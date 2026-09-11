@@ -41,6 +41,12 @@ class TurnUnderstandingAuthorityShadowService:
         from app.domain.services.turn_understanding_kpi_intent_mapper_service import (
             TurnUnderstandingKpiIntentMapperService,
         )
+        from app.domain.services.turn_understanding_generic_intent_mapper_service import (
+            TurnUnderstandingGenericIntentMapperService,
+        )
+        from app.domain.services.chat_intent_router.chat_intent_router_classify_service import (
+            ChatIntentRouterClassifyService,
+        )
 
         product = str(
             ChatProductQueryIntentService.detect(message, force_legacy=True) or ""
@@ -111,6 +117,28 @@ class TurnUnderstandingAuthorityShadowService:
                 agree_kpi = agree_kpi or candidate_kpi_token == kpi.path_token
 
         agree_compound = contract.subtask_count >= 2 or product != "multi_scope"
+        generic = TurnUnderstandingGenericIntentMapperService.from_understanding(contract)
+        legacy_route = ChatIntentRouterClassifyService.classify(message)
+        legacy_intent = str(legacy_route.intent or "")
+        legacy_sub = str(legacy_route.sub_intent or "")
+        agree_no_tool = True
+        if generic.no_tool is False:
+            agree_no_tool = legacy_intent in {"small_talk", "utility", "identity"}
+        elif generic.no_tool is True:
+            agree_no_tool = legacy_intent not in {"small_talk", "utility", "identity"}
+        agree_presentation = True
+        if generic.presentation_view:
+            agree_presentation = legacy_intent in {
+                "presentation_task",
+                "follow_up",
+            } or legacy_sub == "format_refinement"
+        agree_compare = True
+        if generic.is_reasoning:
+            agree_compare = (
+                legacy_intent in {"analysis", "text_task"}
+                or legacy_sub in {"analysis", "data_interpretation", "compound"}
+            )
+
         cutover_product = (
             ChatConversationalIntelligenceFlagService.product_family_cutover_enabled()
         )
@@ -118,12 +146,24 @@ class TurnUnderstandingAuthorityShadowService:
             ChatConversationalIntelligenceFlagService.production_family_cutover_enabled()
         )
         cutover_kpi = ChatConversationalIntelligenceFlagService.kpi_family_cutover_enabled()
+        cutover_no_tool = (
+            ChatConversationalIntelligenceFlagService.no_tool_family_cutover_enabled()
+        )
+        cutover_presentation = (
+            ChatConversationalIntelligenceFlagService.presentation_family_cutover_enabled()
+        )
+        cutover_compare = (
+            ChatConversationalIntelligenceFlagService.compare_explain_family_cutover_enabled()
+        )
 
         shadow = {
             "kind": "turn_understanding_authority",
             "cutover": bool(cutover_product),
             "cutoverProduction": bool(cutover_production),
             "cutoverKpi": bool(cutover_kpi),
+            "cutoverNoTool": bool(cutover_no_tool),
+            "cutoverPresentation": bool(cutover_presentation),
+            "cutoverCompareExplain": bool(cutover_compare),
             "goalCount": contract.subtask_count,
             "productIntent": product or None,
             "candidateProductIntent": candidate_product,
@@ -131,9 +171,15 @@ class TurnUnderstandingAuthorityShadowService:
             "candidateProductionKind": candidate_production_name,
             "kpiMatched": kpi_hit,
             "candidateKpi": candidate_kpi_token,
+            "candidateNoTool": generic.no_tool,
+            "candidatePresentationView": generic.presentation_view,
+            "candidateIsReasoning": generic.is_reasoning,
             "agreeProduct": bool(agree_product),
             "agreeProduction": bool(agree_production),
             "agreeKpi": bool(agree_kpi),
+            "agreeNoTool": bool(agree_no_tool),
+            "agreePresentation": bool(agree_presentation),
+            "agreeCompareExplain": bool(agree_compare),
             "agreeCompound": bool(agree_compound),
             "agree": bool(agree_product and agree_production and agree_kpi),
         }
@@ -161,5 +207,11 @@ class TurnUnderstandingAuthorityShadowService:
                 "cutover": bool(shadow.get("cutover")),
                 "cutoverProduction": bool(shadow.get("cutoverProduction")),
                 "cutoverKpi": bool(shadow.get("cutoverKpi")),
+                "cutoverNoTool": bool(shadow.get("cutoverNoTool")),
+                "cutoverPresentation": bool(shadow.get("cutoverPresentation")),
+                "cutoverCompareExplain": bool(shadow.get("cutoverCompareExplain")),
+                "agreeNoTool": bool(shadow.get("agreeNoTool")),
+                "agreePresentation": bool(shadow.get("agreePresentation")),
+                "agreeCompareExplain": bool(shadow.get("agreeCompareExplain")),
             },
         )

@@ -86,6 +86,18 @@ class ChatConversationalIntelligenceFlagService:
         return cls.family_cutover_enabled("kpi")
 
     @classmethod
+    def no_tool_family_cutover_enabled(cls) -> bool:
+        return cls.family_cutover_enabled("no_tool")
+
+    @classmethod
+    def presentation_family_cutover_enabled(cls) -> bool:
+        return cls.family_cutover_enabled("presentation")
+
+    @classmethod
+    def compare_explain_family_cutover_enabled(cls) -> bool:
+        return cls.family_cutover_enabled("compare_explain")
+
+    @classmethod
     def _env_override(cls, key: str) -> bool | None:
         from app.domain.services.chat_domain_config_service import (
             ChatDomainConfigService,

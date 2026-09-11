@@ -93,7 +93,7 @@
       "moduleOwner": "app/domain/services/chat_product_query_intent_detection_service.py",
       "defaultState": "cutover_on",
       "flagReversible": true,
-      "rollbackHow": "productFamilyAuthorityShadow.cutoverEnabled=false ou families.product/production/kpi=false. Production/KPI são agree-gated (sem divergência do legado).",
+      "rollbackHow": "productFamilyAuthorityShadow.cutoverEnabled=false ou families.*=false. Product/production/KPI = mapper-first+fallback; no_tool/presentation/compare_explain = overlay E2.S5.",
       "observability": "authorityShadow.candidateProductIntent / cutover",
       "sideEffects": true,
       "evidence": "docs/roadmap/llm-json-decoupling/evidence/e2-s4-authority-shadow.md",

@@ -63,11 +63,9 @@ class ChatProductionOperationalIntentService:
             return legacy
 
         mapped = cls._resolve_from_turn_understanding(message)
-        # Agree-gated canary: never diverge from legacy while mapper is incomplete.
-        if mapped is not None and legacy is not None and mapped == legacy:
+        # Mapper-first + fallback legado (parity com product).
+        if mapped is not None:
             return mapped
-        if mapped is not None and legacy is None:
-            return legacy
         return legacy
 
     @classmethod

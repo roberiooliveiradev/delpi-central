@@ -18,7 +18,7 @@ from app.domain.services.external_actions.external_action_response_content_servi
 class TurnUnderstandingKpiIntentMapperService:
     """Derives DepartmentKpiMatch from TU prose (high-confidence tokens only)."""
 
-    # Exact pathToken from department_kpi_rules.json → prose needles
+    # Exact pathToken from department_kpi_rules.json → prose needles (mais específico primeiro).
     _TOKEN_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
         (
             "closing-rate",
@@ -28,7 +28,47 @@ class TurnUnderstandingKpiIntentMapperService:
                 "closing rate",
                 "conversao de vendas",
                 "conversão de vendas",
+                "fechamento de venda",
             ),
+        ),
+        (
+            "rol/series",
+            (
+                "serie de rol",
+                "série de rol",
+                "rol no tempo",
+                "evolucao do rol",
+                "evolução do rol",
+            ),
+        ),
+        (
+            "new-clients-rol-pct",
+            ("rol de clientes novos", "clientes novos rol"),
+        ),
+        (
+            "new-business-rol-pct",
+            (
+                "rol novos negocios",
+                "rol novos negócios",
+                "novos negocios rol",
+                "novos negócios rol",
+            ),
+        ),
+        (
+            "rol/summary",
+            (
+                "meta comercial",
+                "meta do comercial",
+                "meta de comercial",
+                "meta de rol comercial",
+                "meta percentual comercial",
+                "meta rol matriz",
+                "rol matriz",
+            ),
+        ),
+        (
+            "rol/by-branch",
+            ("rol por filial", "rol filial", "rol das filiais"),
         ),
         ("ebitda", ("ebitda",)),
         (
@@ -37,10 +77,18 @@ class TurnUnderstandingKpiIntentMapperService:
                 "rol financeiro",
                 "receita operacional liquida",
                 "receita operacional líquida",
+                "qual o rol",
+                "mostrar o rol",
+                "me mostra o rol",
+                "indicador de rol",
             ),
         ),
+        ("oee", ("oee", "overall equipment")),
         ("kaizens", ("kaizen",)),
-        ("audit-5s", ("auditoria 5s", "audit 5s")),
+        (
+            "audit-5s",
+            ("auditoria 5s", "audit 5s", "auditoria dos 5s"),
+        ),
     )
 
     @classmethod

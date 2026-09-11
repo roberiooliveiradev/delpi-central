@@ -155,7 +155,7 @@
       "surface": "app/content/pt-BR/assistant/ (plano-02)",
       "owner": "plano-02 / Onda C",
       "status": "BLOCKED",
-      "blockReason": "E2.S4 all-families canary (prod/KPI agree-gated); E2.S5–S7 incompletos — DELETE heuristics BLOCKED"
+      "blockReason": "E2.S4 mapper-first all families + E2.S5 generic slice + E2.S6 harness parcial; major JSON heuristics JUSTIFIED_KEEP — DELETE BLOCKED até E2.S5 full + E2.S6 live metrics"
     }
   ],
   "passStatusesForDelete": ["PASS", "PASS_OFFLINE_AND_LIVE", "APPROVED"],

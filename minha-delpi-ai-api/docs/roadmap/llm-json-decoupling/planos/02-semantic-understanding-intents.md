@@ -1,7 +1,7 @@
 # Plano 02 — NLU manual -> Turn Understanding + planner estruturado
 
 **Prioridade:** P0  
-**Status execução:** Onda C · E2.S1–S3 **ATENDIDOS** · E2.S4 **CUTOVER_ALL_FAMILIES_CANARY** · Onda C **ATENDIDO_PARCIAL** (mapper-first prod/KPI + E2.S5–S7 deferred)  
+**Status execução:** Onda C · E2.S1–S7 **ATENDIDO_PARCIAL** (S1–S5 cutovers; S6 harness; S7 JUSTIFIED_KEEP) · Onda C **ATENDIDO_PARCIAL**  
 **Evidência:** [`../evidence/e2-s1-heuristic-intent-inventory.md`](../evidence/e2-s1-heuristic-intent-inventory.md) · [`../evidence/e2-s2-understanding-baseline.md`](../evidence/e2-s2-understanding-baseline.md) · [`../evidence/e2-s3-turn-understanding-contract.md`](../evidence/e2-s3-turn-understanding-contract.md) · [`../evidence/e2-s4-authority-shadow.md`](../evidence/e2-s4-authority-shadow.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** frases longas, sinônimos, linguagem informal, typos e pedidos compostos devem ser compreendidos sem manutenção contínua de `terms`, `excludes`, regex e predicates por domínio.
 
@@ -99,37 +99,29 @@ O campo `intent` é semântico, não enum por endpoint.
 
 **Feito:** entity + `TURN_UNDERSTANDING_JSON_SCHEMA` + validator/fallback; `analyze` emite contrato validado com `goals`/`entities`/`presentationIntent`/`needsTool`; sem path tokens. Evidência: [`../evidence/e2-s3-turn-understanding-contract.md`](../evidence/e2-s3-turn-understanding-contract.md).
 
-### E2.S4 — Product/production/KPI migration — **CUTOVER_PARTIAL** (2026-09-10)
+### E2.S4 — Product/production/KPI migration — **MAPPER_FIRST_ALL_FAMILIES** (2026-09-10)
 
 **Fazer:** substituir gradualmente gates… / **Não fazer:** apagar heurística antes de shadow compare.
 
-**Feito:** shadow + dials; product **mapper-first**; production/KPI **agree-gated canary ON**. Evidência: [`../evidence/e2-s4-authority-shadow.md`](../evidence/e2-s4-authority-shadow.md).
+**Feito:** shadow + dials; product/production/KPI **mapper-first + fallback**. Evidência: [`../evidence/e2-s4-authority-shadow.md`](../evidence/e2-s4-authority-shadow.md).
 
-**Pendente:** mapper-first production/KPI; E2.S5–S7.
+### E2.S5 — Generic intent/router migration — **CUTOVER_GENERIC_SLICE** (2026-09-10)
 
-### E2.S5 — Generic intent/router migration
+**Feito:** dials `no_tool` / `presentation` / `compare_explain` + mapper + overlay em `ChatIntentRouterService.classify`. Sem DELETE de JSON. Evidência: [`../evidence/e2-s5-generic-intent-router.md`](../evidence/e2-s5-generic-intent-router.md).
 
-**Fazer:** reduzir `intent_router`, `analysis_intent_vocabulary` e vocabulários de apresentação a fast paths/config realmente úteis; deixar interpretação complexa para o contrato semântico.
+**Pendente (full):** cascade ClassifyService completo; analysis multi-consumer.
 
-**Teste:** no-tool, compare/explain/summarize, email-from-data, RAG, web intent, table/chart-only.
+### E2.S6 — Pedidos compostos e dependências — **ATENDIDO_PARCIAL** (2026-09-10)
 
-**Pronto quando:** generalização melhora sem regressão de latência material.
+**Feito:** harness dependsOn/ordem/parallel via TU→TaskPlanner. Evidência: [`../evidence/e2-s6-compound-depends.md`](../evidence/e2-s6-compound-depends.md).
 
-### E2.S6 — Pedidos compostos e dependências
+**Pendente:** `taskPlannerEnabled` ON + métricas live.
 
-**Fazer:** garantir que goals independentes podem paralelizar e dependentes preservam ordem; transportar referências entre subtarefas.
+### E2.S7 — Cleanup — **JUSTIFIED_KEEP** (2026-09-10)
 
-**Teste:** pedido com 3-4 operações + síntese final; partial failure; repeated entity; presentation-only joiners.
+**Feito:** gates atualizados; major heuristics KEEP. Evidência: [`../evidence/e2-s7-cleanup-gates.md`](../evidence/e2-s7-cleanup-gates.md).
 
-**Pronto quando:** `multi_request_completion_rate` e `task_decomposition_recall` atendem meta definida no baseline.
-
-### E2.S7 — Cleanup
-
-**Fazer:** remover predicates/lists mortas e tests presos a frases específicas; manter somente fast paths justificados.
-
-**Não fazer:** remover datasets de regressão úteis.
-
-**Pronto quando:** code search não encontra decisão crítica dependente dos catálogos aposentados.
+**Não feito:** DELETE de catálogos (BLOCKED até gates full).
 
 ## Invariantes
 

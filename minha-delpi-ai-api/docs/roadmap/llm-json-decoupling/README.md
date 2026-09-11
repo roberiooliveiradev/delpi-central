@@ -1,6 +1,6 @@
 # Desacoplamento de JSONs + inteligência LLM — Minha DELPI AI
 
-**Status:** Onda A–G ATENDIDAS · Onda H **ATENDIDO_PARCIAL** (E9.S12.A–E; E2.S4 all-families canary) · via [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)  
+**Status:** Onda A–G ATENDIDAS · Onda C/H **ATENDIDO_PARCIAL** (plano-02 E2.S1–S7 parcial; E9.S12.A–E) · via [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)  
 **Escopo:** `minha-delpi-ai-api/app/content` + consumidores runtime relacionados  
 **Objetivo:** remover acoplamentos técnicos e linguísticos que impedem o chat de generalizar para novas APIs, novos domínios e formulações de linguagem natural sem manutenção rota a rota.
 
@@ -51,7 +51,10 @@ O LLM interpreta intenção e contexto. O OpenAPI define contrato. O validator v
 | [`evidence/e2-s1-heuristic-intent-inventory.md`](./evidence/e2-s1-heuristic-intent-inventory.md) | E2.S1 — inventário árvores heurísticas (Onda C). |
 | [`evidence/e2-s2-understanding-baseline.md`](./evidence/e2-s2-understanding-baseline.md) | E2.S2 — baseline authority vs shadow TU. |
 | [`evidence/e2-s3-turn-understanding-contract.md`](./evidence/e2-s3-turn-understanding-contract.md) | E2.S3 — contrato canônico TU. |
-| [`evidence/e2-s4-authority-shadow.md`](./evidence/e2-s4-authority-shadow.md) | E2.S4 — SHADOW_ON authority vs TU. |
+| [`evidence/e2-s4-authority-shadow.md`](./evidence/e2-s4-authority-shadow.md) | E2.S4 — mapper-first product/production/KPI. |
+| [`evidence/e2-s5-generic-intent-router.md`](./evidence/e2-s5-generic-intent-router.md) | E2.S5 — overlay no_tool/presentation/compare. |
+| [`evidence/e2-s6-compound-depends.md`](./evidence/e2-s6-compound-depends.md) | E2.S6 — harness compostos (parcial). |
+| [`evidence/e2-s7-cleanup-gates.md`](./evidence/e2-s7-cleanup-gates.md) | E2.S7 — JUSTIFIED_KEEP heuristics. |
 | [`evidence/e3-s1-multi-turn-state-inventory.md`](./evidence/e3-s1-multi-turn-state-inventory.md) | E3.S1 — inventário grafo multi-turn (Onda D). |
 | [`evidence/e3-s2-follow-up-baseline.md`](./evidence/e3-s2-follow-up-baseline.md) | E3.S2 — baseline follow-up/refinement. |
 | [`evidence/e3-s3-turn-refinement-contract.md`](./evidence/e3-s3-turn-refinement-contract.md) | E3.S3 — contrato canônico Turn Refinement. |

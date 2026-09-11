@@ -62,7 +62,15 @@ class TurnUnderstandingProductionIntentMapperService:
         ),
         (
             ProductionOperationalIntentKind.ORDERS_OPEN,
-            ("ops abertas", "ordens abertas", "op aberta", "ordens em aberto"),
+            (
+                "ops abertas",
+                "ordens abertas",
+                "op aberta",
+                "ordens em aberto",
+                "ops em aberto",
+                "op em aberto",
+                "ops em aberto hoje",
+            ),
         ),
         (
             ProductionOperationalIntentKind.SCHEDULE_TODAY,
@@ -70,6 +78,9 @@ class TurnUnderstandingProductionIntentMapperService:
                 "programacao de producao",
                 "programação de produção",
                 "programados",
+                "programado",
+                "na programacao",
+                "na programação",
                 "programacao hoje",
                 "programação hoje",
                 "cronograma de producao",

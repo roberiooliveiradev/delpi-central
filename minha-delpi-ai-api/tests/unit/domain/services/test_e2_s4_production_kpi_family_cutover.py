@@ -79,12 +79,51 @@ def test_production_resolve_uses_mapper_on_canary() -> None:
     ) == ProductionOperationalIntentKind.SCHEDULE_TODAY
 
 
-def test_production_resolve_falls_back_when_mapper_none() -> None:
-    # agenda: mapper None → legacy None
+def test_production_mapper_membership_schedule_with_code() -> None:
+    assert (
+        TurnUnderstandingProductionIntentMapperService.from_message(
+            "O produto 90260255 está na programação de hoje?"
+        )
+        == ProductionOperationalIntentKind.SCHEDULE_TODAY
+    )
+    assert (
+        TurnUnderstandingProductionIntentMapperService.from_message(
+            "O chicote 90261486 está programado hoje?"
+        )
+        == ProductionOperationalIntentKind.SCHEDULE_TODAY
+    )
+
+
+def test_production_mapper_ops_em_aberto() -> None:
+    assert (
+        TurnUnderstandingProductionIntentMapperService.from_message(
+            "Quais OPs em aberto hoje na filial 01?"
+        )
+        == ProductionOperationalIntentKind.ORDERS_OPEN
+    )
+
+
+def test_production_resolve_mapper_first_with_fallback() -> None:
+    message = "O produto 90260255 está na programação de hoje?"
+    assert (
+        ChatProductionOperationalIntentService.resolve(message)
+        == ProductionOperationalIntentKind.SCHEDULE_TODAY
+    )
+    # agenda: mapper None → fallback legado None
     assert ChatProductionOperationalIntentService.resolve("agenda de produção") is None
 
 
-def test_kpi_mapper_rol_and_closing_rate() -> None:
+def test_kpi_mapper_meta_comercial_and_oee() -> None:
+    meta = TurnUnderstandingKpiIntentMapperService.from_message(
+        "qual a meta comercial deste mês"
+    )
+    assert meta is not None
+    assert meta.path_token == "rol/summary"
+
+    oee = TurnUnderstandingKpiIntentMapperService.from_message("como está o oee da fábrica")
+    assert oee is not None
+    assert oee.path_token == "oee"
+
     rol = TurnUnderstandingKpiIntentMapperService.from_message(
         "qual o rol financeiro do mes"
     )

@@ -123,11 +123,8 @@ class ChatDepartmentKpiIntentService:
             return legacy
 
         mapped = cls._resolve_from_turn_understanding(message)
-        if (
-            mapped is not None
-            and legacy is not None
-            and mapped.path_token == legacy.path_token
-        ):
+        # Mapper-first + fallback legado (parity com product).
+        if mapped is not None:
             return mapped
         return legacy
 

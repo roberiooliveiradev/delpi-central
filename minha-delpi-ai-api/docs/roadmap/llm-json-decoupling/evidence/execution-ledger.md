@@ -10,7 +10,7 @@
 |------|--------|--------|------------------|-------|
 | A — baseline/contratos | inventário + freeze | **ATENDIDO** | — | Ver `onda-a-inventory.md` |
 | B — routing universal | 01 | **ATENDIDO_PARCIAL** | Onda H: DELETE fields registry | Cutover seleção + binder OK; JSON markers deferred |
-| C — entendimento | 02 | **ATENDIDO_PARCIAL** | E2.S4 cutover (após agree) → S5–S7 | S1–S3 OK; S4 shadow-only; DELETE heuristics deferred |
+| C — entendimento | 02 | **ATENDIDO_PARCIAL** | E2.S5 full / E2.S6 live / E2.S7 DELETE | S1–S5 cutovers; S6 harness; S7 JUSTIFIED_KEEP |
 | D — multi-turn/args | 03 | **ATENDIDO_PARCIAL** | Onda H: DELETE terms | S1–S7 OK; S8 reload OK; DELETE deferred |
 | E — caps/composition | 04, 05 | **ATENDIDO** | — | plano 04+05 S1–S7 OK |
 | F — UX inteligente | 06 | **ATENDIDO** | — | E6.S1–S6 OK; queries = LEGACY_FALLBACK |
@@ -167,3 +167,8 @@ abrir planos/0N-*.md
 | 2026-09-10 | Onda C/H **ATENDIDO_PARCIAL** — próximo: canary production/KPI OU E2.S5 |
 | 2026-09-10 | E2.S4 **CUTOVER_ALL_FAMILIES_CANARY** — product mapper-first; production/KPI agree-gated ON |
 | 2026-09-10 | Onda C/H **ATENDIDO_PARCIAL** — próximo: E2.S5 intent_router/analysis OU mapper-first prod/KPI |
+| 2026-09-10 | E2.S4 **MAPPER_FIRST_ALL_FAMILIES** — production/KPI mapper-first + cobertura |
+| 2026-09-10 | E2.S5 **CUTOVER_GENERIC_SLICE** — no_tool/presentation/compare overlay |
+| 2026-09-10 | E2.S6 **ATENDIDO_PARCIAL** — harness dependsOn; taskPlanner live BLOCKED |
+| 2026-09-10 | E2.S7 **JUSTIFIED_KEEP** — major heuristics KEEP; DELETE BLOCKED |
+| 2026-09-10 | Onda C **ATENDIDO_PARCIAL** — plano-02 executável fechado com resíduos documentados |
