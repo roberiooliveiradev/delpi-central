@@ -76,11 +76,14 @@ URL: `panel`/`modal` shareable; summary/menu/confirm **efêmeros** (não reidrat
 
 Link Mode **não** entra na URL. Builders emitem `modal`. `drawer=` só alias de parse.
 
-## Mobile (≤768)
+## Mobile / compact (≤1100)
 
-- Painel esquerdo inicia **recolhido** (`useViewportBucket` + auto-collapse).
-- Toolbar direita: **icon-only** (`.pp-map-overlay-btn-label` oculto); larguras assimétricas `--left` / `--right` anti-colisão.
-- MiniMap desligado no mobile (`showMiniMap={false}`).
+- **Um** `HubMapChrome` em `overlayTopRight` (não há chrome Admin à esquerda).
+- Default: desktop expanded; tablet/mobile (`isCompactViewport`) collapsed.
+- Collapsed = só `PpIconButton` (`PanelRightOpen`) sem card externo.
+- Abrir `panel` (catálogo) ou Connection Mode → auto-collapse + restore do estado prévio.
+- MiniMap off em viewport compacto.
+- Refresh de dados Admin só no header do chrome (não duplicar na bottom bar).
 
 ## Anti-padrões
 

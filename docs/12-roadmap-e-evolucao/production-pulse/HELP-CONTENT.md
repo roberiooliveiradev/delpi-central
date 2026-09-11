@@ -30,9 +30,9 @@ import { PP_HELP, getPpHelp } from "../content/helpTooltips";
 
 ## WF-PP-OTA-HUB — Admin mapa
 
-Superfície única Admin: canvas fullscreen, KPIs em chips, catálogos/jobs em painéis laterais, detalhe/CRUD em modais host-contained e popovers ancorados (`AnchoredPanelPortal`). Feedback transitório via FloatingNotice; confirmações destrutivas via ConfirmModalPanel.
+Superfície única Admin: canvas fullscreen + `HubMapChrome` colapsável à direita (contexto, nav, Novo, busca/filtros, diagnósticos), catálogos/jobs em `PpDetailDialog`, detalhe/CRUD em modais host-contained e popovers ancorados (`AnchoredPanelPortal`). Feedback transitório via FloatingNotice; confirmações destrutivas via ConfirmModalPanel.
 
-**Single Surface Principle:** resumo do nó, menu ⋯ e popover Saúde da frota = uma moldura (`variant="bare"` + `delpi-ui-popover-surface`); classes `pp-*` só layout. Filtros recolhidos no mapa = `IconButton` sem card externo. Ver [DESIGN-FRONTEND §3.6.1](./DESIGN-FRONTEND.md).
+**Single Surface Principle:** resumo do nó e menu ⋯ = uma moldura (`variant="bare"` + `delpi-ui-popover-surface`); classes `pp-*` só layout. Hub chrome recolhido = `IconButton` sem card externo; Saúde/Conexões = disclosure inline. Ver [DESIGN-FRONTEND §3.6.1](./DESIGN-FRONTEND.md).
 
 **Conexões:** linha sólida = vínculo OTA explícito; sem linha = sem vínculo. Compatibilidade de driver só no **modo vínculo** (menu Vincular / arraste FW→IoT) — sem linha tracejada permanente. **Soft delete:** Desativar IoT · Arquivar versão. **Menu ⋯:** cada item com `hint` no próprio label (`PpContextMenuItem` / `PP_HELP.hub.menu*`). **Legenda:** título via `PpSectionHintLabel` (sem `HelpTooltip` standalone).
 
@@ -40,8 +40,8 @@ Helps: `PP_HELP.hub.*`, `PP_HELP.otaLinks.*`.
 
 | Elemento UI | Chave help |
 |-------------|------------|
-| Hero / CTAs | `hub.hero` · `hub.newDevice` · `hub.newFirmware` · `hub.refresh` |
-| KPIs | `hub.kpiPublished` · `hub.kpiLinked` · `hub.kpiUpdating` · `hub.kpiFailed` |
+| Hero / CTAs | `hub.hero` · `hub.newMenu` · `hub.newDevice` · `hub.newFirmware` · `hub.refresh` · `hub.collapseFilters` |
+| KPIs / frota | `hub.fleetHealth` · `hub.kpiPublished` · `hub.kpiLinked` · `hub.kpiUpdating` · `hub.kpiFailed` |
 | Canvas / legenda | `hub.edgeModesHint` · `hub.edgeSolid` · `hub.edgeNone` · `hub.linkMode*` |
 | Menu ⋯ IoT/FW | `hub.menuEditDevice` … `hub.menuArchiveFirmware` · `hub.startLinkFrom*` |
 | Catálogo | `hub.catalog` · `hub.catalogSearch` |

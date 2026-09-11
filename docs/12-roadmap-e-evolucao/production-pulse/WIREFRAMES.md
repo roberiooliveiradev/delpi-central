@@ -1539,17 +1539,22 @@ TopBar: **Admin | Operador**. O mapa ocupa quase todo o viewport.
 
 ```text
 ┌─ Admin                                              Operador ─┐
-│ [Buscar] [Filtros] [Saúde▾] [Jobs n]     [IoTs] [FW] [+IoT] [+FW] [↻] │
-│ ┌─ Canvas fullscreen (React Flow + MiniMap condicional) ────┐ │
-│ │  FW ──▶ IoT   · clique = popover · ⋯ = menu · modais CRUD │ │
-│ └────────────────────────────────────────────────────────────┘ │
-│ [contagens · jobs · lock · refresh]                            │
-└───────────────────────────────────────────────────────────────┘
+│ ┌─ Canvas fullscreen (React Flow) ──────────────┐ ┌ HubMapChrome ┐ │
+│ │  FW ──▶ IoT   · popover · ⋯ · modais CRUD     │ │ Admin·OTA  ◀│ │
+│ │                                                │ │ SC        ↻ │ │
+│ │                                                │ │ nav / Novo  │ │
+│ │                                                │ │ busca/filtro│ │
+│ │                                                │ │ Saúde/Conex ⌄│ │
+│ └────────────────────────────────────────────────┘ └─────────────┘ │
+│ [contagens · jobs OTA · lock]  (refresh só no HubMapChrome)        │
+└────────────────────────────────────────────────────────────────────┘
 ```
 
-**Single Surface:** popover de resumo, menu ⋯ e Saúde da frota usam `AnchoredPanelPortal` `bare` + `delpi-ui-popover-surface` (uma moldura). Overlay de filtros recolhido = só `IconButton` (sem card externo). Ver [DESIGN-FRONTEND §3.6.1](./DESIGN-FRONTEND.md).
+Collapsed: só `PpIconButton` (`PanelRightOpen`) no top-right — sem card.
 
-Query: `entity=device|firmware|job:<id>` · `panel=devices|firmwares|jobs` · `modal=…` (alias legado `drawer=`)
+**Single Surface:** popover de resumo e menu ⋯ usam `AnchoredPanelPortal` `bare` + `delpi-ui-popover-surface`. Saúde/Conexões = disclosure inline no `HubMapChrome`. Ver [DESIGN-FRONTEND §3.6.1](./DESIGN-FRONTEND.md).
+
+Query: `entity=device|firmware|job:<id>` · `panel=devices|firmwares|jobs|drivers` · `modal=…` (alias legado `drawer=`)
 
 ## WF-PP-OTA-04 — Detalhe · aba Firmware (IoT)
 

@@ -787,6 +787,9 @@ function FirmwareDeviceLinkCanvasInner({
           autoPanOnNodeFocus
           edgesReconnectable={false}
           fitView
+          fitViewOptions={{
+            padding: { top: 0.1, right: 0.24, bottom: 0.16, left: 0.08 },
+          }}
           minZoom={0.35}
           maxZoom={1.75}
           panOnScroll
@@ -800,7 +803,7 @@ function FirmwareDeviceLinkCanvasInner({
             color={isDark ? "rgba(148, 163, 184, 0.28)" : "rgba(100, 116, 139, 0.35)"}
           />
           {overlayTopLeft ? (
-            <Panel position="top-left" className="pp-map-overlay-panel pp-map-overlay-panel--left">
+            <Panel position="top-left" className="pp-map-overlay-panel">
               {overlayTopLeft}
             </Panel>
           ) : null}

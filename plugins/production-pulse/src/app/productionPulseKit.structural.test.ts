@@ -166,7 +166,10 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/PpFloatingNotices/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).not.toMatch(/PpHostContainedDrawer/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/AnchoredPanelPortal|EntitySummaryPopover/);
-    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/HubOtaKpiChips/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/HubMapChrome/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).not.toMatch(/HubOtaKpiChips/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).not.toMatch(/leftChromeCollapsed/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/hubChromeCollapsed/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(
       /current\.openLayer !== \"menu\"/,
     );
@@ -174,12 +177,13 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("components/EntityContextLayers.tsx")).toMatch(/PpContextMenuItem/);
     expect(readRelative("components/EntityContextLayers.tsx")).not.toMatch(/<ContextMenuItem\b/);
     expect(readRelative("components/EntityContextLayers.tsx")).toMatch(/icon=\{Pencil\}|icon=\{Archive\}/);
-    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/panelDevices|panelFirmwares|panelJobs/);
+    expect(readRelative("components/HubMapChrome.tsx")).toMatch(/panelDevices|panelFirmwares|panelJobs/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/openPanel\("devices"\)|onOpenDevices/);
     expect(readRelative("components/HubCanvasLegend.tsx")).toMatch(/PpSectionHintLabel/);
     expect(readRelative("components/HubCanvasLegend.tsx")).not.toMatch(/HelpTooltip/);
     expect(readRelative("content/helpTooltips.ts")).toMatch(/menuArchiveFirmware/);
     expect(readRelative("content/helpTooltips.ts")).toMatch(/menuUnlinkFirmware/);
-    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/HubCanvasLegend/);
+    expect(readRelative("components/HubMapChrome.tsx")).toMatch(/HubCanvasLegend/);
     expect(readRelative("components/HubCanvasLegend.tsx")).toMatch(/edgeSolid|linkModeTitle/);
     expect(readRelative("components/HubCanvasLegend.tsx")).not.toMatch(/edgeDashed/);
     expect(readRelative("app/productionPulseUi.tsx")).toMatch(/hintTrigger=\{props\.hintTrigger \?\? "label"\}/);
@@ -212,7 +216,9 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("pages/FirmwareLinksPage.tsx")).not.toMatch(
       /<PpSectionCard title="Targets/,
     );
-    expect(readRelative("components/HubOtaKpiChips.tsx")).toMatch(/AnchoredPanelPortal/);
+    expect(readRelative("components/HubMapChrome.tsx")).toMatch(/AnchoredPanelPortal/);
+    expect(readRelative("components/HubMapChrome.tsx")).toMatch(/PanelRightOpen|PanelRightClose/);
+    expect(readRelative("components/HubMapChrome.tsx")).toMatch(/Novo/);
     expect(readRelative("utils/hubOtaKpis.ts")).toMatch(/computeHubOtaKpis/);
     expect(readRelative("utils/hubOtaKpis.ts")).toMatch(/explicitFirmwareKey/);
     expect(readRelative("utils/adminHubUiState.ts")).toMatch(/AdminHubUiState/);
@@ -275,10 +281,10 @@ describe("production-pulse kit contracts", () => {
 
   it("Single Surface Principle: popovers bare + surface; sem panelRef no filho; CSS sem chrome paralelo", () => {
     const entityLayers = readRelative("components/EntityContextLayers.tsx");
-    const healthChips = readRelative("components/HubOtaKpiChips.tsx");
+    const hubChrome = readRelative("components/HubMapChrome.tsx");
     const css = readRelative("index.css");
 
-    for (const source of [entityLayers, healthChips]) {
+    for (const source of [entityLayers, hubChrome]) {
       expect(source).toMatch(/variant=["']bare["']/);
       expect(source).toMatch(/delpi-ui-popover-surface/);
       expect(source).toMatch(/density=["']compact["']/);
@@ -294,51 +300,52 @@ describe("production-pulse kit contracts", () => {
     const sharedPopoverLayout = css.match(
       /\.pp-entity-summary,\s*\.pp-entity-menu\s*\{[^}]*\}/,
     )?.[0];
-    const healthBlock = css.match(/\.pp-hub-health-popover\s*\{[^}]*\}/)?.[0];
     const collapsedBlock = css.match(
-      /\.pp-map-overlay-stack--collapsed\s*\{[^}]*\}/,
+      /\.pp-hub-map-chrome--collapsed\s*\{[^}]*\}/,
     )?.[0];
 
     expect(sharedPopoverLayout).toBeTruthy();
-    expect(healthBlock).toBeTruthy();
-    for (const block of [sharedPopoverLayout!, healthBlock!]) {
-      expect(block).not.toMatch(/background\s*:/);
-      expect(block).not.toMatch(/box-shadow\s*:/);
-    }
+    expect(sharedPopoverLayout!).not.toMatch(/background\s*:/);
+    expect(sharedPopoverLayout!).not.toMatch(/box-shadow\s*:/);
 
     expect(collapsedBlock).toBeTruthy();
     expect(collapsedBlock!).toMatch(/background:\s*transparent/);
     expect(collapsedBlock!).toMatch(/box-shadow:\s*none/);
     expect(collapsedBlock!).toMatch(/border:\s*0/);
-    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(
-      /pp-map-overlay-stack--collapsed/,
-    );
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/HubMapChrome/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).not.toMatch(/overlayTopLeft=/);
   });
 
-  it("Hub mobile: overlays assimétricos, labels compactáveis, MiniMap off e auto-collapse", () => {
+  it("HubMapChrome único à direita: progressive disclosure, sem dual anti-colisão", () => {
     const css = readRelative("index.css");
     const hub = readRelative("pages/FirmwareLinksPage.tsx");
+    const chrome = readRelative("components/HubMapChrome.tsx");
     const canvas = readRelative("components/FirmwareDeviceLinkCanvas.tsx");
 
-    expect(css).toMatch(/\.pp-map-overlay-panel--left/);
+    expect(css).toMatch(/\.pp-hub-map-chrome\b/);
+    expect(css).toMatch(/\.pp-hub-map-chrome--collapsed/);
     expect(css).toMatch(/\.pp-map-overlay-panel--right/);
-    expect(css).toMatch(/pp-map-overlay-btn-label/);
-    expect(css).not.toMatch(
-      /@media \(max-width: 768px\) \{\s*\.pp-map-overlay-panel \{\s*max-width:\s*calc\(100vw - 1\.5rem\);/,
-    );
-    expect(css).toMatch(
-      /\.pp-map-overlay-panel--left[\s\S]*?max-width:\s*min\(20rem,\s*calc\(100vw - 4\.5rem\)\)/,
-    );
-    expect(css).toMatch(
-      /\.pp-map-overlay-panel--right[\s\S]*?max-width:\s*min\(11rem,\s*46vw\)/,
-    );
+    expect(css).not.toMatch(/\.pp-map-overlay-panel--left/);
+    expect(css).not.toMatch(/pp-map-overlay-btn-label/);
+    expect(css).not.toMatch(/pp-map-overlay-actions/);
+    expect(css).not.toMatch(/pp-hub-health-popover/);
 
     expect(hub).toMatch(/useViewportBucket/);
-    expect(hub).toMatch(/pp-map-overlay-btn-label/);
-    expect(hub).toMatch(/showMiniMap=\{!isMobile\}/);
-    expect(hub).toMatch(/didAutoCollapseForMobileRef/);
-    expect(canvas).toMatch(/pp-map-overlay-panel--left/);
+    expect(hub).toMatch(/hubChromeCollapsed/);
+    expect(hub).toMatch(/chromeCollapsedBeforeOverlayRef/);
+    expect(hub).toMatch(/overlayTopRight=\{overlayTopRight\}/);
+    expect(hub).not.toMatch(/overlayTopLeft=/);
+    expect(hub).toMatch(/showMiniMap=\{!preferCollapsedChrome\}/);
+    expect(hub).not.toMatch(/leftChromeCollapsed/);
+    expect(hub).not.toMatch(/PanelLeftOpen|PanelLeftClose/);
+
+    expect(chrome).toMatch(/PanelRightOpen/);
+    expect(chrome).toMatch(/PanelRightClose/);
+    expect(chrome).toMatch(/onCreateDevice|onCreateFirmware/);
+    expect(chrome).toMatch(/Saúde da frota/);
     expect(canvas).toMatch(/pp-map-overlay-panel--right/);
+    expect(canvas).toMatch(/fitViewOptions/);
+    expect(canvas).not.toMatch(/pp-map-overlay-panel--left/);
   });
 
   it("botões do hero usam PpHintAction + PP_HELP (sem ação órfã)", () => {

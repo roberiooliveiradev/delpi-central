@@ -33,8 +33,7 @@ import {
   type CanvasEntitySelection,
   type LinkCandidateRequest,
 } from "../components/FirmwareDeviceLinkCanvas";
-import { HubOtaKpiChips } from "../components/HubOtaKpiChips";
-import { HubCanvasLegend } from "../components/HubCanvasLegend";
+import { HubMapChrome } from "../components/HubMapChrome";
 import {
   MiniInspectorPanel,
   RenameDeviceDialog,
@@ -52,7 +51,6 @@ import {
   PpIconButton,
   PpNativeTextField,
   PpOtaProgressBar,
-  PpSegmentToggle,
   PpStateBox,
   PpWorkbenchDialog,
   useFloatingNotices,
@@ -66,17 +64,10 @@ import { OtaTargetProgress } from "../components/ota/OtaTargetProgress";
 import { useProductionPulseOtaMonitor } from "../hooks/useProductionPulseOtaMonitor";
 import { useViewportBucket } from "../hooks/useViewportBucket";
 import {
-  CircuitBoard,
   Cpu,
-  FileCode,
   Link2,
-  ListTodo,
   Lock,
   LockOpen,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Plus,
-  RefreshCw,
 } from "lucide-react";
 import { resolveBranchOptions } from "../constants/branches";
 import type { ProductionPulsePermissionFlags } from "../constants/permissions";
@@ -118,7 +109,7 @@ import {
   uniqueFirmwareFamilies,
   type LinkMode,
 } from "../utils/firmwareLinkGraph";
-import { isMobileViewport } from "../utils/viewportLayout";
+import { isCompactViewport } from "../utils/viewportLayout";
 import {
   computeHubOtaKpis,
   EMPTY_HUB_OTA_KPIS,
@@ -221,20 +212,36 @@ export function FirmwareLinksPage({
   } | null>(null);
   const [scheduledAt, setScheduledAt] = useState("");
   const viewport = useViewportBucket();
-  const isMobile = isMobileViewport(viewport);
-  const [leftChromeCollapsed, setLeftChromeCollapsed] = useState(isMobile);
+  const preferCollapsedChrome = isCompactViewport(viewport);
+  const [hubChromeCollapsed, setHubChromeCollapsed] = useState(preferCollapsedChrome);
   const [nodesLocked, setNodesLocked] = useState(false);
-  const didAutoCollapseForMobileRef = useRef(isMobile);
+  const chromeCollapsedBeforeOverlayRef = useRef<boolean | null>(null);
+  const didAutoCollapseForCompactRef = useRef(preferCollapsedChrome);
 
   useEffect(() => {
-    if (!isMobile) {
-      didAutoCollapseForMobileRef.current = false;
+    if (!preferCollapsedChrome) {
+      didAutoCollapseForCompactRef.current = false;
       return;
     }
-    if (didAutoCollapseForMobileRef.current) return;
-    didAutoCollapseForMobileRef.current = true;
-    setLeftChromeCollapsed(true);
-  }, [isMobile]);
+    if (didAutoCollapseForCompactRef.current) return;
+    didAutoCollapseForCompactRef.current = true;
+    setHubChromeCollapsed(true);
+  }, [preferCollapsedChrome]);
+
+  useEffect(() => {
+    const overlayActive = Boolean(ui.panel) || Boolean(linkMode);
+    if (overlayActive) {
+      if (chromeCollapsedBeforeOverlayRef.current === null) {
+        chromeCollapsedBeforeOverlayRef.current = hubChromeCollapsed;
+        setHubChromeCollapsed(true);
+      }
+      return;
+    }
+    if (chromeCollapsedBeforeOverlayRef.current !== null) {
+      setHubChromeCollapsed(chromeCollapsedBeforeOverlayRef.current);
+      chromeCollapsedBeforeOverlayRef.current = null;
+    }
+  }, [ui.panel, linkMode, hubChromeCollapsed]);
 
   useEffect(() => {
     if (!highlightFirmwareKey) return;
@@ -1140,192 +1147,57 @@ export function FirmwareLinksPage({
     );
   }
 
-  const overlayTopLeft = leftChromeCollapsed ? (
-    <div className="pp-map-overlay-stack pp-map-overlay-stack--collapsed">
-      <PpHintAction hint={PP_HELP.hub.collapseFilters} ariaLabel="Ajuda: Expandir filtros">
-        <PpIconButton
-          aria-label="Expandir filtros do mapa"
-          aria-expanded={false}
-          onClick={() => setLeftChromeCollapsed(false)}
-        >
-          <PanelLeftOpen size={18} />
-        </PpIconButton>
-      </PpHintAction>
-    </div>
-  ) : (
-    <div className="pp-map-overlay-stack">
-      <div className="pp-map-overlay-title">
-        <div className="pp-map-overlay-title__row">
-          <strong>Admin · OTA</strong>
-          <PpHintAction hint={PP_HELP.hub.collapseFilters} ariaLabel="Ajuda: Recolher filtros">
-            <PpIconButton
-              aria-label="Recolher filtros do mapa"
-              aria-expanded={true}
-              onClick={() => setLeftChromeCollapsed(true)}
-            >
-              <PanelLeftClose size={16} />
-            </PpIconButton>
-          </PpHintAction>
-        </div>
-        <span className="pp-muted">Mapa Firmware ↔ IoT</span>
-      </div>
-      <PpHintAction hint={PP_HELP.hub.mapSearch} ariaLabel="Ajuda: Buscar no mapa">
-        <div>
-          <PpCatalogSearchBar
-            value={ui.filters.q}
-            onChange={(q) =>
-              dispatch({
-                type: "setFilters",
-                filters: { ...ui.filters, q },
-              })
-            }
-            placeholder="Buscar no mapa…"
-          />
-        </div>
-      </PpHintAction>
-      <PpHintAction hint={PP_HELP.hub.statusFilter} ariaLabel="Ajuda: Filtro de status">
-        <PpSegmentToggle
-          ariaLabel="Filtro de status"
-          size="sm"
-          widthMode="content"
-          value={ui.filters.status || "all"}
-          onChange={(value) =>
-            dispatch({
-              type: "setFilters",
-              filters: {
-                ...ui.filters,
-                status: value === "all" ? "" : value,
-              },
-            })
-          }
-          options={[
-            { value: "all", label: "Todos" },
-            { value: "online", label: "Online" },
-            { value: "offline", label: "Offline" },
-            { value: "disabled", label: "Inativos" },
-          ]}
-        />
-      </PpHintAction>
-      <HubOtaKpiChips
-        kpis={hubKpis}
-        loading={loading}
-        activeJobs={activeJobCount}
-        awaitingCount={otaMonitor.awaitingCount}
-        downloadingCount={otaMonitor.downloadingCount}
-        onOpenJobs={() => openPanel("jobs")}
-      />
-      <HubCanvasLegend linkModeActive={Boolean(linkMode)} />
-    </div>
-  );
-
   const overlayTopRight = (
-    <div className="pp-map-overlay-actions">
-      {branchOptions.length > 1 ? (
-        <PpHintAction hint={PP_HELP.hub.branch} ariaLabel="Ajuda: Filial">
-          <PpSegmentToggle
-            ariaLabel="Filial"
-            size="sm"
-            widthMode="content"
-            value={branch}
-            onChange={changeBranch}
-            options={branchOptions.map((item) => ({
-              value: item.id,
-              label: item.label,
-            }))}
-          />
-        </PpHintAction>
-      ) : null}
-      <PpHintAction hint={PP_HELP.hub.panelDevices} ariaLabel="Ajuda: Painel IoTs">
-        <PpActionButton
-          variant="ghost"
-          className="pp-map-overlay-nav-btn pp-map-overlay-nav-btn--device"
-          aria-label="Abrir catálogo de IoTs"
-          onClick={() => openPanel("devices")}
-        >
-          <Cpu size={14} aria-hidden="true" />
-          <span className="pp-map-overlay-btn-label">IoTs</span>
-        </PpActionButton>
-      </PpHintAction>
-      <PpHintAction hint={PP_HELP.hub.panelFirmwares} ariaLabel="Ajuda: Painel Firmwares">
-        <PpActionButton
-          variant="ghost"
-          className="pp-map-overlay-nav-btn pp-map-overlay-nav-btn--firmware"
-          aria-label="Abrir catálogo de Firmwares"
-          onClick={() => openPanel("firmwares")}
-        >
-          <FileCode size={14} aria-hidden="true" />
-          <span className="pp-map-overlay-btn-label">Firmwares</span>
-        </PpActionButton>
-      </PpHintAction>
-      <PpHintAction hint={PP_HELP.hub.panelDrivers} ariaLabel="Ajuda: Painel Drivers">
-        <PpActionButton
-          variant="ghost"
-          className="pp-map-overlay-nav-btn pp-map-overlay-nav-btn--driver"
-          aria-label="Abrir catálogo de Drivers"
-          onClick={() => openPanel("drivers")}
-        >
-          <CircuitBoard size={14} aria-hidden="true" />
-          <span className="pp-map-overlay-btn-label">Drivers</span>
-        </PpActionButton>
-      </PpHintAction>
-      <PpHintAction hint={PP_HELP.hub.panelJobs} ariaLabel="Ajuda: Painel Jobs">
-        <PpActionButton
-          variant="ghost"
-          className="pp-map-overlay-nav-btn pp-map-overlay-nav-btn--jobs"
-          aria-label={
-            activeJobCount > 0
-              ? `Abrir Jobs OTA, ${activeJobCount} ativos`
-              : "Abrir Jobs OTA"
-          }
-          onClick={() => openPanel("jobs")}
-        >
-          <ListTodo size={14} aria-hidden="true" />
-          <span className="pp-map-overlay-btn-label">
-            Jobs{activeJobCount > 0 ? ` · ${activeJobCount}` : ""}
-          </span>
-        </PpActionButton>
-      </PpHintAction>
-      {canManage ? (
-        <div className="pp-map-overlay-actions__create" role="group" aria-label="Criar">
-          <PpHintAction hint={PP_HELP.hub.newDevice} ariaLabel="Ajuda: Novo IoT">
-            <PpActionButton
-              variant="primary"
-              className="pp-map-overlay-create-btn pp-map-overlay-create-btn--device"
-              aria-label="Cadastrar novo IoT"
-              onClick={() => openModal("device-create", null)}
-            >
-              <Plus size={14} aria-hidden="true" />
-              <Cpu size={14} aria-hidden="true" />
-              <span className="pp-map-overlay-btn-label">IoT</span>
-            </PpActionButton>
-          </PpHintAction>
-          <PpHintAction hint={PP_HELP.hub.newFirmware} ariaLabel="Ajuda: Novo firmware">
-            <PpActionButton
-              variant="primary"
-              className="pp-map-overlay-create-btn pp-map-overlay-create-btn--firmware"
-              aria-label="Criar novo firmware"
-              onClick={() => openModal("firmware-create", null)}
-            >
-              <Plus size={14} aria-hidden="true" />
-              <FileCode size={14} aria-hidden="true" />
-              <span className="pp-map-overlay-btn-label">FW</span>
-            </PpActionButton>
-          </PpHintAction>
-        </div>
-      ) : null}
-      <PpHintAction hint={PP_HELP.hub.refresh} ariaLabel="Ajuda: Atualizar">
-        <PpIconButton
-          aria-label="Atualizar mapa"
-          disabled={loading}
-          onClick={() => {
-            void reloadGraph();
-            void reloadJobs({ soft: true });
-          }}
-        >
-          <RefreshCw size={16} />
-        </PpIconButton>
-      </PpHintAction>
-    </div>
+    <HubMapChrome
+      collapsed={hubChromeCollapsed}
+      onCollapsedChange={setHubChromeCollapsed}
+      context={{
+        branch,
+        branchOptions,
+        onBranchChange: changeBranch,
+        refreshing: loading,
+        onRefresh: () => {
+          void reloadGraph();
+          void reloadJobs({ soft: true });
+        },
+      }}
+      navigation={{
+        activeJobs: activeJobCount,
+        onOpenDevices: () => openPanel("devices"),
+        onOpenFirmwares: () => openPanel("firmwares"),
+        onOpenDrivers: () => openPanel("drivers"),
+        onOpenJobs: () => openPanel("jobs"),
+      }}
+      create={
+        canManage
+          ? {
+              onCreateDevice: () => openModal("device-create", null),
+              onCreateFirmware: () => openModal("firmware-create", null),
+            }
+          : undefined
+      }
+      filters={{
+        search: ui.filters.q,
+        onSearchChange: (q) =>
+          dispatch({
+            type: "setFilters",
+            filters: { ...ui.filters, q },
+          }),
+        status: ui.filters.status,
+        onStatusChange: (status) =>
+          dispatch({
+            type: "setFilters",
+            filters: { ...ui.filters, status },
+          }),
+      }}
+      diagnostics={{
+        kpis: hubKpis,
+        linkModeActive: Boolean(linkMode),
+        awaitingCount: otaMonitor.awaitingCount,
+        downloadingCount: otaMonitor.downloadingCount,
+        loading,
+      }}
+    />
   );
 
   const overlayBottom = linkMode ? (
@@ -1396,18 +1268,6 @@ export function FirmwareLinksPage({
           {nodesLocked ? <Lock size={16} /> : <LockOpen size={16} />}
         </PpIconButton>
       </PpHintAction>
-      <PpHintAction hint={PP_HELP.hub.refresh} ariaLabel="Ajuda: Atualizar">
-        <PpIconButton
-          aria-label="Atualizar"
-          disabled={loading}
-          onClick={() => {
-            void reloadGraph();
-            void reloadJobs({ soft: true });
-          }}
-        >
-          <RefreshCw size={16} />
-        </PpIconButton>
-      </PpHintAction>
     </div>
   );
 
@@ -1455,11 +1315,10 @@ export function FirmwareLinksPage({
                 dispatch({ type: "closeTransient" });
               }
             }}
-            overlayTopLeft={overlayTopLeft}
             overlayTopRight={overlayTopRight}
             overlayBottom={overlayBottom}
             nodesLocked={nodesLocked}
-            showMiniMap={!isMobile}
+            showMiniMap={!preferCollapsedChrome}
           />
         )}
 

@@ -225,12 +225,13 @@ Import: `from "@delpi/plugin-ui/index"`. Factory com prefixo `pp` onde existir h
 |---|---|---|
 | Resumo nó (FW/IoT) | `pp-entity-summary` | kit `delpi-ui-popover-surface` |
 | Menu ⋯ | `pp-entity-menu` | idem |
-| Saúde da frota | `pp-hub-health-popover` | idem |
-| Filtros mapa recolhidos | `pp-map-overlay-stack--collapsed` | **sem** card — só `IconButton` |
+| Hub Admin chrome | `pp-hub-map-chrome` | surface única do painel; disclosures inline (Saúde/Conexões) **sem** popover |
+| Menu Novo (criar) | `pp-hub-map-chrome__create-menu` | kit `delpi-ui-popover-surface` |
+| Hub chrome recolhido | `pp-hub-map-chrome--collapsed` | **sem** card — só `IconButton` (`PanelRightOpen`) |
 
-**Não fazer:** `variant` omitido (default `shape`) + filho com chrome; `panelRef` no filho e no portal; regras `.delpi-ui-*` no MFE; flatten de `SectionCard` em modais/forms (seções funcionais reais ficam).
+**Não fazer:** `variant` omitido (default `shape`) + filho com chrome; `panelRef` no filho e no portal; regras `.delpi-ui-*` no MFE; flatten de `SectionCard` em modais/forms (seções funcionais reais ficam); dual overlay Admin left+right; Saúde da frota em segundo card/popover.
 
-**Guardrail:** `productionPulseKit.structural.test.ts` — bare + surface + CSS sem chrome paralelo + collapsed transparente.
+**Guardrail:** `productionPulseKit.structural.test.ts` — bare + surface + CSS sem chrome paralelo + collapsed transparente + `HubMapChrome` top-right.
 
 ### 3.6.2 Connection Mode (Firmware ↔ IoT)
 

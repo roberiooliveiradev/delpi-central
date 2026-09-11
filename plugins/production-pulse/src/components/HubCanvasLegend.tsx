@@ -5,20 +5,27 @@ import { PP_HELP } from "../content/helpTooltips";
 
 type HubCanvasLegendProps = {
   linkModeActive?: boolean;
+  /** When embedded under a parent disclosure heading. */
+  hideTitle?: boolean;
 };
 
 /** Canvas connections: solid OTA link in normal mode; candidate states in link mode. */
-export function HubCanvasLegend({ linkModeActive = false }: HubCanvasLegendProps) {
+export function HubCanvasLegend({
+  linkModeActive = false,
+  hideTitle = false,
+}: HubCanvasLegendProps) {
   if (linkModeActive) {
     return (
       <div className="pp-hub-legend pp-hub-legend--compact" role="group" aria-label="Legenda do modo vínculo">
-        <div className="pp-hub-legend__title-row">
-          <PpSectionHintLabel
-            label={PP_HELP.hub.linkModeTitle}
-            hint={PP_HELP.hub.edgeModesHint}
-            className="pp-hub-legend__title"
-          />
-        </div>
+        {hideTitle ? null : (
+          <div className="pp-hub-legend__title-row">
+            <PpSectionHintLabel
+              label={PP_HELP.hub.linkModeTitle}
+              hint={PP_HELP.hub.edgeModesHint}
+              className="pp-hub-legend__title"
+            />
+          </div>
+        )}
         <span className="pp-hub-legend__item pp-hub-legend__item--compatible">
           <Link2 size={12} aria-hidden="true" /> {PP_HELP.hub.linkCompatible}
         </span>
@@ -34,13 +41,15 @@ export function HubCanvasLegend({ linkModeActive = false }: HubCanvasLegendProps
 
   return (
     <div className="pp-hub-legend pp-hub-legend--compact" role="group" aria-label="Legenda das conexões">
-      <div className="pp-hub-legend__title-row">
-        <PpSectionHintLabel
-          label={PP_HELP.hub.edgeModesTitle}
-          hint={PP_HELP.hub.edgeModesHint}
-          className="pp-hub-legend__title"
-        />
-      </div>
+      {hideTitle ? null : (
+        <div className="pp-hub-legend__title-row">
+          <PpSectionHintLabel
+            label={PP_HELP.hub.edgeModesTitle}
+            hint={PP_HELP.hub.edgeModesHint}
+            className="pp-hub-legend__title"
+          />
+        </div>
+      )}
       <span className="pp-hub-legend__item pp-hub-legend__item--solid">
         {PP_HELP.hub.edgeSolid}
       </span>

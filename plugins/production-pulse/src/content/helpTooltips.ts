@@ -363,6 +363,7 @@ export const PP_HELP = {
     refresh: "Recarrega firmwares, IoTs e atualizações da filial.",
     newDevice: "Cadastra um novo dispositivo IoT nesta filial (modal).",
     newFirmware: "Cria uma nova versão de firmware (modal).",
+    newMenu: "Cria IoT ou firmware nesta filial.",
     kpiPublished: "Versões publicadas e não arquivadas, elegíveis para disparo OTA.",
     kpiLinked: "IoTs com vínculo explícito de família — pré-requisito para OTA.",
     kpiUpdating: "IoTs com atualização autorizada, baixando ou aplicando agora.",
@@ -460,7 +461,7 @@ export const PP_HELP = {
     mapSearch: "Filtra e destaca nós no mapa.",
     fleetHealth: "Resumo compacto da saúde OTA da frota.",
     collapseFilters:
-      "Recolhe ou expande filtros, KPIs e legenda do mapa. No celular o painel inicia recolhido para liberar o canvas.",
+      "Recolhe ou expande o Hub Admin à direita (catálogos, criação, filtros e diagnósticos). Em telas ≤1100px inicia recolhido.",
     lockNodes: "Bloqueia o arraste dos nós no canvas.",
     bottomBar: "Contagens, jobs ativos e atalhos secundários do mapa.",
   },
