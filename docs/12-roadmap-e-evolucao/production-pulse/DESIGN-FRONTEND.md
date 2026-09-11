@@ -167,13 +167,18 @@ Import: `from "@delpi/plugin-ui/index"`. Factory com prefixo `pp` onde existir h
 
 | Estado | Ícone (Lucide) | Progresso |
 |--------|----------------|-----------|
-| pending/authorized | Clock3 / WifiOff se offline | nenhum |
+| authorized + wake pending | Megaphone | indeterminate (avisando) |
+| authorized + wake accepted | Bell | nenhum (aguardando consulta) |
+| authorized + wake failed | BellOff | nenhum (pull fallback) |
+| pending/authorized (sem wake) | Clock3 / WifiOff se offline | nenhum |
 | downloading | Download | barra + % real |
 | applying | LoaderCircle | indeterminate |
 | updated | CircleCheck | — |
 | failed | CircleX | — |
 | ota_target_stale | TriangleAlert | — |
 | cancelled | Ban | — |
+
+Wake (`wake_*`) é telemetria de aviso; não altera `status` OTA nem `error_code`.
 
 ### 3.4 Filtros e formulário
 
