@@ -1,25 +1,21 @@
-# Firmware ESP8266 — contador v2 (lab de troca OTA)
+# Firmware ESP8266 — contador V2 (vermelho)
 
-Sketch irmão de [`../esp8266_counter_v1/Teste.ino`](../esp8266_counter_v1/Teste.ino) para homologar OTA com progresso.
+Segundo binário da família `esp8266_counter_v1` para homologar OTA. Contrato `/api/*` idêntico ao V1.
 
 | Item | Valor |
 |------|--------|
-| Pasta Arduino | abra **esta** pasta (`esp8266_counter_v2`) — não misture `.ino` na pasta v1 |
-| `FIRMWARE_VERSION` | `esp8266_counter_v2.0.2` |
-| Contrato `/api/*` | Idêntico ao v1 (driver `esp8266_counter_v1`) + `POST /api/ota/check-now` (202) |
-| Pull OTA | ~60 s + jitter 0–15 s; backoff em erro; wake via check-now |
-| UI `/` | Badge **V2**, accent verde, exibe versão |
+| Pasta Arduino | `esp8266_counter_v2` (não misture `.ino` na pasta v1) |
+| Arquivo | `esp8266_counter_v2.ino` |
+| Família / driver | `esp8266_counter_v1` (igual ao V1) |
+| `FIRMWARE_VERSION` | `esp8266_counter_v1.2.0.0` |
+| Catálogo OTA | versão `2.0.0` |
+| Tema | **Vermelho** (badge + accent na página `/`) |
+| Par | [`../esp8266_counter_v1/`](../esp8266_counter_v1/) (verde · `1.0.0`) |
 
-## Lab swap v1 ↔ v2
+## Lab OTA
 
-1. Compile/publique o `.bin` do v1 (`esp8266_counter_v1.3.2`) e do v2 (`esp8266_counter_v2.0.2`) no catálogo OTA (mesma `firmwareKey` / `driverKey`).
-2. Amarre o IoT em `/firmware-links`.
-3. Dispare campanha para a versão alvo.
-4. No detalhe do device (aba Firmware): acompanhe **% real** + fases PT.
-5. Após reboot, **Em execução** deve mostrar a nova `FIRMWARE_VERSION` (live `/api/status`).
+1. Compile/publique V1 (`1.0.0`) e V2 (`2.0.0`) na mesma família.
+2. Flash USB com V1; vincule o IoT; dispare campanha para `2.0.0`.
+3. Após reboot, `/` deve mostrar badge **V2 · Vermelho** e `firmwareVersion` `….2.0.0`.
 
-## Progresso byte a byte
-
-Durante o download o sketch envia `POST /device-ota/report` com `bytesReceived`, `bytesTotal`, `progressPercent` (throttle ~5% / 32 KiB / máx. 1×/2 s). Falha do report intermediário **não** aborta o flash.
-
-Reports terminais (`updated` antes do restart e `failed` ao abandonar o apply) usam `reportTerminalWithRetry` (até 3 tentativas, backoff 200/400/800 ms). Falha do ACK **não** impede o restart.
+Índice: [../README.md](../README.md).

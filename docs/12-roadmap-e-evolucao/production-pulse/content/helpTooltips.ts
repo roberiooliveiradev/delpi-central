@@ -197,7 +197,7 @@ export const PP_HELP = {
     driverKeyEmpty: "Lista de drivers indisponível — digite a chave EN do driver.",
     version: "Versão semântica do binário (ex.: 1.3.0).",
     displayName: "Nome amigável na UI (pode ser em português).",
-    file: "Anexe o .bin gerado ao compilar o sketch (ex.: Teste.ino). O fonte .ino não é o artefato OTA. O sha256 é calculado no servidor.",
+    file: "Anexe o .bin gerado ao compilar o sketch (ex.: esp8266_counter_v1.ino). O fonte .ino não é o artefato OTA. O sha256 é calculado no servidor.",
     releaseNotes: "Notas opcionais da versão para operadores/admin.",
     catalogList: "Versões disponíveis por família de firmware. Arquivar remove a versão de novos disparos.",
     catalogEmpty: "Nenhuma versão publicada ainda.",

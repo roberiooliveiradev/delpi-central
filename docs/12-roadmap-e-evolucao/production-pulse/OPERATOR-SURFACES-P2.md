@@ -33,7 +33,7 @@ Expandir o modo operador além de **contador** e **gauge genérico**, cobrindo:
 | % na tela | Calculado na **API** (`metrics` + `goals` → `progress.pct`) — MFE só renderiza |
 | Painel combinado | Rota `/operator/placements/:placementKey/board` — 1 tela, cards por device; tap → superfície dedicada |
 | Contador | Continua `counter_pad` — meta/alerta **como faixa** acima do valor, sem misturar pad |
-| Firmware | Drivers novos = protocolo HTTP próprio; não acoplar ao `Teste.ino` do contador |
+| Firmware | Drivers novos = protocolo HTTP próprio; não acoplar ao sketch `esp8266_counter_v1` do contador |
 | Kit UI | Tiles + banners via `@delpi/plugin-ui`; gráfico % com `ComparativeAreaChart` / anel SVG domínio `.pp-operator-ring` |
 
 ---

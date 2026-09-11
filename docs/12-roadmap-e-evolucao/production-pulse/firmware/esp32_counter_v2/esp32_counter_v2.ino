@@ -1,4 +1,4 @@
-// Production Pulse — ESP32-WROOM counter (esp32_counter_v1)
+// Production Pulse — ESP32-WROOM counter V2 red (family esp32_counter_v1)
 // Board: ESP32 Dev Module (WROOM). Hybrid OTA: wake POST /api/ota/check-now + pull ~60s.
 #include <WiFi.h>
 #include <WebServer.h>
@@ -18,9 +18,9 @@
 static const char* DEFAULT_WIFI_SSID = "YOUR_SSID";
 static const char* DEFAULT_WIFI_PASSWORD = "YOUR_PASSWORD";
 static const unsigned long DEFAULT_DEBOUNCE_MS = 100;
-static const char* FIRMWARE_VERSION = "esp32_counter_v1.1.0.0";
+static const char* FIRMWARE_VERSION = "esp32_counter_v1.2.0.0";
 // OTA pair identity: V1 green / V2 red (HTML accent + BACKEND_OK RGB).
-static const bool VERSION_THEME_IS_RED = false;
+static const bool VERSION_THEME_IS_RED = true;
 static const uint16_t EEPROM_SIZE = 512;
 static const uint32_t CONFIG_MAGIC = 0x50505731;  // "PPW1" — ESP32-WROOM (distinct from ESP8266/C3)
 
@@ -1302,11 +1302,11 @@ String paginaPrincipal() {
   html += "<!DOCTYPE html><html lang='pt-BR'><head>";
   html += "<meta charset='utf-8'/>";
   html += "<meta name='viewport' content='width=device-width,initial-scale=1'/>";
-  html += "<title>Production Pulse - Contador V1 Verde</" "title><style>";
-  html += ":root{--bg:#0b1220;--card:#111827;--line:#334155;--text:#e2e8f0;--muted:#94a3b8;--accent:#22c55e;--ok:#4ade80;}";
+  html += "<title>Production Pulse - Contador V2 Vermelho</" "title><style>";
+  html += ":root{--bg:#0b1220;--card:#111827;--line:#334155;--text:#e2e8f0;--muted:#94a3b8;--accent:#ef4444;--ok:#4ade80;}";
   html += "*{box-sizing:border-box}";
   html += "body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;";
-  html += "background:linear-gradient(160deg,#052e1f,#0b1220 55%,#052e1f);color:var(--text);min-height:100vh;padding:1.25rem}";
+  html += "background:linear-gradient(160deg,#450a0a,#0b1220 55%,#450a0a);color:var(--text);min-height:100vh;padding:1.25rem}";
   html += ".wrap{max-width:28rem;margin:0 auto}";
   html += ".badge{display:inline-block;padding:.2rem .55rem;border-radius:999px;border:1px solid var(--accent);";
   html += "color:var(--accent);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.75rem}";
@@ -1321,7 +1321,7 @@ String paginaPrincipal() {
   html += ".dot{display:inline-block;width:.55rem;height:.55rem;border-radius:50%;background:var(--ok);";
   html += "margin-right:.35rem;vertical-align:middle}";
   html += "</" "style></" "head><body><div class='wrap'>";
-  html += "<div class='badge'>V1 · Verde · WROOM</" "div>";
+  html += "<div class='badge'>V2 · Vermelho · WROOM</" "div>";
   html += "<div class='card'>";
   html += "<p class='label'>Firmware instalado</" "p>";
   html += "<div class='code'>";

@@ -1,50 +1,26 @@
-# Firmware ESP32-WROOM — contador v1 (Production Pulse)
-
-Família oficial WROOM, isolada de ESP8266 e ESP32-C3. Mesmo contrato HTTP `/api/*` + OTA híbrido (wake + pull).
+# Firmware ESP32-WROOM — contador V1 (verde)
 
 | Item | Valor |
 |------|--------|
-| Pasta Arduino | `esp32_counter_v1` |
-| Arquivo | `esp32_counter_v1.ino` |
-| `FIRMWARE_VERSION` | `esp32_counter_v1.0.1` |
-| `driverKey` / `firmwareKey` | `esp32_counter_v1` |
-| Board | **ESP32 Dev Module** (WROOM-32) |
-| FQBN | `esp32:esp32:esp32` |
-| Arduino core | Espressif 2.x / 3.x |
-| Flash | 4 MB, **QIO**, dual OTA |
-| Partition | Minimal SPIFFS / Default with dual OTA (`ota_0` + `ota_1`) |
-| Pull OTA | ~60 s + jitter 0–15 s; backoff em erro de check |
-| Wake | `POST /api/ota/check-now` → **202** (flag; flash só no loop) |
+| Pasta / arquivo | `esp32_counter_v1` / `esp32_counter_v1.ino` |
+| Família / driver | `esp32_counter_v1` |
+| `FIRMWARE_VERSION` | `esp32_counter_v1.1.0.0` |
+| Catálogo OTA | versão `1.0.0` |
+| Tema | **Verde** (UI `/` + LED RGB em `BACKEND_OK`) |
+| Board / FQBN | ESP32 Dev Module · `esp32:esp32:esp32` |
+| Par OTA | [`../esp32_counter_v2/`](../esp32_counter_v2/) (vermelho · `2.0.0`) |
 
-## Bootstrap USB (1ª gravação)
+## Flash
 
-1. Abra a pasta `esp32_counter_v1` no Arduino IDE / `arduino-cli`.
-2. Board: **ESP32 Dev Module** (`esp32:esp32:esp32`).
-3. Partition Scheme com `ota_0` + `ota_1` (não use “No OTA”).
-4. Grave via USB; no Serial: `MAC WIFI STA - ENVIAR PARA TI` e `controllerCode` (`ESP32-` + MAC hex).
-5. Configure `ssid` / `password` / `apiToken` / `otaBaseUrl` / `branch` via `POST /api/config` (token vazio = bootstrap aberto).
-6. A API deve empurrar `otaBaseUrl` + `branch` no configure (`PP_DEVICE_OTA_BASE_URL`).
+1. Abra a pasta `esp32_counter_v1` no Arduino IDE.
+2. Partition scheme com dual OTA (ex.: Minimal SPIFFS / Large APP with OTA).
+3. Publique o `.bin` no Admin Pulse.
 
-Placeholders de fábrica: `YOUR_SSID` / `YOUR_PASSWORD` — sem secrets reais no sketch.
+## Pinos
 
-## Pinos (defaults do sketch)
+| Função | GPIO |
+|--------|------|
+| INPUT_1 / INPUT_2 | 18 / 19 |
+| LED R / G / B | 25 / 26 / 27 (cátodo comum, HIGH liga) |
 
-| Função | GPIO | Notas |
-|--------|------|--------|
-| INPUT_1 (pulso) | 18 | `INPUT_PULLUP`, active LOW; incrementa contador |
-| INPUT_2 (diagnóstico) | 19 | active LOW; **não** altera contador |
-| LED R / G / B | 25 / 26 / 27 | cátodo comum externo (~220 Ω); HIGH liga |
-
-Ajuste no `.ino` se o hardware divergir. Evite GPIO0/2/15 (strapping) para sinais permanentes.
-
-## Endpoints
-
-Contrato alinhado aos contadores irmãos: `GET /api/contador` público; demais `/api/*` com `X-Device-Token` quando token setado; `POST /api/ota/check-now` autenticado → 202.
-
-## EEPROM
-
-`CONFIG_MAGIC = 0x50505731` (`PPW1`) — distinto de ESP8266 (`PPS\x02`) e C3 (`PPC1`).
-
-## COMPILACAO_FISICA_PENDENTE
-
-Compile com `arduino-cli` quando o core ESP32 estiver instalado. Smoke OTA físico A–K permanece **PENDENTE** até lab com WROOM.
+Índice: [../README.md](../README.md).

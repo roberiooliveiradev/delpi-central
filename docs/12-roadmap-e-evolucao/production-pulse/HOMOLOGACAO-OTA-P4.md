@@ -9,7 +9,7 @@ Lab: 1 ESP flash USB na versão A → amarração firmware↔IoT → campanha �
 - [ ] IoT **amarrado** à família em `/apps/production-pulse/firmware-links` (1 IoT = 1 firmware)
 - [ ] Sketch com `otaBaseUrl` = `http://<host>/apps/production-pulse-api`, `branch`, token
 - [ ] Rede do ESP alcança o gateway em **HTTP**
-- [ ] Binário novo com `FIRMWARE_VERSION` diferente (ex.: `…v1.3.0`)
+- [ ] Binário novo com `FIRMWARE_VERSION` diferente (ex.: V1 `….1.0.0` verde → V2 `….2.0.0` vermelho; ver [`firmware/README.md`](./firmware/README.md))
 
 ## Passos
 

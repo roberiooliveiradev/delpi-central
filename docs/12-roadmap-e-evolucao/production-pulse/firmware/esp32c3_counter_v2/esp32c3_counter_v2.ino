@@ -1,25 +1,36 @@
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>
-#include <ESP8266HTTPClient.h>
+// Production Pulse — ESP32-C3 counter V2 red (family esp32c3_counter_v1)
+#include <WiFi.h>
+#include <WebServer.h>
+#include <ESPmDNS.h>
+#include <HTTPClient.h>
 #include <WiFiClient.h>
-#include <Updater.h>
+#include <Update.h>
 #include <EEPROM.h>
+#include <esp_mac.h>
+#include <esp_wifi.h>
+#include <esp_system.h>
 #include <string.h>
 
 // =============================================================================
-// Defaults de fábrica (primeiro boot / EEPROM vazia)
+// Factory defaults (first boot / empty EEPROM) — placeholders only, no secrets
 // =============================================================================
 static const char* DEFAULT_WIFI_SSID = "YOUR_SSID";
 static const char* DEFAULT_WIFI_PASSWORD = "YOUR_PASSWORD";
 static const unsigned long DEFAULT_DEBOUNCE_MS = 100;
-static const char* FIRMWARE_VERSION = "esp8266_counter_v1.3.2";
+static const char* FIRMWARE_VERSION = "esp32c3_counter_v1.2.0.0";
+// OTA pair identity: V1 green / V2 red (HTML accent + BACKEND_OK RGB).
+static const bool VERSION_THEME_IS_RED = true;
 static const uint16_t EEPROM_SIZE = 512;
-static const uint32_t CONFIG_MAGIC = 0x50505302;  // "PPS\x02" — inclui OTA base URL
+static const uint32_t CONFIG_MAGIC = 0x50504331;  // "PPC1" — distinct from ESP8266 PPS\x02
 
-// NodeMCU silk labels D5/D1 — use GPIO numbers so Generic ESP8266 boards compile.
-#define BT_MAIS  14  // D5
-#define BT_MENOS 5   // D1
+// Opto-isolated machine inputs (active LOW, INPUT_PULLUP). 3.3 V logic side only.
+#define INPUT_1_PIN 0
+#define INPUT_2_PIN 1
+
+// External RGB common-cathode: HIGH = channel on (external ~220 Ω per channel).
+#define LED_R_PIN 4
+#define LED_G_PIN 5
+#define LED_B_PIN 6
 
 struct DeviceConfig {
   uint32_t magic;
@@ -27,7 +38,7 @@ struct DeviceConfig {
   char password[65];
   char apiToken[65];
   uint32_t debounceMs;
-  char otaBaseUrl[129];  // ex.: http://host/apps/production-pulse-api (sem trailing slash)
+  char otaBaseUrl[129];  // e.g. http://host/apps/production-pulse-api (no trailing slash)
   char branch[8];        // filial EN "01" / "02"
 };
 
@@ -46,21 +57,49 @@ struct VersionHistory {
 VersionHistory versionHistory;
 
 long contador = 0;
-String codigoControlador;
-ESP8266WebServer server(80);
 
-bool estadoMais = HIGH;
-bool estadoMenos = HIGH;
-bool leituraAnteriorMais = HIGH;
-bool leituraAnteriorMenos = HIGH;
-unsigned long tempoMais = 0;
-unsigned long tempoMenos = 0;
+// Single STA identity source (resolved after WiFi.mode(WIFI_STA)).
+uint8_t stationMacBytes[6] = {0};
+String stationMacAddress;   // XX:XX:XX:XX:XX:XX
+String controllerCode;      // ESP32C3-XXXXXXXXXXXX
+String codigoControlador;   // alias — same value as controllerCode
 
-unsigned long lastWifiAttemptMs = 0;
+WebServer server(80);
+
+// Input debounce (INPUT_1 increments; INPUT_2 diagnostic only).
+bool input1Stable = HIGH;
+bool input2Stable = HIGH;
+bool input1LastRaw = HIGH;
+bool input2LastRaw = HIGH;
+unsigned long input1DebounceMs = 0;
+unsigned long input2DebounceMs = 0;
+int input1RawLevel = 1;
+int input2RawLevel = 1;
+
+// Wi-Fi connection state machine — sole owner of WiFi.begin().
+enum WifiConnState {
+  WIFI_SM_IDLE = 0,
+  WIFI_SM_CONNECTING = 1,
+  WIFI_SM_CONNECTED = 2,
+  WIFI_SM_BACKOFF = 3
+};
+
+volatile WifiConnState wifiConnState = WIFI_SM_IDLE;
+volatile bool wifiGotIpFlag = false;
+volatile bool wifiDisconnectedFlag = false;
+volatile uint8_t wifiDisconnectReason = 0;
+bool wifiReconnectRequested = false;
+unsigned long wifiAttemptStartMs = 0;
+unsigned long wifiBackoffUntilMs = 0;
 unsigned long wifiBackoffMs = 1000;
-unsigned long factoryHoldStartMs = 0;
-unsigned long ledLastToggleMs = 0;
-bool ledLit = false;
+static const unsigned long WIFI_BACKOFF_MAX_MS = 30000;
+static const unsigned long WIFI_CONNECT_TIMEOUT_MS = 20000;
+
+// Backend freshness (authenticated contact with Minha DELPI / production-pulse-api).
+unsigned long lastBackendContactMs = 0;
+static const unsigned long BACKEND_FRESHNESS_MS = 120000UL;  // 2 minutes
+
+// Auth / OTA / RGB
 bool authErrorLatched = false;
 unsigned long authErrorUntilMs = 0;
 unsigned long lastOtaCheckMs = 0;
@@ -68,31 +107,34 @@ bool otaInProgress = false;
 bool otaCheckRequested = false;
 unsigned long otaIntervalJitterMs = 0;
 unsigned long otaErrorBackoffMs = 0;
-static const unsigned long WIFI_BACKOFF_MAX_MS = 30000;
-static const unsigned long WIFI_BOOT_WAIT_MS = 15000;
-static const unsigned long FACTORY_HOLD_MS = 10000;
-static const unsigned long LED_CONNECTING_MS = 500;
-static const unsigned long LED_ONLINE_PULSE_MS = 2000;
-static const unsigned long LED_AUTH_ERROR_MS = 100;
+unsigned long lastPeriodicStatusMs = 0;
+unsigned long rgbLastToggleMs = 0;
+bool rgbBlinkPhase = false;
+
 static const unsigned long AUTH_ERROR_HOLD_MS = 5000;
 static const unsigned long OTA_CHECK_INTERVAL_MS = 60000;   // 60 s base pull
 static const unsigned long OTA_JITTER_MAX_MS = 15000;       // 0–15 s jitter
 static const unsigned long OTA_ERROR_BACKOFF_MIN_MS = 60000;
 static const unsigned long OTA_ERROR_BACKOFF_MAX_MS = 300000;
-static const unsigned long OTA_FIRST_CHECK_MS = 60000;      // 1 min após boot
+static const unsigned long OTA_FIRST_CHECK_MS = 60000;      // 1 min after boot
 static const uint32_t OTA_MIN_FREE_HEAP = 20000;
+static const unsigned long PERIODIC_STATUS_MS = 10000;
+static const unsigned long RGB_BLINK_SLOW_MS = 500;
+static const unsigned long RGB_BLINK_FAST_MS = 100;
+static const unsigned long RGB_BLINK_OTA_MS = 350;
 
-enum LedState {
-  LED_CONNECTING = 0,
-  LED_ONLINE = 1,
-  LED_AUTH_ERROR = 2
+enum RgbVisualState {
+  RGB_OFFLINE = 0,
+  RGB_CONNECTING = 1,
+  RGB_WIFI_OK_BACKEND_STALE = 2,
+  RGB_BACKEND_OK = 3,
+  RGB_AUTH_ERROR = 4,
+  RGB_OTA_IN_PROGRESS = 5
 };
 
-String montarCodigoControlador() {
-  char buf[24];
-  snprintf(buf, sizeof(buf), "ESP-%08X", ESP.getChipId());
-  return String(buf);
-}
+// =============================================================================
+// Helpers
+// =============================================================================
 
 bool apiTokenConfigured() {
   return cfg.apiToken[0] != '\0';
@@ -102,10 +144,38 @@ bool passwordConfigured() {
   return cfg.password[0] != '\0';
 }
 
+bool isBackendFresh() {
+  if (lastBackendContactMs == 0) {
+    return false;
+  }
+  return (millis() - lastBackendContactMs) < BACKEND_FRESHNESS_MS;
+}
+
+void noteBackendContact() {
+  lastBackendContactMs = millis();
+}
+
 void enviarCors() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   server.sendHeader("Access-Control-Allow-Headers", "Content-Type, X-Device-Token");
+}
+
+/**
+ * Optional passive freshness on public routes: valid X-Device-Token refreshes
+ * lastBackendContactMs without requiring the header.
+ */
+void maybeNoteBackendContactFromHeader() {
+  if (!apiTokenConfigured()) {
+    return;
+  }
+  if (!server.hasHeader("X-Device-Token")) {
+    return;
+  }
+  String got = server.header("X-Device-Token");
+  if (got == String(cfg.apiToken)) {
+    noteBackendContact();
+  }
 }
 
 bool requireDeviceToken() {
@@ -127,6 +197,7 @@ bool requireDeviceToken() {
     server.send(401, "application/json", "{\"error\":\"unauthorized\"}");
     return false;
   }
+  noteBackendContact();
   return true;
 }
 
@@ -365,12 +436,189 @@ String otaBaseTrimmed() {
   return base;
 }
 
-/** Redirects — API enum (core ≥2.6). Sem símbolo = no-op seguro. */
+/** Safe OTA base for Serial/HTML: hide URL if it looks like it embeds credentials. */
+String otaBaseSafeForDisplay() {
+  String base = otaBaseTrimmed();
+  if (base.indexOf('@') >= 0) {
+    return String("(redacted)");
+  }
+  return base;
+}
+
 void httpEnableRedirects(HTTPClient& http) {
 #if defined(HTTPC_STRICT_FOLLOW_REDIRECTS)
   http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
 #endif
 }
+
+// =============================================================================
+// Identity (STA MAC single source)
+// =============================================================================
+
+void resolveStationIdentity() {
+  esp_err_t err = esp_read_mac(stationMacBytes, ESP_MAC_WIFI_STA);
+  if (err != ESP_OK) {
+    Serial.print("esp_read_mac(ESP_MAC_WIFI_STA) failed: ");
+    Serial.println((int)err);
+    memset(stationMacBytes, 0, sizeof(stationMacBytes));
+  }
+
+  char macBuf[18];
+  snprintf(
+    macBuf,
+    sizeof(macBuf),
+    "%02X:%02X:%02X:%02X:%02X:%02X",
+    stationMacBytes[0],
+    stationMacBytes[1],
+    stationMacBytes[2],
+    stationMacBytes[3],
+    stationMacBytes[4],
+    stationMacBytes[5]
+  );
+  stationMacAddress = String(macBuf);
+
+  char codeBuf[24];
+  snprintf(
+    codeBuf,
+    sizeof(codeBuf),
+    "ESP32C3-%02X%02X%02X%02X%02X%02X",
+    stationMacBytes[0],
+    stationMacBytes[1],
+    stationMacBytes[2],
+    stationMacBytes[3],
+    stationMacBytes[4],
+    stationMacBytes[5]
+  );
+  controllerCode = String(codeBuf);
+  codigoControlador = controllerCode;
+}
+
+// =============================================================================
+// Radio preparation (before any WiFi.begin)
+// =============================================================================
+
+void prepareWifiRadio() {
+  bool sleepOk = WiFi.setSleep(false);
+  Serial.print("WiFi sleep: disabled");
+  Serial.print(" (setSleep=");
+  Serial.print(sleepOk ? "ok" : "fail");
+  Serial.println(")");
+
+  bool txOk = WiFi.setTxPower(WIFI_POWER_8_5dBm);
+  Serial.print("WiFi TX power: 8.5 dBm");
+  Serial.print(" (setTxPower=");
+  Serial.print(txOk ? "ok" : "fail");
+  Serial.println(")");
+}
+
+// =============================================================================
+// Wi-Fi state machine
+// =============================================================================
+
+void onWifiArduinoEvent(WiFiEvent_t event, WiFiEventInfo_t info) {
+  if (event == ARDUINO_EVENT_WIFI_STA_GOT_IP) {
+    wifiGotIpFlag = true;
+  } else if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
+    wifiDisconnectedFlag = true;
+    wifiDisconnectReason = info.wifi_sta_disconnected.reason;
+  }
+}
+
+void requestWifiReconnect() {
+  wifiReconnectRequested = true;
+}
+
+void startWifiConnectAttempt() {
+  wifiGotIpFlag = false;
+  wifiDisconnectedFlag = false;
+  wifiConnState = WIFI_SM_CONNECTING;
+  wifiAttemptStartMs = millis();
+  Serial.print("WiFi begin ssid=");
+  Serial.println(cfg.ssid);
+  WiFi.begin(cfg.ssid, cfg.password);
+}
+
+void scheduleWifiBackoff() {
+  wifiConnState = WIFI_SM_BACKOFF;
+  wifiBackoffUntilMs = millis() + wifiBackoffMs;
+  Serial.print("WiFi backoff ms=");
+  Serial.println(wifiBackoffMs);
+  if (wifiBackoffMs < WIFI_BACKOFF_MAX_MS) {
+    unsigned long next = wifiBackoffMs * 2UL;
+    wifiBackoffMs = next > WIFI_BACKOFF_MAX_MS ? WIFI_BACKOFF_MAX_MS : next;
+  }
+}
+
+void ensureWifiStateMachine() {
+  // Drain event flags (loop context — safe for Serial / state transitions).
+  if (wifiGotIpFlag) {
+    wifiGotIpFlag = false;
+    wifiConnState = WIFI_SM_CONNECTED;
+    wifiBackoffMs = 1000;
+    wifiReconnectRequested = false;
+    Serial.println("WiFi GOT_IP");
+    Serial.print("IP: ");
+    Serial.println(WiFi.localIP());
+    Serial.print("Gateway: ");
+    Serial.println(WiFi.gatewayIP());
+    Serial.print("Channel: ");
+    Serial.println(WiFi.channel());
+    Serial.print("RSSI: ");
+    Serial.println(WiFi.RSSI());
+  }
+
+  if (wifiDisconnectedFlag) {
+    wifiDisconnectedFlag = false;
+    uint8_t reason = wifiDisconnectReason;
+    Serial.print("WiFi DISCONNECTED reason=");
+    Serial.println(reason);
+    if (wifiConnState == WIFI_SM_CONNECTED || wifiConnState == WIFI_SM_CONNECTING) {
+      scheduleWifiBackoff();
+    }
+  }
+
+  if (wifiReconnectRequested) {
+    wifiReconnectRequested = false;
+    Serial.println("WiFi reconnect requested (config change)");
+    if (wifiConnState == WIFI_SM_CONNECTING || wifiConnState == WIFI_SM_CONNECTED) {
+      WiFi.disconnect(false, false);
+    }
+    wifiBackoffMs = 1000;
+    wifiConnState = WIFI_SM_IDLE;
+  }
+
+  if (wifiConnState == WIFI_SM_CONNECTED) {
+    if (WiFi.status() != WL_CONNECTED) {
+      scheduleWifiBackoff();
+    }
+    return;
+  }
+
+  if (wifiConnState == WIFI_SM_CONNECTING) {
+    if ((millis() - wifiAttemptStartMs) >= WIFI_CONNECT_TIMEOUT_MS) {
+      Serial.println("WiFi connect timeout");
+      WiFi.disconnect(false, false);
+      scheduleWifiBackoff();
+    }
+    return;
+  }
+
+  if (wifiConnState == WIFI_SM_BACKOFF) {
+    if ((long)(millis() - wifiBackoffUntilMs) < 0) {
+      return;
+    }
+    wifiConnState = WIFI_SM_IDLE;
+  }
+
+  // WIFI_SM_IDLE → start exactly one begin in flight.
+  if (wifiConnState == WIFI_SM_IDLE) {
+    startWifiConnectAttempt();
+  }
+}
+
+// =============================================================================
+// HTTP / OTA
+// =============================================================================
 
 bool httpExchange(
   const String& method,
@@ -413,7 +661,7 @@ bool reportOtaStatus(
   }
   String url = otaBaseTrimmed() + "/device-ota/report";
   String payload = "{";
-  payload += "\"controllerCode\":\"" + jsonEscape(codigoControlador) + "\",";
+  payload += "\"controllerCode\":\"" + jsonEscape(controllerCode) + "\",";
   payload += "\"branch\":\"" + jsonEscape(String(cfg.branch)) + "\",";
   if (targetId.length() > 0) {
     payload += "\"targetId\":\"" + jsonEscape(targetId) + "\",";
@@ -443,7 +691,9 @@ bool reportOtaStatus(
     return false;
   }
   bool ok = code >= 200 && code < 300;
-  if (!ok) {
+  if (ok) {
+    noteBackendContact();
+  } else {
     Serial.print("OTA report HTTP ");
     Serial.print(code);
     Serial.print(" body=");
@@ -454,6 +704,7 @@ bool reportOtaStatus(
 
 // Terminal OTA statuses (updated / failed before give-up). Best-effort ACK with
 // limited retries; false still allows restart — backend reconcile covers gaps.
+// ESP32: yield/delay only (no ESP8266 ESP.wdtFeed).
 bool reportTerminalWithRetry(
   const String& targetId,
   const String& status,
@@ -477,7 +728,6 @@ bool reportTerminalWithRetry(
     Serial.println(attempt + 1);
     delay(backoffsMs[attempt]);
     yield();
-    ESP.wdtFeed();
   }
   return false;
 }
@@ -485,11 +735,11 @@ bool reportTerminalWithRetry(
 bool applyOtaBinary(const String& artifactUrl, const String& targetId, const String& version) {
   reportOtaStatus(targetId, "downloading", "", "", 0, -1, 0);
   yield();
-  ESP.wdtFeed();
 
   WiFiClient client;
   HTTPClient http;
-  http.setTimeout(120000);
+  // HTTPClient timeout is uint16_t ms on Arduino-ESP32 (max 65535).
+  http.setTimeout(60000);
   httpEnableRedirects(http);
   if (!http.begin(client, artifactUrl)) {
     reportTerminalWithRetry(targetId, "failed", "http_begin_failed", "");
@@ -502,7 +752,6 @@ bool applyOtaBinary(const String& artifactUrl, const String& targetId, const Str
     reportTerminalWithRetry(targetId, "failed", "download_http_" + String(code), "");
     return false;
   }
-  // ESP8266 Updater exige tamanho conhecido — não usar UPDATE_SIZE_UNKNOWN (símbolo do ESP32).
   int contentLength = http.getSize();
   if (contentLength <= 0) {
     http.end();
@@ -538,7 +787,6 @@ bool applyOtaBinary(const String& artifactUrl, const String& targetId, const Str
     if (n <= 0) {
       delay(50);
       yield();
-      ESP.wdtFeed();
       if (!stream->connected() && stream->available() == 0) {
         break;
       }
@@ -553,7 +801,6 @@ bool applyOtaBinary(const String& artifactUrl, const String& targetId, const Str
     }
     written += w;
     yield();
-    ESP.wdtFeed();
 
     int pct = (int)((written * 100UL) / (size_t)contentLength);
     unsigned long now = millis();
@@ -652,9 +899,10 @@ void maybeCheckOta() {
   otaCheckRequested = false;
   lastOtaCheckMs = now;
   otaInProgress = true;
+  Serial.println("OTA checking");
 
   String url = otaBaseTrimmed() + "/device-ota/check?controllerCode="
-    + urlEncodeComponent(codigoControlador)
+    + urlEncodeComponent(controllerCode)
     + "&branch=" + urlEncodeComponent(String(cfg.branch));
   int code = 0;
   String resp;
@@ -665,10 +913,12 @@ void maybeCheckOta() {
     otaInProgress = false;
     return;
   }
+  noteBackendContact();
 
   String dataJson = extractEnvelopeData(resp);
   bool available = false;
   if (!extractJsonBool(dataJson, "updateAvailable", available) || !available) {
+    Serial.println("OTA no update");
     noteOtaCheckSuccess();
     otaInProgress = false;
     return;
@@ -686,13 +936,17 @@ void maybeCheckOta() {
 
   noteOtaCheckSuccess();
   String artifactUrl = otaBaseTrimmed() + "/device-ota/artifacts/" + urlEncodeComponent(token)
-    + "?controllerCode=" + urlEncodeComponent(codigoControlador)
+    + "?controllerCode=" + urlEncodeComponent(controllerCode)
     + "&branch=" + urlEncodeComponent(String(cfg.branch));
   Serial.print("OTA applying version=");
   Serial.println(version);
   applyOtaBinary(artifactUrl, targetId, version);
   otaInProgress = false;
 }
+
+// =============================================================================
+// HTTP handlers
+// =============================================================================
 
 long parseContadorDoBody() {
   if (!server.hasArg("plain")) {
@@ -707,14 +961,15 @@ long parseContadorDoBody() {
 }
 
 void enviarContador() {
+  maybeNoteBackendContactFromHeader();
   enviarCors();
   String json =
     "{"
     "\"contador\":" + String(contador) + ","
-    "\"hardwareUid\":\"" + codigoControlador + "\","
-    "\"controllerCode\":\"" + codigoControlador + "\","
-    "\"codigoControlador\":\"" + codigoControlador + "\","
-    "\"mac\":\"" + WiFi.macAddress() + "\""
+    "\"hardwareUid\":\"" + controllerCode + "\","
+    "\"controllerCode\":\"" + controllerCode + "\","
+    "\"codigoControlador\":\"" + controllerCode + "\","
+    "\"mac\":\"" + stationMacAddress + "\""
     "}";
   server.send(200, "application/json", json);
 }
@@ -727,13 +982,13 @@ void enviarStatus() {
   bool wifiOk = WiFi.status() == WL_CONNECTED;
   String json =
     "{"
-    "\"hardwareUid\":\"" + codigoControlador + "\","
-    "\"codigoControlador\":\"" + codigoControlador + "\","
-    "\"controllerCode\":\"" + codigoControlador + "\","
-    "\"equipamento\":\"" + codigoControlador + "\","
+    "\"hardwareUid\":\"" + controllerCode + "\","
+    "\"codigoControlador\":\"" + controllerCode + "\","
+    "\"controllerCode\":\"" + controllerCode + "\","
+    "\"equipamento\":\"" + controllerCode + "\","
     "\"contador\":" + String(contador) + ","
     "\"ip\":\"" + WiFi.localIP().toString() + "\","
-    "\"mac\":\"" + WiFi.macAddress() + "\","
+    "\"mac\":\"" + stationMacAddress + "\","
     "\"status\":\"online\","
     "\"firmwareVersion\":\"" + String(FIRMWARE_VERSION) + "\","
     "\"previousFirmwareVersion\":\"" + jsonEscape(String(versionHistory.previousFirmwareVersion)) + "\","
@@ -741,7 +996,9 @@ void enviarStatus() {
     "\"uptimeMs\":" + String(millis()) + ","
     "\"freeHeap\":" + String(ESP.getFreeHeap()) + ","
     "\"rssi\":" + String(wifiOk ? WiFi.RSSI() : 0) + ","
-    "\"wifiConnected\":" + String(wifiOk ? "true" : "false") +
+    "\"wifiConnected\":" + String(wifiOk ? "true" : "false") + ","
+    "\"input1\":" + String(input1RawLevel) + ","
+    "\"input2\":" + String(input2RawLevel) +
     "}";
   server.send(200, "application/json", json);
 }
@@ -837,9 +1094,8 @@ void aplicarConfigPost() {
   saveConfigToEeprom();
 
   if (wifiChanged) {
-    WiFi.disconnect(true);
-    delay(100);
-    WiFi.begin(cfg.ssid, cfg.password);
+    // Reconnect only via state machine — never WiFi.begin() in HTTP handler.
+    requestWifiReconnect();
   }
 
   enviarConfig();
@@ -882,107 +1138,189 @@ void aplicarFactoryReset() {
   ESP.restart();
 }
 
-void checkFactoryResetHold() {
-  bool bothHeld = digitalRead(BT_MAIS) == LOW && digitalRead(BT_MENOS) == LOW;
-  if (!bothHeld) {
-    factoryHoldStartMs = 0;
-    return;
-  }
-  if (factoryHoldStartMs == 0) {
-    factoryHoldStartMs = millis();
-    return;
-  }
-  if ((millis() - factoryHoldStartMs) < FACTORY_HOLD_MS) {
-    return;
-  }
-  Serial.println("Factory reset via hold D5+D1");
-  restoreFactoryConfig();
-  delay(50);
-  ESP.restart();
+// =============================================================================
+// RGB (single owner of GPIO4/5/6 writes)
+// =============================================================================
+
+void writeRgbChannels(bool r, bool g, bool b) {
+  digitalWrite(LED_R_PIN, r ? HIGH : LOW);
+  digitalWrite(LED_G_PIN, g ? HIGH : LOW);
+  digitalWrite(LED_B_PIN, b ? HIGH : LOW);
 }
 
-void updateStatusLed() {
+RgbVisualState resolveRgbVisualState() {
   if (authErrorLatched && (long)(millis() - authErrorUntilMs) >= 0) {
     authErrorLatched = false;
   }
 
-  LedState state = LED_CONNECTING;
+  // Priority: auth/failure > OTA > connecting/offline > connected/backend freshness
   if (authErrorLatched) {
-    state = LED_AUTH_ERROR;
-  } else if (WiFi.status() == WL_CONNECTED) {
-    state = LED_ONLINE;
+    return RGB_AUTH_ERROR;
   }
-
-  unsigned long interval = LED_CONNECTING_MS;
-  if (state == LED_ONLINE) {
-    interval = LED_ONLINE_PULSE_MS;
-  } else if (state == LED_AUTH_ERROR) {
-    interval = LED_AUTH_ERROR_MS;
+  if (otaInProgress) {
+    return RGB_OTA_IN_PROGRESS;
   }
+  if (wifiConnState == WIFI_SM_CONNECTING || wifiConnState == WIFI_SM_BACKOFF
+      || wifiConnState == WIFI_SM_IDLE) {
+    if (WiFi.status() != WL_CONNECTED) {
+      if (wifiConnState == WIFI_SM_IDLE && millis() < 2000UL) {
+        return RGB_OFFLINE;
+      }
+      return RGB_CONNECTING;
+    }
+  }
+  if (WiFi.status() != WL_CONNECTED) {
+    return RGB_OFFLINE;
+  }
+  if (isBackendFresh()) {
+    return RGB_BACKEND_OK;
+  }
+  // Connected but never contacted, or freshness expired → stale (solid then blink).
+  if (lastBackendContactMs == 0) {
+    return RGB_WIFI_OK_BACKEND_STALE;  // solid blue until first contact
+  }
+  return RGB_WIFI_OK_BACKEND_STALE;    // blink blue when expired (pattern differs below)
+}
 
+void updateRgbState() {
+  RgbVisualState state = resolveRgbVisualState();
   unsigned long now = millis();
-  if ((now - ledLastToggleMs) < interval) {
+  unsigned long interval = RGB_BLINK_SLOW_MS;
+  bool r = false;
+  bool g = false;
+  bool b = false;
+  bool solid = false;
+
+  switch (state) {
+    case RGB_AUTH_ERROR:
+      interval = RGB_BLINK_FAST_MS;
+      r = true;
+      break;
+    case RGB_OTA_IN_PROGRESS:
+      interval = RGB_BLINK_OTA_MS;
+      r = true;
+      g = true;  // yellow/orange
+      break;
+    case RGB_CONNECTING:
+      interval = RGB_BLINK_SLOW_MS;
+      r = true;
+      break;
+    case RGB_OFFLINE:
+      solid = true;
+      r = true;
+      break;
+    case RGB_BACKEND_OK:
+      solid = true;
+      if (VERSION_THEME_IS_RED) {
+        r = true;  // V2 brand = red (auth error uses fast blink red)
+      } else {
+        g = true;  // V1 brand = green
+      }
+      break;
+    case RGB_WIFI_OK_BACKEND_STALE:
+      if (lastBackendContactMs == 0) {
+        // Wi-Fi OK, never contacted backend yet → solid blue
+        solid = true;
+        b = true;
+      } else {
+        // Freshness expired → blinking blue
+        interval = RGB_BLINK_SLOW_MS;
+        b = true;
+      }
+      break;
+    default:
+      solid = true;
+      r = true;
+      break;
+  }
+
+  if (solid) {
+    writeRgbChannels(r, g, b);
     return;
   }
-  ledLastToggleMs = now;
 
-  // LED_BUILTIN on NodeMCU is active LOW.
-  if (state == LED_ONLINE) {
-    // Slow pulse: mostly on, brief off.
-    ledLit = !ledLit;
-    digitalWrite(LED_BUILTIN, ledLit ? LOW : HIGH);
+  if ((now - rgbLastToggleMs) < interval) {
+    return;
+  }
+  rgbLastToggleMs = now;
+  rgbBlinkPhase = !rgbBlinkPhase;
+  if (rgbBlinkPhase) {
+    writeRgbChannels(r, g, b);
   } else {
-    ledLit = !ledLit;
-    digitalWrite(LED_BUILTIN, ledLit ? LOW : HIGH);
+    writeRgbChannels(false, false, false);
   }
 }
 
-void ensureWifiConnected() {
-  if (WiFi.status() == WL_CONNECTED) {
-    wifiBackoffMs = 1000;
-    return;
+// =============================================================================
+// Inputs
+// =============================================================================
+
+void processInput1Pulse() {
+  bool leitura = digitalRead(INPUT_1_PIN);
+  input1RawLevel = (leitura == LOW) ? 0 : 1;
+  if (leitura != input1LastRaw) {
+    input1DebounceMs = millis();
   }
-  unsigned long now = millis();
-  if (now - lastWifiAttemptMs < wifiBackoffMs) {
-    return;
+  if ((millis() - input1DebounceMs) > cfg.debounceMs) {
+    if (leitura != input1Stable) {
+      input1Stable = leitura;
+      if (input1Stable == LOW) {
+        contador += 1;
+        Serial.print("Contador: ");
+        Serial.println(contador);
+      }
+    }
   }
-  lastWifiAttemptMs = now;
-  WiFi.disconnect();
-  WiFi.begin(cfg.ssid, cfg.password);
-  if (wifiBackoffMs < WIFI_BACKOFF_MAX_MS) {
-    unsigned long next = wifiBackoffMs * 2UL;
-    wifiBackoffMs = next > WIFI_BACKOFF_MAX_MS ? WIFI_BACKOFF_MAX_MS : next;
-  }
+  input1LastRaw = leitura;
 }
+
+void processInput2Diagnostic() {
+  bool leitura = digitalRead(INPUT_2_PIN);
+  input2RawLevel = (leitura == LOW) ? 0 : 1;
+  if (leitura != input2LastRaw) {
+    input2DebounceMs = millis();
+  }
+  if ((millis() - input2DebounceMs) > cfg.debounceMs) {
+    if (leitura != input2Stable) {
+      input2Stable = leitura;
+      // Diagnostic only — never mutates contador.
+    }
+  }
+  input2LastRaw = leitura;
+}
+
+// =============================================================================
+// HTML maintenance page
+// =============================================================================
 
 String paginaPrincipal() {
-  // Arduino IDE 1.x corrompe sequencias literais de fechamento HTML no .ino.
-  // Sempre quebrar: "</" + "tag>"
+  // Arduino IDE 1.x corrupts literal HTML closing tags in .ino — always split: "</" "tag>"
+  bool wifiOk = WiFi.status() == WL_CONNECTED;
   String html;
-  html.reserve(2800);
+  html.reserve(4200);
   html += "<!DOCTYPE html><html lang='pt-BR'><head>";
   html += "<meta charset='utf-8'/>";
   html += "<meta name='viewport' content='width=device-width,initial-scale=1'/>";
-  html += "<title>Production Pulse - Contador</" "title><style>";
-  html += ":root{--bg:#0b1220;--card:#111827;--line:#334155;--text:#e2e8f0;--muted:#94a3b8;--accent:#34d399;--ok:#4ade80;}";
+  html += "<title>Production Pulse - Contador V2 Vermelho</" "title><style>";
+  html += ":root{--bg:#0b1220;--card:#111827;--line:#334155;--text:#e2e8f0;--muted:#94a3b8;--accent:#ef4444;--ok:#4ade80;}";
   html += "*{box-sizing:border-box}";
   html += "body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;";
-  html += "background:linear-gradient(160deg,#052e1f,#0b1220 55%,#052e1f);color:var(--text);min-height:100vh;padding:1.25rem}";
+  html += "background:linear-gradient(160deg,#450a0a,#0b1220 55%,#450a0a);color:var(--text);min-height:100vh;padding:1.25rem}";
   html += ".wrap{max-width:28rem;margin:0 auto}";
   html += ".badge{display:inline-block;padding:.2rem .55rem;border-radius:999px;border:1px solid var(--accent);";
   html += "color:var(--accent);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.75rem}";
   html += ".card{background:var(--card);border:1px solid var(--line);border-radius:1rem;padding:1.25rem;";
   html += "margin-bottom:1rem;box-shadow:0 12px 40px rgba(0,0,0,.35)}";
   html += ".label{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 .35rem}";
-  html += ".code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:1.35rem;";
+  html += ".code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:1.15rem;";
   html += "font-weight:700;color:var(--accent);word-break:break-all}";
   html += ".hint{margin:.55rem 0 0;font-size:.85rem;color:var(--muted);line-height:1.4}";
   html += ".valor{font-size:2.75rem;font-weight:700;letter-spacing:-.03em;margin:.25rem 0}";
-  html += ".meta{font-size:.8rem;color:var(--muted);margin-top:.75rem}";
+  html += ".meta{font-size:.8rem;color:var(--muted);margin-top:.55rem;line-height:1.5}";
   html += ".dot{display:inline-block;width:.55rem;height:.55rem;border-radius:50%;background:var(--ok);";
   html += "margin-right:.35rem;vertical-align:middle}";
   html += "</" "style></" "head><body><div class='wrap'>";
-  html += "<div class='badge'>Firmware V1</" "div>";
+  html += "<div class='badge'>V2 · Vermelho · C3</" "div>";
   html += "<div class='card'>";
   html += "<p class='label'>Firmware instalado</" "p>";
   html += "<div class='code'>";
@@ -1007,15 +1345,32 @@ String paginaPrincipal() {
   html += "<div class='card'>";
   html += "<p class='label'>Codigo do controlador</" "p>";
   html += "<div class='code' id='codigo'>";
-  html += codigoControlador;
+  html += controllerCode;
   html += "</" "div>";
-  html += "<p class='hint'>Use este codigo no cadastro do Production Pulse ";
-  html += "(campo Codigo do controlador), junto com IP e nome do dispositivo. ";
-  html += "Config Wi-Fi/token: API /api/config.</" "p>";
-  html += "<p class='meta'><i class='dot'></" "i>Identidade fixa do chip (nao muda ao reiniciar)</" "p>";
+  html += "<p class='meta'>STA MAC: <span id='mac'>";
+  html += stationMacAddress;
+  html += "</" "span></" "p>";
+  html += "<p class='meta'>IP: <span id='ip'>";
+  html += (wifiOk ? WiFi.localIP().toString() : String("-"));
+  html += "</" "span></" "p>";
+  html += "<p class='meta'>Wi-Fi: <span id='wifi'>";
+  html += (wifiOk ? "conectado" : "offline");
+  html += "</" "span> | RSSI: <span id='rssi'>";
+  html += String(wifiOk ? WiFi.RSSI() : 0);
+  html += "</" "span></" "p>";
+  html += "<p class='meta'>API Token: ";
+  html += (apiTokenConfigured() ? "configurado" : "nao configurado");
+  html += "</" "p>";
+  html += "<p class='meta'>OTA base: ";
+  html += (otaConfigured() || cfg.otaBaseUrl[0] != '\0' ? otaBaseSafeForDisplay() : String("nao configurado"));
+  html += "</" "p>";
+  html += "<p class='meta'>OTA state: <span id='ota'>";
+  html += (otaInProgress ? "in_progress" : "idle");
+  html += "</" "span></" "p>";
+  html += "<p class='meta'><i class='dot'></" "i>Uptime ms: <span id='up'>0</" "span></" "p>";
   html += "</" "div>";
   html += "<div class='card'>";
-  html += "<p class='label'>Contador</" "p>";
+  html += "<p class='label'>Contador C3</" "p>";
   html += "<div class='valor' id='c'>0</" "div>";
   html += "<p class='meta'>Atualizacao via GET /api/contador (publico)</" "p>";
   html += "</" "div>";
@@ -1027,6 +1382,7 @@ String paginaPrincipal() {
   html += "var j=await r.json();";
   html += "document.getElementById('c').innerText=j.contador;";
   html += "}catch(e){}";
+  html += "document.getElementById('up').innerText=String(Date.now()%100000000);";
   html += "}";
   html += "setInterval(atualiza,500);";
   html += "atualiza();";
@@ -1034,45 +1390,17 @@ String paginaPrincipal() {
   return html;
 }
 
-void processarBotao(
-  int pino,
-  bool& estado,
-  bool& leituraAnterior,
-  unsigned long& tempoRef,
-  long delta
-) {
-  bool leitura = digitalRead(pino);
-  if (leitura != leituraAnterior) {
-    tempoRef = millis();
-  }
-  if ((millis() - tempoRef) > cfg.debounceMs) {
-    if (leitura != estado) {
-      estado = leitura;
-      if (estado == LOW) {
-        contador += delta;
-        Serial.print("Contador: ");
-        Serial.println(contador);
-      }
-    }
-  }
-  leituraAnterior = leitura;
-}
-
 void registrarRotas() {
-  // Core 3.x: collectHeaders variádico. Core 2.x: array + count.
-#if defined(ARDUINO_ESP8266_MAJOR) && (ARDUINO_ESP8266_MAJOR >= 3)
-  server.collectHeaders("X-Device-Token");
-#else
-  static const char* HEADER_KEYS[] = {"X-Device-Token"};
-  server.collectHeaders(HEADER_KEYS, 1);
-#endif
+  // ESP32 Arduino Core 3.x: collectHeaders variadic.
+  const char* headerKeys[] = {"X-Device-Token"};
+  server.collectHeaders(headerKeys, 1);
 
   server.on("/", HTTP_GET, []() {
     server.send(200, "text/html", paginaPrincipal());
   });
 
   server.on("/api/contador", HTTP_GET, []() {
-    // Única rota /api pública — ver contagem sem X-Device-Token
+    // Unique public /api route — count without requiring X-Device-Token
     enviarContador();
   });
   server.on("/api/status", HTTP_GET, enviarStatus);
@@ -1138,46 +1466,108 @@ void registrarRotas() {
   });
 }
 
+void logPeriodicStatus() {
+  unsigned long now = millis();
+  if ((now - lastPeriodicStatusMs) < PERIODIC_STATUS_MS) {
+    return;
+  }
+  lastPeriodicStatusMs = now;
+  bool wifiOk = WiFi.status() == WL_CONNECTED;
+  Serial.print("status uptimeMs=");
+  Serial.print(now);
+  Serial.print(" wifi=");
+  Serial.print(wifiOk ? "1" : "0");
+  Serial.print(" sm=");
+  Serial.print((int)wifiConnState);
+  Serial.print(" rssi=");
+  Serial.print(wifiOk ? WiFi.RSSI() : 0);
+  Serial.print(" heap=");
+  Serial.print(ESP.getFreeHeap());
+  Serial.print(" fw=");
+  Serial.print(FIRMWARE_VERSION);
+  Serial.print(" backendFresh=");
+  Serial.print(isBackendFresh() ? "1" : "0");
+  Serial.print(" in1=");
+  Serial.print(input1RawLevel);
+  Serial.print(" in2=");
+  Serial.println(input2RawLevel);
+}
+
+void logBootBanner() {
+  Serial.println();
+  Serial.println("=== Production Pulse ESP32-C3 ===");
+  Serial.print("firmware: ");
+  Serial.println(FIRMWARE_VERSION);
+  Serial.print("chip: ");
+  Serial.print(ESP.getChipModel());
+  Serial.print(" rev=");
+  Serial.println(ESP.getChipRevision());
+  Serial.print("resetReason: ");
+  Serial.println((int)esp_reset_reason());
+  Serial.print("MAC WIFI STA - ENVIAR PARA TI: ");
+  Serial.println(stationMacAddress);
+  Serial.print("controllerCode: ");
+  Serial.println(controllerCode);
+  Serial.print("ssid: ");
+  Serial.println(cfg.ssid);
+  Serial.print("apiToken: ");
+  Serial.println(apiTokenConfigured() ? "configurado" : "nao configurado");
+  Serial.print("ota: ");
+  Serial.println(otaConfigured() ? "configurado" : "nao configurado");
+  if (cfg.otaBaseUrl[0] != '\0') {
+    Serial.print("otaBaseUrl: ");
+    Serial.println(otaBaseSafeForDisplay());
+  }
+  Serial.print("branch: ");
+  Serial.println(cfg.branch);
+  Serial.print("freeHeap: ");
+  Serial.println(ESP.getFreeHeap());
+  Serial.print("BACKEND_FRESHNESS_MS: ");
+  Serial.println(BACKEND_FRESHNESS_MS);
+}
+
+// =============================================================================
+// setup / loop
+// =============================================================================
+
 void setup() {
   Serial.begin(115200);
-  ESP.wdtEnable(8000);
-  randomSeed(ESP.getChipId() ^ micros());
+  delay(200);
+  randomSeed((uint32_t)esp_random());
   rollOtaIntervalJitter();
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH);  // off (active LOW)
-  pinMode(BT_MAIS, INPUT_PULLUP);
-  pinMode(BT_MENOS, INPUT_PULLUP);
-  codigoControlador = montarCodigoControlador();
+
+  pinMode(LED_R_PIN, OUTPUT);
+  pinMode(LED_G_PIN, OUTPUT);
+  pinMode(LED_B_PIN, OUTPUT);
+  writeRgbChannels(true, false, false);  // solid red at boot
+
+  pinMode(INPUT_1_PIN, INPUT_PULLUP);
+  pinMode(INPUT_2_PIN, INPUT_PULLUP);
+  input1LastRaw = digitalRead(INPUT_1_PIN);
+  input2LastRaw = digitalRead(INPUT_2_PIN);
+  input1Stable = input1LastRaw;
+  input2Stable = input2LastRaw;
+  input1RawLevel = (input1LastRaw == LOW) ? 0 : 1;
+  input2RawLevel = (input2LastRaw == LOW) ? 0 : 1;
+
   loadConfigFromEeprom();
   loadVersionHistoryFromEeprom();
 
   WiFi.mode(WIFI_STA);
-  WiFi.begin(cfg.ssid, cfg.password);
-  lastWifiAttemptMs = millis();
-  unsigned long bootStart = millis();
-  while (WiFi.status() != WL_CONNECTED && (millis() - bootStart) < WIFI_BOOT_WAIT_MS) {
-    delay(200);
-    ESP.wdtFeed();
-  }
+  resolveStationIdentity();
+  prepareWifiRadio();
+  logBootBanner();
 
-  Serial.println();
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("WiFi conectado");
-    Serial.print("IP: ");
-    Serial.println(WiFi.localIP());
-  } else {
-    Serial.println("WiFi ainda offline — reconnect no loop");
-  }
-  Serial.print("Codigo controlador: ");
-  Serial.println(codigoControlador);
-  Serial.print("apiTokenSet: ");
-  Serial.println(apiTokenConfigured() ? "true" : "false");
+  WiFi.onEvent(onWifiArduinoEvent);
+  // First association goes through the state machine (idle → connecting → begin).
+  wifiConnState = WIFI_SM_IDLE;
+  ensureWifiStateMachine();
 
   registrarRotas();
   server.begin();
   Serial.println("Servidor iniciado");
 
-  String mdnsHost = codigoControlador;
+  String mdnsHost = controllerCode;
   mdnsHost.replace(":", "-");
   mdnsHost.toLowerCase();
   if (MDNS.begin(mdnsHost.c_str())) {
@@ -1191,13 +1581,12 @@ void setup() {
 }
 
 void loop() {
-  ESP.wdtFeed();
-  ensureWifiConnected();
-  updateStatusLed();
-  MDNS.update();
+  ensureWifiStateMachine();
+  updateRgbState();
   server.handleClient();
-  checkFactoryResetHold();
   maybeCheckOta();
-  processarBotao(BT_MAIS, estadoMais, leituraAnteriorMais, tempoMais, +1);
-  processarBotao(BT_MENOS, estadoMenos, leituraAnteriorMenos, tempoMenos, -1);
+  processInput1Pulse();
+  processInput2Diagnostic();
+  logPeriodicStatus();
+  // ESP32 mDNS does not require MDNS.update() in loop (unlike ESP8266).
 }

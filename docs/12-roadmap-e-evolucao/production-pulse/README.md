@@ -105,7 +105,7 @@ Detalhe: [SCHEMA.md § device_bindings](./SCHEMA.md) · [INTEGRATIONS-TOTVS.md](
 | `POST` | `/api/definir` | body `{"contador": <int>}` → `{"contador": <int>}` |
 | `POST` | `/api/reboot` | reinicia o chip (auth com token se setado) |
 
-Firmware de referência: [`firmware/esp8266_counter_v1/`](./firmware/esp8266_counter_v1/).
+Firmwares de referência (V1 verde / V2 vermelho por família): [`firmware/README.md`](./firmware/README.md).
 
 Comando plataforma: `POST /devices/{id}/commands/set` com `{"counter": <int>}` (aliases `contador` / `value`).
 
