@@ -5,8 +5,8 @@
     "messageSegmentTermsRole": "removed",
     "deleteDeferredToWaveH": false,
     "messageSegmentTermsDeletedAt": "E9.S12.A",
-    "playbookPathMarkersRole": "removed",
-    "playbookPathMarkersDeletedAt": "E9.S12.B"
+    "playbookCatalogMarkersRole": "removed",
+    "playbookCatalogMarkersDeletedAt": "E9.S12.B"
   },
   "followUpTypes": {
     "shipping": {

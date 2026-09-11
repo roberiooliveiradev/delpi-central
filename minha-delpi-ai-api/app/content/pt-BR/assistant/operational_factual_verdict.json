@@ -1,10 +1,12 @@
 {
   "profiles": {
     "structure_exclusivity": {
-      "pathMarkers": ["/structure/exclusivity"],
       "fidelityRule": "**Exclusividade de MPs:** MP exclusiva = usada em **apenas 1 PA**. Se KPI ou fatos indicarem **0 MPs exclusivas**, responda **Não** — as MPs são **compartilhadas** com outros PAs. **Proibido** afirmar «tem exclusividade» ou «exclusividade definida por MPs compartilhadas». **Proibido** usar «exclusiva» e «compartilhada» na mesma conclusão.",
       "scalarFromKpi": {
-        "labelMarkers": ["mps exclusivas", "mp exclusiva"]
+        "labelMarkers": [
+          "mps exclusivas",
+          "mp exclusiva"
+        ]
       },
       "llmFacts": {
         "verdictNo": "Veredito canônico: Não — nenhuma MP exclusiva (0 MPs exclusivas no KPI).",
@@ -24,7 +26,11 @@
           "exclusividade por matérias-primas compartilhadas",
           "exclusividade por mps compartilhadas"
         ],
-        "positiveMarkers": ["exclusiva", "exclusivo", "exclusividade"],
+        "positiveMarkers": [
+          "exclusiva",
+          "exclusivo",
+          "exclusividade"
+        ],
         "sharedMarkers": [
           "compartilhada",
           "compartilhado",
@@ -44,10 +50,13 @@
           "definedWithShared": "exclusividade definida com MPs compartilhadas"
         }
       },
-      "qualityGapKey": "exclusivityContradiction"
+      "qualityGapKey": "exclusivityContradiction",
+      "entityKeys": [
+        "product_structure_exclusivity",
+        "structure_exclusivity"
+      ]
     },
     "product_stock": {
-      "pathMarkers": ["/stock"],
       "fidelityRule": "**Cobertura estoque × demanda:** se o saldo disponível total for **0**, diga que o estoque **não cobre** demanda típica. Se o saldo for **> 0**, cite o saldo e **não** afirme «não cobre» sem fatos de demanda. Não invente demanda numérica ausente dos fatos. **Proibido** dizer que a consulta não trouxe estoque / não tem saldo nesta consulta quando os fatos (turno atual ou anterior) já incluem saldo de estoque.",
       "scalarFromTableKeys": [
         "available_quantity",
@@ -78,7 +87,11 @@
           "estoque disponivel nesta consulta",
           "estoque disponível nesta consulta"
         ],
-        "positiveMarkers": ["cobre", "suficiente", "atende"],
+        "positiveMarkers": [
+          "cobre",
+          "suficiente",
+          "atende"
+        ],
         "sharedMarkers": [],
         "verdictNoMarkers": [
           "saldo disponivel total: 0",
@@ -93,7 +106,10 @@
           "definedWithShared": "nega existência de estoque consultado com saldo já nos fatos"
         }
       },
-      "qualityGapKey": "stockDemandCoverageContradiction"
+      "qualityGapKey": "stockDemandCoverageContradiction",
+      "entityKeys": [
+        "product_stock"
+      ]
     }
   }
 }

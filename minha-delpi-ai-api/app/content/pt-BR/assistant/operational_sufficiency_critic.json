@@ -8,11 +8,19 @@
     {
       "id": "stock_low_needs_sales",
       "when": {
-        "anomalyTypes": ["negative_value", "zero_value", "empty_list"],
-        "profileKeys": ["stock"]
+        "anomalyTypes": [
+          "negative_value",
+          "zero_value",
+          "empty_list"
+        ],
+        "profileKeys": [
+          "stock"
+        ]
       },
       "then": {
-        "followUpRouteIds": ["productSales"],
+        "followUpRouteIds": [
+          "productSales"
+        ],
         "maxAutoFollowUps": 0
       },
       "reasonKey": "stockLowNeedsSales"
@@ -20,9 +28,12 @@
     {
       "id": "sales_empty_clarify_invoice",
       "when": {
-        "anomalyTypes": ["empty_list"],
-        "profileKeys": ["generic_list"],
-        "pathMarkers": ["/sales"]
+        "anomalyTypes": [
+          "empty_list"
+        ],
+        "profileKeys": [
+          "generic_list"
+        ]
       },
       "then": {
         "clarifyKey": "clarifyInvoiceDirection",
@@ -49,7 +60,11 @@
         "enrichmentPlannedMin": 2
       },
       "then": {
-        "followUpRouteIds": ["productSales", "productStock", "productSummary"],
+        "followUpRouteIds": [
+          "productSales",
+          "productStock",
+          "productSummary"
+        ],
         "skipAlreadyExecutedPaths": true,
         "maxAutoFollowUps": 1
       },
@@ -100,7 +115,12 @@
     "invalidLlmPlan": "Classificador LLM retornou planId inválido; usou fallback heurístico."
   },
   "llmAssist": {
-    "allowedVerdicts": ["sufficient", "need_follow_up", "need_clarify", "uncertain"],
+    "allowedVerdicts": [
+      "sufficient",
+      "need_follow_up",
+      "need_clarify",
+      "uncertain"
+    ],
     "systemTemplate": "Você classifica se a evidência operacional basta. Responda só JSON com verdict, followUpPlanId (ou null) e clarifyKey (ou null). IDs permitidos de plano: {planIds}. Clarify keys: {clarifyKeys}."
   }
 }

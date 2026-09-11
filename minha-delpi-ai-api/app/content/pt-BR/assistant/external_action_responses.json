@@ -111,19 +111,19 @@
             "anyOfTermKeys": [
               "suppliesOtdSuppliesDomainTerms"
             ],
-            "pathContainsFromKey": "suppliesOtdPathPrefix"
+            "operationIdContains": "supplies"
           },
           {
             "anyOfTermKeys": [
               "candidatePathPrioritization.productionTerms"
             ],
-            "pathContains": "/production/"
+            "operationIdContains": "production"
           },
           {
             "anyOfTermKeys": [
               "candidatePathPrioritization.commercialTerms"
             ],
-            "pathContains": "/commercial/"
+            "operationIdContains": "commercial"
           }
         ]
       },
@@ -133,7 +133,6 @@
         "anyOfTermKeys": [
           "productionPcpOrdersTriggerTerms"
         ],
-        "pathMarkersKey": "productionPcpOrdersPathMarkers",
         "preferredOperationIdsKey": "productionPcpOrdersPreferredOperationIds"
       },
       {
@@ -143,9 +142,8 @@
           "productionOtdDetailTerms",
           "productionOtdDetailProductionContextTerms"
         ],
-        "pathEqualsFromKey": "productionOtdDetailPath",
         "operationIdContainsFromKey": "productionOtdDetailOperationId",
-        "pathMatch": "equals"
+        "pathMatch": "contains"
       },
       {
         "id": "productionOeeAppointment",
@@ -157,7 +155,6 @@
           "productionOeeContextTerms",
           "productionOeeAppointmentShortcutTerms"
         ],
-        "pathContainsFromKey": "productionOeeAppointmentPath",
         "operationIdContainsFromKey": "productionOeeAppointmentOperationId",
         "pathMatch": "contains"
       },
@@ -168,7 +165,6 @@
           "qualityKaizenDetailTerms",
           "qualityKaizenContextTerms"
         ],
-        "pathContainsFromKey": "qualityKaizenDetailPath",
         "operationIdContainsFromKey": "qualityKaizenDetailOperationId",
         "pathMatch": "contains"
       },
@@ -205,9 +201,8 @@
           "productionOeeDetailTerms",
           "productionOeeContextTerms"
         ],
-        "pathEqualsFromKey": "productionOeeDetailPath",
         "operationIdContainsFromKey": "productionOeeDetailOperationId",
-        "pathMatch": "equals"
+        "pathMatch": "contains"
       }
     ],
     "scoreGap": {
@@ -277,18 +272,12 @@
         "operationIds": [
           "get_production_otd"
         ],
-        "pathMarkers": [
-          "/production/otd"
-        ],
         "profileKeys": [
           "production_otd"
         ]
       },
       {
         "id": "productionSchedule",
-        "pathMarkers": [
-          "/production/schedule"
-        ],
         "profileKeys": [
           "production_schedule"
         ]
@@ -639,25 +628,11 @@
       "late",
       "em atraso"
     ],
-    "productionPcpOrdersPathMarkers": [
-      "/production/pcp-orders",
-      "pcp-orders",
-      "pcp_orders"
-    ],
     "productionPcpOrdersPreferredOperationIds": [
       "get_production_pcp_orders_items",
       "get_production_pcp_orders_ranking",
       "get_production_pcp_orders_summary"
     ],
-    "routeSuggestionPoolPathMarkers": {
-      "production": [
-        "/production/"
-      ],
-      "productionOrdersCatalog": [
-        "/production/pcp-orders",
-        "/production/otd"
-      ]
-    },
     "productionOeeContextTerms": [
       "oee",
       "eficiencia",
@@ -1651,12 +1626,6 @@
       502,
       503,
       504
-    ],
-    "compositePathMarkers": [
-      "/factory-status",
-      "/raw-material-price-intelligence",
-      "/cost-impact-simulation",
-      "/analyser"
     ]
   },
   "temporal": {

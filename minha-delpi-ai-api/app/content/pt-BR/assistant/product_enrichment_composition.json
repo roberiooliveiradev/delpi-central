@@ -67,15 +67,26 @@
   },
   "anomalyFollowUpPlans": {
     "stock_low": {
-      "anomalyTypes": ["negative_value", "zero_value", "empty_list"],
-      "profileKeys": ["stock"],
-      "followUpRouteIds": ["productSales"],
+      "anomalyTypes": [
+        "negative_value",
+        "zero_value",
+        "empty_list"
+      ],
+      "profileKeys": [
+        "stock"
+      ],
+      "followUpRouteIds": [
+        "productSales"
+      ],
       "maxFollowUps": 0
     },
     "sales_empty": {
-      "anomalyTypes": ["empty_list"],
-      "profileKeys": ["generic_list"],
-      "pathMarkers": ["/sales"],
+      "anomalyTypes": [
+        "empty_list"
+      ],
+      "profileKeys": [
+        "generic_list"
+      ],
       "followUpRouteIds": [],
       "clarifyInvoiceDirection": true,
       "maxFollowUps": 0

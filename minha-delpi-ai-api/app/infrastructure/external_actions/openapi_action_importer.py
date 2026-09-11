@@ -81,8 +81,17 @@ class OpenApiActionImporter:
             "enabled": True,
         }
 
-        if delpi_metadata:
-            payload["delpi_metadata"] = delpi_metadata
+        metadata = dict(delpi_metadata or {})
+        if not str(metadata.get("apiRouteDomain") or "").strip():
+            from app.domain.services.api_route_domain_inference_service import (
+                ApiRouteDomainInferenceService,
+            )
+
+            metadata["apiRouteDomain"] = ApiRouteDomainInferenceService.infer_from_path(
+                path,
+                operation_id=str(operation_id or ""),
+            )
+        payload["delpi_metadata"] = metadata
 
         if locale_texts.get("whenToUse"):
             when_to = str(locale_texts["whenToUse"]).strip()

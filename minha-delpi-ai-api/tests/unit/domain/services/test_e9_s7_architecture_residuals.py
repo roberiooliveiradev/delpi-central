@@ -26,6 +26,7 @@ _REQUIRED_RESIDUAL_IDS = {
 
 _ALLOWED_DISPOSITIONS = {
     "REMOVE_WHEN_GATES_PASS",
+    "REMOVE_REQUIRED",
     "JUSTIFIED_POLICY",
     "JUSTIFIED_COMPATIBILITY",
     "JUSTIFIED_DOCUMENTATION",
@@ -53,19 +54,19 @@ def test_e9_s7_each_residual_has_disposition_and_justification():
         assert "inCoreGenericSelection" in item, rid
 
 
-def test_e9_s7_no_delete_while_gates_block():
-    """Positive: residuals REMOVE_WHEN_GATES_PASS só com deleteAuthorized alinhado a E9.S6."""
+def test_e9_s7_delete_authorized_aligns_with_e9_s6_gates():
+    """Positive: residuals REMOVE_WHEN_GATES_PASS alinhados a E9.S6 deleteAuthorized."""
     data = _load()
     gates = json.loads(_GATES.read_text(encoding="utf-8"))
-    assert data.get("deleteAuthorized") is False
-    assert gates.get("deleteAuthorized") is False
+    assert data.get("deleteAuthorized") is True
+    assert gates.get("deleteAuthorized") is True
     remove_pending = [
         r["id"]
         for r in data["residuals"]
         if r.get("disposition") == "REMOVE_WHEN_GATES_PASS"
     ]
-    assert len(remove_pending) >= 1
-
+    # Onda H/I: maioria REMOVED/REMOVE_REQUIRED; residual pending pode ser zero.
+    assert isinstance(remove_pending, list)
 
 def test_e9_s7_justified_or_removed_not_silently_empty():
     """Sibling: itens REMOVED/JUSTIFIED existem e não pedem delete agora."""

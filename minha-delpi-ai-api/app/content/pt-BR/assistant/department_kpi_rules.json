@@ -3,8 +3,6 @@
   "defaultMatchMode": "substring",
   "rules": [
     {
-      "domainPrefix": "/commercial/",
-      "pathToken": "closing-rate",
       "keywords": [
         "taxa de convers",
         "closing rate",
@@ -15,11 +13,11 @@
         "suprimentos",
         "compra"
       ],
-      "label": "taxa de conversão comercial"
+      "label": "taxa de conversão comercial",
+      "catalogToken": "closing-rate",
+      "domainTag": "commercial"
     },
     {
-      "domainPrefix": "/commercial/",
-      "pathToken": "sales-order-otd",
       "keywords": [
         "otd de pedido",
         "otd de venda",
@@ -31,11 +29,11 @@
         "compra",
         "producao"
       ],
-      "label": "OTD de pedidos de venda (comercial)"
+      "label": "OTD de pedidos de venda (comercial)",
+      "catalogToken": "sales-order-otd",
+      "domainTag": "commercial"
     },
     {
-      "domainPrefix": "/commercial/",
-      "pathToken": "rol/series",
       "keywords": [
         "serie de rol",
         "série de rol",
@@ -43,22 +41,22 @@
         "evolucao do rol"
       ],
       "excludes": [],
-      "label": "série temporal de ROL comercial"
+      "label": "série temporal de ROL comercial",
+      "catalogToken": "rol/series",
+      "domainTag": "commercial"
     },
     {
-      "domainPrefix": "/commercial/",
-      "pathToken": "new-clients-average",
       "keywords": [
         "media de novos clientes",
         "média de novos clientes",
         "novos clientes media"
       ],
       "excludes": [],
-      "label": "média de novos clientes"
+      "label": "média de novos clientes",
+      "catalogToken": "new-clients-average",
+      "domainTag": "commercial"
     },
     {
-      "domainPrefix": "/commercial/",
-      "pathToken": "new-clients-rol-pct",
       "keywords": [
         "rol de clientes novos",
         "clientes novos rol"
@@ -66,11 +64,11 @@
       "excludes": [
         "novos negocios"
       ],
-      "label": "percentual ROL de clientes novos"
+      "label": "percentual ROL de clientes novos",
+      "catalogToken": "new-clients-rol-pct",
+      "domainTag": "commercial"
     },
     {
-      "domainPrefix": "/commercial/",
-      "pathToken": "new-business-rol-pct",
       "matchMode": "token_and",
       "keywords": [
         "rol novos negocios",
@@ -79,11 +77,11 @@
         "novos negócios rol"
       ],
       "excludes": [],
-      "label": "percentual ROL de novos negócios"
+      "label": "percentual ROL de novos negócios",
+      "catalogToken": "new-business-rol-pct",
+      "domainTag": "commercial"
     },
     {
-      "domainPrefix": "/commercial/",
-      "pathToken": "rol/summary",
       "branchDefault": "01",
       "keywords": [
         "meta rol matriz",
@@ -101,11 +99,11 @@
       "excludes": [
         "filial"
       ],
-      "label": "meta percentual ROL matriz"
+      "label": "meta percentual ROL matriz",
+      "catalogToken": "rol/summary",
+      "domainTag": "commercial"
     },
     {
-      "domainPrefix": "/commercial/",
-      "pathToken": "rol/summary",
       "branchDefault": "02",
       "keywords": [
         "meta rol filial",
@@ -128,11 +126,11 @@
       "excludes": [
         "matriz"
       ],
-      "label": "meta percentual ROL da filial"
+      "label": "meta percentual ROL da filial",
+      "catalogToken": "rol/summary",
+      "domainTag": "commercial"
     },
     {
-      "domainPrefix": "/financial/",
-      "pathToken": "ebitda",
       "keywords": [
         "ebitda",
         "meta financeiro",
@@ -149,11 +147,11 @@
         "custos fixos",
         "pmr"
       ],
-      "label": "EBITDA percentual"
+      "label": "EBITDA percentual",
+      "catalogToken": "ebitda",
+      "domainTag": "financial"
     },
     {
-      "domainPrefix": "/financial/",
-      "pathToken": "fixed_cost",
       "keywords": [
         "custo fixo",
         "custos fixos",
@@ -162,11 +160,11 @@
         "meta percentual custo fixo"
       ],
       "excludes": [],
-      "label": "custo fixo percentual"
+      "label": "custo fixo percentual",
+      "catalogToken": "fixed_cost",
+      "domainTag": "financial"
     },
     {
-      "domainPrefix": "/financial/",
-      "pathToken": "pmr",
       "keywords": [
         "pmr",
         "prazo medio de recebimento",
@@ -178,11 +176,11 @@
       "excludes": [
         "suprimentos"
       ],
-      "label": "PMR (prazo médio de recebimento)"
+      "label": "PMR (prazo médio de recebimento)",
+      "catalogToken": "pmr",
+      "domainTag": "financial"
     },
     {
-      "domainPrefix": "/financial/",
-      "pathToken": "/financial/rol",
       "keywords": [
         "rol financeiro",
         "indicador rol financeiro",
@@ -221,11 +219,11 @@
         "por filiais",
         "rolamento"
       ],
-      "label": "ROL (receita operacional líquida)"
+      "label": "ROL (receita operacional líquida)",
+      "catalogToken": "/financial/rol",
+      "domainTag": "financial"
     },
     {
-      "domainPrefix": "/commercial/",
-      "pathToken": "rol/by-branch",
       "keywords": [
         "rol por filial",
         "rol por filiais",
@@ -238,11 +236,11 @@
         "serie",
         "série"
       ],
-      "label": "ROL comercial por filial"
+      "label": "ROL comercial por filial",
+      "catalogToken": "rol/by-branch",
+      "domainTag": "commercial"
     },
     {
-      "domainPrefix": "/production/",
-      "pathToken": "eficiencia-fabril",
       "keywords": [
         "eficiencia fabril",
         "eficiência fabril",
@@ -259,11 +257,11 @@
         "equipamento global",
         "overall equipment"
       ],
-      "label": "painel de eficiência fabril (MOD e apontamentos)"
+      "label": "painel de eficiência fabril (MOD e apontamentos)",
+      "catalogToken": "eficiencia-fabril",
+      "domainTag": "production"
     },
     {
-      "domainPrefix": "/production/",
-      "pathToken": "oee",
       "keywords": [
         "apontamentos oee",
         "listagem oee",
@@ -291,11 +289,11 @@
         "equipamento global",
         "otd"
       ],
-      "label": "OEE produção — resumo e apontamentos"
+      "label": "OEE produção — resumo e apontamentos",
+      "catalogToken": "oee",
+      "domainTag": "production"
     },
     {
-      "domainPrefix": "/production/",
-      "pathToken": "overall_equipment",
       "keywords": [
         "oee",
         "eficiencia de equipamento",
@@ -308,11 +306,11 @@
         "producao",
         "produção"
       ],
-      "label": "OEE (eficiência global dos equipamentos)"
+      "label": "OEE (eficiência global dos equipamentos)",
+      "catalogToken": "overall_equipment",
+      "domainTag": "production"
     },
     {
-      "domainPrefix": "/production/",
-      "pathToken": "direct_labor",
       "keywords": [
         "mao de obra direta",
         "mão de obra direta",
@@ -320,11 +318,11 @@
         "custo direto de mão"
       ],
       "excludes": [],
-      "label": "custo direto de mão de obra"
+      "label": "custo direto de mão de obra",
+      "catalogToken": "direct_labor",
+      "domainTag": "production"
     },
     {
-      "domainPrefix": "/production/",
-      "pathToken": "production_cost",
       "keywords": [
         "custo de producao",
         "custo de produção"
@@ -333,21 +331,21 @@
         "mao de obra",
         "mão de obra"
       ],
-      "label": "custo de produção percentual"
+      "label": "custo de produção percentual",
+      "catalogToken": "production_cost",
+      "domainTag": "production"
     },
     {
-      "domainPrefix": "/production/",
-      "pathToken": "depreciation",
       "keywords": [
         "depreciacao",
         "depreciação"
       ],
       "excludes": [],
-      "label": "depreciação percentual sobre ROL"
+      "label": "depreciação percentual sobre ROL",
+      "catalogToken": "depreciation",
+      "domainTag": "production"
     },
     {
-      "domainPrefix": "/production/",
-      "pathToken": "on_time_delivery",
       "keywords": [
         "otd de producao",
         "otd de produção",
@@ -362,11 +360,11 @@
         "compra",
         "suprimentos"
       ],
-      "label": "OTD de produção"
+      "label": "OTD de produção",
+      "catalogToken": "on_time_delivery",
+      "domainTag": "production"
     },
     {
-      "domainPrefix": "/hr/",
-      "pathToken": "branches",
       "keywords": [
         "filiais rh",
         "filial rh",
@@ -379,11 +377,11 @@
         "avaliacao",
         "avaliação"
       ],
-      "label": "filiais de RH"
+      "label": "filiais de RH",
+      "catalogToken": "branches",
+      "domainTag": "hr"
     },
     {
-      "domainPrefix": "/hr/",
-      "pathToken": "active-pdi",
       "keywords": [
         "pdi ativo",
         "pdis ativos",
@@ -393,11 +391,11 @@
         "meta de pdi"
       ],
       "excludes": [],
-      "label": "quantidade de PDIs ativos"
+      "label": "quantidade de PDIs ativos",
+      "catalogToken": "active-pdi",
+      "domainTag": "hr"
     },
     {
-      "domainPrefix": "/hr/",
-      "pathToken": "performance-reviews",
       "keywords": [
         "avaliacao de desempenho",
         "avaliação de desempenho",
@@ -409,11 +407,11 @@
         "meta avaliações rh"
       ],
       "excludes": [],
-      "label": "conclusão de avaliações de desempenho"
+      "label": "conclusão de avaliações de desempenho",
+      "catalogToken": "performance-reviews",
+      "domainTag": "hr"
     },
     {
-      "domainPrefix": "/hr/",
-      "pathToken": "snapshot",
       "keywords": [
         "snapshot rh",
         "indicadores de rh",
@@ -431,11 +429,11 @@
         "avaliacao",
         "avaliação"
       ],
-      "label": "snapshot de RH"
+      "label": "snapshot de RH",
+      "catalogToken": "snapshot",
+      "domainTag": "hr"
     },
     {
-      "domainPrefix": "/quality/",
-      "pathToken": "branches",
       "keywords": [
         "filiais qualidade",
         "filial qualidade",
@@ -448,11 +446,11 @@
         "nao conformidade",
         "não conformidade"
       ],
-      "label": "filiais de qualidade"
+      "label": "filiais de qualidade",
+      "catalogToken": "branches",
+      "domainTag": "quality"
     },
     {
-      "domainPrefix": "/quality/",
-      "pathToken": "kaizens",
       "keywords": [
         "kaizen",
         "meta kaizen",
@@ -460,11 +458,11 @@
         "meta ganhos kaizen"
       ],
       "excludes": [],
-      "label": "resumo de kaizens"
+      "label": "resumo de kaizens",
+      "catalogToken": "kaizens",
+      "domainTag": "quality"
     },
     {
-      "domainPrefix": "/quality/",
-      "pathToken": "audit-5s",
       "keywords": [
         "auditoria 5s",
         "audit 5s",
@@ -482,11 +480,11 @@
         "operacional",
         "postgresql"
       ],
-      "label": "resumo de auditoria 5S"
+      "label": "resumo de auditoria 5S",
+      "catalogToken": "audit-5s",
+      "domainTag": "quality"
     },
     {
-      "domainPrefix": "/quality/",
-      "pathToken": "ppm/internal",
       "keywords": [
         "ppm interno",
         "ppm interna",
@@ -504,11 +502,11 @@
         "kaizen",
         "5s"
       ],
-      "label": "PPM interno"
+      "label": "PPM interno",
+      "catalogToken": "ppm/internal",
+      "domainTag": "quality"
     },
     {
-      "domainPrefix": "/quality/",
-      "pathToken": "ppm/external",
       "keywords": [
         "ppm externo",
         "ppm externa",
@@ -518,11 +516,11 @@
         "interno",
         "interna"
       ],
-      "label": "PPM externo"
+      "label": "PPM externo",
+      "catalogToken": "ppm/external",
+      "domainTag": "quality"
     },
     {
-      "domainPrefix": "/quality/",
-      "pathToken": "nonconformities/series",
       "keywords": [
         "serie de nao conformidade",
         "série de não conformidade",
@@ -530,11 +528,11 @@
         "evolução de nc"
       ],
       "excludes": [],
-      "label": "série temporal de não conformidades"
+      "label": "série temporal de não conformidades",
+      "catalogToken": "nonconformities/series",
+      "domainTag": "quality"
     },
     {
-      "domainPrefix": "/quality/",
-      "pathToken": "nonconformities",
       "keywords": [
         "nao conformidade",
         "não conformidade",
@@ -550,11 +548,11 @@
         "auditoria 5s",
         "audit 5s"
       ],
-      "label": "não conformidades"
+      "label": "não conformidades",
+      "catalogToken": "nonconformities",
+      "domainTag": "quality"
     },
     {
-      "domainPrefix": "/quality/audit-5s/",
-      "pathToken": "audits",
       "keywords": [
         "auditorias 5s",
         "auditoria 5s operacional",
@@ -565,11 +563,11 @@
         "summary",
         "nc totvs"
       ],
-      "label": "auditorias operacionais 5S (PostgreSQL)"
+      "label": "auditorias operacionais 5S (PostgreSQL)",
+      "catalogToken": "audits",
+      "domainTag": "quality"
     },
     {
-      "domainPrefix": "/quality/audit-5s/",
-      "pathToken": "nonconformities",
       "keywords": [
         "nc 5s",
         "nao conformidade 5s",
@@ -585,33 +583,33 @@
         "ppm",
         "kaizen"
       ],
-      "label": "NC operacionais da auditoria 5S (PostgreSQL)"
+      "label": "NC operacionais da auditoria 5S (PostgreSQL)",
+      "catalogToken": "nonconformities",
+      "domainTag": "quality"
     },
     {
-      "domainPrefix": "/quality/audit-5s/",
-      "pathToken": "areas",
       "keywords": [
         "areas 5s",
         "áreas 5s",
         "areas da auditoria 5s"
       ],
       "excludes": [],
-      "label": "áreas da auditoria 5S"
+      "label": "áreas da auditoria 5S",
+      "catalogToken": "areas",
+      "domainTag": "quality"
     },
     {
-      "domainPrefix": "/quality/audit-5s/",
-      "pathToken": "nc-candidates",
       "keywords": [
         "candidatas a nc 5s",
         "nc candidatas 5s",
         "candidatas nao conformidade 5s"
       ],
       "excludes": [],
-      "label": "respostas candidatas a NC na auditoria 5S"
+      "label": "respostas candidatas a NC na auditoria 5S",
+      "catalogToken": "nc-candidates",
+      "domainTag": "quality"
     },
     {
-      "domainPrefix": "/system/",
-      "pathToken": "tables/search",
       "keywords": [
         "buscar tabela",
         "pesquisar tabela",
@@ -623,18 +621,20 @@
       "excludes": [
         "coluna"
       ],
-      "label": "busca de tabelas do Protheus"
+      "label": "busca de tabelas do Protheus",
+      "catalogToken": "tables/search",
+      "domainTag": "system"
     },
     {
-      "domainPrefix": "/system/",
-      "pathToken": "columns/search",
       "keywords": [
         "buscar coluna",
         "pesquisar coluna",
         "colunas da tabela"
       ],
       "excludes": [],
-      "label": "busca de colunas"
+      "label": "busca de colunas",
+      "catalogToken": "columns/search",
+      "domainTag": "system"
     }
   ]
 }

@@ -628,12 +628,12 @@
     },
     "costImpactMaterials": {
       "detect": {
-        "pathContains": [
-          "/cost-impact-simulation"
-        ],
         "allKeys": [
           "raw_material_code",
           "impact_on_material_cost_percent"
+        ],
+        "operationIdContains": [
+          "cost_impact_simulation"
         ]
       },
       "preferredColumns": [
@@ -767,8 +767,8 @@
           "parent_code",
           "parent_description"
         ],
-        "pathContains": [
-          "/analyser"
+        "operationIdContains": [
+          "analyser"
         ]
       },
       "preferredColumns": [
@@ -787,8 +787,8 @@
           "product_code",
           "bom_level"
         ],
-        "pathContains": [
-          "/analyser"
+        "operationIdContains": [
+          "analyser"
         ]
       },
       "preferredColumns": [
@@ -805,8 +805,8 @@
           "product_code",
           "level"
         ],
-        "pathContains": [
-          "/analyser"
+        "operationIdContains": [
+          "analyser"
         ]
       },
       "preferredColumns": [
@@ -873,8 +873,8 @@
           "branch",
           "total_stock_value"
         ],
-        "pathContains": [
-          "/stock-value"
+        "operationIdContains": [
+          "stock_value"
         ]
       },
       "preferredColumns": [
@@ -948,8 +948,8 @@
           "raw_material_code",
           "raw_material_description"
         ],
-        "pathContains": [
-          "/factory-status"
+        "operationIdContains": [
+          "factory_status"
         ]
       },
       "preferredColumns": [
@@ -969,8 +969,8 @@
           "raw_material_code",
           "raw_material_description"
         ],
-        "pathContains": [
-          "/factory-status"
+        "operationIdContains": [
+          "factory_status"
         ]
       },
       "preferredColumns": [
@@ -993,9 +993,9 @@
           "production_order",
           "product_code"
         ],
-        "pathContains": [
-          "/production-status",
-          "/factory-status"
+        "operationIdContains": [
+          "production_status",
+          "factory_status"
         ]
       },
       "preferredColumns": [
@@ -1020,8 +1020,8 @@
           "production_order",
           "product_code"
         ],
-        "pathContains": [
-          "/shipping-status"
+        "operationIdContains": [
+          "shipping_status"
         ]
       },
       "preferredColumns": [
@@ -1042,8 +1042,8 @@
           "level",
           "component_code"
         ],
-        "pathContains": [
-          "/structure/exclusivity"
+        "operationIdContains": [
+          "structure_exclusivity"
         ]
       },
       "preferredColumns": [
@@ -1063,8 +1063,8 @@
           "product_code",
           "description"
         ],
-        "pathContains": [
-          "/stock"
+        "operationIdContains": [
+          "stock"
         ]
       },
       "preferredColumns": [
@@ -1085,9 +1085,9 @@
           "issue_date",
           "supplier_name"
         ],
-        "pathContains": [
-          "/price-history",
-          "/raw-material-price"
+        "operationIdContains": [
+          "price_history",
+          "raw_material_price"
         ]
       },
       "preferredColumns": [
@@ -1139,8 +1139,8 @@
           "order_number",
           "supplier_name"
         ],
-        "pathContains": [
-          "/purchases"
+        "operationIdContains": [
+          "purchases"
         ]
       },
       "preferredColumns": [
@@ -1156,9 +1156,6 @@
     },
     "directivesRawMaterials": {
       "detect": {
-        "pathContains": [
-          "/directives/"
-        ],
         "allKeys": [
           "raw_material_code",
           "accumulated_quantity"
@@ -1166,6 +1163,9 @@
         "excludeIfAnyKeys": [
           "supplier_code",
           "invoice_number"
+        ],
+        "operationIdContains": [
+          "directives"
         ]
       },
       "preferredColumns": [
@@ -1192,15 +1192,15 @@
     },
     "directivesSuppliers": {
       "detect": {
-        "pathContains": [
-          "/directives/"
-        ],
         "allKeys": [
           "raw_material_code",
           "supplier_code"
         ],
         "excludeIfAnyKeys": [
           "invoice_number"
+        ],
+        "operationIdContains": [
+          "directives"
         ]
       },
       "preferredColumns": [
@@ -1216,12 +1216,12 @@
     },
     "directivesLastPurchase": {
       "detect": {
-        "pathContains": [
-          "/directives/"
-        ],
         "allKeys": [
           "raw_material_code",
           "invoice_number"
+        ],
+        "operationIdContains": [
+          "directives"
         ]
       },
       "preferredColumns": [
@@ -1246,8 +1246,8 @@
           "branch",
           "invoice_number"
         ],
-        "pathContains": [
-          "/last-purchase"
+        "operationIdContains": [
+          "last_purchase"
         ]
       },
       "preferredColumns": [
@@ -1271,9 +1271,9 @@
           "table_code",
           "table_description"
         ],
-        "pathContains": [
-          "/sale-pricing",
-          "/pricing"
+        "operationIdContains": [
+          "sale_pricing",
+          "pricing"
         ]
       },
       "preferredColumns": [
@@ -1308,8 +1308,8 @@
           "product_group",
           "real_consumption_qty"
         ],
-        "pathContains": [
-          "/production/consumption/top-items"
+        "operationIdContains": [
+          "production_consumption_top_items"
         ]
       },
       "preferredColumns": [
@@ -1323,8 +1323,8 @@
           "unit",
           "real_consumption_qty"
         ],
-        "pathContains": [
-          "/production/consumption/top-items"
+        "operationIdContains": [
+          "production_consumption_top_items"
         ]
       },
       "preferredColumns": [
@@ -1342,8 +1342,8 @@
           "item_code",
           "description"
         ],
-        "pathContains": [
-          "/production/consumption/top-items"
+        "operationIdContains": [
+          "production_consumption_top_items"
         ]
       },
       "preferredColumns": [
@@ -1545,8 +1545,8 @@
           "allocated_qty",
           "component_code"
         ],
-        "pathContains": [
-          "/production/allocation-gaps"
+        "operationIdContains": [
+          "production_allocation_gaps"
         ]
       },
       "preferredColumns": [
@@ -1565,8 +1565,8 @@
           "component_code",
           "allocated_qty"
         ],
-        "pathContains": [
-          "/production/orders/finished-without-consumption"
+        "operationIdContains": [
+          "production_orders_finished_without_consumption"
         ]
       },
       "preferredColumns": [

@@ -22,7 +22,7 @@
       "rol",
       "r$"
     ],
-    "productPathMarkers": [
+    "productCatalogTokens": [
       "/products/",
       "/products/{code}"
     ]

@@ -11,13 +11,13 @@ _PROFILES = _ASSISTANT / "presentation_profiles.json"
 _COLUMNS = _ASSISTANT / "column_labels.json"
 _PRESENTER = _ASSISTANT / "presenter_content.json"
 
-# Frozen 2026-09-10 — autoridade residual path/entity ainda LIVE.
+# Frozen 2026-09-11 — Onda I remove pathRules / pathContains laterais.
 _FREEZE = {
-    "pathRules": 49,
+    "pathRules": 0,
     "entityProfiles": 34,
     "entityTableProfiles": 18,
     "entityPathHints": 139,
-    "tableProfilesWithPathContains": 23,
+    "tableProfilesWithPathContains": 0,
     "tableProfilesTotal": 76,
     "openapiShapeDefaults": 9,
 }

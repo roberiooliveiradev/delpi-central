@@ -26,13 +26,18 @@ class ChatOperationalFactualVerdictContentService:
         return node if isinstance(node, dict) else {}
 
     @classmethod
-    def path_markers(cls, profile_key: str) -> list[str]:
-        raw = cls.profile_node(profile_key).get("pathMarkers")
+    def entity_keys(cls, profile_key: str) -> list[str]:
+        raw = cls.profile_node(profile_key).get("entityKeys")
 
         if not isinstance(raw, list):
             return []
 
         return [str(item).strip() for item in raw if str(item or "").strip()]
+
+    @classmethod
+    def path_markers(cls, profile_key: str) -> list[str]:
+        """Deprecated — Onda I uses entityKeys. Kept empty for compat callers."""
+        return []
 
     @classmethod
     def fidelity_rule(cls, profile_key: str) -> str:

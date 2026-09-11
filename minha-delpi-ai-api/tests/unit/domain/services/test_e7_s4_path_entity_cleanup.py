@@ -101,7 +101,8 @@ def test_e7_s4_path_rules_count_reduced():
     profiles = json.loads(
         (_ASSISTANT / "presentation_profiles.json").read_text(encoding="utf-8")
     )
-    assert len(profiles.get("pathRules") or []) == 49
+    # E10.S4 — pathRules laterais removidos (entityProfiles + OpenAPI deriver).
+    assert len(profiles.get("pathRules") or []) == 0
     columns = json.loads(
         (_ASSISTANT / "column_labels.json").read_text(encoding="utf-8")
     )
@@ -112,4 +113,4 @@ def test_e7_s4_path_rules_count_reduced():
         detect = profile.get("detect") or {}
         if isinstance(detect, dict) and detect.get("pathContains"):
             with_pc += 1
-    assert with_pc == 23
+    assert with_pc == 0

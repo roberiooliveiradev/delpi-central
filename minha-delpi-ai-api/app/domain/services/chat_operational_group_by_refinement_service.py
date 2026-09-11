@@ -98,11 +98,19 @@ class ChatOperationalGroupByRefinementService:
     @classmethod
     def match_route_for_path(cls, path: str) -> dict[str, Any] | None:
         lowered = str(path or "").lower()
+        hay = lowered.replace("-", "_")
 
         for route in cls.routes():
             marker = str(route.get("pathContains") or "").strip().lower()
+            oid_token = str(route.get("operationIdContains") or "").strip().lower()
 
-            if not marker or marker not in lowered:
+            matched = False
+            if marker and marker in lowered:
+                matched = True
+            elif oid_token and oid_token.replace("-", "_") in hay:
+                matched = True
+
+            if not matched:
                 continue
 
             excluded = route.get("pathExcludeContains") or []

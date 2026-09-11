@@ -49,26 +49,37 @@ class ChatOperationalFactualVerdictService:
         if profile_key and profile_key in ChatOperationalFactualVerdictContentService.profile_keys():
             return profile_key
 
-        lowered = str(resolved_path or "").lower()
-
-        for candidate in ChatOperationalFactualVerdictContentService.profile_keys():
-            if cls.profile_applies_to_path(candidate, lowered):
-                return candidate
+        if entity:
+            entity_lower = entity.lower()
+            for candidate in ChatOperationalFactualVerdictContentService.profile_keys():
+                keys = {
+                    str(item).strip().lower()
+                    for item in ChatOperationalFactualVerdictContentService.entity_keys(
+                        candidate
+                    )
+                    if str(item or "").strip()
+                }
+                if entity_lower in keys:
+                    return candidate
 
         return None
 
     @classmethod
     def profile_applies_to_path(cls, profile_key: str, path: str | None) -> bool:
-        lowered = str(path or "").lower()
+        """Deprecated path fallback — Onda I binds via entityKeys only."""
+        del profile_key, path
+        return False
 
-        if not lowered:
+    @classmethod
+    def profile_applies_to_entity(cls, profile_key: str, entity: str | None) -> bool:
+        token = str(entity or "").strip().lower()
+        if not token:
             return False
-
-        return any(
-            marker.lower() in lowered
-            for marker in ChatOperationalFactualVerdictContentService.path_markers(profile_key)
-            if str(marker or "").strip()
-        )
+        return token in {
+            str(item).strip().lower()
+            for item in ChatOperationalFactualVerdictContentService.entity_keys(profile_key)
+            if str(item or "").strip()
+        }
 
     @classmethod
     def extract_scalar(cls, metadata: dict[str, Any], profile_key: str) -> int | None:

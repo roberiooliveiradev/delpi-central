@@ -540,7 +540,6 @@ class ChatOperationalSufficiencyCriticService:
         anomaly_plan = {
             "anomalyTypes": when.get("anomalyTypes") or [],
             "profileKeys": when.get("profileKeys") or [],
-            "pathMarkers": when.get("pathMarkers") or [],
         }
 
         if not any(anomaly_plan.values()):

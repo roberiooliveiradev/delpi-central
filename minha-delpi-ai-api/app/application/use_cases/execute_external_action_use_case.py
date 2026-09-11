@@ -206,10 +206,21 @@ class ExecuteExternalActionUseCase:
         from app.domain.services.chat_operational_api_domain_service import (
             ChatOperationalApiDomainService,
         )
+        from app.domain.services.parameter_strategy_inference_service import (
+            ParameterStrategyInferenceService,
+        )
 
-        api_route_domain = ChatOperationalApiDomainService.classify_path(resolved_path)
-        parameter_strategy = ChatOperationalApiDomainService.parameter_strategy_for_domain(
-            api_route_domain
+        api_route_domain = ChatOperationalApiDomainService.classify_action(
+            {
+                **(action if isinstance(action, dict) else {}),
+                "path": resolved_path,
+            }
+        )
+        parameter_strategy = ParameterStrategyInferenceService.infer_from_action(
+            {
+                **(action if isinstance(action, dict) else {}),
+                "path": resolved_path,
+            }
         )
         persisted_request_parameters = {
             key: value
@@ -357,7 +368,12 @@ class ExecuteExternalActionUseCase:
             "actionId": action.get("actionId"),
             "method": action.get("method"),
             "path": resolved_path,
-            "apiRouteDomain": ChatOperationalApiDomainService.classify_path(resolved_path),
+            "apiRouteDomain": ChatOperationalApiDomainService.classify_action(
+                {
+                    **(action if isinstance(action, dict) else {}),
+                    "path": resolved_path,
+                }
+            ),
             "selectionReason": reason,
             "skippedHttp": True,
         }

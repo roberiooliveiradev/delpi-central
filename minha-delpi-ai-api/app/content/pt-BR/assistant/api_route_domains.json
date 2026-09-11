@@ -1,182 +1,92 @@
 {
-  "version": "2026.06.16",
+  "version": "2026.09.11",
   "domains": {
     "product": {
       "label": "Produto",
-      "pathMarkers": [
-        "/products/{code}",
-        "/products/"
-      ],
-      "excludePathMarkers": [
-        "/products/search",
-        "/products/directives/"
-      ],
       "method": "GET"
     },
     "product_directives": {
       "label": "Diretivas do produto",
-      "pathMarkers": [
-        "/products/directives/"
-      ],
       "method": "GET"
     },
     "product_search": {
       "label": "Busca de produtos",
-      "pathMarkers": [
-        "/products/search"
-      ],
       "method": "GET"
     },
     "product_exclusive_catalog": {
       "label": "Catálogo MP exclusiva",
-      "pathMarkers": [
-        "/products/exclusive-raw-materials/catalog"
-      ],
       "method": "GET"
     },
     "production_consumption": {
       "label": "Consumo produção",
-      "pathMarkers": [
-        "/production/consumption/"
-      ],
       "method": "GET"
     },
     "production_losses": {
       "label": "Perdas produção",
-      "pathMarkers": [
-        "/production/losses/"
-      ],
       "method": "GET"
     },
     "production_schedule": {
       "label": "Programação produção",
-      "pathMarkers": [
-        "/production/schedule/"
-      ],
       "method": "GET"
     },
     "production_orders": {
       "label": "Ordens de produção",
-      "pathMarkers": [
-        "/production/orders/"
-      ],
       "method": "GET"
     },
     "production_work_centers": {
       "label": "Centros de trabalho",
-      "pathMarkers": [
-        "/production/work-centers/"
-      ],
       "method": "GET"
     },
     "purchases_ranking": {
       "label": "Ranking de compras",
-      "pathMarkers": [
-        "/purchases/top-products"
-      ],
       "method": "GET"
     },
     "open_sales_orders": {
       "label": "Pedidos de venda em aberto",
-      "pathMarkers": [
-        "/pedidos-venda-abertos/"
-      ],
       "method": "GET"
     },
     "commercial_proposal_documents": {
       "label": "Propostas comerciais internas",
-      "pathMarkers": [
-        "/propostas-comerciais/"
-      ],
       "method": "GET"
     },
     "quality_action_plans": {
       "label": "PAC — planos de ação",
-      "pathMarkers": [
-        "/quality/action-plans/"
-      ],
       "method": "GET"
     },
     "process_inspection_plans": {
       "label": "Planos de inspeção de processo",
-      "pathMarkers": [
-        "/process-inspection-plans/"
-      ],
       "method": "GET"
     },
     "department_kpi": {
       "label": "KPI departamental",
-      "pathMarkers": [
-        "/commercial/",
-        "/financial/",
-        "/production/",
-        "/hr/",
-        "/quality/"
-      ],
-      "excludePathMarkers": [
-        "/production/consumption/",
-        "/production/losses/",
-        "/production/schedule/",
-        "/production/orders/",
-        "/production/work-centers/",
-        "/production/allocation-gaps",
-        "/production/planned-vs-real-time",
-        "/quality/action-plans/"
-      ],
       "method": "GET"
     },
     "department_idd": {
       "label": "IDD estratégico (metas e realizado)",
-      "pathMarkers": [
-        "/dashboard/department-idd",
-        "/dashboard/department-indicators",
-        "/dashboard/departments-indicators"
-      ],
       "method": "GET"
     },
     "supplies_kpi": {
       "label": "KPI suprimentos",
-      "pathMarkers": [
-        "/supplies/"
-      ],
-      "excludePathMarkers": [
-        "/supplies/safety-stock/"
-      ],
       "method": "GET"
     },
     "safety_stock": {
       "label": "Estoque de segurança",
-      "pathMarkers": [
-        "/supplies/safety-stock/"
-      ],
       "method": "GET"
     },
     "lmp": {
       "label": "LMP / transformação",
-      "pathMarkers": [
-        "/lmp",
-        "/transforma"
-      ],
       "method": "GET"
     },
     "sql": {
       "label": "SQL / dados",
-      "pathMarkers": [
-        "/data/sql",
-        "/data/"
-      ],
       "method": "POST"
     },
     "system": {
       "label": "Metadados Protheus",
-      "pathMarkers": [
-        "/system/"
-      ],
       "method": "GET"
     },
     "generic": {
       "label": "Operacional genérico",
-      "pathMarkers": [],
       "method": "GET"
     }
   },
@@ -484,6 +394,7 @@
     }
   },
   "cleanupMeta": {
-    "parameterStrategyDeletedAt": "E9.S12.E"
+    "parameterStrategyDeletedAt": "E9.S12.E",
+    "lateralPathMapDeletedAt": "E10.S2"
   }
 }

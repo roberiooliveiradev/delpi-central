@@ -16,7 +16,7 @@
 | F — UX inteligente | 06 | **ATENDIDO** | — | E6.S1–S6 OK; queries = LEGACY_FALLBACK |
 | G — presentation/skills | 07, 08 | **ATENDIDO** | — | Planos 07+08 S1–S* OK |
 | H — cutover/cleanup | 09 | **ATENDIDO** | — | S1–S15; `globalReleasePass=true`; deleteAuthorized=true |
-| I — zero mapa lateral | 10 | **EM_ANDAMENTO** | E10.S1 inventário/contrato | Revoga JUSTIFIED_POLICY; pathMarkers laterais = REMOVE_REQUIRED |
+| I — zero mapa lateral | 10 | **ATENDIDO** | — | E10.S1–S5; gate zero keys laterais; domínio via catalog/inference |
 
 ## Protocolo por subetapa
 
@@ -196,3 +196,5 @@ abrir planos/0N-*.md
 | 2026-09-11 | Changelog `2026-09-llm-json-decoupling.md` + pasta **ARQUIVADO** (A–H) |
 | 2026-09-11 | **POLICY** zero mapa lateral — JUSTIFIED_POLICY revogada para pathMarkers laterais |
 | 2026-09-11 | Onda I / plano 10 **EM_ANDAMENTO** — E10.S1 inventário + contrato sem pathMarkers |
+| 2026-09-11 | E10.S1–S5 **ATENDIDO** — zero keys laterais; `ApiRouteDomainInferenceService`; stamp import |
+| 2026-09-11 | Onda I **ATENDIDO** — gate `test_e10_zero_lateral_path_maps` PASS |

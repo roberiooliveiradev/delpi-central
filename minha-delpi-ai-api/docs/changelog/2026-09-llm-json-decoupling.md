@@ -25,7 +25,7 @@ Policies determinísticas (RBAC, required args, confirmation, timeouts) permanec
 **Nenhum mapa lateral deve existir.**  
 A disposição `JUSTIFIED_POLICY` para `api_route_domains.pathMarkers` (e mapas irmãos por path) foi **revogada**. Domínio/label/classificação operacional devem vir do OpenAPI indexado / Action Catalog — não de JSON paralelo no assistente.
 
-Débito aberto: Onda I / plano 10 (implementação + DELETE dos mapas listados).
+Débito Onda I: **ATENDIDO** (E10.S1–S5) — content sem chaves laterais; domínio via catalog/inference.
 
 ## Ondas
 
@@ -39,7 +39,7 @@ Débito aberto: Onda I / plano 10 (implementação + DELETE dos mapas listados).
 | F | Recommendations contextual grounded | ATENDIDO |
 | G | Presentation schema-first + skills/help residual | ATENDIDO |
 | H | Evals R1–R11, live gates, DELETE autorizado, release pass | ATENDIDO |
-| I | Zero mapa lateral (`pathMarkers` / pathToken laterais) | **EM_ANDAMENTO** |
+| I | Zero mapa lateral (`pathMarkers` / pathToken laterais) | **ATENDIDO** |
 
 ## Evidências-chave de release (H)
 
@@ -53,6 +53,7 @@ Débito aberto: Onda I / plano 10 (implementação + DELETE dos mapas listados).
 | Item | Disposição atual |
 |------|------------------|
 | Heuristics TU fast paths | KEEP_APPROVED (não é mapa de rota) |
-| Mapas `pathMarkers` laterais (`api_route_domains`, factual, enrichment, responses, …) | **REMOVE_REQUIRED** (Onda I) |
-| `pathToken` KPI | **REMOVE_REQUIRED** (Onda I) |
-| Pasta roadmap | ledger ativo para Onda I |
+| Mapas `pathMarkers` laterais | **REMOVED** (E10) |
+| `pathToken` KPI → `catalogToken` | **REMOVED** chave pathToken (E10.S4) |
+| `presentation_profiles.pathRules` | **REMOVED** (E10.S4; entityProfiles + OpenAPI deriver) |
+| Pasta roadmap | arquivado A–I |

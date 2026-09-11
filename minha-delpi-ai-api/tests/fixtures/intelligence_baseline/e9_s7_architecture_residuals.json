@@ -4,7 +4,7 @@
   "program": "llm-json-decoupling",
   "evaluatedAt": "2026-09-11",
   "deleteGateRef": "tests/fixtures/intelligence_baseline/e9_s6_cleanup_gates.json",
-  "deleteAuthorized": false,
+  "deleteAuthorized": true,
   "residuals": [
     {
       "id": "pathMarkers",
@@ -19,11 +19,11 @@
         "app/application/services/external_actions/operational_route_selection/operational_route_action_resolver_service.py"
       ],
       "disposition": "REMOVED",
-      "justification": "E9.S12.C — pathMarkers removidos do registry operacional (authority=operationIds). Mapas laterais em api_route_domains/factual/enrichment/responses permanecem — Onda I / plano 10 (REMOVE_REQUIRED).",
+      "justification": "E9.S12.C registry + E10 mapas laterais content removidos.",
       "inCoreGenericSelection": false,
       "deletedAt": "E9.S12.C",
       "replacement": "route.operationIds",
-      "lateralMapsRemaining": true,
+      "lateralMapsRemaining": false,
       "followUpPlan": "planos/10-zero-lateral-path-maps.md"
     },
     {
@@ -65,10 +65,11 @@
       "coreConsumers": [
         "app/domain/services (department KPI matching)"
       ],
-      "disposition": "REMOVE_REQUIRED",
-      "justification": "POLICY 2026-09-11: nenhum mapa lateral. pathToken/pathContains em KPI devem migrar para operationId/actionId/tags OpenAPI (Onda I / E10.S4). JUSTIFIED_POLICY revogada.",
+      "disposition": "REMOVED",
+      "justification": "POLICY 2026-09-11: nenhum mapa lateral. pathToken/pathContains em KPI devem migrar para operationId/actionId/tags OpenAPI (Onda I / E10.S4). JUSTIFIED_POLICY revogada. E10 ATENDIDO — content keys removidas; domínio via inference/catalog.",
       "inCoreGenericSelection": false,
-      "followUpPlan": "planos/10-zero-lateral-path-maps.md"
+      "followUpPlan": "planos/10-zero-lateral-path-maps.md",
+      "deletedAt": "E10"
     },
     {
       "id": "routeHints",
@@ -148,11 +149,12 @@
         "app/domain/services/chat_operational_api_domain_service.py",
         "app/application/services/external_actions/external_action_route_selection_service.py"
       ],
-      "disposition": "REMOVE_REQUIRED",
-      "justification": "POLICY 2026-09-11: NENHUM MAPA LATERAL. pathMarkers laterais não são authority OpenAPI-first aceitável — domínio/labels via Action Catalog/OpenAPI tags. Plano 10 / Onda I.",
+      "disposition": "REMOVED",
+      "justification": "POLICY 2026-09-11: NENHUM MAPA LATERAL. pathMarkers laterais não são authority OpenAPI-first aceitável — domínio/labels via Action Catalog/OpenAPI tags. Plano 10 / Onda I. E10 ATENDIDO — content keys removidas; domínio via inference/catalog.",
       "inCoreGenericSelection": false,
-      "followUpPlan": "planos/10-zero-lateral-path-maps.md"
+      "followUpPlan": "planos/10-zero-lateral-path-maps.md",
+      "deletedAt": "E10"
     }
   ],
-  "policyNote": "Zero lateral path maps (Onda I). JUSTIFIED_POLICY for path maps revoked."
+  "policyNote": "Zero lateral path maps (Onda I ATENDIDA)."
 }

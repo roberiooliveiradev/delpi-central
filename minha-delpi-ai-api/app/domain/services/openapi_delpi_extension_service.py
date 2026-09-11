@@ -45,6 +45,12 @@ class OpenApiDelpiExtensionService:
         if category:
             normalized["category"] = category
 
+        api_route_domain = str(
+            raw.get("apiRouteDomain") or raw.get("api_route_domain") or ""
+        ).strip()
+        if api_route_domain:
+            normalized["apiRouteDomain"] = api_route_domain
+
         locale = raw.get("locale")
         if isinstance(locale, dict) and locale:
             normalized["locale"] = locale

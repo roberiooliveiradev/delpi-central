@@ -1067,9 +1067,19 @@ class ExternalActionColumnLabelService:
         lowered_path: str,
     ) -> bool:
         path_contains = detect.get("pathContains") or []
+        operation_tokens = detect.get("operationIdContains") or []
 
         if path_contains and not any(token in lowered_path for token in path_contains):
             return False
+
+        if operation_tokens:
+            hay = lowered_path.replace("-", "_")
+            if not any(
+                str(token).strip().lower().replace("-", "_") in hay
+                for token in operation_tokens
+                if str(token or "").strip()
+            ):
+                return False
 
         any_keys = detect.get("anyKeys") or []
 

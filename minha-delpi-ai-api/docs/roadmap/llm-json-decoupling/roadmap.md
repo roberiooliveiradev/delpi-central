@@ -1,6 +1,6 @@
 # Roadmap — desacoplamento de JSONs e generalização LLM/OpenAPI
 
-**Status:** Ondas A–H **ATENDIDAS** · **Onda I EM_ANDAMENTO** (zero mapa lateral) · ver [`ARCHIVED.md`](./ARCHIVED.md) · [`planos/10-zero-lateral-path-maps.md`](./planos/10-zero-lateral-path-maps.md)  
+**Status:** Ondas A–I **ATENDIDAS** · ver [`ARCHIVED.md`](./ARCHIVED.md) · [`planos/10-zero-lateral-path-maps.md`](./planos/10-zero-lateral-path-maps.md)  
 **Owner arquitetural:** Minha DELPI AI / OpenAPI-first tool routing  
 **Dependência:** `../openapi-first-universal-tool-routing.md`  
 **Baseline freeze:** [`evidence/onda-a-baseline/manifest.json`](./evidence/onda-a-baseline/manifest.json)
@@ -151,9 +151,9 @@ Planos 07+08 fechados (schema-first presentation + skills/help residual + audit 
 
 Plano 09 completo: E9.S1–S15. `deleteAuthorized=true` (E9.S6/S14); **`globalReleasePass=true`** (E9.S8 pós E9.S15 recommendations + send/stream/simulate live).
 
-### Onda I — zero mapa lateral — **EM_ANDAMENTO** (2026-09-11)
+### Onda I — zero mapa lateral — **ATENDIDO** (2026-09-11)
 
-Plano 10: nenhum pathMarkers/pathToken lateral em content. Dominio via OpenAPI/Action Catalog. Ver planos/10-zero-lateral-path-maps.md.
+Plano 10 E10.S1–S5: content sem pathMarkers/pathToken/pathContains/pathRules laterais. Domínio via Action Catalog + `ApiRouteDomainInferenceService`. Gate `test_e10_zero_lateral_path_maps`.
 
 
 ## 6. Métricas obrigatórias

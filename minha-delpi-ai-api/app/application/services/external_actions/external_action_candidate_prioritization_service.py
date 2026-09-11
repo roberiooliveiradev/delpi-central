@@ -205,18 +205,32 @@ class ExternalActionCandidatePrioritizationService:
                 continue
 
             marker = ""
+            operation_token = ""
             if chain.get("pathContainsFromKey"):
                 marker = cls._scalar_from_key(str(chain["pathContainsFromKey"])).lower()
-            else:
+            elif chain.get("pathContains"):
                 marker = str(chain.get("pathContains") or "").lower()
+            if chain.get("operationIdContainsFromKey"):
+                operation_token = cls._scalar_from_key(
+                    str(chain["operationIdContainsFromKey"])
+                ).lower()
+            elif chain.get("operationIdContains"):
+                operation_token = str(chain.get("operationIdContains") or "").lower()
 
-            if not marker:
+            if not marker and not operation_token:
                 continue
 
             filtered = [
                 action
                 for action in candidates
-                if marker in str(action.get("path") or "").lower()
+                if (
+                    (marker and marker in str(action.get("path") or "").lower())
+                    or (
+                        operation_token
+                        and operation_token
+                        in str(action.get("operationId") or "").lower()
+                    )
+                )
             ]
             if filtered:
                 return filtered

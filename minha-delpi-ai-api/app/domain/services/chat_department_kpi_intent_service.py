@@ -43,7 +43,11 @@ def _rules_content() -> tuple[tuple[str, str, tuple[str, ...], tuple[str, ...], 
             continue
 
         domain_prefix = str(rule.get("domainPrefix") or "").strip()
-        path_token = str(rule.get("pathToken") or "").strip()
+        if not domain_prefix:
+            domain_tag = str(rule.get("domainTag") or "").strip()
+            if domain_tag:
+                domain_prefix = f"/{domain_tag.strip('/')}/"
+        path_token = str(rule.get("pathToken") or rule.get("catalogToken") or "").strip()
         label = str(rule.get("label") or "").strip()
         keywords = rule.get("keywords") or []
         excludes = rule.get("excludes") or []

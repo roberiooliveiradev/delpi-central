@@ -219,7 +219,11 @@ class ChatOperationalDateParameterService:
 
     @classmethod
     def _implicit_reference_date_today_path_markers(cls) -> tuple[str, ...]:
-        markers = (_parameter_content().get("implicitReferenceDateTodayPathMarkers") or [])
+        markers = (
+            _parameter_content().get("implicitReferenceDateTodayCatalogTokens")
+            or _parameter_content().get("implicitReferenceDateTodayPathMarkers")
+            or []
+        )
 
         if isinstance(markers, list) and markers:
             return tuple(str(marker).strip().lower() for marker in markers if str(marker).strip())

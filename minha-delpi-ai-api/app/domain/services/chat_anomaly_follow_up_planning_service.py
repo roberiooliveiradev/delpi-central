@@ -206,6 +206,7 @@ class ChatAnomalyFollowUpPlanningService:
             for item in (plan.get("pathMarkers") or [])
             if str(item).strip()
         ]
+        # Onda I: pathMarkers optional; profileKeys / anomalyTypes are authority.
 
         for tool_call in tool_calls:
             if str(tool_call.get("name") or "") != "execute_external_action":

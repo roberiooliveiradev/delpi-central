@@ -30,7 +30,6 @@
     {
       "id": "productionConsumptionTopItems",
       "actionIdDefault": "production-consumption-top-items",
-      "pathContains": "/production/consumption/top-items",
       "pathExcludeContains": [
         "by-work-center",
         "top-items-validated",
@@ -62,7 +61,9 @@
           "label": "unidade de medida",
           "strategy": "local",
           "localCategoryField": "unit",
-          "localMetricFields": ["real_consumption_qty"],
+          "localMetricFields": [
+            "real_consumption_qty"
+          ],
           "localSortField": "real_consumption_qty",
           "terms": [
             "unidade",
@@ -78,7 +79,9 @@
           "label": "filial",
           "strategy": "auto",
           "localCategoryField": "branch",
-          "localMetricFields": ["real_consumption_qty"],
+          "localMetricFields": [
+            "real_consumption_qty"
+          ],
           "localSortField": "real_consumption_qty",
           "refetchGroupBy": "branch_summary",
           "terms": [
@@ -102,7 +105,8 @@
             "detalhe por filial"
           ]
         }
-      ]
+      ],
+      "operationIdContains": "production_consumption_top_items"
     }
   ]
 }
