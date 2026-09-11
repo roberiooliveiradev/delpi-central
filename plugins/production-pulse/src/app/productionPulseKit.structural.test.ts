@@ -411,6 +411,9 @@ describe("production-pulse kit contracts", () => {
     expect(canvas).toMatch(/pp-map-overlay-panel--right/);
     expect(canvas).toMatch(/fitViewOptions/);
     expect(canvas).not.toMatch(/pp-map-overlay-panel--left/);
+    expect(canvas).not.toMatch(/Sem nós/);
+    expect(canvas).not.toMatch(/variant="empty"/);
+    expect(canvas).toMatch(/<ReactFlow/);
   });
 
   it("botões do hero usam PpHintAction + PP_HELP (sem ação órfã)", () => {

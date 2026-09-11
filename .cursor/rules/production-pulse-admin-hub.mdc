@@ -8,7 +8,7 @@ alwaysApply: false
 
 ## Superfície canônica
 
-Mapa Admin = `FirmwareLinksPage` (`/firmware-links`). Canvas é a superfície principal; overlays/painéis/modais são siblings (não desmontar React Flow).
+Mapa Admin = `FirmwareLinksPage` (`/firmware-links`). Canvas é a superfície principal; overlays/painéis/modais são siblings (não desmontar React Flow). Grafo vazio (0 firmwares / 0 IoTs) **continua** montando React Flow + `HubMapChrome` / bottom bar — proibido substituir por `PpStateBox` empty que esconde as opções de cadastro.
 
 ## Conexões
 
@@ -115,6 +115,7 @@ Link Mode **não** entra na URL. Builders emitem `modal`. `drawer=` só alias de
 7. Remontar React Flow só para alternar Connection Mode.
 8. Ocultar candidatos incompatíveis (`display:none` / filtrar do array).
 9. Ícone `?` separado quando o label/controle já é o gatilho (`SectionHintLabel`, `FieldLabel`, `HintAction`, `PpContextMenuItem`).
+10. Empty state `PpStateBox` no lugar do canvas quando não há nós (esconde chrome de cadastro).
 
 ## Helps (embutidos no label/controle)
 

@@ -979,11 +979,14 @@ class PostgresFirmwareUpdateJobRepository:
 
     def list_open_targets_for_reconcile(self) -> list[dict[str, Any]]:
         """Open targets whose device already reports installed_firmware_version = to_version."""
+        target_columns = ", ".join(
+            f"t.{col.strip()}" for col in _TARGET_COLUMNS.split(",") if col.strip()
+        )
         with plugins_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     f"""
-                    SELECT {_TARGET_COLUMNS}
+                    SELECT {target_columns}
                     FROM production_pulse.firmware_update_targets t
                     JOIN production_pulse.devices d ON d.id = t.device_id
                     WHERE t.status = ANY(%s)

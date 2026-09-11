@@ -746,16 +746,8 @@ function FirmwareDeviceLinkCanvasInner({
     [busy, canManage, onLinked, unlinkDevice],
   );
 
-  if (families.length === 0 && devices.length === 0) {
-    return (
-      <PpStateBox
-        variant="empty"
-        title="Sem nós"
-        message="Publique um firmware e cadastre IoTs nesta filial."
-      />
-    );
-  }
-
+  // Empty graph still mounts React Flow + overlays (HubMapChrome / bottom bar)
+  // so Admin can open catalogs and create firmware/IoT without leaving the map.
   return (
     <div
       className={`pp-firmware-link-canvas-wrap pp-firmware-link-canvas-wrap--fill${
