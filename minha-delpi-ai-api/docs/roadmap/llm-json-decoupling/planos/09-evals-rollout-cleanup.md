@@ -127,11 +127,9 @@ if path/provider/operationId
 
 Cada residual deve ser removido ou explicitamente justificado como policy/compatibility/documentation fora do core genérico — **cumprido via inventário**.
 
-### E9.S8 — Verify-final — **ATENDIDO_PARCIAL** (revalidado 2026-09-11)
+### E9.S8 — Verify-final — **ATENDIDO** (revalidado 2026-09-11 pós E9.S15)
 
-**Feito:** matriz alinhada a E9.S13/S14; 7/10 `PASS_OFFLINE_AND_LIVE` + efficiency `PASS`; aggregate `PASS_OFFLINE_AND_LIVE_PARTIAL`; `deleteAuthorizedRef=true`.
-
-**Bloqueia `globalReleasePass`:** `recommendations_grounded`, `send_stream_simulate_parity` (ainda `PASS_OFFLINE`).
+**Feito:** matriz 10/10 sem `PASS_OFFLINE` bloqueante; aggregate `PASS_OFFLINE_AND_LIVE`; `deleteAuthorizedRef=true`; **`globalReleasePass=true`**.
 
 | Objetivo | Status atual |
 |---|---|
@@ -142,29 +140,31 @@ Cada residual deve ser removido ou explicitamente justificado como policy/compat
 | argumentos | PASS_OFFLINE_AND_LIVE |
 | safety | PASS_OFFLINE_AND_LIVE |
 | apresentação | PASS_OFFLINE_AND_LIVE |
-| recomendações | PASS_OFFLINE |
-| paridade | PASS_OFFLINE |
+| recomendações | PASS_OFFLINE_AND_LIVE (E9.S15) |
+| paridade | PASS_OFFLINE_AND_LIVE (E9.S15) |
 | eficiência | PASS |
 
-### E9.S9 — Documentação e encerramento — **ATENDIDO_PARCIAL** (2026-09-10)
+### E9.S9 — Documentação e encerramento — **ATENDIDO** (2026-09-11)
 
-**Feito:** ponte em docs canônicas (`chat-intelligence-base.md`, `chat-ai-flow-families.md` §21); evidência `e9-s9-documentation.md`; roadmap **mantido** (ainda há débitos).
+**Feito:** ponte em docs canônicas; evidência `e9-s9-documentation.md`; aceite final com `globalReleasePass=true`.
 
-**Não feito:** declarar aceite final da iniciativa; remover pasta roadmap.
+**Opcional:** atualizar changelog; arquivar pasta roadmap se deixar de ter valor futuro.
 
-**Fazer (quando gates/live plenos):** incorporar decisões finais remanescentes; atualizar changelog; arquivar roadmap se deixar de ter valor futuro.
+### E9.S15 — Live release blockers — **ATENDIDO** (2026-09-11)
+
+**Feito:** `scripts/smoke_e9_s15_release_blockers_live.py` — recommendations grounded (catalog stock) + SEND/STREAM/SIMULATE parity 3/3; evidência `e9-s15-release-blockers-live.*`.
 
 ### E9.S10 — Offline INCONCLUSIVE close — **ATENDIDO** (2026-09-10)
 
 **Feito:** harnesses dedicados unknown API / legacy residual / send-stream parity; atualização E9.S6+E9.S8 para `PASS_OFFLINE` nessas células; corpus v1 **imutável**.
 
-**Bloqueado:** `latency_cost` / efficiency (Ollama DNS); `deleteAuthorized` e `globalReleasePass` permanecem false.
+**Bloqueado (histórico E9.S10):** `latency_cost` / efficiency (Ollama DNS) — resolvido em E9.S11; `deleteAuthorized`/`globalReleasePass` resolvidos em E9.S14/S15.
 
 ### E9.S11 — Efficiency live (Kimi) — **ATENDIDO** (2026-09-10)
 
 **Feito:** `run_e9_s11_efficiency_live.py` — 5/5 trials; p50≈14.7s; p95≈19.1s; provider `openai_compatible` only; gate `latency_cost=PASS` / matriz `efficiency=PASS`.
 
-**Ainda bloqueado:** `deleteAuthorized=false` e `globalReleasePass=false` (células PASS_OFFLINE).
+**Ainda (histórico):** células PASS_OFFLINE — resolvidas em E9.S15; `deleteAuthorized=true` desde E9.S14.
 
 ## Métricas mínimas
 

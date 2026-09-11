@@ -1,4 +1,4 @@
-"""E9.S8 — verify-final matrix: não declarar PASS global com PASS_OFFLINE/INCONCLUSIVE."""
+"""E9.S8 — verify-final matrix: globalReleasePass só com células não-bloqueantes."""
 
 from __future__ import annotations
 
@@ -10,6 +10,14 @@ _MATRIX = (
     _ROOT / "tests/fixtures/intelligence_baseline/e9_s8_verify_final_matrix.json"
 )
 _GATES = _ROOT / "tests/fixtures/intelligence_baseline/e9_s6_cleanup_gates.json"
+_S15_EVIDENCE = (
+    _ROOT
+    / "docs/roadmap/llm-json-decoupling/evidence/e9-s15-release-blockers-live.md"
+)
+_S15_JSON = (
+    _ROOT
+    / "docs/roadmap/llm-json-decoupling/evidence/e9-s15-release-blockers-live.json"
+)
 
 _REQUIRED_IDS = {
     "unknown_api_no_code",
@@ -44,21 +52,19 @@ def test_e9_s8_matrix_covers_plan_objectives():
     assert len(data["matrix"]) >= 10
 
 
-def test_e9_s8_current_global_release_is_false():
-    """Positive: release ainda bloqueado por células só-offline."""
+def test_e9_s8_global_release_pass_true_after_s15():
+    """Positive: pós E9.S15 nenhuma célula blocking; release liberado."""
     data = _load()
-    assert data.get("globalReleasePass") is False
-    assert global_release_pass(data) is False
-    assert data.get("aggregate") == "PASS_OFFLINE_AND_LIVE_PARTIAL"
+    assert data.get("globalReleasePass") is True
+    assert global_release_pass(data) is True
+    assert data.get("aggregate") == "PASS_OFFLINE_AND_LIVE"
+    assert data.get("blockingCells") == []
     efficiency = next(r for r in data["matrix"] if r["id"] == "efficiency")
     assert efficiency["status"] == "PASS"
-    blocking = set(data.get("blockingCells") or [])
-    assert "recommendations_grounded" in blocking
-    assert "send_stream_simulate_parity" in blocking
 
 
-def test_e9_s8_live_promoted_cells_after_s13_s14():
-    """Sibling: gates com live E9.S13/S14 não ficam PASS_OFFLINE."""
+def test_e9_s8_live_promoted_cells_after_s13_s15():
+    """Sibling: gates com live E9.S13/S14/S15 não ficam PASS_OFFLINE."""
     data = _load()
     by_id = {r["id"]: r for r in data["matrix"]}
     for rid in (
@@ -69,18 +75,19 @@ def test_e9_s8_live_promoted_cells_after_s13_s14():
         "required_args",
         "safety",
         "presentation_schema",
+        "recommendations_grounded",
+        "send_stream_simulate_parity",
     ):
         assert by_id[rid]["status"] == "PASS_OFFLINE_AND_LIVE", rid
 
 
 def test_e9_s8_aligned_with_delete_authorized_gates():
-    """Gates E9.S6 já autorizam DELETE; verify-final release é barra separada."""
+    """Gates E9.S6 já autorizam DELETE; verify-final release agora também passa."""
     gates = json.loads(_GATES.read_text(encoding="utf-8"))
     assert gates.get("deleteAuthorized") is True
     data = _load()
     assert data.get("deleteAuthorizedRef") is True
-    # DELETE autorizado ≠ release global
-    assert data.get("globalReleasePass") is False
+    assert data.get("globalReleasePass") is True
 
 
 def test_e9_s8_each_row_has_evidence():
@@ -93,13 +100,23 @@ def test_e9_s8_each_row_has_evidence():
         assert str(row.get("objective") or "").strip(), row.get("id")
 
 
-def test_e9_s8_sibling_all_non_blocking_would_release():
+def test_e9_s8_s15_evidence_artifact_pass():
+    """Positive: artefato live E9.S15 reporta PASS nas duas células."""
+    assert _S15_EVIDENCE.is_file()
+    assert _S15_JSON.is_file()
+    data = json.loads(_S15_JSON.read_text(encoding="utf-8"))
+    assert data.get("pass") is True
+    gates = data.get("gates") or {}
+    assert gates.get("recommendations_grounded") == "PASS"
+    assert gates.get("send_stream_simulate_parity") == "PASS"
+
+
+def test_e9_s8_sibling_pass_offline_would_block_release():
+    """Sibling: reintroduzir PASS_OFFLINE bloqueia release."""
     data = _load()
     clone = json.loads(json.dumps(data))
-    for row in clone["matrix"]:
-        if row["status"] == "PASS_OFFLINE":
-            row["status"] = "PASS_OFFLINE_AND_LIVE"
-    assert global_release_pass(clone) is True
+    clone["matrix"][0]["status"] = "PASS_OFFLINE"
+    assert global_release_pass(clone) is False
 
 
 def test_e9_s8_negative_inconclusive_blocks_release():

@@ -1,6 +1,6 @@
-# E9.S8 — Verify-final (revalidação pós E9.S13/S14)
+# E9.S8 — Verify-final (revalidação pós E9.S15)
 
-**Status:** `ATENDIDO_PARCIAL` (revalidado 2026-09-11) — matriz atualizada; **globalReleasePass=false**  
+**Status:** `ATENDIDO` (revalidado 2026-09-11) — **globalReleasePass=true**  
 **Onda:** H (plano 09)  
 **Fixture:** `tests/fixtures/intelligence_baseline/e9_s8_verify_final_matrix.json`  
 **Harness:** `tests/unit/domain/services/test_e9_s8_verify_final_matrix.py`
@@ -9,15 +9,15 @@
 
 ```text
 MATRIX_10_OBJECTIVES = PASS (cobertos)
-GLOBAL_RELEASE_PASS = false
-AGGREGATE = PASS_OFFLINE_AND_LIVE_PARTIAL
+GLOBAL_RELEASE_PASS = true
+AGGREGATE = PASS_OFFLINE_AND_LIVE
 DELETE_AUTHORIZED_GATES = true (E9.S6 / E9.S14)
-BLOCKING_CELLS = recommendations_grounded, send_stream_simulate_parity
+BLOCKING_CELLS = (vazio)
 EFFICIENCY = PASS (E9.S11)
 NO_FALSE_GLOBAL_PASS = PASS
 ```
 
-## Matriz (pós E9.S13 + E9.S14)
+## Matriz (pós E9.S13 + E9.S14 + E9.S15)
 
 | Objetivo | Status | Evidência |
 |----------|--------|-----------|
@@ -28,20 +28,14 @@ NO_FALSE_GLOBAL_PASS = PASS
 | argumentos | PASS_OFFLINE_AND_LIVE | E9.S14 |
 | safety | PASS_OFFLINE_AND_LIVE | E9.S14 |
 | apresentação | PASS_OFFLINE_AND_LIVE | offline 07 + live stock/unknown |
-| recomendações | **PASS_OFFLINE** | plano-06 offline only |
-| paridade send/stream/simulate | **PASS_OFFLINE** | E9.S10 offline only |
+| recomendações | PASS_OFFLINE_AND_LIVE | **E9.S15** |
+| paridade send/stream/simulate | PASS_OFFLINE_AND_LIVE | **E9.S15** |
 | eficiência | PASS | E9.S11 |
-
-## Drift corrigido
-
-Matriz anterior (2026-09-10) ainda marcava maioria como `PASS_OFFLINE` e aggregate `PASS_OFFLINE_WITH_LIVE_EFFICIENCY`, desalinhada de E9.S6 pós-S14 (`deleteAuthorized=true`).
 
 ## Decisão
 
-Não declarar aceite final da iniciativa enquanto `recommendations_grounded` e `send_stream_simulate_parity` forem só offline (`PASS_OFFLINE` ∈ blockingStatuses).
+Aceite de release da Onda H / verify-final: **aprovado** (`globalReleasePass=true`). Débitos menores documentados (F5 browser, tokens metadata) não bloqueiam a barra canônica da matriz E9.S8.
 
 ## Próximo
 
-1. Smoke live de recomendações grounded **ou** APPROVED explícito com política.
-2. Smoke live send/stream/simulate parity **ou** APPROVED.
-3. Então `globalReleasePass=true` + E9.S9 encerramento.
+E9.S9 — documentação e encerramento com aceite final alinhado a este veredito.

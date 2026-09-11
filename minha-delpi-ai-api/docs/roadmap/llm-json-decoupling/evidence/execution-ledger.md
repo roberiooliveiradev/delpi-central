@@ -15,7 +15,7 @@
 | E — caps/composition | 04, 05 | **ATENDIDO** | — | plano 04+05 S1–S7 OK |
 | F — UX inteligente | 06 | **ATENDIDO** | — | E6.S1–S6 OK; queries = LEGACY_FALLBACK |
 | G — presentation/skills | 07, 08 | **ATENDIDO** | — | Planos 07+08 S1–S* OK |
-| H — cutover/cleanup | 09 | **ATENDIDO_PARCIAL** | verify-final / residual KEEP | S1–S14; dims required PASS|PASS_OFFLINE_AND_LIVE; deleteAuthorized=true |
+| H — cutover/cleanup | 09 | **ATENDIDO** | — | S1–S15; `globalReleasePass=true`; deleteAuthorized=true |
 
 ## Protocolo por subetapa
 
@@ -182,3 +182,7 @@ abrir planos/0N-*.md
 | 2026-09-11 | E9.S14 **ATENDIDO** — live remaining gates 6/6 PASS; word-boundary candidateDiscovery (`ov`≠provider); `deleteAuthorized=true` |
 | 2026-09-11 | E9.S8 **REVALIDADO** — matriz alinhada S13/S14; aggregate `PASS_OFFLINE_AND_LIVE_PARTIAL`; `globalReleasePass=false` (recommendations + parity) |
 | 2026-09-11 | Onda H **ATENDIDO_PARCIAL** — próximo: live recommendations/parity **ou** APPROVED → globalReleasePass + E9.S9 |
+| 2026-09-11 | E9.S15 **ATENDIDO** — recommendations grounded + send/stream/simulate parity live 3/3 (`e9-s15-release-blockers-live`) |
+| 2026-09-11 | E9.S8 **ATENDIDO** — `globalReleasePass=true`; aggregate `PASS_OFFLINE_AND_LIVE`; blockingCells=[] |
+| 2026-09-11 | E9.S9 **ATENDIDO** — aceite final Onda H documentado |
+| 2026-09-11 | Plano 09 / Onda H **ATENDIDO** — release gates plenos; débitos F5 browser / tokens metadata não-bloqueantes |

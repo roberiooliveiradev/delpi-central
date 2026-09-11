@@ -1,0 +1,119 @@
+{
+  "stage": "E9.S15_release_blockers",
+  "generated_at": "2026-09-11T13:20:12.221219+00:00",
+  "product_code": "10080022",
+  "gates": {
+    "recommendations_grounded": "PASS",
+    "send_stream_simulate_parity": "PASS"
+  },
+  "cases": {
+    "SEND_stock": {
+      "elapsed_s": 41.88,
+      "paths": [
+        "/products/10080022/stock"
+      ],
+      "path_ok": true,
+      "display": {
+        "plans": 2,
+        "tables": 2,
+        "titles_sample": [],
+        "labels_sample": [
+          "Ver vendas",
+          "/products/10080022/summary",
+          "Registros",
+          "Committed Quantity",
+          "Média",
+          "Mostrar apenas posições com disponível negativo",
+          "Ver concentração por filial",
+          "Saldo disponível total: **17.831** un. em **6** posição(ões). Maior concentração na filial **02** (13.773 un. disponíveis). **3** posição(ões) com disponível zerado."
+        ],
+        "path_leaks": [],
+        "ok": true
+      },
+      "recommendations": {
+        "commentary_count": 2,
+        "commentary_grounded_hits": 2,
+        "presentation_rec_count": 1,
+        "follow_up_count": 4,
+        "actionable_follow_ups": 4,
+        "suggestion_count": 4,
+        "suggestion_source_keys": [
+          "followUpSuggestions",
+          "operationalRefinementFollowUpSuggestions",
+          "presentationFollowUpSuggestions"
+        ],
+        "unknown_sources": [],
+        "write_marker_hits": [],
+        "commentary_sample": [
+          {
+            "intent": "Filtrar estoque com disponível negativo",
+            "text": "Mostrar apenas posições com disponível negativo"
+          },
+          {
+            "intent": "Mostrar concentração de estoque por filial",
+            "text": "Ver concentração por filial"
+          }
+        ],
+        "ok": true
+      },
+      "ok": true
+    },
+    "STREAM_stock": {
+      "event_count": 22,
+      "has_done": true,
+      "answer_len": 420,
+      "tool_calls": 1,
+      "paths": [
+        "/products/10080022/stock"
+      ],
+      "plans": 2,
+      "tables": 2,
+      "titles_sample": [],
+      "labels_sample": [
+        "Estoque (produto)",
+        "Product Code",
+        "Filial",
+        "Código do armazém",
+        "Quantidade atual no armazém",
+        "Saldo disponível (atual - empenhado - reservado)",
+        "Committed Quantity",
+        "Reserved Quantity"
+      ],
+      "path_leaks": [],
+      "ok": true,
+      "elapsed_s": 42.25,
+      "path_ok": true
+    },
+    "SIMULATE_stock": {
+      "has_answer_preview": true,
+      "planned_tool_count": 1,
+      "tools_executed": true,
+      "paths": [
+        "/products/10080022/stock"
+      ],
+      "plans": 1,
+      "tables": 1,
+      "titles_sample": [],
+      "labels_sample": [
+        "Quem sou eu?",
+        "Aplicaria 1 diretriz(es): Quem sou eu?.",
+        "Nenhum chunk documental seria incluído no prompt.",
+        "Sem diretrizes administrativas, o agente usaria apenas políticas base, RAG e instruções do agente.",
+        "Sem RAG, o prompt não incluiria trechos documentais recuperados.",
+        "/products/10080022/summary",
+        "Registros",
+        "Committed Quantity"
+      ],
+      "path_leaks": [],
+      "ok": true,
+      "source": "simulate_root",
+      "elapsed_s": 15.6,
+      "path_ok": true
+    }
+  },
+  "pass": true,
+  "agentId": "4f9c225b-0414-40d3-a462-040889719b83",
+  "sessionId_send": "795e207a-5605-4170-a677-4669332cd63e",
+  "sessionId_stream": "f4dcf4d2-3424-49bc-88cd-37d248f766eb",
+  "failed_count": 0
+}

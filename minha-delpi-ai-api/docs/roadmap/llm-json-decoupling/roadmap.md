@@ -147,9 +147,9 @@ Plano 06 S1–S6: recommendations contextuais + composer budget-safe; `recommend
 
 Planos 07+08 fechados (schema-first presentation + skills/help residual + audit gate). Próximo: plano 09 / Onda H.
 
-### Onda H — cutover e limpeza — **ATENDIDO_PARCIAL** (2026-09-10)
+### Onda H — cutover e limpeza — **ATENDIDO** (2026-09-11)
 
-Plano 09 S1–S11: efficiency live no Kimi (E9.S11). `deleteAuthorized=false` / `globalReleasePass=false` enquanto dims restantes forem `PASS_OFFLINE`.
+Plano 09 completo: E9.S1–S15. `deleteAuthorized=true` (E9.S6/S14); **`globalReleasePass=true`** (E9.S8 pós E9.S15 recommendations + send/stream/simulate live).
 
 ## 6. Métricas obrigatórias
 

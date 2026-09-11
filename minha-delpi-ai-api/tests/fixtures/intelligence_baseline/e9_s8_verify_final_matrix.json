@@ -4,13 +4,14 @@
   "program": "llm-json-decoupling",
   "evaluatedAt": "2026-09-11",
   "datasetHash": "371f0cfa802188c805f986ff15452e152a5f98e636132fa81145fad7cfcf26b8",
-  "globalReleasePass": false,
-  "aggregate": "PASS_OFFLINE_AND_LIVE_PARTIAL",
+  "globalReleasePass": true,
+  "aggregate": "PASS_OFFLINE_AND_LIVE",
   "revalidatedAgainst": [
     "tests/fixtures/intelligence_baseline/e9_s6_cleanup_gates.json",
     "docs/roadmap/llm-json-decoupling/evidence/e9-s13-live-l1l4.md",
     "docs/roadmap/llm-json-decoupling/evidence/e9-s14-remaining-gates-live.md",
-    "docs/roadmap/llm-json-decoupling/evidence/e9-s11-efficiency-live.md"
+    "docs/roadmap/llm-json-decoupling/evidence/e9-s11-efficiency-live.md",
+    "docs/roadmap/llm-json-decoupling/evidence/e9-s15-release-blockers-live.md"
   ],
   "deleteAuthorizedRef": true,
   "matrix": [
@@ -82,18 +83,18 @@
       "objective": "recomendações",
       "proof": "grounded/allowlist",
       "expected": "PASS",
-      "status": "PASS_OFFLINE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s3-candidate-plans-offline.md",
-      "note": "Plano 06 candidate offline; live grounded recommendations ainda sem smoke dedicado"
+      "status": "PASS_OFFLINE_AND_LIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s15-release-blockers-live.md",
+      "note": "E9.S15: recommendationQueries.stock + follow-ups; sem write chips"
     },
     {
       "id": "send_stream_simulate_parity",
       "objective": "paridade",
       "proof": "send/stream/simulate",
       "expected": "PASS",
-      "status": "PASS_OFFLINE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s10-offline-inconclusive-close.md",
-      "note": "Harness offline E9.S10; live L1–L4 send/stream/simulate parity ainda pending"
+      "status": "PASS_OFFLINE_AND_LIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s15-release-blockers-live.md",
+      "note": "E9.S15: SEND+STREAM+SIMULATE stock 10080022 3/3 PASS"
     },
     {
       "id": "efficiency",
@@ -106,6 +107,6 @@
     }
   ],
   "blockingStatuses": ["INCONCLUSIVE", "FAIL", "PENDING", "PENDING_RUNTIME", "PASS_OFFLINE"],
-  "blockingCells": ["recommendations_grounded", "send_stream_simulate_parity"],
-  "note": "Revalidação 2026-09-11 pós E9.S13/S14. deleteAuthorized=true nos gates E9.S6. globalReleasePass=false enquanto recommendations/parity forem PASS_OFFLINE."
+  "blockingCells": [],
+  "note": "Revalidação 2026-09-11 pós E9.S15. globalReleasePass=true — recommendations e parity promovidos a PASS_OFFLINE_AND_LIVE."
 }
