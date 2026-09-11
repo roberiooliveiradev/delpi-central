@@ -1,7 +1,7 @@
 # Plano 11 — Correção arquitetural: cutover + generalização + cleanup sem residual
 
 **Prioridade:** P0  
-**Status execução:** **REABERTO — Onda J / `VERIFY_FINAL_FAILED`** · J-R1–J-R6 **ATENDIDO** · próxima = **J-R7**  
+**Status execução:** **REABERTO — Onda J / `VERIFY_FINAL_FAILED`** · J-R1–J-R7 **ATENDIDO** · próxima = **J-R8**  
 **BASE_GIT_SHA original (E11.S0):** `8bc84fc6d1cea3edc8cd0c08dceee90f9303e777`  
 **Candidate anteriormente declarado final:** `782a49721319571f0fe4733d59b8a5cc65ac4c04` — **histórico invalidado como release evidence**  
 **Auditoria pós-fechamento:** [`../evidence/e11-post-close-audit-2026-09-11.md`](../evidence/e11-post-close-audit-2026-09-11.md)  
@@ -361,11 +361,13 @@ Fazer cutover dos consumers reais antes do DELETE:
 - remover path/operationId markers/suffixes como filtro semântico;
 - remover regras `/products/`, `search`, `supplier` etc. usadas para decidir afinidade de route;
 - semantic metadata do Action Catalog + retrieval + schema substituem a decisão;
-- uso de path continua permitido somente para execução/contrato/observabilidade.
+- path/method/operationId permanecem só para execução/contrato/observabilidade.
 
-Provas: known, sibling, negative, unknown, metamorphic.
+**Status:** **ATENDIDO** · `NO_PATH_SEMANTIC_AFFINITY=PASS` · evidência [`../evidence/e11-j-r7-zero-path-semantic-affinity.md`](../evidence/e11-j-r7-zero-path-semantic-affinity.md)
 
-**Gate:** `NO_PATH_SEMANTIC_AFFINITY = PASS`.
+**Gate:** `NO_PATH_SEMANTIC_AFFINITY = PASS` (**cumprido**).
+
+**Próxima:** J-R8.
 
 ## J-R8 — cleanup registry/content técnico
 

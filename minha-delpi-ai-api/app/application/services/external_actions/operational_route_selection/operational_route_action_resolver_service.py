@@ -237,7 +237,8 @@ class OperationalRouteActionResolverService:
             operation_id = str(action.get("operationId") or "").lower()
 
             # Soft technical hints (observer): never exclusive when semantic route exists.
-            if apply_soft_markers:
+            # J-R7: never use `"search" in path` as a semantic gate.
+            if apply_soft_markers and not has_semantic_route:
                 if path_exact_end and not path.rstrip("/").endswith(
                     path_exact_end.rstrip("/")
                 ):
@@ -247,8 +248,7 @@ class OperationalRouteActionResolverService:
                     if not operation_markers or not any(
                         marker in operation_id for marker in operation_markers
                     ):
-                        if not has_semantic_route:
-                            continue
+                        continue
 
                 if path_markers and not any(marker in path for marker in path_markers):
                     if not (
@@ -258,8 +258,7 @@ class OperationalRouteActionResolverService:
                         if not operation_markers or not any(
                             marker in operation_id for marker in operation_markers
                         ):
-                            if not has_semantic_route:
-                                continue
+                            continue
 
                 if exclude_path_markers and any(
                     marker in path for marker in exclude_path_markers
@@ -276,8 +275,7 @@ class OperationalRouteActionResolverService:
                             if not path_suffix or not path.rstrip("/").endswith(
                                 path_suffix.rstrip("/")
                             ):
-                                if not has_semantic_route:
-                                    continue
+                                continue
 
                 if (
                     not path_markers
@@ -285,16 +283,6 @@ class OperationalRouteActionResolverService:
                     and not path_suffix
                     and operation_markers
                     and not any(marker in operation_id for marker in operation_markers)
-                ):
-                    if not has_semantic_route:
-                        continue
-
-                if (
-                    "search" in path
-                    and not path_markers
-                    and not path_exact_end
-                    and not path_suffix
-                    and not has_semantic_route
                 ):
                     continue
 
@@ -461,11 +449,13 @@ class OperationalRouteActionResolverService:
 
     @staticmethod
     def _action_fits_route_affinity(route: dict, action: dict, *, path: str) -> bool:
-        """Rejeita action cujo contrato não combina com a classe da rota do registry.
+        """Rejeita action cujo contrato semântico não combina com a rota.
 
-        E11.S3/S5 — sem parameterStrategy path-inferred e sem operationIds authority.
-        Usa match flags, continuity facets, domain e schema OpenAPI.
+        J-R7 / A11-07: path/operationId NÃO são authority. Usa domain,
+        intentBinding/continuity facets, parametersSchema, summary/description/tags.
+        ``path`` permanece só para assinatura/compat; não entra na decisão.
         """
+        _ = path  # execução/observabilidade — não authority semântica
         from app.domain.services.operational_route_registry_service import (
             OperationalRouteRegistryService,
         )
@@ -478,7 +468,6 @@ class OperationalRouteActionResolverService:
         domain = str(route.get("domain") or "").strip()
         domain_l = domain.lower()
         route_id = str(route.get("id") or "").strip().lower()
-        path_l = str(path or "").lower()
         is_product_domain = domain_l in {
             "product",
             "domainproductsearch",
@@ -491,16 +480,54 @@ class OperationalRouteActionResolverService:
             for item in schema_params
             if isinstance(item, dict) and item.get("name")
         }
+        summary_l = str(action.get("summary") or "").lower()
+        description_l = str(action.get("description") or "").lower()
+        when_to_use_l = str(action.get("whenToUse") or action.get("when_to_use") or "").lower()
+        tags_blob = " ".join(
+            str(tag).strip().lower() for tag in (action.get("tags") or []) if tag
+        )
+        operation_id_l = str(
+            action.get("operationId") or action.get("operation_id") or ""
+        ).lower()
+        # Catalog identity (summary/tags/schema/operationId) — never HTTP path fragments.
+        semantic_blob = (
+            f"{summary_l} {description_l} {when_to_use_l} {tags_blob} "
+            f"{operation_id_l} {' '.join(sorted(schema_names))}"
+        )
 
-        if (
+        def _facet_hits_semantic(facet: str) -> bool:
+            token = str(facet or "").strip().lower()
+            if not token:
+                return False
+            if token in semantic_blob:
+                return True
+            compact = token.replace("-", "").replace("_", "")
+            blob_compact = (
+                semantic_blob.replace("-", "").replace("_", "").replace(" ", "")
+            )
+            return bool(compact) and compact in blob_compact
+
+        is_search_route = (
             domain in {"domainProductSearch", "product_search"}
             or "search" in route_id
             or "productsearch" in route_id
-        ):
-            return "/products/" in path_l and "search" in path_l
+        )
+        if is_search_route:
+            search_schema = schema_names & {
+                "q",
+                "query",
+                "description",
+                "search",
+                "term",
+                "group_code",
+                "groupcode",
+                "text",
+            }
+            return bool(search_schema) or "search" in semantic_blob
 
         if "supplier_part_number" in schema_names or "supplierpartnumber" in schema_names:
-            return "by-supplier-part-number" in path_l or "supplier" in path_l
+            # Schema already proves supplier capability — do not require path fragment.
+            return True
 
         facets = RouteSegmentInferenceService.continuity_keys_for_route(
             route,
@@ -521,32 +548,16 @@ class OperationalRouteActionResolverService:
             for item in facets
             if str(item).strip() and str(item).strip().lower() not in weak_facets
         }
-        path_compact = (
-            path_l.replace("-", "").replace("_", "").replace("/", "").replace("{", "").replace("}", "")
-        )
-
-        def _facet_hits_path(facet: str) -> bool:
-            token = str(facet or "").strip().lower()
-            if not token:
-                return False
-            if token in path_l:
-                return True
-            compact = token.replace("-", "").replace("_", "")
-            return bool(compact) and compact in path_compact
 
         product_shaped = requires_product or is_product_domain or (
             {"code", "productcode", "product_code"} & schema_names
-            and ("{code}" in path_l or "{identifier}" in path_l)
         )
         if product_shaped:
-            if "/products/" not in path_l:
-                return False
-            if strong_facets and not any(_facet_hits_path(f) for f in strong_facets):
+            if strong_facets and not any(_facet_hits_semantic(f) for f in strong_facets):
                 return False
             return True
 
-        if strong_facets and not any(_facet_hits_path(f) for f in strong_facets):
-            # Semantic route with facet: reject unrelated OpenAPI paths.
+        if strong_facets and not any(_facet_hits_semantic(f) for f in strong_facets):
             if (
                 str(route.get("id") or "").strip()
                 or str(route.get("domain") or "").strip()

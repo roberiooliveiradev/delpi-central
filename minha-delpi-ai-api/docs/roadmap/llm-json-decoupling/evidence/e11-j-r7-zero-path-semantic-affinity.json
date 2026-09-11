@@ -1,0 +1,15 @@
+{
+  "runId": "e11-j-r7-zero-path-semantic-affinity-v1",
+  "wave": "J",
+  "step": "J-R7",
+  "gate": "NO_PATH_SEMANTIC_AFFINITY",
+  "completeGate": "PASS",
+  "owner": "OperationalRouteActionResolverService._action_fits_route_affinity",
+  "removed": [
+    "/products/ in path",
+    "search in path gate",
+    "supplier path fragment",
+    "_facet_hits_path"
+  ],
+  "tests": "tests/unit/application/services/test_j_r7_zero_path_semantic_affinity.py"
+}
