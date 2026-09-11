@@ -17,8 +17,9 @@ static const char* FIRMWARE_VERSION = "esp8266_counter_v1.3.2";
 static const uint16_t EEPROM_SIZE = 512;
 static const uint32_t CONFIG_MAGIC = 0x50505302;  // "PPS\x02" — inclui OTA base URL
 
-#define BT_MAIS  D5
-#define BT_MENOS D1
+// NodeMCU silk labels D5/D1 — use GPIO numbers so Generic ESP8266 boards compile.
+#define BT_MAIS  14  // D5
+#define BT_MENOS 5   // D1
 
 struct DeviceConfig {
   uint32_t magic;
