@@ -1050,8 +1050,18 @@ class PostgresFirmwareUpdateJobRepository:
                 raise FirmwareJobNotFoundError(str(target_id))
             return dict(row)
 
-    def claim_wake_attempt(self, target_id: UUID) -> dict[str, Any] | None:
-        """Mark wake pending once per target. Returns None if already attempted or not authorized."""
+    def claim_wake_attempt(
+        self,
+        target_id: UUID,
+        *,
+        retry_after_seconds: int = 60,
+    ) -> dict[str, Any] | None:
+        """Mark wake pending for first attempt or cooldown retry.
+
+        Retries only while status=authorized and download has not started
+        (started_at IS NULL). Returns None if not eligible.
+        """
+        cooldown = max(1, int(retry_after_seconds))
         with plugins_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -1059,17 +1069,47 @@ class PostgresFirmwareUpdateJobRepository:
                     UPDATE production_pulse.firmware_update_targets
                     SET wake_status = 'pending',
                         wake_attempted_at = NOW(),
+                        wake_acknowledged_at = NULL,
                         wake_error_code = NULL
                     WHERE id = %s
                       AND status = 'authorized'
-                      AND wake_attempted_at IS NULL
+                      AND started_at IS NULL
+                      AND (
+                        wake_attempted_at IS NULL
+                        OR wake_attempted_at <= NOW() - (%s * INTERVAL '1 second')
+                      )
                     RETURNING {_TARGET_COLUMNS}
                     """,
-                    (target_id,),
+                    (target_id, cooldown),
                 )
                 row = cur.fetchone()
             conn.commit()
             return dict(row) if row else None
+
+    def list_authorized_targets_for_wake_retry(
+        self,
+        *,
+        retry_after_seconds: int = 60,
+    ) -> list[dict[str, Any]]:
+        """Authorized targets without download progress that are due for (re)wake."""
+        cooldown = max(1, int(retry_after_seconds))
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT {_TARGET_COLUMNS}
+                    FROM production_pulse.firmware_update_targets
+                    WHERE status = 'authorized'
+                      AND started_at IS NULL
+                      AND (
+                        wake_attempted_at IS NULL
+                        OR wake_attempted_at <= NOW() - (%s * INTERVAL '1 second')
+                      )
+                    ORDER BY COALESCE(wake_attempted_at, authorized_at, created_at) ASC
+                    """,
+                    (cooldown,),
+                )
+                return [dict(row) for row in cur.fetchall()]
 
     def finalize_wake_attempt(
         self,

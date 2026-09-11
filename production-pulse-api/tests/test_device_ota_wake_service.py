@@ -75,11 +75,69 @@ def test_wake_timeout_marks_failed_keeps_authorized():
     )
 
 
-def test_wake_skips_when_already_attempted():
+def test_wake_skips_when_claim_returns_none():
     jobs = MagicMock()
     target = _target(wake_attempted_at="2026-01-01T00:00:00Z")
+    jobs.claim_wake_attempt.return_value = None
+    DeviceOtaWakeService(job_repository=jobs).wake_target(target)
+    jobs.claim_wake_attempt.assert_called_once()
+    jobs.finalize_wake_attempt.assert_not_called()
+
+
+def test_wake_retries_after_prior_failed_attempt():
+    jobs = MagicMock()
+    devices = MagicMock()
+    registry = MagicMock()
+    target = _target(
+        wake_attempted_at="2026-01-01T00:00:00Z",
+        wake_status="failed",
+        started_at=None,
+    )
+    jobs.claim_wake_attempt.return_value = {**target, "wake_status": "pending"}
+    devices.get_by_id.return_value = {
+        "id": target["device_id"],
+        "driver_key": "esp8266_counter_v1",
+    }
+    driver = MagicMock()
+    driver.wake_ota_check.return_value = CommandResult(success=True)
+    registry.get_implementation.return_value = driver
+
+    DeviceOtaWakeService(
+        job_repository=jobs,
+        device_repository=devices,
+        driver_registry=registry,
+        wake_retry_seconds=60,
+    ).wake_target(target)
+
+    jobs.claim_wake_attempt.assert_called_once_with(
+        target["id"],
+        retry_after_seconds=60,
+    )
+    jobs.finalize_wake_attempt.assert_called_once_with(
+        target["id"],
+        wake_status="accepted",
+        wake_error_code=None,
+    )
+
+
+def test_wake_skips_when_download_already_started():
+    jobs = MagicMock()
+    target = _target(started_at="2026-01-01T00:00:01Z")
     DeviceOtaWakeService(job_repository=jobs).wake_target(target)
     jobs.claim_wake_attempt.assert_not_called()
+
+
+def test_retry_authorized_wakes_lists_then_wakes():
+    jobs = MagicMock()
+    targets = [_target()]
+    jobs.list_authorized_targets_for_wake_retry.return_value = targets
+    jobs.claim_wake_attempt.return_value = None
+    service = DeviceOtaWakeService(job_repository=jobs, wake_retry_seconds=45)
+    assert service.retry_authorized_wakes() == 1
+    jobs.list_authorized_targets_for_wake_retry.assert_called_once_with(
+        retry_after_seconds=45,
+    )
+    jobs.claim_wake_attempt.assert_called_once()
 
 
 def test_create_job_wakes_after_authorize(monkeypatch):
@@ -172,8 +230,10 @@ def test_authorize_due_scheduled_wakes_once():
 
     wake = MagicMock()
     jobs = MagicMock()
-    targets = [_target()]
+    job_id = uuid4()
+    targets = [_target(job_id=job_id)]
     jobs.authorize_due_scheduled_jobs.return_value = (1, targets)
+    jobs.get_job.return_value = {"id": job_id, "branch": "01", "status": "running"}
     service = FirmwareUpdateJobService(job_repository=jobs, wake_service=wake)
     assert service.authorize_due_scheduled() == 1
     wake.wake_authorized_targets.assert_called_once_with(targets)

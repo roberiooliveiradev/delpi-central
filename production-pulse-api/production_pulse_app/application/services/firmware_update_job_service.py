@@ -262,6 +262,10 @@ class FirmwareUpdateJobService:
                 )
         return job_count
 
+    def retry_authorized_ota_wakes(self) -> int:
+        """Pulse-driven OTA: re-wake authorized targets without download progress."""
+        return self._wake.retry_authorized_wakes()
+
     def reconcile_device_installed_version(self, device_id: UUID, version: str) -> bool:
         """Close open target when device already reports the target to_version."""
         installed = str(version or "").strip()

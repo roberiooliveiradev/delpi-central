@@ -103,6 +103,7 @@ class DevicePollSchedulerService:
     async def _tick(self) -> None:
         await self._maybe_purge_raw()
         await self._maybe_authorize_ota_jobs()
+        await self._maybe_retry_ota_wakes()
         await self._maybe_recover_ota_targets()
         due_devices = await asyncio.to_thread(self._devices.list_due_for_scheduled_poll)
         for device in due_devices:
@@ -120,6 +121,14 @@ class DevicePollSchedulerService:
                 logger.info("Authorized %s scheduled OTA job(s).", authorized)
         except Exception:
             logger.exception("Firmware OTA scheduled authorization failed.")
+
+    async def _maybe_retry_ota_wakes(self) -> None:
+        try:
+            retried = await asyncio.to_thread(self._firmware_jobs.retry_authorized_ota_wakes)
+            if retried:
+                logger.info("Retried OTA wake for %s authorized target(s).", retried)
+        except Exception:
+            logger.exception("Firmware OTA wake retry failed.")
 
     async def _maybe_recover_ota_targets(self) -> None:
         try:

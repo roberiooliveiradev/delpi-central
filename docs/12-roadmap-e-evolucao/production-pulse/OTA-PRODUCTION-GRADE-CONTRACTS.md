@@ -77,16 +77,17 @@ Documento de evidência para o plano hub OTA. Não substitui SCHEMA.md / API-ROU
 - [ ] `/firmware-jobs?branch=` redireciona preservando filial
 - [ ] UI: authorized sem barra %; downloading com % real
 
-## OTA híbrido (Push Wake + Pull Autorizado)
+## OTA Pulse-driven (Push Wake + Pull sob demanda)
 
 | Camada | Contrato |
 |---|---|
-| Configure push | API envia `otaBaseUrl`, `branch`, `otaCheckIntervalMs` (`PP_DEVICE_OTA_BASE_URL`) — MFE não é dona da URL |
+| Configure push | API envia `otaBaseUrl`, `branch`, `otaCheckIntervalMs` (`PP_DEVICE_OTA_BASE_URL`) — MFE não é dona da URL; firmwares atuais ignoram intervalo periódico |
 | Authorize | Job manual ou scheduled autoriza targets (`status=authorized`) |
 | Wake (push) | Após commit: `DeviceOtaWakeService` → `POST http://{ip}/api/ota/check-now` (best-effort). Falha **não** muda `target.status`/`error_code` |
+| Wake retry | Scheduler re-tenta wake em targets `authorized` sem `started_at` após `PP_OTA_WAKE_RETRY_SECONDS` (default 60s) |
 | Telemetria wake | `wake_status` / `wake_attempted_at` / `wake_acknowledged_at` / `wake_error_code` em `firmware_update_targets` |
-| Pull | Device: `GET /device-ota/check` (+ artifact + report). Intervalo firmware ~60 s + jitter; flag `otaCheckRequested` |
+| Pull | Device: `GET /device-ota/check` (+ artifact + report) **somente** após wake (`otaCheckRequested`); sem pull periódico autônomo |
 | Poll versão | Scheduler/poll sincroniza `firmwareVersion` de `/api/status` → `installed_firmware_version` |
-| UI | `resolveOtaVisualState`: Avisando / Avisado / Não avisou·pull / Aguardando consulta / Offline / download… |
+| UI | `resolveOtaVisualState`: Avisando / Avisado / Não avisou·nova tentativa / Aguardando consulta / Offline / download… |
 
 Smoke físico A–K: **PENDENTE_HARDWARE**.

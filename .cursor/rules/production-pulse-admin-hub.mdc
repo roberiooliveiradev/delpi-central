@@ -91,7 +91,7 @@ Excluir permanentemente = irreversível; remove row; revalida dependências no D
 | Estado OTA por IoT | `useProductionPulseOtaMonitor` + `resolveOtaVisualState` / `OtaStatusIndicator` |
 
 **Vocabulário UI:** **Tipo de driver** (`driver_key` / protocolo IoT) ≠ **Família OTA** (`firmware_key` / versões). Painel `panel=drivers`; modais `driver-create` / `driver-detail`.
-**OTA híbrido:** `authorized` + `wakeStatus` → Avisando / Avisado / Não avisou·pull; sem wake → «Aguardando consulta OTA» (sem %); `applying` indeterminate; falhas OTA via `resolveOtaTargetFailure` (wake fail ≠ OTA failed).
+**OTA Pulse-driven:** `authorized` + `wakeStatus` → Avisando / Avisado / Não avisou·nova tentativa; sem wake → «Aguardando consulta OTA» (sem %); `applying` indeterminate; falhas OTA via `resolveOtaTargetFailure` (wake fail ≠ OTA failed). Retry de wake na API (`PP_OTA_WAKE_RETRY_SECONDS`), não pull periódico no IoT.
 
 ## Live refresh (WebSocket)
 

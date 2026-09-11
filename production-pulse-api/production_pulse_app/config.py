@@ -92,6 +92,10 @@ class Settings:
     PP_OTA_TARGET_STALE_SECONDS: int = int(
         _get_env("PP_OTA_TARGET_STALE_SECONDS", default="3600") or "3600"
     )
+    # Re-claim wake for authorized targets still without download progress.
+    PP_OTA_WAKE_RETRY_SECONDS: int = int(
+        _get_env("PP_OTA_WAKE_RETRY_SECONDS", default="60") or "60"
+    )
     # Base URL reachable by IoT devices for /device-ota/* (industrial LAN; often HTTP).
     PP_DEVICE_OTA_BASE_URL: str = _get_env(
         "PP_DEVICE_OTA_BASE_URL",
