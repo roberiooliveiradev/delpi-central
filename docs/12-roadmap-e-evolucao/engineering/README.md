@@ -32,6 +32,7 @@ O Portal de Engenharia deve funcionar como **módulo-shell do domínio**, no mes
 | [SCOPE-OWNERSHIP.md](./SCOPE-OWNERSHIP.md) | Escopo funcional, ownership, inventário atual, fronteiras e integrações |
 | [WIREFRAMES.md](./WIREFRAMES.md) | Navegação, TopBar, páginas, estados e wireframes textuais |
 | [API-ROUTES.md](./API-ROUTES.md) | Contratos alvo do `engineering-api`, dependências e deep links |
+| [DATA-MODEL.md](./DATA-MODEL.md) | Modelo de persistência próprio, Sala de interação e documentos técnicos |
 | [ROADMAP.md](./ROADMAP.md) | Ledger RQ-*, decisões travadas, fases E*.S*, testes, rollout e aceite |
 
 ## Norte do produto
