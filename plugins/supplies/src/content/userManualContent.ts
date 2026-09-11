@@ -84,6 +84,11 @@ export const USER_MANUAL_CONTENT = {
           how: "A URL guarda unidade(s), datas e preset — copie o link com o filtro ativo",
         },
         {
+          want: "Abrir pedidos de compra (PC)",
+          where: "Pedidos de compra",
+          how: "Lista linhas abertas no TOTVS; URL guarda filtros; detalhe completo na próxima etapa",
+        },
+        {
           want: "Abrir solicitações de compras (SC)",
           where: "Solicitações de compras",
           how: "Lista e detalhe no escopo de CC/filial; URL guarda filtros (F5); exportação CSV se tiver permissão",
@@ -137,6 +142,7 @@ export const USER_MANUAL_CONTENT = {
         "Início — atenção, busca, favoritos e caminhos por capability.",
         "Visão geral — cockpit de KPIs do período (não é a tela inicial).",
         "OTD — velocímetros de pontualidade e evolução; abra pelo Início, catálogo Análises ou CTA da Visão geral.",
+        "Pedidos de compra — linhas abertas (saldo a receber); distinto do OTD de pontualidade.",
         "Solicitações de compras — lista/detalhe no escopo CC+filial; exportação CSV com permissão separada.",
         "Operações — pedidos, entregas, fornecedores, produtos, estoque e ESTSEG.",
         "Indicadores / Negociações — recorte analítico quando liberado.",

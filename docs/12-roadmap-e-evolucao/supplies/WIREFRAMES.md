@@ -1,6 +1,6 @@
 # WIREFRAMES — Portal Suprimentos
 
-> **Status (2026-09-11):** wireframes alinhados ao modo página-a-página. Início, Visão geral, OTD analytics e Solicitações de Compras estão fechados; demais páginas são fila e não autorização de implementação.
+> **Status (2026-09-11):** wireframes alinhados ao modo página-a-página. Início, Visão geral, OTD analytics, Solicitações e Pedidos de Compra (lista) estão fechados; detalhe do pedido e demais páginas são fila.
 
 Shell comum (padrão Comercial por composição compartilhada, não por cópia de CSS):
 
@@ -191,16 +191,17 @@ SectionCard "OTD no tempo"
 
 ## Fila futura — promover uma página por vez
 
-### WF-05 — Pedidos de Compra
+### WF-05 — Pedidos de Compra — FECHADA (DoD)
 
 | Campo | Conteúdo |
 |---|---|
 | Rota | `/purchase-orders` |
 | Capability | `supplies.operations.access` |
 | Unit | sim |
-| Fonte | PO/OTD via `api-delpi` através de `supplies-api` |
-| Ações | abrir detalhe; follow-up somente quando autorizado |
-| Gate | só promover após WF-04 fechado + autorização PO |
+| Fonte | api-delpi `GET /supplies/purchase-orders` (SC7 aberto) via supplies-api |
+| Ações | marcar pedido na URL; detalhe completo = WF-06 |
+| Estado | **GATE-FEATURE PASS** (2026-09-11); smoke federado `INCONCLUSIVE` |
+| DoD | kit-first, estados, Help, filtros/URL/F5, testes P/S/N |
 
 ### WF-06 — Detalhe do Pedido
 

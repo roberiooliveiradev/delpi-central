@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-04",
-  "baselineOperationCount": 705,
-  "operationCount": 705,
-  "coveredCount": 630,
+  "generatedAt": "2026-09-11",
+  "baselineOperationCount": 700,
+  "operationCount": 700,
+  "coveredCount": 625,
   "gapCount": 74,
   "exemptCount": 1,
   "byModule": {
@@ -92,8 +92,8 @@
       "exempt": 0
     },
     "invoice-issuance": {
-      "total": 14,
-      "covered": 14,
+      "total": 9,
+      "covered": 9,
       "gap": 0,
       "exempt": 0
     },

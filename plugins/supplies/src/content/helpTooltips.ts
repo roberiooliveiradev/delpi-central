@@ -83,6 +83,15 @@ export const SP_HELP = {
     "Situação consolidada da SC (aguardando pedido, parcial, concluída etc.).",
   purchaseRequestsExport:
     "Exportação CSV do recorte filtrado. Exige permissão de exportação além do acesso à lista.",
+  purchaseOrders:
+    "Pedidos de compra em aberto no TOTVS (saldo a receber). Não é o painel OTD de pontualidade — esse fica na analytics. Detalhe completo entra na próxima etapa.",
+  purchaseOrdersBranch:
+    "Filial do recorte. Só unidades liberadas na sessão; a API reforça o escopo de unidade.",
+  purchaseOrdersNumber: "Filtra pelo número do pedido de compra.",
+  purchaseOrdersProduct: "Filtra por código de produto/MP da linha.",
+  purchaseOrdersSupplier: "Filtra pelo código do fornecedor (A2).",
+  purchaseOrdersDelivery:
+    "Recorte pela data prometida de entrega. «Somente atrasados» usa a data prometida anterior a hoje.",
   userProfile:
     "Perfil do Portal Suprimentos: identidade Minha DELPI (foto, cargo e contatos da Core, só leitura), atalhos por capability e preferências (filial padrão e densidade). Edite foto/cargo/contatos em /profile do Portal host.",
   userProfilePrefs:

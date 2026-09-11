@@ -17,6 +17,7 @@ import { OverviewPage } from "./pages/OverviewPage";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { UserManualPage } from "./features/help/UserManualPage";
 import { OtdAnalyticsPage } from "./features/analytics/OtdAnalyticsPage";
+import { PurchaseOrdersPage } from "./features/purchase-orders/PurchaseOrdersPage";
 import { PurchaseRequestsPage } from "./features/purchase-requests/PurchaseRequestsPage";
 import { UserProfilePage } from "./features/users/UserProfilePage";
 
@@ -33,10 +34,6 @@ const PLACEHOLDER: Partial<
   my_tasks: {
     title: "Minhas tarefas",
     description: "A fila de acompanhamento será composta nas jornadas seguintes.",
-  },
-  purchase_orders: {
-    title: "Pedidos de compra",
-    description: "Composição operacional entra depois da fundação do shell.",
   },
   deliveries: {
     title: "Entregas",
@@ -150,6 +147,8 @@ function AppRoutes({
     content = <UserManualPage basePath={basePath} />;
   } else if (view === "purchase_requests") {
     content = <PurchaseRequestsPage basePath={basePath} />;
+  } else if (view === "purchase_orders") {
+    content = <PurchaseOrdersPage basePath={basePath} />;
   } else {
     const placeholder = PLACEHOLDER[view];
     content = placeholder ? (

@@ -35,6 +35,7 @@ from app.interface.http.routes.production_appointments import (
 )
 from app.interface.http.routes.supplies import supplies_router
 from app.interface.http.routes.supplies import safety_stock_router
+from app.interface.http.routes.supplies import purchase_orders_router
 from app.interface.http.routes.supplies import purchase_requests_router
 from app.interface.http.routes.supplies import protheus_users_router
 from app.interface.http.routes.supplies import stock_balances_router
@@ -251,6 +252,7 @@ app.include_router(retrabalho_router.router)
 app.include_router(refugos_router.router)
 app.include_router(supplies_router.router)
 app.include_router(safety_stock_router.router)
+app.include_router(purchase_orders_router.router)
 app.include_router(purchase_requests_router.router)
 app.include_router(protheus_users_router.router)
 app.include_router(stock_balances_router.router)

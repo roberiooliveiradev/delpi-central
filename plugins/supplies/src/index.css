@@ -943,3 +943,101 @@
   gap: 0.65rem;
   justify-items: start;
 }
+
+/* Pedidos de compra — layout de domínio (chrome = plugin-ui) */
+.dashboard-supplies-portal .sp-purchase-orders__filters {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.dashboard-supplies-portal .sp-purchase-orders__filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.dashboard-supplies-portal .sp-purchase-orders__meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  color: var(--sp-text-muted);
+  font-size: 0.875rem;
+}
+
+.dashboard-supplies-portal .sp-purchase-orders__pager {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dashboard-supplies-portal .sp-purchase-orders__table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--sp-border);
+  border-radius: var(--sp-radius, 14px);
+  background: var(--sp-surface);
+}
+
+.dashboard-supplies-portal .sp-purchase-orders__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.dashboard-supplies-portal .sp-purchase-orders__table th,
+.dashboard-supplies-portal .sp-purchase-orders__table td {
+  padding: 0.7rem 0.85rem;
+  text-align: left;
+  border-bottom: 1px solid var(--sp-border);
+  vertical-align: top;
+}
+
+.dashboard-supplies-portal .sp-purchase-orders__table th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--sp-text-muted);
+  background: color-mix(in srgb, var(--sp-text) 3%, transparent);
+}
+
+.dashboard-supplies-portal .sp-purchase-orders__table tbody tr {
+  cursor: pointer;
+}
+
+.dashboard-supplies-portal .sp-purchase-orders__table tbody tr:hover,
+.dashboard-supplies-portal .sp-purchase-orders__table tbody tr.is-selected {
+  background: color-mix(in srgb, var(--sp-accent) 8%, transparent);
+}
+
+.dashboard-supplies-portal .sp-purchase-orders__detail-body dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.75rem;
+  margin: 0.85rem 0 0;
+}
+
+.dashboard-supplies-portal .sp-purchase-orders__detail-body dt {
+  font-size: 0.75rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-purchase-orders__detail-body dd {
+  margin: 0.15rem 0 0;
+  font-weight: 600;
+}
+
+.dashboard-supplies-portal .sp-purchase-orders__error {
+  display: grid;
+  gap: 0.65rem;
+  justify-items: start;
+}
+
+@media (max-width: 720px) {
+  .dashboard-supplies-portal .sp-purchase-orders__meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

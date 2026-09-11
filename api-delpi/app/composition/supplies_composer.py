@@ -56,6 +56,9 @@ from app.application.use_cases.supplies.get_purchase_requests_open_coverage_use_
 from app.application.use_cases.supplies.get_supplies_purchase_request_lines_use_case import (
     GetSuppliesPurchaseRequestLinesUseCase,
 )
+from app.application.use_cases.supplies.list_supplies_purchase_orders_use_case import (
+    ListSuppliesPurchaseOrdersUseCase,
+)
 from app.application.use_cases.supplies.list_supplies_purchase_request_lines_use_case import (
     ListSuppliesPurchaseRequestLinesUseCase,
 )
@@ -67,6 +70,9 @@ from app.application.use_cases.supplies.list_supplies_purchase_request_recent_li
 )
 from app.application.use_cases.supplies.list_supplies_purchase_request_requesters_use_case import (
     ListSuppliesPurchaseRequestRequestersUseCase,
+)
+from app.infrastructure.persistence.totvs.supplies_repositories.purchase_orders_list_repository import (
+    PurchaseOrdersListRepository,
 )
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_lines_repository import (
     PurchaseRequestLinesRepository,
@@ -214,6 +220,12 @@ def build_get_purchase_requests_open_coverage_use_case() -> (
     GetPurchaseRequestsOpenCoverageUseCase
 ):
     return GetPurchaseRequestsOpenCoverageUseCase(repository=SafetyStockQueryRepository())
+
+
+def build_list_supplies_purchase_orders_use_case() -> ListSuppliesPurchaseOrdersUseCase:
+    return ListSuppliesPurchaseOrdersUseCase(
+        repository=PurchaseOrdersListRepository(),
+    )
 
 
 def build_list_supplies_purchase_request_lines_use_case() -> (

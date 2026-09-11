@@ -1,9 +1,9 @@
 # IMPLEMENTATION-PLAN — Portal Suprimentos
 
 > **Status (2026-09-11):** plano executável revisado segundo `evidence-driven-execution.mdc`, `plan-construction.mdc` e `plan-execution.mdc`.  
-> **Entregue:** E1–E6 (incluindo E6.S5 / GATE-FEATURE WF-04).  
-> **Em foco:** nenhuma página — aguardando autorização explícita do Product Owner para E7 WF-05.  
-> **Próxima página candidata:** E7 WF-05 Pedidos de Compra, bloqueada até autorização explícita do Product Owner.  
+> **Entregue:** E1–E7 (incluindo E7 / GATE-FEATURE WF-05 lista).  
+> **Em foco:** nenhuma página — aguardando autorização explícita do Product Owner para E8 WF-06.  
+> **Próxima página candidata:** E8 WF-06 Detalhe do Pedido, bloqueada até autorização explícita do Product Owner.  
 > **Modo:** uma página user-facing por vez; etapas futuras abaixo são fila/grafo, não autorização de execução.
 
 Referências: [README](./README.md), ADR-001..ADR-007, [WIREFRAMES](./WIREFRAMES.md), [API-ROUTES](./API-ROUTES.md), [DECISOES_FUNCIONAIS_PENDENTES](./DECISOES_FUNCIONAIS_PENDENTES.md), [HOMOLOGACAO-PARIDADE](./HOMOLOGACAO-PARIDADE.md).
@@ -46,7 +46,7 @@ Invariantes:
 | RQ-04 | Unit/resource scope coerente | HERDADO transversalmente; testar em cada página |
 | RQ-05 | Overview/OTD com KPIs e metas SI canônicas | ATENDIDO — E5 |
 | RQ-06 | SC C1 funcional + DoD da página | ATENDIDO — E6.S1–S5 |
-| RQ-07 | Pedidos de Compra | BLOQUEADO pela fila — E7 |
+| RQ-07 | Pedidos de Compra (lista) | ATENDIDO — E7 |
 | RQ-08 | Detalhe do Pedido | BLOQUEADO pela fila — E8 |
 | RQ-09 | Entregas/Atrasos | BLOQUEADO pela fila — E9 |
 | RQ-10 | Estoque | BLOQUEADO pela fila — E10 |
@@ -189,13 +189,21 @@ Overview/OTD fechados com filtros/URL, 7 KPIs, metas SI, charts/gauges e Ajuda.
 
 As etapas abaixo estão **BLOCKED_BY_QUEUE**. Antes de executar qualquer uma, substituir o resumo por receita completa conforme `plan-construction.mdc`, revalidando código, API e decisões pendentes.
 
-## E7 — WF-05 Pedidos de Compra
+## E7 — WF-05 Pedidos de Compra — COMPLETED 2026-09-11
 
-Pré-condição: autorização explícita PO (E6.S5 já PASS). Ler/fixar DTOs PO necessários à **lista**, criar BFF da lista, UI/estados/Help/testes e fechar GATE-FEATURE. Não implementar detalhe nem Entregas na mesma etapa.
+**Entregue:**
+- E7.S1 api-delpi `GET /supplies/purchase-orders` (`list_supplies_purchase_orders`) — SC7 aberto paginado;
+- E7.S2 BFF `GET /purchase-orders` (operations + unit);
+- E7.S3 MFE kit-first + URL/F5 + seleção de linha (detalhe completo fora);
+- E7.S4 Help + docs GATE-FEATURE; smoke federado `INCONCLUSIVE`.
+
+**Decisão:** lista = SC7 aberto, **não** OTD panel.
+
+**Teste:** api-delpi `pytest tests/test_purchase_orders_list_*.py` · supplies-api `pytest tests/interface/http/test_purchase_orders_bff.py` · MFE `npm test -- --run src/features/purchase-orders`.
 
 ## E8 — WF-06 Detalhe do Pedido
 
-Pré-condição: E7 PASS. Contrato de detalhe + resource scope + itens/prometida/recebimentos/SC origem + follow-up apenas se recurso/capability permitirem. Fechar GATE-FEATURE próprio.
+Pré-condição: autorização explícita PO (E7 já PASS). Contrato de detalhe + resource scope + itens/prometida/recebimentos/SC origem + follow-up apenas se recurso/capability permitirem. Fechar GATE-FEATURE próprio.
 
 ## E9 — WF-07 Entregas/Atrasos
 
