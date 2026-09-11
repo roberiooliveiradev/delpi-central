@@ -1,7 +1,7 @@
 # Plano 11 — Correção arquitetural: cutover + generalização + cleanup sem residual
 
 **Prioridade:** P0  
-**Status execução:** **REABERTO — Onda J / `VERIFY_FINAL_FAILED`** · J-R1–J-R5 **ATENDIDO** · próxima = **J-R6**  
+**Status execução:** **REABERTO — Onda J / `VERIFY_FINAL_FAILED`** · J-R1–J-R6 **ATENDIDO** · próxima = **J-R7**  
 **BASE_GIT_SHA original (E11.S0):** `8bc84fc6d1cea3edc8cd0c08dceee90f9303e777`  
 **Candidate anteriormente declarado final:** `782a49721319571f0fe4733d59b8a5cc65ac4c04` — **histórico invalidado como release evidence**  
 **Auditoria pós-fechamento:** [`../evidence/e11-post-close-audit-2026-09-11.md`](../evidence/e11-post-close-audit-2026-09-11.md)  
@@ -348,7 +348,11 @@ Fazer:
 - positive/sibling/negative para registry/path affinity/content duplication;
 - gate deve detectar comportamento equivalente com outro nome/arquivo.
 
-**Gate:** `ARCHITECTURE_GATE_INDEPENDENT = PASS`.
+**Status:** **ATENDIDO** · `ARCHITECTURE_GATE_INDEPENDENT=PASS` · evidência [`../evidence/e11-j-r6-architecture-gate-independent.md`](../evidence/e11-j-r6-architecture-gate-independent.md)
+
+**Gate:** `ARCHITECTURE_GATE_INDEPENDENT = PASS` (**cumprido** — scanner estrutural; debt 84 catalogs → J-R8).
+
+**Próxima:** J-R7.
 
 ## J-R7 — zero path semantic affinity
 
