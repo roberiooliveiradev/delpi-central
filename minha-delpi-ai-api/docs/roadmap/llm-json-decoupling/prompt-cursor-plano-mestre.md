@@ -1,6 +1,8 @@
-# Prompt para Cursor — plano completo de desacoplamento JSON + LLM/OpenAPI
+# Prompt para Cursor — rebaseline e planejamento mestre do desacoplamento LLM/OpenAPI
 
-Copie o bloco abaixo para o Cursor em **Plan mode**. O objetivo inicial é revalidar o repositório e **atualizar os markdowns desta pasta** (`roadmap.md`, `planos/*.md`); não criar `.plan.md` paralelo nem implementar até autorização explícita.
+Este prompt é usado em **Plan mode** para revalidar arquitetura, requisitos e etapas. Para implementar a Onda corretiva ativa, use [`prompt-cursor-execucao-corretiva.md`](./prompt-cursor-execucao-corretiva.md).
+
+> **Estado atual:** o programa foi reaberto após auditoria arquitetural pós Ondas A–I. O plano ativo é [`planos/11-corrective-cutover-generalization-cleanup.md`](./planos/11-corrective-cutover-generalization-cleanup.md). PASSs históricos não constituem aceite do candidate final.
 
 ---
 
@@ -8,22 +10,11 @@ Copie o bloco abaixo para o Cursor em **Plan mode**. O objetivo inicial é reval
 
 Você está trabalhando no monorepo `delpi-central`, com foco em `minha-delpi-ai-api`.
 
-### Objetivo
+Sua tarefa neste modo é **revalidar o estado atual e manter o roadmap executável correto**. Não implemente runtime neste prompt; a execução possui prompt separado.
 
-Investigue o código e os contratos atuais e construa um plano completo para remover acoplamentos residuais em `minha-delpi-ai-api/app/content`, substituindo:
+## 1. Fontes obrigatórias
 
-1. catálogos técnicos duplicados por **OpenAPI + Action Catalog**;
-2. árvores de NLU/intent baseadas em terms/regex/excludes/predicates por **Turn Understanding + retrieval + planner LLM estruturado**;
-3. follow-up/refinement por path/route markers por **estado conversacional estruturado + schema**;
-4. mini catálogos manuais de actions/capabilities por **metadata materializada do Action Catalog**;
-5. recomendações/sugestões estáticas por geração contextual grounded, preferencialmente reutilizando a síntese LLM já existente no turno;
-6. path/entity-specific presentation residual quando `responseSchema + payload + metadata` forem suficientes.
-
-Não aplique `JSON -> LLM` indiscriminadamente. Preserve como determinísticos: RBAC, sensitivity, confirmation, required/type/enum/format, regras factuais, regras de negócio, limites, timeout/retry, formatação determinística e policies. Preserve copy/UX/prompts legítimos como conteúdo configurável.
-
-### Ordem de autoridade obrigatória
-
-Leia antes de qualquer decisão:
+Leia na ordem:
 
 1. `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`
 2. `.cursor/rules/development-standards-index.mdc`
@@ -32,40 +23,92 @@ Leia antes de qualquer decisão:
 5. `.cursor/rules/plan-execution.mdc`
 6. `.cursor/rules/test-and-commit.mdc`
 7. `.cursor/rules/openapi-first-universal-tool-routing.mdc`
-8. `.cursor/rules/assistant-content-json.mdc`
-9. `.cursor/rules/ai-intelligence-evaluation.mdc`
-10. regras especializadas adicionais indicadas pelo index para chat, tools, LLM stack, schema-first presentation, help e budget.
+8. `.cursor/rules/operational-api-routing.mdc`
+9. `.cursor/rules/assistant-content-json.mdc`
+10. `.cursor/rules/ai-intelligence-evaluation.mdc`
+11. `.cursor/rules/clean-architecture-chat-api.mdc`
+12. `.cursor/rules/ai-external-tools-security.mdc`
+13. `.cursor/rules/llm-stack-centralized.mdc`
+14. `minha-delpi-ai-api/docs/testing/chat-ai-flow-families.md`
+15. `minha-delpi-ai-api/docs/roadmap/llm-json-decoupling/README.md`
+16. `minha-delpi-ai-api/docs/roadmap/llm-json-decoupling/roadmap.md`
+17. todos os planos 01–11 relevantes ao drift.
 
-Depois leia:
+## 2. Situação que deve ser revalidada, não assumida
 
-- `minha-delpi-ai-api/docs/roadmap/openapi-first-universal-tool-routing.md`
-- `minha-delpi-ai-api/docs/api/04-actions-openapi.md`
-- `minha-delpi-ai-api/docs/testing/chat-ai-flow-families.md`
-- `minha-delpi-ai-api/docs/roadmap/llm-json-decoupling/README.md`
-- `minha-delpi-ai-api/docs/roadmap/llm-json-decoupling/roadmap.md`
-- todos os arquivos em `minha-delpi-ai-api/docs/roadmap/llm-json-decoupling/planos/`.
+A auditoria anterior encontrou, entre outros:
 
-### Regras da investigação
+- mapa path→domain recriado em Python após remoção do JSON;
+- `parameterStrategy` removida do JSON e reintroduzida por path/operationId;
+- continuidade multi-turn derivada de path-tail/operationId inventory;
+- `route.operationIds` como catálogo técnico paralelo residual;
+- ownership semântico duplicado entre heurísticas/mappers e LLM Turn Analysis;
+- recommendation estática ainda participando de fallback/oracle;
+- capability metadata uniformemente `read/low/parallelSafe`;
+- boundary/DI residual;
+- credential defaults em smoke;
+- unknown-provider antigo reutilizado depois de mudanças materiais.
 
-- Código/contrato/testes atuais prevalecem sobre este roadmap se houver drift.
-- Se uma decisão do roadmap estiver superada, registrar `EXECUTION_DRIFT` com evidência e corrigir o plano antes de implementar.
-- Não assumir que um JSON está acoplado só pelo nome: localizar todos os producers/consumers/fallbacks/tests/docs.
-- Não assumir que algo deve ir para LLM: classificar primeiro.
-- Não criar nova regra `.cursor` para esta tarefa salvo lacuna de governança comprovada.
-- Não duplicar source of truth.
-- Não corrigir apenas `api-delpi`: a prova real é provider OpenAPI externo desconhecido.
-- Não introduzir `capabilityGroup`, `routeFamily`, `pathClass` ou metadata manual por endpoint como simples substituto do catálogo removido.
-- Não criar service/selector/presenter por API ou endpoint.
-- Não criar MegaLabelService/MegaIntentService/God service.
-- Não adicionar chamadas LLM independentes para action label, title, framing, recommendations e routing se a mesma inferência de turno puder produzir esses dados estruturados.
+Esses itens são hipóteses confirmadas no audit-base do Plano 11, mas **releia o HEAD atual antes de planejar**. Se algum já mudou, registre o drift e atualize o plano.
 
-### Classificação obrigatória por nó JSON
+## 3. Regra fundamental de arquitetura
 
-Para cada chave material classifique exatamente como uma das categorias:
+O target é:
+
+```text
+USER MESSAGE + STRUCTURED CONTEXT
+→ semantic understanding
+→ goals/subtasks/entities/references
+→ allowed Action Catalog
+→ semantic retrieval
+→ structured planner restricted to candidates
+→ schema-driven argument binder
+→ OpenAPI validator
+→ RBAC/sensitivity/confirmation
+→ generic executor
+→ responseSchema + metadata
+→ schema-driven presentation
+→ grounded synthesis/recommendations
+```
+
+O core precisa funcionar para provider OpenAPI externo nunca visto sem source code por endpoint.
+
+## 4. Não aceite migração de representação como solução
+
+A classificação deve ser conceitual.
+
+Exemplos:
+
+```text
+pathMarkers JSON
+→ _DOMAIN_RULES em Python
+= NÃO RESOLVIDO
+
+parameterStrategy JSON
+→ if path/operationId → strategy
+= NÃO RESOLVIDO
+
+routeSegment JSON
+→ path-tail/operationId-tail
+= NÃO RESOLVIDO
+
+pathMarkers
+→ route.operationIds manual por rota semântica
+= catálogo técnico residual
+```
+
+Planeje sempre a eliminação da authority, não apenas do arquivo/chave.
+
+## 5. Classificação obrigatória por residual
+
+Classifique cada nó/branch/catálogo como:
 
 ```text
 TECHNICAL_CONTRACT_DUPLICATION
 SEMANTIC_ROUTING_HEURISTIC
+SEMANTIC_AUTHORITY_DUPLICATION
+MULTI_TURN_PATH_COUPLING
+ARGUMENT_BINDING_LEGACY_SUBSTITUTE
 SEMANTIC_PRESENTATION_METADATA
 LLM_COMPOSITION_CANDIDATE
 LLM_LOCALIZATION_CANDIDATE
@@ -73,15 +116,15 @@ DETERMINISTIC_POLICY
 BUSINESS_RULE
 FACTUAL_GUARDRAIL
 UX_COPY
-VOCABULARY
-FAST_PATH
+VOCABULARY_TRANSVERSAL
+FAST_PATH_TRANSVERSAL
 TEST_FIXTURE
 GENERATED_SNAPSHOT
 DEAD_CONTENT
 UNKNOWN_REQUIRES_EVIDENCE
 ```
 
-E escolha o destino:
+E destino:
 
 ```text
 OPENAPI_DIRECT
@@ -90,264 +133,195 @@ SCHEMA_DIRECT
 TURN_UNDERSTANDING
 ACTION_RETRIEVAL_PLANNER
 OPENAPI_ARGUMENT_BINDER
+STRUCTURED_CONVERSATION_STATE
 EXISTING_TURN_LLM_SYNTHESIS
 DETERMINISTIC_SERVICE
 KEEP_JSON
 KEEP_GENERATED
-DELETE_AFTER_CUTOVER
+DELETE_AFTER_GENERALIZATION
 INVESTIGATE_FIRST
 ```
 
-### Arquivos/fluxos que exigem investigação prioritária
+## 6. Ordem de cada workstream
 
-Não limite a análise a estes arquivos, mas cubra explicitamente:
-
-#### Routing técnico
-
-- `app/content/pt-BR/assistant/operational_route_registry.json`
-- `app/content/pt-BR/assistant/api_route_domains.json`
-- consumers de `pathMarkers`, `operationIdMarkers`, `routeSegment`, `parameterStrategy`, priority e routeId.
-
-#### NLU/intent manual
-
-- `product_query_intent.json`
-- `production_operational_intent.json`
-- `department_kpi_rules.json`
-- `intent_router.json`
-- `analysis_intent_vocabulary.json`
-- `operational_pipeline_vocabulary.json`
-- `turn_understanding.json`
-
-Mapear terms, excludes, anyOf/allOf/noneOf, customPredicate, regex, keyword scoring e pathTokens.
-
-#### Follow-up/refinement/arguments
-
-- `operational_follow_up_routing.json`
-- `operational_group_by_refinement.json`
-- `operational_refinement.json`
-- `operational_parameters.json`
-- conversation state/result references/pending requirements relacionados.
-
-#### Capabilities e composição
-
-- `capabilities.json` — copy/detection/help ( **`pathRules` já removido** — ver plano 04 drift )
-- `capability_ux_classification.json` — classificação UX materializada no import (`uxCapability`)
-- `capability_registry.json`, especialmente `action.*` e `routeHints`
-- `entity_capability_catalog.json`
-- `department_meta_composition.json`
-- `product_enrichment_composition.json`
-
-#### Recommendations/composer
-
-- `humanized_data_response.json`, especialmente `recommendationQueries`, `nextActions` e consumers
-- `composer_route_questions.json`
-- produtores de `structuredRecommendations` e sugestões do composer.
-
-#### Presentation residual
-
-- `presentation_profiles.json`
-- `column_labels.json`
-- `product_operational_content.json`
-- `presenter_content.json`
-- `data_interpretation.json`
-
-Separar: schema/shape, order/format/policy, display semantic metadata e contextual prose.
-
-#### Skills/help/content
-
-- `app/content/pt-BR/skills/catalog.json`
-- endpoint/execution hints existentes em help/features/capabilities.
-
-### Arquitetura alvo obrigatória
-
-Provar como o repositório atual converge para:
+O plano só é executável se cada migração de authority respeitar:
 
 ```text
-USER MESSAGE
-+ structured conversation context
-        |
-        v
-STRUCTURED TURN UNDERSTANDING
-        |
-        v
-goals/subtasks/entities/references/presentation intent
-        |
-        v
-ALLOWED ACTION CATALOG
-        |
-        v
-semantic retrieval per goal
-        |
-        v
-STRUCTURED PLANNER
-        |
-        v
-OpenAPI argument binding + deterministic validation
-        |
-        v
-RBAC + sensitivity + confirmation policy
-        |
-        v
-generic executor
-        |
-        v
-responseSchema + payload + metadata
-        |
-        v
-schema-driven presentation
-        |
-        v
-existing grounded LLM synthesis
-        |
-        +--> contextual recommendations/follow-ups
+CUTOVER
+→ wiring real
+→ GENERALIZATION
+→ positive + sibling + negative
+→ unknown/metamorphic quando material
+→ CLEANUP
+→ semantic residual search
+→ VERIFY
+→ COMPLETE_GATE
 ```
 
-### Regra sobre chamadas LLM
+Nunca planeje `DELETE` antes de existir prova de generalização suficiente.
 
-Para cada proposta de LLM responda no plano:
+## 7. Ledger e rastreabilidade
 
-1. O dado já existe no OpenAPI/schema/Action Catalog?
-2. É uma transformação determinística?
-3. É semântica estável que pode ser materializada/cacheada no import?
-4. É contextual e precisa da mensagem/resultado atual?
-5. Pode ser produzido pela chamada LLM já existente no turno?
-6. O que acontece se o modelo falhar/timeout?
-7. Qual é o budget de latência/tokens?
-8. O output será validado por schema/allowlist/policy?
+Cada requisito material deve possuir:
+
+```text
+RQ
+→ evidência/current
+→ decisão
+→ subetapa
+→ teste
+→ generalization proof
+→ cleanup proof
+→ ready criteria
+```
+
+Estados permitidos:
+
+```text
+ATENDIDO_NO_PLANO
+HERDADO_POR_SOLUCAO_TRANSVERSAL
+FORA_DO_ESCOPO_COM_JUSTIFICATIVA
+BLOQUEADO_COM_EVIDENCIA
+```
+
+Não desapareça com requisito por compressão de texto.
+
+## 8. “Concluído” significa sem pendência material
+
+Ao revisar status, trate como **não concluído** qualquer etapa que ainda possua no escopo:
+
+```text
+PARTIAL
+ATENDIDO_PARCIAL
+LEGACY_FALLBACK
+SHADOW_ONLY
+INCONCLUSIVE
+PENDING
+DEFERRED sem justificativa
+TODO
+FIXME
+HACK
+TEMPORARY
+flag/fallback sem exit criteria
+```
+
+Se o objetivo original exige remoção/substituição, não aceite `LEGACY_FALLBACK` como `ATENDIDO`.
+
+## 9. Unknown external API e metamorphic
+
+Unknown API precisa ser provider fictício realmente novo:
+
+```text
+OpenAPI
+→ import/index
+→ agent binding
+→ allowed actions
+→ retrieval
+→ planner
+→ validator
+→ policy
+→ executor
+→ presentation
+```
+
+Não vale:
+
+- mensagem sem sentido;
+- rota conhecida com frase nova;
+- fixture ensinada ao runtime.
+
+Metamorphic deve renomear provider/path/operationId preservando semântica e schema.
+
+## 10. Frescor de evidência
+
+Candidate evidence pertence a `gitSha + config + dataset + model/provider + OpenAPI/Action Catalog hash`.
+
+Se houver diff posterior que afete uma dimensão, aquela prova volta a `INCONCLUSIVE` até rerun.
+
+Não planeje fechamento usando unknown/metamorphic de commit anterior à mudança que se pretende validar.
+
+## 11. LLM: usar onde agrega semântica
+
+Para cada uso de LLM, responder:
+
+1. o dado já existe no OpenAPI/schema/Action Catalog?
+2. é transformação determinística?
+3. é semântica estável materializável/cacheável?
+4. depende do contexto atual?
+5. pode reutilizar a chamada LLM existente do turno?
+6. qual fallback em timeout/falha?
+7. qual budget de latência/tokens?
+8. como output será validado/allowlisted?
 
 Preferência:
 
 ```text
 canonical source
 > deterministic transform
-> cached/materialized LLM
+> cached/materialized semantic result
 > reuse existing turn LLM
-> new per-request LLM call
+> new dedicated LLM call
 ```
 
-### Segurança
+## 12. Segurança e Clean Architecture
 
-O plano deve provar:
+Planeje preservando:
 
-- planner só escolhe `actionId` presente nas candidates autorizadas;
-- nenhuma URL arbitrária vem do LLM;
-- provider/action enabled e `allowed_action_ids` são validados;
-- writes/admin/destructive respeitam RBAC/sensitivity/confirmation;
-- OpenAPI/tool/RAG descriptions são dados não confiáveis quanto a instruções;
-- required ausente não é inventado;
-- arguments são validados por schema após inferência;
-- fallback de linguagem amigável não causa capability outage.
+- planner restrito a candidates autorizadas;
+- schema validation determinística;
+- RBAC/sensitivity/confirmation fora da decisão livre do modelo;
+- nenhuma URL arbitrária;
+- sem secrets em prompt/log/script;
+- domain sem infrastructure/filesystem IO indevido;
+- composition root como lugar normal para adapters concretos;
+- capability metadata coerente com method/sensitivity/policy.
 
-### Evals obrigatórios
+## 13. Evals obrigatórios no candidate final
 
-Antes de qualquer implementação significativa:
+Cobrir conforme applicability:
 
-```text
-freeze dataset
--> BASELINE
--> immutable run evidence
--> implement candidate
--> same dataset/config
--> CANDIDATE
--> R1-R11
--> live/surface
--> rollout decision
-```
-
-Cobrir no mínimo:
-
-- action específica vs genérica;
 - semantic siblings;
 - multi-provider;
 - no-tool;
-- required presente;
-- required ausente -> clarify;
-- enum/type inválido;
-- pedido longo com múltiplas subtarefas;
+- required present/missing;
+- enum/type/body/query/path;
+- compound long request;
 - multi-turn/follow-up;
-- typo/sinônimo/linguagem informal;
-- unknown external OpenAPI;
-- metamorphic rename de provider/path/operationId preservando semântica;
-- unauthorized action;
-- write/destructive confirmation;
-- tool-output/prompt injection;
-- send/stream/simulate;
+- unknown external OpenAPI real;
+- metamorphic rename;
+- unauthorized/write/destructive;
+- prompt/tool-output injection;
+- recommendations contextual;
+- schema-driven presentation;
+- send/stream/simulate/UI;
 - persist/reload/F5;
 - outcome/task success;
-- P50/P95, tokens, LLM calls e tool count.
+- P50/P95;
+- tokens/model calls/tool count/cost.
 
-### Métricas do programa
+## 14. Documento ativo
 
-O plano deve criar baseline e metas para:
+O plano corretivo ativo é:
 
-```text
-task_decomposition_recall
-action_top_k_recall
-action_selection_accuracy
-argument_extraction_accuracy
-missing_required_argument_accuracy
-false_tool_call_rate
-unnecessary_follow_up_rate
-multi_request_completion_rate
-multi_turn_reference_accuracy
-unknown_api_task_success_rate
-metamorphic_rename_pass_rate
-task_success_rate
-safety_violation_rate
-p50/p95_latency
-llm_calls_per_turn
-tokens_per_turn
-tool_calls_per_turn
-catalog_path_coupling_count
-manual_intent_rule_count
-```
+`planos/11-corrective-cutover-generalization-cleanup.md`
 
-### Formato obrigatório do plano produzido pelo Cursor
+Atualize esse arquivo se a revalidação encontrar drift. Não abra outro plano paralelo para o mesmo objetivo.
 
-Use `plan-construction.mdc`. **Entrega canônica = atualização dos markdowns em** `minha-delpi-ai-api/docs/roadmap/llm-json-decoupling/` (README, roadmap, planos/01–09). Não criar plano Cursor paralelo como segunda fonte.
+README/roadmap/ARCHIVED são status/documentação; não substituem o Plano 11 durante execução.
 
-Ao revalidar, atualize no markdown afetado:
+## 15. Saída deste Plan mode
 
-1. **Overview** / status HEAD.
-2. **EXECUTION_DRIFT** quando código divergir.
-3. **CURRENT / TARGET** e ledger RQ do plano filho.
-4. Inventário / classificação de nós quando a etapa for inventário.
-5. Etapas E*.S* (marcar ATENDIDO / SKIP / ABERTO).
-6. Aceite e evidências.
-
-Opcional: um card Cursor pode apontar para esta pasta, sem duplicar conteúdo.
-
-### Sequenciamento sugerido — validar antes de travar
-
-Use como hipótese inicial, não como ordem cega:
+Entregue:
 
 ```text
-E0 baseline + inventory + classification
-E1 routing registry/OpenAPI
-E2 semantic understanding/intents
-E3 follow-up/refinement/argument binding
-E4 capabilities/action catalog
-E5 composition/enrichment
-E6 recommendations/composer
-E7 presentation schema-first residuals
-E8 skills/help/residual content cleanup
-E9 shadow/canary/cutover/legacy cleanup
-E10 verify-final
+HEAD_REVALIDATED:
+DRIFTS_CONFIRMED:
+DRIFTS_RESOLVED_SINCE_AUDIT:
+NEW_DRIFTS:
+REQUIREMENT_LEDGER_STATUS:
+PLAN_11_CHANGES:
+READY_SUBSTEP:
+BLOCKERS:
 ```
 
-### Proibições finais
-
-Não:
-
-- implementar durante a construção inicial do plano;
-- alterar expectativa de eval para esconder regressão;
-- substituir hardcode JSON por hardcode Python;
-- substituir pathMarkers por nova taxonomia manual por endpoint;
-- criar intent service por domínio novo;
-- confiar em prompt para enforcing de RBAC/schema/safety;
-- apagar fallback antes de medir divergência;
-- declarar sucesso só porque unit tests passaram;
-- declarar "mais inteligente" sem R1-R11 + outcome + eficiência;
-- manter roadmap concluído como fonte arquitetural permanente: decisões finais devem voltar para docs canônicas e o roadmap concluído deve ser limpo conforme política documental.
-
-Ao final, pare no plano. Não implemente nem faça commit/push de runtime até autorização explícita.
+Pare no planejamento. Para implementação, usar `prompt-cursor-execucao-corretiva.md` e executar E11.S0→E11.S10 sem pular `COMPLETE_GATE`.
