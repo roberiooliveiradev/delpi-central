@@ -9,9 +9,9 @@
 | Onda | Planos | Status | Próxima subetapa | Notas |
 |------|--------|--------|------------------|-------|
 | A — baseline/contratos | inventário + freeze | **ATENDIDO** | — | Ver `onda-a-inventory.md` |
-| B — routing universal | 01 | **ATENDIDO_PARCIAL** | Onda H: DELETE fields registry | Cutover seleção + binder OK; JSON markers deferred |
+| B — routing universal | 01 | **ATENDIDO** | — | Cutover + DELETE registry (E9.S12.C/D/E) |
 | C — entendimento | 02 | **ATENDIDO** | — | E2.S1–S7 100%; fast paths KEEP_APPROVED |
-| D — multi-turn/args | 03 | **ATENDIDO_PARCIAL** | Onda H: DELETE terms | S1–S7 OK; S8 reload OK; DELETE deferred |
+| D — multi-turn/args | 03 | **ATENDIDO** | — | E3.S1–S8; Postgres lastAction overlay |
 | E — caps/composition | 04, 05 | **ATENDIDO** | — | plano 04+05 S1–S7 OK |
 | F — UX inteligente | 06 | **ATENDIDO** | — | E6.S1–S6 OK; queries = LEGACY_FALLBACK |
 | G — presentation/skills | 07, 08 | **ATENDIDO** | — | Planos 07+08 S1–S* OK |
@@ -186,3 +186,7 @@ abrir planos/0N-*.md
 | 2026-09-11 | E9.S8 **ATENDIDO** — `globalReleasePass=true`; aggregate `PASS_OFFLINE_AND_LIVE`; blockingCells=[] |
 | 2026-09-11 | E9.S9 **ATENDIDO** — aceite final Onda H documentado |
 | 2026-09-11 | Plano 09 / Onda H **ATENDIDO** — release gates plenos; débitos F5 browser / tokens metadata não-bloqueantes |
+| 2026-09-11 | E3.S8 **ATENDIDO** — Postgres overlay `working/lastAction` + merge history-wins; sanitize bounded |
+| 2026-09-11 | Onda B **ATENDIDO** — E1.S6 fechado (DELETE registry E9.S12.*) |
+| 2026-09-11 | Onda D **ATENDIDO** — plano 03 S1–S8 completo |
+| 2026-09-11 | Programa llm-json-decoupling **ondas A–H ATENDIDAS** |
