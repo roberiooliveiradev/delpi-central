@@ -25,6 +25,12 @@ from pathlib import Path
 from typing import Any
 
 _ROOT = Path(__file__).resolve().parents[1]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
+from app.domain.services.chat_r8_latency_threshold_service import (  # noqa: E402
+    ChatR8LatencyThresholdService,
+)
 _BASE_URL = os.environ.get("SMOKE_BASE_URL", "http://localhost").strip()
 _REALM = os.environ.get("SMOKE_REALM", "delpi").strip()
 _CLIENT_ID = os.environ.get("SMOKE_CLIENT_ID", "delpi-central").strip()
@@ -280,27 +286,41 @@ def main() -> int:
         "decision": None,
     }
 
-    # Gate: enough ok trials + no ollama provider observed + p95 present
-    ollama_seen = any("ollama" in p.lower() for p in providers)
-    enough = summary["stack"]["trialsOk"] >= 3
-    tokens_ok = bool(token_totals)
-    if not enough:
-        decision = "INCONCLUSIVE"
-        reason = "menos de 3 trials OK"
-    elif ollama_seen:
-        decision = "FAIL"
-        reason = "provider ollama observado (fallback proibido)"
-    elif summary["latency"]["p95Ms"] is None:
-        decision = "INCONCLUSIVE"
-        reason = "p95 ausente"
-    elif not tokens_ok:
-        decision = "INCONCLUSIVE"
-        reason = "tokens metadata ausente (totalTokens/Estimated)"
-    else:
-        decision = "PASS"
-        reason = "p50/p95 + tokens metadata no stack openai_compatible"
+    # Gate R8 canônico (chat-ai-flow-families.md §12): P50/P95 ≤ alvo do modo.
+    provider_for_gate = providers[0] if len(providers) == 1 else (",".join(providers) if providers else None)
+    if any("ollama" in p.lower() for p in providers):
+        provider_for_gate = next(p for p in providers if "ollama" in p.lower())
+    llm_call_count = sum(
+        1
+        for t in trials
+        if t.get("ok") and isinstance(t.get("llmMs"), (int, float))
+    )
+    tool_call_count = sum(int(t.get("toolCalls") or 0) for t in trials if t.get("ok"))
+    token_avg = statistics.mean(token_totals) if token_totals else None
+
+    gate = ChatR8LatencyThresholdService.evaluate(
+        response_mode=_RESPONSE_MODE,
+        p50_ms=summary["latency"]["p50Ms"],
+        p95_ms=summary["latency"]["p95Ms"],
+        provider=provider_for_gate,
+        total_tokens=token_avg,
+        llm_calls=llm_call_count,
+        tool_calls=tool_call_count,
+        trials_ok=int(summary["stack"]["trialsOk"]),
+        min_trials_ok=3,
+        require_tokens=True,
+    )
+    decision = gate.decision
+    reason = gate.reason
     summary["decision"] = decision
     summary["decisionReason"] = reason
+    summary["r8Gate"] = gate.as_dict()
+    summary["efficiency"] = {
+        "llmCalls": llm_call_count,
+        "toolCalls": tool_call_count,
+        "tokensAvgTotal": token_avg,
+        "observedProviders": providers,
+    }
 
     out_dir = (
         _ROOT
@@ -315,9 +335,12 @@ def main() -> int:
     print("\n=== RESUMO ===")
     print(
         f"ok={summary['stack']['trialsOk']}/{_TRIALS} "
+        f"mode={_RESPONSE_MODE} thresholdMs={gate.threshold_ms} "
         f"p50={summary['latency']['p50Ms']} p95={summary['latency']['p95Ms']} "
-        f"providers={providers} decision={decision}"
+        f"providers={providers} llmCalls={llm_call_count} toolCalls={tool_call_count} "
+        f"decision={decision}"
     )
+    print(f"reason={reason}")
     print(f"evidence={out_dir / 'results.json'}")
     return 0 if decision == "PASS" else 1
 

@@ -1,7 +1,7 @@
 # Plano 11 — Correção arquitetural: cutover + generalização + cleanup sem residual
 
 **Prioridade:** P0  
-**Status execução:** **REABERTO — Onda J / `VERIFY_FINAL_FAILED`**  
+**Status execução:** **REABERTO — Onda J / `VERIFY_FINAL_FAILED`** · J-R1 **ATENDIDO** · próxima = **J-R2**  
 **BASE_GIT_SHA original (E11.S0):** `8bc84fc6d1cea3edc8cd0c08dceee90f9303e777`  
 **Candidate anteriormente declarado final:** `782a49721319571f0fe4733d59b8a5cc65ac4c04` — **histórico invalidado como release evidence**  
 **Auditoria pós-fechamento:** [`../evidence/e11-post-close-audit-2026-09-11.md`](../evidence/e11-post-close-audit-2026-09-11.md)  
@@ -252,7 +252,8 @@ GROUNDED SYNTHESIS + CONTEXTUAL RECOMMENDATIONS
 
 ## J-R1 — corrigir R8
 
-**Objetivo:** tornar latency gate aderente ao contrato canônico.
+**Objetivo:** tornar latency gate aderente ao contrato canônico.  
+**Status:** **ATENDIDO** · `R8_THRESHOLD_CANONICAL=PASS` · evidência [`../evidence/e11-j-r1-r8-threshold-canonical.md`](../evidence/e11-j-r1-r8-threshold-canonical.md)
 
 Fazer:
 
@@ -262,7 +263,9 @@ Fazer:
 - falhar quando threshold obrigatório for excedido;
 - não aumentar threshold apenas para acomodar o candidate.
 
-**Gate:** `R8_THRESHOLD_CANONICAL = PASS`.
+**Gate:** `R8_THRESHOLD_CANONICAL = PASS` (**cumprido** — `ChatR8LatencyThresholdService` + runner `run_e9_s11_efficiency_live.py`).
+
+**Próxima:** J-R2.
 
 ## J-R2 — corrigir requiredDimensions
 

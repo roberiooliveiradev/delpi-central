@@ -1,0 +1,24 @@
+{
+  "runId": "e11-j-r1-r8-threshold-canonical-v1",
+  "wave": "J",
+  "step": "J-R1",
+  "gate": "R8_THRESHOLD_CANONICAL",
+  "completeGate": "PASS",
+  "authority": "docs/testing/chat-ai-flow-families.md#12",
+  "canonicalThresholdsMs": {
+    "fast": 3000,
+    "normal": 5000,
+    "thinker": 15000
+  },
+  "owner": "app.domain.services.chat_r8_latency_threshold_service.ChatR8LatencyThresholdService",
+  "runnerWired": "scripts/run_e9_s11_efficiency_live.py",
+  "historicalCandidateInvalidated": "782a49721319571f0fe4733d59b8a5cc65ac4c04",
+  "historicalReevaluation": {
+    "responseMode": "normal",
+    "p50Ms": 41522,
+    "p95Ms": 50708,
+    "storedDecision": "PASS",
+    "canonicalDecision": "FAIL"
+  },
+  "tests": "tests/unit/domain/services/test_j_r1_r8_latency_threshold.py"
+}
