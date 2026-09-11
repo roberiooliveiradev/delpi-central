@@ -91,7 +91,7 @@
       "controlPath": ["productFamilyAuthorityShadow", "cutoverEnabled"],
       "envOverride": null,
       "moduleOwner": "app/domain/services/chat_product_query_intent_detection_service.py",
-      "defaultState": "cutover_off",
+      "defaultState": "cutover_on",
       "flagReversible": true,
       "rollbackHow": "productFamilyAuthorityShadow.cutoverEnabled=false → detect volta ao pipeline legado; mapper permanece observer no shadow.",
       "observability": "authorityShadow.candidateProductIntent / cutover",

@@ -1,46 +1,41 @@
-# E2.S4 — Product-family cutover dial (default OFF)
+# E2.S4 — Product-family cutover canary ON
 
-**Status:** `CUTOVER_PARTIAL` (2026-09-10) — família **product** instrumentada; dial `cutoverEnabled=false`  
+**Status:** `CUTOVER_PRODUCT_CANARY` (2026-09-10) — família **product** com dial `cutoverEnabled=true`  
 **Onda:** C (plano 02)
 
 ## O que entrou
 
 | Peça | Path |
 |------|------|
-| Dial | `conversational_intelligence.json` → `productFamilyAuthorityShadow` |
-| Flag | `ChatConversationalIntelligenceFlagService.product_family_cutover_enabled` |
-| Mapper | `TurnUnderstandingProductIntentMapperService` (goals → enum) |
-| Cutover point | `ChatProductQueryIntentDetectionService.detect` / `refine_*` |
-| Shadow | `candidateProductIntent` + `cutover` do dial; legacy via `force_legacy=True` |
+| Dial | `productFamilyAuthorityShadow.cutoverEnabled=true` (só `families.product`) |
+| Mapper | grounding obrigatório (código/`produto`) + bloqueio doc/RAG (`política…`) |
+| Authority | `detect` / `refine_*` usam mapper; fallback legado se `None` |
+| Shadow | `candidateProductIntent` + `cutover=true` |
 
-## Dial (default seguro)
+## Paridade offline (corpus E2.S2)
 
-```json
-"productFamilyAuthorityShadow": {
-  "enabled": true,
-  "cutoverEnabled": false,
-  "families": { "product": true, "production": false, "kpi": false }
-}
+```text
+agree_legacy_effective = 10/10
+rag_policy → mapped=None → fallback full (PASS negativo)
+stock/synonym/compound → mapped=stock|multi_scope (PASS)
 ```
-
-Com `cutoverEnabled=false`: comportamento idêntico ao pré-cutover (SHADOW_DOES_NOT_CHANGE_SELECTION).
 
 ## Aceite
 
 ```text
 SHADOW_COMPARE_WIRED = PASS
-SHADOW_DOES_NOT_CHANGE_SELECTION = PASS (dial OFF)
-PRODUCT_MAPPER_STOCK_SYNONYM = PASS
-PRODUCT_MAPPER_COMPOUND_MULTI_SCOPE = PASS
-PRODUCT_MAPPER_NEGATIVE_SMALLTALK = PASS
-CUTOVER_PRODUCT_DIAL = READY (OFF in prod JSON)
+PRODUCT_CUTOVER_ON = PASS
+PRODUCT_MAPPER_GROUNDING = PASS
+PRODUCT_MAPPER_NEGATIVE_RAG = PASS
 CUTOVER_PRODUCTION_KPI = NOT_STARTED
 DELETE_HEURISTICS = BLOCKED
 ```
 
-## Não feito nesta fatia
+## Rollback
 
-- Ligar `cutoverEnabled=true` em produção
+`productFamilyAuthorityShadow.cutoverEnabled=false` → pipeline legado imediato.
+
+## Não feito
+
 - Production / KPI families
-- E2.S5 intent_router / analysis vocabulary
-- E2.S7 DELETE de `product_query_intent` heuristics
+- E2.S5–S7 DELETE heurísticas
