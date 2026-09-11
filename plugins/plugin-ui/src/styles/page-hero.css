@@ -1,11 +1,22 @@
 /**
- * PageHero — card de saudação/overview (linguagem visual SI IgdHero).
+ * PageHero — cabeçalho de página (não é card).
+ * Default = plain (sem borda/sombra/fundo de card) para não competir com SectionCard /
+ * DataTableSection abaixo. Opt-in `surface=featured` restaura o card de saudação legado.
  */
 
 .delpi-ui-page-hero {
   position: relative;
   overflow: hidden;
   min-width: 0;
+  padding: 20px 0 12px;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  animation: delpi-ui-page-hero-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.delpi-ui-page-hero--featured {
   padding: 28px;
   border-radius: 28px;
   background: linear-gradient(
@@ -20,10 +31,10 @@
       var(--delpi-ui-border, var(--border, #e6e6e6))
     );
   box-shadow: var(--delpi-ui-shadow, var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12)));
-  animation: delpi-ui-page-hero-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .delpi-ui-page-hero__glow {
+  display: none;
   position: absolute;
   right: -90px;
   bottom: -120px;
@@ -34,6 +45,10 @@
   background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 16%, transparent);
   filter: blur(10px);
   opacity: 0.62;
+}
+
+.delpi-ui-page-hero--featured .delpi-ui-page-hero__glow {
+  display: block;
 }
 
 .delpi-ui-page-hero__content {
@@ -170,6 +185,10 @@
 
 @media (max-width: 768px) {
   .delpi-ui-page-hero {
+    padding: 16px 0 10px;
+  }
+
+  .delpi-ui-page-hero--featured {
     padding: 22px;
   }
 
@@ -178,8 +197,8 @@
   }
 }
 
-:root[data-theme="dark"] .delpi-ui-page-hero,
-.theme-dark .delpi-ui-page-hero {
+:root[data-theme="dark"] .delpi-ui-page-hero--featured,
+.theme-dark .delpi-ui-page-hero--featured {
   background: linear-gradient(
     135deg,
     color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 22%, #0b1220),
@@ -207,6 +226,12 @@
 /* Densidade compact — listas / admin (Portal Comercial e consumidores).
  * Tipografia = mesma do comfortable; só padding/gap/radius ficam densos. */
 .delpi-ui-page-hero--compact {
+  padding: 12px 0 8px;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.delpi-ui-page-hero--featured.delpi-ui-page-hero--compact {
   padding: 12px 14px;
   border-radius: 14px;
   box-shadow: var(--delpi-ui-shadow-sm, 0 4px 14px rgba(0, 0, 0, 0.1));
@@ -307,10 +332,24 @@
 
 @media (max-width: 768px) {
   .delpi-ui-page-hero--compact {
+    padding: 10px 0 6px;
+  }
+
+  .delpi-ui-page-hero--featured.delpi-ui-page-hero--compact {
     padding: 10px 12px;
   }
 
   .delpi-ui-page-hero--compact .delpi-ui-page-hero__highlights {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/*
+ * Contrato Single Surface: nunca empilhar chrome de card dentro do PageHero
+ * (FilterBar sem embedded, SectionCard acidental, etc.).
+ */
+.delpi-ui-page-hero .delpi-ui-card {
+  border: none;
+  box-shadow: none;
+  background: transparent;
 }

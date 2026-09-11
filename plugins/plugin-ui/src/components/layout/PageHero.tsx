@@ -6,6 +6,9 @@ export type PageHeroHighlightTone = "neutral" | "warning" | "danger";
 
 export type PageHeroDensity = "comfortable" | "compact";
 
+/** Default `plain` = cabeçalho sem chrome de card. `featured` = card de saudação legado (opt-in). */
+export type PageHeroSurface = "plain" | "featured";
+
 export type PageHeroHighlight = {
   id: string;
   label: ReactNode;
@@ -41,10 +44,15 @@ export type PageHeroProps = {
   /** Ações à direita do headline (ex.: Atualizar). */
   actions?: ReactNode;
   highlights?: PageHeroHighlight[];
-  /** Faixa inferior (filtros, chips, escopo). Preferir fora do hero em listas densas. */
+  /** Faixa inferior (filtros, chips, escopo). Preferir FilterBar `embedded` quando dentro do hero. */
   children?: ReactNode;
-  /** Densidade vertical — `compact` reduz padding/título/highlights. */
+  /** Densidade vertical — `compact` reduz padding/gap/highlights. */
   density?: PageHeroDensity;
+  /**
+   * Superfície visual. Default `plain` evita card-sobre-card com SectionCard/DataTable abaixo.
+   * Use `featured` só em home/saudação isolada que precise do card legado.
+   */
+  surface?: PageHeroSurface;
   className?: string;
   "aria-label"?: string;
 };
@@ -86,11 +94,14 @@ export function PageHero({
   highlights,
   children,
   density = "comfortable",
+  surface = "plain",
   className,
   "aria-label": ariaLabel,
 }: PageHeroProps) {
   const rootClass = [
-    density === "compact" ? withBemModifier(classNames.root, "compact") : classNames.root,
+    classNames.root,
+    density === "compact" ? withBemModifier(classNames.root, "compact") : null,
+    surface === "featured" ? withBemModifier(classNames.root, "featured") : null,
     className,
   ]
     .filter(Boolean)
@@ -98,7 +109,12 @@ export function PageHero({
   const hasHighlights = Boolean(highlights?.length);
 
   return (
-    <section className={rootClass} aria-label={ariaLabel} data-density={density}>
+    <section
+      className={rootClass}
+      aria-label={ariaLabel}
+      data-density={density}
+      data-surface={surface}
+    >
       <span className={classNames.glow} aria-hidden="true" />
       <div className={classNames.content}>
         {eyebrow ? <p className={classNames.eyebrow}>{eyebrow}</p> : null}

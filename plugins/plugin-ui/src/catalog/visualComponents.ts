@@ -95,8 +95,10 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   }),
   vc("layout", "PageHero", {
     addedAt: "2026-08-06",
+    updatedAt: "2026-09-11",
     description:
-      "Card hero de overview/saudação (linguagem SI): eyebrow, título, descrição, highlights; density comfortable|compact.",
+      "Cabeçalho de página (plain por default, sem chrome de card): eyebrow, título, descrição, highlights; density comfortable|compact; surface featured opt-in.",
+    changeNote: "Default surface=plain — evita card-sobre-card com SectionCard/DataTable",
   }),
   vc("layout", "ResizableColumns", {
     addedAt: "2026-08-19",

@@ -346,6 +346,7 @@ export {
   type PageHeroHighlight,
   type PageHeroHighlightTone,
   type PageHeroProps,
+  type PageHeroSurface,
 } from "./PageHero";
 export {
   ResizableColumns,

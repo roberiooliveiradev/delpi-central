@@ -83,6 +83,18 @@ Onda de poda remove CSS local **sem** dual-class/tokens → cards colados, loadi
 ### Overlays / toolbars flutuantes (anti-padrão documentado — ago/2026)
 
 Toolbar abspos dentro de lista com `overflow-y: auto` + “fix” com `overflow: clip` / `padding-top` → corte e scroll fantasma. **Canônico:** `AnchoredPanelPortal` + `resolveAnchoredPanelCoords` — regra **`plugins-overlay-positioning.mdc`**.
+
+### PageHero sem card-sobre-card (set/2026)
+
+`PageHero` default = **`surface="plain"`** (sem borda/sombra/fundo de card). Conteúdo da página (`SectionCard`, `DataTableSection`, KPIs) é a única superfície de card.
+
+| Fazer | Não fazer |
+|-------|-----------|
+| PageHero plain + SectionCard/DataTable abaixo | PageHero como card + SectionCard “Lista …” logo abaixo (dois cards empilhados) |
+| FilterBar `embedded` quando filtros estão **dentro** do hero | FilterBar com chrome de card aninhado no hero |
+| `surface="featured"` só em home/saudação isolada que precise do card legado | `featured` em listas/admin “porque o DoD pedia PageHero” |
+
+Correção de chrome: só em `plugins/plugin-ui/src/styles/page-hero.css` (+ teste de contrato). Zero override no MFE.
 ---
 
 ## O que usar do pacote (hoje)
