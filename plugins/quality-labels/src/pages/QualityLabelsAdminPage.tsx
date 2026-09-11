@@ -389,6 +389,9 @@ export function QualityLabelsAdminPage() {
           <>
             <span className="ql-cell-strong">{row.productCode}</span>
             <span className={QL_TABLE.sub}>{row.productDescription}</span>
+            {row.customerName ? (
+              <span className={QL_TABLE.sub}>{row.customerName}</span>
+            ) : null}
             {row.customerItem || row.customerReference ? (
               <span className={QL_TABLE.sub}>
                 Cliente {row.customerItem || row.customerReference}

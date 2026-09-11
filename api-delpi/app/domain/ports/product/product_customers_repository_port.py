@@ -14,3 +14,8 @@ class ProductCustomersRepositoryPort(ABC):
         page_size: int
     ) -> Page[Customer]:
         pass
+
+    @abstractmethod
+    def fetch_latest_customer_by_product(self, code: str) -> dict | None:
+        """Cliente da última NF (SD2) do produto, com nome SA1."""
+        raise NotImplementedError

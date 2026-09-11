@@ -18,9 +18,6 @@ from app.application.services.quality_labels.quality_labels_qr_service import (
 from app.application.use_cases.production.get_production_order_by_op_use_case import (
     GetProductionOrderByOpUseCase,
 )
-from app.application.use_cases.production.get_order_customer_by_op_use_case import (
-    GetOrderCustomerByOpUseCase,
-)
 from app.application.use_cases.production.search_production_orders_by_op_use_case import (
     SearchProductionOrdersByOpUseCase,
 )
@@ -61,7 +58,6 @@ class QualityLabelsService:
         qr_service: QualityLabelsQrService,
         production_order_use_case: GetProductionOrderByOpUseCase,
         search_orders_use_case: SearchProductionOrdersByOpUseCase,
-        order_customer_use_case: GetOrderCustomerByOpUseCase,
         product_query_repository: ProductQueryRepositoryPort,
         audit_metadata_service: QualityLabelsAuditMetadataService,
         audit_repository: PostgresQualityLabelsAuditRepository,
@@ -70,7 +66,6 @@ class QualityLabelsService:
         self._qr_service = qr_service
         self._production_order_use_case = production_order_use_case
         self._search_orders_use_case = search_orders_use_case
-        self._order_customer_use_case = order_customer_use_case
         self._product_query_repository = product_query_repository
         self._audit_metadata_service = audit_metadata_service
         self._audit_repository = audit_repository
@@ -110,7 +105,9 @@ class QualityLabelsService:
         customer = self._lookup_customer(
             production_order=resolved_op,
             branch=resolved_branch,
+            product_code=str(order.get("product_code") or "").strip() or None,
         )
+        header = self._lookup_product_header(order.get("product_code"))
         return {
             "productionOrder": resolved_op,
             "orderNumber": order.get("order_number"),
@@ -122,9 +119,8 @@ class QualityLabelsService:
             "existingLabels": existing_payloads,
             "hasActiveInspection": len(active_existing) > 0,
             "customer": customer,
-            "customerReference": self._lookup_customer_reference(
-                order.get("product_code")
-            ),
+            "customerReference": header.get("customer_reference"),
+            "drawingCode": header.get("drawing_code"),
         }
 
     def create_label(
@@ -206,6 +202,7 @@ class QualityLabelsService:
             return None
         payload = self._repository.to_admin_payload(row, include_audit_metadata=True)
         payload["publicUrl"] = build_public_url(row["public_token"])
+        self._enrich_product_codes(payload, row)
         return payload
 
     def set_active(
@@ -283,49 +280,75 @@ class QualityLabelsService:
             actor_name="Cliente (acesso público)",
         )
         payload = self._repository.to_public_payload(row)
-        if payload.get("customerReference") or self._repository.audit_captured_customer_reference(
+        self._enrich_product_codes(payload, row)
+        if not payload.get("customerName") and not self._repository.audit_captured_customer_name(
             row
         ):
-            return payload
-        payload["customerReference"] = self._lookup_customer_reference(
-            row.get("product_code")
-        )
+            live_customer = self._lookup_customer(
+                production_order=str(row.get("production_order") or ""),
+                branch=row.get("branch"),
+                product_code=str(row.get("product_code") or "").strip() or None,
+            )
+            payload["customerName"] = (live_customer or {}).get("name")
         return payload
 
-    def _lookup_customer_reference(self, product_code: Any) -> str | None:
+    def _enrich_product_codes(self, payload: dict[str, Any], row: dict[str, Any]) -> None:
+        needs_reference = not payload.get(
+            "customerReference"
+        ) and not self._repository.audit_captured_customer_reference(row)
+        needs_drawing = not payload.get(
+            "drawingCode"
+        ) and not self._repository.audit_captured_drawing_code(row)
+        if not needs_reference and not needs_drawing:
+            return
+        header = self._lookup_product_header(row.get("product_code"))
+        if needs_reference:
+            payload["customerReference"] = header.get("customer_reference")
+        if needs_drawing:
+            payload["drawingCode"] = header.get("drawing_code")
+
+    def _lookup_product_header(self, product_code: Any) -> dict[str, str | None]:
+        empty: dict[str, str | None] = {
+            "customer_reference": None,
+            "drawing_code": None,
+        }
         code = str(product_code or "").strip()
         if not code:
-            return None
+            return empty
         try:
             row = self._product_query_repository.fetch_product_by_code(code)
         except Exception as exc:  # noqa: BLE001 - best-effort
-            log_error(f"Falha ao buscar referência do cliente do produto {code}: {exc}")
-            return None
+            log_error(f"Falha ao buscar cadastro do produto {code}: {exc}")
+            return empty
         if not row:
-            return None
-        text = str(row.get("customer_reference") or "").strip()
-        return text or None
+            return empty
+        return {
+            "customer_reference": str(row.get("customer_reference") or "").strip() or None,
+            "drawing_code": str(row.get("drawing_code") or "").strip() or None,
+        }
 
     def _lookup_customer(
         self,
         *,
         production_order: str,
         branch: str | None,
+        product_code: str | None = None,
     ) -> dict[str, Any] | None:
         try:
-            row = self._order_customer_use_case.execute(
+            row = self._audit_metadata_service.resolve_customer(
                 production_order=production_order,
                 branch=branch,
+                product_code=product_code,
             )
         except Exception as exc:  # noqa: BLE001 - best-effort
             log_error(f"Falha ao buscar cliente da OP {production_order}: {exc}")
             return None
-        if not row or not row.get("customer_name"):
+        if not row or not row.get("name"):
             return None
         return {
-            "code": row.get("customer_code"),
-            "store": row.get("customer_store"),
-            "name": row.get("customer_name"),
+            "code": row.get("code"),
+            "store": row.get("store"),
+            "name": row.get("name"),
             "source": "totvs",
         }
 

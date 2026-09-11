@@ -218,6 +218,18 @@ export function AuditMetadataModal({ label, onClose }: Props) {
                     <dt>Referência do cliente (B1_REFEREN)</dt>
                     <dd>{text(product?.customerReference)}</dd>
                   </div>
+                  <div className="ql-audit-grid__item">
+                    <dt>Código do desenho (B1_CODDES)</dt>
+                    <dd>{text(product?.drawingCode ?? label.drawingCode)}</dd>
+                  </div>
+                  <div className="ql-audit-grid__item">
+                    <dt>Cliente</dt>
+                    <dd>{text(metadata?.customer?.name ?? label.customerName)}</dd>
+                  </div>
+                  <div className="ql-audit-grid__item">
+                    <dt>Fonte do cliente</dt>
+                    <dd>{text(metadata?.customer?.source)}</dd>
+                  </div>
                 </dl>
               </section>
 

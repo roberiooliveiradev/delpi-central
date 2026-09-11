@@ -236,6 +236,14 @@ export function resolveDelpiCableLabelCustomerValue(fields: {
   return formatDelpiCableLabelCustomerItem(fields.customerReference, null);
 }
 
+/** Rótulo da linha do cliente: nome fantasia/razão; senão «CLIENTE». */
+export function resolveDelpiCableLabelCustomerLabel(
+  name?: string | null,
+): string {
+  const trimmed = (name ?? "").trim();
+  return trimmed || "CLIENTE";
+}
+
 /**
  * Linha rotulada (DELPI / CLIENTE) no painel da etiqueta 100×30 mm.
  * Valor vazio ou só espaço → string vazia (não renderiza o bloco).

@@ -297,7 +297,8 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
             SB1.B1_TIPO AS product_type,
             SB1.B1_UM AS unit,
             SB1.B1_GRUPO AS group_code,
-            SB1.B1_REFEREN AS customer_reference
+            SB1.B1_REFEREN AS customer_reference,
+            SB1.B1_CODDES AS drawing_code
         FROM SB1010 SB1 WITH (NOLOCK)
         WHERE SB1.D_E_L_E_T_ = ''
           AND SB1.B1_COD = ?
@@ -313,7 +314,8 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
             SB1.B1_TIPO AS product_type,
             SB1.B1_UM AS unit,
             SB1.B1_GRUPO AS group_code,
-            SB1.B1_REFEREN AS customer_reference
+            SB1.B1_REFEREN AS customer_reference,
+            SB1.B1_CODDES AS drawing_code
         FROM SB1010 SB1 WITH (NOLOCK)
         WHERE SB1.D_E_L_E_T_ = ''
           AND SB1.B1_REFEREN = ?

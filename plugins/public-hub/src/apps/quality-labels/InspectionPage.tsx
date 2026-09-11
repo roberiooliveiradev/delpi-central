@@ -38,10 +38,22 @@ export function InspectionView({ inspection }: { inspection: PublicInspection })
       <p className="qlp-desc">{inspection.productDescription}</p>
 
       <dl className="qlp-details">
+        {inspection.customerName ? (
+          <div className="qlp-detail">
+            <dt>Cliente</dt>
+            <dd>{inspection.customerName}</dd>
+          </div>
+        ) : null}
         {inspection.customerReference ? (
           <div className="qlp-detail">
             <dt>Código do cliente</dt>
             <dd>{inspection.customerReference}</dd>
+          </div>
+        ) : null}
+        {inspection.drawingCode ? (
+          <div className="qlp-detail">
+            <dt>Código do desenho</dt>
+            <dd>{inspection.drawingCode}</dd>
           </div>
         ) : null}
         <div className="qlp-detail">

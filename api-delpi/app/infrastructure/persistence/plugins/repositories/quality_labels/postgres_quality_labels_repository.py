@@ -22,7 +22,7 @@ _ADMIN_COLUMNS = (
     "l.inspector_user_id, l.inspector_name, l.result, l.notes, "
     "l.inspected_quantity, l.qr_filename, l.view_count, l.is_active, "
     "l.audit_metadata, l.created_at, l.updated_at, "
-    "c.customer_item, c.customer_item_rev"
+    "c.customer_item, c.customer_item_rev, c.customer_name"
 )
 _ADMIN_FROM = """
               FROM quality_labels.inspection_labels AS l
@@ -283,6 +283,8 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
             "customerItem": cls._optional_text(row.get("customer_item")),
             "customerItemRev": cls._optional_text(row.get("customer_item_rev")),
             "customerReference": cls.customer_reference_from_row(row),
+            "customerName": cls.resolved_customer_name(row),
+            "drawingCode": cls.drawing_code_from_row(row),
         }
         if include_audit_metadata:
             metadata = cls._audit_metadata(row)
@@ -309,11 +311,45 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
         )
 
     @classmethod
+    def drawing_code_from_row(cls, row: dict[str, Any]) -> str | None:
+        """SB1.B1_CODDES capturado em audit_metadata.product.drawingCode."""
+        product = cls._audit_metadata(row).get("product")
+        if not isinstance(product, dict):
+            return None
+        return cls._optional_text(
+            product.get("drawingCode") or product.get("drawing_code")
+        )
+
+    @classmethod
+    def audit_captured_drawing_code(cls, row: dict[str, Any]) -> bool:
+        """True quando o snapshot já tentou gravar B1_CODDES (mesmo se vazio)."""
+        product = cls._audit_metadata(row).get("product")
+        return isinstance(product, dict) and (
+            "drawingCode" in product or "drawing_code" in product
+        )
+
+    @classmethod
     def resolved_customer_reference(cls, row: dict[str, Any]) -> str | None:
         """Item manual do certificado vence o snapshot do cadastro SB1."""
         return cls._optional_text(row.get("customer_item")) or cls.customer_reference_from_row(
             row
         )
+
+    @classmethod
+    def customer_name_from_row(cls, row: dict[str, Any]) -> str | None:
+        customer = cls._audit_metadata(row).get("customer")
+        if not isinstance(customer, dict):
+            return None
+        return cls._optional_text(customer.get("name"))
+
+    @classmethod
+    def audit_captured_customer_name(cls, row: dict[str, Any]) -> bool:
+        return "customer" in cls._audit_metadata(row)
+
+    @classmethod
+    def resolved_customer_name(cls, row: dict[str, Any]) -> str | None:
+        """Nome no certificado vence o snapshot (pedido ou última NF)."""
+        return cls._optional_text(row.get("customer_name")) or cls.customer_name_from_row(row)
 
     @classmethod
     def to_public_payload(cls, row: dict[str, Any]) -> dict[str, Any]:
@@ -329,4 +365,6 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
             "result": row.get("result"),
             "companyName": "Delpi Conexões Elétricas",
             "customerReference": cls.resolved_customer_reference(row),
+            "customerName": cls.resolved_customer_name(row),
+            "drawingCode": cls.drawing_code_from_row(row),
         }

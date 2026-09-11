@@ -12,6 +12,8 @@ export type PublicInspection = {
   result: string;
   companyName: string;
   customerReference?: string | null;
+  customerName?: string | null;
+  drawingCode?: string | null;
 };
 
 type ApiEnvelope<T> = {

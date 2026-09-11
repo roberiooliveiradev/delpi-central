@@ -50,6 +50,8 @@ def test_admin_payload_without_certificate_join_has_null_customer_item() -> None
     assert payload["customerItem"] is None
     assert payload["customerItemRev"] is None
     assert payload["customerReference"] is None
+    assert payload["customerName"] is None
+    assert payload["drawingCode"] is None
 
 
 def test_admin_payload_includes_customer_reference_from_audit_snapshot() -> None:
@@ -62,6 +64,53 @@ def test_admin_payload_includes_customer_reference_from_audit_snapshot() -> None
     )
     assert payload["customerReference"] == "2229-07/1"
     assert payload["customerItem"] is None
+
+
+def test_admin_payload_includes_drawing_code_from_audit_snapshot() -> None:
+    payload = PostgresQualityLabelsRepository.to_admin_payload(
+        _row(
+            audit_metadata={
+                "product": {
+                    "code": "90264270",
+                    "customerReference": "19425259",
+                    "drawingCode": "10014878060",
+                }
+            }
+        )
+    )
+    assert payload["drawingCode"] == "10014878060"
+    assert payload["customerReference"] == "19425259"
+
+
+def test_admin_payload_includes_customer_name_from_snapshot() -> None:
+    payload = PostgresQualityLabelsRepository.to_admin_payload(
+        _row(
+            audit_metadata={
+                "customer": {"name": "THERMOSTAR", "source": "last_sale"}
+            }
+        )
+    )
+    assert payload["customerName"] == "THERMOSTAR"
+
+
+def test_public_payload_certificate_name_wins_over_snapshot() -> None:
+    payload = PostgresQualityLabelsRepository.to_public_payload(
+        _row(
+            customer_name="Nome no certificado",
+            audit_metadata={"customer": {"name": "THERMOSTAR"}},
+        )
+    )
+    assert payload["customerName"] == "Nome no certificado"
+
+
+def test_public_payload_uses_snapshot_name_when_certificate_blank() -> None:
+    payload = PostgresQualityLabelsRepository.to_public_payload(
+        _row(
+            customer_name="  ",
+            audit_metadata={"customer": {"name": "THERMOSTAR"}},
+        )
+    )
+    assert payload["customerName"] == "THERMOSTAR"
 
 
 def test_public_payload_does_not_expose_customer_item() -> None:
@@ -100,4 +149,22 @@ def test_public_payload_certificate_item_wins_over_snapshot() -> None:
 def test_public_payload_omits_customer_reference_when_absent() -> None:
     payload = PostgresQualityLabelsRepository.to_public_payload(_row())
     assert payload["customerReference"] is None
+    assert payload["customerName"] is None
+    assert payload["drawingCode"] is None
     assert "customerItem" not in payload
+
+
+def test_public_payload_includes_drawing_code_from_snapshot() -> None:
+    payload = PostgresQualityLabelsRepository.to_public_payload(
+        _row(
+            audit_metadata={
+                "product": {
+                    "code": "90264270",
+                    "customerReference": "19425259",
+                    "drawingCode": "10014878060",
+                }
+            }
+        )
+    )
+    assert payload["drawingCode"] == "10014878060"
+    assert payload["customerReference"] == "19425259"

@@ -23,9 +23,17 @@ export type AuditMetadata = {
   product?: {
     code?: string | null;
     customerReference?: string | null;
+    drawingCode?: string | null;
     structure?: Record<string, unknown> | null;
     routing?: Record<string, unknown> | null;
     inspection?: Record<string, unknown> | null;
+  } | null;
+  customer?: {
+    code?: string | null;
+    store?: string | null;
+    name?: string | null;
+    legalName?: string | null;
+    source?: string | null;
   } | null;
   sources?: AuditSource[];
   errors?: AuditError[];
@@ -57,8 +65,10 @@ export type OpLookup = {
   existingLabels: ExistingLabelBrief[];
   hasActiveInspection: boolean;
   customer: OpCustomerHint | null;
-  /** SB1.B1_REFEREN — referência do desenho no cadastro do produto. */
+  /** SB1.B1_REFEREN — referência do cliente no cadastro do produto. */
   customerReference?: string | null;
+  /** SB1.B1_CODDES — código do desenho do cliente. */
+  drawingCode?: string | null;
 };
 
 export type ChecklistTemplateItem = {
@@ -97,8 +107,12 @@ export type QualityLabel = {
   /** Item do cliente no certificado 1:1 — usado na etiqueta física. */
   customerItem?: string | null;
   customerItemRev?: string | null;
-  /** SB1.B1_REFEREN no snapshot de auditoria — fallback da etiqueta/página pública. */
+  /** SB1.B1_REFEREN no snapshot de auditoria — código na etiqueta física. */
   customerReference?: string | null;
+  /** Nome do cliente (pedido da OP, última NF ou certificado) — QR e metadados. */
+  customerName?: string | null;
+  /** SB1.B1_CODDES — código do desenho do cliente (QR e metadados). */
+  drawingCode?: string | null;
   /** Snapshot TOTVS no registro — presente em create/get detalhe. */
   auditMetadata?: AuditMetadata;
   hasAuditMetadata?: boolean;

@@ -190,11 +190,12 @@ export function CertificateFormFields({
           )}
         </span>
         <p className="ql-info-note ql-info-note--compact">
-          Na etiqueta física e na página pública do QR, o código do cliente vem da
-          referência do cadastro do produto (<strong>B1_REFEREN</strong>), gravada
-          nos metadados da inspeção. Se o item do cliente for preenchido aqui, ele
-          prevalece. O código Delpi fica só no verso da etiqueta, com a marca e o
-          selo.
+          Na etiqueta física e na página pública do QR, o rótulo do QR usa o
+          <strong>nome do cliente</strong> (pedido da OP ou última NF) e o código
+          vem da referência do cadastro do produto (<strong>B1_REFEREN</strong>),
+          gravada nos metadados da inspeção. Se nome ou item forem preenchidos
+          aqui, eles prevalecem. O código Delpi fica só no verso da etiqueta,
+          com a marca e o selo.
         </p>
         <div className="ql-cert-grid">
           <label className="ql-field ql-field--wide">

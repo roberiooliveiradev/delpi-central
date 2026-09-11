@@ -34,7 +34,11 @@ class ProductionOrderCustomerRepository(
             RTRIM(LTRIM(OP.C2_ITEMPV))  AS sales_order_item,
             RTRIM(LTRIM(C5.C5_CLIENTE)) AS customer_code,
             RTRIM(LTRIM(C5.C5_LOJACLI)) AS customer_store,
-            RTRIM(LTRIM(A1.A1_NOME))    AS customer_name
+            COALESCE(
+                NULLIF(RTRIM(LTRIM(A1.A1_NREDUZ)), ''),
+                RTRIM(LTRIM(A1.A1_NOME))
+            ) AS customer_name,
+            RTRIM(LTRIM(A1.A1_NOME)) AS customer_legal_name
         FROM SC2010 OP WITH (NOLOCK)
         LEFT JOIN SC5010 C5 WITH (NOLOCK)
             ON C5.D_E_L_E_T_ = ''

@@ -30,7 +30,7 @@ class Product:
     # =====================
     # ENGINEERING / PRODUCTION
     # =====================
-    drawing_code: Optional[str] = None
+    drawing_code: Optional[str] = None  # B1_CODDES — código do desenho do cliente
     unit: Optional[str] = None
     secondary_unit: Optional[str] = None
     conversion_factor: Optional[float] = None

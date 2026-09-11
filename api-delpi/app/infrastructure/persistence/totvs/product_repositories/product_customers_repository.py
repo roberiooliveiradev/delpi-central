@@ -131,3 +131,32 @@ class ProductCustomersRepository(BaseRepository, ProductCustomersRepositoryPort)
             page=paging["page"],
             page_size=paging["page_size"]
         )
+
+    def fetch_latest_customer_by_product(self, code: str) -> dict | None:
+        product_code = (code or "").strip()
+        if not product_code:
+            return None
+        sql = """
+        SELECT TOP 1
+            RTRIM(LTRIM(SD2.D2_CLIENTE)) AS customer_code,
+            RTRIM(LTRIM(SD2.D2_LOJA)) AS customer_store,
+            COALESCE(
+                NULLIF(RTRIM(LTRIM(A1.A1_NREDUZ)), ''),
+                RTRIM(LTRIM(A1.A1_NOME))
+            ) AS customer_name,
+            RTRIM(LTRIM(A1.A1_NOME)) AS customer_legal_name
+        FROM SD2010 SD2 WITH (NOLOCK)
+        INNER JOIN SA1010 A1 WITH (NOLOCK)
+            ON A1.D_E_L_E_T_ = ''
+           AND A1.A1_COD = SD2.D2_CLIENTE
+           AND A1.A1_LOJA = SD2.D2_LOJA
+        WHERE SD2.D_E_L_E_T_ = ''
+          AND RTRIM(LTRIM(SD2.D2_COD)) = ?
+          AND RTRIM(LTRIM(A1.A1_NOME)) <> ''
+        ORDER BY SD2.D2_EMISSAO DESC
+        """
+        with self as repo:
+            row = repo.execute_one(sql, (product_code,))
+        if not row or not (row.get("customer_name") or "").strip():
+            return None
+        return row

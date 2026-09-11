@@ -7,6 +7,7 @@ import {
   buildDelpiCableLabelStyles,
   buildDelpiQualitySealSvg,
   formatDelpiCableLabelCustomerItem,
+  resolveDelpiCableLabelCustomerLabel,
   resolveDelpiCableLabelCustomerValue,
 } from "./delpiCableLabel";
 
@@ -89,6 +90,17 @@ describe("resolveDelpiCableLabelCustomerValue", () => {
         customerReference: "2229-07/1",
       }),
     ).toBe("MANUAL-99 Rev.00");
+  });
+});
+
+describe("resolveDelpiCableLabelCustomerLabel", () => {
+  it("usa o nome do cliente quando existe", () => {
+    expect(resolveDelpiCableLabelCustomerLabel("THERMOSTAR")).toBe("THERMOSTAR");
+  });
+
+  it("cai no rótulo CLIENTE quando o nome está vazio", () => {
+    expect(resolveDelpiCableLabelCustomerLabel(null)).toBe("CLIENTE");
+    expect(resolveDelpiCableLabelCustomerLabel("  ")).toBe("CLIENTE");
   });
 });
 

@@ -79,7 +79,7 @@ function buildLabelHtml(
     sealTopLabel: topLabel,
     brandFooterHtml: productHtml,
     hintHtml:
-      "Recorte na linha externa e dobre na faixa central em volta do cabo: o QR (frente) mostra o código do cliente; o verso traz a marca, o selo e o código Delpi.",
+      "Recorte na linha externa e dobre na faixa central em volta do cabo: o QR (frente) mostra a referência do cliente; nome e código do desenho aparecem ao ler o QR. O verso traz a marca, o selo e o código Delpi.",
   });
 }
 

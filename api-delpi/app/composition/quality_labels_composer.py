@@ -32,6 +32,9 @@ from app.composition.product_composer import (
 from app.infrastructure.persistence.totvs.product_repositories.product_repository import (
     ProductRepository,
 )
+from app.infrastructure.persistence.totvs.product_repositories.product_customers_repository import (
+    ProductCustomersRepository,
+)
 from app.composition.production_operational_composer import (
     build_get_production_order_by_op_use_case,
     build_search_production_orders_by_op_use_case,
@@ -66,6 +69,8 @@ def build_quality_labels_audit_metadata_service() -> QualityLabelsAuditMetadataS
         guide_use_case=build_list_product_guide_use_case(),
         inspection_use_case=build_list_product_inspection_use_case(),
         product_query_repository=ProductRepository(),
+        order_customer_use_case=build_get_order_customer_by_op_use_case(),
+        product_customers_repository=ProductCustomersRepository(),
     )
 
 
@@ -75,7 +80,6 @@ def build_quality_labels_service() -> QualityLabelsService:
         qr_service=QualityLabelsQrService(),
         production_order_use_case=build_get_production_order_by_op_use_case(),
         search_orders_use_case=build_search_production_orders_by_op_use_case(),
-        order_customer_use_case=build_get_order_customer_by_op_use_case(),
         product_query_repository=ProductRepository(),
         audit_metadata_service=build_quality_labels_audit_metadata_service(),
         audit_repository=PostgresQualityLabelsAuditRepository(),
@@ -104,6 +108,6 @@ def build_quality_labels_certificate_service() -> QualityLabelsCertificateServic
         signature_storage=QualityLabelsSignatureStorage(),
         certificate_storage=QualityLabelsCertificateStorage(),
         pdf_renderer=QualityCertificatePdfRenderer(),
-        order_customer_use_case=build_get_order_customer_by_op_use_case(),
+        audit_metadata_service=build_quality_labels_audit_metadata_service(),
         audit_repository=PostgresQualityLabelsAuditRepository(),
     )

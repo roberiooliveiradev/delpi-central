@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.application.services.quality_labels.quality_labels_audit_metadata_service import (
+    QualityLabelsAuditMetadataService,
+)
 from app.application.services.quality_labels.quality_labels_certificate_storage import (
     QualityLabelsCertificateStorage,
-)
-from app.application.use_cases.production.get_order_customer_by_op_use_case import (
-    GetOrderCustomerByOpUseCase,
 )
 from app.infrastructure.pdf.quality_labels.quality_certificate_pdf_renderer import (
     QualityCertificatePdfRenderer,
@@ -54,7 +54,7 @@ class QualityLabelsCertificateService:
         signature_storage,
         certificate_storage: QualityLabelsCertificateStorage,
         pdf_renderer: QualityCertificatePdfRenderer,
-        order_customer_use_case: GetOrderCustomerByOpUseCase,
+        audit_metadata_service: QualityLabelsAuditMetadataService,
         audit_repository: PostgresQualityLabelsAuditRepository,
     ) -> None:
         self._certificate_repository = certificate_repository
@@ -64,7 +64,7 @@ class QualityLabelsCertificateService:
         self._signature_storage = signature_storage
         self._certificate_storage = certificate_storage
         self._pdf_renderer = pdf_renderer
-        self._order_customer_use_case = order_customer_use_case
+        self._audit_metadata_service = audit_metadata_service
         self._audit_repository = audit_repository
 
     # ------------------------------------------------------------------ read
@@ -171,10 +171,12 @@ class QualityLabelsCertificateService:
     # --------------------------------------------------------------- helpers
 
     def _build_draft(self, label: dict[str, Any]) -> dict[str, Any]:
-        customer = self._order_customer_use_case.execute(
+        customer = self._audit_metadata_service.resolve_customer(
             production_order=str(label.get("production_order") or ""),
             branch=label.get("branch"),
+            product_code=str(label.get("product_code") or "").strip() or None,
         )
+        snap_name = PostgresQualityLabelsRepository.customer_name_from_row(label)
         inspected_qty = label.get("inspected_quantity")
         sample_quantity = f"{inspected_qty} peças" if inspected_qty else None
 
@@ -195,9 +197,9 @@ class QualityLabelsCertificateService:
             "sampleType": "fornecimento",
             "quantity": None,
             "sampleQuantity": sample_quantity,
-            "customerCode": (customer or {}).get("customer_code"),
-            "customerStore": (customer or {}).get("customer_store"),
-            "customerName": (customer or {}).get("customer_name"),
+            "customerCode": (customer or {}).get("code"),
+            "customerStore": (customer or {}).get("store"),
+            "customerName": (customer or {}).get("name") or snap_name,
             "customerItem": PostgresQualityLabelsRepository.customer_reference_from_row(
                 label
             ),
