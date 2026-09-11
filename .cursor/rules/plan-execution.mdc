@@ -23,14 +23,19 @@ PLAN_APPROVED
 → testes locais
 → prova de wiring/contrato
 → positive + sibling + negative quando aplicável
+→ generalization/metamorphic/unknown quando o risco exigir
 → revisão adversarial do diff
+→ busca residual semântica
 → validar objetivo da subetapa
 → READY_TO_COMMIT?
 → commit/push somente conforme protocolo autorizado
 → provar pós-condições
+→ COMPLETE_GATE?
 → desbloquear dependentes
-→ verify-final contra objetivo original
+→ verify-final contra objetivo original no HEAD final
 ```
+
+**Sem `COMPLETE_GATE`, a etapa não está concluída.**
 
 ## 1. Revalidar antes de cada subetapa
 
@@ -42,7 +47,8 @@ Antes de alterar código para qualquer `E*.S*`:
 4. validar que arquivos, símbolos, contratos e ownership citados ainda existem e continuam canônicos;
 5. validar que dependências anteriores realmente entregaram suas pós-condições;
 6. inspecionar o estado atual do repositório e preservar alterações preexistentes;
-7. confirmar que a receita ainda está em estado executável.
+7. confirmar que a receita ainda está em estado executável;
+8. registrar o `gitSha` que será usado como referência de início da subetapa quando o ambiente permitir.
 
 Não começar uma etapa apenas porque ela está `pending`.
 
@@ -99,7 +105,9 @@ drift material
 - correção planejada que se tornou redundante após etapa anterior;
 - risco de segurança/compatibilidade não previsto;
 - alteração concorrente no mesmo trecho/contrato;
-- teste planejado que mede sinal diferente do outcome real.
+- teste planejado que mede sinal diferente do outcome real;
+- remoção de catálogo/heurística que reaparece com outra representação em Python, JSON, prompt, fixture, cache ou metadata;
+- evidência de candidate produzida antes de uma alteração posterior que afeta a dimensão avaliada.
 
 Não reescrever todo o plano por detalhe irrelevante; corrigir somente o subgrafo afetado.
 
@@ -176,7 +184,8 @@ Proibido, salvo mudança de requisito comprovada:
 - trocar outcome real por metadata superficial;
 - desabilitar/skippiar teste ou gate para acomodar o diff;
 - reduzir threshold de eval/cobertura/safety para aprovar candidato;
-- enfraquecer scanner/CI para o novo caso.
+- enfraquecer scanner/CI para o novo caso;
+- trocar uma denylist de conceito por uma denylist de nomes de chaves que permita o mesmo anti-padrão com outro nome.
 
 Quando expectativa antiga estiver realmente errada, registrar a evidência da mudança de contrato/requisito antes de atualizar o teste.
 
@@ -192,13 +201,72 @@ regra local
 → positive
 → sibling
 → negative
+→ generalization/metamorphic/unknown-provider
 → persistência/F5/superfície compartilhada
 → objetivo da subetapa
 ```
 
 Teste unitário verde não libera dependente cuja pós-condição é de integração.
 
-## 10. Revisão adversarial do diff
+### Ordem obrigatória quando houver cutover + cleanup
+
+Quando uma workstream substitui autoridade legada, a ordem é:
+
+```text
+CUTOVER
+→ provar uso real da nova autoridade
+→ GENERALIZATION
+→ positive + sibling + negative
+→ metamorphic/unknown quando material
+→ CLEANUP
+→ busca residual pós-cleanup
+→ VERIFY
+```
+
+**É proibido pular diretamente de CUTOVER para CLEANUP quando a generalização é requisito da solução.**
+
+## 10. Busca residual semântica — obrigatória em cleanup
+
+Remover um arquivo, chave ou classe não prova que a dependência conceitual foi removida.
+
+Para todo cleanup de catálogo, heurística, fallback, mirror ou feature flag, procurar equivalentes em:
+
+```text
+runtime Python/TS
+JSON/YAML/config
+prompts/content
+fixtures e generators
+scripts/smokes
+caches/materializers
+metadata persistida
+loaders/adapters
+MFE/consumers
+CI/lints
+roadmaps/docs/help
+```
+
+A busca deve ser **semântica**, não apenas nominal. Exemplos de equivalentes que contam como residual:
+
+```text
+pathMarkers JSON
+→ tuple/dict de fragments de path em Python
+
+parameterStrategy JSON
+→ if/contains por path/operationId que escolhe a mesma estratégia
+
+routeSegment JSON
+→ derivação por path-tail/operationId
+
+path→domain map
+→ _DOMAIN_RULES ou matchers equivalentes
+
+lista estática de recomendações
+→ mesma lista usada como oracle de aceite da recomendação contextual
+```
+
+Se o conceito removido reapareceu em outra representação, classificar `EXECUTION_DRIFT`; não marcar cleanup como concluído.
+
+## 11. Revisão adversarial do diff
 
 Antes de declarar a subetapa pronta, revisar **o diff real**, não somente os testes.
 
@@ -215,11 +283,14 @@ Perguntas obrigatórias:
 8. Existe código morto, fallback duplicado ou branch temporário?
 9. O diff é maior que o necessário por causa de melhoria oportunista?
 10. Como este diff pode estar errado mesmo com testes verdes?
+11. O conceito removido foi apenas movido para outra camada/arquivo?
+12. A etapa depende de evidência produzida antes do último diff relevante?
+13. Há `PARTIAL`, `LEGACY_FALLBACK`, `INCONCLUSIVE`, TODO/FIXME/HACK ou dívida material incompatível com o critério de pronto?
 ```
 
 Risco material e testável descoberto aqui deve ser resolvido antes do commit.
 
-## 11. Gate `READY_TO_COMMIT`
+## 12. Gate `READY_TO_COMMIT`
 
 Uma subetapa só está pronta para commit quando:
 
@@ -230,18 +301,20 @@ Uma subetapa só está pronta para commit quando:
 [ ] alterações preexistentes foram preservadas
 [ ] regra local passa
 [ ] positive/sibling/negative passam quando aplicáveis
+[ ] generalization/metamorphic/unknown passam quando exigidos
 [ ] wiring/contrato foi provado quando material
 [ ] gates especializados aplicáveis passam
 [ ] nenhum teste/gate foi enfraquecido para acomodar o diff
 [ ] nenhum hardcode do exemplo foi introduzido
 [ ] ownership e boundaries permanecem corretos
+[ ] busca residual semântica foi executada quando houve cleanup
 [ ] objetivo observável da subetapa foi validado
 [ ] evidência corresponde exatamente ao estado que será commitado
 ```
 
 Se um gate obrigatório não puder ser executado, classificar `INCONCLUSIVE/PENDENTE`; não declarar a etapa PASS.
 
-## 12. Commit e push
+## 13. Commit e push
 
 `test-and-commit.mdc` continua dono das regras gerais de commit.
 
@@ -258,24 +331,25 @@ Quando autorizado:
 
 Sem autorização explícita, concluir a alteração testada sem criar commit.
 
-## 13. Pós-condição e desbloqueio de dependentes
+## 14. Pós-condição e desbloqueio de dependentes
 
 Após concluir uma subetapa, provar o que as próximas etapas dependem.
 
-Registrar mentalmente ou no plano:
+Registrar:
 
 ```text
 STEP: E1.S2
 DELIVERED: ...
 POSTCONDITIONS_PROVED: ...
 TEST_EVIDENCE: ...
+RESIDUAL_SEARCH: ...
 DEPENDENTS_UNLOCKED: E1.S3
 NEW_DRIFT: none | ...
 ```
 
 Não desbloquear dependente baseado apenas em “commit criado”.
 
-## 14. Atualização do estado do plano
+## 15. Atualização do estado do plano
 
 Durante execução multi-etapa:
 
@@ -288,9 +362,59 @@ Durante execução multi-etapa:
 
 O plano continua estado de execução, não documentação arquitetural permanente.
 
-## 15. Verify-final
+### Status que NÃO significam concluído
 
-Depois das subetapas, voltar ao pedido original e provar o outcome perceptível.
+Os seguintes estados são bloqueantes para fechar a etapa/plano quando pertencem ao escopo material:
+
+```text
+PARTIAL
+ATENDIDO_PARCIAL
+LEGACY_FALLBACK
+SHADOW_ONLY
+INCONCLUSIVE
+PENDING
+DEFERRED
+TODO
+FIXME
+HACK
+TEMPORARY
+compatibility branch sem exit criteria
+feature flag sem exit criteria
+fallback legado exigido pelo caminho principal
+```
+
+Só podem permanecer se o requisito correspondente estiver explicitamente classificado como `FORA_DO_ESCOPO_COM_JUSTIFICATIVA` ou `BLOQUEADO_COM_EVIDENCIA`, com impacto registrado. Nesse caso o plano **não** pode declarar o objetivo global concluído se a pendência impede o resultado original.
+
+## 16. `COMPLETE_GATE` — fechamento sem coisas por fazer
+
+Uma subetapa só pode receber `COMPLETED/ATENDIDO` quando todos os itens forem verdadeiros:
+
+```text
+[ ] todos os requisitos materiais da subetapa têm evidência
+[ ] nenhum requisito foi silenciosamente comprimido ou perdido
+[ ] producer + consumer + wiring real foram validados
+[ ] positive + sibling + negative foram executados quando aplicáveis
+[ ] generalization/metamorphic/unknown foram executados quando exigidos
+[ ] cleanup não deixou substituto semântico do legado
+[ ] nenhuma pendência material ficou escondida como comentário, fallback ou TODO
+[ ] docs/evidence/status refletem o código atual
+[ ] evidência pertence ao candidate atual, não a SHA/config anterior incompatível
+[ ] pós-condições das próximas etapas estão explicitamente provadas
+```
+
+Se qualquer item falhar:
+
+```text
+COMPLETE_GATE = FAIL
+→ manter EM_ANDAMENTO / INCONCLUSIVE / BLOCKED_WITH_EVIDENCE
+→ não desbloquear etapa dependente
+→ não arquivar roadmap
+→ não declarar release PASS
+```
+
+## 17. Verify-final
+
+Depois das subetapas, voltar ao pedido original e provar o outcome perceptível **no estado final atual**.
 
 O verify-final deve comparar:
 
@@ -298,7 +422,7 @@ O verify-final deve comparar:
 RQ original
 → comportamento antes
 → comportamento depois
-→ evidência no estado final atual
+→ evidência no HEAD final
 → regressões conhecidas
 → pendências reais
 ```
@@ -312,11 +436,39 @@ Quando material, incluir:
 - send/stream/simulate ou superfícies equivalentes;
 - Help/documentação user-facing;
 - CI/gates;
-- baseline × candidate/evals para IA.
+- baseline × candidate/evals para IA;
+- busca residual final no código, conteúdo, tests, scripts e docs.
+
+### Regra de frescor do verify-final
+
+Qualquer alteração posterior ao candidate que afete uma dimensão validada invalida a evidência daquela dimensão. Reexecutar a prova afetada no HEAD final antes de fechar.
 
 Não considerar `pytest verde` como substituto do objetivo final.
 
-## 16. Estados de execução recomendados
+## 18. Matriz obrigatória de fechamento
+
+Antes de declarar um plano multi-etapa concluído, produzir:
+
+| Requisito | Etapa | Implementado | Teste | Generalização | Cleanup residual | Evidência HEAD final | Status |
+|---|---|---|---|---|---|---|---|
+
+Nenhuma linha material pode terminar em vazio, `N/A` não justificado, `PARTIAL`, `INCONCLUSIVE` ou `LEGACY_FALLBACK` se o objetivo original exigia sua remoção/substituição.
+
+O veredito final deve declarar separadamente:
+
+```text
+CUTOVER_RESULT
+GENERALIZATION_RESULT
+CLEANUP_RESULT
+SECURITY_RESULT
+ARCHITECTURE_RESULT
+VERIFY_FINAL
+FINAL_RESULT
+```
+
+`FINAL_RESULT=PASS` somente quando todos os resultados obrigatórios forem `PASS`.
+
+## 19. Estados de execução recomendados
 
 ```text
 READY_TO_EXECUTE
@@ -326,6 +478,7 @@ BLOCKED_WITH_EVIDENCE
 INCONCLUSIVE
 READY_TO_COMMIT
 COMPLETED
+COMPLETE_GATE_FAILED
 VERIFY_FINAL_FAILED
 ```
 
@@ -344,8 +497,12 @@ Usar os estados como raciocínio; não criar infraestrutura nova apenas para arm
 - enfraquecer testes, mocks, evals, scanners ou CI;
 - commitar estado inconclusivo como PASS;
 - usar commit criado como prova de pós-condição;
-- declarar plano concluído sem verify-final do objetivo original.
+- declarar plano concluído sem verify-final do objetivo original;
+- remover JSON e recriar a mesma autoridade em Python/TS para “zerar chaves”;
+- usar smoke de caso conhecido como substituto de prova de generalização;
+- reutilizar PASS de candidate anterior depois de alteração material no motor;
+- arquivar roadmap contendo pendência material incompatível com o objetivo.
 
 ## Critério de sucesso
 
-Outro agente deve conseguir executar o plano de forma incremental **sem obedecer cegamente a premissas obsoletas, sem perder trabalho existente e sem avançar para a próxima etapa antes de provar a pós-condição da atual**.
+Outro agente deve conseguir executar o plano de forma incremental **sem obedecer cegamente a premissas obsoletas, sem perder trabalho existente, sem pular generalização/cleanup e sem avançar para a próxima etapa antes de provar a pós-condição e o `COMPLETE_GATE` da atual**.
