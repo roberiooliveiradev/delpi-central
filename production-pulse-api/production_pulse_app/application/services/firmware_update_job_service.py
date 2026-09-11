@@ -11,6 +11,7 @@ from production_pulse_app.domain.services.device_validation_service import valid
 from production_pulse_app.infrastructure.persistence.repositories.postgres_device_repository import (
     PostgresDeviceRepository,
 )
+from production_pulse_app.application.services.device_ota_wake_service import DeviceOtaWakeService
 from production_pulse_app.infrastructure.persistence.repositories.postgres_firmware_repository import (
     FirmwareJobConflictError,
     FirmwareJobNotFoundError,
@@ -30,10 +31,15 @@ class FirmwareUpdateJobService:
         job_repository: PostgresFirmwareUpdateJobRepository | None = None,
         firmware_repository: PostgresFirmwareRepository | None = None,
         device_repository: PostgresDeviceRepository | None = None,
+        wake_service: DeviceOtaWakeService | None = None,
     ) -> None:
         self._jobs = job_repository or PostgresFirmwareUpdateJobRepository()
         self._firmwares = firmware_repository or PostgresFirmwareRepository()
         self._devices = device_repository or PostgresDeviceRepository()
+        self._wake = wake_service or DeviceOtaWakeService(
+            job_repository=self._jobs,
+            device_repository=self._devices,
+        )
 
     def list_jobs(self, *, branch: str | None = None) -> list[dict[str, Any]]:
         if branch:
@@ -164,6 +170,9 @@ class FirmwareUpdateJobService:
                     updates={"target_firmware_version": firmware["version"]},
                     actor_sub=actor_sub,
                 )
+            # Wake only after commit (create_job_with_targets already committed).
+            authorized_targets = self._jobs.list_targets(job["id"])
+            self._wake.wake_authorized_targets(authorized_targets)
         api = self._job_to_api(job)
         logger.info(
             "ota_job_created job_id=%s status=%s branch=%s targets=%s",
@@ -191,7 +200,10 @@ class FirmwareUpdateJobService:
         return api
 
     def authorize_due_scheduled(self) -> int:
-        return self._jobs.authorize_due_scheduled_jobs()
+        job_count, targets = self._jobs.authorize_due_scheduled_jobs()
+        if targets:
+            self._wake.wake_authorized_targets(targets)
+        return job_count
 
     def reconcile_device_installed_version(self, device_id: UUID, version: str) -> bool:
         """Close open target when device already reports the target to_version."""

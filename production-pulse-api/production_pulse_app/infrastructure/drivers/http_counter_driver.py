@@ -205,6 +205,24 @@ class HttpCounterDriver:
         counter = parse_counter_response(body)
         return DeviceReading(metrics={"counter": counter})
 
+    def wake_ota_check(self, device: dict[str, Any]) -> CommandResult:
+        """Best-effort POST /api/ota/check-now — not part of operator command catalog."""
+        try:
+            response_body = device_post_json(
+                device,
+                "/api/ota/check-now",
+                client=self._client,
+                timeout_seconds=self._timeout_for(device),
+                payload={},
+            )
+            return CommandResult(
+                success=True,
+                metrics={},
+                response_payload=response_body if isinstance(response_body, dict) else {},
+            )
+        except DeviceDriverError as exc:
+            return CommandResult(success=False, error_code=exc.code)
+
     def _fetch_identity(self, device: dict[str, Any]) -> dict[str, Any]:
         try:
             body = device_get_json(

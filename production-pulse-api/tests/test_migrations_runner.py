@@ -87,6 +87,6 @@ def test_v015_ota_wake_telemetry_is_present_and_parseable():
     text = path.read_text(encoding="utf-8")
     assert "wake_status" in text
     assert "wake_attempted_at" in text
+    assert "wake_error_code" in text
     assert "last_ota_check_at" in text
-    assert "error_code" not in text.split("wake_error_code")[0][-40:] or "wake_error_code" in text
     assert len(_checksum(text)) == 64
