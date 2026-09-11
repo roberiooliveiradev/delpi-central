@@ -50,7 +50,16 @@
     "maxAllowedActions": 40,
     "maxAlreadyExecuted": 20,
     "maxMessageChars": 400,
-    "maxRecommendations": 3
+    "maxRecommendations": 3,
+    "genericFallback": {
+      "goalLabelTemplate": "Continuar: {goal}",
+      "goalReason": "Próximo passo alinhado ao objetivo do turno",
+      "limitationLabelTemplate": "Resolver: {limitation}",
+      "limitationReason": "Limitação observada na resposta atual",
+      "messageLabelTemplate": "Aprofundar: {message}",
+      "messageReason": "Explorar o tema da pergunta com o catálogo autorizado",
+      "removedLegacyFallbackAt": "J-R10"
+    }
   },
   "recommendationQueries": {
     "factory_status": [

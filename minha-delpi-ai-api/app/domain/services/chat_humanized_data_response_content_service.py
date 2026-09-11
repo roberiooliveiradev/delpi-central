@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
 _BUNDLE = "humanized_data_response"
@@ -79,7 +81,7 @@ class ChatHumanizedDataResponseContentService:
         return queries
 
     @classmethod
-    def recommendation_grounding_caps(cls) -> dict[str, int]:
+    def recommendation_grounding_caps(cls) -> dict[str, Any]:
         """Caps do contrato E6.S2 — input bounded para recomendações contextuais."""
 
         node = cls.get_node("recommendationGrounding")
@@ -96,11 +98,14 @@ class ChatHumanizedDataResponseContentService:
             "maxRecommendations": 3,
         }
         if not isinstance(node, dict):
-            return defaults
-        out = dict(defaults)
+            return dict(defaults)
+        out: dict[str, Any] = dict(defaults)
         for key, default in defaults.items():
             try:
                 out[key] = max(0, int(node.get(key, default)))
             except (TypeError, ValueError):
                 out[key] = default
+        generic = node.get("genericFallback")
+        if isinstance(generic, dict):
+            out["genericFallback"] = dict(generic)
         return out

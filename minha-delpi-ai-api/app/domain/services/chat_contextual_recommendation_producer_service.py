@@ -1,4 +1,4 @@
-"""Producer contextual de recommendations — candidate-first; recommendationQueries = LEGACY_FALLBACK."""
+"""Producer contextual de recommendations — grounding do turno; sem fallback de profile estático."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ _PAGINATION_MARKERS = (
 
 @dataclass(frozen=True)
 class RecommendationDualRunReport:
-    """Comparação candidate (contextual) vs static (recommendationQueries bruto)."""
+    """Comparação candidate (contextual) vs static seed (observabilidade apenas)."""
 
     profile_key: str
     authority: str
@@ -34,10 +34,10 @@ class RecommendationDualRunReport:
     only_in_candidate: tuple[str, ...]
     used_profile_fallback: bool
     false_suggestion_count: int
-    # E11.S7 — static profile is LEGACY_FALLBACK with explicit exit criteria.
+    # J-R10 — static recommendationQueries is not a selection fallback.
     static_fallback_exit_criteria: str = (
-        "remove recommendationQueries profiles when contextual candidate "
-        "coverage ≥ static for canary corpus and smoke does not use static as oracle"
+        "J-R10: recommendationQueries is observability seed only; "
+        "empty candidate uses generic grounding fallback, never raw profile dump"
     )
 
     def as_dict(self) -> dict[str, Any]:
@@ -52,8 +52,9 @@ class RecommendationDualRunReport:
             "onlyInCandidate": list(self.only_in_candidate),
             "usedProfileFallback": self.used_profile_fallback,
             "falseSuggestionCount": self.false_suggestion_count,
-            "staticFallbackRole": "LEGACY_FALLBACK",
+            "staticFallbackRole": "REMOVED",
             "staticFallbackExitCriteria": self.static_fallback_exit_criteria,
+            "legacyRecommendationFallback": 0,
         }
 
 
@@ -68,10 +69,10 @@ class RecommendationProduceResult:
 
 class ChatContextualRecommendationProducerService:
     """
-    Autoridade no turno (E6.S4):
+    Autoridade no turno (J-R10):
     1) llm_candidates | existing (llm_contextual / deterministic)
-    2) candidate contextual = profile queries *filtradas* (deterministic)
-    3) LEGACY_FALLBACK = recommendationQueries bruto só se candidate vazio
+    2) candidate contextual = profile queries *filtradas* (deterministic seed)
+    3) generic grounding fallback (goals/facts/limitations/message) — nunca profile dump
     """
 
     @classmethod
@@ -159,42 +160,126 @@ class ChatContextualRecommendationProducerService:
                 }
             )
 
-        used_fallback = False
         authority = "contextual_candidate"
-        if not candidate_items and queries:
-            # LEGACY_FALLBACK: recommendationQueries bruto só quando candidate vazio.
-            used_fallback = True
-            authority = "profile_fallback"
-            for item in queries:
-                if not isinstance(item, dict):
-                    continue
-                label = str(item.get("label") or "").strip()
-                query = str(item.get("query") or "").strip()
-                if not label or not query:
-                    continue
-                candidate_items.append(
-                    {
-                        "label": label,
-                        "query": query,
-                        "reason": str(item.get("reason") or "").strip(),
-                        "source": "profile_fallback",
-                        "confidence": 0.4,
-                    }
-                )
+        if not candidate_items:
+            # J-R10 — generic grounding fallback (never raw recommendationQueries dump).
+            authority = "contextual_generic"
+            candidate_items = cls._generic_contextual_from_grounding(
+                grounding,
+                max_recs=max_recs,
+            )
 
         filtered = ChatRecommendationGroundingService.filter_candidates_against_grounding(
             candidate_items,
             grounding,
         )
         items = cls._dedupe_by_query(filtered)[:max_recs]
+        if not items and authority != "contextual_generic":
+            authority = "contextual_generic"
+            items = cls._dedupe_by_query(
+                cls._generic_contextual_from_grounding(grounding, max_recs=max_recs)
+            )[:max_recs]
         dual = cls._build_dual_run(
             profile_key=grounding.profile_key,
             static_queries=static_queries,
             items=items,
             authority=authority,
-            used_profile_fallback=used_fallback,
+            used_profile_fallback=False,
         )
         return RecommendationProduceResult(items=tuple(items), dual_run=dual)
+
+    @classmethod
+    def _generic_contextual_from_grounding(
+        cls,
+        grounding: RecommendationGroundingContext,
+        *,
+        max_recs: int,
+    ) -> list[dict[str, Any]]:
+        caps = ChatHumanizedDataResponseContentService.recommendation_grounding_caps()
+        templates = caps.get("genericFallback") if isinstance(caps, dict) else None
+        if not isinstance(templates, dict):
+            templates = {}
+
+        goal_tpl = str(
+            templates.get("goalLabelTemplate") or "Continuar: {goal}"
+        ).strip()
+        goal_reason = str(
+            templates.get("goalReason") or "Próximo passo alinhado ao objetivo do turno"
+        ).strip()
+        lim_tpl = str(
+            templates.get("limitationLabelTemplate") or "Resolver: {limitation}"
+        ).strip()
+        lim_reason = str(
+            templates.get("limitationReason") or "Limitação observada na resposta atual"
+        ).strip()
+        msg_tpl = str(
+            templates.get("messageLabelTemplate") or "Aprofundar: {message}"
+        ).strip()
+        msg_reason = str(
+            templates.get("messageReason")
+            or "Explorar o tema da pergunta com o catálogo autorizado"
+        ).strip()
+
+        covered = {
+            token.casefold()
+            for token in (
+                *grounding.user_goals,
+                *grounding.already_executed_goal_ids,
+            )
+            if token
+        }
+        items: list[dict[str, Any]] = []
+
+        for goal in grounding.user_goals:
+            text = str(goal or "").strip()
+            if not text or text.casefold() in covered and text in grounding.already_executed_goal_ids:
+                continue
+            if any(
+                text.casefold() == str(done or "").strip().casefold()
+                for done in grounding.already_executed_goal_ids
+            ):
+                continue
+            items.append(
+                {
+                    "label": goal_tpl.format(goal=text[:120]),
+                    "query": text,
+                    "reason": goal_reason,
+                    "source": "contextual_generic",
+                    "confidence": 0.5,
+                }
+            )
+            if len(items) >= max_recs:
+                return items
+
+        for limitation in grounding.limitations:
+            text = str(limitation or "").strip()
+            if not text:
+                continue
+            items.append(
+                {
+                    "label": lim_tpl.format(limitation=text[:120]),
+                    "query": text,
+                    "reason": lim_reason,
+                    "source": "contextual_generic",
+                    "confidence": 0.45,
+                }
+            )
+            if len(items) >= max_recs:
+                return items
+
+        message = str(grounding.user_message or "").strip()
+        if message and len(items) < max_recs:
+            items.append(
+                {
+                    "label": msg_tpl.format(message=message[:120]),
+                    "query": message,
+                    "reason": msg_reason,
+                    "source": "contextual_generic",
+                    "confidence": 0.4,
+                }
+            )
+
+        return items
 
     @classmethod
     def _build_dual_run(
@@ -219,8 +304,6 @@ class ChatContextualRecommendationProducerService:
         only_candidate = tuple(
             candidate_fold[k] for k in candidate_fold.keys() - static_fold.keys()
         )
-        # False suggestion: query no candidate que não existia no catálogo estático do profile.
-        # (llm_candidates podem legítimamente divergir; ainda assim contabilizamos.)
         return RecommendationDualRunReport(
             profile_key=str(profile_key or "").strip(),
             authority=authority,

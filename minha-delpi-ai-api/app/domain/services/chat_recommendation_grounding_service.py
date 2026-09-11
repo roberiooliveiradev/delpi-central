@@ -14,6 +14,7 @@ _RECOMMENDATION_SOURCES = frozenset(
         "llm_contextual",
         "profile_fallback",
         "deterministic",
+        "contextual_generic",
     }
 )
 

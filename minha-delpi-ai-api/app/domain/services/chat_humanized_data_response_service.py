@@ -513,24 +513,8 @@ class ChatHumanizedDataResponseService:
                 if str(item.get("text") or item.get("label") or "").strip()
             ]
 
-        queries = ChatHumanizedDataResponseContentService.recommendation_queries(
-            profile_key,
-        )
-
-        # LEGACY_FALLBACK — só quando structuredRecommendations ausente.
-        return [
-            {
-                "text": str(item.get("label") or "").strip(),
-                **(
-                    {"intent": str(item.get("query") or "").strip()}
-                    if str(item.get("query") or "").strip()
-                    else {}
-                ),
-                "source": "profile_fallback",
-            }
-            for item in queries
-            if str(item.get("label") or "").strip()
-        ]
+        # J-R10 — never dump recommendationQueries; empty → no UI chips here.
+        return []
 
     @classmethod
     def _build_structured_recommendations(
@@ -576,23 +560,7 @@ class ChatHumanizedDataResponseService:
             if structured:
                 return structured
 
-        queries = ChatHumanizedDataResponseContentService.recommendation_queries(profile_key)
-
-        if queries:
-            # E6.S4 — recommendationQueries só como LEGACY_FALLBACK neste consumer.
-            return [
-                {
-                    "label": str(item.get("label") or "").strip(),
-                    "query": str(item.get("query") or "").strip(),
-                    "reason": str(item.get("reason") or "").strip(),
-                    "source": "profile_fallback",
-                    "confidence": 0.4,
-                }
-                for item in queries
-                if str(item.get("label") or "").strip()
-                and str(item.get("query") or "").strip()
-            ]
-
+        # J-R10 — no raw recommendationQueries dump; rely on producer/attach path.
         texts = cls._build_recommendations(
             commentary,
             profile_key=profile_key,
@@ -604,6 +572,7 @@ class ChatHumanizedDataResponseService:
                 "label": text,
                 "query": text,
                 "reason": "",
+                "source": "contextual_generic",
             }
             for item in texts
             for text in [str(item.get("text") or "").strip()]

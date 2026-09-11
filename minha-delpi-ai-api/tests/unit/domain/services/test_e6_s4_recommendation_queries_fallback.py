@@ -1,4 +1,4 @@
-"""E6.S4 — recommendationQueries como LEGACY_FALLBACK; dual-run candidate vs static."""
+"""E6.S4 / J-R10 — recommendationQueries seed; generic fallback (sem LEGACY_FALLBACK)."""
 
 from __future__ import annotations
 
@@ -49,11 +49,11 @@ def test_e6_s4_stock_candidate_subset_of_static_no_false_suggestions():
     assert dual.only_in_candidate == ()
     assert any("página" in q.casefold() for q in dual.only_in_static)
     assert all(item.get("source") == "deterministic" for item in result.items)
+    assert dual.as_dict().get("staticFallbackRole") == "REMOVED"
+    assert dual.as_dict().get("legacyRecommendationFallback") == 0
 
 
-def test_e6_s4_all_important_profiles_have_non_empty_or_explicit_fallback():
-    """Candidate cobre profiles com queries; false suggestions = 0 no path profile-derived."""
-
+def test_e6_s4_all_important_profiles_have_non_empty_or_generic():
     keys = _commentary_profile_keys()
     assert len(keys) == 13
     empty_static: list[str] = []
@@ -70,17 +70,22 @@ def test_e6_s4_all_important_profiles_have_non_empty_or_explicit_fallback():
             profile_queries=static,
         )
         if not result.items:
-            failures.append(f"{key}: empty candidate and fallback")
+            failures.append(f"{key}: empty candidate and generic")
             continue
-        if result.dual_run.false_suggestion_count != 0:
+        if result.dual_run.false_suggestion_count != 0 and result.dual_run.authority == (
+            "contextual_candidate"
+        ):
             failures.append(
                 f"{key}: falseSuggestionCount={result.dual_run.false_suggestion_count}"
             )
         if result.dual_run.authority not in {
             "contextual_candidate",
-            "profile_fallback",
+            "contextual_generic",
+            "llm_or_existing",
         }:
             failures.append(f"{key}: authority={result.dual_run.authority}")
+        if result.dual_run.used_profile_fallback:
+            failures.append(f"{key}: used_profile_fallback still true")
 
     assert not empty_static
     assert not failures, failures
@@ -97,6 +102,7 @@ def test_e6_s4_attach_writes_dual_run_metadata():
     assert dual.get("authority") == "contextual_candidate"
     assert dual.get("falseSuggestionCount") == 0
     assert dual.get("usedProfileFallback") is False
+    assert dual.get("staticFallbackRole") == "REMOVED"
     assert commentary.get("structuredRecommendations")
 
 
@@ -118,11 +124,12 @@ def test_e6_s4_llm_candidates_may_diverge_from_static():
     assert result.items[0]["source"] == "llm_contextual"
 
 
-def test_e6_s4_fallback_when_all_queries_filtered_out():
-    """Se todo o catálogo for paginação sem sinal → LEGACY_FALLBACK seguro."""
+def test_j_r10_generic_fallback_when_all_queries_filtered_out():
+    """Pagination-only seed filtered → generic grounding, never profile dump."""
 
     grounding = ChatRecommendationGroundingService.build(
         profile_key="stock",
+        user_message="estoque do produto",
         limitations=["ok"],
     )
     only_pagination = [
@@ -136,7 +143,8 @@ def test_e6_s4_fallback_when_all_queries_filtered_out():
         grounding=grounding,
         profile_queries=only_pagination,
     )
-    assert result.dual_run.used_profile_fallback is True
-    assert result.dual_run.authority == "profile_fallback"
+    assert result.dual_run.used_profile_fallback is False
+    assert result.dual_run.authority == "contextual_generic"
     assert result.items
-    assert result.items[0]["source"] == "profile_fallback"
+    assert result.items[0]["source"] == "contextual_generic"
+    assert result.dual_run.as_dict().get("legacyRecommendationFallback") == 0

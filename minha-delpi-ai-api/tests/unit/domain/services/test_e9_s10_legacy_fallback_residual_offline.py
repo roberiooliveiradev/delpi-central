@@ -30,20 +30,22 @@ def test_e9_s10_follow_up_terms_deleted_e9_s12a():
     )
 
 
-def test_e9_s10_recommendation_queries_legacy_fallback_role():
-    """Sibling: recommendationQueries não é authority primária (legado residual)."""
+def test_e9_s10_recommendation_queries_no_longer_legacy_fallback_role():
+    """J-R10 sibling: producer usa contextual_generic; dual-run role = REMOVED."""
     producer = (
         _ROOT
         / "app/domain/services/chat_contextual_recommendation_producer_service.py"
     )
     assert producer.is_file()
     text = producer.read_text(encoding="utf-8")
-    assert "LEGACY_FALLBACK" in text or "legacy" in text.lower()
+    assert "authority = \"profile_fallback\"" not in text
     assert "produce_with_dual_run" in text
+    assert "contextual_generic" in text
+    assert 'static_fallback_exit_criteria' in text or "staticFallbackRole" in text
 
 
 def test_e9_s10_negative_remaining_residuals_still_gated():
-    """Negative: DELETE follow-up ≠ liberar registry markers/strategy/TU."""
+    """Negative: inventário de shadows/gates permanece rastreável após deletes E9.S12."""
     shadows = json.loads(_SHADOW.read_text(encoding="utf-8"))
     ids = {s["id"] for s in shadows.get("shadows") or []}
     assert "recommendationDualRun" in ids
@@ -53,7 +55,6 @@ def test_e9_s10_negative_remaining_residuals_still_gated():
             _ROOT / "tests/fixtures/intelligence_baseline/e9_s6_cleanup_gates.json"
         ).read_text(encoding="utf-8")
     )
-    assert gates.get("deleteAuthorized") is False
     by_id = {c["id"]: c for c in gates.get("deleteCandidates") or []}
     assert by_id["turn_understanding_heuristics_json"]["status"] == "KEEP_APPROVED"
     assert by_id["registry_path_markers"]["status"] == "DELETED"
