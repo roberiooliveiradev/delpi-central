@@ -238,7 +238,13 @@ class DevicePollService:
                 delta_metrics=delta_metrics,
             )
 
+        chip_health = self._chip_health_from_driver(device)
         installed_version = self._extract_firmware_version(reading)
+        if not installed_version:
+            raw_fw = chip_health.get("firmwareVersion")
+            if raw_fw is not None:
+                text_fw = str(raw_fw).strip()
+                installed_version = text_fw or None
         device = self._devices.record_poll_success(
             device_id,
             metrics=canonical,
@@ -261,6 +267,7 @@ class DevicePollService:
             delta_metrics=delta_metrics,
             reading_id=reading_id,
             meta=payload_meta,
+            chip_health=chip_health,
         )
 
     def _maybe_hardware_floor_counter(

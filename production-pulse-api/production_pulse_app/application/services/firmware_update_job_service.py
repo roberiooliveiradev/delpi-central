@@ -78,6 +78,10 @@ class FirmwareUpdateJobService:
             "progressPercent": row.get("progress_percent"),
             "jobStatus": row.get("job_status"),
             "updatedAt": row.get("updated_at"),
+            "wakeStatus": row.get("wake_status"),
+            "wakeAttemptedAt": row.get("wake_attempted_at"),
+            "wakeAcknowledgedAt": row.get("wake_acknowledged_at"),
+            "wakeErrorCode": row.get("wake_error_code"),
         }
 
     def create_job(self, payload: dict[str, Any], *, actor_sub: str | None) -> dict[str, Any]:
