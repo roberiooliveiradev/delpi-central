@@ -5,6 +5,7 @@ import {
   FileCode,
   FilePenLine,
   FilePlus2,
+  Layers,
   Link2,
   Link2Off,
   MoreHorizontal,
@@ -31,10 +32,19 @@ import { OtaTargetProgress } from "./ota/OtaTargetProgress";
 import { PP_HELP } from "../content/helpTooltips";
 import type { DeviceListItem } from "../types/device";
 import type { AdminEntityRef } from "../utils/adminHubUiState";
+import { firmwareLifecycleLabel as catalogLifecycleLabel } from "../utils/firmwareCatalogDisplay";
+import { firmwareSiblingsForFamily } from "../utils/firmwareCatalogGrouping";
 import { explicitFirmwareKey } from "../utils/firmwareLinkGraph";
 import { isPublishedFirmware } from "../utils/hubOtaKpis";
+import {
+  openFirmwareVersionAction,
+  parseOpenFirmwareVersionAction,
+} from "../utils/openFirmwareVersionAction";
+
+export { openFirmwareVersionAction, parseOpenFirmwareVersionAction } from "../utils/openFirmwareVersionAction";
 
 const POPOVER_SURFACE = "delpi-ui-popover-surface";
+const MAX_MENU_VERSIONS = 8;
 
 function deviceStatusLabel(device: DeviceListItem): string {
   if (device.status === "online") return "● Online";
@@ -48,6 +58,13 @@ function firmwareLifecycleLabel(firmware: FirmwareListItem | null | undefined): 
   if (isPublishedFirmware(firmware)) return "Publicado";
   if (firmware.lifecycle === "draft") return "Rascunho";
   return "Arquivado";
+}
+
+function versionMenuLabel(item: FirmwareListItem, currentId?: string): string {
+  const life = catalogLifecycleLabel(item.lifecycle);
+  const current = currentId && item.id === currentId ? " · atual" : "";
+  const archived = item.archivedAt ? " · arquivada" : "";
+  return `v${item.version} · ${life}${current}${archived}`;
 }
 
 type EntitySummaryPopoverProps = {
@@ -64,11 +81,13 @@ type EntitySummaryPopoverProps = {
     linkedCount: number;
     outdatedCount: number;
   } | null;
+  familyVersions?: FirmwareListItem[];
   canManage: boolean;
   onClose: () => void;
   onInspect: () => void;
   onOpenMenu: () => void;
   onPrimary: () => void;
+  onOpenVersion?: (firmwareId: string) => void;
 };
 
 export function EntitySummaryPopover({
@@ -79,11 +98,13 @@ export function EntitySummaryPopover({
   otaTarget,
   firmware,
   firmwareMeta,
+  familyVersions = [],
   canManage,
   onClose,
   onInspect,
   onOpenMenu,
   onPrimary,
+  onOpenVersion,
 }: EntitySummaryPopoverProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const anchorRef = useRef<HTMLElement | null>(null);
@@ -104,6 +125,15 @@ export function EntitySummaryPopover({
   const title = isDevice
     ? device?.name ?? "IoT"
     : firmwareMeta?.displayName || firmware?.displayName || firmwareMeta?.firmwareKey || "Firmware";
+
+  const familyKey = firmwareMeta?.firmwareKey || firmware?.firmwareKey || "";
+  const versions =
+    familyVersions.length > 0
+      ? familyVersions
+      : familyKey
+        ? firmwareSiblingsForFamily(firmware ? [firmware] : [], familyKey)
+        : [];
+  const showVersionPicker = !isDevice && Boolean(onOpenVersion) && versions.length > 0;
 
   return (
     <AnchoredPanelPortal
@@ -179,7 +209,7 @@ export function EntitySummaryPopover({
                     "Firmware"}
                 </strong>
                 <span className="pp-entity-summary__meta">
-                  Firmware · v{firmwareMeta?.version || firmware?.version || "—"} ·{" "}
+                  Família OTA · v{firmwareMeta?.version || firmware?.version || "—"} ·{" "}
                   {firmwareLifecycleLabel(firmware)}
                 </span>
               </div>
@@ -201,6 +231,32 @@ export function EntitySummaryPopover({
             {firmwareMeta?.firmwareKey || firmware?.firmwareKey ? (
               <div className="pp-muted pp-entity-summary__key">
                 <code>{firmwareMeta?.firmwareKey || firmware?.firmwareKey}</code>
+              </div>
+            ) : null}
+            {showVersionPicker ? (
+              <div className="pp-entity-summary__versions" role="list" aria-label="Versões da família">
+                <div className="pp-entity-summary__versions-label">
+                  {PP_HELP.hub.summaryVersionsLabel}
+                </div>
+                {versions.map((item) => {
+                  const isCurrent = item.id === firmware?.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      role="listitem"
+                      className={
+                        isCurrent
+                          ? "pp-entity-summary__version pp-entity-summary__version--current"
+                          : "pp-entity-summary__version"
+                      }
+                      onClick={() => onOpenVersion?.(item.id)}
+                    >
+                      <span>{versionMenuLabel(item, firmware?.id)}</span>
+                      <span aria-hidden="true">›</span>
+                    </button>
+                  );
+                })}
               </div>
             ) : null}
           </div>
@@ -234,10 +290,47 @@ type EntityActionMenuProps = {
   entity: AdminEntityRef | null;
   device?: DeviceListItem | null;
   firmware?: FirmwareListItem | null;
+  familyVersions?: FirmwareListItem[];
   canManage: boolean;
   onClose: () => void;
   onAction: (action: string) => void;
 };
+
+function FirmwareVersionMenuItems({
+  firmware,
+  familyVersions,
+  onPick,
+}: {
+  firmware: FirmwareListItem;
+  familyVersions: FirmwareListItem[];
+  onPick: (firmwareId: string) => void;
+}) {
+  const versions =
+    familyVersions.length > 0
+      ? familyVersions
+      : firmwareSiblingsForFamily([firmware], firmware.firmwareKey);
+  if (versions.length <= 1) return null;
+
+  const visible = versions.slice(0, MAX_MENU_VERSIONS);
+  return (
+    <>
+      <ContextMenuDivider />
+      <div className="pp-entity-menu__section-label" role="presentation">
+        <Layers size={14} aria-hidden="true" />
+        {PP_HELP.hub.summaryVersionsLabel}
+      </div>
+      {visible.map((item) => (
+        <PpContextMenuItem
+          key={item.id}
+          label={versionMenuLabel(item, firmware.id)}
+          icon={FileCode}
+          hint={PP_HELP.hub.menuOpenFirmwareVersion}
+          onSelect={() => onPick(item.id)}
+        />
+      ))}
+    </>
+  );
+}
 
 export function EntityActionMenu({
   open,
@@ -245,6 +338,7 @@ export function EntityActionMenu({
   entity,
   device,
   firmware,
+  familyVersions = [],
   canManage,
   onClose,
   onAction,
@@ -360,6 +454,11 @@ export function EntityActionMenu({
               hint={PP_HELP.hub.menuNewFirmwareVersion}
               onSelect={() => run("new-version")}
             />
+            <FirmwareVersionMenuItems
+              firmware={firmware}
+              familyVersions={familyVersions}
+              onPick={(id) => run(openFirmwareVersionAction(id))}
+            />
             <ContextMenuDivider />
             <PpContextMenuItem
               label="Vincular IoT"
@@ -413,6 +512,11 @@ export function EntityActionMenu({
               icon={Upload}
               hint={PP_HELP.hub.menuPublishFirmware}
               onSelect={() => run("edit")}
+            />
+            <FirmwareVersionMenuItems
+              firmware={firmware}
+              familyVersions={familyVersions}
+              onPick={(id) => run(openFirmwareVersionAction(id))}
             />
             <ContextMenuDivider />
             <PpContextMenuItem

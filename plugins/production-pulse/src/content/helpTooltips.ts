@@ -419,6 +419,8 @@ export const PP_HELP = {
     menuEnableDevice: "Reativa um IoT desativado e volta a operar/polling.",
     menuEditFirmwareMeta: "Abre o detalhe da versão para editar nome exibido e notas.",
     menuNewFirmwareVersion: "Cria nova versão na mesma família (nova release com sketch/bin).",
+    menuOpenFirmwareVersion: "Abre o detalhe desta versão da família OTA.",
+    summaryVersionsLabel: "Versões",
     menuOtaFamilyNow: "Dispara OTA agora para os IoTs com vínculo explícito nesta família.",
     menuOtaFamilySchedule: "Agenda OTA para os IoTs vinculados a esta família.",
     menuArchiveFirmware:

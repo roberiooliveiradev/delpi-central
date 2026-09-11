@@ -114,9 +114,12 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("pages/FirmwareCreatePage.tsx")).toMatch(/initialFirmwareKey/);
     expect(readRelative("pages/DriverFormPage.tsx")).toMatch(/createDriver|patchDriver/);
     expect(readRelative("pages/DriverDetailPage.tsx")).toMatch(/archiveDriver|unarchiveDriver/);
-    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/FirmwareFamilyCatalogItem/);
-    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/groupFirmwareCatalogByFamily/);
-    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/breadcrumbNewVersion/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/familyVersions=\{selectedFamilyVersions\}/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/onOpenVersion/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/parseOpenFirmwareVersionAction/);
+    expect(readRelative("utils/openFirmwareVersionAction.ts")).toMatch(/open-version:/);
+    expect(readRelative("components/EntityContextLayers.tsx")).toMatch(/summaryVersionsLabel/);
+    expect(readRelative("content/helpTooltips.ts")).toMatch(/menuOpenFirmwareVersion/);
     expect(readRelative("components/firmware/FirmwareFamilyCatalogItem.tsx")).toMatch(
       /FirmwareCatalogListItem/,
     );

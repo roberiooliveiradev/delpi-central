@@ -28,6 +28,7 @@ import {
   EntityActionMenu,
   EntitySummaryPopover,
 } from "../components/EntityContextLayers";
+import { parseOpenFirmwareVersionAction } from "../utils/openFirmwareVersionAction";
 import {
   FirmwareDeviceLinkCanvas,
   type CanvasEntitySelection,
@@ -109,7 +110,7 @@ import {
   uniqueFirmwareFamilies,
   type LinkMode,
 } from "../utils/firmwareLinkGraph";
-import { groupFirmwareCatalogByFamily } from "../utils/firmwareCatalogGrouping";
+import { groupFirmwareCatalogByFamily, firmwareSiblingsForFamily } from "../utils/firmwareCatalogGrouping";
 import { isCompactViewport } from "../utils/viewportLayout";
 import {
   computeHubOtaKpis,
@@ -336,6 +337,12 @@ export function FirmwareLinksPage({
     }
     return null;
   }, [families, selectedDevice, selectedFirmware, ui.selectedEntity]);
+
+  const selectedFamilyVersions = useMemo(() => {
+    const key = selectedFamily?.firmwareKey ?? selectedFirmware?.firmwareKey;
+    if (!key) return [];
+    return firmwareSiblingsForFamily(firmwares, key);
+  }, [firmwares, selectedFamily?.firmwareKey, selectedFirmware?.firmwareKey]);
 
   const resolveAnchor = useCallback((nodeId: string | null) => {
     if (!nodeId || typeof document === "undefined") return null;
@@ -1013,6 +1020,11 @@ export function FirmwareLinksPage({
       return;
     }
     if (ui.selectedEntity.type === "firmware") {
+      const openVersionId = parseOpenFirmwareVersionAction(action);
+      if (openVersionId) {
+        openModal("firmware-detail", { type: "firmware", id: openVersionId });
+        return;
+      }
       const fw =
         firmwareById.get(ui.selectedEntity.id) ||
         firmwares.find((item) => item.firmwareKey === ui.selectedEntity!.id);
@@ -1348,6 +1360,7 @@ export function FirmwareLinksPage({
               }
             : null
         }
+        familyVersions={selectedFamilyVersions}
         canManage={canManage}
         onClose={() => dispatch({ type: "closeTransient" })}
         onInspect={() => {
@@ -1362,6 +1375,9 @@ export function FirmwareLinksPage({
           // Fallback raro: entity sem detalhe modal — inspector layer.
           dispatch({ type: "openInspector" });
         }}
+        onOpenVersion={(firmwareId) =>
+          openModal("firmware-detail", { type: "firmware", id: firmwareId })
+        }
         onOpenMenu={() => {
           if (!ui.selectedEntity || !ui.popoverAnchorId) return;
           dispatch({
@@ -1385,6 +1401,7 @@ export function FirmwareLinksPage({
         entity={ui.selectedEntity}
         device={selectedDevice}
         firmware={selectedFirmware}
+        familyVersions={selectedFamilyVersions}
         canManage={canManage}
         onClose={() => {
           // Não sobrescrever confirm/modal abertos pela ação do menu (ex.: Desvincular).
