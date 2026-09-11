@@ -180,3 +180,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | E9.S13 **ATENDIDO_PARCIAL** — C5 L1–L4 PASS → `multi_turn=PASS_OFFLINE_AND_LIVE`; C4 structure FAIL; deleteAuthorized=false |
 | 2026-09-11 | E9.S13 **C4 PASS** — scoped fan-out select + follow-up multi-scope; `compound=PASS_OFFLINE_AND_LIVE`; deleteAuthorized=false |
 | 2026-09-11 | E9.S14 **ATENDIDO** — live remaining gates 6/6 PASS; word-boundary candidateDiscovery (`ov`≠provider); `deleteAuthorized=true` |
+| 2026-09-11 | E9.S8 **REVALIDADO** — matriz alinhada S13/S14; aggregate `PASS_OFFLINE_AND_LIVE_PARTIAL`; `globalReleasePass=false` (recommendations + parity) |
+| 2026-09-11 | Onda H **ATENDIDO_PARCIAL** — próximo: live recommendations/parity **ou** APPROVED → globalReleasePass + E9.S9 |

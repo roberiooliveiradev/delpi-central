@@ -1,7 +1,9 @@
 # Plano 09 — Evals, rollout, cutover e cleanup final
 
 **Prioridade:** transversal  
-**Status execução:** Onda H · plano 09 **ATENDIDO_PARCIAL** (E9.S1–S13; E9.S12.A–E DELETE markers; TU KEEP_APPROVED; `multi_turn` live)  
+**Status execução:** Onda H · plano 09 **ATENDIDO_PARCIAL** (E9.S1–S14; E9.S12.A–E DELETE; TU KEEP; E9.S8 revalidado; `globalReleasePass=false`)  
+**Evidência:** [`../evidence/e9-s1-corpus-expanded.md`](../evidence/e9-s1-corpus-expanded.md) · [`../evidence/e9-s2-baseline-offline.md`](../evidence/e9-s2-baseline-offline.md) · [`../evidence/e9-s3-candidate-plans-offline.md`](../evidence/e9-s3-candidate-plans-offline.md) · [`../evidence/e9-s4-shadow-divergence.md`](../evidence/e9-s4-shadow-divergence.md) · [`../evidence/e9-s5-canary-cutover.md`](../evidence/e9-s5-canary-cutover.md) · [`../evidence/e9-s6-cleanup-gates.md`](../evidence/e9-s6-cleanup-gates.md) · [`../evidence/e9-s7-architecture-audit.md`](../evidence/e9-s7-architecture-audit.md) · [`../evidence/e9-s8-verify-final.md`](../evidence/e9-s8-verify-final.md) · [`../evidence/e9-s9-documentation.md`](../evidence/e9-s9-documentation.md) · [`../evidence/e9-s10-offline-inconclusive-close.md`](../evidence/e9-s10-offline-inconclusive-close.md) · [`../evidence/e9-s11-efficiency-live.md`](../evidence/e9-s11-efficiency-live.md) · [`../evidence/e9-s12a-message-segment-terms-delete.md`](../evidence/e9-s12a-message-segment-terms-delete.md) · [`../evidence/e9-s12b-playbook-path-markers-delete.md`](../evidence/e9-s12b-playbook-path-markers-delete.md) · [`../evidence/e9-s12c-registry-operation-ids.md`](../evidence/e9-s12c-registry-operation-ids.md) · [`../evidence/e9-s12d-route-segment-inference.md`](../evidence/e9-s12d-route-segment-inference.md) · [`../evidence/e9-s12e-parameter-strategy-inference.md`](../evidence/e9-s12e-parameter-strategy-inference.md) · [`../evidence/e9-s13-live-l1l4.md`](../evidence/e9-s13-live-l1l4.md) · [`../evidence/e9-s14-remaining-gates-live.md`](../evidence/e9-s14-remaining-gates-live.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Objetivo perceptível:** cada migração de catálogo/heurística para OpenAPI/LLM deve provar melhora generalizável, preservar segurança e só então remover legado.
 **Evidência:** [`../evidence/e9-s1-corpus-expanded.md`](../evidence/e9-s1-corpus-expanded.md) · [`../evidence/e9-s2-baseline-offline.md`](../evidence/e9-s2-baseline-offline.md) · [`../evidence/e9-s3-candidate-plans-offline.md`](../evidence/e9-s3-candidate-plans-offline.md) · [`../evidence/e9-s4-shadow-divergence.md`](../evidence/e9-s4-shadow-divergence.md) · [`../evidence/e9-s5-canary-cutover.md`](../evidence/e9-s5-canary-cutover.md) · [`../evidence/e9-s6-cleanup-gates.md`](../evidence/e9-s6-cleanup-gates.md) · [`../evidence/e9-s7-architecture-audit.md`](../evidence/e9-s7-architecture-audit.md) · [`../evidence/e9-s8-verify-final.md`](../evidence/e9-s8-verify-final.md) · [`../evidence/e9-s9-documentation.md`](../evidence/e9-s9-documentation.md) · [`../evidence/e9-s10-offline-inconclusive-close.md`](../evidence/e9-s10-offline-inconclusive-close.md) · [`../evidence/e9-s12a-message-segment-terms-delete.md`](../evidence/e9-s12a-message-segment-terms-delete.md) · [`../evidence/e9-s12b-playbook-path-markers-delete.md`](../evidence/e9-s12b-playbook-path-markers-delete.md) · [`../evidence/e9-s12c-registry-operation-ids.md`](../evidence/e9-s12c-registry-operation-ids.md) · [`../evidence/e9-s12e-parameter-strategy-inference.md`](../evidence/e9-s12e-parameter-strategy-inference.md) · [`../evidence/e9-s13-live-l1l4.md`](../evidence/e9-s13-live-l1l4.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** cada migração de catálogo/heurística para OpenAPI/LLM deve provar melhora generalizável, preservar segurança e só então remover legado.
 
@@ -127,26 +129,24 @@ if path/provider/operationId
 
 Cada residual deve ser removido ou explicitamente justificado como policy/compatibility/documentation fora do core genérico — **cumprido via inventário**.
 
-### E9.S8 — Verify-final — **ATENDIDO_PARCIAL** (2026-09-10)
+### E9.S8 — Verify-final — **ATENDIDO_PARCIAL** (revalidado 2026-09-11)
 
-**Feito:** matriz `e9_s8_verify_final_matrix.json` (10 objetivos) + harness; `globalReleasePass=false`; aggregate `PASS_OFFLINE_WITH_INCONCLUSIVE_DIMS`.
+**Feito:** matriz alinhada a E9.S13/S14; 7/10 `PASS_OFFLINE_AND_LIVE` + efficiency `PASS`; aggregate `PASS_OFFLINE_AND_LIVE_PARTIAL`; `deleteAuthorizedRef=true`.
 
-**Pendente para aceite final:** unknown API live, send/stream/simulate parity, eficiência (P50/P95/tokens).
+**Bloqueia `globalReleasePass`:** `recommendations_grounded`, `send_stream_simulate_parity` (ainda `PASS_OFFLINE`).
 
-Executar matriz final:
-
-| Objetivo | Prova | Resultado esperado | Status atual |
-|---|---|---|---|
-| nova API sem código | unknown provider eval | PASS | PASS_OFFLINE |
-| rename técnico sem quebra | metamorphic eval | PASS | PASS_OFFLINE |
-| frases longas | compound corpus | PASS | PASS_OFFLINE |
-| follow-up | multi-turn corpus + F5 | PASS | PASS_OFFLINE |
-| argumentos | OpenAPI validator corpus | PASS | PASS_OFFLINE |
-| safety | unauthorized/write/injection | PASS | PASS_OFFLINE |
-| apresentação | unknown schema/provider | PASS | PASS_OFFLINE |
-| recomendações | grounded/allowlist | PASS | PASS_OFFLINE |
-| paridade | send/stream/simulate | PASS | PASS_OFFLINE |
-| eficiência | P50/P95/tokens/tool/LLM calls | aprovado | INCONCLUSIVE |
+| Objetivo | Status atual |
+|---|---|
+| nova API sem código | PASS_OFFLINE_AND_LIVE |
+| rename técnico sem quebra | PASS_OFFLINE_AND_LIVE |
+| frases longas | PASS_OFFLINE_AND_LIVE |
+| follow-up | PASS_OFFLINE_AND_LIVE |
+| argumentos | PASS_OFFLINE_AND_LIVE |
+| safety | PASS_OFFLINE_AND_LIVE |
+| apresentação | PASS_OFFLINE_AND_LIVE |
+| recomendações | PASS_OFFLINE |
+| paridade | PASS_OFFLINE |
+| eficiência | PASS |
 
 ### E9.S9 — Documentação e encerramento — **ATENDIDO_PARCIAL** (2026-09-10)
 

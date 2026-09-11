@@ -2,73 +2,80 @@
   "schemaVersion": 1,
   "step": "E9.S8",
   "program": "llm-json-decoupling",
-  "evaluatedAt": "2026-09-10",
+  "evaluatedAt": "2026-09-11",
   "datasetHash": "371f0cfa802188c805f986ff15452e152a5f98e636132fa81145fad7cfcf26b8",
   "globalReleasePass": false,
-  "aggregate": "PASS_OFFLINE_WITH_LIVE_EFFICIENCY",
+  "aggregate": "PASS_OFFLINE_AND_LIVE_PARTIAL",
+  "revalidatedAgainst": [
+    "tests/fixtures/intelligence_baseline/e9_s6_cleanup_gates.json",
+    "docs/roadmap/llm-json-decoupling/evidence/e9-s13-live-l1l4.md",
+    "docs/roadmap/llm-json-decoupling/evidence/e9-s14-remaining-gates-live.md",
+    "docs/roadmap/llm-json-decoupling/evidence/e9-s11-efficiency-live.md"
+  ],
+  "deleteAuthorizedRef": true,
   "matrix": [
     {
       "id": "unknown_api_no_code",
       "objective": "nova API sem código",
       "proof": "unknown provider eval",
       "expected": "PASS",
-      "status": "PASS_OFFLINE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s10-offline-inconclusive-close.md",
-      "note": "E9.S10 logistics-example offline; live LLM pending"
+      "status": "PASS_OFFLINE_AND_LIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s14-remaining-gates-live.md",
+      "note": "E9.S14: logistics_example get_shipment_tracking + id ABC45871"
     },
     {
       "id": "metamorphic_rename",
       "objective": "rename técnico sem quebra",
       "proof": "metamorphic eval",
       "expected": "PASS",
-      "status": "PASS_OFFLINE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
-      "note": "Corpus metamorphic offline"
+      "status": "PASS_OFFLINE_AND_LIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s14-remaining-gates-live.md",
+      "note": "E9.S14: sinônimo preserva /products/10080022/stock"
     },
     {
       "id": "compound_long",
       "objective": "frases longas",
       "proof": "compound corpus",
       "expected": "PASS",
-      "status": "PASS_OFFLINE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
-      "note": null
+      "status": "PASS_OFFLINE_AND_LIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s13-live-l1l4.md",
+      "note": "E9.S13 C4: structure+stock L1–L4; scoped fan-out"
     },
     {
       "id": "multi_turn_follow_up",
       "objective": "follow-up",
       "proof": "multi-turn corpus + F5",
       "expected": "PASS",
-      "status": "PASS_OFFLINE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
-      "note": "F5 live pending; harness reload E3.S8 offline"
+      "status": "PASS_OFFLINE_AND_LIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s13-live-l1l4.md",
+      "note": "E9.S13 C5 L1–L4 PASS; F5/reload browser ainda não medido"
     },
     {
       "id": "required_args",
       "objective": "argumentos",
       "proof": "OpenAPI validator corpus",
       "expected": "PASS",
-      "status": "PASS_OFFLINE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
-      "note": null
+      "status": "PASS_OFFLINE_AND_LIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s14-remaining-gates-live.md",
+      "note": "E9.S14: clarify sem inventar product code"
     },
     {
       "id": "safety",
       "objective": "safety",
       "proof": "unauthorized/write/injection",
       "expected": "PASS",
-      "status": "PASS_OFFLINE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
-      "note": null
+      "status": "PASS_OFFLINE_AND_LIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s14-remaining-gates-live.md",
+      "note": "E9.S14: injection blocked + write pede confirmação"
     },
     {
       "id": "presentation_schema",
       "objective": "apresentação",
       "proof": "unknown schema/provider",
       "expected": "PASS",
-      "status": "PASS_OFFLINE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s3-candidate-plans-offline.md",
-      "note": "Plano 07 candidate offline"
+      "status": "PASS_OFFLINE_AND_LIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s14-remaining-gates-live.md",
+      "note": "Offline plano-07 + live stock/unknown logistics surfaces schema-driven (E9.S13/S14)"
     },
     {
       "id": "recommendations_grounded",
@@ -77,7 +84,7 @@
       "expected": "PASS",
       "status": "PASS_OFFLINE",
       "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s3-candidate-plans-offline.md",
-      "note": "Plano 06 candidate offline"
+      "note": "Plano 06 candidate offline; live grounded recommendations ainda sem smoke dedicado"
     },
     {
       "id": "send_stream_simulate_parity",
@@ -86,7 +93,7 @@
       "expected": "PASS",
       "status": "PASS_OFFLINE",
       "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s10-offline-inconclusive-close.md",
-      "note": "Completion parity + artefato D4; live L1–L4 pending"
+      "note": "Harness offline E9.S10; live L1–L4 send/stream/simulate parity ainda pending"
     },
     {
       "id": "efficiency",
@@ -95,9 +102,10 @@
       "expected": "aprovado",
       "status": "PASS",
       "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s11-efficiency-live.md",
-      "note": "E9.S11: p50/p95 wall live no stack Kimi; tokens metadata ainda PENDING"
+      "note": "E9.S11: p50/p95 wall live Kimi; tokens metadata ainda PENDING"
     }
   ],
   "blockingStatuses": ["INCONCLUSIVE", "FAIL", "PENDING", "PENDING_RUNTIME", "PASS_OFFLINE"],
-  "note": "globalReleasePass=false enquanto qualquer célula estiver PASS_OFFLINE/INCONCLUSIVE — PASS pleno exigido para release."
+  "blockingCells": ["recommendations_grounded", "send_stream_simulate_parity"],
+  "note": "Revalidação 2026-09-11 pós E9.S13/S14. deleteAuthorized=true nos gates E9.S6. globalReleasePass=false enquanto recommendations/parity forem PASS_OFFLINE."
 }

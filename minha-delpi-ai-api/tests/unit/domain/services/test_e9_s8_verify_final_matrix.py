@@ -1,4 +1,4 @@
-"""E9.S8 — verify-final matrix: não declarar PASS global com INCONCLUSIVE."""
+"""E9.S8 — verify-final matrix: não declarar PASS global com PASS_OFFLINE/INCONCLUSIVE."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ _ROOT = Path(__file__).resolve().parents[4]
 _MATRIX = (
     _ROOT / "tests/fixtures/intelligence_baseline/e9_s8_verify_final_matrix.json"
 )
+_GATES = _ROOT / "tests/fixtures/intelligence_baseline/e9_s6_cleanup_gates.json"
 
 _REQUIRED_IDS = {
     "unknown_api_no_code",
@@ -44,12 +45,42 @@ def test_e9_s8_matrix_covers_plan_objectives():
 
 
 def test_e9_s8_current_global_release_is_false():
+    """Positive: release ainda bloqueado por células só-offline."""
     data = _load()
     assert data.get("globalReleasePass") is False
     assert global_release_pass(data) is False
-    assert data.get("aggregate") == "PASS_OFFLINE_WITH_LIVE_EFFICIENCY"
+    assert data.get("aggregate") == "PASS_OFFLINE_AND_LIVE_PARTIAL"
     efficiency = next(r for r in data["matrix"] if r["id"] == "efficiency")
     assert efficiency["status"] == "PASS"
+    blocking = set(data.get("blockingCells") or [])
+    assert "recommendations_grounded" in blocking
+    assert "send_stream_simulate_parity" in blocking
+
+
+def test_e9_s8_live_promoted_cells_after_s13_s14():
+    """Sibling: gates com live E9.S13/S14 não ficam PASS_OFFLINE."""
+    data = _load()
+    by_id = {r["id"]: r for r in data["matrix"]}
+    for rid in (
+        "unknown_api_no_code",
+        "metamorphic_rename",
+        "compound_long",
+        "multi_turn_follow_up",
+        "required_args",
+        "safety",
+        "presentation_schema",
+    ):
+        assert by_id[rid]["status"] == "PASS_OFFLINE_AND_LIVE", rid
+
+
+def test_e9_s8_aligned_with_delete_authorized_gates():
+    """Gates E9.S6 já autorizam DELETE; verify-final release é barra separada."""
+    gates = json.loads(_GATES.read_text(encoding="utf-8"))
+    assert gates.get("deleteAuthorized") is True
+    data = _load()
+    assert data.get("deleteAuthorizedRef") is True
+    # DELETE autorizado ≠ release global
+    assert data.get("globalReleasePass") is False
 
 
 def test_e9_s8_each_row_has_evidence():
@@ -62,11 +93,12 @@ def test_e9_s8_each_row_has_evidence():
         assert str(row.get("objective") or "").strip(), row.get("id")
 
 
-def test_e9_s8_sibling_all_pass_would_release():
+def test_e9_s8_sibling_all_non_blocking_would_release():
     data = _load()
     clone = json.loads(json.dumps(data))
     for row in clone["matrix"]:
-        row["status"] = "PASS"
+        if row["status"] == "PASS_OFFLINE":
+            row["status"] = "PASS_OFFLINE_AND_LIVE"
     assert global_release_pass(clone) is True
 
 
