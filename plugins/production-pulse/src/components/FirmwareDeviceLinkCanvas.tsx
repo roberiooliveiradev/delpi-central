@@ -292,6 +292,7 @@ function DeviceNodeView({ id, data }: NodeProps<Node<DeviceNodeData>>) {
             status={ota.status}
             errorCode={ota.errorCode}
             deviceOnline={data.status === "online"}
+            wakeStatus={ota.wakeStatus}
             progressPercent={ota.progressPercent}
             density="compact"
           />

@@ -8,6 +8,7 @@ type OtaStatusIndicatorProps = {
   status?: string | null;
   errorCode?: string | null;
   deviceOnline?: boolean | null;
+  wakeStatus?: string | null;
   progressPercent?: number | null;
   bytesReceived?: number | null;
   bytesTotal?: number | null;
@@ -31,6 +32,7 @@ export function OtaStatusIndicator({
   status,
   errorCode,
   deviceOnline,
+  wakeStatus,
   progressPercent,
   bytesReceived,
   bytesTotal,
@@ -44,6 +46,7 @@ export function OtaStatusIndicator({
     status,
     errorCode,
     deviceOnline,
+    wakeStatus,
     progressPercent,
     bytesReceived,
     bytesTotal,

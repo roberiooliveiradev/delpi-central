@@ -29,10 +29,10 @@ describe("resolveOtaProgressPercent", () => {
 describe("formatOtaProgressDisplay", () => {
   it("shows awaiting device for authorized/pending", () => {
     expect(formatOtaProgressDisplay({ status: "authorized" })).toBe(
-      "Aguardando dispositivo",
+      "Aguardando consulta OTA",
     );
     expect(formatOtaProgressDisplay({ status: "pending" })).toBe(
-      "Aguardando dispositivo",
+      "Aguardando consulta OTA",
     );
   });
 

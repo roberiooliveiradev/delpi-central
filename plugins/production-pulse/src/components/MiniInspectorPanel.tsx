@@ -225,6 +225,7 @@ export function OtaProgressSnippet(props: {
   progressPercent: number | null | undefined;
   errorCode?: string | null;
   deviceOnline?: boolean | null;
+  wakeStatus?: string | null;
 }) {
   return (
     <div className="pp-ota-progress-snippet">
@@ -232,6 +233,7 @@ export function OtaProgressSnippet(props: {
         status={props.status}
         errorCode={props.errorCode}
         deviceOnline={props.deviceOnline}
+        wakeStatus={props.wakeStatus}
         progressPercent={props.progressPercent}
         density="compact"
       />

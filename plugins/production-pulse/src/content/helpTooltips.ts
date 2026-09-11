@@ -291,11 +291,19 @@ export const PP_HELP = {
     lastActivity: "Última atividade",
     technicalCode: "Código técnico",
     phase: {
-      awaiting: "Aguardando dispositivo",
+      awaiting: "Aguardando consulta OTA",
       awaitingOffline: "Aguardando dispositivo · IoT offline",
       awaitingOfflineHint:
         "O IoT está offline. A atualização começa quando ele voltar a responder, enquanto a operação permanecer válida.",
-      awaitingHint: "A atualização foi autorizada. Aguardando o IoT buscar o firmware.",
+      awaitingHint:
+        "Atualização autorizada. Aguardando o IoT consultar o backend (pull periódico ou após o aviso).",
+      wakePending: "Avisando dispositivo",
+      wakePendingHint: "A API está pedindo ao IoT para consultar o OTA agora (wake best-effort).",
+      wakeAccepted: "Avisado · aguardando consulta",
+      wakeAcceptedHint: "O IoT aceitou o aviso e deve consultar o OTA em instantes.",
+      wakeFailed: "Não avisou · aguardando pull",
+      wakeFailedHint:
+        "O aviso push falhou; a atualização permanece autorizada e o IoT deve pegar no próximo pull (~60–120s).",
       downloading: "Baixando firmware",
       applying: "Aplicando firmware",
       updated: "Atualizado",

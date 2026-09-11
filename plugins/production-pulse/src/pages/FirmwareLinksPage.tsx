@@ -1098,6 +1098,7 @@ export function FirmwareLinksPage({
                 status={row.status}
                 errorCode={row.errorCode}
                 deviceOnline={device?.online ?? device?.status === "online"}
+                wakeStatus={row.wakeStatus}
                 progressPercent={row.progressPercent}
                 bytesReceived={row.bytesReceived}
                 bytesTotal={row.bytesTotal}

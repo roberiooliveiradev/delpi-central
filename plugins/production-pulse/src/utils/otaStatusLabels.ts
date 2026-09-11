@@ -82,12 +82,17 @@ export function formatOtaProgressDisplay(input: {
   status?: string | null;
   progressPercent?: number | null;
   deviceOnline?: boolean | null;
+  wakeStatus?: string | null;
 }): string {
   const status = (input.status || "").trim().toLowerCase();
   if (status === "pending" || status === "authorized") {
     if (input.deviceOnline === false) {
       return PP_HELP.ota.phase.awaitingOffline;
     }
+    const wake = (input.wakeStatus || "").trim().toLowerCase();
+    if (status === "authorized" && wake === "pending") return PP_HELP.ota.phase.wakePending;
+    if (status === "authorized" && wake === "accepted") return PP_HELP.ota.phase.wakeAccepted;
+    if (status === "authorized" && wake === "failed") return PP_HELP.ota.phase.wakeFailed;
     return PP_HELP.ota.phase.awaiting;
   }
   if (status === "applying") {

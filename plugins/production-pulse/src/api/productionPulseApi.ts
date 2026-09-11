@@ -365,6 +365,10 @@ export type FirmwareUpdateTarget = {
   bytesTotal?: number | null;
   progressPercent?: number | null;
   updatedAt?: string | null;
+  wakeStatus?: string | null;
+  wakeAttemptedAt?: string | null;
+  wakeAcknowledgedAt?: string | null;
+  wakeErrorCode?: string | null;
 };
 
 export type DeviceFirmwareUpdateStatus = {
@@ -381,6 +385,10 @@ export type DeviceFirmwareUpdateStatus = {
   progressPercent?: number | null;
   jobStatus?: string | null;
   updatedAt?: string | null;
+  wakeStatus?: string | null;
+  wakeAttemptedAt?: string | null;
+  wakeAcknowledgedAt?: string | null;
+  wakeErrorCode?: string | null;
   target?: FirmwareUpdateTarget | null;
 };
 

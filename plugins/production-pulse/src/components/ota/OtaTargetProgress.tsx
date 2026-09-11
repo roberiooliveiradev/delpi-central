@@ -8,6 +8,7 @@ type OtaTargetProgressProps = {
   status?: string | null;
   errorCode?: string | null;
   deviceOnline?: boolean | null;
+  wakeStatus?: string | null;
   progressPercent?: number | null;
   bytesReceived?: number | null;
   bytesTotal?: number | null;
@@ -20,6 +21,7 @@ export function OtaTargetProgress({
   status,
   errorCode,
   deviceOnline,
+  wakeStatus,
   progressPercent,
   bytesReceived,
   bytesTotal,
@@ -31,6 +33,7 @@ export function OtaTargetProgress({
     status,
     errorCode,
     deviceOnline,
+    wakeStatus,
     progressPercent,
     bytesReceived,
     bytesTotal,
@@ -47,6 +50,7 @@ export function OtaTargetProgress({
         status={status}
         errorCode={errorCode}
         deviceOnline={deviceOnline}
+        wakeStatus={wakeStatus}
         progressPercent={progressPercent}
         bytesReceived={bytesReceived}
         bytesTotal={bytesTotal}

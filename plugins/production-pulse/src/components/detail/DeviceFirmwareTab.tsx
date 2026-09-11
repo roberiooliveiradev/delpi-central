@@ -158,6 +158,10 @@ function statusFromHubTarget(
     bytesTotal: target.bytesTotal,
     progressPercent: target.progressPercent,
     updatedAt: target.updatedAt,
+    wakeStatus: target.wakeStatus,
+    wakeAttemptedAt: target.wakeAttemptedAt,
+    wakeAcknowledgedAt: target.wakeAcknowledgedAt,
+    wakeErrorCode: target.wakeErrorCode,
     target,
   };
 }
@@ -410,6 +414,7 @@ export function DeviceFirmwareTab({
               status={status}
               errorCode={effectiveStatus?.errorCode}
               deviceOnline={device.status === "online"}
+              wakeStatus={effectiveStatus?.wakeStatus}
               progressPercent={effectiveStatus?.progressPercent}
               bytesReceived={effectiveStatus?.bytesReceived}
               bytesTotal={effectiveStatus?.bytesTotal}

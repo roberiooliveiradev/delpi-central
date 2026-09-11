@@ -185,6 +185,7 @@ export function EntitySummaryPopover({
                 status={otaTarget.status}
                 errorCode={otaTarget.errorCode}
                 deviceOnline={device.status === "online"}
+                wakeStatus={otaTarget.wakeStatus}
                 progressPercent={otaTarget.progressPercent}
                 bytesReceived={otaTarget.bytesReceived}
                 bytesTotal={otaTarget.bytesTotal}

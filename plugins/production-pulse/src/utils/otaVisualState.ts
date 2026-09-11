@@ -1,11 +1,14 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Ban,
+  Bell,
+  BellOff,
   CircleCheck,
   CircleX,
   Clock3,
   Download,
   LoaderCircle,
+  Megaphone,
   TriangleAlert,
   WifiOff,
 } from "lucide-react";
@@ -33,6 +36,84 @@ export type OtaVisualState = {
   technicalCode: string | null;
 };
 
+export type OtaWakeStatus = "pending" | "accepted" | "failed" | string | null | undefined;
+
+function resolveAwaitingWakeState(input: {
+  status: string;
+  wakeStatus?: OtaWakeStatus;
+  online: boolean;
+}): OtaVisualState | null {
+  if (input.status !== "pending" && input.status !== "authorized") {
+    return null;
+  }
+  if (!input.online) {
+    return {
+      phase: input.status,
+      label: PP_HELP.ota.phase.awaitingOffline,
+      description: PP_HELP.ota.phase.awaitingOfflineHint,
+      icon: WifiOff,
+      tone: "warning",
+      progressMode: "none",
+      progressPercent: null,
+      bytesLabel: null,
+      technicalCode: null,
+    };
+  }
+
+  const wake = (input.wakeStatus || "").trim().toLowerCase();
+  if (input.status === "authorized" && wake === "pending") {
+    return {
+      phase: "wake_pending",
+      label: PP_HELP.ota.phase.wakePending,
+      description: PP_HELP.ota.phase.wakePendingHint,
+      icon: Megaphone,
+      tone: "info",
+      progressMode: "indeterminate",
+      progressPercent: null,
+      bytesLabel: null,
+      technicalCode: null,
+    };
+  }
+  if (input.status === "authorized" && wake === "accepted") {
+    return {
+      phase: "wake_accepted",
+      label: PP_HELP.ota.phase.wakeAccepted,
+      description: PP_HELP.ota.phase.wakeAcceptedHint,
+      icon: Bell,
+      tone: "info",
+      progressMode: "none",
+      progressPercent: null,
+      bytesLabel: null,
+      technicalCode: null,
+    };
+  }
+  if (input.status === "authorized" && wake === "failed") {
+    return {
+      phase: "wake_failed",
+      label: PP_HELP.ota.phase.wakeFailed,
+      description: PP_HELP.ota.phase.wakeFailedHint,
+      icon: BellOff,
+      tone: "warning",
+      progressMode: "none",
+      progressPercent: null,
+      bytesLabel: null,
+      technicalCode: null,
+    };
+  }
+
+  return {
+    phase: input.status,
+    label: PP_HELP.ota.phase.awaiting,
+    description: PP_HELP.ota.phase.awaitingHint,
+    icon: Clock3,
+    tone: "info",
+    progressMode: "none",
+    progressPercent: null,
+    bytesLabel: null,
+    technicalCode: null,
+  };
+}
+
 export function resolveOtaVisualState(input: {
   status?: string | null;
   errorCode?: string | null;
@@ -40,6 +121,7 @@ export function resolveOtaVisualState(input: {
   progressPercent?: number | null;
   bytesReceived?: number | null;
   bytesTotal?: number | null;
+  wakeStatus?: OtaWakeStatus;
 }): OtaVisualState {
   const status = (input.status || "").trim().toLowerCase();
   const online = input.deviceOnline !== false;
@@ -53,31 +135,13 @@ export function resolveOtaVisualState(input: {
   });
   const bytesLabel = formatOtaBytes(input.bytesReceived, input.bytesTotal);
 
-  if (status === "pending" || status === "authorized") {
-    if (!online) {
-      return {
-        phase: status,
-        label: PP_HELP.ota.phase.awaitingOffline,
-        description: PP_HELP.ota.phase.awaitingOfflineHint,
-        icon: WifiOff,
-        tone: "warning",
-        progressMode: "none",
-        progressPercent: null,
-        bytesLabel: null,
-        technicalCode: null,
-      };
-    }
-    return {
-      phase: status,
-      label: PP_HELP.ota.phase.awaiting,
-      description: PP_HELP.ota.phase.awaitingHint,
-      icon: Clock3,
-      tone: "info",
-      progressMode: "none",
-      progressPercent: null,
-      bytesLabel: null,
-      technicalCode: null,
-    };
+  const awaiting = resolveAwaitingWakeState({
+    status,
+    wakeStatus: input.wakeStatus,
+    online,
+  });
+  if (awaiting) {
+    return awaiting;
   }
 
   if (status === "downloading") {
