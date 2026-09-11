@@ -21,6 +21,7 @@ NENHUM MAPA LATERAL DEVE EXISTIR.
 | E10.S3 factual/sufficiency/enrichment/responses | **ATENDIDO** |
 | E10.S4 KPI catalogToken + pathRules DELETE + audit | **ATENDIDO** |
 | E10.S5 docs/ledger/residuals | **ATENDIDO** |
+| E10 live smoke | **ATENDIDO** (`smoke_e10_zero_lateral_path_maps_live.py`) |
 
 ## Aceite da Onda I
 
@@ -31,9 +32,13 @@ CONTENT_PATHMARKERS_COUNT = 0
 DOMAIN_FROM_OPENAPI_OR_CATALOG = PASS
 UNKNOWN_PROVIDER_STILL_WORKS = PASS (E9.S10 offline)
 NO_NEW_PATH_MAP_SUBSTITUTE = PASS (gate + inference bridge documentada)
+LIVE_PRODUCT_STOCK_DOMAIN = PASS
+LIVE_DEPARTMENT_KPI_SIBLING = PASS
+LIVE_UNKNOWN_SAFE = PASS
 ```
 
-Gate: `tests/unit/domain/services/test_e10_zero_lateral_path_maps.py`
+Gate: `tests/unit/domain/services/test_e10_zero_lateral_path_maps.py`  
+Live: `scripts/smoke_e10_zero_lateral_path_maps_live.py` → [`../evidence/e10-zero-lateral-path-maps-live.md`](../evidence/e10-zero-lateral-path-maps-live.md)
 
 ## Nota de bridge
 

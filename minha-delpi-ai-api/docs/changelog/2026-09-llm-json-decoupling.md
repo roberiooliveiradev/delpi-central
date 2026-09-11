@@ -25,7 +25,7 @@ Policies determinísticas (RBAC, required args, confirmation, timeouts) permanec
 **Nenhum mapa lateral deve existir.**  
 A disposição `JUSTIFIED_POLICY` para `api_route_domains.pathMarkers` (e mapas irmãos por path) foi **revogada**. Domínio/label/classificação operacional devem vir do OpenAPI indexado / Action Catalog — não de JSON paralelo no assistente.
 
-Débito Onda I: **ATENDIDO** (E10.S1–S5) — content sem chaves laterais; domínio via catalog/inference.
+Débito Onda I: **ATENDIDO** (E10.S1–S5 + live smoke OVERALL=PASS).
 
 ## Ondas
 

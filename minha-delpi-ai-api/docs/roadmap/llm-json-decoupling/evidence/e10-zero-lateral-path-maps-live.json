@@ -1,0 +1,57 @@
+{
+  "stage": "E10_zero_lateral_path_maps_live",
+  "generated_at": "2026-09-11T15:07:02.761308+00:00",
+  "product_code": "10080022",
+  "cases": {
+    "content_no_lateral_keys": {
+      "ok": true,
+      "hit_files": [],
+      "hit_count": 0
+    },
+    "product_stock_domain": {
+      "elapsed_s": 50.43,
+      "sessionId": "e2d9cbd5-b857-4507-b6cf-25a19f97eee6",
+      "identities": [
+        {
+          "path": "/products/10080022/stock",
+          "apiRouteDomain": "product",
+          "operationId": "",
+          "actionId": "api_delpi.products.get_product_stock",
+          "ok": "True"
+        }
+      ],
+      "domains": [
+        "product"
+      ],
+      "ok": true
+    },
+    "department_kpi_sibling": {
+      "elapsed_s": 138.45,
+      "sessionId": "62f42863-4c78-4efb-aafb-844c08f6aa37",
+      "identities": [
+        {
+          "path": "/commercial/closing-rate/series",
+          "apiRouteDomain": "department_kpi",
+          "operationId": "",
+          "actionId": "api_delpi.comercial.get_sales_conversion_rate_series",
+          "ok": "True"
+        }
+      ],
+      "domains": [
+        "department_kpi"
+      ],
+      "ok": true
+    },
+    "unknown_safe_negative": {
+      "elapsed_s": 56.33,
+      "sessionId": "db2971bf-ccaa-4676-a152-4d39364c17bc",
+      "has_reply": true,
+      "no_path_map_keys_in_payload": true,
+      "content_preview": "",
+      "ok": true
+    }
+  },
+  "pass": true,
+  "agentId": "4f9c225b-0414-40d3-a462-040889719b83",
+  "failed_count": 0
+}

@@ -198,3 +198,4 @@ abrir planos/0N-*.md
 | 2026-09-11 | Onda I / plano 10 **EM_ANDAMENTO** — E10.S1 inventário + contrato sem pathMarkers |
 | 2026-09-11 | E10.S1–S5 **ATENDIDO** — zero keys laterais; `ApiRouteDomainInferenceService`; stamp import |
 | 2026-09-11 | Onda I **ATENDIDO** — gate `test_e10_zero_lateral_path_maps` PASS |
+| 2026-09-11 | E10 **live PASS** — `smoke_e10_zero_lateral_path_maps_live.py` (product + KPI sibling + negative) |
