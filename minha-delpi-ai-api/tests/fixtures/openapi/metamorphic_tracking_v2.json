@@ -1,0 +1,46 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Metamorphic Tracking API V2",
+    "version": "1.0.0",
+    "description": "V2 surface — renamed provider/path/operationId; same summary/description/tags/schema (J-R5)."
+  },
+  "paths": {
+    "/cargo/{id}/position": {
+      "get": {
+        "operationId": "locateCargo",
+        "summary": "Get shipment tracking and ETA",
+        "description": "Returns current location, status and estimated delivery date for a shipment. Use when the user asks where a remessa is or the previsao de entrega.",
+        "tags": ["shipments", "tracking"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Shipment identifier",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tracking payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["id", "status", "location", "estimatedDelivery"],
+                  "properties": {
+                    "id": { "type": "string" },
+                    "status": { "type": "string" },
+                    "location": { "type": "string" },
+                    "estimatedDelivery": { "type": "string", "format": "date" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

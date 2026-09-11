@@ -1,0 +1,19 @@
+{
+  "runId": "e11-j-r5-metamorphic-rename-v1",
+  "wave": "J",
+  "step": "J-R5",
+  "gate": "METAMORPHIC_PROVIDER_PATH_OPERATION_ID_RENAME",
+  "completeGate": "PASS",
+  "v1": {
+    "provider": "metamorphic-tracking-a",
+    "path": "/shipments/{id}/tracking",
+    "operationId": "get_shipment_tracking"
+  },
+  "v2": {
+    "provider": "metamorphic-tracking-z",
+    "path": "/cargo/{id}/position",
+    "operationId": "locateCargo"
+  },
+  "tests": "tests/unit/application/services/test_j_r5_metamorphic_provider_path_operation_id_rename.py",
+  "coreMatchersForV2": 0
+}

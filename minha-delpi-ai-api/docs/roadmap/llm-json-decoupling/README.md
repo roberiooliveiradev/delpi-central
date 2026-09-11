@@ -102,8 +102,8 @@ J-R1  evaluator R8 com threshold canônico          ✅ ATENDIDO
 J-R2  requiredDimensions alinhadas automaticamente ✅ ATENDIDO
 J-R3  evidence reproduzível                         ✅ ATENDIDO
 J-R4  unknown external full chain                   ✅ ATENDIDO
-J-R5  metamorphic rename verdadeiro                 ← próxima
-J-R6  Architecture Enforcement independente
+J-R5  metamorphic rename verdadeiro                 ✅ ATENDIDO
+J-R6  Architecture Enforcement independente         ← próxima
 J-R7  zero path semantic affinity
 J-R8  cleanup registry/content técnico duplicado
 J-R9  semantic single owner

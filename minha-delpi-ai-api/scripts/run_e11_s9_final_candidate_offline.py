@@ -38,6 +38,7 @@ SIDECARS: list[dict] = [
         "requiredDimensions": ["R9", "R11"],
         "harnessRefs": [
             "tests/unit/application/services/test_e9_s10_unknown_external_openapi_offline.py",
+            "tests/unit/application/services/test_j_r4_unknown_external_openapi_full_chain_offline.py",
             "tests/unit/application/services/test_e11_s5_registry_operation_ids_cutover.py",
         ],
     },
