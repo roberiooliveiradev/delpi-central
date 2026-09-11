@@ -32,6 +32,11 @@ export type ModalShellProps = {
   className?: string;
   overlayClassName?: string;
   closeAriaLabel?: string;
+  /**
+   * Se `true`, clique no backdrop (fora do card) chama `onClose`.
+   * Default `false` — fechar só pelo botão X (Escape continua fechando).
+   */
+  closeOnOverlayClick?: boolean;
   initialFocusSelector?: string;
   dialogRef?: RefObject<HTMLDivElement | null>;
   /** Substitui o lock padrão (`document.body.style.overflow`). */
@@ -89,6 +94,7 @@ export function ModalShell({
   className,
   overlayClassName,
   closeAriaLabel = "Fechar",
+  closeOnOverlayClick = false,
   initialFocusSelector,
   dialogRef,
   lockPageScroll,
@@ -261,6 +267,7 @@ export function ModalShell({
       className={overlayClass}
       style={containedOverlayStyle}
       onClick={(event) => {
+        if (!closeOnOverlayClick) return;
         /* Só o backdrop fecha — não depender só de stopPropagation no card
          * (portais / listeners em captura no palco MFE podem furar o bubble). */
         if (event.target === event.currentTarget) onClose();
@@ -345,6 +352,11 @@ export type CreateModalShellConfig = {
   variant?: ModalShellVariant;
   classNames?: Partial<ModalShellClassNames>;
   /**
+   * Default do shell criado; props da instância podem sobrescrever.
+   * Default do ModalShell é `false` (não fecha no clique fora).
+   */
+  closeOnOverlayClick?: boolean;
+  /**
    * Só para `createHostContainedModalShell`:
    * `fill` = workbench; `dialog` = aviso/confirm centralizado no host.
    */
@@ -372,6 +384,7 @@ export function createModalShell(config: CreateModalShellConfig) {
         className={mergedClassName}
         overlayClassName={config.overlayClassName}
         closeAriaLabel={config.closeAriaLabel ?? props.closeAriaLabel}
+        closeOnOverlayClick={props.closeOnOverlayClick ?? config.closeOnOverlayClick}
         portalScopeClassName={config.portalScopeClassName}
       />
     );

@@ -1,11 +1,13 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   createHostContainedDrawerShell,
   DrawerShell,
   drawerShellBemClasses,
 } from "./DrawerShell";
+
+afterEach(cleanup);
 
 describe("DrawerShell", () => {
   it("não renderiza quando fechado", () => {
@@ -130,5 +132,40 @@ describe("DrawerShell", () => {
 
     unmount();
     host.remove();
+  });
+
+  it("não fecha ao clicar no backdrop por default — só no botão Fechar", () => {
+    const onClose = vi.fn();
+    render(
+      <DrawerShell open title="Detalhes" onClose={onClose} classNames={drawerShellBemClasses("si")}>
+        <p>Conteúdo</p>
+      </DrawerShell>,
+    );
+
+    const backdrop = document.querySelector(".delpi-ui-drawer-root__backdrop") as HTMLElement;
+    expect(backdrop.tagName).toBe("DIV");
+    fireEvent.click(backdrop);
+    expect(onClose).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Fechar" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("fecha no clique do backdrop quando closeOnBackdropClick=true", () => {
+    const onClose = vi.fn();
+    render(
+      <DrawerShell
+        open
+        title="Painel"
+        onClose={onClose}
+        closeOnBackdropClick
+        classNames={drawerShellBemClasses("si")}
+      >
+        <p>Ok</p>
+      </DrawerShell>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Fechar painel" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

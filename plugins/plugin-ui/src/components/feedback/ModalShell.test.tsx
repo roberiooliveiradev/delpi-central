@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -288,5 +288,42 @@ describe("ModalShell", () => {
 
     unmount();
     host.remove();
+  });
+
+  it("não fecha ao clicar no overlay por default — só no botão Fechar", () => {
+    const onClose = vi.fn();
+    render(
+      <ModalShell open title="Confirmar" onClose={onClose} classNames={modalShellBemClasses("pac")}>
+        <p>Conteúdo</p>
+      </ModalShell>,
+    );
+
+    const dialog = screen.getByRole("dialog", { name: "Confirmar" });
+    const overlay = dialog.closest(".pac-modal-overlay") as HTMLElement;
+    fireEvent.click(overlay);
+    expect(onClose).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Fechar" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("fecha no clique do overlay quando closeOnOverlayClick=true", () => {
+    const onClose = vi.fn();
+    render(
+      <ModalShell
+        open
+        title="Aviso"
+        onClose={onClose}
+        closeOnOverlayClick
+        classNames={modalShellBemClasses("pac")}
+      >
+        <p>Ok</p>
+      </ModalShell>,
+    );
+
+    const dialog = screen.getByRole("dialog", { name: "Aviso" });
+    const overlay = dialog.closest(".pac-modal-overlay") as HTMLElement;
+    fireEvent.click(overlay);
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

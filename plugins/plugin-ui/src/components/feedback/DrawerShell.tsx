@@ -31,6 +31,11 @@ export type DrawerShellProps = {
   className?: string;
   closeAriaLabel?: string;
   backdropAriaLabel?: string;
+  /**
+   * Se `true`, clique no backdrop chama `onClose`.
+   * Default `false` — fechar só pelo botão X (Escape continua fechando).
+   */
+  closeOnBackdropClick?: boolean;
   /** Substitui o lock padrão (`document.body.style.overflow`). */
   lockPageScroll?: () => () => void;
   /**
@@ -73,6 +78,7 @@ export function DrawerShell({
   className,
   closeAriaLabel = "Fechar",
   backdropAriaLabel = "Fechar painel",
+  closeOnBackdropClick = false,
   lockPageScroll,
   portalScopeClassName,
   portalTarget = null,
@@ -181,12 +187,16 @@ export function DrawerShell({
       data-drawer-contained={containedInPortalTarget ? "true" : undefined}
     >
       <div className={rootClass} role="presentation">
-        <button
-          type="button"
-          className={classNames.backdrop}
-          aria-label={backdropAriaLabel}
-          onClick={onClose}
-        />
+        {closeOnBackdropClick ? (
+          <button
+            type="button"
+            className={classNames.backdrop}
+            aria-label={backdropAriaLabel}
+            onClick={onClose}
+          />
+        ) : (
+          <div className={classNames.backdrop} aria-hidden="true" />
+        )}
 
         <aside
           ref={panelRef}
@@ -237,6 +247,8 @@ export type CreateDrawerShellConfig = {
   prefix: string;
   closeAriaLabel?: string;
   backdropAriaLabel?: string;
+  /** Default do shell; props da instância podem sobrescrever. Default do DrawerShell: `false`. */
+  closeOnBackdropClick?: boolean;
   classNames?: Partial<DrawerShellClassNames>;
   portalScopeClassName?: string;
 };
@@ -250,11 +262,12 @@ export function createDrawerShell(config: CreateDrawerShellConfig) {
   return function DashboardDrawerShell(props: DashboardDrawerShellProps) {
     return (
       <DrawerShell
-        classNames={classNames}
-        closeAriaLabel={config.closeAriaLabel}
-        backdropAriaLabel={config.backdropAriaLabel}
-        portalScopeClassName={config.portalScopeClassName}
         {...props}
+        classNames={classNames}
+        closeAriaLabel={config.closeAriaLabel ?? props.closeAriaLabel}
+        backdropAriaLabel={config.backdropAriaLabel ?? props.backdropAriaLabel}
+        closeOnBackdropClick={props.closeOnBackdropClick ?? config.closeOnBackdropClick}
+        portalScopeClassName={config.portalScopeClassName}
       />
     );
   };

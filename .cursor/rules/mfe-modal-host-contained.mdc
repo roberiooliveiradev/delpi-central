@@ -30,3 +30,9 @@ Incidente jul/2026: aviso «Link copiado.» via `ConfirmModal` + `Modal` body-fi
 - Workbench: `HostContainedModal` (`fill`).
 - Teste: dialog dentro do host + `data-modal-contained` + **sem** cobrir `#portal-sidebar`.
 - Regressão: `ModalShell.test.tsx` (layout dialog), `NoticeDialogProvider.test.tsx`.
+
+## Fechar modal / drawer
+
+`ModalShell` e `DrawerShell` **não** fecham no clique do backdrop por default (`closeOnOverlayClick` / `closeOnBackdropClick` = `false`). Fechar pelo botão X (Escape continua fechando, a11y).
+
+Só passe `closeOnOverlayClick` / `closeOnBackdropClick` quando o produto exigir dismiss no clique fora.
