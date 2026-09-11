@@ -10,7 +10,7 @@ Fonte de referência: `Teste.ino` (flash no Arduino IDE / PlatformIO).
 - Download em chunks com report de `progressPercent` (throttle); ver lab em [`../esp8266_counter_v2/README.md`](../esp8266_counter_v2/README.md).
 - Redirects HTTP: `HTTPC_STRICT_FOLLOW_REDIRECTS` quando o core exporta o enum.
 
-`FIRMWARE_VERSION` atual: `esp8266_counter_v1.3.0`.
+`FIRMWARE_VERSION` atual: `esp8266_counter_v1.3.1`.
 
 ## Endpoints
 
@@ -27,6 +27,7 @@ Fonte de referência: `Teste.ino` (flash no Arduino IDE / PlatformIO).
 | `POST` | `/api/definir` | idem | body `{"contador": N}` — restore pela API Delpi |
 | `POST` | `/api/reboot` | idem | responde JSON e reinicia o chip |
 | `POST` | `/api/factory-reset` | idem | restaura EEPROM (defaults); reinicia — contador em RAM zera |
+| `POST` | `/api/ota/check-now` | idem | **202** imediato; seta `otaCheckRequested` (wake híbrido; flash só no loop) |
 
 ### Autenticação
 
@@ -47,12 +48,13 @@ Pull autorizado contra a Production Pulse API ([FIRMWARE-OTA-P4.md](../../FIRMWA
    - `branch`: `01` / `02`
    - `apiToken`: igual ao `device_api_token` no cadastro
 2. No admin: publique o `.bin`, amarre o IoT em `/firmware-links` (1 IoT = 1 firmware), crie campanha OTA.
-3. O chip (~1 min após boot, depois a cada ~10 min) chama:
+3. O chip (~1 min após boot, depois a cada ~**60 s** + jitter 0–15 s; backoff em erro de check) chama:
    - `GET {otaBaseUrl}/device-ota/check?controllerCode=…&branch=…` com `X-Device-Token`
    - Parse do envelope `{ "success", "data": { "updateAvailable", "artifactToken", … } }`
    - Download `GET …/device-ota/artifacts/{token}` e `Updater`
    - `POST …/device-ota/report` (`downloading` → `applying` → `updated|failed`) **antes** do stream de download (evita segundo HTTP concorrente)
    - Reports terminais (`updated` antes do `ESP.restart()`, e `failed` antes de abandonar o apply) usam `reportTerminalWithRetry` (até 3 tentativas, backoff 200/400/800 ms + `ESP.wdtFeed`); falha do ACK **não** impede o restart — o backend reconcilia
-4. MVP do sketch: **HTTP na VLAN** (sem BearSSL/HTTPS).
+4. Wake híbrido: a API pode `POST /api/ota/check-now` (mesmo `X-Device-Token`) → **202** e flag no loop; o flash **nunca** roda no handler HTTP.
+5. MVP do sketch: **HTTP na VLAN** (sem BearSSL/HTTPS).
 
 Checklist lab: [HOMOLOGACAO-OTA-P4.md](../../HOMOLOGACAO-OTA-P4.md).

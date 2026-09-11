@@ -16,7 +16,7 @@
 static const char* DEFAULT_WIFI_SSID = "YOUR_SSID";
 static const char* DEFAULT_WIFI_PASSWORD = "YOUR_PASSWORD";
 static const unsigned long DEFAULT_DEBOUNCE_MS = 100;
-static const char* FIRMWARE_VERSION = "esp32c3_counter_v1.0.0";
+static const char* FIRMWARE_VERSION = "esp32c3_counter_v1.0.1";
 static const uint16_t EEPROM_SIZE = 512;
 static const uint32_t CONFIG_MAGIC = 0x50504331;  // "PPC1" — distinct from ESP8266 PPS\x02
 
@@ -88,12 +88,18 @@ bool authErrorLatched = false;
 unsigned long authErrorUntilMs = 0;
 unsigned long lastOtaCheckMs = 0;
 bool otaInProgress = false;
+bool otaCheckRequested = false;
+unsigned long otaIntervalJitterMs = 0;
+unsigned long otaErrorBackoffMs = 0;
 unsigned long lastPeriodicStatusMs = 0;
 unsigned long rgbLastToggleMs = 0;
 bool rgbBlinkPhase = false;
 
 static const unsigned long AUTH_ERROR_HOLD_MS = 5000;
-static const unsigned long OTA_CHECK_INTERVAL_MS = 600000;  // 10 min
+static const unsigned long OTA_CHECK_INTERVAL_MS = 60000;   // 60 s base pull
+static const unsigned long OTA_JITTER_MAX_MS = 15000;       // 0–15 s jitter
+static const unsigned long OTA_ERROR_BACKOFF_MIN_MS = 60000;
+static const unsigned long OTA_ERROR_BACKOFF_MAX_MS = 300000;
 static const unsigned long OTA_FIRST_CHECK_MS = 60000;      // 1 min after boot
 static const uint32_t OTA_MIN_FREE_HEAP = 20000;
 static const unsigned long PERIODIC_STATUS_MS = 10000;
@@ -773,6 +779,42 @@ bool applyOtaBinary(const String& artifactUrl, const String& targetId, const Str
   return true;
 }
 
+void rollOtaIntervalJitter() {
+  otaIntervalJitterMs = (unsigned long)random(0, (long)OTA_JITTER_MAX_MS + 1L);
+}
+
+unsigned long otaEffectiveIntervalMs() {
+  unsigned long base = OTA_CHECK_INTERVAL_MS + otaIntervalJitterMs;
+  if (otaErrorBackoffMs > base) {
+    return otaErrorBackoffMs;
+  }
+  return base;
+}
+
+void noteOtaCheckSuccess() {
+  otaErrorBackoffMs = 0;
+  rollOtaIntervalJitter();
+}
+
+void noteOtaCheckError() {
+  if (otaErrorBackoffMs == 0) {
+    otaErrorBackoffMs = OTA_ERROR_BACKOFF_MIN_MS;
+  } else {
+    unsigned long next = otaErrorBackoffMs * 2UL;
+    otaErrorBackoffMs = next > OTA_ERROR_BACKOFF_MAX_MS ? OTA_ERROR_BACKOFF_MAX_MS : next;
+  }
+  rollOtaIntervalJitter();
+}
+
+void solicitarOtaCheckNow() {
+  if (!requireDeviceToken()) {
+    return;
+  }
+  otaCheckRequested = true;
+  enviarCors();
+  server.send(202, "application/json", "{\"accepted\":true,\"action\":\"ota_check_now\"}");
+}
+
 void maybeCheckOta() {
   if (otaInProgress || !otaConfigured()) {
     return;
@@ -784,13 +826,18 @@ void maybeCheckOta() {
     return;
   }
   unsigned long now = millis();
-  if (lastOtaCheckMs == 0) {
-    if (now < OTA_FIRST_CHECK_MS) {
+  bool requested = otaCheckRequested;
+  if (!requested) {
+    if (lastOtaCheckMs == 0) {
+      if (now < OTA_FIRST_CHECK_MS) {
+        return;
+      }
+    } else if ((now - lastOtaCheckMs) < otaEffectiveIntervalMs()) {
       return;
     }
-  } else if ((now - lastOtaCheckMs) < OTA_CHECK_INTERVAL_MS) {
-    return;
   }
+
+  otaCheckRequested = false;
   lastOtaCheckMs = now;
   otaInProgress = true;
   Serial.println("OTA checking");
@@ -803,6 +850,7 @@ void maybeCheckOta() {
   if (!httpExchange("GET", url, "", code, resp) || code != HTTP_CODE_OK) {
     Serial.print("OTA check HTTP ");
     Serial.println(code);
+    noteOtaCheckError();
     otaInProgress = false;
     return;
   }
@@ -812,6 +860,7 @@ void maybeCheckOta() {
   bool available = false;
   if (!extractJsonBool(dataJson, "updateAvailable", available) || !available) {
     Serial.println("OTA no update");
+    noteOtaCheckSuccess();
     otaInProgress = false;
     return;
   }
@@ -821,10 +870,12 @@ void maybeCheckOta() {
   String version = extractJsonString(dataJson, "version");
   if (token.length() == 0) {
     reportOtaStatus(targetId, "failed", "missing_artifact_token", "");
+    noteOtaCheckError();
     otaInProgress = false;
     return;
   }
 
+  noteOtaCheckSuccess();
   String artifactUrl = otaBaseTrimmed() + "/device-ota/artifacts/" + urlEncodeComponent(token)
     + "?controllerCode=" + urlEncodeComponent(controllerCode)
     + "&branch=" + urlEncodeComponent(String(cfg.branch));
@@ -1320,6 +1371,11 @@ void registrarRotas() {
     enviarCors();
     server.send(204);
   });
+  server.on("/api/ota/check-now", HTTP_POST, solicitarOtaCheckNow);
+  server.on("/api/ota/check-now", HTTP_OPTIONS, []() {
+    enviarCors();
+    server.send(204);
+  });
 }
 
 void logPeriodicStatus() {
@@ -1389,6 +1445,8 @@ void logBootBanner() {
 void setup() {
   Serial.begin(115200);
   delay(200);
+  randomSeed((uint32_t)esp_random());
+  rollOtaIntervalJitter();
 
   pinMode(LED_R_PIN, OUTPUT);
   pinMode(LED_G_PIN, OUTPUT);

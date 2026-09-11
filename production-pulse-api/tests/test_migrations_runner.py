@@ -90,3 +90,16 @@ def test_v015_ota_wake_telemetry_is_present_and_parseable():
     assert "wake_error_code" in text
     assert "last_ota_check_at" in text
     assert len(_checksum(text)) == 64
+
+
+def test_v016_esp32_counter_v1_driver_is_present_and_parseable():
+    migrations = _discover_migrations()
+    by_version = {m.version: m for m in migrations}
+    assert 16 in by_version
+    assert by_version[16].name == "esp32_counter_v1_driver"
+    path = _migrations_dir() / "V016__esp32_counter_v1_driver.sql"
+    text = path.read_text(encoding="utf-8")
+    assert "esp32_counter_v1" in text
+    assert "http_counter" in text
+    assert "ota_wake" not in text
+    assert len(_checksum(text)) == 64

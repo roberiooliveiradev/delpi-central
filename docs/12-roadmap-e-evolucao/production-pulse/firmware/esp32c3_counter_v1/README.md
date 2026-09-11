@@ -5,13 +5,14 @@ Família nova, isolada do ESP8266. Contrato HTTP `/api/*` compatível com o cont
 | Item | Valor |
 |------|--------|
 | Pasta Arduino | abra **esta** pasta (`esp32c3_counter_v1`) |
-| `FIRMWARE_VERSION` | `esp32c3_counter_v1.0.0` |
+| `FIRMWARE_VERSION` | `esp32c3_counter_v1.0.1` |
 | Board | **ESP32C3 Dev Module** |
 | Arduino core | Espressif **3.3.11** |
 | CPU | 160 MHz |
 | Flash | 4 MB, **QIO**, 80 MHz |
 | Upload | 115200 |
 | Partition scheme | **Minimal SPIFFS** (ou equivalente com dual OTA) |
+| Pull OTA | ~60 s + jitter 0–15 s; `POST /api/ota/check-now` → 202 (wake; flash no loop) |
 
 ## Particionamento OTA (obrigatório na 1ª gravação USB)
 
@@ -76,9 +77,13 @@ Reconexão: máquina de estados (`idle` / `connecting` / `connected` / `backoff`
 
 ## Endpoints preservados
 
-`GET /`, `GET /api/contador`, `GET /api/status`, `GET|POST /api/config`, `POST /api/incrementar|decrementar|reset|definir|reboot|factory-reset`.
+`GET /`, `GET /api/contador`, `GET|POST /api/config`, `POST /api/incrementar|decrementar|reset|definir|reboot|factory-reset`, `POST /api/ota/check-now` (202, autenticado).
 
 Status aditivo: `input1` / `input2` como `0|1` raw (`0` = LOW/ativo).
+
+## OTA híbrido (pull + wake)
+
+Pull periódico ~60 s + jitter 0–15 s (backoff exponencial se o check falhar). Wake: `POST /api/ota/check-now` com `X-Device-Token` retorna **202** e agenda o mesmo pull no loop (sem flash no handler).
 
 ## OTA — ACK terminal com retry
 
