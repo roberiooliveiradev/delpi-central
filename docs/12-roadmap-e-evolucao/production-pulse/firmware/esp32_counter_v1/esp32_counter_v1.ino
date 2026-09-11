@@ -20,7 +20,7 @@ static const char* DEFAULT_WIFI_PASSWORD = "YOUR_PASSWORD";
 static const unsigned long DEFAULT_DEBOUNCE_MS = 100;
 static const char* FIRMWARE_VERSION = "esp32_counter_v1.0.0";
 static const uint16_t EEPROM_SIZE = 512;
-static const uint32_t CONFIG_MAGIC = 0x50505731;  // "PPW1" — ESP32-WROOM; distinct from ESP8266/C3\x02
+static const uint32_t CONFIG_MAGIC = 0x50505731;  // "PPW1" — ESP32-WROOM (distinct from ESP8266/C3)
 
 // Opto-isolated machine inputs (active LOW, INPUT_PULLUP). 3.3 V logic side only.
 #define INPUT_1_PIN 18
