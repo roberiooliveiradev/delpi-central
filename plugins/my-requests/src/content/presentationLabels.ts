@@ -24,7 +24,7 @@ const ACTION_LABELS: Record<string, string> = {
   return: "Devolver para ajuste",
   resubmit: "Reenviar solicitação",
   complete: "Concluir",
-  issue: "Registrar emissão",
+  issue: "Emitir nota fiscal",
   confirm_fulfillment: "Confirmar atendimento",
   reject_fulfillment: "Devolver para correção",
   cancel: "Cancelar solicitação",

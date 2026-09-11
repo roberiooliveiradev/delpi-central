@@ -191,7 +191,8 @@ def test_p0_start_then_issue_complete(stack):
         idempotency_key=str(uuid4()),
     )
     assert started["status"] == "in_progress"
-    assert {"complete", "issue"} <= set(started["allowed_actions"])
+    assert "issue" in started["allowed_actions"]
+    assert "complete" not in started["allowed_actions"]
 
     issued = TransitionRequestUseCase(
         stack.types, stack.requests, stack.idem
@@ -293,7 +294,7 @@ def test_p0_cancel_in_progress_processor(stack):
         (
             "in_progress",
             lambda: Actor(user_id="p", user_name="P", has_process=True, has_access=True),
-            {"view", "return", "complete", "issue", "cancel"},
+            {"view", "return", "issue", "cancel"},
         ),
         (
             "needs_information",
@@ -404,7 +405,7 @@ def test_p0_get_detail_exposes_issue_alias(stack):
         user=_processor(), request_id=created["id"]
     )
     assert "issue" in detail["allowed_actions"]
-    assert "complete" in detail["allowed_actions"]
+    assert "complete" not in detail["allowed_actions"]
     assert detail["journey_progress"]["percentage"] == 66
     assert detail["journey_progress"]["current_stage_id"] == "service"
     assert detail["capabilities"]["can_upload_artifact"] is True

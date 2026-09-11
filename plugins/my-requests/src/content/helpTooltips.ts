@@ -96,7 +96,7 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
     complete:
       "Finaliza o atendimento quando todas as providências necessárias foram realizadas.",
     issue:
-      "Registra a emissão da nota fiscal. É obrigatório ter anexado a nota (PDF) em Documentos gerados. Depois disso, os documentos ficam bloqueados e o solicitante precisa confirmar o atendimento ou devolver para correção.",
+      "Emite a nota fiscal nesta solicitação. Anexe o PDF em Documentos gerados antes de confirmar — sem o PDF a ação avisa o que falta. Depois da emissão, os documentos ficam bloqueados e o solicitante confirma o atendimento ou devolve para correção.",
     confirm_fulfillment:
       "Confirme que o que você pediu foi atendido. Só essa confirmação fecha a solicitação. Se algo estiver errado, use Devolver para correção.",
     reject_fulfillment:

@@ -88,8 +88,9 @@ def test_registry_loads_invoice_and_generic_without_engine_branch():
         ("submitted", _processor, None, {"view", "start"}),
         ("submitted", _creator, None, {"view", "cancel"}),
         ("submitted", _manager, None, {"view", "start", "cancel"}),
-        ("in_progress", _processor, None, {"view", "return", "cancel"}),
+        ("in_progress", _processor, None, {"view", "return", "issue", "cancel"}),
         ("in_progress", _processor, _NF, {"view", "return", "issue", "cancel"}),
+        ("in_progress", _processor, _GENERIC_ONLY, {"view", "return", "issue", "cancel"}),
         ("in_progress", _creator, _NF, {"view"}),
         ("needs_information", _creator, None, {"view", "edit", "resubmit"}),
         ("needs_information", _processor, None, {"view"}),
@@ -129,6 +130,29 @@ def test_invoice_allowed_actions_parity(
         )
     )
     assert actions == expected
+
+
+def test_issue_listed_without_pdf_but_execute_still_requires_artifact(engine, invoice_workflow):
+    """UI must surface Emitir/issue in in_progress; PDF is enforced only on execute."""
+    actions = engine.compute_allowed_actions(
+        request=_request(status="in_progress"),
+        actor=_processor(),
+        workflow=invoice_workflow,
+        artifacts=None,
+    )
+    assert "issue" in actions
+
+    ok, code, field = engine.can_transition(
+        request=_request(status="in_progress"),
+        actor=_processor(),
+        workflow=invoice_workflow,
+        action="issue",
+        artifacts=None,
+        require_fields=False,
+    )
+    assert ok is False
+    assert code == "artifact_required"
+    assert field == "invoice_pdf"
 
 
 def test_issue_requires_invoice_pdf_artifact(engine, invoice_workflow):

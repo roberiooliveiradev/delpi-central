@@ -43,7 +43,7 @@ describe("presentationLabels", () => {
           to_status: "awaiting_requester_confirmation",
         },
       }),
-    ).toBe("Registrar emissão — Aguardando confirmação do solicitante");
+    ).toBe("Emitir nota fiscal — Aguardando confirmação do solicitante");
 
     expect(
       timelineEventTitle({
@@ -54,7 +54,7 @@ describe("presentationLabels", () => {
           to_status: "awaiting_requester_confirmation",
         },
       }),
-    ).toBe("Registrar emissão — Aguardando confirmação do solicitante");
+    ).toBe("Emitir nota fiscal — Aguardando confirmação do solicitante");
 
     expect(
       timelineEventTitle({

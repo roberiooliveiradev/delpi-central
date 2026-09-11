@@ -192,11 +192,16 @@ class WorkflowEngine:
         action: str,
         body: dict[str, Any] | None = None,
         require_fields: bool = True,
+        require_artifacts: bool = True,
         expected_version: int | None = None,
         artifacts: list[dict[str, Any]] | None = None,
     ) -> tuple[bool, str | None, str | None]:
         """
         Returns (ok, error_code, missing_field).
+
+        Listing allowed actions should use require_fields=False and
+        require_artifacts=False so the UI can surface the action; execution
+        keeps full validation (fields + artifacts).
         """
         if expected_version is not None and request.version != expected_version:
             return False, "stale_version", None
@@ -222,7 +227,7 @@ class WorkflowEngine:
         ):
             return False, "forbidden", None
 
-        if not _matches_artifacts(requires, artifacts):
+        if require_artifacts and not _matches_artifacts(requires, artifacts):
             return False, "artifact_required", "invoice_pdf"
 
         if require_fields:
@@ -280,6 +285,7 @@ class WorkflowEngine:
                 action=action,
                 body=None,
                 require_fields=False,
+                require_artifacts=False,
                 artifacts=artifacts,
             )
             if ok:
