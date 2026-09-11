@@ -701,10 +701,21 @@ class OperationalRouteRegistryLintService:
                 or route_spec.get("operationIdMarkers")
                 or route_spec.get("pathMarkers")
             )
+            # E11.S5 — manual registry may omit operationIds; CI autoTierC still needs
+            # a technical binding OR semantic route id / continuity facet.
+            has_semantic = bool(
+                str(route.get("id") or "").strip()
+                or str(route.get("intentBinding") or "").strip()
+                or (
+                    isinstance(route.get("continuityFacets"), list)
+                    and route.get("continuityFacets")
+                )
+            )
 
-            if not markers:
+            if not markers and not has_semantic:
                 report.add_error(
-                    f"autoTierCRoutes.{route_id}: route sem operationIds/operationIdMarkers/pathMarkers"
+                    f"autoTierCRoutes.{route_id}: route sem operationIds/"
+                    "operationIdMarkers/pathMarkers nem metadata semântica"
                 )
 
             parameters = route.get("parameters") or {}

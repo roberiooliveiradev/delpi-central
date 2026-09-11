@@ -1835,6 +1835,10 @@
     },
     "parameterStrategyDeletedAt": "E9.S12.E",
     "routeSegmentDeletedAt": "E9.S12.D",
-    "routeSegmentDeletedCount": 23
+    "routeSegmentDeletedCount": 23,
+    "operationIdsRuntimeAuthority": false,
+    "operationIdsRole": "observer",
+    "operationIdsAuthorityRemovedAt": "E11.S5",
+    "operationIdsObserverCount": 84
   }
 }

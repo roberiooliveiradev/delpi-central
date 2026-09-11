@@ -39,12 +39,12 @@ class OperationalRouteActionResolverService:
         route_spec = route.get("route")
 
         if not isinstance(route_spec, dict):
-            return None
+            route_spec = {}
 
-        # E9.S12.C — authority = operationIds canônicos (OpenAPI).
-        # Compat: operationIdMarkers/pathMarkers ainda lidos se presentes (testes/KPI virtual).
-        operation_ids = [
-            str(item).strip()
+        # E11.S5 — operationIds/pathMarkers são observer/telemetry, não authority.
+        # Seleção: allowlist completo + affinity/schema; preferred ids só ordenam.
+        preferred_operation_ids = [
+            str(item).strip().lower()
             for item in (route_spec.get("operationIds") or [])
             if str(item).strip()
         ]
@@ -66,126 +66,75 @@ class OperationalRouteActionResolverService:
         path_exact_end = str(route_spec.get("pathExactEnd") or "").strip().lower()
         path_suffix = str(route_spec.get("pathSuffix") or "").strip().lower()
 
+        has_semantic_route = bool(
+            str(route.get("id") or "").strip()
+            or str(route.get("domain") or "").strip()
+            or str(route.get("intentBinding") or "").strip()
+            or (isinstance(route.get("match"), dict) and route.get("match"))
+        )
         if (
-            not operation_ids
+            not preferred_operation_ids
             and not path_markers
             and not operation_markers
             and not path_exact_end
             and not path_suffix
+            and not has_semantic_route
         ):
             return None
 
         if candidates is None:
-            if operation_ids and hasattr(
-                self._catalog, "find_allowed_actions_by_operation_ids"
-            ):
-                candidates = self._catalog.find_allowed_actions_by_operation_ids(
-                    operation_ids=operation_ids,
-                    allowed_action_ids=allowed_action_ids,
-                    method=str(route_spec.get("method") or "GET"),
-                )
-            if not candidates:
-                candidates = self._catalog.find_allowed_actions_by_markers(
-                    path_markers=path_markers
-                    or ([path_exact_end] if path_exact_end else []),
-                    operation_markers=operation_markers
-                    or [oid.lower() for oid in operation_ids],
-                    allowed_action_ids=allowed_action_ids,
-                )
-
-            if not candidates:
-                candidates = self._catalog.load_candidates(
-                    message,
-                    allowed_action_ids=allowed_action_ids,
-                    candidates_loader=candidates_loader,
-                )
+            candidates = self._catalog.load_candidates(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                candidates_loader=candidates_loader,
+            )
 
         candidates = self._catalog.stable_sort_by_allowed_action_ids(
             candidates or [],
             allowed_action_ids,
         )
 
+        preferred_set = {oid for oid in preferred_operation_ids}
+        preferred_candidates = [
+            action
+            for action in candidates
+            if str(action.get("operationId") or "").strip().lower() in preferred_set
+        ] if preferred_set else []
+
         expected_method = str(route_spec.get("method") or "GET").upper()
-        operation_id_set = {oid.lower() for oid in operation_ids}
-
         normalized = ChatMessageNormalizationService.normalize_for_matching(message or "")
-        matching: list[tuple[dict, dict, str]] = []
 
-        for action in candidates:
-            if str(action.get("method") or "GET").upper() != expected_method:
-                continue
-
-            path = str(action.get("path") or "").lower()
-            operation_id = str(action.get("operationId") or "").lower()
-
-            if operation_id_set:
-                if operation_id not in operation_id_set:
-                    continue
-            else:
-                if path_exact_end and not path.rstrip("/").endswith(
-                    path_exact_end.rstrip("/")
-                ):
-                    continue
-
-                if path_suffix and not path.rstrip("/").endswith(path_suffix.rstrip("/")):
-                    if not operation_markers or not any(
-                        marker in operation_id for marker in operation_markers
-                    ):
-                        continue
-
-                if path_markers and not any(marker in path for marker in path_markers):
-                    if not (
-                        path_suffix
-                        and path.rstrip("/").endswith(path_suffix.rstrip("/"))
-                    ):
-                        if not operation_markers or not any(
-                            marker in operation_id for marker in operation_markers
-                        ):
-                            continue
-
-                if exclude_path_markers and any(
-                    marker in path for marker in exclude_path_markers
-                ):
-                    continue
-
-                if operation_markers and not any(
-                    marker in operation_id for marker in operation_markers
-                ):
-                    if path_markers or path_exact_end or path_suffix:
-                        if not path_markers or not any(
-                            marker in path for marker in path_markers
-                        ):
-                            if not path_suffix or not path.rstrip("/").endswith(
-                                path_suffix.rstrip("/")
-                            ):
-                                continue
-
-                if (
-                    not path_markers
-                    and not path_exact_end
-                    and not path_suffix
-                    and operation_markers
-                    and not any(marker in operation_id for marker in operation_markers)
-                ):
-                    continue
-
-                if (
-                    "search" in path
-                    and not path_markers
-                    and not path_exact_end
-                    and not path_suffix
-                ):
-                    continue
-
-            if not self._action_fits_route_affinity(route, action, path=path):
-                continue
-
-            parameters = self.build_parameters(
+        matching = self._match_actions_for_route(
+            route,
+            preferred_candidates or candidates,
+            message=message,
+            identifier=identifier,
+            normalized=normalized,
+            expected_method=expected_method,
+            previous_messages=previous_messages,
+            build_date_branch_parameters=build_date_branch_parameters,
+            merge_date_parameters=merge_date_parameters,
+            production_kind=production_kind,
+            conversation_context=conversation_context,
+            description_override=description_override,
+            memory_snapshot=memory_snapshot,
+            path_markers=path_markers,
+            operation_markers=operation_markers,
+            exclude_path_markers=exclude_path_markers,
+            path_exact_end=path_exact_end,
+            path_suffix=path_suffix,
+            has_semantic_route=has_semantic_route,
+            apply_soft_markers=not preferred_set,
+        )
+        # Observer preferred ids miss → OpenAPI allowlist completo (E11.S5).
+        if not matching and preferred_candidates and preferred_candidates != candidates:
+            matching = self._match_actions_for_route(
                 route,
-                action,
+                candidates,
                 message=message,
                 identifier=identifier,
                 normalized=normalized,
+                expected_method=expected_method,
                 previous_messages=previous_messages,
                 build_date_branch_parameters=build_date_branch_parameters,
                 merge_date_parameters=merge_date_parameters,
@@ -193,36 +142,14 @@ class OperationalRouteActionResolverService:
                 conversation_context=conversation_context,
                 description_override=description_override,
                 memory_snapshot=memory_snapshot,
+                path_markers=path_markers,
+                operation_markers=operation_markers,
+                exclude_path_markers=exclude_path_markers,
+                path_exact_end=path_exact_end,
+                path_suffix=path_suffix,
+                has_semantic_route=has_semantic_route,
+                apply_soft_markers=False,
             )
-
-            if parameters is None:
-                continue
-
-            from app.domain.services.chat_operational_date_parameter_service import (
-                ChatOperationalDateParameterService,
-            )
-
-            if (
-                ChatOperationalDateParameterService.action_requires_explicit_date(action)
-                and not ChatOperationalDateParameterService.parameters_have_date(
-                    action,
-                    parameters,
-                )
-            ):
-                continue
-
-            reason = self.resolve_presentation_reason(
-                route,
-                parameters,
-                message=message,
-                normalized=normalized,
-                description_override=description_override,
-            )
-
-            if not reason:
-                continue
-
-            matching.append((action, parameters, reason))
 
         if not matching:
             return None
@@ -275,6 +202,150 @@ class OperationalRouteActionResolverService:
         if shadow is not None:
             result["metadata"] = {"parameterStrategyShadow": shadow}
         return result
+
+    def _match_actions_for_route(
+        self,
+        route: dict,
+        candidates: list[dict],
+        *,
+        message: str,
+        identifier: str | None,
+        normalized: str,
+        expected_method: str,
+        previous_messages: list | None,
+        build_date_branch_parameters: Callable[..., dict] | None,
+        merge_date_parameters: Callable[..., dict] | None,
+        production_kind: ProductionOperationalIntentKind | None,
+        conversation_context: str | None,
+        description_override: str | None,
+        memory_snapshot: dict | None,
+        path_markers: list[str],
+        operation_markers: list[str],
+        exclude_path_markers: list[str],
+        path_exact_end: str,
+        path_suffix: str,
+        has_semantic_route: bool,
+        apply_soft_markers: bool,
+    ) -> list[tuple[dict, dict, str]]:
+        matching: list[tuple[dict, dict, str]] = []
+
+        for action in candidates:
+            if str(action.get("method") or "GET").upper() != expected_method:
+                continue
+
+            path = str(action.get("path") or "").lower()
+            operation_id = str(action.get("operationId") or "").lower()
+
+            # Soft technical hints (observer): never exclusive when semantic route exists.
+            if apply_soft_markers:
+                if path_exact_end and not path.rstrip("/").endswith(
+                    path_exact_end.rstrip("/")
+                ):
+                    continue
+
+                if path_suffix and not path.rstrip("/").endswith(path_suffix.rstrip("/")):
+                    if not operation_markers or not any(
+                        marker in operation_id for marker in operation_markers
+                    ):
+                        if not has_semantic_route:
+                            continue
+
+                if path_markers and not any(marker in path for marker in path_markers):
+                    if not (
+                        path_suffix
+                        and path.rstrip("/").endswith(path_suffix.rstrip("/"))
+                    ):
+                        if not operation_markers or not any(
+                            marker in operation_id for marker in operation_markers
+                        ):
+                            if not has_semantic_route:
+                                continue
+
+                if exclude_path_markers and any(
+                    marker in path for marker in exclude_path_markers
+                ):
+                    continue
+
+                if operation_markers and not any(
+                    marker in operation_id for marker in operation_markers
+                ):
+                    if path_markers or path_exact_end or path_suffix:
+                        if not path_markers or not any(
+                            marker in path for marker in path_markers
+                        ):
+                            if not path_suffix or not path.rstrip("/").endswith(
+                                path_suffix.rstrip("/")
+                            ):
+                                if not has_semantic_route:
+                                    continue
+
+                if (
+                    not path_markers
+                    and not path_exact_end
+                    and not path_suffix
+                    and operation_markers
+                    and not any(marker in operation_id for marker in operation_markers)
+                ):
+                    if not has_semantic_route:
+                        continue
+
+                if (
+                    "search" in path
+                    and not path_markers
+                    and not path_exact_end
+                    and not path_suffix
+                    and not has_semantic_route
+                ):
+                    continue
+
+            if not self._action_fits_route_affinity(route, action, path=path):
+                continue
+
+            parameters = self.build_parameters(
+                route,
+                action,
+                message=message,
+                identifier=identifier,
+                normalized=normalized,
+                previous_messages=previous_messages,
+                build_date_branch_parameters=build_date_branch_parameters,
+                merge_date_parameters=merge_date_parameters,
+                production_kind=production_kind,
+                conversation_context=conversation_context,
+                description_override=description_override,
+                memory_snapshot=memory_snapshot,
+            )
+
+            if parameters is None:
+                continue
+
+            from app.domain.services.chat_operational_date_parameter_service import (
+                ChatOperationalDateParameterService,
+            )
+
+            if (
+                ChatOperationalDateParameterService.action_requires_explicit_date(action)
+                and not ChatOperationalDateParameterService.parameters_have_date(
+                    action,
+                    parameters,
+                )
+            ):
+                continue
+
+            reason = self.resolve_presentation_reason(
+                route,
+                parameters,
+                message=message,
+                normalized=normalized,
+                description_override=description_override,
+            )
+
+            if not reason:
+                continue
+
+            matching.append((action, parameters, reason))
+
+        return matching
 
     @staticmethod
     def _prefer_branch_capable_match(
@@ -392,21 +463,27 @@ class OperationalRouteActionResolverService:
     def _action_fits_route_affinity(route: dict, action: dict, *, path: str) -> bool:
         """Rejeita action cujo contrato não combina com a classe da rota do registry.
 
-        E11.S3 — sem parameterStrategy path-inferred. Usa match flags, domain da rota
-        e parâmetros declarados no schema OpenAPI da action.
+        E11.S3/S5 — sem parameterStrategy path-inferred e sem operationIds authority.
+        Usa match flags, continuity facets, domain e schema OpenAPI.
         """
+        from app.domain.services.operational_route_registry_service import (
+            OperationalRouteRegistryService,
+        )
         from app.domain.services.route_segment_inference_service import (
             RouteSegmentInferenceService,
         )
 
         match_spec = route.get("match") if isinstance(route.get("match"), dict) else {}
         requires_product = bool(match_spec.get("requiresProductIdentifier"))
-        has_product_segment = (
-            RouteSegmentInferenceService.has_product_continuity_segment(route)
-        )
         domain = str(route.get("domain") or "").strip()
+        domain_l = domain.lower()
         route_id = str(route.get("id") or "").strip().lower()
         path_l = str(path or "").lower()
+        is_product_domain = domain_l in {
+            "product",
+            "domainproductsearch",
+            "product_search",
+        } or route_id.startswith("product")
 
         schema_params = action.get("parametersSchema") or action.get("parameters_schema") or []
         schema_names = {
@@ -425,13 +502,57 @@ class OperationalRouteActionResolverService:
         if "supplier_part_number" in schema_names or "supplierpartnumber" in schema_names:
             return "by-supplier-part-number" in path_l or "supplier" in path_l
 
-        if requires_product or has_product_segment or (
+        facets = RouteSegmentInferenceService.continuity_keys_for_route(
+            route,
+            aliases=OperationalRouteRegistryService.continuity_facet_aliases(),
+        )
+        weak_facets = {
+            "full",
+            "summary",
+            "analyser",
+            "analyzer",
+            "description",
+            "detail",
+            "list",
+            "generic",
+        }
+        strong_facets = {
+            str(item).strip().lower()
+            for item in facets
+            if str(item).strip() and str(item).strip().lower() not in weak_facets
+        }
+        path_compact = (
+            path_l.replace("-", "").replace("_", "").replace("/", "").replace("{", "").replace("}", "")
+        )
+
+        def _facet_hits_path(facet: str) -> bool:
+            token = str(facet or "").strip().lower()
+            if not token:
+                return False
+            if token in path_l:
+                return True
+            compact = token.replace("-", "").replace("_", "")
+            return bool(compact) and compact in path_compact
+
+        product_shaped = requires_product or is_product_domain or (
             {"code", "productcode", "product_code"} & schema_names
             and ("{code}" in path_l or "{identifier}" in path_l)
-        ):
-            if "{code}" in path_l or "{identifier}" in path_l:
-                return "/products/" in path_l
-            return "/products/" in path_l
+        )
+        if product_shaped:
+            if "/products/" not in path_l:
+                return False
+            if strong_facets and not any(_facet_hits_path(f) for f in strong_facets):
+                return False
+            return True
+
+        if strong_facets and not any(_facet_hits_path(f) for f in strong_facets):
+            # Semantic route with facet: reject unrelated OpenAPI paths.
+            if (
+                str(route.get("id") or "").strip()
+                or str(route.get("domain") or "").strip()
+                or str(route.get("intentBinding") or "").strip()
+            ):
+                return False
 
         return True
 

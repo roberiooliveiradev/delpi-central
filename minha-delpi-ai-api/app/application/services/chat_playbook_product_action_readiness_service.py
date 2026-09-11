@@ -50,6 +50,35 @@ class ChatPlaybookProductActionReadinessService:
             if str(marker).strip()
         ]
 
+        # E11.S5 — sem operationIds authority: diagnostic via continuity facet / route id.
+        if not path_markers and not operation_markers:
+            from app.domain.services.operational_route_registry_service import (
+                OperationalRouteRegistryService,
+            )
+            from app.domain.services.route_segment_inference_service import (
+                RouteSegmentInferenceService,
+            )
+
+            facets = sorted(
+                RouteSegmentInferenceService.continuity_keys_for_route(
+                    route,
+                    aliases=OperationalRouteRegistryService.continuity_facet_aliases(),
+                )
+            )
+            weak = {
+                "full",
+                "summary",
+                "analyser",
+                "analyzer",
+                "description",
+                "detail",
+                "list",
+                "generic",
+            }
+            strong = [f for f in facets if f not in weak]
+            if strong:
+                path_markers = [strong[0]]
+
         path_token = path_markers[0] if path_markers else ""
         operation_token = operation_markers[0] if operation_markers else ""
 

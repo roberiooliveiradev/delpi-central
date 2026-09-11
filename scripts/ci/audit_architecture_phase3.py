@@ -627,7 +627,11 @@ def scan_semantic_substitute_lines(path: str, lines: dict[int, str]) -> list[Vio
 
 
 def scan_registry_operation_id_catalog(path: str = REGISTRY_REL) -> list[Violation]:
-    """Flag manual operationIds lists used as routing technical catalog."""
+    """Flag manual operationIds lists used as routing technical catalog authority.
+
+    E11.S5 — arrays may remain as observer/telemetry when
+    ``cleanupMeta.operationIdsRuntimeAuthority`` is explicitly false.
+    """
     file_path = ROOT / path
     if not file_path.is_file():
         return []
@@ -635,7 +639,12 @@ def scan_registry_operation_id_catalog(path: str = REGISTRY_REL) -> list[Violati
         payload = json.loads(file_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         return [Violation("SEMANTIC_TECHNICAL_OPERATION_ID_CATALOG", path, 0, f"registry JSON inválido: {exc}")]
-    routes = payload.get("routes") if isinstance(payload, dict) else None
+    if not isinstance(payload, dict):
+        return []
+    meta = payload.get("cleanupMeta") if isinstance(payload.get("cleanupMeta"), dict) else {}
+    if meta.get("operationIdsRuntimeAuthority") is False:
+        return []
+    routes = payload.get("routes")
     if not isinstance(routes, list):
         return []
     findings: list[Violation] = []

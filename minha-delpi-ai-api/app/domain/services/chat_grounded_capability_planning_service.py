@@ -686,26 +686,57 @@ class ChatGroundedCapabilityPlanningService:
             if not isinstance(route, dict):
                 continue
             route_node = route.get("route") if isinstance(route.get("route"), dict) else {}
-            operation_ids = [
-                str(item).strip().lower()
-                for item in (route_node.get("operationIds") or [])
-                if str(item).strip()
-            ]
+            # E11.S5 — eligibility by continuity facets / path affinity, not operationIds catalog.
+            from app.domain.services.route_segment_inference_service import (
+                RouteSegmentInferenceService,
+            )
+
+            facets = RouteSegmentInferenceService.continuity_keys_for_route(
+                route,
+                aliases=OperationalRouteRegistryService.continuity_facet_aliases(),
+            )
             markers = [
                 str(marker).strip().rstrip("/").lower()
                 for marker in (route_node.get("pathMarkers") or [])
                 if str(marker).strip()
             ]
-            if operation_ids:
-                # E9.S12.C — binding canônico por operationId; pathMarkers opcionais.
-                pass
-            elif markers and not any(
-                marker in path_norm or path_norm.endswith(marker)
-                for marker in markers
-            ):
-                continue
-            elif not operation_ids and not markers:
-                continue
+            path_hits_marker = bool(
+                markers
+                and any(
+                    marker in path_norm or path_norm.endswith(marker)
+                    for marker in markers
+                )
+            )
+            path_compact = (
+                path_norm.replace("-", "").replace("_", "").replace("/", "")
+            )
+
+            def _facet_hits(facet: str) -> bool:
+                token = str(facet or "").strip().lower()
+                if not token or token in {
+                    "full",
+                    "summary",
+                    "analyser",
+                    "analyzer",
+                    "description",
+                    "detail",
+                    "list",
+                    "generic",
+                }:
+                    return False
+                if token in path_norm:
+                    return True
+                compact = token.replace("-", "").replace("_", "")
+                return bool(compact) and compact in path_compact
+
+            path_hits_facet = bool(facets) and any(_facet_hits(f) for f in facets)
+            if not path_hits_marker and not path_hits_facet:
+                # Legacy: route id leaf in path (e.g. productStock → stock).
+                leaf = RouteSegmentInferenceService._facet_from_route_id(
+                    str(route.get("id") or "")
+                )
+                if not leaf or not _facet_hits(leaf):
+                    continue
             if hasattr(selection_service, "select_registry_route_id"):
                 try:
                     selected = selection_service.select_registry_route_id(

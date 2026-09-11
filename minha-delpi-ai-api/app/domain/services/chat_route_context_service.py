@@ -422,11 +422,41 @@ class ChatRouteContextService:
                             for item in (route_spec.get("operationIds") or [])
                             if str(item).strip()
                         }
-                        # actionId often ends with operationId
+                        # E11.S5 — operationIds optional observer; prefer route.id / facets.
                         matched = any(
                             action_id.endswith(op) or op in action_id for op in op_ids
                         )
-                        if not matched and str(route.get("id") or "") not in action_id:
+                        route_id = str(route.get("id") or "").strip()
+                        if not matched and route_id and route_id not in action_id:
+                            facets = RouteSegmentInferenceService.continuity_keys_for_route(
+                                route,
+                                aliases=OperationalRouteRegistryService.continuity_facet_aliases(),
+                            )
+                            action_compact = (
+                                action_id.lower()
+                                .replace("-", "")
+                                .replace("_", "")
+                                .replace(".", "")
+                            )
+                            matched = any(
+                                (
+                                    f.replace("-", "").replace("_", "") in action_compact
+                                )
+                                for f in facets
+                                if f
+                                and f
+                                not in {
+                                    "full",
+                                    "summary",
+                                    "analyser",
+                                    "analyzer",
+                                    "description",
+                                    "detail",
+                                    "list",
+                                    "generic",
+                                }
+                            )
+                        if not matched and route_id not in action_id:
                             continue
                         for facet in RouteSegmentInferenceService.continuity_keys_for_route(
                             route,

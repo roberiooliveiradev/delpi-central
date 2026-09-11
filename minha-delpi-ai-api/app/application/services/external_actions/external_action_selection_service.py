@@ -286,10 +286,7 @@ class ExternalActionSelectionService:
         allowed_action_ids: list[str],
         previous_messages: list | None,
     ) -> dict | None:
-        """Usa metadados técnicos da rota + Action Catalog; cutover E1.S6B no allowlist completo."""
-        from app.domain.services.openapi_tool_routing_content_service import (
-            OpenApiToolRoutingContentService,
-        )
+        """E11.S5 — OpenAPI-first no allowlist completo; registry operationIds = observer only."""
         from app.domain.services.operational_route_registry_service import (
             OperationalRouteRegistryService,
         )
@@ -299,11 +296,13 @@ class ExternalActionSelectionService:
             return None
 
         route_node = route.get("route") if isinstance(route.get("route"), dict) else {}
-        operation_ids = [
+        # Observer telemetry only — never narrows authority allowlist.
+        marker_matched_ids: list[str] = []
+        operation_ids = {
             str(item).strip().lower()
             for item in (route_node.get("operationIds") or [])
             if str(item).strip()
-        ]
+        }
         path_markers = [
             str(item).strip().lower()
             for item in (route_node.get("pathMarkers") or [])
@@ -321,96 +320,57 @@ class ExternalActionSelectionService:
             return None
 
         allowed = {str(item) for item in allowed_action_ids}
-        matched_ids: list[str] = []
-        for action in list_actions():
+        catalog_actions = list(list_actions())
+        for action in catalog_actions:
             action_id = str(action.get("actionId") or "").strip()
             if not action_id or (allowed and action_id not in allowed):
                 continue
             path = str(action.get("path") or "").lower()
             operation_id = str(action.get("operationId") or "").lower()
             if operation_ids and operation_id in operation_ids:
-                matched_ids.append(action_id)
+                marker_matched_ids.append(action_id)
                 continue
             if path_suffix and path_suffix in path:
-                matched_ids.append(action_id)
+                marker_matched_ids.append(action_id)
                 continue
             if any(marker in path for marker in path_markers):
-                matched_ids.append(action_id)
+                marker_matched_ids.append(action_id)
                 continue
             if any(marker in operation_id for marker in operation_markers):
-                matched_ids.append(action_id)
+                marker_matched_ids.append(action_id)
 
-        cutover = OpenApiToolRoutingContentService.bool_setting(
-            "registrySelectionShadow",
-            "cutoverEnabled",
-            default=False,
-        )
-
-        if cutover:
-            # Authority: OpenAPI-first no allowlist completo (sem narrowing por markers).
-            selected = self._select_via_openapi_first(
-                message,
-                allowed_action_ids=list(allowed_action_ids),
-                previous_messages=previous_messages,
-                memory_snapshot=None,
-            )
-            if not isinstance(selected, dict):
-                return None
-            legacy_selected = None
-            if matched_ids:
-                legacy_selected = self._select_via_openapi_first(
-                    message,
-                    allowed_action_ids=matched_ids,
-                    previous_messages=previous_messages,
-                    memory_snapshot=None,
-                )
-            legacy_action_id = (
-                self._legacy_action_id(legacy_selected)
-                if isinstance(legacy_selected, dict)
-                else ""
-            )
-            shadow = self._build_registry_selection_shadow(
-                message=message,
-                route_id=str(route_id or "").strip(),
-                legacy_action_id=legacy_action_id,
-                marker_matched_ids=list(matched_ids),
-                full_allowed_ids=list(allowed_action_ids),
-                catalog_actions=list(list_actions()),
-                kind="registry_route_id",
-                authority_action_id=self._legacy_action_id(selected),
-                cutover=True,
-            )
-            if shadow is not None:
-                metadata = dict(selected.get("metadata") or {})
-                metadata["registrySelectionShadow"] = shadow
-                selected = {**selected, "metadata": metadata}
-                from app.domain.services.registry_selection_shadow_observability_service import (
-                    RegistrySelectionShadowObservabilityService,
-                )
-
-                RegistrySelectionShadowObservabilityService.record(shadow)
-            return selected
-
-        if not matched_ids:
-            return None
-
-        # Prefer single matched action; otherwise let OpenAPI planner disambiguate.
         selected = self._select_via_openapi_first(
             message,
-            allowed_action_ids=matched_ids,
+            allowed_action_ids=list(allowed_action_ids),
             previous_messages=previous_messages,
             memory_snapshot=None,
         )
         if not isinstance(selected, dict):
             return None
+
+        legacy_selected = None
+        if marker_matched_ids:
+            legacy_selected = self._select_via_openapi_first(
+                message,
+                allowed_action_ids=marker_matched_ids,
+                previous_messages=previous_messages,
+                memory_snapshot=None,
+            )
+        legacy_action_id = (
+            self._legacy_action_id(legacy_selected)
+            if isinstance(legacy_selected, dict)
+            else ""
+        )
         shadow = self._build_registry_selection_shadow(
             message=message,
             route_id=str(route_id or "").strip(),
-            legacy_action_id=self._legacy_action_id(selected),
-            marker_matched_ids=list(matched_ids),
+            legacy_action_id=legacy_action_id,
+            marker_matched_ids=list(marker_matched_ids),
             full_allowed_ids=list(allowed_action_ids),
-            catalog_actions=list(list_actions()),
+            catalog_actions=catalog_actions,
             kind="registry_route_id",
+            authority_action_id=self._legacy_action_id(selected),
+            cutover=True,
         )
         if shadow is not None:
             metadata = dict(selected.get("metadata") or {})

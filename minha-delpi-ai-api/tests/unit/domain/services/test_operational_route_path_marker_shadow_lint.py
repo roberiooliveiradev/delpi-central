@@ -36,10 +36,24 @@ def test_product_search_routes_have_no_path_marker_shadow() -> None:
     assert report.ok, report.errors
 
 
-def test_product_search_by_description_uses_operation_ids() -> None:
+def test_product_search_by_description_keeps_observer_operation_ids() -> None:
     route = OperationalRouteRegistryService.route_by_id("productSearchByDescription")
+    assert route is not None
     route_spec = route.get("route") or {}
 
+    # E11.S5 — arrays may remain as observer; not routing authority.
     assert "search_products" in (route_spec.get("operationIds") or [])
     assert not (route_spec.get("pathMarkers") or [])
     assert not (route_spec.get("pathSuffix") or "")
+
+    from pathlib import Path
+    import json
+
+    payload = json.loads(
+        (
+            Path(__file__).resolve().parents[4]
+            / "app/content/pt-BR/assistant/operational_route_registry.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert payload.get("cleanupMeta", {}).get("operationIdsRuntimeAuthority") is False
+    assert payload.get("cleanupMeta", {}).get("operationIdsRole") == "observer"

@@ -1,7 +1,7 @@
 # Plano 11 — Correção arquitetural: cutover + generalização + cleanup sem residual
 
 **Prioridade:** P0  
-**Status execução:** Onda J · **ABERTO / VERIFY_FINAL_FAILED** · E11.S0–S4 **ATENDIDO** · próxima = **E11.S5**  
+**Status execução:** Onda J · **ABERTO / VERIFY_FINAL_FAILED** · E11.S0–S5 **ATENDIDO** · próxima = **E11.S6**  
 **BASE_GIT_SHA (E11.S0):** `8bc84fc6d1cea3edc8cd0c08dceee90f9303e777`  
 **Auditoria-base:** S4 `evidence/e11-s4-structured-continuity.md`  
 **Origem:** revisão arquitetural pós Ondas A–I em 2026-09-11  
@@ -144,7 +144,7 @@ Plano 10 reaproveitou E9.S10, executado antes da alteração posterior do motor 
 | RQ11-01 | Eliminar path→domain maps/substitutos do core genérico, em qualquer formato | ATENDIDO (E11.S2) |
 | RQ11-02 | Eliminar endpoint→parameterStrategy e usar schema OpenAPI como authority | ATENDIDO (E11.S3; path/oid inference removida; helpers schema-driven) |
 | RQ11-03 | Eliminar continuidade multi-turn derivada de path/operationId | ATENDIDO (E11.S4; facetas estruturadas) |
-| RQ11-04 | Remover `operationIds`/registry técnico como authority de routing | ABERTO |
+| RQ11-04 | Remover `operationIds`/registry técnico como authority de routing | ATENDIDO (E11.S5; arrays observer até S10 DELETE) |
 | RQ11-05 | Consolidar ownership semântico e remover NLU endpoint/domain-specific redundante | ABERTO |
 | RQ11-06 | Tornar recommendations contextuais; estático no máximo fallback temporário com exit criteria | ABERTO |
 | RQ11-07 | Derivar capability metadata de contract/sensitivity/policy real | ABERTO |
@@ -521,7 +521,11 @@ Não remover metadata técnica `operationId` do Action Catalog; remover apenas o
 
 ### Complete gate
 
-Nova API não exige registry edit; `TECHNICAL_CATALOG_ENTRIES` runtime = 0 para routing.
+Nova API não exige registry edit para routing authority; `SEMANTIC_TECHNICAL_OPERATION_ID_CATALOG` runtime authority = 0.
+
+- **COMPLETE_GATE:** ATENDIDO (`operationIdsRuntimeAuthority=false`; cutover permanente em `select_registry_route_id`)
+- Evidência: [`../evidence/e11-s5-registry-operation-ids-cutover.md`](../evidence/e11-s5-registry-operation-ids-cutover.md)
+- `READY_TO_EXECUTE` E11.S6: **sim**
 
 ---
 
@@ -752,7 +756,7 @@ Preencher no final:
 | RQ11-01 | | | | | |
 | RQ11-02 | | | | | |
 | RQ11-03 | | | | | |
-| RQ11-04 | | | | | |
+| RQ11-04 | e11-s5 | cutover+facet | test_e11_s5_* | ATENDIDO | arrays observer |
 | RQ11-05 | | | | | |
 | RQ11-06 | | | | | |
 | RQ11-07 | | | | | |
