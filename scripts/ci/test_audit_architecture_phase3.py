@@ -140,17 +140,13 @@ class ArchitecturePhase3GateTests(unittest.TestCase):
         )
         self.assertEqual(findings, [])
 
-    def test_registry_operation_ids_authority_cleared_after_e11_s5(self) -> None:
-        findings = phase3.scan_registry_operation_id_catalog()
-        self.assertEqual(findings, [])
-
-    def test_registry_operation_ids_catalog_detected_when_authority_true(self) -> None:
-        import json
-        import tempfile
-        from pathlib import Path
-
+    def test_registry_operation_ids_detected_even_when_cleanup_meta_denies_authority(self) -> None:
+        """A11-06 / J-R6: self-attestation cannot silence structural catalog scan."""
         payload = {
-            "cleanupMeta": {"operationIdsRuntimeAuthority": True},
+            "cleanupMeta": {
+                "operationIdsRuntimeAuthority": False,
+                "operationIdsRole": "observer",
+            },
             "routes": [
                 {
                     "id": "demo",
@@ -158,21 +154,32 @@ class ArchitecturePhase3GateTests(unittest.TestCase):
                 }
             ],
         }
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "operational_route_registry.json"
-            path.write_text(json.dumps(payload), encoding="utf-8")
-            # scan helper expects repo-relative path; exercise logic via direct load
-            findings: list = []
-            data = json.loads(path.read_text(encoding="utf-8"))
-            meta = data.get("cleanupMeta") or {}
-            self.assertIs(meta.get("operationIdsRuntimeAuthority"), True)
-            for item in data["routes"]:
-                ids = item["route"]["operationIds"]
-                if ids:
-                    findings.append("hit")
-            self.assertEqual(findings, ["hit"])
-            # Authority false short-circuits the real scanner on the live registry.
-            self.assertEqual(phase3.scan_registry_operation_id_catalog(), [])
+        findings = phase3.scan_registry_operation_id_catalog(
+            "tmp/demo_registry.json",
+            payload=payload,
+        )
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0].rule, "SEMANTIC_TECHNICAL_OPERATION_ID_CATALOG")
+        self.assertIn("metadata cannot suppress", findings[0].message)
+        self.assertIn("get_demo", findings[0].message)
+
+    def test_registry_operation_ids_empty_routes_ok(self) -> None:
+        findings = phase3.scan_registry_operation_id_catalog(
+            "tmp/empty_registry.json",
+            payload={
+                "cleanupMeta": {"operationIdsRuntimeAuthority": True},
+                "routes": [{"id": "x", "route": {"operationIds": [], "method": "GET"}}],
+            },
+        )
+        self.assertEqual(findings, [])
+
+    def test_live_registry_still_flagged_while_observer_arrays_exist(self) -> None:
+        """Live registry declares observer=false authority but still has operationIds lists."""
+        findings = phase3.scan_registry_operation_id_catalog()
+        self.assertGreater(len(findings), 0)
+        self.assertTrue(
+            all(item.rule == "SEMANTIC_TECHNICAL_OPERATION_ID_CATALOG" for item in findings)
+        )
 
 
 if __name__ == "__main__":

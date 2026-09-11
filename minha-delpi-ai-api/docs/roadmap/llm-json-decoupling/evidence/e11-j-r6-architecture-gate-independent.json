@@ -1,0 +1,13 @@
+{
+  "runId": "e11-j-r6-architecture-gate-independent-v1",
+  "wave": "J",
+  "step": "J-R6",
+  "gate": "ARCHITECTURE_GATE_INDEPENDENT",
+  "completeGate": "PASS",
+  "bypassRemoved": "cleanupMeta.operationIdsRuntimeAuthority=false short-circuit",
+  "semanticDebtAfter": {
+    "SEMANTIC_TECHNICAL_OPERATION_ID_CATALOG": 84,
+    "note": "expected until J-R8 removes parallel operationIds arrays"
+  },
+  "tests": "scripts/ci/test_audit_architecture_phase3.py"
+}

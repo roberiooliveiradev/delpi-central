@@ -10,8 +10,9 @@ introduzidas no diff falham. Regras cobertas:
 - UNSAFE_WRITE_RETRY: retry configurado para métodos de escrita sem exceção explícita;
 - SECRET_IN_LOG: segredo/credencial enviado para logger/print/console;
 - SECRET_LITERAL: segredo literal óbvio em código/config de produção.
-- SEMANTIC_* (E11.S1): substitutos de path/domain/strategy/routeSegment/catalog/credenciais;
-  use `--check-semantic-debt` para full-tree (vermelho até cleanup Onda J).
+- SEMANTIC_* (E11.S1 / J-R6): substitutos de path/domain/strategy/routeSegment/catalog/credenciais;
+  use `--check-semantic-debt` para full-tree. ``cleanupMeta``/self-attestation NÃO silencia
+  finding estrutural de ``operationIds`` no registry (A11-06).
 
 Uso CI:
   python scripts/ci/audit_architecture_phase3.py --check --base <sha>
@@ -626,27 +627,43 @@ def scan_semantic_substitute_lines(path: str, lines: dict[int, str]) -> list[Vio
     return findings
 
 
-def scan_registry_operation_id_catalog(path: str = REGISTRY_REL) -> list[Violation]:
-    """Flag manual operationIds lists used as routing technical catalog authority.
+def scan_registry_operation_id_catalog(
+    path: str = REGISTRY_REL,
+    *,
+    payload: dict | None = None,
+) -> list[Violation]:
+    """Flag manual operationIds lists used as a parallel technical routing catalog.
 
-    E11.S5 — arrays may remain as observer/telemetry when
-    ``cleanupMeta.operationIdsRuntimeAuthority`` is explicitly false.
+    J-R6 / A11-06: ``cleanupMeta.operationIdsRuntimeAuthority`` (or any self-attestation)
+    may annotate the finding for humans, but MUST NOT suppress structural detection.
     """
-    file_path = ROOT / path
-    if not file_path.is_file():
+    data = payload
+    if data is None:
+        file_path = ROOT / path
+        if not file_path.is_file():
+            return []
+        try:
+            data = json.loads(file_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            return [
+                Violation(
+                    "SEMANTIC_TECHNICAL_OPERATION_ID_CATALOG",
+                    path,
+                    0,
+                    f"registry JSON inválido: {exc}",
+                )
+            ]
+    if not isinstance(data, dict):
         return []
-    try:
-        payload = json.loads(file_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        return [Violation("SEMANTIC_TECHNICAL_OPERATION_ID_CATALOG", path, 0, f"registry JSON inválido: {exc}")]
-    if not isinstance(payload, dict):
-        return []
-    meta = payload.get("cleanupMeta") if isinstance(payload.get("cleanupMeta"), dict) else {}
-    if meta.get("operationIdsRuntimeAuthority") is False:
-        return []
-    routes = payload.get("routes")
+
+    meta = data.get("cleanupMeta") if isinstance(data.get("cleanupMeta"), dict) else {}
+    claimed_authority = meta.get("operationIdsRuntimeAuthority")
+    claimed_role = meta.get("operationIdsRole")
+
+    routes = data.get("routes")
     if not isinstance(routes, list):
         return []
+
     findings: list[Violation] = []
     for item in routes:
         if not isinstance(item, dict):
@@ -655,12 +672,19 @@ def scan_registry_operation_id_catalog(path: str = REGISTRY_REL) -> list[Violati
         route_spec = item.get("route") if isinstance(item.get("route"), dict) else {}
         ids = route_spec.get("operationIds")
         if isinstance(ids, list) and any(str(x).strip() for x in ids):
-            findings.append(Violation(
-                "SEMANTIC_TECHNICAL_OPERATION_ID_CATALOG",
-                path,
-                0,
-                f"route {route_id} teaches actions via manual operationIds={ids!r}",
-            ))
+            findings.append(
+                Violation(
+                    "SEMANTIC_TECHNICAL_OPERATION_ID_CATALOG",
+                    path,
+                    0,
+                    (
+                        f"route {route_id} teaches actions via manual "
+                        f"operationIds={ids!r} "
+                        f"(cleanupMeta.operationIdsRuntimeAuthority={claimed_authority!r} "
+                        f"role={claimed_role!r}; metadata cannot suppress structural finding)"
+                    ),
+                )
+            )
     return findings
 
 
