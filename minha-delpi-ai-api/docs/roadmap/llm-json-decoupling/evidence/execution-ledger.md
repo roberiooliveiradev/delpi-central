@@ -10,7 +10,7 @@
 |------|--------|--------|------------------|-------|
 | A — baseline/contratos | inventário + freeze | **ATENDIDO** | — | Ver `onda-a-inventory.md` |
 | B — routing universal | 01 | **ATENDIDO_PARCIAL** | Onda H: DELETE fields registry | Cutover seleção + binder OK; JSON markers deferred |
-| C — entendimento | 02 | **ATENDIDO_PARCIAL** | E2.S5 full / E2.S6 live / E2.S7 DELETE | S1–S5 cutovers; S6 harness; S7 JUSTIFIED_KEEP |
+| C — entendimento | 02 | **ATENDIDO** | — | E2.S1–S7 100%; fast paths KEEP_APPROVED |
 | D — multi-turn/args | 03 | **ATENDIDO_PARCIAL** | Onda H: DELETE terms | S1–S7 OK; S8 reload OK; DELETE deferred |
 | E — caps/composition | 04, 05 | **ATENDIDO** | — | plano 04+05 S1–S7 OK |
 | F — UX inteligente | 06 | **ATENDIDO** | — | E6.S1–S6 OK; queries = LEGACY_FALLBACK |
@@ -172,3 +172,7 @@ abrir planos/0N-*.md
 | 2026-09-10 | E2.S6 **ATENDIDO_PARCIAL** — harness dependsOn; taskPlanner live BLOCKED |
 | 2026-09-10 | E2.S7 **JUSTIFIED_KEEP** — major heuristics KEEP; DELETE BLOCKED |
 | 2026-09-10 | Onda C **ATENDIDO_PARCIAL** — plano-02 executável fechado com resíduos documentados |
+| 2026-09-10 | E2.S5 **CUTOVER_FULL_SLICE** — analysis `is_*` multi-consumer + dial data_interpretation |
+| 2026-09-10 | E2.S6 **ATENDIDO** — taskPlannerEnabled=true (fast ainda disabled) |
+| 2026-09-10 | E2.S7 **KEEP_APPROVED** — fast paths JUSTIFIED (TARGET); sem DELETE indevido |
+| 2026-09-10 | Onda C / plano-02 **ATENDIDO 100%** — aceite offline + verify-final |

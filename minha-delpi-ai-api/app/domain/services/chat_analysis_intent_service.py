@@ -59,6 +59,15 @@ class ChatAnalysisIntentService:
         message: str,
         previous_messages: list | None = None,
     ) -> bool:
+        # E2.S5: email-from-data permanece heurístico (exige tool-data + terms).
+        return cls._is_email_from_operational_data_legacy(message, previous_messages)
+
+    @classmethod
+    def _is_email_from_operational_data_legacy(
+        cls,
+        message: str,
+        previous_messages: list | None = None,
+    ) -> bool:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
         if not normalized:
@@ -79,6 +88,30 @@ class ChatAnalysisIntentService:
         previous_messages: list | None = None,
     ) -> bool:
         """Pedido para interpretar dados já obtidos na conversa (sem nova consulta)."""
+        legacy = cls._is_data_interpretation_legacy(message, previous_messages)
+        if not cls._data_interpretation_cutover_enabled():
+            return legacy
+        if legacy:
+            return True
+        # TU assist: só com tool-data recente; não inventa interpretação sem histórico.
+        if not (
+            previous_messages
+            and cls._has_recent_successful_tool_data(previous_messages)
+        ):
+            return False
+        from app.domain.services.turn_understanding_generic_intent_mapper_service import (
+            TurnUnderstandingGenericIntentMapperService,
+        )
+
+        signals = TurnUnderstandingGenericIntentMapperService.from_message(message)
+        return bool(signals.is_reasoning)
+
+    @classmethod
+    def _is_data_interpretation_legacy(
+        cls,
+        message: str,
+        previous_messages: list | None = None,
+    ) -> bool:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
         if not normalized:
@@ -109,7 +142,7 @@ class ChatAnalysisIntentService:
         ):
             return False
 
-        if cls.is_email_from_operational_data_request(message, previous_messages):
+        if cls._is_email_from_operational_data_legacy(message, previous_messages):
             return True
 
         if cls._matches_short_interpretation_command(normalized, previous_messages):
@@ -152,6 +185,14 @@ class ChatAnalysisIntentService:
                 return True
 
         return False
+
+    @classmethod
+    def _data_interpretation_cutover_enabled(cls) -> bool:
+        from app.domain.services.chat_conversational_intelligence_flag_service import (
+            ChatConversationalIntelligenceFlagService,
+        )
+
+        return ChatConversationalIntelligenceFlagService.data_interpretation_family_cutover_enabled()
 
     @classmethod
     def _is_sql_result_interpretation_request(cls, normalized: str) -> bool:
@@ -333,22 +374,67 @@ class ChatAnalysisIntentService:
 
     @classmethod
     def is_comparison_or_insight_request(cls, message: str) -> bool:
+        legacy = cls._is_comparison_or_insight_legacy(message)
+        if not cls._compare_explain_cutover_enabled():
+            return legacy
+        if legacy:
+            return True
+        if cls._comparison_guards_block(message):
+            return False
+
+        from app.domain.services.turn_understanding_generic_intent_mapper_service import (
+            TurnUnderstandingGenericIntentMapperService,
+        )
+
+        signals = TurnUnderstandingGenericIntentMapperService.from_message(message)
+        if not signals.is_reasoning:
+            return False
+
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        expand_needles = (
+            "compar",
+            "diferen",
+            "versus",
+            " vs ",
+            "ambos",
+            "as duas",
+            "os dois",
+        )
+        return any(needle in normalized for needle in expand_needles)
 
+    @classmethod
+    def _compare_explain_cutover_enabled(cls) -> bool:
+        from app.domain.services.chat_conversational_intelligence_flag_service import (
+            ChatConversationalIntelligenceFlagService,
+        )
+
+        return ChatConversationalIntelligenceFlagService.compare_explain_family_cutover_enabled()
+
+    @classmethod
+    def _comparison_guards_block(cls, message: str) -> bool:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         if not normalized:
-            return False
-
+            return True
         if cls._looks_like_single_product_fetch(normalized):
-            return False
-
+            return True
         from app.domain.services.chat_production_operational_intent_service import (
             ChatProductionOperationalIntentService,
         )
 
         if ChatProductionOperationalIntentService.matches_rest_route(message):
+            return True
+        if cls._looks_like_production_kpi_dashboard_list_request(message):
+            return True
+        return False
+
+    @classmethod
+    def _is_comparison_or_insight_legacy(cls, message: str) -> bool:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized:
             return False
 
-        if cls._looks_like_production_kpi_dashboard_list_request(message):
+        if cls._comparison_guards_block(message):
             return False
 
         if any(term in normalized for term in cls._comparison_terms()):

@@ -1,8 +1,8 @@
 {
-  "version": "2026.09.3",
+  "version": "2026.09.4",
   "featureFlags": {
     "turnUnderstandingShadow": true,
-    "taskPlannerEnabled": false
+    "taskPlannerEnabled": true
   },
   "productFamilyAuthorityShadow": {
     "enabled": true,
@@ -13,7 +13,8 @@
       "kpi": true,
       "no_tool": true,
       "presentation": true,
-      "compare_explain": true
+      "compare_explain": true,
+      "data_interpretation": true
     }
   },
   "envOverrides": {

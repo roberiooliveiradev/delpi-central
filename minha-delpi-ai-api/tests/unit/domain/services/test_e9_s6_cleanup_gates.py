@@ -78,11 +78,17 @@ def test_e9_s6_delete_candidates_status():
         assert item.get("authorization") == "APPROVED", deleted_id
     for item in candidates:
         status = item.get("status")
-        assert status in {"BLOCKED", "DELETED"}, item.get("id")
+        assert status in {"BLOCKED", "DELETED", "KEEP_APPROVED"}, item.get("id")
         if status == "BLOCKED":
             assert str(item.get("blockReason") or "").strip(), item.get("id")
+        if status == "KEEP_APPROVED":
+            assert item.get("authorization") == "APPROVED", item.get("id")
         assert str(item.get("owner") or "").strip(), item.get("id")
         assert item.get("fields"), item.get("id")
+
+    tu = by_id["turn_understanding_heuristics_json"]
+    assert tu.get("status") == "KEEP_APPROVED"
+    assert tu.get("authorization") == "APPROVED"
 
 
 def test_e9_s6_evidence_paths_exist():

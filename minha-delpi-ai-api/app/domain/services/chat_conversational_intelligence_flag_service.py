@@ -98,6 +98,10 @@ class ChatConversationalIntelligenceFlagService:
         return cls.family_cutover_enabled("compare_explain")
 
     @classmethod
+    def data_interpretation_family_cutover_enabled(cls) -> bool:
+        return cls.family_cutover_enabled("data_interpretation")
+
+    @classmethod
     def _env_override(cls, key: str) -> bool | None:
         from app.domain.services.chat_domain_config_service import (
             ChatDomainConfigService,

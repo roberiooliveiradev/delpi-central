@@ -88,10 +88,24 @@ def test_discovery_respects_top_k():
 # ------------------------------------------------------- E5.S2 cutover por flag
 
 
-def test_planner_execution_disabled_by_default_flag(monkeypatch):
+def test_planner_execution_enabled_by_default_flag(monkeypatch):
     monkeypatch.delenv("CHAT_TASK_PLANNER_ENABLED", raising=False)
 
-    assert ChatTaskPlannerService.plan_for_execution("liste terminais pino") is None
+    plan = ChatTaskPlannerService.plan_for_execution(
+        "liste terminais pino; mostre o estoque do segundo",
+        response_mode="normal",
+    )
+    assert plan is not None
+    assert plan.task_count >= 2
+
+
+def test_planner_execution_disabled_by_env_override(monkeypatch):
+    monkeypatch.setenv("CHAT_TASK_PLANNER_ENABLED", "false")
+
+    assert ChatTaskPlannerService.plan_for_execution(
+        "liste terminais pino; mostre o estoque do segundo",
+        response_mode="normal",
+    ) is None
 
 
 def test_planner_execution_enabled_by_env_override(monkeypatch):

@@ -1,36 +1,32 @@
-# E2.S5 — Generic intent/router cutover (slice mínima)
+# E2.S5 — Generic intent/router + analysis multi-consumer
 
-**Status:** `CUTOVER_GENERIC_SLICE` (2026-09-10)  
+**Status:** `CUTOVER_FULL_SLICE` (2026-09-10)  
 **Onda:** C (plano 02)
 
-## Choke
+## Chokes
 
-`ChatIntentRouterService.classify` → legacy `ClassifyService` → overlay TU.
+1. `ChatIntentRouterService.classify` → overlay TU (`no_tool` / `presentation` / `compare_explain`)
+2. `ChatAnalysisIntentService.is_*` → cutover multi-consumer:
+   - `is_comparison_or_insight_request` — dial `compare_explain` (legacy ∪ TU reasoning + needles)
+   - `is_data_interpretation_request` — dial `data_interpretation` (legacy ∪ TU reasoning **com** tool-data)
+   - `is_email_from_operational_data_request` — **KEEP** heurístico (terms + tool-data)
 
-## Famílias (dials em `productFamilyAuthorityShadow.families`)
-
-| Família | Dial | Modo |
-|---------|------|------|
-| `presentation` | `true` | mapper-first (alinha `text_task`/`presentation_task`; agree em `format_refinement`) |
-| `no_tool` | `true` | agree-gated (flag `tu_no_tool_agree`; não inventa small_talk) |
-| `compare_explain` | `true` | agree-gated (flag `tu_compare_agree`) |
-
-## Aceite da slice
+## Aceite
 
 ```text
 NO_TOOL_SMALLTALK_AGREE = PASS
 PRESENTATION_TABLE_CHART_MAPPER = PASS
-NEGATIVE_OPERATIONAL_NOT_SMALLTALK = PASS
+COMPARE_MULTI_CONSUMER = PASS
+DATA_INTERPRETATION_MULTI_CONSUMER = PASS
+NEGATIVE_OPERATIONAL_NOT_COMPARE = PASS
 DIALS_OFF_EQUALS_LEGACY = PASS
 HEURISTIC_JSON_UNTOUCHED = PASS
 ```
 
-## BLOCKED (E2.S5 full / E2.S7)
+## Ainda KEEP (não é débito de E2.S5)
 
-- DELETE `intent_router.json` / `analysis_intent_vocabulary.json`
-- Cutover total do cascade ClassifyService (RAG/web/SQL/…)
-- Consumers de `ChatAnalysisIntentService.is_*` fora do router
+Cascade SQL/RAG/web/drawing e `intent_router.json` / `analysis_intent_vocabulary.json` como fallback — TARGET permite fast paths justificados (E2.S7).
 
 ## Rollback
 
-`families.no_tool|presentation|compare_explain=false` ou `cutoverEnabled=false`.
+`families.compare_explain|data_interpretation|presentation|no_tool=false` ou `cutoverEnabled=false`.

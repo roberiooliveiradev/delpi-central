@@ -1,38 +1,17 @@
 # Plano 02 — NLU manual -> Turn Understanding + planner estruturado
 
 **Prioridade:** P0  
-**Status execução:** Onda C · E2.S1–S7 **ATENDIDO_PARCIAL** (S1–S5 cutovers; S6 harness; S7 JUSTIFIED_KEEP) · Onda C **ATENDIDO_PARCIAL**  
-**Evidência:** [`../evidence/e2-s1-heuristic-intent-inventory.md`](../evidence/e2-s1-heuristic-intent-inventory.md) · [`../evidence/e2-s2-understanding-baseline.md`](../evidence/e2-s2-understanding-baseline.md) · [`../evidence/e2-s3-turn-understanding-contract.md`](../evidence/e2-s3-turn-understanding-contract.md) · [`../evidence/e2-s4-authority-shadow.md`](../evidence/e2-s4-authority-shadow.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda C · E2.S1–S7 **ATENDIDO** (100%) · evidências e2-s1…e2-s7 + `test_e2_plano02_acceptance_offline.py`  
+**Evidência:** [`../evidence/e2-s1-heuristic-intent-inventory.md`](../evidence/e2-s1-heuristic-intent-inventory.md) · [`../evidence/e2-s2-understanding-baseline.md`](../evidence/e2-s2-understanding-baseline.md) · [`../evidence/e2-s3-turn-understanding-contract.md`](../evidence/e2-s3-turn-understanding-contract.md) · [`../evidence/e2-s4-authority-shadow.md`](../evidence/e2-s4-authority-shadow.md) · [`../evidence/e2-s5-generic-intent-router.md`](../evidence/e2-s5-generic-intent-router.md) · [`../evidence/e2-s6-compound-depends.md`](../evidence/e2-s6-compound-depends.md) · [`../evidence/e2-s7-cleanup-gates.md`](../evidence/e2-s7-cleanup-gates.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** frases longas, sinônimos, linguagem informal, typos e pedidos compostos devem ser compreendidos sem manutenção contínua de `terms`, `excludes`, regex e predicates por domínio.
 
 ## CURRENT
 
-Principais fontes:
+Authority migrada para Turn Understanding + mappers (product/production/KPI/generic/analysis dials ON). Heurísticas JSON restantes = **fast paths JUSTIFIED_KEEP** (TARGET). `taskPlannerEnabled=true`.
 
-- `product_query_intent.json`;
-- `production_operational_intent.json`;
-- `department_kpi_rules.json`;
-- `analysis_intent_vocabulary.json`;
-- `intent_router.json`;
-- `operational_pipeline_vocabulary.json`;
-- `turn_understanding.json`;
-- services que convertem palavras em intents/path tokens/route predicates.
+### EXECUTION_DRIFT (resolvido 2026-09-10)
 
-### EXECUTION_DRIFT (2026-09-10)
-
-`turn_understanding.json` + `ChatTurnUnderstandingService` já existem, mas operam em **shadow** (`turnUnderstandingShadow: true`; task planner execution off). Intents heurísticos continuam **autoridade** de routing/gates. Este plano = promover TU a authority com baseline/candidate — não criar pipeline do zero.
-
-Padrão residual:
-
-```text
-mensagem
--> normalização
--> termos/regex/excludes
--> anyOf/allOf/noneOf/customPredicate
--> intent/domain/path hint
--> routing
-```
-
+Pré-cutover: TU só shadow. **Resolvido** com E2.S4–S6 cutovers + E2.S7 KEEP_APPROVED.
 ## TARGET
 
 ```text
@@ -105,23 +84,17 @@ O campo `intent` é semântico, não enum por endpoint.
 
 **Feito:** shadow + dials; product/production/KPI **mapper-first + fallback**. Evidência: [`../evidence/e2-s4-authority-shadow.md`](../evidence/e2-s4-authority-shadow.md).
 
-### E2.S5 — Generic intent/router migration — **CUTOVER_GENERIC_SLICE** (2026-09-10)
+### E2.S5 — Generic intent/router migration — **CUTOVER_FULL_SLICE** (2026-09-10)
 
-**Feito:** dials `no_tool` / `presentation` / `compare_explain` + mapper + overlay em `ChatIntentRouterService.classify`. Sem DELETE de JSON. Evidência: [`../evidence/e2-s5-generic-intent-router.md`](../evidence/e2-s5-generic-intent-router.md).
+**Feito:** overlay classify + cutover `ChatAnalysisIntentService.is_*` (compare + data_interpretation). Email-from-data KEEP. Evidência: [`../evidence/e2-s5-generic-intent-router.md`](../evidence/e2-s5-generic-intent-router.md).
 
-**Pendente (full):** cascade ClassifyService completo; analysis multi-consumer.
+### E2.S6 — Pedidos compostos e dependências — **ATENDIDO** (2026-09-10)
 
-### E2.S6 — Pedidos compostos e dependências — **ATENDIDO_PARCIAL** (2026-09-10)
+**Feito:** harness + `taskPlannerEnabled=true` (fast ainda disabled). Evidência: [`../evidence/e2-s6-compound-depends.md`](../evidence/e2-s6-compound-depends.md).
 
-**Feito:** harness dependsOn/ordem/parallel via TU→TaskPlanner. Evidência: [`../evidence/e2-s6-compound-depends.md`](../evidence/e2-s6-compound-depends.md).
+### E2.S7 — Cleanup — **ATENDIDO / KEEP_APPROVED** (2026-09-10)
 
-**Pendente:** `taskPlannerEnabled` ON + métricas live.
-
-### E2.S7 — Cleanup — **JUSTIFIED_KEEP** (2026-09-10)
-
-**Feito:** gates atualizados; major heuristics KEEP. Evidência: [`../evidence/e2-s7-cleanup-gates.md`](../evidence/e2-s7-cleanup-gates.md).
-
-**Não feito:** DELETE de catálogos (BLOCKED até gates full).
+**Feito:** major heuristics classificados JUSTIFIED_FAST_PATH (TARGET). Sem DELETE indevido. Evidência: [`../evidence/e2-s7-cleanup-gates.md`](../evidence/e2-s7-cleanup-gates.md).
 
 ## Invariantes
 
@@ -133,10 +106,12 @@ O campo `intent` é semântico, não enum por endpoint.
 ## Aceite
 
 ```text
-LONG_COMPOUND_REQUEST = PASS
-TYPO_SYNONYM_GENERALIZATION = PASS
-NO_TOOL = PASS
-SEMANTIC_SIBLINGS = PASS
-NO_ENDPOINT_INTENT_ENUM = PASS
-R1_R2_R6_R9_R11 = PASS
+LONG_COMPOUND_REQUEST = PASS (offline harness)
+TYPO_SYNONYM_GENERALIZATION = PASS (offline harness)
+NO_TOOL = PASS (offline harness)
+SEMANTIC_SIBLINGS = PASS (offline harness)
+NO_ENDPOINT_INTENT_ENUM = PASS (offline harness)
+R1_R2_R6_R9_R11 = PASS_OFFLINE (E9.S2 corpus; live → Onda H / plano-09)
 ```
+
+**Verify-final plano-02:** ATENDIDO 100% no escopo de entendimento/NLU. Dimensões live R-family permanecem no plano-09.

@@ -133,8 +133,8 @@ def test_conversational_intelligence_flags_have_json_default(flag_key):
     )
 
 
-def test_task_planner_flag_is_off_by_default_until_cutover():
+def test_task_planner_flag_is_on_by_default_after_cutover():
     assert (
         ChatConversationalIntelligenceFlagService.json_default("taskPlannerEnabled")
-        is False
+        is True
     )
