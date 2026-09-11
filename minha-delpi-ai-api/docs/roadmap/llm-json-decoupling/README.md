@@ -107,8 +107,8 @@ J-R6  Architecture Enforcement independente         ✅ ATENDIDO
 J-R7  zero path semantic affinity                   ✅ ATENDIDO
 J-R8  cleanup registry/content técnico duplicado    ✅ ATENDIDO
 J-R9  semantic single owner                         ✅ ATENDIDO
-J-R10 recommendations sem LEGACY_FALLBACK material  ← próxima
-J-R11 Clean Architecture / IO fora de domain
+J-R10 recommendations sem LEGACY_FALLBACK material  ✅ ATENDIDO
+J-R11 Clean Architecture / IO fora de domain        ← próxima
 J-R12 novo candidate R1–R11 + residual + COMPLETE_GATE
 ```
 

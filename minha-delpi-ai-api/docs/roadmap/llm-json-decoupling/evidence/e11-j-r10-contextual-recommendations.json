@@ -1,0 +1,10 @@
+{
+  "step": "J-R10",
+  "gate": "CONTEXTUAL_RECOMMENDATIONS",
+  "completeGate": "PASS",
+  "legacyRecommendationFallback": 0,
+  "staticFallbackRole": "REMOVED",
+  "authorities": ["llm_or_existing", "contextual_candidate", "contextual_generic"],
+  "removed": ["profile_fallback", "LEGACY_FALLBACK dump"],
+  "next": "J-R11"
+}
