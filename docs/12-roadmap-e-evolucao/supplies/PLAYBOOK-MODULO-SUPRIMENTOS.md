@@ -1,10 +1,10 @@
 # PLAYBOOK — Portal Suprimentos (Minha DELPI)
 
-> **Status:** baseline oficial de produto/arquitetura · set/2026 · **não implementado**  
-> **Readiness:** bloqueado até E1 + gates P0  
+> **Status (2026-09-10):** arquitetura/produto congelados e implementação incremental em andamento. **E1–E5 concluídas; E6 C1 funcional concluída; WF-04 em revalidação de DoD.**  
+> **Próxima página candidata:** WF-05 Pedidos de Compra, somente após fechamento do WF-04 e autorização explícita do Product Owner.  
 > **Nome:** Portal Suprimentos · **id:** `supplies` · **basePath:** `/apps/supplies` · **API:** `supplies-api`
 
-Complementos: [README](./README.md) · [INVENTARIO](./INVENTARIO-ATIVOS.md) · [DESIGN-IA](./DESIGN-IA-SUPRIMENTOS.md) · [IMPLEMENTATION-PLAN](./IMPLEMENTATION-PLAN.md) · ADRs.
+Complementos: [README](./README.md) · [INVENTARIO](./INVENTARIO-ATIVOS.md) · [DESIGN-IA](./DESIGN-IA-SUPRIMENTOS.md) · [IMPLEMENTATION-PLAN](./IMPLEMENTATION-PLAN.md) · [WIREFRAMES](./WIREFRAMES.md) · ADRs.
 
 ---
 
@@ -13,7 +13,7 @@ Complementos: [README](./README.md) · [INVENTARIO](./INVENTARIO-ATIVOS.md) · [
 Hub operacional, analítico e gerencial do domínio de Suprimentos. Não é launcher de links nem segundo dashboard isolado.
 
 ```text
-vários BIs + plugins + Sheets + filtros diferentes
+experiências legadas / BIs / plugins / Sheets
         ↓
 Portal Suprimentos
   → Meu trabalho
@@ -28,33 +28,35 @@ Portal Suprimentos
 ### Pilares
 
 1. Minhas atividades — worklist/follow-ups.
-2. Compras — SC, PC, entregas/atrasos, importações/alçadas quando validadas.
-3. Fornecedor 360 — TOTVS + OTD + Qualidade projetada + estado Delpi.
-4. Produto/MP 360 — estoque, ESTSEG, onde usado, fornecedores, preços.
+2. Compras — SC, PC, entregas/atrasos, importações/alçadas somente quando validadas.
+3. Fornecedor 360 — TOTVS + OTD + estado Delpi; Qualidade somente após contrato/autorização definidos.
+4. Produto/MP 360 — estoque, ESTSEG, onde usado, fornecedores e preços.
 5. Estoques — valor, saldos, segurança, giro e consumo.
 6. Negociações — savings e inteligência de preço.
-7. Gestão — Overview 6–8 KPIs + SI.
+7. Gestão — Overview com KPIs homologados + SI.
 8. Administração — mappings, scopes e settings homologados.
 
 ---
 
-## 2. Decisões irrevogáveis enquanto os ADRs vigentes não forem substituídos
+## 2. Decisões travadas enquanto os ADRs vigentes não forem substituídos
 
 1. Identidade `supplies`, API `supplies-api`, CSS `.dashboard-supplies-portal` — ADR-004.
-2. `supplies-api` em **Flask** pela precedência das instruções oficiais — ADR-001.
-3. MFE fala somente com supplies-api.
-4. JWT = identidade; **Core API resolve effective permissions**. Não autorizar por claims de permission do JWT.
-5. RBAC = **menor catálogo suficiente**, sem permission por CRUD — ADR-007.
-6. Unidade = eixo B `supplies.unit.filial-{TOTVS}` — ADR-006.
-7. Autorização real = capability + unit scope + resource scope/ownership + business rule.
-8. Purchase Requests: C0 coexistência → C1 composição → C2 ownership/jobs → paridade final → C3 cutover.
+2. `supplies-api` em Flask — ADR-001 + instrução oficial vigente.
+3. MFE fala somente com `supplies-api`; browser não chama `api-delpi` diretamente.
+4. JWT identifica/autentica; Core API resolve effective permissions.
+5. RBAC usa menor catálogo suficiente; não criar permission por CRUD/tela/botão.
+6. Unidade = eixo ortogonal `supplies.unit.filial-{TOTVS}`.
+7. AuthZ real = capability + unit scope + resource scope/ownership + business rule.
+8. Purchase Requests = C0 coexistência → C1 composição → C2 ownership/jobs → paridade final → C3 cutover.
 9. Home ≠ Overview.
-10. Identificadores novos em inglês; UI em PT-BR.
-11. Kit `@delpi/plugin-ui`; zero CSS que sobrescreva primitivas do kit.
-12. Ajuda acompanha feature user-facing.
+10. Identificadores técnicos novos em inglês; UI em PT-BR.
+11. `@delpi/plugin-ui` é fonte canônica de componentes reutilizáveis; não copiar CSS/componente do Comercial.
+12. Ajuda acompanha cada feature user-facing; etapa de help global é apenas auditoria/consolidação.
 13. Sem escrita TOTVS neste roadmap.
 14. Sem espelho TOTVS no Postgres.
-15. BIs evidenciados pelo PO exigem dump Core e destino explícito antes do cutover.
+15. BIs/apps externos precisam de classificação final antes do cutover.
+16. O Core atual não possui contrato canônico `/me/routes`; as rotas autorizadas são validadas em `/me/apps` (`apps[].routes`).
+17. Uma página user-facing por vez até GATE-FEATURE fechado.
 
 ---
 
@@ -64,12 +66,12 @@ Portal Suprimentos
 Portal
   → MFE supplies
     → supplies-api
-      → Core /me
+      → Core /me + /me/apps
       → api-delpi → TOTVS
-      → purchase-requests-api (C1)
-      → SI
+      → purchase-requests-api (C1 até C2)
+      → strategic-indicators-api
       → contextos irmãos autorizados
-      → PG supplies
+      → PostgreSQL supplies
 ```
 
 Boundaries completos: [MATRIZ-BOUNDARIES.md](./MATRIZ-BOUNDARIES.md) e [PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md).
@@ -80,151 +82,124 @@ Boundaries completos: [MATRIZ-BOUNDARIES.md](./MATRIZ-BOUNDARIES.md) e [PLAYBOOK
 
 Flags de UX não são necessariamente permission codes 1:1.
 
-| Flag de produto | Permission base | Telas/capacidade |
+| Flag | Permission base | Capacidade |
 |---|---|---|
 | `shell` | `supplies.portal.access` | Home, busca, help, palette, preferências |
 | `purchaseRequests` | `supplies.purchase-requests.access` | SC no escopo |
-| `purchaseRequestsAll` | `supplies.purchase-requests.view-all` | bypass CC, nunca unidade |
+| `purchaseRequestsAll` | `supplies.purchase-requests.view-all` | amplia CC, nunca unidade |
 | `purchaseRequestsExport` | `supplies.purchase-requests.export` | export enquanto segregação for necessária |
 | `operations` | `supplies.operations.access` | PC, entregas, fornecedor, produto, estoque, ESTSEG, follow-ups/notas |
-| `analytics` | `supplies.analytics.access` | Overview, OTD gerencial, CPV, giro, savings |
+| `analytics` | `supplies.analytics.access` | Overview, OTD, CPV, giro, savings |
 | `administration` | `supplies.administration.manage` | mappings, scopes, settings |
 
-Não criar `tasks.view/write`, `products.view`, `inventory.view`, `supplier-notes.write` etc. apenas porque existe uma rota/ação distinta. Ver ADR-007.
-
-Unidades não são capability de tela: `allowedUnits[]` é derivado de effective permissions do Core.
+`allowedUnits[]` deriva das effective permissions do Core e não é capability de tela.
 
 ---
 
 ## 5. Jornadas P0
 
 1. Abrir Home e agir em exceções autorizadas.
-2. Filtrar unidade dentro de `allowedUnits`.
-3. Consultar SC no escopo de CC e exportar somente se cap separada ainda for necessária.
-4. Consultar PC/entregas como operação de compras.
-5. Abrir Produto/MP 360.
-6. Abrir Fornecedor 360.
-7. Ver Overview conforme permission analytics.
-8. Criar/concluir follow-up somente quando o recurso referenciado estiver autorizado.
-9. Abrir Ajuda/Quero→onde.
+2. Consultar Overview/OTD no recorte autorizado.
+3. Consultar SC no escopo de CC e exportar somente quando permitido.
+4. Consultar Pedidos de Compra e seu detalhe.
+5. Consultar Entregas/Atrasos.
+6. Consultar Estoque e ESTSEG/consumo.
+7. Abrir Fornecedor 360 e Produto/MP 360.
+8. Consultar Savings/Negociações.
+9. Criar/concluir follow-up quando o recurso referenciado estiver autorizado.
+10. Usar Administração dentro do escopo permitido.
+11. Abrir Ajuda/Quero→onde em todas as jornadas entregues.
 
 ---
 
-## 6. Regra de autorização fina
-
-Permission não substitui escopo de recurso.
-
-Exemplo de task:
-
-```text
-supplies.portal.access
-AND capability do recurso referenciado
-AND branch ∈ allowedUnits
-AND ownership/regra de equipe
-→ pode criar/alterar/concluir
-```
-
-Exemplo de nota de fornecedor:
-
-```text
-supplies.operations.access
-AND branch autorizada
-AND fornecedor no escopo
-→ pode registrar nota operacional
-```
-
-Se houver necessidade real de separar leitura/escrita por públicos distintos, abrir decisão específica em vez de inflar preventivamente o catálogo.
-
----
-
-## 7. Backlog priorizado
+## 6. Backlog por prioridade
 
 ### P0
 
-- shell/Home;
-- Overview com KPIs homologados;
-- paridade SC via C1;
-- pedidos/entregas básicos a partir de contratos existentes;
-- estoque + ESTSEG;
-- Fornecedor 360 leitura + notas operacionais;
+- shell/Home — entregue;
+- Overview + OTD analytics — entregues;
+- SC via C1 — funcional, WF-04 em revalidação de DoD;
+- Pedidos de Compra;
+- Entregas/Atrasos;
+- Estoque;
+- Estoque de Segurança;
+- Análise de Consumo;
+- Fornecedor 360;
 - Produto/MP 360;
-- worklist/follow-ups;
-- Ajuda;
-- RBAC multi-unidade e coexistência.
+- Savings/Negociações;
+- Minhas Atividades;
+- Administração;
+- Ajuda sincronizada;
+- paridade e cutover controlado.
 
-### P1
+### P1+
 
-- lead time real × cadastrado;
-- price variance;
-- alertas persistidos se latência/caso de uso justificar;
-- importações somente após E1;
-- cobertura/slow moving após ficha funcional.
-
-### P2
-
-- scorecard composto;
-- concentração/fornecedor único;
-- alçadas se houver workflow comprovado;
-- comparativo fornecedor;
-- obsolescência.
-
-### P3
-
-- previsão de atraso;
-- follow-up automático externo;
-- escrita ESTSEG no Protheus — fora do ADR vigente.
+Só entram em plano executável após evidência/aceite próprios: lead time real × cadastrado, price variance, supplier scorecard, concentração, alçadas, importações, slow moving/obsolescência, previsão de atraso, automações externas.
 
 ---
 
-## 8. Multi-unidade
+## 7. Regra de execução do roadmap
 
-`allowedUnits` vem das **permissions efetivas do Core**, não do JWT.
-
-- uma unit → apenas ela;
-- várias → união delas;
-- branch omitido → união autorizada, nunca empresa inteira;
-- administração não concede automaticamente todas as units;
-- superadmin segue política canônica do Core e auditoria.
-
----
-
-## 9. KPIs
-
-Overview: no máximo 6–8 KPIs. Cada card precisa explicitar sua natureza temporal (snapshot, estado atual, intervalo ou competência) e respeitar only-allowedUnits.
-
-Fichas: [KPI-FICHAS.md](./KPI-FICHAS.md).
-
----
-
-## 10. UX
-
-Família visual do Comercial, sem copiar domínio/componente local já coberto pelo kit. Rotas internas capability-driven. Mobile ≤768px com cards/stacked quando tabela não couber.
-
----
-
-## 11. Roadmap causal
-
-Sequência macro obrigatória:
+O roadmap é causal, mas **não autoriza execução em lote**.
 
 ```text
-E1 descoberta/gates
-→ fundação API + authz
-→ shell MFE + RBAC coexistência
-→ features P0
-→ C1 Purchase Requests
-→ C2 ownership/jobs de SC
-→ paridade final
-→ C3 cutover
-→ evoluções futuras
-→ verify final
+página atual
+→ contrato/BFF
+→ UI kit-first
+→ AuthZ + estados
+→ Help
+→ testes + docs + smoke
+→ GATE-FEATURE
+→ próxima página
 ```
 
-O `IMPLEMENTATION-PLAN.md` deve refletir essa causalidade também no bloco `dependsOn`.
+Etapas futuras no `IMPLEMENTATION-PLAN.md` são fila/dependências até serem promovidas. Ao promover uma página, revalidar código e contratos, criar ledger RQ-* e preencher receita completa `E*.S*` segundo `plan-construction.mdc`.
 
 ---
 
-## 12. Cutover
+## 8. Sequência macro atualizada
 
-Target saudável primeiro; redirect por último. Nenhum BI pode chegar ao GO em `LEGADO_A_VALIDAR`: deve estar `PARIDADE_HOMOLOGADA`, `MANTER_EXTERNO`, `DEEP_LINK` ou `FORA_DO_ESCOPO_COM_ACEITE`.
+```text
+E1–E5 concluídas
+→ E6 fechar GATE-FEATURE WF-04 (SC)
+→ E7 Pedidos de Compra
+→ E8 Detalhe do Pedido
+→ E9 Entregas/Atrasos
+→ E10 Estoque
+→ E11 Estoque de Segurança
+→ E12 Análise de Consumo
+→ E13 Fornecedores
+→ E14 Fornecedor 360
+→ E15 OTD Fornecedores
+→ E16 Produtos/MP
+→ E17 Produto/MP 360
+→ E18 Onde Usado / Histórico de Preços conforme página promovida
+→ E19 Negociações
+→ E20 Indicadores, se mantido como página distinta
+→ E21 Minhas Atividades
+→ E22 Administração
+→ E23 auditoria final de Help/onboarding
+→ E24 paridade inicial C1
+→ E25 Purchase Requests C2
+→ E26 paridade final
+→ E27 preparação cutover
+→ E28 C3
+→ E29 verify-final
+```
+
+A numeração é de programa e pode ser renumerada apenas por uma revisão explícita do plano; o princípio imutável é **uma página por vez + C1→C2→paridade→C3**.
+
+---
+
+## 9. Cutover
+
+Target saudável primeiro; redirect por último. Nenhum BI/app legado chega ao GO como `LEGADO_A_VALIDAR`. Estados finais permitidos:
+
+```text
+PARIDADE_HOMOLOGADA
+MANTER_EXTERNO
+DEEP_LINK
+FORA_DO_ESCOPO_COM_ACEITE
+```
 
 Runbook: [CUTOVER-RUNBOOK.md](./CUTOVER-RUNBOOK.md).

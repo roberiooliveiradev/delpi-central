@@ -1,35 +1,43 @@
-# DECISOES_FUNCIONAIS_PENDENTES
+# DECISOES_FUNCIONAIS_PENDENTES — Portal Suprimentos
 
-Só o que o repositório não responde. Não bloqueia o desenho, mas pode bloquear implementação/cutover conforme o impacto.
+> Revisado em 2026-09-10. Este arquivo contém apenas decisões que o repositório ainda não responde. Hipótese não vira receita executável.
 
-| ID | Pergunta | Impacto | Estado E1 | Subetapa |
+| ID | Pergunta | Impacto | Estado atual | Próxima decisão |
 |---|---|---|---|---|
-| P-01 | URLs, ids e tipo dos 6 apps/BIs do PO | menu, paridade, redirects | **BLOQUEADO_COM_EVIDENCIA** — Core local 2026-09-08: 0/6; falta dump prod | E1.S1 → reabrir com Core prod |
-| P-02 | Comprador ES existe no Core? | papel + unit-02 | **FECHADO_PARA_DESENHO** — Core local sem papéis supplies; sem evidência PO de comprador ES; **sem permission nova**; smoke prod fica para E3.S5 (`HIPOTESE_A_VALIDAR` operacional) | E1.S2 |
-| P-03 | Regra do BI Atraso SC = OTD nativo? | WF-07/paridade | **BLOQUEADO_COM_EVIDENCIA** — BI id/path desconhecido até dump prod; OTD nativo documentado no help | E1.S1 + E7.S1 |
-| P-04 | Regra do BI Controle Estoques SC | WF-15/paridade | **BLOQUEADO_COM_EVIDENCIA** — mesmo motivo P-01 | E1.S1 + E8 |
-| P-05 | Existe processo de importação/TOTVS já mapeado? | WF-08 | **BLOQUEADO_COM_EVIDENCIA** — app não no Core local; nenhuma rota nativa confirmada no monorepo | E1.S1 |
-| P-06 | Alçada é consulta ou workflow de aprovação? | permission/SoD futura | **BLOQUEADO_COM_EVIDENCIA** — sem app no Core local; não criar `approvals.manage` | E1.S1 + E20.S3 |
-| P-07 | Quem edita IDD/Sheets e o app deve permanecer? | manter externo vs integrar | **BLOQUEADO_COM_EVIDENCIA** — app não no Core local; leitura savings via api-delpi não resolve editor | E1.S1 |
-| P-08 | Cobertura = meses de giro ou cobertura ESTSEG? | KPI bloqueado | **FECHADO** — fora do Overview P0 (`BLOQUEADO`); ver KPI-FICHAS E1.S3 | E1.S3 |
-| P-09 | Threshold aging SC/PC | worklist | aberto | homologação antes de nomear buckets |
-| P-10 | Estratégia/janela de transição C2 | reconciliação SC | aberto | E6.S4 + E16 |
-| P-11 | Quais campos de Qualidade podem aparecer no Supplier 360? | RBAC cruzado | aberto | E9 |
-| P-12 | Owner formal de cada KPI | status final das fichas | **FECHADO** — owner = área Suprimentos; aceite nominal PO pendente na Assinatura | E1.S3 |
-| P-13 | Identificador canônico de usuário persistido no schema supplies | data model | **FECHADO** — Core `/me.id` UUID; `keycloak_sub` opcional; ver DATA-MODEL §2 | E2.S4 |
+| P-01 | URLs, ids e tipo dos 6 apps/BIs do PO | menu, paridade, redirects | **BLOQUEADO_COM_EVIDENCIA** — Core local 0/6; falta dump prod | coletar Core prod antes de cutover |
+| P-02 | Comprador ES existe no Core? | papel + unit-02 | **FECHADO_PARA_DESENHO** — sem permission nova; validação operacional fica para HML/prod | smoke com usuário real quando disponível |
+| P-03 | Regra do BI Atraso SC = OTD/PO-OTD nativo? | paridade WF-07/11 | **BLOQUEADO_COM_EVIDENCIA** até dump/comparação prod | comparar antes de depreciação do BI; não bloquear automaticamente construção da página nativa se contrato estiver comprovado |
+| P-04 | Regra do BI Controle Estoques SC | paridade WF-15 | **BLOQUEADO_COM_EVIDENCIA** | dump prod + comparação na etapa de Estoque |
+| P-05 | Existe processo de importação/TOTVS já mapeado? | WF-08 | **BLOQUEADO_COM_EVIDENCIA** | manter Importações fora da linha executável até contrato/jornada comprovados |
+| P-06 | Alçada é consulta ou workflow de aprovação? | permission/SoD futura | **BLOQUEADO_COM_EVIDENCIA** | não criar `approvals.manage` até workflow/segregação reais serem comprovados |
+| P-07 | Quem edita IDD/Sheets e o app deve permanecer? | manter externo vs integrar | **BLOQUEADO_COM_EVIDENCIA** | dump prod + owner/fluxo de edição |
+| P-08 | Cobertura = meses de giro ou cobertura ESTSEG? | KPI | **FECHADO** — fora do Overview P0 | reabrir somente como feature futura com ficha própria |
+| P-09 | Threshold aging SC/PC | worklist/alertas | **ABERTO** | homologar antes de nomear buckets/regras |
+| P-10 | Qual a janela operacional de transição C2? | migração SC | **PARCIALMENTE_FECHADO** — estratégia técnica single-writer já está definida; faltam volumes HML/prod, janela, responsáveis e rollback operacional | medir ambiente e fechar runbook antes de E25 |
+| P-11 | Quais dados de Qualidade podem aparecer no Supplier 360? | boundary/RBAC cruzado | **ABERTO** | **Qualidade fora do P0 Supplier 360 enquanto não houver contrato + autorização claros** |
+| P-12 | Owner formal de cada KPI | governança | **FECHADO** — área Suprimentos; aceite nominal pode permanecer assinatura de homologação | manter fichas atualizadas |
+| P-13 | Identificador canônico de usuário persistido | data model | **FECHADO** — Core `/me.id` UUID | manter `keycloak_sub` apenas quando contrato exigir |
+| P-14 | `/indicators` agrega jornada distinta da Overview/SI? | risco de página redundante | **ABERTO PARA A ETAPA FUTURA** | antes de promover WF-20, provar valor distinto; senão marcar fora do escopo |
+| P-15 | Histórico de Preços é página própria ou seção do Product 360? | fila page-by-page | **ABERTO PARA A ETAPA FUTURA** | decidir com evidência antes de promover WF-19 |
 
-## Decisões fechadas pelo PO / arquitetura
+## Decisões fechadas pelo PO/arquitetura
 
-- Unidade = eixo ortogonal `supplies.unit.filial-{TOTVS}` — ADR-006.
-- Permission catalog deve ser mínimo; não espelhar CRUD — ADR-007.
-- Tasks/notas não recebem permissions read/write separadas na P0 sem evidência de risco/público distinto.
-- Framework supplies-api = Flask pela precedência oficial — ADR-001.
-- JWT não é fonte final de permissions; Core resolve effective permissions — ADR-001/006.
-- C2 ocorre antes de C3 — ADR-002 + IMPLEMENTATION-PLAN.
-- Páginas generalistas alinhadas ao Comercial: shell, Início, Ajuda `/help` (WF-HELP), perfil plugin `/users/:userId` (WF-USER); preferências no perfil + `/me/preferences`; sem `/preferences` dedicado; `/profile` do host permanece global — WIREFRAMES + DESIGN-IA + E4.S4.
+- Unidade = `supplies.unit.filial-{TOTVS}`.
+- Permission catalog mínimo; sem espelho CRUD.
+- Tasks/notas não recebem permissions read/write separadas na P0 sem risco/segregação comprovados.
+- `supplies-api` = Flask.
+- JWT não é fonte final de permissions; Core resolve effective permissions.
+- C1 → C2 → paridade → C3.
+- MFE fala somente com `supplies-api`.
+- `/me/apps` (`apps[].routes`) é a superfície vigente para apps/rotas autorizadas; não criar dependência em `/me/routes`.
+- Páginas generalistas seguem linguagem visual Comercial por `@delpi/plugin-ui`, sem copiar CSS/componentes.
+- Help acompanha cada feature user-facing.
+- Uma página user-facing por vez até GATE-FEATURE fechado.
 
 ## Gates
 
-- P-01/P-03/P-04/P-07 não podem chegar ao cutover ainda como `LEGADO_A_VALIDAR`.
-- P-06 só cria `supplies.approvals.manage` se houver aprovação/rejeição real ou segregação material.
-- P-13 fechado: Core `/me.id` (UUID) é o identificador persistido.
+- P-01/P-03/P-04/P-07 não podem chegar ao cutover como `LEGADO_A_VALIDAR`.
+- P-06 não cria capability/permission de aprovação sem workflow comprovado.
+- P-10 bloqueia E25 C2 enquanto volumes/janela/runbook operacional não estiverem fechados.
+- P-11 mantém o bloco Qualidade fora do Supplier 360 P0 enquanto aberto.
+- P-14/P-15 não bloqueiam a fila anterior; são decisões obrigatórias somente quando suas páginas forem promovidas.

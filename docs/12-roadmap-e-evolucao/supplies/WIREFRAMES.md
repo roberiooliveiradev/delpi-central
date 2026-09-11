@@ -1,41 +1,54 @@
 # WIREFRAMES — Portal Suprimentos
 
-Shell comum (padrão Comercial — chrome WF-00):
+> **Status (2026-09-10):** wireframes alinhados ao modo página-a-página. Início, Visão geral e OTD analytics estão fechados; Solicitações de Compras é o foco atual de revalidação; demais páginas são fila e não autorização de implementação.
+
+Shell comum (padrão Comercial por composição compartilhada, não por cópia de CSS):
 
 ```text
 ┌─ .dashboard-supplies-portal ────────────────────────────────┐
 │ TopBar kit  [nav…] [Buscar Ctrl+K] [Favoritos] [Avatar]    │
-│   UnderlineNav (capability-driven) · Ajuda na nav           │
-│ PagePath / PageHero (Início)                               │
+│ UnderlineNav capability-driven · Ajuda                     │
+│ PagePath / PageHero                                        │
 ├─────────────────────────────────────────────────────────────┤
 │ conteúdo · loading · empty · partial · error · 403 · 404   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Entrega:** uma página wireframe por vez até DoD (ver README § Protocolo). Não planejar a próxima tela enquanto a atual estiver aberta.
+Desktop, tablet, mobile ≤768px, light/dark, teclado/focus. Touch targets adequados. Tabelas no mobile devem usar estratégia explícita de scroll ou cards/stacked.
 
-Desktop, tablet, mobile ≤768px, light/dark. Touch ≥44×44. Tabelas no mobile → cards/stacked.
+## Regra visual de help
 
-## Páginas generalistas (padrão Comercial)
+Quando houver label/título semântico, o **próprio texto é o alvo do tooltip**. Não desenhar `(?)` como componente adicional.
 
-Espelham o Portal Comercial: shell + hub + Ajuda + perfil — **não** são jornadas TOTVS.
+Exemplos corretos:
 
-| WF | Página | Rota | Capability | Status doc |
+```text
+Visão geral        ← hover/focus no próprio título
+Período rápido     ← hover/focus no próprio label
+Indicadores        ← hover/focus no próprio título
+Meta parcial       ← hover/focus no próprio label
+```
+
+O ícone/controle de ajuda separado só é aceitável quando não existir label/título semântico adequado.
+
+---
+
+## Páginas generalistas
+
+| WF | Página | Rota | Capability | Estado |
 |---|---|---|---|---|
-| Shell comum | chrome TopBar / nav / busca / Favoritos / avatar | — | `supplies.portal.access` | entregue E3 + Favoritos TopBar |
-| WF-01 | Início (hub) | `/apps/supplies` | `supplies.portal.access` | **FECHADA (DoD)** |
-| WF-02 | Visão geral | `/overview` | `supplies.analytics.access` | **FECHADA (DoD)** · polish **WF-02R** |
-| WF-OTD-A | OTD analytics | `/analytics/otd` | `supplies.analytics.access` | **FECHADA (DoD)** |
-| **WF-HELP** | Ajuda / Manual | `/help` | `supplies.portal.access` | esqueleto E4; completo E14 |
-| **WF-USER** | Perfil usuário | `/users/:userId` | self: portal · outros: admin | **implementado** (E4.S4) |
+| Shell | TopBar/nav/busca/Favoritos/avatar | — | `supplies.portal.access` | entregue |
+| WF-01 | Início | `/apps/supplies` | `supplies.portal.access` | **FECHADA** |
+| WF-02 | Visão geral | `/overview` | `supplies.analytics.access` | **FECHADA** · WF-02R |
+| WF-OTD-A | OTD analytics | `/analytics/otd` | `supplies.analytics.access` | **FECHADA** |
+| WF-HELP | Ajuda / Manual | `/help` | `supplies.portal.access` | implementada; evolui junto das features |
+| WF-USER | Perfil usuário | `/users/:userId` | self portal; terceiros admin | implementada |
 
-Preferências pessoais (tema, filial padrão) **não** são página separada: ficam no **WF-USER** + `GET/PATCH /me/preferences` (Comercial também não tem `/preferences` dedicado).
+Preferências pessoais ficam no WF-USER + `/me/preferences`; não existe página `/preferences` separada. Perfil global Minha DELPI permanece em `/profile` do host.
 
-Referência: [commercial/WIREFRAMES.md](../commercial/WIREFRAMES.md) (Shell, Início, WF-USER) + `/help` no MFE Comercial.
+---
 
 ## Regra de RBAC nos wireframes
-
-O campo **Capability** abaixo é a capability funcional mínima. Dado TOTVS exige também unit scope e, quando aplicável, resource scope/ownership.
 
 ```text
 JWT válido
@@ -46,11 +59,11 @@ JWT válido
 → ação
 ```
 
-Não criar permissions de leitura/escrita separadas só porque a UI possui GET/POST/PATCH.
+Não criar permission CRUD por existir novo botão/GET/POST/PATCH.
 
 ---
 
-## WF-01 — Início
+## WF-01 — Início — FECHADA
 
 | Campo | Conteúdo |
 |---|---|
@@ -58,409 +71,233 @@ Não criar permissions de leitura/escrita separadas só porque a UI possui GET/P
 | Rota | `/apps/supplies` |
 | Capability | `supplies.portal.access` |
 | Fonte | `/home/attention` + catálogo + favoritos |
-| Filtro | unidade dentro de `allowedUnits` |
 | Conteúdo | atenção, busca, favoritos, recentes, cards por capability |
-| Partial | bloco auxiliar indisponível não derruba Hub inteiro |
-| Ajuda | Início vs Overview |
+| Partial | bloco auxiliar indisponível não derruba o Hub |
+| Ajuda | Início × Overview |
 
 ---
 
-## WF-02 — Visão Geral
+## WF-02 — Visão Geral — FECHADA
 
 | Campo | Conteúdo |
 |---|---|
-| Objetivo | cockpit dos **7 KPIs P0** ([KPI-FICHAS](./KPI-FICHAS.md)) + série OTD com ChartViewShell completo + CTA para WF-OTD-A |
+| Objetivo | cockpit dos 7 KPIs P0 + série OTD + CTA para WF-OTD-A |
 | Rota | `/overview` |
 | Capability | `supplies.analytics.access` |
-| Unit | MultiSelect Unidade (Santa Catarina / Espírito Santo); URL `branch` CSV códigos; consolidado = omit/`01,02` |
+| Unit | MultiSelect das unidades em `allowedUnits`; consolidado = união autorizada |
 | KPIs | OTD, STOCK-VALUE, TURNOVER, CPV, SAVINGS, SC-OPEN, CRITICAL-MP |
-| Filtros | preset período + `from`/`to` + `branch` · URL shareable |
-| Gráficos | OTD (`GET /analytics/otd/series`) com granularity/tipo/export · comparativo valor×meta (KPIs interval) |
-| Fora P0 | Speedometer no Overview; KPI-PO-LATE; série CPV/Savings dedicada; seller/segmento/cliente |
-| UX temporal | cada card mostra snapshot/estado/intervalo |
-| Drill | CTA «Abrir OTD» → `/analytics/otd` preservando query |
-| Partial | KPI auxiliar / série OTD podem ficar unavailable |
-| Status | **FECHADA (DoD)** · delta visual **WF-02R** |
+| Filtros globais | período + `from`/`to` + `branch`; URL shareable |
+| Fora do chrome global | cliente/segmento/carteira/vendedor, `location` e `stock_method` quando não suportados por todos os KPIs |
+| Metas | tríade SI: `goalValue`, `comparableGoal`, `referenceGoal` + `iddScore` |
+| Gráficos | OTD no tempo + comparativo valor×meta conforme natureza temporal |
+| Partial | blocos auxiliares podem ficar unavailable sem derrubar tudo |
 
-### WF-HERO-OV — densidades do hero (Overview)
+### Hero
 
 ```text
-┌─ TopBar sp ─ Início · Visão geral† · … · [Buscar] [Favoritos] [Ajuda] [avatar] ─┐
-┌─ PagePath: Início › Visão geral ────────────────────────────────────────────────┐
-┌─ PageHero compact ──────────────────────────────────────────────────────────────┐
-│ Portal Suprimentos                                                              │
-│ Visão geral (?)     [badge: Santa Catarina | Consolidado | SC, ES]  [Atualizar]│
-│ Indicadores do período no seu escopo. O Início é ação — não use isto como fila. │
-│ ┌─ FilterBar embutido ────────────────────────────────────────────────────────┐ │
-│ │ Período rápido (?): [Este mês] [Mês passado] [Trimestre] [Ano] [12m] [Pers.]│ │
-│ │ [De ···] [Até ···] [Unidade ▾ MultiSelect]                                  │ │
-│ │   painel: Buscar… · [Selecionar visíveis] [Limpar]                          │ │
-│ │   ☑/☐ Santa Catarina (01) · ☑/☐ Espírito Santo (02) — só allowedUnits      │ │
-│ └─────────────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────────┘
+┌─ TopBar ─────────────────────────────────────────────────────────────────────────┐
+┌─ PagePath: Início › Visão geral ─────────────────────────────────────────────────┐
+┌─ PageHero compact ────────────────────────────────────────────────────────────────┐
+│ Portal Suprimentos                                                               │
+│ Visão geral                 [badge de escopo]                        [Atualizar] │
+│ Indicadores do período no seu escopo.                                            │
+│ Período rápido: [Hoje] [Esta semana] [Este mês] [Mês passado] [Tri] [Ano] [12m] │
+│ [De] [Até] [Unidade ▾ MultiSelect]                                               │
+└───────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### WF-02R — ASCII happy path
+### Conteúdo
 
 ```text
-┌─ (WF-HERO-OV) ──────────────────────────────────────────────────────────────────┐
+[StateBanner partial, se necessário]
 
-┌─ ⚠ StateBanner partial (se partialFailures) ─ "Alguns indicadores falharam…" ──┐
+SectionCard "Indicadores"
+  7 KPI cards; help no próprio título/labels de meta
 
-┌─ SectionCard «Indicadores» (?) natureza temporal ───────────────────────────────┐
-│  grid até 7 SuppliesKpiCard (available | unavailable + partial)                 │
-└─────────────────────────────────────────────────────────────────────────────────┘
+SectionCard "OTD no tempo"                                  [Abrir OTD]
+  ChartViewShell + série
 
-┌─ SectionCard «OTD no tempo» (?) ─────────────────────────── [Abrir OTD →] ──────┐
-│  ChartViewShell: granularidade Dia/Semana/Mês · tipo · export CSV/XLSX          │
-│  MultiTypeSeriesChart (série OTD %) · Empty/Error/Loading locais                │
-└─────────────────────────────────────────────────────────────────────────────────┘
-
-┌─ SectionCard «Comparativo no período» (?) ──────────────────────────────────────┐
-│  Barras Valor × Meta só KPIs temporalNature=interval + available                │
-└─────────────────────────────────────────────────────────────────────────────────┘
+SectionCard "Comparativo no período"
+  somente KPIs comparáveis no recorte
 ```
 
 ---
 
-## WF-OTD-A — OTD analytics
+## WF-OTD-A — OTD analytics — FECHADA
 
 | Campo | Conteúdo |
 |---|---|
-| Objetivo | Velocímetros OTD valor×meta + evolução temporal (paridade visual Comercial OTD **sem** painel de linhas) |
-| Rota | `/apps/supplies/analytics/otd` · viewId `analytics_otd` |
+| Objetivo | gauges por unidade + evolução temporal |
+| Rota | `/analytics/otd` |
 | Capability | `supplies.analytics.access` |
-| Entrada | Catálogo/Início Análises · CTA Overview · deep link URL |
-| Fontes | `GET /analytics/otd` (agregado) + `GET /analytics/otd/series` |
-| Kit | PagePath, PageHero, FilterBar MultiSelect (reuso Overview), SpeedometerGauge, ChartViewShell |
-| Unidade | mesmos MultiSelect SC/ES do Overview; títulos dos gauges = Santa Catarina / Espírito Santo |
-| **Não traz** | DataTable linhas; ranking fornecedor; WF-11 `/suppliers/otd`; seller |
-| Status | **FECHADA (DoD)** |
-
-### WF-HERO-OTD
+| Entrada | Overview/catálogo/deep link |
+| Fontes | `/analytics/otd` + `/analytics/otd/series` |
+| Filtros | mesmo contrato de período/unidade do Overview |
+| Não traz | ranking fornecedor ou painel operacional de entregas |
 
 ```text
-┌─ TopBar sp (igual) ─────────────────────────────────────────────────────────────┐
-┌─ PagePath: Início › Visão geral › OTD    (back = Visão geral se veio do CTA)     │
-┌─ PageHero compact ──────────────────────────────────────────────────────────────┐
-│ Portal Suprimentos                                                              │
-│ OTD — pontualidade de compras (?)   [badge escopo]   [Abrir Visão geral][Atualizar]│
-│ Velocímetros e evolução no recorte. Atrasos do dia ficam em Entregas (ops).     │
-│ ┌─ FilterBar (mesmo contrato URL que Overview) ───────────────────────────────┐ │
-│ │ Período rápido · De · Até · Unidade (MultiSelect SC/ES)                     │ │
-│ └─────────────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────────┘
+PagePath: Início › Visão geral › OTD
+PageHero: OTD — pontualidade de compras      [escopo] [Visão geral] [Atualizar]
+FilterBar: Período rápido · De · Até · Unidade
+
+SectionCard "Pontualidade no período"
+  SpeedometerGauge por unidade
+
+SectionCard "OTD no tempo"
+  ChartViewShell
 ```
-
-### ASCII — consolidado (2 unidades)
-
-```text
-┌─ (WF-HERO-OTD) ─────────────────────────────────────────────────────────────────┐
-
-┌─ SectionCard «Pontualidade no período» (?) ─────────────────────────────────────┐
-│  Legenda zonas do kit (showZonesLegend)                                         │
-│   ┌─ Santa Catarina ────────────┐   ┌─ Espírito Santo ────────────┐             │
-│   │  SpeedometerGauge size≈280  │   │  SpeedometerGauge size≈280  │             │
-│   │  value = otdPct · goal SI   │   │  value = otdPct · goal SI   │             │
-│   └─────────────────────────────┘   └─────────────────────────────┘             │
-└─────────────────────────────────────────────────────────────────────────────────┘
-
-┌─ SectionCard «OTD no tempo» (?) ────────────────────────────────────────────────┐
-│  ChartViewShell (prefs `supplies:analytics-otd:otd-series`)                     │
-└─────────────────────────────────────────────────────────────────────────────────┘
-```
-
-**≠** WF-11 `/suppliers/otd` (OTD por fornecedor — fila ops).
 
 ---
 
-## WF-HELP — Ajuda / Manual `/help`
+## WF-HELP — Ajuda / Manual
 
 | Campo | Conteúdo |
 |---|---|
-| Objetivo | Manual in-app (padrão Comercial): conceitos, Quero→onde, FAQ, glossário |
-| Rota | `/apps/supplies/help` |
-| Capability | `supplies.portal.access` |
-| Fonte | `userManualContent.ts` · `userManualToolLinks.ts` · `glossaryContent.ts` · tooltips |
-| Nav | atalho TopBar **Ajuda** + item catálogo; sempre visível com portal |
-| Não traz | path/`operationId` nos textos; espelho markdown = E16 |
-
-```text
-┌─ PagePath: Início / Ajuda ──────────────────────────────────────────────────┐
-┌─ PageHero: Manual do usuário ───────────────────────────────────────────────┐
-┌─ TOC sticky | Conceitos | Quero→onde | Mapa | FAQ | Glossário ──────────────┐
-```
-
-Satélite: [HELP-AND-ONBOARDING.md](./HELP-AND-ONBOARDING.md).
+| Rota | `/help` |
+| Fonte | `userManualContent.ts`, `userManualToolLinks.ts`, `glossaryContent.ts`, tooltips |
+| Layout | PagePath + PageHero + TOC + SectionCards |
+| Regra | conteúdo evolui na mesma entrega de cada feature; etapa final só audita cobertura |
 
 ---
 
-## WF-USER — Perfil usuário `/users/:userId`
-
-Padrão Comercial (`WF-USER`), adaptado ao domínio Suprimentos (sem carteiras/OV).
+## WF-USER — Perfil usuário
 
 | Campo | Conteúdo |
 |---|---|
-| Objetivo | identidade + preferências do Portal Suprimentos + atalhos por capability |
-| Rota | `/apps/supplies/users/:userId` (EN; SPA — mesmo padrão Comercial, fora do menu launcher) |
-| Capability | self: `supplies.portal.access` · outro usuário: `supplies.administration.manage` |
-| Fonte | Core `/me` + `/me/person-profile` (+ `/photo`) · BFF `GET/PATCH /users/{id}/profile` + `/me/preferences` |
-| Conteúdo | avatar Core quando self · cargo/contatos Core read-only · filiais `allowedUnits` · capabilities · preferências · atalhos Início / Overview† / SC† / Ajuda |
-| Edição | preferências só no **próprio** perfil; admin não altera prefs de terceiros na P0; foto/cargo/contatos só em `/profile` do host |
-| Sync host | CustomEvent `DELPI_PERSON_PROFILE_CHANGED` (Portal) → TopBar/WF-USER recarregam da Core |
-| Não traz | volume de foto no plugin; cargo comercial / carteiras |
-
-```text
-┌─ PagePath: Portal / Usuário / {nome} ───────────────────────────────────────┐
-┌─ PageHero: Nome · e-mail · badges units / capabilities ─────────────────────┐
-┌─ Identidade | Atalhos ──────────────────────────────────────────────────────┐
-│ Identidade (read-only Core) · Atalhos por cap (Início, Overview†, SC†…)     │
-└─────────────────────────────────────────────────────────────────────────────┘
-┌─ Preferências (só self): tema · filial padrão ──────────────────────────────┐
-┌─ Acesso: capabilities sessão + units (só self ou admin) ────────────────────┘
-```
-
-† conforme capability. BFF: [API-ROUTES](./API-ROUTES.md). Roadmap: **E4.S4 concluída**.
+| Rota | `/users/:userId` |
+| Fonte | Core person-profile/photo + BFF profile/preferences |
+| Conteúdo | identidade read-only, units/capabilities, atalhos, preferências |
+| Edição P0 | somente preferências do próprio usuário |
+| Preferências atuais | filial padrão + densidade de tabela conforme schema vigente |
+| Foto/cargo/contatos | edição somente no `/profile` global do host |
 
 ---
 
-## WF-03 — Minhas Atividades
-
-| Campo | Conteúdo |
-|---|---|
-| Rota | `/my-tasks` |
-| Capability base | `supplies.portal.access` |
-| Regra fina | capability do recurso referenciado + unit + ownership/equipe |
-| Ações | criar, editar, concluir, cancelar conforme regra de recurso |
-| Permission CRUD extra | **não na P0** |
-| Fonte | `supply_tasks` + referências TOTVS |
-
----
-
-## WF-04 — Solicitações de Compras
+## WF-04 — Solicitações de Compras — EM FOCO
 
 | Campo | Conteúdo |
 |---|---|
 | Rota | `/purchase-requests` |
 | Capability | `supplies.purchase-requests.access` |
-| Unit | sim |
-| Resource scope | CC fail-closed; `view-all` só amplia CC |
-| Export | exige `supplies.purchase-requests.export` enquanto segregação for necessária |
-| Fonte | PR-api C1; supplies-api/PG C2 |
+| Unit | obrigatório |
+| Resource scope | CC fail-closed; `view-all` amplia CC, nunca unidade |
+| Export | `supplies.purchase-requests.export` + scopes |
+| Fonte | PR-api C1; supplies-api/PG somente após C2 |
+| Estado | C1 funcional implementado; revalidar GATE-FEATURE atual antes de promover WF-05 |
+| DoD pendente | kit-first, estados, Help, filtros/URL, tema/mobile/a11y, positive+sibling+negative, smoke |
 
 ---
 
-## WF-05 — Pedidos de Compra
+## Fila futura — promover uma página por vez
+
+### WF-05 — Pedidos de Compra
 
 | Campo | Conteúdo |
 |---|---|
 | Rota | `/purchase-orders` |
 | Capability | `supplies.operations.access` |
 | Unit | sim |
-| Fonte | PO-OTD/panel |
-| Ações | abrir detalhe, criar follow-up autorizado |
+| Fonte | PO/OTD via `api-delpi` através de `supplies-api` |
+| Ações | abrir detalhe; follow-up somente quando autorizado |
+| Gate | só promover após WF-04 fechado + autorização PO |
 
----
-
-## WF-06 — Detalhe do Pedido
+### WF-06 — Detalhe do Pedido
 
 | Campo | Conteúdo |
 |---|---|
 | Rota | `/purchase-orders/:branch/:number` |
 | Capability | `supplies.operations.access` |
-| Unit/resource | pedido precisa pertencer ao recorte |
+| Resource | pedido deve pertencer ao recorte autorizado |
 | Conteúdo | itens, prometida, recebimentos, SC origem |
-| Ações | follow-up; deep links irmãos |
 
----
-
-## WF-07 — Entregas / Atrasos
+### WF-07 — Entregas / Atrasos
 
 | Campo | Conteúdo |
 |---|---|
 | Rota | `/deliveries` |
 | Capability | `supplies.operations.access` |
-| Unit | sim |
-| Conteúdo | atrasos operacionais, ranking, drill PC/fornecedor |
-| Gate | regra BI atraso precisa ser comparada antes de depreciação |
+| Conteúdo | atrasos operacionais e drills autorizados |
+| Paridade | BI atraso só pode ser depreciado após comparação real; P-03 continua residual de cutover/paridade |
 
----
+### WF-08 — Importações
 
-## WF-08 — Importações
+**BLOQUEADO_COM_EVIDENCIA** até contrato/jornada real serem confirmados. Não criar capability/rota funcional nova por suposição.
 
-| Campo | Conteúdo |
-|---|---|
-| Rota | `/imports` |
-| Status | **BLOQUEADO** até E1.S1/P-05 |
-| Capability | não criar antes de entender a jornada/risco |
-| Coexistência | manter app atual se confirmado |
+### WF-09 — Fornecedores
 
----
+Busca/lista; contrato de busca fornecedor precisa estar comprovado ao promover.
 
-## WF-09 — Fornecedores
+### WF-10 — Fornecedor 360
 
-| Campo | Conteúdo |
-|---|---|
-| Rota | `/suppliers` |
-| Capability | `supplies.operations.access` |
-| Unit | conforme disponibilidade/recorte da fonte |
-| Conteúdo | busca/lista, código, loja, nome, indicadores contextuais |
+Identidade/TOTVS + blocos operacionais + notas/tasks. **Qualidade fica fora do P0 enquanto P-11 estiver aberto**; não deixar “Qualidade autorizada” como decisão implícita de implementação.
 
----
+### WF-11 — OTD Fornecedores
 
-## WF-10 — Fornecedor 360
+Página analítica distinta de OTD geral e Entregas; OTD/meta/evolução/ranking somente após contrato promovido.
 
-| Campo | Conteúdo |
-|---|---|
-| Rota | `/suppliers/:code/:store` |
-| Capability | `supplies.operations.access` |
-| Unit | sim para dados unit-scoped |
-| Blocos | identidade, produtos, PCs, entregas, preço, OTD, Qualidade autorizada, notas/tasks |
-| Nota | mesma capability operacional + unit + fornecedor + ownership; sem `notes.write` preventivo |
-| Partial | Qualidade indisponível não derruba identidade TOTVS |
+### WF-12 — Produtos / MP
 
----
+Busca/lista e abertura do 360.
 
-## WF-11 — OTD Fornecedores
+### WF-13 — Produto / MP 360
 
-| Campo | Conteúdo |
-|---|---|
-| Rota | `/suppliers/otd` |
-| Capability | `supplies.analytics.access` |
-| Unit | sim |
-| Conteúdo | OTD, meta, evolução, ranking |
-| Gate | comparar BI atraso |
+Cadastro + blocos autorizados de estoque/ESTSEG/SC/PC/fornecedores/preços; partial explícito por bloco.
 
----
+### WF-14 — Onde o Item é Usado
 
-## WF-12 — Produtos / Matérias-primas
+Fonte `get_product_parents`; não declarar paridade do BI antes de comparação real.
 
-| Campo | Conteúdo |
-|---|---|
-| Rota | `/products` |
-| Capability | `supplies.operations.access` |
-| Fonte | busca produto/part number |
-| Ação | abrir Produto 360 |
+### WF-15 — Controle de Estoques
 
----
+Saldo/valor/localização. Não misturar ESTSEG. Política de capability do stock-value deve ser fechada no plano da página.
 
-## WF-13 — Produto / MP 360
+### WF-16 — Estoque de Segurança
 
-| Campo | Conteúdo |
-|---|---|
-| Rota | `/products/:code` |
-| Capability | `supplies.operations.access` |
-| Unit | sim para estoque/ESTSEG/PC/SC |
-| Conteúdo | cadastro, saldo, ESTSEG, onde usado, fornecedores, última compra, preço, SC/PC |
-| Partial | blocos independentes sinalizam indisponibilidade |
+Saldo × ESTSEG, déficit, extrato, fornecedores, SC abertas; read-only neste roadmap.
 
----
+### WF-17 — Análise de Consumo
 
-## WF-14 — Onde o Item é Usado
+Consumo/lead time/comparativos/memória; decidir ao promover se é página independente ou satélite inseparável do WF-16.
 
-| Campo | Conteúdo |
-|---|---|
-| Rota | `/products/:code/where-used` |
-| Capability | `supplies.operations.access` |
-| Fonte | `get_product_parents` |
-| Gate | não declarar paridade do BI antes do dump/comparação |
+### WF-18 — Savings / Negociações
 
----
+SI continua owner de meta; Portal não cria segunda meta.
 
-## WF-15 — Controle de Estoques
+### WF-19 — Histórico de Preços
 
-| Campo | Conteúdo |
-|---|---|
-| Rota | `/inventory` |
-| Capability | `supplies.operations.access` |
-| Unit | sim |
-| Conteúdo | saldo/valor/localização; não misturar ESTSEG |
-| Analytics | Overview pode consumir agregados com `supplies.analytics.access` via contrato próprio |
+Ao promover, decidir com evidência se permanece seção do Product 360 ou página própria. Não executar junto de WF-14 por conveniência.
 
----
+### WF-20 — Indicadores
 
-## WF-16 — Estoque de Segurança
+Antes de promover `/indicators`, provar jornada distinta da Overview/deep link SI; caso contrário marcar fora do escopo com justificativa.
 
-| Campo | Conteúdo |
-|---|---|
-| Rota | `/safety-stock` |
-| Capability | `supplies.operations.access` |
-| Unit | sim |
-| Conteúdo | saldo × ESTSEG, déficit, extrato, fornecedores, SC abertas |
-| Ações | read-only neste roadmap |
+### WF-03 — Minhas Atividades
 
----
+Tasks/follow-ups com capability do recurso + unit quando aplicável + ownership/equipe; sem CRUD permissions preventivas.
 
-## WF-17 — Análise de Consumo
+### WF-21 — Administração
 
-| Campo | Conteúdo |
-|---|---|
-| Rota | `/safety-stock/consumption-analysis` |
-| Capability | `supplies.operations.access` |
-| Unit | sim |
-| Conteúdo | consumo, lead time, comparativos, memória de cálculo |
-| Legado | alias `/analise-consumo` somente na migração |
-
----
-
-## WF-18 — Savings / Negociações
-
-| Campo | Conteúdo |
-|---|---|
-| Rota | `/negotiations` |
-| Capability | `supplies.analytics.access` |
-| Unit | sim |
-| Fonte | Sheets via api-delpi + meta SI |
-| Regra | Portal lê; não cria segunda meta |
-
----
-
-## WF-19 — Histórico de Preços
-
-| Campo | Conteúdo |
-|---|---|
-| Rota | `/products/:code/price-history` ou seção do 360 |
-| Capability | `supplies.operations.access` |
-| Unit | quando contrato exigir |
-| Fonte | purchase-price-history |
-| Ajuda | última compra ≠ média ≠ orçamento |
-
----
-
-## WF-20 — Indicadores
-
-| Campo | Conteúdo |
-|---|---|
-| Rota | `/indicators` |
-| Capability | `supplies.analytics.access` |
-| Fonte | mesmos KPIs homologados + deep link SI |
-| Regra | SI continua owner de metas |
-
----
-
-## WF-21 — Administração
-
-| Campo | Conteúdo |
-|---|---|
-| Rota | `/administration` |
-| Capability | `supplies.administration.manage` |
-| Unit | quando administrar configuração/escopo unit-scoped |
-| Conteúdo | mappings, visibility scopes, settings tipados |
-| Auditoria | obrigatória |
-| Não concede | acesso automático a todas as units |
+Mappings, visibility scopes e settings tipados; audit obrigatório; administração não concede todas as units.
 
 ---
 
 ## Estados obrigatórios por tela
 
 - loading;
+- success;
 - empty;
 - partial/unavailable quando composição permitir;
 - error;
 - 403 capability/unit/resource;
 - 404 recurso;
-- retry quando seguro.
+- retry/recovery quando seguro.
 
-## Regra visual de permission minimization
+## Definition of Done visual
 
-A UI pode ter vários botões para uma mesma capability. Novo botão/endpoint não implica nova permission. Só criar code adicional quando houver fronteira material de risco/segregação conforme ADR-007.
+- `@delpi/plugin-ui` primeiro;
+- help no próprio label/título sempre que houver alvo semântico;
+- sem override estrutural `.delpi-ui-*` no MFE;
+- desktop/mobile e light/dark;
+- teclado/focus;
+- nenhum dado/regra de negócio inventado no frontend;
+- Ajuda sincronizada no mesmo deliverable.

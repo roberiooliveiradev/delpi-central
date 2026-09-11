@@ -1,39 +1,18 @@
 # HOMOLOGACAO-PARIDADE — Portal vs legado
 
+> Revisado em 2026-09-10. Paridade é evidência de dados, comportamento, segurança e experiência; não aparência.
+
 Depreciação somente com checklist assinada (owner Suprimentos + QA) e evidência mensurável.
 
-Não marcar paridade por aparência. Comparar funcionalidade, filtros, dados, permissions, URLs, performance e Ajuda.
+## 1. Método
 
----
+Para KPIs: filial/units, período/competência, filtros, valor legado, valor Portal, delta, tolerância definida antes do teste e evidência.
 
-## 1. Método de comparação
+Para listas/tabelas: total quando comparável, chaves de negócio, filtros/ordenação, paginação, positive + sibling + negative e filial irmã.
 
-Para KPI:
+Para performance: baseline e candidato com p50/p95 ou métrica acordada, timeout/error rate e downstream calls quando composição for crítica.
 
-| Campo | Obrigatório |
-|---|---|
-| filial/units | sim |
-| período/competência | sim |
-| filtros | sim |
-| valor legado | sim |
-| valor Portal | sim |
-| delta | sim |
-| tolerância | definida antes do teste |
-| evidência | link/arquivo/screenshot/JSON |
-
-Para listas/tabelas:
-
-- mesma quantidade total quando contratos forem equivalentes;
-- mesmo conjunto de chaves de negócio;
-- mesmos filtros/ordenação quando fizer parte do contrato;
-- paginação equivalente;
-- casos positivo, negativo e filial irmã.
-
-Para performance:
-
-- p50/p95 ou outra métrica acordada;
-- timeout/error rate;
-- quantidade de downstream calls para composições críticas.
+Para UI/UX: Help, loading/empty/partial/error/403/404, URL/F5, tema, responsividade e acessibilidade quando material.
 
 ---
 
@@ -41,40 +20,42 @@ Para performance:
 
 | Item | Critério Portal | Status |
 |---|---|---|
-| Home/Overview | WF-01 + WF-02 sem misturar Hub e BI | pendente |
+| Home/Overview | WF-01 + WF-02 preservam separação Hub × BI | implementação fechada; paridade legado pendente |
 | CPV | mesmo recorte/fórmula + contexto temporal | pendente |
-| OTD + ranking | mesmo universo/regra ou diferença explicitamente homologada | pendente |
-| estoque | mesmo recorte por branch/location | pendente |
-| giro | mesmo indicador oficial em vezes | pendente |
+| OTD | mesmo universo/regra ou diferença homologada | pendente |
+| estoque | mesmo recorte aplicável | pendente |
+| giro | mesmo indicador oficial | pendente |
 | savings | mesma origem/recorte | pendente |
-| filtros | branch/datas/location/competência equivalentes | pendente |
-| export | equivalente se realmente utilizado | pendente |
-| metas SI | mesma fonte canônica e escopo autorizado | pendente |
-| permission legado | migração para capability canônica + RBAC Core validado | pendente |
-| URL legada | redirect decidido/testado somente após GO | pendente |
-| Ajuda | conceitos cobertos | pendente |
+| metas SI | mesma fonte canônica; tríade e escopo preservados | pendente |
+| permissions | migração para capabilities canônicas + Core | pendente final |
+| URL legada | redirect somente após GO | pendente |
+| Ajuda | conceitos equivalentes/cobertos | parcial — Portal implementado |
 | performance | baseline legado × Portal | pendente |
+
+Filtros de domínio como `location`/`stock_method` só entram na comparação da superfície que realmente os suporta; não são globais da Overview por conveniência.
 
 ---
 
 ## 3. `purchase-requests`
 
+C1 funcional existe no Portal, mas o WF-04 ainda está em revalidação de GATE-FEATURE e C2 continua futuro.
+
 | Item | Critério | Status |
 |---|---|---|
-| lista grão item | mesmo contrato 0.2 | pendente |
-| filtros | branch, datas, SC, solicitante, CC, produto, fornecedor, pedido, estágio | pendente |
-| fail-closed CC | equivalente | pendente |
-| view-all | bypass CC, não unidade | pendente |
-| units 01/02 | equivalente após migração | pendente |
+| lista/detalhe/export C1 | fluxo BFF-only presente | implementado; revalidar DoD |
+| grão item | contrato equivalente | pendente de homologação quantitativa |
+| filtros | equivalência conforme contrato vigente | pendente |
+| fail-closed CC | equivalente | implementado/testes; homologação final pendente |
+| view-all | amplia CC, não unidade | implementado/testes; homologação final pendente |
+| units | somente `allowedUnits` | implementado/testes; HML/prod pendente |
 | admin mapping/scopes | paridade | pendente |
-| export | comportamento + permission | pendente |
-| notificações | jobs migrados e reconciliados na C2 | pendente |
-| deep links | filtros preservados | pendente |
-| C2 | ownership/jobs supplies-api concluídos | pendente |
-| reconciliação | contagens/eventos equivalentes antes de C3 | pendente |
-| 403 filial | testes positivos/negativos/irmão | pendente |
+| notificações/jobs | migrados para supplies-api | **não** — C2 futuro |
+| deep links/URL | filtros preservados | revalidar WF-04 |
+| C2 | ownership/jobs supplies-api | pendente |
+| reconciliação | counts/cursors/events | pendente |
+| 403 filial | positive/negative/sibling | revalidar |
 
-**C3/cutover é proibido antes de C2 + reconciliação + paridade final.**
+**C3 é proibido antes de C2 + reconciliação + paridade final.**
 
 ---
 
@@ -82,59 +63,47 @@ Para performance:
 
 | Item | Critério | Status |
 |---|---|---|
-| saldo × ESTSEG | equivalência de dados | pendente |
-| filtros | filial/grupo/situação/busca | pendente |
-| detalhe | SC7/SD4 + SC1 conforme contrato | pendente |
+| saldo × ESTSEG | equivalência | pendente |
+| filtros | filial/grupo/situação/busca conforme contrato | pendente |
+| detalhe | fontes conforme contrato canônico | pendente |
 | fornecedores/preços | equivalência | pendente |
 | análise de consumo | mesma memória de cálculo | pendente |
 | read-only | preservado | pendente |
-| export | equivalente se requisito vigente | pendente |
-| unit aliases | migração para eixo B | pendente |
+| export | somente se requisito vigente | pendente |
+| unit aliases | eixo `supplies.unit.*` | pendente |
 | performance | baseline × Portal | pendente |
 
 ---
 
 ## 5. BIs/apps externos do Product Owner
 
-Antes do `GATE-CUTOVER`, **nenhum** pode permanecer em `LEGADO_A_VALIDAR`.
+Antes do GATE-CUTOVER, nenhum pode permanecer `LEGADO_A_VALIDAR`.
 
 Estados finais permitidos:
 
-```text
-PARIDADE_HOMOLOGADA
-MANTER_EXTERNO
-DEEP_LINK
-FORA_DO_ESCOPO_COM_ACEITE
-```
+`PARIDADE_HOMOLOGADA` · `MANTER_EXTERNO` · `DEEP_LINK` · `FORA_DO_ESCOPO_COM_ACEITE`.
 
-Tabela após E1.S1 (dump Core **local** 2026-09-08; produção ainda pendente):
-
-| App/BI | id/path real | Regra/fonte confirmada? | Destino | Evidência | Owner aceite | Status |
-|---|---|---:|---|---|---|---|
-| Análise - Importações | não encontrado (Core local) | não | — | ADR-005 E1.S1 SQL 0 rows | pendente dump prod | LEGADO_A_VALIDAR |
-| Onde o item é usado - BI | não encontrado (Core local) | não | — | ADR-005 E1.S1; API nativa `get_product_parents` não prova paridade | pendente dump prod | LEGADO_A_VALIDAR |
-| Atraso de Fornecedores - SC - BI | não encontrado (Core local) | não | — | ADR-005 E1.S1; OTD nativo ainda não comparado | pendente dump prod | LEGADO_A_VALIDAR |
-| Alçada de Compras - BI | não encontrado (Core local) | não | — | ADR-005 E1.S1; workflow vs consulta aberto (P-06) | pendente dump prod | LEGADO_A_VALIDAR |
-| Controle de Estoques - SC - BI | não encontrado (Core local) | não | — | ADR-005 E1.S1 | pendente dump prod | LEGADO_A_VALIDAR |
-| Indicadores de Suprimentos - Sheets | não encontrado (Core local) | não | — | ADR-005 E1.S1; savings API ≠ prova de remoção do app | pendente dump prod | LEGADO_A_VALIDAR |
+O dump Core local 2026-09-08 encontrou 0/6; o dump produção continua obrigatório para fechar P-01/P-03/P-04/P-07 e decisões de redirect/depreciação.
 
 ---
 
-## 6. Authz/RBAC de paridade
+## 6. AuthZ/RBAC de paridade
 
-Além de dados, homologar:
+Homologar:
 
-- permissions efetivas vêm do Core;
-- `/me/apps` retorna o Portal para papéis provisionados;
-- `/me/routes` respeita capabilities;
+- effective permissions vêm do Core;
+- `/me/apps` retorna o Portal e suas rotas autorizadas em `apps[].routes`;
+- **não usar `/me/routes` como critério**, pois não é contrato canônico atual;
 - usuário sem `supplies.portal.access` não abre o Portal;
-- unit scope respeitado no backend;
-- aliases legados não viram única fonte de acesso ao novo app;
-- tasks/notas respeitam resource scope/ownership sem permissions CRUD redundantes.
+- unit scope é validado no backend;
+- aliases legados não viram fonte única de autorização;
+- tasks/notas respeitam resource scope/ownership sem CRUD permissions redundantes.
 
 ---
 
-## 7. Assinatura
+## 7. Gates e assinatura
+
+Paridade só fecha quando dados + filtros + segurança + UX + performance aplicável estiverem evidenciados. Falha de ambiente deve ser marcada `INCONCLUSIVE`, não PASS.
 
 | Ativo | Data | Owner Suprimentos | QA | Evidência | Notas |
 |---|---|---|---|---|---|

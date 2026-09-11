@@ -1,25 +1,23 @@
 # Inventário de ativos — Portal Suprimentos
 
-> **Data:** 2026-09-08 · **Status:** baseline de inventário; E1.S1 dump **local** concluído (0/6 no Core Docker); dump **produção** ainda pendente.
+> **Revisado em 2026-09-10.** O Portal Suprimentos e a `supplies-api` já existem e possuem E1–E5 + SC C1 funcional implementados. Este inventário não deve descrevê-los como “futuros”. Dump Core produção dos 6 BIs externos continua pendente.
 
-Legenda de decisão: `INCORPORAR` · `INTEGRAR` · `DEEP_LINK` · `MANTER_EXTERNO` · `DEPRECIAR_APOS_PARIDADE` · `LEGADO_A_VALIDAR` · `FORA_DO_ESCOPO`.
+Legenda: `INCORPORAR` · `INTEGRAR` · `DEEP_LINK` · `MANTER_EXTERNO` · `DEPRECIAR_APOS_PARIDADE` · `LEGADO_A_VALIDAR` · `FORA_DO_ESCOPO`.
 
 ---
 
-## 1. Aplicações diretamente relacionadas a Suprimentos
+## 1. Aplicações diretamente relacionadas
 
-| Ativo | Tipo | Owner atual | Função | Permission atual | Decisão Portal | Fase alvo | Evidência |
-|---|---|---|---|---|---|---|---|
-| Dashboard Suprimentos | MFE | plugin + api-delpi | CPV, OTD, estoque, giro, savings | `dashboard-supplies.view` | DEPRECIAR_APOS_PARIDADE | E5 + E11 + E17 | código/manifest |
-| Solicitações de Compras | MFE | purchase-requests-api | SC por CC, detalhe, export | `purchase-requests.*` | DEPRECIAR_APOS_PARIDADE | E6 C1 → E16 C2 → E19 C3 | código/manifest |
-| purchase-requests-api | API FastAPI existente | BC Solicitações | escopo CC, mapping, jobs/notificações | aliases `purchase-requests.*` | DEPRECIAR_APOS_PARIDADE | E6 C1 → E16 C2 → E19 C3 | código + ADR-002 |
-| Estoque de Segurança | MFE | plugin + api-delpi | saldo×ESTSEG, consumo, fornecedores | `estoque-seguranca.*` | DEPRECIAR_APOS_PARIDADE | E8 + E17 | código/manifest |
-| Portal Suprimentos | MFE futuro | novo produto | hub operacional/analítico | `supplies.portal.access` + capabilities mínimas | INCORPORAR | E3+ | ADR-004/007 |
-| supplies-api | API futura Flask | novo produto | BFF + estado Minha DELPI + authz | Core-first | INCORPORAR | E2+ | ADR-001 |
+| Ativo | Tipo | Owner atual | Função | Decisão Portal | Estado/etapa |
+|---|---|---|---|---|---|
+| Portal Suprimentos | MFE | produto Suprimentos | hub operacional/analítico | INCORPORAR | **implementado**, evolução página-a-página |
+| supplies-api | API Flask | produto Suprimentos | BFF + estado Minha DELPI + authz | INCORPORAR | **implementada**, evolução por contratos de página |
+| Dashboard Suprimentos legado | MFE + api-delpi | legado | CPV, OTD, estoque, giro, savings | DEPRECIAR_APOS_PARIDADE | Overview novo existe; paridade/cutover pendentes |
+| Solicitações de Compras legado | MFE + purchase-requests-api | BC Solicitações | SC por CC, detalhe, export | DEPRECIAR_APOS_PARIDADE | C1 funcional no Portal; C2/C3 futuros |
+| purchase-requests-api | API FastAPI | BC Solicitações | escopo CC, mappings, jobs/notificações | DEPRECIAR_APOS_PARIDADE | owner até C2 |
+| Estoque de Segurança legado | MFE + api-delpi | legado | saldo×ESTSEG, consumo, fornecedores | DEPRECIAR_APOS_PARIDADE | páginas novas ainda na fila |
 
-### Catálogo canônico alvo de permissions
-
-O inventário não cria permission por tela, botão ou verbo CRUD. Catálogo P0/P1 deliberadamente mínimo:
+### Permissions canônicas alvo
 
 ```text
 supplies.portal.access
@@ -33,136 +31,42 @@ supplies.unit.filial-01
 supplies.unit.filial-02
 ```
 
-Novas permissions só nascem com justificativa de risco/segregação conforme ADR-007.
+Novas permissions exigem fronteira real de risco/segregação conforme ADR-007.
 
 ---
 
-## 2. BIs / apps externos evidenciados pelo Product Owner
+## 2. BIs/apps externos do Product Owner
 
-| Ativo | Permission observada | Estado técnico | Sobreposição parcial | Decisão atual | Próxima ação |
-|---|---|---|---|---|---|
-| Análise - Importações | `importados.access` | git ausente; Core local 2026-09-08 = não encontrado | nenhuma nativa confirmada | LEGADO_A_VALIDAR | dump Core **prod**; sem redirect |
-| Onde o item é usado - BI | `onde-e-usado.access` | git ausente; Core local 2026-09-08 = não encontrado | `get_product_parents` | LEGADO_A_VALIDAR | dump prod + E10 paridade |
-| Atraso de Fornecedores - SC - BI | `matriz_atraso-fornecedores.access` | git ausente; Core local 2026-09-08 = não encontrado | OTD / PO panel | LEGADO_A_VALIDAR | dump prod + E7.S1 |
-| Alçada de Compras - BI | `alcada-compras.access` | git ausente; Core local 2026-09-08 = não encontrado | campos TOTVS; workflow não comprovado | LEGADO_A_VALIDAR | dump prod; backlog E20.S3 |
-| Controle de Estoques - SC - BI | `controle-estoque-sc.access` | git ausente; Core local 2026-09-08 = não encontrado | stock + ESTSEG | LEGADO_A_VALIDAR | dump prod + E8 |
-| Indicadores de Suprimentos - Sheets | `idd-suprimentos.access` | git ausente; Core local 2026-09-08 = não encontrado; leitura Sheets via api-delpi existe | dashboard + SI | LEGADO_A_VALIDAR | dump prod + confirmar editor (P-07) |
+| Ativo | Estado técnico local | Sobreposição possível | Decisão atual | Próxima ação |
+|---|---|---|---|---|
+| Análise - Importações | não encontrado no Core local | nenhuma nativa confirmada | LEGADO_A_VALIDAR | dump Core prod; P-05 |
+| Onde o item é usado - BI | não encontrado | `get_product_parents` | LEGADO_A_VALIDAR | dump prod + comparação antes de depreciação |
+| Atraso de Fornecedores - SC - BI | não encontrado | OTD/PO panel | LEGADO_A_VALIDAR | dump prod + P-03 |
+| Alçada de Compras - BI | não encontrado | campos TOTVS; workflow não comprovado | LEGADO_A_VALIDAR | dump prod + P-06 |
+| Controle de Estoques - SC - BI | não encontrado | stock + ESTSEG | LEGADO_A_VALIDAR | dump prod + página Estoque |
+| Indicadores de Suprimentos - Sheets | não encontrado; leitura atual existe via api-delpi/SI | Overview/Savings | LEGADO_A_VALIDAR | dump prod + P-07 |
 
-Evidência do dump local: [ADR-005 § E1.S1](./adr/ADR-005-external-bi-core-dump.md).
-
-### Gate
-
-Nenhum desses ativos pode permanecer `LEGADO_A_VALIDAR` no GO. Estado final permitido:
-
-```text
-PARIDADE_HOMOLOGADA
-MANTER_EXTERNO
-DEEP_LINK
-FORA_DO_ESCOPO_COM_ACEITE
-```
+Nenhum desses ativos pode chegar ao GO como `LEGADO_A_VALIDAR`.
 
 ---
 
 ## 3. APIs e bounded contexts
 
-| Ativo | Owner | Responsabilidade | Como o Portal consome | Decisão |
+| Ativo | Owner | Responsabilidade | Como Portal consome | Decisão |
 |---|---|---|---|---|
-| api-delpi `/supplies/*` | api-delpi | SQL/interpretação TOTVS | HTTP via supplies-api | INTEGRAR |
-| api-delpi `/products/*` | api-delpi | produto, compras, preço, suppliers, parents, stock | HTTP via supplies-api | INTEGRAR |
-| purchase-requests-api | Solicitações | estado/escopo CC/jobs até C2 | HTTP em C1; absorção C2 | DEPRECIAR_APOS_PARIDADE |
-| strategic-indicators-api | SI | metas/snapshots | enrich via supplies-api | INTEGRAR |
-| financial-api | Financeiro | frete/rateio | deep link/projeção autorizada | DEEP_LINK |
-| contexto Qualidade | Qualidade | inspeções/rejeições | projeção autorizada Supplier 360 | INTEGRAR |
-| tv-dashboard-api | TV | telas/presets de TV | não absorver superfície | INTEGRAR feed/DEEP_LINK |
-| minha-delpi-ai-api | Chat | tools/assistente | reutiliza mesmos contratos; sem acoplamento | INTEGRAR contrato |
+| `api-delpi /supplies/*` | api-delpi | SQL/interpretação TOTVS | HTTP via supplies-api | INTEGRAR |
+| `api-delpi /products/*` | api-delpi | produto/compras/preços/suppliers/stock/parents | HTTP via supplies-api | INTEGRAR |
+| purchase-requests-api | Solicitações | estado/CC/mappings/jobs até C2 | HTTP C1; absorção C2 | DEPRECIAR_APOS_PARIDADE |
+| strategic-indicators-api | SI | metas/IDD | composição via supplies-api | INTEGRAR |
+| Core API | plataforma | identidade/governança/effective permissions/apps/rotas | supplies-api + Portal | INTEGRAR |
+| contexto Qualidade | Qualidade | inspeções/rejeições | somente projeção autorizada | P-11 aberto; fora do Supplier 360 P0 enquanto não fechado |
+| Financeiro | Financeiro | frete/rateio | deep link/projeção autorizada | DEEP_LINK |
 
 ---
 
-## 4. Dados e rotas api-delpi reutilizáveis
+## 4. Estado novo owned pela supplies-api
 
-Famílias existentes que devem ser usadas antes de criar nova rota TOTVS:
-
-- CPV;
-- OTD;
-- stock value;
-- inventory turnover;
-- negotiation savings;
-- purchase-order OTD/panel/series;
-- purchase requests/linked orders/receipts;
-- safety stock;
-- consumption analysis;
-- stock balances;
-- product last purchase;
-- purchases;
-- purchase price history;
-- suppliers;
-- stock;
-- parents/where-used;
-- raw-material intelligence.
-
-Catálogo detalhado: [API-ROUTES.md](./API-ROUTES.md).
-
----
-
-## 5. Ferramentas externas / Sheets / Power BI
-
-| Ativo | Owner atual | Função | Decisão |
-|---|---|---|---|
-| Planilha IDD | operação atual + composer api-delpi | origem do realizado de savings | INTEGRAR leitura; edição depende P-07 |
-| Strategic Indicators | SI | meta canônica | INTEGRAR |
-| Power BI/iframes dos 6 apps | a descobrir no Core | superfícies operacionais/analíticas | LEGADO_A_VALIDAR até E1.S1 |
-
-Não copiar planilha ou Power BI para Postgres do Portal apenas para “centralizar”.
-
----
-
-## 6. Capacidades compartilhadas com outros departamentos
-
-| Capacidade | Owner | Portal faz | Portal não faz |
-|---|---|---|---|
-| Inspeções de Entrada | Qualidade | projeta indicadores autorizados no Supplier 360 | assume workflow de inspeção |
-| Frete de compras | Financeiro | deep link/card contextual | recalcula rateio |
-| PCP/open coverage | Produção/PCP | usa apenas dados compartilháveis necessários | toma regra de programação |
-| Materiais de Terceiros | contexto próprio | fora do escopo/deep link | trata SB6 como estoque de compra |
-| Chat | minha-delpi-ai-api | mantém compatibilidade de contratos | duplica routing/action catalog |
-| Lançamento NF | Fiscal | deep link quando útil | incorpora processo fiscal |
-
----
-
-## 7. Indicadores estratégicos
-
-| Indicador | Owner da regra/realizado | Owner da meta | Portal |
-|---|---|---|---|
-| CPV | api-delpi | SI | integra |
-| OTD | api-delpi | SI | integra |
-| Giro | api-delpi | SI | integra |
-| Valor de estoque | api-delpi | SI quando houver meta | integra |
-| Savings | Sheets/api-delpi para realizado atual | SI | integra sem dual write |
-
-Todo consolidado do Portal respeita somente `allowedUnits`.
-
----
-
-## 8. Legado e aliases
-
-| Legado | Alvo canônico |
-|---|---|
-| `dashboard-supplies.view` | `supplies.analytics.access` |
-| `purchase-requests.access` | `supplies.purchase-requests.access` |
-| `purchase-requests.admin` | `supplies.administration.manage` |
-| `estoque-seguranca.access` | `supplies.operations.access` |
-| `purchase-requests.unit.filial-01/02` | `supplies.unit.filial-01/02` |
-| `estoque-seguranca.view.filial-sc/es` | `supplies.unit.filial-01/02` |
-| fixture `supplies.view` | não é contrato; ajustar para `supplies.portal.access` |
-| `/analise-consumo` | redirect/alias para `/safety-stock/consumption-analysis` |
-
-Alias no BFF não substitui provisionamento do novo permission set no Core.
-
----
-
-## 9. Ownership de estado novo
-
-Somente estado criado pela Minha DELPI fica em `supplies-api`, por exemplo:
+Somente estado Minha DELPI, por exemplo:
 
 - preferências do usuário;
 - tasks/follow-ups;
@@ -171,32 +75,84 @@ Somente estado criado pela Minha DELPI fica em `supplies-api`, por exemplo:
 - auditoria funcional;
 - após C2, ownership do schema/processos `purchase_requests`.
 
-Sem clone de SA2, SB1, SC1, SC7 ou demais tabelas TOTVS.
+Não clonar SA2, SB1, SC1, SC7 ou demais tabelas TOTVS.
 
 ---
 
-## 10. Fases atualizadas
+## 5. Situação de rotas/experiências
+
+### Implementadas
+
+- Home `/apps/supplies`;
+- Overview `/overview`;
+- OTD analytics `/analytics/otd`;
+- Perfil `/users/:userId`;
+- Ajuda `/help`;
+- SC `/purchase-requests` C1 funcional.
+
+### Próxima em foco somente após WF-04 fechar
+
+- Pedidos de Compra `/purchase-orders`.
+
+### Fila posterior
+
+- detalhe do pedido;
+- Entregas;
+- Estoque;
+- ESTSEG;
+- Análise de Consumo;
+- Fornecedores/Supplier 360/OTD;
+- Produtos/Product 360/where-used/preços;
+- Negociações;
+- Indicadores se jornada distinta for comprovada;
+- Minhas Atividades;
+- Administração.
+
+---
+
+## 6. Legado e aliases
+
+| Legado | Alvo canônico |
+|---|---|
+| `dashboard-supplies.view` | `supplies.analytics.access` |
+| `purchase-requests.access` | `supplies.purchase-requests.access` |
+| `purchase-requests.admin` | `supplies.administration.manage` |
+| `estoque-seguranca.access` | `supplies.operations.access` |
+| units legadas | `supplies.unit.filial-01/02` |
+| `/analise-consumo` | alias/redirect futuro somente após decisão de migração |
+
+Alias não substitui provisionamento do permission set canônico.
+
+---
+
+## 7. Fases atualizadas do programa
 
 ```text
-E1  descoberta/freeze
-E2  supplies-api + authz
-E3  MFE + RBAC coexistência
-E4  Home
-E5  Overview
-E6  SC C1
-E7  PC/entregas
-E8  estoque/ESTSEG
-E9  Supplier 360
-E10 Product 360
-E11 negociações/indicadores
-E12 Minhas Atividades
-E13 administração
-E14 ajuda completa
-E15 paridade inicial
-E16 C2 Purchase Requests
-E17 paridade final
-E18 preparação cutover
-E19 C3 cutover
-E20 evoluções futuras
-E21 verify final
+E1–E5  concluídas
+E6     SC C1: funcional concluída; GATE-FEATURE WF-04 em revalidação
+E7     Pedidos de Compra
+E8     Detalhe do Pedido
+E9     Entregas/Atrasos
+E10    Estoque
+E11    Estoque de Segurança
+E12    Análise de Consumo
+E13    Fornecedores
+E14    Fornecedor 360
+E15    OTD Fornecedores
+E16    Produtos/MP
+E17    Produto/MP 360
+E18    drills de produto (uma superfície por vez)
+E19    Negociações
+E20    decisão/Indicadores
+E21    Minhas Atividades
+E22    Administração
+E23    auditoria Help/onboarding
+E24    paridade inicial C1
+E25    Purchase Requests C2
+E26    paridade final
+E27    preparação cutover
+E28    C3
+E29    verify-final
 ```
+
+Backlog P1+ não faz parte da linha causal P0 e não bloqueia E29.

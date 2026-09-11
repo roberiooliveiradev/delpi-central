@@ -1,1009 +1,462 @@
 # IMPLEMENTATION-PLAN — Portal Suprimentos
 
-> **Status:** plano executável revisado · set/2026 · **E1–E6 concluídas** · E7+ não iniciar sem autorização explícita  
-> **Readiness atual:** **E1–E6 + E4.S4 perfil + GATE-AUTHZ + GATE-RBAC PASS (local)**  
-> **Modo:** **uma página por vez** · **Início + Visão geral + OTD analytics fechados** · **foco = SC (WF-04)** · E7 só após fechar a fila até Pedidos  
-> Referências: ADR-001..ADR-007, `plan-construction.mdc`, `evidence-driven-execution.mdc`, README § Protocolo página-a-página.
+> **Status (2026-09-10):** plano executável revisado segundo `evidence-driven-execution.mdc`, `plan-construction.mdc` e `plan-execution.mdc`.  
+> **Entregue:** E1–E5 + E6.S1–S4.  
+> **Em foco:** E6.S5 — revalidar e fechar o GATE-FEATURE do WF-04 Solicitações de Compras.  
+> **Próxima página candidata:** E7 WF-05 Pedidos de Compra, bloqueada até E6.S5 PASS + autorização explícita do Product Owner.  
+> **Modo:** uma página user-facing por vez; etapas futuras abaixo são fila/grafo, não autorização de execução.
+
+Referências: [README](./README.md), ADR-001..ADR-007, [WIREFRAMES](./WIREFRAMES.md), [API-ROUTES](./API-ROUTES.md), [DECISOES_FUNCIONAIS_PENDENTES](./DECISOES_FUNCIONAIS_PENDENTES.md), [HOMOLOGACAO-PARIDADE](./HOMOLOGACAO-PARIDADE.md).
 
 ---
 
-## 1. Objetivo
+## 1. Objetivo e arquitetura alvo
 
-Entregar o Portal Suprimentos como hub capability-driven:
+Entregar o Portal Suprimentos como hub capability-driven sem romper boundaries:
 
 ```text
 Portal
 → MFE supplies
 → supplies-api (Flask)
-→ Core /me + api-delpi + SI + contextos autorizados
+→ Core /me + /me/apps
+→ api-delpi / strategic-indicators-api / purchase-requests-api / contextos autorizados
 ```
 
-sem bypass de api-delpi pelo MFE, sem espelho TOTVS, sem autorização por permissions dos claims JWT e sem inflar RBAC por CRUD.
+Invariantes:
+
+- MFE não chama `api-delpi` diretamente;
+- JWT identifica; Core resolve effective permissions;
+- autorização = capability + unit + resource scope/ownership + business rule;
+- não espelhar TOTVS no Postgres;
+- não inflar RBAC por CRUD;
+- `@delpi/plugin-ui` primeiro para componente reutilizável;
+- Ajuda acompanha a feature;
+- C1 → C2 → paridade → C3 para Purchase Requests;
+- não usar `/me/routes`; validar rotas autorizadas em `/me/apps` (`apps[].routes`).
 
 ---
 
-## 2. Decisões travadas
+## 2. Ledger de requisitos do programa
 
-| Decisão | Referência |
+| RQ | Requisito | Estado no plano |
+|---|---|---|
+| RQ-01 | Hub único de Suprimentos com shell capability-driven | ATENDIDO — E3/E4 |
+| RQ-02 | MFE BFF-only | ATENDIDO — E3 |
+| RQ-03 | AuthZ Core-first e fail-closed | ATENDIDO — E2; revalidar por feature |
+| RQ-04 | Unit/resource scope coerente | HERDADO transversalmente; testar em cada página |
+| RQ-05 | Overview/OTD com KPIs e metas SI canônicas | ATENDIDO — E5 |
+| RQ-06 | SC C1 funcional + DoD da página | PARCIAL — E6.S1–S4 feitos; E6.S5 aberto |
+| RQ-07 | Pedidos de Compra | BLOQUEADO pela fila — E7 |
+| RQ-08 | Detalhe do Pedido | BLOQUEADO pela fila — E8 |
+| RQ-09 | Entregas/Atrasos | BLOQUEADO pela fila — E9 |
+| RQ-10 | Estoque | BLOQUEADO pela fila — E10 |
+| RQ-11 | ESTSEG | BLOQUEADO pela fila — E11 |
+| RQ-12 | Análise de Consumo | BLOQUEADO pela fila — E12 |
+| RQ-13 | Fornecedores / Supplier 360 / OTD | BLOQUEADO pela fila; P-11 limita Qualidade |
+| RQ-14 | Produtos / Product 360 / where-used / preços | BLOQUEADO pela fila |
+| RQ-15 | Savings/Negociações | BLOQUEADO pela fila |
+| RQ-16 | Indicadores como página distinta | BLOQUEADO até revalidar necessidade/escopo ao promover |
+| RQ-17 | Minhas Atividades | BLOQUEADO pela fila |
+| RQ-18 | Administração | BLOQUEADO pela fila |
+| RQ-19 | Ajuda sincronizada por feature | HERDADO por `feature-help-sync`; auditoria final em E23 |
+| RQ-20 | Paridade mensurável | E24/E26 |
+| RQ-21 | C2 sem dual writer + reconciliação | E25 |
+| RQ-22 | Cutover reversível | E27/E28 |
+| RQ-23 | Verify-final do objetivo original | E29 |
+
+Nenhum RQ futuro é autorização automática de implementação.
+
+---
+
+## 3. Decisões travadas
+
+| Decisão | Evidência |
 |---|---|
 | id `supplies`, base `/apps/supplies`, CSS `.dashboard-supplies-portal` | ADR-004 |
-| API própria `supplies-api` em Flask | ADR-001 |
-| JWT identifica; Core `/me` resolve effective permissions | ADR-001/006 |
-| MFE só fala com supplies-api | ADR-001 |
-| capabilities mínimas, não CRUD | ADR-007 |
-| unidade ortogonal `supplies.unit.filial-{TOTVS}` | ADR-006 |
-| SC: C0 → C1 → C2 → paridade final → C3 | ADR-002 |
-| BIs externos não podem ficar `LEGADO_A_VALIDAR` no GO | ADR-005 |
+| `supplies-api` Flask | ADR-001 + instruções oficiais |
+| MFE somente `supplies-api` | ADR-001 / boundaries |
+| effective permissions via Core | ADR-001/006 |
+| capabilities mínimas | ADR-007 |
+| unit `supplies.unit.filial-{TOTVS}` | ADR-006 |
+| SC C0→C1→C2→paridade→C3 | ADR-002 |
 | target saudável antes de redirect | CUTOVER-RUNBOOK |
 | Home ≠ Overview | DESIGN-IA |
-| Páginas generalistas = padrão Comercial (shell, Home, Ajuda, perfil `/users/:userId`; prefs no perfil) | WIREFRAMES WF-HELP/WF-USER · DESIGN-IA §2 |
-| **Uma página por vez até DoD** — não paralelizar páginas user-facing nem antecipar E7 enquanto houver foco aberto | README § Protocolo · DESIGN-IA §1 |
+| Help no mesmo entregável | `feature-help-sync.mdc` |
+| uma página por vez | README + WIREFRAMES |
+| `/me/apps` é a superfície de apps/rotas autorizadas; sem `/me/routes` | contrato Core atual |
 
 ---
 
-## 2.1 Protocolo página-a-página (obrigatório)
+## 4. Protocolo de execução por página
+
+Antes de promover qualquer E*.S* futuro:
 
 ```text
-escolher 1 página da fila
-→ plano só dessa página (+ Ajuda satélite se user-facing)
-→ BFF/UI/AuthZ/estados/Ajuda/testes/docs
-→ DoD fechado (GATE-FEATURE)
-→ só então abrir a próxima
+reler regras
+→ inspecionar working tree
+→ reler código/contratos atuais
+→ criar ledger da página
+→ classificar evidência READY_CONFIRMED / READY_BOUNDED / NOT_READY
+→ atualizar receita executável
+→ READY_TO_EXECUTE
+→ implementar menor escopo correto
+→ positive + sibling + negative
+→ revisão adversarial
+→ smoke/tema/responsivo quando material
+→ GATE-FEATURE
 ```
 
-| # | Página | Etapa canônica | Estado |
-|---|---|---|---|
-| 1 | Início | E4 + polish shell/Favoritos/helps | **FECHADA (DoD)** |
-| 2 | Visão geral | E5 + série OTD + kit FilterBar/Chart · **WF-02R** | **FECHADA (DoD)** |
-| — | OTD analytics | BFF `/analytics/otd` + gauges · **WF-OTD-A** | **FECHADA (DoD)** |
-| 3 | Solicitações de compras | E6 C1 | **EM FOCO** — revalidar DoD |
-| 4 | Pedidos de compra | E7.S* | aguardando |
-| 5 | Entregas | E7.S* | aguardando |
-| … | demais | E8+ | fila |
+`EXECUTION_DRIFT` interrompe somente o subgrafo afetado. Não adaptar código para obedecer documentação obsoleta.
 
-**Anti-padrões:** iniciar E7.S1 enquanto o Início estiver em foco; misturar duas UIs no mesmo plano; marcar página “concluída” com placeholder interno.
+---
 
-DoD resumido: contrato + UI kit + AuthZ + estados L/E/E/403/404 + Ajuda + testes + docs (detalhe no README).
+## 5. Gates
 
-## 3. Gates
+### GATE-AUTHZ — PASS atual
+JWT válido; Core resolve effective permissions; Core indisponível falha fechado; filial/recurso negados no backend.
 
-### GATE-AUTHZ
+### GATE-RBAC — PASS local
+Manifest/papéis canônicos locais e `/me` + `/me/apps`. Persona negativa real em HML/prod continua pendente quando depender de usuário real.
 
-Passa somente quando:
-
-- JWT validado;
-- effective permissions vêm do Core;
-- nenhuma autorização nova usa `claims.permissions`/`claims.is_superadmin` como fonte final;
-- Core indisponível = fail-closed **na fronteira** da supplies-api (não só em alguns decorators);
-- testes positivo, negativo e filial cruzada verdes.
-
-**Não copiar:** `shared/delpi_auth/middleware/flask_auth.py` nem o fallback FastAPI `rbac_lookup_unavailable_using_token_claims` / `_rbac_from_claims` (ADR-001 DRIFT-AUTHZ-01).
-
-### GATE-E1
-
-**PASS (2026-09-08)** quando:
-
-- dump dos BIs externos concluído (local documentado; prod residual para cutover);
-- papéis SC/ES mapeados;
-- KPIs P0 homologados ou explicitamente bloqueados.
-
-### GATE-ARCH
-
-**PASS (2026-09-08)** quando:
-
-- ADRs 001–007 revisados;
-- `MANIFEST-DRAFT.md` validado contra runtime real (`schemaVersion 1.0.0`);
-- catálogo de permissions mínimo aprovado (ADR-007).
-
-### GATE-RBAC
-
-**PASS (local 2026-09-08)** quando:
-
-- permissions canônicas provisionáveis (manifest registrado);
-- papéis canônicos criados (`plugins/supplies/scripts/provision-rbac-coexistence.sh`);
-- smoke `GET /me` + `GET /me/apps` (rotas embutidas — Core **não** expõe `/me/routes`);
-- evidence: `evidence/e3-s5-rbac-smoke-local.json`.
-
-Persona negativa em user não-superadmin e Comprador ES operacional ficam para HML/prod com usuários reais.
+### GATE-FEATURE
+Por página: contrato + kit + AuthZ + estados + Help + testes + docs + URL/F5 quando aplicável + responsividade/tema/acessibilidade + smoke federado quando material.
 
 ### GATE-C2
-
-- supplies-api assumiu ownership/jobs de `purchase_requests`;
-- reconciliação concluída;
-- rollback/roll-forward conhecido.
+Um único writer no schema `purchase_requests`, jobs transferidos, reconciliação e rollback conhecidos.
 
 ### GATE-PARITY
-
-- comparação quantitativa concluída;
-- nenhum gap crítico sem aceite.
+Comparação quantitativa de dados, filtros, permissions, URLs, performance e Ajuda; gaps críticos aceitos explicitamente ou corrigidos.
 
 ### GATE-CUTOVER
-
-- GATE-C2 + GATE-PARITY;
-- nenhum BI externo em `LEGADO_A_VALIDAR`;
-- target saudável;
-- RBAC canônico ativo;
-- redirects fechados e rollback testado.
+GATE-C2 + GATE-PARITY + BIs/legados em estado final permitido + target saudável + RBAC + redirects + rollback.
 
 ---
 
-## 4. Matriz transversal
+# E1 — Descoberta e freeze — COMPLETED
 
-| Fluxo | Capability | Unit | Resource scope | API | Ajuda |
-|---|---|---|---|---|---|
-| Abrir Home | portal | não para shell | próprio usuário | supplies-api | sim |
-| Overview | analytics | sim | — | api-delpi + SI | sim |
-| SC | purchase-requests | sim | CC fail-closed | PR-api C1 / PG C2 | sim |
-| Export SC | purchase-requests + export | sim | CC/view-all | BFF | sim |
-| PC/entregas | operations | sim | PC no recorte | api-delpi | sim |
-| Fornecedor 360 | operations | sim | fornecedor/branch | composição | sim |
-| Nota fornecedor | operations | sim | fornecedor + ownership/política equipe | PG | sim |
-| Produto 360 | operations | sim | item/branch | composição | sim |
-| Estoque/ESTSEG | operations | sim | branch | api-delpi | sim |
-| Task/follow-up | portal + capability do recurso | quando ref exigir | ownership/equipe | PG | sim |
-| Administração | administration | quando aplicável | unidade administrada | PG/PR-api | sim |
+E1.S1–S5 concluídas em 2026-09-08. Dump Core produção dos BIs externos permanece residual para cutover e não reabre E1.
 
----
+# E2 — Fundação supplies-api/AuthZ — COMPLETED
 
-# E1 — Descoberta residual e freeze de contratos
+E2.S1–S6 concluídas: Flask, erros/observabilidade, schema supplies, gateway api-delpi, Core-first AuthZ e `/me/capabilities`.
 
-## E1.S1 — Dump Core dos BIs externos
+# E3 — MFE + RBAC coexistência — COMPLETED
 
-**Objetivo:** identificar id/path/type/permissions reais dos 6 apps do PO.
+E3.S1–S5 concluídas: Module Federation, BFF-only, shell, manifest e RBAC coexistente local.
 
-**Fazer:** consultar Core/admin/SQL autorizado; atualizar inventário, ADR-005 e paridade.
+# E4 — Home + Ajuda + Perfil — COMPLETED
 
-**Não fazer:** inventar redirect ou alias.
+E4.S1–S4 concluídas: catálogo, `/home/attention`, Ajuda inicial, `/users/:userId`, preferências e avatar Core.
 
-**Evidência:** tabela 6/6 preenchida ou “não encontrado” com data.
+# E5 — Overview + OTD analytics — COMPLETED
 
-**Teste:** checklist documental `HOMOLOGACAO-PARIDADE.md` seção BIs.
-
-**Pronto quando:** P-01, P-03, P-04 e P-07 atualizados.
-
-## E1.S2 — Mapear papéis reais
-
-**Objetivo:** confirmar composição SC/ES e comprador ES.
-
-**Evidência:** papel × permissions × units.
-
-**Teste:** comparação com `/core-api/me`, `/me/apps`, `/me/routes` de usuários de homologação.
-
-**Pronto quando:** P-02 fechado ou explicitamente não aplicável.
-
-## E1.S3 — Homologar KPI P0
-
-**Objetivo:** fechar ≤8 KPIs do Overview e suas janelas temporais.
-
-**Evidência:** `KPI-FICHAS.md` sem fórmula P0 ambígua.
-
-**Teste:** revisão owner Suprimentos + fonte canônica.
-
-## E1.S4 — Validar Manifest Draft e RBAC mínimo
-
-**Objetivo:** congelar route × capability × unit sem CRUD inflation.
-
-**Evidência:** ADR-007 + MANIFEST-DRAFT aprovados.
-
-**Teste:** validar draft contra schema/registrador real do Core.
-
-## E1.S5 — Freeze arquitetural
-
-**Objetivo:** declarar GATE-E1 + GATE-ARCH e liberar o caminho documental para E2.
-
-**Feito em 2026-09-08:**
-
-| Gate | Veredito | Evidência |
-|---|---|---|
-| GATE-E1 | **PASS** | ADR-005 dump local; PERFIS E1.S2; KPI-FICHAS E1.S3 (7 KPIs) |
-| GATE-ARCH | **PASS** | ADRs 001–007; MANIFEST-DRAFT `1.0.0` dry-run vs schema Core |
-
-**Residuais explícitos (não reabrem E1):**
-
-- Dump Core **produção** dos 6 BIs — obrigatório antes de `GATE-CUTOVER` (P-01/P-03/P-04/P-07).
-- Smoke `/me` de personas supplies — E3.S5 (Core local sem apps supplies).
-- Aceite nominal PO nas fichas KPI — Assinatura em KPI-FICHAS.
-- GATE-AUTHZ / código Flask — E2.S2.
-- P-13 — antes de E2.S4.
-
-**Pronto quando:** GATE-E1 + GATE-ARCH — **atingido**.
-
-**Não fazer nesta subetapa:** scaffold Flask; marcar GATE-AUTHZ/GATE-RBAC verdes.
+Overview/OTD fechados com filtros/URL, 7 KPIs, metas SI, charts/gauges e Ajuda.
 
 ---
 
-# E2 — Fundação supplies-api e authz
+# E6 — Solicitações de Compras C1 — EM FOCO
 
-## E2.S1 — Scaffold Flask
+## E6.S1 — Gateway PR-api — COMPLETED
 
-**Fazer:** criar `supplies-api/` em Flask com Clean Architecture, `/health`, `/ready`, config e testes.
+**Entregue:** BFF C1 preservando CC fail-closed e unit scope.  
+**Teste de referência:** `pytest supplies-api/tests/infrastructure/gateways/test_purchase_requests_gateway.py -q` + BFF route tests.
 
-**Não fazer:** copiar framework FastAPI do commercial-api.
+## E6.S2 — Lista/detalhe SC — COMPLETED FUNCIONAL
 
-**Teste futuro:**
+**Entregue:** lista e detalhe via MFE BFF-only.  
+**Teste de referência:** `cd plugins/supplies && npm test -- PurchaseRequests`.
 
-```bash
-pytest supplies-api/tests/interface/http/test_health.py -q
-```
+## E6.S3 — Export — COMPLETED
 
-## E2.S2 — AuthN/AuthZ Core-first
+**Entregue:** export condicionado a access + export + unit + CC/view-all.
 
-**Objetivo:** JWT identifica; Core `/me` autoriza; Core fora = 503/401 na fronteira.
+## E6.S4 — Evidência C2 — COMPLETED DOCUMENTAL
 
-**Fazer:** middleware Flask próprio da supplies-api; request context; testes positivo/negativo/filial.
+**Entregue:** inventário de schema/writers/jobs/cursors/subscriptions e estratégia single-writer.  
+**Evidência:** [evidence/e6-s4-c2-migration-evidence.md](./evidence/e6-s4-c2-migration-evidence.md).  
+**Residual:** medir volumes HML/prod antes de E25.
 
-**Não fazer:** copiar `flask_auth.py`; copiar `fastapi_auth.py` (`rbac_lookup_unavailable_using_token_claims`, `_rbac_from_claims`, stale cache como AuthZ nova); confiar em `claims.permissions` / `claims.is_superadmin`.
+## E6.S5 — Revalidar GATE-FEATURE WF-04 — PENDING / NEXT
 
-**Evidência:** ADR-001 DRIFT-AUTHZ-01 + INTEGRACOES §2.
+**Objetivo:** fechar a página atual contra o DoD vigente sem misturar E7.
 
-**Testes futuros:**
-
-```bash
-pytest supplies-api/tests/security/test_effective_permissions.py -q
-pytest supplies-api/tests/security/test_unit_authorization.py -q
-```
-
-**Pronto quando:** GATE-AUTHZ.
-
-**Commit:** `feat(supplies-api): autorizar pelo Core, não por claims JWT`
-
-## E2.S3 — Envelope, erros e observabilidade
-
-**Teste futuro:**
-
-```bash
-pytest supplies-api/tests/interface/http/test_error_contract.py -q
-pytest supplies-api/tests/observability/test_request_context.py -q
-```
-
-## E2.S4 — SQL schema `supplies`
-
-Criar somente preferences P0 via `migrations/V001__*.sql` (padrão plugins). Nada de clone TOTVS. Nada de Alembic.
-
-**Teste futuro:**
-
-```bash
-pytest supplies-api/tests/infrastructure/test_migrations.py -q
-```
-
-## E2.S5 — Gateway api-delpi
-
-Timeout explícito, caller, sem retry não seguro.
-
-**Teste futuro:**
-
-```bash
-pytest supplies-api/tests/infrastructure/gateways/test_delpi_api_gateway.py -q
-```
-
-## E2.S6 — `/me/capabilities`
-
-Mapear effective permissions + aliases temporários para flags mínimas e `allowedUnits`.
-
-**Teste futuro:**
-
-```bash
-pytest supplies-api/tests/application/test_capability_resolution.py -q
-```
-
----
-
-# E3 — Shell MFE + RBAC de coexistência
-
-## E3.S1 — Scaffold MFE
-
-Module Federation + plugin-ui, root CSS isolado.
-
-**Teste futuro:**
-
-```bash
-cd plugins/supplies && npm run build
-```
-
-## E3.S2 — Cliente HTTP BFF-only
-
-**Teste futuro:**
-
-```bash
-rg -n "api-delpi|API_DELPI_BASE|apiDelpiUrl" plugins/supplies/src
-```
-
-Esperado: zero ocorrências de chamada direta.
-
-## E3.S3 — Shell capability-driven
-
-TopBar, nav, palette, estados e theme.
-
-**Teste futuro:**
-
-```bash
-cd plugins/supplies && npm test -- routeCatalog
-```
-
-## E3.S4 — Registrar manifest em homologação
-
-Usar contrato validado do `MANIFEST-DRAFT.md`.
-
-## E3.S5 — Provisionar RBAC de coexistência
-
-Adicionar permissions canônicas aos papéis/grupos sem remover legadas.
-
-**Smoke obrigatório:**
-
-```text
-/core-api/me
-/core-api/me/apps   # rotas filtradas em apps[].routes — Core não expõe /me/routes
-```
-
-Casos: comprador SC, analista, usuário sem supplies, superadmin e comprador ES se existir.
-
-**Pronto quando:** GATE-RBAC (local documentado em `evidence/e3-s5-rbac-smoke-local.json`).
-
----
-
-# E4 — Home e Ajuda inicial
-
-## E4.S1 — Catálogo de rotas
-
-Usar capabilities mínimas; não roles.
-
-## E4.S2 — `/home/attention`
-
-Compor apenas cards autorizados. Partial failure permitido para bloco auxiliar.
-
-**Teste futuro:**
-
-```bash
-pytest supplies-api/tests/application/test_home_attention.py -q
-cd plugins/supplies && npm test -- Home
-```
-
-## E4.S3 — Ajuda esqueleto
-
-Manual + Quero→onde + FAQ inicial.
-
-## E4.S4 — Perfil usuário (generalista, padrão Comercial)
-
-**Objetivo:** página `/users/:userId` (WF-USER) alinhada ao Comercial — identidade Core + preferências `supply_user_preferences` + atalhos por capability.
+**Requisitos cobertos:** RQ-04, RQ-06, RQ-19.
 
 **Fazer:**
-1. Rotas MFE `users/:userId` + `UserProfilePage` (PagePath/PageHero; prefs só self).
-2. BFF `GET/PATCH /users/{id}/profile` (compose Core + preferences); PATCH só self na P0.
-3. Entrada UX: atalho self (shell/hero) sem poluir UnderlineNav.
-4. Ajuda: Quero→onde «alterar filial padrão / tema» → Perfil; distinguir `/profile` do Portal host.
-5. Testes: self ok; outro usuário sem admin → 403; admin leitura ok; prefs default_branch fora de allowedUnits → 422.
+- inspecionar `plugins/supplies` e `supplies-api` atuais da jornada SC;
+- criar baseline da UI/estados e inventário de componentes;
+- confirmar kit-first (`PagePath`, `PageHero`, `SectionCard`, filtros/tabela/estados do `plugin-ui` quando aplicáveis);
+- validar loading/empty/partial/error/403/404;
+- validar filtros, query/URL, F5 e detalhe;
+- validar access/export/view-all/unit/CC fail-closed;
+- sincronizar Help e wireframe da página;
+- executar testes positive + sibling + negative e smoke federado quando ambiente permitir.
 
-**Não fazer:** volume de avatar dedicado; cargo/carteiras comerciais; bloquear E6; segunda página `/preferences`.
+**Não fazer:** implementar Pedidos, Entregas, C2 ou cutover; criar componente duplicado do kit; enfraquecer CC/unit scope.
 
-**Wireframes:** [WF-USER](./WIREFRAMES.md) · [DESIGN-IA §2 generalistas](./DESIGN-IA-SUPRIMENTOS.md).
+**Evidência de ownership:** ADR-002, API-ROUTES e código C1 atual.
 
-**Teste futuro:**
-```bash
-pytest supplies-api/tests/application/test_user_profile.py -q
-cd plugins/supplies && npm test -- UserProfile
-```
+**Dependências:** E6.S1–S4 completas.
 
-**Pronto quando:** perfil self utilizável; admin lê terceiros; prefs no mesmo lugar que o Comercial (perfil do plugin).
+**Teste:** descobrir e executar os comandos reais atuais de `plugins/supplies` e `supplies-api`; no mínimo suíte PurchaseRequests + BFF/security relacionada + build do MFE. Não declarar smoke PASS se o ambiente não permitir.
 
-**Status:** **concluída** (BFF + MFE `/users/:userId` + avatar TopBar + Ajuda).
+**Pronto quando:** GATE-FEATURE WF-04 = PASS e README/WIREFRAMES/API-ROUTES refletem o estado final.
 
-**Não bloqueia:** E6 SC C1.
-
----
-
-# E5 — Overview
-
-## E5.S1 — BFF Overview
-
-6–8 KPIs homologados; somente allowedUnits; fan-out resiliente.
-
-**Teste futuro:**
-
-```bash
-pytest supplies-api/tests/application/test_overview.py -q
-pytest supplies-api/tests/application/test_partial_composition.py -q
-```
-
-## E5.S2 — Página Overview
-
-Mostrar natureza temporal de cada KPI.
-
-**Teste futuro:**
-
-```bash
-cd plugins/supplies && npm test -- Overview
-```
+**Commit sugerido:** `fix(supplies): fechar DoD de solicitações de compras`
 
 ---
 
-# E6 — Solicitações de Compras C1
+# Fila futura — uma página por vez
 
-> **Concluída 2026-09-08** — gateway BFF + lista/detalhe/export + evidência C2 documental.
+As etapas abaixo estão **BLOCKED_BY_QUEUE**. Antes de executar qualquer uma, substituir o resumo por receita completa conforme `plan-construction.mdc`, revalidando código, API e decisões pendentes.
 
-## E6.S1 — Gateway purchase-requests-api
+## E7 — WF-05 Pedidos de Compra
 
-Preservar CC fail-closed.
+Pré-condição: E6.S5 PASS + autorização explícita PO. Ler/fixar DTOs PO necessários à **lista**, criar BFF da lista, UI/estados/Help/testes e fechar GATE-FEATURE. Não implementar detalhe nem Entregas na mesma etapa.
 
-```bash
-pytest supplies-api/tests/infrastructure/gateways/test_purchase_requests_gateway.py -q
-pytest supplies-api/tests/interface/http/test_purchase_requests_bff.py -q
-```
+## E8 — WF-06 Detalhe do Pedido
 
-## E6.S2 — Lista/detalhe SC
+Pré-condição: E7 PASS. Contrato de detalhe + resource scope + itens/prometida/recebimentos/SC origem + follow-up apenas se recurso/capability permitirem. Fechar GATE-FEATURE próprio.
 
-```bash
-cd plugins/supplies && npm test -- PurchaseRequests
-```
+## E9 — WF-07 Entregas/Atrasos
 
-## E6.S3 — Export
+Pré-condição: E8 PASS. Comparar regra do BI Atraso quando evidência produtiva existir; isso bloqueia **depreciação/paridade**, não necessariamente a construção da página nativa se o contrato PO-OTD estiver confirmado. Fechar GATE-FEATURE.
 
-Capability separada enquanto risco/auditoria justificar.
+## E10 — WF-15 Controle de Estoques
 
-```bash
-pytest supplies-api/tests/security/test_purchase_request_export.py -q
-```
+Página própria. Não misturar ESTSEG. Confirmar política de capability da rota de stock-value antes de executar.
 
-## E6.S4 — Evidência para C2
+## E11 — WF-16 Estoque de Segurança
 
-Medir rows, jobs, cursors, subscriptions e estratégia de reconciliação.
+Página própria, read-only neste roadmap.
 
-Evidência: [evidence/e6-s4-c2-migration-evidence.md](./evidence/e6-s4-c2-migration-evidence.md).
+## E12 — WF-17 Análise de Consumo
 
----
+Página própria ou satélite somente se a promoção provar que é extensão inseparável do WF-16; não assumir herança sem evidência.
 
-# E7 — Operações: pedidos e entregas
+## E13 — WF-09 Fornecedores
 
-> **Pré-condição de execução:** página em foco anterior fechada na fila (Início → Overview → SC) **e** autorização explícita do PO.  
-> Não abrir E7.S* em paralelo com polish do Início.
+Busca/lista. Se busca SA2/contrato fornecedor não estiver comprovada, manter `BLOCKED_WITH_EVIDENCE`.
 
-## E7.S1 — Ler/fixar DTOs PO-OTD
+## E14 — WF-10 Fornecedor 360
 
-Fechar KPI-PO-LATE e comparação BI atraso.
+Composição TOTVS + PG. **Qualidade fica fora do P0 enquanto P-11 não estiver resolvido**; não usar “quando autorizada” como receita ambígua. Notas seguem operations + unit + resource + ownership/política de equipe, sem permission CRUD preventiva.
 
-## E7.S2 — BFF PC/entregas
+## E15 — WF-11 OTD Fornecedores
 
-```bash
-pytest supplies-api/tests/application/test_purchase_orders.py -q
-```
+Página analítica distinta do OTD geral e de Entregas. Validar ranking/meta/evolução e relação com BI legado antes de paridade.
 
-## E7.S3 — UI PC/detalhe/atrasos
+## E16 — WF-12 Produtos / MP
 
-```bash
-cd plugins/supplies && npm test -- PurchaseOrders Deliveries
-```
+Busca/lista de produtos; não misturar 360 completo.
 
----
+## E17 — WF-13 Produto / MP 360
 
-# E8 — Estoque e ESTSEG
+Composição por blocos autorizados, com partial explícito.
 
-## E8.S1 — BFF inventory/stock balances
+## E18 — WF-14 Onde Usado e WF-19 Histórico de Preços
 
-```bash
-pytest supplies-api/tests/application/test_inventory.py -q
-```
+Não executar os dois automaticamente juntos. Ao chegar nesta fila, decidir se Histórico de Preços permanece seção do 360 ou página própria e promover **uma superfície por vez**. Where-used só declara paridade do BI após comparação real.
 
-## E8.S2 — BFF safety-stock/consumption
+## E19 — WF-18 Savings / Negociações
 
-```bash
-pytest supplies-api/tests/application/test_safety_stock.py -q
-```
+SI continua owner de meta; sem dual write; Help explica realizado × meta.
 
-## E8.S3 — UI estoque/ESTSEG/consumo
+## E20 — WF-20 Indicadores
 
-```bash
-cd plugins/supplies && npm test -- Inventory SafetyStock
-```
+Antes de executar, revalidar se `/indicators` ainda agrega valor além da Overview e deep links SI. Se não houver jornada distinta comprovada, marcar `FORA_DO_ESCOPO_COM_JUSTIFICATIVA` em vez de criar página redundante.
 
----
+## E21 — WF-03 Minhas Atividades
 
-# E9 — Fornecedor 360
+Migration + API + worklist somente depois de contratos de recursos referenciados necessários estarem estáveis. AuthZ pelo recurso; sem `tasks.view/write` preventivo.
 
-## E9.S1 — BFF Supplier 360
+## E22 — WF-21 Administração
 
-Composição api-delpi + PG; Qualidade somente quando autorizada.
+Scopes/mappings/settings tipados + auditoria; administração não concede automaticamente todas as units.
 
-```bash
-pytest supplies-api/tests/application/test_supplier_360.py -q
-```
+## E23 — Auditoria final de Help/onboarding
 
-## E9.S2 — Notas internas sem permission CRUD extra
+Não é entrega tardia de Help. Audita cobertura acumulada de tooltips, Manual, Quero→onde, FAQ e glossário de todas as páginas já fechadas.
 
-`operations.access` + unit + resource scope + ownership/política de equipe.
+## E24 — Paridade inicial C1
 
-```bash
-pytest supplies-api/tests/security/test_supplier_notes_scope.py -q
-```
+Comparar quantitativamente os legados/jornadas incorporados. Não fazer cutover nem C2 aqui.
 
-## E9.S3 — UI Supplier 360
+## E25 — Purchase Requests C2
 
-```bash
-cd plugins/supplies && npm test -- Supplier360
-```
+### E25.S1 — Precondições e snapshot
+Medir volumes HML/prod, confirmar janela operacional, owner e rollback.
 
----
+### E25.S2 — Expand/read readiness
+Preparar `supplies-api` para leitura do schema existente sem quebrar PR-api.
 
-# E10 — Produto / MP 360
+### E25.S3 — Transferir writers/jobs
+Um único writer: desligar writers/jobs PR-api antes de ligar equivalents na `supplies-api`. Zero dual-write prolongado.
 
-## E10.S1 — BFF Product 360 + where-used
+### E25.S4 — Reconciliação
+Comparar counts, subscriptions, cursors/eventos e smoke CC/list/detail/export.
 
-```bash
-pytest supplies-api/tests/application/test_product_360.py -q
-```
+### E25.S5 — Freeze PR-api
+Somente bug/security durante coexistência final. GATE-C2 ao final.
 
-## E10.S2 — UI produto/preço/where-used
+## E26 — Paridade final pós-C2
 
-```bash
-cd plugins/supplies && npm test -- Product360
-```
+Reexecutar matriz com C2 ativo. BIs externos devem sair de `LEGADO_A_VALIDAR` antes do GO.
+
+## E27 — Preparar cutover C3
+
+Fechar destinos/redirects, telemetria, rollback, known consumers e smoke do target antes de redirecionar.
+
+## E28 — Cutover C3
+
+Staging → produção somente com GATE-CUTOVER → observação → remoção posterior segundo critérios; não remover legado no mesmo instante do primeiro redirect.
+
+## E29 — Verify-final
+
+Rebuild/runtime/smoke da matriz P0, authz, unit/resource scope, mobile/light/dark, partial failures, redirects e revisão do objetivo original.
 
 ---
 
-# E11 — Negociações e indicadores
+## 6. Backlog P1/P2/P3 fora da linha executável P0
 
-## E11.S1 — Savings/SI
+- supplier scorecard;
+- supplier concentration;
+- purchase approvals/alçadas;
+- importações;
+- slow moving/obsolescência;
+- lead time real × cadastrado;
+- price variance;
+- previsão de atraso;
+- follow-up automático externo;
+- escrita ESTSEG no Protheus.
 
-Sem dual write de meta.
-
-```bash
-pytest supplies-api/tests/application/test_savings.py -q
-```
-
-## E11.S2 — UI analytics de negociação
-
-```bash
-cd plugins/supplies && npm test -- Negotiations
-```
-
----
-
-# E12 — Minhas Atividades
-
-## E12.S1 — Migration `supply_tasks`
-
-Usar idempotência/partial unique conforme DATA-MODEL.
-
-```bash
-pytest supplies-api/tests/infrastructure/test_supply_tasks_migration.py -q
-```
-
-## E12.S2 — API tasks
-
-Sem `tasks.view/write`; authz pelo recurso.
-
-```bash
-pytest supplies-api/tests/security/test_task_resource_scope.py -q
-```
-
-## E12.S3 — UI worklist
-
-```bash
-cd plugins/supplies && npm test -- MyTasks
-```
+Cada item só vira E*.S* após evidência de contrato, decisão funcional e autorização próprias. Não bloqueia E29.
 
 ---
 
-# E13 — Administração
-
-## E13.S1 — Admin de scopes/mappings C1
-
-`supplies.administration.manage` + unit quando aplicável.
-
-```bash
-pytest supplies-api/tests/security/test_administration.py -q
-```
-
-## E13.S2 — Settings tipados + audit
-
-```bash
-pytest supplies-api/tests/application/test_settings_catalog.py -q
-```
-
----
-
-# E14 — Help/onboarding completo
-
-## E14.S1 — Help/onboarding completo
-
-**Objetivo:** Manual, FAQ, glossário, tooltips e Quero→onde para todas as features entregues (`feature-help-sync`).
-
-**Não fazer:** cutover; texto PT em Python/TS fora dos catálogos de Ajuda.
-
-```bash
-cd plugins/supplies && npm test -- help
-```
-
----
-
-# E15 — Paridade inicial C1
-
-## E15.S1 — Paridade inicial C1
-
-Comparar dashboard, SC, ESTSEG e demais jornadas implementadas quantitativamente (`HOMOLOGACAO-PARIDADE.md`).
-
-**Não fazer:** cutover; C2.
-
----
-
-# E16 — Purchase Requests C2
-
-## E16.S1 — Expand para supplies-api
-
-Preparar leitura do schema existente sem quebrar PR-api.
-
-## E16.S2 — Migrar ownership/jobs
-
-**Objetivo:** um único writer no schema `purchase_requests`.
-
-**Fazer:** jobs de notificações/cursors passam à supplies-api Flask; desligar writers da `purchase-requests-api` (FastAPI) **antes** dos jobs Flask gravarem.
-
-**Não fazer:** dual-write Flask + FastAPI no mesmo schema; C3 nesta subetapa.
-
-## E16.S3 — Reconciliação
-
-Comparar counts, subscriptions, cursors e eventos.
-
-```bash
-pytest supplies-api/tests/integration/test_purchase_requests_c2_reconciliation.py -q
-```
-
-## E16.S4 — Freeze PR-api
-
-Somente bug/security enquanto coexistência final ocorre.
-
-**Pronto quando:** GATE-C2.
-
----
-
-# E17 — Paridade final pós-C2
-
-## E17.S1 — Paridade final pós-C2
-
-Reexecutar `HOMOLOGACAO-PARIDADE.md` com C2 ativo.
-
-BIs externos precisam estar em estado final permitido (nenhum `LEGADO_A_VALIDAR` no GO).
-
-**Pronto quando:** GATE-PARITY.
-
----
-
-# E18 — Preparar cutover C3
-
-## E18.S1 — Fechar redirects
-
-Nenhum destino `BLOQUEADO` ou “ou rota”.
-
-## E18.S2 — Telemetria/rollback
-
-Definir owner, replacement, startDate, knownConsumers, telemetry, removalCriteria, rollback.
-
-## E18.S3 — Smoke target novo
-
-Target saudável antes de qualquer redirect.
-
----
-
-# E19 — Cutover C3
-
-## E19.S1 — Staging
-
-Ativar redirects/ocultar launcher em staging, validar favoritos e query params.
-
-## E19.S2 — Produção
-
-Somente com GATE-CUTOVER.
-
-## E19.S3 — Observação e remoção posterior
-
-Não remover código no mesmo instante do primeiro redirect. Esperar critérios de remoção.
-
----
-
-# E20 — Evoluções futuras atomizadas
-
-Cada feature vira subetapa própria somente após aprovação. Não agrupar quatro produtos numa mesma subetapa. Não bloqueia E21.
-
-## E20.S1 — supplier-scorecard
-
-Somente após evidência de contrato e aceite.
-
-## E20.S2 — supplier-concentration
-
-Somente após evidência de contrato e aceite.
-
-## E20.S3 — purchase-approvals
-
-Somente se workflow comprovado.
-
-## E20.S4 — imports
-
-Somente se contrato comprovado.
-
-## E20.S5 — slow-moving / obsolescence
-
-Somente após evidência de contrato e aceite.
-
----
-
-# E21 — Verify final
-
-## E21.S1 — Pipeline real
-
-Rebuild sequencial, smoke da matriz P0, authz, mobile/light/dark, partial failure e redirects.
-
-## E21.S2 — Revisão objetivo original
-
-Confirmar que experiência fragmentada foi substituída sem tomar ownership indevido e sem quebrar contratos.
-
----
-
-## 5. Critérios de pronto por subetapa
-
-`plan-construction.mdc` exige os 7 campos **neste arquivo**, em cada `#### E*.S*`, antes de executar a etapa — não só no PR:
-
-```text
-Objetivo
-Fazer
-Não fazer
-Evidência
-Teste com comando e arquivo exatos
-Pronto quando
-Commit sugerido
-```
-
-YAML §6 é 1:1 com esses headings (`eN-sM-slug`). Subetapa sem os 7 campos = incompleta para execução delegada: completar o bloco **aqui** no início da etapa, depois copiar o mesmo bloco no PR.
-
-Não aceitar “teste: unit”, “pytest stock” ou equivalente vago.
-
----
-
-## 6. Todos YAML
+## 7. Todos YAML
 
 ```yaml
 todos:
-  - id: e1-s1-core-bi-dump
+  - id: e1-discovery-freeze
     status: completed
     dependsOn: []
-  - id: e1-s2-real-roles
+  - id: e2-api-authz-foundation
     status: completed
-    dependsOn: []
-  - id: e1-s3-kpi-freeze
+    dependsOn: [e1-discovery-freeze]
+  - id: e3-mfe-rbac
     status: completed
-    dependsOn: []
-  - id: e1-s4-manifest-rbac
+    dependsOn: [e2-api-authz-foundation]
+  - id: e4-home-help-profile
     status: completed
-    dependsOn: [e1-s1-core-bi-dump, e1-s2-real-roles]
-  - id: e1-s5-architecture-freeze
+    dependsOn: [e3-mfe-rbac]
+  - id: e5-overview-otd
     status: completed
-    dependsOn: [e1-s3-kpi-freeze, e1-s4-manifest-rbac]
-
-  - id: e2-s1-flask-scaffold
-    status: completed
-    dependsOn: [e1-s5-architecture-freeze]
-  - id: e2-s2-core-first-authz
-    status: completed
-    dependsOn: [e2-s1-flask-scaffold]
-  - id: e2-s3-errors-observability
-    status: completed
-    dependsOn: [e2-s2-core-first-authz]
-  - id: e2-s4-sql-schema
-    status: completed
-    dependsOn: [e2-s1-flask-scaffold]
-  - id: e2-s5-delpi-gateway
-    status: completed
-    dependsOn: [e2-s2-core-first-authz]
-  - id: e2-s6-capabilities
-    status: completed
-    dependsOn: [e2-s2-core-first-authz]
-
-  - id: e3-s1-mfe-scaffold
-    status: pending
-    dependsOn: [e2-s1-flask-scaffold]
-  - id: e3-s2-bff-only
-    status: pending
-    dependsOn: [e3-s1-mfe-scaffold]
-  - id: e3-s3-shell
-    status: pending
-    dependsOn: [e2-s6-capabilities, e3-s1-mfe-scaffold]
-  - id: e3-s4-manifest-hml
-    status: pending
-    dependsOn: [e3-s3-shell]
-  - id: e3-s5-rbac-coexistence
-    status: pending
-    dependsOn: [e3-s4-manifest-hml]
-
-  - id: e4-s1-route-catalog
-    status: pending
-    dependsOn: [e3-s5-rbac-coexistence]
-  - id: e4-s2-home-attention
-    status: pending
-    dependsOn: [e4-s1-route-catalog, e2-s5-delpi-gateway, e2-s6-capabilities]
-  - id: e4-s3-help-skeleton
-    status: pending
-    dependsOn: [e4-s1-route-catalog]
-
-  - id: e5-s1-overview-bff
-    status: pending
-    dependsOn: [e4-s2-home-attention, e1-s3-kpi-freeze, e2-s5-delpi-gateway]
-  - id: e5-s2-overview-page
-    status: pending
-    dependsOn: [e5-s1-overview-bff, e3-s3-shell]
-
+    dependsOn: [e4-home-help-profile]
   - id: e6-s1-pr-gateway
-    status: pending
-    dependsOn: [e3-s5-rbac-coexistence, e2-s2-core-first-authz]
+    status: completed
+    dependsOn: [e3-mfe-rbac]
   - id: e6-s2-pr-list-detail
-    status: pending
-    dependsOn: [e6-s1-pr-gateway, e3-s2-bff-only]
+    status: completed
+    dependsOn: [e6-s1-pr-gateway]
   - id: e6-s3-pr-export
-    status: pending
+    status: completed
     dependsOn: [e6-s2-pr-list-detail]
   - id: e6-s4-c2-evidence
-    status: pending
+    status: completed
     dependsOn: [e6-s1-pr-gateway]
+  - id: e6-s5-wf04-feature-gate
+    status: pending
+    dependsOn: [e6-s2-pr-list-detail, e6-s3-pr-export, e6-s4-c2-evidence]
 
-  - id: e7-s1-po-otd-dtos
-    status: pending
-    dependsOn: [e2-s5-delpi-gateway, e1-s3-kpi-freeze]
-  - id: e7-s2-po-bff
-    status: pending
-    dependsOn: [e7-s1-po-otd-dtos]
-  - id: e7-s3-po-ui
-    status: pending
-    dependsOn: [e7-s2-po-bff, e3-s2-bff-only]
-
-  - id: e8-s1-inventory-bff
-    status: pending
-    dependsOn: [e2-s5-delpi-gateway]
-  - id: e8-s2-safety-stock-bff
-    status: pending
-    dependsOn: [e2-s5-delpi-gateway]
-  - id: e8-s3-inventory-ui
-    status: pending
-    dependsOn: [e8-s1-inventory-bff, e8-s2-safety-stock-bff, e3-s2-bff-only]
-
-  - id: e9-s1-supplier-360-bff
-    status: pending
-    dependsOn: [e7-s2-po-bff, e2-s4-sql-schema]
-  - id: e9-s2-supplier-notes
-    status: pending
-    dependsOn: [e9-s1-supplier-360-bff]
-  - id: e9-s3-supplier-360-ui
-    status: pending
-    dependsOn: [e9-s2-supplier-notes, e3-s2-bff-only]
-
-  - id: e10-s1-product-360-bff
-    status: pending
-    dependsOn: [e8-s1-inventory-bff]
-  - id: e10-s2-product-360-ui
-    status: pending
-    dependsOn: [e10-s1-product-360-bff, e3-s2-bff-only]
-
-  - id: e11-s1-savings-si
-    status: pending
-    dependsOn: [e5-s1-overview-bff]
-  - id: e11-s2-negotiations-ui
-    status: pending
-    dependsOn: [e11-s1-savings-si, e3-s2-bff-only]
-
-  - id: e12-s1-tasks-migration
-    status: pending
-    dependsOn: [e2-s4-sql-schema]
-  - id: e12-s2-tasks-api
-    status: pending
-    dependsOn: [e12-s1-tasks-migration, e6-s2-pr-list-detail, e7-s2-po-bff]
-  - id: e12-s3-tasks-ui
-    status: pending
-    dependsOn: [e12-s2-tasks-api, e3-s2-bff-only]
-
-  - id: e13-s1-admin-scopes
-    status: pending
-    dependsOn: [e6-s1-pr-gateway]
-  - id: e13-s2-settings-audit
-    status: pending
-    dependsOn: [e13-s1-admin-scopes, e2-s4-sql-schema]
-
-  - id: e14-s1-help-complete
-    status: pending
-    dependsOn:
-      - e4-s3-help-skeleton
-      - e9-s3-supplier-360-ui
-      - e10-s2-product-360-ui
-      - e11-s2-negotiations-ui
-      - e12-s3-tasks-ui
-      - e13-s2-settings-audit
-
-  - id: e15-s1-initial-parity
-    status: pending
-    dependsOn:
-      - e5-s2-overview-page
-      - e6-s3-pr-export
-      - e8-s3-inventory-ui
-      - e14-s1-help-complete
-
-  - id: e16-s1-schema-expand
-    status: pending
-    dependsOn: [e15-s1-initial-parity, e6-s4-c2-evidence]
-  - id: e16-s2-ownership-jobs
-    status: pending
-    dependsOn: [e16-s1-schema-expand]
-  - id: e16-s3-reconciliation
-    status: pending
-    dependsOn: [e16-s2-ownership-jobs]
-  - id: e16-s4-freeze-pr-api
-    status: pending
-    dependsOn: [e16-s3-reconciliation]
-
-  - id: e17-s1-final-parity
-    status: pending
-    dependsOn: [e16-s4-freeze-pr-api]
-
-  - id: e18-s1-close-redirects
-    status: pending
-    dependsOn: [e17-s1-final-parity]
-  - id: e18-s2-telemetry-rollback
-    status: pending
-    dependsOn: [e18-s1-close-redirects]
-  - id: e18-s3-target-smoke
-    status: pending
-    dependsOn: [e18-s2-telemetry-rollback]
-
-  - id: e19-s1-staging
-    status: pending
-    dependsOn: [e18-s3-target-smoke]
-  - id: e19-s2-production
-    status: pending
-    dependsOn: [e19-s1-staging]
-  - id: e19-s3-observe-remove
-    status: pending
-    dependsOn: [e19-s2-production]
-
-  - id: e20-s1-supplier-scorecard
-    status: pending
-    dependsOn: [e17-s1-final-parity]
-  - id: e20-s2-supplier-concentration
-    status: pending
-    dependsOn: [e17-s1-final-parity]
-  - id: e20-s3-purchase-approvals
-    status: pending
-    dependsOn: [e17-s1-final-parity]
-  - id: e20-s4-imports
-    status: pending
-    dependsOn: [e17-s1-final-parity]
-  - id: e20-s5-slow-moving
-    status: pending
-    dependsOn: [e17-s1-final-parity]
-
-  - id: e21-s1-pipeline-real
-    status: pending
-    dependsOn: [e19-s2-production]
-  - id: e21-s2-original-objective
-    status: pending
-    dependsOn: [e21-s1-pipeline-real]
+  - id: e7-purchase-orders-list
+    status: blocked
+    dependsOn: [e6-s5-wf04-feature-gate]
+  - id: e8-purchase-order-detail
+    status: blocked
+    dependsOn: [e7-purchase-orders-list]
+  - id: e9-deliveries
+    status: blocked
+    dependsOn: [e8-purchase-order-detail]
+  - id: e10-inventory
+    status: blocked
+    dependsOn: [e9-deliveries]
+  - id: e11-safety-stock
+    status: blocked
+    dependsOn: [e10-inventory]
+  - id: e12-consumption-analysis
+    status: blocked
+    dependsOn: [e11-safety-stock]
+  - id: e13-suppliers-list
+    status: blocked
+    dependsOn: [e12-consumption-analysis]
+  - id: e14-supplier-360
+    status: blocked
+    dependsOn: [e13-suppliers-list]
+  - id: e15-supplier-otd
+    status: blocked
+    dependsOn: [e14-supplier-360]
+  - id: e16-products-list
+    status: blocked
+    dependsOn: [e15-supplier-otd]
+  - id: e17-product-360
+    status: blocked
+    dependsOn: [e16-products-list]
+  - id: e18-product-drills
+    status: blocked
+    dependsOn: [e17-product-360]
+  - id: e19-negotiations
+    status: blocked
+    dependsOn: [e18-product-drills]
+  - id: e20-indicators-decision
+    status: blocked
+    dependsOn: [e19-negotiations]
+  - id: e21-my-tasks
+    status: blocked
+    dependsOn: [e20-indicators-decision]
+  - id: e22-administration
+    status: blocked
+    dependsOn: [e21-my-tasks]
+  - id: e23-help-audit
+    status: blocked
+    dependsOn: [e22-administration]
+  - id: e24-initial-parity
+    status: blocked
+    dependsOn: [e23-help-audit]
+  - id: e25-purchase-requests-c2
+    status: blocked
+    dependsOn: [e24-initial-parity, e6-s4-c2-evidence]
+  - id: e26-final-parity
+    status: blocked
+    dependsOn: [e25-purchase-requests-c2]
+  - id: e27-cutover-prep
+    status: blocked
+    dependsOn: [e26-final-parity]
+  - id: e28-cutover-c3
+    status: blocked
+    dependsOn: [e27-cutover-prep]
+  - id: e29-verify-final
+    status: blocked
+    dependsOn: [e28-cutover-c3]
 ```
 
-### Consistência causal obrigatória
-
-```text
-ADR order = roadmap order = dependsOn order
-```
-
-Em especial:
-
-```text
-C1 → C2 → PARIDADE FINAL → C3
-```
-
-Nunca C3 antes de C2.
-
-E20.S* não bloqueia E21 (evoluções futuras após paridade final).
+`blocked` significa fila/precondição não satisfeita, não falha técnica.
 
 ---
 
-## 7. Fora do escopo sem novo ADR
+## 8. Revisão adversarial obrigatória antes de promover próxima página
 
-- escrita TOTVS;
-- absorver Financeiro/Qualidade/PCP/Chat/TV;
-- IA preditiva;
-- e-mail automático a fornecedor;
-- remover legado sem telemetria/paridade;
-- criar permission por CRUD sem justificativa ADR-007.
+- A página anterior realmente fechou GATE-FEATURE?
+- Há alguma decisão `NOT_READY` disfarçada de “se necessário/quando autorizado”?
+- Producer e consumers do contrato foram lidos?
+- Algum componente já existe no `plugin-ui`?
+- A etapa mistura duas páginas?
+- AuthZ/unit/resource scope está no backend?
+- Help está na mesma entrega?
+- URL/F5/deep link foram considerados?
+- Positive + sibling + negative provam o comportamento?
+- Docs/status/todos refletem o código atual?
+- Há dependência em `/me/routes` ou outro contrato inexistente?
+- O próximo agente conseguiria executar sem redescobrir decisão material?
+
+Se qualquer resposta material for negativa, a etapa ainda não está READY_TO_EXECUTE.
