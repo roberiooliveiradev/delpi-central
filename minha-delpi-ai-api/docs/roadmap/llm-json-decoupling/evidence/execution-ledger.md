@@ -250,3 +250,5 @@ Qualquer mudança material posterior ao candidate invalida as dimensões de evid
 | 2026-09-11 | **E11.S7 ATENDIDO** — capability method+sensitivity; recs static=LEGACY_FALLBACK+exit; próxima = **E11.S8** |
 | 2026-09-11 | **E11.S8 ATENDIDO** — smoke creds sem defaults; SEMANTIC_* full-tree=0; CA residual→S10; próxima = **E11.S9** |
 | 2026-09-11 | **E11.S9 ATENDIDO** — candidate `782a4972…` R1–R11 PASS (offline+live); próxima = **E11.S10** |
+| 2026-09-11 | **E11.S10 ATENDIDO** — residual scan PASS; docs ARCHIVED; `VERIFY_FINAL=PASS`; `FINAL_RESULT=PASS` |
+| 2026-09-11 | **Onda J / Plano 11 CONCLUÍDO** — programa llm-json-decoupling ARCHIVED; FINAL_CANDIDATE `782a4972…` |

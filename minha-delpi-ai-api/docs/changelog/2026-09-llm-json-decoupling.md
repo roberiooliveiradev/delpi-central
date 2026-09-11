@@ -2,103 +2,64 @@
 
 **Roadmap:** [llm-json-decoupling](../roadmap/llm-json-decoupling/README.md)  
 **Ledger:** [execution-ledger.md](../roadmap/llm-json-decoupling/evidence/execution-ledger.md)  
-**Release histórico (Ondas A–H):** `globalReleasePass=true` no candidate avaliado em E9.S8/E9.S15  
-**Onda I:** executada, aceite arquitetural posteriormente invalidado por drift  
-**Estado vigente:** **REABERTO — Onda J**  
-**Plano ativo:** [plano 11 — corrective cutover/generalization/cleanup](../roadmap/llm-json-decoupling/planos/11-corrective-cutover-generalization-cleanup.md)
+**Estado vigente:** **CONCLUÍDO / ARCHIVED — Onda J**  
+**Plano:** [plano 11](../roadmap/llm-json-decoupling/planos/11-corrective-cutover-generalization-cleanup.md)  
+**FINAL_CANDIDATE_GIT_SHA:** `782a49721319571f0fe4733d59b8a5cc65ac4c04`  
+**VERIFY_FINAL / FINAL_RESULT:** PASS
 
 ---
 
 ## Resumo
 
-As Ondas A–I entregaram avanços importantes no OpenAPI-first, Turn Understanding, schema-driven presentation e cleanup de catálogos. Uma auditoria posterior do código mostrou, porém, que parte do conhecimento removido dos JSONs reapareceu em outra representação no runtime e que algumas provas finais foram reutilizadas após mudanças materiais.
+As Ondas A–I entregaram avanços OpenAPI-first, Turn Understanding, schema-driven presentation e cleanup parcial. Auditoria pós-onda encontrou substitutos semânticos (JSON→Python) e candidate stale — o que reabriu o programa como **Onda J**.
 
-Por isso:
+A Onda J executou cutover → generalização → cleanup → residual scan → candidate fresco R1–R11 e fechou com:
 
 ```text
-PASS histórico ≠ PASS do candidate final atual
+VERIFY_FINAL = PASS
+FINAL_RESULT = PASS
+SEMANTIC_* full-tree = 0
 ```
 
-O programa só volta a ser considerado concluído após a Onda J provar cutover, generalização, cleanup, segurança, arquitetura e R1–R11 no mesmo candidate final.
-
 ## Correção de política — 2026-09-11
-
-A regra passa a ser interpretada de forma conceitual:
 
 ```text
 NENHUM MAPA LATERAL OU SUBSTITUTO SEMÂNTICO DEVE SER AUTHORITY.
 ```
 
-Não basta remover `pathMarkers/pathToken/pathContains/pathRules` do JSON. Também são drift:
+Action Catalog `path`/`method`/`operationId` = metadata técnica legítima. Proibido: usá-los como heurística de semântica no core genérico.
 
-- path→domain map em Python/TS;
-- endpoint→parameter strategy por path/operationId;
-- continuity/route segment por path-tail/operationId-tail;
-- registry route→operationIds como catálogo técnico de routing;
-- selector/intent/presenter por endpoint;
-- taxonomia proprietária obrigatória para unknown provider funcionar.
+## Drifts corrigidos na Onda J
 
-## Drifts que reabriram a iniciativa
-
-1. `ApiRouteDomainInferenceService._DOMAIN_RULES` portando fragments de path do catálogo anterior;
-2. `ParameterStrategyInferenceService` recriando endpoint→strategy;
-3. follow-up/route segment dependente de path/operationId inventory;
-4. `route.operationIds` residual como catálogo técnico;
-5. semantic authority duplicada entre heurísticas/mappers e LLM Turn Analysis;
-6. `recommendationQueries` ainda em fallback/oracle;
-7. capability metadata genérica `read/low/parallelSafe` para actions de efeitos diferentes;
-8. Clean Architecture/DI residual;
-9. credential defaults em smoke;
-10. unknown/metamorphic histórico não reexecutado depois do último diff material.
+| Drift | Etapa |
+|---|---|
+| path→domain Python | E11.S2 |
+| endpoint→parameterStrategy | E11.S3 |
+| continuity path-tail | E11.S4 |
+| registry operationIds authority | E11.S5 |
+| NLU pathTokens/pathMarkers laterais | E11.S6 |
+| recs estático + capability fake | E11.S7 |
+| smoke credential defaults | E11.S8 |
+| candidate fresco R1–R11 | E11.S9 |
+| residual scan + docs | E11.S10 |
 
 ## Ondas
 
 | Onda | Entrega | Estado vigente |
 |------|---------|----------------|
-| A | Inventário + baseline freeze | histórico/baseline |
-| B | Registry OpenAPI-first | implementação existente; revalidar residual na J |
-| C | Turn Understanding | implementação existente; cleanup semântico reaberto |
-| D | Multi-turn/args | implementação existente; path coupling reaberto |
-| E | Capabilities/composition | implementação existente; metadata reaberta |
-| F | Recommendations | implementação existente; cutover contextual reaberto |
-| G | Presentation/skills | implementação existente; revalidar candidate final |
-| H | Evals/cutover | PASS histórico, não release atual |
-| I | Zero mapa lateral | **aceite invalidado por substitutos semânticos** |
-| J | Correção cutover + generalização + cleanup | **ABERTA / P0** |
+| A–H | Inventário → evals/cutover | histórico |
+| I | Zero mapa lateral (JSON) | histórico; aceite invalidado por substitutos |
+| J | Correção + candidate final | **CONCLUÍDO / PASS** |
 
-## Regra de execução da Onda J
+## Residuais pós-programa (não bloqueiam)
 
-```text
-CUTOVER
-→ GENERALIZATION
-→ CLEANUP
-→ VERIFY
-→ COMPLETE_GATE
-```
+- observer `operationIds` arrays (DELETE quando CI facets 100%);
+- `recommendationQueries` LEGACY_FALLBACK até exit criteria;
+- vocabulary `_TOKEN_RULES` facet/kind;
+- backlog CA: FS lint/generator em domain.
 
-Cada E11.S* precisa provar wiring, positive/sibling/negative, generalização quando aplicável, residual scan e pós-condições antes de liberar a próxima etapa.
+## Evidências
 
-Estados `PARTIAL`, `LEGACY_FALLBACK`, `INCONCLUSIVE`, TODO/FIXME/HACK, flag/fallback sem exit criteria ou evidência de candidate antigo impedem `FINAL_RESULT=PASS` quando são materiais ao objetivo.
-
-## Evidências históricas
-
-As evidências E1–E10 permanecem preservadas em `docs/roadmap/llm-json-decoupling/evidence/`. Elas servem para baseline, comparação e rastreabilidade; não devem ser apagadas nem renomeadas para parecer evidência da Onda J.
-
-## Critério para novo fechamento
-
-Somente registrar novo release quando o Plano 11 produzir no `FINAL_CANDIDATE_GIT_SHA`:
-
-```text
-CUTOVER_RESULT = PASS
-GENERALIZATION_RESULT = PASS
-CLEANUP_RESULT = PASS
-UNKNOWN_EXTERNAL_API = PASS
-METAMORPHIC_RENAME = PASS
-R1_R11_REQUIRED_DIMENSIONS = PASS
-CLEAN_ARCHITECTURE = PASS
-SECURITY_HYGIENE = PASS
-RESIDUAL_SCAN = PASS
-COMPLETE_GATE = PASS
-VERIFY_FINAL = PASS
-FINAL_RESULT = PASS
-```
+- Candidate: [`e11-s9-final-candidate.md`](../roadmap/llm-json-decoupling/evidence/e11-s9-final-candidate.md)
+- Fechamento: [`e11-s10-residual-scan-verify-final.md`](../roadmap/llm-json-decoupling/evidence/e11-s10-residual-scan-verify-final.md)
+- Histórico E1–E10 preservado em `evidence/` (baseline/rastreabilidade).

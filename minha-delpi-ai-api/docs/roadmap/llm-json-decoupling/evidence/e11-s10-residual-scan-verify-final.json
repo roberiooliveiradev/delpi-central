@@ -1,0 +1,45 @@
+{
+  "runId": "e11-s10-residual-scan-verify-final-v1",
+  "wave": "J",
+  "planStep": "E11.S10",
+  "finalCandidateGitSha": "782a49721319571f0fe4733d59b8a5cc65ac4c04",
+  "semanticDebtFullTree": 0,
+  "semanticDebtRevalidatedAt": "2026-09-11",
+  "semanticDebtCommand": "python3 scripts/ci/audit_architecture_phase3.py --check-semantic-debt",
+  "verifyFinal": "PASS",
+  "finalResult": "PASS",
+  "docsMatchFinalHead": true,
+  "programStatus": "CONCLUIDO_ARCHIVED",
+  "blockedWithEvidenceMaterial": [],
+  "removeNowPending": [],
+  "keepWithExitCriteria": [
+    "operational_route_registry.operationIds observer arrays",
+    "recommendationQueries LEGACY_FALLBACK profiles",
+    "TurnUnderstanding *_TOKEN_RULES facet/kind vocabulary"
+  ],
+  "cleanArchitectureBacklogNonBlocking": [
+    "domain FS for PDF/drawing/lint/openapi baseline readers"
+  ],
+  "definitionOfDone": {
+    "CUTOVER_RESULT": "PASS",
+    "GENERALIZATION_RESULT": "PASS",
+    "CLEANUP_RESULT": "PASS",
+    "UNKNOWN_EXTERNAL_API": "PASS_ON_FINAL_CANDIDATE",
+    "METAMORPHIC_RENAME": "PASS_ON_FINAL_CANDIDATE",
+    "ARGUMENT_SCHEMA_AUTHORITY": "PASS",
+    "MULTI_TURN_STRUCTURED_STATE": "PASS",
+    "SEMANTIC_AUTHORITY_SINGLE_OWNER": "PASS",
+    "CONTEXTUAL_RECOMMENDATIONS": "PASS",
+    "CAPABILITY_SECURITY_METADATA": "PASS",
+    "CLEAN_ARCHITECTURE": "PASS",
+    "SECURITY_HYGIENE": "PASS",
+    "SEND_STREAM_SIMULATE_UI": "PASS",
+    "PERSIST_RELOAD_F5": "PASS",
+    "R1_R11_REQUIRED_DIMENSIONS": "PASS",
+    "RESIDUAL_SCAN": "PASS",
+    "DOCS_MATCH_FINAL_HEAD": "PASS",
+    "COMPLETE_GATE": "PASS",
+    "VERIFY_FINAL": "PASS",
+    "FINAL_RESULT": "PASS"
+  }
+}

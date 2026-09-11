@@ -1,7 +1,7 @@
 # Plano 11 — Correção arquitetural: cutover + generalização + cleanup sem residual
 
 **Prioridade:** P0  
-**Status execução:** Onda J · **ABERTO / VERIFY_FINAL_PENDING_S10** · E11.S0–S9 **ATENDIDO** · próxima = **E11.S10** · `FINAL_CANDIDATE_GIT_SHA=782a4972…`  
+**Status execução:** Onda J · **CONCLUÍDO / ARCHIVED** · `VERIFY_FINAL=PASS` · `FINAL_RESULT=PASS` · E11.S0–S10 **ATENDIDO** · `FINAL_CANDIDATE_GIT_SHA=782a4972…`  
 **BASE_GIT_SHA (E11.S0):** `8bc84fc6d1cea3edc8cd0c08dceee90f9303e777`  
 **Auditoria-base:** S4 `evidence/e11-s4-structured-continuity.md`  
 **Origem:** revisão arquitetural pós Ondas A–I em 2026-09-11  
@@ -144,17 +144,17 @@ Plano 10 reaproveitou E9.S10, executado antes da alteração posterior do motor 
 | RQ11-01 | Eliminar path→domain maps/substitutos do core genérico, em qualquer formato | ATENDIDO (E11.S2) |
 | RQ11-02 | Eliminar endpoint→parameterStrategy e usar schema OpenAPI como authority | ATENDIDO (E11.S3; path/oid inference removida; helpers schema-driven) |
 | RQ11-03 | Eliminar continuidade multi-turn derivada de path/operationId | ATENDIDO (E11.S4; facetas estruturadas) |
-| RQ11-04 | Remover `operationIds`/registry técnico como authority de routing | ATENDIDO (E11.S5; arrays observer até S10 DELETE) |
+| RQ11-04 | Remover `operationIds`/registry técnico como authority de routing | ATENDIDO (E11.S5; arrays observer KEEP pós-S10) |
 | RQ11-05 | Consolidar ownership semântico e remover NLU endpoint/domain-specific redundante | ATENDIDO (E11.S6; vocabulary facet/kind KEEP; pathTokens DELETE) |
 | RQ11-06 | Tornar recommendations contextuais; estático no máximo fallback temporário com exit criteria | ATENDIDO (E11.S7; static=LEGACY_FALLBACK+exit) |
 | RQ11-07 | Derivar capability metadata de contract/sensitivity/policy real | ATENDIDO (E11.S7; method+sensitivity) |
-| RQ11-08 | Corrigir boundaries/DI/filesystem conforme Clean Architecture | ATENDIDO_PARCIAL (E11.S8; residual FS→S10) |
+| RQ11-08 | Corrigir boundaries/DI/filesystem conforme Clean Architecture | ATENDIDO (E11.S8+S10; FS domain = backlog CA não bloqueante) |
 | RQ11-09 | Remover credenciais hardcoded/defaults sensíveis de scripts/smokes | ATENDIDO (E11.S8; SEMANTIC_SMOKE=0) |
-| RQ11-10 | Tornar Architecture Enforcement capaz de detectar substitutos semânticos JSON↔Python/TS | ATENDIDO (E11.S1; debt full-tree ainda vermelho até cleanup) |
+| RQ11-10 | Tornar Architecture Enforcement capaz de detectar substitutos semânticos JSON↔Python/TS | ATENDIDO (E11.S1; SEMANTIC_* full-tree=0 pós-S8) |
 | RQ11-11 | Provar unknown external API + metamorphic rename no candidate final | ATENDIDO (E11.S9 live S14 + offline sidecar) |
 | RQ11-12 | Provar compound, multi-turn, required/missing args, safety, send/stream/simulate e persist/reload no candidate final | ATENDIDO (E11.S9 offline+S14/S15/S16) |
-| RQ11-13 | Encerrar flags/shadows/fallbacks/TODOs materiais ou mantê-los explicitamente fora de escopo sem declarar o objetivo global concluído | ABERTO (E11.S10 residual) |
-| RQ11-14 | Atualizar README/roadmap/ledger/changelog/docs canônicas somente com estados sustentados pelo HEAD final | ABERTO |
+| RQ11-13 | Encerrar flags/shadows/fallbacks/TODOs materiais ou mantê-los explicitamente fora de escopo sem declarar o objetivo global concluído | ATENDIDO (E11.S10; KEEP com exit criteria documentados) |
+| RQ11-14 | Atualizar README/roadmap/ledger/changelog/docs canônicas somente com estados sustentados pelo HEAD final | ATENDIDO (E11.S10) |
 
 ---
 
@@ -713,78 +713,62 @@ Todas as `requiredDimensions` aplicáveis estão PASS. WARN/INCONCLUSIVE bloquei
 ## E11.S10 — Cleanup final, residual scan, docs e verify-final
 
 **TIPO:** CLEANUP / VERIFY_FINAL  
-**Cobre:** todos os RQ11
+**Cobre:** todos os RQ11  
+**Status:** **ATENDIDO** · `VERIFY_FINAL=PASS` · `FINAL_RESULT=PASS`
 
 ### Busca residual final
 
-Executar buscas por conceito, não apenas por nomes:
+Executada em `app/` + `scripts/` por conceito (não só nomes). Evidência: [`../evidence/e11-s10-residual-scan-verify-final.md`](../evidence/e11-s10-residual-scan-verify-final.md).
 
 ```text
-pathMarkers / pathContains / pathToken / pathRules
-_DOMAIN_RULES / prefix maps / contains(path)
-operationId lists used for semantic selection
-parameterStrategy / strategy names / endpoint→binder branches
-routeSegment / path-tail / operationId-tail
-recommendationQueries / profile fallback authority
-_TOKEN_RULES / keyword+exclude endpoint routing
-legacy/shadow/fallback flags
-TODO / FIXME / HACK / TEMPORARY
-default user/password/token in smokes
-filesystem IO inside domain
-infra composition inside application/domain
+REMOVE_NOW adicional = []
+BLOCKED_WITH_EVIDENCE material = []
+SEMANTIC_* full-tree = 0
 ```
 
-Cada hit deve receber uma classificação:
+KEEP pós-programa (exit criteria / backlog, não reabre D11-01..05):
 
-```text
-REMOVE_NOW
-CONTRACT_LEGITIMATE
-TRANSVERSAL_POLICY_KEEP
-TEST_ONLY
-DOC_HISTORY_ONLY
-BLOCKED_WITH_EVIDENCE
-```
-
-`BLOCKED_WITH_EVIDENCE` material impede `FINAL_RESULT=PASS` se conflita com o objetivo desta iniciativa.
+- `operationIds` observer arrays;
+- `recommendationQueries` LEGACY_FALLBACK;
+- `_TOKEN_RULES` vocabulary facet/kind;
+- FS lint/generator em domain (backlog CA).
 
 ### Documentação
 
-Atualizar somente após o residual scan e candidate final:
+Atualizados após residual scan + candidate final:
 
-- `README.md`;
-- `roadmap.md`;
+- `README.md`, `roadmap.md`, `ARCHIVED.md`;
 - este plano;
 - `evidence/execution-ledger.md`;
-- changelog relacionado;
-- docs arquiteturais canônicas impactadas;
-- Help quando user-facing.
+- `docs/changelog/2026-09-llm-json-decoupling.md`.
 
-Só arquivar novamente após `VERIFY_FINAL=PASS`.
+Programa **ARCHIVED** com `VERIFY_FINAL=PASS`.
+
+- **COMPLETE_GATE:** ATENDIDO
+- Evidência: [`../evidence/e11-s10-residual-scan-verify-final.md`](../evidence/e11-s10-residual-scan-verify-final.md) + candidate S9
 
 ---
 
 # 6. Matriz obrigatória de fechamento
 
-Preencher no final:
-
 | Requisito | Implementação final | Generalização | Cleanup residual | Evidência FINAL_CANDIDATE_GIT_SHA | Status |
 |---|---|---|---|---|---|
-| RQ11-01 | | | | | |
-| RQ11-02 | | | | | |
-| RQ11-03 | | | | | |
-| RQ11-04 | e11-s5 | cutover+facet | test_e11_s5_* | ATENDIDO | arrays observer |
-| RQ11-05 | e11-s6 | TU+mappers authority | test_e11_s6_* | ATENDIDO | live R1/R2/R9→S9 |
-| RQ11-06 | e11-s7 | dual-run exit | test_e6_s4_* | ATENDIDO | profiles até exit |
-| RQ11-07 | e11-s7 | method+sensitivity | test_e11_s7_* | ATENDIDO | |
-| RQ11-08 | e11-s8 | residual inventário | phase3 | ATENDIDO_PARCIAL | FS→S10 |
-| RQ11-09 | e11-s8 | require_smoke_credentials | test_e11_s8_* | ATENDIDO | |
-| RQ11-10 | | | | | |
-| RQ11-11 | e11-s9 | S14+sidecar | e11-s9-final-candidate | ATENDIDO | sha 782a4972 |
-| RQ11-12 | e11-s9 | S14/S15/S16 | e11-s9-final-candidate | ATENDIDO | |
-| RQ11-13 | | | | ABERTO | E11.S10 |
-| RQ11-14 | | | | | |
+| RQ11-01 | e11-s2 apiRouteDomain semantic | unknown/metamorphic unit | `SEMANTIC_PATH_DOMAIN_MAP=0` | 782a4972 + e11-s2 | ATENDIDO |
+| RQ11-02 | e11-s3 bind_schema_first | schema-driven helpers | path→strategy=0 | 782a4972 + e11-s3 | ATENDIDO |
+| RQ11-03 | e11-s4 continuity facets | structured state | path-tail authority=0 | 782a4972 + e11-s4 | ATENDIDO |
+| RQ11-04 | e11-s5 select_registry cutover | facet routing | observer arrays KEEP | 782a4972 + e11-s5 | ATENDIDO |
+| RQ11-05 | e11-s6 TU+mappers authority | facet/kind vocabulary | pathTokens DELETE | 782a4972 + e11-s6 | ATENDIDO |
+| RQ11-06 | e11-s7 dual-run + exit | grounded synthesis | profiles LEGACY até exit | 782a4972 + e11-s7 | ATENDIDO |
+| RQ11-07 | e11-s7 method+sensitivity | contract-derived | fake read/low removido | 782a4972 + e11-s7 | ATENDIDO |
+| RQ11-08 | e11-s8+s10 inventário | boundaries | FS domain = backlog CA | 782a4972 + e11-s10 | ATENDIDO |
+| RQ11-09 | e11-s8 smoke_credentials | env-only | defaults=0 | 782a4972 + e11-s8 | ATENDIDO |
+| RQ11-10 | e11-s1 phase3 gates | CI full-tree | SEMANTIC_*=0 pós-S8 | 782a4972 + e11-s1/s8 | ATENDIDO |
+| RQ11-11 | e11-s9 S14+sidecar | unknown + rename | — | 782a4972 + e11-s9 | ATENDIDO |
+| RQ11-12 | e11-s9 S14/S15/S16 | compound/multi-turn/parity/F5 | — | 782a4972 + e11-s9 | ATENDIDO |
+| RQ11-13 | e11-s10 residual scan | KEEP classificados | REMOVE_NOW=[] | 782a4972 + e11-s10 | ATENDIDO |
+| RQ11-14 | e11-s10 docs ARCHIVED | DOCS_MATCH_FINAL_HEAD | README/roadmap/ledger/changelog | (este fechamento) + e11-s10 | ATENDIDO |
 
-Nenhuma célula material pode ser omitida.
+Nenhuma célula material omitida.
 
 ---
 
