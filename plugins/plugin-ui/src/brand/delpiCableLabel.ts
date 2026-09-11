@@ -220,19 +220,17 @@ export function formatDelpiCableLabelCustomerItem(
 }
 
 /**
- * Código do cliente na etiqueta: item (desenho) prevalece; senão o código SA1.
+ * Código do cliente na etiqueta física: somente o item do desenho
+ * (campo «Item do cliente» / customerItem). Não usa o código SA1 da empresa.
  */
 export function resolveDelpiCableLabelCustomerValue(fields: {
   customerItem?: string | null;
   customerItemRev?: string | null;
-  customerCode?: string | null;
 }): string {
-  const item = formatDelpiCableLabelCustomerItem(
+  return formatDelpiCableLabelCustomerItem(
     fields.customerItem,
     fields.customerItemRev,
   );
-  if (item) return item;
-  return (fields.customerCode ?? "").trim();
 }
 
 /**

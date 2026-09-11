@@ -49,27 +49,28 @@ describe("formatDelpiCableLabelCustomerItem", () => {
 });
 
 describe("resolveDelpiCableLabelCustomerValue", () => {
-  it("prefere o item do cliente ao código SA1", () => {
+  it("usa o item do cliente com revisão", () => {
     expect(
       resolveDelpiCableLabelCustomerValue({
         customerItem: "2229-07/1",
         customerItemRev: "00",
-        customerCode: "000123",
       }),
     ).toBe("2229-07/1 Rev.00");
   });
 
-  it("usa o código SA1 quando o item do cliente está vazio", () => {
+  it("usa o item sem revisão", () => {
     expect(
       resolveDelpiCableLabelCustomerValue({
-        customerItem: "  ",
-        customerCode: "000123",
+        customerItem: "2229-07/1",
       }),
-    ).toBe("000123");
+    ).toBe("2229-07/1");
   });
 
-  it("devolve vazio quando não há item nem código", () => {
+  it("devolve vazio quando o item do cliente não foi preenchido", () => {
     expect(resolveDelpiCableLabelCustomerValue({})).toBe("");
+    expect(
+      resolveDelpiCableLabelCustomerValue({ customerItem: "  ", customerItemRev: "00" }),
+    ).toBe("");
   });
 });
 

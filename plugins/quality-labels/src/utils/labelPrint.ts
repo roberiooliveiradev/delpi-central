@@ -58,7 +58,6 @@ function buildLabelHtml(
   const customerValue = resolveDelpiCableLabelCustomerValue({
     customerItem: certificate?.customerItem ?? label.customerItem,
     customerItemRev: certificate?.customerItemRev ?? label.customerItemRev,
-    customerCode: certificate?.customerCode,
   });
   const customerHtml = buildDelpiCableLabelLabeledCodeHtml(
     "customer",
@@ -75,11 +74,11 @@ function buildLabelHtml(
     qrDataUrl,
     qrAlt: "QR code da inspeção",
     caption: "",
-    qrFooterHtml: `${customerHtml}${productHtml}<div class="tag__meta">OP ${op} · ${date}</div>`,
+    qrFooterHtml: `${customerHtml}<div class="tag__meta">OP ${op} · ${date}</div>`,
     sealTopLabel: topLabel,
     brandFooterHtml: productHtml,
     hintHtml:
-      "Recorte na linha externa e dobre na faixa central em volta do cabo: o QR (frente) mostra CLIENTE e DELPI; o verso traz a marca, o selo e o código Delpi.",
+      "Recorte na linha externa e dobre na faixa central em volta do cabo: o QR (frente) mostra o item do cliente; o verso traz a marca, o selo e o código Delpi.",
   });
 }
 

@@ -190,9 +190,10 @@ export function CertificateFormFields({
           )}
         </span>
         <p className="ql-info-note ql-info-note--compact">
-          Na etiqueta física, o QR mostra CLIENTE e DELPI. O item do cliente
-          (desenho) prevalece; se estiver vazio, sai o código cadastral do
-          cliente. Salve o certificado antes de imprimir.
+          Na etiqueta física, o QR mostra o <strong>item do cliente</strong>
+          (referência do desenho). O código Delpi fica só no verso, com a marca e
+          o selo. Sem item preenchido e salvo no certificado, a frente sai só com
+          OP e data.
         </p>
         <div className="ql-cert-grid">
           <label className="ql-field ql-field--wide">
