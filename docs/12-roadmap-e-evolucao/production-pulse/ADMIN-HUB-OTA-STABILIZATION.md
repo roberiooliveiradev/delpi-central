@@ -111,6 +111,15 @@ stateDiagram-v2
 - Fases UI (híbrido): Avisando dispositivo / Avisado · aguardando consulta / Não avisou · aguardando pull / Aguardando consulta OTA / Offline / Baixando / Aplicando / Atualizado / Falhou / Interrompida.
 - Wake é telemetria (`wake_*`); não confundir com falha OTA (`error_code` / `status=failed`).
 
+### Troca de versão (upgrade + rollback)
+
+- Job OTA **sempre** usa `firmwareId` explícito (`runFirmwareJob({ firmwareId })`). Não re-resolver por `firmwareKey` após a escolha.
+- Upgrade e rollback compartilham o **mesmo** motor (`POST /firmware-update-jobs`); não existe `POST /rollback`.
+- `onlyOutdated` = desigualdade de string (`installed != version`); downgrade SemVer é elegível.
+- UX: `FirmwareVersionPicker` + confirmação (Atualização / Reversão); same/draft/archived desabilitados no picker.
+- Pós-rollback: KPI “desatualizado” continua válido se `installed != latestPublished` — **comportamento conhecido**. Não há pin/`desiredFirmwareVersion` neste ciclo.
+- Labels: Mais recente / Instalada / Selecionada / Publicada / Rascunho / Arquivada — sem « · atual » ambíguo.
+
 ### Scheduler
 
 `DevicePollSchedulerService` no mesmo tick: authorize scheduled + stale + reconcile batch.

@@ -21,6 +21,7 @@ import { productionPulseFirmwareLinksPath } from "../../constants/routes";
 import { PP_HELP } from "../../content/helpTooltips";
 import type { DeviceListItem } from "../../types/device";
 import type { LivePollResult } from "../../types/detail";
+import { latestPublishedFirmwareForFamily } from "../../utils/latestPublishedFirmware";
 import { navigateProductionPulse } from "../../utils/navigation";
 import {
   isOtaStatusActive,
@@ -218,7 +219,10 @@ export function DeviceFirmwareTab({
       publishedOnly: true,
     })
       .then((items) => {
-        const latest = items.find((item) => item.lifecycle === "published" && !item.archivedAt);
+        const latest = latestPublishedFirmwareForFamily(
+          items,
+          device.firmwareKey || device.driverKey,
+        );
         setLatestPublishedVersion(latest?.version ?? null);
       })
       .catch(() => setLatestPublishedVersion(null));
@@ -266,7 +270,10 @@ export function DeviceFirmwareTab({
         firmwareKey: device.firmwareKey || device.driverKey,
         publishedOnly: true,
       });
-      const latest = firmwares.find((item) => item.lifecycle === "published" && !item.archivedAt);
+      const latest = latestPublishedFirmwareForFamily(
+        firmwares,
+        device.firmwareKey || device.driverKey,
+      );
       if (!latest) {
         emitNotice({
           variant: "warning",

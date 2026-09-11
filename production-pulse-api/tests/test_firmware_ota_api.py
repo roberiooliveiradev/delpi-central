@@ -602,3 +602,290 @@ def test_ota_job_isolates_c3_and_esp8266_families(client, unique_ip, firmware_st
     items = targets.json()["data"]["items"]
     assert len(items) == 1
     assert items[0]["deviceId"] == c3["id"]
+
+
+def test_manual_job_allows_downgrade_to_older_published_version(
+    client, unique_ip, firmware_storage_dir
+):
+    """Upgrade and rollback share the same job motor; onlyOutdated is string inequality."""
+    from production_pulse_app.infrastructure.persistence.repositories.postgres_device_repository import (
+        PostgresDeviceRepository,
+    )
+    from uuid import UUID
+
+    device = _create_device(client, ip=unique_ip, token="downgrade-tok")
+    device_id = device["id"]
+    PostgresDeviceRepository().record_installed_firmware_version(
+        UUID(device_id), version="1.0.0"
+    )
+
+    older = client.post(
+        "/firmwares",
+        data={
+            "firmwareKey": "esp8266_counter_v1",
+            "driverKey": "esp8266_counter_v1",
+            "version": "0.1.3",
+            "displayName": "Older",
+            "publish": "true",
+        },
+        files={"file": ("old.bin", b"old-firmware", "application/octet-stream")},
+    )
+    assert older.status_code == 201, older.text
+    older_id = older.json()["data"]["id"]
+
+    newer = client.post(
+        "/firmwares",
+        data={
+            "firmwareKey": "esp8266_counter_v1",
+            "driverKey": "esp8266_counter_v1",
+            "version": "1.0.0",
+            "displayName": "Current",
+            "publish": "true",
+        },
+        files={"file": ("new.bin", b"new-firmware", "application/octet-stream")},
+    )
+    assert newer.status_code == 201, newer.text
+
+    job = client.post(
+        "/firmware-update-jobs",
+        json={
+            "firmwareId": older_id,
+            "branch": "01",
+            "trigger": "manual",
+            "filter": {
+                "firmwareKey": "esp8266_counter_v1",
+                "onlyOutdated": True,
+                "deviceIds": [device_id],
+            },
+        },
+    )
+    assert job.status_code == 201, job.text
+    targets = client.get(f"/firmware-update-jobs/{job.json()['data']['id']}/targets")
+    item = targets.json()["data"]["items"][0]
+    assert item["fromVersion"] == "1.0.0"
+    assert item["toVersion"] == "0.1.3"
+    assert item["deviceId"] == device_id
+
+
+def test_same_version_with_only_outdated_skips_device(
+    client, unique_ip, firmware_storage_dir
+):
+    from production_pulse_app.infrastructure.persistence.repositories.postgres_device_repository import (
+        PostgresDeviceRepository,
+    )
+    from uuid import UUID
+
+    device = _create_device(client, ip=unique_ip, token="same-tok")
+    device_id = device["id"]
+    PostgresDeviceRepository().record_installed_firmware_version(
+        UUID(device_id), version="2.0.0"
+    )
+
+    published = client.post(
+        "/firmwares",
+        data={
+            "firmwareKey": "esp8266_counter_v1",
+            "driverKey": "esp8266_counter_v1",
+            "version": "2.0.0",
+            "displayName": "Same",
+            "publish": "true",
+        },
+        files={"file": ("same.bin", b"same-firmware", "application/octet-stream")},
+    )
+    assert published.status_code == 201, published.text
+    firmware_id = published.json()["data"]["id"]
+
+    job = client.post(
+        "/firmware-update-jobs",
+        json={
+            "firmwareId": firmware_id,
+            "branch": "01",
+            "trigger": "manual",
+            "filter": {
+                "onlyOutdated": True,
+                "deviceIds": [device_id],
+            },
+        },
+    )
+    assert job.status_code == 422, job.text
+    assert job.json()["error"]["code"] == "noEligibleDevices"
+
+
+def test_archived_firmware_rejected_for_new_job(client, unique_ip, firmware_storage_dir):
+    device = _create_device(client, ip=unique_ip, token="arch-tok")
+    published = client.post(
+        "/firmwares",
+        data={
+            "firmwareKey": "esp8266_counter_v1",
+            "driverKey": "esp8266_counter_v1",
+            "version": "3.0.0",
+            "displayName": "Arch",
+            "publish": "true",
+        },
+        files={"file": ("arch.bin", b"arch-firmware", "application/octet-stream")},
+    )
+    assert published.status_code == 201, published.text
+    firmware_id = published.json()["data"]["id"]
+
+    archived = client.post(f"/firmwares/{firmware_id}/archive")
+    assert archived.status_code == 200, archived.text
+
+    job = client.post(
+        "/firmware-update-jobs",
+        json={
+            "firmwareId": firmware_id,
+            "branch": "01",
+            "trigger": "manual",
+            "filter": {"onlyOutdated": False, "deviceIds": [device["id"]]},
+        },
+    )
+    assert job.status_code == 422, job.text
+    assert job.json()["error"]["code"] == "firmwareArchived"
+
+
+def test_draft_firmware_not_found_for_job(client, unique_ip, firmware_storage_dir):
+    device = _create_device(client, ip=unique_ip, token="draft-tok")
+    draft = client.post(
+        "/firmwares",
+        data={
+            "firmwareKey": "esp8266_counter_v1",
+            "driverKey": "esp8266_counter_v1",
+            "version": "3.1.0",
+            "displayName": "Draft",
+            "publish": "false",
+        },
+        files={"file": ("draft.bin", b"draft-firmware", "application/octet-stream")},
+    )
+    assert draft.status_code == 201, draft.text
+    firmware_id = draft.json()["data"]["id"]
+    assert draft.json()["data"]["publishedAt"] is None
+
+    job = client.post(
+        "/firmware-update-jobs",
+        json={
+            "firmwareId": firmware_id,
+            "branch": "01",
+            "trigger": "manual",
+            "filter": {"onlyOutdated": False, "deviceIds": [device["id"]]},
+        },
+    )
+    assert job.status_code in {404, 422}, job.text
+
+
+def test_scheduled_job_keeps_to_version_of_selected_firmware_id(
+    client, unique_ip, firmware_storage_dir
+):
+    from production_pulse_app.infrastructure.persistence.repositories.postgres_device_repository import (
+        PostgresDeviceRepository,
+    )
+    from uuid import UUID
+
+    device = _create_device(client, ip=unique_ip, token="sched-ver-tok")
+    device_id = device["id"]
+    PostgresDeviceRepository().record_installed_firmware_version(
+        UUID(device_id), version="1.0.0"
+    )
+
+    older = client.post(
+        "/firmwares",
+        data={
+            "firmwareKey": "esp8266_counter_v1",
+            "driverKey": "esp8266_counter_v1",
+            "version": "0.9.0",
+            "displayName": "Sched older",
+            "publish": "true",
+        },
+        files={"file": ("s0.bin", b"sched-old", "application/octet-stream")},
+    )
+    assert older.status_code == 201, older.text
+    older_id = older.json()["data"]["id"]
+
+    client.post(
+        "/firmwares",
+        data={
+            "firmwareKey": "esp8266_counter_v1",
+            "driverKey": "esp8266_counter_v1",
+            "version": "1.2.0",
+            "displayName": "Sched newer",
+            "publish": "true",
+        },
+        files={"file": ("s1.bin", b"sched-new", "application/octet-stream")},
+    )
+
+    future = (datetime.now(timezone.utc) + timedelta(hours=3)).isoformat()
+    job = client.post(
+        "/firmware-update-jobs",
+        json={
+            "firmwareId": older_id,
+            "branch": "01",
+            "trigger": "scheduled",
+            "scheduledAt": future,
+            "filter": {
+                "onlyOutdated": True,
+                "deviceIds": [device_id],
+            },
+        },
+    )
+    assert job.status_code == 201, job.text
+    assert job.json()["data"]["firmwareId"] == older_id
+    targets = client.get(f"/firmware-update-jobs/{job.json()['data']['id']}/targets")
+    item = targets.json()["data"]["items"][0]
+    assert item["toVersion"] == "0.9.0"
+    assert item["fromVersion"] == "1.0.0"
+
+
+def test_reconcile_after_downgrade_installed_matches_older_to_version(
+    client, unique_ip, firmware_storage_dir
+):
+    from production_pulse_app.application.services.firmware_update_job_service import (
+        FirmwareUpdateJobService,
+    )
+    from production_pulse_app.infrastructure.persistence.repositories.postgres_device_repository import (
+        PostgresDeviceRepository,
+    )
+    from uuid import UUID
+
+    device = _create_device(client, ip=unique_ip, token="reconcile-down-tok")
+    device_id = device["id"]
+    PostgresDeviceRepository().record_installed_firmware_version(
+        UUID(device_id), version="1.0.0"
+    )
+
+    older = client.post(
+        "/firmwares",
+        data={
+            "firmwareKey": "esp8266_counter_v1",
+            "driverKey": "esp8266_counter_v1",
+            "version": "0.1.3",
+            "displayName": "Reconcile older",
+            "publish": "true",
+        },
+        files={"file": ("r.bin", b"reconcile-old", "application/octet-stream")},
+    )
+    assert older.status_code == 201, older.text
+    older_id = older.json()["data"]["id"]
+
+    job = client.post(
+        "/firmware-update-jobs",
+        json={
+            "firmwareId": older_id,
+            "branch": "01",
+            "trigger": "manual",
+            "filter": {"onlyOutdated": True, "deviceIds": [device_id]},
+        },
+    )
+    assert job.status_code == 201, job.text
+    job_id = job.json()["data"]["id"]
+
+    PostgresDeviceRepository().record_installed_firmware_version(
+        UUID(device_id), version="0.1.3"
+    )
+    closed = FirmwareUpdateJobService().reconcile_device_installed_version(
+        UUID(device_id), "0.1.3"
+    )
+    assert closed is True
+
+    targets = client.get(f"/firmware-update-jobs/{job_id}/targets")
+    item = targets.json()["data"]["items"][0]
+    assert item["status"] == "updated"
+    assert item["toVersion"] == "0.1.3"

@@ -121,7 +121,7 @@ export function useProductionPulseOtaMonitor(
       const prior = prev.get(target.id);
 
       if (!prior && target.jobId && !seenJobCreatedRef.current.has(target.jobId)) {
-        // First sight of targets for a job — optional; create notice is owned by runFamilyJob.
+        // First sight of targets for a job — optional; create notice is owned by runFirmwareJob.
         seenJobCreatedRef.current.add(target.jobId);
       }
 

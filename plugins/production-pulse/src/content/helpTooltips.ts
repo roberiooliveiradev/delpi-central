@@ -278,6 +278,25 @@ export const PP_HELP = {
     deviceJobFailed: "Não foi possível criar a atualização OTA.",
     updateStartedTitle: "Atualização iniciada",
     updateStartedMessage: "A atualização OTA foi enviada para {count} IoT(s).",
+    rollbackStartedTitle: "Reversão iniciada",
+    upgradeConfirmTitle: "Confirmar atualização?",
+    upgradeConfirmBody:
+      "O IoT (ou a frota vinculada) receberá a versão selecionada. A direção é atualização (upgrade).",
+    upgradeConfirmLabel: "Atualizar",
+    rollbackConfirmTitle: "Confirmar reversão?",
+    rollbackConfirmBody:
+      "A versão selecionada é anterior à instalada. O mesmo motor OTA aplica o rollback — sem reinstalação forçada da mesma versão.",
+    rollbackConfirmLabel: "Reverter",
+    versionSwitchDeviceTitle: "Trocar versão do IoT",
+    versionSwitchFamilyTitle: "Trocar versão dos vinculados",
+    versionSwitchPickHint:
+      "Escolha uma versão publicada. Rascunho, arquivada ou igual à instalada ficam desabilitadas.",
+    versionPickerAria: "Versões de firmware da família",
+    versionPickerDraftHint: "Rascunho — publique antes de usar em OTA.",
+    versionPickerArchivedHint: "Arquivada — não entra em novos disparos.",
+    versionPickerSameHint: "Já é a versão instalada (reinstalação forçada fora do escopo).",
+    directionUpgrade: "Atualização",
+    directionDowngrade: "Reversão",
     updateCompletedTitle: "Atualização concluída",
     updateCompletedMessage: "{name} foi atualizado para a versão {version}.",
     alreadyInProgressTitle: "Atualização já em andamento",
@@ -421,8 +440,11 @@ export const PP_HELP = {
     softDeleteDriverConfirmLabel: "Arquivar tipo de driver",
     menuEditDevice: "Abre o formulário do IoT (rede, vínculo de posto, token) em modal.",
     menuRenameDevice: "Altera só o nome exibido do IoT, sem mudar IP ou vínculo.",
-    menuOtaDeviceNow: "Dispara OTA agora para este IoT (exige vínculo sólido ou família publicada compatível).",
-    menuOtaDeviceSchedule: "Agenda data/hora para autorizar o download OTA neste IoT.",
+    menuOtaDeviceNow:
+      "Dispara OTA agora para a versão mais recente publicada desta família (exige vínculo).",
+    menuOtaDeviceSwitch:
+      "Abre o seletor de versão para escolher upgrade ou rollback no mesmo motor OTA.",
+    menuOtaDeviceSchedule: "Escolhe a versão e agenda data/hora para autorizar o download OTA neste IoT.",
     menuUnlinkFirmware:
       "Remove o vínculo OTA explícito (assignedFirmwareKey). Compatibilidade de driver não gera linha no mapa.",
     menuDisableDevice: "Soft delete: desativa o IoT (filtro Inativos). Não apaga o cadastro.",
@@ -431,8 +453,11 @@ export const PP_HELP = {
     menuNewFirmwareVersion: "Cria nova versão na mesma família (nova release com sketch/bin).",
     menuOpenFirmwareVersion: "Abre o detalhe desta versão da família OTA.",
     summaryVersionsLabel: "Versões",
-    menuOtaFamilyNow: "Dispara OTA agora para os IoTs com vínculo explícito nesta família.",
-    menuOtaFamilySchedule: "Agenda OTA para os IoTs vinculados a esta família.",
+    menuOtaFamilyNow:
+      "Dispara OTA agora para a mais recente publicada nos IoTs com vínculo explícito nesta família.",
+    menuOtaFamilySwitch:
+      "Escolhe qualquer versão publicada e aplica nos IoTs vinculados (upgrade ou rollback).",
+    menuOtaFamilySchedule: "Escolhe a versão e agenda OTA para os IoTs vinculados a esta família.",
     menuArchiveFirmware:
       "Soft delete da versão: arquiva — sai de novos disparos; histórico permanece.",
     menuEditFirmwareDraft: "Continua o rascunho: identidade, sketch e binário.",

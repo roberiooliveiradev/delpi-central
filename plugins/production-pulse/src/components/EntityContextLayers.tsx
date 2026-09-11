@@ -5,6 +5,7 @@ import {
   FileCode,
   FilePenLine,
   FilePlus2,
+  History,
   Layers,
   Link2,
   Link2Off,
@@ -32,8 +33,11 @@ import { OtaTargetProgress } from "./ota/OtaTargetProgress";
 import { PP_HELP } from "../content/helpTooltips";
 import type { DeviceListItem } from "../types/device";
 import type { AdminEntityRef } from "../utils/adminHubUiState";
-import { firmwareLifecycleLabel as catalogLifecycleLabel } from "../utils/firmwareCatalogDisplay";
 import { firmwareSiblingsForFamily } from "../utils/firmwareCatalogGrouping";
+import {
+  formatFirmwareVersionMenuLabel,
+  resolveFirmwareVersionRowRoles,
+} from "../utils/firmwareVersionLabels";
 import { explicitFirmwareKey } from "../utils/firmwareLinkGraph";
 import { isPublishedFirmware } from "../utils/hubOtaKpis";
 import {
@@ -44,7 +48,7 @@ import {
 export { openFirmwareVersionAction, parseOpenFirmwareVersionAction } from "../utils/openFirmwareVersionAction";
 
 const POPOVER_SURFACE = "delpi-ui-popover-surface";
-const MAX_MENU_VERSIONS = 8;
+const MAX_SUMMARY_VERSIONS = 8;
 
 function deviceStatusLabel(device: DeviceListItem): string {
   if (device.status === "online") return "● Online";
@@ -60,11 +64,17 @@ function firmwareLifecycleLabel(firmware: FirmwareListItem | null | undefined): 
   return "Arquivado";
 }
 
-function versionMenuLabel(item: FirmwareListItem, currentId?: string): string {
-  const life = catalogLifecycleLabel(item.lifecycle);
-  const current = currentId && item.id === currentId ? " · atual" : "";
-  const archived = item.archivedAt ? " · arquivada" : "";
-  return `v${item.version} · ${life}${current}${archived}`;
+function versionRowLabel(
+  item: FirmwareListItem,
+  familyVersions: FirmwareListItem[],
+  selectedId?: string,
+): string {
+  const roles = resolveFirmwareVersionRowRoles({
+    item,
+    familyItems: familyVersions.length > 0 ? familyVersions : [item],
+    selectedId,
+  });
+  return formatFirmwareVersionMenuLabel(item, roles);
 }
 
 type EntitySummaryPopoverProps = {
@@ -239,21 +249,21 @@ export function EntitySummaryPopover({
                 <div className="pp-entity-summary__versions-label">
                   {PP_HELP.hub.summaryVersionsLabel}
                 </div>
-                {versions.map((item) => {
-                  const isCurrent = item.id === firmware?.id;
+                {versions.slice(0, MAX_SUMMARY_VERSIONS).map((item) => {
+                  const isSelected = item.id === firmware?.id;
                   return (
                     <button
                       key={item.id}
                       type="button"
                       role="listitem"
                       className={
-                        isCurrent
+                        isSelected
                           ? "pp-entity-summary__version pp-entity-summary__version--current"
                           : "pp-entity-summary__version"
                       }
                       onClick={() => onOpenVersion?.(item.id)}
                     >
-                      <span>{versionMenuLabel(item, firmware?.id)}</span>
+                      <span>{versionRowLabel(item, versions, firmware?.id)}</span>
                       <span aria-hidden="true">›</span>
                     </button>
                   );
@@ -297,49 +307,12 @@ type EntityActionMenuProps = {
   onAction: (action: string) => void;
 };
 
-function FirmwareVersionMenuItems({
-  firmware,
-  familyVersions,
-  onPick,
-}: {
-  firmware: FirmwareListItem;
-  familyVersions: FirmwareListItem[];
-  onPick: (firmwareId: string) => void;
-}) {
-  const versions =
-    familyVersions.length > 0
-      ? familyVersions
-      : firmwareSiblingsForFamily([firmware], firmware.firmwareKey);
-  if (versions.length <= 1) return null;
-
-  const visible = versions.slice(0, MAX_MENU_VERSIONS);
-  return (
-    <>
-      <ContextMenuDivider />
-      <div className="pp-entity-menu__section-label" role="presentation">
-        <Layers size={14} aria-hidden="true" />
-        {PP_HELP.hub.summaryVersionsLabel}
-      </div>
-      {visible.map((item) => (
-        <PpContextMenuItem
-          key={item.id}
-          label={versionMenuLabel(item, firmware.id)}
-          icon={FileCode}
-          hint={PP_HELP.hub.menuOpenFirmwareVersion}
-          onSelect={() => onPick(item.id)}
-        />
-      ))}
-    </>
-  );
-}
-
 export function EntityActionMenu({
   open,
   anchorEl,
   entity,
   device,
   firmware,
-  familyVersions = [],
   canManage,
   onClose,
   onAction,
@@ -395,10 +368,16 @@ export function EntityActionMenu({
           />
           <ContextMenuDivider />
           <PpContextMenuItem
-            label="Atualizar agora"
+            label="Atualizar para a mais recente"
             icon={RefreshCw}
             hint={PP_HELP.hub.menuOtaDeviceNow}
             onSelect={() => run("ota-now")}
+          />
+          <PpContextMenuItem
+            label="Trocar versão…"
+            icon={History}
+            hint={PP_HELP.hub.menuOtaDeviceSwitch}
+            onSelect={() => run("ota-switch")}
           />
           <PpContextMenuItem
             label="Agendar atualização…"
@@ -455,10 +434,11 @@ export function EntityActionMenu({
               hint={PP_HELP.hub.menuNewFirmwareVersion}
               onSelect={() => run("new-version")}
             />
-            <FirmwareVersionMenuItems
-              firmware={firmware}
-              familyVersions={familyVersions}
-              onPick={(id) => run(openFirmwareVersionAction(id))}
+            <PpContextMenuItem
+              label="Ver versões…"
+              icon={Layers}
+              hint={PP_HELP.hub.menuOpenFirmwareVersion}
+              onSelect={() => run("ota-versions")}
             />
             <ContextMenuDivider />
             <PpContextMenuItem
@@ -468,10 +448,16 @@ export function EntityActionMenu({
               onSelect={() => run("link")}
             />
             <PpContextMenuItem
-              label="Atualizar vinculados agora"
+              label="Atualizar vinculados para a mais recente"
               icon={RefreshCw}
               hint={PP_HELP.hub.menuOtaFamilyNow}
               onSelect={() => run("ota-now")}
+            />
+            <PpContextMenuItem
+              label="Trocar versão dos vinculados…"
+              icon={History}
+              hint={PP_HELP.hub.menuOtaFamilySwitch}
+              onSelect={() => run("ota-switch")}
             />
             <PpContextMenuItem
               label="Agendar atualização…"
@@ -514,10 +500,11 @@ export function EntityActionMenu({
               hint={PP_HELP.hub.menuPublishFirmware}
               onSelect={() => run("edit")}
             />
-            <FirmwareVersionMenuItems
-              firmware={firmware}
-              familyVersions={familyVersions}
-              onPick={(id) => run(openFirmwareVersionAction(id))}
+            <PpContextMenuItem
+              label="Ver versões…"
+              icon={Layers}
+              hint={PP_HELP.hub.menuOpenFirmwareVersion}
+              onSelect={() => run("ota-versions")}
             />
             <ContextMenuDivider />
             <PpContextMenuItem

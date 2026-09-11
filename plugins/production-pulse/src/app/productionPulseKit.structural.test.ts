@@ -170,6 +170,28 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/PP_HELP\.ota/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/PP_HELP\.otaLinks|PP_HELP\.hub/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/createFirmwareUpdateJob/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/runFirmwareJob/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(
+      /latestPublishedFirmwareForFamily/,
+    );
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/FirmwareVersionPicker/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).not.toMatch(/\brunFamilyJob\b/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).not.toMatch(
+      /publishedFirmwares\.find\(\(item\) => item\.firmwareKey === firmwareKey\)/,
+    );
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).not.toMatch(/ · atual/);
+    expect(readRelative("components/EntityContextLayers.tsx")).not.toMatch(/ · atual/);
+    expect(readRelative("components/firmware/FirmwareVersionPicker.tsx")).toMatch(
+      /role="radiogroup"/,
+    );
+    expect(readRelative("content/helpTooltips.ts")).toMatch(/menuOtaDeviceSwitch/);
+    expect(readRelative("content/helpTooltips.ts")).toMatch(/rollbackConfirmTitle/);
+    expect(readRelative("utils/latestPublishedFirmware.ts")).toMatch(
+      /latestPublishedFirmwareForFamily/,
+    );
+    expect(readRelative("utils/firmwareVersionDirection.ts")).toMatch(
+      /resolveFirmwareChangeDirection/,
+    );
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/reloadJobs\(\{\s*soft:\s*true/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/useProductionPulseOtaMonitor/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/OtaTargetProgress/);

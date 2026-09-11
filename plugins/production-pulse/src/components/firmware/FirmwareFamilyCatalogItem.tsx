@@ -16,6 +16,7 @@ type FirmwareFamilyCatalogItemProps = {
   onOpenVersionDetails: (firmwareId: string) => void;
   onNewVersion?: () => void;
   onUpdateLinked?: () => void;
+  onSwitchVersion?: () => void;
 };
 
 export function FirmwareFamilyCatalogItem({
@@ -25,6 +26,7 @@ export function FirmwareFamilyCatalogItem({
   onOpenVersionDetails,
   onNewVersion,
   onUpdateLinked,
+  onSwitchVersion,
 }: FirmwareFamilyCatalogItemProps) {
   const panelId = useId();
   const [expanded, setExpanded] = useState(family.defaultExpanded);
@@ -77,6 +79,11 @@ export function FirmwareFamilyCatalogItem({
           {canManage && family.latestPublished && onUpdateLinked ? (
             <PpActionButton variant="ghost" disabled={busy} onClick={onUpdateLinked}>
               Atualizar ligados
+            </PpActionButton>
+          ) : null}
+          {canManage && onSwitchVersion ? (
+            <PpActionButton variant="ghost" disabled={busy} onClick={onSwitchVersion}>
+              Trocar versão…
             </PpActionButton>
           ) : null}
         </div>

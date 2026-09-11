@@ -4,6 +4,7 @@ import type { FirmwareUpdateJob, FirmwareUpdateTarget } from "../../api/producti
 import { PpActionButton, PpOtaProgressBar } from "../../app/productionPulseUi";
 import { PP_HELP } from "../../content/helpTooltips";
 import { formatRelativeTime } from "../../utils/deviceDisplay";
+import { resolveFirmwareChangeDirection } from "../../utils/firmwareVersionDirection";
 import {
   jobStatusToOtaPhase,
   summarizeOtaJobTargets,
@@ -34,10 +35,24 @@ export function OtaJobListItem({
   const canCancel =
     canManage && ["draft", "scheduled", "running"].includes((job.status || "").toLowerCase());
 
+  const sample = targets.find((t) => t.fromVersion || t.toVersion);
+  const direction = sample
+    ? resolveFirmwareChangeDirection(sample.fromVersion, sample.toVersion)
+    : "unknown";
+  const directionBadge =
+    direction === "upgrade"
+      ? PP_HELP.ota.directionUpgrade
+      : direction === "downgrade"
+        ? PP_HELP.ota.directionDowngrade
+        : null;
+
   const metaParts: string[] = [triggerLabel];
   if (job.createdAt) metaParts.push(formatRelativeTime(job.createdAt));
   if (summary && summary.total > 0) {
     metaParts.push(`${summary.terminal} de ${summary.total} processados`);
+  }
+  if (sample?.fromVersion || sample?.toVersion) {
+    metaParts.push(`${sample.fromVersion ?? "—"} → ${sample.toVersion ?? "—"}`);
   }
 
   return (
@@ -46,7 +61,20 @@ export function OtaJobListItem({
         <div className="pp-ota-job-row__firmware">
           <FileCode size={16} aria-hidden className="pp-ota-job-row__fw-icon" />
           <div className="pp-ota-job-row__fw-text">
-            <span className="pp-ota-job-row__fw-label">{firmwareLabel}</span>
+            <span className="pp-ota-job-row__fw-label">
+              {firmwareLabel}
+              {directionBadge ? (
+                <span
+                  className={
+                    direction === "downgrade"
+                      ? "pp-ota-direction-badge pp-ota-direction-badge--downgrade"
+                      : "pp-ota-direction-badge pp-ota-direction-badge--upgrade"
+                  }
+                >
+                  {directionBadge}
+                </span>
+              ) : null}
+            </span>
             <span className="pp-ota-job-row__fw-meta">
               <TriggerIcon size={12} aria-hidden />
               {metaParts.join(" · ")}

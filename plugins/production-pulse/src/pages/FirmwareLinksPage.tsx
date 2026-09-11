@@ -65,7 +65,9 @@ import { OtaTargetProgress } from "../components/ota/OtaTargetProgress";
 import { useProductionPulseOtaMonitor } from "../hooks/useProductionPulseOtaMonitor";
 import { useViewportBucket } from "../hooks/useViewportBucket";
 import {
+  ArrowUp,
   Cpu,
+  History,
   Link2,
   Lock,
   LockOpen,
@@ -111,14 +113,17 @@ import {
   type LinkMode,
 } from "../utils/firmwareLinkGraph";
 import { groupFirmwareCatalogByFamily, firmwareSiblingsForFamily } from "../utils/firmwareCatalogGrouping";
+import { FirmwareVersionPicker } from "../components/firmware/FirmwareVersionPicker";
 import { isCompactViewport } from "../utils/viewportLayout";
 import {
   computeHubOtaKpis,
   EMPTY_HUB_OTA_KPIS,
   isPublishedFirmware,
 } from "../utils/hubOtaKpis";
+import { latestPublishedFirmwareForFamily } from "../utils/latestPublishedFirmware";
 import { replaceProductionPulse } from "../utils/navigation";
 import { summarizeOtaJobTargets } from "../utils/otaJobSummary";
+import { resolveFirmwareChangeDirection } from "../utils/firmwareVersionDirection";
 import {
   otaActiveNoticeId,
   otaJobCreatedNoticeId,
@@ -213,6 +218,14 @@ export function FirmwareLinksPage({
     deviceIds?: string[];
   } | null>(null);
   const [scheduledAt, setScheduledAt] = useState("");
+  const [versionSwitch, setVersionSwitch] = useState<{
+    firmwareKey: string;
+    deviceIds?: string[];
+    installedVersion: string | null;
+    selectedFirmwareId: string | null;
+    phase: "pick" | "confirm";
+    intent: "now" | "schedule";
+  } | null>(null);
   const viewport = useViewportBucket();
   const preferCollapsedChrome = isCompactViewport(viewport);
   const [hubChromeCollapsed, setHubChromeCollapsed] = useState(preferCollapsedChrome);
@@ -254,11 +267,6 @@ export function FirmwareLinksPage({
       message: `Firmware ${highlightFirmwareKey} publicado — ligue os IoTs no canvas.`,
     });
   }, [highlightFirmwareKey, pushNotice]);
-
-  const publishedFirmwares = useMemo(
-    () => firmwares.filter(isPublishedFirmware),
-    [firmwares],
-  );
 
   const families = useMemo(
     () => uniqueFirmwareFamilies(firmwares, devices),
@@ -632,14 +640,14 @@ export function FirmwareLinksPage({
     [dispatch, reloadDrivers],
   );
 
-  const runFamilyJob = useCallback(
-    async (
-      firmwareKey: string,
-      deviceIds?: string[],
-      opts?: { scheduledAt?: string },
-    ) => {
-      const match = publishedFirmwares.find((item) => item.firmwareKey === firmwareKey);
-      if (!match) {
+  const runFirmwareJob = useCallback(
+    async (args: {
+      firmwareId: string;
+      deviceIds?: string[];
+      scheduledAt?: string;
+    }) => {
+      const match = firmwareById.get(args.firmwareId);
+      if (!match || !isPublishedFirmware(match)) {
         pushNotice({
           variant: "warning",
           title: PP_HELP.ota.noEligibleTitle,
@@ -648,6 +656,7 @@ export function FirmwareLinksPage({
         return;
       }
 
+      const deviceIds = args.deviceIds;
       const isSingleDevice = deviceIds?.length === 1;
       const singleDeviceId = isSingleDevice ? deviceIds![0] : undefined;
       if (isSingleDevice && singleDeviceId) {
@@ -677,14 +686,13 @@ export function FirmwareLinksPage({
       let filterDeviceIds = deviceIds;
       let skippedActive = 0;
       if (!isSingleDevice) {
-        const family = families.find((item) => item.firmwareKey === firmwareKey);
         const candidates =
           deviceIds ??
           devices
-            .filter((device) => device.assignedFirmwareKey === firmwareKey)
+            .filter((device) => device.assignedFirmwareKey === match.firmwareKey)
             .filter((device) => {
               const installed = device.installedFirmwareVersion?.trim() || null;
-              return installed !== (family?.latestVersion ?? null);
+              return installed !== match.version;
             })
             .map((device) => device.id);
 
@@ -720,6 +728,15 @@ export function FirmwareLinksPage({
         }
       }
 
+      const referenceInstalled =
+        isSingleDevice && singleDeviceId
+          ? devices.find((d) => d.id === singleDeviceId)?.installedFirmwareVersion
+          : null;
+      const direction = resolveFirmwareChangeDirection(
+        referenceInstalled,
+        match.version,
+      );
+
       setBusy(true);
       try {
         const filter: Record<string, unknown> = {
@@ -730,16 +747,20 @@ export function FirmwareLinksPage({
         const job = await createFirmwareUpdateJob({
           firmwareId: match.id,
           branch,
-          trigger: opts?.scheduledAt ? "scheduled" : "manual",
-          scheduledAt: opts?.scheduledAt,
+          trigger: args.scheduledAt ? "scheduled" : "manual",
+          scheduledAt: args.scheduledAt,
           filter,
         });
         await reloadJobs({ soft: true });
+        const directionTitle =
+          direction === "downgrade"
+            ? PP_HELP.ota.rollbackStartedTitle
+            : PP_HELP.ota.updateStartedTitle;
         if (filterDeviceIds?.length) {
           pushNotice({
             id: otaJobCreatedNoticeId(job.id),
             variant: "success",
-            title: PP_HELP.ota.updateStartedTitle,
+            title: directionTitle,
             message: PP_HELP.ota.updateStartedMessage.replace(
               "{count}",
               String(filterDeviceIds.length),
@@ -749,7 +770,7 @@ export function FirmwareLinksPage({
           pushNotice({
             id: otaJobCreatedNoticeId(job.id),
             variant: "success",
-            title: PP_HELP.ota.updateStartedTitle,
+            title: directionTitle,
             message: PP_HELP.ota.deviceJobCreated,
           });
         }
@@ -785,10 +806,9 @@ export function FirmwareLinksPage({
     [
       branch,
       devices,
-      families,
+      firmwareById,
       openJobDetails,
       openPanel,
-      publishedFirmwares,
       pushNotice,
       reloadJobs,
     ],
@@ -801,8 +821,8 @@ export function FirmwareLinksPage({
       if (!device) return;
       const key = device.firmwareKey || device.assignedFirmwareKey || device.driverKey;
       const match =
-        publishedFirmwares.find((item) => item.firmwareKey === key) ||
-        publishedFirmwares.find((item) => item.driverKey === device.driverKey);
+        latestPublishedFirmwareForFamily(firmwares, key) ||
+        latestPublishedFirmwareForFamily(firmwares, device.driverKey);
       if (!match) {
         pushNotice({
           variant: "warning",
@@ -811,17 +831,45 @@ export function FirmwareLinksPage({
         });
         return;
       }
-      await runFamilyJob(match.firmwareKey, [deviceId]);
+      await runFirmwareJob({ firmwareId: match.id, deviceIds: [deviceId] });
     },
-    [canManage, devices, publishedFirmwares, pushNotice, runFamilyJob],
+    [canManage, devices, firmwares, pushNotice, runFirmwareJob],
   );
 
   const handleUpdateFamily = useCallback(
     async (firmwareKey: string) => {
       if (!canManage) return;
-      await runFamilyJob(firmwareKey);
+      const match = latestPublishedFirmwareForFamily(firmwares, firmwareKey);
+      if (!match) {
+        pushNotice({
+          variant: "warning",
+          title: PP_HELP.ota.noEligibleTitle,
+          message: PP_HELP.ota.noPublishedFirmware,
+        });
+        return;
+      }
+      await runFirmwareJob({ firmwareId: match.id });
     },
-    [canManage, runFamilyJob],
+    [canManage, firmwares, pushNotice, runFirmwareJob],
+  );
+
+  const openVersionSwitch = useCallback(
+    (args: {
+      firmwareKey: string;
+      deviceIds?: string[];
+      installedVersion?: string | null;
+      intent?: "now" | "schedule";
+    }) => {
+      setVersionSwitch({
+        firmwareKey: args.firmwareKey,
+        deviceIds: args.deviceIds,
+        installedVersion: args.installedVersion ?? null,
+        selectedFirmwareId: null,
+        phase: "pick",
+        intent: args.intent ?? "now",
+      });
+    },
+    [],
   );
 
   const openConfirm = useCallback(
@@ -969,19 +1017,24 @@ export function FirmwareLinksPage({
         await handleUpdateDevice(device.id);
         return;
       }
+      if (action === "ota-switch") {
+        const key = device.assignedFirmwareKey || device.firmwareKey || device.driverKey;
+        openVersionSwitch({
+          firmwareKey: key,
+          deviceIds: [device.id],
+          installedVersion: device.installedFirmwareVersion ?? null,
+          intent: "now",
+        });
+        return;
+      }
       if (action === "ota-schedule") {
         const key = device.assignedFirmwareKey || device.firmwareKey || device.driverKey;
-        const match = publishedFirmwares.find((item) => item.firmwareKey === key);
-        if (!match) {
-          pushNotice({
-            variant: "warning",
-            title: PP_HELP.ota.noEligibleTitle,
-            message: PP_HELP.ota.noPublishedFirmware,
-          });
-          return;
-        }
-        setScheduleContext({ firmwareId: match.id, deviceIds: [device.id] });
-        openModal("ota-schedule", { type: "device", id: device.id });
+        openVersionSwitch({
+          firmwareKey: key,
+          deviceIds: [device.id],
+          installedVersion: device.installedFirmwareVersion ?? null,
+          intent: "schedule",
+        });
         return;
       }
       if (action === "unlink") {
@@ -1041,9 +1094,24 @@ export function FirmwareLinksPage({
         await handleUpdateFamily(fw.firmwareKey);
         return;
       }
+      if (action === "ota-switch") {
+        openVersionSwitch({
+          firmwareKey: fw.firmwareKey,
+          installedVersion: null,
+          intent: "now",
+        });
+        return;
+      }
+      if (action === "ota-versions") {
+        openModal("firmware-detail", { type: "firmware", id: fw.id });
+        return;
+      }
       if (action === "ota-schedule") {
-        setScheduleContext({ firmwareId: fw.id });
-        openModal("ota-schedule", { type: "firmware", id: fw.id });
+        openVersionSwitch({
+          firmwareKey: fw.firmwareKey,
+          installedVersion: null,
+          intent: "schedule",
+        });
         return;
       }
       if (action === "archive") {
@@ -1616,13 +1684,14 @@ export function FirmwareLinksPage({
             disabled={!scheduledAt || !scheduleContext}
             onClick={() => {
               if (!scheduleContext) return;
-              const fw = firmwareById.get(scheduleContext.firmwareId);
-              if (!fw) return;
-              void runFamilyJob(fw.firmwareKey, scheduleContext.deviceIds, {
+              void runFirmwareJob({
+                firmwareId: scheduleContext.firmwareId,
+                deviceIds: scheduleContext.deviceIds,
                 scheduledAt,
               }).then(() => {
                 setScheduleContext(null);
                 setScheduledAt("");
+                closeLayers();
               });
             }}
           >
@@ -1630,6 +1699,135 @@ export function FirmwareLinksPage({
           </PpActionButton>
         </div>
       </PpHostContainedDialog>
+
+      <PpHostContainedDialog
+        open={Boolean(versionSwitch && versionSwitch.phase === "pick")}
+        title={
+          versionSwitch?.deviceIds?.length === 1
+            ? PP_HELP.ota.versionSwitchDeviceTitle
+            : PP_HELP.ota.versionSwitchFamilyTitle
+        }
+        onClose={() => setVersionSwitch(null)}
+      >
+        <p className="pp-muted">{PP_HELP.ota.versionSwitchPickHint}</p>
+        {versionSwitch ? (
+          <FirmwareVersionPicker
+            versions={firmwareSiblingsForFamily(firmwares, versionSwitch.firmwareKey)}
+            installedVersion={versionSwitch.installedVersion}
+            selectedId={versionSwitch.selectedFirmwareId}
+            onSelect={(firmwareId) => {
+              if (versionSwitch.intent === "schedule") {
+                setScheduleContext({
+                  firmwareId,
+                  deviceIds: versionSwitch.deviceIds,
+                });
+                setVersionSwitch(null);
+                openModal(
+                  "ota-schedule",
+                  versionSwitch.deviceIds?.length === 1
+                    ? { type: "device", id: versionSwitch.deviceIds[0] }
+                    : { type: "firmware", id: firmwareId },
+                );
+                return;
+              }
+              setVersionSwitch({
+                ...versionSwitch,
+                selectedFirmwareId: firmwareId,
+                phase: "confirm",
+              });
+            }}
+          />
+        ) : null}
+        <div className="pp-inline-actions">
+          <PpActionButton variant="ghost" onClick={() => setVersionSwitch(null)}>
+            Cancelar
+          </PpActionButton>
+        </div>
+      </PpHostContainedDialog>
+
+      {(() => {
+        if (!versionSwitch || versionSwitch.phase !== "confirm" || !versionSwitch.selectedFirmwareId) {
+          return null;
+        }
+        const dest = firmwareById.get(versionSwitch.selectedFirmwareId);
+        if (!dest) return null;
+        const direction = resolveFirmwareChangeDirection(
+          versionSwitch.installedVersion,
+          dest.version,
+        );
+        const isRollback = direction === "downgrade";
+        return (
+          <PpConfirmDialog
+            open
+            title={
+              isRollback
+                ? PP_HELP.ota.rollbackConfirmTitle
+                : PP_HELP.ota.upgradeConfirmTitle
+            }
+            message={
+              <div className="pp-ota-version-confirm">
+                <p className="pp-ota-version-confirm__direction">
+                  {isRollback ? (
+                    <History size={18} aria-hidden />
+                  ) : (
+                    <ArrowUp size={18} aria-hidden />
+                  )}
+                  <span>
+                    {isRollback
+                      ? PP_HELP.ota.rollbackConfirmBody
+                      : PP_HELP.ota.upgradeConfirmBody}
+                  </span>
+                </p>
+                <dl className="pp-definition-list">
+                  <div>
+                    <dt>Instalada</dt>
+                    <dd>
+                      <code>{versionSwitch.installedVersion ?? "—"}</code>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Selecionada</dt>
+                    <dd>
+                      <code>{dest.version}</code>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Mais recente</dt>
+                    <dd>
+                      <code>
+                        {latestPublishedFirmwareForFamily(
+                          firmwares,
+                          versionSwitch.firmwareKey,
+                        )?.version ?? "—"}
+                      </code>
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            }
+            confirmLabel={
+              isRollback
+                ? PP_HELP.ota.rollbackConfirmLabel
+                : PP_HELP.ota.upgradeConfirmLabel
+            }
+            cancelLabel="Voltar"
+            variant="default"
+            confirmBusy={busy}
+            onConfirm={() => {
+              const firmwareId = versionSwitch.selectedFirmwareId!;
+              const deviceIds = versionSwitch.deviceIds;
+              setVersionSwitch(null);
+              void runFirmwareJob({ firmwareId, deviceIds });
+            }}
+            onCancel={() =>
+              setVersionSwitch({
+                ...versionSwitch,
+                phase: "pick",
+              })
+            }
+          />
+        );
+      })()}
 
       <PpDetailDialog
         open={ui.openLayer === "panel" && ui.panel === "firmwares"}
@@ -1672,6 +1870,16 @@ export function FirmwareLinksPage({
                   onUpdateLinked={
                     family.latestPublished
                       ? () => void handleUpdateFamily(family.firmwareKey)
+                      : undefined
+                  }
+                  onSwitchVersion={
+                    canManage
+                      ? () =>
+                          openVersionSwitch({
+                            firmwareKey: family.firmwareKey,
+                            installedVersion: null,
+                            intent: "now",
+                          })
                       : undefined
                   }
                 />

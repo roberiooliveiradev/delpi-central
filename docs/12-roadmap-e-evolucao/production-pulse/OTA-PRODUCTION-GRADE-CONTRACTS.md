@@ -21,7 +21,7 @@ Documento de evidência para o plano hub OTA. Não substitui SCHEMA.md / API-ROU
 | Spec / UI | Código |
 |---|---|
 | Token one-time | TTL + re-check regenera token |
-| Semver / anti-downgrade | igualdade string + `onlyOutdated` |
+| Semver / anti-downgrade | igualdade string + `onlyOutdated` (downgrade permitido; UX marca Reversão) |
 | `min_compatible_version` | persistido, não lido na elegibilidade |
 | Job `completed` | CHECK existe; writer `maybe_finish_job` |
 | Progresso `authorized = 5%` | removido — fase sem % fake |
