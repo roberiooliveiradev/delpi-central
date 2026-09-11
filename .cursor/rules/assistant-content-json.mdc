@@ -58,6 +58,32 @@ provider selector
 
 Se o fato pode ser lido do Action Catalog/OpenAPI, não deve existir segunda fonte no conteúdo do assistente.
 
+## Regra de equivalência semântica
+
+A proibição é conceitual, não depende do formato do arquivo.
+
+Se um catálogo técnico removido do JSON reaparece em Python/TypeScript como `dict`, tuple, lista, regex, chain de `if`, prefix map, path-tail ou operationId-tail, **o cleanup falhou**.
+
+Exemplos proibidos:
+
+```text
+pathMarkers JSON
+→ _DOMAIN_RULES com fragments de path em Python
+
+parameterStrategy JSON
+→ if "/products/" in path: "product_code"
+
+routeSegment JSON
+→ derivar continuidade de path/operationId conhecidos
+
+catalogToken técnico
+→ tabela Python token→endpoint/domain
+```
+
+Do mesmo modo, mover hardcode Python/TS para JSON não o torna válido.
+
+Ao apagar chave/catálogo técnico, a etapa deve procurar substitutos semânticos em runtime, generators, fixtures, scripts, CI e docs antes de declarar cleanup concluído.
+
 ## Vocabulário vs contrato
 
 Válido:
@@ -79,6 +105,8 @@ Inválido:
 ```
 
 quando apenas copia o OpenAPI.
+
+Vocabulário empresarial não deve ser usado como catálogo indireto de endpoints. Se adicionar um termo exige também escolher `pathToken`, operationId, routeId ou parameter strategy conhecido, presumir acoplamento técnico e reavaliar o ownership.
 
 ## Regex e thresholds
 
@@ -111,6 +139,21 @@ contrato técnico/discovery da action → OpenAPI + index
 
 A descoberta semântica deve usar documento gerado do contrato importado, não uma lista manual de endpoints.
 
+## Cleanup de conteúdo
+
+Antes de marcar um nó como `DELETE_AFTER_CUTOVER`:
+
+1. localizar todos os consumers/fallbacks/generators/tests/docs;
+2. provar qual fonte canônica o substitui;
+3. fazer o cutover do consumer real;
+4. provar positive/sibling/negative;
+5. provar generalização quando o conceito afeta tools/inteligência;
+6. apagar o legado;
+7. executar busca residual semântica;
+8. atualizar docs/evidence no HEAD final.
+
+`arquivo apagado` ou `chave ausente` não é Definition of Done se a mesma autoridade foi recriada em outro lugar.
+
 ## O que NÃO fazer
 
 - Copiar frase/regex/threshold em vários serviços.
@@ -119,7 +162,9 @@ A descoberta semântica deve usar documento gerado do contrato importado, não u
 - Duplicar OpenAPI em JSON.
 - Criar markers/strategies como onboarding normal de API.
 - Resolver bug de routing adicionando endpoint conhecido ao vocabulário técnico.
-- Mover hardcode Python para JSON para passar gate/teste.
+- Mover hardcode Python/TS para JSON para passar gate/teste.
+- Mover hardcode JSON para Python/TS para passar gate/teste.
+- Considerar `0 forbidden keys` como prova suficiente de `0 lateral maps`.
 
 ## Nova feature
 
@@ -128,8 +173,10 @@ A descoberta semântica deve usar documento gerado do contrato importado, não u
 3. Metadata/action contract → OpenAPI/importer/Action Catalog.
 4. Estender loader canônico quando necessário.
 5. Cobrir com testes.
-6. Mudança de routing segue `ai-intelligence-evaluation.mdc`; se afetar tools, provar API externa desconhecida.
+6. Mudança de routing segue `ai-intelligence-evaluation.mdc`; se afetar tools, provar API externa desconhecida no candidate final.
 
 ## Revisão de PR
 
 Se `assistant/*.json` adiciona path, operationId, args, schema ou marker específico de endpoint, presumir drift arquitetural e rejeitar salvo prova explícita de que o dado é linguagem/policy transversal e não replica contrato.
+
+Se um diff remove esses campos do JSON mas adiciona lógica equivalente no código, **rejeitar pelo mesmo motivo**.
