@@ -88,6 +88,15 @@ class Settings:
     PP_OTA_TARGET_STALE_SECONDS: int = int(
         _get_env("PP_OTA_TARGET_STALE_SECONDS", default="3600") or "3600"
     )
+    # Base URL reachable by IoT devices for /device-ota/* (industrial LAN; often HTTP).
+    PP_DEVICE_OTA_BASE_URL: str = _get_env(
+        "PP_DEVICE_OTA_BASE_URL",
+        default="",
+    ) or ""
+    # Default OTA pull interval pushed to devices via configure (ms).
+    PP_DEVICE_OTA_CHECK_INTERVAL_MS: int = int(
+        _get_env("PP_DEVICE_OTA_CHECK_INTERVAL_MS", default="60000") or "60000"
+    )
 
 
 def _optional_positive_int(raw: str | None) -> int | None:

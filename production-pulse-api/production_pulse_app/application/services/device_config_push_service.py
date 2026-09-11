@@ -6,12 +6,28 @@ from production_pulse_app.application.services.device_driver_registry_service im
     DeviceDriverNotImplementedError,
     get_device_driver_registry,
 )
+from production_pulse_app.config import settings
 from production_pulse_app.domain.services.device_config_payload_service import (
     build_configure_http_payload,
 )
 from production_pulse_app.infrastructure.content.device_api_messages_content_service import (
     device_config_push_message,
 )
+
+
+def resolve_device_ota_base_url() -> str:
+    """Canonical OTA API base for IoT devices (no trailing slash)."""
+    raw = (settings.PP_DEVICE_OTA_BASE_URL or "").strip()
+    if raw:
+        return raw.rstrip("/")
+    # Fallback: PUBLIC_BASE_URL + API root (may be unreachable from shop floor — prefer PP_DEVICE_OTA_BASE_URL).
+    public = (settings.PUBLIC_BASE_URL or "").strip().rstrip("/")
+    root = (settings.PRODUCTION_PULSE_API_ROOT_PATH or "").strip()
+    if not root.startswith("/"):
+        root = f"/{root}" if root else ""
+    if public:
+        return f"{public}{root}".rstrip("/")
+    return root.rstrip("/") if root else ""
 
 
 class DeviceConfigPushService:
@@ -25,6 +41,7 @@ class DeviceConfigPushService:
         device_row: dict[str, Any],
         *,
         request_payload: dict[str, Any],
+        force_ota_provision: bool = True,
     ) -> dict[str, Any]:
         configure_body = build_configure_http_payload(
             {
@@ -52,6 +69,9 @@ class DeviceConfigPushService:
         if "apiToken" not in configure_body and device_row.get("device_api_token"):
             if "apiToken" in request_payload or "api_token" in request_payload:
                 configure_body["apiToken"] = str(device_row["device_api_token"])
+
+        if force_ota_provision:
+            self._merge_ota_provision_fields(configure_body, device_row)
 
         if not configure_body:
             return {
@@ -95,5 +115,20 @@ class DeviceConfigPushService:
             "errorCode": result.error_code,
         }
 
+    @staticmethod
+    def _merge_ota_provision_fields(
+        configure_body: dict[str, Any],
+        device_row: dict[str, Any],
+    ) -> None:
+        ota_base = resolve_device_ota_base_url()
+        if ota_base:
+            configure_body["otaBaseUrl"] = ota_base
+        branch = str(device_row.get("branch") or "").strip()
+        if branch:
+            configure_body["branch"] = branch
+        interval = int(settings.PP_DEVICE_OTA_CHECK_INTERVAL_MS or 60000)
+        if interval >= 1000:
+            configure_body["otaCheckIntervalMs"] = interval
 
-__all__ = ["DeviceConfigPushService"]
+
+__all__ = ["DeviceConfigPushService", "resolve_device_ota_base_url"]

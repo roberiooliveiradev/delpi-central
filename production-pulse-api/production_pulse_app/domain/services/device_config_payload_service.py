@@ -31,6 +31,24 @@ def build_configure_http_payload(payload: dict[str, Any] | None) -> dict[str, An
         except (TypeError, ValueError):
             pass
 
+    if "otaBaseUrl" in payload:
+        ota_base = payload.get("otaBaseUrl")
+        if ota_base is not None and str(ota_base).strip():
+            body["otaBaseUrl"] = str(ota_base).strip().rstrip("/")
+
+    if "branch" in payload:
+        branch = payload.get("branch")
+        if branch is not None and str(branch).strip():
+            body["branch"] = str(branch).strip()
+
+    if "otaCheckIntervalMs" in payload:
+        try:
+            interval = int(payload.get("otaCheckIntervalMs"))
+            if interval >= 1000:
+                body["otaCheckIntervalMs"] = interval
+        except (TypeError, ValueError):
+            pass
+
     return body
 
 

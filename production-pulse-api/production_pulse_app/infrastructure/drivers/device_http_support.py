@@ -217,4 +217,18 @@ def parse_device_config_response(body: Any) -> dict[str, Any]:
         payload["apiTokenSet"] = bool(body.get("apiTokenSet"))
     if "wifiConfigured" in body:
         payload["wifiConfigured"] = bool(body.get("wifiConfigured"))
+    ota_base = body.get("otaBaseUrl")
+    if ota_base is not None and str(ota_base).strip():
+        payload["otaBaseUrl"] = str(ota_base).strip()
+        payload["otaBaseUrlConfigured"] = True
+    elif "otaBaseUrlConfigured" in body:
+        payload["otaBaseUrlConfigured"] = bool(body.get("otaBaseUrlConfigured"))
+    branch = body.get("branch")
+    if branch is not None and str(branch).strip():
+        payload["branch"] = str(branch).strip()
+    if "otaCheckIntervalMs" in body:
+        try:
+            payload["otaCheckIntervalMs"] = int(body.get("otaCheckIntervalMs"))
+        except (TypeError, ValueError):
+            pass
     return payload
