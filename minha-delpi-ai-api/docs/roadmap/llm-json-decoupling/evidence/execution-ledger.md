@@ -154,6 +154,7 @@ J-R12 novo candidate final + R1–R11 + residual + COMPLETE_GATE
 | 2026-09-11 | **J-R5 ATENDIDO** — metamorphic provider/path/operationId rename com outcome equivalente; `METAMORPHIC_PROVIDER_PATH_OPERATION_ID_RENAME=PASS` |
 | 2026-09-11 | **J-R6 ATENDIDO** — scanner não silencia por cleanupMeta; 84 findings estruturais reaparecem; `ARCHITECTURE_GATE_INDEPENDENT=PASS` |
 | 2026-09-11 | **J-R7 ATENDIDO** — affinity sem path `/products|search|supplier`; facets via catalog metadata; `NO_PATH_SEMANTIC_AFFINITY=PASS` |
+| 2026-09-11 | **J-R8 ATENDIDO** — operationIds manuais esvaziados; method/pathPrefix removidos; autoTierC CI `JUSTIFIED_NON_SEMANTIC`; `TECHNICAL_PARALLEL_REGISTRY`/`ASSISTANT_CONTENT_TECHNICAL_DUPLICATION=0` |
 
 ## 8. Proibições vigentes
 
@@ -168,6 +169,6 @@ J-R12 novo candidate final + R1–R11 + residual + COMPLETE_GATE
 
 ## 9. Próximo desbloqueio
 
-**J-R1…J-R7 ATENDIDOS.** Próxima etapa obrigatória: **J-R8** (cleanup registry/content técnico duplicado).
+**J-R1…J-R8 ATENDIDOS.** Próxima etapa obrigatória: **J-R9** (semantic single owner).
 
 `J-R12` permanece bloqueado até J-R1…J-R11 com COMPLETE_GATE.

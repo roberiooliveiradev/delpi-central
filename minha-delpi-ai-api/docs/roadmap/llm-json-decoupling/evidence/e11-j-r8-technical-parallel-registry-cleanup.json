@@ -1,0 +1,19 @@
+{
+  "step": "J-R8",
+  "gate": "TECHNICAL_PARALLEL_REGISTRY",
+  "completeGate": "PASS",
+  "assistantContentTechnicalDuplication": 0,
+  "semanticTechnicalOperationIdCatalog": 0,
+  "manualRegistryOperationIdsEmptied": true,
+  "domainsMethodsRemoved": 22,
+  "pathPrefixToDepartmentIdRemoved": true,
+  "autoTierC": {
+    "classification": "JUSTIFIED_NON_SEMANTIC",
+    "operationCount": 503,
+    "runtimeAuthority": false,
+    "note": "CI presentation/coverage mirror only"
+  },
+  "auditCommand": "python3 scripts/ci/audit_architecture_phase3.py --check-semantic-debt",
+  "auditTotalsByRule": {},
+  "next": "J-R9"
+}
