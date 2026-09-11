@@ -29,7 +29,7 @@ OpenAPI importado
 - **Planner:** decomposição e escolha estruturada entre candidates.
 - **Validator:** required/type/enum/format/path/query/body.
 - **Policy:** RBAC, sensitivity e confirmation.
-- **JSON do assistente:** linguagem/UX/policy transversal, nunca catálogo de endpoints.
+- **JSON do assistente:** linguagem/UX/policy transversal, caps e vocabulário — **nunca** mapa lateral de rotas (`pathMarkers`, pathContains, pathToken de catálogo paralelo, `routeFamily`, `pathClass`, `capabilityGroup` por endpoint). Path/operation/domínio operacional vêm só do OpenAPI + Action Catalog (`planos/10-zero-lateral-path-maps.md`).
 - **Executor:** apenas provider/action persistidos e autorizados.
 - **Presentation:** fallback schema-driven, perfil especializado opcional.
 

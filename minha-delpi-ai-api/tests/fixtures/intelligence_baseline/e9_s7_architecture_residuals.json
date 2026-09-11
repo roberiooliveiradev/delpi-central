@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "step": "E9.S7",
   "program": "llm-json-decoupling",
-  "evaluatedAt": "2026-09-10",
+  "evaluatedAt": "2026-09-11",
   "deleteGateRef": "tests/fixtures/intelligence_baseline/e9_s6_cleanup_gates.json",
   "deleteAuthorized": false,
   "residuals": [
@@ -19,10 +19,12 @@
         "app/application/services/external_actions/operational_route_selection/operational_route_action_resolver_service.py"
       ],
       "disposition": "REMOVED",
-      "justification": "E9.S12.C — pathMarkers/exclude/suffix/exactEnd removidos; binding canônico route.operationIds (OpenAPI exact).",
+      "justification": "E9.S12.C — pathMarkers removidos do registry operacional (authority=operationIds). Mapas laterais em api_route_domains/factual/enrichment/responses permanecem — Onda I / plano 10 (REMOVE_REQUIRED).",
       "inCoreGenericSelection": false,
       "deletedAt": "E9.S12.C",
-      "replacement": "route.operationIds"
+      "replacement": "route.operationIds",
+      "lateralMapsRemaining": true,
+      "followUpPlan": "planos/10-zero-lateral-path-maps.md"
     },
     {
       "id": "operationIdMarkers",
@@ -63,9 +65,10 @@
       "coreConsumers": [
         "app/domain/services (department KPI matching)"
       ],
-      "disposition": "JUSTIFIED_POLICY",
-      "justification": "Matching de KPI por token de path do payload operacional — policy de domínio financeiro/fabril, não seletor genérico de actions OpenAPI. Fora do core de tool routing.",
-      "inCoreGenericSelection": false
+      "disposition": "REMOVE_REQUIRED",
+      "justification": "POLICY 2026-09-11: nenhum mapa lateral. pathToken/pathContains em KPI devem migrar para operationId/actionId/tags OpenAPI (Onda I / E10.S4). JUSTIFIED_POLICY revogada.",
+      "inCoreGenericSelection": false,
+      "followUpPlan": "planos/10-zero-lateral-path-maps.md"
     },
     {
       "id": "routeHints",
@@ -130,6 +133,26 @@
       "justification": "E9.S12.A — campos JSON deletados; authority permanente follow_up_type→routeSegment; APIs observer retornam vazio/None.",
       "inCoreGenericSelection": false,
       "deletedAt": "E9.S12.A"
+    },
+    {
+      "id": "lateral_path_maps",
+      "surfaces": [
+        "app/content/pt-BR/assistant/api_route_domains.json",
+        "app/content/pt-BR/assistant/operational_factual_verdict.json",
+        "app/content/pt-BR/assistant/operational_sufficiency_critic.json",
+        "app/content/pt-BR/assistant/product_enrichment_composition.json",
+        "app/content/pt-BR/assistant/external_action_responses.json",
+        "app/content/pt-BR/assistant/openapi_tool_routing.json"
+      ],
+      "coreConsumers": [
+        "app/domain/services/chat_operational_api_domain_service.py",
+        "app/application/services/external_actions/external_action_route_selection_service.py"
+      ],
+      "disposition": "REMOVE_REQUIRED",
+      "justification": "POLICY 2026-09-11: NENHUM MAPA LATERAL. pathMarkers laterais não são authority OpenAPI-first aceitável — domínio/labels via Action Catalog/OpenAPI tags. Plano 10 / Onda I.",
+      "inCoreGenericSelection": false,
+      "followUpPlan": "planos/10-zero-lateral-path-maps.md"
     }
-  ]
+  ],
+  "policyNote": "Zero lateral path maps (Onda I). JUSTIFIED_POLICY for path maps revoked."
 }

@@ -1,6 +1,6 @@
 # Desacoplamento de JSONs + inteligência LLM — Minha DELPI AI
 
-**Status:** **ARQUIVADO** · Ondas A–H ATENDIDAS · `globalReleasePass=true` · débitos opcionais fechados · ver [`ARCHIVED.md`](./ARCHIVED.md)  
+**Status:** Ondas A–H **ATENDIDAS** · **Onda I EM_ANDAMENTO** (zero mapa lateral) · via [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) · ver [`ARCHIVED.md`](./ARCHIVED.md)  
 **Escopo:** `minha-delpi-ai-api/app/content` + consumidores runtime relacionados  
 **Objetivo:** remover acoplamentos técnicos e linguísticos que impedem o chat de generalizar para novas APIs, novos domínios e formulações de linguagem natural sem manutenção rota a rota.
 
@@ -26,6 +26,15 @@ copy / UX / prompt
 
 O LLM interpreta intenção e contexto. O OpenAPI define contrato. O validator valida argumentos. RBAC/policy decide autorização. O executor usa somente actions persistidas e permitidas.
 
+### Invariante — zero mapa lateral (Onda I)
+
+```text
+NENHUM MAPA LATERAL DEVE EXISTIR.
+```
+
+Informação de rota/operation **não** pode viver em JSON paralelo (`pathMarkers`, pathContains, pathToken de catálogo lateral). Vem do **OpenAPI indexado / Action Catalog**. Ver [`planos/10-zero-lateral-path-maps.md`](./planos/10-zero-lateral-path-maps.md).
+
+
 ## Documentos
 
 | Documento | Finalidade |
@@ -41,6 +50,7 @@ O LLM interpreta intenção e contexto. O OpenAPI define contrato. O validator v
 | [`planos/07-presentation-schema-first-residuals.md`](./planos/07-presentation-schema-first-residuals.md) | Residuais de apresentação path/entity. |
 | [`planos/08-skills-content-residual-catalogs.md`](./planos/08-skills-content-residual-catalogs.md) | Skills/help residual — **ATENDIDO** (hints neutros + help actionId + EAR copy + audit). |
 | [`planos/09-evals-rollout-cleanup.md`](./planos/09-evals-rollout-cleanup.md) | Baseline, shadow/canary, R1-R11, cleanup. |
+| [`planos/10-zero-lateral-path-maps.md`](./planos/10-zero-lateral-path-maps.md) | **Onda I** — zero mapa lateral (`pathMarkers`/pathToken); domínio só via OpenAPI/Catalog. |
 | [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) | Estado das ondas A–H e próxima subetapa. |
 | [`evidence/onda-a-inventory.md`](./evidence/onda-a-inventory.md) | Inventário Onda A (consumers + classificação). |
 | [`evidence/e1-s4-registry-selection-shadow.md`](./evidence/e1-s4-registry-selection-shadow.md) | E1.S4 — SHADOW_ON + agree aggregation admin. |

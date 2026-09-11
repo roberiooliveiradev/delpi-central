@@ -56,6 +56,8 @@ Se uma integração exigir algum desses itens para a action ser descoberta/execu
 
 Não duplicar contrato técnico em JSON do assistente.
 
+**Zero mapa lateral:** proibido manter inventário paralelo de rotas/paths (`pathMarkers`, pathContains, pathToken de catálogo) no content do assistente. Domínio/labels/operations vêm do OpenAPI + Action Catalog. Programa: [`llm-json-decoupling/planos/10-zero-lateral-path-maps.md`](./llm-json-decoupling/planos/10-zero-lateral-path-maps.md).
+
 ---
 
 ## Retrieval

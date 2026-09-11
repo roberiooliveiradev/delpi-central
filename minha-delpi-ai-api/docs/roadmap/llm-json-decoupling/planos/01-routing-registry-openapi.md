@@ -1,7 +1,7 @@
 # Plano 01 — Routing registry -> OpenAPI + Action Catalog
 
 **Prioridade:** P0  
-**Status execução:** Onda B · E1.S6 **ATENDIDO** (cutover seleção + binder; DELETE JSON via E9.S12.C/D/E)  
+**Status execução:** Onda B · E1.S6 **ATENDIDO** (registry) · **débito lateral** → Onda I / [`10-zero-lateral-path-maps.md`](./10-zero-lateral-path-maps.md) (`api_route_domains` e irmãos)  
 **Evidência:** [`../evidence/e1-s3-action-catalog.md`](../evidence/e1-s3-action-catalog.md) · [`../evidence/e1-s4-registry-selection-shadow.md`](../evidence/e1-s4-registry-selection-shadow.md) · [`../evidence/e1-s4-agree-aggregation.md`](../evidence/e1-s4-agree-aggregation.md) · [`../evidence/e1-s5-parameter-strategy-shadow.md`](../evidence/e1-s5-parameter-strategy-shadow.md) · [`../evidence/e1-s6-cleanup-partial.md`](../evidence/e1-s6-cleanup-partial.md) · [`../evidence/e1-s6b-selection-cutover.md`](../evidence/e1-s6b-selection-cutover.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** uma action nova deve ser descoberta e selecionada por semântica/contrato sem exigir `pathMarkers`, `operationIdMarkers`, `routeSegment` ou `parameterStrategy` por endpoint no conteúdo do assistente.
 
@@ -10,7 +10,7 @@
 Fontes de dívida prioritárias:
 
 - `app/content/pt-BR/assistant/operational_route_registry.json`;
-- `app/content/pt-BR/assistant/api_route_domains.json`;
+- `app/content/pt-BR/assistant/api_route_domains.json` — **ainda mapa lateral** (Onda I / E10.*); não JUSTIFIED;
 - consumers em seleção residual, readiness, route resolver, entity capability, grounded/composition, lint/generator;
 - snapshots CI e fallbacks associados.
 

@@ -1,8 +1,9 @@
 # Set/2026 — Desacoplamento JSON + generalização LLM/OpenAPI
 
-**Roadmap:** [llm-json-decoupling](../roadmap/llm-json-decoupling/README.md) (`ARQUIVADO`)  
+**Roadmap:** [llm-json-decoupling](../roadmap/llm-json-decoupling/README.md)  
 **Ledger:** [execution-ledger.md](../roadmap/llm-json-decoupling/evidence/execution-ledger.md)  
-**Release:** `globalReleasePass=true` (E9.S8 / E9.S15)
+**Release (Ondas A–H):** `globalReleasePass=true` (E9.S8 / E9.S15)  
+**Reabertura:** Onda I — [plano 10 zero mapa lateral](../roadmap/llm-json-decoupling/planos/10-zero-lateral-path-maps.md)
 
 ---
 
@@ -19,28 +20,39 @@ OpenAPI + Action Catalog
 
 Policies determinísticas (RBAC, required args, confirmation, timeouts) permaneceram fora do LLM.
 
-## Ondas (A–H)
+### Correção de política (2026-09-11)
 
-| Onda | Entrega |
-|------|---------|
-| A | Inventário + baseline freeze |
-| B | Registry OpenAPI-first + DELETE markers (E9.S12) |
-| C | Turn Understanding cutover (heuristics KEEP_APPROVED) |
-| D | Multi-turn/args + Postgres `lastAction` overlay (E3.S8) |
-| E | Capabilities / composition |
-| F | Recommendations contextual grounded |
-| G | Presentation schema-first + skills/help residual |
-| H | Evals R1–R11, live gates, DELETE autorizado, release pass |
+**Nenhum mapa lateral deve existir.**  
+A disposição `JUSTIFIED_POLICY` para `api_route_domains.pathMarkers` (e mapas irmãos por path) foi **revogada**. Domínio/label/classificação operacional devem vir do OpenAPI indexado / Action Catalog — não de JSON paralelo no assistente.
 
-## Evidências-chave de release
+Débito aberto: Onda I / plano 10 (implementação + DELETE dos mapas listados).
+
+## Ondas
+
+| Onda | Entrega | Status |
+|------|---------|--------|
+| A | Inventário + baseline freeze | ATENDIDO |
+| B | Registry OpenAPI-first + DELETE markers (E9.S12) | ATENDIDO |
+| C | Turn Understanding cutover (heuristics KEEP_APPROVED) | ATENDIDO |
+| D | Multi-turn/args + Postgres `lastAction` overlay (E3.S8) | ATENDIDO |
+| E | Capabilities / composition | ATENDIDO |
+| F | Recommendations contextual grounded | ATENDIDO |
+| G | Presentation schema-first + skills/help residual | ATENDIDO |
+| H | Evals R1–R11, live gates, DELETE autorizado, release pass | ATENDIDO |
+| I | Zero mapa lateral (`pathMarkers` / pathToken laterais) | **EM_ANDAMENTO** |
+
+## Evidências-chave de release (H)
 
 - E9.S13–S15 live (compound, multi-turn, unknown API, safety, recommendations, send/stream/simulate)
 - E9.S11 efficiency (p50/p95 + tokens metadata)
 - E9.S16 F5/session reload via API
 - E9.S6 `deleteAuthorized=true`
 
-## Residuais justificados (não são débito aberto)
+## Residuais
 
-- Heuristics TU `KEEP_APPROVED` (fast paths)
-- `api_route_domains.pathMarkers` JUSTIFIED_POLICY
-- Pasta roadmap mantida como arquivo histórico
+| Item | Disposição atual |
+|------|------------------|
+| Heuristics TU fast paths | KEEP_APPROVED (não é mapa de rota) |
+| Mapas `pathMarkers` laterais (`api_route_domains`, factual, enrichment, responses, …) | **REMOVE_REQUIRED** (Onda I) |
+| `pathToken` KPI | **REMOVE_REQUIRED** (Onda I) |
+| Pasta roadmap | ledger ativo para Onda I |

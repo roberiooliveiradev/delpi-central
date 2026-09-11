@@ -1,13 +1,13 @@
-# Arquivado — llm-json-decoupling
+# Arquivado parcial — Ondas A–H
 
-**Estado:** `ARQUIVADO` (2026-09-11)  
-**Motivo:** Ondas A–H ATENDIDAS; `globalReleasePass=true`; débitos opcionais E9.S16/tokens/changelog fechados.
+**Estado (2026-09-11):** Ondas **A–H** permanecem concluídas (`globalReleasePass=true`).  
+**Reabertura:** **Onda I / plano 10** — *zero mapa lateral por path* (política corrigida).
 
-Esta pasta permanece como **histórico e ledger de evidências**. Não é mais fila de execução ativa.
+A classificação anterior de `api_route_domains.pathMarkers` (e irmãos) como `JUSTIFIED_POLICY` foi **revogada**. Nenhum mapa lateral de rota/path deve existir em paralelo ao OpenAPI indexado.
 
-- Fonte vigente de arquitetura: `docs/architecture/chat-intelligence-base.md`
-- Routing/tools: `docs/roadmap/openapi-first-universal-tool-routing.md`
-- Changelog: `docs/changelog/2026-09-llm-json-decoupling.md`
-- Ledger final: `evidence/execution-ledger.md`
+- Plano ativo: [`planos/10-zero-lateral-path-maps.md`](./planos/10-zero-lateral-path-maps.md)
+- README: [`README.md`](./README.md)
+- Changelog: [`docs/changelog/2026-09-llm-json-decoupling.md`](../../changelog/2026-09-llm-json-decoupling.md)
+- Routing canônico: [`../openapi-first-universal-tool-routing.md`](../openapi-first-universal-tool-routing.md)
 
-Não criar novos `E*.S*` aqui sem reabrir o programa explicitamente.
+Não criar `.plan.md` paralelo; executar via markdowns desta pasta.

@@ -16,6 +16,7 @@
 | F — UX inteligente | 06 | **ATENDIDO** | — | E6.S1–S6 OK; queries = LEGACY_FALLBACK |
 | G — presentation/skills | 07, 08 | **ATENDIDO** | — | Planos 07+08 S1–S* OK |
 | H — cutover/cleanup | 09 | **ATENDIDO** | — | S1–S15; `globalReleasePass=true`; deleteAuthorized=true |
+| I — zero mapa lateral | 10 | **EM_ANDAMENTO** | E10.S1 inventário/contrato | Revoga JUSTIFIED_POLICY; pathMarkers laterais = REMOVE_REQUIRED |
 
 ## Protocolo por subetapa
 
@@ -192,6 +193,6 @@ abrir planos/0N-*.md
 | 2026-09-11 | Programa llm-json-decoupling **ondas A–H ATENDIDAS** |
 | 2026-09-11 | E9.S16 **ATENDIDO** — F5/session reload API (GET messages + same-product follow-up) |
 | 2026-09-11 | E9.S11 **tokens PASS** — extractor lê *TokensEstimated + aliases adminDebug |
-| 2026-09-11 | Changelog `2026-09-llm-json-decoupling.md` + pasta **ARQUIVADO** |
-| 2026-09-11 | Programa llm-json-decoupling **ENCERRADO** (sem fila ativa) |
-
+| 2026-09-11 | Changelog `2026-09-llm-json-decoupling.md` + pasta **ARQUIVADO** (A–H) |
+| 2026-09-11 | **POLICY** zero mapa lateral — JUSTIFIED_POLICY revogada para pathMarkers laterais |
+| 2026-09-11 | Onda I / plano 10 **EM_ANDAMENTO** — E10.S1 inventário + contrato sem pathMarkers |
