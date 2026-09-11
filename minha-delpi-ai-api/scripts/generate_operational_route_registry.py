@@ -36,8 +36,8 @@ def main() -> int:
     parser.add_argument(
         "--registry",
         type=Path,
-        default=OperationalRouteRegistryGeneratorService.default_registry_path(),
-        help="Caminho para operational_route_registry.json",
+        default=OperationalRouteRegistryService.ci_auto_tier_c_path(),
+        help="Caminho do mirror CI autoTierC (não o registry de runtime)",
     )
     parser.add_argument(
         "--write",

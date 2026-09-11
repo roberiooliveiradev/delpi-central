@@ -1,9 +1,15 @@
 {
   "version": "2026.06.16",
   "continuityFacetAliases": {
-    "invoices-inbound": ["inbound-invoice"],
-    "invoices-outbound": ["outbound-invoice"],
-    "structure-exclusivity": ["structure/exclusivity"]
+    "invoices-inbound": [
+      "inbound-invoice"
+    ],
+    "invoices-outbound": [
+      "outbound-invoice"
+    ],
+    "structure-exclusivity": [
+      "structure/exclusivity"
+    ]
   },
   "dispatchOrder": [
     "sessionRefinement",
@@ -196,9 +202,7 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "operationIds": [
-          "get_product_directives"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -213,9 +217,7 @@
         "customPredicate": "exclusiveRawMaterialCatalog"
       },
       "route": {
-        "operationIds": [
-          "list_exclusive_raw_materials_catalog"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -230,9 +232,7 @@
         "customPredicate": "rawMaterialPriceIntelligence"
       },
       "route": {
-        "operationIds": [
-          "get_product_raw_material_price_intelligence"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -247,9 +247,7 @@
         "customPredicate": "costImpactSimulation"
       },
       "route": {
-        "operationIds": [
-          "get_product_cost_impact_simulation"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -264,9 +262,7 @@
         "customPredicate": "productionStatus"
       },
       "route": {
-        "operationIds": [
-          "get_product_production_status"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -281,9 +277,7 @@
         "customPredicate": "shippingStatus"
       },
       "route": {
-        "operationIds": [
-          "get_product_shipping_status"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -298,9 +292,7 @@
         "customPredicate": "structureExclusivity"
       },
       "route": {
-        "operationIds": [
-          "get_product_structure_exclusivity"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -320,9 +312,7 @@
         ]
       },
       "route": {
-        "operationIds": [
-          "get_product_factory_status"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -338,9 +328,7 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "operationIds": [
-          "get_product_guide"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -358,9 +346,7 @@
         ]
       },
       "route": {
-        "operationIds": [
-          "search_products_by_supplier_part_number"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -380,9 +366,7 @@
         ]
       },
       "route": {
-        "operationIds": [
-          "get_product_suppliers"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -412,9 +396,7 @@
         ]
       },
       "route": {
-        "operationIds": [
-          "get_product_purchases"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -430,9 +412,7 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "operationIds": [
-          "get_product_pricing"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -448,11 +428,7 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "operationIds": [
-          "get_product_sales_open_orders",
-          "list_totvs_open_orders",
-          "list_totvs_open_orders_by_customer"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -468,9 +444,7 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "operationIds": [
-          "get_product_sales_billing"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -500,9 +474,7 @@
         ]
       },
       "route": {
-        "operationIds": [
-          "get_product_pricing"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -518,10 +490,7 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "operationIds": [
-          "get_product_inspection",
-          "get_public_quality_label_inspection"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -537,9 +506,7 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "operationIds": [
-          "get_product_customers"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -555,9 +522,7 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "operationIds": [
-          "get_product_internal_movements"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -577,9 +542,7 @@
         ]
       },
       "route": {
-        "operationIds": [
-          "get_product_last_purchase"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -594,9 +557,7 @@
         "customPredicate": "purchasePriceHistory"
       },
       "route": {
-        "operationIds": [
-          "get_product_purchase_price_history"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -611,9 +572,7 @@
         "customPredicate": "purchaseBudgetHistory"
       },
       "route": {
-        "operationIds": [
-          "get_product_purchase_budget_history"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -625,9 +584,7 @@
       "domain": "product",
       "intentBinding": "stock",
       "route": {
-        "operationIds": [
-          "get_product_stock"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -642,9 +599,7 @@
         "customPredicate": "structureExcel"
       },
       "route": {
-        "operationIds": [
-          "get_product_structure_excel"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -656,9 +611,7 @@
       "domain": "product",
       "intentBinding": "structure",
       "route": {
-        "operationIds": [
-          "get_product_structure"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -670,9 +623,7 @@
       "domain": "product",
       "intentBinding": "parents",
       "route": {
-        "operationIds": [
-          "get_product_parents"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -684,9 +635,7 @@
       "domain": "product",
       "intentBinding": "sales",
       "route": {
-        "operationIds": [
-          "get_product_sales_summary"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -698,15 +647,16 @@
       "domain": "product",
       "priority": 113,
       "intentBinding": "full",
-      "continuityFacets": ["inbound-invoice", "invoices-inbound"],
+      "continuityFacets": [
+        "inbound-invoice",
+        "invoices-inbound"
+      ],
       "match": {
         "customPredicate": "inboundInvoiceRoute",
         "requiresProductIdentifier": true
       },
       "route": {
-        "operationIds": [
-          "get_product_inbound_invoice_items"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -718,15 +668,16 @@
       "domain": "product",
       "priority": 112,
       "intentBinding": "full",
-      "continuityFacets": ["outbound-invoice", "invoices-outbound"],
+      "continuityFacets": [
+        "outbound-invoice",
+        "invoices-outbound"
+      ],
       "match": {
         "customPredicate": "outboundInvoiceRoute",
         "requiresProductIdentifier": true
       },
       "route": {
-        "operationIds": [
-          "get_product_outbound_invoice_items"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -751,10 +702,7 @@
         ]
       },
       "route": {
-        "operationIds": [
-          "get_product_inbound_invoice_items",
-          "get_product_outbound_invoice_items"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -770,9 +718,7 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "operationIds": [
-          "get_product_analyser"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -784,9 +730,7 @@
       "domain": "product",
       "intentBinding": "summary",
       "route": {
-        "operationIds": [
-          "get_product_summary"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -798,9 +742,7 @@
       "domain": "product",
       "intentBinding": "analyser",
       "route": {
-        "operationIds": [
-          "get_product_analyser"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -812,9 +754,7 @@
       "domain": "product",
       "intentBinding": "description",
       "route": {
-        "operationIds": [
-          "get_product_detail"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -826,9 +766,7 @@
       "domain": "productionOperational",
       "productionOperationalKind": "consumption",
       "route": {
-        "operationIds": [
-          "get_production_consumption_top_items"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -843,9 +781,7 @@
       "domain": "productionOperational",
       "productionOperationalKind": "consumptionByWorkCenter",
       "route": {
-        "operationIds": [
-          "get_production_consumption_top_items_by_work_center"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -860,9 +796,7 @@
       "domain": "productionOperational",
       "productionOperationalKind": "consumptionValidated",
       "route": {
-        "operationIds": [
-          "get_production_consumption_top_items_validated"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -877,9 +811,7 @@
       "domain": "productionOperational",
       "productionOperationalKind": "purchasesRanking",
       "route": {
-        "operationIds": [
-          "get_purchases_top_products"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -894,9 +826,7 @@
       "domain": "productionOperational",
       "productionOperationalKind": "lossesTop",
       "route": {
-        "operationIds": [
-          "get_production_losses_top_materials"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -911,9 +841,7 @@
       "domain": "productionOperational",
       "productionOperationalKind": "lossesRecords",
       "route": {
-        "operationIds": [
-          "get_production_losses_records"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -933,9 +861,7 @@
         "reasonKey": "productionSqlFastPath"
       },
       "route": {
-        "operationIds": [
-          "get_production_schedule_today"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "parameters": {
@@ -958,9 +884,7 @@
       "domain": "productionOperational",
       "productionOperationalKind": "ordersOpen",
       "route": {
-        "operationIds": [
-          "get_production_orders_open"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -975,9 +899,7 @@
       "domain": "productionOperational",
       "productionOperationalKind": "ordersFinished",
       "route": {
-        "operationIds": [
-          "get_production_orders_finished"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -992,9 +914,7 @@
       "domain": "productionOperational",
       "productionOperationalKind": "workCenterSummary",
       "route": {
-        "operationIds": [
-          "get_production_work_center_order_summary"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1009,9 +929,7 @@
       "domain": "productionOperational",
       "productionOperationalKind": "allocationGaps",
       "route": {
-        "operationIds": [
-          "get_production_allocation_gaps"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1026,9 +944,7 @@
       "domain": "productionOperational",
       "productionOperationalKind": "finishedWithoutConsumption",
       "route": {
-        "operationIds": [
-          "get_production_orders_finished_without_consumption"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1043,9 +959,7 @@
       "domain": "productionOperational",
       "productionOperationalKind": "averagePlannedTime",
       "route": {
-        "operationIds": [
-          "get_production_work_center_average_planned_time"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1060,9 +974,7 @@
       "domain": "productionOperational",
       "productionOperationalKind": "consumptionByItem",
       "route": {
-        "operationIds": [
-          "get_production_consumption_by_item"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1077,9 +989,7 @@
       "domain": "productionOperational",
       "productionOperationalKind": "plannedVsRealTime",
       "route": {
-        "operationIds": [
-          "get_production_planned_vs_real_time"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1097,9 +1007,7 @@
         "termsFrom": "external_action_responses.actionSelection.kpiQuestions.cpvTerms"
       },
       "route": {
-        "operationIds": [
-          "get_supplies_cpv"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1114,9 +1022,7 @@
         "customPredicate": "suppliesOtdRoute"
       },
       "route": {
-        "operationIds": [
-          "get_supplies_otd"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1131,9 +1037,7 @@
         "termsFrom": "external_action_responses.actionSelection.kpiQuestions.departmentIddAllTerms"
       },
       "route": {
-        "operationIds": [
-          "get_dashboard_departments_indicators"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1148,9 +1052,7 @@
         "termsFrom": "external_action_responses.actionSelection.kpiQuestions.departmentIddIndicatorsTerms"
       },
       "route": {
-        "operationIds": [
-          "get_dashboard_department_indicators"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1166,9 +1068,7 @@
         "excludeTermsFrom": "external_action_responses.actionSelection.kpiQuestions.departmentIddIndicatorsTerms"
       },
       "route": {
-        "operationIds": [
-          "get_dashboard_department_idd"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1184,9 +1084,7 @@
         "excludeTermsFrom": "external_action_responses.actionSelection.kpiQuestions.inventoryTurnoverExcludeDepartmentIddTerms"
       },
       "route": {
-        "operationIds": [
-          "get_supplies_inventory_turnover"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1201,9 +1099,7 @@
         "termsFrom": "external_action_responses.actionSelection.kpiQuestions.suppliesStockTerms"
       },
       "route": {
-        "operationIds": [
-          "get_supplies_stock_value"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1218,9 +1114,7 @@
         "termsFrom": "external_action_responses.actionSelection.kpiQuestions.suppliesStockTerms"
       },
       "route": {
-        "operationIds": [
-          "get_supplies_stock_balances_summary"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1235,9 +1129,7 @@
         "termsFrom": "external_action_responses.actionSelection.kpiQuestions.suppliesStockTerms"
       },
       "route": {
-        "operationIds": [
-          "get_supplies_stock_balances_items"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1253,9 +1145,7 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "operationIds": [
-          "get_supplies_safety_stock_item_details"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1271,9 +1161,7 @@
         "requiresProductIdentifier": false
       },
       "route": {
-        "operationIds": [
-          "get_supplies_safety_stock_consumption_analysis_items"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1289,9 +1177,7 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "operationIds": [
-          "get_supplies_safety_stock_consumption_analysis_item_details"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1306,10 +1192,7 @@
         "customPredicate": "productionOtdDetailRoute"
       },
       "route": {
-        "operationIds": [
-          "get_production_otd",
-          "get_production_otd_series"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1324,10 +1207,7 @@
         "customPredicate": "productionOeeDetailRoute"
       },
       "route": {
-        "operationIds": [
-          "get_production_oee",
-          "get_production_oee_series"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1342,9 +1222,7 @@
         "customPredicate": "productionOeeAppointmentRoute"
       },
       "route": {
-        "operationIds": [
-          "get_production_oee_appointment_by_id"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1359,11 +1237,7 @@
         "customPredicate": "productionEficienciaFabrilRoute"
       },
       "route": {
-        "operationIds": [
-          "get_eficiencia_fabril_dashboard",
-          "get_eficiencia_fabril_efficiency_by_work_center",
-          "list_eficiencia_fabril_appointments"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1378,9 +1252,7 @@
         "customPredicate": "saleOrdersList"
       },
       "route": {
-        "operationIds": [
-          "list_sale_orders"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1395,11 +1267,7 @@
         "customPredicate": "commercialRol"
       },
       "route": {
-        "operationIds": [
-          "get_commercial_rol_series",
-          "get_commercial_rol_summary",
-          "get_financial_rol"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1421,9 +1289,7 @@
         ]
       },
       "route": {
-        "operationIds": [
-          "get_transforma_mais_summary"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1438,9 +1304,7 @@
         "customPredicate": "transformaQuestion"
       },
       "route": {
-        "operationIds": [
-          "list_transforma_mais_processes"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1462,11 +1326,7 @@
         ]
       },
       "route": {
-        "operationIds": [
-          "get_lmp_by_sale_number",
-          "get_lmp_history_events",
-          "get_lmp_history_flow"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1488,9 +1348,7 @@
         ]
       },
       "route": {
-        "operationIds": [
-          "get_lmps_dashboard_summary"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1512,9 +1370,7 @@
         ]
       },
       "route": {
-        "operationIds": [
-          "list_lmps_dashboard_items"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1536,9 +1392,7 @@
         ]
       },
       "route": {
-        "operationIds": [
-          "get_lmps_dashboard_charts"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1560,9 +1414,7 @@
         ]
       },
       "route": {
-        "operationIds": [
-          "list_lmps_dashboard"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1577,9 +1429,7 @@
         "customPredicate": "lmpCatchAll"
       },
       "route": {
-        "operationIds": [
-          "list_lmps"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1594,9 +1444,7 @@
         "customPredicate": "productSearchWithGroupCode"
       },
       "route": {
-        "operationIds": [
-          "search_products"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1624,9 +1472,7 @@
         ]
       },
       "route": {
-        "operationIds": [
-          "search_products"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1652,9 +1498,7 @@
         ]
       },
       "route": {
-        "operationIds": [
-          "get_protheus_table_schema"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1679,9 +1523,7 @@
         ]
       },
       "route": {
-        "operationIds": [
-          "get_protheus_table_indexes"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1706,9 +1548,7 @@
         ]
       },
       "route": {
-        "operationIds": [
-          "get_protheus_table_relations"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1733,9 +1573,7 @@
         ]
       },
       "route": {
-        "operationIds": [
-          "list_protheus_table_columns"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1765,9 +1603,7 @@
         ]
       },
       "route": {
-        "operationIds": [
-          "search_protheus_columns_by_description"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1789,9 +1625,7 @@
         ]
       },
       "route": {
-        "operationIds": [
-          "search_tables_by_description"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1813,9 +1647,7 @@
         ]
       },
       "route": {
-        "operationIds": [
-          "get_protheus_table"
-        ],
+        "operationIds": [],
         "method": "GET"
       },
       "presentation": {
@@ -1837,8 +1669,10 @@
     "routeSegmentDeletedAt": "E9.S12.D",
     "routeSegmentDeletedCount": 23,
     "operationIdsRuntimeAuthority": false,
-    "operationIdsRole": "observer",
+    "operationIdsRole": "removed",
     "operationIdsAuthorityRemovedAt": "E11.S5",
-    "operationIdsObserverCount": 84
+    "operationIdsObserverCount": 0,
+    "operationIdsEmptiedAt": "J-R8",
+    "previousObserverCount": 84
   }
 }

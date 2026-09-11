@@ -145,26 +145,32 @@ class ChatOperationalRefinementMetricService:
         )
 
         spec = ChatOperationalApiDomainService.parameter_strategy_spec("department_idd")
-        mapping = spec.get("pathPrefixToDepartmentId") if isinstance(spec, dict) else None
+        aliases = spec.get("departmentIdAliases") if isinstance(spec, dict) else None
+        if not isinstance(aliases, dict):
+            aliases = {}
 
-        if not isinstance(mapping, dict):
-            mapping = {}
+        # J-R8: no pathPrefix→department map. Use semantic domain token from context.
+        raw = str(recent.domain_prefix or "").strip().lower()
+        token = raw.strip("/")
+        if "/" in token:
+            token = token.split("/")[0]
+        if not token:
+            return None
 
-        prefix = str(recent.domain_prefix or "").strip().lower()
-        path = str(recent.path or "").strip().lower()
-
-        for marker, department_id in mapping.items():
-            marker_text = str(marker or "").strip().lower()
-
-            if not marker_text:
-                continue
-
-            if marker_text == prefix or marker_text in path:
-                value = str(department_id or "").strip().lower()
-
-                if value:
-                    return value
-
+        known = {
+            "commercial",
+            "financial",
+            "production",
+            "quality",
+            "hr",
+            "supplies",
+            "engineering",
+        }
+        if token in aliases:
+            value = str(aliases.get(token) or "").strip().lower()
+            return value or None
+        if token in known:
+            return token
         return None
 
     @classmethod

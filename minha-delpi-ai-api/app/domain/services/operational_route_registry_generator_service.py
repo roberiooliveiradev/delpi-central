@@ -479,6 +479,17 @@ class OperationalRouteRegistryGeneratorService:
                 "CI-only autoTierC mirror of api-delpi OpenAPI baseline. "
                 "Not loaded for chat action selection."
             ),
+            "justification": {
+                "classification": "JUSTIFIED_NON_SEMANTIC",
+                "gate": "TECHNICAL_PARALLEL_REGISTRY",
+                "reason": (
+                    "CI presentation/coverage gate only; Action Catalog OpenAPI "
+                    "remains runtime authority; manual registry operationIds "
+                    "emptied at J-R8."
+                ),
+                "emptiedManualOperationIdsAt": "J-R8",
+                "runtimeAuthority": False,
+            },
             "autoTierCRoutesMeta": cls.build_meta(
                 generated,
                 openapi_baseline_path=openapi_baseline_path,

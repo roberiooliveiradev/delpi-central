@@ -173,13 +173,10 @@ class ArchitecturePhase3GateTests(unittest.TestCase):
         )
         self.assertEqual(findings, [])
 
-    def test_live_registry_still_flagged_while_observer_arrays_exist(self) -> None:
-        """Live registry declares observer=false authority but still has operationIds lists."""
+    def test_live_registry_has_no_operation_id_catalog_after_j_r8(self) -> None:
+        """J-R8 emptied parallel operationIds arrays → structural catalog findings = 0."""
         findings = phase3.scan_registry_operation_id_catalog()
-        self.assertGreater(len(findings), 0)
-        self.assertTrue(
-            all(item.rule == "SEMANTIC_TECHNICAL_OPERATION_ID_CATALOG" for item in findings)
-        )
+        self.assertEqual(findings, [])
 
 
 if __name__ == "__main__":

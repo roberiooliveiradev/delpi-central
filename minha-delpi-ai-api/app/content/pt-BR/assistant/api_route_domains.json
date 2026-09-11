@@ -26,92 +26,70 @@
   },
   "domains": {
     "product": {
-      "label": "Produto",
-      "method": "GET"
+      "label": "Produto"
     },
     "product_directives": {
-      "label": "Diretivas do produto",
-      "method": "GET"
+      "label": "Diretivas do produto"
     },
     "product_search": {
-      "label": "Busca de produtos",
-      "method": "GET"
+      "label": "Busca de produtos"
     },
     "product_exclusive_catalog": {
-      "label": "Catálogo MP exclusiva",
-      "method": "GET"
+      "label": "Catálogo MP exclusiva"
     },
     "production_consumption": {
-      "label": "Consumo produção",
-      "method": "GET"
+      "label": "Consumo produção"
     },
     "production_losses": {
-      "label": "Perdas produção",
-      "method": "GET"
+      "label": "Perdas produção"
     },
     "production_schedule": {
-      "label": "Programação produção",
-      "method": "GET"
+      "label": "Programação produção"
     },
     "production_orders": {
-      "label": "Ordens de produção",
-      "method": "GET"
+      "label": "Ordens de produção"
     },
     "production_work_centers": {
-      "label": "Centros de trabalho",
-      "method": "GET"
+      "label": "Centros de trabalho"
     },
     "purchases_ranking": {
-      "label": "Ranking de compras",
-      "method": "GET"
+      "label": "Ranking de compras"
     },
     "open_sales_orders": {
-      "label": "Pedidos de venda em aberto",
-      "method": "GET"
+      "label": "Pedidos de venda em aberto"
     },
     "commercial_proposal_documents": {
-      "label": "Propostas comerciais internas",
-      "method": "GET"
+      "label": "Propostas comerciais internas"
     },
     "quality_action_plans": {
-      "label": "PAC — planos de ação",
-      "method": "GET"
+      "label": "PAC — planos de ação"
     },
     "process_inspection_plans": {
-      "label": "Planos de inspeção de processo",
-      "method": "GET"
+      "label": "Planos de inspeção de processo"
     },
     "department_kpi": {
-      "label": "KPI departamental",
-      "method": "GET"
+      "label": "KPI departamental"
     },
     "department_idd": {
-      "label": "IDD estratégico (metas e realizado)",
-      "method": "GET"
+      "label": "IDD estratégico (metas e realizado)"
     },
     "supplies_kpi": {
-      "label": "KPI suprimentos",
-      "method": "GET"
+      "label": "KPI suprimentos"
     },
     "safety_stock": {
-      "label": "Estoque de segurança",
-      "method": "GET"
+      "label": "Estoque de segurança"
     },
     "lmp": {
-      "label": "LMP / transformação",
-      "method": "GET"
+      "label": "LMP / transformação"
     },
     "sql": {
-      "label": "SQL / dados",
-      "method": "POST"
+      "label": "SQL / dados"
     },
     "system": {
-      "label": "Metadados Protheus",
-      "method": "GET"
+      "label": "Metadados Protheus"
     },
     "generic": {
-      "label": "Operacional genérico",
-      "method": "GET"
+      "label": "Operacional genérico"
     }
   },
   "parameterStrategies": {
@@ -305,15 +283,6 @@
         "hr": "hr",
         "recursos humanos": "hr"
       },
-      "pathPrefixToDepartmentId": {
-        "/commercial/": "commercial",
-        "/financial/": "financial",
-        "/production/": "production",
-        "/quality/": "quality",
-        "/hr/": "hr",
-        "/supplies/": "supplies",
-        "/engineering/": "engineering"
-      },
       "bindings": [
         {
           "source": "branch_regex",
@@ -419,6 +388,9 @@
   },
   "cleanupMeta": {
     "parameterStrategyDeletedAt": "E9.S12.E",
-    "lateralPathMapDeletedAt": "E10.S2"
+    "lateralPathMapDeletedAt": "E10.S2",
+    "technicalDuplicationRemovedAt": "J-R8",
+    "removedDomainMethods": 22,
+    "removedPathPrefixToDepartmentId": true
   }
 }

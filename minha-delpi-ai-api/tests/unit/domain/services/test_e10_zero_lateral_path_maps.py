@@ -55,7 +55,7 @@ def test_e10_assistant_content_has_zero_lateral_path_map_keys():
 
 
 def test_e10_api_route_domains_has_labels_without_path_maps():
-    """Sibling: domains restam como label/method + parameterStrategies."""
+    """Sibling: domains restam como label + parameterStrategies (sem method HTTP)."""
     data = json.loads(
         (_ASSISTANT / "api_route_domains.json").read_text(encoding="utf-8")
     )

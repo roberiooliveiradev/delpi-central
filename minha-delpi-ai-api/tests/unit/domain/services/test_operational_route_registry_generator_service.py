@@ -58,23 +58,25 @@ def test_route_id_from_operation_id_is_stable() -> None:
 
 
 def test_infer_parameter_strategy_from_openapi_path() -> None:
+    # E11.S3 — OpenAPI schema is authority; stub always returns schema.
     assert (
         OperationalRouteRegistryGeneratorService.infer_parameter_strategy(
             path="/production/orders/by-op/{production_order}",
             entity=None,
         )
-        == "date_branch"
+        == "schema"
     )
     assert (
         OperationalRouteRegistryGeneratorService.infer_parameter_strategy(
             path="/cultura-delpi/content",
             entity=None,
         )
-        == "none"
+        == "schema"
     )
 
 
-def test_manual_registry_covers_product_routes_not_auto_tier_c() -> None:
+def test_manual_registry_no_longer_covers_via_technical_catalog_after_j_r8() -> None:
+    """J-R8 emptied route.operationIds/pathMarkers — coverage via parallel catalog = 0."""
     rows = ChatPresentationCoverageService.build_matrix()
     product_rows = [
         row
@@ -87,7 +89,7 @@ def test_manual_registry_covers_product_routes_not_auto_tier_c() -> None:
 
     assert product_rows
     assert all(
-        OperationalRouteRegistryGeneratorService.is_operation_covered_by_manual_registry(
+        not OperationalRouteRegistryGeneratorService.is_operation_covered_by_manual_registry(
             operation_id=row.operation_id,
             path=row.path,
         )
@@ -108,21 +110,24 @@ def test_route_by_operation_id_resolves_auto_entry() -> None:
     assert resolved["id"] == sample["id"]
 
 
-def test_manual_route_path_markers_require_all_fragments() -> None:
+def test_manual_route_technical_markers_removed_after_j_r8() -> None:
     lmp_route = OperationalRouteRegistryService.route_by_id("engineeringLmpDashboard")
     assert lmp_route is not None
+    route_spec = lmp_route.get("route") or {}
+    assert (route_spec.get("operationIds") or []) == []
+    assert not (route_spec.get("pathMarkers") or [])
 
+    # Without technical catalog fields, generator does not claim manual coverage.
     assert OperationalRouteRegistryGeneratorService._manual_route_covers(
         lmp_route,
         "get_quality_action_plans_dashboard",
         "/quality/action-plans/dashboard",
     ) is False
-
     assert OperationalRouteRegistryGeneratorService._manual_route_covers(
         lmp_route,
         "list_lmps_dashboard",
         "/engineering/lmps/dashboard",
-    ) is True
+    ) is False
 
 
 def test_manual_route_does_not_cover_process_inspection_plans() -> None:
@@ -137,13 +142,7 @@ def test_manual_route_does_not_cover_process_inspection_plans() -> None:
     assert (
         OperationalRouteRegistryGeneratorService.is_operation_covered_by_manual_registry(
             operation_id="get_process_inspection_plans_product",
-            path="/process-inspection-plans/products/{code}",
+            path="/process-inspection-plans/product/{code}",
         )
         is False
     )
-
-    generated = OperationalRouteRegistryGeneratorService.generate_routes()
-    oids = {str(route.get("operationId") or "") for route in generated}
-    assert "get_process_inspection_plans_summary" in oids
-    assert "get_process_inspection_plans_products_without_plan" in oids
-    assert "get_process_inspection_plans_product" in oids

@@ -36,13 +36,13 @@ def test_product_search_routes_have_no_path_marker_shadow() -> None:
     assert report.ok, report.errors
 
 
-def test_product_search_by_description_keeps_observer_operation_ids() -> None:
+def test_product_search_by_description_keeps_empty_operation_ids_after_j_r8() -> None:
     route = OperationalRouteRegistryService.route_by_id("productSearchByDescription")
     assert route is not None
     route_spec = route.get("route") or {}
 
-    # E11.S5 — arrays may remain as observer; not routing authority.
-    assert "search_products" in (route_spec.get("operationIds") or [])
+    # J-R8 — parallel technical operationIds catalog removed (empty arrays).
+    assert (route_spec.get("operationIds") or []) == []
     assert not (route_spec.get("pathMarkers") or [])
     assert not (route_spec.get("pathSuffix") or "")
 
@@ -56,4 +56,5 @@ def test_product_search_by_description_keeps_observer_operation_ids() -> None:
         ).read_text(encoding="utf-8")
     )
     assert payload.get("cleanupMeta", {}).get("operationIdsRuntimeAuthority") is False
-    assert payload.get("cleanupMeta", {}).get("operationIdsRole") == "observer"
+    assert payload.get("cleanupMeta", {}).get("operationIdsEmptiedAt") == "J-R8"
+    assert payload.get("cleanupMeta", {}).get("operationIdsObserverCount") == 0
