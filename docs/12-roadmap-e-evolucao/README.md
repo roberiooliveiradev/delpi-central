@@ -122,6 +122,13 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | [invoice-issuance/PLAYBOOK.md](./invoice-issuance/PLAYBOOK.md) | Playbook — papéis, fluxo, deploy |
 | [invoice-issuance/ROADMAP.md](./invoice-issuance/ROADMAP.md) | Etapas e status do MVP |
 
+### Controle de matéria-prima
+
+| Arquivo | Conteúdo |
+|---|---|
+| [controle-mp/README.md](./controle-mp/README.md) | Índice — iframe legado → nativo em Minhas Solicitações |
+| [controle-mp/EVOLUCAO.md](./controle-mp/EVOLUCAO.md) | Evolução (não implementar): solicitante em my-requests + tratativa do analista |
+
 ### Inspeções de Entrada
 
 | Arquivo | Conteúdo |

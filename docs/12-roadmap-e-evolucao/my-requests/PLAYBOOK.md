@@ -96,7 +96,7 @@ flowchart LR
 | D14 | RBAC | `my-requests.access`, `.view-all`, `.manage` + `my-requests.{type}.create/process` |
 | D15 | Filial | Opcional por RequestType (`required|optional|none`) |
 | D16 | Primeiro vertical | `invoice-issuance`; plugin legado permanece até cutover |
-| D17 | Segundo vertical | `raw-material-creation` schema-driven only |
+| D17 | Segundo vertical | Stub `raw-material-creation` schema-driven (prova de plugabilidade). **Produto real de MP:** [controle-mp/EVOLUCAO.md](../controle-mp/EVOLUCAO.md) — specialized + Minhas Solicitações + fila do analista |
 | D18 | Framework API | FastAPI |
 | D19 | Textos PT | `requests_app/content/pt-BR/*.json` |
 | D20 | Ajuda | `helpTooltips.ts` + Manual espelho ([`feature-help-sync.mdc`](../../../.cursor/rules/feature-help-sync.mdc)) |
