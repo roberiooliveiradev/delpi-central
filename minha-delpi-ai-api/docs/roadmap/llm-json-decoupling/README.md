@@ -1,126 +1,186 @@
-# Desacoplamento de JSONs + inteligência LLM — Minha DELPI AI
+# Desacoplamento de JSONs + inteligência LLM/OpenAPI — Minha DELPI AI
 
-**Status:** Ondas A–I **ATENDIDAS** · via [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) · ver [`ARCHIVED.md`](./ARCHIVED.md)  
-**Escopo:** `minha-delpi-ai-api/app/content` + consumidores runtime relacionados  
-**Objetivo:** remover acoplamentos técnicos e linguísticos que impedem o chat de generalizar para novas APIs, novos domínios e formulações de linguagem natural sem manutenção rota a rota.
+**Status atual:** **REABERTO — Onda J em execução planejada**  
+**Plano ativo:** [`planos/11-corrective-cutover-generalization-cleanup.md`](./planos/11-corrective-cutover-generalization-cleanup.md)  
+**Escopo:** `minha-delpi-ai-api` + consumers relacionados do chat/MFE  
+**Objetivo:** remover acoplamentos técnicos/linguísticos que impedem generalização para novas APIs, domínios e formulações sem manutenção rota a rota.
 
-> Este diretório é roadmap executável. **Não criar planos `.plan.md` paralelos** para o mesmo programa: atualizar estes markdowns quando houver drift. Antes de implementar qualquer subetapa, revalidar código, contratos, regras `.cursor` e documentação vigente.
+> As Ondas A–I produziram avanços e evidências históricas, mas uma auditoria posterior encontrou drifts materiais. Portanto, seus `PASS` não constituem aceite do **candidate final atual**. O programa só volta a ser arquivado após a Onda J passar `COMPLETE_GATE` + `VERIFY_FINAL` no HEAD final.
 
 ## Princípio da iniciativa
 
-Não aplicar a simplificação `JSON -> LLM` indiscriminadamente.
-
 ```text
 catálogo técnico duplicado
--> OpenAPI + Action Catalog
+→ OpenAPI + Action Catalog
 
-NLU/semântica hardcoded
--> Turn Understanding + retrieval + planner LLM estruturado
+NLU/semântica endpoint-specific
+→ semantic understanding + retrieval + structured planner
+
+argument binding
+→ semantic delta + OpenAPI schema + validator
+
+multi-turn
+→ structured conversation state
 
 policy / business rule / safety
--> determinístico
+→ determinístico
 
 copy / UX / prompt
--> conteúdo configurável
+→ conteúdo configurável
+
+presentation
+→ responseSchema + payload + semantic metadata
+
+contextual prose/recommendations
+→ grounded synthesis, preferencialmente reutilizando LLM do turno
 ```
 
-O LLM interpreta intenção e contexto. O OpenAPI define contrato. O validator valida argumentos. RBAC/policy decide autorização. O executor usa somente actions persistidas e permitidas.
+Não aplicar `JSON → LLM` indiscriminadamente. E, principalmente, **não aplicar `JSON → Python hardcode` para fazer cleanup parecer concluído**.
 
-### Invariante — zero mapa lateral (Onda I)
+## Invariante reforçada — zero catálogo técnico paralelo
 
 ```text
-NENHUM MAPA LATERAL DEVE EXISTIR.
+NENHUM MAPA LATERAL OU SUBSTITUTO SEMÂNTICO DEVE SER AUTHORITY.
 ```
 
-Informação de rota/operation **não** pode viver em JSON paralelo (`pathMarkers`, pathContains, pathToken de catálogo lateral). Vem do **OpenAPI indexado / Action Catalog**. Ver [`planos/10-zero-lateral-path-maps.md`](./planos/10-zero-lateral-path-maps.md).
+Isto inclui, em JSON **ou código**:
 
+- path→domain maps;
+- path/operationId→parameter strategy;
+- path/operationId→route segment;
+- route semantic→lista manual de operationIds para routing;
+- selector por API/endpoint;
+- presenter obrigatório por endpoint;
+- taxonomia proprietária obrigatória para provider externo funcionar.
 
-## Documentos
+`path`, `method` e `operationId` continuam válidos como metadata técnica do Action Catalog para executar/observar a action. A proibição é usá-los como heurística hardcoded de semântica no core genérico.
+
+## Documentos canônicos desta iniciativa
 
 | Documento | Finalidade |
 |---|---|
-| [`prompt-cursor-plano-mestre.md`](./prompt-cursor-plano-mestre.md) | Prompt para o Cursor revalidar HEAD e **atualizar estes markdowns** antes de implementar. |
-| [`roadmap.md`](./roadmap.md) | Roadmap macro, dependências, critérios globais, ordem das ondas e Definition of Done. |
-| [`planos/01-routing-registry-openapi.md`](./planos/01-routing-registry-openapi.md) | Remover autoridade **residual** do registry/`api_route_domains` (cold path já OpenAPI-first). |
-| [`planos/02-semantic-understanding-intents.md`](./planos/02-semantic-understanding-intents.md) | Substituir NLU manual por Turn Understanding estruturado (hoje shadow). |
-| [`planos/03-follow-up-refinement-argument-binding.md`](./planos/03-follow-up-refinement-argument-binding.md) | Generalizar follow-up/refinement/args via contexto + schema. |
-| [`planos/04-capabilities-action-catalog.md`](./planos/04-capabilities-action-catalog.md) | Mini-catálogo `action.*` → Action Catalog; **pathRules já removido (D1)**. |
-| [`planos/05-composition-enrichment-planning.md`](./planos/05-composition-enrichment-planning.md) | Composition/enrichment planner-driven. |
-| [`planos/06-recommendations-composer-contextual.md`](./planos/06-recommendations-composer-contextual.md) | Recommendations/composer contextuais — **ATENDIDO** (queries = LEGACY_FALLBACK). |
-| [`planos/07-presentation-schema-first-residuals.md`](./planos/07-presentation-schema-first-residuals.md) | Residuais de apresentação path/entity. |
-| [`planos/08-skills-content-residual-catalogs.md`](./planos/08-skills-content-residual-catalogs.md) | Skills/help residual — **ATENDIDO** (hints neutros + help actionId + EAR copy + audit). |
-| [`planos/09-evals-rollout-cleanup.md`](./planos/09-evals-rollout-cleanup.md) | Baseline, shadow/canary, R1-R11, cleanup. |
-| [`planos/10-zero-lateral-path-maps.md`](./planos/10-zero-lateral-path-maps.md) | **Onda I** — zero mapa lateral (`pathMarkers`/pathToken); domínio só via OpenAPI/Catalog. |
-| [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) | Estado das ondas A–H e próxima subetapa. |
-| [`evidence/onda-a-inventory.md`](./evidence/onda-a-inventory.md) | Inventário Onda A (consumers + classificação). |
-| [`evidence/e1-s4-registry-selection-shadow.md`](./evidence/e1-s4-registry-selection-shadow.md) | E1.S4 — SHADOW_ON + agree aggregation admin. |
-| [`evidence/e1-s4-agree-aggregation.md`](./evidence/e1-s4-agree-aggregation.md) | E1.S4 — admin summary `agreeRate` (sem cutover). |
-| [`evidence/e1-s5-parameter-strategy-shadow.md`](./evidence/e1-s5-parameter-strategy-shadow.md) | E1.S5 — **ATENDIDO** (cutover completo da fila do resolver). |
-| [`evidence/e1-s6-cleanup-partial.md`](./evidence/e1-s6-cleanup-partial.md) | E1.S6A — binder permanente / switch removido. |
-| [`evidence/e1-s6b-selection-cutover.md`](./evidence/e1-s6b-selection-cutover.md) | E1.S6B — **ATENDIDO** cutover seleção OpenAPI-first. |
-| [`evidence/e2-s1-heuristic-intent-inventory.md`](./evidence/e2-s1-heuristic-intent-inventory.md) | E2.S1 — inventário árvores heurísticas (Onda C). |
-| [`evidence/e2-s2-understanding-baseline.md`](./evidence/e2-s2-understanding-baseline.md) | E2.S2 — baseline authority vs shadow TU. |
-| [`evidence/e2-s3-turn-understanding-contract.md`](./evidence/e2-s3-turn-understanding-contract.md) | E2.S3 — contrato canônico TU. |
-| [`evidence/e2-s4-authority-shadow.md`](./evidence/e2-s4-authority-shadow.md) | E2.S4 — mapper-first product/production/KPI. |
-| [`evidence/e2-s5-generic-intent-router.md`](./evidence/e2-s5-generic-intent-router.md) | E2.S5 — overlay no_tool/presentation/compare. |
-| [`evidence/e2-s6-compound-depends.md`](./evidence/e2-s6-compound-depends.md) | E2.S6 — harness compostos (parcial). |
-| [`evidence/e2-s7-cleanup-gates.md`](./evidence/e2-s7-cleanup-gates.md) | E2.S7 — JUSTIFIED_KEEP heuristics. |
-| [`evidence/e3-s1-multi-turn-state-inventory.md`](./evidence/e3-s1-multi-turn-state-inventory.md) | E3.S1 — inventário grafo multi-turn (Onda D). |
-| [`evidence/e3-s2-follow-up-baseline.md`](./evidence/e3-s2-follow-up-baseline.md) | E3.S2 — baseline follow-up/refinement. |
-| [`evidence/e3-s3-turn-refinement-contract.md`](./evidence/e3-s3-turn-refinement-contract.md) | E3.S3 — contrato canônico Turn Refinement. |
-| [`evidence/e3-s4-schema-driven-argument-binder.md`](./evidence/e3-s4-schema-driven-argument-binder.md) | E3.S4 — binder OpenAPI sobre TurnRefinement. |
-| [`evidence/e3-s5-schema-driven-group-by.md`](./evidence/e3-s5-schema-driven-group-by.md) | E3.S5 — group-by por schema/actionId. |
-| [`evidence/e3-s6-pagination-filter-fast-path.md`](./evidence/e3-s6-pagination-filter-fast-path.md) | E3.S6 — pagination/filter schema-bound. |
-| [`evidence/e3-s7-follow-up-routing-cutover.md`](./evidence/e3-s7-follow-up-routing-cutover.md) | E3.S7 — cutover follow-up routing. |
-| [`evidence/e3-s8-persist-reload-cleanup.md`](./evidence/e3-s8-persist-reload-cleanup.md) | E3.S8 — persist/reload (DELETE deferred). |
-| [`evidence/e4-s1-capability-inventory.md`](./evidence/e4-s1-capability-inventory.md) | E4.S1 — inventário capabilities/registry. |
-| [`evidence/e4-s2-capability-discovery-baseline.md`](./evidence/e4-s2-capability-discovery-baseline.md) | E4.S2 — baseline discovery. |
-| [`evidence/e4-s3-ux-capability-contract.md`](./evidence/e4-s3-ux-capability-contract.md) | E4.S3 — contrato uxCapability. |
-| [`evidence/e4-s4-dynamic-capability-view.md`](./evidence/e4-s4-dynamic-capability-view.md) | E4.S4 — help dinâmico Action Catalog. |
-| [`evidence/e4-s5-remove-action-mini-catalog.md`](./evidence/e4-s5-remove-action-mini-catalog.md) | E4.S5 — remove action.* do registry. |
-| [`evidence/e5-s1-composition-inventory.md`](./evidence/e5-s1-composition-inventory.md) | E5.S1 — inventário decisões de composição. |
-| [`evidence/e5-s2-composition-baseline.md`](./evidence/e5-s2-composition-baseline.md) | E5.S2 — baseline composition/enrichment. |
-| [`evidence/e5-s3-goal-coverage-contract.md`](./evidence/e5-s3-goal-coverage-contract.md) | E5.S3 — contrato Goal Coverage. |
-| [`evidence/e5-s4-planner-driven-enrichment.md`](./evidence/e5-s4-planner-driven-enrichment.md) | E5.S4 — enrichment via coverage gaps. |
-| [`evidence/e5-s5-department-composition-cutover.md`](./evidence/e5-s5-department-composition-cutover.md) | E5.S5 — department goals+retrieval. |
-| [`evidence/e5-s6-entity-enrichment-cutover.md`](./evidence/e5-s6-entity-enrichment-cutover.md) | E5.S6 — entity enrichment goals. |
-| [`evidence/e5-s7-composition-cleanup.md`](./evidence/e5-s7-composition-cleanup.md) | E5.S7 — DELETE maps mortos composition. |
+| [`prompt-cursor-plano-mestre.md`](./prompt-cursor-plano-mestre.md) | Rebaseline/revisão do plano em Plan mode. |
+| [`prompt-cursor-execucao-corretiva.md`](./prompt-cursor-execucao-corretiva.md) | **Prompt de execução** da Onda J, uma subetapa por vez, sem pular gates. |
+| [`roadmap.md`](./roadmap.md) | Estado macro, decisões e Definition of Done global. |
+| [`planos/11-corrective-cutover-generalization-cleanup.md`](./planos/11-corrective-cutover-generalization-cleanup.md) | **Plano ativo** de correção arquitetural e verify-final. |
+| [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) | Histórico de execução/evidências; deve ser atualizado durante a Onda J. |
+| [`ARCHIVED.md`](./ARCHIVED.md) | Histórico das Ondas A–I; não representa o aceite vigente. |
 
-## Drift HEAD (2026-09-10) — resumido
+## Planos históricos
 
-| Tema | Estado |
-|------|--------|
-| OpenAPI-first cold path | Já default — plano 01 = residual |
-| `capabilities.pathRules` | Removido — plano 04 R04-02 ATENDIDO |
-| `recommendationQueries` | LEGACY_FALLBACK (E6.S4) — dual-run `recommendationDualRun` |
-| Turn Understanding | Bundle + shadow on — plano 02 |
+| Plano | Tema | Relação com a Onda J |
+|---|---|---|
+| [`01-routing-registry-openapi.md`](./planos/01-routing-registry-openapi.md) | routing registry/OpenAPI | revisar residual registry/operationIds |
+| [`02-semantic-understanding-intents.md`](./planos/02-semantic-understanding-intents.md) | semantic understanding/intents | consolidar authority e limpar NLU endpoint-specific |
+| [`03-follow-up-refinement-argument-binding.md`](./planos/03-follow-up-refinement-argument-binding.md) | follow-up/refinement/args | retirar path-derived continuity/strategy |
+| [`04-capabilities-action-catalog.md`](./planos/04-capabilities-action-catalog.md) | capabilities | corrigir metadata de efeito/risco |
+| [`05-composition-enrichment-planning.md`](./planos/05-composition-enrichment-planning.md) | composition/enrichment | validar generalização no candidate final |
+| [`06-recommendations-composer-contextual.md`](./planos/06-recommendations-composer-contextual.md) | recommendations | concluir cutover contextual e exit de fallback |
+| [`07-presentation-schema-first-residuals.md`](./planos/07-presentation-schema-first-residuals.md) | presentation | revalidar fallback universal |
+| [`08-skills-content-residual-catalogs.md`](./planos/08-skills-content-residual-catalogs.md) | skills/help/content | revalidar residual técnico |
+| [`09-evals-rollout-cleanup.md`](./planos/09-evals-rollout-cleanup.md) | evals/release | evidência histórica; candidate final precisa rerun fresco |
+| [`10-zero-lateral-path-maps.md`](./planos/10-zero-lateral-path-maps.md) | zero mapa lateral | reaberto por substitutos semânticos encontrados |
 
-## Fontes obrigatórias antes de executar
+## Drifts que motivaram a Onda J
+
+A auditoria pós-implementação encontrou:
+
+1. `ApiRouteDomainInferenceService._DOMAIN_RULES` portando path maps do JSON para Python;
+2. `ParameterStrategyInferenceService` inferindo strategy por path/operationId após DELETE do catálogo;
+3. continuidade/`routeSegment` derivada de path-tail/operationId inventory;
+4. `route.operationIds` como catálogo técnico paralelo residual;
+5. ownership semântico duplicado entre heurísticas/mappers e LLM Turn Analysis;
+6. `recommendationQueries` ainda como fallback e parte de oracle de smoke;
+7. capability metadata fixa `read/low/parallelSafe` para actions heterogêneas;
+8. boundary/DI residual;
+9. credential defaults em smoke;
+10. unknown-provider histórico reutilizado depois de mudança material.
+
+O detalhamento e os critérios de correção estão no Plano 11.
+
+## Regras obrigatórias antes de executar
 
 1. `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`
 2. `.cursor/rules/development-standards-index.mdc`
 3. `.cursor/rules/evidence-driven-execution.mdc`
 4. `.cursor/rules/plan-construction.mdc`
 5. `.cursor/rules/plan-execution.mdc`
-6. `.cursor/rules/openapi-first-universal-tool-routing.mdc`
-7. `.cursor/rules/assistant-content-json.mdc`
-8. `.cursor/rules/ai-intelligence-evaluation.mdc`
-9. `minha-delpi-ai-api/docs/api/04-actions-openapi.md`
-10. `minha-delpi-ai-api/docs/testing/chat-ai-flow-families.md`
-11. `minha-delpi-ai-api/docs/roadmap/openapi-first-universal-tool-routing.md`
+6. `.cursor/rules/test-and-commit.mdc`
+7. `.cursor/rules/openapi-first-universal-tool-routing.mdc`
+8. `.cursor/rules/operational-api-routing.mdc`
+9. `.cursor/rules/assistant-content-json.mdc`
+10. `.cursor/rules/ai-intelligence-evaluation.mdc`
+11. `.cursor/rules/clean-architecture-chat-api.mdc`
+12. `minha-delpi-ai-api/docs/testing/chat-ai-flow-families.md`
 
-## Invariantes
+## Ordem de execução da Onda J
 
-- Nenhum novo `if path/provider/operationId` no core genérico.
-- Nenhum novo catálogo paralelo de endpoints em JSON.
-- LLM nunca escolhe URL arbitrária nem action fora das candidates autorizadas.
-- `required`, `type`, `enum`, `format`, body/query/path continuam validados deterministicamente.
-- RBAC, sensitivity e confirmation permanecem fora da decisão livre do modelo.
-- Regras factuais e de negócio não migram para LLM só para reduzir JSON.
-- Fast paths pequenos podem permanecer quando comprovadamente seguros e úteis para latência.
-- Nova API OpenAPI desconhecida deve funcionar sem alterações por endpoint no core.
-- Mudanças de inteligência exigem baseline vs candidate + R1–R11 + live/surface validation.
+```text
+E11.S0  rebaseline/inventário
+E11.S1  architecture enforcement semântico
+E11.S2  apiRouteDomain sem path authority
+E11.S3  argument binding schema-driven
+E11.S4  multi-turn sem path/operationId continuity
+E11.S5  registry/operationIds sem routing authority
+E11.S6  semantic authority única + cleanup NLU manual
+E11.S7  recommendations contextuais + capability metadata
+E11.S8  Clean Architecture + segurança de scripts
+E11.S9  candidate final + unknown/metamorphic + R1–R11
+E11.S10 residual scan + docs + verify-final
+```
 
-## Regra de execução
+Em workstream de substituição:
 
-Cada plano filho (`planos/0N-*.md`) é a **unidade de execução**. Se o código atual contradizer uma decisão, registrar `EXECUTION_DRIFT` **no próprio markdown**, atualizar CURRENT/etapas e só então prosseguir. Não manter segundo plano Cursor como fonte.
+```text
+CUTOVER
+→ GENERALIZATION
+→ CLEANUP
+→ VERIFY
+→ COMPLETE_GATE
+```
+
+## O que não conta como concluído
+
+Se fizer parte do objetivo material, qualquer um destes estados mantém a iniciativa aberta:
+
+```text
+PARTIAL
+ATENDIDO_PARCIAL
+LEGACY_FALLBACK
+SHADOW_ONLY
+INCONCLUSIVE
+PENDING
+DEFERRED
+TODO/FIXME/HACK/TEMPORARY
+flag/fallback sem exit criteria
+```
+
+Não é permitido escrever “100% concluído” deixando “próximo passo”, “depois remover”, “falta unknown”, “falta live”, “fallback ainda necessário” ou equivalente.
+
+## Definition of Done global
+
+A iniciativa só pode voltar a `CONCLUÍDA/ARCHIVED` quando, no mesmo candidate final:
+
+```text
+CUTOVER_RESULT = PASS
+GENERALIZATION_RESULT = PASS
+CLEANUP_RESULT = PASS
+UNKNOWN_EXTERNAL_API = PASS
+METAMORPHIC_PROVIDER_PATH_OPERATION_RENAME = PASS
+ARGUMENT_SCHEMA_AUTHORITY = PASS
+MULTI_TURN_STRUCTURED_STATE = PASS
+SEMANTIC_AUTHORITY_SINGLE_OWNER = PASS
+CONTEXTUAL_RECOMMENDATIONS = PASS
+CAPABILITY_SECURITY_METADATA = PASS
+CLEAN_ARCHITECTURE = PASS
+SECURITY_HYGIENE = PASS
+SEND_STREAM_SIMULATE_UI = PASS
+PERSIST_RELOAD_F5 = PASS
+R1_R11_REQUIRED_DIMENSIONS = PASS
+RESIDUAL_SCAN = PASS
+DOCS_MATCH_FINAL_HEAD = PASS
+COMPLETE_GATE = PASS
+VERIFY_FINAL = PASS
+```
+
+Se qualquer item obrigatório estiver `FAIL`, `INCONCLUSIVE`, `PARTIAL` ou depender de evidência anterior ao último diff material, o status permanece **REABERTO / VERIFY_FINAL_FAILED**.
