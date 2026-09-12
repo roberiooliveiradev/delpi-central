@@ -1,70 +1,104 @@
-# 09 — UX do Copilot
+# 09 — UX do Minha DELPI Copilot
 
 ## 1. Princípio
 
 O Copilot deve parecer parte da plataforma, não uma janela de chat isolada.
 
-Ele acompanha o contexto do usuário, explica o que pode fazer, mostra progresso operacional e oferece ações úteis relacionadas ao estado atual da tela.
+A linguagem natural é a porta de entrada; o produto também possui surfaces de trabalho persistente, evidence, decisions e acompanhamento.
 
-## 2. Superfícies
+```text
+Chat
++ Context
++ Activity
++ Evidence
++ Decisions
++ Tasks
++ Cases
++ Rooms
++ Inbox
++ Watch
+```
 
-### Painel lateral persistente
+## 2. Uma única identidade
 
-Recomendação principal para uso cotidiano.
+A UI não deve exigir que o usuário escolha “Agente Engenharia”, “Agente Qualidade” etc.
 
-- abre sem tirar o usuário do app atual;
-- conhece Workspace Context;
-- pode navegar/alterar visão;
-- exibe activity e resultados;
-- permite continuar trabalhando na UI.
+Quando útil, pode mostrar:
 
-### Página completa de Copilot
+```text
+Conhecimentos aplicados
+• Engenharia
+• Qualidade
+• Suprimentos
+```
 
-Para:
+sem representar troca de identidade/runtime.
 
-- análises longas;
-- workflows complexos;
-- relatórios;
-- histórico;
-- agentes/projetos.
+## 3. Painel lateral global
 
-### Entry points contextuais
+Uso cotidiano:
 
-Botões como:
+- conversar sem sair do app;
+- receber Workspace Context;
+- mostrar context chips;
+- navegar;
+- executar reads/writes governados;
+- acompanhar activity;
+- mostrar sources/evidence;
+- receber Decision Gates;
+- criar/abrir Task/Case.
+
+## 4. Página completa
+
+Adequada para:
+
+- análise longa;
+- comparação;
+- multimodalidade;
+- Tasks/Workflows;
+- Cases/Evidence Board;
+- artifacts;
+- histórico.
+
+## 5. Entry points contextuais
+
+Exemplos:
 
 ```text
 Analisar com Copilot
-Explicar este indicador
-Perguntar sobre este cliente
+Explicar indicador
+Perguntar sobre cliente
+Investigar problema
 Criar ação a partir deste resultado
 ```
 
-Esses entry points devem passar `entityRefs`/`resultRefs`, não prompts gigantes hardcoded.
+Passar `EntityRef`, `EvidenceRef`, `OutcomeRef` ou Workspace Context estruturado; evitar prompts gigantes hardcoded.
 
-## 3. PLAN → EXECUTE → OBSERVE → EXPLAIN
+## 6. Activity operacional
 
-A UI deve mostrar plano operacional resumido, não chain-of-thought.
+Mostrar estado verificável, não CoT.
 
 Exemplo:
 
 ```text
-Analisando atraso do item 90264238
-
-✓ Estoque consultado
-✓ Pedidos em aberto consultados
-✓ Produção consultada
-○ Consultando compras
-○ Preparando análise
+Investigando reclamação
+✓ Produto identificado
+✓ Histórico de qualidade consultado
+✓ Desenho analisado
+○ Consultando lote/OP
+○ Aguardando nova revisão
 ```
 
-## 4. Estados visuais
+## 7. Estados UX
+
+Turn/task/workflow podem usar estados coerentes:
 
 ```text
-thinking
 planning
+running
 waiting_for_input
-waiting_for_confirmation
-executing
+waiting_for_decision
+waiting_for_event
 partially_completed
 completed
 blocked
@@ -72,116 +106,258 @@ failed
 cancelled
 ```
 
-Cada estado deve ter copy clara e ação de recuperação quando possível.
+Não inventar novo vocabulário incompatível para cada surface.
 
-## 5. Confirmação de writes
+## 8. Epistemic UX
 
-A confirmação deve ser apresentada como cartão estruturado contendo:
+Distinguir visualmente quando material:
 
-- ação;
-- entidade;
-- principais campos;
-- efeito;
-- risco/sensitivity;
-- botões confirmar/cancelar.
+- **Fato**;
+- **Cálculo**;
+- **Hipótese**;
+- **Conclusão**;
+- **Recomendação**.
 
-Nunca esconder write atrás de uma resposta textual ambígua.
+Uma hipótese não deve ter o mesmo tratamento visual de um fato confirmado.
 
-## 6. Resultados ricos
+## 9. Evidence/Sources
 
-Reutilizar o pipeline de renderização existente para:
+Permitir expandir:
+
+- source system/document;
+- entity;
+- timestamp/freshness;
+- filtros/período;
+- page/region de arquivo quando aplicável;
+- confidence/limitations quando aplicável.
+
+Não sobrecarregar resposta simples; progressive disclosure.
+
+## 10. Decision Gate UX
+
+Substitui cartão genérico de “confirmar”.
+
+Pode apresentar:
+
+```text
+Ação
+Entidade
+Mudanças principais
+Impacto
+Evidence usada
+Risco
+Gate requerido
+```
+
+Ações possíveis dependem do gate:
+
+```text
+Entendi
+Confirmar / Cancelar
+Revisar e confirmar
+Aprovar / Rejeitar
+```
+
+Não esconder write atrás de texto ambíguo.
+
+## 11. Resultados ricos
+
+Reutilizar render pipeline para:
 
 - texto;
 - KPI;
 - tabela;
 - gráfico;
 - árvore;
-- dashboard;
+- cards de entidade;
+- timeline;
 - checklist;
-- cards de entidades;
-- timeline.
+- evidence board;
+- workflow/task progress;
+- comparison.
 
-## 7. Ações após resposta
+## 12. Suggested actions
 
-Após uma análise, o Copilot pode oferecer sugestões contextuais:
+Somente capabilities autorizadas:
 
 ```text
-[Abrir pedidos em atraso]
-[Comparar com mês passado]
-[Criar solicitação para Compras]
+[Abrir registro]
+[Comparar período]
+[Investigar como Case]
+[Criar solicitação]
 [Gerar relatório]
+[Acompanhar mudança]
 ```
 
-Somente capabilities autorizadas devem ser oferecidas.
+Sugestão não significa execução.
 
-## 8. Navegação perceptível
+## 13. Navigation UX
 
-Quando o Copilot mudar a página:
+Quando Copilot navegar:
 
-- mostrar mensagem curta do que está fazendo;
-- preservar a conversa;
-- manter o painel aberto quando fizer sentido;
-- atualizar Workspace Context após a navegação.
+- activity curta;
+- conversa preservada;
+- painel permanece quando apropriado;
+- Workspace Context atualiza após navegação;
+- focus acessível/previsível.
 
-## 9. Context chips
+## 14. Context chips
 
-O composer pode mostrar chips como:
+Exemplo:
 
 ```text
 Portal Comercial
 Cliente 000123
 Filial 01
-Período: setembro/2026
+Setembro/2026
+Caso Q-2026-0042
 ```
 
-O usuário pode remover um chip para impedir que aquele contexto seja usado no próximo turno.
+Usuário pode remover contexto não desejado.
 
-## 10. Correção pelo usuário
+Contexto explícito novo vence memória antiga.
 
-O usuário deve poder dizer:
+## 15. Copilot Task UX
 
-> “Não, use a filial 02.”
+Task card/page mostra:
 
-O novo contexto explícito prevalece imediatamente.
+- objetivo;
+- status;
+- progresso real;
+- steps resumidos;
+- pending decisions;
+- results/evidence;
+- links para app/Case;
+- cancel quando permitido.
 
-## 11. Histórico e continuidade
+Task não precisa parecer conversa.
 
-Após F5/reload:
+## 16. Copilot Case UX
 
-- conversa permanece;
-- ações concluídas continuam marcadas;
-- pending confirmation não deve ser reexecutada automaticamente;
-- contexto visual é reestabelecido quando seguro/possível.
+Case é workspace de investigação/trabalho:
 
-## 12. Explicabilidade operacional
+```text
+Cabeçalho/objetivo
+Entidades relacionadas
+Evidence Board
+Hipóteses/conclusões
+Tasks/Workflows
+Decisões/Ações
+Timeline
+Room
+Artifacts
+```
 
-Exibir quando útil:
+Deve deixar claro o que é source data e o que é interpretação do Copilot.
 
-- fontes consultadas;
-- dados usados;
-- período/filtros;
-- actions executadas;
-- limitações/partial failures;
-- motivo de bloqueio por permissão/policy.
+## 17. Interaction Room UX
 
-Não expor prompt interno ou chain-of-thought.
+Room associada a Case pode oferecer:
 
-## 13. Feedback
+- conversa humana;
+- arquivos;
+- menções;
+- resumo do Copilot;
+- decisões/pending actions;
+- link para evidence/entidades.
 
-Permitir feedback contextual:
+Resumo não pode revelar source data que o usuário não pode acessar.
 
-- resposta útil/não útil;
-- action errada;
-- dado incorreto;
-- navegação errada;
-- análise incompleta.
+## 18. Copilot Inbox UX
 
-Feedback deve alimentar evals/observabilidade, não modificar regra automaticamente em produção.
+Sections possíveis:
 
-## 14. Acessibilidade
+```text
+Aguardando você
+Em andamento
+Concluído
+Alertas
+```
 
-- activity compatível com leitores de tela;
-- foco previsível após navegação;
-- confirmações operáveis por teclado;
-- status não depender somente de cor;
-- mensagens de erro com ação recomendada.
+Itens linkam para Task/Case/Decision/Workflow/entity.
+
+Leitura de item nunca executa write implicitamente.
+
+## 19. Watch UX
+
+Usuário deve entender:
+
+- o que está sendo acompanhado;
+- condição/gatilho;
+- modo `OBSERVE | ADVISE | ACT`;
+- prazo/expiração;
+- como pausar/desabilitar;
+- quais actions ACT poderia executar quando permitido.
+
+ACT requer destaque de autonomia/policy.
+
+## 20. Multimodal UX
+
+Para desenho/documento:
+
+- mostrar arquivo/página/região quando possível;
+- destacar findings com confidence/limitation;
+- permitir voltar à evidência;
+- não fingir leitura de região ilegível.
+
+## 21. Simulation UX
+
+Separar claramente:
+
+```text
+Estado atual
+Premissas simuladas
+Resultado projetado
+Limitações
+```
+
+Botão `Aplicar` nunca é continuidade implícita; inicia uma Business Action nova e governada.
+
+## 22. Histórico/reload
+
+Após F5:
+
+- conversa permanece conforme persistence atual;
+- Task/Case/Workflow recupera status real;
+- pending Decision não executa automaticamente;
+- completed write não repete;
+- Workspace Context é reconstruído/revalidado.
+
+## 23. Correção e feedback
+
+Usuário pode corrigir contexto/entidade/interpretação.
+
+Feedback pode classificar:
+
+- resposta;
+- action;
+- evidence;
+- navigation;
+- analysis;
+- recommendation.
+
+Feedback alimenta telemetry/evals/candidate improvement, não altera production behavior imediatamente.
+
+## 24. Acessibilidade
+
+- keyboard navigation;
+- focus management;
+- screen-reader labels;
+- status não depende só de cor;
+- activity live-region apropriada;
+- Decision Gate acessível;
+- errors recuperáveis;
+- tables/graphs com alternativas textuais quando necessário.
+
+## 25. UX success
+
+O usuário deve conseguir começar por uma pergunta e, quando o problema crescer, evoluir naturalmente:
+
+```text
+Turn
+→ Task
+→ Case
+→ Room/Inbox/Watch
+```
+
+sem aprender uma coleção de agentes ou trocar de ferramenta mental.
