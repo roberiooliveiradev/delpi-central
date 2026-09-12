@@ -4,7 +4,8 @@
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **State:** [`21-data-and-state-model.md`](./21-data-and-state-model.md)  
-**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
+**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
+**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)
 
 ## 1. Objetivo
 
@@ -89,7 +90,7 @@ Domain/Application não importam:
 - PostgreSQL driver;
 - HTTP client concreto;
 - LLM/provider SDK concreto;
-- speech/vision/media SDK concreto;
+- speech/vision/media/biometric SDK concreto;
 - WebRTC/browser concrete transport;
 - vector DB concreto;
 - event broker concreto;
@@ -109,7 +110,7 @@ Pode conter:
 - Specification when genuinely combinable;
 - Domain Events as domain facts.
 
-Não acessa DB/HTTP/LLM/media SDK/env/framework.
+Não acessa DB/HTTP/LLM/media/biometric SDK/env/framework.
 
 ### Application
 
@@ -121,6 +122,7 @@ Não acessa DB/HTTP/LLM/media SDK/env/framework.
 - policy invocation;
 - transaction boundary abstractions;
 - media/session orchestration only through ports;
+- biometric identity resolution through ports;
 - Meeting/Frontline use cases without provider details.
 
 Sem SQL, URLs, provider names or transport concerns.
@@ -142,8 +144,11 @@ Sem SQL, URLs, provider names or transport concerns.
 - RAG/vector adapters;
 - OCR/Vision adapters;
 - STT/TTS adapters;
+- face/speaker biometric adapters;
+- liveness/anti-spoof adapters quando necessários;
 - realtime media transport adapters;
 - media/file/object storage adapters;
+- protected biometric-template storage adapter;
 - device-context adapters;
 - event broker/outbox;
 - telemetry/cache/materializers.
@@ -172,10 +177,10 @@ data
 Copilot MFE may organize feature folders inside those responsibilities.
 
 ### UI
-Rendering/accessibility/user events/presentation/media controls only.
+Rendering/accessibility/user events/presentation/media/biometric controls only.
 
 ### State
-Local/conversation/workspace/media-session UI state. No durable business authority.
+Local/conversation/workspace/media-session UI state. No durable business or identity authority.
 
 ### Data
 Typed Copilot API clients, adapters, cache/query integration, contracts.
@@ -187,11 +192,12 @@ Server State          → query/cache layer
 Workspace State       → Portal/Copilot context adapter
 Conversation UI State → MFE + server refs
 Media UI State        → MFE/browser session state; durable refs in API if needed
+Biometric UI State    → candidate/result/consent display only; authority stays server-side/Core
 Local UI State        → component/hook
 Durable Work State    → Copilot API
 ```
 
-Browser camera/mic permission state is UI/platform state, not authorization truth for business actions.
+Browser camera/mic permission state and biometric candidate are not authorization truth for business actions.
 
 ## 7. Shared-code gate
 
@@ -235,6 +241,9 @@ Do not transform Chat into a library.
 | materially different read/write models | light CQRS | no default duplication |
 | speech/vision/provider integration | Port + Adapter | provider SDK stays infrastructure |
 | media ingestion | Pipeline + bounded stages | no unbounded in-request processing |
+| biometric identity | Port + Adapter + Policy + protected template boundary | candidate identity, never RBAC source |
+| biometric enrollment | Use Case + lifecycle/state + protected storage | explicit/revocable/versioned |
+| Human Observation | bounded observation pipeline + Evidence normalization | objective process signals only |
 | large/long media | Async Job/Workflow when required | avoid blocking synchronous request |
 | realtime media | Session + bounded transport adapter | explicit limits/backpressure |
 | meeting lifecycle | Use Cases + State Machine if persisted | no second backend/runtime |
@@ -270,9 +279,13 @@ Examples:
 - CreateMeetingArtifact;
 - StartFrontlineSession;
 - IngestMedia;
+- EnrollBiometricIdentity;
+- ResolveBiometricIdentity;
+- RevokeBiometricEnrollment;
+- CreateProcessObservation;
 - CreateKnowledgeCandidate.
 
-Avoid one monolithic `CopilotService` or `MultimodalService` god object.
+Avoid one monolithic `CopilotService`, `MultimodalService` or `BiometricService` god object.
 
 ## 10. Ports & Adapters
 
@@ -291,13 +304,17 @@ Storage
 OCR/Vision
 Speech-to-Text
 Text-to-Speech
+Face identity
+Speaker identity
+Liveness/anti-spoof when needed
+Human Observation
 Realtime media transport
 Device context
 Business Graph source adapters
 Industrial telemetry/read sources
 ```
 
-Potential media ports (`SpeechToTextPort`, `MediaIngestPort`, etc.) are **candidates**, not mandatory boilerplate. Each must pass Abstraction Gate.
+Potential media/biometric ports are **candidates**, not mandatory boilerplate. Each must pass Abstraction Gate.
 
 ## 11. Repository Pattern
 
@@ -310,6 +327,7 @@ Use only for Copilot-owned lifecycle/persistent authority, e.g. when proven:
 - Watch;
 - Meeting session/artifact metadata if durable;
 - Frontline session metadata if durable;
+- Biometric enrollment/template metadata if Copilot is approved owner;
 - Graph relationship materialization.
 
 Wrong:
@@ -317,6 +335,7 @@ Wrong:
 ```text
 PurchaseOrderRepository that merely calls purchase API
 RawVideoRepository created only because video exists
+PersonRepository duplicating Core users
 ```
 
 Correct:
@@ -324,6 +343,7 @@ Correct:
 ```text
 DomainApiAdapter / generic Business Action executor
 MediaStoragePort only when durable media storage is actually required
+BiometricEnrollmentRepository only if Copilot truly owns enrollment lifecycle
 ```
 
 ## 12. Adapter / Anti-Corruption Layer
@@ -334,7 +354,7 @@ Use for:
 - MFE/Portal host contract;
 - iframe messages;
 - Domain API/provider variations;
-- media/speech/vision providers;
+- media/speech/vision/biometric providers;
 - device/workstation context;
 - existing room/notification infrastructure;
 - industrial telemetry sources;
@@ -356,6 +376,7 @@ Expertise content: DRAFT → REVIEW → TESTING → PUBLISHED → DEPRECATED
 Watch: ACTIVE → TRIGGERED/COOLDOWN → ACTIVE | EXPIRED | DISABLED
 Meeting: DRAFT → ACTIVE → ENDING → COMPLETED|FAILED|CANCELLED when persistence justified
 MediaSession: CREATED → CAPTURING → PROCESSING → STOPPED/terminal when lifecycle justified
+BiometricEnrollment: PENDING → ACTIVE → REVOKED|DELETED when lifecycle is owned by Copilot
 FrontlineSession: READY → ACTIVE → WAITING_HELP/ESCALATED → terminal when durable state justified
 ```
 
@@ -374,6 +395,8 @@ RetryPolicy
 RetentionPolicy
 MediaCapturePolicy
 ConsentPolicy
+BiometricIdentityPolicy
+HumanObservationPolicy
 CapabilityAvailabilityPolicy
 ComputePolicy
 IndustrialSafetyBoundaryPolicy
@@ -386,6 +409,10 @@ structured input → structured decision
 ```
 
 Policy is not a free-form prompt.
+
+Biometric policy can narrow matching/usage; it cannot grant RBAC.
+
+HumanObservationPolicy forbids subjective/sensitive inference classes defined in `54`.
 
 Industrial safety authority remains with industrial owner; Copilot policy can only further restrict, never relax that owner.
 
@@ -435,7 +462,48 @@ Rules:
 - large/long video may become async job/workflow;
 - provider failure produces degraded mode, not fabricated result.
 
-## 17. Realtime Session Pattern
+## 17. Biometric Identity Pattern
+
+Biometric identity is a **candidate-resolution pipeline**:
+
+```text
+explicit enrollment
+→ protected template
+→ media sample
+→ biometric adapter
+→ candidateUserRef + confidence
+→ threshold/policy/liveness when required
+→ user-correctable association
+→ authenticated session/Core RBAC remains authority
+```
+
+Rules:
+
+- closed-set users enrolled for the approved purpose;
+- unknown remains unknown when threshold is not met;
+- correction does not silently retrain enrollment;
+- revoke/delete prevents future use;
+- no template in ordinary logs/API;
+- biometric result never equals `PermissionGrant`;
+- no open-world person identification by default.
+
+## 18. Human Observation Pattern
+
+Human Observation produces bounded process evidence:
+
+```text
+media/session + operational context
+→ detect observable event/pattern
+→ Evidence/PersonObservationRef
+→ optional aggregation
+→ analysis/Knowledge candidate
+```
+
+Allowed output describes observable work/process signals.
+
+Forbidden output includes personality, honesty, loyalty, emotion-as-truth, health diagnosis, sensitive attributes or automatic employment judgments.
+
+## 19. Realtime Session Pattern
 
 Use only for genuine realtime requirements.
 
@@ -444,6 +512,7 @@ Session boundary should define:
 ```text
 start/stop
 active modalities
+identity-recognition active/inactive
 user/device/session refs
 budgets
 backpressure
@@ -454,9 +523,9 @@ observability
 cleanup
 ```
 
-Realtime is not a global singleton and does not auto-resume mic/camera after reload without explicit policy/user state.
+Realtime is not a global singleton and does not auto-resume mic/camera/biometric recognition after reload without explicit policy/user state.
 
-## 18. Event-Driven
+## 20. Event-Driven
 
 Use when reacting asynchronously to a fact.
 
@@ -474,7 +543,7 @@ Watch/wait_event share the canonical event semantics.
 
 Media frame streams are not automatically domain events.
 
-## 19. Transactional Outbox
+## 21. Transactional Outbox
 
 Use only when we need atomic:
 
@@ -484,7 +553,7 @@ state persisted + integration event eventually published
 
 If platform owner already guarantees equivalent semantics, use its contract.
 
-## 20. Idempotency
+## 22. Idempotency
 
 Preference:
 
@@ -496,7 +565,7 @@ Write timeout ambiguity requires outcome verification before retry.
 
 Repeated voice utterance, duplicated transcript event or meeting replay cannot duplicate write.
 
-## 21. Saga
+## 23. Saga
 
 Only when:
 
@@ -504,9 +573,9 @@ Only when:
 - process consistency matters;
 - real compensation operations exist.
 
-Never for read-only analysis, Meeting transcription or because “workflow is multi-step”.
+Never for read-only analysis, Meeting transcription, biometric matching or because “workflow is multi-step”.
 
-## 22. Resilience
+## 24. Resilience
 
 Every external adapter defines as appropriate:
 
@@ -518,7 +587,7 @@ bulkhead/concurrency limit
 ambiguous outcome handling
 ```
 
-Media/realtime adds when needed:
+Media/realtime/biometric adds when needed:
 
 ```text
 size/duration limit
@@ -527,11 +596,14 @@ concurrent-session limit
 network-loss fallback
 async/degraded fallback
 cost budget
+confidence threshold
+unknown fallback
+provider failure fallback
 ```
 
 Read retry != write retry.
 
-## 23. Result/Error model
+## 25. Result/Error model
 
 Canonical semantics should cover:
 
@@ -551,13 +623,17 @@ MediaPolicyBlocked
 MediaTooLarge
 RealtimeUnavailable
 SharedDeviceSessionInvalid
+BiometricEnrollmentRequired
+BiometricIdentityUnknown
+BiometricIdentityAmbiguous
+BiometricPolicyBlocked
 IndustrialSafetyBlocked
 Internal
 ```
 
 Infra exceptions do not leak directly to MFE/LLM.
 
-## 24. DTO + Mapper
+## 26. DTO + Mapper
 
 Do not expose persistence ORM models as public transport contracts.
 
@@ -569,11 +645,11 @@ Application/Domain model
 Persistence model
 ```
 
-Media provider DTOs do not leak into Evidence/domain contracts.
+Media/biometric provider DTOs do not leak into Evidence/domain contracts.
 
 Avoid ceremonial mapping when no semantic boundary exists.
 
-## 25. Dependency Injection
+## 27. Dependency Injection
 
 Use simple composition.
 
@@ -584,11 +660,12 @@ UseCase creates PostgresRepository()
 DomainService creates HttpClient()
 MeetingUseCase creates SpeechProviderSDK()
 FrontlineUseCase creates CameraProvider()
+IdentityUseCase creates FaceRecognitionSDK()
 ```
 
 Concrete construction belongs to composition/startup.
 
-## 26. Factory / Builder / Strategy
+## 28. Factory / Builder / Strategy
 
 - Factory: config/runtime-dependent construction;
 - Builder: truly complex/invariant-heavy object creation;
@@ -596,15 +673,15 @@ Concrete construction belongs to composition/startup.
 
 One implementation plus hypothetical future variation is not enough for an internal Strategy.
 
-Model/STT/Vision provider selection belongs to adapters/compute policy, not arbitrary feature branches.
+Model/STT/Vision/Biometric provider selection belongs to adapters/compute/data policy, not arbitrary feature branches.
 
-## 27. CQRS
+## 29. CQRS
 
 Light CQRS only if separate read/write models materially simplify performance/security/shape.
 
 No Event Sourcing or duplicate stores by default.
 
-## 28. Bounded Contexts target
+## 30. Bounded Contexts target
 
 C0 finalizes names/owners:
 
@@ -615,6 +692,7 @@ Expertise & Playbooks
 Knowledge
 Evidence & Provenance
 Media & Interaction Sessions
+Biometric Identity & Human Observation
 Work Management
 Policy & Decision
 Platform Experience
@@ -624,9 +702,11 @@ Observability & Evals
 
 Meeting/Frontline are product/application modules over these bounded responsibilities, not necessarily new bounded contexts.
 
+Core remains corporate user authority. Biometric context does not replace it.
+
 Industrial OT/safety remains external authority/boundary unless a separate approved initiative defines otherwise.
 
-## 29. Patterns by Copilot component
+## 31. Patterns by Copilot component
 
 | Componente | Preferred patterns |
 |---|---|
@@ -641,9 +721,11 @@ Industrial OT/safety remains external authority/boundary unless a separate appro
 | Multimodal | Pipeline + adapters; Strategy only if needed |
 | Speech | Port + Adapter; realtime session only when necessary |
 | Image/Video | Media Pipeline + Evidence normalization |
+| Biometric identity | Enrollment Use Cases + Port/Adapter + Policy + protected template boundary |
+| Human Observation | bounded observation pipeline + Evidence + governance policy |
 | Media persistence | Storage Adapter + Retention Policy only when needed |
 | Meeting | Application Use Cases + shared Media/Evidence/Work contracts |
-| Frontline | Application Use Cases + WorkspaceContext + Media/Evidence adapters |
+| Frontline | Application Use Cases + WorkspaceContext + Media/Evidence/Biometric adapters |
 | Evidence | Value Object/validated factory + provenance |
 | Graph | Ports/Adapters + permission policy; repository only if materialized |
 | Decision | Policy + State Machine |
@@ -658,7 +740,7 @@ Industrial OT/safety remains external authority/boundary unless a separate appro
 | Industrial telemetry | Read Adapter + canonical Entity/Evidence mapping |
 | Industrial actuation | separate deterministic safety architecture, not generic Copilot executor |
 
-## 30. Abstraction Gate
+## 32. Abstraction Gate
 
 Before creating:
 
@@ -672,6 +754,8 @@ framework
 generic engine
 repository
 media service
+biometric service
+person profile
 realtime gateway
 meeting backend
 frontline backend
@@ -688,22 +772,25 @@ Answer:
 6. Does repo already contain an equivalent abstraction?
 7. Would the abstraction couple Copilot to Chat internals?
 8. Can existing WorkspaceContext/EntityRef/EvidenceRef model it?
-9. Does raw media really need persistence?
-10. Is this business automation or physical actuation?
-11. Who owns privacy/retention/safety?
+9. Does raw media/template really need persistence?
+10. Does biometric data need its own protected lifecycle rather than general media storage?
+11. Is this identity assistance or a duplicate user authority?
+12. Is Human Observation objective/process-grounded or subjective person profiling?
+13. Is this business automation or physical actuation?
+14. Who owns privacy/retention/safety?
 
 If justification is “maybe later”, do not create it.
 
 External boundaries may justify a Port from first implementation.
 
-## 31. Anti-patterns
+## 33. Anti-patterns
 
 - Chat internals used as Copilot library;
 - `Manager/Helper/Utils/Service` god objects;
 - repository for every HTTP resource;
 - deep base-class inheritance;
 - global mutable service locator/singleton state;
-- framework/provider/media SDK types in Domain/Application;
+- framework/provider/media/biometric SDK types in Domain/Application;
 - ORM model as external contract;
 - event bus without schema/owner;
 - Strategy/Factory without variation;
@@ -711,36 +798,40 @@ External boundaries may justify a Port from first implementation.
 - CQRS/Event Sourcing by fashion;
 - feature-specific Entity/Evidence/Decision/Event model;
 - `FrontlineContext` duplicating WorkspaceContext;
-- second Core/RBAC/domain authority;
+- second Core/RBAC/domain/user authority;
 - Portal containing planner/RAG/action/media intelligence;
 - fallback to Chat runtime;
-- one `MultimodalService` owning every provider/workflow/policy;
-- raw-media persistence by default;
-- hidden camera/mic capture;
-- media retention without class/policy;
+- one `MultimodalService`/`BiometricService` owning every provider/workflow/policy;
+- raw-media/template persistence by default;
+- biometric embeddings/templates in ordinary logs;
+- hidden camera/mic/identity recognition;
+- media/biometric retention without class/policy;
 - meeting-specific action executor;
 - voice-specific RBAC;
-- device identity as user identity;
-- hidden employee surveillance;
+- device or biometric candidate as user identity authority;
+- open-world/indiscriminate face recognition by default;
+- emotion/personality/trustworthiness inference from face/voice;
+- hidden employee surveillance/scoring;
+- automatic employment decisions from biometric/Human Observation;
 - free-form LLM output sent to PLC/CNC/robot;
 - Copilot replacing safety interlocks.
 
-## 32. Testing by layer
+## 34. Testing by layer
 
 ### Domain
 Pure units/invariants/value objects/state/policy.
 
 ### Application
-Use cases with port fakes/stubs; no Flask/provider/media SDK required.
+Use cases with port fakes/stubs; no Flask/provider/media/biometric SDK required.
 
 ### Infrastructure
-Contract/integration tests, provider mapping, timeout/error translation, media lifecycle, cleanup/backpressure when applicable.
+Contract/integration tests, provider mapping, timeout/error translation, media/biometric lifecycle, cleanup/backpressure when applicable.
 
 ### Interfaces
-Schema/auth/error/transport/media-session tests.
+Schema/auth/error/transport/media-session/biometric-enrollment tests.
 
 ### Frontend
-Components/hooks/adapters/integration/accessibility/media permission/shared-device UX.
+Components/hooks/adapters/integration/accessibility/media permission/shared-device/identity-correction UX.
 
 ### Standalone boundary
 
@@ -753,17 +844,21 @@ NO_CHAT_DB_AUTHORITY
 CHAT_OFFLINE_INDEPENDENCE
 ```
 
-When Meeting/Frontline/media are in scope:
+When Meeting/Frontline/media/biometric are in scope:
 
 ```text
 NO_HIDDEN_CAPTURE
 RETENTION_POLICY_ENFORCED
 SHARED_DEVICE_ISOLATION
 MODALITY_RBAC_PARITY
+BIOMETRIC_MATCH_NOT_AUTHORITY
+UNKNOWN_IDENTITY_REMAINS_UNKNOWN
+NO_SENSITIVE_PERSON_INFERENCE
+NO_AUTOMATIC_EMPLOYMENT_DECISION_FROM_BIOMETRICS
 NO_ARBITRARY_OT_COMMAND
 ```
 
-## 33. Migration patterns
+## 35. Migration patterns
 
 ### Copilot DB/contracts
 
@@ -779,9 +874,11 @@ Adapter/ACL → telemetry → canary → cutover → residual scan → remove ad
 
 Again: Minha DELPI Chat is not being migrated into Copilot.
 
-Media provider migration follows adapters/versioned policy; do not rewrite business/application layers for provider swaps.
+Media/biometric provider migration follows adapters/versioned policy; do not rewrite business/application layers for provider swaps.
 
-## 34. ADR / Exception Gate
+Biometric template migrations require explicit compatibility/version/reenrollment strategy; never silently reinterpret incompatible embeddings.
+
+## 36. ADR / Exception Gate
 
 If canonical pattern cannot satisfy a real requirement:
 
@@ -789,11 +886,11 @@ If canonical pattern cannot satisfy a real requirement:
 2. list alternatives;
 3. document trade-offs;
 4. prove no second authority/product coupling;
-5. include privacy/retention/safety impact when applicable;
+5. include privacy/biometric/retention/safety impact when applicable;
 6. register ADR/decision;
 7. update this standard if exception becomes standard.
 
-## 35. FOUNDATION_FREEZE architecture gates
+## 37. FOUNDATION_FREEZE architecture gates
 
 ```text
 ARCHITECTURE_STYLE
@@ -814,6 +911,8 @@ ARCHITECTURAL_EXCEPTION_PROCESS
 SHARED_CODE_GATE
 MEDIA_PROVIDER_BOUNDARIES
 MEDIA_RETENTION_POLICY
+BIOMETRIC_IDENTITY_BOUNDARY
+HUMAN_OBSERVATION_BOUNDARY
 SHARED_DEVICE_BOUNDARY
 OT_SAFETY_BOUNDARY
 CHAT_RUNTIME_DEPENDENCY=0
@@ -821,7 +920,7 @@ CHAT_RUNTIME_DEPENDENCY=0
 
 All required = PASS before runtime feature work that depends on them.
 
-## 36. Checklist per step
+## 38. Checklist per step
 
 ```text
 [ ] owner/product boundary clear
@@ -833,9 +932,14 @@ All required = PASS before runtime feature work that depends on them.
 [ ] external dependency behind adapter
 [ ] composition root wiring
 [ ] error/resilience semantics preserved
-[ ] frontend has no durable business authority
+[ ] frontend has no durable business/identity authority
 [ ] no Chat product coupling
 [ ] media privacy/retention considered when applicable
+[ ] biometric enrollment/template lifecycle considered when applicable
+[ ] biometric result cannot grant permission
+[ ] unknown/ambiguous identity has safe fallback
+[ ] Human Observation remains observable/process-grounded
+[ ] no sensitive/personality/emotion/employment inference
 [ ] shared-device isolation considered when applicable
 [ ] no modality RBAC bypass
 [ ] OT physical actuation separated from generic action runtime
@@ -844,16 +948,16 @@ All required = PASS before runtime feature work that depends on them.
 [ ] no predictable next-phase redesign
 ```
 
-## 37. Regra final
+## 39. Regra final
 
 Quando houver dúvida:
 
 ```text
-platform/product/privacy/safety boundary first
+platform/product/privacy/identity/safety boundary first
 → proven repo convention
 → Pattern Decision Matrix
 → simplest solution preserving boundaries
 → ADR only for material ambiguity
 ```
 
-O objetivo não é usar muitos patterns; é obter código previsível, consistente, testável e evolutivo sem refatoração estrutural desnecessária — inclusive quando o Copilot evoluir de texto administrativo para voz, vídeo, Meeting e Frontline.
+O objetivo não é usar muitos patterns; é obter código previsível, consistente, testável e evolutivo sem refatoração estrutural desnecessária — inclusive quando o Copilot evoluir de texto administrativo para voz, vídeo, identidade biométrica governada, Meeting e Frontline.
