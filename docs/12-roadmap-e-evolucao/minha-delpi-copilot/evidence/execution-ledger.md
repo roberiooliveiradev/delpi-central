@@ -99,6 +99,7 @@ Tudo acima é `PLAN_ONLY` até evidence de runtime futura.
 | 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | Business Graph/Tasks/Cases/Rooms/Inbox/Watch/Evidence/Decision/Knowledge/Simulation/Model Router | PLAN_ONLY |
 | 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | revisão foundation-first: primitives antecipados para C0, authorities documentais consolidadas, E*/O* subordinados a C0–C7 | PLAN_ONLY; sem runtime diff |
 | 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | padrão normativo de arquitetura/design patterns criado: Clean Architecture, Ports & Adapters, DDD pragmático, pattern matrix, Abstraction Gate, migration/resilience/testing rules | PLAN_ONLY; sem runtime diff |
+| 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | requisitos CP-130–CP-140 adicionados para rastrear architecture style, layers, DI, patterns, errors, events, state machines, frontend state, migration e conformance | PLAN_ONLY; sem runtime diff |
 
 ## 7. Escopo obrigatório de C0.S0
 
@@ -228,6 +229,7 @@ CP-001–060 core
 CP-061–070 iframe
 CP-071–089 single Copilot/expertise
 CP-090–129 operational intelligence
+CP-130–140 architecture/design patterns
 ```
 
 `46-*` é reference only.
