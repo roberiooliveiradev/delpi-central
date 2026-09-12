@@ -416,3 +416,224 @@ O sistema deve suportar, sem troca de agente:
 > "Analise este desenho, verifique os riscos de qualidade, consulte reclamações semelhantes, compare fornecedores e monte um 8D preliminar."
 
 O mesmo runtime deve ativar Engenharia + Qualidade + Suprimentos, multimodalidade, RAG e Business Actions autorizadas, preservando identidade, contexto, RBAC, policy e audit.
+
+---
+
+## 21. Evolução para camada operacional inteligente
+
+O Copilot não deve terminar na arquitetura de chat + tools. O target completo adiciona uma camada de trabalho persistente e contexto empresarial:
+
+```text
+Business Graph
++ Tasks/Cases/Rooms
++ Inbox/Watch
++ Evidence/Provenance
++ Decision Gates/Simulation
++ Organizational Knowledge
++ Expertise Studio
++ Model Router
++ Durable Workflow Runtime
+```
+
+Fonte estratégica: [`34-market-benchmark-and-product-north-star.md`](./34-market-benchmark-and-product-north-star.md).
+
+## 22. DELPI Business Graph
+
+Responsável por representar **referências e relações semânticas**, sem duplicar os dados operacionais.
+
+```text
+EntityRef + RelationshipRef
+→ graph traversal
+→ authorized source capabilities
+→ dados atuais nas APIs owners
+```
+
+Exemplos de relações:
+
+```text
+complaint → product → productionOrder → material → supplier
+product → drawingRevision
+nonconformity → rootCause → actionPlan
+customer → order → item → product
+```
+
+O graph ajuda o planner a navegar o contexto; não é authority de autorização nem cópia dos bancos.
+
+Fonte: [`35-delpi-business-graph.md`](./35-delpi-business-graph.md).
+
+## 23. Tasks, Cases e Interaction Rooms
+
+Unidades de produto:
+
+```text
+Turn
+→ Task
+→ Case
+   └→ Interaction Room
+```
+
+- Task: objetivo delimitado multi-step;
+- Case: investigação/processo persistente;
+- Room: colaboração com pessoas, Copilot, mensagens, arquivos, evidências, decisões e ações.
+
+Task/Case persistem estado operacional e evidence, não raciocínio privado.
+
+Fonte: [`36-copilot-tasks-cases-and-interaction-rooms.md`](./36-copilot-tasks-cases-and-interaction-rooms.md).
+
+## 24. Inbox e trabalho proativo
+
+`Copilot Inbox` centraliza:
+
+- aguardando usuário;
+- workflows trabalhando;
+- resultados concluídos;
+- alertas.
+
+`Copilot Watch` acompanha condições/eventos e responde em três modos:
+
+```text
+OBSERVE
+ADVISE
+ACT
+```
+
+`ACT` continua condicionado a autonomia/policy/Decision Gates.
+
+Fonte: [`37-copilot-inbox-watch-and-proactive-work.md`](./37-copilot-inbox-watch-and-proactive-work.md).
+
+## 25. Evidence e Provenance
+
+Toda análise material deve distinguir:
+
+```text
+FACT
+CALCULATION
+HYPOTHESIS
+CONCLUSION
+RECOMMENDATION
+```
+
+E, quando aplicável, preservar:
+
+```text
+sourceRef
+entityRef
+observedAt
+freshness
+confidence
+limitations
+```
+
+Isso atravessa API results, documentos, multimodalidade, Cases e artifacts.
+
+Fonte: [`38-evidence-provenance-and-epistemic-ux.md`](./38-evidence-provenance-and-epistemic-ux.md).
+
+## 26. Decision Gates e Simulation
+
+Confirmação deixa de ser apenas booleano e pode ser:
+
+```text
+NO_GATE
+ACKNOWLEDGE
+CONFIRM
+REVIEW_AND_CONFIRM
+APPROVAL_WORKFLOW
+BLOCK
+```
+
+What-if/Simulation usa baseline + premissas + modelo/cálculo governado; simulação nunca implica write automático.
+
+Fonte: [`39-decision-gates-and-what-if-simulation.md`](./39-decision-gates-and-what-if-simulation.md).
+
+## 27. Organizational Knowledge
+
+Separar explicitamente:
+
+```text
+Reference Knowledge
+Operational Knowledge
+Decision Knowledge
+Experience Knowledge
+Semantic Knowledge
+```
+
+Casos encerrados podem gerar Experience Records/Solution Patterns somente após processo de promoção governado.
+
+Fonte: [`40-organizational-knowledge-and-governed-learning.md`](./40-organizational-knowledge-and-governed-learning.md).
+
+## 28. Expertise Studio
+
+Superfície administrativa para versionar e publicar Expertise Packs/Playbooks com lifecycle:
+
+```text
+DRAFT → REVIEW → TESTING → APPROVED → PUBLISHED → DEPRECATED/RETIRED
+```
+
+Não é criador de agentes nem catálogo manual de endpoints.
+
+Fonte: [`41-expertise-studio-governance.md`](./41-expertise-studio-governance.md).
+
+## 29. Model Router
+
+Roteia internamente por requisitos de tarefa:
+
+```text
+FAST
+STANDARD
+DEEP_REASONING
+MULTIMODAL
+LONG_CONTEXT
+```
+
+A escolha de modelo/provider continua invisível como identidade de produto e sujeita a compute/security policy.
+
+Fonte: [`42-model-router-and-compute-policy.md`](./42-model-router-and-compute-policy.md).
+
+## 30. Durable Workflow Runtime
+
+Para tarefas de horas/dias:
+
+```text
+execute
+→ checkpoint
+→ wait_user | wait_approval | wait_event | wait_time
+→ revalidate
+→ resume
+```
+
+Reutiliza os mesmos executors/policies e deve impedir duplicate writes após restart/retry.
+
+Fonte: [`43-durable-workflow-runtime.md`](./43-durable-workflow-runtime.md).
+
+## 31. Nova separação arquitetural
+
+```text
+Conversation Runtime
+→ entende/interage
+
+Planning Runtime
+→ monta plano operacional
+
+Capability/Execution Layer
+→ executa operações reais
+
+Durable Workflow Runtime
+→ mantém execução ao longo do tempo
+
+Business Graph
+→ contexto relacional
+
+Knowledge/Expertise/Playbooks
+→ contexto especializado
+
+Tasks/Cases/Rooms
+→ containers de produto/trabalho
+
+Evidence Layer
+→ confiança/provenance
+
+Policy/Decision Gates
+→ governança
+```
+
+Nenhum desses componentes deve virar um segundo Copilot.
