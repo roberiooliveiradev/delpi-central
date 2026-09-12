@@ -2,241 +2,262 @@
 
 ## 1. Conceito
 
-Uma **Capability** representa algo que a plataforma consegue fazer em nome do usuário ou para auxiliá-lo. É a unidade semântica usada pelo Copilot para descobrir possibilidades, planejar tarefas e executar ações.
-
-Capability não é sinônimo de endpoint. Um endpoint pode sustentar uma capability de negócio; uma capability de navegação pode não ter endpoint algum.
+Uma **Capability** representa algo que a plataforma consegue fazer para auxiliar ou em nome do usuário. É unidade semântica de discovery/planning; **não é sinônimo de endpoint, permission ou executor**.
 
 ## 2. Categorias
 
-### `business.read`
-
-Consulta dados corporativos sem alteração de estado.
-
-Exemplos:
-
-- consultar estoque;
-- consultar pedidos;
-- consultar fornecedor;
-- consultar indicador;
-- consultar solicitação.
-
-### `business.write`
-
-Cria ou altera estado de negócio.
-
-Exemplos:
-
-- criar solicitação;
-- atualizar cadastro;
-- registrar comentário;
-- alterar responsável.
-
-### `business.destructive`
-
-Ação com maior impacto ou irreversibilidade.
-
-Exemplos:
-
-- cancelar;
-- excluir;
-- rejeitar definitivamente;
-- encerrar processo.
-
-### `platform.navigation`
-
-Ações de navegação da plataforma.
-
-Exemplos:
-
-- abrir app;
-- abrir rota;
-- abrir entidade;
-- voltar;
-- abrir área administrativa autorizada.
-
-### `platform.view`
-
-Ações de experiência visual.
-
-Exemplos:
-
-- mudar aba;
-- aplicar filtro local;
-- mudar período visual;
-- selecionar modo tabela/gráfico;
-- destacar entidade.
-
-### `knowledge`
-
-Recuperação de conhecimento autorizado.
-
-Exemplos:
-
-- pesquisar procedimento;
-- localizar norma;
-- responder com base em documentos;
-- recuperar contexto histórico.
-
-### `analysis`
-
-Combina e interpreta evidências já obtidas.
-
-Exemplos:
-
-- comparar períodos;
-- calcular variação;
-- encontrar anomalias;
-- cruzar múltiplas fontes;
-- resumir causas.
-
-### `artifact`
-
-Produz saída reutilizável.
-
-Exemplos:
-
-- relatório;
-- e-mail;
-- resumo executivo;
-- apresentação;
-- documento.
-
-### `workflow`
-
-Orquestra várias capabilities em um objetivo de negócio.
-
-## 3. Contrato conceitual
-
-Exemplo de capability materializada:
-
-```json
-{
-  "capabilityId": "purchase-request.create",
-  "name": "Criar solicitação de compra",
-  "description": "Cria uma solicitação de compra para o usuário autorizado.",
-  "category": "business.write",
-  "source": "openapi",
-  "actionId": "api-delpi:createPurchaseRequest",
-  "inputSchema": {},
-  "outputSchema": {},
-  "permissions": ["purchase-requests.create"],
-  "sensitivity": "write",
-  "requiresConfirmation": true,
-  "parallelSafe": false,
-  "idempotency": "supported",
-  "tags": ["compras", "solicitação"]
-}
+```text
+business.read
+business.write
+business.destructive
+platform.navigation
+platform.view
+knowledge
+analysis
+artifact
+multimodal
+workflow
 ```
 
-Exemplo de capability de plataforma:
+Exemplos:
+
+- consultar estoque → `business.read`;
+- criar solicitação → `business.write`;
+- cancelar processo → `business.destructive`;
+- abrir app → `platform.navigation`;
+- aplicar filtro local → `platform.view`;
+- buscar procedimento → `knowledge`;
+- comparar períodos → `analysis`;
+- gerar relatório → `artifact`;
+- analisar desenho → `multimodal`;
+- conduzir investigação composta → `workflow`.
+
+## 3. Capability Projection
+
+O Copilot usa uma **projeção/visão semântica autorizada**, não um novo catálogo técnico.
+
+Exemplo conceitual:
 
 ```json
 {
-  "capabilityId": "portal.open-app",
-  "name": "Abrir aplicativo",
-  "category": "platform.navigation",
-  "source": "portal",
-  "inputSchema": {
-    "appId": "string"
+  "capabilityId": "business-action-ref-or-stable-projection-id",
+  "kind": "business.write",
+  "label": "Criar solicitação de compra",
+  "description": "Cria uma solicitação de compra autorizada.",
+  "source": {
+    "type": "action_catalog",
+    "refId": "canonical-action-id"
   },
-  "sensitivity": "read",
-  "requiresConfirmation": false,
-  "parallelSafe": true
+  "availability": "allowed",
+  "risk": "write",
+  "provenance": {}
 }
 ```
 
-## 4. Capability Catalog
+O executor resolve o `source.refId` de volta à authority canônica para method/path/schema/policy.
 
-O catálogo lógico agrega capabilities de várias fontes:
+Não copiar o OpenAPI inteiro para a projection.
+
+## 4. Fontes de capabilities
 
 ```text
-OpenAPI Action Catalog
+OpenAPI/Action Catalog
         +
-Portal Capability Catalog
+Core/Portal authorized routes
         +
-Knowledge Tools
+Knowledge/Internal Tools
         +
-Internal Platform Tools
-        +
-Artifact/Analysis Capabilities
+Analysis/Artifact/Multimodal capabilities
         ↓
 Authorized Capability View
 ```
 
-A visão entregue ao planner deve ser filtrada por usuário, agente, contexto e policy.
+Cada fonte mantém sua authority.
 
-## 5. Descoberta
+## 5. Autorização
 
 ```text
-user goal
-→ authorized capability pool
-→ lexical/vector/schema retrieval
-→ top-K candidates
-→ structured planner
+identity
+→ Core/domain RBAC + action policy
+→ allowed source set
+→ Capability Projection
+→ semantic retrieval
 ```
 
-O planner nunca pode inventar capabilityId fora dos candidates autorizados.
+Filtrar por:
 
-## 6. Semântica mínima recomendada
+- usuário/subject;
+- permission/policy;
+- feature availability;
+- context requirement;
+- environment;
+- capability health.
 
-Cada capability deve possuir, quando aplicável:
+**Não filtrar por agent ativo como authority final.** Expertise pode influenciar ranking, não availability.
 
-- `capabilityId` estável;
-- nome e descrição;
-- categoria;
-- fonte;
-- input/output schema;
-- required permissions;
-- sensitivity;
-- confirmation policy;
-- read/write semantics;
-- parallel safety;
-- idempotency;
-- tags/semantic descriptions;
-- availability status;
-- app/entity associations;
-- observability metadata.
+## 6. Discovery
 
-## 7. Derivação, não duplicação
+```text
+goal + entities + context
+→ authorized capability pool
+→ semantic/schema retrieval
+→ top-K
+→ structured planner restrito aos candidates
+```
 
-Para Business Actions, dados técnicos como method/path/parameters/schema devem vir de OpenAPI/Action Catalog. Não duplicar isso em JSON manual do Copilot.
+Planner não inventa capability/action fora dos candidates autorizados.
 
-Para Platform Actions, apps e rotas devem ser derivados dos contratos do Core/Portal, não mantidos em lista hardcoded no chat.
+## 7. Business capability
 
-## 8. Capabilities compostas
+Para Business Actions:
 
-Uma workflow capability pode declarar intenção de alto nível sem congelar uma sequência rígida de endpoints.
+```text
+technical contract = OpenAPI + Action Catalog
+availability = RBAC/policy
+semantic projection = Capability Projection
+execution = generic canonical executor
+```
+
+A projection pode conter semântica/risk para retrieval/UX, mas path/method/parameters/schema técnicos continuam na authority.
+
+## 8. Platform capability
+
+Derivada de:
+
+```text
+Core /me/apps/routes
++ generic Portal action definitions
+```
+
+Target usa app/route/entity IDs; Portal resolve/revalida.
+
+Não manter lista `app → URL` no AI core.
+
+## 9. Knowledge/Multimodal/Internal capabilities
+
+Capabilities internas precisam owner/contract/policy claro.
 
 Exemplo:
 
 ```text
-investigate_delivery_delay
+document.inspect
+drawing.inspect
+knowledge.search
+artifact.generate
 ```
 
-pode sugerir goals como estoque, carteira, produção e compras, mas a seleção concreta deve ocorrer pelo catálogo autorizado atual.
+Multimodal perception produz Evidence; não conclusão de negócio automaticamente.
 
-## 9. Estado e disponibilidade
+## 10. Workflow capability
 
-Uma capability pode estar:
+Uma capability composta representa objetivo/método de alto nível sem congelar endpoints.
+
+Exemplo:
+
+```text
+investigate_nonconformity
+```
+
+Pode usar Playbook + allowed capabilities para construir `WorkflowPlan`.
+
+Workflow capability não cria executor próprio.
+
+## 11. Risk e Decision Gate
+
+Evitar `requiresConfirmation` como booleano permanente dentro da projection.
+
+O modelo alvo é:
+
+```text
+capability/action metadata
++ context/impact/arguments/evidence
++ deterministic policy
+→ Decision Gate level
+```
+
+Níveis canônicos são definidos no foundation C0.
+
+## 12. Idempotency/parallel safety
+
+Metadata pode indicar expectations/hints, mas a garantia final pertence ao contrato/use case/domain owner.
+
+Não assumir:
+
+```text
+GET = sempre safe em qualquer contexto
+POST = sempre non-idempotent
+```
+
+Usar contratos/policy reais.
+
+## 13. Availability state
+
+Estados conceituais úteis:
 
 ```text
 AVAILABLE
-UNAVAILABLE_PROVIDER
 UNAUTHORIZED
+UNAVAILABLE_PROVIDER
 REQUIRES_CONTEXT
-REQUIRES_CONFIRMATION
+POLICY_BLOCKED
 DEGRADED
 ```
 
-O usuário deve receber explicação clara quando o Copilot não puder executar algo.
+Decision Gate pendente é estado de execução/decisão, não necessariamente availability da capability.
 
-## 10. Anti-padrões
+## 14. Relação com Expertise
+
+```text
+Expertise
+→ melhora ranking/contexto
+→ sugere capabilities/playbooks
+
+Capability availability
+→ continua RBAC/policy/source authority
+```
+
+Nenhum pack concede permission.
+
+## 15. Relação com Entity/Evidence
+
+Capabilities podem consumir/produzir refs compartilhadas:
+
+```text
+EntityRef
+SourceRef
+EvidenceRef
+OutcomeRef
+```
+
+Evitar DTOs semânticos incompatíveis por capability.
+
+## 16. Observabilidade
+
+Registrar quando material:
+
+- candidate set/count;
+- selected capability/sourceRef;
+- retrieval score/reasonCode estruturado;
+- policy outcome;
+- Decision Gate;
+- executor/outcome;
+- duration/error;
+- no CoT.
+
+## 17. Anti-padrões
 
 Não criar:
 
 - capability por path hardcoded;
-- capabilityId derivado de texto instável do endpoint;
-- catálogo duplicado de operationIds;
-- capability que concede acesso por si só;
-- `isAdmin=true` como substituto genérico de permission policy;
-- action de escrita classificada como read apenas para simplificar planner.
+- manual operationId catalog;
+- capability granting access;
+- `isAdmin=true` como universal policy;
+- write classificado como read para facilitar planner;
+- agent-specific action catalog como authority;
+- copied request/response schema em JSON paralelo;
+- workflow capability com endpoints congelados;
+- `requiresConfirmation` boolean como substituto do Decision Gate completo.
+
+## 18. Foundation rule
+
+`CapabilityProjection` é um primitive definido/reutilizado em C0. Features posteriores devem estendê-lo por versionamento explícito, não criar projection própria por app/domain.
