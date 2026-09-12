@@ -2,11 +2,11 @@
 
 **Status:** thematic spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Foundation:** `PlatformCommand`, `WorkspaceContext`, `EntityRef` e bridge envelope compartilhados em C0.
+**Foundation:** `PlatformCommand`, `WorkspaceContext`, `EntityRef` e bridge envelope em C0; runtime de integração em C2.
 
 ## 1. Objetivo
 
-Integrar apps `iframe` ao Copilot sem DOM automation, bypass de origem/RBAC ou duplicação de Business Actions.
+Integrar apps `iframe` ao Copilot standalone sem DOM automation, bypass de origem/RBAC ou duplicação de Business Actions.
 
 ## 2. Classes
 
@@ -28,26 +28,24 @@ I3 AI_READY
 
 ```text
 Visual/context:
-Copilot
+Copilot API/MFE
 → PlatformCommand
-→ CopilotBridge
+→ Portal CopilotBridge
 → IframeBridge
 → generic visual command
 → observation
 
 Negócio:
-Copilot
-→ Action Catalog/OpenAPI
+Copilot API
+→ Copilot Action Catalog/OpenAPI
 → RBAC/policy/Decision Gate
-→ domain API/use case
+→ Domain API/use case
 → Outcome/Evidence
 ```
 
 Nunca usar click/DOM para substituir Business Action.
 
 ## 4. Handshake
-
-Conceitualmente:
 
 ```text
 iframe HELLO
@@ -60,7 +58,7 @@ iframe HELLO
 
 ## 5. Envelope
 
-Usar `IframeBridgeEnvelope` foundation, com:
+Usar `IframeBridgeEnvelope` foundation:
 
 ```text
 protocol/version
@@ -70,26 +68,15 @@ message type
 typed payload
 ```
 
-Não criar envelope específico por app.
+Não criar envelope por app.
 
 ## 6. Context
 
-Iframe I1+ pode publicar:
+Iframe I1+ pode publicar `EntityRef[]`, view/presentation state, filters, selection, date range e visible-data refs. Portal valida/sanitiza e converte para o mesmo `WorkspaceContext` usado por MFEs.
 
-- `EntityRef[]`;
-- viewId/presentation state;
-- filters;
-- selection;
-- date range;
-- visible data refs.
-
-Portal valida/sanitiza e normaliza para o mesmo `WorkspaceContext` usado por MFE.
-
-Payload do iframe é **untrusted data** para policy/system.
+Payload do iframe é untrusted data para policy/system.
 
 ## 7. Comandos visuais genéricos
-
-Preferir verbos compartilhados:
 
 ```text
 view.open_entity
@@ -100,35 +87,25 @@ view.focus_entity
 view.refresh
 ```
 
-Não criar no core:
+Não criar comandos app-specific no core/Portal/Copilot.
 
-```text
-click_totvs_button
-open_commercial_customer
-select_supplier_screen_x
-```
+## 8. Result
 
-## 8. Command result
-
-Observation/result correlacionado por requestId e estado do bridge.
-
-Command visual não pode produzir outcome de negócio fictício.
+Observation/result é correlacionado por requestId e bridge session. Comando visual não produz outcome de negócio fictício.
 
 ## 9. Capability discovery
-
-Combina:
 
 ```text
 Core /me/apps
 → app/route autorizado
 
 registration/manifest
-→ render/origin metadata real
+→ render/origin metadata
 
 runtime handshake
 → visual capabilities suportadas
 
-OpenAPI/Action Catalog
+Domain OpenAPI/Copilot Action Catalog
 → Business Actions
 ```
 
@@ -141,46 +118,27 @@ Preferência:
 ```text
 Portal → Keycloak
 Iframe app → Keycloak/SSO compatível
-Bridge → somente context/visual commands
+Bridge → context/visual commands only
 ```
 
-Proibido por padrão:
-
-- token em query string;
-- JWT/refresh token em `postMessage`;
-- shared technical credential via bridge.
+Proibido token em query string, JWT/refresh token em postMessage ou credential técnica compartilhada pelo bridge.
 
 ## 11. Security
-
-Obrigatório:
 
 - origin allowlist;
 - `event.source` validation;
 - authorized app/route binding;
-- protocol/version;
-- schema validation;
+- protocol/version/schema validation;
 - capability allowlist/intersection;
 - bounded payload;
 - lifecycle/session invalidation;
 - timeout/correlation;
 - rate/budget quando necessário;
 - secret redaction;
-- CSP/frame policy coerente;
+- CSP/frame policy;
 - current permission revalidation.
 
-Threat tests:
-
-- malicious origin;
-- wrong source/window;
-- fake appId;
-- unauthorized app;
-- stale session;
-- oversized/invalid payload;
-- replay;
-- undeclared command;
-- context injection;
-- token exfiltration;
-- permission revoked after handshake.
+Threat tests incluem malicious origin/source/appId, stale session, replay, undeclared command, context injection, token exfiltration e permission revocation.
 
 ## 12. Apps legados/external
 
@@ -190,34 +148,23 @@ Sem adaptação interna:
 class = PORTAL_ONLY
 ```
 
-Copilot pode abrir app/rota e usar APIs externas disponíveis, mas não promete:
-
-- cross-origin DOM reading;
-- current internal entity;
-- internal filters;
-- form filling/clicking.
-
-Apps `external` fora do Shell exigem canal explícito/auditado para níveis I1+.
+Copilot pode abrir app/rota e usar APIs disponíveis, mas não promete cross-origin DOM reading, internal entity/filter discovery ou form clicking.
 
 ## 13. SDK futuro
 
-Se C0 provar ausência de helper reutilizável, C6 AI-ready ecosystem pode fornecer SDK/shared package para:
-
-- handshake;
-- envelope/types;
-- context publisher;
-- visual command handler;
-- lifecycle cleanup;
-- test fixtures.
+Se C0 provar ausência de helper reutilizável, C6 AI-ready ecosystem pode fornecer package compartilhado para handshake, envelope/types, context publisher, command handler, lifecycle cleanup e fixtures.
 
 SDK não contém business logic/RBAC.
 
 ## 14. Implementation mapping
 
 ```text
-C0 → inventory + bridge contract/security semantics
-C1 → PORTAL_ONLY + handshake/context/view foundation
-C3/C4 → Business parity via APIs, never bridge click
+C0 → inventory + bridge contracts/security semantics
+C1 → prova do Copilot MFE/Portal host standalone
+C2 → PORTAL_ONLY + handshake/context/view runtime
+C3 → intelligence understands contextual capabilities
+C4 → Business reads via Domain APIs, never bridge click
+C5 → governed writes via Domain APIs, never bridge click
 C6 → shared SDK/readiness onboarding
 C7 → rollout/coverage refinements
 ```
@@ -225,30 +172,26 @@ C7 → rollout/coverage refinements
 ## 15. Promotion gates
 
 ```text
-I0→I1
-handshake + security + context lifecycle
-
-I1→I2
-generic declared commands + typed observations + negatives
-
-I2→I3
-Business Actions via OpenAPI + RBAC/policy/Decision Gate/evals
+I0→I1: handshake + security + context lifecycle
+I1→I2: generic declared commands + typed observations + negatives
+I2→I3: Business Actions via OpenAPI + RBAC/policy/Decision Gate/evals
 ```
 
 `postMessage` funcionando não significa AI_READY.
 
 ## 16. Generalization
 
-Segundo iframe com outro appId/origin/capability set deve funcionar sem `if appId == ...`, command app-specific ou planner patch.
+Segundo iframe com outro appId/origin/capability set deve funcionar sem branch app-specific ou planner patch.
 
 ## 17. Anti-patterns
 
 - DOM automation;
 - cross-origin workaround;
 - `eval`/script injection;
-- `targetOrigin='*'` em mensagem sensível;
+- `targetOrigin='*'` para mensagem sensível;
 - JWT/refresh token no bridge;
-- app-specific commands no core;
+- app-specific commands;
 - Business Action como click;
 - handshake como RBAC;
-- context como system instruction.
+- context como system instruction;
+- lógica do Copilot dentro do Portal.
