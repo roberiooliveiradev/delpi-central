@@ -2,6 +2,7 @@
 
 **Status do programa:** `PLANNED / NOT_STARTED`  
 **Plano ativo:** [`../16-execution-master-plan.md`](../16-execution-master-plan.md)  
+**Arquitetura/patterns:** [`../49-architecture-and-design-patterns-standard.md`](../49-architecture-and-design-patterns-standard.md)  
 **Governança documental:** [`../48-documentation-governance-and-architecture-review.md`](../48-documentation-governance-and-architecture-review.md)  
 **Protocolo:** [`../22-cursor-execution-protocol.md`](../22-cursor-execution-protocol.md)  
 **Prompt mestre:** [`../23-prompt-cursor-execucao.md`](../23-prompt-cursor-execucao.md)  
@@ -31,12 +32,12 @@ E*/O* não aparecem como fases independentes. São apenas detalhamentos mapeados
 ## 3. C0 sequence
 
 ```text
-C0.S0 inventory total
+C0.S0 inventory total + architecture/pattern inventory
 → C0.S1 authorities/bounded contexts
 → C0.S2 shared primitives/envelopes
 → C0.S3 ports/persistence boundaries
-→ C0.S4 cross-cutting semantics
-→ C0.S5 contract harness
+→ C0.S4 cross-cutting semantics + architecture/pattern freeze
+→ C0.S5 contract + architecture conformance harness
 → C0.S6 FOUNDATION_FREEZE
 ```
 
@@ -74,6 +75,16 @@ ORGANIZATIONAL_KNOWLEDGE = PLANNED
 EXPERTISE_STUDIO = PLANNED
 SIMULATION = LOCKED_TO_C7
 MODEL_ROUTER = LOCKED_TO_C7
+
+ARCHITECTURE_STYLE = CLEAN_ARCHITECTURE_PLUS_PORTS_ADAPTERS_PLUS_PRAGMATIC_DDD
+EVENT_DRIVEN = ONLY_WITH_REAL_EVENT_OWNER
+STATE_MACHINE = REQUIRED_FOR_NON_TRIVIAL_LIFECYCLE
+CQRS = LIGHT_AND_JUSTIFIED_ONLY
+DEPENDENCY_INVERSION = REQUIRED
+COMPOSITION_ROOT_DI = REQUIRED
+FRONTEND_DURABLE_BUSINESS_AUTHORITY = FORBIDDEN
+ABSTRACTION_GATE = REQUIRED
+LEGACY_MIGRATION = ADAPTER_ACL_STRANGLER_WHEN_APPLICABLE
 ```
 
 Tudo acima é `PLAN_ONLY` até evidence de runtime futura.
@@ -87,6 +98,7 @@ Tudo acima é `PLAN_ONLY` até evidence de runtime futura.
 | 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | Copilot único + Expertise/Playbooks/migração agents | PLAN_ONLY |
 | 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | Business Graph/Tasks/Cases/Rooms/Inbox/Watch/Evidence/Decision/Knowledge/Simulation/Model Router | PLAN_ONLY |
 | 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | revisão foundation-first: primitives antecipados para C0, authorities documentais consolidadas, E*/O* subordinados a C0–C7 | PLAN_ONLY; sem runtime diff |
+| 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | padrão normativo de arquitetura/design patterns criado: Clean Architecture, Ports & Adapters, DDD pragmático, pattern matrix, Abstraction Gate, migration/resilience/testing rules | PLAN_ONLY; sem runtime diff |
 
 ## 7. Escopo obrigatório de C0.S0
 
@@ -145,6 +157,27 @@ model/provider metrics
 existing request/case concepts
 ```
 
+### Architecture/pattern foundations
+
+```text
+actual backend layers/packages
+use case/application service conventions
+ports/adapters/gateways/repositories
+composition root / DI
+DTO/mappers
+error/result taxonomy
+state machines/lifecycle transitions
+domain/integration events + event envelope
+outbox/event publication
+retry/timeout/circuit-breaker/idempotency
+transaction/unit-of-work conventions
+migration/compatibility/strangler patterns
+frontend ui/state/data organization
+server/workspace/conversation/local state owners
+query/cache/store conventions
+test doubles/contract/integration patterns
+```
+
 Classificar findings:
 
 ```text
@@ -157,6 +190,15 @@ REMOVE
 NOT_PROVEN
 ```
 
+Divergência entre código atual e `49`:
+
+```text
+ALIGN_DOC
+MIGRATE_CODE
+ADR_REQUIRED
+NOT_PROVEN
+```
+
 ## 8. Required C0 outputs
 
 - app onboarding matrix factual;
@@ -165,6 +207,13 @@ NOT_PROVEN
 - entity/relationship inventory;
 - event/job/room/notification inventory;
 - persistence/approval/idempotency inventory;
+- architecture layer/pattern inventory;
+- `49` revalidado contra o código real;
+- Pattern Decision Matrix validada;
+- Abstraction Gate validado;
+- error/event/state/persistence/frontend-state/resilience rules congeladas;
+- testing/migration patterns congelados;
+- architectural exception/ADR process definido;
 - owner gaps;
 - ledger with HEAD and evidence.
 
@@ -187,6 +236,8 @@ CP-090–129 operational intelligence
 
 Única matriz: [`../20-testing-and-acceptance-matrix.md`](../20-testing-and-acceptance-matrix.md).
 
+Architecture/design-pattern conformance também é required gate via `20` + `49`.
+
 `45-*` é reference only.
 
 ## 11. Template de evento
@@ -200,10 +251,15 @@ STATUS:
 DEPENDENCY_GATE:
 CP_REQUIREMENTS:
 CANONICAL_OWNERS:
+ARCHITECTURE_LAYER:
+DESIGN_PATTERNS_APPLIED:
+ABSTRACTION_GATE:
+ARCHITECTURAL_EXCEPTION_ADR:
 REUSED_FOUNDATIONS:
 NEW_FOUNDATIONS_CREATED:
 EVIDENCE:
 TESTS:
+ARCHITECTURAL_CONFORMANCE:
 FOUNDATION_DRIFT:
 COMPLETE_GATE:
 NEXT_UNLOCKED:
@@ -237,6 +293,10 @@ STALE_EVIDENCE
 DUPLICATE_AUTHORITY
 FOUNDATION_DRIFT
 UNKNOWN_CONSUMER material
+ARCHITECTURE_PATTERN_DRIFT
+DEPENDENCY_RULE_VIOLATION
+UNJUSTIFIED_ABSTRACTION
+UNDOCUMENTED_ARCHITECTURAL_EXCEPTION
 ```
 
 ## 14. Primeiro comando de execução
@@ -244,3 +304,5 @@ UNKNOWN_CONSUMER material
 Abrir `23-prompt-cursor-execucao.md` e executar somente **C0.S0**.
 
 Não implementar CopilotBridge, Business Graph, Expertise runtime, Decision Gate, Workflow, Task, Case, Watch ou Model Router antes de suas fases canônicas.
+
+C0.S0 deve primeiro provar os padrões reais do repo; C0.S4/C0.S6 congelam a arquitetura/patterns antes do primeiro runtime feature work.
