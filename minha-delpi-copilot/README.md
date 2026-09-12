@@ -2,7 +2,9 @@
 
 Ponto de entrada da iniciativa no monorepo `delpi-central`.
 
-O Copilot é a **camada inteligente operacional da Minha DELPI**: pergunta, faz, acompanha e trabalha sobre a plataforma existente usando as mesmas permissions, APIs/use cases e regras de negócio.
+O Copilot é uma **aplicação nova e standalone** da Minha DELPI, composta por API e MFE próprios e integrada ao Portal/Core/Gateway/Keycloak/APIs existentes.
+
+Ele não é evolução do `minha-delpi-ai-api` nem de `plugins/minha-delpi-chat`.
 
 ## Documentação canônica
 
@@ -12,80 +14,66 @@ O Copilot é a **camada inteligente operacional da Minha DELPI**: pergunta, faz,
 
 ```text
 PROGRAM = PLANNED / NOT_STARTED
-NEXT_STEP = C0.S0 — Rebaseline e inventário total
+NEXT_STEP = C0.S0 — Platform/monorepo inventory
 ```
 
-## Authorities principais
+## Authorities
 
-- [Plano Mestre foundation-first](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/16-execution-master-plan.md)
-- [Ownership e contracts](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/17-component-and-contract-map.md)
-- [Arquitetura e design patterns](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/49-architecture-and-design-patterns-standard.md)
-- [Testes e aceite](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/20-testing-and-acceptance-matrix.md)
-- [Dados e estado](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/21-data-and-state-model.md)
-- [Prompt mestre do Cursor](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/23-prompt-cursor-execucao.md)
-- [Especificação do produto](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/24-product-specification.md)
-- [Rastreabilidade CP-001…CP-140](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/25-requirements-traceability.md)
-- [Governança documental](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/48-documentation-governance-and-architecture-review.md)
+- [Plano Mestre](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/16-execution-master-plan.md)
+- [Boundary standalone](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/50-standalone-copilot-application-architecture.md)
+- [Ownership/contracts](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/17-component-and-contract-map.md)
+- [Architecture/design patterns](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/49-architecture-and-design-patterns-standard.md)
+- [Platform integration baseline](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/51-platform-integration-baseline.md)
+- [Repository/bootstrap plan](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/52-standalone-repository-and-bootstrap-plan.md)
+- [Tests/acceptance](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/20-testing-and-acceptance-matrix.md)
+- [State/persistence](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/21-data-and-state-model.md)
+- [Cursor prompt](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/23-prompt-cursor-execucao.md)
+- [Product specification](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/24-product-specification.md)
+- [Traceability CP-001…CP-154](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/25-requirements-traceability.md)
+- [Documentation governance](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/48-documentation-governance-and-architecture-review.md)
 - [Execution ledger](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/evidence/execution-ledger.md)
+
+## Target owners
+
+```text
+minha-delpi-copilot-api/       → new backend/runtime
+plugins/minha-delpi-copilot/   → new federated MFE
+portal/                        → host/context/navigation
+core-api/                      → apps/routes/RBAC/governance
+keycloak                       → identity/SSO
+gateway/                       → routing
+plugins/plugin-ui/             → shared design system
+Domain APIs                    → business data/rules
+```
 
 ## Ordem de construção
 
 ```text
-C0 Foundations
-→ C1 Platform/Context
-→ C2 Intelligence Core
-→ C3 Business Reads + Graph
-→ C4 Governed Writes
-→ C5 Durable Work
-→ C6 Proactivity/Ecosystem/Learning
-→ C7 Optimization/Autonomy/Rollout
+C0 Platform + Architecture Foundation Freeze
+→ C1 Standalone Application Bootstrap
+→ C2 Portal Context + Platform Commands
+→ C3 Intelligence Core
+→ C4 Business Reads + Graph
+→ C5 Governed Writes + Durable Foundation
+→ C6 Product Work + Proactivity + Ecosystem
+→ C7 Autonomy + Optimization + Rollout
 ```
 
-### Primeiro freeze
+## Boundary test
+
+A arquitetura só está correta se:
 
 ```text
-C0.S0 inventory + patterns reais do repo
-→ C0.S1 authorities/bounded contexts
-→ C0.S2 shared primitives
-→ C0.S3 ports/persistence boundaries
-→ C0.S4 cross-cutting semantics + architecture/pattern freeze
-→ C0.S5 contract/conformance harness
-→ C0.S6 FOUNDATION_FREEZE
+Minha DELPI Chat offline
+→ Copilot API continues healthy
+→ Copilot MFE continues mountable
+→ Portal/Core/Domain integration continues functional
 ```
 
-Nenhum runtime feature work deve preceder esse gate.
+No Chat runtime/API/database fallback is allowed.
 
-O freeze inclui, além dos contratos, validação de:
+## Primeira ação
 
-```text
-Clean Architecture
-Ports & Adapters
-DDD pragmático
-layer/dependency rules
-Pattern Decision Matrix
-error/event/state/persistence/frontend rules
-resilience/idempotency
-migration/strangler patterns
-Abstraction Gate
-architectural exception/ADR process
-```
+Abrir o [prompt mestre](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/23-prompt-cursor-execucao.md) e executar apenas **C0.S0**.
 
-## Owners a evoluir
-
-- `minha-delpi-ai-api` — intelligence/retrieval/planning/policy/execution coordination/evidence/workflow orchestration;
-- `plugins/minha-delpi-chat` — UX conversacional, activity, evidence, Decision Gates, rendering;
-- `portal` — Router, CopilotBridge, Workspace Context, IframeBridge, global surfaces;
-- Core API — apps/routes/RBAC/governance;
-- APIs de domínio — Business Actions/OpenAPI/use cases/outcomes;
-- MFEs/iframes — context, EntityRefs, deep links, visual capabilities;
-- infraestrutura existente de events/jobs/rooms/notifications — reutilizar antes de criar nova.
-
-Não criar um segundo motor de IA, Graph como banco mestre, Task engine separado, agent runtime por departamento ou arquitetura/pattern local concorrente.
-
-## Primeira ação do Cursor
-
-Abrir o [prompt mestre](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/23-prompt-cursor-execucao.md) e executar **somente C0.S0**.
-
-C0.S0 é inventário/evidence: além dos componentes funcionais, deve mapear patterns/layers/DI/errors/events/state/resilience/migrations reais do repositório para validar o documento `49` antes do `FOUNDATION_FREEZE`.
-
-C0.S0 não implementa CopilotBridge, Graph, Expertise, Decision Gate, Workflow, Task, Case, Watch ou Model Router.
+Nenhuma pasta/runtime do Copilot deve ser criada antes de `C0.S7 FOUNDATION_FREEZE=PASS`.
