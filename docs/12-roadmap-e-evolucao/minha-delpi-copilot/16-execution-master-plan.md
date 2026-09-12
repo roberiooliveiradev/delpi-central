@@ -8,6 +8,7 @@
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
 **Patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
+**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
 **DoD:** [`14-definition-of-done.md`](./14-definition-of-done.md)  
 **Testes:** [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md)  
 **Ledger:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
@@ -37,17 +38,17 @@ O Chat é apenas sistema vizinho/referência durante o inventário.
 
 ## 2. Objetivo foundation-first
 
-Evitar que inteligência seja construída antes de provar que a nova aplicação está corretamente integrada à plataforma.
+Evitar que inteligência, mídia ou experiência industrial sejam construídas antes de provar que a nova aplicação e seus boundaries estão corretamente integrados à plataforma.
 
 ```text
-PLATFORM + ARCHITECTURE FOUNDATIONS
+PLATFORM + ARCHITECTURE + MEDIA/PRIVACY/OT FOUNDATIONS
 → STANDALONE APPLICATION BOOTSTRAP
-→ PORTAL CONTEXT / PLATFORM COMMANDS
-→ INTELLIGENCE CORE
+→ PORTAL + OPERATIONAL CONTEXT / PLATFORM COMMANDS
+→ INTELLIGENCE CORE + MULTIMODAL FOUNDATIONS
 → BUSINESS READS + GRAPH
 → GOVERNED WRITES + DURABLE FOUNDATION
-→ PRODUCT WORK + PROACTIVITY + ECOSYSTEM
-→ AUTONOMY + OPTIMIZATION + ROLLOUT
+→ PRODUCT WORK + MEETING/FRONTLINE + PROACTIVITY + ECOSYSTEM
+→ ADVANCED REALTIME + AUTONOMY + OPTIMIZATION + ROLLOUT
 ```
 
 ## 3. Authorities documentais
@@ -62,10 +63,11 @@ PLATFORM + ARCHITECTURE FOUNDATIONS
 50 = standalone product boundary
 51 = current platform baseline
 52 = repo/bootstrap target
+53 = multimodal/Meeting/Frontline/industrial spec
 ledger = execution evidence/status
 ```
 
-Specs temáticas não podem reabrir a decisão de usar Chat como base.
+Specs temáticas não podem reabrir a decisão de usar Chat como base nem criar uma ordem paralela.
 
 ## 4. Invariantes
 
@@ -92,7 +94,15 @@ Specs temáticas não podem reabrir a decisão de usar Chat como base.
 21. Clean Architecture + Ports & Adapters + DDD pragmático conforme `49`.
 22. Não criar abstraction/speculative generic framework sem Abstraction Gate.
 23. Infraestrutura compartilhada só é reutilizada quando neutra e governada.
-24. `PARTIAL`, `INCONCLUSIVE`, stale evidence, duplicate authority e Chat dependency material bloqueiam fechamento.
+24. Voz/imagem/vídeo/screen share são modalidades, nunca bypass de RBAC/policy.
+25. Meeting/Frontline usam a mesma Copilot API e o mesmo policy/work runtime.
+26. Contexto industrial reutiliza WorkspaceContext/EntityRef; não cria authority paralela.
+27. Raw media retention exige purpose/policy explícitos; data minimization é default.
+28. Device identity não substitui user identity.
+29. Observação de processo gera candidate knowledge, nunca mudança automática de produção.
+30. Copilot não é safety controller; autonomia empresarial L5 não implica autoridade OT.
+31. Facial recognition/emotion detection/hidden worker surveillance não fazem parte do default scope.
+32. `PARTIAL`, `INCONCLUSIVE`, stale evidence, duplicate authority, Chat dependency, media/privacy violation ou OT safety violation bloqueiam fechamento.
 
 ## 5. Grafo canônico
 
@@ -103,10 +113,10 @@ C0 — Platform + Architecture Foundation Freeze
 C1 — Standalone Application Bootstrap
  |
  v
-C2 — Portal Context + Platform Commands
+C2 — Portal + Operational Context + Platform Commands
  |
  v
-C3 — Intelligence Core
+C3 — Intelligence Core + Multimodal Foundations
  |
  v
 C4 — Business Reads + DELPI Business Graph
@@ -115,10 +125,10 @@ C4 — Business Reads + DELPI Business Graph
 C5 — Governed Writes + Durable Work Foundation
  |
  v
-C6 — Tasks/Cases/Rooms/Inbox/Watch + Ecosystem/Learning
+C6 — Tasks/Cases/Rooms/Inbox/Watch + Meeting/Frontline + Ecosystem/Learning
  |
  v
-C7 — Autonomy + Simulation + Model Routing + Rollout
+C7 — Advanced Realtime + Autonomy + Simulation + Model Routing + Rollout
 ```
 
 ---
@@ -140,7 +150,9 @@ Inventariar com arquivo/símbolo/contrato/owner/consumer.
 - Workspace/context patterns;
 - notifications/socket;
 - theme/accessibility;
-- federation share scope.
+- federation share scope;
+- browser media permission/capture patterns, se existirem;
+- mobile/tablet/kiosk/shared-device patterns, se existirem.
 
 ### Core API
 
@@ -152,19 +164,22 @@ Inventariar com arquivo/símbolo/contrato/owner/consumer.
 - presence/app usage;
 - audit;
 - avatar/user metadata;
-- integration/service auth patterns.
+- integration/service auth patterns;
+- device/session registration patterns, se existirem.
 
 ### Gateway/Infra
 
 - API/MFE path conventions;
-- streaming/websocket/SSE patterns;
+- streaming/websocket/SSE/WebRTC-related patterns;
 - dev/prod parity;
 - Compose profiles/services;
 - postgres/storage patterns;
+- object/media storage;
 - health checks;
 - sequential scripts;
 - env examples;
-- shared volumes/network.
+- shared volumes/network;
+- realtime/network limits/proxies relevantes.
 
 ### MFEs
 
@@ -177,7 +192,9 @@ Inventariar representativamente e depois cobrir o conjunto relevante:
 - HTTP/auth client;
 - deep links/context;
 - permission usage;
-- current portal integrations.
+- current portal integrations;
+- responsive/accessibility patterns;
+- camera/microphone/file/media usage, se houver.
 
 ### APIs
 
@@ -192,7 +209,8 @@ Inventariar APIs disponíveis e seus contratos:
 - idempotency/write semantics;
 - events/websockets;
 - pagination/error envelopes;
-- entity IDs/deep links.
+- entity IDs/deep links;
+- produção/manutenção/qualidade sources para OP, operação, máquina, lote e revisão quando existirem.
 
 ### Existing collaboration/work infrastructure
 
@@ -201,7 +219,38 @@ Inventariar APIs disponíveis e seus contratos:
 - notifications/inbox-like concepts;
 - approvals;
 - event bus/jobs/workers/schedulers;
-- durable workflow patterns if any.
+- durable workflow patterns if any;
+- meeting/room/collaboration artifacts existentes;
+- procedures/training sources.
+
+### Media/Meeting/Frontline inventory
+
+Mapear factual e classificar:
+
+- browser audio/video capabilities;
+- speech/vision providers/config existentes;
+- file/object/media storage;
+- retention/LGPD policies atuais;
+- recording/transcription patterns;
+- room hardware/processes relevantes;
+- shared workstations/tablets/kiosks;
+- production terminals;
+- device identity/session patterns;
+- network constraints no chão de fábrica;
+- accessibility/noise constraints;
+- existing camera/vision systems, se houver;
+- existing procedure/training systems.
+
+### Industrial/OT inventory
+
+Somente inventário/read-only nesta etapa:
+
+- machine/PLC/CNC/robot/SCADA/MES interfaces existentes;
+- industrial events/telemetry owners;
+- safety owners/interlocks;
+- approved read-only APIs;
+- command APIs/protocols existentes, **sem assumir que Copilot poderá utilizá-los**;
+- segregation IT/OT e security owners.
 
 ### Chat — reference only
 
@@ -235,6 +284,9 @@ Nunca classificar `minha-delpi-ai-api` como runtime base do Copilot.
 - MFE/manifest inventory;
 - shared infrastructure map;
 - existing rooms/events/notifications map;
+- media/device/meeting/frontline inventory;
+- privacy/retention owner inventory;
+- industrial/OT boundary inventory;
 - `17` atualizado;
 - `18` atualizado;
 - `51` revalidado;
@@ -258,6 +310,7 @@ DB/schema ownership
 health path
 admin paths
 streaming transport direction
+media storage ownership direction
 ```
 
 Target recomendado:
@@ -269,6 +322,8 @@ plugins/minha-delpi-copilot/
 /apps/minha-delpi-copilot-api
 ```
 
+Meeting/Frontline não criam novos product backends por default.
+
 Mudança exige evidence/ADR.
 
 ## C0.S2 — Freeze de authorities e bounded contexts
@@ -279,13 +334,16 @@ Definir owners para:
 identity/RBAC
 portal hosting/navigation
 workspace context
+device identity/session
 Copilot conversations
 capability discovery
 OpenAPI action catalog
 planner
 expertise/playbook
 knowledge
-multimodal
+multimodal/media
+meeting semantics
+frontline assistance semantics
 entity/relationship projection
 evidence
 policy/decision
@@ -294,6 +352,8 @@ watch/inbox semantics
 notification delivery
 audit/evals
 model/provider policy
+privacy/consent/retention
+industrial/OT safety boundary
 ```
 
 ## C0.S3 — Freeze de shared primitives
@@ -316,11 +376,14 @@ Definir/reutilizar semanticamente:
 - `TaskRef`;
 - `CaseRef`;
 - `EventEnvelope`;
-- audit contract.
+- audit contract;
+- `MediaRef` **somente se C0 provar necessidade transversal**.
+
+Não criar `FrontlineContext` paralelo a WorkspaceContext nem outro Evidence model para mídia.
 
 C0 congela semântica; tabelas surgem apenas se necessárias.
 
-## C0.S4 — Freeze de arquitetura/patterns/persistence boundaries
+## C0.S4 — Freeze de arquitetura/patterns/persistence/privacy boundaries
 
 Aplicar `49` e congelar:
 
@@ -336,7 +399,14 @@ Aplicar `49` e congelar:
 - migration policy;
 - testing pattern;
 - Abstraction Gate;
-- ADR exception process.
+- ADR exception process;
+- media provider boundaries;
+- transient versus durable media;
+- consent/capture visibility;
+- retention classes;
+- shared-device session isolation;
+- realtime budgets/backpressure direction;
+- OT safety non-authority.
 
 Definir storage ownership da nova Copilot API sem usar Chat tables.
 
@@ -350,9 +420,13 @@ Portal WorkspaceContext ↔ Copilot
 Copilot MFE ↔ Copilot API
 Copilot API ↔ Core API
 Copilot API ↔ Domain APIs
-Copilot API ↔ AI providers/stores
+Copilot API ↔ AI/media providers/stores
 Copilot API ↔ notification/event adapters
+Device/session adapter ↔ Copilot
+Media capture surface ↔ Copilot media boundary
 ```
+
+OT command contract **não** é criado nesta etapa apenas porque interface industrial existe. Read-only telemetry/context pode ser adaptado conforme owner/policy.
 
 ## C0.S6 — RED contract/conformance harness
 
@@ -371,7 +445,13 @@ Antes do runtime:
 - invalid OpenAPI action contract;
 - Decision hash/replay negatives;
 - event duplicate;
-- architecture pattern conformance.
+- architecture pattern conformance;
+- hidden media capture negative;
+- undefined retention negative;
+- shared-device user-state leak negative;
+- voice modality authorization parity negative;
+- screen/camera injection negative;
+- arbitrary LLM→OT command negative.
 
 ## C0.S7 — FOUNDATION_FREEZE
 
@@ -386,6 +466,10 @@ SHARED_PRIMITIVES = PASS
 ARCHITECTURE_PATTERNS = PASS
 PERSISTENCE_BOUNDARIES = PASS
 INTEGRATION_CONTRACTS = PASS
+MEDIA_PRIVACY_BOUNDARIES = PASS
+SHARED_DEVICE_BOUNDARY = PASS
+OPERATIONAL_CONTEXT_BOUNDARY = PASS
+OT_SAFETY_BOUNDARY = PASS
 CONFORMANCE_HARNESS = PASS
 CHAT_RUNTIME_DEPENDENCY = 0
 FOUNDATION_DUPLICATION = 0 material
@@ -422,7 +506,9 @@ Objetivo: provar aplicação independente antes da inteligência.
 - `@delpi/plugin-ui`;
 - shared React;
 - bootstrap/mount/unmount;
-- typed host props.
+- typed host props;
+- responsive/accessibility baseline;
+- media permission state foundation sem auto-capture.
 
 ## C1.S4 — Manifest + Core registration path
 
@@ -439,7 +525,8 @@ Objetivo: provar aplicação independente antes da inteligência.
 - services independentes;
 - no `depends_on` Chat;
 - env examples;
-- health.
+- health;
+- streaming/media transport tuning apenas quando contract exigir.
 
 ## C1.S6 — Portal full-page mount
 
@@ -477,11 +564,13 @@ INDEPENDENT_ROLLBACK = PASS
 
 ---
 
-# C2 — Portal Context + Platform Commands
+# C2 — Portal + Operational Context + Platform Commands
 
 ## C2.S1 — Workspace Context Store/contract
 
 Portal/MFEs publicam contexto bounded.
+
+Contexto operacional usa `EntityRef` para OP/máquina/produto/operação/lote/posto quando sources existem.
 
 ## C2.S2 — Copilot Global Bridge
 
@@ -502,17 +591,27 @@ Core `/me/apps`/authorized routes → semantic platform capabilities.
 
 Helper compartilhável sem business logic.
 
-## C2.S6 — Iframe integration baseline
+## C2.S6 — Shared-device/session context baseline
+
+Quando aplicável:
+
+- user current session;
+- device/workstation bounded metadata;
+- capability flags mic/camera/touch/screen;
+- user-switch/context-clear semantics;
+- device identity não concede RBAC.
+
+## C2.S7 — Iframe integration baseline
 
 `PORTAL_ONLY` universal e bridge seguro para apps que suportarem.
 
-## C2.S7 — Context/security/generalization gate
+## C2.S8 — Context/security/generalization gate
 
-Unauthorized/stale/F5/logout/unknown app/iframe/URL arbitrary/send-stream parity.
+Unauthorized/stale/F5/logout/user-switch/unknown app/iframe/URL arbitrary/send-stream parity.
 
 ---
 
-# C3 — Intelligence Core
+# C3 — Intelligence Core + Multimodal Foundations
 
 Tudo nesta fase pertence à **Copilot API nova**.
 
@@ -526,7 +625,7 @@ Own session/conversation model, sem `agent_id` legado.
 
 ## C3.S3 — Structured understanding
 
-Goals/entities/requirements/attachments.
+Goals/entities/requirements/attachments/modality metadata.
 
 ## C3.S4 — Copilot OpenAPI ingestion + Action Catalog foundation
 
@@ -548,21 +647,49 @@ Methodology, evidence criteria, not endpoints.
 
 Copilot-owned retrieval with ACL/provenance.
 
-## C3.S9 — Multimodal
+## C3.S9 — Multimodal + media foundations
 
-Native/OCR/Vision adapters producing Evidence.
+Implementar de forma incremental conforme escopo/evidence:
 
-## C3.S10 — Evidence/epistemic synthesis
+```text
+document/native extraction
+OCR
+image/drawing vision
+speech-to-text
+text-to-speech
+short-video ingestion
+screen/camera evidence
+```
+
+Cada provider atrás de port/adapter justificado.
+
+Mídia gera `EvidenceRef`/`MediaRef` conforme foundation, nunca novo evidence model.
+
+## C3.S10 — Media policy/session foundation
+
+Quando voice/camera/video entrarem:
+
+- explicit capture state;
+- transient versus retained media;
+- retention class enforcement;
+- media session lifecycle;
+- provider data policy;
+- stop/cleanup behavior;
+- budget/size/duration limits.
+
+## C3.S11 — Evidence/epistemic synthesis
 
 FACT/CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION.
 
-## C3.S11 — Structured planner
+Visual/audio finding não vira fato autoritativo sem source/regra adequada.
+
+## C3.S12 — Structured planner
 
 Planner outputs typed plans, not technical content JSON leakage.
 
-## C3.S12 — Intelligence generalization gate
+## C3.S13 — Intelligence/multimodal generalization gate
 
-Positive/sibling/negative/unknown/metamorphic/injection/budget/stream parity.
+Positive/sibling/negative/unknown/metamorphic/injection/budget/stream/voice/image/video parity.
 
 ---
 
@@ -584,13 +711,27 @@ Freshness/source/outcome refs.
 
 EntityRef/RelationshipRef, permission-aware traversal, source fetch from owner.
 
-## C4.S5 — Cross-domain analysis
+## C4.S5 — Operational context correlation
+
+Quando sources existirem, correlacionar:
+
+```text
+OP ↔ produto/revisão
+operação ↔ procedimento
+máquina ↔ manutenção/eventos
+lote/material ↔ fornecedor/qualidade
+media/evidence ↔ entity refs
+```
+
+Sem duplicar master data.
+
+## C4.S6 — Cross-domain analysis
 
 Graph + APIs + expertise + evidence.
 
-## C4.S6 — Unknown-provider/generalization gate
+## C4.S7 — Unknown-provider/generalization gate
 
-No endpoint/provider hardcode.
+No endpoint/provider/entity hardcode.
 
 ---
 
@@ -616,13 +757,27 @@ DAG + canonical capability executor.
 
 `wait_user`, `wait_approval`, `wait_event`, timeouts/cancel.
 
-## C5.S6 — crash/retry/idempotency gate
+## C5.S6 — Modality-to-action governance
 
-No duplicate write.
+Candidate actions originadas de:
+
+```text
+text
+voice
+meeting transcript
+frontline session
+visual finding
+```
+
+entram no mesmo planner/Decision Gate/executor. Nenhuma modality executa write por canal paralelo.
+
+## C5.S7 — crash/retry/idempotency gate
+
+No duplicate write, inclusive após repeated utterance/event/resume.
 
 ---
 
-# C6 — Product Work + Proactivity + Ecosystem
+# C6 — Product Work + Proactivity + Meeting/Frontline + Ecosystem
 
 ## C6.S1 — Copilot Task
 
@@ -634,7 +789,7 @@ Reuse/extend existing owner if C0 proves it.
 
 ## C6.S4 — Copilot Inbox
 
-Work/decision/watch projection.
+Work/decision/watch/meeting-action projection.
 
 ## C6.S5 — Watch OBSERVE/ADVISE
 
@@ -646,7 +801,7 @@ Reference/Decision/Experience/Solution Patterns.
 
 ## C6.S7 — Governed Learning
 
-feedback → candidate → eval → review → publish.
+feedback/meeting/process/frontline observation → candidate → eval → review → publish.
 
 ## C6.S8 — Expertise Studio
 
@@ -654,15 +809,49 @@ feedback → candidate → eval → review → publish.
 
 Context/Entity/deep-link/action/OpenAPI readiness.
 
-## C6.S10 — ecosystem/proactivity gate
+## C6.S10 — Meeting Mode
+
+Entregar progressivamente:
+
+- explicit start/stop;
+- voice/transcript;
+- live grounded business queries;
+- camera/screen/media when authorized;
+- decisions/pending topics;
+- candidate actions;
+- ata viva;
+- Task/Case/Room linkage;
+- next-meeting continuity;
+- retention/consent visibility.
+
+## C6.S11 — Frontline Mode
+
+Entregar progressivamente:
+
+- simplified/large-touch UI;
+- shared-device session isolation;
+- OP/machine/product/operation context;
+- hands-free voice + fallback;
+- camera/image assistance;
+- drawing/procedure/training help;
+- issue/escalation actions through Domain APIs;
+- knowledge candidate capture;
+- no hidden surveillance;
+- no physical machine command path.
+
+## C6.S12 — ecosystem/proactivity/meeting/frontline gate
+
+Provar Meeting/Frontline surface parity de RBAC/policy/Evidence, accessibility, privacy, shared-device isolation e learning governance.
 
 ---
 
-# C7 — Autonomy + Optimization + Rollout
+# C7 — Advanced Realtime + Autonomy + Optimization + Rollout
 
 ## C7.S1 — Autonomy L0–L5
 
 L5 OFF default.
+
+Autonomia empresarial não concede OT.
 
 ## C7.S2 — Watch ACT
 
@@ -676,17 +865,50 @@ Only reproducible domain models.
 
 Only after baseline metrics.
 
-## C7.S5 — Scale/performance/cost
+## C7.S5 — Advanced realtime/media
 
-## C7.S6 — Progressive rollout
+Somente com evidence real de valor e foundation já comprovada:
 
-Internal → cohort → reads → writes → durable/proactive → selected autonomy.
+- continuous voice session optimization;
+- advanced video/frame sampling;
+- concurrency/backpressure;
+- network degradation;
+- cost/latency budgets;
+- edge processing quando necessário;
+- room devices/wearables como extensões futuras.
 
-## C7.S7 — Final verification
+## C7.S6 — Industrial/OT safety gate
 
-Security, accessibility, unknown/sibling/metamorphic, rollback.
+Default permanece **NO ACTUATION**.
 
-## C7.S8 — Product Complete
+Qualquer future OT actuation só entra após iniciativa/gate explicitamente aprovado contendo:
+
+```text
+industrial owner
+risk assessment
+typed deterministic commands
+allowlist
+machine state/preconditions
+human authorization as required
+independent safety PLC/interlocks
+simulation/test environment
+fail-safe/kill switch
+audit
+```
+
+Sem isso, todo free-form LLM→machine command = BLOCK.
+
+## C7.S7 — Scale/performance/cost
+
+## C7.S8 — Progressive rollout
+
+Internal → cohort → reads → writes → durable/proactive → Meeting/Frontline → selected autonomy/realtime.
+
+## C7.S9 — Final verification
+
+Security, privacy, accessibility, unknown/sibling/metamorphic, rollback, Chat independence, OT boundary.
+
+## C7.S10 — Product Complete
 
 No material unresolved requirements for declared scope.
 
@@ -705,13 +927,23 @@ esperar Onda J/llm-json-decoupling do Chat
 fazer cutover do Minha DELPI Chat
 ```
 
-Esses itens podem existir em roadmap próprio do Chat, mas não bloqueiam nem integram este projeto.
+Também não pertence ao default scope:
+
+```text
+facial recognition/emotion detection
+hidden employee surveillance
+unbounded raw-media retention
+free-form LLM→machine control
+Copilot replacing industrial safety interlocks
+```
+
+Esses itens exigiriam iniciativas/requisitos explícitos próprios se algum dia fossem considerados.
 
 ## 7. Protocolo por subetapa
 
 ```text
 REVALIDATE HEAD/WORKTREE
-→ read 16/17/20/25/49/50/51/52 + spec applicable
+→ read 16/17/20/25/49/50/51/52/53 + spec applicable
 → dependency gate
 → READY_TO_EXECUTE
 → baseline
@@ -719,7 +951,7 @@ REVALIDATE HEAD/WORKTREE
 → producer/consumer wiring
 → unit/contract/integration
 → positive/sibling/negative
-→ security/RBAC
+→ security/RBAC/privacy/safety
 → generalization/metamorphic/unknown when applicable
 → independence check against Chat
 → architecture conformance
@@ -731,18 +963,23 @@ REVALIDATE HEAD/WORKTREE
 
 ## 8. Regra anti-refatoração
 
-Antes de criar service/schema/table/framework:
+Antes de criar service/schema/table/framework/media pipeline/device context/OT adapter:
 
-1. pertence ao Copilot ou a platform owner existente?
+1. pertence ao Copilot ou a platform/domain/industrial owner existente?
 2. existe neutral shared owner real?
 3. isso cria dependency no Chat?
-4. isso duplica Core/RBAC/domain rules?
+4. isso duplica Core/RBAC/domain/industrial safety rules?
 5. shared primitive já existe?
-6. próxima fase conhecida exigirá redesign?
-7. pattern é justificado pelo `49`?
-8. sibling/unknown funciona sem hardcode?
+6. WorkspaceContext/EntityRef/EvidenceRef já resolvem o conceito?
+7. próxima fase conhecida exigirá redesign?
+8. pattern é justificado pelo `49`?
+9. sibling/unknown funciona sem hardcode?
+10. raw media persistence é realmente necessária?
+11. modality introduz bypass de permission/Decision?
+12. device identity está sendo confundida com user identity?
+13. atuação física está sendo confundida com Business Action?
 
-Se 3, 4 ou 6 = sim: **não implementar** até corrigir o desenho.
+Se 3, 4, 7, 11, 12 ou 13 = sim: **não implementar** até corrigir o desenho.
 
 ## 9. Primeira ordem efetiva
 
@@ -758,4 +995,4 @@ C0.S0
 → C1.S1
 ```
 
-Nenhuma intelligence feature precede a prova de aplicação standalone integrada.
+Nenhuma intelligence/media/frontline feature precede a prova de aplicação standalone e dos boundaries de privacy/device/OT.
