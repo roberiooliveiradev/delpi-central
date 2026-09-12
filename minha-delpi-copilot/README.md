@@ -24,7 +24,7 @@ NEXT_STEP = C0.S0 — Rebaseline e inventário total
 - [Dados e estado](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/21-data-and-state-model.md)
 - [Prompt mestre do Cursor](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/23-prompt-cursor-execucao.md)
 - [Especificação do produto](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/24-product-specification.md)
-- [Rastreabilidade CP-001…CP-129](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/25-requirements-traceability.md)
+- [Rastreabilidade CP-001…CP-140](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/25-requirements-traceability.md)
 - [Governança documental](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/48-documentation-governance-and-architecture-review.md)
 - [Execution ledger](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/evidence/execution-ledger.md)
 
