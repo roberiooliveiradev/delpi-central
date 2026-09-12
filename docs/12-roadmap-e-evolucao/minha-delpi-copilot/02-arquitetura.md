@@ -1,543 +1,168 @@
 # 02 — Arquitetura do Minha DELPI Copilot
 
 **Status:** arquitetura alvo canônica  
-**Ordem de construção:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Arquitetura de código/design patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)
+**Boundary de produto:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
+**Baseline da plataforma:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
+**Estrutura física:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
+**Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
 
-## 1. Objetivo arquitetural
+## 1. Decisão arquitetural principal
 
-O Minha DELPI Copilot é uma camada transversal sobre a plataforma existente, reutilizando:
-
-- Gateway;
-- Keycloak;
-- Core API/RBAC;
-- Portal Shell;
-- `minha-delpi-ai-api`;
-- Chat MFE;
-- OpenAPI + Action Catalog;
-- RAG/Knowledge;
-- multimodalidade;
-- APIs de domínio;
-- MFEs e iframes.
-
-Não criar um produto ou stack de IA paralelos.
-
-## 2. Princípio do Copilot único
-
-Existe um único Copilot de produto.
+O Minha DELPI Copilot é uma **nova aplicação da plataforma** com API e MFE próprios.
 
 ```text
 NÃO
-usuário → agente Engenharia → handoff → agente Qualidade
+Copilot → extensão do Minha DELPI Chat
+Copilot → código dentro de minha-delpi-ai-api
+Copilot → código dentro de plugins/minha-delpi-chat
+Copilot → feature implementada dentro do Portal
 
 SIM
-usuário → Minha DELPI Copilot
-→ goals/context
-→ capabilities autorizadas
-→ expertise/playbooks
-→ knowledge/evidence
-→ planner
-→ policy
-→ execution
+Portal/Core/Gateway/Keycloak/Domain APIs = plataforma
+Copilot API + Copilot MFE = novo produto standalone
 ```
 
-Domínios especializam o mesmo runtime por Expertise Packs, Domain Playbooks, Knowledge scopes e tools.
+O Chat permanece sistema vizinho. Nenhum refactor ou bug do Chat é pré-requisito para o Copilot.
 
-## 3. Foundation-first
-
-A arquitetura é organizada em três dimensões:
-
-### 3.1 Foundations compartilhadas
+## 2. Arquitetura da plataforma observada
 
 ```text
-Identity/RBAC
-Correlation
-Entity/Relationship refs
-Source/Evidence/Outcome refs
-Capability contracts
-Workspace Context
-Expertise/Playbook contracts
-Decision Gate contracts
-Workflow/Task/Case lifecycles
-Event envelope
-Audit/Observability
+                         Gateway
+                           │
+          ┌────────────────┼────────────────┐
+          ▼                ▼                ▼
+       Portal           Core API        Domain APIs
+          │                │                │
+          │            Keycloak/RBAC        │
+          │                                 │
+          └──────── apps/MFEs ──────────────┘
 ```
 
-### 3.2 Foundations de arquitetura de código
+Fatos relevantes do repositório:
+
+- Portal é Shell React/Vite;
+- Core fornece apps/rotas/permissões;
+- AppHost suporta `embedded`, `external`, `federated`;
+- MFEs federados expõem `mount()`;
+- Portal passa `getAccessToken` e props de host;
+- `plugin-ui` é remote compartilhado;
+- APIs dedicadas convivem como serviços pares;
+- Gateway roteia `/apps/<service>/...`;
+- Keycloak fornece SSO;
+- APIs de domínio mantêm dados/regras de negócio.
+
+## 3. Componentes novos
+
+### 3.1 Copilot API
+
+Owner recomendado: `minha-delpi-copilot-api/`.
+
+É o runtime inteligente completo:
 
 ```text
-Clean Architecture
-Ports & Adapters
-DDD pragmático
-layer/dependency rules
-bounded contexts
-Pattern Decision Matrix
-error/result model
-event model
-state-machine rules
-persistence rules
-frontend state ownership
-resilience/idempotency rules
-migration/strangler rules
-Abstraction Gate
+HTTP/stream interface
+→ Application Use Cases
+→ Understanding/Context
+→ Capability Discovery
+→ Expertise/Knowledge/Evidence
+→ Structured Planner
+→ Policy/Decision Gate
+→ Action/Platform adapters
+→ Outcome
+→ Workflow/Task/Case/Watch state
 ```
 
-### 3.3 Features construídas sobre as foundations
+### 3.2 Copilot MFE
+
+Owner recomendado: `plugins/minha-delpi-copilot/`.
+
+React/Vite/Module Federation, usando `@delpi/plugin-ui`.
+
+Surfaces:
 
 ```text
-Navigation
-Context
-Expertise
-Multimodal analysis
-Business Reads
-Business Graph
-Business Writes
-Durable Work
-Cases/Rooms/Inbox
-Watch
-Learning
-Simulation
-Model Routing
+full-page app
++ global Portal panel
 ```
 
-Uma feature não pode redefinir foundation já existente nem escolher architecture style/pattern concorrente silenciosamente.
+Ambas consomem a mesma Copilot API e o mesmo product state.
 
-## 4. Arquitetura macro
+## 4. Arquitetura macro do produto
 
 ```text
-                               USUÁRIO
-                                  │
-                       Portal / Chat / Case UX
-                                  │
-                      Workspace + Entity Context
+                                 USER
                                   │
                                   ▼
-                    ┌─────────────────────────┐
-                    │ Minha DELPI Copilot     │
-                    │      AI Runtime         │
-                    └────────────┬────────────┘
-                                 │
-       ┌─────────────────────────┼──────────────────────────┐
-       ▼                         ▼                          ▼
-Understanding             Capability Retrieval       Expertise/Playbooks
-       │                         │                          │
-       └──────────────┬──────────┴──────────────┬───────────┘
-                      ▼                         ▼
-               Knowledge/Evidence         Structured Planner
-                      │                         │
-                      └─────────────┬───────────┘
-                                    ▼
-                         Policy / Decision Gate
-                                    │
-                     ┌──────────────┼──────────────┐
-                     ▼              ▼              ▼
-              Platform Actions Business Actions Internal Tools
-                     │              │              │
-                     ▼              ▼              ▼
-               Portal Bridge   Generic Executor  RAG/Vision/etc
-                                    │
-                                    ▼
-                              Domain APIs
-                                    │
-                                    ▼
-                         Outcome / Evidence
-                                    │
-                              Observe/Replan
+                         Portal React Shell
+                  ┌───────────────┴───────────────┐
+                  ▼                               ▼
+             full-page                        side-panel
+                  └───────────────┬───────────────┘
+                                  ▼
+                         Copilot Federated MFE
+                                  │
+                            typed API client
+                                  │
+                                  ▼
+                           Gateway / Nginx
+                                  │
+                                  ▼
+                         Copilot Standalone API
+                                  │
+     ┌────────────────────────────┼────────────────────────────┐
+     ▼                            ▼                            ▼
+  Core API                    Domain APIs                  AI Infra
+apps/routes/RBAC        OpenAPI/use cases/data        LLM/RAG/Vision
+     │                            │                            │
+     └────────────────────────────┼────────────────────────────┘
+                                  ▼
+                           Copilot-owned DB
 ```
 
-## 5. Camadas de runtime
-
-### 5.1 Experience Layer
-
-Owners:
-
-- Portal Shell;
-- Chat MFE;
-- MFEs;
-- iframe adapters;
-- Task/Case/Inbox UX.
-
-Responsável por apresentação/interação, não autorização real de negócio nem durable business authority.
-
-### 5.2 Intelligence Layer
-
-Owner principal: `minha-delpi-ai-api`.
-
-Responsabilidades:
-
-- structured understanding;
-- goal decomposition;
-- capability retrieval;
-- expertise/playbook retrieval;
-- knowledge/evidence composition;
-- planning;
-- synthesis;
-- workflow orchestration;
-- recommendation;
-- presentation plan.
-
-### 5.3 Policy/Safety Layer
-
-Responsável por:
-
-- allowed capabilities;
-- sensitivity/risk;
-- Decision Gates;
-- autonomy policy;
-- provider data policy;
-- limits/budgets;
-- confirmation/approval como estados do Decision Gate;
-- audit requirements.
-
-LLM não relaxa policy.
-
-### 5.4 Execution Layer
-
-Reutiliza executors canônicos:
-
-```text
-Platform → CopilotBridge/Portal handlers
-Business → Action Catalog + generic HTTP executor
-Knowledge → RAG/search tools
-Multimodal → document/image/drawing adapters
-```
-
-Durable Workflow coordena executors; não os duplica.
-
-### 5.5 State/Work Layer
-
-Responsável por:
-
-- workflow checkpoints;
-- Tasks;
-- Cases;
-- waits;
-- decision refs;
-- event resume;
-- Inbox materialization.
-
-Lifecycle complexo deve usar State Machine owner em vez de transições espalhadas.
-
-## 6. Canonical pipeline
-
-```text
-input/message/event
-+ WorkspaceContext
-+ entity refs
-+ attachments
-+ durable work state quando aplicável
-
-→ input/security validation
-→ structured understanding
-→ goals/entities/requirements
-→ authorized capability candidates
-→ expertise/playbook retrieval
-→ knowledge/multimodal evidence
-→ bounded context composition
-→ structured plan
-→ policy/risk/Decision Gate evaluation
-→ execute/read/wait
-→ Outcome/Evidence
-→ observe/update state
-→ continue | clarify | wait | complete
-→ synthesis/presentation
-→ persist/audit/metrics
-```
-
-## 7. Sources of truth
+## 5. Authority Matrix
 
 | Conceito | Authority |
 |---|---|
-| identidade | Keycloak + Core integration |
-| permissions efetivas | Core API |
-| apps/rotas | Core API |
-| business rules | APIs/use cases de domínio |
-| business action technical contract | OpenAPI + Action Catalog |
-| navigation | Portal Shell/Router |
-| workspace visual | Portal/MFE/iframe |
-| entity identity | domain owner + shared EntityRef adapter |
-| relationships | domain owner + Business Graph relationship registry |
-| expertise | Expertise Catalog |
-| playbooks | Domain Playbook Catalog |
-| knowledge visibility | Knowledge ACL |
-| multimodal observation | extractor/service versionado |
-| evidence provenance | source owner + Evidence contract |
-| policy/decision | Policy/Safety |
-| workflow state | durable work owner |
-| model/compute selection | centralized Compute Policy |
-| audit | audit/observability infrastructure |
+| autenticação | Keycloak |
+| usuário/apps/rotas/permissões da plataforma | Core API |
+| navegação real | Portal Router/AppHost |
+| design system MFE | plugin-ui |
+| regras/dados Comercial | commercial-api/API owner |
+| integrações TOTVS/DELPI | api-delpi |
+| demais negócios | respectivas Domain APIs |
+| Copilot conversations | Copilot API |
+| Copilot capabilities projection | Copilot API derivada de authorities |
+| planner/orchestration | Copilot API |
+| Expertise/Playbooks | Copilot API |
+| Copilot Knowledge index | Copilot API, respeitando source ACL |
+| Evidence/Provenance | Copilot API + source authorities |
+| Business Graph projection | Copilot API; source data continua nos owners |
+| Decision Gates | Copilot API + Domain API final authorization |
+| Workflow/Task/Case/Watch | Copilot API |
+| notification delivery compartilhada | Core/Portal quando apropriado |
+| provider/model selection | Copilot API Compute Policy |
+| Copilot audit/evals | Copilot API/observability |
 
-## 8. Platform Actions
-
-Fluxo:
-
-```text
-Core /me/apps
-→ authorized route projection
-→ semantic retrieval
-→ PlatformCommand
-→ Portal validation/revalidation
-→ Router/MFE/Iframe handler
-→ PlatformCommandResult
-```
-
-Pattern principal: `Command + Handler + Adapter` com registry por comando genérico, nunca por app.
-
-Exemplos genéricos:
-
-- `portal.open_app`;
-- `portal.open_route`;
-- `portal.open_entity`;
-- view commands suportados.
-
-Sem URL livre do modelo.
-
-## 9. Workspace Context
-
-Contrato bounded compartilhado por MFE/iframe/Portal.
-
-Pode conter:
+## 6. Regra de dependência com Chat
 
 ```text
-appId
-routeId
-entityRefs
-filters
-selection
-dateRange
-visibleDataRefs
-source
+Copilot API  ─X→ minha-delpi-ai-api runtime
+Copilot MFE  ─X→ minha-delpi-chat source
+Copilot DB   ─X→ Chat tables as authority
 ```
 
-Não contém:
-
-- estado React completo;
-- DOM;
-- token;
-- permission authority;
-- dataset grande sem necessidade.
-
-## 10. Business Actions
+Permitido:
 
 ```text
-UI ───────────────┐
-                  ▼
-             Domain API
-                  ▲
-Copilot → Action Catalog
+C0 lê Chat para aprender padrões/erros
+Copilot e Chat usam plugin-ui
+Copilot e Chat usam Core/Keycloak/Gateway
+futuro package neutro pode ter ambos como consumidores se extraído corretamente
 ```
 
-O Copilot não aprende endpoints pela tela.
+Não existe fase de migração do Chat para o Copilot no roadmap desta iniciativa.
 
-Pipeline:
-
-```text
-semantic intent
-→ allowed action retrieval
-→ schema/argument binding
-→ policy
-→ Decision Gate se necessário
-→ generic executor
-→ domain API
-→ verified outcome
-```
-
-Integração externa segue Port/Adapter quando boundary justificar; Repository não é wrapper genérico de HTTP.
-
-## 11. Entity model e Business Graph
-
-### EntityRef
-
-É referência lógica estável, não objeto duplicado.
-
-### RelationshipRef
-
-Conecta entidades com source/provenance.
-
-### Business Graph
-
-```text
-EntityRefs + RelationshipRefs
-→ permission-aware traversal
-→ related source refs
-→ fetch atual nas APIs donas
-```
-
-O graph pode materializar relações/cache, mas não virar sistema mestre de estoque, pedido, produto etc.
-
-Patterns: Ports & Adapters; Repository/index somente se existir materialização própria comprovada; Policy/Specification para regras combináveis de traversal quando justificadas.
-
-## 12. Evidence/Provenance
-
-Toda análise madura usa um contrato compartilhado.
-
-```text
-SourceRef
-→ EvidenceRef
-→ FACT/CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION
-→ presentation/audit/case
-```
-
-Evidence é reutilizado por multimodalidade, API results, Graph, Case e Workflow.
-
-## 13. Expertise
-
-```text
-goals/context/entities/attachments/project prefs
-→ Expertise retrieval
-→ selected packs
-→ bounded ExpertiseContext
-```
-
-Pack pode orientar:
-
-- terminologia;
-- análise;
-- evidence expectations;
-- preferred playbooks;
-- knowledge refs;
-- multimodal needs.
-
-Não concede action/permission.
-
-Strategy para retrieval só existe se houver estratégias reais/intercambiáveis ou boundary comprovado; não por moda.
-
-## 14. Domain Playbooks
-
-Playbook descreve método:
-
-```text
-applicability
-stages
-evidence checklist
-decision criteria
-completion criteria
-recommended capability semantics
-```
-
-Planner transforma método em WorkflowPlan usando capabilities reais autorizadas.
-
-## 15. Multimodalidade
-
-```text
-attachment
-→ native parsing/OCR/VLM
-→ observations com page/region/confidence/limitations
-→ EvidenceRef
-→ expertise/playbook/analysis
-```
-
-Multimodal observation não é domain conclusion.
-
-Adapters protegem providers concretos; extraction Strategy só é criada quando native/OCR/VLM realmente constituírem estratégias intercambiáveis.
-
-## 16. Decision Gates
-
-Modelo único de governança de decisão:
-
-```text
-NO_GATE
-ACKNOWLEDGE
-CONFIRM
-REVIEW_AND_CONFIRM
-APPROVAL_WORKFLOW
-BLOCK
-```
-
-Inputs podem incluir:
-
-- risk/sensitivity;
-- impact;
-- arguments hash;
-- evidence refs;
-- autonomy;
-- approver requirements.
-
-Pattern principal: Policy + State Machine.
-
-## 17. Durable Workflow
-
-```text
-WorkflowPlan
-→ steps/dependencies
-→ execute canonical capabilities
-→ checkpoint
-→ wait_user / wait_approval / wait_event / wait_time
-→ resume/revalidate
-→ complete/fail/cancel
-```
-
-Não cria novo HTTP/tool stack.
-
-Patterns principais: Application orchestration + State Machine + Idempotency; Saga somente se existirem múltiplos writes distribuídos e compensações reais.
-
-## 18. Task / Case / Room / Inbox
-
-### Task
-Unidade de trabalho curta/média backed por workflow.
-
-### Case
-Investigação/trabalho prolongado com entity/evidence/task/workflow refs.
-
-Aggregate/Repository só são criados se lifecycle/authority persistida própria forem comprovados.
-
-### Room
-Colaboração humana + Copilot; preferir owner existente.
-
-### Inbox
-View/materialização sobre estados de Work/Decision/Watch; não novo engine.
-
-## 19. Watch/Event-driven
-
-```text
-EventEnvelope
-→ Watch condition
-→ dedupe/cooldown
-→ permission/policy revalidation
-→ OBSERVE | ADVISE | ACT
-```
-
-ACT exige autonomia explícita e Decision Gate quando aplicável.
-
-Event-Driven só é usado quando existe fato/event owner real. Atomicidade state+event pode usar Transactional Outbox apenas se requisito e infraestrutura justificarem.
-
-## 20. Organizational Knowledge e Learning
-
-Knowledge operacional evolui somente por ciclo governado:
-
-```text
-candidate
-→ review
-→ eval
-→ publish
-→ rollout
-```
-
-Case resolution pode gerar candidate Experience, nunca verdade automática.
-
-## 21. Model Router
-
-Centralizado e implementado somente após baseline.
-
-Classes conceituais:
-
-```text
-FAST
-STANDARD
-DEEP_REASONING
-MULTIMODAL
-LONG_CONTEXT
-```
-
-Considera privacy, availability, quality, latency, cost e output contract.
-
-Pattern: Compute Policy + Strategy somente quando variação de modelo/provider estiver comprovada. Nome concreto do provider não deve vazar para Domain/Application.
-
-## 22. Arquitetura de código canônica
-
-A especificação normativa completa está em [`49`](./49-architecture-and-design-patterns-standard.md).
-
-### Backend
+## 7. Clean Architecture da Copilot API
 
 ```text
 Domain
@@ -548,155 +173,305 @@ Interfaces / Adapters
 ↑
 Infrastructure
 
-Composition Root conecta tudo.
+Composition Root conecta implementações aos ports.
 ```
 
-#### Domain
+### Domain
 
-- entities/aggregates quando houver identidade/lifecycle real;
-- value objects/refs;
-- invariantes e policies puras;
-- specifications puras quando combináveis;
-- domain events quando representarem fatos reais;
-- sem DB/HTTP/LLM/framework.
+- Value Objects (`EntityRef`, lifecycle values etc. quando realmente domain-owned);
+- invariantes;
+- pure policies;
+- state machines;
+- domain errors/events internos.
 
-#### Application
+### Application
 
-- Use Cases/Application Services;
-- orchestration;
+- use cases;
 - ports;
-- decision/workflow/task/case/graph use cases;
-- sem SQL/client/provider concreto.
+- planner orchestration;
+- capability/expertise/knowledge composition;
+- workflow orchestration;
+- evidence coordination.
 
-#### Interfaces
+### Interfaces
 
-- REST/SSE/event boundaries;
-- controllers;
-- DTOs;
-- mappers;
-- transport validation.
+- REST;
+- streaming/SSE quando escolhido;
+- event consumers quando existirem;
+- DTOs/schemas.
 
-#### Infrastructure
+### Infrastructure
 
-- DB repositories;
-- vector/index;
-- OpenAPI/importer/executor adapters;
-- LLM/embedding/model providers;
-- event/outbox adapters;
-- multimodal adapters;
-- persistence/queues.
+- PostgreSQL;
+- Core API adapter;
+- generic Domain API/OpenAPI adapter;
+- LLM/embedding provider;
+- vector/search store;
+- OCR/Vision;
+- object/file storage;
+- event/notification adapters;
+- telemetry.
 
-#### Composition Root
-
-- DI/wiring concreto;
-- nenhum service interno instancia infraestrutura escondida.
-
-### Frontend
+## 8. Frontend architecture
 
 ```text
-ui
-state
-data
+ui/
+state/
+data/
+features/
+contracts/
+adapters/
 ```
 
-Owners de estado:
+State ownership:
 
 ```text
-server state           → query/cache layer existente
-workspace state        → Portal Workspace Context
-conversation state     → chat/copilot state
-local UI state         → component/hook
-durable business state → backend
+server state        → query/cache layer
+workspace state     → Portal/Copilot context adapter
+conversation UI     → MFE state + server state
+local UI state      → component/hooks
+durable work state  → Copilot API
 ```
 
-## 23. Pattern Decision Matrix
+MFE não vira owner de Workflow/Case/Decision/Watch.
 
-A matriz normativa está em `49`. Defaults principais:
+## 9. Portal integration
+
+### 9.1 Registered app
+
+Core manifesto registra Copilot como `microfrontend`/`federated`.
+
+Portal não precisa de catálogo manual porque AppLauncher/AppHost usam `apps/routes` do Core.
+
+### 9.2 Federated lifecycle
+
+MFE segue convenções `plugins/vite/federation.shared.ts`:
+
+- React singleton;
+- `@delpi/plugin-ui` remote;
+- `remoteEntry.js`;
+- `mount()`/`unmount()` conforme padrão vigente.
+
+### 9.3 Global panel
+
+Portal terá somente uma integração thin-host:
 
 ```text
-external dependency       → Port + Adapter
-application operation     → Use Case/Application Service
-owned persisted lifecycle → Repository
-complex lifecycle         → State Machine
-combinable rules          → Policy/Specification
-legacy incompatible model → Adapter + Anti-Corruption Layer
-legacy migration          → Strangler Fig
-platform command          → Command + Handler
-state + event atomicity   → Transactional Outbox quando necessário
-retryable write/resume    → Idempotency
-real async reaction       → Event-Driven
-real distributed writes   → Saga somente com compensações reais
-transport boundary        → DTO + Mapper
-wiring                    → Composition Root/DI
+CopilotGlobalHost
+→ monta Copilot MFE panel export
+→ fornece host props/context
+→ recebe typed platform commands
 ```
 
-Strategy/Factory/Builder/CQRS e abstrações genéricas dependem do Abstraction Gate.
+Sem AI logic no Portal.
 
-## 24. Scalability/generalization
+## 10. Workspace Context
 
-A arquitetura precisa permitir:
-
-- novo app sem planner patch;
-- novo OpenAPI provider sem endpoint selector;
-- novo Expertise Pack sem core patch;
-- novo Playbook sem novo agente;
-- novo entity/relationship type sem planner branch;
-- novo iframe compatível sem app-specific command no core;
-- novo model/provider via Compute Policy, não `if` espalhado.
-
-## 25. Migration do legado agents
+Portal/MFEs produzem contexto limitado e tipado:
 
 ```text
-agent specialization → Expertise
-agent tool gate → capabilities + policy
-soft handoff → retrieval/replan/clarify
-project default agent → project preferences/context
-agent_id routing → temporary compatibility → removal
+appId
+routeId
+EntityRef[]
+filters
+selection
+dateRange
+visibleDataRefs
 ```
 
-Padrão: Adapter + Anti-Corruption Layer + Strangler Fig + telemetry/evals + exit criteria.
+O contexto é enviado ao Copilot por bridge/host contract.
 
-## 26. Anti-patterns proibidos
+Contexto **não** concede permissão.
 
-- second planner/tool executor;
-- agent por departamento como produto final;
-- manual endpoint catalog;
-- path/opId semantic routing;
-- graph como réplica dos bancos;
-- evidence diferente por feature;
-- confirmation paralela ao Decision Gate;
-- Task engine paralelo ao Workflow runtime;
-- Watch polling hardcoded por app;
-- DOM automation para Business Action;
-- CoT persistence;
-- permission derivada de prompt/context/pack;
-- model routing espalhado por feature;
-- framework/provider concreto em Domain/Application;
-- durable business state com authority no frontend;
-- Repository como simples proxy HTTP;
-- `Manager/Helper/Utils/Service` genérico acumulando responsabilidades;
-- Strategy/Factory/Builder/CQRS/Saga/Event Sourcing sem justificativa;
-- retry cego de write;
-- EventBus sem schema/owner;
-- dual-read/dual-write permanente.
+## 11. Platform Commands
 
-## 27. Architecture success scenario
-
-> “Investigue esta reclamação, analise o desenho, relacione produção e fornecedor, monte um 8D, acompanhe a nova revisão e, quando ela chegar, reavalie e prepare as ações necessárias.”
-
-Um único runtime deve combinar:
+Copilot não gera URL arbitrária.
 
 ```text
-Context
-+ Entity/Graph
-+ Multimodal Evidence
-+ Expertise/Playbook
-+ Business Reads
-+ Durable Workflow/Case
-+ Watch/Inbox
-+ Decision Gate
-+ Business Write
-+ Audit
+semantic target
+→ PlatformCommand
+→ Portal validator/authorized route resolution
+→ Router/MFE/Iframe adapter
+→ typed result
 ```
 
-sem trocar de agente, sem criar authorities paralelas e sem mudar de architecture style/pattern a cada feature.
+Exemplos:
+
+- `portal.open_app`;
+- `portal.open_route`;
+- `portal.open_entity`;
+- view commands declarados.
+
+## 12. Business Action architecture — nativa do Copilot
+
+A cadeia OpenAPI-first é construída dentro da nova Copilot API desde o início da fase de inteligência/actions.
+
+```text
+OpenAPI sources
+→ import/normalize/index
+→ Action Catalog interno do Copilot
+→ permission-aware availability
+→ semantic retrieval
+→ structured planner
+→ schema argument binding
+→ policy/Decision Gate
+→ generic HTTP executor
+→ Domain API
+→ verify outcome
+→ Evidence/Audit
+```
+
+Isso **não depende** de `minha-delpi-ai-api` estar corrigida ou pronta.
+
+Se C0 encontrar código realmente genérico útil no Chat, ele só pode ser reutilizado após extração para owner neutro ou reimplementação limpa no Copilot; nunca via dependency de runtime.
+
+## 13. Core/RBAC integration
+
+Copilot API:
+
+1. valida JWT (issuer/audience/signature/exp);
+2. resolve Core current user/context;
+3. consulta apps/routes/permissions quando necessário;
+4. restringe capability candidates;
+5. encaminha identity/token conforme contrato seguro à Domain API;
+6. Domain API revalida regra/permissão da ação.
+
+Invariante:
+
+```text
+Copilot effective capabilities ⊆ user effective capabilities
+```
+
+## 14. Evidence and Business Graph
+
+Shared Copilot primitives são definidos antes das features:
+
+```text
+EntityRef
+RelationshipRef
+SourceRef
+EvidenceRef
+OutcomeRef
+CorrelationContext
+```
+
+Business Graph guarda relações/referências/provenance, não cópias mestres de pedidos/produtos/estoques.
+
+## 15. Intelligence Core
+
+Depois de C1/C2 platform bootstrap/context:
+
+```text
+input
++ workspace
++ attachments
+→ safety/input normalization
+→ understanding
+→ capability retrieval
+→ expertise/playbook retrieval
+→ knowledge/multimodal retrieval
+→ bounded context
+→ structured plan
+→ policy
+→ execute/read/wait
+→ evidence/outcome
+→ synthesis
+```
+
+## 16. Durable Work
+
+Copilot API é owner de:
+
+```text
+WorkflowPlan
+steps/checkpoints
+wait_user
+wait_approval
+wait_event
+Task
+Case
+Watch
+Inbox state
+```
+
+Core notification infrastructure pode ser adapter de delivery, mas não owner do workflow semantics.
+
+## 17. Interaction Rooms
+
+O Portal Comercial já possui conceito/rota de sala de interação. Antes de criar nova sala, C0 deve mapear API, MFE, storage, websocket e authorization existentes.
+
+Decisão depois do inventário:
+
+```text
+REUSE | EXTEND | ADAPTER | CREATE_REQUIRED
+```
+
+## 18. Deploy/infra
+
+Copilot possui independentemente:
+
+- Dockerfiles;
+- requirements/package-lock;
+- migration chain;
+- health endpoint;
+- Gateway dev/prod route;
+- Compose dev/prod service;
+- env settings;
+- manifest;
+- registration script;
+- test suites;
+- logs/metrics;
+- rollback.
+
+Nenhum `depends_on` lógico do Chat.
+
+## 19. Architecture patterns
+
+Aplica `49` integralmente:
+
+- Ports & Adapters para Core/Domain APIs/LLMs/stores;
+- Use Cases na Application;
+- Repository somente para Copilot-owned persistence;
+- State Machines para lifecycle;
+- Policy/Specification para regras determinísticas;
+- Outbox/idempotency onde atomicidade/replay justificar;
+- Strategy para providers apenas com variação real;
+- no speculative abstraction.
+
+## 20. Generalization
+
+Target precisa suportar sem core patch específico:
+
+- nova API/OpenAPI provider;
+- novo app/route;
+- novo Expertise Pack;
+- novo Playbook;
+- novo entity/relationship type;
+- novo iframe compatível;
+- novo model/provider por Compute Policy.
+
+## 21. Sequência arquitetural
+
+```text
+C0 platform/application foundations
+↓
+C1 standalone bootstrap + Portal/Core/Gateway/SSO
+↓
+C2 workspace context + platform commands
+↓
+C3 intelligence core
+↓
+C4 reads + graph
+↓
+C5 writes + durable foundation
+↓
+C6 product work/proactivity/ecosystem
+↓
+C7 advanced autonomy/optimization/rollout
+```
+
+## 22. Critério de sucesso estrutural
+
+O Copilot está corretamente arquitetado quando podemos desligar `minha-delpi-ai-api` e `plugins/minha-delpi-chat` e **o Copilot continua funcional**, exceto por qualquer infraestrutura neutra compartilhada que também seja usada por outros apps.
+
+Esse teste conceitual de independência é obrigatório.
