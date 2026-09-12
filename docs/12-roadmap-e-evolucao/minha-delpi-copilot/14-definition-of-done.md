@@ -2,13 +2,20 @@
 
 ## 1. Objetivo
 
-Evitar fechamento prematuro por demo funcional. Cada fase precisa provar foundation, wiring, segurança, generalização e evidence no candidate vigente.
+Evitar fechamento prematuro por demo funcional. Cada fase precisa provar foundation, wiring, segurança, generalização, conformidade arquitetural e evidence no candidate vigente.
 
 ## 2. DoD global
 
 ```text
 [ ] authorities possuem owner claro
 [ ] shared primitives não possuem duplicação material
+[ ] implementação segue arquitetura/patterns canônicos do documento 49
+[ ] layer/dependency rules são preservadas
+[ ] abstrações novas passaram pelo Abstraction Gate
+[ ] divergência arquitetural material possui decisão/ADR explícita
+[ ] external dependencies estão atrás de boundary/adapter adequado quando aplicável
+[ ] concrete wiring ocorre no Composition Root/DI
+[ ] estado durável de negócio permanece no backend owner
 [ ] permissions do Copilot ⊆ permissões efetivas do usuário
 [ ] UI/Copilot convergem para os mesmos use cases
 [ ] OpenAPI + Action Catalog são authority técnica de Business Actions
@@ -28,6 +35,7 @@ Evitar fechamento prematuro por demo funcional. Cada fase precisa provar foundat
 
 ```text
 [ ] C0.S0 inventário total com evidence
+[ ] patterns/camadas/DI/error/event/state/resilience atuais do repo inventariados
 [ ] authorities/bounded contexts congelados
 [ ] Correlation/Entity/Relationship/Source/Evidence/Outcome contracts definidos/reutilizados
 [ ] Platform/Workspace/Iframe contracts definidos/reutilizados
@@ -36,8 +44,17 @@ Evitar fechamento prematuro por demo funcional. Cada fase precisa provar foundat
 [ ] Workflow/Task/Case lifecycle contracts definidos/reutilizados
 [ ] EventEnvelope definido/reutilizado
 [ ] persistence boundaries/ports definidos
+[ ] architecture style validado
+[ ] layer responsibilities validadas
+[ ] dependency rules validadas
+[ ] Pattern Decision Matrix validada contra padrões reais do repo
+[ ] error/event/state-machine/persistence/frontend-state rules congeladas
+[ ] resilience/idempotency rules congeladas
+[ ] testing/migration patterns congelados
+[ ] Abstraction Gate definido e aplicável
+[ ] architectural exception/ADR process definido
 [ ] versioning/error/retry/idempotency/freshness semantics definidos
-[ ] contract harness RED/GREEN reproduzível
+[ ] contract + architecture conformance harness RED/GREEN reproduzível
 [ ] nenhuma second authority material
 [ ] FOUNDATION_FREEZE=PASS
 ```
@@ -49,12 +66,14 @@ C1 não inicia sem C0 completo.
 ```text
 [ ] authorized route projection deriva do Core
 [ ] CopilotBridge valida/revalida commands
+[ ] Command + Handler/Adapter seguem padrão canônico sem handler por app
 [ ] open app/route funcional
 [ ] open entity quando contrato existir
 [ ] URL arbitrária rejeitada
 [ ] Workspace Context bounded/seguro
 [ ] MFE adapter reutilizável
 [ ] iframe PORTAL_ONLY funcional
+[ ] iframe integration usa Adapter/ACL tipado, não DOM automation
 [ ] bridge avançado possui security negatives quando usado
 [ ] unknown app/iframe não exige patch central
 [ ] F5/logout/stale context corretos
@@ -65,13 +84,15 @@ C1 não inicia sem C0 completo.
 
 ```text
 [ ] nova sessão não depende de agent_id
-[ ] Expertise Catalog/Repository canônico
+[ ] legacy agent migration usa adapter/ACL/strangler com exit criteria
+[ ] Expertise Catalog/Repository canônico somente se authority persistida for comprovada
 [ ] retrieval positive/sibling/negative
 [ ] unknown pack sem core patch
 [ ] cross-domain expertise composition
 [ ] Playbook applicability/versioning
 [ ] Knowledge ACL não é ampliada por expertise/project
 [ ] multimodal evidence possui provenance/confidence/limitations
+[ ] extraction Strategy só existe se variação real justificar
 [ ] FACT/CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION semanticamente distinguidos
 [ ] injection negatives passam
 [ ] shadow agent migration possui exit criteria
@@ -87,6 +108,7 @@ C1 não inicia sem C0 completo.
 [ ] args/schema/RBAC corretos
 [ ] normalized outcome/evidence consistente
 [ ] Graph usa EntityRef/RelationshipRef compartilhados
+[ ] Graph segue Ports & Adapters; materialização/repository só existe com gap comprovado
 [ ] traversal é permission-aware
 [ ] authoritative vs inferred relationship rastreável
 [ ] source data é buscado no owner
@@ -97,11 +119,12 @@ C1 não inicia sem C0 completo.
 ## 7. DoD C4 — Governed Writes
 
 ```text
-[ ] Decision Gate Engine implementa níveis canônicos
+[ ] Decision Gate Engine usa Policy + State Machine conforme padrão
 [ ] impact preview corresponde ao payload efetivo
 [ ] arguments/evidence change invalida decisão quando material
 [ ] backend revalida RBAC/policy
 [ ] idempotency/concurrency tratadas
+[ ] retry cego de write inexistente
 [ ] write outcome verificado
 [ ] ambiguous outcome não vira sucesso narrativo
 [ ] audit/deep-link/evidence presentes
@@ -114,6 +137,7 @@ C1 não inicia sem C0 completo.
 
 ```text
 [ ] workflow persistence/checkpoint
+[ ] workflow runtime usa Application orchestration + State Machine + Idempotency
 [ ] wait_user
 [ ] wait_approval
 [ ] wait_event
@@ -121,12 +145,13 @@ C1 não inicia sem C0 completo.
 [ ] DAG dependencies
 [ ] parallel safe reads
 [ ] retry/idempotency
+[ ] Saga somente existe se houver múltiplos writes distribuídos + compensações reais
 [ ] crash/restart sem duplicate write
 [ ] Task usa workflow runtime, sem engine própria
 [ ] Case usa refs/evidence compartilhados
 [ ] Evidence Board não duplica evidence model
 [ ] Room respeita source permissions
-[ ] Inbox materializa work state sem disparar write por leitura
+[ ] Inbox materializa work state sem virar workflow engine
 [ ] reload/resume consistente
 ```
 
@@ -134,6 +159,7 @@ C1 não inicia sem C0 completo.
 
 ```text
 [ ] Watch OBSERVE/ADVISE event-driven quando possível
+[ ] Watch usa EventEnvelope/State Machine/dedupe canônicos
 [ ] dedupe/cooldown/expiry/revalidation
 [ ] AI-ready SDK/templates
 [ ] readiness scanner baseado em facts
@@ -141,6 +167,7 @@ C1 não inicia sem C0 completo.
 [ ] project preferences não concedem permission
 [ ] Reference/Decision/Experience knowledge possuem provenance/version/owner
 [ ] feedback não muda production behavior automaticamente
+[ ] Expertise Studio usa Use Cases + State Machine + admin RBAC
 [ ] Expertise Studio draft/review/eval/publish/rollback
 [ ] admin RBAC/coverage
 ```
@@ -151,12 +178,15 @@ C1 não inicia sem C0 completo.
 [ ] L5 OFF por default e allowlisted
 [ ] Watch ACT sujeito a autonomy/Decision Gate
 [ ] Simulation reproduzível e separada de Apply
-[ ] Model Router baseado em baseline e data policy
+[ ] Model Router introduz Strategy/Policy somente após baseline/variações reais
+[ ] provider/model names não vazam para domain/application
 [ ] provider incompatível é bloqueado
 [ ] legacy agent-routing residual material = 0
+[ ] compatibility adapters temporários removidos conforme exit criteria
 [ ] canary/cohort/rollback
 [ ] final R1–R11
 [ ] accessibility/security/generalization
+[ ] architecture conformance final
 [ ] CP coverage sem UNMAPPED
 ```
 
@@ -178,6 +208,10 @@ idempotency/replay
 partial failure
 persist/reload/restart
 send/stream parity
+layer/dependency conformance
+port/adapter contracts
+state transition rules
+error translation/resilience
 latency/cost
 ```
 
@@ -196,6 +230,10 @@ TEST_NOT_RUN
 STALE_EVIDENCE
 DUPLICATE_AUTHORITY
 FOUNDATION_DRIFT
+ARCHITECTURE_PATTERN_DRIFT
+DEPENDENCY_RULE_VIOLATION
+UNJUSTIFIED_ABSTRACTION
+UNDOCUMENTED_ARCHITECTURAL_EXCEPTION
 ```
 
 ## 13. Evidence de release
@@ -207,6 +245,8 @@ dataset/eval hashes
 OpenAPI/Action Catalog hashes
 expertise/playbook versions quando materiais
 schema/migration versions
+architecture layer/pattern conformance
+ADR/exception refs quando houver
 unit/integration/live results
 security tests
 residual scan
@@ -218,4 +258,4 @@ rollout decision
 
 O DoD não é “a IA respondeu”.
 
-> O usuário autorizado atingiu o objetivo corretamente, com evidência, governança, continuidade e auditabilidade, usando os mesmos contratos da plataforma sem criar foundations paralelas.
+> O usuário autorizado atingiu o objetivo corretamente, com evidência, governança, continuidade e auditabilidade, usando os mesmos contratos da plataforma e a arquitetura canônica, sem criar foundations ou abstrações paralelas.
