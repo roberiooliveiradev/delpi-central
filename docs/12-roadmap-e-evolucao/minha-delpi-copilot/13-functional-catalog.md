@@ -2,368 +2,359 @@
 
 ## 1. Objetivo
 
-Este documento descreve as funcionalidades esperadas do Copilot como produto, independentemente da fase em que forem implementadas.
-
----
+Descrever as capacidades do produto independentemente da fase, sem duplicar a ordem de implementação. A sequência canônica vive em `16-execution-master-plan.md`.
 
 ## 2. Conversa e entendimento
 
-### 2.1 Linguagem natural
+- linguagem natural PT-BR;
+- pedidos simples/compostos;
+- follow-up contextual;
+- clarify mínimo;
+- entity resolution;
+- structured goals;
+- memória/references sem chain-of-thought.
 
-O usuário pode escrever pedidos curtos ou longos, com uma ou várias intenções.
+## 3. Navegação e contexto
 
-Exemplos:
+- abrir app/rota/entidade;
+- selecionar view/aba;
+- aplicar filtro visual;
+- focus;
+- deep link;
+- Workspace Context;
+- context chips;
+- contexto por MFE/iframe.
 
-- “Abra o Portal Comercial.”
-- “Mostre os pedidos atrasados deste cliente.”
-- “Compare estoque, compras e vendas deste produto.”
-- “Analise o problema, crie uma solicitação e avise o responsável.”
+## 4. Copilot único e especialização
 
-### 2.2 Pedidos compostos
+- uma identidade de produto;
+- Expertise Packs;
+- Domain Playbooks;
+- composição cross-domain;
+- project preferences;
+- unknown pack sem core patch;
+- nenhuma capability concedida por expertise.
 
-O Copilot decompõe pedidos em goals/subtasks, preservando dependências.
+## 5. Knowledge
 
-### 2.3 Follow-up contextual
+- procedimentos/manuais/normas;
+- help contextual;
+- Reference Knowledge;
+- Operational Knowledge;
+- Decision Knowledge;
+- Experience Knowledge;
+- Semantic Knowledge;
+- ACL em todas as camadas.
 
-Entende continuidades como:
+## 6. Multimodalidade
 
-- “e no mês passado?”;
-- “só filial 01”;
-- “abra esse”;
-- “faça o mesmo para o outro cliente”.
+- PDF;
+- imagem;
+- desenho técnico;
+- foto de defeito;
+- certificados/relatórios;
+- OCR/VLM quando necessário;
+- page/region provenance;
+- confidence/limitations.
 
-### 2.4 Clarification inteligente
+## 7. Evidence e explicabilidade
 
-Pergunta apenas dados obrigatórios ausentes e não repete informações já disponíveis.
+- SourceRef/EvidenceRef;
+- freshness;
+- facts;
+- calculations;
+- hypotheses;
+- conclusions;
+- recommendations;
+- conflicting evidence;
+- source expansion na UX.
 
----
+## 8. Business Reads
 
-## 3. Navegação
+Quando APIs/actions autorizadas existirem:
 
-### 3.1 Abrir app
+- produtos/estoque/estrutura;
+- comercial;
+- suprimentos;
+- produção;
+- financeiro;
+- qualidade;
+- engenharia;
+- manutenção;
+- solicitações;
+- demais domínios onboarded.
 
-Abre qualquer app autorizado disponível no Portal.
+Concreto = OpenAPI/Action Catalog + RBAC, nunca lista hardcoded deste documento.
 
-### 3.2 Abrir rota
+## 9. DELPI Business Graph
 
-Navega para uma página/rota específica autorizada.
+- canonical EntityRef;
+- relações cross-domain;
+- authoritative/inferred provenance;
+- permission-aware traversal;
+- source API fetch;
+- depth/cycle budgets;
+- sibling relation onboarding.
 
-### 3.3 Abrir entidade
+## 10. Análise
 
-Abre detalhe de cliente, produto, solicitação, pedido, fornecedor ou outra entidade com deep link registrado.
+- comparar períodos/entidades;
+- métricas/cálculos grounded;
+- anomalias/tendências quando método suportar;
+- causalidade somente com evidence suficiente;
+- cross-domain synthesis;
+- limitação explícita.
 
-### 3.4 Trocar visão
+## 11. Recommendations
 
-Pode selecionar abas, visualizações ou agrupamentos declarados pelo MFE.
+Próximos passos baseados em:
 
-### 3.5 Aplicar filtros
+- goals;
+- evidence/outcomes;
+- Workspace Context;
+- authorized capabilities;
+- policy;
+- work state.
 
-Aplica filtros visuais suportados sem alterar dados de negócio.
+Sugestão não é execução.
 
----
+## 12. Business Writes
 
-## 4. Contexto do workspace
+Conforme API/RBAC/policy:
 
-### 4.1 Entidade atual
-
-O Copilot sabe qual entidade o usuário está visualizando quando o MFE publica contexto.
-
-### 4.2 Filtros e período
-
-Usa filial, período e filtros ativos como contexto opcional.
-
-### 4.3 Seleção atual
-
-Pode compreender uma linha/item selecionado.
-
-### 4.4 Context chips
-
-Mostra no composer os contextos que serão usados e permite removê-los.
-
----
-
-## 5. Consultas de negócio
-
-### 5.1 Produtos
-
-- cadastro;
-- estoque;
-- estrutura;
-- preço;
-- fornecedor;
-- compras;
-- vendas;
-- inspeção;
-- produção.
-
-### 5.2 Comercial
-
-- clientes;
-- propostas;
-- pedidos;
-- carteira;
-- faturamento;
-- indicadores.
-
-### 5.3 Suprimentos
-
-- requisições;
-- pedidos de compra;
-- fornecedores;
-- estoque;
-- OTD;
-- CPV;
-- giro;
-- rankings.
-
-### 5.4 Produção
-
-- ordens;
-- programação;
-- consumo;
-- perdas;
-- centros de trabalho;
-- planejado x realizado;
-- indicadores.
-
-### 5.5 Financeiro
-
-- indicadores autorizados;
-- inadimplência;
-- centro de custo;
-- séries e comparações.
-
-### 5.6 Qualidade
-
-- inspeções;
-- planos de ação;
-- indicadores;
-- ocorrências.
-
-### 5.7 Solicitações
-
-- listar;
-- localizar;
-- acompanhar;
-- abrir detalhe;
 - criar;
+- editar;
+- aprovar/rejeitar;
+- atribuir;
 - comentar;
-- atualizar quando autorizado.
+- cancelar/arquivar;
+- iniciar processos.
 
-> O catálogo concreto depende das APIs e permissões existentes. Esta seção descreve a capacidade-alvo, não autoriza inventar endpoints inexistentes.
+Sempre via Business Action, não UI automation.
 
----
+## 13. Decision Gates
 
-## 6. Escritas e operações
+- NO_GATE;
+- ACKNOWLEDGE;
+- CONFIRM;
+- REVIEW_AND_CONFIRM;
+- APPROVAL_WORKFLOW;
+- BLOCK.
 
-### 6.1 Criar registros
+Inclui impact preview, args hash, evidence refs, expiry e revalidation.
 
-Exemplos:
+## 14. Artefatos
 
-- solicitação;
-- comentário;
-- registro operacional permitido.
+- relatório;
+- resumo executivo;
+- tabela;
+- comunicação/e-mail;
+- plano de ação;
+- documentação;
+- apresentação/arquivo quando capability existir.
 
-### 6.2 Atualizar registros
+Artefato não executa business write implicitamente.
 
-Exemplos:
+## 15. Workflows
 
-- responsável;
-- prioridade;
-- campos de cadastro;
-- status quando permitido.
+- goal/DAG;
+- dependencies;
+- safe parallel reads;
+- Decision Gates;
+- retry/idempotency;
+- partial failure;
+- checkpoints;
+- activity;
+- cancel/timeout;
+- no duplicate write.
 
-### 6.3 Aprovar/rejeitar
+## 16. Durable Work
 
-Disponível somente com permission/sensitivity/policy adequadas.
+- wait_user;
+- wait_approval;
+- wait_event;
+- wait_time;
+- resume após F5/restart;
+- event correlation;
+- state persistence quando necessário.
 
-### 6.4 Cancelar/arquivar
+## 17. Copilot Tasks
 
-Exige confirmação forte quando impacto material.
+- objective;
+- progress;
+- steps;
+- decisions pendentes;
+- result/evidence refs;
+- links;
+- cancel quando suportado.
 
----
+## 18. Copilot Cases
 
-## 7. Análise
+- investigação longa;
+- entity refs;
+- Evidence Board;
+- hypotheses/decisions/actions;
+- Tasks/Workflows;
+- timeline;
+- Room;
+- artifacts;
+- lifecycle/resolution/reopen.
 
-### 7.1 Comparar
+## 19. Interaction Rooms
 
-- períodos;
-- filiais;
-- produtos;
-- clientes;
-- fornecedores;
-- indicadores.
+- participantes;
+- mensagens;
+- arquivos;
+- resumo grounded;
+- pending actions;
+- Case linkage;
+- source permissions preservadas.
 
-### 7.2 Explicar variação
+## 20. Copilot Inbox
 
-Busca evidências relevantes e resume fatores associados.
+- waiting_for_user;
+- working;
+- completed;
+- alerts;
+- Decision/Task/Case/Workflow links;
+- dedupe/status lifecycle.
 
-### 7.3 Análise multi-fonte
+## 21. Copilot Watch
 
-Cruza múltiplas APIs e resultados.
+- OBSERVE;
+- ADVISE;
+- ACT.
 
-### 7.4 Anomalias e tendências
+Com event matching, dedupe, cooldown, expiry, permission revalidation e autonomy policy.
 
-Destaca desvios quando dados suportarem essa conclusão.
+## 22. Event-driven continuity
 
-### 7.5 Limitações
+- resume workflow por evento;
+- alertas;
+- acompanhar status;
+- continuar investigação após dependência externa;
+- preferir event source real a polling hardcoded.
 
-Se fontes faltarem ou falharem, declarar explicitamente a limitação.
+## 23. Organizational Knowledge e Governed Learning
 
----
+- Decision/Experience records;
+- Solution Patterns;
+- feedback → candidate;
+- review/eval/version/publish;
+- rollback;
+- nunca auto-publicar conversa/correção.
 
-## 8. Conhecimento e ajuda
+## 24. Expertise Studio
 
-### 8.1 Procedimentos
+- draft;
+- review;
+- eval;
+- publish;
+- deprecate;
+- rollback;
+- usage/quality telemetry.
 
-Explica processos usando RAG autorizado.
+Não é criador de agentes.
 
-### 8.2 Ajuda contextual
+## 25. Simulation
 
-Explica a página/app/campo atual.
+- baseline;
+- assumptions;
+- deterministic/domain model owner;
+- projected impact;
+- limitations;
+- `SIMULATE != APPLY`.
 
-### 8.3 Políticas e normas
+## 26. Model Router
 
-Responde com grounding documental e acesso adequado.
-
-### 8.4 Como fazer
-
-Pode orientar o usuário e, quando possível, oferecer execução da capability correspondente.
-
----
-
-## 9. Artefatos
-
-### 9.1 Relatório
-
-Gera relatório a partir de dados consultados.
-
-### 9.2 Resumo executivo
-
-Consolida resultados para gestão.
-
-### 9.3 Mensagem/e-mail
-
-Redige comunicação com base no contexto e facts obtidos.
-
-### 9.4 Exportação
-
-Integra com capacidades existentes de exportação quando disponíveis.
-
----
-
-## 10. Recomendações
-
-Após uma análise, pode sugerir próximos passos baseados em:
-
-- goal;
-- resultados;
-- limitações;
-- capabilities autorizadas;
-- ações já executadas.
-
-Não usar catálogo estático como authority permanente.
-
----
-
-## 11. Workflows compostos
-
-### 11.1 Investigar + agir
+Classes conceituais:
 
 ```text
-consultar
-→ analisar
-→ navegar
-→ criar ação
-→ comunicar
+FAST
+STANDARD
+DEEP_REASONING
+MULTIMODAL
+LONG_CONTEXT
 ```
 
-### 11.2 Preparar + confirmar + executar
+Seleção por Compute Policy, data policy, latency/cost e quality requirements.
 
-Write é preparado e resumido antes da confirmação quando policy exigir.
+## 27. Iframes
 
-### 11.3 Partial completion
+```text
+PORTAL_ONLY
+CONTEXTUAL
+INTERACTIVE
+AI_READY
+```
 
-O Copilot entrega o que conseguiu e mostra passos bloqueados.
+Contexto/comandos visuais por bridge seguro; Business Actions por API.
 
----
+## 28. Autonomia
 
-## 12. Histórico e continuidade
+```text
+L0 explain
+L1 navigate
+L2 read/analyze
+L3 prepare
+L4 governed execute
+L5 explicitly allowlisted autonomy
+```
 
-- manter conversa;
-- preservar result references;
-- reutilizar entidades/argumentos;
-- retomar após F5;
-- não reexecutar writes automaticamente no reload;
-- distinguir ação concluída de ação somente preparada.
+L5 OFF por default.
 
----
+## 29. Administração
 
-## 13. Administração futura
+- capability/action coverage;
+- app readiness;
+- expertise/playbooks;
+- knowledge lifecycle;
+- Task/Case/Workflow;
+- Decision Gates;
+- Watch;
+- model usage/cost;
+- failures/retries;
+- safe execution;
+- audit;
+- rollout/kill switch.
 
-### 13.1 Capability governance
+## 30. Onboarding AI-ready
 
-Admin pode inspecionar capabilities disponíveis, origem, sensitivity e status.
+```text
+L1 discoverable
+L2 context-ready
+L3 read-ready
+L4 write-ready
+L5 workflow-ready
+```
 
-### 13.2 Provider/action governance
+Novo app entra por shared contracts sem patch central.
 
-Habilitar/desabilitar integrações conforme modelo já existente de agents/actions.
+## 31. Fora do padrão
 
-### 13.3 Autonomy policy
+- DOM automation para substituir API;
+- browser/cross-origin hacks;
+- bypass de permission;
+- endpoint selector hardcoded;
+- chain-of-thought persistence;
+- agent engine por departamento;
+- Business Graph duplicando bancos;
+- confirmation system paralelo ao Decision Gate;
+- automatic production learning por feedback.
 
-Configurar limites L0–L5 por capability/grupo quando maturidade permitir.
+## 32. Experiência final
 
-### 13.4 Observability
-
-Dashboards de uso, sucesso, falhas, custo, latency, confirmations e feedback.
-
-### 13.5 Evals
-
-Executar suites e simulações antes de rollout.
-
----
-
-## 14. Notificações e continuidade futura
-
-Em evolução posterior, workflows podem gerar acompanhamentos/alertas quando existir infraestrutura apropriada de tarefas/eventos.
-
-Exemplos:
-
-- avisar quando solicitação mudar de status;
-- lembrar follow-up;
-- monitorar indicador;
-- continuar workflow após evento externo.
-
-Isso deve ser implementado como mecanismo explícito de automação/eventos, não como promessa de execução em background do chat síncrono.
-
----
-
-## 15. Funcionalidades fora do padrão
-
-Não é objetivo padrão:
-
-- controlar qualquer página pelo DOM;
-- contornar APIs ruins com browser automation silenciosa;
-- executar ação sem permission;
-- escolher endpoint por hardcode;
-- armazenar chain-of-thought;
-- tornar cada departamento um agente isolado com engine própria.
-
----
-
-## 16. Experiência final desejada
-
-O usuário deve sentir que a Minha DELPI possui um copiloto que:
+O usuário deve sentir que o Copilot:
 
 ```text
 sabe onde estou
-+ entende o que quero
-+ conhece o que posso fazer
-+ encontra os dados certos
-+ explica
-+ executa
-+ navega
-+ mantém contexto
++ entende o objetivo
++ encontra entidades/fontes corretas
++ aplica conhecimento especializado
++ mostra evidence
++ navega e executa com governança
++ acompanha trabalho ao longo do tempo
++ colabora com pessoas
++ aprende somente por processo governado
 + respeita minhas permissões
-+ mostra claramente o que fez
 ```
