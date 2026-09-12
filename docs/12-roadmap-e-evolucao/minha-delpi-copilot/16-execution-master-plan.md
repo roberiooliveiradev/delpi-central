@@ -4,13 +4,14 @@
 **Owner arquitetural:** plataforma Minha DELPI  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Próxima etapa:** `C0.S0`  
+**Arquitetura/patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
 **DoD:** [`14-definition-of-done.md`](./14-definition-of-done.md)  
 **Testes:** [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md)  
 **Ledger:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
 
 ## 1. Objetivo
 
-Construir o Minha DELPI Copilot em ordem **foundation-first**, estabilizando authorities, contratos, estados, ports e gates antes de funcionalidades que dependem deles.
+Construir o Minha DELPI Copilot em ordem **foundation-first**, estabilizando authorities, contratos, estados, ports, arquitetura de código, design patterns e gates antes de funcionalidades que dependem deles.
 
 O objetivo explícito é evitar:
 
@@ -19,6 +20,9 @@ O objetivo explícito é evitar:
 - migrations sucessivas para o mesmo conceito;
 - implementação piloto que depois precisa ser generalizada;
 - catálogos paralelos;
+- design patterns escolhidos de forma inconsistente por etapa;
+- infra/framework vazando para camadas internas;
+- overengineering especulativo;
 - retrabalho de prompts, schemas e testes;
 - gasto desnecessário de tokens do Cursor por execução fora de ordem.
 
@@ -37,6 +41,12 @@ FOUNDATIONS
 
 A ordem é definida somente aqui.
 
+A arquitetura de código e escolha de design patterns é definida em:
+
+```text
+49-architecture-and-design-patterns-standard.md
+```
+
 Documentos como:
 
 - `32-expertise-runtime-implementation-plan.md`;
@@ -51,6 +61,12 @@ Se qualquer documento divergir da ordem abaixo:
 
 ```text
 16-execution-master-plan.md vence.
+```
+
+Se uma implementação divergir do style/layers/patterns normativos sem decisão arquitetural explícita:
+
+```text
+49-architecture-and-design-patterns-standard.md vence.
 ```
 
 ## 3. Invariantes
@@ -71,7 +87,11 @@ Se qualquer documento divergir da ordem abaixo:
 14. Watch não cria autoridade nova e revalida permission/policy no disparo.
 15. Não persistir chain-of-thought.
 16. Qualquer feature nova deve reutilizar os primitives C0; criar contrato paralelo é FAIL arquitetural.
-17. `PARTIAL`, `INCONCLUSIVE`, `LEGACY_FALLBACK` material, `TEST_NOT_RUN` e evidence stale bloqueiam fechamento.
+17. Runtime segue Clean Architecture + Ports & Adapters + DDD pragmático conforme `49`; patterns adicionais só entram quando a matriz/Abstraction Gate justificar.
+18. Domain/Application não dependem de framework/provider concreto; wiring concreto ocorre no Composition Root.
+19. Estado durável de negócio permanece no backend; frontend não se torna authority de Workflow/Case/Decision/Watch/Graph.
+20. Migração legada usa Adapter/Anti-Corruption Layer/Strangler quando aplicável, sempre com exit criteria.
+21. `PARTIAL`, `INCONCLUSIVE`, `LEGACY_FALLBACK` material, `TEST_NOT_RUN` e evidence stale bloqueiam fechamento.
 
 ## 4. Dependência crítica da Minha DELPI AI
 
@@ -92,7 +112,7 @@ Não recriar a Onda J dentro do Copilot.
 ## 5. Grafo canônico
 
 ```text
-C0 — Fundação arquitetural e contratos universais
+C0 — Fundação arquitetural, patterns e contratos universais
  |
  v
 C1 — Portal, navegação, entidades e Workspace Context
@@ -120,7 +140,7 @@ Nenhuma fase dependente começa porque “já existe código parcial”. Só com
 
 ---
 
-# C0 — Fundação arquitetural e contratos universais
+# C0 — Fundação arquitetural, patterns e contratos universais
 
 ## C0.S0 — Rebaseline e inventário total
 
@@ -169,6 +189,24 @@ Antes de runtime diff, inventariar com arquivo/símbolo/owner/consumer:
 - idempotency support;
 - knowledge lifecycle.
 
+### Arquitetura e padrões do código atual
+- camadas/packages `domain/application/interfaces/infrastructure` ou equivalentes;
+- use cases/application services;
+- ports/adapters/gateways/repositories;
+- DI/composition root;
+- DTO/mappers e boundary schemas;
+- error/result taxonomy;
+- state machines/lifecycle patterns;
+- domain events/integration events/event envelopes;
+- outbox/event publication;
+- retry/timeout/circuit-breaker/idempotency;
+- transaction/unit-of-work conventions;
+- migrations/compatibility/strangler patterns;
+- organização frontend `ui/state/data`;
+- query/cache, Workspace state, Conversation state e Local UI state;
+- conventions para hooks/reducers/stores/adapters;
+- testing doubles/contract/integration patterns.
+
 Classificar cada conceito existente:
 
 ```text
@@ -186,6 +224,8 @@ NOT_PROVEN
 - `17-component-and-contract-map.md` atualizado com fatos;
 - matriz de migração agent→expertise;
 - mapa entity/event/workflow/room/notification;
+- `49-architecture-and-design-patterns-standard.md` revalidado contra patterns reais do repositório;
+- divergências entre `49` e padrão real classificadas como `ALIGN_DOC`, `MIGRATE_CODE`, `ADR_REQUIRED` ou `NOT_PROVEN`;
 - ledger com `HEAD_BEFORE` e evidence.
 
 **Proibido:** runtime diff de Copilot antes de C0.S0 fechar.
@@ -217,6 +257,21 @@ audit/observability
 ```
 
 Toda responsabilidade deve possuir um owner; caches/indexes são derivados.
+
+Também congelar/revalidar os bounded contexts conceituais do `49`, sem obrigar package artificial quando o código real já possui owner equivalente:
+
+```text
+Copilot Intelligence
+Capability & Action Integration
+Expertise & Playbooks
+Knowledge
+Evidence & Provenance
+Work Management
+Policy & Decision
+Platform Experience
+Business Graph
+Observability & Evals
+```
 
 ## C0.S2 — Freeze de primitives e envelopes compartilhados
 
@@ -299,10 +354,24 @@ Definir desde já:
 - index requirements;
 - idempotency boundaries.
 
-## C0.S4 — Cross-cutting semantics
+Patterns obrigatórios conforme `49`:
+
+```text
+external boundary → Port + Adapter
+owned aggregate/lifecycle persistence → Repository
+legacy incompatible model → Adapter + Anti-Corruption Layer
+legacy gradual cutover → Strangler Fig
+durable write/retry boundary → Idempotency
+state + event atomicity → Transactional Outbox somente se requisito real
+```
+
+Não criar Repository para simples proxy HTTP nem nova storage authority por conveniência.
+
+## C0.S4 — Cross-cutting semantics + architecture/pattern freeze
 
 Congelar antes das features:
 
+### Semântica transversal
 - versioning compatibility;
 - correlation IDs;
 - provenance/freshness;
@@ -315,7 +384,89 @@ Congelar antes das features:
 - feature flag ownership/exit criteria;
 - no-CoT observability.
 
-## C0.S5 — Contract harness e RED gates
+### Architecture style
+
+```text
+Clean Architecture
++ Ports & Adapters / Hexagonal
++ DDD pragmático
++ Event-Driven somente onde houver eventos reais
++ State Machines para lifecycle não trivial
++ CQRS leve somente quando houver assimetria material
+```
+
+### Layer responsibilities
+
+Backend:
+
+```text
+Domain         → entities/value objects/invariantes/policies puras
+Application    → use cases/orchestration/ports
+Interfaces     → controllers/DTOs/event boundaries/mappers
+Infrastructure → DB/HTTP/OpenAPI/LLM/RAG/Vision/Event adapters
+Composition    → DI/wiring concreto
+```
+
+Frontend:
+
+```text
+ui
+state
+data
+```
+
+Owners de estado:
+
+```text
+server state           → query/cache layer existente
+workspace state        → Portal Workspace Context
+conversation state     → chat/copilot state
+local UI state         → component/hook
+durable business state → backend canônico
+```
+
+### Dependency rules
+
+- Domain/Application não importam framework/client/provider concreto;
+- infrastructure implementa ports;
+- business rules server-side não são duplicadas no frontend;
+- concrete wiring ocorre no Composition Root;
+- ORM/persistence model não vira API contract automaticamente.
+
+### Pattern Decision Matrix
+
+Congelar/revalidar a matriz do `49` para:
+
+- Port + Adapter;
+- Use Case/Application Service;
+- Repository;
+- State Machine;
+- Policy/Specification;
+- Strategy;
+- Adapter/Anti-Corruption Layer;
+- Strangler Fig;
+- Command + Handler;
+- Transactional Outbox;
+- Idempotency;
+- Event-Driven;
+- Saga somente com compensação real;
+- resilience patterns;
+- DTO + Mapper;
+- Dependency Injection/Composition Root;
+- Factory/Builder quando justificadas;
+- CQRS leve quando necessário.
+
+### Abstraction Gate
+
+Antes de criar `interface/port/repository/factory/strategy/registry/base class/generic engine`, provar boundary/lifecycle/variação/consumer/testability e inexistência de equivalente no repo.
+
+Abstração puramente especulativa = FAIL.
+
+### Exception process
+
+Divergência material do `49` exige decisão arquitetural/ADR no padrão real do repo antes do código.
+
+## C0.S5 — Contract + architecture conformance harness e RED gates
 
 Criar/reutilizar testes de contrato para os primitives materiais:
 
@@ -331,6 +482,18 @@ Criar/reutilizar testes de contrato para os primitives materiais:
 - secret/JWT em context/bridge/state;
 - send/stream parity do envelope comum.
 
+Criar/reutilizar checks de conformidade arquitetural quando tecnicamente viáveis:
+
+- Domain/Application sem imports proibidos de framework/infra;
+- dependency direction preservada;
+- frontend durable business state ausente;
+- no duplicate primitive/contracts;
+- adapter/port contract tests;
+- state transition tests para lifecycle complexo;
+- error translation tests;
+- write retry/idempotency negatives;
+- migration compatibility/residual checks quando aplicável.
+
 ## C0.S6 — FOUNDATION_FREEZE
 
 Só desbloqueia C1 se:
@@ -343,6 +506,22 @@ PERSISTENCE_BOUNDARIES = PASS
 CROSS_CUTTING_SEMANTICS = PASS
 CONTRACT_HARNESS = PASS
 FOUNDATION_DUPLICATION = 0 material
+
+ARCHITECTURE_STYLE = PASS
+LAYER_RESPONSIBILITIES = PASS
+DEPENDENCY_RULES = PASS
+BOUNDED_CONTEXTS = PASS
+PATTERN_DECISION_MATRIX = PASS
+ERROR_MODEL = PASS
+EVENT_MODEL = PASS
+STATE_MACHINE_RULES = PASS
+PERSISTENCE_RULES = PASS
+FRONTEND_STATE_RULES = PASS
+RESILIENCE_RULES = PASS
+TESTING_PATTERN = PASS
+MIGRATION_PATTERNS = PASS
+ABSTRACTION_GATE = PASS
+ARCHITECTURAL_EXCEPTION_PROCESS = PASS
 ```
 
 ---
@@ -354,8 +533,12 @@ Objetivo: estabelecer a interação segura com a plataforma antes de Business Ac
 ## C1.S1 — Authorized Portal Capability Projection
 `/me/apps` → authorized app/route capabilities, sem lista manual.
 
+Pattern esperado: projection + Port/Adapter quando houver boundary + use case/application orchestration; não criar catalog owner paralelo.
+
 ## C1.S2 — CopilotBridge
 Validator + revalidation + handlers genéricos + typed result + trace.
+
+Pattern esperado: Command + Handler + Adapter; registry por tipo genérico, nunca por app.
 
 ## C1.S3 — Navegação mínima
 - `portal.open_app`;
@@ -374,6 +557,8 @@ Helper compartilhado para contexto e entity refs; sem business logic.
 ## C1.S7 — Iframe Bridge
 `PORTAL_ONLY` universal + handshake seguro para classes superiores.
 
+Pattern esperado: Adapter + Anti-Corruption Layer + typed message boundary.
+
 ## C1.S8 — Contextual UX
 Context chips, abrir app/entidade, explicar view, remover contexto.
 
@@ -391,11 +576,17 @@ Objetivo: estabilizar a inteligência transversal **antes** de conectá-la massi
 - compatibilidade legada explicitamente temporária;
 - projeto/contexto separado de identidade do Copilot.
 
+Migração: Adapter + Anti-Corruption Layer + Strangler, não dual-runtime permanente.
+
 ## C2.S2 — Expertise Catalog/Repository
 Implementar authority versionada conforme contrato C0.
 
+Repository somente se C0 provar authority/lifecycle persistido próprio.
+
 ## C2.S3 — Expertise retrieval/composition
 Top-K semântico + policy/ACL + bounded context; unknown pack sem core patch.
+
+Strategy somente se existirem estratégias reais/intercambiáveis; não criar Strategy só para embrulhar uma implementação.
 
 ## C2.S4 — Domain Playbook Catalog/retrieval
 Método → stages/evidence/criteria; não endpoint.
@@ -405,6 +596,8 @@ Expertise/project preference nunca amplia knowledge visibility.
 
 ## C2.S6 — Multimodal Evidence Adapter
 Reaproveitar document vision/drawing analysis e produzir `EvidenceRef`/provenance/confidence.
+
+Extraction strategies são permitidas quando a variação native/OCR/VLM for real e o boundary justificar.
 
 ## C2.S7 — Evidence/epistemic synthesis foundation
 Normalizar facts/calculations/hypotheses/conclusions/recommendations e source refs.
@@ -428,7 +621,7 @@ Positive/sibling/negative, unknown expertise, metamorphic expertise, multimodal 
 Allowed Action Catalog → projection; executor sempre resolve source canônico.
 
 ## C3.S2 — Operational metadata
-read/write/risk/sensitivity/confirmation/idempotency/policy derivados por owner canônico.
+read/write/risk/sensitivity/decision/idempotency/policy derivados por owner canônico.
 
 ## C3.S3 — Generic read parity
 UI/Copilot usam o mesmo use case/API; known/sibling/unknown provider/metamorphic.
@@ -443,6 +636,8 @@ Implementar somente após `EntityRef`/`RelationshipRef` C0:
 - source API fetch após traversal;
 - cycle/depth budget;
 - authoritative vs inferred relationship provenance.
+
+Arquitetura esperada: Ports & Adapters; Repository/index apenas se houver materialização própria comprovada; permission traversal em Policy/Specification quando combinação justificar.
 
 Piloto recomendado:
 
@@ -465,6 +660,8 @@ Objetivo: somente depois dos reads estarem estáveis, liberar alterações com g
 ## C4.S1 — Decision Gate Engine
 Implementar os níveis definidos em C0 com deterministic policy owner.
 
+Pattern esperado: Policy + State Machine; prompt livre não é policy.
+
 ## C4.S2 — Impact Preview
 Arguments finais + evidence relevante + sensitivity + effect summary + hash.
 
@@ -477,11 +674,15 @@ Chave nativa do domínio preferida; locking/dedupe para retry/resume quando nece
 ## C4.S5 — Generic write execution
 Policy/RBAC revalidation imediatamente antes de execute; no DOM write.
 
+Writes não idempotentes não recebem retry cego.
+
 ## C4.S6 — Outcome verification
 Verificar resultado real, gerar outcome/evidence/audit e deep link.
 
 ## C4.S7 — Decouple action availability from legacy agent activation
 Remover gate material `userActivatedAgent` somente após capability/policy tests.
+
+Migração via Strangler/ACL; não copiar allowed tools para nova authority.
 
 ## C4.S8 — Replace soft handoff
 Retrieval/replan/clarify; não trocar agente departamental.
@@ -498,6 +699,8 @@ Objetivo: transformar execução de turno em trabalho persistente sem duplicar p
 ## C5.S1 — Durable Workflow Runtime
 Persistência de workflow/steps/checkpoints + crash/restart semantics.
 
+Pattern esperado: Application orchestration + State Machine + Idempotency; external dependencies via ports/adapters.
+
 ## C5.S2 — Wait states
 - `wait_user`;
 - `wait_approval`;
@@ -507,17 +710,23 @@ Persistência de workflow/steps/checkpoints + crash/restart semantics.
 ## C5.S3 — DAG runner
 Dependências, parallel safe reads, writes serializados quando necessário, budget/loop limit.
 
+Saga somente quando houver múltiplos writes distribuídos e compensações reais.
+
 ## C5.S4 — Copilot Task
 Task é unidade operacional curta/média vinculada a workflow e evidence/outcomes.
 
 ## C5.S5 — Copilot Case + Evidence Board
 Case é unidade de investigação/trabalho prolongado; não duplica sistema existente se C0 identificar owner reutilizável.
 
+Repository/Aggregate apenas se lifecycle/authority própria forem comprovados.
+
 ## C5.S6 — Interaction Room integration
 Reutilizar sala existente quando possível; Case/Room compartilham refs, nunca ACL implícita.
 
 ## C5.S7 — Copilot Inbox
 `waiting_for_user | working | completed | alerts`, ligada a Task/Case/Workflow/EntityRef.
+
+Preferir materialized/read model sobre authorities existentes; Inbox não vira workflow engine.
 
 ## C5.S8 — Persist/reload/resume gate
 Crash após write, duplicate event, concurrent resume, policy change durante wait, F5, cancel, partial failure.
@@ -528,6 +737,8 @@ Crash após write, duplicate event, concurrent resume, policy change durante wai
 
 ## C6.S1 — Watch OBSERVE/ADVISE
 Event-driven quando infraestrutura permitir; dedupe/cooldown/expiry + permission revalidation.
+
+Pattern esperado: Event-Driven + State Machine + dedupe/idempotency; polling app-specific não é default.
 
 ## C6.S2 — AI-ready SDK/templates
 Workspace Context, EntityRef, deep link, iframe bridge, contract fixtures.
@@ -546,6 +757,8 @@ feedback → candidate → eval → review → publish → rollout; nunca aprend
 
 ## C6.S7 — Expertise Studio
 Draft/review/eval/publish/rollback/admin RBAC.
+
+Pattern esperado: Use Cases + State Machine + admin RBAC; Studio não é agent builder.
 
 ## C6.S8 — Admin/coverage
 Capabilities, apps, expertise, playbooks, workflow/case/watch coverage, metrics.
@@ -569,6 +782,8 @@ Somente modelos owner/reproduzíveis. `simulate` nunca implica `apply`.
 ## C7.S4 — Model Router / Compute Policy
 Somente depois de baseline de qualidade/latência/custo e provider data-policy.
 
+Pattern esperado: Policy/Strategy somente após variações reais/baseline; não espalhar provider/model names pelo domain/application.
+
 ## C7.S5 — Legacy agent-routing cutover
 Parar novas dependências de `agent_id`; remover handoff/gates/fallbacks materiais; residual scan.
 
@@ -576,7 +791,7 @@ Parar novas dependências de `agent_id`; remover handoff/gates/fallbacks materia
 internal → cohort → app waves → reads → writes → durable work → watch selected → autonomy selected.
 
 ## C7.S7 — Final verification
-R1–R11 + CP coverage + unknown app/provider/pack/iframe/relation + security + accessibility + rollback.
+R1–R11 + CP coverage + unknown app/provider/pack/iframe/relation + security + accessibility + rollback + architecture conformance.
 
 ## C7.S8 — Product Complete gate
 Só declarar produto completo se requisitos materiais do release estiverem PASS ou `OUT_OF_SCOPE_WITH_DECISION` justificável.
@@ -622,6 +837,9 @@ Esse mapeamento substitui qualquer sequência antiga conflitante nos documentos 
 ```text
 REVALIDATE HEAD + git status
 → read applicable rules/docs
+→ identify owner + architecture layer
+→ select pattern from 49
+→ run Abstraction Gate
 → dependency gate
 → READY_TO_EXECUTE
 → baseline
@@ -632,6 +850,7 @@ REVALIDATE HEAD + git status
 → positive/sibling/negative
 → security/RBAC
 → generalization/metamorphic/unknown quando aplicável
+→ architecture conformance review
 → adversarial review
 → semantic residual search
 → postconditions
@@ -642,16 +861,22 @@ REVALIDATE HEAD + git status
 
 ## 8. Regra anti-refatoração previsível
 
-Antes de qualquer nova tabela/service/schema/perfil de evento, responder:
+Antes de qualquer nova tabela/service/schema/perfil de evento/abstração, responder:
 
 1. O primitive já existe em C0?
 2. Já existe owner/repository equivalente no projeto?
-3. Esta feature está tentando redefinir EntityRef/Evidence/Decision/Workflow/Event?
-4. Existe segunda authority sendo criada?
-5. O próximo estágio conhecido exigiria mudar este contrato?
-6. A implementação é genérica para sibling/unknown case?
+3. Qual camada é dona dessa responsabilidade?
+4. Qual pattern do `49` se aplica?
+5. A abstração passa o Abstraction Gate?
+6. Esta feature está tentando redefinir EntityRef/Evidence/Decision/Workflow/Event?
+7. Existe segunda authority sendo criada?
+8. O próximo estágio conhecido exigiria mudar este contrato?
+9. A implementação é genérica para sibling/unknown case?
+10. Existe padrão equivalente já comprovado no repositório?
 
-Se a resposta 3, 4 ou 5 for “sim”, **não implementar** até corrigir a fundação.
+Se 6, 7 ou 8 for “sim”, **não implementar** até corrigir a fundação.
+
+Se 5 for “não”, preferir implementação simples sem abstração especulativa.
 
 ## 9. Primeira ordem efetiva
 
