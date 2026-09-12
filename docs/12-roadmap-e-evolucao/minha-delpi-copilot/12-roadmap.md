@@ -1,315 +1,234 @@
-# 12 — Roadmap de implementação
+# 12 — Roadmap macro do Minha DELPI Copilot
+
+> **Status:** planejamento  
+> **Autoridade de execução atômica:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+> **Próxima etapa:** `C0.S0`
+
+Este arquivo descreve a evolução do produto em nível macro. O Cursor deve usar o Plano Mestre para executar subetapas, dependências, gates e evidências.
 
 ## Visão geral
 
-A implantação deve ser incremental. O objetivo é gerar valor cedo sem transformar o Copilot em um motor paralelo de UI automation.
-
 ```text
-Fase 0 — Fundamentos e contratos
-Fase 1 — Platform Actions + CopilotBridge
-Fase 2 — Workspace Context
-Fase 3 — Business Capability Parity
-Fase 4 — Agentic Workflows
-Fase 5 — AI-ready ecosystem
-Fase 6 — Autonomia governada e otimização
+C0 — Fundação, inventário e contratos
+C1 — Platform Actions + CopilotBridge
+C2 — Workspace Context
+C3 — Business Action Parity
+C4 — Agentic Workflows
+C5 — Ecossistema AI-ready
+C6 — Autonomia governada
+C7 — Rollout final
 ```
 
----
+## C0 — Fundação
 
-# Fase 0 — Fundamentos e contratos
+Objetivos:
 
-## Objetivo
+- inventariar Portal/Core/AI/MFEs/APIs reais;
+- congelar ownership producer/consumer;
+- reutilizar contratos existentes antes de criar novos;
+- formalizar PlatformCommand, WorkspaceContext e Capability Projection quando necessário;
+- criar harness contratual e negatives antes do runtime.
 
-Preparar o modelo conceitual sem alterar ainda o comportamento dos apps.
-
-## Entregas
-
-- modelo `Capability`;
-- categorias e sensitivity;
-- contratos de `PlatformCommand`;
-- contrato de `WorkspaceContext`;
-- estratégia de Authorized Capability View;
-- ownership e boundaries;
-- eventos de audit/observability;
-- testes de contrato.
-
-## Critério de saída
+Saída:
 
 ```text
-CAPABILITY_MODEL = APPROVED
-PLATFORM_COMMAND_SCHEMA = APPROVED
-WORKSPACE_CONTEXT_SCHEMA = APPROVED
-SECURITY_MODEL = APPROVED
+INVENTORY = PROVEN
+OWNERSHIP = PROVEN
+CONTRACTS = VERSIONED
+BASE_GATES = PASS
 ```
 
----
+## C1 — Platform Actions
 
-# Fase 1 — Platform Actions + CopilotBridge
+Objetivo: permitir ao Copilot navegar pela plataforma sem URL arbitrária e sem lista hardcoded de apps.
 
-## Objetivo
+Entrega:
 
-Fazer o Copilot navegar pela Minha DELPI de forma segura e contextual.
-
-## Escopo mínimo
-
+- projection derivada de `/me/apps`;
+- CopilotBridge no Shell;
 - `portal.open_app`;
 - `portal.open_route`;
-- `portal.open_entity` para uma entidade piloto;
-- `portal.select_tab`/`set_view_context` em um app piloto;
-- capability catalog derivado de apps/rotas autorizados;
-- `CopilotBridge` no Shell;
-- result/observation de navegação;
-- activity no chat.
+- transport send/stream;
+- activity/result/audit;
+- unauthorized/TOCTOU negatives.
 
-## Piloto sugerido
-
-Portal Comercial ou Portal de Suprimentos, escolhendo um app com rotas e entidades já estáveis.
-
-## Evals
-
-- usuário autorizado abre app;
-- usuário sem permissão não recebe capability;
-- app desconhecido registrado dinamicamente funciona sem patch no planner;
-- URL arbitrária é rejeitada;
-- F5 preserva conversa e reconstrói contexto de navegação seguro.
-
----
-
-# Fase 2 — Workspace Context Protocol
-
-## Objetivo
-
-Permitir perguntas e comandos relativos à tela atual.
-
-## Entregas
-
-- `WorkspaceContextBridge` no Portal;
-- adapter padrão para MFEs;
-- entity refs;
-- filters;
-- selection;
-- visible data refs;
-- context chips no composer;
-- prioridade do contexto explícito da mensagem;
-- persist/reload rules.
-
-## Casos de aceite
-
-```text
-“explique este cliente”
-“e os pedidos dele?”
-“agora só filial 01”
-“abra esse pedido”
-```
-
-sem exigir repetição de IDs já disponíveis.
-
----
-
-# Fase 3 — Business Capability Parity
-
-## Objetivo
-
-Transformar operações reais dos apps em capabilities executáveis pela IA.
-
-## Estratégia
-
-Não tentar cobrir toda a plataforma de uma vez.
-
-### Onda 3A — Reads
-
-- produto;
-- estoque;
-- cliente;
-- pedidos;
-- compras;
-- indicadores;
-- solicitações.
-
-### Onda 3B — Writes de baixo risco
-
-- criar solicitação;
-- adicionar comentário;
-- alterar responsável;
-- registrar observação.
-
-### Onda 3C — Aprovações e operações sensíveis
-
-- aprovar/rejeitar;
-- cancelar;
-- alterar cadastros críticos.
-
-## Entrega por app
-
-Manter matriz UI → use case/API → capability → permission → sensitivity.
-
----
-
-# Fase 4 — Agentic Workflows
-
-## Objetivo
-
-Permitir tarefas compostas multi-app.
-
-## Entregas
-
-- Goal DAG;
-- step dependencies;
-- parallel reads;
-- checkpoints;
-- partial failure;
-- replan;
-- confirmation resumida de múltiplos writes;
-- workflow audit trail;
-- limits/budgets.
-
-## Caso-âncora
-
-```text
-“Analise por que este item está atrasado,
-abra os dados relevantes,
-crie uma solicitação para Compras
-e avise o responsável.”
-```
-
----
-
-# Fase 5 — Ecossistema AI-ready
-
-## Objetivo
-
-Fazer novos apps entrarem no Copilot por contrato, sem projeto manual de integração.
-
-## Entregas
-
-- checklist AI-ready no template de plugins;
-- OpenAPI quality gates;
-- Workspace Context adapter template;
-- entity deep link metadata;
-- UI capability registration;
-- smoke “unknown app”;
-- dashboard de capability coverage.
-
-## Meta
-
-Novo app padrão deve conseguir:
-
-```text
-ser descoberto
-→ ser aberto
-→ publicar contexto
-→ expor reads/writes
-→ funcionar no Copilot
-```
-
-sem alterar o core genérico da IA.
-
----
-
-# Fase 6 — Autonomia governada
-
-## Objetivo
-
-Aumentar automação sem aumentar risco indevidamente.
-
-## Entregas
-
-- policies L0–L5 por capability;
-- auto-execution allowlists governadas;
-- workflow templates;
-- scheduled/triggered workflows quando houver infraestrutura apropriada;
-- budget por usuário/agente;
-- cost optimization;
-- feedback/eval loops;
-- progressive rollout.
-
----
-
-# Dependências arquiteturais
-
-Antes de avançar para writes em escala, o programa atual de OpenAPI-first/LLM deve estar com os gates materiais resolvidos. O Copilot não deve ampliar o alcance de uma camada de actions ainda inconsistente.
-
-Especialmente:
-
-- Action Catalog universal;
-- schema-driven binding;
-- RBAC/policy/confirmation;
-- evidence/evals confiáveis;
-- unknown-provider generalization;
-- clean architecture do executor.
-
----
-
-# Priorização recomendada
-
-## MVP de percepção de valor
-
-```text
-Fase 1 + parte da Fase 2
-```
-
-Isso permite rapidamente:
+Valor percebido:
 
 > “Abra o Portal Comercial.”
 
 > “Vá para pedidos em aberto.”
 
+## C2 — Workspace Context
+
+Objetivo: tornar a conversa relativa ao app/tela/entidade atual.
+
+Entrega:
+
+- WorkspaceContext contract;
+- Portal Context Store;
+- helper/SDK MFE;
+- piloto real;
+- context chips;
+- contextual explanation;
+- stale context/F5/logout security semantics.
+
+Valor percebido:
+
 > “Explique este cliente.”
 
-sem ainda introduzir riscos grandes de escrita.
+> “E no mês passado?”
 
-## MVP operacional
+## C3 — Business Action Parity
 
-```text
-Fase 3A + 3B
-```
-
-Permite consultar e criar solicitações simples.
-
-## Copilot pleno
+Objetivo: UI e Copilot utilizarem os mesmos contratos/use cases.
 
 ```text
-Fase 4 + Fase 5
+UI ──────────┐
+             ▼
+         API/use case
+             ▲
+Copilot ─────┘
 ```
 
-Passa a executar objetivos multi-app e a aprender novos apps por contrato.
+Ondas:
 
----
+1. reads;
+2. prepare write;
+3. confirmed writes;
+4. sensitive/destructive apenas com policy forte.
 
-# Regras de rollout
+### Dependência
 
-Cada fase segue:
+Business Actions production-ready dependem do pipeline OpenAPI-first/Action Catalog/evals relevante estar aprovado no candidate vigente da Minha DELPI AI. A Onda J aberta não deve ser ignorada nem reimplementada aqui.
+
+## C4 — Agentic Workflows
+
+Objetivo: executar objetivos compostos multi-app.
+
+Entrega:
+
+- goals/DAG;
+- dependencies;
+- parallel safe reads;
+- confirmation boundaries;
+- retry/idempotency;
+- partial failure;
+- checkpoints/activity;
+- persist/reload/resume;
+- mixed read+write.
+
+Caso-âncora:
+
+> “Analise o atraso deste item, consulte estoque, produção e compras, prepare uma solicitação para Compras e abra o registro resultante.”
+
+## C5 — Ecossistema AI-ready
+
+Objetivo: novos apps entrarem por contrato sem patch no core do Copilot.
+
+Entrega:
+
+- readiness levels L1–L5;
+- scanner;
+- templates/helpers;
+- entity/deep-link conventions;
+- workspace context padrão;
+- waves de onboarding;
+- coverage dashboard.
+
+Matriz: [`18-app-onboarding-matrix.md`](./18-app-onboarding-matrix.md).
+
+## C6 — Autonomia governada
+
+Objetivo: aumentar automação sem elevar poder do usuário.
+
+```text
+L0 explain
+L1 navigate
+L2 read/analyze
+L3 prepare write
+L4 confirmed write
+L5 explicitly policy-allowed autonomy
+```
+
+L5 começa OFF e requer allowlist, limits, idempotency, audit e kill switch.
+
+## C7 — Rollout final
+
+```text
+internal canary
+→ app canary
+→ reads scale
+→ L3/L4 canary
+→ selected workflows
+→ metrics/incident review
+→ progressive expansion
+```
+
+Sem big-bang.
+
+## Dependências e gates
+
+Toda fase segue:
 
 ```text
 PLAN
-→ CONTRACTS
-→ PILOT
-→ EVALS
-→ CANARY
-→ OBSERVABILITY
-→ SCALE
+→ INVENTORY/CONTRACTS
+→ IMPLEMENT
+→ WIRING
+→ TESTS
+→ SECURITY
+→ GENERALIZATION
+→ RESIDUAL SEARCH
+→ COMPLETE_GATE
+→ CANARY/ROLLOUT quando aplicável
 ```
 
-Nunca fazer rollout global de write capability sem eval de autorização, confirmação, idempotência e recuperação de falha.
+Detalhes:
 
----
+- execução: [`16-execution-master-plan.md`](./16-execution-master-plan.md);
+- rollout/migrations: [`19-rollout-and-migrations.md`](./19-rollout-and-migrations.md);
+- testes: [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md);
+- estado/persistência: [`21-data-and-state-model.md`](./21-data-and-state-model.md);
+- Cursor: [`22-cursor-execution-protocol.md`](./22-cursor-execution-protocol.md);
+- requisitos: [`25-requirements-traceability.md`](./25-requirements-traceability.md).
 
-# Primeira implementação recomendada
+## MVPs
 
-A primeira implementação concreta deve ser:
+### MVP de percepção
 
 ```text
-Portal Capability Catalog
-+ CopilotBridge
-+ portal.open_app
-+ portal.open_route
-+ Workspace Context mínimo
+C1 + fatia C2
 ```
 
-Por quê:
+Navega e entende contexto, sem risco de write.
 
-- alto impacto perceptível;
-- baixo risco de negócio;
-- reutiliza `/me/apps` e Router existentes;
-- estabelece protocolo Shell ↔ Copilot;
-- prepara todas as fases seguintes.
+### MVP operacional
+
+```text
+C3 reads + L3 prepare + primeiro L4 confirmed write
+```
+
+### Copilot multi-app
+
+```text
+C4 + primeiros apps L5 workflow-ready
+```
+
+### Plataforma AI-ready
+
+```text
+C5 + C6 + C7
+```
+
+## Primeira implementação
+
+Não começar pela UI final. Começar por:
+
+```text
+C0.S0 rebaseline/inventory
+→ C0.S1 ownership/contracts
+→ C0.S2 harness
+→ C1.S1 Authorized Portal Capability Projection
+```
+
+O estado executável é registrado em [`evidence/execution-ledger.md`](./evidence/execution-ledger.md).
