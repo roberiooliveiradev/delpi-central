@@ -1,536 +1,407 @@
-# 02 — Arquitetura
+# 02 — Arquitetura do Minha DELPI Copilot
+
+**Status:** arquitetura alvo canônica  
+**Ordem de construção:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
 
 ## 1. Objetivo arquitetural
 
-O Copilot deve ser uma camada transversal sobre a arquitetura atual da Minha DELPI, reutilizando identidade, RBAC, Core API, Portal Shell, `minha-delpi-ai-api`, OpenAPI Action Catalog, RAG, multimodalidade, MFEs e apps iframe.
+O Minha DELPI Copilot é uma camada transversal sobre a plataforma existente, reutilizando:
 
-Não criar um produto paralelo à plataforma.
+- Gateway;
+- Keycloak;
+- Core API/RBAC;
+- Portal Shell;
+- `minha-delpi-ai-api`;
+- Chat MFE;
+- OpenAPI + Action Catalog;
+- RAG/Knowledge;
+- multimodalidade;
+- APIs de domínio;
+- MFEs e iframes.
 
-A identidade do produto também é única:
+Não criar um produto ou stack de IA paralelos.
 
-> **Existe um único Minha DELPI Copilot.** Especialização por Engenharia, Qualidade, Suprimentos, Comercial, Financeiro, RH e demais domínios ocorre por **Expertise Packs**, **Domain Playbooks**, knowledge scopes, capabilities e ferramentas multimodais — não por troca de agente/runtime.
+## 2. Princípio do Copilot único
 
-Fonte detalhada: [`27-single-copilot-specialization-architecture.md`](./27-single-copilot-specialization-architecture.md).
-
-## 2. Componentes
+Existe um único Copilot de produto.
 
 ```text
-Portal Shell
-├─ Router
-├─ AuthContext
-├─ Apps/Routes autorizados
-├─ Copilot UI
-├─ CopilotBridge
-├─ IframeBridge
-└─ WorkspaceContextBridge
+NÃO
+usuário → agente Engenharia → handoff → agente Qualidade
 
-minha-delpi-ai-api
-├─ Turn Understanding
-├─ Context/Memory
-├─ Capability Retrieval
-├─ Expertise Retrieval
-├─ Domain Playbook Retrieval
-├─ Knowledge Retrieval
-├─ Multimodal Evidence
-├─ Planner / Workflow Runtime
-├─ Policies/Confirmation
-├─ Action Execution
-├─ Analysis/Synthesis
-└─ Observability/Evals
-
-Core API
-├─ identidade efetiva
-├─ apps/rotas
-├─ permissions/RBAC
-└─ auditoria/governança
-
-Business APIs
-├─ api-delpi
-├─ APIs de portais
-├─ serviços específicos
-└─ integrações externas OpenAPI
+SIM
+usuário → Minha DELPI Copilot
+→ goals/context
+→ capabilities autorizadas
+→ expertise/playbooks
+→ knowledge/evidence
+→ planner
+→ policy
+→ execution
 ```
 
-## 3. Pipeline canônico
+Domínios especializam o mesmo runtime por Expertise Packs, Domain Playbooks, Knowledge scopes e tools.
+
+## 3. Foundation-first
+
+A arquitetura é organizada em duas dimensões:
+
+### 3.1 Foundations compartilhadas
 
 ```text
-mensagem + workspace context + attachments
-→ segurança/input validation
+Identity/RBAC
+Correlation
+Entity/Relationship refs
+Source/Evidence/Outcome refs
+Capability contracts
+Workspace Context
+Expertise/Playbook contracts
+Decision Gate contracts
+Workflow/Task/Case lifecycles
+Event envelope
+Audit/Observability
+```
+
+### 3.2 Features construídas sobre as foundations
+
+```text
+Navigation
+Context
+Expertise
+Multimodal analysis
+Business Reads
+Business Graph
+Business Writes
+Durable Work
+Cases/Rooms/Inbox
+Watch
+Learning
+Simulation
+Model Routing
+```
+
+Uma feature não pode redefinir foundation já existente.
+
+## 4. Arquitetura macro
+
+```text
+                               USUÁRIO
+                                  │
+                       Portal / Chat / Case UX
+                                  │
+                      Workspace + Entity Context
+                                  │
+                                  ▼
+                    ┌─────────────────────────┐
+                    │ Minha DELPI Copilot     │
+                    │      AI Runtime         │
+                    └────────────┬────────────┘
+                                 │
+       ┌─────────────────────────┼──────────────────────────┐
+       ▼                         ▼                          ▼
+Understanding             Capability Retrieval       Expertise/Playbooks
+       │                         │                          │
+       └──────────────┬──────────┴──────────────┬───────────┘
+                      ▼                         ▼
+               Knowledge/Evidence         Structured Planner
+                      │                         │
+                      └─────────────┬───────────┘
+                                    ▼
+                         Policy / Decision Gate
+                                    │
+                     ┌──────────────┼──────────────┐
+                     ▼              ▼              ▼
+              Platform Actions Business Actions Internal Tools
+                     │              │              │
+                     ▼              ▼              ▼
+               Portal Bridge   Generic Executor  RAG/Vision/etc
+                                    │
+                                    ▼
+                              Domain APIs
+                                    │
+                                    ▼
+                         Outcome / Evidence
+                                    │
+                              Observe/Replan
+```
+
+## 5. Camadas de runtime
+
+### 5.1 Experience Layer
+
+Owners:
+
+- Portal Shell;
+- Chat MFE;
+- MFEs;
+- iframe adapters;
+- Task/Case/Inbox UX.
+
+Responsável por apresentação/interação, não autorização real de negócio.
+
+### 5.2 Intelligence Layer
+
+Owner principal: `minha-delpi-ai-api`.
+
+Responsabilidades:
+
+- structured understanding;
+- goal decomposition;
+- capability retrieval;
+- expertise/playbook retrieval;
+- knowledge/evidence composition;
+- planning;
+- synthesis;
+- workflow orchestration;
+- recommendation;
+- presentation plan.
+
+### 5.3 Policy/Safety Layer
+
+Responsável por:
+
+- allowed capabilities;
+- sensitivity/risk;
+- Decision Gates;
+- autonomy policy;
+- provider data policy;
+- limits/budgets;
+- confirmation/approval;
+- audit requirements.
+
+LLM não relaxa policy.
+
+### 5.4 Execution Layer
+
+Reutiliza executors canônicos:
+
+```text
+Platform → CopilotBridge/Portal handlers
+Business → Action Catalog + generic HTTP executor
+Knowledge → RAG/search tools
+Multimodal → document/image/drawing adapters
+```
+
+Durable Workflow coordena executors; não os duplica.
+
+### 5.5 State/Work Layer
+
+Responsável por:
+
+- workflow checkpoints;
+- Tasks;
+- Cases;
+- waits;
+- decision refs;
+- event resume;
+- Inbox materialization.
+
+## 6. Canonical pipeline
+
+```text
+input/message/event
++ WorkspaceContext
++ entity refs
++ attachments
++ durable work state quando aplicável
+
+→ input/security validation
 → structured understanding
-→ goals/subtasks/dependencies/entities/domain signals
-→ authorized capability discovery
-→ expertise retrieval
-→ playbook retrieval
-→ knowledge retrieval
-→ multimodal extraction quando aplicável
+→ goals/entities/requirements
+→ authorized capability candidates
+→ expertise/playbook retrieval
+→ knowledge/multimodal evidence
 → bounded context composition
 → structured plan
-→ policy/RBAC/sensitivity
-→ confirm quando necessário
-→ generic execution
-→ observations/results
-→ domain-aware analysis/synthesis
-→ renderPlan + UI commands
-→ persistence/audit/evals
+→ policy/risk/Decision Gate evaluation
+→ execute/read/wait
+→ Outcome/Evidence
+→ observe/update state
+→ continue | clarify | wait | complete
+→ synthesis/presentation
+→ persist/audit/metrics
 ```
 
-## 4. Tipos de capability
+## 7. Sources of truth
 
-```text
-Business Action
-→ operação de negócio via API/use case
-
-Platform Action
-→ operação do Portal/Shell
-
-Knowledge Capability
-→ RAG/search/documentos
-
-Analysis Capability
-→ transformação/comparação/síntese grounded
-
-Artifact Capability
-→ geração de relatório/mensagem/arquivo
-
-Multimodal Capability
-→ extração/percepção de documento/imagem/desenho
-
-Workflow Capability
-→ composição governada de múltiplas capabilities
-```
-
-## 5. Tipos de especialização
-
-Especialização é ortogonal a capability.
-
-```text
-Expertise Pack
-→ linguagem, conceitos, critérios, guidance e knowledge scopes de um domínio
-
-Domain Playbook
-→ método operacional/analítico com evidências, etapas e critérios
-
-Project Context
-→ arquivos, preferências, knowledge e contexto persistível de um workspace
-
-Multimodal Tool
-→ mecanismo de percepção/extração; não identidade de agente
-```
-
-Exemplo:
-
-```text
-Capability: consultar reclamações
-Expertise: quality-industrial
-Playbook: quality.root-cause
-Tool: document-vision
-```
-
-## 6. Fonte de verdade por responsabilidade
-
-| Conceito | Fonte de verdade |
+| Conceito | Authority |
 |---|---|
-| identidade | Keycloak + Core context |
-| permissões efetivas | Core API |
-| apps/rotas autorizadas | `/core-api/me/apps` / contratos equivalentes |
-| operação de negócio | API/use case + OpenAPI |
-| contrato técnico de action | OpenAPI + Action Catalog |
-| confirmação/sensitivity | policy determinística |
-| contexto visual atual | Portal/MFE/iframe Workspace Context |
-| conhecimento documental | fontes RAG autorizadas |
+| identidade | Keycloak + Core integration |
+| permissions efetivas | Core API |
+| apps/rotas | Core API |
+| business rules | APIs/use cases de domínio |
+| business action technical contract | OpenAPI + Action Catalog |
+| navigation | Portal Shell/Router |
+| workspace visual | Portal/MFE/iframe |
+| entity identity | domain owner + shared EntityRef adapter |
+| relationships | domain owner + Business Graph relationship registry |
 | expertise | Expertise Catalog |
-| método de domínio | Domain Playbook Catalog |
-| percepção multimodal | serviços multimodais/versionados |
-| navegação | Platform Capability Catalog derivado do Portal |
-| apresentação de dados | schema/payload/metadata → renderPlan |
+| playbooks | Domain Playbook Catalog |
+| knowledge visibility | Knowledge ACL |
+| multimodal observation | extractor/service versionado |
+| evidence provenance | source owner + Evidence contract |
+| policy/decision | Policy/Safety |
+| workflow state | durable work owner |
+| model/compute selection | centralized Compute Policy |
+| audit | audit/observability infrastructure |
 
-Nenhuma expertise/playbook pode duplicar permission, path, method, operationId ou schema como authority técnica paralela.
+## 8. Platform Actions
 
-## 7. Princípio UI ↔ Copilot
-
-A UI e o Copilot devem convergir para os mesmos use cases.
+Fluxo:
 
 ```text
-MFE/UI ──────┐
-             ▼
-       Business Use Case/API
-             ▲
-Copilot ─────┘
+Core /me/apps
+→ authorized route projection
+→ semantic retrieval
+→ PlatformCommand
+→ Portal validation/revalidation
+→ Router/MFE/Iframe handler
+→ PlatformCommandResult
 ```
 
-Automação de UI só deve ser usada para ações verdadeiramente visuais, como navegação, foco, troca de aba ou aplicação de preferência local.
+Exemplos genéricos:
 
-## 8. CopilotBridge
+- `portal.open_app`;
+- `portal.open_route`;
+- `portal.open_entity`;
+- view commands suportados.
 
-Responsável no Portal por receber **Platform Commands tipados** e validá-los antes da execução.
+Sem URL livre do modelo.
 
-Exemplos:
+## 9. Workspace Context
 
-```json
-{
-  "type": "portal.open_app",
-  "target": { "appId": "portal-suprimentos" }
-}
-```
+Contrato bounded compartilhado por MFE/iframe/Portal.
 
-```json
-{
-  "type": "portal.open_entity",
-  "target": {
-    "entityType": "purchaseRequest",
-    "entityId": "SC-00123"
-  }
-}
-```
-
-O LLM não produz `window.location`, URL arbitrária nem código React. Ele escolhe uma capability conhecida e o Portal executa o comando validado.
-
-## 9. WorkspaceContextBridge
-
-Responsável por sincronizar contexto útil do Portal/MFE/iframe com o Copilot:
+Pode conter:
 
 ```text
 appId
 routeId
 entityRefs
 filters
-dateRange
 selection
+dateRange
 visibleDataRefs
-presentationState
+source
 ```
 
-O contexto deve ser pequeno, estruturado, versionado e sem despejar estado React completo ou DOM.
+Não contém:
 
-## 10. Capability Discovery
+- estado React completo;
+- DOM;
+- token;
+- permission authority;
+- dataset grande sem necessidade.
 
-O planner não recebe o universo inteiro indiscriminadamente.
+## 10. Business Actions
 
 ```text
-permissions efetivas
-→ capabilities permitidas
-→ semantic retrieval
-→ top-K
-→ planner restrito aos candidates
+UI ───────────────┐
+                  ▼
+             Domain API
+                  ▲
+Copilot → Action Catalog
 ```
 
-O mesmo princípio já usado para Actions OpenAPI deve ser expandido para capabilities da plataforma.
+O Copilot não aprende endpoints pela tela.
 
-## 11. Expertise Discovery
-
-Também não carregar todas as especializações em todo turno.
+Pipeline:
 
 ```text
-goals + entities + workspace + attachments + project preferences
-→ expertise semantic retrieval
-→ policy/compatibility filter
-→ top-K Expertise Packs
-→ playbooks relevantes
-→ bounded expertise context
+semantic intent
+→ allowed action retrieval
+→ schema/argument binding
+→ policy
+→ Decision Gate se necessário
+→ generic executor
+→ domain API
+→ verified outcome
 ```
 
-A seleção é dinâmica. O usuário não precisa alternar manualmente entre agentes.
+## 11. Entity model e Business Graph
 
-### Regra crítica
+### EntityRef
+
+É referência lógica estável, não objeto duplicado.
+
+### RelationshipRef
+
+Conecta entidades com source/provenance.
+
+### Business Graph
 
 ```text
-expertise selecionada
-≠ permission concedida
+EntityRefs + RelationshipRefs
+→ permission-aware traversal
+→ related source refs
+→ fetch atual nas APIs donas
 ```
 
-O pack pode recomendar capabilities, mas o planner só recebe/executa as permitidas ao usuário.
+O graph pode materializar relações/cache, mas não virar sistema mestre de estoque, pedido, produto etc.
 
-## 12. Domain Playbooks
+## 12. Evidence/Provenance
 
-Playbooks descrevem método, não implementação técnica.
+Toda análise madura usa um contrato compartilhado.
 
 ```text
-playbook
-→ goals/stages/evidence checklist/decision criteria
-+ authorized capabilities
-+ current context
-→ WorkflowPlan
+SourceRef
+→ EvidenceRef
+→ FACT/CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION
+→ presentation/audit/case
 ```
 
-Exemplos:
+Evidence é reutilizado por multimodalidade, API results, Graph, Case e Workflow.
 
-- `quality.8d`;
-- `quality.root-cause`;
-- `engineering.drawing-review`;
-- `operations.delivery-delay-analysis`.
+## 13. Expertise
 
-Fonte: [`29-domain-playbooks-specification.md`](./29-domain-playbooks-specification.md).
+```text
+goals/context/entities/attachments/project prefs
+→ Expertise retrieval
+→ selected packs
+→ bounded ExpertiseContext
+```
 
-## 13. Multimodalidade
+Pack pode orientar:
 
-Documentos, imagens e desenhos entram como evidência estruturada:
+- terminologia;
+- análise;
+- evidence expectations;
+- preferred playbooks;
+- knowledge refs;
+- multimodal needs.
+
+Não concede action/permission.
+
+## 14. Domain Playbooks
+
+Playbook descreve método:
+
+```text
+applicability
+stages
+evidence checklist
+decision criteria
+completion criteria
+recommended capability semantics
+```
+
+Planner transforma método em WorkflowPlan usando capabilities reais autorizadas.
+
+## 15. Multimodalidade
 
 ```text
 attachment
-→ native/OCR/VLM extraction
-→ structured evidence + provenance/confidence
-→ expertise/playbook interpretation
-→ optional Business/Knowledge Actions
-→ grounded synthesis
+→ native parsing/OCR/VLM
+→ observations com page/region/confidence/limitations
+→ EvidenceRef
+→ expertise/playbook/analysis
 ```
 
-A percepção não deve ser acoplada a um agente selecionado.
+Multimodal observation não é domain conclusion.
 
-Fonte: [`30-multimodal-expertise-and-drawing-analysis.md`](./30-multimodal-expertise-and-drawing-analysis.md).
+## 16. Decision Gates
 
-## 14. Execução agentic
-
-O executor deve operar em ciclos observáveis:
-
-```text
-PLAN
-→ ACT
-→ OBSERVE
-→ UPDATE STATE
-→ CONTINUE | COMPLETE | CLARIFY
-```
-
-"Agentic" aqui descreve o padrão de execução/autonomia, **não múltiplas identidades de agente por departamento**.
-
-Limites de segurança e custo controlam número de passos, tools, retries e profundidade.
-
-## 15. Persistência
-
-Persistir estado suficiente para continuidade sem depender de reinterpretação total:
-
-- goals;
-- selected capabilities;
-- selected expertise refs quando relevante;
-- selected playbook refs;
-- resolved entities;
-- resolved arguments;
-- pending requirements;
-- result references;
-- workspace context relevante;
-- project context;
-- confirmations;
-- audit events.
-
-Não persistir chain-of-thought.
-
-Expertise selecionada no turno não deve virar authority permanente; turnos futuros podem reavaliar conforme objetivo/contexto.
-
-## 16. Migração do modelo atual de agents
-
-A base atual possui conceitos de agent activation, specialization, skills e soft handoff. A arquitetura alvo exige migração incremental:
-
-```text
-agent specialization
-→ Expertise Packs / knowledge scopes
-
-agent-bound operational tools
-→ authorized capabilities + policy
-
-soft agent handoff
-→ expertise/capability retrieval + clarify/unavailable
-
-agent/project customization
-→ Project Context + preferred expertise quando aplicável
-```
-
-Sessões legadas precisam de compatibilidade temporária, porém `LEGACY_FALLBACK` material não pode permanecer como solução final.
-
-Fonte: [`31-agent-to-expertise-migration-plan.md`](./31-agent-to-expertise-migration-plan.md).
-
-## 17. Clean Architecture
-
-### Domain
-
-- modelos de capability;
-- modelos/regras puras de expertise e playbook;
-- policies puras;
-- contracts de plan/confirmation;
-- regras de autonomia;
-- sem filesystem/HTTP/DB/LLM.
-
-### Application
-
-- discover capabilities;
-- retrieve expertise/playbooks;
-- compose bounded expertise context;
-- plan task;
-- execute workflow;
-- bind arguments;
-- coordinate confirmation;
-- build response/render commands;
-- coordinate multimodal evidence.
-
-### Infrastructure
-
-- Core/RBAC gateway;
-- OpenAPI catalog repository;
-- Portal capability repository;
-- Expertise/Playbook repositories/indexes;
-- HTTP execution;
-- LLM/embedding providers;
-- multimodal adapters;
-- persistence;
-- vector/search adapters.
-
-### Interfaces
-
-- REST/SSE;
-- Portal events;
-- admin endpoints.
-
-### Composition
-
-- DI/wiring de implementations concretas.
-
-## 18. Alterações arquiteturais obrigatórias a inventariar/implementar
-
-O C0.S0 deve mapear o runtime atual e preparar mudanças em especial:
-
-1. `ChatWorkspaceAgentActivationService`: remover dependência conceitual de agente ativo para habilitar tools operacionais;
-2. `ChatSoftAgentHandoffService`: substituir troca de agente por recuperação/replanejamento de expertise/capability;
-3. `AgentSpecializationService`: migrar presets úteis para Expertise Packs/knowledge scopes;
-4. `ChatSkillRegistry`: preservar skills úteis, mas desacoplar `has_agent` quando não for requisito real e eliminar semântica técnica frágil incompatível com OpenAPI-first;
-5. sessão/persistência: tratar `agent_id` como compatibilidade legada onde aplicável;
-6. UI: remover dependência de seleção manual de agente no Copilot após migration gates;
-7. projetos: separar customização/contexto de projeto da identidade do Copilot.
-
-Plano de execução: [`32-expertise-runtime-implementation-plan.md`](./32-expertise-runtime-implementation-plan.md).
-
-## 19. Requisitos de escalabilidade
-
-- novo app não exige editar o planner central;
-- novo endpoint OpenAPI não exige selector dedicado;
-- novo Expertise Pack não exige editar planner central;
-- novo Playbook compatível não exige criar agente;
-- capabilities/expertise/playbooks podem ser indexados e buscados semanticamente;
-- catálogos podem ser materializados/cacheados sem virar authority paralela;
-- execução deve ser idempotente quando contrato permitir;
-- writes precisam de correlation/audit ids;
-- workflows longos precisam checkpoints e recuperação;
-- um pedido cross-domain deve compor especializações no mesmo turno.
-
-## 20. Critério arquitetural de sucesso
-
-O sistema deve suportar, sem troca de agente:
-
-> "Analise este desenho, verifique os riscos de qualidade, consulte reclamações semelhantes, compare fornecedores e monte um 8D preliminar."
-
-O mesmo runtime deve ativar Engenharia + Qualidade + Suprimentos, multimodalidade, RAG e Business Actions autorizadas, preservando identidade, contexto, RBAC, policy e audit.
-
----
-
-## 21. Evolução para camada operacional inteligente
-
-O Copilot não deve terminar na arquitetura de chat + tools. O target completo adiciona uma camada de trabalho persistente e contexto empresarial:
-
-```text
-Business Graph
-+ Tasks/Cases/Rooms
-+ Inbox/Watch
-+ Evidence/Provenance
-+ Decision Gates/Simulation
-+ Organizational Knowledge
-+ Expertise Studio
-+ Model Router
-+ Durable Workflow Runtime
-```
-
-Fonte estratégica: [`34-market-benchmark-and-product-north-star.md`](./34-market-benchmark-and-product-north-star.md).
-
-## 22. DELPI Business Graph
-
-Responsável por representar **referências e relações semânticas**, sem duplicar os dados operacionais.
-
-```text
-EntityRef + RelationshipRef
-→ graph traversal
-→ authorized source capabilities
-→ dados atuais nas APIs owners
-```
-
-Exemplos de relações:
-
-```text
-complaint → product → productionOrder → material → supplier
-product → drawingRevision
-nonconformity → rootCause → actionPlan
-customer → order → item → product
-```
-
-O graph ajuda o planner a navegar o contexto; não é authority de autorização nem cópia dos bancos.
-
-Fonte: [`35-delpi-business-graph.md`](./35-delpi-business-graph.md).
-
-## 23. Tasks, Cases e Interaction Rooms
-
-Unidades de produto:
-
-```text
-Turn
-→ Task
-→ Case
-   └→ Interaction Room
-```
-
-- Task: objetivo delimitado multi-step;
-- Case: investigação/processo persistente;
-- Room: colaboração com pessoas, Copilot, mensagens, arquivos, evidências, decisões e ações.
-
-Task/Case persistem estado operacional e evidence, não raciocínio privado.
-
-Fonte: [`36-copilot-tasks-cases-and-interaction-rooms.md`](./36-copilot-tasks-cases-and-interaction-rooms.md).
-
-## 24. Inbox e trabalho proativo
-
-`Copilot Inbox` centraliza:
-
-- aguardando usuário;
-- workflows trabalhando;
-- resultados concluídos;
-- alertas.
-
-`Copilot Watch` acompanha condições/eventos e responde em três modos:
-
-```text
-OBSERVE
-ADVISE
-ACT
-```
-
-`ACT` continua condicionado a autonomia/policy/Decision Gates.
-
-Fonte: [`37-copilot-inbox-watch-and-proactive-work.md`](./37-copilot-inbox-watch-and-proactive-work.md).
-
-## 25. Evidence e Provenance
-
-Toda análise material deve distinguir:
-
-```text
-FACT
-CALCULATION
-HYPOTHESIS
-CONCLUSION
-RECOMMENDATION
-```
-
-E, quando aplicável, preservar:
-
-```text
-sourceRef
-entityRef
-observedAt
-freshness
-confidence
-limitations
-```
-
-Isso atravessa API results, documentos, multimodalidade, Cases e artifacts.
-
-Fonte: [`38-evidence-provenance-and-epistemic-ux.md`](./38-evidence-provenance-and-epistemic-ux.md).
-
-## 26. Decision Gates e Simulation
-
-Confirmação deixa de ser apenas booleano e pode ser:
+Modelo único de governança de decisão:
 
 ```text
 NO_GATE
@@ -541,41 +412,74 @@ APPROVAL_WORKFLOW
 BLOCK
 ```
 
-What-if/Simulation usa baseline + premissas + modelo/cálculo governado; simulação nunca implica write automático.
+Inputs podem incluir:
 
-Fonte: [`39-decision-gates-and-what-if-simulation.md`](./39-decision-gates-and-what-if-simulation.md).
+- risk/sensitivity;
+- impact;
+- arguments hash;
+- evidence refs;
+- autonomy;
+- approver requirements.
 
-## 27. Organizational Knowledge
-
-Separar explicitamente:
-
-```text
-Reference Knowledge
-Operational Knowledge
-Decision Knowledge
-Experience Knowledge
-Semantic Knowledge
-```
-
-Casos encerrados podem gerar Experience Records/Solution Patterns somente após processo de promoção governado.
-
-Fonte: [`40-organizational-knowledge-and-governed-learning.md`](./40-organizational-knowledge-and-governed-learning.md).
-
-## 28. Expertise Studio
-
-Superfície administrativa para versionar e publicar Expertise Packs/Playbooks com lifecycle:
+## 17. Durable Workflow
 
 ```text
-DRAFT → REVIEW → TESTING → APPROVED → PUBLISHED → DEPRECATED/RETIRED
+WorkflowPlan
+→ steps/dependencies
+→ execute canonical capabilities
+→ checkpoint
+→ wait_user / wait_approval / wait_event / wait_time
+→ resume/revalidate
+→ complete/fail/cancel
 ```
 
-Não é criador de agentes nem catálogo manual de endpoints.
+Não cria novo HTTP/tool stack.
 
-Fonte: [`41-expertise-studio-governance.md`](./41-expertise-studio-governance.md).
+## 18. Task / Case / Room / Inbox
 
-## 29. Model Router
+### Task
+Unidade de trabalho curta/média backed por workflow.
 
-Roteia internamente por requisitos de tarefa:
+### Case
+Investigação/trabalho prolongado com entity/evidence/task/workflow refs.
+
+### Room
+Colaboração humana + Copilot; preferir owner existente.
+
+### Inbox
+View/materialização sobre estados de Work/Decision/Watch; não novo engine.
+
+## 19. Watch/Event-driven
+
+```text
+EventEnvelope
+→ Watch condition
+→ dedupe/cooldown
+→ permission/policy revalidation
+→ OBSERVE | ADVISE | ACT
+```
+
+ACT exige autonomia explícita e Decision Gate quando aplicável.
+
+## 20. Organizational Knowledge e Learning
+
+Knowledge operacional evolui somente por ciclo governado:
+
+```text
+candidate
+→ review
+→ eval
+→ publish
+→ rollout
+```
+
+Case resolution pode gerar candidate Experience, nunca verdade automática.
+
+## 21. Model Router
+
+Centralizado e implementado somente após baseline.
+
+Classes conceituais:
 
 ```text
 FAST
@@ -585,55 +489,102 @@ MULTIMODAL
 LONG_CONTEXT
 ```
 
-A escolha de modelo/provider continua invisível como identidade de produto e sujeita a compute/security policy.
+Considera privacy, availability, quality, latency, cost e output contract.
 
-Fonte: [`42-model-router-and-compute-policy.md`](./42-model-router-and-compute-policy.md).
+## 22. Clean Architecture
 
-## 30. Durable Workflow Runtime
+### Domain
 
-Para tarefas de horas/dias:
+- refs/value objects puros;
+- policy rules puras;
+- state machine semantics;
+- sem DB/HTTP/LLM/framework.
+
+### Application
+
+- retrieve/compose/plan;
+- decision orchestration;
+- workflow/task/case use cases;
+- graph traversal use cases;
+- knowledge/evidence coordination.
+
+### Infrastructure
+
+- DB repositories;
+- vector/index;
+- OpenAPI importer/executor adapters;
+- LLM/embedding/model providers;
+- event adapters;
+- multimodal adapters;
+- persistence/queues.
+
+### Interfaces
+
+- REST/SSE/events;
+- Portal commands;
+- admin APIs.
+
+### Composition
+
+- DI/wiring.
+
+## 23. Scalability/generalization
+
+A arquitetura precisa permitir:
+
+- novo app sem planner patch;
+- novo OpenAPI provider sem endpoint selector;
+- novo Expertise Pack sem core patch;
+- novo Playbook sem novo agente;
+- novo entity/relationship type sem planner branch;
+- novo iframe compatível sem app-specific command no core;
+- novo model/provider via Compute Policy, não `if` espalhado.
+
+## 24. Migration do legado agents
 
 ```text
-execute
-→ checkpoint
-→ wait_user | wait_approval | wait_event | wait_time
-→ revalidate
-→ resume
+agent specialization → Expertise
+agent tool gate → capabilities + policy
+soft handoff → retrieval/replan/clarify
+project default agent → project preferences/context
+agent_id routing → temporary compatibility → removal
 ```
 
-Reutiliza os mesmos executors/policies e deve impedir duplicate writes após restart/retry.
+Compatibilidade possui exit criteria.
 
-Fonte: [`43-durable-workflow-runtime.md`](./43-durable-workflow-runtime.md).
+## 25. Anti-patterns proibidos
 
-## 31. Nova separação arquitetural
+- second planner/tool executor;
+- agent por departamento como produto final;
+- manual endpoint catalog;
+- path/opId semantic routing;
+- graph como réplica dos bancos;
+- evidence diferente por feature;
+- confirmation paralela ao Decision Gate;
+- Task engine paralelo ao Workflow runtime;
+- Watch polling hardcoded por app;
+- DOM automation para Business Action;
+- CoT persistence;
+- permission derivada de prompt/context/pack;
+- model routing espalhado por feature.
+
+## 26. Architecture success scenario
+
+> “Investigue esta reclamação, analise o desenho, relacione produção e fornecedor, monte um 8D, acompanhe a nova revisão e, quando ela chegar, reavalie e prepare as ações necessárias.”
+
+Um único runtime deve combinar:
 
 ```text
-Conversation Runtime
-→ entende/interage
-
-Planning Runtime
-→ monta plano operacional
-
-Capability/Execution Layer
-→ executa operações reais
-
-Durable Workflow Runtime
-→ mantém execução ao longo do tempo
-
-Business Graph
-→ contexto relacional
-
-Knowledge/Expertise/Playbooks
-→ contexto especializado
-
-Tasks/Cases/Rooms
-→ containers de produto/trabalho
-
-Evidence Layer
-→ confiança/provenance
-
-Policy/Decision Gates
-→ governança
+Context
++ Entity/Graph
++ Multimodal Evidence
++ Expertise/Playbook
++ Business Reads
++ Durable Workflow/Case
++ Watch/Inbox
++ Decision Gate
++ Business Write
++ Audit
 ```
 
-Nenhum desses componentes deve virar um segundo Copilot.
+sem trocar de agente e sem criar authorities paralelas.
