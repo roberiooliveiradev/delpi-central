@@ -1,128 +1,81 @@
 # Minha DELPI Copilot — Governança Documental e Revisão Arquitetural
 
-**Status:** canônico para leitura/precedência documental  
-**Revisão:** foundation-first + architecture-pattern freeze  
-**Ordem de execução:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Arquitetura/patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)
+**Status:** canônico para precedência documental  
+**Revisão:** foundation-first + standalone application boundary  
+**Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
 
 ## 1. Objetivo
 
-Evitar que a quantidade de documentos gere:
-
-- instruções duplicadas;
-- duas ordens de implementação;
-- requisitos com IDs concorrentes;
-- matrizes de teste paralelas;
-- arquitetura/design patterns inferidos de forma diferente por etapa;
-- abstrações concorrentes para o mesmo problema;
-- contexto excessivo no Cursor;
-- retrabalho/refatoração previsível.
+Evitar que a documentação gere ordens, owners, contracts, patterns ou product boundaries concorrentes.
 
 ## 2. Precedência
 
 Em caso de conflito:
 
 ```text
-1. instruções oficiais do projeto + regras .cursor aplicáveis
-2. 16-execution-master-plan.md              — ordem/dependências
-3. 17-component-and-contract-map.md         — ownership/primitives
-4. 49-architecture-and-design-patterns-standard.md — arquitetura de código/patterns
-5. 21-data-and-state-model.md               — estado/persistência
-6. 20-testing-and-acceptance-matrix.md       — gates/testes
-7. 25-requirements-traceability.md           — CP requirements
-8. 02-arquitetura.md                         — target técnico
-9. 24-product-specification.md               — target funcional
-10. specs temáticas da fase
-11. evidence/execution-ledger.md             — estado/evidence corrente
+1. instruções oficiais + .cursor rules
+2. 16 — ordem/dependências
+3. 50 — standalone product/runtime boundary
+4. 17 — ownership/primitives/contracts
+5. 49 — architecture/patterns
+6. 51 — factual platform integration baseline
+7. 52 — repository/bootstrap target
+8. 21 — state/persistence
+9. 20 — tests/gates
+10. 25 — CP requirements
+11. 02 — technical target
+12. 24 — product target
+13. thematic specs
+14. ledger — current execution/evidence
 ```
 
-O ledger não muda a arquitetura; registra o que está realmente executado e desbloqueado.
+O ledger registra estado; não redefine arquitetura.
 
-Uma spec temática não pode redefinir o style/pattern canônico de `49` sem decisão arquitetural explícita.
-
-## 3. Leitura mínima por execução
-
-Para reduzir tokens, o Cursor não precisa carregar todos os documentos em toda subetapa.
-
-### Sempre ler
-
-```text
-instruções oficiais
-regras .cursor aplicáveis
-README
-16 plano mestre
-17 ownership/contracts
-49 arquitetura/patterns — integral no C0; depois seções aplicáveis
-20 tests aplicáveis
-25 requirements aplicáveis
-evidence ledger
-```
-
-### Ler quando a etapa tocar estado/persistence
-
-```text
-21-data-and-state-model.md
-19-rollout-and-migrations.md
-```
-
-### Ler specs temáticas somente se no escopo
-
-Exemplos:
-
-- iframe → `26`;
-- expertise → `27–33`;
-- Business Graph → `35`;
-- Tasks/Cases/Rooms → `36`;
-- Inbox/Watch → `37`;
-- Evidence → `38`;
-- Decision/Simulation → `39`;
-- Knowledge/Learning → `40`;
-- Expertise Studio → `41`;
-- Model Router → `42`;
-- Durable Workflow → `43`.
-
-## 4. Classificação dos documentos
-
-### Authorities operacionais
+## 3. Authorities operacionais
 
 | Arquivo | Authority |
 |---|---|
-| `16` | ordem C0–C7 e substeps |
+| `16` | ordem C0–C7/substeps |
+| `50` | Copilot standalone boundary e relação com Chat |
 | `17` | owners/primitives/contracts |
-| `49` | architecture style, layers, dependency rules e design patterns |
-| `20` | testes/gates |
-| `21` | estado/persistência |
+| `49` | code architecture/design patterns |
+| `51` | baseline factual Portal/Core/APIs/MFEs/infra |
+| `52` | estrutura física/bootstrap standalone |
+| `20` | tests/gates |
+| `21` | state/persistence |
 | `23` | prompt mestre Cursor |
-| `25` | requisitos CP-* |
-| ledger | execução/evidence atual |
+| `25` | requirements CP-* |
+| ledger | execution/evidence current |
 
-### Authorities conceituais
+## 4. Authorities conceituais
 
 | Arquivo | Papel |
 |---|---|
+| `01` | visão de produto |
 | `02` | arquitetura alvo |
 | `12` | roadmap macro |
 | `13` | catálogo funcional |
-| `14` | Definition of Done |
-| `15` | integração com plataforma |
-| `24` | especificação completa do produto |
+| `14` | DoD |
+| `15` | integration map |
+| `19` | rollout/migrations |
+| `24` | product specification |
 
-### Specs temáticas
+## 5. Specs temáticas
 
 ```text
-03 capabilities
+03 capability model
 04 platform actions
 05 workspace context
 06 business parity
 07 workflows
-08 security
+08 security/autonomy
 09 UX
 10 AI-ready
-11 observability
-18 app matrix
-19 rollout
+11 observability/evals
+18 onboarding matrix
 26 iframe
-27–33 single Copilot/expertise/playbooks/multimodal/migration/reference
+27–30 single Copilot/expertise/playbooks/multimodal
+33 reference expertise pilots
 34 benchmark
 35 Business Graph
 36 Tasks/Cases/Rooms
@@ -133,182 +86,158 @@ Exemplos:
 41 Expertise Studio
 42 Model Router
 43 Durable Workflow
-44 operational detail map
 ```
 
-Specs detalham o tema; não redefinem a ordem do `16` nem o padrão arquitetural do `49`.
+Specs não podem redefinir `16/50/49`.
 
-### Superseded/reference only
+## 6. Superseded/reference only
 
 ```text
+31 agent-to-expertise migration of Chat
+32 expertise migration plan tied to old Chat runtime
+44 old operational track ordering
 45 operational testing extension
 46 operational requirements extension
 47 Cursor operational extension
 ```
 
-Seus conteúdos materiais foram consolidados respectivamente em `20`, `25`, `23`.
+Conteúdo conceitual útil pode permanecer como histórico, mas nenhuma dessas fontes desbloqueia trabalho nem torna o Chat dependência do Copilot.
 
-## 5. Findings da revisão foundation-first
+`31` e os trechos antigos de `32` sobre agents do Chat são explicitamente fora do novo product boundary.
 
-### F1 — múltiplas autoridades de ordem
+## 7. Reading minimization
 
-**Problema:** C0–C7, E0–E13 e O0–O13 podiam ser lidos como roadmaps independentes.
-
-**Correção:** `16` é a única authority. E*/O* são mapeamentos temáticos.
-
-### F2 — primitives introduzidos tarde
-
-**Problema:** Evidence, Decision Gate, Entity Relationship, Workflow/Task/Case e Event semantics apareciam após features consumidoras.
-
-**Risco:** refatoração de schemas, persistence e UI.
-
-**Correção:** semântica/owner/ports de todos os primitives compartilhados foram movidos para C0. Runtime continua na fase adequada.
-
-### F3 — confirmation e approval separados
-
-**Problema:** write confirmation inicial e approval/Decision Gate posterior poderiam criar dois modelos.
-
-**Correção:** um único `DecisionGate` compartilhado; UI simples de confirmação é uma apresentação desse modelo.
-
-### F4 — Evidence duplicável por feature
-
-**Problema:** multimodal, Graph, Workflow e Case poderiam criar evidence próprios.
-
-**Correção:** `SourceRef/EvidenceRef/OutcomeRef` transversais em C0.
-
-### F5 — Entity identity duplicável
-
-**Problema:** Workspace, Graph, Deep Link e Case poderiam usar IDs/types incompatíveis.
-
-**Correção:** `EntityRef` compartilhado + domain adapters; `RelationshipRef` para Graph.
-
-### F6 — Workflow, Task e Case como motores distintos
-
-**Problema:** risco de três orchestrators/persistences.
-
-**Correção:** Durable Workflow é runtime; Task/Case são unidades/organizações de trabalho sobre o mesmo runtime/refs.
-
-### F7 — Watch com event model próprio
-
-**Problema:** Watch e wait_event poderiam divergir.
-
-**Correção:** `EventEnvelope` compartilhado em C0.
-
-### F8 — agents como gate técnico
-
-**Problema:** operational tools e skills estavam acoplados a agent activation/handoff.
-
-**Correção:** single Copilot; expertise orienta; availability vem de capabilities + RBAC + policy. Cutover ocorre somente após gates.
-
-### F9 — Business Graph tarde demais
-
-**Problema:** Graph estava em C5, depois de análises cross-domain que poderiam inventar outra entity-linking abstraction.
-
-**Correção:** contracts de Entity/Relationship em C0 e runtime mínimo de Graph em C3 junto de reads.
-
-### F10 — Decision Gates tarde demais
-
-**Problema:** writes poderiam nascer com confirmation simples e migrar depois.
-
-**Correção:** contract C0; engine C4 antes do primeiro write production-ready.
-
-### F11 — Model Router cedo demais seria premature optimization
-
-**Decisão:** permanece C7 após métricas reais de qualidade/custo/latência/privacy.
-
-### F12 — Simulation sem owner de modelo
-
-**Decisão:** permanece C7 e somente por domínio com cálculo/modelo reproduzível.
-
-### F13 — design patterns e layering inferidos durante implementação
-
-**Problema:** mesmo com bons contratos, cada subetapa poderia escolher `Service`, `Repository`, `Factory`, `Strategy`, evento, state handling ou organização frontend de forma diferente.
-
-**Risco:** abstrações locais concorrentes, infra vazando para application/domain, overengineering, business state no frontend e refatorações estruturais posteriores.
-
-**Correção:** `49` tornou-se authority normativa e C0 deve congelar style, layers, dependency rules, pattern matrix, error/event/state/persistence/frontend/testing/migration rules e Abstraction Gate.
-
-### F14 — overengineering pela IA
-
-**Problema:** modelos tendem a criar interfaces/factories/strategies registries “para o futuro”.
-
-**Correção:** `Abstraction Gate` + Rule of Three para abstrações internas; boundary externo pode justificar Port desde a primeira implementação.
-
-### F15 — migração legada sem padrão uniforme
-
-**Problema:** agent migration e outras compatibilidades poderiam usar dual-read/fallbacks distintos.
-
-**Correção:** Anti-Corruption Layer + Adapter + Strangler Fig + exit criteria + residual search são o padrão de migração.
-
-## 6. Foundation invariants
-
-Após C0.S6:
+### Sempre
 
 ```text
-um conceito compartilhado → um contrato canônico
-um dado de negócio → um owner de domínio
-um action técnico → OpenAPI/Action Catalog
-uma permission → Core/RBAC/domain backend
-um workflow runtime → orchestration canônica
-um evidence model → EvidenceRef
-um entity reference model → EntityRef
-um decision model → DecisionGate
-um event envelope → EventEnvelope
-uma dependência externa → port/adapter quando boundary justificar
-um lifecycle complexo → state machine owner
-um wiring concreto → composition root/DI
-um estado durável de negócio → backend owner
-uma exceção arquitetural → decisão/ADR explícita
+official rules
+applicable .cursor rules
+README
+16
+50
+17
+49
+20 applicable section
+25 applicable CPs
+ledger
 ```
 
-Qualquer feature que precisar quebrar essas invariantes deve abrir mudança arquitetural/versionada, não criar um tipo/pattern local silenciosamente.
+### C0/C1 integration
 
-## 7. Token efficiency
+```text
+51
+52
+02
+19 when infra/deploy/migration is involved
+```
 
-Para minimizar contexto no Cursor:
+### State/persistence
 
-- executar uma subetapa por vez;
-- usar `16` para saber **o que** vem agora;
-- usar `17/21` para saber **quais foundations/state** reutilizar;
-- usar `49` para decidir **como estruturar a implementação**, lendo só as seções aplicáveis após C0;
-- usar somente a spec temática do step;
-- usar `20` apenas nas seções aplicáveis;
-- usar `25` apenas nos CP do step;
-- ledger carrega somente evidence/status necessário;
-- não reenviar o roadmap inteiro em todo prompt;
-- não pedir à IA para “escolher a melhor arquitetura” se o padrão já estiver congelado.
+```text
+21
+```
 
-## 8. Regra para documentos futuros
+### Feature implementation
 
-Novo documento precisa declarar no cabeçalho:
+Only thematic specs relevant to the current step.
+
+This prevents reading 50+ docs every iteration.
+
+## 8. Architecture review findings
+
+### F1 — Multiple execution authorities
+E*/O* tracks could be treated as roadmaps. `16` is now the only order authority.
+
+### F2 — Shared primitives introduced late
+Entity/Evidence/Decision/Workflow/Event semantics moved to C0.
+
+### F3 — Parallel confirmations/evidence/entities/events
+Unified into DecisionGate/EvidenceRef/EntityRef/EventEnvelope.
+
+### F4 — Task/Case/Workflow engine duplication
+Durable Workflow is runtime; Task/Case are product units over that runtime.
+
+### F5 — Graph master-data risk
+Graph stores refs/relations/provenance; Domain APIs remain data owners.
+
+### F6 — Architecture/patterns inferred per step
+`49` freezes layers/pattern matrix/Abstraction Gate before runtime features.
+
+### F7 — Overengineering by AI
+Interfaces/Strategy/Factory/Registry/etc. require evidence or external boundary justification.
+
+### F8 — Chat mistakenly treated as Copilot base
+**Superseded architecture:** Copilot was previously documented as evolution of `minha-delpi-ai-api`/`plugins/minha-delpi-chat`, with agent migration and Onda J dependency.
+
+**Current decision:** Copilot is a new standalone application with own API/MFE/persistence/deploy. Chat is only a neighboring/reference system.
+
+### F9 — External Chat gate blocked Copilot
+Removed. OpenAPI-first/Action Catalog/planner are built natively in the Copilot API.
+
+### F10 — Intelligence before application integration
+Corrected. C1 proves standalone API/MFE/Core/Gateway/Portal integration before C3 Intelligence Core.
+
+### F11 — Portal boundary could become blurred
+Portal is host/router/context/command executor only. AI logic belongs to Copilot API.
+
+### F12 — Shared infra versus product code
+Reuse is allowed for neutral platform components (`plugin-ui`, federation, Core, Gateway, Keycloak, approved shared libraries). Reusing Chat product internals is prohibited.
+
+## 9. Foundation invariants
+
+After C0.S7:
+
+```text
+one product runtime → Copilot API
+one product MFE → Copilot MFE
+one platform RBAC authority → Core
+one identity authority → Keycloak
+one navigation authority → Portal
+one business source → corresponding Domain API
+one action technical source → Domain OpenAPI
+one Copilot Action Catalog → derived inside Copilot
+one Evidence model → EvidenceRef
+one Entity ref model → EntityRef
+one Decision model → DecisionGate
+one Workflow runtime → Copilot durable orchestration
+one event envelope → EventEnvelope
+one concrete wiring boundary → Composition Root
+Chat runtime dependency → zero
+```
+
+## 10. Rule for future docs
+
+Every new doc declares:
 
 ```text
 Status: canonical authority | thematic spec | reference | superseded
 Order authority: 16-execution-master-plan.md
-Architecture authority: 49-architecture-and-design-patterns-standard.md quando houver runtime/code design
+Standalone boundary: 50 when runtime/product relevant
 ```
 
-Novo documento temático não pode:
+A thematic doc may not:
 
-- criar nova sequência de fases;
-- criar nova matriz CP;
-- criar nova matriz de testes;
-- criar outro prompt mestre do Cursor;
-- redefinir primitive compartilhado sem versionamento/ADR;
-- introduzir architectural style/pattern concorrente sem decisão explícita.
+- create another phase sequence;
+- create another CP matrix;
+- create another test matrix;
+- create another Cursor master prompt;
+- redefine shared primitive silently;
+- introduce Chat runtime dependency;
+- move AI logic into Portal;
+- create duplicate Core/domain authority.
 
-## 9. Estado após esta revisão
-
-A documentação está conceitualmente organizada para iniciar por:
+## 11. Current executable state
 
 ```text
-C0.S0 inventory + architecture pattern inventory
-→ C0.S1 authorities/bounded contexts
-→ C0.S2 shared primitives
-→ C0.S3 persistence/ports boundaries
-→ C0.S4 cross-cutting semantics + architecture/pattern freeze
-→ C0.S5 contract/conformance harness
-→ C0.S6 FOUNDATION_FREEZE
+C0.S0 platform/monorepo inventory
+→ C0.S1 standalone boundary/names
+→ C0.S2 authorities
+→ C0.S3 primitives
+→ C0.S4 architecture/persistence
+→ C0.S5 integration contracts
+→ C0.S6 RED harness
+→ C0.S7 FOUNDATION_FREEZE
+→ C1.S1 standalone API skeleton
 ```
 
-Nenhuma feature runtime deve ser iniciada antes desse gate.
+No runtime implementation before that sequence permits it.
