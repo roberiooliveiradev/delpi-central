@@ -4,7 +4,8 @@
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Boundary standalone:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
-**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
+**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
+**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)
 
 ## 1. Regra de evidence
 
@@ -20,6 +21,7 @@ OpenAPI/Action Catalog hashes
 provider/model/config hashes
 expertise/playbook hashes
 media/provider policy hashes
+biometric model/template policy version
 retention/consent policy version
 device/session class
 industrial safety boundary/version when applicable
@@ -48,6 +50,9 @@ Provar com paths/contracts reais:
 - shared-device/tablet/kiosk/room patterns quando existirem;
 - media/object storage existente;
 - privacy/retention/consent owners existentes;
+- corporate user/avatar/photo sources existentes;
+- biometric enrollment/storage/provider/liveness patterns existentes, se houver;
+- participant/presence sources;
 - OP/machine/operation/product context sources;
 - OT APIs/events/protocol boundaries existentes, sem assumir command authority;
 - Chat analisado apenas como reference-only.
@@ -62,7 +67,7 @@ Copilot target imports plugins/minha-delpi-chat source
 Copilot schema depends on Chat table/session/agent
 Copilot requires Chat API endpoint
 Copilot requires Chat container to start
-Copilot media pipeline calls Chat runtime as required dependency
+Copilot media/biometric pipeline calls Chat runtime as required dependency
 ```
 
 Todos devem resultar em `FAIL` arquitetural.
@@ -83,11 +88,12 @@ Positive/sibling/negative para:
 - TaskRef/CaseRef;
 - EventEnvelope;
 - IframeBridgeEnvelope;
-- `MediaRef` ou equivalente, **somente se C0 confirmar necessidade**.
+- `MediaRef` ou equivalente, **somente se C0 confirmar necessidade**;
+- biometric/person observation refs, **somente se C0 confirmar necessidade e sem duplicar Core user**.
 
-### Media/privacy/Frontline foundation
+### Media/privacy/Frontline/Biometric foundation
 
-Provar antes de runtime multimodal contínuo:
+Provar antes de runtime multimodal/biométrico contínuo:
 
 - capture mode classes;
 - media retention classes;
@@ -97,8 +103,15 @@ Provar antes de runtime multimodal contínuo:
 - operational context reuse de WorkspaceContext/EntityRef;
 - realtime budgets/backpressure direction;
 - industrial/OT boundary;
-- no hidden surveillance default;
-- no facial/emotion recognition introduced implicitly.
+- biometric enrollment lifecycle;
+- biometric template protection/retention/revocation;
+- unknown/low-confidence semantics;
+- correction flow;
+- liveness/anti-spoof criteria;
+- prohibited human inference classes;
+- no open-world/indiscriminate face recognition default;
+- no emotion/personality/character inference;
+- no automatic employment decision from biometrics/Human Observation.
 
 ### Architecture conformance
 
@@ -111,7 +124,7 @@ Provar antes de runtime multimodal contínuo:
 - Error/Result translation at boundaries;
 - retry/idempotency read/write semantics;
 - frontend server/workspace/conversation/local/durable state ownership;
-- media/provider integrations behind justified boundaries;
+- media/biometric provider integrations behind justified boundaries;
 - no speculative Strategy/Factory/Saga/CQRS/registry/base class;
 - ADR for material exception.
 
@@ -127,6 +140,8 @@ ARCHITECTURE_PATTERNS=PASS
 PERSISTENCE_BOUNDARIES=PASS
 INTEGRATION_CONTRACTS=PASS
 MEDIA_PRIVACY_BOUNDARIES=PASS
+BIOMETRIC_IDENTITY_BOUNDARY=PASS
+HUMAN_OBSERVATION_BOUNDARY=PASS
 SHARED_DEVICE_BOUNDARY=PASS
 OPERATIONAL_CONTEXT_BOUNDARY=PASS
 OT_SAFETY_BOUNDARY=PASS
@@ -159,7 +174,7 @@ DUPLICATE_FOUNDATION=0 material
 - getAccessToken host contract;
 - API error/401 handling;
 - responsive baseline;
-- media capability/permission state does not start capture automatically;
+- media/biometric capability state does not start capture or recognition automatically;
 - accessibility baseline compatible with future Frontline/Meeting surfaces.
 
 ### Manifest/Core/Gateway/Compose
@@ -201,6 +216,7 @@ INDEPENDENT_DEPLOY_ROLLBACK=PASS
 - app/route/entity/filter/date context changes;
 - operational EntityRefs: OP/machine/product/operation/lote/posto when source exists;
 - device/session metadata bounded and non-authoritative;
+- biometric candidate never becomes permission source;
 - stale context;
 - logout context clear;
 - user change on shared device clears prior local context;
@@ -215,7 +231,7 @@ INDEPENDENT_DEPLOY_ROLLBACK=PASS
 - no JWT/secret in bridge messages;
 - business write via DOM/visual command rejected.
 
-## 5. Gate C3 — Intelligence Core + Multimodal Foundations
+## 5. Gate C3 — Intelligence Core + Multimodal/Biometric Foundations
 
 ### Conversation/understanding
 
@@ -291,14 +307,49 @@ Quando camera/video entrar no candidate:
 - raw-video retention follows configured class;
 - visual finding does not become authoritative quality decision by default.
 
-### Media policy
+### Biometric identity
+
+Quando face/speaker recognition entrar no candidate:
+
+- enrolled-user positive;
+- non-enrolled negative;
+- look-alike negative;
+- wrong-speaker negative;
+- low-confidence result remains unknown;
+- multi-person meeting;
+- manual correction changes association without silently retraining enrollment;
+- revoked/deleted enrollment no longer matches;
+- biometric match cannot create authenticated session or permission grant;
+- template/embedding never appears in ordinary logs/API response;
+- provider receives only allowed biometric/media data;
+- model/template version changes are traceable;
+- photo/replay/deepfake/liveness tests quando a finalidade exigir anti-spoof;
+- false accept / false reject / unknown rate and confidence calibration tracked.
+
+### Human Observation
+
+Quando habilitado:
+
+- observable process event can be evidenced;
+- uncertain behavior remains hypothesis;
+- no personality inference;
+- no honesty/trustworthiness inference;
+- no emotion-as-truth inference;
+- no health/diagnostic inference;
+- no sensitive-attribute inference;
+- no hidden productivity/person score;
+- no automatic hiring/promotion/punishment/pay/performance/dismissal decision;
+- process-learning candidate requires evidence/review.
+
+### Media/biometric policy
 
 - transient capture without raw persistence;
 - configured retention class honored;
-- delete/anonymize path where required;
+- biometric template lifecycle separated from raw media;
+- delete/anonymize/revoke path where required;
 - provider/data policy filtering;
-- session stop actually stops capture;
-- F5/reconnect never restarts camera/mic silently.
+- session stop actually stops capture/recognition;
+- F5/reconnect never restarts camera/mic/recognition silently.
 
 ## 6. Gate C4 — Business Reads + Business Graph
 
@@ -325,7 +376,8 @@ Quando camera/video entrar no candidate:
 - sibling entity/relation without planner patch;
 - traversal returns refs then fetches owner data;
 - no master dataset replication;
-- media/meeting/frontline evidence links to EntityRefs without copying source master data.
+- media/meeting/frontline evidence links to EntityRefs without copying source master data;
+- person/user refs point to Core identity authority, not biometric shadow profiles.
 
 ### Operational context correlation
 
@@ -335,7 +387,7 @@ Quando sources existirem:
 - machine → maintenance/history;
 - operation → procedure/instruction;
 - lot/material → supplier/quality;
-- user without permission does not gain data because device/machine context exists.
+- user without permission does not gain data because device/machine/biometric context exists.
 
 ## 7. Gate C5 — Governed Writes + Durable Foundation
 
@@ -360,7 +412,8 @@ Quando sources existirem:
 - outcome verification;
 - no blind retry;
 - repeated voice utterance/event does not duplicate write;
-- meeting action candidate is not write until governed transition.
+- meeting action candidate is not write until governed transition;
+- biometric recognition never bypasses revalidation.
 
 ### Workflow foundation
 
@@ -421,16 +474,18 @@ Quando sources existirem:
 Quando C6 Meeting scope for candidate:
 
 - explicit start/stop;
-- visible mic/transcript/camera/screen/raw-record indicators;
-- capture cannot start hidden;
+- visible mic/transcript/camera/identity-recognition/screen/raw-record indicators;
+- capture/recognition cannot start hidden;
 - participant/session context correct;
+- enrolled face/speaker association is confidence-based and correctable;
+- non-enrolled/ambiguous participant remains session label/unknown;
 - live query uses user permissions;
 - meeting transcript != summary != confirmed decision;
 - generated ata cites/refers to sources when material;
 - candidate action requires review/Decision Gate before write;
 - resume/next meeting can load authorized pending actions;
 - revoked participant/source access is respected;
-- raw audio/video retention follows policy;
+- raw audio/video/biometric retention follows policy;
 - meeting works without Chat runtime.
 
 ### Frontline Mode
@@ -439,10 +494,13 @@ Quando C6 Frontline scope for candidate:
 
 - shared terminal login/user switch;
 - prior-user local context/data does not leak;
+- biometric identity assistance is optional/policy-bound;
+- ambiguous biometric result falls back to explicit login/confirmation;
 - OP/machine/product/operation context resolves from canonical EntityRefs;
 - hands-free command fallback to touch/text;
 - noisy speech does not trigger unsafe action;
 - camera finding exposes confidence/limitations;
+- Human Observation remains process-grounded, not psychological scoring;
 - training step links to current revision/procedure source;
 - unavailable source/provider yields safe degraded guidance;
 - register issue/escalate uses governed Business Action;
@@ -455,8 +513,9 @@ Quando C6 Frontline scope for candidate:
 - candidate has provenance/Evidence/context;
 - expert/owner review required;
 - feedback/meeting/operator statement does not change production behavior automatically;
+- no secret worker profile;
 - no hidden individual productivity scoring;
-- PII/media handling;
+- PII/biometric/media handling;
 - draft/test/publish/rollback;
 - admin RBAC;
 - no technical endpoint catalog inside expertise/playbook.
@@ -496,19 +555,20 @@ Quando C6 Frontline scope for candidate:
 - latency/cost thresholds;
 - structured output validity;
 - provider names isolated from domain/application;
-- realtime/media provider filtering by data policy.
+- realtime/media/biometric provider filtering by data policy.
 
-### Advanced realtime/media
+### Advanced realtime/media/biometric
 
 Quando candidate:
 
 - session duration/budget limits;
 - concurrent session limits;
 - frame sampling/bitrate bounds;
+- biometric matching throughput does not reduce threshold/security;
 - backpressure/network loss;
 - graceful degraded/async fallback;
 - realtime provider unavailable;
-- capture stop/kill switch;
+- capture/recognition stop/kill switch;
 - cost telemetry;
 - edge processing only with defined data boundary.
 
@@ -532,7 +592,7 @@ Se future OT actuation for explicitamente aprovada, exigir test matrix separada 
 - rollback;
 - accessibility;
 - incident metrics;
-- media/privacy incident controls;
+- media/privacy/biometric incident controls;
 - final independence test with Chat offline.
 
 ## 10. Injection/safety transversal
@@ -546,6 +606,8 @@ tool/API result
 RAG source
 WorkspaceContext
 device/session metadata
+biometric identity candidate
+Human Observation result
 iframe message
 Expertise/Playbook content
 PDF/image
@@ -573,7 +635,7 @@ iframe contextual entry when supported
 admin preview/simulation
 ```
 
-UX/transport podem variar; RBAC/policy/Decision/Evidence semantics não.
+UX/transport podem variar; RBAC/policy/Decision/Evidence/biometric-non-authority semantics não.
 
 ## 12. Anchor scenarios finais
 
@@ -602,6 +664,7 @@ reclamação
 ```text
 reunião produção
 → explicit capture/transcript
+→ enrolled participant association when enabled
 → pergunta sobre linha/máquina
 → authorized APIs/Graph
 → grounded answer
@@ -615,11 +678,13 @@ reunião produção
 ### Frontline
 
 ```text
-operador + OP + máquina + operação
+operador + optional biometric identity assistance
+→ authenticated session + OP + máquina + operação
 → voice/camera question
 → drawing/procedure + history reads
 → Evidence/Hypothesis
 → guided response
+→ process observation candidate
 → issue/escalation candidate
 → governed action
 → Task/Case/Knowledge candidate
@@ -650,7 +715,14 @@ UNDEFINED_MEDIA_RETENTION
 SHARED_DEVICE_STATE_LEAK
 VOICE_PERMISSION_BYPASS
 VISUAL_FINDING_AS_UNVALIDATED_FACT
-HIDDEN_WORKER_SURVEILLANCE
+BIOMETRIC_PERMISSION_ELEVATION
+LOW_CONFIDENCE_FORCED_IDENTITY
+REVOKED_BIOMETRIC_STILL_ACTIVE
+BIOMETRIC_TEMPLATE_LEAK
+OPEN_WORLD_FACE_RECOGNITION_WITHOUT_EXPLICIT_SCOPE
+EMOTION_PERSONALITY_CHARACTER_INFERENCE
+AUTOMATIC_EMPLOYMENT_DECISION_FROM_BIOMETRICS
+HIDDEN_WORKER_PROFILING
 ARBITRARY_LLM_OT_COMMAND
 SAFETY_INTERLOCK_BYPASS
 required test FAIL/INCONCLUSIVE/NOT_RUN
