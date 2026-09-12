@@ -1,61 +1,73 @@
 # Minha DELPI Copilot — Padrão Normativo de Arquitetura e Design Patterns
 
-**Status:** `CANONICAL_AUTHORITY` para arquitetura de código e escolha de patterns  
+**Status:** `CANONICAL_AUTHORITY` para arquitetura de código/patterns  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Ownership/contracts:** [`17-component-and-contract-map.md`](./17-component-and-contract-map.md)  
-**State/persistence:** [`21-data-and-state-model.md`](./21-data-and-state-model.md)  
-**Regra:** nenhuma subetapa de runtime pode inferir livremente arquitetura/pattern quando este documento já define o padrão aplicável.
+**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
+**State:** [`21-data-and-state-model.md`](./21-data-and-state-model.md)
 
 ## 1. Objetivo
 
-Reduzir variabilidade arquitetural, refatoração previsível e consumo de tokens durante a implementação do Minha DELPI Copilot.
-
-O Cursor/IA deve primeiro **classificar o problema**, depois aplicar o pattern definido aqui e somente então implementar.
+Fazer o Cursor classificar o problema e aplicar um padrão já definido, em vez de inventar arquitetura por feature e refatorar depois.
 
 ```text
-NÃO
-problema
-→ IA inventa arquitetura local
-→ implementa
-→ descobre inconsistência
-→ refatora
-
-SIM
-problema
-→ classifica responsabilidade/boundary
-→ consulta pattern canônico
-→ reutiliza foundation/owner
-→ implementa
-→ testa contrato
+problem
+→ owner/boundary
+→ layer
+→ canonical pattern
+→ Abstraction Gate
+→ implement
+→ contract/conformance tests
 ```
 
-Este documento não substitui as instruções oficiais nem as regras `.cursor`. Ele especializa essas regras para o Copilot.
+## 2. Product boundary primeiro
 
-## 2. Arquitetura base obrigatória
+Patterns nunca podem violar o boundary standalone.
 
-O Copilot adota:
+```text
+Copilot code belongs to:
+- minha-delpi-copilot-api
+- plugins/minha-delpi-copilot
+
+Platform shared owners:
+- Portal
+- Core API
+- Keycloak
+- Gateway
+- plugin-ui
+- federation shared config
+- Domain APIs
+- approved neutral shared packages
+```
+
+`minha-delpi-ai-api` e `plugins/minha-delpi-chat` **não são shared libraries**.
+
+Copiar/importar internals do Chat não é reuse; é product coupling e deve falhar.
+
+## 3. Architecture style
+
+Obrigatório:
 
 ```text
 Clean Architecture
 +
-Hexagonal Architecture / Ports & Adapters
+Ports & Adapters / Hexagonal
 +
-DDD pragmático
+Pragmatic DDD
 +
-Event-Driven Architecture somente onde houver eventos reais
+Event-Driven only for real events
 +
-State Machines para lifecycles não triviais
+State Machines for nontrivial lifecycle
 +
-CQRS leve somente quando command/read possuírem necessidades materialmente diferentes
+Light CQRS only when read/write asymmetry is material
 ```
 
-### 2.1 Princípio de simplicidade
+Princípio:
 
-> Usar o menor pattern que preserve ownership, testabilidade, segurança, generalização e evolução.
+> use o menor pattern que preserve ownership, testabilidade, segurança, generalização e evolução.
 
-Não aplicar DDD cerimonial, CQRS total, Event Sourcing, Saga, Factory, Strategy ou abstração genérica apenas porque o pattern existe.
+Sem DDD cerimonial, CQRS total, Event Sourcing, Saga/Factory/Strategy “por moda”.
 
-## 3. Regra de dependência
+## 4. Dependency rule
 
 ```text
 Domain
@@ -66,121 +78,82 @@ Interfaces / Adapters
 ↑
 Infrastructure
 
-Composition Root conecta tudo.
+Composition Root wires concrete implementations.
 ```
 
-Dependências de código devem apontar para dentro.
-
-O domínio/application não pode depender de:
+Domain/Application não importam:
 
 - Flask;
-- React;
-- SQLAlchemy model;
+- SQLAlchemy;
 - PostgreSQL driver;
-- requests/httpx client concreto;
-- provider de LLM concreto;
-- vector database concreto;
+- HTTP client concreto;
+- LLM/provider SDK concreto;
+- vector DB concreto;
 - event broker concreto;
-- implementation-specific SDK externo.
+- Chat modules;
+- Portal React source.
 
-Infraestrutura implementa ports definidos pelas camadas internas.
+## 5. Backend layers
 
-## 4. Backend — responsabilidades por camada
-
-### 4.1 `domain`
+### Domain
 
 Pode conter:
 
-- Entities/Aggregates quando existir identidade/lifecycle próprio;
+- Entity/Aggregate quando há identity/lifecycle próprio;
 - Value Objects;
-- enums de domínio;
-- invariantes puras;
-- Domain Policies puras;
-- Specifications puras quando realmente combináveis;
-- Domain Events quando representarem fato do domínio;
-- ports somente quando a abstração pertence semanticamente ao domínio.
+- invariants;
+- pure Domain Policies;
+- Specification when genuinely combinable;
+- Domain Events as domain facts.
 
-Não pode:
+Não acessa DB/HTTP/LLM/env/framework.
 
-- acessar banco;
-- chamar HTTP;
-- chamar LLM;
-- importar Flask/SQLAlchemy;
-- ler variável de ambiente;
-- publicar evento em broker;
-- serializar DTO de transporte.
+### Application
 
-### 4.2 `application`
-
-Owner de orchestration/use cases.
-
-Pode conter:
-
-- Use Cases / Application Services;
-- Commands/Queries de aplicação;
-- ports de repositories/gateways/external capabilities;
-- orchestrators;
-- transaction boundaries abstratas;
-- policy invocation;
+- Use Cases/Application Services;
+- orchestration;
+- ports;
+- Commands/Queries;
 - state transition use cases;
-- mapping entre domain/result refs quando necessário.
+- policy invocation;
+- transaction boundary abstractions.
 
-Não deve conter:
+Sem SQL, URLs, provider names or transport concerns.
 
-- SQL;
-- URL/path/provider hardcoded;
-- regra React/UI;
-- client concreto;
-- detalhes de framework.
-
-### 4.3 `interfaces` / transport adapters
-
-Pode conter:
+### Interfaces
 
 - Flask controllers/routes;
 - request/response DTOs;
-- schemas de transporte;
-- event consumers/producers de borda;
-- mappers de transport ↔ application;
-- validation de shape/boundary.
+- event/stream transport boundaries;
+- schema validation;
+- transport mappers.
 
-Não deve conter regra de negócio.
+### Infrastructure
 
-### 4.4 `infrastructure`
+- SQLAlchemy/PostgreSQL adapters;
+- Core/Domain HTTP adapters;
+- OpenAPI importer/executor;
+- LLM/embedding adapters;
+- RAG/vector adapters;
+- OCR/Vision adapters;
+- event broker/outbox;
+- file/object storage;
+- telemetry/cache/materializers.
 
-Pode conter:
+### Composition Root
 
-- SQLAlchemy/PostgreSQL repositories;
-- HTTP adapters;
-- OpenAPI adapters;
-- LLM/model adapters;
-- vector/RAG adapters;
-- object/file storage adapters;
-- OCR/vision adapters;
-- event broker/outbox implementations;
-- telemetry adapters;
-- caches/materializers.
-
-Infrastructure não redefine policy/semântica do domínio.
-
-### 4.5 `composition root`
-
-Único local normal para wiring concreto:
+Normal place for:
 
 ```text
 config
-→ create adapters
-→ create repositories
-→ create policies
-→ create use cases
+→ create adapters/repositories
+→ create policies/use cases
 → register controllers/handlers
 ```
 
-Proibido instanciar infraestrutura escondida dentro de domain/application services.
+## 6. Frontend architecture
 
-## 5. Frontend — arquitetura obrigatória
-
-Respeitar a Clean Architecture oficial do projeto:
+Base:
 
 ```text
 ui
@@ -188,233 +161,165 @@ state
 data
 ```
 
-Preferir organização por feature **dentro dessas responsabilidades** quando reduzir acoplamento.
+Copilot MFE may organize feature folders inside those responsibilities.
 
-Exemplo conceitual:
+### UI
+Rendering/accessibility/user events/presentation only.
 
-```text
-copilot/
-  ui/
-    components/
-    pages/
-  state/
-    hooks/
-    reducers-or-store/
-  data/
-    api/
-    adapters/
-    contracts/
-```
+### State
+Local/conversation/workspace UI state. No durable business authority.
 
-### 5.1 `ui`
+### Data
+Typed Copilot API clients, adapters, cache/query integration, contracts.
 
-- rendering;
-- composição visual;
-- events de usuário;
-- acessibilidade;
-- presentation-only transformations.
-
-Não executa regra de negócio server-side nem decide permission.
-
-### 5.2 `state`
-
-- estado local e transversal de UX;
-- hooks reutilizáveis;
-- reducers/state machines de UI quando lifecycle justificar;
-- Portal Workspace Context conforme owner definido.
-
-### 5.3 `data`
-
-- clients/adapters tipados;
-- serialização;
-- cache/query integration existente;
-- contract mapping.
-
-Não criar regra de negócio duplicada para “facilitar a tela”.
-
-## 6. Regra de ownership do estado frontend
+State ownership:
 
 ```text
-Server State          → query/cache layer existente
-Workspace State       → Portal Workspace Context owner
-Conversation State    → chat/copilot state
+Server State          → query/cache layer
+Workspace State       → Portal/Copilot context adapter
+Conversation UI State → MFE + server refs
 Local UI State        → component/hook
-Durable Business State→ backend canônico
+Durable Work State    → Copilot API
 ```
 
-Case, Workflow, Decision Gate, Watch ou Business Graph não podem ter React como authority.
+## 7. Shared-code gate
 
-## 7. Pattern Decision Matrix
+Before extracting/reusing code across products:
 
-| Problema | Pattern padrão | Condição/limite |
+```text
+1. Is the contract product-neutral?
+2. Are there 2+ real consumers?
+3. Is there a neutral owner/location?
+4. Can it version/test independently?
+5. Does reuse avoid importing Chat product internals?
+```
+
+If not, implement inside Copilot.
+
+Do not transform Chat into a library.
+
+## 8. Pattern Decision Matrix
+
+| Problema | Pattern padrão | Limite |
 |---|---|---|
-| dependência externa | Port + Adapter | default para boundary externo |
-| operação de aplicação | Use Case / Application Service | uma intenção operacional clara |
-| persistência de aggregate/estado próprio | Repository | não usar para simples proxy HTTP |
-| lifecycle complexo | State Machine | transições explícitas/invariantes |
-| regras determinísticas combináveis | Policy / Specification | quando combinação/reuso justificar |
-| escolha entre algoritmos reais | Strategy | não criar se existe só uma implementação sem variação provável |
-| integração legada/shape incompatível | Adapter + Anti-Corruption Layer | preservar novo modelo limpo |
-| migração gradual de legado | Strangler Fig | adapter temporário + exit criteria |
-| comando visual/plataforma | Command + Handler | registry genérico; sem handler por app |
-| evento confiável junto de transação DB | Transactional Outbox | quando atomicidade state+event for requisito |
-| write reexecutável/retry/resume | Idempotency Pattern | preferir suporte nativo do domínio |
-| comunicação assíncrona | Event-Driven | somente com evento owner/contrato real |
-| transação distribuída com compensações | Saga | somente quando houver compensações de domínio reais |
-| integração instável | Timeout + Retry Policy + Circuit Breaker quando aplicável | write nunca recebe retry cego |
-| boundary HTTP/event | DTO + Mapper | não expor ORM model como contrato |
-| wiring concreto | Dependency Injection via Composition Root | DI simples, sem framework mágico obrigatório |
-| criação dependente de configuração | Factory | só quando criação realmente varia |
-| criação complexa com invariantes | Builder/Factory Method | somente quando constructor simples não basta |
-| leitura e escrita com modelos muito distintos | CQRS leve | sem duplicar domínio por padrão |
+| external dependency | Port + Adapter | default at external boundary |
+| application operation | Use Case / Application Service | one operational intent |
+| owned persistent aggregate/state | Repository | not for simple HTTP proxy |
+| complex lifecycle | State Machine | explicit transitions/invariants |
+| deterministic decision rules | Policy | structured input/output |
+| combinable reusable predicates | Specification | only when composition helps |
+| real interchangeable algorithms | Strategy | only with actual variation |
+| incompatible external/legacy shape | Adapter + Anti-Corruption Layer | protect canonical model |
+| gradual replacement of a real legacy integration | Strangler Fig | temporary + exit criteria |
+| visual/platform command | Command + Handler | generic by command type |
+| state + event atomicity | Transactional Outbox | only when required |
+| retry/replayable write | Idempotency | prefer domain-native support |
+| asynchronous reaction | Event-Driven | real event owner/schema required |
+| distributed transaction with compensation | Saga | real writes + real compensation |
+| unstable external integration | Timeout/Retry/Circuit Breaker | writes never blind-retry |
+| HTTP/event boundary | DTO + Mapper | no ORM contract leakage |
+| concrete wiring | Composition Root DI | simple composition |
+| config-dependent construction | Factory | only when construction varies |
+| complex invariant-heavy creation | Builder/Factory Method | simple constructor first |
+| materially different read/write models | light CQRS | no default duplication |
 
-## 8. Use Case / Application Service
-
-Default para ação da aplicação:
+## 9. Use Case Pattern
 
 ```text
 Controller/Event Handler
 → Use Case
-→ Domain/Policies
-→ Ports
-→ Adapters
+→ Domain/Policy
+→ Port
+→ Adapter
 ```
 
-Exemplos possíveis, sujeitos ao inventário real:
+Examples:
 
-- `CreateCopilotTask`;
-- `ResumeWorkflow`;
-- `TraverseBusinessGraph`;
-- `EvaluateDecisionGate`;
-- `PublishExpertisePack`;
-- `CreateWatch`.
+- ResolveWorkspaceContext;
+- ImportOpenApiProvider;
+- RetrieveCapabilities;
+- TraverseBusinessGraph;
+- EvaluateDecisionGate;
+- ExecuteBusinessAction;
+- ResumeWorkflow;
+- CreateCopilotCase;
+- CreateWatch.
 
-Não criar um `CopilotService` monolítico com responsabilidades heterogêneas.
+Avoid one monolithic `CopilotService`.
 
-## 9. Ports & Adapters
+## 10. Ports & Adapters
 
-Aplicar especialmente em:
+Especially for:
 
 ```text
-LLM/provider
-OpenAPI/actions
-Business Graph
-Knowledge/RAG
-Vector store
-Database
-Event bus
-Notifications
-File/object storage
-Multimodal/OCR/Vision
+Core API
 Domain APIs
+OpenAPI
+LLM/providers
+Knowledge/vector store
+Database
+Event transport
+Notifications
+Storage
+OCR/Vision
+Business Graph source adapters
 ```
 
-Exemplo:
+## 11. Repository Pattern
 
-```text
-Application
-   ↓
-BusinessGraphPort
-   ↑
-APITraversalAdapter | MaterializedGraphAdapter
-```
+Use only for Copilot-owned lifecycle/persistent authority, e.g. when proven:
 
-O nome final deve seguir convenções reais do repositório encontradas em C0.S0.
-
-## 10. Repository Pattern
-
-Usar para estado/aggregate cujo lifecycle pertence ao Copilot/plataforma.
-
-Candidatos conceituais:
-
-- Expertise/Playbook quando authority persistida for comprovada;
+- Conversation;
+- Expertise/Playbook catalogs;
 - Workflow;
 - Task/Case;
 - Watch;
-- materialização do Graph quando comprovada.
+- Graph relationship materialization.
 
-Não criar repository no Copilot para cada recurso que já possui domain API owner.
-
-```text
-ERRADO
-PurchaseOrderRepository no Copilot apenas para chamar purchase-api
-
-CORRETO
-Business Action/API Adapter → domain API owner
-```
-
-## 11. Adapter e Anti-Corruption Layer
-
-### 11.1 Iframe/MFE/external systems
-
-- `IframeBridgeAdapter`;
-- Workspace Context adapters;
-- OpenAPI adapters;
-- provider adapters.
-
-### 11.2 Migração de agents
-
-O novo domínio não deve carregar `agent_id`, `chat_mode` ou soft handoff como conceitos centrais.
+Wrong:
 
 ```text
-Legacy Agent Model
-→ Anti-Corruption Layer / Migration Adapter
-→ Expertise / Project Context / Capability Policy
+PurchaseOrderRepository that merely calls purchase API
 ```
 
-A ACL é temporária e precisa de exit criteria.
-
-## 12. Strangler Fig para migração
-
-Migrações relevantes do legado devem preferir:
+Correct:
 
 ```text
-legacy runtime
-→ compatibility adapter
-→ new canonical behavior
-→ telemetry/evals
-→ canary
-→ cutover
-→ residual search
-→ remove legacy
+DomainApiAdapter / generic Business Action executor
 ```
 
-Não fazer big-bang sem necessidade.
+## 12. Adapter / Anti-Corruption Layer
 
-Não manter dual-read/dual-write indefinidamente.
+Use for:
 
-## 13. State Machine Pattern
+- Core contract → Copilot canonical context;
+- MFE/Portal host contract;
+- iframe messages;
+- Domain API/provider variations;
+- existing room/notification infrastructure;
+- any actual legacy system that exposes incompatible shape.
 
-Obrigatório quando status possui transições válidas, waits, expiry, reabertura ou invariantes.
+**Not used to migrate the Minha DELPI Chat into Copilot.** Chat is separate product, not a legacy implementation being strangled by this roadmap.
 
-### Workflow
+## 13. State Machine
+
+Required for lifecycle with transition rules/waits/expiry/reopen.
+
+Examples:
 
 ```text
-PLANNED
-→ RUNNING
-→ WAITING_USER | WAITING_EVENT | WAITING_APPROVAL | WAITING_TIME
-→ RUNNING
-→ SUCCEEDED | PARTIALLY_SUCCEEDED | FAILED | CANCELLED | EXPIRED
+Workflow: PLANNED → RUNNING → WAITING_* → RUNNING → terminal
+Decision: REQUESTED → PENDING → APPROVED|REJECTED|EXPIRED|INVALIDATED
+Case: OPEN → INVESTIGATING/WAITING/ACTIONING → RESOLVED/CLOSED/REOPENED
+Expertise content: DRAFT → REVIEW → TESTING → PUBLISHED → DEPRECATED
+Watch: ACTIVE → TRIGGERED/COOLDOWN → ACTIVE | EXPIRED | DISABLED
 ```
 
-### Decision Gate
+Do not scatter lifecycle rules across `if status` branches.
 
-```text
-PENDING
-→ APPROVED | REJECTED | EXPIRED | INVALIDATED
-```
+## 14. Policy / Specification
 
-### Case/Task/Expertise lifecycle
-
-Usar o lifecycle canônico definido em C0 e specs correspondentes; não criar `if status == ...` disperso como regra de transição.
-
-Transição deve ocorrer em owner/use case explícito.
-
-## 14. Policy e Specification
-
-### Policy Object
-
-Preferir para decisão determinística:
+Policies:
 
 ```text
 DecisionGatePolicy
@@ -425,146 +330,97 @@ CapabilityAvailabilityPolicy
 ComputePolicy
 ```
 
-Forma:
+Form:
 
 ```text
-structured input
-→ structured decision
+structured input → structured decision
 ```
 
-Policy não é prompt livre.
-
-### Specification
-
-Usar quando regras combináveis/reutilizáveis justificarem:
-
-```text
-UserHasPermission
-AND CapabilityAvailable
-AND ContextValid
-```
-
-Não criar uma classe Specification por condição trivial.
+Policy is not a free-form prompt.
 
 ## 15. Command + Handler
 
-Adequado para Platform Actions e comandos tipados.
+Platform actions:
 
 ```text
 PlatformCommand
-→ Generic Handler Registry
-→ handler por tipo de comando
+→ validator/authorized target resolver
+→ generic handler registry
+→ handler by command type
 ```
 
-Permitido:
+Allowed:
+- OpenAppCommandHandler;
+- OpenRouteCommandHandler;
+- SetViewCommandHandler.
 
-- `OpenAppCommandHandler`;
-- `OpenRouteCommandHandler`;
-- `SetViewCommandHandler`.
+Forbidden:
+- OpenCommercialPortalHandler;
+- handler per app/customer/provider.
 
-Proibido no core genérico:
+## 16. Event-Driven
 
-- `OpenCommercialPortalHandler`;
-- `OpenSuppliesPortalHandler`;
-- handlers por app/cliente/provider.
+Use when reacting asynchronously to a fact.
 
-## 16. Event-Driven Architecture
-
-Eventos são usados quando há desacoplamento temporal ou reação a fato ocorrido.
-
-Não transformar chamada síncrona simples em evento sem motivo.
-
-### Domain Event
-
-Fato interno do bounded context.
-
-### Integration Event
-
-Contrato versionado publicado para outros contexts.
+Distinguish:
 
 ```text
-Domain fact
-→ Integration Event adapter/outbox quando necessário
-→ EventEnvelope canônico
+Domain Event
+Integration Event
+EventEnvelope used by Copilot boundary
 ```
 
-Watch e `wait_event` consomem o mesmo envelope/event semantics congelado em C0.
+Do not convert simple synchronous call into event without reason.
+
+Watch/wait_event share the canonical event semantics.
 
 ## 17. Transactional Outbox
 
-Usar quando for requisito garantir:
+Use only when we need atomic:
 
 ```text
-state persisted
-E
-integration event eventually published
+state persisted + integration event eventually published
 ```
 
-Fluxo:
-
-```text
-DB transaction
-├─ state change
-└─ outbox record
-commit
-→ publisher/worker
-→ broker
-```
-
-Não introduzir Outbox se o owner atual já garante atomicidade por mecanismo equivalente.
+If platform owner already guarantees equivalent semantics, use its contract.
 
 ## 18. Idempotency
 
-Obrigatório para writes sujeitos a retry/replay/resume quando o domínio suportar ou a plataforma precisar coordenar segurança.
+Preference:
 
-Preferência:
+1. Domain API native idempotency;
+2. domain use-case key;
+3. Copilot orchestration guard only when necessary.
 
-1. contrato idempotente nativo da domain API;
-2. use case do domínio com idempotency key;
-3. orchestration guard somente quando necessário e explicitamente limitado.
+Write timeout ambiguity requires outcome verification before retry.
 
-Nunca assumir `POST`, `PUT`, `PATCH` ou `DELETE` seguros para retry apenas pelo método HTTP.
+## 19. Saga
 
-## 19. Saga Pattern
+Only when:
 
-Usar somente quando:
+- multiple writes across systems;
+- process consistency matters;
+- real compensation operations exist.
 
-- existem múltiplos writes em sistemas distintos;
-- há necessidade real de consistência processual;
-- cada compensação possui operação real e semântica de domínio.
+Never for read-only analysis or because “workflow is multi-step”.
 
-Não usar Saga para reads, análise ou workflow simples.
+## 20. Resilience
 
-Não inventar rollback universal.
-
-## 20. Resilience Patterns
-
-Toda integração externa deve definir conforme risco:
+Every external adapter defines as appropriate:
 
 ```text
 timeout
-retry eligibility
-backoff
-circuit breaker quando útil
-bulkhead/concurrency limit quando necessário
+retry eligibility/backoff
+circuit breaker
+bulkhead/concurrency limit
 ambiguous outcome handling
 ```
 
-### Reads
+Read retry != write retry.
 
-Podem usar retry controlado quando seguro.
+## 21. Result/Error model
 
-### Writes
-
-Retry somente com idempotência/verification adequados.
-
-Timeout ambíguo após write exige verificar outcome antes de nova tentativa.
-
-## 21. Result / Error Model
-
-Application layer deve trabalhar com taxonomia estável de outcomes/errors, reaproveitando o padrão real do repo quando existir.
-
-Semântica mínima:
+Canonical semantics should cover:
 
 ```text
 Validation
@@ -580,77 +436,55 @@ BusinessRuleViolation
 Internal
 ```
 
-Infra exception não deve vazar diretamente para UI/LLM.
-
-Não criar uma taxonomia diferente por feature.
+Infra exceptions do not leak directly to MFE/LLM.
 
 ## 22. DTO + Mapper
 
-Não expor ORM entity/model diretamente como contrato externo.
+Do not expose persistence ORM models as public transport contracts.
 
 ```text
 Transport DTO
-↕ mapper
-Application/Domain Model
-↕ repository mapper quando necessário
-Persistence Model
+↕
+Application/Domain model
+↕ when needed
+Persistence model
 ```
 
-Evitar mappers artificiais quando shapes são realmente idênticos e não há boundary semântico, mas preservar separação de ownership.
+Avoid ceremonial mapping when no semantic boundary exists.
 
 ## 23. Dependency Injection
 
-Usar DI simples por composição.
+Use simple composition.
+
+Forbidden:
 
 ```text
-bootstrap/create_app/composition root
-→ concrete adapters
-→ ports/use cases
-→ controllers/handlers
+UseCase creates PostgresRepository()
+DomainService creates HttpClient()
 ```
 
-Proibido:
+Concrete construction belongs to composition/startup.
+
+## 24. Factory / Builder / Strategy
+
+- Factory: config/runtime-dependent construction;
+- Builder: truly complex/invariant-heavy object creation;
+- Strategy: real interchangeable behavior.
+
+One implementation plus hypothetical future variation is not enough for an internal Strategy.
+
+## 25. CQRS
+
+Light CQRS only if separate read/write models materially simplify performance/security/shape.
+
+No Event Sourcing or duplicate stores by default.
+
+## 26. Bounded Contexts target
+
+C0 finalizes names/owners:
 
 ```text
-class DomainService:
-    repo = PostgresRepository()
-```
-
-ou service instanciando client/provider concreto internamente sem boundary.
-
-## 24. Factory e Builder
-
-### Factory
-
-Somente quando criação depende materialmente de runtime/config/provider.
-
-Exemplos possíveis:
-
-- model/provider adapter factory;
-- document extractor factory.
-
-### Builder
-
-Somente para objeto realmente complexo com etapas/invariantes.
-
-Não criar Builder para DTO simples.
-
-## 25. CQRS leve
-
-Pode separar Command/Query quando:
-
-- read model e write model têm requirements muito diferentes;
-- há benefício material de performance/segurança/shape;
-- a separação simplifica, não duplica, o domínio.
-
-Não criar dois bancos/modelos por padrão.
-
-## 26. Bounded Contexts conceituais
-
-C0.S1 deve revalidar nomes/owners reais, mas a separação alvo é:
-
-```text
-Copilot Intelligence
+Copilot Conversation/Intelligence
 Capability & Action Integration
 Expertise & Playbooks
 Knowledge
@@ -662,38 +496,38 @@ Business Graph
 Observability & Evals
 ```
 
-Compartilhar contracts deliberadamente; não compartilhar models internos indiscriminadamente.
+These live within the standalone Copilot product while respecting external platform/domain boundaries.
 
-## 27. Padrões por componente do Copilot
+## 27. Patterns by Copilot component
 
-| Componente | Arquitetura/patterns preferidos |
+| Componente | Preferred patterns |
 |---|---|
-| Capability/Action integration | Port + Adapter; projection; policy |
+| Core integration | Port + Adapter + bounded DTO |
+| Domain Actions | OpenAPI adapter + generic executor + Policy |
 | Platform Actions | Command + Handler + Adapter |
-| Workspace Context | Adapter + bounded immutable contract |
-| Iframe Bridge | Adapter + Anti-Corruption Layer + typed messages |
-| Expertise | Repository se authority persistida; retrieval Strategy somente quando variações reais; Policy |
-| Domain Playbooks | versioned domain content + repository/port |
-| Multimodal | Pipeline + Adapter; extraction strategies quando comprovadas |
-| Evidence | Value Object/validated factory + provenance composition |
-| Business Graph | Ports & Adapters; repository/index somente se materializado; permission Policy/Specification |
-| Decision Gates | Policy + State Machine |
+| Workspace Context | Adapter + bounded contract |
+| Iframe Bridge | Adapter + ACL + typed messages |
+| Expertise | versioned catalog; Repository if persisted; retrieval policy |
+| Playbooks | versioned content + repository/port |
+| Multimodal | Pipeline + adapters; Strategy only if needed |
+| Evidence | Value Object/validated factory + provenance |
+| Graph | Ports/Adapters + permission policy; repository only if materialized |
+| Decision | Policy + State Machine |
 | Workflow | Application orchestration + State Machine + Idempotency |
-| Task/Case | Aggregate/lifecycle quando comprovado + Repository + Workflow refs |
-| Rooms/Inbox | adapters/materialized views sobre authorities existentes |
-| Watch | Event-driven + State Machine + dedupe/idempotency |
-| Organizational Knowledge | versioned lifecycle + Repository + review policy |
-| Expertise Studio | Use Cases + State Machine + RBAC admin |
-| Model Router | Strategy/Policy apenas após baseline C7 |
-| Legacy agents | Anti-Corruption Layer + Adapter + Strangler |
+| Task/Case | Aggregate/lifecycle if proven + Workflow refs |
+| Room/Notification | Adapter to existing owner when viable |
+| Inbox | materialized projection/surface |
+| Watch | Event-driven + State Machine + dedupe |
+| Organizational Knowledge | versioned lifecycle + review policy |
+| Expertise Studio | Use Cases + State Machine + admin RBAC |
+| Model Router | Strategy/Compute Policy after C7 baseline |
 
-## 28. Abstraction Gate — quando NÃO abstrair
+## 28. Abstraction Gate
 
-Antes de criar:
+Before creating:
 
 ```text
-interface
-port
+interface/port
 base class
 factory
 strategy
@@ -703,177 +537,146 @@ generic engine
 repository
 ```
 
-responder:
+Answer:
 
-1. Existe boundary real?
-2. Existe mais de uma implementação/consumer ou uma variação concretamente provável?
-3. Precisamos de test double em boundary externo?
-4. O conceito possui owner/lifecycle próprio?
-5. A abstração reduz acoplamento ou apenas adiciona indireção?
-6. Já existe abstração equivalente no repo?
+1. Is there a real boundary?
+2. Is there real variation or multiple consumers?
+3. Do we need a test double for an external boundary?
+4. Does the concept own lifecycle/state?
+5. Does abstraction reduce coupling rather than add indirection?
+6. Does repo already contain an equivalent abstraction?
+7. Would the abstraction couple Copilot to Chat internals?
 
-Se a justificativa for apenas “pode ser útil no futuro”, não criar.
+If justification is “maybe later”, do not create it.
 
-### Rule of Three
+External boundaries may justify a Port from first implementation.
 
-Para abstrações puramente internas e não-boundary, preferir implementação simples até repetição/variação real justificar extração.
+## 29. Anti-patterns
 
-Boundary externo é exceção: Port pode ser correto desde a primeira implementação porque protege a regra de dependência.
+- Chat internals used as Copilot library;
+- `Manager/Helper/Utils/Service` god objects;
+- repository for every HTTP resource;
+- deep base-class inheritance;
+- global mutable service locator/singleton state;
+- framework types in Domain/Application;
+- ORM model as external contract;
+- event bus without schema/owner;
+- Strategy/Factory without variation;
+- Saga without compensation;
+- CQRS/Event Sourcing by fashion;
+- feature-specific Entity/Evidence/Decision/Event model;
+- second Core/RBAC/domain authority;
+- Portal containing planner/RAG/action logic;
+- fallback to Chat runtime.
 
-## 29. Anti-patterns proibidos
-
-- `Manager`, `Helper`, `Utils` ou `Service` genérico acumulando responsabilidades;
-- repository como wrapper de qualquer HTTP;
-- base class profunda para compartilhar duas linhas;
-- service locator global;
-- singleton com mutable business state;
-- framework types atravessando Domain/Application;
-- ORM model como API contract;
-- exception concreta de infra como contrato de produto;
-- event bus sem schema/owner;
-- Strategy com uma implementação sem boundary/variação justificável;
-- Factory para constructor trivial;
-- Saga sem compensação real;
-- CQRS/Event Sourcing por moda;
-- feature criando seus próprios Entity/Evidence/Decision/Event primitives;
-- pattern que introduz segunda authority.
-
-## 30. Testing Pattern por camada
+## 30. Testing by layer
 
 ### Domain
-
-- unit puro;
-- invariantes;
-- value objects;
-- state transitions/policies.
+Pure units/invariants/value objects/state/policy.
 
 ### Application
+Use cases with port fakes/stubs; no Flask/provider required.
 
-- use case unit com ports fake/stub;
-- policy interaction;
-- positive/sibling/negative;
-- no framework requerido.
+### Infrastructure
+Contract/integration tests, mapping, timeout/error translation.
 
-### Adapters/Infrastructure
-
-- contract tests;
-- integration com DB/API/broker/provider quando material;
-- serialization/mapping;
-- timeout/error translation.
-
-### Interface
-
-- request/response schema;
-- auth/RBAC boundary;
-- error mapping;
-- transport semantics.
+### Interfaces
+Schema/auth/error/transport tests.
 
 ### Frontend
+Components/hooks/adapters/integration/accessibility.
 
-- component behavior;
-- hooks/state transitions;
-- adapter/contract tests;
-- integration da feature;
-- accessibility/keyboard para fluxos críticos.
+### Standalone boundary
 
-Mocks não podem substituir o owner real justamente no teste que pretende provar integration/outcome.
+Required checks:
+
+```text
+NO_CHAT_IMPORT
+NO_CHAT_API_DEP
+NO_CHAT_DB_AUTHORITY
+CHAT_OFFLINE_INDEPENDENCE
+```
 
 ## 31. Migration patterns
 
-### Banco/contrato
+### Copilot DB/contracts
 
 ```text
-EXPAND
-→ deploy compatible readers
-→ deploy writer
-→ backfill se necessário
-→ CUTOVER
-→ residual scan
-→ CONTRACT em release posterior
+EXPAND → compatible readers → writers → optional backfill → CUTOVER → CLEANUP
 ```
 
-### Runtime legado
+### External legacy integration actually being replaced
 
 ```text
-Strangler
-+ Anti-Corruption Layer
-+ telemetry
-+ canary
-+ exit criteria
+Adapter/ACL → telemetry → canary → cutover → residual scan → remove adapter
 ```
 
-Dual-read/dual-write só quando inevitável e sempre temporário.
+Again: Minha DELPI Chat is not being migrated into Copilot.
 
-## 32. ADR / Architectural Exception Gate
+## 32. ADR / Exception Gate
 
-Se uma implementação precisar divergir deste padrão:
+If canonical pattern cannot satisfy a real requirement:
 
-1. demonstrar por que o pattern canônico não atende;
-2. registrar alternativas consideradas;
-3. documentar trade-offs e impacto futuro;
-4. provar que não cria segunda authority;
-5. criar ADR/decisão arquitetural no local padrão do repo, se existente;
-6. atualizar `49` se a exceção virar novo padrão.
+1. prove why;
+2. list alternatives;
+3. document trade-offs;
+4. prove no second authority/product coupling;
+5. register ADR/decision;
+6. update this standard if exception becomes standard.
 
-Não criar exceção silenciosa dentro de PR.
-
-## 33. FOUNDATION_FREEZE — requisitos arquiteturais
-
-Antes de `C1.S1`, C0 precisa comprovar:
+## 33. FOUNDATION_FREEZE architecture gates
 
 ```text
-ARCHITECTURE_STYLE = PASS
-LAYER_RESPONSIBILITIES = PASS
-DEPENDENCY_RULES = PASS
-BOUNDED_CONTEXTS = PASS
-PATTERN_DECISION_MATRIX = PASS
-ERROR_MODEL = PASS
-EVENT_MODEL = PASS
-STATE_MACHINE_RULES = PASS
-PERSISTENCE_RULES = PASS
-FRONTEND_STATE_RULES = PASS
-RESILIENCE_RULES = PASS
-TESTING_PATTERN = PASS
-MIGRATION_PATTERNS = PASS
-ABSTRACTION_GATE = PASS
-ARCHITECTURAL_EXCEPTION_PROCESS = PASS
+ARCHITECTURE_STYLE
+LAYER_RESPONSIBILITIES
+DEPENDENCY_RULES
+BOUNDED_CONTEXTS
+PATTERN_DECISION_MATRIX
+ERROR_MODEL
+EVENT_MODEL
+STATE_MACHINE_RULES
+PERSISTENCE_RULES
+FRONTEND_STATE_RULES
+RESILIENCE_RULES
+TESTING_PATTERN
+MIGRATION_PATTERNS
+ABSTRACTION_GATE
+ARCHITECTURAL_EXCEPTION_PROCESS
+SHARED_CODE_GATE
+CHAT_RUNTIME_DEPENDENCY=0
 ```
 
-Esses gates complementam, não substituem, os contratos/owners definidos no `16`/`17`.
+All required = PASS before runtime feature work.
 
-## 34. Checklist obrigatório por subetapa
-
-Antes de codificar:
+## 34. Checklist per step
 
 ```text
-[ ] owner e camada definidos
-[ ] pattern selecionado pela matrix
-[ ] primitive compartilhado reutilizado
-[ ] port só existe se boundary/abstraction gate justificar
-[ ] state machine usada se lifecycle não trivial
-[ ] persistence não virou authority paralela
-[ ] external dependency está atrás de adapter
-[ ] DI ocorre no composition root
-[ ] error model canônico preservado
-[ ] retry/idempotency coerentes com read/write
-[ ] event/outbox somente se requisito justificar
-[ ] frontend não ganhou business authority
-[ ] migration/legacy usa padrão canônico
-[ ] tests seguem camada/contrato
-[ ] sibling/unknown não exigem hardcode
-[ ] não há refatoração futura já previsível pela próxima fase
+[ ] owner/product boundary clear
+[ ] correct layer
+[ ] canonical pattern selected
+[ ] shared primitive reused
+[ ] port/abstraction justified
+[ ] state machine if lifecycle requires
+[ ] external dependency behind adapter
+[ ] composition root wiring
+[ ] error/resilience semantics preserved
+[ ] frontend has no durable business authority
+[ ] no Chat product coupling
+[ ] tests match layer/contract
+[ ] sibling/unknown no hardcode
+[ ] no predictable next-phase redesign
 ```
 
-## 35. Regra final para Cursor/IA
+## 35. Regra final
 
-Quando houver dúvida entre dois patterns:
+Quando houver dúvida:
 
 ```text
-1. reutilize o padrão já comprovado no repo;
-2. aplique a matrix deste documento;
-3. escolha a solução mais simples que preserve boundaries;
-4. não invente framework/abstração local;
-5. se a decisão for materialmente ambígua, registre como architecture decision antes de codificar.
+platform/product boundary first
+→ proven repo convention
+→ Pattern Decision Matrix
+→ simplest solution preserving boundaries
+→ ADR only for material ambiguity
 ```
 
-O objetivo não é maximizar número de patterns. É maximizar **consistência, legibilidade, testabilidade, previsibilidade e capacidade de evolução sem refatoração estrutural**.
+O objetivo não é usar muitos patterns; é obter código previsível, consistente, testável e evolutivo sem refatoração estrutural desnecessária.
