@@ -1,8 +1,9 @@
 # Minha DELPI Copilot — Governança Documental e Revisão Arquitetural
 
 **Status:** canônico para leitura/precedência documental  
-**Revisão:** foundation-first  
-**Ordem de execução:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
+**Revisão:** foundation-first + architecture-pattern freeze  
+**Ordem de execução:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Arquitetura/patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)
 
 ## 1. Objetivo
 
@@ -12,6 +13,8 @@ Evitar que a quantidade de documentos gere:
 - duas ordens de implementação;
 - requisitos com IDs concorrentes;
 - matrizes de teste paralelas;
+- arquitetura/design patterns inferidos de forma diferente por etapa;
+- abstrações concorrentes para o mesmo problema;
 - contexto excessivo no Cursor;
 - retrabalho/refatoração previsível.
 
@@ -23,16 +26,19 @@ Em caso de conflito:
 1. instruções oficiais do projeto + regras .cursor aplicáveis
 2. 16-execution-master-plan.md              — ordem/dependências
 3. 17-component-and-contract-map.md         — ownership/primitives
-4. 21-data-and-state-model.md               — estado/persistência
-5. 20-testing-and-acceptance-matrix.md       — gates/testes
-6. 25-requirements-traceability.md           — CP requirements
-7. 02-arquitetura.md                         — target técnico
-8. 24-product-specification.md               — target funcional
-9. specs temáticas da fase
-10. evidence/execution-ledger.md              — estado/evidence corrente
+4. 49-architecture-and-design-patterns-standard.md — arquitetura de código/patterns
+5. 21-data-and-state-model.md               — estado/persistência
+6. 20-testing-and-acceptance-matrix.md       — gates/testes
+7. 25-requirements-traceability.md           — CP requirements
+8. 02-arquitetura.md                         — target técnico
+9. 24-product-specification.md               — target funcional
+10. specs temáticas da fase
+11. evidence/execution-ledger.md             — estado/evidence corrente
 ```
 
 O ledger não muda a arquitetura; registra o que está realmente executado e desbloqueado.
+
+Uma spec temática não pode redefinir o style/pattern canônico de `49` sem decisão arquitetural explícita.
 
 ## 3. Leitura mínima por execução
 
@@ -46,8 +52,9 @@ regras .cursor aplicáveis
 README
 16 plano mestre
 17 ownership/contracts
-20 tests
-25 requirements
+49 arquitetura/patterns — integral no C0; depois seções aplicáveis
+20 tests aplicáveis
+25 requirements aplicáveis
 evidence ledger
 ```
 
@@ -82,6 +89,7 @@ Exemplos:
 |---|---|
 | `16` | ordem C0–C7 e substeps |
 | `17` | owners/primitives/contracts |
+| `49` | architecture style, layers, dependency rules e design patterns |
 | `20` | testes/gates |
 | `21` | estado/persistência |
 | `23` | prompt mestre Cursor |
@@ -128,7 +136,7 @@ Exemplos:
 44 operational detail map
 ```
 
-Specs detalham o tema; não redefinem a ordem do `16`.
+Specs detalham o tema; não redefinem a ordem do `16` nem o padrão arquitetural do `49`.
 
 ### Superseded/reference only
 
@@ -212,6 +220,26 @@ Seus conteúdos materiais foram consolidados respectivamente em `20`, `25`, `23`
 
 **Decisão:** permanece C7 e somente por domínio com cálculo/modelo reproduzível.
 
+### F13 — design patterns e layering inferidos durante implementação
+
+**Problema:** mesmo com bons contratos, cada subetapa poderia escolher `Service`, `Repository`, `Factory`, `Strategy`, evento, state handling ou organização frontend de forma diferente.
+
+**Risco:** abstrações locais concorrentes, infra vazando para application/domain, overengineering, business state no frontend e refatorações estruturais posteriores.
+
+**Correção:** `49` tornou-se authority normativa e C0 deve congelar style, layers, dependency rules, pattern matrix, error/event/state/persistence/frontend/testing/migration rules e Abstraction Gate.
+
+### F14 — overengineering pela IA
+
+**Problema:** modelos tendem a criar interfaces/factories/strategies registries “para o futuro”.
+
+**Correção:** `Abstraction Gate` + Rule of Three para abstrações internas; boundary externo pode justificar Port desde a primeira implementação.
+
+### F15 — migração legada sem padrão uniforme
+
+**Problema:** agent migration e outras compatibilidades poderiam usar dual-read/fallbacks distintos.
+
+**Correção:** Anti-Corruption Layer + Adapter + Strangler Fig + exit criteria + residual search são o padrão de migração.
+
 ## 6. Foundation invariants
 
 Após C0.S6:
@@ -226,9 +254,14 @@ um evidence model → EvidenceRef
 um entity reference model → EntityRef
 um decision model → DecisionGate
 um event envelope → EventEnvelope
+uma dependência externa → port/adapter quando boundary justificar
+um lifecycle complexo → state machine owner
+um wiring concreto → composition root/DI
+um estado durável de negócio → backend owner
+uma exceção arquitetural → decisão/ADR explícita
 ```
 
-Qualquer feature que precisar quebrar essas invariantes deve abrir mudança arquitetural/versionada, não criar um tipo local silenciosamente.
+Qualquer feature que precisar quebrar essas invariantes deve abrir mudança arquitetural/versionada, não criar um tipo/pattern local silenciosamente.
 
 ## 7. Token efficiency
 
@@ -236,12 +269,14 @@ Para minimizar contexto no Cursor:
 
 - executar uma subetapa por vez;
 - usar `16` para saber **o que** vem agora;
-- usar `17/21` para saber **quais foundations** reutilizar;
+- usar `17/21` para saber **quais foundations/state** reutilizar;
+- usar `49` para decidir **como estruturar a implementação**, lendo só as seções aplicáveis após C0;
 - usar somente a spec temática do step;
 - usar `20` apenas nas seções aplicáveis;
 - usar `25` apenas nos CP do step;
 - ledger carrega somente evidence/status necessário;
-- não reenviar o roadmap inteiro em todo prompt.
+- não reenviar o roadmap inteiro em todo prompt;
+- não pedir à IA para “escolher a melhor arquitetura” se o padrão já estiver congelado.
 
 ## 8. Regra para documentos futuros
 
@@ -250,6 +285,7 @@ Novo documento precisa declarar no cabeçalho:
 ```text
 Status: canonical authority | thematic spec | reference | superseded
 Order authority: 16-execution-master-plan.md
+Architecture authority: 49-architecture-and-design-patterns-standard.md quando houver runtime/code design
 ```
 
 Novo documento temático não pode:
@@ -258,19 +294,20 @@ Novo documento temático não pode:
 - criar nova matriz CP;
 - criar nova matriz de testes;
 - criar outro prompt mestre do Cursor;
-- redefinir primitive compartilhado sem versionamento/ADR.
+- redefinir primitive compartilhado sem versionamento/ADR;
+- introduzir architectural style/pattern concorrente sem decisão explícita.
 
 ## 9. Estado após esta revisão
 
 A documentação está conceitualmente organizada para iniciar por:
 
 ```text
-C0.S0 inventory
-→ C0.S1 authorities
+C0.S0 inventory + architecture pattern inventory
+→ C0.S1 authorities/bounded contexts
 → C0.S2 shared primitives
-→ C0.S3 persistence boundaries
-→ C0.S4 cross-cutting semantics
-→ C0.S5 contract harness
+→ C0.S3 persistence/ports boundaries
+→ C0.S4 cross-cutting semantics + architecture/pattern freeze
+→ C0.S5 contract/conformance harness
 → C0.S6 FOUNDATION_FREEZE
 ```
 
