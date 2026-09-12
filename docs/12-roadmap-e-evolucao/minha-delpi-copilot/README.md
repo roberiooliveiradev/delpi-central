@@ -3,6 +3,7 @@
 > **Status:** **PLANEJAMENTO EXECUTÁVEL / NOT_STARTED**  
 > **Próxima etapa:** **C0.S0 — Rebaseline e inventário real**  
 > **Plano executável:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+> **Extensão operacional:** [`44-operational-intelligence-implementation-plan.md`](./44-operational-intelligence-implementation-plan.md)  
 > **Especialização do Copilot:** [`27-single-copilot-specialization-architecture.md`](./27-single-copilot-specialization-architecture.md)  
 > **Prompt do Cursor:** [`23-prompt-cursor-execucao.md`](./23-prompt-cursor-execucao.md)  
 > **Ledger:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
@@ -274,6 +275,10 @@ A migração de agents para expertise e esta expansão estratégica **não autor
 | [`41-expertise-studio-governance.md`](./41-expertise-studio-governance.md) | Expertise Studio |
 | [`42-model-router-and-compute-policy.md`](./42-model-router-and-compute-policy.md) | Model Router |
 | [`43-durable-workflow-runtime.md`](./43-durable-workflow-runtime.md) | Durable Workflow Runtime |
+| [`44-operational-intelligence-implementation-plan.md`](./44-operational-intelligence-implementation-plan.md) | plano O0–O13 |
+| [`45-operational-intelligence-testing-gates.md`](./45-operational-intelligence-testing-gates.md) | gates de teste adicionais |
+| [`46-operational-intelligence-requirements.md`](./46-operational-intelligence-requirements.md) | requisitos CP-090–CP-129 |
+| [`47-cursor-operational-intelligence-extension.md`](./47-cursor-operational-intelligence-extension.md) | suplemento obrigatório do Cursor |
 
 ### Execução e implantação
 
@@ -283,12 +288,12 @@ A migração de agents para expertise e esta expansão estratégica **não autor
 | [`17-component-and-contract-map.md`](./17-component-and-contract-map.md) | ownership/contratos |
 | [`18-app-onboarding-matrix.md`](./18-app-onboarding-matrix.md) | matriz de apps |
 | [`19-rollout-and-migrations.md`](./19-rollout-and-migrations.md) | rollout/migrations |
-| [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md) | testes |
+| [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md) | testes base |
 | [`21-data-and-state-model.md`](./21-data-and-state-model.md) | dados/estado |
 | [`22-cursor-execution-protocol.md`](./22-cursor-execution-protocol.md) | protocolo Cursor |
-| [`23-prompt-cursor-execucao.md`](./23-prompt-cursor-execucao.md) | prompt mestre |
+| [`23-prompt-cursor-execucao.md`](./23-prompt-cursor-execucao.md) | prompt mestre consolidado |
 | [`24-product-specification.md`](./24-product-specification.md) | especificação completa |
-| [`25-requirements-traceability.md`](./25-requirements-traceability.md) | CP-* |
+| [`25-requirements-traceability.md`](./25-requirements-traceability.md) | CP-001–CP-089 |
 | [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) | evidence/estado real |
 
 ## 9. Invariantes
@@ -331,6 +336,8 @@ C0 fundação/inventário/contratos
 → C7 rollout
 → ondas posteriores de Inbox/Simulation/Experience/Model Router conforme gates
 ```
+
+A sequência detalhada O0–O13 está em `44-operational-intelligence-implementation-plan.md`.
 
 ## 11. Resultado esperado
 
