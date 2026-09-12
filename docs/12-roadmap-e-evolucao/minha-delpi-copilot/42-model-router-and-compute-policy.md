@@ -1,167 +1,160 @@
 # Minha DELPI Copilot — Model Router e Compute Policy
 
-**Status:** arquitetura proposta  
-**Objetivo:** usar o nível de inteligência, modalidade, latência e custo adequados para cada tarefa sem fragmentar a experiência do Copilot.
+**Status:** thematic spec  
+**Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Runtime phase:** C7, somente depois de baseline real de qualidade, latência, custo e data policy.
 
 ## 1. Princípio
 
-O usuário fala com **um Copilot**. A escolha de modelo é detalhe interno governado.
+O usuário fala com **um Copilot**. Model/provider selection é detalhe interno governado.
 
 ```text
-turn/task
-→ requirement classification
-→ compute policy
-→ model/provider candidate
-→ policy/security constraints
+task requirements
+→ Compute Policy
+→ permitted model/provider candidates
+→ selected config
 → execute
 ```
 
-Não criar “agentes” apenas para escolher modelos diferentes.
+Não criar agentes apenas para usar modelos diferentes.
 
-## 2. Dimensões de roteamento
+## 2. Dimensões
 
-- modalidade: texto / visão / documento;
-- complexidade de reasoning;
-- tamanho/contexto;
-- necessidade de structured output;
-- sensibilidade dos dados/provider policy;
+- modality;
+- reasoning complexity;
+- context size;
+- structured output requirements;
+- data sensitivity/provider policy;
 - latency budget;
 - cost budget;
 - reliability/SLA;
-- tool-use compatibility;
-- idioma/domínio quando comprovadamente relevante.
+- tool compatibility;
+- language/domain only when evidence justifies.
 
 ## 3. Classes conceituais
 
 ```text
 FAST
-→ classificação, navegação simples, transformações curtas
-
 STANDARD
-→ consultas, sínteses e workflows comuns
-
 DEEP_REASONING
-→ problemas complexos/multi-step/causa raiz
-
 MULTIMODAL
-→ desenhos, imagens, documentos visuais
-
 LONG_CONTEXT
-→ grandes conjuntos documentais quando retrieval não é suficiente
 ```
 
-As classes não precisam mapear 1:1 para fornecedores ou modelos fixos.
+Classes não mapeiam necessariamente 1:1 para um provider/model fixo.
 
-## 4. ComputePolicyV1
+## 4. Compute Policy
 
-```json
-{
-  "taskType": "quality.root_cause_analysis",
-  "requiredModalities": ["text"],
-  "reasoningClass": "deep_reasoning",
-  "latencyBudgetMs": 30000,
-  "costClass": "controlled",
-  "structuredOutput": true
-}
+C0 define owner/data-policy boundaries; C7 pode criar/estender contract concreto se gap for provado.
+
+Exemplo conceitual:
+
+```text
+required modalities
+reasoning class
+structured output requirement
+latency budget
+cost class
+data classification/provider constraints
 ```
 
-O router resolve para configuração vigente de models/providers.
+Evitar criar `ComputePolicyV1` prematuramente se abstração atual de provider/config já atende.
 
 ## 5. Fallback
 
-Fallback deve preservar segurança e verdade operacional.
-
 ```text
 preferred unavailable
-→ compatible fallback
-→ capability/policy requirements still valid
-→ explicit degraded mode when quality materially differs
+→ candidate compatible with security/data/output requirements
+→ fallback
+→ degraded mode explicit if quality materially differs
 ```
 
-Nunca remover validation/policy para caber num modelo alternativo.
+Fallback nunca relaxa policy/validation.
 
-## 6. Multimodal routing
+## 6. Multimodal
 
-Desenho técnico pode exigir:
+Router seleciona multimodal somente quando percepção visual é necessária; não enviar todo turno a modelo multimodal por padrão.
 
-```text
-native parser/OCR
-→ multimodal model
-→ expertise
-```
+## 7. Internal stage specialization
 
-O router deve considerar a necessidade real de visão; não enviar todas as mensagens para modelo multimodal por padrão.
+Planner/synthesis/perception podem futuramente usar modelos diferentes se:
 
-## 7. Tool planner vs synthesis
+- shared contracts separam stages;
+- policy permanece central;
+- evidence/provenance registra config material;
+- evals provam vantagem;
+- não cria experiências/agentes separados.
 
-A implementação pode usar modelos distintos para etapas internas se isso for comprovadamente melhor, mas:
+## 8. Data/provider policy
 
-- o workflow continua único;
-- contracts estruturados separam etapas;
-- policy não depende de texto livre entre modelos;
-- provenance registra configurações relevantes;
-- evals validam o pipeline real.
+Filtrar candidates por:
 
-## 8. Privacidade e provider policy
+- data class;
+- provider allowlist;
+- privacy/residency/tenancy constraints;
+- retention contract;
+- supported capabilities;
+- health.
 
-O router deve filtrar candidates compatíveis com:
+Fallback não pode violar data policy.
 
-- classificação dos dados;
-- região/tenancy quando aplicável;
-- contratos corporativos;
-- políticas de retenção;
-- capabilities suportadas.
+## 9. Observability
 
-## 9. Observabilidade
+Registrar:
 
-Registrar sem segredo:
+- model/provider/class;
+- structured route reason code;
+- latency;
+- tokens/cost;
+- fallback;
+- output validity;
+- eval segment.
 
-```text
-model/provider class
-reason for route (category, not private CoT)
-latency
-tokens/cost
-fallback
-quality/eval segment
-```
+Sem private CoT.
 
-## 10. Métricas
+## 10. Metrics
 
-- task completion por class/model;
+- completion by class/model;
 - cost per completed task;
 - P50/P95 latency;
-- fallback rate;
-- retry rate;
+- fallback/retry;
 - structured output validity;
-- tool trajectory quality;
-- multimodal extraction accuracy;
+- multimodal accuracy;
 - correction rate.
 
-## 11. Administração
+## 11. Admin
 
-Configuração central deve permitir:
+Centralize:
 
-- models/providers ativos;
-- classes suportadas;
+- active providers/models;
+- class mapping;
 - budgets;
-- rollout/cohort;
+- cohorts;
 - emergency disable;
-- provider health;
-- policy constraints.
+- health;
+- data-policy constraints.
 
-Não espalhar nome do modelo pelo domínio/application.
+Não espalhar model names pelo domain/application code.
 
-## 12. Testes
+## 12. Tests
 
-- tarefa simples escolhe classe apropriada;
-- multimodal exige modelo compatível;
-- provider indisponível;
-- fallback incompatível é rejeitado;
-- sensitive data não vai para provider proibido;
-- latency/cost thresholds;
-- output schema continua válido;
-- same task under candidate config mantém outcome esperado.
+- simple task class;
+- multimodal compatibility;
+- unavailable provider;
+- incompatible fallback rejected;
+- sensitive data provider blocked;
+- latency/cost budgets;
+- structured output validity;
+- baseline vs candidate quality.
 
-## 13. Gate
+## 13. Implementation mapping
 
-Model Router só deve ser introduzido após existir baseline de qualidade/latência/custo. Antes disso, abstrair provider/config corretamente é suficiente; não adicionar roteamento “inteligente” sem evidence.
+```text
+C0 → provider/model inventory + data-policy/owner boundaries
+C2–C6 → collect baseline metrics; no intelligent routing required
+C7 → implement/extend Model Router only if evidence justifies
+```
+
+## 14. Gate
+
+Sem baseline de qualidade/latência/custo, a solução correta é provider/config abstraction simples — não “roteamento inteligente” especulativo.
