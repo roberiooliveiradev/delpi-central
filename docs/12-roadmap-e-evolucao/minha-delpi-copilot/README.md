@@ -35,6 +35,8 @@ UI ───────────────┐
 Copilot ──────────┘
 ```
 
+Esse princípio vale também para apps `iframe`: o iframe pode participar como adapter de navegação/contexto/experiência, mas operações de negócio continuam usando API/use case quando existir contrato.
+
 ## 2. Arquitetura alvo
 
 ```text
@@ -57,8 +59,9 @@ Copilot ──────────┘
                │           ▼             ▼             ▼
                │        OpenAPI       Portal        RAG/Web
                │           │          Bridge
-               │           │             │
-               ▼           ▼             ▼
+               │           │          │   │
+               │           │          │   └─ IframeBridge
+               ▼           ▼          ▼
            ┌────────────────────────────────────┐
            │ RBAC / policy / sensitivity /     │
            │ confirmation / audit / budgets    │
@@ -68,7 +71,10 @@ Copilot ──────────┘
                             │
               ┌─────────────┼──────────────┐
               ▼             ▼              ▼
-            APIs           MFEs           Core
+            APIs           MFEs       iframe apps
+                                           │
+                                           ▼
+                                      Core/External
 ```
 
 ## 3. Fonte de verdade por capability
@@ -94,7 +100,7 @@ Core API /me/apps
 → Platform Capability Projection
 → PlatformCommand tipado
 → CopilotBridge
-→ Portal Router/MFE
+→ Portal Router/MFE/IframeBridge
 ```
 
 Sem app→URL hardcoded no Copilot.
@@ -102,7 +108,7 @@ Sem app→URL hardcoded no Copilot.
 ### Workspace Context
 
 ```text
-MFE
+MFE ou iframe integrado
 → WorkspaceContext tipado
 → Portal Context Store
 → bounded turn context
@@ -110,6 +116,24 @@ MFE
 ```
 
 Contexto não é permissão.
+
+### Apps iframe
+
+```text
+PORTAL_ONLY
+→ Copilot abre app/rota
+
+CONTEXTUAL
+→ + iframe publica contexto via bridge tipado
+
+INTERACTIVE
+→ + recebe comandos visuais genéricos
+
+AI_READY
+→ + Business Actions reais via API/OpenAPI
+```
+
+A especificação canônica está em [`26-iframe-copilot-bridge.md`](./26-iframe-copilot-bridge.md).
 
 ## 4. Dependência crítica atual
 
@@ -163,6 +187,7 @@ O Copilot não cria workaround nem duplica a correção da Onda J.
 | [`23-prompt-cursor-execucao.md`](./23-prompt-cursor-execucao.md) | prompt mestre para implementação |
 | [`24-product-specification.md`](./24-product-specification.md) | especificação funcional/técnica consolidada |
 | [`25-requirements-traceability.md`](./25-requirements-traceability.md) | requisitos CP-* → owner → fase → gate |
+| [`26-iframe-copilot-bridge.md`](./26-iframe-copilot-bridge.md) | **protocolo Portal ↔ iframe, contexto, comandos visuais, segurança e níveis de integração** |
 | [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) | estado executável/evidências |
 
 ## 6. Funcionalidades alvo
@@ -173,6 +198,9 @@ O produto completo contempla:
 - abertura de apps/rotas/entidades;
 - filtros/view context tipados;
 - entendimento do que o usuário está vendo;
+- integração gradual com apps iframe (`PORTAL_ONLY`, `CONTEXTUAL`, `INTERACTIVE`, `AI_READY`);
+- contexto de iframe normalizado no mesmo `WorkspaceContext` usado pelos MFEs;
+- comandos visuais tipados para iframes integráveis, sem DOM automation;
 - consultas business read via OpenAPI;
 - criação/edição/aprovação/cancelamento conforme capabilities reais;
 - preview/confirmation/idempotency para writes;
@@ -199,7 +227,7 @@ plugins/minha-delpi-chat
 → experiência conversacional, activity, confirmation, rendering
 
 portal
-→ Router, AuthContext, authorized apps/routes, Workspace Context, CopilotBridge
+→ Router, AuthContext, authorized apps/routes, Workspace Context, CopilotBridge, IframeBridge
 
 Core API
 → apps, routes, permissions e governança
@@ -209,6 +237,9 @@ api-delpi e demais APIs
 
 MFEs
 → experiência especializada + contexto/deep links/view capabilities
+
+iframes
+→ abertura pelo Portal + contexto/comandos visuais tipados quando houver bridge compatível
 ```
 
 Não criar uma IA por departamento. Apps especializam o Copilot central por capabilities, contexto, knowledge e policy.
@@ -228,19 +259,22 @@ Não criar uma IA por departamento. Apps especializam o Copilot central por capa
 10. Capability Projection não vira catálogo técnico paralelo.
 11. Workspace Context não é authority de autorização.
 12. Evidência de SHA/config anterior não fecha candidate novo.
+13. Iframe não transmite JWT/refresh token pelo bridge.
+14. Iframe não usa DOM automation como substituto de API.
+15. postMessage é validado por origin + source + schema + sessão/protocolo.
 ```
 
 ## 9. Ordem de execução
 
 ```text
 C0.S0 Rebaseline/inventário
-→ C0.S1 contracts/ownership
+→ C0.S1 contracts/ownership incluindo IframeBridgeV1
 → C0.S2 harness
-→ C1 Platform Actions
-→ C2 Workspace Context
+→ C1 Platform Actions + PORTAL_ONLY/handshake base
+→ C2 Workspace Context + iframe contextual/interativo piloto
 → C3 Business Parity
 → C4 Workflows
-→ C5 AI-ready ecosystem
+→ C5 AI-ready ecosystem + SDK iframe
 → C6 autonomy
 → C7 rollout final
 ```
@@ -253,4 +287,4 @@ Exemplo-alvo:
 
 > “Analise por que estamos atrasando as entregas do item 90264238, compare estoque, produção, compras e carteira de pedidos, mostre as principais causas, abra o Portal de Suprimentos já filtrado nesse item e crie uma solicitação para Compras revisar o caso.”
 
-O Copilot deve decompor objetivos, usar somente capabilities autorizadas, explicar o plano operacional, executar reads, pedir confirmação para alterações sensíveis, verificar outcomes, abrir a interface adequada e preservar contexto relevante.
+O Copilot deve decompor objetivos, usar somente capabilities autorizadas, explicar o plano operacional, executar reads, pedir confirmação para alterações sensíveis, verificar outcomes, abrir a interface adequada e preservar contexto relevante, independentemente de a experiência visual do app ser MFE ou iframe compatível.
