@@ -3,7 +3,8 @@
 **Objetivo:** garantir owner, fase, gate e status de cada requisito.  
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Testes:** [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md)
+**Testes:** [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md)  
+**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
 
 > Esta é a única authority `CP-*`. IDs históricos não são reutilizados nem apagados; requisitos ligados à migração do Minha DELPI Chat são preservados como `OUT_OF_SCOPE_WITH_DECISION`.
 
@@ -62,6 +63,12 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-146 | Zero dependência de runtime do Minha DELPI Chat | Copilot Platform | Chat-offline/scan | PLANNED |
 | CP-147 | Persistência/migration chain próprias do Copilot | Copilot API | storage ownership | PLANNED |
 | CP-154 | Inventário Portal/Core/Gateway/APIs/MFEs antes do runtime | Architecture | C0.S0 evidence | PLANNED |
+| CP-157 | Media capture/consent/retention classes definidas antes do runtime multimodal contínuo | Copilot Security/Architecture | media/privacy foundation | PLANNED |
+| CP-158 | Shared-device identity/session isolation | Copilot/Portal/Security | device session negative tests | PLANNED |
+| CP-175 | Raw media minimization e retention class-specific | Copilot Media/Security | retention/data minimization | PLANNED |
+| CP-176 | Sem facial recognition/emotion detection/hidden surveillance por default | Security/Governance | privacy negative gate | PLANNED |
+| CP-178 | Arbitrary LLM→machine command proibido | Copilot/Industrial Safety | OT boundary gate | PLANNED |
+| CP-179 | Future OT actuation exige safety gate separado | Industrial owner/Copilot | separate architecture/risk approval | PLANNED |
 
 ## 3. C1 — Standalone Application Bootstrap
 
@@ -77,6 +84,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-150 | JWT + Core/RBAC integration | Copilot API/Core | auth negatives | LOCKED |
 | CP-152 | Health + independent rollback/shutdown | Copilot/Infra | Chat-offline rollback | LOCKED |
 | CP-153 | Reuso obrigatório de `@delpi/plugin-ui`/shared federation | Copilot MFE | federation/UI conformance | LOCKED |
+| CP-155 | Entry point do Copilot amplamente disponibilizável conforme acesso/rollout | Portal/Core/Copilot MFE | access/visibility gate | LOCKED |
 
 ## 4. C2 — Portal Context + Platform Commands
 
@@ -104,8 +112,11 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-068 | Proibir Business Action via DOM/click | Portal/Copilot Policy | negative gate | LOCKED |
 | CP-069 | SSO iframe sem token pelo bridge | Portal/App/Security | auth architecture | TO_INVENTORY |
 | CP-070 | Observabilidade iframe bridge | Portal/Observability | trace/redaction | LOCKED |
+| CP-156 | Paridade de RBAC/policy entre Global/Workspace/Meeting/Frontline | Portal/Copilot Policy | surface parity | LOCKED |
+| CP-159 | Contexto operacional OP/máquina/produto/operação/posto usa WorkspaceContext + EntityRef | Portal/MFE/Copilot | operational context contract | LOCKED |
+| CP-171 | Device metadata não substitui identidade/autorização | Portal/Copilot Security | shared-device/context negative | LOCKED |
 
-## 5. C3 — Intelligence Core Standalone
+## 5. C3 — Intelligence Core Standalone + Multimodal Foundations
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
@@ -122,6 +133,12 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-087 | Metamorphic rename de Expertise Pack | Copilot Evals | equivalence | LOCKED |
 | CP-089 | Packs referência Qualidade + Engenharia | Copilot/domain owners | pilot evals | LOCKED |
 | CP-151 | OpenAPI ingestion + Action Catalog próprios do Copilot | Copilot API | independent catalog/importer | LOCKED |
+| CP-160 | Speech-to-text/text-to-speech baseline por ports/adapters quando priorizado | Copilot Media | voice eval/provider abstraction | LOCKED |
+| CP-161 | Voice command preserva mesma RBAC/policy/Decision semantics do texto | Copilot Policy/Planner | modality parity | LOCKED |
+| CP-162 | Camera/image Evidence com frame/region/confidence/limitations | Copilot Multimodal | visual evidence eval | LOCKED |
+| CP-163 | Short-video ingestion com time-range provenance e bounded processing | Copilot Media | video eval/budget | LOCKED |
+| CP-164 | Screen share bounded/consented sem virar DOM automation | Copilot MFE/Media/Security | screen-share safety | LOCKED |
+| CP-177 | Visual finding não vira decisão oficial de qualidade por default | Copilot/Quality Policy | epistemic/quality negative | LOCKED |
 
 ## 6. C4 — Business Reads + Business Graph
 
@@ -163,8 +180,9 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-045 | Autonomia L0–L2 | Copilot Policy | safe reads/navigation/prepare | LOCKED |
 | CP-054 | Simulate/admin preview de action | Copilot Admin | parity | LOCKED |
 | CP-076 | Playbook→WorkflowPlan sem endpoint hardcoded | Copilot Planner | authority separation | LOCKED |
+| CP-168 | Candidate action de voz/reunião/frontline exige transition governada antes de write | Copilot Policy/Work | Decision/idempotency | LOCKED |
 
-## 8. C6 — Product Work + Proactivity + Ecosystem
+## 8. C6 — Product Work + Proactivity + Meeting/Frontline + Ecosystem
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
@@ -195,8 +213,17 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-125 | Case resolution learning candidate | Copilot Case/Knowledge | candidate only | LOCKED |
 | CP-126 | Inbox decision→workflow resume | Copilot MFE/Work | correlation | LOCKED |
 | CP-127 | Room summary grounded em Case | Copilot/Room | evidence/RBAC | TO_INVENTORY |
+| CP-165 | Meeting Mode com lifecycle explícito de captura | Copilot MFE/API | explicit start/stop/indicators | LOCKED |
+| CP-166 | Meeting consulta dados reais com permissões do usuário | Copilot API/Domain APIs | meeting read parity | LOCKED |
+| CP-167 | Ata viva distingue transcript/resumo/decisão/action/outcome | Copilot Meeting/Artifact | semantic/evidence gate | LOCKED |
+| CP-169 | Frontline Mode no mesmo MFE/API | Copilot MFE/API | frontline surface parity | LOCKED |
+| CP-170 | Hands-free voice com fallback touch/text | Copilot Frontline | noisy/permission/accessibility tests | LOCKED |
+| CP-172 | Training assistance referencia procedimento/desenho/revisão vigente | Copilot Knowledge/Domain owners | source freshness | LOCKED |
+| CP-173 | Observação de processo gera somente Knowledge/Experience candidate | Copilot Knowledge | candidate provenance | LOCKED |
+| CP-174 | Meeting/frontline candidate exige review/eval antes de virar conhecimento publicado | Copilot Knowledge/Expertise | governed learning | LOCKED |
+| CP-181 | Meeting/Frontline accessibility e large-touch/shared-device UX | Copilot MFE | accessibility/frontline gate | LOCKED |
 
-## 9. C7 — Autonomy + Optimization + Rollout
+## 9. C7 — Autonomy + Advanced Realtime + Optimization + Rollout
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
@@ -212,6 +239,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-121 | Model Router | Copilot Infrastructure | quality/cost/latency | LOCKED |
 | CP-122 | Compute Policy | Copilot Policy | provider constraints | LOCKED |
 | CP-129 | Anchor reclamação→8D→Watch→ação | Cross-domain/Copilot | full integration | LOCKED |
+| CP-180 | Advanced realtime media possui budgets/backpressure/degraded mode/cost telemetry | Copilot Media/Infra | realtime reliability gate | LOCKED |
 
 ## 10. Requisitos históricos do Chat — fora do escopo Copilot
 
@@ -233,7 +261,9 @@ Esses IDs não podem ser reativados como dependência do Copilot.
 - requisito removido recebe `OUT_OF_SCOPE_WITH_DECISION`;
 - nenhum requisito Copilot pode ser bloqueado por refactor do Chat;
 - shared reuse precisa ser platform-neutral;
-- phase canonical é C0–C7 do `16`.
+- phase canonical é C0–C7 do `16`;
+- modality não pode criar bypass de RBAC/policy;
+- OT physical actuation não é inferida a partir de autonomia L5.
 
 ## 12. Coverage final
 
@@ -253,6 +283,11 @@ STANDALONE_FOUNDATION
 ARCHITECTURE_PATTERNS
 PORTAL_CONTEXT
 INTELLIGENCE
+MULTIMODAL_MEDIA
+MEETING
+FRONTLINE
+PRIVACY_SHARED_DEVICE
+INDUSTRIAL_OT_SAFETY
 BUSINESS_READS_GRAPH
 GOVERNED_WRITES_DURABLE
 PRODUCT_WORK_PROACTIVITY
