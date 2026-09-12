@@ -13,7 +13,7 @@ Entrada principal: [`README.md`](./README.md).
 7. [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md) — gates/tests.
 8. [`21-data-and-state-model.md`](./21-data-and-state-model.md) — state/persistence.
 9. [`23-prompt-cursor-execucao.md`](./23-prompt-cursor-execucao.md) — prompt mestre.
-10. [`25-requirements-traceability.md`](./25-requirements-traceability.md) — requirements CP-*.
+10. [`25-requirements-traceability.md`](./25-requirements-traceability.md) — requirements `CP-001…CP-154`.
 11. [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) — execution evidence/status.
 
 ## Produto/arquitetura
@@ -28,12 +28,13 @@ Entrada principal: [`README.md`](./README.md).
 - [`24-product-specification.md`](./24-product-specification.md)
 - [`48-documentation-governance-and-architecture-review.md`](./48-documentation-governance-and-architecture-review.md)
 
-## Specs temáticas
+## Specs temáticas ativas
 
 - `03–11` capabilities/platform/context/actions/workflows/security/UX/AI-ready/observability
 - `18` app onboarding
 - `26` iframe bridge
 - `27–30` Copilot único/expertise/playbooks/multimodal
+- `32` runtime nativo de Expertise da Copilot API
 - `33` reference expertise pilots
 - `34` market benchmark
 - `35` Business Graph
@@ -45,26 +46,28 @@ Entrada principal: [`README.md`](./README.md).
 - `41` Expertise Studio
 - `42` Model Router
 - `43` Durable Workflow
+- `44` mapa temático da inteligência operacional, subordinado ao `16`
 
 ## Reference/superseded
 
-- `31` antigo plano de migração de agents do Chat — **SUPERSEDED**
-- `32` permanece spec de expertise, porém sua versão atual é standalone/native
-- `44–47` tracks/extensions históricos; não definem ordem/requirements/tests/prompt.
+- `31` antigo plano de migração de agents do Chat — **SUPERSEDED / REFERENCE_ONLY**
+- `45` antiga extensão de testing gates — **SUPERSEDED / REFERENCE_ONLY**
+- `46` antiga extensão de requirements — **SUPERSEDED / REFERENCE_ONLY**
+- `47` antiga extensão do prompt Cursor — **SUPERSEDED / REFERENCE_ONLY**
 
 ## Regra rápida
 
 ```text
-what next?        → 16
-product boundary? → 50
-who owns it?      → 17
-how to build?     → 49
-platform facts?   → 51
-where/how boot?   → 52
-state?            → 21
-how to prove?     → 20
-which requirement?→ 25
-what is executed? → ledger
+what next?         → 16
+product boundary?  → 50
+who owns it?       → 17
+how to build?      → 49
+platform facts?    → 51
+where/how boot?    → 52
+state?             → 21
+how to prove?      → 20
+which requirement? → 25
+what is executed?  → ledger
 ```
 
-Nenhuma spec temática pode reintroduzir dependência de runtime no Minha DELPI Chat.
+Nenhuma spec temática pode reintroduzir dependência de runtime no Minha DELPI Chat nem redefinir a fase indicada pelo `16`.
