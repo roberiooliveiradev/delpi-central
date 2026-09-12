@@ -1,12 +1,12 @@
 # Minha DELPI Copilot — Governança Documental e Revisão Arquitetural
 
 **Status:** canônico para precedência documental  
-**Revisão:** foundation-first + standalone application + multimodal/Meeting/Frontline boundary  
+**Revisão:** foundation-first + standalone application + multimodal/Meeting/Frontline + biometric/Human Observation boundary  
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
 
 ## 1. Objetivo
 
-Evitar que a documentação gere ordens, owners, contracts, patterns ou product/privacy/safety boundaries concorrentes.
+Evitar que a documentação gere ordens, owners, contracts, patterns ou product/privacy/identity/safety boundaries concorrentes.
 
 ## 2. Precedência
 
@@ -20,18 +20,18 @@ Em caso de conflito:
 5. 49 — architecture/patterns
 6. 51 — factual platform integration baseline
 7. 52 — repository/bootstrap target
-8. 21 — state/persistence/media refs
+8. 21 — state/persistence/media/biometric refs
 9. 20 — tests/gates
 10. 25 — CP requirements
 11. 02 — technical target
 12. 24 — product target
-13. thematic specs, incluindo 53
+13. thematic specs, incluindo 53 e 54
 14. ledger — current execution/evidence
 ```
 
 O ledger registra estado; não redefine arquitetura.
 
-`53` detalha a visão multimodal/Meeting/Frontline/industrial, porém não cria ordem paralela ao `16` nem authority de safety diferente dos owners industriais.
+`53` detalha a visão multimodal/Meeting/Frontline/industrial. `54` detalha biometric identity e Human Observation. Nenhum dos dois cria ordem paralela ao `16`, permission authority paralela ao Core ou safety authority paralela aos owners industriais.
 
 ## 3. Authorities operacionais
 
@@ -44,9 +44,9 @@ O ledger registra estado; não redefine arquitetura.
 | `51` | baseline factual Portal/Core/APIs/MFEs/infra + gaps a inventariar |
 | `52` | estrutura física/bootstrap standalone |
 | `20` | tests/gates |
-| `21` | state/persistence/media refs |
+| `21` | state/persistence/media/biometric refs |
 | `23` | prompt mestre Cursor |
-| `25` | requirements `CP-001…CP-181` |
+| `25` | requirements `CP-001…CP-193` |
 | ledger | execution/evidence current |
 
 ## 4. Authorities conceituais
@@ -70,7 +70,7 @@ O ledger registra estado; não redefine arquitetura.
 05 workspace context
 06 business parity
 07 workflows
-08 security/autonomy/privacy/safety
+08 security/autonomy/privacy/biometric/safety
 09 UX
 10 AI-ready
 11 observability/evals
@@ -91,9 +91,10 @@ O ledger registra estado; não redefine arquitetura.
 43 Durable Workflow
 44 operational intelligence thematic map
 53 multimodal/Meeting/Frontline/industrial Copilot
+54 biometric identity/Human Observation governance
 ```
 
-Specs não podem redefinir `16/50/49` nem criar owner paralelo de RBAC/domain/industrial safety.
+Specs não podem redefinir `16/50/49`, criar owner paralelo de RBAC/domain/industrial safety ou transformar biometric association em identity/permission authority.
 
 ## 6. Superseded/reference only
 
@@ -106,7 +107,7 @@ Specs não podem redefinir `16/50/49` nem criar owner paralelo de RBAC/domain/in
 
 Esses arquivos existem apenas para compatibilidade/histórico. Não desbloqueiam trabalho nem tornam o Chat dependência do Copilot.
 
-O documento `32` é **ativo** e descreve o runtime nativo de Expertise da Copilot API. O documento `44` também é **ativo como mapa temático**, mas é totalmente subordinado ao `16`. O documento `53` é **ativo como spec temática** e sua sequência é materializada somente por `16`.
+O documento `32` é **ativo** e descreve o runtime nativo de Expertise da Copilot API. O documento `44` também é **ativo como mapa temático**, mas é totalmente subordinado ao `16`. `53` e `54` são **specs temáticas ativas**, com sequência materializada somente por `16`.
 
 ## 7. Reading minimization
 
@@ -132,19 +133,21 @@ ledger
 52
 02
 19 when infra/deploy/migration is involved
-53 when media/device/privacy/Meeting/Frontline/OT is being inventoried (C0.S0 includes it)
+53 when media/device/privacy/Meeting/Frontline/OT is being inventoried
+54 when photo/voice identity, enrollment, biometric storage, liveness or Human Observation is material
 ```
 
-### State/persistence/media retention
+### State/persistence/media/biometric retention
 
 ```text
 21
 53 when media lifecycle is material
+54 when biometric enrollment/template/person-observation lifecycle is material
 ```
 
 ### Feature implementation
 
-Somente specs temáticas do step corrente; Meeting/Frontline/media steps sempre incluem `53`.
+Somente specs temáticas do step corrente. Meeting/Frontline/media steps incluem `53`; biometric/Human Observation steps incluem `54`.
 
 Isso evita carregar 50+ docs a cada iteração sem perder authorities.
 
@@ -183,7 +186,7 @@ Removido. OpenAPI-first/Action Catalog/planner são construídos nativamente na 
 Corrigido. C1 prova API/MFE/Core/Gateway/Portal independentes antes de C3 Intelligence Core.
 
 ### F11 — Portal boundary could become blurred
-Portal é host/router/context/Platform Command executor. AI/media intelligence pertence à Copilot API.
+Portal é host/router/context/Platform Command executor. AI/media/biometric intelligence pertence à Copilot API.
 
 ### F12 — Shared infra versus product code
 Reuse permitido para componentes neutros (`plugin-ui`, federation, Core, Gateway, Keycloak, approved shared libraries/media infrastructure). Reuso de internals do Chat é proibido.
@@ -213,7 +216,18 @@ Corrigido. Copilot não é safety controller; L5 não concede OT. Free-form LLM�
 Corrigido. Visual finding é Evidence/Hypothesis por default; critério oficial de inspeção/medição/quality owner permanece authoritative salvo capability automática explicitamente validada.
 
 ### F21 — Frontline poderia virar vigilância implícita
-Corrigido. Hidden capture, facial recognition, emotion detection e hidden individual scoring/surveillance ficam fora do default scope e são blockers quando introduzidos sem decisão/policy explícita.
+Corrigido. Hidden capture, hidden identity recognition e hidden individual scoring/surveillance são blockers. Captura e identity recognition precisam ser explícitas/policy-bound.
+
+### F22 — Proibição total de reconhecimento facial bloquearia casos úteis de identidade
+Corrigido. `54` substitui a proibição genérica por uma capability biométrica governada: **closed-set recognition/verification de usuários conhecidos/enrolled**, com purpose, template protection, confidence, unknown fallback, correction, revocation e liveness quando necessário.
+
+Biometric match nunca se torna login/RBAC automaticamente.
+
+### F23 — “Analisar pessoas” poderia virar inferência subjetiva/sensível
+Corrigido. Human Observation pode analisar comportamentos **observáveis e relacionados ao processo**, produzindo Evidence/Hypothesis. Personality, honesty/trustworthiness, emotion-as-truth, health/diagnosis, sensitive attributes e global professional fitness ficam fora do comportamento default.
+
+### F24 — Biometria poderia contaminar decisão trabalhista
+Corrigido. Biometric/Human Observation não são authority automática de contratação, promoção, punição, remuneração, avaliação formal, suspensão ou desligamento. Evidence operacional pode subsidiar processo humano separado sob owner/governance adequados.
 
 ## 9. Foundation invariants
 
@@ -224,7 +238,8 @@ one product runtime → Copilot API
 one product MFE → Copilot MFE
 four surfaces → same runtime/policy/state model
 one platform RBAC authority → Core
-one identity authority → Keycloak
+one corporate identity authority → Keycloak/Core
+biometric identity → candidate association only
 one navigation authority → Portal
 one business source → corresponding Domain API
 one action technical source → Domain OpenAPI
@@ -233,12 +248,15 @@ one Evidence model → EvidenceRef
 one Entity ref model → EntityRef
 one workspace context model → WorkspaceContext
 MediaRef → only if C0 proves need
+Biometric refs → only if C0 proves need
 one Decision model → DecisionGate
 one Workflow runtime → Copilot durable orchestration
 one event envelope → EventEnvelope
 one concrete wiring boundary → Composition Root
 user identity != device identity
-raw media retention → explicit class/policy only
+biometric candidate != authenticated session
+raw media/template retention → explicit class/policy only
+Human Observation → observable process evidence only
 process learning → candidate only until governed publish
 industrial safety authority → external industrial owner
 free-form LLM machine actuation → blocked
@@ -254,6 +272,7 @@ Status: canonical authority | thematic spec | reference | superseded
 Order authority: 16-execution-master-plan.md
 Standalone boundary: 50 when runtime/product relevant
 Multimodal/Meeting/Frontline: 53 when relevant
+Biometric/Human Observation: 54 when relevant
 ```
 
 A thematic doc may not:
@@ -264,27 +283,30 @@ A thematic doc may not:
 - create another Cursor master prompt;
 - redefine shared primitive silently;
 - introduce Chat runtime dependency;
-- move AI/media intelligence into Portal;
-- create duplicate Core/domain authority;
+- move AI/media/biometric intelligence into Portal;
+- create duplicate Core/domain/user authority;
 - create separate Meeting/Frontline business executors;
 - create `FrontlineContext` incompatible with WorkspaceContext;
-- make capture implicit;
-- make raw-media retention default;
-- convert device identity into user authorization;
-- create hidden surveillance;
+- make capture/identity recognition implicit;
+- make raw-media/biometric-template retention default;
+- convert device/biometric candidate into user authorization;
+- introduce open-world person recognition without explicit new governance decision;
+- infer personality/emotion/honesty/health/sensitive attributes from biometrics as product truth;
+- create hidden worker scoring/profiling;
+- create automatic employment decision from biometrics/Human Observation;
 - weaken industrial safety/interlocks;
 - infer OT permission from Copilot autonomy.
 
 ## 11. Current executable state
 
 ```text
-C0.S0 platform/monorepo/media/device/OT inventory
+C0.S0 platform/monorepo/media/device/biometric/OT inventory
 → C0.S1 standalone boundary/names
 → C0.S2 authorities
-→ C0.S3 primitives/MediaRef decision
-→ C0.S4 architecture/persistence/privacy/media boundaries
+→ C0.S3 primitives/MediaRef/biometric-ref decisions
+→ C0.S4 architecture/persistence/privacy/media/biometric boundaries
 → C0.S5 integration contracts
-→ C0.S6 RED harness incl. privacy/device/OT negatives
+→ C0.S6 RED harness incl. privacy/device/biometric/OT negatives
 → C0.S7 FOUNDATION_FREEZE
 → C1.S1 standalone API skeleton
 ```
