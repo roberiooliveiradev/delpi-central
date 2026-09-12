@@ -1,7 +1,8 @@
 # 02 — Arquitetura do Minha DELPI Copilot
 
 **Status:** arquitetura alvo canônica  
-**Ordem de construção:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
+**Ordem de construção:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Arquitetura de código/design patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)
 
 ## 1. Objetivo arquitetural
 
@@ -44,7 +45,7 @@ Domínios especializam o mesmo runtime por Expertise Packs, Domain Playbooks, Kn
 
 ## 3. Foundation-first
 
-A arquitetura é organizada em duas dimensões:
+A arquitetura é organizada em três dimensões:
 
 ### 3.1 Foundations compartilhadas
 
@@ -62,7 +63,26 @@ Event envelope
 Audit/Observability
 ```
 
-### 3.2 Features construídas sobre as foundations
+### 3.2 Foundations de arquitetura de código
+
+```text
+Clean Architecture
+Ports & Adapters
+DDD pragmático
+layer/dependency rules
+bounded contexts
+Pattern Decision Matrix
+error/result model
+event model
+state-machine rules
+persistence rules
+frontend state ownership
+resilience/idempotency rules
+migration/strangler rules
+Abstraction Gate
+```
+
+### 3.3 Features construídas sobre as foundations
 
 ```text
 Navigation
@@ -80,7 +100,7 @@ Simulation
 Model Routing
 ```
 
-Uma feature não pode redefinir foundation já existente.
+Uma feature não pode redefinir foundation já existente nem escolher architecture style/pattern concorrente silenciosamente.
 
 ## 4. Arquitetura macro
 
@@ -137,7 +157,7 @@ Owners:
 - iframe adapters;
 - Task/Case/Inbox UX.
 
-Responsável por apresentação/interação, não autorização real de negócio.
+Responsável por apresentação/interação, não autorização real de negócio nem durable business authority.
 
 ### 5.2 Intelligence Layer
 
@@ -166,7 +186,7 @@ Responsável por:
 - autonomy policy;
 - provider data policy;
 - limits/budgets;
-- confirmation/approval;
+- confirmation/approval como estados do Decision Gate;
 - audit requirements.
 
 LLM não relaxa policy.
@@ -195,6 +215,8 @@ Responsável por:
 - decision refs;
 - event resume;
 - Inbox materialization.
+
+Lifecycle complexo deve usar State Machine owner em vez de transições espalhadas.
 
 ## 6. Canonical pipeline
 
@@ -259,6 +281,8 @@ Core /me/apps
 → PlatformCommandResult
 ```
 
+Pattern principal: `Command + Handler + Adapter` com registry por comando genérico, nunca por app.
+
 Exemplos genéricos:
 
 - `portal.open_app`;
@@ -318,6 +342,8 @@ semantic intent
 → verified outcome
 ```
 
+Integração externa segue Port/Adapter quando boundary justificar; Repository não é wrapper genérico de HTTP.
+
 ## 11. Entity model e Business Graph
 
 ### EntityRef
@@ -338,6 +364,8 @@ EntityRefs + RelationshipRefs
 ```
 
 O graph pode materializar relações/cache, mas não virar sistema mestre de estoque, pedido, produto etc.
+
+Patterns: Ports & Adapters; Repository/index somente se existir materialização própria comprovada; Policy/Specification para regras combináveis de traversal quando justificadas.
 
 ## 12. Evidence/Provenance
 
@@ -372,6 +400,8 @@ Pack pode orientar:
 
 Não concede action/permission.
 
+Strategy para retrieval só existe se houver estratégias reais/intercambiáveis ou boundary comprovado; não por moda.
+
 ## 14. Domain Playbooks
 
 Playbook descreve método:
@@ -399,6 +429,8 @@ attachment
 
 Multimodal observation não é domain conclusion.
 
+Adapters protegem providers concretos; extraction Strategy só é criada quando native/OCR/VLM realmente constituírem estratégias intercambiáveis.
+
 ## 16. Decision Gates
 
 Modelo único de governança de decisão:
@@ -421,6 +453,8 @@ Inputs podem incluir:
 - autonomy;
 - approver requirements.
 
+Pattern principal: Policy + State Machine.
+
 ## 17. Durable Workflow
 
 ```text
@@ -435,6 +469,8 @@ WorkflowPlan
 
 Não cria novo HTTP/tool stack.
 
+Patterns principais: Application orchestration + State Machine + Idempotency; Saga somente se existirem múltiplos writes distribuídos e compensações reais.
+
 ## 18. Task / Case / Room / Inbox
 
 ### Task
@@ -442,6 +478,8 @@ Unidade de trabalho curta/média backed por workflow.
 
 ### Case
 Investigação/trabalho prolongado com entity/evidence/task/workflow refs.
+
+Aggregate/Repository só são criados se lifecycle/authority persistida própria forem comprovados.
 
 ### Room
 Colaboração humana + Copilot; preferir owner existente.
@@ -460,6 +498,8 @@ EventEnvelope
 ```
 
 ACT exige autonomia explícita e Decision Gate quando aplicável.
+
+Event-Driven só é usado quando existe fato/event owner real. Atomicidade state+event pode usar Transactional Outbox apenas se requisito e infraestrutura justificarem.
 
 ## 20. Organizational Knowledge e Learning
 
@@ -491,44 +531,108 @@ LONG_CONTEXT
 
 Considera privacy, availability, quality, latency, cost e output contract.
 
-## 22. Clean Architecture
+Pattern: Compute Policy + Strategy somente quando variação de modelo/provider estiver comprovada. Nome concreto do provider não deve vazar para Domain/Application.
 
-### Domain
+## 22. Arquitetura de código canônica
 
-- refs/value objects puros;
-- policy rules puras;
-- state machine semantics;
+A especificação normativa completa está em [`49`](./49-architecture-and-design-patterns-standard.md).
+
+### Backend
+
+```text
+Domain
+↑
+Application
+↑
+Interfaces / Adapters
+↑
+Infrastructure
+
+Composition Root conecta tudo.
+```
+
+#### Domain
+
+- entities/aggregates quando houver identidade/lifecycle real;
+- value objects/refs;
+- invariantes e policies puras;
+- specifications puras quando combináveis;
+- domain events quando representarem fatos reais;
 - sem DB/HTTP/LLM/framework.
 
-### Application
+#### Application
 
-- retrieve/compose/plan;
-- decision orchestration;
-- workflow/task/case use cases;
-- graph traversal use cases;
-- knowledge/evidence coordination.
+- Use Cases/Application Services;
+- orchestration;
+- ports;
+- decision/workflow/task/case/graph use cases;
+- sem SQL/client/provider concreto.
 
-### Infrastructure
+#### Interfaces
+
+- REST/SSE/event boundaries;
+- controllers;
+- DTOs;
+- mappers;
+- transport validation.
+
+#### Infrastructure
 
 - DB repositories;
 - vector/index;
-- OpenAPI importer/executor adapters;
+- OpenAPI/importer/executor adapters;
 - LLM/embedding/model providers;
-- event adapters;
+- event/outbox adapters;
 - multimodal adapters;
 - persistence/queues.
 
-### Interfaces
+#### Composition Root
 
-- REST/SSE/events;
-- Portal commands;
-- admin APIs.
+- DI/wiring concreto;
+- nenhum service interno instancia infraestrutura escondida.
 
-### Composition
+### Frontend
 
-- DI/wiring.
+```text
+ui
+state
+data
+```
 
-## 23. Scalability/generalization
+Owners de estado:
+
+```text
+server state           → query/cache layer existente
+workspace state        → Portal Workspace Context
+conversation state     → chat/copilot state
+local UI state         → component/hook
+durable business state → backend
+```
+
+## 23. Pattern Decision Matrix
+
+A matriz normativa está em `49`. Defaults principais:
+
+```text
+external dependency       → Port + Adapter
+application operation     → Use Case/Application Service
+owned persisted lifecycle → Repository
+complex lifecycle         → State Machine
+combinable rules          → Policy/Specification
+legacy incompatible model → Adapter + Anti-Corruption Layer
+legacy migration          → Strangler Fig
+platform command          → Command + Handler
+state + event atomicity   → Transactional Outbox quando necessário
+retryable write/resume    → Idempotency
+real async reaction       → Event-Driven
+real distributed writes   → Saga somente com compensações reais
+transport boundary        → DTO + Mapper
+wiring                    → Composition Root/DI
+```
+
+Strategy/Factory/Builder/CQRS e abstrações genéricas dependem do Abstraction Gate.
+
+## 24. Scalability/generalization
 
 A arquitetura precisa permitir:
 
@@ -540,7 +644,7 @@ A arquitetura precisa permitir:
 - novo iframe compatível sem app-specific command no core;
 - novo model/provider via Compute Policy, não `if` espalhado.
 
-## 24. Migration do legado agents
+## 25. Migration do legado agents
 
 ```text
 agent specialization → Expertise
@@ -550,9 +654,9 @@ project default agent → project preferences/context
 agent_id routing → temporary compatibility → removal
 ```
 
-Compatibilidade possui exit criteria.
+Padrão: Adapter + Anti-Corruption Layer + Strangler Fig + telemetry/evals + exit criteria.
 
-## 25. Anti-patterns proibidos
+## 26. Anti-patterns proibidos
 
 - second planner/tool executor;
 - agent por departamento como produto final;
@@ -566,9 +670,17 @@ Compatibilidade possui exit criteria.
 - DOM automation para Business Action;
 - CoT persistence;
 - permission derivada de prompt/context/pack;
-- model routing espalhado por feature.
+- model routing espalhado por feature;
+- framework/provider concreto em Domain/Application;
+- durable business state com authority no frontend;
+- Repository como simples proxy HTTP;
+- `Manager/Helper/Utils/Service` genérico acumulando responsabilidades;
+- Strategy/Factory/Builder/CQRS/Saga/Event Sourcing sem justificativa;
+- retry cego de write;
+- EventBus sem schema/owner;
+- dual-read/dual-write permanente.
 
-## 26. Architecture success scenario
+## 27. Architecture success scenario
 
 > “Investigue esta reclamação, analise o desenho, relacione produção e fornecedor, monte um 8D, acompanhe a nova revisão e, quando ela chegar, reavalie e prepare as ações necessárias.”
 
@@ -587,4 +699,4 @@ Context
 + Audit
 ```
 
-sem trocar de agente e sem criar authorities paralelas.
+sem trocar de agente, sem criar authorities paralelas e sem mudar de architecture style/pattern a cada feature.
