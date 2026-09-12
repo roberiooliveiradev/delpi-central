@@ -1,8 +1,12 @@
 # 06 — Business Action Parity
 
+**Status:** thematic spec  
+**Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)
+
 ## 1. Objetivo
 
-Garantir que toda operação material disponível na UI possua um use case/API reutilizável pelo Copilot sob as mesmas regras de negócio e autorização.
+Garantir que toda operação material disponível na UI possua use case/API reutilizável pelo Copilot sob as mesmas regras de negócio e autorização.
 
 > Se a UI consegue executar uma ação de negócio, o Copilot deve conseguir usar o mesmo contrato quando o usuário estiver autorizado — sem automatizar a tela.
 
@@ -16,7 +20,7 @@ Copilot
 → clica salvar
 ```
 
-Não é arquitetura padrão. Se não existir API/use case, o gap deve ser tratado no domínio; browser/DOM workaround exige decisão excepcional explícita e não torna a operação AI-ready.
+Se não existir API/use case, o gap pertence ao domínio. DOM/browser workaround não torna a operação AI-ready.
 
 ## 3. Padrão correto
 
@@ -28,7 +32,25 @@ UI ──────────────┐
 Copilot ─────────┘
 ```
 
-## 4. Requisitos Copilot-ready
+## 4. Runtime standalone
+
+A cadeia é implementada **na nova Copilot API**, diretamente sobre Domain OpenAPIs/APIs.
+
+```text
+Domain OpenAPI
+→ Copilot importer/Action Catalog
+→ authorized Capability Projection
+→ retrieval/planner
+→ schema/argument validation
+→ policy/Decision Gate
+→ generic executor
+→ Domain API
+→ Outcome/Evidence
+```
+
+Não usar `minha-delpi-ai-api` como proxy/runtime.
+
+## 5. Requisitos Copilot-ready
 
 Uma operação deve possuir, conforme aplicável:
 
@@ -47,9 +69,9 @@ Uma operação deve possuir, conforme aplicável:
 - outcome verificável;
 - entity/source metadata suficiente para presentation/evidence.
 
-## 5. Reads
+## 6. Reads — C4
 
-C3 libera generic reads somente após gates OpenAPI-first aplicáveis.
+C4 libera generic reads após C3 estabilizar o Intelligence Core/OpenAPI Action foundation.
 
 Reads devem:
 
@@ -59,11 +81,9 @@ Reads devem:
 - registrar source/freshness/evidence quando material;
 - não mutar estado inesperadamente.
 
-## 6. Writes
+## 7. Writes — C5
 
-C4 libera writes após Decision Gate foundation existir.
-
-Fluxo:
+C5 libera writes após reads/evidence C4 e Decision Gate contracts C0.
 
 ```text
 intent
@@ -79,11 +99,9 @@ intent
 → evidence/audit/deep link
 ```
 
-## 7. Decision Gate
+## 8. Decision Gate
 
-Não usar um booleano `requiresConfirmation` como modelo final.
-
-Policy pode resultar em:
+Não usar boolean `requiresConfirmation` como modelo final.
 
 ```text
 NO_GATE
@@ -94,63 +112,40 @@ APPROVAL_WORKFLOW
 BLOCK
 ```
 
-Decision deve estar vinculada a arguments/evidence/impact relevantes e expirar/invalidate conforme contrato.
+Decision vincula arguments/evidence/impact e possui expiry/invalidation semantics.
 
-## 8. Destructive/high-risk
+## 9. High-risk/destructive
 
-Ações como:
+Cancelamento, exclusão, rejeição irreversível, aprovação de alto impacto e alteração financeira/sensível podem exigir gate/approver/audit mais forte.
+
+## 10. Formulário não é contrato
+
+Schema vem do Domain API/use case, não da tela.
 
 ```text
-cancelar
-excluir
-rejeitar irreversivelmente
-aprovar alto impacto
-alterar dado financeiro sensível
+User request
+→ grounded fields
+→ required missing
+→ clarify only missing
+→ Decision Gate when required
+→ Domain API
 ```
 
-podem exigir gate mais forte, approver e audit reforçado.
-
-## 9. Formulário não é contrato
-
-O schema vem do use case/API.
-
-Exemplo:
+## 11. Validation
 
 ```text
-User: “Crie uma solicitação de matéria-prima para o item X, prioridade alta.”
-
-API requires:
-item
-reason
-priority
-unit
-
-Grounded:
-item + priority
-Missing:
-reason + unit
-→ clarify somente missing required
-→ Decision Gate quando policy exigir
-→ execute
-```
-
-## 10. Validation
-
-```text
-AI binder/validator
-→ early feedback
+Copilot binder/validator
+→ early structured validation
 
 Domain API/use case
-→ definitive validation/business authority
+→ definitive business validation/authority
 ```
 
-Não relaxar backend rules para IA.
+## 12. Outcome/Evidence
 
-## 11. Outcome e Evidence
+Write só é narrado como executado após outcome real.
 
-Write só pode ser narrado como executado após outcome real.
-
-Possíveis estados/erros:
+Errors/states podem incluir:
 
 ```text
 validation_error
@@ -167,53 +162,48 @@ business_rule_violation
 partial_failure
 ```
 
-Ambiguous outcome exige verificação/reconciliation antes de retry cego.
+Ambiguous outcome requer reconciliation antes de retry.
 
-## 12. Idempotency
+## 13. Idempotency
 
-Preferir garantia do domínio.
+Preferir garantia do domínio. Retry write somente com idempotency comprovada ou reconciliation segura.
 
-Retry write somente quando:
+Essas semantics nascem em C0 e são usadas por C5 Durable Work.
 
-- idempotency suportada/provada; ou
-- reconciliation demonstra que efeito não ocorreu e policy permite.
+## 14. Coverage matrix por app
 
-Isso é necessário para Durable Workflow/reload futuro e por isso semantics são definidas em C0.
-
-## 13. Coverage matrix por app
-
-| UI function | Use case/API | OpenAPI | Permission | Risk | Decision Gate | Idempotency | Outcome/Evidence | AI-ready level |
+| UI function | Domain API/use case | OpenAPI | Permission | Risk | Decision Gate | Idempotency | Outcome/Evidence | AI-ready |
 |---|---|---|---|---|---|---|---|---|
 
-A matriz deve ser baseada em código/contratos reais.
+Matriz baseada em código/contratos reais durante onboarding.
 
-## 14. Ordem canônica de parity
+## 15. Ordem canônica
 
 ```text
-C3 reads de alto valor
-→ cross-domain reads/Graph
-→ C4 prepare/Decision Gate
-→ non-destructive writes
-→ approvals/high-risk/destructive
-→ C5 composição durável
+C3 intelligence/action foundation
+→ C4 reads + Graph
+→ C5 prepare/Decision Gate/non-destructive writes
+→ C5 high-risk writes when gates pass
+→ C5 durable foundation
+→ C6 Tasks/Cases/Watch composition
 ```
 
-Não implementar “create request demo” antes da foundation de Decision/idempotency só para demonstrar write.
+Não criar write-demo antes das foundations.
 
-## 15. Iframe
+## 16. Iframe
 
-Mesmo que a UI esteja em iframe:
+Mesmo com UI em iframe:
 
 ```text
-Copilot → Business Action/API
+Copilot → Domain API Business Action
 ```
 
 Nunca `view.click_button` como substituto.
 
-## 16. Generalization
+## 17. Generalization
 
-Novo endpoint/provider semanticamente bem descrito e permitido deve funcionar pelo pipeline genérico sem selector específico por path/provider/opId.
+Novo OpenAPI/provider semanticamente descrito e autorizado deve funcionar pelo pipeline genérico sem selector por path/provider/opId.
 
-## 17. Benefício
+## 18. Benefício
 
-Paridade bem implementada melhora simultaneamente UI, integrações, automação, workflow e Copilot porque força o negócio para contracts reutilizáveis e verificáveis.
+Parity melhora simultaneamente UI, integrações, automação e Copilot porque força o negócio para contratos reutilizáveis, verificáveis e owner-driven.
