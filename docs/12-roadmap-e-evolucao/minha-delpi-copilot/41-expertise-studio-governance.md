@@ -2,7 +2,8 @@
 
 **Status:** thematic admin spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Runtime phase:** C6, após Expertise/Playbook runtime C2 e operational cutover C4 estarem estáveis.
+**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
+**Runtime phase:** C6.S8, após Expertise/Playbook runtime próprio da Copilot API em C3 estar estável.
 
 ## 1. Conceito
 
@@ -131,15 +132,20 @@ Feedback não publica mudança automaticamente.
 ## 11. Implementation mapping
 
 ```text
-C0 → Pack/Playbook contracts/lifecycle semantics
-C2 → runtime catalog/retrieval outside Studio UX
-C6 → Studio admin capability + governance workflows
+C0 → Pack/Playbook contracts/lifecycle/persistence boundaries
+C3.S6–S7 → Copilot-owned Expertise/Playbook runtime outside Studio UX
+C6.S7 → Governed Learning candidate pipeline
+C6.S8 → Expertise Studio admin capability + governance workflows
 C7 → optimization/rollout refinements
 ```
 
-Não iniciar “MVP Studio storage” antes de C6 só porque a UI ainda não existe; C0/C2 owners devem ser reutilizados, não duplicados.
+Não iniciar “MVP Studio storage” antecipadamente. O Studio administra o mesmo owner/catálogo criado para o runtime standalone da Copilot API.
 
-## 12. Anti-patterns
+## 12. Independence
+
+O Studio não migra, edita nem publica Agents/Skills do Minha DELPI Chat. Conteúdo do Chat pode apenas servir como referência histórica durante C0 quando houver valor comprovado.
+
+## 13. Anti-patterns
 
 - arbitrary prompt publish sem review;
 - Expertise as permission;
@@ -148,8 +154,9 @@ Não iniciar “MVP Studio storage” antes de C6 só porque a UI ainda não exi
 - endpoint technical catalog;
 - publish após um único manual example;
 - Studio repository paralelo ao Expertise Catalog canônico;
-- lifecycle próprio diferente do runtime catalog.
+- lifecycle próprio diferente do runtime catalog;
+- CRUD de Agent legado disfarçado de Expertise Studio.
 
-## 13. Gate
+## 14. Gate
 
-Studio só passa quando administra o **mesmo** Pack/Playbook owner usado pelo runtime, com RBAC, versioning, eval, audit e rollback.
+Studio só passa quando administra o **mesmo** Pack/Playbook owner usado pela Copilot API, com RBAC, versioning, eval, audit e rollback.
