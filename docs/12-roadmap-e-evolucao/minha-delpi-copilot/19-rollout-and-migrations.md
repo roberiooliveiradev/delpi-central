@@ -2,6 +2,7 @@
 
 **Status:** plano operacional  
 **Autoridade de ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Arquitetura/patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
 **Princípio:** incremental, reversível, observável e foundation-first. Sem big-bang.
 
 ## 1. Estratégia
@@ -20,6 +21,8 @@ infra existente de events/jobs/rooms/notifications
 
 Novo serviço/storage somente com gap provado em C0 e ADR quando material.
 
+Architecture style/pattern não muda por release. O que foi congelado em C0 permanece authority; exceção exige decisão arquitetural explícita.
+
 ## 2. Releases alinhadas a C0–C7
 
 ### R0 — Foundation Freeze
@@ -29,15 +32,27 @@ Corresponde a C0.
 Entrega:
 
 - inventário/ownership;
+- inventário dos patterns/layers/DI/error/event/state/resilience/migration atuais;
 - shared primitives/contracts;
 - ports/persistence boundaries;
+- architecture style validado;
+- layer/dependency rules;
+- bounded contexts;
+- Pattern Decision Matrix;
+- Abstraction Gate;
+- error/result model;
+- event/state-machine rules;
+- frontend state ownership;
+- resilience/idempotency;
+- migration/Strangler/ACL rules;
+- architectural exception/ADR process;
 - versioning/correlation/error/idempotency semantics;
-- contract harness;
-- zero duplicate authority material.
+- contract + architecture conformance harness;
+- zero duplicate authority/foundation material.
 
 Sem feature UX final necessária.
 
-**Gate:** `FOUNDATION_FREEZE=PASS`.
+**Gate:** `FOUNDATION_FREEZE=PASS` com os gates arquiteturais do `16/49`.
 
 ### R1 — Platform/Context
 
@@ -52,6 +67,8 @@ Entrega:
 - MFE adapter;
 - iframe base/handshake;
 - contextual UX.
+
+Padrões: Command + Handler + Adapter; sem handler específico por app no core.
 
 Rollout interno/canary.
 
@@ -69,6 +86,8 @@ Entrega:
 - epistemic synthesis;
 - shadow agent migration com exit criteria.
 
+Migração legada usa Adapter/Anti-Corruption Layer/Strangler. Strategy só quando variação real justificar.
+
 Pode rodar sem Business Actions production-ready.
 
 ### R3 — Business Reads + Graph
@@ -85,6 +104,8 @@ Entrega:
 - Business Graph mínimo;
 - cross-domain analysis.
 
+Graph segue Ports & Adapters; storage/index novo somente com gap comprovado.
+
 Rollout read-only primeiro.
 
 ### R4 — Governed Writes
@@ -95,11 +116,13 @@ Entrega:
 
 - Decision Gate Engine;
 - impact preview;
-- confirmations/approvals;
+- confirmations/approvals como estados do mesmo lifecycle;
 - idempotency/concurrency;
 - generic writes;
 - outcome verification;
 - decoupling de agent activation/handoff.
+
+Padrões: Policy + State Machine + Idempotency. Retry cego de write é proibido.
 
 Começar com write não destrutivo de baixo/médio risco.
 
@@ -118,6 +141,8 @@ Entrega:
 - Inbox;
 - restart/resume safety.
 
+Padrões: Application orchestration + State Machine + Idempotency. Saga somente se houver múltiplos writes distribuídos e compensações reais.
+
 ### R6 — Proactivity/Ecosystem/Learning
 
 Corresponde a C6.
@@ -133,6 +158,8 @@ Entrega:
 - Expertise Studio;
 - admin/coverage.
 
+Watch usa event semantics canônicas; Expertise Studio usa use cases/lifecycle canônico.
+
 ### R7 — Optimization/Autonomy/Rollout
 
 Corresponde a C7.
@@ -146,7 +173,7 @@ Entrega gradual:
 - agent-routing cleanup;
 - progressive rollout/final verification.
 
-L5/ACT não são default.
+Model Router só introduz Strategy/Policy após baseline. L5/ACT não são default.
 
 ## 3. Feature flags
 
@@ -182,9 +209,11 @@ simulation/model routing
 
 Evitar flag por endpoint/app quando uma flag transversal/cohort resolve.
 
+Feature flag não autoriza manter duas architectures/authorities indefinidamente.
+
 ## 4. Migration policy
 
-Preferir:
+Preferir para schema/contrato:
 
 ```text
 EXPAND
@@ -196,25 +225,40 @@ EXPAND
 → CONTRACT/CLEANUP posterior
 ```
 
-Dual read/write somente se inevitável, com exit criteria.
+Para runtime/legado:
+
+```text
+Legacy
+→ Adapter / Anti-Corruption Layer
+→ canonical model
+→ telemetry/evals
+→ canary
+→ cutover
+→ residual scan
+→ remove legacy adapter
+```
+
+Isso implementa Strangler Fig quando aplicável.
+
+Dual read/write somente se inevitável, com owner + exit criteria + planned removal.
 
 ## 5. Migration planning por fase
 
 ### C0
 
-Não criar tabelas só porque o contrato existe. Definir boundaries e provar gaps.
+Não criar tabelas, repositories ou generic engines só porque o contrato existe. Definir boundaries, patterns e provar gaps.
 
 ### C2
 
-Possível persistence de Expertise/Playbook catalog somente se current owner não atender.
+Possível persistence de Expertise/Playbook catalog somente se current owner não atender. Legacy agent compatibility permanece atrás de ACL/adapter temporário.
 
 ### C3
 
-Graph pode exigir relationship/index store; não armazenar domain objects completos.
+Graph pode exigir relationship/index store; não armazenar domain objects completos. Repository só se o Graph possuir estado/materialização própria.
 
 ### C4
 
-Decision/approval persistence pode estender mecanismo existente.
+Decision/approval persistence pode estender mecanismo existente. Idempotência prefere owner da domain API.
 
 ### C5
 
@@ -231,18 +275,21 @@ Room/Inbox devem preferir owners/views existentes.
 
 Watch/Experience/Compute policy persistence somente quando runtime correspondente for implementado.
 
-## 6. Antes de qualquer migration
+## 6. Antes de qualquer migration ou nova abstração
 
-1. procurar owner/model/repository existente;
-2. provar necessidade durável;
+1. procurar owner/model/repository/adapter existente;
+2. provar necessidade durável ou boundary real;
 3. validar shared primitive C0;
-4. definir retention/LGPD;
-5. constraints/indexes;
-6. concurrency/idempotency;
-7. forward/backout path;
-8. tests;
-9. observability;
-10. confirmar que fase seguinte conhecida não exigirá remodelagem previsível.
+4. consultar Pattern Decision Matrix do `49`;
+5. passar pelo Abstraction Gate;
+6. definir retention/LGPD;
+7. constraints/indexes;
+8. concurrency/idempotency;
+9. forward/backout path;
+10. tests;
+11. observability;
+12. confirmar que fase seguinte conhecida não exigirá remodelagem previsível;
+13. se houver desvio do padrão canônico, registrar ADR/decisão antes de implementar.
 
 ## 7. Ordem de experiência para usuários
 
@@ -271,7 +318,7 @@ Conforme infraestrutura vigente:
 - feature family;
 - autonomy level.
 
-Cohort não concede business permission.
+Cohort não concede business permission nem flexibiliza architecture/security gates.
 
 ## 9. Rollback por camada
 
@@ -296,10 +343,19 @@ Desabilitar triggers; não perder audit/history.
 ### Model Router
 Voltar para policy/model baseline conhecido.
 
+### Legacy migration
+Rollback pode reativar caminho compatível somente enquanto sua janela/exit criteria estiverem ativos; não reintroduzir legacy como fallback permanente.
+
 ## 10. Stop-the-line
 
 - unauthorized action/data exposure;
 - duplicate authority/foundation drift;
+- architecture/pattern drift material;
+- dependency rule violation;
+- unjustified abstraction;
+- architectural exception sem ADR/decisão;
+- framework/provider concreto vazando para Domain/Application;
+- durable business authority no frontend;
 - write sem required Decision Gate;
 - duplicate write em retry/resume;
 - graph/room/case vazando source data;
@@ -315,9 +371,12 @@ Voltar para policy/model baseline conhecido.
 - phase COMPLETE_GATE PASS;
 - current SHA evidence;
 - required tests PASS;
+- architecture conformance PASS;
 - RBAC/security negatives PASS;
 - metrics/traces disponíveis;
 - rollback testado;
+- Abstraction Gate/evidence registrado para abstrações novas materiais;
+- ADR presente para exceções materiais;
 - no material legacy fallback no objetivo da release;
 - docs/ledger consistentes.
 
@@ -335,4 +394,4 @@ internal canary
 → progressive expansion
 ```
 
-Nunca usar rollout para ocultar foundation incompleta.
+Nunca usar rollout para ocultar foundation incompleta ou architecture drift.
