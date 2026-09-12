@@ -100,10 +100,26 @@ Copilot migrates Chat agent_id/chat_mode       = OUT_OF_SCOPE
 | 2026-09-12 | normative architecture/design patterns | PLAN_ONLY |
 | 2026-09-12 | **standalone decision: own API + own MFE, Chat fully decoupled** | PLAN_ONLY; docs only |
 | 2026-09-12 | Portal/Core/Gateway/APIs/MFE factual baseline documented | PLAN_ONLY; docs only |
+| 2026-09-12 | **documentation consistency cleanup:** phase drift removed from Decision/Durable/Knowledge/Studio/Model Router/Operational map/UX/Observability/Benchmark; `32` and `44` restored as active thematic specs; `31` and `45–47` remain superseded | PLAN_ONLY; docs only; audited through `4ba3ac8cd2928429901b22600a3a074257883a0a` before this ledger commit |
 
-Actual `HEAD_BEFORE` for runtime is captured at C0.S0.
+Actual `HEAD_BEFORE` for runtime is captured at C0.S0. Documentation-only commits do not advance execution status.
 
-## 7. Required C0.S0 inventory
+## 7. Canonical phase mapping after cleanup
+
+```text
+C0 → platform inventory + standalone boundary + shared foundations
+C1 → API/MFE/Manifest/Gateway/Compose/Portal bootstrap + Chat-offline independence
+C2 → Workspace Context + Platform Commands
+C3 → provider baseline + conversation + OpenAPI ingestion + capability retrieval + Expertise + Playbooks + Knowledge + Multimodal + Evidence + Planner
+C4 → generic business reads + Evidence normalization + Business Graph + cross-domain analysis
+C5 → Decision Gates + writes + Outcome verification + Durable Workflow/checkpoints/waits
+C6 → Task + Case + Room + Inbox + Watch OBSERVE/ADVISE + Organizational Knowledge/Learning + Expertise Studio + AI-ready ecosystem
+C7 → autonomy + Watch ACT + Simulation + Model Router + scale/rollout
+```
+
+Any thematic document diverging from this mapping is documentation drift and must be corrected against `16`.
+
+## 8. Required C0.S0 inventory
 
 ### Portal
 ```text
@@ -175,7 +191,7 @@ NOT_PROVEN
 OUT_OF_SCOPE
 ```
 
-## 8. Required C0 outputs
+## 9. Required C0 outputs
 
 - revalidated `51` baseline;
 - owners/contracts map;
@@ -191,19 +207,17 @@ OUT_OF_SCOPE
 
 No agent migration matrix is required.
 
-## 9. Requirements authority
+## 10. Requirements authority
 
 `25-requirements-traceability.md` is the single CP authority.
 
-New standalone range:
-
 ```text
-CP-141–CP-154
+CP-001–CP-154
 ```
 
-Historical Chat migration requirements remain `OUT_OF_SCOPE_WITH_DECISION`.
+Standalone additions are `CP-141–CP-154`. Historical Chat migration requirements remain `OUT_OF_SCOPE_WITH_DECISION`.
 
-## 10. Test authority
+## 11. Test authority
 
 `20-testing-and-acceptance-matrix.md`.
 
@@ -217,7 +231,7 @@ CHAT_OFFLINE_INDEPENDENCE
 INDEPENDENT_DEPLOY_ROLLBACK
 ```
 
-## 11. Event template
+## 12. Event template
 
 ```text
 DATE:
@@ -242,7 +256,7 @@ NEXT_UNLOCKED:
 NOTES:
 ```
 
-## 12. Allowed states
+## 13. Allowed states
 
 ```text
 NOT_STARTED
@@ -255,7 +269,7 @@ PASS
 LOCKED
 ```
 
-## 13. COMPLETE_GATE blockers
+## 14. COMPLETE_GATE blockers
 
 ```text
 PARTIAL
@@ -275,7 +289,7 @@ PORTAL_AI_LOGIC_LEAK
 DOMAIN_RULE_DUPLICATION
 ```
 
-## 14. First execution
+## 15. First execution
 
 Open `23-prompt-cursor-execucao.md` and execute **C0.S0 only**.
 
