@@ -2,23 +2,21 @@
 
 ## 1. Objetivo
 
-Garantir que toda operação relevante disponível na UI possua um contrato de negócio reutilizável pelo Copilot.
+Garantir que toda operação material disponível na UI possua um use case/API reutilizável pelo Copilot sob as mesmas regras de negócio e autorização.
 
-A regra é:
+> Se a UI consegue executar uma ação de negócio, o Copilot deve conseguir usar o mesmo contrato quando o usuário estiver autorizado — sem automatizar a tela.
 
-> Se a UI consegue executar uma ação de negócio, o Copilot deve conseguir executar a mesma ação por meio do mesmo use case/API, desde que o usuário tenha permissão.
-
-## 2. Anti-padrão que deve ser evitado
+## 2. Anti-padrão
 
 ```text
 Copilot
 → abre tela
-→ procura botão
+→ procura botão/input
 → preenche DOM
 → clica salvar
 ```
 
-Isso só é aceitável quando não existe outra integração possível e mediante decisão arquitetural explícita. O padrão normal é API/use case.
+Não é arquitetura padrão. Se não existir API/use case, o gap deve ser tratado no domínio; browser/DOM workaround exige decisão excepcional explícita e não torna a operação AI-ready.
 
 ## 3. Padrão correto
 
@@ -30,142 +28,192 @@ UI ──────────────┐
 Copilot ─────────┘
 ```
 
-## 4. Requisitos para uma operação ser Copilot-ready
+## 4. Requisitos Copilot-ready
 
-Uma operação deve possuir:
+Uma operação deve possuir, conforme aplicável:
 
-- owner de negócio claro;
-- use case único;
-- contrato HTTP ou capability interna tipada;
-- OpenAPI quando exposta via HTTP;
+- business owner;
+- use case/contract claro;
+- HTTP/API ou internal capability tipada;
+- OpenAPI quando HTTP;
 - input/output schema;
-- erros previsíveis;
-- permissões;
-- sensitivity;
-- confirmation policy;
-- idempotência quando aplicável;
-- auditoria/correlation id para writes;
-- testes de contrato;
-- apresentação genérica do resultado.
+- errors;
+- RBAC;
+- risk/sensitivity;
+- Decision Gate policy;
+- idempotency/concurrency semantics;
+- correlation/audit para writes;
+- tests;
+- outcome verificável;
+- entity/source metadata suficiente para presentation/evidence.
 
-## 5. Leituras
+## 5. Reads
 
-Reads devem ser preferencialmente seguros para execução direta quando autorizados.
+C3 libera generic reads somente após gates OpenAPI-first aplicáveis.
 
-Exemplos:
+Reads devem:
 
-```text
-consultar produto
-consultar estoque
-consultar pedido
-consultar solicitação
-consultar indicador
-consultar fornecedor
-```
+- validar schema/args;
+- revalidar authorization;
+- normalizar outcome;
+- registrar source/freshness/evidence quando material;
+- não mutar estado inesperadamente.
 
-## 6. Escritas
+## 6. Writes
 
-Writes devem passar por policy determinística.
+C4 libera writes após Decision Gate foundation existir.
 
-Exemplos:
+Fluxo:
 
 ```text
-criar solicitação
-alterar responsável
-registrar comentário
-editar cadastro
-aprovar item
+intent
+→ allowed action
+→ grounded arguments
+→ schema validation
+→ RBAC/policy
+→ impact preview
+→ Decision Gate
+→ revalidation
+→ execute
+→ verify outcome
+→ evidence/audit/deep link
 ```
 
-O planner propõe; policy decide confirmação e autorização.
+## 7. Decision Gate
 
-## 7. Operações destrutivas
+Não usar um booleano `requiresConfirmation` como modelo final.
 
-Devem possuir sensitivity explícita e confirmação forte.
+Policy pode resultar em:
 
-Exemplos:
+```text
+NO_GATE
+ACKNOWLEDGE
+CONFIRM
+REVIEW_AND_CONFIRM
+APPROVAL_WORKFLOW
+BLOCK
+```
+
+Decision deve estar vinculada a arguments/evidence/impact relevantes e expirar/invalidate conforme contrato.
+
+## 8. Destructive/high-risk
+
+Ações como:
 
 ```text
 cancelar
-arquivar definitivamente
 excluir
 rejeitar irreversivelmente
+aprovar alto impacto
+alterar dado financeiro sensível
 ```
 
-## 8. Formulários
+podem exigir gate mais forte, approver e audit reforçado.
 
-Formulário de UI não é o contrato da capability.
+## 9. Formulário não é contrato
 
-A capability deve derivar do schema do use case/API. O Copilot pode coletar os mesmos campos em linguagem natural.
+O schema vem do use case/API.
 
 Exemplo:
 
 ```text
-Usuário: “Crie uma solicitação de matéria-prima para o item X, prioridade alta.”
+User: “Crie uma solicitação de matéria-prima para o item X, prioridade alta.”
 
-Schema exige:
-- item
-- motivo
-- prioridade
-- unidade
+API requires:
+item
+reason
+priority
+unit
 
-Copilot possui item/prioridade
-→ pergunta somente motivo/unidade ausentes
-→ valida
-→ confirma se policy exigir
-→ executa
+Grounded:
+item + priority
+Missing:
+reason + unit
+→ clarify somente missing required
+→ Decision Gate quando policy exigir
+→ execute
 ```
 
-## 9. Validação
-
-A validação deve ocorrer em duas camadas:
+## 10. Validation
 
 ```text
-Copilot binder/validator
-→ feedback antecipado
+AI binder/validator
+→ early feedback
 
-API/use case
-→ autoridade definitiva
+Domain API/use case
+→ definitive validation/business authority
 ```
 
-Nunca relaxar regra do backend para facilitar a IA.
+Não relaxar backend rules para IA.
 
-## 10. Erros e recuperação
+## 11. Outcome e Evidence
 
-O Copilot deve distinguir:
+Write só pode ser narrado como executado após outcome real.
+
+Possíveis estados/erros:
 
 ```text
 validation_error
 permission_denied
 not_found
 conflict
+policy_blocked
+decision_required
+decision_expired
 provider_unavailable
 timeout
+ambiguous_outcome
 business_rule_violation
-confirmation_required
+partial_failure
 ```
 
-A resposta deve explicar o que aconteceu e oferecer recuperação coerente.
+Ambiguous outcome exige verificação/reconciliation antes de retry cego.
 
-## 11. Critério de cobertura
+## 12. Idempotency
 
-Cada app deve possuir uma matriz:
+Preferir garantia do domínio.
 
-| Função visível na UI | Use case/API | OpenAPI | Capability | Permission | Sensitivity | Copilot-ready |
-|---|---|---|---|---|---|---|
+Retry write somente quando:
 
-O objetivo de longo prazo é atingir paridade para todas as funções materiais.
+- idempotency suportada/provada; ou
+- reconciliation demonstra que efeito não ocorreu e policy permite.
 
-## 12. Prioridade de migração
+Isso é necessário para Durable Workflow/reload futuro e por isso semantics são definidas em C0.
 
-1. reads de alto uso;
-2. criação de solicitações;
-3. comentários/interações;
-4. updates reversíveis;
-5. aprovações;
-6. operações destrutivas;
-7. fluxos administrativos.
+## 13. Coverage matrix por app
 
-## 13. Benefício
+| UI function | Use case/API | OpenAPI | Permission | Risk | Decision Gate | Idempotency | Outcome/Evidence | AI-ready level |
+|---|---|---|---|---|---|---|---|---|
 
-A mesma evolução melhora UI, automação, integrações e IA porque força regras de negócio a saírem de componentes visuais e convergirem para contratos reutilizáveis.
+A matriz deve ser baseada em código/contratos reais.
+
+## 14. Ordem canônica de parity
+
+```text
+C3 reads de alto valor
+→ cross-domain reads/Graph
+→ C4 prepare/Decision Gate
+→ non-destructive writes
+→ approvals/high-risk/destructive
+→ C5 composição durável
+```
+
+Não implementar “create request demo” antes da foundation de Decision/idempotency só para demonstrar write.
+
+## 15. Iframe
+
+Mesmo que a UI esteja em iframe:
+
+```text
+Copilot → Business Action/API
+```
+
+Nunca `view.click_button` como substituto.
+
+## 16. Generalization
+
+Novo endpoint/provider semanticamente bem descrito e permitido deve funcionar pelo pipeline genérico sem selector específico por path/provider/opId.
+
+## 17. Benefício
+
+Paridade bem implementada melhora simultaneamente UI, integrações, automação, workflow e Copilot porque força o negócio para contracts reutilizáveis e verificáveis.
