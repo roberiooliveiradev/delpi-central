@@ -9,6 +9,7 @@
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
 **Patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
 **Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
+**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
 **DoD:** [`14-definition-of-done.md`](./14-definition-of-done.md)  
 **Testes:** [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md)  
 **Ledger:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
@@ -38,13 +39,13 @@ O Chat é apenas sistema vizinho/referência durante o inventário.
 
 ## 2. Objetivo foundation-first
 
-Evitar que inteligência, mídia ou experiência industrial sejam construídas antes de provar que a nova aplicação e seus boundaries estão corretamente integrados à plataforma.
+Evitar que inteligência, mídia, biometria ou experiência industrial sejam construídas antes de provar que a nova aplicação e seus boundaries estão corretamente integrados à plataforma.
 
 ```text
-PLATFORM + ARCHITECTURE + MEDIA/PRIVACY/OT FOUNDATIONS
+PLATFORM + ARCHITECTURE + MEDIA/PRIVACY/BIOMETRIC/OT FOUNDATIONS
 → STANDALONE APPLICATION BOOTSTRAP
 → PORTAL + OPERATIONAL CONTEXT / PLATFORM COMMANDS
-→ INTELLIGENCE CORE + MULTIMODAL FOUNDATIONS
+→ INTELLIGENCE CORE + MULTIMODAL/BIOMETRIC FOUNDATIONS
 → BUSINESS READS + GRAPH
 → GOVERNED WRITES + DURABLE FOUNDATION
 → PRODUCT WORK + MEETING/FRONTLINE + PROACTIVITY + ECOSYSTEM
@@ -64,6 +65,7 @@ PLATFORM + ARCHITECTURE + MEDIA/PRIVACY/OT FOUNDATIONS
 51 = current platform baseline
 52 = repo/bootstrap target
 53 = multimodal/Meeting/Frontline/industrial spec
+54 = biometric identity/Human Observation governance
 ledger = execution evidence/status
 ```
 
@@ -99,10 +101,13 @@ Specs temáticas não podem reabrir a decisão de usar Chat como base nem criar 
 26. Contexto industrial reutiliza WorkspaceContext/EntityRef; não cria authority paralela.
 27. Raw media retention exige purpose/policy explícitos; data minimization é default.
 28. Device identity não substitui user identity.
-29. Observação de processo gera candidate knowledge, nunca mudança automática de produção.
-30. Copilot não é safety controller; autonomia empresarial L5 não implica autoridade OT.
-31. Facial recognition/emotion detection/hidden worker surveillance não fazem parte do default scope.
-32. `PARTIAL`, `INCONCLUSIVE`, stale evidence, duplicate authority, Chat dependency, media/privacy violation ou OT safety violation bloqueiam fechamento.
+29. Biometric match não substitui authenticated session/Core permission.
+30. Reconhecimento facial/voz permitido somente como capability governada de usuários conhecidos/enrolled, com ambiguity/correction/revocation.
+31. Observação humana pode descrever padrões objetivos do processo, não inferir personalidade, honestidade, emoção como verdade, saúde, atributos sensíveis ou valor profissional global.
+32. Biometria/Human Observation não pode ser authority automática de contratação, promoção, punição, remuneração, avaliação formal ou desligamento.
+33. Observação de processo gera candidate knowledge, nunca mudança automática de produção ou perfil secreto de trabalhador.
+34. Copilot não é safety controller; autonomia empresarial L5 não implica autoridade OT.
+35. `PARTIAL`, `INCONCLUSIVE`, stale evidence, duplicate authority, Chat dependency, media/privacy/biometric violation ou OT safety violation bloqueiam fechamento.
 
 ## 5. Grafo canônico
 
@@ -116,7 +121,7 @@ C1 — Standalone Application Bootstrap
 C2 — Portal + Operational Context + Platform Commands
  |
  v
-C3 — Intelligence Core + Multimodal Foundations
+C3 — Intelligence Core + Multimodal/Biometric Foundations
  |
  v
 C4 — Business Reads + DELPI Business Graph
@@ -164,6 +169,7 @@ Inventariar com arquivo/símbolo/contrato/owner/consumer.
 - presence/app usage;
 - audit;
 - avatar/user metadata;
+- corporate photo/profile source, se existir;
 - integration/service auth patterns;
 - device/session registration patterns, se existirem.
 
@@ -175,6 +181,7 @@ Inventariar com arquivo/símbolo/contrato/owner/consumer.
 - Compose profiles/services;
 - postgres/storage patterns;
 - object/media storage;
+- encrypted sensitive storage/key-management patterns;
 - health checks;
 - sequential scripts;
 - env examples;
@@ -223,14 +230,14 @@ Inventariar APIs disponíveis e seus contratos:
 - meeting/room/collaboration artifacts existentes;
 - procedures/training sources.
 
-### Media/Meeting/Frontline inventory
+### Media/Meeting/Frontline/Biometric inventory
 
 Mapear factual e classificar:
 
 - browser audio/video capabilities;
 - speech/vision providers/config existentes;
 - file/object/media storage;
-- retention/LGPD policies atuais;
+- retention/privacy policies atuais;
 - recording/transcription patterns;
 - room hardware/processes relevantes;
 - shared workstations/tablets/kiosks;
@@ -239,7 +246,17 @@ Mapear factual e classificar:
 - network constraints no chão de fábrica;
 - accessibility/noise constraints;
 - existing camera/vision systems, se houver;
-- existing procedure/training systems.
+- existing procedure/training systems;
+- corporate avatar/photo sources;
+- voice sample sources, se existirem e forem aprovados;
+- biometric enrollment owner/process, se existir;
+- biometric template storage/key-management patterns;
+- identity matching/liveness/anti-spoof capabilities já existentes;
+- participant lists/presence sources;
+- governance owner para biometria/Human Observation;
+- prohibited inference classes e correction/revocation requirements.
+
+Nenhum item inexistente vira `PLATFORM_REUSE` por suposição.
 
 ### Industrial/OT inventory
 
@@ -285,6 +302,7 @@ Nunca classificar `minha-delpi-ai-api` como runtime base do Copilot.
 - shared infrastructure map;
 - existing rooms/events/notifications map;
 - media/device/meeting/frontline inventory;
+- biometric identity/Human Observation inventory;
 - privacy/retention owner inventory;
 - industrial/OT boundary inventory;
 - `17` atualizado;
@@ -311,6 +329,7 @@ health path
 admin paths
 streaming transport direction
 media storage ownership direction
+biometric storage ownership direction
 ```
 
 Target recomendado:
@@ -322,7 +341,7 @@ plugins/minha-delpi-copilot/
 /apps/minha-delpi-copilot-api
 ```
 
-Meeting/Frontline não criam novos product backends por default.
+Meeting/Frontline/Biometric não criam novos product backends por default.
 
 Mudança exige evidence/ADR.
 
@@ -335,6 +354,8 @@ identity/RBAC
 portal hosting/navigation
 workspace context
 device identity/session
+biometric enrollment/identity association
+human observation
 Copilot conversations
 capability discovery
 OpenAPI action catalog
@@ -355,6 +376,8 @@ model/provider policy
 privacy/consent/retention
 industrial/OT safety boundary
 ```
+
+Core continua authority do usuário corporativo; biometric subsystem apenas associa candidate `userRef`.
 
 ## C0.S3 — Freeze de shared primitives
 
@@ -377,13 +400,14 @@ Definir/reutilizar semanticamente:
 - `CaseRef`;
 - `EventEnvelope`;
 - audit contract;
-- `MediaRef` **somente se C0 provar necessidade transversal**.
+- `MediaRef` **somente se C0 provar necessidade transversal**;
+- `BiometricEnrollmentRef` / `BiometricIdentityCandidate` / `PersonObservationRef` **somente se C0 provar a forma correta e necessária**.
 
-Não criar `FrontlineContext` paralelo a WorkspaceContext nem outro Evidence model para mídia.
+Não criar `FrontlineContext` paralelo a WorkspaceContext, outro Evidence model para mídia ou outro modelo de usuário paralelo ao Core.
 
 C0 congela semântica; tabelas surgem apenas se necessárias.
 
-## C0.S4 — Freeze de arquitetura/patterns/persistence/privacy boundaries
+## C0.S4 — Freeze de arquitetura/patterns/persistence/privacy/biometric boundaries
 
 Aplicar `49` e congelar:
 
@@ -404,6 +428,10 @@ Aplicar `49` e congelar:
 - transient versus durable media;
 - consent/capture visibility;
 - retention classes;
+- biometric enrollment/template/association lifecycle;
+- threshold/unknown/correction/revocation semantics;
+- liveness/anti-spoof requirement criteria;
+- prohibited inference classes;
 - shared-device session isolation;
 - realtime budgets/backpressure direction;
 - OT safety non-authority.
@@ -421,6 +449,7 @@ Copilot MFE ↔ Copilot API
 Copilot API ↔ Core API
 Copilot API ↔ Domain APIs
 Copilot API ↔ AI/media providers/stores
+Copilot API ↔ biometric providers/storage when approved
 Copilot API ↔ notification/event adapters
 Device/session adapter ↔ Copilot
 Media capture surface ↔ Copilot media boundary
@@ -449,6 +478,12 @@ Antes do runtime:
 - hidden media capture negative;
 - undefined retention negative;
 - shared-device user-state leak negative;
+- biometric candidate granting permission negative;
+- low-confidence forced identity negative;
+- revoked enrollment still matching negative;
+- template/log leakage negative;
+- forbidden emotion/personality inference negative;
+- automatic employment decision from biometric/human observation negative;
 - voice modality authorization parity negative;
 - screen/camera injection negative;
 - arbitrary LLM→OT command negative.
@@ -467,6 +502,8 @@ ARCHITECTURE_PATTERNS = PASS
 PERSISTENCE_BOUNDARIES = PASS
 INTEGRATION_CONTRACTS = PASS
 MEDIA_PRIVACY_BOUNDARIES = PASS
+BIOMETRIC_IDENTITY_BOUNDARY = PASS
+HUMAN_OBSERVATION_BOUNDARY = PASS
 SHARED_DEVICE_BOUNDARY = PASS
 OPERATIONAL_CONTEXT_BOUNDARY = PASS
 OT_SAFETY_BOUNDARY = PASS
@@ -508,7 +545,8 @@ Objetivo: provar aplicação independente antes da inteligência.
 - bootstrap/mount/unmount;
 - typed host props;
 - responsive/accessibility baseline;
-- media permission state foundation sem auto-capture.
+- media permission state foundation sem auto-capture;
+- biometric capability UI OFF until C0/C3 gates permit it.
 
 ## C1.S4 — Manifest + Core registration path
 
@@ -597,9 +635,10 @@ Quando aplicável:
 
 - user current session;
 - device/workstation bounded metadata;
-- capability flags mic/camera/touch/screen;
+- capability flags mic/camera/touch/screen/biometric-ready;
 - user-switch/context-clear semantics;
-- device identity não concede RBAC.
+- device identity não concede RBAC;
+- biometric candidate não é user session.
 
 ## C2.S7 — Iframe integration baseline
 
@@ -611,7 +650,7 @@ Unauthorized/stale/F5/logout/user-switch/unknown app/iframe/URL arbitrary/send-s
 
 ---
 
-# C3 — Intelligence Core + Multimodal Foundations
+# C3 — Intelligence Core + Multimodal/Biometric Foundations
 
 Tudo nesta fase pertence à **Copilot API nova**.
 
@@ -659,19 +698,27 @@ speech-to-text
 text-to-speech
 short-video ingestion
 screen/camera evidence
+closed-set face recognition/verification when approved
+speaker recognition/diarization when approved
+bounded Human Observation when approved
 ```
 
 Cada provider atrás de port/adapter justificado.
 
 Mídia gera `EvidenceRef`/`MediaRef` conforme foundation, nunca novo evidence model.
 
-## C3.S10 — Media policy/session foundation
+Biometric result gera candidate association; não PermissionGrant.
 
-Quando voice/camera/video entrarem:
+## C3.S10 — Media/biometric policy/session foundation
 
-- explicit capture state;
+Quando voice/camera/video/biometric entrarem:
+
+- explicit capture/identity-recognition state;
 - transient versus retained media;
 - retention class enforcement;
+- biometric template lifecycle;
+- threshold/unknown/correction/revocation;
+- liveness/anti-spoof conforme finalidade;
 - media session lifecycle;
 - provider data policy;
 - stop/cleanup behavior;
@@ -681,15 +728,17 @@ Quando voice/camera/video entrarem:
 
 FACT/CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION.
 
-Visual/audio finding não vira fato autoritativo sem source/regra adequada.
+Visual/audio/human-observation finding não vira fato autoritativo sem source/regra adequada.
 
 ## C3.S12 — Structured planner
 
 Planner outputs typed plans, not technical content JSON leakage.
 
-## C3.S13 — Intelligence/multimodal generalization gate
+## C3.S13 — Intelligence/multimodal/biometric generalization gate
 
-Positive/sibling/negative/unknown/metamorphic/injection/budget/stream/voice/image/video parity.
+Positive/sibling/negative/unknown/metamorphic/injection/budget/stream/voice/image/video/identity parity.
+
+Biometric evals incluem false accept/reject, unknown-person handling, correction, revoke/delete, spoof/replay quando aplicável e permission-elevation negative.
 
 ---
 
@@ -721,9 +770,10 @@ operação ↔ procedimento
 máquina ↔ manutenção/eventos
 lote/material ↔ fornecedor/qualidade
 media/evidence ↔ entity refs
+person/user participation refs ↔ session/evidence only when necessary and authorized
 ```
 
-Sem duplicar master data.
+Sem duplicar master data ou criar pessoa como Graph authority paralela ao Core.
 
 ## C4.S6 — Cross-domain analysis
 
@@ -767,9 +817,10 @@ voice
 meeting transcript
 frontline session
 visual finding
+human observation
 ```
 
-entram no mesmo planner/Decision Gate/executor. Nenhuma modality executa write por canal paralelo.
+entram no mesmo planner/Decision Gate/executor. Nenhuma modality ou biometric match executa write por canal paralelo.
 
 ## C5.S7 — crash/retry/idempotency gate
 
@@ -803,6 +854,8 @@ Reference/Decision/Experience/Solution Patterns.
 
 feedback/meeting/process/frontline observation → candidate → eval → review → publish.
 
+Não persistir worker profiling secreto como aprendizado.
+
 ## C6.S8 — Expertise Studio
 
 ## C6.S9 — AI-ready app SDK/readiness
@@ -817,12 +870,14 @@ Entregar progressivamente:
 - voice/transcript;
 - live grounded business queries;
 - camera/screen/media when authorized;
+- closed-set face/speaker participant recognition quando habilitado;
+- ambiguity/correction UX;
 - decisions/pending topics;
 - candidate actions;
 - ata viva;
 - Task/Case/Room linkage;
 - next-meeting continuity;
-- retention/consent visibility.
+- retention/consent/identity-recognition visibility.
 
 ## C6.S11 — Frontline Mode
 
@@ -830,18 +885,20 @@ Entregar progressivamente:
 
 - simplified/large-touch UI;
 - shared-device session isolation;
+- biometric identity assistance quando habilitada;
 - OP/machine/product/operation context;
 - hands-free voice + fallback;
 - camera/image assistance;
+- bounded Human Observation of process patterns;
 - drawing/procedure/training help;
 - issue/escalation actions through Domain APIs;
 - knowledge candidate capture;
-- no hidden surveillance;
+- no hidden worker profiling;
 - no physical machine command path.
 
-## C6.S12 — ecosystem/proactivity/meeting/frontline gate
+## C6.S12 — ecosystem/proactivity/meeting/frontline/biometric gate
 
-Provar Meeting/Frontline surface parity de RBAC/policy/Evidence, accessibility, privacy, shared-device isolation e learning governance.
+Provar Meeting/Frontline surface parity de RBAC/policy/Evidence, accessibility, privacy, shared-device isolation, biometric correction/revocation, no sensitive inference, no automatic employment decisions e learning governance.
 
 ---
 
@@ -851,7 +908,7 @@ Provar Meeting/Frontline surface parity de RBAC/policy/Evidence, accessibility, 
 
 L5 OFF default.
 
-Autonomia empresarial não concede OT.
+Autonomia empresarial não concede OT nem reduz biometric/user authorization requirements.
 
 ## C7.S2 — Watch ACT
 
@@ -865,16 +922,17 @@ Only reproducible domain models.
 
 Only after baseline metrics.
 
-## C7.S5 — Advanced realtime/media
+## C7.S5 — Advanced realtime/media/biometric
 
 Somente com evidence real de valor e foundation já comprovada:
 
 - continuous voice session optimization;
 - advanced video/frame sampling;
+- optimized biometric matching;
+- edge processing de mídia/biometria quando necessário e aprovado;
 - concurrency/backpressure;
 - network degradation;
 - cost/latency budgets;
-- edge processing quando necessário;
 - room devices/wearables como extensões futuras.
 
 ## C7.S6 — Industrial/OT safety gate
@@ -902,11 +960,11 @@ Sem isso, todo free-form LLM→machine command = BLOCK.
 
 ## C7.S8 — Progressive rollout
 
-Internal → cohort → reads → writes → durable/proactive → Meeting/Frontline → selected autonomy/realtime.
+Internal → cohort → reads → writes → durable/proactive → Meeting/Frontline → governed biometrics → selected autonomy/realtime.
 
 ## C7.S9 — Final verification
 
-Security, privacy, accessibility, unknown/sibling/metamorphic, rollback, Chat independence, OT boundary.
+Security, privacy, accessibility, unknown/sibling/metamorphic, rollback, Chat independence, biometric governance, no sensitive inference, OT boundary.
 
 ## C7.S10 — Product Complete
 
@@ -930,20 +988,22 @@ fazer cutover do Minha DELPI Chat
 Também não pertence ao default scope:
 
 ```text
-facial recognition/emotion detection
-hidden employee surveillance
-unbounded raw-media retention
+open-world/indiscriminate facial recognition
+emotion/personality/character inference from face or voice
+hidden employee surveillance/scoring
+automatic employment decisions based on biometrics
+unbounded raw-media/biometric-template retention
 free-form LLM→machine control
 Copilot replacing industrial safety interlocks
 ```
 
-Esses itens exigiriam iniciativas/requisitos explícitos próprios se algum dia fossem considerados.
+Reconhecimento fechado de usuários enrolled e Human Observation objetiva pertencem ao roadmap somente sob `54`.
 
 ## 7. Protocolo por subetapa
 
 ```text
 REVALIDATE HEAD/WORKTREE
-→ read 16/17/20/25/49/50/51/52/53 + spec applicable
+→ read 16/17/20/25/49/50/51/52/53/54 + spec applicable
 → dependency gate
 → READY_TO_EXECUTE
 → baseline
@@ -951,7 +1011,7 @@ REVALIDATE HEAD/WORKTREE
 → producer/consumer wiring
 → unit/contract/integration
 → positive/sibling/negative
-→ security/RBAC/privacy/safety
+→ security/RBAC/privacy/biometric/safety
 → generalization/metamorphic/unknown when applicable
 → independence check against Chat
 → architecture conformance
@@ -963,7 +1023,7 @@ REVALIDATE HEAD/WORKTREE
 
 ## 8. Regra anti-refatoração
 
-Antes de criar service/schema/table/framework/media pipeline/device context/OT adapter:
+Antes de criar service/schema/table/framework/media pipeline/device context/biometric store/OT adapter:
 
 1. pertence ao Copilot ou a platform/domain/industrial owner existente?
 2. existe neutral shared owner real?
@@ -974,12 +1034,13 @@ Antes de criar service/schema/table/framework/media pipeline/device context/OT a
 7. próxima fase conhecida exigirá redesign?
 8. pattern é justificado pelo `49`?
 9. sibling/unknown funciona sem hardcode?
-10. raw media persistence é realmente necessária?
-11. modality introduz bypass de permission/Decision?
-12. device identity está sendo confundida com user identity?
-13. atuação física está sendo confundida com Business Action?
+10. raw media/template persistence é realmente necessária?
+11. modality/biometric result introduz bypass de permission/Decision?
+12. device identity ou biometric candidate está sendo confundido com authenticated user?
+13. Human Observation está virando inferência psicológica/sensível ou decisão trabalhista automática?
+14. atuação física está sendo confundida com Business Action?
 
-Se 3, 4, 7, 11, 12 ou 13 = sim: **não implementar** até corrigir o desenho.
+Se 3, 4, 7, 11, 12, 13 ou 14 = sim: **não implementar** até corrigir o desenho.
 
 ## 9. Primeira ordem efetiva
 
@@ -995,4 +1056,4 @@ C0.S0
 → C1.S1
 ```
 
-Nenhuma intelligence/media/frontline feature precede a prova de aplicação standalone e dos boundaries de privacy/device/OT.
+Nenhuma intelligence/media/biometric/frontline feature precede a prova de aplicação standalone e dos boundaries de privacy/device/identity/OT.
