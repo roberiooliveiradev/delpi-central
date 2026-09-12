@@ -1,248 +1,223 @@
 # Minha DELPI Copilot — Execution Ledger
 
-**Status do programa:** `PLANNED / NOT_STARTED`  
-**Plano ativo:** [`../16-execution-master-plan.md`](../16-execution-master-plan.md)  
-**Arquitetura/patterns:** [`../49-architecture-and-design-patterns-standard.md`](../49-architecture-and-design-patterns-standard.md)  
-**Governança documental:** [`../48-documentation-governance-and-architecture-review.md`](../48-documentation-governance-and-architecture-review.md)  
-**Protocolo:** [`../22-cursor-execution-protocol.md`](../22-cursor-execution-protocol.md)  
-**Prompt mestre:** [`../23-prompt-cursor-execucao.md`](../23-prompt-cursor-execucao.md)  
-**Próxima etapa obrigatória:** **C0.S0 — Rebaseline e inventário total**
+**Status:** `PLANNED / NOT_STARTED`  
+**Product boundary:** standalone application  
+**Plan:** [`../16-execution-master-plan.md`](../16-execution-master-plan.md)  
+**Boundary:** [`../50-standalone-copilot-application-architecture.md`](../50-standalone-copilot-application-architecture.md)  
+**Baseline:** [`../51-platform-integration-baseline.md`](../51-platform-integration-baseline.md)  
+**Bootstrap:** [`../52-standalone-repository-and-bootstrap-plan.md`](../52-standalone-repository-and-bootstrap-plan.md)  
+**Patterns:** [`../49-architecture-and-design-patterns-standard.md`](../49-architecture-and-design-patterns-standard.md)  
+**Next:** **C0.S0 — Platform/monorepo rebaseline**
 
-## 1. Regra do ledger
+## 1. Ledger rule
 
-Este arquivo registra somente **estado executável/evidence**, não redefine arquitetura nem ordem.
+This file records execution/evidence only. It does not redefine architecture or sequence.
 
-Uma subetapa só vira `PASS` com `COMPLETE_GATE=PASS` no HEAD correspondente.
-
-## 2. Status canônico
+## 2. Canonical phase status
 
 | Fase | Status | Próximo step | Dependência |
 |---|---|---|---|
-| C0 Foundations | **NOT_STARTED** | **C0.S0** | nenhuma |
-| C1 Platform/Context | LOCKED | — | C0.S6 FOUNDATION_FREEZE |
-| C2 Intelligence Core | LOCKED | — | C1 + foundations |
-| C3 Business Reads + Graph | LOCKED | — | C2 + OpenAPI-first gates aplicáveis |
-| C4 Governed Writes | LOCKED | — | C3 read foundations + action gates |
-| C5 Durable Work | LOCKED | — | C4 foundations |
-| C6 Proactivity/Ecosystem/Learning | LOCKED | — | C5 + safety/evidence |
-| C7 Optimization/Autonomy/Rollout | LOCKED | — | C0–C6 required gates |
-
-E*/O* não aparecem como fases independentes. São apenas detalhamentos mapeados no plano mestre.
+| C0 Platform + Architecture Foundations | **NOT_STARTED** | **C0.S0** | none |
+| C1 Standalone Bootstrap | LOCKED | — | C0.S7 FOUNDATION_FREEZE |
+| C2 Portal Context + Commands | LOCKED | — | C1 independence gate |
+| C3 Intelligence Core | LOCKED | — | C1+C2 foundations |
+| C4 Business Reads + Graph | LOCKED | — | C3 action/capability foundation |
+| C5 Writes + Durable Foundation | LOCKED | — | C4 reads/evidence |
+| C6 Product Work + Proactivity | LOCKED | — | C5 durable/safety |
+| C7 Autonomy + Optimization | LOCKED | — | C0–C6 gates |
 
 ## 3. C0 sequence
 
 ```text
-C0.S0 inventory total + architecture/pattern inventory
-→ C0.S1 authorities/bounded contexts
-→ C0.S2 shared primitives/envelopes
-→ C0.S3 ports/persistence boundaries
-→ C0.S4 cross-cutting semantics + architecture/pattern freeze
-→ C0.S5 contract + architecture conformance harness
-→ C0.S6 FOUNDATION_FREEZE
+C0.S0 platform/monorepo inventory
+→ C0.S1 standalone boundary/names
+→ C0.S2 authorities/bounded contexts
+→ C0.S3 shared primitives
+→ C0.S4 architecture/persistence boundaries
+→ C0.S5 integration contracts
+→ C0.S6 RED contract/conformance harness
+→ C0.S7 FOUNDATION_FREEZE
 ```
 
-Nenhum runtime feature work C1+ antes de `FOUNDATION_FREEZE=PASS`.
-
-## 4. Dependência externa vigente
-
-A iniciativa `minha-delpi-ai-api/docs/roadmap/llm-json-decoupling/` permanece dependência para Business Actions enquanto os gates OpenAPI-first relevantes não estiverem `PASS` no candidate vigente.
+## 4. Current architectural decisions
 
 ```text
-C0–C2 = podem avançar
-C3+ Business Actions production-ready = BLOCKED_BY_AI_GATE até gates relevantes PASS
-```
-
-O Copilot não duplica a correção.
-
-## 5. Decisões arquiteturais vigentes
-
-```text
+COPILOT_PRODUCT = STANDALONE_NEW_APPLICATION
+COPILOT_API = NEW_OWN_SERVICE
+COPILOT_MFE = NEW_OWN_MICROFRONTEND
+CHAT_RUNTIME_DEPENDENCY = FORBIDDEN
+CHAT_DATABASE_AUTHORITY = FORBIDDEN
+CHAT_API_PROXY_DEPENDENCY = FORBIDDEN
+CHAT_AGENT_MIGRATION = OUT_OF_SCOPE
+OPENAPI_FIRST = NATIVE_COPILOT_FOUNDATION
+PORTAL_ROLE = HOST_CONTEXT_NAVIGATION
+CORE_ROLE = APPS_ROUTES_RBAC_GOVERNANCE
+KEYCLOAK_ROLE = IDENTITY_SSO
+DOMAIN_APIS = BUSINESS_AUTHORITIES
+PLUGIN_UI = SHARED_DESIGN_SYSTEM
+BUSINESS_GRAPH = COPILOT_PROJECTION_NOT_MASTER_DATA
 SINGLE_COPILOT_IDENTITY = TARGET
-DEPARTMENT_AGENT_ROUTING = TO_MIGRATE
 EXPERTISE_PACKS = PLANNED
 DOMAIN_PLAYBOOKS = PLANNED
-MULTIMODAL_RUNTIME = REUSE/EXTEND após inventário
-DELPI_BUSINESS_GRAPH = PLANNED
 EVIDENCE_PROVENANCE = FOUNDATION_CONTRACT
 DECISION_GATE = FOUNDATION_CONTRACT
 DURABLE_WORKFLOW = PLANNED
-COPILOT_TASK = PLANNED
-COPILOT_CASE = PLANNED
-INTERACTION_ROOM_INTEGRATION = TO_INVENTORY
-COPILOT_INBOX = PLANNED
-COPILOT_WATCH = PLANNED
-ORGANIZATIONAL_KNOWLEDGE = PLANNED
-EXPERTISE_STUDIO = PLANNED
-SIMULATION = LOCKED_TO_C7
-MODEL_ROUTER = LOCKED_TO_C7
+TASK_CASE_WATCH_INBOX = PLANNED
+SIMULATION = C7
+MODEL_ROUTER = C7
 
-ARCHITECTURE_STYLE = CLEAN_ARCHITECTURE_PLUS_PORTS_ADAPTERS_PLUS_PRAGMATIC_DDD
+ARCHITECTURE_STYLE = CLEAN_ARCHITECTURE_PORTS_ADAPTERS_PRAGMATIC_DDD
 EVENT_DRIVEN = ONLY_WITH_REAL_EVENT_OWNER
-STATE_MACHINE = REQUIRED_FOR_NON_TRIVIAL_LIFECYCLE
-CQRS = LIGHT_AND_JUSTIFIED_ONLY
-DEPENDENCY_INVERSION = REQUIRED
+STATE_MACHINE = NONTRIVIAL_LIFECYCLES
+CQRS = LIGHT_JUSTIFIED_ONLY
 COMPOSITION_ROOT_DI = REQUIRED
-FRONTEND_DURABLE_BUSINESS_AUTHORITY = FORBIDDEN
 ABSTRACTION_GATE = REQUIRED
-LEGACY_MIGRATION = ADAPTER_ACL_STRANGLER_WHEN_APPLICABLE
 ```
 
-Tudo acima é `PLAN_ONLY` até evidence de runtime futura.
+All remain `PLAN_ONLY` until runtime evidence.
 
-## 6. Registro histórico de planejamento
-
-| Data | HEAD | Evento | Status |
-|---|---|---|---|
-| 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | arquitetura inicial do Copilot | PLAN_ONLY |
-| 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | Iframe Copilot Bridge incorporado | PLAN_ONLY |
-| 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | Copilot único + Expertise/Playbooks/migração agents | PLAN_ONLY |
-| 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | Business Graph/Tasks/Cases/Rooms/Inbox/Watch/Evidence/Decision/Knowledge/Simulation/Model Router | PLAN_ONLY |
-| 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | revisão foundation-first: primitives antecipados para C0, authorities documentais consolidadas, E*/O* subordinados a C0–C7 | PLAN_ONLY; sem runtime diff |
-| 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | padrão normativo de arquitetura/design patterns criado: Clean Architecture, Ports & Adapters, DDD pragmático, pattern matrix, Abstraction Gate, migration/resilience/testing rules | PLAN_ONLY; sem runtime diff |
-| 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | requisitos CP-130–CP-140 adicionados para rastrear architecture style, layers, DI, patterns, errors, events, state machines, frontend state, migration e conformance | PLAN_ONLY; sem runtime diff |
-
-## 7. Escopo obrigatório de C0.S0
-
-### Platform/Core
+## 5. Superseded decisions
 
 ```text
-Router/Auth/AppHost/AppLauncher
+Copilot extends minha-delpi-ai-api            = SUPERSEDED
+Copilot extends plugins/minha-delpi-chat      = SUPERSEDED
+Copilot blocked by Chat llm-json/Onda J       = SUPERSEDED
+Copilot migrates AgentSpecializationService   = OUT_OF_SCOPE
+Copilot removes userActivatedAgent in Chat    = OUT_OF_SCOPE
+Copilot removes Chat soft handoff              = OUT_OF_SCOPE
+Copilot migrates Chat agent_id/chat_mode       = OUT_OF_SCOPE
+```
+
+## 6. Planning history
+
+| Data | Evento | Status |
+|---|---|---|
+| 2026-09-12 | initial Copilot architecture | PLAN_ONLY |
+| 2026-09-12 | iframe bridge incorporated | PLAN_ONLY |
+| 2026-09-12 | single Copilot + expertise/playbooks | PLAN_ONLY |
+| 2026-09-12 | Business Graph/Tasks/Cases/Rooms/Inbox/Watch/Evidence/Decision | PLAN_ONLY |
+| 2026-09-12 | foundation-first reordering | PLAN_ONLY |
+| 2026-09-12 | normative architecture/design patterns | PLAN_ONLY |
+| 2026-09-12 | **standalone decision: own API + own MFE, Chat fully decoupled** | PLAN_ONLY; docs only |
+| 2026-09-12 | Portal/Core/Gateway/APIs/MFE factual baseline documented | PLAN_ONLY; docs only |
+
+Actual `HEAD_BEFORE` for runtime is captured at C0.S0.
+
+## 7. Required C0.S0 inventory
+
+### Portal
+```text
+AuthContext/Keycloak
+AppHost federated lifecycle
+AppLauncher/Router
+panel/drawer/global host infrastructure
+getAccessToken/host props
+federation share scope
+notifications/socket/context
+```
+
+### Core
+```text
 /me /me/apps /me/routes
-manifests/routes/permissions
-MFE/iframe/external lifecycle
-rooms/notifications/inbox patterns
+RBAC/permission resolver
+manifest/versioning
+app/route models
+notifications/audit/presence
 ```
 
-### AI
-
+### Gateway/Infra
 ```text
-understanding/planner
-Action Catalog/importer/index
-executors
-policy/confirmation
-RAG/ACL
-sessions/turn persistence
-send/stream/simulate
-multimodal
-models/providers
-observability/evals
+MFE/API path conventions
+dev/prod parity
+Compose profiles/services
+env/health/scripts
+postgres/storage/network
 ```
 
-### Legacy agents/skills
-
+### Apps/MFEs/APIs
 ```text
-agent entities/repos/controllers/admin
-AgentSpecializationService
-ChatWorkspaceAgentActivationService
-ChatSoftAgentHandoffService
-ChatSkillRegistry
-agent_id/chat_mode
-project default agent
-knowledge/actions/tools gated by agent
-agent selector/handoff UX
+manifests
+mount/unmount/federation/plugin-ui
+HTTP/auth clients
+Workspace/deep-link contracts
+Domain APIs/OpenAPIs
+auth/permissions/errors/pagination
+entity IDs
+idempotency/events/websockets
 ```
 
-### Operational foundations
-
+### Collaboration/work
 ```text
-canonical entity IDs/types
-relationships/deep links
-event bus/event types
-workers/queues/jobs
-workflow/checkpoint persistence
-approval/confirmation models
-idempotency support
-audit/provenance
-knowledge lifecycle
-model/provider metrics
-existing request/case concepts
+interaction rooms
+requests/cases
+notifications/inbox-like concepts
+approvals
+workers/jobs/schedulers/events
 ```
 
-### Architecture/pattern foundations
-
+### Chat reference only
 ```text
-actual backend layers/packages
-use case/application service conventions
-ports/adapters/gateways/repositories
-composition root / DI
-DTO/mappers
-error/result taxonomy
-state machines/lifecycle transitions
-domain/integration events + event envelope
-outbox/event publication
-retry/timeout/circuit-breaker/idempotency
-transaction/unit-of-work conventions
-migration/compatibility/strangler patterns
-frontend ui/state/data organization
-server/workspace/conversation/local state owners
-query/cache/store conventions
-test doubles/contract/integration patterns
+architecture/providers/RAG/multimodal/actions
+lessons/anti-patterns
+neutral shared-library candidates only
 ```
 
-Classificar findings:
+Finding classification:
 
 ```text
-REUSE
-EXTEND
-MIGRATE
-CREATE_REQUIRED
-DEPRECATE
-REMOVE
-NOT_PROVEN
-```
-
-Divergência entre código atual e `49`:
-
-```text
-ALIGN_DOC
-MIGRATE_CODE
+PLATFORM_REUSE
+NEUTRAL_SHARED_REUSE
+COPILOT_IMPLEMENT_NEW
+EXTEND_PLATFORM_CONTRACT
+ADAPTER_REQUIRED
 ADR_REQUIRED
 NOT_PROVEN
+OUT_OF_SCOPE
 ```
 
 ## 8. Required C0 outputs
 
-- app onboarding matrix factual;
-- component/contract map updated from code;
-- agent→expertise migration matrix;
-- entity/relationship inventory;
-- event/job/room/notification inventory;
-- persistence/approval/idempotency inventory;
-- architecture layer/pattern inventory;
-- `49` revalidado contra o código real;
-- Pattern Decision Matrix validada;
-- Abstraction Gate validado;
-- error/event/state/persistence/frontend-state/resilience rules congeladas;
-- testing/migration patterns congelados;
-- architectural exception/ADR process definido;
-- owner gaps;
-- ledger with HEAD and evidence.
+- revalidated `51` baseline;
+- owners/contracts map;
+- app/API/OpenAPI inventory;
+- manifest/federation inventory;
+- entity/deep-link/event/room/notification inventory;
+- service/path/manifest/storage names frozen;
+- architecture/pattern inventory/freeze;
+- Copilot integration contracts;
+- RED/conformance harness;
+- CP status update;
+- ledger with actual HEAD/evidence.
+
+No agent migration matrix is required.
 
 ## 9. Requirements authority
 
-Única authority: [`../25-requirements-traceability.md`](../25-requirements-traceability.md).
+`25-requirements-traceability.md` is the single CP authority.
 
-Faixas:
+New standalone range:
 
 ```text
-CP-001–060 core
-CP-061–070 iframe
-CP-071–089 single Copilot/expertise
-CP-090–129 operational intelligence
-CP-130–140 architecture/design patterns
+CP-141–CP-154
 ```
 
-`46-*` é reference only.
+Historical Chat migration requirements remain `OUT_OF_SCOPE_WITH_DECISION`.
 
-## 10. Tests authority
+## 10. Test authority
 
-Única matriz: [`../20-testing-and-acceptance-matrix.md`](../20-testing-and-acceptance-matrix.md).
+`20-testing-and-acceptance-matrix.md`.
 
-Architecture/design-pattern conformance também é required gate via `20` + `49`.
+Required standalone gates include:
 
-`45-*` é reference only.
+```text
+NO_CHAT_IMPORT
+NO_CHAT_API_DEP
+NO_CHAT_DB_AUTHORITY
+CHAT_OFFLINE_INDEPENDENCE
+INDEPENDENT_DEPLOY_ROLLBACK
+```
 
-## 11. Template de evento
+## 11. Event template
 
 ```text
 DATE:
@@ -253,14 +228,13 @@ STATUS:
 DEPENDENCY_GATE:
 CP_REQUIREMENTS:
 CANONICAL_OWNERS:
-ARCHITECTURE_LAYER:
-DESIGN_PATTERNS_APPLIED:
-ABSTRACTION_GATE:
-ARCHITECTURAL_EXCEPTION_ADR:
-REUSED_FOUNDATIONS:
-NEW_FOUNDATIONS_CREATED:
+LAYER/PATTERNS:
+PLATFORM_REUSE:
+COPILOT_NEW_CODE:
+CHAT_DEPENDENCIES:
 EVIDENCE:
 TESTS:
+CHAT_INDEPENDENCE:
 ARCHITECTURAL_CONFORMANCE:
 FOUNDATION_DRIFT:
 COMPLETE_GATE:
@@ -268,7 +242,7 @@ NEXT_UNLOCKED:
 NOTES:
 ```
 
-## 12. Estados permitidos
+## 12. Allowed states
 
 ```text
 NOT_STARTED
@@ -287,24 +261,22 @@ LOCKED
 PARTIAL
 INCONCLUSIVE
 PENDING
-LEGACY_FALLBACK material
-SHADOW_ONLY sem exit criteria
-TODO/FIXME/HACK/TEMPORARY material
 TEST_NOT_RUN
 STALE_EVIDENCE
 DUPLICATE_AUTHORITY
 FOUNDATION_DRIFT
-UNKNOWN_CONSUMER material
 ARCHITECTURE_PATTERN_DRIFT
-DEPENDENCY_RULE_VIOLATION
 UNJUSTIFIED_ABSTRACTION
-UNDOCUMENTED_ARCHITECTURAL_EXCEPTION
+CHAT_RUNTIME_IMPORT
+CHAT_API_REQUIRED
+CHAT_DATABASE_AUTHORITY
+CHAT_MIGRATION_DEPENDENCY
+PORTAL_AI_LOGIC_LEAK
+DOMAIN_RULE_DUPLICATION
 ```
 
-## 14. Primeiro comando de execução
+## 14. First execution
 
-Abrir `23-prompt-cursor-execucao.md` e executar somente **C0.S0**.
+Open `23-prompt-cursor-execucao.md` and execute **C0.S0 only**.
 
-Não implementar CopilotBridge, Business Graph, Expertise runtime, Decision Gate, Workflow, Task, Case, Watch ou Model Router antes de suas fases canônicas.
-
-C0.S0 deve primeiro provar os padrões reais do repo; C0.S4/C0.S6 congelam a arquitetura/patterns antes do primeiro runtime feature work.
+The first code after Foundation Freeze is the standalone Copilot API/MFE bootstrap, not intelligence features.
