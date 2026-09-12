@@ -1,252 +1,230 @@
 # 12 — Roadmap macro do Minha DELPI Copilot
 
 > **Status:** planejamento canônico  
-> **Autoridade de execução atômica:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-> **Arquitetura/design patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
+> **Produto:** aplicação standalone nova  
+> **Autoridade de execução:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+> **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 > **Próxima etapa:** `C0.S0`
 
-Este documento apresenta a evolução macro. A ordem de subetapas, dependências e gates vive somente no Plano Mestre. O style arquitetural, layers, dependency rules e design patterns de implementação são definidos pelo documento `49`.
+Este roadmap apresenta a evolução macro. A ordem atômica, dependências e gates vivem somente no Plano Mestre `16`.
 
 ## Visão geral
 
 ```text
-C0 — Fundação arquitetural, patterns e contratos universais
-C1 — Portal, navegação, entidades e Workspace Context
-C2 — Intelligence Core: Copilot único, expertise, knowledge, multimodal e evidence
-C3 — Business Reads + DELPI Business Graph
-C4 — Governed Writes + Decision Gates
-C5 — Durable Work: Workflows + Tasks + Cases + Rooms + Inbox
-C6 — Proatividade + AI-ready Ecosystem + Governed Learning
-C7 — Optimization + Autonomia + Simulation + Model Routing + Rollout
+C0 — Platform + Architecture Foundation Freeze
+C1 — Standalone Application Bootstrap
+C2 — Portal Context + Platform Commands
+C3 — Intelligence Core
+C4 — Business Reads + DELPI Business Graph
+C5 — Governed Writes + Durable Work Foundation
+C6 — Tasks/Cases/Rooms/Inbox/Watch + Ecosystem/Learning
+C7 — Autonomy + Simulation + Model Routing + Rollout
 ```
 
-## C0 — Fundação arquitetural
+## C0 — Platform + Architecture Foundation Freeze
 
-Objetivo: estabilizar vocabulário, contratos e **como o código será estruturado** antes de qualquer feature dependente.
-
-Entregas macro:
-
-- inventário real de Portal/Core/AI/apps/agents/events/workflows/rooms/notifications;
-- inventário dos patterns/layers/DI/error/event/state/resilience/migration já praticados no repo;
-- authorities e bounded contexts congelados;
-- primitives compartilhados de entidade, fonte, evidence, capability, contexto, expertise, decisão, workflow, task, case e eventos;
-- ports/persistence boundaries;
-- architecture style canônico: Clean Architecture + Ports & Adapters + DDD pragmático;
-- layer/dependency rules;
-- Pattern Decision Matrix;
-- Abstraction Gate;
-- error/result model;
-- event/state-machine/resilience/idempotency rules;
-- frontend state ownership;
-- migration/Strangler/ACL rules;
-- architectural exception/ADR process;
-- versioning/correlation/idempotency/freshness/error semantics;
-- contract + architecture conformance harness;
-- `FOUNDATION_FREEZE=PASS`.
-
-Não construir feature do Copilot antes desse freeze.
-
-## C1 — Portal e contexto
-
-Objetivo: permitir que o Copilot saiba **onde o usuário está** e navegue com segurança.
+Objetivo: entender a plataforma real e congelar boundaries, contratos e patterns antes de criar runtime.
 
 Entregas:
 
-- authorized Platform Capability Projection;
-- CopilotBridge;
-- open app/route/entity;
-- Workspace Context Store;
-- MFE context/deep-link adapter;
-- Iframe Bridge;
-- context UX e generalization tests.
+- inventário Portal/Core/Gateway/Infra/MFEs/APIs;
+- inventário OpenAPI/auth/entity/deep-link/events/rooms/notifications;
+- Chat analisado apenas como referência, nunca como runtime base;
+- nomes/path/service/manifest/DB ownership do Copilot congelados;
+- authorities/bounded contexts;
+- shared primitives;
+- Clean Architecture + Ports & Adapters + DDD pragmático;
+- persistence/integration boundaries;
+- Pattern Decision Matrix + Abstraction Gate;
+- contract/conformance harness;
+- `CHAT_RUNTIME_DEPENDENCY = 0`;
+- `FOUNDATION_FREEZE = PASS`.
 
-Patterns predominantes: Command + Handler + Adapter, obedecendo boundaries C0.
+## C1 — Standalone Application Bootstrap
 
-## C2 — Intelligence Core
-
-Objetivo: estabilizar a inteligência transversal antes de Business Actions em escala.
+Objetivo: provar que o Copilot é uma aplicação nova e operacionalmente independente antes de investir na inteligência.
 
 Entregas:
 
-- sessão do Copilot sem agent obrigatório;
-- Expertise Catalog/retrieval/composition;
+- `minha-delpi-copilot-api` skeleton;
+- JWT validation;
+- Core API integration;
+- `plugins/minha-delpi-copilot` skeleton;
+- Module Federation + `plugin-ui`;
+- manifesto próprio;
+- Gateway dev/prod próprio;
+- Compose dev/prod próprio;
+- full-page federated mount no Portal;
+- global side-panel host contract;
+- health/logging/config;
+- rollback independente;
+- prova de funcionamento com Chat desligado.
+
+## C2 — Portal Context + Platform Commands
+
+Objetivo: transformar o Portal em host contextual do Copilot sem mover inteligência para o Shell.
+
+Entregas:
+
+- Workspace Context;
+- Global Copilot Bridge;
+- Platform Capability Projection a partir do Core;
+- `open_app`, `open_route`, `open_entity`;
+- MFE context/deep-link helper;
+- iframe integration baseline;
+- security/generalization tests.
+
+## C3 — Intelligence Core
+
+Objetivo: construir do zero o runtime inteligente da Copilot API.
+
+Entregas:
+
+- provider/model abstraction baseline;
+- conversation/turn state próprio;
+- structured understanding;
+- OpenAPI ingestion próprio;
+- Copilot Action Catalog/index;
+- capability retrieval;
+- Expertise Packs;
 - Domain Playbooks;
-- Knowledge ACL integration;
-- multimodal evidence;
-- provenance/epistemic synthesis;
-- shadow migration do modelo de agents;
-- observabilidade operacional.
+- Knowledge/RAG próprio;
+- multimodal/document/drawing pipeline;
+- Evidence/Provenance;
+- structured planner;
+- observability/evals.
 
-Migração legada usa Adapter/Anti-Corruption Layer/Strangler conforme `49`, sem runtime paralelo permanente.
+Não há migração de agents/sessions/tools do Minha DELPI Chat.
 
-## C3 — Business Reads + Business Graph
+## C4 — Business Reads + Business Graph
 
-Objetivo: conectar o Copilot aos dados reais de negócio com evidence e contexto cross-domain.
+Objetivo: consultar sistemas de negócio diretamente e produzir análises cross-domain grounded.
 
 Entregas:
 
-- Business Capability Projection a partir do Action Catalog;
-- generic read parity;
-- normalized outcomes/evidence;
-- DELPI Business Graph mínimo;
+- OpenAPI refresh/inventory;
+- generic read executor;
+- normalized Outcome/Evidence;
+- DELPI Business Graph;
 - permission-aware traversal;
-- análises cross-domain.
+- cross-domain analysis;
+- unknown provider/metamorphic/generalization gates.
 
-Business Graph segue Ports & Adapters; Repository/index só entra se houver materialização/authority própria comprovada.
+Não existe dependência da Onda J ou do runtime do Chat.
 
-**Dependência:** gates OpenAPI-first relevantes da Minha DELPI AI precisam estar `PASS` para produção.
+## C5 — Governed Writes + Durable Work Foundation
 
-## C4 — Governed Writes + Decision Gates
-
-Objetivo: liberar alterações somente com governança proporcional ao risco.
+Objetivo: liberar alterações governadas e criar a fundação durável usada pelas unidades de trabalho posteriores.
 
 Entregas:
 
 - Decision Gate Engine;
-- impact preview + hash;
-- confirmação/aprovação como lifecycle do mesmo Decision Gate;
+- impact preview;
+- generic write executor;
 - idempotency/concurrency;
-- generic write execution;
 - outcome verification;
-- remoção do gate operacional dependente de agent ativo;
-- substituição do soft handoff por retrieval/replan/clarify.
+- WorkflowPlan runtime;
+- checkpoints;
+- wait_user/wait_approval/wait_event;
+- crash/retry/replay safety.
 
-Patterns predominantes: Policy + State Machine + Idempotency; write não recebe retry cego.
+## C6 — Product Work + Proactivity + Ecosystem
 
-## C5 — Durable Work
-
-Objetivo: sair da limitação do turno/chat para trabalho que dura minutos, horas ou dias.
+Objetivo: entregar trabalho empresarial persistente e expandir o ecossistema Copilot.
 
 Entregas:
 
-- Durable Workflow Runtime;
-- checkpoints e wait states;
-- DAG runner;
-- Copilot Tasks;
-- Copilot Cases + Evidence Board;
-- Interaction Rooms;
+- Copilot Task;
+- Copilot Case + Evidence Board;
+- Interaction Rooms por reuse/extend/adapter conforme C0;
 - Copilot Inbox;
-- reload/restart/resume sem duplicate writes.
-
-Patterns predominantes: Application orchestration + State Machine + Idempotency. Saga somente quando existirem múltiplos writes distribuídos e compensações reais.
-
-## C6 — Proatividade + Ecossistema + Aprendizado Governado
-
-Objetivo: permitir acompanhamento contínuo e crescimento do ecossistema sem hardcode central.
-
-Entregas:
-
-- Watch `OBSERVE/ADVISE`;
-- AI-ready SDK/templates;
-- readiness scanner/onboarding waves;
-- project preferences;
+- Watch OBSERVE/ADVISE;
 - Organizational Knowledge;
-- Governed Learning Loop;
+- Governed Learning;
 - Expertise Studio;
+- AI-ready app SDK/readiness;
 - admin/coverage.
 
-Watch usa EventEnvelope/state/idempotency canônicos; polling específico por app não é o padrão.
+## C7 — Autonomy + Optimization + Rollout
 
-## C7 — Optimization, autonomia e rollout
-
-Objetivo: ampliar autonomia e otimizar custo/latência somente depois das bases estarem comprovadas.
+Objetivo: ampliar autonomia, simulação e eficiência somente após o produto base estar comprovado.
 
 Entregas:
 
 - autonomia L0–L5;
-- Watch `ACT` controlado;
-- What-if/Simulation pilots;
+- Watch ACT controlado;
+- What-if/Simulation;
 - Model Router/Compute Policy;
-- cutover final do agent-routing legado;
-- canary/rollback;
-- final R1–R11 e Product Complete gate.
+- performance/cost/scaling;
+- progressive rollout;
+- final security/accessibility/generalization;
+- Product Complete gate.
 
-Model Router só introduz Strategy/Policy após baseline/variação real, evitando premature abstraction.
-
-## Dependência entre as camadas
+## Dependência entre fases
 
 ```text
-contracts + architecture/pattern freeze C0
+platform + architecture C0
 ↓
-context/navigation C1
+standalone app C1
 ↓
-intelligence/evidence C2
+portal context C2
 ↓
-reads/graph C3
+intelligence core C3
 ↓
-writes/decision C4
+reads/graph C4
 ↓
-durable work C5
+writes/durable foundation C5
 ↓
-proactivity/ecosystem C6
+work/proactivity/ecosystem C6
 ↓
-optimization/autonomy C7
+autonomy/optimization C7
 ```
 
-A ordem existe para evitar refatorações previsíveis. Exemplo:
+A ordem elimina refatorações previsíveis:
 
-- `EvidenceRef` nasce em C0, não quando Case aparecer;
-- `DecisionGate` nasce em C0 e executa em C4, não depois de writes;
-- `Workflow/Task/Case` têm lifecycle semântico em C0 e persistência em C5;
-- `EntityRef/RelationshipRef` nascem antes do Business Graph;
-- expertise/playbook contracts nascem antes de agent migration;
-- event envelope nasce antes de Watch;
-- Port/Adapter/State Machine/Error/Frontend State rules são congelados antes da primeira feature;
-- nenhuma feature escolhe Repository/Strategy/Factory/Saga/CQRS por conta própria sem passar pelo Pattern Decision Matrix e Abstraction Gate.
+- MFE/API/paths/auth/deploy são provados antes do planner;
+- `EntityRef/EvidenceRef/DecisionGate/Workflow` nascem antes de seus consumidores;
+- OpenAPI-first é nativo do Copilot, não herdado do Chat;
+- Task/Case/Watch usam o mesmo durable runtime;
+- Portal hospeda, mas não recebe AI logic;
+- Domain APIs continuam owners;
+- Chat não precisa ser corrigido, migrado ou desligado para o Copilot evoluir.
 
-## MVPs
+## Releases de produto
 
-### MVP de plataforma
+### Foundation Release
+`C0`
 
-```text
-C0 + C1
-```
+### Standalone Bootstrap Release
+`C1`
 
-Navega e entende contexto sobre fundações arquiteturais estáveis.
+### Contextual Platform Release
+`C2`
 
-### MVP inteligente
+### Intelligent Copilot Release
+`C3 + C4 reads`
 
-```text
-C2 + C3 reads
-```
+### Operational Copilot Release
+`C5`
 
-Copilot único, expertise, multimodalidade, evidence e consultas cross-domain.
+### Work Copilot Release
+`C6`
 
-### MVP operacional
+### Mature Autonomous Platform
+`C7`
 
-```text
-C4
-```
-
-Primeiros writes governados e verificáveis.
-
-### MVP de trabalho
+## Primeira execução
 
 ```text
-C5
-```
-
-Tasks/Cases/Rooms/Inbox com workflows duráveis.
-
-### Plataforma madura
-
-```text
-C6 + C7
-```
-
-Proatividade, learning governance, autonomia seletiva e otimização.
-
-## Primeira implementação
-
-```text
-C0.S0 rebaseline/inventory + architecture/pattern inventory
-→ C0.S1 authorities/bounded contexts
-→ C0.S2 shared primitives
-→ C0.S3 ports/persistence boundaries
-→ C0.S4 cross-cutting semantics + architecture/pattern freeze
-→ C0.S5 contract/conformance harness
-→ C0.S6 FOUNDATION_FREEZE
-→ C1.S1
+C0.S0 monorepo/platform inventory
+→ C0.S1 boundary/names
+→ C0.S2 authorities
+→ C0.S3 shared primitives
+→ C0.S4 architecture/persistence
+→ C0.S5 integration contracts
+→ C0.S6 RED harness
+→ C0.S7 FOUNDATION_FREEZE
+→ C1.S1 API skeleton
 ```
 
 Estado executável: [`evidence/execution-ledger.md`](./evidence/execution-ledger.md).
