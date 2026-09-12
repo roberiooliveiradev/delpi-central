@@ -1,12 +1,12 @@
 # Minha DELPI Copilot — Governança Documental e Revisão Arquitetural
 
 **Status:** canônico para precedência documental  
-**Revisão:** foundation-first + standalone application boundary  
+**Revisão:** foundation-first + standalone application + multimodal/Meeting/Frontline boundary  
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
 
 ## 1. Objetivo
 
-Evitar que a documentação gere ordens, owners, contracts, patterns ou product boundaries concorrentes.
+Evitar que a documentação gere ordens, owners, contracts, patterns ou product/privacy/safety boundaries concorrentes.
 
 ## 2. Precedência
 
@@ -20,16 +20,18 @@ Em caso de conflito:
 5. 49 — architecture/patterns
 6. 51 — factual platform integration baseline
 7. 52 — repository/bootstrap target
-8. 21 — state/persistence
+8. 21 — state/persistence/media refs
 9. 20 — tests/gates
 10. 25 — CP requirements
 11. 02 — technical target
 12. 24 — product target
-13. thematic specs
+13. thematic specs, incluindo 53
 14. ledger — current execution/evidence
 ```
 
 O ledger registra estado; não redefine arquitetura.
+
+`53` detalha a visão multimodal/Meeting/Frontline/industrial, porém não cria ordem paralela ao `16` nem authority de safety diferente dos owners industriais.
 
 ## 3. Authorities operacionais
 
@@ -39,12 +41,12 @@ O ledger registra estado; não redefine arquitetura.
 | `50` | Copilot standalone boundary e relação com Chat |
 | `17` | owners/primitives/contracts |
 | `49` | code architecture/design patterns |
-| `51` | baseline factual Portal/Core/APIs/MFEs/infra |
+| `51` | baseline factual Portal/Core/APIs/MFEs/infra + gaps a inventariar |
 | `52` | estrutura física/bootstrap standalone |
 | `20` | tests/gates |
-| `21` | state/persistence |
+| `21` | state/persistence/media refs |
 | `23` | prompt mestre Cursor |
-| `25` | requirements `CP-001…CP-154` |
+| `25` | requirements `CP-001…CP-181` |
 | ledger | execution/evidence current |
 
 ## 4. Authorities conceituais
@@ -68,7 +70,7 @@ O ledger registra estado; não redefine arquitetura.
 05 workspace context
 06 business parity
 07 workflows
-08 security/autonomy
+08 security/autonomy/privacy/safety
 09 UX
 10 AI-ready
 11 observability/evals
@@ -88,9 +90,10 @@ O ledger registra estado; não redefine arquitetura.
 42 Model Router
 43 Durable Workflow
 44 operational intelligence thematic map
+53 multimodal/Meeting/Frontline/industrial Copilot
 ```
 
-Specs não podem redefinir `16/50/49`.
+Specs não podem redefinir `16/50/49` nem criar owner paralelo de RBAC/domain/industrial safety.
 
 ## 6. Superseded/reference only
 
@@ -103,7 +106,7 @@ Specs não podem redefinir `16/50/49`.
 
 Esses arquivos existem apenas para compatibilidade/histórico. Não desbloqueiam trabalho nem tornam o Chat dependência do Copilot.
 
-O documento `32` é **ativo** e descreve o runtime nativo de Expertise da Copilot API. O documento `44` também é **ativo como mapa temático**, mas é totalmente subordinado ao `16` e não cria uma segunda ordem.
+O documento `32` é **ativo** e descreve o runtime nativo de Expertise da Copilot API. O documento `44` também é **ativo como mapa temático**, mas é totalmente subordinado ao `16`. O documento `53` é **ativo como spec temática** e sua sequência é materializada somente por `16`.
 
 ## 7. Reading minimization
 
@@ -129,17 +132,19 @@ ledger
 52
 02
 19 when infra/deploy/migration is involved
+53 when media/device/privacy/Meeting/Frontline/OT is being inventoried (C0.S0 includes it)
 ```
 
-### State/persistence
+### State/persistence/media retention
 
 ```text
 21
+53 when media lifecycle is material
 ```
 
 ### Feature implementation
 
-Somente specs temáticas do step corrente.
+Somente specs temáticas do step corrente; Meeting/Frontline/media steps sempre incluem `53`.
 
 Isso evita carregar 50+ docs a cada iteração sem perder authorities.
 
@@ -178,23 +183,37 @@ Removido. OpenAPI-first/Action Catalog/planner são construídos nativamente na 
 Corrigido. C1 prova API/MFE/Core/Gateway/Portal independentes antes de C3 Intelligence Core.
 
 ### F11 — Portal boundary could become blurred
-Portal é host/router/context/Platform Command executor. AI logic pertence à Copilot API.
+Portal é host/router/context/Platform Command executor. AI/media intelligence pertence à Copilot API.
 
 ### F12 — Shared infra versus product code
-Reuse permitido para componentes neutros (`plugin-ui`, federation, Core, Gateway, Keycloak, approved shared libraries). Reuso de internals do Chat é proibido.
+Reuse permitido para componentes neutros (`plugin-ui`, federation, Core, Gateway, Keycloak, approved shared libraries/media infrastructure). Reuso de internals do Chat é proibido.
 
 ### F13 — Phase-number drift after standalone rebaseline
-Specs temáticas antigas ainda referenciavam C2/C3/C4/C5 do roadmap anterior. A limpeza documental remapeou:
+Specs temáticas antigas ainda referenciavam fases do roadmap anterior. A limpeza documental remapeou tudo contra `16`.
 
-```text
-Expertise/Knowledge/Multimodal/Evidence intelligence → C3
-Business Reads/Graph → C4
-Decision/write/Durable Workflow foundation → C5
-Task/Case/Room/Inbox/Watch/Knowledge Learning/Studio → C6
-Simulation/Model Router/selected autonomy → C7
-```
+### F14 — Multimodalidade poderia nascer como adição tardia
+Corrigido. Media provider boundaries, consent/retention, realtime direction, shared-device isolation e provenance entram no C0 foundation inventory/freeze, mesmo que Meeting/Frontline completos só sejam entregues em C6/C7.
 
-Qualquer referência futura diferente precisa ser tratada como documentation drift e corrigida contra `16`.
+### F15 — Frontline poderia criar um segundo contexto/modelo de identidade
+Corrigido. Contexto operacional reutiliza `WorkspaceContext + EntityRef`; device identity é separada de user identity e não concede permission. `FrontlineContext` paralelo é anti-pattern por default.
+
+### F16 — Meeting poderia criar action executor paralelo
+Corrigido. Fala/transcript/meeting action vira candidate e converge para o mesmo planner/Decision Gate/generic executor de C5.
+
+### F17 — Mídia poderia virar armazenamento indiscriminado
+Corrigido. `MediaRef` é apenas candidate primitive até C0 provar necessidade; transcript/raw-audio/raw-video/screen/derived Evidence têm retention classes próprias e data minimization é default.
+
+### F18 — “Aprender com operador” poderia virar auto-learning não governado
+Corrigido. Meeting/process/frontline observation gera candidate knowledge/Experience com Evidence → review → eval → version/publish.
+
+### F19 — Autonomia empresarial poderia ser confundida com comando de máquina
+Corrigido. Copilot não é safety controller; L5 não concede OT. Free-form LLM→PLC/CNC/robot é `BLOCK` até existir iniciativa industrial separada com deterministic commands, interlocks independentes, industrial owner e safety gate.
+
+### F20 — Computer vision poderia virar authority de qualidade sem validação
+Corrigido. Visual finding é Evidence/Hypothesis por default; critério oficial de inspeção/medição/quality owner permanece authoritative salvo capability automática explicitamente validada.
+
+### F21 — Frontline poderia virar vigilância implícita
+Corrigido. Hidden capture, facial recognition, emotion detection e hidden individual scoring/surveillance ficam fora do default scope e são blockers quando introduzidos sem decisão/policy explícita.
 
 ## 9. Foundation invariants
 
@@ -203,6 +222,7 @@ After C0.S7:
 ```text
 one product runtime → Copilot API
 one product MFE → Copilot MFE
+four surfaces → same runtime/policy/state model
 one platform RBAC authority → Core
 one identity authority → Keycloak
 one navigation authority → Portal
@@ -211,10 +231,17 @@ one action technical source → Domain OpenAPI
 one Copilot Action Catalog → derived inside Copilot
 one Evidence model → EvidenceRef
 one Entity ref model → EntityRef
+one workspace context model → WorkspaceContext
+MediaRef → only if C0 proves need
 one Decision model → DecisionGate
 one Workflow runtime → Copilot durable orchestration
 one event envelope → EventEnvelope
 one concrete wiring boundary → Composition Root
+user identity != device identity
+raw media retention → explicit class/policy only
+process learning → candidate only until governed publish
+industrial safety authority → external industrial owner
+free-form LLM machine actuation → blocked
 Chat runtime dependency → zero
 ```
 
@@ -226,6 +253,7 @@ Every new doc declares:
 Status: canonical authority | thematic spec | reference | superseded
 Order authority: 16-execution-master-plan.md
 Standalone boundary: 50 when runtime/product relevant
+Multimodal/Meeting/Frontline: 53 when relevant
 ```
 
 A thematic doc may not:
@@ -236,19 +264,27 @@ A thematic doc may not:
 - create another Cursor master prompt;
 - redefine shared primitive silently;
 - introduce Chat runtime dependency;
-- move AI logic into Portal;
-- create duplicate Core/domain authority.
+- move AI/media intelligence into Portal;
+- create duplicate Core/domain authority;
+- create separate Meeting/Frontline business executors;
+- create `FrontlineContext` incompatible with WorkspaceContext;
+- make capture implicit;
+- make raw-media retention default;
+- convert device identity into user authorization;
+- create hidden surveillance;
+- weaken industrial safety/interlocks;
+- infer OT permission from Copilot autonomy.
 
 ## 11. Current executable state
 
 ```text
-C0.S0 platform/monorepo inventory
+C0.S0 platform/monorepo/media/device/OT inventory
 → C0.S1 standalone boundary/names
 → C0.S2 authorities
-→ C0.S3 primitives
-→ C0.S4 architecture/persistence
+→ C0.S3 primitives/MediaRef decision
+→ C0.S4 architecture/persistence/privacy/media boundaries
 → C0.S5 integration contracts
-→ C0.S6 RED harness
+→ C0.S6 RED harness incl. privacy/device/OT negatives
 → C0.S7 FOUNDATION_FREEZE
 → C1.S1 standalone API skeleton
 ```
