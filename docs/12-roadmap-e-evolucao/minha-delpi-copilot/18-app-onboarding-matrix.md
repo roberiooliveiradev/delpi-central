@@ -1,23 +1,25 @@
 # Minha DELPI Copilot — Matriz de Onboarding dos Apps
 
 **Status:** inventário inicial / `TO_INVENTORY`  
-**Owner de atualização factual:** C0.S0 + readiness scanner futuro  
+**Owner factual:** C0.S0 + future readiness scanner  
 **Regra:** nenhum campo sem evidence vira comprovado por suposição.
 
-## 1. Níveis AI-ready
+## 1. Objetivo
+
+Mapear como o **novo Copilot standalone** descobre e integra apps/APIs existentes sem hardcode central e sem depender do Minha DELPI Chat.
+
+## 2. Níveis AI-ready
 
 | Nível | Nome | Critério mínimo |
 |---|---|---|
 | L0 | NOT_INVENTORIED | não auditado |
 | L1 | DISCOVERABLE | app/rotas/permissions discoverable |
-| L2 | CONTEXT_READY | EntityRef/deep link + Workspace Context quando material |
-| L3 | READ_READY | Business reads via contrato canônico + RBAC + outcome/evidence |
-| L4 | WRITE_READY | writes via API + policy/Decision Gate + idempotency/audit |
-| L5 | WORKFLOW_READY | capabilities confiáveis para Durable Workflows/events necessários |
+| L2 | CONTEXT_READY | EntityRef/deep link + WorkspaceContext quando material |
+| L3 | READ_READY | business reads via Domain API/OpenAPI + RBAC + evidence |
+| L4 | WRITE_READY | writes + Decision Gate + idempotency/audit |
+| L5 | WORKFLOW_READY | safe durable workflow/events when required |
 
-Nível maior pressupõe requisitos materiais anteriores.
-
-## 2. Classificação ortogonal de iframe
+## 3. Iframe class
 
 ```text
 I0 PORTAL_ONLY
@@ -26,54 +28,54 @@ I2 INTERACTIVE
 I3 AI_READY
 ```
 
-I3 exige Business Actions por API/OpenAPI; bridge visual sozinho não basta.
+I3 exige Business Actions por API/OpenAPI.
 
-## 3. Campos obrigatórios por app
+## 4. Campos obrigatórios por app
 
-C0.S0 deve registrar, quando aplicável:
+C0 deve registrar:
 
 ```text
-appId
-name
-renderMode
-plugin/MFE path
-backend/domain owner
+appId/name
+manifest path/version
+renderMode/MFE path
+backend/domain API owner
 Core registration
-/me/apps routes
-permissions
-canonical entity types/IDs
-entity deep-link support
-Workspace Context support
-OpenAPI location/quality
-business reads
-business writes
-destructive/high-risk actions
+routes/permissions
+canonical entity IDs
+entity deep links
+WorkspaceContext support
+OpenAPI location/version/quality
+business reads/writes
 risk/sensitivity owner
 Decision Gate readiness
-idempotency/concurrency support
-outcome/evidence/freshness support
-domain events relevant to workflows/watch
-current AI/agent integration
-AI-ready level
-iframe integration class
-iframe origin/SSO/bridge/CSP
+idempotency/concurrency
+outcome/evidence/freshness
+events/workflow relevance
+iframe class/origin/SSO/bridge if applicable
 knowledge/help sources
 owner/team
 candidate wave
 blockers
-evidence paths/hashes/verifiedAt
+evidence paths/hashes/timestamp
 ```
 
-## 4. Inventário inicial — candidatos conhecidos
+Além disso:
 
-A lista é ponto de partida, não prova de existência/owner. C0.S0 deve reconciliar com `plugins/`, manifests, Core registrations, APIs e roadmaps reais.
+```text
+COPILOT_INTEGRATION = API_CONTRACT | PLATFORM_CONTEXT | IFRAME_BRIDGE | NONE
+CHAT_DEPENDENCY_FOR_COPILOT = MUST_BE_NONE
+```
 
-| Área/app | Referência conhecida | Nível | Wave candidata | Estado |
+## 5. Inventário inicial — candidatos
+
+A lista é ponto de partida, não prova.
+
+| Área/app | Referência | Nível | Wave candidata | Estado |
 |---|---|---:|---|---|
-| Minha DELPI Chat | `plugins/minha-delpi-chat` + AI API | revalidar | Fundação | TO_INVENTORY |
-| Portal Comercial | portal comercial | L0 | Wave 1 candidata | TO_INVENTORY |
-| Portal Suprimentos | portal suprimentos | L0 | Wave 1 candidata | TO_INVENTORY |
-| Minhas Solicitações | `my-requests` | L0 | Wave 1 candidata | TO_INVENTORY |
+| Minha DELPI Chat | sistema vizinho/reference-only | N/A | nenhuma | OUT_OF_SCOPE para onboarding Copilot |
+| Portal Comercial | commercial | L0 | Wave 1 candidata | TO_INVENTORY |
+| Portal Suprimentos | supplies | L0 | Wave 1 candidata | TO_INVENTORY |
+| Minhas Solicitações | my-requests | L0 | Wave 1 candidata | TO_INVENTORY |
 | Portal Engenharia | engineering | L0 | Wave 2 | TO_INVENTORY |
 | Portal Financeiro | financial | L0 | Wave 2 | TO_INVENTORY |
 | Production Control | production-control | L0 | Wave 2 | TO_INVENTORY |
@@ -85,65 +87,61 @@ A lista é ponto de partida, não prova de existência/owner. C0.S0 deve reconci
 | Manutenção | maintenance | L0 | Wave 2 | TO_INVENTORY |
 | Customer Experience | customer-experience | L0 | Wave 2 | TO_INVENTORY |
 | Planos de Ação Qualidade | quality-action-plans | L0 | Wave 2 | TO_INVENTORY |
-| Labels Qualidade | quality-labels | L0 | Wave 3 | TO_INVENTORY |
 | Inspeções Entrada | inspecoes-entrada | L0 | Wave 2 | TO_INVENTORY |
 | Inspeções Processo | inspecoes-processo | L0 | Wave 3 | TO_INVENTORY |
 | Solicitações Compras | purchase requests | L0 | Wave 2 | TO_INVENTORY |
 | Controle MP | controle-mp | L0 | Wave 3 | TO_INVENTORY |
-| Emissão NF | invoice issuance | L0 | Wave 3 | TO_INVENTORY |
-| Lançamento NF | lancamento-notas-fiscais | L0 | Wave 3 | TO_INVENTORY |
+| Emissão/Lançamento NF | invoice apps | L0 | Wave 3 | TO_INVENTORY |
 | Despesas Viagem | travel expenses | L0 | Wave 3 | TO_INVENTORY |
 | CIPA | cipa | L0 | Wave 3 | TO_INVENTORY |
-| Comitê Ética/Conduta | ética/conduta | L0 | Wave 3 | TO_INVENTORY |
+| Comitê Ética/Conduta | ethics | L0 | Wave 3 | TO_INVENTORY |
 | Auditoria 5S | auditoria-5s | L0 | Wave 3 | TO_INVENTORY |
 | Central Agendamento | central-agendamento | L0 | Wave 3 | TO_INVENTORY |
 | Delpi Reports | delpi-reports | L0 | Wave 3 | TO_INVENTORY |
 | TV Dashboard | tv-dashboard | L0 | Wave 3 | TO_INVENTORY |
 | Transformômetro | transformometro | L0 | Wave 3 | TO_INVENTORY |
 
-Adicionar/remover linhas somente com evidence.
+C0 deve reconciliar esta lista com `plugins/`, Core registrations e APIs reais.
 
-## 5. Critério de Wave 1
+## 6. API inventory é parte do onboarding
 
-Escolher apps que maximizem aprendizado e reduzam risco:
-
-- Core registration e routes estáveis;
-- owner disponível;
-- EntityRef/deep-link claro;
-- OpenAPI real e razoável;
-- read forte e de valor;
-- Workspace Context útil;
-- baixo risco para piloto;
-- caminho futuro de write governado;
-- testes/observability possíveis.
-
-Comercial, Suprimentos e Minhas Solicitações são apenas candidatos até C0.S0.
-
-## 6. Readiness score
-
-Score pode ajudar priorização, mas **não substitui gates**.
-
-Itens possíveis:
+Para cada app/domain mapear também:
 
 ```text
-Core registration
-routes/RBAC
-EntityRef/deep-link
-Workspace Context
-OpenAPI quality
-read action
-outcome/evidence
-write action
-Decision Gate readiness
-idempotency
-contract/eval tests
-observability
-event readiness quando necessário
+API service
+Gateway base path
+OpenAPI source
+JWT/auth model
+permission headers/scopes
+error envelope
+pagination
+entity IDs
+read operations
+write operations
+idempotency support
+events/websockets
+health
 ```
 
-Bloqueio de segurança vence score.
+O Copilot integra a API owner diretamente; não passa pelo Chat.
 
-## 7. Evidence por linha
+## 7. Wave 1
+
+Priorizar apps com:
+
+- Core registration/permissions estáveis;
+- owner disponível;
+- EntityRef/deep-link claro;
+- OpenAPI real;
+- useful reads;
+- contextual value;
+- lower pilot risk;
+- future governed write path;
+- observability/tests.
+
+Comercial, Suprimentos e Minhas Solicitações permanecem candidatos até C0.S0.
+
+## 8. Readiness evidence
 
 ```text
 gitSha
@@ -152,45 +150,33 @@ Core registration evidence
 route/permission source
 OpenAPI source/hash
 entity/deep-link contract
-Workspace Context contract/test
+WorkspaceContext contract/test
 Decision/idempotency contract
-event source quando aplicável
-iframe origin/SSO/protocol quando aplicável
+event source if applicable
+iframe origin/protocol if applicable
 smoke/eval
 lastVerifiedAt
 ```
 
-Sem evidence: `TO_INVENTORY`.
+No evidence → `TO_INVENTORY`.
 
-## 8. Promoção AI-ready
-
-### L1 → L2
-Context/Entity foundations comprovadas.
-
-### L2 → L3
-Generic read + RBAC + outcome/evidence tests.
-
-### L3 → L4
-Write + Decision Gate + idempotency/audit tests.
-
-### L4 → L5
-Workflow safety + retry/resume/events quando o use case exigir.
-
-## 9. Promoção iframe
+## 9. Promotion
 
 ```text
-I0 → I1
-handshake/security + context lifecycle
-
-I1 → I2
-generic declared visual commands + observations
-
-I2 → I3
-Business Actions via API/OpenAPI + RBAC/policy/Decision Gate/evals
+L1 → L2: context/entity foundations
+L2 → L3: generic read + RBAC + outcome/evidence
+L3 → L4: write + Decision Gate + idempotency/audit
+L4 → L5: workflow safety + resume/events when required
 ```
 
-Fonte: [`26-iframe-copilot-bridge.md`](./26-iframe-copilot-bridge.md).
+Iframe:
 
-## 10. Regra foundation-first
+```text
+I0 → I1 context handshake
+I1 → I2 declared visual commands
+I2 → I3 Business Actions via API/OpenAPI
+```
 
-Onboarding de app **não cria novos primitives**. Se um app exigir variante de EntityRef, Evidence, Decision, Workspace ou Event, primeiro validar se existe gap real na foundation e versionar de forma compartilhada.
+## 10. Foundation rule
+
+App onboarding não cria new primitives or product-specific planner branches. Se um app revelar gap de Entity/Evidence/Decision/Workspace/Event, voltar à foundation/versioned contract antes de implementar.
