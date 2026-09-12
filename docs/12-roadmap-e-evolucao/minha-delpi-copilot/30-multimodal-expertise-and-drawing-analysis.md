@@ -2,91 +2,122 @@
 
 **Status:** thematic spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Foundation:** multimodal perception produz `EvidenceRef`/`MultimodalEvidenceRef` compartilhado em C0; runtime de integração em C2.
+**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)
 
 ## 1. Princípio
 
-Multimodalidade é capability/tool do mesmo Copilot, não agente separado.
+Multimodalidade é capability/tool da **nova Copilot API**, não agente separado e não chamada ao runtime do Minha DELPI Chat.
 
 ```text
 attachment
-→ extraction/perception
+→ Copilot perception adapters
 → Multimodal Evidence
-→ expertise/playbook interpretation
-→ optional business/knowledge correlation
+→ Expertise/Playbook interpretation
+→ optional Business/Knowledge correlation
 → grounded synthesis
 ```
 
-Percepção e interpretação de domínio são responsabilidades separadas.
+Percepção e interpretação de domínio permanecem separadas.
 
-## 2. Runtime existente a reaproveitar
+## 2. Relação com implementações existentes
 
-C0.S0 deve revalidar e preservar quando vigente:
+C0.S0 deve estudar o pipeline existente do Minha DELPI Chat — `ChatDocumentVisionService`, OCR, native extraction, VLM fallback, drawing analysis etc. — **somente como referência técnica**.
 
-- `ChatDocumentVisionService`;
-- `chat_document_vision/*`;
-- native extraction;
-- OCR;
-- VLM fallback;
-- drawing merge;
-- `drawing-analysis-delpi`;
-- `document-vision-delpi`;
-- `technical-description-delpi`.
+Não permitido:
 
-Objetivo de migração: remover dependência de agent ativo quando não houver requisito real de segurança/capability.
+```text
+Copilot API → importar ChatDocumentVisionService
+Copilot API → chamar endpoint do Chat para vision
+Copilot → depender de Chat skill registry
+Copilot → depender de agent ativo
+```
 
-## 3. Pipeline
+Permitido:
+
+- reutilizar biblioteca externa já aprovada;
+- reutilizar package neutro realmente compartilhado;
+- extrair utility neutra para shared owner se 2+ consumers reais justificarem;
+- reimplementar o pipeline de forma limpa dentro da Copilot API.
+
+## 3. Pipeline Copilot-owned
 
 ```text
 upload/ref
 → type/security/size validation
-→ native extraction quando possível
-→ targeted OCR quando necessário
-→ targeted VLM/vision quando necessário
+→ native extraction when possible
+→ targeted OCR when required
+→ targeted VLM/vision when required
 → structured observations
-→ EvidenceRef(s) com provenance/confidence/limitations
+→ EvidenceRef(s) with provenance/confidence/limitations
 → expertise/playbook retrieval
 → domain interpretation
-→ optional API/Knowledge reads
+→ optional Domain API/Knowledge reads
 → synthesis/render/artifact
 ```
 
-## 4. Layers
+## 4. Ports & Adapters
 
-### Perception
+Application/domain não conhecem provider/OCR/VLM concreto.
+
+Ports conceituais, se Abstraction Gate justificar:
+
+```text
+DocumentExtractorPort
+VisionAnalyzerPort
+AttachmentStoragePort
+```
+
+Adapters podem incluir:
+
+```text
+NativePdfExtractorAdapter
+OcrAdapter
+VisionModelAdapter
+ObjectStorageAdapter
+```
+
+Strategy só existe quando houver variação real/seleção entre extraction methods.
+
+## 5. Perception layer
 
 Extrai/observa:
 
-- texto;
+- text;
 - tables;
 - regions;
-- labels/symbols detectáveis;
-- metadata;
+- detectable labels/symbols;
+- document metadata;
 - visual structure;
 - pages/images.
 
 Não conclui business rule sozinho.
 
-### Domain interpretation
+## 6. Domain interpretation
 
-Usa expertise/playbook para interpretar:
+Expertise/Playbook interpreta:
 
-- significado técnico;
-- risco;
-- inconsistência;
+- technical meaning;
+- risk;
+- inconsistency;
 - evidence sufficiency;
-- relation com produto/processo;
-- necessidade de dados adicionais.
+- relation to product/process;
+- additional data required.
 
-### Execution/correlation
+## 7. Execution/correlation
 
-EntityRef extraído/grounded pode acionar Business/Knowledge capabilities autorizadas.
+```text
+multimodal observation
+→ grounded EntityRef
+→ Business Graph/capability retrieval
+→ authorized Domain API
+→ additional Evidence/Outcome
+```
 
-## 5. Evidence model
+Vision pipeline não contém endpoint-specific routing.
 
-Não criar um evidence schema exclusivo de vision.
+## 8. Evidence model
 
-Usar foundation compartilhada com extensões multimodais como:
+Reutilizar `EvidenceRef`/`MultimodalEvidenceRef` canônicos:
 
 ```text
 sourceRef/attachmentRef
@@ -95,14 +126,14 @@ observation kind/value ref
 extractor/method/version
 confidence
 limitations
-revision/document metadata quando material
+revision/document metadata when material
 ```
 
-OCR/VLM output é observação, não verdade absoluta.
+OCR/VLM output é observação, não truth authority.
 
-## 6. Drawing observations
+## 9. Drawing observations
 
-Quando tecnicamente viável:
+Quando detectável:
 
 ```text
 document identification
@@ -121,11 +152,9 @@ revision markers
 ambiguous/unreadable regions
 ```
 
-Ausência de campo não deve ser inventada.
+Nunca inventar campo ilegível/ausente.
 
-## 7. Confidence/limitations
-
-Estados conceituais úteis:
+## 10. Confidence/limitations
 
 ```text
 EXTRACTED_HIGH_CONFIDENCE
@@ -135,74 +164,56 @@ UNREADABLE
 NOT_FOUND
 ```
 
-Confidence numérica só quando o extractor/method suporta significado real.
+Numerical confidence only when method supports meaningful score.
 
-## 8. Engenharia + Qualidade
-
-Exemplo:
+## 11. Engenharia + Qualidade
 
 > “Analise este desenho e veja se há riscos para a inspeção de recebimento.”
 
 ```text
-drawing evidence
+drawing Evidence
 → product-engineering expertise
 → quality-industrial expertise
 → drawing-review playbook
-→ authorized quality/inspection knowledge/actions
-→ facts/hypotheses/recommendations grounded
+→ authorized inspection/quality sources
+→ grounded facts/hypotheses/recommendations
 ```
 
-## 9. Entity correlation
-
-```text
-vision observation
-→ grounded EntityRef
-→ Business Graph/capability retrieval
-→ source APIs
-→ Evidence/Outcome
-```
-
-Vision pipeline não recebe endpoints específicos para buscar produto/fornecedor/inspeção.
-
-## 10. Security
+## 12. Security
 
 - file type/size validation;
 - safe parsing/sandbox;
 - no embedded code execution;
-- extracted text is untrusted data;
+- extracted content = untrusted data;
 - image/PDF prompt injection protection;
-- document ACL;
+- source ACL;
 - PII/secret handling;
 - no full document in logs by default;
-- model/provider data policy.
+- provider data policy.
 
-## 11. Performance
-
-Preferir custo incremental:
+## 13. Performance
 
 ```text
 native parse
 → targeted OCR
 → targeted VLM
-→ full multimodal only if justified
+→ full multimodal only when justified
 ```
 
-Não rasterizar tudo por padrão.
+## 14. Cache
 
-## 12. Cache
-
-Cache de percepção pode usar:
+Derived perception cache may key by:
 
 ```text
-attachment/content hash
+content hash
 extractor version
 model/config hash
 schema version
 ```
 
-Mudança material invalida evidence/eval afetada.
+It is derived/invalidatable, not document authority.
 
-## 13. Evals
+## 15. Evals
 
 - textual PDF;
 - raster PDF;
@@ -212,26 +223,29 @@ Mudança material invalida evidence/eval afetada.
 - revision mismatch;
 - visual prompt injection;
 - unrelated document;
-- model/provider variant;
+- provider variant;
 - cache/reload consistency;
-- session without agent.
+- no Chat runtime dependency.
 
-## 14. Implementation mapping
+## 16. Phase mapping
 
 ```text
-C0 → evidence contract + runtime inventory/security semantics
-C2 → multimodal adapter producing shared Evidence + expertise integration
-C3 → optional business/source correlation through generic reads/Graph
-C5 → Case Evidence Board reuses same refs
+C0 → contracts/security/provider boundaries
+C3 → Copilot-owned multimodal runtime + expertise/evidence
+C4 → business/source correlation
+C6 → Case Evidence Board integration
+C7 → model-routing optimization if justified
 ```
 
-## 15. Gate
+## 17. Gate
 
-Multimodal feature só é madura se:
+```text
+COPILOT_OWN_MULTIMODAL_RUNTIME = PASS
+NO_CHAT_VISION_DEPENDENCY = PASS
+EVIDENCE_PROVENANCE = PASS
+UNCERTAINTY_HANDLING = PASS
+DOCUMENT_INJECTION = PASS
+AUTHORIZED_CORRELATION = PASS
+```
 
-- observations são rastreáveis;
-- unreadable/uncertain content é explicitado;
-- document injection não altera policy;
-- source correlation usa authorized capabilities;
-- evidence model não é paralelo;
-- no-agent usage funciona quando autorizado.
+Multimodalidade só fecha quando esses gates passam.
