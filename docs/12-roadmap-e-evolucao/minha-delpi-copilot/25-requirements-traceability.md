@@ -1,7 +1,8 @@
 # Minha DELPI Copilot — Matriz Canônica de Rastreabilidade
 
-**Objetivo:** garantir que toda funcionalidade possua owner, fase canônica, gate e status.  
+**Objetivo:** garantir que toda funcionalidade e requisito arquitetural possua owner, fase canônica, gate e status.  
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Arquitetura/patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
 **Testes:** [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md)
 
 > Este documento é a authority de requisitos `CP-*`. O arquivo `46-operational-intelligence-requirements.md` passa a ser apenas referência histórica/temática; requisitos CP-090–CP-129 estão consolidados aqui.
@@ -21,7 +22,7 @@ PASS
 OUT_OF_SCOPE_WITH_DECISION
 ```
 
-## 2. C0 — Fundação/contratos
+## 2. C0 — Fundação/contratos/arquitetura
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
@@ -46,6 +47,17 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-110 | Decision Gate proporcional a risco | Policy | C0 contract; runtime C4 | PLANNED |
 | CP-111 | Approval workflow humano | Policy/Workflow | C0 contract; runtime C4/C5 | PLANNED |
 | CP-123 | Provider data-policy filtering | AI/Security | C0 policy contract; runtime C7 | PLANNED |
+| CP-130 | Architecture style canônico: Clean Architecture + Ports & Adapters + DDD pragmático | Platform Architecture | C0 architecture freeze | PLANNED |
+| CP-131 | Layer responsibilities e dependency direction canônicas | Platform Architecture | dependency conformance | PLANNED |
+| CP-132 | DI/Composition Root e external dependencies atrás de adapters/ports quando boundary justificar | Platform Architecture + owners | wiring/conformance | PLANNED |
+| CP-133 | Pattern Decision Matrix canônica para Repository/Use Case/State Machine/Policy/Adapter/Event/etc. | Platform Architecture | pattern matrix review | PLANNED |
+| CP-134 | Abstraction Gate para interface/port/repository/factory/strategy/registry/base class | Platform Architecture | no unjustified abstraction | PLANNED |
+| CP-135 | Error/Result model transversal e tradução de erros de infraestrutura | Application/Interfaces | error contract/conformance | PLANNED |
+| CP-136 | Event model + EventEnvelope + Outbox/Idempotency/Resilience rules sem event bus paralelo | Platform/Workflow | event/resilience conformance | PLANNED |
+| CP-137 | State Machine pattern para lifecycles não triviais | Work/Policy/Domain owners | transition tests | PLANNED |
+| CP-138 | Frontend state ownership: server/workspace/conversation/local vs durable backend state | Portal/Chat/MFEs | frontend architecture conformance | PLANNED |
+| CP-139 | Migração legada via Adapter + Anti-Corruption Layer + Strangler + exit criteria quando aplicável | AI/Platform | migration/residual gate | PLANNED |
+| CP-140 | Architectural conformance + exception/ADR process obrigatório | Platform Architecture | architecture gate/ADR | PLANNED |
 
 ## 3. C1 — Portal, navegação e Workspace Context
 
@@ -195,12 +207,13 @@ OUT_OF_SCOPE_WITH_DECISION
 - requisito novo recebe novo `CP-*`; nunca reutilizar ID;
 - nenhum CP vira PASS por documentação apenas;
 - `BLOCKED_BY_AI_GATE` muda somente com evidence vigente dos gates externos;
-- requisitos de contrato em C0 podem ser PASS sem runtime completo, desde que o gate seja de schema/ownership e isso esteja explícito;
+- requisitos de contrato/arquitetura em C0 podem ser PASS sem runtime completo, desde que o gate seja de schema/ownership/conformance e isso esteja explícito;
 - runtime requirement só passa com wiring + integration/eval;
 - `TO_INVENTORY` não vira PLANNED por suposição;
 - requisito removido recebe `OUT_OF_SCOPE_WITH_DECISION` ou decisão de deprecação; não apagar silenciosamente;
 - `LEGACY_FALLBACK` precisa exit criteria;
-- phase canonical é C0–C7 do Plano Mestre; tags antigas E*/O* são somente referência histórica.
+- phase canonical é C0–C7 do Plano Mestre; tags antigas E*/O* são somente referência histórica;
+- requisito de design pattern não autoriza criar a abstração: o Abstraction Gate continua obrigatório.
 
 ## 11. Coverage final
 
@@ -219,6 +232,7 @@ E por família:
 
 ```text
 FOUNDATION
+ARCHITECTURE_PATTERNS
 PLATFORM_CONTEXT
 INTELLIGENCE
 BUSINESS_READS_GRAPH
