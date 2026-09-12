@@ -1,16 +1,18 @@
 # Minha DELPI Copilot — Detalhamento do Runtime de Expertise
 
-**Status:** detalhamento temático  
-**Autoridade de ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Regra:** os identificadores `E*` abaixo são referências técnicas, **não uma sequência executável independente**.
+**Status:** thematic spec  
+**Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)
 
 ## 1. Objetivo
 
-Detalhar a migração do modelo atual de agents/skills para o runtime de Copilot único, sem redefinir a ordem C0–C7.
+Implementar **nativamente na nova Copilot API** a especialização dinâmica do Copilot único.
 
-## 2. Componentes alvo
+Não existe migration de agents do Minha DELPI Chat nesta iniciativa.
 
-Conceitualmente, se C0 provar gaps reais:
+## 2. Componentes conceituais
+
+Conforme gaps e Abstraction Gate:
 
 ```text
 ExpertiseCatalogPort
@@ -26,133 +28,103 @@ MultimodalEvidenceAdapter
 ExpertiseTelemetry
 ```
 
-Nomes finais devem seguir patterns reais do repositório.
+Nomes finais seguem C0/`49`; não criar todos antecipadamente.
 
-## 3. Boundaries
+## 3. Layers
 
 ### Domain
-- Expertise/Playbook models puros;
-- selection/composition rules;
-- sem filesystem/DB/HTTP/LLM.
+- Expertise/Playbook value/domain models;
+- pure applicability/composition semantics;
+- no DB/HTTP/LLM/framework.
 
 ### Application
-- retrieve expertise;
-- compose bounded context;
+- retrieve/rank packs;
+- compose bounded ExpertiseContext;
 - resolve playbook applicability;
-- integrate evidence com planning.
+- combine with evidence/planning;
+- project preference without permission elevation.
 
 ### Infrastructure
-- repositories/indexes;
-- bootstrap/import;
-- embedding/LLM adapters;
-- telemetry persistence.
+- storage/index adapters;
+- embedding/provider adapters;
+- import/version adapters;
+- telemetry.
 
 ### Interfaces
-- admin/read DTO/endpoints quando necessários.
+- admin/read DTO/endpoints when C6 requires them.
 
-## 4. Mapeamento canônico
+## 4. Fase canônica
 
-| Referência E* | Conteúdo | Fase canônica |
-|---|---|---|
-| E0 | inventário agent/skill consumers | C0.S0 |
-| E1 | contracts/RED tests | C0.S2–C0.S5 |
-| E2 | Expertise Catalog/Repository | C2.S2 |
-| E3 | retrieval top-K | C2.S3 |
-| E4 | bounded context composition | C2.S3 |
-| E5 | decouple operational tools de agent activation | C4.S7 |
-| E6 | remover soft handoff | C4.S8 |
-| E7 | migrar specialization presets | C4/C6, após evidence de consumers |
-| E8 | cleanup skill gating | C4, conforme owner/policy |
-| E9 | Domain Playbooks | contracts C0; runtime C2.S4/C5 planning |
-| E10 | multimodal integration | C2.S6–S7 |
-| E11 | project preferences | C6.S4 |
-| E12 | admin/observability | C6.S7–S8 |
-| E13 | legacy agent-routing deprecation | C7.S5 |
+```text
+C0
+→ Expertise/Playbook contracts, owners, persistence boundaries
 
-Se este mapeamento divergir de texto antigo, a fase C acima prevalece.
+C3
+→ Catalog/Repository if required
+→ retrieval/ranking
+→ context composition
+→ playbooks
+→ Knowledge ACL integration
+→ multimodal integration
+→ evals/generalization
 
-## 5. Regras de implementação
+C6
+→ project preferences
+→ Expertise Studio/admin/coverage
 
-- pack/playbook não concede permission;
-- pack/playbook não contém path/method/operationId como authority;
-- unknown pack funciona sem planner patch;
-- retrieval usa goals/context/entities/attachments/project prefs de forma bounded;
-- project preference melhora ranking, não força pack irrelevante;
-- knowledge scopes continuam sujeitos a ACL;
-- multimodal skill útil não exige `agent_id` quando policy/capability permitir;
-- shadow selection tem exit criteria e não vira fallback permanente.
+C7
+→ performance/model-routing optimization only if justified
+```
 
-## 6. Migração legada
+## 5. Regras
 
-Inventariar/classificar:
+- one Copilot identity;
+- pack/playbook never grants permission;
+- no path/method/opId as semantic authority;
+- unknown/new pack works without planner patch;
+- retrieval uses goals/context/entities/attachments/preferences boundedly;
+- project preference improves ranking, not authorization;
+- Knowledge source ACL remains authoritative;
+- multimodal capability does not depend on agent activation;
+- versions/hashes are auditable;
+- packs/playbooks are data/configuration of the Copilot product, not user-facing agents.
+
+## 6. No Chat migration
+
+These concepts are explicitly **not inputs** to this runtime:
 
 ```text
 AgentSpecializationService
 ChatWorkspaceAgentActivationService
 ChatSoftAgentHandoffService
 ChatSkillRegistry
-agent repositories/entities/controllers
-session.agent_id
-chat_mode
-project default agent
-knowledge/actions por agent
-agent admin/selector UX
+Chat session.agent_id
+Chat chat_mode
+Chat project default agent
 ```
 
-Classificações:
+They may be observed during C0 only to understand lessons/anti-patterns.
+
+## 7. Tests
 
 ```text
-KEEP
-MIGRATE_TO_EXPERTISE
-MIGRATE_TO_PROJECT_CONTEXT
-MIGRATE_TO_CAPABILITY_POLICY
-DEPRECATE
-REMOVE
-NOT_PROVEN
+positive domain selection
+sibling domain
+negative unrelated
+cross-domain composition
+unknown pack
+metamorphic pack rename
+unauthorized capability
+unauthorized knowledge
+project preference conflict
+malicious pack content
+multimodal-triggered expertise
+version regression
+full-page/panel parity
 ```
 
-## 7. Gates
+## 8. Resultado alvo
 
-Antes de remover seleção/roteamento material por agent:
+> “Use Engenharia e Qualidade para analisar este desenho, consulte problemas anteriores e monte um 8D preliminar.”
 
-```text
-EXPERTISE_CONTRACT = PASS
-EXPERTISE_RETRIEVAL = PASS
-CROSS_DOMAIN_COMPOSITION = PASS
-UNAUTHORIZED_CAPABILITY = PASS
-UNAUTHORIZED_KNOWLEDGE = PASS
-SESSION_WITHOUT_AGENT = PASS
-LEGACY_SESSION_COMPATIBILITY = PASS durante janela definida
-SOFT_HANDOFF_REMOVAL = PASS
-MULTIMODAL_EXPERTISE = PASS quando no escopo
-SEND_STREAM_PARITY = PASS
-RESIDUAL_AGENT_ROUTING = PASS
-```
-
-## 8. Residual scan
-
-```text
-has_agent
-userActivatedAgent
-chat_mode == "agent"
-switch_agent_and_resend
-softAgentHandoff
-agent allowed tools
-agentId routing
-```
-
-Cada ocorrência final deve ser:
-
-```text
-VALID_NON_ROUTING_CONCEPT
-LEGACY_COMPAT_WITH_EXIT_CRITERIA
-REMOVE
-```
-
-Residual material sem exit criteria bloqueia C7.
-
-## 9. Resultado alvo
-
-> “Use Engenharia e Qualidade para analisar este desenho, consulte reclamações anteriores e monte um 8D preliminar.”
-
-Deve funcionar no mesmo Copilot, sem troca de agente e sem perda de RBAC.
+O mesmo Copilot deve compor os packs/playbooks necessários sem troca de agent e sem depender do Minha DELPI Chat.
