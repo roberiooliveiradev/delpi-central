@@ -22,7 +22,9 @@ Leia obrigatoriamente antes de qualquer alteração:
 10. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/21-data-and-state-model.md`
 11. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/22-cursor-execution-protocol.md`
 12. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/24-product-specification.md`
-13. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/evidence/execution-ledger.md`
+13. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/25-requirements-traceability.md`
+14. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/26-iframe-copilot-bridge.md`
+15. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/evidence/execution-ledger.md`
 
 Também leia a documentação vigente de `minha-delpi-ai-api`, Portal/Core e do componente específico que estiver sendo alterado.
 
@@ -58,10 +60,10 @@ Platform Actions
 → Platform Capability Projection
 → typed PlatformCommand
 → CopilotBridge
-→ Router/MFE
+→ Router/MFE/IframeBridge
 
 Workspace Context
-→ MFE publisher
+→ MFE publisher OU IframeBridge
 → Portal context store
 → bounded structured turn context
 
@@ -83,7 +85,10 @@ Agentic workflows
 - workflow HTTP executor paralelo;
 - memória paralela por app;
 - chain-of-thought persistida;
-- agente independente por departamento como novo core.
+- agente independente por departamento como novo core;
+- comando específico por iframe/app no bridge genérico;
+- transmissão de JWT/refresh token por `postMessage`;
+- `targetOrigin='*'` para mensagens sensíveis.
 
 ## Dependência da Onda J
 
@@ -91,7 +96,7 @@ A implementação atual de `llm-json-decoupling` possui documentação com `VERI
 
 Não ignore isso e não declare resolvido neste projeto.
 
-- C0–C2 podem avançar independentemente: contratos, navegação e Workspace Context.
+- C0–C2 podem avançar independentemente: contratos, navegação, IframeBridge e Workspace Context.
 - C3+ pode preparar scaffolding/testes, porém **Business Actions production-ready** dependem dos gates OpenAPI-first/tool/eval relevantes aprovados no candidate vigente.
 
 ## Ordem obrigatória
@@ -121,11 +126,12 @@ Antes de editar runtime:
 
 1. capture `git status` e HEAD;
 2. inventarie código real de Portal, Core, AI API, Chat MFE, manifests e APIs;
-3. identifique producer/consumer/owner;
-4. atualize `18-app-onboarding-matrix.md` com fatos/evidence;
-5. atualize `17-component-and-contract-map.md` se os contratos reais diferirem das hipóteses;
-6. registre evidence no ledger;
-7. somente então defina C0.S1 como desbloqueada.
+3. inventarie explicitamente todos apps `iframe` e `external`, seus manifests, render modes, origins, SSO e possibilidade de integração;
+4. identifique producer/consumer/owner;
+5. atualize `18-app-onboarding-matrix.md` com fatos/evidence;
+6. atualize `17-component-and-contract-map.md` se os contratos reais diferirem das hipóteses;
+7. registre evidence no ledger;
+8. somente então defina C0.S1 como desbloqueada.
 
 Onde não houver prova, use `TO_INVENTORY`/`NOT_PROVEN`. Não invente.
 
@@ -196,6 +202,31 @@ O LLM gera target lógico/ID autorizado, nunca URL livre.
 - executar Router/Shell action;
 - emitir resultado tipado/auditável.
 
+## Iframe Copilot Bridge
+
+Apps `iframe` seguem `26-iframe-copilot-bridge.md`.
+
+Classificar cada app:
+
+```text
+PORTAL_ONLY
+CONTEXTUAL
+INTERACTIVE
+AI_READY
+```
+
+Regras obrigatórias:
+
+- `PORTAL_ONLY`: abrir app/rota somente;
+- `CONTEXTUAL`: iframe publica contexto bounded via bridge tipado;
+- `INTERACTIVE`: recebe somente comandos visuais genéricos declarados;
+- `AI_READY`: Business Actions reais vêm de API/OpenAPI, não de click/DOM;
+- validar `origin`, `event.source`, `appId`, protocolo, versão, sessão e schema;
+- capability declarada pelo iframe não implica autorização automática;
+- contexto do iframe é dado não confiável para policy/system;
+- nenhuma credencial de negócio é transmitida pelo bridge;
+- segundo iframe compatível deve funcionar sem patch específico no planner/bridge.
+
 ## Workspace Context
 
 Contexto deve ser bounded e tipado:
@@ -209,6 +240,8 @@ selection
 dateRange
 visibleDataRefs
 ```
+
+Pode ser produzido por MFE ou iframe integrado. O Copilot deve receber a representação normalizada, sem acoplar o planner à tecnologia visual.
 
 Não enviar estado React inteiro. Não usar contexto como permissão.
 
@@ -237,6 +270,8 @@ args grounded
 → verify outcome
 → audit
 ```
+
+Em iframe, jamais substituir esse fluxo por `view.click_button` ou equivalente.
 
 ## Workflows
 
@@ -267,6 +302,9 @@ Obrigatório conforme a etapa:
 - required/type/enum/path/query/body;
 - confirmation/idempotency;
 - compound/multi-turn/partial failure;
+- iframe valid/invalid origin/source/session/schema;
+- unknown iframe onboarding sem hardcode;
+- tentativa de business write por comando visual rejeitada;
 - R1–R11.
 
 Nunca enfraquecer teste/threshold para fazer o candidate passar.
@@ -278,7 +316,8 @@ Seguir:
 ```text
 contracts
 → navigation canary
-→ workspace context opt-in
+→ iframe PORTAL_ONLY/bridge handshake
+→ workspace context opt-in MFE/iframe
 → business reads
 → prepare write L3
 → confirmed write L4
