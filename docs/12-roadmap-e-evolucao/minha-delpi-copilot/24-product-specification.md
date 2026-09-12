@@ -1,118 +1,117 @@
 # Minha DELPI Copilot — Especificação Funcional e Técnica Completa
 
 **Status:** especificação canônica de produto  
-**Ordem de implantação:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Produto:** aplicação standalone nova  
+**Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
+**Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Rastreabilidade:** [`25-requirements-traceability.md`](./25-requirements-traceability.md)
 
 ## 1. Definição
 
-O Minha DELPI Copilot é a **camada inteligente operacional da empresa**.
+O Minha DELPI Copilot é a **camada inteligente operacional da empresa implementada como aplicação independente dentro da Minha DELPI**.
 
-Não é apenas um chatbot e não substitui os Portais. Ele conecta aplicações, dados, pessoas, conhecimento, decisões e trabalho persistente sob as mesmas regras de segurança da Minha DELPI.
+Ele possui:
+
+```text
+Copilot API própria
+Copilot MFE próprio
+persistência/migrations próprias
+manifesto/rotas/permissões próprias
+deploy/rollback próprios
+```
+
+Ele **não é evolução do Minha DELPI Chat** e não depende do Chat para funcionar.
 
 North Star:
 
 > Entender o contexto da organização, conectar dados, pessoas, processos e aplicações, investigar problemas, executar trabalho, acompanhar resultados e transformar conhecimento empresarial em ação governada.
 
-Quatro verbos do produto:
-
 ```text
 PERGUNTAR  → entender, pesquisar, explicar, analisar
 FAZER      → abrir, consultar, criar, alterar, aprovar, executar
-ACOMPANHAR → monitorar, detectar, lembrar, alertar, reagir
-TRABALHAR  → investigar, colaborar, planejar, acompanhar ações, concluir
+ACOMPANHAR → monitorar, detectar, alertar, reagir
+TRABALHAR  → investigar, colaborar, planejar, acompanhar, concluir
 ```
 
-## 2. Princípio do Copilot único
+## 2. Integração na Minha DELPI
 
-Existe **um único Minha DELPI Copilot**.
+```text
+Portal Shell
+→ hospeda Copilot MFE federado
+→ fornece token/contexto de host
 
-Engenharia, Qualidade, Suprimentos, Comercial, Financeiro, RH e demais áreas não criam novos runtimes/agentes de produto. Especialização ocorre por:
+Core API
+→ apps/rotas/RBAC/governança
 
-- Expertise Packs;
-- Domain Playbooks;
-- knowledge scopes;
-- project preferences;
-- capabilities autorizadas;
-- multimodal tools.
+Gateway
+→ rota Copilot MFE/API
 
-Workers internos especializados podem existir como detalhe de implementação, sem criar identidades de produto ou authorities paralelas.
+Domain APIs
+→ dados/regras/actions reais
+
+plugin-ui
+→ design system
+
+Copilot API
+→ inteligência/orquestração/trabalho/evidence
+```
+
+O Portal é host, não runtime inteligente. Core é authority de permissões, não banco do Copilot. Domain APIs continuam donas do negócio.
 
 ## 3. Superfícies
 
-### 3.1 Painel lateral global
+### Full page
 
-- conversa;
-- contexto da tela;
-- activity;
-- evidence/sources;
-- decisions/approvals;
-- ações “abrir no app”;
-- continuidade entre apps quando permitido.
+Aplicação registrada como MFE federado para:
 
-### 3.2 Página completa
-
-- análises longas;
-- Tasks;
-- Cases;
-- artefatos;
-- histórico;
-- workflows extensos;
+- conversas longas;
+- Tasks/Cases;
+- artifacts;
 - evidence boards;
-- comparação multi-domínio.
+- administration;
+- workflows extensos.
 
-### 3.3 Entrada contextual MFE
+### Global side panel
 
-App publica `WorkspaceContext`; Shell abre o Copilot central.
+Portal hospeda o mesmo MFE/runtime para acesso contextual de qualquer app.
 
-### 3.4 Entrada contextual iframe
+O painel não é segundo frontend nem segundo estado do produto.
 
-Usa `Iframe Copilot Bridge` conforme classe `PORTAL_ONLY | CONTEXTUAL | INTERACTIVE | AI_READY`.
+### Contextual app/iframe
 
-### 3.5 Inbox
+MFEs/iframes podem publicar `WorkspaceContext` e receber Platform Commands tipados.
 
-Centraliza:
+### Inbox / Case / Room
 
-```text
-waiting_for_user
-working
-completed
-alerts
-```
+Surfaces de trabalho persistente, sempre usando a mesma Copilot API.
 
-### 3.6 Case/Room
+## 4. Copilot único
 
-Investigações/trabalho colaborativo persistente com pessoas + Copilot + arquivos + evidence + decisões + ações.
+Existe um único Copilot. Domínios especializam o runtime por:
 
-## 4. Conversa e entendimento
+- Expertise Packs;
+- Domain Playbooks;
+- Knowledge scopes;
+- project/preferences;
+- authorized capabilities;
+- multimodal tools.
+
+Não existe agent runtime por departamento.
+
+## 5. Conversa e entendimento
 
 - PT-BR natural;
 - pedidos longos/compostos;
 - follow-up contextual;
-- decomposição em goals/subtasks;
-- clarify somente para requisito realmente ausente;
+- goal decomposition;
 - entity resolution;
-- structured memory/reference;
-- sem chain-of-thought exposta/persistida.
+- clarify somente quando necessário;
+- structured references/memory;
+- sem chain-of-thought persistida/exposta.
 
-## 5. Navegação
-
-Capabilities visuais genéricas:
-
-- abrir app;
-- abrir rota;
-- abrir entidade;
-- voltar;
-- selecionar aba/view;
-- aplicar filtro visual;
-- focar entidade/seção;
-- deep link resultante.
-
-LLM escolhe target lógico autorizado; Portal resolve URL/rota.
+Conversations/turns são Copilot-owned e não usam sessions/agent_id do Chat.
 
 ## 6. Workspace Context
-
-Quando disponível:
 
 ```text
 appId
@@ -125,39 +124,48 @@ visibleDataRefs
 source
 ```
 
-Contexto é bounded, sanitizado e não concede permission.
+Bounded/sanitized. Não concede permission.
 
-## 7. Entidades e DELPI Business Graph
+## 7. Navegação / Platform Commands
 
-O produto usa `EntityRef` canônico e relações com provenance para navegar semanticamente entre domínios.
+- abrir app;
+- abrir rota;
+- abrir entidade;
+- back/history;
+- select/focus view;
+- aplicar filtro visual quando app declarar suporte.
 
-Exemplo:
+LLM escolhe target lógico; Portal resolve rota autorizada. URL arbitrária é proibida.
+
+## 8. Capability architecture
+
+### Platform capabilities
+
+Derivadas de Core apps/routes e generic action definitions.
+
+### Business capabilities
+
+Derivadas diretamente de OpenAPI/contracts das Domain APIs.
 
 ```text
-reclamação
-→ produto
-→ desenho/revisão
-→ OP/lote
-→ matéria-prima
-→ fornecedor
-→ inspeções
-→ não conformidades
-→ plano de ação
+Domain OpenAPI
+→ Copilot importer/index
+→ Copilot Action Catalog
+→ authorized Capability Projection
+→ semantic retrieval
+→ planner
+→ schema validation
+→ policy/Decision Gate
+→ generic executor
+→ Domain API
+→ Outcome/Evidence
 ```
 
-O Business Graph:
+Essa cadeia é nativa do Copilot; não usa o Action Catalog/runtime do Minha DELPI Chat.
 
-- armazena referências/relações, não cópia integral dos dados;
-- distingue authoritative vs inferred relationship;
-- respeita RBAC;
-- busca dados atuais na source API;
-- possui depth/cycle budget.
+## 9. Business Reads
 
-## 8. Business Reads
-
-O Copilot consulta somente Business Actions autorizadas via OpenAPI + Action Catalog.
-
-Abrange, conforme APIs disponíveis:
+Consultar, conforme APIs onboarded:
 
 - comercial;
 - suprimentos;
@@ -167,13 +175,13 @@ Abrange, conforme APIs disponíveis:
 - engenharia;
 - manutenção;
 - solicitações;
-- demais domínios onboarded.
+- demais domínios.
 
 A lista não é hardcoded no planner.
 
-## 9. Business Writes
+## 10. Business Writes
 
-Quando o domínio/API/policy permitir:
+Quando Domain API/policy permitir:
 
 - criar;
 - editar;
@@ -182,28 +190,11 @@ Quando o domínio/API/policy permitir:
 - comentar;
 - cancelar/arquivar;
 - iniciar processo;
-- demais actions reais.
+- demais operations reais.
 
-Fluxo:
+Nunca usar DOM automation como substituto de API.
 
-```text
-intent
-→ grounded args
-→ schema validation
-→ RBAC/policy
-→ impact preview
-→ Decision Gate
-→ revalidation
-→ execute
-→ verify outcome
-→ evidence/audit/deep link
-```
-
-Nunca substituir Business Action por DOM automation.
-
-## 10. Decision Gates
-
-Governança proporcional ao risco:
+## 11. Decision Gates
 
 ```text
 NO_GATE
@@ -214,20 +205,29 @@ APPROVAL_WORKFLOW
 BLOCK
 ```
 
-Considera:
+Consideram risk, sensitivity, impact, evidence, arguments hash, expiry, autonomy e approver requirements.
 
-- risk/sensitivity;
-- value/impact;
-- operation type;
-- evidence;
-- autonomy policy;
-- arguments hash;
-- expiry;
-- approver/RBAC quando aplicável.
+## 12. Entity model e DELPI Business Graph
 
-## 11. Análise e Epistemic UX
+`EntityRef` e `RelationshipRef` conectam semanticamente domínios:
 
-O Copilot deve distinguir visual e semanticamente:
+```text
+reclamação
+→ produto
+→ desenho/revisão
+→ OP/lote
+→ material
+→ fornecedor
+→ inspeções
+→ não conformidade
+→ plano de ação
+```
+
+Graph guarda refs/relationships/provenance, não master copies dos dados.
+
+## 13. Evidence / Epistemic UX
+
+Distinguir:
 
 ```text
 FACT
@@ -237,190 +237,110 @@ CONCLUSION
 RECOMMENDATION
 ```
 
-Regras:
+Evidence pode carregar source, entity refs, freshness, page/region, confidence, limitations, extractor/model version.
 
-- fato material aponta source/evidence quando disponível;
-- cálculo expõe inputs/método suficiente;
-- hipótese não vira certeza;
-- conclusão mostra evidências e limitações;
-- recomendação não é ação executada.
+## 14. Expertise Packs
 
-## 12. Evidence & Provenance
+Fornecem:
 
-Cada evidence relevante pode carregar:
-
-```text
-sourceRef
-entityRefs
-observedAt/freshness
-confidence quando aplicável
-page/region/location quando multimodal
-limitations
-extractor/model version quando material
-```
-
-Conflito ou staleness deve aparecer na síntese.
-
-## 13. Expertise Packs
-
-Expertise Pack define conhecimento operacional especializado, não permissão.
-
-Pode fornecer:
-
-- terminologia;
-- domain signals;
+- terminology;
+- signals;
 - analysis guidance;
 - evidence expectations;
 - preferred playbooks;
-- knowledge scope refs sujeitos a ACL;
+- knowledge refs;
 - multimodal needs;
 - output guidance.
 
-Não pode conter endpoint técnico/permission override como authority.
+Não concedem RBAC nem definem endpoints como authority.
 
-## 14. Domain Playbooks
+## 15. Domain Playbooks
 
-Representam métodos como:
+Métodos versionados como:
 
 - 8D;
-- causa raiz;
-- análise de desenho;
+- root cause;
+- drawing review;
 - FMEA;
-- análise de atraso;
-- outros métodos corporativos versionados.
+- shortage/delay analysis;
+- outros processos corporativos.
 
-Playbook fornece stages/evidence/criteria e o planner resolve capabilities autorizadas.
-
-## 15. Multimodalidade
-
-Suportar, conforme tools:
-
-- PDF;
-- imagem;
-- desenho técnico;
-- planilha/documento;
-- foto de defeito;
-- certificados/relatórios;
-- outros formatos futuros.
-
-Pipeline:
-
-```text
-attachment
-→ native extraction/OCR/VLM conforme necessidade
-→ structured evidence + provenance/confidence
-→ expertise/playbook
-→ optional API/knowledge reads
-→ grounded synthesis
-```
-
-Percepção não é conclusão de domínio.
+Playbook orienta stages/evidence/criteria. Planner resolve capabilities reais.
 
 ## 16. Knowledge
 
-Camadas conceituais:
+- Reference Knowledge;
+- Operational Knowledge;
+- Decision Knowledge;
+- Experience Knowledge;
+- Semantic Knowledge.
 
-- Reference Knowledge — normas/manuais/procedimentos;
-- Operational Knowledge — como processos funcionam;
-- Decision Knowledge — decisões e justificativas auditáveis, sem CoT;
-- Experience Knowledge — casos anteriores aprovados;
-- Semantic Knowledge — entidades/relações.
+Knowledge/RAG runtime é próprio do Copilot e respeita ACL/source provenance.
 
-Visibility continua sujeita a ACL.
+## 17. Multimodalidade
 
-## 17. Governed Learning
+Suportar conforme tools:
 
-Fluxo:
+- PDF;
+- imagens;
+- desenhos técnicos;
+- planilhas/documentos;
+- fotos de defeito;
+- certificados/relatórios.
 
 ```text
-feedback/case resolution
-→ candidate improvement
-→ review
+attachment
+→ native extraction/OCR/Vision
+→ structured Evidence
+→ Expertise/Playbook
+→ optional API/Knowledge reads
+→ grounded synthesis
+```
+
+A implementação é nova na Copilot API. O pipeline existente do Chat pode ser estudado, mas não é runtime dependency.
+
+## 18. Governed Learning / Expertise Studio
+
+```text
+feedback/case outcome
+→ candidate
+→ expert review
 → eval
 → version
 → publish
-→ canary/rollout
+→ canary/rollback
 ```
 
-Nunca:
+Nunca auto-publicar comportamento de produção a partir de correção do usuário.
+
+Expertise Studio gerencia Packs/Playbooks, não agents.
+
+## 19. Workflow / Durable Runtime
 
 ```text
-user correction → automatic production prompt/model change
+WorkflowPlan
+→ steps/dependencies
+→ canonical capability executors
+→ checkpoint
+→ wait_user | wait_approval | wait_event | wait_time
+→ resume/revalidate
+→ complete/fail/cancel
 ```
 
-## 18. Expertise Studio
+Deve sobreviver a restart sem duplicate write.
 
-Administração governada de Expertise Packs, Playbooks e padrões relacionados:
+## 20. Copilot Task
 
-```text
-draft
-→ review
-→ eval
-→ published
-→ deprecated/rollback
-```
+Unidade operacional curta/média backed pelo Durable Workflow Runtime.
 
-Não é “criador de agentes”.
+Mostra objective/status/progress/pending decisions/results/evidence/entity links.
 
-## 19. Workflows
+## 21. Copilot Case
 
-O Copilot pode executar objetivos compostos com `PLAN → ACT → OBSERVE → UPDATE`.
+Unidade de investigação/trabalho prolongado com:
 
-Workflow possui:
-
-- steps;
-- dependencies;
-- capability refs;
-- preconditions;
-- expected outcomes;
-- decision boundaries;
-- budgets/limits;
-- checkpoints.
-
-Reads podem ser paralelizados quando seguros. Writes seguem policy/idempotency.
-
-## 20. Durable Workflow Runtime
-
-Para trabalho que cruza request/reload/tempo:
-
-```text
-wait_user
-wait_approval
-wait_event
-wait_time
-resume
-retry seguro
-cancel
-timeout
-checkpoint
-```
-
-Deve sobreviver a restart sem repetir write.
-
-## 21. Copilot Task
-
-Unidade operacional curta/média.
-
-Mostra:
-
-- objetivo;
-- status/progress;
-- steps;
-- pending decisions;
-- result/evidence refs;
-- links para entidades/Case.
-
-Não possui executor próprio: usa Durable Workflow Runtime.
-
-## 22. Copilot Case
-
-Unidade de investigação/trabalho prolongado.
-
-Pode conter:
-
-- objetivo;
 - entity refs;
-- evidence board;
+- Evidence Board;
 - hypotheses;
 - decisions;
 - actions;
@@ -429,53 +349,28 @@ Pode conter:
 - room ref;
 - artifacts.
 
-Case não substitui source system nem source permissions.
+Não substitui source permissions.
 
-## 23. Evidence Board
+## 22. Interaction Rooms
 
-Organiza os mesmos `EvidenceRef` em estados como:
+C0 deve inventariar a infraestrutura já existente — incluindo salas do Portal Comercial — antes de decidir `REUSE | EXTEND | ADAPTER | CREATE_REQUIRED`.
+
+Room membership não concede acesso aos sources relacionados.
+
+## 23. Copilot Inbox
+
+Materializa:
 
 ```text
-accepted
-contested
-missing
-superseded
+waiting_for_user
+working
+completed
+alerts
 ```
 
-Não cria outro modelo de evidence.
+É surface/projection, não outro workflow engine.
 
-## 24. Interaction Rooms
-
-Preferir o padrão de salas existente da Minha DELPI.
-
-Funções:
-
-- participantes;
-- mensagens;
-- arquivos;
-- decisões;
-- pending actions;
-- Copilot contextual;
-- resumo grounded;
-- Case link.
-
-Membership da sala não concede automaticamente acesso a dados fonte.
-
-## 25. Copilot Inbox
-
-Materializa trabalho que exige atenção:
-
-- decisões/aprovações;
-- Tasks esperando usuário;
-- Cases relevantes;
-- workflows em andamento/concluídos;
-- alerts/Watch.
-
-Inbox é superfície, não novo workflow engine.
-
-## 26. Copilot Watch
-
-Três modos:
+## 24. Copilot Watch
 
 ```text
 OBSERVE
@@ -483,40 +378,23 @@ ADVISE
 ACT
 ```
 
-Watch pode ser disparado por evento/condição autorizada.
+Event/condition-driven quando possível, com dedupe/cooldown/expiry/permission revalidation.
 
-Obrigatório:
+ACT somente em C7 com autonomy policy adequada.
 
-- dedupe/cooldown;
-- expiry/disable;
-- revalidar permission/policy;
-- payload não confiável;
-- ACT somente com autonomia/policy/Decision Gate adequados.
-
-## 27. Event-driven interaction
-
-Preferir eventos da plataforma quando disponíveis. Não criar polling app-specific no Copilot core quando houver owner/event source melhor.
-
-`EventEnvelope` compartilhado serve para workflow resume, Watch e observabilidade correlacionada.
-
-## 28. What-if / Simulation
-
-Perguntas como:
-
-- “e se esse fornecedor atrasar mais 5 dias?”;
-- “se eu priorizar essa OP, o que muda?”
-
-Só podem usar modelo/cálculo com owner e premissas explícitas.
+## 25. Simulation
 
 ```text
 SIMULATE != APPLY
 ```
 
-Apply é nova Business Action governada.
+Somente modelos/cálculos com owner, premissas e reproducibility. Apply é nova Business Action governada.
 
-## 29. Model Router / Compute Policy
+## 26. Model Router
 
-Depois de baseline de qualidade/custo/latência, selecionar classes como:
+Introduzido somente após baseline de quality/cost/latency.
+
+Classes possíveis:
 
 ```text
 FAST
@@ -526,20 +404,9 @@ MULTIMODAL
 LONG_CONTEXT
 ```
 
-Policy considera:
+Provider/model selection segue Compute Policy e data policy.
 
-- task requirements;
-- privacy/data policy;
-- provider availability;
-- output contract;
-- latency/cost budget;
-- fallback compatibility.
-
-Não espalhar `if model == ...` por features.
-
-## 30. Iframe integration
-
-Fonte: [`26-iframe-copilot-bridge.md`](./26-iframe-copilot-bridge.md).
+## 27. Iframe integration
 
 Classes:
 
@@ -550,9 +417,9 @@ INTERACTIVE
 AI_READY
 ```
 
-Business Action continua por API/OpenAPI.
+Bridge é para contexto/experiência. Business Action continua por API/OpenAPI.
 
-## 31. Autonomia
+## 28. Autonomia
 
 | Nível | Comportamento |
 |---|---|
@@ -560,37 +427,33 @@ Business Action continua por API/OpenAPI.
 | L1 | navegar |
 | L2 | consultar/analisar |
 | L3 | preparar mudança |
-| L4 | executar com Decision Gate conforme policy |
-| L5 | executar capability explicitamente allowlisted dentro de limites |
+| L4 | executar governado |
+| L5 | execute explicit allowlist dentro de limites |
 
 L5 OFF por default.
 
-## 32. Administração
+## 29. Administração/Observabilidade
 
-Observar/governar:
+Governar/observar:
 
 - capabilities/actions;
-- apps AI-ready;
-- iframe classes;
+- OpenAPI sources;
+- apps readiness;
 - expertise/playbooks;
-- evidence quality;
-- Tasks/Cases/Workflows;
-- Inbox/Watch;
+- knowledge/evidence quality;
+- workflows/tasks/cases/watch;
 - Decision Gates;
-- knowledge lifecycle;
-- model routing;
-- latency/cost;
-- failures/retries;
-- safe execution rate;
+- model usage;
+- latency/cost/failure/retry;
 - rollout/cohorts;
 - kill switch;
 - audit.
 
-Administração não concede business permission fora do Core/RBAC.
+Sem CoT.
 
-## 33. Onboarding AI-ready
+## 30. AI-ready onboarding
 
-Níveis:
+Níveis conceituais:
 
 ```text
 L1 discoverable
@@ -600,110 +463,75 @@ L4 write-ready
 L5 workflow-ready
 ```
 
-Novo app deve entrar por contrato sem patch central.
+Checklist: routes/RBAC, API/OpenAPI, EntityRef/deep-link, WorkspaceContext, evidence, sensitivity/Decision, evals, iframe class.
 
-Checklist inclui:
+## 31. Activity
 
-- routes/RBAC;
-- APIs/use cases;
-- OpenAPI quality;
-- EntityRef/deep-link;
-- Workspace Context;
-- evidence/provenance quando relevante;
-- sensitivity/Decision Gate;
-- evals;
-- iframe class quando aplicável.
-
-## 34. Activity e explicabilidade operacional
-
-Pode mostrar:
+Mostrar operações e estado, não reasoning privado:
 
 ```text
 Planejando
-Aplicando conhecimento de Engenharia e Qualidade
-Consultando produção
-Analisando desenho
-Aguardando aprovação
-Monitorando nova revisão
+Aplicando expertise
+Consultando dados
+Analisando documento
+Aguardando decisão
+Monitorando evento
 Concluído
 ```
 
-Não mostrar chain-of-thought. Mostrar actions, sources, state, policy decisions relevantes e limitações.
-
-## 35. Erros
+## 32. Erros
 
 Distinguir:
 
 - unauthorized;
 - not found;
 - missing requirement;
-- pending decision;
 - policy blocked;
+- pending decision;
 - backend unavailable;
 - partial failure;
 - ambiguous outcome;
 - stale evidence;
 - unsupported simulation;
-- workflow waiting/expired;
-- bridge incompatible;
-- capability unavailable.
+- waiting/expired workflow;
+- incompatible bridge;
+- unavailable capability.
 
-Nunca narrar sucesso quando outcome não foi confirmado.
+Nunca narrar success sem verified outcome.
 
-## 36. Observabilidade
+## 33. Não-funcionais
 
-Deve responder:
-
-- o que foi pedido?;
-- contexto/entidades?;
-- capabilities disponíveis/selecionadas?;
-- expertise/playbooks usados?;
-- sources/evidence?;
-- policy/Decision Gate?;
-- workflow/task/case state?;
-- outcome real?;
-- latency/cost/retries?;
-- rollback/failure?.
-
-Sem CoT.
-
-## 37. Não-funcionais
-
+- independent deployment/rollback;
 - security by default;
-- Clean Architecture;
-- baixo acoplamento;
-- accessibility;
-- responsive UX;
-- performance budgets;
-- auditability;
-- data minimization;
-- LGPD;
+- Clean Architecture/Ports & Adapters;
+- accessibility/responsive UX;
+- observability/auditability;
+- data minimization/LGPD;
 - versioned contracts;
-- incremental rollout;
 - idempotency/resilience;
 - no duplicate authorities;
-- generalization tests.
+- generalization tests;
+- no Chat runtime dependency.
 
-## 38. Fora de escopo por padrão
+## 34. Fora de escopo
 
+- transformar Chat em Copilot;
+- migrar Chat agents/sessions;
+- depender do Chat API;
 - unrestricted desktop/browser control;
-- DOM automation como substituto de API;
-- cross-origin hacks;
-- eval/script injection;
+- DOM automation as business integration;
 - superuser Copilot identity;
 - global L5 autonomy;
-- automatic production learning from user data;
-- source data access por visibility em outro sistema;
+- automatic production learning;
 - automatic endpoint creation;
-- JWT/refresh token via iframe bridge;
-- multi-agent departmental UX como arquitetura principal.
+- multi-agent departmental product UX.
 
-## 39. Cenários de referência
+## 35. Reference scenarios
 
 ### Contextual read
 > “Explique este cliente e compare com o mês passado.”
 
-### Cross-domain analysis
+### Cross-domain
 > “Para este item, compare estoque, compras, produção e carteira.”
 
 ### Multimodal
@@ -718,47 +546,43 @@ Sem CoT.
 ### Proactive
 > “Me avise quando a nova revisão chegar e reanalise o caso.”
 
-### Simulation
-> “Se esse fornecedor atrasar mais cinco dias, quais pedidos entram em risco?”
-
-## 40. Anchor scenario
+## 36. Anchor scenario
 
 ```text
-reclamação cliente
+reclamação
 → Case
 → Business Graph
-→ multimodal drawing analysis
+→ drawing analysis
 → Evidence Board
 → Engineering + Quality Expertise
 → 8D Playbook
 → Task/Durable Workflow
 → wait_event
 → Watch/Inbox
-→ nova revisão
 → reanalysis
 → Decision Gate
-→ Business Action
+→ Domain API Action
 → Outcome/Evidence/Audit
 → Experience candidate
 ```
 
-Sem troca manual de agente.
+Tudo executado pela Copilot API própria.
 
-## 41. Product Complete
+## 37. Product Complete
 
-O release só pode ser chamado completo quando o escopo declarado possuir:
+O release completo exige:
 
-- foundations congeladas;
-- navegação/contexto;
-- Copilot único + expertise;
+- standalone API/MFE/deploy confirmed;
+- Chat-offline independence;
+- Portal/Core/Gateway integration;
+- navigation/context;
+- intelligence core;
 - reads/evidence;
-- writes/Decision Gates;
-- durable work quando no release;
-- security/evals;
-- generalization;
-- observabilidade;
-- rollout/rollback;
-- requisitos CP correspondentes `PASS` ou `OUT_OF_SCOPE_WITH_DECISION` justificável;
-- nenhum fallback material escondido.
+- writes/Decision Gates conforme release;
+- durable work/proactivity conforme release;
+- security/evals/generalization;
+- observability/rollback;
+- CP coverage;
+- no hidden Chat fallback.
 
-O estado de execução real é registrado no ledger, não inferido desta especificação.
+Estado real vive no execution ledger.
