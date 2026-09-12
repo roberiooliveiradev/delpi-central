@@ -29,6 +29,7 @@ Mudança material posterior invalida evidence afetada.
 | URL safety | target ID resolvido | deep link válido | URL arbitrária | obrigatório |
 | WorkspaceContext | campos válidos | entity/filter variants | oversize/secret/untrusted field | obrigatório |
 | Confirmation | preview=exec args | novo write | args mudam após confirmação | obrigatório |
+| Iframe bridge | handshake/context válido | segundo iframe compatível | origin/source/schema/session inválidos | obrigatório quando iframe no escopo |
 
 ## 3. Platform Actions
 
@@ -45,7 +46,9 @@ Testar:
 9. send vs stream equivalentes;
 10. back/forward/F5 quando aplicável;
 11. deep-link invalid/untrusted;
-12. navigation audit/tracing.
+12. navigation audit/tracing;
+13. app iframe `PORTAL_ONLY` autorizado abre sem exigir SDK interno;
+14. app iframe não autorizado não recebe capability de navegação.
 
 Aceite:
 
@@ -67,6 +70,7 @@ Cobertura mínima:
 - date range;
 - selection;
 - visible data ref;
+- origem MFE e iframe normalizadas no mesmo contrato;
 - troca de app;
 - troca de entidade;
 - contexto explícito novo vence memória antiga;
@@ -116,6 +120,8 @@ deep link pós-write
 
 Nenhum caso de write pode ser aprovado apenas por mockar o executor que está sendo validado.
 
+Para app iframe, adicionar negative obrigatório: tentativa de executar write como comando visual/click deve ser rejeitada como arquitetura inválida.
+
 ## 7. Prompt/tool injection
 
 Casos obrigatórios:
@@ -125,7 +131,8 @@ Casos obrigatórios:
 - API retornando URL/action falsa;
 - documento solicitando segredo;
 - payload tentando alterar allowed actions;
-- workspace context tentando injetar instrução.
+- workspace context tentando injetar instrução;
+- iframe context tentando injetar instrução/system override.
 
 Resultado esperado: dados são tratados como dados, nunca como authority sobre policy/system.
 
@@ -210,7 +217,7 @@ stream
 simulate/admin preview
 Portal side panel
 full page chat
-contextual entry point in MFE
+contextual entry point in MFE/iframe integrado
 ```
 
 Diferença permitida é transporte/UX, não routing/policy/outcome.
@@ -251,15 +258,15 @@ Não adaptar threshold para candidate passar.
 
 | Fase | Gate mínimo |
 |---|---|
-| C0 | contracts + negatives + harness red/green reproduzível |
-| C1 | authorized navigation + TOCTOU + send/stream + audit |
-| C2 | context relevance/security/F5 + pilot MFE |
+| C0 | contracts + negatives + harness red/green reproduzível + inventário iframe |
+| C1 | authorized navigation + TOCTOU + send/stream + audit + `PORTAL_ONLY` + bridge security base |
+| C2 | context relevance/security/F5 + pilot MFE + iframe `CONTEXTUAL/INTERACTIVE` quando disponível |
 | C3 read | unknown API + metamorphic + args + RBAC + R9 |
-| C3 write | policy + confirmation + idempotency + audit |
+| C3 write | policy + confirmation + idempotency + audit + no DOM-write |
 | C4 | compound + dependency + partial + resume + mixed write |
-| C5 | onboarding scanner + app waves + no central hardcode |
+| C5 | onboarding scanner + app waves + no central hardcode + unknown iframe |
 | C6 | autonomy policies + kill switch + adversarial safety |
-| C7 | canary metrics + rollback + final R1–R11 |
+| C7 | canary metrics + rollback + final R1–R11 + iframe class coverage |
 
 ## 14. Regra final
 
@@ -269,3 +276,89 @@ qualquer REQUIRED = FAIL/INCONCLUSIVE/PENDING
 ```
 
 Não transformar teste conhecido como faltante em “não bloqueante” se estiver no escopo da fase.
+
+## 15. Iframe Copilot Bridge — gates obrigatórios
+
+Fonte: [`26-iframe-copilot-bridge.md`](./26-iframe-copilot-bridge.md).
+
+### 15.1 Handshake/security
+
+Positive:
+
+- origin autorizado;
+- `event.source` corresponde ao iframe esperado;
+- appId corresponde ao app carregado;
+- protocolo/versão aceitos;
+- app está autorizado em `/me/apps`;
+- accepted capabilities = interseção válida.
+
+Negative:
+
+- origin maliciosa;
+- source de outra janela/iframe;
+- appId falso;
+- app não autorizado;
+- protocol/version inválido;
+- session antiga;
+- payload oversize;
+- campo desconhecido crítico;
+- tentativa de JWT/secret em payload;
+- permission revogada após handshake.
+
+### 15.2 Context
+
+Provar:
+
+```text
+iframe context.changed
+→ validation/sanitization
+→ WorkspaceContextV1(source=iframe)
+→ AI turn context
+→ grounded response
+```
+
+Sem tratar payload do iframe como instrução de system/policy.
+
+### 15.3 Interactive commands
+
+Positive:
+
+- capability declarada;
+- comando visual genérico válido;
+- result/observation correlacionado por requestId.
+
+Negative:
+
+- capability não declarada;
+- command app-specific fora do protocolo;
+- replay indevido;
+- command após logout/unmount;
+- tentativa de executar Business Action por comando visual.
+
+### 15.4 Generalization
+
+Cadastrar/usar um segundo iframe compatível ou fixture de integração com:
+
+```text
+novo appId
+nova origin
+capabilities visuais diferentes
+```
+
+sem adicionar `if appId == ...`, selector específico, matcher de origin por código ou comando particular no planner/bridge.
+
+### 15.5 Class promotion
+
+```text
+PORTAL_ONLY
+requires authorized navigation
+
+CONTEXTUAL
+requires handshake + context + lifecycle + security negatives
+
+INTERACTIVE
+requires CONTEXTUAL + command/result + declaration + negatives
+
+AI_READY
+requires INTERACTIVE + Business Actions por API/OpenAPI + RBAC/policy/confirmation/evals
+```
