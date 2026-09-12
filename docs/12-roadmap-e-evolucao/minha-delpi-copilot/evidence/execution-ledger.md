@@ -2,7 +2,9 @@
 
 **Status do programa:** `PLANNED / NOT_STARTED`  
 **Plano ativo:** [`../16-execution-master-plan.md`](../16-execution-master-plan.md)  
+**Extensão operacional:** [`../44-operational-intelligence-implementation-plan.md`](../44-operational-intelligence-implementation-plan.md)  
 **Protocolo:** [`../22-cursor-execution-protocol.md`](../22-cursor-execution-protocol.md)  
+**Prompt mestre:** [`../23-prompt-cursor-execucao.md`](../23-prompt-cursor-execucao.md)  
 **Próxima etapa obrigatória:** **C0.S0 — Rebaseline e inventário real**
 
 ## 1. Regra do ledger
@@ -19,10 +21,11 @@ Uma etapa só muda para `PASS` quando `COMPLETE_GATE=PASS` no HEAD correspondent
 | C1 Platform Actions | LOCKED | — | C0 completo |
 | C2 Workspace Context | LOCKED | — | C1 base + contratos C0 |
 | C3 Business Action Parity | LOCKED | — | C2 + gates AI/OpenAPI-first relevantes |
-| C4 Agentic Workflows | LOCKED | — | C3 |
-| C5 Ecossistema AI-ready | LOCKED | — | C3/C4 foundation |
-| C6 Autonomia governada | LOCKED | — | C4/C5 + safety gates |
+| C4 Agentic/Durable Workflows | LOCKED | — | C3 |
+| C5 Ecossistema AI-ready / expertise / graph-cases waves | LOCKED | — | C3/C4 foundation |
+| C6 Autonomia governada / decision gates / watch ACT | LOCKED | — | C4/C5 + safety gates |
 | C7 Rollout final | LOCKED | — | C0–C6 required gates |
+| O0–O13 Inteligência operacional | LOCKED | O0 após inventário | dependem das fases C* conforme `44-*` |
 
 ## 3. Dependência externa vigente
 
@@ -41,8 +44,6 @@ O Copilot não assume ownership da correção da Onda J.
 
 ## 4. Decisão arquitetural vigente — Copilot único
 
-A arquitetura de produto passa a adotar:
-
 ```text
 SINGLE_COPILOT_IDENTITY = TARGET
 DEPARTMENT_AGENT_ROUTING = TO_MIGRATE
@@ -53,29 +54,46 @@ SOFT_AGENT_HANDOFF = TO_DEPRECATE
 AGENT_REQUIRED_OPERATIONAL_TOOLS = TO_MIGRATE
 ```
 
-Fonte canônica:
+Fontes: `27`–`33`.
 
-- [`../27-single-copilot-specialization-architecture.md`](../27-single-copilot-specialization-architecture.md);
-- [`../28-expertise-pack-specification.md`](../28-expertise-pack-specification.md);
-- [`../29-domain-playbooks-specification.md`](../29-domain-playbooks-specification.md);
-- [`../30-multimodal-expertise-and-drawing-analysis.md`](../30-multimodal-expertise-and-drawing-analysis.md);
-- [`../31-agent-to-expertise-migration-plan.md`](../31-agent-to-expertise-migration-plan.md);
-- [`../32-expertise-runtime-implementation-plan.md`](../32-expertise-runtime-implementation-plan.md);
-- [`../33-reference-expertise-packs-quality-engineering.md`](../33-reference-expertise-packs-quality-engineering.md).
+Essa decisão **não altera a próxima etapa**: continua C0.S0.
 
-Essa decisão **não altera a próxima etapa**: continua sendo C0.S0. Nenhum runtime deve ser alterado com base apenas na documentação antes do inventário real de consumers, persistência, UI, sessions, projects e admin de agents/skills.
+## 5. Decisão estratégica vigente — camada operacional inteligente
 
-## 5. Registro de execução
+A evolução de produto passa a incluir, de forma faseada:
+
+```text
+DELPI_BUSINESS_GRAPH = PLANNED
+EVIDENCE_PROVENANCE_LAYER = PLANNED
+COPILOT_TASKS = PLANNED
+COPILOT_CASES = PLANNED
+INTERACTION_ROOMS_INTEGRATION = TO_INVENTORY
+COPILOT_INBOX = PLANNED
+COPILOT_WATCH = PLANNED
+DURABLE_WORKFLOW_RUNTIME = PLANNED
+DECISION_GATES = PLANNED
+WHAT_IF_SIMULATION = LOCKED_BY_DOMAIN_MODEL
+ORGANIZATIONAL_EXPERIENCE_KNOWLEDGE = PLANNED
+EXPERTISE_STUDIO = PLANNED
+MODEL_ROUTER = LOCKED_BY_BASELINE
+```
+
+Fontes canônicas: `34`–`47`.
+
+Esta decisão é **PLAN_ONLY**. Nenhum desses itens deve ser reportado como runtime existente sem evidence futura.
+
+## 6. Registro de execução
 
 | Data | HEAD | Etapa | Evento | Status/evidence |
 |---|---|---|---|---|
 | 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | Planejamento | documentação arquitetural/funcional e plano executável criados | PLAN_ONLY |
-| 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | Planejamento | integração de apps iframe incorporada ao produto/plano: `Iframe Copilot Bridge`, classes `PORTAL_ONLY/CONTEXTUAL/INTERACTIVE/AI_READY`, contratos, segurança, testes e CP-061–CP-070 | PLAN_ONLY; sem runtime diff |
-| 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | Planejamento | decisão de **Copilot único** incorporada: Expertise Packs, Domain Playbooks, multimodalidade, migração de agent specialization/handoff/activation e CP-071–CP-089 | PLAN_ONLY; sem runtime diff; architecture target defined |
+| 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | Planejamento | integração de apps iframe incorporada: Iframe Copilot Bridge, classes I0–I3, segurança e CP-061–CP-070 | PLAN_ONLY; sem runtime diff |
+| 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | Planejamento | decisão de Copilot único incorporada: Expertise Packs, Domain Playbooks, multimodalidade, migração de agent specialization/handoff/activation e CP-071–CP-089 | PLAN_ONLY; sem runtime diff |
+| 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | Planejamento | expansão de produto para camada operacional inteligente: Business Graph, Tasks/Cases/Rooms, Inbox/Watch, Evidence/Provenance, Decision Gates, Simulation, Organizational Knowledge, Expertise Studio, Model Router e Durable Workflow; CP-090–CP-129 | PLAN_ONLY; sem runtime diff |
 
-## 6. Escopo adicional obrigatório no C0.S0 — apps/iframe
+## 7. Escopo obrigatório no C0.S0 — apps/iframe
 
-O inventário deve cobrir explicitamente apps `iframe` e `external` e registrar, quando aplicável:
+Inventariar:
 
 ```text
 renderMode
@@ -92,11 +110,11 @@ security owner
 iframe integration class
 ```
 
-Fonte canônica: [`../26-iframe-copilot-bridge.md`](../26-iframe-copilot-bridge.md).
+Fonte: [`../26-iframe-copilot-bridge.md`](../26-iframe-copilot-bridge.md).
 
-## 7. Escopo adicional obrigatório no C0.S0 — agents/skills/expertise
+## 8. Escopo obrigatório no C0.S0 — agents/skills/expertise
 
-O inventário deve localizar producer/consumer e classificar pelo menos:
+Inventariar e classificar:
 
 ```text
 agent entities/tables/repositories
@@ -115,10 +133,10 @@ agent selector UX
 soft handoff UX/events
 agent-related tests/fixtures/scripts/docs
 usage telemetry
-multimodal skills and their has_agent dependencies
+multimodal skills and has_agent dependencies
 ```
 
-Cada item deve receber uma classificação:
+Classificação:
 
 ```text
 KEEP
@@ -130,28 +148,81 @@ REMOVE
 NOT_PROVEN
 ```
 
-C0.S0 também deve registrar se existem consumers externos ou contratos públicos que impeçam remoção imediata.
+## 9. Escopo obrigatório no C0.S0 — inteligência operacional
 
-## 8. Baseline arquitetural já observado para revalidar no C0.S0
+Inventariar com arquivo/símbolo/owner/evidence:
 
-Há evidência documental/código previamente observada de que:
+```text
+canonical entity types/IDs
+existing entity relations/deep links
+existing event bus and event types
+background jobs/queues/workers
+notifications/inbox patterns
+interaction rooms/chats
+approval/confirmation models
+workflow/task persistence
+checkpoint/resume mechanisms
+audit/provenance metadata
+knowledge sources/version/lifecycle
+model/provider abstractions
+latency/token/cost metrics
+existing case/request domains usable as Task/Case foundation
+```
 
-- `AgentSpecializationService` contém presets por domínio com knowledge/guidelines/allowedTools;
-- `ChatWorkspaceAgentActivationService.operational_tools_enabled()` depende de `userActivatedAgent && actionsEnabled`;
-- `ChatSoftAgentHandoffService` oferece `switch_agent_and_resend`;
-- `ChatSkillRegistry` contém skills úteis como document vision/drawing analysis/quality action plans e possui branches dependentes de `has_agent`;
-- existe runtime de document vision/drawing analysis que deve ser preferencialmente reaproveitado.
+Classificar cada item:
 
-Esses pontos são **findings para revalidar**, não autorização para editar antes do inventário completo.
+```text
+REUSE
+EXTEND
+MIGRATE
+CREATE_REQUIRED
+NOT_PROVEN
+OUT_OF_SCOPE_WITH_DECISION
+```
 
-## 9. Template de evento
+C0.S0 deve atualizar `44-operational-intelligence-implementation-plan.md` se o inventário provar owners/infra diferentes das hipóteses.
+
+## 10. Baseline já observado para revalidar
+
+Há findings prévios a confirmar no HEAD executado:
+
+- `AgentSpecializationService` possui presets por domínio;
+- `ChatWorkspaceAgentActivationService` condiciona tools operacionais ao agent activation;
+- `ChatSoftAgentHandoffService` oferece troca de agente;
+- `ChatSkillRegistry` possui document vision/drawing/quality skills;
+- existe runtime multimodal reaproveitável;
+- a plataforma possui event-driven e salas de interação documentadas, mas o C0.S0 deve localizar contratos/runtime reais antes de reuse.
+
+Esses são findings para revalidar, não autorização para runtime diff.
+
+## 11. Requisitos e gates
+
+Faixas vigentes:
+
+```text
+CP-001–CP-060 = core inicial
+CP-061–CP-070 = iframe
+CP-071–CP-089 = Copilot único / expertise / migração agents
+CP-090–CP-129 = inteligência operacional
+```
+
+Fontes:
+
+- [`../25-requirements-traceability.md`](../25-requirements-traceability.md);
+- [`../46-operational-intelligence-requirements.md`](../46-operational-intelligence-requirements.md).
+
+Gates adicionais: [`../45-operational-intelligence-testing-gates.md`](../45-operational-intelligence-testing-gates.md).
+
+## 12. Template de evento
 
 ```text
 DATE:
 STEP:
+OPERATIONAL_STEP:
 HEAD_BEFORE:
 HEAD_AFTER:
 STATUS:
+CP_REQUIREMENTS:
 EVIDENCE:
 TESTS:
 COMPLETE_GATE:
@@ -159,18 +230,30 @@ NEXT_UNLOCKED:
 NOTES:
 ```
 
-Para etapas de expertise/migração adicionar:
+Para expertise/migração:
 
 ```text
 EXPERTISE_PACKS_TOUCHED:
 PLAYBOOKS_TOUCHED:
 LEGACY_AGENT_CONSUMERS_FOUND:
 MIGRATION_CLASSIFICATION:
-EXPERTISE_SELECTION_EVIDENCE:
 RESIDUAL_AGENT_ROUTING:
 ```
 
-## 10. Estados permitidos
+Para inteligência operacional:
+
+```text
+REUSED_COMPONENTS:
+NEW_COMPONENTS_JUSTIFIED:
+DATA_AUTHORITIES:
+ENTITY_RELATIONS:
+EVENT_SOURCES:
+PROVENANCE:
+IDEMPOTENCY:
+RELOAD_RESUME:
+```
+
+## 13. Estados permitidos
 
 ```text
 NOT_STARTED
@@ -183,11 +266,9 @@ PASS
 LOCKED
 ```
 
-Evitar aliases vagos como “quase pronto”, “feito com ressalva” ou “100% salvo X”.
+## 14. COMPLETE_GATE
 
-## 11. COMPLETE_GATE
-
-Bloqueantes de PASS quando materiais ao step:
+Bloqueantes materiais:
 
 ```text
 PARTIAL
@@ -198,19 +279,20 @@ SHADOW_ONLY sem exit criteria
 TODO/FIXME/HACK/TEMPORARY
 TEST_NOT_RUN
 STALE_EVIDENCE
-```
-
-Para o cutover de Copilot único, também bloqueiam:
-
-```text
-SOFT_AGENT_HANDOFF_RESIDUAL material
-AGENT_REQUIRED_TOOL_GATE material
-UNMIGRATED_AGENT_SPECIALIZATION material
+SOFT_AGENT_HANDOFF_RESIDUAL
+AGENT_REQUIRED_TOOL_GATE
 UNKNOWN_AGENT_CONSUMER
-UNAUTHORIZED_KNOWLEDGE regression
-UNAUTHORIZED_CAPABILITY regression
+UNFILTERED_GRAPH_TRAVERSAL
+MATERIAL_CLAIM_WITHOUT_PROVENANCE
+CASE_ROOM_PERMISSION_LEAK
+WATCH_ACT_WITHOUT_POLICY
+DUPLICATE_WRITE_AFTER_RESUME
+STALE_APPROVAL
+NON_REPRODUCIBLE_SIMULATION
+AUTO_PUBLISHED_EXPERIENCE
+MODEL_ROUTER_WITHOUT_BASELINE
 ```
 
-## 12. Primeiro comando de execução
+## 15. Próxima ação
 
-O Cursor deve abrir [`../23-prompt-cursor-execucao.md`](../23-prompt-cursor-execucao.md), ler também [`../27-single-copilot-specialization-architecture.md`](../27-single-copilot-specialization-architecture.md) e [`../32-expertise-runtime-implementation-plan.md`](../32-expertise-runtime-implementation-plan.md), e iniciar **C0.S0**, sem runtime diff antes de concluir o inventário.
+O Cursor deve ler `23-prompt-cursor-execucao.md` e iniciar **C0.S0**. A existência dos planos O0–O13 não libera sua execução antes das dependências do plano C0–C7.
