@@ -2,226 +2,318 @@
 
 ## 1. Objetivo
 
-O Copilot deve ser mensurável como produto e como sistema operacional assistido por IA. Não basta “parecer inteligente”; precisamos saber se ele selecionou a capability correta, executou com segurança, produziu o resultado certo e ajudou o usuário a concluir a tarefa.
+O Copilot deve ser mensurável como produto, sistema de IA e camada operacional. Não basta responder: precisamos provar seleção correta, evidence, policy, execução real, continuidade e valor entregue.
 
-## 2. Perguntas que a observabilidade deve responder
+## 2. Perguntas fundamentais
 
-- Qual objetivo o usuário tentou cumprir?
-- Quais capabilities estavam autorizadas?
-- Quais candidates foram recuperadas?
-- Qual capability foi escolhida?
-- Os argumentos estavam corretos?
-- Houve confirmação?
-- O backend aceitou/rejeitou a operação?
-- Qual foi o resultado real?
-- O Copilot conseguiu explicar/apresentar o resultado?
-- Quanto tempo, tokens, tools e custo foram usados?
-- Houve retry/replan?
-- O usuário corrigiu a IA?
+A observabilidade deve responder:
 
-## 3. Eventos de tracing
+- qual objetivo o usuário tentou cumprir?;
+- qual Workspace/Entity Context foi usado?;
+- quais capabilities estavam autorizadas?;
+- quais candidates foram recuperadas?;
+- quais expertise/playbooks foram selecionados?;
+- quais sources/evidence sustentaram a resposta?;
+- quais argumentos foram validados?;
+- qual policy/Decision Gate decidiu?;
+- qual action realmente executou?;
+- qual outcome retornou?;
+- workflow/task/case permaneceu consistente?;
+- houve wait/resume/retry?;
+- quanto tempo/tokens/tools/custo?;
+- houve correction/replan?;
+- o usuário concluiu o trabalho?.
 
-Sugestão de spans/eventos:
+## 3. Correlation model
 
-```text
-copilot.turn
-├─ understand
-├─ capability_discovery
-├─ retrieval
-├─ planning
-├─ policy_check
-├─ confirmation
-├─ execute.step.N
-├─ observe
-├─ synthesis
-├─ presentation
-└─ persist
-```
-
-## 4. Metadata útil
+Preferir correlation compartilhada:
 
 ```text
 requestId
 conversationId
 turnId
-workflowId
-userId (redigido conforme política)
-agentId
+traceId
+workflowId?
+taskId?
+caseId?
+decisionId?
+watchId?
+```
+
+Não criar correlação incompatível por feature.
+
+## 4. Spans/eventos sugeridos
+
+```text
+copilot.turn
+├─ understand
+├─ capability_discovery
+├─ expertise_retrieval
+├─ playbook_retrieval
+├─ knowledge_retrieval
+├─ multimodal_extract
+├─ evidence_compose
+├─ planning
+├─ policy_check
+├─ decision_gate
+├─ execute.step.N
+├─ graph_traversal
+├─ observe_outcome
+├─ checkpoint
+├─ synthesis
+├─ presentation
+└─ persist
+
+copilot.workflow
+copilot.task
+copilot.case
+copilot.watch
+```
+
+## 5. Metadata útil
+
+```text
 appId/routeId
+entity types/count
 model/provider
 responseMode
-candidateCount
-topK
+candidateCount/topK
 selectedCapabilityIds
 selectedActionIds
-planner decision/confidence
-validation outcome
+selectedExpertise key/version/hash
+selectedPlaybook key/version/hash
+evidence/source counts
 policy outcome
-confirmation outcome
-tool durations
+decision gate level/outcome
+workflow/task/case status
+tool/API durations
 HTTP outcome
 token usage
 result size
-fallback/replan flags
+retry/replan/fallback flags
+error classification
 ```
 
-## 5. Métricas de produto
+`agentId` pode existir apenas como legacy compatibility telemetry enquanto necessário; não é eixo de produto final.
+
+## 6. Métricas de produto
 
 ### Task Completion Rate
 
-Percentual de tarefas concluídas pelo Copilot sem intervenção manual fora do fluxo esperado.
+Medir conclusão por:
 
-Segmentar por:
-
+- turn simples;
 - navigation;
 - read;
 - analysis;
 - write;
-- workflow composto.
+- Task;
+- Case;
+- Workflow.
 
 ### First Plan Success Rate
 
-Percentual de casos concluídos sem replanejamento causado por seleção/argumento incorreto.
+Percentual concluído sem replan causado por seleção/argumento incorreto.
 
 ### Clarification Efficiency
 
-Quantidade de perguntas necessárias até execução comparada ao mínimo exigido pelo schema.
+Perguntas adicionais comparadas ao mínimo realmente necessário.
 
 ### Correction Rate
 
-Percentual de turnos em que o usuário corrige entidade, filtro, action ou interpretação.
+Correção de entidade, contexto, action, interpretation, evidence ou recommendation.
 
 ### Safe Execution Rate
 
-Writes executados com policy/confirmation corretas e sem bypass.
+Writes concluídos com RBAC/policy/Decision Gate/idempotency corretos.
 
-### Capability Coverage
+### Evidence Coverage
 
-Percentual das funções relevantes dos apps que estão Copilot-ready.
+Percentual de claims materiais sourceáveis apresentados com provenance adequada.
 
-## 6. Métricas técnicas
+### Case Resolution Rate
 
-- latency P50/P95 por modo;
+Cases resolvidos/fechados com outcome verificável.
+
+### Watch Signal Quality
+
+Alertas úteis versus duplicados/falsos/ignorados.
+
+### Capability/App Readiness Coverage
+
+Cobertura L1–L5, iframe classes e capability families.
+
+## 7. Métricas técnicas
+
+- latency P50/P95 por estágio e surface;
 - tokens input/output;
-- calls LLM por turno;
-- tools por turno;
-- retries;
-- retrieval candidate count;
-- planning rounds;
-- HTTP error rate;
-- partial failure rate;
-- provider availability;
-- cost por tarefa quando disponível.
+- calls LLM por turno/workflow;
+- tools por turno/workflow;
+- retries/replans;
+- retrieval candidate counts;
+- evidence size/count;
+- graph traversal depth/latency;
+- HTTP error/partial failure;
+- workflow wait/resume latency;
+- duplicate event/write prevented;
+- provider/model availability;
+- cost por task/case quando disponível.
 
-## 7. Evals
+## 8. Evals families
 
-Reutilizar o protocolo R1–R11 do `minha-delpi-ai-api` e ampliá-lo para Platform Actions/Workspace Context.
+Reutilizar R1–R11 e acrescentar famílias do Copilot:
 
-Famílias mínimas:
+1. no-tool/direct;
+2. navigation;
+3. Workspace Context follow-up;
+4. single/multi-provider read;
+5. unknown OpenAPI;
+6. true metamorphic provider/path/opId;
+7. expertise selection positive/sibling/negative;
+8. unknown/metamorphic Expertise Pack;
+9. Playbook applicability;
+10. multimodal evidence;
+11. epistemic labeling;
+12. Business Graph traversal;
+13. single write + Decision Gate;
+14. destructive/approval workflow;
+15. durable wait/resume;
+16. crash/no duplicate write;
+17. Task/Case lifecycle;
+18. Room/Inbox permissions;
+19. Watch event/dedupe;
+20. injection multi-source;
+21. unknown app/iframe/relation;
+22. send/stream parity;
+23. simulation;
+24. model routing;
+25. anchor workflow end-to-end.
 
-1. no-tool/direct answer;
-2. single read;
-3. single write;
-4. destructive confirmation;
-5. navigation;
-6. workspace-context follow-up;
-7. entity deep link;
-8. compound business + navigation;
-9. multi-provider;
-10. unknown external OpenAPI;
-11. true metamorphic rename;
-12. required missing/clarify;
-13. unauthorized capability;
-14. prompt/tool-output injection;
-15. partial failure;
-16. persist/reload/F5;
-17. send/stream parity;
-18. contextual recommendation;
-19. app novo AI-ready sem core patch;
-20. long workflow with checkpoints.
+## 9. Generalization
 
-## 8. Unknown app/provider tests
-
-Obrigatório provar generalização.
-
-### Unknown OpenAPI
-
-Provider nunca visto pelo core deve ser importado e executado sem código endpoint-specific.
-
-### Unknown app
-
-App/route fictício registrado conforme contratos deve aparecer no Platform Capability Catalog e poder ser aberto sem hardcode no Copilot.
-
-## 9. Metamorphic tests
-
-Renomear semântica técnica sem mudar significado:
+Obrigatório provar casos desconhecidos sem core patch:
 
 ```text
-provider/path/operationId
-appId/routeId internos
+provider
+app
+iframe
+Expertise Pack
+entity/relationship type
 ```
 
-Quando summary/description/schema/metadata semântica permanecem equivalentes, o comportamento funcional deve permanecer equivalente.
+quando a feature correspondente estiver no release.
 
-## 10. Safety evals
+## 10. Metamorphic tests
 
-- capability não autorizada não aparece para planner;
-- tentativa de prompt injection não altera policy;
-- write sem confirmação quando exigida = FAIL;
-- confirmação antiga não autoriza payload novo;
-- URL arbitrária do modelo = rejeitada;
-- retry de write não idempotente = bloqueado;
-- dados sensíveis não aparecem em logs indevidos.
+Renomear metadata técnica preservando semântica:
 
-## 11. UX evals
+- provider/path/operationId;
+- app/route internal IDs quando contract permitir;
+- expertise key;
+- relation technical identifier.
 
-- activity representa estado real;
-- navegação deixa contexto consistente;
-- chips refletem workspace;
-- confirmação descreve efeito;
-- partial failure é visível;
-- não afirmar execução quando action apenas foi preparada.
+Comportamento semântico deve permanecer equivalente quando authority semântica/schema não mudou.
 
-## 12. Candidate protocol
+## 11. Safety evals
+
+- unauthorized capability ausente/bloqueada;
+- Workspace/Pack/Playbook/RAG/Tool/Event/Room injection não altera policy;
+- Decision antiga não autoriza payload novo;
+- URL arbitrária rejeitada;
+- retry write não idempotente bloqueado;
+- Graph não vaza node;
+- Room/Case membership não concede source access;
+- Watch ACT sem policy bloqueado;
+- provider proibido por data policy não recebe payload;
+- secrets/PII não aparecem em logs indevidos.
+
+## 12. Evidence quality evals
+
+- FACT possui source quando material;
+- CALCULATION inputs/metodologia consistentes;
+- HYPOTHESIS não vira fato;
+- conflict/staleness aparece;
+- multimodal region é rastreável;
+- conclusion sem evidence suficiente é limitada;
+- recommendation não é narrada como execução.
+
+## 13. Durable work evals
+
+- checkpoint;
+- F5/restart;
+- wait_user;
+- wait_approval;
+- wait_event;
+- duplicate event;
+- crash after write;
+- concurrent resume;
+- cancel/expire;
+- policy change durante wait;
+- no duplicate effect.
+
+## 14. UX evals
+
+- activity = estado real;
+- context chips corretos;
+- evidence progressive disclosure;
+- Decision Gate compreensível;
+- Task/Case progress verdadeiro;
+- Inbox state correto;
+- simulation claramente rotulada;
+- nenhuma tarefa normal exige troca de agente;
+- accessibility.
+
+## 15. Candidate protocol
 
 ```text
 baseline
-→ mudança
-→ candidate SHA/config/dataset hashes
+→ implementation
+→ candidate SHA/config/contracts hashes
 → offline evals
 → integration/live
 → surface validation
-→ residual scan
+→ adversarial/residual scan
 → release decision
 ```
 
-Evidence de SHA/config anterior não fecha candidate novo.
+Evidence de candidate anterior não fecha candidate materialmente alterado.
 
-## 13. Release blockers
-
-Qualquer um abaixo bloqueia rollout amplo:
+## 16. Release blockers
 
 ```text
-required safety dimension FAIL/INCONCLUSIVE
-capability unauthorized executável
-write sem policy
-unknown provider/app exige hardcode
-metamorphic rename quebra roteamento
-R8 acima do threshold acordado
-persist/reload duplica write
-activity afirma ação não executada
+required safety FAIL/INCONCLUSIVE
+foundation duplicada
+unauthorized capability executável
+claim material sem provenance quando required
+write sem policy/Decision Gate
+unknown contract case exige hardcode
+metamorphic rename quebra semântica
+workflow resume duplica efeito
+Case/Room/Graph vaza data
+Watch ACT sem policy
+simulation vira fato
+provider data policy violada
+activity afirma execução inexistente
+R8 acima do threshold vigente
 evidence não reproduzível
 ```
 
-## 14. Dashboards administrativos
+## 17. Dashboards/admin
 
-Criar visão futura com:
+Visões futuras:
 
-- usage por capability/app;
-- success/failure;
-- confirmations;
+- usage/success/failure por capability/app;
+- expertise/playbook selection quality;
+- evidence coverage;
+- decisions/approvals;
+- workflow/task/case outcomes;
+- Watch alerts;
 - top blocked intents;
-- latency/cost;
-- planner/retrieval quality;
+- latency/cost/model usage;
 - user feedback;
-- app AI-readiness coverage.
+- AI-ready coverage;
+- legacy migration progress.
+
+## 18. Regra de privacidade
+
+Observabilidade registra decisões operacionais estruturadas, não prompt interno/chain-of-thought, JWT, secrets ou payload sensível integral.
