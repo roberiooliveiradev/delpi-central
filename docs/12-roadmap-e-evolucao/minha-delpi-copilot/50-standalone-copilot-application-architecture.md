@@ -2,7 +2,8 @@
 
 **Status:** `CANONICAL_AUTHORITY` para boundary do produto e ownership de runtime  
 **Ordem de execução:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)
+**Patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
+**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
 
 ## 1. Decisão irrevogável desta iniciativa
 
@@ -102,19 +103,40 @@ infra/                compose/deploy/env/network
                             ▼
               Minha DELPI Copilot API
                   (serviço independente)
-              ┌─────────────┼──────────────┐
-              ▼             ▼              ▼
-          Core API      Domain APIs     AI Providers
-        apps/RBAC       OpenAPI/use     LLM/RAG/Vision
-                           cases
-              │             │              │
-              └─────────────┼──────────────┘
+        ┌───────────────────┼────────────────────┐
+        ▼                   ▼                    ▼
+     Core API           Domain APIs           AI/Media
+   apps/RBAC           OpenAPI/use        LLM/RAG/Vision/
+                           cases          STT/TTS/Realtime
+        │                   │                    │
+        └───────────────────┼────────────────────┘
                             ▼
                  Copilot-owned state
-          conversations/work/evidence/etc.
+       conversations/work/evidence/media refs/etc.
 ```
 
-## 5. Responsabilidades da Copilot API
+## 5. Surfaces sobre o mesmo runtime
+
+O Copilot deve suportar diferentes experiências sem criar produtos/runtimes paralelos:
+
+```text
+GLOBAL      → painel contextual no Portal
+WORKSPACE   → página completa
+MEETING     → reunião assistida multimodal
+FRONTLINE   → operador/posto/máquina
+```
+
+Invariante:
+
+```text
+4 surfaces
+→ same Copilot API
+→ same product identity
+→ same RBAC/policy
+→ same Evidence/Work runtime
+```
+
+## 6. Responsabilidades da Copilot API
 
 A nova API é owner do runtime inteligente do Copilot:
 
@@ -130,11 +152,15 @@ A nova API é owner do runtime inteligente do Copilot:
 - Expertise Packs;
 - Domain Playbooks;
 - knowledge retrieval/RAG do Copilot;
-- multimodal/document/drawing pipeline;
+- multimodal/document/drawing/image/audio/video pipeline;
+- speech/transcription/synthesis adapters quando implementados;
+- media session orchestration quando necessário;
 - Evidence/Provenance;
 - Business Graph refs/relationships/index;
 - durable workflows;
 - Tasks/Cases/Watch/Inbox state;
+- Meeting artifacts/session semantics do Copilot;
+- Frontline assistance/session semantics do Copilot;
 - model/provider abstraction e Compute Policy;
 - audit/tracing/evals do Copilot;
 - administration endpoints do Copilot.
@@ -145,18 +171,25 @@ A API **não** vira owner de:
 - catálogo mestre de apps/rotas;
 - regras de negócio de Comercial, Suprimentos, Engenharia etc.;
 - dados mestres que pertencem às APIs de domínio;
-- navegação real do Portal.
+- navegação real do Portal;
+- regras certificadas de segurança de máquinas;
+- interlocks/PLC safety logic;
+- qualificação/certificação oficial de operador;
+- critérios de inspeção que pertencem a sistemas/processos owners.
 
-## 6. Responsabilidades do Copilot MFE
+## 7. Responsabilidades do Copilot MFE
 
 Frontend independente, React/Vite/Module Federation, seguindo padrões do monorepo.
 
 Responsabilidades:
 
-- chat/conversation UX do Copilot;
+- conversation UX do Copilot;
 - Task/Case/Inbox/Approval surfaces;
 - evidence/provenance presentation;
 - artifacts/attachments;
+- media capture controls quando surface/device suportar;
+- Meeting Mode UX;
+- Frontline Mode UX;
 - full-page Copilot experience;
 - global side-panel experience quando hospedado pelo Portal;
 - administração do Copilot quando autorizada;
@@ -164,7 +197,7 @@ Responsabilidades:
 
 Não contém regra de negócio nem autorização authoritative.
 
-## 7. Integração com o Portal
+## 8. Integração com o Portal
 
 O Portal é **host**, não runtime do Copilot.
 
@@ -183,7 +216,7 @@ isSuperadmin
 
 O Copilot deverá usar o mesmo contrato federado, evoluído somente por contrato genérico quando necessário.
 
-### 7.1 Full page
+### 8.1 Full page
 
 Manifesto do Copilot registra app `microfrontend` com `renderMode=federated` e base path próprio.
 
@@ -195,7 +228,7 @@ Conceitualmente:
 
 O path final é congelado em C0/C1 conforme convenção vigente.
 
-### 7.2 Global Copilot surface
+### 8.2 Global Copilot surface
 
 Além do app navegável, o Portal poderá oferecer botão/side panel global.
 
@@ -208,17 +241,56 @@ Portal Global Copilot Host
 → recebe PlatformCommand
 ```
 
-O Portal não implementa planner, RAG, actions ou prompt do Copilot.
+O Portal não implementa planner, RAG, actions, media intelligence ou prompt do Copilot.
 
 A integração global precisa evitar uma segunda implementação do frontend. O mesmo MFE deve suportar, por contrato, surfaces como:
 
 ```text
-surface = page | panel
+surface = page | panel | meeting | frontline
 ```
 
-se C0/C1 confirmar esse desenho.
+quando cada surface for liberada.
 
-## 8. Integração com Core API
+## 9. Meeting e Frontline não são novos backends
+
+Meeting/Frontline são experiências do Copilot standalone.
+
+```text
+Meeting MFE surface ─┐
+Frontline MFE surface├→ Copilot API
+Global/Page surface ─┘
+```
+
+Não criar:
+
+```text
+meeting-ai-api
+frontline-ai-api
+operator-agent-runtime
+```
+
+sem gap arquitetural real e ADR. Serviços auxiliares de media/edge podem existir como infrastructure adapters, mas não como segunda authority do Copilot.
+
+## 10. Workspace Context operacional
+
+Não criar um segundo contexto industrial paralelo.
+
+OP, operação, máquina, produto, lote, material, ferramenta e posto devem usar preferencialmente `EntityRef` dentro do `WorkspaceContext`.
+
+```text
+WorkspaceContext
+├─ app/route
+├─ EntityRefs
+│  ├─ productionOrder
+│  ├─ machine
+│  ├─ product
+│  └─ operation
+└─ bounded device/session metadata
+```
+
+Device/session metadata nunca concede autorização.
+
+## 11. Integração com Core API
 
 Core permanece authority de:
 
@@ -240,7 +312,30 @@ Domain API = autorização/regra final de negócio
 Copilot = nunca amplia permission
 ```
 
-## 9. Integração com APIs de domínio
+## 12. Shared devices
+
+Terminal de produção, tablet, kiosk ou sala podem ser devices compartilhados.
+
+A arquitetura deve separar:
+
+```text
+user identity
+≠
+device identity
+≠
+operational context
+```
+
+Obrigatório quando aplicável:
+
+- user atual explícito;
+- session timeout/lock;
+- troca de usuário sem state leak;
+- limpeza de cache/mídia/contexto local;
+- logout seguro;
+- device scopes limitados.
+
+## 13. Integração com APIs de domínio
 
 O Copilot chama APIs owners diretamente através do Gateway/service network conforme contrato aprovado; não usa Chat como proxy.
 
@@ -260,11 +355,11 @@ intent
 
 OpenAPI-first é requisito **nativo do Copilot desde sua fundação**, não dependência de correções do Chat.
 
-## 10. Integração com API DELPI
+## 14. Integração com API DELPI
 
 `api-delpi` já existe como `backend-only`, com JWT e permission contract próprios. O Copilot a trata como uma API de domínio/integração corporativa, respeitando seu manifesto, OpenAPI e permissões; não replica integrações TOTVS dentro da Copilot API.
 
-## 11. Integração com plugin-ui
+## 15. Integração com plugin-ui
 
 Os MFEs usam infraestrutura compartilhada `plugins/vite/federation.shared.ts`, que disponibiliza `@delpi/plugin-ui` por Module Federation e mantém React singleton/versionado.
 
@@ -273,9 +368,50 @@ O Copilot MFE deve:
 - reutilizar `@delpi/plugin-ui`;
 - reutilizar `FEDERATION_SHARED_REACT` e convenções atuais;
 - não source-importar componentes do Portal ou do Chat;
-- propor extensão do `plugin-ui` somente quando componente for realmente transversal.
+- propor extensão do `plugin-ui` somente quando componente for realmente transversal;
+- preservar accessibility e large-touch/responsive needs de Meeting/Frontline.
 
-## 12. Persistência independente
+## 16. Media architecture
+
+Mídia é responsabilidade do Copilot, mas providers/transport/storage concretos ficam atrás de boundaries.
+
+Possíveis ports quando C0/Abstraction Gate provar necessidade:
+
+```text
+SpeechToTextPort
+TextToSpeechPort
+MediaIngestPort
+VisionAnalysisPort
+RealtimeMediaSessionPort
+MediaStoragePort
+DeviceContextPort
+```
+
+Não criar todos antecipadamente.
+
+Meeting, câmera, vídeo e voz usam esses adapters; não chamam runtime do Chat.
+
+## 17. MediaRef / Evidence
+
+C0 deve decidir se `MediaRef` é primitive compartilhado necessário.
+
+Evidence não deve duplicar mídia bruta; referencia source/location quando necessário.
+
+Candidate semantics:
+
+```text
+media ref
+kind
+source
+capturedAt
+session/owner refs
+retention class
+consent/policy ref
+hash/version
+storage ref if persisted
+```
+
+## 18. Persistência independente
 
 Copilot terá schema/tabelas/migrations próprias conforme gaps provados.
 
@@ -286,15 +422,64 @@ Conceitos Copilot-owned candidatos:
 - conversations/turns;
 - user/project preferences do Copilot;
 - expertise/playbooks;
-- evidence metadata;
+- evidence/media metadata;
 - workflow/task/case/checkpoints;
 - watch/inbox/decision refs;
+- meeting artifact/session metadata quando persistência for necessária;
+- frontline session metadata quando policy exigir;
 - graph relationship/index derivado;
 - eval/admin metadata.
 
+Raw audio/video não é automaticamente Copilot-owned durable state. Retention precisa de purpose/policy explícitos.
+
 C0 congela boundaries antes de migrations.
 
-## 13. Infraestrutura e deploy
+## 19. Privacy/consent boundary
+
+Audio/video/camera/screen capture exige estado explícito e policy.
+
+Separar:
+
+```text
+transient capture
+transcript
+raw audio
+raw video
+screen capture
+derived Evidence
+meeting artifact
+```
+
+Essas classes podem ter retention/access diferentes.
+
+Default: data minimization.
+
+## 20. Industrial/OT boundary
+
+Copilot não é safety controller.
+
+Default permitido:
+
+```text
+observe
+consult
+explain
+recommend
+prepare governed enterprise action
+```
+
+Default proibido:
+
+```text
+arbitrary LLM-generated machine command
+LLM replacing interlock/safety PLC
+```
+
+Qualquer futura machine actuation exige arquitetura/gate específico com deterministic command schema/allowlist, industrial owner, machine-state validation, independent safety interlocks, test environment, fail-safe, human authorization e audit.
+
+Autonomia L5 do Copilot empresarial não habilita OT automaticamente.
+
+## 21. Infraestrutura e deploy
 
 A aplicação terá entradas próprias em:
 
@@ -316,9 +501,11 @@ API gateway path: /apps/minha-delpi-copilot-api/
 MFE path: /apps/minha-delpi-copilot/
 ```
 
+Media/realtime support pode exigir tuning de Gateway/infra, mas não cria outro product boundary.
+
 Nomes/paths finais devem ser congelados antes da implementação e não inferidos por cada etapa.
 
-## 14. Relação com Minha DELPI Chat
+## 22. Relação com Minha DELPI Chat
 
 Chat é **sistema vizinho**, não legado a migrar dentro do projeto Copilot.
 
@@ -329,13 +516,14 @@ Portanto ficam fora do roadmap do Copilot:
 - remover `softAgentHandoff` do Chat;
 - converter sessions do Chat;
 - fazer cutover de `agent_id` do Chat;
-- corrigir runtime/action routing do Chat.
+- corrigir runtime/action routing do Chat;
+- reutilizar voice/vision/media runtime do Chat como dependency.
 
 Esses trabalhos pertencem ao produto Chat se forem desejados futuramente.
 
 O Copilot nasce sem essas dependências.
 
-## 15. Regra de construção do zero
+## 23. Regra de construção do zero
 
 “Do zero” não significa ignorar a plataforma.
 
@@ -359,9 +547,10 @@ O Copilot deve reaproveitar:
 - plugin-ui;
 - padrões Clean Architecture;
 - clients/contracts oficiais das APIs;
-- event/notification infrastructure quando apropriado.
+- event/notification infrastructure quando apropriado;
+- device/media infrastructure neutra se C0 provar owner compartilhado.
 
-## 16. Gate de independência
+## 24. Gate de independência
 
 Antes do primeiro release, provar:
 
@@ -378,4 +567,16 @@ PLUGIN_UI_REUSE = PASS
 INDEPENDENT_DEPLOY_ROLLBACK = PASS
 ```
 
-Qualquer dependência material do produto Chat bloqueia conclusão, salvo uma futura decisão arquitetural explícita.
+Antes de Meeting/Frontline production scope, provar também conforme aplicável:
+
+```text
+MEDIA_POLICY = PASS
+CONSENT_VISIBILITY = PASS
+RETENTION_CLASSES = PASS
+SHARED_DEVICE_ISOLATION = PASS
+OPERATIONAL_CONTEXT = PASS
+OT_SAFETY_BOUNDARY = PASS
+NO_HIDDEN_SURVEILLANCE = PASS
+```
+
+Qualquer dependência material do produto Chat, captura sem governance ou bypass de safety/RBAC bloqueia conclusão.
