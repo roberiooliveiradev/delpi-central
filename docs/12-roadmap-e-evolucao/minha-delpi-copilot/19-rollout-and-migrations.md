@@ -1,11 +1,12 @@
 # Minha DELPI Copilot — Rollout, Migrações e Implantação
 
 **Status:** plano operacional  
-**Princípio:** implantação incremental, reversível e observável. Sem big-bang.
+**Autoridade de ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Princípio:** incremental, reversível, observável e foundation-first. Sem big-bang.
 
-## 1. Estratégia geral
+## 1. Estratégia
 
-A primeira versão do Copilot não exige um novo microserviço dedicado. Evoluir componentes existentes:
+Evoluir owners atuais antes de criar serviço novo:
 
 ```text
 portal
@@ -13,105 +14,145 @@ minha-delpi-ai-api
 plugins/minha-delpi-chat
 Core API
 APIs de domínio
-MFEs
+MFEs/iframes
+infra existente de events/jobs/rooms/notifications
 ```
 
-Criar serviço novo somente se uma necessidade técnica mensurável não couber nos owners atuais e houver ADR aprovada.
+Novo serviço/storage somente com gap provado em C0 e ADR quando material.
 
-## 2. Sequência de deployment
+## 2. Releases alinhadas a C0–C7
 
-### Release R0 — contratos/testes
+### R0 — Foundation Freeze
 
-Sem mudança visível ao usuário.
-
-Entrega:
-
-- schemas/tipos v1;
-- harness contratual;
-- observabilidade mínima;
-- app readiness inventory.
-
-Rollback: remover artefatos não consumidos ou desligar flag com exit criteria.
-
-### Release R1 — navegação Copilot
+Corresponde a C0.
 
 Entrega:
 
-- authorized Portal Capability Projection;
+- inventário/ownership;
+- shared primitives/contracts;
+- ports/persistence boundaries;
+- versioning/correlation/error/idempotency semantics;
+- contract harness;
+- zero duplicate authority material.
+
+Sem feature UX final necessária.
+
+**Gate:** `FOUNDATION_FREEZE=PASS`.
+
+### R1 — Platform/Context
+
+Corresponde a C1.
+
+Entrega:
+
+- Platform Capability Projection;
 - CopilotBridge;
-- `portal.open_app`;
-- `portal.open_route`;
-- transport send/stream;
-- UX “Abrir no app”.
+- open app/route/entity;
+- Workspace Context;
+- MFE adapter;
+- iframe base/handshake;
+- contextual UX.
 
-Disponibilização: cohort interno/canary.
+Rollout interno/canary.
 
-### Release R2 — contexto
+### R2 — Intelligence Core
+
+Corresponde a C2.
 
 Entrega:
 
-- WorkspaceContext;
-- Portal Context Store;
-- SDK/helper para MFE;
-- primeiro MFE piloto;
-- contextual explanation/deep navigation.
+- single-Copilot session model;
+- Expertise Catalog/retrieval;
+- Domain Playbooks;
+- Knowledge ACL integration;
+- multimodal Evidence;
+- epistemic synthesis;
+- shadow agent migration com exit criteria.
 
-Rollout por MFE, opt-in.
+Pode rodar sem Business Actions production-ready.
 
-### Release R3 — reads de negócio
+### R3 — Business Reads + Graph
 
-**Pré-condição:** gates relevantes da AI/OpenAPI-first atuais aprovados no candidate vigente.
+Corresponde a C3.
+
+Pré-condição: gates OpenAPI-first relevantes PASS.
 
 Entrega:
 
 - Business Capability Projection;
-- read parity;
-- resultados + deep links;
-- app coverage scanner.
+- generic reads;
+- Outcome/Evidence normalization;
+- Business Graph mínimo;
+- cross-domain analysis.
 
-Rollout inicialmente read-only.
+Rollout read-only primeiro.
 
-### Release R4 — writes L3/L4
+### R4 — Governed Writes
 
-Entrega:
-
-- prepare-only;
-- preview de argumentos;
-- confirmation protocol;
-- write não destrutivo piloto;
-- idempotency/audit.
-
-Não liberar destructive nesta release salvo caso explicitamente aprovado e testado.
-
-### Release R5 — workflows compostos
+Corresponde a C4.
 
 Entrega:
 
-- DAG;
-- partial failure;
-- checkpoints;
-- persist/reload;
-- multi-app read;
-- mixed read+write confirmed.
+- Decision Gate Engine;
+- impact preview;
+- confirmations/approvals;
+- idempotency/concurrency;
+- generic writes;
+- outcome verification;
+- decoupling de agent activation/handoff.
 
-### Release R6 — ecossistema AI-ready
+Começar com write não destrutivo de baixo/médio risco.
+
+### R5 — Durable Work
+
+Corresponde a C5.
 
 Entrega:
 
-- SDK/templates;
-- readiness scanner;
-- waves de onboarding;
-- coverage dashboard.
+- workflow persistence/checkpoints;
+- waits;
+- DAG runner;
+- Task;
+- Case/Evidence Board;
+- Room integration;
+- Inbox;
+- restart/resume safety.
 
-### Release R7 — autonomia governada
+### R6 — Proactivity/Ecosystem/Learning
 
-Entrega gradual L5, se aprovada. OFF por default.
+Corresponde a C6.
+
+Entrega:
+
+- Watch OBSERVE/ADVISE;
+- AI-ready SDK/templates;
+- readiness scanner/waves;
+- project preferences;
+- Organizational Knowledge;
+- Governed Learning;
+- Expertise Studio;
+- admin/coverage.
+
+### R7 — Optimization/Autonomy/Rollout
+
+Corresponde a C7.
+
+Entrega gradual:
+
+- L5 selected;
+- Watch ACT selected;
+- Simulation pilots;
+- Model Router;
+- agent-routing cleanup;
+- progressive rollout/final verification.
+
+L5/ACT não são default.
 
 ## 3. Feature flags
 
-Feature flag é mecanismo de rollout, não dívida eterna.
+Flag = rollout tool, não arquitetura permanente.
 
-Cada flag deve registrar:
+Cada flag precisa:
 
 ```text
 name
@@ -124,144 +165,174 @@ exitCriteria
 plannedRemoval
 ```
 
-Flags sugeridas conceitualmente — nomes reais somente após inventário das convenções atuais:
+Nomes reais só após inventário de convenção atual.
+
+Famílias conceituais possíveis:
 
 ```text
-copilotPlatformActionsEnabled
-copilotWorkspaceContextEnabled
-copilotBusinessReadsEnabled
-copilotWritePrepareEnabled
-copilotConfirmedWritesEnabled
-copilotAgenticWorkflowsEnabled
-copilotAutonomyL5Enabled
+platform/context
+single-copilot expertise
+business reads/graph
+governed writes
+durable work
+watch/proactivity
+autonomy
+simulation/model routing
 ```
 
-Não criar dial por endpoint/app quando uma flag transversal resolve o rollout.
+Evitar flag por endpoint/app quando uma flag transversal/cohort resolve.
 
-## 4. Migrações de contrato
+## 4. Migration policy
 
-Preferir mudanças aditivas e versionadas.
-
-Quando contrato persistido precisar mudar:
+Preferir:
 
 ```text
 EXPAND
-→ BACKFILL quando necessário
-→ DUAL READ somente se inevitável e com exit criteria
+→ compatible readers
+→ writers
+→ BACKFILL se necessário
 → CUTOVER
-→ CONTRACT
+→ MONITOR
+→ CONTRACT/CLEANUP posterior
 ```
 
-Não manter dual-write/dual-read indefinidamente.
+Dual read/write somente se inevitável, com exit criteria.
 
-## 5. Migrações de banco
+## 5. Migration planning por fase
 
-Criar tabela/coluna somente quando persistência for necessária e owner existente não puder representar o dado.
+### C0
 
-Possíveis necessidades, a confirmar em C0.S0/C4:
+Não criar tabelas só porque o contrato existe. Definir boundaries e provar gaps.
 
-- workflow execution durável;
-- step execution state;
-- confirmation lifecycle;
-- idempotency/audit references.
+### C2
 
-Antes de criar migration:
+Possível persistence de Expertise/Playbook catalog somente se current owner não atender.
 
-1. procurar modelo/repository existente;
-2. provar requisito de persistência;
-3. definir retention/LGPD;
-4. definir rollback;
-5. criar migration compatível;
-6. testar upgrade e downgrade quando suportado pelo padrão local.
+### C3
 
-## 6. Ordem de rollout por capacidade
+Graph pode exigir relationship/index store; não armazenar domain objects completos.
+
+### C4
+
+Decision/approval persistence pode estender mecanismo existente.
+
+### C5
+
+Possíveis stores, se gaps provados:
+
+- workflow instance/steps;
+- checkpoints/waits;
+- Task/Case refs/state;
+- dedupe/idempotency coordination.
+
+Room/Inbox devem preferir owners/views existentes.
+
+### C6/C7
+
+Watch/Experience/Compute policy persistence somente quando runtime correspondente for implementado.
+
+## 6. Antes de qualquer migration
+
+1. procurar owner/model/repository existente;
+2. provar necessidade durável;
+3. validar shared primitive C0;
+4. definir retention/LGPD;
+5. constraints/indexes;
+6. concurrency/idempotency;
+7. forward/backout path;
+8. tests;
+9. observability;
+10. confirmar que fase seguinte conhecida não exigirá remodelagem previsível.
+
+## 7. Ordem de experiência para usuários
+
+Mesmo com foundations internas, percepção deve expandir com risco crescente:
 
 ```text
 explain
-→ navigation
-→ context-aware explain
-→ read
-→ analysis
-→ prepare write
-→ confirmed write
-→ workflow
-→ limited autonomy
+→ navigation/context
+→ specialized analysis/evidence
+→ business reads
+→ prepare/governed write
+→ durable tasks/cases
+→ advise/watch
+→ selected automation
+→ optimization
 ```
 
-Não inverter esta ordem apenas para demonstrar uma feature visual.
+## 8. Cohorts
 
-## 7. Cohorts
+Conforme infraestrutura vigente:
 
-Rollout deve suportar, conforme infraestrutura vigente:
-
-- ambiente;
-- usuário/grupo interno;
-- app;
-- capability kind;
+- environment;
+- internal users/groups;
+- app/domain;
+- capability family;
+- feature family;
 - autonomy level.
 
-A seleção do cohort não concede permission de negócio. RBAC continua obrigatório.
+Cohort não concede business permission.
 
-## 8. Rollback
+## 9. Rollback por camada
 
-### Platform Actions
+### Platform/Context
+Desligar bridge/context integration; apps continuam manualmente utilizáveis.
 
-- desabilitar projection/bridge via flag;
-- chat volta a responder texto/deep link quando aplicável;
-- nenhuma rota do Portal fica inacessível manualmente.
+### Expertise/Multimodal
+Desabilitar candidate/version problemática; base conversational continua.
 
-### Workspace Context
+### Business Reads/Graph
+Remover availability no Copilot; source APIs continuam normais.
 
-- parar publisher/consumer;
-- chat continua funcional sem contexto visual.
+### Writes
+Read-only kill switch; preservar audit/outcomes.
 
-### Business Actions
+### Durable Work
+Bloquear novos workflows e preservar estado; definir tratamento seguro para running/waiting.
 
-- desligar availability no Copilot;
-- UI continua operando pela API normalmente.
+### Watch
+Desabilitar triggers; não perder audit/history.
 
-### Workflows
+### Model Router
+Voltar para policy/model baseline conhecido.
 
-- impedir novos workflows;
-- preservar estado/audit dos em andamento;
-- definir política segura para `waiting_confirmation` e `running`.
+## 10. Stop-the-line
 
-## 9. Critérios de promoção
+- unauthorized action/data exposure;
+- duplicate authority/foundation drift;
+- write sem required Decision Gate;
+- duplicate write em retry/resume;
+- graph/room/case vazando source data;
+- Watch ACT sem policy;
+- secret/token leak;
+- arbitrary URL/action;
+- model provider violando data policy;
+- irreproducible evidence;
+- migration sem rollback/mitigation em dado crítico.
 
-Uma release só promove cohort quando:
+## 11. Promotion criteria
 
-- tests/contract passam;
-- security/RBAC negatives passam;
-- error rate dentro do limite definido na própria release;
-- audit/traces disponíveis;
-- rollback foi testado;
-- nenhuma dimensão required relevante está FAIL/INCONCLUSIVE;
-- documentação/evidence apontam para o mesmo HEAD.
+- phase COMPLETE_GATE PASS;
+- current SHA evidence;
+- required tests PASS;
+- RBAC/security negatives PASS;
+- metrics/traces disponíveis;
+- rollback testado;
+- no material legacy fallback no objetivo da release;
+- docs/ledger consistentes.
 
-## 10. Critérios de interrupção
-
-Stop-the-line para:
-
-- execução não autorizada;
-- write sem confirmação requerida;
-- capability fora do catálogo autorizado;
-- URL/action arbitrária criada pelo modelo;
-- vazamento de segredo/token;
-- duplicação de catálogo técnico como workaround;
-- erro de idempotência que duplica write;
-- evidência irreproduzível.
-
-## 11. Produção
-
-Antes de release ampla:
+## 12. Produção
 
 ```text
-canary interno
-→ canary por app
-→ canary writes L4
-→ workflows selecionados
-→ análise de métricas/incidentes
-→ expansão gradual
+internal canary
+→ selected app/users
+→ read scale
+→ governed write canary
+→ durable work selected
+→ Watch advise selected
+→ selected ACT/autonomy only after governance
+→ metrics/incident review
+→ progressive expansion
 ```
 
-L5 não faz parte do rollout padrão; requer decisão explícita de governança.
+Nunca usar rollout para ocultar foundation incompleta.
