@@ -3,14 +3,17 @@
 **Status:** arquitetura canônica de ownership  
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
+**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
+**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)
 
 ## 1. Owners canônicos
 
 | Responsabilidade | Authority / owner | Consumidores | Proibido |
 |---|---|---|---|
-| identidade | Keycloak + Core integration | Portal, Copilot API, Domain APIs | identity própria/superuser do Copilot |
-| permissões efetivas da plataforma | Core API/RBAC | Portal, Copilot API | permission derivada de prompt/context/pack/media |
+| identidade corporativa | Keycloak + Core integration | Portal, Copilot API, Domain APIs | identity própria/superuser do Copilot |
+| associação biométrica a usuário conhecido | Copilot Biometric subsystem apontando para Core `userRef` | Meeting/Frontline | biometric match virar user authority |
+| enrollment biométrico/template | Copilot Biometric + Security/Governance owner | Biometric adapters | template em log/MFE/raw DB genérico |
+| permissões efetivas da plataforma | Core API/RBAC | Portal, Copilot API | permission derivada de prompt/context/pack/media/biometria |
 | apps/rotas | Core API | Portal, Copilot | catálogo manual app→URL |
 | navegação | Portal Router/AppHost | Copilot MFE/commands | URL livre do LLM |
 | Copilot UI | `plugins/minha-delpi-copilot` | usuário/Portal/devices | implementar Copilot no Chat MFE |
@@ -29,7 +32,10 @@
 | knowledge visibility | source ACL + Copilot policy adapter | RAG | projeto/pack ampliar ACL |
 | media capture controls | Copilot MFE + browser/device permissions | Copilot media adapters | hidden capture |
 | media perception | Copilot media/extractor adapters | Evidence | OCR/VLM/STT como conclusão authoritative |
+| face/speaker recognition | Copilot biometric adapters | identity candidates | open-world identity/permission authority |
+| Human Observation | Copilot bounded observation adapter + governance | Evidence/Knowledge candidates | personality/emotion/character/employment scoring |
 | raw media storage | approved media/storage owner if persistence required | Copilot | guardar indiscriminadamente no DB |
+| biometric template storage | approved protected storage + security owner | biometric adapters only | template em ordinary application logs/API |
 | media retention/consent | security/privacy governance + Copilot policy enforcement | Meeting/Frontline/Media | uma retention genérica para toda mídia |
 | meeting semantics | Copilot API | Meeting MFE/Task/Case/Room | meeting backend paralelo |
 | frontline assistance semantics | Copilot API | Frontline MFE/Task/Case | operator-agent runtime paralelo |
@@ -42,27 +48,30 @@
 | inbox semantics | Copilot API | Copilot MFE/Portal | Portal virar workflow engine |
 | notification delivery | Core/Portal shared owner quando aplicável | usuário | duplicar canal sem gap |
 | model/compute policy | Copilot API infrastructure/policy | runtime | model selection espalhada em features |
-| audit/evals | Copilot observability + platform audit where required | admin/security | CoT/secrets/JWT/raw media in logs |
+| audit/evals | Copilot observability + platform audit where required | admin/security | CoT/secrets/JWT/raw media/templates in logs |
 
 ## 2. Componentes físicos alvo
 
 | Componente | Responsabilidade |
 |---|---|
 | Portal Shell | host global, Router, current workspace, Copilot panel host |
-| Core API | apps/routes/RBAC/governance/shared notifications |
+| Core API | apps/routes/RBAC/governance/shared notifications/user authority |
 | Keycloak | SSO/identity |
 | Gateway | single public entry/routing |
 | `plugins/plugin-ui` | shared UI components/design system |
 | `plugins/minha-delpi-copilot` | Global/Workspace/Meeting/Frontline Copilot UX |
-| `minha-delpi-copilot-api` | complete Copilot intelligence/work/media runtime |
+| `minha-delpi-copilot-api` | complete Copilot intelligence/work/media/biometric runtime |
 | Copilot OpenAPI importer/index | derive action contracts from Domain APIs |
 | Copilot Action Catalog | operational action representation derived from OpenAPI |
 | Capability Projection | authorized semantic index |
 | Expertise/Playbook Catalogs | dynamic specialization/methodology |
 | Knowledge/RAG adapters | authorized knowledge retrieval |
 | Media/Multimodal adapters | documents/images/audio/video/screen perception |
+| Biometric adapters | closed-set face/speaker identity candidates, enrollment/liveness when approved |
+| Human Observation adapter | process-grounded observable activity evidence |
 | Media storage adapter | optional persisted media by policy |
-| Policy/Decision subsystem | allow/deny/gates/autonomy/privacy constraints |
+| Protected biometric storage | enrollment/template refs when required |
+| Policy/Decision subsystem | allow/deny/gates/autonomy/privacy/biometric constraints |
 | Durable Workflow Runtime | steps/checkpoints/waits/resume |
 | DELPI Business Graph projection | permission-aware references/relations |
 | Task/Case/Watch services | persistent Copilot work semantics |
@@ -74,7 +83,7 @@
 
 `minha-delpi-ai-api` and `plugins/minha-delpi-chat` are **not components of this runtime graph**.
 
-Meeting/Frontline are not separate product backends by default.
+Meeting/Frontline/Biometric são módulos/capabilities do mesmo produto, não backends paralelos por default.
 
 ## 3. Primitive registry — frozen in C0
 
@@ -105,6 +114,8 @@ traceId?
 ```
 
 Máquina, OP, operação, produto, lote, material, posto e ferramenta reutilizam `EntityRef` quando houver domain identity.
+
+Usuário corporativo não é recriado como aggregate paralelo; biometric subsystem aponta para `userRef`/Core identity.
 
 ### `RelationshipRef`
 ```text
@@ -178,6 +189,33 @@ storageRef?
 
 MediaRef referencia mídia; Evidence continua o modelo canônico de interpretação/provenance.
 
+### Candidate biometric/person observation contracts
+
+Somente se C0 provar necessidade:
+
+```text
+BiometricEnrollmentRef
+BiometricIdentityCandidate
+PersonObservationRef
+```
+
+Semântica candidata:
+
+```text
+candidateUserRef
+modality: face|voice
+confidence
+source/mediaRef
+session/device ref
+model/template version
+policyRef
+correction/revocation state
+```
+
+`BiometricIdentityCandidate` nunca representa autenticação ou permission grant.
+
+`PersonObservationRef` descreve somente observação objetiva do processo, com Evidence/provenance; não é perfil psicológico.
+
 ### Capability/specialization
 - `CapabilityProjection`
 - `ExpertisePack`
@@ -220,8 +258,16 @@ Persisted records específicos só surgem quando C0/C6 provarem lifecycle/durabl
 ## 4. Producer → consumer graph
 
 ```text
-Keycloak
+Keycloak/Core user authority
 → Portal/Core/Copilot API identity validation
+
+Approved biometric enrollment
+→ protected template store
+→ face/speaker adapter
+→ BiometricIdentityCandidate(userRef, confidence)
+→ policy/correction
+→ session/context association
+-X→ permission grant
 
 Core /me/apps/routes
 → Platform Capability Projection
@@ -248,13 +294,19 @@ Documents/Images/Audio/Video/Screen
 → MediaRef? + EvidenceRef
 → expertise/playbook/analysis
 
+Visible human/process activity
+→ Human Observation adapter
+→ PersonObservationRef/Evidence
+→ process analysis / Knowledge candidate
+-X→ automatic employment decision
+
 Meeting
-→ media/transcript + authorized business reads
+→ media/transcript + participant identity candidates + authorized business reads
 → Evidence/decisions/candidate actions
 → Task/Case/Room/Workflow
 
 Frontline
-→ user + device + operational EntityRefs + voice/camera
+→ user/session + optional biometric candidate + device + operational EntityRefs + voice/camera
 → Knowledge/API/Graph reads
 → Evidence/guidance
 → governed escalation/action
@@ -299,7 +351,7 @@ Must remain true:
 Copilot MFE ─X→ minha-delpi-chat source
 Copilot API ─X→ minha-delpi-ai-api modules/endpoints as required runtime
 Copilot DB  ─X→ Chat tables as authority
-Copilot Media ─X→ Chat media runtime as required dependency
+Copilot Media/Biometric ─X→ Chat media runtime as required dependency
 ```
 
 Shared dependencies must be neutral platform components:
@@ -320,7 +372,8 @@ approved neutral media/storage infrastructure
 
 Do not create:
 
-- another Core/RBAC model;
+- another Core/RBAC/user authority;
+- biometric shadow user directory as source of truth;
 - manual app→URL registry;
 - manual endpoint/action authority;
 - `CaseEntityRef` incompatible with `EntityRef`;
@@ -334,7 +387,9 @@ Do not create:
 - Graph master copies of Domain API objects;
 - Chat compatibility layer inside Copilot;
 - departmental agent tool registries;
-- raw-media table/blob persistence without policy/need;
+- raw-media/template persistence without policy/need;
+- person profile model based on inferred personality/emotion/trustworthiness;
+- automatic employment decision engine sourced from biometric/Human Observation;
 - machine state master inside Copilot;
 - generic LLM→OT command executor.
 
@@ -354,6 +409,10 @@ Is a new shared package justified by 2+ real consumers?
 Does WorkspaceContext/EntityRef/EvidenceRef already model this?
 Does media need persistence or only transient processing?
 Who owns consent/retention?
+Who owns corporate user identity?
+Is biometric enrollment explicit/revocable?
+Could biometric result be confused with authentication/permission?
+Is Human Observation objective/process-related or subjective person profiling?
 Is the device shared and how is user isolation enforced?
 Is this business automation or physical machine actuation?
 Who owns industrial safety?
@@ -364,15 +423,15 @@ Unknown = `NOT_PROVEN`, not assumption.
 ## 9. Stabilization order
 
 ```text
-platform/media/device/OT inventory
+platform/media/device/biometric/OT inventory
 → standalone boundaries
 → authorities
 → primitives
-→ ports/persistence/privacy/integration contracts
+→ ports/persistence/privacy/biometric/integration contracts
 → architecture conformance
 → FOUNDATION_FREEZE
 → standalone bootstrap
-→ intelligence/multimodal foundations
+→ intelligence/multimodal/biometric foundations
 → business features
 → Meeting/Frontline
 → advanced realtime/autonomy
