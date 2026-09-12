@@ -3,7 +3,8 @@
 **Status:** target arquitetural standalone  
 **Autoridade de ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
+**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
+**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)
 
 ## 1. Princípio
 
@@ -11,7 +12,7 @@ Todo estado durável do produto Copilot pertence à **Copilot API nova** ou a um
 
 ```text
 REFERENCE
-→ refs para entities/sources de owners externos
+→ refs para entities/sources/users de owners externos
 
 COPILOT RUNTIME STATE
 → conversations/turns/plans/context snapshots
@@ -19,17 +20,20 @@ COPILOT RUNTIME STATE
 COPILOT DURABLE WORK STATE
 → decision/workflow/task/case/watch/inbox semantics
 
-COPILOT COLLAB/MEDIA STATE
-→ meeting/frontline/media metadata only when required
+COPILOT COLLAB/MEDIA/BIOMETRIC STATE
+→ meeting/frontline/media/biometric metadata only when required
 
 DERIVED INDEX/CACHE
 → capabilities/expertise/graph/search indexes
 
 DOMAIN DATA
 → permanece nas Domain APIs
+
+CORPORATE USER IDENTITY
+→ permanece Keycloak/Core-owned
 ```
 
-**Proibido:** usar tabelas/sessions/agents/migrations do Minha DELPI Chat como foundation do Copilot.
+**Proibido:** usar tabelas/sessions/agents/migrations do Minha DELPI Chat como foundation do Copilot ou criar um shadow user directory biométrico como nova authority corporativa.
 
 ## 2. Storage ownership
 
@@ -48,6 +52,8 @@ same PostgreSQL cluster != same product schema/authority
 
 Nenhuma migration do Copilot edita tabelas do Chat.
 
+Biometric template storage pode exigir storage/keys diferentes do banco transacional comum; C0 deve decidir o owner/adapter apropriado antes de criar tabela.
+
 ## 3. Regra C0
 
 Antes de criar migrations, C0 define:
@@ -57,15 +63,19 @@ Antes de criar migrations, C0 define:
 - versioning;
 - retention/LGPD;
 - media retention classes;
+- biometric data/template retention class;
+- enrollment/revocation/deletion lifecycle;
 - consent/policy references;
+- encryption/key management;
 - indexes;
 - concurrency/idempotency;
 - migration/rollback strategy;
 - quais dados são Copilot-owned versus refs/projections;
 - quais existing rooms/notifications/events são referenciados por adapter;
 - se `MediaRef` ou primitive equivalente é necessário;
+- se biometric/person-observation refs são necessários;
 - shared-device session boundaries;
-- o que nunca pode ser durable raw media por default.
+- o que nunca pode ser durable raw media/template por default.
 
 ## 4. Shared references
 
@@ -98,6 +108,17 @@ Não copia o Domain object.
 
 OP, máquina, produto, lote, material, operação e posto devem preferir `EntityRef` em vez de criar um segundo contexto industrial.
 
+### UserRef
+
+O Copilot referencia usuário corporativo por identificador canônico resolvido a partir de Keycloak/Core.
+
+```text
+userRef
+→ corporate identity authority
+```
+
+Biometric enrollment/candidate aponta para `userRef`; não cria outro usuário.
+
 ### SourceRef / EvidenceRef / OutcomeRef
 
 Copilot-owned contract usado transversalmente por:
@@ -106,6 +127,8 @@ Copilot-owned contract usado transversalmente por:
 - API results;
 - multimodal;
 - media;
+- biometric identity evidence;
+- Human Observation;
 - Business Graph;
 - workflow;
 - Task/Case;
@@ -155,6 +178,7 @@ routeId
 EntityRefs[]
 filters/selection/dateRange
 bounded device/session metadata
+confirmed/current userRef from authenticated session
 ```
 
 Nunca persistir como truth:
@@ -163,7 +187,8 @@ Nunca persistir como truth:
 - tokens/secrets;
 - datasets completos;
 - permissions;
-- inferência visual de identidade de usuário.
+- biometric candidate como permission truth;
+- provider biometric payloads desnecessários.
 
 ## 7. Device/session metadata
 
@@ -176,12 +201,136 @@ deviceRef/workstationRef
 surface: global|workspace|meeting|frontline
 deviceClass: desktop|tablet|kiosk|room|mobile|other
 sessionStartedAt
-capability flags: mic/camera/screen/touch/audioOut
+capability flags: mic/camera/screen/touch/audioOut/biometricReady?
 ```
 
 Não deve conter permission truth nem substituir autenticação do usuário.
 
-## 8. Copilot conversations
+## 8. Biometric identity state
+
+Separar quatro conceitos:
+
+```text
+RAW BIOMETRIC MEDIA
+→ foto/frame/audio/video usados no enrollment/match quando necessário
+
+BIOMETRIC ENROLLMENT
+→ relação governada userRef + modality + purpose + lifecycle
+
+BIOMETRIC TEMPLATE
+→ representação protegida usada para matching
+
+IDENTITY CANDIDATE / ASSOCIATION
+→ resultado de uma observação/match em uma sessão
+```
+
+### Candidate `BiometricEnrollmentRef`
+
+Somente se C0 confirmar ownership/modelo:
+
+```text
+enrollmentId
+userRef
+modality: face|voice
+purpose/policyRef
+status
+createdAt/updatedAt/revokedAt/deletedAt?
+templateVersion/modelVersion
+retentionClass
+quality metadata bounded
+```
+
+Lifecycle conceitual:
+
+```text
+PENDING → ACTIVE → REVOKED | DELETED
+```
+
+### Biometric template
+
+Não deve ser tratado como attachment comum.
+
+Requisitos:
+
+```text
+templateId/ref
+enrollmentRef
+modality
+model/template version
+encrypted/protected storageRef
+createdAt
+status
+```
+
+Não incluir embedding/template em:
+
+- ordinary logs;
+- MFE payload comum;
+- generic Evidence value;
+- analytics export genérico.
+
+### Candidate `BiometricIdentityCandidate`
+
+```text
+candidateId
+candidateUserRef?
+modality
+confidence
+media/sourceRef
+meeting/frontline/mediaSession ref?
+deviceRef?
+modelVersion
+templateVersion?
+policyRef
+status: UNKNOWN|CANDIDATE|CONFIRMED|CORRECTED|REJECTED
+observedAt
+```
+
+Invariante:
+
+```text
+BiometricIdentityCandidate != authenticated session != permission grant
+```
+
+Low confidence pode persistir apenas como `UNKNOWN`/session-local evidence quando necessário; não forçar associação.
+
+Correção de associação não altera enrollment/template automaticamente.
+
+## 9. Human Observation state
+
+Se C0/C3 provarem necessidade, usar `PersonObservationRef` ou equivalente **somente para observações objetivas ligadas ao processo**.
+
+Semântica candidata:
+
+```text
+observationId
+sessionRef
+userRef?              # apenas quando necessário/autorizado
+entityRefs[]           # OP/machine/product/operation...
+media/evidence refs[]
+observationType
+observed facts bounded
+confidence?
+limitations[]
+observedAt
+```
+
+Não armazenar campos de:
+
+```text
+personality score
+honesty/trust score
+emotion truth
+loyalty
+mental/health diagnosis
+sensitive attribute inference
+global employee score
+disciplinary propensity
+```
+
+O objetivo é descrever processo/comportamento observável, não criar perfil psicológico do trabalhador.
+
+## 10. Copilot conversations
 
 O Copilot possui modelo próprio desde C3.
 
@@ -204,6 +353,7 @@ conversationId
 input/output refs
 workspace snapshot ref?
 media/evidence refs?
+identity candidate refs?  # somente quando material
 plan/outcome/evidence refs
 model/config metadata bounded
 createdAt
@@ -213,7 +363,7 @@ Não armazenar chain-of-thought.
 
 Não utilizar `agent_id`, `chat_mode` ou session rows do Minha DELPI Chat.
 
-## 9. Media session
+## 11. Media session
 
 Realtime/capture session só é persistida se continuity/audit/policy exigir.
 
@@ -226,6 +376,7 @@ actor/user ref
 deviceRef?
 meetingRef?/frontlineRef?/conversationRef?
 active modalities
+identityRecognitionEnabled?
 consent/policy refs
 startedAt/endedAt
 status
@@ -234,7 +385,7 @@ provider/config refs bounded
 
 Raw stream não precisa ser armazenado para existir media session.
 
-## 10. Retention classes
+## 12. Retention classes
 
 Não tratar tudo como “attachment”.
 
@@ -247,13 +398,19 @@ RAW_AUDIO
 RAW_VIDEO
 SCREEN_CAPTURE
 DERIVED_EVIDENCE
+BIOMETRIC_ENROLLMENT_MEDIA
+BIOMETRIC_TEMPLATE
+IDENTITY_CANDIDATE
+PERSON_OBSERVATION
 MEETING_ARTIFACT
 FRONTLINE_RECORD
 ```
 
-Cada classe define purpose, access, retention, redaction, delete/anonymize e provider handling.
+Cada classe define purpose, access, retention, encryption/redaction, revoke/delete/anonymize e provider handling.
 
-## 11. Meeting session
+Apagar enrollment/template deve impedir matches futuros conforme contract, independentemente de retention permitida para alguma Evidence já produzida.
+
+## 13. Meeting session
 
 Meeting durable state é Copilot-owned apenas quando a feature estiver em escopo e a policy exigir persistência.
 
@@ -266,9 +423,11 @@ subject/title
 startedAt/endedAt
 initiatorRef
 participantRefs[]
+participantIdentityCandidateRefs[]?
 conversationRef?
 caseRef?/roomRef?
 active/captured modality metadata
+identityRecognitionEnabled?
 transcriptRef?
 summaryArtifactRef?
 evidenceRefs[]
@@ -281,10 +440,10 @@ retentionPolicyRef
 Distinguir:
 
 ```text
-transcript != summary != confirmed decision != executed action
+transcript != summary != identity candidate != confirmed participant association != confirmed decision != executed action
 ```
 
-## 12. Frontline assistance session
+## 14. Frontline assistance session
 
 Persistir somente quando necessário à continuidade/audit/process improvement.
 
@@ -293,12 +452,14 @@ Campos conceituais:
 ```text
 frontlineSessionId
 actor/user ref
+identityCandidateRef?  # se biometric assistance participou da resolução
 device/workstation ref
 status
 startedAt/endedAt
 entityRefs[]  # OP, machine, product, operation, etc.
 conversationRef?
 media/evidence refs[]
+personObservationRefs[]?
 issue/finding refs[]
 escalation/task/case/request refs[]
 candidateKnowledgeRefs[]
@@ -306,7 +467,7 @@ candidateKnowledgeRefs[]
 
 Não virar employee-surveillance datastore.
 
-## 13. Derived catalogs/indexes
+## 15. Derived catalogs/indexes
 
 ### Copilot Action Catalog
 
@@ -327,9 +488,9 @@ Catalogs são Copilot-owned; vector/search indexes são derivados e invalidávei
 
 ### Business Graph index
 
-Pode guardar `RelationshipRef`/lookup metadata/provenance, nunca master copies dos Domain objects.
+Pode guardar `RelationshipRef`/lookup metadata/provenance, nunca master copies dos Domain objects ou biometric person profiles.
 
-## 14. Evidence
+## 16. Evidence
 
 Persistir apenas quando necessário à continuidade/audit/Case/Meeting/Frontline.
 
@@ -337,10 +498,12 @@ Persistir apenas quando necessário à continuidade/audit/Case/Meeting/Frontline
 evidenceId
 sourceRef
 entityRefs[]
+userRef?              # somente quando necessário/autorizado
 kind
 valueRef/value bounded
 location?  # page/region/frame/time-range
 mediaRef?
+identityCandidateRef?
 observedAt
 freshness
 confidence?
@@ -358,9 +521,9 @@ CONCLUSION
 RECOMMENDATION
 ```
 
-Visual/audio finding não vira FACT apenas por existir modelo multimodal.
+Visual/audio/Human Observation finding não vira FACT apenas por existir modelo multimodal.
 
-## 15. Decision Gate
+## 17. Decision Gate
 
 Copilot-owned lifecycle; final Domain API authorization continua obrigatória.
 
@@ -378,7 +541,9 @@ requestedAt/expiresAt/decidedAt
 actor/approver refs
 ```
 
-## 16. Durable Workflow
+Biometric identity candidate não substitui `actor/approver` autenticado.
+
+## 18. Durable Workflow
 
 Contract nasce em C0; runtime/persistence entra em C5.
 
@@ -420,7 +585,7 @@ WAITING_EVENT
 WAITING_TIME
 ```
 
-## 17. Task
+## 19. Task
 
 Copilot-owned product unit backed by Workflow runtime.
 
@@ -442,7 +607,7 @@ timestamps
 
 Task não possui executor próprio.
 
-## 18. Case
+## 20. Case
 
 Copilot Case é Copilot-owned **salvo se C0 provar que um owner corporativo existente deve ser estendido**.
 
@@ -475,7 +640,7 @@ frontlineSessionRefs[]?
 timestamps
 ```
 
-## 19. Evidence Board
+## 21. Evidence Board
 
 View/state sobre `EvidenceRef`:
 
@@ -488,7 +653,7 @@ superseded
 
 Não cria outro evidence schema.
 
-## 20. Interaction Room
+## 22. Interaction Room
 
 C0 deve decidir owner após inventariar salas existentes.
 
@@ -502,9 +667,9 @@ Copilot uses authorized adapter
 
 Não duplicar sala nem conteúdo integral se existing owner atende.
 
-Meeting artifact pode ser referenciado por Room/Case sem duplicar transcript/raw media.
+Meeting artifact pode ser referenciado por Room/Case sem duplicar transcript/raw media/biometric template.
 
-## 21. Inbox
+## 23. Inbox
 
 Copilot API é owner da **semântica de work inbox**; delivery/presentation pode usar Portal/Core infrastructure.
 
@@ -518,7 +683,7 @@ entityRefs[]
 timestamps
 ```
 
-## 22. Event / Watch
+## 24. Event / Watch
 
 `EventEnvelope` é shared Copilot contract para ingestão/correlação de eventos de platform/domain owners.
 
@@ -538,7 +703,7 @@ timestamps
 
 ACT revalida authorization/policy no disparo.
 
-## 23. Organizational Knowledge
+## 25. Organizational Knowledge
 
 Reference/Decision/Experience/Solution Pattern records precisam:
 
@@ -551,11 +716,13 @@ review/eval metadata
 timestamps
 ```
 
-Meeting/process/frontline observation pode gerar **candidate**, nunca published truth diretamente.
+Meeting/process/frontline/Human Observation pode gerar **candidate**, nunca published truth diretamente.
+
+Preferir knowledge abstraído para processo, não perfis de pessoa, salvo autoria/participação necessária e autorizada.
 
 No CoT.
 
-## 24. Copilot preferences/projects
+## 26. Copilot preferences/projects
 
 Se projeto/contexto persistente for necessário:
 
@@ -567,7 +734,7 @@ Se projeto/contexto persistente for necessário:
 
 Nunca concede permission/capability.
 
-## 25. Idempotência e concurrency
+## 27. Idempotência e concurrency
 
 Write preference:
 
@@ -579,20 +746,20 @@ Resume exige dedupe, checkpoint consistency, ambiguous-outcome verification and 
 
 Voice/Meeting/Frontline repeated utterance/event não pode duplicar Business Action.
 
-## 26. Shared-device isolation
+## 28. Shared-device isolation
 
 Quando device é compartilhado:
 
 ```text
 end user session
-→ clear local auth/context/media cache
+→ clear local auth/context/media/biometric-candidate cache
 → invalidate bounded session refs
 → next user starts clean context
 ```
 
-Nunca reutilizar conversation/meeting/frontline state de usuário anterior por conveniência.
+Nunca reutilizar conversation/meeting/frontline/identity-candidate state de usuário anterior por conveniência.
 
-## 27. OT/machine state
+## 29. OT/machine state
 
 Copilot não persiste “machine truth” própria. Estado de máquina vem do owner OT/domain system.
 
@@ -609,9 +776,9 @@ machine command request
 
 Nenhum LLM-generated free-form command vira machine instruction direta.
 
-## 28. Retention/LGPD
+## 30. Retention/LGPD
 
-Por tabela/record/media class novo definir:
+Por tabela/record/media/biometric class novo definir:
 
 ```text
 purpose
@@ -621,12 +788,13 @@ retention
 access model
 consent/policy ref when needed
 audit
+encryption/key boundary when needed
 redaction
-archive/delete/anonymize
+archive/delete/anonymize/revoke
 provider processing
 ```
 
-## 29. Migration strategy
+## 31. Migration strategy
 
 Copilot migrations são independentes e seguem:
 
@@ -642,7 +810,9 @@ expand additive
 
 Não existe migration Chat→Copilot como requisito desta iniciativa.
 
-## 30. State machines
+Biometric template/model migration exige versão explícita e estratégia de compatibilidade/reenrollment; não reinterpretar embeddings incompatíveis silenciosamente.
+
+## 32. State machines
 
 ### Platform Command
 ```text
@@ -672,6 +842,16 @@ REQUESTED → PENDING → ACKNOWLEDGED|CONFIRMED|APPROVED|REJECTED|EXPIRED|INVAL
 CREATED → CAPTURING → PROCESSING? → STOPPED → COMPLETED|FAILED|CANCELLED
 ```
 
+### Biometric Enrollment
+```text
+PENDING → ACTIVE → REVOKED|DELETED
+```
+
+### Identity Candidate
+```text
+OBSERVED → UNKNOWN|CANDIDATE → CONFIRMED|CORRECTED|REJECTED
+```
+
 ### Meeting
 ```text
 DRAFT → ACTIVE → ENDING → COMPLETED|FAILED|CANCELLED
@@ -684,7 +864,7 @@ READY → ACTIVE → WAITING_HELP|ESCALATED? → COMPLETED|CANCELLED|FAILED
 
 Final states/lifecycles só são congelados em C0/C6 se runtime provar necessidade; não criar tabelas apenas por este desenho conceitual.
 
-## 31. Explicitamente proibido
+## 33. Explicitamente proibido
 
 - Chat conversation/session/agent tables como Copilot storage;
 - foreign-key do Copilot para internal Chat row;
@@ -698,5 +878,10 @@ Final states/lifecycles só são congelados em C0/C6 se runtime provar necessida
 - CoT persistence;
 - credentials/tokens in state;
 - raw audio/video retention sem policy;
-- biometric/employee-surveillance dataset por default;
+- biometric template/embedding em ordinary logs;
+- biometric shadow user directory;
+- open-world person-identification dataset por default;
+- personality/emotion/trustworthiness/health/sensitive-attribute profile;
+- hidden employee-surveillance/productivity score dataset;
+- automatic employment decision state derived from biometrics/Human Observation;
 - machine-control state tratado como Copilot authority.
