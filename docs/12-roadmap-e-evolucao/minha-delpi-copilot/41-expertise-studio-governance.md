@@ -1,23 +1,24 @@
 # Minha DELPI Copilot — Expertise Studio
 
-**Status:** arquitetura de administração proposta  
-**Objetivo:** permitir que conhecimento especializado e playbooks evoluam com governança, testes e versionamento sem recriar agentes.
+**Status:** thematic admin spec  
+**Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Runtime phase:** C6, após Expertise/Playbook runtime C2 e operational cutover C4 estarem estáveis.
 
 ## 1. Conceito
 
-`Expertise Studio` é a superfície administrativa para gerenciar:
+Expertise Studio é a superfície de governança para:
 
 - Expertise Packs;
 - Domain Playbooks;
 - terminology/glossary;
-- knowledge scopes;
-- schemas de saída;
-- exemplos positivos/negativos;
-- eval datasets;
-- lifecycle/versionamento;
-- owners/reviewers.
+- knowledge refs/scopes;
+- output guidance/schemas;
+- examples/eval datasets;
+- lifecycle/versioning;
+- owners/reviewers;
+- rollout/rollback.
 
-Ele **não é um criador de agentes**.
+**Não é criador de agentes.**
 
 ## 2. Lifecycle
 
@@ -31,164 +32,124 @@ DRAFT
 → RETIRED
 ```
 
-Nenhuma edição publicada entra em produção sem nova versão/candidate e gates aplicáveis.
+Mudança material publicada cria versão/candidate novo e passa por evals.
 
 ## 3. Roles
 
-Exemplos:
+Conforme RBAC administrativo real:
 
-```text
-Expertise Author
-Domain Reviewer
-AI/Platform Reviewer
-Security Reviewer quando necessário
-Publisher/Admin
-```
+- Expertise Author;
+- Domain Reviewer;
+- AI/Platform Reviewer;
+- Security Reviewer quando necessário;
+- Publisher/Admin.
 
-RBAC administrativo não concede permissões de negócio ao Copilot.
+Admin de conteúdo não concede business permission ao Copilot.
 
-## 4. Editor de Expertise Pack
+## 4. Pack editor
 
-Campos conceituais:
+Pode editar campos permitidos pelo `ExpertisePack` foundation:
 
-```text
-key/version
-label/description
-domain tags
-applicability signals
-methodology/guidance
-required/desired evidence
-knowledge scopes
-playbook refs
-output schema refs
-multimodal requirements
-limitations
-examples
-eval refs
-owner/reviewers
-```
+- identity/version;
+- domains/signals;
+- terminology;
+- analysis/output guidance;
+- Evidence expectations;
+- knowledge refs;
+- playbook refs;
+- multimodal needs;
+- eval refs;
+- owner/reviewers.
 
-Proibido usar o Studio para cadastrar manualmente path/method/operationId como catálogo de APIs.
+Não cadastrar path/method/operationId como API catalog.
 
-## 5. Editor de Playbook
+## 5. Playbook editor
 
-Deve permitir descrever:
+Pode editar:
 
-- objetivo;
-- etapas metodológicas;
-- evidence requirements;
-- decision points;
+- purpose/applicability;
+- stages;
+- Evidence requirements;
+- decision criteria;
 - completion criteria;
-- optional/required steps;
-- outputs esperados;
-- applicable expertise;
-- rules/owners;
-- eval cases.
+- optional/required stages;
+- artifact/output guidance;
+- evals/owner.
 
-Playbook não deve conter executor HTTP específico.
+Não embutir HTTP executor.
 
-## 6. Preview/Simulation
+## 6. Preview/eval
 
 Antes de publicar:
 
-- mostrar conteúdo compilado que será consumido pelo runtime;
-- executar casos de teste;
-- comparar versão atual vs candidata;
-- detectar regressões;
-- medir token/context footprint;
-- validar schemas;
-- revisar references inexistentes.
+- compile/validate content;
+- refs exist/authorized structurally;
+- run positive/sibling/negative/safety cases;
+- compare current vs candidate;
+- measure token/context footprint;
+- detect secret/technical authority violations;
+- review semantic diff.
 
-## 7. Eval gate
+## 7. Versioning
 
-Cada Pack/Playbook material precisa de:
+Scheme final depende do owner, mas precisa distinguir compatible vs material change e registrar version/hash no runtime/audit.
 
-```text
-positive cases
-sibling cases
-negative/not-applicable cases
-compound cases quando relevante
-safety cases
-expected structured output
-```
-
-Para multimodal: incluir documentos/desenhos de teste representativos e licença/uso apropriados.
-
-## 8. Versionamento
-
-SemVer ou esquema equivalente:
-
-- PATCH: correção sem mudança de contrato;
-- MINOR: nova orientação/método compatível;
-- MAJOR: mudança material de output/processo/semântica.
-
-Runtime/audit deve registrar versão efetivamente utilizada.
-
-## 9. Rollout
+## 8. Rollout
 
 ```text
 published candidate
-→ internal users
-→ domain canary
-→ metrics/review
+→ internal/canary
+→ metrics/domain review
 → wider rollout
 ```
 
-Rollback para versão anterior deve ser suportado.
+Rollback para versão anterior deve existir.
 
-## 10. Diff semântico
-
-A UI deve destacar alterações em:
-
-- metodologia;
-- evidence requirements;
-- outputs;
-- applicable scopes;
-- safety/limitations;
-- linked playbooks/knowledge.
-
-## 11. Métricas por versão
+## 9. Metrics
 
 - selection precision;
 - task completion;
 - correction rate;
-- evidence coverage;
+- Evidence coverage;
 - clarification efficiency;
-- expert approval rate;
+- review/approval rate;
 - latency/token impact;
 - unsafe/blocked outcomes.
 
-## 12. Governed Learning integration
-
-Feedback não publica automaticamente mudanças.
-
-O Studio recebe sugestões como:
+## 10. Governed Learning integration
 
 ```text
 candidate improvement
-→ author accepts/edits
+→ author/reviewer decision
+→ edit
 → eval
-→ review
 → publish
 ```
 
-## 13. Não fazer
+Feedback não publica mudança automaticamente.
 
-- permitir prompt arbitrário publicado sem review;
-- tratar Expertise como permission;
-- criar agentId por expertise;
-- guardar secrets no conteúdo;
-- acoplar método a endpoint técnico específico;
-- publicar porque um exemplo manual funcionou.
+## 11. Implementation mapping
 
-## 14. Primeiro MVP
+```text
+C0 → Pack/Playbook contracts/lifecycle semantics
+C2 → runtime catalog/retrieval outside Studio UX
+C6 → Studio admin capability + governance workflows
+C7 → optimization/rollout refinements
+```
 
-Pode começar como administração técnica/versionada sem UI completa:
+Não iniciar “MVP Studio storage” antes de C6 só porque a UI ainda não existe; C0/C2 owners devem ser reutilizados, não duplicados.
 
-- storage/repository;
-- schemas;
-- CLI/admin endpoints;
-- tests/evals;
-- version lifecycle.
+## 12. Anti-patterns
 
-UI Studio vem depois sem mudar o contrato canônico.
+- arbitrary prompt publish sem review;
+- Expertise as permission;
+- agentId por pack;
+- secrets;
+- endpoint technical catalog;
+- publish após um único manual example;
+- Studio repository paralelo ao Expertise Catalog canônico;
+- lifecycle próprio diferente do runtime catalog.
+
+## 13. Gate
+
+Studio só passa quando administra o **mesmo** Pack/Playbook owner usado pelo runtime, com RBAC, versioning, eval, audit e rollback.
