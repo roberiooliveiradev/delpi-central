@@ -2,185 +2,184 @@
 
 ## 1. Objetivo
 
-Platform Actions permitem que o Copilot opere a experiência da Minha DELPI sem inventar URLs nem manipular diretamente o DOM. São comandos tipados, validados pelo Portal Shell e limitados ao conjunto de apps/rotas autorizados.
+Platform Actions permitem ao Copilot operar a experiência da Minha DELPI por comandos tipados e autorizados, sem inventar URLs nem manipular DOM.
 
-## 2. Fonte do catálogo
-
-A fonte primária deve ser o estado autorizado já conhecido pelo Portal, derivado do Core API.
+## 2. Authority
 
 ```text
-Core API
-→ apps/rotas autorizados
+Core API authorized apps/routes
 → Portal Shell
-→ Platform Capability Catalog
+→ Platform Capability Projection
 → Copilot
 ```
 
-O Copilot não deve possuir uma lista hardcoded paralela de apps.
+O AI core não mantém lista paralela de apps/URLs.
 
-## 3. CopilotBridge
+## 3. Contracts
 
-O Portal deve possuir um `CopilotBridge` responsável por:
+Reutilizar os primitives C0:
 
-- receber comandos estruturados;
-- validar schema;
-- verificar que o alvo existe na visão autorizada do usuário;
-- executar navegação/ação visual;
-- retornar observation estruturada;
-- registrar telemetria/auditoria quando aplicável.
+- `PlatformCommand`;
+- `PlatformCommandResult`;
+- `EntityRef`;
+- `WorkspaceContext`;
+- correlation context.
 
-## 4. Ações mínimas
+Não criar command schema diferente por app.
+
+## 4. CopilotBridge
+
+Portal owner de:
+
+- schema validation;
+- target resolution;
+- authorization/revalidation;
+- generic command dispatch;
+- navigation/view execution;
+- typed observation/result;
+- trace/audit.
+
+## 5. Ações genéricas
 
 ### `portal.open_app`
 
-Abre um app autorizado.
-
-Entrada conceitual:
-
 ```json
-{
-  "appId": "portal-suprimentos"
-}
+{"appId":"portal-suprimentos"}
 ```
 
 ### `portal.open_route`
 
-Abre uma rota autorizada de um app.
-
 ```json
-{
-  "appId": "portal-suprimentos",
-  "routeId": "purchase-requests"
-}
+{"appId":"portal-suprimentos","routeId":"purchase-requests"}
 ```
 
 ### `portal.open_entity`
 
-Abre uma entidade em um app capaz de representá-la.
+Usa `EntityRef` compartilhado:
 
 ```json
 {
-  "entityType": "purchaseRequest",
-  "entityId": "SC-00123"
-}
-```
-
-A resolução entidade → rota deve ser declarativa no contrato do app, não hardcoded no LLM.
-
-### `portal.set_view_context`
-
-Aplica contexto visual suportado pela tela.
-
-```json
-{
-  "filters": {
-    "branch": "01",
-    "product": "90264238"
+  "entityRef": {
+    "entityType":"purchaseRequest",
+    "entityId":"SC-00123",
+    "sourceSystem":"my-requests"
   }
 }
 ```
 
+Entity→route resolution é declarativa no app/Portal, não LLM hardcode.
+
+### `portal.set_view_context`
+
+Aplica filtros/view state suportados, sem alterar negócio.
+
 ### `portal.focus`
 
-Destaca um elemento sem executar negócio.
+Foca/destaca visualmente.
 
 ### `portal.select_tab`
 
-Muda uma aba declaradamente suportada.
+Seleciona view/aba suportada.
 
 ### `portal.back`
 
-Retorna ao estado de navegação anterior.
+Navegação anterior quando suportada.
 
-## 5. Contrato de resposta
+## 6. Result
 
-O bridge deve responder com observações, por exemplo:
-
-```json
-{
-  "status": "completed",
-  "command": "portal.open_route",
-  "appId": "portal-suprimentos",
-  "routeId": "purchase-requests",
-  "workspaceContextVersion": 42
-}
-```
-
-Em erro:
+Exemplo conceitual:
 
 ```json
 {
-  "status": "rejected",
-  "reason": "route_not_authorized"
+  "status":"succeeded",
+  "commandId":"uuid",
+  "resolved":{"appId":"portal-suprimentos","routeId":"purchase-requests"},
+  "errorCode":null
 }
 ```
 
-## 6. Segurança
+Status seguem o contract C0; evitar enums diferentes por adapter.
 
-Antes de executar uma Platform Action:
+## 7. Segurança
 
-1. confirmar que a capability está autorizada;
-2. validar o payload;
-3. confirmar que app/rota continuam presentes no estado atual;
-4. nunca confiar em URL arbitrária produzida pelo modelo;
-5. nunca usar Platform Action para bypassar um backend protegido.
+Antes da execução:
 
-## 7. Registro por app
+1. capability/target existem na visão atual autorizada;
+2. payload/schema válido;
+3. permission/route revalidada;
+4. sem URL arbitrária;
+5. Platform Action não bypassa backend de negócio;
+6. context/view command não vira write.
 
-Um MFE pode declarar UI capabilities próprias, por exemplo:
+## 8. MFE view capabilities
 
-```text
-customer.open
-customer.select-tab
-customer.apply-view-filter
-dashboard.change-view
-interaction-room.open
-```
+MFE pode declarar suporte visual, mas o core genérico deve preferir **verbos compartilhados**.
 
-Regras:
-
-- somente comportamento visual/local;
-- sem duplicar write/read de negócio que já deveria ser API;
-- schema versionado;
-- capability descoberta pelo Shell;
-- app desmontado = capability indisponível.
-
-## 8. Fluxo de exemplo
-
-Usuário:
-
-> “Abra o Portal Comercial no cliente DELPI e vá para pedidos em aberto.”
-
-Plano possível:
+Exemplo:
 
 ```text
-1. business.read customer.search("DELPI")
-2. portal.open_app(portal-comercial)
-3. portal.open_entity(customer, 000123)
-4. portal.select_tab(open-orders)
+view.open_entity
+view.set_view
+view.set_filters
+view.set_selection
+view.focus_entity
+view.refresh
 ```
 
-O lookup do cliente é negócio; abrir app/entidade/aba é experiência.
+O MFE mapeia o comando genérico para sua implementação local.
 
-## 9. Eventos Portal ↔ Copilot
-
-Sugestão de eventos tipados:
+Não criar no core:
 
 ```text
-copilot:command
-copilot:command-result
-workspace:context-changed
-workspace:entity-selected
-workspace:view-changed
-capability:availability-changed
+customer.open-special-tab
+supplier.click-approve
+commercial.apply-x
 ```
 
-Evitar EventBus genérico sem contratos. Eventos devem ter schema e ownership.
+## 9. Iframe
 
-## 10. Fallback
+Iframe integrado usa o mesmo princípio via `IframeBridge`:
 
-Se uma página não implementa uma UI capability específica:
+```text
+PlatformCommand
+→ Portal
+→ IframeBridge
+→ generic visual command
+→ observation
+```
 
-- ainda deve ser possível abrir app/rota autorizada;
-- o Copilot explica a limitação;
-- não deve começar a usar seletores DOM como fallback silencioso.
+Business Actions permanecem fora do bridge.
+
+## 10. Events
+
+Eventos de Portal devem reutilizar `EventEnvelope`/contrato tipado quando materialmente o mesmo conceito for persistido/roteado.
+
+Eventos locais de UI podem continuar internos ao Portal, mas precisam ownership/schema claro quando atravessam boundaries.
+
+## 11. Exemplo
+
+> “Abra o cliente DELPI e vá para pedidos em aberto.”
+
+Possível plano:
+
+```text
+business.read customer search
+→ EntityRef(customer)
+→ portal.open_app
+→ portal.open_entity(EntityRef)
+→ portal.select_tab(open-orders)
+```
+
+Lookup é negócio; navegação é experiência.
+
+## 12. Fallback
+
+Sem view capability avançada:
+
+- open app/route continua;
+- explicar limitação;
+- não usar DOM selector silenciosamente.
+
+## 13. Generalization
+
+Novo app/route/view compatível deve funcionar por registration/contracts sem adicionar `if appId == ...` no AI core/CopilotBridge genérico.
