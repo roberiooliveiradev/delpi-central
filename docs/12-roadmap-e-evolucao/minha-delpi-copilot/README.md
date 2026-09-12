@@ -6,6 +6,7 @@
 > **Arquitetura/design patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
 > **Governança documental:** [`48-documentation-governance-and-architecture-review.md`](./48-documentation-governance-and-architecture-review.md)  
 > **Prompt do Cursor:** [`23-prompt-cursor-execucao.md`](./23-prompt-cursor-execucao.md)  
+> **Rastreabilidade:** [`25-requirements-traceability.md`](./25-requirements-traceability.md) — `CP-001…CP-140`  
 > **Ledger:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
 
 ## 1. North Star
