@@ -2,28 +2,69 @@
 
 Entrada principal: [`README.md`](./README.md).
 
-## Para implementar
+## Authorities para implementar
 
-1. [`16-execution-master-plan.md`](./16-execution-master-plan.md) — ordem única C0–C7.
-2. [`17-component-and-contract-map.md`](./17-component-and-contract-map.md) — owners e foundations.
-3. [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md) — arquitetura de código, layers, dependency rules, design patterns e Abstraction Gate.
-4. [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md) — gates.
-5. [`21-data-and-state-model.md`](./21-data-and-state-model.md) — estado/persistência.
-6. [`23-prompt-cursor-execucao.md`](./23-prompt-cursor-execucao.md) — prompt mestre.
-7. [`25-requirements-traceability.md`](./25-requirements-traceability.md) — CP requirements.
-8. [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) — estado real.
+1. [`16-execution-master-plan.md`](./16-execution-master-plan.md) — única ordem C0–C7.
+2. [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md) — boundary: API/MFE próprios; Chat separado.
+3. [`17-component-and-contract-map.md`](./17-component-and-contract-map.md) — owners/primitives/contracts.
+4. [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md) — layers/patterns/Abstraction Gate.
+5. [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md) — fatos do Portal/Core/Gateway/APIs/MFEs.
+6. [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md) — estrutura física e bootstrap.
+7. [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md) — gates/tests.
+8. [`21-data-and-state-model.md`](./21-data-and-state-model.md) — state/persistence.
+9. [`23-prompt-cursor-execucao.md`](./23-prompt-cursor-execucao.md) — prompt mestre.
+10. [`25-requirements-traceability.md`](./25-requirements-traceability.md) — requirements CP-*.
+11. [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) — execution evidence/status.
 
-## Para entender o produto
+## Produto/arquitetura
 
+- [`01-visao-produto.md`](./01-visao-produto.md)
 - [`02-arquitetura.md`](./02-arquitetura.md)
-- [`24-product-specification.md`](./24-product-specification.md)
 - [`12-roadmap.md`](./12-roadmap.md)
 - [`13-functional-catalog.md`](./13-functional-catalog.md)
 - [`14-definition-of-done.md`](./14-definition-of-done.md)
 - [`15-integration-map.md`](./15-integration-map.md)
+- [`19-rollout-and-migrations.md`](./19-rollout-and-migrations.md)
+- [`24-product-specification.md`](./24-product-specification.md)
+- [`48-documentation-governance-and-architecture-review.md`](./48-documentation-governance-and-architecture-review.md)
 
-## Governança documental
+## Specs temáticas
 
-Leia [`48-documentation-governance-and-architecture-review.md`](./48-documentation-governance-and-architecture-review.md) para precedência, classificação dos documentos e findings da revisão foundation-first.
+- `03–11` capabilities/platform/context/actions/workflows/security/UX/AI-ready/observability
+- `18` app onboarding
+- `26` iframe bridge
+- `27–30` Copilot único/expertise/playbooks/multimodal
+- `33` reference expertise pilots
+- `34` market benchmark
+- `35` Business Graph
+- `36` Tasks/Cases/Rooms
+- `37` Inbox/Watch
+- `38` Evidence
+- `39` Decision/Simulation
+- `40` Knowledge/Learning
+- `41` Expertise Studio
+- `42` Model Router
+- `43` Durable Workflow
 
-`49` é authority normativa para **como** o runtime é estruturado. Specs temáticas devem ser abertas somente quando a fase em execução exigir o tema e não podem redefinir architecture style/patterns sem decisão arquitetural explícita.
+## Reference/superseded
+
+- `31` antigo plano de migração de agents do Chat — **SUPERSEDED**
+- `32` permanece spec de expertise, porém sua versão atual é standalone/native
+- `44–47` tracks/extensions históricos; não definem ordem/requirements/tests/prompt.
+
+## Regra rápida
+
+```text
+what next?        → 16
+product boundary? → 50
+who owns it?      → 17
+how to build?     → 49
+platform facts?   → 51
+where/how boot?   → 52
+state?            → 21
+how to prove?     → 20
+which requirement?→ 25
+what is executed? → ledger
+```
+
+Nenhuma spec temática pode reintroduzir dependência de runtime no Minha DELPI Chat.
