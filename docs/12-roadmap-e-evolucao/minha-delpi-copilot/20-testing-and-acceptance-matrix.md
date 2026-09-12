@@ -2,6 +2,7 @@
 
 **Status:** gate transversal canônico  
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Arquitetura/patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
 **Base:** regras `.cursor` + protocolo R1–R11 da Minha DELPI AI.
 
 > Este documento absorve os gates funcionais da antiga extensão `45-operational-intelligence-testing-gates.md`. Se houver divergência, este arquivo prevalece.
@@ -20,6 +21,9 @@ Expertise Pack key/version/hash
 Domain Playbook key/version/hash
 multimodal extractor/model hash
 schema/contract version
+architecture layer/pattern
+abstraction gate result
+ADR/exception ref quando houver
 environment
 runner/test version
 timestamp
@@ -73,6 +77,39 @@ secret/JWT em context/state/bridge
 Entity/Relationship sem permission leakage protection
 ```
 
+### Architecture/design-pattern conformance
+
+Provar conforme `49` e o padrão real revalidado no repo:
+
+- Clean Architecture/dependency direction preservada;
+- Domain/Application sem imports proibidos de Flask/SQLAlchemy/client/provider concreto;
+- external dependencies atrás de Port/Adapter quando boundary justificar;
+- concrete wiring concentrado no Composition Root/DI;
+- Repository somente para lifecycle/authority persistida, não proxy HTTP trivial;
+- lifecycle complexo usa State Machine ou equivalente canônico explícito;
+- error/result taxonomy única, com tradução de infra na boundary adequada;
+- EventEnvelope/schema/owner explícitos; sem EventBus livre/sem contrato;
+- retry/timeout/idempotency coerentes com read/write;
+- frontend mantém separação `ui/state/data` e não persiste durable business authority localmente;
+- migration legada usa Adapter/ACL/Strangler com exit criteria quando aplicável;
+- Strategy/Factory/Builder/CQRS/Saga/Outbox só existem quando o Abstraction/Pattern Gate justificar;
+- nenhuma base class/interface/registry/framework genérico existe apenas por especulação;
+- exceção arquitetural material possui ADR/decisão explícita.
+
+Negative fixtures/reviews devem cobrir quando aplicável:
+
+```text
+framework import em domain/application
+concrete repo/client criado dentro de use case
+ORM model exposto como transport contract sem boundary justificável
+frontend como owner de Workflow/Case/Watch/Decision
+repository para simples HTTP wrapper
+Strategy/Factory sem variação real
+Saga sem compensação real
+write retry cego
+parallel event/evidence/entity/decision type
+```
+
 ### FOUNDATION_FREEZE
 
 C1 só libera se:
@@ -85,6 +122,22 @@ PERSISTENCE_BOUNDARIES = PASS
 CROSS_CUTTING_SEMANTICS = PASS
 CONTRACT_HARNESS = PASS
 DUPLICATE_FOUNDATION = 0 material
+
+ARCHITECTURE_STYLE = PASS
+LAYER_RESPONSIBILITIES = PASS
+DEPENDENCY_RULES = PASS
+BOUNDED_CONTEXTS = PASS
+PATTERN_DECISION_MATRIX = PASS
+ERROR_MODEL = PASS
+EVENT_MODEL = PASS
+STATE_MACHINE_RULES = PASS
+PERSISTENCE_RULES = PASS
+FRONTEND_STATE_RULES = PASS
+RESILIENCE_RULES = PASS
+TESTING_PATTERN = PASS
+MIGRATION_PATTERNS = PASS
+ABSTRACTION_GATE = PASS
+ARCHITECTURAL_EXCEPTION_PROCESS = PASS
 ```
 
 ## 3. Gate C1 — Platform/Context
@@ -107,7 +160,8 @@ Testar:
 - stale context;
 - logout;
 - contexto explícito novo vence inferência antiga;
-- MFE sibling sem patch central.
+- MFE sibling sem patch central;
+- Platform Commands usam Command+Handler/Adapter sem handler app-specific.
 
 ### Iframe
 
@@ -119,7 +173,8 @@ Testar:
 - capability não declarada rejeitada;
 - nenhum JWT/secret;
 - tentativa de business write via visual command rejeitada;
-- segundo iframe compatível funciona sem `if appId == ...`.
+- segundo iframe compatível funciona sem `if appId == ...`;
+- Adapter/ACL preserva o modelo canônico sem vazar shape legado para core.
 
 ## 4. Gate C2 — Intelligence Core
 
@@ -128,7 +183,8 @@ Testar:
 - nova sessão sem `agent_id` obrigatório;
 - sessão legada compatível durante migração;
 - nenhuma tarefa normal exige troca de agente;
-- project preference não cria outro runtime.
+- project preference não cria outro runtime;
+- compatibility adapter/ACL possui exit criteria e não vira second authority.
 
 ### Expertise
 
@@ -146,7 +202,8 @@ Negative:
 - pack não concede capability;
 - pack não amplia Knowledge ACL;
 - project preference não força expertise incompatível;
-- pack não altera policy/system.
+- pack não altera policy/system;
+- Strategy de retrieval não é criada sem variação real/justificativa.
 
 Generalization:
 - unknown pack;
@@ -172,7 +229,8 @@ Generalization:
 - prompt injection em arquivo;
 - extractor/model version auditável;
 - multimodal funciona sem agente ativo;
-- `perception evidence != domain conclusion`.
+- `perception evidence != domain conclusion`;
+- native/OCR/VLM strategy boundary segue pattern canônico quando houver variação real.
 
 ### Epistemic UX
 
@@ -199,7 +257,8 @@ Generalization:
 - unauthorized;
 - response normalization;
 - R9 outcome;
-- session-without-agent mantém action autorizada.
+- session-without-agent mantém action autorizada;
+- API integration usa Adapter/port canônico, não repository/proxy inventado.
 
 ### Evidence
 
@@ -218,7 +277,9 @@ Generalization:
 - stale/superseded relation;
 - cycle/depth budget;
 - novo entity/relationship type sem patch no planner;
-- traversal retorna refs e depois busca source; não replica dataset inteiro.
+- traversal retorna refs e depois busca source; não replica dataset inteiro;
+- repository/materialized index só existe com authority/performance gap comprovado;
+- traversal policy/specification não vira regra hardcoded no adapter.
 
 ## 6. Gate C4 — Governed Writes
 
@@ -234,7 +295,8 @@ Generalization:
 - evidence material mudou;
 - decision expired;
 - approver sem permission;
-- RBAC/policy revalidation imediatamente antes do write.
+- RBAC/policy revalidation imediatamente antes do write;
+- Decision Gate lifecycle segue State Machine owner, não `if status` espalhado.
 
 ### Write execution
 
@@ -253,13 +315,16 @@ result audit/deep link
 
 Nenhum write pode passar somente por mockar o executor sob teste.
 
+Negative adicional: retry cego de write sem idempotency/outcome verification = FAIL.
+
 ### Agent migration
 
 - operational action não depende de `userActivatedAgent` após cutover;
 - legacy session continua segura durante janela definida;
 - soft handoff não é emitido;
 - capability miss → retrieval/replan/clarify/unavailable;
-- residual scan de `has_agent`, `switch_agent_and_resend`, `chat_mode == agent`, `agent allowed tools`.
+- residual scan de `has_agent`, `switch_agent_and_resend`, `chat_mode == agent`, `agent allowed tools`;
+- Strangler/ACL temporários possuem exit criteria e zero authority paralela.
 
 ## 7. Gate C5 — Durable Work
 
@@ -280,7 +345,9 @@ Nenhum write pode passar somente por mockar o executor sob teste.
 - policy/permission change durante wait;
 - budget/loop exhaustion;
 - version compatibility;
-- no duplicate write.
+- no duplicate write;
+- workflow orchestration usa State Machine/idempotency e canonical executors;
+- Saga ausente salvo quando múltiplos writes distribuídos + compensações reais justificarem.
 
 ### Task
 
@@ -288,7 +355,8 @@ Nenhum write pode passar somente por mockar o executor sob teste.
 - progress reflete estado real;
 - reload/restart;
 - cancel;
-- result/evidence refs consistentes.
+- result/evidence refs consistentes;
+- Task não possui engine executor paralela.
 
 ### Case/Evidence Board
 
@@ -297,7 +365,8 @@ Nenhum write pode passar somente por mockar o executor sob teste.
 - reabertura auditada;
 - usuário removido perde acesso;
 - source entity permission continua necessária;
-- Case não promove Experience automaticamente.
+- Case não promove Experience automaticamente;
+- Aggregate/Repository só existem se lifecycle/authority própria tiverem sido comprovados.
 
 ### Room
 
@@ -314,7 +383,8 @@ Nenhum write pode passar somente por mockar o executor sob teste.
 - dedupe;
 - links válidos;
 - entity permission revogada sanitiza item;
-- leitura não dispara write.
+- leitura não dispara write;
+- Inbox funciona como materialização/surface, não workflow engine.
 
 ## 8. Gate C6 — Proactivity/Ecosystem/Learning
 
@@ -332,7 +402,8 @@ Negative:
 - condition inválida;
 - hostile payload;
 - expired/disabled watch;
-- ACT permanece bloqueado sem autonomy policy.
+- ACT permanece bloqueado sem autonomy policy;
+- Watch não cria event envelope paralelo nem polling app-specific quando há event owner melhor.
 
 ### AI-ready onboarding
 
@@ -360,7 +431,8 @@ Negative:
 - rollback;
 - secret detection;
 - admin RBAC;
-- endpoint technical catalog proibido em pack/playbook.
+- endpoint technical catalog proibido em pack/playbook;
+- lifecycle segue State Machine/use cases canônicos.
 
 ## 9. Gate C7 — Optimization/Autonomy/Rollout
 
@@ -392,7 +464,9 @@ Negative:
 - data-policy provider filter;
 - latency/cost budget;
 - structured output validity;
-- baseline vs candidate.
+- baseline vs candidate;
+- Strategy/Policy só introduzidas após variações reais/baseline;
+- provider/model names não vazam para Domain/Application.
 
 ### Legacy cleanup
 
@@ -403,6 +477,7 @@ soft agent handoff
 agent-required operational tool gate
 unmigrated department agent routing
 fallback sem exit criteria
+compatibility adapter/ACL sem consumer
 ```
 
 ### Rollout
@@ -412,7 +487,8 @@ fallback sem exit criteria
 - feature flags com owner/exit criteria;
 - final R1–R11;
 - accessibility;
-- incident/metric review.
+- incident/metric review;
+- architecture conformance final.
 
 ## 10. Injection/safety transversal
 
@@ -470,12 +546,18 @@ reclamação cliente
 → candidate Experience (não auto-published)
 ```
 
-O fluxo deve sobreviver a reload/restart e não exigir troca manual de agente.
+O fluxo deve sobreviver a reload/restart, não exigir troca manual de agente e preservar as mesmas boundaries/patterns ao atravessar múltiplos componentes.
 
 ## 13. Release blockers
 
 ```text
 foundation duplicada
+architecture/pattern drift material
+dependency rule violation
+unjustified abstraction
+undocumented architectural exception
+framework/provider concreto vazando para Domain/Application
+durable business state com authority no frontend
 claim material sem provenance quando fonte deveria existir
 Business Graph bypassando RBAC
 write sem Decision Gate/policy quando required
