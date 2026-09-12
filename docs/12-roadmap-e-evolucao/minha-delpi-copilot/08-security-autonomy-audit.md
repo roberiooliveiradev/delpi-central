@@ -1,6 +1,7 @@
 # 08 — Segurança, autonomia e auditoria
 
-**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
+**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
+**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)
 
 ## 1. Invariante principal
 
@@ -8,7 +9,7 @@
 Copilot effective permissions ⊆ user effective permissions
 ```
 
-O Copilot nunca opera como superusuário implícito e nenhuma camada de expertise/contexto/workflow/modalidade pode ampliar privilégios.
+O Copilot nunca opera como superusuário implícito e nenhuma camada de expertise/contexto/workflow/modalidade/biometria pode ampliar privilégios.
 
 ## 2. Fluxo de autorização
 
@@ -26,6 +27,8 @@ identity
 
 Backend/domain API continua authority final do write.
 
+Biometric match pode ajudar a resolver `userRef`, mas **não substitui autenticação, Core RBAC, Decision Gate ou autorização final do backend**.
+
 ## 3. Trust boundaries
 
 Conteúdo de qualquer uma destas fontes é **dado não confiável para policy/system**:
@@ -33,6 +36,8 @@ Conteúdo de qualquer uma destas fontes é **dado não confiável para policy/sy
 - user prompt;
 - voz/transcrição;
 - imagem/câmera/vídeo/tela compartilhada;
+- biometric identity candidate;
+- human observation result;
 - Workspace Context;
 - device/session metadata;
 - iframe;
@@ -67,7 +72,7 @@ Nenhum deles altera:
 
 L5 é OFF por default.
 
-**L5 empresarial não implica autoridade OT.** Comando físico de máquina exige governance industrial separada.
+**L5 empresarial não implica autoridade OT nem autoridade biométrica para substituir identidade/autorização.**
 
 ## 5. Sensitivity/risk
 
@@ -82,7 +87,8 @@ destructive
 external_communication
 financial
 personal_data
-biometric_or_surveillance_sensitive
+biometric_data
+human_observation
 media_capture
 industrial_safety
 ```
@@ -96,6 +102,7 @@ A classificação final deve ser owner/policy server-side e pode definir:
 - approver requirements;
 - volume/value limits;
 - capture/retention rules;
+- provider restrictions;
 - industrial safety restrictions.
 
 ## 6. Decision Gates
@@ -135,6 +142,7 @@ Revalidar antes de execute/resume/Watch ACT porque podem mudar:
 - approver validity;
 - media session/consent state;
 - device/user session;
+- biometric enrollment/revocation quando identity association for material;
 - machine/process state quando houver integração industrial.
 
 ## 8. Capability minimization
@@ -242,6 +250,7 @@ Expertise Pack
 Playbook
 PDF/image
 camera/video/screen
+biometric/human observation metadata
 Room message/file
 Event payload
 Experience Knowledge
@@ -276,6 +285,7 @@ Model Router futuro deve respeitar:
 - retention policy;
 - cost/latency budgets;
 - media modality/provider terms;
+- biometric template/media restrictions;
 - industrial-data restrictions.
 
 Provider fallback não pode diminuir security/data policy.
@@ -290,6 +300,7 @@ A UI deve indicar claramente, conforme ativo:
 microfone
 transcrição
 câmera
+identity recognition
 screen share
 raw recording
 ```
@@ -299,17 +310,18 @@ Policy deve distinguir:
 ```text
 transient capture
 transcript retention
+biometric matching
 raw audio retention
 raw video retention
 screen retention
 derived Evidence/artifact retention
 ```
 
-Participante presente em reunião não autoriza automaticamente persistência ilimitada de mídia.
+Participante presente em reunião não autoriza automaticamente persistência ilimitada de mídia ou criação de enrollment biométrico.
 
 ## 20. Consentimento e data minimization
 
-Antes de captura persistente definir:
+Antes de captura persistente ou enrollment biométrico definir:
 
 - finalidade;
 - quem iniciou;
@@ -319,40 +331,86 @@ Antes de captura persistente definir:
 - acesso;
 - redaction;
 - provider processing;
-- delete/anonymize policy.
+- delete/anonymize/revoke policy.
 
 Default arquitetural: **reter o mínimo necessário**.
 
-Transcript e Evidence derivada podem ter lifecycle distinto de áudio/vídeo bruto.
+Transcript, Evidence derivada, mídia bruta e biometric template possuem lifecycles distintos.
 
-## 21. Shared device security
+## 21. Biometric identity security
+
+A capability biométrica segue `54`.
+
+Invariante:
+
+```text
+biometric match != authenticated session != permission grant
+```
+
+Requisitos mínimos:
+
+- enrollment explícito e revogável;
+- closed-set recognition/verification de usuários conhecidos/enrolled;
+- unknown/low-confidence não força identidade;
+- associação corrigível;
+- biometric template protegido e não logado;
+- strict server-side access;
+- retention/deletion próprios;
+- provider allowlist/data-policy;
+- audit de enrollment/match/correction/revoke/delete;
+- liveness/anti-spoof quando a finalidade exigir confiança adicional;
+- nenhum template biométrico exposto ao MFE sem necessidade.
+
+Ações sensíveis nunca usam biometria como único fator de autorização.
+
+## 22. Human Observation boundaries
+
+O Copilot pode analisar comportamentos **observáveis e relacionados ao processo**, como:
+
+- etapa executada/não executada;
+- interação com ferramenta/máquina/material;
+- repetição/retrabalho;
+- tempo entre etapas;
+- deslocamento relevante ao fluxo;
+- pedido de ajuda;
+- postura/ergonomia quando houver método/owner apropriado;
+- uso observável de EPI quando formalmente definido.
+
+Por default, é proibido transformar rosto/voz/comportamento em inferências de:
+
+```text
+personalidade
+honestidade/confiabilidade
+intenção moral
+lealdade
+emoção como truth
+saúde/diagnóstico
+atributos sensíveis
+aptidão profissional global
+propensão disciplinar
+```
+
+Também é proibido usar biometria/Human Observation como authority automática para contratação, promoção, punição, remuneração, avaliação formal, suspensão ou desligamento.
+
+Evidence operacional pode subsidiar processos humanos separados, mas não é julgamento automático sobre a pessoa.
+
+## 23. Shared device security
 
 Em tablet industrial, terminal, kiosk ou sala compartilhada:
 
 - user atual precisa ser explícito;
 - device identity != user identity;
+- biometric candidate não mantém sessão indefinidamente;
+- ambiguous match exige fallback/confirmation;
 - logout/troca de usuário limpa contexto sensível;
 - session timeout/lock;
 - tokens não permanecem expostos;
 - mídia/cache local é minimizada/limpa;
 - usuário anterior não pode vazar WorkspaceContext/Conversation/Case para o próximo.
 
-Business Action sempre depende do usuário/authority vigente, não apenas do device.
+Business Action sempre depende do usuário/authority vigente, não apenas do device ou biometric candidate.
 
-## 22. Privacidade Frontline
-
-Por default, Frontline não inclui:
-
-- reconhecimento facial;
-- emotion detection;
-- identificação biométrica implícita;
-- scoring oculto de produtividade individual;
-- gravação contínua sem purpose/policy;
-- reutilização de vídeo para finalidade diferente sem governance.
-
-Analytics de processo/pessoa exige requisitos específicos, transparência e owner apropriado.
-
-## 23. Industrial/OT safety boundary
+## 24. Industrial/OT safety boundary
 
 Copilot não é safety controller.
 
@@ -381,7 +439,7 @@ risk assessment
 
 LLM nunca substitui interlock, safety PLC ou lógica certificada.
 
-## 24. Computer vision e qualidade
+## 25. Computer vision e qualidade
 
 Imagem/vídeo gerados pelo Copilot são Evidence/Findings com confidence/limitations, salvo capability de inspeção automática explicitamente validada.
 
@@ -396,7 +454,7 @@ visual finding
 
 Não aprovar/reprovar peça apenas pela impressão do LLM quando processo oficial exige medição/equipamento/tolerância distinta.
 
-## 25. Organizational Knowledge safety
+## 26. Organizational Knowledge safety
 
 Feedback, reunião, observação de operador ou Case resolution não viram production truth automaticamente.
 
@@ -410,7 +468,9 @@ candidate
 
 Decision/Experience record não armazena chain-of-thought.
 
-## 26. Auditoria
+Não criar perfil secreto persistente de trabalhador como mecanismo de aprendizagem.
+
+## 27. Auditoria
 
 Eventos conceituais:
 
@@ -427,6 +487,8 @@ copilot.watch.triggered
 copilot.navigation.executed
 copilot.media.session_started|stopped
 copilot.media.ingested|deleted
+copilot.biometric.enrolled|matched|corrected|revoked|deleted
+copilot.human_observation.created
 copilot.meeting.started|ended
 copilot.meeting.artifact_created
 copilot.frontline.session_started|ended
@@ -446,12 +508,13 @@ capability/action
 expertise/playbook refs
 policy/Decision Gate
 consent/retention class refs
+biometric modality/confidence/model-version when applicable
 outcome/evidence refs
 duration/error
 timestamp/correlation
 ```
 
-## 27. Dados proibidos em logs/state
+## 28. Dados proibidos em logs/state comuns
 
 - JWT/refresh token;
 - API key/password/secrets;
@@ -459,9 +522,11 @@ timestamp/correlation
 - full sensitive payload sem necessidade;
 - provider credentials;
 - raw audio/video/screenshots fora de storage/policy apropriados;
-- biometric templates sem iniciativa explicitamente aprovada.
+- biometric embeddings/templates em logs;
+- raw enrollment media fora de storage/policy específicos;
+- hidden person scoring.
 
-## 28. Emergency stop
+## 29. Emergency stop
 
 Deve ser possível, conforme owner:
 
@@ -476,8 +541,23 @@ Deve ser possível, conforme owner:
 - desabilitar voice/video/media capture;
 - encerrar realtime media sessions;
 - bloquear Frontline/Meeting Mode por incidente;
+- desabilitar face recognition;
+- desabilitar speaker recognition;
+- bloquear enrollment biométrico;
+- suspender Human Observation;
 - bloquear qualquer OT integration separadamente.
 
-## 29. Security success criteria
+## 30. Security success criteria
 
-Segurança está correta quando uma capability autorizada continua útil, mas nenhuma tentativa de prompt/context/pack/event/room/voice/media/device consegue ampliar o que o usuário poderia fazer diretamente pelas regras da plataforma, nem ultrapassar privacy/retention/industrial safety boundaries.
+Segurança está correta quando uma capability autorizada continua útil, mas nenhuma tentativa de prompt/context/pack/event/room/voice/media/device/biometric signal consegue ampliar o que o usuário poderia fazer diretamente pelas regras da plataforma, nem ultrapassar privacy/retention/industrial safety boundaries.
+
+Também deve valer:
+
+```text
+biometric identity is bounded, correctable and revocable
+unknown remains unknown when confidence is insufficient
+no biometric-only permission elevation
+no emotion/personality/character inference
+no automatic employment decision from biometrics
+no hidden worker profiling
+```
