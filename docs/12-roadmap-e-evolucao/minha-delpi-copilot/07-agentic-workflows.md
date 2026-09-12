@@ -1,179 +1,247 @@
-# 07 — Agentic Workflows
+# 07 — Workflows Agentic e Durable Work
 
 ## 1. Objetivo
 
-Permitir que o Copilot execute objetivos compostos envolvendo múltiplas capabilities, apps e fontes, com controle explícito de dependências, segurança, custo e progresso.
+Permitir que o Copilot execute objetivos compostos com múltiplas capabilities/apps/fontes, preservando dependências, policy, evidence, Decision Gates, idempotência e continuidade.
 
-## 2. Modelo de execução
+“Agentic” descreve o padrão de execução, **não agentes departamentais distintos**.
+
+## 2. Contrato antes do runtime
+
+Os semantics de `WorkflowPlan`, `WorkflowStep`, `TaskRef`, `CaseRef`, wait states e correlation são definidos/reutilizados em C0.
+
+A persistência/engine durável concreta só é implementada em C5 após inventário de infraestrutura existente.
+
+## 3. Modelo de execução
 
 ```text
 GOAL
-→ DECOMPOSE
+→ UNDERSTAND
+→ RETRIEVE capabilities/expertise/playbooks
 → PLAN DAG
 → CHECK POLICY
 → EXECUTE READY STEPS
-→ OBSERVE
-→ UPDATE STATE
-→ REPLAN IF NEEDED
-→ COMPLETE | CLARIFY | BLOCK
+→ OBSERVE Outcome/Evidence
+→ CHECKPOINT
+→ CONTINUE | REPLAN | WAIT | COMPLETE | BLOCK
 ```
 
-## 3. Task Graph
+## 4. WorkflowPlan
 
-Cada plano deve representar:
+Cada plano operacional pode conter:
 
-- `goalId`;
-- subtarefas;
-- dependências;
-- capability candidates;
-- argumentos resolvidos;
-- argumentos pendentes;
-- status;
-- result references;
-- policy/confirmation state.
+- goal/subgoals;
+- entity refs;
+- expertise/playbook refs;
+- steps;
+- dependencies;
+- capability refs;
+- preconditions;
+- expected outcomes;
+- pending requirements;
+- Decision Gate boundaries;
+- status/budget.
 
-Exemplo:
+Não persistir chain-of-thought.
 
-```text
-G1 analisar atraso do produto
-  ├─ S1 estoque
-  ├─ S2 pedidos em aberto
-  ├─ S3 produção
-  ├─ S4 compras
-  └─ S5 sintetizar causas ← depende S1..S4
-
-G2 abrir contexto no Portal
-  └─ S6 abrir Portal Suprimentos ← depende entidade resolvida
-
-G3 criar solicitação
-  └─ S7 criar request ← depende S5 + confirmação
-```
-
-## 4. Paralelismo
+## 5. Paralelismo
 
 Reads independentes e seguros podem executar em paralelo.
 
-Writes, destructive actions e steps com dependência causal não devem ser paralelizados sem contrato explícito.
+Writes, destructive actions e dependências causais são serializados salvo contrato explícito e seguro.
 
-## 5. Replanejamento
+## 6. Replanejamento
 
-Replanejar quando:
+Permitido quando:
 
-- action indisponível;
-- required argument não resolvido;
-- resultado muda premissa;
+- capability indisponível;
+- required argument ausente;
+- outcome muda premissa;
 - provider falha;
 - usuário altera objetivo;
-- policy bloqueia um step;
-- partial failure permite caminho alternativo.
+- policy bloqueia step;
+- partial failure permite alternativa.
 
-Replanejamento não pode reduzir safety para “dar certo”.
+Replan nunca relaxa permission/policy/Decision Gate.
 
-## 6. Clarify
-
-Perguntar somente o necessário.
+## 7. Clarify
 
 ```text
 required ausente
-+ não existe valor grounded em mensagem/context/memória
-→ clarify específico
++ nenhum valor grounded em mensagem/context/entity/result/evidence
+→ pergunta específica
 ```
 
-Não perguntar novamente dados já conhecidos e confiáveis.
+Não repetir perguntas respondidas.
 
-## 7. Checkpoints
+## 8. Durable states
 
-Workflows com múltiplos passos devem registrar checkpoints:
-
-- plano criado;
-- steps concluídos;
-- confirmações;
-- resultados referenciados;
-- falha/retry;
-- completion state.
-
-Isso permite F5/reload e retomada segura.
-
-## 8. Partial failure
-
-O resultado final deve distinguir:
+Quando workflow atravessa request/reload/tempo:
 
 ```text
-COMPLETED
-PARTIALLY_COMPLETED
+planned
+running
+waiting_user
+waiting_approval
+waiting_event
+waiting_time
+succeeded
+partially_succeeded
+failed
+cancelled
+expired
+```
+
+Waits são estados persistíveis, não loops de polling do LLM.
+
+## 9. Checkpoints
+
+Registrar somente estado operacional necessário:
+
+- plan/version;
+- completed steps;
+- outcome/evidence refs;
+- Decision Gate refs;
+- wait state;
+- attempt/idempotency;
+- error classification;
+- checkpoint version.
+
+## 10. Retry/idempotency
+
+- read pode retry conforme policy;
+- write só retry com garantia idempotente/documentada;
+- crash após write e antes de checkpoint deve ser tratável sem efeito duplicado;
+- duplicate event/resume deve ser deduplicado;
+- ambiguous outcome não vira retry cego.
+
+## 11. Partial failure
+
+Estados finais devem ser truthfully representados:
+
+```text
+SUCCEEDED
+PARTIALLY_SUCCEEDED
 BLOCKED
 FAILED
-CANCELLED_BY_USER
-AWAITING_CONFIRMATION
-AWAITING_INPUT
+CANCELLED
+WAITING_*
 ```
 
-Se 3 de 4 fontes responderam, o Copilot pode analisar as três, mas deve declarar a limitação.
+Se fonte não crítica falha, a análise pode continuar com limitação explícita. Se precondition crítica falha, write dependente não executa.
 
-## 9. Workflows de exemplo
+## 12. Decision boundaries
 
-### Investigação operacional
-
-> “Descubra por que este item está atrasado e me diga o que fazer.”
-
-Consulta múltiplas fontes → análise → recomendação.
-
-### Ação após análise
-
-> “Agora crie uma solicitação para Compras com esse diagnóstico.”
-
-Usa fatos/result refs do turno anterior → prepara write → confirmação → execução.
-
-### Navegação contextual
-
-> “Abra o pedido que mais contribuiu para esse atraso.”
-
-Resolve entity ref → Platform Action.
-
-### Comunicação
-
-> “Avise o comprador responsável.”
-
-Resolve responsável → compõe mensagem → policy → action de comunicação.
-
-## 10. Loops e limites
-
-Configurar budgets:
-
-- máximo de planner rounds;
-- máximo de tools por turno;
-- máximo de retries;
-- timeout global;
-- limite de tokens/custo;
-- limite de fan-out.
-
-Ao atingir budget, retornar estado parcial e pedir decisão do usuário quando necessário.
-
-## 11. Writes encadeados
-
-Nunca executar uma sequência de writes baseada apenas em uma intenção vaga.
-
-Antes da confirmação, apresentar resumo operacional:
+Antes de write governado, usar o `DecisionGate` compartilhado:
 
 ```text
-Vou:
-1. criar a solicitação X;
-2. relacionar o produto Y;
-3. atribuir ao grupo Compras;
-4. anexar o diagnóstico Z.
+impact preview
++ args hash
++ evidence refs
++ risk/policy
+→ Decision Gate
+→ revalidate
+→ execute
 ```
 
-## 12. Auditoria
+Workflow referencia decisão; não cria confirmation schema próprio.
 
-Cada step executado deve possuir:
+## 13. Task
 
-- actor userId;
-- conversation/turn/workflow id;
-- capabilityId/actionId;
-- policy decision;
-- confirmation reference quando aplicável;
-- outcome;
-- timestamps;
-- correlation id do sistema alvo.
+Task é uma unidade operacional curta/média respaldada pelo workflow.
 
-Sem armazenar chain-of-thought.
+Não possui planner/executor próprio.
+
+Pode mostrar:
+
+- objective;
+- progress;
+- steps;
+- pending decisions;
+- results/evidence;
+- links.
+
+## 14. Case
+
+Case organiza trabalho/investigação longa sobre:
+
+- entity refs;
+- evidence;
+- Tasks/Workflows;
+- hypotheses/decisions/actions;
+- room/artifacts;
+- timeline.
+
+Case não é novo executor nem source de negócio.
+
+## 15. Event-driven resume
+
+`wait_event` usa `EventEnvelope` compartilhado.
+
+Fluxo:
+
+```text
+event
+→ validate/dedupe/correlate
+→ revalidate user/policy
+→ resume workflow
+```
+
+Watch pode produzir/consumir o mesmo modelo de evento; não criar envelope paralelo.
+
+## 16. Exemplos
+
+### Investigação read-only
+
+> “Descubra por que este item está atrasado.”
+
+Reads + Graph + expertise + evidence → synthesis.
+
+### Governed write
+
+> “Crie uma solicitação para Compras com esse diagnóstico.”
+
+Result/evidence refs → write preview → Decision Gate → execute → verify.
+
+### Long-running
+
+> “Acompanhe até Engenharia liberar a nova revisão e então reanalise.”
+
+Workflow → `wait_event` → Watch/event → resume → reanalysis.
+
+### Cross-domain Case
+
+> “Investigue a reclamação e monte um 8D.”
+
+Case + Graph + multimodal + expertise/playbook + Tasks.
+
+## 17. Budgets
+
+Configurar limites por owner/policy:
+
+- planner rounds;
+- tools;
+- retries;
+- fan-out;
+- elapsed time;
+- tokens/cost;
+- workflow lifetime.
+
+Budget exhaustion gera estado explícito, não loop infinito.
+
+## 18. Auditoria
+
+Cada step material deve ser correlacionável por:
+
+```text
+user/subject
+request/turn/workflow/task/case ids
+capability/action ref
+entity refs
+policy/Decision Gate ref
+outcome/evidence refs
+timestamps/duration
+error classification
+```
+
+Sem chain-of-thought.
