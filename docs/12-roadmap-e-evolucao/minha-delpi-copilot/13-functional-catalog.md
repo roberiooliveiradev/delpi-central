@@ -1,5 +1,9 @@
 # 13 — Catálogo funcional do Minha DELPI Copilot
 
+**Status:** catálogo funcional temático  
+**Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
+
 ## 1. Objetivo
 
 Descrever as capacidades do produto independentemente da fase, sem duplicar a ordem de implementação. A sequência canônica vive em `16-execution-master-plan.md`.
@@ -12,9 +16,21 @@ Descrever as capacidades do produto independentemente da fase, sem duplicar a or
 - clarify mínimo;
 - entity resolution;
 - structured goals;
-- memória/references sem chain-of-thought.
+- memória/references sem chain-of-thought;
+- texto e voz como modalidades de entrada.
 
-## 3. Navegação e contexto
+## 3. Surfaces
+
+```text
+GLOBAL
+WORKSPACE
+MEETING
+FRONTLINE
+```
+
+Todas usam a mesma Copilot API, identidade, policies e Evidence model.
+
+## 4. Navegação e contexto
 
 - abrir app/rota/entidade;
 - selecionar view/aba;
@@ -23,9 +39,11 @@ Descrever as capacidades do produto independentemente da fase, sem duplicar a or
 - deep link;
 - Workspace Context;
 - context chips;
-- contexto por MFE/iframe.
+- contexto por MFE/iframe;
+- contexto operacional via EntityRefs para OP, máquina, produto, lote, operação, posto e material;
+- bounded device/session metadata quando necessário.
 
-## 4. Copilot único e especialização
+## 5. Copilot único e especialização
 
 - uma identidade de produto;
 - Expertise Packs;
@@ -35,7 +53,7 @@ Descrever as capacidades do produto independentemente da fase, sem duplicar a or
 - unknown pack sem core patch;
 - nenhuma capability concedida por expertise.
 
-## 5. Knowledge
+## 6. Knowledge
 
 - procedimentos/manuais/normas;
 - help contextual;
@@ -44,22 +62,95 @@ Descrever as capacidades do produto independentemente da fase, sem duplicar a or
 - Decision Knowledge;
 - Experience Knowledge;
 - Semantic Knowledge;
-- ACL em todas as camadas.
+- ACL em todas as camadas;
+- candidate knowledge a partir de reuniões/processos somente com governance.
 
-## 6. Multimodalidade
+## 7. Multimodalidade
 
 - PDF;
 - imagem;
 - desenho técnico;
 - foto de defeito;
 - certificados/relatórios;
-- OCR/VLM quando necessário;
-- page/region provenance;
-- confidence/limitations.
+- áudio/voz;
+- câmera;
+- vídeo curto;
+- screen share quando autorizado;
+- OCR/VLM/STT/TTS quando necessário;
+- page/region/frame/time-range provenance;
+- confidence/limitations;
+- media retention/policy refs.
 
-## 7. Evidence e explicabilidade
+## 8. Voice
+
+- speech-to-text;
+- text-to-speech;
+- hands-free commands;
+- correction/repeat;
+- voice activity em Meeting/Frontline;
+- mesma policy/Decision Gate do texto.
+
+Voz nunca é bypass de autorização.
+
+## 9. Meeting Mode
+
+- sessão explícita;
+- transcrição;
+- perguntas por voz/texto;
+- consulta de dados reais durante reunião;
+- screen/camera/media quando autorizado;
+- fatos/decisões/pendências;
+- candidate actions;
+- ata viva;
+- Tasks/Cases/Room linkage;
+- retomada na reunião seguinte.
+
+## 10. Meeting artifacts
+
+Ata/meeting artifact pode conter:
+
+```text
+participants refs
+transcript ref
+summary
+source data/evidence
+decisions
+pending topics
+candidate actions
+confirmed actions
+Task/Case refs
+```
+
+Ação extraída da fala não é execução automática.
+
+## 11. Frontline Mode
+
+- UI simplificada;
+- touch/tablet/kiosk;
+- voz hands-free;
+- câmera/imagem;
+- instrução passo a passo;
+- desenho/revisão;
+- OP/operação/máquina contextual;
+- histórico de qualidade/manutenção;
+- registrar ocorrência;
+- chamar líder/manutenção/qualidade;
+- training assistance;
+- degraded fallback quando modalidade não estiver disponível.
+
+## 12. Process learning
+
+- observar processo apenas quando autorizado;
+- capturar insight/prática como candidate;
+- associar Evidence/context;
+- expert/owner review;
+- eval/version/publish;
+- nunca auto-mudar instrução/processo.
+
+## 13. Evidence e explicabilidade
 
 - SourceRef/EvidenceRef;
+- media provenance;
 - freshness;
 - facts;
 - calculations;
@@ -69,7 +160,7 @@ Descrever as capacidades do produto independentemente da fase, sem duplicar a or
 - conflicting evidence;
 - source expansion na UX.
 
-## 8. Business Reads
+## 14. Business Reads
 
 Quando APIs/actions autorizadas existirem:
 
@@ -86,7 +177,7 @@ Quando APIs/actions autorizadas existirem:
 
 Concreto = OpenAPI/Action Catalog + RBAC, nunca lista hardcoded deste documento.
 
-## 9. DELPI Business Graph
+## 15. DELPI Business Graph
 
 - canonical EntityRef;
 - relações cross-domain;
@@ -94,18 +185,20 @@ Concreto = OpenAPI/Action Catalog + RBAC, nunca lista hardcoded deste documento.
 - permission-aware traversal;
 - source API fetch;
 - depth/cycle budgets;
-- sibling relation onboarding.
+- sibling relation onboarding;
+- ligação de media/evidence/meeting/frontline refs às entities sem replicar master data.
 
-## 10. Análise
+## 16. Análise
 
 - comparar períodos/entidades;
 - métricas/cálculos grounded;
 - anomalias/tendências quando método suportar;
 - causalidade somente com evidence suficiente;
 - cross-domain synthesis;
+- processo/tempo/ciclo quando dados oficiais sustentarem;
 - limitação explícita.
 
-## 11. Recommendations
+## 17. Recommendations
 
 Próximos passos baseados em:
 
@@ -118,7 +211,7 @@ Próximos passos baseados em:
 
 Sugestão não é execução.
 
-## 12. Business Writes
+## 18. Business Writes
 
 Conforme API/RBAC/policy:
 
@@ -128,11 +221,12 @@ Conforme API/RBAC/policy:
 - atribuir;
 - comentar;
 - cancelar/arquivar;
-- iniciar processos.
+- iniciar processos;
+- registrar ocorrência/solicitação.
 
 Sempre via Business Action, não UI automation.
 
-## 13. Decision Gates
+## 19. Decision Gates
 
 - NO_GATE;
 - ACKNOWLEDGE;
@@ -143,7 +237,7 @@ Sempre via Business Action, não UI automation.
 
 Inclui impact preview, args hash, evidence refs, expiry e revalidation.
 
-## 14. Artefatos
+## 20. Artefatos
 
 - relatório;
 - resumo executivo;
@@ -151,11 +245,13 @@ Inclui impact preview, args hash, evidence refs, expiry e revalidation.
 - comunicação/e-mail;
 - plano de ação;
 - documentação;
+- ata de reunião;
+- transcript/meeting summary quando permitido;
 - apresentação/arquivo quando capability existir.
 
 Artefato não executa business write implicitamente.
 
-## 15. Workflows
+## 21. Workflows
 
 - goal/DAG;
 - dependencies;
@@ -168,7 +264,7 @@ Artefato não executa business write implicitamente.
 - cancel/timeout;
 - no duplicate write.
 
-## 16. Durable Work
+## 22. Durable Work
 
 - wait_user;
 - wait_approval;
@@ -176,19 +272,21 @@ Artefato não executa business write implicitamente.
 - wait_time;
 - resume após F5/restart;
 - event correlation;
-- state persistence quando necessário.
+- state persistence quando necessário;
+- Meeting/Frontline actions podem virar Task/Workflow sem engine paralela.
 
-## 17. Copilot Tasks
+## 23. Copilot Tasks
 
 - objective;
 - progress;
 - steps;
 - decisions pendentes;
 - result/evidence refs;
+- meeting/frontline refs quando aplicável;
 - links;
 - cancel quando suportado.
 
-## 18. Copilot Cases
+## 24. Copilot Cases
 
 - investigação longa;
 - entity refs;
@@ -198,9 +296,10 @@ Artefato não executa business write implicitamente.
 - timeline;
 - Room;
 - artifacts;
+- meeting/frontline refs;
 - lifecycle/resolution/reopen.
 
-## 19. Interaction Rooms
+## 25. Interaction Rooms
 
 - participantes;
 - mensagens;
@@ -208,18 +307,20 @@ Artefato não executa business write implicitamente.
 - resumo grounded;
 - pending actions;
 - Case linkage;
+- meeting artifact linkage;
 - source permissions preservadas.
 
-## 20. Copilot Inbox
+## 26. Copilot Inbox
 
 - waiting_for_user;
 - working;
 - completed;
 - alerts;
 - Decision/Task/Case/Workflow links;
+- meeting actions pendentes;
 - dedupe/status lifecycle.
 
-## 21. Copilot Watch
+## 27. Copilot Watch
 
 - OBSERVE;
 - ADVISE;
@@ -227,7 +328,7 @@ Artefato não executa business write implicitamente.
 
 Com event matching, dedupe, cooldown, expiry, permission revalidation e autonomy policy.
 
-## 22. Event-driven continuity
+## 28. Event-driven continuity
 
 - resume workflow por evento;
 - alertas;
@@ -235,16 +336,17 @@ Com event matching, dedupe, cooldown, expiry, permission revalidation e autonomy
 - continuar investigação após dependência externa;
 - preferir event source real a polling hardcoded.
 
-## 23. Organizational Knowledge e Governed Learning
+## 29. Organizational Knowledge e Governed Learning
 
 - Decision/Experience records;
 - Solution Patterns;
 - feedback → candidate;
+- meeting/process/frontline insight → candidate;
 - review/eval/version/publish;
 - rollback;
-- nunca auto-publicar conversa/correção.
+- nunca auto-publicar conversa/correção/observação.
 
-## 24. Expertise Studio
+## 30. Expertise Studio
 
 - draft;
 - review;
@@ -256,7 +358,7 @@ Com event matching, dedupe, cooldown, expiry, permission revalidation e autonomy
 
 Não é criador de agentes.
 
-## 25. Simulation
+## 31. Simulation
 
 - baseline;
 - assumptions;
@@ -265,7 +367,7 @@ Não é criador de agentes.
 - limitations;
 - `SIMULATE != APPLY`.
 
-## 26. Model Router
+## 32. Model Router
 
 Classes conceituais:
 
@@ -275,11 +377,12 @@ STANDARD
 DEEP_REASONING
 MULTIMODAL
 LONG_CONTEXT
+REALTIME_MEDIA quando futuramente justificado
 ```
 
 Seleção por Compute Policy, data policy, latency/cost e quality requirements.
 
-## 27. Iframes
+## 33. Iframes
 
 ```text
 PORTAL_ONLY
@@ -290,7 +393,7 @@ AI_READY
 
 Contexto/comandos visuais por bridge seguro; Business Actions por API.
 
-## 28. Autonomia
+## 34. Autonomia
 
 ```text
 L0 explain
@@ -303,7 +406,32 @@ L5 explicitly allowlisted autonomy
 
 L5 OFF por default.
 
-## 29. Administração
+**Autonomia empresarial não implica comando físico de máquina.**
+
+## 35. Industrial/OT boundary
+
+Default:
+
+```text
+Copilot observa/consulta/explica/recomenda
+Copilot prepara ação empresarial
+Copilot -X→ comando físico arbitrário
+```
+
+Qualquer future machine control exige safety gate separado, deterministic adapters, interlocks independentes, authorization e audit.
+
+## 36. Privacy/media governance
+
+- visible capture state;
+- purpose;
+- consent/policy;
+- class-specific retention;
+- data minimization;
+- shared-device session isolation;
+- no implicit facial recognition/emotion detection;
+- no hidden worker surveillance.
+
+## 37. Administração
 
 - capability/action coverage;
 - app readiness;
@@ -312,13 +440,16 @@ L5 OFF por default.
 - Task/Case/Workflow;
 - Decision Gates;
 - Watch;
+- media providers/session budgets;
+- meeting/frontline coverage;
 - model usage/cost;
 - failures/retries;
+- privacy/retention;
 - safe execution;
 - audit;
 - rollout/kill switch.
 
-## 30. Onboarding AI-ready
+## 38. Onboarding AI-ready
 
 ```text
 L1 discoverable
@@ -330,7 +461,9 @@ L5 workflow-ready
 
 Novo app entra por shared contracts sem patch central.
 
-## 31. Fora do padrão
+Frontline-ready pode ainda exigir device/context/media requirements próprios sem alterar os níveis AI-ready de negócio.
+
+## 39. Fora do padrão
 
 - DOM automation para substituir API;
 - browser/cross-origin hacks;
@@ -340,21 +473,29 @@ Novo app entra por shared contracts sem patch central.
 - agent engine por departamento;
 - Business Graph duplicando bancos;
 - confirmation system paralelo ao Decision Gate;
-- automatic production learning por feedback.
+- automatic production learning por feedback;
+- hidden audio/video capture;
+- raw-media retention sem policy;
+- facial/emotion surveillance por default;
+- arbitrary LLM→machine control;
+- qualidade automática baseada apenas em impressão visual não validada.
 
-## 32. Experiência final
+## 40. Experiência final
 
 O usuário deve sentir que o Copilot:
 
 ```text
 sabe onde estou
 + entende o objetivo
++ entende quando falo/mostro algo
 + encontra entidades/fontes corretas
 + aplica conhecimento especializado
 + mostra evidence
 + navega e executa com governança
 + acompanha trabalho ao longo do tempo
++ participa de reuniões de forma transparente
++ ajuda o operador no trabalho real
 + colabora com pessoas
 + aprende somente por processo governado
-+ respeita minhas permissões
++ respeita minhas permissões e privacidade
 ```
