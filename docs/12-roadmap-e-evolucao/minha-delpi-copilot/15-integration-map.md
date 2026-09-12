@@ -1,154 +1,197 @@
-# 15 — Mapa de integração com a Minha DELPI atual
+# 15 — Mapa de integração com a Minha DELPI
 
 **Status:** mapa canônico de integração  
-**Ordem de implementação:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
+**Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Baseline factual:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)
 
 ## 1. Princípio
 
-O Copilot evolui os owners existentes antes de criar novos componentes.
+O Copilot é **novo produto**, mas integra as authorities atuais da plataforma.
 
 ```text
-REUSE
-→ EXTEND
-→ MIGRATE
-→ CREATE_REQUIRED somente com gap provado
+REUSE PLATFORM CONTRACT
+→ ADAPT AT BOUNDARY
+→ EXTEND PLATFORM CONTRACT if justified
+→ CREATE COPILOT-OWNED COMPONENT when responsibility belongs to Copilot
 ```
 
-## 2. `minha-delpi-ai-api`
+Não aplicar `REUSE` a runtime interno do Minha DELPI Chat.
 
-### Reutilizar/evoluir
+## 2. Copilot API
 
-- understanding/decomposition;
-- conversation/memory;
-- Action Catalog;
-- retrieval/planner;
-- OpenAPI validation/binding;
-- generic action executor;
-- RAG/Knowledge;
-- multimodal/document vision;
-- synthesis/presentation;
-- policy/safety;
-- persistence;
-- observability/evals;
-- model/provider abstraction.
+Novo owner: `minha-delpi-copilot-api`.
 
-### Evoluir para
+Responsável por:
 
-- single-Copilot session model;
-- Capability Projection;
-- Expertise Catalog/Retrieval/Context;
-- Domain Playbook Catalog/Adapter;
-- Evidence/Provenance normalization;
-- Decision Gate orchestration;
-- durable workflow coordination;
-- Task/Case orchestration ports;
-- Business Graph query/use cases;
-- Watch/event coordination;
-- Organizational Knowledge governance;
-- Compute Policy/Model Router quando C7 liberar.
+- conversations/turns;
+- understanding;
+- OpenAPI ingestion/Action Catalog;
+- capability retrieval;
+- planner;
+- Expertise/Playbooks;
+- Knowledge/RAG;
+- multimodal;
+- Evidence/Provenance;
+- policy/Decision Gates;
+- generic execution;
+- Business Graph projection;
+- durable work;
+- Task/Case/Watch/Inbox semantics;
+- model/provider abstraction;
+- audit/evals/admin.
 
-### Não criar
+Não depende de `minha-delpi-ai-api`.
 
-- segundo planner;
-- segundo HTTP executor;
-- agent runtime por departamento;
-- manual endpoint catalog;
-- CoT store.
+## 3. Copilot MFE
 
-## 3. `plugins/minha-delpi-chat`
+Novo owner: `plugins/minha-delpi-copilot`.
 
-### Reutilizar/evoluir
+Reutiliza:
 
-- composer;
-- streaming/activity;
-- rich presentation;
-- conversation/history;
-- feedback;
-- attachments;
-- project context onde fizer sentido.
+- React/Vite/Module Federation;
+- `plugins/vite/federation.shared.ts`;
+- `@delpi/plugin-ui`;
+- Portal `getAccessToken` host contract.
 
-### Adicionar/evoluir
+Surfaces:
 
-- context chips;
-- sources/evidence presentation;
-- epistemic labels quando material;
-- Decision Gate UI;
-- Task/Workflow progress;
-- Case/Inbox entry points quando disponíveis;
-- navigation/platform command presentation;
-- single-Copilot UX sem agent selector obrigatório.
+```text
+full page
+Portal global panel
+```
 
-### Migrar
+Mesmo API/runtime em ambas.
 
-- agent selection/handoff UX → expertise/project preferences ou remover conforme plano de migração.
+## 4. Minha DELPI Chat
 
-## 4. Portal Shell
+`minha-delpi-ai-api` e `plugins/minha-delpi-chat` são **sistemas vizinhos**.
 
-### Reutilizar
+Integração runtime:
+
+```text
+NONE required
+```
+
+Permitido apenas:
+
+- leitura de código em C0 como benchmark interno;
+- shared neutral platform library já existente;
+- future extracted neutral package com 2+ consumers e owner próprio.
+
+## 5. Portal Shell
+
+Reutilizar:
 
 - Router;
-- AuthContext;
-- authorized apps/routes;
-- AppHost;
-- shell lifecycle.
+- AuthContext/Keycloak lifecycle;
+- AppHost federated mode;
+- AppLauncher/Core-driven apps;
+- shared layout/theme;
+- host token contract.
 
-### Adicionar/evoluir
+Adicionar/evoluir genericamente:
 
-- Authorized Platform Capability Projection;
-- CopilotBridge;
-- Workspace Context Store/Bridge;
-- Entity deep-link resolver;
-- MFE context adapter contract;
-- IframeBridge;
-- global Copilot surface;
-- Inbox/Task/Case navigation surfaces quando C5 liberar.
+- global Copilot host/panel;
+- Workspace Context Bridge;
+- PlatformCommand execution;
+- deep-link/entity resolver;
+- iframe bridge when needed.
 
-Portal executa Platform Actions e valida targets; não executa business rules.
+Portal não implementa planner/RAG/actions/policy persistence.
 
-## 5. Core API
+## 6. Core API
 
-Reutilizar como authority de:
+Authority de:
 
-- identidade/contexto do usuário;
+- current user/platform context;
 - apps/routes;
 - permissions/RBAC;
-- app registration/manifests;
-- audit/governance onde aplicável.
+- manifest registration/versioning;
+- shared notifications/audit/presence when applicable.
 
-Avaliar extensão somente se C0 provar gap de metadata de plataforma. Não mover inteligência LLM, Expertise ou Business Graph semantic reasoning para Core apenas por conveniência.
+Copilot API consumes official contracts; no local RBAC clone.
 
-## 6. APIs de domínio
+## 7. Keycloak
 
-Continuam owners de negócio.
+Identity/SSO owner.
 
-Devem ser reutilizadas/evoluídas para:
+```text
+Portal → token
+Copilot MFE → getAccessToken
+Copilot API → validate JWT
+Core/Domain APIs → authorization context/final rules
+```
 
-- OpenAPI de qualidade;
-- consistent entity identifiers;
-- source timestamps/version quando material;
-- idempotency em writes quando possível;
-- domain events quando já fizerem sentido;
-- clear authorization;
-- outcomes verificáveis.
+## 8. Gateway
 
-Evitar endpoints exclusivos “para IA” se o use case já existe no domínio.
+Novo paths próprios, conceitualmente:
 
-## 7. MFEs
+```text
+/apps/minha-delpi-copilot/
+/apps/minha-delpi-copilot-api/
+```
 
-Responsabilidades AI-ready possíveis:
+Dev/prod parity mandatory.
 
-- Workspace Context;
+Streaming/SSE/socket tuning only if the chosen transport requires it.
+
+## 9. Infra/Compose
+
+Novos services próprios:
+
+```text
+minha-delpi-copilot-api
+minha-delpi-copilot
+```
+
+No `depends_on` Chat.
+
+Physical shared DB/network allowed only with logical ownership separation.
+
+## 10. plugin-ui / federation
+
+Copilot MFE reuses shared design system/federation.
+
+Do not source-import Portal/Chat components.
+
+Promote a Copilot component to `plugin-ui` only when truly transversal and consumers are proven.
+
+## 11. Domain APIs
+
+Remain business owners.
+
+Copilot expects:
+
+- OpenAPI quality;
+- stable entity IDs;
+- clear auth;
+- idempotency where applicable;
+- verified outcomes;
+- timestamps/version/freshness when material;
+- domain events where domain already supports them.
+
+No special “AI endpoint” if normal use case already exists.
+
+## 12. api-delpi
+
+`api-delpi` remains owner of exposed DELPI/TOTVS integrations.
+
+Copilot calls it through authorized contracts. No TOTVS logic duplication inside Copilot.
+
+## 13. MFEs
+
+AI-ready integration can expose:
+
+- WorkspaceContext;
 - EntityRefs;
-- deep-link metadata;
+- deep links;
 - visual commands;
-- contextual entry points;
-- source/result presentation.
+- contextual Copilot entry;
+- result/source presentation.
 
-Não duplicam business rules/RBAC server-side.
+Business logic/RBAC stay server-side.
 
-## 8. Apps iframe
-
-Integração progressiva:
+## 14. Iframes
 
 ```text
 PORTAL_ONLY
@@ -157,178 +200,137 @@ INTERACTIVE
 AI_READY
 ```
 
-Portal/IframeBridge cuida de context/visual commands. Business Actions continuam por APIs.
+Portal/IframeBridge handles context/visual experience. Business Actions use APIs.
 
-## 9. Shared UI / plugin-ui
+## 15. Knowledge
 
-Reutilizar componentes para:
+Copilot has own Knowledge runtime/index but source visibility remains with source ACL/owners.
 
-- activity;
-- status;
-- Decision Gate cards;
-- evidence/source disclosure;
-- Entity cards;
-- Task/Case status;
-- Inbox items;
-- timeline;
-- accessibility patterns.
-
-Não criar visuais incompatíveis por plugin quando shared component atende.
-
-## 10. Knowledge/RAG
-
-Reutilizar current ingestion/search/ACL owners.
-
-Evoluir para distinguir, quando necessário:
+Classes:
 
 ```text
-Reference Knowledge
-Operational Knowledge
-Decision Knowledge
-Experience Knowledge
+Reference
+Operational
+Decision
+Experience
+Semantic
 ```
 
-Expertise/Project preference não amplia ACL.
+## 16. Multimodal
 
-## 11. Multimodal runtime
+Copilot implements own adapters/runtime.
 
-Reutilizar document vision/drawing analysis existentes.
+Existing Chat document-vision code = reference only.
 
-Adapter normaliza para EvidenceRef com:
+Output normalizes to shared EvidenceRef.
 
-- attachment/source;
-- page/region;
-- confidence;
-- extractor/model version;
-- limitations.
+## 17. Rooms
 
-Não acoplar a agent ativo.
+C0 inventories Portal Comercial Interaction Rooms and any other collaboration owner.
 
-## 12. Event infrastructure
+Decision:
 
-C0 deve inventariar:
+```text
+REUSE | EXTEND | ADAPTER | CREATE_REQUIRED
+```
 
-- existing event bus;
-- socket/event patterns;
-- background workers/queues;
-- domain events;
-- notification patterns.
-
-Watch e `wait_event` devem usar owner existente quando adequado. Não criar event bus paralelo sem gap provado.
-
-## 13. Rooms/interaction
-
-C0 deve mapear salas já implementadas nos Portais.
-
-Meta:
+Target relation:
 
 ```text
 CaseRef ↔ RoomRef
 ```
 
-Copilot integra contexto/resumo/pending actions, sem duplicar message/file storage se owner existente atende.
+Do not duplicate room message/file storage when owner exists.
 
-## 14. Notifications/Inbox
+## 18. Notifications/Inbox
 
-Inventariar notification center/patterns existentes.
+Copilot owns Inbox/work semantics.
 
-Copilot Inbox deve preferir view/materialization sobre:
-
-- Decision Gates;
-- Tasks;
-- Cases;
-- Workflows;
-- Watch alerts.
-
-Não criar workflow engine dentro da Inbox.
-
-## 15. Business Graph
-
-### Sources
-
-- Entity IDs dos domínios;
-- domain relationships/events/contracts;
-- explicit inferred relationships quando autorizadas.
-
-### Owner
-
-Copilot/Platform pode manter relationship registry/index e query port, mas source objects continuam nas APIs donas.
-
-### Fluxo
+Core/Portal may provide shared notification delivery/presentation via adapter.
 
 ```text
-EntityRef
-→ RelationshipRef traversal
-→ permission check
-→ related EntityRefs/SourceRefs
-→ fetch current data from owner API
+Copilot work/decision/watch state
+→ notification adapter
+→ Core/Portal delivery when appropriate
 ```
 
-## 16. Decision/Approval integration
+## 19. Events/jobs/workers
 
-C0 deve inventariar confirmation/approval mechanisms existentes.
+C0 inventories existing infrastructure first.
 
-Target é um `DecisionGate` compartilhado, reutilizando infra atual quando suficiente.
+Copilot may reuse transport/worker infrastructure by neutral contract, but owns its own work/watch semantics.
 
-Não criar “confirmation card backend” e “approval workflow backend” independentes sem necessidade.
+No parallel event bus without proven gap.
 
-## 17. Durable Workflow integration
+## 20. Business Graph
 
-C0 deve mapear jobs/queues/workflow/background infrastructure.
+```text
+Domain Entity IDs/relationships
+→ Copilot EntityRef/RelationshipRef projection
+→ permission-aware traversal
+→ Domain API source fetch
+→ Evidence
+```
 
-Runtime C5 deve reutilizar:
+Source data stays in domain owners.
 
-- scheduler/worker infra;
-- persistence primitives;
-- locks/idempotency;
-- event handling;
+## 21. Decision/Approval
 
-quando compatíveis.
+Copilot owns DecisionGate semantics. Existing approval infrastructure may be adapted when compatible.
 
-O orchestration layer continua chamando executors canônicos.
+Final Domain API authorization remains required.
 
-## 18. Model/provider integration
+## 22. Durable Work
 
-C0 inventaria provider abstraction e metrics.
+Copilot owns Workflow semantics/state.
 
-C7 Compute Policy/Model Router deve ficar centralizada na AI API/infrastructure, não distribuída em Skills/Features.
+Existing queues/schedulers/locks/event transport may be reused through adapters after C0 inventory.
 
-## 19. Fluxo completo alvo
+## 23. Model/provider
+
+Copilot owns provider ports/adapters and later Compute Policy.
+
+Provider names/config do not leak into domain/application.
+
+## 24. End-to-end integration
 
 ```text
 Keycloak/Core
-→ identity + permissions + apps/routes
+→ identity + platform authorization
 
 Portal/MFE/Iframe
-→ Workspace + Entity Context
+→ Workspace/Entity context
 
-OpenAPI Actions ─┐
-Platform Actions ├→ Authorized Capability View
+Domain OpenAPIs ─┐
+Core apps/routes ├→ Copilot Capability View
 Knowledge ───────┤
-Internal Tools ──┘
+Internal tools ──┘
 
-Goals/Context
+Copilot goals/context
 → Expertise/Playbooks
 → Knowledge/Multimodal Evidence
 → Planner
-→ Policy/Decision Gate
-→ canonical executor(s)
-→ Domain API/Portal/Internal Tool
+→ Policy/Decision
+→ Platform or Business Adapter
+→ Portal / Domain API
 → Outcome/Evidence
-→ Workflow/Task/Case state when durable
-→ Presentation/Inbox/Room/Watch
+→ Work state when durable
+→ MFE/Inbox/Room/Watch presentation
 → Audit/Evals
 ```
 
-## 20. Integration rule
+## 25. Integration gate
 
-Antes de criar componente:
+Before a new component:
 
 ```text
-Does owner already exist?
-Can existing contract be extended?
-Would new component duplicate an authority?
-Would next known phase force this contract to change?
+Who owns this today?
+Is it platform-shared or Copilot-owned?
+Can an official contract be reused?
+Would reuse couple Copilot to Chat product internals?
+Would it duplicate Core/domain authority?
+Can an Adapter preserve boundaries?
+Would next phase force redesign?
 ```
 
-Se houver duplicação ou refatoração previsível, voltar ao C0 foundation design antes de implementar.
+A component is not created until those questions are answered with evidence.
