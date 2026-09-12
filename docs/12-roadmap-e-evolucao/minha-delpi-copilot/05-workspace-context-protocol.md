@@ -2,26 +2,24 @@
 
 ## 1. Objetivo
 
-O Workspace Context Protocol permite que o Copilot compreenda onde o usuário está e quais entidades/filtros estão ativos sem exigir que ele repita o contexto manualmente.
+Permitir que o Copilot compreenda onde o usuário está e quais entidades/filtros estão ativos sem receber o estado inteiro do frontend.
 
-## 2. Princípio
+## 2. Foundation
 
-Não enviar o estado completo do frontend para a IA.
+`WorkspaceContext` e `EntityRef` são primitives compartilhados definidos/reutilizados em C0. MFE, iframe, Portal e AI usam a mesma semântica.
 
-Cada app publica apenas um contexto estruturado, pequeno, útil e autorizado.
-
-## 3. Contexto mínimo sugerido
+## 3. Contrato conceitual
 
 ```json
 {
   "version": 1,
   "appId": "portal-comercial",
   "routeId": "customer-detail",
-  "title": "Cliente",
   "entityRefs": [
     {
-      "type": "customer",
-      "id": "000123",
+      "entityType": "customer",
+      "entityId": "000123",
+      "sourceSystem": "commercial-api",
       "label": "Empresa XYZ"
     }
   ],
@@ -29,93 +27,89 @@ Cada app publica apenas um contexto estruturado, pequeno, útil e autorizado.
     "branch": "01",
     "period": "2026-09"
   },
-  "selection": null,
+  "selection": [],
+  "dateRange": null,
   "visibleDataRefs": [],
-  "presentationState": {
-    "tab": "overview"
-  }
+  "presentationState": {"tab":"overview"},
+  "source": "mfe",
+  "updatedAt": "ISO-8601"
 }
 ```
 
-## 4. Campos
+O shape final depende do C0 inventory; não criar variante por app.
 
-### `appId`
+## 4. Conteúdo permitido
 
-App ativo.
+### App/route
+Identidade lógica do workspace atual.
 
-### `routeId`
+### EntityRefs
+Referências compartilhadas, não cópias completas de objetos.
 
-Identificador semântico da rota, preferível a depender do path literal.
+### Filters/dateRange
+Apenas filtros semanticamente relevantes.
 
-### `entityRefs`
+### Selection
+Seleção transitória útil.
 
-Entidades atualmente abertas/selecionadas.
+### visibleDataRefs
+Referências recuperáveis a datasets/resultados, sem embutir payload grande.
 
-### `filters`
+### presentationState
+Estado visual útil como aba/view.
 
-Filtros relevantes de negócio ou visão.
-
-### `selection`
-
-Seleção transitória útil, como linha ativa de uma tabela.
-
-### `visibleDataRefs`
-
-Referências a datasets/resultados que o Copilot pode recuperar por ID, em vez de receber todo o payload no contexto.
-
-### `presentationState`
-
-Estado visual útil como aba, visão ou agrupamento.
+### source
+Provenance do contexto (`portal`, `mfe`, `iframe` ou equivalente canônico).
 
 ## 5. Publicação
 
-Fluxo recomendado:
-
 ```text
-MFE
-→ WorkspaceContextAdapter
-→ Portal WorkspaceContextBridge
-→ contexto consolidado
-→ minha-delpi-ai-api
+MFE/Iframe
+→ adapter validation/sanitization
+→ Portal Context Store
+→ bounded WorkspaceContext
+→ AI turn input
 ```
 
-O Portal Shell é o owner da agregação; cada MFE é owner apenas do contexto que publica.
+Portal é owner da agregação. App é owner somente do contexto que publica.
 
-## 6. Atualização
+## 6. Lifecycle
 
-Publicar somente quando houver mudança semântica relevante:
+Atualizar em mudanças semânticas:
 
-- navegação;
-- entidade selecionada;
-- filtro aplicado;
-- período alterado;
-- aba relevante alterada.
+- app/route;
+- entity;
+- filters/date range;
+- selection;
+- view relevante.
 
-Evitar enviar eventos para cada mudança de pixel/input não confirmado.
+Não emitir por mudança irrelevante de pixel/input não confirmado.
 
-## 7. Uso conversacional
+Ao desmontar app/iframe, limpar/invalidate context conforme lifecycle.
+
+## 7. Precedência
+
+Contexto explícito novo na mensagem/UI prevalece sobre memória/contexto antigo.
 
 Exemplo:
 
-Usuário está em um cliente e pergunta:
+```text
+Workspace: customer 000123
+User: “faça isso para o cliente 000987”
+→ 000987 vence para aquele objetivo
+```
 
-> “Mostre os pedidos atrasados dele.”
+## 8. Segurança
 
-O Copilot usa `entityRefs.customer=000123` como contexto grounded.
+Workspace Context:
 
-Se o usuário disser:
-
-> “Agora faça isso para o cliente 000987.”
-
-O contexto explícito da mensagem substitui o contexto anterior.
-
-## 8. Segurança e privacidade
-
-- contexto só contém dados que a tela/usuário já pode acessar;
-- não incluir token/JWT/secrets;
-- não incluir dados invisíveis ao usuário apenas porque estão no store;
-- respeitar classificação de dados sensíveis;
-- logs devem evitar payloads completos quando não necessários.
+- é dado não confiável para system/policy;
+- não concede permission;
+- não inclui JWT/token/secret;
+- não inclui hidden store data só porque frontend possui;
+- não substitui backend/RBAC;
+- deve ser bounded/sanitizado;
+- logs evitam full sensitive payload.
 
 ## 9. Persistência
 
@@ -123,43 +117,58 @@ Separar:
 
 ```text
 live workspace context
-→ estado atual do browser
+→ efêmero/browser/Portal
 
-conversation working memory
-→ estado conversacional persistível
+bounded conversation snapshot
+→ somente quando necessário para continuidade
 ```
 
-O primeiro pode expirar quando app/rota muda. O segundo guarda apenas fatos que precisam sobreviver a reload/F5.
+Não persistir estado React/DOM.
 
-## 10. Context References
+Task/Case/Workflow usam refs compartilhadas, não snapshot ilimitado do workspace.
 
-Para dados volumosos, preferir referências:
+## 10. visibleDataRefs
+
+Exemplo:
 
 ```json
 {
-  "visibleDataRefs": [
-    {
-      "refId": "dataset:orders:abc123",
-      "type": "table",
-      "description": "Pedidos em aberto do cliente 000123"
-    }
-  ]
+  "refId":"dataset:orders:abc123",
+  "kind":"table",
+  "description":"Pedidos em aberto do cliente 000123"
 }
 ```
 
-O Copilot recupera a referência somente se necessário.
+O ref precisa owner/lifecycle/access check antes de ser recuperado.
 
-## 11. Versionamento
+## 11. Iframe
 
-O contrato deve ter `version` e evolução compatível.
+Iframe I1+ publica contexto pelo protocolo `26-iframe-copilot-bridge.md`; Portal converte para o mesmo `WorkspaceContext`.
 
-Mudanças breaking exigem versão nova e adaptação explícita no Shell.
+O AI core não precisa conhecer tecnologia visual de origem.
 
-## 12. Fallback
+## 12. Versionamento
 
-Se um MFE não publicar contexto:
+Breaking changes exigem versão/adapters explícitos. Não criar “WorkspaceContextV2” local apenas para uma feature.
 
-- chat continua funcionando;
-- o Copilot pode pedir informação faltante;
-- Platform Actions básicas de app/rota continuam disponíveis;
-- nunca inferir entidade sensível apenas pelo path.
+## 13. Fallback
+
+Sem context adapter:
+
+- chat funciona;
+- open app/route funciona;
+- Copilot pede required info ausente;
+- não inferir entidade sensível pelo path/DOM.
+
+## 14. Testes mínimos
+
+- valid context;
+- unknown field;
+- oversize;
+- secret/JWT;
+- stale app/entity;
+- F5/logout;
+- MFE sibling;
+- iframe source;
+- explicit context override;
+- unauthorized entity ref não vira data access.
