@@ -6,9 +6,9 @@ O Copilot é a evolução da Minha DELPI para uma plataforma em que a IA funcion
 
 ## Documentação completa
 
-A documentação arquitetural e funcional está em:
+A documentação arquitetural e funcional canônica está em:
 
-[`../docs/13-minha-delpi-copilot/README.md`](../docs/13-minha-delpi-copilot/README.md)
+[`../docs/12-roadmap-e-evolucao/minha-delpi-copilot/README.md`](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/README.md)
 
 ## Estado
 
@@ -35,4 +35,4 @@ Portal Capability Catalog
 + Workspace Context mínimo
 ```
 
-Ver [`12-roadmap.md`](../docs/13-minha-delpi-copilot/12-roadmap.md).
+Ver [`12-roadmap.md`](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/12-roadmap.md).
