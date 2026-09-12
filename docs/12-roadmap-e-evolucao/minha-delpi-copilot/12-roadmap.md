@@ -2,14 +2,15 @@
 
 > **Status:** planejamento canônico  
 > **Autoridade de execução atômica:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+> **Arquitetura/design patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
 > **Próxima etapa:** `C0.S0`
 
-Este documento apresenta a evolução macro. A ordem de subetapas, dependências e gates vive somente no Plano Mestre.
+Este documento apresenta a evolução macro. A ordem de subetapas, dependências e gates vive somente no Plano Mestre. O style arquitetural, layers, dependency rules e design patterns de implementação são definidos pelo documento `49`.
 
 ## Visão geral
 
 ```text
-C0 — Fundação arquitetural e contratos universais
+C0 — Fundação arquitetural, patterns e contratos universais
 C1 — Portal, navegação, entidades e Workspace Context
 C2 — Intelligence Core: Copilot único, expertise, knowledge, multimodal e evidence
 C3 — Business Reads + DELPI Business Graph
@@ -21,16 +22,26 @@ C7 — Optimization + Autonomia + Simulation + Model Routing + Rollout
 
 ## C0 — Fundação arquitetural
 
-Objetivo: estabilizar o vocabulário e as peças compartilhadas antes de qualquer feature dependente.
+Objetivo: estabilizar vocabulário, contratos e **como o código será estruturado** antes de qualquer feature dependente.
 
 Entregas macro:
 
 - inventário real de Portal/Core/AI/apps/agents/events/workflows/rooms/notifications;
+- inventário dos patterns/layers/DI/error/event/state/resilience/migration já praticados no repo;
 - authorities e bounded contexts congelados;
 - primitives compartilhados de entidade, fonte, evidence, capability, contexto, expertise, decisão, workflow, task, case e eventos;
 - ports/persistence boundaries;
+- architecture style canônico: Clean Architecture + Ports & Adapters + DDD pragmático;
+- layer/dependency rules;
+- Pattern Decision Matrix;
+- Abstraction Gate;
+- error/result model;
+- event/state-machine/resilience/idempotency rules;
+- frontend state ownership;
+- migration/Strangler/ACL rules;
+- architectural exception/ADR process;
 - versioning/correlation/idempotency/freshness/error semantics;
-- contract harness;
+- contract + architecture conformance harness;
 - `FOUNDATION_FREEZE=PASS`.
 
 Não construir feature do Copilot antes desse freeze.
@@ -49,6 +60,8 @@ Entregas:
 - Iframe Bridge;
 - context UX e generalization tests.
 
+Patterns predominantes: Command + Handler + Adapter, obedecendo boundaries C0.
+
 ## C2 — Intelligence Core
 
 Objetivo: estabilizar a inteligência transversal antes de Business Actions em escala.
@@ -64,6 +77,8 @@ Entregas:
 - shadow migration do modelo de agents;
 - observabilidade operacional.
 
+Migração legada usa Adapter/Anti-Corruption Layer/Strangler conforme `49`, sem runtime paralelo permanente.
+
 ## C3 — Business Reads + Business Graph
 
 Objetivo: conectar o Copilot aos dados reais de negócio com evidence e contexto cross-domain.
@@ -77,6 +92,8 @@ Entregas:
 - permission-aware traversal;
 - análises cross-domain.
 
+Business Graph segue Ports & Adapters; Repository/index só entra se houver materialização/authority própria comprovada.
+
 **Dependência:** gates OpenAPI-first relevantes da Minha DELPI AI precisam estar `PASS` para produção.
 
 ## C4 — Governed Writes + Decision Gates
@@ -87,12 +104,14 @@ Entregas:
 
 - Decision Gate Engine;
 - impact preview + hash;
-- confirmação/aprovação;
+- confirmação/aprovação como lifecycle do mesmo Decision Gate;
 - idempotency/concurrency;
 - generic write execution;
 - outcome verification;
 - remoção do gate operacional dependente de agent ativo;
 - substituição do soft handoff por retrieval/replan/clarify.
+
+Patterns predominantes: Policy + State Machine + Idempotency; write não recebe retry cego.
 
 ## C5 — Durable Work
 
@@ -109,6 +128,8 @@ Entregas:
 - Copilot Inbox;
 - reload/restart/resume sem duplicate writes.
 
+Patterns predominantes: Application orchestration + State Machine + Idempotency. Saga somente quando existirem múltiplos writes distribuídos e compensações reais.
+
 ## C6 — Proatividade + Ecossistema + Aprendizado Governado
 
 Objetivo: permitir acompanhamento contínuo e crescimento do ecossistema sem hardcode central.
@@ -124,6 +145,8 @@ Entregas:
 - Expertise Studio;
 - admin/coverage.
 
+Watch usa EventEnvelope/state/idempotency canônicos; polling específico por app não é o padrão.
+
 ## C7 — Optimization, autonomia e rollout
 
 Objetivo: ampliar autonomia e otimizar custo/latência somente depois das bases estarem comprovadas.
@@ -138,10 +161,12 @@ Entregas:
 - canary/rollback;
 - final R1–R11 e Product Complete gate.
 
+Model Router só introduz Strategy/Policy após baseline/variação real, evitando premature abstraction.
+
 ## Dependência entre as camadas
 
 ```text
-primitives C0
+contracts + architecture/pattern freeze C0
 ↓
 context/navigation C1
 ↓
@@ -165,7 +190,9 @@ A ordem existe para evitar refatorações previsíveis. Exemplo:
 - `Workflow/Task/Case` têm lifecycle semântico em C0 e persistência em C5;
 - `EntityRef/RelationshipRef` nascem antes do Business Graph;
 - expertise/playbook contracts nascem antes de agent migration;
-- event envelope nasce antes de Watch.
+- event envelope nasce antes de Watch;
+- Port/Adapter/State Machine/Error/Frontend State rules são congelados antes da primeira feature;
+- nenhuma feature escolhe Repository/Strategy/Factory/Saga/CQRS por conta própria sem passar pelo Pattern Decision Matrix e Abstraction Gate.
 
 ## MVPs
 
@@ -175,7 +202,7 @@ A ordem existe para evitar refatorações previsíveis. Exemplo:
 C0 + C1
 ```
 
-Navega e entende contexto sobre fundações estáveis.
+Navega e entende contexto sobre fundações arquiteturais estáveis.
 
 ### MVP inteligente
 
@@ -212,12 +239,12 @@ Proatividade, learning governance, autonomia seletiva e otimização.
 ## Primeira implementação
 
 ```text
-C0.S0 rebaseline/inventory
+C0.S0 rebaseline/inventory + architecture/pattern inventory
 → C0.S1 authorities/bounded contexts
 → C0.S2 shared primitives
-→ C0.S3 persistence boundaries
-→ C0.S4 cross-cutting semantics
-→ C0.S5 contract harness
+→ C0.S3 ports/persistence boundaries
+→ C0.S4 cross-cutting semantics + architecture/pattern freeze
+→ C0.S5 contract/conformance harness
 → C0.S6 FOUNDATION_FREEZE
 → C1.S1
 ```
