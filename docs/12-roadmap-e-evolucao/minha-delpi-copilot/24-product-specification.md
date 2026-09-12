@@ -43,7 +43,13 @@ Apps podem oferecer “Perguntar ao Copilot” sem criar IA própria.
 
 O app publica `WorkspaceContext`; o Shell abre/foca a mesma experiência central.
 
-### 2.4 Ações embutidas em respostas
+### 2.4 Entrada contextual em iframe integrado
+
+Apps iframe compatíveis podem participar da mesma experiência por meio do `Iframe Copilot Bridge`.
+
+O iframe não ganha uma IA própria. Ele publica contexto bounded e, quando suportado, recebe comandos visuais tipados. O Portal normaliza tudo para os contratos centrais do Copilot.
+
+### 2.5 Ações embutidas em respostas
 
 Exemplos:
 
@@ -79,7 +85,7 @@ Funcionalidades:
 - abrir entidade/registro;
 - voltar;
 - selecionar aba;
-- focar componente/área quando contrato do MFE suportar;
+- focar componente/área quando contrato do MFE/iframe suportar;
 - aplicar contexto/filtro visual compatível;
 - oferecer deep link de resultado.
 
@@ -88,7 +94,9 @@ Funcionalidades:
 - target sempre validado contra capabilities autorizadas;
 - sem URL livre gerada pelo LLM;
 - app não autorizado não aparece como capability;
-- rota revogada antes da execução deve falhar de forma segura.
+- rota revogada antes da execução deve falhar de forma segura;
+- iframe `PORTAL_ONLY` continua navegável mesmo sem integração interna;
+- comando visual de iframe não substitui operação de negócio.
 
 ## 5. Módulo de Contexto
 
@@ -103,6 +111,8 @@ Copilot deve entender, quando o app publicar:
 - unidade/filial quando não sensível e aplicável;
 - seleção visual;
 - referências a dados visíveis.
+
+O contrato deve ser o mesmo semanticamente para MFE e iframe. A origem (`mfe`, `iframe`, `portal`) é metadata de provenance, não uma nova semântica.
 
 Exemplos:
 
@@ -159,6 +169,8 @@ intenção
 → outcome
 → link/registro resultante
 ```
+
+Mesmo quando a UI está dentro de iframe, write deve utilizar API/use case/Business Action real; não clique automatizado.
 
 ## 8. Módulo de Análise
 
@@ -260,7 +272,8 @@ Funcionalidades:
 - confirmation;
 - idempotency;
 - timeout/resilience;
-- prompt/tool injection protection;
+- prompt/tool/context injection protection;
+- iframe origin/source/protocol validation;
 - secret redaction;
 - audit;
 - kill switch;
@@ -288,7 +301,8 @@ L5 é OFF por default.
 - pending confirmations;
 - workflow status;
 - reload/resume quando aplicável;
-- troca explícita de contexto substitui inferência antiga.
+- troca explícita de contexto substitui inferência antiga;
+- sessão do iframe bridge é efêmera e deve ser reconstruída/revalidada após lifecycle que a invalide.
 
 ## 16. Módulo Administrativo
 
@@ -300,6 +314,7 @@ A administração futura do Copilot deve permitir, respeitando RBAC de administr
 - providers/actions importados;
 - apps AI-ready;
 - coverage por app;
+- classificação de integração de iframe;
 - latência;
 - tokens/custo;
 - failures;
@@ -330,13 +345,23 @@ L4 write-ready
 L5 workflow-ready
 ```
 
+Para iframe, existe ainda classificação ortogonal:
+
+```text
+PORTAL_ONLY
+CONTEXTUAL
+INTERACTIVE
+AI_READY
+```
+
 Ferramentas de onboarding:
 
 - readiness scanner;
 - checklist;
 - templates/shared SDK;
 - contract tests;
-- coverage dashboard.
+- coverage dashboard;
+- iframe bridge fixtures quando aplicável.
 
 ## 18. Entidades e deep links
 
@@ -363,7 +388,9 @@ O Copilot deve distinguir:
 - execução parcial;
 - ação não disponível;
 - contexto insuficiente;
-- policy blocked.
+- policy blocked;
+- iframe não integrado além de `PORTAL_ONLY`;
+- iframe bridge rejected/expired/incompatible sem expor detalhes sensíveis.
 
 Não transformar erro técnico em sucesso narrativo.
 
@@ -374,6 +401,8 @@ Pode mostrar:
 ```text
 Planejando
 Consultando estoque
+Abrindo aplicativo
+Aplicando filtro visual
 Consultando pedidos
 Analisando resultados
 Aguardando confirmação
@@ -394,6 +423,7 @@ Cada execução relevante deve ser correlacionável por IDs e permitir responder
 - qual policy decidiu?;
 - houve confirmação?;
 - qual foi o outcome?;
+- qual app/surface/bridge participou?;
 - quanto demorou/custou?;
 - houve fallback/erro?.
 
@@ -409,7 +439,8 @@ Cada execução relevante deve ser correlacionável por IDs e permitir responder
 - minimização de dados;
 - compatibilidade incremental;
 - testes automatizados;
-- documentação atualizada.
+- documentação atualizada;
+- versionamento de protocolo para integração iframe.
 
 ## 23. Fora de escopo por padrão
 
@@ -417,17 +448,38 @@ Não assumir como requisito automático:
 
 - controle irrestrito do desktop/navegador;
 - automação de DOM como substituto de API;
+- leitura cross-origin por workaround;
+- script injection/eval em iframe;
 - execução com identidade técnica superuser;
 - autonomia L5 global;
 - treinamento/fine-tuning por dados do usuário sem processo específico;
 - acesso a dados não autorizados porque estão visíveis em outro sistema;
-- criação automática de novos endpoints pelo Copilot.
+- criação automática de novos endpoints pelo Copilot;
+- transmissão de JWT/refresh token por `postMessage`.
 
 ## 24. Cenários de referência
 
 ### Navegação
 
 > “Abra o Portal Comercial e vá para clientes.”
+
+### Iframe básico
+
+> “Abra o sistema legado de produção.”
+
+Resultado: Portal abre o app autorizado mesmo que ele seja apenas `PORTAL_ONLY`.
+
+### Iframe contextual
+
+> “Explique esta ordem.”
+
+Resultado: se o iframe publicar `productionOrder:OP123456`, o Copilot usa a referência sem exigir que o usuário repita o ID.
+
+### Iframe interativo
+
+> “Mostre as operações desta ordem.”
+
+Resultado: o Copilot usa comando visual tipado somente se o iframe declarou/negociou essa capability.
 
 ### Contexto
 
@@ -440,6 +492,8 @@ Não assumir como requisito automático:
 ### Write
 
 > “Crie uma solicitação para Compras revisar este item.”
+
+Mesmo que a solicitação seja exibida dentro de iframe, a criação ocorre via Business Action/API.
 
 ### Workflow
 
@@ -456,9 +510,11 @@ Resultado: negar execução; não elevar privilégio.
 A aplicação só pode ser considerada funcionalmente completa quando:
 
 - navegação global está operacional;
-- contexto por MFE possui padrão e cobertura definida;
+- contexto por MFE/iframe possui padrão e cobertura definida;
+- apps iframe existentes estão inventariados e classificados;
+- bridge de iframe possui security gates para as classes habilitadas;
 - reads de negócio usam Action Catalog;
-- writes usam confirmação/policy/idempotency;
+- writes usam confirmação/policy/idempotency e nunca dependem de DOM automation;
 - workflows compostos são duráveis quando necessário;
 - onboarding AI-ready não exige hardcode central;
 - observabilidade/admin existem;
@@ -466,3 +522,61 @@ A aplicação só pode ser considerada funcionalmente completa quando:
 - matriz de apps possui cobertura/evidence;
 - testes de [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md) passam no candidate final;
 - requisitos de [`14-definition-of-done.md`](./14-definition-of-done.md) estão satisfeitos.
+
+## 26. Módulo de Integração com Iframes
+
+Fonte canônica detalhada: [`26-iframe-copilot-bridge.md`](./26-iframe-copilot-bridge.md).
+
+### 26.1 Objetivo
+
+Tratar iframe como adapter de experiência da plataforma, sem tornar o planner dependente de tecnologia visual.
+
+### 26.2 Classes
+
+```text
+PORTAL_ONLY
+→ abrir app/rota
+
+CONTEXTUAL
+→ + contexto estruturado
+
+INTERACTIVE
+→ + comandos visuais tipados
+
+AI_READY
+→ + Business Actions reais por API/OpenAPI
+```
+
+### 26.3 Protocolo
+
+A integração avançada deve usar handshake e envelope versionados, com no mínimo:
+
+```text
+protocol
+version
+sessionId
+requestId
+message type
+schema-validated payload
+```
+
+O Portal valida `origin`, `event.source`, app autorizado, versão, sessão e capabilities negociadas.
+
+### 26.4 Comandos visuais
+
+Comandos devem ser genéricos, por exemplo:
+
+```text
+view.open_entity
+view.set_view
+view.set_filters
+view.set_selection
+view.focus_entity
+view.refresh
+```
+
+Não criar comandos por app no core genérico.
+
+### 26.5 Limitação explícita
+
+Iframe externo/legado sem integração pode permanecer `PORTAL_ONLY`. O produto não promete leitura de DOM cross-origin, filtros internos ou preenchimento de formulários nesses casos.
