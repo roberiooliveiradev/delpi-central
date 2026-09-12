@@ -2,15 +2,15 @@
 
 ## 1. Definição
 
-O **Minha DELPI Copilot** é a camada inteligente operacional transversal da Minha DELPI. Ele acompanha o usuário, entende contexto, conecta dados e conhecimento, navega pela plataforma, executa operações autorizadas e sustenta trabalho que pode continuar além de um único turno de chat.
+O **Minha DELPI Copilot** é uma **nova aplicação standalone** da Minha DELPI e a camada inteligente operacional transversal da plataforma.
 
-Não é um chatbot separado nem um conjunto de agentes departamentais. É uma nova forma de operar a mesma plataforma.
+Ele acompanha o usuário, entende contexto, conecta dados/conhecimento, navega, executa operações autorizadas e sustenta trabalho além de um turno.
+
+Ele possui API, MFE, persistência, manifesto e deploy próprios. Não é expansão do `minha-delpi-ai-api` ou `plugins/minha-delpi-chat`.
 
 ## 2. North Star
 
 > **Entender o contexto da organização, conectar dados, pessoas, processos e aplicações, investigar problemas, executar trabalho, acompanhar resultados e transformar conhecimento empresarial em ação governada.**
-
-Quatro verbos:
 
 ```text
 PERGUNTAR  → entender, pesquisar, explicar, analisar
@@ -19,45 +19,54 @@ ACOMPANHAR → monitorar, detectar, alertar, reagir
 TRABALHAR  → investigar, colaborar, planejar, acompanhar, concluir
 ```
 
-## 3. Promessa do produto
+## 3. Promessa
 
-> O usuário diz o objetivo. O Copilot encontra contexto e recursos autorizados, aplica conhecimento adequado, mostra evidências, executa o que for permitido, pede a decisão humana correta quando necessário e acompanha o trabalho até um outcome verificável.
+> O usuário diz o objetivo. O Copilot encontra contexto e recursos autorizados, aplica conhecimento adequado, mostra evidências, executa o permitido, pede a decisão humana correta e acompanha o trabalho até um outcome verificável.
 
-## 4. Pilares
+## 4. Relação com a plataforma
 
-### Explicar e consultar
+```text
+Portal      → host/context/navigation
+Core API    → apps/routes/RBAC/governance
+Keycloak    → identity/SSO
+Gateway     → routing
+plugin-ui   → shared design system
+Domain APIs → business data/rules
+Copilot API → intelligence/work runtime
+Copilot MFE → product UX
+```
 
-- páginas, campos, indicadores e processos;
+O Copilot reutiliza a **plataforma**, não o runtime do Minha DELPI Chat.
+
+## 5. Pilares
+
+### Explicar/consultar
+- páginas/campos/indicadores/processos;
 - dados corporativos;
 - documentos/normas;
-- relações entre entidades;
-- erros/limitações sem expor detalhes sensíveis.
+- relações entre entities.
 
 ### Analisar
-
-- comparar períodos/entidades;
+- comparar períodos/entities;
 - cruzar APIs;
 - usar Business Graph;
 - analisar documentos/desenhos;
-- separar fato, cálculo, hipótese, conclusão e recomendação;
+- separar fact/calc/hypothesis/conclusion/recommendation;
 - mostrar evidence/provenance.
 
 ### Navegar
-
-- app/rota/entidade;
-- view/aba/filtro;
+- app/route/entity;
+- view/tab/filter;
 - MFE/iframe context;
-- deep links autorizados.
+- authorized deep links.
 
 ### Executar
-
-- Business Actions reais via APIs/use cases;
-- Decision Gates proporcionais ao risco;
+- real Business Actions via Domain APIs;
+- Decision Gates;
 - outcome verification;
 - idempotency/audit.
 
 ### Trabalhar ao longo do tempo
-
 - Durable Workflow;
 - Task;
 - Case;
@@ -66,20 +75,18 @@ TRABALHAR  → investigar, colaborar, planejar, acompanhar, concluir
 - Watch/event resume.
 
 ### Produzir
-
-- relatórios;
-- resumos;
+- relatórios/resumos;
 - análises;
 - mensagens/e-mails;
 - planos de ação;
-- artifacts suportados.
+- artifacts.
 
-## 5. Copilot único
+## 6. Copilot único
 
-O usuário não precisa escolher entre “Agente Engenharia”, “Agente Qualidade” etc.
+O usuário não escolhe “Agente Engenharia”, “Agente Qualidade” etc.
 
 ```text
-mesmo Copilot
+one Copilot
 + Expertise Packs
 + Domain Playbooks
 + Knowledge
@@ -87,93 +94,73 @@ mesmo Copilot
 + authorized capabilities
 ```
 
-Problemas cross-domain podem combinar várias especialidades no mesmo trabalho.
-
-## 6. Experiência-alvo
-
-Usuário:
+## 7. Experiência-alvo
 
 > “Esse produto está dando problema no cliente. Investigue se é desenho, fabricação ou fornecedor e monte um 8D.”
 
-O Copilot pode, de acordo com permissions/APIs disponíveis:
+O Copilot pode:
 
 1. resolver produto/reclamação;
-2. abrir um Case;
-3. percorrer relações relevantes no Business Graph;
+2. abrir Case;
+3. percorrer Business Graph;
 4. consultar qualidade/produção/suprimentos;
-5. analisar desenho/anexos;
+5. analisar desenho;
 6. organizar Evidence Board;
 7. aplicar Engineering + Quality Expertise;
 8. aplicar 8D Playbook;
-9. criar Tasks para pendências;
-10. aguardar nova evidence/evento quando necessário;
-11. apresentar conclusões/limitações;
+9. criar Tasks;
+10. aguardar evidência/evento;
+11. apresentar conclusions/limitations;
 12. preparar ações;
-13. submeter writes ao Decision Gate;
+13. submeter writes a Decision Gate;
 14. verificar outcomes;
 15. manter audit/continuidade.
 
-Tudo sem trocar de agente.
+Tudo executado pelo runtime próprio do Copilot.
 
-## 7. Personas
+## 8. Personas
 
-### Usuário operacional
-Quer concluir tarefas sem decorar caminhos da plataforma.
+- usuário operacional;
+- analista;
+- gestor;
+- especialista de área;
+- colaborador de Case/Room;
+- administrador/governança.
 
-### Analista
-Quer investigar, cruzar evidências e explicar causas.
+## 9. UX principles
 
-### Gestor
-Quer síntese, riscos, decisões e acompanhamento.
+- language natural é entrada, não única surface;
+- evidence/state visíveis;
+- hypothesis não vira fact;
+- Decision Gate explica impacto;
+- contexto corrigível/removível;
+- não repetir pergunta respondida;
+- distinguir prepared/executed/verified;
+- Task/Case/Inbox quando chat é insuficiente;
+- no manual agent selection;
+- accessibility by default;
+- full-page e panel usam o mesmo produto/runtime.
 
-### Especialista de área
-Quer método profissional, evidência e integração com seus processos.
-
-### Colaborador de Case/Room
-Quer participar de investigação/decisão compartilhada com o Copilot.
-
-### Administrador/governança
-Quer gerir capabilities, policies, expertise/playbooks, quality/evals, rollout e audit.
-
-## 8. Princípios de UX
-
-- linguagem natural é entrada, não única surface;
-- evidência e estado operacional são visíveis;
-- nenhuma hipótese se apresenta como fato;
-- Decision Gate explica impacto real;
-- contexto pode ser corrigido/removido;
-- não repetir pergunta já respondida;
-- distinguir preparado/executado/verificado;
-- Task/Case/Inbox são usados quando chat deixa de ser unidade suficiente;
-- nenhuma tarefa normal exige seleção manual de agente;
-- accessibility by default.
-
-## 9. Não objetivos
+## 10. Non-goals
 
 O Copilot não deve:
 
-- obter mais permissão que o usuário;
-- usar DOM automation quando API/use case existe;
+- depender do runtime/database/API do Minha DELPI Chat;
+- obter mais permission que o usuário;
+- duplicar Core/RBAC;
+- duplicar domain business rules;
+- usar DOM automation quando API existe;
 - inventar endpoint/URL/action/permission;
-- duplicar Business Graph como banco mestre;
-- criar logic/business state paralelos às aplicações;
-- criar engine de IA por departamento;
+- usar Graph como master database;
+- criar AI engine por departamento;
 - persistir chain-of-thought;
-- executar write sem policy/Decision Gate requerido;
-- aprender automaticamente em produção com correções do usuário;
+- executar write sem required policy/Decision Gate;
+- auto-learn production behavior;
 - tratar Simulation como efeito real.
 
-## 10. Métricas de sucesso
+## 11. Métricas
 
-Métrica macro: **Task Completion Rate**, segmentada por:
-
-- navigation;
-- read;
-- analysis;
-- write;
-- Task;
-- Case;
-- Workflow.
+Macro: **Task Completion Rate**.
 
 Complementares:
 
@@ -185,8 +172,23 @@ Complementares:
 - Case Resolution Rate;
 - Watch Signal Quality;
 - latency/cost;
-- AI-ready coverage.
+- AI-ready coverage;
+- standalone availability;
+- Chat-independence failures = zero.
 
-## 11. Princípio de implantação
+## 12. Implantação
 
-A ambição do produto não altera a ordem de construção: primeiro foundations compartilhadas, depois features. Fonte de verdade: `16-execution-master-plan.md`.
+A ordem é foundation-first:
+
+```text
+platform/architecture
+→ standalone bootstrap
+→ context/platform commands
+→ intelligence
+→ reads/graph
+→ writes/durable
+→ work/proactivity
+→ autonomy/optimization
+```
+
+Fonte de verdade: `16-execution-master-plan.md`.
