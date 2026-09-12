@@ -258,7 +258,8 @@ Specs temáticas são lidas somente quando a subetapa tocar o tema.
 - `42` Model Router
 - `43` Durable Workflow
 - `44` Operational thematic map
-- `49` Architecture and Design Patterns Standard — authority normativa de implementação
+
+`49` é authority normativa, não apenas spec temática.
 
 `45`, `46` e `47` são `SUPERSEDED / REFERENCE_ONLY` porque seus conteúdos foram consolidados em `20`, `25` e `23`.
 
