@@ -1,17 +1,101 @@
 # Minha DELPI Copilot — Modelo de Dados, Estado e Persistência
 
-**Status:** target arquitetural; C0.S0 deve mapear modelos/repositories existentes antes de criar migrations.
+**Status:** target arquitetural foundation-first  
+**Autoridade de ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
 
 ## 1. Princípio
 
-Persistir somente o necessário para continuidade, auditoria e segurança. Não criar banco paralelo de capabilities nem armazenar chain-of-thought.
+Separar claramente:
 
-## 2. Estados principais
+```text
+REFERENCE
+→ identidade/ref compartilhada
 
-### 2.1 Workspace Context
+RUNTIME STATE
+→ estado efêmero do turno/UI
 
-**Owner primário:** Portal/MFE em runtime.  
-**Persistência:** efêmera por padrão; snapshot bounded no turno somente quando necessário para continuidade/auditoria.
+DURABLE WORK STATE
+→ workflow/task/case/decision/watch quando necessário
+
+DERIVED INDEX/CACHE
+→ capability/expertise/graph/search materializado
+
+DOMAIN DATA
+→ continua nas APIs/bancos donos do domínio
+```
+
+Não criar banco paralelo de dados operacionais, capability contracts ou chain-of-thought.
+
+## 2. Regra de C0
+
+C0 define **semântica, IDs, relações e ports** antes de decidir migrations.
+
+C0.S0 deve provar:
+
+- quais tabelas/repositories já existem;
+- quais estados de conversa/workflow/approval existem;
+- quais entity IDs são estáveis;
+- quais rooms/notifications/cases podem ser reutilizados;
+- quais event stores/queues existem;
+- quais caches/indexes já são materializados.
+
+Somente gaps reais justificam novas migrations.
+
+## 3. Shared references
+
+### 3.1 Correlation
+
+Todo fluxo material deve ser correlacionável por um conjunto coerente de IDs:
+
+```text
+requestId
+conversationId
+turnId
+workflowId?
+taskId?
+caseId?
+traceId?
+```
+
+Não gerar um universo de IDs sem relação entre si por feature.
+
+### 3.2 EntityRef
+
+Referência lógica e compacta:
+
+```text
+entityType
+entityId
+sourceSystem/domain
+label?
+version/revision? quando material
+```
+
+Domain object completo continua no owner.
+
+### 3.3 SourceRef / EvidenceRef / OutcomeRef
+
+`SourceRef` aponta origem verificável.  
+`EvidenceRef` registra observação/claim sourceable.  
+`OutcomeRef` registra resultado real de execução.
+
+Esses conceitos são transversais e devem ser reutilizados por:
+
+- Chat;
+- multimodal;
+- Business Graph;
+- workflow;
+- Task;
+- Case/Evidence Board;
+- Simulation;
+- audit/presentation.
+
+Não criar variants incompatíveis por feature.
+
+## 4. Workspace Context
+
+**Owner primário:** Portal/MFE/iframe em runtime.  
+**Persistência:** efêmera por padrão; snapshot bounded no turno somente quando necessário.
 
 Campos conceituais:
 
@@ -30,48 +114,133 @@ updatedAt
 
 Não persistir:
 
-- estado React inteiro;
-- tokens;
-- secrets;
+- estado React/DOM;
+- tokens/secrets;
 - datasets completos;
-- valores não usados sem justificativa.
+- campos sem finalidade.
 
-### 2.2 Capability Projection
+## 5. Derived catalogs/indexes
 
-**Owner:** derivada das authorities canônicas.  
-**Persistência:** preferir derivação/cache/index materializado; nunca virar segunda fonte de contrato.
+### Capability Projection
 
-Business:
-
-```text
-OpenAPI/Action Catalog → projection
-```
-
-Platform:
+Derivada das authorities:
 
 ```text
-Core /me/apps + generic platform action definitions → projection
+Business → OpenAPI/Action Catalog
+Platform → Core apps/routes + generic action definitions
 ```
 
-Qualquer cache deve carregar provenance/version/hash e ser invalidável.
+### Expertise/Playbook indexes
 
-### 2.3 Workflow Execution
+Authority é o catálogo canônico; embedding/vector/search é materialização derivada e invalidável por version/hash.
 
-Criar modelo persistido apenas em C4 se o workflow precisar sobreviver a confirmação/reload/timeout.
+### Business Graph index
 
-Campos mínimos conceituais:
+Pode materializar relações/referências, mas:
+
+- não replica objetos operacionais completos;
+- registra source/provenance;
+- respeita lifecycle do source;
+- traversal revalida permission quando necessário.
+
+## 6. Evidence e epistemic state
+
+Persistir evidence somente quando houver finalidade de continuidade/audit/Case.
+
+Campos conceituais:
+
+```text
+evidenceId
+sourceRef
+entityRefs[]
+kind
+valueRef/value bounded
+location/page/region?
+observedAt
+freshness
+confidence?
+limitations[]
+extractor/version? quando multimodal
+```
+
+Classificação da síntese:
+
+```text
+FACT
+CALCULATION
+HYPOTHESIS
+CONCLUSION
+RECOMMENDATION
+```
+
+Hipótese/conclusão/recomendação não devem se disfarçar de source fact.
+
+## 7. Decision Gate lifecycle
+
+Unifica confirmation e approvals sob um modelo consistente.
+
+Campos conceituais:
+
+```text
+decisionId
+workflowId?/turnId?
+stepId?/actionRef
+requiredGate
+argumentsHash
+impactPreview
+evidenceRefs[]
+risk/sensitivity
+status
+requestedAt
+expiresAt
+decidedAt
+decision
+actor/approver refs
+```
+
+Gate levels:
+
+```text
+NO_GATE
+ACKNOWLEDGE
+CONFIRM
+REVIEW_AND_CONFIRM
+APPROVAL_WORKFLOW
+BLOCK
+```
+
+Status mínimos:
+
+```text
+pending
+acknowledged
+confirmed
+rejected
+approved
+expired
+invalidated
+blocked
+```
+
+Mudança material de argumentos, evidence ou policy invalida decisão quando aplicável.
+
+## 8. Durable Workflow
+
+Contrato semântico nasce em C0; persistence/runtime concreto nasce em C5 se gap for provado.
+
+### Workflow
 
 ```text
 workflowId
-conversationId
-turnId
-requestId
-userId/subjectRef
+conversationId?
+turnId?
+subjectRef
 planVersion
 status
+currentCheckpoint
 createdAt
 updatedAt
-currentCheckpoint
+budget/limits refs
 ```
 
 Status:
@@ -79,184 +248,246 @@ Status:
 ```text
 planned
 running
-waiting_confirmation
+waiting_user
+waiting_approval
+waiting_event
+waiting_time
 succeeded
 partially_succeeded
 failed
 cancelled
+expired
 ```
 
-Não persistir raciocínio privado.
-
-### 2.4 Workflow Step
+### Workflow Step
 
 ```text
 stepId
 workflowId
 capabilityRef
-sourceActionRef quando business action
+actionSourceRef?
 dependsOn[]
 status
 attemptCount
-idempotencyKey quando aplicável
+idempotencyKey?
 startedAt
 finishedAt
 resultRef/errorCode
-confirmationRef quando aplicável
+decisionRef?
 ```
 
-`resultRef` deve preferir referência/resultado sanitizado, evitando copiar payload sensível inteiro sem necessidade.
+## 9. Copilot Task
 
-### 2.5 Confirmation lifecycle
+Task é uma unidade de trabalho curta/média, normalmente backed por workflow.
 
 Campos conceituais:
 
 ```text
-confirmationId
-workflowId/turnId
-stepId/actionRef
-argumentsHash
-preview sanitized
-sensitivity
+taskId
+objective
+workflowRef
+entityRefs[]
+caseRef?
 status
-requestedAt
-expiresAt
-decidedAt
-decision
+progressRef
+pendingDecisionRefs[]
+resultRefs[]
+evidenceRefs[]
+createdBy/owner
+createdAt/updatedAt
 ```
 
-Status:
+Não criar engine separada para Task.
+
+## 10. Copilot Case
+
+Case é unidade de investigação/trabalho prolongado, não necessariamente um novo banco se C0 provar que conceito existente pode ser estendido.
+
+Campos conceituais:
 
 ```text
-pending
-confirmed
-rejected
-expired
-invalidated
-```
-
-Se os argumentos finais mudarem, `argumentsHash` muda e a confirmação anterior deve ser invalidada.
-
-### 2.6 Audit event
-
-Preferir infraestrutura de observabilidade/auditoria existente.
-
-Registrar quando aplicável:
-
-```text
-requestId
-workflowId
-stepId
-user subject
-capability/action ref
-policy decision
-confirmation ref
-execution status
-duration
-result/error classification
-timestamp
-```
-
-Redigir PII/segredos conforme padrões existentes.
-
-## 3. Estado de conversa
-
-Reutilizar persistence de conversa/turn metadata da AI API.
-
-Possíveis extensões, somente após inventário:
-
-```text
-workspaceContextSnapshot
+caseId
+title/objective
+caseType
+status
+entityRefs[]
+taskRefs[]
 workflowRefs[]
-lastEntityRefs[]
-pendingConfirmationRefs[]
+evidenceRefs[]
+hypothesis/decision/action refs
+authorized participant refs
+roomRef?
+createdAt/updatedAt/closedAt
 ```
 
-Não duplicar a memória estruturada já existente.
-
-## 4. Idempotência
-
-Writes em workflow precisam de idempotência quando houver retry/reload/replay possível.
-
-Ordem de preferência:
-
-1. idempotency contract nativo da API de domínio;
-2. use case de domínio com chave idempotente;
-3. proteção coordenada no orchestration layer somente se arquiteturalmente necessária e sem mascarar ausência de garantia no backend.
-
-Nunca assumir que `POST` é seguro para retry.
-
-## 5. Retention e LGPD
-
-Antes de persistir novo dado:
-
-- finalidade;
-- base/necessidade operacional;
-- retenção;
-- minimização;
-- acesso;
-- auditoria;
-- exclusão/anonimização quando aplicável.
-
-Integração deve respeitar documentação de auditoria/LGPD da plataforma.
-
-## 6. Migrations
-
-C0.S0 deve responder:
+Lifecycle conceitual:
 
 ```text
-Existe modelo de workflow atual?
-Existe confirmation persistence atual?
-Turn metadata já suporta workspace context?
-Existe audit event suficiente?
-Existe idempotency storage?
+open
+investigating
+waiting
+actioning
+resolved
+closed
+reopened
 ```
 
-Somente os `NO` que correspondam a requisito real justificam migration.
+Case não substitui permissões das entidades fontes.
 
-## 7. Evolução de schema
+## 11. Evidence Board
 
-Quando migration for necessária:
+É uma view/estrutura sobre `EvidenceRef`, não um segundo modelo de evidence.
+
+Estados de board podem incluir:
+
+```text
+accepted
+contested
+missing
+superseded
+```
+
+A classificação não altera a origem do evidence.
+
+## 12. Interaction Room
+
+Preferir owner existente.
+
+Case armazena `roomRef`; mensagens/arquivos ficam no owner da sala. O Copilot acessa somente via permissions adequadas.
+
+Não duplicar conteúdo integral da sala dentro do Case.
+
+## 13. Inbox
+
+Inbox deve preferir materialização/view sobre estados de Task/Case/Workflow/Decision/Watch, não novo workflow owner.
+
+Item conceitual:
+
+```text
+inboxItemId
+kind
+sourceRef(task/case/workflow/decision/watch)
+status
+priority/severity
+entityRefs[]
+createdAt
+resolvedAt?
+```
+
+Ler item não executa ação.
+
+## 14. Event / Watch
+
+### EventEnvelope
+
+```text
+eventId
+eventType
+source
+entityRefs[]
+occurredAt
+payloadRef/payload bounded
+correlation
+schemaVersion
+```
+
+### Watch
+
+```text
+watchId
+owner/user subject
+condition/ref
+mode OBSERVE|ADVISE|ACT
+entity/capability scope
+status
+cooldown/dedupe policy
+expiresAt?
+createdAt/updatedAt
+```
+
+ACT continua sujeito a autonomy/Decision Gate/policy no momento do disparo.
+
+## 15. Organizational Knowledge
+
+Reference/Decision/Experience/Solution Pattern precisam de:
+
+```text
+id/version
+owner
+source refs
+provenance
+status draft/review/published/deprecated
+review/eval metadata
+createdAt/updatedAt
+```
+
+Não armazenar CoT em Decision/Experience record.
+
+## 16. Project preferences
+
+Projeto pode persistir:
+
+- preferred expertise;
+- knowledge scopes permitidos;
+- files;
+- artifact templates;
+- guidance.
+
+Não pode conceder permission/capability.
+
+## 17. Idempotência e concurrency
+
+Ordem de preferência para write:
+
+1. idempotency contract nativo da API;
+2. domain use case idempotente;
+3. orchestration protection apenas quando necessária e explícita.
+
+Workflow resume exige:
+
+- dedupe de command/event;
+- atomic checkpoint onde possível;
+- tratamento de ambiguous outcome;
+- locking/lease/concurrency strategy documentada.
+
+Nunca assumir que `POST` é retry-safe.
+
+## 18. Retention e LGPD
+
+Por novo dado durável definir:
+
+```text
+purpose
+owner
+minimum fields
+retention
+access model
+audit
+redaction
+archive/delete/anonymize policy
+```
+
+Case/Evidence/Room/Experience podem conter dados sensíveis e exigem atenção explícita.
+
+## 19. Migration strategy
+
+Toda migration segue:
 
 ```text
 expand additive
-→ deploy reader compatible
-→ deploy writer
+→ compatible readers
+→ writers
 → backfill se necessário
 → cutover
-→ remover legado em release posterior
+→ monitor
+→ cleanup posterior
 ```
 
-Toda migration precisa de:
+Não misturar criação de todos os modelos C5 em uma migration monolítica.
 
-- owner;
-- forward path;
-- rollback/mitigation;
-- indexes;
-- constraints;
-- testes;
-- impacto de volume;
-- observabilidade.
+## 20. State machines
 
-## 8. State machine do workflow
-
-```text
-PLANNED
-  ↓
-RUNNING ───────────────→ FAILED
-  │
-  ├─ needs confirmation → WAITING_CONFIRMATION
-  │                         │
-  │                         ├─ reject/expire → CANCELLED/FAILED conforme plano
-  │                         └─ confirm → RUNNING
-  │
-  ├─ all required steps ok → SUCCEEDED
-  └─ optional/noncritical failure → PARTIALLY_SUCCEEDED
-```
-
-Writes críticos não podem ser executados após precondition required falhar.
-
-## 9. State machine de Platform Command
+### Platform Command
 
 ```text
 PROPOSED
@@ -266,14 +497,41 @@ PROPOSED
 → SUCCEEDED | REJECTED | FAILED
 ```
 
-O Portal resolve/revalida o target no instante da execução.
+### Durable Workflow
 
-## 10. O que explicitamente não criar
+```text
+PLANNED
+→ RUNNING
+   ├→ WAITING_USER ───────┐
+   ├→ WAITING_APPROVAL ───┤
+   ├→ WAITING_EVENT ──────┤
+   └→ WAITING_TIME ───────┤
+                           ↓
+                        RUNNING
+                           │
+              ┌────────────┼────────────┐
+              ↓            ↓            ↓
+         SUCCEEDED    PARTIAL       FAILED/CANCELLED
+```
 
-- tabela manual de endpoints do Copilot;
-- tabela manual de path→intent;
-- cópia persistida do OpenAPI por capability como segunda authority;
-- “memory” paralela por app;
-- workflow engine separado que duplica planner/executor existentes;
-- armazenamento de chain-of-thought;
-- credentials/tokens em workflow state.
+### Decision Gate
+
+```text
+REQUESTED
+→ PENDING
+→ ACKNOWLEDGED | CONFIRMED | APPROVED | REJECTED | EXPIRED | INVALIDATED | BLOCKED
+```
+
+## 21. O que explicitamente não criar
+
+- tabela manual endpoint→intent;
+- cópia do OpenAPI por capability;
+- graph replicando tabelas operacionais;
+- evidence model diferente por Case/Workflow/Multimodal;
+- confirmation paralelo ao Decision Gate;
+- Task engine independente do Workflow runtime;
+- Room storage duplicado no Copilot se já houver owner;
+- Watch event envelope próprio se o comum atende;
+- memory paralela por app/case;
+- CoT persistence;
+- tokens/credentials em state.
