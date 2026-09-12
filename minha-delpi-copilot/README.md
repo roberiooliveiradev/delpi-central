@@ -6,7 +6,7 @@ O Copilot é uma **aplicação nova e standalone** da Minha DELPI, composta por 
 
 Ele não é evolução do `minha-delpi-ai-api` nem de `plugins/minha-delpi-chat`.
 
-A visão alvo é **um único Copilot para escritório, reuniões e chão de fábrica**, com surfaces Global, Workspace, Meeting e Frontline sobre o mesmo runtime e governança.
+A visão alvo é **um único Copilot para escritório, reuniões e chão de fábrica**, com surfaces Global, Workspace, Meeting e Frontline sobre o mesmo runtime e governança, incluindo multimodalidade e identidade biométrica governada quando habilitada.
 
 ## Documentação canônica
 
@@ -16,7 +16,7 @@ A visão alvo é **um único Copilot para escritório, reuniões e chão de fáb
 
 ```text
 PROGRAM = PLANNED / NOT_STARTED
-NEXT_STEP = C0.S0 — Platform/Media/Device/OT inventory
+NEXT_STEP = C0.S0 — Platform/Media/Device/Biometric/OT inventory
 ```
 
 ## Authorities
@@ -28,21 +28,22 @@ NEXT_STEP = C0.S0 — Platform/Media/Device/OT inventory
 - [Platform integration baseline](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/51-platform-integration-baseline.md)
 - [Repository/bootstrap plan](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/52-standalone-repository-and-bootstrap-plan.md)
 - [Multimodal/Meeting/Frontline/Industrial](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/53-multimodal-meeting-frontline-and-industrial-copilot.md)
+- [Biometric Identity/Human Observation](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/54-biometric-identity-and-human-observation-governance.md)
 - [Tests/acceptance](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/20-testing-and-acceptance-matrix.md)
-- [State/persistence/media](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/21-data-and-state-model.md)
+- [State/persistence/media/biometric](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/21-data-and-state-model.md)
 - [Cursor prompt](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/23-prompt-cursor-execucao.md)
 - [Product specification](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/24-product-specification.md)
-- [Traceability CP-001…CP-181](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/25-requirements-traceability.md)
+- [Traceability CP-001…CP-193](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/25-requirements-traceability.md)
 - [Documentation governance](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/48-documentation-governance-and-architecture-review.md)
 - [Execution ledger](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/evidence/execution-ledger.md)
 
 ## Target owners
 
 ```text
-minha-delpi-copilot-api/       → new intelligence/work/media backend
+minha-delpi-copilot-api/       → intelligence/work/media/biometric backend
 plugins/minha-delpi-copilot/   → Global/Workspace/Meeting/Frontline federated MFE
 portal/                        → host/context/navigation
-core-api/                      → apps/routes/RBAC/governance
+core-api/                      → apps/routes/RBAC/governance/user authority
 keycloak                       → identity/SSO
 gateway/                       → routing
 plugins/plugin-ui/             → shared design system
@@ -53,10 +54,10 @@ OT/domain systems              → machine/process truth and industrial safety o
 ## Ordem de construção
 
 ```text
-C0 Platform + Architecture + Media/Privacy/OT Foundation Freeze
+C0 Platform + Architecture + Media/Privacy/Biometric/OT Foundation Freeze
 → C1 Standalone Application Bootstrap
 → C2 Portal + Operational Context + Platform Commands
-→ C3 Intelligence Core + Multimodal Foundations
+→ C3 Intelligence Core + Multimodal/Biometric Foundations
 → C4 Business Reads + Graph
 → C5 Governed Writes + Durable Foundation
 → C6 Product Work + Meeting/Frontline + Proactivity + Ecosystem
@@ -71,6 +72,15 @@ Minha DELPI Chat offline
 
 voice/image/video
 → same RBAC/policy as text
+
+biometric match
+-X→ permission grant
+
+unknown/low-confidence identity
+→ unknown or explicit confirmation
+
+Human Observation
+→ observable process evidence, not psychological/person score
 
 shared device
 → user A cannot leak into user B
