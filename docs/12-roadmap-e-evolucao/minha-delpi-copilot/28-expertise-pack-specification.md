@@ -1,23 +1,24 @@
 # Minha DELPI Copilot — Especificação de Expertise Packs
 
-**Status:** contrato arquitetural proposto  
-**Objetivo:** permitir especialização dinâmica do Copilot sem criar agentes independentes por departamento.
+**Status:** thematic spec / contract detail  
+**Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Foundation:** schema/owner/version semantics definidos/reutilizados em C0; runtime de retrieval em C2.
 
 ## 1. Definição
 
-`Expertise Pack` é um pacote versionado de conhecimento operacional e heurísticas de análise que melhora a atuação do mesmo Copilot em um domínio.
+`Expertise Pack` é um pacote versionado de conhecimento operacional e guidance que especializa o **mesmo Copilot** em um domínio.
 
-Ele responde principalmente a:
+Responde a:
 
-- quais conceitos importam neste domínio?;
+- quais conceitos importam?;
 - quais evidências devem ser buscadas?;
-- quais métodos de análise são adequados?;
-- quais playbooks podem ser úteis?;
-- quais knowledge scopes devem receber boost?;
-- quais capacidades multimodais são relevantes?;
-- quais riscos/limitações devem ser explicitados?
+- quais métodos são adequados?;
+- quais playbooks são relevantes?;
+- quais knowledge scopes recebem boost?;
+- quais necessidades multimodais existem?;
+- quais limitações/riscos devem ser explicitados?.
 
-Ele **não** define permissões nem endpoints.
+Não define permission nem endpoint.
 
 ## 2. Estrutura conceitual
 
@@ -27,7 +28,7 @@ Ele **não** define permissões nem endpoints.
   "key": "quality-industrial",
   "version": "1.0.0",
   "label": "Qualidade Industrial",
-  "description": "Especialização para análise de qualidade, não conformidade e causa raiz.",
+  "description": "Especialização para qualidade, não conformidade e causa raiz.",
   "domains": ["quality", "manufacturing"],
   "signals": ["nonconformity", "inspection", "complaint", "8d"],
   "knowledgeScopes": ["global:quality"],
@@ -36,232 +37,177 @@ Ele **não** define permissões nem endpoints.
   "multimodalNeeds": ["image", "pdf", "technical-drawing"],
   "terminology": {},
   "analysisGuidance": [],
-  "safetyNotes": [],
   "outputGuidance": [],
   "evalSuites": ["quality-core-v1"],
-  "owner": "quality-platform-owner",
+  "owner": "quality-owner",
   "status": "active"
 }
 ```
 
-Esse shape é conceitual até C0.S1 confirmar padrões de schema existentes.
+Shape final é congelado/reutilizado em **C0.S2**, após C0.S0/S1 provarem owners/patterns existentes.
 
 ## 3. Campos permitidos
 
-### Identidade e governança
+- key/version/label/description/owner/status;
+- domains/signals/terminology;
+- analysis/output guidance;
+- knowledge scope refs;
+- preferred playbook refs;
+- recommended capability semantics;
+- multimodal needs;
+- eval refs.
 
-- `key` estável;
-- `version` SemVer;
-- `label`;
-- `description`;
-- `owner`;
-- `status`.
-
-### Semântica
-
-- `domains`;
-- `signals`;
-- `terminology`;
-- `analysisGuidance`;
-- `outputGuidance`.
-
-### Integração
-
-- `knowledgeScopes`;
-- `preferredPlaybooks`;
-- `recommendedCapabilities` por capability key sem endpoint técnico;
-- `multimodalNeeds`;
-- `evalSuites`.
-
-## 4. Campos proibidos
-
-Não incluir como authority de roteamento:
+## 4. Campos proibidos como authority
 
 ```text
 path
 method
 operationId
-provider-specific selector
-pathMarker
-operationIdMarker
-routeSegment
-parameterStrategy
+provider selector
+path/opId markers
+parameter strategy
 permission override
 JWT/secret
-hardcoded department → endpoint
+hardcoded department→endpoint
 ```
 
-Se uma capability técnica depende de OpenAPI, a authority continua no OpenAPI + Action Catalog.
+Technical action authority permanece OpenAPI + Action Catalog.
 
 ## 5. Ativação
 
-Ativação deve ser automática e dinâmica.
-
 ```text
-goals/context/attachments
-→ expertise retriever
-→ top-K packs
-→ compatibility/policy filter
-→ compose runtime context
+goals + Workspace/Entity context + attachments + project preferences
+→ Expertise Retriever
+→ top-K candidates
+→ compatibility/ACL/policy filter
+→ ExpertiseSelection
+→ bounded ExpertiseContext
 ```
 
-O usuário não precisa escolher explicitamente o pack para uma pergunta normal.
-
-A UI pode exibir de forma leve algo como:
-
-> Conhecimentos aplicados: Engenharia · Qualidade
-
-sem transformar isso em troca de agente.
+Usuário não precisa selecionar pack manualmente.
 
 ## 6. Composição
 
-Mais de um pack pode ser carregado no mesmo turno.
+Vários packs podem ser usados no mesmo turno.
 
-Regras de merge:
+Merge rules:
 
-1. base behavior e policy sempre vencem;
-2. guidance não pode reduzir safety;
-3. knowledge scopes são união após autorização;
-4. terminology é namespaceado quando houver colisão;
-5. playbooks são candidates, não execução automática;
-6. capability recommendation não concede access;
-7. output guidance deve ser reconciliado pelo planner/presenter.
+1. system/safety/policy vencem;
+2. guidance não reduz safety;
+3. knowledge scopes só entram após ACL;
+4. terminology pode ser namespaceada;
+5. playbooks são candidates;
+6. capability recommendation não concede acesso;
+7. context final é bounded.
 
 ## 7. Ranking
 
-O retriever pode considerar:
+Pode considerar:
 
-```text
-goal/domain match
-workspace app/entity
-attachment type
-recognized terminology
-selected capability candidates
-recent structured context
-project preferences
-```
+- goals/domain signals;
+- Workspace app/entity;
+- attachments;
+- recognized terminology;
+- capability candidates;
+- recent structured context;
+- project preferences.
 
-Não usar `agent_id` como requisito para ativação.
+`agent_id` não é requisito.
 
 ## 8. Knowledge
 
-Pack pode sugerir scopes, mas a recuperação final precisa aplicar:
-
 ```text
-identity
-+ knowledge ACL
-+ tenant/context
+pack knowledge refs
++ user ACL
 + source policy
+→ permitted knowledge candidates
 ```
 
-Pack não amplia visibilidade de documentos.
+Pack nunca amplia visibility.
 
-## 9. Relação com capabilities
-
-Expertise melhora seleção e interpretação, porém não substitui discovery.
+## 9. Capability relation
 
 ```text
-Expertise: "Qualidade Industrial"
-Capability: "Consultar reclamações de cliente"
-Action authority: OpenAPI/Action Catalog
+Expertise = como analisar
+Capability = o que pode fazer
+Action Catalog = contrato técnico
+Policy/RBAC = se pode fazer
 ```
 
-## 10. Relação com playbooks
+## 10. Playbooks
 
-Um pack pode recomendar playbooks sem copiá-los.
-
-Exemplo:
+Pack pode recomendar refs como:
 
 ```text
-quality-industrial
-→ quality.8d
-→ quality.root-cause
-→ quality.nonconformity-triage
+quality.8d
+quality.root-cause
+engineering.drawing-review
 ```
 
-O playbook possui ciclo de vida próprio.
+Playbook é objeto versionado separado.
 
-## 11. Relação com multimodalidade
+## 11. Multimodalidade
 
-Pack pode declarar que certos formatos merecem capacidades específicas.
+Pack pode indicar necessidade de document/image/drawing perception, mas extraction tool continua capability/internal tool governada.
 
-Exemplo Engenharia:
+## 12. Versioning/provenance
 
-```text
-technical-drawing attachment
-→ document vision
-→ drawing structure extraction
-→ engineering expertise
-→ drawing-review playbook
-```
-
-## 12. Versionamento
-
-Mudança de conteúdo que altera comportamento material deve incrementar versão e invalidar evidence afetada.
-
-Registrar quando aplicável:
+Registrar quando material:
 
 ```text
-expertisePackKey
-expertisePackVersion
+key
+version
 contentHash
 evalSuiteHash
+owner/status
 ```
 
-## 13. Observabilidade
+Mudança material invalida evidence de eval correspondente.
 
-Tracing deve registrar sem conteúdo sensível excessivo:
+## 13. Observability
 
-- packs candidates;
-- packs selecionados;
-- score/reasonCode;
-- versão/hash;
-- playbooks selecionados;
-- knowledge scopes consultados;
-- tools/capabilities utilizadas;
+- candidates;
+- selected packs;
+- structured reasonCode/score;
+- version/hash;
+- playbooks;
+- knowledge/tool usage;
 - outcome/eval.
 
-## 14. Evals mínimos por pack
+Sem CoT.
 
-```text
-positive domain query
-semantic sibling
-cross-domain composition
-negative unrelated query
-unauthorized knowledge
-prompt injection from knowledge
-attachment-triggered multimodal case
-unknown/new pack contract test
-version regression
-```
+## 14. Evals
 
-## 15. Administração
+- positive;
+- semantic sibling;
+- unrelated negative;
+- cross-domain composition;
+- unauthorized knowledge;
+- malicious pack content;
+- attachment-triggered case;
+- unknown pack;
+- version regression;
+- metamorphic key rename preserving semantics.
 
-Um pack só pode ir para `active` após:
+## 15. Lifecycle/admin
 
-```text
-schema valid
-owner definido
-knowledge scopes válidos
-playbook refs válidos
-capability refs sem autoridade técnica duplicada
-evals mínimos PASS
-security review quando sensível
-```
+Candidate só pode ser published/active conforme lifecycle governado do Expertise Studio, com schema/owner/refs/evals/security aplicáveis.
 
-## 16. Packs iniciais recomendados
+## 16. Pilotos
 
-A criação efetiva deve ocorrer após inventário, porém o desenho deve suportar:
+Começar por poucos packs de alto valor, por exemplo:
 
-- `quality-industrial`;
-- `product-engineering`;
-- `supplies`;
-- `commercial`;
-- `finance`;
-- `production`;
-- `maintenance`;
-- `hr`;
-- `it-support`;
-- `legal-compliance`.
+- Qualidade Industrial;
+- Engenharia de Produto;
+- Suprimentos.
 
-Não criar todos antes de validar o contrato com 2–3 pilotos reais.
+Não criar um catálogo de departamentos inteiro antes de validar retrieval/composition/generalization.
+
+## 17. Anti-patterns
+
+- um agentId por expertise;
+- pack como permission;
+- pack como endpoint registry;
+- prompt monolítico global com todas as expertises;
+- activation manual obrigatória;
+- hardcode do pack no planner.
