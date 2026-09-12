@@ -6,11 +6,12 @@ Entrada principal: [`README.md`](./README.md).
 
 1. [`16-execution-master-plan.md`](./16-execution-master-plan.md) — ordem única C0–C7.
 2. [`17-component-and-contract-map.md`](./17-component-and-contract-map.md) — owners e foundations.
-3. [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md) — gates.
-4. [`21-data-and-state-model.md`](./21-data-and-state-model.md) — estado/persistência.
-5. [`23-prompt-cursor-execucao.md`](./23-prompt-cursor-execucao.md) — prompt mestre.
-6. [`25-requirements-traceability.md`](./25-requirements-traceability.md) — CP requirements.
-7. [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) — estado real.
+3. [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md) — arquitetura de código, layers, dependency rules, design patterns e Abstraction Gate.
+4. [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md) — gates.
+5. [`21-data-and-state-model.md`](./21-data-and-state-model.md) — estado/persistência.
+6. [`23-prompt-cursor-execucao.md`](./23-prompt-cursor-execucao.md) — prompt mestre.
+7. [`25-requirements-traceability.md`](./25-requirements-traceability.md) — CP requirements.
+8. [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) — estado real.
 
 ## Para entender o produto
 
@@ -25,4 +26,4 @@ Entrada principal: [`README.md`](./README.md).
 
 Leia [`48-documentation-governance-and-architecture-review.md`](./48-documentation-governance-and-architecture-review.md) para precedência, classificação dos documentos e findings da revisão foundation-first.
 
-Specs temáticas devem ser abertas somente quando a fase em execução exigir o tema.
+`49` é authority normativa para **como** o runtime é estruturado. Specs temáticas devem ser abertas somente quando a fase em execução exigir o tema e não podem redefinir architecture style/patterns sem decisão arquitetural explícita.
