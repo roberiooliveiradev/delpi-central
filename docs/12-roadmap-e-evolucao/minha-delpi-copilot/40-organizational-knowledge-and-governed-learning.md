@@ -1,96 +1,84 @@
 # Minha DELPI Copilot — Organizational Knowledge e Aprendizagem Governada
 
-**Status:** arquitetura proposta  
-**Objetivo:** separar conhecimento documental, conhecimento operacional, decisões e experiência histórica, criando um ciclo seguro de melhoria.
+**Status:** thematic spec  
+**Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Runtime phase:** C6, após Evidence/Case foundations estarem estáveis.
 
-## 1. Classes de conhecimento
+## 1. Classes
 
 ```text
 Reference Knowledge
-→ documentos, normas, procedimentos, manuais
+→ normas, procedimentos, manuais
 
 Operational Knowledge
-→ como processos da DELPI funcionam
+→ processos/métodos governados, frequentemente Playbooks
 
 Decision Knowledge
-→ decisões tomadas, contexto e justificativas
+→ decisões aprovadas, contexto, constraints, Evidence/Outcome refs
 
 Experience Knowledge
-→ casos anteriores, causas, ações, resultados
+→ casos resolvidos e resultados revisados
 
 Semantic Knowledge
-→ entidades, conceitos e relações do Business Graph
+→ entidades/relacionamentos do Business Graph
 ```
 
-Essas classes podem compartilhar infraestrutura, mas não devem ser semanticamente confundidas.
+Compartilhar infraestrutura é possível; semântica/owner/lifecycle permanecem explícitos.
 
 ## 2. Reference Knowledge
 
-RAG tradicional continua útil para:
+RAG tradicional com:
 
-- procedimentos;
-- normas;
-- políticas;
-- manuais;
-- documentação técnica;
-- guias internos.
-
-Toda fonte deve possuir scope, owner, version/freshness e política de acesso.
+- owner;
+- scope/ACL;
+- version/freshness;
+- provenance;
+- retention.
 
 ## 3. Operational Knowledge
 
-Representa práticas e processos estáveis:
+Preferir representação governada como:
 
-- como tratar uma não conformidade;
-- quem deve aprovar determinado processo;
-- quais etapas um fluxo corporativo possui;
-- terminologia interna;
-- critérios de aceitação.
+- Domain Playbook;
+- policy/rule;
+- documentação versionada;
+- terminology/glossary.
 
-Preferencialmente materializado como Domain Playbooks, regras ou documentação governada, não como memória informal do LLM.
+Não depender de “memória informal do LLM”.
 
 ## 4. Decision Knowledge
 
-Uma decisão relevante pode registrar:
+Registro conceitual pode referenciar:
 
 ```text
-decisionId
-case/task
-question
-options considered
+decision/case/task refs
+question/options
 selected option
-decision owner/date
-approved evidence refs
+actor/date
+Evidence refs
 constraints
-outcome refs
+Outcome refs
 ```
 
-Não persistir chain-of-thought do modelo. Registrar justificativa operacional aprovada e evidências.
+Não persistir chain-of-thought. Armazenar justificativa operacional aprovada quando necessária.
 
 ## 5. Experience Knowledge
 
-Permite responder:
-
-> “Já tivemos esse problema antes?”
-
-Um caso encerrado pode gerar um `ExperienceRecord`:
+Case resolvido pode gerar **candidate** Experience:
 
 ```text
 problem signature
 context/entity types
-confirmed root causes
-actions taken
-verification/result
-applicable constraints
-evidence refs
-case ref
+confirmed causes
+verified actions/outcomes
+constraints
+Evidence refs
+Case ref
 ```
 
-Promoção para Experience Knowledge deve ser governada; nem toda conversa/caso vira conhecimento confiável.
+Candidate não é published knowledge automaticamente.
 
 ## 6. Solution Patterns
-
-Padrões validados podem ser promovidos para catálogo reutilizável:
 
 ```text
 candidate
@@ -98,44 +86,37 @@ candidate
 → eval
 → published pattern
 → usage/feedback
-→ version update/deprecate
+→ version/deprecate
 ```
 
-Exemplo: padrão de solução para trinca causada por determinado processo/material.
+Padrão precisa provar sibling/generalization; não memorizar um único caso literalmente.
 
 ## 7. Governed Learning Loop
 
-O produto aprende por evolução de artefatos governados, não por alteração invisível do modelo a cada correção.
-
 ```text
-feedback/correction
+feedback/correction/case resolution
 → telemetry
-→ recurring issue detection
-→ improvement proposal
+→ recurring issue/candidate
+→ change proposal
 → edit Expertise/Playbook/Knowledge/Rule
 → tests/evals
-→ approval
+→ review/approval
 → versioned publish
 → canary
 ```
 
-## 8. Sinais de melhoria
-
-- usuário corrige entidade frequentemente;
-- expertise escolhida incorretamente;
-- playbook pede informação desnecessária;
-- mesma capability falha em binding;
-- mesma recomendação é rejeitada;
-- perguntas repetidas sem resposta;
-- solution pattern recorrente;
-- source stale/contraditório.
-
-## 9. Feedback
-
-Tipos úteis:
+Nunca:
 
 ```text
-helpful / not_helpful
+user correction → automatic production behavior change
+```
+
+## 8. Feedback taxonomy
+
+Exemplos:
+
+```text
+helpful/not_helpful
 wrong_fact
 wrong_entity
 wrong_action
@@ -146,34 +127,53 @@ outdated_knowledge
 better_solution
 ```
 
-Feedback não substitui evidence nem altera produção automaticamente.
+Feedback é sinal, não truth/evidence.
 
-## 10. Retenção e LGPD
+## 9. Provenance e shared refs
 
-- minimizar conteúdo persistido;
-- separar dados pessoais de conhecimento reutilizável;
-- redigir/anonymizar quando possível;
-- respeitar delete/retention policies;
-- não promover dado pessoal de caso para conhecimento global sem base legal/policy.
+Usar `EntityRef`, `EvidenceRef`, `OutcomeRef`, Case/Task/Decision refs compartilhados. Não criar modelos paralelos por knowledge class.
 
-## 11. Métricas
+## 10. Security/LGPD
 
-- knowledge hit usefulness;
-- outdated knowledge rate;
+- user/source ACL;
+- minimize/redact/anonymize;
+- no PII promotion sem policy/base;
+- delete/retention;
+- no sensitive Case content globalized silently;
+- malicious prior record não altera system/policy.
+
+## 11. Metrics
+
+- knowledge usefulness;
+- stale/outdated rate;
 - correction recurrence;
 - solution pattern reuse;
-- expertise/playbook version success;
-- time to resolve repeated cases;
-- proportion of conclusions backed by evidence.
+- version success;
+- repeated-case resolution time;
+- evidence coverage.
 
-## 12. Não fazer
+## 12. Mapping
 
-- “auto-treinar” com toda conversa;
-- transformar resposta do LLM em norma corporativa;
-- esconder origem/versionamento;
-- usar decisão antiga fora de contexto como regra universal;
-- manter conhecimento sem owner.
+```text
+C0 → provenance/lifecycle/retention semantics
+C2 → Reference Knowledge + ACL integration
+C5 → Cases generate structured resolution evidence
+C6 → Decision/Experience/Solution Pattern + governed learning
+C7 → rollout optimization only
+```
 
 ## 13. Gate
 
-Uma fonte só é considerada `published organizational knowledge` se possuir owner, scope, provenance, lifecycle e regras de acesso.
+Published organizational knowledge exige:
+
+```text
+owner
+version
+scope/ACL
+provenance
+review/eval
+lifecycle/status
+retention
+```
+
+Sem esses itens, continua candidate/reference, não corporate truth.
