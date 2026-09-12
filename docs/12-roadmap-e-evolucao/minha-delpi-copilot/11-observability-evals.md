@@ -1,30 +1,40 @@
 # 11 — Observabilidade, métricas e evals
 
-**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)
+**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
+**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
 
 ## 1. Objetivo
 
-O Copilot deve ser mensurável como produto, sistema de IA e camada operacional independente. Não basta responder: precisamos provar seleção correta, evidence, policy, execução real, continuidade, valor entregue e ausência de dependência do Minha DELPI Chat.
+O Copilot deve ser mensurável como produto, sistema de IA e camada operacional independente. Não basta responder: precisamos provar seleção correta, Evidence, policy, execução real, continuidade, valor entregue, privacy/safety e ausência de dependência do Minha DELPI Chat.
+
+Meeting/Frontline/media também precisam ser observáveis sem transformar telemetry em armazenamento oculto de áudio/vídeo ou mecanismo de vigilância.
 
 ## 2. Perguntas fundamentais
 
 A observabilidade deve responder:
 
 - qual objetivo o usuário tentou cumprir?;
+- qual surface foi usada?;
 - qual Workspace/Entity Context foi usado?;
+- qual user/device session estava ativa?;
 - quais capabilities estavam autorizadas?;
 - quais candidates foram recuperadas?;
 - quais expertise/playbooks foram selecionados?;
 - quais sources/evidence sustentaram a resposta?;
+- qual modality foi usada?;
+- houve media session e qual retention class/policy se aplicou?;
 - quais argumentos foram validados?;
 - qual policy/Decision Gate decidiu?;
 - qual action realmente executou?;
 - qual outcome retornou?;
 - workflow/task/case permaneceu consistente?;
+- Meeting gerou decisão/action candidate ou ação executada?;
+- Frontline guidance/escalation foi concluída?;
 - houve wait/resume/retry?;
-- quanto tempo/tokens/tools/custo?;
+- quanto tempo/tokens/tools/media/custo?;
 - houve correction/replan?;
 - o usuário concluiu o trabalho?;
+- alguma tentativa violou privacy/shared-device/OT boundary?;
 - algum componente do Chat foi chamado indevidamente?.
 
 ## 3. Correlation model
@@ -41,6 +51,10 @@ taskId?
 caseId?
 decisionId?
 watchId?
+meetingId?
+frontlineSessionId?
+mediaSessionId?
+deviceRef? bounded/non-sensitive
 ```
 
 Não criar correlação incompatível por feature nem reutilizar IDs internos do Chat como authority.
@@ -54,6 +68,8 @@ copilot.turn
 ├─ expertise_retrieval
 ├─ playbook_retrieval
 ├─ knowledge_retrieval
+├─ media_ingest
+├─ speech_transcribe
 ├─ multimodal_extract
 ├─ evidence_compose
 ├─ planning
@@ -71,6 +87,9 @@ copilot.workflow
 copilot.task
 copilot.case
 copilot.watch
+copilot.media_session
+copilot.meeting
+copilot.frontline_session
 ```
 
 Namespaces de telemetry devem ser próprios do Copilot.
@@ -78,8 +97,14 @@ Namespaces de telemetry devem ser próprios do Copilot.
 ## 5. Metadata útil
 
 ```text
+surface = global|workspace|meeting|frontline
 appId/routeId
 entity types/count
+device class, sem identity sensível desnecessária
+modality = text|voice|image|video|screen|document
+media kind/duration/size class
+retention class/policy version
+capture persisted? yes/no
 model/provider
 responseMode
 candidateCount/topK
@@ -91,14 +116,16 @@ evidence/source counts
 policy outcome
 decision gate level/outcome
 workflow/task/case status
-tool/API durations
+meeting/frontline status
+tool/API/media stage durations
 HTTP outcome
 token usage
 result size
 retry/replan/fallback flags
 error classification
-surface full-page|panel|contextual
 ```
+
+Não logar raw media/payload sensível apenas para “observabilidade”.
 
 `agentId`, `chat_mode`, `userActivatedAgent` e outros campos do Minha DELPI Chat **não fazem parte do modelo de telemetry do Copilot**.
 
@@ -115,7 +142,9 @@ Medir conclusão por:
 - write;
 - Task;
 - Case;
-- Workflow.
+- Workflow;
+- Meeting goal;
+- Frontline assistance goal.
 
 ### First Plan Success Rate
 
@@ -127,7 +156,7 @@ Perguntas adicionais comparadas ao mínimo realmente necessário.
 
 ### Correction Rate
 
-Correção de entidade, contexto, action, interpretation, evidence ou recommendation.
+Correção de entidade, contexto, action, interpretation, evidence, recommendation, transcript ou visual finding.
 
 ### Safe Execution Rate
 
@@ -145,13 +174,39 @@ Cases resolvidos/fechados com outcome verificável.
 
 Alertas úteis versus duplicados/falsos/ignorados.
 
-### Capability/App Readiness Coverage
+### Meeting Action Closure Rate
 
-Cobertura L1–L5, iframe classes e capability families.
+Ações confirmadas em reunião que chegam a outcome verificável dentro do prazo/fluxo aplicável.
+
+### Meeting Summary Correction Rate
+
+Percentual de atas/resumos que exigem correção material de decisão, responsável, prazo ou fato.
+
+### Frontline Help Resolution Rate
+
+Sessões de assistência resolvidas sem escalation desnecessária e com guidance grounded.
+
+### Escalation Quality
+
+Escalations que chegam ao owner correto com contexto/Evidence suficiente.
+
+### Capability/App/Frontline Readiness Coverage
+
+Cobertura L1–L5, iframe classes e readiness Frontline quando aplicável.
 
 ### Standalone Independence Rate
 
-Execuções que completam sem chamadas/imports/storage do Minha DELPI Chat. Para releases do Copilot, o target é **100%** fora de testes explicitamente reference-only.
+Execuções que completam sem chamadas/imports/storage do Minha DELPI Chat. Target: **100%** fora de testes explicitamente reference-only.
+
+### Safety/privacy targets
+
+```text
+hidden capture incidents = 0
+shared-device state leaks = 0
+unauthorized media retention = 0
+arbitrary OT command attempts executed = 0
+safety interlock bypass = 0
+```
 
 ## 7. Métricas técnicas
 
@@ -167,13 +222,19 @@ Execuções que completam sem chamadas/imports/storage do Minha DELPI Chat. Para
 - workflow wait/resume latency;
 - duplicate event/write prevented;
 - provider/model availability;
-- cost por task/case quando disponível;
-- full-page/panel parity;
+- STT/TTS/vision provider latency/error when used;
+- media ingest/transcription/video processing latency;
+- media session duration/concurrency;
+- frame/video sampling rate when applicable;
+- network degradation/fallback rate;
+- raw-media persisted versus transient count by policy class;
+- cost por task/case/meeting/frontline session quando disponível;
+- surface policy parity;
 - independence violations = 0.
 
 ## 8. Evals families
 
-Aplicar o protocolo R1–R11 quando pertinente e acrescentar famílias do Copilot:
+Aplicar R1–R11 quando pertinente e acrescentar famílias do Copilot:
 
 1. no-tool/direct;
 2. navigation;
@@ -184,24 +245,32 @@ Aplicar o protocolo R1–R11 quando pertinente e acrescentar famílias do Copilo
 7. expertise selection positive/sibling/negative;
 8. unknown/metamorphic Expertise Pack;
 9. Playbook applicability;
-10. multimodal evidence;
-11. epistemic labeling;
-12. Business Graph traversal;
-13. single write + Decision Gate;
-14. destructive/approval workflow;
-15. durable wait/resume;
-16. crash/no duplicate write;
-17. Task/Case lifecycle;
-18. Room/Inbox permissions;
-19. Watch event/dedupe;
-20. injection multi-source;
-21. unknown app/iframe/relation;
-22. send/stream parity;
-23. full-page/panel/contextual parity;
-24. simulation;
-25. model routing;
-26. standalone independence with Chat unavailable;
-27. anchor workflow end-to-end.
+10. document/image multimodal Evidence;
+11. voice STT/TTS/modality parity;
+12. camera/video provenance/uncertainty;
+13. epistemic labeling;
+14. Business Graph traversal;
+15. single write + Decision Gate;
+16. destructive/approval workflow;
+17. durable wait/resume;
+18. crash/no duplicate write;
+19. Task/Case lifecycle;
+20. Room/Inbox permissions;
+21. Watch event/dedupe;
+22. injection multi-source/media;
+23. unknown app/iframe/relation;
+24. send/stream/voice parity;
+25. Global/Workspace/Meeting/Frontline security parity;
+26. Meeting capture/ata/action candidate;
+27. shared-device/Frontline user isolation;
+28. Frontline guidance/escalation;
+29. process-learning candidate governance;
+30. simulation;
+31. model routing;
+32. advanced realtime budgets/fallback when enabled;
+33. industrial/OT negative safety cases;
+34. standalone independence with Chat unavailable;
+35. anchor workflows end-to-end.
 
 ## 9. Generalization
 
@@ -213,6 +282,7 @@ app
 iframe
 Expertise Pack
 entity/relationship type
+device class/media provider when the abstraction claims generalization
 ```
 
 quando a feature correspondente estiver no release.
@@ -224,14 +294,15 @@ Renomear metadata técnica preservando semântica:
 - provider/path/operationId;
 - app/route internal IDs quando contract permitir;
 - expertise key;
-- relation technical identifier.
+- relation technical identifier;
+- media provider implementation quando port contract permanecer equivalente.
 
-Comportamento semântico deve permanecer equivalente quando authority semântica/schema não mudou.
+Comportamento semântico deve permanecer equivalente quando authority/schema não mudou.
 
 ## 11. Safety evals
 
 - unauthorized capability ausente/bloqueada;
-- Workspace/Pack/Playbook/RAG/Tool/Event/Room injection não altera policy;
+- Workspace/Pack/Playbook/RAG/Tool/Event/Room/media injection não altera policy;
 - Decision antiga não autoriza payload novo;
 - URL arbitrária rejeitada;
 - retry write não idempotente bloqueado;
@@ -239,8 +310,17 @@ Comportamento semântico deve permanecer equivalente quando authority semântica
 - Room/Case membership não concede source access;
 - Watch ACT sem policy bloqueado;
 - provider proibido por data policy não recebe payload;
-- secrets/PII não aparecem em logs indevidos;
-- Chat runtime indisponível não degrada autorização/execução do Copilot.
+- secrets/PII/raw media não aparecem em logs indevidos;
+- Chat runtime indisponível não degrada autorização/execução;
+- mic/camera/screen não iniciam ocultamente;
+- F5/reconnect não reativa capture silenciosamente;
+- voice command não amplia RBAC;
+- user B em shared device não recebe state do user A;
+- visual finding não vira quality fact sem authority;
+- meeting statement não executa write implicitamente;
+- process observation não muda production behavior automaticamente;
+- free-form LLM→machine command bloqueado;
+- Copilot L5 não relaxa OT safety.
 
 ## 12. Evidence quality evals
 
@@ -248,11 +328,44 @@ Comportamento semântico deve permanecer equivalente quando authority semântica
 - CALCULATION inputs/metodologia consistentes;
 - HYPOTHESIS não vira fato;
 - conflict/staleness aparece;
-- multimodal region é rastreável;
+- multimodal page/region/frame/time-range rastreável;
+- voice/transcript segment rastreável quando necessário e permitido;
+- confidence/limitations coerentes;
 - conclusion sem evidence suficiente é limitada;
 - recommendation não é narrada como execução.
 
-## 13. Durable work evals
+## 13. Meeting evals
+
+- capture start/stop explícito;
+- indicators corretos;
+- transcript accuracy em amostras representativas;
+- live queries obey RBAC;
+- facts sourced;
+- summary faithfulness;
+- decision extraction distinguish candidate/confirmed;
+- action extraction does not execute;
+- ata viva links evidence/tasks/cases corretamente;
+- source revocation respected;
+- retention classes honored;
+- no Chat dependency.
+
+## 14. Frontline evals
+
+- large-touch/accessibility;
+- noisy environment speech;
+- text/touch fallback;
+- current OP/machine/product/operation context;
+- wrong/stale context correction;
+- procedure/drawing revision freshness;
+- camera finding confidence;
+- unavailable network/provider safe degradation;
+- escalation owner correctness;
+- issue registration governance;
+- shared-device switch isolation;
+- no hidden surveillance;
+- no physical machine command path.
+
+## 15. Durable work evals
 
 - checkpoint;
 - F5/restart;
@@ -260,13 +373,14 @@ Comportamento semântico deve permanecer equivalente quando authority semântica
 - wait_approval;
 - wait_event;
 - duplicate event;
+- repeated voice/transcript action;
 - crash after write;
 - concurrent resume;
 - cancel/expire;
 - policy change durante wait;
 - no duplicate effect.
 
-## 14. UX evals
+## 16. UX evals
 
 - activity = estado real;
 - context chips corretos;
@@ -276,18 +390,21 @@ Comportamento semântico deve permanecer equivalente quando authority semântica
 - Inbox state correto;
 - simulation claramente rotulada;
 - nenhuma tarefa normal exige troca de agente;
-- mesmas conversas/estado do Copilot entre full-page e global panel quando o contrato prevê continuidade;
-- accessibility.
+- mesmas conversas/estado entre surfaces quando contrato prevê continuidade;
+- capture/privacy indicators;
+- Meeting/Frontline accessibility;
+- captions/transcript and non-voice fallback.
 
-## 15. Candidate protocol
+## 17. Candidate protocol
 
 ```text
 baseline
 → implementation
-→ candidate SHA/config/contracts hashes
+→ candidate SHA/config/contracts/policy hashes
 → offline evals
 → integration/live
-→ surface validation
+→ surface/media validation
+→ privacy/shared-device/OT validation when applicable
 → independence validation
 → adversarial/residual scan
 → release decision
@@ -295,7 +412,7 @@ baseline
 
 Evidence de candidate anterior não fecha candidate materialmente alterado.
 
-## 16. Release blockers
+## 18. Release blockers
 
 ```text
 required safety FAIL/INCONCLUSIVE
@@ -311,29 +428,44 @@ Watch ACT sem policy
 simulation vira fato
 provider data policy violada
 activity afirma execução inexistente
-R8 acima do threshold vigente
 evidence não reproduzível
 Chat runtime dependency detectada
 Copilot storage/telemetry usando Chat authority
+hidden media capture
+undefined/violated media retention
+shared-device state leak
+voice permission bypass
+unvalidated visual finding promoted to fact
+hidden worker surveillance
+arbitrary LLM OT command
+safety interlock bypass
 ```
 
-## 17. Dashboards/admin
+## 19. Dashboards/admin
 
 Visões futuras:
 
-- usage/success/failure por capability/app;
+- usage/success/failure por capability/app/surface;
 - expertise/playbook selection quality;
 - evidence coverage;
 - decisions/approvals;
 - workflow/task/case outcomes;
+- Meeting action closure/summary corrections;
+- Frontline help/escalation outcomes;
 - Watch alerts;
+- media session/provider latency/cost/failures;
+- retention/deletion compliance;
+- shared-device/session violations;
+- privacy/safety blocks;
 - top blocked intents;
-- latency/cost/model usage;
+- model usage;
 - user feedback;
-- AI-ready coverage;
+- AI-ready/Frontline readiness coverage;
 - standalone independence violations;
-- rollout/readiness progress do próprio Copilot.
+- rollout/readiness progress.
 
-## 18. Regra de privacidade
+## 20. Regra de privacidade
 
-Observabilidade registra decisões operacionais estruturadas, não prompt interno/chain-of-thought, JWT, secrets ou payload sensível integral.
+Observabilidade registra decisões operacionais estruturadas, não prompt interno/chain-of-thought, JWT, secrets, full sensitive payload, raw audio/video/screenshots ou biometric data sem purpose/owner/policy explícitos.
+
+Telemetry não deve se transformar em um sistema de vigilância de trabalhadores.
