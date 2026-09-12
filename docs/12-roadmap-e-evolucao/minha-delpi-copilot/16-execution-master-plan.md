@@ -1,882 +1,748 @@
 # Minha DELPI Copilot — Plano Mestre Executável
 
 **Status:** planejamento executável canônico  
-**Owner arquitetural:** plataforma Minha DELPI  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
+**Produto:** aplicação standalone nova  
 **Próxima etapa:** `C0.S0`  
-**Arquitetura/patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
+**Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
+**Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
+**Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
+**Patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
 **DoD:** [`14-definition-of-done.md`](./14-definition-of-done.md)  
 **Testes:** [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md)  
 **Ledger:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
 
-## 1. Objetivo
+## 1. Decisão de execução
 
-Construir o Minha DELPI Copilot em ordem **foundation-first**, estabilizando authorities, contratos, estados, ports, arquitetura de código, design patterns e gates antes de funcionalidades que dependem deles.
-
-O objetivo explícito é evitar:
-
-- refatoração previsível por contrato criado tarde;
-- duas abstrações para a mesma responsabilidade;
-- migrations sucessivas para o mesmo conceito;
-- implementação piloto que depois precisa ser generalizada;
-- catálogos paralelos;
-- design patterns escolhidos de forma inconsistente por etapa;
-- infra/framework vazando para camadas internas;
-- overengineering especulativo;
-- retrabalho de prompts, schemas e testes;
-- gasto desnecessário de tokens do Cursor por execução fora de ordem.
+O Copilot será construído do zero como aplicação independente.
 
 ```text
-FOUNDATIONS
-→ PLATFORM/CONTEXT
+PROIBIDO
+→ evoluir minha-delpi-ai-api para virar Copilot
+→ evoluir plugins/minha-delpi-chat para virar Copilot
+→ esperar correções/refactors do Chat para continuar Copilot
+→ compartilhar tabelas/runtime do Chat como foundation
+
+OBRIGATÓRIO
+→ nova Copilot API
+→ novo Copilot MFE
+→ migrations próprias
+→ manifesto próprio
+→ Gateway/Compose próprios
+→ deploy/rollback próprios
+→ integração normal com Portal/Core/Keycloak/APIs
+```
+
+O Chat é apenas sistema vizinho/referência durante o inventário.
+
+## 2. Objetivo foundation-first
+
+Evitar que inteligência seja construída antes de provar que a nova aplicação está corretamente integrada à plataforma.
+
+```text
+PLATFORM + ARCHITECTURE FOUNDATIONS
+→ STANDALONE APPLICATION BOOTSTRAP
+→ PORTAL CONTEXT / PLATFORM COMMANDS
 → INTELLIGENCE CORE
 → BUSINESS READS + GRAPH
-→ GOVERNED WRITES
-→ DURABLE WORK
-→ PROACTIVITY + ECOSYSTEM
-→ OPTIMIZATION + ROLLOUT
+→ GOVERNED WRITES + DURABLE FOUNDATION
+→ PRODUCT WORK + PROACTIVITY + ECOSYSTEM
+→ AUTONOMY + OPTIMIZATION + ROLLOUT
 ```
 
-## 2. Regra de autoridade documental
-
-A ordem é definida somente aqui.
-
-A arquitetura de código e escolha de design patterns é definida em:
+## 3. Authorities documentais
 
 ```text
-49-architecture-and-design-patterns-standard.md
+16 = ordem
+17 = ownership/contracts
+20 = tests/gates
+21 = state/persistence
+25 = requirements
+49 = code architecture/design patterns
+50 = standalone product boundary
+51 = current platform baseline
+52 = repo/bootstrap target
+ledger = execution evidence/status
 ```
 
-Documentos como:
+Specs temáticas não podem reabrir a decisão de usar Chat como base.
 
-- `32-expertise-runtime-implementation-plan.md`;
-- `44-operational-intelligence-implementation-plan.md`;
-- `45-operational-intelligence-testing-gates.md`;
-- `46-operational-intelligence-requirements.md`;
-- `47-cursor-operational-intelligence-extension.md`;
+## 4. Invariantes
 
-são **detalhes temáticos** e não podem liberar uma implementação antes da fase `C*` correspondente estar desbloqueada neste plano.
-
-Se qualquer documento divergir da ordem abaixo:
-
-```text
-16-execution-master-plan.md vence.
-```
-
-Se uma implementação divergir do style/layers/patterns normativos sem decisão arquitetural explícita:
-
-```text
-49-architecture-and-design-patterns-standard.md vence.
-```
-
-## 3. Invariantes
-
-1. Um único Copilot de produto; departamentos especializam por expertise/playbooks, não por runtimes separados.
-2. Não criar segundo planner/tool executor fora de `minha-delpi-ai-api`.
-3. Business Actions usam OpenAPI + Action Catalog + executor genérico canônico.
-4. Capability Projection é índice/projeção, nunca segunda authority técnica.
-5. Expertise e Playbooks orientam; não concedem permission nem carregam endpoint técnico como authority.
-6. Core API continua authority de apps/rotas/permissões.
-7. Workspace Context é contexto, nunca autorização.
-8. Entity/Evidence/Workflow/Task/Case/Decision/Event usam contratos compartilhados antes de features especializadas.
-9. Business Graph referencia entidades/sources; não replica bancos operacionais.
-10. Platform Actions usam IDs tipados e Portal resolve/revalida targets; LLM não inventa URL.
-11. Iframe usa bridge tipado para experiência; Business Action não é DOM automation.
-12. Writes passam por RBAC/policy/Decision Gate/idempotency/audit conforme risco.
-13. Workflow durável não pode duplicar write em retry/resume.
-14. Watch não cria autoridade nova e revalida permission/policy no disparo.
-15. Não persistir chain-of-thought.
-16. Qualquer feature nova deve reutilizar os primitives C0; criar contrato paralelo é FAIL arquitetural.
-17. Runtime segue Clean Architecture + Ports & Adapters + DDD pragmático conforme `49`; patterns adicionais só entram quando a matriz/Abstraction Gate justificar.
-18. Domain/Application não dependem de framework/provider concreto; wiring concreto ocorre no Composition Root.
-19. Estado durável de negócio permanece no backend; frontend não se torna authority de Workflow/Case/Decision/Watch/Graph.
-20. Migração legada usa Adapter/Anti-Corruption Layer/Strangler quando aplicável, sempre com exit criteria.
-21. `PARTIAL`, `INCONCLUSIVE`, `LEGACY_FALLBACK` material, `TEST_NOT_RUN` e evidence stale bloqueiam fechamento.
-
-## 4. Dependência crítica da Minha DELPI AI
-
-A correção OpenAPI-first/LLM-decoupling permanece uma dependência externa enquanto os gates relevantes não estiverem `PASS` no candidate vigente.
-
-Consequência:
-
-```text
-C0–C2
-→ podem avançar sem Business Action production-ready
-
-C3+ que dependa de Business Actions reais
-→ bloqueado até gates OpenAPI-first/tool-routing/argument-binding/evals aplicáveis PASS
-```
-
-Não recriar a Onda J dentro do Copilot.
+1. Copilot API é serviço independente.
+2. Copilot MFE é microfrontend independente.
+3. Nenhum runtime import do Chat.
+4. Nenhuma tabela do Chat é authority Copilot.
+5. Nenhum endpoint do Chat é proxy obrigatório para Copilot.
+6. Core API continua authority de apps/rotas/RBAC.
+7. Keycloak continua authority de autenticação.
+8. Portal continua Shell/Router/host; não recebe AI business logic.
+9. Domain APIs continuam authority de seus dados/regras.
+10. `api-delpi` continua owner das integrações DELPI/TOTVS que já expõe.
+11. `plugin-ui` é design system compartilhado.
+12. Business Actions são OpenAPI-first nativamente no Copilot.
+13. Capability Projection não duplica OpenAPI/owners.
+14. Workspace Context não concede permission.
+15. Expertise/Playbooks não concedem permission.
+16. Shared primitives internos do Copilot nascem antes das features consumidoras.
+17. Business Graph referencia dados; não replica sistemas owners.
+18. Writes usam Decision Gate + revalidation + idempotency/audit.
+19. Durable Work não cria segundo action executor.
+20. Chain-of-thought não é persistida/exposta.
+21. Clean Architecture + Ports & Adapters + DDD pragmático conforme `49`.
+22. Não criar abstraction/speculative generic framework sem Abstraction Gate.
+23. Infraestrutura compartilhada só é reutilizada quando neutra e governada.
+24. `PARTIAL`, `INCONCLUSIVE`, stale evidence, duplicate authority e Chat dependency material bloqueiam fechamento.
 
 ## 5. Grafo canônico
 
 ```text
-C0 — Fundação arquitetural, patterns e contratos universais
+C0 — Platform + Architecture Foundation Freeze
  |
  v
-C1 — Portal, navegação, entidades e Workspace Context
+C1 — Standalone Application Bootstrap
  |
  v
-C2 — Intelligence Core: Copilot único, expertise, knowledge, multimodal e evidence
+C2 — Portal Context + Platform Commands
  |
  v
-C3 — Business Reads + DELPI Business Graph + análise cross-domain
+C3 — Intelligence Core
  |
  v
-C4 — Governed Writes + Decision Gates + idempotência
+C4 — Business Reads + DELPI Business Graph
  |
  v
-C5 — Durable Work: Workflows + Tasks + Cases + Rooms + Inbox
+C5 — Governed Writes + Durable Work Foundation
  |
  v
-C6 — Proatividade + AI-ready Ecosystem + Governed Learning
+C6 — Tasks/Cases/Rooms/Inbox/Watch + Ecosystem/Learning
  |
  v
-C7 — Autonomia avançada + Simulation + Model Routing + Rollout + cleanup
+C7 — Autonomy + Simulation + Model Routing + Rollout
 ```
-
-Nenhuma fase dependente começa porque “já existe código parcial”. Só começa quando o gate anterior exigido estiver `PASS`.
 
 ---
 
-# C0 — Fundação arquitetural, patterns e contratos universais
+# C0 — Platform + Architecture Foundation Freeze
 
-## C0.S0 — Rebaseline e inventário total
+## C0.S0 — Rebaseline factual do monorepo
 
-Antes de runtime diff, inventariar com arquivo/símbolo/owner/consumer:
+Inventariar com arquivo/símbolo/contrato/owner/consumer.
 
-### Plataforma
-- Portal Router/AuthContext/AppHost/AppLauncher;
-- Core `/me`, `/me/apps`, `/me/routes`;
-- manifesto/routes/permissions;
-- MFE/iframe/external lifecycle;
-- salas de interação existentes;
-- notifications/inbox existentes.
+### Portal
 
-### AI
-- turn understanding;
-- planner;
-- Action Catalog/importer/index;
-- generic executor;
-- confirmation/policy;
-- RAG/knowledge ACL;
-- persistence/session/turn metadata;
-- send/stream/simulate;
-- document vision/drawing analysis;
-- model/provider abstractions;
-- tracing/evals.
+- `AuthContext`/Keycloak lifecycle;
+- `AppHost` federated lifecycle;
+- AppLauncher/menu/routes;
+- `getAccessToken` host props;
+- full-page layouts;
+- overlay/panel/drawer infrastructure para global Copilot surface;
+- Workspace/context patterns;
+- notifications/socket;
+- theme/accessibility;
+- federation share scope.
 
-### Agents/skills legados
-- agent entities/repositories/controllers/admin;
-- `AgentSpecializationService`;
-- `ChatWorkspaceAgentActivationService`;
-- `ChatSoftAgentHandoffService`;
-- `ChatSkillRegistry`;
-- `agent_id`, `chat_mode`, project default agent;
-- knowledge/actions/tools condicionados a agent;
-- UI de agent/handoff.
+### Core API
 
-### Operação corporativa
-- canonical entity IDs por domínio;
-- relações cross-domain existentes;
-- event bus/event types;
-- workers/queues/background jobs;
+- `/me`, `/me/apps`, `/me/routes`;
+- manifest registration/versioning;
+- app/route/permission models;
+- RBAC resolver;
+- notifications;
+- presence/app usage;
+- audit;
+- avatar/user metadata;
+- integration/service auth patterns.
+
+### Gateway/Infra
+
+- API/MFE path conventions;
+- streaming/websocket/SSE patterns;
+- dev/prod parity;
+- Compose profiles/services;
+- postgres/storage patterns;
+- health checks;
+- sequential scripts;
+- env examples;
+- shared volumes/network.
+
+### MFEs
+
+Inventariar representativamente e depois cobrir o conjunto relevante:
+
+- manifests;
+- federation config;
+- bootstrap/mount/unmount;
+- `plugin-ui` consumption;
+- HTTP/auth client;
+- deep links/context;
+- permission usage;
+- current portal integrations.
+
+### APIs
+
+Inventariar APIs disponíveis e seus contratos:
+
+- `api-delpi`;
+- commercial-api;
+- supplies/requests/financial/customer-experience e demais APIs existentes;
+- OpenAPI availability/version;
+- JWT/auth middleware;
+- permission requirements;
+- idempotency/write semantics;
+- events/websockets;
+- pagination/error envelopes;
+- entity IDs/deep links.
+
+### Existing collaboration/work infrastructure
+
+- commercial interaction rooms;
+- Minhas Solicitações/cases/requests;
+- notifications/inbox-like concepts;
 - approvals;
-- audit/provenance;
-- workflows persistentes;
-- requests/cases existentes que possam ser generalizados;
-- idempotency support;
-- knowledge lifecycle.
+- event bus/jobs/workers/schedulers;
+- durable workflow patterns if any.
 
-### Arquitetura e padrões do código atual
-- camadas/packages `domain/application/interfaces/infrastructure` ou equivalentes;
-- use cases/application services;
-- ports/adapters/gateways/repositories;
-- DI/composition root;
-- DTO/mappers e boundary schemas;
-- error/result taxonomy;
-- state machines/lifecycle patterns;
-- domain events/integration events/event envelopes;
-- outbox/event publication;
-- retry/timeout/circuit-breaker/idempotency;
-- transaction/unit-of-work conventions;
-- migrations/compatibility/strangler patterns;
-- organização frontend `ui/state/data`;
-- query/cache, Workspace state, Conversation state e Local UI state;
-- conventions para hooks/reducers/stores/adapters;
-- testing doubles/contract/integration patterns.
+### Chat — reference only
 
-Classificar cada conceito existente:
+Mapear apenas para **não repetir erros** e identificar componentes neutros:
+
+- `minha-delpi-ai-api` architecture;
+- `plugins/minha-delpi-chat` federation/manifest;
+- provider/RAG/multimodal patterns;
+- tool/action architecture;
+- known coupling/legacy problems.
+
+Classificação permitida para qualquer finding:
 
 ```text
-REUSE
-EXTEND
-MIGRATE
-CREATE_REQUIRED
-DEPRECATE
-REMOVE
+PLATFORM_REUSE
+NEUTRAL_SHARED_REUSE
+COPILOT_IMPLEMENT_NEW
+EXTEND_PLATFORM_CONTRACT
+ADAPTER_REQUIRED
+ADR_REQUIRED
 NOT_PROVEN
+OUT_OF_SCOPE
 ```
 
-**Saídas obrigatórias:**
-- `18-app-onboarding-matrix.md` atualizado;
-- `17-component-and-contract-map.md` atualizado com fatos;
-- matriz de migração agent→expertise;
-- mapa entity/event/workflow/room/notification;
-- `49-architecture-and-design-patterns-standard.md` revalidado contra patterns reais do repositório;
-- divergências entre `49` e padrão real classificadas como `ALIGN_DOC`, `MIGRATE_CODE`, `ADR_REQUIRED` ou `NOT_PROVEN`;
-- ledger com `HEAD_BEFORE` e evidence.
+Nunca classificar `minha-delpi-ai-api` como runtime base do Copilot.
 
-**Proibido:** runtime diff de Copilot antes de C0.S0 fechar.
+### Saídas de C0.S0
 
-## C0.S1 — Freeze de authorities e bounded contexts
+- platform integration inventory;
+- API/OpenAPI inventory;
+- MFE/manifest inventory;
+- shared infrastructure map;
+- existing rooms/events/notifications map;
+- `17` atualizado;
+- `18` atualizado;
+- `51` revalidado;
+- ledger HEAD/evidence.
 
-Definir owner canônico para:
+**Sem runtime diff do Copilot.**
+
+## C0.S1 — Freeze de product boundary e nomes
+
+Congelar:
 
 ```text
-identity
-permissions
-app/route navigation
-business action contract
-capability projection
+backend root name
+MFE root name
+serviceName
+container name convention
+MFE basePath
+API basePath
+manifest id
+DB/schema ownership
+health path
+admin paths
+streaming transport direction
+```
+
+Target recomendado:
+
+```text
+minha-delpi-copilot-api/
+plugins/minha-delpi-copilot/
+/apps/minha-delpi-copilot
+/apps/minha-delpi-copilot-api
+```
+
+Mudança exige evidence/ADR.
+
+## C0.S2 — Freeze de authorities e bounded contexts
+
+Definir owners para:
+
+```text
+identity/RBAC
+portal hosting/navigation
 workspace context
-entity identity
-relationship identity
-knowledge visibility
-expertise
-playbook
-evidence/provenance
-policy/sensitivity
-decision gate
+Copilot conversations
+capability discovery
+OpenAPI action catalog
+planner
+expertise/playbook
+knowledge
+multimodal
+entity/relationship projection
+evidence
+policy/decision
 workflow/task/case
-room/inbox
-watch/event
-model/compute policy
-audit/observability
+watch/inbox semantics
+notification delivery
+audit/evals
+model/provider policy
 ```
 
-Toda responsabilidade deve possuir um owner; caches/indexes são derivados.
+## C0.S3 — Freeze de shared primitives
 
-Também congelar/revalidar os bounded contexts conceituais do `49`, sem obrigar package artificial quando o código real já possui owner equivalente:
+Definir/reutilizar semanticamente:
+
+- `CorrelationContext`;
+- `EntityRef`;
+- `RelationshipRef`;
+- `SourceRef`;
+- `EvidenceRef`;
+- `OutcomeRef`;
+- `CapabilityProjection`;
+- `PlatformCommand/Result`;
+- `WorkspaceContext`;
+- `ExpertisePack/Selection/Context`;
+- `DomainPlaybook`;
+- `DecisionGateRequest/Decision`;
+- `WorkflowPlan/Step`;
+- `TaskRef`;
+- `CaseRef`;
+- `EventEnvelope`;
+- audit contract.
+
+C0 congela semântica; tabelas surgem apenas se necessárias.
+
+## C0.S4 — Freeze de arquitetura/patterns/persistence boundaries
+
+Aplicar `49` e congelar:
+
+- layers/dependency rules;
+- ports/adapters;
+- composition root/DI;
+- repositories;
+- error/result model;
+- state machine conventions;
+- event/outbox conventions;
+- retry/timeout/idempotency;
+- frontend state ownership;
+- migration policy;
+- testing pattern;
+- Abstraction Gate;
+- ADR exception process.
+
+Definir storage ownership da nova Copilot API sem usar Chat tables.
+
+## C0.S5 — Integration contracts
+
+Congelar contratos de integração:
 
 ```text
-Copilot Intelligence
-Capability & Action Integration
-Expertise & Playbooks
-Knowledge
-Evidence & Provenance
-Work Management
-Policy & Decision
-Platform Experience
-Business Graph
-Observability & Evals
+Portal Host ↔ Copilot MFE
+Portal WorkspaceContext ↔ Copilot
+Copilot MFE ↔ Copilot API
+Copilot API ↔ Core API
+Copilot API ↔ Domain APIs
+Copilot API ↔ AI providers/stores
+Copilot API ↔ notification/event adapters
 ```
 
-## C0.S2 — Freeze de primitives e envelopes compartilhados
+## C0.S6 — RED contract/conformance harness
 
-Antes de implementar features dependentes, definir/reutilizar semanticamente os contratos abaixo. Nomes finais dependem do inventário real.
+Antes do runtime:
 
-### Identidade e correlação
-- `CorrelationContextV1` / request-turn-workflow correlation;
-- subject/user reference seguro.
+- invalid JWT;
+- unauthorized Core app/route;
+- invalid WorkspaceContext;
+- invalid Entity/Evidence refs;
+- Chat dependency detection;
+- forbidden imports/dependency direction;
+- invalid manifest/base path;
+- invalid federation host contract;
+- secret/token leakage;
+- duplicate authority;
+- invalid OpenAPI action contract;
+- Decision hash/replay negatives;
+- event duplicate;
+- architecture pattern conformance.
 
-### Entidades e fontes
-- `EntityRefV1`;
-- `RelationshipRefV1`;
-- `SourceRefV1`;
-- `OutcomeRefV1`.
+## C0.S7 — FOUNDATION_FREEZE
 
-### Evidence/provenance
-- `EvidenceRefV1`;
-- `MultimodalEvidenceRefV1`;
-- freshness/confidence/provenance semantics;
-- epistemic class: `FACT | CALCULATION | HYPOTHESIS | CONCLUSION | RECOMMENDATION`.
-
-### Capabilities/plataforma
-- `CapabilityProjectionV1`;
-- `PlatformCommandV1`;
-- `PlatformCommandResultV1`;
-- `WorkspaceContextV1`;
-- `IframeBridgeEnvelopeV1`.
-
-### Especialização
-- `ExpertisePackV1`;
-- `ExpertiseSelectionV1`;
-- `ExpertiseContextV1`;
-- `DomainPlaybookV1`.
-
-### Policy/decisão
-- `DecisionGateRequestV1`;
-- `DecisionGateDecisionV1`;
-- níveis mínimos: `NO_GATE | ACKNOWLEDGE | CONFIRM | REVIEW_AND_CONFIRM | APPROVAL_WORKFLOW | BLOCK`.
-
-### Trabalho durável
-- `WorkflowPlanV1`;
-- `WorkflowStepV1`;
-- `TaskRefV1` + lifecycle enum;
-- `CaseRefV1` + lifecycle enum;
-- checkpoint/wait-state semantics.
-
-### Eventos
-- `EventEnvelopeV1` com source/type/entity refs/eventId/occurredAt/payloadRef;
-- dedupe/correlation semantics.
-
-### Auditoria
-- `AuditEventV1` ou integração explícita com contrato canônico existente.
-
-C0 define **contratos e semântica**, não precisa criar todas as tabelas/runtime correspondentes.
-
-## C0.S3 — Ports, persistence boundaries e schema strategy
-
-Antes de migrations, definir portas e owner de persistência:
-
-- capability/expertise/playbook catalogs;
-- evidence/provenance store somente se necessário;
-- workflow/task/case repositories;
-- graph relationship repository/index;
-- event/watch repository;
-- decision/approval persistence;
-- audit integration.
-
-Regra:
+C1 desbloqueia somente se:
 
 ```text
-reuse existing storage > extend existing owner > new storage only with proven gap
-```
-
-Definir desde já:
-- IDs estáveis;
-- versionamento;
-- optimistic/concurrency rules;
-- retention/LGPD;
-- expand/cutover/cleanup migration pattern;
-- index requirements;
-- idempotency boundaries.
-
-Patterns obrigatórios conforme `49`:
-
-```text
-external boundary → Port + Adapter
-owned aggregate/lifecycle persistence → Repository
-legacy incompatible model → Adapter + Anti-Corruption Layer
-legacy gradual cutover → Strangler Fig
-durable write/retry boundary → Idempotency
-state + event atomicity → Transactional Outbox somente se requisito real
-```
-
-Não criar Repository para simples proxy HTTP nem nova storage authority por conveniência.
-
-## C0.S4 — Cross-cutting semantics + architecture/pattern freeze
-
-Congelar antes das features:
-
-### Semântica transversal
-- versioning compatibility;
-- correlation IDs;
-- provenance/freshness;
-- error taxonomy;
-- permission revalidation;
-- retry/idempotency semantics;
-- timeout/cancellation;
-- payload size/budget;
-- audit/redaction;
-- feature flag ownership/exit criteria;
-- no-CoT observability.
-
-### Architecture style
-
-```text
-Clean Architecture
-+ Ports & Adapters / Hexagonal
-+ DDD pragmático
-+ Event-Driven somente onde houver eventos reais
-+ State Machines para lifecycle não trivial
-+ CQRS leve somente quando houver assimetria material
-```
-
-### Layer responsibilities
-
-Backend:
-
-```text
-Domain         → entities/value objects/invariantes/policies puras
-Application    → use cases/orchestration/ports
-Interfaces     → controllers/DTOs/event boundaries/mappers
-Infrastructure → DB/HTTP/OpenAPI/LLM/RAG/Vision/Event adapters
-Composition    → DI/wiring concreto
-```
-
-Frontend:
-
-```text
-ui
-state
-data
-```
-
-Owners de estado:
-
-```text
-server state           → query/cache layer existente
-workspace state        → Portal Workspace Context
-conversation state     → chat/copilot state
-local UI state         → component/hook
-durable business state → backend canônico
-```
-
-### Dependency rules
-
-- Domain/Application não importam framework/client/provider concreto;
-- infrastructure implementa ports;
-- business rules server-side não são duplicadas no frontend;
-- concrete wiring ocorre no Composition Root;
-- ORM/persistence model não vira API contract automaticamente.
-
-### Pattern Decision Matrix
-
-Congelar/revalidar a matriz do `49` para:
-
-- Port + Adapter;
-- Use Case/Application Service;
-- Repository;
-- State Machine;
-- Policy/Specification;
-- Strategy;
-- Adapter/Anti-Corruption Layer;
-- Strangler Fig;
-- Command + Handler;
-- Transactional Outbox;
-- Idempotency;
-- Event-Driven;
-- Saga somente com compensação real;
-- resilience patterns;
-- DTO + Mapper;
-- Dependency Injection/Composition Root;
-- Factory/Builder quando justificadas;
-- CQRS leve quando necessário.
-
-### Abstraction Gate
-
-Antes de criar `interface/port/repository/factory/strategy/registry/base class/generic engine`, provar boundary/lifecycle/variação/consumer/testability e inexistência de equivalente no repo.
-
-Abstração puramente especulativa = FAIL.
-
-### Exception process
-
-Divergência material do `49` exige decisão arquitetural/ADR no padrão real do repo antes do código.
-
-## C0.S5 — Contract + architecture conformance harness e RED gates
-
-Criar/reutilizar testes de contrato para os primitives materiais:
-
-- invalid schema/version;
-- unauthorized target;
-- evidence sem provenance quando exigida;
-- pack/playbook tentando conceder permission;
-- Decision Gate com arguments hash divergente;
-- workflow resume sem idempotency protection;
-- duplicate event;
-- entity/relationship permission leakage;
-- iframe invalid origin/source/session;
-- secret/JWT em context/bridge/state;
-- send/stream parity do envelope comum.
-
-Criar/reutilizar checks de conformidade arquitetural quando tecnicamente viáveis:
-
-- Domain/Application sem imports proibidos de framework/infra;
-- dependency direction preservada;
-- frontend durable business state ausente;
-- no duplicate primitive/contracts;
-- adapter/port contract tests;
-- state transition tests para lifecycle complexo;
-- error translation tests;
-- write retry/idempotency negatives;
-- migration compatibility/residual checks quando aplicável.
-
-## C0.S6 — FOUNDATION_FREEZE
-
-Só desbloqueia C1 se:
-
-```text
-INVENTORY = PASS
+PLATFORM_INVENTORY = PASS
+STANDALONE_BOUNDARY = PASS
+NAMES_PATHS = PASS
 AUTHORITIES = PASS
 SHARED_PRIMITIVES = PASS
+ARCHITECTURE_PATTERNS = PASS
 PERSISTENCE_BOUNDARIES = PASS
-CROSS_CUTTING_SEMANTICS = PASS
-CONTRACT_HARNESS = PASS
+INTEGRATION_CONTRACTS = PASS
+CONFORMANCE_HARNESS = PASS
+CHAT_RUNTIME_DEPENDENCY = 0
 FOUNDATION_DUPLICATION = 0 material
-
-ARCHITECTURE_STYLE = PASS
-LAYER_RESPONSIBILITIES = PASS
-DEPENDENCY_RULES = PASS
-BOUNDED_CONTEXTS = PASS
-PATTERN_DECISION_MATRIX = PASS
-ERROR_MODEL = PASS
-EVENT_MODEL = PASS
-STATE_MACHINE_RULES = PASS
-PERSISTENCE_RULES = PASS
-FRONTEND_STATE_RULES = PASS
-RESILIENCE_RULES = PASS
-TESTING_PATTERN = PASS
-MIGRATION_PATTERNS = PASS
-ABSTRACTION_GATE = PASS
-ARCHITECTURAL_EXCEPTION_PROCESS = PASS
 ```
 
 ---
 
-# C1 — Portal, navegação, entidades e Workspace Context
+# C1 — Standalone Application Bootstrap
 
-Objetivo: estabelecer a interação segura com a plataforma antes de Business Actions.
+Objetivo: provar aplicação independente antes da inteligência.
 
-## C1.S1 — Authorized Portal Capability Projection
-`/me/apps` → authorized app/route capabilities, sem lista manual.
+## C1.S1 — Copilot API skeleton
 
-Pattern esperado: projection + Port/Adapter quando houver boundary + use case/application orchestration; não criar catalog owner paralelo.
+- novo root;
+- Flask/app factory conforme padrão aprovado;
+- domain/application/interfaces/infrastructure/composition;
+- config/env;
+- structured logging;
+- `/health`;
+- tests.
 
-## C1.S2 — CopilotBridge
-Validator + revalidation + handlers genéricos + typed result + trace.
+## C1.S2 — Authentication + Core context
 
-Pattern esperado: Command + Handler + Adapter; registry por tipo genérico, nunca por app.
+- JWT validation;
+- Core current-user adapter;
+- `/me/apps`/routes/permission context conforme necessidade;
+- no local RBAC duplication.
 
-## C1.S3 — Navegação mínima
-- `portal.open_app`;
-- `portal.open_route`;
-- depois `portal.open_entity` usando `EntityRefV1`/route metadata.
+## C1.S3 — Copilot MFE skeleton
 
-## C1.S4 — Transport AI ↔ Portal
-Paridade send/stream; Chat MFE transporta, não autoriza.
+- novo plugin root;
+- Vite/React;
+- Module Federation;
+- `@delpi/plugin-ui`;
+- shared React;
+- bootstrap/mount/unmount;
+- typed host props.
 
-## C1.S5 — Workspace Context Store
-Implementar contrato C0, lifecycle app/route/entity/filter/selection/dateRange.
+## C1.S4 — Manifest + Core registration path
 
-## C1.S6 — MFE Context/Deep-link adapter
-Helper compartilhado para contexto e entity refs; sem business logic.
+- manifesto próprio;
+- minimal access/admin permissions;
+- routes;
+- backend metadata;
+- registration/update scripts conforme padrão vigente.
 
-## C1.S7 — Iframe Bridge
-`PORTAL_ONLY` universal + handshake seguro para classes superiores.
+## C1.S5 — Gateway + Compose dev/prod
 
-Pattern esperado: Adapter + Anti-Corruption Layer + typed message boundary.
+- API route própria;
+- MFE route própria;
+- services independentes;
+- no `depends_on` Chat;
+- env examples;
+- health.
 
-## C1.S8 — Contextual UX
-Context chips, abrir app/entidade, explicar view, remover contexto.
+## C1.S6 — Portal full-page mount
 
-## C1.S9 — Security/generalization gate
-TOCTOU, unauthorized, stale context, F5/logout, unknown app/iframe, URL arbitrary negative.
+- authorized user vê/abre app;
+- remoteEntry 200;
+- mount/unmount;
+- token → API;
+- F5/deep route;
+- no Chat running requirement.
 
----
+## C1.S7 — Global Copilot host contract
 
-# C2 — Intelligence Core
+Implementar host mínimo no Portal para side panel/global entry, reutilizando o mesmo MFE.
 
-Objetivo: estabilizar a inteligência transversal **antes** de conectá-la massivamente a Business Actions.
+Nenhuma AI logic no Portal.
 
-## C2.S1 — Single Copilot session model
-- sessão nova sem `agent_id` obrigatório;
-- compatibilidade legada explicitamente temporária;
-- projeto/contexto separado de identidade do Copilot.
+## C1.S8 — Independence Gate
 
-Migração: Adapter + Anti-Corruption Layer + Strangler, não dual-runtime permanente.
-
-## C2.S2 — Expertise Catalog/Repository
-Implementar authority versionada conforme contrato C0.
-
-Repository somente se C0 provar authority/lifecycle persistido próprio.
-
-## C2.S3 — Expertise retrieval/composition
-Top-K semântico + policy/ACL + bounded context; unknown pack sem core patch.
-
-Strategy somente se existirem estratégias reais/intercambiáveis; não criar Strategy só para embrulhar uma implementação.
-
-## C2.S4 — Domain Playbook Catalog/retrieval
-Método → stages/evidence/criteria; não endpoint.
-
-## C2.S5 — Knowledge ACL integration
-Expertise/project preference nunca amplia knowledge visibility.
-
-## C2.S6 — Multimodal Evidence Adapter
-Reaproveitar document vision/drawing analysis e produzir `EvidenceRef`/provenance/confidence.
-
-Extraction strategies são permitidas quando a variação native/OCR/VLM for real e o boundary justificar.
-
-## C2.S7 — Evidence/epistemic synthesis foundation
-Normalizar facts/calculations/hypotheses/conclusions/recommendations e source refs.
-
-## C2.S8 — Agent migration shadow mode
-Comparar expertise retrieval com comportamento legado sem usar shadow como fallback permanente.
-
-## C2.S9 — Operational activity/observability
-Mostrar etapas operacionais, expertise aplicada, sources e limitações; nunca CoT.
-
-## C2.S10 — Intelligence gate
-Positive/sibling/negative, unknown expertise, metamorphic expertise, multimodal injection, session-without-agent, unauthorized knowledge/capability.
-
----
-
-# C3 — Business Reads + DELPI Business Graph
-
-**Gate:** OpenAPI-first/Action Catalog relevante precisa estar `PASS` para produção.
-
-## C3.S1 — Business Capability Projection
-Allowed Action Catalog → projection; executor sempre resolve source canônico.
-
-## C3.S2 — Operational metadata
-read/write/risk/sensitivity/decision/idempotency/policy derivados por owner canônico.
-
-## C3.S3 — Generic read parity
-UI/Copilot usam o mesmo use case/API; known/sibling/unknown provider/metamorphic.
-
-## C3.S4 — Normalized read result + Evidence
-Resultado autorizado produz `OutcomeRef`/`EvidenceRef` quando aplicável, com freshness/provenance.
-
-## C3.S5 — Business Graph minimal runtime
-Implementar somente após `EntityRef`/`RelationshipRef` C0:
-- registry/index de relações;
-- permission-aware traversal;
-- source API fetch após traversal;
-- cycle/depth budget;
-- authoritative vs inferred relationship provenance.
-
-Arquitetura esperada: Ports & Adapters; Repository/index apenas se houver materialização própria comprovada; permission traversal em Policy/Specification quando combinação justificar.
-
-Piloto recomendado:
+Desligar/ausentar Chat runtime não pode quebrar bootstrap Copilot.
 
 ```text
-reclamação → produto → OP/lote → material → fornecedor
+OWN_API = PASS
+OWN_MFE = PASS
+OWN_MANIFEST = PASS
+OWN_GATEWAY_ROUTE = PASS
+OWN_COMPOSE = PASS
+JWT_CORE = PASS
+FEDERATED_MOUNT = PASS
+PLUGIN_UI = PASS
+NO_CHAT_IMPORT = PASS
+NO_CHAT_API_DEP = PASS
+NO_CHAT_DB_AUTHORITY = PASS
+INDEPENDENT_ROLLBACK = PASS
 ```
 
-## C3.S6 — Cross-domain read analysis
-Business Graph + APIs + expertise + evidence; sem write.
+---
 
-## C3.S7 — Read/evidence/graph gate
-RBAC, stale source, conflicting evidence, unknown relation sibling, no planner hardcode, R1–R11 aplicáveis.
+# C2 — Portal Context + Platform Commands
+
+## C2.S1 — Workspace Context Store/contract
+
+Portal/MFEs publicam contexto bounded.
+
+## C2.S2 — Copilot Global Bridge
+
+Thin host bridge; no planner/policy in Portal.
+
+## C2.S3 — Platform Capability Projection
+
+Core `/me/apps`/authorized routes → semantic platform capabilities.
+
+## C2.S4 — Commands
+
+- open app;
+- open route;
+- open entity;
+- view commands quando declarados.
+
+## C2.S5 — MFE context/deep-link SDK
+
+Helper compartilhável sem business logic.
+
+## C2.S6 — Iframe integration baseline
+
+`PORTAL_ONLY` universal e bridge seguro para apps que suportarem.
+
+## C2.S7 — Context/security/generalization gate
+
+Unauthorized/stale/F5/logout/unknown app/iframe/URL arbitrary/send-stream parity.
 
 ---
 
-# C4 — Governed Writes + Decision Gates
+# C3 — Intelligence Core
 
-Objetivo: somente depois dos reads estarem estáveis, liberar alterações com governança proporcional ao risco.
+Tudo nesta fase pertence à **Copilot API nova**.
 
-## C4.S1 — Decision Gate Engine
-Implementar os níveis definidos em C0 com deterministic policy owner.
+## C3.S1 — Model/provider abstraction
 
-Pattern esperado: Policy + State Machine; prompt livre não é policy.
+Port + adapter; baseline simples, sem Model Router avançado.
 
-## C4.S2 — Impact Preview
-Arguments finais + evidence relevante + sensitivity + effect summary + hash.
+## C3.S2 — Conversation/turn runtime
 
-## C4.S3 — Human decision/approval
-confirm/reject/expire/invalidate; approval workflow quando policy exigir.
+Own session/conversation model, sem `agent_id` legado.
 
-## C4.S4 — Idempotency/concurrency
-Chave nativa do domínio preferida; locking/dedupe para retry/resume quando necessário.
+## C3.S3 — Structured understanding
 
-## C4.S5 — Generic write execution
-Policy/RBAC revalidation imediatamente antes de execute; no DOM write.
+Goals/entities/requirements/attachments.
 
-Writes não idempotentes não recebem retry cego.
+## C3.S4 — Copilot OpenAPI ingestion + Action Catalog foundation
 
-## C4.S6 — Outcome verification
-Verificar resultado real, gerar outcome/evidence/audit e deep link.
+Implementação própria, OpenAPI-first.
 
-## C4.S7 — Decouple action availability from legacy agent activation
-Remover gate material `userActivatedAgent` somente após capability/policy tests.
+## C3.S5 — Capability retrieval/projection
 
-Migração via Strangler/ACL; não copiar allowed tools para nova authority.
+Permission-aware candidates.
 
-## C4.S8 — Replace soft handoff
-Retrieval/replan/clarify; não trocar agente departamental.
+## C3.S6 — Expertise Catalog/retrieval
 
-## C4.S9 — Write gate
-Unauthorized, payload changed, stale approval, duplicate request, backend conflict, partial/ambiguous outcome, send/stream parity.
+Single Copilot; no departmental agents.
 
----
+## C3.S7 — Domain Playbooks
 
-# C5 — Durable Work
+Methodology, evidence criteria, not endpoints.
 
-Objetivo: transformar execução de turno em trabalho persistente sem duplicar planner/executors.
+## C3.S8 — Knowledge/RAG
 
-## C5.S1 — Durable Workflow Runtime
-Persistência de workflow/steps/checkpoints + crash/restart semantics.
+Copilot-owned retrieval with ACL/provenance.
 
-Pattern esperado: Application orchestration + State Machine + Idempotency; external dependencies via ports/adapters.
+## C3.S9 — Multimodal
 
-## C5.S2 — Wait states
-- `wait_user`;
-- `wait_approval`;
-- `wait_event`;
-- timeout/cancel.
+Native/OCR/Vision adapters producing Evidence.
 
-## C5.S3 — DAG runner
-Dependências, parallel safe reads, writes serializados quando necessário, budget/loop limit.
+## C3.S10 — Evidence/epistemic synthesis
 
-Saga somente quando houver múltiplos writes distribuídos e compensações reais.
+FACT/CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION.
 
-## C5.S4 — Copilot Task
-Task é unidade operacional curta/média vinculada a workflow e evidence/outcomes.
+## C3.S11 — Structured planner
 
-## C5.S5 — Copilot Case + Evidence Board
-Case é unidade de investigação/trabalho prolongado; não duplica sistema existente se C0 identificar owner reutilizável.
+Planner outputs typed plans, not technical content JSON leakage.
 
-Repository/Aggregate apenas se lifecycle/authority própria forem comprovados.
+## C3.S12 — Intelligence generalization gate
 
-## C5.S6 — Interaction Room integration
-Reutilizar sala existente quando possível; Case/Room compartilham refs, nunca ACL implícita.
-
-## C5.S7 — Copilot Inbox
-`waiting_for_user | working | completed | alerts`, ligada a Task/Case/Workflow/EntityRef.
-
-Preferir materialized/read model sobre authorities existentes; Inbox não vira workflow engine.
-
-## C5.S8 — Persist/reload/resume gate
-Crash após write, duplicate event, concurrent resume, policy change durante wait, F5, cancel, partial failure.
+Positive/sibling/negative/unknown/metamorphic/injection/budget/stream parity.
 
 ---
 
-# C6 — Proatividade + AI-ready Ecosystem + Governed Learning
+# C4 — Business Reads + DELPI Business Graph
 
-## C6.S1 — Watch OBSERVE/ADVISE
-Event-driven quando infraestrutura permitir; dedupe/cooldown/expiry + permission revalidation.
+## C4.S1 — API inventory import/refresh
 
-Pattern esperado: Event-Driven + State Machine + dedupe/idempotency; polling app-specific não é default.
+Domain OpenAPIs → Copilot Action Catalog.
 
-## C6.S2 — AI-ready SDK/templates
-Workspace Context, EntityRef, deep link, iframe bridge, contract fixtures.
+## C4.S2 — Generic read executor
 
-## C6.S3 — Readiness scanner/onboarding waves
-L1–L5 + iframe classes + capability/evidence/workflow readiness.
+Schema-valid, authorization-aware, outcome-normalized.
 
-## C6.S4 — Project preferences
-Preferred expertise/knowledge/templates/guidance sem conceder permission.
+## C4.S3 — Evidence from API results
 
-## C6.S5 — Organizational Knowledge lifecycle
-Reference/Decision/Experience/Solution Pattern com owner/version/provenance/review.
+Freshness/source/outcome refs.
 
-## C6.S6 — Governed Learning Loop
-feedback → candidate → eval → review → publish → rollout; nunca aprendizado automático de production behavior.
+## C4.S4 — Business Graph runtime
 
-## C6.S7 — Expertise Studio
-Draft/review/eval/publish/rollback/admin RBAC.
+EntityRef/RelationshipRef, permission-aware traversal, source fetch from owner.
 
-Pattern esperado: Use Cases + State Machine + admin RBAC; Studio não é agent builder.
+## C4.S5 — Cross-domain analysis
 
-## C6.S8 — Admin/coverage
-Capabilities, apps, expertise, playbooks, workflow/case/watch coverage, metrics.
+Graph + APIs + expertise + evidence.
 
-## C6.S9 — Proactivity/ecosystem gate
-No unauthorized event action, no auto-publish, unknown app/pack onboarding, coverage evidence.
+## C4.S6 — Unknown-provider/generalization gate
+
+No endpoint/provider hardcode.
 
 ---
 
-# C7 — Optimization, autonomia e rollout final
+# C5 — Governed Writes + Durable Work Foundation
 
-## C7.S1 — Autonomia L0–L5 final
-L5 OFF por default; allowlist/limits/budgets/kill switch.
+## C5.S1 — Decision Gate Engine
+
+Risk/sensitivity/impact/hash/approval.
+
+## C5.S2 — Generic write executor
+
+Final RBAC/policy revalidation and idempotency.
+
+## C5.S3 — Outcome verification
+
+No ambiguous success narrative.
+
+## C5.S4 — WorkflowPlan runtime
+
+DAG + canonical capability executor.
+
+## C5.S5 — Checkpoints/waits
+
+`wait_user`, `wait_approval`, `wait_event`, timeouts/cancel.
+
+## C5.S6 — crash/retry/idempotency gate
+
+No duplicate write.
+
+---
+
+# C6 — Product Work + Proactivity + Ecosystem
+
+## C6.S1 — Copilot Task
+
+## C6.S2 — Copilot Case + Evidence Board
+
+## C6.S3 — Interaction Room integration
+
+Reuse/extend existing owner if C0 proves it.
+
+## C6.S4 — Copilot Inbox
+
+Work/decision/watch projection.
+
+## C6.S5 — Watch OBSERVE/ADVISE
+
+Event-driven where available.
+
+## C6.S6 — Organizational Knowledge
+
+Reference/Decision/Experience/Solution Patterns.
+
+## C6.S7 — Governed Learning
+
+feedback → candidate → eval → review → publish.
+
+## C6.S8 — Expertise Studio
+
+## C6.S9 — AI-ready app SDK/readiness
+
+Context/Entity/deep-link/action/OpenAPI readiness.
+
+## C6.S10 — ecosystem/proactivity gate
+
+---
+
+# C7 — Autonomy + Optimization + Rollout
+
+## C7.S1 — Autonomy L0–L5
+
+L5 OFF default.
 
 ## C7.S2 — Watch ACT
-Somente capability allowlisted + Decision Gate/autonomy policy + audit.
 
-## C7.S3 — What-if / Simulation pilots
-Somente modelos owner/reproduzíveis. `simulate` nunca implica `apply`.
+Allowlisted/policy/Decision Gate.
 
-## C7.S4 — Model Router / Compute Policy
-Somente depois de baseline de qualidade/latência/custo e provider data-policy.
+## C7.S3 — What-if/Simulation
 
-Pattern esperado: Policy/Strategy somente após variações reais/baseline; não espalhar provider/model names pelo domain/application.
+Only reproducible domain models.
 
-## C7.S5 — Legacy agent-routing cutover
-Parar novas dependências de `agent_id`; remover handoff/gates/fallbacks materiais; residual scan.
+## C7.S4 — Model Router/Compute Policy
+
+Only after baseline metrics.
+
+## C7.S5 — Scale/performance/cost
 
 ## C7.S6 — Progressive rollout
-internal → cohort → app waves → reads → writes → durable work → watch selected → autonomy selected.
+
+Internal → cohort → reads → writes → durable/proactive → selected autonomy.
 
 ## C7.S7 — Final verification
-R1–R11 + CP coverage + unknown app/provider/pack/iframe/relation + security + accessibility + rollback + architecture conformance.
 
-## C7.S8 — Product Complete gate
-Só declarar produto completo se requisitos materiais do release estiverem PASS ou `OUT_OF_SCOPE_WITH_DECISION` justificável.
+Security, accessibility, unknown/sibling/metamorphic, rollback.
+
+## C7.S8 — Product Complete
+
+No material unresolved requirements for declared scope.
 
 ---
 
-## 6. Mapeamento dos planos temáticos
+## 6. Itens antigos explicitamente removidos do roadmap
 
-### Expertise (`E*`)
-
-| Track antigo | Fase canônica |
-|---|---|
-| E0–E1 | C0 |
-| E2–E4 | C2 |
-| E5–E8 | C4 |
-| E9–E10 | C2/C5 conforme função |
-| E11–E12 | C6 |
-| E13 | C7 |
-
-### Inteligência operacional (`O*`)
-
-| Track antigo | Fase canônica |
-|---|---|
-| O0 | C0 |
-| O1 Evidence contracts | C0; runtime C2/C3 |
-| O2 Business Graph | contracts C0; runtime C3 |
-| O3 Task | contracts C0; runtime C5 |
-| O4 Durable Workflow | contracts C0; runtime C5 |
-| O5 Case | contracts C0; runtime C5 |
-| O6 Rooms | C5 |
-| O7 Inbox | C5 |
-| O8 Watch | C6; ACT C7 |
-| O9 Decision Gates | contracts C0; runtime C4 |
-| O10 Experience Knowledge | C6 |
-| O11 Expertise Studio | C6 |
-| O12 Simulation | C7 |
-| O13 Model Router | C7 |
-
-Esse mapeamento substitui qualquer sequência antiga conflitante nos documentos temáticos.
-
-## 7. Protocolo obrigatório por subetapa
+Não pertencem mais ao Copilot:
 
 ```text
-REVALIDATE HEAD + git status
-→ read applicable rules/docs
-→ identify owner + architecture layer
-→ select pattern from 49
-→ run Abstraction Gate
+migrar AgentSpecializationService do Chat
+remover userActivatedAgent no Chat
+substituir softAgentHandoff no Chat
+migrar Chat sessions/agent_id
+esperar Onda J/llm-json-decoupling do Chat
+fazer cutover do Minha DELPI Chat
+```
+
+Esses itens podem existir em roadmap próprio do Chat, mas não bloqueiam nem integram este projeto.
+
+## 7. Protocolo por subetapa
+
+```text
+REVALIDATE HEAD/WORKTREE
+→ read 16/17/20/25/49/50/51/52 + spec applicable
 → dependency gate
 → READY_TO_EXECUTE
 → baseline
-→ minimal correct owner-level implementation
+→ minimal correct owner-level diff
 → producer/consumer wiring
-→ unit/contract
-→ integration
+→ unit/contract/integration
 → positive/sibling/negative
 → security/RBAC
-→ generalization/metamorphic/unknown quando aplicável
-→ architecture conformance review
-→ adversarial review
-→ semantic residual search
-→ postconditions
+→ generalization/metamorphic/unknown when applicable
+→ independence check against Chat
+→ architecture conformance
+→ residual search
 → COMPLETE_GATE
-→ docs + ledger
+→ docs/ledger
 → unlock next
 ```
 
-## 8. Regra anti-refatoração previsível
+## 8. Regra anti-refatoração
 
-Antes de qualquer nova tabela/service/schema/perfil de evento/abstração, responder:
+Antes de criar service/schema/table/framework:
 
-1. O primitive já existe em C0?
-2. Já existe owner/repository equivalente no projeto?
-3. Qual camada é dona dessa responsabilidade?
-4. Qual pattern do `49` se aplica?
-5. A abstração passa o Abstraction Gate?
-6. Esta feature está tentando redefinir EntityRef/Evidence/Decision/Workflow/Event?
-7. Existe segunda authority sendo criada?
-8. O próximo estágio conhecido exigiria mudar este contrato?
-9. A implementação é genérica para sibling/unknown case?
-10. Existe padrão equivalente já comprovado no repositório?
+1. pertence ao Copilot ou a platform owner existente?
+2. existe neutral shared owner real?
+3. isso cria dependency no Chat?
+4. isso duplica Core/RBAC/domain rules?
+5. shared primitive já existe?
+6. próxima fase conhecida exigirá redesign?
+7. pattern é justificado pelo `49`?
+8. sibling/unknown funciona sem hardcode?
 
-Se 6, 7 ou 8 for “sim”, **não implementar** até corrigir a fundação.
-
-Se 5 for “não”, preferir implementação simples sem abstração especulativa.
+Se 3, 4 ou 6 = sim: **não implementar** até corrigir o desenho.
 
 ## 9. Primeira ordem efetiva
 
@@ -887,8 +753,9 @@ C0.S0
 → C0.S3
 → C0.S4
 → C0.S5
-→ C0.S6 FOUNDATION_FREEZE
+→ C0.S6
+→ C0.S7 FOUNDATION_FREEZE
 → C1.S1
 ```
 
-Nenhum runtime feature work do Copilot deve preceder `FOUNDATION_FREEZE=PASS`.
+Nenhuma intelligence feature precede a prova de aplicação standalone integrada.
