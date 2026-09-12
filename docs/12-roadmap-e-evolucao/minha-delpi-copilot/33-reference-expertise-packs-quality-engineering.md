@@ -1,252 +1,183 @@
 # Minha DELPI Copilot — Packs de Referência: Qualidade e Engenharia
 
-**Status:** referência funcional para os primeiros pilotos  
-**Objetivo:** mostrar como expertise, playbooks, knowledge e multimodalidade se combinam sem criar agentes independentes.
+**Status:** `REFERENCE_ONLY` — exemplos funcionais  
+**Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
 
-## 1. Pack `quality-industrial`
+## 1. Objetivo
 
-### Finalidade
+Mostrar como Expertise Packs, Playbooks, Knowledge, Multimodal Evidence e Business Capabilities se combinam no mesmo Copilot.
 
-Apoiar análise de:
+Não define schema/phase novo.
 
-- não conformidade;
-- reclamação de cliente;
+## 2. Referência `quality-industrial`
+
+Finalidade:
+
+- NC/reclamação;
 - inspeção;
 - reincidência;
-- plano de ação;
 - causa raiz;
 - contenção;
-- efetividade.
+- plano/efetividade.
 
-### Knowledge scopes candidatos
+Knowledge candidates, sujeitos a ACL:
 
-A validar no inventário:
-
-- procedimentos de qualidade;
+- procedimentos/normas;
 - planos de controle;
 - instruções de inspeção;
-- normas internas;
-- histórico curado de NC/PAC;
-- reclamações de clientes;
+- histórico curado;
+- reclamações;
 - critérios de liberação.
 
-### Playbooks preferenciais
+Preferred playbooks:
 
-- `quality.root-cause`;
-- `quality.8d`;
-- `quality.nonconformity-triage`;
-- `quality.customer-complaint-analysis`.
+```text
+quality.root-cause
+quality.8d
+quality.nonconformity-triage
+quality.customer-complaint-analysis
+```
 
-### Capabilities úteis
+Guidance:
 
-Sem fixar endpoint técnico:
+- separar contenção, sintoma, causa e efeito;
+- não declarar causa sem evidence;
+- buscar recorrência;
+- explicitar missing/conflicting evidence;
+- recomendar ação proporcional ao risco;
+- verificar efetividade.
 
-- knowledge search;
-- quality records read;
-- action plans read/write conforme RBAC;
-- artifact/report generation;
-- document vision;
-- comparative analysis.
+## 3. Referência `product-engineering`
 
-### Guidance
+Finalidade:
 
-- separar contenção de causa raiz;
-- distinguir ocorrência, causa e efeito;
-- não declarar causa sem evidência;
-- verificar recorrência/histórico;
-- explicitar evidência faltante;
-- sugerir ação proporcional ao risco;
-- medir efetividade quando aplicável.
-
-## 2. Pack `product-engineering`
-
-### Finalidade
-
-Apoiar análise de:
-
-- desenho técnico;
-- revisão de produto;
+- desenho/revisão;
 - alteração de engenharia;
-- especificações;
-- tolerâncias;
+- tolerâncias/especificações;
 - material/processo;
-- impacto técnico;
-- comparação de versões.
+- technical comparison/change impact.
 
-### Knowledge scopes candidatos
-
-- normas de desenho;
-- padrões internos;
-- documentação de produto;
-- procedimentos de alteração;
-- especificações de materiais/processos;
-- manuais de engenharia.
-
-### Playbooks preferenciais
-
-- `engineering.drawing-review`;
-- `engineering.change-impact-analysis`;
-- `engineering.technical-comparison`.
-
-### Multimodal
-
-Preferir quando houver desenho/PDF/imagem:
+Preferred playbooks:
 
 ```text
-document vision
-→ drawing extraction
-→ engineering interpretation
+engineering.drawing-review
+engineering.change-impact-analysis
+engineering.technical-comparison
 ```
 
-### Guidance
+Guidance:
 
-- registrar revisão/documento analisado;
-- não inventar dimensão/tolerância ilegível;
-- apontar ambiguidades;
-- diferenciar especificação de inferência;
-- correlacionar alteração com impacto quando evidência existir;
-- considerar necessidade de validação humana em decisão crítica.
+- registrar documento/revisão;
+- não inventar dimensão ilegível;
+- separar especificação de inferência;
+- apontar ambiguity/limitation;
+- correlacionar impacto somente com evidence.
 
-## 3. Composição Engenharia + Qualidade
+## 4. Composição Engenharia + Qualidade
 
-Caso:
-
-> "Analise este desenho e veja se ele pode explicar a não conformidade dimensional do lote."
-
-Fluxo:
+> “Analise este desenho e veja se ele pode explicar a não conformidade dimensional do lote.”
 
 ```text
-1. extrair evidência do desenho
-2. identificar revisão e característica relevante
-3. ativar product-engineering
-4. ativar quality-industrial
-5. aplicar engineering.drawing-review
-6. consultar inspeção/NC autorizada
-7. comparar especificação x resultado medido
-8. listar hipóteses suportadas
-9. indicar evidências faltantes
-10. sugerir próximo playbook, se aplicável
+attachment
+→ Multimodal Evidence
+→ product-engineering + quality-industrial
+→ drawing-review playbook
+→ authorized inspection/NC reads
+→ specification x measurement comparison
+→ FACT/CALCULATION/HYPOTHESIS/CONCLUSION
+→ missing evidence
+→ recommendation
 ```
 
-A conclusão deve evitar causalidade não provada.
+Não afirmar causalidade sem evidence suficiente.
 
-## 4. Playbook `quality.root-cause`
-
-Etapas de referência:
+## 5. `quality.root-cause` — stages de referência
 
 ```text
 RC1 definir problema
-RC2 delimitar escopo/ocorrência
-RC3 coletar evidências
+RC2 delimitar escopo
+RC3 coletar evidence
 RC4 separar sintomas de causas candidatas
 RC5 estruturar hipóteses
-RC6 testar hipóteses contra evidência
-RC7 selecionar causa(s) suportada(s)
-RC8 propor ação e verificação
+RC6 testar hipóteses
+RC7 selecionar causas suportadas
+RC8 propor ação/verificação
 ```
 
-Saída:
-
-- problem statement;
-- evidence map;
-- candidate causes;
-- rejected hypotheses;
-- supported causes;
-- missing evidence;
-- next actions.
-
-## 5. Playbook `quality.8d`
-
-Etapas:
+## 6. `quality.8d` — stages de referência
 
 ```text
 D1 equipe/responsáveis quando aplicável
-D2 descrição do problema
+D2 descrição
 D3 contenção
 D4 causa raiz
 D5 ação corretiva
 D6 implementação/verificação
-D7 prevenção de recorrência
-D8 conclusão/reconhecimento
+D7 prevenção
+D8 conclusão
 ```
 
-O Copilot pode preparar um 8D preliminar com campos explicitamente marcados como faltantes.
+Copilot pode preparar draft com campos faltantes explícitos; nunca inventar dados para completar formulário.
 
-Nenhum campo deve ser inventado para "completar" o formulário.
-
-## 6. Playbook `engineering.drawing-review`
-
-Etapas:
+## 7. `engineering.drawing-review` — stages de referência
 
 ```text
-E1 identificar documento/revisão
-E2 extrair título/notas/material
-E3 identificar características críticas
-E4 identificar tolerâncias/símbolos relevantes
-E5 localizar ambiguidades/regiões ilegíveis
-E6 correlacionar com item/processo quando autorizado
-E7 verificar documentos/normas relacionadas
-E8 consolidar riscos e perguntas técnicas
+E1 documento/revisão
+E2 título/notas/material
+E3 características críticas
+E4 tolerâncias/símbolos
+E5 ambiguity/unreadable
+E6 item/process correlation
+E7 related standards/knowledge
+E8 risks/questions
 ```
 
-## 7. Caso composto de referência
+## 8. Caso composto
 
-Usuário:
-
-> "Analise o desenho 90264238, veja os principais riscos de qualidade, consulte se já tivemos problema semelhante e monte um 8D preliminar."
-
-Execução alvo:
+> “Analise o desenho 90264238, veja riscos de qualidade, procure problema semelhante e monte um 8D preliminar.”
 
 ```text
-attachment/entity resolution
-→ document/drawing vision
-→ product-engineering pack
-→ quality-industrial pack
-→ drawing-review playbook
-→ quality historical Business Actions / knowledge
-→ root-cause reasoning grounded
-→ 8D draft artifact
+Entity/Attachment resolution
+→ Multimodal Evidence
+→ Engineering + Quality Expertise
+→ drawing-review
+→ Business/Knowledge reads
+→ root-cause analysis
+→ 8D artifact draft
 → gaps/limitations
 ```
 
-Se uma operação de negócio adicional for necessária, aplicar RBAC/policy/confirmation normalmente.
-
-## 8. Critérios de eval do piloto
-
-### Positive
-
-- desenho legível + histórico disponível;
-- identifica corretamente revisão/item;
-- correlaciona dados sem inventar.
-
-### Sibling
-
-- segundo desenho/item;
-- outra não conformidade;
-- outra fonte de histórico.
-
-### Negative
-
-- documento não técnico;
-- desenho ilegível;
-- usuário sem acesso a histórico;
-- ausência de evidência de causa;
-- prompt injection dentro do PDF.
-
-### Cross-domain
-
-- Engenharia + Qualidade + Suprimentos na mesma conversa.
-
-## 9. Acceptance
-
-O piloto só é considerado válido quando provar:
+Se houver write:
 
 ```text
-SINGLE_COPILOT_IDENTITY = PASS
-EXPERTISE_COMPOSITION = PASS
-DRAWING_EVIDENCE_PROVENANCE = PASS
-NO_CAUSALITY_HALLUCINATION = PASS
-UNAUTHORIZED_DATA_BLOCKED = PASS
-PLAYBOOK_GROUNDED = PASS
-MULTIMODAL_NEGATIVES = PASS
+Business Action
+→ current RBAC/policy
+→ Decision Gate
+→ execute
+→ verify Outcome/Evidence
+```
+
+## 9. Evals do piloto
+
+- desenho legível;
+- segunda revisão/item;
+- desenho ilegível;
+- unauthorized history;
+- no evidence of cause;
+- prompt injection in PDF;
+- Engineering + Quality + Supplies composition;
+- evidence provenance;
+- no causality hallucination;
+- session without agent.
+
+## 10. Acceptance
+
+```text
+SINGLE_COPILOT_IDENTITY=PASS
+EXPERTISE_COMPOSITION=PASS
+MULTIMODAL_EVIDENCE=PASS
+NO_CAUSALITY_HALLUCINATION=PASS
+UNAUTHORIZED_DATA_BLOCKED=PASS
+PLAYBOOK_GROUNDED=PASS
+DECISION_GATE_ON_WRITES=PASS quando write no escopo
 ```
