@@ -1,12 +1,14 @@
 # 08 — Segurança, autonomia e auditoria
 
+**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
+
 ## 1. Invariante principal
 
 ```text
 Copilot effective permissions ⊆ user effective permissions
 ```
 
-O Copilot nunca opera como superusuário implícito e nenhuma camada de expertise/contexto/workflow pode ampliar privilégios.
+O Copilot nunca opera como superusuário implícito e nenhuma camada de expertise/contexto/workflow/modalidade pode ampliar privilégios.
 
 ## 2. Fluxo de autorização
 
@@ -29,7 +31,10 @@ Backend/domain API continua authority final do write.
 Conteúdo de qualquer uma destas fontes é **dado não confiável para policy/system**:
 
 - user prompt;
+- voz/transcrição;
+- imagem/câmera/vídeo/tela compartilhada;
 - Workspace Context;
+- device/session metadata;
 - iframe;
 - RAG;
 - Expertise Pack/Playbook content;
@@ -45,7 +50,9 @@ Nenhum deles altera:
 - system instructions;
 - Decision Gate requirements;
 - allowed actions;
-- autonomy level.
+- autonomy level;
+- retention/privacy policy;
+- industrial safety boundaries.
 
 ## 4. Níveis de autonomia
 
@@ -60,6 +67,8 @@ Nenhum deles altera:
 
 L5 é OFF por default.
 
+**L5 empresarial não implica autoridade OT.** Comando físico de máquina exige governance industrial separada.
+
 ## 5. Sensitivity/risk
 
 Classes podem incluir:
@@ -73,6 +82,9 @@ destructive
 external_communication
 financial
 personal_data
+biometric_or_surveillance_sensitive
+media_capture
+industrial_safety
 ```
 
 A classificação final deve ser owner/policy server-side e pode definir:
@@ -82,7 +94,9 @@ A classificação final deve ser owner/policy server-side e pode definir:
 - audit strength;
 - redaction;
 - approver requirements;
-- volume/value limits.
+- volume/value limits;
+- capture/retention rules;
+- industrial safety restrictions.
 
 ## 6. Decision Gates
 
@@ -118,7 +132,10 @@ Revalidar antes de execute/resume/Watch ACT porque podem mudar:
 - policy;
 - provider availability;
 - evidence freshness;
-- approver validity.
+- approver validity;
+- media session/consent state;
+- device/user session;
+- machine/process state quando houver integração industrial.
 
 ## 8. Capability minimization
 
@@ -209,25 +226,28 @@ Obrigatório:
 - no JWT/refresh token;
 - visual capabilities não viram Business Actions.
 
-## 15. Prompt/tool/document/event injection
+## 15. Prompt/tool/document/media/event injection
 
 Testar injection a partir de:
 
 ```text
 user
+voice transcript
 RAG
 tool/API
 Workspace Context
+device/session metadata
 iframe
 Expertise Pack
 Playbook
 PDF/image
+camera/video/screen
 Room message/file
 Event payload
 Experience Knowledge
 ```
 
-Resultado esperado: nenhuma fonte de dados altera policy/system/RBAC.
+Resultado esperado: nenhuma fonte de dados altera policy/system/RBAC/retention/safety boundary.
 
 ## 16. URLs e HTTP
 
@@ -254,16 +274,135 @@ Model Router futuro deve respeitar:
 - residency/privacy constraints;
 - model capability;
 - retention policy;
-- cost/latency budgets.
+- cost/latency budgets;
+- media modality/provider terms;
+- industrial-data restrictions.
 
 Provider fallback não pode diminuir security/data policy.
 
-## 19. Organizational Knowledge safety
+## 19. Meeting capture security
 
-Feedback/case resolution não vira production truth automaticamente.
+Meeting Mode exige sessão de captura explícita.
+
+A UI deve indicar claramente, conforme ativo:
+
+```text
+microfone
+transcrição
+câmera
+screen share
+raw recording
+```
+
+Policy deve distinguir:
+
+```text
+transient capture
+transcript retention
+raw audio retention
+raw video retention
+screen retention
+derived Evidence/artifact retention
+```
+
+Participante presente em reunião não autoriza automaticamente persistência ilimitada de mídia.
+
+## 20. Consentimento e data minimization
+
+Antes de captura persistente definir:
+
+- finalidade;
+- quem iniciou;
+- participantes/scope;
+- modalidade;
+- retenção;
+- acesso;
+- redaction;
+- provider processing;
+- delete/anonymize policy.
+
+Default arquitetural: **reter o mínimo necessário**.
+
+Transcript e Evidence derivada podem ter lifecycle distinto de áudio/vídeo bruto.
+
+## 21. Shared device security
+
+Em tablet industrial, terminal, kiosk ou sala compartilhada:
+
+- user atual precisa ser explícito;
+- device identity != user identity;
+- logout/troca de usuário limpa contexto sensível;
+- session timeout/lock;
+- tokens não permanecem expostos;
+- mídia/cache local é minimizada/limpa;
+- usuário anterior não pode vazar WorkspaceContext/Conversation/Case para o próximo.
+
+Business Action sempre depende do usuário/authority vigente, não apenas do device.
+
+## 22. Privacidade Frontline
+
+Por default, Frontline não inclui:
+
+- reconhecimento facial;
+- emotion detection;
+- identificação biométrica implícita;
+- scoring oculto de produtividade individual;
+- gravação contínua sem purpose/policy;
+- reutilização de vídeo para finalidade diferente sem governance.
+
+Analytics de processo/pessoa exige requisitos específicos, transparência e owner apropriado.
+
+## 23. Industrial/OT safety boundary
+
+Copilot não é safety controller.
+
+Proibido como arquitetura default:
+
+```text
+LLM → comando livre → PLC/CNC/robô/máquina
+```
+
+Capability empresarial L4/L5 não concede operação física.
+
+Qualquer futura atuação OT exige gate separado com, no mínimo:
+
+```text
+industrial owner
+command allowlist/schema
+deterministic adapter
+machine state/precondition validation
+human authorization as required
+safety PLC/interlocks independent of Copilot
+simulation/test environment
+fail-safe/kill switch
+audit
+risk assessment
+```
+
+LLM nunca substitui interlock, safety PLC ou lógica certificada.
+
+## 24. Computer vision e qualidade
+
+Imagem/vídeo gerados pelo Copilot são Evidence/Findings com confidence/limitations, salvo capability de inspeção automática explicitamente validada.
+
+Regra default:
+
+```text
+visual finding
+→ Evidence/Hypothesis
+→ official inspection rule/measurement
+→ authorized quality decision
+```
+
+Não aprovar/reprovar peça apenas pela impressão do LLM quando processo oficial exige medição/equipamento/tolerância distinta.
+
+## 25. Organizational Knowledge safety
+
+Feedback, reunião, observação de operador ou Case resolution não viram production truth automaticamente.
 
 ```text
 candidate
+→ provenance/Evidence
 → review
 → eval
 → publish
@@ -271,7 +410,7 @@ candidate
 
 Decision/Experience record não armazena chain-of-thought.
 
-## 20. Auditoria
+## 26. Auditoria
 
 Eventos conceituais:
 
@@ -286,6 +425,13 @@ copilot.task.state_changed
 copilot.case.state_changed
 copilot.watch.triggered
 copilot.navigation.executed
+copilot.media.session_started|stopped
+copilot.media.ingested|deleted
+copilot.meeting.started|ended
+copilot.meeting.artifact_created
+copilot.frontline.session_started|ended
+copilot.knowledge_candidate.created
+copilot.ot_command.blocked
 ```
 
 Campos úteis:
@@ -294,24 +440,28 @@ Campos úteis:
 actor/subject
 request/conversation/turn
 workflow/task/case
+meeting/frontline/media session refs
 entity refs
 capability/action
 expertise/playbook refs
 policy/Decision Gate
+consent/retention class refs
 outcome/evidence refs
 duration/error
 timestamp/correlation
 ```
 
-## 21. Dados proibidos em logs/state
+## 27. Dados proibidos em logs/state
 
 - JWT/refresh token;
 - API key/password/secrets;
 - chain-of-thought;
 - full sensitive payload sem necessidade;
-- provider credentials.
+- provider credentials;
+- raw audio/video/screenshots fora de storage/policy apropriados;
+- biometric templates sem iniciativa explicitamente aprovada.
 
-## 22. Emergency stop
+## 28. Emergency stop
 
 Deve ser possível, conforme owner:
 
@@ -322,8 +472,12 @@ Deve ser possível, conforme owner:
 - suspender workflow class;
 - revogar iframe integration;
 - desabilitar expertise/playbook version problemática;
-- desabilitar provider/model por data policy/incidente.
+- desabilitar provider/model por data policy/incidente;
+- desabilitar voice/video/media capture;
+- encerrar realtime media sessions;
+- bloquear Frontline/Meeting Mode por incidente;
+- bloquear qualquer OT integration separadamente.
 
-## 23. Security success criteria
+## 29. Security success criteria
 
-Segurança está correta quando uma capability autorizada continua útil, mas nenhuma tentativa de prompt/context/pack/event/room pode ampliar o que o usuário poderia fazer diretamente pelas regras da plataforma.
+Segurança está correta quando uma capability autorizada continua útil, mas nenhuma tentativa de prompt/context/pack/event/room/voice/media/device consegue ampliar o que o usuário poderia fazer diretamente pelas regras da plataforma, nem ultrapassar privacy/retention/industrial safety boundaries.
