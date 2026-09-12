@@ -44,8 +44,30 @@ O Copilot não assume ownership da correção da Onda J.
 | Data | HEAD | Etapa | Evento | Status/evidence |
 |---|---|---|---|---|
 | 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | Planejamento | documentação arquitetural/funcional e plano executável criados | PLAN_ONLY |
+| 2026-09-12 | `TO_CAPTURE_AT_C0.S0` | Planejamento | integração de apps iframe incorporada ao produto/plano: `Iframe Copilot Bridge`, classes `PORTAL_ONLY/CONTEXTUAL/INTERACTIVE/AI_READY`, contratos, segurança, testes e CP-061–CP-070 | PLAN_ONLY; sem runtime diff |
 
-## 5. Template de evento
+## 5. Escopo adicional obrigatório no C0.S0
+
+O inventário deve cobrir explicitamente apps `iframe` e `external` e registrar, quando aplicável:
+
+```text
+renderMode
+entry/origin authority
+allowed origins
+SSO/auth mode
+bridge existente?
+protocol/version
+context publish
+visual commands
+Business API/OpenAPI
+CSP/frame constraints
+security owner
+iframe integration class
+```
+
+Fonte canônica: [`../26-iframe-copilot-bridge.md`](../26-iframe-copilot-bridge.md).
+
+## 6. Template de evento
 
 ```text
 DATE:
@@ -60,7 +82,7 @@ NEXT_UNLOCKED:
 NOTES:
 ```
 
-## 6. Estados permitidos
+## 7. Estados permitidos
 
 ```text
 NOT_STARTED
@@ -75,7 +97,7 @@ LOCKED
 
 Evitar aliases vagos como “quase pronto”, “feito com ressalva” ou “100% salvo X”.
 
-## 7. COMPLETE_GATE
+## 8. COMPLETE_GATE
 
 Bloqueantes de PASS quando materiais ao step:
 
@@ -90,6 +112,6 @@ TEST_NOT_RUN
 STALE_EVIDENCE
 ```
 
-## 8. Primeiro comando de execução
+## 9. Primeiro comando de execução
 
 O Cursor deve abrir [`../23-prompt-cursor-execucao.md`](../23-prompt-cursor-execucao.md) e iniciar **C0.S0**, sem runtime diff antes de concluir o inventário.
