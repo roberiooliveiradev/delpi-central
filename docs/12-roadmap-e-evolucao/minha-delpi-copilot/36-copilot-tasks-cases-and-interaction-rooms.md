@@ -2,46 +2,27 @@
 
 **Status:** thematic spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Runtime owner:** Durable Workflow C5; Task/Case não criam executors próprios.
+**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
+**Runtime owner:** Durable Workflow foundation em C5; Task/Case/Room product features em C6.
 
 ## 1. Unidades de trabalho
 
 ```text
-Turn
-→ interação curta
-
-Task
-→ objetivo delimitado multi-step
-
-Case
-→ investigação/trabalho persistente
-
-Interaction Room
-→ colaboração humana ligada a Case/Task quando aplicável
+Turn → interação curta
+Task → objetivo delimitado multi-step
+Case → investigação/trabalho persistente
+Interaction Room → colaboração humana ligada a Case/Task
 ```
 
-O usuário pode começar pelo chat e evoluir para Task/Case quando a natureza do trabalho exigir.
+O usuário pode começar pela conversa e evoluir para Task/Case quando a natureza do trabalho exigir.
 
 ## 2. Foundations
 
-Reutilizar:
-
-```text
-CorrelationContext
-EntityRef
-EvidenceRef
-OutcomeRef
-DecisionGate refs
-WorkflowPlan/Step
-TaskRef
-CaseRef
-```
-
-Não criar Entity/Evidence/Decision models próprios desta feature.
+Reutilizar CorrelationContext, EntityRef, EvidenceRef, OutcomeRef, Decision refs, WorkflowPlan/Step, TaskRef e CaseRef. Não criar modelos paralelos por feature.
 
 ## 3. Copilot Task
 
-Task é uma **view/unidade de produto sobre Durable Workflow**.
+Task é uma unidade de produto sobre Durable Workflow.
 
 Campos conceituais:
 
@@ -60,7 +41,7 @@ owner/createdBy
 createdAt/updatedAt
 ```
 
-Status deve alinhar ao lifecycle canônico do data/state model; não criar enum incompatível no frontend.
+Status alinha ao lifecycle canônico; frontend não cria enum incompatível.
 
 ## 4. Copilot Case
 
@@ -78,26 +59,20 @@ evidenceRefs[]
 hypothesis/decision/action refs
 participant refs
 roomRef?
-createdAt/updatedAt/closedAt
+timestamps
 ```
 
-Lifecycle canônico conceitual:
+Lifecycle conceitual:
 
 ```text
-open
-investigating
-waiting
-actioning
-resolved
-closed
-reopened
+open → investigating/waiting/actioning → resolved/closed → reopened
 ```
 
-Se C0 identificar um domínio existente que já representa esse conceito, preferir extensão/adaptação em vez de tabela paralela `copilot_cases` automaticamente.
+Se C0 provar owner corporativo existente adequado, usar Adapter/Port em vez de criar tabela paralela automaticamente.
 
 ## 5. Evidence Board
 
-Evidence Board é organização dos **mesmos `EvidenceRef`**:
+Organiza os mesmos `EvidenceRef` como:
 
 ```text
 accepted
@@ -110,81 +85,43 @@ Não duplica source/value/provenance.
 
 ## 6. Interaction Room
 
-Preferir o owner/padrão de sala existente da Minha DELPI.
+C0 deve inventariar as salas existentes, inclusive Portal Comercial, antes de definir owner.
+
+Preferência:
 
 ```text
 CaseRef/TaskRef
 ↔ RoomRef
 ```
 
-Room owner mantém:
+Room owner mantém participants/messages/files/timeline. Copilot usa adapter autorizado e não copia tudo para Case state quando refs atendem.
 
-- participants;
-- messages;
-- files;
-- timeline própria.
-
-Copilot pode produzir resumo/pendências e relacionar evidence/actions, respeitando ACL.
-
-Não copiar todas as mensagens/arquivos para Case state se refs atendem.
-
-## 7. Relação com conversa
-
-Uma conversa pode:
-
-- permanecer turn-based;
-- criar Task;
-- criar Case;
-- abrir Task/Case existente.
-
-O Copilot pode sugerir promoção, mas não precisa perguntar quando uma Task técnica interna for necessária apenas para durability, desde que a UX/policy permita.
-
-## 8. Relação com Expertise/Playbook
+## 7. Relações
 
 ```text
-Case
-+ Entity/Evidence Context
-+ Expertise Packs
-+ Playbook
-→ WorkflowPlan/Tasks
+Conversation → may create/open Task/Case
+Case + Evidence + Expertise + Playbook → WorkflowPlan/Tasks
+Case EntityRefs → Business Graph/source owners
 ```
 
-Case não é agente.
+Case não é agent nem executor.
 
-## 9. Relação com Business Graph
-
-Case guarda `EntityRef`; relações atuais são resolvidas pelo Graph/source owners.
-
-Não persistir cópia arbitrária de todos os objetos relacionados.
-
-## 10. Permissions
+## 8. Permissions
 
 ```text
 Case/Room access ≠ source entity permission
 ```
 
-Toda leitura/ação sobre source data continua sujeita a RBAC/policy.
+Toda source read/action continua sujeita a current RBAC/policy. Materializações respeitam retention/redaction/classification.
 
-Materializações em Case precisam classification/retention/redaction adequadas.
+## 9. Durable behavior
 
-## 11. Durable behavior
+Task/Case sobrevivem a F5, API/worker restart, waits, partial failure, cancel/expiry e resume sem repeat write.
 
-Task/Case devem sobreviver a:
-
-- F5;
-- restart de worker/API;
-- wait_user;
-- wait_approval;
-- wait_event;
-- partial failure;
-- cancel/expiry;
-
-sem repetir write.
-
-## 12. UX surfaces
+## 10. UX surfaces
 
 ```text
-Copilot Chat
+Copilot Conversation
 Tasks
 Cases
 Evidence Board
@@ -195,29 +132,26 @@ Artifacts
 Inbox
 ```
 
-## 13. Implementation mapping
+Todas usam o mesmo Copilot MFE/API; não existe segunda app de Cases.
 
-Não executar `TC*` como roadmap separado.
+## 11. Phase mapping
 
 ```text
-C0 → Task/Case lifecycle contracts + inventory de Room/Case owners
-C5.S1–S3 → Durable Workflow foundation
-C5.S4 → Task
-C5.S5 → Case + Evidence Board
-C5.S6 → Room integration
-C5.S7 → Inbox
-C5.S8 → restart/resume gate
+C0 → Task/Case contracts + Room/Case owner inventory
+C5 → Durable Workflow/checkpoints/waits foundation
+C6.S1 → Task
+C6.S2 → Case + Evidence Board
+C6.S3 → Room integration
+C6.S4 → Inbox
+C6 → product reload/lifecycle/integration gates
 ```
 
-## 14. Gate
+## 12. Independence
 
-Case só é produto real quando possui:
+Task/Case state pertence à Copilot API ou a owner corporativo adaptado; nunca às tabelas/sessions do Minha DELPI Chat.
 
-- structured lifecycle;
-- shared Entity/Evidence refs;
-- real workflow/task integration;
-- permissions corretas;
-- timeline/outcomes;
-- persistence/reload quando necessário.
+## 13. Gate C6
+
+Case só é produto real com structured lifecycle, shared refs, Workflow/Task integration, permissions, timeline/outcomes e persistence/reload quando necessário.
 
 Uma conversa renomeada como “Case” não atende.
