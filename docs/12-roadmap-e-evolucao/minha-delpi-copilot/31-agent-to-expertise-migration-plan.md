@@ -1,31 +1,41 @@
-# Minha DELPI Copilot — Plano de Migração de Agentes para Expertise
+# Minha DELPI Copilot — Migração de Agents para Expertise
 
-**Status:** plano arquitetural de migração  
-**Objetivo:** remover a dependência estrutural de agentes selecionáveis no Copilot sem perder conhecimento, skills, projetos ou capacidades já existentes.
+**Status:** thematic migration spec  
+**Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
 
 ## 1. Direção
 
 ```text
 ANTES
 agent identity
-+ agent specialization
++ specialization
 + agent-bound skills/tools
 + soft handoff
 
 DEPOIS
 single Copilot identity
-+ expertise packs
-+ domain playbooks
++ Expertise Packs
++ Domain Playbooks
 + authorized capabilities
-+ project preferences/context
++ Project Context/preferences
 + dynamic knowledge/multimodal tools
 ```
 
-## 2. Princípio de migração
+## 2. Regra de execução
 
-Não apagar recursos úteis porque foram implementados sob o nome "agent".
+Este documento **não define fases próprias de implantação**. O cutover segue C0–C7:
 
-Cada responsabilidade existente deve ser classificada:
+```text
+C0 inventory/contracts
+→ C2 expertise runtime/shadow
+→ C4 action availability + handoff cutover
+→ C6 projects/admin/preferences
+→ C7 legacy cleanup
+```
+
+## 3. Classificação obrigatória em C0.S0
+
+Cada responsabilidade atual deve ser classificada por função:
 
 ```text
 IDENTITY/PERSONA
@@ -33,266 +43,253 @@ KNOWLEDGE
 EXPERTISE
 CAPABILITY
 POLICY
-PROJECT CONTEXT
-LEGACY UX
-LEGACY TECHNICAL COUPLING
+PROJECT_CONTEXT
+LEGACY_UX
+LEGACY_TECHNICAL_COUPLING
 ```
 
-Somente depois decidir KEEP / MIGRATE / DEPRECATE / REMOVE.
+E por destino:
 
-## 3. Inventário obrigatório no C0.S0
+```text
+KEEP
+MIGRATE_TO_EXPERTISE
+MIGRATE_TO_PROJECT_CONTEXT
+MIGRATE_TO_CAPABILITY_POLICY
+DEPRECATE
+REMOVE
+NOT_PROVEN
+```
 
-Mapear ao menos:
+## 4. Inventário obrigatório
 
-- entidades/tabelas de agents;
-- agent CRUD/admin;
-- agent metadata;
-- agent specialization;
-- agent skills;
-- allowed actions por agent;
-- workspace/session `agent_id`;
-- `chat_mode` common/agent;
+Mapear:
+
+- agent entities/tables/repos;
+- CRUD/admin;
+- metadata/instructions;
+- specialization;
+- skills;
+- allowed actions/tools;
+- session/workspace `agent_id`;
+- `chat_mode`;
 - project default agent;
-- UI de seleção/ativação;
+- UI selector/activation;
 - soft handoff;
-- knowledge namespaces vinculados;
-- prompts/policies por agent;
+- knowledge namespaces;
+- prompts/policies;
 - tests/fixtures/scripts/docs;
-- telemetry de uso.
+- telemetry/consumers externos.
 
-## 4. Mapeamento inicial conhecido
+## 5. Mapeamento conhecido a revalidar
 
 ### `AgentSpecializationService`
 
-Atual:
-
-- presets RH/TI/Financeiro/Comercial/Jurídico;
-- knowledge domains/namespaces/tags;
-- guideline categories;
-- allowed tools.
-
-Alvo:
+Alvo conceitual:
 
 ```text
-knowledge fields
-→ ExpertisePack.knowledgeScopes / semantic metadata
-
-guideline fields
-→ ExpertisePack.analysisGuidance / safety/output guidance
-
-allowedTools
-→ remover como authority departamental
-→ disponibilidade vem de capability/policy/RBAC
+knowledge config → Expertise/Knowledge metadata
+analysis guidelines → Expertise guidance
+allowedTools → capability/policy authority, não department agent
 ```
 
 ### `ChatWorkspaceAgentActivationService`
 
-Atual:
-
-- `agent_id` controla modo agent;
-- tools operacionais exigem agente ativo.
-
 Alvo:
 
 ```text
-Copilot runtime sempre único
-operational capability availability independente de agent_id
-legacy agent_id somente compatibility até migração concluída
+operational capability availability
+→ identity/RBAC + allowed actions + policy
 ```
+
+`agent_id` não permanece gate de operação no target.
 
 ### `ChatSoftAgentHandoffService`
 
-Atual:
-
-- sugere trocar para Agente Minha DELPI e reenviar consulta.
-
 Alvo:
 
 ```text
-miss de capability/expertise
-→ dynamic retrieval/replan
-→ clarification se required
-→ unavailable explanation se não existir capability autorizada
+capability/expertise miss
+→ retrieve/replan
+→ clarify if required
+→ unavailable explanation
 ```
 
-Sem handoff de identidade.
+Sem troca de identidade.
 
 ### `ChatSkillRegistry`
 
-Atual:
+Preservar capabilities úteis, mas separar:
 
-- skills úteis e bindings parcialmente dependentes de `has_agent`/agent metadata.
+```text
+capability availability
+≠ agent active
+```
 
-Alvo:
+Remover semantic routing técnico incompatível com OpenAPI-first quando encontrado.
 
-- preservar capabilities úteis;
-- separar disponibilidade de capability de configuração de agente;
-- mover preferências/contexto para `ExpertiseContext`/Project quando apropriado;
-- remover path-token/operation-marker como semântica sempre que violar a arquitetura OpenAPI-first vigente.
+## 6. C0 — contracts/migration design
 
-## 5. Estratégia em fases
-
-### M0 — Inventory only
-
-Nenhum runtime diff.
+Sem runtime cutover.
 
 Saídas:
 
-- graph producer/consumer;
-- tabela KEEP/MIGRATE/DEPRECATE/REMOVE;
-- uso real por banco/UI;
-- riscos de compatibilidade.
+- producer/consumer graph;
+- migration classification;
+- public API consumers;
+- data migration needs;
+- legacy session strategy;
+- rollback/exit criteria;
+- Expertise/Project/Capability boundaries.
 
-### M1 — Contratos novos
+## 7. C2 — expertise runtime + shadow validation
 
-Definir/reutilizar:
+Implementar/reutilizar:
 
-- `ExpertisePackV1`;
-- `ExpertiseSelectionV1`;
-- `ExpertiseContextV1`;
-- `DomainPlaybookV1`;
-- provenance/version metadata.
+- Expertise Catalog;
+- semantic retrieval;
+- bounded ExpertiseContext;
+- Playbook retrieval;
+- multimodal integration;
+- session without mandatory agent.
 
-Sem remover agent ainda.
+Shadow comparison pode usar legacy output para evaluation, mas não como fallback permanente.
 
-### M2 — Dual-read controlado
+## 8. C4 — operational cutover
 
-```text
-legacy specialization config
-→ migration adapter
-→ ExpertiseContext
-```
+Somente após capability/RBAC/policy gates:
 
-O adapter é temporário, com exit criteria e telemetry.
+- operational tools deixam de exigir agent activation;
+- soft handoff sai do fluxo alvo;
+- misses usam retrieval/replan/clarify;
+- writes continuam governados por Decision Gate;
+- legacy sessions continuam legíveis durante janela definida.
 
-Proibido criar duas autoridades permanentes.
+## 9. C6 — projects/admin/preferences
 
-### M3 — Copilot-first cutover
-
-Novas conversas e superfícies do Copilot:
-
-- não exigem agent selection;
-- operational tools não dependem de agent activation;
-- expertise é recuperada automaticamente;
-- projects podem sugerir preferred packs.
-
-### M4 — UI deprecation
-
-Remover/ocultar fluxo de "trocar agente" no produto Copilot após:
-
-- usage telemetry;
-- migration tests;
-- rollback definido;
-- documentação atualizada.
-
-### M5 — Data migration
-
-Configuração útil de agents existentes pode virar:
-
-```text
-agent knowledge config → expertise/project knowledge preferences
-agent specialization → expertise pack refs
-agent skill toggles → project/runtime capability preferences somente quando não forem security authority
-agent instructions → project guidance ou pack guidance após revisão
-```
-
-Não migrar automaticamente instrução insegura ou permission override.
-
-### M6 — Runtime cleanup
-
-Remover:
-
-- agent-required gates sem função residual;
-- soft handoff;
-- selectors de agente sem consumidor;
-- compatibility adapters após exit criteria;
-- tests/docs obsoletos.
-
-## 6. Persistência
-
-### Durante transição
-
-Sessões antigas com `agent_id` devem continuar legíveis.
-
-### Futuro
-
-Contexto relevante pode persistir como:
-
-```text
-selectedExpertiseRefs
-projectId
-knowledgeScopeRefs
-workflow state
-workspace context
-```
-
-Evitar persistir expertise selecionada como authority eterna: novo turno pode reavaliar conforme objetivo/contexto.
-
-## 7. Projetos
-
-Se agentes atuais também funcionam como "espaço de trabalho configurável", separar esse conceito de identidade do Copilot.
+Separar projeto de identidade do Copilot.
 
 Projeto pode conter:
 
-- arquivos;
-- knowledge scopes;
+- files;
+- Knowledge scope refs sujeitos a ACL;
 - preferred expertise;
 - templates;
 - domain guidance;
-- default apps/context.
+- app/context preferences.
 
-Projeto não concede permissão nem cria novo planner.
+Projeto não concede permission nem novo planner.
 
-## 8. Compatibilidade de API
+Administração de Expertise/Playbooks segue lifecycle governado.
 
-Endpoints de administração de agents existentes devem ser inventariados antes de remoção.
+## 10. C7 — cleanup
 
-Opções:
+Remover/deprecar somente após zero consumers materiais e gates:
 
-```text
-1. manter read-only durante janela de migração;
-2. introduzir endpoints de expertise/playbooks;
-3. migrar consumidores;
-4. deprecar com versão/data;
-5. remover somente após zero consumers provados.
-```
+- `agent_id` routing;
+- `chat_mode=agent` behavior material;
+- soft handoff;
+- agent-required tool gates;
+- dead selectors/config;
+- compatibility adapters;
+- obsolete tests/docs.
 
-## 9. Rollback
+## 11. Persistência
 
-Até M4/M5, manter rollback configurável quando tecnicamente necessário.
+Durante migração, sessões antigas devem continuar legíveis.
 
-Após cutover final, não manter `LEGACY_FALLBACK` material indefinidamente.
-
-## 10. Testes de migração
-
-Obrigatórios:
-
-- sessão antiga com agent_id;
-- nova sessão sem agent_id;
-- query RH/Financeiro/Qualidade sem seleção manual;
-- compound cross-domain;
-- project preferred expertise;
-- capability unauthorized continua bloqueada;
-- knowledge scope unauthorized continua bloqueado;
-- send/stream parity;
-- reload;
-- no soft-handoff;
-- telemetry/provenance correta;
-- residual search por gates `has_agent`/`userActivatedAgent`.
-
-## 11. Critério de conclusão
-
-A migração só fecha quando:
+Target pode persistir refs como:
 
 ```text
-[ ] Copilot funciona sem agente selecionado
-[ ] tools/capabilities são governadas por RBAC/policy, não agent activation
-[ ] especialização dinâmica cobre casos antes dependentes de presets
-[ ] projects preservam customização necessária
-[ ] knowledge ACL permanece intacta
-[ ] soft handoff removido
-[ ] UX não exige troca de agente
-[ ] sessões legadas tratadas/migradas
-[ ] residual material de agent-routing = zero
-[ ] evals candidate final PASS
+selectedExpertiseRefs quando útil
+projectId
+knowledge refs
+workflow/task/case refs
+workspace snapshot bounded
 ```
+
+Expertise selecionada não vira authority eterna; novo turno pode reavaliar.
+
+## 12. Data migration
+
+Não migrar blindly todo conteúdo de agent.
+
+Cada campo precisa owner/destino:
+
+```text
+knowledge config → Knowledge/Expertise
+specialization → Expertise
+skill preference → Project/runtime preference somente se não for security authority
+instructions → reviewed Project/Expertise guidance
+permission override → NÃO migrar como expertise
+```
+
+## 13. API compatibility
+
+Endpoints administrativos atuais precisam consumer inventory.
+
+Estratégia possível:
+
+```text
+compatibility read
+→ expertise/playbook endpoints
+→ consumer migration
+→ deprecation window
+→ zero-consumer proof
+→ remove
+```
+
+## 14. Rollback
+
+Durante cutover:
+
+- feature flag/cohort quando padrão local suportar;
+- legacy data permanece legível;
+- rollback não pode reintroduzir unauthorized tool exposure;
+- fallback possui exit criteria e prazo.
+
+## 15. Gates
+
+Antes do cutover final:
+
+```text
+session_without_agent PASS
+expertise retrieval/composition PASS
+unknown pack PASS
+knowledge ACL PASS
+unauthorized capability PASS
+multimodal no-agent PASS quando no escopo
+soft handoff replacement PASS
+legacy consumer inventory complete
+send/stream parity PASS
+residual scan PASS
+```
+
+## 16. Residual scan
+
+Buscar:
+
+```text
+has_agent
+userActivatedAgent
+chat_mode == agent
+switch_agent_and_resend
+softAgentHandoff
+agent allowed tools
+agentId routing
+```
+
+Cada residual final:
+
+```text
+VALID_NON_ROUTING_CONCEPT
+LEGACY_COMPAT_WITH_EXIT_CRITERIA
+REMOVE
+```
+
+Residual material sem exit criteria bloqueia C7.
+
+## 17. Resultado alvo
+
+> “Analise este desenho com Engenharia e Qualidade, procure problemas semelhantes e monte um 8D preliminar.”
+
+O mesmo Copilot compõe expertise/tools/capabilities sem troca de identidade ou perda de RBAC.
