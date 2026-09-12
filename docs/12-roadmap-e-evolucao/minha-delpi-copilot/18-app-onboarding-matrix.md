@@ -23,6 +23,7 @@ Para cada app, C0.S0/C5.S3 deve comprovar:
 ```text
 appId
 nome
+render type (microfrontend/iframe/backend-only/external quando aplicável)
 MFE/plugin path
 backend owner
 OpenAPI disponível?
@@ -38,6 +39,8 @@ destructive actions?
 sensitivity/confirmation?
 integração AI atual?
 nível AI-ready
+iframe integration class quando aplicável
+origin/SSO/bridge evidence quando aplicável
 wave proposta
 bloqueios
 evidence
@@ -97,6 +100,8 @@ Escolher 2–3 apps que maximizem aprendizado e minimizem risco:
 
 **Candidatos atuais são somente recomendação:** Comercial, Suprimentos e Minhas Solicitações. C0.S0 deve confirmar ou alterar a escolha.
 
+Para iframe, o piloto de bridge pode ser um app separado do piloto de Business Action. Priorizar owner disponível, origin estável, baixo risco e possibilidade de implementar contrato sem alterar regra de negócio.
+
 ## 5. Score de readiness sugerido
 
 Pontuar 0/1 por item comprovado:
@@ -117,6 +122,18 @@ contract tests
 observability
 ```
 
+Para iframe, acrescentar:
+
+```text
+render mode conhecido
+origin authority conhecida
+SSO mode comprovado
+bridge handshake comprovado
+context publish comprovado
+visual command support comprovado
+security negative tests comprovados
+```
+
 Não usar score para mascarar bloqueio de segurança. App com write sem RBAC/policy/confirmation não pode ser L4 independentemente da pontuação.
 
 ## 6. Evidence por linha
@@ -129,9 +146,66 @@ manifest path
 backend OpenAPI path/url
 permission source
 route source
+render mode
+iframe origin source
+SSO mode
+bridge protocol/version
 contract test
 smoke/eval
 last verified at
 ```
 
 Sem evidence, estado continua `TO_INVENTORY`.
+
+## 7. Classificação específica de iframe
+
+Além do nível AI-ready global L0–L5, apps com renderização iframe possuem uma classificação ortogonal:
+
+| Classe | Nome | Critério |
+|---|---|---|
+| I0 | `PORTAL_ONLY` | app/rota autorizados podem ser abertos pelo Portal; sem contexto interno |
+| I1 | `CONTEXTUAL` | I0 + publica contexto bounded via protocolo validado |
+| I2 | `INTERACTIVE` | I1 + aceita comandos visuais genéricos declarados e retorna observation |
+| I3 | `AI_READY` | I2 + Business Actions relevantes existem via API/OpenAPI governada |
+
+Um app pode, por exemplo, ser `L3 READ_READY` e `I1 CONTEXTUAL`, ou `L1 DISCOVERABLE` e `I0 PORTAL_ONLY`.
+
+## 8. Campos adicionais para iframe
+
+C0.S0 deve acrescentar por app iframe/external:
+
+```text
+renderMode
+iframeIntegrationClass
+entry/origin authority
+allowed origins
+SSO/auth mode
+bridge existing? yes/no
+bridge protocol/version
+context publish support
+visual commands suportados
+runtime declared capabilities
+Business API/OpenAPI support
+security owner
+CSP/frame constraints
+last bridge verification
+```
+
+`external` sem canal controlado normalmente permanece `PORTAL_ONLY` para o Copilot.
+
+## 9. Regras de promoção de classe iframe
+
+```text
+PORTAL_ONLY → CONTEXTUAL
+somente com handshake + origin/source/schema + lifecycle + context tests
+
+CONTEXTUAL → INTERACTIVE
+somente com command allowlist + declared capabilities + observation + negative security gates
+
+INTERACTIVE → AI_READY
+somente com Business Actions por API/OpenAPI + RBAC/policy/confirmation + evals
+```
+
+`postMessage` funcionando isoladamente não promove o app para `AI_READY`.
+
+Fonte canônica: [`26-iframe-copilot-bridge.md`](./26-iframe-copilot-bridge.md).
