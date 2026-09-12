@@ -2,118 +2,84 @@
 
 ## 1. Objetivo
 
-Todo novo app da Minha DELPI deve nascer preparado para ser utilizado tanto pela UI quanto pelo Copilot, sem exigir hardcodes no motor central de IA.
+Todo app da Minha DELPI deve poder evoluir para uso pela UI e pelo Copilot **sem hardcode central e sem criar contratos paralelos**.
 
 ## 2. Princípio
 
 ```text
-Novo app
-├─ manifesto
-├─ routes
-├─ permissions
+App
+├─ manifesto/routes/permissions
 ├─ APIs/use cases
 ├─ OpenAPI
-├─ semantic metadata
+├─ EntityRef/deep-link metadata
 ├─ Workspace Context adapter
-└─ UI capabilities opcionais
+├─ Evidence/provenance-friendly responses quando relevante
+├─ sensitivity/Decision Gate metadata/policy
+├─ optional UI capabilities
+└─ optional event integration
         ↓
 Minha DELPI Copilot
 ```
 
-## 3. Requisitos mínimos
+## 3. Requisitos estruturais
 
-### 3.1 Manifesto e rotas
-
-O app deve possuir:
+### App/route identity
 
 - `appId` estável;
-- `basePath`;
 - rotas identificáveis;
-- labels amigáveis;
-- permission por rota quando aplicável;
-- metadata suficiente para Portal e Copilot descreverem a função da rota.
+- permission alinhada;
+- labels/descrições semânticas;
+- não ensinar URL livre ao LLM.
 
-### 3.2 Permissões
+### Business use cases
 
-Toda função protegida deve possuir permission clara.
+Regra de negócio fica em API/use case, nunca apenas em componente React.
 
-Não usar apenas visibilidade de botão como autorização.
+### OpenAPI
 
-### 3.3 Business use cases
+Para actions consumíveis:
 
-Operações de negócio devem viver em use cases/API, não dentro de componentes React.
-
-### 3.4 OpenAPI
-
-APIs consumíveis pelo Copilot devem expor OpenAPI de qualidade com:
-
-- `summary` útil;
-- `description` semântica;
-- operationId estável;
-- parâmetros descritos;
+- summary/description úteis;
+- operationId estável como metadata técnica, não semântica de routing;
 - required/type/enum/format corretos;
-- request body schema;
-- response schemas;
-- exemplos quando agregarem valor;
-- erros documentados;
-- security schemes.
+- request/response schemas;
+- erros/security schemes;
+- exemplos úteis.
 
-### 3.5 Sensitivity/policy
+### RBAC
 
-Actions de escrita precisam de metadata/policy que permita derivar:
+Visibilidade de botão não é autorização. Backend revalida.
 
-```text
-readWrite
-risk
-requiresConfirmation
-parallelSafe
-```
+## 4. Shared foundations que o app deve reutilizar
 
-Sem classificar manualmente tudo como read/low.
+Quando aplicável:
 
-## 4. Workspace Context Adapter
+- `EntityRef` compartilhado;
+- `SourceRef/EvidenceRef/OutcomeRef` semantics;
+- `WorkspaceContext`;
+- Platform Command/deep-link conventions;
+- Decision Gate policy model;
+- `EventEnvelope` para eventos integráveis;
+- iframe protocol se render mode exigir.
 
-O MFE deve implementar um adapter pequeno quando possuir contexto útil.
+Não criar `MyAppEntityRef`, `MyAppConfirmation`, `MyAppCopilotEvent` incompatíveis se o shared contract atende.
 
-Exemplos:
+## 5. Workspace Context Adapter
 
-- cliente aberto;
-- produto selecionado;
-- solicitação atual;
+Publicar somente contexto útil:
+
+- entidade atual;
+- filtros;
 - período;
-- filial;
-- aba;
-- dataset visível.
+- seleção;
+- view/aba;
+- refs de dados visíveis.
 
-Não publicar estado interno irrelevante.
+Não publicar React state, DOM, token ou dataset inteiro.
 
-## 5. UI Capabilities
+## 6. Entity refs e deep links
 
-Registrar somente capacidades visuais que não duplicam business actions.
-
-Permitido:
-
-```text
-open entity
-select tab
-change local view
-focus section
-apply local view filter
-```
-
-Evitar:
-
-```text
-createOrder via UI capability
-updateCustomer via UI capability
-approveRequest via UI capability
-```
-
-Essas devem ser Business Actions.
-
-## 6. Entity Deep Links
-
-Apps com entidades relevantes devem declarar como abrir uma entidade sem ensinar URLs ao LLM.
+Apps com entidades relevantes devem mapear entidade lógica → route metadata.
 
 Exemplo conceitual:
 
@@ -125,68 +91,163 @@ Exemplo conceitual:
 }
 ```
 
-O Shell resolve e valida a navegação.
+Portal resolve/revalida a navegação.
 
-## 7. Apresentação
+## 7. UI capabilities
 
-A API deve devolver schema/payload suficientemente descritivos para apresentação genérica útil.
+Permitido quando verdadeiramente visual:
 
-Presenter dedicado é melhoria opcional, não requisito para a capability existir.
+```text
+open entity
+select tab/view
+focus section
+apply local filter
+refresh view
+```
 
-## 8. Help e descrição
+Não usar UI capability para:
 
-O app deve fornecer linguagem de negócio suficiente para o Copilot explicar:
+```text
+create/update/approve/cancel
+```
 
-- o que o app faz;
-- principais entidades;
-- principais operações;
-- significado de campos/indicadores quando não óbvio.
+se houver API/use case de negócio.
 
-Essa documentação pode alimentar knowledge/RAG e help contextual.
+## 8. Business Action risk/decision readiness
 
-## 9. Matriz de readiness
+Writes precisam permitir ao policy owner derivar/definir:
 
-Cada app deve manter:
+```text
+read/write
+action risk/sensitivity
+Decision Gate requirement
+idempotency expectations
+parallel/retry safety
+audit requirement
+```
+
+Não hardcodar “todos POST confirmam” no planner.
+
+## 9. Evidence/provenance readiness
+
+APIs importantes para análise devem oferecer dados suficientes para:
+
+- source identification;
+- timestamp/freshness;
+- entity relation;
+- status/outcome;
+- limitation/error classification.
+
+Não é obrigatório embrulhar toda API em `EvidenceRef`; o adapter do Copilot pode normalizar usando metadata real.
+
+## 10. Event-ready opcional
+
+Quando o app possui eventos relevantes para Watch/workflow:
+
+- owner claro;
+- schema versionado;
+- eventId/dedupe semantics;
+- entity refs;
+- occurredAt;
+- payload bounded/ref;
+- permission/security model.
+
+Não criar polling no Copilot core se evento confiável já existe.
+
+## 11. Iframe readiness
+
+Classificação ortogonal:
+
+```text
+PORTAL_ONLY
+CONTEXTUAL
+INTERACTIVE
+AI_READY
+```
+
+AI_READY exige Business Actions por API/OpenAPI; `postMessage` sozinho não basta.
+
+## 12. Help/knowledge
+
+O app deve fornecer linguagem suficiente para explicar:
+
+- função;
+- entidades;
+- campos/indicadores;
+- operações;
+- procedimentos associados.
+
+Knowledge visibility continua sujeita a ACL.
+
+## 13. Readiness levels
+
+```text
+L1 DISCOVERABLE
+L2 CONTEXT_READY
+L3 READ_READY
+L4 WRITE_READY
+L5 WORKFLOW_READY
+```
+
+### L1
+rotas/permission/descrição discoverable.
+
+### L2
+Workspace Context + EntityRef/deep link quando material.
+
+### L3
+OpenAPI read + RBAC + outcome/evidence normalization.
+
+### L4
+write + policy/Decision Gate + idempotency/audit.
+
+### L5
+capabilities estáveis para Durable Workflow + events quando o fluxo precisar.
+
+## 14. Matriz mínima de readiness
 
 | Item | Status |
 |---|---|
-| Rotas autorizadas deriváveis | |
-| Business APIs disponíveis | |
-| OpenAPI completo | |
-| Permissions alinhadas | |
-| Sensitivity correta | |
+| app/routes autorizados deriváveis | |
+| EntityRef/deep link | |
 | Workspace Context | |
-| Entity deep links | |
+| Business APIs | |
+| OpenAPI quality | |
+| permissions/RBAC | |
+| read outcome/evidence | |
+| write sensitivity/Decision Gate | |
+| idempotency/retry semantics | |
 | UI capabilities necessárias | |
-| Help/RAG | |
-| Evals básicos | |
+| events quando necessários | |
+| help/knowledge | |
+| evals | |
 
-## 10. Testes mínimos
+## 15. Testes mínimos
 
-- app/route visibility por RBAC;
-- capability discovery para usuário autorizado;
-- ausência para usuário não autorizado;
-- read action via Copilot;
-- write action com confirmação quando aplicável;
+Conforme nível:
+
+- authorized/unauthorized app/route;
+- Workspace Context;
 - entity deep link;
-- Workspace Context update;
-- negative: app novo não exige alteração no core do Copilot.
+- read action;
+- write Decision Gate;
+- idempotency negative;
+- unknown/sibling onboarding sem core patch;
+- event duplicate/security quando aplicável;
+- iframe security quando aplicável.
 
-## 11. Definition of Ready para novo app
-
-Um app é AI-ready quando:
+## 16. Definition of Ready AI
 
 ```text
-[ ] UI e Copilot usam os mesmos contratos de negócio
-[ ] OpenAPI é suficiente para discovery/binding genérico
-[ ] nenhuma regra de endpoint foi adicionada ao core da IA
-[ ] permissões são reutilizadas pelo Copilot
-[ ] contexto visual útil possui adapter
-[ ] navegação usa metadata tipada, não URL inventada
-[ ] writes possuem sensitivity/confirmation
-[ ] smoke de capability passa
+[ ] UI/Copilot convergem para mesmos use cases
+[ ] shared foundations foram reutilizadas
+[ ] OpenAPI é suficiente para discovery/binding
+[ ] nenhuma regra endpoint-specific foi adicionada ao core
+[ ] permissions vêm dos owners canônicos
+[ ] Entity/Context/navigation são tipados
+[ ] writes possuem policy/Decision Gate semantics
+[ ] evidence/outcome é rastreável quando material
+[ ] smoke/evals do nível passam
 ```
 
-## 12. Governança
-
-O checklist de criação de novo plugin/MFE deve incorporar este padrão progressivamente. O objetivo é que AI-readiness seja uma propriedade do ecossistema, não um projeto posterior de integração por app.
+AI-readiness é propriedade do ecossistema, não integração artesanal por app.
