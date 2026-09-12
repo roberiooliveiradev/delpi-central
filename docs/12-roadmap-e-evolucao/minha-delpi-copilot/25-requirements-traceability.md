@@ -4,7 +4,8 @@
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Testes:** [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md)  
-**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
+**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
+**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)
 
 > Esta é a única authority `CP-*`. IDs históricos não são reutilizados nem apagados; requisitos ligados à migração do Minha DELPI Chat são preservados como `OUT_OF_SCOPE_WITH_DECISION`.
 
@@ -66,9 +67,14 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-157 | Media capture/consent/retention classes definidas antes do runtime multimodal contínuo | Copilot Security/Architecture | media/privacy foundation | PLANNED |
 | CP-158 | Shared-device identity/session isolation | Copilot/Portal/Security | device session negative tests | PLANNED |
 | CP-175 | Raw media minimization e retention class-specific | Copilot Media/Security | retention/data minimization | PLANNED |
-| CP-176 | Sem facial recognition/emotion detection/hidden surveillance por default | Security/Governance | privacy negative gate | PLANNED |
+| CP-176 | Sem reconhecimento facial open-world/indiscriminado, emotion detection como truth ou hidden surveillance por default | Security/Governance | privacy negative gate | PLANNED |
 | CP-178 | Arbitrary LLM→machine command proibido | Copilot/Industrial Safety | OT boundary gate | PLANNED |
 | CP-179 | Future OT actuation exige safety gate separado | Industrial owner/Copilot | separate architecture/risk approval | PLANNED |
+| CP-182 | Enrollment biométrico explícito, versionado, revogável e com purpose/retention definidos | Copilot Biometric/Security | enrollment lifecycle contract | PLANNED |
+| CP-183 | Biometric match nunca concede autenticação/permissão por si só | Copilot Policy/Core | permission-elevation negative | PLANNED |
+| CP-188 | Human Observation limitado a evidência observável do processo; sem inferência psicológica/sensível | Copilot Security/Governance | prohibited-inference gate | PLANNED |
+| CP-189 | Sem decisão trabalhista automática baseada em biometria/Human Observation | Governance/People owner/Copilot | employment-decision negative | PLANNED |
+| CP-190 | Biometric templates protegidos, não logados, revogáveis e com retenção própria | Copilot Biometric/Security | storage/key/retention gate | PLANNED |
 
 ## 3. C1 — Standalone Application Bootstrap
 
@@ -116,7 +122,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-159 | Contexto operacional OP/máquina/produto/operação/posto usa WorkspaceContext + EntityRef | Portal/MFE/Copilot | operational context contract | LOCKED |
 | CP-171 | Device metadata não substitui identidade/autorização | Portal/Copilot Security | shared-device/context negative | LOCKED |
 
-## 5. C3 — Intelligence Core Standalone + Multimodal Foundations
+## 5. C3 — Intelligence Core Standalone + Multimodal/Biometric Foundations
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
@@ -139,6 +145,10 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-163 | Short-video ingestion com time-range provenance e bounded processing | Copilot Media | video eval/budget | LOCKED |
 | CP-164 | Screen share bounded/consented sem virar DOM automation | Copilot MFE/Media/Security | screen-share safety | LOCKED |
 | CP-177 | Visual finding não vira decisão oficial de qualidade por default | Copilot/Quality Policy | epistemic/quality negative | LOCKED |
+| CP-184 | Face recognition/verification closed-set apenas para usuários enrolled e policy-approved | Copilot Biometric | positive/unknown/look-alike eval | LOCKED |
+| CP-185 | Speaker recognition/diarization separado de STT e de autorização | Copilot Biometric/Media | speaker identity eval | LOCKED |
+| CP-186 | Unknown/low-confidence permanece desconhecido ou requer confirmação; associação é corrigível | Copilot Biometric/MFE | confidence/correction gate | LOCKED |
+| CP-187 | Liveness/anti-spoof obrigatório quando a finalidade exigir confiança adicional | Copilot Biometric/Security | replay/photo/deepfake eval | LOCKED |
 
 ## 6. C4 — Business Reads + Business Graph
 
@@ -222,6 +232,9 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-173 | Observação de processo gera somente Knowledge/Experience candidate | Copilot Knowledge | candidate provenance | LOCKED |
 | CP-174 | Meeting/frontline candidate exige review/eval antes de virar conhecimento publicado | Copilot Knowledge/Expertise | governed learning | LOCKED |
 | CP-181 | Meeting/Frontline accessibility e large-touch/shared-device UX | Copilot MFE | accessibility/frontline gate | LOCKED |
+| CP-191 | Meeting pode associar face/voz enrolled a participante com confidence/correção | Copilot Meeting/Biometric | participant identity gate | LOCKED |
+| CP-192 | Frontline pode usar biometria para identity assistance sem substituir sessão/RBAC | Copilot Frontline/Biometric | shared-device identity gate | LOCKED |
+| CP-193 | Human Observation analisa somente padrões operacionais observáveis com Evidence/provenance | Copilot Frontline/Knowledge | process observation gate | LOCKED |
 
 ## 9. C7 — Autonomy + Advanced Realtime + Optimization + Rollout
 
@@ -262,7 +275,9 @@ Esses IDs não podem ser reativados como dependência do Copilot.
 - nenhum requisito Copilot pode ser bloqueado por refactor do Chat;
 - shared reuse precisa ser platform-neutral;
 - phase canonical é C0–C7 do `16`;
-- modality não pode criar bypass de RBAC/policy;
+- modality/biometric result não pode criar bypass de RBAC/policy;
+- biometric identity é candidate association, não permission authority;
+- Human Observation não pode virar inferência psicológica/sensível ou decisão trabalhista automática;
 - OT physical actuation não é inferida a partir de autonomia L5.
 
 ## 12. Coverage final
@@ -284,6 +299,8 @@ ARCHITECTURE_PATTERNS
 PORTAL_CONTEXT
 INTELLIGENCE
 MULTIMODAL_MEDIA
+BIOMETRIC_IDENTITY
+HUMAN_OBSERVATION
 MEETING
 FRONTLINE
 PRIVACY_SHARED_DEVICE
