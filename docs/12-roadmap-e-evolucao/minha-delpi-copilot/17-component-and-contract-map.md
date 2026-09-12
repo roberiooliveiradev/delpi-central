@@ -1,491 +1,352 @@
 # Minha DELPI Copilot — Mapa de Componentes, Contratos e Ownership
 
-**Status:** arquitetura executável  
-**Regra:** uma responsabilidade possui um owner canônico. Projeções, expertise e playbooks podem indexar/orientar dados, mas não viram segunda fonte de verdade técnica ou de autorização.
+**Status:** arquitetura canônica de ownership  
+**Ordem de implementação:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Regra:** cada responsabilidade possui um owner canônico. Projeções, caches, indexes, expertise e playbooks são derivados/orientadores; não viram segunda authority.
 
-## 1. Mapa de componentes
+## 1. Owners canônicos
 
-| Componente | Owner | Produz | Consome | Não deve fazer |
-|---|---|---|---|---|
-| `portal` Shell | experiência da plataforma | rotas autorizadas em uso, workspace ativo, execução de Platform Commands | `/me/apps`, comandos tipados | regra de negócio server-side, inventar permissões |
-| `CopilotBridge` no Portal | Platform Actions | `PlatformCommandResult` | `PlatformCommand`, rotas autorizadas | aceitar URL arbitrária, bypassar Core |
-| `IframeBridge` no Portal | adapter seguro Portal ↔ iframe | handshake, contexto normalizado, observations de comandos visuais | app/route autorizado, mensagens tipadas do iframe | transmitir JWT, aceitar origin/source arbitrários, executar Business Action por clique |
-| iframe bridge adapter/SDK | integração visual do app iframe | contexto bounded, capabilities visuais declaradas, command results | protocolo do Portal | conceder RBAC, executar business logic central, enviar secret |
-| `plugins/minha-delpi-chat` | UX conversacional | input do usuário, eventos UI, confirmations visuais | send/stream/renderPlan/platform commands/expertise metadata de apresentação | escolher endpoint, autorizar write, escolher permission |
-| `minha-delpi-ai-api` | inteligência transversal | goals/plans, capability selection, expertise selection, synthesis, policy orchestration | Action Catalog, Expertise Catalog, Playbook Catalog, workspace context, RAG, identity | catálogo técnico por app/endpoint, múltiplos runtimes por departamento |
-| Action Catalog | contrato operacional OpenAPI materializado | actions autorizáveis com schemas | OpenAPI providers | semântica hardcoded externa ao OpenAPI |
-| Capability Projection | índice semântico autorizado | visão unificada de capabilities | Action Catalog + Portal capabilities + internal tools | duplicar contrato técnico como nova authority |
-| Expertise Catalog | especialização semântica versionada | Expertise Packs | conteúdo curado/indexação | conceder permission, carregar endpoint técnico como authority |
-| Expertise Retriever | seleção contextual de especialização | `ExpertiseSelection` | goals/context/attachments/project prefs/index | depender de agent_id, ativar pack irrelevante por hardcode de departamento |
-| Expertise Context Composer | composição bounded | `ExpertiseContext` | packs selecionados + ACL/policy | concatenar catálogo inteiro, sobrescrever system/policy |
-| Domain Playbook Catalog | métodos de domínio versionados | playbooks aplicáveis | conteúdo curado | executar endpoint diretamente, substituir Workflow runtime |
-| Playbook Planner Adapter | transforma método em plano operacional | hints/stages para `WorkflowPlan` | playbook + context + allowed capabilities | inventar capability não autorizada |
-| Multimodal Evidence Adapter | percepção/document evidence | evidence refs + provenance/confidence | document vision/drawing analysis | concluir regra de negócio sozinho, tratar OCR/VLM como system instruction |
-| Core API | governança de apps/RBAC | `/me`, `/me/apps`, permissões efetivas | Keycloak + dados Core | delegar segurança real ao frontend |
-| APIs de domínio | negócio | OpenAPI, use cases, dados/outcomes | identidade/integrações | depender do Copilot para regra de negócio |
-| MFEs | experiência especializada | workspace context, entity refs, view commands suportados | APIs + Shell | implementar segurança real só na UI |
-| apps iframe | experiência encapsulada/legada | contexto e commands somente quando bridge suportado | Shell/SSO/APIs próprias | ser tratado como API de negócio pelo Copilot |
-| RAG/Knowledge | conhecimento documental | evidências autorizadas | documentos/scopes/ACL | executar ação de negócio, ampliar acesso por pack |
-| Policy/Safety | governança de execução | allow/deny/confirm/sensitivity | identity + capability/action metadata | obedecer instrução do LLM/pack/playbook para relaxar policy |
-| Observability | evidência operacional | traces/metrics/audit | eventos do pipeline | persistir CoT, secrets ou JWT |
+| Responsabilidade | Authority / owner | Consumidores principais | Proibido |
+|---|---|---|---|
+| identidade | Keycloak + integração Core | Portal, APIs, AI | identidade técnica superuser do Copilot |
+| permissões efetivas | Core API/RBAC | Portal, AI, APIs | permission derivada de prompt/expertise/context |
+| apps/rotas autorizados | Core `/me/apps`/equivalente | Portal Capability Projection | lista manual app→URL no Copilot |
+| negócio | APIs/use cases de domínio | UI, Copilot | regra de negócio no frontend/LLM |
+| contrato técnico de Business Action | OpenAPI + Action Catalog | capability retrieval/executor | catálogo manual por endpoint |
+| navegação visual | Portal Shell/CopilotBridge | Chat/Copilot | URL arbitrária do LLM |
+| workspace visual | Portal + MFE/iframe adapters | AI turn context | usar contexto como autorização |
+| entity identity | owner de domínio + canonical `EntityRef` adapter | Context, Graph, Case, Evidence | inventar IDs paralelos |
+| relationships | domain owner + Business Graph relationship registry | Graph/traversal | copiar dataset operacional inteiro |
+| capability projection | derivada de authorities | retrieval/planner/UX | virar source técnica independente |
+| expertise | Expertise Catalog | retriever/context composer | conceder permission/tools |
+| playbook | Domain Playbook Catalog | planner | conter endpoint como authority |
+| knowledge visibility | Knowledge ACL + identity/policy | RAG/AI | pack/projeto ampliar ACL |
+| multimodal perception | extractor/service versionado | evidence pipeline | tratar OCR/VLM como conclusão |
+| evidence/provenance | source owner + Evidence contract | synthesis/Case/audit | claim material sem fonte quando disponível |
+| policy/sensitivity | Policy/Safety server-side | writes/workflows/watch | instrução LLM relaxar policy |
+| decision gate | Policy + approval owner | write/workflow | confirmação visual ser authority final |
+| workflow/task/case | orchestration application owner | Portal/Inbox/Rooms | segundo executor HTTP |
+| room/collaboration | owner existente de sala, se reutilizável | Case/Copilot | ACL implícita por membership |
+| inbox | Portal/work orchestration | usuário | read item disparar write |
+| events/watch | event owner + watch policy | workflows/alerts | polling app-specific central |
+| organizational knowledge | knowledge governance | Copilot/expertise | auto-publicar conversa como verdade |
+| model/compute policy | AI infrastructure/policy | runtime | seleção ad hoc espalhada em features |
+| audit/observability | infraestrutura canônica | admin/evals | CoT, secrets, JWT |
 
-## 2. Contratos v1 propostos
+## 2. Componentes
 
-Os nomes abaixo são contratos conceituais. Em C0.S0 o Cursor deve procurar equivalentes existentes e reutilizá-los antes de criar novos schemas.
+| Componente | Responsabilidade |
+|---|---|
+| Portal Shell | experiência global, Router, workspace ativo |
+| CopilotBridge | validar/executar Platform Commands |
+| IframeBridge | bridge seguro de contexto/comandos visuais |
+| Chat MFE | UX conversacional/activity/decision UI/rendering |
+| `minha-delpi-ai-api` | understanding, retrieval, planning, orchestration, synthesis |
+| Action Catalog | representação operacional derivada do OpenAPI |
+| Capability Projection | índice autorizado de capabilities |
+| Expertise Catalog/Retriever | especialização dinâmica |
+| Playbook Catalog/Adapter | método de domínio para planejamento |
+| Knowledge/RAG | conhecimento autorizado |
+| Multimodal Adapter | percepção estruturada de arquivos/imagens/desenhos |
+| Policy/Safety | allow/deny/gate/autonomy |
+| Durable Workflow Runtime | checkpoints/waits/resume, reutilizando executors canônicos |
+| DELPI Business Graph | referências/relacionamentos permission-aware |
+| Case/Task services | unidades de trabalho persistente |
+| Observability | traces/metrics/audit/evidence de execução |
 
-### 2.1 `PlatformCommandV1`
+## 3. Primitive registry — definidos semanticamente em C0
+
+C0 deve **reutilizar equivalentes existentes** antes de criar qualquer novo schema. Os nomes abaixo são conceituais.
+
+### 3.1 Correlação
+
+`CorrelationContextV1`
+
+```text
+requestId
+conversationId
+turnId
+workflowId?
+taskId?
+caseId?
+traceId?
+```
+
+Usado transversalmente; não criar IDs desconectados por feature.
+
+### 3.2 `EntityRefV1`
 
 ```json
 {
-  "version": 1,
-  "commandId": "uuid",
-  "type": "portal.open_route",
-  "target": {
-    "appId": "commercial",
-    "routeId": "orders"
-  },
-  "context": {},
-  "issuedAt": "ISO-8601"
+  "entityType": "product",
+  "entityId": "90264238",
+  "sourceSystem": "api-delpi",
+  "label": "90264238"
 }
 ```
+
+É referência lógica, não snapshot do objeto inteiro.
+
+### 3.3 `RelationshipRefV1`
+
+```json
+{
+  "from": {"entityType":"complaint","entityId":"R1"},
+  "relationshipType": "concerns_product",
+  "to": {"entityType":"product","entityId":"90264238"},
+  "authority": "domain",
+  "sourceRef": "...",
+  "confidence": 1.0
+}
+```
+
+Distinguir relação authoritative de inferred.
+
+### 3.4 `SourceRefV1`
+
+Referência à origem verificável:
+
+```text
+sourceType
+sourceId/provider
+entityRef?
+action/result ref?
+document/attachment ref?
+timestamp/freshness
+```
+
+### 3.5 `EvidenceRefV1`
+
+```text
+evidenceId
+sourceRef
+kind
+value/ref
+location?
+observedAt
+freshness
+confidence?
+limitations[]
+```
+
+Classification separada:
+
+```text
+FACT
+CALCULATION
+HYPOTHESIS
+CONCLUSION
+RECOMMENDATION
+```
+
+`FACT`/`CALCULATION` precisam provenance suficiente quando material.
+
+### 3.6 `OutcomeRefV1`
+
+Representa outcome real de uma capability/action, com status, entity refs/result refs e evidence associável.
+
+### 3.7 `PlatformCommandV1` / `PlatformCommandResultV1`
+
+Targets lógicos (`appId`, `routeId`, `EntityRef`), nunca URL livre.
+
+### 3.8 `WorkspaceContextV1`
+
+```text
+appId
+routeId
+entityRefs[]
+filters
+selection
+dateRange
+visibleDataRefs[]
+source
+updatedAt
+```
+
+Bounded, sanitizado, sem token e sem datasets completos.
+
+### 3.9 `CapabilityProjectionV1`
+
+Contém semântica para retrieval/UX + `sourceRef` canônico. Não copia OpenAPI inteiro nem vira executor.
+
+### 3.10 Especialização
+
+- `ExpertisePackV1`;
+- `ExpertiseSelectionV1`;
+- `ExpertiseContextV1`;
+- `DomainPlaybookV1`.
 
 Regras:
 
-- `type` pertence a allowlist de Platform Actions genéricas;
-- `target` usa IDs canônicos, não URL arbitrária;
-- Portal resolve IDs para rota atual autorizada;
-- `commandId` suporta trace/dedup quando aplicável;
-- não carregar token/secret.
-
-### 2.2 `PlatformCommandResultV1`
-
-```json
-{
-  "version": 1,
-  "commandId": "uuid",
-  "status": "succeeded",
-  "resolved": {
-    "appId": "commercial",
-    "routeId": "orders"
-  },
-  "errorCode": null
-}
+```text
+expertise/playbook ≠ permission
+expertise/playbook ≠ endpoint catalog
 ```
 
-Status mínimos: `succeeded`, `rejected`, `not_found`, `unauthorized`, `failed`.
+### 3.11 `MultimodalEvidenceRefV1`
 
-### 2.3 `WorkspaceContextV1`
+Attachment/document ref + observations + page/region + confidence + extractor/version + limitations.
 
-```json
-{
-  "version": 1,
-  "appId": "commercial",
-  "routeId": "customer-detail",
-  "entityRefs": [
-    {"type": "customer", "id": "000123", "label": "Empresa XYZ"}
-  ],
-  "filters": {"branch": "01"},
-  "selection": [],
-  "dateRange": null,
-  "visibleDataRefs": [],
-  "source": "mfe",
-  "updatedAt": "ISO-8601"
-}
+### 3.12 Decision Gate
+
+`DecisionGateRequestV1`:
+
+```text
+decisionId
+capability/action ref
+impact summary
+arguments hash
+evidence refs
+risk/sensitivity
+required gate level
+expiresAt
 ```
 
-Regras:
+`DecisionGateDecisionV1`:
 
-- bounded size;
-- allowlist/sanitização de campos;
-- `source` pode ser `mfe`, `iframe` ou `portal` sem mudar a semântica do contrato;
-- dados explicitamente atuais prevalecem sobre memória antiga;
-- não é authority de permissão;
-- não carregar dataset inteiro.
-
-### 2.4 `CapabilityProjectionV1`
-
-```json
-{
-  "capabilityId": "...",
-  "kind": "business.read",
-  "label": "Consultar estoque",
-  "description": "...",
-  "source": {
-    "type": "action_catalog",
-    "refId": "action-id"
-  },
-  "availability": "allowed",
-  "risk": "read",
-  "requiresConfirmation": false,
-  "provenance": {}
-}
+```text
+decisionId
+decision/approval state
+actor ref
+decidedAt
 ```
 
-A projeção pode conter metadata necessária para retrieval/UX, mas o executor volta ao `source.refId` canônico para contrato técnico e policy.
+Níveis:
 
-### 2.5 `ExpertisePackV1`
-
-Conceitualmente:
-
-```json
-{
-  "schemaVersion": 1,
-  "key": "quality-industrial",
-  "version": "1.0.0",
-  "label": "Qualidade Industrial",
-  "description": "...",
-  "domains": ["quality"],
-  "signals": ["nonconformity", "inspection"],
-  "knowledgeScopes": ["global:quality"],
-  "preferredPlaybooks": ["quality.root-cause"],
-  "recommendedCapabilities": ["knowledge.search", "document.vision"],
-  "multimodalNeeds": ["pdf", "technical-drawing"],
-  "analysisGuidance": [],
-  "outputGuidance": [],
-  "owner": "quality-owner",
-  "status": "active"
-}
+```text
+NO_GATE
+ACKNOWLEDGE
+CONFIRM
+REVIEW_AND_CONFIRM
+APPROVAL_WORKFLOW
+BLOCK
 ```
 
-Regras:
+### 3.13 Workflow e trabalho persistente
 
-- sem path/method/operationId/provider selector como authority;
-- sem permission override;
-- knowledge scopes passam por ACL;
-- recommended capabilities não concedem disponibilidade;
-- versão/hash devem participar da evidence quando material.
+- `WorkflowPlanV1`;
+- `WorkflowStepV1`;
+- `TaskRefV1`;
+- `CaseRefV1`.
 
-Fonte: [`28-expertise-pack-specification.md`](./28-expertise-pack-specification.md).
+Contrato C0 define IDs/status/relações; persistência/runtime só em C5 após inventário.
 
-### 2.6 `ExpertiseSelectionV1`
+### 3.14 `EventEnvelopeV1`
 
-```json
-{
-  "version": 1,
-  "selected": [
-    {
-      "expertiseKey": "quality-industrial",
-      "expertiseVersion": "1.0.0",
-      "score": 0.91,
-      "reasonCode": "goal_domain_match"
-    }
-  ]
-}
+```text
+eventId
+eventType
+source
+entityRefs[]
+occurredAt
+payloadRef/payload bounded
+correlation
 ```
 
-Não persistir chain-of-thought. `reasonCode` é explicabilidade operacional estruturada.
+Semântica de dedupe e replay definida em C0; Watch vem depois.
 
-### 2.7 `ExpertiseContextV1`
-
-Contexto bounded derivado dos packs selecionados:
-
-```json
-{
-  "version": 1,
-  "expertiseRefs": [
-    {"key": "quality-industrial", "version": "1.0.0"}
-  ],
-  "terminology": {},
-  "analysisGuidance": [],
-  "knowledgeScopeRefs": [],
-  "playbookCandidates": [],
-  "multimodalNeeds": []
-}
-```
-
-Regras:
-
-- não carregar catálogo completo;
-- não sobrescrever policy;
-- não carregar secret;
-- pode ser reavaliado a cada turno.
-
-### 2.8 `DomainPlaybookV1`
-
-```json
-{
-  "schemaVersion": 1,
-  "key": "quality.root-cause",
-  "version": "1.0.0",
-  "purpose": "Estruturar análise de causa raiz",
-  "applicability": {
-    "domains": ["quality"],
-    "signals": ["nonconformity"]
-  },
-  "stages": [],
-  "evidenceChecklist": [],
-  "decisionRules": [],
-  "recommendedCapabilities": [],
-  "completionCriteria": [],
-  "owner": "quality-owner",
-  "status": "active"
-}
-```
-
-O playbook orienta o planner; não executa endpoint diretamente.
-
-Fonte: [`29-domain-playbooks-specification.md`](./29-domain-playbooks-specification.md).
-
-### 2.9 `MultimodalEvidenceRefV1`
-
-```json
-{
-  "sourceRef": "attachment-id",
-  "contentType": "application/pdf",
-  "observations": [
-    {
-      "kind": "text",
-      "value": "...",
-      "location": {"page": 1},
-      "confidence": 0.94,
-      "extractor": "native"
-    }
-  ],
-  "limitations": [],
-  "provenance": {}
-}
-```
-
-Perception evidence não é conclusão de domínio.
-
-### 2.10 Confirmation
-
-```json
-{
-  "confirmationId": "uuid",
-  "actionRef": "action-id",
-  "summary": "Atualizar ...",
-  "argumentsPreview": {},
-  "sensitivity": "write",
-  "expiresAt": "ISO-8601"
-}
-```
-
-Decision:
-
-```json
-{
-  "confirmationId": "uuid",
-  "decision": "confirmed",
-  "decidedAt": "ISO-8601"
-}
-```
-
-Regras:
-
-- preview deve refletir os argumentos que serão executados;
-- alteração material nos argumentos invalida confirmação anterior;
-- confirmação não substitui RBAC/policy no momento da execução;
-- Expertise Pack/Playbook não dispensam confirmação.
-
-### 2.11 `WorkflowPlanV1`
-
-Não armazenar raciocínio privado. Registrar somente plano operacional explicável:
-
-```json
-{
-  "workflowId": "uuid",
-  "goal": "Analisar atraso e criar solicitação",
-  "expertiseRefs": ["supplies", "production"],
-  "playbookRefs": ["operations.delivery-delay-analysis"],
-  "steps": [
-    {
-      "stepId": "s1",
-      "capabilityRef": "...",
-      "dependsOn": [],
-      "mode": "read",
-      "status": "planned"
-    }
-  ]
-}
-```
-
-### 2.12 `IframeBridgeEnvelopeV1`
+### 3.15 `IframeBridgeEnvelopeV1`
 
 Fonte detalhada: [`26-iframe-copilot-bridge.md`](./26-iframe-copilot-bridge.md).
 
-Envelope conceitual:
+### 3.16 Audit event
 
-```json
-{
-  "protocol": "delpi-iframe-copilot",
-  "version": 1,
-  "sessionId": "opaque-id",
-  "requestId": "uuid",
-  "type": "command",
-  "payload": {}
-}
-```
+Usar contrato existente se houver; precisa correlacionar user/request/workflow/capability/policy/decision/outcome sem armazenar CoT.
 
-Handshake esperado:
-
-```text
-iframe HELLO
-→ Portal valida origin/source/appId/autorização/protocolo
-→ Portal retorna BRIDGE_READY
-→ troca de context/commands/results tipados
-```
-
-Regras:
-
-- `sessionId` não é credencial de negócio;
-- `postMessage` não transporta JWT/refresh token;
-- capability visual declarada pelo iframe não concede autorização;
-- Portal intersecta declaration + app/route autorizado + allowlist do protocolo;
-- commands são visuais/genéricos;
-- Business Actions continuam fora do bridge.
-
-## 3. Producer → consumer graph
+## 4. Producer → consumer graph
 
 ```text
 Keycloak
-  → Core API identity
+→ Core identity/RBAC
+→ allowed apps/routes/actions/knowledge
 
-Core API /me/apps
-  → Portal AuthContext/apps/routes
-  → Authorized Portal Capability Projection
-  → Minha DELPI AI retrieval/planner
-  → PlatformCommand
-  → Chat transport
-  → CopilotBridge
-  → Router/AppHost/MFE/IframeBridge
+Core /me/apps
+→ Platform Capability Projection
+→ AI retrieval
+→ PlatformCommand
+→ CopilotBridge
+→ Router/MFE/Iframe
 
-Iframe app
-  → HELLO + declared visual capabilities
-  → IframeBridge validation
-  → context.changed
-  → WorkspaceContext normalization
-  → Portal Context Store
-  → AI turn input
+OpenAPI
+→ Action Catalog
+→ allowed Business Actions
+→ Capability Projection
+→ retrieval/planner
+→ policy/Decision Gate
+→ generic executor
+→ domain API
+→ OutcomeRef/EvidenceRef
 
-Copilot/Portal
-  → visual command
-  → IframeBridge
-  → iframe handler
-  → command.result / observation
-  → Portal/Copilot feedback
+Workspace MFE/Iframe
+→ WorkspaceContext
+→ AI understanding/retrieval
 
-Business OpenAPI
-  → importer/index
-  → Action Catalog
-  → allowed actions
-  → Business Capability Projection
-  → retrieval/planner
-  → validator/policy/confirmation
-  → ExecuteExternalActionUseCase
-  → HTTP gateway
-  → domain API
-  → normalized result
-  → presentation/synthesis
+Attachments
+→ multimodal extraction
+→ EvidenceRef
+→ expertise/playbook/analysis
 
-Expertise content/repository
-  → Expertise Catalog
-  → semantic index
-  → Expertise Retriever
-  → ExpertiseSelection
-  → Expertise Context Composer
-  → planner/analysis
+Expertise content
+→ Expertise Catalog/index
+→ retrieval
+→ bounded ExpertiseContext
 
-Domain playbook repository
-  → Playbook Catalog
-  → applicability retrieval
-  → Playbook Planner Adapter
-  → WorkflowPlan hints/stages
+Playbook
+→ applicability
+→ WorkflowPlan guidance
 
-Attachment
-  → document vision/drawing analysis
-  → MultimodalEvidenceRef
-  → Expertise/Playbook/Planner
-  → optional Business/Knowledge Actions
-  → synthesis
+EntityRefs + RelationshipRefs
+→ Business Graph traversal
+→ source API fetch
+→ EvidenceRef
 
-MFE
-  → WorkspaceContext publisher
-  → Portal Context Store
-  → AI turn input
-  → grounding/planning/expertise retrieval
+WorkflowPlan
+→ Durable Workflow Runtime
+→ Task/Case
+→ waits/Inbox/Room/Watch
 ```
 
-## 4. Ownership por dado
+## 5. Anti-duplication rules
 
-| Dado | Authority |
-|---|---|
-| identidade | Keycloak + Core integration |
-| permissões efetivas | Core API |
-| apps/rotas autorizados | Core API `/me/apps` |
-| path/method/operationId/schema de business action | OpenAPI + Action Catalog |
-| disponibilidade de Business Action para o Copilot | allowed actions + policy/RBAC |
-| workspace visual atual | Portal/MFE/iframe context contract |
-| expertise pack | Expertise Catalog canônico |
-| domain playbook | Domain Playbook Catalog canônico |
-| knowledge visibility | Knowledge/RAG ACL + identity/policy |
-| multimodal evidence | extractor/service versionado + attachment provenance |
-| project preferences | project context repository; não é permission authority |
-| iframe origin/render registration | manifesto/Core/Portal registration real a confirmar em C0.S0 |
-| visual capabilities do iframe em runtime | handshake validado + allowlist do protocolo |
-| policy/sensitivity/confirmation | policy layer server-side |
-| conversa/memória | Minha DELPI AI persistence |
-| navegação atual | Portal Router/Shell |
-| resultado de negócio | API/use case de domínio |
-| presentation | AI API render decision + MFE render |
+Não criar:
 
-## 5. Migração de agents — ownership alvo
+- `CaseEntityRef` incompatível com `EntityRef`;
+- `WorkflowEvidence` diferente de `EvidenceRef` sem motivo material;
+- confirmation schema separado de Decision Gate;
+- event envelope próprio para Watch se `EventEnvelope` existe;
+- outro result/outcome type só para Business Graph;
+- second Action Catalog;
+- agent-specific tool registry como authority final;
+- memory paralela por app/case;
+- graph table que replique objetos inteiros da API.
 
-O C0.S0 deve provar o runtime real antes do diff, mas o target arquitetural é:
+## 6. C0 inventory questions obrigatórias
 
-| Conceito legado | Target |
-|---|---|
-| agent specialization | Expertise Packs + knowledge scopes |
-| agent allowed tools | allowed capabilities + policy/RBAC |
-| agent soft handoff | expertise/capability retrieval + replan/clarify |
-| agent-bound document vision | multimodal capability do Copilot único |
-| project default agent | project preferred expertise/context, quando fizer sentido |
-| session `agent_id` | compatibilidade temporária; não routing authority final |
-| `chat_mode=agent` | deprecar para Copilot único após migration gates |
-
-Fonte: [`31-agent-to-expertise-migration-plan.md`](./31-agent-to-expertise-migration-plan.md).
-
-## 6. Pontos a inventariar antes de implementar
-
-Marcar `TO_INVENTORY` até C0.S0 provar:
-
-- schema real retornado por `/me/apps` e IDs estáveis disponíveis;
-- existência de route ID além de path;
-- eventos SSE já reutilizáveis para PlatformCommand;
-- mecanismo atual de confirmation;
-- deep-link conventions existentes por MFE;
-- shared package adequado para tipos Portal/MFE;
-- persistence atual de turn metadata/context;
-- idempotency support nas APIs de write;
-- policy/sensitivity metadata atual no Action Catalog;
-- lista real de apps `iframe` e `external`;
-- onde origin/entry/renderMode são authority hoje;
-- se algum iframe já usa `postMessage`/bridge;
-- SSO/auth atual de cada iframe;
-- CSP/frame policies atuais;
-- lifecycle de iframe no `AppHost`/Portal;
-- agent entities/tables/repositories/controllers/admin;
-- `AgentSpecializationService` consumers;
-- `ChatWorkspaceAgentActivationService` consumers;
-- `ChatSoftAgentHandoffService` consumers/UI events;
-- `ChatSkillRegistry` bindings e branches `has_agent`;
-- `session.agent_id`/`chat_mode` persistence e API contracts;
-- project↔agent bindings;
-- knowledge scopes/namespaces ligados a agents;
-- multimodal skills e dependências de agent activation;
-- consumers externos de APIs de agents;
-- telemetry de uso de agent selector/handoff.
-
-Não preencher esses pontos por inferência.
-
-## 7. Contrato de não duplicação
-
-Antes do COMPLETE_GATE de qualquer implementação de expertise, provar:
+Antes de criar cada primitive, responder:
 
 ```text
-Expertise Pack não duplicou endpoint catalog
-Domain Playbook não duplicou workflow executor
-Project preferences não duplicaram RBAC
-Multimodal evidence não virou policy authority
-Legacy agent config possui exit criteria
+Existe equivalente atual?
+Quem produz?
+Quem consome?
+É público/externo?
+Tem persistence?
+Tem migration consumers?
+Tem versioning?
+Tem tests?
+Pode ser estendido sem quebrar contrato?
 ```
+
+Quando não houver prova: `NOT_PROVEN`, não inventar.
+
+## 7. Ordem de estabilização
+
+```text
+Authorities
+→ primitives
+→ ports/persistence boundaries
+→ contract tests
+→ FOUNDATION_FREEZE
+→ feature implementations
+```
+
+A implementação concreta de uma feature não pode redefinir primitive já congelado sem abrir explicitamente uma mudança arquitetural/versionada.
