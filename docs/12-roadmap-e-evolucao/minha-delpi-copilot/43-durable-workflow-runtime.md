@@ -2,7 +2,8 @@
 
 **Status:** thematic spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Foundation:** Workflow/Step/wait semantics nascem em C0; runtime/persistência em C5.
+**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
+**Foundation:** Workflow/Step/wait semantics nascem em C0; runtime/persistência em C5; Task/Case/Room/Inbox consomem esse runtime em C6.
 
 ## 1. Objetivo
 
@@ -11,7 +12,7 @@ Suportar trabalho que atravessa minutos, horas ou dias, incluindo waits, eventos
 ## 2. Princípio
 
 ```text
-Planner
+Copilot Planner
 → WorkflowPlan compartilhado
 → Durable Workflow Runtime
    ├─ execute canonical capability
@@ -25,7 +26,7 @@ Planner
    └─ complete/fail/cancel
 ```
 
-O runtime **não cria outro HTTP/tool executor**.
+O runtime **não cria outro HTTP/tool executor**: ele usa os executors canônicos da própria Copilot API.
 
 ## 3. Estados
 
@@ -191,7 +192,7 @@ Room = colaboração
 Inbox = materialização de atenção/estado
 ```
 
-Nenhum deles cria executor paralelo.
+Task/Case/Room/Inbox entram em C6 e **não criam planner, executor ou workflow engine próprios**.
 
 ## 15. Infrastructure
 
@@ -204,7 +205,7 @@ Escolher após C0 inventory:
 - lease/locking;
 - dead-letter/failure handling.
 
-Reutilizar infraestrutura existente quando compatível. Engine externa nova precisa gap/ADR.
+Reutilizar infraestrutura neutra existente quando compatível. Engine externa nova precisa gap/ADR. Infra específica do Minha DELPI Chat não é dependency válida.
 
 ## 16. Scalability
 
@@ -232,7 +233,8 @@ Reutilizar infraestrutura existente quando compatível. Engine externa nova prec
 - partial failure;
 - cancel/expiry;
 - budget exhaustion;
-- no duplicate write.
+- no duplicate write;
+- restart da Copilot API sem Chat disponível.
 
 ## 18. Implementation mapping
 
@@ -240,16 +242,22 @@ Não executar `DW*` como roadmap separado.
 
 ```text
 C0 → Workflow/Step/wait contracts + infra inventory
-C5.S1 → persistence/checkpoint runtime
-C5.S2 → waits
-C5.S3 → DAG runner
-C5.S4–S7 → Task/Case/Room/Inbox consumers
-C5.S8 → restart/resume gate
-C6 → Watch OBSERVE/ADVISE event integration
-C7 → selected Watch ACT/autonomy
+C5.S4 → WorkflowPlan/DAG runtime usando executors canônicos
+C5.S5 → checkpoints + wait_user/wait_approval/wait_event/wait_time + timeout/cancel
+C5.S6 → crash/retry/idempotency/restart gate
+C6.S1 → Task consumer
+C6.S2 → Case + Evidence Board consumer
+C6.S3 → Room integration
+C6.S4 → Inbox projection
+C6.S5 → Watch OBSERVE/ADVISE event integration
+C7.S2 → selected Watch ACT/autonomy
 ```
 
-## 19. Gate
+## 19. Independence
+
+Durable Workflow pertence integralmente à `minha-delpi-copilot-api`. Não reutiliza session, job orchestration, agent state ou persistence do Minha DELPI Chat como runtime authority.
+
+## 20. Gate
 
 Não declarar long-running workflow se:
 
@@ -258,4 +266,5 @@ Não declarar long-running workflow se:
 - não existe checkpoint estruturado;
 - resume pode duplicar write;
 - policy não é revalidada;
-- Event/Decision contracts paralelos foram criados.
+- Event/Decision contracts paralelos foram criados;
+- runtime depende do Minha DELPI Chat estar ativo.
