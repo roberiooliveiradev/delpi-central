@@ -2,7 +2,8 @@
 
 **Status:** thematic spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Runtime phase:** C6, após Evidence/Case foundations estarem estáveis.
+**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
+**Runtime phase:** Reference Knowledge/RAG nasce na Copilot API em C3; Decision/Experience/Solution Pattern e Governed Learning entram em C6.
 
 ## 1. Classes
 
@@ -23,17 +24,19 @@ Semantic Knowledge
 → entidades/relacionamentos do Business Graph
 ```
 
-Compartilhar infraestrutura é possível; semântica/owner/lifecycle permanecem explícitos.
+Compartilhar infraestrutura neutra é possível; semântica, owner e lifecycle permanecem explícitos e pertencem ao Copilot ou ao owner corporativo correto, nunca ao Minha DELPI Chat por dependência implícita.
 
 ## 2. Reference Knowledge
 
-RAG tradicional com:
+RAG da própria Copilot API com:
 
 - owner;
 - scope/ACL;
 - version/freshness;
 - provenance;
 - retention.
+
+C0 pode identificar infraestrutura neutra reaproveitável, mas C3 implementa o runtime de retrieval do Copilot.
 
 ## 3. Operational Knowledge
 
@@ -155,14 +158,20 @@ Usar `EntityRef`, `EvidenceRef`, `OutcomeRef`, Case/Task/Decision refs compartil
 ## 12. Mapping
 
 ```text
-C0 → provenance/lifecycle/retention semantics
-C2 → Reference Knowledge + ACL integration
-C5 → Cases generate structured resolution evidence
-C6 → Decision/Experience/Solution Pattern + governed learning
-C7 → rollout optimization only
+C0 → provenance/lifecycle/retention + storage boundaries
+C3 → Reference Knowledge/RAG + ACL/provenance integration
+C4 → Semantic Knowledge/Business Graph source correlation
+C6.S2 → Cases produce structured resolution evidence
+C6.S6 → Decision/Experience/Solution Pattern runtime
+C6.S7 → Governed Learning Loop
+C7 → rollout/performance optimization only
 ```
 
-## 13. Gate
+## 13. Independence
+
+Nenhum knowledge namespace, RAG store, conversation memory ou agent knowledge do Minha DELPI Chat é authority do Copilot. Reuso só é permitido quando C0 comprovar componente neutro com owner compartilhado e contrato independente.
+
+## 14. Gate
 
 Published organizational knowledge exige:
 
