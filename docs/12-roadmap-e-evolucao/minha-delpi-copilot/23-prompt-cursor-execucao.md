@@ -2,7 +2,7 @@
 
 Implemente o **Minha DELPI Copilot como aplicação nova e independente**, do zero até o produto completo. Não evolua nem refatore o Minha DELPI Chat para atingir este objetivo.
 
-A visão alvo inclui **escritório, reuniões e chão de fábrica**, com texto, voz, imagem, câmera, vídeo e documentos quando autorizados. Essas modalidades não criam outro runtime nem bypassam RBAC, policy, Evidence, Decision Gate ou segurança industrial.
+A visão alvo inclui **escritório, reuniões e chão de fábrica**, com texto, voz, imagem, câmera, vídeo e documentos quando autorizados. Também inclui **identidade biométrica governada** de usuários conhecidos/enrolled e análise objetiva de padrões de processo conforme `54`. Essas capacidades não criam outro runtime nem bypassam RBAC, policy, Evidence, Decision Gate, privacidade ou segurança industrial.
 
 ## 1. Decisão inegociável
 
@@ -18,7 +18,7 @@ Proibido:
 ```text
 importar runtime do minha-delpi-ai-api
 importar source do plugins/minha-delpi-chat
-usar Chat API como proxy/planner/tool/media runtime
+usar Chat API como proxy/planner/tool/media/biometric runtime
 usar Chat tables/sessions/agents como Copilot authority
 alterar Chat para desbloquear Copilot
 esperar roadmap/Onda J do Chat
@@ -50,6 +50,16 @@ same Durable Work runtime
 
 Meeting e Frontline **não** são agentes nem backends separados.
 
+Quando biometric identity estiver habilitada:
+
+```text
+face/voice sample
+→ enrolled-user candidate
+→ confidence/policy/correction
+→ userRef association
+-X→ authentication/permission grant
+```
+
 ## 3. Ordem de leitura
 
 1. `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`
@@ -62,22 +72,23 @@ Meeting e Frontline **não** são agentes nem backends separados.
 8. `.../17-component-and-contract-map.md`
 9. `.../49-architecture-and-design-patterns-standard.md`
 10. `.../53-multimodal-meeting-frontline-and-industrial-copilot.md`
-11. `.../20-testing-and-acceptance-matrix.md` seções aplicáveis
-12. `.../21-data-and-state-model.md` quando houver state/persistence/media retention
-13. `.../22-cursor-execution-protocol.md`
-14. `.../25-requirements-traceability.md` CPs aplicáveis
-15. `.../evidence/execution-ledger.md`
-16. specs temáticas da etapa.
+11. `.../54-biometric-identity-and-human-observation-governance.md`
+12. `.../20-testing-and-acceptance-matrix.md` seções aplicáveis
+13. `.../21-data-and-state-model.md` quando houver state/persistence/media/biometric retention
+14. `.../22-cursor-execution-protocol.md`
+15. `.../25-requirements-traceability.md` CPs aplicáveis
+16. `.../evidence/execution-ledger.md`
+17. specs temáticas da etapa.
 
-`16` é a única authority de ordem. `50` é authority do product boundary. `49` é authority de arquitetura/patterns. `53` é a spec temática de media/Meeting/Frontline/industrial safety.
+`16` é a única authority de ordem. `50` é authority do product boundary. `49` é authority de arquitetura/patterns. `53` é a spec temática de media/Meeting/Frontline/industrial safety. `54` governa biometric identity e Human Observation.
 
 ## 4. Ordem de construção
 
 ```text
-C0 Platform + Architecture + Media/Privacy/OT Foundation Freeze
+C0 Platform + Architecture + Media/Privacy/Biometric/OT Foundation Freeze
 → C1 Standalone App Bootstrap
 → C2 Portal + Operational Context + Platform Commands
-→ C3 Intelligence Core + Multimodal Foundations
+→ C3 Intelligence Core + Multimodal/Biometric Foundations
 → C4 Business Reads + Graph
 → C5 Governed Writes + Durable Foundation
 → C6 Product Work + Meeting/Frontline + Proactivity + Ecosystem
@@ -112,6 +123,7 @@ Inventarie com paths/symbols/contracts/evidence:
 - manifest registration/versioning;
 - app/route models;
 - notification/audit/presence patterns;
+- corporate avatar/photo sources;
 - device/session registration patterns, se existirem.
 
 ### Gateway/Infra
@@ -122,6 +134,7 @@ Inventarie com paths/symbols/contracts/evidence:
 - health/scripts/storage/network;
 - SSE/WebSocket/WebRTC/realtime proxy patterns;
 - object/media storage;
+- encrypted sensitive storage/key-management patterns;
 - factory-network constraints quando documentadas.
 
 ### MFEs
@@ -151,7 +164,7 @@ Inventarie com paths/symbols/contracts/evidence:
 - meeting/collaboration artifacts;
 - procedures/training sources.
 
-### Media/Meeting/Frontline
+### Media/Meeting/Frontline/Biometric
 - speech/vision/media providers/configs;
 - recording/transcription patterns;
 - media/file/object storage;
@@ -160,7 +173,18 @@ Inventarie com paths/symbols/contracts/evidence:
 - production terminals;
 - meeting-room devices/processes;
 - accessibility/noise constraints;
-- device identity/session patterns.
+- device identity/session patterns;
+- corporate avatar/photo sources;
+- voice samples, se existirem e forem governados;
+- biometric enrollment owner/process;
+- biometric template storage/key management;
+- face/speaker recognition provider/capability, se existir;
+- liveness/anti-spoof support, se existir;
+- participant/presence sources;
+- governance owner para Human Observation;
+- prohibited person-inference classes.
+
+Não assumir que fotos/avatares existentes podem ser usados para enrollment biométrico sem owner/purpose/policy explícitos.
 
 ### Industrial/OT — inventário somente
 - machine/PLC/CNC/robot/SCADA/MES interfaces;
@@ -205,6 +229,8 @@ ARCHITECTURE_PATTERNS=PASS
 PERSISTENCE_BOUNDARIES=PASS
 INTEGRATION_CONTRACTS=PASS
 MEDIA_PRIVACY_BOUNDARIES=PASS
+BIOMETRIC_IDENTITY_BOUNDARY=PASS
+HUMAN_OBSERVATION_BOUNDARY=PASS
 SHARED_DEVICE_BOUNDARY=PASS
 OPERATIONAL_CONTEXT_BOUNDARY=PASS
 OT_SAFETY_BOUNDARY=PASS
@@ -235,7 +261,7 @@ plugins/minha-delpi-copilot/
   src/adapters
 ```
 
-Meeting/Frontline belong to these owners. Never create source inside Chat folders or separate product APIs merely because the surface is different.
+Meeting/Frontline/Biometric belong to these owners. Never create source inside Chat folders or separate product APIs merely because the surface/capability is different.
 
 ## 8. Architecture rules
 
@@ -250,7 +276,7 @@ Clean Architecture
 
 External dependencies are adapters. Concrete wiring happens in Composition Root. Durable state is backend-owned.
 
-Media providers/transport/storage also sit behind justified ports/adapters. Before creating interface/port/repository/factory/strategy/registry/base class/media service/realtime gateway, pass the Abstraction Gate in `49`.
+Media/biometric providers, transport and storage also sit behind justified ports/adapters. Before creating interface/port/repository/factory/strategy/registry/base class/media service/biometric service/realtime gateway, pass the Abstraction Gate in `49`.
 
 ## 9. Portal integration
 
@@ -282,9 +308,9 @@ same Copilot MFE/API
 → same auth/policy/state contracts
 ```
 
-Portal must not contain planner, prompts, RAG, media intelligence, business action routing or Copilot persistence.
+Portal must not contain planner, prompts, RAG, media/biometric intelligence, business action routing or Copilot persistence.
 
-## 10. Auth/RBAC
+## 10. Auth/RBAC e biometria
 
 ```text
 Keycloak → identity/JWT
@@ -299,9 +325,12 @@ In shared devices:
 
 ```text
 device identity != user identity
+biometric candidate != authenticated user/session
 ```
 
-The current user must remain explicit and user switching must clear prior local state/context/media cache.
+Biometric identity may assist recognition of a known enrolled user, but never grants permission by itself.
+
+The current user/session must remain explicit and user switching must clear prior local state/context/media cache.
 
 ## 11. Operational context
 
@@ -319,7 +348,7 @@ WorkspaceContext
 + bounded device/session metadata
 ```
 
-Device context never grants permission.
+Device/biometric context never grants permission.
 
 ## 12. Business Actions — build natively in Copilot
 
@@ -343,10 +372,12 @@ No manual endpoint catalog. No path/opId semantic hardcode.
 Input modality does not change this pipeline:
 
 ```text
-text | voice | meeting transcript | frontline | visual finding
+text | voice | meeting transcript | frontline | visual finding | human observation
 → candidate intent/action
 → same validation/policy/Decision/executor
 ```
+
+Biometric match only contributes identity/context evidence; it does not create a write channel.
 
 ## 13. Multimodal/media rules
 
@@ -362,18 +393,75 @@ document/image
 Required principles:
 
 - explicit capture state;
-- visible mic/camera/screen indicators;
+- visible mic/camera/screen/identity-recognition indicators;
 - no silent auto-resume after reload;
 - provider behind adapters;
 - size/duration/concurrency budgets;
 - provenance: page/region/frame/time range;
 - confidence/limitations;
 - raw media persistence is optional, not default;
-- transcript/raw audio/raw video/screen/derived Evidence may have different retention.
+- transcript/raw audio/raw video/screen/derived Evidence/biometric template have distinct retention classes.
 
-`MediaRef` is a candidate primitive; create/freeze it only if C0 proves transversal need.
+`MediaRef` and biometric refs are candidate primitives; create/freeze only if C0 proves transversal need.
 
-## 14. Meeting Mode rules
+## 14. Biometric Identity rules
+
+Follow `54`.
+
+Allowed target:
+
+```text
+explicit enrollment
+→ protected biometric template
+→ face/voice sample
+→ closed-set match against approved enrolled users
+→ candidateUserRef + confidence
+→ threshold/policy/liveness when required
+→ correctable association
+```
+
+Required:
+
+- unknown/ambiguous stays unknown or requires confirmation;
+- enrollment is explicit/revocable/versioned;
+- template/embedding is protected and never ordinary log data;
+- correction does not silently retrain enrollment;
+- revoke/delete prevents future use;
+- liveness/anti-spoof when purpose requires higher trust;
+- biometric match never replaces login/session/Core RBAC/Decision Gate.
+
+Do not implement open-world/indiscriminate face identification by default.
+
+## 15. Human Observation rules
+
+Copilot may analyze **observable process-related behavior**, e.g.:
+
+- executed/missed step;
+- tool/machine/material interaction;
+- repeated motion/rework;
+- time between steps;
+- process-relevant movement;
+- request for help;
+- PPE/ergonomic observation only when formally defined by an owner/method.
+
+Output is Evidence/Hypothesis/process candidate, not psychological truth.
+
+Do not infer from face/voice/behavior:
+
+```text
+personality
+honesty/trustworthiness
+moral intent/loyalty
+emotion as truth
+health/diagnosis
+sensitive attributes
+global professional fitness
+disciplinary propensity
+```
+
+Do not use biometrics/Human Observation as automatic authority for hiring, promotion, punishment, pay, formal performance evaluation, suspension or dismissal.
+
+## 16. Meeting Mode rules
 
 Meeting Mode must be a surface of the same Copilot.
 
@@ -381,7 +469,8 @@ When implemented:
 
 ```text
 explicit start/stop
-→ mic/transcription/camera/screen status visible
+→ mic/transcription/camera/identity-recognition/screen status visible
+→ optional governed participant/speaker association
 → authorized live data queries
 → facts/evidence
 → decisions/pending topics
@@ -393,12 +482,12 @@ explicit start/stop
 Keep semantics distinct:
 
 ```text
-transcript != summary != human decision != candidate action != executed action
+transcript != summary != biometric candidate != confirmed human decision != candidate action != executed action
 ```
 
 A sentence in a meeting never becomes a write merely because the Copilot understood it.
 
-## 15. Frontline rules
+## 17. Frontline rules
 
 Frontline must prioritize operator reality:
 
@@ -406,28 +495,32 @@ Frontline must prioritize operator reality:
 - hands-free voice;
 - touch/text fallback;
 - current OP/machine/product/operation context;
+- optional governed biometric identity assistance;
 - drawing/procedure/revision freshness;
 - camera/image assistance;
+- bounded Human Observation of process patterns;
 - safe degradation under network/provider failure;
 - issue/escalation via governed Domain Actions;
 - training assistance without conferring qualification automatically.
 
-Observation of operator/process produces **candidate knowledge**, not automatic production behavior.
+Observation of operator/process produces **candidate knowledge**, not automatic production behavior or secret worker profile.
 
-## 16. Privacy and surveillance rules
+## 18. Privacy and people-analysis rules
 
 Default prohibitions:
 
-- hidden mic/camera/screen capture;
-- raw media retention without explicit purpose/policy;
-- facial recognition;
-- emotion detection;
-- hidden individual productivity scoring/surveillance;
-- reusing media for an unrelated purpose without governance.
+- hidden mic/camera/screen/identity recognition;
+- raw media or biometric-template retention without explicit purpose/policy;
+- open-world/indiscriminate facial recognition;
+- emotion/personality/honesty/character inference from face/voice;
+- sensitive attribute inference;
+- hidden individual productivity/person scoring;
+- automatic employment decisions based on biometric/Human Observation;
+- reusing media/biometric data for an unrelated purpose without governance.
 
 Use data minimization by default.
 
-## 17. Industrial/OT safety rule
+## 19. Industrial/OT safety rule
 
 Copilot is not a safety controller.
 
@@ -444,7 +537,7 @@ Any future physical actuation requires a **separate explicitly approved industri
 
 Do not wire generic Business Action executor directly to PLC/CNC/robot control.
 
-## 18. Quality/computer vision rule
+## 20. Quality/computer vision rule
 
 Visual finding is normally:
 
@@ -460,7 +553,7 @@ official quality approval/rejection
 
 When official process requires measurement/tolerance/equipment/authorized inspector, use those owners. Only explicitly validated inspection capabilities may make automated quality decisions.
 
-## 19. Shared code policy
+## 21. Shared code policy
 
 Reuse platform-neutral code only when:
 
@@ -469,9 +562,9 @@ Reuse platform-neutral code only when:
 
 Never turn `minha-delpi-ai-api` or `minha-delpi-chat` into a library for Copilot.
 
-## 20. C1 special rule
+## 22. C1 special rule
 
-First runtime work is bootstrap, not intelligence/media feature:
+First runtime work is bootstrap, not intelligence/media/biometric feature:
 
 ```text
 own API skeleton
@@ -487,9 +580,9 @@ own API skeleton
 → Chat-offline independence test
 ```
 
-LLM/planner/RAG/media intelligence start only in C3.
+LLM/planner/RAG/media/biometric intelligence start only in C3 after corresponding foundation gates.
 
-## 21. Generic implementation protocol
+## 23. Generic implementation protocol
 
 For one `C*.S*` at a time:
 
@@ -504,7 +597,7 @@ REVALIDATE HEAD
 → WIRE PRODUCER/CONSUMER
 → UNIT/CONTRACT/INTEGRATION
 → POSITIVE/SIBLING/NEGATIVE
-→ SECURITY/RBAC/PRIVACY/SAFETY
+→ SECURITY/RBAC/PRIVACY/BIOMETRIC/SAFETY
 → GENERALIZATION/METAMORPHIC/UNKNOWN
 → CHAT-INDEPENDENCE CHECK
 → ARCHITECTURE CONFORMANCE
@@ -514,14 +607,14 @@ REVALIDATE HEAD
 → NEXT STEP
 ```
 
-## 22. Prohibitions
+## 24. Prohibitions
 
 - Chat runtime dependency;
 - Chat DB authority;
 - Chat agent/session migration;
-- second RBAC;
+- second RBAC/user authority;
 - business rules in MFE/LLM;
-- Portal AI/media intelligence;
+- Portal AI/media/biometric intelligence;
 - manual app URL catalog;
 - manual endpoint catalog;
 - DOM business automation;
@@ -531,18 +624,23 @@ REVALIDATE HEAD
 - Task executor parallel to Workflow runtime;
 - Meeting-specific business action executor;
 - voice-specific RBAC;
+- biometric match as authentication/permission grant;
+- biometric shadow user directory;
+- open-world/indiscriminate face recognition by default;
+- emotion/personality/trustworthiness inference from face/voice;
+- automatic employment decisions from biometric/Human Observation;
 - CoT persistence;
-- secrets/JWT in context/logs;
+- secrets/JWT/templates in logs;
 - speculative abstractions;
-- hidden media capture;
-- undefined raw-media retention;
+- hidden media/identity recognition capture;
+- undefined raw-media/template retention;
 - shared-device state leakage;
-- hidden worker surveillance;
+- hidden worker profiling/scoring;
 - visual finding promoted to official fact without authority;
 - arbitrary LLM→PLC/CNC/robot command;
 - safety-interlock bypass.
 
-## 23. Required tests
+## 25. Required tests
 
 Use `20` as authority. In addition to feature tests, every relevant release boundary includes:
 
@@ -558,19 +656,24 @@ DEV_PROD_ROUTE_PARITY
 INDEPENDENT_ROLLBACK
 ```
 
-When media/Meeting/Frontline apply:
+When media/Meeting/Frontline/Biometric apply:
 
 ```text
 NO_HIDDEN_CAPTURE
 RETENTION_POLICY_ENFORCED
 MODALITY_RBAC_PARITY
 SHARED_DEVICE_ISOLATION
+BIOMETRIC_MATCH_NOT_AUTHORITY
+UNKNOWN_IDENTITY_REMAINS_UNKNOWN
+BIOMETRIC_TEMPLATE_PROTECTED
+NO_SENSITIVE_PERSON_INFERENCE
+NO_AUTOMATIC_EMPLOYMENT_DECISION_FROM_BIOMETRICS
 VISUAL_EVIDENCE_SEMANTICS
-NO_HIDDEN_SURVEILLANCE
+NO_HIDDEN_WORKER_PROFILING
 NO_ARBITRARY_OT_COMMAND
 ```
 
-## 24. Complete Gate blockers
+## 26. Complete Gate blockers
 
 ```text
 PARTIAL
@@ -593,12 +696,18 @@ UNDEFINED_MEDIA_RETENTION
 SHARED_DEVICE_STATE_LEAK
 VOICE_PERMISSION_BYPASS
 VISUAL_FINDING_AS_UNVALIDATED_FACT
-HIDDEN_WORKER_SURVEILLANCE
+BIOMETRIC_PERMISSION_ELEVATION
+LOW_CONFIDENCE_FORCED_IDENTITY
+REVOKED_BIOMETRIC_STILL_ACTIVE
+BIOMETRIC_TEMPLATE_LEAK
+EMOTION_PERSONALITY_CHARACTER_INFERENCE
+AUTOMATIC_EMPLOYMENT_DECISION_FROM_BIOMETRICS
+HIDDEN_WORKER_PROFILING
 ARBITRARY_LLM_OT_COMMAND
 SAFETY_INTERLOCK_BYPASS
 ```
 
-## 25. Report format
+## 27. Report format
 
 ```text
 STEP:
@@ -613,11 +722,12 @@ LAYER/PATTERNS:
 PLATFORM_REUSE:
 COPILOT_NEW_CODE:
 CHAT_DEPENDENCIES:
-MEDIA_DEVICE_OT_IMPACT:
+MEDIA_DEVICE_BIOMETRIC_OT_IMPACT:
 WIRING_PROOF:
 TESTS:
 SECURITY_RBAC:
 PRIVACY_RETENTION:
+BIOMETRIC_HUMAN_OBSERVATION:
 INDUSTRIAL_SAFETY:
 GENERALIZATION:
 CHAT_INDEPENDENCE:
@@ -630,7 +740,7 @@ COMMIT:
 PUSH:
 ```
 
-## 26. Start here
+## 28. Start here
 
 Execute only:
 
@@ -638,4 +748,4 @@ Execute only:
 C0.S0
 ```
 
-Do not create the Copilot API/MFE, media runtime, Meeting Mode or Frontline Mode until C0.S7 `FOUNDATION_FREEZE=PASS`. After the freeze, start C1.S1 with the standalone API skeleton.
+Do not create the Copilot API/MFE, media/biometric runtime, Meeting Mode or Frontline Mode until C0.S7 `FOUNDATION_FREEZE=PASS`. After the freeze, start C1.S1 with the standalone API skeleton.
