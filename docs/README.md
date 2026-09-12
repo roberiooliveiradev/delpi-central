@@ -15,6 +15,12 @@ Documentação técnica do monorepo **delpi-central** (produto **Minha DELPI**).
 | 3 | [11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md](./11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md) | Constituição arquitetural |
 | 4 | [00-visao-geral/glossario.md](./00-visao-geral/glossario.md) | Termos |
 
+### Iniciativas em evolução
+
+| Iniciativa | Entrada | Objetivo |
+|---|---|---|
+| **Minha DELPI Copilot** | [12-roadmap-e-evolucao/minha-delpi-copilot/README.md](./12-roadmap-e-evolucao/minha-delpi-copilot/README.md) | IA como segunda interface operacional da plataforma: explicar, analisar, navegar e executar capabilities autorizadas |
+
 ---
 
 ## Índice por pasta
@@ -33,7 +39,7 @@ Documentação técnica do monorepo **delpi-central** (produto **Minha DELPI**).
 | [09-banco-de-dados/](./09-banco-de-dados/) | [README](./09-banco-de-dados/README.md) | Persistência e schemas |
 | [10-guias-operacionais/](./10-guias-operacionais/) | — | Runbooks |
 | [11-padroes-de-desenvolvimento/](./11-padroes-de-desenvolvimento/) | [README](./11-padroes-de-desenvolvimento/README.md) | Constituição, padrões e code review |
-| [12-roadmap-e-evolucao/](./12-roadmap-e-evolucao/) | [README](./12-roadmap-e-evolucao/README.md) | **Única pasta canônica de roadmap/evolução** |
+| [12-roadmap-e-evolucao/](./12-roadmap-e-evolucao/) | [README](./12-roadmap-e-evolucao/README.md) | **Única pasta canônica de roadmap/evolução** · inclui [Minha DELPI Copilot](./12-roadmap-e-evolucao/minha-delpi-copilot/README.md) |
 | [13-auditoria-lgpd/](./13-auditoria-lgpd/) | — | ROPA, relatórios LGPD, rastreamento de uso |
 | [14-documentacao-geral/](./14-documentacao-geral/) | [README](./14-documentacao-geral/README.md) | Acervo de referência migrado; não normativo |
 
@@ -113,3 +119,4 @@ A precedência arquitetural do repositório é definida por:
 - [status-atual.md](./12-roadmap-e-evolucao/status-atual.md)
 - [pendencias-tecnicas.md](./12-roadmap-e-evolucao/pendencias-tecnicas.md)
 - [decisoes-tecnicas.md](./12-roadmap-e-evolucao/decisoes-tecnicas.md)
+- [Minha DELPI Copilot](./12-roadmap-e-evolucao/minha-delpi-copilot/README.md)
