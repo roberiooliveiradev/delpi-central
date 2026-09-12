@@ -44,7 +44,7 @@ O ledger registra estado; não redefine arquitetura.
 | `20` | tests/gates |
 | `21` | state/persistence |
 | `23` | prompt mestre Cursor |
-| `25` | requirements CP-* |
+| `25` | requirements `CP-001…CP-154` |
 | ledger | execution/evidence current |
 
 ## 4. Authorities conceituais
@@ -60,7 +60,7 @@ O ledger registra estado; não redefine arquitetura.
 | `19` | rollout/migrations |
 | `24` | product specification |
 
-## 5. Specs temáticas
+## 5. Specs temáticas ativas
 
 ```text
 03 capability model
@@ -75,6 +75,7 @@ O ledger registra estado; não redefine arquitetura.
 18 onboarding matrix
 26 iframe
 27–30 single Copilot/expertise/playbooks/multimodal
+32 native Expertise runtime
 33 reference expertise pilots
 34 benchmark
 35 Business Graph
@@ -86,6 +87,7 @@ O ledger registra estado; não redefine arquitetura.
 41 Expertise Studio
 42 Model Router
 43 Durable Workflow
+44 operational intelligence thematic map
 ```
 
 Specs não podem redefinir `16/50/49`.
@@ -93,17 +95,15 @@ Specs não podem redefinir `16/50/49`.
 ## 6. Superseded/reference only
 
 ```text
-31 agent-to-expertise migration of Chat
-32 expertise migration plan tied to old Chat runtime
-44 old operational track ordering
+31 old Chat agent-to-expertise migration plan
 45 operational testing extension
 46 operational requirements extension
 47 Cursor operational extension
 ```
 
-Conteúdo conceitual útil pode permanecer como histórico, mas nenhuma dessas fontes desbloqueia trabalho nem torna o Chat dependência do Copilot.
+Esses arquivos existem apenas para compatibilidade/histórico. Não desbloqueiam trabalho nem tornam o Chat dependência do Copilot.
 
-`31` e os trechos antigos de `32` sobre agents do Chat são explicitamente fora do novo product boundary.
+O documento `32` é **ativo** e descreve o runtime nativo de Expertise da Copilot API. O documento `44` também é **ativo como mapa temático**, mas é totalmente subordinado ao `16` e não cria uma segunda ordem.
 
 ## 7. Reading minimization
 
@@ -139,49 +139,62 @@ ledger
 
 ### Feature implementation
 
-Only thematic specs relevant to the current step.
+Somente specs temáticas do step corrente.
 
-This prevents reading 50+ docs every iteration.
+Isso evita carregar 50+ docs a cada iteração sem perder authorities.
 
 ## 8. Architecture review findings
 
 ### F1 — Multiple execution authorities
-E*/O* tracks could be treated as roadmaps. `16` is now the only order authority.
+E*/O* tracks podiam ser tratados como roadmaps. `16` é a única authority de ordem.
 
 ### F2 — Shared primitives introduced late
-Entity/Evidence/Decision/Workflow/Event semantics moved to C0.
+Entity/Evidence/Decision/Workflow/Event semantics foram antecipados para C0.
 
 ### F3 — Parallel confirmations/evidence/entities/events
-Unified into DecisionGate/EvidenceRef/EntityRef/EventEnvelope.
+Unificados em DecisionGate/EvidenceRef/EntityRef/EventEnvelope.
 
 ### F4 — Task/Case/Workflow engine duplication
-Durable Workflow is runtime; Task/Case are product units over that runtime.
+Durable Workflow é runtime C5; Task/Case são unidades de produto C6 sobre esse runtime.
 
 ### F5 — Graph master-data risk
-Graph stores refs/relations/provenance; Domain APIs remain data owners.
+Graph armazena refs/relations/provenance; Domain APIs permanecem data owners. Runtime entra em C4.
 
 ### F6 — Architecture/patterns inferred per step
-`49` freezes layers/pattern matrix/Abstraction Gate before runtime features.
+`49` congela layers/pattern matrix/Abstraction Gate antes de runtime features.
 
 ### F7 — Overengineering by AI
-Interfaces/Strategy/Factory/Registry/etc. require evidence or external boundary justification.
+Interfaces/Strategy/Factory/Registry/etc. exigem evidence ou external boundary justification.
 
 ### F8 — Chat mistakenly treated as Copilot base
-**Superseded architecture:** Copilot was previously documented as evolution of `minha-delpi-ai-api`/`plugins/minha-delpi-chat`, with agent migration and Onda J dependency.
+**Superseded architecture:** Copilot foi documentado inicialmente como evolução de `minha-delpi-ai-api`/`plugins/minha-delpi-chat`, com agent migration e dependência de Onda J.
 
-**Current decision:** Copilot is a new standalone application with own API/MFE/persistence/deploy. Chat is only a neighboring/reference system.
+**Current decision:** Copilot é aplicação standalone nova com API/MFE/persistence/deploy próprios. Chat é apenas sistema vizinho/reference-only.
 
 ### F9 — External Chat gate blocked Copilot
-Removed. OpenAPI-first/Action Catalog/planner are built natively in the Copilot API.
+Removido. OpenAPI-first/Action Catalog/planner são construídos nativamente na Copilot API em C3/C4.
 
 ### F10 — Intelligence before application integration
-Corrected. C1 proves standalone API/MFE/Core/Gateway/Portal integration before C3 Intelligence Core.
+Corrigido. C1 prova API/MFE/Core/Gateway/Portal independentes antes de C3 Intelligence Core.
 
 ### F11 — Portal boundary could become blurred
-Portal is host/router/context/command executor only. AI logic belongs to Copilot API.
+Portal é host/router/context/Platform Command executor. AI logic pertence à Copilot API.
 
 ### F12 — Shared infra versus product code
-Reuse is allowed for neutral platform components (`plugin-ui`, federation, Core, Gateway, Keycloak, approved shared libraries). Reusing Chat product internals is prohibited.
+Reuse permitido para componentes neutros (`plugin-ui`, federation, Core, Gateway, Keycloak, approved shared libraries). Reuso de internals do Chat é proibido.
+
+### F13 — Phase-number drift after standalone rebaseline
+Specs temáticas antigas ainda referenciavam C2/C3/C4/C5 do roadmap anterior. A limpeza documental remapeou:
+
+```text
+Expertise/Knowledge/Multimodal/Evidence intelligence → C3
+Business Reads/Graph → C4
+Decision/write/Durable Workflow foundation → C5
+Task/Case/Room/Inbox/Watch/Knowledge Learning/Studio → C6
+Simulation/Model Router/selected autonomy → C7
+```
+
+Qualquer referência futura diferente precisa ser tratada como documentation drift e corrigida contra `16`.
 
 ## 9. Foundation invariants
 
