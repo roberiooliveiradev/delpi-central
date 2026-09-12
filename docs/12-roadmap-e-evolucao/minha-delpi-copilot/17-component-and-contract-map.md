@@ -1,67 +1,71 @@
 # Minha DELPI Copilot — Mapa de Componentes, Contratos e Ownership
 
 **Status:** arquitetura canônica de ownership  
-**Ordem de implementação:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Regra:** cada responsabilidade possui um owner canônico. Projeções, caches, indexes, expertise e playbooks são derivados/orientadores; não viram segunda authority.
+**Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)
 
 ## 1. Owners canônicos
 
-| Responsabilidade | Authority / owner | Consumidores principais | Proibido |
+| Responsabilidade | Authority / owner | Consumidores | Proibido |
 |---|---|---|---|
-| identidade | Keycloak + integração Core | Portal, APIs, AI | identidade técnica superuser do Copilot |
-| permissões efetivas | Core API/RBAC | Portal, AI, APIs | permission derivada de prompt/expertise/context |
-| apps/rotas autorizados | Core `/me/apps`/equivalente | Portal Capability Projection | lista manual app→URL no Copilot |
-| negócio | APIs/use cases de domínio | UI, Copilot | regra de negócio no frontend/LLM |
-| contrato técnico de Business Action | OpenAPI + Action Catalog | capability retrieval/executor | catálogo manual por endpoint |
-| navegação visual | Portal Shell/CopilotBridge | Chat/Copilot | URL arbitrária do LLM |
-| workspace visual | Portal + MFE/iframe adapters | AI turn context | usar contexto como autorização |
-| entity identity | owner de domínio + canonical `EntityRef` adapter | Context, Graph, Case, Evidence | inventar IDs paralelos |
-| relationships | domain owner + Business Graph relationship registry | Graph/traversal | copiar dataset operacional inteiro |
-| capability projection | derivada de authorities | retrieval/planner/UX | virar source técnica independente |
-| expertise | Expertise Catalog | retriever/context composer | conceder permission/tools |
-| playbook | Domain Playbook Catalog | planner | conter endpoint como authority |
-| knowledge visibility | Knowledge ACL + identity/policy | RAG/AI | pack/projeto ampliar ACL |
-| multimodal perception | extractor/service versionado | evidence pipeline | tratar OCR/VLM como conclusão |
-| evidence/provenance | source owner + Evidence contract | synthesis/Case/audit | claim material sem fonte quando disponível |
-| policy/sensitivity | Policy/Safety server-side | writes/workflows/watch | instrução LLM relaxar policy |
-| decision gate | Policy + approval owner | write/workflow | confirmação visual ser authority final |
-| workflow/task/case | orchestration application owner | Portal/Inbox/Rooms | segundo executor HTTP |
-| room/collaboration | owner existente de sala, se reutilizável | Case/Copilot | ACL implícita por membership |
-| inbox | Portal/work orchestration | usuário | read item disparar write |
-| events/watch | event owner + watch policy | workflows/alerts | polling app-specific central |
-| organizational knowledge | knowledge governance | Copilot/expertise | auto-publicar conversa como verdade |
-| model/compute policy | AI infrastructure/policy | runtime | seleção ad hoc espalhada em features |
-| audit/observability | infraestrutura canônica | admin/evals | CoT, secrets, JWT |
+| identidade | Keycloak + Core integration | Portal, Copilot API, Domain APIs | identity própria/superuser do Copilot |
+| permissões efetivas da plataforma | Core API/RBAC | Portal, Copilot API | permission derivada de prompt/context/pack |
+| apps/rotas | Core API | Portal, Copilot | catálogo manual app→URL |
+| navegação | Portal Router/AppHost | Copilot MFE/commands | URL livre do LLM |
+| Copilot UI | `plugins/minha-delpi-copilot` | usuário/Portal | implementar Copilot no Chat MFE |
+| Copilot runtime | `minha-delpi-copilot-api` | Copilot MFE/Portal adapters | usar `minha-delpi-ai-api` como runtime |
+| Copilot persistence | Copilot API migration chain | Copilot runtime | Chat tables/sessions/agents como authority |
+| negócio | Domain APIs/use cases | UI/Copilot | duplicar regra na Copilot API/LLM |
+| integrações DELPI/TOTVS | `api-delpi` quando owner | Copilot/other apps | copiar integração para Copilot |
+| technical Business Action contract | OpenAPI da Domain API | Copilot Action Catalog/executor | endpoint catalog manual |
+| workspace visual | Portal + MFE/iframe adapters | Copilot API | contexto como authorization |
+| entity identity | domain owner + Copilot `EntityRef` projection | Context/Graph/Case/Evidence | IDs paralelos |
+| relationships | domain owner + Copilot Graph projection | traversal/analysis | replicar datasets masters |
+| capability projection | Copilot API derivada de authorities | retrieval/planner/UX | virar source técnica independente |
+| expertise | Copilot Expertise Catalog | runtime/admin | permission/tool grant |
+| playbook | Copilot Playbook Catalog | planner/workflows | endpoint como authority |
+| knowledge visibility | source ACL + Copilot policy adapter | RAG | projeto/pack ampliar ACL |
+| multimodal perception | Copilot extractor adapters | Evidence | OCR/VLM como conclusão |
+| evidence/provenance | Copilot Evidence contract + source authority | synthesis/Case/audit | claim material sem source quando disponível |
+| policy/decision | Copilot Policy/Decision owner + final Domain API auth | writes/workflows | LLM relaxar policy |
+| workflow/task/case/watch | Copilot API | MFE/Portal surfaces | engines paralelos |
+| room/collaboration | existing owner if reusable; adapter from Copilot | Case/Room UX | membership conceder source ACL |
+| inbox semantics | Copilot API | Copilot MFE/Portal | Portal virar workflow engine |
+| notification delivery | Core/Portal shared owner quando aplicável | usuário | duplicar canal sem gap |
+| model/compute policy | Copilot API infrastructure/policy | runtime | model selection espalhada em features |
+| audit/evals | Copilot observability + platform audit where required | admin/security | CoT/secrets/JWT |
 
-## 2. Componentes
+## 2. Componentes físicos alvo
 
 | Componente | Responsabilidade |
 |---|---|
-| Portal Shell | experiência global, Router, workspace ativo |
-| CopilotBridge | validar/executar Platform Commands |
-| IframeBridge | bridge seguro de contexto/comandos visuais |
-| Chat MFE | UX conversacional/activity/decision UI/rendering |
-| `minha-delpi-ai-api` | understanding, retrieval, planning, orchestration, synthesis |
-| Action Catalog | representação operacional derivada do OpenAPI |
-| Capability Projection | índice autorizado de capabilities |
-| Expertise Catalog/Retriever | especialização dinâmica |
-| Playbook Catalog/Adapter | método de domínio para planejamento |
-| Knowledge/RAG | conhecimento autorizado |
-| Multimodal Adapter | percepção estruturada de arquivos/imagens/desenhos |
-| Policy/Safety | allow/deny/gate/autonomy |
-| Durable Workflow Runtime | checkpoints/waits/resume, reutilizando executors canônicos |
-| DELPI Business Graph | referências/relacionamentos permission-aware |
-| Case/Task services | unidades de trabalho persistente |
-| Observability | traces/metrics/audit/evidence de execução |
+| Portal Shell | host global, Router, current workspace, Copilot panel host |
+| Core API | apps/routes/RBAC/governance/shared notifications |
+| Keycloak | SSO/identity |
+| Gateway | single public entry/routing |
+| `plugins/plugin-ui` | shared UI components/design system |
+| `plugins/minha-delpi-copilot` | full-page + panel Copilot UX |
+| `minha-delpi-copilot-api` | complete Copilot intelligence/work runtime |
+| Copilot OpenAPI importer/index | derive action contracts from Domain APIs |
+| Copilot Action Catalog | operational action representation derived from OpenAPI |
+| Capability Projection | authorized semantic index |
+| Expertise/Playbook Catalogs | dynamic specialization/methodology |
+| Knowledge/RAG adapters | authorized knowledge retrieval |
+| Multimodal adapters | perception of documents/images/drawings |
+| Policy/Decision subsystem | allow/deny/gates/autonomy |
+| Durable Workflow Runtime | steps/checkpoints/waits/resume |
+| DELPI Business Graph projection | permission-aware references/relations |
+| Task/Case/Watch services | persistent Copilot work semantics |
+| Domain APIs | actual business data/rules/actions |
+| Observability | Copilot traces/metrics/audit/evals |
 
-## 3. Primitive registry — definidos semanticamente em C0
+`minha-delpi-ai-api` and `plugins/minha-delpi-chat` are **not components of this runtime graph**.
 
-C0 deve **reutilizar equivalentes existentes** antes de criar qualquer novo schema. Os nomes abaixo são conceituais.
+## 3. Primitive registry — frozen in C0
 
-### 3.1 Correlação
+Names below are conceptual until C0 confirms final schemas.
 
-`CorrelationContextV1`
-
+### `CorrelationContext`
 ```text
 requestId
 conversationId
@@ -72,10 +76,7 @@ caseId?
 traceId?
 ```
 
-Usado transversalmente; não criar IDs desconectados por feature.
-
-### 3.2 `EntityRefV1`
-
+### `EntityRef`
 ```json
 {
   "entityType": "product",
@@ -85,38 +86,25 @@ Usado transversalmente; não criar IDs desconectados por feature.
 }
 ```
 
-É referência lógica, não snapshot do objeto inteiro.
-
-### 3.3 `RelationshipRefV1`
-
-```json
-{
-  "from": {"entityType":"complaint","entityId":"R1"},
-  "relationshipType": "concerns_product",
-  "to": {"entityType":"product","entityId":"90264238"},
-  "authority": "domain",
-  "sourceRef": "...",
-  "confidence": 1.0
-}
+### `RelationshipRef`
+```text
+from EntityRef
+relationshipType
+to EntityRef
+authority/sourceRef
+confidence/provenance
 ```
 
-Distinguir relação authoritative de inferred.
-
-### 3.4 `SourceRefV1`
-
-Referência à origem verificável:
-
+### `SourceRef`
 ```text
 sourceType
 sourceId/provider
 entityRef?
-action/result ref?
-document/attachment ref?
+action/result/document ref?
 timestamp/freshness
 ```
 
-### 3.5 `EvidenceRefV1`
-
+### `EvidenceRef`
 ```text
 evidenceId
 sourceRef
@@ -129,8 +117,7 @@ confidence?
 limitations[]
 ```
 
-Classification separada:
-
+Epistemic classification:
 ```text
 FACT
 CALCULATION
@@ -139,80 +126,30 @@ CONCLUSION
 RECOMMENDATION
 ```
 
-`FACT`/`CALCULATION` precisam provenance suficiente quando material.
+### `OutcomeRef`
+Actual capability/action outcome reference with status/result/entity/evidence refs.
 
-### 3.6 `OutcomeRefV1`
+### Platform contracts
+- `PlatformCommand`
+- `PlatformCommandResult`
+- `WorkspaceContext`
+- `IframeBridgeEnvelope`
 
-Representa outcome real de uma capability/action, com status, entity refs/result refs e evidence associável.
+Targets are logical IDs/refs, never arbitrary URLs.
 
-### 3.7 `PlatformCommandV1` / `PlatformCommandResultV1`
+### Capability/specialization
+- `CapabilityProjection`
+- `ExpertisePack`
+- `ExpertiseSelection`
+- `ExpertiseContext`
+- `DomainPlaybook`
+- `MultimodalEvidenceRef`
 
-Targets lógicos (`appId`, `routeId`, `EntityRef`), nunca URL livre.
+### Decision
+- `DecisionGateRequest`
+- `DecisionGateDecision`
 
-### 3.8 `WorkspaceContextV1`
-
-```text
-appId
-routeId
-entityRefs[]
-filters
-selection
-dateRange
-visibleDataRefs[]
-source
-updatedAt
-```
-
-Bounded, sanitizado, sem token e sem datasets completos.
-
-### 3.9 `CapabilityProjectionV1`
-
-Contém semântica para retrieval/UX + `sourceRef` canônico. Não copia OpenAPI inteiro nem vira executor.
-
-### 3.10 Especialização
-
-- `ExpertisePackV1`;
-- `ExpertiseSelectionV1`;
-- `ExpertiseContextV1`;
-- `DomainPlaybookV1`.
-
-Regras:
-
-```text
-expertise/playbook ≠ permission
-expertise/playbook ≠ endpoint catalog
-```
-
-### 3.11 `MultimodalEvidenceRefV1`
-
-Attachment/document ref + observations + page/region + confidence + extractor/version + limitations.
-
-### 3.12 Decision Gate
-
-`DecisionGateRequestV1`:
-
-```text
-decisionId
-capability/action ref
-impact summary
-arguments hash
-evidence refs
-risk/sensitivity
-required gate level
-expiresAt
-```
-
-`DecisionGateDecisionV1`:
-
-```text
-decisionId
-decision/approval state
-actor ref
-decidedAt
-```
-
-Níveis:
-
+Levels:
 ```text
 NO_GATE
 ACKNOWLEDGE
@@ -222,131 +159,127 @@ APPROVAL_WORKFLOW
 BLOCK
 ```
 
-### 3.13 Workflow e trabalho persistente
+### Durable work
+- `WorkflowPlan`
+- `WorkflowStep`
+- `TaskRef`
+- `CaseRef`
+- checkpoint/wait state contracts
 
-- `WorkflowPlanV1`;
-- `WorkflowStepV1`;
-- `TaskRefV1`;
-- `CaseRefV1`.
-
-Contrato C0 define IDs/status/relações; persistência/runtime só em C5 após inventário.
-
-### 3.14 `EventEnvelopeV1`
-
-```text
-eventId
-eventType
-source
-entityRefs[]
-occurredAt
-payloadRef/payload bounded
-correlation
-```
-
-Semântica de dedupe e replay definida em C0; Watch vem depois.
-
-### 3.15 `IframeBridgeEnvelopeV1`
-
-Fonte detalhada: [`26-iframe-copilot-bridge.md`](./26-iframe-copilot-bridge.md).
-
-### 3.16 Audit event
-
-Usar contrato existente se houver; precisa correlacionar user/request/workflow/capability/policy/decision/outcome sem armazenar CoT.
+### Events/Audit
+- `EventEnvelope`
+- canonical AuditEvent/equivalent
 
 ## 4. Producer → consumer graph
 
 ```text
 Keycloak
-→ Core identity/RBAC
-→ allowed apps/routes/actions/knowledge
+→ Portal/Core/Copilot API identity validation
 
-Core /me/apps
+Core /me/apps/routes
 → Platform Capability Projection
-→ AI retrieval
+→ Copilot planner
 → PlatformCommand
-→ CopilotBridge
-→ Router/MFE/Iframe
+→ Portal validator/Router/MFE/Iframe
 
-OpenAPI
-→ Action Catalog
-→ allowed Business Actions
-→ Capability Projection
+Domain OpenAPI
+→ Copilot OpenAPI importer/index
+→ Copilot Action Catalog
+→ authorized Capability Projection
 → retrieval/planner
-→ policy/Decision Gate
+→ Policy/Decision Gate
 → generic executor
-→ domain API
+→ Domain API
 → OutcomeRef/EvidenceRef
 
-Workspace MFE/Iframe
+Portal/MFE/Iframe
 → WorkspaceContext
-→ AI understanding/retrieval
+→ Copilot API understanding/retrieval
 
 Attachments
-→ multimodal extraction
+→ Copilot multimodal adapters
 → EvidenceRef
 → expertise/playbook/analysis
 
-Expertise content
-→ Expertise Catalog/index
-→ retrieval
-→ bounded ExpertiseContext
-
-Playbook
-→ applicability
-→ WorkflowPlan guidance
-
 EntityRefs + RelationshipRefs
-→ Business Graph traversal
-→ source API fetch
+→ Copilot Business Graph traversal
+→ Domain API source fetch
 → EvidenceRef
 
 WorkflowPlan
-→ Durable Workflow Runtime
-→ Task/Case
-→ waits/Inbox/Room/Watch
+→ Copilot Durable Runtime
+→ Task/Case/Watch
+→ Inbox/Room/notification adapters
 ```
 
-## 5. Anti-duplication rules
+## 5. Independence graph
 
-Não criar:
-
-- `CaseEntityRef` incompatível com `EntityRef`;
-- `WorkflowEvidence` diferente de `EvidenceRef` sem motivo material;
-- confirmation schema separado de Decision Gate;
-- event envelope próprio para Watch se `EventEnvelope` existe;
-- outro result/outcome type só para Business Graph;
-- second Action Catalog;
-- agent-specific tool registry como authority final;
-- memory paralela por app/case;
-- graph table que replique objetos inteiros da API.
-
-## 6. C0 inventory questions obrigatórias
-
-Antes de criar cada primitive, responder:
+Must remain true:
 
 ```text
-Existe equivalente atual?
-Quem produz?
-Quem consome?
-É público/externo?
-Tem persistence?
-Tem migration consumers?
-Tem versioning?
-Tem tests?
-Pode ser estendido sem quebrar contrato?
+Copilot MFE ─X→ minha-delpi-chat source
+Copilot API ─X→ minha-delpi-ai-api modules/endpoints as required runtime
+Copilot DB  ─X→ Chat tables as authority
 ```
 
-Quando não houver prova: `NOT_PROVEN`, não inventar.
-
-## 7. Ordem de estabilização
+Shared dependencies must be neutral platform components:
 
 ```text
-Authorities
+Portal
+Core
+Keycloak
+Gateway
+plugin-ui
+shared federation config
+Domain APIs
+approved shared libraries
+```
+
+## 6. Anti-duplication rules
+
+Do not create:
+
+- another Core/RBAC model;
+- manual app→URL registry;
+- manual endpoint/action authority;
+- `CaseEntityRef` incompatible with `EntityRef`;
+- feature-specific Evidence model;
+- confirmation model parallel to Decision Gate;
+- Task engine parallel to Workflow runtime;
+- Watch-specific event envelope;
+- Graph master copies of Domain API objects;
+- Chat compatibility layer inside Copilot;
+- departmental agent tool registries.
+
+## 7. C0 ownership inventory questions
+
+Before creating a component/schema:
+
+```text
+Who owns the source truth today?
+Is this platform-shared or Copilot-owned?
+Does an official contract already exist?
+Would reuse introduce Chat product coupling?
+Who produces and consumes it?
+Does it need persistence/versioning?
+Can the Domain API remain owner while Copilot stores only refs/projections?
+Is a new shared package justified by 2+ real consumers?
+```
+
+Unknown = `NOT_PROVEN`, not assumption.
+
+## 8. Stabilization order
+
+```text
+platform inventory
+→ standalone boundaries
+→ authorities
 → primitives
-→ ports/persistence boundaries
-→ contract tests
+→ ports/persistence/integration contracts
+→ architecture conformance
 → FOUNDATION_FREEZE
-→ feature implementations
+→ standalone bootstrap
+→ intelligence/features
 ```
 
-A implementação concreta de uma feature não pode redefinir primitive já congelado sem abrir explicitamente uma mudança arquitetural/versionada.
+No feature may redefine a frozen primitive silently.
