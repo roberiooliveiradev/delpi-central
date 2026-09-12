@@ -1,185 +1,215 @@
 # Minha DELPI Copilot — Rollout, Migrações e Implantação
 
-**Status:** plano operacional  
+**Status:** plano operacional standalone  
 **Autoridade de ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Arquitetura/patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
-**Princípio:** incremental, reversível, observável e foundation-first. Sem big-bang.
+**Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
+**Patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)
 
 ## 1. Estratégia
 
-Evoluir owners atuais antes de criar serviço novo:
+O Copilot nasce como **novo par de aplicação** dentro da plataforma:
 
 ```text
-portal
-minha-delpi-ai-api
-plugins/minha-delpi-chat
-Core API
-APIs de domínio
-MFEs/iframes
-infra existente de events/jobs/rooms/notifications
+minha-delpi-copilot-api
+plugins/minha-delpi-copilot
 ```
 
-Novo serviço/storage somente com gap provado em C0 e ADR quando material.
+Ele reutiliza as foundations corporativas:
 
-Architecture style/pattern não muda por release. O que foi congelado em C0 permanece authority; exceção exige decisão arquitetural explícita.
+```text
+Portal
+Core API
+Keycloak
+Gateway
+plugin-ui
+Module Federation
+Domain APIs
+infra compartilhada aprovada
+```
 
-## 2. Releases alinhadas a C0–C7
+Ele **não migra runtime do Minha DELPI Chat**.
 
-### R0 — Foundation Freeze
+## 2. Releases C0–C7
 
-Corresponde a C0.
+### R0 — Foundation Freeze / C0
 
-Entrega:
+- platform inventory;
+- standalone boundary;
+- service/path/manifest/storage naming;
+- authorities/primitives;
+- architecture/pattern freeze;
+- integration contracts;
+- RED conformance harness;
+- `CHAT_RUNTIME_DEPENDENCY=0`.
 
-- inventário/ownership;
-- inventário dos patterns/layers/DI/error/event/state/resilience/migration atuais;
-- shared primitives/contracts;
-- ports/persistence boundaries;
-- architecture style validado;
-- layer/dependency rules;
-- bounded contexts;
-- Pattern Decision Matrix;
-- Abstraction Gate;
-- error/result model;
-- event/state-machine rules;
-- frontend state ownership;
-- resilience/idempotency;
-- migration/Strangler/ACL rules;
-- architectural exception/ADR process;
-- versioning/correlation/error/idempotency semantics;
-- contract + architecture conformance harness;
-- zero duplicate authority/foundation material.
+No runtime code yet.
 
-Sem feature UX final necessária.
+### R1 — Standalone Bootstrap / C1
 
-**Gate:** `FOUNDATION_FREEZE=PASS` com os gates arquiteturais do `16/49`.
+- Copilot API skeleton;
+- health/config/logging;
+- JWT + Core integration;
+- Copilot MFE skeleton;
+- federation/plugin-ui;
+- own manifest;
+- Gateway routes;
+- Compose services;
+- Portal full-page mount;
+- global host/panel contract;
+- independent rollback;
+- Chat-offline independence test.
 
-### R1 — Platform/Context
+### R2 — Portal Context / C2
 
-Corresponde a C1.
-
-Entrega:
-
-- Platform Capability Projection;
-- CopilotBridge;
-- open app/route/entity;
 - Workspace Context;
-- MFE adapter;
-- iframe base/handshake;
-- contextual UX.
+- Global Bridge;
+- Platform Capability Projection;
+- open app/route/entity;
+- MFE context/deep-link helper;
+- iframe integration baseline.
 
-Padrões: Command + Handler + Adapter; sem handler específico por app no core.
+### R3 — Intelligence Core / C3
 
-Rollout interno/canary.
+- Copilot-owned conversation/turn model;
+- provider abstraction;
+- OpenAPI ingestion + Action Catalog;
+- capability retrieval;
+- planner;
+- expertise/playbooks;
+- Knowledge/RAG;
+- multimodal/evidence;
+- eval/observability.
 
-### R2 — Intelligence Core
+No Chat agent/session/action migration.
 
-Corresponde a C2.
+### R4 — Business Reads + Graph / C4
 
-Entrega:
-
-- single-Copilot session model;
-- Expertise Catalog/retrieval;
-- Domain Playbooks;
-- Knowledge ACL integration;
-- multimodal Evidence;
-- epistemic synthesis;
-- shadow agent migration com exit criteria.
-
-Migração legada usa Adapter/Anti-Corruption Layer/Strangler. Strategy só quando variação real justificar.
-
-Pode rodar sem Business Actions production-ready.
-
-### R3 — Business Reads + Graph
-
-Corresponde a C3.
-
-Pré-condição: gates OpenAPI-first relevantes PASS.
-
-Entrega:
-
-- Business Capability Projection;
 - generic reads;
-- Outcome/Evidence normalization;
-- Business Graph mínimo;
-- cross-domain analysis.
+- normalized outcomes/evidence;
+- Business Graph;
+- cross-domain analysis;
+- unknown/metamorphic provider gates.
 
-Graph segue Ports & Adapters; storage/index novo somente com gap comprovado.
+Rollout read-only first.
 
-Rollout read-only primeiro.
+### R5 — Governed Writes + Durable Foundation / C5
 
-### R4 — Governed Writes
-
-Corresponde a C4.
-
-Entrega:
-
-- Decision Gate Engine;
+- Decision Gates;
 - impact preview;
-- confirmations/approvals como estados do mesmo lifecycle;
-- idempotency/concurrency;
 - generic writes;
+- idempotency/concurrency;
 - outcome verification;
-- decoupling de agent activation/handoff.
+- WorkflowPlan/checkpoints/waits;
+- restart/replay safety.
 
-Padrões: Policy + State Machine + Idempotency. Retry cego de write é proibido.
+Start with low/medium-risk non-destructive writes.
 
-Começar com write não destrutivo de baixo/médio risco.
+### R6 — Product Work + Proactivity / C6
 
-### R5 — Durable Work
-
-Corresponde a C5.
-
-Entrega:
-
-- workflow persistence/checkpoints;
-- waits;
-- DAG runner;
-- Task;
-- Case/Evidence Board;
+- Tasks;
+- Cases/Evidence Board;
 - Room integration;
 - Inbox;
-- restart/resume safety.
-
-Padrões: Application orchestration + State Machine + Idempotency. Saga somente se houver múltiplos writes distribuídos e compensações reais.
-
-### R6 — Proactivity/Ecosystem/Learning
-
-Corresponde a C6.
-
-Entrega:
-
 - Watch OBSERVE/ADVISE;
-- AI-ready SDK/templates;
-- readiness scanner/waves;
-- project preferences;
 - Organizational Knowledge;
 - Governed Learning;
 - Expertise Studio;
-- admin/coverage.
+- AI-ready onboarding/admin.
 
-Watch usa event semantics canônicas; Expertise Studio usa use cases/lifecycle canônico.
+### R7 — Autonomy + Optimization / C7
 
-### R7 — Optimization/Autonomy/Rollout
-
-Corresponde a C7.
-
-Entrega gradual:
-
-- L5 selected;
+- L0–L5 final policy;
 - Watch ACT selected;
-- Simulation pilots;
+- Simulation;
 - Model Router;
-- agent-routing cleanup;
-- progressive rollout/final verification.
+- performance/cost/scaling;
+- progressive rollout;
+- Product Complete verification.
 
-Model Router só introduz Strategy/Policy após baseline. L5/ACT não são default.
+## 3. Migration policy
 
-## 3. Feature flags
+There is **no Chat→Copilot migration** required for this initiative.
 
-Flag = rollout tool, não arquitetura permanente.
+Copilot schema/contract changes follow:
 
-Cada flag precisa:
+```text
+EXPAND
+→ compatible readers
+→ writers
+→ BACKFILL if necessary
+→ CUTOVER
+→ MONITOR
+→ CLEANUP
+```
+
+Existing platform integration requiring adaptation may use:
+
+```text
+existing platform/domain owner
+→ Adapter / Anti-Corruption Layer
+→ Copilot canonical contract
+```
+
+Strangler applies only where an actual legacy integration is being replaced; it does not imply migrating the Chat into the Copilot.
+
+## 4. Storage rollout
+
+- Copilot has its own migration chain;
+- physical PostgreSQL may be shared if approved;
+- logical table/schema ownership remains separate;
+- no Chat table edits;
+- no Chat foreign keys as Copilot authority;
+- create storage only after C0 proves durable need.
+
+## 5. Infra rollout
+
+Dev/prod must evolve together for:
+
+```text
+Copilot API Dockerfile/service
+Copilot MFE Dockerfile/service
+Gateway API route
+Gateway MFE route
+Compose service/profile
+health checks
+env examples
+sequential scripts
+volumes/storage
+manifest registration
+```
+
+No `depends_on` Chat.
+
+## 6. Portal rollout
+
+Order:
+
+```text
+full-page federated app
+→ internal users
+→ global side-panel host
+→ broader groups
+```
+
+Both surfaces use the same MFE/runtime. The Portal host remains thin.
+
+## 7. Business capability rollout
+
+```text
+OpenAPI ingestion
+→ read-only capabilities
+→ cross-domain reads
+→ low-risk governed writes
+→ durable workflows
+→ Watch advice
+→ selected ACT/autonomy
+```
+
+No action goes production because a model can “probably call it”; schema/RBAC/policy/evals must pass.
+
+## 8. Feature flags
+
+Each flag requires:
 
 ```text
 name
@@ -192,206 +222,120 @@ exitCriteria
 plannedRemoval
 ```
 
-Nomes reais só após inventário de convenção atual.
-
-Famílias conceituais possíveis:
+Useful families:
 
 ```text
-platform/context
-single-copilot expertise
-business reads/graph
-governed writes
-durable work
-watch/proactivity
-autonomy
-simulation/model routing
+copilot-app-bootstrap
+global-panel
+workspace-context
+platform-commands
+intelligence-core
+business-reads
+business-graph
+governed-writes
+durable-work
+watch
+selected-autonomy
+model-routing
 ```
 
-Evitar flag por endpoint/app quando uma flag transversal/cohort resolve.
+Flags do not authorize permanent duplicate architectures.
 
-Feature flag não autoriza manter duas architectures/authorities indefinidamente.
-
-## 4. Migration policy
-
-Preferir para schema/contrato:
-
-```text
-EXPAND
-→ compatible readers
-→ writers
-→ BACKFILL se necessário
-→ CUTOVER
-→ MONITOR
-→ CONTRACT/CLEANUP posterior
-```
-
-Para runtime/legado:
-
-```text
-Legacy
-→ Adapter / Anti-Corruption Layer
-→ canonical model
-→ telemetry/evals
-→ canary
-→ cutover
-→ residual scan
-→ remove legacy adapter
-```
-
-Isso implementa Strangler Fig quando aplicável.
-
-Dual read/write somente se inevitável, com owner + exit criteria + planned removal.
-
-## 5. Migration planning por fase
-
-### C0
-
-Não criar tabelas, repositories ou generic engines só porque o contrato existe. Definir boundaries, patterns e provar gaps.
-
-### C2
-
-Possível persistence de Expertise/Playbook catalog somente se current owner não atender. Legacy agent compatibility permanece atrás de ACL/adapter temporário.
-
-### C3
-
-Graph pode exigir relationship/index store; não armazenar domain objects completos. Repository só se o Graph possuir estado/materialização própria.
-
-### C4
-
-Decision/approval persistence pode estender mecanismo existente. Idempotência prefere owner da domain API.
-
-### C5
-
-Possíveis stores, se gaps provados:
-
-- workflow instance/steps;
-- checkpoints/waits;
-- Task/Case refs/state;
-- dedupe/idempotency coordination.
-
-Room/Inbox devem preferir owners/views existentes.
-
-### C6/C7
-
-Watch/Experience/Compute policy persistence somente quando runtime correspondente for implementado.
-
-## 6. Antes de qualquer migration ou nova abstração
-
-1. procurar owner/model/repository/adapter existente;
-2. provar necessidade durável ou boundary real;
-3. validar shared primitive C0;
-4. consultar Pattern Decision Matrix do `49`;
-5. passar pelo Abstraction Gate;
-6. definir retention/LGPD;
-7. constraints/indexes;
-8. concurrency/idempotency;
-9. forward/backout path;
-10. tests;
-11. observability;
-12. confirmar que fase seguinte conhecida não exigirá remodelagem previsível;
-13. se houver desvio do padrão canônico, registrar ADR/decisão antes de implementar.
-
-## 7. Ordem de experiência para usuários
-
-Mesmo com foundations internas, percepção deve expandir com risco crescente:
-
-```text
-explain
-→ navigation/context
-→ specialized analysis/evidence
-→ business reads
-→ prepare/governed write
-→ durable tasks/cases
-→ advise/watch
-→ selected automation
-→ optimization
-```
-
-## 8. Cohorts
-
-Conforme infraestrutura vigente:
+## 9. Cohorts
 
 - environment;
-- internal users/groups;
+- user/group;
 - app/domain;
 - capability family;
-- feature family;
 - autonomy level.
 
-Cohort não concede business permission nem flexibiliza architecture/security gates.
+Cohort never grants business permission.
 
-## 9. Rollback por camada
+## 10. Rollback
 
-### Platform/Context
-Desligar bridge/context integration; apps continuam manualmente utilizáveis.
+### Bootstrap
+Disable Copilot routes/services/manifest version; Portal and Chat continue normally.
 
-### Expertise/Multimodal
-Desabilitar candidate/version problemática; base conversational continua.
+### Context/Platform
+Disable bridge/panel; full Portal remains functional.
 
-### Business Reads/Graph
-Remover availability no Copilot; source APIs continuam normais.
+### Intelligence
+Disable candidate provider/feature; Copilot may degrade to explicit unavailable mode, never silently delegate to Chat.
+
+### Reads/Graph
+Remove capability availability; Domain APIs continue normally.
 
 ### Writes
-Read-only kill switch; preservar audit/outcomes.
+Switch Copilot to read-only; preserve audit/outcomes.
 
 ### Durable Work
-Bloquear novos workflows e preservar estado; definir tratamento seguro para running/waiting.
+Block new workflows and preserve running/waiting state safely.
 
 ### Watch
-Desabilitar triggers; não perder audit/history.
+Disable triggers while preserving history.
 
 ### Model Router
-Voltar para policy/model baseline conhecido.
+Return to known baseline Compute Policy.
 
-### Legacy migration
-Rollback pode reativar caminho compatível somente enquanto sua janela/exit criteria estiverem ativos; não reintroduzir legacy como fallback permanente.
+**Rollback must never mean “fallback to Minha DELPI Chat runtime”.**
 
-## 10. Stop-the-line
+## 11. Before any migration/new abstraction
 
-- unauthorized action/data exposure;
-- duplicate authority/foundation drift;
-- architecture/pattern drift material;
-- dependency rule violation;
-- unjustified abstraction;
-- architectural exception sem ADR/decisão;
-- framework/provider concreto vazando para Domain/Application;
-- durable business authority no frontend;
-- write sem required Decision Gate;
-- duplicate write em retry/resume;
-- graph/room/case vazando source data;
-- Watch ACT sem policy;
+1. prove owner/boundary;
+2. prove durable need;
+3. ensure no Chat coupling;
+4. reuse C0 primitives;
+5. apply Pattern Decision Matrix;
+6. pass Abstraction Gate;
+7. define retention/LGPD;
+8. concurrency/idempotency;
+9. forward/backout path;
+10. tests/observability;
+11. check known next-phase impact;
+12. ADR for material exception.
+
+## 12. Stop-the-line
+
+- Chat runtime/API/table dependency;
+- unauthorized data/action;
+- duplicate authority;
+- architecture/pattern drift;
+- framework/provider leak into inner layers;
+- Portal AI logic leak;
+- domain business-rule duplication;
+- write without required Decision Gate;
+- duplicate write after retry/resume;
+- Graph/Case/Room permission leakage;
+- Watch ACT without policy;
 - secret/token leak;
-- arbitrary URL/action;
-- model provider violando data policy;
-- irreproducible evidence;
-- migration sem rollback/mitigation em dado crítico.
+- migration without safe rollback;
+- stale/non-reproducible evidence.
 
-## 11. Promotion criteria
+## 13. Promotion criteria
 
 - phase COMPLETE_GATE PASS;
 - current SHA evidence;
 - required tests PASS;
 - architecture conformance PASS;
-- RBAC/security negatives PASS;
-- metrics/traces disponíveis;
-- rollback testado;
-- Abstraction Gate/evidence registrado para abstrações novas materiais;
-- ADR presente para exceções materiais;
-- no material legacy fallback no objetivo da release;
-- docs/ledger consistentes.
+- security/RBAC negatives PASS;
+- Chat-independence PASS;
+- metrics/traces available;
+- rollback tested;
+- docs/ledger consistent.
 
-## 12. Produção
+## 14. Production progression
 
 ```text
-internal canary
-→ selected app/users
+standalone bootstrap internal
+→ contextual platform internal
+→ intelligence/read canary
 → read scale
 → governed write canary
 → durable work selected
 → Watch advise selected
-→ selected ACT/autonomy only after governance
+→ selected ACT/autonomy
 → metrics/incident review
 → progressive expansion
 ```
 
-Nunca usar rollout para ocultar foundation incompleta ou architecture drift.
+The Copilot must remain deployable, operable and reversible independently of the Minha DELPI Chat throughout this progression.
