@@ -1,177 +1,111 @@
-# Minha DELPI Copilot — Extensão de Implementação da Inteligência Operacional
+# Minha DELPI Copilot — Detalhamento da Inteligência Operacional
 
-**Status:** extensão executável do plano C0–C7  
-**Autoridade:** complementa `16-execution-master-plan.md`; não altera a regra de começar por C0.S0.
+**Status:** detalhamento temático  
+**Autoridade de ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Regra:** identificadores `O*` são referência de assunto, não sequência independente.
 
 ## 1. Objetivo
 
-Implantar de forma incremental os componentes estratégicos descritos em `34`–`43`, sem big-bang e sem criar arquitetura paralela.
+Detalhar Business Graph, Evidence, Tasks, Cases, Rooms, Inbox, Watch, Decision Gates, Organizational Knowledge, Expertise Studio, Simulation e Model Router sem competir com a ordem C0–C7.
 
-## 2. Dependências
+## 2. Mapeamento canônico
+
+| O* | Conceito | Contrato/foundation | Runtime canônico |
+|---|---|---|---|
+| O0 | inventário operacional | C0.S0 | — |
+| O1 | Evidence/Provenance | C0.S2–S4 | C2/C3 |
+| O2 | DELPI Business Graph | C0 Entity/Relationship contracts | C3.S5–S7 |
+| O3 | Copilot Task | C0 Task lifecycle | C5.S4 |
+| O4 | Durable Workflow | C0 workflow/wait semantics | C5.S1–S3 |
+| O5 | Copilot Case/Evidence Board | C0 Case lifecycle + EvidenceRef | C5.S5 |
+| O6 | Interaction Room | C0 inventory/owner | C5.S6 |
+| O7 | Copilot Inbox | C0 reference/state semantics | C5.S7 |
+| O8 | Watch | C0 EventEnvelope | C6.S1; ACT C7.S2 |
+| O9 | Decision Gates | C0 Decision contracts | C4.S1–S3 |
+| O10 | Organizational Experience | C0 provenance/lifecycle principles | C6.S5–S6 |
+| O11 | Expertise Studio | Expertise contracts C0 | C6.S7 |
+| O12 | What-if/Simulation | owner/model assumptions | C7.S3 |
+| O13 | Model Router | model/provider inventory + policy | C7.S4 |
+
+Esse mapeamento substitui qualquer ordem antiga `O0→O13` como regra de execução.
+
+## 3. Princípio de construção
 
 ```text
-C0-C2
-→ contracts/context/platform foundation
-
-C3
-→ business reads/writes + evidence foundation
-
-C4
-→ workflows + checkpoints + Task foundation
-
-C5
-→ AI-ready ecosystem + expertise + Business Graph + Cases
-
-C6
-→ Decision Gates + Watch/controlled proactivity
-
-C7
-→ rollout/metrics
-
-POST-C7 / waves específicas
-→ simulation advanced
-→ experience knowledge at scale
-→ advanced model routing
+contract first
+→ owner/port
+→ persistence boundary
+→ tests
+→ runtime
+→ UX
+→ rollout
 ```
 
-## 3. O0 — Inventário obrigatório em C0.S0
+Nenhum conceito operacional cria primitive próprio quando C0 já oferece um compartilhado.
 
-Adicionar ao inventário:
+## 4. Evidence
 
-- canonical entity IDs e relações entre domínios;
-- event bus/event types existentes;
-- salas de interação já existentes nos portais;
-- notification/inbox patterns existentes;
-- workflows/background jobs/queues atuais;
-- approval/confirmation models atuais;
-- audit/provenance metadata disponível;
-- knowledge sources e lifecycle;
-- model/provider abstractions e métricas;
-- persistência de workflows/tasks atual;
-- cases/solicitações que possam ser reutilizados em vez de novo conceito.
+Reutiliza `SourceRef`, `EvidenceRef`, `OutcomeRef` e epistemic classes C0.
 
-Não criar `BusinessGraph`, `Case` ou engine durável antes de provar gaps e owners.
+Runtime C2/C3 deve fornecer:
 
-## 4. O1 — Evidence Foundation
+- provenance/freshness;
+- multimodal page/region;
+- conflicting evidence handling;
+- FACT/CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION.
 
-**Entrada:** C2/C3 foundation.
+Case, Workflow e Simulation referenciam o mesmo Evidence model.
 
-Entregas:
+## 5. Business Graph
 
-- `EvidenceRefV1` ou equivalente canônico;
-- classificação FACT/CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION;
-- provenance em normalized results;
-- freshness semantics;
-- multimodal region/page provenance;
-- UI mínima de fontes/evidências.
+Reutiliza `EntityRef`/`RelationshipRef`.
 
-**Gate:** análise piloto consegue rastrear claims materiais até fontes autorizadas.
+Runtime C3:
 
-## 5. O2 — Business Graph mínimo
-
-Entregas:
-
-- canonical `EntityRef` reutilizado/expandido;
-- `RelationshipRef`;
-- graph query port;
-- 3–5 relações cross-domain de alto valor;
+- relationship registry/index;
 - permission-aware traversal;
-- source API fetch após traversal.
+- source fetch;
+- provenance;
+- depth/cycle budget;
+- authoritative vs inferred.
 
-Piloto recomendado:
+Não replica tabelas operacionais.
 
-```text
-reclamação → produto → OP/lote → material/fornecedor
-```
+## 6. Durable Work
 
-**Gate:** novo relation type entra por contrato/config/owner adequado, sem hardcode no planner.
-
-## 6. O3 — Copilot Task
-
-Entregas:
-
-- Task lifecycle/status;
-- vínculo com WorkflowPlan;
-- progress/activity;
-- result/evidence refs;
-- pending decisions;
-- reload/resume.
-
-**Gate:** uma tarefa multi-step sobrevive a F5/restart sem repetir write.
-
-## 7. O4 — Durable Workflow Foundation
-
-Entregas:
-
-- workflow instance/step persistence;
-- checkpoint;
-- `wait_user`;
-- `wait_approval`;
-- resume com RBAC/policy revalidation;
-- locking/idempotency.
-
-Não introduzir engine externa antes de inventariar infraestrutura existente.
-
-## 8. O5 — Case + Evidence Board
-
-Entregas:
-
-- Case lifecycle;
-- objective/entity refs;
-- evidence board;
-- hypotheses/decisions/actions como estruturas explícitas;
-- timeline;
-- ligação Task/Workflow.
-
-Piloto recomendado: investigação de Qualidade ou atraso operacional.
-
-## 9. O6 — Interaction Room
-
-Reutilizar o padrão de sala já existente quando possível.
-
-Entregas:
-
-- Case ↔ Room;
-- participantes;
-- mensagens;
-- arquivos;
-- Copilot contextual;
-- decisões e pendências;
-- summaries/digests.
-
-**Gate:** autorização da sala não vaza dados de entidades sem permission.
-
-## 10. O7 — Copilot Inbox
-
-Entregas:
+C5 implementa nesta ordem interna:
 
 ```text
-waiting_for_user
-working
-completed
-alerts
+Durable Workflow foundation
+→ waits/checkpoints
+→ DAG runner
+→ Task
+→ Case/Evidence Board
+→ Room integration
+→ Inbox
+→ restart/resume gate
 ```
 
-Itens linkam para Task/Case/Workflow/EntityRef.
+Task/Case não criam executors próprios.
 
-Iniciar read-only; nenhuma execução automática na primeira onda.
+## 7. Proatividade
 
-## 11. O8 — Watch / Events
+C6 começa apenas com:
 
-Entregas:
+```text
+OBSERVE
+ADVISE
+```
 
-- Watch contract;
-- event matching;
-- dedupe/cooldown;
-- OBSERVE/ADVISE;
-- resume de workflows waiting_event;
-- permission revalidation no disparo.
+Watch `ACT` exige C7 autonomy/Decision Gate policy.
 
-**ACT permanece bloqueado** até C6/autonomy gates.
+Event processing precisa dedupe/cooldown/expiry/revalidation.
 
-## 12. O9 — Decision Gates
+## 8. Decision Gates
 
-Migrar confirmação simples progressivamente:
+Contrato nasce em C0; runtime antes de writes em C4.
+
+Níveis:
 
 ```text
 NO_GATE
@@ -182,127 +116,87 @@ APPROVAL_WORKFLOW
 BLOCK
 ```
 
-Entregas:
+Approval antiga não autoriza payload/evidence materialmente alterado.
 
-- impact preview;
-- arguments/evidence hash;
-- expiry;
-- approval state;
-- revalidation antes de execute.
+## 9. Organizational Knowledge
 
-## 13. O10 — Organizational Experience
-
-Entregas:
-
-- DecisionRecord;
-- ExperienceRecord;
-- SolutionPattern candidate/publish lifecycle;
-- owner/reviewer;
-- Case → candidate experience promotion.
-
-Nunca publicar automaticamente a partir de uma conversa.
-
-## 14. O11 — Expertise Studio
-
-Primeiro MVP pode ser admin técnico:
-
-- repositories;
-- schemas;
-- versioning;
-- draft/review/publish;
-- eval runner;
-- rollback.
-
-UI completa vem após contratos estáveis.
-
-## 15. O12 — What-if / Simulation
-
-Somente por domínio com modelo owner claro.
-
-Primeiro piloto deve escolher problema com:
-
-- baseline mensurável;
-- regra/cálculo reproduzível;
-- risco controlado;
-- diferença clara entre simulate e apply.
-
-## 16. O13 — Model Router
-
-Não iniciar antes de baseline de qualidade/custo/latência.
-
-Entregas:
-
-- task requirements classification;
-- compute policy;
-- classes FAST/STANDARD/DEEP/MULTIMODAL/LONG_CONTEXT;
-- provider/model mapping central;
-- privacy constraints;
-- fallback/evals.
-
-## 17. Sequência recomendada
+C6:
 
 ```text
-O0 inventory
-→ O1 evidence
-→ O2 graph minimum
-→ O3 tasks
-→ O4 durable workflow
-→ O5 cases
-→ O6 rooms
-→ O7 inbox
-→ O8 watch advise
-→ O9 decision gates
-→ O10 experience knowledge
-→ O11 expertise studio
-→ O12 simulation pilots
-→ O13 model router
+Reference
+Decision
+Experience
+Solution Pattern
 ```
 
-Alguns tracks podem avançar em paralelo após contracts, mas seus gates não devem ser fundidos artificialmente.
+com owner/version/provenance/review/eval. Case resolution gera candidate, nunca auto-publish.
 
-## 18. Feature flags
+## 10. Expertise Studio
 
-Flags candidatas, apenas se o projeto já possui mecanismo coerente:
+C6, após Expertise runtime estável:
 
 ```text
-copilot_business_graph
-copilot_tasks
-copilot_cases
-copilot_inbox
-copilot_watch
-copilot_decision_gates
-copilot_experience_knowledge
-copilot_simulation
-copilot_model_router
+draft → review → eval → published → deprecated/rollback
 ```
 
-Toda flag temporária precisa owner e exit criteria.
+Não criar agente por pack.
 
-## 19. Não fazer
+## 11. Simulation
 
-- implementar os 10 componentes em um único PR;
-- criar databases/services novos sem inventário;
-- introduzir event bus paralelo se já existir um;
-- criar Case duplicando Minhas Solicitações ou outro domínio sem análise;
-- implementar Watch com polling app-specific no core;
-- criar graph duplicando tabelas inteiras;
-- fazer Model Router antes de métricas;
-- usar LLM para cálculo que possui regra determinística owner.
-
-## 20. COMPLETE_GATE
-
-Cada `O*` segue o mesmo protocolo do plano mestre:
+C7 somente para domínio com modelo/calculadora owner, baseline e premissas reproduzíveis.
 
 ```text
-inventory
-→ owner/contracts
-→ baseline
-→ implementation
-→ wiring
-→ positive/sibling/negative
-→ security
-→ generalization
-→ residual scan
-→ evidence
-→ COMPLETE_GATE
+SIMULATE != APPLY
 ```
+
+Apply passa por Business Action/Decision Gate.
+
+## 12. Model Router
+
+C7 somente depois de métricas reais.
+
+Compute policy pode selecionar:
+
+```text
+FAST
+STANDARD
+DEEP_REASONING
+MULTIMODAL
+LONG_CONTEXT
+```
+
+com privacy/provider/latency/cost/output constraints.
+
+## 13. Anti-duplicação
+
+Não criar:
+
+- `CaseEvidence` incompatível com EvidenceRef;
+- `WatchEvent` incompatível com EventEnvelope;
+- Task workflow engine;
+- confirmation system paralelo ao Decision Gate;
+- graph entity ID próprio;
+- room storage duplicado sem gap provado;
+- Experience auto-learning pipeline sem governance;
+- model selection conditions espalhadas pelas features.
+
+## 14. Cenário âncora
+
+```text
+reclamação
+→ Case
+→ Graph
+→ desenho multimodal
+→ Evidence Board
+→ Engineering + Quality expertise
+→ 8D
+→ Task/Durable Workflow
+→ wait_event
+→ Watch/Inbox
+→ Decision Gate
+→ Business Action
+→ Outcome/Audit
+→ Experience candidate
+```
+
+A execução desse cenário só é liberada gradualmente conforme cada fase C correspondente esteja PASS.
