@@ -1,102 +1,85 @@
 # Minha DELPI Copilot — Especificação de Domain Playbooks
 
-**Status:** contrato arquitetural proposto  
-**Objetivo:** transformar métodos de trabalho corporativos em conhecimento operacional estruturado e reutilizável pelo Copilot.
+**Status:** thematic spec / contract detail  
+**Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Foundation:** schema/semantics em C0; catalog/retrieval em C2; execução durável em C5.
 
 ## 1. Definição
 
-`Domain Playbook` representa um método, procedimento analítico ou roteiro de decisão que o Copilot pode usar para organizar uma tarefa.
+`Domain Playbook` representa método, procedimento analítico ou roteiro de decisão que ajuda o Copilot a estruturar trabalho.
 
-Ele não é um agente e não é um workflow técnico de endpoints.
+Não é agente, endpoint catalog nem workflow técnico congelado.
 
 Exemplos:
 
-- análise 8D;
-- Ishikawa;
-- 5 Porquês;
-- triagem de não conformidade;
-- análise de desenho técnico;
-- análise de atraso de entrega;
-- análise de risco de fornecimento;
-- preparação de reunião de engenharia;
-- análise de variação financeira.
+- 8D;
+- Ishikawa/5 Porquês;
+- triagem de NC;
+- análise de desenho;
+- atraso de entrega;
+- risco de fornecimento;
+- análise financeira quando governada.
 
-## 2. Separação obrigatória
+## 2. Separação
 
 ```text
 Playbook
-→ método / evidências / perguntas / critérios
+→ método/evidence/perguntas/critérios
 
-Workflow Runtime
-→ plano executável / dependências / status
+WorkflowPlan
+→ plano operacional concreto
 
 Capability
-→ ação disponível
+→ ação semântica disponível
 
 OpenAPI/Action Catalog
-→ contrato técnico da ação
-```
+→ contrato técnico da Business Action
 
-O playbook pode pedir semanticamente uma evidência ou capability, mas não deve conter path/method/operationId como roteamento.
+DecisionGate
+→ governança de decisão/write
+```
 
 ## 3. Estrutura conceitual
 
 ```json
 {
-  "schemaVersion": 1,
-  "key": "quality.8d",
-  "version": "1.0.0",
-  "label": "Análise 8D",
-  "purpose": "Estruturar investigação e plano de ação para problema de qualidade.",
-  "applicability": {
-    "domains": ["quality"],
-    "signals": ["nonconformity", "customer-complaint", "recurrence"]
-  },
-  "inputs": ["problemStatement", "evidenceRefs"],
-  "stages": [],
-  "evidenceChecklist": [],
-  "decisionRules": [],
-  "recommendedCapabilities": [],
-  "artifactTemplates": [],
-  "completionCriteria": [],
-  "safetyNotes": [],
-  "owner": "quality-owner",
-  "status": "active"
+  "schemaVersion":1,
+  "key":"quality.8d",
+  "version":"1.0.0",
+  "label":"Análise 8D",
+  "purpose":"Estruturar investigação e plano de ação.",
+  "applicability":{"domains":["quality"],"signals":["nonconformity","complaint"]},
+  "stages":[],
+  "evidenceChecklist":[],
+  "decisionRules":[],
+  "recommendedCapabilities":[],
+  "artifactTemplates":[],
+  "completionCriteria":[],
+  "safetyNotes":[],
+  "owner":"quality-owner",
+  "status":"active"
 }
 ```
 
+Shape final depende do C0 foundation freeze.
+
 ## 4. Stages
 
-Uma etapa descreve o que precisa ser resolvido, não como chamar tecnicamente uma API.
-
-Exemplo:
+Stage descreve problema a resolver, evidência esperada e output sem especificar endpoint.
 
 ```json
 {
-  "stageId": "containment",
-  "goal": "Definir contenção imediata",
-  "requiredEvidence": ["affectedScope", "riskAssessment"],
-  "optionalCapabilityKinds": ["business.read", "knowledge.search"],
-  "produces": ["containmentProposal"]
+  "stageId":"containment",
+  "goal":"Definir contenção imediata",
+  "requiredEvidence":["affectedScope","riskAssessment"],
+  "optionalCapabilityKinds":["business.read","knowledge"],
+  "produces":["containmentProposal"]
 }
 ```
 
 ## 5. Evidence checklist
 
-Playbooks devem indicar evidências esperadas para reduzir respostas superficiais.
-
-Exemplo para análise de atraso:
-
-- carteira/pedido;
-- estoque disponível;
-- ordens de produção;
-- compras abertas;
-- lead times;
-- bloqueios de qualidade;
-- eventos/logs relevantes;
-- limitações de dados.
-
-O Copilot deve distinguir:
+Playbook deve orientar suficiência de evidence e estados como:
 
 ```text
 PROVEN
@@ -105,136 +88,126 @@ MISSING
 NOT_APPLICABLE
 ```
 
+Esses estados não substituem `EvidenceRef`; são avaliação metodológica sobre evidence disponível.
+
 ## 6. Decision rules
 
-Regras podem orientar análise, mas não podem bypassar policy.
+Podem orientar análise/recommendation, mas nunca bypassar Policy/DecisionGate.
 
 Exemplo:
 
 ```text
-se estoque = 0 e compra crítica atrasada
-→ classificar risco de abastecimento
-→ recomendar revisão com Compras
+stock=0 + critical purchase late
+→ classify supply risk
+→ recommend buyer review
 ```
 
-Essa recomendação não cria automaticamente uma solicitação sem capability/policy adequada.
+A recommendation não executa write automaticamente.
 
-## 7. Playbook → Workflow
-
-O planner pode converter um playbook aplicável em plano operacional:
+## 7. Playbook → WorkflowPlan
 
 ```text
 playbook stages
-+ capabilities autorizadas
-+ contexto atual
-+ dependências
-→ WorkflowPlanV1
++ authorized capabilities
++ current context/entities/evidence
++ dependencies
+→ WorkflowPlan
 ```
 
-O workflow resultante deve ser observável e pode divergir do playbook quando etapas não forem aplicáveis, registrando reason codes.
+Planner pode pular stage não aplicável com reason code estruturado.
 
-## 8. Playbooks multimodais
+## 8. Multimodal playbook
 
-Playbooks podem exigir inspeção de anexos.
+`engineering.drawing-review`, por exemplo, pode pedir:
 
-Exemplo `engineering.drawing-review`:
+1. document/revision identification;
+2. relevant notes/dimensions/tolerances;
+3. ambiguous regions;
+4. product/process correlation;
+5. authorized standards/knowledge;
+6. risks/questions/evidence;
+7. output checklist/report.
 
-```text
-1. identificar revisão/documento
-2. extrair quadro/título/notas/cotas críticas quando possível
-3. identificar símbolos/tolerâncias relevantes
-4. correlacionar com item/processo
-5. consultar normas/procedimentos autorizados
-6. listar riscos, dúvidas e evidências
-7. gerar checklist ou parecer preliminar
-```
+Perception output continua Evidence, não conclusão automática.
 
-## 9. Playbooks não são SOP executável cego
+## 9. Não é SOP cego
 
-Mesmo que um procedimento interno tenha sequência definida, o Copilot deve:
+Copilot deve:
 
-- validar contexto;
-- verificar applicability;
-- respeitar versões vigentes;
-- explicitar evidência faltante;
+- validar applicability;
+- usar versão vigente;
+- explicitar missing evidence;
 - não inventar conclusão;
-- confirmar writes quando policy exigir.
+- submeter writes ao Decision Gate;
+- registrar stages aplicados/pulados quando material.
 
-## 10. Conhecimento e normas
+## 10. Knowledge refs
 
-Playbook pode referenciar knowledge categories/scopes semanticamente.
+Playbook referencia categories/scopes, mas documentos permanecem no Knowledge owner com ACL/versioning.
 
-Normas/documentos precisam permanecer no RAG/knowledge store com controle de versão e ACL.
+## 11. Versioning
 
-Não copiar documento inteiro para o playbook.
+Mudança material de método/critério/output exige nova versão.
 
-## 11. Versionamento
-
-Mudança de decisão, critério ou sequência material exige nova versão.
-
-Telemetry/evidence deve registrar:
+Registrar:
 
 ```text
 playbookKey
-playbookVersion
+version
 contentHash
-stagesApplied
-stagesSkipped
+stagesApplied/skipped
 ```
 
 ## 12. Evals
 
-Cada playbook relevante deve possuir casos:
-
-- cenário completo;
-- evidência faltante;
-- evidência contraditória;
-- cenário sibling;
-- não aplicável;
+- complete scenario;
+- missing evidence;
+- conflicting evidence;
+- sibling;
+- not applicable;
 - cross-domain;
-- injection em documento/evidência;
-- write proposto mas não autorizado;
+- malicious document/evidence;
+- unauthorized proposed write;
 - version regression.
 
-## 13. Administração e autoria
-
-Fluxo recomendado:
+## 13. Lifecycle
 
 ```text
 draft
-→ domain review
-→ architecture/schema validation
-→ security review quando necessário
+→ review
 → eval
 → published
-→ deprecated
+→ deprecated/rollback
 ```
 
-Owners de domínio podem evoluir conteúdo sem editar o planner central.
+Expertise Studio é a surface de administração futura; não muda o contrato.
 
-## 14. Playbooks iniciais de referência
+## 14. Reference families
 
-### Qualidade
-
+Qualidade:
 - `quality.8d`;
 - `quality.root-cause`;
-- `quality.nonconformity-triage`;
-- `quality.customer-complaint-analysis`.
+- `quality.nonconformity-triage`.
 
-### Engenharia
-
+Engenharia:
 - `engineering.drawing-review`;
-- `engineering.change-impact-analysis`;
-- `engineering.technical-comparison`.
+- `engineering.change-impact-analysis`.
 
-### Suprimentos
-
+Suprimentos:
 - `supplies.shortage-risk`;
-- `supplies.purchase-delay-analysis`;
-- `supplies.supplier-comparison`.
+- `supplies.purchase-delay-analysis`.
 
-### Operação cross-domain
-
+Cross-domain:
 - `operations.delivery-delay-analysis`.
 
-A implantação real deve começar por poucos playbooks de alto valor e alta disponibilidade de evidência.
+Implantação real começa por poucos playbooks com evidence disponível, não por um catálogo completo.
+
+## 15. Anti-patterns
+
+- path/method/operationId;
+- permission override;
+- hardcoded app/endpoint;
+- new workflow executor;
+- static department agent;
+- document copy inside playbook;
+- write execution encoded as methodology step without Decision Gate.
