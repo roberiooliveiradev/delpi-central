@@ -2,23 +2,14 @@
 
 **Status:** thematic spec / contract detail  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Foundation:** schema/owner/version semantics definidos/reutilizados em C0; runtime de retrieval em C2.
+**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
+**Foundation:** schema/owner/version semantics em C0; runtime de retrieval na Copilot API em C3.
 
 ## 1. Definição
 
-`Expertise Pack` é um pacote versionado de conhecimento operacional e guidance que especializa o **mesmo Copilot** em um domínio.
+`Expertise Pack` é pacote versionado de conhecimento operacional/guidance que especializa o **mesmo Copilot** em um domínio. Não é agent, permission ou endpoint catalog.
 
-Responde a:
-
-- quais conceitos importam?;
-- quais evidências devem ser buscadas?;
-- quais métodos são adequados?;
-- quais playbooks são relevantes?;
-- quais knowledge scopes recebem boost?;
-- quais necessidades multimodais existem?;
-- quais limitações/riscos devem ser explicitados?.
-
-Não define permission nem endpoint.
+Responde a quais conceitos/evidências/métodos/playbooks/knowledge scopes/multimodal needs/limitações importam para uma análise.
 
 ## 2. Estrutura conceitual
 
@@ -44,170 +35,91 @@ Não define permission nem endpoint.
 }
 ```
 
-Shape final é congelado/reutilizado em **C0.S2**, após C0.S0/S1 provarem owners/patterns existentes.
+Shape final é congelado/reutilizado em **C0.S3**, depois de C0.S0–S2 provarem platform boundary, names e owners.
 
-## 3. Campos permitidos
+## 3. Authority
 
-- key/version/label/description/owner/status;
-- domains/signals/terminology;
-- analysis/output guidance;
-- knowledge scope refs;
-- preferred playbook refs;
-- recommended capability semantics;
-- multimodal needs;
-- eval refs.
+Fields permitidos incluem identity/version, domains/signals, terminology/guidance, knowledge refs, preferred playbooks, recommended capability semantics, multimodal needs e eval refs.
 
-## 4. Campos proibidos como authority
+Proibido como technical authority:
 
 ```text
 path
 method
 operationId
 provider selector
-path/opId markers
-parameter strategy
 permission override
 JWT/secret
 hardcoded department→endpoint
 ```
 
-Technical action authority permanece OpenAPI + Action Catalog.
+Business action authority permanece Domain OpenAPI + Copilot Action Catalog derivado.
 
-## 5. Ativação
+## 4. Ativação/composição
 
 ```text
-goals + Workspace/Entity context + attachments + project preferences
-→ Expertise Retriever
+goals + Workspace/Entity context + attachments + preferences
+→ Copilot Expertise Retriever
 → top-K candidates
-→ compatibility/ACL/policy filter
+→ ACL/policy filter
 → ExpertiseSelection
 → bounded ExpertiseContext
 ```
 
-Usuário não precisa selecionar pack manualmente.
+Vários packs podem compor o mesmo turno. System/safety/policy vencem; capability recommendation não concede access; knowledge scopes só entram após ACL.
 
-## 6. Composição
+## 5. Ranking
 
-Vários packs podem ser usados no mesmo turno.
+Pode considerar goals, domain signals, workspace/entity, attachments, terminology, capability candidates, structured context e preferences. `agent_id` não existe como requisito do runtime standalone.
 
-Merge rules:
-
-1. system/safety/policy vencem;
-2. guidance não reduz safety;
-3. knowledge scopes só entram após ACL;
-4. terminology pode ser namespaceada;
-5. playbooks são candidates;
-6. capability recommendation não concede acesso;
-7. context final é bounded.
-
-## 7. Ranking
-
-Pode considerar:
-
-- goals/domain signals;
-- Workspace app/entity;
-- attachments;
-- recognized terminology;
-- capability candidates;
-- recent structured context;
-- project preferences.
-
-`agent_id` não é requisito.
-
-## 8. Knowledge
-
-```text
-pack knowledge refs
-+ user ACL
-+ source policy
-→ permitted knowledge candidates
-```
-
-Pack nunca amplia visibility.
-
-## 9. Capability relation
+## 6. Relações
 
 ```text
 Expertise = como analisar
 Capability = o que pode fazer
-Action Catalog = contrato técnico
+Playbook = método
+Domain OpenAPI/Copilot Action Catalog = contrato técnico
 Policy/RBAC = se pode fazer
 ```
 
-## 10. Playbooks
+## 7. Knowledge/Multimodal
 
-Pack pode recomendar refs como:
+Pack sugere scopes/needs, mas Knowledge ACL e tool availability continuam authorities próprias. Multimodal runtime pertence à Copilot API.
 
-```text
-quality.8d
-quality.root-cause
-engineering.drawing-review
-```
+## 8. Versioning/observability
 
-Playbook é objeto versionado separado.
+Registrar key/version/contentHash/evalHash/owner/status, selected candidates/reason codes, playbooks, knowledge/tools e outcomes, sem CoT.
 
-## 11. Multimodalidade
+## 9. Evals
 
-Pack pode indicar necessidade de document/image/drawing perception, mas extraction tool continua capability/internal tool governada.
-
-## 12. Versioning/provenance
-
-Registrar quando material:
-
-```text
-key
-version
-contentHash
-evalSuiteHash
-owner/status
-```
-
-Mudança material invalida evidence de eval correspondente.
-
-## 13. Observability
-
-- candidates;
-- selected packs;
-- structured reasonCode/score;
-- version/hash;
-- playbooks;
-- knowledge/tool usage;
-- outcome/eval.
-
-Sem CoT.
-
-## 14. Evals
-
-- positive;
-- semantic sibling;
-- unrelated negative;
+- positive/sibling/negative;
 - cross-domain composition;
-- unauthorized knowledge;
+- unauthorized knowledge/capability;
 - malicious pack content;
 - attachment-triggered case;
 - unknown pack;
+- metamorphic key rename;
 - version regression;
-- metamorphic key rename preserving semantics.
+- full-page/panel parity.
 
-## 15. Lifecycle/admin
+## 10. Lifecycle/admin
 
-Candidate só pode ser published/active conforme lifecycle governado do Expertise Studio, com schema/owner/refs/evals/security aplicáveis.
+Candidate só vira published/active por lifecycle governado do Expertise Studio com schema/owner/refs/evals/security aplicáveis.
 
-## 16. Pilotos
+## 11. Pilotos
 
-Começar por poucos packs de alto valor, por exemplo:
+Começar por poucos packs de alto valor, por exemplo Qualidade Industrial, Engenharia de Produto e Suprimentos. Não criar catálogo de departamentos inteiro antes de validar retrieval/generalization.
 
-- Qualidade Industrial;
-- Engenharia de Produto;
-- Suprimentos.
+## 12. Independence
 
-Não criar um catálogo de departamentos inteiro antes de validar retrieval/composition/generalization.
+A implementação não importa nem migra `AgentSpecializationService`, agent sessions ou skills do Minha DELPI Chat. Chat pode ser usado apenas como referência de C0.
 
-## 17. Anti-patterns
+## 13. Anti-patterns
 
 - um agentId por expertise;
 - pack como permission;
 - pack como endpoint registry;
-- prompt monolítico global com todas as expertises;
-- activation manual obrigatória;
-- hardcode do pack no planner.
+- prompt global com todas as expertises;
+- seleção manual obrigatória;
+- hardcode de pack no planner;
+- runtime de Expertise delegado ao Chat.
