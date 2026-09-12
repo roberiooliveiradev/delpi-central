@@ -1,25 +1,31 @@
 # Minha DELPI Copilot — Protocolo de Execução para o Cursor
 
-**Status:** obrigatório para execução do plano  
-**Plano:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
+**Status:** obrigatório  
+**Authority de ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
 
 ## 1. Objetivo
 
-Evitar execução fora de ordem, “implementação por exemplo”, contratos inventados, fechamento prematuro e criação de arquitetura paralela.
+Evitar:
 
-## 2. Antes de qualquer etapa
+- execução fora de ordem;
+- feature-first prototyping que depois exige refatoração;
+- contratos inventados tarde;
+- segunda authority;
+- duplicação de primitive/state;
+- fechamento prematuro;
+- gasto desnecessário de tokens com retrabalho.
 
-Ler, nesta ordem:
+## 2. Ordem documental antes de qualquer step
 
-1. `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`;
-2. `.cursor/rules/development-standards-index.mdc`;
-3. regras específicas aplicáveis de plan/execution/test/security/OpenAPI/AI;
-4. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/README.md`;
-5. `16-execution-master-plan.md`;
-6. `17-component-and-contract-map.md`;
-7. `18-app-onboarding-matrix.md`;
-8. documento específico da fase;
-9. `20-testing-and-acceptance-matrix.md`;
+1. instruções oficiais do projeto;
+2. `.cursor/rules/development-standards-index.mdc` + regras específicas;
+3. `README.md` do Copilot;
+4. `16-execution-master-plan.md`;
+5. `17-component-and-contract-map.md`;
+6. `21-data-and-state-model.md`;
+7. `20-testing-and-acceptance-matrix.md`;
+8. `25-requirements-traceability.md`;
+9. documento temático da subetapa;
 10. `evidence/execution-ledger.md`.
 
 Depois:
@@ -31,37 +37,75 @@ git rev-parse HEAD
 
 Registrar `HEAD_BEFORE`.
 
-## 3. C0.S0 é obrigatório
+## 3. Uma única ordem
 
-Não iniciar CopilotBridge, types, UI ou API antes de C0.S0 concluir o inventário real.
+O Cursor executa somente a próxima subetapa desbloqueada em `16`.
 
-C0.S0 deve provar, com arquivo/símbolo/contrato:
+Planos E*/O* não liberam execução independente.
 
-- como `/me/apps` é produzido e consumido;
-- shape real de app/route;
-- Router/AppHost atuais;
-- contratos send/stream do Chat;
-- Action Catalog/planner/executor atuais;
-- confirmation/policy atuais;
-- persistence/turn metadata;
-- manifests e APIs dos apps candidatos;
-- convenções de shared packages/types;
-- deep-link/entity patterns existentes.
+Se algum documento temático sugerir outra ordem:
 
-Quando não houver prova, registrar `NOT_PROVEN`/`TO_INVENTORY`.
+```text
+16-execution-master-plan.md vence
+```
 
-## 4. Unidade de execução
+## 4. C0.S0 é obrigatório e read-only para runtime
 
-Executar somente uma subetapa `C*.S*` por vez.
+C0.S0 deve provar com arquivo/símbolo/contrato/consumer:
 
-Pipeline:
+- Portal/Core/Chat/AI atuais;
+- Action Catalog/planner/executors/policy;
+- sessions/persistence;
+- agents/skills/handoff;
+- apps/MFEs/iframes;
+- entity IDs/deep links;
+- events/jobs/queues;
+- rooms/notifications;
+- workflows/approvals;
+- audit/provenance;
+- model/provider abstractions;
+- domain API/OpenAPI/idempotency.
+
+Classificar cada finding:
+
+```text
+REUSE
+EXTEND
+MIGRATE
+CREATE_REQUIRED
+DEPRECATE
+REMOVE
+NOT_PROVEN
+```
+
+**Nenhum runtime diff do Copilot em C0.S0.**
+
+## 5. FOUNDATION_FREEZE
+
+Nenhum C1+ começa até C0.S6 provar:
+
+```text
+INVENTORY=PASS
+AUTHORITIES=PASS
+SHARED_PRIMITIVES=PASS
+PERSISTENCE_BOUNDARIES=PASS
+CROSS_CUTTING_SEMANTICS=PASS
+CONTRACT_HARNESS=PASS
+FOUNDATION_DUPLICATION=0 material
+```
+
+## 6. Unidade de execução
+
+Executar **uma** `C*.S*` por vez:
 
 ```text
 SELECT STEP
-→ REVALIDATE
+→ REVALIDATE HEAD/WORKTREE
+→ READ OWNERS/CONTRACTS
+→ DEPENDENCY GATE
 → READY_TO_EXECUTE
 → BASELINE
-→ IMPLEMENT MINIMAL CORRECT DIFF
+→ IMPLEMENT MINIMAL CORRECT OWNER-LEVEL DIFF
 → WIRE PRODUCER/CONSUMER
 → UNIT/CONTRACT
 → INTEGRATION
@@ -69,8 +113,8 @@ SELECT STEP
 → SIBLING
 → NEGATIVE
 → SECURITY/RBAC
-→ GENERALIZATION quando aplicável
-→ ADVERSARIAL DIFF REVIEW
+→ GENERALIZATION/METAMORPHIC/UNKNOWN
+→ ADVERSARIAL REVIEW
 → SEMANTIC RESIDUAL SEARCH
 → POSTCONDITIONS
 → COMPLETE_GATE
@@ -78,140 +122,177 @@ SELECT STEP
 → UNLOCK NEXT
 ```
 
-## 5. READY_TO_EXECUTE
+## 7. READY_TO_EXECUTE
 
-Só fica `READY_TO_EXECUTE` se:
+Somente se:
 
-- owners e consumers da etapa estão identificados;
-- contrato alvo está definido;
-- dependências anteriores passaram;
-- não existe working-tree conflict não entendido;
-- não existe decisão de produto necessária e ausente;
-- baseline/tests estão definidos;
-- impacto de segurança está classificado.
+- dependências anteriores PASS;
+- owner/consumer conhecidos;
+- primitive/contract reutilizado ou aprovado em C0;
+- não há second authority;
+- baseline/test definido;
+- working tree entendido;
+- impacto de segurança classificado;
+- migration/persistence necessity provada quando houver.
 
 Caso contrário: `BLOCKED_WITH_EVIDENCE`.
 
-## 6. Menor diff correto
+## 8. Regra anti-refatoração
 
-Não interpretar “menor diff” como workaround.
+Antes de criar schema/class/service/table/event enum:
+
+```text
+A. Existe equivalente compartilhado?
+B. Quem é owner canônico?
+C. Quem consome hoje?
+D. Isso duplica Entity/Evidence/Decision/Workflow/Event/Capability?
+E. A próxima fase conhecida obrigaria alterar este contrato?
+F. Isso funciona para sibling/unknown sem branch específica?
+```
+
+Se D ou E = sim, **não implementar a feature**. Corrigir a foundation/versionar o contrato primeiro.
+
+## 9. Menor diff correto
 
 Correto:
 
 ```text
-alterar owner canônico
+owner canônico
++ shared primitive existente
 + wiring real
-+ testes
-+ remover substituto quando cutover estiver provado
++ tests
++ migration/cutover quando material
++ cleanup/fallback exit criteria
 ```
 
 Incorreto:
 
 ```text
-copiar lógica para outro service
-criar JSON auxiliar por endpoint
-hardcodar app piloto
-bypassar policy para smoke
+copiar lógica
+novo JSON técnico
+local endpoint selector
+feature-specific Evidence/Entity/Confirmation type
+duplicar executor
+hardcodar piloto
+mockar security para smoke
 ```
 
-## 7. Proibições específicas do Copilot
+## 10. Proibições específicas
 
-- não criar lista manual central de todos os apps para navegação;
-- não criar capability business com path/method/operationId manual;
-- não criar selector por app/provider/endpoint;
-- não criar UI automation quando existe API/use case;
-- não criar URL arbitrária produzida pelo modelo;
-- não confiar no WorkspaceContext como autorização;
-- não persistir chain-of-thought;
-- não criar agente por departamento como novo motor;
-- não criar novo HTTP executor para workflows;
-- não duplicar o Action Catalog dentro do Copilot;
-- não liberar write/destructive porque a UI confirmou sem revalidar backend policy;
-- não declarar Onda J/tool pipeline como resolvida dentro deste plano.
+- manual app→URL catalog;
+- manual endpoint catalog;
+- path/operationId semantic routing;
+- department agent runtime;
+- Workspace Context como permission;
+- Expertise/Playbook como permission;
+- DOM automation quando API/use case existe;
+- second Action Catalog;
+- second workflow HTTP/tool executor;
+- graph duplicando domain data;
+- Case-specific Evidence contract;
+- confirmation paralelo ao Decision Gate;
+- Task engine paralelo;
+- Watch event envelope paralelo;
+- arbitrary model routing por feature;
+- CoT persistence;
+- JWT/secret em bridge/state;
+- auto-publish de learning.
 
-## 8. Regras de evidence
+## 11. Evidence de execução
 
-Nunca escrever “PASS” sem evidência da execução correspondente.
+Nunca declarar PASS sem evidence do candidate correspondente.
 
-Por teste relevante registrar:
+Registrar conforme material:
 
 ```text
 command/test
 result
 HEAD
-config/hash quando aplicável
-artifact/evidence path
+contract/schema version
+config/model/provider hash
+OpenAPI/catalog hash
+expertise/playbook hash
+evidence artifact/path
+timestamp
 ```
 
-Não reaproveitar evidence de SHA anterior após mudança material.
+Evidence stale não fecha step.
 
-## 9. Residual search
+## 12. Residual search
 
-Após cutover/cleanup, procurar o conceito em:
+Depois de cutover/cleanup, procurar conceito em:
 
-- runtime Python/TS/TSX;
+- Python/TS/TSX;
 - JSON/YAML/config;
 - prompts/content;
 - fixtures/generators;
-- tests/smokes;
+- tests;
 - scripts/CI;
-- caches/materializers;
+- caches/indexes;
 - manifests;
 - docs.
 
-Exemplos de residual proibido:
+Buscar especialmente:
 
 ```text
-appId → hardcoded URL
-operationId list → business capability catalog manual
-path substring → semantic selection
-write endpoint → hardcoded confirmation bypass
-MFE-specific command no core generic
+app hardcode
+endpoint/path selector
+parallel Evidence/Entity/Confirmation types
+userActivatedAgent
+switch_agent_and_resend
+agentId routing
+legacy fallback
+feature-specific workflow executor
 ```
 
-## 10. Adversarial review
+## 13. Adversarial review
 
-Antes do COMPLETE_GATE, responder:
+Antes de COMPLETE_GATE responder:
 
-1. Isso funciona com outro app sem editar o core?
-2. Isso funciona com provider OpenAPI nunca visto quando aplicável?
-3. Renomear provider/path/operationId altera semântica indevidamente?
-4. Um usuário sem permissão consegue forçar a action pelo payload?
-5. Um resultado/tool/context hostil consegue alterar policy?
-6. Reload/retry pode duplicar write?
-7. Existe uma segunda fonte de verdade criada pelo diff?
-8. O fallback remanescente está dentro do objetivo final? Se sim, a etapa não pode fechar.
+1. funciona com sibling/unknown sem core patch?;
+2. existe second authority?;
+3. usuário não autorizado consegue forçar payload?;
+4. data/tool/context/pack/event hostil altera policy?;
+5. retry/reload/resume duplica write?;
+6. source permission é preservada em Graph/Case/Room/Inbox?;
+7. fallback material ainda existe?;
+8. próxima fase conhecida exigirá redesign do que acabou de ser criado?;
+9. migration é realmente necessária?;
+10. foundation drift foi introduzido?.
 
-## 11. COMPLETE_GATE
+## 14. COMPLETE_GATE
 
-Para fechar uma subetapa, todos os requisitos materiais precisam estar comprovados.
-
-Estados bloqueantes:
+Bloqueantes quando materiais:
 
 ```text
 PARTIAL
 ATENDIDO_PARCIAL
 INCONCLUSIVE
 PENDING
-LEGACY_FALLBACK material
+LEGACY_FALLBACK
 SHADOW_ONLY sem exit criteria
-TODO/FIXME/HACK/TEMPORARY material
+TODO/FIXME/HACK/TEMPORARY
 TEST_NOT_RUN
 STALE_EVIDENCE
+DUPLICATE_AUTHORITY
+FOUNDATION_DRIFT
+UNKNOWN_CONSUMER material
 ```
 
-## 12. Formato de reporte por etapa
+## 15. Reporte obrigatório
 
 ```text
 STEP:
 HEAD_BEFORE:
 HEAD_AFTER:
 STATUS:
-REQUIREMENTS:
-DEPENDENCIES:
+DEPENDENCY_GATE:
+REQUIREMENTS_CP:
 FILES_CHANGED:
 CANONICAL_OWNERS:
 PRODUCERS_CONSUMERS:
+REUSED_FOUNDATIONS:
+NEW_FOUNDATIONS_CREATED:
 BASELINE:
 IMPLEMENTATION:
 WIRING_PROOF:
@@ -223,6 +304,7 @@ SECURITY_RBAC:
 GENERALIZATION:
 RESIDUAL_SEARCH:
 ADVERSARIAL_REVIEW:
+FOUNDATION_DRIFT:
 DRIFTS:
 POSTCONDITIONS:
 COMPLETE_GATE:
@@ -232,28 +314,41 @@ COMMIT:
 PUSH:
 ```
 
-## 13. Commit/push
+## 16. Commit/push
 
-Seguir `.cursor/rules/test-and-commit.mdc` e autorização atual do usuário.
+Seguir `.cursor/rules/test-and-commit.mdc`.
 
-Não misturar refactors não relacionados à subetapa.
+- preservar mudanças não relacionadas;
+- não misturar refactors fora do step;
+- não “arrumar aproveitando” áreas adjacentes sem requirement;
+- manter commit/evidence coerentes.
 
-Preservar mudanças não relacionadas já existentes no working tree.
+## 17. Quando parar
 
-## 14. Quando parar
-
-Parar somente por:
+Somente por bloqueio real:
 
 - secret/dado obrigatório indisponível;
-- risco destrutivo real em produção;
-- conflito de working tree impossível de resolver com segurança;
-- decisão de produto realmente não definida;
-- dependência externa indisponível impedindo evidence necessária.
+- risco destrutivo real;
+- working-tree conflict não resolvível com segurança;
+- decisão de produto realmente ausente;
+- dependência externa impedindo evidence;
+- foundation contradiction que precisa ser resolvida antes da feature.
 
-Registrar `BLOCKED_WITH_EVIDENCE`, não `PASS`.
+Registrar `BLOCKED_WITH_EVIDENCE`, não PASS parcial.
 
-## 15. Continuidade
+## 18. Continuidade
 
-Se a etapa fechou `COMPLETE_GATE=PASS`, continuar para a próxima desbloqueada sem pedir confirmação intermediária quando o usuário já autorizou a execução do plano.
+Quando o usuário já autorizou o plano e a subetapa fecha `COMPLETE_GATE=PASS`, continuar para a próxima desbloqueada em `16`.
 
-Primeira etapa: **C0.S0**.
+Primeira ordem:
+
+```text
+C0.S0
+→ C0.S1
+→ C0.S2
+→ C0.S3
+→ C0.S4
+→ C0.S5
+→ C0.S6 FOUNDATION_FREEZE
+→ C1.S1
+```
