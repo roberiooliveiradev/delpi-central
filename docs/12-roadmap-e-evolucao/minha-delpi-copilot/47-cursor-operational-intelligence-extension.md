@@ -1,6 +1,6 @@
 # Cursor — Extensão Obrigatória — Inteligência Operacional do Minha DELPI Copilot
 
-**Status:** suplemento obrigatório do `23-prompt-cursor-execucao.md` quando qualquer requisito CP-071+ ou etapa O* estiver em escopo.
+**Status:** suplemento obrigatório do `23-prompt-cursor-execucao.md` quando qualquer requisito CP-090+ ou etapa O* estiver em escopo.
 
 ## 1. Leia antes de implementar
 
