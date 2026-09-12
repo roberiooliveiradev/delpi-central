@@ -3,57 +3,66 @@
 ## 1. Invariante principal
 
 ```text
-Permissões do Copilot ⊆ permissões efetivas do usuário
+Copilot effective permissions ⊆ user effective permissions
 ```
 
-O Copilot nunca opera como superusuário implícito e nunca usa credencial privilegiada para executar algo que o usuário não poderia executar diretamente.
+O Copilot nunca opera como superusuário implícito e nenhuma camada de expertise/contexto/workflow pode ampliar privilégios.
 
-## 2. Autorização
-
-Fluxo recomendado:
+## 2. Fluxo de autorização
 
 ```text
-identidade
-→ permissões efetivas Core API
-→ capabilities autorizadas
+identity
+→ Core effective permissions
+→ authorized capability/action set
 → planner restrito
-→ policy/sensitivity
-→ confirmação quando necessário
+→ policy/risk/sensitivity
+→ Decision Gate quando necessário
 → executor
-→ backend revalida autorização
+→ backend revalidation
+→ outcome/audit
 ```
 
-O backend continua sendo a autoridade final.
+Backend/domain API continua authority final do write.
 
-## 3. Níveis de autonomia
+## 3. Trust boundaries
 
-### L0 — Explicar
+Conteúdo de qualquer uma destas fontes é **dado não confiável para policy/system**:
 
-Sem execução operacional.
+- user prompt;
+- Workspace Context;
+- iframe;
+- RAG;
+- Expertise Pack/Playbook content;
+- API/tool output;
+- PDF/imagem/desenho;
+- Room message/file;
+- Event payload;
+- organizational experience records.
 
-### L1 — Navegar
+Nenhum deles altera:
 
-Ações de Portal/Shell sem alteração de negócio.
+- permissions;
+- system instructions;
+- Decision Gate requirements;
+- allowed actions;
+- autonomy level.
 
-### L2 — Consultar e analisar
+## 4. Níveis de autonomia
 
-Reads e análise grounded.
+| Nível | Comportamento |
+|---|---|
+| L0 | explicar |
+| L1 | navegar |
+| L2 | consultar/analisar |
+| L3 | preparar alteração |
+| L4 | executar com Decision Gate conforme policy |
+| L5 | auto-executar capability explicitamente allowlisted dentro de limites |
 
-### L3 — Preparar alteração
+L5 é OFF por default.
 
-O Copilot monta payload/plano, mas não executa ainda.
+## 5. Sensitivity/risk
 
-### L4 — Executar com confirmação
-
-Write/destructive permitido após confirmação explícita conforme policy.
-
-### L5 — Execução automática governada
-
-Somente para fluxos previamente autorizados por policy, escopo e risco. Não é default.
-
-## 4. Sensitivity
-
-Sugestão de classes:
+Classes podem incluir:
 
 ```text
 read
@@ -66,132 +75,255 @@ financial
 personal_data
 ```
 
-Cada classe define:
+A classificação final deve ser owner/policy server-side e pode definir:
 
-- se exige confirmação;
-- tipo de confirmação;
-- limite de autonomia;
-- campos a mascarar em logs;
-- necessidade de auditoria reforçada.
+- gate level;
+- autonomy ceiling;
+- audit strength;
+- redaction;
+- approver requirements;
+- volume/value limits.
 
-## 5. Confirmação
+## 6. Decision Gates
 
-A confirmação deve descrever efeito real.
+Modelo único:
 
-Bom:
+```text
+NO_GATE
+ACKNOWLEDGE
+CONFIRM
+REVIEW_AND_CONFIRM
+APPROVAL_WORKFLOW
+BLOCK
+```
 
-> “Vou cancelar a solicitação SC-00123. Essa ação encerra o fluxo atual e exige nova solicitação para reabertura. Confirmar?”
+Decision request deve vincular, quando material:
 
-Ruim:
+- action/capability ref;
+- arguments hash;
+- impact preview;
+- evidence refs;
+- risk/sensitivity;
+- expiry;
+- actor/approver scope.
 
-> “Confirmar ação?”
+Mudança material de payload, evidence, permission ou policy pode invalidar decisão anterior.
 
-Confirmation token/reference deve estar associado ao plano/payload que será executado para impedir troca silenciosa entre confirmação e execução.
+## 7. TOCTOU e revalidação
 
-## 6. Revalidação no momento da execução
+Revalidar antes de execute/resume/Watch ACT porque podem mudar:
 
-Entre planejamento e execução podem mudar:
+- permissions;
+- entity state/version;
+- policy;
+- provider availability;
+- evidence freshness;
+- approver validity.
 
-- permissões;
-- estado da entidade;
-- versão do registro;
-- disponibilidade do provider.
+## 8. Capability minimization
 
-Portanto revalidar imediatamente antes do write.
+O planner recebe somente candidates necessários/autorizados.
 
-## 7. Proteção contra prompt/tool injection
+Expertise pode **recomendar** uma capability, mas disponibilidade vem do set autorizado.
 
-Conteúdo vindo de:
+Project preference/context também não concede capability.
 
-- RAG;
-- APIs;
-- anexos;
-- páginas web;
-- campos de banco;
+## 9. Knowledge security
 
-é dado, não instrução de sistema.
+Knowledge scopes passam por ACL independente da expertise.
 
-Nunca permitir que tool output altere RBAC, allowed capabilities ou confirmation policy.
+Proibido:
 
-## 8. URLs e execução externa
+```text
+pack selecionado → liberar documentos do departamento
+```
 
-O modelo não produz URLs arbitrárias para o executor HTTP.
+Correto:
 
-A URL vem do provider/action persistidos e validados no catálogo.
+```text
+pack selecionado
++ user ACL
+→ permitted knowledge candidates
+```
 
-## 9. Auditoria
+## 10. Business Graph security
 
-Eventos mínimos:
+Traversal não pode vazar nó/edge não autorizado.
+
+Regras:
+
+- relationship source/provenance;
+- permission-aware traversal;
+- source fetch revalidado;
+- graph cache não vira bypass de API/RBAC;
+- inferred relation não tratada como authoritative.
+
+## 11. Case/Room/Inbox security
+
+- membership de Case/Room não concede automaticamente source entity access;
+- summary respeita ACL;
+- usuário removido perde acesso conforme owner/policy;
+- Inbox sanitiza item cuja source deixou de ser autorizada;
+- abrir/ler Inbox não dispara write.
+
+## 12. Durable Workflow security
+
+Em waits/restart/resume:
+
+- revalidar identity/permission/policy;
+- proteger duplicate resume/event;
+- garantir idempotency para write;
+- tratar ambiguous outcome;
+- bloquear step dependente quando precondition crítica falha;
+- respeitar cancellation/expiry.
+
+## 13. Watch/Event security
+
+Watch modes:
+
+```text
+OBSERVE
+ADVISE
+ACT
+```
+
+ACT exige explicit autonomy policy e Decision Gate quando aplicável.
+
+Event payload:
+
+- schema validated;
+- deduped;
+- correlated;
+- tratado como dado não confiável;
+- não concede permission.
+
+## 14. Iframe security
+
+Obrigatório:
+
+- origin allowlist;
+- `event.source` validation;
+- app/session/protocol/version validation;
+- schema validation;
+- bounded payload;
+- no JWT/refresh token;
+- visual capabilities não viram Business Actions.
+
+## 15. Prompt/tool/document/event injection
+
+Testar injection a partir de:
+
+```text
+user
+RAG
+tool/API
+Workspace Context
+iframe
+Expertise Pack
+Playbook
+PDF/image
+Room message/file
+Event payload
+Experience Knowledge
+```
+
+Resultado esperado: nenhuma fonte de dados altera policy/system/RBAC.
+
+## 16. URLs e HTTP
+
+LLM não produz URL arbitrária para executor.
+
+Business URL/method/schema vêm do provider/action canônico. Platform navigation resolve IDs autorizados via Portal.
+
+## 17. Idempotência/concurrency
+
+Preferência:
+
+1. domain API idempotency;
+2. domain use case protection;
+3. orchestration dedupe/locking somente quando necessário.
+
+Proibido retry cego de write.
+
+## 18. Model/provider data policy
+
+Model Router futuro deve respeitar:
+
+- data classification;
+- provider allowlist;
+- residency/privacy constraints;
+- model capability;
+- retention policy;
+- cost/latency budgets.
+
+Provider fallback não pode diminuir security/data policy.
+
+## 19. Organizational Knowledge safety
+
+Feedback/case resolution não vira production truth automaticamente.
+
+```text
+candidate
+→ review
+→ eval
+→ publish
+```
+
+Decision/Experience record não armazena chain-of-thought.
+
+## 20. Auditoria
+
+Eventos conceituais:
 
 ```text
 copilot.plan.created
 copilot.capability.selected
-copilot.confirmation.requested
-copilot.confirmation.accepted|rejected
-copilot.action.started
-copilot.action.completed|failed
-copilot.workflow.completed|partial|blocked
+copilot.expertise.selected
+copilot.decision.requested|decided
+copilot.action.started|completed|failed
+copilot.workflow.state_changed
+copilot.task.state_changed
+copilot.case.state_changed
+copilot.watch.triggered
 copilot.navigation.executed
 ```
 
 Campos úteis:
 
-- actor;
-- session/conversation/turn;
-- app/context;
-- capability/action;
-- sensitivity;
-- permission decision;
-- confirmation reference;
-- outcome;
-- duration;
-- correlation id.
-
-## 10. Dados sensíveis
-
-Não persistir em observabilidade:
-
-- JWT;
-- refresh token;
-- API key;
-- senha;
-- secrets;
-- chain-of-thought.
-
-Payloads sensíveis devem ser reduzidos/redigidos.
-
-## 11. Idempotência
-
-Writes devem usar idempotency key quando o sistema alvo suportar.
-
-Retries cegos em POST/DELETE são proibidos.
-
-## 12. Autonomia configurável
-
-A política pode combinar:
-
 ```text
-user/group
-capability
-sensitivity
-app/domain
-ambiente
-tipo de dado
-horário/processo
+actor/subject
+request/conversation/turn
+workflow/task/case
+entity refs
+capability/action
+expertise/playbook refs
+policy/Decision Gate
+outcome/evidence refs
+duration/error
+timestamp/correlation
 ```
 
-Mas deve permanecer governada e auditável, nunca escondida em prompt.
+## 21. Dados proibidos em logs/state
 
-## 13. Emergency stop
+- JWT/refresh token;
+- API key/password/secrets;
+- chain-of-thought;
+- full sensitive payload sem necessidade;
+- provider credentials.
 
-Deve existir mecanismo operacional para:
+## 22. Emergency stop
 
-- desabilitar writes do Copilot;
+Deve ser possível, conforme owner:
+
+- desabilitar Copilot writes;
 - desabilitar provider/action;
-- colocar capability em read-only;
-- desabilitar workflows agentic;
-- revogar integração comprometida.
+- read-only mode;
+- desabilitar Watch ACT;
+- suspender workflow class;
+- revogar iframe integration;
+- desabilitar expertise/playbook version problemática;
+- desabilitar provider/model por data policy/incidente.
 
-## 14. Princípio de least privilege
+## 23. Security success criteria
 
-O Copilot deve receber somente o subconjunto de capabilities necessário para o usuário/agente/contexto atual, reduzindo superfície de erro e custo de planning.
+Segurança está correta quando uma capability autorizada continua útil, mas nenhuma tentativa de prompt/context/pack/event/room pode ampliar o que o usuário poderia fazer diretamente pelas regras da plataforma.
