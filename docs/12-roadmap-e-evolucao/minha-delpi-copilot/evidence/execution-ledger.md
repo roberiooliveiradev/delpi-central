@@ -8,7 +8,8 @@
 **Bootstrap:** [`../52-standalone-repository-and-bootstrap-plan.md`](../52-standalone-repository-and-bootstrap-plan.md)  
 **Patterns:** [`../49-architecture-and-design-patterns-standard.md`](../49-architecture-and-design-patterns-standard.md)  
 **Multimodal/Meeting/Frontline:** [`../53-multimodal-meeting-frontline-and-industrial-copilot.md`](../53-multimodal-meeting-frontline-and-industrial-copilot.md)  
-**Next:** **C0.S0 — Platform/Media/Device/OT rebaseline**
+**Biometric/Human Observation:** [`../54-biometric-identity-and-human-observation-governance.md`](../54-biometric-identity-and-human-observation-governance.md)  
+**Next:** **C0.S0 — Platform/Media/Device/Biometric/OT rebaseline**
 
 ## 1. Ledger rule
 
@@ -20,10 +21,10 @@ Documentation-only changes do not advance runtime phase status.
 
 | Fase | Status | Próximo step | Dependência |
 |---|---|---|---|
-| C0 Platform + Architecture + Media/Privacy/OT Foundations | **NOT_STARTED** | **C0.S0** | none |
+| C0 Platform + Architecture + Media/Privacy/Biometric/OT Foundations | **NOT_STARTED** | **C0.S0** | none |
 | C1 Standalone Bootstrap | LOCKED | — | C0.S7 FOUNDATION_FREEZE |
 | C2 Portal + Operational Context + Commands | LOCKED | — | C1 independence gate |
-| C3 Intelligence + Multimodal Foundations | LOCKED | — | C1+C2 foundations |
+| C3 Intelligence + Multimodal/Biometric Foundations | LOCKED | — | C1+C2 foundations |
 | C4 Business Reads + Graph | LOCKED | — | C3 action/capability/media foundation |
 | C5 Writes + Durable Foundation | LOCKED | — | C4 reads/evidence |
 | C6 Product Work + Meeting/Frontline + Proactivity | LOCKED | — | C5 durable/safety |
@@ -32,13 +33,13 @@ Documentation-only changes do not advance runtime phase status.
 ## 3. C0 sequence
 
 ```text
-C0.S0 platform/monorepo/media/device/OT inventory
+C0.S0 platform/monorepo/media/device/biometric/OT inventory
 → C0.S1 standalone boundary/names
 → C0.S2 authorities/bounded contexts
-→ C0.S3 shared primitives/MediaRef decision
-→ C0.S4 architecture/persistence/privacy/media boundaries
+→ C0.S3 shared primitives/MediaRef/biometric-ref decisions
+→ C0.S4 architecture/persistence/privacy/media/biometric boundaries
 → C0.S5 integration contracts
-→ C0.S6 RED contract/conformance/privacy/device/OT harness
+→ C0.S6 RED contract/conformance/privacy/device/biometric/OT harness
 → C0.S7 FOUNDATION_FREEZE
 ```
 
@@ -80,9 +81,16 @@ DEVICE_IDENTITY_EQUALS_USER_IDENTITY = FORBIDDEN
 OPERATIONAL_CONTEXT = WORKSPACE_CONTEXT_PLUS_ENTITY_REFS
 MEETING_ACTION = CANDIDATE_UNTIL_GOVERNED
 PROCESS_LEARNING = CANDIDATE_ONLY_UNTIL_REVIEW_EVAL_PUBLISH
-FACIAL_RECOGNITION_DEFAULT = OUT_OF_SCOPE
-EMOTION_DETECTION_DEFAULT = OUT_OF_SCOPE
-HIDDEN_WORKER_SURVEILLANCE = FORBIDDEN_BY_DEFAULT
+BIOMETRIC_IDENTITY = GOVERNED_OPTIONAL_CAPABILITY
+FACE_RECOGNITION = CLOSED_SET_ENROLLED_USERS_ONLY
+SPEAKER_RECOGNITION = GOVERNED_OPTIONAL_CAPABILITY
+BIOMETRIC_MATCH_EQUALS_AUTHORIZATION = FALSE
+LOW_CONFIDENCE_IDENTITY = UNKNOWN_OR_CONFIRM
+BIOMETRIC_TEMPLATE = PROTECTED_REVOCABLE_NO_LOGGING
+HUMAN_OBSERVATION = OBSERVABLE_PROCESS_EVIDENCE_ONLY
+EMOTION_PERSONALITY_CHARACTER_INFERENCE = FORBIDDEN_BY_DEFAULT
+AUTOMATIC_EMPLOYMENT_DECISION_FROM_BIOMETRICS = FORBIDDEN
+HIDDEN_WORKER_PROFILING = FORBIDDEN_BY_DEFAULT
 VISUAL_FINDING_DEFAULT = EVIDENCE_OR_HYPOTHESIS
 OT_ACTUATION = BLOCKED_BY_DEFAULT
 COPILOT_IS_SAFETY_CONTROLLER = FALSE
@@ -107,6 +115,7 @@ Copilot migrates AgentSpecializationService   = OUT_OF_SCOPE
 Copilot removes userActivatedAgent in Chat    = OUT_OF_SCOPE
 Copilot removes Chat soft handoff              = OUT_OF_SCOPE
 Copilot migrates Chat agent_id/chat_mode       = OUT_OF_SCOPE
+Facial recognition universally out of scope   = SUPERSEDED_BY_GOVERNED_BIOMETRIC_CAPABILITY
 ```
 
 ## 6. Planning history
@@ -122,21 +131,22 @@ Copilot migrates Chat agent_id/chat_mode       = OUT_OF_SCOPE
 | 2026-09-12 | standalone decision: own API + own MFE, Chat fully decoupled | PLAN_ONLY; docs only |
 | 2026-09-12 | Portal/Core/Gateway/APIs/MFE factual baseline documented | PLAN_ONLY; docs only |
 | 2026-09-12 | documentation consistency cleanup and phase remapping | PLAN_ONLY; docs only |
-| 2026-09-12 | **North Star expanded to Global/Workspace/Meeting/Frontline with voice/image/video, shared-device/privacy boundaries and default OT no-actuation** | PLAN_ONLY; docs only |
+| 2026-09-12 | North Star expanded to Global/Workspace/Meeting/Frontline with voice/image/video, shared-device/privacy boundaries and default OT no-actuation | PLAN_ONLY; docs only |
 | 2026-09-12 | `53` created; master plan/patterns/state/tests/requirements/prompt updated through `CP-181` | PLAN_ONLY; docs only |
+| 2026-09-12 | **Biometric Identity + Human Observation added as governed capabilities; `54` created; requirements extended through `CP-193`** | PLAN_ONLY; docs only |
 
 Actual `HEAD_BEFORE` for runtime is captured at C0.S0. Documentation-only commits do not advance execution status.
 
 ## 7. Canonical phase mapping
 
 ```text
-C0 → platform/media/device/OT inventory + standalone/shared foundations
+C0 → platform/media/device/biometric/OT inventory + standalone/shared foundations
 C1 → API/MFE/Manifest/Gateway/Compose/Portal bootstrap + Chat-offline independence
 C2 → Workspace/Operational Context + Platform Commands + shared-device baseline
-C3 → provider baseline + conversation + OpenAPI + capability + Expertise + Knowledge + multimodal/media foundations + Evidence + Planner
+C3 → provider baseline + conversation + OpenAPI + capability + Expertise + Knowledge + multimodal/media/biometric foundations + Evidence + Planner
 C4 → generic reads + Evidence normalization + Business Graph + operational context correlation
 C5 → Decision Gates + writes + Outcome verification + Durable Workflow + modality-to-action governance
-C6 → Task + Case + Room + Inbox + Watch + Meeting + Frontline + Organizational Knowledge/Learning + Expertise Studio
+C6 → Task + Case + Room + Inbox + Watch + Meeting + Frontline + governed biometric identity + Human Observation + Organizational Knowledge/Learning + Expertise Studio
 C7 → advanced realtime + autonomy + Watch ACT + Simulation + Model Router + scale/rollout
 ```
 
@@ -164,6 +174,7 @@ RBAC/permission resolver
 manifest/versioning
 app/route models
 notifications/audit/presence
+corporate avatar/photo sources
 device/session patterns if any
 ```
 
@@ -175,6 +186,7 @@ Compose profiles/services
 env/health/scripts
 postgres/storage/network
 object/media storage
+encrypted sensitive storage/key management
 SSE/WebSocket/WebRTC patterns
 ```
 
@@ -201,7 +213,7 @@ meeting/collaboration artifacts
 procedures/training sources
 ```
 
-### Media/Meeting/Frontline
+### Media/Meeting/Frontline/Biometric
 ```text
 speech/vision/media providers
 recording/transcription patterns
@@ -210,6 +222,14 @@ shared devices/tablets/kiosks
 production terminals
 meeting room hardware/processes
 network/noise/accessibility constraints
+corporate photo/avatar sources
+voice sample sources if any
+biometric enrollment owner/process
+biometric template storage/key management
+face/speaker recognition providers if any
+liveness/anti-spoof capability if any
+participant lists/presence sources
+Human Observation governance owner
 ```
 
 ### Operational/OT
@@ -250,15 +270,17 @@ OUT_OF_SCOPE
 - app/API/OpenAPI inventory;
 - manifest/federation inventory;
 - entity/deep-link/event/room/notification inventory;
-- media/device/meeting/frontline inventory;
+- media/device/meeting/frontline/biometric inventory;
 - privacy/consent/retention inventory;
+- biometric enrollment/template/liveness decision;
+- prohibited human-inference classes frozen;
 - production/maintenance/quality context inventory;
 - OT/industrial safety inventory;
 - service/path/manifest/storage names frozen;
-- MediaRef/equivalent decision;
+- MediaRef/biometric-ref decisions;
 - architecture/pattern inventory/freeze;
 - Copilot integration contracts;
-- RED/conformance/privacy/device/OT harness;
+- RED/conformance/privacy/device/biometric/OT harness;
 - CP status update;
 - ledger with actual HEAD/evidence.
 
@@ -269,10 +291,11 @@ No agent migration matrix is required.
 `25-requirements-traceability.md` is the single CP authority.
 
 ```text
-CP-001–CP-181
+CP-001–CP-193
 ```
 
-`CP-155–CP-181` cover the expanded access/multimodal/Meeting/Frontline/privacy/shared-device/industrial safety vision.
+`CP-155–CP-181` cover expanded access/multimodal/Meeting/Frontline/privacy/shared-device/industrial safety.  
+`CP-182–CP-193` cover governed biometric identity and Human Observation.
 
 Historical Chat migration requirements remain `OUT_OF_SCOPE_WITH_DECISION`.
 
@@ -297,8 +320,13 @@ NO_HIDDEN_CAPTURE
 RETENTION_POLICY_ENFORCED
 MODALITY_RBAC_PARITY
 SHARED_DEVICE_ISOLATION
+BIOMETRIC_MATCH_NOT_AUTHORITY
+UNKNOWN_IDENTITY_REMAINS_UNKNOWN
+BIOMETRIC_TEMPLATE_PROTECTED
+NO_SENSITIVE_PERSON_INFERENCE
+NO_AUTOMATIC_EMPLOYMENT_DECISION_FROM_BIOMETRICS
 VISUAL_EVIDENCE_SEMANTICS
-NO_HIDDEN_SURVEILLANCE
+NO_HIDDEN_WORKER_PROFILING
 NO_ARBITRARY_OT_COMMAND
 ```
 
@@ -317,11 +345,12 @@ LAYER/PATTERNS:
 PLATFORM_REUSE:
 COPILOT_NEW_CODE:
 CHAT_DEPENDENCIES:
-MEDIA_DEVICE_OT_IMPACT:
+MEDIA_DEVICE_BIOMETRIC_OT_IMPACT:
 EVIDENCE:
 TESTS:
 SECURITY_RBAC:
 PRIVACY_RETENTION:
+BIOMETRIC_HUMAN_OBSERVATION:
 INDUSTRIAL_SAFETY:
 CHAT_INDEPENDENCE:
 ARCHITECTURAL_CONFORMANCE:
@@ -367,7 +396,13 @@ UNDEFINED_MEDIA_RETENTION
 SHARED_DEVICE_STATE_LEAK
 VOICE_PERMISSION_BYPASS
 VISUAL_FINDING_AS_UNVALIDATED_FACT
-HIDDEN_WORKER_SURVEILLANCE
+BIOMETRIC_PERMISSION_ELEVATION
+LOW_CONFIDENCE_FORCED_IDENTITY
+REVOKED_BIOMETRIC_STILL_ACTIVE
+BIOMETRIC_TEMPLATE_LEAK
+EMOTION_PERSONALITY_CHARACTER_INFERENCE
+AUTOMATIC_EMPLOYMENT_DECISION_FROM_BIOMETRICS
+HIDDEN_WORKER_PROFILING
 ARBITRARY_LLM_OT_COMMAND
 SAFETY_INTERLOCK_BYPASS
 ```
@@ -376,4 +411,4 @@ SAFETY_INTERLOCK_BYPASS
 
 Open `23-prompt-cursor-execucao.md` and execute **C0.S0 only**.
 
-The first code after Foundation Freeze is the standalone Copilot API/MFE bootstrap, not intelligence/media/Meeting/Frontline features.
+The first code after Foundation Freeze is the standalone Copilot API/MFE bootstrap, not intelligence/media/biometric/Meeting/Frontline features.
