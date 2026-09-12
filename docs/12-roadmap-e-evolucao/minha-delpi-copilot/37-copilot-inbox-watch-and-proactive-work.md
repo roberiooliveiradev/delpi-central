@@ -1,186 +1,212 @@
 # Minha DELPI Copilot — Inbox, Watch e Trabalho Proativo
 
-**Status:** arquitetura de produto proposta  
-**Objetivo:** evoluir do modelo exclusivamente reativo para acompanhamento governado de eventos, condições e pendências.
+**Status:** thematic spec  
+**Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Foundation:** `EventEnvelope` em C0; Inbox usa refs de Work/Decision/Watch existentes.
 
 ## 1. Copilot Inbox
 
-A Inbox centraliza o que requer atenção do usuário.
-
-Categorias mínimas:
+Inbox materializa o que requer atenção:
 
 ```text
 AGUARDANDO VOCÊ
-→ confirmações, approvals, dados faltantes, escolhas
+→ Decision Gates, approvals, input faltante
 
 TRABALHANDO
-→ tasks/cases/workflows em execução ou espera
+→ Tasks/Cases/Workflows em andamento/espera
 
 CONCLUÍDO
 → resultados recentes relevantes
 
 ALERTAS
-→ condições monitoradas atingidas, riscos e exceções
+→ Watch/events/riscos
 ```
 
-Cada item deve apontar para Task/Case/Workflow/EntityRef correspondente.
+Cada item referencia sua source (`TaskRef`, `CaseRef`, workflow/decision/watch/entity), sem criar novo engine.
 
-## 2. Copilot Watch
+## 2. Watch
 
-`Watch` representa uma condição futura monitorada pelo Copilot.
+Watch representa condição futura monitorada de forma governada.
 
 Exemplos:
 
-- pedido entrar em atraso;
+- pedido atrasar;
 - estoque cair abaixo do limite;
-- Engenharia liberar revisão de desenho;
+- nova revisão de desenho;
 - fornecedor ultrapassar SLA;
-- resposta chegar numa sala/caso;
-- ação ficar vencida;
+- ação vencer;
 - indicador ultrapassar threshold;
-- documento/registro mudar de estado.
+- evidência chegar ao Case.
 
 ## 3. Event-first
 
-Preferência arquitetural:
+Preferência:
 
 ```text
-domain/platform event
-→ event bus/handler
-→ watch matching
-→ policy
-→ observe | advise | act
+domain/platform EventEnvelope
+→ validate/dedupe
+→ Watch matching
+→ permission/policy revalidation
+→ OBSERVE | ADVISE | ACT
 ```
 
-Polling só quando não existir evento ou integração melhor, com frequência e custo controlados.
+Polling somente com gap provado e owner/frequency/cost claros.
 
-## 4. Três modos de resposta
+## 4. Modes
 
 ```text
 OBSERVE
-→ registra/atualiza estado sem interromper usuário
+→ atualiza/audita estado
 
 ADVISE
-→ cria alerta/recomendação/inbox item
+→ alerta/recomendação/Inbox item
 
 ACT
-→ executa capability permitida dentro de policy explícita
+→ executa capability allowlisted sob autonomy/Decision Gate
 ```
 
-`ACT` não significa autonomia irrestrita; segue os níveis L0–L5 e Decision Gates.
+C6 libera OBSERVE/ADVISE. ACT somente C7.
 
-## 5. Contrato conceitual de Watch
+## 5. Watch contract
 
-```json
-{
-  "watchId": "uuid",
-  "ownerUserId": "...",
-  "subjectRefs": [{"type":"purchaseOrder","id":"450231"}],
-  "condition": {
-    "kind": "status_changed",
-    "target": "late"
-  },
-  "responseMode": "advise",
-  "policyRef": "...",
-  "status": "active"
-}
-```
+Reutilizar `EntityRef` e Event semantics C0.
 
-Condição não deve ser armazenada como código arbitrário ou expressão insegura executável.
-
-## 6. Watch + Business Graph
-
-O Watch pode observar uma entidade e, quando disparado, expandir relações autorizadas para análise.
-
-Exemplo:
+Campos conceituais:
 
 ```text
-pedido atrasou
-→ produto
-→ estoque
-→ OP
-→ compras
-→ risco consolidado
-→ alerta grounded
+watchId
+owner/subject ref
+entity scope refs
+condition ref/structured condition
+mode
+policy/autonomy ref
+status
+cooldown/dedupe policy
+expiresAt?
+createdAt/updatedAt
 ```
 
-## 7. Watch + Cases
+Não armazenar prompt livre ou código arbitrário como condição executável.
 
-Um Case pode possuir watchers internos:
+## 6. EventEnvelope
 
-- aguardar evidência;
-- aguardar aprovação;
-- aguardar status externo;
-- prazo de ação;
-- deadline de investigação.
-
-Evento retoma o Durable Workflow correspondente.
-
-## 8. UX
-
-Um item de Inbox deve responder:
+Watch e `wait_event` usam o **mesmo** EventEnvelope compartilhado:
 
 ```text
-o que aconteceu?
-por que isso importa?
-qual evidence suporta?
-qual ação está disponível?
-é obrigatório decidir agora?
+eventId
+eventType
+source
+entityRefs[]
+occurredAt
+payloadRef/payload bounded
+correlation
+schemaVersion
 ```
 
-Nunca mostrar alerta genérico sem contexto acionável quando o sistema possui dados para explicar.
+Não criar `WatchEvent` paralelo.
 
-## 9. Dedupe e ruído
+## 7. Watch + Graph
 
-Obrigatório evitar fadiga de alertas:
+Ao disparar:
 
-- dedupe por watch/subject/event;
-- cooldown quando aplicável;
-- agrupamento de ocorrências semelhantes;
-- severidade;
-- quiet hours/preferences quando permitido;
-- resolução automática de alerta quando condição deixa de existir, se semântica permitir.
+```text
+event entity
+→ authorized Graph traversal
+→ source API reads
+→ Evidence
+→ advice/action planning
+```
 
-## 10. Segurança
+Graph não concede permissão.
 
-- watch pertence a usuário/grupo/policy claramente definidos;
-- permissão é revalidada no disparo, não apenas na criação;
-- dados revogados não permanecem acessíveis via Inbox;
-- evento externo é tratado como dado não confiável;
-- `ACT` revalida policy/confirmation/idempotency.
+## 8. Watch + Durable Workflow
 
-## 11. Auditoria
+Case/Workflow pode aguardar:
+
+- evidence;
+- approval;
+- status externo;
+- prazo;
+- revisão.
+
+Evento correlacionado pode retomar `wait_event` após revalidation.
+
+## 9. Inbox behavior
+
+Item deve explicar:
+
+- o que ocorreu;
+- por que importa;
+- source/evidence;
+- qual work item originou;
+- ações autorizadas;
+- se decisão é requerida.
+
+Ler item não executa write.
+
+## 10. Dedupe/noise
+
+Obrigatório:
+
+- dedupe event/watch/subject;
+- cooldown;
+- grouping quando seguro;
+- severity;
+- expiry;
+- quiet-hours/preferences quando policy permitir;
+- resolved state quando semântica suportar.
+
+## 11. Segurança
+
+- owner claro;
+- permission revalidated no trigger;
+- source access revogado não fica exposto pela Inbox;
+- event payload é untrusted data;
+- Watch ACT revalida policy/Decision Gate/idempotency;
+- duplicate/replayed event não duplica effect.
+
+## 12. Audit
 
 Registrar:
 
 ```text
-watch created/updated/disabled
-condition matched
-source event
+watch create/update/disable
+source event/ref
+match/dedupe outcome
 policy outcome
 advice emitted
+work resumed
 action prepared/executed/rejected
 user acknowledged/dismissed
 ```
 
-## 12. Implantação
+## 13. Implementation mapping
 
-### PW0
-- inbox contract e UI read-only;
+Não executar `PW*` como roadmap independente.
 
-### PW1
-- Watch read-only/ADVISE com eventos existentes;
+```text
+C0 → EventEnvelope/Watch semantics + inventory de events/notifications
+C5 → Inbox sobre Durable Work/Decisions
+C6 → Watch OBSERVE/ADVISE
+C7 → Watch ACT selected
+```
 
-### PW2
-- ligação com Task/Case e Durable Workflow;
+## 14. Anti-patterns
 
-### PW3
-- ACT apenas para capabilities explicitamente allowlisted e após gates de autonomia.
+- cron/polling app-specific no core sem gap;
+- prompt livre como condition code;
+- outro EventEnvelope;
+- alerta sem dedupe/budget;
+- permission avaliada somente na criação;
+- ACT porque “Watch já existia” apesar de policy revogada;
+- Inbox como workflow engine.
 
-## 13. Não fazer
+## 15. Gate
 
-- criar cron/polling específico por app no core;
-- armazenar prompt livre como condição executável;
-- enviar alertas sem dedupe/budget;
-- executar write porque o Watch existia antes de uma revogação de permission;
-- confundir Watch com scheduler genérico sem contexto de negócio.
+Watch/Inbox só passam quando:
+
+- events são correlacionáveis/deduped;
+- source permission é preservada;
+- no alert fatigue baseline;
+- workflow resume é seguro;
+- ACT permanece inacessível antes da fase/policy correta.
