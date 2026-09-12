@@ -2,6 +2,8 @@
 
 Implemente o **Minha DELPI Copilot como aplicação nova e independente**, do zero até o produto completo. Não evolua nem refatore o Minha DELPI Chat para atingir este objetivo.
 
+A visão alvo inclui **escritório, reuniões e chão de fábrica**, com texto, voz, imagem, câmera, vídeo e documentos quando autorizados. Essas modalidades não criam outro runtime nem bypassam RBAC, policy, Evidence, Decision Gate ou segurança industrial.
+
 ## 1. Decisão inegociável
 
 ```text
@@ -16,7 +18,7 @@ Proibido:
 ```text
 importar runtime do minha-delpi-ai-api
 importar source do plugins/minha-delpi-chat
-usar Chat API como proxy/planner/tool runtime
+usar Chat API como proxy/planner/tool/media runtime
 usar Chat tables/sessions/agents como Copilot authority
 alterar Chat para desbloquear Copilot
 esperar roadmap/Onda J do Chat
@@ -24,7 +26,31 @@ esperar roadmap/Onda J do Chat
 
 O Chat pode ser lido em C0 somente como referência para patterns, lessons learned e anti-patterns.
 
-## 2. Ordem de leitura
+## 2. North Star de experiência
+
+O mesmo Copilot deve poder se apresentar como:
+
+```text
+GLOBAL      → painel contextual no Portal
+WORKSPACE   → página completa
+MEETING     → reunião assistida multimodal
+FRONTLINE   → operador/posto/máquina
+```
+
+Todas as surfaces usam:
+
+```text
+same Copilot API
+same product identity
+same Core/RBAC
+same policy/Decision Gate
+same Evidence model
+same Durable Work runtime
+```
+
+Meeting e Frontline **não** são agentes nem backends separados.
+
+## 3. Ordem de leitura
 
 1. `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`
 2. `.cursor/rules/development-standards-index.mdc` + regras aplicáveis
@@ -35,29 +61,30 @@ O Chat pode ser lido em C0 somente como referência para patterns, lessons learn
 7. `.../52-standalone-repository-and-bootstrap-plan.md`
 8. `.../17-component-and-contract-map.md`
 9. `.../49-architecture-and-design-patterns-standard.md`
-10. `.../20-testing-and-acceptance-matrix.md` seções aplicáveis
-11. `.../21-data-and-state-model.md` quando houver state/persistence
-12. `.../22-cursor-execution-protocol.md`
-13. `.../25-requirements-traceability.md` CPs aplicáveis
-14. `.../evidence/execution-ledger.md`
-15. specs temáticas da etapa.
+10. `.../53-multimodal-meeting-frontline-and-industrial-copilot.md`
+11. `.../20-testing-and-acceptance-matrix.md` seções aplicáveis
+12. `.../21-data-and-state-model.md` quando houver state/persistence/media retention
+13. `.../22-cursor-execution-protocol.md`
+14. `.../25-requirements-traceability.md` CPs aplicáveis
+15. `.../evidence/execution-ledger.md`
+16. specs temáticas da etapa.
 
-`16` é a única authority de ordem. `50` é authority do product boundary. `49` é authority de arquitetura/patterns.
+`16` é a única authority de ordem. `50` é authority do product boundary. `49` é authority de arquitetura/patterns. `53` é a spec temática de media/Meeting/Frontline/industrial safety.
 
-## 3. Ordem de construção
+## 4. Ordem de construção
 
 ```text
-C0 Platform + Architecture Foundation Freeze
+C0 Platform + Architecture + Media/Privacy/OT Foundation Freeze
 → C1 Standalone App Bootstrap
-→ C2 Portal Context + Platform Commands
-→ C3 Intelligence Core
+→ C2 Portal + Operational Context + Platform Commands
+→ C3 Intelligence Core + Multimodal Foundations
 → C4 Business Reads + Graph
 → C5 Governed Writes + Durable Foundation
-→ C6 Product Work + Proactivity + Ecosystem
-→ C7 Autonomy + Optimization + Rollout
+→ C6 Product Work + Meeting/Frontline + Proactivity + Ecosystem
+→ C7 Advanced Realtime + Autonomy + Optimization + Rollout
 ```
 
-## 4. Primeira ação — C0.S0
+## 5. Primeira ação — C0.S0
 
 Antes de qualquer runtime diff:
 
@@ -75,21 +102,27 @@ Inventarie com paths/symbols/contracts/evidence:
 - global layout/drawer/panel infrastructure;
 - getAccessToken host contract;
 - federation share scope;
-- notifications/socket/context patterns.
+- notifications/socket/context patterns;
+- responsive/accessibility patterns;
+- browser media permission/capture patterns, se existirem.
 
 ### Core
 - `/me`, `/me/apps`, `/me/routes`;
 - RBAC/permission resolver;
 - manifest registration/versioning;
 - app/route models;
-- notification/audit/presence patterns.
+- notification/audit/presence patterns;
+- device/session registration patterns, se existirem.
 
 ### Gateway/Infra
 - API/MFE path conventions;
 - dev/prod parity;
 - Compose profiles/services;
 - env examples;
-- health/scripts/storage/network.
+- health/scripts/storage/network;
+- SSE/WebSocket/WebRTC/realtime proxy patterns;
+- object/media storage;
+- factory-network constraints quando documentadas.
 
 ### MFEs
 - manifests;
@@ -97,7 +130,9 @@ Inventarie com paths/symbols/contracts/evidence:
 - federation config;
 - plugin-ui usage;
 - auth/API clients;
-- context/deep links.
+- context/deep links;
+- responsive/touch/accessibility patterns;
+- mic/camera/file/media usage existente.
 
 ### APIs
 - existing APIs and OpenAPIs;
@@ -105,13 +140,37 @@ Inventarie com paths/symbols/contracts/evidence:
 - error/pagination envelopes;
 - idempotency/write semantics;
 - entity IDs;
-- events/websockets.
+- events/websockets;
+- sources para OP, operação, máquina, produto, lote, material, posto, manutenção e qualidade.
 
 ### Collaboration/work infrastructure
 - interaction rooms;
 - requests/cases;
 - notifications/inbox-like concepts;
-- approvals/jobs/workers/events.
+- approvals/jobs/workers/events;
+- meeting/collaboration artifacts;
+- procedures/training sources.
+
+### Media/Meeting/Frontline
+- speech/vision/media providers/configs;
+- recording/transcription patterns;
+- media/file/object storage;
+- privacy/consent/retention owners;
+- shared workstations/tablets/kiosks;
+- production terminals;
+- meeting-room devices/processes;
+- accessibility/noise constraints;
+- device identity/session patterns.
+
+### Industrial/OT — inventário somente
+- machine/PLC/CNC/robot/SCADA/MES interfaces;
+- telemetry/events owners;
+- approved read-only APIs;
+- machine command APIs/protocols existentes apenas como fato;
+- safety PLC/interlocks/industrial owners;
+- IT/OT segmentation/security ownership.
+
+Não assuma que a existência de uma API/protocolo de comando autoriza o Copilot a usá-lo.
 
 ### Chat reference only
 - inspect architecture/providers/RAG/multimodal/actions only to avoid repeating debt;
@@ -132,7 +191,7 @@ OUT_OF_SCOPE
 
 No runtime changes in C0.S0.
 
-## 5. Foundation Freeze
+## 6. Foundation Freeze
 
 Before C1:
 
@@ -145,12 +204,16 @@ SHARED_PRIMITIVES=PASS
 ARCHITECTURE_PATTERNS=PASS
 PERSISTENCE_BOUNDARIES=PASS
 INTEGRATION_CONTRACTS=PASS
+MEDIA_PRIVACY_BOUNDARIES=PASS
+SHARED_DEVICE_BOUNDARY=PASS
+OPERATIONAL_CONTEXT_BOUNDARY=PASS
+OT_SAFETY_BOUNDARY=PASS
 CONFORMANCE_HARNESS=PASS
 CHAT_RUNTIME_DEPENDENCY=0
 FOUNDATION_DUPLICATION=0 material
 ```
 
-## 6. Target physical structure
+## 7. Target physical structure
 
 Recommended, unless C0 evidence/ADR changes it:
 
@@ -172,9 +235,9 @@ plugins/minha-delpi-copilot/
   src/adapters
 ```
 
-Never create Copilot source inside Chat folders.
+Meeting/Frontline belong to these owners. Never create source inside Chat folders or separate product APIs merely because the surface is different.
 
-## 7. Architecture rules
+## 8. Architecture rules
 
 ```text
 Clean Architecture
@@ -187,9 +250,9 @@ Clean Architecture
 
 External dependencies are adapters. Concrete wiring happens in Composition Root. Durable state is backend-owned.
 
-Before creating interface/port/repository/factory/strategy/registry/base class, pass the Abstraction Gate in `49`.
+Media providers/transport/storage also sit behind justified ports/adapters. Before creating interface/port/repository/factory/strategy/registry/base class/media service/realtime gateway, pass the Abstraction Gate in `49`.
 
-## 8. Portal integration
+## 9. Portal integration
 
 Copilot MFE is `federated`.
 
@@ -211,9 +274,17 @@ Portal thin host
 → typed PlatformCommands
 ```
 
-Portal must not contain planner, prompts, RAG, business action routing or Copilot persistence.
+Meeting/Frontline:
 
-## 9. Auth/RBAC
+```text
+same Copilot MFE/API
+→ different surface/layout/device capabilities
+→ same auth/policy/state contracts
+```
+
+Portal must not contain planner, prompts, RAG, media intelligence, business action routing or Copilot persistence.
+
+## 10. Auth/RBAC
 
 ```text
 Keycloak → identity/JWT
@@ -224,7 +295,33 @@ Copilot → cannot elevate any of them
 
 MFE receives `getAccessToken` from host. Copilot API validates JWT and uses official Core contracts.
 
-## 10. Business Actions — build natively in Copilot
+In shared devices:
+
+```text
+device identity != user identity
+```
+
+The current user must remain explicit and user switching must clear prior local state/context/media cache.
+
+## 11. Operational context
+
+Do not create a parallel industrial context model.
+
+Use:
+
+```text
+WorkspaceContext
++ EntityRef(OP)
++ EntityRef(machine)
++ EntityRef(product)
++ EntityRef(operation)
++ EntityRef(lot/material/workstation when applicable)
++ bounded device/session metadata
+```
+
+Device context never grants permission.
+
+## 12. Business Actions — build natively in Copilot
 
 Do not inherit Chat Action Catalog/runtime.
 
@@ -243,7 +340,127 @@ Domain OpenAPI
 
 No manual endpoint catalog. No path/opId semantic hardcode.
 
-## 11. Shared code policy
+Input modality does not change this pipeline:
+
+```text
+text | voice | meeting transcript | frontline | visual finding
+→ candidate intent/action
+→ same validation/policy/Decision/executor
+```
+
+## 13. Multimodal/media rules
+
+Progressive scope:
+
+```text
+document/image
+→ voice/audio
+→ short video/screen
+→ sampled/realtime only when justified
+```
+
+Required principles:
+
+- explicit capture state;
+- visible mic/camera/screen indicators;
+- no silent auto-resume after reload;
+- provider behind adapters;
+- size/duration/concurrency budgets;
+- provenance: page/region/frame/time range;
+- confidence/limitations;
+- raw media persistence is optional, not default;
+- transcript/raw audio/raw video/screen/derived Evidence may have different retention.
+
+`MediaRef` is a candidate primitive; create/freeze it only if C0 proves transversal need.
+
+## 14. Meeting Mode rules
+
+Meeting Mode must be a surface of the same Copilot.
+
+When implemented:
+
+```text
+explicit start/stop
+→ mic/transcription/camera/screen status visible
+→ authorized live data queries
+→ facts/evidence
+→ decisions/pending topics
+→ candidate actions
+→ ata viva
+→ Task/Case/Room linkage
+```
+
+Keep semantics distinct:
+
+```text
+transcript != summary != human decision != candidate action != executed action
+```
+
+A sentence in a meeting never becomes a write merely because the Copilot understood it.
+
+## 15. Frontline rules
+
+Frontline must prioritize operator reality:
+
+- large touch targets;
+- hands-free voice;
+- touch/text fallback;
+- current OP/machine/product/operation context;
+- drawing/procedure/revision freshness;
+- camera/image assistance;
+- safe degradation under network/provider failure;
+- issue/escalation via governed Domain Actions;
+- training assistance without conferring qualification automatically.
+
+Observation of operator/process produces **candidate knowledge**, not automatic production behavior.
+
+## 16. Privacy and surveillance rules
+
+Default prohibitions:
+
+- hidden mic/camera/screen capture;
+- raw media retention without explicit purpose/policy;
+- facial recognition;
+- emotion detection;
+- hidden individual productivity scoring/surveillance;
+- reusing media for an unrelated purpose without governance.
+
+Use data minimization by default.
+
+## 17. Industrial/OT safety rule
+
+Copilot is not a safety controller.
+
+Default:
+
+```text
+OT telemetry/read → adapter → Evidence/context → analysis/recommendation
+free-form LLM output → machine command = BLOCK
+voice command → direct machine actuation = BLOCK
+Copilot L5 → implicit OT permission = BLOCK
+```
+
+Any future physical actuation requires a **separate explicitly approved industrial safety gate** with deterministic typed commands, allowlist, machine state/preconditions, industrial owner, independent safety PLC/interlocks, human authorization as required, simulation/test environment, fail-safe/kill switch and audit.
+
+Do not wire generic Business Action executor directly to PLC/CNC/robot control.
+
+## 18. Quality/computer vision rule
+
+Visual finding is normally:
+
+```text
+Evidence/Hypothesis
+```
+
+not automatically:
+
+```text
+official quality approval/rejection
+```
+
+When official process requires measurement/tolerance/equipment/authorized inspector, use those owners. Only explicitly validated inspection capabilities may make automated quality decisions.
+
+## 19. Shared code policy
 
 Reuse platform-neutral code only when:
 
@@ -252,9 +469,9 @@ Reuse platform-neutral code only when:
 
 Never turn `minha-delpi-ai-api` or `minha-delpi-chat` into a library for Copilot.
 
-## 12. C1 special rule
+## 20. C1 special rule
 
-First runtime work is bootstrap, not intelligence:
+First runtime work is bootstrap, not intelligence/media feature:
 
 ```text
 own API skeleton
@@ -262,6 +479,7 @@ own API skeleton
 → JWT/Core integration
 → own MFE skeleton
 → federation/plugin-ui
+→ responsive/accessibility/media-permission baseline
 → own manifest
 → Gateway/Compose
 → Portal full-page mount
@@ -269,9 +487,9 @@ own API skeleton
 → Chat-offline independence test
 ```
 
-LLM/planner/RAG start only in C3.
+LLM/planner/RAG/media intelligence start only in C3.
 
-## 13. Generic implementation protocol
+## 21. Generic implementation protocol
 
 For one `C*.S*` at a time:
 
@@ -286,7 +504,7 @@ REVALIDATE HEAD
 → WIRE PRODUCER/CONSUMER
 → UNIT/CONTRACT/INTEGRATION
 → POSITIVE/SIBLING/NEGATIVE
-→ SECURITY/RBAC
+→ SECURITY/RBAC/PRIVACY/SAFETY
 → GENERALIZATION/METAMORPHIC/UNKNOWN
 → CHAT-INDEPENDENCE CHECK
 → ARCHITECTURE CONFORMANCE
@@ -296,27 +514,37 @@ REVALIDATE HEAD
 → NEXT STEP
 ```
 
-## 14. Prohibitions
+## 22. Prohibitions
 
 - Chat runtime dependency;
 - Chat DB authority;
 - Chat agent/session migration;
 - second RBAC;
 - business rules in MFE/LLM;
-- Portal AI logic;
+- Portal AI/media intelligence;
 - manual app URL catalog;
 - manual endpoint catalog;
 - DOM business automation;
 - Graph as operational master database;
 - feature-specific Entity/Evidence/Decision/Event types;
+- `FrontlineContext` duplicating WorkspaceContext;
 - Task executor parallel to Workflow runtime;
+- Meeting-specific business action executor;
+- voice-specific RBAC;
 - CoT persistence;
 - secrets/JWT in context/logs;
-- speculative abstractions.
+- speculative abstractions;
+- hidden media capture;
+- undefined raw-media retention;
+- shared-device state leakage;
+- hidden worker surveillance;
+- visual finding promoted to official fact without authority;
+- arbitrary LLM→PLC/CNC/robot command;
+- safety-interlock bypass.
 
-## 15. Required tests
+## 23. Required tests
 
-Use `20` as authority. In addition to feature tests, every release boundary must include:
+Use `20` as authority. In addition to feature tests, every relevant release boundary includes:
 
 ```text
 NO_CHAT_IMPORT
@@ -330,7 +558,19 @@ DEV_PROD_ROUTE_PARITY
 INDEPENDENT_ROLLBACK
 ```
 
-## 16. Complete Gate blockers
+When media/Meeting/Frontline apply:
+
+```text
+NO_HIDDEN_CAPTURE
+RETENTION_POLICY_ENFORCED
+MODALITY_RBAC_PARITY
+SHARED_DEVICE_ISOLATION
+VISUAL_EVIDENCE_SEMANTICS
+NO_HIDDEN_SURVEILLANCE
+NO_ARBITRARY_OT_COMMAND
+```
+
+## 24. Complete Gate blockers
 
 ```text
 PARTIAL
@@ -348,9 +588,17 @@ CHAT_DATABASE_AUTHORITY
 CHAT_MIGRATION_DEPENDENCY
 PORTAL_AI_LOGIC_LEAK
 DOMAIN_RULE_DUPLICATION
+HIDDEN_MEDIA_CAPTURE
+UNDEFINED_MEDIA_RETENTION
+SHARED_DEVICE_STATE_LEAK
+VOICE_PERMISSION_BYPASS
+VISUAL_FINDING_AS_UNVALIDATED_FACT
+HIDDEN_WORKER_SURVEILLANCE
+ARBITRARY_LLM_OT_COMMAND
+SAFETY_INTERLOCK_BYPASS
 ```
 
-## 17. Report format
+## 25. Report format
 
 ```text
 STEP:
@@ -365,9 +613,12 @@ LAYER/PATTERNS:
 PLATFORM_REUSE:
 COPILOT_NEW_CODE:
 CHAT_DEPENDENCIES:
+MEDIA_DEVICE_OT_IMPACT:
 WIRING_PROOF:
 TESTS:
 SECURITY_RBAC:
+PRIVACY_RETENTION:
+INDUSTRIAL_SAFETY:
 GENERALIZATION:
 CHAT_INDEPENDENCE:
 ARCHITECTURE_CONFORMANCE:
@@ -379,7 +630,7 @@ COMMIT:
 PUSH:
 ```
 
-## 18. Start here
+## 26. Start here
 
 Execute only:
 
@@ -387,4 +638,4 @@ Execute only:
 C0.S0
 ```
 
-Do not create the Copilot API/MFE until C0.S7 `FOUNDATION_FREEZE=PASS`. After the freeze, start C1.S1 with the standalone API skeleton.
+Do not create the Copilot API/MFE, media runtime, Meeting Mode or Frontline Mode until C0.S7 `FOUNDATION_FREEZE=PASS`. After the freeze, start C1.S1 with the standalone API skeleton.
