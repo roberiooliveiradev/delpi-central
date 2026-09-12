@@ -5,6 +5,7 @@
 > **Autoridade de execução:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 > **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 > **Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
+> **Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
 > **Próxima etapa:** `C0.S0`
 
 Este roadmap apresenta a evolução macro. A ordem atômica, dependências e gates vivem somente no Plano Mestre `16`.
@@ -12,10 +13,10 @@ Este roadmap apresenta a evolução macro. A ordem atômica, dependências e gat
 ## Visão geral
 
 ```text
-C0 — Platform + Architecture Foundation Freeze
+C0 — Platform + Architecture + Media/Privacy/Biometric/OT Foundation Freeze
 C1 — Standalone Application Bootstrap
-C2 — Portal Context + Platform Commands
-C3 — Intelligence Core + Multimodal Foundations
+C2 — Portal + Operational Context + Platform Commands
+C3 — Intelligence Core + Multimodal/Biometric Foundations
 C4 — Business Reads + DELPI Business Graph
 C5 — Governed Writes + Durable Work Foundation
 C6 — Tasks/Cases/Rooms/Inbox/Watch + Meeting/Frontline + Ecosystem/Learning
@@ -34,13 +35,16 @@ Entregas:
 - inventário de dispositivos compartilhados, tablets/kiosks/postos e infraestrutura de reunião quando existente;
 - inventário de fontes de contexto industrial: OP, operação, máquina, posto, lote, produto e revisão;
 - inventário de integrações/eventos OT existentes sem assumir autorização de comando;
+- inventário de fontes corporativas de foto/avatar/voz, participant presence e qualquer infraestrutura biométrica existente;
 - privacy/consent/retention/media policy boundaries;
+- biometric enrollment/template/liveness/correction/revocation boundaries;
+- Human Observation prohibited-inference boundary;
 - shared-device identity/session boundaries;
 - Chat analisado apenas como referência, nunca como runtime base;
 - nomes/path/service/manifest/DB ownership do Copilot congelados;
 - authorities/bounded contexts;
 - shared primitives;
-- decisão sobre necessidade de `MediaRef` ou equivalente;
+- decisão sobre necessidade de `MediaRef`, `BiometricEnrollmentRef`, `BiometricIdentityCandidate` ou equivalentes;
 - Clean Architecture + Ports & Adapters + DDD pragmático;
 - persistence/integration boundaries;
 - Pattern Decision Matrix + Abstraction Gate;
@@ -66,6 +70,7 @@ Entregas:
 - global side-panel host contract;
 - responsive/accessibility baseline;
 - capability flags/media permission handling foundation;
+- biometric capability UI/state OFF até os gates correspondentes;
 - health/logging/config;
 - rollback independente;
 - prova de funcionamento com Chat desligado.
@@ -83,12 +88,14 @@ Entregas:
 - MFE context/deep-link helper;
 - contexto operacional via `EntityRef` para OP/máquina/produto/operação/posto;
 - bounded device/session metadata quando necessário;
+- shared-device user-switch/isolation semantics;
+- biometric candidate não substitui user session/RBAC;
 - iframe integration baseline;
 - security/generalization tests.
 
-## C3 — Intelligence Core + Multimodal Foundations
+## C3 — Intelligence Core + Multimodal/Biometric Foundations
 
-Objetivo: construir do zero o runtime inteligente da Copilot API e os fundamentos multimodais sem criar experiências paralelas.
+Objetivo: construir do zero o runtime inteligente da Copilot API e os fundamentos multimodais/biométricos sem criar experiências paralelas.
 
 Entregas:
 
@@ -106,6 +113,10 @@ Entregas:
 - short-video/media ingestion conforme escopo;
 - media Evidence/Provenance;
 - transcription foundations;
+- closed-set face recognition/verification quando priorizado/aprovado;
+- speaker recognition/diarization quando priorizado/aprovado;
+- enrollment/template/liveness/unknown/correction lifecycle;
+- bounded Human Observation quando priorizada/aprovada;
 - Evidence/Provenance;
 - structured planner;
 - observability/evals.
@@ -124,10 +135,9 @@ Entregas:
 - DELPI Business Graph;
 - permission-aware traversal;
 - correlação de mídia/contexto com OP, produto, máquina, lote, manutenção, qualidade e outras entities autorizadas;
+- user/person refs apontam para authority Core, não shadow biometric profile;
 - cross-domain analysis;
 - unknown provider/metamorphic/generalization gates.
-
-Não existe dependência da Onda J ou do runtime do Chat.
 
 ## C5 — Governed Writes + Durable Work Foundation
 
@@ -144,7 +154,8 @@ Entregas:
 - checkpoints;
 - wait_user/wait_approval/wait_event;
 - crash/retry/replay safety;
-- candidate actions oriundas de voz/reunião/frontline passam pelo mesmo governance pipeline.
+- candidate actions oriundas de voz/reunião/frontline/Human Observation passam pelo mesmo governance pipeline;
+- biometric match nunca substitui final actor/session revalidation.
 
 ## C6 — Product Work + Proactivity + Meeting/Frontline + Ecosystem
 
@@ -158,10 +169,13 @@ Entregas:
 - Copilot Inbox;
 - Watch OBSERVE/ADVISE;
 - Meeting Mode;
+- face/speaker participant association governada quando habilitada;
 - ata viva com decisões/evidence/actions candidatas;
 - Frontline Mode;
+- biometric identity assistance em shared devices quando habilitada;
 - assistência hands-free;
 - training assistance;
+- Human Observation limitada a sinais objetivos do processo;
 - process-observation knowledge candidates;
 - Organizational Knowledge;
 - Governed Learning;
@@ -183,6 +197,7 @@ Entregas:
 - Model Router/Compute Policy;
 - continuous multimodal assistance somente se evidence/custo/policy justificarem;
 - advanced video sampling/realtime;
+- optimized biometric processing sem reduzir thresholds/governance;
 - edge/device optimization quando necessária;
 - room appliances/wearables como extensão futura;
 - performance/cost/scaling;
@@ -195,13 +210,13 @@ Entregas:
 ## Dependência entre fases
 
 ```text
-platform + architecture + media/privacy/OT foundations C0
+platform + architecture + media/privacy/biometric/OT foundations C0
 ↓
 standalone app C1
 ↓
 portal + operational context C2
 ↓
-intelligence + multimodal foundations C3
+intelligence + multimodal/biometric foundations C3
 ↓
 reads/graph/context correlation C4
 ↓
@@ -215,14 +230,16 @@ advanced realtime/autonomy/optimization C7
 A ordem elimina refatorações previsíveis:
 
 - MFE/API/paths/auth/deploy são provados antes do planner;
-- media/privacy/device/OT boundaries são definidos antes de voz/câmera/video;
+- media/privacy/device/biometric/OT boundaries são definidos antes de voz/câmera/video/recognition;
 - `EntityRef/EvidenceRef/DecisionGate/Workflow` nascem antes de seus consumidores;
 - contexto industrial reutiliza `WorkspaceContext`/`EntityRef` em vez de criar modelo paralelo;
+- biometric identity aponta para user authority existente em vez de criar shadow directory;
 - OpenAPI-first é nativo do Copilot, não herdado do Chat;
 - Task/Case/Watch/Meeting/Frontline usam o mesmo durable/policy runtime;
 - Portal hospeda, mas não recebe AI logic;
 - Domain APIs continuam owners;
-- câmera/voz/vídeo não ampliam permissões;
+- câmera/voz/vídeo/biometria não ampliam permissões;
+- Human Observation não vira avaliação psicológica/trabalhista;
 - Chat não precisa ser corrigido, migrado ou desligado para o Copilot evoluir.
 
 ## Releases de produto
@@ -236,8 +253,8 @@ A ordem elimina refatorações previsíveis:
 ### Contextual Platform Release
 `C2`
 
-### Intelligent Multimodal Copilot Release
-`C3 + C4 reads`
+### Intelligent Multimodal/Biometric Copilot Release
+`C3 + C4 reads`, somente para capabilities aprovadas no escopo
 
 ### Operational Copilot Release
 `C5`
@@ -251,11 +268,11 @@ A ordem elimina refatorações previsíveis:
 ## Primeira execução
 
 ```text
-C0.S0 monorepo/platform/media/device/OT inventory
+C0.S0 monorepo/platform/media/device/biometric/OT inventory
 → C0.S1 boundary/names
 → C0.S2 authorities
 → C0.S3 shared primitives
-→ C0.S4 architecture/persistence/privacy/media
+→ C0.S4 architecture/persistence/privacy/media/biometric
 → C0.S5 integration contracts
 → C0.S6 RED harness
 → C0.S7 FOUNDATION_FREEZE
