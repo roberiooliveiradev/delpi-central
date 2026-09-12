@@ -2,23 +2,14 @@
 
 **Status:** thematic spec / contract detail  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Foundation:** schema/semantics em C0; catalog/retrieval em C2; execução durável em C5.
+**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
+**Foundation:** schema/semantics em C0; catalog/retrieval na Copilot API em C3; execução durável em C5.
 
 ## 1. Definição
 
-`Domain Playbook` representa método, procedimento analítico ou roteiro de decisão que ajuda o Copilot a estruturar trabalho.
+`Domain Playbook` representa método, procedimento analítico ou roteiro de decisão que ajuda o Copilot a estruturar trabalho. Não é agente, endpoint catalog nem workflow técnico congelado.
 
-Não é agente, endpoint catalog nem workflow técnico congelado.
-
-Exemplos:
-
-- 8D;
-- Ishikawa/5 Porquês;
-- triagem de NC;
-- análise de desenho;
-- atraso de entrega;
-- risco de fornecimento;
-- análise financeira quando governada.
+Exemplos: 8D, Ishikawa/5 Porquês, triagem de NC, desenho técnico, atraso de entrega, risco de fornecimento e análises financeiras governadas.
 
 ## 2. Separação
 
@@ -32,7 +23,7 @@ WorkflowPlan
 Capability
 → ação semântica disponível
 
-OpenAPI/Action Catalog
+Domain OpenAPI/Copilot Action Catalog
 → contrato técnico da Business Action
 
 DecisionGate
@@ -61,128 +52,55 @@ DecisionGate
 }
 ```
 
-Shape final depende do C0 foundation freeze.
+Shape final depende do C0 Foundation Freeze.
 
-## 4. Stages
+## 4. Stages/Evidence
 
-Stage descreve problema a resolver, evidência esperada e output sem especificar endpoint.
+Stage descreve goal, evidence e output sem especificar endpoint. Evidence checklist pode classificar suficiência como `PROVEN | INFERRED | MISSING | NOT_APPLICABLE`, sempre sobre `EvidenceRef` canônico.
 
-```json
-{
-  "stageId":"containment",
-  "goal":"Definir contenção imediata",
-  "requiredEvidence":["affectedScope","riskAssessment"],
-  "optionalCapabilityKinds":["business.read","knowledge"],
-  "produces":["containmentProposal"]
-}
-```
+## 5. Decision rules
 
-## 5. Evidence checklist
+Regras podem orientar analysis/recommendation, nunca bypassar Policy/DecisionGate.
 
-Playbook deve orientar suficiência de evidence e estados como:
-
-```text
-PROVEN
-INFERRED
-MISSING
-NOT_APPLICABLE
-```
-
-Esses estados não substituem `EvidenceRef`; são avaliação metodológica sobre evidence disponível.
-
-## 6. Decision rules
-
-Podem orientar análise/recommendation, mas nunca bypassar Policy/DecisionGate.
-
-Exemplo:
-
-```text
-stock=0 + critical purchase late
-→ classify supply risk
-→ recommend buyer review
-```
-
-A recommendation não executa write automaticamente.
-
-## 7. Playbook → WorkflowPlan
+## 6. Playbook → WorkflowPlan
 
 ```text
 playbook stages
 + authorized capabilities
-+ current context/entities/evidence
++ context/entities/evidence
 + dependencies
 → WorkflowPlan
 ```
 
-Planner pode pular stage não aplicável com reason code estruturado.
+Planner pode pular etapa não aplicável com reason code estruturado.
 
-## 8. Multimodal playbook
+## 7. Multimodal
 
-`engineering.drawing-review`, por exemplo, pode pedir:
+Playbooks como `engineering.drawing-review` podem solicitar document/revision identification, dimensions/tolerances, ambiguous regions, product/process correlation, standards/knowledge, risks/questions/evidence.
 
-1. document/revision identification;
-2. relevant notes/dimensions/tolerances;
-3. ambiguous regions;
-4. product/process correlation;
-5. authorized standards/knowledge;
-6. risks/questions/evidence;
-7. output checklist/report.
+Perception continua Evidence, não domain conclusion automática.
 
-Perception output continua Evidence, não conclusão automática.
+## 8. Não é SOP cego
 
-## 9. Não é SOP cego
+Copilot valida applicability/version, explicita missing evidence, não inventa conclusão, submete writes ao Decision Gate e registra stages applied/skipped quando material.
 
-Copilot deve:
+## 9. Knowledge refs
 
-- validar applicability;
-- usar versão vigente;
-- explicitar missing evidence;
-- não inventar conclusão;
-- submeter writes ao Decision Gate;
-- registrar stages aplicados/pulados quando material.
+Playbook referencia categories/scopes; documents permanecem no Knowledge owner com ACL/versioning.
 
-## 10. Knowledge refs
+## 10. Versioning/Evals
 
-Playbook referencia categories/scopes, mas documentos permanecem no Knowledge owner com ACL/versioning.
+Mudança material exige nova versão. Registrar key/version/contentHash/stages. Evals: complete, missing/conflicting evidence, sibling, negative, cross-domain, injection, unauthorized write e regression.
 
-## 11. Versioning
-
-Mudança material de método/critério/output exige nova versão.
-
-Registrar:
+## 11. Lifecycle
 
 ```text
-playbookKey
-version
-contentHash
-stagesApplied/skipped
+draft → review → eval → published → deprecated/rollback
 ```
 
-## 12. Evals
+Expertise Studio é a surface de administração futura.
 
-- complete scenario;
-- missing evidence;
-- conflicting evidence;
-- sibling;
-- not applicable;
-- cross-domain;
-- malicious document/evidence;
-- unauthorized proposed write;
-- version regression.
-
-## 13. Lifecycle
-
-```text
-draft
-→ review
-→ eval
-→ published
-→ deprecated/rollback
-```
-
-Expertise Studio é a surface de administração futura; não muda o contrato.
-
-## 14. Reference families
+## 12. Reference families
 
 Qualidade:
 - `quality.8d`;
@@ -200,7 +118,18 @@ Suprimentos:
 Cross-domain:
 - `operations.delivery-delay-analysis`.
 
-Implantação real começa por poucos playbooks com evidence disponível, não por um catálogo completo.
+## 13. Phase mapping
+
+```text
+C0 → contracts/owners/version semantics
+C3 → Copilot-owned Playbook Catalog/retrieval + Intelligence Core integration
+C5 → WorkflowPlan execution/waits when work becomes durable
+C6 → Expertise Studio/governance/product work integration
+```
+
+## 14. Independence
+
+Playbooks são nativos da Copilot API. Não dependem do Chat planner, agent system ou Chat action runtime.
 
 ## 15. Anti-patterns
 
@@ -210,4 +139,5 @@ Implantação real começa por poucos playbooks com evidence disponível, não p
 - new workflow executor;
 - static department agent;
 - document copy inside playbook;
-- write execution encoded as methodology step without Decision Gate.
+- write encoded without Decision Gate;
+- Chat runtime used as Playbook executor.
