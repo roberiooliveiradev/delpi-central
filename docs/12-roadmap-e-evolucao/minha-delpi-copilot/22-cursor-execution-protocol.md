@@ -1,7 +1,8 @@
 # Minha DELPI Copilot — Protocolo de Execução para o Cursor
 
 **Status:** obrigatório  
-**Authority de ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
+**Authority de ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Authority de arquitetura/patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)
 
 ## 1. Objetivo
 
@@ -12,6 +13,9 @@ Evitar:
 - contratos inventados tarde;
 - segunda authority;
 - duplicação de primitive/state;
+- escolha inconsistente de design patterns;
+- abstrações/frameworks locais desnecessários;
+- business state no frontend;
 - fechamento prematuro;
 - gasto desnecessário de tokens com retrabalho.
 
@@ -22,11 +26,12 @@ Evitar:
 3. `README.md` do Copilot;
 4. `16-execution-master-plan.md`;
 5. `17-component-and-contract-map.md`;
-6. `21-data-and-state-model.md`;
-7. `20-testing-and-acceptance-matrix.md`;
-8. `25-requirements-traceability.md`;
-9. documento temático da subetapa;
-10. `evidence/execution-ledger.md`.
+6. `49-architecture-and-design-patterns-standard.md` — ler integralmente no C0; depois, no mínimo as seções aplicáveis à subetapa;
+7. `21-data-and-state-model.md` quando estado/persistência estiverem no escopo;
+8. `20-testing-and-acceptance-matrix.md` nas seções aplicáveis;
+9. `25-requirements-traceability.md` nos CPs aplicáveis;
+10. documento temático da subetapa;
+11. `evidence/execution-ledger.md`.
 
 Depois:
 
@@ -49,6 +54,12 @@ Se algum documento temático sugerir outra ordem:
 16-execution-master-plan.md vence
 ```
 
+Se alguma implementação propuser arquitetura/pattern divergente sem decisão arquitetural aprovada:
+
+```text
+49-architecture-and-design-patterns-standard.md vence
+```
+
 ## 4. C0.S0 é obrigatório e read-only para runtime
 
 C0.S0 deve provar com arquivo/símbolo/contrato/consumer:
@@ -64,7 +75,15 @@ C0.S0 deve provar com arquivo/símbolo/contrato/consumer:
 - workflows/approvals;
 - audit/provenance;
 - model/provider abstractions;
-- domain API/OpenAPI/idempotency.
+- domain API/OpenAPI/idempotency;
+- padrões existentes de `domain/application/interfaces/infrastructure`;
+- ports/adapters/repositories/use cases atuais;
+- DI/composition root atual;
+- error/result taxonomy;
+- event/outbox/idempotency/resilience patterns atuais;
+- state machines/lifecycle atuais;
+- organização `ui/state/data` e server/workspace/local state no frontend;
+- mecanismos atuais de migration/strangler/compatibility adapter.
 
 Classificar cada finding:
 
@@ -92,7 +111,25 @@ PERSISTENCE_BOUNDARIES=PASS
 CROSS_CUTTING_SEMANTICS=PASS
 CONTRACT_HARNESS=PASS
 FOUNDATION_DUPLICATION=0 material
+
+ARCHITECTURE_STYLE=PASS
+LAYER_RESPONSIBILITIES=PASS
+DEPENDENCY_RULES=PASS
+BOUNDED_CONTEXTS=PASS
+PATTERN_DECISION_MATRIX=PASS
+ERROR_MODEL=PASS
+EVENT_MODEL=PASS
+STATE_MACHINE_RULES=PASS
+PERSISTENCE_RULES=PASS
+FRONTEND_STATE_RULES=PASS
+RESILIENCE_RULES=PASS
+TESTING_PATTERN=PASS
+MIGRATION_PATTERNS=PASS
+ABSTRACTION_GATE=PASS
+ARCHITECTURAL_EXCEPTION_PROCESS=PASS
 ```
+
+Os critérios arquiteturais são definidos em `49`.
 
 ## 6. Unidade de execução
 
@@ -102,6 +139,8 @@ Executar **uma** `C*.S*` por vez:
 SELECT STEP
 → REVALIDATE HEAD/WORKTREE
 → READ OWNERS/CONTRACTS
+→ CLASSIFY LAYER + PATTERN
+→ ABSTRACTION GATE
 → DEPENDENCY GATE
 → READY_TO_EXECUTE
 → BASELINE
@@ -114,6 +153,7 @@ SELECT STEP
 → NEGATIVE
 → SECURITY/RBAC
 → GENERALIZATION/METAMORPHIC/UNKNOWN
+→ ARCHITECTURAL CONFORMANCE REVIEW
 → ADVERSARIAL REVIEW
 → SEMANTIC RESIDUAL SEARCH
 → POSTCONDITIONS
@@ -128,29 +168,39 @@ Somente se:
 
 - dependências anteriores PASS;
 - owner/consumer conhecidos;
+- camada correta identificada;
+- pattern escolhido pela matriz do `49`;
+- abstraction gate justifica interfaces/ports/factories/strategies/repositories novos;
 - primitive/contract reutilizado ou aprovado em C0;
 - não há second authority;
 - baseline/test definido;
 - working tree entendido;
 - impacto de segurança classificado;
-- migration/persistence necessity provada quando houver.
+- migration/persistence necessity provada quando houver;
+- divergence arquitetural, se necessária, possui decisão/ADR conforme padrão do repo.
 
 Caso contrário: `BLOCKED_WITH_EVIDENCE`.
 
 ## 8. Regra anti-refatoração
 
-Antes de criar schema/class/service/table/event enum:
+Antes de criar schema/class/service/table/event enum/abstração:
 
 ```text
 A. Existe equivalente compartilhado?
 B. Quem é owner canônico?
 C. Quem consome hoje?
-D. Isso duplica Entity/Evidence/Decision/Workflow/Event/Capability?
-E. A próxima fase conhecida obrigaria alterar este contrato?
-F. Isso funciona para sibling/unknown sem branch específica?
+D. Qual camada é dona dessa responsabilidade?
+E. Qual pattern da matriz do 49 se aplica?
+F. A abstração passa o Abstraction Gate?
+G. Isso duplica Entity/Evidence/Decision/Workflow/Event/Capability?
+H. A próxima fase conhecida obrigaria alterar este contrato?
+I. Isso funciona para sibling/unknown sem branch específica?
+J. Existe implementação/pattern equivalente já comprovado no repo?
 ```
 
-Se D ou E = sim, **não implementar a feature**. Corrigir a foundation/versionar o contrato primeiro.
+Se G ou H = sim, **não implementar a feature**. Corrigir a foundation/versionar o contrato primeiro.
+
+Se F = não, implementar de forma mais simples sem abstração especulativa.
 
 ## 9. Menor diff correto
 
@@ -158,8 +208,10 @@ Correto:
 
 ```text
 owner canônico
++ camada correta
++ pattern canônico
 + shared primitive existente
-+ wiring real
++ wiring real via composition root quando aplicável
 + tests
 + migration/cutover quando material
 + cleanup/fallback exit criteria
@@ -175,6 +227,9 @@ feature-specific Evidence/Entity/Confirmation type
 duplicar executor
 hardcodar piloto
 mockar security para smoke
+instanciar infrastructure dentro de domain/application
+criar Factory/Strategy/Repository sem Abstraction Gate
+persistir business authority no frontend
 ```
 
 ## 10. Proibições específicas
@@ -196,7 +251,16 @@ mockar security para smoke
 - arbitrary model routing por feature;
 - CoT persistence;
 - JWT/secret em bridge/state;
-- auto-publish de learning.
+- auto-publish de learning;
+- `Manager/Helper/Utils/Service` genérico acumulando responsabilidades;
+- framework/ORM/client concreto atravessando Domain/Application;
+- repository como simples wrapper de qualquer HTTP;
+- deep inheritance para compartilhar implementação trivial;
+- service locator/singleton mutable de business state;
+- Strategy/Factory/Builder/CQRS/Saga/Event Sourcing por moda;
+- event bus sem schema/owner;
+- retry cego de write;
+- regra de negócio server-side duplicada em React.
 
 ## 11. Evidence de execução
 
@@ -209,6 +273,10 @@ command/test
 result
 HEAD
 contract/schema version
+architecture layer
+pattern(s) aplicados
+abstraction gate result
+ADR/exception ref quando houver
 config/model/provider hash
 OpenAPI/catalog hash
 expertise/playbook hash
@@ -243,6 +311,11 @@ switch_agent_and_resend
 agentId routing
 legacy fallback
 feature-specific workflow executor
+framework import em domain/application
+new concrete client dentro de use case
+local event envelope
+frontend durable business state
+unjustified repository/factory/strategy/base class
 ```
 
 ## 13. Adversarial review
@@ -258,7 +331,12 @@ Antes de COMPLETE_GATE responder:
 7. fallback material ainda existe?;
 8. próxima fase conhecida exigirá redesign do que acabou de ser criado?;
 9. migration é realmente necessária?;
-10. foundation drift foi introduzido?.
+10. foundation drift foi introduzido?;
+11. responsabilidade foi colocada na camada correta?;
+12. o pattern usado é o padrão do `49` ou há ADR explícita?;
+13. alguma abstração existe apenas por especulação?;
+14. o frontend virou authority de dado/regra durável?;
+15. dependency rule foi violada?.
 
 ## 14. COMPLETE_GATE
 
@@ -277,6 +355,10 @@ STALE_EVIDENCE
 DUPLICATE_AUTHORITY
 FOUNDATION_DRIFT
 UNKNOWN_CONSUMER material
+ARCHITECTURE_PATTERN_DRIFT
+DEPENDENCY_RULE_VIOLATION
+UNJUSTIFIED_ABSTRACTION
+UNDOCUMENTED_ARCHITECTURAL_EXCEPTION
 ```
 
 ## 15. Reporte obrigatório
@@ -291,6 +373,10 @@ REQUIREMENTS_CP:
 FILES_CHANGED:
 CANONICAL_OWNERS:
 PRODUCERS_CONSUMERS:
+ARCHITECTURE_LAYER:
+DESIGN_PATTERNS_APPLIED:
+ABSTRACTION_GATE:
+ARCHITECTURAL_EXCEPTION_ADR:
 REUSED_FOUNDATIONS:
 NEW_FOUNDATIONS_CREATED:
 BASELINE:
@@ -302,6 +388,7 @@ SIBLING:
 NEGATIVE:
 SECURITY_RBAC:
 GENERALIZATION:
+ARCHITECTURAL_CONFORMANCE:
 RESIDUAL_SEARCH:
 ADVERSARIAL_REVIEW:
 FOUNDATION_DRIFT:
@@ -321,7 +408,8 @@ Seguir `.cursor/rules/test-and-commit.mdc`.
 - preservar mudanças não relacionadas;
 - não misturar refactors fora do step;
 - não “arrumar aproveitando” áreas adjacentes sem requirement;
-- manter commit/evidence coerentes.
+- manter commit/evidence coerentes;
+- não introduzir novo architectural style/pattern local sem decisão documentada.
 
 ## 17. Quando parar
 
@@ -332,7 +420,8 @@ Somente por bloqueio real:
 - working-tree conflict não resolvível com segurança;
 - decisão de produto realmente ausente;
 - dependência externa impedindo evidence;
-- foundation contradiction que precisa ser resolvida antes da feature.
+- foundation contradiction que precisa ser resolvida antes da feature;
+- architecture/pattern contradiction sem decisão aprovada.
 
 Registrar `BLOCKED_WITH_EVIDENCE`, não PASS parcial.
 
@@ -352,3 +441,5 @@ C0.S0
 → C0.S6 FOUNDATION_FREEZE
 → C1.S1
 ```
+
+No C0, o `49` deve sair validado contra o código real e os padrões existentes do repositório antes do `FOUNDATION_FREEZE`.
