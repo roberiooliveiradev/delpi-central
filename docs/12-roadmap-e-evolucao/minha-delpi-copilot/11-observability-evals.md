@@ -1,8 +1,10 @@
 # 11 — Observabilidade, métricas e evals
 
+**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)
+
 ## 1. Objetivo
 
-O Copilot deve ser mensurável como produto, sistema de IA e camada operacional. Não basta responder: precisamos provar seleção correta, evidence, policy, execução real, continuidade e valor entregue.
+O Copilot deve ser mensurável como produto, sistema de IA e camada operacional independente. Não basta responder: precisamos provar seleção correta, evidence, policy, execução real, continuidade, valor entregue e ausência de dependência do Minha DELPI Chat.
 
 ## 2. Perguntas fundamentais
 
@@ -22,11 +24,12 @@ A observabilidade deve responder:
 - houve wait/resume/retry?;
 - quanto tempo/tokens/tools/custo?;
 - houve correction/replan?;
-- o usuário concluiu o trabalho?.
+- o usuário concluiu o trabalho?;
+- algum componente do Chat foi chamado indevidamente?.
 
 ## 3. Correlation model
 
-Preferir correlation compartilhada:
+Preferir correlation compartilhada do Copilot:
 
 ```text
 requestId
@@ -40,7 +43,7 @@ decisionId?
 watchId?
 ```
 
-Não criar correlação incompatível por feature.
+Não criar correlação incompatível por feature nem reutilizar IDs internos do Chat como authority.
 
 ## 4. Spans/eventos sugeridos
 
@@ -70,6 +73,8 @@ copilot.case
 copilot.watch
 ```
 
+Namespaces de telemetry devem ser próprios do Copilot.
+
 ## 5. Metadata útil
 
 ```text
@@ -92,9 +97,10 @@ token usage
 result size
 retry/replan/fallback flags
 error classification
+surface full-page|panel|contextual
 ```
 
-`agentId` pode existir apenas como legacy compatibility telemetry enquanto necessário; não é eixo de produto final.
+`agentId`, `chat_mode`, `userActivatedAgent` e outros campos do Minha DELPI Chat **não fazem parte do modelo de telemetry do Copilot**.
 
 ## 6. Métricas de produto
 
@@ -143,6 +149,10 @@ Alertas úteis versus duplicados/falsos/ignorados.
 
 Cobertura L1–L5, iframe classes e capability families.
 
+### Standalone Independence Rate
+
+Execuções que completam sem chamadas/imports/storage do Minha DELPI Chat. Para releases do Copilot, o target é **100%** fora de testes explicitamente reference-only.
+
 ## 7. Métricas técnicas
 
 - latency P50/P95 por estágio e surface;
@@ -157,11 +167,13 @@ Cobertura L1–L5, iframe classes e capability families.
 - workflow wait/resume latency;
 - duplicate event/write prevented;
 - provider/model availability;
-- cost por task/case quando disponível.
+- cost por task/case quando disponível;
+- full-page/panel parity;
+- independence violations = 0.
 
 ## 8. Evals families
 
-Reutilizar R1–R11 e acrescentar famílias do Copilot:
+Aplicar o protocolo R1–R11 quando pertinente e acrescentar famílias do Copilot:
 
 1. no-tool/direct;
 2. navigation;
@@ -185,9 +197,11 @@ Reutilizar R1–R11 e acrescentar famílias do Copilot:
 20. injection multi-source;
 21. unknown app/iframe/relation;
 22. send/stream parity;
-23. simulation;
-24. model routing;
-25. anchor workflow end-to-end.
+23. full-page/panel/contextual parity;
+24. simulation;
+25. model routing;
+26. standalone independence with Chat unavailable;
+27. anchor workflow end-to-end.
 
 ## 9. Generalization
 
@@ -225,7 +239,8 @@ Comportamento semântico deve permanecer equivalente quando authority semântica
 - Room/Case membership não concede source access;
 - Watch ACT sem policy bloqueado;
 - provider proibido por data policy não recebe payload;
-- secrets/PII não aparecem em logs indevidos.
+- secrets/PII não aparecem em logs indevidos;
+- Chat runtime indisponível não degrada autorização/execução do Copilot.
 
 ## 12. Evidence quality evals
 
@@ -261,6 +276,7 @@ Comportamento semântico deve permanecer equivalente quando authority semântica
 - Inbox state correto;
 - simulation claramente rotulada;
 - nenhuma tarefa normal exige troca de agente;
+- mesmas conversas/estado do Copilot entre full-page e global panel quando o contrato prevê continuidade;
 - accessibility.
 
 ## 15. Candidate protocol
@@ -272,6 +288,7 @@ baseline
 → offline evals
 → integration/live
 → surface validation
+→ independence validation
 → adversarial/residual scan
 → release decision
 ```
@@ -296,6 +313,8 @@ provider data policy violada
 activity afirma execução inexistente
 R8 acima do threshold vigente
 evidence não reproduzível
+Chat runtime dependency detectada
+Copilot storage/telemetry usando Chat authority
 ```
 
 ## 17. Dashboards/admin
@@ -312,7 +331,8 @@ Visões futuras:
 - latency/cost/model usage;
 - user feedback;
 - AI-ready coverage;
-- legacy migration progress.
+- standalone independence violations;
+- rollout/readiness progress do próprio Copilot.
 
 ## 18. Regra de privacidade
 
