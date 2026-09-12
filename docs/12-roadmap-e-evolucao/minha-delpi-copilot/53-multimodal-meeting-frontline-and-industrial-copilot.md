@@ -4,7 +4,8 @@
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Security:** [`08-security-autonomy-audit.md`](./08-security-autonomy-audit.md)  
-**UX:** [`09-ux-copilot.md`](./09-ux-copilot.md)
+**UX:** [`09-ux-copilot.md`](./09-ux-copilot.md)  
+**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)
 
 ## 1. Decisão de produto
 
@@ -25,6 +26,8 @@ APIs/dados empresariais
 ```
 
 Todas as modalidades usam a mesma Copilot API, a mesma identidade de produto, os mesmos RBAC/policies e o mesmo modelo de Evidence.
+
+Quando habilitado por policy, o Copilot também pode usar **identidade biométrica governada** para reconhecer usuários conhecidos/enrolled por face ou voz e associar observações a pessoas autorizadas, conforme `54`.
 
 ## 2. Presença para os usuários
 
@@ -127,7 +130,8 @@ Durante a reunião o Copilot pode:
 - identificar ações propostas;
 - produzir resumo/ata;
 - associar Evidence/SourceRefs;
-- preparar Tasks/Cases/Business Actions.
+- preparar Tasks/Cases/Business Actions;
+- associar speakers/participantes a usuários enrolled quando a capability biométrica estiver explicitamente habilitada.
 
 ### 6.3 Ata viva
 
@@ -166,6 +170,7 @@ Exemplos de UI:
 Microfone ativo
 Transcrição ativa
 Câmera ativa
+Reconhecimento de identidade ativo/inativo
 Compartilhamento de tela ativo
 Gravação persistente ativa/inativa
 ```
@@ -175,6 +180,7 @@ A policy deve distinguir:
 ```text
 capture transient
 transcription
+biometric matching
 raw audio retention
 raw video retention
 screen retention
@@ -185,14 +191,27 @@ Por padrão, aplicar **data minimization**: não reter mídia bruta quando trans
 
 ## 8. Participantes e identidade em reunião
 
-Identidade de participantes deve vir de fontes explícitas sempre que possível:
+Identidade de participantes deve combinar fontes explícitas e, quando habilitado, reconhecimento biométrico governado.
+
+Fontes preferenciais:
 
 - usuários autenticados;
 - convite/lista da reunião;
 - presença declarada;
-- associação manual corrigível.
+- associação manual corrigível;
+- face/voice candidate de usuários previamente enrolled conforme `54`.
 
-Reconhecimento facial/biométrico não é requisito do Copilot e não deve ser introduzido implicitamente.
+Pipeline permitido:
+
+```text
+authenticated/invited participants
++ face/voice candidate
+→ participant association
+→ confidence/correction
+→ diarized transcript / participant refs
+```
+
+Biometria **não substitui autenticação, RBAC ou Decision Gate**. Pessoa não enrolled, ambígua ou abaixo do threshold permanece `UNKNOWN_PERSON`/label de sessão até confirmação.
 
 ## 9. Frontline Mode
 
@@ -213,12 +232,13 @@ A experiência prioriza:
 Exemplo:
 
 ```text
-Operador autenticado
+Operador autenticado ou biometricamente reconhecido como candidate
 + posto/terminal
 + OP
 + operação
 + máquina
 + produto/revisão
+→ user/session validation
 → WorkspaceContext operacional
 → Copilot
 ```
@@ -261,6 +281,8 @@ Frontline deve suportar, quando device/policy permitirem:
 
 Voz é um **transport/input modality**, não uma autoridade especial. O mesmo planner/policy/Decision Gate se aplica.
 
+Speaker recognition, quando habilitado, apenas ajuda a resolver `userRef`; não autoriza ações por si só.
+
 ## 12. Imagem e câmera
 
 A câmera pode ser usada para:
@@ -270,7 +292,9 @@ A câmera pode ser usada para:
 - assistência contextual;
 - comparação com referência;
 - coleta de Evidence;
-- apoio ao treinamento.
+- apoio ao treinamento;
+- reconhecer usuário enrolled/participante quando a capability biométrica estiver habilitada;
+- observar atividades/processos visíveis dentro do escopo aprovado.
 
 Resultado visual deve carregar, quando material:
 
@@ -279,6 +303,7 @@ Resultado visual deve carregar, quando material:
 - frame/image/source;
 - timestamp;
 - entity/context refs;
+- person/user candidate refs quando aplicável;
 - model/extractor version.
 
 Visão não pode transformar hipótese em fato.
@@ -297,6 +322,8 @@ V4 real-time/continuous assistance quando custo, rede e policy justificarem
 Não enviar/armazenar vídeo contínuo indiscriminadamente.
 
 Large/long video deve preferir pipeline assíncrono, segmentação e Evidence refs, evitando requests síncronos ilimitados.
+
+Tracking de pessoa ao longo da sessão deve ser bounded, purpose-specific e não virar perfil global oculto.
 
 ## 14. Compartilhamento de tela
 
@@ -355,6 +382,7 @@ Fluxo:
 observação autorizada
 + voz/vídeo/contexto
 + dados de processo
++ person/user ref quando necessário e permitido
 → candidate insight/practice
 → Evidence
 → especialista/owner review
@@ -370,6 +398,8 @@ operador faz algo uma vez
 → Copilot muda procedimento de produção automaticamente
 ```
 
+O objetivo é aprender o processo, não criar um perfil secreto do trabalhador.
+
 ## 18. Conhecimento tácito
 
 O Copilot pode ajudar a capturar conhecimento que hoje vive apenas na experiência das pessoas.
@@ -380,20 +410,35 @@ Exemplo:
 
 O sistema pode produzir um **candidate experience/solution pattern**, vinculado a Evidence e contexto, sujeito a revisão do owner.
 
-## 19. Não virar sistema de vigilância
+A autoria pode ser preservada quando necessária, porém o conhecimento publicado deve ser preferencialmente abstraído para o processo e não para julgamentos pessoais.
 
-Frontline/vision não deve ser usado implicitamente para vigilância de pessoas.
+## 19. Identidade biométrica e análise de pessoas
 
-Por default:
+O Copilot pode reconhecer usuários conhecidos por **face e voz** conforme a capability governada definida em `54`.
 
-- não fazer reconhecimento facial;
-- não inferir emoção/estado psicológico;
-- não criar scoring oculto de produtividade individual;
-- não gravar continuamente sem finalidade/policy;
-- não usar câmera para finalidade diferente da informada;
-- não promover observação em punição automática.
+Permitido:
 
-Analytics de processo e performance individual exigem owner, base legal/policy, transparência e requisitos separados.
+- closed-set face recognition/verification de usuários enrolled;
+- speaker recognition/diarization;
+- participant association em Meeting;
+- shared-device identity assistance;
+- observação de comportamentos objetivos ligados ao processo;
+- análise de sequência de trabalho, interação com ferramentas/máquinas, repetição, etapas e desvios observáveis;
+- captura de padrões operacionais para melhoria e treinamento.
+
+Por default, não inferir de biometria/comportamento:
+
+- personalidade;
+- honestidade/confiabilidade;
+- intenção moral;
+- emoção como truth;
+- saúde/diagnóstico;
+- atributos sensíveis;
+- aptidão profissional global;
+- propensão disciplinar;
+- score oculto de produtividade.
+
+Também não usar biometria como autoridade automática para contratação, promoção, punição, remuneração, avaliação formal ou desligamento.
 
 ## 20. Boundary IT/OT e máquinas
 
@@ -442,6 +487,7 @@ Postos, tablets e salas podem ser dispositivos compartilhados.
 A arquitetura precisa prever:
 
 - usuário atual explícito;
+- biometric candidate quando habilitado;
 - lock/session timeout;
 - troca rápida de usuário sem state leak;
 - logout seguro;
@@ -450,7 +496,7 @@ A arquitetura precisa prever:
 - scopes limitados;
 - kiosk/shared-terminal policy quando necessário.
 
-Um device autenticado nunca substitui autorização do usuário para Business Actions.
+Um device autenticado ou biometricamente reconhecido nunca substitui autorização do usuário para Business Actions.
 
 ## 23. Media architecture
 
@@ -466,6 +512,9 @@ VisionAnalysisPort
 RealtimeMediaSessionPort
 MediaStoragePort
 DeviceContextPort
+FaceIdentityPort
+SpeakerIdentityPort
+HumanObservationPort
 ```
 
 Não criar todos antecipadamente: cada port passa pelo Abstraction Gate de `49`.
@@ -490,6 +539,8 @@ storage ref if persisted
 
 Evidence aponta para MediaRef/location quando necessário; não duplica conteúdo bruto.
 
+Biometric template/ref deve ser modelado separadamente da mídia bruta.
+
 ## 25. Retention e mídia
 
 Para cada modalidade definir antes do runtime:
@@ -500,6 +551,7 @@ capture mode
 raw retention yes/no
 retention duration
 transcript retention
+biometric template retention
 artifact/evidence retention
 who can access
 redaction
@@ -508,7 +560,7 @@ delete/anonymize
 provider data handling
 ```
 
-Meeting transcript, raw audio e raw video são classes distintas e não herdam a mesma retenção por conveniência.
+Meeting transcript, raw audio, raw video e biometric template são classes distintas e não herdam a mesma retenção por conveniência.
 
 ## 26. Realtime e custo
 
@@ -536,6 +588,7 @@ Meeting pode produzir:
 transcript ref
 summary
 participants refs
+participant identity candidates/corrections when applicable
 facts/evidence
 questions
 resolved/unresolved topics
@@ -549,6 +602,7 @@ A ata deve marcar diferença entre:
 
 - transcrição;
 - resumo do Copilot;
+- identidade reconhecida/confirmada;
 - decisão humana confirmada;
 - action executada;
 - source data consultado.
@@ -560,11 +614,13 @@ Uma sessão de assistência pode produzir:
 ```text
 session ref
 operator/user ref
+biometric candidate/confirmation ref when applicable
 device/workstation ref
 EntityRefs (OP/machine/product/operation)
 questions/answers
 media/evidence refs
 issues/findings
+observable process patterns
 escalations
 candidate knowledge
 Task/Case/Request refs
@@ -585,21 +641,26 @@ Inventariar/congelar:
 - mobile/tablet/kiosk patterns;
 - media storage;
 - privacy/consent/retention;
+- corporate photo/avatar/user sources;
+- biometric enrollment authority/storage/key management;
+- face/voice provider constraints;
+- identity thresholds/correction/liveness needs;
+- prohibited human-inference classes;
 - speech/vision provider constraints;
 - network/cost budgets;
 - production context sources;
 - machine/OT APIs/events e boundary de segurança;
 - existing training/procedure sources;
-- MediaRef necessidade;
+- MediaRef/biometric ref necessidade;
 - shared-device identity/session rules.
 
 ### C1 — Bootstrap
 
-MFE/API nascem preparados para capability flags, responsive/accessibility e media permission handling, sem ainda implementar Meeting/Frontline completos.
+MFE/API nascem preparados para capability flags, responsive/accessibility e media permission handling, sem ainda implementar Meeting/Frontline/biometric recognition completos.
 
 ### C2 — Context
 
-WorkspaceContext suporta contexto operacional via EntityRefs e device/session metadata bounded.
+WorkspaceContext suporta contexto operacional via EntityRefs e device/session metadata bounded. Identity association não substitui Core auth/RBAC.
 
 ### C3 — Intelligence Core
 
@@ -609,6 +670,7 @@ Implementar conforme escopo:
 - image/document multimodal;
 - short-video/media ingestion quando priorizado;
 - media Evidence/provenance;
+- biometric/perception adapters quando priorizados e aprovados;
 - provider adapters;
 - transcription/synthesis foundations.
 
@@ -618,7 +680,7 @@ Correlacionar mídia/contexto com OP, produto, máquina, lote, manutenção, qua
 
 ### C5 — Writes/Durable
 
-Candidate actions de voz/reunião/frontline passam por Decision Gates, idempotency e Domain APIs.
+Candidate actions de voz/reunião/frontline passam por Decision Gates, idempotency e Domain APIs. Biometric match nunca substitui esses gates.
 
 ### C6 — Product Work/Ecosystem
 
@@ -626,7 +688,9 @@ Entregar progressivamente:
 
 - Meeting Mode;
 - ata viva;
+- participant/speaker recognition governado;
 - Frontline Mode;
+- shared-device identity assistance;
 - training assistance;
 - process-observation candidates;
 - Task/Case/Room/Inbox linkage;
@@ -638,6 +702,7 @@ Somente depois de evidence real:
 
 - continuous multimodal assistance;
 - advanced real-time video sampling;
+- optimized biometric/realtime processing;
 - room appliances/wearables;
 - edge processing/model routing;
 - selected automation within policy.
@@ -656,25 +721,32 @@ meeting capture is explicit/consented
 data retention is class-specific
 operational context uses canonical EntityRefs
 frontline shared-device sessions do not leak users/data
+known enrolled users can be recognized under explicit policy
+unknown/ambiguous people remain unknown or user-confirmed
+biometric match never grants permission
 media findings produce Evidence/limitations
+human observation stays grounded in observable process evidence
 meeting actions require governance
 process learning produces candidates, not auto-rules
-no hidden worker surveillance
+no emotion/personality/character inference
+no biometric-based automatic employment decision
 no arbitrary LLM→machine control
 ```
 
 ## 31. Non-goals iniciais
 
 - gravação contínua de toda a fábrica;
-- reconhecimento facial de operadores;
-- emotion detection;
+- reconhecimento aberto/indiscriminado de pessoas externas ou não enrolled;
+- emotion detection como truth;
+- personalidade/honestidade/intenção inferidas de rosto/voz;
 - scoring oculto de pessoas;
+- decisão trabalhista automática baseada em biometria;
 - substituir sistema de segurança de máquina;
 - aprovar/reprovar peça apenas porque um LLM “viu” a imagem;
 - mudar procedimento automaticamente a partir de observação;
 - delegar Business Actions à automação de tela;
-- manter mídia bruta sem propósito/retenção definidos.
+- manter mídia bruta/templates biométricos sem propósito/retenção definidos.
 
 ## 32. North Star ampliado
 
-> **Minha DELPI Copilot é a interface inteligente entre as pessoas e a operação da DELPI. Está presente no escritório e na fábrica, entende texto, voz, imagem, vídeo, documentos, contexto operacional e dados empresariais; ajuda pessoas a entender, decidir, executar e aprender, preservando permissões, evidências, segurança, privacidade e governança.**
+> **Minha DELPI Copilot é a interface inteligente entre as pessoas e a operação da DELPI. Está presente no escritório e na fábrica, entende texto, voz, imagem, vídeo, documentos, contexto operacional e dados empresariais; pode reconhecer usuários conhecidos sob governança explícita e compreender padrões observáveis de trabalho; ajuda pessoas a entender, decidir, executar e aprender, preservando permissões, evidências, segurança, privacidade e governança.**
