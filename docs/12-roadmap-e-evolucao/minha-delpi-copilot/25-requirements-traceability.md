@@ -1,19 +1,18 @@
 # Minha DELPI Copilot — Matriz Canônica de Rastreabilidade
 
-**Objetivo:** garantir que toda funcionalidade e requisito arquitetural possua owner, fase canônica, gate e status.  
+**Objetivo:** garantir owner, fase, gate e status de cada requisito.  
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Arquitetura/patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
+**Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Testes:** [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md)
 
-> Este documento é a authority de requisitos `CP-*`. O arquivo `46-operational-intelligence-requirements.md` passa a ser apenas referência histórica/temática; requisitos CP-090–CP-129 estão consolidados aqui.
+> Esta é a única authority `CP-*`. IDs históricos não são reutilizados nem apagados; requisitos ligados à migração do Minha DELPI Chat são preservados como `OUT_OF_SCOPE_WITH_DECISION`.
 
-## 1. Status permitidos
+## 1. Status
 
 ```text
 PLANNED
 REVALIDATE
 TO_INVENTORY
-BLOCKED_BY_AI_GATE
 LOCKED
 IN_PROGRESS
 BLOCKED_WITH_EVIDENCE
@@ -22,202 +21,221 @@ PASS
 OUT_OF_SCOPE_WITH_DECISION
 ```
 
-## 2. C0 — Fundação/contratos/arquitetura
+`BLOCKED_BY_AI_GATE` foi removido do Copilot: o runtime OpenAPI-first será construído nativamente na nova Copilot API e não depende do roadmap do Chat.
+
+## 2. C0 — Platform + Architecture Foundation Freeze
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
-| CP-051 | Observabilidade/correlação de capability | AI/Portal/Observability | C0 contracts/traces | PLANNED |
-| CP-055 | Segurança prompt/tool/context injection | AI/Policy | C0 safety semantics + transversal | PLANNED |
-| CP-056 | Secret redaction | todos os owners | C0 redaction contract | PLANNED |
-| CP-057 | Idempotency de writes | Domain API + orchestration | C0 semantics; runtime C4/C5 | PLANNED |
-| CP-072 | Expertise Pack versionado | AI API | C0 primitive/schema | PLANNED |
-| CP-075 | Domain Playbook versionado | AI/domain owners | C0 primitive/schema | PLANNED |
-| CP-077 | Expertise não concede RBAC/permissão | Core/Policy/AI | C0 invariant | PLANNED |
-| CP-088 | Injection em PDF/imagem não altera policy | AI multimodal/Policy | C0 safety + C2 eval | PLANNED |
-| CP-091 | EntityRef cross-domain canônico | shared/domain owners | C0 primitive | PLANNED |
-| CP-092 | RelationshipRef com provenance | domain owners/Graph | C0 primitive | PLANNED |
-| CP-093 | EvidenceRef transversal | AI/Presentation | C0 primitive | PLANNED |
-| CP-094 | Epistemic classes FACT/CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION | AI synthesis | C0 semantics | PLANNED |
-| CP-095 | Evidence multimodal por página/região | Multimodal | C0 contract; runtime C2 | PLANNED |
-| CP-105 | Durable Workflow persistence/checkpoint contract | Workflow runtime | C0 lifecycle; runtime C5 | PLANNED |
-| CP-106 | `wait_user` semantics | Workflow runtime | C0 lifecycle; runtime C5 | PLANNED |
-| CP-107 | `wait_approval` semantics | Workflow/Policy | C0 lifecycle; runtime C5 | PLANNED |
-| CP-108 | `wait_event` semantics | Workflow/Event | C0 lifecycle; runtime C5 | PLANNED |
-| CP-109 | No duplicate write after resume | Workflow/Executor | C0 idempotency; runtime C5 | PLANNED |
-| CP-110 | Decision Gate proporcional a risco | Policy | C0 contract; runtime C4 | PLANNED |
-| CP-111 | Approval workflow humano | Policy/Workflow | C0 contract; runtime C4/C5 | PLANNED |
-| CP-123 | Provider data-policy filtering | AI/Security | C0 policy contract; runtime C7 | PLANNED |
-| CP-130 | Architecture style canônico: Clean Architecture + Ports & Adapters + DDD pragmático | Platform Architecture | C0 architecture freeze | PLANNED |
-| CP-131 | Layer responsibilities e dependency direction canônicas | Platform Architecture | dependency conformance | PLANNED |
-| CP-132 | DI/Composition Root e external dependencies atrás de adapters/ports quando boundary justificar | Platform Architecture + owners | wiring/conformance | PLANNED |
-| CP-133 | Pattern Decision Matrix canônica para Repository/Use Case/State Machine/Policy/Adapter/Event/etc. | Platform Architecture | pattern matrix review | PLANNED |
-| CP-134 | Abstraction Gate para interface/port/repository/factory/strategy/registry/base class | Platform Architecture | no unjustified abstraction | PLANNED |
-| CP-135 | Error/Result model transversal e tradução de erros de infraestrutura | Application/Interfaces | error contract/conformance | PLANNED |
-| CP-136 | Event model + EventEnvelope + Outbox/Idempotency/Resilience rules sem event bus paralelo | Platform/Workflow | event/resilience conformance | PLANNED |
-| CP-137 | State Machine pattern para lifecycles não triviais | Work/Policy/Domain owners | transition tests | PLANNED |
-| CP-138 | Frontend state ownership: server/workspace/conversation/local vs durable backend state | Portal/Chat/MFEs | frontend architecture conformance | PLANNED |
-| CP-139 | Migração legada via Adapter + Anti-Corruption Layer + Strangler + exit criteria quando aplicável | AI/Platform | migration/residual gate | PLANNED |
-| CP-140 | Architectural conformance + exception/ADR process obrigatório | Platform Architecture | architecture gate/ADR | PLANNED |
+| CP-051 | Correlação/observabilidade transversal | Copilot API/Portal/Observability | contracts/traces | PLANNED |
+| CP-055 | Prompt/tool/context injection safety | Copilot Policy | security semantics | PLANNED |
+| CP-056 | Secret redaction | todos os owners | redaction contract | PLANNED |
+| CP-057 | Idempotency semantics de writes | Domain API + Copilot orchestration | C0 contract; runtime C5 | PLANNED |
+| CP-072 | Expertise Pack versionado | Copilot API | primitive/schema | PLANNED |
+| CP-075 | Domain Playbook versionado | Copilot API/domain owners | primitive/schema | PLANNED |
+| CP-077 | Expertise não concede RBAC | Core/Copilot Policy | invariant | PLANNED |
+| CP-088 | PDF/imagem não altera policy | Copilot Multimodal/Policy | safety contract; C3 eval | PLANNED |
+| CP-091 | EntityRef cross-domain canônico | Copilot shared/domain owners | primitive | PLANNED |
+| CP-092 | RelationshipRef com provenance | Graph/domain owners | primitive | PLANNED |
+| CP-093 | EvidenceRef transversal | Copilot API | primitive | PLANNED |
+| CP-094 | Epistemic classes canônicas | Copilot synthesis | semantics | PLANNED |
+| CP-095 | Evidence multimodal page/region | Copilot Multimodal | contract; runtime C3 | PLANNED |
+| CP-105 | Workflow persistence/checkpoint contract | Copilot Work Runtime | lifecycle contract | PLANNED |
+| CP-106 | `wait_user` semantics | Copilot Work Runtime | lifecycle contract | PLANNED |
+| CP-107 | `wait_approval` semantics | Copilot Work/Policy | lifecycle contract | PLANNED |
+| CP-108 | `wait_event` semantics | Copilot Work/Event | lifecycle contract | PLANNED |
+| CP-109 | No duplicate write after resume | Copilot Work/Executor | idempotency contract | PLANNED |
+| CP-110 | Decision Gate proporcional a risco | Copilot Policy | contract | PLANNED |
+| CP-111 | Approval workflow humano | Copilot Policy/Work | contract | PLANNED |
+| CP-123 | Provider data-policy filtering | Copilot Security | policy contract | PLANNED |
+| CP-130 | Clean Architecture + Ports & Adapters + DDD pragmático | Architecture | architecture freeze | PLANNED |
+| CP-131 | Layer/dependency direction canônicas | Architecture | conformance | PLANNED |
+| CP-132 | DI/Composition Root + adapters/ports | Architecture/owners | wiring conformance | PLANNED |
+| CP-133 | Pattern Decision Matrix | Architecture | review | PLANNED |
+| CP-134 | Abstraction Gate | Architecture | no unjustified abstraction | PLANNED |
+| CP-135 | Error/Result model transversal | Application/Interfaces | contract/conformance | PLANNED |
+| CP-136 | EventEnvelope + Outbox/Idempotency/Resilience rules | Platform/Work | conformance | PLANNED |
+| CP-137 | State Machine para lifecycles não triviais | Domain/Policy/Work | transition tests | PLANNED |
+| CP-138 | Frontend state ownership | Portal/Copilot MFE | frontend conformance | PLANNED |
+| CP-139 | Adapter/ACL/Strangler para integrações legadas quando necessário | Architecture | migration gate | PLANNED |
+| CP-140 | Architecture conformance + ADR process | Architecture | conformance/ADR | PLANNED |
+| CP-146 | Zero dependência de runtime do Minha DELPI Chat | Copilot Platform | Chat-offline/scan | PLANNED |
+| CP-147 | Persistência/migration chain próprias do Copilot | Copilot API | storage ownership | PLANNED |
+| CP-154 | Inventário Portal/Core/Gateway/APIs/MFEs antes do runtime | Architecture | C0.S0 evidence | PLANNED |
 
-## 3. C1 — Portal, navegação e Workspace Context
-
-| ID | Requisito | Owner | Gate | Status |
-|---|---|---|---|---|
-| CP-001 | Chat global no Portal | Chat MFE + Portal | surface/UX | PLANNED |
-| CP-002 | Abrir app | Portal/CopilotBridge | authorized navigation | PLANNED |
-| CP-003 | Abrir rota | Portal/CopilotBridge | authorized navigation | PLANNED |
-| CP-004 | Abrir entidade | Portal + app contract | EntityRef/deep-link | PLANNED |
-| CP-005 | Voltar/navegar histórico | Portal | router behavior | PLANNED |
-| CP-006 | Selecionar aba/focar view | Portal/MFE/Iframe | typed view command | PLANNED |
-| CP-007 | Aplicar filtro visual | MFE/Iframe + Portal | Workspace/view contract | PLANNED |
-| CP-008 | Contexto do app atual | Portal | WorkspaceContext | PLANNED |
-| CP-009 | Contexto de entidade | MFE/Iframe | EntityRef | PLANNED |
-| CP-010 | Contexto de filtros/período | MFE/Iframe | stale/security | PLANNED |
-| CP-011 | Context chips | Chat MFE | UX/relevance | PLANNED |
-| CP-012 | “Explique o que estou vendo” | AI + Context | grounding/R6/R9 | PLANNED |
-| CP-025 | Deep link após execução | Portal/MFE | result navigation | PLANNED |
-| CP-053 | Send/stream parity | AI/Chat | R7 | PLANNED |
-| CP-059 | Capability projection platform | Portal/AI | `/me/apps` authority | PLANNED |
-| CP-061 | Descobrir/abrir iframe `PORTAL_ONLY` | Portal/CopilotBridge | authorized navigation | PLANNED |
-| CP-062 | Handshake seguro Portal↔iframe | Portal/IframeBridge | origin/source/schema/protocol | PLANNED |
-| CP-063 | Workspace Context a partir de iframe | IframeBridge | normalization/security | PLANNED |
-| CP-064 | Comando visual genérico em iframe | Portal/IframeBridge | declared capability/result | PLANNED |
-| CP-065 | Classificar iframe I0–I3 | Readiness | evidence classification | PLANNED |
-| CP-068 | Proibir Business Action por DOM/click | Portal/AI/Policy | architecture negative | PLANNED |
-| CP-069 | SSO iframe sem token via bridge | Portal/App/Security | auth architecture | TO_INVENTORY |
-| CP-070 | Observabilidade do iframe bridge | Portal/Observability | trace/redaction | PLANNED |
-
-## 4. C2 — Intelligence Core
+## 3. C1 — Standalone Application Bootstrap
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
-| CP-026 | RAG de procedimentos/documentos | AI/Knowledge | grounding/security | REVALIDATE |
-| CP-028 | Redigir e-mail/texto | AI capability | faithfulness | REVALIDATE |
-| CP-071 | Copilot único sem seleção obrigatória de agente | AI API + Chat | session-without-agent | PLANNED |
-| CP-073 | Recuperação semântica de expertise | AI API | positive/sibling/negative | LOCKED |
-| CP-074 | Composição de múltiplas expertises | AI planner | cross-domain composition | LOCKED |
-| CP-078 | Multimodalidade independente de agente ativo | AI multimodal | no-agent attachment eval | REVALIDATE |
-| CP-079 | Análise de desenho com provenance/confidence | AI + Engineering | multimodal eval | LOCKED |
-| CP-083 | Projects com preferred expertise sem outro runtime | AI projects | project context + permission negative | TO_INVENTORY |
-| CP-086 | Unknown Expertise Pack sem planner patch | AI | generalization | LOCKED |
-| CP-087 | Metamorphic rename de Expertise Pack | AI evals | semantic equivalence | LOCKED |
-| CP-089 | Packs referência Qualidade + Engenharia | AI/domain owners | drawing/root-cause/cross-domain | LOCKED |
+| CP-141 | Copilot API standalone | `minha-delpi-copilot-api` | own service/health/tests | LOCKED |
+| CP-142 | Copilot MFE standalone | `plugins/minha-delpi-copilot` | build/federation/tests | LOCKED |
+| CP-143 | Manifesto próprio do Copilot | Copilot/Core | schema/registration | LOCKED |
+| CP-144 | Gateway route própria API/MFE | Gateway | dev/prod parity | LOCKED |
+| CP-145 | Compose/deploy próprios | Infra | independent service/start | LOCKED |
+| CP-148 | Portal federated full-page mount | Portal/Copilot MFE | authorized mount/F5 | LOCKED |
+| CP-149 | Global Copilot panel usando o mesmo MFE/runtime | Portal/Copilot MFE | surface parity | LOCKED |
+| CP-150 | JWT + Core/RBAC integration | Copilot API/Core | auth negatives | LOCKED |
+| CP-152 | Health + independent rollback/shutdown | Copilot/Infra | Chat-offline rollback | LOCKED |
+| CP-153 | Reuso obrigatório de `@delpi/plugin-ui`/shared federation | Copilot MFE | federation/UI conformance | LOCKED |
 
-## 5. C3 — Business Reads + Business Graph
-
-| ID | Requisito | Owner | Gate | Status |
-|---|---|---|---|---|
-| CP-013 | Consultar Business Action | AI/Action Catalog | R1/R2/R3/R9 | BLOCKED_BY_AI_GATE |
-| CP-014 | Consultar múltiplas APIs | AI planner | multi-provider | BLOCKED_BY_AI_GATE |
-| CP-015 | Analisar/comparar dados | AI synthesis | grounded outcome | BLOCKED_BY_AI_GATE |
-| CP-027 | Gerar resumo/relatório grounded | AI/artifact | evidence/faithfulness | PLANNED |
-| CP-029 | Recomendar próximos passos | AI synthesis | contextual/allowed | BLOCKED_BY_AI_GATE |
-| CP-043 | Unknown OpenAPI provider | AI | full-chain unknown | BLOCKED_BY_AI_GATE |
-| CP-044 | Metamorphic provider/path/opId | AI | metamorphic gate | BLOCKED_BY_AI_GATE |
-| CP-058 | Capability projection business | AI | no duplicate catalog | LOCKED |
-| CP-090 | DELPI Business Graph mínimo | AI/Platform + domain owners | permission-aware traversal | LOCKED |
-| CP-128 | Business Graph sibling onboarding | Graph | no planner hardcode | LOCKED |
-
-## 6. C4 — Governed Writes + Decision Gates
+## 4. C2 — Portal Context + Platform Commands
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
-| CP-016 | Criar registro | Domain API + AI executor | Decision Gate/RBAC/outcome | BLOCKED_BY_AI_GATE |
-| CP-017 | Editar registro | Domain API + AI executor | write parity | BLOCKED_BY_AI_GATE |
-| CP-018 | Aprovar/rejeitar | Domain API/Policy | approval/safety | BLOCKED_BY_AI_GATE |
-| CP-019 | Cancelar/arquivar | Domain API/Policy | destructive gate | BLOCKED_BY_AI_GATE |
-| CP-020 | Adicionar comentário | Domain API | write parity | BLOCKED_BY_AI_GATE |
-| CP-021 | Atribuir responsável | Domain API | permission/gate | BLOCKED_BY_AI_GATE |
-| CP-022 | Preview de write | AI + Chat | argsHash/impact UX | PLANNED |
-| CP-023 | Decision/confirmation UI | AI + Chat | R10 | PLANNED |
-| CP-024 | Revalidar após decisão | Policy/Executor | TOCTOU/RBAC | PLANNED |
-| CP-045 | Autonomia L0–L2 | Policy | safe execution | PLANNED |
-| CP-054 | Simulate/admin preview de action | AI admin | surface parity | PLANNED |
-| CP-080 | Migrar presets de AgentSpecializationService | AI | migration parity | TO_INVENTORY |
-| CP-081 | Remover gate `userActivatedAgent` para tools operacionais | AI/Policy | unauthorized + no-agent | BLOCKED_BY_AI_GATE |
-| CP-082 | Remover soft agent handoff | AI + Chat | replan/clarify | LOCKED |
+| CP-001 | Copilot global no Portal | Copilot MFE + Portal | panel/full-page UX | LOCKED |
+| CP-002 | Abrir app | Portal/CopilotBridge | authorized navigation | LOCKED |
+| CP-003 | Abrir rota | Portal/CopilotBridge | authorized navigation | LOCKED |
+| CP-004 | Abrir entidade | Portal + app contract | EntityRef/deep-link | LOCKED |
+| CP-005 | Voltar/navegar histórico | Portal | router behavior | LOCKED |
+| CP-006 | Selecionar aba/focar view | Portal/MFE/Iframe | typed command | LOCKED |
+| CP-007 | Aplicar filtro visual | MFE/Iframe + Portal | view contract | LOCKED |
+| CP-008 | Contexto do app atual | Portal | WorkspaceContext | LOCKED |
+| CP-009 | Contexto de entidade | MFE/Iframe | EntityRef | LOCKED |
+| CP-010 | Contexto filtros/período | MFE/Iframe | stale/security | LOCKED |
+| CP-011 | Context chips | Copilot MFE | UX/relevance | LOCKED |
+| CP-012 | “Explique o que estou vendo” | Copilot API + Context | grounding | LOCKED |
+| CP-025 | Deep link após execução | Portal/MFE | result navigation | LOCKED |
+| CP-059 | Platform Capability Projection | Portal/Copilot API | Core authority | LOCKED |
+| CP-061 | Abrir iframe `PORTAL_ONLY` | Portal/CopilotBridge | authorized navigation | LOCKED |
+| CP-062 | Handshake seguro Portal↔iframe | Portal/IframeBridge | security contract | LOCKED |
+| CP-063 | Workspace Context de iframe | IframeBridge | normalization | LOCKED |
+| CP-064 | Comando visual genérico iframe | Portal/IframeBridge | declared capability | LOCKED |
+| CP-065 | Classificar iframe I0–I3 | Readiness | evidence | LOCKED |
+| CP-068 | Proibir Business Action via DOM/click | Portal/Copilot Policy | negative gate | LOCKED |
+| CP-069 | SSO iframe sem token pelo bridge | Portal/App/Security | auth architecture | TO_INVENTORY |
+| CP-070 | Observabilidade iframe bridge | Portal/Observability | trace/redaction | LOCKED |
 
-## 7. C5 — Durable Work
-
-| ID | Requisito | Owner | Gate | Status |
-|---|---|---|---|---|
-| CP-030 | Plano operacional visível | AI + Chat | no CoT/activity | PLANNED |
-| CP-031 | Workflow multi-app | Orchestrator | compound outcome | LOCKED |
-| CP-032 | Parallel reads | Orchestrator | safety/efficiency | LOCKED |
-| CP-033 | Dependências entre steps | Orchestrator | DAG correctness | LOCKED |
-| CP-034 | Partial failure | Orchestrator | truthful outcome | LOCKED |
-| CP-035 | Retry seguro | Orchestrator | idempotency | LOCKED |
-| CP-036 | Pause por decisão | Workflow/Decision | persistence/R10 | LOCKED |
-| CP-037 | Reload/resume | Persistence | no duplicate write | LOCKED |
-| CP-038 | Audit trail de workflow | Observability | coverage | LOCKED |
-| CP-076 | Playbook→WorkflowPlan sem endpoint hardcoded | Planner | authority separation | LOCKED |
-| CP-096 | Copilot Task persistente | Workflow/Product | restart/resume | LOCKED |
-| CP-097 | Copilot Case | Product/Workflow | lifecycle/evidence | LOCKED |
-| CP-098 | Evidence Board | Case/AI | same EvidenceRef + status | LOCKED |
-| CP-099 | Interaction Room ligada a Case | Portal/Room | RBAC/context | TO_INVENTORY |
-| CP-100 | Copilot Inbox | Portal/Workflow | pending/result lifecycle | LOCKED |
-| CP-124 | Task Completion por Task/Case | Observability | metric validity | LOCKED |
-| CP-126 | Inbox decision→workflow resume | Portal/Workflow | correlation/revalidation | LOCKED |
-| CP-127 | Room summary grounded em Case | AI/Room | evidence/RBAC | TO_INVENTORY |
-
-## 8. C6 — Proatividade + AI-ready + Learning
+## 5. C3 — Intelligence Core Standalone
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
-| CP-039 | AI-ready SDK/templates | Shared/Portal | contract tests | LOCKED |
-| CP-040 | Readiness scanner | Tooling | factual inventory | PLANNED |
-| CP-041 | Coverage dashboard | Admin/Observability | metrics | LOCKED |
-| CP-042 | Unknown app onboarding | Core/Portal/AI | no core hardcode | LOCKED |
-| CP-060 | Administração de capabilities/coverage | Admin | admin RBAC | LOCKED |
-| CP-066 | SDK de Iframe Copilot Bridge | Shared/Portal | contract/lifecycle | LOCKED |
+| CP-026 | RAG de procedimentos/documentos | Copilot Knowledge | grounding/security | LOCKED |
+| CP-028 | Redigir e-mail/texto | Copilot capability | faithfulness | LOCKED |
+| CP-053 | Send/stream parity | Copilot API/MFE | transport parity | LOCKED |
+| CP-071 | Um único Copilot sem seleção de agente | Copilot API/MFE | no agent runtime | LOCKED |
+| CP-073 | Recuperação semântica de expertise | Copilot API | positive/sibling/negative | LOCKED |
+| CP-074 | Composição multi-expertise | Copilot Planner | cross-domain | LOCKED |
+| CP-078 | Multimodalidade sem agent dependency | Copilot Multimodal | attachment eval | LOCKED |
+| CP-079 | Análise de desenho com provenance/confidence | Copilot + Engineering | multimodal eval | LOCKED |
+| CP-083 | Projects/preferred expertise sem outro runtime | Copilot API | permission negative | TO_INVENTORY |
+| CP-086 | Unknown Expertise Pack sem planner patch | Copilot API | generalization | LOCKED |
+| CP-087 | Metamorphic rename de Expertise Pack | Copilot Evals | equivalence | LOCKED |
+| CP-089 | Packs referência Qualidade + Engenharia | Copilot/domain owners | pilot evals | LOCKED |
+| CP-151 | OpenAPI ingestion + Action Catalog próprios do Copilot | Copilot API | independent catalog/importer | LOCKED |
+
+## 6. C4 — Business Reads + Business Graph
+
+| ID | Requisito | Owner | Gate | Status |
+|---|---|---|---|---|
+| CP-013 | Consultar Business Action | Copilot Action Runtime | read/RBAC/outcome | LOCKED |
+| CP-014 | Consultar múltiplas APIs | Copilot Planner | multi-provider | LOCKED |
+| CP-015 | Analisar/comparar dados | Copilot synthesis | grounded evidence | LOCKED |
+| CP-027 | Gerar resumo/relatório grounded | Copilot Artifact | evidence/faithfulness | LOCKED |
+| CP-029 | Recomendar próximos passos | Copilot synthesis | contextual/allowed | LOCKED |
+| CP-043 | Unknown OpenAPI provider | Copilot API | full-chain unknown | LOCKED |
+| CP-044 | Metamorphic provider/path/opId | Copilot Evals | metamorphic | LOCKED |
+| CP-058 | Business Capability Projection | Copilot API | no duplicate authority | LOCKED |
+| CP-090 | DELPI Business Graph mínimo | Copilot Graph/domain owners | permission traversal | LOCKED |
+| CP-128 | Business Graph sibling onboarding | Copilot Graph | no planner hardcode | LOCKED |
+
+## 7. C5 — Governed Writes + Durable Work Foundation
+
+| ID | Requisito | Owner | Gate | Status |
+|---|---|---|---|---|
+| CP-016 | Criar registro | Domain API + Copilot executor | Decision/RBAC/outcome | LOCKED |
+| CP-017 | Editar registro | Domain API + Copilot executor | write parity | LOCKED |
+| CP-018 | Aprovar/rejeitar | Domain API/Copilot Policy | approval/safety | LOCKED |
+| CP-019 | Cancelar/arquivar | Domain API/Copilot Policy | destructive gate | LOCKED |
+| CP-020 | Adicionar comentário | Domain API | write parity | LOCKED |
+| CP-021 | Atribuir responsável | Domain API | permission/gate | LOCKED |
+| CP-022 | Preview de write | Copilot API/MFE | argsHash/impact | LOCKED |
+| CP-023 | Decision/confirmation UI | Copilot MFE/API | Decision Gate | LOCKED |
+| CP-024 | Revalidar após decisão | Copilot Policy/Executor | TOCTOU | LOCKED |
+| CP-030 | Plano operacional visível | Copilot API/MFE | no CoT/activity | LOCKED |
+| CP-031 | Workflow multi-app | Copilot Work Runtime | compound outcome | LOCKED |
+| CP-032 | Parallel safe reads | Copilot Work Runtime | safety | LOCKED |
+| CP-033 | Dependências entre steps | Copilot Work Runtime | DAG | LOCKED |
+| CP-034 | Partial failure truthful | Copilot Work Runtime | outcome | LOCKED |
+| CP-035 | Retry seguro | Copilot Work Runtime | idempotency | LOCKED |
+| CP-036 | Pause por decisão | Copilot Work/Decision | persistence | LOCKED |
+| CP-037 | Reload/resume | Copilot Work Persistence | no duplicate write | LOCKED |
+| CP-038 | Audit trail workflow | Copilot Observability | coverage | LOCKED |
+| CP-045 | Autonomia L0–L2 | Copilot Policy | safe reads/navigation/prepare | LOCKED |
+| CP-054 | Simulate/admin preview de action | Copilot Admin | parity | LOCKED |
+| CP-076 | Playbook→WorkflowPlan sem endpoint hardcoded | Copilot Planner | authority separation | LOCKED |
+
+## 8. C6 — Product Work + Proactivity + Ecosystem
+
+| ID | Requisito | Owner | Gate | Status |
+|---|---|---|---|---|
+| CP-039 | AI-ready SDK/templates | Shared/Portal/Copilot | contracts | LOCKED |
+| CP-040 | Readiness scanner | Copilot Tooling | factual inventory | LOCKED |
+| CP-041 | Coverage dashboard | Copilot Admin/Observability | metrics | LOCKED |
+| CP-042 | Unknown app onboarding | Core/Portal/Copilot | no hardcode | LOCKED |
+| CP-060 | Admin de capabilities/coverage | Copilot Admin | admin RBAC | LOCKED |
+| CP-066 | Iframe Copilot Bridge SDK | Shared/Portal | contract/lifecycle | LOCKED |
 | CP-067 | Unknown iframe onboarding | Portal/IframeBridge | generalization | LOCKED |
-| CP-084 | Admin/observability de packs/playbooks | AI admin | version/eval/audit | LOCKED |
-| CP-101 | Watch por condição/evento | Workflow/Events | event/dedupe/RBAC | LOCKED |
-| CP-102 | Watch OBSERVE | Workflow | audit-only | LOCKED |
-| CP-103 | Watch ADVISE | Workflow/AI | grounded alert | LOCKED |
-| CP-114 | Reference Knowledge lifecycle | Knowledge | owner/version/scope | REVALIDATE |
-| CP-115 | Decision Knowledge | Case/Knowledge | provenance/no-CoT | LOCKED |
-| CP-116 | Experience Knowledge | Case/Knowledge | governed promotion | LOCKED |
-| CP-117 | Solution Pattern lifecycle | Knowledge/Expertise | review/eval/version | LOCKED |
-| CP-118 | Governed Learning Loop | AI admin | no auto-publish | LOCKED |
-| CP-119 | Expertise Studio lifecycle | AI admin | draft→publish gates | LOCKED |
-| CP-120 | Expertise/Playbook rollback | AI admin | version/eval | LOCKED |
-| CP-125 | Case resolution learning candidate | Case/Knowledge | candidate only | LOCKED |
+| CP-084 | Admin/observability packs/playbooks | Copilot Admin | version/eval/audit | LOCKED |
+| CP-096 | Copilot Task persistente | Copilot Work | restart/resume | LOCKED |
+| CP-097 | Copilot Case | Copilot Work/Product | lifecycle/evidence | LOCKED |
+| CP-098 | Evidence Board | Copilot Case | same EvidenceRef | LOCKED |
+| CP-099 | Interaction Room ligada a Case | Copilot + room owner | RBAC/context | TO_INVENTORY |
+| CP-100 | Copilot Inbox | Copilot Work/MFE | lifecycle | LOCKED |
+| CP-101 | Watch por condição/evento | Copilot Work/Events | dedupe/RBAC | LOCKED |
+| CP-102 | Watch OBSERVE | Copilot Work | audit | LOCKED |
+| CP-103 | Watch ADVISE | Copilot Work/AI | grounded alert | LOCKED |
+| CP-114 | Reference Knowledge lifecycle | Copilot Knowledge | owner/version/scope | LOCKED |
+| CP-115 | Decision Knowledge | Copilot Case/Knowledge | provenance/no-CoT | LOCKED |
+| CP-116 | Experience Knowledge | Copilot Case/Knowledge | governed promotion | LOCKED |
+| CP-117 | Solution Pattern lifecycle | Copilot Knowledge/Expertise | review/eval/version | LOCKED |
+| CP-118 | Governed Learning Loop | Copilot Admin | no auto-publish | LOCKED |
+| CP-119 | Expertise Studio lifecycle | Copilot Admin | draft→publish | LOCKED |
+| CP-120 | Expertise/Playbook rollback | Copilot Admin | version/eval | LOCKED |
+| CP-124 | Task Completion metric | Copilot Observability | metric validity | LOCKED |
+| CP-125 | Case resolution learning candidate | Copilot Case/Knowledge | candidate only | LOCKED |
+| CP-126 | Inbox decision→workflow resume | Copilot MFE/Work | correlation | LOCKED |
+| CP-127 | Room summary grounded em Case | Copilot/Room | evidence/RBAC | TO_INVENTORY |
 
-## 9. C7 — Optimization/Autonomy/Rollout
+## 9. C7 — Autonomy + Optimization + Rollout
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
-| CP-046 | Autonomia L3 prepare | Policy/AI | no persistence | LOCKED |
-| CP-047 | Autonomia L4 governed write | Policy/AI | Decision Gate | LOCKED |
-| CP-048 | Autonomia L5 limitada | Policy/Admin | allowlist/limits/kill switch | LOCKED |
-| CP-049 | Emergency stop | Admin/Policy | kill switch | LOCKED |
-| CP-050 | Rollout/cohort controls | Platform/Admin | canary/rollback | LOCKED |
-| CP-052 | TCR/First Plan Success metrics | Observability | metric validity | LOCKED |
-| CP-085 | Remover routing legado por `agent_id` | AI + Chat | residual zero | LOCKED |
-| CP-104 | Watch ACT | Policy/Workflow | L5/Decision Gate | LOCKED |
-| CP-112 | What-if Simulation | Domain analytics | reproducible model | LOCKED |
-| CP-113 | Simulate→Apply separado | Domain API/Policy | new gate | LOCKED |
-| CP-121 | Model Router | AI infrastructure | quality/cost/latency | LOCKED |
-| CP-122 | Compute Policy | AI/Policy | provider/model constraints | LOCKED |
-| CP-129 | Anchor reclamação→8D→Watch→ação | Cross-domain | full integration | LOCKED |
+| CP-046 | Autonomia L3 prepare | Copilot Policy | no persistence | LOCKED |
+| CP-047 | Autonomia L4 governed write | Copilot Policy | Decision Gate | LOCKED |
+| CP-048 | Autonomia L5 limitada | Copilot Policy/Admin | allowlist/limits/kill switch | LOCKED |
+| CP-049 | Emergency stop | Copilot Admin/Policy | kill switch | LOCKED |
+| CP-050 | Rollout/cohort controls | Platform/Copilot Admin | canary/rollback | LOCKED |
+| CP-052 | TCR/First Plan Success metrics | Copilot Observability | metric validity | LOCKED |
+| CP-104 | Watch ACT | Copilot Policy/Work | autonomy/Decision | LOCKED |
+| CP-112 | What-if Simulation | Domain analytics/Copilot | reproducible model | LOCKED |
+| CP-113 | Simulate→Apply separado | Domain API/Copilot Policy | new gate | LOCKED |
+| CP-121 | Model Router | Copilot Infrastructure | quality/cost/latency | LOCKED |
+| CP-122 | Compute Policy | Copilot Policy | provider constraints | LOCKED |
+| CP-129 | Anchor reclamação→8D→Watch→ação | Cross-domain/Copilot | full integration | LOCKED |
 
-## 10. Regras de atualização
+## 10. Requisitos históricos do Chat — fora do escopo Copilot
 
-- requisito novo recebe novo `CP-*`; nunca reutilizar ID;
+| ID | Requisito histórico | Decisão | Status |
+|---|---|---|---|
+| CP-080 | Migrar presets de `AgentSpecializationService` | pertence ao Chat; Copilot cria Expertise nativa | OUT_OF_SCOPE_WITH_DECISION |
+| CP-081 | Remover `userActivatedAgent` do Chat | pertence ao Chat | OUT_OF_SCOPE_WITH_DECISION |
+| CP-082 | Remover soft agent handoff do Chat | pertence ao Chat | OUT_OF_SCOPE_WITH_DECISION |
+| CP-085 | Remover routing legado `agent_id` do Chat | pertence ao Chat | OUT_OF_SCOPE_WITH_DECISION |
+
+Esses IDs não podem ser reativados como dependência do Copilot.
+
+## 11. Regras de atualização
+
+- requisito novo recebe novo CP-ID;
 - nenhum CP vira PASS por documentação apenas;
-- `BLOCKED_BY_AI_GATE` muda somente com evidence vigente dos gates externos;
-- requisitos de contrato/arquitetura em C0 podem ser PASS sem runtime completo, desde que o gate seja de schema/ownership/conformance e isso esteja explícito;
-- runtime requirement só passa com wiring + integration/eval;
+- runtime só passa com wiring + integration/eval;
 - `TO_INVENTORY` não vira PLANNED por suposição;
-- requisito removido recebe `OUT_OF_SCOPE_WITH_DECISION` ou decisão de deprecação; não apagar silenciosamente;
-- `LEGACY_FALLBACK` precisa exit criteria;
-- phase canonical é C0–C7 do Plano Mestre; tags antigas E*/O* são somente referência histórica;
-- requisito de design pattern não autoriza criar a abstração: o Abstraction Gate continua obrigatório.
+- requisito removido recebe `OUT_OF_SCOPE_WITH_DECISION`;
+- nenhum requisito Copilot pode ser bloqueado por refactor do Chat;
+- shared reuse precisa ser platform-neutral;
+- phase canonical é C0–C7 do `16`.
 
-## 11. Coverage final
-
-Gerar por release:
+## 12. Coverage final
 
 ```text
 TOTAL_REQUIREMENTS
@@ -228,18 +246,17 @@ OUT_OF_SCOPE_WITH_DECISION
 UNMAPPED
 ```
 
-E por família:
+Famílias:
 
 ```text
-FOUNDATION
+STANDALONE_FOUNDATION
 ARCHITECTURE_PATTERNS
-PLATFORM_CONTEXT
+PORTAL_CONTEXT
 INTELLIGENCE
 BUSINESS_READS_GRAPH
-GOVERNED_WRITES
-DURABLE_WORK
-PROACTIVITY_ECOSYSTEM
-OPTIMIZATION_AUTONOMY
+GOVERNED_WRITES_DURABLE
+PRODUCT_WORK_PROACTIVITY
+AUTONOMY_OPTIMIZATION
 IFRAME
 EXPERTISE
 EVIDENCE
