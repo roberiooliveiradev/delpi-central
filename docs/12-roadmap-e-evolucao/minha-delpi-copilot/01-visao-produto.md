@@ -2,150 +2,191 @@
 
 ## 1. Definição
 
-O **Minha DELPI Copilot** é a interface inteligente transversal da plataforma Minha DELPI. Ele deve acompanhar o usuário no Portal, compreender contexto, responder perguntas, explicar dados/processos, navegar pela plataforma e executar operações autorizadas.
+O **Minha DELPI Copilot** é a camada inteligente operacional transversal da Minha DELPI. Ele acompanha o usuário, entende contexto, conecta dados e conhecimento, navega pela plataforma, executa operações autorizadas e sustenta trabalho que pode continuar além de um único turno de chat.
 
-Não é um chatbot separado. É uma nova forma de operar a mesma plataforma.
+Não é um chatbot separado nem um conjunto de agentes departamentais. É uma nova forma de operar a mesma plataforma.
 
-## 2. Promessa do produto
+## 2. North Star
 
-> O usuário pode dizer o que deseja alcançar; o Copilot entende o objetivo, encontra os recursos autorizados, explica o que fará, executa o necessário e apresenta o resultado de forma útil.
+> **Entender o contexto da organização, conectar dados, pessoas, processos e aplicações, investigar problemas, executar trabalho, acompanhar resultados e transformar conhecimento empresarial em ação governada.**
 
-## 3. Pilares funcionais
+Quatro verbos:
 
-### 3.1 Explicar
+```text
+PERGUNTAR  → entender, pesquisar, explicar, analisar
+FAZER      → navegar, consultar, criar, alterar, aprovar, executar
+ACOMPANHAR → monitorar, detectar, alertar, reagir
+TRABALHAR  → investigar, colaborar, planejar, acompanhar, concluir
+```
 
-- explicar páginas, campos, indicadores e processos;
-- explicar por que determinado dado está alto/baixo;
-- explicar resultado de uma ação executada;
-- explicar quais permissões/capabilities estão disponíveis;
-- explicar erros sem expor detalhes sensíveis.
+## 3. Promessa do produto
 
-### 3.2 Consultar
+> O usuário diz o objetivo. O Copilot encontra contexto e recursos autorizados, aplica conhecimento adequado, mostra evidências, executa o que for permitido, pede a decisão humana correta quando necessário e acompanha o trabalho até um outcome verificável.
 
-- consultar dados corporativos;
-- localizar entidades por linguagem natural;
-- recuperar documentos e conhecimento;
-- combinar resultados de múltiplas fontes;
-- responder com referências e contexto suficiente.
+## 4. Pilares
 
-### 3.3 Analisar
+### Explicar e consultar
 
-- comparar períodos, unidades, clientes, produtos e fornecedores;
-- identificar causas prováveis com base em evidências;
-- destacar anomalias, tendências e riscos;
-- cruzar resultados de múltiplas APIs;
-- produzir resumo executivo e recomendações contextualizadas.
+- páginas, campos, indicadores e processos;
+- dados corporativos;
+- documentos/normas;
+- relações entre entidades;
+- erros/limitações sem expor detalhes sensíveis.
 
-### 3.4 Navegar
+### Analisar
 
-- abrir aplicativos autorizados;
-- abrir rotas específicas;
-- abrir entidade/detalhe;
-- alternar aba/visão;
-- aplicar filtros e contexto visual;
-- retornar ao ponto anterior.
+- comparar períodos/entidades;
+- cruzar APIs;
+- usar Business Graph;
+- analisar documentos/desenhos;
+- separar fato, cálculo, hipótese, conclusão e recomendação;
+- mostrar evidence/provenance.
 
-### 3.5 Executar
+### Navegar
 
-- criar registros;
-- alterar registros;
-- enviar solicitações;
-- aprovar/rejeitar quando autorizado;
-- cancelar/arquivar quando permitido;
-- iniciar workflows;
-- acionar integrações externas.
+- app/rota/entidade;
+- view/aba/filtro;
+- MFE/iframe context;
+- deep links autorizados.
 
-### 3.6 Produzir
+### Executar
+
+- Business Actions reais via APIs/use cases;
+- Decision Gates proporcionais ao risco;
+- outcome verification;
+- idempotency/audit.
+
+### Trabalhar ao longo do tempo
+
+- Durable Workflow;
+- Task;
+- Case;
+- Interaction Room;
+- Inbox;
+- Watch/event resume.
+
+### Produzir
 
 - relatórios;
 - resumos;
-- análises executivas;
-- e-mails e mensagens;
-- artefatos derivados de dados e documentos.
+- análises;
+- mensagens/e-mails;
+- planos de ação;
+- artifacts suportados.
 
-## 4. Experiência-alvo
+## 5. Copilot único
 
-Exemplo:
+O usuário não precisa escolher entre “Agente Engenharia”, “Agente Qualidade” etc.
 
-> “Por que o produto 90264238 está atrasando entregas?”
+```text
+mesmo Copilot
++ Expertise Packs
++ Domain Playbooks
++ Knowledge
++ Multimodal tools
++ authorized capabilities
+```
 
-O Copilot pode:
+Problemas cross-domain podem combinar várias especialidades no mesmo trabalho.
 
-1. identificar o produto;
-2. consultar estoque;
-3. consultar carteira em aberto;
-4. consultar ordens de produção;
-5. consultar compras;
-6. consultar fornecedores;
-7. cruzar os dados;
-8. explicar as causas;
-9. oferecer próximos passos.
-
-Usuário:
-
-> “Abra isso no Portal de Suprimentos.”
-
-O Copilot navega para a rota autorizada e aplica o contexto do produto.
+## 6. Experiência-alvo
 
 Usuário:
 
-> “Crie uma solicitação para Compras revisar o caso.”
+> “Esse produto está dando problema no cliente. Investigue se é desenho, fabricação ou fornecedor e monte um 8D.”
 
-O Copilot prepara a operação, mostra um resumo da alteração e solicita confirmação quando a policy exigir.
+O Copilot pode, de acordo com permissions/APIs disponíveis:
 
-## 5. Personas
+1. resolver produto/reclamação;
+2. abrir um Case;
+3. percorrer relações relevantes no Business Graph;
+4. consultar qualidade/produção/suprimentos;
+5. analisar desenho/anexos;
+6. organizar Evidence Board;
+7. aplicar Engineering + Quality Expertise;
+8. aplicar 8D Playbook;
+9. criar Tasks para pendências;
+10. aguardar nova evidence/evento quando necessário;
+11. apresentar conclusões/limitações;
+12. preparar ações;
+13. submeter writes ao Decision Gate;
+14. verificar outcomes;
+15. manter audit/continuidade.
+
+Tudo sem trocar de agente.
+
+## 7. Personas
 
 ### Usuário operacional
-
-Quer executar tarefas rapidamente sem decorar onde cada funcionalidade está.
+Quer concluir tarefas sem decorar caminhos da plataforma.
 
 ### Analista
-
-Quer cruzar dados, investigar causas e produzir explicações.
+Quer investigar, cruzar evidências e explicar causas.
 
 ### Gestor
-
-Quer síntese executiva, indicadores, riscos e recomendações.
+Quer síntese, riscos, decisões e acompanhamento.
 
 ### Especialista de área
+Quer método profissional, evidência e integração com seus processos.
 
-Quer trabalhar dentro do portal do departamento com contexto persistente.
+### Colaborador de Case/Room
+Quer participar de investigação/decisão compartilhada com o Copilot.
 
-### Administrador
+### Administrador/governança
+Quer gerir capabilities, policies, expertise/playbooks, quality/evals, rollout e audit.
 
-Quer administrar capabilities, políticas, integrações, auditoria e qualidade.
+## 8. Princípios de UX
 
-## 6. Princípios de UX
+- linguagem natural é entrada, não única surface;
+- evidência e estado operacional são visíveis;
+- nenhuma hipótese se apresenta como fato;
+- Decision Gate explica impacto real;
+- contexto pode ser corrigido/removido;
+- não repetir pergunta já respondida;
+- distinguir preparado/executado/verificado;
+- Task/Case/Inbox são usados quando chat deixa de ser unidade suficiente;
+- nenhuma tarefa normal exige seleção manual de agente;
+- accessibility by default.
 
-- linguagem natural como entrada, não como única interface;
-- mostrar o que está acontecendo sem expor chain-of-thought;
-- pedir confirmação somente quando necessário;
-- não repetir perguntas para dados já conhecidos;
-- manter contexto entre chat e página aberta;
-- permitir correção/override do usuário a qualquer momento;
-- deixar claro o que foi apenas analisado, preparado ou realmente executado;
-- resultados acionáveis devem oferecer próximos passos válidos e autorizados.
-
-## 7. Não objetivos
+## 9. Não objetivos
 
 O Copilot não deve:
 
 - obter mais permissão que o usuário;
-- operar por cliques quando existe API/use case confiável;
-- inventar endpoints, URLs ou IDs;
-- manter lógica de negócio paralela à aplicação;
-- criar um motor de IA diferente por departamento;
-- tomar decisões administrativas/destrutivas fora de policy;
-- substituir auditoria corporativa por texto gerado pelo LLM.
+- usar DOM automation quando API/use case existe;
+- inventar endpoint/URL/action/permission;
+- duplicar Business Graph como banco mestre;
+- criar logic/business state paralelos às aplicações;
+- criar engine de IA por departamento;
+- persistir chain-of-thought;
+- executar write sem policy/Decision Gate requerido;
+- aprender automaticamente em produção com correções do usuário;
+- tratar Simulation como efeito real.
 
-## 8. Métrica principal de sucesso
+## 10. Métricas de sucesso
 
-A métrica macro é **Task Completion Rate assistida pelo Copilot**, segmentada por:
+Métrica macro: **Task Completion Rate**, segmentada por:
 
-- consulta;
-- análise;
-- navegação;
-- escrita;
-- workflow composto.
+- navigation;
+- read;
+- analysis;
+- write;
+- Task;
+- Case;
+- Workflow.
 
-Ela deve ser acompanhada por segurança, precisão, tempo, custo e taxa de necessidade de intervenção humana.
+Complementares:
+
+- Safe Execution Rate;
+- Evidence Coverage;
+- First Plan Success;
+- Clarification Efficiency;
+- Correction Rate;
+- Case Resolution Rate;
+- Watch Signal Quality;
+- latency/cost;
+- AI-ready coverage.
+
+## 11. Princípio de implantação
+
+A ambição do produto não altera a ordem de construção: primeiro foundations compartilhadas, depois features. Fonte de verdade: `16-execution-master-plan.md`.
