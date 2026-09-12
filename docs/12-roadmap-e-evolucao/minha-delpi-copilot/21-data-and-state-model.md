@@ -1,51 +1,66 @@
 # Minha DELPI Copilot — Modelo de Dados, Estado e Persistência
 
-**Status:** target arquitetural foundation-first  
-**Autoridade de ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
+**Status:** target arquitetural standalone  
+**Autoridade de ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)
 
 ## 1. Princípio
 
-Separar claramente:
+Todo estado durável do produto Copilot pertence à **Copilot API nova** ou a um owner corporativo explicitamente referenciado.
 
 ```text
 REFERENCE
-→ identidade/ref compartilhada
+→ refs para entities/sources de owners externos
 
-RUNTIME STATE
-→ estado efêmero do turno/UI
+COPILOT RUNTIME STATE
+→ conversations/turns/plans/context snapshots
 
-DURABLE WORK STATE
-→ workflow/task/case/decision/watch quando necessário
+COPILOT DURABLE WORK STATE
+→ decision/workflow/task/case/watch/inbox semantics
 
 DERIVED INDEX/CACHE
-→ capability/expertise/graph/search materializado
+→ capabilities/expertise/graph/search indexes
 
 DOMAIN DATA
-→ continua nas APIs/bancos donos do domínio
+→ permanece nas Domain APIs
 ```
 
-Não criar banco paralelo de dados operacionais, capability contracts ou chain-of-thought.
+**Proibido:** usar tabelas/sessions/agents/migrations do Minha DELPI Chat como foundation do Copilot.
 
-## 2. Regra de C0
+## 2. Storage ownership
 
-C0 define **semântica, IDs, relações e ports** antes de decidir migrations.
+Target recomendado:
 
-C0.S0 deve provar:
+```text
+minha-delpi-copilot-api/migrations/
+→ única migration chain do Copilot
+```
 
-- quais tabelas/repositories já existem;
-- quais estados de conversa/workflow/approval existem;
-- quais entity IDs são estáveis;
-- quais rooms/notifications/cases podem ser reutilizados;
-- quais event stores/queues existem;
-- quais caches/indexes já são materializados.
+O cluster PostgreSQL físico pode ser compartilhado com outros plugins se a infraestrutura vigente recomendar isso, porém ownership lógico é separado.
 
-Somente gaps reais justificam novas migrations.
+```text
+same PostgreSQL cluster != same product schema/authority
+```
 
-## 3. Shared references
+Nenhuma migration do Copilot edita tabelas do Chat.
 
-### 3.1 Correlation
+## 3. Regra C0
 
-Todo fluxo material deve ser correlacionável por um conjunto coerente de IDs:
+Antes de criar migrations, C0 define:
+
+- DB/schema/table naming convention;
+- IDs;
+- versioning;
+- retention/LGPD;
+- indexes;
+- concurrency/idempotency;
+- migration/rollback strategy;
+- quais dados são Copilot-owned versus refs/projections;
+- quais existing rooms/notifications/events são referenciados por adapter.
+
+## 4. Shared references
+
+### CorrelationContext
 
 ```text
 requestId
@@ -57,97 +72,102 @@ caseId?
 traceId?
 ```
 
-Não gerar um universo de IDs sem relação entre si por feature.
-
-### 3.2 EntityRef
-
-Referência lógica e compacta:
+### EntityRef
 
 ```text
 entityType
 entityId
 sourceSystem/domain
 label?
-version/revision? quando material
+version/revision?
 ```
 
-Domain object completo continua no owner.
+Não copia o Domain object.
 
-### 3.3 SourceRef / EvidenceRef / OutcomeRef
+### SourceRef / EvidenceRef / OutcomeRef
 
-`SourceRef` aponta origem verificável.  
-`EvidenceRef` registra observação/claim sourceable.  
-`OutcomeRef` registra resultado real de execução.
+Copilot-owned contract usado transversalmente por:
 
-Esses conceitos são transversais e devem ser reutilizados por:
-
-- Chat;
+- conversation synthesis;
+- API results;
 - multimodal;
 - Business Graph;
 - workflow;
-- Task;
-- Case/Evidence Board;
+- Task/Case;
 - Simulation;
 - audit/presentation.
 
-Não criar variants incompatíveis por feature.
+Não existe dependência do evidence/state model do Chat.
 
-## 4. Workspace Context
+## 5. Workspace Context
 
-**Owner primário:** Portal/MFE/iframe em runtime.  
-**Persistência:** efêmera por padrão; snapshot bounded no turno somente quando necessário.
+**Owner primário em runtime:** Portal/MFE/iframe.  
+**Copilot persistence:** snapshot bounded somente quando necessário à conversa/workflow/audit.
+
+Nunca persistir:
+
+- DOM/React state;
+- tokens/secrets;
+- datasets completos;
+- permissions como truth source.
+
+## 6. Copilot conversations
+
+O Copilot possui modelo próprio desde C3.
 
 Campos conceituais:
 
 ```text
-version
-appId
-routeId
-entityRefs[]
-filters
-selection
-dateRange
-visibleDataRefs[]
-source
-updatedAt
+conversationId
+owner/participant refs
+status
+title?
+createdAt/updatedAt
+context/preferences refs
 ```
 
-Não persistir:
+Turn:
 
-- estado React/DOM;
-- tokens/secrets;
-- datasets completos;
-- campos sem finalidade.
+```text
+turnId
+conversationId
+input/output refs
+workspace snapshot ref?
+plan/outcome/evidence refs
+model/config metadata bounded
+createdAt
+```
 
-## 5. Derived catalogs/indexes
+Não armazenar chain-of-thought.
+
+Não utilizar `agent_id`, `chat_mode` ou session rows do Minha DELPI Chat.
+
+## 7. Derived catalogs/indexes
+
+### Copilot Action Catalog
+
+Authority técnica permanece no OpenAPI source; catálogo/index Copilot é derivado/versionado.
 
 ### Capability Projection
 
-Derivada das authorities:
+Derivada de:
 
 ```text
-Business → OpenAPI/Action Catalog
-Platform → Core apps/routes + generic action definitions
+Business → OpenAPI/Action Catalog + authorization
+Platform → Core apps/routes + generic platform actions
 ```
 
 ### Expertise/Playbook indexes
 
-Authority é o catálogo canônico; embedding/vector/search é materialização derivada e invalidável por version/hash.
+Catalogs são Copilot-owned; vector/search indexes são derivados e invalidáveis por version/hash.
 
 ### Business Graph index
 
-Pode materializar relações/referências, mas:
+Pode guardar `RelationshipRef`/lookup metadata/provenance, nunca master copies dos Domain objects.
 
-- não replica objetos operacionais completos;
-- registra source/provenance;
-- respeita lifecycle do source;
-- traversal revalida permission quando necessário.
+## 8. Evidence
 
-## 6. Evidence e epistemic state
-
-Persistir evidence somente quando houver finalidade de continuidade/audit/Case.
-
-Campos conceituais:
+Persistir apenas quando necessário à continuidade/audit/Case.
 
 ```text
 evidenceId
@@ -155,15 +175,15 @@ sourceRef
 entityRefs[]
 kind
 valueRef/value bounded
-location/page/region?
+location?
 observedAt
 freshness
 confidence?
 limitations[]
-extractor/version? quando multimodal
+extractor/version?
 ```
 
-Classificação da síntese:
+Epistemic classification:
 
 ```text
 FACT
@@ -173,93 +193,42 @@ CONCLUSION
 RECOMMENDATION
 ```
 
-Hipótese/conclusão/recomendação não devem se disfarçar de source fact.
+## 9. Decision Gate
 
-## 7. Decision Gate lifecycle
-
-Unifica confirmation e approvals sob um modelo consistente.
-
-Campos conceituais:
+Copilot-owned lifecycle; final Domain API authorization continua obrigatória.
 
 ```text
 decisionId
 workflowId?/turnId?
-stepId?/actionRef
+actionRef
 requiredGate
 argumentsHash
 impactPreview
 evidenceRefs[]
 risk/sensitivity
 status
-requestedAt
-expiresAt
-decidedAt
-decision
+requestedAt/expiresAt/decidedAt
 actor/approver refs
 ```
 
-Gate levels:
+## 10. Durable Workflow
 
-```text
-NO_GATE
-ACKNOWLEDGE
-CONFIRM
-REVIEW_AND_CONFIRM
-APPROVAL_WORKFLOW
-BLOCK
-```
+Contract nasce em C0; runtime/persistence entra em C5.
 
-Status mínimos:
-
-```text
-pending
-acknowledged
-confirmed
-rejected
-approved
-expired
-invalidated
-blocked
-```
-
-Mudança material de argumentos, evidence ou policy invalida decisão quando aplicável.
-
-## 8. Durable Workflow
-
-Contrato semântico nasce em C0; persistence/runtime concreto nasce em C5 se gap for provado.
-
-### Workflow
+Workflow:
 
 ```text
 workflowId
 conversationId?
-turnId?
-subjectRef
-planVersion
+caseId?/taskId?
 status
-currentCheckpoint
-createdAt
-updatedAt
+planVersion
+checkpoint
 budget/limits refs
+createdAt/updatedAt
 ```
 
-Status:
-
-```text
-planned
-running
-waiting_user
-waiting_approval
-waiting_event
-waiting_time
-succeeded
-partially_succeeded
-failed
-cancelled
-expired
-```
-
-### Workflow Step
+Step:
 
 ```text
 stepId
@@ -270,17 +239,22 @@ dependsOn[]
 status
 attemptCount
 idempotencyKey?
-startedAt
-finishedAt
 resultRef/errorCode
 decisionRef?
 ```
 
-## 9. Copilot Task
+Wait states:
 
-Task é uma unidade de trabalho curta/média, normalmente backed por workflow.
+```text
+WAITING_USER
+WAITING_APPROVAL
+WAITING_EVENT
+WAITING_TIME
+```
 
-Campos conceituais:
+## 11. Task
+
+Copilot-owned product unit backed by Workflow runtime.
 
 ```text
 taskId
@@ -293,17 +267,27 @@ progressRef
 pendingDecisionRefs[]
 resultRefs[]
 evidenceRefs[]
-createdBy/owner
-createdAt/updatedAt
+owner
+timestamps
 ```
 
-Não criar engine separada para Task.
+Task não possui executor próprio.
 
-## 10. Copilot Case
+## 12. Case
 
-Case é unidade de investigação/trabalho prolongado, não necessariamente um novo banco se C0 provar que conceito existente pode ser estendido.
+Copilot Case é Copilot-owned **salvo se C0 provar que um owner corporativo existente deve ser estendido**.
 
-Campos conceituais:
+Se existing Requests/Case infrastructure for reused:
+
+```text
+Copilot Case semantics
+→ Adapter/Port
+→ existing owner
+```
+
+Nunca acesso direto à tabela de outro serviço.
+
+Conceptual fields:
 
 ```text
 caseId
@@ -314,31 +298,15 @@ entityRefs[]
 taskRefs[]
 workflowRefs[]
 evidenceRefs[]
-hypothesis/decision/action refs
-authorized participant refs
+decision/action refs
+participant refs
 roomRef?
-createdAt/updatedAt/closedAt
+timestamps
 ```
 
-Lifecycle conceitual:
+## 13. Evidence Board
 
-```text
-open
-investigating
-waiting
-actioning
-resolved
-closed
-reopened
-```
-
-Case não substitui permissões das entidades fontes.
-
-## 11. Evidence Board
-
-É uma view/estrutura sobre `EvidenceRef`, não um segundo modelo de evidence.
-
-Estados de board podem incluir:
+View/state sobre `EvidenceRef`:
 
 ```text
 accepted
@@ -347,21 +315,25 @@ missing
 superseded
 ```
 
-A classificação não altera a origem do evidence.
+Não cria outro evidence schema.
 
-## 12. Interaction Room
+## 14. Interaction Room
 
-Preferir owner existente.
+C0 deve decidir owner após inventariar salas existentes.
 
-Case armazena `roomRef`; mensagens/arquivos ficam no owner da sala. O Copilot acessa somente via permissions adequadas.
+Preferência:
 
-Não duplicar conteúdo integral da sala dentro do Case.
+```text
+Case stores roomRef
+messages/files stay with room owner
+Copilot uses authorized adapter
+```
 
-## 13. Inbox
+Não duplicar sala nem conteúdo integral se existing owner atende.
 
-Inbox deve preferir materialização/view sobre estados de Task/Case/Workflow/Decision/Watch, não novo workflow owner.
+## 15. Inbox
 
-Item conceitual:
+Copilot API é owner da **semântica de work inbox**; delivery/presentation pode usar Portal/Core infrastructure.
 
 ```text
 inboxItemId
@@ -370,91 +342,69 @@ sourceRef(task/case/workflow/decision/watch)
 status
 priority/severity
 entityRefs[]
-createdAt
-resolvedAt?
+timestamps
 ```
 
-Ler item não executa ação.
+## 16. Event / Watch
 
-## 14. Event / Watch
+`EventEnvelope` é shared Copilot contract para ingestão/correlação de eventos de platform/domain owners.
 
-### EventEnvelope
-
-```text
-eventId
-eventType
-source
-entityRefs[]
-occurredAt
-payloadRef/payload bounded
-correlation
-schemaVersion
-```
-
-### Watch
+Watch:
 
 ```text
 watchId
-owner/user subject
+owner
 condition/ref
 mode OBSERVE|ADVISE|ACT
 entity/capability scope
 status
 cooldown/dedupe policy
 expiresAt?
-createdAt/updatedAt
+timestamps
 ```
 
-ACT continua sujeito a autonomy/Decision Gate/policy no momento do disparo.
+ACT revalida authorization/policy no disparo.
 
-## 15. Organizational Knowledge
+## 17. Organizational Knowledge
 
-Reference/Decision/Experience/Solution Pattern precisam de:
+Reference/Decision/Experience/Solution Pattern records precisam:
 
 ```text
 id/version
-owner
-source refs
+owner/source refs
 provenance
-status draft/review/published/deprecated
+lifecycle
 review/eval metadata
-createdAt/updatedAt
+timestamps
 ```
 
-Não armazenar CoT em Decision/Experience record.
+No CoT.
 
-## 16. Project preferences
+## 18. Copilot preferences/projects
 
-Projeto pode persistir:
+Se projeto/contexto persistente for necessário:
 
 - preferred expertise;
-- knowledge scopes permitidos;
+- allowed knowledge scopes refs;
 - files;
 - artifact templates;
 - guidance.
 
-Não pode conceder permission/capability.
+Nunca concede permission/capability.
 
-## 17. Idempotência e concurrency
+## 19. Idempotência e concurrency
 
-Ordem de preferência para write:
+Write preference:
 
-1. idempotency contract nativo da API;
-2. domain use case idempotente;
-3. orchestration protection apenas quando necessária e explícita.
+1. native Domain API idempotency;
+2. domain use-case idempotency;
+3. Copilot orchestration guard when necessary.
 
-Workflow resume exige:
+Resume exige dedupe, checkpoint consistency, ambiguous-outcome verification and locking/lease strategy where needed.
 
-- dedupe de command/event;
-- atomic checkpoint onde possível;
-- tratamento de ambiguous outcome;
-- locking/lease/concurrency strategy documentada.
+## 20. Retention/LGPD
 
-Nunca assumir que `POST` é retry-safe.
-
-## 18. Retention e LGPD
-
-Por novo dado durável definir:
+Por tabela/record novo definir:
 
 ```text
 purpose
@@ -464,74 +414,60 @@ retention
 access model
 audit
 redaction
-archive/delete/anonymize policy
+archive/delete/anonymize
 ```
 
-Case/Evidence/Room/Experience podem conter dados sensíveis e exigem atenção explícita.
+## 21. Migration strategy
 
-## 19. Migration strategy
-
-Toda migration segue:
+Copilot migrations são independentes e seguem:
 
 ```text
 expand additive
 → compatible readers
 → writers
-→ backfill se necessário
+→ backfill if required
 → cutover
 → monitor
-→ cleanup posterior
+→ cleanup
 ```
 
-Não misturar criação de todos os modelos C5 em uma migration monolítica.
+Não existe migration Chat→Copilot como requisito desta iniciativa.
 
-## 20. State machines
+## 22. State machines
 
 ### Platform Command
-
 ```text
-PROPOSED
-→ VALIDATED
-→ AUTHORIZED_TARGET_RESOLVED
-→ EXECUTED
-→ SUCCEEDED | REJECTED | FAILED
+PROPOSED → VALIDATED → TARGET_RESOLVED → EXECUTED → SUCCEEDED|REJECTED|FAILED
 ```
 
-### Durable Workflow
-
+### Workflow
 ```text
-PLANNED
-→ RUNNING
-   ├→ WAITING_USER ───────┐
-   ├→ WAITING_APPROVAL ───┤
-   ├→ WAITING_EVENT ──────┤
-   └→ WAITING_TIME ───────┤
-                           ↓
-                        RUNNING
-                           │
-              ┌────────────┼────────────┐
-              ↓            ↓            ↓
-         SUCCEEDED    PARTIAL       FAILED/CANCELLED
+PLANNED → RUNNING
+          ├→ WAITING_USER ──────┐
+          ├→ WAITING_APPROVAL ──┤
+          ├→ WAITING_EVENT ─────┤
+          └→ WAITING_TIME ──────┤
+                                 ↓
+                              RUNNING
+                                 ↓
+                  SUCCEEDED|PARTIAL|FAILED|CANCELLED
 ```
 
-### Decision Gate
-
+### Decision
 ```text
-REQUESTED
-→ PENDING
-→ ACKNOWLEDGED | CONFIRMED | APPROVED | REJECTED | EXPIRED | INVALIDATED | BLOCKED
+REQUESTED → PENDING → ACKNOWLEDGED|CONFIRMED|APPROVED|REJECTED|EXPIRED|INVALIDATED|BLOCKED
 ```
 
-## 21. O que explicitamente não criar
+## 23. Explicitamente proibido
 
-- tabela manual endpoint→intent;
-- cópia do OpenAPI por capability;
-- graph replicando tabelas operacionais;
-- evidence model diferente por Case/Workflow/Multimodal;
-- confirmation paralelo ao Decision Gate;
-- Task engine independente do Workflow runtime;
-- Room storage duplicado no Copilot se já houver owner;
-- Watch event envelope próprio se o comum atende;
-- memory paralela por app/case;
+- Chat conversation/session/agent tables como Copilot storage;
+- foreign-key do Copilot para internal Chat row;
+- migration do Chat alterada para feature Copilot;
+- manual endpoint→intent table;
+- graph master copies;
+- feature-specific Evidence;
+- confirmation parallel to Decision Gate;
+- Task engine parallel to Workflow runtime;
+- duplicated Room storage when owner exists;
 - CoT persistence;
-- tokens/credentials em state.
+- credentials/tokens in state.
