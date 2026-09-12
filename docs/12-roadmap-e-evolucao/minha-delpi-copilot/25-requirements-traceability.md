@@ -76,6 +76,25 @@
 | CP-068 | Proibir Business Action por DOM/click em iframe | Portal/AI/policy | C3 + transversal | architecture/security negative | PLANNED |
 | CP-069 | SSO iframe sem token via bridge | Portal/app owner/security | C0/C5 | auth architecture review | TO_INVENTORY |
 | CP-070 | Observabilidade de sessão/comandos do iframe bridge | Portal/Observability | C1/C2/C7 | trace correlation/redaction | PLANNED |
+| CP-071 | Copilot único sem seleção obrigatória de agente | AI API + Chat MFE | C0/C2/C3/C7 | session without agent + UX cutover | PLANNED |
+| CP-072 | Expertise Pack versionado | AI API | C0.S1 + E1/E2 | schema/version/owner | PLANNED |
+| CP-073 | Recuperação semântica de expertise | AI API | C2/C3 + E3/E4 | positive/sibling/negative | LOCKED |
+| CP-074 | Composição de múltiplas expertises no mesmo turno | AI planner | C3/C4 | cross-domain composition | LOCKED |
+| CP-075 | Domain Playbook versionado | AI API/domain owners | C0/C3/C4 | schema/applicability/evidence | PLANNED |
+| CP-076 | Playbook → WorkflowPlan sem endpoint hardcoded | AI planner | C4 | no technical authority duplication | LOCKED |
+| CP-077 | Expertise não concede RBAC/permissão | Policy/Core/AI | transversal | unauthorized capability/knowledge | PLANNED |
+| CP-078 | Multimodalidade independente de agente ativo | AI document vision | C2/C3 | attachment + no-agent test | REVALIDATE |
+| CP-079 | Análise de desenho com provenance/confidence | AI multimodal + Engineering | C3/C4 | multimodal evals | LOCKED |
+| CP-080 | Migrar presets de `AgentSpecializationService` | AI API | C3/C5 + E7 | migration matrix + parity | TO_INVENTORY |
+| CP-081 | Remover gate `userActivatedAgent` para tools operacionais | AI API/policy | C3 + E5 | unauthorized + session-no-agent | BLOCKED_BY_AI_GATE |
+| CP-082 | Remover `soft agent handoff` e substituir por retrieval/replan | AI API + Chat MFE | C3 + E6 | no-handoff + recovery behavior | LOCKED |
+| CP-083 | Projetos configuram preferred expertise sem criar outro runtime | AI API/projects | C2/C5 + E11 | project context + permission negative | TO_INVENTORY |
+| CP-084 | Administração/observabilidade de packs e playbooks | AI admin/observability | C5/C7 + E12 | version/eval/usage/audit | LOCKED |
+| CP-085 | Deprecar/remover roteamento legado por `agent_id` após migração | AI API + Chat MFE | C7 + E13 | residual agent-routing zero | LOCKED |
+| CP-086 | Unknown/new Expertise Pack entra sem patch no planner central | AI API | C5/C7 | unknown-pack generalization | LOCKED |
+| CP-087 | Metamorphic rename de Expertise Pack preserva comportamento semântico | AI evals | C5/C7 | expertise metamorphic gate | LOCKED |
+| CP-088 | Prompt injection em PDF/imagem não altera policy | AI multimodal/policy | transversal | multimodal injection negative | PLANNED |
+| CP-089 | Packs de referência Qualidade + Engenharia | AI/domain owners | C3/C4 | drawing + root-cause + cross-domain eval | LOCKED |
 
 ## 2. Regras de atualização
 
@@ -83,7 +102,9 @@
 - nenhum `CP-*` pode virar `PASS` sem evidence no ledger;
 - `BLOCKED_BY_AI_GATE` só muda quando a dependência OpenAPI-first aplicável tiver evidence atual;
 - se uma funcionalidade for removida do produto, registrar decisão/justificativa; não apagar silenciosamente;
-- requisito de iframe só é `OUT_OF_SCOPE_WITH_DECISION` quando o release/app realmente não utiliza iframe; a existência de iframe no escopo exige classificação/evidence.
+- requisito de iframe só é `OUT_OF_SCOPE_WITH_DECISION` quando o release/app realmente não utiliza iframe; a existência de iframe no escopo exige classificação/evidence;
+- requisito de expertise não pode ser fechado por documentação apenas: precisa de wiring/runtime/eval do candidate correspondente;
+- compatibilidade legada com agents deve possuir exit criteria; `LEGACY_FALLBACK` material impede conclusão do cutover.
 
 ## 3. Status permitidos
 
@@ -130,3 +151,33 @@ SECURITY_GATE_FAIL
 ```
 
 `NOT_INVENTORIED` deve ser zero para apps iframe no escopo do release.
+
+## 6. Coverage específico de expertise/migração
+
+No verify final da migração para Copilot único:
+
+```text
+EXPERTISE_PACKS_ACTIVE
+PLAYBOOKS_ACTIVE
+PACKS_WITHOUT_OWNER
+PACKS_WITHOUT_EVAL
+CROSS_DOMAIN_EVAL_PASS
+SESSION_WITHOUT_AGENT_PASS
+UNAUTHORIZED_CAPABILITY_PASS
+UNAUTHORIZED_KNOWLEDGE_PASS
+SOFT_HANDOFF_RESIDUALS
+AGENT_ROUTING_RESIDUALS
+LEGACY_COMPAT_WITH_EXIT_CRITERIA
+MULTIMODAL_EXPERTISE_PASS
+UNKNOWN_PACK_GENERALIZATION_PASS
+```
+
+Critérios finais:
+
+```text
+PACKS_WITHOUT_OWNER = 0
+PACKS_WITHOUT_EVAL = 0 para packs no release
+SOFT_HANDOFF_RESIDUALS = 0
+AGENT_ROUTING_RESIDUALS = 0 material
+LEGACY_COMPAT_WITH_EXIT_CRITERIA = 0 no cutover final
+```
