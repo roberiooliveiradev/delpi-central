@@ -9,6 +9,8 @@
 |---|---|---|---|---|
 | `portal` Shell | experiência da plataforma | rotas autorizadas em uso, workspace ativo, execução de Platform Commands | `/me/apps`, comandos tipados | regra de negócio server-side, inventar permissões |
 | `CopilotBridge` no Portal | Platform Actions | `PlatformCommandResult` | `PlatformCommand`, rotas autorizadas | aceitar URL arbitrária, bypassar Core |
+| `IframeBridge` no Portal | adapter seguro Portal ↔ iframe | handshake, contexto normalizado, observations de comandos visuais | app/route autorizado, mensagens tipadas do iframe | transmitir JWT, aceitar origin/source arbitrários, executar Business Action por clique |
+| iframe bridge adapter/SDK | integração visual do app iframe | contexto bounded, capabilities visuais declaradas, command results | protocolo do Portal | conceder RBAC, executar business logic central, enviar secret |
 | `plugins/minha-delpi-chat` | UX conversacional | input do usuário, eventos UI, confirmations visuais | send/stream/renderPlan/platform commands | escolher endpoint, autorizar write |
 | `minha-delpi-ai-api` | inteligência transversal | goals/plans, capability selection, synthesis, policy orchestration | Action Catalog, workspace context, RAG, identity | catálogo técnico por app/endpoint |
 | Action Catalog | contrato operacional OpenAPI materializado | actions autorizáveis com schemas | OpenAPI providers | semântica hardcoded externa ao OpenAPI |
@@ -16,6 +18,7 @@
 | Core API | governança de apps/RBAC | `/me`, `/me/apps`, permissões efetivas | Keycloak + dados Core | delegar segurança real ao frontend |
 | APIs de domínio | negócio | OpenAPI, use cases, dados/outcomes | identidade/integrações | depender do Copilot para regra de negócio |
 | MFEs | experiência especializada | workspace context, entity refs, view commands suportados | APIs + Shell | implementar segurança real só na UI |
+| apps iframe | experiência encapsulada/legada | contexto e commands somente quando bridge suportado | Shell/SSO/APIs próprias | ser tratado como API de negócio pelo Copilot |
 | RAG/Knowledge | conhecimento documental | evidências autorizadas | documentos/scopes | executar ação de negócio |
 | Policy/Safety | governança de execução | allow/deny/confirm/sensitivity | identity + capability/action metadata | obedecer instrução do LLM para relaxar policy |
 | Observability | evidência operacional | traces/metrics/audit | eventos do pipeline | persistir CoT, secrets ou JWT |
@@ -88,6 +91,7 @@ Regras:
 
 - bounded size;
 - allowlist/sanitização de campos;
+- `source` pode ser `mfe`, `iframe` ou `portal` sem mudar a semântica do contrato;
 - dados explicitamente atuais prevalecem sobre memória antiga;
 - não é authority de permissão;
 - não carregar dataset inteiro.
@@ -162,6 +166,41 @@ Não armazenar raciocínio privado. Registrar somente plano operacional explicá
 }
 ```
 
+### 2.7 `IframeBridgeEnvelopeV1`
+
+Fonte detalhada: [`26-iframe-copilot-bridge.md`](./26-iframe-copilot-bridge.md).
+
+Envelope conceitual:
+
+```json
+{
+  "protocol": "delpi-iframe-copilot",
+  "version": 1,
+  "sessionId": "opaque-id",
+  "requestId": "uuid",
+  "type": "command",
+  "payload": {}
+}
+```
+
+Handshake esperado:
+
+```text
+iframe HELLO
+→ Portal valida origin/source/appId/autorização/protocolo
+→ Portal retorna BRIDGE_READY
+→ troca de context/commands/results tipados
+```
+
+Regras:
+
+- `sessionId` não é credencial de negócio;
+- `postMessage` não transporta JWT/refresh token;
+- capability visual declarada pelo iframe não concede autorização;
+- Portal intersecta declaration + app/route autorizado + allowlist do protocolo;
+- commands são visuais/genéricos;
+- Business Actions continuam fora do bridge.
+
 ## 3. Producer → consumer graph
 
 ```text
@@ -175,7 +214,22 @@ Core API /me/apps
   → PlatformCommand
   → Chat transport
   → CopilotBridge
-  → Router/AppHost/MFE
+  → Router/AppHost/MFE/IframeBridge
+
+Iframe app
+  → HELLO + declared visual capabilities
+  → IframeBridge validation
+  → context.changed
+  → WorkspaceContext normalization
+  → Portal Context Store
+  → AI turn input
+
+Copilot/Portal
+  → visual command
+  → IframeBridge
+  → iframe handler
+  → command.result / observation
+  → Portal/Copilot feedback
 
 Business OpenAPI
   → importer/index
@@ -206,7 +260,9 @@ MFE
 | apps/rotas autorizados | Core API `/me/apps` |
 | path/method/operationId/schema de business action | OpenAPI + Action Catalog |
 | disponibilidade para agente | binding/allowed actions |
-| workspace visual atual | Portal/MFE context contract |
+| workspace visual atual | Portal/MFE/iframe context contract |
+| iframe origin/render registration | manifesto/Core/Portal registration real a confirmar em C0.S0 |
+| visual capabilities do iframe em runtime | handshake validado + allowlist do protocolo |
 | policy/sensitivity/confirmation | policy layer server-side |
 | conversa/memória | Minha DELPI AI persistence |
 | navegação atual | Portal Router/Shell |
@@ -225,6 +281,12 @@ Marcar `TO_INVENTORY` até C0.S0 provar:
 - shared package adequado para tipos Portal/MFE;
 - persistence atual de turn metadata/context;
 - idempotency support nas APIs de write;
-- policy/sensitivity metadata atual no Action Catalog.
+- policy/sensitivity metadata atual no Action Catalog;
+- lista real de apps `iframe` e `external`;
+- onde origin/entry/renderMode são authority hoje;
+- se algum iframe já usa `postMessage`/bridge;
+- SSO/auth atual de cada iframe;
+- CSP/frame policies atuais;
+- lifecycle de iframe no `AppHost`/Portal.
 
 Não preencher esses pontos por inferência.
