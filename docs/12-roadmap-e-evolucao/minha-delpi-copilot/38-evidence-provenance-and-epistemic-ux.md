@@ -2,7 +2,8 @@
 
 **Status:** thematic spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Foundation:** `SourceRef`, `EvidenceRef`, `OutcomeRef` e epistemic classes são compartilhados em C0.
+**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
+**Foundation:** `SourceRef`, `EvidenceRef`, `OutcomeRef` e epistemic classes em C0; runtime base em C3.
 
 ## 1. Regra central
 
@@ -18,81 +19,30 @@ source
 ## 2. Epistemic classes
 
 ```text
-FACT
-→ observado em fonte autorizada
-
-CALCULATION
-→ derivado de fatos por método identificável
-
-HYPOTHESIS
-→ explicação possível ainda não confirmada
-
-CONCLUSION
-→ inferência sustentada por evidence suficiente
-
-RECOMMENDATION
-→ ação sugerida a partir de facts/conclusions/policy
+FACT           → observado em fonte autorizada
+CALCULATION    → derivado por método identificável
+HYPOTHESIS     → explicação possível não confirmada
+CONCLUSION     → inferência sustentada por evidence suficiente
+RECOMMENDATION → ação sugerida a partir de facts/conclusions/policy
 ```
 
 Nunca apresentar hipótese como fato.
 
 ## 3. EvidenceRef
 
-Usar o primitive compartilhado. Exemplo conceitual:
+Usar primitive compartilhado C0. Campos conceituais incluem evidenceId, sourceRef, kind, entityRefs, observedAt, freshness, confidence quando metodologicamente válida e limitations.
 
-```json
-{
-  "evidenceId":"uuid",
-  "sourceRef":"source-ref-id",
-  "kind":"api_fact",
-  "entityRefs":[],
-  "observedAt":"ISO-8601",
-  "freshness":"current",
-  "confidence":1.0,
-  "limitations":[]
-}
-```
-
-Campos finais dependem do C0 contract.
-
-Não criar EvidenceRef diferente para Case, Workflow, Graph ou multimodal.
+Não criar EvidenceRef diferente para Case, Workflow, Graph, API ou multimodal.
 
 ## 4. Synthesis claim
 
-Uma afirmação de resposta pode referenciar EvidenceRefs e possuir classificação epistemic, confidence/limitations quando metodologicamente válidos.
+Afirmação de resposta pode referenciar EvidenceRefs e classificação epistemic sem exigir durable `ClaimV1` próprio. Persistir claim somente se C0/C6 provar lifecycle/owner real.
 
-Isso **não exige um novo durable `ClaimV1`** por padrão. Use DTO/presentation structure do pipeline existente, a menos que C0 prove necessidade de persistência/owner próprio.
+## 5. SourceRef / Freshness
 
-Exemplo conceitual de apresentação:
+SourceRef representa API/result, domain entity, document, knowledge record, event ou calculation inputs.
 
-```json
-{
-  "type":"HYPOTHESIS",
-  "statement":"A troca de lote pode estar associada ao aumento de refugo",
-  "evidenceRefs":["e1","e2"],
-  "confidence":0.68,
-  "limitations":["certificado do lote anterior ainda não comparado"]
-}
-```
-
-Não criar falsa precisão de confidence sem método.
-
-## 5. SourceRef
-
-SourceRef representa origem verificável, como:
-
-- API/result ref;
-- domain entity;
-- document/attachment;
-- knowledge record;
-- event;
-- calculation inputs.
-
-Evidence refere SourceRef; não repetir metadata de source em formatos incompatíveis.
-
-## 6. Freshness
-
-Semântica conceitual:
+Freshness conceitual:
 
 ```text
 current/live
@@ -102,41 +52,33 @@ stale
 unknown
 ```
 
-Fonte stale/unknown pode ser usada somente com limitação coerente quando o objetivo exigir atualidade.
+Stale/unknown exige limitação coerente quando atualidade importa.
 
-## 7. Multimodal Evidence
+## 6. Multimodal Evidence — C3
 
-Para documento/desenho/imagem:
+Documento/desenho/imagem pode carregar:
 
 - file/source ref;
-- page/sheet;
-- region;
+- page/sheet/region;
 - observation/extracted text;
-- extraction method;
-- extractor/model version;
+- method/extractor/model version;
 - confidence;
 - limitations;
-- revision quando relevante.
+- document revision.
 
-Finding importante sem localização/provenance é incompleto quando a tool consegue fornecer essa informação.
+Finding importante sem localização/provenance é incompleto quando a tool pode fornecer isso.
 
-## 8. Business/API Evidence
+## 7. Business/API Evidence — C4/C5
 
-Normalized read/write outcome pode gerar evidence/source refs contendo:
+Normalized read/write outcomes podem produzir source/evidence refs com entity/action result, timestamps/version, filters/query context material e outcome status.
 
-- entity/action result;
-- timestamps/version;
-- filters/query context quando material;
-- outcome status;
-- freshness.
+Não copiar payload sensível inteiro apenas para provenance.
 
-Não copiar payload sensível inteiro só para provenance.
+## 8. Graph Evidence — C4
 
-## 9. Graph Evidence
+RelationshipRef possui provenance própria. Relação inferida permanece explicitamente inferred e não vira FACT automaticamente.
 
-RelationshipRef possui provenance própria. Traversal pode produzir evidence sobre relações/fatos, mas relação inferida continua rotulada como inferred.
-
-## 10. Evidence Board
+## 9. Evidence Board — C6
 
 Case organiza os mesmos EvidenceRefs:
 
@@ -149,70 +91,51 @@ superseded
 
 Board state não altera source/provenance original.
 
-## 11. Artifacts
+## 10. Artifacts / conflicting sources / RBAC
 
-Relatório/artefato pode preservar refs/footnotes/source metadata permitidos, sem copiar secrets/PII desnecessários.
+Artifacts podem preservar refs/footnotes permitidos sem copiar PII/secrets desnecessários.
 
-## 12. Conflicting evidence
+Quando fontes confiáveis divergem, mostrar conflito/recency/authority e manter limitation até resolução.
 
-Quando fontes confiáveis divergem:
-
-- não escolher silenciosamente;
-- mostrar conflito/recency/authority;
-- buscar source owner atual quando possível;
-- manter limitation até resolução.
-
-## 13. RBAC
-
-Evidence reference não concede acesso ao source.
-
-Ao abrir/reconsultar source:
+EvidenceRef não concede source access:
 
 ```text
-EvidenceRef
-→ SourceRef
-→ current permission check
-→ source fetch
+EvidenceRef → SourceRef → current permission check → source fetch
 ```
 
-Revogação precisa ser respeitada.
+## 11. Observabilidade
 
-## 14. Observabilidade
+Sem CoT, deve ser possível responder quais sources sustentaram outcome/conclusion, freshness, conflicts, extractor/version, hypotheses não validadas e quais evidence refs suportaram uma ação.
 
-Sem CoT, deve ser possível responder:
-
-- quais sources sustentaram outcome/conclusion?;
-- freshness?;
-- evidence conflicts?;
-- qual extractor/version?;
-- hypothesis permaneceu não validada?;
-- qual action usou quais evidence refs?.
-
-## 15. Implementation mapping
+## 12. Phase mapping
 
 ```text
 C0 → Source/Evidence/Outcome contracts + freshness semantics
-C2 → multimodal evidence + epistemic synthesis
-C3 → API/Graph outcome/evidence normalization
-C5 → Case Evidence Board sobre o mesmo model
-C6 → Experience/Knowledge promotion com provenance
-C7 → Simulation results também separados de facts
+C3 → Copilot-owned multimodal Evidence + epistemic synthesis foundation
+C4 → Business read/Graph outcome/evidence normalization
+C5 → governed-write outcomes/evidence
+C6 → Case Evidence Board + Experience/Knowledge promotion
+C7 → Simulation outputs separados de facts
 ```
 
-## 16. Tests
+## 13. Independence
+
+Evidence runtime e storage pertencem à Copilot API. Não usar evidence/session/output models do Minha DELPI Chat como authority.
+
+## 14. Tests
 
 - FACT com source;
 - calculation com inputs/method;
 - hypothesis label;
-- stale source;
-- conflicting sources;
+- stale/conflicting source;
 - RBAC revoked source;
 - multimodal page/region;
 - superseded revision;
 - artifact refs;
 - no invented evidence/source IDs;
-- data injection não altera policy.
+- data injection não altera policy;
+- Chat-offline independence.
 
-## 17. Gate
+## 15. Gate
 
-Análise avançada não é madura se não diferencia fato/hipótese ou perde provenance de evidence material.
+Análise avançada não é madura se não diferencia fato/hipótese, perde provenance ou depende do Chat para recuperar/armazenar Evidence.
