@@ -2,7 +2,8 @@
 
 **Status:** thematic spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Foundation:** Decision Gate contracts nascem em C0; engine em C4; Simulation em C7.
+**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
+**Foundation:** Decision Gate contracts nascem em C0; engine e `wait_approval` durável em C5; Simulation em C7.
 
 ## 1. Decision Gate
 
@@ -189,12 +190,15 @@ Simulation:
 
 ```text
 C0 → Decision contracts/semantics
-C4 → Decision Gate Engine before production writes
-C5 → wait_approval durability
+C5 → Decision Gate Engine before production writes + wait_approval durability
 C7 → Simulation pilots and autonomy-selected gates
 ```
 
-## 14. Gate
+## 14. Independence
+
+Decision Gates e Simulation pertencem à `minha-delpi-copilot-api`. Nenhum lifecycle, confirmation state ou approval runtime do Minha DELPI Chat é dependency do Copilot.
+
+## 15. Gate
 
 - nenhum write material bypassa required Decision Gate;
 - Simulation só é chamada assim quando existe cálculo/modelo governado;
