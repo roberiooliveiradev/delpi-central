@@ -2,270 +2,211 @@
 
 ## 1. Objetivo
 
-Evitar que o Copilot seja considerado pronto apenas porque um fluxo demonstrativo funciona. Cada fase precisa provar arquitetura, segurança, integração, UX, especialização e generalização.
-
----
+Evitar fechamento prematuro por demo funcional. Cada fase precisa provar foundation, wiring, segurança, generalização e evidence no candidate vigente.
 
 ## 2. DoD global
 
-O programa só pode ser considerado maduro quando:
-
 ```text
-[ ] existe uma única identidade/runtime de Copilot para o produto
-[ ] capabilities possuem owner e fonte de verdade clara
-[ ] permissions do Copilot são subconjunto das permissões do usuário
-[ ] Expertise Packs não concedem permission nem duplicam contrato técnico
-[ ] Domain Playbooks não carregam endpoint/path/method/operationId como authority
-[ ] especializações podem compor entre si no mesmo turno
-[ ] novo Expertise Pack compatível entra sem patch no planner central
-[ ] Platform Actions são tipadas e validadas pelo Portal
-[ ] Business Actions reutilizam use cases/APIs da UI
-[ ] OpenAPI é authority técnica para actions externas
-[ ] nenhum core selector depende de hardcode por endpoint/provider
-[ ] Workspace Context é estruturado e versionado
-[ ] multimodalidade produz evidence com provenance/confidence quando aplicável
-[ ] tools multimodais não exigem agente selecionado quando policy/capability permitem
-[ ] writes possuem sensitivity + confirmation policy
-[ ] destructive actions possuem confirmação forte/auditoria
-[ ] workflows compostos suportam partial failure/checkpoints
+[ ] authorities possuem owner claro
+[ ] shared primitives não possuem duplicação material
+[ ] permissions do Copilot ⊆ permissões efetivas do usuário
+[ ] UI/Copilot convergem para os mesmos use cases
+[ ] OpenAPI + Action Catalog são authority técnica de Business Actions
+[ ] Workspace Context não concede autorização
+[ ] Expertise/Playbook não concedem autorização
+[ ] Entity/Evidence/Decision/Workflow/Event contracts são compartilhados
+[ ] Business Graph não replica dados operacionais
+[ ] writes usam Decision Gate/policy/idempotency/audit conforme risco
+[ ] durable resume não duplica write
 [ ] activity representa estado real
-[ ] reload não duplica write
-[ ] app/provider/expertise desconhecido compatível funciona por contrato
-[ ] soft agent handoff não é necessário no produto final
-[ ] agent_id/chat_mode não são authority de routing no cutover final
-[ ] evals e evidências pertencem ao candidate final
-[ ] observabilidade permite explicar seleção/outcome sem chain-of-thought
+[ ] app/provider/pack/relation desconhecido funciona por contrato quando no escopo
+[ ] eval evidence pertence ao candidate final
+[ ] observabilidade não persiste chain-of-thought
 ```
 
----
-
-## 3. DoD Fase 0 — Contratos
+## 3. DoD C0 — Foundation
 
 ```text
-[ ] Capability contract versionado
-[ ] PlatformCommand contract versionado
-[ ] WorkspaceContext contract versionado
-[ ] ExpertisePack contract versionado ou equivalente canônico reutilizado
-[ ] ExpertiseSelection/Context contract definido
-[ ] DomainPlaybook contract versionado ou equivalente canônico reutilizado
-[ ] multimodal evidence/provenance contract definido quando necessário
-[ ] sensitivity model definido
-[ ] autonomy levels definidos
-[ ] audit event schema definido
-[ ] boundaries Clean Architecture aprovados
-[ ] inventário de agents/skills/specialization/handoff concluído
-[ ] migration classification KEEP/MIGRATE/DEPRECATE/REMOVE registrada
-[ ] positive/negative contract tests
+[ ] C0.S0 inventário total com evidence
+[ ] authorities/bounded contexts congelados
+[ ] Correlation/Entity/Relationship/Source/Evidence/Outcome contracts definidos/reutilizados
+[ ] Platform/Workspace/Iframe contracts definidos/reutilizados
+[ ] Expertise/Playbook contracts definidos/reutilizados
+[ ] Decision Gate contract definido/reutilizado
+[ ] Workflow/Task/Case lifecycle contracts definidos/reutilizados
+[ ] EventEnvelope definido/reutilizado
+[ ] persistence boundaries/ports definidos
+[ ] versioning/error/retry/idempotency/freshness semantics definidos
+[ ] contract harness RED/GREEN reproduzível
+[ ] nenhuma second authority material
+[ ] FOUNDATION_FREEZE=PASS
 ```
 
----
+C1 não inicia sem C0 completo.
 
-## 4. DoD Fase 1 — Platform Actions
+## 4. DoD C1 — Platform/Context
 
 ```text
-[ ] catálogo deriva apps/rotas autorizados
-[ ] portal.open_app funcional
-[ ] portal.open_route funcional
-[ ] entity deep link piloto funcional
-[ ] CopilotBridge valida comandos
-[ ] URL arbitrária é rejeitada
-[ ] capability unauthorized não chega ao planner
-[ ] navigation activity exibida
-[ ] app fictício registrado funciona sem patch no planner
-[ ] F5 não quebra conversa/contexto
+[ ] authorized route projection deriva do Core
+[ ] CopilotBridge valida/revalida commands
+[ ] open app/route funcional
+[ ] open entity quando contrato existir
+[ ] URL arbitrária rejeitada
+[ ] Workspace Context bounded/seguro
+[ ] MFE adapter reutilizável
+[ ] iframe PORTAL_ONLY funcional
+[ ] bridge avançado possui security negatives quando usado
+[ ] unknown app/iframe não exige patch central
+[ ] F5/logout/stale context corretos
+[ ] send/stream parity
 ```
 
----
-
-## 5. DoD Fase 2 — Workspace Context e Expertise Context foundation
+## 5. DoD C2 — Intelligence Core
 
 ```text
-[ ] Portal agrega contexto dos MFEs/iframes aplicáveis
-[ ] appId/routeId estruturados
-[ ] entityRefs funcionais
-[ ] filters funcionais
-[ ] context chips exibidos
-[ ] usuário pode remover contexto
-[ ] mensagem explícita sobrescreve contexto antigo
-[ ] dados sensíveis não vazam via store/context
-[ ] MFE sem adapter continua funcionando
-[ ] reload preserva somente o que é seguro/persistível
-[ ] turno sem agent_id continua funcional
-[ ] expertise retrieval usa contexto bounded e não depende de agent selection
+[ ] nova sessão não depende de agent_id
+[ ] Expertise Catalog/Repository canônico
+[ ] retrieval positive/sibling/negative
+[ ] unknown pack sem core patch
+[ ] cross-domain expertise composition
+[ ] Playbook applicability/versioning
+[ ] Knowledge ACL não é ampliada por expertise/project
+[ ] multimodal evidence possui provenance/confidence/limitations
+[ ] FACT/CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION semanticamente distinguidos
+[ ] injection negatives passam
+[ ] shadow agent migration possui exit criteria
+[ ] operational activity sem CoT
+```
+
+## 6. DoD C3 — Business Reads + Graph
+
+```text
+[ ] gates OpenAPI-first aplicáveis PASS
+[ ] Business Capability Projection não duplica contrato técnico
+[ ] known/sibling/unknown/metamorphic reads passam
+[ ] args/schema/RBAC corretos
+[ ] normalized outcome/evidence consistente
+[ ] Graph usa EntityRef/RelationshipRef compartilhados
+[ ] traversal é permission-aware
+[ ] authoritative vs inferred relationship rastreável
+[ ] source data é buscado no owner
+[ ] cycle/depth budget existe
+[ ] sibling relation/entity não exige planner hardcode
+```
+
+## 7. DoD C4 — Governed Writes
+
+```text
+[ ] Decision Gate Engine implementa níveis canônicos
+[ ] impact preview corresponde ao payload efetivo
+[ ] arguments/evidence change invalida decisão quando material
+[ ] backend revalida RBAC/policy
+[ ] idempotency/concurrency tratadas
+[ ] write outcome verificado
+[ ] ambiguous outcome não vira sucesso narrativo
+[ ] audit/deep-link/evidence presentes
+[ ] operational tools não dependem de agent ativo após cutover
+[ ] soft handoff removido do fluxo alvo
+[ ] iframe DOM write rejeitado
+```
+
+## 8. DoD C5 — Durable Work
+
+```text
+[ ] workflow persistence/checkpoint
+[ ] wait_user
+[ ] wait_approval
+[ ] wait_event
+[ ] timeout/cancel
+[ ] DAG dependencies
+[ ] parallel safe reads
+[ ] retry/idempotency
+[ ] crash/restart sem duplicate write
+[ ] Task usa workflow runtime, sem engine própria
+[ ] Case usa refs/evidence compartilhados
+[ ] Evidence Board não duplica evidence model
+[ ] Room respeita source permissions
+[ ] Inbox materializa work state sem disparar write por leitura
+[ ] reload/resume consistente
+```
+
+## 9. DoD C6 — Proactivity/Ecosystem/Learning
+
+```text
+[ ] Watch OBSERVE/ADVISE event-driven quando possível
+[ ] dedupe/cooldown/expiry/revalidation
+[ ] AI-ready SDK/templates
+[ ] readiness scanner baseado em facts
+[ ] unknown app/pack onboarding sem hardcode
 [ ] project preferences não concedem permission
+[ ] Reference/Decision/Experience knowledge possuem provenance/version/owner
+[ ] feedback não muda production behavior automaticamente
+[ ] Expertise Studio draft/review/eval/publish/rollback
+[ ] admin RBAC/coverage
 ```
 
----
-
-## 6. DoD Fase 3 — Business Action Parity + cutover operacional
-
-Para cada capability piloto:
+## 10. DoD C7 — Optimization/Autonomy/Rollout
 
 ```text
-[ ] função existe na UI
-[ ] owner/use case identificado
-[ ] API/OpenAPI disponível
-[ ] schema correto
-[ ] permission alinhada
-[ ] sensitivity correta
-[ ] confirmação correta
-[ ] backend revalida autorização
-[ ] positive/sibling/negative passam
-[ ] usuário não autorizado é bloqueado
-[ ] action funciona pelo Copilot sem DOM automation
-[ ] resultado apresentado corretamente
-[ ] audit/correlation presente em writes
+[ ] L5 OFF por default e allowlisted
+[ ] Watch ACT sujeito a autonomy/Decision Gate
+[ ] Simulation reproduzível e separada de Apply
+[ ] Model Router baseado em baseline e data policy
+[ ] provider incompatível é bloqueado
+[ ] legacy agent-routing residual material = 0
+[ ] canary/cohort/rollback
+[ ] final R1–R11
+[ ] accessibility/security/generalization
+[ ] CP coverage sem UNMAPPED
 ```
 
-Para o cutover de especialização:
-
-```text
-[ ] operational tools não dependem de userActivatedAgent como authority
-[ ] sessão sem agent_id consegue descobrir/executar capability permitida
-[ ] sessão legada continua segura durante janela de compatibilidade
-[ ] AgentSpecialization presets úteis possuem migration mapping
-[ ] soft handoff foi substituído por retrieval/replan/clarify
-[ ] expertise não amplia allowed actions
-[ ] unauthorized capability/knowledge negatives passam
-```
-
----
-
-## 7. DoD Fase 4 — Agentic Workflows + Domain Playbooks
-
-```text
-[ ] compound decomposition cobre goals materiais
-[ ] DAG/dependencies corretos
-[ ] reads paralelos somente quando seguros
-[ ] writes serializados quando necessário
-[ ] clarify pergunta somente missing required
-[ ] replan não reduz safety
-[ ] partial failure é representado
-[ ] checkpoints persistidos
-[ ] confirmation cobre payload efetivo
-[ ] cancelamento pelo usuário funciona
-[ ] budget/loop limit existe
-[ ] workflow audit trail completo
-[ ] playbook aplicável pode orientar WorkflowPlan sem endpoint técnico hardcoded
-[ ] dois ou mais Expertise Packs podem compor no mesmo workflow
-[ ] etapas de playbook mostram evidence missing em vez de inventar conclusão
-```
-
----
-
-## 8. DoD Fase 5 — AI-ready ecosystem + Expertise ecosystem
-
-```text
-[ ] checklist integrado ao padrão de novos apps
-[ ] novo app entra no catálogo por contrato
-[ ] novo app pode publicar workspace context
-[ ] deep link de entidade pode ser declarado
-[ ] OpenAPI quality gate existe
-[ ] smoke unknown-app existe
-[ ] app novo não exige if/selector no Copilot core
-[ ] capability coverage mensurável
-[ ] novo Expertise Pack entra por contrato/indexação
-[ ] novo Domain Playbook entra sem criar agente
-[ ] pack/playbook possui owner, versão e eval status
-[ ] admin/readiness mostra cobertura de expertise/playbooks
-```
-
----
-
-## 9. DoD Fase 6 — Autonomia governada
-
-```text
-[ ] policy L0–L5 explícita
-[ ] auto-execution somente allowlisted
-[ ] expertise/playbook não conseguem elevar autonomia
-[ ] emergency stop disponível
-[ ] alteração de policy auditada
-[ ] budgets/cost guardrails
-[ ] safety evals antes de rollout
-[ ] progressive rollout/canary
-[ ] rollback definido
-```
-
----
-
-## 10. DoD Fase 7 — Cutover final de Copilot único
-
-```text
-[ ] UX não exige seleção/troca de agente por departamento
-[ ] soft handoff residual = 0 material
-[ ] agent-required operational gate residual = 0 material
-[ ] unmigrated agent specialization residual = 0 material
-[ ] LEGACY_FALLBACK de agent routing = 0
-[ ] project context está separado de identidade do Copilot
-[ ] telemetry/evals do candidate final confirmam single-Copilot mode
-[ ] unknown expertise generalization passa
-[ ] metamorphic expertise rename passa
-[ ] rollout/rollback da migração foi exercitado
-```
-
----
-
-## 11. Evals obrigatórios antes de release material
+## 11. Evals obrigatórios conforme escopo
 
 ```text
 positive
 sibling
 negative/no-tool
 unauthorized
+TOCTOU
 required missing
-write confirmation
-destructive confirmation
 workspace follow-up
-compound
-cross-domain expertise composition
-session without agent
-legacy session compatibility
-unknown expertise pack
-expertise metamorphic rename
-playbook applicability
-playbook evidence missing
-multimodal document/drawing
-multimodal prompt injection
+unknown app/provider/pack/iframe/relation
+metamorphic rename
+prompt/tool/context/document/event injection
+Decision Gate
+idempotency/replay
 partial failure
-persist/reload/F5
-unknown provider
-unknown app
-metamorphic provider/path/operationId rename
-prompt/tool-output injection
+persist/reload/restart
 send/stream parity
 latency/cost
 ```
 
 ## 12. Critério de não conclusão
 
-Qualquer item material em:
+Estados bloqueantes quando materiais:
 
 ```text
 PARTIAL
 LEGACY_FALLBACK
-SHADOW_ONLY
+SHADOW_ONLY sem exit criteria
 INCONCLUSIVE
 PENDING
-TODO/FIXME/HACK
-SOFT_AGENT_HANDOFF_RESIDUAL
-AGENT_REQUIRED_TOOL_GATE
-UNKNOWN_AGENT_CONSUMER
+TODO/FIXME/HACK/TEMPORARY
+TEST_NOT_RUN
+STALE_EVIDENCE
+DUPLICATE_AUTHORITY
+FOUNDATION_DRIFT
 ```
 
-não pode ser reclassificado como “não bloqueante” se fizer parte do objetivo original da fase/cutover.
-
-## 13. Evidência
-
-Cada release deve registrar:
+## 13. Evidence de release
 
 ```text
 GIT_SHA
-config/model/provider
+config/model/provider hashes
 dataset/eval hashes
-expertise pack versions/hashes
-playbook versions/hashes
-multimodal extractor/model versions quando aplicável
-migrations/contracts
+OpenAPI/Action Catalog hashes
+expertise/playbook versions quando materiais
+schema/migration versions
 unit/integration/live results
 security tests
 residual scan
@@ -273,12 +214,8 @@ known limitations
 rollout decision
 ```
 
-Evidence de outro SHA/config/pack version não fecha o candidate atual quando houve mudança material.
-
 ## 14. Outcome final
 
-O DoD real não é “a IA respondeu”.
+O DoD não é “a IA respondeu”.
 
-É:
-
-> O usuário autorizado conseguiu atingir o objetivo de forma correta, segura, observável e reproduzível usando as mesmas regras de negócio da plataforma, com o mesmo Copilot compondo automaticamente o conhecimento e os métodos de domínio necessários sem exigir troca de agente.
+> O usuário autorizado atingiu o objetivo corretamente, com evidência, governança, continuidade e auditabilidade, usando os mesmos contratos da plataforma sem criar foundations paralelas.
