@@ -2,7 +2,8 @@
 
 **Status:** mapa canônico de integração  
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Baseline factual:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)
+**Baseline factual:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
+**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
 
 ## 1. Princípio
 
@@ -30,13 +31,16 @@ Responsável por:
 - planner;
 - Expertise/Playbooks;
 - Knowledge/RAG;
-- multimodal;
+- multimodal/media orchestration;
+- speech/vision adapters;
 - Evidence/Provenance;
 - policy/Decision Gates;
 - generic execution;
 - Business Graph projection;
 - durable work;
 - Task/Case/Watch/Inbox semantics;
+- Meeting session/artifact semantics;
+- Frontline assistance semantics;
 - model/provider abstraction;
 - audit/evals/admin.
 
@@ -56,11 +60,13 @@ Reutiliza:
 Surfaces:
 
 ```text
-full page
-Portal global panel
+GLOBAL
+WORKSPACE
+MEETING
+FRONTLINE
 ```
 
-Mesmo API/runtime em ambas.
+Mesmo API/runtime em todas.
 
 ## 4. Minha DELPI Chat
 
@@ -95,9 +101,10 @@ Adicionar/evoluir genericamente:
 - Workspace Context Bridge;
 - PlatformCommand execution;
 - deep-link/entity resolver;
-- iframe bridge when needed.
+- iframe bridge when needed;
+- host/device capability metadata bounded quando necessário.
 
-Portal não implementa planner/RAG/actions/policy persistence.
+Portal não implementa planner/RAG/actions/media intelligence/policy persistence.
 
 ## 6. Core API
 
@@ -122,9 +129,11 @@ Copilot API → validate JWT
 Core/Domain APIs → authorization context/final rules
 ```
 
+Shared device não muda essa regra: `device identity != user identity`.
+
 ## 8. Gateway
 
-Novo paths próprios, conceitualmente:
+Novos paths próprios, conceitualmente:
 
 ```text
 /apps/minha-delpi-copilot/
@@ -133,7 +142,7 @@ Novo paths próprios, conceitualmente:
 
 Dev/prod parity mandatory.
 
-Streaming/SSE/socket tuning only if the chosen transport requires it.
+Streaming/SSE/WebSocket/WebRTC-related tuning only if the chosen transport requires it and C0/C3 evidence proves need.
 
 ## 9. Infra/Compose
 
@@ -148,6 +157,8 @@ No `depends_on` Chat.
 
 Physical shared DB/network allowed only with logical ownership separation.
 
+Media/object storage and realtime infra are reused/created only after C0 inventory.
+
 ## 10. plugin-ui / federation
 
 Copilot MFE reuses shared design system/federation.
@@ -156,19 +167,22 @@ Do not source-import Portal/Chat components.
 
 Promote a Copilot component to `plugin-ui` only when truly transversal and consumers are proven.
 
+Frontline may require large-touch/accessibility components; promotion remains subject to the same shared-component gate.
+
 ## 11. Domain APIs
 
 Remain business owners.
 
-Copilot expects:
+Copilot expects, where relevant:
 
 - OpenAPI quality;
 - stable entity IDs;
 - clear auth;
-- idempotency where applicable;
+- idempotency;
 - verified outcomes;
-- timestamps/version/freshness when material;
-- domain events where domain already supports them.
+- timestamps/version/freshness;
+- domain events;
+- production/maintenance/quality context sources.
 
 No special “AI endpoint” if normal use case already exists.
 
@@ -190,6 +204,8 @@ AI-ready integration can expose:
 - result/source presentation.
 
 Business logic/RBAC stay server-side.
+
+Industrial context should still use canonical EntityRefs rather than bespoke Copilot-only IDs.
 
 ## 14. Iframes
 
@@ -216,15 +232,81 @@ Experience
 Semantic
 ```
 
-## 16. Multimodal
+Meeting/process/frontline observations create candidates only; publishing remains governed.
+
+## 16. Multimodal/media
 
 Copilot implements own adapters/runtime.
 
 Existing Chat document-vision code = reference only.
 
-Output normalizes to shared EvidenceRef.
+Target integrations, only as proven/needed:
 
-## 17. Rooms
+```text
+native document extraction
+OCR/Vision
+Speech-to-Text
+Text-to-Speech
+camera/image/video ingest
+screen-share ingest
+media storage
+realtime transport
+```
+
+Output normalizes to EvidenceRef and optional MediaRef if C0 freezes that primitive.
+
+Raw-media persistence is not default.
+
+## 17. Meeting
+
+Meeting Mode belongs to the Copilot product:
+
+```text
+Copilot MFE Meeting surface
+→ Copilot API meeting/media use cases
+→ authorized Core/Domain/Knowledge reads
+→ Evidence/Decision candidate actions
+→ Task/Case/Room/Workflow
+```
+
+No domain needs a “meeting API” merely for Copilot to query it.
+
+Meeting transcript, summary, confirmed decision and executed action remain distinct.
+
+## 18. Frontline
+
+Frontline integration target:
+
+```text
+user
++ device/workstation
++ WorkspaceContext(EntityRefs)
++ voice/camera when allowed
+→ Copilot
+→ Domain APIs/Knowledge/Graph
+→ Evidence/guidance
+→ governed escalation/action
+```
+
+Relevant external owners can include production, maintenance, quality, procedures/training and device/platform infrastructure.
+
+No `FrontlineContext` or frontline-specific action executor by default.
+
+## 19. Shared devices
+
+For tablet/kiosk/production terminal/meeting room device:
+
+```text
+user identity
+≠ device identity
+≠ operational context
+```
+
+Integration must support session switch/logout/cleanup and prevent previous-user state leakage.
+
+Device metadata may describe capabilities but never grant business authorization.
+
+## 20. Rooms
 
 C0 inventories Portal Comercial Interaction Rooms and any other collaboration owner.
 
@@ -238,31 +320,32 @@ Target relation:
 
 ```text
 CaseRef ↔ RoomRef
+MeetingArtifactRef ↔ Case/Room when useful
 ```
 
 Do not duplicate room message/file storage when owner exists.
 
-## 18. Notifications/Inbox
+## 21. Notifications/Inbox
 
 Copilot owns Inbox/work semantics.
 
 Core/Portal may provide shared notification delivery/presentation via adapter.
 
 ```text
-Copilot work/decision/watch state
+Copilot work/decision/watch/meeting state
 → notification adapter
 → Core/Portal delivery when appropriate
 ```
 
-## 19. Events/jobs/workers
+## 22. Events/jobs/workers
 
 C0 inventories existing infrastructure first.
 
-Copilot may reuse transport/worker infrastructure by neutral contract, but owns its own work/watch semantics.
+Copilot may reuse transport/worker infrastructure by neutral contract, but owns its work/watch/media-job semantics.
 
-No parallel event bus without proven gap.
+Long media processing may use async jobs/workflows; do not create event bus/worker stack without proven gap.
 
-## 20. Business Graph
+## 23. Business Graph
 
 ```text
 Domain Entity IDs/relationships
@@ -274,36 +357,93 @@ Domain Entity IDs/relationships
 
 Source data stays in domain owners.
 
-## 21. Decision/Approval
+Media/Meeting/Frontline references connect through canonical EntityRefs/Evidence rather than copying domain data.
+
+## 24. Decision/Approval
 
 Copilot owns DecisionGate semantics. Existing approval infrastructure may be adapted when compatible.
 
 Final Domain API authorization remains required.
 
-## 22. Durable Work
+A meeting statement, voice command or visual finding is only input/candidate; it cannot bypass the Decision Gate.
+
+## 25. Durable Work
 
 Copilot owns Workflow semantics/state.
 
 Existing queues/schedulers/locks/event transport may be reused through adapters after C0 inventory.
 
-## 23. Model/provider
+Meeting/Frontline use the same runtime for action follow-up.
+
+## 26. Model/provider
 
 Copilot owns provider ports/adapters and later Compute Policy.
 
 Provider names/config do not leak into domain/application.
 
-## 24. End-to-end integration
+Media providers are subject to the same data policy and observability rules.
+
+## 27. Privacy/consent/retention
+
+C0 must identify real governance owners/contracts.
+
+Copilot enforces policy for:
+
+```text
+transient capture
+transcript
+raw audio
+raw video
+screen capture
+derived Evidence
+meeting artifacts
+frontline records
+```
+
+Do not assume a single retention period or that capture implies persistence.
+
+## 28. Industrial/OT integration
+
+Default integration is **read/observe**, when an approved owner contract exists:
+
+```text
+OT/domain telemetry
+→ approved read adapter
+→ EntityRef/Evidence
+→ Copilot analysis/recommendation
+```
+
+Default prohibited:
+
+```text
+free-form LLM
+→ generic action executor
+→ PLC/CNC/robot/machine
+```
+
+Future actuation requires separate industrial safety architecture with deterministic command schema, allowlist, machine-state/preconditions, industrial owner, independent interlocks, authorization, test/simulation, fail-safe and audit.
+
+Autonomy L5 does not grant OT permission.
+
+## 29. Quality/computer vision
+
+Visual finding integrates as Evidence/Hypothesis.
+
+Official inspection/quality owner remains authority unless an automated inspection capability has been separately validated for that decision.
+
+## 30. End-to-end integration
 
 ```text
 Keycloak/Core
 → identity + platform authorization
 
-Portal/MFE/Iframe
-→ Workspace/Entity context
+Portal/MFE/Device/Iframe
+→ Workspace/Entity context + modality capabilities
 
 Domain OpenAPIs ─┐
 Core apps/routes ├→ Copilot Capability View
 Knowledge ───────┤
+Media Evidence ──┤
 Internal tools ──┘
 
 Copilot goals/context
@@ -315,21 +455,26 @@ Copilot goals/context
 → Portal / Domain API
 → Outcome/Evidence
 → Work state when durable
-→ MFE/Inbox/Room/Watch presentation
+→ Global/Workspace/Meeting/Frontline presentation
 → Audit/Evals
 ```
 
-## 25. Integration gate
+## 31. Integration gate
 
 Before a new component:
 
 ```text
 Who owns this today?
-Is it platform-shared or Copilot-owned?
+Is it platform-shared, domain/industrial-owned or Copilot-owned?
 Can an official contract be reused?
-Would reuse couple Copilot to Chat product internals?
-Would it duplicate Core/domain authority?
+Would reuse couple Copilot to Chat internals?
+Would it duplicate Core/domain/safety authority?
 Can an Adapter preserve boundaries?
+Can WorkspaceContext/EntityRef/EvidenceRef represent it?
+Does media need persistence or only transient processing?
+Who owns consent/retention?
+Is the device shared?
+Is this a Business Action or physical machine actuation?
 Would next phase force redesign?
 ```
 
