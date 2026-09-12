@@ -2,195 +2,192 @@
 
 ## 1. Objetivo
 
-Evitar fechamento prematuro por demo funcional. Cada fase precisa provar foundation, wiring, segurança, generalização, conformidade arquitetural e evidence no candidate vigente.
+Uma fase só fecha quando prova comportamento, integração, segurança, generalização, arquitetura e **independência do Minha DELPI Chat** no candidate vigente.
 
 ## 2. DoD global
 
 ```text
+[ ] Copilot API pertence a serviço próprio
+[ ] Copilot MFE pertence a plugin próprio
+[ ] não existe runtime import do Chat
+[ ] não existe Chat API como proxy obrigatório
+[ ] não existe tabela/session/agent do Chat como authority Copilot
+[ ] deploy/rollback do Copilot é independente
 [ ] authorities possuem owner claro
+[ ] implementation segue 49 e boundaries 50/51/52
 [ ] shared primitives não possuem duplicação material
-[ ] implementação segue arquitetura/patterns canônicos do documento 49
-[ ] layer/dependency rules são preservadas
 [ ] abstrações novas passaram pelo Abstraction Gate
-[ ] divergência arquitetural material possui decisão/ADR explícita
-[ ] external dependencies estão atrás de boundary/adapter adequado quando aplicável
-[ ] concrete wiring ocorre no Composition Root/DI
-[ ] estado durável de negócio permanece no backend owner
-[ ] permissions do Copilot ⊆ permissões efetivas do usuário
-[ ] UI/Copilot convergem para os mesmos use cases
-[ ] OpenAPI + Action Catalog são authority técnica de Business Actions
+[ ] Domain/Application não dependem de framework/provider concreto
+[ ] concrete wiring ocorre no Composition Root
+[ ] Core continua authority de apps/routes/RBAC
+[ ] Domain APIs continuam authority de business rules/data
+[ ] permissions Copilot ⊆ permissions efetivas do usuário
+[ ] Portal hospeda/navega, mas não contém AI runtime
+[ ] OpenAPI + Copilot Action Catalog sustentam Business Actions
 [ ] Workspace Context não concede autorização
 [ ] Expertise/Playbook não concedem autorização
-[ ] Entity/Evidence/Decision/Workflow/Event contracts são compartilhados
 [ ] Business Graph não replica dados operacionais
-[ ] writes usam Decision Gate/policy/idempotency/audit conforme risco
+[ ] writes usam Decision Gate/idempotency/audit quando aplicável
 [ ] durable resume não duplica write
-[ ] activity representa estado real
-[ ] app/provider/pack/relation desconhecido funciona por contrato quando no escopo
-[ ] eval evidence pertence ao candidate final
 [ ] observabilidade não persiste chain-of-thought
 ```
 
-## 3. DoD C0 — Foundation
+## 3. DoD C0 — Foundation Freeze
 
 ```text
-[ ] C0.S0 inventário total com evidence
-[ ] patterns/camadas/DI/error/event/state/resilience atuais do repo inventariados
+[ ] Portal/Core/Gateway/Infra/MFE/API inventory com evidence
+[ ] Chat inventariado apenas como reference-only
+[ ] existing rooms/events/notifications/jobs inventariados
+[ ] API/OpenAPI/auth/idempotency/entity/deep-link inventory
+[ ] backend/MFE/serviceName/basePaths/manifestId congelados
+[ ] standalone product boundary congelado
+[ ] DB/schema/migration ownership congelado
 [ ] authorities/bounded contexts congelados
-[ ] Correlation/Entity/Relationship/Source/Evidence/Outcome contracts definidos/reutilizados
-[ ] Platform/Workspace/Iframe contracts definidos/reutilizados
-[ ] Expertise/Playbook contracts definidos/reutilizados
-[ ] Decision Gate contract definido/reutilizado
-[ ] Workflow/Task/Case lifecycle contracts definidos/reutilizados
-[ ] EventEnvelope definido/reutilizado
+[ ] shared primitives definidos/reutilizados
+[ ] Portal↔MFE, MFE↔API, API↔Core, API↔Domain contracts congelados
+[ ] architecture style/layers/dependency rules congelados
+[ ] Pattern Decision Matrix + Abstraction Gate validados
+[ ] error/event/state/resilience/frontend-state rules congeladas
 [ ] persistence boundaries/ports definidos
-[ ] architecture style validado
-[ ] layer responsibilities validadas
-[ ] dependency rules validadas
-[ ] Pattern Decision Matrix validada contra padrões reais do repo
-[ ] error/event/state-machine/persistence/frontend-state rules congeladas
-[ ] resilience/idempotency rules congeladas
-[ ] testing/migration patterns congelados
-[ ] Abstraction Gate definido e aplicável
-[ ] architectural exception/ADR process definido
-[ ] versioning/error/retry/idempotency/freshness semantics definidos
-[ ] contract + architecture conformance harness RED/GREEN reproduzível
-[ ] nenhuma second authority material
-[ ] FOUNDATION_FREEZE=PASS
+[ ] contract + architecture conformance harness reproduzível
+[ ] CHAT_RUNTIME_DEPENDENCY = 0 planejado/contractual
+[ ] FOUNDATION_DUPLICATION = 0 material
+[ ] FOUNDATION_FREEZE = PASS
 ```
 
 C1 não inicia sem C0 completo.
 
-## 4. DoD C1 — Platform/Context
+## 4. DoD C1 — Standalone Application Bootstrap
 
 ```text
-[ ] authorized route projection deriva do Core
-[ ] CopilotBridge valida/revalida commands
-[ ] Command + Handler/Adapter seguem padrão canônico sem handler por app
-[ ] open app/route funcional
-[ ] open entity quando contrato existir
-[ ] URL arbitrária rejeitada
-[ ] Workspace Context bounded/seguro
-[ ] MFE adapter reutilizável
-[ ] iframe PORTAL_ONLY funcional
-[ ] iframe integration usa Adapter/ACL tipado, não DOM automation
-[ ] bridge avançado possui security negatives quando usado
-[ ] unknown app/iframe não exige patch central
-[ ] F5/logout/stale context corretos
-[ ] send/stream parity
+[ ] minha-delpi-copilot-api criado em root próprio
+[ ] Copilot API segue layers/patterns C0
+[ ] health endpoint funcional
+[ ] JWT validation funcional
+[ ] Core current-user/apps/routes integration funcional
+[ ] plugins/minha-delpi-copilot criado
+[ ] Module Federation funcional
+[ ] plugin-ui reutilizado
+[ ] mount/unmount conforme host contract
+[ ] manifesto próprio válido
+[ ] Gateway dev/prod próprio
+[ ] Compose dev/prod próprio
+[ ] env/config próprios
+[ ] Portal full-page mount autorizado
+[ ] global panel host contract funcional ou gateado conforme step
+[ ] F5/deep route/logout funcionais
+[ ] Chat desligado não quebra Copilot bootstrap
+[ ] nenhuma import/source/API/table dependency do Chat
+[ ] rollback/shutdown independente
 ```
 
-## 5. DoD C2 — Intelligence Core
+## 5. DoD C2 — Portal Context + Platform Commands
 
 ```text
-[ ] nova sessão não depende de agent_id
-[ ] legacy agent migration usa adapter/ACL/strangler com exit criteria
-[ ] Expertise Catalog/Repository canônico somente se authority persistida for comprovada
-[ ] retrieval positive/sibling/negative
-[ ] unknown pack sem core patch
-[ ] cross-domain expertise composition
-[ ] Playbook applicability/versioning
-[ ] Knowledge ACL não é ampliada por expertise/project
-[ ] multimodal evidence possui provenance/confidence/limitations
-[ ] extraction Strategy só existe se variação real justificar
-[ ] FACT/CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION semanticamente distinguidos
-[ ] injection negatives passam
-[ ] shadow agent migration possui exit criteria
+[ ] WorkspaceContext bounded/sanitized
+[ ] Portal→Copilot context bridge tipado
+[ ] authorized Platform Capability Projection deriva do Core
+[ ] open app/route/entity funcional
+[ ] URL arbitrária rejeitada
+[ ] permission revocation/TOCTOU tratado
+[ ] MFE context/deep-link helper sem business logic
+[ ] iframe PORTAL_ONLY funcional quando aplicável
+[ ] bridge iframe avançado usa Adapter/ACL, não DOM automation
+[ ] unknown app/iframe não exige planner patch
+[ ] F5/logout/stale context corretos
+[ ] full-page/panel possuem policy parity
+```
+
+## 6. DoD C3 — Intelligence Core
+
+```text
+[ ] conversation/turn model é Copilot-owned
+[ ] não existe agent_id/chat_mode legado como requisito
+[ ] provider/model abstraction por ports/adapters
+[ ] OpenAPI ingestion Copilot-owned
+[ ] Copilot Action Catalog/index Copilot-owned
+[ ] capability retrieval positive/sibling/negative
+[ ] structured planner usa contracts tipados
+[ ] Expertise Catalog/retrieval/composition
+[ ] Domain Playbook applicability/versioning
+[ ] Knowledge/RAG respeita ACL/provenance
+[ ] multimodal evidence possui page/region/confidence/limitations
+[ ] Evidence/epistemic classes consistentes
+[ ] prompt/tool/context/document injection negatives passam
+[ ] unknown provider/pack e metamorphic cases passam
+[ ] no Chat runtime dependency
 [ ] operational activity sem CoT
 ```
 
-## 6. DoD C3 — Business Reads + Graph
+## 7. DoD C4 — Business Reads + Graph
 
 ```text
-[ ] gates OpenAPI-first aplicáveis PASS
-[ ] Business Capability Projection não duplica contrato técnico
-[ ] known/sibling/unknown/metamorphic reads passam
+[ ] Domain OpenAPIs importadas por contrato
+[ ] Business Capability Projection não duplica authority técnica
+[ ] generic reads known/sibling/unknown/metamorphic passam
 [ ] args/schema/RBAC corretos
-[ ] normalized outcome/evidence consistente
+[ ] normalized Outcome/Evidence consistente
 [ ] Graph usa EntityRef/RelationshipRef compartilhados
-[ ] Graph segue Ports & Adapters; materialização/repository só existe com gap comprovado
-[ ] traversal é permission-aware
+[ ] traversal permission-aware
 [ ] authoritative vs inferred relationship rastreável
-[ ] source data é buscado no owner
+[ ] source data buscado no owner
+[ ] Graph não replica domain datasets como master
 [ ] cycle/depth budget existe
-[ ] sibling relation/entity não exige planner hardcode
+[ ] nova relação/provider não exige hardcode central
 ```
 
-## 7. DoD C4 — Governed Writes
+## 8. DoD C5 — Governed Writes + Durable Foundation
 
 ```text
-[ ] Decision Gate Engine usa Policy + State Machine conforme padrão
+[ ] Decision Gate usa Policy + State Machine
 [ ] impact preview corresponde ao payload efetivo
-[ ] arguments/evidence change invalida decisão quando material
-[ ] backend revalida RBAC/policy
+[ ] backend/domain API revalida authorization
 [ ] idempotency/concurrency tratadas
 [ ] retry cego de write inexistente
-[ ] write outcome verificado
 [ ] ambiguous outcome não vira sucesso narrativo
-[ ] audit/deep-link/evidence presentes
-[ ] operational tools não dependem de agent ativo após cutover
-[ ] soft handoff removido do fluxo alvo
-[ ] iframe DOM write rejeitado
-```
-
-## 8. DoD C5 — Durable Work
-
-```text
-[ ] workflow persistence/checkpoint
-[ ] workflow runtime usa Application orchestration + State Machine + Idempotency
-[ ] wait_user
-[ ] wait_approval
-[ ] wait_event
+[ ] write outcome verificado/auditado
+[ ] WorkflowPlan/Step runtime usa executors canônicos
+[ ] checkpoint persistente
+[ ] wait_user/wait_approval/wait_event
 [ ] timeout/cancel
-[ ] DAG dependencies
-[ ] parallel safe reads
-[ ] retry/idempotency
-[ ] Saga somente existe se houver múltiplos writes distribuídos + compensações reais
 [ ] crash/restart sem duplicate write
-[ ] Task usa workflow runtime, sem engine própria
+[ ] Saga somente se houver writes distribuídos + compensações reais
+```
+
+## 9. DoD C6 — Product Work + Proactivity + Ecosystem
+
+```text
+[ ] Task usa durable runtime; não possui engine paralela
 [ ] Case usa refs/evidence compartilhados
-[ ] Evidence Board não duplica evidence model
-[ ] Room respeita source permissions
-[ ] Inbox materializa work state sem virar workflow engine
-[ ] reload/resume consistente
-```
-
-## 9. DoD C6 — Proactivity/Ecosystem/Learning
-
-```text
-[ ] Watch OBSERVE/ADVISE event-driven quando possível
-[ ] Watch usa EventEnvelope/State Machine/dedupe canônicos
-[ ] dedupe/cooldown/expiry/revalidation
-[ ] AI-ready SDK/templates
-[ ] readiness scanner baseado em facts
-[ ] unknown app/pack onboarding sem hardcode
-[ ] project preferences não concedem permission
-[ ] Reference/Decision/Experience knowledge possuem provenance/version/owner
+[ ] Evidence Board não duplica EvidenceRef
+[ ] Interaction Room reutiliza/estende/adapta owner existente quando C0 provar viável
+[ ] Room membership não amplia source permissions
+[ ] Inbox é projection de work/decision/watch state
+[ ] Watch OBSERVE/ADVISE usa EventEnvelope/dedupe/revalidation
+[ ] AI-ready SDK/templates não hardcodam apps
+[ ] Organizational Knowledge possui owner/version/provenance
 [ ] feedback não muda production behavior automaticamente
-[ ] Expertise Studio usa Use Cases + State Machine + admin RBAC
-[ ] Expertise Studio draft/review/eval/publish/rollback
-[ ] admin RBAC/coverage
+[ ] Expertise Studio usa lifecycle/admin RBAC
+[ ] unknown app/pack onboarding sem core hardcode
 ```
 
-## 10. DoD C7 — Optimization/Autonomy/Rollout
+## 10. DoD C7 — Autonomy/Optimization/Rollout
 
 ```text
-[ ] L5 OFF por default e allowlisted
-[ ] Watch ACT sujeito a autonomy/Decision Gate
+[ ] L5 OFF por default
+[ ] Watch ACT allowlisted/policy-governed
 [ ] Simulation reproduzível e separada de Apply
-[ ] Model Router introduz Strategy/Policy somente após baseline/variações reais
-[ ] provider/model names não vazam para domain/application
-[ ] provider incompatível é bloqueado
-[ ] legacy agent-routing residual material = 0
-[ ] compatibility adapters temporários removidos conforme exit criteria
-[ ] canary/cohort/rollback
-[ ] final R1–R11
-[ ] accessibility/security/generalization
+[ ] Model Router só existe após baseline/variações reais
+[ ] provider incompatível com data policy é bloqueado
+[ ] performance/cost/latency observáveis
+[ ] progressive rollout/canary/rollback
+[ ] accessibility/security/generalization finais
 [ ] architecture conformance final
-[ ] CP coverage sem UNMAPPED
+[ ] Copilot continua independente do Chat
+[ ] CP coverage sem UNMAPPED para release declarado
 ```
 
-## 11. Evals obrigatórios conforme escopo
+## 11. Testes transversais obrigatórios
 
 ```text
 positive
@@ -199,7 +196,6 @@ negative/no-tool
 unauthorized
 TOCTOU
 required missing
-workspace follow-up
 unknown app/provider/pack/iframe/relation
 metamorphic rename
 prompt/tool/context/document/event injection
@@ -207,25 +203,21 @@ Decision Gate
 idempotency/replay
 partial failure
 persist/reload/restart
-send/stream parity
+full-page/panel parity
 layer/dependency conformance
 port/adapter contracts
-state transition rules
+state transitions
 error translation/resilience
-latency/cost
+CHAT_OFFLINE_INDEPENDENCE
+latency/cost quando aplicável
 ```
 
-## 12. Critério de não conclusão
-
-Estados bloqueantes quando materiais:
+## 12. Blockers
 
 ```text
 PARTIAL
-LEGACY_FALLBACK
-SHADOW_ONLY sem exit criteria
 INCONCLUSIVE
 PENDING
-TODO/FIXME/HACK/TEMPORARY
 TEST_NOT_RUN
 STALE_EVIDENCE
 DUPLICATE_AUTHORITY
@@ -234,28 +226,33 @@ ARCHITECTURE_PATTERN_DRIFT
 DEPENDENCY_RULE_VIOLATION
 UNJUSTIFIED_ABSTRACTION
 UNDOCUMENTED_ARCHITECTURAL_EXCEPTION
+CHAT_RUNTIME_IMPORT
+CHAT_API_REQUIRED
+CHAT_DATABASE_AUTHORITY
+CHAT_MIGRATION_DEPENDENCY
+PORTAL_AI_LOGIC_LEAK
+DOMAIN_RULE_DUPLICATION
 ```
 
 ## 13. Evidence de release
 
 ```text
 GIT_SHA
-config/model/provider hashes
-dataset/eval hashes
+Copilot API image/version
+Copilot MFE bundle/version
+manifest version/hash
+Gateway/Compose config evidence
+schema/migration version
 OpenAPI/Action Catalog hashes
-expertise/playbook versions quando materiais
-schema/migration versions
-architecture layer/pattern conformance
-ADR/exception refs quando houver
-unit/integration/live results
-security tests
-residual scan
+config/model/provider hashes
+expertise/playbook versions
+architecture conformance
+unit/integration/live/security results
+CHAT_OFFLINE_INDEPENDENCE result
+rollback evidence
 known limitations
-rollout decision
 ```
 
-## 14. Outcome final
+## 14. Resultado final
 
-O DoD não é “a IA respondeu”.
-
-> O usuário autorizado atingiu o objetivo corretamente, com evidência, governança, continuidade e auditabilidade, usando os mesmos contratos da plataforma e a arquitetura canônica, sem criar foundations ou abstrações paralelas.
+> O Copilot só está Done quando funciona como aplicação independente, integrada às authorities da Minha DELPI, sem herdar o runtime/dívida do Chat e sem criar authorities paralelas.
