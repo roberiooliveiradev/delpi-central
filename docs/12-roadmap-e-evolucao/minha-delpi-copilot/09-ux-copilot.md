@@ -1,13 +1,15 @@
 # 09 — UX do Minha DELPI Copilot
 
+**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)
+
 ## 1. Princípio
 
-O Copilot deve parecer parte da plataforma, não uma janela de chat isolada.
+O Copilot deve parecer parte da plataforma, não uma janela de chat isolada. Ao mesmo tempo, ele é uma **aplicação própria**, com MFE e API próprios, hospedada de forma integrada pelo Portal.
 
 A linguagem natural é a porta de entrada; o produto também possui surfaces de trabalho persistente, evidence, decisions e acompanhamento.
 
 ```text
-Chat
+Conversation
 + Context
 + Activity
 + Evidence
@@ -48,6 +50,8 @@ Uso cotidiano:
 - receber Decision Gates;
 - criar/abrir Task/Case.
 
+O painel é uma **surface do mesmo `plugins/minha-delpi-copilot`**, hospedada pelo Portal. Não é um segundo chat, um segundo state owner nem lógica de IA no Shell.
+
 ## 4. Página completa
 
 Adequada para:
@@ -59,6 +63,8 @@ Adequada para:
 - Cases/Evidence Board;
 - artifacts;
 - histórico.
+
+A página completa usa o mesmo MFE, a mesma Copilot API, a mesma sessão/contexto e os mesmos contracts do painel global.
 
 ## 5. Entry points contextuais
 
@@ -162,7 +168,7 @@ Não esconder write atrás de texto ambíguo.
 
 ## 11. Resultados ricos
 
-Reutilizar render pipeline para:
+Usar componentes/rendering do próprio Copilot e `@delpi/plugin-ui` quando houver equivalente compartilhado para:
 
 - texto;
 - KPI;
@@ -175,6 +181,8 @@ Reutilizar render pipeline para:
 - evidence board;
 - workflow/task progress;
 - comparison.
+
+Não importar renderer/component interno de `plugins/minha-delpi-chat` como dependency.
 
 ## 12. Suggested actions
 
@@ -196,7 +204,7 @@ Sugestão não significa execução.
 Quando Copilot navegar:
 
 - activity curta;
-- conversa preservada;
+- conversa preservada pela própria Copilot API;
 - painel permanece quando apropriado;
 - Workspace Context atualiza após navegação;
 - focus acessível/previsível.
@@ -317,11 +325,13 @@ Botão `Aplicar` nunca é continuidade implícita; inicia uma Business Action no
 
 Após F5:
 
-- conversa permanece conforme persistence atual;
-- Task/Case/Workflow recupera status real;
+- conversa permanece conforme persistence da **Copilot API**;
+- painel e página completa convergem para o mesmo estado autorizado;
+- Task/Case/Workflow recupera status real do backend do Copilot;
 - pending Decision não executa automaticamente;
 - completed write não repete;
-- Workspace Context é reconstruído/revalidado.
+- Workspace Context é reconstruído/revalidado pelo Portal;
+- ausência do Minha DELPI Chat não altera a experiência do Copilot.
 
 ## 23. Correção e feedback
 
@@ -360,4 +370,4 @@ Turn
 → Room/Inbox/Watch
 ```
 
-sem aprender uma coleção de agentes ou trocar de ferramenta mental.
+sem aprender uma coleção de agentes, trocar de ferramenta mental ou perceber ruptura entre painel global e página completa.
