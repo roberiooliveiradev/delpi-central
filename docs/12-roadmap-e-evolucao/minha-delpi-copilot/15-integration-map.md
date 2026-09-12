@@ -1,118 +1,334 @@
 # 15 — Mapa de integração com a Minha DELPI atual
 
-## Componentes existentes a evoluir
+**Status:** mapa canônico de integração  
+**Ordem de implementação:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
 
-### `minha-delpi-ai-api`
+## 1. Princípio
 
-Reutilizar/evoluir:
+O Copilot evolui os owners existentes antes de criar novos componentes.
 
-- entendimento/decomposição;
-- memory/context;
+```text
+REUSE
+→ EXTEND
+→ MIGRATE
+→ CREATE_REQUIRED somente com gap provado
+```
+
+## 2. `minha-delpi-ai-api`
+
+### Reutilizar/evoluir
+
+- understanding/decomposition;
+- conversation/memory;
 - Action Catalog;
 - retrieval/planner;
-- OpenAPI validation;
-- policy/confirmation;
-- executor;
-- RAG;
+- OpenAPI validation/binding;
+- generic action executor;
+- RAG/Knowledge;
+- multimodal/document vision;
 - synthesis/presentation;
-- observability/evals.
+- policy/safety;
+- persistence;
+- observability/evals;
+- model/provider abstraction.
 
-Adicionar gradualmente:
+### Evoluir para
 
-- Capability abstraction acima de Actions;
-- Platform Capability adapter/port;
-- Workspace Context ingestion;
-- workflow state/checkpoints;
-- navigation observations.
+- single-Copilot session model;
+- Capability Projection;
+- Expertise Catalog/Retrieval/Context;
+- Domain Playbook Catalog/Adapter;
+- Evidence/Provenance normalization;
+- Decision Gate orchestration;
+- durable workflow coordination;
+- Task/Case orchestration ports;
+- Business Graph query/use cases;
+- Watch/event coordination;
+- Organizational Knowledge governance;
+- Compute Policy/Model Router quando C7 liberar.
 
-### `plugins/minha-delpi-chat`
+### Não criar
 
-Reutilizar/evoluir:
+- segundo planner;
+- segundo HTTP executor;
+- agent runtime por departamento;
+- manual endpoint catalog;
+- CoT store.
+
+## 3. `plugins/minha-delpi-chat`
+
+### Reutilizar/evoluir
 
 - composer;
 - streaming/activity;
 - rich presentation;
-- conversation state;
-- agents/projects.
+- conversation/history;
+- feedback;
+- attachments;
+- project context onde fizer sentido.
 
-Adicionar:
+### Adicionar/evoluir
 
 - context chips;
-- confirmation cards estruturados;
-- workflow progress;
-- navigation status;
-- painel/presentation adaptado ao modo Copilot quando necessário.
+- sources/evidence presentation;
+- epistemic labels quando material;
+- Decision Gate UI;
+- Task/Workflow progress;
+- Case/Inbox entry points quando disponíveis;
+- navigation/platform command presentation;
+- single-Copilot UX sem agent selector obrigatório.
 
-### `portal`
+### Migrar
 
-Adicionar:
+- agent selection/handoff UX → expertise/project preferences ou remover conforme plano de migração.
 
-- `CopilotBridge`;
-- `PlatformCapabilityCatalog`;
-- `WorkspaceContextBridge`;
-- registry de adapters dos MFEs;
-- validação de Platform Commands;
-- integração com Router/AuthContext/apps autorizados.
+## 4. Portal Shell
 
-### Core API
+### Reutilizar
 
-Reutilizar:
+- Router;
+- AuthContext;
+- authorized apps/routes;
+- AppHost;
+- shell lifecycle.
 
-- `/me`;
-- `/me/apps`;
-- `/me/routes`/contrato equivalente;
+### Adicionar/evoluir
+
+- Authorized Platform Capability Projection;
+- CopilotBridge;
+- Workspace Context Store/Bridge;
+- Entity deep-link resolver;
+- MFE context adapter contract;
+- IframeBridge;
+- global Copilot surface;
+- Inbox/Task/Case navigation surfaces quando C5 liberar.
+
+Portal executa Platform Actions e valida targets; não executa business rules.
+
+## 5. Core API
+
+Reutilizar como authority de:
+
+- identidade/contexto do usuário;
+- apps/routes;
 - permissions/RBAC;
-- apps/manifests/routes.
+- app registration/manifests;
+- audit/governance onde aplicável.
 
-Avaliar extensão somente se necessária para metadata semântica de capabilities de Portal, mantendo Core como owner de governança e não de inteligência LLM.
+Avaliar extensão somente se C0 provar gap de metadata de plataforma. Não mover inteligência LLM, Expertise ou Business Graph semantic reasoning para Core apenas por conveniência.
 
-### APIs de negócio
+## 6. APIs de domínio
 
-Reutilizar/evoluir OpenAPI e use cases. Evitar endpoints exclusivos “para IA” quando a operação já pertence ao domínio existente.
+Continuam owners de negócio.
 
-## Fluxo completo esperado
+Devem ser reutilizadas/evoluídas para:
+
+- OpenAPI de qualidade;
+- consistent entity identifiers;
+- source timestamps/version quando material;
+- idempotency em writes quando possível;
+- domain events quando já fizerem sentido;
+- clear authorization;
+- outcomes verificáveis.
+
+Evitar endpoints exclusivos “para IA” se o use case já existe no domínio.
+
+## 7. MFEs
+
+Responsabilidades AI-ready possíveis:
+
+- Workspace Context;
+- EntityRefs;
+- deep-link metadata;
+- visual commands;
+- contextual entry points;
+- source/result presentation.
+
+Não duplicam business rules/RBAC server-side.
+
+## 8. Apps iframe
+
+Integração progressiva:
 
 ```text
-Portal AuthContext
-→ authorized apps/routes
-→ Platform Capability Catalog
-                  ┐
-OpenAPI Actions ──┼→ Authorized Capability View
-Knowledge tools ──┘
-         │
-         ▼
-minha-delpi-ai-api planner
-         │
-         ├─ Business Action → API/use case
-         ├─ Platform Action → CopilotBridge
-         ├─ Knowledge → RAG
-         └─ Analysis/Artifact → services
-         │
-         ▼
-observations + results
-         │
-         ▼
-response/renderPlan/activity
-         │
-         ▼
-plugins/minha-delpi-chat + Portal
+PORTAL_ONLY
+CONTEXTUAL
+INTERACTIVE
+AI_READY
 ```
 
-## Ownership
+Portal/IframeBridge cuida de context/visual commands. Business Actions continuam por APIs.
 
-| Conceito | Owner recomendado |
-|---|---|
-| capability domain model | `minha-delpi-ai-api/domain` |
-| capability orchestration | `minha-delpi-ai-api/application` |
-| OpenAPI adapter | `minha-delpi-ai-api/infrastructure` |
-| Portal capability adapter | Portal + port no AI API |
-| workspace context contract | contrato compartilhado Portal/Copilot |
-| business rules | API/use case do domínio proprietário |
-| RBAC | Core/API backend |
-| navigation execution | Portal Shell |
-| renderização | plugin-ui/chat MFE |
-| policy/confirmation | AI/application+domain, respaldada pelo backend |
+## 9. Shared UI / plugin-ui
 
-## Regra de evolução
+Reutilizar componentes para:
 
-Antes de criar componente novo, verificar se a responsabilidade já existe no chat base ou Portal. O Copilot deve ser uma evolução coordenada, não duplicação da plataforma.
+- activity;
+- status;
+- Decision Gate cards;
+- evidence/source disclosure;
+- Entity cards;
+- Task/Case status;
+- Inbox items;
+- timeline;
+- accessibility patterns.
+
+Não criar visuais incompatíveis por plugin quando shared component atende.
+
+## 10. Knowledge/RAG
+
+Reutilizar current ingestion/search/ACL owners.
+
+Evoluir para distinguir, quando necessário:
+
+```text
+Reference Knowledge
+Operational Knowledge
+Decision Knowledge
+Experience Knowledge
+```
+
+Expertise/Project preference não amplia ACL.
+
+## 11. Multimodal runtime
+
+Reutilizar document vision/drawing analysis existentes.
+
+Adapter normaliza para EvidenceRef com:
+
+- attachment/source;
+- page/region;
+- confidence;
+- extractor/model version;
+- limitations.
+
+Não acoplar a agent ativo.
+
+## 12. Event infrastructure
+
+C0 deve inventariar:
+
+- existing event bus;
+- socket/event patterns;
+- background workers/queues;
+- domain events;
+- notification patterns.
+
+Watch e `wait_event` devem usar owner existente quando adequado. Não criar event bus paralelo sem gap provado.
+
+## 13. Rooms/interaction
+
+C0 deve mapear salas já implementadas nos Portais.
+
+Meta:
+
+```text
+CaseRef ↔ RoomRef
+```
+
+Copilot integra contexto/resumo/pending actions, sem duplicar message/file storage se owner existente atende.
+
+## 14. Notifications/Inbox
+
+Inventariar notification center/patterns existentes.
+
+Copilot Inbox deve preferir view/materialization sobre:
+
+- Decision Gates;
+- Tasks;
+- Cases;
+- Workflows;
+- Watch alerts.
+
+Não criar workflow engine dentro da Inbox.
+
+## 15. Business Graph
+
+### Sources
+
+- Entity IDs dos domínios;
+- domain relationships/events/contracts;
+- explicit inferred relationships quando autorizadas.
+
+### Owner
+
+Copilot/Platform pode manter relationship registry/index e query port, mas source objects continuam nas APIs donas.
+
+### Fluxo
+
+```text
+EntityRef
+→ RelationshipRef traversal
+→ permission check
+→ related EntityRefs/SourceRefs
+→ fetch current data from owner API
+```
+
+## 16. Decision/Approval integration
+
+C0 deve inventariar confirmation/approval mechanisms existentes.
+
+Target é um `DecisionGate` compartilhado, reutilizando infra atual quando suficiente.
+
+Não criar “confirmation card backend” e “approval workflow backend” independentes sem necessidade.
+
+## 17. Durable Workflow integration
+
+C0 deve mapear jobs/queues/workflow/background infrastructure.
+
+Runtime C5 deve reutilizar:
+
+- scheduler/worker infra;
+- persistence primitives;
+- locks/idempotency;
+- event handling;
+
+quando compatíveis.
+
+O orchestration layer continua chamando executors canônicos.
+
+## 18. Model/provider integration
+
+C0 inventaria provider abstraction e metrics.
+
+C7 Compute Policy/Model Router deve ficar centralizada na AI API/infrastructure, não distribuída em Skills/Features.
+
+## 19. Fluxo completo alvo
+
+```text
+Keycloak/Core
+→ identity + permissions + apps/routes
+
+Portal/MFE/Iframe
+→ Workspace + Entity Context
+
+OpenAPI Actions ─┐
+Platform Actions ├→ Authorized Capability View
+Knowledge ───────┤
+Internal Tools ──┘
+
+Goals/Context
+→ Expertise/Playbooks
+→ Knowledge/Multimodal Evidence
+→ Planner
+→ Policy/Decision Gate
+→ canonical executor(s)
+→ Domain API/Portal/Internal Tool
+→ Outcome/Evidence
+→ Workflow/Task/Case state when durable
+→ Presentation/Inbox/Room/Watch
+→ Audit/Evals
+```
+
+## 20. Integration rule
+
+Antes de criar componente:
+
+```text
+Does owner already exist?
+Can existing contract be extended?
+Would new component duplicate an authority?
+Would next known phase force this contract to change?
+```
+
+Se houver duplicação ou refatoração previsível, voltar ao C0 foundation design antes de implementar.
