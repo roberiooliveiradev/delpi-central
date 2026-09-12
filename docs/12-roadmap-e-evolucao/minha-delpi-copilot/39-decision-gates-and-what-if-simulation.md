@@ -1,171 +1,201 @@
 # Minha DELPI Copilot — Decision Gates e What-if Simulation
 
-**Status:** arquitetura proposta  
-**Objetivo:** tornar decisões e mudanças sensíveis proporcionais ao risco e permitir simular cenários antes de agir.
+**Status:** thematic spec  
+**Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Foundation:** Decision Gate contracts nascem em C0; engine em C4; Simulation em C7.
 
-## 1. De confirmation booleana para Decision Gate
+## 1. Decision Gate
 
-Nem toda ação deve usar a mesma confirmação.
-
-O gate deve considerar:
-
-```text
-sensitivity
-financial impact
-scope/volume
-reversibility
-confidence/evidence quality
-user role
-policy
-business criticality
-```
-
-## 2. Tipos conceituais
+O produto usa um único modelo de decisão proporcional ao risco:
 
 ```text
 NO_GATE
-→ reads e ações visuais de baixo risco
-
 ACKNOWLEDGE
-→ usuário toma ciência
-
 CONFIRM
-→ confirmação simples de write
-
 REVIEW_AND_CONFIRM
-→ preview estruturado + impacto + evidências
-
 APPROVAL_WORKFLOW
-→ um ou mais aprovadores humanos
-
 BLOCK
-→ operação não permitida
 ```
 
-## 3. DecisionGateV1
+Não manter confirmation booleana como authority paralela.
 
-```json
-{
-  "gateId": "uuid",
-  "type": "review_and_confirm",
-  "subject": "Atualizar preço do item X",
-  "risk": "high",
-  "impactSummary": {},
-  "evidenceRefs": [],
-  "argumentsHash": "...",
-  "expiresAt": "..."
-}
-```
+## 2. Inputs de policy
 
-Mudança material em argumentos, policy ou evidence invalida o gate anterior.
+Podem incluir:
 
-## 4. Approval
+- action/capability risk;
+- sensitivity/data class;
+- financial/operational impact;
+- volume/scope;
+- reversibility;
+- arguments final;
+- Evidence refs/freshness;
+- user/approver permissions;
+- autonomy level;
+- business criticality.
 
-Para operações que exigem múltiplas pessoas:
+O LLM pode ajudar a preparar preview, mas gate level é determinado por policy/owner governado.
+
+## 3. Contracts compartilhados
+
+Usar `DecisionGateRequest` e `DecisionGateDecision` C0.
+
+Request conceitual:
 
 ```text
-prepared
-→ pending_approval
-→ approved | rejected | expired
-→ revalidate
-→ execute
+decisionId
+action/capability ref
+argumentsHash
+impactSummary
+evidenceRefs[]
+risk/sensitivity
+requiredGate
+expiresAt
 ```
 
-A aprovação não substitui autorização server-side no momento da execução.
+Decision conceitual:
 
-## 5. What-if / Simulation
+```text
+decisionId
+decision/status
+actor/approver ref
+decidedAt
+```
 
-Antes de determinadas decisões, o Copilot pode construir uma simulação sem persistir alterações.
+Não criar `DecisionGateV1` local com lifecycle incompatível.
+
+## 4. Invalidation
+
+Pode invalidar decisão anterior:
+
+- arguments hash materialmente diferente;
+- evidence crítica mudou/stale;
+- permission/policy alterada;
+- entity version/precondition mudou;
+- expiry;
+- approver perdeu autoridade.
+
+Sempre revalidar antes de execute.
+
+## 5. Approval workflow
+
+```text
+Decision request
+→ pending approval
+→ approved | rejected | expired
+→ current-state revalidation
+→ execute | block
+```
+
+Approval não substitui backend authorization.
+
+## 6. What-if / Simulation
+
+C7 pode introduzir simulações somente quando existe modelo/cálculo owner e reproduzível.
 
 Exemplos:
 
-- “E se adiarmos essa OP em três dias?”;
-- “Se priorizarmos este pedido, quais outros serão afetados?”;
-- “Se o fornecedor atrasar mais cinco dias, onde haverá ruptura?”;
-- “Qual o impacto de aumentar o estoque de segurança?”;
-- “O que muda se rejeitarmos esta proposta?”.
+- atraso adicional de fornecedor;
+- priorização de OP;
+- alteração de estoque de segurança;
+- impacto de capacidade;
+- cenários financeiros com modelo aprovado.
 
-## 6. SimulationV1
+## 7. Simulation state
 
-```json
-{
-  "simulationId": "uuid",
-  "baselineRefs": [],
-  "assumptions": [],
-  "inputs": {},
-  "modelRef": "...",
-  "outputs": {},
-  "evidenceRefs": [],
-  "limitations": [],
-  "createdAt": "..."
-}
+Uma simulação pode registrar semanticamente:
+
+```text
+simulationId
+baseline Source/Evidence refs
+assumptions
+inputs
+model/rule ref + version
+outputs
+limitations
+createdAt
 ```
 
-Simulação deve declarar premissas; não apresentar projeção como fato.
+Isso não cria automaticamente um foundation global se um domínio já possuir contrato de simulação. Reutilizar/adapter antes de criar schema transversal.
 
-## 7. Fontes de cálculo
+## 8. Fontes de cálculo
 
 Preferência:
 
-1. API/use case de simulação do domínio;
-2. regras determinísticas versionadas;
-3. modelos analíticos/otimização governados;
-4. LLM apenas para interpretar, estruturar cenários e explicar resultados — não para inventar números.
+1. domain simulation API/use case;
+2. deterministic versioned rules;
+3. governed analytical/optimization model;
+4. LLM para estruturar/explain, não inventar números.
 
-## 8. Simulate → Apply
-
-Quando existir operação real correspondente:
+## 9. Simulate != Apply
 
 ```text
 simulate
-→ review
-→ decision gate
-→ apply via Business Action
-→ verify outcome
+→ projected outcome
+→ user reviews
+→ separate Business Action intent
+→ current RBAC/policy/Decision Gate
+→ execute
+→ verify actual outcome
 ```
 
-Não reaproveitar resultado simulado como autorização para write.
+Resultado simulado não é autorização nem outcome real.
 
-## 9. Evidence e confiança
+## 10. Epistemic UX
 
-Toda simulação relevante precisa diferenciar:
+Separar:
 
-- baseline observado;
-- input fornecido pelo usuário;
-- premissa assumida;
-- cálculo/modelo;
-- resultado projetado;
-- limitações.
+- observed baseline;
+- user-provided input;
+- assumption;
+- model/calculation;
+- projected result;
+- confidence/uncertainty se metodologicamente suportada;
+- limitations.
 
-## 10. Casos prioritários
+Simulation output nunca é FACT atual.
 
-- produção/capacidade/priorização;
-- suprimentos/estoque/fornecedor;
-- financeiro/crédito/cash flow quando houver modelos aprovados;
-- comercial/preço/margem quando houver regra owner;
-- qualidade/risco de contenção/processo;
-- manutenção/janelas e impacto produtivo.
+## 11. Security
 
-## 11. Segurança
+- no hidden write;
+- source RBAC;
+- owner/version do modelo;
+- sensitive assumptions redacted in logs;
+- stale baseline handling;
+- provider/data policy quando model/LLM envolvido.
 
-- simulação não deve executar write escondido;
-- dados usados respeitam RBAC;
-- regras financeiras/industriais críticas devem possuir owner;
-- modelos/versões precisam de auditabilidade;
-- premissas sensíveis não devem vazar em logs.
+## 12. Tests
 
-## 12. Testes
+Decision:
 
-- baseline correto;
-- premissa explícita;
-- cálculo determinístico reproduzível;
-- modelo indisponível;
-- input fora de faixa;
-- conflito de dados;
-- usuário sem acesso a uma fonte;
-- apply exige gate novamente;
-- mudança de baseline invalida resultado stale quando material.
+- each gate level;
+- args changed;
+- evidence changed;
+- expired;
+- approver unauthorized;
+- revalidation.
 
-## 13. Gate
+Simulation:
 
-What-if só entra como feature de decisão quando houver modelo/cálculo governado suficiente para produzir impacto verificável. Caso contrário, o Copilot deve apresentar análise qualitativa como hipótese, não “simulação”.
+- correct baseline;
+- explicit assumptions;
+- reproducible model;
+- unsupported scenario;
+- stale baseline;
+- no hidden write;
+- Apply requires new gate.
+
+## 13. Mapping
+
+```text
+C0 → Decision contracts/semantics
+C4 → Decision Gate Engine before production writes
+C5 → wait_approval durability
+C7 → Simulation pilots and autonomy-selected gates
+```
+
+## 14. Gate
+
+- nenhum write material bypassa required Decision Gate;
+- Simulation só é chamada assim quando existe cálculo/modelo governado;
+- análise qualitativa sem modelo permanece hipótese/cenário, não simulação quantitativa.
