@@ -1,435 +1,579 @@
 # Prompt mestre — Cursor — Minha DELPI Copilot
 
-Copie este documento para o Cursor ou instrua o Cursor a lê-lo diretamente antes de executar a iniciativa.
+Você deve implementar o **Minha DELPI Copilot** de forma incremental, seguindo integralmente a documentação canônica do repositório, sem criar arquitetura paralela e sem pular gates.
 
----
+## 1. Autoridades obrigatórias
 
-Você deve implementar o **Minha DELPI Copilot** de forma incremental, seguindo integralmente a documentação canônica do repositório e sem criar arquitetura paralela.
+Leia antes de qualquer alteração:
 
-## Fonte de verdade
+1. `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`;
+2. `.cursor/rules/development-standards-index.mdc` e regras aplicáveis de planning, execution, tests, security, OpenAPI, AI e Clean Architecture;
+3. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/README.md`;
+4. `16-execution-master-plan.md`;
+5. `17-component-and-contract-map.md`;
+6. `18-app-onboarding-matrix.md`;
+7. `19-rollout-and-migrations.md`;
+8. `20-testing-and-acceptance-matrix.md`;
+9. `21-data-and-state-model.md`;
+10. `22-cursor-execution-protocol.md`;
+11. `24-product-specification.md`;
+12. `25-requirements-traceability.md`;
+13. `26-iframe-copilot-bridge.md`;
+14. `27-single-copilot-specialization-architecture.md`;
+15. `28-expertise-pack-specification.md`;
+16. `29-domain-playbooks-specification.md`;
+17. `30-multimodal-expertise-and-drawing-analysis.md`;
+18. `31-agent-to-expertise-migration-plan.md`;
+19. `32-expertise-runtime-implementation-plan.md`;
+20. `33-reference-expertise-packs-quality-engineering.md`;
+21. `34-market-benchmark-and-product-north-star.md`;
+22. `35-delpi-business-graph.md`;
+23. `36-copilot-tasks-cases-and-interaction-rooms.md`;
+24. `37-copilot-inbox-watch-and-proactive-work.md`;
+25. `38-evidence-provenance-and-epistemic-ux.md`;
+26. `39-decision-gates-and-what-if-simulation.md`;
+27. `40-organizational-knowledge-and-governed-learning.md`;
+28. `41-expertise-studio-governance.md`;
+29. `42-model-router-and-compute-policy.md`;
+30. `43-durable-workflow-runtime.md`;
+31. `44-operational-intelligence-implementation-plan.md`;
+32. `45-operational-intelligence-testing-gates.md`;
+33. `46-operational-intelligence-requirements.md`;
+34. `47-cursor-operational-intelligence-extension.md`;
+35. `evidence/execution-ledger.md`.
 
-Leia obrigatoriamente antes de qualquer alteração:
+Também leia a documentação vigente do componente real que será alterado.
 
-1. `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`
-2. `.cursor/rules/development-standards-index.mdc`
-3. regras `.cursor` aplicáveis a planning, execution, tests, security, OpenAPI, AI e Clean Architecture
-4. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/README.md`
-5. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/02-arquitetura.md`
-6. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/16-execution-master-plan.md`
-7. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/17-component-and-contract-map.md`
-8. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/18-app-onboarding-matrix.md`
-9. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/19-rollout-and-migrations.md`
-10. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/20-testing-and-acceptance-matrix.md`
-11. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/21-data-and-state-model.md`
-12. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/22-cursor-execution-protocol.md`
-13. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/24-product-specification.md`
-14. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/25-requirements-traceability.md`
-15. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/26-iframe-copilot-bridge.md`
-16. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/27-single-copilot-specialization-architecture.md`
-17. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/28-expertise-pack-specification.md`
-18. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/29-domain-playbooks-specification.md`
-19. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/30-multimodal-expertise-and-drawing-analysis.md`
-20. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/31-agent-to-expertise-migration-plan.md`
-21. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/32-expertise-runtime-implementation-plan.md`
-22. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/33-reference-expertise-packs-quality-engineering.md`
-23. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/evidence/execution-ledger.md`
+## 2. North Star
 
-Também leia a documentação vigente de `minha-delpi-ai-api`, Portal/Core e do componente específico que estiver sendo alterado.
+Construir o Copilot como **camada inteligente operacional da Minha DELPI**:
 
-## Missão
+```text
+PERGUNTAR
+→ entender / pesquisar / explicar / analisar
 
-Construir o Copilot como uma segunda interface operacional da Minha DELPI e como **uma única identidade inteligente de produto**:
+FAZER
+→ abrir / consultar / criar / alterar / aprovar / executar
+
+ACOMPANHAR
+→ monitorar / detectar / lembrar / alertar / reagir
+
+TRABALHAR
+→ investigar / colaborar / planejar / acompanhar ações / concluir
+```
+
+O chat é a interface de linguagem natural, não a única unidade de trabalho.
+
+## 3. Copilot único
+
+O produto final possui **um único Minha DELPI Copilot**.
+
+Não criar agentes por departamento como novo core.
 
 ```text
 usuário
-→ linguagem natural
-→ goals/subtasks
-→ capabilities autorizadas
-→ expertise/playbooks relevantes
-→ plano operacional
-→ policy/RBAC/confirmation
-→ execução
-→ observação
-→ análise/síntese
-→ navegação/resultado
-```
-
-O Copilot deve explicar, consultar, analisar, navegar e executar tudo que estiver representado por capabilities autorizadas, sempre respeitando os mesmos contratos e permissões da UI.
-
-## Decisão arquitetural obrigatória — Copilot único
-
-Não implemente o produto final como coleção de agentes por departamento.
-
-```text
-NÃO
-usuário → agente Engenharia → handoff → agente Qualidade → handoff → agente Suprimentos
-
-SIM
-usuário → Minha DELPI Copilot
+→ Copilot único
 → understanding
-→ capability retrieval
+→ authorized capability retrieval
 → expertise retrieval
 → playbook retrieval
-→ tools/multimodal/knowledge
+→ knowledge / multimodal tools
 → planner
+→ policy
 → execution
 ```
 
-Engenharia, Qualidade, Suprimentos, Comercial, Financeiro, RH, TI, Jurídico e outros domínios entram como:
+Engenharia, Qualidade, Suprimentos, Comercial, Financeiro, RH, TI e outros entram como:
 
-- `Expertise Packs`;
-- `Domain Playbooks`;
+- Expertise Packs;
+- Domain Playbooks;
 - knowledge scopes;
 - terminology/guidance;
 - capabilities autorizadas;
 - multimodal tools;
 - project preferences quando aplicável.
 
-Nenhum desses elementos concede permission.
+Nenhum desses itens concede permission.
 
-## Arquitetura obrigatória
+## 4. Arquitetura obrigatória
 
 ```text
 Business Actions
 → OpenAPI + Action Catalog
-→ validator/policy/confirmation
-→ executor genérico existente
+→ validator/policy/Decision Gate
+→ executor genérico
 
 Platform Actions
-→ /me/apps + Portal authorized routes
+→ /me/apps + authorized routes
 → Platform Capability Projection
-→ typed PlatformCommand
+→ PlatformCommand
 → CopilotBridge
 → Router/MFE/IframeBridge
 
 Workspace Context
-→ MFE publisher OU IframeBridge
+→ MFE OU IframeBridge
 → Portal context store
-→ bounded structured turn context
+→ bounded structured context
 
-Expertise
-→ Expertise Catalog
-→ semantic retrieval top-K
-→ bounded ExpertiseContext
+Expertise/Playbooks
+→ semantic retrieval
+→ bounded specialization context
+→ planner
 
-Domain Playbooks
-→ applicability/evidence/method
-→ planner converte em plano operacional usando capabilities autorizadas
+Business Graph
+→ EntityRef/RelationshipRef
+→ planning/traversal
+→ source APIs remain data authorities
 
-Multimodal
-→ document/image/drawing extraction
-→ structured evidence + provenance/confidence
-→ expertise/playbook interpretation
+Evidence Layer
+→ source result/document
+→ EvidenceRef/Claim
+→ analysis/case/artifact
 
-Agentic workflows
-→ goals/DAG
-→ capabilities existentes
-→ mesmos executors/policies
+Tasks/Cases/Rooms
+→ product work containers
+→ WorkflowPlan / Durable Workflow
+
+Inbox/Watch
+→ pending work / events / advice / controlled act
+
+Durable Workflow Runtime
+→ checkpoints / wait / resume / revalidate
 ```
 
-## Não criar
+## 5. Não criar
 
 - segundo motor de IA/planner/tools;
+- agente independente por departamento como arquitetura final;
 - catálogo manual central de endpoints;
-- lista manual de app→URL para o Copilot;
-- selector por endpoint/provider;
-- path/operationId hardcoded para semântica;
+- lista manual app→URL;
+- selector semântico baseado em path/operationId/provider;
 - DOM automation quando existe API/use case;
 - permission model próprio do Copilot;
-- workflow HTTP executor paralelo;
+- novo HTTP executor paralelo para workflows;
+- Business Graph duplicando datasets inteiros;
+- Case duplicando domínio existente sem inventário;
+- event bus paralelo sem provar necessidade;
+- Watch por polling app-specific como arquitetura final;
+- confirmação antiga válida para payload novo;
+- Simulation que executa write;
+- auto-publicação de Experience Knowledge;
+- Expertise Studio como agent builder;
+- Model Router sem baseline/evals;
 - memória paralela por app;
 - chain-of-thought persistida;
-- agente independente por departamento como novo core;
-- handoff obrigatório entre agentes para mudar de domínio;
-- Expertise Pack contendo path/method/operationId como authority técnica;
-- Expertise Pack concedendo permission/allowed action;
-- Domain Playbook executando endpoint diretamente;
-- project preference elevando permissão;
-- capability multimodal condicionada a agente selecionado sem justificativa real;
-- comando específico por iframe/app no bridge genérico;
-- transmissão de JWT/refresh token por `postMessage`;
-- `targetOrigin='*'` para mensagens sensíveis.
+- transmissão de JWT/refresh token pelo iframe bridge.
 
-## Dependência da Onda J
+## 6. Dependência OpenAPI-first
 
-A implementação atual de `llm-json-decoupling` possui documentação com `VERIFY_FINAL_FAILED`.
+A iniciativa vigente de desacoplamento LLM/OpenAPI está documentada com gates ainda abertos.
 
-Não ignore isso e não declare resolvido neste projeto.
-
-- C0–C2 podem avançar independentemente: contratos, navegação, IframeBridge, Workspace Context e inventário/contratos de expertise.
-- C3+ pode preparar scaffolding/testes, porém **Business Actions production-ready** e o cutover de operational tools dependem dos gates OpenAPI-first/tool/eval relevantes aprovados no candidate vigente.
-
-## Ordem obrigatória
-
-Execute uma subetapa por vez:
+Não mascarar isso.
 
 ```text
-C0.S0
-→ C0.S1
-→ C0.S2
-→ C1.S1
-→ C1.S2
-→ C1.S3
-→ C1.S4
-→ C1.S5
-→ C1.S6
-→ C2.S1...
+C0-C2
+→ podem avançar
+
+C3 scaffolding/tests
+→ pode avançar sem declarar production-ready
+
+C3+ Business Actions production-ready
+→ dependem dos gates OpenAPI-first/tool/eval relevantes PASS
 ```
 
-Continue conforme o grafo do `16-execution-master-plan.md` e integre os steps E0–E13 do `32-expertise-runtime-implementation-plan.md` nas fases correspondentes.
+Não reimplementar a correção dentro do Copilot.
 
-**Não pule C0.S0.**
+## 7. Ordem obrigatória
 
-## C0.S0 — primeira ação
+Comece sempre em:
+
+```text
+C0.S0 — Rebaseline e inventário real
+```
+
+Depois siga o grafo de `16-execution-master-plan.md`.
+
+Os componentes estratégicos `O0–O13` de `44-operational-intelligence-implementation-plan.md` são **extensão dependente** do plano C0–C7 e não substituem essa ordem.
+
+## 8. C0.S0 — inventário obrigatório
 
 Antes de editar runtime:
 
 1. capture `git status` e HEAD;
-2. inventarie código real de Portal, Core, AI API, Chat MFE, manifests e APIs;
-3. inventarie explicitamente todos apps `iframe` e `external`, seus manifests, render modes, origins, SSO e possibilidade de integração;
-4. inventarie todo o modelo atual de agents/skills/specialization/handoff;
-5. identifique producer/consumer/owner;
-6. atualize `18-app-onboarding-matrix.md` com fatos/evidence;
-7. atualize `17-component-and-contract-map.md` se os contratos reais diferirem das hipóteses;
-8. registre evidence no ledger;
-9. somente então defina C0.S1 como desbloqueada.
+2. inventarie Portal, Core, AI API, Chat MFE, manifests, APIs e infraestrutura real;
+3. inventarie apps iframe/external;
+4. inventarie agents/skills/specialization/handoff existentes;
+5. inventarie canonical entity IDs e relações cross-domain;
+6. inventarie event bus/eventos;
+7. inventarie background jobs/queues/workers;
+8. inventarie notification/inbox patterns;
+9. inventarie interaction rooms/chats existentes;
+10. inventarie approval/confirmation models;
+11. inventarie workflow persistence/checkpoints;
+12. inventarie audit/provenance metadata;
+13. inventarie knowledge sources/lifecycle;
+14. inventarie model/provider abstractions e métricas;
+15. identifique producer/consumer/owner;
+16. atualize matrizes/docs/ledger com evidence;
+17. somente então libere C0.S1.
 
-### Inventário obrigatório de agents/skills
+Onde não houver prova, use `TO_INVENTORY`/`NOT_PROVEN`.
 
-Localize e prove consumers de, no mínimo:
-
-```text
-agent entities/tables/repositories
-agent CRUD/admin
-agent metadata/instructions
-AgentSpecializationService
-ChatWorkspaceAgentActivationService
-ChatSoftAgentHandoffService
-ChatSkillRegistry
-allowed actions by agent
-session.agent_id
-chat_mode common/agent
-project default agent
-knowledge scopes/namespaces by agent
-agent selector UI
-soft handoff UI/events
-agent tests/fixtures/scripts/docs
-multimodal skills e branches dependentes de has_agent
-```
-
-Classifique cada item:
+Classifique estruturas potencialmente reutilizáveis:
 
 ```text
-KEEP
-MIGRATE_TO_EXPERTISE
-MIGRATE_TO_PROJECT_CONTEXT
-MIGRATE_TO_CAPABILITY_POLICY
+REUSE
+EXTEND
+MIGRATE
+CREATE_REQUIRED
 DEPRECATE
 REMOVE
 NOT_PROVEN
+OUT_OF_SCOPE_WITH_DECISION
 ```
 
-Onde não houver prova, use `TO_INVENTORY`/`NOT_PROVEN`. Não invente.
+## 9. Reuse-first
 
-## Contratos de expertise
+Antes de criar componentes novos, procurar e avaliar:
 
-Em C0.S1, reusar contratos existentes se houver. Só criar novos quando necessário.
+- Minhas Solicitações para Task/Case-like state;
+- salas de interação existentes;
+- notification/event-driven infrastructure;
+- background workers/workflows existentes;
+- Core audit logs;
+- entity/deep-link contracts;
+- current AI memory/result refs;
+- confirmation/policy atual;
+- existing model config/services.
 
-Contratos conceituais alvo:
+A visão estratégica não justifica duplicação.
+
+## 10. Capability Projection
+
+Business capability:
 
 ```text
-ExpertisePackV1
-ExpertiseSelectionV1
-ExpertiseContextV1
-DomainPlaybookV1
-MultimodalEvidenceRefV1
+Action Catalog authority
+→ projection para discovery/retrieval/UX
+→ sourceRef
+→ executor volta à authority
 ```
+
+Platform capability:
+
+```text
+Core /me/apps
++ tipos genéricos do Shell
+→ projection
+```
+
+Não copiar path/method/operationId/schema para catálogo manual de capability.
+
+## 11. Expertise e Playbooks
+
+Expertise responde **como analisar**; Capability responde **o que pode executar**; Playbook responde **como conduzir um método/processo**.
+
+```text
+Capability = operação
+Expertise = conhecimento/metodologia
+Playbook = método/processo
+Workflow = execução concreta
+```
+
+Expertise/Playbook não concedem autorização e não armazenam catálogo técnico de APIs.
+
+## 12. Business Graph
 
 Regras:
 
-- versionados;
-- owner definido;
-- conteúdo semântico, não catálogo técnico de endpoint;
-- sem permission override;
-- sem secret;
-- provenance/hash quando material;
-- compatíveis com indexação/retrieval.
+- graph contém refs/relationships;
+- APIs owners continuam fontes atuais;
+- relation possui provenance/confidence;
+- inferred ≠ authoritative;
+- traversal respeita RBAC;
+- novo relation/entity type não exige patch no planner central.
 
-## Expertise Pack
+## 13. Evidence/Provenance
 
-Um pack responde "como interpretar melhor este domínio", não "qual endpoint chamar".
-
-Pode conter:
+Toda análise material deve distinguir:
 
 ```text
-domains/signals
-terminology
-knowledge scopes
-preferred playbooks
-recommended capability kinds/keys
-analysis guidance
-output guidance
-multimodal needs
-eval suites
+FACT
+CALCULATION
+HYPOTHESIS
+CONCLUSION
+RECOMMENDATION
 ```
 
-Não pode ser authority de:
+Preservar quando aplicável:
 
 ```text
-path
-method
-operationId
-parameterStrategy
-provider selector
-permission
-allowed action
+sourceRef
+entityRef
+observedAt
+freshness
+confidence
+limitations
 ```
 
-## Expertise retrieval
+Não inventar evidence/source inexistente.
 
-Target:
+## 14. Iframe Copilot Bridge
+
+Classifique cada app:
 
 ```text
-goals + entities + workspace + attachments + project preferences
-→ semantic retrieval
-→ top-K packs
-→ policy/ACL filter
-→ bounded ExpertiseContext
+PORTAL_ONLY
+CONTEXTUAL
+INTERACTIVE
+AI_READY
 ```
 
-Testar:
+- validar origin/source/appId/protocol/version/session/schema;
+- contexto do iframe não é permission;
+- comando visual não substitui Business Action;
+- JWT/refresh token não viaja pelo bridge;
+- segundo iframe compatível deve funcionar sem patch específico.
+
+## 15. Tasks / Cases / Rooms
+
+- Task: objetivo multi-step delimitado;
+- Case: investigação/processo persistente;
+- Room: colaboração ligada a Task/Case;
+- persistir estado operacional, evidence e decisões, não CoT;
+- acesso ao Case/Room não concede acesso às entidades fonte;
+- lifecycle/audit obrigatórios.
+
+## 16. Inbox / Watch
+
+Inbox:
+
+```text
+waiting_for_user
+working
+completed
+alerts
+```
+
+Watch:
+
+```text
+OBSERVE
+ADVISE
+ACT
+```
+
+- preferir eventos a polling;
+- dedupe/cooldown;
+- revalidar permission no trigger;
+- `ACT` somente após autonomy/Decision Gate correspondente.
+
+## 17. Durable Workflow
+
+Long-running flow deve usar estado/checkpoint:
+
+```text
+execute
+→ checkpoint
+→ wait_user | wait_approval | wait_event | wait_time
+→ revalidate
+→ resume
+```
+
+Não manter request aberto por horas e não reexecutar prompt inteiro como estratégia de resume.
+
+Writes:
+
+```text
+retry somente com idempotência/verification
+```
+
+## 18. Decision Gates
+
+Migrar confirmação conforme risco:
+
+```text
+NO_GATE
+ACKNOWLEDGE
+CONFIRM
+REVIEW_AND_CONFIRM
+APPROVAL_WORKFLOW
+BLOCK
+```
+
+Alteração material em args/evidence/policy invalida gate anterior.
+
+## 19. Simulation
+
+```text
+baseline
++ explicit assumptions
++ governed model/calculation
+→ projected outputs
+```
+
+- preferir regra/modelo determinístico owner;
+- LLM explica/estrutura, não inventa números;
+- `simulate` nunca faz write;
+- `apply` é Business Action separada e revalidada.
+
+## 20. Organizational Knowledge
+
+Separar:
+
+```text
+Reference
+Operational
+Decision
+Experience
+Semantic
+```
+
+Feedback não altera produção automaticamente.
+
+Experience/Solution Pattern:
+
+```text
+candidate
+→ review
+→ eval
+→ versioned publish
+```
+
+## 21. Expertise Studio
+
+Não é agent builder.
+
+Lifecycle:
+
+```text
+DRAFT → REVIEW → TESTING → APPROVED → PUBLISHED → DEPRECATED/RETIRED
+```
+
+Publish exige schema/evals/version/audit/rollback.
+
+## 22. Model Router
+
+Somente após baseline de qualidade/custo/latência.
+
+Classes conceituais:
+
+```text
+FAST
+STANDARD
+DEEP_REASONING
+MULTIMODAL
+LONG_CONTEXT
+```
+
+Routing deve respeitar privacy/provider policy; fallback não relaxa safety.
+
+## 23. Workspace Context
+
+Contexto bounded e tipado:
+
+```text
+appId
+routeId
+entityRefs
+filters
+selection
+dateRange
+visibleDataRefs
+```
+
+Não enviar estado React/DOM inteiro. Contexto não é permission.
+
+## 24. Business Actions
+
+```text
+intenção
+→ grounded args
+→ schema validation
+→ RBAC/policy
+→ preview/Decision Gate
+→ revalidation
+→ generic execute
+→ verify outcome
+→ evidence/audit
+```
+
+UI e Copilot convergem no mesmo API/use case.
+
+## 25. Workflows
+
+Representar plano operacional, não raciocínio privado.
+
+Cada step possui:
+
+- capabilityRef;
+- dependencies;
+- status;
+- confirmation/decision boundary;
+- expected outcome;
+- evidence/result refs quando aplicável.
+
+Paralelizar apenas reads independentes e seguros.
+
+## 26. Testes
+
+Use `20-testing-and-acceptance-matrix.md` e `45-operational-intelligence-testing-gates.md`.
+
+Conforme a etapa, provar:
 
 - positive;
 - sibling;
-- negative unrelated;
-- cross-domain composition;
-- unknown pack;
-- metamorphic rename;
-- unauthorized knowledge;
-- unauthorized capability.
+- negative;
+- unauthorized;
+- TOCTOU;
+- injection;
+- send/stream parity;
+- reload/F5;
+- unknown OpenAPI;
+- true metamorphic rename;
+- required/type/enum/path/query/body;
+- confirmation/idempotency;
+- compound/partial failure;
+- iframe security/generalization;
+- expertise/playbook selection;
+- Business Graph RBAC/generalization;
+- evidence provenance;
+- Task/Case lifecycle;
+- Watch dedupe/revocation;
+- Durable Workflow restart/no duplicate write;
+- stale approval rejection;
+- Simulation reproducibility;
+- Experience publish governance;
+- Model Router privacy/fallback;
+- R1–R11.
 
-## Domain Playbooks
+Nunca enfraquecer teste ou threshold para o candidate passar.
 
-Playbook representa método de domínio.
+## 27. Anchor scenario
 
-Exemplo:
+O produto maduro deve conseguir executar, de forma governada:
 
-```text
-quality.8d
-quality.root-cause
-engineering.drawing-review
-operations.delivery-delay-analysis
-```
+> “Esse produto está dando problema no cliente. Analise o desenho, procure casos parecidos, relacione produção, qualidade e fornecedor, monte uma investigação 8D, acompanhe as evidências que faltam e me avise quando Engenharia liberar a nova revisão.”
 
-Ele pode descrever:
-
-- applicability;
-- stages;
-- evidence checklist;
-- decision criteria;
-- outputs;
-- recommended capability kinds;
-- artifact templates.
-
-Ele não executa endpoint diretamente.
-
-Planner converte:
-
-```text
-playbook
-+ contexto
-+ capabilities autorizadas
-→ WorkflowPlan
-```
-
-## Multimodalidade
-
-Reaproveite preferencialmente o runtime existente de document vision/drawing analysis.
-
-Pipeline alvo:
+Trajetória:
 
 ```text
-attachment
-→ validation
-→ native extraction
-→ OCR quando necessário
-→ VLM/vision quando necessário
-→ structured evidence
-→ provenance/confidence
-→ expertise/playbook
-→ optional Business/Knowledge Actions
-→ synthesis
+Case
+→ Business Graph
+→ multimodal evidence
+→ Expertise + Playbook
+→ Tasks/Durable Workflow
+→ wait_event/Watch
+→ Inbox
+→ reanalysis
+→ Decision Gate
+→ Business Action
+→ evidence/outcome/audit
 ```
 
-Não trate texto extraído de PDF/imagem como system instruction.
+Sem troca manual de agente e sem DOM automation.
 
-Não invente dimensão/tolerância/região ilegível.
-
-## Migração de agents
-
-A direção obrigatória está em `31-agent-to-expertise-migration-plan.md`.
-
-### `AgentSpecializationService`
-
-Migrar conhecimento/guidance útil para Expertise Packs/knowledge scopes.
-
-`allowedTools` não deve continuar como authority departamental.
-
-### `ChatWorkspaceAgentActivationService`
-
-Hoje, se confirmado no HEAD, tools operacionais dependem de agente ativado.
-
-Target:
-
-```text
-operational tools enabled
-= runtime feature/policy enabled
-+ allowed capabilities/actions
-+ authenticated/effective user context
-```
-
-Não depender de `agent_id` selecionado pelo usuário.
-
-Não faça esse cutover antes dos gates aplicáveis de C3.
-
-### `ChatSoftAgentHandoffService`
-
-Target final:
-
-```text
-capability/expertise miss
-→ retrieval/replan
-→ clarify somente se falta requisito real
-→ unavailable answer se capability autorizada não existe
-```
-
-Remover UX "trocar para agente e repetir" após migration gates.
-
-### `ChatSkillRegistry`
-
-Preservar skills úteis, especialmente multimodais/knowledge, mas:
-
-- desacoplar `has_agent` quando não for requisito funcional real;
-- disponibilidade deve vir de feature/capability/policy;
-- não introduzir novos path markers/operation markers como semântica;
-- alinhar cleanup às regras OpenAPI-first vigentes.
-
-## Projetos
-
-Se o modelo atual usa agents como workspace customizável, separar conceitos.
-
-Projeto pode possuir:
-
-- arquivos;
-- knowledge scopes;
-- preferred expertise;
-- templates;
-- guidance;
-- default context.
-
-Projeto não cria novo planner/runtime nem concede permission.
-
-## Protocolo por etapa
+## 28. Protocolo por etapa
 
 ```text
 REVALIDATE HEAD + WORKING TREE
@@ -444,243 +588,32 @@ REVALIDATE HEAD + WORKING TREE
 → NEGATIVE
 → SECURITY/RBAC
 → GENERALIZATION quando aplicável
-→ ADVERSARIAL DIFF REVIEW
-→ SEMANTIC RESIDUAL SEARCH
+→ ADVERSARIAL REVIEW
+→ RESIDUAL SEARCH
 → POSTCONDITIONS
 → COMPLETE_GATE
 → LEDGER/DOCS
 → NEXT
 ```
 
-Sem `COMPLETE_GATE=PASS`, a próxima dependente não está liberada.
+Sem `COMPLETE_GATE=PASS`, dependente não é liberada.
 
-## Capability Projection
-
-Nunca transformar o Capability Catalog em nova fonte técnica.
-
-Business capability:
-
-```text
-Action Catalog authority
-→ projection para discovery/retrieval/UX
-→ sourceRef
-→ executor retorna à Action authority
-```
-
-Platform capability:
-
-```text
-Core /me/apps authority
-+ tipos genéricos do Shell
-→ projection
-```
-
-Não copiar path/method/operationId/schema para JSON manual de capability.
-
-## Platform Actions
-
-Primeiro target funcional:
-
-```text
-portal.open_app
-portal.open_route
-```
-
-O LLM gera target lógico/ID autorizado, nunca URL livre.
-
-`CopilotBridge` deve:
-
-- validar schema;
-- resolver target contra rotas atuais autorizadas;
-- revalidar no instante da execução;
-- executar Router/Shell action;
-- emitir resultado tipado/auditável.
-
-## Iframe Copilot Bridge
-
-Apps `iframe` seguem `26-iframe-copilot-bridge.md`.
-
-Classificar cada app:
-
-```text
-PORTAL_ONLY
-CONTEXTUAL
-INTERACTIVE
-AI_READY
-```
-
-Regras obrigatórias:
-
-- `PORTAL_ONLY`: abrir app/rota somente;
-- `CONTEXTUAL`: iframe publica contexto bounded via bridge tipado;
-- `INTERACTIVE`: recebe somente comandos visuais genéricos declarados;
-- `AI_READY`: Business Actions reais vêm de API/OpenAPI, não de click/DOM;
-- validar `origin`, `event.source`, `appId`, protocolo, versão, sessão e schema;
-- capability declarada pelo iframe não implica autorização automática;
-- contexto do iframe é dado não confiável para policy/system;
-- nenhuma credencial de negócio é transmitida pelo bridge;
-- segundo iframe compatível deve funcionar sem patch específico no planner/bridge.
-
-## Workspace Context
-
-Contexto deve ser bounded e tipado:
-
-```text
-appId
-routeId
-entityRefs
-filters
-selection
-dateRange
-visibleDataRefs
-```
-
-Pode ser produzido por MFE ou iframe integrado. O Copilot deve receber a representação normalizada, sem acoplar o planner à tecnologia visual.
-
-Não enviar estado React inteiro. Não usar contexto como permissão.
-
-## Business Actions
-
-UI e Copilot devem convergir:
-
-```text
-UI ───────────┐
-              ▼
-          API/use case
-              ▲
-Copilot ──────┘
-```
-
-Para writes:
-
-```text
-args grounded
-→ schema validation
-→ RBAC/policy
-→ preview
-→ confirmation quando required
-→ revalidation
-→ execute
-→ verify outcome
-→ audit
-```
-
-Em iframe, jamais substituir esse fluxo por `view.click_button` ou equivalente.
-
-Expertise/Playbook nunca bypassam esse fluxo.
-
-## Workflows
-
-Representar plano operacional, não raciocínio privado.
-
-Cada step possui capability, dependências, status, confirmation boundary e outcome esperado.
-
-Paralelizar somente reads independentes e seguros.
-
-Não retry write sem garantia de idempotência.
-
-Playbooks podem orientar o plano, mas o executor continua usando capabilities/executors canônicos.
-
-## Testes
-
-Use `20-testing-and-acceptance-matrix.md` como gate.
-
-Obrigatório conforme a etapa:
-
-- positive;
-- sibling;
-- negative;
-- unauthorized;
-- TOCTOU;
-- injection;
-- send/stream parity;
-- reload/F5;
-- session without agent;
-- legacy session compatibility;
-- expertise positive/sibling/negative;
-- cross-domain expertise composition;
-- unknown Expertise Pack;
-- metamorphic Expertise Pack rename;
-- Domain Playbook applicability/evidence missing;
-- multimodal document/drawing;
-- multimodal prompt injection;
-- unknown external API;
-- verdadeiro metamorphic provider/path/operationId rename;
-- required/type/enum/path/query/body;
-- confirmation/idempotency;
-- compound/multi-turn/partial failure;
-- iframe valid/invalid origin/source/session/schema;
-- unknown iframe onboarding sem hardcode;
-- tentativa de business write por comando visual rejeitada;
-- R1–R11.
-
-Nunca enfraquecer teste/threshold para fazer o candidate passar.
-
-## Residual search específico de agents
-
-Após cada cutover relacionado a expertise, procurar:
-
-```text
-has_agent
-userActivatedAgent
-chat_mode == "agent"
-switch_agent_and_resend
-softAgentHandoff
-agent specialization
-agent allowed tools
-agent required tools
-agentId routing
-```
-
-Classificar cada ocorrência como:
-
-```text
-VALID_NON_ROUTING_CONCEPT
-LEGACY_COMPAT_WITH_EXIT_CRITERIA
-REMOVE
-```
-
-No cutover final, routing residual material deve ser zero.
-
-## Rollout
-
-Seguir:
-
-```text
-contracts
-→ navigation canary
-→ iframe PORTAL_ONLY/bridge handshake
-→ workspace context opt-in MFE/iframe
-→ expertise shadow retrieval
-→ internal single-Copilot canary
-→ business reads
-→ operational-tool decoupling after gates
-→ playbooks/multimodal pilots
-→ prepare write L3
-→ confirmed write L4
-→ workflows
-→ AI-ready waves
-→ agent selector deprecation
-→ legacy agent-routing removal
-→ L5 somente policy explícita e OFF por default
-```
-
-Feature flag precisa de owner e exit criteria.
-
-Shadow não pode virar fallback permanente.
-
-## Reporte obrigatório após cada subetapa
+## 29. Reporte obrigatório
 
 ```text
 STEP:
+OPERATIONAL_STEP quando aplicável:
 HEAD_BEFORE:
 HEAD_AFTER:
 STATUS:
-REQUIREMENTS:
+CP_REQUIREMENTS:
 DEPENDENCIES:
 FILES_CHANGED:
 CANONICAL_OWNERS:
 PRODUCERS_CONSUMERS:
+REUSED_COMPONENTS:
+NEW_COMPONENTS_JUSTIFIED:
+DATA_AUTHORITIES:
 BASELINE:
 IMPLEMENTATION:
 WIRING_PROOF:
@@ -689,13 +622,10 @@ POSITIVE:
 SIBLING:
 NEGATIVE:
 SECURITY_RBAC:
+PROVENANCE:
+IDEMPOTENCY:
+RELOAD_RESUME:
 GENERALIZATION:
-EXPERTISE_PACKS_TOUCHED:
-PLAYBOOKS_TOUCHED:
-LEGACY_AGENT_CONSUMERS_FOUND:
-MIGRATION_CLASSIFICATION:
-EXPERTISE_SELECTION_EVIDENCE:
-RESIDUAL_AGENT_ROUTING:
 RESIDUAL_SEARCH:
 ADVERSARIAL_REVIEW:
 DRIFTS:
@@ -707,9 +637,9 @@ COMMIT:
 PUSH:
 ```
 
-## Status bloqueantes
+## 30. Estados bloqueantes
 
-Não declarar etapa concluída com:
+Não declarar concluído com:
 
 ```text
 PARTIAL
@@ -720,15 +650,20 @@ SHADOW_ONLY sem exit criteria
 TODO/FIXME/HACK/TEMPORARY material
 TEST_NOT_RUN
 STALE_EVIDENCE
-SOFT_AGENT_HANDOFF_RESIDUAL material
-AGENT_REQUIRED_TOOL_GATE material
-UNKNOWN_AGENT_CONSUMER
-UNAUTHORIZED_CAPABILITY regression
-UNAUTHORIZED_KNOWLEDGE regression
+manual relation catalog sem owner
+unfiltered graph traversal
+claim material sem provenance
+case/room permission leakage
+watch ACT sem policy
+duplicate write after resume
+approval stale
+simulation não reproduzível
+knowledge auto-published
+model router sem baseline/evals
 ```
 
-## Continuidade
+## 31. Continuidade
 
-Se o usuário já autorizou a implementação do plano e a etapa atual fechou `COMPLETE_GATE=PASS`, continue automaticamente para a próxima desbloqueada. Pare somente por bloqueio real conforme `22-cursor-execution-protocol.md`.
+Se o usuário já autorizou a implementação e a etapa fecha `COMPLETE_GATE=PASS`, continue para a próxima desbloqueada conforme os planos canônicos. Pare apenas por bloqueio real documentado.
 
-Comece por **C0.S0**.
+**Comece por C0.S0.**
