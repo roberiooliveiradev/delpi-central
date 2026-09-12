@@ -109,6 +109,7 @@ Copilot ──────────┘
 | [`12-roadmap.md`](./12-roadmap.md) | roadmap incremental de implementação |
 | [`13-functional-catalog.md`](./13-functional-catalog.md) | catálogo funcional detalhado do Copilot |
 | [`14-definition-of-done.md`](./14-definition-of-done.md) | critérios de conclusão por fase e globais |
+| [`15-integration-map.md`](./15-integration-map.md) | mapa de integração com componentes atuais da Minha DELPI |
 
 ## Integração com arquitetura existente
 
