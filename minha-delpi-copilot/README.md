@@ -19,6 +19,7 @@ NEXT_STEP = C0.S0 — Rebaseline e inventário total
 
 - [Plano Mestre foundation-first](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/16-execution-master-plan.md)
 - [Ownership e contracts](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/17-component-and-contract-map.md)
+- [Arquitetura e design patterns](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/49-architecture-and-design-patterns-standard.md)
 - [Testes e aceite](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/20-testing-and-acceptance-matrix.md)
 - [Dados e estado](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/21-data-and-state-model.md)
 - [Prompt mestre do Cursor](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/23-prompt-cursor-execucao.md)
@@ -43,16 +44,31 @@ C0 Foundations
 ### Primeiro freeze
 
 ```text
-C0.S0 inventory
-→ C0.S1 authorities
+C0.S0 inventory + patterns reais do repo
+→ C0.S1 authorities/bounded contexts
 → C0.S2 shared primitives
-→ C0.S3 persistence boundaries
-→ C0.S4 cross-cutting semantics
-→ C0.S5 contract harness
+→ C0.S3 ports/persistence boundaries
+→ C0.S4 cross-cutting semantics + architecture/pattern freeze
+→ C0.S5 contract/conformance harness
 → C0.S6 FOUNDATION_FREEZE
 ```
 
 Nenhum runtime feature work deve preceder esse gate.
+
+O freeze inclui, além dos contratos, validação de:
+
+```text
+Clean Architecture
+Ports & Adapters
+DDD pragmático
+layer/dependency rules
+Pattern Decision Matrix
+error/event/state/persistence/frontend rules
+resilience/idempotency
+migration/strangler patterns
+Abstraction Gate
+architectural exception/ADR process
+```
 
 ## Owners a evoluir
 
@@ -64,10 +80,12 @@ Nenhum runtime feature work deve preceder esse gate.
 - MFEs/iframes — context, EntityRefs, deep links, visual capabilities;
 - infraestrutura existente de events/jobs/rooms/notifications — reutilizar antes de criar nova.
 
-Não criar um segundo motor de IA, Graph como banco mestre, Task engine separado ou agent runtime por departamento.
+Não criar um segundo motor de IA, Graph como banco mestre, Task engine separado, agent runtime por departamento ou arquitetura/pattern local concorrente.
 
 ## Primeira ação do Cursor
 
 Abrir o [prompt mestre](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/23-prompt-cursor-execucao.md) e executar **somente C0.S0**.
 
-C0.S0 é inventário/evidence; não implementa CopilotBridge, Graph, Expertise, Decision Gate, Workflow, Task, Case, Watch ou Model Router.
+C0.S0 é inventário/evidence: além dos componentes funcionais, deve mapear patterns/layers/DI/errors/events/state/resilience/migrations reais do repositório para validar o documento `49` antes do `FOUNDATION_FREEZE`.
+
+C0.S0 não implementa CopilotBridge, Graph, Expertise, Decision Gate, Workflow, Task, Case, Watch ou Model Router.
