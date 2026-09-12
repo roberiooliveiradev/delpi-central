@@ -3,7 +3,8 @@
 **Status:** gate transversal canônico  
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Boundary standalone:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)
+**Patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
+**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
 
 ## 1. Regra de evidence
 
@@ -18,6 +19,10 @@ schema/migration version
 OpenAPI/Action Catalog hashes
 provider/model/config hashes
 expertise/playbook hashes
+media/provider policy hashes
+retention/consent policy version
+device/session class
+industrial safety boundary/version when applicable
 environment
 test/eval version
 timestamp
@@ -39,6 +44,12 @@ Provar com paths/contracts reais:
 - representative MFEs/manifests;
 - APIs/OpenAPIs/auth/idempotency/entity IDs;
 - rooms/events/jobs/notifications/workflows existentes;
+- browser/media/streaming patterns existentes;
+- shared-device/tablet/kiosk/room patterns quando existirem;
+- media/object storage existente;
+- privacy/retention/consent owners existentes;
+- OP/machine/operation/product context sources;
+- OT APIs/events/protocol boundaries existentes, sem assumir command authority;
 - Chat analisado apenas como reference-only.
 
 ### Standalone boundary
@@ -51,6 +62,7 @@ Copilot target imports plugins/minha-delpi-chat source
 Copilot schema depends on Chat table/session/agent
 Copilot requires Chat API endpoint
 Copilot requires Chat container to start
+Copilot media pipeline calls Chat runtime as required dependency
 ```
 
 Todos devem resultar em `FAIL` arquitetural.
@@ -70,7 +82,23 @@ Positive/sibling/negative para:
 - WorkflowPlan/Step;
 - TaskRef/CaseRef;
 - EventEnvelope;
-- IframeBridgeEnvelope.
+- IframeBridgeEnvelope;
+- `MediaRef` ou equivalente, **somente se C0 confirmar necessidade**.
+
+### Media/privacy/Frontline foundation
+
+Provar antes de runtime multimodal contínuo:
+
+- capture mode classes;
+- media retention classes;
+- transcript/raw-audio/raw-video/screen/Evidence lifecycle separado;
+- consent/policy owner;
+- shared-device identity/session isolation;
+- operational context reuse de WorkspaceContext/EntityRef;
+- realtime budgets/backpressure direction;
+- industrial/OT boundary;
+- no hidden surveillance default;
+- no facial/emotion recognition introduced implicitly.
 
 ### Architecture conformance
 
@@ -83,6 +111,7 @@ Positive/sibling/negative para:
 - Error/Result translation at boundaries;
 - retry/idempotency read/write semantics;
 - frontend server/workspace/conversation/local/durable state ownership;
+- media/provider integrations behind justified boundaries;
 - no speculative Strategy/Factory/Saga/CQRS/registry/base class;
 - ADR for material exception.
 
@@ -97,6 +126,10 @@ PRIMITIVES=PASS
 ARCHITECTURE_PATTERNS=PASS
 PERSISTENCE_BOUNDARIES=PASS
 INTEGRATION_CONTRACTS=PASS
+MEDIA_PRIVACY_BOUNDARIES=PASS
+SHARED_DEVICE_BOUNDARY=PASS
+OPERATIONAL_CONTEXT_BOUNDARY=PASS
+OT_SAFETY_BOUNDARY=PASS
 CONFORMANCE_HARNESS=PASS
 CHAT_RUNTIME_DEPENDENCY=0
 DUPLICATE_FOUNDATION=0 material
@@ -124,7 +157,10 @@ DUPLICATE_FOUNDATION=0 material
 - `@delpi/plugin-ui` loaded;
 - mount/unmount;
 - getAccessToken host contract;
-- API error/401 handling.
+- API error/401 handling;
+- responsive baseline;
+- media capability/permission state does not start capture automatically;
+- accessibility baseline compatible with future Frontline/Meeting surfaces.
 
 ### Manifest/Core/Gateway/Compose
 
@@ -163,8 +199,11 @@ INDEPENDENT_DEPLOY_ROLLBACK=PASS
 
 - WorkspaceContext bounded/sanitized;
 - app/route/entity/filter/date context changes;
+- operational EntityRefs: OP/machine/product/operation/lote/posto when source exists;
+- device/session metadata bounded and non-authoritative;
 - stale context;
 - logout context clear;
+- user change on shared device clears prior local context;
 - Portal panel/full page parity;
 - open app/route/entity authorized;
 - unauthorized/revoked/TOCTOU;
@@ -176,7 +215,7 @@ INDEPENDENT_DEPLOY_ROLLBACK=PASS
 - no JWT/secret in bridge messages;
 - business write via DOM/visual command rejected.
 
-## 5. Gate C3 — Intelligence Core
+## 5. Gate C3 — Intelligence Core + Multimodal Foundations
 
 ### Conversation/understanding
 
@@ -214,7 +253,7 @@ INDEPENDENT_DEPLOY_ROLLBACK=PASS
 - Knowledge ACL enforced;
 - project preference cannot elevate visibility.
 
-### Multimodal/Evidence
+### Document/Image multimodal
 
 - textual PDF;
 - scanned PDF;
@@ -222,8 +261,44 @@ INDEPENDENT_DEPLOY_ROLLBACK=PASS
 - unreadable region;
 - page/region provenance;
 - confidence/limitations;
-- document prompt injection;
+- document/image prompt injection;
 - FACT/CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION semantics.
+
+### Voice/audio
+
+Quando voice baseline entrar no candidate:
+
+- mic permission denied;
+- mic permission revoked mid-session;
+- speech-to-text success/partial/error;
+- noisy/ambiguous utterance;
+- correction/repeat flow;
+- text-to-speech fallback;
+- voice command equals typed command sem privilege difference;
+- material action with uncertain transcription does not execute silently;
+- no raw-audio persistence without policy.
+
+### Camera/video
+
+Quando camera/video entrar no candidate:
+
+- camera permission denied/revoked;
+- image/frame provenance;
+- short-video segmentation/time-range provenance;
+- unsupported/large video becomes bounded async/degraded flow;
+- model uncertainty exposed;
+- hostile visual/document instruction does not alter policy;
+- raw-video retention follows configured class;
+- visual finding does not become authoritative quality decision by default.
+
+### Media policy
+
+- transient capture without raw persistence;
+- configured retention class honored;
+- delete/anonymize path where required;
+- provider/data policy filtering;
+- session stop actually stops capture;
+- F5/reconnect never restarts camera/mic silently.
 
 ## 6. Gate C4 — Business Reads + Business Graph
 
@@ -249,7 +324,18 @@ INDEPENDENT_DEPLOY_ROLLBACK=PASS
 - source owner unavailable;
 - sibling entity/relation without planner patch;
 - traversal returns refs then fetches owner data;
-- no master dataset replication.
+- no master dataset replication;
+- media/meeting/frontline evidence links to EntityRefs without copying source master data.
+
+### Operational context correlation
+
+Quando sources existirem:
+
+- OP → product/revision;
+- machine → maintenance/history;
+- operation → procedure/instruction;
+- lot/material → supplier/quality;
+- user without permission does not gain data because device/machine context exists.
 
 ## 7. Gate C5 — Governed Writes + Durable Foundation
 
@@ -272,7 +358,9 @@ INDEPENDENT_DEPLOY_ROLLBACK=PASS
 - ambiguous timeout;
 - partial failure;
 - outcome verification;
-- no blind retry.
+- no blind retry;
+- repeated voice utterance/event does not duplicate write;
+- meeting action candidate is not write until governed transition.
 
 ### Workflow foundation
 
@@ -289,7 +377,7 @@ INDEPENDENT_DEPLOY_ROLLBACK=PASS
 - permission/policy change while waiting;
 - no duplicate write.
 
-## 8. Gate C6 — Product Work + Proactivity + Ecosystem
+## 8. Gate C6 — Product Work + Proactivity + Meeting/Frontline + Ecosystem
 
 ### Task/Case
 
@@ -297,7 +385,8 @@ INDEPENDENT_DEPLOY_ROLLBACK=PASS
 - state matches workflow;
 - Evidence Board accepted/contested/missing/superseded;
 - source permission remains required;
-- Case does not auto-publish Experience.
+- Case does not auto-publish Experience;
+- meeting/frontline refs do not duplicate raw source content.
 
 ### Rooms
 
@@ -306,11 +395,13 @@ INDEPENDENT_DEPLOY_ROLLBACK=PASS
 - membership does not grant source access;
 - grounded summary;
 - injection negative;
-- Case correlation.
+- Case correlation;
+- meeting artifact link preserves source permissions.
 
 ### Inbox
 
 - pending decision/work/result/alert states;
+- meeting candidate actions pending review when applicable;
 - dedupe;
 - resolved transition;
 - revoked source permission sanitizes item;
@@ -325,12 +416,47 @@ INDEPENDENT_DEPLOY_ROLLBACK=PASS
 - expiry/disable;
 - ACT remains blocked in C6.
 
-### Knowledge/Learning/Studio
+### Meeting Mode
 
-- source owner/version/provenance;
-- Experience promotion requires review;
-- PII handling;
-- feedback does not change production automatically;
+Quando C6 Meeting scope for candidate:
+
+- explicit start/stop;
+- visible mic/transcript/camera/screen/raw-record indicators;
+- capture cannot start hidden;
+- participant/session context correct;
+- live query uses user permissions;
+- meeting transcript != summary != confirmed decision;
+- generated ata cites/refers to sources when material;
+- candidate action requires review/Decision Gate before write;
+- resume/next meeting can load authorized pending actions;
+- revoked participant/source access is respected;
+- raw audio/video retention follows policy;
+- meeting works without Chat runtime.
+
+### Frontline Mode
+
+Quando C6 Frontline scope for candidate:
+
+- shared terminal login/user switch;
+- prior-user local context/data does not leak;
+- OP/machine/product/operation context resolves from canonical EntityRefs;
+- hands-free command fallback to touch/text;
+- noisy speech does not trigger unsafe action;
+- camera finding exposes confidence/limitations;
+- training step links to current revision/procedure source;
+- unavailable source/provider yields safe degraded guidance;
+- register issue/escalate uses governed Business Action;
+- no physical machine command from free-form LLM;
+- Frontline works without Chat runtime.
+
+### Process learning / Knowledge
+
+- observation creates candidate only;
+- candidate has provenance/Evidence/context;
+- expert/owner review required;
+- feedback/meeting/operator statement does not change production behavior automatically;
+- no hidden individual productivity scoring;
+- PII/media handling;
 - draft/test/publish/rollback;
 - admin RBAC;
 - no technical endpoint catalog inside expertise/playbook.
@@ -339,9 +465,10 @@ INDEPENDENT_DEPLOY_ROLLBACK=PASS
 
 - unknown app/MFE/iframe/API/pack;
 - contracts drive onboarding;
-- no app-specific planner hardcode.
+- no app-specific planner hardcode;
+- Frontline-ready requirements do not alter business permission semantics.
 
-## 9. Gate C7 — Autonomy + Optimization + Rollout
+## 9. Gate C7 — Autonomy + Advanced Realtime + Optimization + Rollout
 
 ### Autonomy/Watch ACT
 
@@ -368,7 +495,35 @@ INDEPENDENT_DEPLOY_ROLLBACK=PASS
 - data-policy filtering;
 - latency/cost thresholds;
 - structured output validity;
-- provider names isolated from domain/application.
+- provider names isolated from domain/application;
+- realtime/media provider filtering by data policy.
+
+### Advanced realtime/media
+
+Quando candidate:
+
+- session duration/budget limits;
+- concurrent session limits;
+- frame sampling/bitrate bounds;
+- backpressure/network loss;
+- graceful degraded/async fallback;
+- realtime provider unavailable;
+- capture stop/kill switch;
+- cost telemetry;
+- edge processing only with defined data boundary.
+
+### Industrial/OT negative gate
+
+Obrigatório enquanto não houver programa específico aprovado:
+
+```text
+free-form LLM output → PLC/CNC/robot command = BLOCK
+voice command → direct machine actuation = BLOCK
+visual finding → machine safety override = BLOCK
+Copilot L5 → implicit OT permission = BLOCK
+```
+
+Se future OT actuation for explicitamente aprovada, exigir test matrix separada para deterministic command schema, state/preconditions, independent interlocks, simulation, authorization, fail-safe e audit.
 
 ### Rollout
 
@@ -377,6 +532,7 @@ INDEPENDENT_DEPLOY_ROLLBACK=PASS
 - rollback;
 - accessibility;
 - incident metrics;
+- media/privacy incident controls;
 - final independence test with Chat offline.
 
 ## 10. Injection/safety transversal
@@ -385,34 +541,43 @@ Testar conforme surface:
 
 ```text
 user prompt
+voice transcript
 tool/API result
 RAG source
 WorkspaceContext
+device/session metadata
 iframe message
 Expertise/Playbook content
 PDF/image
+camera/video/screen
 room message/file
 event payload
+meeting transcript
+frontline observation
 ```
 
-Untrusted data never changes system policy/permissions.
+Untrusted data never changes system policy/permissions/retention/safety boundary.
 
 ## 11. Surface parity
 
-Material behavior must remain equivalent across:
+Material security/authorization behavior deve permanecer equivalente entre:
 
 ```text
 full page
 Portal panel
-send/stream
+Meeting
+Frontline
+send/stream/voice
 Task/Case/Inbox surfaces
 iframe contextual entry when supported
 admin preview/simulation
 ```
 
-Only UX/transport may differ.
+UX/transport podem variar; RBAC/policy/Decision/Evidence semantics não.
 
-## 12. Anchor scenario final
+## 12. Anchor scenarios finais
+
+### Cross-domain investigation
 
 ```text
 reclamação
@@ -432,7 +597,35 @@ reclamação
 → candidate Experience
 ```
 
-Must work without Minha DELPI Chat runtime.
+### Meeting
+
+```text
+reunião produção
+→ explicit capture/transcript
+→ pergunta sobre linha/máquina
+→ authorized APIs/Graph
+→ grounded answer
+→ decisões/pending actions
+→ ata viva
+→ review/Decision Gate
+→ Task/Case
+→ next-meeting follow-up
+```
+
+### Frontline
+
+```text
+operador + OP + máquina + operação
+→ voice/camera question
+→ drawing/procedure + history reads
+→ Evidence/Hypothesis
+→ guided response
+→ issue/escalation candidate
+→ governed action
+→ Task/Case/Knowledge candidate
+```
+
+Todos devem funcionar sem Minha DELPI Chat runtime.
 
 ## 13. Release blockers
 
@@ -452,6 +645,14 @@ Watch ACT without policy
 simulation presented as fact
 Experience auto-published
 unknown provider/app requiring hardcode
+HIDDEN_MEDIA_CAPTURE
+UNDEFINED_MEDIA_RETENTION
+SHARED_DEVICE_STATE_LEAK
+VOICE_PERMISSION_BYPASS
+VISUAL_FINDING_AS_UNVALIDATED_FACT
+HIDDEN_WORKER_SURVEILLANCE
+ARBITRARY_LLM_OT_COMMAND
+SAFETY_INTERLOCK_BYPASS
 required test FAIL/INCONCLUSIVE/NOT_RUN
 stale/non-reproducible evidence
 ```
