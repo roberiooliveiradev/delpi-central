@@ -66,13 +66,24 @@
 | CP-058 | Capability projection business | AI | C3.S1 | no duplicate catalog | LOCKED |
 | CP-059 | Capability projection platform | Portal/AI | C1.S1 | `/me/apps` authority | PLANNED |
 | CP-060 | Administração de capabilities/coverage | admin | C5/C6 | RBAC admin | LOCKED |
+| CP-061 | Descobrir/abrir app iframe `PORTAL_ONLY` | Portal/CopilotBridge | C1.S1–S3 | authorized iframe navigation | PLANNED |
+| CP-062 | Handshake seguro Portal ↔ iframe | Portal/IframeBridge | C0.S1–C1.S7 | origin/source/schema/protocol | PLANNED |
+| CP-063 | Publicar Workspace Context a partir de iframe | IframeBridge + iframe adapter | C2.S3/C2.S8 | context normalization/security | PLANNED |
+| CP-064 | Executar comando visual genérico em iframe | Portal/IframeBridge | C2.S8 | declared capability + observation | PLANNED |
+| CP-065 | Classificar iframe `PORTAL_ONLY/CONTEXTUAL/INTERACTIVE/AI_READY` | readiness tooling | C0/C3.S7/C5.S3 | evidence-based classification | PLANNED |
+| CP-066 | SDK/helper de Iframe Copilot Bridge | shared/Portal | C5.S2 | contract + lifecycle tests | LOCKED |
+| CP-067 | Unknown iframe onboarding sem hardcode | Portal/IframeBridge | C5 | generalization test | LOCKED |
+| CP-068 | Proibir Business Action por DOM/click em iframe | Portal/AI/policy | C3 + transversal | architecture/security negative | PLANNED |
+| CP-069 | SSO iframe sem token via bridge | Portal/app owner/security | C0/C5 | auth architecture review | TO_INVENTORY |
+| CP-070 | Observabilidade de sessão/comandos do iframe bridge | Portal/Observability | C1/C2/C7 | trace correlation/redaction | PLANNED |
 
 ## 2. Regras de atualização
 
 - toda funcionalidade nova adicionada à especificação deve receber um `CP-*`;
 - nenhum `CP-*` pode virar `PASS` sem evidence no ledger;
 - `BLOCKED_BY_AI_GATE` só muda quando a dependência OpenAPI-first aplicável tiver evidence atual;
-- se uma funcionalidade for removida do produto, registrar decisão/justificativa; não apagar silenciosamente.
+- se uma funcionalidade for removida do produto, registrar decisão/justificativa; não apagar silenciosamente;
+- requisito de iframe só é `OUT_OF_SCOPE_WITH_DECISION` quando o release/app realmente não utiliza iframe; a existência de iframe no escopo exige classificação/evidence.
 
 ## 3. Status permitidos
 
@@ -103,3 +114,19 @@ UNMAPPED
 ```
 
 `UNMAPPED` deve ser zero. Requisito material `BLOCKED` ou `FAIL` impede declarar a aplicação completa se pertencer ao escopo do release final.
+
+## 5. Coverage específico de iframe
+
+Quando houver apps iframe no release, o verify final deve ainda apresentar:
+
+```text
+TOTAL_IFRAME_APPS
+PORTAL_ONLY
+CONTEXTUAL
+INTERACTIVE
+AI_READY
+NOT_INVENTORIED
+SECURITY_GATE_FAIL
+```
+
+`NOT_INVENTORIED` deve ser zero para apps iframe no escopo do release.
