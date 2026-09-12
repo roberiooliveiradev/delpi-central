@@ -2,11 +2,12 @@
 
 **Status:** thematic spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Runtime phase:** C7, somente depois de baseline real de qualidade, latência, custo e data policy.
+**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
+**Runtime phase:** C7.S4, somente depois de baseline real da própria Copilot API sobre qualidade, latência, custo e data policy.
 
 ## 1. Princípio
 
-O usuário fala com **um Copilot**. Model/provider selection é detalhe interno governado.
+O usuário fala com **um Copilot**. Model/provider selection é detalhe interno governado da `minha-delpi-copilot-api`.
 
 ```text
 task requirements
@@ -45,7 +46,7 @@ Classes não mapeiam necessariamente 1:1 para um provider/model fixo.
 
 ## 4. Compute Policy
 
-C0 define owner/data-policy boundaries; C7 pode criar/estender contract concreto se gap for provado.
+C0 define owner/data-policy boundaries; C3.S1 cria a abstraction baseline simples de provider/model; C7 pode criar/estender roteamento inteligente somente se métricas provarem necessidade.
 
 Exemplo conceitual:
 
@@ -58,7 +59,7 @@ cost class
 data classification/provider constraints
 ```
 
-Evitar criar `ComputePolicyV1` prematuramente se abstração atual de provider/config já atende.
+Evitar criar `ComputePolicyV1` prematuramente se a abstração baseline já atende.
 
 ## 5. Fallback
 
@@ -77,7 +78,7 @@ Router seleciona multimodal somente quando percepção visual é necessária; n�
 
 ## 7. Internal stage specialization
 
-Planner/synthesis/perception podem futuramente usar modelos diferentes se:
+Understanding/planning/synthesis/perception podem futuramente usar modelos diferentes se:
 
 - shared contracts separam stages;
 - policy permanece central;
@@ -124,7 +125,7 @@ Sem private CoT.
 
 ## 11. Admin
 
-Centralize:
+Centralizar no Copilot:
 
 - active providers/models;
 - class mapping;
@@ -145,16 +146,22 @@ Não espalhar model names pelo domain/application code.
 - sensitive data provider blocked;
 - latency/cost budgets;
 - structured output validity;
-- baseline vs candidate quality.
+- baseline vs candidate quality;
+- Chat indisponível sem impacto no provider routing do Copilot.
 
 ## 13. Implementation mapping
 
 ```text
 C0 → provider/model inventory + data-policy/owner boundaries
-C2–C6 → collect baseline metrics; no intelligent routing required
-C7 → implement/extend Model Router only if evidence justifies
+C3.S1 → provider/model abstraction baseline da Copilot API
+C3–C6 → coletar métricas reais; sem intelligent routing obrigatório
+C7.S4 → implementar/estender Model Router somente se evidence justificar
 ```
 
-## 14. Gate
+## 14. Independence
 
-Sem baseline de qualidade/latência/custo, a solução correta é provider/config abstraction simples — não “roteamento inteligente” especulativo.
+Configuração de provider/model, fallback, telemetry e routing do Minha DELPI Chat não são runtime authority nem fallback do Copilot.
+
+## 15. Gate
+
+Sem baseline de qualidade/latência/custo da **própria Copilot API**, a solução correta é provider/config abstraction simples — não “roteamento inteligente” especulativo.
