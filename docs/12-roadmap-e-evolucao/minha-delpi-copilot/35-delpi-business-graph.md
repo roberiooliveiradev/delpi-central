@@ -2,7 +2,8 @@
 
 **Status:** thematic spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Contracts:** `EntityRef` e `RelationshipRef` vêm da foundation C0.
+**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
+**Contracts:** `EntityRef` e `RelationshipRef` vêm da foundation C0; runtime do Graph entra em C4.
 
 ## 1. Objetivo
 
@@ -22,51 +23,25 @@ Reclamação
 
 ## 2. Princípio
 
-O Graph é **grafo de referências/relacionamentos**.
+O Graph é projeção da **Copilot API** sobre referências/relacionamentos dos domain owners:
 
 ```text
 Graph
-→ identifica EntityRefs e RelationshipRefs
-→ preserva source/provenance
-→ aplica permission-aware traversal
-→ source API fornece dado atual
+→ EntityRefs/RelationshipRefs
+→ source/provenance
+→ permission-aware traversal
+→ Domain API fornece dado atual
 ```
 
-Não é data warehouse nem system of record das entidades.
+Não é data warehouse nem system of record.
 
-## 3. EntityRef
+## 3. EntityRef / RelationshipRef
 
-Usar o primitive compartilhado C0. Exemplo conceitual:
+Usar primitives C0. Não adicionar snapshots arbitrários ao `EntityRef` nem criar IDs paralelos.
 
-```json
-{
-  "entityType":"product",
-  "entityId":"90264238",
-  "sourceSystem":"api-delpi",
-  "label":"Produto 90264238"
-}
-```
+Relações carregam from/to refs, relationshipType, authority/sourceRef, provenance e confidence quando metodologicamente válida. Relação inferida permanece explicitamente `inferred`/não-authoritative.
 
-Não adicionar `attributes` arbitrários ao EntityRef para transformar ref em snapshot de negócio. Dados adicionais vêm da source API ou refs/evidence adequados.
-
-## 4. RelationshipRef
-
-Usar o primitive compartilhado:
-
-```json
-{
-  "from":{"entityType":"complaint","entityId":"RNC-123","sourceSystem":"customer-experience"},
-  "relationshipType":"affects_product",
-  "to":{"entityType":"product","entityId":"90264238","sourceSystem":"api-delpi"},
-  "authority":"domain",
-  "sourceRef":"...",
-  "confidence":1.0
-}
-```
-
-Relações inferidas precisam ser explicitamente marcadas como `inferred`/não-authoritative conforme contract final.
-
-## 5. Relações candidatas
+## 4. Relações candidatas
 
 - cliente → pedidos/reclamações;
 - pedido → itens/produto;
@@ -83,73 +58,58 @@ Relações inferidas precisam ser explicitamente marcadas como `inferred`/não-a
 
 C0.S0 comprova IDs/owners antes de registrar relação.
 
-## 6. Fontes de relações
+## 5. Fontes
 
 Ordem de confiança:
 
-1. relação explicitada por domain API/contract;
-2. domain event;
+1. Domain API/contract explícito;
+2. domain/integration event;
 3. materialização/view governada;
-4. metadata declarativa governada;
-5. inferred relationship, sempre rotulada e nunca promovida silenciosamente a fato.
+4. metadata declarativa;
+5. inferred relationship rotulada.
 
-## 7. Traversal
+## 6. Traversal
 
 ```text
 start EntityRef
 → lookup authorized relationships
-→ apply depth/cycle/budget
-→ filter by permission/policy
-→ return related EntityRefs/SourceRefs
-→ fetch current facts from source APIs
-→ normalize Evidence/Outcome
+→ depth/cycle/budget
+→ permission/policy filter
+→ related EntityRefs/SourceRefs
+→ fetch current facts from Domain APIs
+→ Outcome/Evidence
 ```
 
-Planner não precisa conhecer tables/endpoints do Graph.
+Planner não conhece tables/endpoints do Graph.
 
-## 8. Security
+## 7. Security
 
 ```text
 relation exists ≠ user may read target
 ```
 
-Obrigatório:
-
 - permission-aware traversal;
 - source permission revalidation;
-- graph cache não vira bypass;
-- hidden node não vaza por label/count indevido;
+- cache não vira bypass;
+- hidden node não vaza por label/count;
 - inferred relation não é FACT.
 
-## 9. Provenance
+## 8. Provenance/performance
 
-Cada relação material precisa, quando aplicável:
+Toda relação material deve carregar relationshipType, authority/inference status, sourceRef e version/observedAt quando aplicável.
 
-```text
-relationshipType
-authority/inference status
-sourceRef
-observedAt/version
-confidence quando metodologicamente válida
-```
+Começar com adapters/query simples. Materialization/index só com necessidade comprovada; cache precisa freshness/invalidation.
 
-## 10. Performance
-
-Começar com query/adapters simples. Criar index/materialization somente quando métricas provarem necessidade.
-
-Caching precisa invalidation/freshness semantics.
-
-## 11. Implementation mapping
-
-Não executar fases `BG*` independentes.
+## 9. Phase mapping
 
 ```text
 C0 → inventory + Entity/Relationship contracts + ports
-C3 → relationship registry/query runtime + permission traversal + pilot
-C6/C7 → coverage/performance/governance refinements se necessários
+C3 → Intelligence Core understands entity/capability semantics
+C4 → relationship registry/query runtime + permission traversal + pilot
+C6/C7 → coverage/performance/governance refinements when justified
 ```
 
-## 12. Piloto recomendado
+## 10. Piloto recomendado
 
 ```text
 complaint
@@ -160,21 +120,24 @@ complaint
 → inspection/quality history
 ```
 
-O piloto deve demonstrar source fetch real e evidence, não dados copiados para o Graph.
+O piloto prova source fetch real + Evidence, não dados copiados para o Graph.
 
-## 13. Anti-patterns
+## 11. Independence
+
+Graph pertence à Copilot API e consulta Domain APIs diretamente. Não usa Chat graph/session/tool runtime.
+
+## 12. Anti-patterns
 
 - copiar datasets completos;
 - inventar IDs paralelos;
-- usar path/endpoint como domain semantics;
+- path/endpoint como domain semantics;
 - inferred relation como authoritative;
 - graph repository com business rules;
-- Graph-specific EntityRef/Evidence contract;
-- planner branch por relationship type.
+- Graph-specific EntityRef/Evidence;
+- planner branch por relationship type;
+- Chat API como proxy de relações/dados.
 
-## 14. Gate
-
-C3 Graph só passa com:
+## 13. Gate C4
 
 - authorized traversal;
 - sibling/unknown relation onboarding sem planner patch;
