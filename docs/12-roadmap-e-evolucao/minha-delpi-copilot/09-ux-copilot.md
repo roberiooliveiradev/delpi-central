@@ -1,335 +1,410 @@
 # 09 — UX do Minha DELPI Copilot
 
-**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
-**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
-**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)
+**Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Specs temáticas:** `53–66`
 
 ## 1. Princípio
 
-O Copilot deve parecer parte do trabalho real, não apenas uma janela de chat. Texto, voz, mídia, dados DELPI, internet e fontes conectadas convergem para a mesma experiência, com provenance e governança visíveis quando materiais.
+O Copilot deve parecer parte do trabalho real, não uma janela de chat. Conversa, dados, processos, análises, automações, artefatos, modelos e contexto industrial convergem para uma experiência única com provenance, estado e governança visíveis quando materiais.
 
 ## 2. Surfaces
 
 ```text
-GLOBAL
-WORKSPACE
-MEETING
-FRONTLINE
+GLOBAL      → painel contextual
+WORKSPACE   → análise/trabalho completo
+MEETING     → reunião assistida
+FRONTLINE   → posto/máquina/operator assistance
+TEAMS       → futura surface do mesmo runtime
+ADMIN       → Connections/Control Tower/Automation/Process/Semantic/Model governance conforme role
 ```
 
-Mesma Copilot API/MFE/policy/state. Nenhuma surface cria outro agente/runtime.
+Não são produtos/agentes separados.
 
-## 3. Fontes visíveis
+## 3. Source and authority UX
 
-Quando útil, a resposta deve deixar claro de onde veio a informação:
+Quando material, distinguir:
 
 ```text
-Minha DELPI
-Internet
-Outlook / Microsoft 365
-Gmail / Google Workspace
-WhatsApp Business
-Drive / OneDrive / SharePoint
-outra fonte conectada
+Minha DELPI / source oficial
+Internet pública
+External connected source
+Personal Memory
+Semantic Metric Definition
+Prediction/Simulation
+Process-derived insight
+AI-generated artifact
 ```
 
-Fonte externa não deve ser apresentada como dado oficial DELPI sem classificação adequada.
+Prediction/recommendation/simulation nunca deve parecer FACT oficial.
 
-## 4. Research UX
+## 4. Activity UX — sem CoT
 
-Exemplo:
-
-> “Pesquise na internet a norma mais recente e compare com nosso procedimento.”
-
-Activity pode mostrar:
+Mostrar passos verificáveis:
 
 ```text
-Consultando procedimento interno
-Pesquisando fontes externas
-Abrindo fontes relevantes
-Comparando versões
-Preparando resposta
-```
-
-Resultado deve permitir progressive disclosure de:
-
-- source/title/provider;
-- data/freshness;
-- Evidence usada;
-- conflito entre fontes;
-- classificação como fonte interna oficial, externa oficial, referência pública ou conteúdo não verificado.
-
-## 5. Connections UX
-
-O Copilot deve possuir surface de **Conexões** dentro do próprio produto.
-
-Exemplo:
-
-```text
-Conexões
-
-Microsoft 365        Conectado
-Gmail                 Não conectado
-WhatsApp Business     Administrado pela empresa
-Google Drive          Conectado via Google Workspace
-```
-
-Para cada conexão mostrar, quando material:
-
-- owner/type (`Pessoal`, `Organizacional`, `Compartilhado`, `Serviço`);
-- conta/resource label;
-- capabilities/scopes concedidos em linguagem humana;
-- data da última validação/sync;
-- status;
-- reconnect/revoke/disconnect;
-- política de compartilhamento/retenção relevante.
-
-Nunca exibir token/secret.
-
-## 6. Connect flow
-
-```text
-[Conectar Microsoft 365]
-→ explicar o que será acessado
-→ provider authorization/consent
-→ retorno ao Copilot
-→ status da conexão
-```
-
-Se um scope adicional for necessário depois, a UI deve pedir nova autorização; nunca elevar silenciosamente.
-
-## 7. Personal versus organizational UX
-
-O usuário deve saber quando está usando uma fonte pessoal/delegada.
-
-Exemplo:
-
-```text
-Fonte: Gmail conectado por você
-Visibilidade: somente você
-```
-
-Compartilhar em Case/Room ou promover para Knowledge deve ser uma ação explícita e mostrar o impacto.
-
-## 8. External search/read UX
-
-Exemplos naturais:
-
-> “Ache no Outlook a última conversa com o fornecedor ACME sobre o item 90264238.”
-
-> “Procure no Gmail o orçamento que recebi ontem e compare com a última OC.”
-
-> “Busque no OneDrive o certificado deste lote.”
-
-Resultado pode trazer cards de recurso com source, data, participantes, attachment refs e ações permitidas.
-
-Se source não estiver conectado ou scope faltar, explicar isso sem fingir que o dado não existe.
-
-## 9. Draft versus Send UX
-
-Separação visual obrigatória:
-
-```text
-RASCUNHO GERADO
-[Editar]
-[Revisar fontes]
-[Enviar]
-```
-
-Gerar rascunho não envia nada.
-
-Antes de send material, mostrar conforme policy:
-
-```text
-De: conta/conexão
-Para: destinatários
-Assunto/canal
-Conteúdo
-Anexos
-Fonte/contexto usados
-Gate requerido
-```
-
-Send segue Decision Gate e apresenta outcome real.
-
-## 10. External outcome UX
-
-Estados explícitos:
-
-```text
-RASCUNHO
-AGUARDANDO CONFIRMAÇÃO
-ENVIANDO
-ENVIADO / CRIADO / ATUALIZADO
-FALHOU
-RESULTADO INCERTO — verificando
-```
-
-Nunca mostrar sucesso antes de provider outcome verificável.
-
-## 11. Provider event / Watch UX
-
-Usuário pode pedir:
-
-> “Me avise quando o fornecedor responder.”
-
-Item de Watch deve mostrar:
-
-- source/connection;
-- condição;
-- modo `OBSERVE | ADVISE | ACT`;
-- expiry/status;
-- o que acontecerá ao disparar;
-- como pausar/desabilitar.
-
-Se subscription/connection ficar stale, mostrar degraded state em vez de falsa tranquilidade.
-
-## 12. External Knowledge UX
-
-Depois de pesquisa ou leitura externa, o usuário pode ter opções distintas:
-
-```text
-[Usar somente nesta conversa]
-[Anexar como Evidence ao Case]
-[Salvar como conhecimento pessoal candidato]
-[Propor para conhecimento organizacional]
-```
-
-A última opção inicia governance/review; não publica automaticamente.
-
-## 13. Meeting Mode
-
-Meeting pode consultar DELPI + internet + sources conectadas autorizadas. A ata distingue:
-
-```text
-transcript
-resumo
-fonte interna/externa
-decisão humana
-ação candidata
-ação executada
-```
-
-External send citado em reunião ainda precisa do mesmo review/gate.
-
-## 14. Frontline Mode
-
-Frontline mantém UI large-touch/hands-free e prioriza procedimento/desenho/revisão interna vigente. Internet/external sources podem complementar, mas não substituir silenciosamente authority operacional interna.
-
-## 15. Biometric UX
-
-Quando habilitado:
-
-```text
-UNKNOWN → CANDIDATE → CONFIRMED/CORRECTED
-```
-
-Biometric association é visível/corrigível e nunca apresentada como permission grant.
-
-## 16. Activity operacional
-
-Mostrar estado verificável, não CoT:
-
-```text
-Consultando Minha DELPI
+Consultando dados da DELPI
 Pesquisando internet
-Consultando Outlook
-Lendo arquivo conectado
-Analisando Evidence
-Gerando rascunho
-Aguardando confirmação
-Enviando
+Consultando Outlook/Teams
+Resolvendo métrica governada
+Analisando processo
+Executando análise em ambiente isolado
+Gerando artefato
+Rodando previsão/simulação
+Preparando ação
+Aguardando decisão
+Executando automação
 Verificando resultado
-Aguardando resposta externa
+Sincronizando Edge
 ```
 
-## 17. Evidence/Sources
+Não mostrar cadeia de raciocínio privada.
 
-Progressive disclosure pode mostrar:
+## 5. Connections / External UX
 
-- source system/provider;
-- account/connection label sem credential;
-- entity/resource;
-- timestamp/freshness;
-- page/region/frame/time range;
-- confidence/limitations;
-- internal versus external authority classification.
+Preservar UX de conexões pessoais/organizacionais/compartilhadas/serviço, scopes em linguagem humana, reconnect/revoke, source provenance, `draft != send`, provider outcome real e degraded subscription state.
 
-## 18. Decision Gate UX
+## 6. Watch / Autonomous Work UX
 
-Exibir ação, target, mudanças/impacto, Evidence, risk, connection/source e gate. Não esconder external write atrás de texto, voz ou gesture ambíguo.
-
-## 19. Context chips
-
-Exemplos:
+Watch deve mostrar:
 
 ```text
-Portal Comercial · Cliente 000123 · Filial 01
-Outlook · thread fornecedor ACME
-Internet · pesquisa de norma atual
+condition
+source/event
+mode: OBSERVE | ADVISE | PREPARE | ACT
+scope/capability
+autonomy policy
+status/last trigger
+what happens when triggered
+pause/disable
+```
+
+C6 não mostra ACT como habilitado. Em C7, ACT exige capability-specific policy/limits/kill switch visibility.
+
+## 7. Automation & Execution Hub UX
+
+Admin/operator view target:
+
+```text
+Automations
+Executions
+Workers
+Exceptions
+Outcomes
+```
+
+For each automation:
+
+- semantic capability;
+- owner;
+- executor type/version;
+- environment;
+- autonomy mode;
+- status/health;
+- technical success rate;
+- verified Outcome rate;
+- kill switch.
+
+Execution timeline distinguishes:
+
+```text
+QUEUED
+RUNNING
+TECHNICALLY_SUCCEEDED
+VERIFYING_OUTCOME
+VERIFIED_SUCCESS | VERIFIED_FAILURE | AMBIGUOUS
+```
+
+Never label technical bot completion as business success prematurely.
+
+## 8. Process Intelligence UX
+
+Workspace should support:
+
+```text
+Process Map
+Variants
+Bottlenecks
+Wait/Rework
+Conformance
+Automation Opportunities
+Before/After
+```
+
+Every finding links to event/source Evidence.
+
+Do not default to employee leaderboard. If actor data appears for legitimate operational reason, show purpose/scope and avoid personality/fraud judgments.
+
+## 9. AI Control Tower UX
+
+Role-gated admin experience:
+
+```text
+Digital Workforce
+AI Assets
+Models
+Automations
+Connectors
+MCP/A2A integrations
+Edge deployments
+Incidents
+Cost & Verified Value
+Risk / Evals / Kill Switches
+```
+
+Cards should answer owner, version, status, risk, data/capabilities, eval freshness, dependencies, cost and health.
+
+Control Tower administrative access does not visually imply permission to execute underlying business actions.
+
+## 10. MCP / A2A UX
+
+Admin lifecycle:
+
+```text
+DISCOVERED → REVIEWED → APPROVED → ACTIVE → DISABLED/REVOKED
+```
+
+Before approval show requested capabilities, data domains, write/read classification, owner, trust source and required credentials/scopes.
+
+For delegated task, user-facing activity may show:
+
+```text
+Delegando subtarefa ao agente aprovado X
+Aguardando resultado
+Resultado recebido / indisponível / cancelado
+```
+
+No raw protocol or hidden context dump.
+
+## 11. Personal Memory UX
+
+A surface **Memória pessoal** should allow:
+
+```text
+Ver o que o Copilot lembra
+Corrigir
+Apagar/esquecer
+Desabilitar personalização
+Definir preferências/retention quando aplicável
+```
+
+When a material answer is personalized, optional disclosure:
+
+> “Priorizei estes itens porque você acompanha Projeto X e Indicador Y.”
+
+Personal Memory never appears as organizational fact.
+
+## 12. Personalized Briefing
+
+Target:
+
+```text
+changes since last view
+pending decisions
+Tasks/Cases/Watches
+meeting/calendar items
+risks/anomalies
+followed metrics/topics
+```
+
+All business facts are fetched live/authorized; memory only helps relevance/presentation.
+
+## 13. Semantic Business Layer UX
+
+Metric cards/details should expose progressive disclosure:
+
+```text
+metric name
+business definition
+value/unit
+period/grain/dimensions
+source/freshness
+owner
+formula/version
+```
+
+If conflicting definitions exist, show the conflict and ask/resolve scope instead of hiding it.
+
+## 14. Analysis Sandbox UX
+
+User asks naturally; no need to know Python/SQL.
+
+Activity/status:
+
+```text
+Preparing authorized data
+Running analysis
+Generating chart/table
+Completed / Failed / Timed out
+```
+
+Advanced users/admin may inspect reproducibility metadata/code/artifacts when authorized. Sandbox failure must not produce invented numbers.
+
+## 15. Artifact Workspace UX
+
+Artifacts appear as editable work objects, not chat blobs:
+
+```text
+Report
+Spreadsheet
+Presentation
+Chart
+BPMN/Process Map
+A3/8D/FMEA candidate
+Checklist/Procedure draft
+Project plan
+Meeting minutes
+```
+
+Show:
+
+- version/status;
+- source/evidence links;
+- AI-generated vs human-edited state when relevant;
+- comments/review;
+- attach to Case/Task/Room;
+- export/share actions.
+
+Regenerate must not silently overwrite human edits.
+
+## 16. Predictive / Prescriptive UX
+
+Prediction example:
+
+```text
+Risco de ruptura: 76%
+Horizonte: 4 dias
+Modelo: ...
+Atualizado: ...
+Confidence/calibration/limitations
+```
+
+Use explicit labels:
+
+```text
+PREVISÃO
+CENÁRIO
+RECOMENDAÇÃO
+```
+
+Never present as “vai acontecer”.
+
+Prescriptive view shows alternatives/objectives/constraints/trade-offs and separate `[Preparar ação]` / `[Aplicar]` only when allowed.
+
+## 17. Operational Twin / Scenario UX
+
+Scenario workspace clearly indicates simulation mode:
+
+```text
+CENÁRIO — NÃO É PRODUÇÃO
+```
+
+Allows parameter changes, assumptions, compare scenarios and impact cards. Production Apply is separate, revalidates live state and creates new Decision flow.
+
+## 18. Edge / Offline UX
+
+Frontline must visibly show:
+
+```text
+ONLINE
+DEGRADADO
+OFFLINE — dados sincronizados em <time>
+SINCRONIZANDO
+```
+
+For critical procedure/drawing, show revision and freshness. Stale critical source must be blocked/degraded per policy.
+
+User switch/logout clears personal context; offline does not expose previous operator state.
+
+## 19. Model lifecycle / Marketplace UX
+
+Control Tower/Marketplace can show:
+
+```text
+Model/Asset name/version
+owner/publisher
+status
+risk
+eval status
+compatibility/dependencies
+required permissions/scopes (requirements only)
+release notes
+health/rollback
+```
+
+Buttons such as Enable/Install must explain that actual RBAC/provider authorization remains separate.
+
+## 20. Meeting / Frontline / Biometrics
+
+Preserve current explicit capture indicators, biometric `UNKNOWN→CANDIDATE→CONFIRMED/CORRECTED`, large-touch/hands-free Frontline and internal procedure/revision authority.
+
+Meeting transcript/source/decision/action/outcome remain semantically distinct.
+
+## 21. Context chips
+
+Examples:
+
+```text
+Portal Comercial · Cliente 000123
 Case Q-2026-0042
+Outlook · thread fornecedor
+Processo · Compras · Variant 3
+Métrica · Lead Time v4
+Cenário · PRESS-04 parada 4h
+Artifact · Relatório de Risco v2
 ```
 
-Usuário pode remover/corrigir contexto.
+User can remove/correct context; chip does not imply permission.
 
-## 20. Reload/logout/user switch
+## 22. Decision UX
 
-- pending send nunca executa automaticamente;
-- provider token nunca fica no browser state;
-- user switch limpa resources/caches locais do usuário anterior;
-- source/connection permissions são revalidadas;
-- media capture não reinicia silenciosamente;
-- Chat offline não altera Copilot.
-
-## 21. Error UX
-
-Distinguir:
+Before material action show action/target/impact/evidence/risk/source/model/metric/version as needed, and clearly differentiate:
 
 ```text
-not_connected
-consent_required
-scope_missing
-connection_expired
-permission_revoked
-provider_unavailable
-rate_limited
-resource_not_found
-external_access_blocked
-subscription_stale
-waiting_for_decision
+Preview
+Prepared
+Waiting approval
+Executing
+Verifying outcome
+Completed/Failed/Ambiguous
 ```
 
-Não confundir `provider indisponível` com `não existem resultados`.
+## 23. Error/degraded UX
 
-## 22. Privacy UX
+Must distinguish source unavailable vs no data, connection expired, metric unknown/conflict, process data incomplete, sandbox timeout, model unavailable/OOD, agent/tool revoked, Edge stale/offline, package/model revoked and outcome inconclusive.
 
-Mostrar quando necessário:
+Never mask degraded state as business conclusion.
 
-- qual conta/source será consultada;
-- se source é pessoal ou organizacional;
-- se dado será compartilhado/persistido;
-- scopes/capabilities em linguagem humana;
-- como desconectar/revogar;
-- quando external data está sendo promovida para Knowledge.
+## 24. Privacy UX
 
-## 23. Accessibility
+Where material disclose:
 
-Keyboard/focus/screen-reader/contrast/live regions/captions/large-touch/non-voice fallback continuam obrigatórios. Connection/Decision/send UIs precisam ser acessíveis.
+- personal vs organizational source/memory;
+- capture/recognition active state;
+- source sharing/persistence/promotion;
+- model/AI asset use when materially relevant;
+- offline cache/freshness;
+- how to revoke/delete/disable.
 
-## 24. UX success
+## 25. Accessibility
 
-O usuário deve conseguir evoluir naturalmente:
+Keyboard/focus/screen-reader/contrast/live regions/captions/large-touch/non-voice fallback are mandatory across new admin/data/process/scenario/artifact surfaces.
+
+Charts/process maps require textual alternatives/summary.
+
+## 26. UX success
+
+A user should move naturally through:
 
 ```text
-pergunta
-→ pesquisa interna/externa
-→ Evidence
-→ draft/action
-→ Decision
-→ Task/Case/Watch
-→ follow-up externo
-→ Knowledge candidate
+question/event
+→ grounded internal/external/process/semantic analysis
+→ prediction/scenario when useful
+→ artifact or recommendation
+→ PREPARE/Decision
+→ Task/Workflow/Automation
+→ verified Outcome
+→ notification
+→ governed learning/personal continuity
 ```
 
-sem precisar conhecer APIs, escolher agentes ou entender diferenças técnicas entre Gmail, Outlook, WhatsApp Business e futuros providers.
+without needing to know APIs, RPA, model providers, MCP/A2A protocols or internal architecture.
