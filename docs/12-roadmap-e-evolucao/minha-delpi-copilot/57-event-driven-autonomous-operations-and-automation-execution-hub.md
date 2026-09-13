@@ -6,49 +6,28 @@
 **State:** [`21-data-and-state-model.md`](./21-data-and-state-model.md)  
 **Tests:** [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md)  
 **External sources:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)  
-**Teams:** [`56-microsoft-teams-integration.md`](./56-microsoft-teams-integration.md)
+**Teams:** [`56-microsoft-teams-connector-and-meeting-integration.md`](./56-microsoft-teams-connector-and-meeting-integration.md)
 
 ## 1. Decisão de produto
 
 O Minha DELPI Copilot não deve ser somente uma interface reativa de `pergunta → RAG → resposta`.
 
-O target é uma camada de **Continuous Operational Intelligence** capaz de observar sinais autorizados da empresa, contextualizar o que está acontecendo, decidir dentro de policies explícitas, coordenar execução e verificar o resultado.
-
-Fluxo canônico:
+O target é uma camada de **Continuous Operational Intelligence** capaz de observar sinais autorizados, contextualizar o que está acontecendo, decidir dentro de policies explícitas, coordenar execução, verificar o resultado, comunicar e aprender de forma governada.
 
 ```text
 EVENT / SIGNAL
 → OBSERVE
 → CONTEXTUALIZE
 → DECIDE
-→ ACT / PREPARE
+→ PREPARE / ACT
 → VERIFY OUTCOME
 → NOTIFY
 → LEARN CANDIDATE
 ```
 
-O usuário continua sendo uma fonte de intenção, mas não é a única fonte de disparo.
+O usuário é uma fonte de intenção, mas não é a única fonte de disparo.
 
-Eventos podem vir, conforme contratos reais, de:
-
-```text
-Domain APIs
-ERP / TOTVS
-MES / produção
-qualidade
-manutenção
-estoque / logística
-Core / Portal
-Teams / Outlook / Gmail / WhatsApp Business
-Interaction Rooms
-Watch timers/schedules
-IoT / telemetry approved read paths
-RPA/automation outcomes
-```
-
-## 2. Separação fundamental: inteligência versus execução
-
-O desenho recomendado separa:
+## 2. Inteligência versus execução
 
 ```text
 MINHA DELPI COPILOT
@@ -67,7 +46,7 @@ HUMAN WORK
 = aprovação, exceção, responsabilidade e tarefas quando exigidas
 ```
 
-O Hub não cria uma segunda inteligência. O Copilot não implementa clicks/seletores/telas de RPA no planner.
+O Hub não cria uma segunda inteligência, segundo planner ou segundo Workflow engine.
 
 ## 3. Não construir apenas um “Hub de RPAs”
 
@@ -81,47 +60,35 @@ Executor preference:
 
 ```text
 1. API oficial / Domain Action
-2. integração/evento nativo com write contract suportado
+2. integração nativa suportada
 3. função/script determinístico governado
 4. RPA
 5. computer-use/UI automation governada
 6. Human Task
 ```
 
-RPA é preferido para legado sem contrato melhor, não como primeiro mecanismo quando uma API está disponível.
+RPA é preferido para legado sem contrato melhor, não como primeiro mecanismo quando uma API autoritativa está disponível.
 
-## 4. Executor contract
+## 4. Semantic capability contract
 
 O Copilot trabalha com capability semântica, não com detalhes de implementação.
 
-Exemplo:
+Exemplos:
 
 ```text
 billing.invoice.issue
+maintenance.request.create
+production.report.validate
+communication.email.send
+inventory.read
 ```
 
-Input conceitual:
+O Hub resolve:
 
 ```text
-orderRef
-companyRef
-invoiceContextRef
-policyContext
-correlationContext
-```
-
-O Automation & Execution Hub resolve o executor adequado:
-
-```text
-billing.invoice.issue
-→ API executor
-```
-
-ou, se o legado comprovadamente exigir:
-
-```text
-billing.invoice.issue
-→ RPA executor
+capability
+→ executor mapping/version
+→ executor contract
 ```
 
 Proibido no planner:
@@ -130,14 +97,16 @@ Proibido no planner:
 click(x, y)
 wait(2)
 type(...)
-selector específico de ERP
+CSS/XPath selector
+screen coordinate
+RPA package internals
 ```
 
-Esses detalhes pertencem exclusivamente ao executor/adaptor concreto.
+Uma capability pode migrar de RPA para API sem patch no planner/workflow.
 
 ## 5. Tipos de executor alvo
 
-O Hub deve suportar progressivamente, conforme C0/C5 provarem necessidade:
+Progressivamente, conforme C0/C5 provarem necessidade:
 
 ```text
 HTTP/API Executor
@@ -148,11 +117,26 @@ Notification Executor
 Human Task Executor
 ```
 
-`Workflow` não é outro executor concorrente: Durable Workflow orquestra capabilities/executors canônicos.
+Durable Workflow continua sendo o orquestrador canônico das capabilities/executors.
 
 ## 6. Event / Signal Plane
 
-O Copilot deve consumir eventos reais quando owners os disponibilizam.
+Eventos podem vir, conforme contratos reais, de:
+
+```text
+Domain APIs
+ERP / TOTVS
+MES / produção
+qualidade
+manutenção
+estoque / logística
+Core / Portal
+Teams / Outlook / Gmail / WhatsApp Business
+Interaction Rooms
+Watch timers/schedules
+IoT / approved telemetry read paths
+RPA/automation outcomes
+```
 
 Fluxo:
 
@@ -160,18 +144,17 @@ Fluxo:
 source event
 → source adapter validates/authenticates
 → EventEnvelope
-→ dedupe/correlation
-→ event classification/routing
-→ Watch / Workflow / decision use case
+→ dedupe/order/correlation
+→ Watch / Workflow / Decision use case
 ```
 
-Não criar event bus novo por suposição. C0 inventaria infrastructure/owners existentes e decide `REUSE | EXTEND | ADAPTER | CREATE_REQUIRED`.
+Não criar event bus novo por suposição. Polling/scheduler é apenas fallback bounded quando não existe evento suportado.
 
-Quando um source não oferece evento, polling/scheduler pode ser usado somente como fallback governado, com intervalos, custo, freshness e dedupe explícitos.
+Event payload nunca concede permission ou ACT authority.
 
 ## 7. Continuous Operational Intelligence
 
-O Copilot deve conseguir avaliar continuamente condições explicitamente registradas, por exemplo:
+Exemplos de condições:
 
 ```text
 pedido pronto para faturar
@@ -180,44 +163,36 @@ apontamento improvável
 estoque crítico
 fornecedor atrasado
 OP parada aguardando material
-qualidade desviando do padrão
+qualidade desviando
 prazo/approval expirando
 resposta externa recebida
 ```
 
-Isso se materializa sobre `Watch`, `EventEnvelope`, Domain reads, Business Graph, Policy, Decision Gate e Durable Workflow — não em um engine paralelo de automação.
+Isso se materializa sobre `Watch`, `EventEnvelope`, Domain reads, Business Graph, Policy, Decision Gate e Durable Workflow — não em engine paralelo de agentes.
 
 ## 8. Três velocidades de decisão
 
-Nem todo evento deve chamar um LLM.
+Nem todo evento chama LLM.
 
-### 8.1 FAST PATH
-
-Para condições determinísticas, de baixa ambiguidade e latência mínima:
+### FAST
 
 ```text
 event
-→ deterministic rule/policy/state machine
-→ governed action or escalation
+→ deterministic Policy/Specification/State Machine
+→ finding/action candidate
 ```
 
-Safety-critical machine protection continua no owner industrial/safety PLC e nunca depende do Copilot.
-
-### 8.2 OPERATIONAL PATH
-
-Para decisões estruturadas de segundos:
+### OPERATIONAL
 
 ```text
 event
 → bounded context reads
 → deterministic rules/policies
 → optional classifier/small model
-→ action/preparation
+→ decision candidate
 ```
 
-### 8.3 REASONING PATH
-
-Para investigação complexa:
+### REASONING
 
 ```text
 event/user goal
@@ -227,16 +202,15 @@ event/user goal
 → Expertise/Playbook
 → LLM reasoning
 → structured decision candidate
-→ Policy/Decision Gate
 ```
 
-O Copilot escolhe o menor caminho suficiente para o problema, respeitando policy e quality thresholds.
+O Copilot escolhe o menor caminho suficiente para o problema.
 
-## 9. Decision Intelligence: deterministic first where material
+## 9. Deterministic-first para readiness material
 
-Uma decisão operacional crítica não pode depender apenas da opinião textual do modelo.
+Uma decisão operacional crítica não deve depender apenas da opinião textual do modelo quando critérios verificáveis existem.
 
-Exemplo de readiness para faturamento:
+Exemplo:
 
 ```text
 READY_TO_INVOICE =
@@ -248,7 +222,7 @@ READY_TO_INVOICE =
   AND no_blocking_occurrence
 ```
 
-A IA pode investigar inconsistência, interpretar documento, explicar conflito e recomendar resolução; a business readiness final usa facts/rules/authorities verificáveis.
+A IA pode investigar inconsistências, interpretar documentos e explicar conflitos; readiness formal usa facts/rules/authorities verificáveis.
 
 ## 10. Exemplo — faturamento automático
 
@@ -258,7 +232,7 @@ order/shipment event
 → read order/customer/shipment/fiscal context
 → deterministic readiness policy
 → READY_TO_INVOICE?
-     ├─ NO  → Evidence + exception/inbox
+     ├─ NO  → Evidence + exception/Inbox
      └─ YES → AutonomyPolicy
                  ├─ PREPARE/CONFIRM → Decision Gate
                  └─ ACT allowed     → billing.invoice.issue
@@ -286,22 +260,7 @@ production report event
 → ACCEPT | ASK_CONFIRMATION | BLOCK_AND_REVIEW
 ```
 
-Exemplo:
-
-```text
-available_time = 60 min
-standard_cycle = 10 s
-reported_qty = 500
-expected theoretical max ≈ 360
-```
-
-Resultado correto:
-
-```text
-POSSIBLE_INCONSISTENCY
-```
-
-Não inferir automaticamente fraude, intenção ou qualidade do trabalhador.
+Uma anomalia é `POSSIBLE_INCONSISTENCY`, não inferência automática de fraude/intenção do trabalhador.
 
 ## 12. Exemplo — máquina parada / manutenção
 
@@ -310,8 +269,7 @@ approved machine/MES event
 → machine.status = DOWN
 → correlate alarm/history/last maintenance/affected OP
 → classify maintenance need
-→ select governed maintenance capability
-→ create maintenance occurrence/task
+→ maintenance.request.create
 → route to eligible technician/team
 → notify
 → Watch acknowledgement/SLA
@@ -320,9 +278,9 @@ approved machine/MES event
 
 O Copilot pode chamar manutenção; não substitui interlocks nem envia comando físico arbitrário para a máquina.
 
-## 13. Autonomia por capability e contexto
+## 13. Autonomia por capability/contexto
 
-Não existe um único `Copilot = L4` global.
+Não existe um único `Copilot = L4/L5` global.
 
 Autonomia é resolvida por:
 
@@ -355,8 +313,6 @@ Níveis finais são policy/configuration decisions, não hardcode do planner.
 
 ## 14. Autonomy ladder
 
-Usar semanticamente:
-
 ```text
 L0 — explain only
 L1 — observe/analyze
@@ -366,63 +322,43 @@ L4 — execute after required governance
 L5 — execute autonomously inside explicit allowlist/policy/budgets
 ```
 
-L5 permanece OFF por default e é habilitado por capability/escopo específico.
+L5 permanece OFF por default.
 
 ## 15. Watch modes
 
-Evolução recomendada:
-
 ```text
-OBSERVE
-→ detect/record
-
-ADVISE
-→ detect/analyze/notify
-
-PREPARE
-→ prepare action/draft/work plan
-
-ACT
-→ execute only under C7 autonomy gate
+OBSERVE → detect/record
+ADVISE  → detect/analyze/notify
+PREPARE → prepare action/draft/work plan without side effect
+ACT     → execute only under C7 autonomy gate
 ```
 
-`PREPARE` deve ser formalmente separado de `ACT` para evitar que raciocínio/evento vire write implicitamente.
+`PREPARE != ACT`.
 
 ## 16. Automation registration / catalog
 
-Cada automation/executor mapping deve possuir contrato versionado, no mínimo:
+Cada mapping deve ser versionado:
 
 ```text
 automationId
 version
 capabilityRef
 executorType
+executorRef
 environment
 inputSchema
 outputSchema
 preconditions
-postconditions/idempotency semantics
-timeout
-retryPolicyRef
-worker/queue requirements?
+postconditions
+idempotency semantics
+timeout/retry policy
 owner
 status
 ```
 
-Opcional conforme executor:
-
-```text
-runbookRef
-artifact/image/version
-credentialRef
-selector/package version
-```
-
 Credenciais nunca ficam no prompt/planner.
 
-## 17. Execution state
-
-Uma execução precisa ser rastreável:
+## 17. AutomationExecution state
 
 ```text
 executionId
@@ -431,15 +367,17 @@ capabilityRef
 executorRef/version
 workflowStepRef?
 triggerEventRef?
+actorRef
 status
 startedAt/endedAt
 attempt
 inputHash
+idempotencyKey?
 resultRef/errorCode
 outcomeVerificationRef?
 ```
 
-Estados candidatos:
+Lifecycle:
 
 ```text
 QUEUED
@@ -447,24 +385,23 @@ QUEUED
 → SUCCEEDED | FAILED | AMBIGUOUS | CANCELLED | TIMED_OUT
 ```
 
-`SUCCEEDED` técnico não equivale automaticamente a business outcome correto; postcondition/outcome verification pode ser necessária.
+`SUCCEEDED` técnico não equivale automaticamente a business outcome correto.
 
 ## 18. RPA worker/queue model
 
 Se RPA entrar no scope:
 
-- worker pool e capabilities explícitos;
+- worker pool/capabilities explícitos;
 - queue/priority/concurrency;
-- environment separation;
 - worker heartbeat/health;
-- lease/lock para evitar dupla execução;
-- timeout/cancel;
-- retry classificado;
-- screenshot/artifact Evidence apenas quando permitido;
-- secrets via protected credential injection;
-- RPA package/version traceable;
-- no desktop session reuse across unauthorized users;
-- observability per execution.
+- lease/lock contra dupla execução;
+- environment separation;
+- package/version traceability;
+- timeout/cancel/retry eligibility;
+- screenshot/artifact retention/classification;
+- protected credential injection;
+- desktop/session isolation;
+- execution observability.
 
 Não assumir ferramenta RPA específica em C0.
 
@@ -472,20 +409,7 @@ Não assumir ferramenta RPA específica em C0.
 
 Computer-use/UI automation é fallback avançado, não substituto automático de API/RPA determinístico.
 
-Requer:
-
-```text
-sandbox/session isolation
-application/domain allowlist
-credential isolation
-screen/output data classification
-bounded actions
-same Policy/Decision semantics
-human takeover/stop
-full audit
-```
-
-Nunca permitir navegação irrestrita pela rede corporativa apenas porque o modelo consegue operar uma tela.
+Requer sandbox/session isolation, app/domain/network allowlist, credential isolation, bounded actions, same Policy/Decision semantics, human takeover/stop e full audit.
 
 ## 20. Outcome verification
 
@@ -507,45 +431,32 @@ RPA clicked Save
 != transaction committed
 
 message send request accepted
-!= message confirmed by provider
+!= final provider outcome when async
 ```
 
-Preferir verificação via owner API/event/record authoritative.
+Preferir owner API/event/record autoritativo para verificação.
 
 ## 21. Notification orchestration
 
 Notification é consequência governada do outcome, não prova do outcome.
 
-Channels podem incluir:
+Canais podem incluir Minha DELPI, email, Teams, WhatsApp Business, Interaction Room e outros connectors aprovados.
+
+Recipients, severity, dedupe, escalation/SLA e acknowledgement seguem policy.
+
+## 22. Human-in-the-loop
 
 ```text
-Minha DELPI notification/inbox
-email
-Teams
-WhatsApp Business
-Interaction Room
-other approved connector
-```
-
-Rules definem recipients, severity, dedupe, escalation, quiet hours/urgency quando aplicável.
-
-## 22. Human-in-the-loop e exceções
-
-Quando policy, ambiguidade ou risco exigirem:
-
-```text
-Copilot
+Workflow
 → Task/Inbox/Decision
 → responsible human
 → decision/correction
 → resume same Workflow
 ```
 
-Não criar workflow paralelo para “manual exception”.
+Não criar workflow paralelo para manual exception.
 
 ## 23. Learning
-
-Execution history pode gerar candidato de melhoria:
 
 ```text
 Event + Context + Decision + Action + Outcome
@@ -555,12 +466,7 @@ Event + Context + Decision + Action + Outcome
 → Policy/Playbook/Automation update
 ```
 
-Nunca:
-
-```text
-one successful run
-→ autonomous permanent policy change
-```
+Nunca `one successful run → autonomous permanent policy change`.
 
 ## 24. Architecture target
 
@@ -606,19 +512,11 @@ one successful run
 
 ## 25. Bounded contexts / ownership
 
-Copilot owns:
+Copilot owns event-correlation semantics used by Watches/Workflows, decision/orchestration, autonomy-policy application, outcome-verification orchestration and automation capability projection.
 
-- event correlation semantics used by its Watches/Workflows;
-- decision/orchestration;
-- autonomy/policy application;
-- execution request lifecycle and correlation when Hub is Copilot-owned;
-- outcome verification orchestration;
-- automation capability projection;
-- automation admin/observability semantics.
+Automation & Execution Hub may be Copilot-owned bounded module or neutral platform service only after C0 ownership analysis. `Hub` does not imply microservice.
 
-Automation & Execution Hub may be a Copilot-owned bounded context/service/module or neutral platform service only after C0 ownership analysis. Do not split a new microservice merely because it has the word `Hub`.
-
-Domain APIs remain business authorities. External providers remain their own authorities. OT safety remains external authority.
+Domain APIs remain business authorities. External providers remain source authorities. OT safety remains external authority.
 
 ## 26. Architecture patterns
 
@@ -630,33 +528,32 @@ Watch/Condition → Policy/Specification
 Decision → structured Policy + optional reasoning
 Execution request → Command/Use Case
 Executor → Port + Adapter
-Automation mapping → capability registry/projection backed by contracts
+Automation mapping → capability registry/projection
 Execution lifecycle → State Machine
-Durable orchestration → existing Workflow runtime
-Reliable state/event → Outbox where atomicity is required
-Retry → explicit idempotency/resilience policy
+Durable orchestration → canonical Workflow runtime
+Retry → explicit idempotency/resilience
 Outcome → verifier adapter + OutcomeRef/EvidenceRef
 ```
 
-Avoid god `AutomationService` / `RpaManager` / `AgentOrchestrator` with mixed responsibilities.
+Avoid god `AutomationService`, `RpaManager` or `AgentOrchestrator`.
 
 ## 27. Security / safety
 
 Required:
 
 - Core/domain authorization revalidation before material action;
-- service identities explicit for background actions;
-- capability/event source allowlists;
+- explicit service/user identity for background actions;
+- event source/capability allowlists;
 - secrets outside prompt/LLM/log/MFE;
-- no event payload can modify policy;
-- no blind retry of material writes;
-- no duplicate execution after workflow resume;
+- no event payload policy mutation;
+- no blind retry of ambiguous writes;
+- no duplicate execution after resume;
 - kill switch per automation/capability/executor/provider;
 - human emergency stop;
-- complete audit/correlation;
-- RPA/computer-use screenshots/data follow classification/retention;
+- full audit/correlation;
+- RPA/computer-use artifacts follow classification/retention;
 - no biometric/person-analysis permission bypass;
-- no free-form LLM → PLC/CNC/robot/machine.
+- no free-form LLM/RPA/computer-use → PLC/CNC/robot/machine.
 
 ## 28. Observability
 
@@ -665,7 +562,7 @@ Minimum metrics:
 ```text
 events received/validated/deduped
 watch detections
-decision path: FAST|OPERATIONAL|REASONING
+decision path FAST|OPERATIONAL|REASONING
 decision latency
 prepared vs executed actions
 execution success/failure/ambiguous/cancelled
@@ -674,132 +571,73 @@ worker availability/utilization when applicable
 retry/idempotency conflicts
 outcome verification failures
 human intervention rate
-notification delivery status
+notification delivery/acknowledgement
 time-to-resolution
 cost per decision/execution when applicable
 ```
 
-KPIs must distinguish technical execution from verified business outcome.
+KPIs distinguish technical execution from verified business outcome.
 
 ## 29. Admin UX target
 
-A futura administração pode apresentar:
+Future admin may expose:
 
 ```text
 AUTOMATION & EXECUTION HUB
 
 Automations
-- capability
-- owner
-- executor
-- version
-- autonomy policy
-- status
-- success/outcome rate
+- capability / owner / executor / version / autonomy policy / status
 
 Executions
-- running/queued/failed/ambiguous
-- correlation
-- Task/Case/Workflow
-- evidence/outcome
+- running / queued / failed / ambiguous / outcome
 
 Workers
-- health/capability/environment
+- health / capability / environment
 
 Exceptions
-- waiting decision
-- blocked by policy
-- failed/ambiguous outcome
+- waiting decision / policy blocked / failed / ambiguous
 ```
 
-Não é requisito de C0/C1; é target de produto posterior.
+Não é requisito C0/C1.
 
 ## 30. Phase mapping
 
-### C0 — Foundation
+### C0
+Inventariar/freeze events, RPA/tools, scripts/jobs, queues/workers, service identities, credential owners, outcome sources, notification channels, executor/idempotency/security, kill switches e OT boundary.
 
-Inventariar/freeze:
+### C1
+Standalone bootstrap. Nenhum Automation Hub/RPA runtime ainda.
 
-- event sources/buses/webhooks/schedulers/workers existentes;
-- RPA tools/platforms/licenses/bots/orchestrators existentes;
-- automation scripts/jobs atuais;
-- service accounts/credential owners;
-- queues/workers/desktop execution infrastructure;
-- existing process/rule engines;
-- polling/scheduler patterns;
-- business postcondition/outcome sources;
-- notification channels;
-- automation ownership/governance;
-- executor contracts/idempotency/security;
-- service/background identity model;
-- kill switches/emergency stop;
-- OT boundary.
+### C2
+Context/commands only.
 
-### C1 — Standalone bootstrap
+### C3
+Event/Decision contracts, FAST/OPERATIONAL/REASONING and deterministic Policy foundation. No autonomous material ACT.
 
-Nenhum RPA Hub runtime ainda. Apenas preparar configuration/health/contracts necessários se C0 freeze exigir.
+### C4
+Read-only readiness/anomaly calculations using business/external reads + Graph/Evidence.
 
-### C2 — Context/commands
+### C5
+Executor ports/adapters, Automation Capability mapping, execution lifecycle, outcome verification, idempotency/resilience and governed writes.
 
-Operational context e Platform Commands; nenhuma automation authority nova.
+### C6
+Watch OBSERVE/ADVISE/PREPARE, Automation Hub admin/observability, Tasks/Cases/Inbox/exceptions, notifications/escalations and learning candidates.
 
-### C3 — Intelligence foundation
-
-- event/decision understanding contracts;
-- FAST/OPERATIONAL/REASONING routing policy foundation;
-- deterministic Policy/Specification patterns;
-- no autonomous material ACT.
-
-### C4 — Reads/context
-
-- business/external reads;
-- Graph/Evidence;
-- readiness/anomaly calculations;
-- no write side effect.
-
-### C5 — Governed execution foundation
-
-- executor ports/adapters;
-- Automation Capability Registry/Projection;
-- API/function/RPA executor support only as prioritized;
-- execution lifecycle/state;
-- outcome verification;
-- idempotency/resilience;
-- human-confirmed/governed writes.
-
-### C6 — Operational Watches + Automation product
-
-- event-driven Watch OBSERVE/ADVISE/PREPARE;
-- automation admin/observability;
-- Tasks/Cases/Inbox/exceptions;
-- notifications/escalations;
-- RPA worker/queue visibility if RPA is in scope;
-- learning candidates.
-
-### C7 — Autonomous Operations
-
-- selected Watch ACT;
-- capability-scoped L5 under explicit allowlist/budgets;
-- proactive autonomous workflows;
-- automation kill switches;
-- advanced computer-use only where justified;
-- scale/cost/performance;
-- OT actuation remains blocked unless separate industrial safety initiative passes its own gate.
+### C7
+Selected Watch ACT, capability-scoped L5, proactive autonomous workflows, kill switches and advanced computer-use only where justified. OT actuation remains blocked unless separate industrial safety initiative passes its own gate.
 
 ## 31. Acceptance outcomes
 
-A arquitetura está correta quando:
-
 ```text
-Copilot can react to authorized events without a user prompt
+Copilot reacts to authorized events without user prompt
 not every event invokes an LLM
 rules/policies can make deterministic decisions
 planner never contains RPA clicks/selectors
-API is preferred over RPA where authoritative contract exists
-RPA is a replaceable executor behind semantic capability
+API preferred over RPA where authoritative contract exists
+RPA is replaceable executor behind semantic capability
 execution is idempotent/correlated/audited
 technical success is verified against business outcome
-notifications happen after/with truthful outcome state
+notifications use truthful outcome state
 autonomy is capability/context/risk scoped
 L5 is OFF by default
 background actions use explicit service/user authority
@@ -809,9 +647,9 @@ learning changes policy only through governance
 machine safety is never delegated to free-form Copilot reasoning
 ```
 
-## 32. Market direction used as benchmark
+## 32. Market benchmark direction
 
-The design intentionally aligns with current market direction in which AI agents reason/orchestrate while deterministic automation, APIs, RPA and people execute/govern work. Reference classes to revalidate during implementation include:
+Reference classes to revalidate during implementation:
 
 ```text
 UiPath Maestro / agentic orchestration
@@ -823,7 +661,7 @@ Siemens industrial copilot / shopfloor intelligence
 Palantir operational ontology / real-time decision workflows
 ```
 
-These are benchmark references, not DELPI architecture authorities. Provider/product details must be revalidated when implementation reaches the relevant phase.
+These are benchmark references, not DELPI architecture authorities.
 
 ## 33. North Star
 
