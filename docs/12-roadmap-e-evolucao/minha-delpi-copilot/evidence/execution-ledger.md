@@ -3,45 +3,41 @@
 **Status:** `PLANNED / NOT_STARTED`  
 **Product boundary:** standalone application  
 **Plan:** [`../16-execution-master-plan.md`](../16-execution-master-plan.md)  
-**Boundary:** [`../50-standalone-copilot-application-architecture.md`](../50-standalone-copilot-application-architecture.md)  
-**Baseline:** [`../51-platform-integration-baseline.md`](../51-platform-integration-baseline.md)  
-**Bootstrap:** [`../52-standalone-repository-and-bootstrap-plan.md`](../52-standalone-repository-and-bootstrap-plan.md)  
 **Patterns:** [`../49-architecture-and-design-patterns-standard.md`](../49-architecture-and-design-patterns-standard.md)  
 **Multimodal/Meeting/Frontline:** [`../53-multimodal-meeting-frontline-and-industrial-copilot.md`](../53-multimodal-meeting-frontline-and-industrial-copilot.md)  
 **Biometric/Human Observation:** [`../54-biometric-identity-and-human-observation-governance.md`](../54-biometric-identity-and-human-observation-governance.md)  
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
-**Next:** **C0.S0 — Platform/Media/Device/Biometric/External/OT rebaseline**
+**Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
+**Next:** **C0.S0 — Platform/Media/Device/Biometric/External/Automation/OT rebaseline**
 
 ## 1. Ledger rule
 
-This file records execution/evidence only. It does not redefine architecture or sequence.
-
-Documentation-only changes do not advance runtime phase status.
+Este arquivo registra estado/evidence de execução. Mudanças somente documentais não avançam fase runtime.
 
 ## 2. Canonical phase status
 
 | Fase | Status | Próximo step | Dependência |
 |---|---|---|---|
-| C0 Platform + Architecture + Media/Privacy/Biometric/External/OT Foundations | **NOT_STARTED** | **C0.S0** | none |
+| C0 Platform + Architecture + Media/Privacy/Biometric/External/Automation/OT Foundations | **NOT_STARTED** | **C0.S0** | none |
 | C1 Standalone Bootstrap | LOCKED | — | C0.S7 FOUNDATION_FREEZE |
 | C2 Portal + Operational Context + Commands | LOCKED | — | C1 independence gate |
-| C3 Intelligence + Multimodal/Biometric/Internet/Connector Foundations | LOCKED | — | C1+C2 foundations |
-| C4 Business + External Reads + Graph | LOCKED | — | C3 action/capability/external foundation |
-| C5 Business/External Writes + Durable Foundation | LOCKED | — | C4 reads/evidence |
-| C6 Product Work + Meeting/Frontline + External Events/Proactivity | LOCKED | — | C5 durable/safety |
-| C7 Advanced Realtime + External Proactivity + Autonomy + Optimization | LOCKED | — | C0–C6 gates |
+| C3 Intelligence + Multimodal/Biometric/External/Decision Foundations | LOCKED | — | C1+C2 foundations |
+| C4 Business + External Reads + Graph + Operational Read Intelligence | LOCKED | — | C3 foundations |
+| C5 Governed Business/External/Automation Writes + Durable Foundation | LOCKED | — | C4 reads/evidence |
+| C6 Product Work + Meeting/Frontline + Automation Hub + Events/Learning | LOCKED | — | C5 durable/executor foundation |
+| C7 Autonomous Operations + Advanced Realtime/External Proactivity + Rollout | LOCKED | — | C0–C6 gates |
 
 ## 3. C0 sequence
 
 ```text
-C0.S0 platform/monorepo/media/device/biometric/external/OT inventory
+C0.S0 platform/monorepo/media/device/biometric/external/automation/OT inventory
 → C0.S1 standalone boundary/names
 → C0.S2 authorities/bounded contexts
-→ C0.S3 shared primitives/MediaRef/biometric-ref/connection-ref decisions
-→ C0.S4 architecture/persistence/privacy/media/biometric/external boundaries
+→ C0.S3 shared primitives/ref decisions
+→ C0.S4 architecture/persistence/privacy/external/automation boundaries
 → C0.S5 integration contracts
-→ C0.S6 RED contract/conformance/privacy/device/biometric/external/OT harness
+→ C0.S6 RED contract/conformance harness
 → C0.S7 FOUNDATION_FREEZE
 ```
 
@@ -51,336 +47,171 @@ C0.S0 platform/monorepo/media/device/biometric/external/OT inventory
 COPILOT_PRODUCT = STANDALONE_NEW_APPLICATION
 COPILOT_API = NEW_OWN_SERVICE
 COPILOT_MFE = NEW_OWN_MICROFRONTEND
-COPILOT_SURFACES = GLOBAL | WORKSPACE | MEETING | FRONTLINE
 CHAT_RUNTIME_DEPENDENCY = FORBIDDEN
-CHAT_DATABASE_AUTHORITY = FORBIDDEN
-CHAT_API_PROXY_DEPENDENCY = FORBIDDEN
-CHAT_AGENT_MIGRATION = OUT_OF_SCOPE
-OPENAPI_FIRST = NATIVE_COPILOT_FOUNDATION
-PORTAL_ROLE = HOST_CONTEXT_NAVIGATION
 CORE_ROLE = APPS_ROUTES_RBAC_GOVERNANCE
 KEYCLOAK_ROLE = IDENTITY_SSO
 DOMAIN_APIS = BUSINESS_AUTHORITIES
 PLUGIN_UI = SHARED_DESIGN_SYSTEM
+OPENAPI_FIRST = NATIVE_COPILOT_FOUNDATION
 BUSINESS_GRAPH = COPILOT_PROJECTION_NOT_MASTER_DATA
-SINGLE_COPILOT_IDENTITY = TARGET
-EXPERTISE_PACKS = PLANNED
-DOMAIN_PLAYBOOKS = PLANNED
 EVIDENCE_PROVENANCE = FOUNDATION_CONTRACT
 DECISION_GATE = FOUNDATION_CONTRACT
-DURABLE_WORKFLOW = PLANNED
-TASK_CASE_WATCH_INBOX = PLANNED
-SIMULATION = C7
-MODEL_ROUTER = C7
+DURABLE_WORKFLOW = SINGLE_CANONICAL_WORK_RUNTIME
+
+COPILOT_SURFACES = GLOBAL | WORKSPACE | MEETING | FRONTLINE | FUTURE_TEAMS_SURFACE
+BACKGROUND_OPERATION = WATCH_WORKFLOW_GOVERNED
 
 MULTIMODAL_TARGET = TEXT | VOICE | IMAGE | DOCUMENT | VIDEO | SCREEN
-MEDIA_REF = C0_DECISION_REQUIRED
-MEDIA_RETENTION = CLASS_SPECIFIC_POLICY
-RAW_MEDIA_PERSISTENCE = NOT_DEFAULT
-CAPTURE_VISIBILITY = REQUIRED
-SHARED_DEVICE_USER_ISOLATION = REQUIRED
-DEVICE_IDENTITY_EQUALS_USER_IDENTITY = FORBIDDEN
-OPERATIONAL_CONTEXT = WORKSPACE_CONTEXT_PLUS_ENTITY_REFS
-MEETING_ACTION = CANDIDATE_UNTIL_GOVERNED
-PROCESS_LEARNING = CANDIDATE_ONLY_UNTIL_REVIEW_EVAL_PUBLISH
 BIOMETRIC_IDENTITY = GOVERNED_OPTIONAL_CAPABILITY
-FACE_RECOGNITION = CLOSED_SET_ENROLLED_USERS_ONLY
-SPEAKER_RECOGNITION = GOVERNED_OPTIONAL_CAPABILITY
 BIOMETRIC_MATCH_EQUALS_AUTHORIZATION = FALSE
-LOW_CONFIDENCE_IDENTITY = UNKNOWN_OR_CONFIRM
-BIOMETRIC_TEMPLATE = PROTECTED_REVOCABLE_NO_LOGGING
 HUMAN_OBSERVATION = OBSERVABLE_PROCESS_EVIDENCE_ONLY
-EMOTION_PERSONALITY_CHARACTER_INFERENCE = FORBIDDEN_BY_DEFAULT
-AUTOMATIC_EMPLOYMENT_DECISION_FROM_BIOMETRICS = FORBIDDEN
-HIDDEN_WORKER_PROFILING = FORBIDDEN_BY_DEFAULT
 
 INTERNET_RESEARCH = GOVERNED_CAPABILITY
-PUBLIC_WEB_CONTENT = UNTRUSTED_SOURCE
-SAFE_WEB_FETCH = REQUIRED_EGRESS_BOUNDARY
-SSRF_PRIVATE_METADATA_ACCESS = FORBIDDEN
 EXTERNAL_CONNECTORS = PROVIDER_NEUTRAL
-EXTERNAL_CONNECTION_TYPES = USER_DELEGATED | ORG_MANAGED | SHARED_RESOURCE | SERVICE_CONNECTION
-OAUTH_LEAST_PRIVILEGE = REQUIRED
-PROVIDER_TOKEN_TO_LLM = FORBIDDEN
-PROVIDER_TOKEN_TO_MFE = FORBIDDEN
-PERSONAL_CONNECTION_TO_ORG_KNOWLEDGE = EXPLICIT_PROMOTION_ONLY
 EXTERNAL_READ_WRITE_SEPARATION = REQUIRED
 DRAFT_EQUALS_SEND = FALSE
-EXTERNAL_WRITE = POLICY_DECISION_VERIFIED_OUTCOME
+PROVIDER_TOKEN_TO_LLM_MFE = FORBIDDEN
 EXTERNAL_EVENTS = EVENT_ENVELOPE_NORMALIZED
-EXTERNAL_LEARNING = CANDIDATE_ONLY_UNTIL_REVIEW_EVAL_PUBLISH
-WHATSAPP_PERSONAL_WEB_SCRAPING = FORBIDDEN_BY_DEFAULT
-EXTERNAL_KILL_SWITCHES = REQUIRED
 
 TEAMS = MICROSOFT365_CAPABILITY_FAMILY
 TEAMS_SEPARATE_COPILOT_RUNTIME = FORBIDDEN
-TEAMS_READ_WRITE_SEPARATION = REQUIRED
 TEAMS_SOURCE_ACL = PRESERVED
 TEAMS_MEETING_ARTIFACTS = SOURCE_EVIDENCE_NOT_DECISION
-TEAMS_CHANGE_NOTIFICATIONS = EVENT_ENVELOPE_NORMALIZED
-TEAMS_APP_TAB_BOT = SAME_COPILOT_RUNTIME
-TEAMS_PARTICIPANT_PROVIDER_IDENTITY = PRIMARY_WHEN_AUTHORITATIVE
-TEAMS_BIOMETRIC_IDENTITY = SUPPLEMENTAL_ONLY
 TEAMS_RAW_REALTIME_MEDIA = C7_ADVANCED_ONLY_WITH_ADR
 
-VISUAL_FINDING_DEFAULT = EVIDENCE_OR_HYPOTHESIS
+AUTONOMOUS_OPERATIONS = EVENT_DRIVEN_GOVERNED_TARGET
+COPILOT_ROLE = INTELLIGENCE_CONTEXT_DECISION_ORCHESTRATION
+AUTOMATION_EXECUTION_HUB_ROLE = EXECUTION
+AUTOMATION_HUB_SEPARATE_MICROSERVICE = NOT_ASSUMED_BEFORE_C0
+EXECUTOR_PREFERENCE = API | NATIVE_INTEGRATION | FUNCTION | RPA | COMPUTER_USE | HUMAN_TASK
+RPA = REPLACEABLE_EXECUTOR_NOT_BUSINESS_AUTHORITY
+PLANNER_RPA_UI_MECHANICS = FORBIDDEN
+DECISION_PATHS = FAST | OPERATIONAL | REASONING
+NOT_EVERY_EVENT_USES_LLM = TRUE
+DETERMINISTIC_READINESS = REQUIRED_WHEN_RULES_FACTS_EXIST
+EVENT_EQUALS_PERMISSION = FALSE
+BACKGROUND_IDENTITY = EXPLICIT_USER_OR_SERVICE
+TECHNICAL_EXECUTION_EQUALS_BUSINESS_OUTCOME = FALSE
+OUTCOME_VERIFICATION = REQUIRED_WHEN_MATERIAL
+WATCH_MODES_C6 = OBSERVE | ADVISE | PREPARE
+WATCH_ACT = C7_ONLY
+AUTONOMY_SCOPE = CAPABILITY_CONTEXT_RISK_SCOPED
+GLOBAL_UNRESTRICTED_L5 = FORBIDDEN
+L5_DEFAULT = OFF
+AUTONOMY_KILL_SWITCHES = REQUIRED
+COMPUTER_USE = ADVANCED_BOUNDED_FALLBACK
+
 OT_ACTUATION = BLOCKED_BY_DEFAULT
 COPILOT_IS_SAFETY_CONTROLLER = FALSE
 
 ARCHITECTURE_STYLE = CLEAN_ARCHITECTURE_PORTS_ADAPTERS_PRAGMATIC_DDD
 EVENT_DRIVEN = ONLY_WITH_REAL_EVENT_OWNER
 STATE_MACHINE = NONTRIVIAL_LIFECYCLES
-CQRS = LIGHT_JUSTIFIED_ONLY
-COMPOSITION_ROOT_DI = REQUIRED
+POLICY_SPECIFICATION = DETERMINISTIC_DECISION_RULES
 ABSTRACTION_GATE = REQUIRED
 ```
 
 All remain `PLAN_ONLY` until runtime evidence.
 
-## 5. Superseded decisions
+## 5. Superseded / rejected directions
 
 ```text
-Copilot extends minha-delpi-ai-api            = SUPERSEDED
-Copilot extends plugins/minha-delpi-chat      = SUPERSEDED
-Copilot blocked by Chat llm-json/Onda J       = SUPERSEDED
-Copilot migrates AgentSpecializationService   = OUT_OF_SCOPE
-Copilot removes userActivatedAgent in Chat    = OUT_OF_SCOPE
-Copilot removes Chat soft handoff              = OUT_OF_SCOPE
-Copilot migrates Chat agent_id/chat_mode       = OUT_OF_SCOPE
-Facial recognition universally out of scope   = SUPERSEDED_BY_GOVERNED_BIOMETRIC_CAPABILITY
-External knowledge limited to DELPI sources   = SUPERSEDED_BY_GOVERNED_EXTERNAL_INFORMATION_PLANE
-Teams requires separate Copilot backend       = SUPERSEDED_BY_MICROSOFT365_CAPABILITY_FAMILY
-Teams base connector requires raw media bot   = SUPERSEDED_BY_GRAPH_FIRST_MEETING_INTEGRATION
+Copilot extends Minha DELPI Chat                = SUPERSEDED
+Copilot depends on Chat/Onda J                  = SUPERSEDED
+External knowledge limited to DELPI             = SUPERSEDED
+Teams requires separate Copilot backend         = SUPERSEDED
+Teams base connector requires raw media bot     = SUPERSEDED
+Automation Hub means only RPA                   = SUPERSEDED_BY_EXECUTION_HUB
+RPA bot owns business decision                  = FORBIDDEN
+Planner emits clicks/selectors                  = FORBIDDEN
+All events require LLM                          = FORBIDDEN_DESIGN
+One global Copilot L5                           = FORBIDDEN
+Technical executor success means process done   = FORBIDDEN
+Event payload directly executes write           = FORBIDDEN
 ```
 
 ## 6. Planning history
 
 | Data | Evento | Status |
 |---|---|---|
-| 2026-09-12 | initial Copilot architecture | PLAN_ONLY |
-| 2026-09-12 | iframe bridge incorporated | PLAN_ONLY |
-| 2026-09-12 | single Copilot + expertise/playbooks | PLAN_ONLY |
-| 2026-09-12 | Business Graph/Tasks/Cases/Rooms/Inbox/Watch/Evidence/Decision | PLAN_ONLY |
-| 2026-09-12 | foundation-first reordering | PLAN_ONLY |
-| 2026-09-12 | normative architecture/design patterns | PLAN_ONLY |
-| 2026-09-12 | standalone decision: own API + own MFE, Chat fully decoupled | PLAN_ONLY; docs only |
-| 2026-09-12 | Portal/Core/Gateway/APIs/MFE factual baseline documented | PLAN_ONLY; docs only |
-| 2026-09-12 | documentation consistency cleanup and phase remapping | PLAN_ONLY; docs only |
-| 2026-09-12 | North Star expanded to Global/Workspace/Meeting/Frontline with voice/image/video, shared-device/privacy boundaries and default OT no-actuation | PLAN_ONLY; docs only |
-| 2026-09-12 | `53` created; master plan/patterns/state/tests/requirements/prompt updated through `CP-181` | PLAN_ONLY; docs only |
-| 2026-09-12 | Biometric Identity + Human Observation added as governed capabilities; `54` created; requirements extended through `CP-193` | PLAN_ONLY; docs only |
-| 2026-09-13 | Internet Research + External Connectors added; `55` created; requirements extended through `CP-214` | PLAN_ONLY; docs only |
-| 2026-09-13 | **Microsoft Teams promoted to first-class Microsoft 365 capability family; `56` created; requirements extended through `CP-225`** | PLAN_ONLY; docs only |
+| 2026-09-12 | initial standalone Copilot architecture | PLAN_ONLY |
+| 2026-09-12 | Business Graph/Tasks/Cases/Rooms/Inbox/Watch/Evidence/Decision/Durable Work | PLAN_ONLY |
+| 2026-09-12 | foundation-first + architecture/design patterns | PLAN_ONLY |
+| 2026-09-12 | Global/Workspace/Meeting/Frontline + multimodal/OT boundaries (`53`) | PLAN_ONLY |
+| 2026-09-12 | Biometric Identity + Human Observation (`54`, through CP-193) | PLAN_ONLY |
+| 2026-09-13 | Internet Research + External Connectors (`55`, through CP-214) | PLAN_ONLY |
+| 2026-09-13 | Microsoft Teams first-class capability family (`56`, through CP-225) | PLAN_ONLY |
+| 2026-09-13 | **Event-Driven Autonomous Operations + Automation & Execution Hub (`57`, through CP-248)** | **PLAN_ONLY; docs only** |
 
 Actual `HEAD_BEFORE` for runtime is captured at C0.S0. Documentation-only commits do not advance execution status.
 
 ## 7. Canonical phase mapping
 
 ```text
-C0 → platform/media/device/biometric/external/OT inventory + standalone/shared foundations, including Teams tenant/Graph/consent inventory
-C1 → API/MFE/Manifest/Gateway/Compose/Portal bootstrap + Chat-offline independence
-C2 → Workspace/Operational Context + Platform Commands + shared-device baseline
-C3 → provider baseline + conversation + OpenAPI + capability + Expertise + Knowledge + multimodal/media/biometric + Internet Research/connector foundations + Microsoft 365/Teams capability foundation + Evidence + Planner
-C4 → business/external reads + Teams reads/meeting artifact reads + Evidence normalization + Business Graph + operational context correlation
-C5 → Decision Gates + business/external/Teams writes + Outcome verification + Durable Workflow + modality-to-action governance
-C6 → Task + Case + Room + Inbox + Watch + Meeting + Frontline + governed biometric identity + Human Observation + external/Teams events + Teams meeting artifacts + Organizational Knowledge/Learning + Expertise Studio
-C7 → advanced realtime + selected external proactivity + Teams live raw-media only if ADR/evidence + autonomy + Watch ACT + Simulation + Model Router + scale/rollout
+C0 → inventory/freeze platform + media + biometric + external + Teams + events + RPA/executors + service identity + outcome/autonomy + OT
+C1 → standalone API/MFE/Manifest/Gateway/Compose/Portal bootstrap
+C2 → Workspace/Operational Context + Platform Commands
+C3 → Intelligence + OpenAPI + Expertise/Knowledge + multimodal + Internet/connectors + Event/Decision foundations
+C4 → business/external reads + Graph + read-only readiness/anomaly intelligence
+C5 → Decision Gates + governed writes + executor ports/adapters + AutomationExecution + Outcome verification + Durable Workflow
+C6 → Task/Case/Room/Inbox + Watch OBSERVE/ADVISE/PREPARE + Meeting/Frontline + Automation Hub admin + events/notifications/learning
+C7 → selected Watch ACT + capability-scoped L5 + autonomous operations + advanced computer-use/realtime + rollout
 ```
 
-Any thematic document diverging from this mapping is documentation drift and must be corrected against `16`.
-
-## 8. Required C0.S0 inventory
-
-### Portal
-```text
-AuthContext/Keycloak
-AppHost federated lifecycle
-AppLauncher/Router
-panel/drawer/global host infrastructure
-getAccessToken/host props
-federation share scope
-notifications/socket/context
-responsive/accessibility
-browser media/capture patterns if any
-```
-
-### Core
-```text
-/me /me/apps /me/routes
-RBAC/permission resolver
-manifest/versioning
-app/route models
-notifications/audit/presence
-corporate avatar/photo sources
-device/session patterns if any
-```
-
-### Gateway/Infra
-```text
-MFE/API path conventions
-dev/prod parity
-Compose profiles/services
-env/health/scripts
-postgres/storage/network
-object/media storage
-encrypted sensitive storage/key management
-outbound HTTP/proxy/DNS/egress policy
-private/link-local/metadata blocking patterns
-secret/vault owner
-OAuth callback routes/patterns
-webhook ingress/signature validation patterns
-SSE/WebSocket/WebRTC patterns
-```
-
-### Apps/MFEs/APIs
-```text
-manifests
-mount/unmount/federation/plugin-ui
-HTTP/auth clients
-Workspace/deep-link contracts
-Domain APIs/OpenAPIs
-auth/permissions/errors/pagination
-entity IDs
-idempotency/events/websockets
-```
-
-### Collaboration/work
-```text
-interaction rooms
-requests/cases
-notifications/inbox-like concepts
-approvals
-workers/jobs/schedulers/events
-meeting/collaboration artifacts
-procedures/training sources
-```
-
-### Media/Meeting/Frontline/Biometric
-```text
-speech/vision/media providers
-recording/transcription patterns
-privacy/consent/retention owners
-shared devices/tablets/kiosks
-production terminals
-meeting room hardware/processes
-network/noise/accessibility constraints
-corporate photo/avatar sources
-voice sample sources if any
-biometric enrollment owner/process
-biometric template storage/key management
-face/speaker recognition providers if any
-liveness/anti-spoof capability if any
-participant lists/presence sources
-Human Observation governance owner
-```
-
-### Internet/External Connectors
-```text
-existing web/search providers
-safe fetch/browser automation patterns if any
-existing Microsoft Graph integrations/app registrations
-existing Google Workspace/Gmail integrations/app registrations
-existing WhatsApp Business integrations
-existing Slack/GitHub/other connectors
-OAuth delegated/application/service auth patterns
-personal vs organizational source policy
-provider token storage/rotation/revocation
-provider webhook/subscription/push lifecycle
-scheduler/reconciliation capability
-attachment download/malware scanning
-provider terms/compliance owners
-```
-
-### Microsoft Teams
-```text
-Entra/Azure app registrations
-Microsoft Graph Teams integrations
-Teams tenant/admin ownership
-Teams policies relevant to apps/meetings/recordings/transcripts
-Teams delegated/application/resource-specific consent patterns
-Teams bot/tab/app inventory if any
-Teams app distribution/deep-link patterns
-Teams webhook/change-notification subscriptions
-meeting call event subscription capability
-transcript/recording access capability
-secret/certificate owner
-subscription renewal/reconciliation owner
-chat/channel/meeting artifact privacy and retention owner
-```
-
-### Operational/OT
-```text
-OP/operation/machine/product/lot/material/workstation IDs/owners
-production/maintenance/quality source APIs
-drawing/procedure/revision owners
-OT telemetry/interfaces
-machine command interfaces as factual inventory only
-industrial safety/interlock owners
-IT/OT segregation
-```
-
-### Chat reference only
-```text
-architecture/providers/RAG/multimodal/actions
-lessons/anti-patterns
-neutral shared-library candidates only
-```
-
-Finding classification:
+## 8. Required C0.S0 automation inventory
 
 ```text
-PLATFORM_REUSE
-NEUTRAL_SHARED_REUSE
-COPILOT_IMPLEMENT_NEW
-EXTEND_PLATFORM_CONTRACT
-ADAPTER_REQUIRED
-ADR_REQUIRED
-NOT_PROVEN
-OUT_OF_SCOPE
+RPA platforms/tools/licences/orchestrators
+bots/robots/packages and owners
+automation scripts/functions/jobs
+queues/workers/worker pools/heartbeats
+desktop/session/VDI execution infrastructure
+event sources/buses/topics/webhooks
+schedulers/polling jobs
+service accounts/background identities
+credential/secret owners and injection patterns
+package/version/deploy/rollback patterns
+retry/idempotency/lease/lock patterns
+RPA screenshots/artifacts/logging/retention
+existing rule/decision/BPM/workflow engines
+business postcondition/outcome verification sources
+notification/escalation channels
+automation governance/SLA/support
+kill switches/emergency stop patterns
 ```
+
+Unknown = `NOT_PROVEN`.
 
 ## 9. Required C0 outputs
 
-- revalidated `51` baseline;
-- owners/contracts map;
-- app/API/OpenAPI inventory;
-- manifest/federation inventory;
-- entity/deep-link/event/room/notification inventory;
-- media/device/meeting/frontline/biometric inventory;
-- Internet/egress/OAuth/external-connector inventory;
-- Microsoft Teams tenant/Graph/consent/app/webhook/meeting-artifact inventory;
-- privacy/consent/retention inventory;
-- biometric enrollment/template/liveness decision;
-- prohibited human-inference classes frozen;
-- external connection ownership/scope/secret lifecycle decision;
-- safe web fetch/SSRF/redirect policy decision;
-- external event/webhook/reconciliation decision;
-- personal vs organizational external-source boundary;
-- Teams source ACL/resource-consent/meeting-artifact boundary;
-- production/maintenance/quality context inventory;
-- OT/industrial safety inventory;
-- service/path/manifest/storage names frozen;
-- MediaRef/biometric-ref/connection-ref decisions;
-- architecture/pattern inventory/freeze;
-- Copilot integration contracts;
-- RED/conformance/privacy/device/biometric/external/Teams/OT harness;
-- CP status update;
-- ledger with actual HEAD/evidence.
+Além dos outputs existentes:
 
-No agent migration matrix is required.
+- automation/RPA/event/worker/service-identity inventory;
+- Automation & Execution Hub ownership decision;
+- executor preference/selection contract;
+- semantic capability→executor contract decision;
+- event source trust/dedupe/polling fallback decision;
+- background identity decision;
+- AutomationExecution lifecycle/idempotency decision;
+- RPA worker/queue/credential/artifact boundary if RPA is real scope;
+- outcome verification contract;
+- Watch PREPARE vs ACT semantics;
+- capability-scoped autonomy/kill-switch model;
+- RED automation/event/autonomy conformance harness.
 
 ## 10. Requirements authority
 
 `25-requirements-traceability.md` is the single CP authority.
 
 ```text
-CP-001–CP-225
+CP-001–CP-248
 ```
 
-`CP-155–CP-181` cover expanded access/multimodal/Meeting/Frontline/privacy/shared-device/industrial safety.  
-`CP-182–CP-193` cover governed biometric identity and Human Observation.  
-`CP-194–CP-214` cover Internet Research, external connectors, OAuth/secrets, external reads/writes/events, privacy and external-learning governance.  
-`CP-215–CP-225` cover Microsoft Teams connector, Teams reads/writes, meeting artifacts/events, Teams surface and advanced realtime boundary.
+```text
+CP-194–CP-214 = Internet/External Connectors
+CP-215–CP-225 = Microsoft Teams
+CP-226–CP-248 = Autonomous Operations / Automation & Execution Hub
+```
 
 Historical Chat migration requirements remain `OUT_OF_SCOPE_WITH_DECISION`.
 
@@ -388,48 +219,27 @@ Historical Chat migration requirements remain `OUT_OF_SCOPE_WITH_DECISION`.
 
 `20-testing-and-acceptance-matrix.md`.
 
-Required standalone gates include:
+Automation gates include:
 
 ```text
-NO_CHAT_IMPORT
-NO_CHAT_API_DEP
-NO_CHAT_DB_AUTHORITY
-CHAT_OFFLINE_INDEPENDENCE
-INDEPENDENT_DEPLOY_ROLLBACK
-```
-
-When relevant:
-
-```text
-NO_HIDDEN_CAPTURE
-RETENTION_POLICY_ENFORCED
-MODALITY_RBAC_PARITY
-SHARED_DEVICE_ISOLATION
-BIOMETRIC_MATCH_NOT_AUTHORITY
-UNKNOWN_IDENTITY_REMAINS_UNKNOWN
-BIOMETRIC_TEMPLATE_PROTECTED
-NO_SENSITIVE_PERSON_INFERENCE
-NO_AUTOMATIC_EMPLOYMENT_DECISION_FROM_BIOMETRICS
-SAFE_WEB_FETCH_SSRF_BLOCK
-EXTERNAL_CONTENT_UNTRUSTED
-OAUTH_LEAST_PRIVILEGE
-NO_PROVIDER_TOKEN_LEAK
-EXTERNAL_CONNECTION_ISOLATION
-DRAFT_NOT_SEND
-EXTERNAL_WRITE_DECISION_GATE
-WEBHOOK_AUTH_DEDUPE_RECONCILIATION
-NO_PERSONAL_SOURCE_AUTO_PROMOTION
-WHATSAPP_SUPPORTED_CONTRACT_ONLY
-TEAMS_PROVIDER_NEUTRAL_CAPABILITIES
-TEAMS_READ_SCOPE_ISOLATION
-TEAMS_DRAFT_SEND_SEPARATION
-TEAMS_EVENT_AUTH_DEDUPE_RECONCILIATION
-TEAMS_TRANSCRIPT_PROVENANCE
-TEAMS_PRIVATE_RESOURCE_NO_LEAK
-TEAMS_APP_SAME_COPILOT_RUNTIME
-TEAMS_RAW_REALTIME_NOT_REQUIRED_FOR_BASE_CONNECTOR
-VISUAL_EVIDENCE_SEMANTICS
-NO_HIDDEN_WORKER_PROFILING
+EVENT_SOURCE_AUTHENTICITY
+EVENT_DEDUPE_NO_DUPLICATE_EXECUTION
+EVENT_NOT_PERMISSION
+FAST_PATH_NO_LLM_WHEN_DETERMINISTIC
+DETERMINISTIC_READINESS_REPRODUCIBLE
+PLANNER_NO_RPA_UI_MECHANICS
+API_PREFERRED_OVER_RPA_WHEN_SUPPORTED
+EXECUTOR_SUBSTITUTION_NO_PLANNER_PATCH
+BACKGROUND_IDENTITY_EXPLICIT
+AUTOMATION_EXECUTION_IDEMPOTENT
+RPA_WORKER_SESSION_CREDENTIAL_ISOLATION
+AMBIGUOUS_WRITE_NO_BLIND_RETRY
+VERIFIED_BUSINESS_OUTCOME
+PREPARE_NOT_ACT
+CAPABILITY_SCOPED_AUTONOMY
+L5_OFF_DEFAULT
+AUTONOMY_KILL_SWITCH
+COMPUTER_USE_BOUNDED
 NO_ARBITRARY_OT_COMMAND
 ```
 
@@ -448,12 +258,14 @@ LAYER/PATTERNS:
 PLATFORM_REUSE:
 COPILOT_NEW_CODE:
 CHAT_DEPENDENCIES:
-MEDIA_DEVICE_BIOMETRIC_EXTERNAL_OT_IMPACT:
+EVENT_AUTOMATION_RPA_IMPACT:
 EVIDENCE:
 TESTS:
 SECURITY_RBAC:
 PRIVACY_RETENTION:
-BIOMETRIC_HUMAN_OBSERVATION:
+BACKGROUND_IDENTITY:
+EXECUTOR_OUTCOME_VERIFICATION:
+AUTONOMY_POLICY:
 EXTERNAL_CONNECTIONS_EGRESS:
 TEAMS_INTEGRATION:
 INDUSTRIAL_SAFETY:
@@ -465,20 +277,7 @@ NEXT_UNLOCKED:
 NOTES:
 ```
 
-## 13. Allowed states
-
-```text
-NOT_STARTED
-READY_TO_EXECUTE
-IN_PROGRESS
-BLOCKED_WITH_EVIDENCE
-EXECUTION_DRIFT
-FAIL
-PASS
-LOCKED
-```
-
-## 14. COMPLETE_GATE blockers
+## 13. COMPLETE_GATE blockers
 
 ```text
 PARTIAL
@@ -491,45 +290,27 @@ FOUNDATION_DRIFT
 ARCHITECTURE_PATTERN_DRIFT
 UNJUSTIFIED_ABSTRACTION
 CHAT_RUNTIME_IMPORT
-CHAT_API_REQUIRED
-CHAT_DATABASE_AUTHORITY
-CHAT_MIGRATION_DEPENDENCY
 PORTAL_AI_LOGIC_LEAK
 DOMAIN_RULE_DUPLICATION
-HIDDEN_MEDIA_CAPTURE
-UNDEFINED_MEDIA_RETENTION
-SHARED_DEVICE_STATE_LEAK
-VOICE_PERMISSION_BYPASS
-VISUAL_FINDING_AS_UNVALIDATED_FACT
-BIOMETRIC_PERMISSION_ELEVATION
-LOW_CONFIDENCE_FORCED_IDENTITY
-REVOKED_BIOMETRIC_STILL_ACTIVE
-BIOMETRIC_TEMPLATE_LEAK
-EMOTION_PERSONALITY_CHARACTER_INFERENCE
-AUTOMATIC_EMPLOYMENT_DECISION_FROM_BIOMETRICS
-HIDDEN_WORKER_PROFILING
-UNSAFE_WEB_FETCH
-SSRF_PRIVATE_NETWORK_ACCESS
-EXTERNAL_PROMPT_INJECTION_POLICY_CHANGE
-PROVIDER_TOKEN_LEAK
-CROSS_USER_EXTERNAL_DATA_LEAK
-EXTERNAL_WRITE_WITHOUT_GATE
-DRAFT_SENT_IMPLICITLY
-INVALID_WEBHOOK_ACCEPTED
-PERSONAL_SOURCE_AUTO_PROMOTED_TO_ORG_KNOWLEDGE
-UNSUPPORTED_WHATSAPP_SESSION_AUTOMATION
-TEAMS_SCOPE_OR_RESOURCE_LEAK
-TEAMS_MESSAGE_SENT_WITHOUT_GATE
-TEAMS_TRANSCRIPT_PROVENANCE_MISSING
-TEAMS_PRIVATE_RESOURCE_PROMOTED_WITHOUT_AUTH
-TEAMS_SEPARATE_COPILOT_RUNTIME
-TEAMS_RAW_REALTIME_REQUIRED_FOR_BASE_CONNECTOR
+EVENT_PERMISSION_ELEVATION
+DUPLICATE_EVENT_DUPLICATE_EXECUTION
+PLANNER_RPA_UI_MECHANICS_LEAK
+RPA_SELECTED_OVER_AUTHORITATIVE_API_WITHOUT_JUSTIFICATION
+BACKGROUND_EXECUTION_WITHOUT_EXPLICIT_IDENTITY
+AUTOMATION_EXECUTION_DUPLICATE
+RPA_CREDENTIAL_OR_SESSION_LEAK
+AMBIGUOUS_WRITE_BLIND_RETRY
+EXECUTOR_TECHNICAL_SUCCESS_AS_BUSINESS_SUCCESS
+PREPARE_BECOMES_ACT_IMPLICITLY
+GLOBAL_UNSCOPED_L5
+AUTONOMY_KILL_SWITCH_BYPASS
+COMPUTER_USE_UNBOUNDED_ACCESS
 ARBITRARY_LLM_OT_COMMAND
 SAFETY_INTERLOCK_BYPASS
 ```
 
-## 15. First execution
+## 14. First execution
 
 Open `23-prompt-cursor-execucao.md` and execute **C0.S0 only**.
 
-The first code after Foundation Freeze is the standalone Copilot API/MFE bootstrap, not intelligence/media/biometric/Internet/connector/Teams/Meeting/Frontline features.
+The first runtime after Foundation Freeze is still the standalone Copilot API/MFE bootstrap — **not** RPA, Event engine, Automation Hub or autonomous ACT.
