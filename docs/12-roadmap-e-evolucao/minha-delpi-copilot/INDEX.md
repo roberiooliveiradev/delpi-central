@@ -7,13 +7,13 @@ Entrada principal: [`README.md`](./README.md).
 1. [`16-execution-master-plan.md`](./16-execution-master-plan.md) — única ordem C0–C7.
 2. [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md) — boundary: API/MFE próprios; Chat separado.
 3. [`17-component-and-contract-map.md`](./17-component-and-contract-map.md) — owners/primitives/contracts.
-4. [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md) — layers/patterns/Abstraction Gate, inclusive media/biometric/realtime/external/OT boundaries.
-5. [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md) — fatos do Portal/Core/Gateway/APIs/MFEs e inventários `TO_INVENTORY`.
+4. [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md) — layers/patterns/Abstraction Gate, inclusive media/biometric/external/automation/OT boundaries.
+5. [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md) — fatos atuais e inventários `TO_INVENTORY`.
 6. [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md) — estrutura física e bootstrap.
 7. [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md) — gates/tests.
-8. [`21-data-and-state-model.md`](./21-data-and-state-model.md) — state/persistence/media/biometric/external refs.
+8. [`21-data-and-state-model.md`](./21-data-and-state-model.md) — state/persistence/media/biometric/external/automation refs.
 9. [`23-prompt-cursor-execucao.md`](./23-prompt-cursor-execucao.md) — prompt mestre.
-10. [`25-requirements-traceability.md`](./25-requirements-traceability.md) — requirements `CP-001…CP-225`.
+10. [`25-requirements-traceability.md`](./25-requirements-traceability.md) — requirements `CP-001…CP-248`.
 11. [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) — execution evidence/status.
 
 ## Produto/arquitetura
@@ -34,30 +34,17 @@ Entrada principal: [`README.md`](./README.md).
 - `18` app onboarding
 - `26` iframe bridge
 - `27–30` Copilot único/expertise/playbooks/multimodal
-- `32` runtime nativo de Expertise da Copilot API
-- `33` reference expertise pilots
-- `34` market benchmark
-- `35` Business Graph
-- `36` Tasks/Cases/Rooms
-- `37` Inbox/Watch
-- `38` Evidence
-- `39` Decision/Simulation
-- `40` Knowledge/Learning
-- `41` Expertise Studio
-- `42` Model Router
-- `43` Durable Workflow
-- `44` mapa temático da inteligência operacional, subordinado ao `16`
-- [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md) — voz/imagem/vídeo, Meeting, Frontline, shared devices, privacy e industrial/OT safety.
-- [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md) — face/voz closed-set de usuários enrolled, enrollment/templates/liveness, Human Observation e limites de análise de pessoas.
-- [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md) — pesquisa na internet, safe web fetch, OAuth, Gmail/Microsoft 365/WhatsApp Business e demais connectors, external actions/events e aprendizagem externa governada.
-- [`56-microsoft-teams-connector-and-meeting-integration.md`](./56-microsoft-teams-connector-and-meeting-integration.md) — Teams como capability family do Microsoft 365 connector: chats/canais, mensagens, meetings/transcripts/recordings, change notifications, app/tab/bot e boundary para live realtime media.
+- `32–44` expertise, benchmark, Graph, work, Evidence, Decision, Knowledge, Model Router e Durable Workflow
+- [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md) — multimodal/Meeting/Frontline/industrial safety.
+- [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md) — face/voz closed-set e Human Observation governance.
+- [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md) — Internet Research, OAuth, external connectors/actions/events/learning.
+- [`56-microsoft-teams-connector-and-meeting-integration.md`](./56-microsoft-teams-connector-and-meeting-integration.md) — Teams chats/canais/meetings/transcripts/events/app surface.
+- [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md) — Event/Signal Plane, Decision Intelligence, API/RPA/computer-use executors, Automation & Execution Hub, Outcome verification e autonomous operations.
 
 ## Reference/superseded
 
 - `31` antigo plano de migração de agents do Chat — **SUPERSEDED / REFERENCE_ONLY**
-- `45` antiga extensão de testing gates — **SUPERSEDED / REFERENCE_ONLY**
-- `46` antiga extensão de requirements — **SUPERSEDED / REFERENCE_ONLY**
-- `47` antiga extensão do prompt Cursor — **SUPERSEDED / REFERENCE_ONLY**
+- `45–47` extensões antigas — **SUPERSEDED / REFERENCE_ONLY**
 
 ## Regra rápida
 
@@ -72,10 +59,11 @@ media/meeting/frontline?     → 53
 biometric/people analysis?  → 54
 internet/external sources?  → 55
 Microsoft Teams?            → 56
-state/external refs?        → 21
+events/RPA/autonomy/Hub?    → 57
+state/execution refs?       → 21
 how to prove?               → 20
 which requirement?          → 25
 what is executed?           → ledger
 ```
 
-Nenhuma spec temática pode reintroduzir dependência de runtime no Minha DELPI Chat, redefinir a fase indicada pelo `16`, criar `FrontlineContext` paralelo ao WorkspaceContext, iniciar captura/reconhecimento oculto, transformar biometric match em permission, produzir inferência psicológica/sensível sobre pessoas, transformar conteúdo externo em authority de policy, expor tokens/credentials ao LLM/MFE, enviar comunicação externa implicitamente, criar runtime/planner separado apenas para Teams ou transformar autonomia empresarial em autoridade física de máquina.
+Nenhuma spec temática pode reintroduzir dependência do Minha DELPI Chat, redefinir a fase de `16`, transformar event payload em permission, expor credentials, colocar business rule dentro de RPA, emitir click/selector no planner, criar segundo Workflow/planner no Automation Hub, confundir `PREPARE` com `ACT`, habilitar L5 global irrestrito ou transformar autonomia empresarial em autoridade física de máquina.
