@@ -1,4 +1,4 @@
-# 02 — Arquitetura do Minha DELPI Copilot
+# 02 — Arquitetura da DÉLIA
 
 **Status:** arquitetura alvo canônica  
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
@@ -8,9 +8,9 @@
 
 ## 1. Decisão principal
 
-Minha DELPI Copilot é aplicação standalone com API/MFE/persistence/deploy próprios. Chat é sistema separado/reference-only.
+DÉLIA é aplicação standalone com API/MFE/persistence/deploy próprios. Chat é sistema separado/reference-only.
 
-O target não é apenas conversational AI; é uma camada de inteligência empresarial/industrial governada.
+O target não é apenas conversational AI; é Continuous Operational Intelligence governada.
 
 ## 2. Arquitetura macro
 
@@ -18,67 +18,68 @@ O target não é apenas conversational AI; é uma camada de inteligência empres
 Users / Devices / Meeting / Frontline / Teams
                     │
                     ▼
-              Portal / Copilot Host
+               Portal Host
                     │
                     ▼
-             Copilot Federated MFE
+             DÉLIA Federated MFE
                     │
                     ▼
                Gateway / Nginx
                     │
                     ▼
-            Copilot Standalone API
+             DÉLIA Standalone API
  ┌──────────────────┼──────────────────────────────────────────┐
  │                  │                                          │
  ▼                  ▼                                          ▼
-Platform         Intelligence/Data                        Work/Execution
+Platform         Intelligence/Data                        Work/Decision
 Core/RBAC        ├ Conversation/Planner                  ├ Policy/Decision
-Domain APIs      ├ Expertise/Knowledge                   ├ Durable Workflow
-External/Teams   ├ Personal Memory                      ├ Task/Case/Watch
-Media/Biometric  ├ Business Graph                       ├ Automation Hub
-Events           ├ Semantic Business Layer              └ Outcome Verification
-OT read sources  ├ Process Intelligence
-                 ├ Analysis/Artifacts
+Keycloak/SSO     ├ Expertise/Knowledge                   ├ Durable Workflow
+Domain APIs      ├ Personal Memory                      ├ Task/Case/Watch
+External/Teams   ├ Business Graph                       └ Outcome coordination
+Media/Biometric  ├ Semantic Business Layer
+Events           ├ Process Intelligence
+OT read sources  ├ Analysis/Artifacts
                  ├ Predictive/Prescriptive/Twin
                  ├ MCP/A2A interoperability
                  └ Model/AI Asset governance
                     │
-        ┌───────────┼────────────┐
-        ▼           ▼            ▼
-   Provider/API   Sandbox      Edge Runtime
-   adapters       adapters     integration
-        │           │            │
-        └───────────┴────────────┘
-                    ▼
-              Evidence / Audit
-                    ▼
-      Copilot-owned persistence/projections
+        ┌───────────┼─────────────────────┐
+        ▼           ▼                     ▼
+   Provider/API   Sandbox            Automation Hub
+   adapters       adapters           technical execution
+        │           │                     │
+        └───────────┴──────────────┬──────┘
+                                  ▼
+                          Evidence / Audit
+                                  ▼
+                    DÉLIA-owned persistence/projections
 ```
 
-Control Tower is governance plane across these assets, not another intelligence runtime.
+Automation Hub is an external technical-execution boundary relative to DÉLIA's intelligence/Policy/Decision/Work ownership. Control Tower is governance plane across AI/automation assets, not another intelligence runtime.
 
 ## 3. Authority Matrix
 
 | Concept | Authority |
 |---|---|
-| authentication | Keycloak |
-| users/apps/routes/RBAC | Core API |
-| navigation/hosting | Portal |
+| authentication / SSO | Keycloak |
+| apps/routes/RBAC/governance | Core API |
+| navigation/hosting/published host context | Portal |
 | business data/rules/actions | Domain APIs |
 | external resource/scope | provider + connection owner |
 | process intended design | process business owner |
-| process observed traces | source event logs + Copilot derived projection |
+| process observed traces | source event logs + DÉLIA derived projection |
 | metric definition | metric business owner + Semantic Layer registry |
-| personal memory | user + Copilot memory lifecycle |
+| personal memory | user + DÉLIA memory lifecycle |
 | organizational knowledge | Knowledge governance/source owners |
-| business graph | Copilot projection over source refs |
+| business graph | DÉLIA projection over source refs |
 | prediction/model | model owner/provider + model registry/evals |
-| scenario/twin | Copilot/domain projection; source state remains external |
-| automation execution | executor owner + Copilot orchestration |
-| verified business outcome | authoritative domain/provider source |
+| scenario/twin | DÉLIA/domain projection; source state remains external |
+| business decision/work orchestration | DÉLIA Policy/Decision/Work |
+| technical automation execution | Automation Hub |
+| verified business outcome | authoritative domain/provider source + DÉLIA coordination |
 | AI asset governance | AI Control Tower projection/admin |
-| tool/agent integration | approved MCP/A2A owner + Copilot policy |
-| Edge device/runtime | device/Edge owner + Copilot package/sync governance |
+| tool/agent integration | approved MCP/A2A owner + DÉLIA policy |
+| Edge device/runtime | device/Edge owner + DÉLIA package/sync governance |
 | industrial safety | OT/safety owner |
 
 ## 4. Clean Architecture
@@ -93,18 +94,18 @@ Interfaces / Adapters
 Infrastructure
 ```
 
-Domain/Application never import provider/model/RPA/MCP/A2A/sandbox/Edge SDKs.
+Domain/Application never import provider/model/RPA/MCP/A2A/sandbox/Edge/Automation Hub SDKs or internals.
 
 ## 5. Business / semantic / process data planes
 
 Keep distinct:
 
 ```text
-Domain APIs       → authoritative records/rules
-Business Graph    → relationships
-Semantic Layer    → official metric/business meaning
+Domain APIs          → authoritative records/rules
+Business Graph       → relationships
+Semantic Layer       → official metric/business meaning
 Process Intelligence → observed process traces/variants
-Operational Twin → scenario projection
+Operational Twin     → scenario projection
 ```
 
 No one layer absorbs all others.
@@ -114,10 +115,10 @@ No one layer absorbs all others.
 Keep distinct:
 
 ```text
-Conversation History → current dialog continuity
-WorkspaceContext     → current app/entity context
-Personal Memory      → user preferences/continuity
-Organizational Knowledge → reviewed reusable knowledge
+Conversation History      → current dialog continuity
+WorkspaceContext          → current authorized operational/app/entity context
+Personal Memory           → user preferences/continuity
+Organizational Knowledge  → reviewed reusable knowledge
 ```
 
 Memory cannot become permission or live business truth.
@@ -196,7 +197,7 @@ Keep provider-neutral adapters, safe egress, least-privilege OAuth, Source/Evide
 ## 13. MCP / A2A architecture
 
 ```text
-Copilot semantic capability/subtask
+DÉLIA semantic capability/subtask
 → trust/allowlist/policy
 → MCP Tool Adapter or A2A Agent Adapter
 → result/artifact
@@ -210,16 +211,19 @@ Discovery != approval. External agent/tool is not policy authority.
 ```text
 intent/event
 → semantic capability
-→ Policy/Decision
-→ Durable Workflow
-→ executor mapping
-→ API | Function | RPA | Computer-Use | Human Task
+→ DÉLIA Policy/Decision
+→ DÉLIA Durable Workflow
+→ executor selection/mapping
+→ Automation Hub contract when technical execution is required
+→ API | Function | RPA | Computer-Use | Human Task executor path
 → technical result
-→ Outcome Verification
+→ authoritative Outcome Verification
 → Evidence/Audit/Notification
 ```
 
 Default executor preference is API→native integration→function→RPA→computer-use→human.
+
+DÉLIA never bypasses the Automation Hub technical boundary with ad hoc executor internals when that capability is under Hub ownership.
 
 ## 15. AI Control Tower architecture
 
@@ -261,12 +265,12 @@ Control Tower admin != business permission
 Marketplace install != permission
 Edge offline != wider authority
 L5 default = OFF
-Copilot != safety controller
+DÉLIA != safety controller
 ```
 
 ## 19. Physical/deployment rule
 
-Thematic capability name does not imply service. Default implementation remains new Copilot API/MFE with internal bounded modules/adapters. Split into neutral/shared service only when C0 evidence/ADR proves ownership, consumers, scale/isolation and lifecycle justify it.
+Thematic capability name does not imply service. Default implementation remains the new DÉLIA API/MFE with internal bounded modules/adapters. Split into neutral/shared service only when C0 evidence/ADR proves ownership, consumers, scale/isolation and lifecycle justify it.
 
 ## 20. Generalization target
 
@@ -275,7 +279,7 @@ Architecture must onboard without planner core rewrite:
 - new Domain OpenAPI;
 - new metric/process source;
 - new provider/connector;
-- new executor;
+- new executor through the approved technical-execution boundary;
 - new model;
 - new MCP server/A2A agent;
 - new Edge device class;
@@ -289,7 +293,7 @@ C0 foundations
 → C2 context/commands
 → C3 capability foundations
 → C4 reads/analysis/discovery
-→ C5 governed writes/executors/artifacts
+→ C5 governed ACT/executors/artifacts
 → C6 product governance/experience
 → C7 advanced autonomy/Edge/Twin/Marketplace scale
 ```
