@@ -1,11 +1,9 @@
 # 14 — Definition of Done
 
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
-**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
-**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)  
-**Teams:** [`56-microsoft-teams-connector-and-meeting-integration.md`](./56-microsoft-teams-connector-and-meeting-integration.md)  
-**Autonomous Operations/Execution Hub:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)
+**Tests:** [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md)  
+**Requirements:** [`25-requirements-traceability.md`](./25-requirements-traceability.md)  
+**Specs temáticas:** `53–66`
 
 ## 1. Objetivo
 
@@ -16,59 +14,54 @@ Uma fase só fecha com comportamento, integração, segurança, privacidade, out
 ```text
 [ ] Copilot API/MFE/deploy/persistence próprios
 [ ] zero runtime dependency no Chat
-[ ] Core continua authority de apps/routes/RBAC
-[ ] Domain APIs continuam authority de business rules/data/actions
-[ ] external provider continua authority de seus recursos
-[ ] RPA/executor nunca vira business-rule authority
-[ ] event/provider/worker/device/biometric identity nunca concede permission
-[ ] OpenAPI/capability contracts governam Business Actions
-[ ] planner trabalha com semantic capabilities, não clicks/selectors
-[ ] API oficial é preferida antes de RPA quando atende o contract
+[ ] Core/Keycloak/Portal/Domain APIs mantêm authorities
+[ ] external/OT owners mantêm source authority
+[ ] shared primitives não duplicados
+[ ] OpenAPI/semantic capabilities governam actions
+[ ] planner provider/executor/model/tool-neutral
+[ ] read != write; draft != send; PREPARE != ACT; simulate != apply
+[ ] recommendation != authorization; prediction != FACT
+[ ] event/tool/agent/model/package/device/biometric identity não concede permission
+[ ] deterministic readiness usa Policy/Specification quando aplicável
 [ ] not every event invokes LLM
-[ ] deterministic readiness usa Policy/Specification quando critérios existem
-[ ] technical executor success != verified business outcome
-[ ] outcome/postcondition é verificado quando material
-[ ] background action possui user/service identity explícita
-[ ] Watch PREPARE != ACT
-[ ] autonomy é capability/context/risk scoped
-[ ] L5 OFF por default
-[ ] kill switches independem de prompt/LLM
-[ ] Durable Workflow continua único work runtime
-[ ] provider/RPA credentials ficam fora de LLM/MFE/logs
-[ ] personal/restricted source não vira organizational source implicitamente
-[ ] read != write e draft != send
-[ ] external/RPA writes não usam blind retry em outcome ambíguo
-[ ] external/event learning publica somente via governance
-[ ] media/biometric privacy boundaries respeitados
-[ ] Copilot/Automation Hub não vira industrial safety controller
+[ ] technical executor success != verified business Outcome
+[ ] no blind retry after ambiguous material write
+[ ] autonomy capability/context/risk-scoped; L5 OFF default
+[ ] kill switches/rollback/revoke paths independem de prompt
+[ ] provider/RPA/tool/model secrets ficam fora de LLM/MFE/logs comuns
+[ ] Process Mining não vira worker surveillance
+[ ] Personal Memory != Organizational Knowledge != live business truth
+[ ] Semantic Layer != Business Graph
+[ ] Sandbox isolated/read-only by default
+[ ] Artifact has provenance/version/ACL
+[ ] Twin/scenario state != production state
+[ ] Edge/offline never widens authority
+[ ] Marketplace/model/tool install != permission grant
+[ ] media/biometric/privacy boundaries pass
+[ ] OT safety boundary intact
 ```
 
 ## 3. DoD C0 — Foundation Freeze
 
 ```text
-[ ] Portal/Core/Gateway/Infra/MFE/API inventory com evidence
+[ ] platform/API/MFE/infra inventory with evidence
 [ ] media/device/biometric/OT inventory
 [ ] Internet/OAuth/connector/Teams inventory
-[ ] event source/broker/webhook/scheduler inventory
-[ ] RPA tool/orchestrator/licence/bot/package inventory
-[ ] scripts/functions/jobs inventory
-[ ] queues/workers/desktop-session infrastructure inventory
-[ ] service account/background identity inventory
-[ ] credential/secret owner inventory
-[ ] business postcondition/outcome source inventory
-[ ] notification/escalation inventory
-[ ] automation governance/SLA/kill-switch inventory
-[ ] standalone boundary/names/storage ownership congelados
-[ ] event trust/dedupe/order/correlation boundary congelado
-[ ] executor preference/semantic contract congelado
-[ ] Automation & Execution Hub ownership direction congelada
-[ ] background identity boundary congelado
-[ ] execution lifecycle/idempotency/ambiguous outcome semantics congelados
-[ ] outcome verification boundary congelado
-[ ] PREPARE/ACT semantics congeladas
-[ ] capability-scoped autonomy/kill-switch model congelado
-[ ] OT safety non-authority congelada
-[ ] contract/conformance harness reproduzível
+[ ] event/RPA/automation/queue/worker/service-identity inventory
+[ ] outcome/postcondition/notification owners inventory
+[ ] event logs/process owners/case keys/task-mining inventory
+[ ] AI/model/automation assets/evals/cost/incidents/kill switches inventory
+[ ] MCP/A2A/tool/agent/trust/delegation inventory
+[ ] personal preference/memory/privacy/delete/export inventory
+[ ] semantic KPI/glossary/BI model/metric owner inventory
+[ ] sandbox/query/file/artifact infrastructure inventory
+[ ] predictive/optimization/simulation/twin inventory
+[ ] Edge/network/device/MDM/offline/local-inference inventory
+[ ] model registry/MLOps/catalog/signing/supply-chain inventory
+[ ] standalone ownership/names/storage boundaries frozen
+[ ] shared primitive decisions frozen
+[ ] process/memory/semantic/sandbox/twin/edge/model boundaries frozen
+[ ] contract/conformance harness reproducible
 [ ] CHAT_RUNTIME_DEPENDENCY=0
 [ ] FOUNDATION_DUPLICATION=0 material
 [ ] FOUNDATION_FREEZE=PASS
@@ -81,8 +74,10 @@ Uma fase só fecha com comportamento, integração, segurança, privacidade, out
 [ ] JWT/Core integration
 [ ] Module Federation/plugin-ui
 [ ] full-page/global host contract
-[ ] Chat offline não quebra bootstrap
-[ ] no RPA/Event engine/Automation Hub ACT runtime criado prematuramente
+[ ] responsive/accessibility baseline
+[ ] no thematic runtime feature activates implicitly
+[ ] secrets absent from browser
+[ ] Chat offline does not break Copilot
 [ ] independent rollback/shutdown
 ```
 
@@ -90,160 +85,171 @@ Uma fase só fecha com comportamento, integração, segurança, privacidade, out
 
 ```text
 [ ] WorkspaceContext bounded/sanitized
-[ ] EntityRef/SourceRef sem credential/permission truth
-[ ] execution/watch refs não concedem action authority
-[ ] device/biometric/external context não concede authorization
-[ ] user-switch/logout limpa state local
-[ ] authorized navigation + arbitrary target rejection
+[ ] EntityRef/SourceRef without permission/credential truth
+[ ] device/memory/model/execution refs do not grant authority
+[ ] shared-device user switch clears local personalized/media/source state
+[ ] typed authorized navigation/actions
+[ ] iframe bridge safe
 ```
 
-## 6. DoD C3 — Intelligence/Event/Decision Foundations
+## 6. DoD C3 — Intelligence + Foundations
 
 ```text
-[ ] conversation/runtime próprios
-[ ] Action Catalog/Capability Projection próprios
-[ ] planner provider/executor-neutral
-[ ] FAST path sem LLM quando condição determinística é suficiente
-[ ] OPERATIONAL/REASONING path selection observável
-[ ] deterministic readiness reproduzível
-[ ] event source authenticity/trust validation
-[ ] duplicate/out-of-order event handling
-[ ] event payload não altera policy/permission
-[ ] Internet/connector/media/biometric gates aplicáveis passam
+[ ] own conversation/runtime
+[ ] own OpenAPI Action Catalog/Capability Projection
+[ ] provider/executor/model/tool-neutral planner
+[ ] FAST/OPERATIONAL/REASONING semantics tested
+[ ] EventLog/ProcessTrace contracts valid
+[ ] AI Asset Registry projection valid
+[ ] MCP/A2A allowlist/trust boundary valid
+[ ] Personal Memory lifecycle/privacy boundary valid
+[ ] MetricDefinition/Glossary versioned
+[ ] Sandbox isolated/quota-bounded
+[ ] Prediction/Twin contracts preserve epistemic semantics
+[ ] Edge device/package/cache contracts versioned
+[ ] Model Registry/eval lineage valid
+[ ] existing media/biometric/external gates pass
 [ ] no material autonomous ACT
 ```
 
-## 7. DoD C4 — Reads + Graph + Operational Intelligence
+## 7. DoD C4 — Governed Reads + Analysis
 
 ```text
-[ ] business/external reads authorized
-[ ] no cross-user/source leak
-[ ] Graph não replica masters
-[ ] invoice/report/stock/supplier/machine readiness/anomaly scenarios são read-only
-[ ] facts/calculations/hypotheses claramente diferenciados
-[ ] anomaly não vira inferência de fraude/intenção de pessoa
-[ ] no side effect implícito
+[ ] business/external reads authorized/provenanced
+[ ] Graph does not replicate masters
+[ ] Process Mining variants/conformance/bottlenecks grounded in real logs
+[ ] process deviations do not become person accusations
+[ ] Semantic Query uses governed metric formula/version
+[ ] Analysis Sandbox read-only result reproducible or truthfully marked otherwise
+[ ] predictive results carry model/version/horizon/freshness/limitations
+[ ] Personal Memory only affects relevance/presentation, not live truth
+[ ] MCP/A2A read-only delegation bounded and provenanced
+[ ] Edge read-only cache freshness/revision enforced
+[ ] no side effect implicit
 ```
 
-## 8. DoD C5 — Governed Execution Foundation
+## 8. DoD C5 — Governed Writes + Durable Foundation
 
 ```text
 [ ] Decision Gate/revalidation/idempotency
 [ ] semantic capability→versioned executor mapping
-[ ] planner não contém RPA UI mechanics
 [ ] API preferred over RPA when supported
-[ ] executor adapters substituíveis
-[ ] AutomationExecution lifecycle válido
-[ ] background actor/service identity explícita
-[ ] worker/queue/lease/session isolation quando RPA está em escopo
-[ ] protected credential injection
-[ ] timeout/ambiguous write não recebe blind retry
-[ ] resume/replay não duplica efeito
-[ ] technical result separado de business Outcome
-[ ] postcondition verificada em source autoritativo quando material
-[ ] Durable Workflow continua único runtime
+[ ] executor adapters replaceable
+[ ] AutomationExecution lifecycle valid
+[ ] worker/session/credential isolation when RPA in scope
+[ ] ambiguous write no blind retry
+[ ] postcondition/Outcome verified where material
+[ ] same Durable Workflow coordinates writes/tools/agents/executors
+[ ] Process Intelligence opportunity remains candidate/PREPARE
+[ ] MCP/A2A writes pass same governance
+[ ] semantic definition/model/policy TOCTOU handled
+[ ] Artifact version/provenance/ACL/human edits preserved
+[ ] prescriptive output remains recommendation/PREPARE
+[ ] SIMULATE != APPLY
 ```
 
-## 9. DoD C6 — Product Work + Automation Hub
+## 9. DoD C6 — Product Work + Governance Experience
 
 ```text
-[ ] Task/Case/Room/Inbox preservam source ACL
-[ ] Watch OBSERVE/ADVISE/PREPARE funciona
-[ ] PREPARE não produz side effect
-[ ] Watch ACT permanece bloqueado
-[ ] Automation Hub Admin não cria segundo planner/workflow engine
-[ ] catalog/executions/workers/exceptions/outcomes são rastreáveis
-[ ] success técnico e verified outcome aparecem separadamente
-[ ] notification/escalation usa estado verdadeiro e dedupe/SLA
-[ ] manual exception retoma mesmo Workflow
-[ ] Meeting/Frontline/external learning governance permanece válida
+[ ] Task/Case/Room/Inbox source ACL preserved
+[ ] Watch OBSERVE/ADVISE/PREPARE works; ACT blocked
+[ ] Automation Hub admin shows truthful technical vs verified outcome states
+[ ] Process Intelligence UX provides maps/variants/bottlenecks/conformance/backlog
+[ ] before/after process metrics reproducible
+[ ] AI Control Tower exposes owner/risk/health/eval/cost/value/incidents/dependencies/kill switch
+[ ] Control Tower admin does not imply business permission
+[ ] MCP/A2A lifecycle/disable/revoke works
+[ ] Personal Memory user view/correct/delete/disable works
+[ ] personalized briefing grounded in live authorities
+[ ] Semantic catalog handles lineage/conflicts/deprecation
+[ ] Artifact Workspace preserves human edits/version history
+[ ] Operational Twin scenario isolated from production
+[ ] Edge offline modes/sync/cache health work when in scope
+[ ] Model drift/health views and Marketplace lifecycle work
+[ ] Meeting/Frontline/external learning governance remains valid
 ```
 
-## 10. DoD C7 — Autonomous Operations
+## 10. DoD C7 — Advanced Autonomy + Scale
 
 ```text
 [ ] no global unrestricted L4/L5 switch
-[ ] L5 OFF by default
-[ ] capability/actor/context/risk/amount/environment allowlists/limits
-[ ] authorization/policy revalidated immediately before ACT
+[ ] L5 OFF default
+[ ] capability/actor/context/risk/amount/environment/budget limits
 [ ] kill switch blocks new ACT independently of LLM
-[ ] duplicate event não duplica action
-[ ] autonomous execution produces verified Outcome
-[ ] failed/ambiguous Outcome is never announced as completed
-[ ] computer-use, if any, is sandboxed/allowlisted/audited
-[ ] autonomous invoice anchor passes when declared in scope
+[ ] autonomous action produces verified Outcome
+[ ] closed-loop process optimization is measured/reversible/governed
+[ ] autonomous A2A delegation bounded/approved/cancellable
+[ ] advanced personalization does not create hidden employee profile
+[ ] semantic federation/materialization preserves source authority/freshness
+[ ] scaled sandbox maintains isolation/quotas/cleanup
+[ ] predictive/prescriptive ACT passes live policy/revalidation
+[ ] Operational Twin Apply re-reads live production state
+[ ] Edge rollout package/model health/rollback/revoke works
+[ ] bounded offline actions, if any, expire/reconcile and never widen authority
+[ ] model deployment/drift/rollback/kill switch works
+[ ] Marketplace publish/enable uses security/supply-chain gates
+[ ] revoked model/server/package no longer selectable
 [ ] progressive rollout/canary/rollback
 [ ] final Chat-offline independence
 [ ] OT physical actuation remains separate safety initiative
 ```
 
-## 11. Testes transversais obrigatórios
+## 11. Transversal required tests
 
 ```text
 positive/sibling/negative
 unauthorized/TOCTOU
 unknown/metamorphic
-injection from prompt/tool/document/media/external/event/RPA screen
+injection from every untrusted source
 Decision Gate
 idempotency/replay
 partial/ambiguous outcome
 persist/reload/restart
 layer/dependency conformance
-event source authenticity/dedupe
-FAST_PATH_NO_LLM_WHEN_DETERMINISTIC
-DETERMINISTIC_READINESS_REPRODUCIBLE
-PLANNER_NO_RPA_UI_MECHANICS
-API_PREFERRED_OVER_RPA_WHEN_SUPPORTED
-EXECUTOR_SUBSTITUTION_NO_PLANNER_PATCH
-BACKGROUND_IDENTITY_EXPLICIT
-AUTOMATION_EXECUTION_IDEMPOTENT
-RPA_WORKER_SESSION_CREDENTIAL_ISOLATION
-AMBIGUOUS_WRITE_NO_BLIND_RETRY
-VERIFIED_BUSINESS_OUTCOME
-PREPARE_NOT_ACT
-CAPABILITY_SCOPED_AUTONOMY
-L5_OFF_DEFAULT
-AUTONOMY_KILL_SWITCH
-COMPUTER_USE_BOUNDED
 CHAT_OFFLINE_INDEPENDENCE
+PROCESS_LOG_PROVENANCE
+NO_WORKER_SURVEILLANCE
+CONTROL_TOWER_NOT_BUSINESS_AUTHORITY
+MCP_A2A_NO_AUTO_TRUST
+TOOL_AGENT_INJECTION_RESISTANCE
+PERSONAL_MEMORY_ISOLATION
+MEMORY_NOT_BUSINESS_TRUTH
+GOVERNED_METRIC_REPRODUCIBILITY
+SANDBOX_ISOLATION
+SANDBOX_READ_ONLY_SOURCE
+ARTIFACT_PROVENANCE_AND_HUMAN_EDIT_PRESERVATION
+PREDICTION_NOT_FACT
+SIMULATE_NOT_APPLY
+EDGE_OFFLINE_NO_PERMISSION_EXPANSION
+MODEL_REVOKE_ENFORCED
+MARKETPLACE_INSTALL_NOT_PERMISSION
+AI_SUPPLY_CHAIN_CONTROLS
 OT_COMMAND_BLOCK
 ```
 
 ## 12. Blockers
 
+Qualquer release blocker de `20` bloqueia a fase. Em especial:
+
 ```text
-PARTIAL
-INCONCLUSIVE
-PENDING
-TEST_NOT_RUN
-STALE_EVIDENCE
-DUPLICATE_AUTHORITY
 FOUNDATION_DRIFT
-ARCHITECTURE_PATTERN_DRIFT
-UNJUSTIFIED_ABSTRACTION
+DUPLICATE_AUTHORITY
 CHAT_RUNTIME_IMPORT
-CHAT_API_REQUIRED
-CHAT_DATABASE_AUTHORITY
-PORTAL_AI_LOGIC_LEAK
-DOMAIN_RULE_DUPLICATION
-EVENT_PERMISSION_ELEVATION
-DUPLICATE_EVENT_DUPLICATE_EXECUTION
-PLANNER_RPA_UI_MECHANICS_LEAK
-RPA_SELECTED_OVER_AUTHORITATIVE_API_WITHOUT_JUSTIFICATION
-BACKGROUND_EXECUTION_WITHOUT_EXPLICIT_IDENTITY
-AUTOMATION_EXECUTION_DUPLICATE
-RPA_CREDENTIAL_OR_SESSION_LEAK
-AMBIGUOUS_WRITE_BLIND_RETRY
-EXECUTOR_TECHNICAL_SUCCESS_AS_BUSINESS_SUCCESS
-PREPARE_BECOMES_ACT_IMPLICITLY
-GLOBAL_UNSCOPED_L5
-AUTONOMY_KILL_SWITCH_BYPASS
-COMPUTER_USE_UNBOUNDED_ACCESS
-PROVIDER_TOKEN_LEAK
-CROSS_USER_EXTERNAL_DATA_LEAK
-BIOMETRIC_PERMISSION_ELEVATION
+PROCESS_MINING_WORKER_PROFILING
+MCP_A2A_AUTO_TRUST
+TOOL_AGENT_POLICY_INJECTION
+CROSS_USER_PERSONAL_MEMORY_LEAK
+MEMORY_OVERRIDES_LIVE_AUTHORITY
+UNGOVERNED_METRIC_FORMULA
+SANDBOX_ESCAPE_OR_UNGOVERNED_WRITE
+ARTIFACT_PROVENANCE_LOSS
+PREDICTION_PRESENTED_AS_FACT
+SIMULATION_MUTATES_PRODUCTION
+EDGE_OFFLINE_PERMISSION_EXPANSION
+REVOKED_AI_ASSET_STILL_ACTIVE
+MARKETPLACE_PERMISSION_ELEVATION
+AI_PACKAGE_SUPPLY_CHAIN_BYPASS
 ARBITRARY_LLM_OT_COMMAND
-SAFETY_INTERLOCK_BYPASS
 ```
 
 Nenhuma fase fecha com blocker material aberto.
