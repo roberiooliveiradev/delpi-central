@@ -1,7 +1,8 @@
 # 08 — Segurança, autonomia e auditoria
 
 **Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
-**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)
+**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
+**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)
 
 ## 1. Invariante principal
 
@@ -9,70 +10,53 @@
 Copilot effective permissions ⊆ user effective permissions
 ```
 
-O Copilot nunca opera como superusuário implícito e nenhuma camada de expertise/contexto/workflow/modalidade/biometria pode ampliar privilégios.
+External provider scope amplia somente o connector correspondente; não amplia Core RBAC/Domain API authorization.
 
 ## 2. Fluxo de autorização
 
 ```text
 identity
 → Core effective permissions
-→ authorized capability/action set
+→ authorized capabilities
+→ optional external connection/scope
 → planner restrito
 → policy/risk/sensitivity
 → Decision Gate quando necessário
-→ executor
-→ backend revalidation
+→ executor/adapter
+→ final owner validation
 → outcome/audit
 ```
 
-Backend/domain API continua authority final do write.
-
-Biometric match pode ajudar a resolver `userRef`, mas **não substitui autenticação, Core RBAC, Decision Gate ou autorização final do backend**.
-
 ## 3. Trust boundaries
 
-Conteúdo de qualquer uma destas fontes é **dado não confiável para policy/system**:
+São dados não confiáveis para system/policy:
 
 - user prompt;
-- voz/transcrição;
-- imagem/câmera/vídeo/tela compartilhada;
-- biometric identity candidate;
-- human observation result;
-- Workspace Context;
-- device/session metadata;
-- iframe;
-- RAG;
-- Expertise Pack/Playbook content;
-- API/tool output;
-- PDF/imagem/desenho;
-- Room message/file;
-- Event payload;
-- organizational experience records.
+- voice/transcript/image/video/screen;
+- WorkspaceContext/device metadata;
+- RAG/tool/API result;
+- Expertise/Playbook content;
+- iframe/Room/Event payload;
+- public webpage/search result;
+- email/message/file/calendar item externo;
+- external attachment;
+- provider webhook/event;
+- biometric/Human Observation result.
 
-Nenhum deles altera:
+Nenhuma dessas fontes altera permission, system instruction, Decision Gate, provider scope, retention ou safety boundary.
 
-- permissions;
-- system instructions;
-- Decision Gate requirements;
-- allowed actions;
-- autonomy level;
-- retention/privacy policy;
-- industrial safety boundaries.
+## 4. Autonomia
 
-## 4. Níveis de autonomia
+```text
+L0 explain
+L1 navigate
+L2 read/analyze
+L3 prepare change
+L4 governed execute
+L5 allowlisted automatic execute within explicit limits
+```
 
-| Nível | Comportamento |
-|---|---|
-| L0 | explicar |
-| L1 | navegar |
-| L2 | consultar/analisar |
-| L3 | preparar alteração |
-| L4 | executar com Decision Gate conforme policy |
-| L5 | auto-executar capability explicitamente allowlisted dentro de limites |
-
-L5 é OFF por default.
-
-**L5 empresarial não implica autoridade OT nem autoridade biométrica para substituir identidade/autorização.**
+L5 OFF por default. L5 não concede OT nem external write irrestrito.
 
 ## 5. Sensitivity/risk
 
@@ -87,27 +71,14 @@ destructive
 external_communication
 financial
 personal_data
-biometric_data
-human_observation
+biometric_sensitive
 media_capture
+external_personal_source
+provider_credential
 industrial_safety
 ```
 
-A classificação final deve ser owner/policy server-side e pode definir:
-
-- gate level;
-- autonomy ceiling;
-- audit strength;
-- redaction;
-- approver requirements;
-- volume/value limits;
-- capture/retention rules;
-- provider restrictions;
-- industrial safety restrictions.
-
 ## 6. Decision Gates
-
-Modelo único:
 
 ```text
 NO_GATE
@@ -118,446 +89,221 @@ APPROVAL_WORKFLOW
 BLOCK
 ```
 
-Decision request deve vincular, quando material:
+External send/update pode exigir target/payload preview, connection/scope state e expiry/revalidation.
 
-- action/capability ref;
-- arguments hash;
-- impact preview;
-- evidence refs;
-- risk/sensitivity;
-- expiry;
-- actor/approver scope.
+## 7. TOCTOU
 
-Mudança material de payload, evidence, permission ou policy pode invalidar decisão anterior.
+Antes de execute/resume/Watch ACT revalidar, conforme aplicável:
 
-## 7. TOCTOU e revalidação
-
-Revalidar antes de execute/resume/Watch ACT porque podem mudar:
-
-- permissions;
-- entity state/version;
+- Core permission;
+- Domain entity state;
 - policy;
-- provider availability;
 - evidence freshness;
-- approver validity;
-- media session/consent state;
-- device/user session;
-- biometric enrollment/revocation quando identity association for material;
-- machine/process state quando houver integração industrial.
+- media/biometric state;
+- external connection active state;
+- provider scope;
+- recipient/target constraints;
+- provider availability;
+- industrial preconditions.
 
 ## 8. Capability minimization
 
-O planner recebe somente candidates necessários/autorizados.
+Planner recebe somente candidates autorizados/relevantes. Expertise, context, web result ou provider message não concedem capability.
 
-Expertise pode **recomendar** uma capability, mas disponibilidade vem do set autorizado.
+## 9. Internet egress security
 
-Project preference/context também não concede capability.
-
-## 9. Knowledge security
-
-Knowledge scopes passam por ACL independente da expertise.
-
-Proibido:
-
-```text
-pack selecionado → liberar documentos do departamento
-```
-
-Correto:
-
-```text
-pack selecionado
-+ user ACL
-→ permitted knowledge candidates
-```
-
-## 10. Business Graph security
-
-Traversal não pode vazar nó/edge não autorizado.
+Public research usa boundary de egress seguro.
 
 Regras:
 
-- relationship source/provenance;
-- permission-aware traversal;
-- source fetch revalidado;
-- graph cache não vira bypass de API/RBAC;
-- inferred relation não tratada como authoritative.
+- somente destinos/protocolos permitidos;
+- protected/internal destinations bloqueados;
+- redirect revalidado;
+- request/response size/time/concurrency limits;
+- download/content policy;
+- TLS e provider policy;
+- minimizar/redigir contexto sensível enviado para fora;
+- nenhuma URL de LLM vai direto a client irrestrito.
 
-## 11. Case/Room/Inbox security
+Browser automation não é default e, se futura, permanece sandboxed/bounded.
 
-- membership de Case/Room não concede automaticamente source entity access;
-- summary respeita ACL;
-- usuário removido perde acesso conforme owner/policy;
-- Inbox sanitiza item cuja source deixou de ser autorizada;
-- abrir/ler Inbox não dispara write.
+## 10. OAuth / External Connection security
 
-## 12. Durable Workflow security
-
-Em waits/restart/resume:
-
-- revalidar identity/permission/policy;
-- proteger duplicate resume/event;
-- garantir idempotency para write;
-- tratar ambiguous outcome;
-- bloquear step dependente quando precondition crítica falha;
-- respeitar cancellation/expiry.
-
-## 13. Watch/Event security
-
-Watch modes:
+Connection types:
 
 ```text
-OBSERVE
-ADVISE
-ACT
+USER_DELEGATED
+ORG_MANAGED
+SHARED_RESOURCE
+SERVICE_CONNECTION
 ```
-
-ACT exige explicit autonomy policy e Decision Gate quando aplicável.
-
-Event payload:
-
-- schema validated;
-- deduped;
-- correlated;
-- tratado como dado não confiável;
-- não concede permission.
-
-## 14. Iframe security
 
 Obrigatório:
 
-- origin allowlist;
-- `event.source` validation;
-- app/session/protocol/version validation;
-- schema validation;
-- bounded payload;
-- no JWT/refresh token;
-- visual capabilities não viram Business Actions.
+- official provider auth flow;
+- least privilege scopes;
+- callback/session integrity validation;
+- consent/scope disclosure;
+- refresh/revoke/reconnect;
+- connection owner explicit;
+- scope increase requer nova autorização adequada;
+- kill switch.
 
-## 15. Prompt/tool/document/media/event injection
+Provider scope != Core permission.
 
-Testar injection a partir de:
+## 11. Provider credentials
 
-```text
-user
-voice transcript
-RAG
-tool/API
-Workspace Context
-device/session metadata
-iframe
-Expertise Pack
-Playbook
-PDF/image
-camera/video/screen
-biometric/human observation metadata
-Room message/file
-Event payload
-Experience Knowledge
-```
+Access/refresh tokens, client secrets e provider credentials:
 
-Resultado esperado: nenhuma fonte de dados altera policy/system/RBAC/retention/safety boundary.
+- ficam em approved secret/vault boundary;
+- Copilot DB prefere `secretRef`;
+- nunca chegam ao LLM;
+- nunca retornam ao MFE;
+- nunca entram em ordinary logs/telemetry;
+- são rotacionáveis/revogáveis;
+- separados por environment/connection.
 
-## 16. URLs e HTTP
-
-LLM não produz URL arbitrária para executor.
-
-Business URL/method/schema vêm do provider/action canônico. Platform navigation resolve IDs autorizados via Portal.
-
-## 17. Idempotência/concurrency
-
-Preferência:
-
-1. domain API idempotency;
-2. domain use case protection;
-3. orchestration dedupe/locking somente quando necessário.
-
-Proibido retry cego de write.
-
-## 18. Model/provider data policy
-
-Model Router futuro deve respeitar:
-
-- data classification;
-- provider allowlist;
-- residency/privacy constraints;
-- model capability;
-- retention policy;
-- cost/latency budgets;
-- media modality/provider terms;
-- biometric template/media restrictions;
-- industrial-data restrictions.
-
-Provider fallback não pode diminuir security/data policy.
-
-## 19. Meeting capture security
-
-Meeting Mode exige sessão de captura explícita.
-
-A UI deve indicar claramente, conforme ativo:
+## 12. Personal versus organizational data
 
 ```text
-microfone
-transcrição
-câmera
-identity recognition
-screen share
-raw recording
+personal/user-delegated source
+-X→ another user's search
+-X→ organizational Knowledge automatically
+-X→ Room/Case sharing automatically
 ```
 
-Policy deve distinguir:
+Promotion/sharing exige ação/policy explícita.
+
+## 13. External reads
+
+Read capability valida connection/scope e preserva SourceRef/Evidence/freshness. Cache não vira authority e não pode vazar entre owners.
+
+## 14. External writes / communication
 
 ```text
-transient capture
-transcript retention
-biometric matching
-raw audio retention
-raw video retention
-screen retention
-derived Evidence/artifact retention
+draft != send
+read != write
 ```
 
-Participante presente em reunião não autoriza automaticamente persistência ilimitada de mídia ou criação de enrollment biométrico.
+External write exige, conforme risk:
 
-## 20. Consentimento e data minimization
+- current connection/scope;
+- policy/Decision Gate;
+- target/payload preview;
+- idempotency/duplicate protection;
+- verified provider outcome;
+- audit.
 
-Antes de captura persistente ou enrollment biométrico definir:
+External content nunca dispara write diretamente.
 
-- finalidade;
-- quem iniciou;
-- participantes/scope;
-- modalidade;
-- retenção;
-- acesso;
-- redaction;
-- provider processing;
-- delete/anonymize/revoke policy.
+## 15. Provider events/webhooks
 
-Default arquitetural: **reter o mínimo necessário**.
+Obrigatório:
 
-Transcript, Evidence derivada, mídia bruta e biometric template possuem lifecycles distintos.
+- authenticity/contract validation;
+- normalize to EventEnvelope;
+- dedupe/correlation;
+- renewal/expiry handling;
+- missed-event reconciliation;
+- permission/connection revocation handling;
+- event payload treated as untrusted.
 
-## 21. Biometric identity security
+Webhook não é um alternate executor.
 
-A capability biométrica segue `54`.
+## 16. External prompt injection
 
-Invariante:
+Web/email/message/file/event content não pode:
+
+- pedir/receber token/secret;
+- mudar policy/system;
+- ampliar permission/scope;
+- conectar provider;
+- enviar mensagem;
+- alterar retention;
+- publicar Knowledge automaticamente.
+
+## 17. External attachment safety
 
 ```text
-biometric match != authenticated session != permission grant
+provider resource
+→ approved download boundary
+→ type/size/content policy
+→ MediaRef/SourceRef
+→ extraction
+→ Evidence
 ```
 
-Requisitos mínimos:
+Conteúdo ativo não é executado como parte da análise.
 
-- enrollment explícito e revogável;
-- closed-set recognition/verification de usuários conhecidos/enrolled;
-- unknown/low-confidence não força identidade;
-- associação corrigível;
-- biometric template protegido e não logado;
-- strict server-side access;
-- retention/deletion próprios;
-- provider allowlist/data-policy;
-- audit de enrollment/match/correction/revoke/delete;
-- liveness/anti-spoof quando a finalidade exigir confiança adicional;
-- nenhum template biométrico exposto ao MFE sem necessidade.
+## 18. Knowledge security
 
-Ações sensíveis nunca usam biometria como único fator de autorização.
+Knowledge scopes respeitam source ACL. External/personal source só vira durable Knowledge por candidate/review/eval/publish conforme owner/privacy/freshness/licensing.
 
-## 22. Human Observation boundaries
+## 19. Business Graph / Case / Room security
 
-O Copilot pode analisar comportamentos **observáveis e relacionados ao processo**, como:
+Graph/Case/Room podem referenciar external SourceRefs, mas membership/relationship não concede acesso ao source original. Revogação deve ser respeitada.
 
-- etapa executada/não executada;
-- interação com ferramenta/máquina/material;
-- repetição/retrabalho;
-- tempo entre etapas;
-- deslocamento relevante ao fluxo;
-- pedido de ajuda;
-- postura/ergonomia quando houver método/owner apropriado;
-- uso observável de EPI quando formalmente definido.
+## 20. Durable Workflow / Watch security
 
-Por default, é proibido transformar rosto/voz/comportamento em inferências de:
+Resume/Watch revalida Core/domain/policy/external connection/scopes. External event duplicado não duplica send/write.
+
+ACT externo em C7 exige allowlist/limits/kill switch e verified outcome.
+
+## 21. Iframe security
+
+Origin/source/session/schema validation, bounded payload, no JWT/refresh token, visual command não vira Business Action.
+
+## 22. Biometric/Human Observation security
+
+Biometric match é candidate identity, não auth/RBAC. Templates protegidos/revogáveis. Human Observation fica em evidência observável de processo, sem inferências psicológicas/sensíveis ou decisão trabalhista automática.
+
+## 23. Industrial/OT boundary
+
+Copilot não é safety controller. Free-form LLM → machine actuation permanece bloqueado sem programa/gate industrial separado.
+
+## 24. Auditoria
+
+Eventos conceituais adicionais:
 
 ```text
-personalidade
-honestidade/confiabilidade
-intenção moral
-lealdade
-emoção como truth
-saúde/diagnóstico
-atributos sensíveis
-aptidão profissional global
-propensão disciplinar
+copilot.web.research_started|completed|blocked
+copilot.external.connection_created|reauth_required|revoked
+copilot.external.read_completed|failed
+copilot.external.action_requested|completed|failed
+copilot.external.subscription_created|renewed|stale
+copilot.external.event_received|rejected|deduped
+copilot.external.knowledge_candidate_created
 ```
 
-Também é proibido usar biometria/Human Observation como authority automática para contratação, promoção, punição, remuneração, avaliação formal, suspensão ou desligamento.
+Audit registra refs/decisions/outcomes, não credentials nem full sensitive content por default.
 
-Evidence operacional pode subsidiar processos humanos separados, mas não é julgamento automático sobre a pessoa.
+## 25. Dados proibidos em logs/state comum
 
-## 23. Shared device security
-
-Em tablet industrial, terminal, kiosk ou sala compartilhada:
-
-- user atual precisa ser explícito;
-- device identity != user identity;
-- biometric candidate não mantém sessão indefinidamente;
-- ambiguous match exige fallback/confirmation;
-- logout/troca de usuário limpa contexto sensível;
-- session timeout/lock;
-- tokens não permanecem expostos;
-- mídia/cache local é minimizada/limpa;
-- usuário anterior não pode vazar WorkspaceContext/Conversation/Case para o próximo.
-
-Business Action sempre depende do usuário/authority vigente, não apenas do device ou biometric candidate.
-
-## 24. Industrial/OT safety boundary
-
-Copilot não é safety controller.
-
-Proibido como arquitetura default:
-
-```text
-LLM → comando livre → PLC/CNC/robô/máquina
-```
-
-Capability empresarial L4/L5 não concede operação física.
-
-Qualquer futura atuação OT exige gate separado com, no mínimo:
-
-```text
-industrial owner
-command allowlist/schema
-deterministic adapter
-machine state/precondition validation
-human authorization as required
-safety PLC/interlocks independent of Copilot
-simulation/test environment
-fail-safe/kill switch
-audit
-risk assessment
-```
-
-LLM nunca substitui interlock, safety PLC ou lógica certificada.
-
-## 25. Computer vision e qualidade
-
-Imagem/vídeo gerados pelo Copilot são Evidence/Findings com confidence/limitations, salvo capability de inspeção automática explicitamente validada.
-
-Regra default:
-
-```text
-visual finding
-→ Evidence/Hypothesis
-→ official inspection rule/measurement
-→ authorized quality decision
-```
-
-Não aprovar/reprovar peça apenas pela impressão do LLM quando processo oficial exige medição/equipamento/tolerância distinta.
-
-## 26. Organizational Knowledge safety
-
-Feedback, reunião, observação de operador ou Case resolution não viram production truth automaticamente.
-
-```text
-candidate
-→ provenance/Evidence
-→ review
-→ eval
-→ publish
-```
-
-Decision/Experience record não armazena chain-of-thought.
-
-Não criar perfil secreto persistente de trabalhador como mecanismo de aprendizagem.
-
-## 27. Auditoria
-
-Eventos conceituais:
-
-```text
-copilot.plan.created
-copilot.capability.selected
-copilot.expertise.selected
-copilot.decision.requested|decided
-copilot.action.started|completed|failed
-copilot.workflow.state_changed
-copilot.task.state_changed
-copilot.case.state_changed
-copilot.watch.triggered
-copilot.navigation.executed
-copilot.media.session_started|stopped
-copilot.media.ingested|deleted
-copilot.biometric.enrolled|matched|corrected|revoked|deleted
-copilot.human_observation.created
-copilot.meeting.started|ended
-copilot.meeting.artifact_created
-copilot.frontline.session_started|ended
-copilot.knowledge_candidate.created
-copilot.ot_command.blocked
-```
-
-Campos úteis:
-
-```text
-actor/subject
-request/conversation/turn
-workflow/task/case
-meeting/frontline/media session refs
-entity refs
-capability/action
-expertise/playbook refs
-policy/Decision Gate
-consent/retention class refs
-biometric modality/confidence/model-version when applicable
-outcome/evidence refs
-duration/error
-timestamp/correlation
-```
-
-## 28. Dados proibidos em logs/state comuns
-
-- JWT/refresh token;
-- API key/password/secrets;
+- JWT/refresh tokens;
+- provider access/refresh tokens;
+- passwords/API keys/client secrets;
+- biometric templates;
 - chain-of-thought;
-- full sensitive payload sem necessidade;
-- provider credentials;
-- raw audio/video/screenshots fora de storage/policy apropriados;
-- biometric embeddings/templates em logs;
-- raw enrollment media fora de storage/policy específicos;
-- hidden person scoring.
+- raw sensitive payload sem necessidade;
+- raw media fora do storage/policy apropriado.
 
-## 29. Emergency stop
+## 26. Emergency stop
 
-Deve ser possível, conforme owner:
+Deve ser possível desabilitar separadamente:
 
-- desabilitar Copilot writes;
-- desabilitar provider/action;
-- read-only mode;
-- desabilitar Watch ACT;
-- suspender workflow class;
-- revogar iframe integration;
-- desabilitar expertise/playbook version problemática;
-- desabilitar provider/model por data policy/incidente;
-- desabilitar voice/video/media capture;
-- encerrar realtime media sessions;
-- bloquear Frontline/Meeting Mode por incidente;
-- desabilitar face recognition;
-- desabilitar speaker recognition;
-- bloquear enrollment biométrico;
-- suspender Human Observation;
-- bloquear qualquer OT integration separadamente.
+- Copilot writes;
+- provider/action;
+- Internet Research;
+- web fetch/browser automation;
+- external connection específica;
+- external writes/outbound messaging;
+- webhook ingestion;
+- background sync/watch;
+- voice/video/biometric capture;
+- OT integration.
 
-## 30. Security success criteria
+Kill switch é deterministic/admin-owned, não prompt-controlled.
 
-Segurança está correta quando uma capability autorizada continua útil, mas nenhuma tentativa de prompt/context/pack/event/room/voice/media/device/biometric signal consegue ampliar o que o usuário poderia fazer diretamente pelas regras da plataforma, nem ultrapassar privacy/retention/industrial safety boundaries.
+## 27. Success criteria
 
-Também deve valer:
-
-```text
-biometric identity is bounded, correctable and revocable
-unknown remains unknown when confidence is insufficient
-no biometric-only permission elevation
-no emotion/personality/character inference
-no automatic employment decision from biometrics
-no hidden worker profiling
-```
+Security está correta quando o Copilot continua útil com sources internas e externas, mas nenhum prompt, webpage, email, message, file, webhook, biometric result ou device context consegue elevar permissions/scopes, vazar credentials/dados entre usuários, enviar conteúdo sem governance, publicar conhecimento automaticamente ou ultrapassar safety boundaries.
