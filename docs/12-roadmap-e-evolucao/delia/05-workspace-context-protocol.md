@@ -2,11 +2,13 @@
 
 ## 1. Objetivo
 
-Permitir que o Copilot compreenda onde o usuário está e quais entidades/filtros estão ativos sem receber o estado inteiro do frontend.
+Permitir que a DÉLIA compreenda onde o usuário está e quais entidades/filtros estão ativos sem receber o estado inteiro do frontend.
 
 ## 2. Foundation
 
-`WorkspaceContext` e `EntityRef` são primitives compartilhados definidos/reutilizados em C0. MFE, iframe, Portal e AI usam a mesma semântica.
+`WorkspaceContext` e `EntityRef` são **primitives TARGET** a confirmar/reutilizar/criar no owner correto em C0. MFE, iframe, Portal e DÉLIA devem convergir para a mesma semântica somente após o contract ser congelado.
+
+A presença desses nomes na documentação não prova implementação atual.
 
 ## 3. Contrato conceitual
 
@@ -41,7 +43,7 @@ O shape final depende do C0 inventory; não criar variante por app.
 ## 4. Conteúdo permitido
 
 ### App/route
-Identidade lógica do workspace atual.
+Identidade lógica do workspace atual publicada pelo host/app conforme contrato.
 
 ### EntityRefs
 Referências compartilhadas, não cópias completas de objetos.
@@ -61,17 +63,28 @@ Estado visual útil como aba/view.
 ### source
 Provenance do contexto (`portal`, `mfe`, `iframe` ou equivalente canônico).
 
-## 5. Publicação
+## 5. Publicação e ownership
+
+Target flow:
 
 ```text
 MFE/Iframe
 → adapter validation/sanitization
-→ Portal Context Store
+→ Portal host/context transport
 → bounded WorkspaceContext
-→ AI turn input
+→ DÉLIA contextualization
 ```
 
-Portal é owner da agregação. App é owner somente do contexto que publica.
+Ownership deve permanecer separado:
+
+```text
+Portal = host/navigation/published app context transport
+App/MFE = owner dos fatos de view/context que publica
+Domain/source = owner dos fatos de negócio referenciados
+DÉLIA = owner da contextualização/intelligence state derivada sobre refs autorizadas
+```
+
+Portal não vira source of truth de fatos operacionais apenas por agregar/publicar contexto. DÉLIA não ganha permission pelo contexto recebido.
 
 ## 6. Lifecycle
 
@@ -89,14 +102,15 @@ Ao desmontar app/iframe, limpar/invalidate context conforme lifecycle.
 
 ## 7. Precedência
 
-Contexto explícito novo na mensagem/UI prevalece sobre memória/contexto antigo.
+Contexto explícito novo na mensagem/UI prevalece sobre memória/contexto antigo, sem substituir validação autoritativa.
 
 Exemplo:
 
 ```text
 Workspace: customer 000123
 User: “faça isso para o cliente 000987”
-→ 000987 vence para aquele objetivo
+→ 000987 vence como referência para aquele objetivo
+→ acesso/estado real ainda é revalidado no owner autoritativo
 ```
 
 ## 8. Segurança
@@ -107,9 +121,10 @@ Workspace Context:
 - não concede permission;
 - não inclui JWT/token/secret;
 - não inclui hidden store data só porque frontend possui;
-- não substitui backend/RBAC;
+- não substitui backend/RBAC/domain validation;
 - deve ser bounded/sanitizado;
-- logs evitam full sensitive payload.
+- logs evitam full sensitive payload;
+- device/provider/tool metadata dentro do contexto não amplia authority.
 
 ## 9. Persistência
 
@@ -117,10 +132,10 @@ Separar:
 
 ```text
 live workspace context
-→ efêmero/browser/Portal
+→ efêmero/browser/host transport
 
-bounded conversation snapshot
-→ somente quando necessário para continuidade
+bounded DÉLIA conversation/work snapshot
+→ somente quando necessário para continuidade e com refs apropriadas
 ```
 
 Não persistir estado React/DOM.
@@ -139,13 +154,13 @@ Exemplo:
 }
 ```
 
-O ref precisa owner/lifecycle/access check antes de ser recuperado.
+O ref precisa owner/lifecycle/access check antes de ser recuperado. Ref metadata nunca é permission proof.
 
 ## 11. Iframe
 
-Iframe I1+ publica contexto pelo protocolo `26-iframe-copilot-bridge.md`; Portal converte para o mesmo `WorkspaceContext`.
+Iframe I1+ pode publicar contexto pelo protocolo histórico/técnico `26-iframe-copilot-bridge.md` se esse contract for confirmado/aprovado. Portal normaliza para o mesmo `WorkspaceContext` target.
 
-O AI core não precisa conhecer tecnologia visual de origem.
+O core da DÉLIA não precisa conhecer tecnologia visual de origem.
 
 ## 12. Versionamento
 
@@ -155,9 +170,9 @@ Breaking changes exigem versão/adapters explícitos. Não criar “WorkspaceCon
 
 Sem context adapter:
 
-- chat funciona;
-- open app/route funciona;
-- Copilot pede required info ausente;
+- experiência conversacional pode continuar;
+- open app/route pode continuar se o platform contract existir;
+- DÉLIA pede required info ausente;
 - não inferir entidade sensível pelo path/DOM.
 
 ## 14. Testes mínimos
@@ -171,4 +186,6 @@ Sem context adapter:
 - MFE sibling;
 - iframe source;
 - explicit context override;
-- unauthorized entity ref não vira data access.
+- unauthorized entity ref não vira data access;
+- provider/device/tool metadata não vira permission;
+- Portal context aggregation não substitui source truth.
