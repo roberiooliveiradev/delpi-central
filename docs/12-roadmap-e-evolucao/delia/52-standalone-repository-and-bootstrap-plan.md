@@ -1,4 +1,4 @@
-# Minha DELPI Copilot — Estrutura de Repositório e Bootstrap Standalone
+# DÉLIA — Estrutura de Repositório e Bootstrap Standalone
 
 **Status:** `CANONICAL_AUTHORITY` para criação física inicial da aplicação  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
@@ -6,19 +6,21 @@
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
 
+> Este documento é `TARGET/PLANNED`: não prova que API, MFE, migrations, manifesto, rotas, containers ou serviços da DÉLIA já existam. A criação física só começa após os gates de C0 definidos em `16`.
+
 ## 1. Objetivo
 
-Definir a organização física esperada **antes** de o Cursor criar arquivos, para evitar reestruturações precoces do backend/frontend.
+Definir a organização física esperada **antes** de criar runtime, evitando reestruturações precoces do backend/frontend.
 
 A aplicação deve nascer preparada arquiteturalmente para Global/Workspace/Meeting/Frontline, porém C1 implementa somente o bootstrap necessário; não antecipar media/runtime/features de C3/C6.
 
-Os nomes finais são congelados em C0.S1; os paths abaixo são o target recomendado e só podem mudar por evidence/ADR.
+Os nomes finais são congelados em C0.S1; os paths abaixo são target recomendado e só podem mudar por evidence/ADR.
 
 ## 2. Estrutura macro alvo
 
 ```text
 delpi-central/
-├── minha-delpi-copilot-api/
+├── minha-delpi-copilot-api/          # namespace técnico temporário
 │   ├── app/
 │   │   ├── domain/
 │   │   ├── application/
@@ -36,7 +38,7 @@ delpi-central/
 │   └── pytest.ini
 │
 ├── plugins/
-│   ├── minha-delpi-copilot/
+│   ├── minha-delpi-copilot/          # namespace técnico temporário
 │   │   ├── src/
 │   │   │   ├── ui/
 │   │   │   ├── state/
@@ -59,7 +61,7 @@ delpi-central/
 └── infra/
 ```
 
-Não criar source code do Copilot dentro de `minha-delpi-ai-api` ou `plugins/minha-delpi-chat`.
+Não criar source code da DÉLIA dentro de `minha-delpi-ai-api` ou `plugins/minha-delpi-chat`.
 
 Não criar por default:
 
@@ -77,7 +79,7 @@ Meeting/Frontline são módulos/surfaces do mesmo produto, salvo gap futuro comp
 
 Somente:
 
-- entities/aggregates realmente pertencentes ao Copilot;
+- entities/aggregates realmente pertencentes à DÉLIA;
 - value objects;
 - lifecycle/state-machine semantics;
 - pure policies/specifications;
@@ -87,7 +89,7 @@ Sem Flask, SQLAlchemy, HTTP, provider SDK, Core client, LLM/media client.
 
 ### application
 
-Subáreas candidatas, criadas somente quando a fase exigir:
+Subáreas candidatas, criadas somente quando a fase exigir e o Abstraction Gate aprovar:
 
 ```text
 conversation/
@@ -142,32 +144,35 @@ device_context/
 events/
 storage/
 observability/
+automation_hub/
 ```
 
-Só criar subdiretórios quando houver implementation real e Abstraction Gate aprovado.
+Só criar subdiretórios quando houver implementação real, owner/contract comprovados e Abstraction Gate aprovado.
 
 ### composition
 
 Composition Root único ou módulos de wiring coerentes com o padrão confirmado em C0.
 
-Provider/media SDKs são construídos aqui/infrastructure, nunca dentro de use cases/domain.
+Provider/media/automation SDKs são construídos aqui/infrastructure, nunca dentro de use cases/domain.
 
 ## 4. Banco e migrations
 
-O Copilot possui migrations próprias.
+A DÉLIA terá migration chain própria **somente para state/lifecycles que C0/C1 provar que são owned**.
 
 Regra:
 
 ```text
-Copilot migration
-→ altera somente schema/tabelas sob ownership Copilot
+DÉLIA migration
+→ altera somente schema/tabelas sob ownership DÉLIA
 ```
 
-Não editar migrations do Chat para atender Copilot.
+Não editar migrations do Chat para atender DÉLIA.
 
-Se o cluster `postgres-plugins` for reutilizado fisicamente, manter separação lógica clara por tables/schema/ownership, constraints e migration chain próprias.
+Se um cluster PostgreSQL compartilhado for reutilizado fisicamente, manter separação lógica clara por tables/schema/ownership, constraints e migration chain próprias.
 
 Raw audio/video não vira tabela/blob persistido por default; media storage e metadata só entram após C0/C3 provar need/policy.
+
+C0 congela boundaries antes de migrations.
 
 ## 5. Frontend package rules
 
@@ -181,7 +186,7 @@ state/
 → local/conversation/workspace/media-session client state
 
 data/
-→ Copilot API client/cache/adapters
+→ API da DÉLIA client/cache/adapters
 
 features/
 → composição por capability de produto
@@ -193,21 +198,13 @@ adapters/
 → Portal host/WorkspaceContext/federation/device/browser boundaries
 ```
 
-Durable business/media metadata state permanece na Copilot API quando persistência é necessária.
+Durable business/media metadata state permanece backend-owned quando persistência é necessária.
 
 Browser mic/camera/screen permission state permanece client/platform state e não concede Business Action permission.
 
 ## 6. Module Federation
 
-Reutilizar:
-
-```text
-@originjs/vite-plugin-federation
-plugins/vite/federation.shared.ts
-@delpi/plugin-ui
-FEDERATION_SHARED_REACT
-federationReactProxyFixPlugin
-```
+Baseline atual comprova a existência de `plugins/vite/federation.shared.ts`, `@delpi/plugin-ui`, `FEDERATION_SHARED_REACT` e helper de federation. O uso pela DÉLIA é `PLANNED`, sujeito a contract/conformance em C0/C1.
 
 Módulo mínimo esperado em C1:
 
@@ -232,7 +229,7 @@ Meeting/Frontline futuras:
 Conceitualmente:
 
 ```text
-CopilotRoot
+DeliaRoot
 ├─ GlobalSurface
 ├─ WorkspaceSurface
 ├─ MeetingSurface      # C6
@@ -254,7 +251,7 @@ Não compartilhar global mutable state entre usuários/devices.
 
 ## 8. Media/browser adapter baseline
 
-C1 não implementa STT/Vision/realtime, mas o frontend deve evitar decisões que impeçam C3/C6.
+C1 não implementa STT/Vision/realtime. O frontend apenas deve evitar decisões que impeçam C3/C6.
 
 Regras:
 
@@ -267,13 +264,13 @@ Regras:
 
 ## 9. Manifesto alvo
 
-Shape conceitual, não arquivo para registro ainda:
+Shape conceitual, **não contrato congelado nem arquivo para registro ainda**:
 
 ```json
 {
   "schemaVersion": "1.0.0",
   "id": "minha-delpi-copilot",
-  "name": "Minha DELPI Copilot",
+  "name": "DÉLIA",
   "type": "microfrontend",
   "basePath": "/apps/minha-delpi-copilot",
   "entry": "/apps/minha-delpi-copilot/assets/remoteEntry.js",
@@ -289,7 +286,7 @@ Shape conceitual, não arquivo para registro ainda:
 }
 ```
 
-Permission codes e rotas finais são definidos durante C0/C1, não inventados antecipadamente sem capability model.
+`id`, `basePath`, backend shape e schemaVersion precisam ser revalidados contra manifesto/contrato vigente em C0.S0/C1 antes de implementação. Permission codes e rotas finais não são inventados antecipadamente.
 
 Meeting/Frontline não exigem manifests independentes por default.
 
@@ -316,20 +313,22 @@ minha-delpi-copilot-api
 minha-delpi-copilot
 ```
 
-Dependências mínimas esperadas:
+Dependências mínimas candidatas, a confirmar em C0/C1:
 
 ```text
-Copilot API:
-- postgres-plugins ou storage aprovado
-- keycloak/Core connectivity
+DÉLIA API:
+- storage/persistence aprovado
+- Keycloak/Core connectivity
+- Domain APIs
+- Automation Hub/executor contracts quando fase exigir
 - provider connectivity quando habilitado
 
-Copilot MFE:
-- plugin-ui
-- Copilot API via Gateway em runtime
+DÉLIA MFE:
+- plugin-ui/federation foundation confirmada
+- DÉLIA API via Gateway em runtime
 ```
 
-Não declarar dependência `depends_on: minha-delpi-ai-api` nem `depends_on: minha-delpi-chat`.
+Não declarar dependência de `minha-delpi-ai-api` nem `minha-delpi-chat`.
 
 Speech/Vision/media provider não precisa ser container próprio se for serviço externo; C0/C3 decide por evidence, não por antecipação.
 
@@ -344,9 +343,7 @@ owner compartilhado está claro?
 versão/testes independentes são justificáveis?
 ```
 
-Se não, manter implementação dentro do Copilot.
-
-Não transformar o Chat em biblioteca compartilhada.
+Se não, manter implementação no bounded context dono. Não transformar o Chat em biblioteca compartilhada.
 
 ## 13. Shared-device rule
 
@@ -373,11 +370,11 @@ A primeira implementação runtime não será “chat inteligente”, Meeting ou
 Será **bootstrap de integração**, pequena e verificável:
 
 ```text
-1. criar Copilot API skeleton
+1. criar API da DÉLIA skeleton
 2. /health
 3. JWT validation
 4. Core client / current-user context
-5. criar Copilot MFE skeleton
+5. criar MFE da DÉLIA skeleton
 6. plugin-ui/federation
 7. responsive/accessibility/media-permission baseline
 8. manifest draft/registration path
@@ -388,11 +385,13 @@ Será **bootstrap de integração**, pequena e verificável:
 13. independent shutdown/rollback
 ```
 
+Cada item só pode usar contrato/owner comprovado no baseline atualizado. Se uma dependência não estiver provada, volta para `TO_INVENTORY`/ADR; não inventar compatibilidade.
+
 Só depois o Intelligence Core começa.
 
 ## 15. Por que bootstrap vem antes de inteligência
 
-Isso prova cedo:
+Isso deve provar cedo:
 
 - app independente existe;
 - deploy independente funciona;
@@ -406,29 +405,31 @@ Isso prova cedo:
 - media permissions não iniciam capture por acidente;
 - nenhum vínculo com Chat.
 
-Sem isso, construir planner/RAG/media antes seria feature-first em uma fundação ainda não integrada.
+Até esses testes existirem, são critérios de aceite `PLANNED`, não fatos.
 
-## 16. Build sequence recomendada
+## 16. Build sequence
+
+A única sequência válida é a do Plano Mestre `16`:
 
 ```text
-C0 — Architecture/Foundation + Media/Privacy/OT Freeze
+C0 — Foundation Freeze factual/arquitetural
 ↓
-C1 — Standalone Application Bootstrap + Portal/Core/Gateway integration
+C1 — Standalone Application Bootstrap
 ↓
-C2 — Workspace/Operational Context + Platform Commands
+C2 — Portal + Operational Context + Platform Commands
 ↓
-C3 — Intelligence Core + Multimodal Foundations
+C3 — Intelligence Core + Capability Foundations
 ↓
-C4 — Business Reads + Business Graph
+C4 — Governed Reads + Graph/Semantics/Analysis/Predictive Discovery
 ↓
-C5 — Governed Writes + Durable Work foundation
+C5 — Governed Writes + Executors + Durable Work + Artifacts/Prescriptive Prepare
 ↓
-C6 — Cases/Inbox/Watch + Meeting/Frontline + Ecosystem/Learning
+C6 — Product Work + Process Intelligence + Control Tower + Meeting/Frontline + Ecosystem
 ↓
-C7 — Advanced Realtime + Autonomy/Simulation/Model Routing/Rollout
+C7 — Advanced Autonomy + Operational Twin/Edge/Marketplace/Optimization + Scale/Rollout
 ```
 
-O Plano Mestre `16` é única authority.
+Este documento não cria ordem paralela.
 
 ## 17. Definition of Bootstrap Done
 
@@ -450,5 +451,7 @@ DEV_PROD_ROUTE_PARITY = PASS
 HEALTH = PASS
 ROLLBACK_INDEPENDENT = PASS
 ```
+
+Nenhum item vira `PASS` por existência documental ou skeleton isolado. É necessária evidência válida para SHA/config, wiring real e teste aplicável.
 
 Somente então liberar C2/C3 conforme `16`.
