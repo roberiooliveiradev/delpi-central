@@ -13,7 +13,7 @@ Entrada principal: [`README.md`](./README.md).
 7. [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md) — gates/tests.
 8. [`21-data-and-state-model.md`](./21-data-and-state-model.md) — state/persistence/media/biometric/external refs.
 9. [`23-prompt-cursor-execucao.md`](./23-prompt-cursor-execucao.md) — prompt mestre.
-10. [`25-requirements-traceability.md`](./25-requirements-traceability.md) — requirements `CP-001…CP-214`.
+10. [`25-requirements-traceability.md`](./25-requirements-traceability.md) — requirements `CP-001…CP-225`.
 11. [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) — execution evidence/status.
 
 ## Produto/arquitetura
@@ -50,6 +50,7 @@ Entrada principal: [`README.md`](./README.md).
 - [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md) — voz/imagem/vídeo, Meeting, Frontline, shared devices, privacy e industrial/OT safety.
 - [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md) — face/voz closed-set de usuários enrolled, enrollment/templates/liveness, Human Observation e limites de análise de pessoas.
 - [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md) — pesquisa na internet, safe web fetch, OAuth, Gmail/Microsoft 365/WhatsApp Business e demais connectors, external actions/events e aprendizagem externa governada.
+- [`56-microsoft-teams-connector-and-meeting-integration.md`](./56-microsoft-teams-connector-and-meeting-integration.md) — Teams como capability family do Microsoft 365 connector: chats/canais, mensagens, meetings/transcripts/recordings, change notifications, app/tab/bot e boundary para live realtime media.
 
 ## Reference/superseded
 
@@ -70,10 +71,11 @@ where/how boot?             → 52
 media/meeting/frontline?     → 53
 biometric/people analysis?  → 54
 internet/external sources?  → 55
+Microsoft Teams?            → 56
 state/external refs?        → 21
 how to prove?               → 20
 which requirement?          → 25
 what is executed?           → ledger
 ```
 
-Nenhuma spec temática pode reintroduzir dependência de runtime no Minha DELPI Chat, redefinir a fase indicada pelo `16`, criar `FrontlineContext` paralelo ao WorkspaceContext, iniciar captura/reconhecimento oculto, transformar biometric match em permission, produzir inferência psicológica/sensível sobre pessoas, transformar conteúdo externo em authority de policy, expor tokens/credentials ao LLM/MFE, enviar comunicação externa implicitamente ou transformar autonomia empresarial em autoridade física de máquina.
+Nenhuma spec temática pode reintroduzir dependência de runtime no Minha DELPI Chat, redefinir a fase indicada pelo `16`, criar `FrontlineContext` paralelo ao WorkspaceContext, iniciar captura/reconhecimento oculto, transformar biometric match em permission, produzir inferência psicológica/sensível sobre pessoas, transformar conteúdo externo em authority de policy, expor tokens/credentials ao LLM/MFE, enviar comunicação externa implicitamente, criar runtime/planner separado apenas para Teams ou transformar autonomia empresarial em autoridade física de máquina.
