@@ -1,4 +1,4 @@
-# Minha DELPI Copilot — Execution Ledger
+# DÉLIA — Execution Ledger
 
 **Status:** `PLANNED / NOT_STARTED`  
 **Product boundary:** standalone application  
@@ -9,56 +9,61 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** **C0.S0 — Platform/Media/Device/Biometric/External/Automation/OT rebaseline**
+**Next:** **C0.S0 — factual Platform/Media/Device/Biometric/External/Automation/Intelligence-Platform/OT rebaseline**
 
 ## 1. Ledger rule
 
 Este arquivo registra estado/evidence de execução. Mudanças somente documentais não avançam fase runtime.
 
+Um status `PASS` só é válido para o SHA/config/evidence explicitamente avaliados. Ausência de prova obrigatória mantém `PENDING | INCONCLUSIVE | TEST_NOT_RUN | STALE_EVIDENCE`, nunca `PASS`.
+
 ## 2. Canonical phase status
 
 | Fase | Status | Próximo step | Dependência |
 |---|---|---|---|
-| C0 Platform + Architecture + Media/Privacy/Biometric/External/Automation/OT Foundations | **NOT_STARTED** | **C0.S0** | none |
+| C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **C0.S0** | none |
 | C1 Standalone Bootstrap | LOCKED | — | C0.S7 FOUNDATION_FREEZE |
 | C2 Portal + Operational Context + Commands | LOCKED | — | C1 independence gate |
-| C3 Intelligence + Multimodal/Biometric/External/Decision Foundations | LOCKED | — | C1+C2 foundations |
-| C4 Business + External Reads + Graph + Operational Read Intelligence | LOCKED | — | C3 foundations |
-| C5 Governed Business/External/Automation Writes + Durable Foundation | LOCKED | — | C4 reads/evidence |
-| C6 Product Work + Meeting/Frontline + Automation Hub + Events/Learning | LOCKED | — | C5 durable/executor foundation |
-| C7 Autonomous Operations + Advanced Realtime/External Proactivity + Rollout | LOCKED | — | C0–C6 gates |
+| C3 Intelligence + Capability Foundations | LOCKED | — | C1+C2 foundations |
+| C4 Governed Reads + Graph/Semantics/Analysis/Predictive Discovery | LOCKED | — | C3 foundations |
+| C5 Governed Writes + Executors + Durable Work + Artifacts/Prescriptive Prepare | LOCKED | — | C4 reads/evidence |
+| C6 Product Work + Process Intelligence + Control Tower + Meeting/Frontline + Ecosystem | LOCKED | — | C5 governed-write/durable foundation |
+| C7 Advanced Autonomy + Twin/Edge/Marketplace + Optimization + Scale/Rollout | LOCKED | — | C0–C6 gates |
 
 ## 3. C0 sequence
 
 ```text
-C0.S0 platform/monorepo/media/device/biometric/external/automation/OT inventory
-→ C0.S1 standalone boundary/names
+C0.S0 factual platform/monorepo/media/device/biometric/external/automation/intelligence-platform/OT inventory
+→ C0.S1 standalone boundary/names/physical ownership
 → C0.S2 authorities/bounded contexts
 → C0.S3 shared primitives/ref decisions
-→ C0.S4 architecture/persistence/privacy/external/automation boundaries
+→ C0.S4 architecture/persistence/privacy/safety freeze
 → C0.S5 integration contracts
-→ C0.S6 RED contract/conformance harness
+→ C0.S6 RED contract/conformance/privacy/security harness
 → C0.S7 FOUNDATION_FREEZE
 ```
 
 ## 4. Current architectural decisions
 
 ```text
-COPILOT_PRODUCT = STANDALONE_NEW_APPLICATION
-COPILOT_API = NEW_OWN_SERVICE
-COPILOT_MFE = NEW_OWN_MICROFRONTEND
+PRODUCT = DÉLIA
+PRODUCT_BOUNDARY = STANDALONE_NEW_APPLICATION
+TECHNICAL_NAMESPACE = minha-delpi-copilot (TEMPORARY_UNTIL_C0_S1)
+DÉLIA_API = NEW_OWN_SERVICE_TARGET
+DÉLIA_MFE = NEW_OWN_MICROFRONTEND_TARGET
 CHAT_RUNTIME_DEPENDENCY = FORBIDDEN
 CORE_ROLE = APPS_ROUTES_RBAC_GOVERNANCE
 KEYCLOAK_ROLE = IDENTITY_SSO
 DOMAIN_APIS = BUSINESS_AUTHORITIES
-PLUGIN_UI = SHARED_DESIGN_SYSTEM
-OPENAPI_FIRST = NATIVE_COPILOT_FOUNDATION
-BUSINESS_GRAPH = COPILOT_PROJECTION_NOT_MASTER_DATA
-EVIDENCE_PROVENANCE = FOUNDATION_CONTRACT
-DECISION_GATE = FOUNDATION_CONTRACT
-DURABLE_WORKFLOW = SINGLE_CANONICAL_WORK_RUNTIME
+PORTAL_ROLE = HOST_NAVIGATION_CONTEXT
+PLUGIN_UI = SHARED_DESIGN_SYSTEM_IF_REVALIDATED
+OPENAPI_FIRST = NATIVE_DÉLIA_FOUNDATION_TARGET
+BUSINESS_GRAPH = DÉLIA_PROJECTION_NOT_MASTER_DATA
+EVIDENCE_PROVENANCE = FOUNDATION_CONTRACT_TARGET
+DECISION_GATE = FOUNDATION_CONTRACT_TARGET
+DURABLE_WORKFLOW = SINGLE_CANONICAL_DÉLIA_WORK_RUNTIME_TARGET
 
-COPILOT_SURFACES = GLOBAL | WORKSPACE | MEETING | FRONTLINE | FUTURE_TEAMS_SURFACE
+DÉLIA_SURFACES = GLOBAL | WORKSPACE | MEETING | FRONTLINE | FUTURE_TEAMS_SURFACE
 BACKGROUND_OPERATION = WATCH_WORKFLOW_GOVERNED
 
 MULTIMODAL_TARGET = TEXT | VOICE | IMAGE | DOCUMENT | VIDEO | SCREEN
@@ -66,23 +71,23 @@ BIOMETRIC_IDENTITY = GOVERNED_OPTIONAL_CAPABILITY
 BIOMETRIC_MATCH_EQUALS_AUTHORIZATION = FALSE
 HUMAN_OBSERVATION = OBSERVABLE_PROCESS_EVIDENCE_ONLY
 
-INTERNET_RESEARCH = GOVERNED_CAPABILITY
+INTERNET_RESEARCH = GOVERNED_CAPABILITY_TARGET
 EXTERNAL_CONNECTORS = PROVIDER_NEUTRAL
 EXTERNAL_READ_WRITE_SEPARATION = REQUIRED
 DRAFT_EQUALS_SEND = FALSE
 PROVIDER_TOKEN_TO_LLM_MFE = FORBIDDEN
-EXTERNAL_EVENTS = EVENT_ENVELOPE_NORMALIZED
+EXTERNAL_EVENTS = EVENT_ENVELOPE_NORMALIZED_TARGET
 
-TEAMS = MICROSOFT365_CAPABILITY_FAMILY
-TEAMS_SEPARATE_COPILOT_RUNTIME = FORBIDDEN
+TEAMS = MICROSOFT365_CAPABILITY_FAMILY_TARGET
+TEAMS_SEPARATE_DÉLIA_RUNTIME = FORBIDDEN
 TEAMS_SOURCE_ACL = PRESERVED
 TEAMS_MEETING_ARTIFACTS = SOURCE_EVIDENCE_NOT_DECISION
-TEAMS_RAW_REALTIME_MEDIA = C7_ADVANCED_ONLY_WITH_ADR
+TEAMS_RAW_REALTIME_MEDIA = ADVANCED_ONLY_WITH_EVIDENCE_ADR
 
-AUTONOMOUS_OPERATIONS = EVENT_DRIVEN_GOVERNED_TARGET
-COPILOT_ROLE = INTELLIGENCE_CONTEXT_DECISION_ORCHESTRATION
-AUTOMATION_EXECUTION_HUB_ROLE = EXECUTION
-AUTOMATION_HUB_SEPARATE_MICROSERVICE = NOT_ASSUMED_BEFORE_C0
+DÉLIA_ROLE = INTELLIGENCE_CONTEXT_EVIDENCE_POLICY_DECISION_WORK_ORCHESTRATION_OUTCOME_COORDINATION
+AUTOMATION_EXECUTION_HUB_ROLE = TECHNICAL_EXECUTION
+AUTOMATION_HUB_PHYSICAL_IMPLEMENTATION = TO_INVENTORY_C0
+AUTOMATION_HUB_SEPARATE_MICROSERVICE = NOT_ASSUMED
 EXECUTOR_PREFERENCE = API | NATIVE_INTEGRATION | FUNCTION | RPA | COMPUTER_USE | HUMAN_TASK
 RPA = REPLACEABLE_EXECUTOR_NOT_BUSINESS_AUTHORITY
 PLANNER_RPA_UI_MECHANICS = FORBIDDEN
@@ -93,8 +98,9 @@ EVENT_EQUALS_PERMISSION = FALSE
 BACKGROUND_IDENTITY = EXPLICIT_USER_OR_SERVICE
 TECHNICAL_EXECUTION_EQUALS_BUSINESS_OUTCOME = FALSE
 OUTCOME_VERIFICATION = REQUIRED_WHEN_MATERIAL
-WATCH_MODES_C6 = OBSERVE | ADVISE | PREPARE
-WATCH_ACT = C7_ONLY
+GOVERNED_ACT = C5_PLUS_WHEN_EXPLICITLY_AUTHORIZED_AND_GATED
+WATCH_DEFAULT_C6 = OBSERVE | ADVISE | PREPARE
+WATCH_AUTONOMOUS_ACT = C7_SELECTED_CAPABILITIES_ONLY
 AUTONOMY_SCOPE = CAPABILITY_CONTEXT_RISK_SCOPED
 GLOBAL_UNRESTRICTED_L5 = FORBIDDEN
 L5_DEFAULT = OFF
@@ -102,7 +108,7 @@ AUTONOMY_KILL_SWITCHES = REQUIRED
 COMPUTER_USE = ADVANCED_BOUNDED_FALLBACK
 
 OT_ACTUATION = BLOCKED_BY_DEFAULT
-COPILOT_IS_SAFETY_CONTROLLER = FALSE
+DÉLIA_IS_SAFETY_CONTROLLER = FALSE
 
 ARCHITECTURE_STYLE = CLEAN_ARCHITECTURE_PORTS_ADAPTERS_PRAGMATIC_DDD
 EVENT_DRIVEN = ONLY_WITH_REAL_EVENT_OWNER
@@ -116,47 +122,52 @@ All remain `PLAN_ONLY` until runtime evidence.
 ## 5. Superseded / rejected directions
 
 ```text
-Copilot extends Minha DELPI Chat                = SUPERSEDED
-Copilot depends on Chat/Onda J                  = SUPERSEDED
+DÉLIA extends Minha DELPI Chat                  = SUPERSEDED
+DÉLIA depends on Chat/Onda J                    = SUPERSEDED
 External knowledge limited to DELPI             = SUPERSEDED
-Teams requires separate Copilot backend         = SUPERSEDED
+Teams requires separate DÉLIA backend           = SUPERSEDED
 Teams base connector requires raw media bot     = SUPERSEDED
 Automation Hub means only RPA                   = SUPERSEDED_BY_EXECUTION_HUB
 RPA bot owns business decision                  = FORBIDDEN
 Planner emits clicks/selectors                  = FORBIDDEN
 All events require LLM                          = FORBIDDEN_DESIGN
-One global Copilot L5                           = FORBIDDEN
+One global DÉLIA L5                             = FORBIDDEN
 Technical executor success means process done   = FORBIDDEN
 Event payload directly executes write           = FORBIDDEN
+All ACT blocked until C7                        = SUPERSEDED_BY_C5_GOVERNED_ACT_C7_ADVANCED_AUTONOMY
 ```
 
 ## 6. Planning history
 
 | Data | Evento | Status |
 |---|---|---|
-| 2026-09-12 | initial standalone Copilot architecture | PLAN_ONLY |
+| 2026-09-12 | initial standalone architecture | PLAN_ONLY |
 | 2026-09-12 | Business Graph/Tasks/Cases/Rooms/Inbox/Watch/Evidence/Decision/Durable Work | PLAN_ONLY |
 | 2026-09-12 | foundation-first + architecture/design patterns | PLAN_ONLY |
 | 2026-09-12 | Global/Workspace/Meeting/Frontline + multimodal/OT boundaries (`53`) | PLAN_ONLY |
 | 2026-09-12 | Biometric Identity + Human Observation (`54`, through CP-193) | PLAN_ONLY |
 | 2026-09-13 | Internet Research + External Connectors (`55`, through CP-214) | PLAN_ONLY |
 | 2026-09-13 | Microsoft Teams first-class capability family (`56`, through CP-225) | PLAN_ONLY |
-| 2026-09-13 | **Event-Driven Autonomous Operations + Automation & Execution Hub (`57`, through CP-248)** | **PLAN_ONLY; docs only** |
+| 2026-09-13 | Event-Driven Autonomous Operations + Automation & Execution Hub (`57`, through CP-248) | PLAN_ONLY; docs only |
+| 2026-09-13 | Process Intelligence through AI Model Lifecycle/Marketplace (`58–66`, through CP-310) | PLAN_ONLY; docs only |
+| 2026-09-13 | product naming frozen internally as DÉLIA; technical namespace remains temporary | PLAN_ONLY; docs only |
 
 Actual `HEAD_BEFORE` for runtime is captured at C0.S0. Documentation-only commits do not advance execution status.
 
 ## 7. Canonical phase mapping
 
 ```text
-C0 → inventory/freeze platform + media + biometric + external + Teams + events + RPA/executors + service identity + outcome/autonomy + OT
+C0 → factual inventory + authority/architecture/privacy/security/data/automation/AI/OT freeze
 C1 → standalone API/MFE/Manifest/Gateway/Compose/Portal bootstrap
 C2 → Workspace/Operational Context + Platform Commands
-C3 → Intelligence + OpenAPI + Expertise/Knowledge + multimodal + Internet/connectors + Event/Decision foundations
-C4 → business/external reads + Graph + read-only readiness/anomaly intelligence
-C5 → Decision Gates + governed writes + executor ports/adapters + AutomationExecution + Outcome verification + Durable Workflow
-C6 → Task/Case/Room/Inbox + Watch OBSERVE/ADVISE/PREPARE + Meeting/Frontline + Automation Hub admin + events/notifications/learning
-C7 → selected Watch ACT + capability-scoped L5 + autonomous operations + advanced computer-use/realtime + rollout
+C3 → Intelligence Core + capability foundations
+C4 → governed reads + Graph/Semantics/Analysis/Predictive discovery
+C5 → Decision Gates + governed writes + executor contracts + AutomationExecution + Outcome verification + Durable Workflow + Artifacts
+C6 → Task/Case/Room/Inbox + Watch default OBSERVE/ADVISE/PREPARE + Process/Control/Meeting/Frontline ecosystem
+C7 → selected autonomous Watch ACT + advanced capability-scoped autonomy + Twin/Edge/Marketplace/optimization/scale
 ```
+
+C5 governed `ACT` and C7 advanced autonomous `ACT` are distinct. `PREPARE != ACT` remains invariant in every phase.
 
 ## 8. Required C0.S0 automation inventory
 
@@ -180,14 +191,14 @@ automation governance/SLA/support
 kill switches/emergency stop patterns
 ```
 
-Unknown = `NOT_PROVEN`.
+Unknown = `NOT_PROVEN` / `TO_INVENTORY`, never assumed reusable.
 
 ## 9. Required C0 outputs
 
 Além dos outputs existentes:
 
 - automation/RPA/event/worker/service-identity inventory;
-- Automation & Execution Hub ownership decision;
+- Automation Hub physical implementation/owner/contract/reuse decision, preserving the semantic boundary `DÉLIA orchestration → Hub technical execution`;
 - executor preference/selection contract;
 - semantic capability→executor contract decision;
 - event source trust/dedupe/polling fallback decision;
@@ -195,7 +206,7 @@ Além dos outputs existentes:
 - AutomationExecution lifecycle/idempotency decision;
 - RPA worker/queue/credential/artifact boundary if RPA is real scope;
 - outcome verification contract;
-- Watch PREPARE vs ACT semantics;
+- Watch PREPARE vs governed ACT vs autonomous ACT semantics;
 - capability-scoped autonomy/kill-switch model;
 - RED automation/event/autonomy conformance harness.
 
@@ -204,13 +215,24 @@ Além dos outputs existentes:
 `25-requirements-traceability.md` is the single CP authority.
 
 ```text
-CP-001–CP-248
+CP-001–CP-310
 ```
 
+Current thematic ranges include:
+
 ```text
-CP-194–CP-214 = Internet/External Connectors
+CP-194–CP-214 = Internet Research / External Connectors
 CP-215–CP-225 = Microsoft Teams
 CP-226–CP-248 = Autonomous Operations / Automation & Execution Hub
+CP-249–CP-255 = Process Intelligence / Process Mining
+CP-256–CP-261 = AI Control Tower
+CP-262–CP-267 = MCP/A2A / Agent Interoperability
+CP-268–CP-273 = Personal Memory / Personalization
+CP-274–CP-279 = Semantic Business Layer
+CP-280–CP-286 = Analysis Sandbox / Artifact Workspace
+CP-287–CP-294 = Predictive/Prescriptive Intelligence / Operational Twin
+CP-295–CP-301 = Edge/Offline Industrial
+CP-302–CP-310 = AI Model Lifecycle / Capability Marketplace
 ```
 
 Historical Chat migration requirements remain `OUT_OF_SCOPE_WITH_DECISION`.
@@ -236,6 +258,7 @@ RPA_WORKER_SESSION_CREDENTIAL_ISOLATION
 AMBIGUOUS_WRITE_NO_BLIND_RETRY
 VERIFIED_BUSINESS_OUTCOME
 PREPARE_NOT_ACT
+GOVERNED_ACT_REQUIRES_LIVE_AUTHZ_POLICY_DECISION_IDEMPOTENCY_AUDIT_OUTCOME
 CAPABILITY_SCOPED_AUTONOMY
 L5_OFF_DEFAULT
 AUTONOMY_KILL_SWITCH
@@ -256,7 +279,7 @@ CP_REQUIREMENTS:
 CANONICAL_OWNERS:
 LAYER/PATTERNS:
 PLATFORM_REUSE:
-COPILOT_NEW_CODE:
+DÉLIA_NEW_CODE:
 CHAT_DEPENDENCIES:
 EVENT_AUTOMATION_RPA_IMPACT:
 EVIDENCE:
@@ -302,6 +325,7 @@ RPA_CREDENTIAL_OR_SESSION_LEAK
 AMBIGUOUS_WRITE_BLIND_RETRY
 EXECUTOR_TECHNICAL_SUCCESS_AS_BUSINESS_SUCCESS
 PREPARE_BECOMES_ACT_IMPLICITLY
+ACT_WITHOUT_LIVE_AUTHZ_POLICY_DECISION
 GLOBAL_UNSCOPED_L5
 AUTONOMY_KILL_SWITCH_BYPASS
 COMPUTER_USE_UNBOUNDED_ACCESS
@@ -313,4 +337,4 @@ SAFETY_INTERLOCK_BYPASS
 
 Open `23-prompt-cursor-execucao.md` and execute **C0.S0 only**.
 
-The first runtime after Foundation Freeze is still the standalone Copilot API/MFE bootstrap — **not** RPA, Event engine, Automation Hub or autonomous ACT.
+The first runtime after Foundation Freeze remains the standalone DÉLIA API/MFE bootstrap — **not** RPA, Event engine, Automation Hub, advanced autonomous ACT or thematic capability runtime.
