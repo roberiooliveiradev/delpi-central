@@ -1,96 +1,74 @@
-# Minha DELPI Copilot — Modelo de Dados, Estado e Persistência
+# Minha DELPI Copilot — Modelo Canônico de Dados, Estado e Persistência
 
 **Status:** target arquitetural standalone  
 **Autoridade de ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
-**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
-**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)  
-**Autonomous Operations/Execution Hub:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)
+**Requirements:** [`25-requirements-traceability.md`](./25-requirements-traceability.md)  
+**Specs temáticas:** `53–66`
 
 ## 1. Princípio
 
-Todo estado durável do Copilot pertence à **Copilot API nova** ou a um owner corporativo/externo explicitamente referenciado.
+Todo estado durável pertence ao **owner correto**. Copilot persiste somente state que possui ou projections/refs bounded necessários para continuidade, audit, search ou performance.
 
 ```text
-REFERENCE
-→ refs para entities/users/resources de owners externos
+CORPORATE IDENTITY / RBAC
+→ Keycloak/Core
 
-COPILOT RUNTIME STATE
-→ conversations/turns/plans/context snapshots
+DOMAIN BUSINESS DATA
+→ Domain APIs / ERP / MES / demais owners
 
-COPILOT DURABLE WORK STATE
-→ decision/workflow/task/case/watch/inbox
+EXTERNAL RESOURCES
+→ external providers
 
-COPILOT MEDIA/BIOMETRIC STATE
-→ meeting/frontline/media/biometric metadata only when required
+OT / MACHINE TRUTH
+→ industrial/domain owners
 
-COPILOT EXTERNAL CONNECTION STATE
-→ connection metadata, scopes, sync/subscription state, secretRef
+COPILOT-OWNED STATE
+→ conversation/intelligence/work/policy/memory/artifact/automation metadata only when owned
 
-COPILOT AUTOMATION STATE
-→ capability-to-executor mapping, execution correlation/lifecycle, outcome refs, only when Copilot owns it
-
-DERIVED INDEX/CACHE
-→ capabilities/expertise/graph/search/external caches
-
-DOMAIN DATA
-→ permanece nas Domain APIs
-
-EXTERNAL RESOURCE DATA
-→ permanece no provider; Copilot guarda refs/cache bounded apenas quando necessário
-
-CORPORATE USER IDENTITY
-→ permanece Keycloak/Core-owned
+DERIVED PROJECTIONS/CACHES
+→ invalidable, versioned, freshness-aware, never authority
 ```
 
-Proibido usar Chat tables como foundation, criar shadow user directory, replicar mailbox/Drive/WhatsApp como system of record ou transformar Automation Hub em segundo system of record de negócio.
+Proibido criar shadow system of record apenas para facilitar IA.
 
 ## 2. Storage ownership
 
-Target:
+Target default:
 
 ```text
 minha-delpi-copilot-api/migrations/
 → única migration chain do Copilot
 ```
 
-Mesmo cluster físico não implica mesma authority lógica.
+Serviço separado só existe com boundary/owner/consumers reais e ADR. “Hub”, “Tower”, “Twin”, “Marketplace” ou “Sandbox” não justificam microservice por nome.
 
-Biometric templates, provider credentials e RPA credentials podem exigir storage/keys separados do banco transacional; C0 define owner/adapter antes de criar tabela.
+Segredos, biometric templates e alguns model/package artifacts podem pertencer a stores especializados; o DB transacional guarda refs/metadata, não secret material.
 
-Se Automation & Execution Hub for provado como neutral platform service separado, ele terá ownership/migrations próprios por ADR. Não assumir microservice antecipadamente.
+## 3. C0 antes de qualquer migration
 
-## 3. Regra C0 antes de migrations
+Congelar:
 
-Definir:
-
-- naming/IDs/versioning;
-- retention/LGPD/data classification;
-- media/biometric/external/automation artifact retention classes;
-- encryption/key management;
-- connection/credential ownership;
-- provider token lifecycle;
-- personal vs organizational source semantics;
-- webhook/subscription/sync state;
-- external cache TTL/freshness;
-- event/execution correlation;
-- executor mapping ownership;
-- service/background identity refs;
-- RPA package/worker/queue ownership;
-- execution/outcome retention;
-- concurrency/idempotency;
+- IDs/naming/versioning;
+- classification/LGPD/retention/delete/export;
+- encryption/key/secret owners;
+- user/service/device identity refs;
+- source authority/freshness;
+- idempotency/concurrency;
 - migration/rollback;
-- Copilot-owned versus refs/projections;
-- shared primitives somente se necessários.
+- Copilot-owned state vs projection/ref;
+- cache TTL/invalidation;
+- audit/evidence lineage;
+- state-machine transitions;
+- data classes novas somente se shared primitives existentes forem insuficientes.
 
-## 4. Shared references
+## 4. Shared foundations
 
 ### CorrelationContext
 
 ```text
 requestId
-conversationId
+conversationId?
 turnId?
 workflowId?
 taskId?
@@ -98,9 +76,10 @@ caseId?
 watchId?
 eventId?
 executionId?
+analysisRunId?
+scenarioId?
 meetingId?
 frontlineSessionId?
-mediaSessionId?
 traceId?
 ```
 
@@ -114,231 +93,162 @@ label?
 version/revision?
 ```
 
-### UserRef / ServiceActorRef
+### UserRef / ServiceActorRef / DeviceRef
 
-`UserRef` aponta para Keycloak/Core. Background automation pode precisar de actor/service identity explícita.
-
-Candidate conceitual, somente se C0 provar necessidade:
-
-```text
-actorType: USER | SERVICE
-actorRef
-sourceAuthority
-purpose/scope bounded
-```
-
-Nunca transformar event source, bot, worker ou biometric candidate em user authority.
+- `UserRef` aponta para Keycloak/Core.
+- background action usa service/user identity explícita.
+- `DeviceRef` não é usuário.
+- biometric candidate não é usuário autenticado.
+- RPA worker não é business actor.
 
 ### SourceRef / EvidenceRef / OutcomeRef
 
-Usados transversalmente por Domain API, web, connectors, multimodal, Graph, Workflow, Automation, Meeting/Frontline e audit.
+Usados transversalmente por APIs, web, connectors, Process Intelligence, analysis, predictive/twin, automation, Meeting/Frontline e audit.
 
-External SourceRef pode conter provider/resource/freshness sem credential.
+Nunca guardar credential em Source/Evidence/Outcome.
 
-OutcomeRef pode apontar para:
+## 5. WorkspaceContext
+
+Pode carregar app/route/EntityRefs/SourceRefs/filters/selection/dateRange/device metadata e bounded refs para Task/Case/Watch/execution/artifact.
+
+Nunca carregar como authority:
 
 ```text
-businessAction outcome
-external provider outcome
-automation execution outcome
-postcondition verification
+JWT/provider secret
+permission/autonomy truth
+raw mailbox/dataset
+biometric permission truth
+RPA desktop state
+sandbox credential
+model/package trust decision
 ```
 
-Technical executor result e verified business Outcome podem ser referências distintas.
+## 6. Media/Biometric/Human Observation
 
-## 5. MediaRef — candidate foundation
+Mantém separação já congelada:
 
-Se C0 provar necessidade, mantém media metadata bounded e Evidence referencia MediaRef/location sem copiar raw media.
+```text
+RAW MEDIA
+BIOMETRIC ENROLLMENT
+BIOMETRIC TEMPLATE
+IDENTITY CANDIDATE
+PERSON OBSERVATION
+```
 
-## 6. Workspace Context
+Identity candidate != authenticated session != permission grant.
 
-Pode carregar app/route/EntityRefs/SourceRefs/filters/selection/dateRange/device metadata.
+Human Observation persiste apenas fatos objetivos do processo quando necessário; sem personality/trust/emotion/health/global employee score.
 
-Pode mostrar execution/task/watch refs bounded para UX, mas nunca persistir como truth:
+## 7. ExternalConnection / provider state
 
-- DOM state;
-- JWT/provider/RPA secrets;
-- permissions/scopes/autonomy as authority;
-- datasets/mailboxes completos;
-- biometric candidate como permission truth;
-- raw RPA desktop session state.
-
-## 7. Device/session metadata
-
-Device identity != user identity. RPA worker/desktop session identity também não equivale a business actor.
-
-## 8. Biometric identity state
-
-Separar RAW MEDIA, ENROLLMENT, TEMPLATE e IDENTITY CANDIDATE. Candidate != authenticated session != permission grant.
-
-## 9. Human Observation state
-
-Somente observações objetivas de processo com Evidence/provenance. Não armazenar personality/trust/emotion/health/sensitive/global employee score.
-
-## 10. ExternalConnection — candidate owned state
+Candidate:
 
 ```text
 connectionId
-ownerType
+ownerType: USER_DELEGATED|ORG_MANAGED|SHARED_RESOURCE|SERVICE_CONNECTION
 ownerRef
 providerKey
-providerAccount/resource label bounded
+resource/account label bounded
 status
 scopes[]
 secretRef
+policyRef
 createdAt/updatedAt
 expiresAt?
 lastValidatedAt?
-policyRef
 ```
 
-`secretRef` nunca vai para LLM/MFE/SourceRef/Evidence.
+Secret material permanece no approved secret owner.
 
-## 11. Provider secret/credential state
+Subscription/sync state mantém provider subscription/cursor/expiry/reconciliation refs sem business authority.
 
-Credential material pertence ao approved secret owner/adapter. O mesmo vale para RPA/service-account credentials.
+## 8. Conversation state
 
-Nunca persistir token/password/desktop secret em conversation/log/MFE/Evidence.
+Copilot-owned. Turn pode referenciar WorkspaceContext snapshot, Evidence, memory influence refs, plans/outcomes/artifacts, nunca chain-of-thought ou credentials.
 
-## 12. External resource references
+## 9. Personal Memory — owned state
 
-Preferir SourceRef antes de novo ExternalResourceRef. Não copiar conteúdo integral por default.
+Personal Memory é separada de conversation e Organizational Knowledge.
 
-## 13. External sync/subscription state
-
-```text
-subscriptionId
-connectionRef
-resourceScope
-providerSubscriptionRef
-status
-expiresAt
-lastEventAt?
-lastReconciledAt?
-syncCursor/deltaRef?
-errorCode?
-```
-
-## 14. External cache / fetched content
-
-Cache derivado, scoped, TTL/freshness explícitos; personal content não vira shared cache por default.
-
-## 15. Internet Research state
-
-Pode ser totalmente transitória. Persistir somente refs/evidence bounded quando Task/Case/audit exigir.
-
-## 16. Copilot conversations
-
-Copilot-owned, sem `agent_id/chat_mode`. Turn pode referenciar workspace/media/evidence/identity/external source/plan/outcome, nunca CoT/credentials.
-
-## 17. Media/Meeting/Frontline sessions
-
-Persistir apenas quando continuity/audit/policy exigir. Frontline não vira surveillance datastore.
-
-## 18. Retention classes
-
-Separar pelo menos:
+Candidate `MemoryItem`:
 
 ```text
-TRANSIENT_MEDIA
-TRANSCRIPT
-RAW_AUDIO
-RAW_VIDEO
-SCREEN_CAPTURE
-DERIVED_EVIDENCE
-BIOMETRIC_ENROLLMENT_MEDIA
-BIOMETRIC_TEMPLATE
-IDENTITY_CANDIDATE
-PERSON_OBSERVATION
-WEB_RESEARCH_TRANSIENT
-WEB_RESEARCH_EVIDENCE
-EXTERNAL_RESOURCE_CACHE
-EXTERNAL_MESSAGE_OR_FILE_EVIDENCE
-EXTERNAL_CONNECTION_METADATA
-EXTERNAL_SUBSCRIPTION_STATE
-AUTOMATION_EXECUTION_METADATA
-AUTOMATION_EXECUTION_ARTIFACT
-RPA_SCREENSHOT_OR_ARTIFACT
-AUTOMATION_LOG_BOUNDED
-MEETING_ARTIFACT
-FRONTLINE_RECORD
-```
-
-Cada classe define purpose/access/retention/redaction/encryption/revoke/delete/anonymize.
-
-## 19. Evidence
-
-Evidence pode apontar para fontes internas/públicas/conectadas e automation execution artifacts.
-
-```text
-evidenceId
-sourceRef
-entityRefs[]
-userRef? only when necessary
-kind
-valueRef/value bounded
-location?
-mediaRef?
-executionRef?
-observedAt
-freshness
+memoryId
+ownerUserRef
+class: USER_PREFERENCE|USER_CONFIRMED_FACT|WORK_CONTINUITY_REF|FOLLOWED_TOPIC|PRIVATE_KNOWLEDGE_REF|TEMPORARY_PERSONAL_CONTEXT
+value/valueRef bounded
+sourceRefs[]?
 confidence?
-limitations[]
-extractor/model/version?
+status: ACTIVE|CORRECTED|EXPIRED|DELETED|DISABLED
+createdAt
+updatedAt
+lastUsedAt?
+retentionClass
+policyRef
+supersedesRef?
 ```
 
-RPA screenshot/output não vira FACT apenas por existir; authoritative business state continua no owner apropriado.
-
-## 20. Decision Gate
-
-Pode referenciar Business Action, External Action ou Automation capability.
+Invariantes:
 
 ```text
-actionRef
-argumentsHash
-impactPreview
-evidenceRefs
-risk/sensitivity
-status
-actor/approver refs
-connectionRef?
-automationCapabilityRef?
+PersonalMemory != OrganizationalKnowledge
+PersonalMemory != permission
+PersonalMemory != live business truth
 ```
 
-Decision antiga não sobrevive a material permission/context/arguments/policy change.
+User deletion/correction propagates to derived indexes according to policy.
 
-## 21. Durable Workflow
+## 10. Organizational Knowledge
 
-Workflow/Step é runtime único para business/external/automation capabilities.
+Reference/Decision/Experience/Solution Pattern knowledge segue candidate→review/eval/version/publish. Personal/external/process/execution evidence nunca vira corporate truth automaticamente.
+
+## 11. Business Graph state
+
+Graph armazena refs/relationships/provenance/materializations quando justificadas. Não duplica master data.
+
+`RelationshipRef` deve carregar source/provenance/freshness suficientes para ser invalidável.
+
+## 12. Semantic Business Layer state
+
+Graph e Semantic Layer permanecem separados.
+
+Candidate `MetricDefinition`:
 
 ```text
-stepId
-workflowId
-capabilityRef
-connectionRef?
-executorRef?
-target/resourceRef?
-dependsOn[]
-status
-attemptCount
-idempotencyKey?
-resultRef/errorCode
-decisionRef?
+metricId
+name
+businessMeaning
+formulaRef/expression
+grain
+dimensions[]
+unit
+sourceOwnerRef
+freshnessSla?
+securityClassification?
+ownerRef
+version
+status: DRAFT|ACTIVE|DEPRECATED|REVOKED
+validationRef?
 ```
 
-Nunca armazenar credential no step.
+Candidate glossary concept:
 
-## 22. Task / Case / Room / Inbox
+```text
+conceptId
+term
+meaning
+scope/domain
+ownerRef
+sourceRefs[]
+version
+status
+```
 
-Podem referenciar external SourceRefs/EvidenceRefs e AutomationExecutionRef bounded. Room membership não concede mailbox/executor permission.
+Conflicting definitions keep separate IDs/versions; do not silently merge.
 
-Exception manual usa Inbox/Decision e retoma o mesmo Workflow.
+## 13. Event / Watch state
 
-## 23. Event / Watch
-
-`EventEnvelope` normaliza eventos internos/externos/automation outcomes.
-
-Campos conceituais relevantes:
+`EventEnvelope` normalizes internal/external/automation/Edge events:
 
 ```text
 eventId
@@ -352,27 +262,50 @@ payloadRef/value bounded
 trust/auth metadata bounded
 ```
 
-Event payload nunca concede permission.
+Event payload never grants permission.
 
 Watch:
 
 ```text
 watchId
-owner
-condition/ref
-mode OBSERVE|ADVISE|PREPARE|ACT
-entity/capability scope
+ownerRef
+conditionRef
+mode: OBSERVE|ADVISE|PREPARE|ACT
+scopeRefs[]
+capabilityRef?
 status
 cooldown/dedupe policy
 expiresAt?
-timestamps
 ```
 
-C6 libera `OBSERVE|ADVISE|PREPARE`; `ACT` permanece C7.
+C6: OBSERVE/ADVISE/PREPARE. ACT: C7 only.
 
-## 24. AutomationCapability / Executor mapping — candidate state
+## 14. Durable Workflow / Decision state
 
-C0/C5 decidem schema final. Conceitualmente:
+Workflow is single durable orchestration runtime for internal/external/automation/tool/agent actions.
+
+```text
+stepId
+workflowId
+capabilityRef
+dependsOn[]
+status
+attemptCount
+idempotencyKey?
+connectionRef?
+executorRef?
+agentRef?
+resultRef/errorCode
+decisionRef?
+```
+
+Decision stores action/arguments hash/impact/evidence/risk/actor/approver/policy/version, never private chain-of-thought.
+
+Material semantic/model/policy changes may invalidate an old Decision.
+
+## 15. Automation Capability / Executor state
+
+Candidate mapping:
 
 ```text
 automationId
@@ -390,27 +323,21 @@ timeoutPolicyRef
 retryPolicyRef
 idempotencyPolicyRef
 status
-createdAt/updatedAt
 ```
 
-Planner recebe capability/schema e não detalhes de UI.
+Planner gets capability/schema, not click/selector mechanics.
 
-Se a mesma capability muda de RPA para API, application/planner não deve mudar por causa disso.
-
-## 25. AutomationExecution state
-
-Candidate Copilot-owned state quando execution correlation/lifecycle pertencer ao Copilot/Hub:
+## 16. AutomationExecution
 
 ```text
 executionId
 correlationContext
 capabilityRef
-executorRef
-executorVersion
+executorRef/version
 workflowStepRef?
 triggerEventRef?
 actorRef
-status
+status: QUEUED|RUNNING|SUCCEEDED|FAILED|AMBIGUOUS|CANCELLED|TIMED_OUT
 queuedAt?
 startedAt?
 endedAt?
@@ -422,68 +349,23 @@ errorCode?
 outcomeVerificationRef?
 ```
 
-Lifecycle:
+`SUCCEEDED` técnico não implica verified business Outcome.
 
-```text
-QUEUED
-→ RUNNING
-→ SUCCEEDED | FAILED | AMBIGUOUS | CANCELLED | TIMED_OUT
-```
-
-`SUCCEEDED` técnico não significa automaticamente business Outcome verificado.
-
-## 26. RPA worker/queue state
-
-Somente se RPA for priorizado e Copilot/Hub for owner apropriado.
-
-Worker ref:
+RPA worker/queue state existe somente se RPA for priorizado/owned:
 
 ```text
 workerRef
-workerClass/capabilities
+class/capabilities
 environment
-status ONLINE|BUSY|OFFLINE|DRAINING
-lastHeartbeatAt
-currentExecutionRef?
-package/runtime versions bounded
+status
+heartbeat
+lease/currentExecutionRef
+package/runtime versions
 ```
 
-Queue/execution state pode carregar:
+Credential nunca entra no state comum.
 
-```text
-priority
-lease/lock owner
-leaseExpiresAt
-attempt
-notBeforeAt?
-```
-
-Nunca armazenar worker password/token em state comum.
-
-Desktop/session IDs são infrastructure refs e não business user identity.
-
-## 27. Executor artifacts
-
-RPA/computer-use podem gerar logs/screenshots/files. Persistir somente quando audit/support/evidence justificar.
-
-Artifact metadata:
-
-```text
-artifactRef
-executionRef
-kind
-classification
-retentionClass
-storageRef
-hash/version
-createdAt
-```
-
-Aplicar redaction para PII/secrets e não tornar screenshot de desktop compartilhado automaticamente visível a todos.
-
-## 28. Outcome verification state
-
-Quando ação material exige postcondition:
+## 17. Outcome verification
 
 ```text
 verificationRef
@@ -491,151 +373,403 @@ executionRef
 authoritativeSourceRef
 expectedPostconditionRef
 observedOutcomeRef
-status VERIFIED_SUCCESS|VERIFIED_FAILURE|PENDING|INCONCLUSIVE
+status: VERIFIED_SUCCESS|VERIFIED_FAILURE|PENDING|INCONCLUSIVE
 verifiedAt?
 ```
 
-Exemplos:
+Notification success não altera Outcome.
+
+## 18. Process Intelligence state
+
+Preferir event-log projections e refs em vez de copiar todos os sistemas.
+
+Candidate event row/materialization:
 
 ```text
-RPA clicked Save
-!= VERIFIED_SUCCESS
-
-API returned accepted
-!= final business completion when owner is async
+processRef
+caseRef/businessKey
+activity
+occurredAt
+sourceRef
+entityRefs[]
+actorRef? only when necessary
+outcome/status?
+correlationRef?
 ```
 
-## 29. Decision path metadata
-
-Não persistir CoT. Pode persistir bounded operational metadata:
+Candidate `ProcessTraceRef` somente se necessário:
 
 ```text
-decisionPath: FAST|OPERATIONAL|REASONING
-policyVersion
-model/configRef? only when used
-input evidence refs
-result/decision ref
-latency/cost bounded
+traceRef
+processRef
+caseRef
+sourceSet/version
+firstEventAt
+lastEventAt
+completeness/freshness metadata
 ```
 
-Isso permite observability sem expor raciocínio privado.
+Process model/variant/conformance outputs são derived artifacts/projections, com Evidence/version, nunca employee score.
 
-## 30. Autonomy policy state
+## 19. Analysis Sandbox state
 
-Autonomia não é campo global do Copilot. Candidate configuration:
+Sandbox session é preferencialmente efêmera.
+
+Persistir metadata quando audit/reproducibility exigir:
 
 ```text
-capabilityRef
-scope/entity constraints
-actor/service constraints
-allowedLevel
-financial/material limits?
-environment constraints
-rate/budget limits
-requiredGate
-killSwitchRef
-policyVersion
+analysisRunId
+ownerRef
+inputSourceRefs[]
+runtimeImage/version
+code/notebook hash or bounded sourceRef
+parameters
+startedAt/endedAt
 status
+outputArtifactRefs[]
+resource/budget metadata
+retentionClass
 ```
 
-L5 default = disabled.
+No secret/host credential in analysis state.
 
-## 31. Notification/escalation state
+## 20. Artifact Workspace state
 
-Notificação referencia Event/Outcome/Task/Case/Workflow sem duplicar business truth.
-
-Candidate metadata:
+Candidate `ArtifactRef`:
 
 ```text
-notificationRef
-sourceOutcome/eventRef
-recipientRefs[]
-channelRefs[]
-severity
+artifactId
+artifactType
+version
+ownerRef
+status: DRAFT|REVIEWED|APPROVED|PUBLISHED|SUPERSEDED|ARCHIVED
+sourceRefs[]
+evidenceRefs[]
+analysisRunRef?
+storageRef
+hash
+createdByRef
+createdAt/updatedAt
+sensitivity
+retentionClass
+```
+
+Human edit/version history remains distinct from AI regeneration.
+
+## 21. Prediction / Prescription state
+
+Candidate `PredictionRef`:
+
+```text
+predictionId
+modelRef/version
+subjectEntityRefs[]
+target
+horizon
+value/probability
+confidence/calibration metadata
+inputSourceRefs[]
+createdAt
+validUntil?
+limitations[]
+```
+
+Prediction != FACT.
+
+Prescriptive artifact/decision candidate stores objectives/constraints/candidate scenarios/trade-offs/assumptions/Evidence; does not imply authorization.
+
+## 22. Operational Twin / Scenario state
+
+Twin is a projection, not master.
+
+Candidate `ScenarioRef`:
+
+```text
+scenarioId
+baseStateRefs[]
+baseObservedAt
+variables/overrides bounded
+assumptions[]
+model/solver refs
+createdByRef
+createdAt
 status
-dedupeKey
-sentAt?
-acknowledgedAt?
-escalationRef?
+resultArtifactRefs[]
 ```
 
-Notification success não altera Outcome do processo.
-
-## 32. Organizational Knowledge
-
-External/process/execution source pode produzir candidate knowledge, nunca corporate truth automática.
-
-Execution history:
+Invariant:
 
 ```text
-Event + Context + Decision + Action + Outcome
-→ Evidence
-→ candidate pattern/optimization
-→ review/eval
-→ publish
+SIMULATED_STATE != PRODUCTION_STATE
 ```
 
-## 33. Idempotência/concurrency
+Apply starts a new live action context; scenario state cannot be reused as write authority.
 
-Business/external/RPA writes precisam proteger replay/resume/ambiguous outcome.
+## 23. MCP/A2A interoperability state
 
-- duplicate event must not duplicate execution;
-- workflow resume must not duplicate material effect;
-- ambiguous executor timeout requires verification before retry when possible;
+Candidate server/agent registry projection:
+
+```text
+integrationRef
+type: MCP_SERVER|A2A_AGENT|OTHER_APPROVED_TOOL_PROVIDER
+provider/endpoint ref bounded
+ownerRef
+approvedCapabilities[]
+riskTier
+dataDomains[]
+allowedCallers/scopes
+status: DISCOVERED|REVIEWED|APPROVED|ACTIVE|DEGRADED|DISABLED|REVOKED|DEPRECATED
+protocol/version
+policyRef
+lastValidatedAt?
+```
+
+No broad credential in registry.
+
+Delegated task metadata:
+
+```text
+taskRef
+goal bounded
+inputRefs[]
+allowedCapabilityScope
+expectedResultSchemaRef
+budget/deadline
+status
+resultRefs[]
+```
+
+No hidden CoT/conversation dump.
+
+## 24. AI Control Tower / AI Asset Registry state
+
+Candidate `AIAssetRef` projection:
+
+```text
+assetId
+assetType
+name/version
+ownerRef
+status
+riskTier
+capabilityRefs[]
+dataDomain/scope refs
+runtime/deployment refs
+policyRef
+model/provider refs?
+evalStatus/ref
+cost/budget metadata?
+dependencies[]
+killSwitchRef?
+lastValidatedAt
+```
+
+Control Tower projection never grants business permission.
+
+Incident state may reference asset/evidence/impact/containment/owner/resolution without secrets/CoT.
+
+## 25. Model lifecycle state
+
+Candidate `ModelRef`:
+
+```text
+modelId
+version
+family
+providerRef?
+ownerRef
+purpose
+approvedDataClasses[]
+evalSuiteRef/status
+riskTier
+status: DRAFT|EXPERIMENT|EVALUATED|APPROVED|DEPLOYED|DEGRADED|DEPRECATED|REVOKED|RETIRED
+runtime/deploymentRefs[]
+latency/cost profile refs?
+rollbackRef?
+```
+
+Dataset refs, if DELPI-owned, preserve provenance/licensing/privacy/version. Never persist training secrets in registry.
+
+## 26. Capability Marketplace state
+
+Candidate package/asset metadata:
+
+```text
+assetId/version/type
+publisher/ownerRef
+status: DRAFT|REVIEW|APPROVED|PUBLISHED|DEPRECATED|REVOKED
+requiredCapabilities[]
+requiredPermissions/scopes declarative only
+configSchemaRef
+dependencies[]
+compatibility
+riskTier
+eval/test refs
+packageHash/signatureRef?
+releaseNotesRef?
+```
+
+Declared permissions/scopes are requirements, not grants.
+
+## 27. Edge / Offline state
+
+Candidate `EdgeDeviceRef`:
+
+```text
+deviceRef
+class/location
+ownerRef
+runtime/os/hardware capabilities bounded
+networkZone
+allowedCapabilityRefs[]
+status/health
+lastSeenAt
+package/model versions
+lastSyncAt?
+```
+
+Offline cache item:
+
+```text
+sourceRef
+version/revision
+syncedAt
+validUntil?
+retention
+hash/signature?
+```
+
+Buffered event:
+
+```text
+localEventId
+occurredAt
+dedupe/idempotency key
+payloadRef bounded
+syncStatus
+```
+
+Offline mode must not widen authority.
+
+## 28. Retention classes
+
+At minimum distinguish:
+
+```text
+TRANSIENT_MEDIA
+RAW_AUDIO/RAW_VIDEO/SCREEN_CAPTURE
+DERIVED_EVIDENCE
+BIOMETRIC_ENROLLMENT_MEDIA/BIOMETRIC_TEMPLATE/IDENTITY_CANDIDATE
+PERSON_OBSERVATION
+WEB_RESEARCH_TRANSIENT/WEB_RESEARCH_EVIDENCE
+EXTERNAL_RESOURCE_CACHE/EXTERNAL_MESSAGE_OR_FILE_EVIDENCE
+EXTERNAL_CONNECTION_METADATA/EXTERNAL_SUBSCRIPTION_STATE
+PERSONAL_MEMORY
+PROCESS_EVENT_PROJECTION
+PROCESS_MODEL_DERIVED
+AUTOMATION_EXECUTION_METADATA/AUTOMATION_ARTIFACT/RPA_SCREENSHOT
+ANALYSIS_RUN_METADATA/ANALYSIS_TEMP_FILE
+ARTIFACT_WORKSPACE_CONTENT
+PREDICTION_OUTPUT/SCENARIO_STATE
+AI_ASSET_METADATA/MODEL_METADATA/EVAL_ARTIFACT
+EDGE_CACHE/EDGE_BUFFERED_EVENT
+MEETING_ARTIFACT/FRONTLINE_RECORD
+```
+
+Cada classe define purpose/access/retention/redaction/encryption/delete/export/revoke/anonymize.
+
+## 29. Cache/materialization rules
+
+Derived cache/materialization always carries:
+
+```text
+source refs
+source version/freshness
+created/materializedAt
+scope/user/connection/domain boundaries
+TTL/invalidation policy
+schema/version
+```
+
+Cache/materialization never becomes permission or business authority.
+
+## 30. Idempotency / concurrency
+
+- duplicate event must not duplicate action;
+- Workflow resume must not duplicate side effect;
+- ambiguous write verified before retry when possible;
 - queue lease prevents double worker pickup;
-- idempotency keys align with domain/provider/executor capabilities.
+- external provider/RPA/domain idempotency differences modeled explicitly;
+- offline Edge sync deduplicates/reconciles;
+- A2A delegated write protects duplicate task/result handling.
 
-## 34. Shared-device / worker isolation
+## 31. Shared-device / Edge / worker isolation
 
-Troca de usuário limpa auth/context/media/external state. RPA worker/session não pode reutilizar state/credential de execução anterior fora de policy.
+- user switch clears personal/context/media/external/memory projections;
+- RPA worker/session cannot leak prior execution credentials/data;
+- Edge device local state follows user/device scope;
+- offline cache for one user/domain cannot leak to unauthorized user.
 
-## 35. OT/machine state
-
-Machine truth permanece owner OT/domain. Automation Hub não é caminho alternativo para arbitrary physical actuation.
-
-## 36. Migration strategy
-
-Copilot migrations independentes:
+## 32. Migration strategy
 
 ```text
 EXPAND → compatible readers → writers → optional backfill → CUTOVER → CLEANUP
 ```
 
-Executor/provider swaps usam adapters/versioned contracts, sem reescrever Domain/Application.
+Provider/executor/model swaps use adapters/versioned refs.
 
-RPA→API migration deve preferir alterar mapping `capabilityRef → executorRef`, preservando planner/workflow contracts.
+RPA→API migration should change capability mapping rather than planner/business logic.
 
-## 37. State machines relevantes
+Metric/model/process definition changes are versioned, never silent overwrite.
+
+## 33. State machines relevantes
 
 ```text
 ExternalConnection:
 PENDING_AUTH → ACTIVE → EXPIRED|REAUTH_REQUIRED|REVOKED|DISABLED|ERROR
 
-ExternalSubscription:
-CREATING → ACTIVE → RENEWING → ACTIVE|EXPIRED|REAUTH_REQUIRED|DISABLED|ERROR
-
 AutomationExecution:
 QUEUED → RUNNING → SUCCEEDED|FAILED|AMBIGUOUS|CANCELLED|TIMED_OUT
 
-Worker:
-ONLINE ↔ BUSY → DRAINING|OFFLINE
+MCP/A2A integration:
+DISCOVERED → REVIEWED → APPROVED → ACTIVE → DEGRADED|DISABLED|REVOKED|DEPRECATED
+
+MemoryItem:
+ACTIVE → CORRECTED|EXPIRED|DELETED|DISABLED
+
+MetricDefinition:
+DRAFT → ACTIVE → DEPRECATED|REVOKED
+
+Artifact:
+DRAFT → REVIEWED → APPROVED|PUBLISHED → SUPERSEDED|ARCHIVED
+
+Model:
+DRAFT/EXPERIMENT → EVALUATED → APPROVED → DEPLOYED → DEGRADED|DEPRECATED|REVOKED|RETIRED
+
+Marketplace Asset:
+DRAFT → REVIEW → APPROVED → PUBLISHED → DEPRECATED|REVOKED
 ```
 
-Só persistir state machine quando lifecycle real justificar.
+Persistir state machine somente quando lifecycle real justificar.
 
-## 38. Explicitamente proibido
+## 34. Explicitamente proibido
 
-- Chat state/tables como Copilot storage;
-- provider/RPA secret em prompt/log/MFE/SourceRef/Evidence;
-- shadow copy de external systems como master data;
-- cross-user external/worker state leak;
-- personal source auto-promoted;
-- external scope persistido como Core permission;
-- RPA bot/package como business authority;
-- click/selector/coordenada como planner durable state;
-- event payload como permission/autonomy truth;
-- technical executor success armazenado como business success sem required verification;
-- global `autonomyLevel=L5` irrestrito;
-- hidden computer-use session without audit/control;
-- biometric/employee surveillance dataset por default;
-- free-form machine-control state como Copilot authority.
+- Chat tables/runtime as Copilot storage;
+- shadow Core user/RBAC/domain database;
+- provider/RPA/model/tool secret in prompt/log/MFE/Evidence;
+- personal memory/source auto-shared to organization;
+- memory as live business truth or permission;
+- employee-surveillance dataset from Process Mining/Task Mining;
+- semantic metric without owner/version for material use;
+- sandbox storing broad DB/host credentials;
+- analysis cache as authoritative business state;
+- prediction stored as FACT;
+- scenario/twin state used directly as production write truth;
+- MCP/A2A registry entry as automatic trust;
+- marketplace requested permission as granted permission;
+- revoked model/server/package still selectable;
+- Edge offline mode as permission expansion;
+- RPA bot/package as business-rule authority;
+- technical executor success as business success without required verification;
+- global unrestricted `autonomyLevel=L5`;
+- free-form machine-control state as Copilot authority.
