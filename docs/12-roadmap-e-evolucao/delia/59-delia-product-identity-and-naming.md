@@ -52,19 +52,22 @@ DELPI Copilot
 Copilot DELPI
 ```
 
-“Copilot” pode continuar aparecendo em documentação histórica/arquitetural durante a transição, mas não é a marca final do produto.
+“Copilot” pode continuar aparecendo somente quando identificar namespace técnico temporário, referência histórica ou contexto explícito de migração. Não é a marca final do produto.
 
 ## 4. Convenção técnica temporária
 
-Os namespaces/pastas/serviços técnicos existentes no planejamento permanecem, por ora:
+O namespace documental já foi corrigido no repositório e é:
+
+```text
+docs/12-roadmap-e-evolucao/delia
+```
+
+Os namespaces de runtime ainda existentes no planejamento permanecem temporários até `C0 FOUNDATION_FREEZE`:
 
 ```text
 minha-delpi-copilot-api
 plugins/minha-delpi-copilot
-docs/.../minha-delpi-copilot
 ```
-
-Motivo: não executar rename físico prematuro antes de `C0 FOUNDATION_FREEZE`.
 
 Em C0.S1 devem ser avaliados os nomes técnicos finais, incluindo possibilidade de:
 
@@ -82,8 +85,11 @@ Até essa decisão:
 ```text
 DISPLAY_NAME = DÉLIA
 PRODUCT_NAME = DÉLIA
-TECHNICAL_CODENAME/NAMESPACE = minha-delpi-copilot (temporary planned namespace)
+DOCUMENTATION_NAMESPACE = delia
+TECHNICAL_CODENAME/NAMESPACE = minha-delpi-copilot (temporary planned runtime namespace)
 ```
+
+A renomeação física da pasta documental já ocorreu antes do `C0 FOUNDATION_FREEZE`; isso invalida a premissa anterior de manter `docs/.../minha-delpi-copilot` até C0. O estado canônico deste documento passa a refletir o HEAD atual, sem antecipar rename dos namespaces técnicos de API/MFE.
 
 ## 5. Persona
 
@@ -189,6 +195,6 @@ Esta documentação congela a decisão de produto interna; não constitui parece
 
 Novos documentos devem usar **DÉLIA** no título e no texto user-facing.
 
-Documentos antigos podem manter nomes técnicos históricos somente quando necessários para paths/contracts ou contexto de migração documental.
+Documentos antigos podem manter “Copilot” somente quando necessário para paths/contracts técnicos temporários, referência histórica ou contexto explícito de migração.
 
-Quando C0 congelar os nomes técnicos, executar uma atualização documental final para remover referências residuais de “Copilot” que não forem semanticamente necessárias.
+Durante o refinamento documental, referências residuais que usem “Copilot” como nome de produto devem ser corrigidas para **DÉLIA**. Em C0.S1, após a decisão dos namespaces técnicos finais, executar a limpeza residual de paths/contracts conforme o rename aprovado.
