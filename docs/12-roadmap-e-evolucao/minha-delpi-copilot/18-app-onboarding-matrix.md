@@ -1,26 +1,26 @@
-# Minha DELPI Copilot — Matriz de Onboarding dos Apps
+# Minha DELPI Copilot — Matriz de Onboarding dos Apps e Domínios
 
 **Status:** inventário inicial / `TO_INVENTORY`  
 **Owner factual:** C0.S0 + future readiness scanner  
 **Regra:** nenhum campo sem evidence vira comprovado por suposição.  
-**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
+**Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
 
 ## 1. Objetivo
 
-Mapear como o **novo Copilot standalone** descobre e integra apps/APIs existentes sem hardcode central e sem depender do Minha DELPI Chat.
+Mapear como o Copilot standalone descobre e integra apps/APIs/domínios sem hardcode central e sem depender do Chat, preservando readiness de negócio e dimensões complementares de contexto, eventos, processo, semântica, artifacts, predictive e Frontline/Edge.
 
-O onboarding de negócio e a prontidão Frontline/media são dimensões relacionadas, mas diferentes: um app pode estar `READ_READY` sem possuir qualquer suporte a device/câmera/voz.
-
-## 2. Níveis AI-ready
+## 2. Níveis AI-ready de negócio
 
 | Nível | Nome | Critério mínimo |
 |---|---|---|
 | L0 | NOT_INVENTORIED | não auditado |
 | L1 | DISCOVERABLE | app/rotas/permissions discoverable |
 | L2 | CONTEXT_READY | EntityRef/deep link + WorkspaceContext quando material |
-| L3 | READ_READY | business reads via Domain API/OpenAPI + RBAC + evidence |
-| L4 | WRITE_READY | writes + Decision Gate + idempotency/audit |
-| L5 | WORKFLOW_READY | safe durable workflow/events when required |
+| L3 | READ_READY | business reads via Domain API/OpenAPI + RBAC + Evidence |
+| L4 | WRITE_READY | writes + Decision Gate + idempotency/audit/Outcome |
+| L5 | WORKFLOW_READY | safe Durable Workflow/events when required |
+
+Esses níveis **não são níveis de autonomia**.
 
 ## 3. Iframe class
 
@@ -31,273 +31,220 @@ I2 INTERACTIVE
 I3 AI_READY
 ```
 
-I3 exige Business Actions por API/OpenAPI.
+I3 exige Business Actions reais por API/use case; visual bridge não substitui domínio.
 
-## 4. Frontline/media readiness — dimensão complementar
+## 4. Readiness dimensions ortogonais
 
-Não alterar L1–L5 para representar hardware/modalidade.
-
-Quando um app/domínio tiver relevância para chão de fábrica, C0 pode registrar separadamente:
+Além de L1–L5, registrar apenas quando aplicável:
 
 ```text
-F0 NOT_APPLICABLE_OR_NOT_INVENTORIED
-F1 OPERATIONAL_CONTEXT_READY
-F2 DEVICE_UI_READY
-F3 MEDIA_ASSIST_READY
-F4 FRONTLINE_WORKFLOW_READY
+EVENT_READY
+PROCESS_INTELLIGENCE_READY
+SEMANTIC_READY
+ARTIFACT_READY
+PREDICTIVE_READY
+FRONTLINE_READY
+EDGE_READY
 ```
 
-Critérios conceituais:
+Não criar uma escala numérica universal para todas essas dimensões.
 
-- `F1`: IDs/owners para OP/máquina/produto/operação/posto + WorkspaceContext/EntityRef;
-- `F2`: UX/device/browser/shared-session constraints conhecidas;
-- `F3`: voz/câmera/media permitidos por policy/device + Evidence provenance;
-- `F4`: escalation/action/workflow governados + training/procedure sources.
+### EVENT_READY
 
-Esses níveis só recebem estado real após evidence. Até lá: `TO_INVENTORY`.
+- owner/event schema/version;
+- eventId/dedupe/replay;
+- entity/case refs;
+- occurredAt/freshness;
+- authenticity/security;
+- bounded payload/ref.
 
-## 5. Campos obrigatórios por app/domain
+### PROCESS_INTELLIGENCE_READY
 
-C0 deve registrar:
+- process/case business key;
+- activity/timestamp/status semantics;
+- process owner;
+- historical completeness;
+- event provenance;
+- privacy boundary for actor/task data.
+
+### SEMANTIC_READY
+
+- governed metrics/concepts;
+- owner/formula/grain/dimensions/unit;
+- source/freshness;
+- version/security classification;
+- conflicts explicit.
+
+### ARTIFACT_READY
+
+- structured read/export refs;
+- source provenance;
+- attach/download/upload contracts;
+- ACL/version/retention when relevant.
+
+### PREDICTIVE_READY
+
+- approved model/use case;
+- target/horizon;
+- source/features lineage;
+- ground truth/eval;
+- model/version/freshness/limitations;
+- owner/rollback.
+
+### FRONTLINE_READY / EDGE_READY
+
+Frontline context/device/media/workflow readiness and, separately, Edge/network/cache/package/offline readiness. Edge readiness never implies OT actuation authority.
+
+## 5. Fields mínimos por app/domain
 
 ```text
 appId/name
-manifest path/version
-renderMode/MFE path
-backend/domain API owner
-Core registration
-routes/permissions
-canonical entity IDs
-entity deep links
-WorkspaceContext support
-OpenAPI location/version/quality
+manifest/version/render mode
+backend/domain owner
+Core registration/routes/permissions
+canonical entity IDs/deep links
+WorkspaceContext
+OpenAPI source/version/quality
 business reads/writes
 risk/sensitivity owner
-Decision Gate readiness
+Decision/Autonomy inputs
 idempotency/concurrency
-outcome/evidence/freshness
-events/workflow relevance
-iframe class/origin/SSO/bridge if applicable
-knowledge/help sources
+authoritative Outcome/postcondition source
+Evidence/freshness
 owner/team
-candidate wave
+wave candidate
 blockers
 evidence paths/hashes/timestamp
 ```
 
-Quando Frontline/media for aplicável, adicionar sem inventar:
+Optional dimensions, only with evidence:
 
 ```text
-operational entity types/IDs
-productionOrder/operation/machine/workstation source owners
-procedure/work-instruction source
-revision/freshness source
-training/qualification owner
-shared-device pattern
-browser/device capabilities
-mic/camera/media relevance
-media/consent/retention owner
-network constraints
-OT telemetry relevance
-industrial safety owner
-frontline readiness class
+event sources
+process case/activity semantics
+governed metrics/glossary
+analysis/export/artifact contracts
+predictive models/evals
+frontline operational entity refs
+procedure/revision/training sources
+device/shared-session/media
+Edge/offline/network constraints
+OT telemetry/safety owner
 ```
 
-Além disso:
+And always:
 
 ```text
-COPILOT_INTEGRATION = API_CONTRACT | PLATFORM_CONTEXT | IFRAME_BRIDGE | NONE
+COPILOT_INTEGRATION = API_CONTRACT | PLATFORM_CONTEXT | IFRAME_BRIDGE | GOVERNED_LEGACY_EXECUTOR | NONE
 CHAT_DEPENDENCY_FOR_COPILOT = MUST_BE_NONE
 ```
 
-## 6. Inventário inicial — candidatos
+`GOVERNED_LEGACY_EXECUTOR` is a gap/fallback path, not equivalent to API-ready L4.
 
-A lista é ponto de partida, não prova.
+## 6. Candidate inventory
 
-| Área/app | Referência | Nível | Frontline | Wave candidata | Estado |
-|---|---|---:|---|---|---|
-| Minha DELPI Chat | sistema vizinho/reference-only | N/A | N/A | nenhuma | OUT_OF_SCOPE para onboarding Copilot |
-| Portal Comercial | commercial | L0 | F0 | Wave 1 candidata | TO_INVENTORY |
-| Portal Suprimentos | supplies | L0 | F0 | Wave 1 candidata | TO_INVENTORY |
-| Minhas Solicitações | my-requests | L0 | F0 | Wave 1 candidata | TO_INVENTORY |
-| Portal Engenharia | engineering | L0 | F0 | Wave 2 | TO_INVENTORY |
-| Portal Financeiro | financial | L0 | F0 | Wave 2 | TO_INVENTORY |
-| Production Control | production-control | L0 | F0 | Wave 2 | TO_INVENTORY |
-| Production Pulse | production-pulse | L0 | F0 | Wave 2 | TO_INVENTORY |
-| Apontamento Produção | production-appointments | L0 | F0 | Wave 2 | TO_INVENTORY |
-| Eficiência Fabril | eficiencia-fabril | L0 | F0 | Wave 2 | TO_INVENTORY |
-| Acompanhamento Refugos | scrap-monitoring | L0 | F0 | Wave 2 | TO_INVENTORY |
-| Indicadores Estratégicos | strategic indicators | L0 | F0 | Wave 2 | TO_INVENTORY |
-| Manutenção | maintenance | L0 | F0 | Wave 2 | TO_INVENTORY |
-| Customer Experience | customer-experience | L0 | F0 | Wave 2 | TO_INVENTORY |
-| Planos de Ação Qualidade | quality-action-plans | L0 | F0 | Wave 2 | TO_INVENTORY |
-| Inspeções Entrada | inspecoes-entrada | L0 | F0 | Wave 2 | TO_INVENTORY |
-| Inspeções Processo | inspecoes-processo | L0 | F0 | Wave 3 | TO_INVENTORY |
-| Solicitações Compras | purchase requests | L0 | F0 | Wave 2 | TO_INVENTORY |
-| Controle MP | controle-mp | L0 | F0 | Wave 3 | TO_INVENTORY |
-| Emissão/Lançamento NF | invoice apps | L0 | F0 | Wave 3 | TO_INVENTORY |
-| Despesas Viagem | travel expenses | L0 | F0 | Wave 3 | TO_INVENTORY |
-| CIPA | cipa | L0 | F0 | Wave 3 | TO_INVENTORY |
-| Comitê Ética/Conduta | ethics | L0 | F0 | Wave 3 | TO_INVENTORY |
-| Auditoria 5S | auditoria-5s | L0 | F0 | Wave 3 | TO_INVENTORY |
-| Central Agendamento | central-agendamento | L0 | F0 | Wave 3 | TO_INVENTORY |
-| Delpi Reports | delpi-reports | L0 | F0 | Wave 3 | TO_INVENTORY |
-| TV Dashboard | tv-dashboard | L0 | F0 | Wave 3 | TO_INVENTORY |
-| Transformômetro | transformometro | L0 | F0 | Wave 3 | TO_INVENTORY |
+Existing candidate app list from prior inventories remains **TO_INVENTORY** until C0 reconciles `plugins/`, Core registrations, APIs and operational reality. No listed wave is proof of readiness.
 
-`F0` nesta tabela significa **não inventariado**, não “sem relevância Frontline”.
+Suggested starting areas remain commercial/supplies/my-requests for administrative read pilots and a separate evidence-driven selection for Frontline/process pilots.
 
-C0 deve reconciliar a lista com `plugins/`, Core registrations, APIs reais e realidade operacional.
-
-## 7. API inventory é parte do onboarding
-
-Para cada app/domain mapear também:
+## 7. API inventory per domain
 
 ```text
 API service
-Gateway base path
-OpenAPI source
-JWT/auth model
-permission headers/scopes
-error envelope
-pagination
+Gateway path
+OpenAPI source/hash
+JWT/auth/permission model
+errors/pagination
 entity IDs
-read operations
-write operations
-idempotency support
+read/write operations
+idempotency/postconditions
 events/websockets
 health
 ```
 
-O Copilot integra a API owner diretamente; não passa pelo Chat.
+Copilot integrates API owner directly, never via Chat.
 
-## 8. Operational-context inventory
+## 8. Process/event onboarding
 
-Para domínios industriais, provar relações/IDs reais, por exemplo quando existirem:
-
-```text
-productionOrder
-operation
-machine
-workstation
-product/revision
-lot
-material
-tool
-maintenance event
-quality inspection/nonconformity
-```
-
-Não inventar source system ou relationship apenas porque faz sentido conceitualmente.
-
-## 9. Frontline onboarding rules
-
-Frontline-ready exige mais do que “ter uma API”.
-
-Verificar:
-
-- device/browser disponível;
-- user/shared-session model;
-- context source;
-- procedure/revision source;
-- accessibility/touch/noise;
-- media permissions/policy;
-- offline/degraded behavior;
-- escalation/action contract;
-- training qualification owner;
-- industrial safety boundary.
-
-A falta de câmera/microfone não impede L1–L5 de negócio; apenas limita a experiência Frontline/media.
-
-## 10. Meeting onboarding
-
-Meeting Mode não exige que cada domínio implemente um “meeting endpoint”.
-
-Para responder durante reunião, o domínio precisa apenas das capabilities normais:
+For process-relevant domain, prove:
 
 ```text
-OpenAPI/readiness
-RBAC
-EntityRef/Evidence
-freshness
+processId/owner
+case/business key
+activity/event type
+occurredAt
+status/outcome
+entity refs
+source/audit provenance
+completeness/retention
+actor data necessity/privacy
 ```
 
-A sessão/ata pertence ao Copilot.
+Audit logs that cannot reconstruct case/activity are not automatically Process Mining-ready.
 
-## 11. Wave 1
+## 9. Semantic onboarding
 
-Priorizar apps com:
+For business metrics, prove definition/owner/formula/grain/dimensions/unit/source/freshness/version. Do not let separate UIs expose conflicting unnamed formulas.
 
-- Core registration/permissions estáveis;
-- owner disponível;
-- EntityRef/deep-link claro;
-- OpenAPI real;
-- useful reads;
-- contextual value;
-- lower pilot risk;
-- future governed write path;
-- observability/tests.
+## 10. Predictive/model onboarding
 
-Comercial, Suprimentos e Minhas Solicitações permanecem candidatos até C0.S0.
+Model use is separate from app L1–L5. Record model owner/version/eval/target/horizon/limitations/deployment and source lineage. Prediction never upgrades a domain fact.
 
-**Não assumir** que Wave 1 administrativa deve ser também o primeiro piloto Frontline. O piloto Frontline depende do inventário de produção/device/processo e deve ser selecionado por evidence.
+## 11. Frontline / Edge onboarding
 
-## 12. Readiness evidence
+Frontline checks device/browser/shared-session/context/procedure/revision/accessibility/noise/media/escalation/training/safety.
+
+Edge additionally checks network reliability/MDM/local runtime/storage/cache/version sync/package/model deployment/offline authority and event reconciliation.
+
+## 12. Meeting onboarding
+
+Meeting does not require domain-specific meeting endpoint. Normal authorized reads/actions/Entity/Evidence contracts are enough; meeting session/ata belongs to Copilot.
+
+## 13. Wave selection
+
+Prioritize high-value/low-risk candidates with stable owners/contracts/evidence. Maintain separate rollout decisions for:
+
+```text
+business reads/writes
+process intelligence
+semantic metrics
+predictive models
+frontline
+Edge/offline
+```
+
+Do not force all dimensions into the same pilot.
+
+## 14. Promotion gates
+
+Business:
+
+```text
+L1 → L2 context/entity
+L2 → L3 reads + RBAC + Evidence
+L3 → L4 writes + Decision/idempotency/Outcome
+L4 → L5 Durable Workflow/events where needed
+```
+
+Other dimensions become READY only when their specific contracts/tests from `20` pass; they do not inherit readiness from L5.
+
+## 15. Evidence record
+
+At minimum:
 
 ```text
 gitSha
-manifest path
-Core registration evidence
-route/permission source
-OpenAPI source/hash
-entity/deep-link contract
-WorkspaceContext contract/test
-Decision/idempotency contract
-event source if applicable
-iframe origin/protocol if applicable
-frontline/device/media evidence if applicable
-procedure/revision owner if applicable
-industrial safety owner if applicable
-smoke/eval
+manifest/Core registration/OpenAPI hashes
+permission/Entity/Context evidence
+Decision/idempotency/Outcome contract
+optional event/process/semantic/model/Frontline/Edge evidence
+owner
+smoke/evals
 lastVerifiedAt
 ```
 
 No evidence → `TO_INVENTORY`.
 
-## 13. Promotion
+## 16. Foundation rule
 
-Business:
-
-```text
-L1 → L2: context/entity foundations
-L2 → L3: generic read + RBAC + outcome/evidence
-L3 → L4: write + Decision Gate + idempotency/audit
-L4 → L5: workflow safety + resume/events when required
-```
-
-Iframe:
-
-```text
-I0 → I1 context handshake
-I1 → I2 declared visual commands
-I2 → I3 Business Actions via API/OpenAPI
-```
-
-Frontline:
-
-```text
-F1 → source IDs/context proven
-F2 → device/session/UX proven
-F3 → media/policy/evidence proven
-F4 → governed work/escalation/training proven
-```
-
-Uma promoção Frontline nunca amplia RBAC do app.
-
-## 14. Foundation rule
-
-App onboarding não cria new primitives or product-specific planner branches.
-
-Se um app revelar gap de Entity/Evidence/Decision/Workspace/Event/Media, voltar à foundation/versioned contract antes de implementar.
-
-Nunca criar contexto/action executor separado só para Frontline ou Meeting.
+Onboarding does not create app-specific primitives, planner branches or parallel authorities. If an app reveals a shared-contract gap, return to the versioned foundation/ADR before implementing a local workaround.
