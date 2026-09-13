@@ -2,7 +2,7 @@
 
 Implemente o **Minha DELPI Copilot como aplicação nova e independente**, do zero até o produto completo. Não evolua nem refatore o Minha DELPI Chat para atingir este objetivo.
 
-A visão alvo inclui **escritório, reuniões e chão de fábrica**, com texto, voz, imagem, câmera, vídeo e documentos quando autorizados. Também inclui **identidade biométrica governada** de usuários conhecidos/enrolled e análise objetiva de padrões de processo conforme `54`. Essas capacidades não criam outro runtime nem bypassam RBAC, policy, Evidence, Decision Gate, privacidade ou segurança industrial.
+A visão alvo inclui **escritório, reuniões, chão de fábrica e fontes externas autorizadas**, com texto, voz, imagem, câmera, vídeo e documentos quando autorizados. Também inclui **identidade biométrica governada** de usuários conhecidos/enrolled, análise objetiva de padrões de processo, **Internet Research** e **External Connectors** conforme `54` e `55`. Essas capacidades não criam outro runtime nem bypassam RBAC, policy, Evidence, Decision Gate, privacidade, provider scopes ou segurança industrial.
 
 ## 1. Decisão inegociável
 
@@ -18,7 +18,7 @@ Proibido:
 ```text
 importar runtime do minha-delpi-ai-api
 importar source do plugins/minha-delpi-chat
-usar Chat API como proxy/planner/tool/media/biometric runtime
+usar Chat API como proxy/planner/tool/media/biometric/external runtime
 usar Chat tables/sessions/agents como Copilot authority
 alterar Chat para desbloquear Copilot
 esperar roadmap/Onda J do Chat
@@ -46,6 +46,7 @@ same Core/RBAC
 same policy/Decision Gate
 same Evidence model
 same Durable Work runtime
+same Internet/External Connector governance
 ```
 
 Meeting e Frontline **não** são agentes nem backends separados.
@@ -58,6 +59,16 @@ face/voice sample
 → confidence/policy/correction
 → userRef association
 -X→ authentication/permission grant
+```
+
+Quando fonte externa estiver conectada:
+
+```text
+provider scope
+→ allowed connector capability
+→ read/write separation
+→ policy/Decision when required
+-X→ Core permission elevation
 ```
 
 ## 3. Ordem de leitura
@@ -73,26 +84,27 @@ face/voice sample
 9. `.../49-architecture-and-design-patterns-standard.md`
 10. `.../53-multimodal-meeting-frontline-and-industrial-copilot.md`
 11. `.../54-biometric-identity-and-human-observation-governance.md`
-12. `.../20-testing-and-acceptance-matrix.md` seções aplicáveis
-13. `.../21-data-and-state-model.md` quando houver state/persistence/media/biometric retention
-14. `.../22-cursor-execution-protocol.md`
-15. `.../25-requirements-traceability.md` CPs aplicáveis
-16. `.../evidence/execution-ledger.md`
-17. specs temáticas da etapa.
+12. `.../55-internet-research-and-external-connectors.md`
+13. `.../20-testing-and-acceptance-matrix.md` seções aplicáveis
+14. `.../21-data-and-state-model.md` quando houver state/persistence/media/biometric/external retention
+15. `.../22-cursor-execution-protocol.md`
+16. `.../25-requirements-traceability.md` CPs aplicáveis
+17. `.../evidence/execution-ledger.md`
+18. specs temáticas da etapa.
 
-`16` é a única authority de ordem. `50` é authority do product boundary. `49` é authority de arquitetura/patterns. `53` é a spec temática de media/Meeting/Frontline/industrial safety. `54` governa biometric identity e Human Observation.
+`16` é a única authority de ordem. `50` é authority do product boundary. `49` é authority de arquitetura/patterns. `53` governa media/Meeting/Frontline/industrial safety. `54` governa biometric identity e Human Observation. `55` governa Internet Research, egress, OAuth, external connectors, external actions/events e external learning.
 
 ## 4. Ordem de construção
 
 ```text
-C0 Platform + Architecture + Media/Privacy/Biometric/OT Foundation Freeze
+C0 Platform + Architecture + Media/Privacy/Biometric/External/OT Foundation Freeze
 → C1 Standalone App Bootstrap
 → C2 Portal + Operational Context + Platform Commands
-→ C3 Intelligence Core + Multimodal/Biometric Foundations
-→ C4 Business Reads + Graph
-→ C5 Governed Writes + Durable Foundation
-→ C6 Product Work + Meeting/Frontline + Proactivity + Ecosystem
-→ C7 Advanced Realtime + Autonomy + Optimization + Rollout
+→ C3 Intelligence Core + Multimodal/Biometric/Internet/Connector Foundations
+→ C4 Business + External Reads + Graph
+→ C5 Governed Business/External Writes + Durable Foundation
+→ C6 Product Work + Meeting/Frontline + External Events + Proactivity + Ecosystem
+→ C7 Advanced Realtime + External Proactivity + Autonomy + Optimization + Rollout
 ```
 
 ## 5. Primeira ação — C0.S0
@@ -135,6 +147,11 @@ Inventarie com paths/symbols/contracts/evidence:
 - SSE/WebSocket/WebRTC/realtime proxy patterns;
 - object/media storage;
 - encrypted sensitive storage/key-management patterns;
+- outbound HTTP/proxy/DNS/egress patterns;
+- safe-fetch/SSRF/private-network/metadata protection patterns;
+- OAuth callback patterns;
+- webhook ingress/signature validation patterns;
+- secret/vault owner;
 - factory-network constraints quando documentadas.
 
 ### MFEs
@@ -145,7 +162,8 @@ Inventarie com paths/symbols/contracts/evidence:
 - auth/API clients;
 - context/deep links;
 - responsive/touch/accessibility patterns;
-- mic/camera/file/media usage existente.
+- mic/camera/file/media usage existente;
+- external connections/settings UX, se existir.
 
 ### APIs
 - existing APIs and OpenAPIs;
@@ -185,6 +203,24 @@ Inventarie com paths/symbols/contracts/evidence:
 - prohibited person-inference classes.
 
 Não assumir que fotos/avatares existentes podem ser usados para enrollment biométrico sem owner/purpose/policy explícitos.
+
+### Internet/External Connectors
+- search/web research providers existentes;
+- safe fetch/browser automation infra, se existir;
+- Microsoft Graph app registrations/integrations;
+- Google Workspace/Gmail app registrations/integrations;
+- WhatsApp Business integrations;
+- Slack/GitHub/other external connectors;
+- OAuth delegated/application/service auth patterns;
+- state/nonce/PKCE/callback validation patterns quando aplicáveis;
+- provider token storage/rotation/revocation;
+- user-delegated vs org-managed/shared/service ownership;
+- provider webhook/subscription/push lifecycle;
+- scheduler/reconciliation/full-sync fallback;
+- attachment download/malware scanning;
+- provider terms/compliance/data-classification owners.
+
+Não assuma que uma conexão ou token existente pode ser reutilizado pelo Copilot. Não assuma que uma conta pessoal pode ser lida organizacionalmente.
 
 ### Industrial/OT — inventário somente
 - machine/PLC/CNC/robot/SCADA/MES interfaces;
@@ -231,6 +267,12 @@ INTEGRATION_CONTRACTS=PASS
 MEDIA_PRIVACY_BOUNDARIES=PASS
 BIOMETRIC_IDENTITY_BOUNDARY=PASS
 HUMAN_OBSERVATION_BOUNDARY=PASS
+EXTERNAL_EGRESS_BOUNDARY=PASS
+OAUTH_CONNECTION_BOUNDARY=PASS
+PROVIDER_SECRET_BOUNDARY=PASS
+EXTERNAL_SOURCE_PRIVACY_BOUNDARY=PASS
+EXTERNAL_EVENT_BOUNDARY=PASS
+EXTERNAL_LEARNING_BOUNDARY=PASS
 SHARED_DEVICE_BOUNDARY=PASS
 OPERATIONAL_CONTEXT_BOUNDARY=PASS
 OT_SAFETY_BOUNDARY=PASS
@@ -261,7 +303,7 @@ plugins/minha-delpi-copilot/
   src/adapters
 ```
 
-Meeting/Frontline/Biometric belong to these owners. Never create source inside Chat folders or separate product APIs merely because the surface/capability is different.
+Meeting/Frontline/Biometric/Internet/Connectors belong to these owners. Never create source inside Chat folders or separate product APIs merely because a capability/provider is different.
 
 ## 8. Architecture rules
 
@@ -276,7 +318,7 @@ Clean Architecture
 
 External dependencies are adapters. Concrete wiring happens in Composition Root. Durable state is backend-owned.
 
-Media/biometric providers, transport and storage also sit behind justified ports/adapters. Before creating interface/port/repository/factory/strategy/registry/base class/media service/biometric service/realtime gateway, pass the Abstraction Gate in `49`.
+Media/biometric/search/web/provider/secret/connector dependencies sit behind justified ports/adapters. Before creating interface/port/repository/factory/strategy/registry/base class/media service/biometric service/connector framework/web fetcher/realtime gateway, pass the Abstraction Gate in `49`.
 
 ## 9. Portal integration
 
@@ -308,14 +350,15 @@ same Copilot MFE/API
 → same auth/policy/state contracts
 ```
 
-Portal must not contain planner, prompts, RAG, media/biometric intelligence, business action routing or Copilot persistence.
+External connections/settings stay in the same product/MFE. Portal must not contain planner, prompts, RAG, media/biometric/search/connector intelligence, business action routing or Copilot persistence.
 
-## 10. Auth/RBAC e biometria
+## 10. Auth/RBAC, biometria e external scopes
 
 ```text
 Keycloak → identity/JWT
 Core API → platform permissions/apps/routes
 Domain API → final business authorization/rules
+External Provider OAuth/API → connection-specific scopes
 Copilot → cannot elevate any of them
 ```
 
@@ -328,27 +371,32 @@ device identity != user identity
 biometric candidate != authenticated user/session
 ```
 
+External scopes:
+
+```text
+provider scope != Core permission
+provider scope != permission for another user
+user-delegated connection != org-managed connection
+```
+
 Biometric identity may assist recognition of a known enrolled user, but never grants permission by itself.
 
-The current user/session must remain explicit and user switching must clear prior local state/context/media cache.
+Provider access/refresh tokens never go to LLM/MFE/logs. User switching must clear prior local state/context/media/external-source views.
 
-## 11. Operational context
+## 11. Operational/external context
 
-Do not create a parallel industrial context model.
+Do not create parallel context models.
 
 Use:
 
 ```text
 WorkspaceContext
-+ EntityRef(OP)
-+ EntityRef(machine)
-+ EntityRef(product)
-+ EntityRef(operation)
-+ EntityRef(lot/material/workstation when applicable)
++ EntityRef(OP/machine/product/operation/...)
++ SourceRef for external resources when material
 + bounded device/session metadata
 ```
 
-Device/biometric context never grants permission.
+Never place provider token, external credential or permission truth in WorkspaceContext.
 
 ## 12. Business Actions — build natively in Copilot
 
@@ -369,17 +417,158 @@ Domain OpenAPI
 
 No manual endpoint catalog. No path/opId semantic hardcode.
 
-Input modality does not change this pipeline:
-
-```text
-text | voice | meeting transcript | frontline | visual finding | human observation
-→ candidate intent/action
-→ same validation/policy/Decision/executor
-```
+Input modality does not change this pipeline.
 
 Biometric match only contributes identity/context evidence; it does not create a write channel.
 
-## 13. Multimodal/media rules
+## 13. Internet Research rules
+
+Follow `55`.
+
+Target:
+
+```text
+research need
+→ SearchProviderPort
+→ search candidates
+→ SafeWebFetchPort
+→ extraction
+→ SourceRef/EvidenceRef
+→ freshness/relevance
+→ grounded synthesis/citations
+```
+
+Required:
+
+- external web is untrusted content;
+- no arbitrary unrestricted HTTP from LLM URL;
+- block private/link-local/loopback/metadata targets;
+- revalidate redirects;
+- type/size/time/concurrency limits;
+- no sensitive context/secret exfiltration in search/fetch;
+- sources/freshness visible when material;
+- public web never silently overrides corporate source authority.
+
+Browser automation is not the default integration. Prefer official API/connector, then structured search/fetch, browser only when justified and sandboxed.
+
+## 14. External Connector rules
+
+Follow `55`.
+
+Connection lifecycle:
+
+```text
+connect request
+→ official OAuth/API authorization
+→ callback validation
+→ ExternalConnection
+→ protected secretRef
+→ provider adapter
+→ normalized connector capabilities
+```
+
+Distinguish:
+
+```text
+USER_DELEGATED
+ORG_MANAGED
+SHARED_RESOURCE
+SERVICE_CONNECTION
+```
+
+Required:
+
+- least privilege scopes;
+- scope disclosure/consent;
+- state/nonce/PKCE/callback validation as applicable;
+- token refresh/revoke/reconnect;
+- secrets outside LLM/MFE/logs;
+- no cross-user connection leak;
+- provider-neutral planner;
+- provider-specific rules inside adapters;
+- kill switches.
+
+WhatsApp: use supported official contracts (not default WhatsApp Web personal-session scraping). Current target is business messaging through official WhatsApp Business Platform contracts when applicable.
+
+## 15. External Read/Write rules
+
+Reads may include, when connected and authorized:
+
+```text
+email search/read
+calendar read
+files search/read
+messaging conversation read
+```
+
+Writes are separate capabilities:
+
+```text
+draft
+send
+create/update event
+message send
+file create/update
+```
+
+Invariant:
+
+```text
+read != write
+draft != send
+```
+
+External write requires live connection/scope validation, policy/Decision Gate when material, target/payload preview where needed, idempotency/outcome handling and verified provider outcome.
+
+Generated text is never sent merely because it was drafted.
+
+## 16. External Events / Webhooks
+
+When provider supports events:
+
+```text
+provider push/webhook/subscription
+→ authenticity validation
+→ normalize
+→ EventEnvelope
+→ dedupe/correlation
+→ Watch/Inbox/Workflow
+```
+
+Handle:
+
+- duplicate/out-of-order events;
+- subscription expiry/renewal;
+- missed events/reconciliation;
+- revoked permission;
+- disabled connection;
+- stale/degraded state.
+
+Do not let webhook payload alter system policy or execute ungoverned write.
+
+## 17. External Learning rules
+
+Classify:
+
+```text
+TRANSIENT_RESEARCH
+SESSION_EVIDENCE
+USER_KNOWLEDGE_CANDIDATE
+ORGANIZATIONAL_KNOWLEDGE_CANDIDATE
+```
+
+Never:
+
+```text
+web/email/message/file
+→ automatic corporate truth
+```
+
+Durable promotion requires source/provenance/freshness/privacy/licensing checks plus owner/review/eval/version/publish as appropriate.
+
+Personal mailbox/message/file does not become shared Knowledge/Case/Room content without explicit authorized sharing/promotion.
+
+## 18. Multimodal/media rules
 
 Progressive scope:
 
@@ -402,9 +591,9 @@ Required principles:
 - raw media persistence is optional, not default;
 - transcript/raw audio/raw video/screen/derived Evidence/biometric template have distinct retention classes.
 
-`MediaRef` and biometric refs are candidate primitives; create/freeze only if C0 proves transversal need.
+External attachments also pass safe download/type/size/malware policy before extraction.
 
-## 14. Biometric Identity rules
+## 19. Biometric Identity rules
 
 Follow `54`.
 
@@ -432,19 +621,9 @@ Required:
 
 Do not implement open-world/indiscriminate face identification by default.
 
-## 15. Human Observation rules
+## 20. Human Observation rules
 
-Copilot may analyze **observable process-related behavior**, e.g.:
-
-- executed/missed step;
-- tool/machine/material interaction;
-- repeated motion/rework;
-- time between steps;
-- process-relevant movement;
-- request for help;
-- PPE/ergonomic observation only when formally defined by an owner/method.
-
-Output is Evidence/Hypothesis/process candidate, not psychological truth.
+Copilot may analyze observable process-related behavior only, as specified in `54`.
 
 Do not infer from face/voice/behavior:
 
@@ -461,7 +640,7 @@ disciplinary propensity
 
 Do not use biometrics/Human Observation as automatic authority for hiring, promotion, punishment, pay, formal performance evaluation, suspension or dismissal.
 
-## 16. Meeting Mode rules
+## 21. Meeting Mode rules
 
 Meeting Mode must be a surface of the same Copilot.
 
@@ -471,7 +650,7 @@ When implemented:
 explicit start/stop
 → mic/transcription/camera/identity-recognition/screen status visible
 → optional governed participant/speaker association
-→ authorized live data queries
+→ authorized live internal/external queries
 → facts/evidence
 → decisions/pending topics
 → candidate actions
@@ -482,45 +661,38 @@ explicit start/stop
 Keep semantics distinct:
 
 ```text
-transcript != summary != biometric candidate != confirmed human decision != candidate action != executed action
+transcript != summary != biometric candidate != external source != confirmed human decision != candidate action != executed action
 ```
 
 A sentence in a meeting never becomes a write merely because the Copilot understood it.
 
-## 17. Frontline rules
+## 22. Frontline rules
 
-Frontline must prioritize operator reality:
-
-- large touch targets;
-- hands-free voice;
-- touch/text fallback;
-- current OP/machine/product/operation context;
-- optional governed biometric identity assistance;
-- drawing/procedure/revision freshness;
-- camera/image assistance;
-- bounded Human Observation of process patterns;
-- safe degradation under network/provider failure;
-- issue/escalation via governed Domain Actions;
-- training assistance without conferring qualification automatically.
+Frontline must prioritize operator reality and preserve the same security/external-source governance. External sources are supplementary, not a replacement for current internal procedure/revision authority.
 
 Observation of operator/process produces **candidate knowledge**, not automatic production behavior or secret worker profile.
 
-## 18. Privacy and people-analysis rules
+## 23. Privacy and people/external-data rules
 
 Default prohibitions:
 
 - hidden mic/camera/screen/identity recognition;
-- raw media or biometric-template retention without explicit purpose/policy;
+- raw media/biometric/external sensitive retention without explicit purpose/policy;
 - open-world/indiscriminate facial recognition;
 - emotion/personality/honesty/character inference from face/voice;
 - sensitive attribute inference;
 - hidden individual productivity/person scoring;
 - automatic employment decisions based on biometric/Human Observation;
-- reusing media/biometric data for an unrelated purpose without governance.
+- unrestricted web fetch/browser access;
+- provider credentials/tokens in prompt/LLM/MFE/logs;
+- cross-user external data leakage;
+- personal-source auto-promotion to organization;
+- implicit external send;
+- reusing external data for unrelated purpose without governance.
 
 Use data minimization by default.
 
-## 19. Industrial/OT safety rule
+## 24. Industrial/OT safety rule
 
 Copilot is not a safety controller.
 
@@ -533,38 +705,17 @@ voice command → direct machine actuation = BLOCK
 Copilot L5 → implicit OT permission = BLOCK
 ```
 
-Any future physical actuation requires a **separate explicitly approved industrial safety gate** with deterministic typed commands, allowlist, machine state/preconditions, industrial owner, independent safety PLC/interlocks, human authorization as required, simulation/test environment, fail-safe/kill switch and audit.
+Any future physical actuation requires a separate explicitly approved industrial safety gate.
 
-Do not wire generic Business Action executor directly to PLC/CNC/robot control.
+## 25. Shared code policy
 
-## 20. Quality/computer vision rule
+Reuse platform-neutral code only when owner is already shared or extraction is justified by real consumers and independent contracts/tests.
 
-Visual finding is normally:
+Never turn Chat into a library. Do not create one universal connector framework before real boundaries/providers justify it.
 
-```text
-Evidence/Hypothesis
-```
+## 26. C1 special rule
 
-not automatically:
-
-```text
-official quality approval/rejection
-```
-
-When official process requires measurement/tolerance/equipment/authorized inspector, use those owners. Only explicitly validated inspection capabilities may make automated quality decisions.
-
-## 21. Shared code policy
-
-Reuse platform-neutral code only when:
-
-- owner is already shared; or
-- extraction to a neutral package is justified by 2+ real consumers and independent contracts/tests.
-
-Never turn `minha-delpi-ai-api` or `minha-delpi-chat` into a library for Copilot.
-
-## 22. C1 special rule
-
-First runtime work is bootstrap, not intelligence/media/biometric feature:
+First runtime work is bootstrap, not intelligence/media/biometric/Internet/connector feature:
 
 ```text
 own API skeleton
@@ -580,15 +731,15 @@ own API skeleton
 → Chat-offline independence test
 ```
 
-LLM/planner/RAG/media/biometric intelligence start only in C3 after corresponding foundation gates.
+LLM/planner/RAG/media/biometric/Internet/connector runtime starts only in later phases after corresponding foundation gates.
 
-## 23. Generic implementation protocol
+## 27. Generic implementation protocol
 
 For one `C*.S*` at a time:
 
 ```text
 REVALIDATE HEAD
-→ READ AUTHORITIES
+→ READ AUTHORITIES INCLUDING 55 WHEN EXTERNAL IS MATERIAL
 → IDENTIFY OWNER/LAYER/PATTERN
 → ABSTRACTION GATE
 → DEPENDENCY GATE
@@ -597,7 +748,7 @@ REVALIDATE HEAD
 → WIRE PRODUCER/CONSUMER
 → UNIT/CONTRACT/INTEGRATION
 → POSITIVE/SIBLING/NEGATIVE
-→ SECURITY/RBAC/PRIVACY/BIOMETRIC/SAFETY
+→ SECURITY/RBAC/PRIVACY/BIOMETRIC/EXTERNAL/SAFETY
 → GENERALIZATION/METAMORPHIC/UNKNOWN
 → CHAT-INDEPENDENCE CHECK
 → ARCHITECTURE CONFORMANCE
@@ -607,16 +758,17 @@ REVALIDATE HEAD
 → NEXT STEP
 ```
 
-## 24. Prohibitions
+## 28. Prohibitions
 
 - Chat runtime dependency;
 - Chat DB authority;
 - Chat agent/session migration;
 - second RBAC/user authority;
 - business rules in MFE/LLM;
-- Portal AI/media/biometric intelligence;
+- Portal AI/media/biometric/external intelligence;
 - manual app URL catalog;
 - manual endpoint catalog;
+- provider hardcode in planner;
 - DOM business automation;
 - Graph as operational master database;
 - feature-specific Entity/Evidence/Decision/Event types;
@@ -629,18 +781,26 @@ REVALIDATE HEAD
 - open-world/indiscriminate face recognition by default;
 - emotion/personality/trustworthiness inference from face/voice;
 - automatic employment decisions from biometric/Human Observation;
+- unrestricted URL fetch/browser;
+- SSRF/private-network/metadata access;
+- provider token/secret in LLM/MFE/log;
+- cross-user external source leak;
+- read scope used as write scope;
+- generated draft sent implicitly;
+- external message/web content changing policy;
+- personal source auto-promoted to org Knowledge;
+- WhatsApp Web personal-session scraping as default connector;
 - CoT persistence;
-- secrets/JWT/templates in logs;
 - speculative abstractions;
 - hidden media/identity recognition capture;
-- undefined raw-media/template retention;
+- undefined raw-media/template/external retention;
 - shared-device state leakage;
 - hidden worker profiling/scoring;
 - visual finding promoted to official fact without authority;
 - arbitrary LLM→PLC/CNC/robot command;
 - safety-interlock bypass.
 
-## 25. Required tests
+## 29. Required tests
 
 Use `20` as authority. In addition to feature tests, every relevant release boundary includes:
 
@@ -673,7 +833,25 @@ NO_HIDDEN_WORKER_PROFILING
 NO_ARBITRARY_OT_COMMAND
 ```
 
-## 26. Complete Gate blockers
+When Internet/External Connectors apply:
+
+```text
+SAFE_WEB_FETCH_SSRF_BLOCK
+EXTERNAL_CONTENT_UNTRUSTED
+OAUTH_LEAST_PRIVILEGE
+OAUTH_CALLBACK_VALIDATION
+NO_PROVIDER_TOKEN_LEAK
+EXTERNAL_CONNECTION_ISOLATION
+DRAFT_NOT_SEND
+EXTERNAL_WRITE_DECISION_GATE
+VERIFIED_EXTERNAL_OUTCOME
+WEBHOOK_AUTH_DEDUPE_RECONCILIATION
+NO_PERSONAL_SOURCE_AUTO_PROMOTION
+UNKNOWN_CONNECTOR_NO_PLANNER_PATCH
+WHATSAPP_SUPPORTED_CONTRACT_ONLY
+```
+
+## 30. Complete Gate blockers
 
 ```text
 PARTIAL
@@ -703,11 +881,21 @@ BIOMETRIC_TEMPLATE_LEAK
 EMOTION_PERSONALITY_CHARACTER_INFERENCE
 AUTOMATIC_EMPLOYMENT_DECISION_FROM_BIOMETRICS
 HIDDEN_WORKER_PROFILING
+UNSAFE_WEB_FETCH
+SSRF_PRIVATE_NETWORK_ACCESS
+EXTERNAL_PROMPT_INJECTION_POLICY_CHANGE
+PROVIDER_TOKEN_LEAK
+CROSS_USER_EXTERNAL_DATA_LEAK
+EXTERNAL_WRITE_WITHOUT_GATE
+DRAFT_SENT_IMPLICITLY
+INVALID_WEBHOOK_ACCEPTED
+PERSONAL_SOURCE_AUTO_PROMOTED_TO_ORG_KNOWLEDGE
+UNSUPPORTED_WHATSAPP_SESSION_AUTOMATION
 ARBITRARY_LLM_OT_COMMAND
 SAFETY_INTERLOCK_BYPASS
 ```
 
-## 27. Report format
+## 31. Report format
 
 ```text
 STEP:
@@ -722,12 +910,13 @@ LAYER/PATTERNS:
 PLATFORM_REUSE:
 COPILOT_NEW_CODE:
 CHAT_DEPENDENCIES:
-MEDIA_DEVICE_BIOMETRIC_OT_IMPACT:
+MEDIA_DEVICE_BIOMETRIC_EXTERNAL_OT_IMPACT:
 WIRING_PROOF:
 TESTS:
 SECURITY_RBAC:
 PRIVACY_RETENTION:
 BIOMETRIC_HUMAN_OBSERVATION:
+EXTERNAL_CONNECTIONS_EGRESS:
 INDUSTRIAL_SAFETY:
 GENERALIZATION:
 CHAT_INDEPENDENCE:
@@ -740,7 +929,7 @@ COMMIT:
 PUSH:
 ```
 
-## 28. Start here
+## 32. Start here
 
 Execute only:
 
@@ -748,4 +937,4 @@ Execute only:
 C0.S0
 ```
 
-Do not create the Copilot API/MFE, media/biometric runtime, Meeting Mode or Frontline Mode until C0.S7 `FOUNDATION_FREEZE=PASS`. After the freeze, start C1.S1 with the standalone API skeleton.
+Do not create the Copilot API/MFE, media/biometric/Internet/connector runtime, Meeting Mode or Frontline Mode until C0.S7 `FOUNDATION_FREEZE=PASS`. After the freeze, start C1.S1 with the standalone API skeleton.
