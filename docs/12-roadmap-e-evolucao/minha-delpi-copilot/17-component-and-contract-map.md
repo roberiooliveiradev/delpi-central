@@ -3,56 +3,57 @@
 **Status:** arquitetura canônica de ownership  
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
-**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
-**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)  
-**Microsoft Teams:** [`56-microsoft-teams-connector-and-meeting-integration.md`](./56-microsoft-teams-connector-and-meeting-integration.md)  
-**Autonomous Operations/Execution Hub:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)
+**Patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
+**State:** [`21-data-and-state-model.md`](./21-data-and-state-model.md)  
+**Specs temáticas:** `53–66`
 
 ## 1. Owners canônicos
 
 | Responsabilidade | Authority / owner | Proibido |
 |---|---|---|
-| identidade corporativa | Keycloak + Core integration | biometric/external/worker shadow identity |
-| permissões apps/rotas | Core API/RBAC | permission por prompt/context/provider/event/worker |
-| negócio DELPI | Domain APIs/use cases | duplicar regra no Copilot/RPA |
-| navegação | Portal | URL livre do LLM |
-| Copilot UI | `plugins/minha-delpi-copilot` | usar Chat MFE como base |
-| Copilot runtime/persistence | `minha-delpi-copilot-api` | Chat API/tables/runtime como authority |
-| OpenAPI Business Actions | Domain OpenAPI + Copilot derived catalog | endpoint catalog manual |
-| Workspace Context | Portal/MFE/iframe/device adapters | context como authorization |
-| Evidence/Source/Outcome | Copilot contracts + source authority | feature-specific evidence schema |
-| biometria | Copilot biometric subsystem + Core userRef | biometric match como login/RBAC |
-| industrial safety | OT/safety owner | Copilot/LLM/RPA como safety controller |
-| Internet Research semantics | Copilot API | browser/web provider como policy authority |
-| public search/fetch source truth | source website/provider | Copilot cache como authority |
-| egress/safe fetch controls | approved infra/security owner + Copilot policy enforcement | unrestricted HTTP from LLM |
-| external connection lifecycle | Copilot API | provider token as conversation state |
-| provider authorization/scopes | external provider contract + connection owner | scope treated as Core permission |
-| provider credential material | approved secret/vault owner | token in DB plain field/MFE/log/LLM |
-| external resources | provider account/service | mailbox/Drive/etc. replicated as Copilot master |
-| external connector mapping | provider adapter | provider branch in planner |
-| Teams source/resource truth | Microsoft 365/Teams resource owner | Teams transcript/message as automatic corporate truth |
-| external source privacy/sharing | connection/source owner + security/privacy policy | personal/restricted source auto-shared |
-| external write governance | Copilot Policy/Decision + provider final validation | generated draft auto-sent |
-| provider/domain events | source owner + Copilot event adapter | event payload bypassing policy |
-| Event/Signal correlation semantics | Copilot Watch/Work runtime | new event authority without source owner |
-| Decision Intelligence | Copilot Policy/Application + Domain/source facts | RPA/LLM textual output as sole business authority when deterministic rules exist |
-| Automation Capability mapping | Copilot Automation/Capability projection or neutral platform owner if proven in C0 | clicks/selectors as planner contract |
-| Automation execution lifecycle | Automation & Execution bounded context/owner decided in C0 | second planner/second workflow engine |
-| RPA execution mechanics | RPA adapter/orchestrator/worker owner | RPA bot as business-rule authority |
-| function/script execution | approved executor adapter/owner | unversioned arbitrary code execution |
-| computer-use execution | bounded/sandboxed executor adapter | unrestricted desktop/network access |
-| background actor/service identity | Keycloak/Core/service identity owner + Copilot Policy | worker/device/event identity as permission |
-| outcome verification | Domain/provider/source authority + Copilot verifier orchestration | technical success treated as business completion |
-| autonomy policy | Copilot Policy/Admin | global unrestricted L5 |
-| workflow/task/case/watch | Copilot API | parallel provider/RPA workflow engine |
-| room/collaboration | existing owner if reusable | membership granting source ACL |
-| notifications | Core/Portal/shared channel owner + Copilot orchestration | notification used as proof of successful business outcome |
-| audit/evals | Copilot observability + platform audit | secrets/raw sensitive payload/CoT in logs |
-| external Knowledge promotion | Copilot Knowledge governance + source owner | web/email/message/automation run auto-truth |
+| corporate identity | Keycloak + Core | shadow user via biometric/device/memory |
+| platform permissions/apps/routes | Core API/RBAC | prompt/context/asset granting permission |
+| DELPI business rules/data/actions | Domain APIs/use cases | duplicar em Copilot/RPA/model |
+| navigation/hosting | Portal | free URL/control from LLM |
+| Copilot UI | `plugins/minha-delpi-copilot` | Chat MFE as base |
+| Copilot runtime/persistence | `minha-delpi-copilot-api` | Chat API/tables/runtime authority |
+| Business Action discovery | Domain OpenAPI + Copilot derived Action Catalog | manual endpoint authority |
+| Workspace Context | Portal/MFE/adapters | context as authorization |
+| Evidence/Source/Outcome | Copilot contracts + source authority | feature-specific duplicate truth |
+| Business Graph | Copilot projection + domain source owners | graph as master database |
+| Semantic Business Layer | Copilot semantic registry + metric business owners | LLM-invented KPI formula |
+| Organizational Knowledge | Copilot Knowledge governance + source owners | auto-publish from memory/web/process |
+| Personal Memory | user-owned Copilot memory context | memory as organizational truth/RBAC |
+| Internet Research | Copilot orchestration + public source authority | unrestricted HTTP / cache truth |
+| External resources/scopes | provider + connection owner | provider scope as Core permission |
+| Teams | Microsoft 365 source owner + Copilot adapter | Teams-specific Copilot runtime |
+| biometrics | Copilot biometric subsystem + Core userRef | match as login/permission |
+| Human Observation | Copilot Evidence/governance + process owner | psychological/employee scoring |
+| Event/Signal ingestion | source owner + Copilot adapter/EventEnvelope | event payload as permission/action |
+| Decision Intelligence | Copilot Application/Policy + authoritative facts | LLM/RPA as sole formal rule when deterministic criteria exist |
+| Process Intelligence | Copilot process projection + process/source owners | Process Mining as employee surveillance |
+| Automation capability mapping | Copilot/neutral platform owner decided in C0 | UI mechanics in planner |
+| Automation execution | Automation bounded context/owner decided in C0 | second planner/workflow engine |
+| RPA mechanics | RPA orchestrator/worker adapter owner | bot as business authority |
+| Computer-use | sandboxed executor owner | unrestricted desktop/network |
+| Outcome verification | authoritative Domain/provider/source + Copilot orchestration | technical success as business completion |
+| Analysis Sandbox | Copilot analysis boundary or neutral execution platform if proven | general-purpose corporate shell |
+| Artifact Workspace | Copilot artifact lifecycle/storage refs + collaboration owner | generated blob without lineage/ACL |
+| Predictive models | model owner/provider + Copilot model adapters | prediction as fact/permission |
+| Operational Twin | Copilot/domain scenario projection + authoritative sources | twin as source of truth |
+| MCP tools | approved server owner + Copilot adapter/policy | discovery as approval |
+| A2A agents | approved external agent owner + Copilot delegation policy | external agent as superior authority |
+| AI Control Tower | Copilot governance/admin plane | admin role as business permission |
+| Model lifecycle | model owner + Copilot governance/Control Tower | unversioned/unreviewed production model |
+| Capability Marketplace | Copilot governance/catalog + asset publisher/owner | install as permission grant |
+| Edge runtime | device/Edge platform owner + Copilot package/sync policy | offline as wider authority |
+| OT/machine safety | industrial/safety owners | Copilot/Edge/RPA as safety controller |
+| notifications | shared channel owner + Copilot orchestration | notification as proof of outcome |
+| audit/evals | Copilot observability + platform audit | CoT/secrets/raw surveillance telemetry |
 
 ## 2. Componentes físicos alvo
+
+Default owners remain:
 
 ```text
 Portal Shell
@@ -62,33 +63,38 @@ Gateway
 plugins/plugin-ui
 plugins/minha-delpi-copilot
 minha-delpi-copilot-api
-
-Copilot API internal bounded components:
-- OpenAPI importer / Action Catalog
-- Capability Projection
-- Planner / Expertise / Playbooks / Knowledge
-- Evidence / Policy / Decision
-- Durable Work / Task / Case / Watch
-- Event / Operational Intelligence
-- Automation Capability Projection
-- Automation Execution orchestration
-- Outcome Verification
-- Notification/Escalation orchestration
-- Media / Biometric adapters
-- Internet Research / Safe Web Fetch
-- External Connection / Provider adapters
-- External subscription/event adapters
-- Business Graph projection
-- Observability/Evals
+Domain APIs / external providers / OT owners
 ```
 
-Concrete executors/providers may include Domain HTTP APIs, functions/scripts, Microsoft Graph, Google Workspace, WhatsApp Business, RPA orchestrator/workers and computer-use adapters when approved.
+Inside Copilot API, bounded modules may include:
 
-**Automation & Execution Hub does not imply a separate microservice.** C0 decides whether this bounded context stays inside Copilot API or becomes a neutral platform service based on real ownership/consumers/infrastructure.
+```text
+Conversation / Understanding / Planner
+Action Catalog / Capability Projection
+Expertise / Playbooks / Knowledge
+Personal Memory
+Evidence / Policy / Decision
+Durable Work / Task / Case / Watch
+Event & Operational Intelligence
+Process Intelligence
+Business Graph
+Semantic Business Layer
+Internet Research / External Connections / Teams
+Automation & Execution orchestration
+Analysis / Artifacts
+Predictive / Prescriptive / Scenario/Twin
+Agent/Tool Interoperability
+AI Asset / Model Governance / Marketplace
+Edge integration
+Media / Biometric / Meeting / Frontline
+Observability / Evals
+```
 
-## 3. Primitive registry — frozen in C0
+**Module name does not imply microservice.** C0 decides physical split only from real ownership/consumers/scale/isolation needs.
 
-Canonical/candidate concepts:
+## 3. Shared primitive registry
+
+Prefer existing foundations:
 
 ```text
 CorrelationContext
@@ -97,62 +103,83 @@ RelationshipRef
 SourceRef
 EvidenceRef
 OutcomeRef
-PlatformCommand / PlatformCommandResult
 WorkspaceContext
 CapabilityProjection
-ExpertisePack / Selection / Context
-DomainPlaybook
-DecisionGateRequest / Decision
-WorkflowPlan / WorkflowStep
-TaskRef / CaseRef
-EventEnvelope / AuditEvent
-MediaRef? when proven
-Biometric refs? when proven
-ExternalConnectionRef? / ExternalResourceRef? when needed
-AutomationExecutionRef? / ExecutorRef? only when C0 proves transversal need
+DecisionGateRequest/Decision
+WorkflowPlan/WorkflowStep
+TaskRef/CaseRef
+EventEnvelope/AuditEvent
 ```
 
-Do not create a second Event/Evidence/Outcome/Workflow model for RPA/automation.
+Candidate refs only if C0 proves transversal need:
 
-## 4. Producer → consumer graph
+```text
+MediaRef
+Biometric refs
+ExternalConnectionRef
+AutomationExecutionRef / ExecutorRef
+ProcessTraceRef
+MetricDefinitionRef
+MemoryItemRef
+AnalysisRunRef
+ArtifactRef
+PredictionRef
+ScenarioRef
+AIAssetRef / ModelRef
+EdgeDeviceRef
+```
+
+Do not create feature-specific duplicate Evidence/Event/Outcome/Workflow models.
+
+## 4. Core producer → consumer graph
 
 ```text
 Keycloak/Core
-→ authenticated user/service identity + platform authorization
+→ authenticated user/service + platform authorization
 
-Domain OpenAPI
-→ Action Catalog
-→ Capability Projection
+Domain/OpenAPI
+→ Action Catalog / Capability Projection
 → Planner/Policy
 
-Public Internet / External Providers / Domain events
+Public/External/Domain/Edge Events
 → source adapters
 → SourceRef/EventEnvelope
 → Evidence/Watch/Workflow/Decision
 
-Operational decision
-→ DecisionPathPolicy
-   FAST | OPERATIONAL | REASONING
-→ deterministic Policy and/or AI reasoning
-→ candidate semantic capability
+Business/Process data
+→ Graph + Semantic Layer + Process Intelligence
+→ grounded analysis
 
-Semantic capability
-→ Decision/AutonomyPolicy
+Decision
+→ semantic capability
 → Durable Workflow
-→ Automation Capability mapping
-→ Executor Port
-→ API | Function | RPA | Computer-Use | Human Task
-→ technical execution result
-→ Outcome Verifier
-→ authoritative business Outcome
+→ executor/tool/agent/model adapter
+→ technical result
+→ authoritative Outcome verification
 → Evidence/Audit/Notification
 
-WorkflowPlan
-→ Durable Runtime
-→ Task/Case/Watch/Inbox
+Authorized data
+→ Sandbox / Predictive / Scenario
+→ Artifact/Prediction/Recommendation
+→ PREPARE/Decision only until governed ACT
 ```
 
-## 5. Connection ownership
+## 5. Semantic distinctions
+
+```text
+Graph = entity relations
+Semantic Layer = metric/concept meaning
+Process Intelligence = observed process behavior
+Personal Memory = user-private continuity/preferences
+Knowledge = governed reusable organizational/user knowledge
+Operational Twin = scenario projection
+Control Tower = governance projection
+Marketplace = governed asset catalog
+```
+
+None substitutes source systems or each other.
+
+## 6. Connection / source ownership
 
 ```text
 USER_DELEGATED
@@ -161,230 +188,177 @@ SHARED_RESOURCE
 SERVICE_CONNECTION
 ```
 
-Provider scope never mutates Core permission model. Personal/restricted sources do not become organization-wide by convenience.
+Personal/restricted source remains bounded. Provider scope does not mutate Core permission.
 
-## 6. Semantic capability graph
+## 7. Semantic capability graph
 
-Planner works with semantic capabilities, for example:
+Examples:
 
 ```text
-communication.email.search/read/draft/send
-calendar.events.read/create/update
-files.search/read/create/update
-messaging.message.send
+communication.email.send
 billing.invoice.issue
 maintenance.request.create
-production.report.validate
 inventory.read
+metric.query
+process.mine
+analysis.run
+artifact.create
+prediction.run
+scenario.simulate
 ```
 
-Provider/executor adapters resolve concrete implementation.
+Planner asks for capability; adapters resolve provider/executor/model/tool.
 
-## 7. Executor ownership graph
-
-Default preference:
+## 8. Event / Decision ownership
 
 ```text
-API official
-→ native supported integration
+source event
+→ authenticity/trust
+→ EventEnvelope
+→ dedupe/order/correlation
+→ FAST|OPERATIONAL|REASONING
+→ structured finding/decision candidate
+```
+
+Source event proves only its factual event, not authorization.
+
+## 9. Process Intelligence ownership
+
+```text
+authoritative event logs
+→ process projection/traces
+→ variants/conformance/bottlenecks
+→ Evidence
+→ opportunity candidate
+```
+
+Process owner owns intended process and interpretation. Copilot does not infer employee fault/intent from deviation.
+
+## 10. Semantic Business Layer ownership
+
+Metric business owner approves definition. Data source owner remains authority for rows/entities.
+
+```text
+MetricDefinition
+→ source query/calculation
+→ value + definition version + Evidence
+```
+
+Metadata does not grant data access.
+
+## 11. Personal Memory ownership
+
+Memory belongs to user by default. Copilot manages lifecycle/retention/user controls. Memory influences relevance/presentation but never business truth, RBAC or Organizational Knowledge automatically.
+
+## 12. Automation/executor ownership
+
+Default executor preference:
+
+```text
+official API
+→ native integration
 → deterministic function/script
 → RPA
 → computer-use
 → Human Task
 ```
 
-A capability can migrate:
+Capability can migrate RPA→API without planner/workflow redesign.
 
-```text
-billing.invoice.issue
-RPA v1
-→ API v2
-```
+Planner never receives clicks/selectors/package internals.
 
-without planner/workflow redesign.
-
-Planner never receives:
-
-```text
-click coordinates
-CSS/XPath selector
-screen-specific sequence
-RPA package internals
-```
-
-## 8. Event / Signal graph
-
-```text
-source event
-→ authenticity/trust validation
-→ EventEnvelope
-→ dedupe/order/correlation
-→ Watch/Workflow/Decision
-```
-
-Polling/scheduler is bounded fallback only when no supported event contract exists.
-
-Event source is not permission authority.
-
-## 9. Decision Intelligence graph
-
-```text
-Event / User Intent
-→ DecisionPathPolicy
-   ├─ FAST        deterministic rules/state machine
-   ├─ OPERATIONAL bounded reads + rules + optional classifier
-   └─ REASONING   Graph/Knowledge/Expertise/LLM
-```
-
-Known readiness criteria use Policy/Specification over authoritative facts.
-
-## 10. Automation execution contract
-
-Candidate contract:
-
-```text
-capabilityRef
-executorRef/version/type
-input/output schema
-preconditions
-postconditions
-actor/service identity
-idempotency semantics
-timeout/retry semantics
-environment
-owner/status
-```
-
-Execution lifecycle:
-
-```text
-QUEUED → RUNNING → SUCCEEDED|FAILED|AMBIGUOUS|CANCELLED|TIMED_OUT
-```
-
-Technical `SUCCEEDED` does not automatically mean business Outcome `VERIFIED_SUCCESS`.
-
-## 11. RPA / worker ownership
-
-If RPA is real scope after C0:
-
-```text
-RPA adapter
-→ orchestrator/queue
-→ worker/session
-→ legacy UI
-```
-
-RPA infrastructure owns worker/session/package mechanics; Copilot owns semantic orchestration only when its bounded context is owner of execution request/correlation.
-
-Requirements include worker health, lease/concurrency, environment/package version, protected credentials, session isolation, artifact retention and idempotency.
-
-## 12. Outcome ownership
+## 13. Outcome ownership
 
 ```text
 technical result
 → OutcomeVerifier
-→ authoritative Domain/provider/source
-→ VERIFIED_SUCCESS | VERIFIED_FAILURE | PENDING | INCONCLUSIVE
+→ authoritative source
+→ VERIFIED_SUCCESS|VERIFIED_FAILURE|PENDING|INCONCLUSIVE
 ```
 
-Notification happens from truthful outcome state; notification itself never becomes evidence that the operation succeeded.
+Notification does not prove completion.
 
-## 13. Autonomy ownership
+## 14. Analysis / Artifact ownership
 
-Autonomy is capability/context/risk scoped:
+Sandbox executes bounded analysis over authorized inputs. Artifact Workspace owns artifact metadata/version/provenance/ACL and storage refs. Source data remains with source owner.
 
-```text
-capability + actor/service + context + risk + limits + environment + policy
-```
+## 15. Predictive / Twin ownership
 
-```text
-L5_DEFAULT = OFF
-GLOBAL_UNRESTRICTED_L5 = FORBIDDEN
-```
+Model owner/provider owns model lifecycle facts; Copilot stores bounded `ModelRef`/Prediction lineage.
 
-C6 Watch supports `OBSERVE|ADVISE|PREPARE`; `ACT` is C7 only.
+Operational Twin is a projection of authoritative live state. Scenario never becomes production state. Apply is new business action.
 
-## 14. External/Teams/Knowledge graphs
+## 16. MCP/A2A ownership
 
-Internet/connector/Teams flows preserve SourceRef/Evidence/freshness/source ACL. Restricted source never auto-promotes to shared Knowledge.
+MCP server/A2A agent remains external integration authority only for capabilities it exposes. Copilot owns allowlist/policy/delegation orchestration. Discovery/metadata/result cannot grant authority.
 
-External event adapters normalize into the same EventEnvelope used by operational events.
+## 17. Control Tower / Model / Marketplace ownership
 
-## 15. Independence graph
+Control Tower aggregates governed projections and admin controls over assets; no second business planner.
+
+Model lifecycle owns approval/eval/deployment/rollback/revoke metadata.
+
+Marketplace owns package/catalog lifecycle. Manifest permissions/scopes are requirements, never grants.
+
+## 18. Edge ownership
+
+Device/Edge platform owns device runtime/health. Copilot owns approved package/content/model projection/sync semantics when applicable. User identity/permissions remain central/domain authorities; offline cache cannot create indefinite authority.
+
+## 19. Independence graph
 
 Must remain true:
 
 ```text
-Copilot MFE ─X→ Chat source
-Copilot API ─X→ Chat runtime/API/tables
-Automation Hub ─X→ second Copilot planner
-RPA bot ─X→ business authority
-Executor ─X→ Core permission authority
+Copilot ─X→ Chat runtime/API/tables
+Control Tower ─X→ domain permission authority
+Process Mining ─X→ employee scoring authority
+Memory ─X→ RBAC/business truth
+Semantic Layer ─X→ source data authority
+Sandbox ─X→ production DB credentials/unrestricted network
+Twin ─X→ production state mutation
+MCP/A2A ─X→ implicit trust
+Marketplace ─X→ permission grant
+Edge ─X→ offline authority expansion
+RPA ─X→ business-rule authority
 ```
 
-Shared dependencies must be platform-neutral.
+## 20. C0 ownership questions
 
-## 16. Anti-duplication rules
-
-Do not create:
-
-- second Core/RBAC/user model;
-- manual app URL registry;
-- manual business endpoint authority;
-- provider/executor-specific planner router;
-- second Evidence/Decision/Event model;
-- external source master copies;
-- second Workflow engine inside Automation Hub;
-- provider/RPA credential store inside conversation state;
-- `FrontlineContext` parallel to WorkspaceContext;
-- RPA UI mechanics in planner/domain/application;
-- global autonomy flag as single authority;
-- machine state/safety authority inside Copilot.
-
-## 17. C0 ownership questions
-
-Before creating component/schema/service:
+Before any new component/schema/service:
 
 ```text
 Who owns source truth?
-Who owns business rule?
-Who owns event authenticity?
-Is this Copilot-owned, neutral platform-shared, provider/domain/RPA-owned?
-Does a canonical contract already exist?
-Can existing refs represent it?
-Does persistence need content or only refs/metadata?
-Who owns credential/key material?
-Who is the explicit background actor/service identity?
-Is this read, prepare or material write?
-Is an authoritative API available before choosing RPA?
-Can executor swap without planner patch?
-How are retries/idempotency/ambiguous outcomes handled?
-What source verifies the business postcondition?
-Could duplicate events produce duplicate effects?
-Could PREPARE silently become ACT?
-Is autonomy scoped by capability/context/risk?
-Could computer-use reach outside its allowlist?
-Could any path bypass OT safety?
+Who approves meaning/rule/model/process?
+Does canonical ref already represent it?
+Is persistence content or only ref/projection?
+Who owns credential/key/package?
+Is this read, prepare, simulate or write?
+What verifies the business outcome?
+Does this create a new permission authority?
+Can implementation be swapped by adapter?
+What is the revoke/rollback/kill-switch path?
+What happens when source/model/network is stale/unavailable?
+Could personal/employee data leak or become a score?
+Could offline/simulation/tool metadata widen authority?
 ```
 
 Unknown = `NOT_PROVEN`.
 
-## 18. Stabilization order
+## 21. Stabilization order
 
 ```text
-platform/media/device/biometric/external/automation/OT inventory
-→ standalone boundaries
-→ authorities
-→ primitives
-→ event/executor/background-identity/outcome/autonomy contracts
-→ architecture conformance
-→ FOUNDATION_FREEZE
+factual inventory
+→ standalone boundary
+→ authorities/bounded contexts
+→ shared primitives
+→ privacy/data/trust/state contracts
+→ architecture/test freeze
 → standalone bootstrap
-→ intelligence + Event/Decision foundations
-→ read-only operational intelligence
-→ governed executor foundation
-→ Automation Hub + PREPARE
-→ selected autonomous ACT
+→ capability foundations
+→ read-only analysis/discovery
+→ governed writes/executors/artifacts
+→ product governance/experience
+→ selected advanced autonomy/Edge/Marketplace
 ```
 
-No feature/provider/executor may silently redefine frozen authorities/primitives.
+No thematic capability may silently redefine frozen authorities.
