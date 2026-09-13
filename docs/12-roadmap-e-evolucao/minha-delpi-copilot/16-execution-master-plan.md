@@ -11,6 +11,8 @@
 **Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
 **Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
 **Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)  
+**Microsoft Teams:** [`56-microsoft-teams-connector-and-meeting-integration.md`](./56-microsoft-teams-connector-and-meeting-integration.md)  
+**Autonomous Operations/Execution Hub:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
 **DoD:** [`14-definition-of-done.md`](./14-definition-of-done.md)  
 **Testes:** [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md)  
 **Ledger:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
@@ -40,17 +42,17 @@ O Chat é apenas sistema vizinho/referência durante o inventário.
 
 ## 2. Objetivo foundation-first
 
-Evitar que inteligência, mídia, biometria, conectividade externa ou experiência industrial sejam construídas antes de provar que a nova aplicação e seus boundaries estão corretamente integrados à plataforma.
+Evitar que inteligência, mídia, biometria, conectividade externa, automação autônoma, RPA ou experiência industrial sejam construídas antes de provar que a nova aplicação e seus boundaries estão corretamente integrados à plataforma.
 
 ```text
-PLATFORM + ARCHITECTURE + MEDIA/PRIVACY/BIOMETRIC/EXTERNAL/OT FOUNDATIONS
+PLATFORM + ARCHITECTURE + MEDIA/PRIVACY/BIOMETRIC/EXTERNAL/AUTOMATION/OT FOUNDATIONS
 → STANDALONE APPLICATION BOOTSTRAP
 → PORTAL + OPERATIONAL CONTEXT / PLATFORM COMMANDS
-→ INTELLIGENCE CORE + MULTIMODAL/BIOMETRIC/INTERNET/CONNECTOR FOUNDATIONS
-→ BUSINESS + EXTERNAL READS + GRAPH
-→ GOVERNED BUSINESS/EXTERNAL WRITES + DURABLE FOUNDATION
-→ PRODUCT WORK + MEETING/FRONTLINE + EXTERNAL EVENTS + PROACTIVITY + ECOSYSTEM
-→ ADVANCED REALTIME + EXTERNAL PROACTIVITY + AUTONOMY + OPTIMIZATION + ROLLOUT
+→ INTELLIGENCE CORE + MULTIMODAL/BIOMETRIC/INTERNET/CONNECTOR/DECISION FOUNDATIONS
+→ BUSINESS + EXTERNAL READS + GRAPH + READ-ONLY OPERATIONAL INTELLIGENCE
+→ GOVERNED BUSINESS/EXTERNAL/AUTOMATION WRITES + DURABLE FOUNDATION
+→ PRODUCT WORK + MEETING/FRONTLINE + EVENTS + AUTOMATION HUB + PROACTIVITY + ECOSYSTEM
+→ ADVANCED REALTIME + AUTONOMOUS OPERATIONS + EXTERNAL PROACTIVITY + OPTIMIZATION + ROLLOUT
 ```
 
 ## 3. Authorities documentais
@@ -68,6 +70,8 @@ PLATFORM + ARCHITECTURE + MEDIA/PRIVACY/BIOMETRIC/EXTERNAL/OT FOUNDATIONS
 53 = multimodal/Meeting/Frontline/industrial spec
 54 = biometric identity/Human Observation governance
 55 = Internet Research/external connectors/OAuth/external learning
+56 = Microsoft Teams connector/meeting integration
+57 = event-driven autonomous operations + Automation & Execution Hub
 ledger = execution evidence/status
 ```
 
@@ -91,8 +95,8 @@ Specs temáticas não podem reabrir a decisão de usar Chat como base nem criar 
 14. Workspace Context não concede permission.
 15. Expertise/Playbooks não concedem permission.
 16. Shared primitives internos do Copilot nascem antes das features consumidoras.
-17. Business Graph referencia dados; não replica sistemas owners.
-18. Writes usam Decision Gate + revalidation + idempotency/audit.
+17. Business Graph referencia dados; não replica systems of record.
+18. Writes usam Decision Gate + revalidation + idempotency/audit conforme risco.
 19. Durable Work não cria segundo action executor.
 20. Chain-of-thought não é persistida/exposta.
 21. Clean Architecture + Ports & Adapters + DDD pragmático conforme `49`.
@@ -104,22 +108,36 @@ Specs temáticas não podem reabrir a decisão de usar Chat como base nem criar 
 27. Raw media retention exige purpose/policy explícitos; data minimization é default.
 28. Device identity não substitui user identity.
 29. Biometric match não substitui authenticated session/Core permission.
-30. Reconhecimento facial/voz permitido somente como capability governada de usuários conhecidos/enrolled, com ambiguity/correction/revocation.
-31. Observação humana pode descrever padrões objetivos do processo, não inferir personalidade, honestidade, emoção como verdade, saúde, atributos sensíveis ou valor profissional global.
-32. Biometria/Human Observation não pode ser authority automática de contratação, promoção, punição, remuneração, avaliação formal ou desligamento.
-33. Observação de processo gera candidate knowledge, nunca mudança automática de produção ou perfil secreto de trabalhador.
+30. Reconhecimento facial/voz é capability governada de usuários conhecidos/enrolled, com ambiguity/correction/revocation.
+31. Human Observation descreve fatos/padrões objetivos do processo, não personalidade, honestidade, emoção como verdade, saúde ou valor profissional global.
+32. Biometria/Human Observation não é authority automática de decisão trabalhista.
+33. Observação de processo gera candidate knowledge, nunca mudança automática de produção.
 34. Internet/external content é untrusted data; nunca altera system/policy/RBAC/retention.
-35. Web fetch passa por boundary seguro de egress; URL gerada por LLM não vai para HTTP client irrestrito.
+35. Web fetch passa por boundary seguro de egress.
 36. OAuth/provider scopes seguem least privilege e não substituem Core/domain authorization.
 37. Provider credentials/tokens nunca entram em prompt, LLM context, MFE ou logs comuns.
-38. Conexão pessoal não vira fonte organizacional por conveniência.
+38. Conexão pessoal não vira fonte organizacional implicitamente.
 39. External read e external write são capabilities diferentes; `draft != send`.
 40. External write usa Policy/Decision Gate quando material e exige verified outcome.
 41. Provider events/webhooks convergem para EventEnvelope, dedupe e reconciliation.
-42. Informação externa durável vira candidate Knowledge antes de publicação; web/email/message não vira corporate truth automaticamente.
-43. WhatsApp não usa scraping de sessão pessoal como integração default; usar contratos oficiais suportados.
-44. Copilot não é safety controller; autonomia empresarial L5 não implica autoridade OT.
-45. `PARTIAL`, `INCONCLUSIVE`, stale evidence, duplicate authority, Chat dependency, media/privacy/biometric/external violation ou OT safety violation bloqueiam fechamento.
+42. Informação externa durável vira candidate Knowledge antes de publicação.
+43. WhatsApp não usa scraping de sessão pessoal como integração default.
+44. Teams é capability family do Microsoft 365 connector, não runtime paralelo.
+45. **Copilot = inteligência/contexto/decisão/orquestração; Automation & Execution Hub = execução.**
+46. **RPA é executor substituível; business rule/decision não pertence ao bot.**
+47. **Executor preference: API → integração nativa → função/script → RPA → computer-use → humano.**
+48. Planner trabalha com capability semântica; nunca com click/selector/coordenada de RPA.
+49. Nem todo evento chama LLM; FAST/OPERATIONAL/REASONING paths são distintos.
+50. Readiness material usa facts/rules/Policy verificáveis quando disponíveis; LLM não é autoridade única.
+51. Event payload nunca concede autorização nem side effect por si só.
+52. Background/autonomous action usa identidade explícita de usuário/serviço e revalidation.
+53. Technical executor success não equivale automaticamente a business success; Outcome deve ser verificado quando material.
+54. Autonomia é capability/context/risk scoped; não existe L4/L5 global irrestrito.
+55. L5 permanece OFF por default e exige allowlist/budgets/kill switch.
+56. Watch `PREPARE` é distinto de `ACT`.
+57. Computer-use é fallback avançado/sandboxed, não primeiro executor.
+58. Copilot não é safety controller; autonomia empresarial L5 não implica autoridade OT.
+59. `PARTIAL`, `INCONCLUSIVE`, stale evidence, duplicate authority, Chat dependency, media/privacy/biometric/external/automation violation ou OT safety violation bloqueiam fechamento.
 
 ## 5. Grafo canônico
 
@@ -133,19 +151,19 @@ C1 — Standalone Application Bootstrap
 C2 — Portal + Operational Context + Platform Commands
  |
  v
-C3 — Intelligence Core + Multimodal/Biometric/External Foundations
+C3 — Intelligence + Multimodal/Biometric/External/Decision Foundations
  |
  v
-C4 — Business + External Reads + DELPI Business Graph
+C4 — Business + External Reads + Business Graph + Operational Read Intelligence
  |
  v
-C5 — Governed Business/External Writes + Durable Work Foundation
+C5 — Governed Business/External/Automation Writes + Durable Work Foundation
  |
  v
-C6 — Tasks/Cases/Rooms/Inbox/Watch + Meeting/Frontline + External Events/Ecosystem/Learning
+C6 — Tasks/Cases/Rooms/Inbox/Watch + Meeting/Frontline + Automation Hub + Events/Learning
  |
  v
-C7 — Advanced Realtime + External Proactivity + Autonomy + Simulation + Model Routing + Rollout
+C7 — Autonomous Operations + Advanced Realtime + External Proactivity + Optimization + Rollout
 ```
 
 ---
@@ -163,13 +181,13 @@ Inventariar com arquivo/símbolo/contrato/owner/consumer.
 - AppLauncher/menu/routes;
 - `getAccessToken` host props;
 - full-page layouts;
-- overlay/panel/drawer infrastructure para global Copilot surface;
+- overlay/panel/drawer infrastructure;
 - Workspace/context patterns;
 - notifications/socket;
 - theme/accessibility;
 - federation share scope;
-- browser media permission/capture patterns, se existirem;
-- mobile/tablet/kiosk/shared-device patterns, se existirem.
+- browser media permission/capture patterns;
+- mobile/tablet/kiosk/shared-device patterns.
 
 ### Core API
 
@@ -181,21 +199,21 @@ Inventariar com arquivo/símbolo/contrato/owner/consumer.
 - presence/app usage;
 - audit;
 - avatar/user metadata;
-- corporate photo/profile source, se existir;
+- corporate photo/profile source;
 - integration/service auth patterns;
-- device/session registration patterns, se existirem.
+- device/session registration patterns.
 
 ### Gateway/Infra
 
 - API/MFE path conventions;
-- streaming/websocket/SSE/WebRTC-related patterns;
+- streaming/websocket/SSE/WebRTC patterns;
 - dev/prod parity;
 - Compose profiles/services;
 - postgres/storage patterns;
 - object/media storage;
 - encrypted sensitive storage/key-management patterns;
 - outbound HTTP/proxy/DNS/egress patterns;
-- SSRF/private/link-local/metadata blocking patterns, se existirem;
+- SSRF/private/link-local/metadata blocking patterns;
 - secrets/vault owner;
 - OAuth callback route patterns;
 - webhook ingress/signature validation patterns;
@@ -203,124 +221,93 @@ Inventariar com arquivo/símbolo/contrato/owner/consumer.
 - sequential scripts;
 - env examples;
 - shared volumes/network;
-- realtime/network limits/proxies relevantes.
+- queues/brokers/workers/schedulers;
+- service-account/background identity patterns;
+- desktop/session infrastructure usable por automação, se existir.
 
 ### MFEs
 
-Inventariar representativamente e depois cobrir o conjunto relevante:
-
-- manifests;
-- federation config;
-- bootstrap/mount/unmount;
-- `plugin-ui` consumption;
-- HTTP/auth client;
+- manifests/federation/bootstrap/mount/unmount;
+- `plugin-ui` usage;
+- HTTP/auth clients;
 - deep links/context;
 - permission usage;
-- current portal integrations;
-- responsive/accessibility patterns;
-- camera/microphone/file/media usage, se houver;
-- external connection/settings UX patterns, se houver.
+- responsive/accessibility;
+- camera/microphone/file/media usage;
+- external connection/settings UX;
+- automation/admin/execution UX existente, se houver.
 
 ### APIs
 
-Inventariar APIs disponíveis e seus contratos:
-
-- `api-delpi`;
-- commercial-api;
-- supplies/requests/financial/customer-experience e demais APIs existentes;
+- `api-delpi` e demais APIs existentes;
 - OpenAPI availability/version;
 - JWT/auth middleware;
-- permission requirements;
+- permissions;
 - idempotency/write semantics;
 - events/websockets;
 - pagination/error envelopes;
 - entity IDs/deep links;
-- produção/manutenção/qualidade sources para OP, operação, máquina, lote e revisão quando existirem.
+- produção/manutenção/qualidade sources para OP/operação/máquina/lote/revisão;
+- business postcondition/outcome sources para writes materiais.
 
 ### Existing collaboration/work infrastructure
 
-- commercial interaction rooms;
-- Minhas Solicitações/cases/requests;
+- interaction rooms;
+- requests/cases;
 - notifications/inbox-like concepts;
 - approvals;
 - event bus/jobs/workers/schedulers;
-- durable workflow patterns if any;
-- meeting/room/collaboration artifacts existentes;
+- durable workflow patterns;
+- meeting/collaboration artifacts;
 - procedures/training sources.
 
 ### Media/Meeting/Frontline/Biometric inventory
 
-Mapear factual e classificar:
-
-- browser audio/video capabilities;
-- speech/vision providers/config existentes;
-- file/object/media storage;
-- retention/privacy policies atuais;
-- recording/transcription patterns;
-- room hardware/processes relevantes;
-- shared workstations/tablets/kiosks;
-- production terminals;
-- device identity/session patterns;
-- network constraints no chão de fábrica;
-- accessibility/noise constraints;
-- existing camera/vision systems, se houver;
-- existing procedure/training systems;
-- corporate avatar/photo sources;
-- voice sample sources, se existirem e forem aprovados;
-- biometric enrollment owner/process, se existir;
-- biometric template storage/key-management patterns;
-- identity matching/liveness/anti-spoof capabilities já existentes;
-- participant lists/presence sources;
-- governance owner para biometria/Human Observation;
-- prohibited inference classes e correction/revocation requirements.
-
-Nenhum item inexistente vira `PLATFORM_REUSE` por suposição.
+Mapear browser audio/video, speech/vision providers, storage, retention/privacy, recording/transcription, room hardware, shared devices, production terminals, device identity, network constraints, biometric enrollment/templates/providers/liveness, participant/presence sources e governance owner.
 
 ### Internet/External Connector inventory
 
+Mapear search/web research, safe fetch/browser automation, Microsoft Graph/Google Workspace/WhatsApp Business/Slack/GitHub connectors, OAuth flows, token storage/rotation/revocation, provider webhooks/subscriptions, reconciliation, attachment scanning, provider compliance/data classification.
+
+### Automation / RPA / Autonomous Operations inventory
+
 Mapear factual e classificar:
 
-- search/web research providers, se existirem;
-- safe fetch/browser automation infrastructure, se existir;
-- outbound egress allowlists/proxies;
-- Microsoft Graph app registrations/integrations;
-- Google Workspace/Gmail app registrations/integrations;
-- WhatsApp Business Platform integrations;
-- Slack/GitHub/other connectors existentes;
-- OAuth authorization-code/delegated/application/service flows usados no repo;
-- callback state/nonce/PKCE patterns quando aplicáveis;
-- secret/token storage, rotation and revocation;
-- user-delegated versus org-managed connection ownership;
-- provider webhook/subscription/push integration;
-- scheduler/jobs for renew/reconcile/full-sync fallback;
-- attachment download/scan patterns;
-- provider compliance/terms owners;
-- external-source data-classification/privacy owners.
+- ferramentas RPA/orchestrators/licenças existentes;
+- bots/robots/packages e owners;
+- automações desktop/web atuais;
+- scripts/functions/jobs automatizados;
+- queues/workers/worker pools/heartbeats;
+- schedulers/polling jobs;
+- event sources/brokers/topics/streams;
+- service accounts/background identities;
+- credential injection/storage owners;
+- desktop/session/VDI execution environments;
+- package/version/deploy/rollback patterns;
+- retry/idempotency patterns;
+- RPA screenshots/artifacts/logging/retention;
+- existing rule/decision engines;
+- process engines/BPM/workflow owners;
+- business postcondition/outcome verification sources;
+- notification/escalation channels;
+- kill switch/emergency-stop patterns;
+- automation ownership/governance/SLA/support.
 
-Não assumir que uma conexão existente autoriza o Copilot a reutilizar seu credential ou ampliar seu scope.
+Não assumir ferramenta RPA específica nem criar um novo Hub antes de provar ownership/gap.
+
+### Microsoft Teams inventory
+
+Seguir `56`: Entra app registrations, Graph scopes, resource-specific consent, chats/channels/meetings/transcripts/recordings/change notifications, app/tab/bot distribution, ACL/privacy e realtime-media constraints.
 
 ### Industrial/OT inventory
 
-Somente inventário/read-only nesta etapa:
-
-- machine/PLC/CNC/robot/SCADA/MES interfaces existentes;
-- industrial events/telemetry owners;
-- safety owners/interlocks;
-- approved read-only APIs;
-- command APIs/protocols existentes, **sem assumir que Copilot poderá utilizá-los**;
-- segregation IT/OT e security owners.
+Somente inventário/read-only: machine/PLC/CNC/robot/SCADA/MES interfaces, telemetry owners, safety owners/interlocks, approved read APIs, command APIs/protocols sem assumir uso, segregation IT/OT.
 
 ### Chat — reference only
 
-Mapear apenas para **não repetir erros** e identificar componentes neutros:
+Mapear arquitetura/providers/RAG/multimodal/actions somente para evitar dívida/reuso indevido.
 
-- `minha-delpi-ai-api` architecture;
-- `plugins/minha-delpi-chat` federation/manifest;
-- provider/RAG/multimodal patterns;
-- tool/action architecture;
-- known coupling/legacy problems.
-
-Classificação permitida para qualquer finding:
+Classificação:
 
 ```text
 PLATFORM_REUSE
@@ -333,19 +320,17 @@ NOT_PROVEN
 OUT_OF_SCOPE
 ```
 
-Nunca classificar `minha-delpi-ai-api` como runtime base do Copilot.
-
 ### Saídas de C0.S0
 
 - platform integration inventory;
 - API/OpenAPI inventory;
 - MFE/manifest inventory;
-- shared infrastructure map;
-- existing rooms/events/notifications map;
-- media/device/meeting/frontline inventory;
-- biometric identity/Human Observation inventory;
-- Internet/egress/OAuth/external-connector inventory;
-- privacy/retention/external-data owner inventory;
+- rooms/events/notifications/work inventory;
+- media/device/meeting/frontline/biometric inventory;
+- Internet/egress/OAuth/external connector inventory;
+- Teams inventory;
+- **automation/RPA/event/queue/worker/service-identity inventory**;
+- privacy/retention/external-data inventory;
 - industrial/OT boundary inventory;
 - `17` atualizado;
 - `18` atualizado;
@@ -356,29 +341,9 @@ Nunca classificar `minha-delpi-ai-api` como runtime base do Copilot.
 
 ## C0.S1 — Freeze de product boundary e nomes
 
-Congelar:
+Congelar backend/MFE roots, service/container conventions, paths, manifest id, DB/schema ownership, health/admin/OAuth/webhook paths, egress/media/biometric/external connection ownership e **Automation & Execution Hub ownership direction**.
 
-```text
-backend root name
-MFE root name
-serviceName
-container name convention
-MFE basePath
-API basePath
-manifest id
-DB/schema ownership
-health path
-admin paths
-OAuth callback base path
-webhook ingress base path
-egress boundary owner
-streaming transport direction
-media storage ownership direction
-biometric storage ownership direction
-external connection/secret ownership direction
-```
-
-Target recomendado:
+Target recomendado continua:
 
 ```text
 minha-delpi-copilot-api/
@@ -387,214 +352,85 @@ plugins/minha-delpi-copilot/
 /apps/minha-delpi-copilot-api
 ```
 
-Meeting/Frontline/Biometric/Connectors não criam novos product backends por default.
-
-Mudança exige evidence/ADR.
+Automation Hub não vira novo microservice automaticamente. C0 decide módulo/bounded context/neutral platform service somente por evidence/ADR.
 
 ## C0.S2 — Freeze de authorities e bounded contexts
 
-Definir owners para:
+Definir owners para identidade/RBAC, hosting, Workspace Context, biometric identity, conversations, planner, Expertise/Knowledge, media, Internet Research, external connections/actions/events, Teams, **Event/Signal ingestion, Decision Intelligence, Automation Capability Registry, Executor lifecycle, RPA worker/queue integration, outcome verification**, Meeting/Frontline, Evidence, Policy/Decision, Workflow/Task/Case/Watch/Inbox, notifications, audit/evals e OT safety.
 
-```text
-identity/RBAC
-portal hosting/navigation
-workspace context
-device identity/session
-biometric enrollment/identity association
-human observation
-Copilot conversations
-capability discovery
-OpenAPI action catalog
-planner
-expertise/playbook
-knowledge
-multimodal/media
-Internet Research
-web egress/safe fetch
-external connection lifecycle
-provider credential/secret storage
-external source privacy/sharing
-external provider actions
-external webhook/subscription events
-meeting semantics
-frontline assistance semantics
-entity/relationship projection
-evidence
-policy/decision
-workflow/task/case
-watch/inbox semantics
-notification delivery
-audit/evals
-model/provider policy
-privacy/consent/retention
-industrial/OT safety boundary
-```
-
-Core continua authority do usuário corporativo; biometric subsystem apenas associa candidate `userRef`. Provider authorization define o que aquela conexão externa permite, mas não altera Core RBAC.
+Domain APIs continuam business authorities. Automation/RPA não vira business authority.
 
 ## C0.S3 — Freeze de shared primitives
 
-Definir/reutilizar semanticamente:
+Definir/reutilizar CorrelationContext, EntityRef, RelationshipRef, SourceRef, EvidenceRef, OutcomeRef, CapabilityProjection, PlatformCommand/Result, WorkspaceContext, Expertise/Playbook, DecisionGate, WorkflowPlan/Step, TaskRef, CaseRef, EventEnvelope, audit contract, MediaRef/biometric/external refs somente se necessários.
 
-- `CorrelationContext`;
-- `EntityRef`;
-- `RelationshipRef`;
-- `SourceRef`;
-- `EvidenceRef`;
-- `OutcomeRef`;
-- `CapabilityProjection`;
-- `PlatformCommand/Result`;
-- `WorkspaceContext`;
-- `ExpertisePack/Selection/Context`;
-- `DomainPlaybook`;
-- `DecisionGateRequest/Decision`;
-- `WorkflowPlan/Step`;
-- `TaskRef`;
-- `CaseRef`;
-- `EventEnvelope`;
-- audit contract;
-- `MediaRef` **somente se C0 provar necessidade transversal**;
-- `BiometricEnrollmentRef` / `BiometricIdentityCandidate` / `PersonObservationRef` **somente se C0 provar a forma correta e necessária**;
-- `ExternalConnectionRef` / `ExternalResourceRef` **somente se C0 provar necessidade transversal além de SourceRef/EntityRef**.
+Para automation, preferir reutilizar `CapabilityProjection`, `EventEnvelope`, `OutcomeRef`, `WorkflowStep` e CorrelationContext antes de criar primitive nova. `AutomationExecutionRef`/`ExecutorRef` só entram se C0 provar necessidade transversal.
 
-Não criar `FrontlineContext` paralelo a WorkspaceContext, outro Evidence model para mídia/external data, outro modelo de usuário paralelo ao Core ou resource-ref por provider se `SourceRef` já modela corretamente.
+## C0.S4 — Freeze de arquitetura/patterns/persistence/privacy/automation boundaries
 
-C0 congela semântica; tabelas surgem apenas se necessárias.
+Aplicar `49` e congelar layers/DI/repositories/errors/state machines/events/outbox/retry/idempotency/frontend state/migrations/tests/Abstraction Gate, media/biometric/external boundaries e adicionalmente:
 
-## C0.S4 — Freeze de arquitetura/patterns/persistence/privacy/biometric/external boundaries
-
-Aplicar `49` e congelar:
-
-- layers/dependency rules;
-- ports/adapters;
-- composition root/DI;
-- repositories;
-- error/result model;
-- state machine conventions;
-- event/outbox conventions;
-- retry/timeout/idempotency;
-- frontend state ownership;
-- migration policy;
-- testing pattern;
-- Abstraction Gate;
-- ADR exception process;
-- media provider boundaries;
-- transient versus durable media;
-- consent/capture visibility;
-- retention classes;
-- biometric enrollment/template/association lifecycle;
-- threshold/unknown/correction/revocation semantics;
-- liveness/anti-spoof requirement criteria;
-- prohibited inference classes;
-- outbound egress/safe fetch/SSRF boundary;
-- OAuth callback/connection lifecycle;
-- least-privilege scope model;
-- secret/vault/credential boundary;
-- personal versus organizational source boundary;
-- external read versus write semantics;
-- external source cache/retention;
-- webhook/subscription renewal/reconciliation semantics;
-- external Knowledge promotion semantics;
-- shared-device session isolation;
-- realtime budgets/backpressure direction;
-- OT safety non-authority.
-
-Definir storage ownership da nova Copilot API sem usar Chat tables.
+- event source trust/authenticity;
+- dedupe/ordering/correlation;
+- polling fallback semantics;
+- FAST/OPERATIONAL/REASONING decision path contract;
+- deterministic readiness Policy/Specification rules;
+- executor preference and selection boundary;
+- semantic automation capability contract;
+- background service/user identity;
+- execution lifecycle/correlation/idempotency;
+- RPA worker/queue/package/credential boundaries;
+- computer-use sandbox boundary;
+- postcondition/outcome verification;
+- notification/escalation truth semantics;
+- capability-scoped autonomy and kill switches.
 
 ## C0.S5 — Integration contracts
 
-Congelar contratos de integração:
+Congelar contratos Portal↔MFE, MFE↔API, API↔Core/Domain/AI/media/biometric/internet/external/secret/event/device, e:
 
 ```text
-Portal Host ↔ Copilot MFE
-Portal WorkspaceContext ↔ Copilot
-Copilot MFE ↔ Copilot API
-Copilot API ↔ Core API
-Copilot API ↔ Domain APIs
-Copilot API ↔ AI/media providers/stores
-Copilot API ↔ biometric providers/storage when approved
-Copilot API ↔ Internet Search/Safe Fetch
-Copilot API ↔ External Provider Adapters
-Copilot API ↔ secret/vault owner
-External Provider ↔ OAuth callback/connection lifecycle
-External Provider ↔ webhook/subscription ingress
-Copilot API ↔ notification/event adapters
-Device/session adapter ↔ Copilot
-Media capture surface ↔ Copilot media boundary
+Event Source ↔ Event Adapter ↔ EventEnvelope
+Copilot Work/Decision ↔ Automation Capability Registry
+Copilot Work ↔ Executor Port
+Executor Adapter ↔ API/Function/RPA/Computer-Use runtime
+Execution lifecycle ↔ Outcome Verifier
+Outcome ↔ Notification/Evidence/Audit
 ```
 
-OT command contract **não** é criado nesta etapa apenas porque interface industrial existe. Read-only telemetry/context pode ser adaptado conforme owner/policy.
+OT command contract não é criado nesta etapa.
 
 ## C0.S6 — RED contract/conformance harness
 
-Antes do runtime:
+Adicionar aos negatives existentes:
 
-- invalid JWT;
-- unauthorized Core app/route;
-- invalid WorkspaceContext;
-- invalid Entity/Evidence refs;
-- Chat dependency detection;
-- forbidden imports/dependency direction;
-- invalid manifest/base path;
-- invalid federation host contract;
-- secret/token leakage;
-- duplicate authority;
-- invalid OpenAPI action contract;
-- Decision hash/replay negatives;
-- event duplicate;
-- architecture pattern conformance;
-- hidden media capture negative;
-- undefined retention negative;
-- shared-device user-state leak negative;
-- biometric candidate granting permission negative;
-- low-confidence forced identity negative;
-- revoked enrollment still matching negative;
-- template/log leakage negative;
-- forbidden emotion/personality inference negative;
-- automatic employment decision from biometric/human observation negative;
-- unsafe URL/SSRF/private network/metadata fetch negative;
-- external prompt injection changing policy negative;
-- OAuth state/scope/connection-owner negative;
-- provider token reaching LLM/MFE/log negative;
-- cross-user external source leak negative;
-- external write without required Decision Gate negative;
-- draft implicitly sent negative;
-- invalid/forged webhook accepted negative;
-- duplicate/out-of-order/missed external event handling negative;
-- personal source auto-promoted to org Knowledge negative;
-- unsupported personal WhatsApp session automation negative;
-- voice modality authorization parity negative;
-- screen/camera injection negative;
-- arbitrary LLM→OT command negative.
+- forged/untrusted event creates action;
+- duplicate event causes duplicate execution;
+- event payload grants authorization;
+- planner emits RPA click/selector details;
+- RPA chosen despite authoritative supported API without approved exception;
+- background action without explicit user/service identity;
+- executor success accepted as business success without required postcondition verification;
+- ambiguous executor timeout blindly retried;
+- workflow resume duplicates RPA/API effect;
+- RPA credential/session leaks across workers/users;
+- `PREPARE` silently transitions to `ACT`;
+- global L5 enables unrelated capabilities;
+- autonomous action ignores kill switch/budget/limit;
+- computer-use accesses non-allowlisted app/network;
+- free-form LLM→OT command.
 
 ## C0.S7 — FOUNDATION_FREEZE
 
-C1 desbloqueia somente se:
+C1 desbloqueia somente se gates anteriores +:
 
 ```text
-PLATFORM_INVENTORY = PASS
-STANDALONE_BOUNDARY = PASS
-NAMES_PATHS = PASS
-AUTHORITIES = PASS
-SHARED_PRIMITIVES = PASS
-ARCHITECTURE_PATTERNS = PASS
-PERSISTENCE_BOUNDARIES = PASS
-INTEGRATION_CONTRACTS = PASS
-MEDIA_PRIVACY_BOUNDARIES = PASS
-BIOMETRIC_IDENTITY_BOUNDARY = PASS
-HUMAN_OBSERVATION_BOUNDARY = PASS
-EXTERNAL_EGRESS_BOUNDARY = PASS
-OAUTH_CONNECTION_BOUNDARY = PASS
-PROVIDER_SECRET_BOUNDARY = PASS
-EXTERNAL_SOURCE_PRIVACY_BOUNDARY = PASS
-EXTERNAL_EVENT_BOUNDARY = PASS
-EXTERNAL_LEARNING_BOUNDARY = PASS
-SHARED_DEVICE_BOUNDARY = PASS
-OPERATIONAL_CONTEXT_BOUNDARY = PASS
-OT_SAFETY_BOUNDARY = PASS
-CONFORMANCE_HARNESS = PASS
-CHAT_RUNTIME_DEPENDENCY = 0
-FOUNDATION_DUPLICATION = 0 material
+AUTOMATION_EXECUTION_BOUNDARY = PASS
+EVENT_SIGNAL_BOUNDARY = PASS
+BACKGROUND_IDENTITY_BOUNDARY = PASS
+EXECUTOR_CONTRACT_BOUNDARY = PASS
+OUTCOME_VERIFICATION_BOUNDARY = PASS
+AUTONOMY_SCOPE_BOUNDARY = PASS
 ```
 
 ---
@@ -605,347 +441,123 @@ Objetivo: provar aplicação independente antes da inteligência.
 
 ## C1.S1 — Copilot API skeleton
 
-- novo root;
-- Flask/app factory conforme padrão aprovado;
-- domain/application/interfaces/infrastructure/composition;
-- config/env;
-- structured logging;
-- `/health`;
-- tests.
+Novo root, Flask/app factory conforme padrão, layers, config/logging, `/health`, tests.
 
 ## C1.S2 — Authentication + Core context
 
-- JWT validation;
-- Core current-user adapter;
-- `/me/apps`/routes/permission context conforme necessidade;
-- no local RBAC duplication.
+JWT/Core current-user/apps/routes/permission context sem local RBAC duplication.
 
 ## C1.S3 — Copilot MFE skeleton
 
-- novo plugin root;
-- Vite/React;
-- Module Federation;
-- `@delpi/plugin-ui`;
-- shared React;
-- bootstrap/mount/unmount;
-- typed host props;
-- responsive/accessibility baseline;
-- media permission state foundation sem auto-capture;
-- biometric capability UI OFF until C0/C3 gates permit it;
-- external connection UI contracts only when C0 freezes ownership; no provider feature implementation here.
+Vite/React/Module Federation/plugin-ui/bootstrap/mount/unmount/typed host props/responsive/accessibility. Nenhuma media/biometric/external/automation execução automática.
 
 ## C1.S4 — Manifest + Core registration path
 
-- manifesto próprio;
-- minimal access/admin permissions;
-- routes;
-- backend metadata;
-- registration/update scripts conforme padrão vigente.
+Manifesto próprio, minimal permissions/routes/backend metadata/registration scripts.
 
 ## C1.S5 — Gateway + Compose dev/prod
 
-- API route própria;
-- MFE route própria;
-- services independentes;
-- no `depends_on` Chat;
-- env examples;
-- health;
-- callback/webhook paths apenas se C0 contract exigir;
-- streaming/media transport tuning apenas quando contract exigir.
+Rotas/serviços próprios, no Chat dependency, env/health; callback/webhook paths somente se C0 contract exigir.
 
 ## C1.S6 — Portal full-page mount
 
-- authorized user vê/abre app;
-- remoteEntry 200;
-- mount/unmount;
-- token → API;
-- F5/deep route;
-- no Chat running requirement.
+Authorized mount/F5/deep route/token→API/Chat independence.
 
 ## C1.S7 — Global Copilot host contract
 
-Implementar host mínimo no Portal para side panel/global entry, reutilizando o mesmo MFE.
-
-Nenhuma AI logic no Portal.
+Thin host; no AI logic no Portal.
 
 ## C1.S8 — Independence Gate
 
-Desligar/ausentar Chat runtime não pode quebrar bootstrap Copilot.
-
-```text
-OWN_API = PASS
-OWN_MFE = PASS
-OWN_MANIFEST = PASS
-OWN_GATEWAY_ROUTE = PASS
-OWN_COMPOSE = PASS
-JWT_CORE = PASS
-FEDERATED_MOUNT = PASS
-PLUGIN_UI = PASS
-NO_CHAT_IMPORT = PASS
-NO_CHAT_API_DEP = PASS
-NO_CHAT_DB_AUTHORITY = PASS
-INDEPENDENT_ROLLBACK = PASS
-```
+OWN API/MFE/Manifest/Gateway/Compose/JWT/Core/Federation/plugin-ui + NO_CHAT_* + independent rollback.
 
 ---
 
 # C2 — Portal + Operational Context + Platform Commands
 
-## C2.S1 — Workspace Context Store/contract
-
-Portal/MFEs publicam contexto bounded.
-
-Contexto operacional usa `EntityRef` para OP/máquina/produto/operação/lote/posto quando sources existem.
-
-External resource context pode usar `SourceRef`/bounded refs quando material; nunca carregar provider token ou permission truth.
-
-## C2.S2 — Copilot Global Bridge
-
-Thin host bridge; no planner/policy in Portal.
-
-## C2.S3 — Platform Capability Projection
-
-Core `/me/apps`/authorized routes → semantic platform capabilities.
-
-## C2.S4 — Commands
-
-- open app;
-- open route;
-- open entity;
-- view commands quando declarados.
-
-## C2.S5 — MFE context/deep-link SDK
-
-Helper compartilhável sem business logic.
-
-## C2.S6 — Shared-device/session context baseline
-
-Quando aplicável:
-
-- user current session;
-- device/workstation bounded metadata;
-- capability flags mic/camera/touch/screen/biometric-ready;
-- user-switch/context-clear semantics;
-- device identity não concede RBAC;
-- biometric candidate não é user session.
-
-## C2.S7 — Iframe integration baseline
-
-`PORTAL_ONLY` universal e bridge seguro para apps que suportarem.
-
-## C2.S8 — Context/security/generalization gate
-
-Unauthorized/stale/F5/logout/user-switch/unknown app/iframe/URL arbitrary/send-stream parity.
+WorkspaceContext bounded, Global Bridge, Platform Capability Projection, typed navigation commands, MFE context/deep-link SDK, shared-device baseline, iframe baseline e security/generalization gate. Automation context pode referenciar capability/execution status somente como bounded refs; não concede execution authority.
 
 ---
 
-# C3 — Intelligence Core + Multimodal/Biometric/External Foundations
+# C3 — Intelligence Core + Multimodal/Biometric/External/Decision Foundations
 
-Tudo nesta fase pertence à **Copilot API nova**.
+Tudo pertence à Copilot API nova.
 
-## C3.S1 — Model/provider abstraction
+## C3.S1–S10
 
-Port + adapter; baseline simples, sem Model Router avançado.
-
-## C3.S2 — Conversation/turn runtime
-
-Own session/conversation model, sem `agent_id` legado.
-
-## C3.S3 — Structured understanding
-
-Goals/entities/requirements/attachments/modality/source metadata.
-
-## C3.S4 — Copilot OpenAPI ingestion + Action Catalog foundation
-
-Implementação própria, OpenAPI-first.
-
-## C3.S5 — Capability retrieval/projection
-
-Permission-aware candidates.
-
-## C3.S6 — Expertise Catalog/retrieval
-
-Single Copilot; no departmental agents.
-
-## C3.S7 — Domain Playbooks
-
-Methodology, evidence criteria, not endpoints.
-
-## C3.S8 — Knowledge/RAG
-
-Copilot-owned retrieval with ACL/provenance.
-
-## C3.S9 — Multimodal + media foundations
-
-Implementar de forma incremental conforme escopo/evidence:
-
-```text
-document/native extraction
-OCR
-image/drawing vision
-speech-to-text
-text-to-speech
-short-video ingestion
-screen/camera evidence
-closed-set face recognition/verification when approved
-speaker recognition/diarization when approved
-bounded Human Observation when approved
-```
-
-Cada provider atrás de port/adapter justificado.
-
-Mídia gera `EvidenceRef`/`MediaRef` conforme foundation, nunca novo evidence model.
-
-Biometric result gera candidate association; não PermissionGrant.
-
-## C3.S10 — Media/biometric policy/session foundation
-
-Quando voice/camera/video/biometric entrarem:
-
-- explicit capture/identity-recognition state;
-- transient versus retained media;
-- retention class enforcement;
-- biometric template lifecycle;
-- threshold/unknown/correction/revocation;
-- liveness/anti-spoof conforme finalidade;
-- media session lifecycle;
-- provider data policy;
-- stop/cleanup behavior;
-- budget/size/duration limits.
+Mantêm provider abstraction, conversation runtime, structured understanding, OpenAPI Action Catalog, Capability retrieval, Expertise, Playbooks, Knowledge/RAG, multimodal/media/biometric foundations e policies conforme specs canônicas.
 
 ## C3.S11 — Internet Research foundation
 
-Implementar somente após C0 boundaries:
+SearchProviderPort + SafeWebFetchPort + Source/Evidence/freshness, safe egress/injection controls.
+
+## C3.S12 — External Connection foundation
+
+OAuth/API authorization → ExternalConnection → secretRef → provider adapter → normalized capabilities.
+
+## C3.S13 — Event/Decision Intelligence foundation
+
+Introduzir contratos e policies, sem material ACT:
 
 ```text
-research need detection
-→ SearchProviderPort
-→ normalized candidates
-→ SafeWebFetchPort
-→ extraction
-→ SourceRef/EvidenceRef
-→ freshness/relevance
-→ grounded synthesis/citations
+authorized event/signal
+→ EventEnvelope
+→ context need
+→ DecisionPathPolicy
+   FAST | OPERATIONAL | REASONING
+→ structured finding/decision candidate
 ```
 
 Requisitos:
 
-- safe egress;
-- SSRF/private/metadata protection;
-- redirect validation;
-- content size/type/time limits;
-- external prompt injection protection;
-- no secret/context exfiltration;
-- transparent source/provenance.
+- nem todo evento chama LLM;
+- FAST usa deterministic Policy/State Machine;
+- OPERATIONAL usa bounded reads/rules e modelo pequeno/classifier somente se necessário;
+- REASONING usa Graph/Knowledge/Expertise/LLM;
+- critical readiness com regra verificável não vira prompt-only decision;
+- event payload não altera policy/authorization.
 
-## C3.S12 — External Connection foundation
-
-Implementar lifecycle genérico sem planner hardcode por provider:
-
-```text
-connect request
-→ OAuth/API authorization
-→ callback validation
-→ ExternalConnection
-→ secretRef
-→ provider adapter
-→ normalized capabilities
-```
-
-Suportar semanticamente:
-
-```text
-USER_DELEGATED
-ORG_MANAGED
-SHARED_RESOURCE
-SERVICE_CONNECTION
-```
-
-Providers concretos só entram quando priorizados e aprovados.
-
-## C3.S13 — Evidence/epistemic synthesis
+## C3.S14 — Evidence/epistemic synthesis
 
 FACT/CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION.
 
-Visual/audio/human-observation/web/external finding não vira fato autoritativo sem source/regra adequada.
+## C3.S15 — Structured planner
 
-## C3.S14 — Structured planner
+Typed plans, sem RPA clicks/selectors/provider UI detail.
 
-Planner outputs typed plans, not technical content JSON leakage.
+## C3.S16 — Intelligence/generalization gate
 
-## C3.S15 — Intelligence/multimodal/biometric/external generalization gate
-
-Positive/sibling/negative/unknown/metamorphic/injection/budget/stream/voice/image/video/identity/external-provider parity.
-
-Biometric evals incluem false accept/reject, unknown-person handling, correction, revoke/delete, spoof/replay quando aplicável e permission-elevation negative.
-
-External evals incluem unknown provider, scope missing, revoked connection, unsafe URL, external injection, token isolation and provider-neutral planner.
+Positive/sibling/negative/unknown/metamorphic/injection/media/biometric/external/event-decision parity.
 
 ---
 
-# C4 — Business + External Reads + DELPI Business Graph
+# C4 — Business + External Reads + Business Graph + Operational Read Intelligence
 
-## C4.S1 — API inventory import/refresh
+- API inventory/import/refresh;
+- generic business reads;
+- external reads;
+- Evidence normalization;
+- Business Graph;
+- operational/external correlation;
+- cross-domain analysis.
 
-Domain OpenAPIs → Copilot Action Catalog.
+## C4 — additional operational intelligence requirement
 
-## C4.S2 — Generic business read executor
-
-Schema-valid, authorization-aware, outcome-normalized.
-
-## C4.S3 — External read adapters
-
-Habilitar reads somente para connections/scopes autorizados, por exemplo:
-
-```text
-email search/read
-calendar read
-file search/read
-messaging conversation read
-other provider read capabilities
-```
-
-Provider adapters normalizam source/resource/outcome sem expor tokens ao planner/LLM.
-
-## C4.S4 — Evidence from API/external results
-
-Freshness/source/outcome refs.
-
-External result material registra provider/resource/connection scope conforme privacy policy, sem vazar secret.
-
-## C4.S5 — Business Graph runtime
-
-EntityRef/RelationshipRef, permission-aware traversal, source fetch from owner.
-
-## C4.S6 — Operational/external context correlation
-
-Quando sources existirem, correlacionar:
+Read-only readiness/anomaly use cases podem calcular, por exemplo:
 
 ```text
-OP ↔ produto/revisão
-operação ↔ procedimento
-máquina ↔ manutenção/eventos
-lote/material ↔ fornecedor/qualidade
-media/evidence ↔ entity refs
-person/user participation refs ↔ session/evidence only when necessary and authorized
-external email/file/calendar/message ↔ EntityRef/Case/Task via SourceRef when authorized
+invoice readiness
+production report plausibility
+stock risk
+supplier delay risk
+machine downtime context
 ```
 
-Sem duplicar master data, mailbox/file repositories ou criar pessoa como Graph authority paralela ao Core.
-
-## C4.S7 — Cross-domain/external analysis
-
-Graph + Domain APIs + external sources + internet research + expertise + evidence.
-
-## C4.S8 — Unknown-provider/generalization gate
-
-No endpoint/provider/entity hardcode.
-
-Novo provider/connector conforme contrato não pode exigir branch semântica central no planner.
+Sem side effect nesta fase. Resultado deve distinguir FACT/CALCULATION/HYPOTHESIS e referenciar authoritative sources.
 
 ---
 
-# C5 — Governed Business/External Writes + Durable Work Foundation
+# C5 — Governed Business/External/Automation Writes + Durable Work Foundation
 
 ## C5.S1 — Decision Gate Engine
 
@@ -953,169 +565,144 @@ Risk/sensitivity/impact/hash/approval.
 
 ## C5.S2 — Generic business write executor
 
-Final RBAC/policy revalidation and idempotency.
+Final RBAC/policy revalidation/idempotency.
 
 ## C5.S3 — External write executor/adapters
 
-Ações como:
+Draft/send/calendar/message/file actions conforme `55/56`.
+
+## C5.S4 — Automation Capability Registry/Projection
+
+Registrar/mapping versionado de semantic capability para executor disponível:
 
 ```text
-email draft/send
-calendar create/update
-message send
-file create/update
+capabilityRef
+→ executorRef/version/type
+→ input/output schema
+→ pre/postconditions
+→ timeout/retry/idempotency
+→ owner/environment/status
 ```
 
-são capabilities separadas e provider-scoped.
+Planner nunca recebe click/selector/coordenada.
 
-Regras:
+## C5.S5 — Executor Ports/Adapters
 
-- connection/scope vigente;
-- policy/Decision Gate quando material;
-- `draft != send`;
-- recipient/target/payload preview quando necessário;
-- provider-specific constraints no adapter;
-- no blind retry;
-- verified external outcome.
-
-## C5.S4 — Outcome verification
-
-No ambiguous success narrative para Domain API ou provider externo.
-
-## C5.S5 — WorkflowPlan runtime
-
-DAG + canonical capability executor.
-
-## C5.S6 — Checkpoints/waits
-
-`wait_user`, `wait_approval`, `wait_event`, timeouts/cancel.
-
-## C5.S7 — Modality/source-to-action governance
-
-Candidate actions originadas de:
+Implementar somente executors priorizados por evidence:
 
 ```text
-text
-voice
-meeting transcript
-frontline session
-visual finding
-human observation
-web research
-email/message/file/calendar source
+Domain/API Executor
+Function/Script Executor
+RPA Executor
+Computer-Use Executor only if already justified
+Notification Executor
+Human Task Adapter
 ```
 
-entram no mesmo planner/Decision Gate/executor apropriado. Nenhuma modality, external content ou biometric match executa write por canal paralelo.
+API permanece preferida quando owner contract suporta a operação.
 
-## C5.S8 — crash/retry/idempotency gate
+## C5.S6 — AutomationExecution lifecycle
 
-No duplicate write, inclusive após repeated utterance/event/resume/provider timeout.
+```text
+QUEUED → RUNNING → SUCCEEDED|FAILED|AMBIGUOUS|CANCELLED|TIMED_OUT
+```
+
+Correlation/inputHash/attempt/idempotency/error/result refs. RPA worker/queue/lease/heartbeat somente se RPA for priorizado.
+
+## C5.S7 — Outcome verification
+
+Technical success é separado de business postcondition. Verificar via Domain API/event/authoritative record sempre que material.
+
+## C5.S8 — Durable Workflow runtime/checkpoints/waits
+
+Workflow continua único orquestrador de capabilities/executors.
+
+## C5.S9 — Modality/source/event-to-action governance
+
+Texto, voz, meeting, frontline, web, external message ou event entram no mesmo Decision/Workflow/executor path. Nenhuma origem cria canal de write paralelo.
+
+## C5.S10 — crash/retry/idempotency gate
+
+No duplicate API/external/RPA effect after timeout/retry/resume.
 
 ---
 
-# C6 — Product Work + Proactivity + Meeting/Frontline + External Events + Ecosystem
+# C6 — Product Work + Proactivity + Meeting/Frontline + Automation Hub + Ecosystem
 
-## C6.S1 — Copilot Task
+Task, Case, Room, Inbox, provider events, external subscriptions, Knowledge/Learning, Expertise Studio, AI-ready, Meeting e Frontline seguem specs existentes.
 
-## C6.S2 — Copilot Case + Evidence Board
+## C6 — Watch evolution
 
-## C6.S3 — Interaction Room integration
+Watch modes canônicos:
 
-Reuse/extend existing owner if C0 proves it.
+```text
+OBSERVE
+ADVISE
+PREPARE
+```
 
-## C6.S4 — Copilot Inbox
+`ACT` permanece bloqueado em C6.
 
-Work/decision/watch/meeting/external-event projection.
+`PREPARE` pode montar action args/preview/draft/work plan sem side effect.
 
-## C6.S5 — Watch OBSERVE/ADVISE
+## C6 — Automation & Execution Hub product/admin
 
-Event-driven where available.
+Quando C5 executor foundation estiver comprovada, expor gradualmente:
 
-External provider events entram via validated webhook/subscription/push adapters → EventEnvelope → dedupe/correlation.
+- Automation Catalog/mappings;
+- executions/queue/status;
+- worker health/capabilities/environment quando RPA existir;
+- failures/ambiguous outcomes;
+- exceptions waiting human decision;
+- version/owner/autonomy policy;
+- success versus verified-outcome metrics;
+- kill-switch status;
+- Task/Case/Workflow correlation.
 
-## C6.S6 — External subscription/reconciliation lifecycle
+Hub não cria segundo Workflow engine nem segundo planner.
 
-Quando provider suportar:
+## C6 — Notifications/escalations
 
-- subscribe/watch;
-- validate webhook authenticity;
-- renew before expiry;
-- handle duplicate/out-of-order events;
-- detect permission revoked;
-- missed-event reconciliation/full sync fallback;
-- truthful stale/degraded state.
+Outcome/event/Watch podem notificar por Minha DELPI, email, Teams, WhatsApp Business e channels aprovados, com recipient/severity/dedupe/SLA/escalation policy.
 
-## C6.S7 — Organizational Knowledge
-
-Reference/Decision/Experience/Solution Patterns.
-
-External source promotion respeita privacy/licensing/freshness/owner.
-
-## C6.S8 — Governed Learning
-
-feedback/meeting/process/frontline/external source → candidate → eval → review → publish.
-
-Não persistir worker profiling secreto nem transformar personal mailbox/message/web page em corporate truth automaticamente.
-
-## C6.S9 — Expertise Studio
-
-## C6.S10 — AI-ready app/connector readiness
-
-Context/Entity/deep-link/action/OpenAPI readiness + external connector capability/connection/event readiness quando aplicável.
-
-## C6.S11 — Meeting Mode
-
-Entregar progressivamente:
-
-- explicit start/stop;
-- voice/transcript;
-- live grounded business/external queries;
-- camera/screen/media when authorized;
-- closed-set face/speaker participant recognition quando habilitado;
-- ambiguity/correction UX;
-- decisions/pending topics;
-- candidate actions;
-- ata viva;
-- Task/Case/Room linkage;
-- next-meeting continuity;
-- retention/consent/identity-recognition/external-source visibility.
-
-## C6.S12 — Frontline Mode
-
-Entregar progressivamente:
-
-- simplified/large-touch UI;
-- shared-device session isolation;
-- biometric identity assistance quando habilitada;
-- OP/machine/product/operation context;
-- hands-free voice + fallback;
-- camera/image assistance;
-- bounded Human Observation of process patterns;
-- drawing/procedure/training help;
-- issue/escalation actions through Domain APIs;
-- knowledge candidate capture;
-- no hidden worker profiling;
-- no physical machine command path.
-
-## C6.S13 — ecosystem/proactivity/meeting/frontline/biometric/external gate
-
-Provar Meeting/Frontline/external-source parity de RBAC/policy/Evidence, accessibility, privacy, shared-device isolation, biometric correction/revocation, no sensitive inference, no automatic employment decisions, connection ownership isolation, external event reliability e learning governance.
+Manual exception deve pausar/retomar o mesmo Durable Workflow.
 
 ---
 
-# C7 — Advanced Realtime + External Proactivity + Autonomy + Optimization + Rollout
+# C7 — Autonomous Operations + Advanced Realtime + External Proactivity + Optimization + Rollout
 
 ## C7.S1 — Autonomy L0–L5
 
-L5 OFF default.
+Autonomia é capability/context/risk scoped. L5 OFF default.
 
-Autonomia empresarial não concede OT, não reduz biometric/user authorization requirements e não torna external write irrestrito.
+## C7.S2 — Watch ACT / Autonomous Operations
 
-## C7.S2 — Watch ACT
+Selecionados somente após allowlist/policy/budgets/identity/revalidation/kill switch:
 
-Allowlisted/policy/Decision Gate.
+```text
+Event
+→ Watch ACT
+→ context/decision path
+→ AutonomyPolicy
+→ Durable Workflow
+→ semantic capability
+→ Executor
+→ verified Outcome
+→ Evidence/Audit
+→ Notification
+```
 
-External ACT exige provider/connection/action allowlist, budgets, target constraints, kill switch e verified outcome.
+Anchor obrigatório quando faturamento autônomo fizer parte do declared scope:
+
+```text
+ready-to-invoice
+→ deterministic readiness
+→ autonomy allowed
+→ billing.invoice.issue
+→ API/RPA executor
+→ verify invoice exists/valid
+→ notify
+```
 
 ## C7.S3 — What-if/Simulation
 
@@ -1127,60 +714,27 @@ Only after baseline metrics.
 
 ## C7.S5 — Advanced realtime/media/biometric
 
-Somente com evidence real de valor e foundation já comprovada:
+Somente com evidence real.
 
-- continuous voice session optimization;
-- advanced video/frame sampling;
-- optimized biometric matching;
-- edge processing de mídia/biometria quando necessário e aprovado;
-- concurrency/backpressure;
-- network degradation;
-- cost/latency budgets;
-- room devices/wearables como extensões futuras.
+## C7.S6 — Advanced external automation/browser/computer-use
 
-## C7.S6 — Advanced external automation/browser
-
-Somente com evidence real e scope explícito:
-
-- background research tasks;
-- proactive connector reads;
-- selected external ACT;
-- browser automation only when API/structured integration is unavailable and policy permits;
-- domain/session sandboxing;
-- no arbitrary intranet access;
-- no secret exposure;
-- kill switch and budgets.
+Somente com evidence e scope explícito. Computer-use é sandboxed/allowlisted/credential-isolated, same Policy/Decision semantics, kill switch, audit; não substitui API/RPA determinístico por conveniência.
 
 ## C7.S7 — Industrial/OT safety gate
 
-Default permanece **NO ACTUATION**.
-
-Qualquer future OT actuation só entra após iniciativa/gate explicitamente aprovado contendo:
-
-```text
-industrial owner
-risk assessment
-typed deterministic commands
-allowlist
-machine state/preconditions
-human authorization as required
-independent safety PLC/interlocks
-simulation/test environment
-fail-safe/kill switch
-audit
-```
-
-Sem isso, todo free-form LLM→machine command = BLOCK.
+Default NO ACTUATION. Qualquer future physical actuation exige iniciativa/gate separado com industrial owner, risk assessment, typed deterministic commands, allowlist, machine-state checks, human authorization conforme risco, independent safety PLC/interlocks, simulation/test, fail-safe/kill switch e audit.
 
 ## C7.S8 — Scale/performance/cost
 
+Incluir event throughput, decision latency, queue latency, worker utilization, executor cost, outcome verification latency e autonomy incident metrics.
+
 ## C7.S9 — Progressive rollout
 
-Internal → cohort → reads → external research/reads → writes → external writes → durable/proactive → Meeting/Frontline → governed biometrics → selected autonomy/realtime/external ACT.
+Internal → reads → governed writes → executor foundation → PREPARE watches → automation admin → selected ACT → capability-scoped L5 → advanced computer-use/realtime somente quando justified.
 
 ## C7.S10 — Final verification
 
-Security, privacy, accessibility, unknown/sibling/metamorphic, rollback, Chat independence, biometric governance, external-source governance, no sensitive inference, OT boundary.
+Security/privacy/accessibility/unknown/metamorphic/rollback/Chat independence/biometric/external/automation/OT boundaries.
 
 ## C7.S11 — Product Complete
 
@@ -1188,43 +742,37 @@ No material unresolved requirements for declared scope.
 
 ---
 
-## 6. Itens antigos explicitamente removidos do roadmap
+## 6. Itens explicitamente fora do roadmap/default scope
 
-Não pertencem mais ao Copilot:
-
-```text
-migrar AgentSpecializationService do Chat
-remover userActivatedAgent no Chat
-substituir softAgentHandoff no Chat
-migrar Chat sessions/agent_id
-esperar Onda J/llm-json-decoupling do Chat
-fazer cutover do Minha DELPI Chat
-```
+Antigas migrações de agents do Chat permanecem fora do escopo.
 
 Também não pertence ao default scope:
 
 ```text
-open-world/indiscriminate facial recognition
-emotion/personality/character inference from face or voice
-hidden employee surveillance/scoring
-automatic employment decisions based on biometrics
-unbounded raw-media/biometric-template retention
-unrestricted arbitrary web fetch/browser access
-provider tokens exposed to LLM/MFE
-personal external account data promoted automatically to organization
-implicit send from generated draft
-personal WhatsApp Web scraping/session automation
+open-world facial recognition
+psychological/personality inference
+hidden employee surveillance
+unbounded raw media/biometric retention
+unrestricted web/browser access
+provider tokens in LLM/MFE
+personal external source auto-promotion
+implicit draft→send
+personal WhatsApp Web scraping
+planner emitting raw RPA clicks/selectors
+RPA as business-rule authority
+one global unrestricted L5 mode
+event payload directly executing write
+blind retry after ambiguous RPA/API write
+computer-use with unrestricted corporate-network access
 free-form LLM→machine control
 Copilot replacing industrial safety interlocks
 ```
-
-Reconhecimento fechado de usuários enrolled e Human Observation objetiva pertencem ao roadmap somente sob `54`. Internet Research e external connectors pertencem ao roadmap somente sob `55`.
 
 ## 7. Protocolo por subetapa
 
 ```text
 REVALIDATE HEAD/WORKTREE
-→ read 16/17/20/25/49/50/51/52/53/54/55 + spec applicable
+→ read 16/17/20/25/49/50/51/52/53/54/55/56/57 + spec applicable
 → dependency gate
 → READY_TO_EXECUTE
 → baseline
@@ -1232,8 +780,8 @@ REVALIDATE HEAD/WORKTREE
 → producer/consumer wiring
 → unit/contract/integration
 → positive/sibling/negative
-→ security/RBAC/privacy/biometric/external/safety
-→ generalization/metamorphic/unknown when applicable
+→ security/RBAC/privacy/biometric/external/automation/safety
+→ generalization/metamorphic/unknown
 → independence check against Chat
 → architecture conformance
 → residual search
@@ -1244,28 +792,29 @@ REVALIDATE HEAD/WORKTREE
 
 ## 8. Regra anti-refatoração
 
-Antes de criar service/schema/table/framework/media pipeline/device context/biometric store/external connector/web fetcher/browser automation/OT adapter:
+Antes de criar service/schema/table/framework/media pipeline/device context/biometric store/external connector/web fetcher/event bus/RPA hub/executor registry/worker queue/computer-use/browser automation/OT adapter, provar:
 
-1. pertence ao Copilot ou a platform/domain/external/industrial owner existente?
-2. existe neutral shared owner real?
-3. isso cria dependency no Chat?
-4. isso duplica Core/RBAC/domain/external-provider/industrial safety rules?
-5. shared primitive já existe?
-6. WorkspaceContext/EntityRef/SourceRef/EvidenceRef já resolvem o conceito?
-7. próxima fase conhecida exigirá redesign?
-8. pattern é justificado pelo `49`?
-9. sibling/unknown provider funciona sem hardcode?
-10. raw media/template/external cache persistence é realmente necessária?
-11. modality/biometric/external content introduz bypass de permission/Decision?
-12. device identity ou biometric candidate está sendo confundido com authenticated user?
-13. Human Observation está virando inferência psicológica/sensível ou decisão trabalhista automática?
-14. token/credential está escapando do adapter/vault boundary?
-15. read e write externos estão sendo confundidos?
-16. fonte pessoal está virando authority/Knowledge organizacional implicitamente?
-17. web fetch/browser pode alcançar private network/metadata sem policy?
-18. atuação física está sendo confundida com Business Action?
+1. owner real?
+2. neutral shared owner existente?
+3. cria dependency no Chat?
+4. duplica Core/RBAC/domain/provider/safety authority?
+5. shared primitive já resolve?
+6. próxima fase exige redesign?
+7. pattern justificado pelo `49`?
+8. sibling/unknown provider/executor funciona sem planner hardcode?
+9. persistence realmente necessária?
+10. token/credential fica protegido?
+11. read/write e PREPARE/ACT continuam separados?
+12. event payload está sendo confundido com permission/action authority?
+13. deterministic rule suficiente está sendo substituída desnecessariamente por LLM?
+14. API autoritativa existe e mesmo assim RPA está sendo escolhido sem justificativa?
+15. technical success está sendo confundido com business Outcome?
+16. automation background identity está explícita/auditável?
+17. autonomy está scoped ou virou global?
+18. computer-use pode atingir app/network fora do allowlist?
+19. atuação física está sendo confundida com Business Action?
 
-Se 3, 4, 7, 11, 12, 13, 14, 15, 16, 17 ou 18 = sim: **não implementar** até corrigir o desenho.
+Se houver violation material: **não implementar** até corrigir o desenho.
 
 ## 9. Primeira ordem efetiva
 
@@ -1281,4 +830,4 @@ C0.S0
 → C1.S1
 ```
 
-Nenhuma intelligence/media/biometric/Internet/connector/frontline feature precede a prova de aplicação standalone e dos boundaries de privacy/device/identity/egress/credentials/external-data/OT.
+Nenhuma intelligence/media/biometric/Internet/connector/Teams/RPA/automation/frontline feature precede a prova da aplicação standalone e dos boundaries de privacy/device/identity/egress/credentials/event/execution/outcome/autonomy/OT.
