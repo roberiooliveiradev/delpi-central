@@ -5,11 +5,12 @@
 **Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **State:** [`21-data-and-state-model.md`](./21-data-and-state-model.md)  
 **Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
-**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)
+**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
+**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)
 
 ## 1. Objetivo
 
-Fazer o Cursor classificar o problema e aplicar um padrão já definido, em vez de inventar arquitetura por feature e refatorar depois.
+Fazer o Cursor classificar o problema e aplicar pattern já definido, em vez de inventar arquitetura por feature/provider.
 
 ```text
 problem
@@ -23,27 +24,11 @@ problem
 
 ## 2. Product boundary primeiro
 
-Patterns nunca podem violar o boundary standalone.
+Copilot code pertence à nova Copilot API/MFE. Platform owners continuam Portal/Core/Keycloak/Gateway/plugin-ui/Domain APIs e infra neutra aprovada.
 
-```text
-Copilot code belongs to:
-- minha-delpi-copilot-api
-- plugins/minha-delpi-copilot
+Chat internals não são shared library.
 
-Platform shared owners:
-- Portal
-- Core API
-- Keycloak
-- Gateway
-- plugin-ui
-- federation shared config
-- Domain APIs
-- approved neutral shared packages/infrastructure
-```
-
-`minha-delpi-ai-api` e `plugins/minha-delpi-chat` **não são shared libraries**.
-
-Copiar/importar internals do Chat não é reuse; é product coupling e deve falhar.
+External provider SDK/API também não vira Domain authority; ele entra por adapter.
 
 ## 3. Architecture style
 
@@ -51,23 +36,14 @@ Obrigatório:
 
 ```text
 Clean Architecture
-+
-Ports & Adapters / Hexagonal
-+
-Pragmatic DDD
-+
-Event-Driven only for real events
-+
-State Machines for nontrivial lifecycle
-+
-Light CQRS only when read/write asymmetry is material
++ Ports & Adapters / Hexagonal
++ Pragmatic DDD
++ Event-Driven only for real events
++ State Machines for nontrivial lifecycle
++ Light CQRS only when materially justified
 ```
 
-Princípio:
-
-> use o menor pattern que preserve ownership, testabilidade, segurança, privacidade, generalização e evolução.
-
-Sem DDD cerimonial, CQRS total, Event Sourcing, Saga/Factory/Strategy “por moda”.
+Use o menor pattern que preserve ownership, testabilidade, segurança, privacidade, generalização e evolução.
 
 ## 4. Dependency rule
 
@@ -83,90 +59,61 @@ Infrastructure
 Composition Root wires concrete implementations.
 ```
 
-Domain/Application não importam:
-
-- Flask;
-- SQLAlchemy;
-- PostgreSQL driver;
-- HTTP client concreto;
-- LLM/provider SDK concreto;
-- speech/vision/media/biometric SDK concreto;
-- WebRTC/browser concrete transport;
-- vector DB concreto;
-- event broker concreto;
-- Chat modules;
-- Portal React source.
+Domain/Application não importam Flask/SQLAlchemy/DB driver/HTTP client/LLM SDK/media SDK/OAuth provider SDK/search SDK/Microsoft Graph SDK/Google SDK/WhatsApp SDK/event broker/Chat modules/Portal source.
 
 ## 5. Backend layers
 
 ### Domain
 
-Pode conter:
+Entities/Aggregates somente com identity/lifecycle real, Value Objects, invariants, pure Policies/Specifications e real Domain Events.
 
-- Entity/Aggregate quando há identity/lifecycle próprio;
-- Value Objects;
-- invariants;
-- pure Domain Policies;
-- Specification when genuinely combinable;
-- Domain Events as domain facts.
-
-Não acessa DB/HTTP/LLM/media/biometric SDK/env/framework.
+Sem DB/HTTP/provider/credential/framework.
 
 ### Application
 
-- Use Cases/Application Services;
-- orchestration;
-- ports;
-- Commands/Queries;
-- state transition use cases;
-- policy invocation;
-- transaction boundary abstractions;
-- media/session orchestration only through ports;
-- biometric identity resolution through ports;
-- Meeting/Frontline use cases without provider details.
+Use Cases/Application Services, Commands/Queries, ports, orchestration, policy invocation, transaction boundaries e lifecycle transitions.
 
-Sem SQL, URLs, provider names or transport concerns.
+Examples:
+
+```text
+ResearchExternalInformation
+CreateExternalConnection
+RefreshExternalConnection
+ReadExternalResource
+DraftExternalMessage
+SendExternalMessage
+HandleProviderEvent
+ReconcileExternalSubscription
+PromoteExternalKnowledgeCandidate
+```
+
+Sem provider URL, SDK, token ou concrete API detail.
 
 ### Interfaces
 
-- Flask controllers/routes;
-- request/response DTOs;
-- event/stream/media transport boundaries;
-- schema validation;
-- transport mappers.
+Controllers/routes/DTOs/schema validation/event/webhook boundaries/mappers.
+
+OAuth callback e webhook são transport boundaries; business/policy logic não vive no controller.
 
 ### Infrastructure
 
-- SQLAlchemy/PostgreSQL adapters;
+- DB repositories;
 - Core/Domain HTTP adapters;
 - OpenAPI importer/executor;
-- LLM/embedding adapters;
-- RAG/vector adapters;
-- OCR/Vision adapters;
-- STT/TTS adapters;
-- face/speaker biometric adapters;
-- liveness/anti-spoof adapters quando necessários;
-- realtime media transport adapters;
-- media/file/object storage adapters;
-- protected biometric-template storage adapter;
-- device-context adapters;
-- event broker/outbox;
-- telemetry/cache/materializers.
+- LLM/RAG/media/biometric adapters;
+- Search provider adapters;
+- Safe Web Fetch adapter;
+- OAuth/provider adapters;
+- secret/vault adapter;
+- Microsoft/Google/WhatsApp/other concrete connectors;
+- event/webhook/subscription adapters;
+- storage/cache/telemetry.
 
 ### Composition Root
 
-Normal place for:
-
-```text
-config
-→ create adapters/repositories
-→ create policies/use cases
-→ register controllers/handlers
-```
+Configura concrete adapters/repositories/policies/use cases/controllers. Feature use cases não criam provider SDK diretamente.
 
 ## 6. Frontend architecture
-
-Base:
 
 ```text
 ui
@@ -174,86 +121,41 @@ state
 data
 ```
 
-Copilot MFE may organize feature folders inside those responsibilities.
+UI apresenta connection state/scopes/source provenance/draft/send/Decision UX. State local não vira provider credential store. Data layer usa Copilot API; browser não recebe refresh token de provider.
 
-### UI
-Rendering/accessibility/user events/presentation/media/biometric controls only.
+Durable ExternalConnection/Subscription state vive no backend/secret owner.
 
-### State
-Local/conversation/workspace/media-session UI state. No durable business or identity authority.
-
-### Data
-Typed Copilot API clients, adapters, cache/query integration, contracts.
-
-State ownership:
-
-```text
-Server State          → query/cache layer
-Workspace State       → Portal/Copilot context adapter
-Conversation UI State → MFE + server refs
-Media UI State        → MFE/browser session state; durable refs in API if needed
-Biometric UI State    → candidate/result/consent display only; authority stays server-side/Core
-Local UI State        → component/hook
-Durable Work State    → Copilot API
-```
-
-Browser camera/mic permission state and biometric candidate are not authorization truth for business actions.
-
-## 7. Shared-code gate
-
-Before extracting/reusing code across products:
-
-```text
-1. Is the contract product-neutral?
-2. Are there 2+ real consumers?
-3. Is there a neutral owner/location?
-4. Can it version/test independently?
-5. Does reuse avoid importing Chat product internals?
-```
-
-If not, implement inside Copilot.
-
-Do not transform Chat into a library.
-
-## 8. Pattern Decision Matrix
+## 7. Pattern Decision Matrix
 
 | Problema | Pattern padrão | Limite |
 |---|---|---|
-| external dependency | Port + Adapter | default at external boundary |
-| application operation | Use Case / Application Service | one operational intent |
-| owned persistent aggregate/state | Repository | not for simple HTTP proxy |
-| complex lifecycle | State Machine | explicit transitions/invariants |
-| deterministic decision rules | Policy | structured input/output |
-| combinable reusable predicates | Specification | only when composition helps |
-| real interchangeable algorithms | Strategy | only with actual variation |
-| incompatible external/legacy shape | Adapter + Anti-Corruption Layer | protect canonical model |
-| gradual replacement of a real legacy integration | Strangler Fig | temporary + exit criteria |
-| visual/platform command | Command + Handler | generic by command type |
-| state + event atomicity | Transactional Outbox | only when required |
-| retry/replayable write | Idempotency | prefer domain-native support |
-| asynchronous reaction | Event-Driven | real event owner/schema required |
-| distributed transaction with compensation | Saga | real writes + real compensation |
-| unstable external integration | Timeout/Retry/Circuit Breaker | writes never blind-retry |
-| HTTP/event boundary | DTO + Mapper | no ORM contract leakage |
+| external dependency | Port + Adapter | boundary real |
+| application operation | Use Case/Application Service | one operational intent |
+| owned persistent state | Repository | not HTTP proxy |
+| complex lifecycle | State Machine | explicit transitions |
+| deterministic rule | Policy | structured input/output |
+| incompatible provider shape | Adapter + ACL | protect canonical model |
+| platform command | Command + Handler | typed generic target |
+| reliable state+event | Transactional Outbox | only when required |
+| retryable write | Idempotency | no blind retry |
+| asynchronous provider event | Event-Driven | real event owner/schema |
+| transport boundary | DTO + Mapper | no provider DTO leakage |
 | concrete wiring | Composition Root DI | simple composition |
-| config-dependent construction | Factory | only when construction varies |
-| complex invariant-heavy creation | Builder/Factory Method | simple constructor first |
-| materially different read/write models | light CQRS | no default duplication |
-| speech/vision/provider integration | Port + Adapter | provider SDK stays infrastructure |
-| media ingestion | Pipeline + bounded stages | no unbounded in-request processing |
-| biometric identity | Port + Adapter + Policy + protected template boundary | candidate identity, never RBAC source |
-| biometric enrollment | Use Case + lifecycle/state + protected storage | explicit/revocable/versioned |
-| Human Observation | bounded observation pipeline + Evidence normalization | objective process signals only |
-| large/long media | Async Job/Workflow when required | avoid blocking synchronous request |
-| realtime media | Session + bounded transport adapter | explicit limits/backpressure |
-| meeting lifecycle | Use Cases + State Machine if persisted | no second backend/runtime |
-| frontline lifecycle | Use Cases + State Machine if persisted | same Copilot runtime |
-| shared-device context | Adapter + bounded session contract | device != user identity |
-| media retention/consent | Policy + lifecycle metadata | not free-form prompt |
-| industrial telemetry | Read Adapter + Entity/Evidence mapping | source remains OT/domain owner |
-| machine actuation | separate industrial safety architecture | never generic LLM executor by default |
+| media processing | bounded Pipeline | provenance/budgets |
+| realtime media | Session + transport adapter | explicit limits |
+| biometric provider | Port + Adapter | candidate identity only |
+| public web search | Search Port + Adapter | provider-neutral results |
+| public web fetch | Safe Fetch Port + Policy | egress boundary required |
+| OAuth connection | Use Cases + State Machine + Credential Port | provider adapter owns details |
+| provider credential | Secret/Vault Adapter | never normal domain field |
+| connector capability | semantic capability + Adapter | planner provider-neutral |
+| provider event | Webhook/Subscription Adapter → EventEnvelope | authenticity/dedupe/reconciliation |
+| external cache | bounded cache/materialization | scoped, TTL, never authority |
+| external communication write | Use Case + Policy/Decision + Adapter | `draft != send` |
+| browser fallback | sandboxed adapter | only if justified; not default |
+| OT actuation | separate industrial safety architecture | never generic LLM executor |
 
-## 9. Use Case Pattern
+## 8. Use Case Pattern
 
 ```text
 Controller/Event Handler
@@ -263,130 +165,78 @@ Controller/Event Handler
 → Adapter
 ```
 
-Examples:
+Evitar `CopilotService`, `MultimodalService` ou `ConnectorService` god objects.
 
-- ResolveWorkspaceContext;
-- ImportOpenApiProvider;
-- RetrieveCapabilities;
-- TraverseBusinessGraph;
-- EvaluateDecisionGate;
-- ExecuteBusinessAction;
-- ResumeWorkflow;
-- CreateCopilotCase;
-- CreateWatch;
-- StartMeetingSession;
-- StopMeetingSession;
-- CreateMeetingArtifact;
-- StartFrontlineSession;
-- IngestMedia;
-- EnrollBiometricIdentity;
-- ResolveBiometricIdentity;
-- RevokeBiometricEnrollment;
-- CreateProcessObservation;
-- CreateKnowledgeCandidate.
+## 9. Ports & Adapters
 
-Avoid one monolithic `CopilotService`, `MultimodalService` or `BiometricService` god object.
-
-## 10. Ports & Adapters
-
-Especially for:
+External boundaries que podem justificar ports quando implementadas:
 
 ```text
-Core API
-Domain APIs
-OpenAPI
-LLM/providers
-Knowledge/vector store
-Database
-Event transport
-Notifications
-Storage
-OCR/Vision
-Speech-to-Text
-Text-to-Speech
-Face identity
-Speaker identity
-Liveness/anti-spoof when needed
-Human Observation
-Realtime media transport
-Device context
-Business Graph source adapters
-Industrial telemetry/read sources
+CoreApiPort
+DomainActionPort
+SearchProviderPort
+SafeWebFetchPort
+ExternalConnectionPort
+ExternalCredentialPort
+ExternalResourcePort
+ExternalActionPort
+ExternalSubscriptionPort
+SecretStorePort
+Media/Vision/Speech/Biometric ports
 ```
 
-Potential media/biometric ports are **candidates**, not mandatory boilerplate. Each must pass Abstraction Gate.
+Não criar todos antecipadamente. Cada port passa pelo Abstraction Gate.
 
-## 11. Repository Pattern
+Provider-specific adapters:
 
-Use only for Copilot-owned lifecycle/persistent authority, e.g. when proven:
+```text
+MicrosoftGraphAdapter
+GoogleWorkspaceAdapter
+WhatsAppBusinessAdapter
+...
+```
+
+não contaminam planner/domain/application com provider semantics.
+
+## 10. Repository Pattern
+
+Repository somente para state/lifecycle que o Copilot possui:
 
 - Conversation;
-- Expertise/Playbook catalogs;
-- Workflow;
-- Task/Case;
-- Watch;
-- Meeting session/artifact metadata if durable;
-- Frontline session metadata if durable;
-- Biometric enrollment/template metadata if Copilot is approved owner;
-- Graph relationship materialization.
+- Expertise/Playbook;
+- Workflow/Task/Case/Watch;
+- ExternalConnection metadata se Copilot-owned;
+- ExternalSubscription state;
+- Meeting/Frontline metadata quando durable;
+- Graph materialization quando provada.
 
-Wrong:
+Não criar `GmailRepository` ou `OutlookRepository` apenas para encapsular HTTP. Use provider adapter.
 
-```text
-PurchaseOrderRepository that merely calls purchase API
-RawVideoRepository created only because video exists
-PersonRepository duplicating Core users
-```
+## 11. Anti-Corruption Layer
 
-Correct:
+Use para Core/domain/provider/legacy shapes incompatíveis. Normalize provider resources/capabilities para contratos Copilot sem espalhar Graph/Gmail/WhatsApp vocabulary no core.
 
-```text
-DomainApiAdapter / generic Business Action executor
-MediaStoragePort only when durable media storage is actually required
-BiometricEnrollmentRepository only if Copilot truly owns enrollment lifecycle
-```
+Chat não é legacy sendo migrado para Copilot; não usar Strangler entre Chat e Copilot.
 
-## 12. Adapter / Anti-Corruption Layer
+## 12. State Machine
 
-Use for:
-
-- Core contract → Copilot canonical context;
-- MFE/Portal host contract;
-- iframe messages;
-- Domain API/provider variations;
-- media/speech/vision/biometric providers;
-- device/workstation context;
-- existing room/notification infrastructure;
-- industrial telemetry sources;
-- any actual legacy system that exposes incompatible shape.
-
-**Not used to migrate the Minha DELPI Chat into Copilot.** Chat is separate product, not a legacy implementation being strangled by this roadmap.
-
-## 13. State Machine
-
-Required for lifecycle with transition rules/waits/expiry/reopen.
-
-Examples:
+Required para lifecycle real, por exemplo:
 
 ```text
-Workflow: PLANNED → RUNNING → WAITING_* → RUNNING → terminal
-Decision: REQUESTED → PENDING → APPROVED|REJECTED|EXPIRED|INVALIDATED
-Case: OPEN → INVESTIGATING/WAITING/ACTIONING → RESOLVED/CLOSED/REOPENED
-Expertise content: DRAFT → REVIEW → TESTING → PUBLISHED → DEPRECATED
-Watch: ACTIVE → TRIGGERED/COOLDOWN → ACTIVE | EXPIRED | DISABLED
-Meeting: DRAFT → ACTIVE → ENDING → COMPLETED|FAILED|CANCELLED when persistence justified
-MediaSession: CREATED → CAPTURING → PROCESSING → STOPPED/terminal when lifecycle justified
-BiometricEnrollment: PENDING → ACTIVE → REVOKED|DELETED when lifecycle is owned by Copilot
-FrontlineSession: READY → ACTIVE → WAITING_HELP/ESCALATED → terminal when durable state justified
+ExternalConnection:
+PENDING_AUTH → ACTIVE → EXPIRED|REAUTH_REQUIRED|REVOKED|DISABLED|ERROR
+
+ExternalSubscription:
+CREATING → ACTIVE → RENEWING → ACTIVE|EXPIRED|REAUTH_REQUIRED|DISABLED|ERROR
 ```
 
-Do not create tables/state machines solely because these examples exist; prove lifecycle/persistence need first.
+Também aplica a Workflow/Decision/Case/Watch/Meeting/Media/Biometric quando persistence/lifecycle forem reais.
 
-Do not scatter lifecycle rules across `if status` branches.
+Não espalhar state transition em `if status` aleatórios.
 
-## 14. Policy / Specification
+## 13. Policy
 
-Policies:
+Policies possíveis quando justificadas:
 
 ```text
 DecisionGatePolicy
@@ -394,296 +244,217 @@ AutonomyPolicy
 RetryPolicy
 RetentionPolicy
 MediaCapturePolicy
-ConsentPolicy
 BiometricIdentityPolicy
-HumanObservationPolicy
-CapabilityAvailabilityPolicy
+ExternalEgressPolicy
+ExternalConnectionPolicy
+ExternalDataSharingPolicy
+ExternalActionPolicy
+ExternalKnowledgePromotionPolicy
 ComputePolicy
 IndustrialSafetyBoundaryPolicy
 ```
 
-Form:
+Policy é deterministic structured decision, não prompt livre.
+
+## 14. Internet Research Pattern
 
 ```text
-structured input → structured decision
-```
-
-Policy is not a free-form prompt.
-
-Biometric policy can narrow matching/usage; it cannot grant RBAC.
-
-HumanObservationPolicy forbids subjective/sensitive inference classes defined in `54`.
-
-Industrial safety authority remains with industrial owner; Copilot policy can only further restrict, never relax that owner.
-
-## 15. Command + Handler
-
-Platform actions:
-
-```text
-PlatformCommand
-→ validator/authorized target resolver
-→ generic handler registry
-→ handler by command type
-```
-
-Allowed:
-- OpenAppCommandHandler;
-- OpenRouteCommandHandler;
-- SetViewCommandHandler.
-
-Forbidden:
-- OpenCommercialPortalHandler;
-- handler per app/customer/provider.
-
-Do not reuse generic PlatformCommand handlers for physical machine actuation.
-
-## 16. Media Pipeline Pattern
-
-Media processing follows bounded stages, not a monolithic provider call:
-
-```text
-capture/reference
-→ validate type/size/policy
-→ transient or persisted ingest
-→ extraction/transcription/perception
-→ normalize Evidence
-→ optional async enrichment
-→ synthesis/presentation
-→ retention/delete lifecycle
+Research Use Case
+→ SearchProviderPort
+→ candidate sources
+→ SafeWebFetchPort
+→ extraction/normalization
+→ SourceRef/EvidenceRef
+→ freshness/relevance
+→ synthesis
 ```
 
 Rules:
 
-- validate before provider call;
-- preserve provenance;
-- explicit resource budgets;
-- raw media persistence optional, not default;
-- large/long video may become async job/workflow;
-- provider failure produces degraded mode, not fabricated result.
+- no LLM-created URL directly into unrestricted HTTP client;
+- egress validation before and after redirect;
+- bounded type/size/time/concurrency;
+- protected/internal destinations blocked according to policy;
+- external content treated as untrusted;
+- sensitive internal context minimized before external query;
+- provenance/freshness preserved.
 
-## 17. Biometric Identity Pattern
+Search and fetch are different responsibilities.
 
-Biometric identity is a **candidate-resolution pipeline**:
+## 15. External Connection / OAuth Pattern
 
 ```text
-explicit enrollment
-→ protected template
-→ media sample
-→ biometric adapter
-→ candidateUserRef + confidence
-→ threshold/policy/liveness when required
-→ user-correctable association
-→ authenticated session/Core RBAC remains authority
+ConnectExternalSource Use Case
+→ provider authorization adapter
+→ callback DTO validation
+→ connection lifecycle
+→ SecretStorePort
+→ ExternalConnection repository
+→ normalized capability projection
+```
+
+Application owns connection intent/state transition; provider adapter owns concrete auth endpoints/scopes/token protocol details.
+
+Provider token never crosses into planner/LLM/MFE.
+
+Connection ownership is explicit:
+
+```text
+USER_DELEGATED
+ORG_MANAGED
+SHARED_RESOURCE
+SERVICE_CONNECTION
+```
+
+## 16. Semantic Connector Capability Pattern
+
+Planner sees semantic capabilities such as:
+
+```text
+communication.email.search
+communication.email.read
+communication.email.draft
+communication.email.send
+calendar.events.read
+calendar.events.create
+files.search
+files.read
+messaging.message.send
+```
+
+Adapter maps those to real provider contracts. Do not branch planner by provider name.
+
+When provider publishes usable OpenAPI/schema, prefer contract-driven normalization where appropriate.
+
+## 17. External Read Pattern
+
+```text
+authorized semantic capability
+→ connection/scope validation
+→ provider adapter
+→ normalized resource/result
+→ SourceRef/EvidenceRef
+→ presentation/correlation
+```
+
+Do not copy mailbox/file store as Copilot master data.
+
+## 18. External Write Pattern
+
+```text
+intent
+→ draft/preview when applicable
+→ ExternalActionPolicy/Decision Gate
+→ connection/scope revalidation
+→ provider adapter
+→ outcome verification
+→ OutcomeRef/Evidence/Audit
 ```
 
 Rules:
 
-- closed-set users enrolled for the approved purpose;
-- unknown remains unknown when threshold is not met;
-- correction does not silently retrain enrollment;
-- revoke/delete prevents future use;
-- no template in ordinary logs/API;
-- biometric result never equals `PermissionGrant`;
-- no open-world person identification by default.
+- `draft != send`;
+- no blind retry;
+- ambiguous timeout requires outcome verification;
+- target/recipient constraints may be policy inputs;
+- connection revoked after preview blocks execution.
 
-## 18. Human Observation Pattern
-
-Human Observation produces bounded process evidence:
+## 19. Provider Event Pattern
 
 ```text
-media/session + operational context
-→ detect observable event/pattern
-→ Evidence/PersonObservationRef
-→ optional aggregation
-→ analysis/Knowledge candidate
+webhook/push/subscription
+→ interface validation
+→ provider adapter authenticity validation
+→ normalize EventEnvelope
+→ dedupe/correlation
+→ Watch/Workflow/Inbox
 ```
 
-Allowed output describes observable work/process signals.
+Subscription lifecycle separately handles renewal, expiry and reconciliation. Event payload never grants permission or bypasses Decision Gate.
 
-Forbidden output includes personality, honesty, loyalty, emotion-as-truth, health diagnosis, sensitive attributes or automatic employment judgments.
-
-## 19. Realtime Session Pattern
-
-Use only for genuine realtime requirements.
-
-Session boundary should define:
+## 20. External Knowledge Promotion Pattern
 
 ```text
-start/stop
-active modalities
-identity-recognition active/inactive
-user/device/session refs
-budgets
-backpressure
-network loss behavior
-provider lifecycle
-consent/retention policy
-observability
-cleanup
+external SourceRef/Evidence
+→ transient use OR candidate
+→ owner/review
+→ freshness/privacy/licensing/eval
+→ versioned publish
 ```
 
-Realtime is not a global singleton and does not auto-resume mic/camera/biometric recognition after reload without explicit policy/user state.
+Personal source cannot auto-promote to organizational Knowledge.
 
-## 20. Event-Driven
+## 21. Media/Biometric Pipelines
 
-Use when reacting asynchronously to a fact.
+Continue usando bounded pipeline/adapters/provenance/retention. External attachments entram no mesmo safe ingest boundary after provider download validation.
 
-Distinguish:
+## 22. Resilience
 
-```text
-Domain Event
-Integration Event
-EventEnvelope used by Copilot boundary
-```
-
-Do not convert simple synchronous call into event without reason.
-
-Watch/wait_event share the canonical event semantics.
-
-Media frame streams are not automatically domain events.
-
-## 21. Transactional Outbox
-
-Use only when we need atomic:
-
-```text
-state persisted + integration event eventually published
-```
-
-If platform owner already guarantees equivalent semantics, use its contract.
-
-## 22. Idempotency
-
-Preference:
-
-1. Domain API native idempotency;
-2. domain use-case key;
-3. Copilot orchestration guard only when necessary.
-
-Write timeout ambiguity requires outcome verification before retry.
-
-Repeated voice utterance, duplicated transcript event or meeting replay cannot duplicate write.
-
-## 23. Saga
-
-Only when:
-
-- multiple writes across systems;
-- process consistency matters;
-- real compensation operations exist.
-
-Never for read-only analysis, Meeting transcription, biometric matching or because “workflow is multi-step”.
-
-## 24. Resilience
-
-Every external adapter defines as appropriate:
+Cada external adapter define conforme aplicável:
 
 ```text
 timeout
 retry eligibility/backoff
+rate-limit handling
 circuit breaker
-bulkhead/concurrency limit
+concurrency limit
 ambiguous outcome handling
+re-auth/degraded state
 ```
 
-Media/realtime/biometric adds when needed:
+Read retry != write retry. Provider subscription failure requires truthful stale/degraded state and reconciliation path.
+
+## 23. Result/Error model
+
+Canonical semantics devem cobrir também:
 
 ```text
-size/duration limit
-backpressure
-concurrent-session limit
-network-loss fallback
-async/degraded fallback
-cost budget
-confidence threshold
-unknown fallback
-provider failure fallback
+ExternalNotConnected
+ExternalConsentRequired
+ExternalScopeMissing
+ExternalConnectionExpired
+ExternalPermissionRevoked
+ExternalProviderUnavailable
+ExternalRateLimited
+ExternalResourceNotFound
+ExternalEgressBlocked
+ExternalEventInvalid
+ExternalSyncStale
 ```
 
-Read retry != write retry.
+Provider exceptions não vazam diretamente à UI/LLM.
 
-## 25. Result/Error model
+## 24. DTO + Mapper
 
-Canonical semantics should cover:
+Provider SDK DTOs não são contracts públicos. Mapear somente o necessário para application/domain refs/outcomes.
 
-```text
-Validation
-Unauthorized
-Forbidden
-NotFound
-Conflict
-PolicyBlocked
-DecisionRequired
-ProviderUnavailable
-Timeout
-BusinessRuleViolation
-MediaPermissionDenied
-MediaPolicyBlocked
-MediaTooLarge
-RealtimeUnavailable
-SharedDeviceSessionInvalid
-BiometricEnrollmentRequired
-BiometricIdentityUnknown
-BiometricIdentityAmbiguous
-BiometricPolicyBlocked
-IndustrialSafetyBlocked
-Internal
-```
-
-Infra exceptions do not leak directly to MFE/LLM.
-
-## 26. DTO + Mapper
-
-Do not expose persistence ORM models as public transport contracts.
-
-```text
-Transport DTO
-↕
-Application/Domain model
-↕ when needed
-Persistence model
-```
-
-Media/biometric provider DTOs do not leak into Evidence/domain contracts.
-
-Avoid ceremonial mapping when no semantic boundary exists.
-
-## 27. Dependency Injection
-
-Use simple composition.
+## 25. Dependency Injection
 
 Forbidden:
 
 ```text
-UseCase creates PostgresRepository()
-DomainService creates HttpClient()
-MeetingUseCase creates SpeechProviderSDK()
-FrontlineUseCase creates CameraProvider()
-IdentityUseCase creates FaceRecognitionSDK()
+UseCase creates Google/Microsoft/WhatsApp client
+UseCase reads provider token directly
+Planner instantiates HTTP client
+Controller owns refresh token lifecycle
 ```
 
-Concrete construction belongs to composition/startup.
+Concrete creation belongs to composition/infrastructure.
 
-## 28. Factory / Builder / Strategy
+## 26. Browser automation
 
-- Factory: config/runtime-dependent construction;
-- Builder: truly complex/invariant-heavy object creation;
-- Strategy: real interchangeable behavior.
+Não é default. Só após provar que API/connector/structured fetch não atende.
 
-One implementation plus hypothetical future variation is not enough for an internal Strategy.
+Quando existir:
 
-Model/STT/Vision/Biometric provider selection belongs to adapters/compute/data policy, not arbitrary feature branches.
+- sandbox/domain/session bounds;
+- protected credential injection;
+- same Policy/Decision semantics;
+- no arbitrary internal-network reach;
+- kill switch;
+- telemetry.
 
-## 29. CQRS
-
-Light CQRS only if separate read/write models materially simplify performance/security/shape.
-
-No Event Sourcing or duplicate stores by default.
-
-## 30. Bounded Contexts target
-
-C0 finalizes names/owners:
+## 27. Bounded Contexts target
 
 ```text
 Copilot Conversation/Intelligence
@@ -692,7 +463,7 @@ Expertise & Playbooks
 Knowledge
 Evidence & Provenance
 Media & Interaction Sessions
-Biometric Identity & Human Observation
+External Information & Connections
 Work Management
 Policy & Decision
 Platform Experience
@@ -700,142 +471,80 @@ Business Graph
 Observability & Evals
 ```
 
-Meeting/Frontline are product/application modules over these bounded responsibilities, not necessarily new bounded contexts.
+Meeting/Frontline remain product modules over shared contexts. Industrial OT/safety remains external authority.
 
-Core remains corporate user authority. Biometric context does not replace it.
-
-Industrial OT/safety remains external authority/boundary unless a separate approved initiative defines otherwise.
-
-## 31. Patterns by Copilot component
+## 28. Patterns by component
 
 | Componente | Preferred patterns |
 |---|---|
-| Core integration | Port + Adapter + bounded DTO |
-| Domain Actions | OpenAPI adapter + generic executor + Policy |
-| Platform Actions | Command + Handler + Adapter |
-| Workspace Context | Adapter + bounded contract |
-| Shared Device Context | Adapter + bounded session metadata |
-| Iframe Bridge | Adapter + ACL + typed messages |
-| Expertise | versioned catalog; Repository if persisted; retrieval policy |
-| Playbooks | versioned content + repository/port |
-| Multimodal | Pipeline + adapters; Strategy only if needed |
-| Speech | Port + Adapter; realtime session only when necessary |
-| Image/Video | Media Pipeline + Evidence normalization |
-| Biometric identity | Enrollment Use Cases + Port/Adapter + Policy + protected template boundary |
-| Human Observation | bounded observation pipeline + Evidence + governance policy |
-| Media persistence | Storage Adapter + Retention Policy only when needed |
-| Meeting | Application Use Cases + shared Media/Evidence/Work contracts |
-| Frontline | Application Use Cases + WorkspaceContext + Media/Evidence/Biometric adapters |
-| Evidence | Value Object/validated factory + provenance |
-| Graph | Ports/Adapters + permission policy; repository only if materialized |
-| Decision | Policy + State Machine |
-| Workflow | Application orchestration + State Machine + Idempotency |
-| Task/Case | Aggregate/lifecycle if proven + Workflow refs |
-| Room/Notification | Adapter to existing owner when viable |
-| Inbox | materialized projection/surface |
-| Watch | Event-driven + State Machine + dedupe |
-| Organizational Knowledge | versioned lifecycle + review policy |
-| Expertise Studio | Use Cases + State Machine + admin RBAC |
-| Model Router | Strategy/Compute Policy after C7 baseline |
-| Industrial telemetry | Read Adapter + canonical Entity/Evidence mapping |
-| Industrial actuation | separate deterministic safety architecture, not generic Copilot executor |
+| Internet Research | Use Case + Search Adapter + Safe Fetch Adapter + Evidence |
+| External Connections | Use Case + State Machine + Repository + Secret Adapter |
+| Microsoft/Google/WhatsApp/etc. | Provider Adapter + ACL |
+| External Reads | Capability + Adapter + Evidence normalization |
+| External Writes | Policy/Decision + Adapter + verified Outcome |
+| Provider Events | Webhook Adapter + EventEnvelope + dedupe/reconciliation |
+| External Knowledge | candidate lifecycle + review/eval/publish |
+| Core/Domain Actions | Port/Adapter + canonical contracts |
+| Workspace | bounded contract |
+| Multimodal/Biometric | Pipeline + adapters |
+| Workflow/Decision | State Machine + Policy + Idempotency |
+| OT | separate safety architecture |
 
-## 32. Abstraction Gate
+## 29. Abstraction Gate
 
-Before creating:
+Antes de criar interface/port/base/factory/strategy/registry/framework/repository/connector engine/web fetcher/browser automation, provar:
 
-```text
-interface/port
-base class
-factory
-strategy
-registry
-framework
-generic engine
-repository
-media service
-biometric service
-person profile
-realtime gateway
-meeting backend
-frontline backend
-OT adapter
-```
+1. real boundary?
+2. real variation/consumer?
+3. test double needed for external boundary?
+4. owned lifecycle/state?
+5. reduces coupling?
+6. equivalent already exists?
+7. avoids Chat product coupling?
+8. existing SourceRef/EntityRef/EvidenceRef sufficient?
+9. persistence really needed?
+10. provider-specific concern can stay in adapter?
+11. token/secret remains inside protected boundary?
+12. read/write semantics remain distinct?
+13. new provider works without planner patch?
 
-Answer:
+“Might be useful later” is insufficient.
 
-1. Is there a real boundary?
-2. Is there real variation or multiple consumers?
-3. Do we need a test double for an external boundary?
-4. Does the concept own lifecycle/state?
-5. Does abstraction reduce coupling rather than add indirection?
-6. Does repo already contain an equivalent abstraction?
-7. Would the abstraction couple Copilot to Chat internals?
-8. Can existing WorkspaceContext/EntityRef/EvidenceRef model it?
-9. Does raw media/template really need persistence?
-10. Does biometric data need its own protected lifecycle rather than general media storage?
-11. Is this identity assistance or a duplicate user authority?
-12. Is Human Observation objective/process-grounded or subjective person profiling?
-13. Is this business automation or physical actuation?
-14. Who owns privacy/retention/safety?
+## 30. Anti-patterns
 
-If justification is “maybe later”, do not create it.
+- Chat internals as Copilot library;
+- god `ConnectorService`;
+- repository for every external HTTP resource;
+- provider SDK types in Domain/Application;
+- provider name branching in planner;
+- manual provider endpoint catalog as authority;
+- OAuth token in conversation/context/log/MFE;
+- one shared connection silently used by all users;
+- personal mailbox/file copied to organizational Knowledge automatically;
+- browser automation before official API/connector without evidence;
+- unrestricted web fetch;
+- implicit `draft → send`;
+- webhook payload executing write directly;
+- external cache as source of truth;
+- raw media/biometric persistence by default;
+- hidden worker profiling;
+- free-form LLM to industrial machine.
 
-External boundaries may justify a Port from first implementation.
+## 31. Testing by layer
 
-## 33. Anti-patterns
-
-- Chat internals used as Copilot library;
-- `Manager/Helper/Utils/Service` god objects;
-- repository for every HTTP resource;
-- deep base-class inheritance;
-- global mutable service locator/singleton state;
-- framework/provider/media/biometric SDK types in Domain/Application;
-- ORM model as external contract;
-- event bus without schema/owner;
-- Strategy/Factory without variation;
-- Saga without compensation;
-- CQRS/Event Sourcing by fashion;
-- feature-specific Entity/Evidence/Decision/Event model;
-- `FrontlineContext` duplicating WorkspaceContext;
-- second Core/RBAC/domain/user authority;
-- Portal containing planner/RAG/action/media intelligence;
-- fallback to Chat runtime;
-- one `MultimodalService`/`BiometricService` owning every provider/workflow/policy;
-- raw-media/template persistence by default;
-- biometric embeddings/templates in ordinary logs;
-- hidden camera/mic/identity recognition;
-- media/biometric retention without class/policy;
-- meeting-specific action executor;
-- voice-specific RBAC;
-- device or biometric candidate as user identity authority;
-- open-world/indiscriminate face recognition by default;
-- emotion/personality/trustworthiness inference from face/voice;
-- hidden employee surveillance/scoring;
-- automatic employment decisions from biometric/Human Observation;
-- free-form LLM output sent to PLC/CNC/robot;
-- Copilot replacing safety interlocks.
-
-## 34. Testing by layer
-
-### Domain
-Pure units/invariants/value objects/state/policy.
-
-### Application
-Use cases with port fakes/stubs; no Flask/provider/media/biometric SDK required.
+### Domain/Application
+Pure policy/lifecycle/use-case tests with port fakes.
 
 ### Infrastructure
-Contract/integration tests, provider mapping, timeout/error translation, media/biometric lifecycle, cleanup/backpressure when applicable.
+Provider contract tests, token refresh/revoke, mapping, limits, event verification, timeout/error translation, safe fetch/egress tests.
 
 ### Interfaces
-Schema/auth/error/transport/media-session/biometric-enrollment tests.
+OAuth callback/webhook/schema/auth/error tests.
 
 ### Frontend
-Components/hooks/adapters/integration/accessibility/media permission/shared-device/identity-correction UX.
+Connection/source/draft/send/Decision/accessibility UX without credential exposure.
 
-### Standalone boundary
-
-Required checks:
+### Standalone
 
 ```text
 NO_CHAT_IMPORT
@@ -844,53 +553,23 @@ NO_CHAT_DB_AUTHORITY
 CHAT_OFFLINE_INDEPENDENCE
 ```
 
-When Meeting/Frontline/media/biometric are in scope:
+External scope also requires connector generalization, credential isolation, safe egress, read/write separation, event reliability and privacy tests from `20`.
 
-```text
-NO_HIDDEN_CAPTURE
-RETENTION_POLICY_ENFORCED
-SHARED_DEVICE_ISOLATION
-MODALITY_RBAC_PARITY
-BIOMETRIC_MATCH_NOT_AUTHORITY
-UNKNOWN_IDENTITY_REMAINS_UNKNOWN
-NO_SENSITIVE_PERSON_INFERENCE
-NO_AUTOMATIC_EMPLOYMENT_DECISION_FROM_BIOMETRICS
-NO_ARBITRARY_OT_COMMAND
-```
+## 32. Migration patterns
 
-## 35. Migration patterns
-
-### Copilot DB/contracts
+Copilot DB/contracts:
 
 ```text
 EXPAND → compatible readers → writers → optional backfill → CUTOVER → CLEANUP
 ```
 
-### External legacy integration actually being replaced
+Provider swaps use adapters/versioned connection policy. Do not rewrite application/domain for a provider migration.
 
-```text
-Adapter/ACL → telemetry → canary → cutover → residual scan → remove adapter
-```
+## 33. ADR / Exception Gate
 
-Again: Minha DELPI Chat is not being migrated into Copilot.
+Any material deviation proves why, alternatives, trade-offs, no second authority, privacy/security impact and exit/rollback.
 
-Media/biometric provider migration follows adapters/versioned policy; do not rewrite business/application layers for provider swaps.
-
-Biometric template migrations require explicit compatibility/version/reenrollment strategy; never silently reinterpret incompatible embeddings.
-
-## 36. ADR / Exception Gate
-
-If canonical pattern cannot satisfy a real requirement:
-
-1. prove why;
-2. list alternatives;
-3. document trade-offs;
-4. prove no second authority/product coupling;
-5. include privacy/biometric/retention/safety impact when applicable;
-6. register ADR/decision;
-7. update this standard if exception becomes standard.
-
-## 37. FOUNDATION_FREEZE architecture gates
+## 34. FOUNDATION_FREEZE architecture gates
 
 ```text
 ARCHITECTURE_STYLE
@@ -910,54 +589,24 @@ ABSTRACTION_GATE
 ARCHITECTURAL_EXCEPTION_PROCESS
 SHARED_CODE_GATE
 MEDIA_PROVIDER_BOUNDARIES
-MEDIA_RETENTION_POLICY
-BIOMETRIC_IDENTITY_BOUNDARY
-HUMAN_OBSERVATION_BOUNDARY
-SHARED_DEVICE_BOUNDARY
+BIOMETRIC_BOUNDARIES
+EXTERNAL_EGRESS_BOUNDARY
+OAUTH_CONNECTION_BOUNDARY
+PROVIDER_SECRET_BOUNDARY
+EXTERNAL_EVENT_BOUNDARY
+EXTERNAL_LEARNING_BOUNDARY
 OT_SAFETY_BOUNDARY
 CHAT_RUNTIME_DEPENDENCY=0
 ```
 
-All required = PASS before runtime feature work that depends on them.
-
-## 38. Checklist per step
+## 35. Regra final
 
 ```text
-[ ] owner/product boundary clear
-[ ] correct layer
-[ ] canonical pattern selected
-[ ] shared primitive reused
-[ ] port/abstraction justified
-[ ] state machine if lifecycle requires
-[ ] external dependency behind adapter
-[ ] composition root wiring
-[ ] error/resilience semantics preserved
-[ ] frontend has no durable business/identity authority
-[ ] no Chat product coupling
-[ ] media privacy/retention considered when applicable
-[ ] biometric enrollment/template lifecycle considered when applicable
-[ ] biometric result cannot grant permission
-[ ] unknown/ambiguous identity has safe fallback
-[ ] Human Observation remains observable/process-grounded
-[ ] no sensitive/personality/emotion/employment inference
-[ ] shared-device isolation considered when applicable
-[ ] no modality RBAC bypass
-[ ] OT physical actuation separated from generic action runtime
-[ ] tests match layer/contract
-[ ] sibling/unknown no hardcode
-[ ] no predictable next-phase redesign
-```
-
-## 39. Regra final
-
-Quando houver dúvida:
-
-```text
-platform/product/privacy/identity/safety boundary first
+platform/product/privacy/security boundary first
 → proven repo convention
 → Pattern Decision Matrix
 → simplest solution preserving boundaries
 → ADR only for material ambiguity
 ```
 
-O objetivo não é usar muitos patterns; é obter código previsível, consistente, testável e evolutivo sem refatoração estrutural desnecessária — inclusive quando o Copilot evoluir de texto administrativo para voz, vídeo, identidade biométrica governada, Meeting e Frontline.
+O objetivo é uma arquitetura previsível que permita adicionar novos providers sem refatorar planner, policy, Domain ou UX central.
