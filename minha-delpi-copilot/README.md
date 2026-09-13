@@ -1,14 +1,16 @@
-# Minha DELPI Copilot
+# DÉLIA — placeholder técnico do namespace `minha-delpi-copilot`
 
-Ponto de entrada da iniciativa no monorepo `delpi-central`.
+Este diretório é apenas um **ponto de entrada documental temporário** da iniciativa no monorepo `delpi-central`.
 
-O Copilot é uma **aplicação nova e standalone**, com API/MFE/persistência/deploy próprios e integrada às foundations do Portal/Core/Gateway/Keycloak/Domain APIs.
+Não é evidência de runtime implementado. Enquanto `C0.S1` não congelar os nomes físicos finais, `minha-delpi-copilot` permanece somente como namespace técnico temporário.
 
-Ele **não** é evolução do `minha-delpi-ai-api` nem de `plugins/minha-delpi-chat`.
+A **DÉLIA — DELPI · Ecossistema de Ligações, Inteligência e Automação** é uma aplicação nova e standalone, com API/MFE/persistência/deploy próprios quando implementados e integrada às foundations comprovadas do Portal/Core/Gateway/Keycloak/Domain APIs.
+
+Ela **não** é evolução do `minha-delpi-ai-api` nem de `plugins/minha-delpi-chat`.
 
 ## North Star
 
-O target é um único Copilot para **escritório, reuniões, chão de fábrica, fontes externas e operações autônomas governadas**, capaz de:
+O target é uma única DÉLIA para **escritório, reuniões, chão de fábrica, fontes externas e operações governadas**, capaz de:
 
 ```text
 perceber eventos
@@ -16,13 +18,13 @@ perceber eventos
 → pesquisar/analisar
 → prever/simular
 → decidir sob policy
-→ preparar/executar trabalho
+→ preparar/executar trabalho governado
 → verificar Outcome real
 → comunicar
 → aprender sob governança
 ```
 
-Não é apenas Chat+RAG.
+Não é apenas Chat + RAG.
 
 ## Capability families
 
@@ -43,39 +45,42 @@ MCP / A2A interoperability
 AI Control Tower / Digital Workforce Governance
 AI Model Lifecycle / MLOps
 Capability Marketplace
-Edge / Offline Industrial Copilot
+Edge / Offline Industrial
 Evidence / Outcome / Evals / Safety
 ```
 
-## Documentation canônica
+## Documentação canônica
 
-[`../docs/12-roadmap-e-evolucao/minha-delpi-copilot/README.md`](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/README.md)
+[`../docs/12-roadmap-e-evolucao/delia/README.md`](../docs/12-roadmap-e-evolucao/delia/README.md)
 
 Key authorities:
 
-- [Execution Master Plan](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/16-execution-master-plan.md)
-- [Ownership/Contracts](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/17-component-and-contract-map.md)
-- [Tests/Gates](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/20-testing-and-acceptance-matrix.md)
-- [State/Persistence](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/21-data-and-state-model.md)
-- [Cursor Master Prompt](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/23-prompt-cursor-execucao.md)
-- [Requirements CP-001…CP-310](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/25-requirements-traceability.md)
-- [Architecture Patterns](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/49-architecture-and-design-patterns-standard.md)
-- [Standalone Boundary](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/50-standalone-copilot-application-architecture.md)
-- [Platform Baseline](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/51-platform-integration-baseline.md)
-- [Index](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/INDEX.md)
-- [Execution Ledger](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/evidence/execution-ledger.md)
+- [Execution Master Plan](../docs/12-roadmap-e-evolucao/delia/16-execution-master-plan.md)
+- [Ownership/Contracts](../docs/12-roadmap-e-evolucao/delia/17-component-and-contract-map.md)
+- [Tests/Gates](../docs/12-roadmap-e-evolucao/delia/20-testing-and-acceptance-matrix.md)
+- [State/Persistence](../docs/12-roadmap-e-evolucao/delia/21-data-and-state-model.md)
+- [Cursor Master Prompt](../docs/12-roadmap-e-evolucao/delia/23-prompt-cursor-execucao.md)
+- [Requirements CP-001…CP-310](../docs/12-roadmap-e-evolucao/delia/25-requirements-traceability.md)
+- [Architecture Patterns](../docs/12-roadmap-e-evolucao/delia/49-architecture-and-design-patterns-standard.md)
+- [Standalone Boundary](../docs/12-roadmap-e-evolucao/delia/50-standalone-copilot-application-architecture.md)
+- [Platform Baseline](../docs/12-roadmap-e-evolucao/delia/51-platform-integration-baseline.md)
+- [Bootstrap Target](../docs/12-roadmap-e-evolucao/delia/52-standalone-repository-and-bootstrap-plan.md)
+- [Index](../docs/12-roadmap-e-evolucao/delia/INDEX.md)
+- [Execution Ledger](../docs/12-roadmap-e-evolucao/delia/evidence/execution-ledger.md)
 
 Thematic architecture is in specs `53–66`.
 
 ## Fundamental boundaries
 
 ```text
-Core/Keycloak = identity/RBAC authority
-Domain APIs = business authority
+Keycloak = identity/SSO
+Core API = apps/routes/RBAC/governance
+Domain APIs = business data/rules
 Portal = host/navigation/context
-External providers = external source authority
-OT/safety = industrial authority
-Copilot = intelligence/policy/orchestration/evidence/work
+DÉLIA = intelligence/context/Evidence/Policy/Decision/Work/orchestration/outcome coordination
+Automation Hub = technical execution
+External providers = external resources
+OT/Safety = machine/industrial safety
 ```
 
 And:
@@ -98,8 +103,8 @@ Edge Offline != Wider Authority
 ```text
 PROGRAM = PLANNED / NOT_STARTED
 REQUIREMENTS = CP-001…CP-310
-NEXT_STEP = C0.S0 — Enterprise AI/Platform Foundation Rebaseline
+NEXT_STEP = C0.S0 — factual Platform/Media/Device/Biometric/External/Automation/Intelligence-Platform/OT rebaseline
 RUNTIME_DIFF = NONE
 ```
 
-C0.S0 is factual inventory only. No Copilot runtime should be created before `C0.S7 FOUNDATION_FREEZE=PASS`.
+C0.S0 é inventário/rebaseline factual. Nenhum runtime da DÉLIA deve ser criado antes de `C0.S7 FOUNDATION_FREEZE=PASS`.
