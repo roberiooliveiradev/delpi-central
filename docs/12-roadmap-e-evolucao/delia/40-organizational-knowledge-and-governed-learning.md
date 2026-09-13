@@ -1,10 +1,9 @@
-# Minha DELPI Copilot — Organizational Knowledge e Aprendizagem Governada
+# DÉLIA — Organizational Knowledge e Aprendizagem Governada
 
-**Status:** thematic spec  
+**Status:** `TARGET` — thematic spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
-**Runtime phase:** Reference Knowledge/RAG nasce na Copilot API em C3; Decision/Experience/Solution Pattern e Governed Learning entram em C6.
+**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
 
 ## 1. Classes
 
@@ -19,17 +18,17 @@ Decision Knowledge
 → decisões aprovadas, contexto, constraints, Evidence/Outcome refs
 
 Experience Knowledge
-→ casos, reuniões e experiências operacionais revisadas com outcomes/evidence
+→ casos, reuniões e experiências operacionais revisadas
 
 Semantic Knowledge
-→ entidades/relacionamentos do Business Graph
+→ relações/significados derivados de sources governadas
 ```
 
-Compartilhar infraestrutura neutra é possível; semântica, owner e lifecycle permanecem explícitos e pertencem ao Copilot ou ao owner corporativo correto, nunca ao Minha DELPI Chat por dependência implícita.
+Essas classes não implicam stores separados nem ownership automático da DÉLIA. C0 deve identificar owner, source canônica, consumers, lifecycle, retention e ACL.
 
 ## 2. Reference Knowledge
 
-RAG da própria Copilot API com:
+Target de retrieval/RAG da DÉLIA sobre fontes autorizadas, com:
 
 - owner;
 - scope/ACL;
@@ -37,9 +36,9 @@ RAG da própria Copilot API com:
 - provenance;
 - retention.
 
-Fontes podem incluir procedimentos, instruções de trabalho, normas, manuais, desenhos/documentos e materiais de treinamento, sempre respeitando owner/version/ACL.
+A DÉLIA não se torna owner do documento/procedure original por indexá-lo ou referenciá-lo.
 
-C0 pode identificar infraestrutura neutra reaproveitável, mas C3 implementa o runtime de retrieval do Copilot.
+C0 pode identificar infraestrutura neutra reaproveitável. Runtime/storage próprio só deve ser criado quando boundary/consumer/lifecycle real justificar.
 
 ## 3. Operational Knowledge
 
@@ -51,9 +50,7 @@ Preferir representação governada como:
 - terminology/glossary;
 - standard work/instruction mantido pelo owner oficial.
 
-Não depender de “memória informal do LLM”.
-
-Copilot não substitui o owner do procedimento apenas porque ajudou a identificar uma melhoria.
+DÉLIA não substitui procedure/policy owner.
 
 ## 4. Decision Knowledge
 
@@ -69,189 +66,100 @@ constraints
 Outcome refs
 ```
 
-Não persistir chain-of-thought. Armazenar justificativa operacional aprovada quando necessária.
-
-Ata/resumo de reunião não vira `Decision Knowledge` apenas porque o LLM inferiu uma decisão; é necessário estado humano/operacional confirmado conforme o workflow aplicável.
+Não persistir chain-of-thought. Ata/resumo inferido não vira decisão aprovada sem confirmação/lifecycle apropriado.
 
 ## 5. Experience Knowledge
 
-Case resolvido, reunião concluída ou experiência operacional pode gerar **candidate** Experience quando houver finalidade e evidence adequadas.
-
-Exemplo conceitual:
+Case resolvido, reunião concluída ou experiência operacional pode gerar **candidate** quando houver finalidade e Evidence adequadas.
 
 ```text
-problem/practice signature
-context/entity types
-source = case|meeting|frontline|validated feedback
-confirmed causes or practice statement
-verified actions/outcomes when available
-constraints
-Evidence refs
-Case/Meeting/Frontline refs
+Evidence
+→ candidate
+→ owner/review
+→ eval
+→ version
+→ publish
 ```
 
 Candidate não é published knowledge automaticamente.
 
-Uma fala de operador ou observação de câmera, isoladamente, não é corporate truth.
-
 ## 6. Conhecimento tácito no chão de fábrica
 
-O Copilot pode ajudar a capturar conhecimento que hoje fica apenas na experiência individual.
-
-Exemplo:
-
-> “Quando esse material vem desse fornecedor eu verifico primeiro esta região porque já tivemos rebarba.”
-
-Fluxo permitido:
+Fala/observação autorizada pode gerar candidate practice/insight, nunca regra universal automática.
 
 ```text
-fala/observação autorizada
-+ OP/produto/material/máquina context
-+ Evidence existente quando disponível
-→ candidate practice/insight
+observation/source
++ operational context
++ existing Evidence when available
+→ candidate
 → domain owner review
-→ buscar confirmação histórica/medição se necessário
-→ eval
-→ accepted Experience/Playbook/procedure change candidate
-→ formal publish pelo owner correto
+→ validation/eval
+→ procedure/playbook/knowledge candidate
+→ formal publish by correct owner
 ```
-
-O Copilot deve preservar quem disse/observou, em qual contexto e qual grau de evidência existe, sem transformar experiência tácita em regra universal.
 
 ## 7. Process observation
 
-Observação de processo por câmera, vídeo, eventos ou dados pode gerar candidatos como:
-
-- possível gargalo;
-- espera recorrente;
-- ajuste manual repetido;
-- possível causa de retrabalho;
-- prática útil do operador;
-- divergência entre instrução e execução real.
-
-Mas o pipeline é:
-
-```text
-observation
-→ Evidence/Hypothesis
-→ validation with source/process owner
-→ candidate improvement
-→ review/eval
-```
+Observação de processo por câmera, vídeo, eventos ou dados pode gerar hipóteses/candidates como gargalo, espera, retrabalho ou prática operacional.
 
 Nunca:
 
 ```text
-one visual observation
-→ automatic standard-work update
+one observation → automatic standard-work update
+operator behavior → hidden individual performance score
 ```
 
-Nem:
-
-```text
-operator behavior
-→ hidden individual performance score
-```
+Human Observation usa fatos observáveis do processo; não infere personalidade, honestidade, emoção como verdade, saúde, atributos sensíveis ou valor profissional.
 
 ## 8. Solution Patterns
 
 ```text
 candidate
 → expert review
-→ eval
+→ eval/generalization
 → published pattern
 → usage/feedback
 → version/deprecate
 ```
 
-Padrão precisa provar sibling/generalization; não memorizar um único caso literalmente.
+Um único caso bem-sucedido não prova generalização.
 
 ## 9. Governed Learning Loop
 
 ```text
-feedback
-case resolution
-meeting outcome
-frontline assistance outcome
-validated process observation
-        ↓
-telemetry + Evidence
-        ↓
-recurring issue/candidate
-        ↓
-change proposal
-        ↓
-edit Expertise/Playbook/Knowledge/Rule/procedure candidate
-        ↓
-tests/evals
-        ↓
-review/approval by correct owner
-        ↓
-versioned publish
-        ↓
-canary/monitor
+feedback/case/meeting/frontline/process outcome
+→ Evidence
+→ recurring issue/candidate
+→ change proposal
+→ edit candidate
+→ tests/evals
+→ correct owner review/approval
+→ versioned publish
+→ canary/monitor
 ```
 
-Nunca:
-
-```text
-user correction → automatic production behavior change
-meeting transcript → automatic corporate policy
-operator observation → automatic work instruction
-```
+Nunca auto-promover conversation, public page, successful automation ou user correction para policy/procedure/conhecimento corporativo.
 
 ## 10. Feedback taxonomy
 
-Exemplos:
-
-```text
-helpful/not_helpful
-wrong_fact
-wrong_entity
-wrong_action
-wrong_method
-missing_source
-unsafe_suggestion
-outdated_knowledge
-better_solution
-wrong_transcript
-wrong_visual_finding
-wrong_meeting_summary
-unsafe_frontline_guidance
-```
-
 Feedback é sinal, não truth/evidence por si só.
 
-## 11. Provenance e shared refs
+## 11. Provenance e refs
 
-Usar:
+Reutilizar refs canônicos somente se C0 os congelar. Não criar modelos paralelos por knowledge class/surface.
 
-```text
-EntityRef
-SourceRef
-EvidenceRef
-OutcomeRef
-CaseRef
-TaskRef
-Meeting/Frontline refs when persisted
-Decision refs
-MediaRef when C0 approves it
-```
-
-Não criar modelos paralelos por knowledge class ou surface.
+Personal Memory permanece separada de Organizational Knowledge e nunca concede authorization.
 
 ## 12. Security/LGPD/worker privacy
 
-- user/source ACL;
+- source ACL;
 - minimize/redact/anonymize;
-- no PII promotion sem policy/base;
-- delete/retention;
-- no sensitive Case/Meeting/Frontline content globalized silently;
-- malicious prior record não altera system/policy;
+- retention/delete/export owner;
+- no silent globalization of sensitive Case/Meeting/Frontline content;
+- external/generated content = untrusted;
 - raw audio/video is not Knowledge by default;
-- no facial/emotion analytics by default;
 - no hidden employee surveillance/scoring;
-- access to Experience Knowledge does not imply access to original protected media/source.
+- access to derived Experience Knowledge does not imply original-source access.
 
 ## 13. Quality gate para conhecimento operacional
 
@@ -260,7 +168,7 @@ Antes de promover candidate ligado a processo fabril, verificar conforme aplicá
 ```text
 owner
 source/evidence
-sample/context scope
+scope/sample
 reproducibility
 conflicting evidence
 safety impact
@@ -271,56 +179,24 @@ version/effective date
 rollback/deprecation path
 ```
 
-Sugestão útil não substitui change management oficial.
-
 ## 14. Metrics
 
-- knowledge usefulness;
-- stale/outdated rate;
-- correction recurrence;
-- solution pattern reuse;
-- version success;
-- repeated-case resolution time;
-- evidence coverage;
-- candidate→published precision;
-- rejected candidate reasons;
-- meeting/frontline candidate usefulness;
-- unsafe/unsupported candidate rate;
-- process improvement outcome after approved publish.
-
-Não usar “quanto o operador obedeceu ao Copilot” como proxy automático de qualidade/produtividade.
+Medir usefulness, freshness, correction recurrence, pattern reuse, eval/version outcomes e verified process improvement. Não usar “obediência ao AI” como produtividade/qualidade individual.
 
 ## 15. Mapping
 
 ```text
-C0 → provenance/lifecycle/retention + media/privacy/storage boundaries
-C3 → Reference Knowledge/RAG + ACL/provenance integration
-C4 → Semantic Knowledge/Business Graph source correlation
-C6.S2 → Cases produce structured resolution evidence
-C6.S6 → Organizational/Decision/Experience/Solution Pattern runtime
-C6.S7 → Governed Learning Loop incl. Meeting/Frontline/process candidates
-C6.S10–S11 → Meeting/Frontline produce candidates and outcomes, not auto-published knowledge
-C7 → rollout/performance optimization only
+C0 → owner/provenance/lifecycle/retention/media/privacy boundaries
+C3 → reference retrieval foundation only when unlocked and justified
+C4 → Graph/Semantic/source correlation
+C6 → Decision/Experience/Solution Pattern + Governed Learning product lifecycle
+C7 → scale/optimization only
 ```
 
 ## 16. Independence
 
-Nenhum knowledge namespace, RAG store, conversation memory ou agent knowledge do Minha DELPI Chat é authority do Copilot. Reuso só é permitido quando C0 comprovar componente neutro com owner compartilhado e contrato independente.
+Nenhum RAG store, conversation memory ou agent knowledge do Minha DELPI Chat é authority da DÉLIA. Reuso exige componente neutro real com owner/contract/consumers comprovados.
 
 ## 17. Gate
 
-Published organizational knowledge exige:
-
-```text
-owner
-version
-scope/ACL
-provenance
-review/eval
-lifecycle/status
-retention
-source/media access separation when applicable
-safety/process approval when applicable
-```
-
-Sem esses itens, continua candidate/reference, não corporate truth.
+Published organizational knowledge exige owner, version, scope/ACL, provenance, review/eval, lifecycle/status, retention e approvals aplicáveis. Sem isso, permanece candidate/reference.
