@@ -9,6 +9,8 @@
 
 Provar qualidade, groundedness, policy, execução, continuidade, privacidade, custo, value/outcome truth e independência do Chat sem transformar telemetry em cópia de business data, mailbox, raw media, employee surveillance ou secrets.
 
+Observabilidade deve preservar ownership: DÉLIA mede inteligência/Policy/Decision/Work e Outcome coordination; Automation Hub mede execução técnica. Correlation pode uni-los sem transformar uma telemetria na authority da outra.
+
 ## 2. Correlation model
 
 ```text
@@ -16,7 +18,7 @@ requestId
 traceId
 conversationId?/turnId?
 workflowId?/taskId?/caseId?/decisionId?/watchId?
-eventId?/executionId?
+eventId?/executionRef?
 processTraceRef?
 analysisRunId?/artifactId?/scenarioId?
 predictionId?
@@ -29,8 +31,10 @@ Nunca token/password/biometric template/chain-of-thought.
 
 ## 3. Core spans
 
+Nomes concretos de spans são TARGET até implementação/owner de telemetry serem congelados. Candidate DÉLIA spans:
+
 ```text
-copilot.turn
+delia.turn
 ├ understand
 ├ capability_discovery
 ├ knowledge_retrieval
@@ -43,7 +47,7 @@ copilot.turn
 ├ sandbox_analysis
 ├ artifact_generate
 ├ workflow
-├ automation_select_executor/execute/outcome_verify
+├ automation_select_executor/request_execution/outcome_verify
 ├ tool_invoke/agent_delegate
 ├ edge_sync
 ├ notification
@@ -51,21 +55,25 @@ copilot.turn
 └ synthesis
 ```
 
-Additional lifecycle streams:
+Technical execution telemetry from Automation Hub remains Hub-owned and is correlated through execution/correlation refs rather than copied as DÉLIA source of truth.
+
+Additional DÉLIA lifecycle streams, if implemented:
 
 ```text
-copilot.memory
-copilot.ai_asset
-copilot.model
-copilot.marketplace
-copilot.process
-copilot.analysis
-copilot.artifact
-copilot.scenario
-copilot.edge
-copilot.external.connection/subscription
-copilot.automation.execution/worker
+delia.memory
+delia.ai_asset
+delia.model
+delia.marketplace
+delia.process
+delia.analysis
+delia.artifact
+delia.scenario
+delia.edge
+delia.external.connection/subscription
+delia.automation.projection/outcome
 ```
+
+Automation Hub may expose its own execution/worker/queue telemetry contract. DÉLIA consumes the approved projection/events needed for correlation, governance and Outcome verification.
 
 ## 4. Common metadata
 
@@ -79,7 +87,7 @@ decisionPath FAST|OPERATIONAL|REASONING
 modelRef/version bounded
 metricDefinitionRef/version?
 processRef/traceRef?
-executorType/version?
+executorRef/type/version?
 autonomyLevelAllowed
 verificationStatus
 assetRef/riskTier?
@@ -288,21 +296,26 @@ Revoked/unapproved model selection count must be zero.
 
 ## 18. Event / Automation metrics
 
-Keep separate:
+Keep separate across owners:
 
 ```text
+DÉLIA:
 events received/invalid/deduped/stale
 FAST/OPERATIONAL/REASONING rate/latency
-executions queued/running/success/failure/ambiguous/timeout
-queue latency/worker health
-retry/idempotency conflicts
-technical success rate
+execution requests/correlation
+Decision/Policy result
 verified business outcome rate
 technical-success-but-verification-failed count
-kill-switch activations
+kill-switch/policy blocks
+
+Automation Hub projection/telemetry when contractually exposed:
+executions queued/running/technical-success/failure/ambiguous/timeout
+queue latency/worker health
+retry/idempotency conflicts
+executor/package/version
 ```
 
-Technical success and verified outcome must never be the same KPI.
+Technical success and verified outcome must never be the same KPI. Hub telemetry does not establish business success without authoritative Outcome verification.
 
 ## 19. External/Teams/Media/Biometric metrics
 
@@ -352,7 +365,7 @@ Each incident has asset refs/evidence/impact/containment/owner/resolution withou
 ```text
 Operational Intelligence
 Process Intelligence
-Automation & Execution Hub
+Automation Hub technical execution
 Autonomy
 AI Control Tower / Digital Workforce
 Model Health / Drift
@@ -369,6 +382,8 @@ Cost & Verified Value
 Every production capability/asset has suitable eval suite/version and freshness. High-risk asset with stale/missing required eval is disabled or degraded according to policy.
 
 Metamorphic/generalization evals cover provider/executor/model/tool/agent replacements without planner hardcode.
+
+Evidence is valid only for the SHA/config/model/provider/policy/contract versions actually evaluated. Missing required proof is `PENDING/INCONCLUSIVE`, never PASS.
 
 ## 24. Regra final
 
