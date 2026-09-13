@@ -1,6 +1,6 @@
-# Minha DELPI Copilot — Event-Driven Autonomous Operations e Automation & Execution Hub
+# DÉLIA — Event-Driven Operations e Automation Hub
 
-**Status:** thematic architecture/product/security spec  
+**Status:** `TARGET` — thematic architecture/product/security spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Architecture/patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
 **State:** [`21-data-and-state-model.md`](./21-data-and-state-model.md)  
@@ -10,9 +10,9 @@
 
 ## 1. Decisão de produto
 
-O Minha DELPI Copilot não deve ser somente uma interface reativa de `pergunta → RAG → resposta`.
+A DÉLIA não é apenas `pergunta → RAG → resposta`.
 
-O target é uma camada de **Continuous Operational Intelligence** capaz de observar sinais autorizados, contextualizar o que está acontecendo, decidir dentro de policies explícitas, coordenar execução, verificar o resultado, comunicar e aprender de forma governada.
+O target é Continuous Operational Intelligence capaz de observar sinais autorizados, contextualizar, decidir sob policies, PREPARE/ACT quando permitido, verificar outcome, comunicar e gerar learning candidates.
 
 ```text
 EVENT / SIGNAL
@@ -22,58 +22,57 @@ EVENT / SIGNAL
 → PREPARE / ACT
 → VERIFY OUTCOME
 → NOTIFY
-→ LEARN CANDIDATE
+→ LEARNING CANDIDATE
 ```
 
-O usuário é uma fonte de intenção, mas não é a única fonte de disparo.
+Nem todo evento usa LLM.
 
 ## 2. Inteligência versus execução
 
 ```text
-MINHA DELPI COPILOT
-= inteligência, contexto, planejamento, policy, decisão e orquestração
+DÉLIA
+= inteligência + contexto + Evidence + Policy + Decision + Work/orquestração + Outcome coordination
 
-AUTOMATION & EXECUTION HUB
-= execução operacional por executors governados
+AUTOMATION HUB
+= execução técnica governada
 
 DOMAIN APIs
-= business authority e validação final das regras do domínio
+= dados/regras/business authority final
 
-EVENT / SIGNAL PLANE
-= percepção de mudanças e fatos observáveis
+KEYCLOAK
+= identidade/SSO
 
-HUMAN WORK
-= aprovação, exceção, responsabilidade e tarefas quando exigidas
+CORE
+= apps/rotas/RBAC/governança
+
+OT/SAFETY
+= máquina e segurança industrial
 ```
 
-O Hub não cria uma segunda inteligência, segundo planner ou segundo Workflow engine.
+Automation Hub **não** é segundo planner, segundo Policy engine, segunda business authority ou owner do Work da DÉLIA.
 
-## 3. Não construir apenas um “Hub de RPAs”
+## 3. Automation Hub não é “Hub de RPA”
 
 RPA é apenas um executor possível.
 
-Nome conceitual recomendado:
-
-> **Minha DELPI Automation & Execution Hub**
-
-Executor preference:
+Preference:
 
 ```text
 1. API oficial / Domain Action
 2. integração nativa suportada
 3. função/script determinístico governado
 4. RPA
-5. computer-use/UI automation governada
+5. computer-use governado
 6. Human Task
 ```
 
-RPA é preferido para legado sem contrato melhor, não como primeiro mecanismo quando uma API autoritativa está disponível.
+O nome físico, deployment model e owner técnico do Automation Hub são `TO_INVENTORY` até C0 provar a fonte canônica. A documentação alvo não autoriza criar um novo Hub se já existir owner/plataforma equivalente.
 
 ## 4. Semantic capability contract
 
-O Copilot trabalha com capability semântica, não com detalhes de implementação.
+A DÉLIA trabalha com capability semântica, não com detalhes de execução.
 
-Exemplos:
+Exemplos candidatos:
 
 ```text
 billing.invoice.issue
@@ -83,12 +82,12 @@ communication.email.send
 inventory.read
 ```
 
-O Hub resolve:
+O executor owner resolve:
 
 ```text
-capability
-→ executor mapping/version
-→ executor contract
+semantic capability
+→ approved execution contract/mapping
+→ technical executor
 ```
 
 Proibido no planner:
@@ -102,77 +101,47 @@ screen coordinate
 RPA package internals
 ```
 
-Uma capability pode migrar de RPA para API sem patch no planner/workflow.
+Migração RPA→API não deve exigir patch no planner.
 
 ## 5. Tipos de executor alvo
 
-Progressivamente, conforme C0/C5 provarem necessidade:
+Possíveis executor families, somente se C0/C5 comprovarem necessidade e owner:
 
 ```text
-HTTP/API Executor
-Function/Script Executor
-RPA Executor
-Computer-Use Executor
-Notification Executor
-Human Task Executor
+HTTP/API
+native integration
+function/script
+RPA
+computer-use
+notification
+Human Task
 ```
 
-Durable Workflow continua sendo o orquestrador canônico das capabilities/executors.
+DÉLIA Work coordena semantic steps; technical execution lifecycle pertence ao Automation Hub/provider/domain executor owner apropriado.
 
 ## 6. Event / Signal Plane
 
-Eventos podem vir, conforme contratos reais, de:
-
-```text
-Domain APIs
-ERP / TOTVS
-MES / produção
-qualidade
-manutenção
-estoque / logística
-Core / Portal
-Teams / Outlook / Gmail / WhatsApp Business
-Interaction Rooms
-Watch timers/schedules
-IoT / approved telemetry read paths
-RPA/automation outcomes
-```
-
-Fluxo:
+Eventos podem vir de Domain APIs, ERP/MES, qualidade, manutenção, estoque/logística, Core/Portal, external providers, timers/schedules, approved telemetry e executor outcomes — somente quando contrato real existir.
 
 ```text
 source event
 → source adapter validates/authenticates
 → EventEnvelope
 → dedupe/order/correlation
-→ Watch / Workflow / Decision use case
+→ DÉLIA Watch/Work/Decision evaluation
 ```
 
-Não criar event bus novo por suposição. Polling/scheduler é apenas fallback bounded quando não existe evento suportado.
+Não criar event bus novo por suposição. Polling/scheduler é bounded fallback quando necessário.
 
-Event payload nunca concede permission ou ACT authority.
+Event payload nunca concede permission, Policy change ou ACT authority.
 
 ## 7. Continuous Operational Intelligence
 
-Exemplos de condições:
+Condições como pedido pronto, máquina parada, estoque crítico, fornecedor atrasado, OP aguardando material, desvio de qualidade, approval expirando ou resposta externa recebida podem gerar avaliação somente após owner/source/event contracts serem comprovados.
 
-```text
-pedido pronto para faturar
-máquina parada além do threshold
-apontamento improvável
-estoque crítico
-fornecedor atrasado
-OP parada aguardando material
-qualidade desviando
-prazo/approval expirando
-resposta externa recebida
-```
-
-Isso se materializa sobre `Watch`, `EventEnvelope`, Domain reads, Business Graph, Policy, Decision Gate e Durable Workflow — não em engine paralelo de agentes.
+Não criar engine paralelo de agentes.
 
 ## 8. Três velocidades de decisão
-
-Nem todo evento chama LLM.
 
 ### FAST
 
@@ -186,9 +155,9 @@ event
 
 ```text
 event
-→ bounded context reads
+→ bounded structured context
 → deterministic rules/policies
-→ optional classifier/small model
+→ optional approved small model
 → decision candidate
 ```
 
@@ -196,473 +165,337 @@ event
 
 ```text
 event/user goal
-→ Business Graph
-→ APIs
-→ documents/external sources
+→ Graph/APIs/Knowledge/docs/external sources
 → Expertise/Playbook
 → LLM reasoning
 → structured decision candidate
 ```
 
-O Copilot escolhe o menor caminho suficiente para o problema.
+Usar o menor caminho suficiente.
 
 ## 9. Deterministic-first para readiness material
 
-Uma decisão operacional crítica não deve depender apenas da opinião textual do modelo quando critérios verificáveis existem.
+Critério operacional verificável não deve depender apenas de opinião textual do modelo.
 
-Exemplo:
+Readiness formal usa facts/rules/authorities verificáveis; IA pode investigar, explicar e estruturar gaps.
 
-```text
-READY_TO_INVOICE =
-  order_released
-  AND shipment_ready
-  AND customer_not_blocked
-  AND fiscal_preconditions_valid
-  AND required_documents_present
-  AND no_blocking_occurrence
-```
+## 10. Exemplo — faturamento
 
-A IA pode investigar inconsistências, interpretar documentos e explicar conflitos; readiness formal usa facts/rules/authorities verificáveis.
-
-## 10. Exemplo — faturamento automático
+Exemplo target, não prova de capability/domain contract existente:
 
 ```text
-order/shipment event
-→ Watch
-→ read order/customer/shipment/fiscal context
+order/shipment signal
+→ Watch evaluation
+→ authorized domain reads
 → deterministic readiness policy
-→ READY_TO_INVOICE?
-     ├─ NO  → Evidence + exception/Inbox
-     └─ YES → AutonomyPolicy
-                 ├─ PREPARE/CONFIRM → Decision Gate
-                 └─ ACT allowed     → billing.invoice.issue
-                                         ↓
-                                   Automation Hub
-                                   API or RPA executor
-                                         ↓
-                                   verify Outcome
-                                         ↓
-                             Evidence/Audit/Notification
+→ not ready → Evidence + exception
+→ ready → autonomy/policy evaluation
+          → PREPARE or L4 ACT
+          → live AuthZ + Decision when required
+          → approved executor/domain action
+          → authoritative postcondition verification
+          → Outcome/Evidence/Audit/Notification
 ```
 
-Notificações podem usar Minha DELPI, email, Teams, WhatsApp Business ou outros connectors autorizados.
+Nunca narrar sucesso apenas por retorno técnico.
 
-Nunca narrar `faturado com sucesso` sem verified Outcome.
-
-## 11. Exemplo — validação de apontamento
+## 11. Exemplo — apontamento
 
 ```text
-production report event
-→ load OP/operation/machine/standard cycle/shift/stoppages/scrap
-→ deterministic plausibility calculations
-→ anomaly threshold/policy
+production report signal
+→ authorized context
+→ deterministic plausibility calculation
+→ anomaly policy
 → Evidence
 → ACCEPT | ASK_CONFIRMATION | BLOCK_AND_REVIEW
 ```
 
-Uma anomalia é `POSSIBLE_INCONSISTENCY`, não inferência automática de fraude/intenção do trabalhador.
+Anomalia não implica fraude, intenção ou valor profissional.
 
-## 12. Exemplo — máquina parada / manutenção
+## 12. Exemplo — manutenção
 
 ```text
-approved machine/MES event
-→ machine.status = DOWN
-→ correlate alarm/history/last maintenance/affected OP
-→ classify maintenance need
-→ maintenance.request.create
-→ route to eligible technician/team
-→ notify
-→ Watch acknowledgement/SLA
-→ escalate if needed
+approved machine/MES signal
+→ authorized context
+→ deterministic/approved classification
+→ PREPARE maintenance request
+→ governed ACT if explicitly authorized
+→ technical execution by approved executor/domain API
+→ verify Outcome
 ```
 
-O Copilot pode chamar manutenção; não substitui interlocks nem envia comando físico arbitrário para a máquina.
+DÉLIA não substitui interlocks e não envia comando físico arbitrário a máquina.
 
 ## 13. Autonomia por capability/contexto
 
-Não existe um único `Copilot = L4/L5` global.
-
-Autonomia é resolvida por:
+Autonomia depende de:
 
 ```text
 capability
-+ actor/user/service identity
++ actor/service identity
 + source/event trust
 + business context
 + risk/sensitivity
-+ financial/material limits
++ materiality/limits
 + environment
-+ policy
 + reversibility
++ Policy
 ```
 
-Exemplo conceitual:
-
-```text
-inventory.read                  → L5 candidate
-Task.create                     → L5 candidate
-maintenance.request.create      → L4/L5 candidate
-internal.notification.send      → L4/L5 candidate
-billing.invoice.issue           → L3/L4 candidate
-payment.approve                 → L1/L2 candidate
-payroll.modify                  → L1 candidate
-physical machine actuation      → outside enterprise-autonomy gate by default
-```
-
-Níveis finais são policy/configuration decisions, não hardcode do planner.
+Níveis são policy decisions; não hardcode do planner.
 
 ## 14. Autonomy ladder
 
 ```text
-L0 — explain only
-L1 — observe/analyze
-L2 — advise
-L3 — prepare
-L4 — execute after required governance
-L5 — execute autonomously inside explicit allowlist/policy/budgets
+L0 explain
+L1 observe
+L2 advise
+L3 prepare
+L4 governed execute
+L5 allowlisted autonomous execute within explicit limits
 ```
 
-L5 permanece OFF por default.
+L4 pode existir em C5 para capability explicitamente autorizada. L5 entra apenas em C7 e permanece OFF por default.
 
 ## 15. Watch modes
 
 ```text
 OBSERVE → detect/record
-ADVISE  → detect/analyze/notify
-PREPARE → prepare action/draft/work plan without side effect
-ACT     → execute only under C7 autonomy gate
+ADVISE  → analyze/notify
+PREPARE → prepare draft/action/work plan; no side effect
+ACT     → governed execution mode; C5-capable through explicit authorized flow
 ```
 
-`PREPARE != ACT`.
-
-## 16. Automation registration / catalog
-
-Cada mapping deve ser versionado:
+Em **C6**, Watch por default permanece `OBSERVE|ADVISE|PREPARE` e **não dispara ACT autonomamente**. Selected Watch autonomous ACT é C7/L5.
 
 ```text
-automationId
-version
-capabilityRef
-executorType
-executorRef
-environment
-inputSchema
-outputSchema
-preconditions
-postconditions
-idempotency semantics
-timeout/retry policy
-owner
-status
+PREPARE != ACT
+C5 governed ACT != C7 autonomous ACT
 ```
 
-Credenciais nunca ficam no prompt/planner.
+## 16. Automation capability projection
 
-## 17. AutomationExecution state
+DÉLIA pode manter uma projeção semântica de capabilities/execution contracts aprovados, sem se tornar registry técnico autoritativo.
+
+Campos candidates:
+
+```text
+capabilityRef
+executionContractRef
+risk/sensitivity
+preconditions/postconditions
+idempotency semantics
+owner/status/version refs
+```
+
+Executor package, queue, worker, credentials e technical mapping permanecem no Automation Hub/executor owner.
+
+## 17. Technical execution state
+
+Se houver Automation Hub, o estado técnico de execução pertence ao Hub/executor owner, não ao domain state da DÉLIA.
+
+Exemplo conceitual do executor owner:
 
 ```text
 executionId
-correlationContext
-capabilityRef
-executorRef/version
-workflowStepRef?
-triggerEventRef?
-actorRef
+capability/executor refs
 status
-startedAt/endedAt
 attempt
-inputHash
-idempotencyKey?
-resultRef/errorCode
-outcomeVerificationRef?
+inputHash/idempotencyKey
+result/error refs
+startedAt/endedAt
 ```
 
-Lifecycle:
+DÉLIA guarda apenas refs/status necessários à Work orchestration, Evidence, Decision e Outcome coordination, evitando duplicar executor truth.
 
-```text
-QUEUED
-→ RUNNING
-→ SUCCEEDED | FAILED | AMBIGUOUS | CANCELLED | TIMED_OUT
-```
-
-`SUCCEEDED` técnico não equivale automaticamente a business outcome correto.
+Technical `SUCCEEDED` nunca equivale automaticamente a business Outcome correto.
 
 ## 18. RPA worker/queue model
 
-Se RPA entrar no scope:
+Worker pools, queues, heartbeats, leases, package versions, credentials, screenshots e desktop sessions são responsabilidade do Automation Hub/RPA platform owner.
 
-- worker pool/capabilities explícitos;
-- queue/priority/concurrency;
-- worker heartbeat/health;
-- lease/lock contra dupla execução;
-- environment separation;
-- package/version traceability;
-- timeout/cancel/retry eligibility;
-- screenshot/artifact retention/classification;
-- protected credential injection;
-- desktop/session isolation;
-- execution observability.
+DÉLIA não cria cópia paralela desses estados.
 
-Não assumir ferramenta RPA específica em C0.
+## 19. Computer-use boundary
 
-## 19. Computer Use boundary
-
-Computer-use/UI automation é fallback avançado, não substituto automático de API/RPA determinístico.
-
-Requer sandbox/session isolation, app/domain/network allowlist, credential isolation, bounded actions, same Policy/Decision semantics, human takeover/stop e full audit.
+Computer-use é fallback avançado, governado e sandboxed. Requer app/domain/network allowlists, credential isolation, bounded actions, live Policy/Decision/AuthZ, audit e human stop/takeover quando aplicável.
 
 ## 20. Outcome verification
 
-Toda ação material precisa responder:
+Toda ação material distingue:
 
 ```text
-EXECUTED?
-AND
-EXPECTED BUSINESS POSTCONDITION OBSERVED?
+TECHNICAL EXECUTION
+!=
+VERIFIED BUSINESS OUTCOME
 ```
 
-Exemplos:
-
-```text
-invoice call returned 200
-!= invoice issued and persisted correctly
-
-RPA clicked Save
-!= transaction committed
-
-message send request accepted
-!= final provider outcome when async
-```
-
-Preferir owner API/event/record autoritativo para verificação.
+DÉLIA coordena verificação usando fonte autoritativa apropriada. Postcondition source deve ser owner/domain/provider evidence, não autoafirmação do executor.
 
 ## 21. Notification orchestration
 
-Notification é consequência governada do outcome, não prova do outcome.
-
-Canais podem incluir Minha DELPI, email, Teams, WhatsApp Business, Interaction Room e outros connectors aprovados.
-
-Recipients, severity, dedupe, escalation/SLA e acknowledgement seguem policy.
+Notification é consequência do state/outcome, nunca prova do outcome. Recipients/severity/dedupe/escalation seguem policy.
 
 ## 22. Human-in-the-loop
 
 ```text
-Workflow
-→ Task/Inbox/Decision
-→ responsible human
-→ decision/correction
-→ resume same Workflow
+DÉLIA Work
+→ Task/Inbox/Decision/Human Task
+→ human action
+→ resume same Work
 ```
 
-Não criar workflow paralelo para manual exception.
+Não criar workflow manual paralelo.
 
 ## 23. Learning
 
 ```text
 Event + Context + Decision + Action + Outcome
 → Evidence
-→ candidate pattern/optimization
-→ review/eval
-→ Policy/Playbook/Automation update
+→ candidate
+→ owner/review
+→ eval
+→ version
+→ publish
 ```
 
-Nunca `one successful run → autonomous permanent policy change`.
+Nunca `one successful run → production policy change`.
 
 ## 24. Architecture target
 
 ```text
-                          SOURCES
-        Domain APIs / ERP / MES / External / IoT
-                             │
-                             ▼
-                      EVENT / SIGNAL PLANE
-                             │
-                             ▼
-                     Minha DELPI Copilot
-        ┌──────────────────────────────────────┐
-        │ Context / Graph / Evidence           │
-        │ Deterministic Policies / Rules       │
-        │ Expertise / Knowledge                │
-        │ Planner / Reasoning                  │
-        │ Decision Gate / Autonomy Policy      │
-        └──────────────────┬───────────────────┘
-                           ▼
-                    Durable Workflow
-                           │
-                 ┌─────────┼─────────┐
-                 ▼         ▼         ▼
-            Domain API  Automation  Human Task
-                         & Execution
-                            Hub
-                 ┌────────┼─────────┐
-                 ▼        ▼         ▼
-               RPA     Function  Computer Use
-                 │
-                 ▼
-             legacy apps
-                 │
-                 └──────────────┐
-                                ▼
-                         Outcome Verification
-                                │
-                   Evidence / Audit / Notification
-                                │
-                         Learning Candidate
+SOURCES / SIGNALS
+        ↓
+EventEnvelope + authorized context
+        ↓
+DÉLIA
+Context / Evidence / Policy / Decision / Work
+        ↓
+PREPARE or ACT intent
+        ↓
+live AuthZ + Decision Gate when required
+        ↓
+approved execution contract
+        ↓
+Automation Hub | Domain API | Provider | Human Task
+        ↓
+technical result
+        ↓
+authoritative postcondition source
+        ↓
+Outcome / Evidence / Audit / Notification
+        ↓
+Learning Candidate
 ```
 
 ## 25. Bounded contexts / ownership
 
-Copilot owns event-correlation semantics used by Watches/Workflows, decision/orchestration, autonomy-policy application, outcome-verification orchestration and automation capability projection.
+DÉLIA owns intelligence context, Evidence coordination, Policy/Decision application, Work orchestration, semantic capability use and Outcome coordination.
 
-Automation & Execution Hub may be Copilot-owned bounded module or neutral platform service only after C0 ownership analysis. `Hub` does not imply microservice.
+Automation Hub owns technical execution mechanics and technical execution state when such platform/owner is proven.
 
-Domain APIs remain business authorities. External providers remain source authorities. OT safety remains external authority.
+Domain APIs remain business authorities. Providers remain external resource authorities. OT/Safety remains physical safety authority.
+
+**Não é permitido decidir que Automation Hub é “Copilot/DÉLIA-owned module” apenas por conveniência documental. C0 deve inventariar o owner real.**
 
 ## 26. Architecture patterns
 
-Preferred:
+Preferred, se gates justificarem:
 
 ```text
 Event Adapter → EventEnvelope
 Watch/Condition → Policy/Specification
-Decision → structured Policy + optional reasoning
-Execution request → Command/Use Case
-Executor → Port + Adapter
-Automation mapping → capability registry/projection
-Execution lifecycle → State Machine
-Durable orchestration → canonical Workflow runtime
-Retry → explicit idempotency/resilience
-Outcome → verifier adapter + OutcomeRef/EvidenceRef
+Decision → deterministic Policy + bounded reasoning
+Work step → semantic command/use case
+Execution → external owner contract
+Execution lifecycle → executor-owner State Machine
+Outcome → authoritative verifier + Outcome/Evidence
 ```
 
-Avoid god `AutomationService`, `RpaManager` or `AgentOrchestrator`.
+Evitar god services e registries paralelos.
 
 ## 27. Security / safety
 
 Required:
 
-- Core/domain authorization revalidation before material action;
-- explicit service/user identity for background actions;
-- event source/capability allowlists;
+- live Core/domain authorization before material ACT;
+- explicit user/service identity;
+- source/capability allowlists;
 - secrets outside prompt/LLM/log/MFE;
-- no event payload policy mutation;
+- event payload cannot mutate policy;
 - no blind retry of ambiguous writes;
-- no duplicate execution after resume;
-- kill switch per automation/capability/executor/provider;
-- human emergency stop;
-- full audit/correlation;
-- RPA/computer-use artifacts follow classification/retention;
-- no biometric/person-analysis permission bypass;
+- idempotency/correlation;
+- kill switch/revoke/disable;
+- human emergency stop where material;
+- no provider/executor metadata permission grant;
+- no biometric bypass;
 - no free-form LLM/RPA/computer-use → PLC/CNC/robot/machine.
 
 ## 28. Observability
 
-Minimum metrics:
+DÉLIA observability pode registrar event/decision/work/outcome refs, decision path, prepared vs executed actions, outcome-verification failures e human intervention.
 
-```text
-events received/validated/deduped
-watch detections
-decision path FAST|OPERATIONAL|REASONING
-decision latency
-prepared vs executed actions
-execution success/failure/ambiguous/cancelled
-queue latency
-worker availability/utilization when applicable
-retry/idempotency conflicts
-outcome verification failures
-human intervention rate
-notification delivery/acknowledgement
-time-to-resolution
-cost per decision/execution when applicable
-```
-
-KPIs distinguish technical execution from verified business outcome.
+Executor queue/worker/package internals permanecem observabilidade do Hub/executor owner, referenciados quando necessário sem duplicação.
 
 ## 29. Admin UX target
 
-Future admin may expose:
-
-```text
-AUTOMATION & EXECUTION HUB
-
-Automations
-- capability / owner / executor / version / autonomy policy / status
-
-Executions
-- running / queued / failed / ambiguous / outcome
-
-Workers
-- health / capability / environment
-
-Exceptions
-- waiting decision / policy blocked / failed / ambiguous
-```
+Uma futura surface de Automation Hub pode expor technical capabilities/executions/workers/exceptions conforme o owner real. Ela não se torna planner ou business authority.
 
 Não é requisito C0/C1.
 
 ## 30. Phase mapping
 
 ### C0
-Inventariar/freeze events, RPA/tools, scripts/jobs, queues/workers, service identities, credential owners, outcome sources, notification channels, executor/idempotency/security, kill switches e OT boundary.
+Inventariar/freeze events, Automation Hub/RPA/tools/scripts/jobs/queues/workers, service identities, credential owners, execution contracts, outcome sources, notification channels, kill switches e OT boundary.
 
 ### C1
-Standalone bootstrap. Nenhum Automation Hub/RPA runtime ainda.
+Standalone bootstrap; nenhum novo Automation Hub/RPA runtime criado sem C0 proof.
 
 ### C2
 Context/commands only.
 
 ### C3
-Event/Decision contracts, FAST/OPERATIONAL/REASONING and deterministic Policy foundation. No autonomous material ACT.
+Event/Decision contracts, FAST/OPERATIONAL/REASONING e deterministic Policy foundation. No material ACT.
 
 ### C4
-Read-only readiness/anomaly calculations using business/external reads + Graph/Evidence.
+Read-only readiness/anomaly calculations com authorized reads/Evidence.
 
 ### C5
-Executor ports/adapters, Automation Capability mapping, execution lifecycle, outcome verification, idempotency/resilience and governed writes.
+Primeiro gate para L4 governed ACT: DÉLIA Work/Decision coordena actions; technical execution usa Automation Hub/domain/provider contract comprovado. Idempotency/audit/Outcome verification obrigatórios conforme capability.
 
 ### C6
-Watch OBSERVE/ADVISE/PREPARE, Automation Hub admin/observability, Tasks/Cases/Inbox/exceptions, notifications/escalations and learning candidates.
+Watch `OBSERVE|ADVISE|PREPARE`, Hub admin/observability quando owner existir, Tasks/Cases/Inbox/exceptions, notifications/escalations e learning candidates. C5-governed ACT continua disponível somente por explicit authorized flow; Watch não o dispara autonomamente.
 
 ### C7
-Selected Watch ACT, capability-scoped L5, proactive autonomous workflows, kill switches and advanced computer-use only where justified. OT actuation remains blocked unless separate industrial safety initiative passes its own gate.
+Selected Watch autonomous ACT/L5, capability-scoped autonomous workflows e advanced computer-use sob explicit limits. L5 OFF default. OT actuation permanece bloqueada sem gate industrial separado.
 
 ## 31. Acceptance outcomes
 
-```text
-Copilot reacts to authorized events without user prompt
-not every event invokes an LLM
-rules/policies can make deterministic decisions
-planner never contains RPA clicks/selectors
-API preferred over RPA where authoritative contract exists
-RPA is replaceable executor behind semantic capability
-execution is idempotent/correlated/audited
-technical success is verified against business outcome
-notifications use truthful outcome state
-autonomy is capability/context/risk scoped
-L5 is OFF by default
-background actions use explicit service/user authority
-Watch PREPARE is distinct from ACT
-human exception resumes same durable workflow
-learning changes policy only through governance
-machine safety is never delegated to free-form Copilot reasoning
-```
-
-## 32. Market benchmark direction
-
-Reference classes to revalidate during implementation:
+Quando implementado, provar:
 
 ```text
-UiPath Maestro / agentic orchestration
-Automation Anywhere agentic process automation
-Microsoft Copilot Studio + Power Automate
-ServiceNow AI Agent Orchestrator
-SAP Joule / agent orchestration
-Siemens industrial copilot / shopfloor intelligence
-Palantir operational ontology / real-time decision workflows
+DÉLIA reacts to authorized events without requiring user prompt
+not every event invokes LLM
+rules/policies can decide deterministically
+planner contains no clicks/selectors
+API preferred over RPA when authoritative contract exists
+executor is replaceable behind semantic capability
+DÉLIA does not duplicate technical executor truth
+technical success != verified business Outcome
+L4 governed ACT works under C5 gates
+C6 Watch has no autonomous ACT
+L5/selected autonomous Watch ACT only in C7 and OFF default
+background ACT uses explicit authority
+learning changes production knowledge/policy only through governance
+machine safety never delegated to free-form reasoning
 ```
 
-These are benchmark references, not DELPI architecture authorities.
+Sem evidence obrigatória: `PENDING`/`INCONCLUSIVE`, nunca PASS.
+
+## 32. Benchmark direction
+
+Qualquer comparação de mercado é reference-only e deve ser revalidada com fonte recente quando usada. Benchmark nunca prova owner, capability ou runtime DELPI.
 
 ## 33. North Star
 
-> **A Minha DELPI evolui de um portal de aplicações para um sistema operacional inteligente da empresa: observa eventos autorizados, entende o contexto operacional, combina regras determinísticas e raciocínio de IA, toma decisões governadas, coordena APIs, automações/RPAs e pessoas, verifica resultados, comunica os envolvidos e transforma resultados em aprendizado governado.**
+> **A DÉLIA observa sinais autorizados, contextualiza, combina políticas determinísticas e raciocínio quando necessário, coordena trabalho governado, delega execução técnica ao owner correto, verifica outcomes em fontes autoritativas, comunica e transforma resultados em learning candidates sem criar autoridade paralela.**
