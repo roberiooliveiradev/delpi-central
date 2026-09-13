@@ -1,6 +1,6 @@
-# Minha DELPI Copilot — Identidade Biométrica e Observação Humana Governada
+# DÉLIA — Identidade Biométrica e Observação Humana Governada
 
-**Status:** thematic architecture/security/product spec  
+**Status:** `TARGET` — thematic architecture/security/product spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Multimodal/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
@@ -8,65 +8,60 @@
 
 ## 1. Decisão de produto
 
-O Minha DELPI Copilot poderá, quando explicitamente habilitado por política e finalidade, **reconhecer usuários conhecidos por foto/vídeo e voz**, associar participantes a identidades corporativas e observar padrões operacionais visíveis durante reuniões, treinamento e trabalho Frontline.
+A DÉLIA poderá, quando explicitamente habilitada por política, finalidade e capability aprovadas, **reconhecer usuários conhecidos por foto/vídeo e voz**, associar participantes a identidades corporativas e observar fatos operacionais visíveis durante reuniões, treinamento e trabalho Frontline.
 
-Essa capability não transforma biometria em autorização nem autoriza inferências irrestritas sobre pessoas.
+Isso não transforma biometria em autenticação, autorização, RBAC ou decisão trabalhista.
 
 ```text
 foto/vídeo/voz
 → biometric/perceptual adapter
-→ candidate identity / observable activity
-→ confidence + evidence
-→ policy + user/context validation
-→ bounded Copilot use
+→ candidate identity / observable fact
+→ confidence + Evidence
+→ policy + user/session/context validation
+→ bounded DÉLIA use
 ```
+
+Nenhum adapter, store, enrollment service ou primitive é considerado implementado por esta especificação. C0 deve provar owner, fonte canônica, consumers, contrato, privacy basis, storage e lifecycle.
 
 ## 2. Objetivos legítimos de produto
 
 Casos de uso alvo incluem:
 
-- reconhecer um usuário previamente enrolled em um terminal/posto compartilhado;
+- reconhecer um usuário previamente enrolled em terminal/posto compartilhado;
 - sugerir identidade de participante em reunião para diarização/ata;
-- reconhecer speaker conhecido em áudio quando policy permitir;
-- personalizar contexto operacional após identidade já autorizada ser confirmada;
-- associar evidências visuais/voz a um participante conhecido;
-- acompanhar sequências observáveis de trabalho para treinamento, melhoria de processo e captura de conhecimento tácito;
-- detectar eventos operacionais observáveis, como etapa executada, uso de ferramenta ou solicitação verbal de ajuda;
+- reconhecer speaker conhecido quando policy permitir;
+- personalizar contexto somente após identidade/sessão autorizada;
+- associar Evidence de mídia a participante conhecido;
+- observar sequência objetiva de trabalho para treinamento/melhoria de processo;
+- detectar fatos operacionais observáveis formalmente definidos;
 - permitir correção manual de identidade ou associação incorreta.
 
-## 3. Biometria não é authority de autorização
+## 3. Biometria não é authority
 
 Invariante:
 
 ```text
 biometric match
 != authenticated session
+!= Keycloak identity proof by itself
 != Core permission
+!= Domain authorization
 != authorization for Business Action
 ```
 
-A identidade biométrica pode:
-
-- ajudar a resolver quem está presente;
-- sugerir account/userRef;
-- atuar como fator adicional quando um fluxo específico for aprovado;
-- reduzir fricção em shared devices.
-
-Mas Business Actions continuam exigindo identidade/sessão válida, Core RBAC, policy e Domain API authorization.
-
-Para ações sensíveis, biometria sozinha nunca é suficiente.
+Biometria pode ajudar a resolver candidate userRef ou atuar como sinal adicional apenas em fluxo explicitamente aprovado. Para ações sensíveis, biometria sozinha nunca é suficiente.
 
 ## 4. Enrollment explícito
 
-Reconhecimento de usuário conhecido exige enrollment controlado.
+Reconhecimento de usuário conhecido exige enrollment controlado pelo owner correto.
 
-O enrollment deve registrar, conforme modalidade:
+Semântica candidata, a congelar em C0:
 
 ```text
 userRef
 modality: face | voice
 purpose
-policy/consent or other approved governance basis
+policy/legal-governance basis
 createdAt
 version
 status
@@ -76,15 +71,11 @@ retention class
 revocation/deletion state
 ```
 
-Preferir **biometric templates/embeddings protegidos** em vez de mídia bruta persistente quando o caso permitir.
-
-Raw enrollment photo/audio/video só pode ser retido se houver finalidade/policy explícita.
+Preferir biometric templates protegidos em vez de mídia bruta persistente quando o caso permitir. Raw enrollment media só pode ser retido com finalidade e governance explícitas.
 
 ## 5. Face recognition
 
-A capability de face recognition é permitida apenas como **closed-set recognition/verification de usuários enrolled e autorizados**.
-
-Exemplos:
+Permitida somente como **closed-set recognition/verification de usuários enrolled** dentro do escopo aprovado.
 
 ```text
 camera frame
@@ -92,23 +83,14 @@ camera frame
 → enrolled-user candidate search
 → {userRef, confidence, evidenceRef}
 → threshold/policy
-→ user-confirmable association
+→ correctable association
 ```
 
-Não usar reconhecimento aberto para identificar pessoas externas a partir de bases desconhecidas ou internet.
-
-Identidade com confidence insuficiente deve permanecer `UNKNOWN_PERSON` ou exigir confirmação.
+Não usar reconhecimento aberto de pessoas externas por bases desconhecidas/internet. Confidence insuficiente permanece `UNKNOWN_PERSON` ou requer confirmação.
 
 ## 6. Voice recognition / speaker identity
 
-Voz pode ser usada para:
-
-- speaker diarization;
-- associação de speaker a usuário enrolled;
-- comandos hands-free contextualizados;
-- continuação de sessão em device aprovado.
-
-Distinguir:
+Distinguir rigorosamente:
 
 ```text
 speech-to-text
@@ -117,45 +99,37 @@ speaker recognition
 voice authentication
 ```
 
-São capabilities diferentes e não devem ser confundidas.
-
-Reconhecer a voz de alguém não autoriza automaticamente um write.
+São capabilities diferentes. Reconhecer voz não autentica nem autoriza write.
 
 ## 7. Vídeo e reconhecimento temporal
 
-Vídeo pode ajudar a reconhecer participantes e manter identidade ao longo de uma sessão usando tracking bounded.
+Tracking pode ser usado somente de forma bounded, purpose-specific e session-scoped.
 
-Saída deve preservar:
+Saída material deve preservar source/frame/time range, candidate userRef, confidence quando válida, model/template version, corrections e session/device context.
 
-- source/frame/time range;
-- candidate userRef;
-- confidence;
-- model/template version;
-- corrections;
-- session/device context.
-
-Não persistir vídeo bruto por default apenas porque o tracking foi usado.
+Não persistir vídeo bruto por default apenas porque tracking foi usado.
 
 ## 8. Human Observation
 
-O Copilot pode analisar **comportamentos observáveis e relacionados ao processo**, por exemplo:
+A DÉLIA pode analisar **fatos observáveis do processo**, por exemplo:
 
 - sequência de etapas executadas;
-- interação com máquina/ferramenta/material;
+- interação visível com máquina/ferramenta/material;
 - deslocamentos relevantes ao fluxo;
-- postura/ergonomia quando houver método e owner apropriados;
-- uso observável de EPI quando essa análise estiver formalmente definida;
-- tempo entre etapas;
-- repetição/retrabalho;
+- uso observável de EPI quando houver método, owner e finalidade aprovados;
+- tempo entre etapas quando medido de forma válida;
+- repetição/retrabalho observável;
 - pedidos de ajuda;
-- desvios visíveis do procedimento;
-- técnicas/práticas de trabalho candidatas a conhecimento.
+- desvio observável de procedimento;
+- prática operacional candidata a conhecimento.
 
-Essas observações devem ser tratadas como Evidence/Hypothesis quando não houver medição/regra determinística suficiente.
+Não inferir personalidade, honestidade, intenção, emoção como verdade, saúde, atributos sensíveis ou valor profissional.
 
-## 9. Limite: não inferir atributos subjetivos ou sensíveis
+Ergonomia/postura só pode ser tratada quando houver metodologia, owner e uso aprovados; caso contrário permanece fora do escopo.
 
-Por default, o Copilot **não deve inferir** de rosto, voz, vídeo ou comportamento:
+## 9. Limites de people inference
+
+Por default, proibido inferir de rosto, voz, vídeo ou comportamento:
 
 - personalidade;
 - honestidade/confiabilidade;
@@ -167,32 +141,19 @@ Por default, o Copilot **não deve inferir** de rosto, voz, vídeo ou comportame
 - raça/etnia/religião/orientação sexual ou outros atributos sensíveis;
 - aptidão profissional global;
 - propensão disciplinar;
-- performance score oculto baseado em sinais biométricos.
+- productivity/trust/performance score oculto.
 
-O sistema pode descrever sinais observáveis de forma limitada (`fala interrompida`, `etapa não concluída`, `movimento repetido`) sem transformar isso em diagnóstico psicológico ou julgamento de caráter.
+Descrição objetiva de fato observável não pode ser convertida em diagnóstico psicológico ou julgamento de caráter.
 
 ## 10. Sem decisão trabalhista automática
 
-Biometric/Human Observation não pode ser usada como authority automática para:
+Biometric/Human Observation não pode ser authority automática para contratar, promover, punir, advertir, remunerar, avaliar desempenho formal, suspender ou demitir.
 
-```text
-contratar
-promover
-punir
-advertir
-remunerar
-avaliar desempenho formal
-suspender
-demitir
-```
+A DÉLIA pode organizar Evidence operacional verificável, mas não automatiza decisão trabalhista baseada em biometria ou inferências pessoais.
 
-Qualquer uso organizacional de analytics de pessoas exige processo separado, owner humano, transparência, fontes adequadas e regras independentes do Copilot.
+## 11. Identity Resolution Contracts
 
-O Copilot pode fornecer evidência operacional verificável, mas não produzir decisão trabalhista autônoma baseada em biometria ou inferências pessoais.
-
-## 11. Identity Resolution Contract
-
-C0 deve avaliar primitive/contract semelhante a:
+C0 deve avaliar se primitives como abaixo são realmente necessárias:
 
 ```text
 PersonObservationRef
@@ -200,155 +161,100 @@ BiometricIdentityCandidate
 BiometricEnrollmentRef
 ```
 
-Semântica candidata:
-
-```text
-candidateUserRef
-modality
-confidence
-source/mediaRef
-observedAt
-sessionRef/deviceRef
-modelVersion
-templateVersion
-policyRef
-correctionState
-```
-
-Não duplicar Core user model. `userRef` continua apontando para a authority corporativa.
+Qualquer shape anterior ao freeze é candidate. Não duplicar o modelo de usuário corporativo; `userRef` aponta para a authority corporativa apropriada.
 
 ## 12. Correção humana
 
-Toda associação biométrica material deve ser corrigível.
+Associação biométrica material deve ser corrigível.
 
-Exemplos:
+Correções:
 
-```text
-“Este não é o João, sou eu.”
-“Speaker 2 é a Mariana.”
-“Não associe esta imagem ao meu perfil.”
-```
-
-Correções devem:
-
-- atualizar apenas a association/session apropriada;
-- não alterar template automaticamente sem enrollment flow;
-- gerar audit/telemetry;
-- alimentar eval/candidate improvement de forma governada.
+- alteram somente association/session apropriada;
+- não mudam template automaticamente sem enrollment flow;
+- geram audit/telemetry apropriado;
+- podem alimentar candidate improvement governado.
 
 ## 13. Segurança dos templates
 
-Biometric templates são dados de alta sensibilidade e exigem:
+Biometric templates são dados de alta sensibilidade e exigem encryption, strict service access, tenant/company scope quando aplicável, ausência de exposure desnecessário ao MFE, no logging, key management, retention/revocation/deletion e audit de enrollment/match/delete.
 
-- encryption at rest/in transit;
-- strict service access;
-- tenant/company scope quando aplicável;
-- no exposure to MFE beyond necessary result;
-- no logging de embeddings/templates;
-- key management;
-- retention/revocation/deletion;
-- audit de enrollment/match/delete;
-- provider data-policy review.
-
-Templates não devem ser enviados indiscriminadamente a providers externos.
+Templates/tokens nunca vão para prompt, embeddings de conhecimento, Personal Memory ou logs comuns.
 
 ## 14. Anti-spoof / liveness
 
-Se biometria for usada para step-up verification ou identidade em shared device, C0/C3 devem avaliar necessidade de liveness/anti-spoof.
-
-Threats incluem:
-
-- foto impressa/tela;
-- replay de áudio;
-- vídeo gravado;
-- synthetic/deepfake media.
-
-Sem proteção adequada, biometria deve ser tratada apenas como **candidate identity**, não fator de confiança elevado.
+Se biometria algum dia participar de step-up verification, C0/C3 devem provar necessidade e mecanismo adequado de liveness/anti-spoof. Sem proteção suficiente, tratar biometria somente como candidate identity.
 
 ## 15. Meeting Mode
 
-Em reuniões, reconhecimento pode:
+Target:
 
 ```text
-face/voice candidate
-+ authenticated/invited participant list
+provider/authenticated participant refs
++ face/voice candidate opcional
 → participant association
-→ diarized transcript
-→ ata com participant refs
+→ confidence/correction
+→ diarized transcript / artifact refs
 ```
 
-A associação deve mostrar confidence/correção quando necessário.
-
-Participante não enrolled permanece identificado por label de sessão (`Participante 3`) ou associação manual.
+Participante não enrolled permanece label de sessão ou associação manual.
 
 ## 16. Frontline / shared devices
 
-Em Frontline, reconhecimento pode reduzir fricção:
+Target:
 
 ```text
 worker approaches approved station
-→ biometric candidate
-→ explicit/approved session continuation or login flow
-→ Core identity/RBAC remains authority
-→ WorkspaceContext loads role/OP/machine context
+→ biometric candidate opcional
+→ explicit approved session/login continuation
+→ Keycloak/Core remain identity/RBAC authorities
+→ bounded operational context
 ```
 
 Nunca manter usuário anterior ativo apenas porque a câmera continua vendo alguém semelhante.
-
-Session timeout, logout, operator change e ambiguous match permanecem obrigatórios.
 
 ## 17. Process learning
 
 Human Observation pode alimentar conhecimento operacional somente como candidate:
 
 ```text
-observable pattern
+observable fact
 + operational context
-+ repeated evidence
++ supporting Evidence
 → candidate practice/insight
-→ owner review
-→ eval/validation
-→ governed Knowledge/Playbook/procedure change
+→ owner/review
+→ eval
+→ version
+→ publish
 ```
 
-Não criar “perfil secreto do operador” como memória de aprendizagem.
-
-Conhecimento deve ser preferencialmente abstraído para o processo, salvo quando a autoria/participação for necessária e autorizada.
+Nada vira procedure/policy/knowledge corporativo automaticamente.
 
 ## 18. Data minimization
 
-Separar claramente:
+Separar:
 
 ```text
 raw photo/video/audio
 biometric template
 identity candidate
 confirmed association
-observable-process evidence
-derived knowledge candidate
+observable-process Evidence
+knowledge candidate
 ```
 
-Cada classe possui purpose/access/retention próprios.
-
-Apagar raw media não deve necessariamente apagar Evidence estruturada quando sua retenção for legitimamente separada; apagar enrollment deve impedir matches futuros.
+Cada classe tem purpose/access/retention próprios.
 
 ## 19. UX obrigatória
 
-Quando reconhecimento estiver ativo, a UI deve tornar visível:
+Quando reconhecimento estiver ativo, a UI deve tornar visível câmera/microfone ativos, finalidade, estado do identity recognition, identidade reconhecida quando relevante, ambiguidade/confidence quando material, opção de corrigir/recusar associação e estado de gravação/retenção quando aplicável.
 
-- câmera/microfone ativos;
-- finalidade da captura;
-- se identity recognition está ativo;
-- identidade reconhecida quando relevante;
-- confidence/ambiguidade quando material;
-- opção de corrigir/recusar associação;
-- estado de gravação/retenção quando aplicável.
-
-Não implementar identificação silenciosa como comportamento default.
+Não implementar identificação silenciosa como default.
 
 ## 20. Arquitetura
 
-Providers concretos ficam atrás de ports/adapters, se justificados pelo Abstraction Gate:
+Providers concretos ficam em adapters. Ports só existem se o Abstraction Gate de `49` justificar.
+
+Possíveis candidates:
 
 ```text
 FaceIdentityPort
@@ -358,108 +264,78 @@ HumanObservationPort
 LivenessPort
 ```
 
-Não criar todos antecipadamente.
-
-Pipeline alvo:
+Pipeline target:
 
 ```text
-MediaRef/session
+media/session ref
 → perception/biometric adapter
-→ candidate identity + observable evidence
+→ candidate identity + observable Evidence
 → policy
 → canonical userRef/context association
-→ Copilot understanding/workflow
+→ DÉLIA intelligence/work
 ```
 
 Nenhum provider biométrico vira source de RBAC.
 
 ## 21. Evals obrigatórios
 
-Quando a capability for implementada:
+Quando a capability entrar em runtime, provar no SHA/config avaliado:
 
-### Identity
 - enrolled positive;
 - non-enrolled negative;
 - look-alike negative;
 - low-confidence unknown;
 - wrong-speaker negative;
-- replay/spoof cases quando aplicável;
+- spoof/replay quando aplicável;
 - multi-person meeting;
-- user correction;
+- correction;
 - revoked/deleted enrollment;
-- model/template version change.
-
-### Fairness/quality
-- quality variance por iluminação/ruído/device;
-- false accept / false reject;
-- unknown-person rate;
-- confidence calibration;
-- no silent forced identity.
-
-### Security/privacy
+- model/template version change;
+- quality variation por iluminação/ruído/device;
+- false accept/false reject;
 - unauthorized enrollment access;
 - template leakage;
-- provider logging;
-- raw media retention violations;
 - cross-user/shared-device leakage;
-- identity candidate cannot grant permission.
-
-### Human Observation
+- candidate identity cannot grant permission;
 - observable fact vs hypothesis;
 - no emotion/personality inference;
-- no hidden productivity score;
-- no automatic disciplinary outcome;
-- process pattern requires evidence/review.
+- no hidden worker score;
+- no automatic disciplinary outcome.
+
+Sem evidência obrigatória, `PENDING`/`INCONCLUSIVE`, nunca PASS.
 
 ## 22. Fases
 
 ### C0
-
-Inventariar e congelar:
-
-- corporate user/avatar/photo sources;
-- voice/media sources;
-- enrollment authority;
-- biometric storage/keys;
-- consent/governance/retention;
-- device/shared-terminal flows;
-- participant sources;
-- provider options/data handling;
-- identity thresholds/correction model;
-- liveness needs;
-- prohibited inference classes.
+Inventariar e congelar user/photo/media sources, enrollment authority, storage/keys, governance/retention, devices, participant sources, provider/data handling, thresholds/correction, liveness needs e prohibited inference classes.
 
 ### C1/C2
-
-Preparar contracts/surfaces/session identity sem ativar reconhecimento automático.
+Preparar somente contracts/surfaces/session identity permitidos pelo freeze, sem reconhecimento automático antecipado.
 
 ### C3
-
-Implementar biometric/perception adapters somente se a capability estiver priorizada e C0 gates estiverem PASS.
+Implementar biometric/perception adapters somente se priorizados e com C0 gates PASS.
 
 ### C6
-
 Integrar reconhecimento governado a Meeting/Frontline e process-learning candidates.
 
 ### C7
-
-Otimizar realtime/edge/model routing somente com métricas e privacy/security gates aprovados.
+Otimizar realtime/Edge/model routing somente com evidence e privacy/security gates aprovados. L5 não é concedido por biometria.
 
 ## 23. Acceptance outcomes
 
 ```text
-known users can be recognized only under explicit governed capability
+closed-set recognition only under explicit governance
 biometric result never grants permission
-unknown/ambiguous people remain unknown or user-confirmed
-face/voice/video evidence is traceable and correctable
-biometric templates are protected and revocable
+unknown/ambiguous remains unknown or corrected
+Evidence traceable/correctable
+biometric templates protected/revocable
 no emotion/personality/character inference
 no biometric-based automatic employment decision
-process analysis uses observable evidence
-learning creates governed candidates, not secret worker profiles
+Human Observation uses observable process facts only
+learning creates governed candidates
 shared devices do not leak identity/session data
 ```
 
 ## 24. Regra final
 
-> O Copilot pode conhecer quem é uma pessoa autorizada e reconhecer padrões observáveis do trabalho, mas não deve transformar aparência, voz ou comportamento em julgamento psicológico, moral ou trabalhista automático.
+> A DÉLIA pode usar biometria para associação de identidade governada e fatos observáveis do processo, mas nunca como atalho de autenticação/autorização, julgamento psicológico ou decisão trabalhista automática.
