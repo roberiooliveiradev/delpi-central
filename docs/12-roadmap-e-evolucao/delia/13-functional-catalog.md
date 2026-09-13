@@ -1,12 +1,12 @@
-# 13 — Catálogo funcional do Minha DELPI Copilot
+# 13 — Catálogo funcional da DÉLIA
 
-**Status:** catálogo funcional temático  
+**Status:** `TARGET` — catálogo funcional temático  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Requirements:** [`25-requirements-traceability.md`](./25-requirements-traceability.md) — `CP-001…CP-310`
 
 ## 1. Objetivo
 
-Descrever o que o produto pode evoluir para fazer, sem duplicar a ordem C0–C7.
+Descrever capabilities target sem duplicar a ordem C0–C7 e sem implicar implementação. Cada capability permanece `PLANNED/TARGET` até evidence provar runtime/contract.
 
 ## 2. Conversation / Understanding
 
@@ -30,22 +30,23 @@ BACKGROUND Watches/Workflows
 ADMIN governance surfaces
 ```
 
-Same Copilot API/product/policy/evidence/work runtime.
+Same DÉLIA product/policy/evidence/work semantics; physical API/MFE/runtime shape depends on C0/C1 evidence.
 
 ## 4. Portal / Context / Navigation
 
 - open app/route/entity;
 - deep links/view/filter/focus;
-- WorkspaceContext + EntityRefs + SourceRefs;
+- WorkspaceContext + EntityRefs + SourceRefs when contracts are frozen;
 - iframe bridge;
-- operational context OP/machine/product/operation/workstation/lot/material;
+- operational context;
 - shared-device/session hygiene.
+
+Portal remains host/navigation/context publisher, not permission/business authority.
 
 ## 5. Expertise / Playbooks / Knowledge
 
-- one Copilot identity;
-- Expertise Packs;
-- Domain Playbooks;
+- one DÉLIA identity;
+- Expertise Packs/Domain Playbooks as governed target contracts;
 - Reference/Decision/Experience/Solution Pattern Knowledge;
 - cross-domain composition;
 - version/review/eval/publish/rollback;
@@ -53,10 +54,8 @@ Same Copilot API/product/policy/evidence/work runtime.
 
 ## 6. Personal Memory / Personalization
 
-- user preferences;
-- confirmed personal work facts;
+- user preferences/continuity;
 - followed topics/projects/metrics;
-- work continuity refs;
 - personalized briefing;
 - view/correct/delete/disable controls;
 - no hidden sensitive/personality profile;
@@ -67,10 +66,11 @@ Same Copilot API/product/policy/evidence/work runtime.
 - PDF/image/drawing/photo/certificates/spreadsheets;
 - STT/TTS/voice commands;
 - camera/video/screen share;
-- page/region/frame/time provenance;
+- provenance;
 - closed-set enrolled face/speaker recognition when governed;
 - explicit capture/retention;
-- Human Observation limited to observable process evidence.
+- Human Observation limited to observable process evidence;
+- biometric match != authentication != authorization.
 
 ## 8. Internet Research
 
@@ -83,27 +83,15 @@ Same Copilot API/product/policy/evidence/work runtime.
 
 ## 9. External Connectors
 
-Potential approved connectors:
-
-- Microsoft 365 / Outlook / Teams / OneDrive / SharePoint;
-- Google Workspace / Gmail / Drive / Calendar;
-- WhatsApp Business;
-- Slack/GitHub/CRMs/service desks/future providers.
-
-Capabilities include search/read/draft/send/create/update according to scopes/policy. `read != write`, `draft != send`.
+Potential approved provider families only after C0/provider contracts. `read != write`, `draft != send`, provider scope != Core permission.
 
 ## 10. Microsoft Teams
 
-- teams/channels/chats/messages/replies;
-- meeting metadata/transcripts/recordings when authorized;
-- change notifications;
-- meeting artifacts to Evidence/Task/Case/Watch;
-- future app/tab/bot as same Copilot runtime;
-- live raw media advanced/optional only.
+Future provider/surface integration under same DÉLIA semantics. No separate planner/runtime or automatic trust from Microsoft metadata.
 
 ## 11. Evidence / Epistemic UX
 
-- SourceRef/EvidenceRef;
+- Source/Evidence refs when frozen;
 - freshness/confidence/limitations;
 - FACT/CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION;
 - conflicting evidence;
@@ -112,87 +100,73 @@ Capabilities include search/read/draft/send/create/update according to scopes/po
 
 ## 12. Business Reads / Writes
 
-Read/compare/analyze data from onboarded domain APIs. Writes create/edit/approve/reject/assign/comment/cancel/initiate domain processes only through authorized Business Actions, Policy/Decision and final domain validation.
+Reads/writes use authorized Domain APIs/use cases whenever available. Material ACT requires live AuthZ + Policy/Decision + idempotency/audit + confirmation/approval as required + authoritative postcondition verification.
 
 ## 13. Business Graph
 
-- canonical entity relationships;
+- relationship projection;
 - cross-domain traversal;
 - provenance/freshness;
 - permission-aware fetch;
-- no master-data replication.
+- no master-data replication;
+- Graph != Semantic Layer.
 
 ## 14. Semantic Business Layer
 
 - governed MetricDefinitions;
-- business glossary;
+- glossary;
 - dimensions/grain/units;
-- official formulas/owners/versions;
+- formulas/owners/versions;
 - conflict/deprecation handling;
-- reproducible semantic queries;
-- zero-copy/federated source preference.
-
-Graph relates entities; Semantic Layer defines business meaning.
+- reproducible queries;
+- source authority preserved.
 
 ## 15. Event-Driven Operational Intelligence
 
 - real event ingestion;
-- EventEnvelope;
+- EventEnvelope when contract is frozen;
 - authenticity/dedupe/order/correlation;
-- polling only as bounded fallback;
-- `FAST|OPERATIONAL|REASONING` paths;
-- deterministic readiness/anomaly policies;
-- proactive Watches.
+- polling as bounded fallback;
+- `FAST|OPERATIONAL|REASONING`;
+- not every event calls an LLM;
+- event never grants permission.
 
 ## 16. Process Intelligence
 
-- Process Discovery;
-- Process Mining;
+- Process Discovery/Mining;
 - Task Mining only when explicitly governed;
-- conformance checking;
-- variants;
-- bottlenecks/waits/rework;
-- process KPI mining;
-- automation opportunity detection;
+- conformance/variants/bottlenecks/waits/rework;
+- automation opportunity candidates;
 - before/after measurement;
-- BPMN/process-map artifacts.
+- no hidden employee scoring.
 
-No hidden employee productivity/person score.
+## 17. Automation Hub / Technical Execution
 
-## 17. Automation & Execution Hub
-
-Executor types:
+Technical executor classes may include:
 
 ```text
-API
+official API
 native integration
 function/script
 RPA
-computer-use
+governed computer-use
 Human Task
 ```
 
-Functions:
+DÉLIA owns semantic capability/Policy/Decision/Work orchestration. Automation Hub or approved executor owner owns technical execution details, queues/workers/packages/credentials/session mechanics as applicable.
 
-- semantic capability→executor mapping;
-- execution queues/state;
-- RPA worker visibility when applicable;
-- idempotency/retry/cancel;
-- exception handling;
-- outcome verification;
-- notification/escalation;
-- kill switches.
-
-API is preferred when supported/authoritative.
+Outcome verification is coordinated by DÉLIA against authoritative business sources; Hub technical success is not business success.
 
 ## 18. Watch / Proactivity
 
 ```text
 OBSERVE → detect/record
 ADVISE  → analyze/notify
-PREPARE → prepare draft/action/work plan, no side effect
-ACT     → C7 only under explicit autonomy
+PREPARE → prepare draft/action/work plan, no material side effect
+ACT     → governed ACT may exist from C5 for explicitly authorized capabilities
 ```
+
+C6 Watch defaults to OBSERVE/ADVISE/PREPARE. C7 adds selected **autonomous Watch ACT / advanced autonomy**, not the first occurrence of ACT.
 
 ## 19. Durable Workflow / Work Management
 
@@ -202,7 +176,8 @@ ACT     → C7 only under explicit autonomy
 - checkpoints/restart/resume;
 - no duplicate write;
 - Task/Case/Room/Inbox;
-- human exceptions resume same Workflow.
+- human exceptions resume same Work;
+- no technical executor duplication.
 
 ## 20. Decision Gates / Autonomy
 
@@ -215,236 +190,104 @@ APPROVAL_WORKFLOW
 BLOCK
 ```
 
-Autonomy L0–L5 is capability/context/risk scoped; L5 OFF by default. No global unrestricted autonomy.
+Autonomy is capability/identity/context/risk/sensitivity/materiality/environment/reversibility/policy scoped. L5 OFF by default.
 
 ## 21. Outcome Verification
 
-Material actions distinguish technical execution from authoritative business completion:
-
 ```text
-EXECUTED?
-AND
-EXPECTED POSTCONDITION VERIFIED?
+technical execution success
+!= authoritative business outcome
 ```
 
-No false “success” notifications.
+Material ACT verifies postcondition at source authority before success claim.
 
 ## 22. Analysis Sandbox
 
-- bounded Python/SQL/DataFrame/statistics/forecast/optimization/chart workloads;
-- isolated runtime;
-- authorized read inputs;
-- quotas/timeouts;
-- no unrestricted host/private network;
-- reproducibility metadata;
-- truthful failure.
+Bounded isolated analysis for authorized data; read-only toward authoritative sources by default; no unrestricted host/private network; truthful failures.
 
 ## 23. Artifact Workspace
 
-Generate/manage:
-
-```text
-reports/documents
-spreadsheets
-presentations
-PDFs
-charts
-process maps/BPMN
-A3/8D/FMEA candidates
-checklists/procedure drafts
-project plans
-meeting minutes
-analysis packages
-```
-
-With version/provenance/ACL/review/human edit preservation/export/share governance.
+Versioned/provenanced work products with ACL/review/human edit preservation. External share/send is separate governed action.
 
 ## 24. Predictive Intelligence
 
-Potential use cases:
-
-- demand/stockout risk;
-- supplier delay;
-- machine failure/maintenance;
-- quality/scrap risk;
-- production delay/capacity;
-- SLA/financial risks where approved.
-
-Prediction carries model/version/horizon/confidence/freshness/limitations and is not FACT.
+Prediction carries model/version/horizon/freshness/limitations and is not FACT.
 
 ## 25. Prescriptive Intelligence
 
-- objectives/constraints;
-- alternative actions;
-- predicted outcomes;
-- trade-offs/risk;
-- recommendation/PREPARE;
-- never implicit authorization.
+Recommendation/PREPARE only; `recommendation != authorization`.
 
 ## 26. Operational Twin / What-if
 
-- dynamic source-state projection;
-- scenario branches;
-- simulation/compare;
-- impact on OP/capacity/inventory/customer/etc.;
-- `SIMULATE != APPLY`;
-- scenario never writes production directly.
+Scenario projection only; `SIMULATE != APPLY`; Twin is not source of truth.
 
 ## 27. MCP / A2A interoperability
 
-- approved MCP tool/resource integrations;
-- approved A2A external-agent delegation;
-- lifecycle/allowlists/scopes;
-- minimal delegated context;
-- cancellation/budget;
-- normalized Evidence/Outcome;
-- same write governance;
-- discovery != approval.
+Approved adapters/allowlists/scopes, least delegated context, cancellation/budget, normalized Evidence/Outcome, same write governance, discovery != approval.
 
 ## 28. AI Control Tower
 
-Central Digital Workforce governance:
-
-- AI asset/model/automation/connectors/tool-agent/Edge inventory;
-- owner/version/risk/data scope;
-- eval freshness/health;
-- cost and verified value;
-- incidents/dependencies;
-- rollout/cohorts;
-- kill switches/rollback.
-
-Admin does not inherit business action permissions.
+Governance projection for AI/model/automation/connectors/tool-agent/Edge assets. Not a second planner/business authority.
 
 ## 29. AI Model Lifecycle / MLOps
 
-- LLM/embedding/vision/speech/classifier/forecast/anomaly/optimization models;
-- eval/approval/deployment;
-- drift/latency/cost/availability;
-- datasets/eval governance;
-- rollback/revoke;
-- cloud/provider/batch/Edge deployments.
+Eval→approval→deployment→monitor/drift→rollback/revoke, with canonical owner. Router selects only approved assets.
 
 ## 30. Capability Marketplace
 
-Governed lifecycle for:
+Governed catalog; package requirements never grant permissions; executable assets require supply-chain controls.
 
-- Expertise/Playbooks;
-- Watches;
-- automations;
-- connector packs;
-- MCP/A2A integrations;
-- analysis/artifact templates;
-- semantic metric packs;
-- Frontline skills;
-- approved models.
+## 31. Edge / Offline
 
-Package requirements never grant permissions. Executable assets pass supply-chain controls.
-
-## 31. Edge / Offline Industrial Copilot
-
-- current procedure/drawing cache;
-- bounded local search/STT/vision/model inference;
-- telemetry reads;
-- FAST path;
-- offline Frontline assistance;
-- event buffering/store-and-forward;
-- device/package/model management;
-- explicit online/degraded/offline modes;
-- no authority widening offline.
+Governed local cache/inference/event buffering only when approved; offline never widens authority; Edge does not grant OT actuation.
 
 ## 32. Meeting Mode
 
-- explicit session/capture;
-- transcript + authorized business/external queries;
-- participant/speaker association when governed;
-- facts/decisions/pending topics;
-- candidate actions;
-- ata viva;
-- Task/Case/Room follow-up.
-
-Transcript != decision != executed action.
+Transcript/source/decision/candidate action/executed outcome remain distinct.
 
 ## 33. Frontline Mode
 
-- large touch/hands-free;
-- camera/image;
-- current procedure/drawing/revision;
-- OP/machine/product context;
-- maintenance/quality support;
-- occurrence/help request;
-- training assistance;
-- governed biometric identity assistance;
-- Edge/offline support when available.
+Large-touch/hands-free/current procedure/revision/operational context with governed media/Edge support. DÉLIA is not safety controller.
 
 ## 34. Organizational Learning
 
 ```text
-source/experience/process/execution
-→ Evidence
+Evidence
 → candidate
-→ review/eval/freshness/privacy/licensing
-→ versioned publish
+→ owner/review
+→ eval
+→ version
+→ publish
 ```
 
-No one-run auto-learning into production policy.
+No one-run auto-learning.
 
 ## 35. Iframe / AI-ready onboarding
 
-Secure bridge for context/visual commands; Business Actions remain API-based. Apps onboard through shared contracts/readiness without central planner hardcode.
+Bridge for context/visual commands; Business Actions remain API/use-case based. UI state/bridge metadata never grants permission.
 
 ## 36. Model Router / Compute Policy
 
-Choose only approved models based on capability, quality, latency, cost, data policy and deployment availability. Revoked model unavailable.
+Select only approved model/deployment candidates. Router is not lifecycle/registry/permission authority.
 
 ## 37. Security / Privacy / Industrial Safety
 
 - no secret/token leakage;
 - source/user isolation;
 - safe egress;
-- no hidden capture/biometric surveillance;
-- Process Mining not employee scoring;
+- no hidden biometric/task surveillance;
 - sandbox bounded;
-- tool/agent/package untrusted;
-- Prediction not fact;
-- Twin not production;
-- Edge offline not permission expansion;
-- Marketplace install not permission;
-- no arbitrary LLM/RPA/Edge→machine actuation.
+- external/tool/package content untrusted;
+- Prediction != FACT;
+- Twin != production;
+- Edge offline != permission expansion;
+- Marketplace install != permission;
+- no arbitrary LLM/voice/vision/RPA/Edge→machine actuation.
 
 ## 38. Administração
 
-Role-gated surfaces may include:
-
-```text
-Connections
-Automation Hub
-Process Intelligence
-AI Control Tower
-Semantic Catalog
-Memory controls
-Artifact Workspace
-Model Governance
-Marketplace
-Edge Fleet
-```
+Role-gated surfaces may include Connections, Automation governance projection, Process Intelligence, Control Tower, Semantic Catalog, Memory controls, Artifact Workspace, Model Governance, Marketplace and Edge Fleet. Admin access does not imply underlying business permission.
 
 ## 39. Final experience
 
-The user should feel that the Copilot:
-
-```text
-understands where I am and what matters to me
-knows business meaning and process reality
-finds internal/external evidence
-can perform reproducible analysis
-anticipates risks and simulates alternatives
-produces usable artifacts
-prepares/executes governed work
-coordinates APIs/RPAs/tools/agents/people
-verifies what really happened
-keeps me informed
-works in meeting and shopfloor contexts
-can remain useful in bounded offline scenarios
-governs models/assets safely
-learns only through explicit governance
-```
+DÉLIA should understand authorized context, find evidence, analyze/predict/simulate with epistemic clarity, prepare/execute governed work through canonical contracts, verify real outcomes, communicate status and learn only through explicit governance.
