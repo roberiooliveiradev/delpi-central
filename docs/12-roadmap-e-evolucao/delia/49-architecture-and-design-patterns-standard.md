@@ -1,4 +1,4 @@
-# Minha DELPI Copilot — Padrão Normativo de Arquitetura e Design Patterns
+# DÉLIA — Padrão Normativo de Arquitetura e Design Patterns
 
 **Status:** `CANONICAL_AUTHORITY` para arquitetura de código/patterns  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
@@ -7,16 +7,20 @@
 **Tests:** [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md)  
 **Specs temáticas:** `53–66`
 
+> Este documento define padrões e constraints alvo. Ele **não prova implementação** de ports, repositories, registries, engines, runtimes, services, schemas ou capabilities. Criação/reuso exige evidência e passagem pelo Abstraction Gate.
+
 ## 1. Objetivo
 
 Evitar arquitetura inventada por feature/provider. Sempre:
 
 ```text
 problem
-→ owner/source of truth
+→ responsibility/owner/source of truth
+→ consumers
+→ contract
 → boundary
 → layer
-→ canonical pattern
+→ simplest canonical pattern
 → Abstraction Gate
 → implementation
 → contract/conformance tests
@@ -24,11 +28,13 @@ problem
 
 ## 2. Product boundary primeiro
 
-Copilot code pertence à nova Copilot API/MFE. Portal/Core/Keycloak/Gateway/plugin-ui/Domain APIs/External providers/OT owners preservam authorities.
+Código da DÉLIA pertence à nova API/MFE da DÉLIA. Portal/Core/Keycloak/Gateway/plugin-ui/Domain APIs/External providers/Automation Hub/OT owners preservam authorities.
 
 Chat internals não são shared library.
 
 Provider SDK, RPA runtime, MCP server, A2A agent, model runtime, sandbox engine e Edge runtime entram por boundaries/adapters; nenhum vira Domain authority.
+
+Automation Hub é owner semântico da **execução técnica** de automações. DÉLIA é owner de inteligência, contexto, Evidence, Policy, Decision, Work/orquestração e verificação de Outcome. C0 deve provar o runtime físico e contratos existentes; ausência de prova não transfere ownership.
 
 ## 3. Architecture style
 
@@ -58,7 +64,9 @@ Infrastructure
 Composition Root wires concretes.
 ```
 
-Domain/Application não importam Flask/SQLAlchemy/HTTP/DB driver/LLM SDK/media SDK/OAuth SDK/provider SDK/RPA SDK/MCP SDK/A2A SDK/sandbox runtime/model-serving SDK/event broker/Portal/Chat source.
+Domain/Application não importam Flask/SQLAlchemy/HTTP/DB driver/LLM SDK/media SDK/OAuth SDK/provider SDK/RPA SDK/MCP SDK/A2A SDK/sandbox runtime/model-serving SDK/event broker/Portal/Chat source/Automation Hub internals.
+
+Bounded contexts integram por contrato HTTP/evento/port adapter apropriado; nunca por import de domain/use case ou banco alheio.
 
 ## 5. Layer responsibilities
 
@@ -73,9 +81,9 @@ Sem provider/executor/model/UI mechanics.
 
 ### Application
 
-Use Cases/Application Services, Commands/Queries, ports, orchestration, lifecycle transitions, transaction boundaries.
+Use Cases/Application Services, Commands/Queries, ports aprovados pelo Abstraction Gate, orchestration, lifecycle transitions, transaction boundaries.
 
-Examples:
+Examples target — não criar sem necessidade comprovada:
 
 ```text
 ResearchExternalInformation
@@ -101,7 +109,7 @@ Controllers/routes/DTOs/schema validation/webhook/event/callback boundaries/mapp
 
 ### Infrastructure
 
-Concrete adapters for DB/Core/Domain/OpenAPI/LLM/media/biometric/search/fetch/OAuth/connectors/events/RPA/computer-use/MCP/A2A/sandbox/model runtime/Edge/storage/cache/telemetry.
+Concrete adapters for DB/Core/Domain/OpenAPI/LLM/media/biometric/search/fetch/OAuth/connectors/events/Automation Hub/RPA/computer-use/MCP/A2A/sandbox/model runtime/Edge/storage/cache/telemetry.
 
 ### Composition Root
 
@@ -144,9 +152,10 @@ Durable business/memory/artifact/process/model/automation state is backend-owned
 | MCP tool | Tool Port/Adapter + allowlist | untrusted tool metadata |
 | A2A agent | Delegation Port/Adapter + bounded task | external agent not authority |
 | automation capability | semantic Registry/Projection | no UI mechanics in planner |
-| executor | Executor Port + Adapter | API/function/RPA/computer-use |
-| RPA | Executor Adapter + ACL | replaceable legacy executor |
-| computer-use | sandboxed Executor Adapter | advanced fallback |
+| automation orchestration | Use Case/Workflow + Policy/Decision | DÉLIA owns semantic Work |
+| technical executor | Automation Hub contract + adapter | no executor internals in planner |
+| RPA | Automation Hub/RPA Executor Adapter + ACL | replaceable legacy executor |
+| computer-use | Automation Hub/sandboxed Executor Adapter | advanced fallback |
 | outcome verification | Verifier Port + Specification | technical != business success |
 | Control Tower | Registry projections + Admin Queries/Commands | governance plane |
 | model lifecycle | Registry + State Machine + Eval/Deployment adapters | governed model asset |
@@ -154,17 +163,19 @@ Durable business/memory/artifact/process/model/automation state is backend-owned
 | Edge/offline | Device/Package/Sync adapters + bounded state | offline != wider authority |
 | OT actuation | separate industrial safety architecture | never generic LLM executor |
 
+Patterns nesta matriz são **defaults condicionais**, não instrução para criar todas as abstrações.
+
 ## 8. Use Case Pattern
 
 ```text
 Controller/Event Handler
 → Use Case
 → Domain/Policy
-→ Port
+→ approved Port
 → Adapter
 ```
 
-Avoid god objects: `CopilotService`, `ConnectorService`, `AutomationService`, `RpaManager`, `AgentOrchestrator`, `SemanticService`, `ProcessMiningService`, `TwinService`, `ControlTowerService` with mixed responsibilities.
+Avoid god objects: `DeliaService`, `CopilotService`, `ConnectorService`, `AutomationService`, `RpaManager`, `AgentOrchestrator`, `SemanticService`, `ProcessMiningService`, `TwinService`, `ControlTowerService` with mixed responsibilities.
 
 ## 9. Ports & Adapters
 
@@ -178,7 +189,7 @@ SafeWebFetchPort
 ExternalConnection/Resource/Action/Subscription ports
 SecretStorePort
 EventSourcePort
-AutomationExecutorPort
+AutomationHubPort
 OutcomeVerifierPort
 NotificationPort
 ProcessEventSourcePort
@@ -193,7 +204,7 @@ EdgeDevice/Sync ports
 ModelRegistry/Deployment ports
 ```
 
-Do not create them all upfront. Every abstraction passes the gate.
+Do not create them all upfront. Every abstraction passes the gate and must have real owner/consumer/variation/lifecycle or test-double justification.
 
 ## 10. Repository Pattern
 
@@ -205,7 +216,7 @@ PersonalMemory
 Expertise/Playbook
 Workflow/Task/Case/Watch
 ExternalConnection/Subscription
-AutomationExecution/catalog when owned
+AutomationExecution projection/catalog only when DÉLIA owns that lifecycle state
 Artifact metadata/version
 AIAsset/Model/Marketplace metadata when owned
 Meeting/Frontline metadata
@@ -214,9 +225,11 @@ Graph/Semantic/Process derived registry/materialization when justified
 
 Do not create `GmailRepository`, `RpaRepository`, `McpRepository` merely to wrap remote calls.
 
+Automation Hub execution state is not automatically DÉLIA-owned persistence; C0 must define contract/projection needs without duplicating executor truth.
+
 ## 11. Anti-Corruption Layer
 
-Normalize Core/domain/provider/RPA/MCP/A2A/model/legacy shapes into Copilot contracts. SDK types never leak to Domain/Application/public API.
+Normalize Core/domain/provider/Automation Hub/RPA/MCP/A2A/model/legacy shapes into DÉLIA contracts. SDK/provider/executor types never leak to Domain/Application/public API.
 
 ## 12. State Machines
 
@@ -224,7 +237,8 @@ Use only for real lifecycles, e.g.:
 
 ```text
 ExternalConnection
-AutomationExecution
+DÉLIA Work/Decision lifecycle
+AutomationExecution projection only if owned/required
 MCP/A2A integration approval lifecycle
 MemoryItem
 Artifact
@@ -237,7 +251,7 @@ No random `if status` spread across controllers.
 
 ## 13. Policy / Specification
 
-Typical policies:
+Typical policies — candidates, not mandatory class names:
 
 ```text
 DecisionGatePolicy
@@ -282,7 +296,7 @@ Mapping can change RPA→API/provider A→B without planner rewrite.
 
 ## 15. Internet / External Connector Patterns
 
-Keep existing canonical flows:
+Target canonical flow:
 
 ```text
 Search → Safe Fetch → Source/Evidence
@@ -303,7 +317,7 @@ event/user goal
 → structured result/decision candidate
 ```
 
-FAST uses deterministic rules; OPERATIONAL uses bounded reads/rules + optional small model; REASONING uses Graph/Knowledge/Expertise/LLM.
+FAST uses deterministic rules; OPERATIONAL uses bounded reads/rules + optional small model; REASONING uses Graph/APIs/Knowledge/Expertise/docs/external sources/LLM conforme necessidade.
 
 Never call LLM merely because an event occurred.
 
@@ -323,13 +337,13 @@ LLM can investigate/explain, not replace formal criteria.
 ```text
 intent/event
 → semantic capability
-→ Policy/Decision
-→ ExecutorSelection
-→ AutomationExecution
-→ ExecutorPort
-→ concrete adapter
+→ DÉLIA Policy/Decision
+→ DÉLIA Work/Workflow
+→ executor selection under policy
+→ Automation Hub contract
+→ technical executor/adapter
 → technical result
-→ OutcomeVerifier
+→ authoritative OutcomeVerifier/source
 → Outcome/Evidence/Audit
 ```
 
@@ -344,11 +358,11 @@ official API
 → human task
 ```
 
-Durable Workflow remains the single orchestration runtime.
+DÉLIA Work remains the canonical intelligence/orchestration lifecycle. Automation Hub may have its own technical execution lifecycle but must not become a second business planner or permission authority.
 
 ## 19. RPA / Computer-Use Pattern
 
-RPA sits in infrastructure. Worker/queue/lease/package/credential/session isolation only if RPA is real scope.
+RPA sits behind the Automation Hub/executor boundary. Worker/queue/lease/package/credential/session isolation belongs to the technical execution owner when RPA is real scope.
 
 Computer-use is advanced fallback with sandbox/session/app/network allowlist, takeover/stop and full audit.
 
@@ -363,7 +377,7 @@ technical result
 → VERIFIED_SUCCESS|VERIFIED_FAILURE|PENDING|INCONCLUSIVE
 ```
 
-No notification/message may convert an unverified action into “success”.
+No notification/message may convert an unverified action into “success”. Automation Hub technical success alone is insufficient.
 
 ## 21. Process Intelligence Pattern
 
@@ -517,7 +531,7 @@ AIAsset registry projections
 + rollout/kill-switch commands
 ```
 
-It does not execute business actions merely because admin controls an asset.
+It does not execute business actions merely because admin controls an asset and is not a second planner.
 
 ## 31. Model Lifecycle Pattern
 
@@ -546,7 +560,7 @@ Install/enable never grants RBAC/provider scope. Executable packages require sup
 
 ## 33. Resilience
 
-Each adapter defines timeout/retry/rate/concurrency/circuit breaker where useful/ambiguous outcome/degraded mode.
+Each adapter defines timeout/retry/rate/concurrency/circuit breaker only where the boundary and failure semantics justify them.
 
 Special cases:
 
@@ -559,7 +573,7 @@ Special cases:
 
 ## 34. Result/Error Model
 
-Canonical families may include:
+Canonical families are candidates to stabilize by contract when consumers exist; não criar catálogo especulativo apenas porque o nome aparece aqui.
 
 ```text
 External*
@@ -590,9 +604,12 @@ Controller owns business/retry/approval logic
 MCP/RPA adapter calls planner
 Sandbox receives production DB credentials
 Edge device invents business permissions
+DÉLIA bypasses Automation Hub technical boundary with ad hoc executor implementation
 ```
 
 ## 36. Bounded Contexts target
+
+Candidates de bounded contexts, a congelar em C0 conforme owner/consumers/contracts reais:
 
 ```text
 Conversation & Intelligence
@@ -609,7 +626,7 @@ Business Graph
 Semantic Business Layer
 Analysis & Artifacts
 Predictive/Prescriptive & Scenario/Twin
-Automation & Execution
+Automation Integration & Orchestration
 Work Management
 Policy & Decision
 Agent/Tool Interoperability
@@ -619,37 +636,42 @@ Platform Experience
 Observability & Evals
 ```
 
-A bounded context name does not imply separate microservice.
+A bounded context name does not imply separate microservice. O Automation Hub permanece boundary de execução técnica, não bounded context interno da DÉLIA por default.
 
 ## 37. Abstraction Gate
 
-Before creating interface/port/base/factory/strategy/registry/framework/repository/engine/service:
+**Obrigatório antes de criar qualquer interface/port/base/factory/strategy/registry/framework/repository/engine/service/shared module.**
 
-1. real boundary/source owner?
-2. real variation/consumer?
-3. test double needed?
-4. owned lifecycle/state?
-5. reduces coupling?
-6. equivalent already exists?
-7. avoids Chat/product coupling?
-8. shared refs sufficient?
-9. persistence truly needed?
-10. provider-specific detail can stay in adapter?
-11. credentials/data remain bounded?
-12. read/write/PREPARE/ACT/simulate/apply remain distinct?
-13. sibling provider/executor/model works without planner patch?
-14. new state duplicates domain/provider truth?
-15. lower-cost simpler pattern works?
-16. rollback/revoke path exists?
-17. does this create permission authority accidentally?
+Perguntar, nesta ordem:
+
+1. existe boundary/owner/source of truth real?
+2. existe consumer/variação real que justifique abstração?
+3. existe lifecycle próprio ou test double necessário?
+4. equivalente já existe no owner correto?
+5. reduz coupling em vez de apenas esconder complexidade?
+6. shared primitive/contrato mais simples já resolve?
+7. provider/executor detail pode permanecer no adapter?
+8. persistence é realmente necessária e owned pela DÉLIA?
+9. credentials/data/identity permanecem bounded?
+10. read/write, PREPARE/ACT e simulate/apply continuam separados?
+11. sibling provider/executor/model funciona sem planner patch?
+12. novo state duplica Domain/provider/Automation Hub truth?
+13. um padrão mais simples resolve?
+14. rollback/revoke/disable path existe?
+15. cria permission authority acidentalmente?
+16. depende de Chat ou internals de outro bounded context?
+17. C0/phase atual permite criar essa abstração agora?
+
+Se qualquer resposta material for negativa ou desconhecida, **não criar ainda**; classificar `TO_INVENTORY`, `PLANNED` ou exigir ADR conforme o caso.
 
 “Might be useful later” is insufficient.
 
 ## 38. Anti-patterns
 
-- Chat internals as Copilot library;
+- Chat internals as DÉLIA library;
 - god services/orchestrators;
-- second workflow engine in Hub/Control Tower/Marketplace;
+- second business workflow/planner engine in Automation Hub/Control Tower/Marketplace;
+- DÉLIA implementing ad hoc technical executor that bypasses Automation Hub ownership;
 - Process Mining as hidden employee leaderboard;
 - Graph as universal semantic model;
 - Semantic Layer copying all data;
@@ -671,7 +693,7 @@ Before creating interface/port/base/factory/strategy/registry/framework/reposito
 
 ### Domain/Application
 
-Pure Policy/Specification/lifecycle/use-case tests with fake ports.
+Pure Policy/Specification/lifecycle/use-case tests with fake ports only for abstractions that passaram pelo gate.
 
 ### Infrastructure
 
@@ -735,13 +757,16 @@ CHAT_RUNTIME_DEPENDENCY=0
 ## 43. Regra final
 
 ```text
-owner/boundary first
+responsibility/owner/source first
+→ consumers
+→ contract
 → factual inventory
 → simplest canonical pattern
+→ Abstraction Gate
 → adapter at volatile boundary
 → evidence/outcome truth
 → security/privacy/rollback
 → ADR only when materially needed
 ```
 
-O objetivo é adicionar novos domínios, providers, tools, agents, models, executors e Edge targets sem reescrever planner, policy, core domain semantics ou UX foundation.
+O objetivo é adicionar novos domínios, providers, tools, agents, models, executors e Edge targets sem reescrever planner, policy, core domain semantics ou UX foundation — e sem criar abstrações especulativas ou autoridades paralelas.
