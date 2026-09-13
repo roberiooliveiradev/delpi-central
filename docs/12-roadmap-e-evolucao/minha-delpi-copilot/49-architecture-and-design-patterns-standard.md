@@ -4,36 +4,33 @@
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **State:** [`21-data-and-state-model.md`](./21-data-and-state-model.md)  
-**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
-**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
-**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)  
-**Autonomous Operations/Execution Hub:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)
+**Tests:** [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md)  
+**Specs temáticas:** `53–66`
 
 ## 1. Objetivo
 
-Fazer o Cursor classificar o problema e aplicar pattern já definido, em vez de inventar arquitetura por feature/provider/executor.
+Evitar arquitetura inventada por feature/provider. Sempre:
 
 ```text
 problem
-→ owner/boundary
+→ owner/source of truth
+→ boundary
 → layer
 → canonical pattern
 → Abstraction Gate
-→ implement
+→ implementation
 → contract/conformance tests
 ```
 
 ## 2. Product boundary primeiro
 
-Copilot code pertence à nova Copilot API/MFE. Platform owners continuam Portal/Core/Keycloak/Gateway/plugin-ui/Domain APIs e infra neutra aprovada.
+Copilot code pertence à nova Copilot API/MFE. Portal/Core/Keycloak/Gateway/plugin-ui/Domain APIs/External providers/OT owners preservam authorities.
 
 Chat internals não são shared library.
 
-External provider SDK/API e RPA/computer-use runtime também não viram Domain authority; entram por adapters.
+Provider SDK, RPA runtime, MCP server, A2A agent, model runtime, sandbox engine e Edge runtime entram por boundaries/adapters; nenhum vira Domain authority.
 
 ## 3. Architecture style
-
-Obrigatório:
 
 ```text
 Clean Architecture
@@ -45,7 +42,7 @@ Clean Architecture
 + Light CQRS only when materially justified
 ```
 
-Use o menor pattern que preserve ownership, testabilidade, segurança, privacidade, generalização, outcome truth e evolução.
+Use o menor pattern que preserve ownership, testability, security, privacy, generalization, evidence/outcome truth e evolution.
 
 ## 4. Dependency rule
 
@@ -58,70 +55,57 @@ Interfaces / Adapters
 ↑
 Infrastructure
 
-Composition Root wires concrete implementations.
+Composition Root wires concretes.
 ```
 
-Domain/Application não importam Flask/SQLAlchemy/DB driver/HTTP client/LLM SDK/media SDK/OAuth SDK/search SDK/Graph SDK/Google SDK/WhatsApp SDK/RPA SDK/computer-use SDK/event broker/Chat modules/Portal source.
+Domain/Application não importam Flask/SQLAlchemy/HTTP/DB driver/LLM SDK/media SDK/OAuth SDK/provider SDK/RPA SDK/MCP SDK/A2A SDK/sandbox runtime/model-serving SDK/event broker/Portal/Chat source.
 
-## 5. Backend layers
+## 5. Layer responsibilities
 
 ### Domain
 
-Entities/Aggregates somente com identity/lifecycle real, Value Objects, invariants, pure Policies/Specifications e real Domain Events.
+- real entities/aggregates only;
+- value objects/invariants;
+- pure Policy/Specification;
+- real Domain Events.
 
-Sem DB/HTTP/provider/credential/framework/RPA/UI mechanics.
+Sem provider/executor/model/UI mechanics.
 
 ### Application
 
-Use Cases/Application Services, Commands/Queries, ports, orchestration, policy invocation, transaction boundaries e lifecycle transitions.
+Use Cases/Application Services, Commands/Queries, ports, orchestration, lifecycle transitions, transaction boundaries.
 
 Examples:
 
 ```text
 ResearchExternalInformation
-CreateExternalConnection
-ReadExternalResource
-SendExternalMessage
-HandleProviderEvent
 EvaluateOperationalCondition
-SelectDecisionPath
+MineProcessVariants
+QueryGovernedMetric
+RunAnalysis
+CreateArtifact
+CreateOrUpdateMemoryItem
+DelegateExternalAgentTask
 PrepareAutomationAction
 ExecuteAutomationCapability
 VerifyAutomationOutcome
-HandleAutomationExecutionResult
-EscalateAutomationException
-PromoteLearningCandidate
+CreateScenario
+RunPrediction
+PublishMarketplaceAsset
+HandleEdgeSync
 ```
-
-Sem provider URL, SDK, token, RPA selector ou concrete UI detail.
 
 ### Interfaces
 
-Controllers/routes/DTOs/schema validation/event/webhook/RPA callback boundaries/mappers.
-
-OAuth callback, provider webhook e executor callback são transport boundaries; business/policy logic não vive no controller.
+Controllers/routes/DTOs/schema validation/webhook/event/callback boundaries/mappers. Business/policy logic never lives in controller.
 
 ### Infrastructure
 
-- DB repositories;
-- Core/Domain HTTP adapters;
-- OpenAPI importer/executor;
-- LLM/RAG/media/biometric adapters;
-- Search/Safe Fetch adapters;
-- OAuth/provider/secret/vault adapters;
-- Microsoft/Google/WhatsApp/etc. connectors;
-- event/webhook/subscription adapters;
-- **API executor adapters**;
-- **Function/Script executor adapters**;
-- **RPA orchestrator/worker adapters**;
-- **Computer-use adapters only when justified**;
-- outcome-verification adapters;
-- notification adapters;
-- storage/cache/telemetry.
+Concrete adapters for DB/Core/Domain/OpenAPI/LLM/media/biometric/search/fetch/OAuth/connectors/events/RPA/computer-use/MCP/A2A/sandbox/model runtime/Edge/storage/cache/telemetry.
 
 ### Composition Root
 
-Configura concrete adapters/repositories/policies/use cases/controllers. Feature use cases não criam SDK/provider/RPA clients diretamente.
+Creates/configures concrete implementations. Feature use cases never instantiate SDKs directly.
 
 ## 6. Frontend architecture
 
@@ -129,45 +113,45 @@ Configura concrete adapters/repositories/policies/use cases/controllers. Feature
 ui
 state
 data
+features/contracts/adapters only when responsibility is real
 ```
 
-UI apresenta connection state/source provenance/Decision UX e, quando Automation Hub existir, catalog/execution/worker/exception/outcome states.
-
-State local não vira provider/RPA credential store nem workflow engine. Data layer usa Copilot API.
+Durable business/memory/artifact/process/model/automation state is backend-owned. Browser never becomes secret/token/model-registry store.
 
 ## 7. Pattern Decision Matrix
 
-| Problema | Pattern padrão | Limite |
+| Problem | Default pattern | Boundary |
 |---|---|---|
-| external dependency | Port + Adapter | boundary real |
-| application operation | Use Case/Application Service | one operational intent |
-| owned persistent state | Repository | not HTTP/RPA proxy |
+| external dependency | Port + Adapter | real external boundary |
+| application operation | Use Case/Application Service | one intent |
+| owned persistent lifecycle | Repository | not remote proxy |
 | complex lifecycle | State Machine | explicit transitions |
-| deterministic rule/readiness | Policy / Specification | structured facts → deterministic result |
+| deterministic rule/readiness | Policy / Specification | structured facts → result |
 | incompatible provider/legacy shape | Adapter + ACL | protect canonical model |
-| platform command | Command + Handler | typed generic target |
-| reliable state+event | Transactional Outbox | only when required |
+| platform command | Command + Handler | typed target |
+| state + event atomicity | Transactional Outbox | only if required |
 | retryable write | Idempotency | no blind retry |
-| asynchronous event | Event-Driven | real source/owner/schema |
-| event condition | Watch + Policy/Specification | OBSERVE/ADVISE/PREPARE/ACT lifecycle |
-| decision path selection | Policy/Strategy justified by real paths | FAST/OPERATIONAL/REASONING |
-| transport boundary | DTO + Mapper | no provider DTO leakage |
-| concrete wiring | Composition Root DI | simple composition |
-| media processing | bounded Pipeline | provenance/budgets |
-| biometric provider | Port + Adapter | candidate identity only |
-| public web fetch | Safe Fetch Port + Policy | egress boundary |
-| OAuth connection | Use Cases + State Machine + Credential Port | provider details in adapter |
-| connector capability | semantic capability + Adapter | planner provider-neutral |
-| provider event | Adapter → EventEnvelope | authenticity/dedupe/reconciliation |
-| automation capability mapping | Registry/Projection backed by contracts | no RPA mechanics in planner |
-| automation execution | Command/Use Case + Executor Port | one semantic capability |
-| RPA integration | Executor Port + Adapter/ACL | bot is replaceable executor |
-| worker/queue lifecycle | State Machine + lease/idempotency | only if RPA infra requires it |
-| outcome verification | Verifier Port + Specification | technical success != business success |
-| background action | explicit Actor/Service Identity + Policy | event never grants authority |
-| external/RPA write | Policy/Decision + Adapter | verify outcome/no blind retry |
-| computer-use fallback | sandboxed Adapter | only if API/RPA unsuitable and justified |
-| human exception | wait_user/wait_approval + same Workflow | no parallel manual process engine |
+| asynchronous event | Event Adapter → EventEnvelope | source/auth/dedupe |
+| event condition | Watch + Specification | OBSERVE/ADVISE/PREPARE/ACT |
+| decision path | Policy; Strategy only if real variation | FAST/OPERATIONAL/REASONING |
+| semantic business metric | Definition/Registry + Query Use Case | owner/version/formula |
+| process mining | Event-log projection + Process Mining Use Case | process, not person score |
+| analysis execution | Sandbox Port + isolated runtime Adapter | bounded/quota/read default |
+| artifact generation | Artifact Use Case + Repository/Storage Adapter | lineage/version/ACL |
+| prediction/model inference | Model Port + Adapter + PredictionRef | model/version/horizon |
+| simulation/twin | Scenario/Projection + Simulation Port | simulated != production |
+| personal memory | Memory Use Cases + Repository + Policy | user-owned/private |
+| MCP tool | Tool Port/Adapter + allowlist | untrusted tool metadata |
+| A2A agent | Delegation Port/Adapter + bounded task | external agent not authority |
+| automation capability | semantic Registry/Projection | no UI mechanics in planner |
+| executor | Executor Port + Adapter | API/function/RPA/computer-use |
+| RPA | Executor Adapter + ACL | replaceable legacy executor |
+| computer-use | sandboxed Executor Adapter | advanced fallback |
+| outcome verification | Verifier Port + Specification | technical != business success |
+| Control Tower | Registry projections + Admin Queries/Commands | governance plane |
+| model lifecycle | Registry + State Machine + Eval/Deployment adapters | governed model asset |
+| marketplace | Package manifest + lifecycle + supply-chain gates | install != permission |
+| Edge/offline | Device/Package/Sync adapters + bounded state | offline != wider authority |
 | OT actuation | separate industrial safety architecture | never generic LLM executor |
 
 ## 8. Use Case Pattern
@@ -180,90 +164,80 @@ Controller/Event Handler
 → Adapter
 ```
 
-Evitar `CopilotService`, `MultimodalService`, `ConnectorService`, `AutomationService`, `RpaManager` ou `AgentOrchestrator` god objects.
+Avoid god objects: `CopilotService`, `ConnectorService`, `AutomationService`, `RpaManager`, `AgentOrchestrator`, `SemanticService`, `ProcessMiningService`, `TwinService`, `ControlTowerService` with mixed responsibilities.
 
 ## 9. Ports & Adapters
 
-Ports possíveis apenas quando o boundary real justificar:
+Possible ports only when a real boundary is proven:
 
 ```text
 CoreApiPort
 DomainActionPort
 SearchProviderPort
 SafeWebFetchPort
-ExternalConnectionPort
-ExternalCredentialPort
-ExternalResourcePort
-ExternalActionPort
-ExternalSubscriptionPort
+ExternalConnection/Resource/Action/Subscription ports
 SecretStorePort
 EventSourcePort
 AutomationExecutorPort
-AutomationRegistryPort
-AutomationWorkerPort
 OutcomeVerifierPort
 NotificationPort
-Media/Vision/Speech/Biometric ports
+ProcessEventSourcePort
+SemanticMetricSourcePort
+AnalysisSandboxPort
+ArtifactStoragePort
+ModelInferencePort
+SimulationPort
+ExternalToolPort
+AgentDelegationPort
+EdgeDevice/Sync ports
+ModelRegistry/Deployment ports
 ```
 
-Não criar todos antecipadamente. Cada port passa pelo Abstraction Gate.
-
-Concrete adapters podem incluir:
-
-```text
-MicrosoftGraphAdapter
-GoogleWorkspaceAdapter
-WhatsAppBusinessAdapter
-DomainHttpExecutorAdapter
-LegacyRpaAdapter
-FunctionExecutorAdapter
-ComputerUseAdapter
-```
+Do not create them all upfront. Every abstraction passes the gate.
 
 ## 10. Repository Pattern
 
-Repository somente para state/lifecycle que o Copilot/Hub realmente possui:
+Repository only for owned lifecycle/state:
 
-- Conversation;
-- Expertise/Playbook;
-- Workflow/Task/Case/Watch;
-- ExternalConnection/Subscription;
-- AutomationExecution metadata;
-- Automation mapping/catalog quando owned;
-- Meeting/Frontline metadata;
-- Graph materialization quando provada.
+```text
+Conversation
+PersonalMemory
+Expertise/Playbook
+Workflow/Task/Case/Watch
+ExternalConnection/Subscription
+AutomationExecution/catalog when owned
+Artifact metadata/version
+AIAsset/Model/Marketplace metadata when owned
+Meeting/Frontline metadata
+Graph/Semantic/Process derived registry/materialization when justified
+```
 
-Não criar `GmailRepository`, `OutlookRepository` ou `RpaRepository` apenas para encapsular remote calls.
+Do not create `GmailRepository`, `RpaRepository`, `McpRepository` merely to wrap remote calls.
 
 ## 11. Anti-Corruption Layer
 
-Use para Core/domain/provider/RPA/legacy shapes incompatíveis. Normalize resources/capabilities/results para contracts Copilot.
+Normalize Core/domain/provider/RPA/MCP/A2A/model/legacy shapes into Copilot contracts. SDK types never leak to Domain/Application/public API.
 
-Planner nunca conhece coordinate/selector/package-specific UI details.
+## 12. State Machines
 
-## 12. State Machine
-
-Exemplos:
+Use only for real lifecycles, e.g.:
 
 ```text
-ExternalConnection:
-PENDING_AUTH → ACTIVE → EXPIRED|REAUTH_REQUIRED|REVOKED|DISABLED|ERROR
-
-ExternalSubscription:
-CREATING → ACTIVE → RENEWING → ACTIVE|EXPIRED|REAUTH_REQUIRED|DISABLED|ERROR
-
-AutomationExecution:
-QUEUED → RUNNING → SUCCEEDED|FAILED|AMBIGUOUS|CANCELLED|TIMED_OUT
-
-RPA Worker:
-ONLINE ↔ BUSY → DRAINING|OFFLINE
+ExternalConnection
+AutomationExecution
+MCP/A2A integration approval lifecycle
+MemoryItem
+Artifact
+Model deployment lifecycle
+Marketplace asset lifecycle
+Worker/Edge device operational state where durable
 ```
 
-Também aplica a Workflow/Decision/Case/Watch/Meeting/Media/Biometric quando lifecycle real exigir.
+No random `if status` spread across controllers.
 
 ## 13. Policy / Specification
 
-Policies possíveis:
+Typical policies:
 
 ```text
 DecisionGatePolicy
@@ -271,157 +245,80 @@ AutonomyPolicy
 DecisionPathPolicy
 OperationalReadinessPolicy
 AnomalyPolicy
-RetryPolicy
-IdempotencyPolicy
+Retry/IdempotencyPolicy
 ExecutorSelectionPolicy
 OutcomeVerificationPolicy
-NotificationEscalationPolicy
 RetentionPolicy
-MediaCapturePolicy
-BiometricIdentityPolicy
+MemoryWritePolicy
+SemanticMetricPolicy
+SandboxPolicy
 ExternalEgressPolicy
-ExternalConnectionPolicy
 ExternalActionPolicy
-ExternalKnowledgePromotionPolicy
-ComputePolicy
+ToolAgentTrustPolicy
+ModelApprovalPolicy
+MarketplaceEnablePolicy
+EdgeOfflinePolicy
 IndustrialSafetyBoundaryPolicy
 ```
 
-Policy/Specification é structured deterministic decision, não prompt livre.
+Policy is structured decision, not free-form prompt.
 
-## 14. Internet Research Pattern
+## 14. Semantic Capability Pattern
 
-Search → Safe Fetch → extraction → Source/Evidence → freshness/relevance → synthesis. External content remains untrusted.
-
-## 15. External Connection / OAuth Pattern
-
-Connect use case → authorization adapter → callback validation → lifecycle → SecretStorePort → normalized capabilities. Token never crosses planner/LLM/MFE.
-
-## 16. Semantic Capability Pattern
-
-Planner trabalha com semantic capabilities, por exemplo:
+Planner works with semantic capabilities independent from technical executor/provider:
 
 ```text
-communication.email.send
+billing.invoice.issue
 maintenance.request.create
-billing.invoice.issue
-production.report.validate
+communication.email.send
 inventory.read
+analysis.run
+artifact.create
+process.mine
+metric.query
 ```
 
-Capability não codifica executor.
+Mapping can change RPA→API/provider A→B without planner rewrite.
+
+## 15. Internet / External Connector Patterns
+
+Keep existing canonical flows:
 
 ```text
-billing.invoice.issue
-→ Domain/API executor today
-→ RPA executor tomorrow
-→ another authoritative adapter later
+Search → Safe Fetch → Source/Evidence
+OAuth → ExternalConnection → SecretRef → Provider Adapter
+Provider event → validation → EventEnvelope → Watch/Workflow
+Intent → preview/Decision → write adapter → verified Outcome
 ```
 
-Planner/workflow permanecem estáveis.
+External content remains untrusted; `draft != send`.
 
-## 17. External Read Pattern
-
-Capability → connection/scope validation → provider adapter → normalized result → Source/Evidence.
-
-## 18. External Write Pattern
-
-Intent → preview/Decision → revalidation → adapter → outcome verification → Outcome/Evidence/Audit.
-
-## 19. Event / Signal Ingestion Pattern
-
-```text
-source event/webhook/push/telemetry
-→ interface validation
-→ source authenticity/trust validation
-→ normalize EventEnvelope
-→ dedupe/order/correlation
-→ Watch/Workflow/Decision use case
-```
-
-Event payload never grants permission or ACT authority.
-
-Polling fallback:
-
-```text
-scheduler
-→ bounded query
-→ synthetic normalized event/change
-→ same dedupe/correlation path
-```
-
-Polling is fallback with explicit freshness/cost/interval semantics.
-
-## 20. Decision Path Pattern
+## 16. Event / Decision Intelligence Pattern
 
 ```text
 event/user goal
+→ EventEnvelope / context
 → DecisionPathPolicy
-   ├─ FAST
-   ├─ OPERATIONAL
-   └─ REASONING
+   FAST | OPERATIONAL | REASONING
+→ structured result/decision candidate
 ```
 
-### FAST
+FAST uses deterministic rules; OPERATIONAL uses bounded reads/rules + optional small model; REASONING uses Graph/Knowledge/Expertise/LLM.
 
-Deterministic facts/rules/state machine. No LLM when unnecessary.
+Never call LLM merely because an event occurred.
 
-### OPERATIONAL
-
-Bounded reads + rules + optional classifier/small model.
-
-### REASONING
-
-Graph + Knowledge + Expertise + LLM + structured decision candidate.
-
-Do not create Strategy hierarchy until at least real paths/variation justify it; a simple Policy function may be enough initially.
-
-## 21. Operational Readiness Pattern
+## 17. Operational Readiness Pattern
 
 ```text
 authoritative facts
-→ Policy/Specification
+→ Specification
 → READY | NOT_READY | INCONCLUSIVE
-→ Evidence/Reason codes
+→ reason codes + Evidence
 ```
 
-LLM may explain/investigate but does not replace deterministic readiness when criteria exist.
+LLM can investigate/explain, not replace formal criteria.
 
-Examples: invoice readiness, report plausibility, stock threshold, SLA breach.
-
-## 22. Automation Capability Registry/Projection Pattern
-
-Registry/projection maps semantic capability to executable contract:
-
-```text
-capabilityRef
-→ executorRef/version/type
-→ input/output schemas
-→ pre/postconditions
-→ timeout/retry/idempotency
-→ owner/environment/status
-```
-
-This is not a manual business rule catalog. Capability authority still derives from Domain/OpenAPI/platform/external contracts and approved automation mappings.
-
-## 23. Executor Selection Pattern
-
-Default preference:
-
-```text
-API official
-→ native supported integration
-→ deterministic function/script
-→ RPA
-→ computer-use
-→ human task
-```
-
-Selection considers availability, authority, reliability, policy, environment and capability mapping.
-
-Choosing RPA despite a reliable authoritative API requires evidence/exception, not convenience.
-
-## 24. Automation Execution Pattern
+## 18. Automation / Executor Pattern
 
 ```text
 intent/event
@@ -430,265 +327,363 @@ intent/event
 → ExecutorSelection
 → AutomationExecution
 → ExecutorPort
-→ concrete Adapter
+→ concrete adapter
 → technical result
 → OutcomeVerifier
-→ OutcomeRef/Evidence/Audit
+→ Outcome/Evidence/Audit
 ```
 
-No parallel automation workflow engine; Durable Workflow remains orchestrator.
-
-## 25. RPA Pattern
-
-RPA belongs to Infrastructure/adapter boundary.
+Default preference:
 
 ```text
-AutomationExecutorPort
-→ RpaExecutorAdapter
-→ RPA orchestrator/worker
+official API
+→ supported native integration
+→ deterministic function/script
+→ RPA
+→ computer-use
+→ human task
 ```
 
-Requirements when real:
+Durable Workflow remains the single orchestration runtime.
 
-- package/version traceability;
-- queue/lease/concurrency;
-- worker health/heartbeat;
-- environment isolation;
-- credential injection through secret owner;
-- selector/UI error translation;
-- screenshot/artifact retention policy;
-- idempotency/ambiguous outcome handling;
-- audit/correlation.
+## 19. RPA / Computer-Use Pattern
 
-Bot never owns business decision.
+RPA sits in infrastructure. Worker/queue/lease/package/credential/session isolation only if RPA is real scope.
 
-## 26. Computer-Use Pattern
+Computer-use is advanced fallback with sandbox/session/app/network allowlist, takeover/stop and full audit.
 
-Advanced fallback only:
+Planner never sees click/selector/coordinate mechanics.
 
-- sandbox/session isolation;
-- app/domain/network allowlists;
-- protected credentials;
-- bounded actions;
-- same Policy/Decision semantics;
-- takeover/stop;
-- full audit;
-- no arbitrary intranet access.
-
-## 27. Outcome Verification Pattern
+## 20. Outcome Verification Pattern
 
 ```text
-technical executor result
+technical result
 → expected postcondition
 → authoritative verifier/source
-→ VERIFIED_SUCCESS | VERIFIED_FAILURE | PENDING | INCONCLUSIVE
+→ VERIFIED_SUCCESS|VERIFIED_FAILURE|PENDING|INCONCLUSIVE
 ```
 
-Examples:
+No notification/message may convert an unverified action into “success”.
+
+## 21. Process Intelligence Pattern
 
 ```text
-HTTP 200 != invoice persisted
-RPA Save click != committed transaction
-provider accepted != final delivery if async
-```
-
-## 28. Background Identity Pattern
-
-Autonomous/background actions require explicit actor context:
-
-```text
-USER_DELEGATED actor
-or
-SERVICE actor with explicit capability/policy scope
-```
-
-Event/worker/device identity never silently becomes permission authority.
-
-## 29. Watch Pattern
-
-```text
-OBSERVE → record/detect
-ADVISE  → analyze/notify
-PREPARE → build candidate action/preview, no side effect
-ACT     → execute only under C7 autonomy gate
-```
-
-PREPARE and ACT are distinct state transitions/capabilities.
-
-## 30. Human Exception Pattern
-
-```text
-Workflow
-→ wait_user / wait_approval
-→ Inbox/Decision
-→ human resolution
-→ resume same Workflow
-```
-
-No separate “manual process” engine.
-
-## 31. External Knowledge / Operational Learning Pattern
-
-```text
-Event + Context + Decision + Action + Outcome
+authorized event logs
+→ normalized process events
+→ case traces
+→ variants/conformance/bottlenecks
 → Evidence
-→ candidate pattern/optimization
-→ review/eval
-→ versioned publish
+→ opportunity candidate
 ```
 
-One successful automation run never changes policy automatically.
+Rules:
 
-## 32. Resilience
+- missing event stays missing;
+- task mining requires privacy boundary;
+- actor-level data minimized;
+- deviation != employee fault/fraud;
+- opportunity != automatic automation deployment;
+- process KPIs use governed semantic definitions where available.
 
-Each adapter/executor defines timeout, retry eligibility, backoff, rate/concurrency, circuit breaker where useful, ambiguous outcome handling and degraded state.
-
-Read retry != write retry. RPA timeout after possible click/save is potentially ambiguous, not automatically retryable.
-
-## 33. Result/Error model
-
-Canonical errors may include:
+## 22. Semantic Business Layer Pattern
 
 ```text
-EventSourceInvalid
-EventDuplicate
-EventStale
-DecisionInconclusive
-AutomationCapabilityUnavailable
-AutomationExecutorUnavailable
-AutomationExecutionTimedOut
-AutomationExecutionAmbiguous
-AutomationExecutionFailed
-AutomationOutcomeNotVerified
-AutomationPolicyBlocked
-AutomationKillSwitchActive
-AutomationWorkerUnavailable
-ComputerUseBoundaryBlocked
+user intent
+→ resolve MetricDefinition/Glossary concept
+→ permission-aware source plan
+→ deterministic query/calculation
+→ Evidence + definition version
+→ explanation
 ```
 
-Concrete provider/RPA exceptions do not leak directly to UI/LLM.
+Graph = relationships; Semantic Layer = meaning/formula/grain/dimensions. Do not collapse them into one generic graph model.
 
-## 34. DTO + Mapper
+## 23. Personal Memory Pattern
 
-SDK/RPA/provider DTOs are not public contracts. Map only application/domain refs/results.
+```text
+candidate memory
+→ MemoryWritePolicy
+→ save/confirm/ignore
+→ versioned MemoryItem
+→ retrieval for relevance/presentation
+```
+
+Memory cannot grant permission or override live business truth. Personal Memory and Organizational Knowledge have different ownership/lifecycles.
+
+## 24. MCP / A2A Pattern
+
+### MCP
+
+```text
+semantic capability
+→ Tool Adapter
+→ approved server
+→ schema-validated invocation
+→ normalized Source/Evidence/Outcome
+```
+
+### A2A
+
+```text
+bounded subtask
+→ AgentDelegationPolicy
+→ approved agent adapter
+→ status/result/artifact
+→ normalized Evidence/Outcome
+→ Workflow continues
+```
+
+Discovery ≠ approval. Tool descriptions/messages/artifacts are untrusted. Delegation sends minimum context and no CoT dump.
+
+## 25. Analysis Sandbox Pattern
+
+```text
+authorized read/data export
+→ isolated sandbox
+→ bounded code/query
+→ analysis result
+→ Evidence/Artifact
+```
+
+Default: read-only source access; quotas/timeout/storage/network/egress/package policy; no broad DB/host credentials.
+
+## 26. Artifact Workspace Pattern
+
+```text
+CreateArtifact Use Case
+→ Artifact lifecycle/version
+→ Storage Adapter
+→ provenance/ACL
+→ review/edit/attach/export
+```
+
+Human edits form new versions or explicit patches; regeneration must not silently overwrite them. External sharing remains separate action.
+
+## 27. Predictive / Prescriptive Pattern
+
+### Prediction
+
+```text
+features/source refs
+→ ModelInferencePort
+→ model adapter
+→ PredictionRef(model/version/horizon/confidence/limitations)
+```
+
+Prediction ≠ FACT.
+
+### Prescription
+
+```text
+objectives + constraints + candidate scenarios
+→ optimizer/model/simulation adapter
+→ trade-offs
+→ recommendation/PREPARE
+```
+
+Recommendation ≠ authorization.
+
+## 28. Operational Twin / Simulation Pattern
+
+```text
+live authoritative state refs
+→ bounded twin projection
+→ scenario branch
+→ simulation
+→ compare
+```
+
+`SIMULATED_STATE != PRODUCTION_STATE`. Apply always starts a new live read/revalidation/Decision/action context.
+
+## 29. Edge / Offline Pattern
+
+```text
+central approved package/model/content
+→ versioned deployment adapter
+→ Edge device
+→ bounded local inference/cache/event buffer
+→ sync/reconcile
+```
+
+Offline modes explicit. Cache has revision/freshness. Loss of cloud never widens authority. Device identity != user identity. No free-form machine actuation.
+
+## 30. AI Control Tower Pattern
+
+Control Tower is a governance/query/command plane over asset projections:
+
+```text
+AIAsset registry projections
++ health/evals/cost/value/incidents/dependencies
++ rollout/kill-switch commands
+```
+
+It does not execute business actions merely because admin controls an asset.
+
+## 31. Model Lifecycle Pattern
+
+```text
+experiment/draft
+→ eval
+→ approval
+→ deployment
+→ monitor/drift
+→ rollback/deprecate/revoke
+```
+
+Model Router only chooses approved/available models compatible with Compute Policy.
+
+## 32. Capability Marketplace Pattern
+
+```text
+package manifest
+→ review/security/evals
+→ approved
+→ publish
+→ local enable/config/authorization
+```
+
+Install/enable never grants RBAC/provider scope. Executable packages require supply-chain controls.
+
+## 33. Resilience
+
+Each adapter defines timeout/retry/rate/concurrency/circuit breaker where useful/ambiguous outcome/degraded mode.
+
+Special cases:
+
+- write retry != read retry;
+- Edge sync handles clock/order/dedupe;
+- A2A task handles timeout/cancel/duplicate;
+- sandbox kills runaway workload;
+- model unavailable/OOD degrades truthfully;
+- RPA timeout after possible side effect is AMBIGUOUS until verified.
+
+## 34. Result/Error Model
+
+Canonical families may include:
+
+```text
+External*
+EventSourceInvalid|Duplicate|Stale
+DecisionInconclusive
+Automation* errors
+ProcessDataIncomplete
+SemanticMetricUnknown|Conflict|Stale
+MemoryDisabled|MemoryNotFound
+SandboxBlocked|SandboxTimedOut|AnalysisFailed
+ArtifactConflict|ArtifactUnauthorized
+ModelUnavailable|ModelRevoked|PredictionOutOfDistribution
+AgentNotApproved|ToolNotApproved|DelegationFailed
+EdgeOffline|EdgeCacheStale|EdgePackageRevoked
+MarketplaceAssetUnapproved|PackageIntegrityFailed
+```
+
+Provider-specific errors never leak raw SDK detail to UI/LLM.
 
 ## 35. Dependency Injection
 
 Forbidden:
 
 ```text
-UseCase creates RPA/Graph/Google client
-Planner instantiates executor
-UseCase reads worker credential directly
-Controller owns retry/decision/business logic
-RPA adapter calls planner
+UseCase creates SDK/client/worker directly
+Planner instantiates executor/model/server
+Controller owns business/retry/approval logic
+MCP/RPA adapter calls planner
+Sandbox receives production DB credentials
+Edge device invents business permissions
 ```
-
-Concrete creation belongs to composition/infrastructure.
 
 ## 36. Bounded Contexts target
 
 ```text
-Copilot Conversation/Intelligence
+Conversation & Intelligence
 Capability & Action Integration
 Expertise & Playbooks
 Knowledge
+Personal Memory
 Evidence & Provenance
 Media & Interaction Sessions
 External Information & Connections
 Event & Operational Intelligence
+Process Intelligence
+Business Graph
+Semantic Business Layer
+Analysis & Artifacts
+Predictive/Prescriptive & Scenario/Twin
 Automation & Execution
 Work Management
 Policy & Decision
+Agent/Tool Interoperability
+AI Asset/Model Governance
+Edge/Offline Runtime Integration
 Platform Experience
-Business Graph
 Observability & Evals
 ```
 
-`Automation & Execution` may remain module inside Copilot API or become neutral platform service only after C0 evidence/ADR. “Hub” does not imply microservice.
+A bounded context name does not imply separate microservice.
 
-## 37. Patterns by component
+## 37. Abstraction Gate
 
-| Componente | Preferred patterns |
-|---|---|
-| Internet Research | Use Case + Search Adapter + Safe Fetch + Evidence |
-| External Connections | Use Case + State Machine + Repository + Secret Adapter |
-| Provider Events | Adapter + EventEnvelope + dedupe/reconciliation |
-| Event/Signal Plane | source adapters + EventEnvelope + correlation |
-| Decision Intelligence | Policy/Specification + optional reasoning adapter |
-| Operational Readiness | deterministic Specification + Evidence |
-| Automation Capability | semantic projection/registry + contract versioning |
-| Execution Hub | Use Cases + Executor Ports/Adapters + State Machine |
-| RPA | Executor Adapter + worker/queue/idempotency |
-| Computer Use | sandboxed Executor Adapter |
-| Outcome Verification | Verifier Port + authoritative source |
-| Watch | State Machine/Policy + same Workflow runtime |
-| Human Exception | wait state + Inbox/Decision + resume |
-| Workflow/Decision | State Machine + Policy + Idempotency |
-| OT | separate safety architecture |
+Before creating interface/port/base/factory/strategy/registry/framework/repository/engine/service:
 
-## 38. Abstraction Gate
-
-Antes de criar interface/port/base/factory/strategy/registry/framework/repository/connector engine/event bus/RPA hub/executor registry/worker queue/computer-use adapter, provar:
-
-1. real boundary?
+1. real boundary/source owner?
 2. real variation/consumer?
 3. test double needed?
 4. owned lifecycle/state?
 5. reduces coupling?
 6. equivalent already exists?
-7. avoids Chat coupling?
+7. avoids Chat/product coupling?
 8. shared refs sufficient?
-9. persistence really needed?
-10. provider/executor concern can stay in adapter?
-11. credentials stay protected?
-12. read/write and PREPARE/ACT remain distinct?
-13. new provider/executor works without planner patch?
-14. authoritative API exists, making RPA unnecessary?
-15. technical success needs separate business verification?
-16. background identity is explicit?
-17. automation scope could be handled by existing Workflow/Watch instead of new engine?
+9. persistence truly needed?
+10. provider-specific detail can stay in adapter?
+11. credentials/data remain bounded?
+12. read/write/PREPARE/ACT/simulate/apply remain distinct?
+13. sibling provider/executor/model works without planner patch?
+14. new state duplicates domain/provider truth?
+15. lower-cost simpler pattern works?
+16. rollback/revoke path exists?
+17. does this create permission authority accidentally?
 
 “Might be useful later” is insufficient.
 
-## 39. Anti-patterns
+## 38. Anti-patterns
 
 - Chat internals as Copilot library;
-- god `AutomationService`/`RpaManager`/`AgentOrchestrator`;
-- second Workflow engine inside Automation Hub;
-- RPA bot as business-rule authority;
-- planner with click/selector/coordenada;
-- RPA chosen over supported authoritative API without evidence;
-- one global unrestricted L5 flag;
-- event payload executing write directly;
-- worker identity treated as user permission;
-- blind retry after ambiguous UI/API write;
-- technical execution success treated as business completion;
-- PREPARE silently becoming ACT;
-- computer-use with unrestricted intranet/session access;
-- secrets in prompt/log/MFE/screenshots;
-- provider name branching in planner;
-- external cache as truth;
-- hidden worker/person profiling;
-- free-form LLM to industrial machine.
+- god services/orchestrators;
+- second workflow engine in Hub/Control Tower/Marketplace;
+- Process Mining as hidden employee leaderboard;
+- Graph as universal semantic model;
+- Semantic Layer copying all data;
+- Personal Memory as permission/business truth;
+- MCP/A2A auto-trust;
+- tool/agent prompt injection changing policy;
+- sandbox as unrestricted corporate shell;
+- artifact without lineage/version;
+- model prediction as fact;
+- twin scenario as production state;
+- Edge offline broad permission cache;
+- model/package install as authorization;
+- RPA bot as business authority;
+- planner with click/selector;
+- one global L5 flag;
+- free-form LLM→industrial machine.
 
-## 40. Testing by layer
+## 39. Testing by layer
 
 ### Domain/Application
 
-Pure Policy/Specification, decision-path, autonomy, lifecycle and use-case tests with port fakes.
+Pure Policy/Specification/lifecycle/use-case tests with fake ports.
 
 ### Infrastructure
 
-Provider/executor contract tests, RPA worker/queue/package/version, token/credential isolation, timeout/ambiguous outcome, event verification, safe fetch.
+Contract/security tests for providers/executors/tools/agents/sandbox/models/Edge/storage, including timeout/error translation.
 
 ### Interfaces
 
-OAuth/webhook/event/executor callback/schema/auth/error tests.
+Schema/auth/webhook/event/callback/upload/download/admin tests.
 
 ### Frontend
 
-Connection/source/Decision/Automation Admin/execution/outcome/exception UX without credential exposure.
+Source/Decision/Memory/Semantic/Artifact/Process/Control-Tower/Automation/Twin/Edge UX without credential leakage.
 
 ### Standalone
 
@@ -699,67 +694,54 @@ NO_CHAT_DB_AUTHORITY
 CHAT_OFFLINE_INDEPENDENCE
 ```
 
-Automation scope also requires event trust, duplicate prevention, executor substitution, worker isolation, outcome verification, PREPARE/ACT separation, autonomy scope and kill-switch tests from `20`.
-
-## 41. Migration patterns
-
-Copilot DB/contracts:
+## 40. Migration Patterns
 
 ```text
 EXPAND → compatible readers → writers → optional backfill → CUTOVER → CLEANUP
 ```
 
-Provider/executor swaps use adapters/versioned mappings. Example RPA→API migration changes capability mapping and adapter, not planner/workflow/domain semantics.
+Adapters/versioned mappings handle provider/executor/model swaps. Definitions/models/packages are versioned; no silent mutation.
 
-## 42. ADR / Exception Gate
+## 41. ADR / Exception Gate
 
-Any material deviation proves why, alternatives, trade-offs, no second authority, privacy/security impact, reliability/outcome semantics and exit/rollback.
+Material deviation documents problem, evidence, alternatives, trade-offs, authority/privacy/security/reliability impact, migration/rollback and exit strategy.
 
-## 43. FOUNDATION_FREEZE architecture gates
+## 42. FOUNDATION_FREEZE gates
+
+At minimum:
 
 ```text
 ARCHITECTURE_STYLE
-LAYER_RESPONSIBILITIES
 DEPENDENCY_RULES
 BOUNDED_CONTEXTS
 PATTERN_DECISION_MATRIX
-ERROR_MODEL
-EVENT_MODEL
-STATE_MACHINE_RULES
-PERSISTENCE_RULES
-FRONTEND_STATE_RULES
-RESILIENCE_RULES
-TESTING_PATTERN
-MIGRATION_PATTERNS
+STATE/PERSISTENCE/ERROR/EVENT/RESILIENCE RULES
 ABSTRACTION_GATE
-ARCHITECTURAL_EXCEPTION_PROCESS
-SHARED_CODE_GATE
-MEDIA_PROVIDER_BOUNDARIES
-BIOMETRIC_BOUNDARIES
-EXTERNAL_EGRESS_BOUNDARY
-OAUTH_CONNECTION_BOUNDARY
-PROVIDER_SECRET_BOUNDARY
-EXTERNAL_EVENT_BOUNDARY
-AUTOMATION_EXECUTION_BOUNDARY
-EVENT_SIGNAL_BOUNDARY
-BACKGROUND_IDENTITY_BOUNDARY
-EXECUTOR_CONTRACT_BOUNDARY
-OUTCOME_VERIFICATION_BOUNDARY
-AUTONOMY_SCOPE_BOUNDARY
+MEDIA/BIOMETRIC/EXTERNAL BOUNDARIES
+AUTOMATION/OUTCOME/AUTONOMY BOUNDARIES
+PROCESS_INTELLIGENCE_BOUNDARY
+AI_ASSET_GOVERNANCE_BOUNDARY
+MCP_A2A_TRUST_BOUNDARY
+PERSONAL_MEMORY_BOUNDARY
+SEMANTIC_LAYER_BOUNDARY
+SANDBOX_ARTIFACT_BOUNDARY
+PREDICTIVE_TWIN_BOUNDARY
+EDGE_OFFLINE_BOUNDARY
+MODEL_MARKETPLACE_BOUNDARY
 OT_SAFETY_BOUNDARY
 CHAT_RUNTIME_DEPENDENCY=0
 ```
 
-## 44. Regra final
+## 43. Regra final
 
 ```text
-platform/product/privacy/security boundary first
-→ factual event/executor inventory
-→ proven repo convention
-→ Pattern Decision Matrix
-→ simplest solution preserving boundaries
-→ verify business outcome
-→ ADR only for material ambiguity
+owner/boundary first
+→ factual inventory
+→ simplest canonical pattern
+→ adapter at volatile boundary
+→ evidence/outcome truth
+→ security/privacy/rollback
+→ ADR only when materially needed
 ```
 
-O objetivo é uma arquitetura previsível em que novos providers e executors possam ser adicionados sem refatorar planner, policy, Domain ou UX central.
+O objetivo é adicionar novos domínios, providers, tools, agents, models, executors e Edge targets sem reescrever planner, policy, core domain semantics ou UX foundation.
