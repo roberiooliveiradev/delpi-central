@@ -1,17 +1,17 @@
-# Minha DELPI Copilot — Packs de Referência: Qualidade e Engenharia
+# DÉLIA — Packs de Referência: Qualidade e Engenharia
 
-**Status:** `REFERENCE_ONLY` — exemplos funcionais  
+**Status:** `REFERENCE_ONLY` — exemplos funcionais, não prova de runtime/catalog  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
 
 ## 1. Objetivo
 
-Mostrar como Expertise Packs, Playbooks, Knowledge, Multimodal Evidence e Business Capabilities se combinam no mesmo Copilot.
+Mostrar conceitualmente como Expertise Packs, Playbooks, Knowledge, Multimodal Evidence e Business Capabilities podem se combinar na mesma DÉLIA.
 
-Não define schema/phase novo.
+Não define schema, owner, phase, catalog ou implementation novos.
 
 ## 2. Referência `quality-industrial`
 
-Finalidade:
+Finalidade conceitual:
 
 - NC/reclamação;
 - inspeção;
@@ -20,7 +20,7 @@ Finalidade:
 - contenção;
 - plano/efetividade.
 
-Knowledge candidates, sujeitos a ACL:
+Knowledge candidates, sempre sujeitos a owner/ACL/version:
 
 - procedimentos/normas;
 - planos de controle;
@@ -29,7 +29,7 @@ Knowledge candidates, sujeitos a ACL:
 - reclamações;
 - critérios de liberação.
 
-Preferred playbooks:
+Preferred playbooks candidatos:
 
 ```text
 quality.root-cause
@@ -41,15 +41,15 @@ quality.customer-complaint-analysis
 Guidance:
 
 - separar contenção, sintoma, causa e efeito;
-- não declarar causa sem evidence;
+- não declarar causa sem Evidence;
 - buscar recorrência;
-- explicitar missing/conflicting evidence;
+- explicitar missing/conflicting Evidence;
 - recomendar ação proporcional ao risco;
 - verificar efetividade.
 
 ## 3. Referência `product-engineering`
 
-Finalidade:
+Finalidade conceitual:
 
 - desenho/revisão;
 - alteração de engenharia;
@@ -57,7 +57,7 @@ Finalidade:
 - material/processo;
 - technical comparison/change impact.
 
-Preferred playbooks:
+Preferred playbooks candidatos:
 
 ```text
 engineering.drawing-review
@@ -71,32 +71,32 @@ Guidance:
 - não inventar dimensão ilegível;
 - separar especificação de inferência;
 - apontar ambiguity/limitation;
-- correlacionar impacto somente com evidence.
+- correlacionar impacto somente com Evidence.
 
 ## 4. Composição Engenharia + Qualidade
 
-> “Analise este desenho e veja se ele pode explicar a não conformidade dimensional do lote.”
+Cenário de referência:
 
 ```text
-attachment
+attachment/source
 → Multimodal Evidence
 → product-engineering + quality-industrial
 → drawing-review playbook
 → authorized inspection/NC reads
 → specification x measurement comparison
 → FACT/CALCULATION/HYPOTHESIS/CONCLUSION
-→ missing evidence
+→ missing Evidence
 → recommendation
 ```
 
-Não afirmar causalidade sem evidence suficiente.
+Não afirmar causalidade sem Evidence suficiente.
 
 ## 5. `quality.root-cause` — stages de referência
 
 ```text
 RC1 definir problema
 RC2 delimitar escopo
-RC3 coletar evidence
+RC3 coletar Evidence
 RC4 separar sintomas de causas candidatas
 RC5 estruturar hipóteses
 RC6 testar hipóteses
@@ -117,7 +117,7 @@ D7 prevenção
 D8 conclusão
 ```
 
-Copilot pode preparar draft com campos faltantes explícitos; nunca inventar dados para completar formulário.
+DÉLIA pode preparar draft com campos faltantes explícitos; nunca inventar dados para completar formulário.
 
 ## 7. `engineering.drawing-review` — stages de referência
 
@@ -134,27 +134,24 @@ E8 risks/questions
 
 ## 8. Caso composto
 
-> “Analise o desenho 90264238, veja riscos de qualidade, procure problema semelhante e monte um 8D preliminar.”
-
 ```text
 Entity/Attachment resolution
 → Multimodal Evidence
 → Engineering + Quality Expertise
 → drawing-review
-→ Business/Knowledge reads
+→ authorized Business/Knowledge reads
 → root-cause analysis
 → 8D artifact draft
 → gaps/limitations
 ```
 
-Se houver write:
+Se houver material ACT:
 
 ```text
-Business Action
-→ current RBAC/policy
-→ Decision Gate
-→ execute
-→ verify Outcome/Evidence
+Business Action intent
+→ live AuthZ/Policy/Decision
+→ Domain API or Automation Hub/approved executor path
+→ authoritative Outcome verification
 ```
 
 ## 9. Evals do piloto
@@ -163,21 +160,13 @@ Business Action
 - segunda revisão/item;
 - desenho ilegível;
 - unauthorized history;
-- no evidence of cause;
+- no Evidence of cause;
 - prompt injection in PDF;
-- Engineering + Quality + Supplies composition;
-- evidence provenance;
+- cross-domain composition;
+- provenance;
 - no causality hallucination;
-- session without agent.
+- no agent dependency.
 
 ## 10. Acceptance
 
-```text
-SINGLE_COPILOT_IDENTITY=PASS
-EXPERTISE_COMPOSITION=PASS
-MULTIMODAL_EVIDENCE=PASS
-NO_CAUSALITY_HALLUCINATION=PASS
-UNAUTHORIZED_DATA_BLOCKED=PASS
-PLAYBOOK_GROUNDED=PASS
-DECISION_GATE_ON_WRITES=PASS quando write no escopo
-```
+Este arquivo não pode declarar `PASS` por si só. Os cenários são acceptance targets; prova válida depende de runtime/tests/evidence do SHA/config avaliado.
