@@ -5,7 +5,8 @@
 **Boundary standalone:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
 **Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
-**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)
+**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
+**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)
 
 ## 1. Regra de evidence
 
@@ -13,68 +14,55 @@ Todo PASS material registra, conforme aplicável:
 
 ```text
 gitSha
-Copilot API version/image
-Copilot MFE version/bundle
-manifest/config hashes
-schema/migration version
+Copilot API/MFE version
+manifest/config/schema hashes
 OpenAPI/Action Catalog hashes
-provider/model/config hashes
-expertise/playbook hashes
-media/provider policy hashes
-biometric model/template policy version
+model/provider/config hashes
+expertise/playbook versions
+media/biometric policy versions
+external connector/connection policy version
+OAuth scope policy version
+egress/web-fetch policy version
 retention/consent policy version
-device/session class
-industrial safety boundary/version when applicable
 environment
 test/eval version
 timestamp
 ```
 
-Evidence posterior incompatível invalida o PASS afetado.
+Evidence incompatível ou stale invalida o PASS afetado.
 
-## 2. Gate C0 — Platform + Architecture Foundation Freeze
+## 2. Gate C0 — Foundation Freeze
 
-### Platform inventory
+### Inventário factual obrigatório
 
 Provar com paths/contracts reais:
 
-- Portal AuthContext/AppHost/AppLauncher/Router;
-- Core `/me`, apps, routes, RBAC, manifest, notifications;
-- Gateway dev/prod;
-- Compose dev/prod;
-- federation/plugin-ui;
-- representative MFEs/manifests;
-- APIs/OpenAPIs/auth/idempotency/entity IDs;
-- rooms/events/jobs/notifications/workflows existentes;
-- browser/media/streaming patterns existentes;
-- shared-device/tablet/kiosk/room patterns quando existirem;
-- media/object storage existente;
-- privacy/retention/consent owners existentes;
-- corporate user/avatar/photo sources existentes;
-- biometric enrollment/storage/provider/liveness patterns existentes, se houver;
-- participant/presence sources;
-- OP/machine/operation/product context sources;
-- OT APIs/events/protocol boundaries existentes, sem assumir command authority;
-- Chat analisado apenas como reference-only.
+- Portal/Core/Gateway/Compose/federation/plugin-ui;
+- APIs/OpenAPIs/auth/idempotency/events;
+- rooms/jobs/notifications/workflows;
+- media/storage/device/privacy owners;
+- biometric enrollment/provider/storage/liveness quando existir;
+- outbound HTTP/egress/proxy/DNS policy;
+- OAuth callback/connection/secret-storage patterns;
+- Microsoft Graph/Google Workspace/WhatsApp Business/other integrations existentes;
+- webhook/subscription/push/scheduler/reconciliation patterns;
+- external-data privacy/compliance owners;
+- OT/industrial boundaries;
+- Chat apenas como reference-only.
 
-### Standalone boundary
+### Standalone negatives
 
-Negative obrigatório:
+Devem falhar arquiteturalmente:
 
 ```text
-Copilot target imports minha-delpi-ai-api
-Copilot target imports plugins/minha-delpi-chat source
-Copilot schema depends on Chat table/session/agent
-Copilot requires Chat API endpoint
-Copilot requires Chat container to start
-Copilot media/biometric pipeline calls Chat runtime as required dependency
+Copilot importa runtime/source do Chat
+Copilot depende de Chat API/container/database authority
+Copilot usa Chat media/biometric/external runtime como dependency obrigatória
 ```
 
-Todos devem resultar em `FAIL` arquitetural.
+### Shared foundations
 
-### Shared primitives
-
-Positive/sibling/negative para:
+Validar sem duplicação:
 
 - CorrelationContext;
 - EntityRef/RelationshipRef;
@@ -82,51 +70,45 @@ Positive/sibling/negative para:
 - CapabilityProjection;
 - PlatformCommand/Result;
 - WorkspaceContext;
-- Expertise/Playbook contracts;
 - DecisionGate;
 - WorkflowPlan/Step;
 - TaskRef/CaseRef;
 - EventEnvelope;
-- IframeBridgeEnvelope;
-- `MediaRef` ou equivalente, **somente se C0 confirmar necessidade**;
-- biometric/person observation refs, **somente se C0 confirmar necessidade e sem duplicar Core user**.
+- MediaRef/biometric/external refs somente quando C0 provar necessidade.
 
-### Media/privacy/Frontline/Biometric foundation
+### Media/Biometric/External foundation
 
-Provar antes de runtime multimodal/biométrico contínuo:
+Provar:
 
-- capture mode classes;
-- media retention classes;
-- transcript/raw-audio/raw-video/screen/Evidence lifecycle separado;
-- consent/policy owner;
-- shared-device identity/session isolation;
-- operational context reuse de WorkspaceContext/EntityRef;
-- realtime budgets/backpressure direction;
-- industrial/OT boundary;
-- biometric enrollment lifecycle;
-- biometric template protection/retention/revocation;
+- capture/retention classes;
+- shared-device isolation;
+- biometric enrollment/template/revoke/correction boundaries;
 - unknown/low-confidence semantics;
-- correction flow;
-- liveness/anti-spoof criteria;
-- prohibited human inference classes;
-- no open-world/indiscriminate face recognition default;
-- no emotion/personality/character inference;
-- no automatic employment decision from biometrics/Human Observation.
+- prohibited person-inference classes;
+- safe outbound web boundary;
+- protected/internal destinations não podem ser alcançados por web research;
+- redirects continuam sob a mesma policy;
+- OAuth lifecycle e least privilege;
+- provider credentials protegidos e fora de LLM/MFE/logs;
+- USER_DELEGATED/ORG_MANAGED/SHARED_RESOURCE/SERVICE_CONNECTION permanecem distintos;
+- personal source não vira organizational source implicitamente;
+- read/write external capabilities permanecem separadas;
+- webhook authenticity/dedupe/renewal/reconciliation definidos;
+- external learning exige promoção governada;
+- OT safety non-authority.
 
 ### Architecture conformance
 
 - dependency direction;
-- no framework/provider concrete imports in Domain/Application;
-- Ports/Adapters where boundary exists;
+- concrete providers apenas em infrastructure/adapters;
 - Composition Root wiring;
-- Repository only for owned persistent lifecycle;
-- State Machine for nontrivial lifecycle;
-- Error/Result translation at boundaries;
-- retry/idempotency read/write semantics;
-- frontend server/workspace/conversation/local/durable state ownership;
-- media/biometric provider integrations behind justified boundaries;
-- no speculative Strategy/Factory/Saga/CQRS/registry/base class;
-- ADR for material exception.
+- Repository somente para lifecycle/state owned;
+- State Machine para lifecycle não trivial;
+- error/result translation;
+- idempotency/resilience;
+- provider-neutral planner;
+- no speculative abstraction;
+- ADR para exceção material.
 
 ### FOUNDATION_FREEZE
 
@@ -142,6 +124,12 @@ INTEGRATION_CONTRACTS=PASS
 MEDIA_PRIVACY_BOUNDARIES=PASS
 BIOMETRIC_IDENTITY_BOUNDARY=PASS
 HUMAN_OBSERVATION_BOUNDARY=PASS
+EXTERNAL_EGRESS_BOUNDARY=PASS
+OAUTH_CONNECTION_BOUNDARY=PASS
+PROVIDER_SECRET_BOUNDARY=PASS
+EXTERNAL_SOURCE_PRIVACY_BOUNDARY=PASS
+EXTERNAL_EVENT_BOUNDARY=PASS
+EXTERNAL_LEARNING_BOUNDARY=PASS
 SHARED_DEVICE_BOUNDARY=PASS
 OPERATIONAL_CONTEXT_BOUNDARY=PASS
 OT_SAFETY_BOUNDARY=PASS
@@ -150,56 +138,21 @@ CHAT_RUNTIME_DEPENDENCY=0
 DUPLICATE_FOUNDATION=0 material
 ```
 
-## 3. Gate C1 — Standalone Application Bootstrap
+## 3. Gate C1 — Standalone Bootstrap
 
-### Copilot API
+### API/MFE/Platform
 
-- own root/package;
-- `/health`;
-- config validation;
-- structured logging;
-- JWT valid/expired/wrong issuer/wrong audience/signature;
-- Core reachable/unavailable/timeout;
-- current user/apps/routes authorization context;
-- no Chat imports/endpoints/tables.
+- API/MFE próprios;
+- health/config/logging/JWT/Core integration;
+- Module Federation/plugin-ui/mount/unmount;
+- manifest/Gateway/Compose dev-prod;
+- full-page + global panel;
+- F5/logout/deep route;
+- media/biometric/external capability UI não ativa nada implicitamente;
+- provider credentials nunca aparecem no MFE;
+- Chat offline não quebra Copilot.
 
-### Copilot MFE
-
-- own plugin root;
-- build/typecheck/tests;
-- remoteEntry 200;
-- React singleton/share scope;
-- `@delpi/plugin-ui` loaded;
-- mount/unmount;
-- getAccessToken host contract;
-- API error/401 handling;
-- responsive baseline;
-- media/biometric capability state does not start capture or recognition automatically;
-- accessibility baseline compatible with future Frontline/Meeting surfaces.
-
-### Manifest/Core/Gateway/Compose
-
-- manifest schema valid;
-- permission/route registration;
-- forbidden route collision;
-- API Gateway dev/prod path parity;
-- MFE Gateway path;
-- Compose services independent;
-- health checks;
-- no `depends_on` Chat.
-
-### Portal
-
-- authorized user opens full-page Copilot;
-- unauthorized user blocked;
-- F5/deep route;
-- logout/login;
-- global panel mounts same MFE/package contract;
-- panel/full-page do not create different product states.
-
-### Independence test
-
-**Required:** Chat containers unavailable/stopped while Copilot bootstrap remains healthy and usable.
+Required:
 
 ```text
 COPILOT_API_OWN_RUNTIME=PASS
@@ -210,487 +163,242 @@ NO_CHAT_DB_AUTHORITY=PASS
 INDEPENDENT_DEPLOY_ROLLBACK=PASS
 ```
 
-## 4. Gate C2 — Portal Context + Platform Commands
+## 4. Gate C2 — Portal Context + Commands
 
 - WorkspaceContext bounded/sanitized;
-- app/route/entity/filter/date context changes;
-- operational EntityRefs: OP/machine/product/operation/lote/posto when source exists;
-- device/session metadata bounded and non-authoritative;
-- biometric candidate never becomes permission source;
-- stale context;
-- logout context clear;
-- user change on shared device clears prior local context;
-- Portal panel/full page parity;
-- open app/route/entity authorized;
-- unauthorized/revoked/TOCTOU;
-- nonexistent target;
-- arbitrary URL rejected;
-- MFE sibling works without central branch;
-- iframe PORTAL_ONLY;
-- iframe origin/source/version/session negatives;
-- no JWT/secret in bridge messages;
-- business write via DOM/visual command rejected.
+- EntityRefs operacionais;
+- SourceRef externo sem token/credential;
+- device/biometric/external context não concede permission;
+- logout/user-switch limpa state local;
+- authorized app/route/entity commands;
+- arbitrary URL navigation rejeitada;
+- iframe contract seguro;
+- no JWT/secret em bridge;
+- visual/DOM command não vira Business Action.
 
-## 5. Gate C3 — Intelligence Core + Multimodal/Biometric Foundations
+## 5. Gate C3 — Intelligence + Multimodal/Biometric/External Foundations
 
-### Conversation/understanding
+### Planner/Action/Expertise
 
-- own conversation/session persistence;
-- no `agent_id` or Chat session dependency;
-- multi-intent/long request decomposition;
-- clarification only when materially required;
-- send/stream semantic parity.
-
-### OpenAPI/Action Catalog foundation
-
-- valid/invalid specs;
-- multiple providers;
-- schema normalization;
-- no path/opId semantic hardcode;
-- refresh/version handling;
-- authorization filtering.
-
-### Capability/Planner
-
-- known action;
-- sibling action;
-- no-tool negative;
-- unknown external OpenAPI;
-- true metamorphic provider/path/opId rename;
-- bounded typed plan;
-- argument validation before execution.
-
-### Expertise/Playbook/Knowledge
-
-- positive/sibling/negative expertise;
-- multi-domain composition;
-- unknown pack without planner patch;
-- pack/playbook cannot grant permission;
-- Knowledge ACL enforced;
-- project preference cannot elevate visibility.
-
-### Document/Image multimodal
-
-- textual PDF;
-- scanned PDF;
-- image/drawing;
-- unreadable region;
-- page/region provenance;
-- confidence/limitations;
-- document/image prompt injection;
-- FACT/CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION semantics.
-
-### Voice/audio
-
-Quando voice baseline entrar no candidate:
-
-- mic permission denied;
-- mic permission revoked mid-session;
-- speech-to-text success/partial/error;
-- noisy/ambiguous utterance;
-- correction/repeat flow;
-- text-to-speech fallback;
-- voice command equals typed command sem privilege difference;
-- material action with uncertain transcription does not execute silently;
-- no raw-audio persistence without policy.
-
-### Camera/video
-
-Quando camera/video entrar no candidate:
-
-- camera permission denied/revoked;
-- image/frame provenance;
-- short-video segmentation/time-range provenance;
-- unsupported/large video becomes bounded async/degraded flow;
-- model uncertainty exposed;
-- hostile visual/document instruction does not alter policy;
-- raw-video retention follows configured class;
-- visual finding does not become authoritative quality decision by default.
-
-### Biometric identity
-
-Quando face/speaker recognition entrar no candidate:
-
-- enrolled-user positive;
-- non-enrolled negative;
-- look-alike negative;
-- wrong-speaker negative;
-- low-confidence result remains unknown;
-- multi-person meeting;
-- manual correction changes association without silently retraining enrollment;
-- revoked/deleted enrollment no longer matches;
-- biometric match cannot create authenticated session or permission grant;
-- template/embedding never appears in ordinary logs/API response;
-- provider receives only allowed biometric/media data;
-- model/template version changes are traceable;
-- photo/replay/deepfake/liveness tests quando a finalidade exigir anti-spoof;
-- false accept / false reject / unknown rate and confidence calibration tracked.
-
-### Human Observation
-
-Quando habilitado:
-
-- observable process event can be evidenced;
-- uncertain behavior remains hypothesis;
-- no personality inference;
-- no honesty/trustworthiness inference;
-- no emotion-as-truth inference;
-- no health/diagnostic inference;
-- no sensitive-attribute inference;
-- no hidden productivity/person score;
-- no automatic hiring/promotion/punishment/pay/performance/dismissal decision;
-- process-learning candidate requires evidence/review.
-
-### Media/biometric policy
-
-- transient capture without raw persistence;
-- configured retention class honored;
-- biometric template lifecycle separated from raw media;
-- delete/anonymize/revoke path where required;
-- provider/data policy filtering;
-- session stop actually stops capture/recognition;
-- F5/reconnect never restarts camera/mic/recognition silently.
-
-## 6. Gate C4 — Business Reads + Business Graph
-
-### Generic reads
-
+- own conversation state;
+- OpenAPI ingestion/versioning;
 - known/sibling/unknown provider;
-- path/query/body arguments;
-- required missing;
-- enum/type/format;
-- unauthorized;
-- upstream unavailable/timeout;
+- metamorphic provider/path/opId;
+- provider-neutral planner;
+- expertise/playbook cannot grant permission;
+- Knowledge ACL/provenance.
+
+### Media/Biometric
+
+- PDF/image/voice/video provenance;
+- confidence/limitations;
+- hostile content does not alter policy;
+- voice parity with text;
+- biometric enrolled/non-enrolled/look-alike/unknown/correction/revoke cases;
+- biometric match cannot authenticate or grant permission;
+- biometric templates absent from ordinary logs/responses;
+- liveness/anti-spoof when required by policy;
+- Human Observation remains process-grounded;
+- no psychological/sensitive inference or automated employment decision.
+
+### Internet Research
+
+- search/fetch success and provider failure paths;
+- only policy-approved public destinations are fetched;
+- redirect remains subject to destination validation;
+- type/size/time/concurrency budgets;
+- hostile webpage content cannot modify system/policy or request secrets;
+- sensitive internal context is not unnecessarily sent to search/fetch providers;
+- SourceRef/EvidenceRef/freshness captured;
+- conflicting/stale sources surfaced truthfully;
+- public web does not silently override corporate authority.
+
+### External Connection lifecycle
+
+- connect/cancel/failure;
+- callback/session integrity validation;
+- required scope present/missing;
+- scope increase requires a new authorized flow;
+- refresh/revoke/expiry/reconnect;
+- user-delegated connection isolated to its owner;
+- org/shared/service connection follows explicit policy;
+- provider token absent from LLM context, MFE payload and ordinary logs;
+- unknown connector onboarding without planner patch.
+
+## 6. Gate C4 — Business + External Reads + Graph
+
+### Business reads
+
+- auth/schema/timeout/error/freshness;
 - normalized Outcome/Evidence;
-- freshness/conflict/stale source;
-- sensitive log redaction.
+- permission-aware Graph traversal;
+- no master-data duplication.
 
-### Business Graph
+### External reads
 
-- authorized traversal;
-- relation absent;
-- authoritative vs inferred;
-- node without permission does not leak;
-- cycle/depth budgets;
-- source owner unavailable;
-- sibling entity/relation without planner patch;
-- traversal returns refs then fetches owner data;
-- no master dataset replication;
-- media/meeting/frontline evidence links to EntityRefs without copying source master data;
-- person/user refs point to Core identity authority, not biometric shadow profiles.
+- read works only with required connection/scope;
+- search/read do not imply modify/send;
+- cross-user connection access blocked;
+- not-connected/scope-missing/provider-unavailable/resource-not-found distinguished;
+- external attachment follows safe download/type/size policy;
+- SourceRef/EvidenceRef includes provider/resource/freshness without credential;
+- revoked connection blocks subsequent read;
+- personal source remains private unless explicitly shared/promoted.
 
-### Operational context correlation
+## 7. Gate C5 — Governed Business/External Writes + Durable Foundation
 
-Quando sources existirem:
+### Decision/Business writes
 
-- OP → product/revision;
-- machine → maintenance/history;
-- operation → procedure/instruction;
-- lot/material → supplier/quality;
-- user without permission does not gain data because device/machine/biometric context exists.
+- Decision Gate/revalidation;
+- idempotency/concurrency;
+- no blind write retry;
+- ambiguous outcome verification;
+- no duplicate effect after resume.
 
-## 7. Gate C5 — Governed Writes + Durable Foundation
+### External writes
 
-### Decision Gate
+- read-only scope cannot perform write;
+- `draft != send`;
+- generated content is not sent implicitly;
+- target/recipient/payload preview when policy requires;
+- connection/scope revalidated immediately before action;
+- revocation between preview and execution blocks action;
+- provider timeout does not cause blind duplicate send;
+- verified provider outcome stored as Outcome/Evidence;
+- provider-specific constraints remain inside adapter.
 
-- NO_GATE only when policy permits;
-- ACKNOWLEDGE/CONFIRM/REVIEW_AND_CONFIRM/APPROVAL/BLOCK;
-- arguments hash change;
-- evidence change;
-- expiry/rejection;
-- approver permission;
-- final RBAC/policy revalidation.
+### Workflow
 
-### Writes
+- DAG/checkpoint/waits;
+- crash/restart/concurrent resume;
+- duplicate internal/external event;
+- permission/policy/connection changes while waiting;
+- no duplicate business or external write.
 
-- permitted/forbidden;
-- idempotency replay;
-- concurrent submit;
-- conflict;
-- ambiguous timeout;
-- partial failure;
-- outcome verification;
-- no blind retry;
-- repeated voice utterance/event does not duplicate write;
-- meeting action candidate is not write until governed transition;
-- biometric recognition never bypasses revalidation.
+## 8. Gate C6 — Product Work + Meeting/Frontline + External Events/Learning
 
-### Workflow foundation
+### Task/Case/Room/Inbox
 
-- dependency DAG;
-- safe parallel reads;
-- checkpoint;
-- wait_user;
-- wait_approval;
-- wait_event;
-- timeout/cancel;
-- crash after read/write;
-- concurrent resume;
-- duplicate event;
-- permission/policy change while waiting;
-- no duplicate write.
-
-## 8. Gate C6 — Product Work + Proactivity + Meeting/Frontline + Ecosystem
-
-### Task/Case
-
-- create/reload/cancel/complete;
-- state matches workflow;
-- Evidence Board accepted/contested/missing/superseded;
 - source permission remains required;
-- Case does not auto-publish Experience;
-- meeting/frontline refs do not duplicate raw source content.
+- external source shared only when authorized;
+- revoked connection/source sanitizes projections;
+- reading an Inbox item never writes.
 
-### Rooms
+### Watch / provider events
 
-- reuse/adapter contract against existing owner;
-- participants/messages/files;
-- membership does not grant source access;
-- grounded summary;
-- injection negative;
-- Case correlation;
-- meeting artifact link preserves source permissions.
-
-### Inbox
-
-- pending decision/work/result/alert states;
-- meeting candidate actions pending review when applicable;
-- dedupe;
-- resolved transition;
-- revoked source permission sanitizes item;
-- reading item does not execute write.
-
-### Watch
-
-- event match;
-- OBSERVE/ADVISE grounded;
-- wrong entity/duplicate/hostile event;
-- permission revocation;
-- expiry/disable;
+- provider event authenticity validation;
+- duplicate/out-of-order handling;
+- subscription expiry/renewal;
+- missed-event reconciliation/degraded state;
+- revoked permission/connection;
+- hostile event content cannot alter policy or trigger ungoverned write;
 - ACT remains blocked in C6.
 
-### Meeting Mode
+### Meeting/Frontline
 
-Quando C6 Meeting scope for candidate:
+- same RBAC/policy/Evidence as other surfaces;
+- external live query uses active connection scopes;
+- ata identifies internal/external sources when material;
+- external candidate action still requires governance;
+- internal procedure/revision remains authoritative over unrelated public content;
+- biometric/shared-device/privacy/OT gates remain intact.
 
-- explicit start/stop;
-- visible mic/transcript/camera/identity-recognition/screen/raw-record indicators;
-- capture/recognition cannot start hidden;
-- participant/session context correct;
-- enrolled face/speaker association is confidence-based and correctable;
-- non-enrolled/ambiguous participant remains session label/unknown;
-- live query uses user permissions;
-- meeting transcript != summary != confirmed decision;
-- generated ata cites/refers to sources when material;
-- candidate action requires review/Decision Gate before write;
-- resume/next meeting can load authorized pending actions;
-- revoked participant/source access is respected;
-- raw audio/video/biometric retention follows policy;
-- meeting works without Chat runtime.
+### External learning
 
-### Frontline Mode
+- transient research may remain non-durable;
+- durable external knowledge starts as candidate;
+- provenance/freshness/privacy/licensing checked;
+- personal mailbox/message/file never auto-promotes to organizational Knowledge;
+- owner/review/eval/version/publish required where material.
 
-Quando C6 Frontline scope for candidate:
+## 9. Gate C7 — External Proactivity + Advanced Autonomy/Rollout
 
-- shared terminal login/user switch;
-- prior-user local context/data does not leak;
-- biometric identity assistance is optional/policy-bound;
-- ambiguous biometric result falls back to explicit login/confirmation;
-- OP/machine/product/operation context resolves from canonical EntityRefs;
-- hands-free command fallback to touch/text;
-- noisy speech does not trigger unsafe action;
-- camera finding exposes confidence/limitations;
-- Human Observation remains process-grounded, not psychological scoring;
-- training step links to current revision/procedure source;
-- unavailable source/provider yields safe degraded guidance;
-- register issue/escalate uses governed Business Action;
-- no physical machine command from free-form LLM;
-- Frontline works without Chat runtime.
-
-### Process learning / Knowledge
-
-- observation creates candidate only;
-- candidate has provenance/Evidence/context;
-- expert/owner review required;
-- feedback/meeting/operator statement does not change production behavior automatically;
-- no secret worker profile;
-- no hidden individual productivity scoring;
-- PII/biometric/media handling;
-- draft/test/publish/rollback;
-- admin RBAC;
-- no technical endpoint catalog inside expertise/playbook.
-
-### AI-ready onboarding
-
-- unknown app/MFE/iframe/API/pack;
-- contracts drive onboarding;
-- no app-specific planner hardcode;
-- Frontline-ready requirements do not alter business permission semantics.
-
-## 9. Gate C7 — Autonomy + Advanced Realtime + Optimization + Rollout
-
-### Autonomy/Watch ACT
-
-- L5 OFF default;
-- allowlist/limits/budget;
-- Decision Gate when required;
-- revocation during execution;
-- kill switch;
-- full audit.
-
-### Simulation
-
-- explicit baseline/assumptions;
-- reproducible model/calculation;
-- unsupported scenario does not invent numbers;
-- simulation never writes;
-- Apply is new governed Business Action.
-
-### Model Router
-
-- class selection based on compute policy;
-- unavailable provider;
-- compatible fallback;
-- data-policy filtering;
-- latency/cost thresholds;
-- structured output validity;
-- provider names isolated from domain/application;
-- realtime/media/biometric provider filtering by data policy.
-
-### Advanced realtime/media/biometric
-
-Quando candidate:
-
-- session duration/budget limits;
-- concurrent session limits;
-- frame sampling/bitrate bounds;
-- biometric matching throughput does not reduce threshold/security;
-- backpressure/network loss;
-- graceful degraded/async fallback;
-- realtime provider unavailable;
-- capture/recognition stop/kill switch;
-- cost telemetry;
-- edge processing only with defined data boundary.
-
-### Industrial/OT negative gate
-
-Obrigatório enquanto não houver programa específico aprovado:
-
-```text
-free-form LLM output → PLC/CNC/robot command = BLOCK
-voice command → direct machine actuation = BLOCK
-visual finding → machine safety override = BLOCK
-Copilot L5 → implicit OT permission = BLOCK
-```
-
-Se future OT actuation for explicitamente aprovada, exigir test matrix separada para deterministic command schema, state/preconditions, independent interlocks, simulation, authorization, fail-safe e audit.
-
-### Rollout
-
-- canary/cohort;
-- feature flag owner/exit criteria;
-- rollback;
-- accessibility;
-- incident metrics;
-- media/privacy/biometric incident controls;
-- final independence test with Chat offline.
+- L5 OFF by default;
+- external ACT uses explicit connection/action allowlist, limits and kill switch;
+- provider terms/scopes revalidated;
+- proactive/background research respects egress/privacy budgets;
+- browser fallback, if ever introduced, is sandboxed and bounded;
+- browser automation cannot become an alternate ungoverned write path;
+- model/media/external provider data-policy filtering;
+- progressive rollout/canary/rollback;
+- final Chat-offline independence.
 
 ## 10. Injection/safety transversal
 
-Testar conforme surface:
+Treat as untrusted:
 
 ```text
 user prompt
 voice transcript
-tool/API result
-RAG source
+RAG/tool/API result
 WorkspaceContext
-device/session metadata
-biometric identity candidate
-Human Observation result
-iframe message
-Expertise/Playbook content
-PDF/image
-camera/video/screen
-room message/file
-event payload
-meeting transcript
-frontline observation
+biometric/Human Observation result
+public webpage/search result
+external email/message/file/calendar item
+external attachment
+provider webhook/event payload
+iframe/room/meeting/frontline content
 ```
 
-Untrusted data never changes system policy/permissions/retention/safety boundary.
+Untrusted data never changes system policy, permissions, provider scopes, retention or safety boundaries.
 
 ## 11. Surface parity
 
-Material security/authorization behavior deve permanecer equivalente entre:
+Security/authorization semantics remain equivalent across:
 
 ```text
-full page
-Portal panel
+Global
+Workspace
 Meeting
 Frontline
-send/stream/voice
-Task/Case/Inbox surfaces
-iframe contextual entry when supported
+Internet Research
+external connector read/write
+Task/Case/Inbox
+iframe contextual entry
 admin preview/simulation
 ```
 
-UX/transport podem variar; RBAC/policy/Decision/Evidence/biometric-non-authority semantics não.
+## 12. Anchor scenarios
 
-## 12. Anchor scenarios finais
-
-### Cross-domain investigation
+### Cross-domain + external investigation
 
 ```text
-reclamação
-→ Case
-→ Business Graph
-→ desenho multimodal
+Case
+→ internal APIs/Graph
+→ authorized external correspondence/files when relevant
+→ public research when needed
 → Evidence Board
-→ Engineering + Quality expertise
-→ 8D playbook
-→ Task/Durable Workflow
-→ wait_event revisão
-→ Watch/Inbox
-→ reanálise
-→ Decision Gate
-→ Domain API action
-→ Outcome/Evidence/Audit
-→ candidate Experience
+→ Expertise/Playbook
+→ Workflow/Watch
+→ governed business/external action
+→ verified Outcome/Audit
+→ Knowledge candidate
+```
+
+### External communication
+
+```text
+retrieve authorized thread
+→ correlate DELPI data
+→ draft
+→ review/Decision Gate when required
+→ provider send
+→ verified outcome
+→ Evidence/Audit
 ```
 
 ### Meeting
 
 ```text
-reunião produção
-→ explicit capture/transcript
-→ enrolled participant association when enabled
-→ pergunta sobre linha/máquina
-→ authorized APIs/Graph
-→ grounded answer
-→ decisões/pending actions
+meeting
+→ explicit capture
+→ internal/external grounded query
+→ decisions/candidate actions
 → ata viva
-→ review/Decision Gate
-→ Task/Case
-→ next-meeting follow-up
+→ governed follow-up
 ```
 
-### Frontline
-
-```text
-operador + optional biometric identity assistance
-→ authenticated session + OP + máquina + operação
-→ voice/camera question
-→ drawing/procedure + history reads
-→ Evidence/Hypothesis
-→ guided response
-→ process observation candidate
-→ issue/escalation candidate
-→ governed action
-→ Task/Case/Knowledge candidate
-```
-
-Todos devem funcionar sem Minha DELPI Chat runtime.
+All scenarios work without Minha DELPI Chat runtime.
 
 ## 13. Release blockers
 
@@ -698,35 +406,35 @@ Todos devem funcionar sem Minha DELPI Chat runtime.
 CHAT_RUNTIME_IMPORT
 CHAT_API_REQUIRED
 CHAT_DATABASE_AUTHORITY
-foundation duplication
-architecture/pattern drift
-claim without expected provenance
-RBAC leakage
-Graph source bypass
-write without required Decision Gate
-resume duplicate write
-Case/Room source-data leak
-Watch ACT without policy
-simulation presented as fact
-Experience auto-published
-unknown provider/app requiring hardcode
+FOUNDATION_DUPLICATION
+ARCHITECTURE_PATTERN_DRIFT
+RBAC_LEAKAGE
+WRITE_WITHOUT_REQUIRED_DECISION_GATE
+RESUME_DUPLICATE_WRITE
 HIDDEN_MEDIA_CAPTURE
 UNDEFINED_MEDIA_RETENTION
 SHARED_DEVICE_STATE_LEAK
-VOICE_PERMISSION_BYPASS
-VISUAL_FINDING_AS_UNVALIDATED_FACT
 BIOMETRIC_PERMISSION_ELEVATION
 LOW_CONFIDENCE_FORCED_IDENTITY
-REVOKED_BIOMETRIC_STILL_ACTIVE
 BIOMETRIC_TEMPLATE_LEAK
-OPEN_WORLD_FACE_RECOGNITION_WITHOUT_EXPLICIT_SCOPE
-EMOTION_PERSONALITY_CHARACTER_INFERENCE
+SENSITIVE_PERSON_INFERENCE
 AUTOMATIC_EMPLOYMENT_DECISION_FROM_BIOMETRICS
-HIDDEN_WORKER_PROFILING
+UNSAFE_WEB_EGRESS
+EXTERNAL_PROMPT_INJECTION_POLICY_CHANGE
+OAUTH_SCOPE_ESCALATION
+PROVIDER_TOKEN_LEAK
+CROSS_USER_EXTERNAL_DATA_LEAK
+EXTERNAL_WRITE_WITHOUT_GATE
+DRAFT_SENT_IMPLICITLY
+UNVERIFIED_EXTERNAL_SUCCESS
+INVALID_PROVIDER_EVENT_ACCEPTED
+MISSED_EVENT_WITHOUT_RECONCILIATION
+PERSONAL_SOURCE_AUTO_PROMOTED_TO_ORG_KNOWLEDGE
+UNSUPPORTED_WHATSAPP_SESSION_AUTOMATION
 ARBITRARY_LLM_OT_COMMAND
 SAFETY_INTERLOCK_BYPASS
-required test FAIL/INCONCLUSIVE/NOT_RUN
-stale/non-reproducible evidence
+REQUIRED_TEST_FAIL_OR_INCONCLUSIVE
+STALE_NONREPRODUCIBLE_EVIDENCE
 ```
 
 ## 14. Regra final
