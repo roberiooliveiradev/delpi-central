@@ -1,4 +1,4 @@
-# 15 — Mapa de integração do Minha DELPI Copilot
+# 15 — Mapa de integração da DÉLIA
 
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
@@ -10,12 +10,12 @@
 Users / Devices / Meeting / Frontline / Teams
                     │
                     ▼
-Portal → Copilot MFE → Gateway → Copilot API
+Portal → DÉLIA MFE → Gateway → DÉLIA API
                               │
      ┌────────────────────────┼───────────────────────────┐
      ▼                        ▼                           ▼
-Core/Keycloak           Domain APIs/OpenAPI       External Providers
-identity/RBAC           business authority        OAuth/API/Webhooks
+Keycloak/Core           Domain APIs/OpenAPI       External Providers
+identity + RBAC         business authority        OAuth/API/Webhooks
      │                        │                           │
      └────────────────────────┼───────────────────────────┘
                               ▼
@@ -29,41 +29,46 @@ identity/RBAC           business authority        OAuth/API/Webhooks
                               ▼
                       Policy / Decision
                               ▼
-                      Durable Workflow
+                    DÉLIA Durable Work
                               ▼
-                   Automation & Execution
-                  API / Function / RPA / Tool
+                 semantic execution request
                               ▼
-                      Outcome Verification
+                     Automation Hub
+             API / Function / RPA / Tool path
+                              ▼
+                     technical result
+                              ▼
+                authoritative Outcome Verification
                               ▼
                     Audit / Notification
 ```
 
+Keycloak e Core aparecem próximos apenas no diagrama: são authorities distintas. Keycloak = identity/SSO; Core = apps/routes/RBAC/governance.
+
 Cross-cutting: AI Control Tower, Personal Memory, Artifact Workspace, MCP/A2A, Operational Twin, Edge/Offline and Model Lifecycle.
 
-## 2. Portal ↔ Copilot
+## 2. Portal ↔ DÉLIA
 
-Portal hosts/navigation/context only. No planner, provider/model/RPA logic, secret storage or semantic calculation in Portal.
+Portal hosts/navigation/published context only. No planner, provider/model/RPA logic, secret storage or semantic calculation in Portal.
 
-## 3. Copilot ↔ Core / Keycloak
+## 3. DÉLIA ↔ Core / Keycloak
 
-Core remains apps/routes/RBAC authority; Keycloak identity. Memory/device/event/model/tool metadata cannot mutate these authorities.
+Keycloak remains identity/SSO authority. Core remains apps/routes/RBAC/governance authority. Memory/device/event/model/tool metadata cannot mutate these authorities.
 
-## 4. Copilot ↔ Domain APIs
+## 4. DÉLIA ↔ Domain APIs
 
 ```text
 OpenAPI
 → Action Catalog
 → authorized semantic capability
 → Policy/Decision
-→ API executor
-→ Domain API
+→ direct Domain API call when that is the approved contract
 → Outcome/Evidence
 ```
 
-When authoritative API exists, it is preferred over RPA/computer-use.
+When authoritative API exists, it is preferred over RPA/computer-use. DÉLIA does not copy domain business rules.
 
-## 5. Copilot ↔ Public Internet / External Providers / Teams
+## 5. DÉLIA ↔ Public Internet / External Providers / Teams
 
 - Search + Safe Fetch for public Internet;
 - OAuth/API adapters for connected sources;
@@ -72,7 +77,7 @@ When authoritative API exists, it is preferred over RPA/computer-use.
 - credentials stay in secret boundary;
 - `read != write`, `draft != send`.
 
-## 6. Copilot ↔ Event Sources
+## 6. DÉLIA ↔ Event Sources
 
 ```text
 Domain/MES/provider/Edge event
@@ -84,7 +89,7 @@ Domain/MES/provider/Edge event
 
 Polling is bounded fallback only. Event never grants permission.
 
-## 7. Copilot ↔ Process Intelligence
+## 7. DÉLIA ↔ Process Intelligence
 
 ```text
 authorized event logs
@@ -96,7 +101,7 @@ authorized event logs
 
 Source systems remain event authorities. Process Mining does not become people-scoring authority.
 
-## 8. Copilot ↔ Semantic Business Layer
+## 8. DÉLIA ↔ Semantic Business Layer
 
 ```text
 MetricDefinition
@@ -106,7 +111,7 @@ MetricDefinition
 
 Metric metadata never grants row/source access. Graph and Semantic Layer stay separate.
 
-## 9. Copilot ↔ Analysis Sandbox
+## 9. DÉLIA ↔ Analysis Sandbox
 
 ```text
 authorized bounded dataset
@@ -117,11 +122,11 @@ authorized bounded dataset
 
 No direct broad production DB credential. Read-only source integration by default.
 
-## 10. Copilot ↔ Artifact Workspace
+## 10. DÉLIA ↔ Artifact Workspace
 
 Artifacts store/version content and provenance/ACL. Source data remains source-owned. Export/share/email/Teams send are separate governed actions.
 
-## 11. Copilot ↔ Predictive Models / Operational Twin
+## 11. DÉLIA ↔ Predictive Models / Operational Twin
 
 ```text
 source features/state
@@ -133,32 +138,37 @@ source features/state
 
 Prediction != fact; simulated state != production state; Apply revalidates live owners.
 
-## 12. Copilot ↔ Automation & Execution Hub
+## 12. DÉLIA ↔ Automation Hub
 
 ```text
 semantic capability
-→ executor mapping
-→ API | Function | RPA | Computer-Use | Human Task
+→ DÉLIA Policy/Decision/Work
+→ executor selection/mapping
+→ Automation Hub contract
+→ technical executor path
 → technical result
 → authoritative Outcome Verifier
 ```
 
-Automation Hub is execution boundary, not second planner/business authority.
+Automation Hub is technical-execution boundary, not second planner/business/permission authority.
 
-## 13. Copilot ↔ RPA
+## 13. DÉLIA ↔ RPA
 
-If C0 proves RPA infrastructure:
+If C0 proves RPA infrastructure and the capability is approved for that fallback:
 
 ```text
-AutomationExecutorPort
-→ RPA Adapter/Orchestrator
+DÉLIA Work
+→ AutomationHubPort / approved execution contract
+→ Automation Hub
+→ RPA adapter/orchestrator
 → queue/worker/session
 → legacy app
+→ authoritative postcondition verification
 ```
 
-Package/version/credentials/session/idempotency/ambiguous outcome are bounded in adapter/infrastructure.
+Package/version/credentials/session/idempotency/ambiguous outcome are bounded by the technical execution owner. DÉLIA does not create a parallel `AutomationExecutorPort` that bypasses the Hub boundary.
 
-## 14. Copilot ↔ MCP / A2A
+## 14. DÉLIA ↔ MCP / A2A
 
 ```text
 MCP:
@@ -170,17 +180,17 @@ bounded subtask → approved Agent Adapter → external agent → result/artifac
 
 Discovery/metadata does not imply trust or permission. Writes pass same Decision/Outcome gates.
 
-## 15. Copilot ↔ Personal Memory
+## 15. DÉLIA ↔ Personal Memory
 
-Memory store is user-private Copilot-owned state/projection. It receives bounded user-confirmed/preferences data and feeds relevance/presentation only. It does not write Core profile/RBAC unless a separate authorized platform action explicitly does so.
+Memory store is user-private DÉLIA-owned state/projection when implemented. It receives bounded user-confirmed/preferences data and feeds relevance/presentation only. It does not write Core profile/RBAC unless a separate authorized platform action explicitly does so.
 
-## 16. Copilot ↔ AI Control Tower
+## 16. DÉLIA ↔ AI Control Tower
 
 Control Tower consumes refs/telemetry from models, automations, connectors, tools/agents, Edge and capabilities; sends admin commands for enable/disable/rollout/kill switch through governed admin contracts.
 
 It does not execute domain actions directly.
 
-## 17. Copilot ↔ Model Lifecycle
+## 17. DÉLIA ↔ Model Lifecycle
 
 ```text
 Model Registry/Evals
@@ -193,7 +203,7 @@ Model Registry/Evals
 
 Revoked model removed from selection.
 
-## 18. Copilot ↔ Capability Marketplace
+## 18. DÉLIA ↔ Capability Marketplace
 
 ```text
 package/asset
@@ -205,7 +215,7 @@ package/asset
 
 Marketplace never grants permission.
 
-## 19. Copilot ↔ Edge / Offline
+## 19. DÉLIA ↔ Edge / Offline
 
 ```text
 approved central content/model/package
@@ -237,10 +247,10 @@ External/process/execution/model/analysis evidence can create candidate Knowledg
 Independent controls where material:
 
 ```text
-Copilot writes
+DÉLIA writes
 Internet/connector/provider
-Watch ACT/autonomy
-specific automation/executor
+Watch autonomous ACT
+a specific automation/executor
 MCP server/A2A agent
 sandbox
 model/deployment
@@ -258,4 +268,4 @@ Never convert infrastructure failure into business conclusion.
 
 ## 24. C0 rule
 
-Every integration in this document is either proven by `51` or remains target/`TO_INVENTORY`. No market product/API is treated as DELPI reuse until factual C0 evidence proves it.
+Every integration in this document is either `PROVEN` by the evidence scope registered in `51` or remains `TO_INVENTORY`, `PLANNED` or `TARGET`. No market product/API is treated as DELPI reuse until factual evidence proves owner, contract, consumers and readiness.
