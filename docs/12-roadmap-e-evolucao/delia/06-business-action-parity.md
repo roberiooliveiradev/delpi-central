@@ -6,9 +6,9 @@
 
 ## 1. Objetivo
 
-Garantir que operações materiais possuam **use case/contract reutilizável e verificável** para UI/Copilot, preservando as mesmas regras de negócio e autorização.
+Garantir que operações materiais possuam **use case/contract reutilizável e verificável** para UI/DÉLIA, preservando as mesmas regras de negócio e autorização.
 
-> Se uma operação pode ser exposta por Domain API/use case autoritativo, esse contrato é o caminho preferencial do Copilot.
+> Se uma operação pode ser exposta por Domain API/use case autoritativo, esse contrato é o caminho preferencial da DÉLIA.
 
 ## 2. Caminho preferencial
 
@@ -17,7 +17,7 @@ UI ──────────────┐
                  ▼
            Use Case/API
                  ▲
-Copilot ─────────┘
+DÉLIA ───────────┘
 ```
 
 O formulário/tela não é business contract.
@@ -28,11 +28,11 @@ A ausência de API continua sendo um **AI-readiness gap do domínio**, mas `57` 
 
 ```text
 semantic capability
-→ Policy/Decision
-→ Automation & Execution Hub
+→ DÉLIA Policy/Decision/Work
+→ Automation Hub
 → RPA / computer-use adapter
 → legacy UI
-→ Outcome verification
+→ authoritative Outcome verification
 ```
 
 Esse fallback:
@@ -50,19 +50,19 @@ Portanto: **API-first, legacy executor only when justified**.
 
 ```text
 Domain OpenAPI
-→ Copilot importer/Action Catalog
+→ DÉLIA importer/Action Catalog
 → Capability Projection
 → retrieval/planner
 → schema/argument validation
 → Policy/Decision Gate
 → executor selection
-→ Domain API or governed legacy adapter
+→ Domain API or Automation Hub governed execution contract
 → verified Outcome/Evidence
 ```
 
 Never use Chat runtime as proxy.
 
-## 5. Requirements for Copilot-ready operation
+## 5. Requirements for DÉLIA-ready operation
 
 As applicable:
 
@@ -85,7 +85,9 @@ Reads validate schema/authorization, normalize Evidence/Outcome/freshness, and n
 
 Analysis/metric/process reads do not create write authority.
 
-## 7. Writes — C5+
+## 7. Writes / governed ACT — C5+
+
+C5 is the first gate where a material capability can execute governed ACT when explicitly authorized and all required gates pass.
 
 ```text
 intent/event
@@ -96,10 +98,13 @@ intent/event
 → preview when material
 → Decision Gate
 → revalidation
-→ executor
-→ Outcome verification
+→ executor contract
+→ technical execution
+→ authoritative Outcome verification
 → Evidence/Audit/Notification
 ```
+
+`PREPARE != ACT`; `L4 governed execute != L5 autonomous execute`.
 
 ## 8. Decision Gate
 
@@ -121,7 +126,7 @@ Financial/material/admin/destructive/people/sensitive/external actions receive s
 ## 10. Binding / Validation
 
 ```text
-Copilot binder/schema validator
+DÉLIA binder/schema validator
 → early structured validation
 
 Domain API/use case
@@ -150,7 +155,7 @@ Prefer domain guarantee. Otherwise use documented idempotency/reconciliation/lea
 
 ## 13. Coverage matrix
 
-| Business function | Domain use case/API | OpenAPI | Permission | Risk | Decision/Autonomy | Idempotency | Outcome verifier | Legacy executor? | AI-ready |
+| Business function | Domain use case/API | OpenAPI | Permission | Risk | Decision/Autonomy | Idempotency | Outcome verifier | Legacy executor? | DÉLIA-ready |
 |---|---|---|---|---|---|---|---|---|---|
 
 Populate from real code/contracts during onboarding.
@@ -165,4 +170,4 @@ New OpenAPI/provider/executor implementation should satisfy same semantic capabi
 
 ## 16. Benefit
 
-Business Action parity improves UI, integrations, automation and Copilot by forcing reusable contracts and preserving a clean migration path away from fragile UI automation.
+Business Action parity improves UI, integrations and automation by forcing reusable contracts and preserving a clean migration path away from fragile UI automation.
