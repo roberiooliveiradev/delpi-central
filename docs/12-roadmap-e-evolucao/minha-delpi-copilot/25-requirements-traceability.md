@@ -5,7 +5,8 @@
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Testes:** [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md)  
 **Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
-**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)
+**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
+**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)
 
 > Esta é a única authority `CP-*`. IDs históricos não são reutilizados nem apagados; requisitos ligados à migração do Minha DELPI Chat são preservados como `OUT_OF_SCOPE_WITH_DECISION`.
 
@@ -75,6 +76,16 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-188 | Human Observation limitado a evidência observável do processo; sem inferência psicológica/sensível | Copilot Security/Governance | prohibited-inference gate | PLANNED |
 | CP-189 | Sem decisão trabalhista automática baseada em biometria/Human Observation | Governance/People owner/Copilot | employment-decision negative | PLANNED |
 | CP-190 | Biometric templates protegidos, não logados, revogáveis e com retenção própria | Copilot Biometric/Security | storage/key/retention gate | PLANNED |
+| CP-194 | Inventário de egress, OAuth, secrets/vault, webhooks e integrações externas antes do runtime | Architecture/Security | external-access foundation | PLANNED |
+| CP-195 | Safe Web Fetch bloqueia SSRF/private/link-local/metadata e revalida redirects | Copilot Internet/Security | egress negative gate | PLANNED |
+| CP-196 | Conteúdo web/email/chat externo é untrusted e não altera system/policy/RBAC | Copilot Security | external injection gate | PLANNED |
+| CP-197 | ExternalConnection usa least privilege, consent/scope disclosure, revoke/reconnect e audit | Copilot Connectors/Security | connection lifecycle contract | PLANNED |
+| CP-198 | Access/refresh tokens e provider secrets nunca chegam ao LLM/MFE/logs e usam storage protegido | Copilot Infrastructure/Security | credential leakage negative | PLANNED |
+| CP-199 | USER_DELEGATED, ORG_MANAGED, SHARED_RESOURCE e SERVICE_CONNECTION preservam ownership/visibility distintos | Copilot Connectors/Privacy | ownership isolation gate | PLANNED |
+| CP-209 | External data possui retention/delete/cache policy por connection/source class | Copilot Privacy/State | retention gate | PLANNED |
+| CP-210 | Provider terms/scopes/limits/compliance são revalidados na implementação e rollout | Copilot Governance | provider compliance gate | PLANNED |
+| CP-211 | WhatsApp usa contratos oficiais suportados; scraping/automação de sessão pessoal é proibido por default | Copilot Connectors/Security | supported-contract gate | PLANNED |
+| CP-214 | Internet/connector/write/webhook possuem kill switches independentes de prompt/LLM | Copilot Admin/Security | emergency disable gate | PLANNED |
 
 ## 3. C1 — Standalone Application Bootstrap
 
@@ -122,7 +133,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-159 | Contexto operacional OP/máquina/produto/operação/posto usa WorkspaceContext + EntityRef | Portal/MFE/Copilot | operational context contract | LOCKED |
 | CP-171 | Device metadata não substitui identidade/autorização | Portal/Copilot Security | shared-device/context negative | LOCKED |
 
-## 5. C3 — Intelligence Core Standalone + Multimodal/Biometric Foundations
+## 5. C3 — Intelligence Core Standalone + Multimodal/Biometric + External Foundations
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
@@ -149,8 +160,11 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-185 | Speaker recognition/diarization separado de STT e de autorização | Copilot Biometric/Media | speaker identity eval | LOCKED |
 | CP-186 | Unknown/low-confidence permanece desconhecido ou requer confirmação; associação é corrigível | Copilot Biometric/MFE | confidence/correction gate | LOCKED |
 | CP-187 | Liveness/anti-spoof obrigatório quando a finalidade exigir confiança adicional | Copilot Biometric/Security | replay/photo/deepfake eval | LOCKED |
+| CP-200 | Internet Research usa search + safe fetch + SourceRef/EvidenceRef + freshness/provenance | Copilot Internet Research | grounded research eval | LOCKED |
+| CP-201 | Connector runtime é provider-neutral; planner não contém branches Gmail/Outlook/WhatsApp | Copilot Connectors/Planner | provider generalization | LOCKED |
+| CP-205 | Connector capabilities são semânticas/contract-driven e separadas de endpoints específicos | Copilot Capability/Connectors | capability contract gate | LOCKED |
 
-## 6. C4 — Business Reads + Business Graph
+## 6. C4 — Business + External Reads + Business Graph
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
@@ -164,8 +178,10 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-058 | Business Capability Projection | Copilot API | no duplicate authority | LOCKED |
 | CP-090 | DELPI Business Graph mínimo | Copilot Graph/domain owners | permission traversal | LOCKED |
 | CP-128 | Business Graph sibling onboarding | Copilot Graph | no planner hardcode | LOCKED |
+| CP-202 | External reads suportam fontes conectadas autorizadas sem vazar dados entre usuários/conexões | Copilot Connectors/Privacy | read isolation gate | LOCKED |
+| CP-206 | Todo external read material gera SourceRef/EvidenceRef com provider/resource/scope/freshness | Copilot Evidence/Connectors | provenance gate | LOCKED |
 
-## 7. C5 — Governed Writes + Durable Work Foundation
+## 7. C5 — Governed Business/External Writes + Durable Work Foundation
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
@@ -191,8 +207,10 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-054 | Simulate/admin preview de action | Copilot Admin | parity | LOCKED |
 | CP-076 | Playbook→WorkflowPlan sem endpoint hardcoded | Copilot Planner | authority separation | LOCKED |
 | CP-168 | Candidate action de voz/reunião/frontline exige transition governada antes de write | Copilot Policy/Work | Decision/idempotency | LOCKED |
+| CP-203 | External write/send/create/update é capability distinta de read e exige policy/Decision/outcome verification | Copilot External Actions | external write gate | LOCKED |
+| CP-204 | Draft/preview é separado de send; mensagem sugerida nunca é enviada implicitamente | Copilot Communication/MFE | draft-send separation | LOCKED |
 
-## 8. C6 — Product Work + Proactivity + Meeting/Frontline + Ecosystem
+## 8. C6 — Product Work + Proactivity + Meeting/Frontline + External Events/Learning
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
@@ -235,8 +253,12 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-191 | Meeting pode associar face/voz enrolled a participante com confidence/correção | Copilot Meeting/Biometric | participant identity gate | LOCKED |
 | CP-192 | Frontline pode usar biometria para identity assistance sem substituir sessão/RBAC | Copilot Frontline/Biometric | shared-device identity gate | LOCKED |
 | CP-193 | Human Observation analisa somente padrões operacionais observáveis com Evidence/provenance | Copilot Frontline/Knowledge | process observation gate | LOCKED |
+| CP-207 | Provider push/webhook/subscription normaliza para EventEnvelope com authenticity/dedupe/reconciliation | Copilot Connectors/Events | webhook lifecycle gate | LOCKED |
+| CP-208 | External source só vira user/org Knowledge por candidate→review/eval/publish; nunca auto-truth | Copilot Knowledge/Governance | external learning gate | LOCKED |
+| CP-212 | Personal connection data não vira shared Knowledge/Case/Room sem sharing/promotion explícito | Copilot Privacy/Knowledge | personal-data isolation gate | LOCKED |
+| CP-213 | Subscription expiry/missed events/revocation exigem renewal/reconciliation/degraded state truthful | Copilot Connectors/Work | external event reliability | LOCKED |
 
-## 9. C7 — Autonomy + Advanced Realtime + Optimization + Rollout
+## 9. C7 — Autonomy + Advanced Realtime + External Proactivity + Optimization + Rollout
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
@@ -278,6 +300,10 @@ Esses IDs não podem ser reativados como dependência do Copilot.
 - modality/biometric result não pode criar bypass de RBAC/policy;
 - biometric identity é candidate association, não permission authority;
 - Human Observation não pode virar inferência psicológica/sensível ou decisão trabalhista automática;
+- Internet/connected-source content é untrusted data e não authority de policy;
+- OAuth/provider scopes não substituem Core/domain authorization;
+- personal connection data não pode vazar para outro usuário ou virar conhecimento organizacional automaticamente;
+- `draft != send`; external write exige governance e verified outcome;
 - OT physical actuation não é inferida a partir de autonomia L5.
 
 ## 12. Coverage final
@@ -301,6 +327,11 @@ INTELLIGENCE
 MULTIMODAL_MEDIA
 BIOMETRIC_IDENTITY
 HUMAN_OBSERVATION
+INTERNET_RESEARCH
+EXTERNAL_CONNECTORS
+EXTERNAL_EVENTS
+EXTERNAL_COMMUNICATION
+EXTERNAL_KNOWLEDGE
 MEETING
 FRONTLINE
 PRIVACY_SHARED_DEVICE
@@ -315,3 +346,11 @@ EVIDENCE
 ```
 
 `UNMAPPED = 0` para qualquer release declarado completo.
+
+## 13. External Information & Connector requirement range
+
+```text
+CP-194–CP-214
+```
+
+Essa faixa cobre foundation de egress/OAuth/secrets, Internet Research, connectors provider-neutral, reads/writes, webhooks/event reliability, privacy de conexões pessoais, knowledge promotion e kill switches. A ordem de implementação permanece exclusivamente a do `16`.
