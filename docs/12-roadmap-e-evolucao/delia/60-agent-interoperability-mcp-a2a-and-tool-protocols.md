@@ -1,74 +1,76 @@
-# Minha DELPI Copilot — Interoperabilidade de Agentes, MCP, A2A e Tool Protocols
+# DÉLIA — Interoperabilidade de Agentes, MCP, A2A e Tool Protocols
 
-**Status:** thematic architecture/security spec  
+**Status:** `TARGET` — thematic architecture/security spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Architecture/patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
 **Security:** [`08-security-autonomy-audit.md`](./08-security-autonomy-audit.md)
 
 ## 1. Decisão
 
-O Minha DELPI Copilot continua sendo o **único produto/entry point de inteligência da DELPI**, mas deve poder interoperar com tools e agentes externos por protocolos abertos quando isso reduzir acoplamento e ampliar capabilities.
+A DÉLIA é o produto user-facing de inteligência operacional. Ela pode interoperar futuramente com tools e agentes externos por protocolos abertos quando C0 provar necessidade, owner, trust boundary, consumers e contratos.
 
 Target conceitual:
 
 ```text
-Minha DELPI Copilot
+DÉLIA
 ├─ OpenAPI / Domain APIs
-├─ semantic connectors
+├─ semantic provider adapters
 ├─ MCP-compatible tool/resource adapters
-└─ A2A-compatible external agent adapters
+└─ A2A-compatible external-agent adapters
 ```
 
-Interoperabilidade não reintroduz agentes departamentais internos nem cria permission authority externa.
+Interoperabilidade não cria agentes departamentais internos, permission authority externa ou segundo planner.
 
 ## 2. MCP role
 
-MCP é tratado como boundary de tools/resources, não como business authority.
+MCP é boundary potencial de tools/resources, nunca business authority.
 
 ```text
-Copilot semantic capability
-→ MCP Tool Adapter
+DÉLIA semantic capability
+→ approved MCP adapter
 → approved MCP server
-→ tool/resource result
-→ normalize SourceRef/EvidenceRef/OutcomeRef
+→ untrusted tool/resource result
+→ normalized Evidence/Outcome refs
 ```
 
-MCP server metadata/tool description é untrusted integration data e não pode redefinir system policy, RBAC ou Decision Gate.
+Tool descriptions, schemas, metadata e results são dados não confiáveis para system/policy. Não podem redefinir RBAC, Policy ou Decision Gates.
 
 ## 3. A2A role
 
-A2A ou protocolo equivalente pode ser usado para delegar tarefa a agente externo aprovado:
+A2A ou protocolo equivalente pode delegar tarefa bounded a agente externo aprovado:
 
 ```text
-Copilot goal/subtask
-→ policy + agent capability check
+DÉLIA goal/subtask
+→ policy + capability + identity check
 → A2A adapter
-→ external agent
+→ approved external agent
 → task status/result/artifact
-→ Evidence/Outcome
-→ Copilot continues orchestration
+→ Evidence/Outcome refs
+→ DÉLIA continues orchestration
 ```
 
-External agent is a provider/executor, not a superior authority.
+External agent é provider/executor externo sob contrato, nunca autoridade superior.
 
 ## 4. Identity and authorization
 
-Separate:
+Separar explicitamente:
 
 ```text
-Copilot user/service identity
+DÉLIA user/service identity
 external agent identity
 MCP server/service identity
 provider scopes
 Core RBAC
-domain authorization
+Domain authorization
 ```
 
-Nunca propagar credential mais ampla do que a capability exige. Delegation token/credential, quando necessário, deve ser scoped, time-bounded e protected.
+Provider/tool/agent scope não concede Core/domain permission. Credentials devem ser scoped, time-bounded quando possível e permanecer fora de prompt, memory, embeddings, MFE e ordinary logs.
 
 ## 5. Capability allowlist
 
-Cada server/agent aprovado precisa de projection explícita:
+Se registry/projection for necessário, deve representar apenas approvals governados e refs dos owners.
+
+Candidate fields:
 
 ```text
 provider/agent/server ref
@@ -80,10 +82,10 @@ allowed callers/surfaces
 required decision policy
 timeout/budget
 status
-owner
+owner/sourceRef
 ```
 
-Discovery não equivale a aprovação automática.
+Discovery != approval. Metadata != permission.
 
 ## 6. Tool poisoning / prompt injection
 
@@ -93,16 +95,19 @@ Treat as untrusted:
 - resource contents;
 - agent messages;
 - artifacts;
+- schemas/metadata externos;
 - errors/status text.
 
 Rules:
 
-- external instructions do not override system/policy;
-- never send unrelated sensitive context;
+- external instructions never override system/policy;
+- minimum necessary context only;
 - tool arguments schema-validated;
-- write tool remains governed;
-- result normalized before use;
-- provenance preserved.
+- read != write;
+- PREPARE != ACT;
+- write remains governed by live AuthZ/Policy/Decision;
+- result normalized with provenance;
+- no automatic durable Knowledge promotion.
 
 ## 7. No protocol monoculture
 
@@ -110,18 +115,19 @@ MCP/A2A não substituem:
 
 ```text
 OpenAPI for business APIs
-semantic connector contracts
+provider-neutral semantic capability contracts
 Domain API authorization
-Durable Workflow
-EventEnvelope
-Decision Gate
+DÉLIA Durable Work
+EventEnvelope semantics
+Policy/Decision
+Automation Hub technical execution
 ```
 
-Use protocol only where it solves real interoperability.
+Usar protocolo somente onde resolve interoperability real e passa pelo Abstraction Gate.
 
 ## 8. Server/agent lifecycle
 
-Target states:
+Estados abaixo são apenas candidate semantics até owner/contract freeze:
 
 ```text
 DISCOVERED
@@ -131,41 +137,33 @@ DISCOVERED
 → DEGRADED | DISABLED | REVOKED | DEPRECATED
 ```
 
-Version/capability change may require re-review.
+Não criar lifecycle engine paralelo se owner existente já tiver lifecycle autoritativo. DÉLIA pode manter projection/ref quando necessário.
 
 ## 9. Agent delegation semantics
 
-Delegated task must specify bounded intent:
+Delegated task deve usar bounded intent e mínimo contexto necessário:
 
 ```text
 taskRef
 goal
-input refs bounded
+bounded input refs
 allowed capability scope
 expected artifact/result schema
 deadline/budget
 correlationContext
 ```
 
-Do not send hidden chain-of-thought or unrestricted conversation history.
+Nunca enviar hidden chain-of-thought, unrestricted conversation history, secrets ou dados sem necessidade.
 
 ## 10. Failure and cancellation
 
-A2A/MCP adapters define:
+Adapters devem tratar timeout, cancellation, retry eligibility, duplicate semantics, partial/ambiguous result, unavailable/degraded provider e capability changed/revoked.
 
-- timeout;
-- cancellation;
-- retry eligibility;
-- duplicate request semantics;
-- partial/ambiguous result;
-- agent unavailable/degraded;
-- capability changed/revoked.
-
-Material writes require Outcome verification where applicable.
+Material writes exigem idempotency/audit e authoritative Outcome verification quando aplicável. Resultado técnico do agente não equivale a business outcome.
 
 ## 11. C0 inventory
 
-Inventariar:
+Inventariar factual:
 
 - existing MCP servers/clients;
 - existing agent frameworks/protocols;
@@ -177,31 +175,36 @@ Inventariar:
 - ownership/review process;
 - protocol versions/security posture.
 
-Do not assume MCP/A2A infrastructure exists.
+Sem evidence = `TO_INVENTORY`. Não assumir MCP/A2A infrastructure por documentação.
 
 ## 12. Phase mapping
 
 ```text
-C0 → inventory, identity, trust, allowlist and protocol boundaries
-C3 → generic tool/agent interoperability ports/adapters and RED security tests
-C4 → read-only MCP/resources and external-agent research/analysis pilots
-C5 → governed write-capable tools/agents under Decision/Outcome semantics
-C6 → Control Tower registry/health, workflow delegation and artifact integration
-C7 → selected autonomous delegation under capability-scoped L5 and budgets
+C0 → inventory, owners, identity, trust, allowlist and protocol boundaries
+C3 → minimal interoperability adapters only when justified
+C4 → read-only MCP/resources and external-agent analysis pilots
+C5 → governed write-capable tools/agents under same AuthZ/Policy/Decision/Outcome semantics
+C6 → Control Tower health/projections, workflow delegation and artifact integration
+C7 → selected autonomous delegation under explicit L5 allowlists/budgets; L5 OFF by default
 ```
 
 ## 13. Acceptance
 
-- unknown MCP server cannot execute automatically;
+Quando implementado, provar:
+
+- unknown/unapproved server or agent cannot execute;
 - tool description cannot elevate policy;
-- agent cannot receive unrelated data;
+- unrelated context is not delegated;
 - read tool cannot become write implicitly;
-- external agent failure remains truthful;
-- agent result preserves provenance;
-- A2A agent can be replaced without planner core rewrite;
-- disabled server/agent becomes unavailable immediately;
-- same Copilot remains user-facing orchestrator.
+- external failure remains truthful;
+- result preserves provenance;
+- provider/agent can be replaced without planner core branching;
+- revoke/disable is enforced;
+- agent result cannot grant business authority;
+- DÉLIA remains the governed orchestrator rather than protocol runtime owner.
+
+Sem prova obrigatória: `PENDING`/`INCONCLUSIVE`.
 
 ## 14. North Star
 
-> **O Minha DELPI Copilot deve conversar com o ecossistema de ferramentas e agentes sem perder identidade, governança, rastreabilidade ou autoridade corporativa.**
+> **DÉLIA deve interoperar com ferramentas e agentes externos sem perder identidade, least privilege, rastreabilidade, Policy/Decision, source authority ou boundaries de execução.**
