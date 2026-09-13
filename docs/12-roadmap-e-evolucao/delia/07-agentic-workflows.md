@@ -11,7 +11,9 @@ Permitir objetivos compostos com múltiplas capabilities/fontes/executors/tools/
 
 ## 2. One durable runtime
 
-`WorkflowPlan/WorkflowStep/TaskRef/CaseRef/waits/correlation` are shared foundations. Do not create separate workflow engine inside provider connector, Automation Hub, MCP/A2A, Process Intelligence, Control Tower or Marketplace.
+`WorkflowPlan/WorkflowStep/TaskRef/CaseRef/waits/correlation` são contracts/foundations TARGET até C0 congelá-los. Não criar separate workflow engine inside provider connector, Automation Hub, MCP/A2A, Process Intelligence, Control Tower or Marketplace.
+
+DÉLIA owns the durable business/intelligence Work lifecycle. Automation Hub may own its own technical execution lifecycle; the two integrate by contract and correlation, not shared internal state.
 
 ## 3. Execution model
 
@@ -21,7 +23,7 @@ GOAL / EVENT
 → RETRIEVE authorized capabilities/expertise/semantic/process context
 → PLAN DAG
 → CHECK POLICY / AUTONOMY
-→ EXECUTE READY STEPS
+→ EXECUTE/COORDINATE READY STEPS
 → VERIFY Outcome/Evidence
 → CHECKPOINT
 → CONTINUE | REPLAN | WAIT | COMPLETE | BLOCK
@@ -31,7 +33,7 @@ No CoT persistence.
 
 ## 4. WorkflowStep
 
-May reference:
+May reference, if frozen by C0:
 
 ```text
 capabilityRef
@@ -41,12 +43,13 @@ preconditions/postconditions
 actor/service identity
 Decision ref
 executor/tool/agent/model refs bounded
+execution correlation ref
 expected Outcome
 time/budget
 idempotency/retry metadata
 ```
 
-Concrete provider/RPA/MCP/A2A mechanics stay behind adapters.
+Concrete provider/RPA/MCP/A2A/Automation Hub mechanics stay behind adapters/contracts. `executionRef` does not make technical executor state DÉLIA-owned truth.
 
 ## 5. Parallelism
 
@@ -56,7 +59,7 @@ Safe independent reads may run in parallel. Writes/material side effects are ser
 
 Allowed on unavailable capability/provider/executor/model/tool/agent, missing args, changed premise, stale source, policy block, user goal change, partial failure or failed Outcome verification.
 
-Replan never relaxes permission/autonomy/Decision/safety boundaries.
+Replan never relaxes permission/autonomy/Decision/safety boundaries and never switches to a lower-governance executor merely to complete the plan.
 
 ## 7. Clarification
 
@@ -64,7 +67,7 @@ Ask only genuinely missing required data after checking message/context/entities
 
 ## 8. Durable states
 
-Candidate:
+Candidate, subordinate to `21`:
 
 ```text
 planned
@@ -94,6 +97,7 @@ plan/version
 completed/active steps
 Outcome/Evidence refs
 Decision refs
+execution correlation refs
 wait state
 attempt/idempotency
 error classification
@@ -101,7 +105,7 @@ actor/service identity ref
 checkpoint version
 ```
 
-No chain-of-thought or broad provider/tool credentials.
+No chain-of-thought or broad provider/tool/executor credentials.
 
 ## 10. Retry / idempotency
 
@@ -109,6 +113,7 @@ No chain-of-thought or broad provider/tool credentials.
 - writes only with proven idempotency or safe reconciliation;
 - duplicate event/resume cannot duplicate side effect;
 - RPA/computer-use timeout after possible commit becomes AMBIGUOUS until verified;
+- lost executor callback triggers reconciliation, not blind re-execution;
 - A2A duplicate delegated task/result is deduped/correlated;
 - Edge buffered events sync idempotently.
 
@@ -137,11 +142,11 @@ impact preview
 + risk/policy
 → Decision Gate
 → live revalidation
-→ execute
+→ governed execution request
 → Outcome verification
 ```
 
-`PREPARE != ACT`; `SIMULATE != APPLY`.
+`PREPARE != ACT`; `SIMULATE != APPLY`; `L4 governed execute != L5 autonomous execute`.
 
 ## 13. Background event workflow
 
@@ -157,7 +162,9 @@ Event/worker/device identity never grants business authority.
 
 ## 14. Automation executor step
 
-Workflow requests semantic capability; Automation Hub resolves executor. Workflow never contains RPA clicks/selectors. Technical result is followed by postcondition verification when required.
+Workflow requests a semantic capability. DÉLIA selects/resolves the approved execution path under policy; when the capability belongs to the technical automation boundary, the request goes through the Automation Hub contract. Workflow never contains RPA clicks/selectors/package internals.
+
+Technical result is followed by authoritative postcondition verification when required. Hub technical success is not Workflow business success.
 
 ## 15. MCP/A2A step
 
@@ -177,7 +184,7 @@ Process Mining/conformance may feed findings/opportunity candidates into Case/Ta
 
 ## 19. Task / Case / Room / Inbox
 
-These are product/work projections over the same durable runtime, not independent planners/executors. Source ACL remains required even if a ref is attached to a Case/Room.
+These are product/work projections over the same DÉLIA durable runtime, not independent planners/executors. Source ACL remains required even if a ref is attached to a Case/Room.
 
 ## 20. Budgets
 
@@ -190,11 +197,12 @@ Material step is correlatable by actor/service, request/workflow/task/case, capa
 ## 22. Core invariant
 
 ```text
-one durable workflow runtime
+one DÉLIA durable Work runtime
++ Automation Hub as separate technical-execution boundary
 + replaceable adapters/executors/tools/agents/models
 + explicit waits/checkpoints
 + live authority revalidation
 + verified outcomes
 ```
 
-No thematic capability may create a hidden parallel orchestration engine.
+No thematic capability may create a hidden parallel orchestration engine or duplicate executor authority.
