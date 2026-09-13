@@ -2,160 +2,183 @@
 
 Implemente o **Minha DELPI Copilot como aplicação nova e independente**, do zero até o produto completo. Não evolua nem refatore o Minha DELPI Chat para atingir este objetivo.
 
-A visão alvo inclui **escritório, reuniões, chão de fábrica, fontes externas autorizadas e operações autônomas governadas**, com texto, voz, imagem, câmera, vídeo e documentos quando autorizados. Também inclui **identidade biométrica governada**, **Internet Research**, **External Connectors**, **Microsoft Teams** e **Event-Driven Autonomous Operations + Automation & Execution Hub** conforme `54`, `55`, `56` e `57`.
-
-O Copilot é o cérebro de contexto/decisão/orquestração; executors/API/RPA/computer-use são mecanismos de execução e nunca viram uma segunda inteligência ou authority de regra de negócio.
+A visão alvo é um **enterprise/industrial intelligent operating layer** para escritório, reuniões, chão de fábrica, fontes externas e operações governadas. Não é apenas Chat+RAG.
 
 ## 1. Decisão inegociável
 
 ```text
 Copilot backend  = nova minha-delpi-copilot-api
 Copilot frontend = novo plugins/minha-delpi-copilot
-Chat backend     = sistema separado
-Chat frontend    = sistema separado
+Chat backend/MFE = sistemas separados/reference-only
 ```
 
-Proibido:
+Proibido importar/depender de runtime/API/tables/source do Chat ou criar runtimes paralelos por Teams, RPA, Process Mining, MCP/A2A, Twin, Edge, Marketplace ou outro tema sem C0/ADR provar boundary real.
+
+## 2. North Star
+
+O mesmo Copilot deve suportar:
 
 ```text
-importar runtime do minha-delpi-ai-api
-importar source do plugins/minha-delpi-chat
-usar Chat API como proxy/planner/tool/media/biometric/external/automation runtime
-usar Chat tables/sessions/agents como Copilot authority
-criar teams-copilot-api ou Teams planner separado
-criar RPA planner/AI paralelo ao Copilot
-alterar Chat para desbloquear Copilot
-esperar roadmap/Onda J do Chat
+GLOBAL      → painel contextual
+WORKSPACE   → full-page work/analysis
+MEETING     → meeting assistance
+FRONTLINE   → operator/shopfloor assistance
+TEAMS       → future surface of same runtime
+BACKGROUND  → governed Watches/Workflows reacting to events
 ```
 
-O Chat pode ser lido em C0 somente como referência para patterns, lessons learned e anti-patterns.
-
-## 2. North Star de experiência
-
-O mesmo Copilot deve poder se apresentar como:
+E deve evoluir para:
 
 ```text
-GLOBAL      → painel contextual no Portal
-WORKSPACE   → página completa
-MEETING     → reunião assistida multimodal
-FRONTLINE   → operador/posto/máquina
-TEAMS       → futura surface app/tab/bot do mesmo Copilot
-BACKGROUND  → Watches/Workflows governados reagindo a eventos sem user prompt
+PERCEBER
+→ ENTENDER
+→ PESQUISAR
+→ ANALISAR
+→ PREVER/SIMULAR
+→ DECIDIR
+→ PREPARAR/EXECUTAR
+→ VERIFICAR OUTCOME
+→ COMUNICAR
+→ APRENDER SOB GOVERNANÇA
 ```
 
-Todas as surfaces e background operations usam:
-
-```text
-same Copilot API
-same product identity
-same Core/RBAC
-same Policy/Decision Gate
-same Evidence model
-same Durable Work runtime
-same External Connector governance
-same Automation/Outcome governance
-```
-
-## 3. Ordem de leitura
+## 3. Ordem obrigatória de leitura
 
 1. `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`
 2. `.cursor/rules/development-standards-index.mdc` + regras aplicáveis
 3. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/README.md`
-4. `.../16-execution-master-plan.md`
-5. `.../50-standalone-copilot-application-architecture.md`
-6. `.../51-platform-integration-baseline.md`
-7. `.../52-standalone-repository-and-bootstrap-plan.md`
-8. `.../17-component-and-contract-map.md`
-9. `.../49-architecture-and-design-patterns-standard.md`
-10. `.../53-multimodal-meeting-frontline-and-industrial-copilot.md`
-11. `.../54-biometric-identity-and-human-observation-governance.md`
-12. `.../55-internet-research-and-external-connectors.md`
-13. `.../56-microsoft-teams-connector-and-meeting-integration.md` quando Teams for material
-14. `.../57-event-driven-autonomous-operations-and-automation-execution-hub.md` quando events/automation/RPA/autonomy forem materiais
-15. `.../20-testing-and-acceptance-matrix.md`
-16. `.../21-data-and-state-model.md`
-17. `.../22-cursor-execution-protocol.md`
-18. `.../25-requirements-traceability.md`
-19. `.../evidence/execution-ledger.md`
-20. specs temáticas da etapa.
+4. `16-execution-master-plan.md`
+5. `50-standalone-copilot-application-architecture.md`
+6. `51-platform-integration-baseline.md`
+7. `52-standalone-repository-and-bootstrap-plan.md`
+8. `17-component-and-contract-map.md`
+9. `49-architecture-and-design-patterns-standard.md`
+10. `21-data-and-state-model.md`
+11. `20-testing-and-acceptance-matrix.md`
+12. `25-requirements-traceability.md`
+13. `53–66` specs temáticas aplicáveis
+14. `22-cursor-execution-protocol.md`
+15. `evidence/execution-ledger.md`
 
-`16` é a única authority de ordem. `49` é authority de code architecture/patterns. `57` governa Event/Signal Plane, Decision Intelligence, executor boundaries, RPA/computer-use, outcome verification e capability-scoped autonomy.
+Precedência é definida por `48`. `16` é a única authority de ordem. `25` é a única authority `CP-*`.
 
-## 4. Ordem de construção
+## 4. Specs temáticas ativas
 
 ```text
-C0 Platform + Architecture + Media/Privacy/Biometric/External/Automation/OT Foundation Freeze
-→ C1 Standalone App Bootstrap
-→ C2 Portal + Operational Context + Platform Commands
-→ C3 Intelligence + Multimodal/Biometric/Internet/Connector/Decision Foundations
-→ C4 Business + External Reads + Graph + Operational Read Intelligence
-→ C5 Governed Business/External/Automation Writes + Durable Foundation
-→ C6 Product Work + Meeting/Frontline + Automation Hub + Events + Ecosystem
-→ C7 Autonomous Operations + Advanced Realtime/External Proactivity + Rollout
+53 multimodal / Meeting / Frontline / industrial
+54 biometric identity / Human Observation
+55 Internet Research / external connectors
+56 Microsoft Teams
+57 Event-Driven Autonomous Operations / Automation & Execution Hub
+58 Process Intelligence / Process Mining / Task Mining
+59 AI Control Tower / Digital Workforce Governance
+60 MCP / A2A / tool-agent interoperability
+61 Personal Memory / Personalization
+62 Semantic Business Layer / governed metrics
+63 Analysis Sandbox / Artifact Workspace
+64 Predictive / Prescriptive Intelligence / Operational Twin
+65 Edge / Offline Industrial Copilot
+66 AI Model Lifecycle / Capability Marketplace
 ```
 
-## 5. Primeira ação — C0.S0
+`31/45/46/47` são superseded/reference-only e nunca redefinem arquitetura atual.
 
-Antes de qualquer runtime diff:
+## 5. Ordem C0–C7
+
+```text
+C0 Foundation Freeze
+→ C1 Standalone Bootstrap
+→ C2 Portal/Context/Commands
+→ C3 Intelligence + capability foundations
+→ C4 Governed reads + analysis/discovery
+→ C5 Governed writes + executors + durable work
+→ C6 Product work + governance/experience ecosystem
+→ C7 Advanced autonomy + scale/optimization/rollout
+```
+
+Nunca pular fase porque um SDK/provider/tool já existe no mercado.
+
+## 6. Primeira ação: execute apenas C0.S0
+
+Antes de runtime diff:
 
 ```text
 git status
 git rev-parse HEAD
 ```
 
-Inventarie com paths/symbols/contracts/evidence.
+C0.S0 é **inventário factual read-only + docs/ledger**, sem criar Copilot runtime.
 
-### Portal/Core/Gateway/Infra/MFEs/APIs
+### 6.1 Platform baseline
 
-Mapear auth/RBAC/manifest/federation/plugin-ui, HTTP clients, API/OpenAPI contracts, events/sockets/jobs, storage/network/secrets, deep links/context, notifications, workers/schedulers e domain sources conforme authorities existentes.
+Inventarie Portal/Core/Keycloak/Gateway/Compose/federation/plugin-ui, manifests, auth/RBAC, routes/context, APIs/OpenAPIs/errors/idempotency/events, workers/schedulers, storage/network/secrets, notifications/rooms/requests/workflows.
 
-### Media/Meeting/Frontline/Biometric
+### 6.2 Media/Biometric/Meeting/Frontline
 
-Mapear speech/vision/media providers, recording/transcription, storage, privacy/consent/retention, shared devices, production terminals, biometric enrollment/templates/providers/liveness e governance owner.
+Inventarie speech/vision/media providers, capture/storage/retention, devices/kiosks/production terminals, biometric enrollment/templates/liveness, participant/presence and OT safety owners.
 
-### Internet/External Connectors
+### 6.3 Internet/External/Teams
 
-Mapear web/search, safe fetch, Microsoft Graph, Google Workspace, WhatsApp Business, OAuth flows, token storage, provider webhooks/subscriptions, reconciliation, attachment scanning e compliance owners.
+Inventarie egress/search/safe fetch, OAuth/vault, Microsoft Graph/Google/WhatsApp/Slack/GitHub, webhooks/subscriptions/reconciliation, attachment scanning, Entra/Teams scopes/artifacts/app/tab/bot/privacy.
 
-### Microsoft Teams
+### 6.4 Automation/Event/RPA
 
-Mapear Entra app registrations, tenant/admin owner, delegated/application/resource-specific consent, chats/channels/messages, meetings/transcripts/recordings, change notifications, app/tab/bot inventory, privacy/retention e raw-media constraints. Não assumir raw media bot como requirement do connector base.
+Inventarie:
 
-### Automation / RPA / Autonomous Operations
+```text
+RPA platforms/licenses/orchestrators/bots/packages
+scripts/functions/jobs
+queues/workers/heartbeats/leases
+schedulers/polling/event buses/topics/webhooks
+service accounts/background identities
+credential injection/storage
+VDI/desktop/session infrastructure
+existing rule/decision/process engines
+business postcondition/outcome sources
+notification/escalation channels
+kill switches/emergency stop
+support/SLA/ownership
+```
 
-Mapear factual:
+Não assumir ferramenta RPA nem criar Hub por suposição.
 
-- RPA tools/orchestrators/licences existentes;
-- bots/robots/packages e owners;
-- automações desktop/web;
-- scripts/functions/jobs;
-- event sources/brokers/topics/webhooks;
-- queues/workers/worker pools/heartbeats;
-- schedulers/polling jobs;
-- service accounts/background identities;
-- credential injection/secret owners;
-- desktop/session/VDI execution infrastructure;
-- package/version/deploy/rollback patterns;
-- retry/idempotency/lease/lock patterns;
-- RPA screenshots/artifacts/logging/retention;
-- rule/decision engines existentes;
-- BPM/workflow/process engines;
-- business postcondition/outcome verification sources;
-- notification/escalation channels;
-- kill switch/emergency stop patterns;
-- automation ownership/governance/SLA/support.
+### 6.5 Process Intelligence
 
-Não criar Automation Hub/RPA service por suposição. Classificar `REUSE | EXTEND | ADAPTER | CREATE_REQUIRED/IMPLEMENT_NEW` somente com evidence.
+Inventarie event logs/audit trails, case/business keys, activities/timestamps/statuses, BPMN/process docs, process owners/KPIs, data quality/completeness, task-mining/desktop telemetry and privacy policy.
 
-### Industrial/OT — inventário somente
+### 6.6 AI Control Tower / Model Governance
 
-Mapear telemetry/read interfaces e safety owners; command APIs apenas como fato. Não assumir autoridade de atuação física.
+Inventarie AI/model/automation assets, provider accounts, model registries/MLOps, eval suites/datasets, prompt/policy registries, cost/usage telemetry, incidents/change management, feature flags/kill switches, package catalogs/signing/supply-chain controls.
 
-### Chat reference only
+### 6.7 MCP/A2A
 
-Inspect lessons/anti-patterns only; nunca `REUSE` como Copilot runtime.
+Inventarie MCP servers/clients, agent frameworks/protocols, tool registries, service/delegation identities, approved external agents, credentials/scopes, network/egress and protocol/security versions.
 
-Classify findings:
+### 6.8 Personal Memory
+
+Inventarie Core/profile/preferences/favorites/recent usage, notification preferences, existing personalization/memory stores, privacy/retention/export/delete owners and shared-device constraints.
+
+### 6.9 Semantic Business Layer
+
+Inventarie BI semantic models, KPI formulas in APIs/frontends/spreadsheets, business glossary, warehouse/lake/SQL/Power BI definitions, owners, grain/dimensions/freshness and conflicting meanings.
+
+### 6.10 Analysis Sandbox / Artifacts
+
+Inventarie Python/Jupyter/code execution, sandbox/container infra, query engines, file/object storage/scanning, document/spreadsheet/presentation generation, collaboration/versioning/export/share systems.
+
+### 6.11 Predictive / Twin
+
+Inventarie forecasting/anomaly/optimization models, datasets/ground truth/evals, simulation/twin tools, MES/IoT/historian, planning/capacity models, solvers and manual what-if models.
+
+### 6.12 Edge / Offline
+
+Inventarie factory network reliability, Edge platforms/gateways, devices/MDM, GPU/NPU/CPU, local storage/inference, procedure/drawing distribution, time sync, offline continuity and OT segmentation.
+
+### 6.13 Chat reference-only
+
+Inspect only for lessons/anti-patterns/neutral shared conventions. Never classify Chat runtime as reuse dependency.
+
+### 6.14 Finding classification
 
 ```text
 PLATFORM_REUSE
@@ -168,67 +191,35 @@ NOT_PROVEN
 OUT_OF_SCOPE
 ```
 
-No runtime changes in C0.S0.
+Market availability without repo/infra evidence = `NOT_PROVEN`.
 
-## 6. Foundation Freeze
+## 7. Foundation Freeze before C1
 
-Before C1:
+At minimum:
 
 ```text
 PLATFORM_INVENTORY=PASS
 STANDALONE_BOUNDARY=PASS
-NAMES_PATHS=PASS
 AUTHORITIES=PASS
 SHARED_PRIMITIVES=PASS
 ARCHITECTURE_PATTERNS=PASS
 PERSISTENCE_BOUNDARIES=PASS
-INTEGRATION_CONTRACTS=PASS
-MEDIA_PRIVACY_BOUNDARIES=PASS
-BIOMETRIC_IDENTITY_BOUNDARY=PASS
-HUMAN_OBSERVATION_BOUNDARY=PASS
-EXTERNAL_EGRESS_BOUNDARY=PASS
-OAUTH_CONNECTION_BOUNDARY=PASS
-PROVIDER_SECRET_BOUNDARY=PASS
-EXTERNAL_SOURCE_PRIVACY_BOUNDARY=PASS
-EXTERNAL_EVENT_BOUNDARY=PASS
-TEAMS_TENANT_GRAPH_BOUNDARY=PASS
-AUTOMATION_EXECUTION_BOUNDARY=PASS
-EVENT_SIGNAL_BOUNDARY=PASS
-BACKGROUND_IDENTITY_BOUNDARY=PASS
-EXECUTOR_CONTRACT_BOUNDARY=PASS
-OUTCOME_VERIFICATION_BOUNDARY=PASS
-AUTONOMY_SCOPE_BOUNDARY=PASS
-SHARED_DEVICE_BOUNDARY=PASS
-OPERATIONAL_CONTEXT_BOUNDARY=PASS
+MEDIA/BIOMETRIC/EXTERNAL BOUNDARIES=PASS
+EVENT/AUTOMATION/OUTCOME/AUTONOMY BOUNDARIES=PASS
+PROCESS_INTELLIGENCE_BOUNDARY=PASS
+AI_ASSET_GOVERNANCE_BOUNDARY=PASS
+MCP_A2A_TRUST_BOUNDARY=PASS
+PERSONAL_MEMORY_BOUNDARY=PASS
+SEMANTIC_LAYER_BOUNDARY=PASS
+SANDBOX_ARTIFACT_BOUNDARY=PASS
+PREDICTIVE_TWIN_BOUNDARY=PASS
+EDGE_OFFLINE_BOUNDARY=PASS
+MODEL_MARKETPLACE_BOUNDARY=PASS
 OT_SAFETY_BOUNDARY=PASS
 CONFORMANCE_HARNESS=PASS
 CHAT_RUNTIME_DEPENDENCY=0
 FOUNDATION_DUPLICATION=0 material
 ```
-
-## 7. Target physical structure
-
-Recommended unless C0 evidence/ADR changes it:
-
-```text
-minha-delpi-copilot-api/
-  app/domain
-  app/application
-  app/interfaces
-  app/infrastructure
-  app/composition
-  migrations/tests/docs/scripts
-
-plugins/minha-delpi-copilot/
-  src/ui
-  src/state
-  src/data
-  src/features
-  src/contracts
-  src/adapters
-```
-
-Automation & Execution Hub does **not** imply new service. C0 decides whether it is a bounded module inside Copilot API or neutral platform service based on ownership/consumers/evidence.
 
 ## 8. Architecture rules
 
@@ -242,416 +233,232 @@ Clean Architecture
 + light CQRS only when justified
 ```
 
-Concrete providers/executors only in Infrastructure/Adapters. Composition Root wires implementations.
+Follow `49`. Concrete providers/executors/models/tools live in Infrastructure. Composition Root wires them.
 
-Before creating port/repository/factory/strategy/registry/event bus/RPA hub/worker queue/computer-use adapter, pass `49` Abstraction Gate.
+No speculative microservice/framework/registry before Abstraction Gate.
 
-## 9. Auth/RBAC and background identity
-
-```text
-Keycloak → identity/JWT
-Core → platform permissions
-Domain API → final business rule/authorization
-External provider → connection scopes
-AutonomyPolicy → additional execution constraints, never permission elevation
-```
-
-Background/autonomous action requires explicit actor:
+## 9. Authorities
 
 ```text
-authenticated/delegated user
-or
-approved service identity with bounded capability scope
+Keycloak = identity
+Core = platform users/apps/routes/RBAC
+Portal = host/navigation/context
+Domain APIs = business data/rules/actions
+External providers = external resources/scopes
+OT/safety systems = machine truth/safety
+Copilot = intelligence/context/policy/orchestration/work/evidence
+Automation Hub = execution mechanisms, not business authority
+Control Tower = governance plane, not business authority
 ```
 
-Never:
+## 10. Fundamental semantic distinctions
+
+Never collapse:
 
 ```text
-event source = permission
-worker identity = business user
-device identity = authorization
-biometric match = permission
+Personal Memory != Organizational Knowledge
+Conversation History != WorkspaceContext
+Business Graph != Semantic Business Layer
+Prediction != FACT
+Recommendation != Authorization
+Simulation/Twin State != Production State
+SIMULATE != APPLY
+PREPARE != ACT
+Read != Write
+Draft != Send
+Technical Execution Success != Verified Business Outcome
+MCP/A2A Discovery != Approval
+Marketplace Install != Permission Grant
+Device/Biometric/Worker Identity != User Authorization
 ```
 
-## 10. Workspace/Operational Context
-
-Reuse `WorkspaceContext + EntityRef + SourceRef` where material. Never include secrets or permission truth.
-
-## 11. Business Actions
-
-OpenAPI-first chain remains native to Copilot:
-
-```text
-OpenAPI
-→ Action Catalog
-→ Capability Projection
-→ planner
-→ validation
-→ Policy/Decision
-→ executor
-→ Domain API
-→ verified Outcome/Evidence
-```
-
-## 12. Event / Signal rules
-
-Follow `57`.
+## 11. Event / Decision Intelligence
 
 ```text
 source event
-→ validate/authenticate source
+→ authenticate/validate
 → EventEnvelope
 → dedupe/order/correlation
-→ Watch/Workflow/Decision use case
+→ DecisionPathPolicy
+   FAST | OPERATIONAL | REASONING
 ```
 
-Required:
+FAST uses deterministic rules. OPERATIONAL uses bounded reads/rules + optional small model. REASONING uses Graph/Knowledge/Expertise/LLM.
 
-- event payload is untrusted for policy/permission;
-- duplicate event cannot duplicate execution;
-- polling/scheduler is bounded fallback only when source lacks event contract;
-- freshness/cost/dedupe explicit;
-- no new event bus by speculation.
+Not every event calls an LLM.
 
-## 13. Decision Intelligence rules
-
-Not every event invokes an LLM.
+## 12. Automation / Executors
 
 ```text
-DecisionPathPolicy
-├─ FAST        deterministic Policy/State Machine
-├─ OPERATIONAL bounded reads/rules + optional classifier
-└─ REASONING   Graph/Knowledge/Expertise/LLM
+Copilot = decide/orchestrate
+Executor = execute
 ```
 
-Material business readiness with known criteria uses deterministic `Policy/Specification` over authoritative facts. LLM may explain/investigate but is not the only authority.
-
-No chain-of-thought persistence.
-
-## 14. Automation & Execution Hub rules
-
-Canonical separation:
+Preference:
 
 ```text
-Copilot
-= context + decision + orchestration
-
-Automation & Execution Hub
-= execution
+official API
+→ native integration
+→ deterministic function/script
+→ RPA
+→ computer-use
+→ human task
 ```
 
-Executor preference:
+Planner sees semantic capability, never click/selector/coordinate/package UI mechanics.
+
+RPA is replaceable adapter. Computer-use is advanced sandboxed fallback.
+
+## 13. Outcome verification
 
 ```text
-1 API official
-2 native supported integration
-3 deterministic function/script
-4 RPA
-5 computer-use
-6 human task
+technical result
+→ authoritative postcondition verification
+→ VERIFIED_SUCCESS|VERIFIED_FAILURE|PENDING|INCONCLUSIVE
 ```
 
-Planner sees semantic capability, never implementation mechanics.
+Never announce material success solely from HTTP 200, RPA Save click or provider accepted response when final outcome is not confirmed.
 
-Example:
+## 14. Process Intelligence
+
+Process Mining uses authorized event logs and preserves source/provenance/completeness.
+
+Prohibited by default:
 
 ```text
-billing.invoice.issue
+secret employee productivity score
+fraud/intent/personality inference from deviation
+unrestricted desktop task capture
+automatic RPA deployment from opportunity
 ```
 
-Allowed mapping:
+Opportunity → candidate/PREPARE → owner validation.
+
+## 15. AI Control Tower
+
+Govern assets, owners, risk, scopes, versions, evals, health, cost, verified value, incidents, dependencies, rollout and kill switches.
+
+Control Tower admin does not grant domain/business permission.
+
+## 16. MCP / A2A
+
+Servers/tools/agents require lifecycle approval and capability allowlists. Metadata/results are untrusted. Delegate minimum context, no CoT dump, scoped credentials, timeout/cancel/budget.
+
+Writes use same Policy/Decision/idempotency/Outcome semantics.
+
+## 17. Personal Memory
+
+User-owned/private by default. User can inspect/correct/delete/disable. Memory affects relevance/presentation, never permissions or live business truth. No hidden sensitive/personality/employee profiling.
+
+## 18. Semantic Business Layer
+
+Material metric has `owner + formula + grain + dimensions + unit + source + freshness + version + security classification`.
+
+LLM interprets question; structured definition/calculation produces metric. Same-name conflicts stay explicit.
+
+## 19. Analysis Sandbox / Artifact Workspace
+
+Sandbox:
+
+- isolated/quota-bounded;
+- no unrestricted host/private network;
+- authorized read data only by default;
+- safe file ingest;
+- no broad credentials;
+- reproducibility metadata;
+- truthful failure.
+
+Artifacts are versioned/provenanced/ACL-controlled. Human edits are not silently overwritten. External share/send remains separate action.
+
+## 20. Predictive / Prescriptive / Twin
+
+Prediction preserves model/version/horizon/confidence/freshness/limitations and is not FACT.
+
+Prescription shows objectives/constraints/assumptions/trade-offs and yields recommendation/PREPARE, not authorization.
+
+Operational Twin is a projection/scenario. Simulation never mutates production. Apply revalidates live state/permissions/policy.
+
+## 21. Edge / Offline
+
+Edge is governed extension of same product, not second unrestricted Copilot.
+
+Explicit modes, revision/freshness, versioned packages/models, buffered events with idempotent sync, device/user separation, no authority widening offline, OT safety independent.
+
+## 22. Model lifecycle / Marketplace
+
+Every production model has owner/version/eval/risk/deployment/rollback/revoke traceability. Model Router selects only approved assets.
+
+Marketplace assets declare requirements/dependencies/data scopes; publish/enable/install never grants RBAC/provider scope. Executable assets follow supply-chain review/integrity controls.
+
+## 23. Security/privacy
+
+Follow `08/20` exactly. Treat all external/tool/model/package/generated content as untrusted. Secrets never reach LLM/MFE/logs. Biometric/Human Observation and employee privacy boundaries remain.
+
+## 24. OT safety
 
 ```text
-billing.invoice.issue → API executor
+free-form LLM/model/vision/voice/RPA/computer-use
+-X→ PLC/CNC/robot/machine actuation
 ```
 
-or, if legacy evidence requires:
+Physical actuation requires separate industrial safety initiative/gate.
+
+## 25. C1 rule
+
+First runtime work after Foundation Freeze is standalone API/MFE bootstrap. No Process Mining engine, Control Tower, MCP/A2A runtime, sandbox, Twin, Edge, Marketplace, RPA Hub or autonomous ACT before foundations and phase dependencies.
+
+## 26. Generic execution protocol
+
+For exactly one `C*.S*`:
 
 ```text
-billing.invoice.issue → RPA executor
-```
-
-Forbidden:
-
-```text
-planner outputs click(x,y)
-planner outputs CSS selector for ERP
-planner embeds RPA package internals
-```
-
-## 15. Automation execution rules
-
-Execution contract/lifecycle when implemented:
-
-```text
-QUEUED
-→ RUNNING
-→ SUCCEEDED | FAILED | AMBIGUOUS | CANCELLED | TIMED_OUT
-```
-
-Required metadata: correlation, capabilityRef, executorRef/version, actorRef, inputHash, attempt, idempotency, result/error refs, outcomeVerificationRef.
-
-No duplicate effect after event replay, retry or workflow resume.
-
-## 16. RPA rules
-
-RPA is replaceable Infrastructure executor, never business authority.
-
-When in scope require:
-
-- package/version traceability;
-- worker health/heartbeat;
-- queue/lease/concurrency;
-- environment separation;
-- protected credential injection;
-- desktop/session isolation;
-- screenshot/artifact classification/retention;
-- timeout/cancel;
-- retry eligibility;
-- ambiguous outcome handling;
-- audit/correlation.
-
-Prefer API when reliable authoritative contract exists.
-
-## 17. Computer-use rules
-
-Advanced fallback only, not default.
-
-Requires sandbox/session isolation, app/domain/network allowlist, protected credentials, bounded actions, takeover/stop, audit and same Policy/Decision semantics.
-
-Never arbitrary corporate-network browsing.
-
-## 18. Outcome verification rules
-
-Invariant:
-
-```text
-technical executor success != verified business outcome
-```
-
-Examples:
-
-```text
-HTTP 200 != invoice definitely issued
-RPA clicked Save != transaction committed
-provider accepted message != final delivery when async
-```
-
-Use authoritative API/event/record/postcondition verifier where material.
-
-Never notify “concluído” when Outcome is pending/ambiguous.
-
-## 19. Watch / Proactivity rules
-
-C6:
-
-```text
-OBSERVE
-ADVISE
-PREPARE
-```
-
-C7 only:
-
-```text
-ACT
-```
-
-PREPARE builds candidate action/preview/draft/work plan and has no side effect.
-
-ACT requires capability-scoped AutonomyPolicy, identity, limits, revalidation, kill switch and Outcome verification.
-
-## 20. Autonomy rules
-
-No global `Copilot=L5`.
-
-Autonomy input:
-
-```text
-capability
-+ actor/service identity
-+ source/event trust
-+ business context
-+ risk/sensitivity
-+ financial/material limits
-+ environment
-+ reversibility
-+ policy
-```
-
-L5 is OFF by default.
-
-Example levels are configured by policy, never hardcoded in planner.
-
-## 21. Human-in-the-loop
-
-Manual exception uses same Durable Workflow:
-
-```text
-Workflow
-→ wait_user / wait_approval
-→ Inbox/Decision
-→ human resolution
-→ resume same Workflow
-```
-
-No parallel “manual process engine”.
-
-## 22. Notifications/escalations
-
-Outcome/event/Watch can notify through approved Minha DELPI/email/Teams/WhatsApp channels.
-
-Recipients, severity, dedupe, SLA/escalation and acknowledgement follow explicit policy. Notification success is not business Outcome.
-
-## 23. External/Teams/Media/Biometric rules
-
-Follow `53–56` without weakening privacy/RBAC/source ACLs. External/meeting content remains untrusted for policy. Teams is same Copilot runtime. Biometrics never grant permission.
-
-## 24. OT safety rule
-
-Copilot/Automation Hub is not a safety controller.
-
-```text
-free-form LLM → PLC/CNC/robot/machine = BLOCK
-voice command → direct actuation = BLOCK
-Copilot L5 → implicit OT authority = BLOCK
-RPA/computer-use → machine safety bypass = BLOCK
-```
-
-Future physical actuation requires separate industrial safety architecture/gate.
-
-## 25. C1 special rule
-
-First runtime work is standalone bootstrap only. No RPA Hub/Event engine/autonomous runtime before Foundation Freeze.
-
-## 26. Phase-specific automation mapping
-
-```text
-C0 → inventory/freeze events, executors, workers, service identity, outcome/autonomy boundaries
-C1 → standalone bootstrap, no automation runtime
-C2 → context/commands only
-C3 → event/decision-path foundations, no material ACT
-C4 → read-only readiness/anomaly intelligence
-C5 → executor ports/adapters + execution lifecycle + outcome verification + governed writes
-C6 → Watch OBSERVE/ADVISE/PREPARE + Automation Hub admin + exceptions/notifications
-C7 → selected Watch ACT + capability-scoped L5 + advanced computer-use
-```
-
-## 27. Generic implementation protocol
-
-For one `C*.S*` at a time:
-
-```text
-REVALIDATE HEAD
-→ READ AUTHORITIES INCLUDING 57 WHEN AUTOMATION/EVENT/RPA IS MATERIAL
-→ IDENTIFY OWNER/LAYER/PATTERN
-→ ABSTRACTION GATE
-→ DEPENDENCY GATE
+REVALIDATE HEAD/WORKTREE
+→ READ AUTHORITIES + APPLICABLE SPECS
+→ IDENTIFY OWNER/SOURCE/BORDER
+→ ABSTRACTION + DEPENDENCY GATES
 → BASELINE
 → MINIMAL CORRECT DIFF
 → WIRE PRODUCER/CONSUMER
 → UNIT/CONTRACT/INTEGRATION
 → POSITIVE/SIBLING/NEGATIVE
-→ SECURITY/RBAC/PRIVACY/EXTERNAL/AUTOMATION/SAFETY
+→ SECURITY/PRIVACY/RBAC/OUTCOME/SAFETY
 → GENERALIZATION/METAMORPHIC/UNKNOWN
-→ CHAT-INDEPENDENCE CHECK
+→ CHAT-INDEPENDENCE
 → ARCHITECTURE CONFORMANCE
 → RESIDUAL SEARCH
 → COMPLETE_GATE
 → DOCS/LEDGER
-→ NEXT STEP
+→ NEXT
 ```
 
-## 28. Prohibitions
+## 27. Required test families
 
-- Chat runtime/database/API dependency;
-- second RBAC/user authority;
-- business rules in MFE/LLM/RPA bot;
-- provider/executor hardcode in planner;
-- manual endpoint catalog authority;
-- RPA click/selector/coordenada in planner/domain/application;
-- RPA selected over authoritative supported API without evidence;
-- second Workflow engine inside Automation Hub;
-- event payload directly executing write;
-- event/worker/device identity granting permission;
-- background execution without explicit bounded identity;
-- blind retry after ambiguous write;
-- technical executor success treated as business success;
-- PREPARE silently becoming ACT;
-- global unrestricted L5;
-- autonomy kill-switch bypass;
-- computer-use without sandbox/allowlist;
-- secrets in prompt/LLM/MFE/log/screenshots;
-- Chat/Teams-specific planner runtime;
-- implicit external send;
-- raw media/biometric policy bypass;
-- hidden worker/person profiling;
-- arbitrary LLM/RPA→PLC/CNC/robot;
-- safety-interlock bypass.
+Use `20` as sole test authority. Never weaken tests to pass candidate.
 
-## 29. Required tests
-
-Use `20` as authority.
-
-Automation scope must include:
+Always include relevant negatives for:
 
 ```text
-EVENT_SOURCE_AUTHENTICITY
-EVENT_DEDUPE_NO_DUPLICATE_EXECUTION
-EVENT_NOT_PERMISSION
-FAST_PATH_NO_LLM_WHEN_DETERMINISTIC
-DETERMINISTIC_READINESS_REPRODUCIBLE
-PLANNER_NO_RPA_UI_MECHANICS
-API_PREFERRED_OVER_RPA_WHEN_SUPPORTED
-EXECUTOR_SUBSTITUTION_NO_PLANNER_PATCH
-BACKGROUND_IDENTITY_EXPLICIT
-AUTOMATION_EXECUTION_IDEMPOTENT
-RPA_WORKER_SESSION_CREDENTIAL_ISOLATION
-AMBIGUOUS_WRITE_NO_BLIND_RETRY
-VERIFIED_BUSINESS_OUTCOME
-PREPARE_NOT_ACT
-CAPABILITY_SCOPED_AUTONOMY
-L5_OFF_DEFAULT
-AUTONOMY_KILL_SWITCH
-COMPUTER_USE_BOUNDED
-NO_ARBITRARY_OT_COMMAND
+permission elevation
+source/data leak
+prompt/tool/agent injection
+unsafe egress
+memory isolation
+semantic metric reproducibility
+sandbox escape/write
+prediction-as-fact
+simulation→production mutation
+Edge authority expansion
+revoked asset still active
+Marketplace permission escalation
+RPA duplicate/credential leak
+unverified success
+PREPARE→ACT bypass
+global L5
+OT command
+Chat dependency
 ```
 
-## 30. Complete Gate blockers
-
-```text
-PARTIAL
-INCONCLUSIVE
-PENDING
-TEST_NOT_RUN
-STALE_EVIDENCE
-DUPLICATE_AUTHORITY
-FOUNDATION_DRIFT
-ARCHITECTURE_PATTERN_DRIFT
-UNJUSTIFIED_ABSTRACTION
-CHAT_RUNTIME_IMPORT
-PORTAL_AI_LOGIC_LEAK
-DOMAIN_RULE_DUPLICATION
-EVENT_PERMISSION_ELEVATION
-DUPLICATE_EVENT_DUPLICATE_EXECUTION
-PLANNER_RPA_UI_MECHANICS_LEAK
-RPA_SELECTED_OVER_AUTHORITATIVE_API_WITHOUT_JUSTIFICATION
-BACKGROUND_EXECUTION_WITHOUT_EXPLICIT_IDENTITY
-AUTOMATION_EXECUTION_DUPLICATE
-AMBIGUOUS_WRITE_BLIND_RETRY
-EXECUTOR_TECHNICAL_SUCCESS_AS_BUSINESS_SUCCESS
-PREPARE_BECOMES_ACT_IMPLICITLY
-GLOBAL_UNSCOPED_L5
-AUTONOMY_KILL_SWITCH_BYPASS
-COMPUTER_USE_UNBOUNDED_ACCESS
-PROVIDER_TOKEN_LEAK
-CROSS_USER_EXTERNAL_DATA_LEAK
-BIOMETRIC_PERMISSION_ELEVATION
-ARBITRARY_LLM_OT_COMMAND
-SAFETY_INTERLOCK_BYPASS
-```
-
-## 31. Report format
+## 28. Report format
 
 ```text
 STEP:
@@ -661,21 +468,24 @@ STATUS:
 DEPENDENCY_GATE:
 CP_REQUIREMENTS:
 FILES_CHANGED:
-OWNERS:
+OWNERS/SOURCES:
 LAYER/PATTERNS:
 PLATFORM_REUSE:
 COPILOT_NEW_CODE:
 CHAT_DEPENDENCIES:
-EVENT_AUTOMATION_RPA_IMPACT:
 WIRING_PROOF:
 TESTS:
-SECURITY_RBAC:
-PRIVACY_RETENTION:
-BACKGROUND_IDENTITY:
-EXECUTOR_OUTCOME_VERIFICATION:
-AUTONOMY_POLICY:
-EXTERNAL_CONNECTIONS_EGRESS:
-TEAMS_INTEGRATION:
+SECURITY_RBAC_PRIVACY:
+DATA_STATE_RETENTION:
+PROCESS_INTELLIGENCE:
+SEMANTIC_LAYER:
+MEMORY_PERSONALIZATION:
+SANDBOX_ARTIFACTS:
+PREDICTIVE_TWIN:
+AUTOMATION_EXECUTION_OUTCOME:
+MCP_A2A:
+MODEL_CONTROL_TOWER_MARKETPLACE:
+EDGE_OFFLINE:
 INDUSTRIAL_SAFETY:
 GENERALIZATION:
 CHAT_INDEPENDENCE:
@@ -688,7 +498,7 @@ COMMIT:
 PUSH:
 ```
 
-## 32. Start here
+## 29. Start here
 
 Execute only:
 
@@ -696,4 +506,4 @@ Execute only:
 C0.S0
 ```
 
-Do not create Copilot API/MFE runtime features, Automation Hub, RPA executor, background ACT, Meeting/Frontline or advanced integrations until C0.S7 `FOUNDATION_FREEZE=PASS`. After freeze, start C1.S1 with standalone API skeleton.
+Do not create runtime code before `C0.S7 FOUNDATION_FREEZE=PASS`. Documentation-only inventory/evidence updates are allowed in C0.S0.
