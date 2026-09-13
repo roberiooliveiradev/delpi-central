@@ -1,4 +1,4 @@
-# Minha DELPI Copilot — Protocolo de Execução para o Cursor
+# DÉLIA — Protocolo de Execução para o Cursor
 
 **Status:** obrigatório  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
@@ -9,7 +9,7 @@
 
 ## 1. Objetivo
 
-Executar o Copilot como aplicação nova, foundation-first, sem Chat runtime dependency, sem architecture-by-feature e sem adiar boundaries de data/process/automation/model/privacy/Edge que depois exigiriam refactor.
+Executar a DÉLIA como aplicação nova, foundation-first, sem Chat runtime dependency, sem architecture-by-feature e sem adiar boundaries de data/process/automation/model/privacy/Edge que depois exigiriam refactor.
 
 ## 2. Mandatory reading
 
@@ -17,13 +17,13 @@ Before each substep:
 
 1. official project instructions;
 2. applicable `.cursor/rules`;
-3. Copilot `README.md` + `INDEX.md`;
+3. DÉLIA `README.md` + `INDEX.md`;
 4. `16` execution order;
 5. `50` standalone boundary;
-6. `51` factual baseline;
-7. `52` physical/bootstrap target;
-8. `17` ownership/contracts;
-9. `49` architecture/patterns;
+6. `17` ownership/contracts;
+7. `49` architecture/patterns;
+8. `51` factual baseline;
+9. `52` physical/bootstrap target;
 10. `21` state/persistence when applicable;
 11. `20` tests/gates;
 12. `25` applicable CP requirements;
@@ -44,10 +44,10 @@ Record `HEAD_BEFORE`.
 Treat as architectural error:
 
 ```text
-Copilot API → Chat runtime/API/tables
-Copilot MFE → Chat source imports
-Copilot feature → Chat planner/tool/media/provider as mandatory implementation
-Copilot progress → Chat refactor dependency
+DÉLIA API → Chat runtime/API/tables
+DÉLIA MFE → Chat source imports
+DÉLIA feature → Chat planner/tool/media/provider as mandatory implementation
+DÉLIA progress → Chat refactor dependency
 ```
 
 Chat is reference-only during inventory.
@@ -60,7 +60,7 @@ Inventariar factual evidence for:
 Platform: Portal/Core/Keycloak/Gateway/Compose/plugin-ui/MFEs/APIs/OpenAPIs
 Media/Biometric/Meeting/Frontline/Devices/OT
 Internet/OAuth/External Connectors/Teams/Webhooks
-Events/RPA/Automation/Queues/Workers/Service Identities/Outcome Sources
+Events/RPA/Automation Hub/Queues/Workers/Service Identities/Outcome Sources
 Process Logs/Process Owners/Task Mining
 AI Assets/Models/Evals/Cost/Incidents/Control mechanisms
 MCP/A2A/Tools/Agents/Delegation identities
@@ -72,20 +72,28 @@ Edge/Offline/Devices/MDM/Local inference
 Model Registry/MLOps/Marketplace/Package Supply Chain
 ```
 
-Classify:
+Classify factual state only as:
+
+```text
+PROVEN
+TO_INVENTORY
+PLANNED
+TARGET
+```
+
+Then, separately if useful, record treatment decision:
 
 ```text
 PLATFORM_REUSE
 NEUTRAL_SHARED_REUSE
-COPILOT_IMPLEMENT_NEW
+IMPLEMENT_NEW
 EXTEND_PLATFORM_CONTRACT
 ADAPTER_REQUIRED
 ADR_REQUIRED
-NOT_PROVEN
 OUT_OF_SCOPE
 ```
 
-Market availability without DELPI evidence = `NOT_PROVEN`.
+Market availability without DELPI evidence = `TO_INVENTORY`, never `PROVEN`.
 
 No runtime diff in C0.S0.
 
@@ -101,10 +109,12 @@ C0 Foundation Freeze
 → C2 Context/Commands
 → C3 Capability Foundations
 → C4 Governed Reads/Analysis
-→ C5 Governed Writes/Executors
+→ C5 Governed ACT/Executors/Durable Work
 → C6 Product Governance/Experience
 → C7 Advanced Autonomy/Scale
 ```
+
+C5 may enable L4 governed execute for explicitly authorized capabilities. C6 does not autonomously trigger Watch ACT by default. C7 adds selected Watch ACT/L5 under explicit limits; L5 remains OFF by default.
 
 No thematic plan changes this order.
 
@@ -116,7 +126,8 @@ Exactly one `C*.S*` at a time:
 SELECT STEP
 → REVALIDATE HEAD/WORKTREE
 → READ AUTHORITIES
-→ IDENTIFY OWNER/SOURCE/LAYER
+→ IDENTIFY RESPONSIBILITY/OWNER/SOURCE
+→ IDENTIFY CONSUMERS/CONTRACT
 → CANONICAL PATTERN
 → ABSTRACTION + DEPENDENCY GATES
 → BASELINE
@@ -136,7 +147,7 @@ SELECT STEP
 
 ## 8. READY_TO_EXECUTE
 
-Only if previous gates pass and owner/source/layer/pattern/primitive/test/migration/security/privacy/safety are known.
+Only if previous gates pass and owner/source/consumers/contract/layer/pattern/primitive/test/migration/security/privacy/safety are known.
 
 For new thematic capability also answer:
 
@@ -160,20 +171,21 @@ Before new schema/service/table/interface/registry/engine/server/sandbox/twin/Ed
 
 ```text
 A owner/source authority?
-B existing shared primitive/contract?
-C Chat/product coupling?
-D layer/pattern?
-E Abstraction Gate?
-F second RBAC/workflow/planner/Graph/Semantic/Knowledge authority?
-G persistence really required?
-H next phase redesign obvious?
-I sibling/unknown generalization?
-J credentials/data bounded?
-K read/write/PREPARE/ACT/simulate/apply separated?
-L rollback/revoke path?
-M user/device/service/worker identities distinct?
-N Outcome verified by authoritative source?
-O OT safety boundary preserved?
+B real consumers/contract?
+C existing shared primitive/contract?
+D Chat/product coupling?
+E layer/pattern?
+F Abstraction Gate?
+G second RBAC/workflow/planner/Graph/Semantic/Knowledge authority?
+H persistence really required and owned?
+I next phase redesign obvious?
+J sibling/unknown generalization?
+K credentials/data bounded?
+L read/write/PREPARE/ACT/simulate/apply separated?
+M rollback/revoke path?
+N user/device/service/worker identities distinct?
+O Outcome verified by authoritative source?
+P OT safety boundary preserved?
 ```
 
 Stop and redesign on material violation.
@@ -189,6 +201,7 @@ SIMULATE != APPLY
 PREPARE != ACT
 Read != Write
 Draft != Send
+L4 governed execute != L5 autonomous execute
 Technical Success != Verified Business Outcome
 MCP/A2A Discovery != Approval
 Marketplace Install != Permission
@@ -199,7 +212,8 @@ Edge Offline != Wider Authority
 ## 11. Prohibitions
 
 - Chat dependency/migration;
-- duplicate Core/domain authority;
+- duplicate Keycloak/Core/domain authority;
+- DÉLIA bypassing Automation Hub technical-execution ownership with ad hoc executor internals;
 - manual endpoint/app/provider/executor/model/tool routing in planner;
 - DOM business automation as default when API exists;
 - RPA clicks/selectors in planner;
@@ -224,7 +238,7 @@ First runtime work after C0 is own API/MFE/health/JWT-Core/federation/plugin-ui/
 
 ## 13. Meeting/Frontline/Edge
 
-Same Copilot API/MFE/policy/evidence/work runtime. Edge is a governed deployment/runtime boundary, not another Copilot product. Offline mode is explicit and cannot widen permission.
+Same DÉLIA API/MFE/policy/evidence/work runtime. Edge is a governed deployment/runtime boundary, not another DÉLIA product. Offline mode is explicit and cannot widen permission.
 
 ## 14. Process/people rule
 
@@ -245,7 +259,16 @@ Was expected business postcondition observed in authoritative source?
 
 Do not use notifications or RPA UI state as final proof when better authoritative source exists.
 
-## 17. OT rule
+## 17. Automation ownership rule
+
+```text
+DÉLIA = intelligence + Policy + Decision + Work/orchestration + Outcome coordination
+Automation Hub = technical execution
+```
+
+C0 must prove whether a physical Hub/runtime/contract already exists. Lack of implementation evidence does not transfer technical execution authority into DÉLIA.
+
+## 18. OT rule
 
 Until separate industrial safety gate passes:
 
@@ -256,14 +279,14 @@ free-form physical actuation → BLOCK
 
 Enterprise L5 never overrides OT safety.
 
-## 18. Evidence minimum
+## 19. Evidence minimum
 
 Record as material:
 
 ```text
 HEAD_BEFORE/AFTER
 files changed
-owner/source/layer/pattern
+owner/source/consumers/contract/layer/pattern
 CPs
 commands/tests/results
 contract/schema/model/metric/executor/package versions
@@ -274,7 +297,7 @@ Chat independence
 ADR refs
 ```
 
-## 19. Adversarial review
+## 20. Adversarial review
 
 Ask:
 
@@ -295,12 +318,13 @@ Ask:
 15. Marketplace install grants permission?
 16. Any LLM→machine path without safety architecture?
 17. Any stale/missing evidence being hidden?
+18. Any DÉLIA technical executor bypassing Automation Hub ownership?
 
-## 20. COMPLETE_GATE
+## 21. COMPLETE_GATE
 
 Use `20` as sole detailed blocker authority. `PARTIAL/INCONCLUSIVE/PENDING/TEST_NOT_RUN/STALE_EVIDENCE` block closure.
 
-## 21. Report required
+## 22. Report required
 
 ```text
 STEP:
@@ -311,10 +335,11 @@ DEPENDENCY_GATE:
 CP_REQUIREMENTS:
 FILES_CHANGED:
 OWNERS/SOURCES:
+CONSUMERS/CONTRACTS:
 LAYER/PATTERNS:
 ABSTRACTION_GATE:
 PLATFORM_REUSE:
-COPILOT_NEW_CODE:
+DELIA_NEW_CODE:
 CHAT_DEPENDENCIES:
 WIRING_PROOF:
 TESTS:
@@ -341,7 +366,7 @@ COMMIT:
 PUSH:
 ```
 
-## 22. Continuity
+## 23. Continuity
 
 With `COMPLETE_GATE=PASS`, follow next step unlocked by `16` unless a real destructive/missing-authority decision blocks it.
 
