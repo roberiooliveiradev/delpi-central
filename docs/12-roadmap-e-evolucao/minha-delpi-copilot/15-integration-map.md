@@ -1,63 +1,53 @@
-# 15 — Mapa de integração com a Minha DELPI
+# 15 — Mapa de integração do Minha DELPI Copilot
 
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)  
-**Microsoft Teams:** [`56-microsoft-teams-connector-and-meeting-integration.md`](./56-microsoft-teams-connector-and-meeting-integration.md)  
-**Autonomous Operations/Execution Hub:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)
+**Specs temáticas:** `53–66`
 
 ## 1. Mapa macro
 
 ```text
-                           Keycloak / Core
-                         identity / RBAC
-                               │
-                               ▼
-Portal ───────────────→ Copilot MFE ───────────────→ Gateway
-                               │                       │
-                               └──────────┬────────────┘
-                                          ▼
-                                Copilot Standalone API
-                                          │
-       ┌──────────────────────┬───────────┼───────────────┬──────────────────┐
-       ▼                      ▼           ▼               ▼                  ▼
- Domain APIs/OpenAPI     Public Internet External       Event/Signal       AI/Media/
- business authority     Search/SafeFetch Providers     Sources            Biometric
-       │                      │           │               │                  │
-       └──────────────────────┴───────────┼───────────────┴──────────────────┘
-                                          ▼
-                          Context / Graph / Evidence
-                          Policy / Decision Intelligence
-                                          │
-                                          ▼
-                                  Durable Workflow
-                                          │
-                              semantic capability
-                                          │
-             ┌────────────────────────────┼────────────────────────────┐
-             ▼                            ▼                            ▼
-       Domain/API Executor       Automation & Execution Hub       Human Task
-                                      │      │
-                                    RPA    Computer-Use
-                                      │
-                                      ▼
-                                  legacy UIs
-                                      │
-                                      ▼
-                              Outcome Verification
-                                      │
-                              Evidence / Notify
+Users / Devices / Meeting / Frontline / Teams
+                    │
+                    ▼
+Portal → Copilot MFE → Gateway → Copilot API
+                              │
+     ┌────────────────────────┼───────────────────────────┐
+     ▼                        ▼                           ▼
+Core/Keycloak           Domain APIs/OpenAPI       External Providers
+identity/RBAC           business authority        OAuth/API/Webhooks
+     │                        │                           │
+     └────────────────────────┼───────────────────────────┘
+                              ▼
+                    Evidence / Context / Graph
+                              │
+             ┌────────────────┼─────────────────┐
+             ▼                ▼                 ▼
+        Semantic Layer  Process Intelligence  Models/Sandbox
+             │                │                 │
+             └────────────────┼─────────────────┘
+                              ▼
+                      Policy / Decision
+                              ▼
+                      Durable Workflow
+                              ▼
+                   Automation & Execution
+                  API / Function / RPA / Tool
+                              ▼
+                      Outcome Verification
+                              ▼
+                    Audit / Notification
 ```
+
+Cross-cutting: AI Control Tower, Personal Memory, Artifact Workspace, MCP/A2A, Operational Twin, Edge/Offline and Model Lifecycle.
 
 ## 2. Portal ↔ Copilot
 
-Portal hospeda/navega/contextualiza. Copilot MFE conversa com Copilot API. Portal não contém planner, connector/executor credentials, RPA logic ou automation workflow engine.
+Portal hosts/navigation/context only. No planner, provider/model/RPA logic, secret storage or semantic calculation in Portal.
 
-## 3. Copilot ↔ Core
+## 3. Copilot ↔ Core / Keycloak
 
-Core continua authority de apps/routes/RBAC/user context. External scope, event source, worker/device identity ou autonomy level não modificam Core permissions.
-
-Background action usa user/service identity explícita conforme foundation.
+Core remains apps/routes/RBAC authority; Keycloak identity. Memory/device/event/model/tool metadata cannot mutate these authorities.
 
 ## 4. Copilot ↔ Domain APIs
 
@@ -65,217 +55,207 @@ Background action usa user/service identity explícita conforme foundation.
 OpenAPI
 → Action Catalog
 → authorized semantic capability
-→ Planner/Policy
-→ Domain/API executor
+→ Policy/Decision
+→ API executor
+→ Domain API
 → Outcome/Evidence
 ```
 
-Quando a Domain API expõe action autoritativa adequada, ela é preferida antes de RPA.
+When authoritative API exists, it is preferred over RPA/computer-use.
 
-## 5. Copilot ↔ Public Internet
+## 5. Copilot ↔ Public Internet / External Providers / Teams
 
-Research → SearchProviderPort → SafeWebFetchPort → SourceRef/EvidenceRef → synthesis, com egress validation/provenance/freshness.
+- Search + Safe Fetch for public Internet;
+- OAuth/API adapters for connected sources;
+- provider webhook/change notifications → EventEnvelope;
+- source ACL/freshness/provenance preserved;
+- credentials stay in secret boundary;
+- `read != write`, `draft != send`.
 
-## 6. Copilot ↔ External Providers / Teams
-
-```text
-Connect
-→ OAuth/API authorization
-→ ExternalConnection
-→ secretRef
-→ Provider Adapter
-→ semantic connector capabilities
-```
-
-Teams permanece capability family Microsoft 365. Provider token nunca vai ao planner/LLM/MFE.
-
-## 7. Event / Signal Sources ↔ Copilot
+## 6. Copilot ↔ Event Sources
 
 ```text
-Domain event / provider webhook / MES signal / Watch timer
-→ source adapter/authenticity validation
+Domain/MES/provider/Edge event
+→ authenticity/trust validation
 → EventEnvelope
 → dedupe/order/correlation
-→ Watch / Workflow / Decision
+→ Watch/Workflow/Decision
 ```
 
-Polling/scheduler only bounded fallback. Event payload never directly executes a material write.
+Polling is bounded fallback only. Event never grants permission.
 
-## 8. Decision Intelligence
+## 7. Copilot ↔ Process Intelligence
 
 ```text
-Event / user intent
-→ FAST | OPERATIONAL | REASONING
-→ structured finding/decision candidate
+authorized event logs
+→ process event projection
+→ traces/variants/conformance/bottlenecks
+→ Evidence
+→ process/automation candidate
 ```
 
-FAST uses deterministic Policy/Specification where sufficient. REASONING uses Graph/Knowledge/Expertise/LLM only when necessary.
+Source systems remain event authorities. Process Mining does not become people-scoring authority.
 
-## 9. Copilot ↔ Automation & Execution Hub
-
-Integration contract is semantic:
+## 8. Copilot ↔ Semantic Business Layer
 
 ```text
-capabilityRef
-+ actor/service identity
-+ validated arguments
-+ correlation/idempotency
-+ policy/decision context
+MetricDefinition
+→ authorized source query/calculation
+→ metric value + version + Evidence
+```
+
+Metric metadata never grants row/source access. Graph and Semantic Layer stay separate.
+
+## 9. Copilot ↔ Analysis Sandbox
+
+```text
+authorized bounded dataset
+→ isolated sandbox
+→ calculation/model/chart
+→ Evidence/Artifact
+```
+
+No direct broad production DB credential. Read-only source integration by default.
+
+## 10. Copilot ↔ Artifact Workspace
+
+Artifacts store/version content and provenance/ACL. Source data remains source-owned. Export/share/email/Teams send are separate governed actions.
+
+## 11. Copilot ↔ Predictive Models / Operational Twin
+
+```text
+source features/state
+→ approved Model/Simulation Adapter
+→ Prediction/Scenario
+→ Evidence
+→ Recommendation/PREPARE
+```
+
+Prediction != fact; simulated state != production state; Apply revalidates live owners.
+
+## 12. Copilot ↔ Automation & Execution Hub
+
+```text
+semantic capability
 → executor mapping
-→ AutomationExecution
+→ API | Function | RPA | Computer-Use | Human Task
+→ technical result
+→ authoritative Outcome Verifier
 ```
 
-Planner never sends clicks/selectors/coordinates.
+Automation Hub is execution boundary, not second planner/business authority.
 
-The Hub may be a Copilot-owned bounded module or neutral platform service only after C0 ownership evidence; no separate brain/planner.
+## 13. Copilot ↔ RPA
 
-## 10. Executor integrations
-
-Preferred order:
-
-```text
-Domain/API
-→ native supported integration
-→ deterministic function/script
-→ RPA
-→ computer-use
-→ Human Task
-```
-
-### RPA integration
+If C0 proves RPA infrastructure:
 
 ```text
 AutomationExecutorPort
-→ RPA Adapter
-→ Orchestrator/Queue
-→ Worker/Session
-→ legacy UI
+→ RPA Adapter/Orchestrator
+→ queue/worker/session
+→ legacy app
 ```
 
-When RPA exists, integration includes worker health, lease/concurrency, package/version, protected credentials, session isolation, timeout/cancel and artifact retention.
+Package/version/credentials/session/idempotency/ambiguous outcome are bounded in adapter/infrastructure.
 
-### Computer-use integration
-
-Sandboxed/allowlisted fallback only; no unrestricted intranet/desktop access.
-
-## 11. Outcome Verification ↔ authorities
+## 14. Copilot ↔ MCP / A2A
 
 ```text
-technical execution result
-→ OutcomeVerifier
-→ Domain/provider/authoritative record/event
-→ VERIFIED_SUCCESS | VERIFIED_FAILURE | PENDING | INCONCLUSIVE
+MCP:
+semantic tool need → approved Tool Adapter → server → normalized result
+
+A2A:
+bounded subtask → approved Agent Adapter → external agent → result/artifact
 ```
 
-RPA click/HTTP 200 is not business completion by itself.
+Discovery/metadata does not imply trust or permission. Writes pass same Decision/Outcome gates.
 
-## 12. Notifications ↔ channels
+## 15. Copilot ↔ Personal Memory
 
-Truthful Event/Outcome state may drive:
+Memory store is user-private Copilot-owned state/projection. It receives bounded user-confirmed/preferences data and feeds relevance/presentation only. It does not write Core profile/RBAC unless a separate authorized platform action explicitly does so.
+
+## 16. Copilot ↔ AI Control Tower
+
+Control Tower consumes refs/telemetry from models, automations, connectors, tools/agents, Edge and capabilities; sends admin commands for enable/disable/rollout/kill switch through governed admin contracts.
+
+It does not execute domain actions directly.
+
+## 17. Copilot ↔ Model Lifecycle
 
 ```text
-Minha DELPI
-email
-Teams
-WhatsApp Business
-Interaction Room
-other approved channel
+Model Registry/Evals
+→ approved deployment
+→ Model Adapter/Router
+→ inference
+→ lineage/metrics
+→ drift/rollback/revoke
 ```
 
-Recipients/severity/dedupe/SLA/escalation follow policy. Notification is not proof of outcome.
+Revoked model removed from selection.
 
-## 13. External Reads/Writes
-
-External read requires active connection/scope; write is separate capability and revalidates scope/policy. `draft != send`.
-
-## 14. Secret/Vault integration
-
-Provider/RPA/service credentials use protected Secret/Vault owner and are consumed only inside concrete adapter/runtime boundaries.
-
-Never LLM/MFE/ordinary logs.
-
-## 15. Source/Evidence / Business Graph
-
-Internal, external, event and automation outputs converge on SourceRef/EvidenceRef/OutcomeRef contracts without copying masters.
-
-Automation artifact may support Evidence; business truth still comes from authoritative source.
-
-## 16. Meeting/Frontline
-
-Meeting and Frontline invoke the same semantic capabilities, Decision/Workflow and executor architecture. They do not create separate business/RPA action paths.
-
-## 17. Knowledge / Learning
+## 18. Copilot ↔ Capability Marketplace
 
 ```text
-Event + Context + Decision + Action + verified Outcome
-→ Evidence
-→ candidate pattern/optimization
-→ review/eval
-→ publish
+package/asset
+→ review/evals/security/integrity
+→ catalog publish
+→ local enable/config
+→ existing RBAC/provider authorization still required
 ```
 
-No automatic policy change from one successful automation run.
+Marketplace never grants permission.
 
-## 18. Failure boundaries
-
-Distinguish:
+## 19. Copilot ↔ Edge / Offline
 
 ```text
-Core/Domain unavailable
-external connection missing/revoked
-provider unavailable
-invalid/stale/duplicate event
-semantic capability unavailable
-executor unavailable
-worker unavailable
-execution timeout
-execution ambiguous
-outcome not verified
-Decision required
-AutonomyPolicy blocked
-kill switch active
+approved central content/model/package
+→ Edge deployment
+→ local bounded cache/inference/event buffer
+→ sync/reconcile
 ```
 
-No false success narrative.
+Device/user identities remain separate. Offline never widens authority. OT segmentation/safety respected.
 
-## 19. Kill switches
-
-Independent controls for Internet/provider/connections/external writes/webhooks/background sync, individual automation/capability/executor, autonomous ACT and future browser/computer-use. OT integration remains separately governed.
-
-## 20. Anti-pattern integration graph
+## 20. Outcome / Notification integration
 
 ```text
-Portal ─X→ provider/RPA token
-LLM ─X→ unrestricted HTTP/desktop
-Planner ─X→ provider/executor-specific UI mechanics
-Event ─X→ direct write authority
-Worker ─X→ user permission authority
-RPA ─X→ business-rule authority
-Technical success ─X→ automatic business success
-PREPARE ─X→ implicit ACT
-Global L5 ─X→ unrestricted execution
-Automation Hub ─X→ second planner/workflow engine
-Copilot ─X→ Chat runtime
-Copilot/RPA ─X→ direct free-form machine actuation
+technical result
+→ authoritative postcondition verification
+→ VERIFIED_SUCCESS|FAILURE|PENDING|INCONCLUSIVE
+→ Evidence/Audit
+→ notification/escalation
 ```
 
-## 21. C0 inventory requirement
+Notification is consequence, not proof.
 
-C0.S0 must map actual evidence for:
+## 21. Knowledge / Learning integration
+
+External/process/execution/model/analysis evidence can create candidate Knowledge/Playbook/Automation improvement. Publish/update requires review/eval/version/privacy/freshness as appropriate.
+
+## 22. Kill switches
+
+Independent controls where material:
 
 ```text
-egress/OAuth/secrets/connectors/Teams
-event sources/brokers/webhooks/schedulers
-RPA tools/orchestrators/licences/bots/packages
-scripts/functions/jobs
-queues/workers/desktop sessions
-service/background identities
-credential injection/storage
-rule/BPM/process engines
-business postcondition/outcome sources
-notification/escalation channels
-kill switches/automation governance
-OT/safety boundaries
+Copilot writes
+Internet/connector/provider
+Watch ACT/autonomy
+specific automation/executor
+MCP server/A2A agent
+sandbox
+model/deployment
+Marketplace asset
+Edge package/device capability
+media/biometric capture
+OT integration
 ```
 
-No provider/executor infrastructure is treated as `REUSE` without evidence.
+## 23. Failure boundaries
+
+Distinguish source unavailable, no data, permission missing, model stale/OOD, process data incomplete, sandbox failed, agent/tool revoked, executor ambiguous, outcome unverified, Edge offline/stale, package/model revoked.
+
+Never convert infrastructure failure into business conclusion.
+
+## 24. C0 rule
+
+Every integration in this document is either proven by `51` or remains target/`TO_INVENTORY`. No market product/API is treated as DELPI reuse until factual C0 evidence proves it.
