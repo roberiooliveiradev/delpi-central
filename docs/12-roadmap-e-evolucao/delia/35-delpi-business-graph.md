@@ -1,13 +1,13 @@
-# Minha DELPI Copilot — DELPI Business Graph
+# DÉLIA — DELPI Business Graph
 
-**Status:** thematic spec  
+**Status:** `TARGET` — thematic spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Contracts:** `EntityRef` e `RelationshipRef` vêm da foundation C0; runtime do Graph entra em C4.
+**Evidence rule:** `EntityRef`, `RelationshipRef`, graph store/index e runtime só são `PROVEN` quando C0/C4 evidence provar owner, contract e implementation.
 
 ## 1. Objetivo
 
-Fornecer contexto semântico transversal entre entidades/sistemas/processos sem duplicar bancos operacionais.
+Fornecer contexto relacional transversal entre entidades/sistemas/processos sem duplicar bancos operacionais.
 
 ```text
 Reclamação
@@ -23,23 +23,22 @@ Reclamação
 
 ## 2. Princípio
 
-O Graph é projeção da **Copilot API** sobre referências/relacionamentos dos domain owners:
+O Graph é **target de projeção relacional da DÉLIA**, condicionado ao owner/contrato congelado em C0:
 
 ```text
-Graph
-→ EntityRefs/RelationshipRefs
-→ source/provenance
+source/domain relationships
+→ normalized refs/provenance
 → permission-aware traversal
-→ Domain API fornece dado atual
+→ current facts fetched from authoritative owners
 ```
 
-Não é data warehouse nem system of record.
+Graph não é data warehouse, Semantic Layer nem system of record.
 
 ## 3. EntityRef / RelationshipRef
 
-Usar primitives C0. Não adicionar snapshots arbitrários ao `EntityRef` nem criar IDs paralelos.
+Se C0 congelar primitives compartilhados, reutilizá-los. Não adicionar snapshots arbitrários nem criar IDs paralelos.
 
-Relações carregam from/to refs, relationshipType, authority/sourceRef, provenance e confidence quando metodologicamente válida. Relação inferida permanece explicitamente `inferred`/não-authoritative.
+Relações materialmente usadas precisam source/provenance, authority/inference status, timestamps/version quando aplicável e confidence somente quando metodologicamente válida.
 
 ## 4. Relações candidatas
 
@@ -56,60 +55,61 @@ Relações carregam from/to refs, relationshipType, authority/sourceRef, provena
 - plano → responsáveis/prazos/evidências;
 - documento → entidade relacionada.
 
-C0.S0 comprova IDs/owners antes de registrar relação.
+São candidates. C0/C4 deve provar IDs, owners, contracts e consumers antes de materializar qualquer registry/index.
 
 ## 5. Fontes
 
-Ordem de confiança:
+Preferência conceitual:
 
 1. Domain API/contract explícito;
-2. domain/integration event;
+2. domain/integration event real;
 3. materialização/view governada;
 4. metadata declarativa;
 5. inferred relationship rotulada.
 
 ## 6. Traversal
 
+Target:
+
 ```text
 start EntityRef
-→ lookup authorized relationships
+→ resolve authorized relationships
 → depth/cycle/budget
 → permission/policy filter
-→ related EntityRefs/SourceRefs
-→ fetch current facts from Domain APIs
-→ Outcome/Evidence
+→ related refs
+→ fetch current facts from authoritative source
+→ Evidence/Outcome
 ```
 
-Planner não conhece tables/endpoints do Graph.
+Planner não conhece tables/endpoints internos do Graph.
 
 ## 7. Security
 
 ```text
-relation exists ≠ user may read target
+relation exists != user may read target
 ```
 
 - permission-aware traversal;
 - source permission revalidation;
-- cache não vira bypass;
+- cache/index não vira bypass;
 - hidden node não vaza por label/count;
-- inferred relation não é FACT.
+- inferred relation não é FACT;
+- graph metadata não concede Core/domain/provider permission.
 
 ## 8. Provenance/performance
 
-Toda relação material deve carregar relationshipType, authority/inference status, sourceRef e version/observedAt quando aplicável.
-
-Começar com adapters/query simples. Materialization/index só com necessidade comprovada; cache precisa freshness/invalidation.
+Começar pelo padrão mais simples que satisfaça consumers reais. Materialization/index/cache/graph database só com necessidade comprovada e Abstraction Gate aprovado.
 
 ## 9. Phase mapping
 
 ```text
-C0 → inventory + Entity/Relationship contracts + ports
-C3 → Intelligence Core understands entity/capability semantics
-C4 → relationship registry/query runtime + permission traversal + pilot
-C6/C7 → coverage/performance/governance refinements when justified
+C0 → inventory + owner/source/consumer/contracts
+C3 → entity/capability semantics foundations when proven
+C4 → relationship query/traversal pilot when unlocked
+C6/C7 → coverage/performance/governance refinements only if justified
 ```
 
-## 10. Piloto recomendado
+## 10. Piloto candidato
 
 ```text
 complaint
@@ -120,11 +120,11 @@ complaint
 → inspection/quality history
 ```
 
-O piloto prova source fetch real + Evidence, não dados copiados para o Graph.
+Piloto só é válido com source fetch real + Evidence e sem copiar masters para o Graph.
 
 ## 11. Independence
 
-Graph pertence à Copilot API e consulta Domain APIs diretamente. Não usa Chat graph/session/tool runtime.
+Graph target pertence à DÉLIA apenas no escopo de projeção/inteligência que C0 atribuir a ela. Domain owners continuam authorities dos dados/regras. Não usar Chat graph/session/tool runtime.
 
 ## 12. Anti-patterns
 
@@ -132,17 +132,12 @@ Graph pertence à Copilot API e consulta Domain APIs diretamente. Não usa Chat 
 - inventar IDs paralelos;
 - path/endpoint como domain semantics;
 - inferred relation como authoritative;
-- graph repository com business rules;
-- Graph-specific EntityRef/Evidence;
+- graph repository com business rules alheias;
+- Graph-specific EntityRef/Evidence incompatível;
 - planner branch por relationship type;
-- Chat API como proxy de relações/dados.
+- Graph virar Semantic Layer;
+- Chat API como proxy.
 
 ## 13. Gate C4
 
-- authorized traversal;
-- sibling/unknown relation onboarding sem planner patch;
-- source fetch real;
-- provenance;
-- depth/cycle budget;
-- no RBAC leakage;
-- no duplicate domain data authority.
+PASS só com runtime/evidence para o SHA/config avaliado, incluindo authorized traversal, source fetch real, provenance, depth/cycle budget, no RBAC leakage e no duplicate domain authority.
