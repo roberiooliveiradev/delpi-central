@@ -1,162 +1,134 @@
-# 10 — Padrão AI-ready para apps e plugins
+# 10 — Padrão AI-ready para apps, APIs e domínios
+
+**Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
 
 ## 1. Objetivo
 
-Todo app da Minha DELPI deve poder evoluir para uso pela UI e pelo Copilot **sem hardcode central e sem criar contratos paralelos**.
+Todo app/domínio deve evoluir para uso pela UI e pelo Copilot **sem hardcode central e sem contratos paralelos**, contribuindo também para Event/Process/Semantic/Outcome readiness quando aplicável.
 
-## 2. Princípio
+## 2. Base AI-ready
 
 ```text
-App
-├─ manifesto/routes/permissions
-├─ APIs/use cases
-├─ OpenAPI
-├─ EntityRef/deep-link metadata
-├─ Workspace Context adapter
-├─ Evidence/provenance-friendly responses quando relevante
-├─ sensitivity/Decision Gate metadata/policy
-├─ optional UI capabilities
-└─ optional event integration
+App/Domain
+├ manifest/routes/permissions
+├ APIs/use cases
+├ OpenAPI
+├ EntityRef/deep-link metadata
+├ Workspace Context adapter
+├ Evidence/provenance-friendly responses
+├ sensitivity/Decision/idempotency semantics
+├ authoritative postcondition/outcome sources
+├ optional visual capabilities
+├ optional trusted events
+├ optional process-event semantics
+└ optional governed metric definitions
         ↓
 Minha DELPI Copilot
 ```
 
-## 3. Requisitos estruturais
+## 3. App/route/business contract
 
-### App/route identity
+- stable app/route IDs;
+- real backend use cases;
+- accurate OpenAPI/security/error schemas;
+- Core/domain authorization;
+- no URL/path/operationId semantics hardcoded in AI core;
+- UI is not business contract.
 
-- `appId` estável;
-- rotas identificáveis;
-- permission alinhada;
-- labels/descrições semânticas;
-- não ensinar URL livre ao LLM.
+## 4. Shared foundations
 
-### Business use cases
-
-Regra de negócio fica em API/use case, nunca apenas em componente React.
-
-### OpenAPI
-
-Para actions consumíveis:
-
-- summary/description úteis;
-- operationId estável como metadata técnica, não semântica de routing;
-- required/type/enum/format corretos;
-- request/response schemas;
-- erros/security schemes;
-- exemplos úteis.
-
-### RBAC
-
-Visibilidade de botão não é autorização. Backend revalida.
-
-## 4. Shared foundations que o app deve reutilizar
-
-Quando aplicável:
-
-- `EntityRef` compartilhado;
-- `SourceRef/EvidenceRef/OutcomeRef` semantics;
-- `WorkspaceContext`;
-- Platform Command/deep-link conventions;
-- Decision Gate policy model;
-- `EventEnvelope` para eventos integráveis;
-- iframe protocol se render mode exigir.
-
-Não criar `MyAppEntityRef`, `MyAppConfirmation`, `MyAppCopilotEvent` incompatíveis se o shared contract atende.
-
-## 5. Workspace Context Adapter
-
-Publicar somente contexto útil:
-
-- entidade atual;
-- filtros;
-- período;
-- seleção;
-- view/aba;
-- refs de dados visíveis.
-
-Não publicar React state, DOM, token ou dataset inteiro.
-
-## 6. Entity refs e deep links
-
-Apps com entidades relevantes devem mapear entidade lógica → route metadata.
-
-Exemplo conceitual:
-
-```json
-{
-  "entityType": "customer",
-  "routeId": "customer-detail",
-  "routeParams": ["customerId"]
-}
-```
-
-Portal resolve/revalida a navegação.
-
-## 7. UI capabilities
-
-Permitido quando verdadeiramente visual:
+Reuse when applicable:
 
 ```text
-open entity
-select tab/view
-focus section
-apply local filter
-refresh view
+EntityRef / SourceRef / EvidenceRef / OutcomeRef
+WorkspaceContext
+PlatformCommand
+DecisionGate
+EventEnvelope
+CapabilityProjection
 ```
 
-Não usar UI capability para:
+Do not create app-specific incompatible equivalents.
+
+## 5. Context readiness
+
+Publish only bounded entity/filter/period/selection/view/data refs. No React state/DOM/token/full dataset.
+
+## 6. Entity/deep-link readiness
+
+App declares logical entity→route mapping. Portal resolves/revalidates.
+
+## 7. Visual capabilities
+
+Visual verbs can support open/select/focus/filter/refresh. They never replace material create/update/approve/cancel Business Actions.
+
+## 8. Action readiness
+
+Material action should expose, as applicable:
 
 ```text
-create/update/approve/cancel
+business owner
+input/output schema
+permission/domain validation
+risk/sensitivity
+Decision/Autonomy policy inputs
+idempotency/concurrency
+preconditions/postconditions
+authoritative Outcome verifier
+errors/audit/correlation
 ```
 
-se houver API/use case de negócio.
+If no API exists, `57` may allow a governed legacy executor, but the app/domain remains not fully API-ready; RPA/UI mechanics do not enter planner contracts.
 
-## 8. Business Action risk/decision readiness
+## 9. Evidence / Outcome readiness
 
-Writes precisam permitir ao policy owner derivar/definir:
+Responses/events should expose enough facts for source identity, timestamps/freshness, entity relations, status and verification. Adapter may normalize to Evidence/Outcome; API need not emit Copilot-specific DTOs.
+
+## 10. Event readiness
+
+When domain owns events:
 
 ```text
-read/write
-action risk/sensitivity
-Decision Gate requirement
-idempotency expectations
-parallel/retry safety
-audit requirement
+eventId/type/version
+case/entity refs
+occurredAt
+source owner
+dedupe/replay semantics
+bounded payload/ref
+authenticity/security model
 ```
 
-Não hardcodar “todos POST confirmam” no planner.
+Trusted event can feed Watch/Workflow/Process Intelligence. Event never grants action permission.
 
-## 9. Evidence/provenance readiness
+## 11. Process Intelligence readiness
 
-APIs importantes para análise devem oferecer dados suficientes para:
+Where process mining is relevant, domain should make real process events correlatable by business/case key, activity and timestamp without inventing person-surveillance telemetry.
 
-- source identification;
-- timestamp/freshness;
-- entity relation;
-- status/outcome;
-- limitation/error classification.
+Audit log presence alone is insufficient unless activity/case semantics are usable.
 
-Não é obrigatório embrulhar toda API em `EvidenceRef`; o adapter do Copilot pode normalizar usando metadata real.
+## 12. Semantic readiness
 
-## 10. Event-ready opcional
+For material KPI/concepts, domain/BI owner should define:
 
-Quando o app possui eventos relevantes para Watch/workflow:
+```text
+metric meaning/formula
+grain/dimensions/unit
+source/freshness
+owner/version
+security classification
+```
 
-- owner claro;
-- schema versionado;
-- eventId/dedupe semantics;
-- entity refs;
-- occurredAt;
-- payload bounded/ref;
-- permission/security model.
+Do not make each plugin define conflicting hidden KPI formulas.
 
-Não criar polling no Copilot core se evento confiável já existe.
+## 13. Predictive/model readiness
 
-## 11. Iframe readiness
+If app/domain owns model output, expose model/version/horizon/freshness/limitations and source/features lineage sufficient for Evidence. Prediction is not domain FACT unless a separate authoritative record says so.
 
-Classificação ortogonal:
+## 14. Artifact/readiness
+
+Apps can expose refs/export contracts usable by Sandbox/Artifact Workspace; do not make Copilot scrape DOM tables when structured read/export exists.
+
+## 15. Iframe readiness
 
 ```text
 PORTAL_ONLY
@@ -165,21 +137,9 @@ INTERACTIVE
 AI_READY
 ```
 
-AI_READY exige Business Actions por API/OpenAPI; `postMessage` sozinho não basta.
+AI_READY requires real API/use case for business operations; postMessage alone is not enough.
 
-## 12. Help/knowledge
-
-O app deve fornecer linguagem suficiente para explicar:
-
-- função;
-- entidades;
-- campos/indicadores;
-- operações;
-- procedimentos associados.
-
-Knowledge visibility continua sujeita a ACL.
-
-## 13. Readiness levels
+## 16. Readiness levels
 
 ```text
 L1 DISCOVERABLE
@@ -189,65 +149,59 @@ L4 WRITE_READY
 L5 WORKFLOW_READY
 ```
 
-### L1
-rotas/permission/descrição discoverable.
+These are app/business readiness levels, **not autonomy levels** and not Edge/Process/Model maturity scores.
 
-### L2
-Workspace Context + EntityRef/deep link quando material.
+## 17. Optional readiness dimensions
 
-### L3
-OpenAPI read + RBAC + outcome/evidence normalization.
+Orthogonal dimensions may be tracked separately:
 
-### L4
-write + policy/Decision Gate + idempotency/audit.
+```text
+EVENT_READY
+PROCESS_INTELLIGENCE_READY
+SEMANTIC_READY
+ARTIFACT_READY
+PREDICTIVE_READY
+FRONTLINE_READY
+EDGE_READY
+```
 
-### L5
-capabilities estáveis para Durable Workflow + events quando o fluxo precisar.
+Do not overload L1–L5 to encode all of them.
 
-## 14. Matriz mínima de readiness
+## 18. Minimum matrix
 
 | Item | Status |
 |---|---|
-| app/routes autorizados deriváveis | |
+| app/routes/permissions | |
 | EntityRef/deep link | |
-| Workspace Context | |
-| Business APIs | |
-| OpenAPI quality | |
-| permissions/RBAC | |
-| read outcome/evidence | |
-| write sensitivity/Decision Gate | |
-| idempotency/retry semantics | |
-| UI capabilities necessárias | |
-| events quando necessários | |
+| WorkspaceContext | |
+| Business APIs/OpenAPI | |
+| read Evidence/freshness | |
+| write risk/Decision | |
+| idempotency/retry | |
+| postcondition/Outcome verifier | |
+| events if relevant | |
+| process event semantics if relevant | |
+| governed metrics if relevant | |
+| visual capabilities if needed | |
 | help/knowledge | |
 | evals | |
 
-## 15. Testes mínimos
+## 19. Tests
 
-Conforme nível:
+As applicable: auth/context/deep-link, read/write, Decision/TOCTOU, idempotency, postcondition verification, sibling/unknown onboarding, event duplicate/authenticity, process event mapping, semantic metric reproducibility and iframe security.
 
-- authorized/unauthorized app/route;
-- Workspace Context;
-- entity deep link;
-- read action;
-- write Decision Gate;
-- idempotency negative;
-- unknown/sibling onboarding sem core patch;
-- event duplicate/security quando aplicável;
-- iframe security quando aplicável.
-
-## 16. Definition of Ready AI
+## 20. Definition of Ready AI
 
 ```text
-[ ] UI/Copilot convergem para mesmos use cases
-[ ] shared foundations foram reutilizadas
-[ ] OpenAPI é suficiente para discovery/binding
-[ ] nenhuma regra endpoint-specific foi adicionada ao core
-[ ] permissions vêm dos owners canônicos
-[ ] Entity/Context/navigation são tipados
-[ ] writes possuem policy/Decision Gate semantics
-[ ] evidence/outcome é rastreável quando material
-[ ] smoke/evals do nível passam
+[ ] UI/Copilot converge to same use cases
+[ ] shared foundations reused
+[ ] OpenAPI/discovery is sufficient
+[ ] no endpoint/provider/executor hardcode added centrally
+[ ] permissions remain with canonical owners
+[ ] Entity/Context/navigation are typed
+[ ] writes have Decision/idempotency/Outcome semantics
+[ ] relevant events/metrics/process refs are owner-driven
+[ ] tests/evals pass for declared readiness dimensions
 ```
 
-AI-readiness é propriedade do ecossistema, não integração artesanal por app.
+AI-readiness is ecosystem architecture, not handcrafted per-app AI glue.
