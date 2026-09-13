@@ -7,21 +7,50 @@
 **Rastreabilidade:** [`25-requirements-traceability.md`](./25-requirements-traceability.md)  
 **Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
 **Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
-**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)
+**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)  
+**Microsoft Teams:** [`56-microsoft-teams-connector-and-meeting-integration.md`](./56-microsoft-teams-connector-and-meeting-integration.md)  
+**Autonomous Operations/Execution Hub:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)
 
 ## 1. Definição
 
-O Minha DELPI Copilot é a **interface inteligente entre pessoas, operação DELPI e fontes externas autorizadas**.
+O Minha DELPI Copilot é a **interface e inteligência operacional entre pessoas, operação DELPI, fontes externas e automações governadas**.
 
 Possui API/MFE/persistência/manifest/deploy próprios e não depende do Minha DELPI Chat.
 
 North Star:
 
-> Entender contexto interno e externo, conectar dados, pessoas, processos e aplicações, pesquisar, investigar, comunicar, executar trabalho, acompanhar resultados e transformar conhecimento validado em ação governada.
+> Observar eventos autorizados, entender contexto interno e externo, conectar dados/pessoas/processos/aplicações, combinar regras determinísticas e raciocínio de IA, decidir dentro de policies, coordenar APIs/RPAs/pessoas, verificar resultados, comunicar e transformar experiência validada em aprendizado governado.
 
-## 2. Espaços de informação
+## 2. Não é somente Chat + RAG
 
-O Copilot trabalha sobre três espaços claramente distintos:
+O produto suporta dois tipos de entrada:
+
+```text
+USER INTENT
+→ pergunta, pedido, comando, conversa
+
+EVENT / SIGNAL
+→ mudança de negócio/produção/manutenção/external provider/Watch
+```
+
+Pipeline alvo:
+
+```text
+intent/event
+→ context / Business Graph / Evidence
+→ DecisionPathPolicy
+   FAST | OPERATIONAL | REASONING
+→ Policy / Decision / Autonomy
+→ Durable Workflow
+→ semantic capability
+→ executor
+→ verified Outcome
+→ Evidence / Notification / Learning candidate
+```
+
+Nem todo evento deve chamar um LLM.
+
+## 3. Espaços de informação
 
 ```text
 1. MINHA DELPI
@@ -31,37 +60,39 @@ O Copilot trabalha sobre três espaços claramente distintos:
    pesquisa/fetch de fontes públicas atuais
 
 3. FONTES EXTERNAS CONECTADAS
-   contas/serviços explicitamente autorizados
+   Microsoft 365/Teams, Google Workspace, WhatsApp Business e outros providers autorizados
 ```
 
 Nenhum espaço herda automaticamente a authority do outro.
 
-## 3. Surfaces
+## 4. Surfaces
 
 ```text
 GLOBAL      → painel contextual no Portal
 WORKSPACE   → página completa
 MEETING     → reunião assistida
 FRONTLINE   → operador/posto/máquina
+TEAMS       → futura app/tab/bot surface do mesmo Copilot
+BACKGROUND  → Watches/Workflows governados reagindo a eventos
 ```
 
-Todas usam mesma Copilot API/MFE/RBAC/Policy/Evidence/Durable Work e podem acessar Internet/Connectors conforme autorização.
+Todas usam mesma Copilot API/RBAC/Policy/Evidence/Durable Work.
 
-## 4. Copilot único
+## 5. Copilot único
 
-Um único Copilot, especializado dinamicamente por Expertise Packs, Domain Playbooks, Knowledge, context e authorized capabilities. Sem agents departamentais.
+Um único Copilot, especializado dinamicamente por Expertise Packs, Playbooks, Knowledge, context e authorized capabilities. Sem agents departamentais e sem planner separado por provider/executor.
 
-## 5. Conversation / Context
+## 6. Conversation / Context
 
 - PT-BR natural;
-- multi-intent;
-- follow-up;
+- multi-intent/follow-up;
 - WorkspaceContext + EntityRef + bounded SourceRef;
 - no CoT persistence;
 - texto/voz/mídia;
-- provider credential nunca entra em context.
+- provider/RPA credential nunca entra em context;
+- event/execution refs podem aparecer apenas como bounded refs, não authority.
 
-## 6. Platform / Business capabilities
+## 7. Platform / Business capabilities
 
 Platform capabilities derivam de Core/Portal. Business capabilities derivam de Domain OpenAPI.
 
@@ -69,177 +100,314 @@ Platform capabilities derivam de Core/Portal. Business capabilities derivam de D
 OpenAPI
 → Action Catalog
 → authorized Capability Projection
-→ retrieval/planner
+→ planner
 → validation
 → Policy/Decision
 → executor
 → Outcome/Evidence
 ```
 
-## 7. Internet Research
+Capabilities são semânticas e independentes do executor concreto.
 
-O Copilot pode pesquisar a web quando a pergunta exige informação externa/atual.
+## 8. Internet Research
 
-```text
-research need
-→ Search Provider
-→ Safe Web Fetch
-→ extraction
-→ SourceRef/EvidenceRef
-→ freshness/authority assessment
-→ grounded synthesis
-```
+Pesquisa externa usa Search Provider + Safe Web Fetch + SourceRef/EvidenceRef/freshness. Web content é untrusted para policy/RBAC.
 
-Casos:
+## 9. External Connectors / Teams
 
-- normas/documentação pública;
-- mercado/benchmark;
-- notícias e fatos atuais;
-- fornecedores/produtos;
-- documentação técnica;
-- referências externas para análise.
+Connectors provider-neutral, com OAuth/least privilege/secret isolation, read/write separation, provider events e source ACL.
 
-External web content é untrusted e não pode alterar policy/RBAC.
+Teams é capability family do Microsoft 365 connector, não runtime separado. Chats/canais/mensagens/meetings/transcripts/recordings/eventos preservam scopes/ACL/provenance.
 
-## 8. External Connectors
-
-Conectores alvo, conforme API oficial e aprovação:
-
-- Microsoft 365 / Outlook / Calendar / OneDrive / SharePoint / Teams;
-- Google Workspace / Gmail / Calendar / Drive;
-- WhatsApp Business Platform;
-- Slack;
-- GitHub;
-- service desks/CRMs/outros providers futuros.
-
-Architecture provider-neutral: novo provider entra por adapter/capability contract, não por branch no planner.
-
-## 9. Connection ownership
-
-```text
-USER_DELEGATED
-ORG_MANAGED
-SHARED_RESOURCE
-SERVICE_CONNECTION
-```
-
-Uma conexão pessoal do usuário não vira fonte organizacional automaticamente.
-
-## 10. OAuth / Credentials
-
-- official provider authorization;
-- least privilege scopes;
-- consent/scope disclosure;
-- callback integrity;
-- refresh/revoke/reconnect;
-- protected secret/vault storage;
-- no access/refresh token in LLM/MFE/log;
-- provider scope != Core permission.
-
-## 11. External Reads
-
-Quando conectado/autorizado, o Copilot pode:
-
-- pesquisar/ler e-mails;
-- resumir threads;
-- localizar attachments;
-- consultar agenda;
-- procurar/ler arquivos;
-- consultar mensagens/canais suportados;
-- correlacionar recurso externo com EntityRefs/Case/Task DELPI.
-
-Resultado externo recebe SourceRef/Evidence/freshness.
-
-## 12. External Writes / Communication
-
-Capacidades distintas:
-
-```text
-email draft
-email send
-calendar create/update
-message send
-file create/update
-```
-
-Invariantes:
+## 10. External Reads/Writes
 
 ```text
 read != write
 draft != send
 ```
 
-External write passa por connection/scope validation, Policy/Decision Gate quando material e verified provider outcome.
+Writes revalidam connection/scope/policy e produzem verified provider outcome.
 
-## 13. Provider Events
+## 11. Event / Signal Plane
 
-Provider push/webhook/subscription pode alimentar EventEnvelope/Watch/Inbox/Workflow.
-
-Obrigatório tratar authenticity, duplicates, ordering, expiry/renewal, missed events, reconciliation e revoked connection.
-
-## 14. WhatsApp
-
-Target suportado é integração por contratos oficiais disponíveis, especialmente WhatsApp Business Platform para canais empresariais quando aplicável.
-
-Não usar scraping/automação de sessão pessoal do WhatsApp Web como integração default.
-
-## 15. External learning
-
-Níveis:
+O Copilot pode reagir a eventos de owners autorizados:
 
 ```text
-TRANSIENT_RESEARCH
-SESSION_EVIDENCE
-USER_KNOWLEDGE_CANDIDATE
-ORGANIZATIONAL_KNOWLEDGE_CANDIDATE
+Domain APIs / ERP / MES / manutenção / qualidade
+External provider webhooks/change notifications
+Watch timer/schedule
+Approved telemetry/read paths
+Automation outcomes
 ```
 
-Nunca:
+Fluxo:
 
 ```text
-web page/email/message/file
-→ automatic corporate truth
+source
+→ authenticity/trust validation
+→ EventEnvelope
+→ dedupe/order/correlation
+→ Watch / Workflow / Decision
 ```
 
-Knowledge durável segue provenance + privacy + freshness + owner/review/eval/version/publish.
+Event payload nunca concede permission ou autorização de ACT.
 
-## 16. Multimodalidade
+Polling/scheduler é fallback bounded quando não existe evento suportado.
 
-PDF, image, drawing, spreadsheet, voice, camera, video, screen share e external attachments convergem para Evidence. Provider/attachment content não altera policy.
+## 12. Decision Intelligence
 
-## 17. Biometric Identity / Human Observation
-
-Closed-set face/speaker recognition somente para enrolled users quando policy permitir. Match não autentica nem concede permission.
-
-Human Observation descreve fatos observáveis do processo; não infere personality/trust/emotion/health/sensitive traits nem toma decisão trabalhista automática.
-
-## 18. Meeting Mode
-
-Meeting pode combinar:
+O Copilot seleciona o menor caminho suficiente:
 
 ```text
-transcript
-internal APIs/Graph
-Internet Research
-connected email/calendar/files/messages
-participant association when enabled
-Evidence
-human decisions
-candidate actions
-ata viva
+FAST
+→ deterministic Policy/Specification/State Machine
+
+OPERATIONAL
+→ bounded reads + deterministic rules + optional classifier/small model
+
+REASONING
+→ Graph + Knowledge + Expertise + LLM
 ```
 
-Uma ação citada na reunião não é executada automaticamente.
+Material readiness com critérios conhecidos não deve depender somente de texto probabilístico do LLM.
 
-## 19. Frontline Mode
+## 13. Continuous Operational Intelligence
 
-Frontline combina OP/machine/product/operation, voice/camera, drawings/procedures/history e external sources apenas como complemento governado. Source/revision interna oficial permanece authority operacional quando definida.
+Exemplos de condições observáveis:
 
-## 20. Business Graph
+```text
+pedido pronto para faturar
+máquina parada
+apontamento improvável
+estoque crítico
+fornecedor atrasado
+OP aguardando material
+qualidade desviando
+approval/prazo expirando
+resposta de fornecedor recebida
+```
 
-EntityRef/RelationshipRef conectam domínios sem replicar masters. External SourceRefs podem ser relacionados a Cases/Tasks/Entities sem transformar mailbox/file provider em Graph master.
+Essas condições são implementadas sobre Watch/EventEnvelope/Policy/Workflow, não em engine paralelo de “agentes”.
 
-## 21. Evidence / Epistemic UX
+## 14. Automation & Execution Hub
+
+Separação canônica:
+
+```text
+COPILOT
+= intelligence + context + decision + policy + orchestration
+
+AUTOMATION & EXECUTION HUB
+= execution
+```
+
+Não construir somente “Hub de RPAs”. RPA é um tipo de executor.
+
+Preferência de executor:
+
+```text
+1 API oficial
+2 integração nativa suportada
+3 função/script determinístico
+4 RPA
+5 computer-use/UI automation governada
+6 Human Task
+```
+
+A existência do conceito `Hub` não implica microservice; ownership físico é decidido em C0 por evidence/ADR.
+
+## 15. Semantic Automation Capabilities
+
+Exemplos:
+
+```text
+billing.invoice.issue
+maintenance.request.create
+production.report.validate
+communication.email.send
+inventory.read
+```
+
+Planner conhece capability/schema/policy, nunca:
+
+```text
+click(x,y)
+selector
+screen coordinate
+RPA package internals
+```
+
+Trocar RPA por API deve alterar mapping/adapter, não o planner/workflow.
+
+## 16. AutomationExecution
+
+Lifecycle conceitual:
+
+```text
+QUEUED
+→ RUNNING
+→ SUCCEEDED | FAILED | AMBIGUOUS | CANCELLED | TIMED_OUT
+```
+
+A execução registra correlation, actor/service identity, capability, executor/version, inputHash, attempt/idempotency, result/error e outcome verification refs.
+
+## 17. RPA executor
+
+Quando priorizado:
+
+- worker pool/capabilities;
+- queue/priority/concurrency;
+- worker heartbeat;
+- lease/lock;
+- environment separation;
+- package/version traceability;
+- protected credential injection;
+- timeout/cancel/retry eligibility;
+- screenshot/artifact retention/classification;
+- desktop/session isolation;
+- full audit/correlation.
+
+Bot/RPA nunca vira authority de business rule.
+
+## 18. Computer Use
+
+Fallback avançado quando API/RPA determinístico não atender e houver justificativa.
+
+Requer sandbox/session isolation, app/domain/network allowlist, protected credentials, bounded actions, human takeover/stop e audit.
+
+## 19. Outcome Verification
+
+Invariante:
+
+```text
+technical executor success != verified business outcome
+```
+
+Exemplos:
+
+```text
+HTTP 200 != nota emitida corretamente
+RPA clicou Salvar != transação confirmada
+provider accepted != final delivery when async
+```
+
+Sempre que material, verificar postcondition em source autoritativo antes de declarar conclusão.
+
+## 20. Exemplo — faturamento autônomo
+
+```text
+order/shipment event
+→ load authoritative order/customer/shipment/fiscal facts
+→ deterministic InvoiceReadinessPolicy
+→ READY?
+   ├─ NO → Evidence + exception/Inbox
+   └─ YES → AutonomyPolicy
+             ├─ PREPARE/CONFIRM → Decision Gate
+             └─ ACT allowed → billing.invoice.issue
+                                  → API/RPA executor
+                                  → verify invoice outcome
+                                  → Evidence/Audit
+                                  → notify Minha DELPI/email/Teams/WhatsApp
+```
+
+A IA pode investigar/explicar exceções; readiness formal usa critérios verificáveis.
+
+## 21. Exemplo — validação de apontamento
+
+```text
+production report event
+→ OP/operation/machine/standard cycle/shift/stoppages/scrap
+→ deterministic plausibility calculation
+→ Evidence
+→ ACCEPT | ASK_CONFIRMATION | BLOCK_AND_REVIEW
+```
+
+Anomalia não é inferência automática de fraude/intenção do operador.
+
+## 22. Exemplo — máquina parada
+
+```text
+approved machine/MES event
+→ alarm/history/last maintenance/affected OP
+→ classify need/criticality
+→ maintenance.request.create
+→ eligible technician/team
+→ notify
+→ Watch acknowledgement/SLA
+→ escalate when needed
+```
+
+Isso não autoriza comando físico de máquina.
+
+## 23. Watch / Proactivity
+
+```text
+OBSERVE → detect/record
+ADVISE  → analyze/notify
+PREPARE → prepare candidate action/preview, no side effect
+ACT     → execute only under C7 autonomy gate
+```
+
+`PREPARE != ACT`.
+
+## 24. Autonomy Model
+
+```text
+L0 explain
+L1 observe/analyze
+L2 advise
+L3 prepare
+L4 execute after required governance
+L5 autonomous within explicit allowlist/policy/budgets
+```
+
+Autonomy is resolved by:
+
+```text
+capability
++ actor/service identity
++ event trust
++ context
++ risk/sensitivity
++ financial/material limits
++ environment
++ reversibility
++ policy
+```
+
+No global unrestricted L4/L5. L5 OFF by default.
+
+## 25. Human-in-the-loop
+
+Quando ambiguidade/risco/policy exigir:
+
+```text
+Workflow
+→ wait_user / wait_approval
+→ Inbox/Decision
+→ human resolution
+→ resume same Workflow
+```
+
+Não criar processo manual paralelo sem correlation.
+
+## 26. Notification / Escalation
+
+Canais aprovados podem incluir Minha DELPI, email, Teams, WhatsApp Business e Interaction Rooms.
+
+Recipients/severity/dedupe/SLA/escalation seguem policy. Notification success não prova business outcome.
+
+## 27. Multimodal / Biometric / Meeting / Frontline
+
+Mídia converge para Evidence. Biometrics são candidate identity only. Meeting/Frontline usam o mesmo Policy/Workflow/Automation model.
+
+Human Observation permanece limitada a fatos/padrões observáveis do processo.
+
+## 28. Business Graph / Evidence
+
+EntityRef/RelationshipRef conectam domínios sem replicar masters.
+
+Epistemic UX:
 
 ```text
 FACT
@@ -249,9 +417,9 @@ CONCLUSION
 RECOMMENDATION
 ```
 
-Evidence material preserva source/freshness/location/confidence/limitations. Fonte externa não vira fato autoritativo por estar disponível.
+Event/RPA/computer-use output não vira FACT autoritativo por existir; source/postcondition authority importa.
 
-## 22. Decision / Writes
+## 29. Decision / Writes
 
 ```text
 NO_GATE
@@ -262,134 +430,138 @@ APPROVAL_WORKFLOW
 BLOCK
 ```
 
-Business e External writes revalidam authority no execute.
+Business/external/automation writes revalidam authority imediatamente antes da execução quando material.
 
-## 23. Durable Work
+## 30. Durable Work
 
-WorkflowPlan único orquestra reads/writes internos e externos com checkpoints/waits/resume/idempotency. Não existe workflow engine por provider.
+WorkflowPlan único orquestra internal/external/automation capabilities com checkpoints/waits/resume/idempotency. Automation Hub não cria segundo workflow engine.
 
-## 24. Task / Case / Room / Inbox / Watch
-
-Podem relacionar SourceRefs internos/externos respeitando source ACL. Watch pode acompanhar eventos internos e provider events; ACT somente sob policy/autonomy adequada.
-
-## 25. Privacy / Security
+## 31. Privacy / Security / Safety
 
 Obrigatório:
 
 - data minimization;
-- safe external egress;
-- external content untrusted;
-- least privilege OAuth;
+- safe egress;
+- external/event/RPA screen content untrusted;
 - secret isolation;
-- cross-user connection isolation;
-- explicit personal→shared promotion;
-- read/write separation;
-- no implicit send;
-- external event validation;
+- source ACL;
+- explicit background actor/service identity;
+- event != permission;
+- capability-scoped autonomy;
 - kill switches;
+- no blind retry after ambiguous write;
+- RPA worker/session isolation;
+- computer-use sandbox/allowlists;
 - media/biometric privacy;
 - OT safety boundary.
 
-## 26. Administration / Connections
+## 32. Administration
 
-Admin/UX deve permitir, conforme role:
+Admin/UX deve evoluir para cobrir:
 
-- listar providers/connections;
-- connect/reconnect/revoke/disable;
-- visualizar scopes/capabilities em linguagem humana;
-- provider health;
-- webhook/subscription status;
-- research/provider/write kill switches;
-- audit/evals/coverage.
+```text
+Connections
+Capabilities
+Automation Catalog
+Executions
+Workers when applicable
+Exceptions
+Decision/approval queues
+Watch conditions/modes
+Autonomy policies
+Outcome/Evidence
+Kill switches
+Audit/Evals/Coverage
+```
 
 Credentials nunca são exibidos.
 
-## 27. AI-ready / Connector-ready
+## 33. Error semantics
 
-Apps continuam com readiness L1–L5. External connector readiness acrescenta:
-
-```text
-auth contract
-connection ownership
-semantic capabilities
-read/write classification
-resource/source mapping
-provider event lifecycle
-privacy/retention
-error/degraded semantics
-evals
-```
-
-## 28. Error semantics
-
-Adicionar:
+Além de external errors, suportar canonical errors como:
 
 ```text
-ExternalNotConnected
-ExternalConsentRequired
-ExternalScopeMissing
-ExternalConnectionExpired
-ExternalPermissionRevoked
-ExternalProviderUnavailable
-ExternalRateLimited
-ExternalResourceNotFound
-ExternalAccessBlocked
-ExternalEventInvalid
-ExternalSyncStale
+EventSourceInvalid
+EventDuplicate
+EventStale
+DecisionInconclusive
+AutomationCapabilityUnavailable
+AutomationExecutorUnavailable
+AutomationWorkerUnavailable
+AutomationExecutionTimedOut
+AutomationExecutionAmbiguous
+AutomationExecutionFailed
+AutomationOutcomeNotVerified
+AutomationPolicyBlocked
+AutomationKillSwitchActive
+ComputerUseBoundaryBlocked
 ```
 
-Nunca narrar “sem resultados” quando source está indisponível.
+Nunca narrar success quando state/outcome é pending/ambiguous/inconclusive.
 
-## 29. Non-functionals
+## 34. Non-functionals
 
 - independent deployment/rollback;
 - security/privacy by default;
-- provider-neutral architecture;
-- current-source freshness/provenance;
-- secret isolation;
-- idempotency/outcome verification;
+- provider/executor-neutral planner;
+- event latency/throughput budgets;
+- decision-path latency observability;
+- executor queue/worker observability when applicable;
+- idempotency/no duplicate effect;
+- verified Outcome semantics;
+- kill switches;
 - external rate/cost budgets;
-- no duplicate authorities;
 - generalization tests;
 - no Chat dependency;
 - industrial safety boundary.
 
-## 30. Fora de escopo/default
+## 35. Fora de escopo/default
 
 - Chat→Copilot migration;
 - unrestricted browser/desktop control;
-- arbitrary internet fetch;
-- provider token in LLM/browser state;
-- personal account sharing by default;
+- arbitrary web fetch;
+- provider/RPA credentials in prompt/browser state;
 - implicit send;
-- scraping personal WhatsApp Web session;
+- personal WhatsApp scraping;
 - external content auto-published as corporate Knowledge;
+- RPA bot as business decision authority;
+- RPA clicks/selectors in planner;
+- second Workflow engine in Automation Hub;
+- event payload directly causing write;
+- all events sent to LLM;
+- technical executor result treated automatically as business completion;
+- global unrestricted L5;
 - open-world biometric surveillance;
-- global L5 autonomy;
 - free-form machine actuation.
 
-## 31. Reference scenarios
+## 36. Reference scenarios
 
 ### Research
 > “Pesquise a norma mais recente e compare com nosso procedimento.”
 
-### Outlook/Gmail
-> “Ache a última conversa com o fornecedor sobre este item e relacione com a OC.”
+### External communication
+> “Ache a última conversa com o fornecedor, compare com a OC e prepare uma resposta; só envie depois da governança necessária.”
 
-### Draft/send
-> “Prepare uma resposta com os dados da DELPI, mas só envie depois que eu revisar.”
+### Operational Watch
+> “Acompanhe pedidos prontos para faturar e prepare a ação quando todos os critérios forem atendidos.”
 
-### Watch
-> “Me avise quando o fornecedor responder e atualize este Case.”
+### Autonomous invoice — future C7 approved scope
+> “Quando a readiness formal estiver PASS e a capability estiver autorizada para ACT, fature, confirme a nota emitida e notifique os responsáveis.”
+
+### Production report
+> “Avalie automaticamente apontamentos improváveis e peça confirmação quando estiverem fora da plausibilidade definida.”
+
+### Maintenance
+> “Se uma máquina ficar parada além do threshold, contextualize o alarme, abra manutenção e notifique/escalone conforme SLA.”
 
 ### Meeting
-> “Use os indicadores, a correspondência com o fornecedor e pesquisa externa; ao final gere a ata e as ações candidatas.”
+> “Use indicadores e fontes conectadas; gere a ata e candidate actions.”
 
 ### Frontline
-> “Mostre o procedimento vigente e, se necessário, busque documentação externa aprovada sem substituir a revisão oficial.”
+> “Mostre o procedimento vigente e registre/escalone problemas por governed capabilities.”
 
-## 32. Product Complete
+## 37. Product Complete
 
-O release completo, conforme escopo declarado, exige standalone independence, Portal/Core integration, intelligence, business/external reads, governed writes, durable work, media/biometric/external privacy, provider events, external learning governance, security/evals/generalization, observability/rollback e CP coverage sem gaps materiais.
+O release completo, conforme escopo declarado, exige standalone independence, Portal/Core integration, intelligence, reads/Graph, Event/Decision foundation, governed business/external/automation writes, Durable Work, Automation Hub semantics, outcome verification, Meeting/Frontline, external privacy/events/learning, capability-scoped autonomy, security/evals/generalization, observability/rollback e CP coverage sem gaps materiais.
 
 Estado real vive no execution ledger.
