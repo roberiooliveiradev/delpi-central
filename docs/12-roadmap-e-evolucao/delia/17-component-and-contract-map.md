@@ -1,4 +1,4 @@
-# Minha DELPI Copilot — Mapa de Componentes, Contratos e Ownership
+# DÉLIA — Mapa de Componentes, Contratos e Ownership
 
 **Status:** arquitetura canônica de ownership  
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
@@ -7,53 +7,58 @@
 **State:** [`21-data-and-state-model.md`](./21-data-and-state-model.md)  
 **Specs temáticas:** `53–66`
 
+> Este documento define **ownership e contratos alvo**. Ele não prova que um runtime, serviço, tabela, adapter ou capability já exista. Existência e estado atual devem ser classificados por evidência em `C0.S0` como `PROVEN`, `TO_INVENTORY`, `PLANNED` ou `TARGET` conforme o caso.
+
 ## 1. Owners canônicos
 
 | Responsabilidade | Authority / owner | Proibido |
 |---|---|---|
 | corporate identity | Keycloak + Core | shadow user via biometric/device/memory |
 | platform permissions/apps/routes | Core API/RBAC | prompt/context/asset granting permission |
-| DELPI business rules/data/actions | Domain APIs/use cases | duplicar em Copilot/RPA/model |
+| DELPI business rules/data/actions | Domain APIs/use cases | duplicar em DÉLIA/RPA/model |
 | navigation/hosting | Portal | free URL/control from LLM |
-| Copilot UI | `plugins/minha-delpi-copilot` | Chat MFE as base |
-| Copilot runtime/persistence | `minha-delpi-copilot-api` | Chat API/tables/runtime authority |
-| Business Action discovery | Domain OpenAPI + Copilot derived Action Catalog | manual endpoint authority |
+| DÉLIA UI | MFE próprio da DÉLIA; namespace técnico temporário `plugins/minha-delpi-copilot` | Chat MFE as base |
+| DÉLIA runtime/persistence | API própria da DÉLIA; namespace técnico temporário `minha-delpi-copilot-api` | Chat API/tables/runtime authority |
+| Business Action discovery | Domain OpenAPI + Action Catalog derivado pela DÉLIA | manual endpoint authority |
 | Workspace Context | Portal/MFE/adapters | context as authorization |
-| Evidence/Source/Outcome | Copilot contracts + source authority | feature-specific duplicate truth |
-| Business Graph | Copilot projection + domain source owners | graph as master database |
-| Semantic Business Layer | Copilot semantic registry + metric business owners | LLM-invented KPI formula |
-| Organizational Knowledge | Copilot Knowledge governance + source owners | auto-publish from memory/web/process |
-| Personal Memory | user-owned Copilot memory context | memory as organizational truth/RBAC |
-| Internet Research | Copilot orchestration + public source authority | unrestricted HTTP / cache truth |
+| Evidence/Source/Outcome | DÉLIA contracts + source authority | feature-specific duplicate truth |
+| Business Graph | DÉLIA projection + domain source owners | graph as master database |
+| Semantic Business Layer | DÉLIA semantic registry + metric business owners | LLM-invented KPI formula |
+| Organizational Knowledge | DÉLIA Knowledge governance + source owners | auto-publish from memory/web/process |
+| Personal Memory | user-owned DÉLIA memory context | memory as organizational truth/RBAC |
+| Internet Research | DÉLIA orchestration + public source authority | unrestricted HTTP / cache truth |
 | External resources/scopes | provider + connection owner | provider scope as Core permission |
-| Teams | Microsoft 365 source owner + Copilot adapter | Teams-specific Copilot runtime |
-| biometrics | Copilot biometric subsystem + Core userRef | match as login/permission |
-| Human Observation | Copilot Evidence/governance + process owner | psychological/employee scoring |
-| Event/Signal ingestion | source owner + Copilot adapter/EventEnvelope | event payload as permission/action |
-| Decision Intelligence | Copilot Application/Policy + authoritative facts | LLM/RPA as sole formal rule when deterministic criteria exist |
-| Process Intelligence | Copilot process projection + process/source owners | Process Mining as employee surveillance |
-| Automation capability mapping | Copilot/neutral platform owner decided in C0 | UI mechanics in planner |
-| Automation execution | Automation bounded context/owner decided in C0 | second planner/workflow engine |
-| RPA mechanics | RPA orchestrator/worker adapter owner | bot as business authority |
-| Computer-use | sandboxed executor owner | unrestricted desktop/network |
-| Outcome verification | authoritative Domain/provider/source + Copilot orchestration | technical success as business completion |
-| Analysis Sandbox | Copilot analysis boundary or neutral execution platform if proven | general-purpose corporate shell |
-| Artifact Workspace | Copilot artifact lifecycle/storage refs + collaboration owner | generated blob without lineage/ACL |
-| Predictive models | model owner/provider + Copilot model adapters | prediction as fact/permission |
-| Operational Twin | Copilot/domain scenario projection + authoritative sources | twin as source of truth |
-| MCP tools | approved server owner + Copilot adapter/policy | discovery as approval |
-| A2A agents | approved external agent owner + Copilot delegation policy | external agent as superior authority |
-| AI Control Tower | Copilot governance/admin plane | admin role as business permission |
-| Model lifecycle | model owner + Copilot governance/Control Tower | unversioned/unreviewed production model |
-| Capability Marketplace | Copilot governance/catalog + asset publisher/owner | install as permission grant |
-| Edge runtime | device/Edge platform owner + Copilot package/sync policy | offline as wider authority |
-| OT/machine safety | industrial/safety owners | Copilot/Edge/RPA as safety controller |
-| notifications | shared channel owner + Copilot orchestration | notification as proof of outcome |
-| audit/evals | Copilot observability + platform audit | CoT/secrets/raw surveillance telemetry |
+| Teams | Microsoft 365 source owner + DÉLIA adapter | Teams-specific DÉLIA runtime |
+| biometrics | DÉLIA biometric boundary + Core userRef, quando aprovado | match as login/permission |
+| Human Observation | DÉLIA Evidence/governance + process owner | psychological/employee scoring |
+| Event/Signal ingestion | source owner + DÉLIA adapter/EventEnvelope | event payload as permission/action |
+| Decision Intelligence | DÉLIA Application/Policy + authoritative facts | LLM/RPA as sole formal rule when deterministic criteria exist |
+| Process Intelligence | DÉLIA process projection + process/source owners | Process Mining as employee surveillance |
+| Automation capability mapping | DÉLIA Capability/Action projection + contrato semântico do executor | UI mechanics in planner |
+| Automation decision/work orchestration | DÉLIA Policy/Decision/Work | second planner/workflow engine in executor |
+| Automation technical execution | Automation Hub | DÉLIA, provider ou bot becoming business/permission authority |
+| RPA mechanics | Automation Hub / approved RPA adapter | bot as business authority |
+| Computer-use mechanics | Automation Hub / sandboxed governed executor | unrestricted desktop/network |
+| Outcome verification | authoritative Domain/provider/source + DÉLIA orchestration | technical success as business completion |
+| Analysis Sandbox | DÉLIA analysis boundary or neutral execution platform if proven | general-purpose corporate shell |
+| Artifact Workspace | DÉLIA artifact lifecycle/storage refs + collaboration owner | generated blob without lineage/ACL |
+| Predictive models | model owner/provider + DÉLIA model adapters | prediction as fact/permission |
+| Operational Twin | DÉLIA/domain scenario projection + authoritative sources | twin as source of truth |
+| MCP tools | approved server owner + DÉLIA adapter/policy | discovery as approval |
+| A2A agents | approved external agent owner + DÉLIA delegation policy | external agent as superior authority |
+| AI Control Tower | DÉLIA governance/admin plane | admin role as business permission |
+| Model lifecycle | model owner + DÉLIA governance/Control Tower | unversioned/unreviewed production model |
+| Capability Marketplace | DÉLIA governance/catalog + asset publisher/owner | install as permission grant |
+| Edge runtime | device/Edge platform owner + DÉLIA package/sync policy | offline as wider authority |
+| OT/machine safety | industrial/safety owners | DÉLIA/Edge/RPA as safety controller |
+| notifications | shared channel owner + DÉLIA orchestration | notification as proof of outcome |
+| audit/evals | DÉLIA observability + platform audit | CoT/secrets/raw surveillance telemetry |
+
+`Automation Hub` acima é a autoridade **semântica alvo para execução técnica**. `C0.S0/C0.S1` deve provar o runtime existente, owner físico, contratos e gaps; falta de implementação comprovada vira `TO_INVENTORY/PLANNED`, não permissão para deslocar execução técnica para a DÉLIA.
 
 ## 2. Componentes físicos alvo
 
-Default owners remain:
+Namespaces técnicos planejados permanecem temporários até C0.S1:
 
 ```text
 Portal Shell
@@ -64,9 +69,10 @@ plugins/plugin-ui
 plugins/minha-delpi-copilot
 minha-delpi-copilot-api
 Domain APIs / external providers / OT owners
+Automation Hub
 ```
 
-Inside Copilot API, bounded modules may include:
+Dentro da API da DÉLIA, bounded modules podem incluir:
 
 ```text
 Conversation / Understanding / Planner
@@ -80,7 +86,7 @@ Process Intelligence
 Business Graph
 Semantic Business Layer
 Internet Research / External Connections / Teams
-Automation & Execution orchestration
+Automation orchestration / executor integration
 Analysis / Artifacts
 Predictive / Prescriptive / Scenario/Twin
 Agent/Tool Interoperability
@@ -90,11 +96,11 @@ Media / Biometric / Meeting / Frontline
 Observability / Evals
 ```
 
-**Module name does not imply microservice.** C0 decides physical split only from real ownership/consumers/scale/isolation needs.
+**Module name does not imply microservice.** C0 decide physical split only from real ownership/consumers/scale/isolation needs. A module de integração com automação não transforma a DÉLIA em owner da execução técnica do Automation Hub.
 
 ## 3. Shared primitive registry
 
-Prefer existing foundations:
+Preferir estas foundations canônicas como contratos alvo quando suficientes:
 
 ```text
 CorrelationContext
@@ -111,7 +117,9 @@ TaskRef/CaseRef
 EventEnvelope/AuditEvent
 ```
 
-Candidate refs only if C0 proves transversal need:
+A presença nesta lista **não prova implementação atual**. C0.S0 deve localizar definição, owner, consumers e evidência antes de reutilizar ou criar qualquer tipo.
+
+Candidate refs somente se C0 provar necessidade transversal:
 
 ```text
 MediaRef
@@ -153,7 +161,7 @@ Business/Process data
 Decision
 → semantic capability
 → Durable Workflow
-→ executor/tool/agent/model adapter
+→ Automation Hub / approved executor adapter
 → technical result
 → authoritative Outcome verification
 → Evidence/Audit/Notification
@@ -207,7 +215,7 @@ prediction.run
 scenario.simulate
 ```
 
-Planner asks for capability; adapters resolve provider/executor/model/tool.
+Planner asks for capability; approved adapters resolve provider/executor/model/tool without exposing UI mechanics.
 
 ## 8. Event / Decision ownership
 
@@ -232,7 +240,7 @@ authoritative event logs
 → opportunity candidate
 ```
 
-Process owner owns intended process and interpretation. Copilot does not infer employee fault/intent from deviation.
+Process owner owns intended process and interpretation. DÉLIA does not infer employee fault/intent from deviation.
 
 ## 10. Semantic Business Layer ownership
 
@@ -248,7 +256,7 @@ Metadata does not grant data access.
 
 ## 11. Personal Memory ownership
 
-Memory belongs to user by default. Copilot manages lifecycle/retention/user controls. Memory influences relevance/presentation but never business truth, RBAC or Organizational Knowledge automatically.
+Memory belongs to user by default. DÉLIA manages lifecycle/retention/user controls. Memory influences relevance/presentation but never business truth, RBAC or Organizational Knowledge automatically.
 
 ## 12. Automation/executor ownership
 
@@ -263,7 +271,7 @@ official API
 → Human Task
 ```
 
-Capability can migrate RPA→API without planner/workflow redesign.
+DÉLIA works with semantic capabilities and governed Work/Decision. Automation Hub owns technical execution mechanics for executors under its boundary. A capability can migrate RPA→API without planner/workflow redesign.
 
 Planner never receives clicks/selectors/package internals.
 
@@ -284,13 +292,13 @@ Sandbox executes bounded analysis over authorized inputs. Artifact Workspace own
 
 ## 15. Predictive / Twin ownership
 
-Model owner/provider owns model lifecycle facts; Copilot stores bounded `ModelRef`/Prediction lineage.
+Model owner/provider owns model lifecycle facts; DÉLIA stores bounded `ModelRef`/Prediction lineage.
 
 Operational Twin is a projection of authoritative live state. Scenario never becomes production state. Apply is new business action.
 
 ## 16. MCP/A2A ownership
 
-MCP server/A2A agent remains external integration authority only for capabilities it exposes. Copilot owns allowlist/policy/delegation orchestration. Discovery/metadata/result cannot grant authority.
+MCP server/A2A agent remains external integration authority only for capabilities it exposes. DÉLIA owns allowlist/policy/delegation orchestration. Discovery/metadata/result cannot grant authority.
 
 ## 17. Control Tower / Model / Marketplace ownership
 
@@ -302,14 +310,16 @@ Marketplace owns package/catalog lifecycle. Manifest permissions/scopes are requ
 
 ## 18. Edge ownership
 
-Device/Edge platform owns device runtime/health. Copilot owns approved package/content/model projection/sync semantics when applicable. User identity/permissions remain central/domain authorities; offline cache cannot create indefinite authority.
+Device/Edge platform owns device runtime/health. DÉLIA owns approved package/content/model projection/sync semantics when applicable. User identity/permissions remain central/domain authorities; offline cache cannot create indefinite authority.
 
 ## 19. Independence graph
 
 Must remain true:
 
 ```text
-Copilot ─X→ Chat runtime/API/tables
+DÉLIA ─X→ Chat runtime/API/tables
+DÉLIA ─X→ Automation Hub technical internals as business authority
+Automation Hub ─X→ business decision/permission authority
 Control Tower ─X→ domain permission authority
 Process Mining ─X→ employee scoring authority
 Memory ─X→ RBAC/business truth
