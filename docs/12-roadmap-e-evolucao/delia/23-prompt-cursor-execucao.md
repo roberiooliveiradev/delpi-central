@@ -1,14 +1,14 @@
-# Prompt mestre — Cursor — Minha DELPI Copilot Standalone
+# Prompt mestre — Cursor — DÉLIA Standalone
 
-Implemente o **Minha DELPI Copilot como aplicação nova e independente**, do zero até o produto completo. Não evolua nem refatore o Minha DELPI Chat para atingir este objetivo.
+Implemente a **DÉLIA — DELPI · Ecossistema de Ligações, Inteligência e Automação como aplicação nova e independente**, do zero até o produto completo. Não evolua nem refatore o Minha DELPI Chat para atingir este objetivo.
 
-A visão alvo é um **enterprise/industrial intelligent operating layer** para escritório, reuniões, chão de fábrica, fontes externas e operações governadas. Não é apenas Chat+RAG.
+A visão alvo é **Continuous Operational Intelligence** para escritório, reuniões, chão de fábrica, fontes externas e operações governadas. Não é Chat+RAG.
 
 ## 1. Decisão inegociável
 
 ```text
-Copilot backend  = nova minha-delpi-copilot-api
-Copilot frontend = novo plugins/minha-delpi-copilot
+DÉLIA backend  = nova API própria; namespace técnico temporário minha-delpi-copilot-api até C0.S1
+DÉLIA frontend = novo MFE próprio; namespace técnico temporário plugins/minha-delpi-copilot até C0.S1
 Chat backend/MFE = sistemas separados/reference-only
 ```
 
@@ -16,7 +16,7 @@ Proibido importar/depender de runtime/API/tables/source do Chat ou criar runtime
 
 ## 2. North Star
 
-O mesmo Copilot deve suportar:
+A mesma DÉLIA deve suportar:
 
 ```text
 GLOBAL      → painel contextual
@@ -46,13 +46,13 @@ PERCEBER
 
 1. `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`
 2. `.cursor/rules/development-standards-index.mdc` + regras aplicáveis
-3. `docs/12-roadmap-e-evolucao/minha-delpi-copilot/README.md`
+3. `docs/12-roadmap-e-evolucao/delia/README.md`
 4. `16-execution-master-plan.md`
 5. `50-standalone-copilot-application-architecture.md`
-6. `51-platform-integration-baseline.md`
-7. `52-standalone-repository-and-bootstrap-plan.md`
-8. `17-component-and-contract-map.md`
-9. `49-architecture-and-design-patterns-standard.md`
+6. `17-component-and-contract-map.md`
+7. `49-architecture-and-design-patterns-standard.md`
+8. `51-platform-integration-baseline.md`
+9. `52-standalone-repository-and-bootstrap-plan.md`
 10. `21-data-and-state-model.md`
 11. `20-testing-and-acceptance-matrix.md`
 12. `25-requirements-traceability.md`
@@ -69,7 +69,7 @@ Precedência é definida por `48`. `16` é a única authority de ordem. `25` é 
 54 biometric identity / Human Observation
 55 Internet Research / external connectors
 56 Microsoft Teams
-57 Event-Driven Autonomous Operations / Automation & Execution Hub
+57 Event-Driven Autonomous Operations / Automation Hub integration
 58 Process Intelligence / Process Mining / Task Mining
 59 AI Control Tower / Digital Workforce Governance
 60 MCP / A2A / tool-agent interoperability
@@ -77,11 +77,11 @@ Precedência é definida por `48`. `16` é a única authority de ordem. `25` é 
 62 Semantic Business Layer / governed metrics
 63 Analysis Sandbox / Artifact Workspace
 64 Predictive / Prescriptive Intelligence / Operational Twin
-65 Edge / Offline Industrial Copilot
+65 Edge / Offline Industrial
 66 AI Model Lifecycle / Capability Marketplace
 ```
 
-`31/45/46/47` são superseded/reference-only e nunca redefinem arquitetura atual.
+`67` é visão transversal de expansão de capabilities e `68` é authority de naming. `31/45/46/47` são superseded/reference-only e nunca redefinem arquitetura atual.
 
 ## 5. Ordem C0–C7
 
@@ -91,10 +91,12 @@ C0 Foundation Freeze
 → C2 Portal/Context/Commands
 → C3 Intelligence + capability foundations
 → C4 Governed reads + analysis/discovery
-→ C5 Governed writes + executors + durable work
+→ C5 Governed ACT + executors + durable work
 → C6 Product work + governance/experience ecosystem
 → C7 Advanced autonomy + scale/optimization/rollout
 ```
+
+C5 pode liberar L4/governed execute para capabilities explicitamente autorizadas. C6 não libera Watch ACT autônomo por default. C7 adiciona L5/Watch autonomous ACT selecionado sob policy/limits/kill switch/verified Outcome.
 
 Nunca pular fase porque um SDK/provider/tool já existe no mercado.
 
@@ -107,7 +109,7 @@ git status
 git rev-parse HEAD
 ```
 
-C0.S0 é **inventário factual read-only + docs/ledger**, sem criar Copilot runtime.
+C0.S0 é **inventário factual read-only + docs/ledger**, sem criar runtime da DÉLIA.
 
 ### 6.1 Platform baseline
 
@@ -126,6 +128,7 @@ Inventarie egress/search/safe fetch, OAuth/vault, Microsoft Graph/Google/WhatsAp
 Inventarie:
 
 ```text
+Automation Hub implementation/owner/runtime/contracts if any
 RPA platforms/licenses/orchestrators/bots/packages
 scripts/functions/jobs
 queues/workers/heartbeats/leases
@@ -140,7 +143,7 @@ kill switches/emergency stop
 support/SLA/ownership
 ```
 
-Não assumir ferramenta RPA nem criar Hub por suposição.
+Não assumir ferramenta RPA nem implementação física do Automation Hub. A authority semântica permanece: DÉLIA decide/orquestra; Automation Hub executa tecnicamente.
 
 ### 6.5 Process Intelligence
 
@@ -180,18 +183,28 @@ Inspect only for lessons/anti-patterns/neutral shared conventions. Never classif
 
 ### 6.14 Finding classification
 
+Use a taxonomia factual canônica:
+
+```text
+PROVEN
+TO_INVENTORY
+PLANNED
+TARGET
+```
+
+Para decisões de tratamento após inventário, registrar separadamente quando aplicável:
+
 ```text
 PLATFORM_REUSE
 NEUTRAL_SHARED_REUSE
-COPILOT_IMPLEMENT_NEW
+IMPLEMENT_NEW
 EXTEND_PLATFORM_CONTRACT
 ADAPTER_REQUIRED
 ADR_REQUIRED
-NOT_PROVEN
 OUT_OF_SCOPE
 ```
 
-Market availability without repo/infra evidence = `NOT_PROVEN`.
+A segunda lista não substitui o estado factual. Market availability without repo/infra evidence = `TO_INVENTORY`, nunca `PROVEN`.
 
 ## 7. Foundation Freeze before C1
 
@@ -240,15 +253,15 @@ No speculative microservice/framework/registry before Abstraction Gate.
 ## 9. Authorities
 
 ```text
-Keycloak = identity
-Core = platform users/apps/routes/RBAC
-Portal = host/navigation/context
+Keycloak = identity/SSO
+Core = platform apps/routes/RBAC/governance
+Portal = host/navigation/published context
 Domain APIs = business data/rules/actions
 External providers = external resources/scopes
-OT/safety systems = machine truth/safety
-Copilot = intelligence/context/policy/orchestration/work/evidence
-Automation Hub = execution mechanisms, not business authority
+DÉLIA = intelligence/context/Evidence/Policy/Decision/Work/orchestration/outcome coordination
+Automation Hub = technical execution, not business/permission authority
 Control Tower = governance plane, not business authority
+OT/safety systems = machine truth/safety
 ```
 
 ## 10. Fundamental semantic distinctions
@@ -266,6 +279,7 @@ SIMULATE != APPLY
 PREPARE != ACT
 Read != Write
 Draft != Send
+L4 governed execute != L5 autonomous execute
 Technical Execution Success != Verified Business Outcome
 MCP/A2A Discovery != Approval
 Marketplace Install != Permission Grant
@@ -290,8 +304,8 @@ Not every event calls an LLM.
 ## 12. Automation / Executors
 
 ```text
-Copilot = decide/orchestrate
-Executor = execute
+DÉLIA = decide/orchestrate
+Automation Hub = technical execute
 ```
 
 Preference:
@@ -307,7 +321,7 @@ official API
 
 Planner sees semantic capability, never click/selector/coordinate/package UI mechanics.
 
-RPA is replaceable adapter. Computer-use is advanced sandboxed fallback.
+RPA is replaceable adapter behind the approved execution boundary. Computer-use is advanced sandboxed fallback.
 
 ## 13. Outcome verification
 
@@ -380,7 +394,7 @@ Operational Twin is a projection/scenario. Simulation never mutates production. 
 
 ## 21. Edge / Offline
 
-Edge is governed extension of same product, not second unrestricted Copilot.
+Edge is governed extension of same product, not second unrestricted DÉLIA.
 
 Explicit modes, revision/freshness, versioned packages/models, buffered events with idempotent sync, device/user separation, no authority widening offline, OT safety independent.
 
@@ -405,7 +419,7 @@ Physical actuation requires separate industrial safety initiative/gate.
 
 ## 25. C1 rule
 
-First runtime work after Foundation Freeze is standalone API/MFE bootstrap. No Process Mining engine, Control Tower, MCP/A2A runtime, sandbox, Twin, Edge, Marketplace, RPA Hub or autonomous ACT before foundations and phase dependencies.
+First runtime work after Foundation Freeze is standalone API/MFE bootstrap. No Process Mining engine, Control Tower, MCP/A2A runtime, sandbox, Twin, Edge, Marketplace, RPA runtime or autonomous ACT before foundations and phase dependencies.
 
 ## 26. Generic execution protocol
 
@@ -415,6 +429,7 @@ For exactly one `C*.S*`:
 REVALIDATE HEAD/WORKTREE
 → READ AUTHORITIES + APPLICABLE SPECS
 → IDENTIFY OWNER/SOURCE/BORDER
+→ IDENTIFY CONSUMERS + CONTRACT
 → ABSTRACTION + DEPENDENCY GATES
 → BASELINE
 → MINIMAL CORRECT DIFF
@@ -453,6 +468,8 @@ Marketplace permission escalation
 RPA duplicate/credential leak
 unverified success
 PREPARE→ACT bypass
+ACT without live AuthZ/idempotency/audit
+Watch autonomous ACT before C7
 global L5
 OT command
 Chat dependency
@@ -469,9 +486,10 @@ DEPENDENCY_GATE:
 CP_REQUIREMENTS:
 FILES_CHANGED:
 OWNERS/SOURCES:
+CONSUMERS/CONTRACTS:
 LAYER/PATTERNS:
 PLATFORM_REUSE:
-COPILOT_NEW_CODE:
+DELIA_NEW_CODE:
 CHAT_DEPENDENCIES:
 WIRING_PROOF:
 TESTS:
