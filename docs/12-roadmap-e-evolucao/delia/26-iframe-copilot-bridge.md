@@ -1,12 +1,14 @@
-# Minha DELPI Copilot — Iframe Copilot Bridge
+# DÉLIA — Iframe Bridge
 
-**Status:** thematic spec  
+**Status:** thematic spec / TARGET  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Foundation:** `PlatformCommand`, `WorkspaceContext`, `EntityRef` e bridge envelope em C0; runtime de integração em C2.
+**Foundation:** `PlatformCommand`, `WorkspaceContext`, `EntityRef` e bridge envelope são targets a confirmar/congelar em C0; runtime de integração entra em C2 somente após gates.
+
+> `CopilotBridge` pode continuar aparecendo como identificador técnico/histórico de bridge até C0.S1; não é nome do produto.
 
 ## 1. Objetivo
 
-Integrar apps `iframe` ao Copilot standalone sem DOM automation, bypass de origem/RBAC ou duplicação de Business Actions.
+Integrar apps `iframe` à DÉLIA standalone sem DOM automation, bypass de origem/RBAC ou duplicação de Business Actions.
 
 ## 2. Classes
 
@@ -28,24 +30,26 @@ I3 AI_READY
 
 ```text
 Visual/context:
-Copilot API/MFE
+DÉLIA API/MFE
 → PlatformCommand
-→ Portal CopilotBridge
+→ Portal bridge host
 → IframeBridge
 → generic visual command
 → observation
 
 Negócio:
-Copilot API
-→ Copilot Action Catalog/OpenAPI
-→ RBAC/policy/Decision Gate
+DÉLIA API
+→ Action Catalog/OpenAPI
+→ Core/domain authorization + Policy/Decision Gate
 → Domain API/use case
 → Outcome/Evidence
 ```
 
-Nunca usar click/DOM para substituir Business Action.
+Nunca usar click/DOM para substituir Business Action. Automation Hub/RPA não é atalho para bridge visual quando API autoritativa existe.
 
 ## 4. Handshake
+
+Target:
 
 ```text
 iframe HELLO
@@ -58,7 +62,7 @@ iframe HELLO
 
 ## 5. Envelope
 
-Usar `IframeBridgeEnvelope` foundation:
+Usar `IframeBridgeEnvelope` somente se C0 comprovar/congelar esse foundation:
 
 ```text
 protocol/version
@@ -72,9 +76,9 @@ Não criar envelope por app.
 
 ## 6. Context
 
-Iframe I1+ pode publicar `EntityRef[]`, view/presentation state, filters, selection, date range e visible-data refs. Portal valida/sanitiza e converte para o mesmo `WorkspaceContext` usado por MFEs.
+Iframe I1+ pode publicar `EntityRef[]`, view/presentation state, filters, selection, date range e visible-data refs quando esses contracts estiverem aprovados. Portal valida/sanitiza e transporta para o mesmo `WorkspaceContext` target usado por MFEs.
 
-Payload do iframe é untrusted data para policy/system.
+Payload do iframe é untrusted data para policy/system. Portal aggregation não transforma view state em source of truth de negócio.
 
 ## 7. Comandos visuais genéricos
 
@@ -87,16 +91,18 @@ view.focus_entity
 view.refresh
 ```
 
-Não criar comandos app-specific no core/Portal/Copilot.
+Não criar comandos app-specific no core/Portal/DÉLIA.
 
 ## 8. Result
 
-Observation/result é correlacionado por requestId e bridge session. Comando visual não produz outcome de negócio fictício.
+Observation/result é correlacionado por requestId e bridge session. Comando visual não produz Outcome de negócio fictício.
 
 ## 9. Capability discovery
 
+Target flow, condicionado a contratos reais:
+
 ```text
-Core /me/apps
+Core authorized apps/routes
 → app/route autorizado
 
 registration/manifest
@@ -105,7 +111,7 @@ registration/manifest
 runtime handshake
 → visual capabilities suportadas
 
-Domain OpenAPI/Copilot Action Catalog
+Domain OpenAPI / DÉLIA Capability Projection
 → Business Actions
 ```
 
@@ -136,7 +142,7 @@ Proibido token em query string, JWT/refresh token em postMessage ou credential t
 - rate/budget quando necessário;
 - secret redaction;
 - CSP/frame policy;
-- current permission revalidation.
+- current permission revalidation via canonical owner.
 
 Threat tests incluem malicious origin/source/appId, stale session, replay, undeclared command, context injection, token exfiltration e permission revocation.
 
@@ -148,24 +154,26 @@ Sem adaptação interna:
 class = PORTAL_ONLY
 ```
 
-Copilot pode abrir app/rota e usar APIs disponíveis, mas não promete cross-origin DOM reading, internal entity/filter discovery ou form clicking.
+DÉLIA pode abrir app/rota e usar APIs disponíveis, mas não promete cross-origin DOM reading, internal entity/filter discovery ou form clicking.
+
+Se alguma operação legada material exigir RPA/computer-use, isso pertence ao Automation Hub technical-execution boundary, separado do IframeBridge.
 
 ## 13. SDK futuro
 
-Se C0 provar ausência de helper reutilizável, C6 AI-ready ecosystem pode fornecer package compartilhado para handshake, envelope/types, context publisher, command handler, lifecycle cleanup e fixtures.
+Se C0 provar ausência de helper reutilizável e houver 2+ consumers reais, C6 AI-ready ecosystem pode fornecer package compartilhado para handshake, envelope/types, context publisher, command handler, lifecycle cleanup e fixtures.
 
-SDK não contém business logic/RBAC.
+SDK não contém business logic/RBAC. Deve passar Abstraction Gate antes de ser criado.
 
 ## 14. Implementation mapping
 
 ```text
 C0 → inventory + bridge contracts/security semantics
-C1 → prova do Copilot MFE/Portal host standalone
+C1 → prova do DÉLIA MFE/Portal host standalone
 C2 → PORTAL_ONLY + handshake/context/view runtime
 C3 → intelligence understands contextual capabilities
 C4 → Business reads via Domain APIs, never bridge click
-C5 → governed writes via Domain APIs, never bridge click
-C6 → shared SDK/readiness onboarding
+C5 → governed ACT via Domain APIs/approved execution boundaries, never bridge click
+C6 → shared SDK/readiness onboarding when justified
 C7 → rollout/coverage refinements
 ```
 
@@ -194,4 +202,5 @@ Segundo iframe com outro appId/origin/capability set deve funcionar sem branch a
 - Business Action como click;
 - handshake como RBAC;
 - context como system instruction;
-- lógica do Copilot dentro do Portal.
+- lógica da DÉLIA dentro do Portal;
+- RPA/computer-use mechanics dentro do bridge.
