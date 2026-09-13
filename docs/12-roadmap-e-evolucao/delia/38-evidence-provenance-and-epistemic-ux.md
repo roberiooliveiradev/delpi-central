@@ -1,9 +1,9 @@
-# Minha DELPI Copilot — Evidence, Provenance e Epistemic UX
+# DÉLIA — Evidence, Provenance e Epistemic UX
 
-**Status:** thematic spec  
+**Status:** `TARGET` — thematic spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Foundation:** `SourceRef`, `EvidenceRef`, `OutcomeRef` e epistemic classes em C0; runtime base em C3.
+**Evidence rule:** `SourceRef`, `EvidenceRef`, `OutcomeRef`, storage e runtime só são implementados quando C0/C3 provar owner, contract, consumers e lifecycle.
 
 ## 1. Regra central
 
@@ -11,8 +11,8 @@ Toda análise/conclusão material deve, quando a fonte permitir, apontar para ev
 
 ```text
 source
-→ EvidenceRef
-→ synthesis classification
+→ Evidence
+→ epistemic classification
 → conclusion/recommendation
 ```
 
@@ -23,26 +23,26 @@ FACT           → observado em fonte autorizada
 CALCULATION    → derivado por método identificável
 HYPOTHESIS     → explicação possível não confirmada
 CONCLUSION     → inferência sustentada por evidence suficiente
-RECOMMENDATION → ação sugerida a partir de facts/conclusions/policy
+RECOMMENDATION → ação sugerida, nunca autorização
 ```
 
-Nunca apresentar hipótese como fato.
+Prediction/simulation permanecem classes próprias quando aplicáveis e não viram FACT.
 
-## 3. EvidenceRef
+## 3. Evidence contract
 
-Usar primitive compartilhado C0. Campos conceituais incluem evidenceId, sourceRef, kind, entityRefs, observedAt, freshness, confidence quando metodologicamente válida e limitations.
+Se C0 congelar um `EvidenceRef` compartilhado, reutilizá-lo. Candidate fields podem incluir evidenceId, sourceRef, kind, entityRefs, observedAt, freshness, confidence quando metodologicamente válida e limitations.
 
-Não criar EvidenceRef diferente para Case, Workflow, Graph, API ou multimodal.
+Não criar EvidenceRef diferente por Case, Workflow, Graph, API, multimodal ou provider.
 
 ## 4. Synthesis claim
 
-Afirmação de resposta pode referenciar EvidenceRefs e classificação epistemic sem exigir durable `ClaimV1` próprio. Persistir claim somente se C0/C6 provar lifecycle/owner real.
+Afirmação pode referenciar Evidence refs e classificação epistemic sem exigir durable `ClaimV1` próprio. Persistir claim somente se owner/lifecycle/consumer real justificar.
 
-## 5. SourceRef / Freshness
+## 5. Source / Freshness
 
-SourceRef representa API/result, domain entity, document, knowledge record, event ou calculation inputs.
+SourceRef representa origem identificável, não authority inventada. Freshness precisa refletir o contrato real da fonte.
 
-Freshness conceitual:
+Candidate semantics:
 
 ```text
 current/live
@@ -52,35 +52,23 @@ stale
 unknown
 ```
 
-Stale/unknown exige limitação coerente quando atualidade importa.
+Stale/unknown exige limitation quando atualidade importa.
 
-## 6. Multimodal Evidence — C3
+## 6. Multimodal Evidence
 
-Documento/desenho/imagem pode carregar:
+Documento/desenho/imagem pode carregar source/file ref, page/sheet/region, observation, method/version, confidence, limitations e revision quando material. Output de OCR/VLM é observação não confiável até contextualização/validação apropriada.
 
-- file/source ref;
-- page/sheet/region;
-- observation/extracted text;
-- method/extractor/model version;
-- confidence;
-- limitations;
-- document revision.
+## 7. Business/API Evidence
 
-Finding importante sem localização/provenance é incompleto quando a tool pode fornecer isso.
+Reads/writes podem produzir refs normalizadas para source/result/outcome sem copiar payload sensível inteiro. Domain API continua authority dos dados/regras; technical execution result não é business outcome.
 
-## 7. Business/API Evidence — C4/C5
+## 8. Graph Evidence
 
-Normalized read/write outcomes podem produzir source/evidence refs com entity/action result, timestamps/version, filters/query context material e outcome status.
+Relationship provenance permanece separada. Relação inferida continua `inferred` e não vira FACT automaticamente.
 
-Não copiar payload sensível inteiro apenas para provenance.
+## 9. Evidence Board
 
-## 8. Graph Evidence — C4
-
-RelationshipRef possui provenance própria. Relação inferida permanece explicitamente inferred e não vira FACT automaticamente.
-
-## 9. Evidence Board — C6
-
-Case organiza os mesmos EvidenceRefs:
+Case pode organizar refs como:
 
 ```text
 accepted
@@ -95,32 +83,35 @@ Board state não altera source/provenance original.
 
 Artifacts podem preservar refs/footnotes permitidos sem copiar PII/secrets desnecessários.
 
-Quando fontes confiáveis divergem, mostrar conflito/recency/authority e manter limitation até resolução.
+Quando fontes divergem, mostrar conflict/recency/authority/limitations.
 
-EvidenceRef não concede source access:
+Evidence nunca concede source access:
 
 ```text
-EvidenceRef → SourceRef → current permission check → source fetch
+Evidence ref
+→ Source ref
+→ current permission check
+→ source fetch
 ```
 
 ## 11. Observabilidade
 
-Sem CoT, deve ser possível responder quais sources sustentaram outcome/conclusion, freshness, conflicts, extractor/version, hypotheses não validadas e quais evidence refs suportaram uma ação.
+Sem CoT, deve ser possível responder quais sources sustentaram outcome/conclusion, freshness, conflicts, versions, hypotheses não validadas e Evidence refs relevantes.
 
 ## 12. Phase mapping
 
 ```text
-C0 → Source/Evidence/Outcome contracts + freshness semantics
-C3 → Copilot-owned multimodal Evidence + epistemic synthesis foundation
-C4 → Business read/Graph outcome/evidence normalization
-C5 → governed-write outcomes/evidence
-C6 → Case Evidence Board + Experience/Knowledge promotion
-C7 → Simulation outputs separados de facts
+C0 → owner/source/consumer/contracts/freshness semantics
+C3 → minimal Evidence/epistemic foundation when unlocked
+C4 → business-read/Graph normalization
+C5 → governed-ACT outcome/evidence correlation
+C6 → Case/Evidence Board + governed knowledge promotion
+C7 → advanced scale/optimization only; simulation is not restricted to C7 by this document
 ```
 
-## 13. Independence
+## 13. Ownership
 
-Evidence runtime e storage pertencem à Copilot API. Não usar evidence/session/output models do Minha DELPI Chat como authority.
+DÉLIA é owner da coordenação/intelligence Evidence que C0 atribuir a ela. A fonte autoritativa continua com Domain API/provider/document owner/etc. Storage físico não é assumido por este documento.
 
 ## 14. Tests
 
@@ -138,4 +129,4 @@ Evidence runtime e storage pertencem à Copilot API. Não usar evidence/session/
 
 ## 15. Gate
 
-Análise avançada não é madura se não diferencia fato/hipótese, perde provenance ou depende do Chat para recuperar/armazenar Evidence.
+Sem prova no SHA/config avaliado, o status é `PENDING/INCONCLUSIVE`, nunca PASS documental.
