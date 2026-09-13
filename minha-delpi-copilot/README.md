@@ -6,7 +6,7 @@ O Copilot é uma **aplicação nova e standalone** da Minha DELPI, composta por 
 
 Ele não é evolução do `minha-delpi-ai-api` nem de `plugins/minha-delpi-chat`.
 
-A visão alvo é **um único Copilot para escritório, reuniões, chão de fábrica e fontes externas autorizadas**, com surfaces Global, Workspace, Meeting e Frontline sobre o mesmo runtime/governança, incluindo multimodalidade, biometria governada, Internet Research e External Connectors.
+A visão alvo é **um único Copilot para escritório, reuniões, chão de fábrica e fontes externas autorizadas**, com surfaces Global, Workspace, Meeting e Frontline sobre o mesmo runtime/governança, incluindo multimodalidade, biometria governada, Internet Research, External Connectors e Microsoft Teams como capability family do Microsoft 365 connector. Uma futura surface Teams app/tab/bot continua usando o mesmo Copilot API/runtime.
 
 ## Documentação canônica
 
@@ -30,11 +30,12 @@ NEXT_STEP = C0.S0 — Platform/Media/Device/Biometric/External/OT inventory
 - [Multimodal/Meeting/Frontline/Industrial](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/53-multimodal-meeting-frontline-and-industrial-copilot.md)
 - [Biometric Identity/Human Observation](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/54-biometric-identity-and-human-observation-governance.md)
 - [Internet Research/External Connectors](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/55-internet-research-and-external-connectors.md)
+- [Microsoft Teams Connector/Meeting](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/56-microsoft-teams-connector-and-meeting-integration.md)
 - [Tests/acceptance](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/20-testing-and-acceptance-matrix.md)
 - [State/persistence](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/21-data-and-state-model.md)
 - [Cursor prompt](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/23-prompt-cursor-execucao.md)
 - [Product specification](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/24-product-specification.md)
-- [Traceability CP-001…CP-214](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/25-requirements-traceability.md)
+- [Traceability CP-001…CP-225](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/25-requirements-traceability.md)
 - [Documentation governance](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/48-documentation-governance-and-architecture-review.md)
 - [Execution ledger](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/evidence/execution-ledger.md)
 
@@ -50,6 +51,7 @@ gateway/                       → routing
 plugins/plugin-ui/             → shared design system
 Domain APIs                    → business data/rules
 External Providers             → external account/resource authority
+Microsoft 365 / Teams          → external collaboration/source/action provider
 Secret/Vault owner             → provider credential material
 OT/domain systems              → machine/process truth and industrial safety owners
 ```
@@ -66,6 +68,8 @@ C0 Platform + Architecture + Media/Privacy/Biometric/External/OT Foundation Free
 → C6 Product Work + Meeting/Frontline + External Events + Ecosystem
 → C7 Advanced Realtime + External Proactivity + Autonomy + Rollout
 ```
+
+Teams segue essa mesma ordem: foundation em C0/C3, reads em C4, writes em C5, events/meeting artifacts e eventual Teams app/tab/bot em C6, e raw realtime meeting participation somente em C7 se houver evidence/ADR.
 
 ## Boundaries essenciais
 
@@ -93,6 +97,18 @@ draft
 
 provider event
 -X→ ungoverned action
+
+Teams private/restricted resource
+-X→ shared Knowledge/Case/Room automatically
+
+Teams transcript
+-X→ human decision or executed action automatically
+
+Teams app/tab/bot
+→ same Copilot API/runtime
+
+base Teams connector
+-X→ mandatory raw realtime media bot
 
 biometric match
 -X→ permission grant
