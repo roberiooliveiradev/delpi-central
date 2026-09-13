@@ -1,11 +1,11 @@
-# 09 — UX do Minha DELPI Copilot
+# 09 — UX da DÉLIA
 
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Specs temáticas:** `53–66`
 
 ## 1. Princípio
 
-O Copilot deve parecer parte do trabalho real, não uma janela de chat. Conversa, dados, processos, análises, automações, artefatos, modelos e contexto industrial convergem para uma experiência única com provenance, estado e governança visíveis quando materiais.
+A DÉLIA deve parecer parte do trabalho real, não uma janela de chat. Conversa, dados, processos, análises, automações, artefatos, modelos e contexto industrial convergem para uma experiência única com provenance, estado e governança visíveis quando materiais.
 
 ## 2. Surfaces
 
@@ -78,9 +78,11 @@ what happens when triggered
 pause/disable
 ```
 
-C6 não mostra ACT como habilitado. Em C7, ACT exige capability-specific policy/limits/kill switch visibility.
+Em C6, Watch permanece por default em `OBSERVE | ADVISE | PREPARE`; não dispara ACT autonomamente. Isso não esconde nem invalida ACT governado já permitido em C5 para capabilities específicas, quando iniciado por fluxo explicitamente autorizado/confirmado.
 
-## 7. Automation & Execution Hub UX
+Em C7, Watch ACT selecionado pode ser exibido/habilitado somente quando capability-specific policy, identity, limits, audit, kill switch e verified Outcome estiverem ativos.
+
+## 7. Automation Hub UX
 
 Admin/operator view target:
 
@@ -91,6 +93,8 @@ Workers
 Exceptions
 Outcomes
 ```
+
+A surface representa o technical-execution boundary do Automation Hub e deve distinguir esse ownership do Work/Decision/orchestration da DÉLIA.
 
 For each automation:
 
@@ -180,7 +184,7 @@ No raw protocol or hidden context dump.
 A surface **Memória pessoal** should allow:
 
 ```text
-Ver o que o Copilot lembra
+Ver o que a DÉLIA lembra
 Corrigir
 Apagar/esquecer
 Desabilitar personalização
@@ -335,7 +339,7 @@ Buttons such as Enable/Install must explain that actual RBAC/provider authorizat
 
 ## 20. Meeting / Frontline / Biometrics
 
-Preserve current explicit capture indicators, biometric `UNKNOWN→CANDIDATE→CONFIRMED/CORRECTED`, large-touch/hands-free Frontline and internal procedure/revision authority.
+Preserve explicit capture indicators, biometric `UNKNOWN→CANDIDATE→CONFIRMED/CORRECTED`, large-touch/hands-free Frontline and internal procedure/revision authority.
 
 Meeting transcript/source/decision/action/outcome remain semantically distinct.
 
@@ -402,6 +406,7 @@ question/event
 → artifact or recommendation
 → PREPARE/Decision
 → Task/Workflow/Automation
+→ governed ACT when allowed
 → verified Outcome
 → notification
 → governed learning/personal continuity
