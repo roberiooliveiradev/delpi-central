@@ -1,527 +1,288 @@
 # Minha DELPI Copilot — Rollout, Migrações e Implantação
 
-**Status:** plano operacional standalone  
-**Autoridade de ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
-**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
+**Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Boundary standalone:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
+**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)
 
-## 1. Estratégia
+## 1. Princípio
 
-O Copilot nasce como **novo par de aplicação** dentro da plataforma:
+Rollout não é desculpa para manter duas authorities ou duas arquiteturas permanentes.
 
-```text
-minha-delpi-copilot-api
-plugins/minha-delpi-copilot
-```
+As capacidades externas entram progressivamente, sempre reutilizando os contracts canônicos de Source/Evidence/Policy/Decision/Workflow.
 
-Ele reutiliza as foundations corporativas:
+## 2. Ordem de rollout do produto
 
 ```text
-Portal
-Core API
-Keycloak
-Gateway
-plugin-ui
-Module Federation
-Domain APIs
-infra compartilhada aprovada
+Foundation
+→ Standalone Bootstrap
+→ Context/Navigation
+→ Internal Intelligence/Reads
+→ Internet Research
+→ External Connected Reads
+→ Governed Business Writes
+→ Governed External Drafts/Writes
+→ External Events/Watch
+→ Meeting/Frontline with external sources
+→ Selected External Proactivity
 ```
 
-Ele **não migra runtime do Minha DELPI Chat**.
+Não liberar send/proatividade antes de provar read/isolation/connection lifecycle.
 
-As surfaces Global/Workspace/Meeting/Frontline são liberadas progressivamente sobre o mesmo runtime.
+## 3. External provider rollout
 
-## 2. Releases C0–C7
+Cada provider entra como candidate independente:
 
-### R0 — Foundation Freeze / C0
+```text
+inventory/contract
+→ connection/auth integration
+→ read-only pilot
+→ source/evidence validation
+→ write disabled
+→ draft capability
+→ selected write capability
+→ event/subscription integration
+→ proactive capability only if justified
+```
 
-- platform inventory;
-- media/device/privacy/OT inventory;
-- standalone boundary;
-- service/path/manifest/storage naming;
-- authorities/primitives;
-- MediaRef decision;
-- architecture/pattern freeze;
-- privacy/retention/shared-device boundaries;
-- industrial safety non-authority;
-- integration contracts;
-- RED conformance harness;
-- `CHAT_RUNTIME_DEPENDENCY=0`.
+Novo provider não altera planner architecture.
 
-No runtime code yet.
+## 4. Connection rollout classes
 
-### R1 — Standalone Bootstrap / C1
+Preferência de menor risco primeiro:
 
-- Copilot API skeleton;
-- health/config/logging;
-- JWT + Core integration;
-- Copilot MFE skeleton;
-- federation/plugin-ui;
-- responsive/accessibility baseline;
-- media-permission baseline without capture;
-- own manifest;
-- Gateway routes;
-- Compose services;
-- Portal full-page mount;
-- global host/panel contract;
-- independent rollback;
-- Chat-offline independence test.
+```text
+ORG_MANAGED read-only pilot
+or
+USER_DELEGATED read-only pilot with narrow scopes
+```
 
-### R2 — Portal + Operational Context / C2
+Depois, conforme evidence:
 
-- Workspace Context;
-- Global Bridge;
-- Platform Capability Projection;
-- open app/route/entity;
-- MFE context/deep-link helper;
-- OP/machine/product/operation EntityRefs where proven;
-- shared-device/session context baseline;
-- iframe integration baseline.
+```text
+SHARED_RESOURCE
+SERVICE_CONNECTION
+write scopes
+background subscriptions
+ACT automation
+```
 
-### R3 — Intelligence + Multimodal Foundations / C3
+A ordem exata é policy/owner-dependent; C0/C3 evidence decide.
 
-- Copilot-owned conversation/turn model;
-- provider abstraction;
-- OpenAPI ingestion + Action Catalog;
-- capability retrieval;
-- planner;
-- expertise/playbooks;
-- Knowledge/RAG;
-- document/image multimodal;
-- speech baseline when prioritized;
-- short-video/screen ingestion when prioritized;
-- Evidence/media provenance;
-- media retention/policy enforcement;
-- eval/observability.
+## 5. Internet Research rollout
 
-No Chat agent/session/action/media migration.
+```text
+internal users / allowlisted cohort
+→ read-only public search
+→ safe fetch/citations
+→ freshness/conflict evals
+→ wider cohort
+→ Task/Case integration
+→ background research only after C7 gate
+```
 
-### R4 — Business Reads + Graph / C4
+Browser automation não entra junto com basic research; exige necessidade separada.
 
-- generic reads;
-- normalized outcomes/evidence;
-- Business Graph;
-- operational-context correlation;
-- cross-domain analysis;
-- unknown/metamorphic provider gates.
+## 6. External communication rollout
 
-Rollout read-only first.
+Para email/messaging:
 
-### R5 — Governed Writes + Durable Foundation / C5
+```text
+read/search
+→ draft only
+→ draft + explicit send confirmation
+→ risk-based Decision Gate
+→ selected allowlisted automation only much later
+```
 
-- Decision Gates;
-- impact preview;
-- generic writes;
-- idempotency/concurrency;
-- outcome verification;
-- WorkflowPlan/checkpoints/waits;
-- modality-to-action governance;
-- restart/replay safety.
+`draft != send` em todas as fases.
 
-Start with low/medium-risk non-destructive writes.
+## 7. Provider event rollout
 
-### R6 — Product Work + Meeting/Frontline + Proactivity / C6
+```text
+manual/read polling baseline if necessary
+→ provider subscription/webhook pilot
+→ authenticity/dedupe
+→ renewal/reconciliation
+→ Watch OBSERVE
+→ Watch ADVISE
+→ ACT only in C7 when explicitly allowlisted
+```
 
-- Tasks;
-- Cases/Evidence Board;
-- Room integration;
-- Inbox;
-- Watch OBSERVE/ADVISE;
-- Meeting Mode;
-- ata viva;
-- Frontline Mode;
-- hands-free/operator assistance;
-- training assistance;
-- process-observation knowledge candidates;
-- Organizational Knowledge;
-- Governed Learning;
-- Expertise Studio;
-- AI-ready onboarding/admin.
+Event delivery incompleta não pode ser tratada como monitoramento garantido.
 
-Meeting/Frontline are piloted by cohort/device/process, not enabled company-wide by default on first release.
+## 8. Knowledge rollout
 
-### R7 — Advanced Realtime + Autonomy + Optimization / C7
+```text
+transient external research
+→ Case/Task Evidence
+→ user knowledge candidate
+→ organizational candidate
+→ review/eval/freshness/privacy/licensing
+→ versioned publish
+```
 
-- L0–L5 final policy;
-- Watch ACT selected;
-- Simulation;
-- Model Router;
-- advanced realtime media when justified;
-- edge/device optimization when justified;
-- performance/cost/scaling;
-- progressive rollout;
-- Product Complete verification.
+Never bulk-ingest a personal mailbox or chat history into organizational Knowledge by default.
 
-OT physical actuation remains blocked unless a **separate industrial safety initiative/gate** authorizes a deterministic integration.
-
-## 3. Migration policy
-
-There is **no Chat→Copilot migration** required for this initiative.
-
-Copilot schema/contract changes follow:
+## 9. DB/schema migration pattern
 
 ```text
 EXPAND
 → compatible readers
 → writers
-→ BACKFILL if necessary
-→ CUTOVER
-→ MONITOR
-→ CLEANUP
+→ optional backfill
+→ cutover
+→ monitor
+→ cleanup
 ```
 
-Existing platform/domain/media integration requiring adaptation may use:
+ExternalConnection/Subscription schemas follow same pattern when owned by Copilot.
+
+No migration from Chat DB is required.
+
+## 10. Provider/credential migration
+
+Provider swap or app-registration change:
 
 ```text
-existing owner
-→ Adapter / Anti-Corruption Layer
-→ Copilot canonical contract
+new adapter/config
+→ new connection version / reauthorization if required
+→ canary connections
+→ observe errors/scopes
+→ cutover
+→ revoke old credentials
+→ cleanup old adapter/config
 ```
 
-Strangler applies only where an actual legacy integration is being replaced; it does not imply migrating the Chat into the Copilot.
+Never copy plaintext credentials between stores as a migration shortcut.
 
-## 4. Storage rollout
+## 11. Subscription migration
 
-- Copilot has its own migration chain;
-- physical PostgreSQL may be shared if approved;
-- logical table/schema ownership remains separate;
-- no Chat table edits;
-- no Chat foreign keys as Copilot authority;
-- create storage only after C0 proves durable need;
-- raw media persistence is opt-in by purpose/policy;
-- media metadata and artifacts use lifecycle/retention classes.
-
-## 5. Infra rollout
-
-Dev/prod evolve together for:
+When webhook/subscription contract changes:
 
 ```text
-Copilot API Dockerfile/service
-Copilot MFE Dockerfile/service
-Gateway API route
-Gateway MFE route
-Compose service/profile
-health checks
-env examples
-sequential scripts
-volumes/storage
-manifest registration
+create compatible new subscription
+→ run overlap with dedupe
+→ validate reconciliation
+→ cut over
+→ cancel old subscription
+→ residual scan
 ```
 
-Streaming/media infra is added only when actual transport/provider requires it.
+Avoid event gaps and duplicate effects.
 
-No `depends_on` Chat.
+## 12. Cache/index migration
 
-## 6. Portal rollout
+External caches are derived. Prefer rebuild/invalidate over complex migration when possible, preserving user/connection isolation.
 
-Order:
+## 13. Feature flags
+
+Flags may control rollout but cannot create permanent split authorities.
+
+Examples:
 
 ```text
-full-page federated app
-→ internal users
-→ global side-panel host
-→ broader authorized groups
+internet_research_enabled
+provider_<x>_enabled
+external_reads_enabled
+external_writes_enabled
+provider_events_enabled
+external_watch_enabled
+browser_fallback_enabled
 ```
 
-Both use the same MFE/runtime.
+Flags have owner, purpose, exit criteria and rollback plan.
 
-Meeting/Frontline surfaces are enabled later by capability/feature policy and appropriate devices/cohorts, not by creating separate Portal apps unless a real UX/deployment need is proven.
+## 14. Kill switches
 
-## 7. Business capability rollout
+Operationally independent kill switches for:
+
+- Internet Research;
+- provider;
+- specific connection;
+- external writes/messaging;
+- webhook ingestion;
+- background sync/watch;
+- browser automation;
+- Copilot writes generally.
+
+## 15. Rollback
+
+Rollback must preserve:
+
+- no credential exposure;
+- connection metadata integrity;
+- no duplicate send/write;
+- provider subscriptions either safely active or explicitly disabled;
+- stale state visible;
+- source/Evidence refs remain interpretable;
+- Chat remains irrelevant to rollback.
+
+## 16. Provider terms/scopes change
+
+Provider contracts evolve independently of DELPI.
+
+At each rollout/release:
+
+- revalidate scopes;
+- revalidate provider limits/terms;
+- revalidate webhook/subscription lifecycle;
+- revalidate data handling/retention requirements;
+- run provider contract tests.
+
+Do not assume a provider behavior from a previous release remains valid indefinitely.
+
+## 17. Cohort strategy
+
+Possible sequence:
 
 ```text
-OpenAPI ingestion
-→ read-only capabilities
-→ cross-domain reads
-→ low-risk governed writes
-→ durable workflows
-→ Watch advice
-→ Meeting action follow-up
-→ Frontline issue/escalation actions
-→ selected ACT/autonomy
-```
-
-No action goes production because a model can “probably call it”; schema/RBAC/policy/evals must pass.
-
-## 8. Multimodal rollout
-
-Prefer progressive value/risk:
-
-```text
-documents/images
-→ voice input/output
-→ camera snapshots
-→ short video/screen share
-→ Meeting pilot
-→ Frontline pilot
-→ sampled/continuous realtime only if evidence justifies
-```
-
-Each step requires privacy/retention/provider/latency/cost evidence.
-
-Do not jump directly to continuous video.
-
-## 9. Meeting rollout
-
-Recommended progression:
-
-```text
-internal meeting transcript/summary pilot
-→ grounded live business queries
-→ decision/pending-action extraction
-→ ata viva
-→ Task/Case/Room linkage
+TI/admin internal
+→ selected power users
 → selected departments
-→ broader authorized availability
+→ wider authenticated users
+→ external writes for approved roles
+→ Meeting/Frontline external reads where useful
+→ selected proactive external actions
 ```
 
-Gates before expansion:
+Provider connections remain owner-specific even when feature flag is broad.
 
-- capture indicators/consent;
-- summary/action accuracy;
-- source/RBAC compliance;
-- retention/deletion;
-- action governance;
-- cost/latency;
-- clear stop/rollback.
+## 18. Metrics before expansion
 
-## 10. Frontline rollout
+Require suitable evidence for:
 
-Do not infer first factory pilot from administrative Wave 1.
+- research quality/source correction rate;
+- provider read success;
+- connection refresh/re-auth errors;
+- scope issues;
+- external action verified success;
+- duplicate effect prevented;
+- subscription renewal/reconciliation;
+- privacy incidents = 0 target;
+- credential leakage = 0;
+- cross-user data leak = 0;
+- implicit send = 0;
+- user feedback/value.
 
-Select after C0 evidence based on:
+## 19. Stop-the-line
 
-- device availability;
-- browser/network reliability;
-- process owner;
-- procedure/drawing source quality;
-- production context/API readiness;
-- safety/privacy complexity;
-- operator value;
-- low initial actuation risk.
-
-Recommended progression:
+Pause rollout on:
 
 ```text
-read-only/context help
-→ procedure/drawing assistance
-→ voice hands-free
-→ camera/image assistance
-→ governed issue/escalation
-→ Task/Case linkage
-→ training assistance
-→ knowledge candidate capture
+credential leakage
+cross-user external data leak
+unverified external success
+implicit send
+scope escalation bug
+invalid provider event accepted
+missed events without truthful stale state/reconciliation
+personal source auto-shared/promoted
+provider-specific planner drift
+unsafe egress
+architecture/pattern drift
+Chat runtime dependency
 ```
 
-No machine actuation in default Frontline rollout.
+## 20. Final rollout criterion
 
-## 11. Process-learning rollout
-
-```text
-candidate creation only
-→ domain expert review
-→ eval
-→ versioned Knowledge/Playbook update
-→ canary
-→ broader publish
-```
-
-Do not score operators or auto-change standard work from raw observation.
-
-## 12. Feature flags
-
-Each flag requires:
-
-```text
-name
-owner
-scope
-introducedAt
-successCriteria
-rollbackTrigger
-exitCriteria
-plannedRemoval
-```
-
-Useful families:
-
-```text
-copilot-app-bootstrap
-global-panel
-workspace-context
-platform-commands
-intelligence-core
-multimodal-document-image
-voice
-camera-video
-meeting-mode
-frontline-mode
-business-reads
-business-graph
-governed-writes
-durable-work
-watch
-selected-autonomy
-model-routing
-advanced-realtime
-```
-
-Flags do not authorize permanent duplicate architectures or business permission.
-
-## 13. Cohorts
-
-- environment;
-- user/group;
-- app/domain;
-- capability family;
-- surface;
-- device/workstation class;
-- production area/process when applicable;
-- autonomy level.
-
-Cohort never grants business permission.
-
-## 14. Privacy/media rollout gate
-
-Before enabling media capture for a cohort:
-
-```text
-purpose defined
-capture indicator verified
-retention class defined
-raw persistence yes/no explicit
-provider/data policy approved
-access/delete path known
-shared-device cleanup tested
-incident disable/kill switch ready
-```
-
-## 15. Industrial/OT rollout gate
-
-Default rollout contains **no free-form physical actuation**.
-
-If a future initiative proposes OT actuation, it is not a normal Copilot flag. It requires separate approval/evidence for:
-
-- industrial owner;
-- risk assessment;
-- deterministic typed command schema;
-- allowlist;
-- machine state/preconditions;
-- independent safety PLC/interlocks;
-- authorization;
-- simulation/test environment;
-- fail-safe/kill switch;
-- audit.
-
-## 16. Rollback
-
-### Bootstrap
-Disable Copilot routes/services/manifest version; Portal and Chat continue normally.
-
-### Context/Platform
-Disable bridge/panel; full Portal remains functional.
-
-### Intelligence
-Disable candidate provider/feature; Copilot may degrade to explicit unavailable mode, never silently delegate to Chat.
-
-### Media
-Disable modality/provider; stop new sessions; preserve/delete retained data according to policy. Do not silently switch to unapproved provider.
-
-### Meeting
-Disable new Meeting sessions; existing artifacts remain governed/accessible per policy.
-
-### Frontline
-Disable Frontline surface/capabilities and fall back to existing operational process, not to unsafe automation.
-
-### Reads/Graph
-Remove capability availability; Domain APIs continue normally.
-
-### Writes
-Switch Copilot to read-only; preserve audit/outcomes.
-
-### Durable Work
-Block new workflows and preserve running/waiting state safely.
-
-### Watch
-Disable triggers while preserving history.
-
-### Model Router
-Return to known baseline Compute Policy.
-
-**Rollback must never mean “fallback to Minha DELPI Chat runtime”.**
-
-## 17. Before any migration/new abstraction
-
-1. prove owner/boundary;
-2. prove durable need;
-3. ensure no Chat coupling;
-4. reuse C0 primitives;
-5. apply Pattern Decision Matrix;
-6. pass Abstraction Gate;
-7. define privacy/retention/LGPD when applicable;
-8. concurrency/idempotency;
-9. forward/backout path;
-10. tests/observability;
-11. shared-device impact;
-12. industrial safety impact;
-13. check known next-phase impact;
-14. ADR for material exception.
-
-## 18. Stop-the-line
-
-- Chat runtime/API/table dependency;
-- unauthorized data/action;
-- duplicate authority;
-- architecture/pattern drift;
-- framework/provider leak into inner layers;
-- Portal AI/media logic leak;
-- domain business-rule duplication;
-- write without required Decision Gate;
-- duplicate write after retry/resume/voice repeat;
-- Graph/Case/Room permission leakage;
-- Watch ACT without policy;
-- secret/token leak;
-- hidden media capture;
-- undefined/violated media retention;
-- shared-device user-state leak;
-- hidden worker surveillance;
-- visual finding promoted to official fact without owner;
-- arbitrary LLM→machine command;
-- safety interlock bypass;
-- migration without safe rollback;
-- stale/non-reproducible evidence.
-
-## 19. Promotion criteria
-
-- phase COMPLETE_GATE PASS;
-- current SHA evidence;
-- required tests PASS;
-- architecture conformance PASS;
-- security/RBAC negatives PASS;
-- privacy/shared-device/OT gates PASS when applicable;
-- Chat-independence PASS;
-- metrics/traces available;
-- rollback tested;
-- docs/ledger consistent.
-
-## 20. Production progression
-
-```text
-standalone bootstrap internal
-→ contextual platform internal
-→ intelligence/read canary
-→ read scale
-→ governed write canary
-→ durable work selected
-→ Meeting pilot
-→ Frontline read/help pilot
-→ Watch advise selected
-→ broader Meeting/Frontline after evidence
-→ selected ACT/autonomy
-→ advanced realtime only after value/cost/privacy proof
-→ metrics/incident review
-→ progressive expansion
-```
-
-The Copilot must remain deployable, operable and reversible independently of the Minha DELPI Chat throughout this progression.
+External capabilities are mature only when read/write/event/knowledge lifecycles remain provider-neutral, auditable, privacy-scoped, resilient to revoke/expiry/provider failure and independently disableable without destabilizing the rest of the Copilot.
