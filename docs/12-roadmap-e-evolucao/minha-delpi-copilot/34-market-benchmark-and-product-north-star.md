@@ -2,132 +2,214 @@
 
 **Status:** `REFERENCE_ONLY` — referência estratégica, não authority de execução  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
+**Thematic target:** `53–66`
 
 ## 1. Objetivo
 
-Registrar padrões de mercado que inspiraram o desenho sem copiar arquitetura proprietária nem definir a sequência de implementação.
+Registrar classes de capacidades observadas no mercado e a interpretação DELPI correspondente. Este documento **não prova** que tecnologias/infrastruturas existam na DELPI e não define sequência de implementação.
 
 ## 2. North Star
 
-> **Minha DELPI Copilot é a interface inteligente entre as pessoas e a operação da DELPI: entende contexto empresarial e operacional, conecta dados, pessoas, processos e aplicações, investiga problemas, executa trabalho, acompanha resultados e transforma experiência validada em conhecimento governado — no escritório, em reuniões e no chão de fábrica.**
+> **A Minha DELPI evolui de um portal de aplicações para uma plataforma operacional inteligente: um único Copilot entende pessoas e contexto, conhece dados e processos, pesquisa, analisa, prevê e simula, coordena sistemas/automação/pessoas, verifica resultados e aprende sob governança — no escritório, reuniões e chão de fábrica.**
 
 ```text
-PERGUNTAR
-FAZER
-ACOMPANHAR
-TRABALHAR
+PERCEBER
+ENTENDER
+PESQUISAR
+ANALISAR
+PREVER/SIMULAR
+DECIDIR
+PREPARAR/EXECUTAR
+VERIFICAR
+COMUNICAR
 APRENDER COM GOVERNANÇA
 ```
 
-## 3. Padrões de mercado considerados
+## 3. Market capability classes considered
 
-- contexto empresarial profundo/grafos;
-- tools/actions ligadas a sistemas reais;
-- long-running/durable workflows;
-- event triggers/proatividade;
-- human-in-the-loop/approvals;
-- tasks/cases/collaboration spaces;
-- evidence/provenance;
-- specialization reutilizável;
-- multimodal interaction;
-- voice/camera/screen experiences;
-- meeting assistance;
-- frontline/operator assistance;
-- contextual training;
-- model routing/cost controls;
-- governance de conhecimento/capabilities.
+### Enterprise Copilot / Agentic Platforms
 
-Referências conceituais de mercado podem incluir soluções de enterprise copilot, collaboration/meeting AI e frontline operations, mas **nenhuma arquitetura externa substitui evidence do monorepo DELPI**.
+Padrões observados em classes de produtos como Microsoft Copilot/Copilot Studio, SAP Joule, ServiceNow AI Agents, Salesforce Agentforce, Google enterprise AI and similar:
 
-## 4. Decisões próprias da Minha DELPI
+- enterprise context/tools/actions;
+- event triggers/proactivity;
+- human-in-the-loop;
+- model/tool governance;
+- external connectors;
+- personalization/memory;
+- agent/tool interoperability;
+- centralized observability/governance.
 
-Não adotar “um agente por departamento” como experiência/authority principal.
+### Agentic Automation / RPA Orchestration
 
-```text
-1 Copilot standalone
-+ Capabilities
-+ Expertise Packs
-+ Domain Playbooks
-+ Knowledge
-+ Multimodal Tools
-+ Durable Work
-+ Global/Workspace/Meeting/Frontline surfaces
-```
+Classes exemplificadas por UiPath/Automation Anywhere/Power Automate and similar:
 
-Workers internos podem existir como implementação subordinada ao mesmo policy/audit da Copilot API.
+- AI reasoning separated from deterministic executors;
+- robots/APIs/humans in one process;
+- control room/orchestration;
+- worker/queue/package management;
+- human exceptions;
+- verified workflow outcomes.
 
-Decisões fundamentais adicionais:
+DELPI interpretation: **Automation & Execution Hub**, not RPA-first architecture.
 
-- não evoluir o Minha DELPI Chat para virar Copilot;
-- não criar Meeting/Frontline como runtimes paralelos;
-- voz/imagem/vídeo não ampliam RBAC;
-- process learning produz candidates, não auto-rules;
-- computer vision não vira quality authority por default;
-- Copilot não vira industrial safety controller;
-- free-form LLM→machine actuation permanece bloqueado sem iniciativa OT separada.
+### Process Intelligence
 
-## 5. Conceitos estratégicos incorporados
+Classes exemplificadas por Celonis, UiPath Process Mining, ServiceNow Process Mining and similar:
 
-- DELPI Business Graph;
-- Tasks/Cases/Rooms;
-- Inbox/Watch;
-- Evidence/Provenance;
-- Decision Gates;
-- Durable Workflow Runtime;
-- Organizational Knowledge;
-- Governed Learning;
-- Expertise Studio;
-- Meeting Mode/ata viva;
-- Frontline/operator assistance;
-- multimodal voice/image/video/screen;
-- shared-device safety;
-- privacy/media lifecycle;
-- Simulation;
-- Model Router;
-- advanced realtime only after evidence.
+- process discovery;
+- event-log reconstruction;
+- variants/conformance/bottlenecks;
+- automation opportunity detection;
+- before/after value measurement.
 
-## 6. Importante: prioridade estratégica ≠ ordem de construção
+DELPI interpretation: process-first evidence, no employee surveillance.
 
-Classificações antigas como P0/P1/P2 eram prioridades de valor de produto, **não dependências técnicas**.
+### AI Control / Governance
 
-A única ordem válida é:
+Market direction includes centralized inventory/risk/evals/cost/health/incidents/kill switches for AI assets.
+
+DELPI interpretation: **AI Control Tower** as governance plane, not business permission authority.
+
+### Semantic Enterprise Data / Knowledge Graph
+
+Market platforms increasingly combine business semantic models, governed metrics/ontology/graphs and AI.
+
+DELPI interpretation:
 
 ```text
-C0 Platform + Architecture + Media/Privacy/OT Foundation Freeze
-→ C1 Standalone Application Bootstrap
-→ C2 Portal + Operational Context + Platform Commands
-→ C3 Intelligence Core + Multimodal Foundations
-→ C4 Business Reads + DELPI Business Graph
-→ C5 Governed Writes + Durable Work Foundation
-→ C6 Product Work + Meeting/Frontline + Proactivity + Ecosystem
-→ C7 Advanced Realtime + Autonomy + Optimization + Rollout
+Business Graph = relationships
+Semantic Business Layer = official meaning/calculation
 ```
 
-Exemplos:
+without copying source systems.
 
-- Business Graph tem alto valor, mas `EntityRef/RelationshipRef` nasce em C0 e runtime em C4;
-- Task/Case contracts nascem em C0, Durable Workflow em C5 e produtos em C6;
-- Meeting/Frontline têm alto valor, mas media/privacy/device/OT boundaries nascem em C0, media intelligence em C3 e product surfaces em C6;
-- continuous video/realtime pertence a C7 somente após evidence de valor/custo/privacy.
+### Predictive / Prescriptive / Operational Twin
 
-## 7. Interpretação correta dos benchmarks
+Industrial/enterprise platforms such as Siemens, Palantir and others demonstrate:
 
-Soluções de mercado podem inspirar experiência, governança e capacidades, mas não justificam:
+- anomaly/prediction;
+- scenario/what-if;
+- operational state models;
+- optimization;
+- shopfloor intelligence.
 
-- multi-agent departmental runtime;
-- acoplar Copilot ao Minha DELPI Chat;
-- copiar arquitetura de terceiros sem aderência ao monorepo;
-- criar authorities paralelas às APIs/Core;
-- criar `FrontlineContext` paralelo;
-- armazenar áudio/vídeo indiscriminadamente;
-- adotar reconhecimento facial/emotion detection por default;
-- transformar “AI agent” em caminho para PLC/CNC/robô;
-- antecipar Model Router, Graph storage, advanced realtime ou Durable Workflow antes de seus gates.
+DELPI interpretation: prediction is not fact, twin is not source of truth, simulate != apply, OT safety independent.
 
-## 8. Regra de uso deste documento
+### Edge Industrial AI
 
-Use este benchmark para avaliar direção e valor, não para instruir o Cursor a implementar uma feature.
+Industrial Edge platforms demonstrate local inference/caching/offline continuity/model distribution.
 
-Implementação sempre segue `16`, boundary `50`, contracts `17/21`, patterns `49`, spec `53`, gates `20` e requirements `25`.
+DELPI interpretation: governed Edge extension with explicit offline modes; no authority expansion or free-form machine control.
+
+### Model Lifecycle / AI Marketplace
+
+Market direction includes model registries/MLOps, drift/rollback and catalogs/studios for reusable agents/skills/templates.
+
+DELPI interpretation: model lifecycle + Capability Marketplace with supply-chain review and no permission-by-install.
+
+### Analysis / Artifact Workspaces
+
+Modern copilots increasingly execute code/data analysis and create documents, spreadsheets, presentations and other work products.
+
+DELPI interpretation: isolated Analysis Sandbox + versioned/provenanced Artifact Workspace.
+
+### MCP / A2A / Open Interoperability
+
+Open protocols are emerging for model/tool and agent/agent interoperability.
+
+DELPI interpretation: approved adapters/allowlists with least context and same governance, never automatic trust.
+
+## 4. DELPI-specific differentiators
+
+```text
+1 standalone Copilot
++ Core/Keycloak/Portal governance
++ OpenAPI-first Domain Actions
++ Business Graph
++ Semantic Business Layer
++ Expertise/Playbooks/Knowledge
++ Personal Memory
++ Evidence/Outcome truth
++ Process Intelligence
++ Event/Decision Intelligence
++ Automation & Execution Hub
++ Analysis/Artifacts
++ Predictive/Prescriptive/Twin
++ Meeting/Frontline/Edge
++ MCP/A2A interoperability
++ AI Control Tower
++ Model Lifecycle/Marketplace
+```
+
+No “agent per department” user experience or authority model.
+
+## 5. Market ideas deliberately not copied blindly
+
+- departmental multi-agent sprawl;
+- RPA-first execution when authoritative API exists;
+- hidden worker/task surveillance;
+- unrestricted browser/computer control;
+- auto-trust of external tools/agents;
+- generic “memory” mixing private/user/company state;
+- one ontology/graph absorbing all semantics/storage;
+- LLM as official KPI formula engine;
+- model prediction as business truth;
+- twin/simulation writing production directly;
+- Edge autonomous control without central/safety boundaries;
+- Marketplace/plugin installation granting permissions;
+- opaque “AI success” metric without verified business outcomes;
+- free-form AI→PLC/CNC/robot.
+
+## 6. Priority ≠ implementation order
+
+Strategic priorities can be P0/P1/P2, but only `16` defines dependencies.
+
+Current order:
+
+```text
+C0 Enterprise AI/Platform Foundation Freeze
+→ C1 Standalone Bootstrap
+→ C2 Context/Commands
+→ C3 Capability Foundations
+→ C4 Governed Reads/Analysis
+→ C5 Governed Writes/Executors
+→ C6 Product Governance/Experience
+→ C7 Advanced Autonomy/Scale
+```
+
+Examples:
+
+- Process Intelligence has high strategic priority, but event/process/privacy semantics freeze in C0, foundations in C3 and product UX in C6;
+- Personal Memory requires privacy/state contracts before personalization;
+- Semantic Layer definitions precede metric-driven decision automation;
+- Edge requires network/device/OT inventory before runtime;
+- Marketplace requires model/asset/supply-chain governance before publish/enable.
+
+## 7. Benchmark rule
+
+Market product availability only supports strategic plausibility. It does not produce:
+
+```text
+PLATFORM_REUSE
+NEUTRAL_SHARED_REUSE
+PROVEN
+```
+
+Those statuses require actual DELPI repo/infra evidence in C0.
+
+## 8. Strategic position
+
+The resulting product is closer to a **DELPI-specific intelligent operating layer** than a conventional chat copilot. The competitive moat should come from:
+
+- DELPI-specific semantic/business/process context;
+- real system/action integration;
+- trustworthy outcomes;
+- industrial/Frontline/Edge integration;
+- governed learning;
+- reusable enterprise assets;
+- strong safety/privacy/authority boundaries.
+
+## 9. Rule of use
+
+Use this document for direction/benchmarking only. Implementation follows `16`, boundaries `17/50/51`, patterns `49`, state `21`, tests `20`, requirements `25` and applicable specs `53–66`.
