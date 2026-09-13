@@ -4,7 +4,7 @@
 
 ## 1. Objetivo
 
-Todo app/domínio deve evoluir para uso pela UI e pelo Copilot **sem hardcode central e sem contratos paralelos**, contribuindo também para Event/Process/Semantic/Outcome readiness quando aplicável.
+Todo app/domínio deve evoluir para uso pela UI e pela DÉLIA **sem hardcode central e sem contratos paralelos**, contribuindo também para Event/Process/Semantic/Outcome readiness quando aplicável.
 
 ## 2. Base AI-ready
 
@@ -23,7 +23,7 @@ App/Domain
 ├ optional process-event semantics
 └ optional governed metric definitions
         ↓
-Minha DELPI Copilot
+       DÉLIA
 ```
 
 ## 3. App/route/business contract
@@ -31,13 +31,13 @@ Minha DELPI Copilot
 - stable app/route IDs;
 - real backend use cases;
 - accurate OpenAPI/security/error schemas;
-- Core/domain authorization;
+- Keycloak/Core/domain authority preserved;
 - no URL/path/operationId semantics hardcoded in AI core;
 - UI is not business contract.
 
 ## 4. Shared foundations
 
-Reuse when applicable:
+Reuse when applicable and proven:
 
 ```text
 EntityRef / SourceRef / EvidenceRef / OutcomeRef
@@ -48,15 +48,15 @@ EventEnvelope
 CapabilityProjection
 ```
 
-Do not create app-specific incompatible equivalents.
+Do not create app-specific incompatible equivalents. Presence in this list does not prove current implementation.
 
 ## 5. Context readiness
 
-Publish only bounded entity/filter/period/selection/view/data refs. No React state/DOM/token/full dataset.
+Publish only bounded entity/filter/period/selection/view/data refs. No React state/DOM/token/full dataset. Context never grants permission.
 
 ## 6. Entity/deep-link readiness
 
-App declares logical entity→route mapping. Portal resolves/revalidates.
+App declares logical entity→route mapping. Portal resolves/revalidates under the platform contract.
 
 ## 7. Visual capabilities
 
@@ -78,11 +78,11 @@ authoritative Outcome verifier
 errors/audit/correlation
 ```
 
-If no API exists, `57` may allow a governed legacy executor, but the app/domain remains not fully API-ready; RPA/UI mechanics do not enter planner contracts.
+If no API exists, `57` may allow a governed legacy executor through the Automation Hub technical-execution boundary, but the app/domain remains not fully API-ready; RPA/UI mechanics do not enter planner contracts and do not move business authority to the Hub.
 
 ## 9. Evidence / Outcome readiness
 
-Responses/events should expose enough facts for source identity, timestamps/freshness, entity relations, status and verification. Adapter may normalize to Evidence/Outcome; API need not emit Copilot-specific DTOs.
+Responses/events should expose enough facts for source identity, timestamps/freshness, entity relations, status and verification. Adapter may normalize to Evidence/Outcome; API need not emit DÉLIA-specific DTOs.
 
 ## 10. Event readiness
 
@@ -124,9 +124,9 @@ Do not make each plugin define conflicting hidden KPI formulas.
 
 If app/domain owns model output, expose model/version/horizon/freshness/limitations and source/features lineage sufficient for Evidence. Prediction is not domain FACT unless a separate authoritative record says so.
 
-## 14. Artifact/readiness
+## 14. Artifact readiness
 
-Apps can expose refs/export contracts usable by Sandbox/Artifact Workspace; do not make Copilot scrape DOM tables when structured read/export exists.
+Apps can expose refs/export contracts usable by Sandbox/Artifact Workspace; do not make DÉLIA scrape DOM tables when structured read/export exists.
 
 ## 15. Iframe readiness
 
@@ -179,6 +179,7 @@ Do not overload L1–L5 to encode all of them.
 | write risk/Decision | |
 | idempotency/retry | |
 | postcondition/Outcome verifier | |
+| Automation Hub execution contract if legacy executor is needed | |
 | events if relevant | |
 | process event semantics if relevant | |
 | governed metrics if relevant | |
@@ -186,20 +187,23 @@ Do not overload L1–L5 to encode all of them.
 | help/knowledge | |
 | evals | |
 
+Populate from real code/contracts. Unknown implementation/readiness stays `TO_INVENTORY`; documentation alone does not make an item ready.
+
 ## 19. Tests
 
-As applicable: auth/context/deep-link, read/write, Decision/TOCTOU, idempotency, postcondition verification, sibling/unknown onboarding, event duplicate/authenticity, process event mapping, semantic metric reproducibility and iframe security.
+As applicable: auth/context/deep-link, read/write, Decision/TOCTOU, idempotency, postcondition verification, sibling/unknown onboarding, event duplicate/authenticity, process event mapping, semantic metric reproducibility, Automation Hub contract/substitution when relevant and iframe security.
 
 ## 20. Definition of Ready AI
 
 ```text
-[ ] UI/Copilot converge to same use cases
-[ ] shared foundations reused
+[ ] UI/DÉLIA converge to same authoritative use cases
+[ ] shared foundations reused only when proven/appropriate
 [ ] OpenAPI/discovery is sufficient
 [ ] no endpoint/provider/executor hardcode added centrally
 [ ] permissions remain with canonical owners
 [ ] Entity/Context/navigation are typed
 [ ] writes have Decision/idempotency/Outcome semantics
+[ ] technical automation execution respects Automation Hub boundary when applicable
 [ ] relevant events/metrics/process refs are owner-driven
 [ ] tests/evals pass for declared readiness dimensions
 ```
