@@ -1,6 +1,6 @@
-# Minha DELPI Copilot — Multimodal, Meeting, Frontline e Industrial
+# DÉLIA — Multimodal, Meeting, Frontline e Industrial
 
-**Status:** thematic architecture/product spec  
+**Status:** `TARGET` — thematic architecture/product spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Security:** [`08-security-autonomy-audit.md`](./08-security-autonomy-audit.md)  
@@ -9,9 +9,9 @@
 
 ## 1. Decisão de produto
 
-O Minha DELPI Copilot não é um chat administrativo. A visão alvo é uma **interface inteligente entre as pessoas e a operação da DELPI**, disponível no escritório, em reuniões e no chão de fábrica.
+A DÉLIA não é um chat administrativo. A visão alvo é uma **interface inteligente entre as pessoas e a operação da DELPI**, disponível no escritório, em reuniões e no chão de fábrica.
 
-Ele deve poder compreender, conforme capability, device e policy:
+Ela deve poder compreender, conforme capability, device e policy aprovados:
 
 ```text
 texto
@@ -25,18 +25,18 @@ contexto operacional
 APIs/dados empresariais
 ```
 
-Todas as modalidades usam a mesma Copilot API, a mesma identidade de produto, os mesmos RBAC/policies e o mesmo modelo de Evidence.
+A semântica alvo é uma única identidade de produto e um único conjunto de contratos governados. Isso **não prova** que API, media runtime, storage, adapters ou primitives já existam; C0/C1 devem congelar owner, contratos e implementação antes de qualquer afirmação `PROVEN`.
 
-Quando habilitado por policy, o Copilot também pode usar **identidade biométrica governada** para reconhecer usuários conhecidos/enrolled por face ou voz e associar observações a pessoas autorizadas, conforme `54`.
+Quando habilitado por policy, a DÉLIA também pode usar **identidade biométrica governada** para reconhecer usuários conhecidos/enrolled por face ou voz e associar observações a pessoas autorizadas, conforme `54`.
 
 ## 2. Presença para os usuários
 
-A direção de produto é tornar o **entry point do Copilot amplamente disponível aos usuários autenticados da Minha DELPI**, condicionado à permissão de acesso do próprio Copilot.
+A direção de produto é tornar o entry point da DÉLIA amplamente disponível aos usuários autenticados da Minha DELPI, condicionado à permissão de acesso da própria DÉLIA.
 
 Disponibilidade visual não significa autoridade universal.
 
 ```text
-Copilot visible/available
+DÉLIA visible/available
 +
 user effective permissions
 +
@@ -52,14 +52,14 @@ what this user can actually see/do
 Invariante:
 
 ```text
-Copilot effective capabilities ⊆ user effective capabilities
+DÉLIA effective capabilities ⊆ user/service effective authorities
 ```
 
-Um operador, comprador, engenheiro, gestor e diretor usam o mesmo Copilot, porém recebem capability/context/knowledge diferentes conforme suas permissões e situação de trabalho.
+Um operador, comprador, engenheiro, gestor e diretor podem usar a mesma DÉLIA, porém recebem capability/context/knowledge diferentes conforme suas permissões e situação de trabalho.
 
-## 3. Surfaces canônicas
+## 3. Surfaces alvo
 
-O produto possui quatro experiências principais sobre o mesmo runtime:
+Experiências candidatas sobre o mesmo produto:
 
 ```text
 GLOBAL      → painel lateral/contextual no Portal
@@ -68,17 +68,18 @@ MEETING     → reunião presencial/remota com voz, tela e mídia
 FRONTLINE   → operador/posto/máquina com voz, câmera e UI simplificada
 ```
 
-Não são quatro agentes e não são quatro backends.
+Não são quatro agentes nem quatro autoridades independentes.
+
+Target:
 
 ```text
-4 surfaces
-→ same Copilot identity
-→ same Copilot API
-→ same policy/RBAC
-→ same Evidence/Work runtime
+surfaces
+→ same DÉLIA product identity
+→ same canonical Policy/Decision/Evidence/Work semantics
+→ backend/runtime composition frozen only after C0/C1 evidence
 ```
 
-## 4. Copilot Global
+## 4. Global
 
 Uso cotidiano administrativo e técnico:
 
@@ -90,7 +91,7 @@ Uso cotidiano administrativo e técnico:
 - acompanhamento de Tasks/Cases/Inbox/Watch;
 - anexos e mídia pontual.
 
-## 5. Copilot Workspace
+## 5. Workspace
 
 Página completa indicada para:
 
@@ -116,14 +117,14 @@ Meeting Mode é uma sessão explícita de colaboração assistida.
 - compartilhamento de tela quando suportado;
 - documentos apresentados;
 - perguntas por voz/texto;
-- dados consultados nas APIs da Minha DELPI.
+- dados consultados em fontes autorizadas da DELPI.
 
-### 6.2 Comportamento
+### 6.2 Comportamento alvo
 
-Durante a reunião o Copilot pode:
+Durante a reunião, quando as capabilities correspondentes existirem e estiverem autorizadas, a DÉLIA pode:
 
 - transcrever;
-- responder perguntas com dados reais;
+- responder perguntas com dados autorizados;
 - abrir indicadores/entidades;
 - comparar períodos;
 - registrar fatos, decisões e pendências;
@@ -140,7 +141,7 @@ A ata não deve ser apenas um documento morto.
 ```text
 reunião
 → transcript/evidence
-→ decisões
+→ decisões confirmadas
 → ações propostas
 → responsáveis/prazos quando confirmados
 → Tasks/Cases/Workflows
@@ -148,16 +149,14 @@ reunião
 → próxima reunião
 ```
 
-O Copilot pode gerar uma ata automaticamente, porém **extrair uma ação da conversa não significa executá-la**.
-
-Exemplo:
+A DÉLIA pode gerar uma ata, porém **extrair uma ação da conversa não significa executá-la**.
 
 ```text
 “João vai revisar o sensor amanhã”
 → candidate action
-→ usuário revisa/confirma
-→ Decision Gate/Business Action quando aplicável
-→ Task/solicitação criada
+→ revisão/confirmação quando necessária
+→ Policy/Decision/Business Action quando aplicável
+→ Task/solicitação criada por capability autorizada
 ```
 
 ## 7. Consentimento e indicadores de captura
@@ -187,7 +186,7 @@ screen retention
 derived artifacts/evidence retention
 ```
 
-Por padrão, aplicar **data minimization**: não reter mídia bruta quando transcript/evidence derivado atende ao propósito e à policy.
+Por padrão, aplicar data minimization: não reter mídia bruta quando transcript/evidence derivado atende ao propósito e à policy.
 
 ## 8. Participantes e identidade em reunião
 
@@ -201,8 +200,6 @@ Fontes preferenciais:
 - associação manual corrigível;
 - face/voice candidate de usuários previamente enrolled conforme `54`.
 
-Pipeline permitido:
-
 ```text
 authenticated/invited participants
 + face/voice candidate
@@ -211,7 +208,7 @@ authenticated/invited participants
 → diarized transcript / participant refs
 ```
 
-Biometria **não substitui autenticação, RBAC ou Decision Gate**. Pessoa não enrolled, ambígua ou abaixo do threshold permanece `UNKNOWN_PERSON`/label de sessão até confirmação.
+Biometria **não substitui autenticação, Core RBAC ou Decision Gate**. Pessoa não enrolled, ambígua ou abaixo do threshold permanece `UNKNOWN_PERSON`/label de sessão até confirmação.
 
 ## 9. Frontline Mode
 
@@ -229,27 +226,25 @@ A experiência prioriza:
 - imagem/desenho em tela cheia;
 - ações rápidas e seguras.
 
-Exemplo:
+Exemplo target:
 
 ```text
-Operador autenticado ou biometricamente reconhecido como candidate
+operador com sessão válida
++ biometric candidate opcional
 + posto/terminal
-+ OP
-+ operação
-+ máquina
-+ produto/revisão
++ OP/operação/máquina/produto
 → user/session validation
-→ WorkspaceContext operacional
-→ Copilot
+→ bounded operational context
+→ DÉLIA
 ```
 
 ## 10. Contexto operacional
 
 Não criar um segundo modelo paralelo de contexto.
 
-Máquina, OP, operação, produto, lote, ferramenta, posto e material devem ser representados preferencialmente por `EntityRef` dentro do `WorkspaceContext`, com source owner conhecido.
+Máquina, OP, operação, produto, lote, ferramenta, posto e material devem referenciar IDs/owners canônicos. `EntityRef`/`WorkspaceContext` só são usados conforme os contratos efetivamente congelados em C0/C2; contexto nunca concede autoridade.
 
-Exemplo conceitual:
+Exemplo conceitual, não factual:
 
 ```json
 {
@@ -258,7 +253,7 @@ Exemplo conceitual:
   "entityRefs": [
     {"entityType": "productionOrder", "entityId": "583922", "sourceSystem": "production-api"},
     {"entityType": "machine", "entityId": "PRESS-04", "sourceSystem": "maintenance-api"},
-    {"entityType": "product", "entityId": "90264238", "sourceSystem": "api-delpi"}
+    {"entityType": "product", "entityId": "90264238", "sourceSystem": "domain-owner"}
   ]
 }
 ```
@@ -267,7 +262,7 @@ Device/post metadata pode existir como bounded session metadata, mas não substi
 
 ## 11. Hands-free voice
 
-Frontline deve suportar, quando device/policy permitirem:
+Frontline pode suportar, quando device/policy permitirem:
 
 ```text
 “próxima etapa”
@@ -279,13 +274,13 @@ Frontline deve suportar, quando device/policy permitirem:
 “mostre o problema anterior”
 ```
 
-Voz é um **transport/input modality**, não uma autoridade especial. O mesmo planner/policy/Decision Gate se aplica.
+Voz é um **transport/input modality**, não uma autoridade especial. O mesmo Policy/Decision/AuthZ se aplica.
 
-Speaker recognition, quando habilitado, apenas ajuda a resolver `userRef`; não autoriza ações por si só.
+Speaker recognition apenas ajuda a resolver candidate identity; não autoriza ações por si só.
 
 ## 12. Imagem e câmera
 
-A câmera pode ser usada para:
+A câmera pode ser usada, quando aprovada, para:
 
 - mostrar peça/defeito;
 - localizar região de desenho/objeto;
@@ -293,41 +288,29 @@ A câmera pode ser usada para:
 - comparação com referência;
 - coleta de Evidence;
 - apoio ao treinamento;
-- reconhecer usuário enrolled/participante quando a capability biométrica estiver habilitada;
+- reconhecer usuário enrolled/participante;
 - observar atividades/processos visíveis dentro do escopo aprovado.
 
-Resultado visual deve carregar, quando material:
+Resultado visual material deve preservar provenance, confidence quando metodologicamente válida, limitations, frame/source/time, entity/context refs e model/extractor version.
 
-- confidence;
-- limitations;
-- frame/image/source;
-- timestamp;
-- entity/context refs;
-- person/user candidate refs quando aplicável;
-- model/extractor version.
-
-Visão não pode transformar hipótese em fato.
+Visão não transforma hipótese em fato.
 
 ## 13. Vídeo
 
-Suporte a vídeo deve evoluir em níveis:
+Evolução target:
 
 ```text
 V1 imagem/frame pontual
 V2 vídeo curto sob demanda
 V3 amostragem temporal de sessão assistida
-V4 real-time/continuous assistance quando custo, rede e policy justificarem
+V4 real-time/continuous assistance somente se custo, rede, safety e policy justificarem
 ```
 
-Não enviar/armazenar vídeo contínuo indiscriminadamente.
-
-Large/long video deve preferir pipeline assíncrono, segmentação e Evidence refs, evitando requests síncronos ilimitados.
-
-Tracking de pessoa ao longo da sessão deve ser bounded, purpose-specific e não virar perfil global oculto.
+Não enviar/armazenar vídeo contínuo indiscriminadamente. Tracking de pessoa deve ser bounded e purpose-specific, sem perfil global oculto.
 
 ## 14. Compartilhamento de tela
 
-Meeting/Workspace podem permitir que o usuário compartilhe uma surface autorizada para contextualização.
+Meeting/Workspace podem permitir contextualização por screen sharing autorizado.
 
 Regras:
 
@@ -335,137 +318,78 @@ Regras:
 - indicator visível;
 - bounded capture;
 - redaction quando possível;
-- nunca interpretar screen sharing como autorização de dados adicionais;
-- não usar DOM automation para business actions.
+- screen share não concede acesso adicional;
+- não usar DOM automation como business authority.
 
 ## 15. Assistência ao operador
 
-O Copilot pode combinar:
+A DÉLIA pode combinar fontes autorizadas como instrução de trabalho, desenho/revisão, BOM/estrutura, OP/operação, histórico de qualidade, ocorrências, manutenção, conhecimento validado e câmera/voz.
 
-```text
-instrução de trabalho
-+ desenho/revisão
-+ BOM/estrutura
-+ OP/operação
-+ histórico de qualidade
-+ ocorrências
-+ manutenção
-+ conhecimento validado
-+ câmera/voz
-```
-
-para explicar uma tarefa, responder dúvidas ou orientar investigação.
-
-Ele não substitui interlocks, procedimentos obrigatórios, validações de qualidade ou autoridade do processo.
+Ela não substitui interlocks, procedimentos obrigatórios, validações de qualidade ou autoridade do processo.
 
 ## 16. Treinamento contextual
 
-Frontline pode oferecer aprendizado durante o trabalho:
-
-- passo a passo;
-- explicação de desenho;
-- vídeos/procedimentos;
-- perguntas de checagem;
-- exemplos validados;
-- ajuda por voz;
-- link para especialista/Room.
-
-Treinamento assistido não concede qualificação/certificação automaticamente. Sistemas/owners oficiais continuam authority dessa condição.
+Frontline pode oferecer aprendizado durante o trabalho, conforme owner/source aprovados. Treinamento assistido não concede qualificação/certificação automaticamente; systems/owners oficiais continuam authority dessa condição.
 
 ## 17. Aprender com o processo fabril
 
 “Aprender” significa **gerar conhecimento candidato de forma governada**, não alterar comportamento automaticamente.
 
-Fluxo:
-
 ```text
 observação autorizada
 + voz/vídeo/contexto
 + dados de processo
-+ person/user ref quando necessário e permitido
-→ candidate insight/practice
-→ Evidence
-→ especialista/owner review
+→ Evidence/Hypothesis
+→ knowledge candidate
+→ owner/review
 → eval/validação
-→ versioned Playbook/Knowledge/procedure change
-→ publish/canary
+→ version
+→ publish pelo owner correto
 ```
 
 Nunca:
 
 ```text
-operador faz algo uma vez
-→ Copilot muda procedimento de produção automaticamente
+uma observação
+→ mudança automática de procedimento/policy
 ```
 
 O objetivo é aprender o processo, não criar um perfil secreto do trabalhador.
 
 ## 18. Conhecimento tácito
 
-O Copilot pode ajudar a capturar conhecimento que hoje vive apenas na experiência das pessoas.
+A DÉLIA pode ajudar a capturar experiência individual como **candidate insight/practice**, vinculada a Evidence e contexto, nunca como regra corporativa automática.
 
-Exemplo:
+A autoria pode ser preservada quando necessária; o conhecimento publicado deve seguir owner, review, eval, version e publish.
 
-> “Quando esse material vem desse fornecedor eu verifico primeiro esta região porque já tivemos rebarba.”
+## 19. Identidade biométrica e observação de pessoas
 
-O sistema pode produzir um **candidate experience/solution pattern**, vinculado a Evidence e contexto, sujeito a revisão do owner.
-
-A autoria pode ser preservada quando necessária, porém o conhecimento publicado deve ser preferencialmente abstraído para o processo e não para julgamentos pessoais.
-
-## 19. Identidade biométrica e análise de pessoas
-
-O Copilot pode reconhecer usuários conhecidos por **face e voz** conforme a capability governada definida em `54`.
+A DÉLIA pode reconhecer usuários conhecidos por face/voz somente conforme a capability governada definida em `54`.
 
 Permitido:
 
-- closed-set face recognition/verification de usuários enrolled;
+- closed-set recognition/verification de usuários enrolled;
 - speaker recognition/diarization;
-- participant association em Meeting;
+- participant association;
 - shared-device identity assistance;
-- observação de comportamentos objetivos ligados ao processo;
-- análise de sequência de trabalho, interação com ferramentas/máquinas, repetição, etapas e desvios observáveis;
-- captura de padrões operacionais para melhoria e treinamento.
+- fatos observáveis do processo;
+- sequência de trabalho, interação com ferramentas/máquinas, repetição, etapas e desvios observáveis quando metodologicamente definidos.
 
-Por default, não inferir de biometria/comportamento:
+Por default, não inferir personalidade, honestidade, intenção moral, emoção como truth, saúde, atributos sensíveis, aptidão profissional global, propensão disciplinar ou score oculto de produtividade.
 
-- personalidade;
-- honestidade/confiabilidade;
-- intenção moral;
-- emoção como truth;
-- saúde/diagnóstico;
-- atributos sensíveis;
-- aptidão profissional global;
-- propensão disciplinar;
-- score oculto de produtividade.
-
-Também não usar biometria como autoridade automática para contratação, promoção, punição, remuneração, avaliação formal ou desligamento.
+Biometria/Human Observation não é authority automática para decisão trabalhista.
 
 ## 20. Boundary IT/OT e máquinas
 
-Copilot **não é safety controller** e não pode virar caminho livre LLM → PLC/CNC/robô/máquina.
-
-Regra inicial:
+DÉLIA **não é safety controller** e não pode virar caminho livre LLM/voz/visão → PLC/CNC/robô/máquina.
 
 ```text
-Copilot → observar/consultar/explicar/recomendar
-Copilot → preparar solicitação/ação empresarial governada
-Copilot -X→ comando físico arbitrário de máquina
+DÉLIA → observar/consultar/explicar/recomendar
+DÉLIA → PREPARE ação empresarial governada
+DÉLIA -X→ comando físico arbitrário de máquina
 ```
 
-Qualquer futura atuação OT exige programa/gate separado com:
-
-- owner de automação/engenharia;
-- protocol allowlist;
-- comando determinístico tipado;
-- safety PLC/interlocks independentes;
-- machine state/version checks;
-- human authorization adequada;
-- simulation/test environment;
-- fail-safe/kill switch;
-- audit;
-- risk assessment específico.
-
-LLM nunca substitui interlock ou lógica de segurança certificada.
+Qualquer futura atuação OT exige iniciativa/gate separado com owner industrial, comandos determinísticos tipados, interlocks independentes, state/precondition checks, autorização apropriada, ambiente de teste/simulação, fail-safe/kill switch, audit e risk assessment específico.
 
 ## 21. Qualidade e inspeção
 
@@ -478,31 +402,17 @@ visual finding
 → authorized decision
 ```
 
-Somente uma capability explicitamente validada para inspeção automática pode atuar como decisão de qualidade.
-
 ## 22. Shared devices e identidade
 
-Postos, tablets e salas podem ser dispositivos compartilhados.
+Postos, tablets e salas podem ser dispositivos compartilhados. Prever usuário atual explícito, candidate identity opcional, timeout/logout, troca de usuário sem leak, limpeza local, device identity separada de user identity e policy de kiosk/shared terminal quando necessária.
 
-A arquitetura precisa prever:
-
-- usuário atual explícito;
-- biometric candidate quando habilitado;
-- lock/session timeout;
-- troca rápida de usuário sem state leak;
-- logout seguro;
-- limpeza de mídia/contexto local;
-- device identity separada de user identity;
-- scopes limitados;
-- kiosk/shared-terminal policy quando necessário.
-
-Um device autenticado ou biometricamente reconhecido nunca substitui autorização do usuário para Business Actions.
+Biometric match nunca substitui autorização para Business Actions.
 
 ## 23. Media architecture
 
-A Copilot API deve esconder providers concretos atrás de ports/adapters.
+Providers concretos ficam em adapters. Ports só são criados quando o Abstraction Gate de `49` provar boundary, consumer/variation e lifecycle/test-double reais.
 
-Possíveis boundaries, se C0 provar necessários:
+Possíveis candidates, não contratos aprovados:
 
 ```text
 SpeechToTextPort
@@ -517,29 +427,11 @@ SpeakerIdentityPort
 HumanObservationPort
 ```
 
-Não criar todos antecipadamente: cada port passa pelo Abstraction Gate de `49`.
-
 ## 24. MediaRef e provenance
 
-C0 deve decidir se `MediaRef` é primitive compartilhado necessário.
+C0 deve decidir se `MediaRef` é primitive compartilhado necessário. Qualquer shape antes disso é candidate.
 
-Semântica candidata:
-
-```text
-mediaId/ref
-kind: audio|image|video|screen|document
-source
-capturedAt
-owner/session refs
-retention class
-consent/policy ref
-content hash/version
-storage ref if persisted
-```
-
-Evidence aponta para MediaRef/location quando necessário; não duplica conteúdo bruto.
-
-Biometric template/ref deve ser modelado separadamente da mídia bruta.
+Biometric template/ref deve permanecer separado da mídia bruta.
 
 ## 25. Retention e mídia
 
@@ -560,71 +452,21 @@ delete/anonymize
 provider data handling
 ```
 
-Meeting transcript, raw audio, raw video e biometric template são classes distintas e não herdam a mesma retenção por conveniência.
+Meeting transcript, raw audio, raw video e biometric template são classes distintas.
 
 ## 26. Realtime e custo
 
-Voice/video real-time precisa de budgets e backpressure.
-
-Definir:
-
-- max session duration;
-- audio/video bitrate/frame sampling;
-- concurrent sessions;
-- provider quotas;
-- latency targets;
-- degraded mode;
-- network loss behavior;
-- async fallback;
-- cost telemetry.
-
-Não criar real-time contínuo como default para todo usuário.
+Voice/video real-time precisa de budgets e backpressure. Não criar real-time contínuo como default para todo usuário.
 
 ## 27. Meeting artifact model
 
-Meeting pode produzir:
+Um artifact de Meeting pode referenciar transcript, summary, participants, identity candidates/corrections, facts/evidence, questions, decisions confirmadas, candidate actions, Task/Case refs e ata.
 
-```text
-transcript ref
-summary
-participants refs
-participant identity candidates/corrections when applicable
-facts/evidence
-questions
-resolved/unresolved topics
-decisions
-candidate actions
-Task/Case refs
-artifact/ata ref
-```
-
-A ata deve marcar diferença entre:
-
-- transcrição;
-- resumo do Copilot;
-- identidade reconhecida/confirmada;
-- decisão humana confirmada;
-- action executada;
-- source data consultado.
+Distinguir explicitamente transcrição, síntese da DÉLIA, identidade candidata/confirmada, decisão humana confirmada e action executada/verificada.
 
 ## 28. Frontline artifact model
 
-Uma sessão de assistência pode produzir:
-
-```text
-session ref
-operator/user ref
-biometric candidate/confirmation ref when applicable
-device/workstation ref
-EntityRefs (OP/machine/product/operation)
-questions/answers
-media/evidence refs
-issues/findings
-observable process patterns
-escalations
-candidate knowledge
-Task/Case/Request refs
-```
+Uma sessão pode produzir refs de session/operator/device/entities, questions/answers, media/evidence, issues/findings, observable process patterns, escalations, knowledge candidates e Task/Case/Request refs.
 
 Persistir somente o necessário à finalidade e policy.
 
@@ -632,106 +474,63 @@ Persistir somente o necessário à finalidade e policy.
 
 ### C0 — Foundation
 
-Inventariar/congelar:
-
-- browser/media APIs existentes;
-- streaming/SSE/WebSocket/WebRTC candidates;
-- devices compartilhados;
-- meeting-room hardware/processes;
-- mobile/tablet/kiosk patterns;
-- media storage;
-- privacy/consent/retention;
-- corporate photo/avatar/user sources;
-- biometric enrollment authority/storage/key management;
-- face/voice provider constraints;
-- identity thresholds/correction/liveness needs;
-- prohibited human-inference classes;
-- speech/vision provider constraints;
-- network/cost budgets;
-- production context sources;
-- machine/OT APIs/events e boundary de segurança;
-- existing training/procedure sources;
-- MediaRef/biometric ref necessidade;
-- shared-device identity/session rules.
+Inventariar e congelar media/device/biometric/privacy/storage/provider/network/OT owners, fontes e contratos. Nenhum runtime multimodal/biométrico é `PROVEN` apenas por esta documentação.
 
 ### C1 — Bootstrap
 
-MFE/API nascem preparados para capability flags, responsive/accessibility e media permission handling, sem ainda implementar Meeting/Frontline/biometric recognition completos.
+Bootstrap deve suportar futuras capability flags, responsive/accessibility e permission handling conforme contratos congelados, sem antecipar Meeting/Frontline/biometric runtime.
 
 ### C2 — Context
 
-WorkspaceContext suporta contexto operacional via EntityRefs e device/session metadata bounded. Identity association não substitui Core auth/RBAC.
+Contexto operacional usa refs canônicas e bounded device/session metadata. Identity association não substitui Keycloak/Core/Domain authorization.
 
-### C3 — Intelligence Core
+### C3 — Intelligence foundations
 
-Implementar conforme escopo:
+Implementar somente capabilities priorizadas após C0, com adapters provider-neutral e Evidence/provenance conforme owner/contrato real.
 
-- speech input/output baseline;
-- image/document multimodal;
-- short-video/media ingestion quando priorizado;
-- media Evidence/provenance;
-- biometric/perception adapters quando priorizados e aprovados;
-- provider adapters;
-- transcription/synthesis foundations.
+### C4 — Reads/Analysis
 
-### C4 — Reads/Graph
+Correlacionar mídia/contexto com entities e fontes autorizadas sem duplicar domain truth.
 
-Correlacionar mídia/contexto com OP, produto, máquina, lote, manutenção, qualidade e demais entities autorizadas.
+### C5 — Governed ACT
 
-### C5 — Writes/Durable
-
-Candidate actions de voz/reunião/frontline passam por Decision Gates, idempotency e Domain APIs. Biometric match nunca substitui esses gates.
+Candidate actions de voz/reunião/frontline podem alcançar L4 governed ACT quando explicitamente autorizadas, com live AuthZ, Policy/Decision, idempotency, audit e Outcome verification. Technical execution permanece no Automation Hub/approved executor boundary; biometric match nunca substitui gates.
 
 ### C6 — Product Work/Ecosystem
 
-Entregar progressivamente:
-
-- Meeting Mode;
-- ata viva;
-- participant/speaker recognition governado;
-- Frontline Mode;
-- shared-device identity assistance;
-- training assistance;
-- process-observation candidates;
-- Task/Case/Room/Inbox linkage;
-- Organizational Knowledge promotion flow.
+Meeting/Frontline/participant association/shared-device assistance/process-observation candidates podem evoluir como product experiences. Watch permanece `OBSERVE|ADVISE|PREPARE` por default e não dispara ACT autonomamente.
 
 ### C7 — Advanced/Optimization
 
-Somente depois de evidence real:
+Continuous multimodal, advanced realtime/Edge e selected autonomous ACT/L5 somente com evidence e gates próprios. L5 OFF por default.
 
-- continuous multimodal assistance;
-- advanced real-time video sampling;
-- optimized biometric/realtime processing;
-- room appliances/wearables;
-- edge processing/model routing;
-- selected automation within policy.
-
-**OT physical actuation remains outside default C7 autonomy unless a separate industrial safety gate explicitly authorizes it.**
+**OT physical actuation permanece fora da autonomia empresarial padrão e exige gate específico de segurança industrial.**
 
 ## 30. Acceptance outcomes
 
-A visão está arquiteturalmente suportada quando:
+Quando a capability estiver em escopo, provar no SHA/config avaliado:
 
 ```text
-one Copilot across office + frontline
+one DÉLIA product identity across approved surfaces
 permission parity across surfaces
-voice/image/video are modalities, not bypasses
+voice/image/video are modalities, not authority bypasses
 meeting capture is explicit/consented
 data retention is class-specific
-operational context uses canonical EntityRefs
-frontline shared-device sessions do not leak users/data
-known enrolled users can be recognized under explicit policy
-unknown/ambiguous people remain unknown or user-confirmed
+operational context uses canonical refs
+shared-device sessions do not leak users/data
+known enrolled users recognized only under explicit policy
+unknown/ambiguous people remain unknown or corrected
 biometric match never grants permission
 media findings produce Evidence/limitations
-human observation stays grounded in observable process evidence
+human observation stays grounded in observable process facts
 meeting actions require governance
 process learning produces candidates, not auto-rules
 no emotion/personality/character inference
 no biometric-based automatic employment decision
 no arbitrary LLM→machine control
 ```
+
+Sem evidência obrigatória, resultado permanece `PENDING`/`INCONCLUSIVE`, nunca PASS.
 
 ## 31. Non-goals iniciais
 
@@ -742,11 +541,11 @@ no arbitrary LLM→machine control
 - scoring oculto de pessoas;
 - decisão trabalhista automática baseada em biometria;
 - substituir sistema de segurança de máquina;
-- aprovar/reprovar peça apenas porque um LLM “viu” a imagem;
+- aprovar/reprovar peça apenas porque um modelo “viu” a imagem;
 - mudar procedimento automaticamente a partir de observação;
 - delegar Business Actions à automação de tela;
 - manter mídia bruta/templates biométricos sem propósito/retenção definidos.
 
 ## 32. North Star ampliado
 
-> **Minha DELPI Copilot é a interface inteligente entre as pessoas e a operação da DELPI. Está presente no escritório e na fábrica, entende texto, voz, imagem, vídeo, documentos, contexto operacional e dados empresariais; pode reconhecer usuários conhecidos sob governança explícita e compreender padrões observáveis de trabalho; ajuda pessoas a entender, decidir, executar e aprender, preservando permissões, evidências, segurança, privacidade e governança.**
+> **DÉLIA é a interface inteligente entre as pessoas e a operação da DELPI. A visão alvo cobre escritório e fábrica, texto, voz, imagem, vídeo, documentos, contexto operacional e dados empresariais, preservando permissões, evidências, segurança, privacidade, safety industrial e governança.**
