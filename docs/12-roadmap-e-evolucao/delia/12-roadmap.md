@@ -1,12 +1,12 @@
-# 12 — Roadmap macro do Minha DELPI Copilot
+# 12 — Roadmap macro da DÉLIA
 
 > **Status:** planejamento canônico  
-> **Produto:** aplicação standalone nova  
+> **Produto:** aplicação standalone nova de Continuous Operational Intelligence  
 > **Autoridade de execução:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 > **Requirements:** `CP-001…CP-310`  
 > **Próxima etapa:** `C0.S0`
 
-Este documento mostra a evolução macro. Ordem atômica/dependências/gates vivem somente em `16`.
+Este documento mostra a evolução macro. Ordem atômica, dependências e gates vivem somente em `16`.
 
 ## Visão geral
 
@@ -16,7 +16,7 @@ C1 — Standalone Application Bootstrap
 C2 — Portal Context + Platform Commands
 C3 — Intelligence Core + Capability Foundations
 C4 — Governed Reads + Graph/Semantics/Analysis/Predictive Discovery
-C5 — Governed Writes + Executors + Durable Work
+C5 — Governed ACT + Executors + Durable Work
 C6 — Product Work + Process/Control/Meeting/Frontline/Ecosystem
 C7 — Advanced Autonomy + Twin/Edge/Marketplace/Optimization + Rollout
 ```
@@ -46,9 +46,11 @@ Output: `FOUNDATION_FREEZE=PASS` and `CHAT_RUNTIME_DEPENDENCY=0`.
 
 Own API/MFE/manifest/Gateway/Compose/JWT-Core/federation/plugin-ui/full-page/global panel/accessibility/rollback. No thematic runtime auto-enabled.
 
+Os namespaces planejados `minha-delpi-copilot-*` permanecem técnicos e temporários até C0.S1; o produto é DÉLIA.
+
 ## C2 — Portal Context + Commands
 
-WorkspaceContext, EntityRefs/SourceRefs, typed navigation/platform commands, iframe bridge, shared-device baseline, operational context. Context never grants authority.
+WorkspaceContext, EntityRefs/SourceRefs, typed navigation/platform commands, iframe bridge, shared-device baseline e operational context. Context never grants authority.
 
 ## C3 — Intelligence + Capability Foundations
 
@@ -69,7 +71,7 @@ WorkspaceContext, EntityRefs/SourceRefs, typed navigation/platform commands, ifr
 - Edge device/package/cache contracts;
 - Model Registry/eval lineage.
 
-No material autonomous ACT.
+No material ACT in C3. `PREPARE != ACT`.
 
 ## C4 — Governed Reads + Analysis
 
@@ -84,9 +86,11 @@ No material autonomous ACT.
 - Edge read-only cached knowledge/telemetry;
 - source/model/metric provenance.
 
-## C5 — Governed Writes + Durable Foundation
+## C5 — Governed ACT + Durable Foundation
 
-- Decision Gate/revalidation/idempotency;
+C5 é o primeiro gate que pode liberar `ACT` material governado para capabilities explicitamente autorizadas. Na taxonomia de autonomia de `08`, isso corresponde a `L4 governed execute`; não equivale a L5/autonomous execution.
+
+- Decision Gate/revalidation/live AuthZ/idempotency/audit;
 - business/external/Teams writes;
 - Automation Capability Registry + executor adapters;
 - API/function/RPA/computer-use only when justified;
@@ -95,7 +99,14 @@ No material autonomous ACT.
 - Process opportunity → candidate/PREPARE;
 - MCP/A2A writes under same gates;
 - Artifact lifecycle/version/provenance/ACL;
-- Prescriptive recommendation → PREPARE, never implicit Apply.
+- Prescriptive recommendation → PREPARE, never implicit Apply;
+- material ACT → authoritative postcondition verification when required.
+
+```text
+L3 = PREPARE
+L4 = GOVERNED EXECUTE
+L5 = AUTONOMOUS EXECUTE WITH EXPLICIT LIMITS
+```
 
 ## C6 — Product Work + Governance Experience
 
@@ -115,19 +126,21 @@ No material autonomous ACT.
 - Capability Marketplace draft/review/catalog;
 - Organizational Knowledge/Governed Learning/Expertise Studio.
 
-ACT remains C7.
+Watch não dispara ACT autonomamente em C6. Capabilities de L4/governed ACT já liberadas em C5 continuam sujeitas a live AuthZ, Policy/Decision, idempotência, audit e Outcome verification.
 
 ## C7 — Advanced Autonomy + Scale
 
-- capability-scoped L0–L5, L5 OFF default;
-- selected Watch ACT/autonomous workflows;
+C7 adiciona autonomia avançada; não inaugura o conceito de ACT.
+
+- capability-scoped autonomy, com L5 OFF default;
+- selected Watch autonomous ACT/autonomous workflows;
 - closed-loop Process Intelligence under explicit policy;
 - mature AI Control Tower budgets/cohorts/incidents/kill switches;
 - autonomous A2A delegation;
 - advanced personalization privacy-safe;
 - semantic federation/materialization scale;
 - scaled sandbox/artifacts;
-- Predictive/Prescriptive ACT with verified Outcome;
+- Predictive/Prescriptive autonomous ACT with verified Outcome;
 - advanced Operational Twin + `SIMULATE != APPLY`;
 - Edge rollout/offline bounded actions only if separately approved;
 - production model deployment/drift/rollback/revoke;
@@ -145,8 +158,8 @@ Foundation Release                  → C0
 Standalone Bootstrap                → C1
 Contextual Platform                 → C2
 Intelligence Foundations            → C3
-Connected Analytical Copilot        → C4
-Governed Action/Artifact Copilot     → C5
+Connected Analytical DÉLIA          → C4
+Governed Action / Durable Work       → C5
 Enterprise Intelligence Platform    → C6
 Governed Autonomous Enterprise      → C7
 ```
@@ -169,6 +182,7 @@ Model/Marketplace install != permission
 API before RPA where authoritative contract exists
 technical success != verified Outcome
 PREPARE != ACT
+C5 governed ACT != C7 autonomous ACT
 L5 default OFF
 ```
 
