@@ -1,296 +1,95 @@
 # Minha DELPI Copilot — Baseline de Integração com a Plataforma
 
 **Status:** `CANONICAL_BASELINE` de evidências para integração  
-**Escopo:** Portal, Core API, Gateway, APIs, MFEs, plugin-ui, infraestrutura e gaps a inventariar para media/Meeting/Frontline/OT  
+**Escopo:** Portal, Core API, Gateway, APIs, MFEs, plugin-ui, infraestrutura e gaps `TO_INVENTORY` para media/biometric/Internet/connectors/Meeting/Frontline/OT  
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
+**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
+**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
+**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)
 
 ## 1. Objetivo
 
-Registrar fatos observados no repositório antes da implementação do Copilot standalone e separar claramente **fato comprovado** de **item ainda `TO_INVENTORY`**.
+Separar **fatos já comprovados no repositório** de itens ainda `TO_INVENTORY`. Este arquivo não substitui C0.S0: tudo é revalidado no HEAD de execução.
 
-Este arquivo não substitui C0.S0. Ele estabelece a baseline já comprovada que C0 deve revalidar no HEAD de execução e lista novos gaps de mídia/device/industrial que **não podem ser preenchidos por suposição**.
+## 2. Portal — PROVEN
 
-## 2. Portal é Shell e Host de aplicações — PROVEN
+Portal React/Vite funciona como Shell/Host. `AuthContext` integra Keycloak/Core, carrega usuário/apps/rotas e fornece `getAccessToken`.
 
-O Portal atual possui React/Vite e separação em `auth/components/data/hooks/layout/pages/routes/state/ui/ui-kit/utils`.
+Consequência: Copilot não implementa login/RBAC no frontend.
 
-O `AuthContext`:
+## 3. AppHost / Module Federation — PROVEN
 
-- obtém token do Keycloak;
-- consulta Core API;
-- carrega usuário e apps autorizados;
-- agrega rotas fornecidas pelos apps;
-- fornece `getAccessToken`, user, apps/routes, favorites e notifications.
+Portal suporta `embedded`, `external` e `federated`. Para federated resolve `remoteEntry`, share scope, módulo `mount()` e host props.
 
-Consequência:
+Decisão: Copilot MFE será `federated` e seguirá federation shared config existente.
 
-> Copilot não implementa login/RBAC no frontend. Ele é hospedado pelo Portal e recebe a identidade/token pelo contrato normal do host.
+## 4. AppLauncher / Core-driven menu — PROVEN
 
-## 3. AppHost suporta três modos — PROVEN
+Apps/rotas vêm do Core/AuthContext. Não criar catálogo manual app→URL no Portal/Copilot.
 
-O contrato do Portal possui:
+## 5. Manifest / plugin-ui — PROVEN
 
-```text
-embedded
-external
-federated
-```
+Manifestos `microfrontend` e `@delpi/plugin-ui` já são padrões compartilhados. Copilot terá manifesto próprio e reutilizará design system/federation.
 
-Para `federated`, o `AppHost`:
+## 6. Core API — PROVEN
 
-1. resolve `remoteEntry`;
-2. inicializa share scope;
-3. carrega módulo exposto;
-4. exige `mount()`;
-5. passa propriedades de host.
+Core segue Clean Architecture e permanece authority de:
 
-Props observadas:
-
-```text
-getAccessToken
-basePath
-pathname
-search
-alternateEntry
-appRoutes
-routeLabel
-permissions
-isSuperadmin
-```
-
-**Decisão:** Copilot será MFE `federated`.
-
-`iframe` não é o modo alvo do próprio Copilot; iframe bridge é apenas integração do Copilot com outros apps iframe.
-
-## 4. AppLauncher/Menu são Core-driven — PROVEN
-
-`AppLauncher` usa `apps` e `routes` do `AuthContext`, logo o app registrado na Core API aparece/navega conforme manifesto e permissões.
-
-Não criar catálogo manual do Copilot dentro do Portal.
-
-## 5. Manifestos de apps — PROVEN
-
-Manifestos atuais provam o padrão:
-
-```json
-{
-  "id": "commercial",
-  "type": "microfrontend",
-  "basePath": "/apps/commercial",
-  "entry": "/apps/commercial/assets/remoteEntry.js",
-  "permissions": [],
-  "routes": [],
-  "ui": {"renderMode": "federated"}
-}
-```
-
-O Minha DELPI Chat também é MFE federado, mas seu manifesto acopla backend `minha-delpi-ai-api`. Esse vínculo é específico do Chat e **não será reutilizado pelo Copilot**.
-
-O Copilot terá manifesto próprio.
-
-## 6. Module Federation compartilhada — PROVEN
-
-`plugins/vite/federation.shared.ts` define:
-
-- React/ReactDOM singleton e strict version;
-- remote `@delpi/plugin-ui`;
-- aliases de testes;
-- convenções reutilizadas pelos MFEs.
-
-**Decisão:** o Copilot MFE seguirá essa infraestrutura desde o primeiro commit.
-
-## 7. plugin-ui é Design System compartilhado — PROVEN
-
-`plugins/plugin-ui` possui remoteEntry, documentação, componentes e lifecycle próprios.
-
-**Decisão:** UI do Copilot reutiliza `@delpi/plugin-ui`; não duplica componentes já existentes e não importa source privado do Portal/Chat.
-
-Se um componente Copilot for genuinamente transversal, promoção para `plugin-ui` é decisão separada com consumidores comprovados.
-
-## 8. Core API é authority de plataforma — PROVEN
-
-A estrutura observada do Core segue Clean Architecture:
-
-```text
-app/domain
-app/application
-app/interfaces
-app/infrastructure
-app/create_app.py
-```
-
-Core permanece owner de:
-
-- usuários e contexto de plataforma;
-- apps;
-- rotas;
-- permissions/RBAC;
-- manifesto/registro;
+- platform users/context;
+- apps/routes;
+- RBAC/permissions;
+- manifest registration;
 - notifications/presence/app usage quando aplicável.
 
-O Copilot não cria tabelas paralelas para essas authorities.
+## 7. APIs dedicadas — PROVEN
 
-## 9. APIs dedicadas são padrão do monorepo — PROVEN
+Monorepo possui `api-delpi`, `commercial-api`, `financial-api`, `customer-experience-api` e outros serviços independentes.
 
-O repositório possui serviços pares dedicados, entre outros:
+Decisão: Copilot API dedicada é coerente com o monorepo e seguirá Clean Architecture/Ports & Adapters.
 
-```text
-api-delpi/
-commercial-api/
-customer-experience-api/
-financial-api/
-cipa-api/
-comite-etica-conduta-api/
-...
-```
+## 8. api-delpi / Domain APIs — PROVEN
 
-`commercial-api` demonstra organização com:
+`api-delpi` é backend-only e owner de integrações DELPI/TOTVS já expostas. Copilot consome contracts; não copia regra/integration.
 
-```text
-application
-composition
-core
-domain
-infrastructure
-interface
-middleware
-startup
-```
+Domain APIs continuam business authorities.
 
-**Decisão:** uma Copilot API dedicada é compatível com a organização atual e deve seguir Clean Architecture/Ports & Adapters desde a criação.
+## 9. Gateway / Compose — PROVEN
 
-## 10. api-delpi é backend-only corporativo — PROVEN
+Gateway Nginx roteia `/core-api/` e `/apps/<service>/...`. Compose organiza serviços/profiles independentes.
 
-Seu manifesto declara:
+Decisão: Copilot API/MFE terão rotas/services próprios e nenhuma dependência operacional do Chat.
 
-```text
-type = backend-only
-basePath = /apps/api-delpi
-validateJwt = true
-requiredPermissionsHeader = x-user-permissions
-healthEndpoint = /health
-```
-
-O Copilot deve consumir `api-delpi` como sistema owner de integrações DELPI/TOTVS quando necessário, por contratos autorizados.
-
-Nunca copiar a lógica TOTVS para dentro do Copilot.
-
-## 11. Gateway é entrada única — PROVEN
-
-O Nginx atual roteia serviços por prefixos `/apps/<service>/...` e Core por `/core-api/`.
-
-Exemplos observados:
-
-```text
-/core-api/                    → core-api:8000
-/apps/minha-delpi-ai/api/     → Chat AI API
-/apps/commercial-api/         → commercial-api:8000
-/apps/requests-api/           → requests-api:8000
-/apps/supplies-api/           → supplies-api:8000
-/apps/customer-experience-api/→ customer-experience-api:8000
-```
-
-**Decisão:** Copilot API terá rota própria no Gateway, sem reutilizar `/apps/minha-delpi-ai/api/`.
-
-## 12. Infra/Compose confirma serviços independentes — PROVEN
-
-`infra/docker-compose.dev.yml` organiza Core/Portal/Gateway/Keycloak, PostgreSQL e apps por serviços/profiles.
-
-O Chat possui profile e containers próprios. O Copilot deverá possuir service/profile próprios, podendo reutilizar PostgreSQL/shared infra conforme decisão de C0, mas sem compartilhar runtime lógico com Chat.
-
-## 13. SSO e autorização — TARGET derivado da plataforma comprovada
-
-Fluxo alvo:
+## 10. SSO/autorização alvo — DERIVED FROM PROVEN PLATFORM
 
 ```text
 Keycloak
-→ Portal recebe access token
-→ Copilot MFE usa getAccessToken
+→ Portal token
+→ Copilot MFE getAccessToken
 → Gateway
-→ Copilot API valida JWT
-→ Copilot API consulta Core para contexto/autorização da plataforma
-→ Domain API revalida operação de negócio
+→ Copilot API JWT validation
+→ Core context/RBAC
+→ Domain API final business authorization
 ```
 
-Não transportar lista definitiva de permissions como trust boundary apenas porque o MFE recebeu props de permissions.
-
-## 14. Comunicação MFE → Copilot API — TARGET
+## 11. Domain Action integration — TARGET
 
 ```text
-Copilot MFE
-→ typed API client
-→ /apps/minha-delpi-copilot-api/...
-→ Gateway
-→ Copilot API
-```
-
-Sem chamadas diretas do browser aos serviços internos, salvo contrato de plataforma existente explicitamente permitido.
-
-## 15. Comunicação Copilot API → Core — TARGET
-
-Necessidades iniciais:
-
-- resolver usuário/contexto;
-- apps autorizados;
-- rotas autorizadas;
-- permission/capability context;
-- avatar/user metadata quando UX exigir;
-- notifications somente quando Core for owner apropriado.
-
-A API do Copilot não cacheia autorização indefinidamente; define freshness/revalidation por policy.
-
-## 16. Comunicação Copilot API → APIs de domínio — TARGET
-
-Preferência:
-
-```text
-OpenAPI/contract canônico
-→ discovery/index
+OpenAPI/contract
+→ Copilot discovery/index
 → allowed capability projection
-→ generic HTTP adapter
+→ planner
+→ generic adapter/executor
 ```
 
-O Copilot não cria client/service especializado por endpoint apenas para ensinar o planner.
+No endpoint-specific planner teaching.
 
-Adapters específicos só são permitidos quando a API exige protocolo/semântica não representável no executor genérico e isso for provado em C0/C3.
+## 12. Existing events/notifications/rooms — PARTIAL PROVEN / TO_INVENTORY
 
-## 17. Eventos, sockets e notificações — PARTIAL PROVEN / TO_INVENTORY
+Core/Portal possuem notifications/socket patterns; alguns serviços possuem workers/schedulers; Portal Comercial expõe Interaction Rooms.
 
-A plataforma já possui:
+C0 precisa mapear owner/contracts antes de decidir reuse/extend/adapter/create.
 
-- Core Socket.IO;
-- APIs com WebSocket/socket quando necessário;
-- notifications no Core/Portal;
-- workers/schedulers em alguns serviços.
-
-C0.S0 deve inventariar owners e contratos concretos antes de criar event bus, inbox delivery ou notification transport do Copilot.
-
-Regra:
-
-```text
-Copilot owns work/watch semantics
-Core/Portal may own shared notification delivery/presentation
-```
-
-## 18. Salas de interação — EXISTENCE PROVEN / CONTRACT TO_INVENTORY
-
-O manifesto do Portal Comercial expõe rota `/apps/commercial/interaction-rooms`.
-
-C0 deve mapear implementação, API, storage, sockets e authorization antes de construir Interaction Rooms do Copilot.
-
-Possibilidades permitidas após evidence:
-
-```text
-REUSE owner existente
-EXTEND contrato existente
-ADAPTER para owner existente
-CREATE_REQUIRED somente se gap comprovado
-```
-
-## 19. Superfícies do Copilot no Portal — TARGET
-
-O produto evolui sem duplicar runtime:
+## 13. Copilot surfaces — TARGET
 
 ```text
 GLOBAL
@@ -299,159 +98,188 @@ MEETING
 FRONTLINE
 ```
 
-### Global/Workspace
+Mesmo MFE/API/runtime; no separate Meeting/Frontline backend.
 
-Portal/full-page host do mesmo MFE.
+## 14. Media/realtime — TO_INVENTORY
 
-### Meeting/Frontline
+Não considerar comprovados sem C0:
 
-Também pertencem ao mesmo `plugins/minha-delpi-copilot` e mesma Copilot API; layouts/device capabilities podem variar.
+- corporate STT/TTS/Vision provider;
+- realtime/WebRTC standard;
+- recording/transcription infra;
+- media/object storage adequado;
+- browser media abstraction;
+- quotas/cost/latency;
+- raw media retention policy;
+- meeting-room hardware.
 
-Exports concretos (`./App`, `./Panel`, mount parametrizado etc.) são congelados em C1 após C0 evidence.
+## 15. Devices/Frontline — TO_INVENTORY
 
-Não criar `meeting-ai-api`/`frontline-ai-api` por conveniência.
+Não considerar comprovados:
 
-## 20. Baseline factual de mídia/realtime — TO_INVENTORY
-
-Até a execução formal de C0.S0, **não considerar comprovados**:
-
-- provider STT/TTS corporativo disponível;
-- provider Vision/VLM corporativo disponível para o Copilot;
-- WebRTC/realtime transport já padronizado;
-- media/object storage adequado a gravações;
-- gravação/transcrição de reunião já existente;
-- browser permission wrapper compartilhado;
-- quotas/custos/latência aceitáveis;
-- política corporativa de retenção de raw áudio/vídeo;
-- hardware de sala integrado ao Portal.
-
-C0.S0 deve localizar evidence ou marcar `NOT_PROVEN`/`COPILOT_IMPLEMENT_NEW`/`EXTEND_PLATFORM_CONTRACT`.
-
-## 21. Baseline factual de devices/Frontline — TO_INVENTORY
-
-Não considerar comprovados sem C0 evidence:
-
-- tablets industriais padronizados;
-- kiosks/terminais com browser compatível;
-- microfone/câmera disponíveis nos postos;
+- tablets/kiosks standardized;
+- mic/camera on production stations;
 - device identity service;
-- kiosk/shared-terminal session policy;
-- connectivity/latency no chão de fábrica;
-- headset/wearable;
-- current production-terminal app contract.
+- shared-terminal policy;
+- factory network characteristics;
+- current production-terminal contract.
 
-C0 deve mapear hardware/processo real antes de escolher transport/UX específico.
+## 16. Biometric Identity — TO_INVENTORY
 
-## 22. Contexto operacional — TO_INVENTORY por domínio
+Não considerar comprovados sem C0:
 
-A arquitetura define o modelo:
+- approved biometric enrollment process;
+- corporate photo source approved for biometric purpose;
+- voice enrollment source;
+- biometric template storage/key owner;
+- face/speaker provider;
+- liveness/anti-spoof capability;
+- thresholds/correction/revoke policy;
+- Human Observation governance owner.
 
-```text
-WorkspaceContext + EntityRef
-```
+Core user identity remains authority regardless.
 
-Mas C0 precisa provar owners/IDs/contracts reais para:
+## 17. Internet Research / web egress — TO_INVENTORY
 
-```text
-productionOrder
-operation
-machine
-workstation
-product/revision
-lot
-material
-tool
-```
+Não considerar comprovados sem C0:
 
-Não inventar IDs ou source systems.
+- approved web search provider;
+- generic search API already shared;
+- safe web-fetch component;
+- outbound proxy/allowlist policy suitable for Copilot;
+- protected/internal destination blocking;
+- external content download/malware policy;
+- browser automation infrastructure;
+- research cache policy.
 
-## 23. Industrial/OT — TO_INVENTORY e NO-ACTUATION default
+C0 must prove `PLATFORM_REUSE | NEUTRAL_SHARED_REUSE | COPILOT_IMPLEMENT_NEW | EXTEND_PLATFORM_CONTRACT | NOT_PROVEN`.
 
-Até C0 mapear a realidade, não assumir:
+## 18. External OAuth / secret management — TO_INVENTORY
 
-- PLC/CNC/robot vendors/protocols;
-- SCADA/MES ownership;
-- telemetry access;
-- command APIs;
-- network reachability;
-- safety architecture;
-- interlock contracts.
+Não considerar comprovados sem evidence:
 
-Mesmo que C0 encontre uma interface de comando, isso **não autoriza** o Copilot a executá-la.
+- reusable OAuth authorization/callback framework;
+- state/nonce/PKCE conventions;
+- provider token vault/secret manager;
+- rotation/revocation lifecycle;
+- user-delegated connection ownership model;
+- org-managed/shared/service connection model;
+- admin consent governance;
+- provider scope inventory.
 
-Default arquitetural:
+Even if env vars or provider credentials exist elsewhere, they are not automatically reusable by Copilot.
 
-```text
-approved telemetry/read → pode ser candidato a Adapter
-free-form Copilot/LLM machine actuation → BLOCK
-```
+## 19. Microsoft 365 / Graph — TO_INVENTORY IN REPO
 
-Qualquer atuação OT futura exige initiative/safety gate separado conforme `53`.
+C0 deve procurar factual evidence de:
 
-## 24. Privacy/consent/retention — TO_INVENTORY
+- existing Microsoft Graph app registration/config;
+- delegated/application permission usage;
+- Outlook mail/calendar/file integrations;
+- Teams/SharePoint/OneDrive integrations;
+- webhook/change-notification subscriptions;
+- provider-specific credential owner.
 
-C0 deve mapear políticas e owners reais para:
+Absence of repo evidence = `NOT_PROVEN`, even though Microsoft Graph is an external platform capability available in the market.
 
-- captura de áudio;
-- gravação/transcrição;
-- câmera/vídeo;
-- screen share;
+## 20. Google Workspace / Gmail — TO_INVENTORY IN REPO
+
+C0 deve procurar:
+
+- Google OAuth app/config;
+- Gmail/Calendar/Drive integration;
+- delegated scopes;
+- push/Pub/Sub integration;
+- token/refresh lifecycle;
+- provider credential owner.
+
+No repo evidence = `NOT_PROVEN`.
+
+## 21. WhatsApp — TO_INVENTORY IN REPO
+
+C0 deve mapear somente integrations oficiais existentes. Target architectural default from `55` is WhatsApp Business Platform when applicable.
+
+Não assumir personal WhatsApp Web integration or reusable personal session.
+
+## 22. Other external connectors — TO_INVENTORY
+
+Inventariar Slack, GitHub, CRMs, service desks e outros integrations já existentes apenas com evidence real.
+
+## 23. Provider events/webhooks — TO_INVENTORY
+
+C0 deve mapear:
+
+- webhook ingress conventions;
+- authenticity/signature validation;
+- EventEnvelope compatibility;
+- subscription/watch renewal;
+- scheduler/reconciliation capability;
+- duplicate/out-of-order handling;
+- missed-event recovery.
+
+Não criar event framework antes de provar gaps.
+
+## 24. Personal versus organizational data — TO_INVENTORY
+
+C0 deve identificar owners/policies de:
+
+- personal/delegated account access;
+- shared mailbox/resources;
+- org-managed service accounts;
+- sharing into Case/Room;
+- external content retention/cache;
+- promotion to organizational Knowledge;
+- provider compliance/terms/data classification.
+
+## 25. Operational context — TO_INVENTORY BY DOMAIN
+
+WorkspaceContext + EntityRef is target, but C0 proves real owners/IDs/contracts for OP/operation/machine/workstation/product/revision/lot/material/tool.
+
+## 26. Industrial/OT — TO_INVENTORY / NO-ACTUATION DEFAULT
+
+Do not assume vendors/protocols/SCADA/MES/telemetry/command APIs/network reachability/safety architecture.
+
+Even if command interface exists, it does not authorize Copilot actuation.
+
+## 27. Privacy/retention — TO_INVENTORY
+
+Map owners/policies for:
+
+- audio/video/screen;
+- biometric enrollment/template;
 - employee/workplace privacy;
-- retenção/deleção;
-- LGPD/data classification;
-- provider processing;
-- export/download.
+- web research/cache;
+- user-delegated mailbox/files/messages;
+- organizational external resources;
+- provider data processing;
+- export/delete/anonymize;
+- LGPD/data classification.
 
-Até haver evidence, nenhuma raw-media retention deve ser assumida.
+## 28. Training/procedures — TO_INVENTORY
 
-## 25. Training/procedures — TO_INVENTORY
+Map official instructions/procedures/drawings/revisions/videos/qualification owners and freshness. External sources only complement; they do not silently replace official internal operational sources.
 
-C0 deve mapear fontes oficiais de:
+## 29. Mandatory C0.S0 complementary inventory
 
-- instruções de trabalho;
-- procedimentos;
-- desenhos/revisões;
-- vídeos de treinamento;
-- qualification/certification state;
-- owners e freshness/versioning.
+```text
+all active manifests/APIs/OpenAPIs
+representative auth clients/middleware
+Gateway dev/prod
+Compose/env/storage patterns
+Portal/federation/plugin-ui contracts
+rooms/cases/requests/events/workers
+media/device/biometric sources
+outbound egress/search/fetch
+OAuth/callback/secret-store
+Microsoft/Google/WhatsApp Business/other connectors
+webhook/subscription/reconciliation
+external privacy/compliance ownership
+production context/OT/safety
+```
 
-Frontline training assistance deve referenciar essas authorities, não criar conteúdo operacional como truth sem owner.
+## 30. Baseline conclusion
 
-## 26. Inventário obrigatório complementar em C0.S0
-
-Mesmo com esta baseline, revisar:
-
-### Plataforma existente
-- todos os manifests ativos;
-- todas as APIs e OpenAPIs disponíveis;
-- auth middleware de APIs representativas;
-- patterns de HTTP clients;
-- notifications/events/workers;
-- app registration scripts;
-- Gateway dev/prod;
-- Compose dev/prod;
-- env vars;
-- migrations/storage patterns;
-- plugin-ui exports;
-- federation contract/mount/unmount;
-- Portal global layouts/overlays;
-- existing rooms/cases/requests.
-
-### Nova visão multimodal/industrial
-- media/browser APIs;
-- speech/vision providers;
-- storage/retention;
-- realtime transport;
-- shared devices;
-- meeting hardware/process;
-- production context sources;
-- training/procedures;
-- OT telemetry/interfaces;
-- industrial safety owners.
-
-## 27. Conclusão da baseline
-
-**Comprovado:** a plataforma atual já fornece as fundações corporativas para uma aplicação autônoma:
+**PROVEN platform foundations:**
 
 ```text
 Keycloak       → SSO
@@ -464,6 +292,6 @@ Domain APIs    → business data/rules
 Infra          → deploy/network/storage foundations
 ```
 
-**Ainda não comprovado:** detalhes de media/realtime/devices/factory hardware/OT/privacy policies. Esses itens pertencem explicitamente ao C0.S0 e não podem ser inferidos.
+**NOT YET PROVEN for Copilot:** specific media/biometric/search/OAuth/connector/provider-event/factory/OT/privacy implementations.
 
-O Copilot deve nascer **sobre** as fundações comprovadas; seu runtime inteligente/multimodal é próprio.
+Therefore C0.S0 must inventory and freeze these boundaries before any external provider code is introduced.
