@@ -12,10 +12,14 @@ Uma fase só fecha com comportamento, integração, segurança, privacidade, out
 ## 2. DoD global
 
 ```text
-[ ] Copilot API/MFE/deploy/persistence próprios
+[ ] DÉLIA API/MFE/deploy/persistence próprios
 [ ] zero runtime dependency no Chat
-[ ] Core/Keycloak/Portal/Domain APIs mantêm authorities
-[ ] external/OT owners mantêm source authority
+[ ] Keycloak = identity/SSO authority
+[ ] Core = apps/routes/RBAC/governance authority
+[ ] Portal = host/navigation/published-context authority
+[ ] Domain APIs mantêm business authority
+[ ] Automation Hub mantém technical-execution authority
+[ ] external/OT owners mantêm source/safety authority
 [ ] shared primitives não duplicados
 [ ] OpenAPI/semantic capabilities governam actions
 [ ] planner provider/executor/model/tool-neutral
@@ -48,6 +52,7 @@ Uma fase só fecha com comportamento, integração, segurança, privacidade, out
 [ ] media/device/biometric/OT inventory
 [ ] Internet/OAuth/connector/Teams inventory
 [ ] event/RPA/automation/queue/worker/service-identity inventory
+[ ] Automation Hub physical owner/runtime/contract status classified
 [ ] outcome/postcondition/notification owners inventory
 [ ] event logs/process owners/case keys/task-mining inventory
 [ ] AI/model/automation assets/evals/cost/incidents/kill switches inventory
@@ -72,12 +77,13 @@ Uma fase só fecha com comportamento, integração, segurança, privacidade, out
 ```text
 [ ] API/MFE/manifest/Gateway/Compose próprios
 [ ] JWT/Core integration
+[ ] Keycloak identity/SSO contract preserved
 [ ] Module Federation/plugin-ui
 [ ] full-page/global host contract
 [ ] responsive/accessibility baseline
 [ ] no thematic runtime feature activates implicitly
 [ ] secrets absent from browser
-[ ] Chat offline does not break Copilot
+[ ] Chat offline does not break DÉLIA
 [ ] independent rollback/shutdown
 ```
 
@@ -109,7 +115,7 @@ Uma fase só fecha com comportamento, integração, segurança, privacidade, out
 [ ] Edge device/package/cache contracts versioned
 [ ] Model Registry/eval lineage valid
 [ ] existing media/biometric/external gates pass
-[ ] no material autonomous ACT
+[ ] no material ACT in C3
 ```
 
 ## 7. DoD C4 — Governed Reads + Analysis
@@ -128,23 +134,25 @@ Uma fase só fecha com comportamento, integração, segurança, privacidade, out
 [ ] no side effect implicit
 ```
 
-## 8. DoD C5 — Governed Writes + Durable Foundation
+## 8. DoD C5 — Governed ACT + Durable Foundation
 
 ```text
-[ ] Decision Gate/revalidation/idempotency
+[ ] Decision Gate/revalidation/AuthZ/idempotency/audit
+[ ] L4 governed execute only for explicitly enabled capability/context
 [ ] semantic capability→versioned executor mapping
 [ ] API preferred over RPA when supported
+[ ] Automation Hub contract used for technical execution under its boundary
 [ ] executor adapters replaceable
-[ ] AutomationExecution lifecycle valid
+[ ] AutomationExecution technical state not duplicated as DÉLIA source of truth
 [ ] worker/session/credential isolation when RPA in scope
 [ ] ambiguous write no blind retry
 [ ] postcondition/Outcome verified where material
-[ ] same Durable Workflow coordinates writes/tools/agents/executors
+[ ] same DÉLIA Durable Workflow coordinates writes/tools/agents/execution requests
 [ ] Process Intelligence opportunity remains candidate/PREPARE
 [ ] MCP/A2A writes pass same governance
 [ ] semantic definition/model/policy TOCTOU handled
 [ ] Artifact version/provenance/ACL/human edits preserved
-[ ] prescriptive output remains recommendation/PREPARE
+[ ] prescriptive output remains recommendation/PREPARE until separately authorized Apply
 [ ] SIMULATE != APPLY
 ```
 
@@ -152,7 +160,9 @@ Uma fase só fecha com comportamento, integração, segurança, privacidade, out
 
 ```text
 [ ] Task/Case/Room/Inbox source ACL preserved
-[ ] Watch OBSERVE/ADVISE/PREPARE works; ACT blocked
+[ ] Watch OBSERVE/ADVISE/PREPARE works
+[ ] Watch does not autonomously trigger ACT in C6
+[ ] C5 governed ACT remains available only through explicitly authorized/confirmed flows
 [ ] Automation Hub admin shows truthful technical vs verified outcome states
 [ ] Process Intelligence UX provides maps/variants/bottlenecks/conformance/backlog
 [ ] before/after process metrics reproducible
@@ -175,7 +185,8 @@ Uma fase só fecha com comportamento, integração, segurança, privacidade, out
 [ ] no global unrestricted L4/L5 switch
 [ ] L5 OFF default
 [ ] capability/actor/context/risk/amount/environment/budget limits
-[ ] kill switch blocks new ACT independently of LLM
+[ ] selected Watch ACT has explicit allowlist/policy/identity/limits
+[ ] kill switch blocks new autonomous ACT independently of LLM
 [ ] autonomous action produces verified Outcome
 [ ] closed-loop process optimization is measured/reversible/governed
 [ ] autonomous A2A delegation bounded/approved/cancellable
@@ -235,6 +246,10 @@ Qualquer release blocker de `20` bloqueia a fase. Em especial:
 FOUNDATION_DRIFT
 DUPLICATE_AUTHORITY
 CHAT_RUNTIME_IMPORT
+ACT_WITHOUT_LIVE_AUTHZ
+ACT_WITHOUT_IDEMPOTENCY_OR_AUDIT
+WATCH_AUTONOMOUS_ACT_BEFORE_C7
+EXECUTOR_TECHNICAL_SUCCESS_AS_BUSINESS_SUCCESS
 PROCESS_MINING_WORKER_PROFILING
 MCP_A2A_AUTO_TRUST
 TOOL_AGENT_POLICY_INJECTION
