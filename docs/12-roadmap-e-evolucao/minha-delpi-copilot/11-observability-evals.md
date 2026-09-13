@@ -1,68 +1,73 @@
 # 11 — Observabilidade, métricas e evals
 
-**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
-**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
-**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)  
-**Autonomous Operations/Execution Hub:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)
+**Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Tests:** [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md)  
+**Control Tower:** [`59-ai-control-tower-and-digital-workforce-governance.md`](./59-ai-control-tower-and-digital-workforce-governance.md)  
+**Specs temáticas:** `53–66`
 
 ## 1. Objetivo
 
-Provar qualidade, groundedness, policy, execução, continuidade, privacidade, custo, outcome truth, automação e independência do Chat sem transformar telemetry em cópia de business data, mailbox, raw media, desktop screenshots ou secrets.
+Provar qualidade, groundedness, policy, execução, continuidade, privacidade, custo, value/outcome truth e independência do Chat sem transformar telemetry em cópia de business data, mailbox, raw media, employee surveillance ou secrets.
 
 ## 2. Correlation model
 
 ```text
 requestId
-conversationId?
-turnId?
 traceId
-workflowId?
-taskId?
-caseId?
-decisionId?
-watchId?
-eventId?
-executionId?
-meetingId?
-frontlineSessionId?
-externalConnectionRef? opaque
-executorRef? bounded
+conversationId?/turnId?
+workflowId?/taskId?/caseId?/decisionId?/watchId?
+eventId?/executionId?
+processTraceRef?
+analysisRunId?/artifactId?/scenarioId?
+predictionId?
+meetingId?/frontlineSessionId?
+externalConnectionRef?
+modelRef?/assetRef?/edgeDeviceRef?
 ```
 
-Nunca token/password/secret/biometric template.
+Nunca token/password/biometric template/chain-of-thought.
 
-## 3. Spans/eventos sugeridos
+## 3. Core spans
 
 ```text
 copilot.turn
-├─ understand
-├─ capability_discovery
-├─ knowledge_retrieval
-├─ internet_search / web_fetch
-├─ external_read/write
-├─ event_ingest
-├─ decision_path
-├─ policy_check / decision_gate
-├─ workflow
-├─ automation_select_executor
-├─ automation_execute
-├─ outcome_verify
-├─ notification
-├─ evidence_compose
-└─ synthesis
-
-copilot.event
-copilot.watch
-copilot.automation.execution
-copilot.automation.worker
-copilot.external.connection
-copilot.external.subscription
-copilot.workflow/task/case
-copilot.media/meeting/frontline
+├ understand
+├ capability_discovery
+├ knowledge_retrieval
+├ semantic_metric_resolve
+├ process_analysis
+├ internet_search/web_fetch/external_read
+├ event_ingest/decision_path
+├ policy_check/decision_gate
+├ model_inference/prediction
+├ sandbox_analysis
+├ artifact_generate
+├ workflow
+├ automation_select_executor/execute/outcome_verify
+├ tool_invoke/agent_delegate
+├ edge_sync
+├ notification
+├ evidence_compose
+└ synthesis
 ```
 
-## 4. Metadata útil
+Additional lifecycle streams:
+
+```text
+copilot.memory
+copilot.ai_asset
+copilot.model
+copilot.marketplace
+copilot.process
+copilot.analysis
+copilot.artifact
+copilot.scenario
+copilot.edge
+copilot.external.connection/subscription
+copilot.automation.execution/worker
+```
+
+## 4. Common metadata
 
 ```text
 surface
@@ -71,291 +76,316 @@ capabilityRef
 actorType USER|SERVICE
 policyVersion
 decisionPath FAST|OPERATIONAL|REASONING
-eventSourceClass/eventTrustResult
-eventDedupeResult
-executorType API|FUNCTION|RPA|COMPUTER_USE|HUMAN_TASK
-executorVersion bounded
-executionStatus
-attempt
-queueLatency
-workerClass/environment bounded
-outcomeVerificationStatus
-notificationStatus
+modelRef/version bounded
+metricDefinitionRef/version?
+processRef/traceRef?
+executorType/version?
 autonomyLevelAllowed
-autonomyPolicyVersion
-killSwitchState
+verificationStatus
+assetRef/riskTier?
+edgeMode/deviceClass?
 latency/error class
-model/tool/token/cost usage when applicable
+cost usage when applicable
 ```
 
-Não logar message body/full page/raw screenshot/credential apenas por observabilidade.
+Do not log full content merely for convenience.
 
-## 5. Métricas de produto
+## 5. Product metrics
 
-- Task Completion Rate;
-- First Plan Success Rate;
+Track separately:
+
+- Task/Case Completion and resolution;
+- First Plan Success / Correction rate;
 - Evidence Coverage;
-- Correction/Replan Rate;
-- Case Resolution Rate;
 - Meeting/Frontline success;
-- Internet Research usefulness;
-- External Action Verified Success Rate;
 - Watch Signal Quality;
-- **Operational Detection-to-Decision Time**;
-- **Decision-to-Execution Time**;
-- **Automation Verified Outcome Rate**;
-- **Human Intervention Rate**;
-- **Exception Resolution Time**;
-- **Autonomous Completion Rate por capability**;
-- **False/Unnecessary Automation Rate**;
-- Knowledge Candidate Acceptance/Reject Rate;
-- Standalone Independence Rate = 100% fora reference-only tests.
+- Process cycle-time/bottleneck/conformance improvement;
+- Automation Verified Outcome Rate;
+- Human Intervention/Exception Resolution;
+- External Follow-up Closure;
+- Artifact adoption/edit/use rate;
+- Personalized briefing usefulness/correction;
+- Prediction quality/calibration by use case;
+- Prescriptive recommendation acceptance/outcome;
+- Knowledge/Marketplace candidate acceptance;
+- Standalone Independence = 100% outside reference-only tests.
 
-Nunca usar uma métrica agregada de “autonomia” sem separar capability/risco/contexto.
+## 6. Process Intelligence metrics/evals
 
-## 6. Métricas Event / Decision Intelligence
+Metrics:
 
 ```text
-events received
-invalid/untrusted events rejected
-duplicate events suppressed
-out-of-order/stale events
-watch matches
-FAST path rate/latency
-OPERATIONAL path rate/latency
-REASONING path rate/latency
-LLM avoided by deterministic path
-readiness PASS|NOT_READY|INCONCLUSIVE distribution
-policy blocks
-Decision Gate frequency
+process cases/variants
+trace completeness
+bottleneck/wait/rework measures
+conformance deviations
+manual-step/automation opportunity candidates
+before-vs-after cycle/error/rework metrics
 ```
 
-Decision path metadata é bounded telemetry, não CoT.
+Evals:
 
-## 7. Métricas Automation & Execution Hub
+- known process reconstruction;
+- incomplete/out-of-order logs;
+- conformance vs insufficient evidence;
+- opportunity provenance;
+- no hidden individual productivity/person score;
+- no fraud/personality inference from deviation.
+
+## 7. AI Control Tower metrics
+
+Per asset:
 
 ```text
-executions queued/running/completed
-execution success/failure/ambiguous/cancelled/timeout
+owner/status/risk/eval validity
+usage/latency/availability
+cost
+verified business value
+incidents
+policy/kill-switch state
+dependencies/deployment versions
+```
+
+Control Tower must distinguish **activity**, **technical success** and **verified business value**.
+
+## 8. MCP/A2A metrics/evals
+
+```text
+approved/discovered/disabled server-agent count
+tool/agent invocation latency/error
+context bytes/data classes delegated
+timeout/cancel rate
+duplicate task rate
+unapproved invocation blocked
+result provenance coverage
+```
+
+Safety evals: tool-description injection, external agent scope expansion, recursive delegation, disabled/revoked agent use, unrelated data leakage.
+
+## 9. Personal Memory metrics/evals
+
+Product quality only, never employee score:
+
+```text
+memory correction/delete rate
+personalization opt-out rate
+stale-memory conflict rate
+briefing relevance feedback
+memory influence explanations when material
+```
+
+Required negatives: cross-user leak, sensitive inference, stale memory overriding live source, memory granting permission, private memory becoming organizational knowledge.
+
+## 10. Semantic Business Layer metrics/evals
+
+```text
+metric query success
+formula/version coverage
+source freshness
+semantic conflict count
+metric-definition adoption
+calculation reproducibility
+```
+
+Metamorphic test: paraphrase user question while preserving same governed metric → same calculation/result for same source snapshot.
+
+## 11. Analysis Sandbox metrics/evals
+
+```text
+analysis success/failure/timeout
+CPU/memory/time/storage usage
+blocked network/host attempts
+input/output size
+reproducibility rate
+artifact generation rate
+```
+
+Required negatives: sandbox escape, private-network access, secret read, unauthorized dataset, read connector mutating source, fabricated result after execution failure.
+
+## 12. Artifact metrics/evals
+
+- provenance coverage;
+- human edit preservation;
+- version conflicts;
+- review/publish/export rate;
+- stale source-dependent section detection where applicable;
+- external share attempts blocked/allowed by policy.
+
+No metric should reward overwriting human edits.
+
+## 13. Predictive/Prescriptive metrics/evals
+
+By model/use case:
+
+```text
+accuracy/error appropriate to target
+calibration
+precision/recall where relevant
+forecast error
+false alert rate
+OOD/stale rate
+prediction latency
+business outcome correlation
+prescriptive objective/trade-off quality
+```
+
+Never aggregate into one vague “AI accuracy”. Prediction and recommendation quality are separate from action authorization.
+
+## 14. Operational Twin metrics/evals
+
+- scenario reproducibility;
+- source-state freshness;
+- simulation latency/cost;
+- assumption coverage;
+- compare-scenario consistency;
+- Apply revalidation failures;
+- production mutation during simulation incidents = 0.
+
+## 15. Edge/Offline metrics/evals
+
+```text
+device health/last seen
+package/model version distribution
+cache freshness
+online/degraded/offline duration
+buffer depth/sync lag
+duplicate sync prevented
+offline blocked action attempts
+rollback/revoke propagation
+local inference latency/error
+```
+
+Safety: loss of cloud never widens authority; stale critical revision is blocked/degraded explicitly.
+
+## 16. Model lifecycle / drift metrics
+
+Per model type:
+
+```text
+quality drift
+input/data drift
+calibration drift
+latency
+availability
+cost
+human correction rate
+verified outcome correlation
+deployment cohort/version
+rollback/revoke events
+```
+
+Revoked/unapproved model selection count must be zero.
+
+## 17. Marketplace / AI supply-chain metrics/evals
+
+- packages by lifecycle state;
+- publisher/owner coverage;
+- dependency/license/vulnerability review state;
+- signature/hash verification when required;
+- enable/disable/revoke propagation;
+- permission-escalation attempts = 0;
+- untrusted executable activation = 0.
+
+## 18. Event / Automation metrics
+
+Keep separate:
+
+```text
+events received/invalid/deduped/stale
+FAST/OPERATIONAL/REASONING rate/latency
+executions queued/running/success/failure/ambiguous/timeout
+queue latency/worker health
+retry/idempotency conflicts
 technical success rate
-verified business outcome success rate
+verified business outcome rate
 technical-success-but-verification-failed count
-ambiguous outcome rate
-retry rate
-idempotency conflicts prevented
-duplicate execution prevented
-queue latency
-executor latency
-worker online/busy/offline/draining when RPA exists
-worker utilization
-package/executor version distribution
-RPA UI/selector failure class
-computer-use takeover/stop rate
 kill-switch activations
-cost per execution/capability when material
 ```
 
-Technical success and verified outcome must be separate charts/metrics.
+Technical success and verified outcome must never be the same KPI.
 
-## 8. Notification/escalation metrics
+## 19. External/Teams/Media/Biometric metrics
 
-- notification requested/sent/failed;
-- dedupe suppression;
-- acknowledgement time;
-- SLA escalation count/time;
-- channel fallback when policy allows;
-- incorrect “success” notification incidents = 0.
+Preserve all existing connector/research/OAuth/subscription/media/biometric privacy and quality metrics from `20`, including credential/cross-user leak incidents = 0 and biometric false accept/reject/unknown/correction rates where capability is enabled.
 
-## 9. External/connector metrics
+## 20. Cost and value
 
-- search/fetch latency/error;
-- blocked external-access attempts;
-- provider latency/rate limit;
-- connection refresh/re-auth rate;
-- scope-missing rate;
-- event duplicate/out-of-order rate;
-- subscription renewal/reconciliation lag;
-- external ambiguous-outcome rate;
-- credential leak incidents = 0;
-- cross-user data leak = 0;
-- implicit send incidents = 0.
-
-## 10. Evals families — Event/Automation
+Measure separately:
 
 ```text
-trusted event positive
-forged/untrusted event negative
-duplicate event
-event replay after workflow resume
-stale event
-FAST path deterministic condition
-OPERATIONAL bounded condition
-REASONING complex condition
-equivalent condition with LLM unavailable
-readiness positive/negative/inconclusive
-planner no RPA click/selector
-API executor preferred over RPA when supported
-RPA fallback when API unavailable by approved mapping
-executor swap RPA→API without planner patch
-worker offline/busy/lease conflict
-credential/session isolation
-executor timeout before side effect
-executor timeout after possible side effect → AMBIGUOUS
-outcome verification success/failure/pending
-notification only after truthful outcome
-PREPARE no side effect
-ACT requires capability-scoped autonomy
-kill switch before ACT
-policy revocation during wait
-computer-use allowlist negative
+LLM/model/provider cost
+search/connector cost
+sandbox compute cost
+automation/RPA cost
+Edge infrastructure cost
+human review cost
 ```
 
-## 11. External/Media/Biometric evals
+Value requires verified outcomes such as saved cycle time, avoided rework/loss, reduced downtime, recovered revenue, improved SLA. Avoid vanity ROI based only on number of AI calls.
 
-Manter famílias de Internet Research, OAuth/connectors, Teams, multimodal, biometric/Human Observation, source ACL, external Knowledge promotion, Meeting/Frontline e privacy conforme `20`.
+## 21. Incident classes
 
-## 12. Generalization
-
-Novo provider ou executor equivalente deve entrar por adapter/capability mapping sem patch semântico no planner.
-
-Metamorphic tests devem poder trocar:
+At least:
 
 ```text
-Microsoft ↔ another supported provider
-RPA executor ↔ API executor
-technical executor identifiers/package versions
-```
-
-preservando semantic capability e policy/outcome expectations.
-
-## 13. Safety evals
-
-- event content não altera policy;
-- event/worker identity não concede permission;
-- external/RPA content não concede Core permission;
-- provider/RPA credential não aparece em LLM/MFE/log/artifact;
-- RPA screenshot não vaza unrelated sensitive data;
-- read scope não permite write;
-- PREPARE não executa;
-- global L5 não existe;
-- L5 disabled by default;
-- kill switch blocks ACT independent of LLM;
-- ambiguous write not blindly retried;
-- technical success not presented as business success;
-- computer-use cannot access non-allowlisted app/network;
-- biometric/worker profiling prohibitions remain;
-- arbitrary OT command blocked.
-
-## 14. Outcome quality
-
-Para cada material execution medir/provar:
-
-```text
-capabilityRef
-technical result
-expected postcondition
-verification source authority
-verification status
-verifiedAt
-Evidence/Outcome refs
-```
-
-Se verification source estiver indisponível, state deve ser `PENDING|INCONCLUSIVE`, não success inventado.
-
-## 15. RPA observability privacy
-
-Quando RPA existir:
-
-- screenshots somente quando necessário;
-- classification/retention/redaction explícitos;
-- no password/token capture;
-- worker/session identifiers bounded;
-- no person productivity score derived from bot/desktop telemetry;
-- support artifact access audited.
-
-## 16. Autonomy metrics
-
-Medir por capability/policy version:
-
-```text
-L0/L1/L2/L3/L4/L5 usage
-L5 eligible vs executed
-policy-blocked ACT
-human-confirmed ACT
-autonomous ACT
-kill-switch block
-budget/limit block
-post-ACT verification failure
-manual override/correction
-```
-
-Não usar autonomia como permission authority.
-
-## 17. Incident classes
-
-```text
-EVENT_AUTH_FAILURE
+AUTHORITY_OR_PERMISSION_BYPASS
+DATA_OR_SECRET_LEAK
 EVENT_DUPLICATE_EFFECT
-BACKGROUND_IDENTITY_ERROR
-EXECUTION_DUPLICATE
-RPA_CREDENTIAL_LEAK
-RPA_SESSION_LEAK
 OUTCOME_FALSE_SUCCESS
-AUTONOMY_SCOPE_BYPASS
-KILL_SWITCH_BYPASS
-COMPUTER_USE_BOUNDARY_BYPASS
-EXTERNAL_DATA_LEAK
-BIOMETRIC_PRIVACY_INCIDENT
+AUTONOMY_OR_KILL_SWITCH_BYPASS
+PROCESS_MINING_PRIVACY_INCIDENT
+TOOL_AGENT_TRUST_INCIDENT
+MEMORY_PRIVACY_INCIDENT
+SEMANTIC_DEFINITION_INCIDENT
+SANDBOX_ESCAPE
+MODEL_DRIFT_OR_REVOKED_MODEL_USE
+SIMULATION_PRODUCTION_MUTATION
+EDGE_AUTHORITY_OR_STALE_CONTENT_INCIDENT
+AI_PACKAGE_SUPPLY_CHAIN_INCIDENT
 OT_SAFETY_BOUNDARY_ATTEMPT
 ```
 
-Incident metrics devem ter correlation/evidence sem guardar secret/CoT.
+Each incident has asset refs/evidence/impact/containment/owner/resolution without CoT/secrets.
 
-## 18. Dashboards alvo
-
-### Operational Intelligence
-Events → Watches → decision path → detections → decisions → latency.
-
-### Automation Hub
-Queued/running/failed/ambiguous → executors/workers → technical success → verified outcome → exceptions.
-
-### Autonomy
-Capabilities/policy levels → PREPARE/ACT → blocks/kill switches → verified outcomes.
-
-### External/Media
-Provider health, research/connectors, source provenance, privacy/retention incidents.
-
-## 19. Release blocking metrics
-
-Material incident/eval failures block release when involving:
+## 22. Dashboards alvo
 
 ```text
-permission elevation
-duplicate material execution
-unverified success narrative
-credential leak
-cross-user/source leak
-PREPARE→ACT bypass
-global autonomy bypass
-kill-switch failure
-computer-use boundary breach
-OT safety boundary breach
+Operational Intelligence
+Process Intelligence
+Automation & Execution Hub
+Autonomy
+AI Control Tower / Digital Workforce
+Model Health / Drift
+Semantic Metrics/Data Quality
+Sandbox/Artifacts
+Predictive/Twin
+Edge Fleet
+External/Media/Privacy
+Cost & Verified Value
 ```
 
-## 20. Regra final
+## 23. Evals governance
 
-Observability must answer:
+Every production capability/asset has suitable eval suite/version and freshness. High-risk asset with stale/missing required eval is disabled or degraded according to policy.
+
+Metamorphic/generalization evals cover provider/executor/model/tool/agent replacements without planner hardcode.
+
+## 24. Regra final
+
+Observability must answer, when material:
 
 ```text
-what event/intent triggered this?
-which facts/evidence were used?
-which decision path/policy version ran?
-which capability/executor/version executed?
+what triggered this?
+which sources/evidence/metric/model versions were used?
+which policy/decision path ran?
 under whose authority?
+which tool/agent/executor ran?
 what was the technical result?
-what authoritative source verified the business outcome?
-who was notified?
-what was learned only as candidate?
+what authoritative source verified outcome?
+what artifact/prediction/scenario was produced?
+what was notified/published?
+what became only a learning candidate?
+which asset/version can be disabled or rolled back?
 ```
 
-without storing chain-of-thought or secrets.
+Sem armazenar chain-of-thought, broad sensitive payloads ou secrets.
