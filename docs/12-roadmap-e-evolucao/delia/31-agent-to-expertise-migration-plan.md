@@ -1,4 +1,4 @@
-# Minha DELPI Copilot — Migração de Agents para Expertise
+# DÉLIA — Histórico de Migração de Agents para Expertise
 
 **Status:** `SUPERSEDED / REFERENCE_ONLY`  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
@@ -6,11 +6,11 @@
 
 ## Decisão atual
 
-Este documento descrevia uma estratégia antiga em que o Copilot seria obtido por evolução/migração do Minha DELPI Chat e de seu modelo de agents.
+Este documento registra uma estratégia antiga em que o produto seria obtido por evolução/migração do Minha DELPI Chat e de seu modelo de agents.
 
-Essa estratégia foi **substituída**.
+Essa estratégia foi **substituída**. DÉLIA é aplicação standalone nova.
 
-O Copilot atual:
+DÉLIA:
 
 ```text
 não migra AgentSpecializationService
@@ -21,47 +21,33 @@ não migra agent_id/chat_mode/sessions do Chat
 não faz cutover do Chat
 ```
 
-A nova aplicação implementa nativamente:
+O target standalone pode implementar nativamente, quando fases/gates permitirem:
 
 ```text
-single Copilot runtime
+single DÉLIA product/runtime identity
 + Expertise Packs
 + Domain Playbooks
 + Capability Projection
 + Knowledge/Multimodal
-+ Copilot-owned conversations/work state
++ DÉLIA-owned conversation/work state only where ownership is proven
 ```
+
+Nenhum item acima é evidência de runtime implementado.
 
 ## Relação com o Minha DELPI Chat
 
-Chat permanece produto separado. Qualquer modernização dos agents atuais pertence ao roadmap próprio do Chat e não bloqueia esta iniciativa.
+Chat permanece produto separado. Qualquer modernização dos agents atuais pertence ao roadmap próprio do Chat e não bloqueia DÉLIA.
 
-O Copilot pode estudar o Chat durante `C0.S0` para:
-
-- identificar anti-patterns;
-- comparar UX/flows;
-- reconhecer libraries realmente neutras;
-- evitar repetir bugs/acoplamentos.
-
-Isso não autoriza dependência de runtime.
+DÉLIA pode estudar o Chat durante C0.S0 somente para inventory/anti-patterns/reuse neutral comprovado. Isso não autoriza runtime dependency.
 
 ## Requisitos históricos
 
-Os requisitos relacionados foram preservados em `25-requirements-traceability.md` como:
-
-```text
-CP-080 OUT_OF_SCOPE_WITH_DECISION
-CP-081 OUT_OF_SCOPE_WITH_DECISION
-CP-082 OUT_OF_SCOPE_WITH_DECISION
-CP-085 OUT_OF_SCOPE_WITH_DECISION
-```
-
-Os IDs não são apagados nem reutilizados.
+IDs históricos permanecem preservados em `25-requirements-traceability.md`; não apagar/reutilizar IDs.
 
 ## Conceito ainda válido
 
-A decisão conceitual de **um Copilot + expertise componível**, em vez de agentes departamentais, continua válida. A implementação está especificada em `27`, `28`, `29`, `33` e nas fases C3/C6 do Plano Mestre.
+A decisão conceitual de uma DÉLIA com expertise componível, em vez de agentes departamentais user-facing, continua válida. Implementação real segue `16`, `27`, `28`, `29`, `49` e gates aplicáveis.
 
 ## Regra
 
-Nenhum Cursor/implementador deve usar este arquivo para executar migration/cutover. Ele existe somente para explicar por que referências antigas a agents do Chat podem aparecer no histórico da documentação.
+Nenhum implementador deve usar este arquivo para executar migration/cutover. Ele existe somente para explicar referências históricas a agents do Chat.
