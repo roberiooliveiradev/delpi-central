@@ -7,7 +7,7 @@
 > **Próxima etapa:** `C0.S0 — Enterprise AI/Platform Foundation Rebaseline`  
 > **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 > **Execution state:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)  
-> **Naming authority:** [`59-delia-product-identity-and-naming.md`](./59-delia-product-identity-and-naming.md)
+> **Naming authority:** [`68-delia-product-identity-and-naming.md`](./68-delia-product-identity-and-naming.md)
 
 ## 1. Decisão fundamental
 
@@ -203,7 +203,12 @@ Full index: [`INDEX.md`](./INDEX.md).
 66 AI Model Lifecycle / Capability Marketplace
 ```
 
-`59-delia-product-identity-and-naming.md` é authority de naming e não integra a sequência temática acima; a colisão física de prefixo `59` permanece um finding estrutural a ser corrigido com atualização de todos os consumers.
+Cross-cutting views:
+
+```text
+67 Market Capability Expansion / Intelligence Platform Map
+68 DÉLIA Product Identity / Naming Authority
+```
 
 ## 13. Current execution state
 
