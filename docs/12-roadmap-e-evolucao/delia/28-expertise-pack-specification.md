@@ -1,15 +1,15 @@
-# Minha DELPI Copilot — Especificação de Expertise Packs
+# DÉLIA — Especificação de Expertise Packs
 
-**Status:** thematic spec / contract detail  
+**Status:** `TARGET` — thematic spec / contract detail  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Foundation:** schema/owner/version semantics em C0; runtime de retrieval na Copilot API em C3.
+**Evidence rule:** schema, storage, catalog e retrieval só deixam de ser target quando C0/C3 provarem owner, contract e implementation.
 
 ## 1. Definição
 
-`Expertise Pack` é pacote versionado de conhecimento operacional/guidance que especializa o **mesmo Copilot** em um domínio. Não é agent, permission ou endpoint catalog.
+`Expertise Pack` é um contrato conceitual versionado de conhecimento operacional/guidance que pode especializar a **mesma DÉLIA** em um domínio. Não é agent, permission, endpoint catalog, policy authority ou executor.
 
-Responde a quais conceitos/evidências/métodos/playbooks/knowledge scopes/multimodal needs/limitações importam para uma análise.
+Responde a quais conceitos, evidências, métodos, playbooks, knowledge scopes, necessidades multimodais e limitações importam para uma análise.
 
 ## 2. Estrutura conceitual
 
@@ -35,11 +35,11 @@ Responde a quais conceitos/evidências/métodos/playbooks/knowledge scopes/multi
 }
 ```
 
-Shape final é congelado/reutilizado em **C0.S3**, depois de C0.S0–S2 provarem platform boundary, names e owners.
+O shape é **candidate**, não contrato implementado. C0 deve decidir owner, source canônica, consumers, versioning, persistence e lifecycle antes de qualquer freeze.
 
 ## 3. Authority
 
-Fields permitidos incluem identity/version, domains/signals, terminology/guidance, knowledge refs, preferred playbooks, recommended capability semantics, multimodal needs e eval refs.
+Fields podem incluir identity/version, domains/signals, terminology/guidance, knowledge refs, preferred playbooks, recommended capability semantics, multimodal needs e eval refs.
 
 Proibido como technical authority:
 
@@ -53,15 +53,16 @@ JWT/secret
 hardcoded department→endpoint
 ```
 
-Business action authority permanece Domain OpenAPI + Copilot Action Catalog derivado.
+Business-action authority permanece no Domain API/use case autoritativo. A projeção semântica da DÉLIA nunca substitui RBAC, domain validation ou provider scope.
 
 ## 4. Ativação/composição
 
+Target:
+
 ```text
 goals + Workspace/Entity context + attachments + preferences
-→ Copilot Expertise Retriever
-→ top-K candidates
-→ ACL/policy filter
+→ Expertise retrieval/ranking
+→ ACL/policy filtering
 → ExpertiseSelection
 → bounded ExpertiseContext
 ```
@@ -70,7 +71,7 @@ Vários packs podem compor o mesmo turno. System/safety/policy vencem; capabilit
 
 ## 5. Ranking
 
-Pode considerar goals, domain signals, workspace/entity, attachments, terminology, capability candidates, structured context e preferences. `agent_id` não existe como requisito do runtime standalone.
+Pode considerar goals, domain signals, workspace/entity, attachments, terminology, capability candidates, structured context e preferences. `agent_id` não é requisito do runtime standalone.
 
 ## 6. Relações
 
@@ -78,17 +79,19 @@ Pode considerar goals, domain signals, workspace/entity, attachments, terminolog
 Expertise = como analisar
 Capability = o que pode fazer
 Playbook = método
-Domain OpenAPI/Copilot Action Catalog = contrato técnico
-Policy/RBAC = se pode fazer
+Domain API/OpenAPI = contrato técnico/business authority
+Policy/Decision = se e como pode agir
 ```
 
 ## 7. Knowledge/Multimodal
 
-Pack sugere scopes/needs, mas Knowledge ACL e tool availability continuam authorities próprias. Multimodal runtime pertence à Copilot API.
+Pack apenas referencia/sugere scopes e needs. Knowledge ACL, media policy, provider availability e source authority continuam independentes.
+
+Qualquer multimodal adapter da DÉLIA permanece provider-neutral e sujeito ao Abstraction Gate.
 
 ## 8. Versioning/observability
 
-Registrar key/version/contentHash/evalHash/owner/status, selected candidates/reason codes, playbooks, knowledge/tools e outcomes, sem CoT.
+Quando implementado, registrar key/version/contentHash/evalHash/owner/status, selected candidates/reason codes, playbooks, knowledge/tools e outcomes, sem CoT.
 
 ## 9. Evals
 
@@ -102,17 +105,19 @@ Registrar key/version/contentHash/evalHash/owner/status, selected candidates/rea
 - version regression;
 - full-page/panel parity.
 
+Mudança de IA não fecha apenas com teste verde: generalization, safety e task outcome devem ser provados no SHA/config avaliado.
+
 ## 10. Lifecycle/admin
 
-Candidate só vira published/active por lifecycle governado do Expertise Studio com schema/owner/refs/evals/security aplicáveis.
+Candidate só vira published/active por lifecycle governado, com owner/review/eval/version/publish. O nome da surface administrativa não cria um repository ou lifecycle paralelo.
 
 ## 11. Pilotos
 
-Começar por poucos packs de alto valor, por exemplo Qualidade Industrial, Engenharia de Produto e Suprimentos. Não criar catálogo de departamentos inteiro antes de validar retrieval/generalization.
+Pilotos de Qualidade Industrial, Engenharia de Produto e Suprimentos são exemplos de target, não evidência de implementação ou prioridade executiva fora de `16`.
 
 ## 12. Independence
 
-A implementação não importa nem migra `AgentSpecializationService`, agent sessions ou skills do Minha DELPI Chat. Chat pode ser usado apenas como referência de C0.
+A implementação não importa nem migra `AgentSpecializationService`, agent sessions ou skills do Minha DELPI Chat. Chat é reference-only.
 
 ## 13. Anti-patterns
 
@@ -120,6 +125,7 @@ A implementação não importa nem migra `AgentSpecializationService`, agent ses
 - pack como permission;
 - pack como endpoint registry;
 - prompt global com todas as expertises;
-- seleção manual obrigatória;
+- seleção manual obrigatória como única estratégia;
 - hardcode de pack no planner;
+- repository/registry criado sem Abstraction Gate;
 - runtime de Expertise delegado ao Chat.
