@@ -2,13 +2,10 @@
 
 **Status:** gate transversal canônico  
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Boundary standalone:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
+**Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
-**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
-**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
-**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)  
-**Teams:** [`56-microsoft-teams-connector-and-meeting-integration.md`](./56-microsoft-teams-connector-and-meeting-integration.md)  
-**Autonomous Operations/Execution Hub:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)
+**Requirements:** [`25-requirements-traceability.md`](./25-requirements-traceability.md)  
+**Specs temáticas:** `53–66`
 
 ## 1. Regra de evidence
 
@@ -19,22 +16,27 @@ gitSha
 Copilot API/MFE version
 manifest/config/schema hashes
 OpenAPI/Action Catalog hashes
-model/provider/config hashes
+model/provider/deployment/eval versions
 expertise/playbook versions
 media/biometric policy versions
-external connector/connection policy version
-OAuth scope policy version
-egress/web-fetch policy version
-automation/executor/version hashes
-RPA package/worker/environment version when applicable
+external connector/connection/OAuth/egress policy versions
+automation/executor/RPA package/worker versions
 autonomy/decision policy version
+process-log/model/metric definition versions
+MCP/A2A server/agent/protocol version
+memory policy/version
+sandbox runtime/image/library versions
+artifact version/hash
+prediction/scenario/twin model versions
+Edge device/package/model versions
+AI asset/marketplace package versions
 retention/consent policy version
 environment
 test/eval version
 timestamp
 ```
 
-Evidence incompatível ou stale invalida o PASS afetado.
+Evidence incompatible, stale ou não reproduzível invalida o PASS afetado.
 
 ## 2. Gate C0 — Foundation Freeze
 
@@ -45,132 +47,90 @@ Provar com paths/contracts reais:
 - Portal/Core/Gateway/Compose/federation/plugin-ui;
 - APIs/OpenAPIs/auth/idempotency/events;
 - rooms/jobs/notifications/workflows;
-- media/storage/device/privacy owners;
-- biometric enrollment/provider/storage/liveness quando existir;
-- outbound HTTP/egress/proxy/DNS policy;
-- OAuth callback/connection/secret-storage patterns;
-- Microsoft Graph/Google Workspace/WhatsApp Business/other integrations existentes;
-- webhook/subscription/push/scheduler/reconciliation patterns;
-- external-data privacy/compliance owners;
-- **RPA platforms/tools/licences/bots/packages/orchestrators existentes**;
-- **queues/workers/desktop sessions/schedulers/service accounts/background identities**;
-- **automation scripts/functions/jobs e current owners**;
-- **business postcondition/outcome-verification sources**;
-- **kill-switch/emergency-stop patterns**;
+- media/storage/device/privacy/biometric owners;
+- Internet/egress/OAuth/vault/external/Teams/webhooks;
+- RPA/automation/event/queue/worker/service-account infrastructure;
+- business outcome/postcondition sources;
+- event logs/process owners/case keys/BPMN/task-mining sources;
+- AI/model/automation asset inventories, eval/cost/incident/kill-switch tooling;
+- MCP/A2A/tool registries/agents/delegation identities;
+- user preference/memory-like stores and privacy controls;
+- BI semantic models/KPI formulas/glossaries/metric owners;
+- sandbox/code-execution/query/file/artifact infrastructure;
+- predictive/anomaly/optimization/simulation/twin models and datasets;
+- factory Edge/devices/MDM/local inference/offline requirements;
+- model registry/MLOps/package/catalog/signing/supply-chain controls;
 - OT/industrial boundaries;
-- Chat apenas como reference-only.
+- Chat reference-only.
+
+Unknown = `NOT_PROVEN`, nunca `PASS` por suposição.
 
 ### Standalone negatives
-
-Devem falhar arquiteturalmente:
 
 ```text
 Copilot importa runtime/source do Chat
 Copilot depende de Chat API/container/database authority
-Copilot usa Chat media/biometric/external/automation runtime como dependency obrigatória
+Copilot usa Chat media/external/automation/model runtime como dependency obrigatória
 ```
 
-### Shared foundations
-
-Validar sem duplicação:
-
-- CorrelationContext;
-- EntityRef/RelationshipRef;
-- SourceRef/EvidenceRef/OutcomeRef;
-- CapabilityProjection;
-- PlatformCommand/Result;
-- WorkspaceContext;
-- DecisionGate;
-- WorkflowPlan/Step;
-- TaskRef/CaseRef;
-- EventEnvelope;
-- MediaRef/biometric/external/automation refs somente quando C0 provar necessidade.
-
-### Media/Biometric/External/Automation foundation
-
-Provar:
-
-- capture/retention classes;
-- shared-device isolation;
-- biometric lifecycle/unknown/prohibited inference;
-- safe outbound web boundary;
-- OAuth least privilege/credential isolation;
-- personal/org external source boundaries;
-- external read/write separation;
-- webhook authenticity/dedupe/reconciliation;
-- external learning promotion;
-- **event source trust/authenticity/dedupe/order/correlation**;
-- **polling fallback bounded/freshness semantics**;
-- **Copilot decision/orchestration vs Automation Hub execution ownership**;
-- **executor preference API→native integration→function/script→RPA→computer-use→human**;
-- **background/service identity model**;
-- **semantic executor contract without RPA click/selector leakage**;
-- **execution lifecycle/idempotency/timeout/ambiguous outcome semantics**;
-- **business postcondition verification semantics**;
-- **capability-scoped autonomy and kill switches**;
-- OT safety non-authority.
-
-### Architecture conformance
-
-- dependency direction;
-- concrete providers/executors apenas em infrastructure/adapters;
-- Composition Root wiring;
-- Repository somente para owned lifecycle;
-- State Machine para lifecycle não trivial;
-- error/result translation;
-- idempotency/resilience;
-- provider/executor-neutral planner;
-- no god `AutomationService`/`RpaManager`;
-- no speculative abstraction;
-- ADR para exceção material.
-
-### FOUNDATION_FREEZE
+### Foundation boundaries REQUIRED
 
 ```text
 PLATFORM_INVENTORY=PASS
 STANDALONE_BOUNDARY=PASS
-NAMES_PATHS=PASS
 AUTHORITIES=PASS
-PRIMITIVES=PASS
+SHARED_PRIMITIVES=PASS
 ARCHITECTURE_PATTERNS=PASS
 PERSISTENCE_BOUNDARIES=PASS
-INTEGRATION_CONTRACTS=PASS
 MEDIA_PRIVACY_BOUNDARIES=PASS
 BIOMETRIC_IDENTITY_BOUNDARY=PASS
 HUMAN_OBSERVATION_BOUNDARY=PASS
 EXTERNAL_EGRESS_BOUNDARY=PASS
 OAUTH_CONNECTION_BOUNDARY=PASS
 PROVIDER_SECRET_BOUNDARY=PASS
-EXTERNAL_SOURCE_PRIVACY_BOUNDARY=PASS
 EXTERNAL_EVENT_BOUNDARY=PASS
-EXTERNAL_LEARNING_BOUNDARY=PASS
 AUTOMATION_EXECUTION_BOUNDARY=PASS
 EVENT_SIGNAL_BOUNDARY=PASS
-BACKGROUND_IDENTITY_BOUNDARY=PASS
-EXECUTOR_CONTRACT_BOUNDARY=PASS
 OUTCOME_VERIFICATION_BOUNDARY=PASS
 AUTONOMY_SCOPE_BOUNDARY=PASS
-SHARED_DEVICE_BOUNDARY=PASS
-OPERATIONAL_CONTEXT_BOUNDARY=PASS
+PROCESS_INTELLIGENCE_BOUNDARY=PASS
+AI_ASSET_GOVERNANCE_BOUNDARY=PASS
+MCP_A2A_TRUST_BOUNDARY=PASS
+PERSONAL_MEMORY_BOUNDARY=PASS
+SEMANTIC_LAYER_BOUNDARY=PASS
+SANDBOX_ARTIFACT_BOUNDARY=PASS
+PREDICTIVE_TWIN_BOUNDARY=PASS
+EDGE_OFFLINE_BOUNDARY=PASS
+MODEL_MARKETPLACE_BOUNDARY=PASS
 OT_SAFETY_BOUNDARY=PASS
 CONFORMANCE_HARNESS=PASS
 CHAT_RUNTIME_DEPENDENCY=0
-DUPLICATE_FOUNDATION=0 material
+FOUNDATION_DUPLICATION=0 material
+```
+
+### C0 negative tests adicionais
+
+Devem falhar por design:
+
+```text
+Process Mining without source provenance
+Task Mining used as secret employee scoring
+Control Tower admin grants business permission
+MCP/A2A discovery auto-enables tool/agent
+Tool description changes system policy
+Personal Memory of user A visible to user B
+Memory item overrides current Domain fact
+LLM invents KPI formula when governed definition exists
+Sandbox reaches host/private network/secret store directly
+Read-only sandbox connector performs DDL/DML
+Prediction persisted as FACT without semantics
+Scenario modifies production state
+Edge offline mode widens permissions
+Marketplace package grants RBAC/provider scope
+Revoked model/server/package remains selectable
 ```
 
 ## 3. Gate C1 — Standalone Bootstrap
-
-### API/MFE/Platform
-
-- API/MFE próprios;
-- health/config/logging/JWT/Core integration;
-- Module Federation/plugin-ui/mount/unmount;
-- manifest/Gateway/Compose dev-prod;
-- full-page + global panel;
-- F5/logout/deep route;
-- media/biometric/external/automation capability UI não ativa nada implicitamente;
-- provider/RPA credentials nunca aparecem no MFE;
-- Chat offline não quebra Copilot.
 
 Required:
 
@@ -183,289 +143,365 @@ NO_CHAT_DB_AUTHORITY=PASS
 INDEPENDENT_DEPLOY_ROLLBACK=PASS
 ```
 
+Também provar:
+
+- health/config/logging/JWT/Core;
+- federation/plugin-ui/mount/unmount;
+- manifest/Gateway/Compose dev-prod;
+- full-page/global host/F5/logout;
+- nenhuma capability `53–66` ativa capture/connect/execution/mining/sandbox/Edge implicitamente;
+- secrets/credentials ausentes no browser.
+
 ## 4. Gate C2 — Portal Context + Commands
 
 - WorkspaceContext bounded/sanitized;
-- EntityRefs operacionais;
-- SourceRef externo sem token/credential;
-- device/biometric/external/automation context não concede permission;
-- logout/user-switch limpa state local;
+- EntityRef/SourceRef sem credential/permission truth;
+- shared-device logout/user-switch cleanup;
 - authorized app/route/entity commands;
-- arbitrary URL navigation rejeitada;
-- iframe contract seguro;
-- no JWT/secret em bridge;
-- visual/DOM command não vira Business Action;
-- execution/status refs no contexto não permitem reexecutar ação por si só.
+- arbitrary URL/navigation target rejected;
+- iframe bridge safe;
+- execution/model/memory/device refs no context não concedem authority;
+- platform visual action não vira Business Action.
 
-## 5. Gate C3 — Intelligence + Multimodal/Biometric/External/Decision Foundations
+## 5. Gate C3 — Intelligence + Capability Foundations
 
-### Planner/Action/Expertise
+### Planner/OpenAPI/Expertise
 
 - own conversation state;
 - OpenAPI ingestion/versioning;
-- known/sibling/unknown provider;
-- metamorphic provider/path/opId;
-- provider/executor-neutral planner;
+- known/sibling/unknown/metamorphic provider;
+- provider/executor/model-neutral planner;
 - expertise/playbook cannot grant permission;
-- Knowledge ACL/provenance.
+- no CoT persistence.
 
-### Media/Biometric
+### Media/Biometric/External
 
-- PDF/image/voice/video provenance;
-- confidence/limitations;
-- hostile content does not alter policy;
-- voice parity with text;
-- biometric enrolled/non-enrolled/look-alike/unknown/correction/revoke cases;
-- biometric match cannot authenticate or grant permission;
-- biometric templates absent from ordinary logs/responses;
-- liveness/anti-spoof when required;
-- Human Observation process-grounded;
-- no psychological/sensitive inference or automated employment decision.
+Manter todos os gates positivos/negativos de `53–56`: provenance, explicit capture, biometric unknown/correction/revoke, no permission elevation, safe fetch/SSRF, OAuth lifecycle, connection isolation, token absence, external content injection resistance.
 
-### Internet Research / External Connections
+### Event/Decision Intelligence
 
-- search/fetch provider failure paths;
-- egress destination validation/redirect/size/time budgets;
-- hostile content cannot alter policy;
-- SourceRef/Evidence/freshness;
-- OAuth connect/cancel/failure/scope/refresh/revoke/reconnect;
-- token absent from LLM/MFE/log;
-- unknown connector without planner patch.
+- trusted event accepted; forged event rejected;
+- duplicate/out-of-order event cannot duplicate candidate;
+- event payload cannot modify policy/permission;
+- FAST handles deterministic rule without LLM;
+- OPERATIONAL uses bounded reads/rules and optional classifier only when justified;
+- REASONING uses Graph/Knowledge/Expertise/LLM when needed;
+- path choice observable;
+- no ACT in C3.
 
-### Event / Decision Intelligence
+### Process Intelligence foundation
 
-Required:
+- EventLog/ProcessTrace schema validation;
+- missing event is missing, not invented;
+- process case/activity/time/source mapping reproducible;
+- actor identity minimized;
+- task-mining raw capture disabled by default;
+- process model never grants automation permission.
 
-- trusted event accepted; forged/untrusted source rejected;
-- duplicate/out-of-order event does not duplicate decision/execution candidate;
-- event payload cannot grant permission or modify policy;
-- `FAST` path handles deterministic condition without LLM call;
-- `OPERATIONAL` path uses bounded facts/rules and optional classifier only when justified;
-- `REASONING` path uses Graph/Knowledge/Expertise/LLM only when complexity requires;
-- equivalent deterministic readiness does not depend on stochastic LLM text;
-- decision path selection is observable/auditable;
-- no material ACT in C3.
+### AI Control Tower foundation
 
-## 6. Gate C4 — Business + External Reads + Graph + Operational Intelligence
+- AIAssetRef/registry metadata owner/version/risk/data scope/eval/dependencies/status;
+- duplicate asset authority avoided;
+- asset without owner/risk cannot become high-risk enabled asset;
+- secret not exposed in registry.
+
+### MCP/A2A foundation
+
+- unknown server/agent starts untrusted/unapproved;
+- tool/agent descriptions treated as untrusted;
+- server/agent capability allowlist enforced;
+- unrelated sensitive conversation/context not delegated;
+- delegation credentials scoped/time-bounded when applicable;
+- external agent result provenance preserved.
+
+### Personal Memory foundation
+
+- memory classes/version/provenance/retention;
+- explicit/user-enabled material memory write policy;
+- cross-user isolation;
+- sensitive/personality inference blocked;
+- user correction supersedes active wrong memory;
+- memory cannot grant permission.
+
+### Semantic Layer foundation
+
+- MetricDefinition validation;
+- owner/formula/grain/dimensions/unit/freshness/version present for material metric;
+- conflict between same labels surfaced;
+- metadata cannot grant source data access.
+
+### Sandbox foundation
+
+- container/session isolation;
+- CPU/memory/time/storage quotas;
+- no unrestricted host/network access;
+- safe file ingest;
+- no refresh/provider token exposure;
+- runtime/version metadata captured;
+- cleanup/expiry tested.
+
+### Predictive/Twin foundation
+
+- Prediction contract carries model/version/horizon/confidence/limitations;
+- prediction remains `PREDICTION`, not FACT;
+- model unavailable/stale/OOD semantics truthful;
+- Scenario state separate from production state.
+
+### Edge foundation
+
+- device identity != user identity;
+- package/model/cache versioning;
+- offline mode state explicit;
+- no broad long-lived secret by default;
+- no unrestricted local OT command path.
+
+### Model lifecycle foundation
+
+- model registry covers model types in scope;
+- revoked/unapproved model not selectable;
+- eval lineage/version captured;
+- deployment/rollback refs typed;
+- package manifest cannot smuggle permission.
+
+## 6. Gate C4 — Governed Reads + Analysis
 
 ### Business/external reads
 
 - auth/schema/timeout/error/freshness;
-- normalized Outcome/Evidence;
 - permission-aware Graph traversal;
-- external source isolation/provenance;
+- normalized Evidence;
+- external/source isolation;
 - no master-data duplication.
 
-### Operational readiness/anomaly
+### Process Mining
 
-Read-only scenarios:
+- known process reconstructed from real log;
+- variants correctly separated;
+- conformance distinguishes deviation vs incomplete evidence;
+- bottleneck metrics reproducible;
+- no employee intent/fraud/personality inference;
+- automation opportunity references Evidence.
 
-```text
-invoice readiness
-production report plausibility
-stock risk
-supplier delay risk
-machine downtime context
-```
+### Semantic Query
 
-Tests:
+- same governed metric + same source snapshot → same result;
+- metric version traceable;
+- unauthorized row/dimension blocked;
+- stale source explicit;
+- LLM paraphrase cannot change formula.
 
-- facts come from authoritative sources;
-- calculations are reproducible;
-- anomaly is not converted into employee intent/fraud claim;
-- result clearly labels FACT/CALCULATION/HYPOTHESIS;
-- no write/notification side effect unless explicitly separate governed capability is invoked later.
+### Analysis Sandbox read-only
 
-## 7. Gate C5 — Governed Business/External/Automation Writes + Durable Foundation
+- authorized dataset only;
+- read connector cannot mutate source;
+- code/runtime/input refs allow reproduction when required;
+- failed calculation not fabricated;
+- output size/file policies enforced.
 
-### Decision/Business/External writes
+### Predictive reads
 
-- Decision Gate/revalidation;
-- idempotency/concurrency;
-- no blind write retry;
-- ambiguous outcome verification;
-- no duplicate effect after resume;
-- `draft != send`.
+- ground-truth/eval metrics exist before production claim;
+- horizon/freshness/calibration visible where relevant;
+- drift/OOD changes status/degrades capability truthfully;
+- protected/sensitive-person features excluded unless separately governed.
 
-### Automation Capability Registry/Projection
+### Edge read-only
 
-- semantic capability maps to versioned executor contract;
-- planner sees capability/schema, not click/selector/UI mechanics;
-- supported authoritative API wins over RPA unless approved exception/evidence;
-- unknown sibling executor mapping does not require planner branch;
-- disabled/retired executor is not selected.
+- cached procedure/drawing revision verified;
+- stale critical revision blocked or clearly degraded;
+- offline read does not imply offline write;
+- local events buffered with dedupe metadata.
 
-### AutomationExecution lifecycle
+### MCP/A2A read-only
 
-Test:
+- timeout/cancel/unavailable behavior truthful;
+- returned content untrusted;
+- result normalized to Source/Evidence;
+- sibling implementation does not require planner patch.
 
-```text
-QUEUED → RUNNING → SUCCEEDED|FAILED|AMBIGUOUS|CANCELLED|TIMED_OUT
-```
+### Personalization reads
 
-Verify:
+- memory affects relevance/presentation only;
+- live Domain fact overrides stale memory;
+- shared-device cache cleared on user switch.
 
-- correlation and input hash;
-- lease/lock prevents duplicate RPA worker pickup when applicable;
-- retry only when eligible;
-- timeout after side effect becomes AMBIGUOUS until verified;
-- resume/replay does not duplicate material effect;
-- cancellation semantics truthful;
-- background identity explicit and authorized.
+## 7. Gate C5 — Governed Writes + Durable Work + Artifacts
 
-### RPA executor when in scope
+### Business/external/Teams writes
 
-- worker online/offline/busy;
-- queue priority/concurrency;
-- package/version traceability;
-- environment separation;
-- credential injection protected;
-- screenshot/artifact retention policy;
-- desktop/session isolation;
-- selector/UI failure translated to canonical error;
-- bot cannot alter business policy.
+Decision Gate/revalidation/idempotency/no blind retry/verified outcome and `draft != send` remain mandatory.
 
-### Outcome verification
+### Automation/Executors
 
-Required:
+- semantic capability→versioned executor mapping;
+- API preferred over RPA when authoritative supported contract exists;
+- planner never sees raw click/selector;
+- unknown sibling executor can be swapped by adapter;
+- AutomationExecution lifecycle/lease/retry/timeout/cancel/AMBIGUOUS;
+- resume/replay no duplicate side effect;
+- background user/service identity explicit;
+- RPA worker/session/credential/package isolation;
+- technical success != business Outcome;
+- outcome verifier queries authoritative source when required.
 
-```text
-technical executor success != business outcome success
-```
+### Process opportunity governance
 
-Examples:
+Process Mining opportunity → candidate/Task/PREPARE; never automatic bot deployment or policy change.
 
-- API 200 but invoice not persisted → FAIL/AMBIGUOUS, not success;
-- RPA clicked Save but no authoritative record/event → not verified;
-- provider accepted message but delivery status unknown → truthful pending/accepted state.
+### MCP/A2A writes
 
-### Workflow
+External tool/agent write passes same Policy/Decision/idempotency/Outcome gates as any other action.
 
-- DAG/checkpoint/waits;
-- crash/restart/concurrent resume;
-- duplicate event;
-- permission/policy/connection/executor changes while waiting;
-- no duplicate business/external/RPA write.
+### Semantic TOCTOU
 
-## 8. Gate C6 — Product Work + Meeting/Frontline + Events/Automation Hub/Learning
+Metric/semantic definition version change material invalidates old decision/preview when it affects action.
 
-### Task/Case/Room/Inbox
+### Artifact lifecycle
 
-- source permission remains required;
-- revoked source sanitizes projections;
-- reading item never writes;
-- manual exception resumes same Workflow correlation.
+- draft/version/owner/ACL/provenance;
+- human edits preserved;
+- regeneration cannot silently overwrite human content;
+- attach/export/share controlled;
+- external send is separate action.
 
-### Watch
+### Prescriptive output
 
-C6 modes:
+- alternatives/objectives/constraints/assumptions/trade-offs visible;
+- recommendation != authorization;
+- simulate != apply;
+- Apply starts new live revalidation/Decision context.
 
-```text
-OBSERVE
-ADVISE
-PREPARE
-```
+## 8. Gate C6 — Product Work + Governance + Experience
 
-Tests:
+### Watch/Product Work
 
-- PREPARE creates action candidate/args/preview without side effect;
-- PREPARE never silently becomes ACT;
-- duplicate events dedupe;
-- SLA/escalation uses truthful event/outcome state;
-- ACT remains blocked in C6.
+`OBSERVE|ADVISE|PREPARE` only; PREPARE no side effect; ACT remains blocked in C6. Task/Case/Room/Inbox/source ACL and Workflow correlation remain.
 
-### Automation Hub Admin
+### Process Intelligence UX
 
-When scope is active:
+- process map/variants/bottlenecks/conformance;
+- automation opportunity backlog;
+- before/after metrics;
+- source/evidence drill-down;
+- no hidden person leaderboard by default.
 
-- catalog shows owner/capability/executor/version/status;
-- executions show queue/running/fail/ambiguous/outcome state;
-- workers show health/environment/capabilities without secrets;
-- exceptions link to Workflow/Task/Case/Decision;
-- technical success and verified outcome metrics are separate;
-- kill-switch state visible/auditable;
-- admin UI does not create second workflow/planner authority.
+### AI Control Tower
 
-### Notifications/escalations
+- inventory/owner/risk/status/eval/data scope/dependencies;
+- health/cost/value separate;
+- incident records/containment;
+- kill switch works independently of LLM;
+- disabling one asset does not unnecessarily disable unrelated assets;
+- Control Tower admin role does not imply domain action permission.
 
-- recipients/channels/severity/dedupe/SLA policy;
-- Minha DELPI/email/Teams/WhatsApp only when authorized/configured;
-- failed action is never announced as completed;
-- repeated event does not spam duplicate notification;
-- escalation after acknowledgement timeout remains correlated.
+### MCP/A2A lifecycle
 
-### Meeting/Frontline/External learning
+`DISCOVERED→REVIEWED→APPROVED→ACTIVE→DEGRADED|DISABLED|REVOKED|DEPRECATED`; revoked becomes unavailable to planner/workflow.
 
-Existing RBAC/privacy/biometric/source ACL/learning candidate gates remain required.
+### Personal Memory UX
 
-## 9. Gate C7 — Autonomous Operations + External Proactivity + Advanced Rollout
+- view/search/correct/delete/disable controls;
+- personalized briefing grounded in live authorized Tasks/Cases/Watches/sources;
+- private memory not auto-shared;
+- deletion propagates to indexes according to policy.
+
+### Semantic catalog
+
+- metric glossary/owner/version/lineage/conflicts visible;
+- new metric onboarding without planner patch;
+- deprecated metric handled explicitly.
+
+### Artifact Workspace
+
+- edit/collaboration/version/history;
+- templates;
+- attach to Case/Task/Room/Meeting;
+- export under ACL;
+- AI-generated vs human-edited material distinction where needed.
+
+### Operational Twin scenario
+
+- simulated state isolated;
+- source freshness present;
+- scenario assumptions explicit;
+- compare alternatives reproducibly;
+- no production write.
+
+### Edge/Offline pilot
+
+- ONLINE/DEGRADED/OFFLINE_READ_ONLY/SYNCING visible;
+- event buffering/idempotent sync;
+- user/session cleanup;
+- package/model/cache health;
+- no authority widening offline.
+
+### Model/Marketplace product
+
+- drift/health/latency/cost metrics appropriate to model type;
+- Marketplace lifecycle draft/review/approved/published/deprecated/revoked;
+- manifest declares dependencies/permissions/data scopes/evals;
+- install/enable still requires local authorization/config.
+
+## 9. Gate C7 — Advanced Autonomy / Scale
 
 ### Capability-scoped autonomy
 
-- no global unrestricted L4/L5 switch;
-- L5 OFF default;
-- capability allowlist;
-- actor/service identity allowlist;
-- business/risk/amount/environment limits;
-- budget/rate/concurrency limits;
-- kill switch;
-- authorization/policy revalidation immediately before ACT;
-- verified Outcome after ACT.
+No global unrestricted L5. L5 OFF default; allowlist/actor/service identity/business limits/budget/rate/kill switch/live revalidation/verified Outcome.
 
-### Watch ACT
+### Closed-loop Process Intelligence
 
-```text
-event
-→ Watch ACT
-→ decision path
-→ AutonomyPolicy
-→ Durable Workflow
-→ semantic capability
-→ executor
-→ verify Outcome
-→ Evidence/Audit
-→ Notification
-```
+- process optimization recommendation measured before/after;
+- no permanent policy change from one successful run;
+- ACT only if capability explicitly approved;
+- regression/reversal possible.
 
-Negative:
+### A2A autonomous delegation
 
-- event itself cannot bypass AutonomyPolicy;
-- policy change/revocation blocks pending ACT;
-- duplicate event does not duplicate action;
-- kill switch stops new ACT independent of LLM.
+- approved agent/capability only;
+- bounded goal/context/deadline/budget;
+- cancel/timeout;
+- no hidden CoT/context dumping;
+- external agent cannot recursively expand authority;
+- verified result/outcome.
 
-### Anchor — autonomous invoice
+### Advanced personalization
 
-When declared in scope:
+- no hidden employee score/sensitive inference;
+- user controls remain;
+- personalization eval does not reward permission overreach.
 
-```text
-ready-to-invoice event/state
-→ deterministic readiness PASS
-→ capability autonomy allowed
-→ billing.invoice.issue
-→ API/RPA executor
-→ authoritative invoice verification
-→ notifications
-```
+### Semantic scale
 
-Test also every negative readiness condition and ambiguous executor result.
+Federation/materialization/cache preserve source permission/freshness/lineage; cache not authority.
 
-### Computer-use
+### Sandbox scale
 
-If introduced:
+Pool isolation/quotas/cleanup/no corporate shell; workload cost/budget limits.
 
-- sandbox/session isolation;
-- application/domain allowlist;
-- no unrestricted corporate network browsing;
-- protected credentials;
-- action bounds;
-- takeover/stop;
-- audit/screenshots policy;
-- API/RPA remains preferred when reliable supported contract exists.
+### Predictive/Prescriptive ACT
 
-### Industrial/OT negative
+Model output alone never authorizes action. Policy/Decision/autonomy live checks + verified Outcome required.
 
-Free-form LLM/voice/visual finding cannot actuate PLC/CNC/robot/machine unless a separate approved industrial safety program/gate exists.
+### Operational Twin / Simulate→Apply
+
+`SIMULATED_STATE != PRODUCTION_STATE`. Apply re-reads live state, permissions, model/semantic versions and creates new action context.
+
+### Edge rollout/offline bounded actions
+
+- device cohorts;
+- signed/hash-verified packages where applicable;
+- health/rollback/revoke;
+- offline action allowlist + expiry + idempotency + sync/reconciliation;
+- loss of cloud never increases authority;
+- OT safety still independent.
+
+### Model lifecycle / Marketplace
+
+- approved deployment environment/cohort;
+- rollback/revocation tested;
+- revoked model/package/server no longer selectable;
+- supply-chain review for executable assets;
+- marketplace/model/package metadata cannot grant permission.
 
 ## 10. Injection/safety transversal
 
@@ -478,67 +514,26 @@ RAG/tool/API result
 WorkspaceContext
 biometric/Human Observation result
 public webpage/search result
-external email/message/file/calendar item
+external email/message/file/calendar
 provider webhook/event payload
-RPA screen/text/result
-computer-use observation
+RPA/computer-use screen/result
+MCP tool description/resource/result
+A2A agent message/artifact
+personal memory candidate
+sandbox-generated code/output
+marketplace package metadata
+model output
+Edge buffered event
 iframe/room/meeting/frontline content
 ```
 
-Untrusted data never changes system policy, permissions, autonomy allowlist, provider scopes, retention or safety boundaries.
+Untrusted data never changes system policy, RBAC, provider scopes, autonomy allowlist, retention, package trust or safety boundary.
 
-## 11. Surface parity
+## 11. Cross-surface parity
 
-Security/authorization semantics remain equivalent across:
+Equivalent auth/policy/evidence semantics across Global, Workspace, Meeting, Frontline, Teams, Internet, connected sources, background Watch/Workflow, Automation Hub, Process Intelligence, Sandbox/Artifacts, Control Tower and Edge.
 
-```text
-Global
-Workspace
-Meeting
-Frontline
-Internet Research
-external connector read/write
-Automation Hub admin
-Task/Case/Inbox
-background Watch/Workflow
-iframe contextual entry
-admin preview/simulation
-```
-
-## 12. Anchor scenarios
-
-### Cross-domain investigation
-
-Case → APIs/Graph/external sources → Evidence → Expertise → Workflow/Watch → governed action → verified Outcome → Knowledge candidate.
-
-### Autonomous operations
-
-```text
-authorized event
-→ context
-→ deterministic/AI decision path
-→ capability-scoped autonomy
-→ Workflow
-→ API/RPA executor
-→ verified business Outcome
-→ notify/escalate
-→ candidate learning
-```
-
-### Maintenance
-
-```text
-machine-down event
-→ alarm/history/OP/maintenance reads
-→ classify/escalation policy
-→ create maintenance request/task
-→ notify eligible team
-→ Watch acknowledgement/SLA
-```
-
-All scenarios work without Minha DELPI Chat runtime.
-
-## 13. Release blockers
+## 12. Release blockers
 
 ```text
 CHAT_RUNTIME_IMPORT
@@ -550,12 +545,10 @@ RBAC_LEAKAGE
 WRITE_WITHOUT_REQUIRED_DECISION_GATE
 RESUME_DUPLICATE_WRITE
 HIDDEN_MEDIA_CAPTURE
-UNDEFINED_MEDIA_RETENTION
 SHARED_DEVICE_STATE_LEAK
 BIOMETRIC_PERMISSION_ELEVATION
 SENSITIVE_PERSON_INFERENCE
 UNSAFE_WEB_EGRESS
-OAUTH_SCOPE_ESCALATION
 PROVIDER_TOKEN_LEAK
 CROSS_USER_EXTERNAL_DATA_LEAK
 DRAFT_SENT_IMPLICITLY
@@ -564,21 +557,31 @@ INVALID_PROVIDER_EVENT_ACCEPTED
 EVENT_PERMISSION_ELEVATION
 DUPLICATE_EVENT_DUPLICATE_EXECUTION
 PLANNER_RPA_UI_MECHANICS_LEAK
-RPA_SELECTED_OVER_AUTHORITATIVE_API_WITHOUT_JUSTIFICATION
 BACKGROUND_EXECUTION_WITHOUT_EXPLICIT_IDENTITY
-AUTOMATION_EXECUTION_DUPLICATE
 AMBIGUOUS_WRITE_BLIND_RETRY
 EXECUTOR_TECHNICAL_SUCCESS_AS_BUSINESS_SUCCESS
 PREPARE_BECOMES_ACT_IMPLICITLY
 GLOBAL_UNSCOPED_L5
-AUTONOMY_KILL_SWITCH_BYPASS
-COMPUTER_USE_UNBOUNDED_ACCESS
+PROCESS_MINING_WORKER_PROFILING
+MCP_A2A_AUTO_TRUST
+TOOL_AGENT_POLICY_INJECTION
+CROSS_USER_PERSONAL_MEMORY_LEAK
+MEMORY_OVERRIDES_LIVE_AUTHORITY
+UNGOVERNED_METRIC_FORMULA
+SANDBOX_ESCAPE_OR_UNGOVERNED_WRITE
+ARTIFACT_PROVENANCE_LOSS
+PREDICTION_PRESENTED_AS_FACT
+SIMULATION_MUTATES_PRODUCTION
+EDGE_OFFLINE_PERMISSION_EXPANSION
+REVOKED_AI_ASSET_STILL_ACTIVE
+MARKETPLACE_PERMISSION_ELEVATION
+AI_PACKAGE_SUPPLY_CHAIN_BYPASS
 ARBITRARY_LLM_OT_COMMAND
 SAFETY_INTERLOCK_BYPASS
 REQUIRED_TEST_FAIL_OR_INCONCLUSIVE
 STALE_NONREPRODUCIBLE_EVIDENCE
 ```
 
-## 14. Regra final
+## 13. Regra final
 
 Qualquer gate REQUIRED em `FAIL | INCONCLUSIVE | PENDING | TEST_NOT_RUN | STALE_EVIDENCE` bloqueia a fase. Nunca enfraquecer teste para fazer candidate passar.
