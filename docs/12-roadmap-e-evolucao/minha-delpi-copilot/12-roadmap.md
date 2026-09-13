@@ -7,6 +7,8 @@
 > **Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
 > **Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
 > **Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)  
+> **Microsoft Teams:** [`56-microsoft-teams-connector-and-meeting-integration.md`](./56-microsoft-teams-connector-and-meeting-integration.md)  
+> **Autonomous Operations/Execution Hub:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
 > **Próxima etapa:** `C0.S0`
 
 Este roadmap apresenta evolução macro. A ordem atômica/dependências/gates vive somente em `16`.
@@ -14,140 +16,190 @@ Este roadmap apresenta evolução macro. A ordem atômica/dependências/gates vi
 ## Visão geral
 
 ```text
-C0 — Platform + Architecture + Media/Privacy/Biometric/External/OT Foundation Freeze
+C0 — Platform + Architecture + Media/Privacy/Biometric/External/Automation/OT Foundation Freeze
 C1 — Standalone Application Bootstrap
-C2 — Portal Context + Platform Commands
-C3 — Intelligence Core + Multimodal/Biometric/Internet/Connector Foundations
-C4 — Business + External Reads + DELPI Business Graph
-C5 — Governed Business/External Writes + Durable Work Foundation
-C6 — Tasks/Cases/Rooms/Inbox/Watch + Meeting/Frontline + External Events/Ecosystem/Learning
-C7 — External Proactivity + Advanced Realtime + Autonomy + Simulation + Model Routing + Rollout
+C2 — Portal Context + Operational Context + Platform Commands
+C3 — Intelligence + Multimodal/Biometric/Internet/Connector/Decision Foundations
+C4 — Business + External Reads + Business Graph + Operational Read Intelligence
+C5 — Governed Business/External/Automation Writes + Durable Work Foundation
+C6 — Tasks/Cases/Rooms/Inbox/Watch + Meeting/Frontline + Automation Hub + Events/Learning
+C7 — Autonomous Operations + Advanced Realtime/External Proactivity + Simulation/Model Routing/Rollout
 ```
 
 ## C0 — Foundation Freeze
 
-Entregas:
+Entregas principais:
 
-- inventário Portal/Core/Gateway/Infra/MFEs/APIs;
-- OpenAPI/auth/entity/event/rooms/notifications;
-- media/devices/shared terminals;
-- biometric sources/enrollment/storage/liveness;
+- inventário Portal/Core/Gateway/Infra/MFEs/APIs/OpenAPIs;
+- auth/RBAC/manifest/federation/contracts;
+- media/devices/shared terminals/biometric/privacy;
 - production/maintenance/quality/OT boundaries;
-- outbound web/egress/search/fetch infrastructure;
-- OAuth/callback/secret-store patterns;
-- Microsoft 365/Google Workspace/WhatsApp Business/other connector inventory;
-- personal vs organizational external-source ownership;
-- webhook/subscription/scheduler/reconciliation patterns;
-- privacy/retention/compliance owners;
-- names/paths/DB ownership;
-- shared primitives/refs;
-- Clean Architecture/pattern freeze;
+- Internet/egress/search/safe-fetch;
+- OAuth/secrets/external connectors/Teams;
+- rooms/events/notifications/jobs/workers/schedulers existentes;
+- **RPA tools/orchestrators/licences/bots/packages existentes**;
+- **automations/scripts/functions/jobs existentes**;
+- **queues/workers/desktop execution infrastructure existente**;
+- **service accounts/background identities**;
+- **business postcondition/outcome sources**;
+- **automation governance/kill switches/emergency stop**;
+- ownership do futuro Automation & Execution Hub;
+- executor preference/contract;
+- event trust/dedupe/correlation;
+- background identity;
+- Outcome verification;
+- capability-scoped autonomy;
 - RED/conformance harness;
 - `CHAT_RUNTIME_DEPENDENCY=0`;
 - `FOUNDATION_FREEZE=PASS`.
 
+Nenhuma ferramenta RPA, fila, event bus ou novo serviço é assumido como existente sem evidence.
+
 ## C1 — Standalone Bootstrap
 
-- own API/MFE;
+- own Copilot API/MFE;
 - JWT/Core;
 - Module Federation/plugin-ui;
 - own manifest/Gateway/Compose;
 - full-page + global host;
 - responsive/accessibility baseline;
-- capability/config foundations only;
 - Chat-offline independence.
 
-No Internet/connector runtime feature is implemented merely because callback/config paths exist.
+Não implementar Automation Hub/RPA/event engine apenas porque seus contracts já foram congelados.
 
-## C2 — Portal Context + Commands
+## C2 — Portal + Operational Context + Commands
 
 - WorkspaceContext;
 - Global Bridge;
 - platform capability projection;
 - open app/route/entity;
-- operational EntityRefs;
-- bounded SourceRefs for current external resources when material;
+- EntityRefs operacionais;
+- SourceRefs externos bounded;
 - shared-device baseline;
 - iframe baseline;
-- security/generalization.
+- execution/watch refs apenas como contexto, nunca execution authority.
 
-No provider token/permission truth in context.
-
-## C3 — Intelligence + Multimodal/Biometric/Internet/Connector Foundations
+## C3 — Intelligence + Decision Foundations
 
 - model/provider abstraction;
-- own conversation/turn state;
-- OpenAPI ingestion/action catalog;
+- conversation/turn state;
+- OpenAPI ingestion/Action Catalog;
 - capability retrieval/planner;
 - Expertise/Playbooks/Knowledge;
-- multimodal/speech/vision/biometric foundations;
-- Internet Research search + safe fetch + SourceRef/Evidence;
-- ExternalConnection lifecycle;
-- provider-neutral connector capability model;
-- least-privilege OAuth/secret boundary implementation as scoped;
+- multimodal/speech/vision/biometric;
+- Internet Research + ExternalConnection;
+- Microsoft 365/Teams foundation;
 - Evidence/provenance;
-- unknown/metamorphic/generalization evals.
+- **EventEnvelope ingestion semantics**;
+- **DecisionPathPolicy `FAST | OPERATIONAL | REASONING`**;
+- deterministic Policy/Specification for material readiness where criteria exist;
+- no material autonomous ACT.
 
-## C4 — Business + External Reads + Graph
+Nem todo evento chama LLM.
+
+## C4 — Reads + Graph + Operational Read Intelligence
 
 - generic business reads;
-- external reads from authorized connections;
-- mail/calendar/file/message retrieval capabilities as providers are onboarded;
-- source/freshness/evidence normalization;
+- external/Teams reads;
+- Evidence/freshness normalization;
 - DELPI Business Graph;
-- internal/external correlation through refs, not copied masters;
-- cross-domain + external analysis;
-- unknown provider/connector gates.
-
-Example:
+- internal/external correlation;
+- read-only operational intelligence, e.g.:
 
 ```text
-item/fornecedor interno
-+ authorized Outlook/Gmail correspondence
-+ public research
-→ Evidence-backed analysis
+invoice readiness
+production report plausibility
+stock/shortage risk
+supplier delay risk
+machine downtime context
 ```
 
-## C5 — Governed Business/External Writes + Durable Foundation
+No side effect in these read-only evaluations.
+
+## C5 — Governed Writes + Automation Execution Foundation
 
 - Decision Gate;
-- generic business write executor;
-- external draft/send/create/update capabilities;
+- business/external writes;
 - `draft != send`;
-- provider connection/scope revalidation;
-- verified external outcome;
-- idempotency/ambiguous-outcome handling;
-- WorkflowPlan/checkpoints/waits/resume;
-- no duplicate business/external write.
+- Durable Workflow/checkpoints/waits;
+- semantic Automation Capability Registry/Projection;
+- executor ports/adapters as prioritized:
 
-## C6 — Product Work + External Events + Meeting/Frontline + Ecosystem
+```text
+API
+Function/Script
+RPA
+Computer-Use only when justified
+Notification
+Human Task
+```
+
+- AutomationExecution lifecycle;
+- RPA worker/queue integration only if C0 proves it belongs in scope;
+- idempotency/retry/ambiguous outcome handling;
+- **verified business Outcome/postcondition**.
+
+Default executor preference:
+
+```text
+API official
+→ native integration
+→ deterministic function/script
+→ RPA
+→ computer-use
+→ human
+```
+
+## C6 — Product Work + Automation Hub + Proactivity
 
 - Task/Case/Evidence Board;
 - Interaction Rooms;
 - Inbox;
-- Watch OBSERVE/ADVISE;
-- provider webhook/subscription/push → EventEnvelope;
-- renewal/reconciliation/stale state;
-- Meeting Mode/ata viva;
-- Frontline Mode/training/process observation;
-- Organizational Knowledge/Governed Learning;
-- external source → candidate → review/eval/publish;
+- provider/domain events;
+- Meeting/Frontline;
+- Knowledge/Learning;
 - Expertise Studio;
-- AI-ready app/connector readiness.
+- Automation & Execution Hub administration;
+- executions/workers/exceptions/outcomes visibility;
+- notification/escalation orchestration;
+- Watch modes:
 
-## C7 — External Proactivity + Advanced Realtime + Autonomy/Rollout
+```text
+OBSERVE
+ADVISE
+PREPARE
+```
 
-- autonomy L0–L5, L5 OFF default;
-- Watch ACT;
-- selected proactive external actions with connection/action allowlists;
-- background research within budgets/privacy policy;
-- browser automation only as justified sandboxed fallback;
-- What-if/Simulation;
+`ACT` remains locked.
+
+Manual exception resumes the same Durable Workflow.
+
+## C7 — Autonomous Operations + Advanced Rollout
+
+- Watch `ACT` for selected capabilities;
+- capability/context/risk-scoped autonomy;
+- L5 OFF by default;
+- allowlists/budgets/limits/kill switches;
+- autonomous end-to-end workflows with Outcome verification;
+- external proactivity;
+- advanced realtime;
+- computer-use only as bounded fallback;
+- Simulation;
 - Model Router/Compute Policy;
-- advanced realtime/media;
-- performance/cost/scaling;
-- canary/rollback;
-- final Product Complete.
+- scale/cost/performance;
+- canary/rollback.
+
+Anchor when in declared scope:
+
+```text
+ready-to-invoice
+→ deterministic readiness
+→ autonomy policy
+→ billing.invoice.issue
+→ API/RPA executor
+→ verify authoritative invoice outcome
+→ notify affected people/channels
+```
 
 OT actuation remains a separate industrial-safety initiative.
 
@@ -158,51 +210,57 @@ foundation C0
 ↓
 standalone app C1
 ↓
-portal/context C2
+context C2
 ↓
-intelligence + external foundations C3
+intelligence/event/decision foundations C3
 ↓
-business/external reads C4
+read-only operational intelligence C4
 ↓
-governed business/external writes C5
+governed execution foundation C5
 ↓
-work + events + meeting/frontline + learning C6
+Automation Hub + PREPARE proactivity C6
 ↓
-selected external proactivity + advanced autonomy C7
+selected autonomous ACT C7
 ```
 
 ## Regras anti-refatoração
 
-- egress/OAuth/secret/privacy boundaries precedem provider code;
-- planner is provider-neutral;
-- SourceRef/EvidenceRef precede external feature-specific models;
-- external read/write split precedes messaging automation;
-- EventEnvelope precede provider-specific Watch logic;
-- ExternalConnection lifecycle precede token-handling feature code;
-- personal vs organizational privacy precede Knowledge promotion;
+- C0 inventaria antes de escolher RPA platform/event bus/queue architecture;
+- Copilot intelligence and Automation Hub execution remain separate concerns;
+- API is preferred over RPA when an authoritative supported contract exists;
+- planner works with semantic capability, never RPA clicks/selectors;
+- EventEnvelope precedes source-specific automation logic;
+- deterministic Policy/Specification precedes prompt-only readiness decisions;
+- AutomationExecution/idempotency precedes autonomous retry;
+- technical execution success never replaces verified business outcome;
+- `PREPARE != ACT`;
+- autonomy is capability/context/risk scoped; no global L5;
+- background actor/service identity is explicit;
+- computer-use remains sandboxed fallback;
+- OT safety remains external authority;
 - Chat does not need migration/refactor to progress.
 
 ## Releases de produto
 
 ```text
-Foundation Release                       → C0
-Standalone Bootstrap Release             → C1
-Contextual Platform Release              → C2
-Intelligent Multimodal/Research Release  → C3
-Connected Read Copilot Release           → C4
-Operational + External Action Release    → C5
-Work/Meeting/Frontline/Events Release    → C6
-Mature Proactive Connected Copilot       → C7
+Foundation Release                         → C0
+Standalone Bootstrap Release               → C1
+Contextual Platform Release                → C2
+Intelligence/Event Decision Foundation     → C3
+Connected Operational Read Copilot         → C4
+Governed Execution Foundation              → C5
+Automation Hub + Work/Meeting/Frontline    → C6
+Autonomous Operations Release              → C7
 ```
 
 ## Primeira execução
 
 ```text
-C0.S0 platform/media/device/biometric/external/OT inventory
+C0.S0 platform/media/device/biometric/external/automation/OT inventory
 → C0.S1 boundary/names
 → C0.S2 authorities
 → C0.S3 primitives/refs
-→ C0.S4 architecture/privacy/egress/OAuth/secrets
+→ C0.S4 architecture/privacy/event/executor/outcome/autonomy boundaries
 → C0.S5 integration contracts
 → C0.S6 RED harness
 → C0.S7 FOUNDATION_FREEZE
