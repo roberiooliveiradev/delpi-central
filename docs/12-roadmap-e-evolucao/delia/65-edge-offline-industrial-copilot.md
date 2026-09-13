@@ -1,24 +1,25 @@
-# Minha DELPI Copilot — Edge/Offline Industrial Copilot
+# DÉLIA — Edge/Offline Industrial
 
-**Status:** thematic industrial/reliability/security spec  
+**Status:** `TARGET` — thematic industrial/reliability/security spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Industrial/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
 **Autonomous Operations:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)
 
 ## 1. Decisão
 
-O Copilot industrial não deve assumir conectividade cloud contínua. O target deve suportar **Edge/Offline assistance** para cenários aprovados, preservando o Copilot central como authority de produto/governança.
+A DÉLIA industrial não deve assumir conectividade cloud contínua. A visão alvo pode incluir **Edge/Offline assistance** para cenários aprovados, sem criar um segundo produto autônomo nem ampliar authority pela perda de conectividade.
 
 ```text
-Cloud Copilot
-+ governed Edge Runtime
+DÉLIA central governance/intelligence
++
+governed Edge capability/runtime when proven necessary
 ```
 
-Edge não é um segundo Copilot autônomo irrestrito.
+Edge é deployment/runtime boundary potencial, não permission authority, business owner ou safety controller.
 
 ## 2. Edge capabilities possíveis
 
-Conforme hardware/policy:
+Candidates, conforme hardware/policy/owner reais:
 
 ```text
 cached current procedures/drawings
@@ -27,27 +28,33 @@ local STT/TTS optional
 vision inference
 anomaly/classifier inference
 machine telemetry reads via approved adapters
-FAST PATH rules
+FAST deterministic rules
 frontline UI/local session support
 event buffering
 store-and-forward sync
 ```
 
+A lista é `TARGET`; não prova runtime, devices, models ou package manager existentes.
+
 ## 3. Offline modes
+
+Estados candidatos, a congelar somente se houver lifecycle real:
 
 ```text
 ONLINE
 DEGRADED
 OFFLINE_READ_ONLY
-OFFLINE_BOUNDED_ACTIONS when explicitly approved
+OFFLINE_BOUNDED_ACTIONS only when separately approved
 SYNCING
 ```
 
-Modo deve ser visível ao usuário. Não apresentar dado antigo como atual.
+Modo deve ser visível quando material. Dado stale não é apresentado como current fact.
 
 ## 4. Cache/freshness
 
-Todo conteúdo offline material possui:
+Conteúdo offline material deve manter source/version/freshness/retention suficientes para evitar uso enganoso.
+
+Candidate refs:
 
 ```text
 sourceRef
@@ -58,51 +65,62 @@ retention
 signature/hash where relevant
 ```
 
-Procedimento/desenho stale deve ser bloqueado ou sinalizado conforme criticidade.
+Procedimento/desenho stale deve ser bloqueado ou sinalizado conforme owner/policy/criticidade.
 
 ## 5. Offline authorization
 
-C0/C7 devem decidir quais proofs podem existir offline. Por default:
+C0 deve inventariar requisitos reais de continuidade; qualquer future offline authority precisa de policy explícita e boundary própria.
 
+Defaults:
+
+- loss of cloud never widens permission;
 - session/user identity cannot be invented;
 - cached permission is not indefinite authority;
-- high-risk action requires fresh central/domain validation unless explicit bounded offline policy exists;
-- biometric candidate still does not grant authorization;
+- high-risk action requires live central/domain validation unless a separately approved bounded offline contract exists;
+- biometric candidate does not authenticate/authorize;
+- provider/model/device state does not grant business permission;
 - OT safety remains independent.
 
 ## 6. Event buffering
 
+Target, quando necessário:
+
 ```text
 local event
 → validate/classify
-→ append bounded buffer
-→ dedupe/idempotency key
-→ sync when link returns
-→ central EventEnvelope/Workflow
+→ bounded durable buffer
+→ dedupe/idempotency metadata
+→ sync when authorized link returns
+→ central EventEnvelope processing
 ```
 
-Ordering, duplicate delivery and clock drift need explicit handling.
+Ordering, duplicates, clock drift, retention e reconciliation precisam de contrato explícito. Buffered event não autoriza ACT.
 
-## 7. Edge model deployment
+## 7. Edge model/package deployment
 
-Model/package deployment requires:
+Candidate metadata:
 
 ```text
-modelRef/version
+model/package ref + version
 approved device class
 runtime compatibility
 hash/signature
 rollout cohort
-rollback version
+rollback ref
 health
 last sync
+owner
 ```
 
-No uncontrolled model download from public source to production device.
+Model/package deployment é capability técnica governada. Instalar modelo não concede permission nem altera policy.
+
+No uncontrolled public-source download to production devices.
 
 ## 8. Device management
 
-Need inventory for:
+Se device projection/registry for necessário, C0 deve provar owner/source/consumer antes da criação.
+
+Candidate fields:
 
 ```text
 deviceRef
@@ -111,39 +129,45 @@ owner
 OS/runtime
 hardware accelerators
 network zone
-allowed capabilities
+allowed technical capabilities
 current package/model versions
 health
 last seen
 ```
 
-Device identity != user identity.
+Device identity != user identity. Technical device capability != business authority.
 
 ## 9. Security
 
-- signed artifacts/packages where applicable;
-- encrypted local data at rest when sensitive;
-- no long-lived broad secrets on device;
+Quando aplicável:
+
+- signed artifacts/packages;
+- encrypted local sensitive data;
+- no long-lived broad secrets;
+- protected device/service identity;
 - remote revoke/disable where feasible;
-- physical tamper risk considered;
+- physical tamper considerations;
 - network segmentation respected;
-- local logs bounded/redacted;
-- offline data cleared according to retention/user switch policy.
+- bounded/redacted logs;
+- local personal/session data cleanup;
+- no secrets in prompts/models/ordinary telemetry.
 
 ## 10. Industrial boundary
 
-Edge Copilot may observe/explain/recommend. Physical control stays with approved industrial/safety systems.
+DÉLIA/Edge may observe, explain and recommend. Physical control stays with approved industrial/safety systems.
 
 ```text
-Edge LLM/vision
--X→ free-form machine command
+free-form Edge LLM/vision/voice
+-X→ PLC/CNC/robot/machine command
 ```
 
-Any future bounded actuation needs separate industrial safety initiative and deterministic contract.
+Any future physical actuation requires a separate industrial safety initiative with deterministic typed commands, independent interlocks, approved owner, risk assessment, testing/simulation, fail-safe and audit.
+
+Enterprise autonomy level never implies physical authority.
 
 ## 11. C0 inventory
 
-Inventariar:
+Inventariar factual:
 
 - factory connectivity/reliability;
 - current Edge platforms/gateways;
@@ -156,30 +180,38 @@ Inventariar:
 - procedure/drawing distribution;
 - time synchronization;
 - credential/device identity patterns;
-- offline business continuity requirements.
+- offline business continuity requirements;
+- industrial safety owners/boundaries.
+
+Sem evidence suficiente = `TO_INVENTORY`.
 
 ## 12. Phase mapping
 
 ```text
-C0 → device/network/OT/offline/edge inventory and trust boundaries
-C3 → Edge contracts/package/model/device projection foundations
+C0 → device/network/OT/offline/edge inventory + trust/safety boundary decisions
+C3 → minimal Edge/device/package contracts only when justified
 C4 → read-only cached knowledge/telemetry pilots
-C6 → Frontline offline assistance, buffering, sync and device admin pilots
-C7 → scaled Edge deployment, local models, bounded offline actions only if separately approved
+C6 → Frontline offline assistance, buffering/sync and device-admin pilots
+C7 → scaled Edge/local models and bounded offline ACT only if separately authorized; L5/enterprise autonomy does not grant OT authority
 ```
 
 ## 13. Acceptance
 
-- offline mode visibly declared;
-- stale revision detected;
-- user switch clears local personal context;
-- buffered events sync idempotently;
-- revoked package/model cannot continue after enforcement point;
-- edge model/version traceable;
+Quando implementado, provar:
+
+- offline/degraded state is explicit;
+- stale revision is detected and handled by policy;
+- user switch clears personal/session state;
+- buffered events reconcile idempotently;
+- revoked package/model is unavailable after defined enforcement point;
+- edge model/package/device versions are traceable;
 - no unrestricted local secret exposure;
-- loss of cloud does not silently widen authority;
+- loss of cloud does not widen authority;
+- device/model metadata cannot grant permission;
 - safety command boundary remains enforced.
+
+Sem prova obrigatória: `PENDING`/`INCONCLUSIVE`.
 
 ## 14. North Star
 
-> **O Copilot deve continuar útil no chão de fábrica mesmo com conectividade limitada, sem sacrificar atualização, identidade, segurança ou autoridade industrial.**
+> **DÉLIA deve continuar útil em ambientes industriais com conectividade limitada sem transformar Edge/offline em authority paralela, permissão ampliada ou caminho para contornar segurança industrial.**
