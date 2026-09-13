@@ -1,9 +1,9 @@
-# Minha DELPI Copilot — Tasks, Cases e Salas de Interação
+# DÉLIA — Tasks, Cases e Salas de Interação
 
-**Status:** thematic spec  
+**Status:** thematic spec / TARGET  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Runtime owner:** Durable Workflow foundation em C5; Task/Case/Room product features em C6.
+**Runtime owner:** DÉLIA Durable Work foundation em C5 após gates; Task/Case/Room product features em C6.
 
 ## 1. Unidades de trabalho
 
@@ -18,11 +18,11 @@ O usuário pode começar pela conversa e evoluir para Task/Case quando a naturez
 
 ## 2. Foundations
 
-Reutilizar CorrelationContext, EntityRef, EvidenceRef, OutcomeRef, Decision refs, WorkflowPlan/Step, TaskRef e CaseRef. Não criar modelos paralelos por feature.
+`CorrelationContext`, `EntityRef`, `EvidenceRef`, `OutcomeRef`, Decision refs, `WorkflowPlan/Step`, `TaskRef` e `CaseRef` são contracts TARGET a reutilizar **somente se C0 os comprovar/congelar**. Não criar modelos paralelos por feature nem tratar a lista como implementação existente.
 
-## 3. Copilot Task
+## 3. DÉLIA Task
 
-Task é uma unidade de produto sobre Durable Workflow.
+Task é uma unidade de produto sobre DÉLIA Durable Work.
 
 Campos conceituais:
 
@@ -41,9 +41,9 @@ owner/createdBy
 createdAt/updatedAt
 ```
 
-Status alinha ao lifecycle canônico; frontend não cria enum incompatível.
+Status alinha ao lifecycle canônico quando congelado; frontend não cria enum incompatível.
 
-## 4. Copilot Case
+## 4. DÉLIA Case
 
 Case organiza investigação/trabalho longo:
 
@@ -62,17 +62,17 @@ roomRef?
 timestamps
 ```
 
-Lifecycle conceitual:
+Lifecycle conceitual, somente se a necessidade real justificar State Machine:
 
 ```text
 open → investigating/waiting/actioning → resolved/closed → reopened
 ```
 
-Se C0 provar owner corporativo existente adequado, usar Adapter/Port em vez de criar tabela paralela automaticamente.
+Se C0 provar owner corporativo existente adequado, usar Adapter/Port conforme Abstraction Gate em vez de criar tabela paralela automaticamente.
 
 ## 5. Evidence Board
 
-Organiza os mesmos `EvidenceRef` como:
+Organiza os mesmos `EvidenceRef` como, se esse lifecycle/classification for aprovado:
 
 ```text
 accepted
@@ -81,20 +81,20 @@ missing
 superseded
 ```
 
-Não duplica source/value/provenance.
+Não duplica source/value/provenance e não transforma classificação de Case em source truth externa.
 
 ## 6. Interaction Room
 
-C0 deve inventariar as salas existentes, inclusive Portal Comercial, antes de definir owner.
+C0 deve inventariar as salas existentes, inclusive qualquer implementação no Portal/Apps, antes de definir owner/contrato.
 
-Preferência:
+Preferência target:
 
 ```text
 CaseRef/TaskRef
 ↔ RoomRef
 ```
 
-Room owner mantém participants/messages/files/timeline. Copilot usa adapter autorizado e não copia tudo para Case state quando refs atendem.
+Room owner mantém participants/messages/files/timeline. DÉLIA usa adapter autorizado e não copia tudo para Case state quando refs atendem.
 
 ## 7. Relações
 
@@ -104,7 +104,7 @@ Case + Evidence + Expertise + Playbook → WorkflowPlan/Tasks
 Case EntityRefs → Business Graph/source owners
 ```
 
-Case não é agent nem executor.
+Case não é agent, permission authority nem technical executor.
 
 ## 8. Permissions
 
@@ -112,16 +112,18 @@ Case não é agent nem executor.
 Case/Room access ≠ source entity permission
 ```
 
-Toda source read/action continua sujeita a current RBAC/policy. Materializações respeitam retention/redaction/classification.
+Toda source read/action continua sujeita a current Core/domain/provider authorization e DÉLIA Policy/Decision quando aplicável. Materializações respeitam retention/redaction/classification.
 
 ## 9. Durable behavior
 
-Task/Case sobrevivem a F5, API/worker restart, waits, partial failure, cancel/expiry e resume sem repeat write.
+Quando implementados, Task/Case sobrevivem a F5, DÉLIA API/Work-worker restart, waits, partial failure, cancel/expiry e resume sem repeat write.
+
+Automation Hub technical execution state permanece externo; Task/Case guardam apenas refs/correlation/outcomes necessários ao Work lifecycle.
 
 ## 10. UX surfaces
 
 ```text
-Copilot Conversation
+DÉLIA Conversation
 Tasks
 Cases
 Evidence Board
@@ -132,26 +134,26 @@ Artifacts
 Inbox
 ```
 
-Todas usam o mesmo Copilot MFE/API; não existe segunda app de Cases.
+Todas usam o mesmo DÉLIA MFE/API; não existe segunda app/planner de Cases por default.
 
 ## 11. Phase mapping
 
 ```text
 C0 → Task/Case contracts + Room/Case owner inventory
-C5 → Durable Workflow/checkpoints/waits foundation
-C6.S1 → Task
-C6.S2 → Case + Evidence Board
-C6.S3 → Room integration
-C6.S4 → Inbox
-C6 → product reload/lifecycle/integration gates
+C5 → Durable Work/checkpoints/waits foundation conforme 16
+C6 → Task/Case/Room/Inbox consumers conforme substeps canônicos de 16
 ```
+
+Este documento não redefine numeração atômica de substeps; `16` é authority exclusiva.
 
 ## 12. Independence
 
-Task/Case state pertence à Copilot API ou a owner corporativo adaptado; nunca às tabelas/sessions do Minha DELPI Chat.
+Task/Case state pertence ao runtime da DÉLIA quando realmente owned, ou a owner corporativo adaptado; nunca às tabelas/sessions do Minha DELPI Chat.
+
+Também não duplica technical execution truth do Automation Hub.
 
 ## 13. Gate C6
 
-Case só é produto real com structured lifecycle, shared refs, Workflow/Task integration, permissions, timeline/outcomes e persistence/reload quando necessário.
+Case só é produto real com structured lifecycle justificado, shared refs aprovadas, Workflow/Task integration, permissions, timeline/outcomes e persistence/reload quando necessário.
 
-Uma conversa renomeada como “Case” não atende.
+Uma conversa renomeada como “Case”, documentação de schema ou tabela sem wiring/behavior/evidence não atende o gate.
