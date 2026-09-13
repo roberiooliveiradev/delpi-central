@@ -1,327 +1,202 @@
 # Minha DELPI Copilot
 
 > **Status:** `PLANNED / NOT_STARTED`  
-> **Decisão de produto:** **aplicação nova e standalone**  
-> **Visão:** **um único Copilot para escritório, reuniões, chão de fábrica, fontes externas e operações autônomas governadas**  
-> **Próxima etapa:** **C0.S0 — Platform/Media/Device/Biometric/External/Automation/OT Rebaseline Inventory**  
-> **Ordem executável:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-> **Boundary standalone:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-> **Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
-> **Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
-> **Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)  
-> **Microsoft Teams:** [`56-microsoft-teams-connector-and-meeting-integration.md`](./56-microsoft-teams-connector-and-meeting-integration.md)  
-> **Autonomous Operations/Execution Hub:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-> **Prompt do Cursor:** [`23-prompt-cursor-execucao.md`](./23-prompt-cursor-execucao.md)  
-> **Requirements:** [`25-requirements-traceability.md`](./25-requirements-traceability.md) — `CP-001…CP-248`  
-> **Ledger:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
+> **Produto:** aplicação nova e standalone  
+> **Requirements:** `CP-001…CP-310`  
+> **Specs temáticas:** `53–66`  
+> **Próxima etapa:** `C0.S0 — Enterprise AI/Platform Foundation Rebaseline`  
+> **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+> **Execution state:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
 
 ## 1. Decisão fundamental
 
 O **Minha DELPI Copilot não é uma expansão do Minha DELPI Chat**.
 
 ```text
-Minha DELPI Chat                 Minha DELPI Copilot
------------------------------    ------------------------------
-plugins/minha-delpi-chat         novo MFE próprio
-minha-delpi-ai-api               nova API própria
-runtime/persistência do Chat     runtime/persistência próprios
-release do Chat                  release próprio
+Minha DELPI Chat                  Minha DELPI Copilot
+-------------------------------   --------------------------------
+plugins/minha-delpi-chat          plugins/minha-delpi-copilot
+minha-delpi-ai-api                minha-delpi-copilot-api
+Chat state/runtime                own state/runtime
+Chat release                      independent release
 
-                 SEM DEPENDÊNCIA DE RUNTIME
+                 NO RUNTIME DEPENDENCY
 ```
-
-O Copilot preserva as fundações corporativas existentes — Portal, Core API, Keycloak, Gateway, Manifest, Module Federation, `plugin-ui` e Domain APIs — mas possui inteligência, estado, deploy e evolução próprios.
 
 ## 2. North Star
 
-> **Minha DELPI Copilot é a interface e a inteligência operacional entre pessoas, sistemas, dados, automações e a operação física da DELPI. Ele pesquisa, percebe eventos, entende contexto, combina regras determinísticas e raciocínio de IA, toma decisões governadas, coordena APIs, automações/RPAs e pessoas, verifica resultados, comunica os envolvidos e transforma experiência validada em aprendizado governado.**
+> **Um único Copilot para escritório, reuniões, chão de fábrica, fontes externas e operações governadas, capaz de perceber eventos, entender pessoas/dados/processos, pesquisar, analisar, prever, simular, decidir, coordenar APIs/automações/pessoas, verificar resultados e aprender sob governança.**
 
 ```text
-PERCEBER   → eventos, dados, mensagens, mídia e contexto operacional
-ENTENDER   → pesquisar, correlacionar, explicar, analisar
-DECIDIR    → rules/policies + AI reasoning quando necessário
-PREPARAR   → plano, draft, preview, Task, Decision
-EXECUTAR   → APIs, functions, RPA, computer-use governado, Human Task
-VERIFICAR  → outcome/postcondition real
-COMUNICAR  → Minha DELPI, email, Teams, WhatsApp e canais autorizados
-APRENDER   → candidate knowledge/policy/playbook após review/eval
+PERCEBER
+→ ENTENDER
+→ PESQUISAR
+→ ANALISAR
+→ PREVER/SIMULAR
+→ DECIDIR
+→ PREPARAR/EXECUTAR
+→ VERIFICAR
+→ COMUNICAR
+→ APRENDER COM GOVERNANÇA
 ```
 
-## 3. Não é “Chat + RAG”
-
-O runtime alvo aceita tanto intenção humana quanto eventos:
+## 3. Surfaces
 
 ```text
-user request OR EventEnvelope
-→ context / Business Graph / Evidence
-→ DecisionPathPolicy
-   FAST | OPERATIONAL | REASONING
-→ Policy / Decision Gate / AutonomyPolicy
-→ Durable Workflow
-→ semantic capability
-→ executor
-→ verified Outcome
-→ Evidence / Notification / Learning candidate
+GLOBAL
+WORKSPACE
+MEETING
+FRONTLINE
+TEAMS future surface
+BACKGROUND Watches/Workflows
+ADMIN governance surfaces
 ```
 
-Nem todo evento chama um LLM. Condições determinísticas usam regras/Policies/State Machines quando suficientes.
+Same Copilot API/MFE/product identity/policy/evidence/work runtime.
 
-## 4. Surfaces e presença
+## 4. Capability map
 
 ```text
-GLOBAL      → painel contextual no Portal
-WORKSPACE   → página completa
-MEETING     → reunião assistida multimodal
-FRONTLINE   → operador/posto/máquina
-TEAMS       → futura surface app/tab/bot do mesmo Copilot
-BACKGROUND  → Watch/Workflow reagindo a eventos governados
+Conversation / Context
+Expertise / Playbooks / Knowledge
+Personal Memory / Personalization
+Multimodal / Voice / Biometric
+Internet Research / External Connectors / Teams
+Business Actions / Business Graph
+Semantic Business Layer
+Event / Decision Intelligence
+Process Intelligence / Process Mining
+Automation & Execution Hub
+Durable Work / Tasks / Cases / Rooms / Inbox / Watch
+Analysis Sandbox / Artifact Workspace
+Predictive / Prescriptive Intelligence
+Operational Twin / Simulation
+MCP / A2A interoperability
+AI Control Tower
+AI Model Lifecycle / MLOps
+Capability Marketplace
+Edge / Offline Industrial Copilot
+Meeting / Frontline
+Evidence / Outcome / Evals / Governance
 ```
 
-Todas compartilham a mesma Copilot API, Core/RBAC, Policy/Decision Gate, Evidence e Durable Work runtime.
-
-## 5. Três espaços de informação
+## 5. Fundamental boundaries
 
 ```text
-MINHA DELPI
-→ Core / Domain APIs / Business Graph / Knowledge / apps
-
-INTERNET
-→ Search + Safe Web Fetch + SourceRef/EvidenceRef
-
-CONNECTED SOURCES
-→ Microsoft 365/Outlook/Teams
-→ Google Workspace/Gmail
-→ WhatsApp Business
-→ Slack/GitHub/outros futuros connectors
+Core/Keycloak = identity/RBAC authority
+Domain APIs = business authority
+Portal = host/navigation/context
+External providers = external-resource authority
+OT/safety systems = machine/safety authority
+Copilot = intelligence/policy/orchestration/work/evidence
 ```
 
-External scopes nunca elevam Core RBAC. Conteúdo externo é untrusted data para system/policy.
-
-## 6. Automation & Execution Hub
-
-Não construir apenas um “Hub de RPAs”. O target conceitual é:
-
-> **Minha DELPI Automation & Execution Hub**
-
-Separação:
+And:
 
 ```text
-COPILOT
-= inteligência, contexto, decisão, planning e orquestração
-
-AUTOMATION & EXECUTION HUB
-= execução por contracts governados
+Personal Memory != Organizational Knowledge
+Business Graph != Semantic Business Layer
+Prediction != FACT
+Recommendation != Authorization
+Simulate != Apply
+Twin != source of truth
+PREPARE != ACT
+Read != Write
+Draft != Send
+Technical Success != Verified Business Outcome
+MCP/A2A Discovery != Approval
+Marketplace Install != Permission
+Edge Offline != Wider Authority
 ```
 
-Executor preference:
+## 6. Automation principle
+
+Copilot is the brain; Automation & Execution Hub executes.
+
+Default executor preference:
 
 ```text
-1. API oficial
-2. integração nativa suportada
-3. função/script determinístico
-4. RPA
-5. computer-use/UI automation governada
-6. Human Task
+Official API
+→ native integration
+→ deterministic function/script
+→ RPA
+→ computer-use
+→ Human Task
 ```
 
-RPA é executor substituível, nunca authority de business rule.
+Planner uses semantic capabilities, never UI clicks/selectors.
 
-## 7. Semantic capability antes do executor
-
-O planner conhece:
+## 7. Process / Data intelligence
 
 ```text
-billing.invoice.issue
-maintenance.request.create
-production.report.validate
-communication.email.send
-inventory.read
+Business Graph     → relationships
+Semantic Layer     → official metric/business meaning
+Process Intelligence → actual process behavior from event logs
+Operational Twin  → scenario projection
 ```
 
-Não conhece:
+Each remains a separate responsibility and none becomes master data.
+
+## 8. AI governance
+
+AI Control Tower governs assets/models/automations/connectors/tools/agents/Edge deployments with owner/risk/evals/health/cost/value/incidents/rollout/kill switches.
+
+Model lifecycle and Marketplace assets are versioned/reviewed/revocable. Admin/catalog access never grants underlying business permission.
+
+## 9. Personalization
+
+Personal Memory can remember user preferences/followed work topics and support personalized briefings. User can inspect/correct/delete/disable it. It remains private by default and never replaces live business facts or RBAC.
+
+## 10. Industrial/Edge direction
+
+Frontline may use voice/camera/current procedures/operational context and, when C0/C7 prove feasibility, governed Edge/offline cache/inference/event buffering.
+
+Copilot/Edge/RPA remain **not safety controllers**; free-form machine actuation is blocked by default.
+
+## 11. Canonical authorities
+
+Read in this order:
+
+1. official project instructions + `.cursor` rules;
+2. [`16`](./16-execution-master-plan.md) — single C0–C7 order;
+3. [`50`](./50-standalone-copilot-application-architecture.md) — standalone boundary;
+4. [`17`](./17-component-and-contract-map.md) — owners/contracts;
+5. [`49`](./49-architecture-and-design-patterns-standard.md) — code architecture/patterns;
+6. [`51`](./51-platform-integration-baseline.md) — factual baseline;
+7. [`52`](./52-standalone-repository-and-bootstrap-plan.md) — physical/bootstrap;
+8. [`21`](./21-data-and-state-model.md) — state/persistence;
+9. [`20`](./20-testing-and-acceptance-matrix.md) — tests/gates;
+10. [`25`](./25-requirements-traceability.md) — `CP-*` authority;
+11. `53–66` — thematic specs;
+12. ledger — actual execution evidence.
+
+Full index: [`INDEX.md`](./INDEX.md).
+
+## 12. Thematic specs
 
 ```text
-click(x,y)
-CSS/XPath selector
-screen coordinate
-RPA package internals
+53 Multimodal / Meeting / Frontline / Industrial
+54 Biometric Identity / Human Observation
+55 Internet Research / External Connectors
+56 Microsoft Teams
+57 Event-Driven Autonomous Operations / Automation Hub
+58 Process Intelligence / Process Mining
+59 AI Control Tower
+60 MCP / A2A / Tool-Agent Interoperability
+61 Personal Memory / Personalization
+62 Semantic Business Layer
+63 Analysis Sandbox / Artifact Workspace
+64 Predictive / Prescriptive / Operational Twin
+65 Edge / Offline Industrial Copilot
+66 AI Model Lifecycle / Capability Marketplace
 ```
 
-Uma capability pode migrar de RPA para API sem patch no planner/workflow.
-
-## 8. Continuous Operational Intelligence
-
-Watches podem observar condições como:
-
-```text
-pedido pronto para faturar
-máquina parada
-apontamento improvável
-estoque crítico
-fornecedor atrasado
-OP aguardando material
-qualidade desviando
-prazo/approval expirando
-resposta externa recebida
-```
-
-Modes:
-
-```text
-OBSERVE
-ADVISE
-PREPARE
-ACT   # C7 only
-```
-
-`PREPARE != ACT`.
-
-## 9. Outcome truth
-
-Invariante:
-
-```text
-technical executor success != verified business outcome
-```
-
-Exemplos:
-
-```text
-HTTP 200 != nota emitida corretamente
-RPA clicou Salvar != transação confirmada
-provider accepted != entrega final quando async
-```
-
-Toda ação material usa postcondition/Outcome verification quando aplicável antes de comunicar conclusão.
-
-## 10. Autonomia
-
-Autonomia é resolvida por:
-
-```text
-capability
-+ actor/service identity
-+ source/event trust
-+ context
-+ risk/sensitivity
-+ financial/material limits
-+ environment
-+ reversibility
-+ policy
-```
-
-Não existe `Copilot=L5` global. L5 permanece OFF por default e exige allowlist, budgets/limits, revalidation, kill switch e verified Outcome.
-
-## 11. Meeting / Frontline / Biometria
-
-Meeting e Frontline são surfaces do mesmo runtime. Voz/câmera/biometria são modalidades/contexto, não permission bypass.
-
-Biometric match:
-
-```text
-!= authenticated session
-!= Core permission
-!= Business Action authorization
-```
-
-Human Observation permanece limitada a fatos/padrões objetivos do processo e não pode virar inferência psicológica/sensível ou decisão trabalhista automática.
-
-## 12. OT / máquinas
-
-Copilot não é safety controller.
-
-```text
-approved telemetry/read
-→ context/Evidence/analysis/recommendation
-
-free-form LLM/RPA/computer-use
--X→ PLC/CNC/robot/machine safety actuation
-```
-
-Qualquer future physical actuation exige iniciativa/safety gate separado com typed deterministic commands, allowlist, state checks, industrial owner, interlocks independentes, test/simulation, fail-safe e audit.
-
-## 13. Owners alvo
-
-```text
-minha-delpi-copilot-api/       → intelligence/work/automation orchestration runtime
-plugins/minha-delpi-copilot/   → Global/Workspace/Meeting/Frontline/admin MFE
-portal/                        → host/context/navigation
-core-api/                      → apps/routes/RBAC/governance/user authority
-keycloak                       → identity/SSO
-gateway/                       → routing
-plugins/plugin-ui/             → shared design system
-Domain APIs                    → business data/rules/actions
-External Providers             → external resource authority
-Secret/Vault owner             → credential material
-Automation executors           → execution mechanisms behind adapters
-OT/domain systems              → machine/process truth and industrial safety owners
-```
-
-Automation & Execution Hub pode ser bounded module do Copilot ou neutral platform service somente após C0 ownership analysis. “Hub” não implica microservice antecipadamente.
-
-## 14. Ordem canônica
-
-```text
-C0 — Platform + Architecture + Media/Privacy/Biometric/External/Automation/OT Foundation Freeze
-→ C1 — Standalone Application Bootstrap
-→ C2 — Portal + Operational Context + Platform Commands
-→ C3 — Intelligence + Multimodal/Biometric/Internet/Connector/Decision Foundations
-→ C4 — Business + External Reads + Graph + Operational Read Intelligence
-→ C5 — Governed Business/External/Automation Writes + Durable Foundation
-→ C6 — Product Work + Meeting/Frontline + Automation Hub + Events/Learning
-→ C7 — Autonomous Operations + Advanced Realtime/External Proactivity + Rollout
-```
-
-## 15. C0 precisa congelar antes de qualquer runtime
-
-Além do inventário já definido, C0 agora inclui:
-
-```text
-event sources/brokers/webhooks/schedulers
-RPA tools/orchestrators/licences/bots/packages
-scripts/functions/jobs
-queues/workers/desktop execution infrastructure
-service accounts/background identities
-credential owners/injection
-business postcondition/outcome sources
-executor contracts/idempotency/retry
-RPA artifacts/retention
-notification/escalation channels
-automation ownership/governance
-kill switches/emergency stop
-```
-
-Nenhum Automation Hub/RPA runtime é criado em C0.S0.
-
-## 16. Documentos canônicos
-
-| Documento | Papel |
-|---|---|
-| `16` | única ordem de implementação |
-| `17` | owners/primitives/contracts |
-| `20` | testes/gates |
-| `21` | state/persistence |
-| `23` | prompt mestre Cursor |
-| `25` | requirements `CP-*` |
-| `49` | architecture/design patterns |
-| `50` | standalone product boundary |
-| `51` | factual platform baseline |
-| `52` | estrutura física/bootstrap |
-| `53` | multimodal/Meeting/Frontline/industrial |
-| `54` | biometric/Human Observation |
-| `55` | Internet/external connectors |
-| `56` | Microsoft Teams |
-| `57` | autonomous operations/Automation & Execution Hub |
-| ledger | execution evidence/status |
-
-## 17. Primeiro passo
-
-Abrir [`23-prompt-cursor-execucao.md`](./23-prompt-cursor-execucao.md) e executar **somente C0.S0**.
+## 13. Current execution state
 
 ```text
 PROGRAM = PLANNED / NOT_STARTED
-NEXT = C0.S0
 RUNTIME_DIFF = NONE
+NEXT = C0.S0
 ```
 
-A primeira implementação após `C0.S7 FOUNDATION_FREEZE=PASS` continua sendo o **bootstrap standalone** da Copilot API/MFE — não RPA, não Event engine, não LLM autonomy.
+C0.S0 is factual inventory only. No Copilot API/MFE/runtime capability is created until C0.S7 `FOUNDATION_FREEZE=PASS`.
