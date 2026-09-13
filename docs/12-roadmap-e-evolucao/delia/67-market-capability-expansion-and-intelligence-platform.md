@@ -1,6 +1,6 @@
 # DÉLIA — Expansão de Capacidades de Mercado e Plataforma de Inteligência
 
-**Status:** cross-cutting architecture/product capability map  
+**Status:** `TARGET` — cross-cutting architecture/product capability map  
 **Nome do produto:** **DÉLIA — DELPI · Ecossistema de Ligações, Inteligência e Automação**  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Ownership:** [`17-component-and-contract-map.md`](./17-component-and-contract-map.md)  
@@ -8,11 +8,11 @@
 **Requirements:** [`25-requirements-traceability.md`](./25-requirements-traceability.md)  
 **Autonomous Operations:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)
 
-> Este arquivo é visão transversal de expansão e **não** integra a sequência temática `53–66`. As specs temáticas continuam sendo as authorities de detalhe de cada capability.
+> Este arquivo é visão transversal de expansão e **não** integra a sequência temática `53–66`. As specs temáticas continuam sendo authorities de detalhe. Nenhuma capability descrita aqui é prova de runtime implementado.
 
 ## 1. Objetivo
 
-Formalizar capacidades complementares que levam a DÉLIA de um assistente/orquestrador para uma **plataforma corporativa de inteligência operacional**, sem criar autoridades paralelas nem engines redundantes.
+Formalizar capacidades complementares que podem levar a DÉLIA a uma **plataforma corporativa de inteligência operacional**, sem criar authorities paralelas, engines redundantes ou implementação antecipada.
 
 A expansão cobre:
 
@@ -59,11 +59,11 @@ DATA / EVENTS / PEOPLE / MACHINES / EXTERNAL SOURCES
              Governance / Learning / Control
 ```
 
-DÉLIA preserva Policy/Decision/Work orchestration; Automation Hub preserva technical execution.
+DÉLIA preserva Policy/Decision/Work orchestration; Automation Hub preserva technical execution. Domain APIs continuam business authorities; Control Tower/Marketplace são experiências/projeções governadas, não novas authorities.
 
 ## 3. Process Intelligence
 
-Process Intelligence deve permitir descobrir como os processos realmente acontecem, e não apenas executar fluxos previamente conhecidos.
+Process Intelligence deve permitir descobrir como os processos realmente acontecem quando event evidence e process owners suficientes existirem.
 
 Escopo alvo:
 
@@ -77,11 +77,11 @@ Bottleneck Detection
 Rework / Loop Detection
 Wait-Time Analysis
 Automation Opportunity Detection
-Agent/Automation Process Mining
+Automation Process Mining
 Process KPI Mining
 ```
 
-Fluxo canônico:
+Fluxo target:
 
 ```text
 Event Logs / Business Events
@@ -91,41 +91,37 @@ Event Logs / Business Events
 → conformance/bottleneck analysis
 → Evidence
 → improvement/automation candidate
-→ human/process-owner review
+→ process-owner review
 → Watch / Playbook / Automation candidate
-→ governed deployment
-→ outcome measurement
+→ governed deployment through owner contracts
+→ Outcome measurement
 → process mining again
 ```
 
-Process Mining nunca altera processo/policy automaticamente.
-
-Task Mining, quando envolver interação de usuários, exige governança de privacidade, transparência, purpose limitation e proibição de hidden worker profiling.
+Process Mining nunca altera process/policy automaticamente. Task Mining exige privacy, purpose limitation, minimization e Human Observation boundaries.
 
 ## 4. AI Control Tower
 
-A DÉLIA deve evoluir para possuir uma camada administrativa de governança de todo ativo de IA/automação relevante.
+A visão alvo inclui uma **projeção administrativa central** de governança/observabilidade sobre ativos de IA/automação relevantes.
 
-Target inventory:
+Candidate inventory, conforme owner/source comprovados:
 
 ```text
-DÉLIA runtime
-models
-prompts/system policies
+DÉLIA runtime refs
+models/providers
+prompt/system-policy refs
 Expertise Packs
 Playbooks
 Watches
-Automations
-RPA packages/workers
-Computer-Use executors
-MCP servers
+Automation Hub execution assets
+MCP servers/tools
 A2A agents
 connectors
-Edge models
+Edge models/deployments
 AI applications
 ```
 
-Cada ativo deve poder expor, conforme aplicável:
+Cada projection pode expor, quando a fonte autoritativa fornecer:
 
 ```text
 owner
@@ -133,63 +129,56 @@ version
 status
 risk class
 autonomy level
-permissions/data access
+required permissions/data scope
 health
 latency
 cost
 usage
 quality/evals
 incidents
-kill switch
+kill-switch ref
 dependencies
 rollout cohort
-rollback state
-business value / outcome metrics
+rollback/revoke ref
+business-value / Outcome metrics
 ```
 
-AI Control Tower é plano de governança/observabilidade, não novo planner e não permission authority de negócio.
+AI Control Tower = projection/admin experience. Não é planner, business-permission authority, model lifecycle owner universal ou technical executor.
 
 ## 5. MCP e A2A
 
-DÉLIA deve ser preparada para interoperabilidade padronizada.
+DÉLIA pode interoperar por protocolos padronizados quando C0/Abstraction Gate justificarem.
 
 ### MCP
 
-Uso alvo:
-
 ```text
 DÉLIA
-→ governed MCP client/gateway
+→ approved MCP adapter
 → approved MCP server
-→ tools/resources/prompts-capabilities
+→ tools/resources
 ```
 
-Regras:
+Rules:
 
-- discovery não concede permission;
-- todo tool invocation passa por capability/policy/Decision semantics aplicáveis;
-- server/tool metadata é untrusted until validated;
+- discovery != approval;
+- metadata/schema/tool output = untrusted external data;
+- invocation passa pelas mesmas capability/AuthZ/Policy/Decision semantics;
 - secrets não entram no LLM;
-- allowlist, versioning, provenance, timeout, rate limit e kill switch;
-- MCP não substitui OpenAPI/Domain authority quando contrato oficial já existe.
+- MCP não substitui OpenAPI/Domain authority.
 
 ### A2A
 
-Uso alvo:
-
 ```text
 DÉLIA
-→ A2A gateway/adapter
+→ approved A2A adapter
 → approved external/specialized agent
 → bounded task/result/artifact
-→ Evidence/Outcome
+→ Evidence/Outcome refs
 ```
 
-DÉLIA permanece o produto principal. Agentes externos não viram agentes departamentais internos nem recebem autoridade implícita.
+External agent não recebe authority implícita nem vira planner interno.
 
 ## 6. Personal Memory e Personalization
-
-Separar:
 
 ```text
 ORGANIZATIONAL KNOWLEDGE
@@ -197,148 +186,98 @@ ORGANIZATIONAL KNOWLEDGE
 USER PERSONAL MEMORY
 ```
 
-Personal Memory pode armazenar somente informação permitida e governada para melhorar continuidade e personalização.
+Personal Memory pode melhorar continuidade/relevância, mas nunca concede RBAC, não substitui live business truth e não promove Organizational Knowledge automaticamente.
 
-Candidate classes:
-
-```text
-user preferences
-preferred output format
-active projects/tasks
-frequent entities/topics
-saved working context
-explicitly remembered facts
-recent relevant decisions/work state
-```
-
-Requisitos:
-
-- source/provenance quando material;
-- user visibility/control;
-- correction/forget/disable semantics;
-- retention classes;
-- no secret/token/password storage;
-- no hidden personality/psychological profile;
-- no use to elevate RBAC;
-- personal memory does not become organizational Knowledge automatically.
+Memory classes/lifecycle/storage só são definidos após C0 owner/privacy/retention decisions.
 
 ## 7. DELPI Semantic Business Layer
 
 Business Graph responde **como entidades se relacionam**. Semantic Business Layer responde **o que conceitos e métricas significam**.
 
-Candidate primitive:
+Candidate semantic definition pode carregar name/type/business meaning/formula ref/grain/dimensions/owner/source/freshness/version/access classification, somente se C0 provar owner/consumer/contract.
 
-```text
-SemanticDefinition
-  id
-  name
-  type: metric | dimension | concept | rule_reference
-  businessMeaning
-  formula/expression?
-  grain
-  dimensions
-  owner
-  sourceRefs
-  freshness
-  version
-  accessPolicyRef
-  status
-```
-
-DÉLIA não inventa fórmula para métrica corporativa quando definição governada existir.
+DÉLIA não inventa fórmula para métrica corporativa material e a Semantic Layer não substitui Domain/BI authority.
 
 ## 8. Analysis Sandbox
 
-Target: ambiente efêmero e isolado para análise avançada.
+Target: ambiente efêmero, isolado e bounded para análise avançada.
 
-Capacidades possíveis:
+Capacidades possíveis incluem Python, approved SQL adapters, DataFrames, statistics, forecasting, optimization, charts e bounded file transforms.
 
-```text
-Python
-SQL sobre datasets autorizados
-DataFrames
-statistics
-forecasting
-optimization
-charts
-temporary files
-CSV/XLSX transformations
-```
-
-Boundary:
-
-```text
-bounded authorized inputs
-→ isolated sandbox
-→ deterministic/tool execution
-→ artifacts/results
-→ Evidence/Source/Outcome refs
-```
-
-Proibido network access irrestrito, acesso direto a secrets, bypass de Domain API/RBAC ou código arbitrário não governado em infraestrutura corporativa.
+Proibido unrestricted host/network access, broad credentials, Domain/RBAC bypass ou production mutation por read-analysis path.
 
 ## 9. Artifact Workspace
 
-DÉLIA deve poder produzir e manter artefatos de trabalho, não apenas texto conversacional.
+DÉLIA pode produzir/manter artifacts de trabalho com provenance, ACL, versioning e human-edit preservation quando a capability estiver implementada.
 
-Target artifacts incluem reports, spreadsheets, presentations, documents, PDFs, charts, process maps, BPMN candidates, checklists, procedure drafts, 8D, FMEA, A3, SWOT, project plans e meeting minutes.
+Artifact lifecycle deve reutilizar owner lifecycle quando existir; Artifact Workspace não vira document authority universal.
 
-Artifacts duráveis carregam owner, source/evidence refs, version, status e sharing policy.
+External share/send permanece separate governed action.
 
 ## 10. Predictive e Prescriptive Intelligence
 
-DÉLIA deve suportar progressivamente:
-
 ```text
-DESCRIPTIVE   → o que aconteceu?
-DIAGNOSTIC    → por que aconteceu?
-PREDICTIVE    → o que provavelmente acontecerá?
-PRESCRIPTIVE  → o que devemos fazer?
+DESCRIPTIVE
+DIAGNOSTIC
+PREDICTIVE
+PRESCRIPTIVE
 ```
 
-Prediction transporta model/version/confidence/source window/limitations. Prescription é recommendation/action candidate, nunca authorization por si só.
+Invariantes:
+
+```text
+Prediction != FACT
+Recommendation != authorization
+```
+
+Prediction deve preservar model/version/horizon/freshness/applicability/limitations. Prescriptive Apply inicia fluxo de ação separado.
 
 ## 11. Operational / Digital Twin
 
-Business Graph não deve ser renomeado para Digital Twin.
+Business Graph != Digital Twin.
 
-Operational Twin é target separado para representar estado operacional dinâmico quando fontes reais justificarem.
+Operational Twin é scenario projection derivada de authoritative state refs:
 
 ```text
-current authoritative state refs
+authoritative state refs
 → scenario/simulation
 → impact projection
-→ recommendation
-→ optional governed action
+→ recommendation/PREPARE
+→ separate governed Apply flow
 ```
 
-Twin não substitui MES/SCADA/Domain/OT authority.
+```text
+Twin != source of truth
+SIMULATE != APPLY
+```
+
+Twin nunca substitui MES/SCADA/Domain/OT authority.
 
 ## 12. Edge / Offline AI
 
 Target industrial progressivo:
 
 ```text
-Cloud DÉLIA
+DÉLIA central governance
 +
-Governed Edge Runtime
+Governed Edge Runtime when justified
 ```
 
-Edge pode executar somente capabilities explicitamente provisionadas, sem ampliar authority quando perde conectividade e sem bypass de safety/interlocks.
+Loss of connectivity never widens authority. Edge/model/device metadata never grants permission. OT physical authority remains under separate industrial safety gate.
 
 ## 13. AI / Model Asset Lifecycle (MLOps)
 
-Model Router decide **qual modelo usar**. AI Asset Lifecycle governa **como modelos existem e evoluem**.
+Model Router decide **qual approved model usar**; lifecycle owner decide como o modelo é evaluated/approved/deployed/monitored/revoked.
 
-Assets podem incluir LLM, embedding, vision, speech, forecast, anomaly detector, classifier, optimization model e edge model.
+DÉLIA/Control Tower podem manter projections/refs quando justified, sem duplicar provider/MLOps source of truth.
 
-Nenhum modelo crítico é atualizado silenciosamente sem version/eval/rollout/rollback semantics.
+Nenhum modelo crítico deve ser atualizado silenciosamente sem version/eval/rollout/rollback/revoke semantics adequadas ao owner.
 
 ## 14. AI Capability Marketplace / Studio
 
-Target de publicação governada para capabilities reutilizáveis, como Expertise Packs, Playbooks, Watches, Automations, Connectors, MCP Servers, A2A Agents, Artifact/Analysis Templates, Frontline Skills e Semantic Definitions.
+Target de publicação/descoberta governada para reusable assets como Expertise Packs, Playbooks, Watches, Automation definitions, Connectors, MCP/A2A integrations, Artifact/Analysis Templates, Frontline Skills, Semantic Definitions e approved model packages.
 
-Lifecycle quando material:
+Possible lifecycle semantics, somente quando não houver lifecycle autoritativo já existente:
 
 ```text
 DRAFT
@@ -349,48 +288,54 @@ DRAFT
 → DEPRECATED | REVOKED
 ```
 
-Marketplace/Studio não cria permissão. Publicar capability não concede acesso a usuários.
+Lifecycle acima é candidate, não authority canônica universal.
+
+```text
+publish != enable
+enable != permission
+install != authorization
+```
 
 ## 15. Integração entre capacidades
 
 ```text
 Process Intelligence
-→ descobre gap/oportunidade
-→ Expertise/Playbook/Watch/Automation candidate
+→ discovers opportunity candidate
 
 Semantic Layer + Business Graph
-→ contextualizam dados
-→ Predictive/Prescriptive / Simulation
+→ contextualize meaning + relationships
+
+Predictive/Prescriptive + Twin
+→ prediction/scenario/recommendation
 
 Analysis Sandbox
-→ análise/modelagem efêmera
+→ bounded analysis
 → Artifact Workspace
 
-Automation Hub
-→ execução técnica
-→ Outcome
-→ Process Intelligence / Control Tower
+DÉLIA Work
+→ Domain API direct action or Automation Hub technical execution
+→ authoritative Outcome verification
 
-AI Control Tower
-→ governa models/connectors/MCP/A2A/automations/edge
+Control Tower
+→ governed projections over owners
 
 Marketplace/Studio
-→ lifecycle de publicação governada
+→ governed publication/discovery experience
 ```
 
 ## 16. Prioridade arquitetural
+
+P0/P1/P2/P3 aqui expressam **foundation impact/product grouping**, não fase executiva paralela. `16` continua única authority C0–C7.
 
 ### P0 — foundation-impacting
 
 ```text
 Process Intelligence event semantics/inventory
-AI Control Tower inventory/governance model
+AI Control Tower inventory/governance boundaries
 MCP/A2A trust boundary
 Personal Memory privacy boundary
 Semantic Business Layer ownership
 ```
-
-Esses itens devem ser considerados em C0 para evitar refatoração estrutural.
 
 ### P1 — product intelligence
 
@@ -414,11 +359,9 @@ AI Asset Lifecycle/MLOps
 AI Capability Marketplace / Studio
 ```
 
-Prioridade não substitui a ordem C0–C7 do Plano Mestre.
-
 ## 17. C0 inventory additions
 
-C0.S0 deve inventariar, sem criar runtime:
+C0.S0 deve inventariar factual, sem criar runtime:
 
 ```text
 process/event logs and case correlation sources
@@ -448,13 +391,14 @@ sandbox != unrestricted code/network execution
 artifact != automatically authoritative document
 prediction != fact
 prescription != automatic action
-operational twin != OT source of truth
+operational twin != source of truth
+simulate != apply
 edge != independent authorization authority
 MCP/A2A discovery != permission
 marketplace publication != access grant
-AI Control Tower != second planner
+AI Control Tower != second planner/executor/authority
 ```
 
 ## 19. North Star ampliado
 
-> **DÉLIA deve entender não apenas dados e perguntas, mas também pessoas autorizadas, processos reais, semântica empresarial, estado operacional, previsões, cenários e capabilities disponíveis; deve produzir trabalho útil, coordenar execução, operar online ou de forma degradada no Edge quando aprovado, interoperar com tools/agentes externos e manter toda a inteligência governada.**
+> **DÉLIA deve entender processos, semântica empresarial, relações, estado operacional, previsões, cenários e capabilities disponíveis; produzir trabalho útil; coordenar execução por contratos apropriados; interoperar com sistemas externos; e manter toda essa inteligência governada sem duplicar owners ou ampliar authority por conveniência.**
