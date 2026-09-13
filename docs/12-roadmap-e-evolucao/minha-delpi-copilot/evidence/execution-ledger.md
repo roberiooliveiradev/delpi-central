@@ -10,6 +10,7 @@
 **Multimodal/Meeting/Frontline:** [`../53-multimodal-meeting-frontline-and-industrial-copilot.md`](../53-multimodal-meeting-frontline-and-industrial-copilot.md)  
 **Biometric/Human Observation:** [`../54-biometric-identity-and-human-observation-governance.md`](../54-biometric-identity-and-human-observation-governance.md)  
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
+**Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Next:** **C0.S0 — Platform/Media/Device/Biometric/External/OT rebaseline**
 
 ## 1. Ledger rule
@@ -111,6 +112,17 @@ EXTERNAL_LEARNING = CANDIDATE_ONLY_UNTIL_REVIEW_EVAL_PUBLISH
 WHATSAPP_PERSONAL_WEB_SCRAPING = FORBIDDEN_BY_DEFAULT
 EXTERNAL_KILL_SWITCHES = REQUIRED
 
+TEAMS = MICROSOFT365_CAPABILITY_FAMILY
+TEAMS_SEPARATE_COPILOT_RUNTIME = FORBIDDEN
+TEAMS_READ_WRITE_SEPARATION = REQUIRED
+TEAMS_SOURCE_ACL = PRESERVED
+TEAMS_MEETING_ARTIFACTS = SOURCE_EVIDENCE_NOT_DECISION
+TEAMS_CHANGE_NOTIFICATIONS = EVENT_ENVELOPE_NORMALIZED
+TEAMS_APP_TAB_BOT = SAME_COPILOT_RUNTIME
+TEAMS_PARTICIPANT_PROVIDER_IDENTITY = PRIMARY_WHEN_AUTHORITATIVE
+TEAMS_BIOMETRIC_IDENTITY = SUPPLEMENTAL_ONLY
+TEAMS_RAW_REALTIME_MEDIA = C7_ADVANCED_ONLY_WITH_ADR
+
 VISUAL_FINDING_DEFAULT = EVIDENCE_OR_HYPOTHESIS
 OT_ACTUATION = BLOCKED_BY_DEFAULT
 COPILOT_IS_SAFETY_CONTROLLER = FALSE
@@ -137,6 +149,8 @@ Copilot removes Chat soft handoff              = OUT_OF_SCOPE
 Copilot migrates Chat agent_id/chat_mode       = OUT_OF_SCOPE
 Facial recognition universally out of scope   = SUPERSEDED_BY_GOVERNED_BIOMETRIC_CAPABILITY
 External knowledge limited to DELPI sources   = SUPERSEDED_BY_GOVERNED_EXTERNAL_INFORMATION_PLANE
+Teams requires separate Copilot backend       = SUPERSEDED_BY_MICROSOFT365_CAPABILITY_FAMILY
+Teams base connector requires raw media bot   = SUPERSEDED_BY_GRAPH_FIRST_MEETING_INTEGRATION
 ```
 
 ## 6. Planning history
@@ -155,21 +169,22 @@ External knowledge limited to DELPI sources   = SUPERSEDED_BY_GOVERNED_EXTERNAL_
 | 2026-09-12 | North Star expanded to Global/Workspace/Meeting/Frontline with voice/image/video, shared-device/privacy boundaries and default OT no-actuation | PLAN_ONLY; docs only |
 | 2026-09-12 | `53` created; master plan/patterns/state/tests/requirements/prompt updated through `CP-181` | PLAN_ONLY; docs only |
 | 2026-09-12 | Biometric Identity + Human Observation added as governed capabilities; `54` created; requirements extended through `CP-193` | PLAN_ONLY; docs only |
-| 2026-09-13 | **Internet Research + External Connectors added; `55` created; requirements extended through `CP-214`** | PLAN_ONLY; docs only |
+| 2026-09-13 | Internet Research + External Connectors added; `55` created; requirements extended through `CP-214` | PLAN_ONLY; docs only |
+| 2026-09-13 | **Microsoft Teams promoted to first-class Microsoft 365 capability family; `56` created; requirements extended through `CP-225`** | PLAN_ONLY; docs only |
 
 Actual `HEAD_BEFORE` for runtime is captured at C0.S0. Documentation-only commits do not advance execution status.
 
 ## 7. Canonical phase mapping
 
 ```text
-C0 → platform/media/device/biometric/external/OT inventory + standalone/shared foundations
+C0 → platform/media/device/biometric/external/OT inventory + standalone/shared foundations, including Teams tenant/Graph/consent inventory
 C1 → API/MFE/Manifest/Gateway/Compose/Portal bootstrap + Chat-offline independence
 C2 → Workspace/Operational Context + Platform Commands + shared-device baseline
-C3 → provider baseline + conversation + OpenAPI + capability + Expertise + Knowledge + multimodal/media/biometric + Internet Research/connector foundations + Evidence + Planner
-C4 → business/external reads + Evidence normalization + Business Graph + operational context correlation
-C5 → Decision Gates + business/external writes + Outcome verification + Durable Workflow + modality-to-action governance
-C6 → Task + Case + Room + Inbox + Watch + Meeting + Frontline + governed biometric identity + Human Observation + external events + Organizational Knowledge/Learning + Expertise Studio
-C7 → advanced realtime + selected external proactivity + autonomy + Watch ACT + Simulation + Model Router + scale/rollout
+C3 → provider baseline + conversation + OpenAPI + capability + Expertise + Knowledge + multimodal/media/biometric + Internet Research/connector foundations + Microsoft 365/Teams capability foundation + Evidence + Planner
+C4 → business/external reads + Teams reads/meeting artifact reads + Evidence normalization + Business Graph + operational context correlation
+C5 → Decision Gates + business/external/Teams writes + Outcome verification + Durable Workflow + modality-to-action governance
+C6 → Task + Case + Room + Inbox + Watch + Meeting + Frontline + governed biometric identity + Human Observation + external/Teams events + Teams meeting artifacts + Organizational Knowledge/Learning + Expertise Studio
+C7 → advanced realtime + selected external proactivity + Teams live raw-media only if ADR/evidence + autonomy + Watch ACT + Simulation + Model Router + scale/rollout
 ```
 
 Any thematic document diverging from this mapping is documentation drift and must be corrected against `16`.
@@ -276,6 +291,23 @@ attachment download/malware scanning
 provider terms/compliance owners
 ```
 
+### Microsoft Teams
+```text
+Entra/Azure app registrations
+Microsoft Graph Teams integrations
+Teams tenant/admin ownership
+Teams policies relevant to apps/meetings/recordings/transcripts
+Teams delegated/application/resource-specific consent patterns
+Teams bot/tab/app inventory if any
+Teams app distribution/deep-link patterns
+Teams webhook/change-notification subscriptions
+meeting call event subscription capability
+transcript/recording access capability
+secret/certificate owner
+subscription renewal/reconciliation owner
+chat/channel/meeting artifact privacy and retention owner
+```
+
 ### Operational/OT
 ```text
 OP/operation/machine/product/lot/material/workstation IDs/owners
@@ -316,6 +348,7 @@ OUT_OF_SCOPE
 - entity/deep-link/event/room/notification inventory;
 - media/device/meeting/frontline/biometric inventory;
 - Internet/egress/OAuth/external-connector inventory;
+- Microsoft Teams tenant/Graph/consent/app/webhook/meeting-artifact inventory;
 - privacy/consent/retention inventory;
 - biometric enrollment/template/liveness decision;
 - prohibited human-inference classes frozen;
@@ -323,13 +356,14 @@ OUT_OF_SCOPE
 - safe web fetch/SSRF/redirect policy decision;
 - external event/webhook/reconciliation decision;
 - personal vs organizational external-source boundary;
+- Teams source ACL/resource-consent/meeting-artifact boundary;
 - production/maintenance/quality context inventory;
 - OT/industrial safety inventory;
 - service/path/manifest/storage names frozen;
 - MediaRef/biometric-ref/connection-ref decisions;
 - architecture/pattern inventory/freeze;
 - Copilot integration contracts;
-- RED/conformance/privacy/device/biometric/external/OT harness;
+- RED/conformance/privacy/device/biometric/external/Teams/OT harness;
 - CP status update;
 - ledger with actual HEAD/evidence.
 
@@ -340,12 +374,13 @@ No agent migration matrix is required.
 `25-requirements-traceability.md` is the single CP authority.
 
 ```text
-CP-001–CP-214
+CP-001–CP-225
 ```
 
 `CP-155–CP-181` cover expanded access/multimodal/Meeting/Frontline/privacy/shared-device/industrial safety.  
 `CP-182–CP-193` cover governed biometric identity and Human Observation.  
-`CP-194–CP-214` cover Internet Research, external connectors, OAuth/secrets, external reads/writes/events, privacy and external-learning governance.
+`CP-194–CP-214` cover Internet Research, external connectors, OAuth/secrets, external reads/writes/events, privacy and external-learning governance.  
+`CP-215–CP-225` cover Microsoft Teams connector, Teams reads/writes, meeting artifacts/events, Teams surface and advanced realtime boundary.
 
 Historical Chat migration requirements remain `OUT_OF_SCOPE_WITH_DECISION`.
 
@@ -385,6 +420,14 @@ EXTERNAL_WRITE_DECISION_GATE
 WEBHOOK_AUTH_DEDUPE_RECONCILIATION
 NO_PERSONAL_SOURCE_AUTO_PROMOTION
 WHATSAPP_SUPPORTED_CONTRACT_ONLY
+TEAMS_PROVIDER_NEUTRAL_CAPABILITIES
+TEAMS_READ_SCOPE_ISOLATION
+TEAMS_DRAFT_SEND_SEPARATION
+TEAMS_EVENT_AUTH_DEDUPE_RECONCILIATION
+TEAMS_TRANSCRIPT_PROVENANCE
+TEAMS_PRIVATE_RESOURCE_NO_LEAK
+TEAMS_APP_SAME_COPILOT_RUNTIME
+TEAMS_RAW_REALTIME_NOT_REQUIRED_FOR_BASE_CONNECTOR
 VISUAL_EVIDENCE_SEMANTICS
 NO_HIDDEN_WORKER_PROFILING
 NO_ARBITRARY_OT_COMMAND
@@ -412,6 +455,7 @@ SECURITY_RBAC:
 PRIVACY_RETENTION:
 BIOMETRIC_HUMAN_OBSERVATION:
 EXTERNAL_CONNECTIONS_EGRESS:
+TEAMS_INTEGRATION:
 INDUSTRIAL_SAFETY:
 CHAT_INDEPENDENCE:
 ARCHITECTURAL_CONFORMANCE:
@@ -474,6 +518,12 @@ DRAFT_SENT_IMPLICITLY
 INVALID_WEBHOOK_ACCEPTED
 PERSONAL_SOURCE_AUTO_PROMOTED_TO_ORG_KNOWLEDGE
 UNSUPPORTED_WHATSAPP_SESSION_AUTOMATION
+TEAMS_SCOPE_OR_RESOURCE_LEAK
+TEAMS_MESSAGE_SENT_WITHOUT_GATE
+TEAMS_TRANSCRIPT_PROVENANCE_MISSING
+TEAMS_PRIVATE_RESOURCE_PROMOTED_WITHOUT_AUTH
+TEAMS_SEPARATE_COPILOT_RUNTIME
+TEAMS_RAW_REALTIME_REQUIRED_FOR_BASE_CONNECTOR
 ARBITRARY_LLM_OT_COMMAND
 SAFETY_INTERLOCK_BYPASS
 ```
@@ -482,4 +532,4 @@ SAFETY_INTERLOCK_BYPASS
 
 Open `23-prompt-cursor-execucao.md` and execute **C0.S0 only**.
 
-The first code after Foundation Freeze is the standalone Copilot API/MFE bootstrap, not intelligence/media/biometric/Internet/connector/Meeting/Frontline features.
+The first code after Foundation Freeze is the standalone Copilot API/MFE bootstrap, not intelligence/media/biometric/Internet/connector/Teams/Meeting/Frontline features.
