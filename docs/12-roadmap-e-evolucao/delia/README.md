@@ -1,31 +1,34 @@
-# Minha DELPI Copilot
+# DÉLIA — DELPI · Ecossistema de Ligações, Inteligência e Automação
 
 > **Status:** `PLANNED / NOT_STARTED`  
-> **Produto:** aplicação nova e standalone  
+> **Produto:** aplicação nova e standalone de Continuous Operational Intelligence  
 > **Requirements:** `CP-001…CP-310`  
 > **Specs temáticas:** `53–66`  
 > **Próxima etapa:** `C0.S0 — Enterprise AI/Platform Foundation Rebaseline`  
 > **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-> **Execution state:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
+> **Execution state:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)  
+> **Naming authority:** [`59-delia-product-identity-and-naming.md`](./59-delia-product-identity-and-naming.md)
 
 ## 1. Decisão fundamental
 
-O **Minha DELPI Copilot não é uma expansão do Minha DELPI Chat**.
+A **DÉLIA não é uma expansão do Minha DELPI Chat**.
 
 ```text
-Minha DELPI Chat                  Minha DELPI Copilot
+Minha DELPI Chat                  DÉLIA
 -------------------------------   --------------------------------
-plugins/minha-delpi-chat          plugins/minha-delpi-copilot
-minha-delpi-ai-api                minha-delpi-copilot-api
+plugins/minha-delpi-chat          plugins/minha-delpi-copilot      # namespace técnico temporário
+minha-delpi-ai-api                minha-delpi-copilot-api           # namespace técnico temporário
 Chat state/runtime                own state/runtime
 Chat release                      independent release
 
                  NO RUNTIME DEPENDENCY
 ```
 
+`minha-delpi-copilot-*` é namespace técnico temporário até `C0.S1`. Não é o nome do produto.
+
 ## 2. North Star
 
-> **Um único Copilot para escritório, reuniões, chão de fábrica, fontes externas e operações governadas, capaz de perceber eventos, entender pessoas/dados/processos, pesquisar, analisar, prever, simular, decidir, coordenar APIs/automações/pessoas, verificar resultados e aprender sob governança.**
+> **Uma única DÉLIA para escritório, reuniões, chão de fábrica, fontes externas e operações governadas, capaz de perceber eventos, entender contexto/dados/processos, pesquisar, analisar, prever, simular, decidir sob políticas, preparar/executar trabalho, verificar resultados, comunicar e aprender sob governança.**
 
 ```text
 PERCEBER
@@ -35,10 +38,12 @@ PERCEBER
 → PREVER/SIMULAR
 → DECIDIR
 → PREPARAR/EXECUTAR
-→ VERIFICAR
+→ VERIFICAR OUTCOME
 → COMUNICAR
 → APRENDER COM GOVERNANÇA
 ```
+
+Não é “Chat + RAG”.
 
 ## 3. Surfaces
 
@@ -52,7 +57,7 @@ BACKGROUND Watches/Workflows
 ADMIN governance surfaces
 ```
 
-Same Copilot API/MFE/product identity/policy/evidence/work runtime.
+Mesma identidade de produto, Policy/Decision/Work semantics e runtime da DÉLIA quando cada surface for implementada. Surface não cria segundo planner, workflow ou permission authority.
 
 ## 4. Capability map
 
@@ -66,7 +71,7 @@ Business Actions / Business Graph
 Semantic Business Layer
 Event / Decision Intelligence
 Process Intelligence / Process Mining
-Automation & Execution Hub
+Automation Hub / RPA / Computer-use execution boundaries
 Durable Work / Tasks / Cases / Rooms / Inbox / Watch
 Analysis Sandbox / Artifact Workspace
 Predictive / Prescriptive Intelligence
@@ -75,7 +80,7 @@ MCP / A2A interoperability
 AI Control Tower
 AI Model Lifecycle / MLOps
 Capability Marketplace
-Edge / Offline Industrial Copilot
+Edge / Offline Industrial
 Meeting / Frontline
 Evidence / Outcome / Evals / Governance
 ```
@@ -83,15 +88,17 @@ Evidence / Outcome / Evals / Governance
 ## 5. Fundamental boundaries
 
 ```text
-Core/Keycloak = identity/RBAC authority
-Domain APIs = business authority
-Portal = host/navigation/context
+Keycloak = identity / SSO
+Core API = apps / routes / RBAC / governance
+Domain APIs = business data / rules / final domain authority
+Portal = host / navigation / published workspace context
+DÉLIA = intelligence / operational context / Evidence / Policy / Decision / Work orchestration
+Automation Hub = technical execution
 External providers = external-resource authority
 OT/safety systems = machine/safety authority
-Copilot = intelligence/policy/orchestration/work/evidence
 ```
 
-And:
+E:
 
 ```text
 Personal Memory != Organizational Knowledge
@@ -111,51 +118,55 @@ Edge Offline != Wider Authority
 
 ## 6. Automation principle
 
-Copilot is the brain; Automation & Execution Hub executes.
+DÉLIA decide/orquestra sob policy; Automation Hub executa tecnicamente.
 
-Default executor preference:
+Preferência default de executor:
 
 ```text
 Official API
 → native integration
 → deterministic function/script
 → RPA
-→ computer-use
+→ governed computer-use
 → Human Task
 ```
 
-Planner uses semantic capabilities, never UI clicks/selectors.
+Planner usa capabilities semânticas, nunca clicks/selectors.
+
+C5 pode liberar `ACT` governado para capabilities explicitamente autorizadas. C7 adiciona autonomia avançada/Watch autonomous ACT/L5 capability-scoped; não é o primeiro momento em que qualquer ACT pode existir.
 
 ## 7. Process / Data intelligence
 
 ```text
-Business Graph     → relationships
-Semantic Layer     → official metric/business meaning
-Process Intelligence → actual process behavior from event logs
-Operational Twin  → scenario projection
+Business Graph       → relações
+Semantic Layer       → significado/cálculo oficial de métricas
+Process Intelligence → comportamento real do processo a partir de eventos válidos
+Operational Twin     → projeção/cenário
 ```
 
-Each remains a separate responsibility and none becomes master data.
+Cada responsabilidade permanece separada e nenhuma vira master data apenas por conveniência.
 
 ## 8. AI governance
 
-AI Control Tower governs assets/models/automations/connectors/tools/agents/Edge deployments with owner/risk/evals/health/cost/value/incidents/rollout/kill switches.
+AI Control Tower governa assets/models/automations/connectors/tools/agents/Edge deployments com owner/risk/evals/health/cost/value/incidents/rollout/kill switches.
 
-Model lifecycle and Marketplace assets are versioned/reviewed/revocable. Admin/catalog access never grants underlying business permission.
+Model lifecycle e Marketplace assets são versionados/reviewed/revocable. Acesso administrativo/catalog não concede business permission.
 
 ## 9. Personalization
 
-Personal Memory can remember user preferences/followed work topics and support personalized briefings. User can inspect/correct/delete/disable it. It remains private by default and never replaces live business facts or RBAC.
+Personal Memory pode lembrar preferências e continuidade de trabalho quando governada. Permanece privada por default e nunca substitui live business facts, Policy ou RBAC.
+
+Knowledge organizacional segue `Evidence → candidate → owner/review → eval → version → publish`; nada vira corporate truth automaticamente.
 
 ## 10. Industrial/Edge direction
 
-Frontline may use voice/camera/current procedures/operational context and, when C0/C7 prove feasibility, governed Edge/offline cache/inference/event buffering.
+Frontline pode usar voice/camera/current procedures/operational context e, se fases futuras provarem necessidade e segurança, Edge/offline cache/inference/event buffering governados.
 
-Copilot/Edge/RPA remain **not safety controllers**; free-form machine actuation is blocked by default.
+DÉLIA/Edge/RPA **não são safety controllers**. Free-form LLM/voice/vision → PLC/CNC/robot/machine e AI safety override são proibidos por default.
 
 ## 11. Canonical authorities
 
-Read in this order:
+Ler nesta ordem:
 
 1. official project instructions + `.cursor` rules;
 2. [`16`](./16-execution-master-plan.md) — single C0–C7 order;
@@ -163,12 +174,13 @@ Read in this order:
 4. [`17`](./17-component-and-contract-map.md) — owners/contracts;
 5. [`49`](./49-architecture-and-design-patterns-standard.md) — code architecture/patterns;
 6. [`51`](./51-platform-integration-baseline.md) — factual baseline;
-7. [`52`](./52-standalone-repository-and-bootstrap-plan.md) — physical/bootstrap;
+7. [`52`](./52-standalone-repository-and-bootstrap-plan.md) — physical/bootstrap target;
 8. [`21`](./21-data-and-state-model.md) — state/persistence;
 9. [`20`](./20-testing-and-acceptance-matrix.md) — tests/gates;
 10. [`25`](./25-requirements-traceability.md) — `CP-*` authority;
-11. `53–66` — thematic specs;
-12. ledger — actual execution evidence.
+11. technical architecture / product spec;
+12. thematic specs `53–66`;
+13. execution ledger — actual execution evidence/status.
 
 Full index: [`INDEX.md`](./INDEX.md).
 
@@ -187,9 +199,11 @@ Full index: [`INDEX.md`](./INDEX.md).
 62 Semantic Business Layer
 63 Analysis Sandbox / Artifact Workspace
 64 Predictive / Prescriptive / Operational Twin
-65 Edge / Offline Industrial Copilot
+65 Edge / Offline Industrial
 66 AI Model Lifecycle / Capability Marketplace
 ```
+
+`59-delia-product-identity-and-naming.md` é authority de naming e não integra a sequência temática acima; a colisão física de prefixo `59` permanece um finding estrutural a ser corrigido com atualização de todos os consumers.
 
 ## 13. Current execution state
 
@@ -199,4 +213,4 @@ RUNTIME_DIFF = NONE
 NEXT = C0.S0
 ```
 
-C0.S0 is factual inventory only. No Copilot API/MFE/runtime capability is created until C0.S7 `FOUNDATION_FREEZE=PASS`.
+C0.S0 é inventário factual. Nenhum runtime/capability da DÉLIA é considerado entregue até evidence válida do SHA/config correspondente e os gates da fase aplicável.
