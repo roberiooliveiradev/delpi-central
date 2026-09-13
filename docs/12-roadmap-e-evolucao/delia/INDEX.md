@@ -1,20 +1,24 @@
-# Índice rápido — Minha DELPI Copilot
+# Índice rápido — DÉLIA
 
 Entrada principal: [`README.md`](./README.md).
 
 ## Authorities para implementar
 
-1. [`16-execution-master-plan.md`](./16-execution-master-plan.md) — única ordem C0–C7.
-2. [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md) — standalone boundary.
-3. [`17-component-and-contract-map.md`](./17-component-and-contract-map.md) — owners/primitives/contracts.
-4. [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md) — layers/patterns/Abstraction Gate.
-5. [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md) — factual platform baseline + `TO_INVENTORY` gaps.
-6. [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md) — physical/bootstrap target.
-7. [`21-data-and-state-model.md`](./21-data-and-state-model.md) — state/persistence/retention.
-8. [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md) — tests/gates.
-9. [`23-prompt-cursor-execucao.md`](./23-prompt-cursor-execucao.md) — Cursor master prompt.
+1. instruções oficiais + `.cursor` rules — autoridade superior.
+2. [`16-execution-master-plan.md`](./16-execution-master-plan.md) — única ordem C0–C7.
+3. [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md) — standalone boundary.
+4. [`17-component-and-contract-map.md`](./17-component-and-contract-map.md) — owners/primitives/contracts.
+5. [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md) — layers/patterns/Abstraction Gate.
+6. [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md) — factual platform baseline + `TO_INVENTORY` gaps.
+7. [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md) — physical/bootstrap target.
+8. [`21-data-and-state-model.md`](./21-data-and-state-model.md) — state/persistence/retention.
+9. [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md) — tests/gates.
 10. [`25-requirements-traceability.md`](./25-requirements-traceability.md) — `CP-001…CP-310` single requirement authority.
-11. [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) — execution state/evidence.
+11. arquitetura técnica / product spec.
+12. specs temáticas `53–66`.
+13. [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) — execution state/evidence.
+
+Naming: [`59-delia-product-identity-and-naming.md`](./59-delia-product-identity-and-naming.md).
 
 ## Product / architecture views
 
@@ -43,7 +47,7 @@ Entrada principal: [`README.md`](./README.md).
 11 Observability / Evals
 18 App onboarding
 26 Iframe bridge
-27–30 Single Copilot / Expertise / Playbooks / Multimodal
+27–30 DÉLIA / Expertise / Playbooks / Multimodal
 32 Expertise runtime
 33 reference expertise pilots
 35 Business Graph
@@ -75,6 +79,8 @@ Entrada principal: [`README.md`](./README.md).
 - [`65-edge-offline-industrial-copilot.md`](./65-edge-offline-industrial-copilot.md)
 - [`66-ai-model-lifecycle-and-capability-marketplace.md`](./66-ai-model-lifecycle-and-capability-marketplace.md)
 
+`59-delia-product-identity-and-naming.md` é uma authority transversal de naming, não uma spec temática. O prefixo duplicado `59` é finding estrutural pendente até rename com atualização atômica dos consumers.
+
 ## Reference-only / superseded
 
 ```text
@@ -84,7 +90,7 @@ Entrada principal: [`README.md`](./README.md).
 47 old Cursor prompt extension
 ```
 
-Do not use them as current authority.
+Não usar como authority atual.
 
 ## Quick routing
 
@@ -98,6 +104,7 @@ where/how boot?                → 52
 state/persistence?             → 21
 how to prove?                  → 20
 which CP?                      → 25
+product naming?                → 59-delia-product-identity-and-naming
 security/autonomy?             → 08
 UX?                            → 09
 observability/evals?           → 11
@@ -107,7 +114,7 @@ internet/external?             → 55
 Teams?                         → 56
 autonomous operations/RPA?     → 57
 Process Mining?                → 58
-AI governance/control tower?   → 59
+AI governance/control tower?   → 59-ai-control-tower...
 MCP/A2A?                       → 60
 personal memory?               → 61
 business metric semantics?     → 62
@@ -121,9 +128,17 @@ what has actually executed?    → ledger
 ## Fundamental anti-drift rules
 
 ```text
+DÉLIA = product name
+minha-delpi-copilot-* = temporary technical namespace only
 Chat runtime dependency = forbidden
 one execution order = 16
 one CP authority = 25
+Keycloak = identity/SSO
+Core = apps/routes/RBAC/governance
+Domain APIs = business authority
+Portal = host/navigation/published context
+DÉLIA = intelligence/Evidence/Policy/Decision/Work orchestration
+Automation Hub = technical execution
 Graph != Semantic Layer
 Memory != Knowledge
 Process Mining != employee scoring
@@ -137,6 +152,7 @@ Edge offline != wider authority
 Marketplace install != permission
 Technical success != verified Outcome
 PREPARE != ACT
-L5 default = OFF
+C5 may allow governed ACT
+C7 = advanced autonomous ACT; L5 default OFF
 OT safety remains external authority
 ```
