@@ -2,110 +2,77 @@
 
 **Status:** obrigatório  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Architecture/patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
-**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
+**Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
+**Patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
+**Requirements:** `CP-001…CP-310`  
+**Specs temáticas:** `53–66`
 
 ## 1. Objetivo
 
-Implementar o Copilot **como aplicação nova**, em ordem foundation-first, sem herdar runtime/dívida do Minha DELPI Chat, sem inferir arquitetura local a cada step e sem adiar boundaries de mídia/device/privacidade/OT que depois exigiriam refatoração.
+Executar o Copilot como aplicação nova, foundation-first, sem Chat runtime dependency, sem architecture-by-feature e sem adiar boundaries de data/process/automation/model/privacy/Edge que depois exigiriam refactor.
 
-## 2. Leitura obrigatória
+## 2. Mandatory reading
 
-Antes de cada subetapa:
+Before each substep:
 
-1. instruções oficiais do projeto;
-2. `.cursor/rules` aplicáveis;
-3. `README.md` do Copilot;
-4. `16-execution-master-plan.md`;
-5. `50-standalone-copilot-application-architecture.md`;
-6. `51-platform-integration-baseline.md`;
-7. `52-standalone-repository-and-bootstrap-plan.md`;
-8. `17-component-and-contract-map.md`;
-9. `49-architecture-and-design-patterns-standard.md`;
-10. `53-multimodal-meeting-frontline-and-industrial-copilot.md` quando media/Meeting/Frontline/device/OT for material;
-11. `20-testing-and-acceptance-matrix.md` seções aplicáveis;
-12. `21-data-and-state-model.md` quando houver state/persistence/media retention;
-13. `25-requirements-traceability.md` CPs aplicáveis;
-14. spec temática do step;
-15. `evidence/execution-ledger.md`.
+1. official project instructions;
+2. applicable `.cursor/rules`;
+3. Copilot `README.md` + `INDEX.md`;
+4. `16` execution order;
+5. `50` standalone boundary;
+6. `51` factual baseline;
+7. `52` physical/bootstrap target;
+8. `17` ownership/contracts;
+9. `49` architecture/patterns;
+10. `21` state/persistence when applicable;
+11. `20` tests/gates;
+12. `25` applicable CP requirements;
+13. applicable thematic specs `53–66`;
+14. execution ledger.
 
-Depois:
+Then:
 
 ```text
 git status
 git rev-parse HEAD
 ```
 
-Registrar `HEAD_BEFORE`.
+Record `HEAD_BEFORE`.
 
-## 3. Boundary obrigatório
+## 3. Standalone boundary
 
-O Cursor deve tratar como erro arquitetural qualquer proposta que faça:
+Treat as architectural error:
 
 ```text
-minha-delpi-copilot-api → importar minha-delpi-ai-api
-plugins/minha-delpi-copilot → importar source de minha-delpi-chat
-Copilot migration → alterar Chat tables
-Copilot runtime → exigir endpoint/container do Chat
-Copilot planner/actions/RAG/media → delegar ao Chat API como implementação padrão
+Copilot API → Chat runtime/API/tables
+Copilot MFE → Chat source imports
+Copilot feature → Chat planner/tool/media/provider as mandatory implementation
+Copilot progress → Chat refactor dependency
 ```
 
-Chat pode ser lido como referência durante C0, nada além disso.
+Chat is reference-only during inventory.
 
-## 4. C0.S0 é read-only para runtime
+## 4. C0.S0 — runtime read-only inventory
 
-Inventariar:
+Inventariar factual evidence for:
 
-### Platform
+```text
+Platform: Portal/Core/Keycloak/Gateway/Compose/plugin-ui/MFEs/APIs/OpenAPIs
+Media/Biometric/Meeting/Frontline/Devices/OT
+Internet/OAuth/External Connectors/Teams/Webhooks
+Events/RPA/Automation/Queues/Workers/Service Identities/Outcome Sources
+Process Logs/Process Owners/Task Mining
+AI Assets/Models/Evals/Cost/Incidents/Control mechanisms
+MCP/A2A/Tools/Agents/Delegation identities
+Personal Memory/Profile/Preferences/Privacy controls
+Semantic KPIs/Glossary/BI models
+Sandbox/Query/File/Artifact infrastructure
+Predictive/Optimization/Simulation/Twin
+Edge/Offline/Devices/MDM/Local inference
+Model Registry/MLOps/Marketplace/Package Supply Chain
+```
 
-- Portal/AuthContext/AppHost/AppLauncher/Router/panel infrastructure;
-- Core `/me`, apps, routes, RBAC, manifest, notifications/audit;
-- Gateway dev/prod;
-- Compose/env/scripts;
-- plugin-ui/federation;
-- MFEs/manifests/context/deep links;
-- Domain APIs/OpenAPIs/auth/idempotency/errors/entities/events;
-- rooms/requests/cases/approvals/jobs/workers.
-
-### Media/Meeting/Frontline
-
-- browser mic/camera/screen/media APIs;
-- current streaming/SSE/WebSocket/WebRTC patterns;
-- file/object/media storage;
-- speech/vision providers/configs existentes;
-- recording/transcription patterns;
-- privacy/consent/retention owners;
-- shared workstations/tablets/kiosks;
-- meeting-room devices/processes;
-- production terminals;
-- procedures/training sources;
-- network constraints relevant to factory devices;
-- accessibility/noise constraints.
-
-### Operational/OT
-
-- sources/IDs para OP, operation, machine, product, lot, material, workstation;
-- production/maintenance/quality APIs/events;
-- OT telemetry interfaces;
-- safety/interlock owners;
-- existing machine command APIs/protocols **only as inventory**;
-- IT/OT security boundary.
-
-### Architecture
-
-- layers/DI/errors/state/resilience/migrations;
-- media/provider boundaries;
-- shared-device session patterns;
-- retention/data-minimization patterns;
-- industrial safety patterns.
-
-### Chat reference only
-
-- inspect architecture/providers/RAG/multimodal/actions only to avoid repeating debt;
-- never classify Chat runtime as `REUSE` for Copilot.
-
-Classificar:
+Classify:
 
 ```text
 PLATFORM_REUSE
@@ -118,264 +85,222 @@ NOT_PROVEN
 OUT_OF_SCOPE
 ```
 
-Sem runtime diff em C0.S0.
+Market availability without DELPI evidence = `NOT_PROVEN`.
 
-## 5. FOUNDATION_FREEZE
+No runtime diff in C0.S0.
 
-Nenhum C1+ começa antes de C0.S7 provar:
+## 5. Foundation Freeze
 
-```text
-PLATFORM_INVENTORY=PASS
-STANDALONE_BOUNDARY=PASS
-NAMES_PATHS=PASS
-AUTHORITIES=PASS
-SHARED_PRIMITIVES=PASS
-ARCHITECTURE_PATTERNS=PASS
-PERSISTENCE_BOUNDARIES=PASS
-INTEGRATION_CONTRACTS=PASS
-MEDIA_PRIVACY_BOUNDARIES=PASS
-SHARED_DEVICE_BOUNDARY=PASS
-OPERATIONAL_CONTEXT_BOUNDARY=PASS
-OT_SAFETY_BOUNDARY=PASS
-CONFORMANCE_HARNESS=PASS
-CHAT_RUNTIME_DEPENDENCY=0
-FOUNDATION_DUPLICATION=0 material
-```
+No C1+ before all REQUIRED foundation boundaries in `16/20` are PASS, including Process Intelligence, AI Asset governance, MCP/A2A trust, Personal Memory, Semantic Layer, Sandbox/Artifacts, Predictive/Twin, Edge/Offline, Model/Marketplace and OT safety.
 
-## 6. Ordem única
+## 6. Single phase order
 
 ```text
 C0 Foundation Freeze
 → C1 Standalone Bootstrap
-→ C2 Portal + Operational Context/Commands
-→ C3 Intelligence + Multimodal Foundations
-→ C4 Business Reads/Graph
-→ C5 Writes/Durable Foundation
-→ C6 Product Work/Meeting/Frontline/Proactivity/Ecosystem
-→ C7 Advanced Realtime/Autonomy/Optimization/Rollout
+→ C2 Context/Commands
+→ C3 Capability Foundations
+→ C4 Governed Reads/Analysis
+→ C5 Governed Writes/Executors
+→ C6 Product Governance/Experience
+→ C7 Advanced Autonomy/Scale
 ```
 
-Nenhum plano temático muda essa ordem.
+No thematic plan changes this order.
 
-## 7. Unidade de execução
+## 7. Execution unit
 
-Uma `C*.S*` por vez:
+Exactly one `C*.S*` at a time:
 
 ```text
 SELECT STEP
 → REVALIDATE HEAD/WORKTREE
 → READ AUTHORITIES
-→ IDENTIFY OWNER/LAYER
-→ SELECT CANONICAL PATTERN
-→ ABSTRACTION GATE
-→ DEPENDENCY GATE
-→ READY_TO_EXECUTE
+→ IDENTIFY OWNER/SOURCE/LAYER
+→ CANONICAL PATTERN
+→ ABSTRACTION + DEPENDENCY GATES
 → BASELINE
 → MINIMAL CORRECT DIFF
 → WIRE PRODUCER/CONSUMER
 → UNIT/CONTRACT/INTEGRATION
 → POSITIVE/SIBLING/NEGATIVE
-→ SECURITY/RBAC/PRIVACY/SAFETY
+→ SECURITY/RBAC/PRIVACY/OUTCOME/SAFETY
 → GENERALIZATION/METAMORPHIC/UNKNOWN
-→ CHAT-INDEPENDENCE CHECK
+→ CHAT-INDEPENDENCE
 → ARCHITECTURE CONFORMANCE
 → RESIDUAL SEARCH
 → COMPLETE_GATE
 → DOCS/LEDGER
-→ UNLOCK NEXT
+→ NEXT
 ```
 
 ## 8. READY_TO_EXECUTE
 
-Somente se:
+Only if previous gates pass and owner/source/layer/pattern/primitive/test/migration/security/privacy/safety are known.
 
-- previous required gate PASS;
-- owner/consumer/layer conhecidos;
-- pattern conforme `49`;
-- abstraction justificada;
-- primitive/contract aprovado;
-- no second authority;
-- no Chat runtime dependency;
-- baseline/test definidos;
-- migration/storage gap provado;
-- security/privacy/safety impact classificado;
-- media retention/capture policy conhecida quando aplicável;
-- shared-device identity boundary conhecida quando aplicável;
-- OT responsibility classificada quando aplicável;
-- material exception has ADR/decision.
-
-Caso contrário: `BLOCKED_WITH_EVIDENCE`.
-
-## 9. Regra anti-refatoração
-
-Antes de criar schema/service/table/interface/registry/framework/media pipeline/realtime gateway/device context/OT adapter:
+For new thematic capability also answer:
 
 ```text
-A. É Copilot-owned ou platform/domain/industrial-owner?
-B. Existe contract/owner atual?
-C. Reuse introduziria dependência de produto no Chat?
-D. Qual layer/pattern canônico?
-E. Passa Abstraction Gate?
-F. Duplica Entity/Evidence/Decision/Workflow/Event/Capability?
-G. WorkspaceContext/EntityRef já resolvem o contexto?
-H. Próxima fase exigiria redesign conhecido?
-I. Funciona para sibling/unknown sem hardcode?
-J. Persistence é realmente necessária?
-K. Raw media precisa ser persistida?
-L. Modality cria bypass de RBAC/Decision?
-M. Device identity está sendo confundida com user identity?
-N. Business Action está sendo confundida com physical machine actuation?
+Does this duplicate a source/system of record?
+Does it create a new permission authority?
+Does it collapse Graph/Semantic/Memory/Knowledge/Twin distinctions?
+Does it require provider/executor/model/tool hardcode?
+What is the revoke/rollback/kill-switch path?
+What verifies actual business outcome?
+What happens stale/offline/unavailable?
+Could it create employee surveillance?
+Can sibling implementation work by adapter?
 ```
 
-Se C, F, H, L, M ou N = sim: parar e corrigir foundation/design.
+If material answer is unresolved: `BLOCKED_WITH_EVIDENCE` or return to foundation/ADR.
 
-## 10. Proibições
+## 9. Anti-refactor checklist
 
-- editar Chat para “preparar” Copilot;
-- copiar pasta/runtime do Chat como ponto de partida;
-- usar Chat DB tables;
-- usar Chat agent/session model;
-- usar Chat API como planner/tool/media proxy;
-- manual app→URL catalog;
-- manual endpoint catalog;
-- path/opId semantic routing;
-- permission própria duplicando Core;
-- DOM automation quando API existe;
-- business data master no Graph;
-- frontend authority de durable state;
-- feature-specific Evidence/Entity/Decision/Event;
-- `FrontlineContext` paralelo a WorkspaceContext sem gap provado;
-- second workflow/action executor;
-- departmental agent runtime;
+Before new schema/service/table/interface/registry/engine/server/sandbox/twin/Edge module/Marketplace:
+
+```text
+A owner/source authority?
+B existing shared primitive/contract?
+C Chat/product coupling?
+D layer/pattern?
+E Abstraction Gate?
+F second RBAC/workflow/planner/Graph/Semantic/Knowledge authority?
+G persistence really required?
+H next phase redesign obvious?
+I sibling/unknown generalization?
+J credentials/data bounded?
+K read/write/PREPARE/ACT/simulate/apply separated?
+L rollback/revoke path?
+M user/device/service/worker identities distinct?
+N Outcome verified by authoritative source?
+O OT safety boundary preserved?
+```
+
+Stop and redesign on material violation.
+
+## 10. Semantic invariants to review every relevant step
+
+```text
+Personal Memory != Organizational Knowledge
+Business Graph != Semantic Business Layer
+Prediction != FACT
+Recommendation != Authorization
+SIMULATE != APPLY
+PREPARE != ACT
+Read != Write
+Draft != Send
+Technical Success != Verified Business Outcome
+MCP/A2A Discovery != Approval
+Marketplace Install != Permission
+Device/Biometric/Worker Identity != User Authorization
+Edge Offline != Wider Authority
+```
+
+## 11. Prohibitions
+
+- Chat dependency/migration;
+- duplicate Core/domain authority;
+- manual endpoint/app/provider/executor/model/tool routing in planner;
+- DOM business automation as default when API exists;
+- RPA clicks/selectors in planner;
+- second workflow engine by capability;
+- hidden capture/surveillance;
+- Process Mining employee leaderboard;
+- Personal Memory as organization truth;
+- LLM-invented material KPI formula;
+- unbounded sandbox/host/network access;
+- prediction as fact;
+- scenario/twin mutating production;
+- MCP/A2A auto-trust;
+- Marketplace/package permission grant;
+- Edge offline authority expansion;
+- global unrestricted L5;
 - CoT persistence;
-- speculative generic framework;
-- hidden camera/mic/screen capture;
-- raw media retention sem purpose/policy;
-- facial recognition/emotion detection/hidden worker surveillance por default;
-- voice-specific permission bypass;
-- direct free-form LLM→PLC/CNC/robot command;
-- Copilot substituindo safety interlock.
+- arbitrary LLM/RPA/Edge→machine actuation.
 
-## 11. C1 bootstrap regra especial
+## 12. C1 special rule
 
-A primeira implementação runtime é infraestrutura funcional, não AI/media feature:
+First runtime work after C0 is own API/MFE/health/JWT-Core/federation/plugin-ui/manifest/Gateway/Compose/Portal host/independence. No intelligence/process/RPA/MCP/sandbox/twin/Edge/Marketplace runtime before dependencies unlock them.
 
-```text
-own API skeleton
-→ health
-→ JWT/Core integration
-→ own MFE skeleton
-→ plugin-ui/federation
-→ responsive/accessibility/media-permission baseline
-→ own manifest
-→ Gateway/Compose
-→ Portal full-page mount
-→ global host contract
-→ independence test with Chat offline
-```
+## 13. Meeting/Frontline/Edge
 
-Planner/RAG/LLM/voice/vision começam somente quando `16` liberar C3.
+Same Copilot API/MFE/policy/evidence/work runtime. Edge is a governed deployment/runtime boundary, not another Copilot product. Offline mode is explicit and cannot widen permission.
 
-## 12. Meeting/Frontline regra especial
+## 14. Process/people rule
 
-Meeting/Frontline não podem ser implementados como produtos paralelos.
+Process Intelligence describes process variants/facts. Human Observation/Task Mining cannot infer personality/trust/intent/fraud or become hidden employee score. Candidate improvements require review/evidence.
+
+## 15. Model/tool/asset rule
+
+Model/tool/agent/package metadata is untrusted. Approval, eval, data scope, version, risk and revoke state must be explicit. Revoked asset cannot remain selectable.
+
+## 16. Outcome rule
+
+Every material execution asks:
 
 ```text
-same Copilot MFE/API
-same WorkspaceContext/EntityRef
-same Evidence
-same Decision Gate
-same Durable Work
-same RBAC/policy
+Was technical execution attempted/completed?
+Was expected business postcondition observed in authoritative source?
 ```
 
-Ações extraídas de reunião/voz/câmera são **candidates** até passarem pelo governance pipeline.
+Do not use notifications or RPA UI state as final proof when better authoritative source exists.
 
-Process observation gera knowledge candidate; nunca production rule automática.
+## 17. OT rule
 
-## 13. OT regra especial
-
-Enquanto não houver safety gate específico aprovado:
+Until separate industrial safety gate passes:
 
 ```text
-industrial telemetry/read → potentially allowed by contract
-free-form machine actuation → BLOCK
+telemetry/read → contract-driven possible
+free-form physical actuation → BLOCK
 ```
 
-Autonomy L5 não muda isso.
+Enterprise L5 never overrides OT safety.
 
-## 14. Evidence mínima
+## 18. Evidence minimum
 
-Registrar conforme material:
+Record as material:
 
 ```text
 HEAD_BEFORE/AFTER
 files changed
-owner/layer/pattern
-CP requirements
+owner/source/layer/pattern
+CPs
 commands/tests/results
-manifest/Gateway/Compose/schema versions
-OpenAPI/catalog hashes
-provider/config hashes
-media/provider/retention policy versions
-device/session class
-industrial safety boundary evidence
-dependence/residual scans
-CHAT_INDEPENDENCE result
+contract/schema/model/metric/executor/package versions
+Evidence/Outcome proof
+security/privacy/autonomy impact
+residual scans
+Chat independence
 ADR refs
 ```
 
-## 15. Adversarial review
+## 19. Adversarial review
 
-Antes de fechar:
+Ask:
 
-1. Copilot funciona se Chat estiver fora do ar?
-2. existe import/table/API Chat escondido?
-3. Core/Domain owner foi duplicado?
-4. Portal recebeu AI logic indevida?
-5. sibling/unknown exige patch central?
-6. retry/resume duplica write?
-7. untrusted input/media consegue alterar policy?
-8. source permissions permanecem válidas?
-9. abstraction é realmente necessária?
-10. próxima fase exigirá redesign previsível?
-11. mic/camera/screen pode iniciar ocultamente?
-12. raw media está sendo retida sem purpose/policy?
-13. shared device vaza usuário/contexto anterior?
-14. voice/camera muda autorização em relação ao texto?
-15. visual finding foi promovido a fact/quality decision sem source oficial?
-16. process observation virou surveillance/auto-learning?
-17. há qualquer caminho LLM→machine command sem safety architecture?
+1. Works with Chat offline?
+2. Any duplicate authority?
+3. Any hidden provider/executor/model/tool branch?
+4. Any permission from event/memory/model/package/tool/agent/device?
+5. Retry/resume/event duplicate causes duplicate effect?
+6. Technical success narrated as business success?
+7. Process/user data becoming surveillance?
+8. Memory overriding live source?
+9. Metric formula reproducible/owned?
+10. Sandbox can escape/write?
+11. Prediction shown as fact?
+12. Simulation writes production?
+13. Edge/offline widens authority?
+14. Revoked asset still usable?
+15. Marketplace install grants permission?
+16. Any LLM→machine path without safety architecture?
+17. Any stale/missing evidence being hidden?
 
-## 16. COMPLETE_GATE blockers
+## 20. COMPLETE_GATE
 
-```text
-PARTIAL
-INCONCLUSIVE
-PENDING
-TEST_NOT_RUN
-STALE_EVIDENCE
-DUPLICATE_AUTHORITY
-FOUNDATION_DRIFT
-ARCHITECTURE_PATTERN_DRIFT
-UNJUSTIFIED_ABSTRACTION
-CHAT_RUNTIME_IMPORT
-CHAT_API_REQUIRED
-CHAT_DATABASE_AUTHORITY
-CHAT_MIGRATION_DEPENDENCY
-PORTAL_AI_LOGIC_LEAK
-DOMAIN_RULE_DUPLICATION
-HIDDEN_MEDIA_CAPTURE
-UNDEFINED_MEDIA_RETENTION
-SHARED_DEVICE_STATE_LEAK
-VOICE_PERMISSION_BYPASS
-VISUAL_FINDING_AS_UNVALIDATED_FACT
-HIDDEN_WORKER_SURVEILLANCE
-ARBITRARY_LLM_OT_COMMAND
-SAFETY_INTERLOCK_BYPASS
-```
+Use `20` as sole detailed blocker authority. `PARTIAL/INCONCLUSIVE/PENDING/TEST_NOT_RUN/STALE_EVIDENCE` block closure.
 
-## 17. Report obrigatório
+## 21. Report required
 
 ```text
 STEP:
@@ -385,20 +310,25 @@ STATUS:
 DEPENDENCY_GATE:
 CP_REQUIREMENTS:
 FILES_CHANGED:
-CANONICAL_OWNERS:
-ARCHITECTURE_LAYER:
-PATTERNS:
+OWNERS/SOURCES:
+LAYER/PATTERNS:
 ABSTRACTION_GATE:
 PLATFORM_REUSE:
 COPILOT_NEW_CODE:
 CHAT_DEPENDENCIES:
-MEDIA_DEVICE_OT_IMPACT:
-BASELINE:
-IMPLEMENTATION:
 WIRING_PROOF:
 TESTS:
-SECURITY_RBAC:
-PRIVACY_RETENTION:
+SECURITY_RBAC_PRIVACY:
+DATA_STATE_RETENTION:
+PROCESS_INTELLIGENCE:
+SEMANTIC_LAYER:
+MEMORY_PERSONALIZATION:
+SANDBOX_ARTIFACTS:
+PREDICTIVE_TWIN:
+AUTOMATION_EXECUTION_OUTCOME:
+MCP_A2A:
+MODEL_CONTROL_TOWER_MARKETPLACE:
+EDGE_OFFLINE:
 INDUSTRIAL_SAFETY:
 GENERALIZATION:
 CHAT_INDEPENDENCE:
@@ -411,11 +341,11 @@ COMMIT:
 PUSH:
 ```
 
-## 18. Continuidade
+## 22. Continuity
 
-Com `COMPLETE_GATE=PASS`, seguir a próxima subetapa desbloqueada por `16` sem pedir nova confirmação, salvo bloqueio real/destrutivo/decisão ausente.
+With `COMPLETE_GATE=PASS`, follow next step unlocked by `16` unless a real destructive/missing-authority decision blocks it.
 
-Primeira ordem:
+First order remains:
 
 ```text
 C0.S0 → C0.S1 → C0.S2 → C0.S3 → C0.S4 → C0.S5 → C0.S6 → C0.S7 FOUNDATION_FREEZE → C1.S1
