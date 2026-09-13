@@ -18,7 +18,8 @@ Entrada principal: [`README.md`](./README.md).
 12. specs temáticas `53–66`.
 13. [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) — execution state/evidence.
 
-Naming: [`59-delia-product-identity-and-naming.md`](./59-delia-product-identity-and-naming.md).
+Naming: [`68-delia-product-identity-and-naming.md`](./68-delia-product-identity-and-naming.md).
+Cross-cutting capability map: [`67-market-capability-expansion-and-intelligence-platform.md`](./67-market-capability-expansion-and-intelligence-platform.md).
 
 ## Product / architecture views
 
@@ -32,6 +33,8 @@ Naming: [`59-delia-product-identity-and-naming.md`](./59-delia-product-identity-
 - [`24-product-specification.md`](./24-product-specification.md)
 - [`34-market-benchmark-and-product-north-star.md`](./34-market-benchmark-and-product-north-star.md)
 - [`48-documentation-governance-and-architecture-review.md`](./48-documentation-governance-and-architecture-review.md)
+- [`67-market-capability-expansion-and-intelligence-platform.md`](./67-market-capability-expansion-and-intelligence-platform.md)
+- [`68-delia-product-identity-and-naming.md`](./68-delia-product-identity-and-naming.md)
 
 ## Core thematic specs
 
@@ -79,7 +82,7 @@ Naming: [`59-delia-product-identity-and-naming.md`](./59-delia-product-identity-
 - [`65-edge-offline-industrial-copilot.md`](./65-edge-offline-industrial-copilot.md)
 - [`66-ai-model-lifecycle-and-capability-marketplace.md`](./66-ai-model-lifecycle-and-capability-marketplace.md)
 
-`59-delia-product-identity-and-naming.md` é uma authority transversal de naming, não uma spec temática. O prefixo duplicado `59` é finding estrutural pendente até rename com atualização atômica dos consumers.
+Prefixos temáticos `58` e `59` agora são exclusivos de Process Intelligence e AI Control Tower. Cross-cutting docs usam `67/68`.
 
 ## Reference-only / superseded
 
@@ -104,7 +107,8 @@ where/how boot?                → 52
 state/persistence?             → 21
 how to prove?                  → 20
 which CP?                      → 25
-product naming?                → 59-delia-product-identity-and-naming
+market capability map?         → 67
+product naming?                → 68
 security/autonomy?             → 08
 UX?                            → 09
 observability/evals?           → 11
@@ -114,7 +118,7 @@ internet/external?             → 55
 Teams?                         → 56
 autonomous operations/RPA?     → 57
 Process Mining?                → 58
-AI governance/control tower?   → 59-ai-control-tower...
+AI governance/control tower?   → 59
 MCP/A2A?                       → 60
 personal memory?               → 61
 business metric semantics?     → 62
