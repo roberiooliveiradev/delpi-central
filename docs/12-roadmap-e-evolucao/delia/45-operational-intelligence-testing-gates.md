@@ -1,4 +1,4 @@
-# Minha DELPI Copilot — Gates da Inteligência Operacional
+# DÉLIA — Gates da Inteligência Operacional
 
 **Status:** `SUPERSEDED / REFERENCE_ONLY`
 
