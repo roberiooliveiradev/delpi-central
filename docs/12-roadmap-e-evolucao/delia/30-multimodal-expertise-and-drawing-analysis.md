@@ -1,16 +1,16 @@
-# Minha DELPI Copilot — Multimodalidade, Document Vision e Análise de Desenhos
+# DÉLIA — Multimodalidade, Document Vision e Análise de Desenhos
 
-**Status:** thematic spec  
+**Status:** `TARGET` — thematic spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)
 
 ## 1. Princípio
 
-Multimodalidade é capability/tool da **nova Copilot API**, não agente separado e não chamada ao runtime do Minha DELPI Chat.
+Multimodalidade é capability target da DÉLIA, não agente separado e não chamada ao runtime do Minha DELPI Chat.
 
 ```text
-attachment
-→ Copilot perception adapters
+attachment/source
+→ provider-neutral perception adapter
 → Multimodal Evidence
 → Expertise/Playbook interpretation
 → optional Business/Knowledge correlation
@@ -19,27 +19,24 @@ attachment
 
 Percepção e interpretação de domínio permanecem separadas.
 
+Nenhum extractor, OCR, VLM, storage port ou provider é considerado implementado apenas por aparecer neste documento.
+
 ## 2. Relação com implementações existentes
 
-C0.S0 deve estudar o pipeline existente do Minha DELPI Chat — `ChatDocumentVisionService`, OCR, native extraction, VLM fallback, drawing analysis etc. — **somente como referência técnica**.
+C0.S0 pode estudar pipeline existente do Minha DELPI Chat — vision, OCR, native extraction, drawing analysis etc. — **somente como inventário/reference-only**.
 
 Não permitido:
 
 ```text
-Copilot API → importar ChatDocumentVisionService
-Copilot API → chamar endpoint do Chat para vision
-Copilot → depender de Chat skill registry
-Copilot → depender de agent ativo
+DÉLIA → importar ChatDocumentVisionService
+DÉLIA → chamar endpoint do Chat para vision
+DÉLIA → depender de Chat skill registry
+DÉLIA → depender de agent ativo
 ```
 
-Permitido:
+Reuse só é válido quando C0 provar componente neutro, owner, contrato, consumers e lifecycle adequados.
 
-- reutilizar biblioteca externa já aprovada;
-- reutilizar package neutro realmente compartilhado;
-- extrair utility neutra para shared owner se 2+ consumers reais justificarem;
-- reimplementar o pipeline de forma limpa dentro da Copilot API.
-
-## 3. Pipeline Copilot-owned
+## 3. Pipeline target
 
 ```text
 upload/ref
@@ -48,39 +45,32 @@ upload/ref
 → targeted OCR when required
 → targeted VLM/vision when required
 → structured observations
-→ EvidenceRef(s) with provenance/confidence/limitations
+→ Evidence refs with provenance/confidence/limitations
 → expertise/playbook retrieval
 → domain interpretation
-→ optional Domain API/Knowledge reads
+→ optional authorized Domain API/Knowledge reads
 → synthesis/render/artifact
 ```
 
+O pipeline final depende de C0 inventory, data policy, provider contracts e Abstraction Gate.
+
 ## 4. Ports & Adapters
 
-Application/domain não conhecem provider/OCR/VLM concreto.
+Domain/Application não conhecem provider/OCR/VLM concreto.
 
-Ports conceituais, se Abstraction Gate justificar:
-
-```text
-DocumentExtractorPort
-VisionAnalyzerPort
-AttachmentStoragePort
-```
-
-Adapters podem incluir:
+Ports só podem existir quando variação/consumer/test-double/boundary real justificar. Exemplos conceituais, não prescrição:
 
 ```text
-NativePdfExtractorAdapter
-OcrAdapter
-VisionModelAdapter
-ObjectStorageAdapter
+DocumentExtractorPort?
+VisionAnalyzerPort?
+AttachmentStoragePort?
 ```
 
-Strategy só existe quando houver variação real/seleção entre extraction methods.
+Strategy só existe quando houver seleção real entre métodos.
 
 ## 5. Perception layer
 
-Extrai/observa:
+Pode extrair/observar:
 
 - text;
 - tables;
@@ -90,11 +80,11 @@ Extrai/observa:
 - visual structure;
 - pages/images.
 
-Não conclui business rule sozinho.
+Não conclui business rule, safety state ou authorization sozinha.
 
 ## 6. Domain interpretation
 
-Expertise/Playbook interpreta:
+Expertise/Playbook pode interpretar:
 
 - technical meaning;
 - risk;
@@ -103,21 +93,23 @@ Expertise/Playbook interpreta:
 - relation to product/process;
 - additional data required.
 
+Material conclusion continua dependente de Evidence adequada e source/domain authority.
+
 ## 7. Execution/correlation
 
 ```text
 multimodal observation
-→ grounded EntityRef
-→ Business Graph/capability retrieval
+→ grounded EntityRef/SourceRef
+→ authorized relationship/capability retrieval
 → authorized Domain API
 → additional Evidence/Outcome
 ```
 
-Vision pipeline não contém endpoint-specific routing.
+Vision pipeline não contém endpoint-specific routing e nunca concede write authority.
 
 ## 8. Evidence model
 
-Reutilizar `EvidenceRef`/`MultimodalEvidenceRef` canônicos:
+Reutilizar contratos canônicos de Evidence quando C0 os congelar. Candidate fields:
 
 ```text
 sourceRef/attachmentRef
@@ -156,19 +148,11 @@ Nunca inventar campo ilegível/ausente.
 
 ## 10. Confidence/limitations
 
-```text
-EXTRACTED_HIGH_CONFIDENCE
-EXTRACTED_LOW_CONFIDENCE
-INFERRED
-UNREADABLE
-NOT_FOUND
-```
-
-Numerical confidence only when method supports meaningful score.
+Semântica de confidence precisa vir do método real. Não inventar score numérico quando o extractor/modelo não sustenta significado calibrado.
 
 ## 11. Engenharia + Qualidade
 
-> “Analise este desenho e veja se há riscos para a inspeção de recebimento.”
+Cenário target:
 
 ```text
 drawing Evidence
@@ -189,29 +173,23 @@ drawing Evidence
 - source ACL;
 - PII/secret handling;
 - no full document in logs by default;
-- provider data policy.
+- provider data policy;
+- media retention and deletion owner explicit.
 
 ## 13. Performance
+
+Preferir custo mínimo suficiente:
 
 ```text
 native parse
 → targeted OCR
 → targeted VLM
-→ full multimodal only when justified
+→ broader multimodal only when justified
 ```
 
 ## 14. Cache
 
-Derived perception cache may key by:
-
-```text
-content hash
-extractor version
-model/config hash
-schema version
-```
-
-It is derived/invalidatable, not document authority.
+Derived perception cache, se existir, é invalidável e não authority. Key/version/freshness dependem do contrato real aprovado.
 
 ## 15. Evals
 
@@ -224,28 +202,21 @@ It is derived/invalidatable, not document authority.
 - visual prompt injection;
 - unrelated document;
 - provider variant;
-- cache/reload consistency;
+- cache/reload consistency quando cache existir;
 - no Chat runtime dependency.
+
+AI change exige generalization, safety e task outcome para o SHA/config avaliado.
 
 ## 16. Phase mapping
 
 ```text
-C0 → contracts/security/provider boundaries
-C3 → Copilot-owned multimodal runtime + expertise/evidence
-C4 → business/source correlation
-C6 → Case Evidence Board integration
-C7 → model-routing optimization if justified
+C0 → inventory/contracts/security/provider/media boundaries
+C3 → capability foundation only when dependencies are proven
+C4 → authorized business/source correlation
+C6 → product/Case integration when prioritized
+C7 → routing/performance optimization only if evidence justifies
 ```
 
 ## 17. Gate
 
-```text
-COPILOT_OWN_MULTIMODAL_RUNTIME = PASS
-NO_CHAT_VISION_DEPENDENCY = PASS
-EVIDENCE_PROVENANCE = PASS
-UNCERTAINTY_HANDLING = PASS
-DOCUMENT_INJECTION = PASS
-AUTHORIZED_CORRELATION = PASS
-```
-
-Multimodalidade só fecha quando esses gates passam.
+Sem runtime/evals reais, status permanece `PLANNED/TARGET`, nunca PASS documental.
