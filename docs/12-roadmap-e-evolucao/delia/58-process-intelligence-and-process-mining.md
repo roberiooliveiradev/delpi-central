@@ -1,6 +1,6 @@
-# Minha DELPI Copilot — Process Intelligence, Process Mining e Task Mining
+# DÉLIA — Process Intelligence, Process Mining e Task Mining
 
-**Status:** thematic architecture/product spec  
+**Status:** `TARGET` — thematic architecture/product spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Autonomous Operations:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
 **Evidence:** [`38-evidence-provenance-and-epistemic-ux.md`](./38-evidence-provenance-and-epistemic-ux.md)  
@@ -8,23 +8,25 @@
 
 ## 1. Decisão de produto
 
-O Copilot deve entender não apenas processos documentados, mas também **como os processos realmente acontecem**, a partir de event logs e evidências autorizadas.
+A DÉLIA deve poder entender não apenas processos documentados, mas também **como os processos realmente acontecem**, quando existirem event logs, owners e evidências autorizadas suficientes.
 
 Target:
 
 ```text
 PROCESS DESIGN
 + REAL EVENT LOGS
-+ TASK OBSERVATIONS GOVERNED
++ GOVERNED TASK OBSERVATIONS
 → PROCESS INTELLIGENCE
 → variants / bottlenecks / deviations / opportunities
 → Evidence
 → recommendation / Watch / Playbook / Automation candidate
 ```
 
-Process Intelligence não substitui o owner do processo nem altera procedimento automaticamente.
+Process Intelligence não substitui o owner do processo, não cria business truth paralelo e não altera procedimento automaticamente.
 
 ## 2. Capability family
+
+Capabilities candidatas:
 
 ```text
 Process Discovery
@@ -37,8 +39,10 @@ Wait/Rework Analysis
 Automation Opportunity Detection
 Process KPI Mining
 Process Change Impact Analysis
-Agent/Automation Execution Mining
+Automation Execution Mining
 ```
+
+A lista é `TARGET`; não prova engines, stores, collectors ou produtos implementados.
 
 ## 3. Event-log model
 
@@ -56,11 +60,11 @@ correlationId?
 sourceRef/evidenceRef
 ```
 
-Não criar cópia total de ERP/MES apenas para mineração. Preferir projections/materializations bounded e reproduzíveis.
+O shape é candidate até owner/source/consumer/contract serem congelados. Não criar cópia total de ERP/MES apenas para mineração. Preferir projections/materializations bounded e reproduzíveis quando justificadas.
 
 ## 4. Process instance versus employee surveillance
 
-Process Mining mede fluxo/processo. Não criar, por default:
+Process Mining mede fluxo/processo. Não criar por default:
 
 ```text
 secret employee productivity score
@@ -69,7 +73,7 @@ behavioral disciplinary profile
 continuous invasive desktop surveillance
 ```
 
-Task Mining em desktop exige purpose, consent/governance, data minimization, app/domain allowlist, redaction, retention e Human Observation boundaries de `54`.
+Task Mining exige purpose, owner, explicit governance, data minimization, app/domain allowlist, redaction, retention e Human Observation boundaries de `54`.
 
 ## 5. Conformance
 
@@ -79,7 +83,7 @@ expected process model
 → conformant | deviation | unknown/incomplete evidence
 ```
 
-Deviation não significa automaticamente erro humano ou fraude. Deve apontar fatos, contexto e impacto.
+Deviation não significa automaticamente erro humano, fraude ou intenção. Deve apontar fatos, contexto, qualidade da evidência e impacto.
 
 ## 6. Automation opportunity loop
 
@@ -89,47 +93,48 @@ process evidence
 → opportunity candidate
 → owner validation
 → business case
-→ semantic capability/executor design
-→ Automation & Execution Hub
+→ semantic capability/execution design
+→ Automation Hub when technical execution is required
 → post-deployment process mining
 → measured improvement
 ```
 
-Nenhuma oportunidade vira RPA automaticamente.
+Nenhuma oportunidade vira RPA/ACT automaticamente. DÉLIA coordena Evidence/Decision/Work; Automation Hub continua owner da execução técnica.
 
 ## 7. Integration with Watch
 
 Process Intelligence pode gerar conditions/candidates, por exemplo:
 
 ```text
-approval cycle > baseline
+approval cycle > governed baseline
 rework loop repeated
 waiting state above threshold
 variant associated with high failure rate
 manual handoff recurring
 ```
 
-Watch `OBSERVE/ADVISE/PREPARE/ACT` continua governado por `37` e `57`.
+Watch segue `37` e `57`:
+
+```text
+C6 default = OBSERVE | ADVISE | PREPARE
+C6 Watch autonomous ACT = BLOCKED
+C5 governed ACT = available only through explicit authorized flow
+C7 selected Watch autonomous ACT = gated
+```
 
 ## 8. Process KPI semantics
 
-Process KPIs devem usar a Semantic Business Layer quando existir, incluindo definition/version/owner/grain/time window. Não permitir que o modelo invente fórmula para lead time, SLA, throughput ou rework rate.
+Process KPIs devem usar a Semantic Business Layer **quando e se** o owner/contrato correspondente estiver comprovado, preservando definition/version/owner/grain/time window. O modelo não inventa fórmulas materiais para lead time, SLA, throughput ou rework rate.
 
 ## 9. AI/LLM role
 
-LLM pode:
+LLM pode ajudar a explicar variants, sintetizar causas candidatas, correlacionar Evidence, sugerir investigação/automation candidate e gerar descrição/BPMN candidate.
 
-- explicar variants;
-- sintetizar causas candidatas;
-- correlacionar Evidence;
-- sugerir investigação/automation candidate;
-- gerar descrição de processo/BPMN candidate.
-
-LLM não é o motor determinístico de cálculo do event log e não inventa eventos ausentes.
+LLM não é o motor determinístico do event log, não inventa eventos ausentes e não transforma correlação em causalidade comprovada.
 
 ## 10. Process model artifacts
 
-Outputs podem incluir:
+Outputs candidatos:
 
 ```text
 process map
@@ -141,7 +146,7 @@ automation opportunity backlog
 before/after comparison
 ```
 
-Artefatos entram no Artifact Workspace e preservam provenance/version.
+Artifacts preservam provenance/version e usam Artifact Workspace apenas quando essa capability estiver efetivamente implementada e autorizada.
 
 ## 11. Security / privacy
 
@@ -151,11 +156,12 @@ Artefatos entram no Artifact Workspace e preservam provenance/version.
 - personal/external source não entra em process mining organizacional sem autorização;
 - task capture explícita e bounded;
 - raw screen/input capture não é default;
-- sensitive fields redacted conforme policy.
+- sensitive fields redacted conforme policy;
+- process deviation não vira decisão trabalhista automática.
 
 ## 12. C0 inventory
 
-Inventariar:
+Inventariar factual:
 
 - event logs/audit trails por domínio;
 - case/business keys;
@@ -169,32 +175,34 @@ Inventariar:
 - historical data quality/completeness;
 - current BI/process KPI definitions.
 
-Unknown = `NOT_PROVEN`.
+Sem evidência suficiente = `TO_INVENTORY`, nunca `PROVEN` por documentação.
 
 ## 13. Phase mapping
 
 ```text
-C0 → source/event/process-owner/privacy inventory + canonical event semantics
-C3 → process-intelligence contracts/index foundations, no production mining conclusion yet
+C0 → source/event/process-owner/privacy inventory + contract freeze
+C3 → target contracts/foundations only when justified by C0
 C4 → read-only process discovery/mining pilots with Evidence
-C5 → automation opportunity may become governed PREPARE/work item; no automatic ACT
-C6 → Process Intelligence product UX, conformance, variants, backlog, before/after measurement
-C7 → selected closed-loop optimization recommendations/ACT only under autonomy gates
+C5 → automation opportunity may become PREPARE or governed ACT through explicit authorized capability; no automatic ACT
+C6 → Process Intelligence UX, conformance, variants, backlog, before/after measurement
+C7 → selected closed-loop autonomous optimization only under explicit L5/Watch gates
 ```
 
 ## 14. Acceptance
 
-Required scenarios:
+Quando em escopo, provar no SHA/config avaliado:
 
-- known process reconstructed from event log;
+- known process reconstructed from authoritative event evidence;
 - missing/out-of-order event remains explicit;
 - multiple variants correctly separated;
 - conformance does not accuse person;
 - automation candidate references Evidence;
-- post-automation before/after metrics reproducible;
+- post-change before/after metrics reproducible;
 - actor-level privacy boundaries enforced;
 - new process source onboarded without planner hardcode.
 
+Sem prova obrigatória: `PENDING`/`INCONCLUSIVE`, nunca PASS.
+
 ## 15. North Star
 
-> **O Copilot deve compreender o processo desenhado, observar o processo real, explicar suas variações e gargalos e transformar oportunidades em melhorias governadas e mensuráveis.**
+> **DÉLIA deve compreender o processo desenhado, observar o processo real com evidência suficiente, explicar variações e gargalos e transformar oportunidades em melhorias governadas e mensuráveis sem se tornar process owner, surveillance engine ou executor técnico.**
