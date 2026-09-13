@@ -10,6 +10,7 @@
 **Patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
 **Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
 **Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
+**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)  
 **DoD:** [`14-definition-of-done.md`](./14-definition-of-done.md)  
 **Testes:** [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md)  
 **Ledger:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
@@ -39,17 +40,17 @@ O Chat é apenas sistema vizinho/referência durante o inventário.
 
 ## 2. Objetivo foundation-first
 
-Evitar que inteligência, mídia, biometria ou experiência industrial sejam construídas antes de provar que a nova aplicação e seus boundaries estão corretamente integrados à plataforma.
+Evitar que inteligência, mídia, biometria, conectividade externa ou experiência industrial sejam construídas antes de provar que a nova aplicação e seus boundaries estão corretamente integrados à plataforma.
 
 ```text
-PLATFORM + ARCHITECTURE + MEDIA/PRIVACY/BIOMETRIC/OT FOUNDATIONS
+PLATFORM + ARCHITECTURE + MEDIA/PRIVACY/BIOMETRIC/EXTERNAL/OT FOUNDATIONS
 → STANDALONE APPLICATION BOOTSTRAP
 → PORTAL + OPERATIONAL CONTEXT / PLATFORM COMMANDS
-→ INTELLIGENCE CORE + MULTIMODAL/BIOMETRIC FOUNDATIONS
-→ BUSINESS READS + GRAPH
-→ GOVERNED WRITES + DURABLE FOUNDATION
-→ PRODUCT WORK + MEETING/FRONTLINE + PROACTIVITY + ECOSYSTEM
-→ ADVANCED REALTIME + AUTONOMY + OPTIMIZATION + ROLLOUT
+→ INTELLIGENCE CORE + MULTIMODAL/BIOMETRIC/INTERNET/CONNECTOR FOUNDATIONS
+→ BUSINESS + EXTERNAL READS + GRAPH
+→ GOVERNED BUSINESS/EXTERNAL WRITES + DURABLE FOUNDATION
+→ PRODUCT WORK + MEETING/FRONTLINE + EXTERNAL EVENTS + PROACTIVITY + ECOSYSTEM
+→ ADVANCED REALTIME + EXTERNAL PROACTIVITY + AUTONOMY + OPTIMIZATION + ROLLOUT
 ```
 
 ## 3. Authorities documentais
@@ -66,6 +67,7 @@ PLATFORM + ARCHITECTURE + MEDIA/PRIVACY/BIOMETRIC/OT FOUNDATIONS
 52 = repo/bootstrap target
 53 = multimodal/Meeting/Frontline/industrial spec
 54 = biometric identity/Human Observation governance
+55 = Internet Research/external connectors/OAuth/external learning
 ledger = execution evidence/status
 ```
 
@@ -106,8 +108,18 @@ Specs temáticas não podem reabrir a decisão de usar Chat como base nem criar 
 31. Observação humana pode descrever padrões objetivos do processo, não inferir personalidade, honestidade, emoção como verdade, saúde, atributos sensíveis ou valor profissional global.
 32. Biometria/Human Observation não pode ser authority automática de contratação, promoção, punição, remuneração, avaliação formal ou desligamento.
 33. Observação de processo gera candidate knowledge, nunca mudança automática de produção ou perfil secreto de trabalhador.
-34. Copilot não é safety controller; autonomia empresarial L5 não implica autoridade OT.
-35. `PARTIAL`, `INCONCLUSIVE`, stale evidence, duplicate authority, Chat dependency, media/privacy/biometric violation ou OT safety violation bloqueiam fechamento.
+34. Internet/external content é untrusted data; nunca altera system/policy/RBAC/retention.
+35. Web fetch passa por boundary seguro de egress; URL gerada por LLM não vai para HTTP client irrestrito.
+36. OAuth/provider scopes seguem least privilege e não substituem Core/domain authorization.
+37. Provider credentials/tokens nunca entram em prompt, LLM context, MFE ou logs comuns.
+38. Conexão pessoal não vira fonte organizacional por conveniência.
+39. External read e external write são capabilities diferentes; `draft != send`.
+40. External write usa Policy/Decision Gate quando material e exige verified outcome.
+41. Provider events/webhooks convergem para EventEnvelope, dedupe e reconciliation.
+42. Informação externa durável vira candidate Knowledge antes de publicação; web/email/message não vira corporate truth automaticamente.
+43. WhatsApp não usa scraping de sessão pessoal como integração default; usar contratos oficiais suportados.
+44. Copilot não é safety controller; autonomia empresarial L5 não implica autoridade OT.
+45. `PARTIAL`, `INCONCLUSIVE`, stale evidence, duplicate authority, Chat dependency, media/privacy/biometric/external violation ou OT safety violation bloqueiam fechamento.
 
 ## 5. Grafo canônico
 
@@ -121,19 +133,19 @@ C1 — Standalone Application Bootstrap
 C2 — Portal + Operational Context + Platform Commands
  |
  v
-C3 — Intelligence Core + Multimodal/Biometric Foundations
+C3 — Intelligence Core + Multimodal/Biometric/External Foundations
  |
  v
-C4 — Business Reads + DELPI Business Graph
+C4 — Business + External Reads + DELPI Business Graph
  |
  v
-C5 — Governed Writes + Durable Work Foundation
+C5 — Governed Business/External Writes + Durable Work Foundation
  |
  v
-C6 — Tasks/Cases/Rooms/Inbox/Watch + Meeting/Frontline + Ecosystem/Learning
+C6 — Tasks/Cases/Rooms/Inbox/Watch + Meeting/Frontline + External Events/Ecosystem/Learning
  |
  v
-C7 — Advanced Realtime + Autonomy + Simulation + Model Routing + Rollout
+C7 — Advanced Realtime + External Proactivity + Autonomy + Simulation + Model Routing + Rollout
 ```
 
 ---
@@ -182,6 +194,11 @@ Inventariar com arquivo/símbolo/contrato/owner/consumer.
 - postgres/storage patterns;
 - object/media storage;
 - encrypted sensitive storage/key-management patterns;
+- outbound HTTP/proxy/DNS/egress patterns;
+- SSRF/private/link-local/metadata blocking patterns, se existirem;
+- secrets/vault owner;
+- OAuth callback route patterns;
+- webhook ingress/signature validation patterns;
 - health checks;
 - sequential scripts;
 - env examples;
@@ -201,7 +218,8 @@ Inventariar representativamente e depois cobrir o conjunto relevante:
 - permission usage;
 - current portal integrations;
 - responsive/accessibility patterns;
-- camera/microphone/file/media usage, se houver.
+- camera/microphone/file/media usage, se houver;
+- external connection/settings UX patterns, se houver.
 
 ### APIs
 
@@ -258,6 +276,29 @@ Mapear factual e classificar:
 
 Nenhum item inexistente vira `PLATFORM_REUSE` por suposição.
 
+### Internet/External Connector inventory
+
+Mapear factual e classificar:
+
+- search/web research providers, se existirem;
+- safe fetch/browser automation infrastructure, se existir;
+- outbound egress allowlists/proxies;
+- Microsoft Graph app registrations/integrations;
+- Google Workspace/Gmail app registrations/integrations;
+- WhatsApp Business Platform integrations;
+- Slack/GitHub/other connectors existentes;
+- OAuth authorization-code/delegated/application/service flows usados no repo;
+- callback state/nonce/PKCE patterns quando aplicáveis;
+- secret/token storage, rotation and revocation;
+- user-delegated versus org-managed connection ownership;
+- provider webhook/subscription/push integration;
+- scheduler/jobs for renew/reconcile/full-sync fallback;
+- attachment download/scan patterns;
+- provider compliance/terms owners;
+- external-source data-classification/privacy owners.
+
+Não assumir que uma conexão existente autoriza o Copilot a reutilizar seu credential ou ampliar seu scope.
+
 ### Industrial/OT inventory
 
 Somente inventário/read-only nesta etapa:
@@ -303,7 +344,8 @@ Nunca classificar `minha-delpi-ai-api` como runtime base do Copilot.
 - existing rooms/events/notifications map;
 - media/device/meeting/frontline inventory;
 - biometric identity/Human Observation inventory;
-- privacy/retention owner inventory;
+- Internet/egress/OAuth/external-connector inventory;
+- privacy/retention/external-data owner inventory;
 - industrial/OT boundary inventory;
 - `17` atualizado;
 - `18` atualizado;
@@ -327,9 +369,13 @@ manifest id
 DB/schema ownership
 health path
 admin paths
+OAuth callback base path
+webhook ingress base path
+egress boundary owner
 streaming transport direction
 media storage ownership direction
 biometric storage ownership direction
+external connection/secret ownership direction
 ```
 
 Target recomendado:
@@ -341,7 +387,7 @@ plugins/minha-delpi-copilot/
 /apps/minha-delpi-copilot-api
 ```
 
-Meeting/Frontline/Biometric não criam novos product backends por default.
+Meeting/Frontline/Biometric/Connectors não criam novos product backends por default.
 
 Mudança exige evidence/ADR.
 
@@ -363,6 +409,13 @@ planner
 expertise/playbook
 knowledge
 multimodal/media
+Internet Research
+web egress/safe fetch
+external connection lifecycle
+provider credential/secret storage
+external source privacy/sharing
+external provider actions
+external webhook/subscription events
 meeting semantics
 frontline assistance semantics
 entity/relationship projection
@@ -377,7 +430,7 @@ privacy/consent/retention
 industrial/OT safety boundary
 ```
 
-Core continua authority do usuário corporativo; biometric subsystem apenas associa candidate `userRef`.
+Core continua authority do usuário corporativo; biometric subsystem apenas associa candidate `userRef`. Provider authorization define o que aquela conexão externa permite, mas não altera Core RBAC.
 
 ## C0.S3 — Freeze de shared primitives
 
@@ -401,13 +454,14 @@ Definir/reutilizar semanticamente:
 - `EventEnvelope`;
 - audit contract;
 - `MediaRef` **somente se C0 provar necessidade transversal**;
-- `BiometricEnrollmentRef` / `BiometricIdentityCandidate` / `PersonObservationRef` **somente se C0 provar a forma correta e necessária**.
+- `BiometricEnrollmentRef` / `BiometricIdentityCandidate` / `PersonObservationRef` **somente se C0 provar a forma correta e necessária**;
+- `ExternalConnectionRef` / `ExternalResourceRef` **somente se C0 provar necessidade transversal além de SourceRef/EntityRef**.
 
-Não criar `FrontlineContext` paralelo a WorkspaceContext, outro Evidence model para mídia ou outro modelo de usuário paralelo ao Core.
+Não criar `FrontlineContext` paralelo a WorkspaceContext, outro Evidence model para mídia/external data, outro modelo de usuário paralelo ao Core ou resource-ref por provider se `SourceRef` já modela corretamente.
 
 C0 congela semântica; tabelas surgem apenas se necessárias.
 
-## C0.S4 — Freeze de arquitetura/patterns/persistence/privacy/biometric boundaries
+## C0.S4 — Freeze de arquitetura/patterns/persistence/privacy/biometric/external boundaries
 
 Aplicar `49` e congelar:
 
@@ -432,6 +486,15 @@ Aplicar `49` e congelar:
 - threshold/unknown/correction/revocation semantics;
 - liveness/anti-spoof requirement criteria;
 - prohibited inference classes;
+- outbound egress/safe fetch/SSRF boundary;
+- OAuth callback/connection lifecycle;
+- least-privilege scope model;
+- secret/vault/credential boundary;
+- personal versus organizational source boundary;
+- external read versus write semantics;
+- external source cache/retention;
+- webhook/subscription renewal/reconciliation semantics;
+- external Knowledge promotion semantics;
 - shared-device session isolation;
 - realtime budgets/backpressure direction;
 - OT safety non-authority.
@@ -450,6 +513,11 @@ Copilot API ↔ Core API
 Copilot API ↔ Domain APIs
 Copilot API ↔ AI/media providers/stores
 Copilot API ↔ biometric providers/storage when approved
+Copilot API ↔ Internet Search/Safe Fetch
+Copilot API ↔ External Provider Adapters
+Copilot API ↔ secret/vault owner
+External Provider ↔ OAuth callback/connection lifecycle
+External Provider ↔ webhook/subscription ingress
 Copilot API ↔ notification/event adapters
 Device/session adapter ↔ Copilot
 Media capture surface ↔ Copilot media boundary
@@ -484,6 +552,17 @@ Antes do runtime:
 - template/log leakage negative;
 - forbidden emotion/personality inference negative;
 - automatic employment decision from biometric/human observation negative;
+- unsafe URL/SSRF/private network/metadata fetch negative;
+- external prompt injection changing policy negative;
+- OAuth state/scope/connection-owner negative;
+- provider token reaching LLM/MFE/log negative;
+- cross-user external source leak negative;
+- external write without required Decision Gate negative;
+- draft implicitly sent negative;
+- invalid/forged webhook accepted negative;
+- duplicate/out-of-order/missed external event handling negative;
+- personal source auto-promoted to org Knowledge negative;
+- unsupported personal WhatsApp session automation negative;
 - voice modality authorization parity negative;
 - screen/camera injection negative;
 - arbitrary LLM→OT command negative.
@@ -504,6 +583,12 @@ INTEGRATION_CONTRACTS = PASS
 MEDIA_PRIVACY_BOUNDARIES = PASS
 BIOMETRIC_IDENTITY_BOUNDARY = PASS
 HUMAN_OBSERVATION_BOUNDARY = PASS
+EXTERNAL_EGRESS_BOUNDARY = PASS
+OAUTH_CONNECTION_BOUNDARY = PASS
+PROVIDER_SECRET_BOUNDARY = PASS
+EXTERNAL_SOURCE_PRIVACY_BOUNDARY = PASS
+EXTERNAL_EVENT_BOUNDARY = PASS
+EXTERNAL_LEARNING_BOUNDARY = PASS
 SHARED_DEVICE_BOUNDARY = PASS
 OPERATIONAL_CONTEXT_BOUNDARY = PASS
 OT_SAFETY_BOUNDARY = PASS
@@ -546,7 +631,8 @@ Objetivo: provar aplicação independente antes da inteligência.
 - typed host props;
 - responsive/accessibility baseline;
 - media permission state foundation sem auto-capture;
-- biometric capability UI OFF until C0/C3 gates permit it.
+- biometric capability UI OFF until C0/C3 gates permit it;
+- external connection UI contracts only when C0 freezes ownership; no provider feature implementation here.
 
 ## C1.S4 — Manifest + Core registration path
 
@@ -564,6 +650,7 @@ Objetivo: provar aplicação independente antes da inteligência.
 - no `depends_on` Chat;
 - env examples;
 - health;
+- callback/webhook paths apenas se C0 contract exigir;
 - streaming/media transport tuning apenas quando contract exigir.
 
 ## C1.S6 — Portal full-page mount
@@ -610,6 +697,8 @@ Portal/MFEs publicam contexto bounded.
 
 Contexto operacional usa `EntityRef` para OP/máquina/produto/operação/lote/posto quando sources existem.
 
+External resource context pode usar `SourceRef`/bounded refs quando material; nunca carregar provider token ou permission truth.
+
 ## C2.S2 — Copilot Global Bridge
 
 Thin host bridge; no planner/policy in Portal.
@@ -650,7 +739,7 @@ Unauthorized/stale/F5/logout/user-switch/unknown app/iframe/URL arbitrary/send-s
 
 ---
 
-# C3 — Intelligence Core + Multimodal/Biometric Foundations
+# C3 — Intelligence Core + Multimodal/Biometric/External Foundations
 
 Tudo nesta fase pertence à **Copilot API nova**.
 
@@ -664,7 +753,7 @@ Own session/conversation model, sem `agent_id` legado.
 
 ## C3.S3 — Structured understanding
 
-Goals/entities/requirements/attachments/modality metadata.
+Goals/entities/requirements/attachments/modality/source metadata.
 
 ## C3.S4 — Copilot OpenAPI ingestion + Action Catalog foundation
 
@@ -724,43 +813,111 @@ Quando voice/camera/video/biometric entrarem:
 - stop/cleanup behavior;
 - budget/size/duration limits.
 
-## C3.S11 — Evidence/epistemic synthesis
+## C3.S11 — Internet Research foundation
+
+Implementar somente após C0 boundaries:
+
+```text
+research need detection
+→ SearchProviderPort
+→ normalized candidates
+→ SafeWebFetchPort
+→ extraction
+→ SourceRef/EvidenceRef
+→ freshness/relevance
+→ grounded synthesis/citations
+```
+
+Requisitos:
+
+- safe egress;
+- SSRF/private/metadata protection;
+- redirect validation;
+- content size/type/time limits;
+- external prompt injection protection;
+- no secret/context exfiltration;
+- transparent source/provenance.
+
+## C3.S12 — External Connection foundation
+
+Implementar lifecycle genérico sem planner hardcode por provider:
+
+```text
+connect request
+→ OAuth/API authorization
+→ callback validation
+→ ExternalConnection
+→ secretRef
+→ provider adapter
+→ normalized capabilities
+```
+
+Suportar semanticamente:
+
+```text
+USER_DELEGATED
+ORG_MANAGED
+SHARED_RESOURCE
+SERVICE_CONNECTION
+```
+
+Providers concretos só entram quando priorizados e aprovados.
+
+## C3.S13 — Evidence/epistemic synthesis
 
 FACT/CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION.
 
-Visual/audio/human-observation finding não vira fato autoritativo sem source/regra adequada.
+Visual/audio/human-observation/web/external finding não vira fato autoritativo sem source/regra adequada.
 
-## C3.S12 — Structured planner
+## C3.S14 — Structured planner
 
 Planner outputs typed plans, not technical content JSON leakage.
 
-## C3.S13 — Intelligence/multimodal/biometric generalization gate
+## C3.S15 — Intelligence/multimodal/biometric/external generalization gate
 
-Positive/sibling/negative/unknown/metamorphic/injection/budget/stream/voice/image/video/identity parity.
+Positive/sibling/negative/unknown/metamorphic/injection/budget/stream/voice/image/video/identity/external-provider parity.
 
 Biometric evals incluem false accept/reject, unknown-person handling, correction, revoke/delete, spoof/replay quando aplicável e permission-elevation negative.
 
+External evals incluem unknown provider, scope missing, revoked connection, unsafe URL, external injection, token isolation and provider-neutral planner.
+
 ---
 
-# C4 — Business Reads + DELPI Business Graph
+# C4 — Business + External Reads + DELPI Business Graph
 
 ## C4.S1 — API inventory import/refresh
 
 Domain OpenAPIs → Copilot Action Catalog.
 
-## C4.S2 — Generic read executor
+## C4.S2 — Generic business read executor
 
 Schema-valid, authorization-aware, outcome-normalized.
 
-## C4.S3 — Evidence from API results
+## C4.S3 — External read adapters
+
+Habilitar reads somente para connections/scopes autorizados, por exemplo:
+
+```text
+email search/read
+calendar read
+file search/read
+messaging conversation read
+other provider read capabilities
+```
+
+Provider adapters normalizam source/resource/outcome sem expor tokens ao planner/LLM.
+
+## C4.S4 — Evidence from API/external results
 
 Freshness/source/outcome refs.
 
-## C4.S4 — Business Graph runtime
+External result material registra provider/resource/connection scope conforme privacy policy, sem vazar secret.
+
+## C4.S5 — Business Graph runtime
 
 EntityRef/RelationshipRef, permission-aware traversal, source fetch from owner.
 
-## C4.S5 — Operational context correlation
+## C4.S6 — Operational/external context correlation
 
 Quando sources existirem, correlacionar:
 
@@ -771,43 +928,69 @@ máquina ↔ manutenção/eventos
 lote/material ↔ fornecedor/qualidade
 media/evidence ↔ entity refs
 person/user participation refs ↔ session/evidence only when necessary and authorized
+external email/file/calendar/message ↔ EntityRef/Case/Task via SourceRef when authorized
 ```
 
-Sem duplicar master data ou criar pessoa como Graph authority paralela ao Core.
+Sem duplicar master data, mailbox/file repositories ou criar pessoa como Graph authority paralela ao Core.
 
-## C4.S6 — Cross-domain analysis
+## C4.S7 — Cross-domain/external analysis
 
-Graph + APIs + expertise + evidence.
+Graph + Domain APIs + external sources + internet research + expertise + evidence.
 
-## C4.S7 — Unknown-provider/generalization gate
+## C4.S8 — Unknown-provider/generalization gate
 
 No endpoint/provider/entity hardcode.
 
+Novo provider/connector conforme contrato não pode exigir branch semântica central no planner.
+
 ---
 
-# C5 — Governed Writes + Durable Work Foundation
+# C5 — Governed Business/External Writes + Durable Work Foundation
 
 ## C5.S1 — Decision Gate Engine
 
 Risk/sensitivity/impact/hash/approval.
 
-## C5.S2 — Generic write executor
+## C5.S2 — Generic business write executor
 
 Final RBAC/policy revalidation and idempotency.
 
-## C5.S3 — Outcome verification
+## C5.S3 — External write executor/adapters
 
-No ambiguous success narrative.
+Ações como:
 
-## C5.S4 — WorkflowPlan runtime
+```text
+email draft/send
+calendar create/update
+message send
+file create/update
+```
+
+são capabilities separadas e provider-scoped.
+
+Regras:
+
+- connection/scope vigente;
+- policy/Decision Gate quando material;
+- `draft != send`;
+- recipient/target/payload preview quando necessário;
+- provider-specific constraints no adapter;
+- no blind retry;
+- verified external outcome.
+
+## C5.S4 — Outcome verification
+
+No ambiguous success narrative para Domain API ou provider externo.
+
+## C5.S5 — WorkflowPlan runtime
 
 DAG + canonical capability executor.
 
-## C5.S5 — Checkpoints/waits
+## C5.S6 — Checkpoints/waits
 
 `wait_user`, `wait_approval`, `wait_event`, timeouts/cancel.
 
-## C5.S6 — Modality-to-action governance
+## C5.S7 — Modality/source-to-action governance
 
 Candidate actions originadas de:
 
@@ -818,17 +1001,19 @@ meeting transcript
 frontline session
 visual finding
 human observation
+web research
+email/message/file/calendar source
 ```
 
-entram no mesmo planner/Decision Gate/executor. Nenhuma modality ou biometric match executa write por canal paralelo.
+entram no mesmo planner/Decision Gate/executor apropriado. Nenhuma modality, external content ou biometric match executa write por canal paralelo.
 
-## C5.S7 — crash/retry/idempotency gate
+## C5.S8 — crash/retry/idempotency gate
 
-No duplicate write, inclusive após repeated utterance/event/resume.
+No duplicate write, inclusive após repeated utterance/event/resume/provider timeout.
 
 ---
 
-# C6 — Product Work + Proactivity + Meeting/Frontline + Ecosystem
+# C6 — Product Work + Proactivity + Meeting/Frontline + External Events + Ecosystem
 
 ## C6.S1 — Copilot Task
 
@@ -840,35 +1025,51 @@ Reuse/extend existing owner if C0 proves it.
 
 ## C6.S4 — Copilot Inbox
 
-Work/decision/watch/meeting-action projection.
+Work/decision/watch/meeting/external-event projection.
 
 ## C6.S5 — Watch OBSERVE/ADVISE
 
 Event-driven where available.
 
-## C6.S6 — Organizational Knowledge
+External provider events entram via validated webhook/subscription/push adapters → EventEnvelope → dedupe/correlation.
+
+## C6.S6 — External subscription/reconciliation lifecycle
+
+Quando provider suportar:
+
+- subscribe/watch;
+- validate webhook authenticity;
+- renew before expiry;
+- handle duplicate/out-of-order events;
+- detect permission revoked;
+- missed-event reconciliation/full sync fallback;
+- truthful stale/degraded state.
+
+## C6.S7 — Organizational Knowledge
 
 Reference/Decision/Experience/Solution Patterns.
 
-## C6.S7 — Governed Learning
+External source promotion respeita privacy/licensing/freshness/owner.
 
-feedback/meeting/process/frontline observation → candidate → eval → review → publish.
+## C6.S8 — Governed Learning
 
-Não persistir worker profiling secreto como aprendizado.
+feedback/meeting/process/frontline/external source → candidate → eval → review → publish.
 
-## C6.S8 — Expertise Studio
+Não persistir worker profiling secreto nem transformar personal mailbox/message/web page em corporate truth automaticamente.
 
-## C6.S9 — AI-ready app SDK/readiness
+## C6.S9 — Expertise Studio
 
-Context/Entity/deep-link/action/OpenAPI readiness.
+## C6.S10 — AI-ready app/connector readiness
 
-## C6.S10 — Meeting Mode
+Context/Entity/deep-link/action/OpenAPI readiness + external connector capability/connection/event readiness quando aplicável.
+
+## C6.S11 — Meeting Mode
 
 Entregar progressivamente:
 
 - explicit start/stop;
 - voice/transcript;
-- live grounded business queries;
+- live grounded business/external queries;
 - camera/screen/media when authorized;
 - closed-set face/speaker participant recognition quando habilitado;
 - ambiguity/correction UX;
@@ -877,9 +1078,9 @@ Entregar progressivamente:
 - ata viva;
 - Task/Case/Room linkage;
 - next-meeting continuity;
-- retention/consent/identity-recognition visibility.
+- retention/consent/identity-recognition/external-source visibility.
 
-## C6.S11 — Frontline Mode
+## C6.S12 — Frontline Mode
 
 Entregar progressivamente:
 
@@ -896,23 +1097,25 @@ Entregar progressivamente:
 - no hidden worker profiling;
 - no physical machine command path.
 
-## C6.S12 — ecosystem/proactivity/meeting/frontline/biometric gate
+## C6.S13 — ecosystem/proactivity/meeting/frontline/biometric/external gate
 
-Provar Meeting/Frontline surface parity de RBAC/policy/Evidence, accessibility, privacy, shared-device isolation, biometric correction/revocation, no sensitive inference, no automatic employment decisions e learning governance.
+Provar Meeting/Frontline/external-source parity de RBAC/policy/Evidence, accessibility, privacy, shared-device isolation, biometric correction/revocation, no sensitive inference, no automatic employment decisions, connection ownership isolation, external event reliability e learning governance.
 
 ---
 
-# C7 — Advanced Realtime + Autonomy + Optimization + Rollout
+# C7 — Advanced Realtime + External Proactivity + Autonomy + Optimization + Rollout
 
 ## C7.S1 — Autonomy L0–L5
 
 L5 OFF default.
 
-Autonomia empresarial não concede OT nem reduz biometric/user authorization requirements.
+Autonomia empresarial não concede OT, não reduz biometric/user authorization requirements e não torna external write irrestrito.
 
 ## C7.S2 — Watch ACT
 
 Allowlisted/policy/Decision Gate.
+
+External ACT exige provider/connection/action allowlist, budgets, target constraints, kill switch e verified outcome.
 
 ## C7.S3 — What-if/Simulation
 
@@ -935,7 +1138,20 @@ Somente com evidence real de valor e foundation já comprovada:
 - cost/latency budgets;
 - room devices/wearables como extensões futuras.
 
-## C7.S6 — Industrial/OT safety gate
+## C7.S6 — Advanced external automation/browser
+
+Somente com evidence real e scope explícito:
+
+- background research tasks;
+- proactive connector reads;
+- selected external ACT;
+- browser automation only when API/structured integration is unavailable and policy permits;
+- domain/session sandboxing;
+- no arbitrary intranet access;
+- no secret exposure;
+- kill switch and budgets.
+
+## C7.S7 — Industrial/OT safety gate
 
 Default permanece **NO ACTUATION**.
 
@@ -956,17 +1172,17 @@ audit
 
 Sem isso, todo free-form LLM→machine command = BLOCK.
 
-## C7.S7 — Scale/performance/cost
+## C7.S8 — Scale/performance/cost
 
-## C7.S8 — Progressive rollout
+## C7.S9 — Progressive rollout
 
-Internal → cohort → reads → writes → durable/proactive → Meeting/Frontline → governed biometrics → selected autonomy/realtime.
+Internal → cohort → reads → external research/reads → writes → external writes → durable/proactive → Meeting/Frontline → governed biometrics → selected autonomy/realtime/external ACT.
 
-## C7.S9 — Final verification
+## C7.S10 — Final verification
 
-Security, privacy, accessibility, unknown/sibling/metamorphic, rollback, Chat independence, biometric governance, no sensitive inference, OT boundary.
+Security, privacy, accessibility, unknown/sibling/metamorphic, rollback, Chat independence, biometric governance, external-source governance, no sensitive inference, OT boundary.
 
-## C7.S10 — Product Complete
+## C7.S11 — Product Complete
 
 No material unresolved requirements for declared scope.
 
@@ -993,17 +1209,22 @@ emotion/personality/character inference from face or voice
 hidden employee surveillance/scoring
 automatic employment decisions based on biometrics
 unbounded raw-media/biometric-template retention
+unrestricted arbitrary web fetch/browser access
+provider tokens exposed to LLM/MFE
+personal external account data promoted automatically to organization
+implicit send from generated draft
+personal WhatsApp Web scraping/session automation
 free-form LLM→machine control
 Copilot replacing industrial safety interlocks
 ```
 
-Reconhecimento fechado de usuários enrolled e Human Observation objetiva pertencem ao roadmap somente sob `54`.
+Reconhecimento fechado de usuários enrolled e Human Observation objetiva pertencem ao roadmap somente sob `54`. Internet Research e external connectors pertencem ao roadmap somente sob `55`.
 
 ## 7. Protocolo por subetapa
 
 ```text
 REVALIDATE HEAD/WORKTREE
-→ read 16/17/20/25/49/50/51/52/53/54 + spec applicable
+→ read 16/17/20/25/49/50/51/52/53/54/55 + spec applicable
 → dependency gate
 → READY_TO_EXECUTE
 → baseline
@@ -1011,7 +1232,7 @@ REVALIDATE HEAD/WORKTREE
 → producer/consumer wiring
 → unit/contract/integration
 → positive/sibling/negative
-→ security/RBAC/privacy/biometric/safety
+→ security/RBAC/privacy/biometric/external/safety
 → generalization/metamorphic/unknown when applicable
 → independence check against Chat
 → architecture conformance
@@ -1023,24 +1244,28 @@ REVALIDATE HEAD/WORKTREE
 
 ## 8. Regra anti-refatoração
 
-Antes de criar service/schema/table/framework/media pipeline/device context/biometric store/OT adapter:
+Antes de criar service/schema/table/framework/media pipeline/device context/biometric store/external connector/web fetcher/browser automation/OT adapter:
 
-1. pertence ao Copilot ou a platform/domain/industrial owner existente?
+1. pertence ao Copilot ou a platform/domain/external/industrial owner existente?
 2. existe neutral shared owner real?
 3. isso cria dependency no Chat?
-4. isso duplica Core/RBAC/domain/industrial safety rules?
+4. isso duplica Core/RBAC/domain/external-provider/industrial safety rules?
 5. shared primitive já existe?
-6. WorkspaceContext/EntityRef/EvidenceRef já resolvem o conceito?
+6. WorkspaceContext/EntityRef/SourceRef/EvidenceRef já resolvem o conceito?
 7. próxima fase conhecida exigirá redesign?
 8. pattern é justificado pelo `49`?
-9. sibling/unknown funciona sem hardcode?
-10. raw media/template persistence é realmente necessária?
-11. modality/biometric result introduz bypass de permission/Decision?
+9. sibling/unknown provider funciona sem hardcode?
+10. raw media/template/external cache persistence é realmente necessária?
+11. modality/biometric/external content introduz bypass de permission/Decision?
 12. device identity ou biometric candidate está sendo confundido com authenticated user?
 13. Human Observation está virando inferência psicológica/sensível ou decisão trabalhista automática?
-14. atuação física está sendo confundida com Business Action?
+14. token/credential está escapando do adapter/vault boundary?
+15. read e write externos estão sendo confundidos?
+16. fonte pessoal está virando authority/Knowledge organizacional implicitamente?
+17. web fetch/browser pode alcançar private network/metadata sem policy?
+18. atuação física está sendo confundida com Business Action?
 
-Se 3, 4, 7, 11, 12, 13 ou 14 = sim: **não implementar** até corrigir o desenho.
+Se 3, 4, 7, 11, 12, 13, 14, 15, 16, 17 ou 18 = sim: **não implementar** até corrigir o desenho.
 
 ## 9. Primeira ordem efetiva
 
@@ -1056,4 +1281,4 @@ C0.S0
 → C1.S1
 ```
 
-Nenhuma intelligence/media/biometric/frontline feature precede a prova de aplicação standalone e dos boundaries de privacy/device/identity/OT.
+Nenhuma intelligence/media/biometric/Internet/connector/frontline feature precede a prova de aplicação standalone e dos boundaries de privacy/device/identity/egress/credentials/external-data/OT.
