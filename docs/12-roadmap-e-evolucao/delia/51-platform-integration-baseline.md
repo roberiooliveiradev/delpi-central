@@ -1,79 +1,172 @@
-# Minha DELPI Copilot — Baseline de Integração com a Plataforma
+# DÉLIA — Baseline de Integração com a Plataforma
 
 **Status:** `CANONICAL_BASELINE` de evidências para integração  
-**Escopo:** fatos comprovados + gaps `TO_INVENTORY` para capabilities `53–66`  
-**Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
+**Escopo:** fatos `PROVEN` + gaps `TO_INVENTORY` + decisões `PLANNED` + arquitetura `TARGET`  
+**Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Evidence snapshot inicial desta revisão:** `dc1d96f787cca66116e328c32c5a9124d31664df`
 
 ## 1. Objetivo
 
-Separar **fatos já comprovados no repositório** de targets e itens `TO_INVENTORY`. Este arquivo não substitui C0.S0: tudo é revalidado no HEAD de execução.
+Separar **fatos comprovados no repositório** de targets e itens ainda sujeitos a inventário. Este arquivo não substitui `C0.S0`: toda evidência precisa ser revalidada no HEAD de execução antes de desbloquear qualquer gate.
 
-## 2. Portal — PROVEN
+Taxonomia obrigatória neste baseline:
 
-Portal React/Vite funciona como Shell/Host. `AuthContext` integra Keycloak/Core, carrega usuário/apps/rotas e fornece `getAccessToken`.
+```text
+PROVEN        evidência direta no HEAD, com path/contrato/símbolo identificável
+TO_INVENTORY  existência, comportamento, owner, contrato ou readiness ainda não provados
+PLANNED       decisão de execução já ordenada pelo Plano Mestre, ainda sem runtime entregue
+TARGET        arquitetura/capability desejada, sem implicar implementação
+```
 
-## 3. AppHost / Module Federation — PROVEN
+Não usar `PARTIAL PROVEN`, `DERIVED FROM PROVEN PLATFORM`, `NOT YET PROVEN` ou equivalentes como substitutos ambíguos. Quando somente uma parte estiver comprovada, registrar explicitamente **o escopo exato do `PROVEN`** e deixar o restante `TO_INVENTORY`.
 
-Portal suporta `embedded`, `external` e `federated`; federated resolve remote/share scope/mount + host props. Copilot MFE seguirá esse padrão.
+## 2. Evidências âncora do HEAD
 
-## 4. AppLauncher / Core-driven menu — PROVEN
+| Área | Estado | Evidência âncora | O que a evidência prova | O que ainda não prova |
+|---|---|---|---|---|
+| Portal host | `PROVEN` | `portal/src/ui/AppHost.tsx` blob `b981a7d7ab5ba37194b957e10a9b57a677c66a65` | existe host React com flows embedded/external/federated | compatibilidade futura da DÉLIA sem contract test |
+| Federated mount | `PROVEN` | `portal/src/ui/AppHost.tsx` | `container.get`, `mount()`, `unmount()`, host props e share scope existem | contrato congelado para DÉLIA |
+| Portal auth/context | `PROVEN` | `portal/src/state/AuthContext.tsx` blob `be12e8b7bf10f8017ed1c14fb39e09ee2f8ee1e1` | integração client-side com Keycloak/Core, `getAccessToken`, apps/routes e state de usuário existem | autorização final de cada Domain API |
+| Shared federation | `PROVEN` | `plugins/vite/federation.shared.ts` blob `37f87c8998f3b11ab37e1e514cab623c746c8da2` | config compartilhada, `@delpi/plugin-ui`, React singleton e helpers existem | que toda futura surface da DÉLIA deva usar exatamente a mesma shape sem revalidação |
+| Core API repository | `PROVEN` | diretório raiz `core-api/` no snapshot | serviço/repositório existe | todos os endpoints/semânticas exigidos pela DÉLIA |
+| Gateway repository | `PROVEN` | diretório raiz `gateway/` no snapshot | owner físico de gateway existe | rota/config final da DÉLIA |
+| Infra repository | `PROVEN` | diretório raiz `infra/` no snapshot | infraestrutura versionada existe | storage/network/deploy adequados a cada capability futura |
+| API DELPI repository | `PROVEN` | diretório raiz `api-delpi/` no snapshot | componente existe | manifesto/OpenAPI/ownership funcional específico sem inspeção adicional |
+| APIs dedicadas | `PROVEN` | múltiplos diretórios de APIs no snapshot raiz | padrão de serviços independentes existe no monorepo | que uma estrutura específica seja automaticamente correta para a DÉLIA |
+| DÉLIA runtime | `TO_INVENTORY` quanto a qualquer implementação; programa `PLANNED / NOT_STARTED` | ledger + placeholder documental | não há prova documental de runtime entregue | qualquer API/MFE/DB/deploy da DÉLIA |
 
-Apps/rotas vêm do Core/AuthContext. Não criar catálogo manual app→URL.
+A presença de arquivo/diretório não prova uso, readiness, contrato completo, produção, segurança ou compatibilidade. `C0.S0` deve seguir producers/consumers e contratos reais.
 
-## 5. Manifest / plugin-ui — PROVEN
+## 3. Portal / AppHost — PROVEN no escopo acima
 
-Manifest v2 e `@delpi/plugin-ui` são padrões compartilhados. Copilot terá manifesto próprio e reutilizará design system/federation.
+O HEAD comprova que `AppHost` suporta caminhos `embedded`, `external` e `federated`. No flow federado atual ele resolve entry, inicializa share scope, busca exposed module, exige `mount()` e fornece props como:
 
-## 6. Core API — PROVEN
+```text
+getAccessToken
+basePath
+pathname
+search
+alternateEntry
+appRoutes
+routeLabel
+permissions
+isSuperadmin
+```
 
-Core segue Clean Architecture e permanece authority de users/context, apps/routes, RBAC/permissions, manifest registration e shared governance.
+Também existe cleanup por `unmount()` quando disponibilizado pelo remote.
 
-## 7. APIs dedicadas — PROVEN
+**Decisão para DÉLIA:** `PLANNED` reutilizar contrato de host da plataforma em vez de criar host paralelo. A compatibilidade exata e qualquer extensão necessária são `TO_INVENTORY`/contract-first em C0/C1.
 
-Monorepo possui vários serviços independentes; Copilot API dedicada é coerente com a plataforma.
+## 4. Auth / Core-driven app context — PROVEN no Portal
 
-## 8. api-delpi / Domain APIs — PROVEN
+`AuthContext` atual comprova client integration com Keycloak/Core e mantém `user`, `apps`, `routes`, favorites/notifications e `getAccessToken`.
 
-`api-delpi` é backend-only e owner de integrações DELPI/TOTVS já expostas. Copilot consome contracts. Domain APIs permanecem business authorities e são preferidas como executor quando oferecem action contract adequado.
+Isso **não** transforma Portal state nem props como `permissions` em authority final de escrita. Invariante:
 
-## 9. Gateway / Compose — PROVEN
+```text
+JWT/Portal context = identidade/contexto
+Core/permission resolver = authority de plataforma
+Domain API = regra/autorização final de negócio
+DÉLIA = não amplia permission
+```
 
-Gateway roteia Core/apps por paths; Compose organiza serviços/profiles independentes. Copilot terá rotas/services próprios e nenhuma dependência operacional do Chat.
+Endpoints concretos e semantics Core necessários à DÉLIA permanecem `TO_INVENTORY` até C0.S0 seguir producer/consumer/contract reais.
 
-## 10. SSO/autorização alvo — DERIVED FROM PROVEN PLATFORM
+## 5. Module Federation / plugin-ui — PROVEN no escopo atual
+
+`plugins/vite/federation.shared.ts` comprova configuração compartilhada de federation, remote de `@delpi/plugin-ui`, React singleton e helpers atuais.
+
+**TARGET:** MFE da DÉLIA reutiliza foundation neutra confirmada, sem source-import de Portal/Chat. Qualquer nova abstração compartilhada passa Abstraction Gate e exige 2+ consumers reais, owner, contrato pequeno e testes.
+
+## 6. Core API — owner normativo; implementação detalhada TO_INVENTORY
+
+`core-api/` existe no HEAD. Pelas autoridades oficiais, Core permanece owner de apps/rotas/RBAC/governança.
+
+`C0.S0` deve provar:
+
+```text
+endpoints efetivamente usados
+request/response/error contracts
+operationIds/OpenAPI quando aplicável
+permission resolution
+service identity/background patterns
+manifest/app registration
+idempotency/audit where relevant
+consumers reais
+```
+
+Não inferir contrato a partir do nome do serviço.
+
+## 7. APIs dedicadas — PROVEN como padrão físico; reuso específico TO_INVENTORY
+
+O monorepo contém múltiplos serviços independentes. Isso comprova que serviço dedicado é um padrão existente, mas **não** prova naming, skeleton, dependency set ou deployment contract da DÉLIA.
+
+A criação física da DÉLIA continua `PLANNED` após Foundation Freeze, conforme `16/52`.
+
+## 8. api-delpi / Domain APIs — presença PROVEN; contratos TO_INVENTORY
+
+`api-delpi/` existe no HEAD. Domain APIs permanecem authorities de dados/regras de seus domínios por decisão arquitetural.
+
+Antes de declarar qualquer action/read reutilizável pela DÉLIA, C0 precisa provar por API:
+
+```text
+owner
+OpenAPI/operationId
+request/response/errors
+AuthN/AuthZ
+idempotency
+limits/retries
+observability
+data/business authority
+postcondition source
+```
+
+DÉLIA consome contratos aprovados; não replica business rule nem integração proprietária apenas por conveniência.
+
+## 9. Gateway / Infra — presença PROVEN; readiness DÉLIA TO_INVENTORY
+
+`gateway/` e `infra/` existem no HEAD. Rotas, Compose, network, secrets, storage, health, deployment e rollback específicos da DÉLIA permanecem `TO_INVENTORY` até C0/C1.
+
+**PLANNED:** runtime da DÉLIA terá deploy/rollback próprios e nenhuma dependência operacional do Chat.
+
+## 10. SSO/autorização DÉLIA — TARGET derivado das authorities, não runtime provado
 
 ```text
 Keycloak
-→ Portal token
-→ Copilot MFE getAccessToken
+→ Portal/session context
+→ DÉLIA MFE host contract
 → Gateway
-→ Copilot API JWT validation
-→ Core context/RBAC
-→ Domain API final authorization
+→ DÉLIA API JWT validation
+→ Core permission context
+→ Domain API final business authorization
 ```
 
-Background/service identity específico para autonomous operations continua `TO_INVENTORY`.
+Background/service identity específico para continuous/autonomous operations é `TO_INVENTORY`.
 
 ## 11. OpenAPI Business Action integration — TARGET
 
 ```text
 OpenAPI/contract
-→ Copilot discovery/index
+→ DÉLIA discovery/index
 → Capability Projection
 → planner
 → Policy/Decision
-→ generic executor
+→ Work/orchestration
+→ Automation Hub / Domain API / approved executor contract
+→ authoritative Outcome verification
 ```
 
-No endpoint-specific planner teaching.
+Sem endpoint-specific planner teaching. Provider/executor metadata nunca concede permission.
 
-## 12. Existing notifications/events/rooms/workers — PARTIAL PROVEN / TO_INVENTORY
+## 12. Notifications / sockets / workers / schedulers — escopo misto
 
-Core/Portal possuem notifications/socket patterns; alguns serviços possuem workers/schedulers; Portal Comercial expõe Interaction Rooms.
+`PROVEN`: o Portal possui código de notifications/socket e o monorepo contém padrões de execução assíncrona em partes da plataforma.
 
-Isso **não prova** event bus, workflow platform, RPA orchestrator ou Control Tower transversal.
+`TO_INVENTORY`: owner transversal, broker/queue standard, durable workflow platform, scheduler governance, worker/service identity, delivery semantics e suitability para DÉLIA.
 
-## 13. Copilot surfaces — TARGET
+Nada disso prova, isoladamente, Event Bus corporativo, Automation Hub reutilizável, Process Mining platform ou AI Control Tower.
+
+## 13. DÉLIA surfaces — TARGET
 
 ```text
 GLOBAL
@@ -85,53 +178,58 @@ BACKGROUND WATCH/WORKFLOW
 ADMIN GOVERNANCE SURFACES
 ```
 
-Mesmo Copilot API/policy/work runtime.
+Mesma identidade de produto e mesma authority de Policy/Decision/Work. Surface não cria segundo planner/runtime.
 
 ## 14. Media / Realtime — TO_INVENTORY
 
-Não considerar comprovados: corporate STT/TTS/Vision provider, WebRTC/realtime standard, recording/transcription infra, media store, browser abstraction, quotas/cost/latency or retention policy.
+Não considerar comprovados: corporate STT/TTS/Vision provider, WebRTC/realtime standard, recording/transcription infra, media store, browser abstraction, quotas/cost/latency ou retention policy.
 
 ## 15. Devices / Frontline — TO_INVENTORY
 
-Não considerar comprovados: standardized tablets/kiosks, production-station mic/camera, device identity service, shared-terminal policy, factory network or production-terminal contracts.
+Não considerar comprovados: standardized tablets/kiosks, production-station mic/camera, device identity service, shared-terminal policy, factory network ou production-terminal contracts.
 
 ## 16. Biometric Identity — TO_INVENTORY
 
-Enrollment/photo/voice/template/liveness/providers/thresholds/governance owners ainda precisam evidence. Core identity remains authority regardless.
+Enrollment/photo/voice/template/liveness/providers/thresholds/governance owners precisam evidence. Keycloak/Core identity authority permanece independente de biometria.
 
 ## 17. Internet Research / Egress — TO_INVENTORY
 
-Approved search provider, shared search API, safe-fetch component, outbound proxy/allowlist, protected-destination blocking, malware/content policy, browser automation and research cache are not yet proven.
+Approved search provider, shared search API, safe-fetch component, outbound proxy/allowlist, protected-destination blocking, malware/content policy, browser automation e research cache ainda não estão provados neste baseline.
 
 ## 18. OAuth / Secret Management — TO_INVENTORY
 
-Reusable OAuth callback framework, state/nonce/PKCE conventions, token vault, rotation/revocation, connection ownership/admin consent/provider scopes need evidence.
+Reusable OAuth callback framework, state/nonce/PKCE conventions, token vault, rotation/revocation, connection ownership/admin consent/provider scopes exigem evidência. Credenciais existentes em outro app não são automaticamente reutilizáveis.
 
-Credentials elsewhere are not automatically reusable.
+## 19. Microsoft 365 / Teams — TO_INVENTORY
 
-## 19. Microsoft 365 / Teams — TO_INVENTORY IN REPO
+Inventariar Entra/Graph registrations, delegated/application/resource consent, Outlook/Teams/SharePoint/OneDrive integrations, messages/meetings/transcripts/recordings/change notifications, app/tab/bot e owners.
 
-Need factual evidence for Entra/Graph registrations, delegated/application/resource consent, Outlook/Teams/SharePoint/OneDrive integrations, messages/meetings/transcripts/recordings/change notifications, app/tab/bot and owners.
+Raw realtime media bot não é requisito do conector base.
 
-Raw realtime bot is not base requirement.
+## 20. Google Workspace / Gmail — TO_INVENTORY
 
-## 20. Google Workspace / Gmail — TO_INVENTORY IN REPO
-
-Need evidence for OAuth app, Gmail/Calendar/Drive, scopes, push/PubSub, token lifecycle and owner.
+Inventariar OAuth app, Gmail/Calendar/Drive, scopes, push/PubSub, token lifecycle e owner.
 
 ## 21. WhatsApp / Other Connectors — TO_INVENTORY
 
-Map official supported WhatsApp Business integration and Slack/GitHub/CRMs/service desks only with real evidence. Personal WhatsApp Web scraping is not target default.
+Mapear integrações oficiais suportadas e Slack/GitHub/CRMs/service desks somente com evidência real. Personal WhatsApp Web scraping não é target default.
 
 ## 22. Provider/domain events — TO_INVENTORY
 
-Map event/webhook authenticity, EventEnvelope compatibility, dedupe/order, renewal/reconciliation, polling fallback, domain owners, replay/freshness. Do not invent event platform before gap proof.
+Mapear event/webhook authenticity, EventEnvelope compatibility, dedupe/order, renewal/reconciliation, polling fallback, domain owners, replay/freshness. Não inventar event platform antes de gap proof.
 
-## 23. Automation / RPA platform — TO_INVENTORY
+## 23. Automation / RPA / Automation Hub — TO_INVENTORY de implementação
 
-No current baseline evidence is sufficient to claim a reusable corporate RPA Hub.
+A autoridade semântica já está definida:
 
-C0 maps:
+```text
+DÉLIA = inteligência + Policy + Decision + Work/orquestração + Outcome coordination
+Automation Hub = execução técnica
+```
+
+O que C0 ainda precisa provar é **implementação física/owner técnico/contrato/reuse** do Automation Hub e executors existentes. Ausência de runtime comprovado não reabre a autoridade acima.
+
+C0 mapeia:
 
 ```text
 vendors/tools/licenses/orchestrators
@@ -147,174 +245,97 @@ screenshots/artifacts/logs/retention
 support/SLA/kill switches
 ```
 
-No vendor selection by assumption.
+Nenhum vendor é selecionado por suposição.
 
 ## 24. Scripts / Functions / Jobs — TO_INVENTORY
 
-Map scheduled scripts/functions/cron/jobs/browser automations with owner, trigger, contract, credential model, authority, idempotency, observability and support. Existing script is not automatically Copilot executor.
+Mapear scheduled scripts/functions/cron/jobs/browser automations com owner, trigger, contract, credential model, authority, idempotency, observability e support. Script existente não vira executor da DÉLIA automaticamente.
 
 ## 25. Background execution / service identity — TO_INVENTORY
 
-Need evidence for queue/broker standard, worker lease/heartbeat, service identities, cancellation/draining, priority/concurrency and environment isolation.
-
-Worker identity != business actor.
+Provar queue/broker standard, worker lease/heartbeat, service identities, cancellation/draining, priority/concurrency e environment isolation. Worker identity != business actor.
 
 ## 26. Rule / Decision / BPM engines — TO_INVENTORY
 
-Search existing deterministic rules/engines/BPM/process validators. If authoritative readiness already exists in Domain API, consume it instead of rebuilding.
+Inventariar regras/engines/BPM/process validators existentes. Se readiness autoritativo já existir em Domain API, consumir contrato em vez de duplicar.
 
 ## 27. Business postcondition / Outcome sources — TO_INVENTORY BY DOMAIN
 
-Map authoritative verification sources for invoice, maintenance request, message delivery, production report changes, records committed, etc. Technical executor success alone is insufficient.
+Mapear fonte autoritativa de verificação para invoice, maintenance request, message delivery, production report, records committed etc. Technical executor success != business completion.
 
-## 28. Notification / Escalation channels — PARTIAL PROVEN / TO_INVENTORY
+## 28. Notification / Escalation channels — TO_INVENTORY além do Portal
 
-Core/Portal notifications partially proven. External channels depend on connectors. Need owner/contracts for dedupe/ack/SLA/escalation.
+Portal notifications são `PROVEN` no escopo de presença/uso client-side. Canais externos, owner/contracts, dedupe/ack/SLA/escalation permanecem `TO_INVENTORY`.
 
 ## 29. Process Intelligence / Process Mining — TO_INVENTORY
 
-No current baseline proof of a transversal Process Mining platform.
+Nenhuma plataforma transversal deve ser presumida. C0 mapeia event logs/audit trails, case/business keys, activity/timestamps/statuses, BPMN/process docs, process owners/KPIs, historical completeness/data quality e task-mining/privacy.
 
-C0 must map:
-
-```text
-event logs/audit trails
-case/business keys
-activity/timestamps/statuses
-BPMN/process documentation
-process owners
-process KPIs
-historical completeness/data quality
-task-mining/desktop telemetry products
-privacy/employee-monitoring policies
-```
-
-Do not infer that audit logs are sufficient for mining until case/activity semantics are proven.
+Audit log ≠ event log de processo adequado sem semântica de case/activity comprovada.
 
 ## 30. AI Control Tower — TO_INVENTORY
 
-No current baseline proof of a central AI Control Tower.
+Inventariar AI/model/automation assets, owners, risk/compliance, eval registries, usage/cost telemetry, flags/kill switches, incidents/change management e deployment dependencies.
 
-Map:
-
-```text
-AI/model/automation inventories
-asset owners
-risk/compliance classifications
-eval registries
-provider/model usage and cost telemetry
-feature flags/kill switches
-AI incidents/change management
-dependency/deployment inventories
-```
-
-Existing dashboards do not automatically constitute Control Tower.
+Dashboard existente ≠ Control Tower automaticamente.
 
 ## 31. MCP / A2A / Agent interoperability — TO_INVENTORY
 
-Need evidence for:
+Inventariar servers/clients, agent frameworks/protocols, tool registries, approved agents, delegation identities, credentials/scoping, network boundaries e protocol/security versions.
 
-```text
-MCP servers/clients
-agent frameworks/protocols
-tool registries
-approved external agents
-service/delegation identities
-credential exchange/scoping
-network boundaries
-protocol versions/security policy
-```
-
-Market support for MCP/A2A != existing DELPI infrastructure.
+Market support ≠ DELPI infrastructure.
 
 ## 32. Personal Memory / Personalization — TO_INVENTORY
 
-Core user/profile/favorites may provide some facts, but C0 must map actual preference/recent-usage/memory-like stores, privacy/retention/delete/export owners, notification preferences and shared-device behavior.
-
-No existing profile field is automatically approved as AI memory.
+Core profile/favorites podem fornecer fatos, mas C0 deve mapear stores, privacy/retention/delete/export owners, notification preferences e shared-device behavior. Profile field ≠ approved AI memory.
 
 ## 33. Semantic Business Layer — TO_INVENTORY
 
-Need inventory of:
+Inventariar BI semantic models, KPI formulas em APIs/frontends/spreadsheets, glossary, warehouse/lake/SQL definitions, metric/dimension owners, grain/freshness/security e conflicts.
 
-```text
-Power BI/BI semantic models if any
-KPI formulas in APIs/frontends/spreadsheets
-business glossary
-warehouse/lake/SQL definitions
-metric/dimension owners
-grain/freshness/security
-conflicting definitions
-```
-
-Business Graph target does not prove a semantic metric layer exists.
+Business Graph ≠ Semantic Layer.
 
 ## 34. Analysis Sandbox — TO_INVENTORY
 
-Need evidence for Python/Jupyter/code execution, isolated containers, query engines, package policies, object/temp storage, file scanning, quotas, egress controls and reproducibility infrastructure.
-
-Local developer Python availability is **not** production sandbox evidence.
+Provar Python/Jupyter/code execution, isolated runtimes, query engines, package policies, object/temp storage, file scanning, quotas, egress controls e reproducibility. Developer machine Python ≠ production sandbox.
 
 ## 35. Artifact generation/workspace — TO_INVENTORY
 
-Need evidence for document/spreadsheet/presentation/PDF/chart generation, object storage, versioning/collaboration, comments/review, export/share and retention/ACL owners.
-
-Existing file generation in isolated plugins is not yet a shared Artifact Workspace.
+Inventariar document/spreadsheet/presentation/PDF/chart generation, storage, versioning/collaboration, comments/review, export/share e retention/ACL owners. Geração isolada em plugin ≠ shared Artifact Workspace.
 
 ## 36. Predictive / Prescriptive Intelligence — TO_INVENTORY
 
-Need factual inventory of forecasting/anomaly/classification/optimization models, datasets, ground truth, evals, model owners, deployment runtime and current analytical models.
-
-No prediction capability should be inferred from generic LLM availability.
+Inventariar forecasting/anomaly/classification/optimization models, datasets, ground truth, evals, owners, deployment runtime e analytical models. LLM availability ≠ predictive capability.
 
 ## 37. Operational / Digital Twin — TO_INVENTORY
 
-Need evidence for simulation/twin tools, MES/IoT/historian state, capacity/planning models, solvers, scenario spreadsheets/models and state-update frequency.
-
-Business Graph != Operational Twin.
+Inventariar simulation/twin tools, MES/IoT/historian state, capacity/planning models, solvers, scenario models e update frequency. Business Graph ≠ Operational Twin.
 
 ## 38. Edge / Offline Industrial — TO_INVENTORY
 
-Need evidence for:
+Inventariar factory network reliability, Edge platforms/gateways, PCs/tablets/kiosks, MDM, GPU/NPU/CPU/storage, local inference, time sync, procedure/drawing distribution, offline requirements e OT segmentation.
 
-```text
-factory network reliability
-Edge platforms/gateways
-production PCs/tablets/kiosks
-MDM/device management
-GPU/NPU/CPU/local storage
-local inference runtimes/models
-time sync
-procedure/drawing distribution
-offline continuity requirements
-OT segmentation/firewalls
-```
-
-Desktop PCs in factory do not automatically prove governed Edge runtime.
+Factory PC ≠ governed Edge runtime.
 
 ## 39. AI Model Lifecycle / MLOps — TO_INVENTORY
 
-Need evidence for model providers/accounts, local ML models, model registry, CI/CD/deployment, datasets/eval suites, drift monitoring, rollback, provider/model ownership and Edge model distribution.
-
-Model Router target does not prove governed model lifecycle infrastructure exists.
+Inventariar providers/accounts, local ML models, model registry, CI/CD/deployment, datasets/eval suites, drift monitoring, rollback, ownership e Edge distribution. Model Router target ≠ model lifecycle infrastructure.
 
 ## 40. Capability Marketplace / Supply Chain — TO_INVENTORY
 
-Need evidence for existing plugin/template/catalog mechanisms reusable for AI assets, package signing/integrity, dependency/license/vulnerability checks, publisher ownership and lifecycle.
-
-Plugin manifest system is a useful reference but does not automatically equal AI Marketplace.
+Inventariar reusable catalog/plugin mechanisms, package signing/integrity, dependency/license/vulnerability controls, publisher ownership e lifecycle. Plugin manifest system ≠ AI Marketplace automaticamente.
 
 ## 41. Personal vs organizational data / privacy — TO_INVENTORY
 
-Need policies for delegated accounts, shared resources, personal memory, Process/Task Mining, artifacts, model datasets/evals, Edge caches, sandbox temp data, AI asset metadata and organizational Knowledge promotion.
+Inventariar policies de delegated accounts/shared resources, Personal Memory, Process/Task Mining, artifacts, model datasets/evals, Edge caches, sandbox temp data, AI asset metadata e Organizational Knowledge promotion.
 
 ## 42. Operational context — TO_INVENTORY BY DOMAIN
 
-WorkspaceContext + EntityRef is target; C0 proves real owners/IDs/contracts for OP/operation/machine/workstation/product/revision/lot/material/tool.
+`WorkspaceContext + EntityRef` é TARGET. C0 prova owners/IDs/contracts reais para OP/operation/machine/workstation/product/revision/lot/material/tool antes de estabilizar schema.
 
-## 43. Industrial/OT — TO_INVENTORY / NO-ACTUATION DEFAULT
+## 43. Industrial/OT — TO_INVENTORY / no-actuation invariant
 
-Do not assume protocols/SCADA/MES/telemetry/command APIs/network reachability/safety architecture. Even if command interface exists, it does not authorize Copilot/Edge/RPA actuation.
+Protocolos/SCADA/MES/telemetry/command APIs/network reachability/safety architecture não são presumidos. Mesmo que command interface exista, isso não autoriza DÉLIA/Edge/RPA a atuar fisicamente.
 
 ## 44. Mandatory C0.S0 inventory summary
 
@@ -337,21 +358,31 @@ OT safety
 
 ## 45. Baseline conclusion
 
-**PROVEN platform foundations:**
+### PROVEN neste snapshot, no escopo explicitamente observado
 
 ```text
-Keycloak → SSO
-Core API → governance/RBAC/apps/routes
-Portal → Shell/host/context/navigation
-Gateway → routing
-plugin-ui → design system
-Module Federation → MFE integration
-Domain APIs → business data/rules
-Infra → deploy/network/storage foundations
+Portal AppHost/federated mount artifacts
+Portal AuthContext Keycloak/Core client integration
+shared federation/plugin-ui configuration artifact
+presence of Core API, Gateway, Infra, api-delpi and multiple dedicated API repositories
 ```
 
-**PARTIAL PROVEN:** notifications/socket/worker/scheduler patterns in parts of platform; they do not yet prove transversal event/automation/process/AI-governance foundations.
+### TO_INVENTORY antes de declarar reusable/runtime-ready
 
-**NOT YET PROVEN for Copilot:** specific implementations for media/biometric/Internet/OAuth/connectors/Teams/RPA/event bus/background identity/Process Mining/Control Tower/MCP-A2A/Personal Memory/Semantic Layer/Sandbox/Artifact Workspace/Predictive/Twin/Edge/MLOps/Marketplace/OT privacy and safety.
+```text
+contratos completos e consumers de Core/Domain APIs
+Gateway/Compose/storage/secrets/network readiness para DÉLIA
+background identity/workers/events
+media/biometric/Internet/OAuth/connectors/Teams
+Automation Hub/RPA executors
+Process Intelligence/Control Tower/MCP-A2A
+Personal Memory/Semantic Layer/Sandbox/Artifacts
+Predictive/Twin/Edge/MLOps/Marketplace
+OT privacy/safety implementation details
+```
 
-Therefore C0.S0 must inventory and freeze all these boundaries before runtime implementation.
+### PLANNED / TARGET
+
+DÉLIA permanece `PLANNED / NOT_STARTED`; sua aplicação standalone, contracts e capabilities são target/plan até evidência válida para o SHA/config executado.
+
+Portanto `C0.S0` continua obrigatório e nenhuma capability, integração ou foundation é promovida a `PASS` apenas por esta documentação.
