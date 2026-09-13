@@ -9,7 +9,8 @@
 **Patterns:** [`../49-architecture-and-design-patterns-standard.md`](../49-architecture-and-design-patterns-standard.md)  
 **Multimodal/Meeting/Frontline:** [`../53-multimodal-meeting-frontline-and-industrial-copilot.md`](../53-multimodal-meeting-frontline-and-industrial-copilot.md)  
 **Biometric/Human Observation:** [`../54-biometric-identity-and-human-observation-governance.md`](../54-biometric-identity-and-human-observation-governance.md)  
-**Next:** **C0.S0 — Platform/Media/Device/Biometric/OT rebaseline**
+**Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
+**Next:** **C0.S0 — Platform/Media/Device/Biometric/External/OT rebaseline**
 
 ## 1. Ledger rule
 
@@ -21,25 +22,25 @@ Documentation-only changes do not advance runtime phase status.
 
 | Fase | Status | Próximo step | Dependência |
 |---|---|---|---|
-| C0 Platform + Architecture + Media/Privacy/Biometric/OT Foundations | **NOT_STARTED** | **C0.S0** | none |
+| C0 Platform + Architecture + Media/Privacy/Biometric/External/OT Foundations | **NOT_STARTED** | **C0.S0** | none |
 | C1 Standalone Bootstrap | LOCKED | — | C0.S7 FOUNDATION_FREEZE |
 | C2 Portal + Operational Context + Commands | LOCKED | — | C1 independence gate |
-| C3 Intelligence + Multimodal/Biometric Foundations | LOCKED | — | C1+C2 foundations |
-| C4 Business Reads + Graph | LOCKED | — | C3 action/capability/media foundation |
-| C5 Writes + Durable Foundation | LOCKED | — | C4 reads/evidence |
-| C6 Product Work + Meeting/Frontline + Proactivity | LOCKED | — | C5 durable/safety |
-| C7 Advanced Realtime + Autonomy + Optimization | LOCKED | — | C0–C6 gates |
+| C3 Intelligence + Multimodal/Biometric/Internet/Connector Foundations | LOCKED | — | C1+C2 foundations |
+| C4 Business + External Reads + Graph | LOCKED | — | C3 action/capability/external foundation |
+| C5 Business/External Writes + Durable Foundation | LOCKED | — | C4 reads/evidence |
+| C6 Product Work + Meeting/Frontline + External Events/Proactivity | LOCKED | — | C5 durable/safety |
+| C7 Advanced Realtime + External Proactivity + Autonomy + Optimization | LOCKED | — | C0–C6 gates |
 
 ## 3. C0 sequence
 
 ```text
-C0.S0 platform/monorepo/media/device/biometric/OT inventory
+C0.S0 platform/monorepo/media/device/biometric/external/OT inventory
 → C0.S1 standalone boundary/names
 → C0.S2 authorities/bounded contexts
-→ C0.S3 shared primitives/MediaRef/biometric-ref decisions
-→ C0.S4 architecture/persistence/privacy/media/biometric boundaries
+→ C0.S3 shared primitives/MediaRef/biometric-ref/connection-ref decisions
+→ C0.S4 architecture/persistence/privacy/media/biometric/external boundaries
 → C0.S5 integration contracts
-→ C0.S6 RED contract/conformance/privacy/device/biometric/OT harness
+→ C0.S6 RED contract/conformance/privacy/device/biometric/external/OT harness
 → C0.S7 FOUNDATION_FREEZE
 ```
 
@@ -91,6 +92,25 @@ HUMAN_OBSERVATION = OBSERVABLE_PROCESS_EVIDENCE_ONLY
 EMOTION_PERSONALITY_CHARACTER_INFERENCE = FORBIDDEN_BY_DEFAULT
 AUTOMATIC_EMPLOYMENT_DECISION_FROM_BIOMETRICS = FORBIDDEN
 HIDDEN_WORKER_PROFILING = FORBIDDEN_BY_DEFAULT
+
+INTERNET_RESEARCH = GOVERNED_CAPABILITY
+PUBLIC_WEB_CONTENT = UNTRUSTED_SOURCE
+SAFE_WEB_FETCH = REQUIRED_EGRESS_BOUNDARY
+SSRF_PRIVATE_METADATA_ACCESS = FORBIDDEN
+EXTERNAL_CONNECTORS = PROVIDER_NEUTRAL
+EXTERNAL_CONNECTION_TYPES = USER_DELEGATED | ORG_MANAGED | SHARED_RESOURCE | SERVICE_CONNECTION
+OAUTH_LEAST_PRIVILEGE = REQUIRED
+PROVIDER_TOKEN_TO_LLM = FORBIDDEN
+PROVIDER_TOKEN_TO_MFE = FORBIDDEN
+PERSONAL_CONNECTION_TO_ORG_KNOWLEDGE = EXPLICIT_PROMOTION_ONLY
+EXTERNAL_READ_WRITE_SEPARATION = REQUIRED
+DRAFT_EQUALS_SEND = FALSE
+EXTERNAL_WRITE = POLICY_DECISION_VERIFIED_OUTCOME
+EXTERNAL_EVENTS = EVENT_ENVELOPE_NORMALIZED
+EXTERNAL_LEARNING = CANDIDATE_ONLY_UNTIL_REVIEW_EVAL_PUBLISH
+WHATSAPP_PERSONAL_WEB_SCRAPING = FORBIDDEN_BY_DEFAULT
+EXTERNAL_KILL_SWITCHES = REQUIRED
+
 VISUAL_FINDING_DEFAULT = EVIDENCE_OR_HYPOTHESIS
 OT_ACTUATION = BLOCKED_BY_DEFAULT
 COPILOT_IS_SAFETY_CONTROLLER = FALSE
@@ -116,6 +136,7 @@ Copilot removes userActivatedAgent in Chat    = OUT_OF_SCOPE
 Copilot removes Chat soft handoff              = OUT_OF_SCOPE
 Copilot migrates Chat agent_id/chat_mode       = OUT_OF_SCOPE
 Facial recognition universally out of scope   = SUPERSEDED_BY_GOVERNED_BIOMETRIC_CAPABILITY
+External knowledge limited to DELPI sources   = SUPERSEDED_BY_GOVERNED_EXTERNAL_INFORMATION_PLANE
 ```
 
 ## 6. Planning history
@@ -133,21 +154,22 @@ Facial recognition universally out of scope   = SUPERSEDED_BY_GOVERNED_BIOMETRIC
 | 2026-09-12 | documentation consistency cleanup and phase remapping | PLAN_ONLY; docs only |
 | 2026-09-12 | North Star expanded to Global/Workspace/Meeting/Frontline with voice/image/video, shared-device/privacy boundaries and default OT no-actuation | PLAN_ONLY; docs only |
 | 2026-09-12 | `53` created; master plan/patterns/state/tests/requirements/prompt updated through `CP-181` | PLAN_ONLY; docs only |
-| 2026-09-12 | **Biometric Identity + Human Observation added as governed capabilities; `54` created; requirements extended through `CP-193`** | PLAN_ONLY; docs only |
+| 2026-09-12 | Biometric Identity + Human Observation added as governed capabilities; `54` created; requirements extended through `CP-193` | PLAN_ONLY; docs only |
+| 2026-09-13 | **Internet Research + External Connectors added; `55` created; requirements extended through `CP-214`** | PLAN_ONLY; docs only |
 
 Actual `HEAD_BEFORE` for runtime is captured at C0.S0. Documentation-only commits do not advance execution status.
 
 ## 7. Canonical phase mapping
 
 ```text
-C0 → platform/media/device/biometric/OT inventory + standalone/shared foundations
+C0 → platform/media/device/biometric/external/OT inventory + standalone/shared foundations
 C1 → API/MFE/Manifest/Gateway/Compose/Portal bootstrap + Chat-offline independence
 C2 → Workspace/Operational Context + Platform Commands + shared-device baseline
-C3 → provider baseline + conversation + OpenAPI + capability + Expertise + Knowledge + multimodal/media/biometric foundations + Evidence + Planner
-C4 → generic reads + Evidence normalization + Business Graph + operational context correlation
-C5 → Decision Gates + writes + Outcome verification + Durable Workflow + modality-to-action governance
-C6 → Task + Case + Room + Inbox + Watch + Meeting + Frontline + governed biometric identity + Human Observation + Organizational Knowledge/Learning + Expertise Studio
-C7 → advanced realtime + autonomy + Watch ACT + Simulation + Model Router + scale/rollout
+C3 → provider baseline + conversation + OpenAPI + capability + Expertise + Knowledge + multimodal/media/biometric + Internet Research/connector foundations + Evidence + Planner
+C4 → business/external reads + Evidence normalization + Business Graph + operational context correlation
+C5 → Decision Gates + business/external writes + Outcome verification + Durable Workflow + modality-to-action governance
+C6 → Task + Case + Room + Inbox + Watch + Meeting + Frontline + governed biometric identity + Human Observation + external events + Organizational Knowledge/Learning + Expertise Studio
+C7 → advanced realtime + selected external proactivity + autonomy + Watch ACT + Simulation + Model Router + scale/rollout
 ```
 
 Any thematic document diverging from this mapping is documentation drift and must be corrected against `16`.
@@ -187,6 +209,11 @@ env/health/scripts
 postgres/storage/network
 object/media storage
 encrypted sensitive storage/key management
+outbound HTTP/proxy/DNS/egress policy
+private/link-local/metadata blocking patterns
+secret/vault owner
+OAuth callback routes/patterns
+webhook ingress/signature validation patterns
 SSE/WebSocket/WebRTC patterns
 ```
 
@@ -232,6 +259,23 @@ participant lists/presence sources
 Human Observation governance owner
 ```
 
+### Internet/External Connectors
+```text
+existing web/search providers
+safe fetch/browser automation patterns if any
+existing Microsoft Graph integrations/app registrations
+existing Google Workspace/Gmail integrations/app registrations
+existing WhatsApp Business integrations
+existing Slack/GitHub/other connectors
+OAuth delegated/application/service auth patterns
+personal vs organizational source policy
+provider token storage/rotation/revocation
+provider webhook/subscription/push lifecycle
+scheduler/reconciliation capability
+attachment download/malware scanning
+provider terms/compliance owners
+```
+
 ### Operational/OT
 ```text
 OP/operation/machine/product/lot/material/workstation IDs/owners
@@ -271,16 +315,21 @@ OUT_OF_SCOPE
 - manifest/federation inventory;
 - entity/deep-link/event/room/notification inventory;
 - media/device/meeting/frontline/biometric inventory;
+- Internet/egress/OAuth/external-connector inventory;
 - privacy/consent/retention inventory;
 - biometric enrollment/template/liveness decision;
 - prohibited human-inference classes frozen;
+- external connection ownership/scope/secret lifecycle decision;
+- safe web fetch/SSRF/redirect policy decision;
+- external event/webhook/reconciliation decision;
+- personal vs organizational external-source boundary;
 - production/maintenance/quality context inventory;
 - OT/industrial safety inventory;
 - service/path/manifest/storage names frozen;
-- MediaRef/biometric-ref decisions;
+- MediaRef/biometric-ref/connection-ref decisions;
 - architecture/pattern inventory/freeze;
 - Copilot integration contracts;
-- RED/conformance/privacy/device/biometric/OT harness;
+- RED/conformance/privacy/device/biometric/external/OT harness;
 - CP status update;
 - ledger with actual HEAD/evidence.
 
@@ -291,11 +340,12 @@ No agent migration matrix is required.
 `25-requirements-traceability.md` is the single CP authority.
 
 ```text
-CP-001–CP-193
+CP-001–CP-214
 ```
 
 `CP-155–CP-181` cover expanded access/multimodal/Meeting/Frontline/privacy/shared-device/industrial safety.  
-`CP-182–CP-193` cover governed biometric identity and Human Observation.
+`CP-182–CP-193` cover governed biometric identity and Human Observation.  
+`CP-194–CP-214` cover Internet Research, external connectors, OAuth/secrets, external reads/writes/events, privacy and external-learning governance.
 
 Historical Chat migration requirements remain `OUT_OF_SCOPE_WITH_DECISION`.
 
@@ -325,6 +375,16 @@ UNKNOWN_IDENTITY_REMAINS_UNKNOWN
 BIOMETRIC_TEMPLATE_PROTECTED
 NO_SENSITIVE_PERSON_INFERENCE
 NO_AUTOMATIC_EMPLOYMENT_DECISION_FROM_BIOMETRICS
+SAFE_WEB_FETCH_SSRF_BLOCK
+EXTERNAL_CONTENT_UNTRUSTED
+OAUTH_LEAST_PRIVILEGE
+NO_PROVIDER_TOKEN_LEAK
+EXTERNAL_CONNECTION_ISOLATION
+DRAFT_NOT_SEND
+EXTERNAL_WRITE_DECISION_GATE
+WEBHOOK_AUTH_DEDUPE_RECONCILIATION
+NO_PERSONAL_SOURCE_AUTO_PROMOTION
+WHATSAPP_SUPPORTED_CONTRACT_ONLY
 VISUAL_EVIDENCE_SEMANTICS
 NO_HIDDEN_WORKER_PROFILING
 NO_ARBITRARY_OT_COMMAND
@@ -345,12 +405,13 @@ LAYER/PATTERNS:
 PLATFORM_REUSE:
 COPILOT_NEW_CODE:
 CHAT_DEPENDENCIES:
-MEDIA_DEVICE_BIOMETRIC_OT_IMPACT:
+MEDIA_DEVICE_BIOMETRIC_EXTERNAL_OT_IMPACT:
 EVIDENCE:
 TESTS:
 SECURITY_RBAC:
 PRIVACY_RETENTION:
 BIOMETRIC_HUMAN_OBSERVATION:
+EXTERNAL_CONNECTIONS_EGRESS:
 INDUSTRIAL_SAFETY:
 CHAT_INDEPENDENCE:
 ARCHITECTURAL_CONFORMANCE:
@@ -403,6 +464,16 @@ BIOMETRIC_TEMPLATE_LEAK
 EMOTION_PERSONALITY_CHARACTER_INFERENCE
 AUTOMATIC_EMPLOYMENT_DECISION_FROM_BIOMETRICS
 HIDDEN_WORKER_PROFILING
+UNSAFE_WEB_FETCH
+SSRF_PRIVATE_NETWORK_ACCESS
+EXTERNAL_PROMPT_INJECTION_POLICY_CHANGE
+PROVIDER_TOKEN_LEAK
+CROSS_USER_EXTERNAL_DATA_LEAK
+EXTERNAL_WRITE_WITHOUT_GATE
+DRAFT_SENT_IMPLICITLY
+INVALID_WEBHOOK_ACCEPTED
+PERSONAL_SOURCE_AUTO_PROMOTED_TO_ORG_KNOWLEDGE
+UNSUPPORTED_WHATSAPP_SESSION_AUTOMATION
 ARBITRARY_LLM_OT_COMMAND
 SAFETY_INTERLOCK_BYPASS
 ```
@@ -411,4 +482,4 @@ SAFETY_INTERLOCK_BYPASS
 
 Open `23-prompt-cursor-execucao.md` and execute **C0.S0 only**.
 
-The first code after Foundation Freeze is the standalone Copilot API/MFE bootstrap, not intelligence/media/biometric/Meeting/Frontline features.
+The first code after Foundation Freeze is the standalone Copilot API/MFE bootstrap, not intelligence/media/biometric/Internet/connector/Meeting/Frontline features.
