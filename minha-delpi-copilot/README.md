@@ -6,7 +6,7 @@ O Copilot é uma **aplicação nova e standalone** da Minha DELPI, composta por 
 
 Ele não é evolução do `minha-delpi-ai-api` nem de `plugins/minha-delpi-chat`.
 
-A visão alvo é **um único Copilot para escritório, reuniões e chão de fábrica**, com surfaces Global, Workspace, Meeting e Frontline sobre o mesmo runtime e governança, incluindo multimodalidade e identidade biométrica governada quando habilitada.
+A visão alvo é **um único Copilot para escritório, reuniões, chão de fábrica e fontes externas autorizadas**, com surfaces Global, Workspace, Meeting e Frontline sobre o mesmo runtime/governança, incluindo multimodalidade, biometria governada, Internet Research e External Connectors.
 
 ## Documentação canônica
 
@@ -16,7 +16,7 @@ A visão alvo é **um único Copilot para escritório, reuniões e chão de fáb
 
 ```text
 PROGRAM = PLANNED / NOT_STARTED
-NEXT_STEP = C0.S0 — Platform/Media/Device/Biometric/OT inventory
+NEXT_STEP = C0.S0 — Platform/Media/Device/Biometric/External/OT inventory
 ```
 
 ## Authorities
@@ -29,18 +29,19 @@ NEXT_STEP = C0.S0 — Platform/Media/Device/Biometric/OT inventory
 - [Repository/bootstrap plan](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/52-standalone-repository-and-bootstrap-plan.md)
 - [Multimodal/Meeting/Frontline/Industrial](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/53-multimodal-meeting-frontline-and-industrial-copilot.md)
 - [Biometric Identity/Human Observation](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/54-biometric-identity-and-human-observation-governance.md)
+- [Internet Research/External Connectors](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/55-internet-research-and-external-connectors.md)
 - [Tests/acceptance](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/20-testing-and-acceptance-matrix.md)
-- [State/persistence/media/biometric](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/21-data-and-state-model.md)
+- [State/persistence](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/21-data-and-state-model.md)
 - [Cursor prompt](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/23-prompt-cursor-execucao.md)
 - [Product specification](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/24-product-specification.md)
-- [Traceability CP-001…CP-193](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/25-requirements-traceability.md)
+- [Traceability CP-001…CP-214](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/25-requirements-traceability.md)
 - [Documentation governance](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/48-documentation-governance-and-architecture-review.md)
 - [Execution ledger](../docs/12-roadmap-e-evolucao/minha-delpi-copilot/evidence/execution-ledger.md)
 
 ## Target owners
 
 ```text
-minha-delpi-copilot-api/       → intelligence/work/media/biometric backend
+minha-delpi-copilot-api/       → intelligence/work/media/biometric/external backend
 plugins/minha-delpi-copilot/   → Global/Workspace/Meeting/Frontline federated MFE
 portal/                        → host/context/navigation
 core-api/                      → apps/routes/RBAC/governance/user authority
@@ -48,20 +49,22 @@ keycloak                       → identity/SSO
 gateway/                       → routing
 plugins/plugin-ui/             → shared design system
 Domain APIs                    → business data/rules
+External Providers             → external account/resource authority
+Secret/Vault owner             → provider credential material
 OT/domain systems              → machine/process truth and industrial safety owners
 ```
 
 ## Ordem de construção
 
 ```text
-C0 Platform + Architecture + Media/Privacy/Biometric/OT Foundation Freeze
+C0 Platform + Architecture + Media/Privacy/Biometric/External/OT Foundation Freeze
 → C1 Standalone Application Bootstrap
 → C2 Portal + Operational Context + Platform Commands
-→ C3 Intelligence Core + Multimodal/Biometric Foundations
-→ C4 Business Reads + Graph
-→ C5 Governed Writes + Durable Foundation
-→ C6 Product Work + Meeting/Frontline + Proactivity + Ecosystem
-→ C7 Advanced Realtime + Autonomy + Optimization + Rollout
+→ C3 Intelligence + Multimodal/Biometric/Internet/Connector Foundations
+→ C4 Business + External Reads + Graph
+→ C5 Governed Business/External Writes + Durable Foundation
+→ C6 Product Work + Meeting/Frontline + External Events + Ecosystem
+→ C7 Advanced Realtime + External Proactivity + Autonomy + Rollout
 ```
 
 ## Boundaries essenciais
@@ -70,29 +73,36 @@ C0 Platform + Architecture + Media/Privacy/Biometric/OT Foundation Freeze
 Minha DELPI Chat offline
 → Copilot continua funcional
 
-voice/image/video
-→ same RBAC/policy as text
+Internet/public content
+→ untrusted Source/Evidence, not policy authority
+
+External connection scope
+-X→ Core permission elevation
+
+Provider token/secret
+-X→ LLM / MFE / ordinary log
+
+personal connection
+-X→ organization-wide source automatically
+
+read
+-X→ write
+
+draft
+-X→ send automatically
+
+provider event
+-X→ ungoverned action
 
 biometric match
 -X→ permission grant
 
-unknown/low-confidence identity
-→ unknown or explicit confirmation
-
 Human Observation
 → observable process evidence, not psychological/person score
-
-shared device
-→ user A cannot leak into user B
-
-process observation
-→ candidate knowledge, not automatic rule
 
 free-form LLM output
 -X→ physical machine command
 ```
-
-No Chat runtime/API/database fallback is allowed. Copilot is not an industrial safety controller.
 
 ## Primeira ação
 
