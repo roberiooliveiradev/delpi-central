@@ -5,7 +5,8 @@
 **Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Security:** [`08-security-autonomy-audit.md`](./08-security-autonomy-audit.md)  
 **Patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
-**State:** [`21-data-and-state-model.md`](./21-data-and-state-model.md)
+**State:** [`21-data-and-state-model.md`](./21-data-and-state-model.md)  
+**Microsoft Teams:** [`56-microsoft-teams-connector-and-meeting-integration.md`](./56-microsoft-teams-connector-and-meeting-integration.md)
 
 ## 1. Decisão de produto
 
@@ -31,7 +32,7 @@ service desks / CRMs / ERPs externos
 outros provedores futuros
 ```
 
-O desenho deve ser provider-neutral. O planner não contém branches como `if gmail`, `if outlook` ou `if whatsapp`.
+O desenho deve ser provider-neutral. O planner não contém branches como `if gmail`, `if outlook`, `if teams` ou `if whatsapp`.
 
 ## 2. Quatro operações diferentes
 
@@ -164,6 +165,7 @@ Exemplos:
 Gmail pessoal conectado pelo próprio usuário       → USER_DELEGATED
 Outlook corporativo com delegated scopes           → USER_DELEGATED
 shared mailbox                                      → SHARED_RESOURCE
+Teams/tenant app connection                         → ORG_MANAGED / SERVICE_CONNECTION conforme cenário
 WhatsApp Business number da empresa                 → ORG_MANAGED / SERVICE_CONNECTION
 ```
 
@@ -229,6 +231,10 @@ files.search
 files.read
 messaging.conversations.read
 messaging.message.send
+collaboration.teams.channel.messages.read
+collaboration.teams.chat.messages.read
+collaboration.teams.message.send
+collaboration.teams.meeting.transcript.read
 ```
 
 Provider adapter resolve isso contra o contrato real permitido.
@@ -245,6 +251,7 @@ Exemplos permitidos quando conectados/autorizados:
 - consultar agenda;
 - localizar arquivos no Drive/OneDrive/SharePoint;
 - consultar mensagens/canais suportados;
+- consultar chats/canais/reuniões/transcrições do Teams conforme autorização;
 - correlacionar informação externa com EntityRefs DELPI;
 - comparar dados internos com informação pública.
 
@@ -263,6 +270,7 @@ enviar e-mail
 criar evento
 alterar evento
 enviar mensagem
+responder mensagem Teams
 upload/alteração de arquivo
 ```
 
@@ -280,7 +288,7 @@ draft/preview
 
 Nenhum modelo pode transformar uma resposta sugerida em mensagem enviada implicitamente.
 
-## 14. Outlook / Microsoft 365
+## 14. Outlook / Microsoft 365 / Teams
 
 O adapter Microsoft deve tratar Microsoft Graph como contract owner para capabilities suportadas.
 
@@ -290,11 +298,22 @@ A arquitetura deve suportar, conforme scopes aprovados:
 - calendar;
 - contacts quando necessário;
 - files/OneDrive/SharePoint;
-- Teams/resources suportados.
-
-Change notifications/subscriptions podem alimentar EventEnvelope/Watch quando o provider suportar.
+- Teams teams/channels/chats/messages/replies;
+- Teams meetings e meeting metadata;
+- Teams transcripts/recordings quando autorizados;
+- Teams change notifications/subscriptions quando suportadas.
 
 Provider-specific lifecycle permanece no adapter.
+
+Teams é detalhado em [`56-microsoft-teams-connector-and-meeting-integration.md`](./56-microsoft-teams-connector-and-meeting-integration.md) e deve respeitar:
+
+```text
+Teams source/action provider
+→ same Copilot planner/policy/evidence/work runtime
+-X→ separate Teams Copilot backend/planner
+```
+
+Change notifications/subscriptions podem alimentar `EventEnvelope/Watch` quando o provider suportar.
 
 ## 15. Google Workspace / Gmail
 
@@ -362,15 +381,18 @@ user personal Gmail connection
 user Outlook mailbox
 -X→ organizational Knowledge automatically
 
-private message
--X→ Case/Room accessible by everyone
+private Teams chat
+-X→ Case/Room/Knowledge accessible by users without source authorization
+
+restricted Teams channel
+-X→ organizational Knowledge automatically
 ```
 
 Sharing/promotion exige regra explícita.
 
 ## 19. External content is untrusted
 
-Email, webpage, attachment, chat message e documento externo são dados não confiáveis para system/policy.
+Email, webpage, attachment, chat message, Teams transcript e documento externo são dados não confiáveis para system/policy.
 
 Prompt injection externo não pode:
 
@@ -419,7 +441,7 @@ ORGANIZATIONAL_KNOWLEDGE_CANDIDATE
 Nunca:
 
 ```text
-web page / email / WhatsApp message
+web page / email / WhatsApp message / Teams message or transcript
 → automatic corporate truth
 ```
 
@@ -457,7 +479,7 @@ Cache de web/external reads, se criado, é derivado e invalidável.
 Regras:
 
 - TTL/freshness explícitos;
-- user/connection scope preservado;
+- user/connection/resource scope preservado;
 - no cross-user cache leak;
 - sensitive content não vira shared cache por default;
 - cache não vira authority.
@@ -513,8 +535,10 @@ Kill switch não depende de prompt/LLM.
              │                                  │
        SafeWebFetchPort             ┌────────────┼────────────┐
              │                      │            │            │
-       Source/Evidence         Microsoft      Google      WhatsApp/... 
+       Source/Evidence         Microsoft      Google      WhatsApp/...
              │                 Adapter        Adapter        Adapter
+             │                    │
+             │                    └─ Teams capability family
              └──────────────────────┬────────────┴────────────┘
                                     │
                               Policy/Decision
@@ -533,6 +557,8 @@ C0.S0 deve inventariar, com evidence:
 - Keycloak/SSO relation with external OAuth flows;
 - secrets manager/vault/encryption patterns;
 - existing Microsoft Graph/Google/WhatsApp integrations;
+- existing Teams app registrations/bots/tabs/integrations;
+- Teams tenant/admin/resource-specific consent patterns;
 - provider app registrations/config/env conventions;
 - existing webhook endpoints/signature verification;
 - job/scheduler/event infrastructure;
@@ -548,7 +574,7 @@ Unknown = `NOT_PROVEN`.
 
 ### C0
 
-Freeze egress, OAuth, credential, connector ownership, external-data privacy, webhook/event and external-learning boundaries.
+Freeze egress, OAuth, credential, connector ownership, external-data privacy, webhook/event and external-learning boundaries. Teams-specific tenant/Graph/resource-consent boundaries seguem `56`.
 
 ### C1
 
@@ -560,23 +586,23 @@ External-source context may be represented in bounded Copilot context, without g
 
 ### C3
 
-Implement Internet Research foundation and generic connection/provider ports/adapters only when justified.
+Implement Internet Research foundation and generic connection/provider ports/adapters only when justified. Teams entra como capability family do Microsoft 365 adapter.
 
 ### C4
 
-Enable governed External Reads and cross-source analysis.
+Enable governed External Reads and cross-source analysis, incluindo Teams reads autorizados.
 
 ### C5
 
-Enable governed External Writes such as draft/send/create/update, with Decision Gates and verified outcomes.
+Enable governed External Writes such as draft/send/create/update, with Decision Gates and verified outcomes, incluindo Teams reply/send quando priorizados.
 
 ### C6
 
-Integrate provider events with Watch/Inbox/Tasks/Cases and governed learning candidates.
+Integrate provider events with Watch/Inbox/Tasks/Cases and governed learning candidates; Teams meeting artifacts/change notifications seguem `56`.
 
 ### C7
 
-Selected proactive/automated external actions only under explicit allowlists, budgets, provider policy and kill switches.
+Selected proactive/automated external actions only under explicit allowlists, budgets, provider policy and kill switches. Teams raw realtime meeting participation é capability avançada e separada.
 
 ## 29. Acceptance outcomes
 
@@ -596,6 +622,7 @@ revoke/expiry/missed-event lifecycle works
 external data does not leak across users
 external knowledge is candidate before publication
 new provider does not require planner hardcode
+Teams uses the same Copilot runtime and preserves source ACL
 WhatsApp integration uses supported official contracts
 ```
 
@@ -605,6 +632,9 @@ These are **external platform facts**, not Copilot architecture authorities:
 
 - Gmail API provides authorized mailbox access and sending via OAuth; Gmail supports push mailbox-change notifications using Cloud Pub/Sub and `watch` lifecycle.
 - Microsoft Graph provides authorized Outlook mail access and supports change-notification subscriptions/webhooks for supported resources.
+- Microsoft Graph Teams APIs support scenarios such as listing chat/channel messages, sending/responding to messages, and change notifications for supported Teams resources.
+- Microsoft Graph supports change-notification scenarios for Teams meeting events and availability of transcripts/recordings under supported permissions/scopes.
+- Teams permissions can vary between delegated, application and resource-specific consent scenarios; exact scopes/limitations must be revalidated during implementation.
 - WhatsApp Business Platform/Cloud API is the official Meta business messaging API; it uses business assets such as a WhatsApp Business Account/business phone number. Personal WhatsApp scraping is not treated as an approved connector contract.
 
 Provider rules/scopes/limits must be revalidated during implementation because they evolve independently of the DELPI repository.
