@@ -1,6 +1,6 @@
-# Minha DELPI Copilot — Internet Research e External Connectors
+# DÉLIA — Internet Research e External Connectors
 
-**Status:** thematic architecture/security/product spec  
+**Status:** `TARGET` — thematic architecture/security/product spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Security:** [`08-security-autonomy-audit.md`](./08-security-autonomy-audit.md)  
@@ -10,7 +10,7 @@
 
 ## 1. Decisão de produto
 
-O Minha DELPI Copilot deve conseguir buscar informação além da Minha DELPI por dois caminhos complementares:
+A DÉLIA deve poder buscar informação além da DELPI por dois caminhos complementares:
 
 ```text
 PUBLIC INTERNET
@@ -20,137 +20,88 @@ CONNECTED SOURCES
 → contas, caixas, canais e serviços explicitamente conectados
 ```
 
-Exemplos de fontes conectáveis, conforme APIs oficiais, autorização e policy:
+Famílias candidatas incluem Microsoft 365, Google Workspace, WhatsApp Business, Slack, GitHub, CRMs/service desks e outros providers futuros, **somente** quando contrato oficial, owner, autorização e policy forem comprovados.
 
-```text
-Microsoft 365 / Outlook / Calendar / OneDrive / SharePoint / Teams
-Google Workspace / Gmail / Calendar / Drive
-WhatsApp Business Platform
-Slack
-GitHub
-service desks / CRMs / ERPs externos
-outros provedores futuros
-```
-
-O desenho deve ser provider-neutral. O planner não contém branches como `if gmail`, `if outlook`, `if teams` ou `if whatsapp`.
+O desenho é provider-neutral. O planner trabalha com capabilities semânticas, nunca com branches de provider.
 
 ## 2. Quatro operações diferentes
 
-Não misturar:
-
 ```text
-1. SEARCH   → localizar informação pública
-2. READ     → ler recurso autorizado de uma conta conectada
-3. ACT      → criar/alterar/enviar algo em sistema externo
-4. LEARN    → promover conhecimento externo para estado durável governado
+SEARCH → localizar informação pública
+READ   → ler recurso autorizado de uma conexão
+ACT    → criar/alterar/enviar recurso externo
+LEARN  → promover conhecimento externo por ciclo governado
 ```
 
 Cada operação tem authority, risco e lifecycle próprios.
 
 ## 3. Internet Research
 
-Fluxo alvo:
+Target:
 
 ```text
-user goal
+user/Work goal
 → research need detection
-→ SearchProviderPort
-→ search candidates
-→ SafeWebFetchPort
+→ provider-neutral search capability
+→ safe fetch boundary
 → extraction/normalization
-→ SourceRef + EvidenceRef
+→ SourceRef/EvidenceRef
 → freshness/relevance assessment
 → grounded synthesis
 → citations/sources
 ```
 
-Pesquisa na web é retrieval, não authority.
-
-Conteúdo externo pode estar errado, desatualizado, malicioso ou conter prompt injection.
+Pesquisa na web é retrieval, não authority. Conteúdo externo é untrusted data e nunca altera system instructions, Policy, RBAC ou Decision Gates.
 
 ## 4. Pesquisa automática versus explícita
 
-O Copilot pode decidir pesquisar a internet quando isso for necessário para responder corretamente, por exemplo:
+A DÉLIA pode decidir pesquisar fontes públicas quando atualidade ou cobertura externa forem necessárias e policy permitir egress.
 
-- fatos atuais;
-- notícias;
-- normas/documentação pública;
-- mercado/benchmark;
-- fornecedores/produtos;
-- documentação técnica;
-- dados externos que não existem nas APIs DELPI.
+Não pesquisar quando:
 
-A UI deve mostrar atividade como `Pesquisando fontes externas` e apresentar provenance quando material.
-
-A pesquisa não deve ocorrer quando:
-
-- a resposta já está coberta por source corporativo canônico e não há necessidade externa;
-- policy classifica a consulta/contexto como não elegível para egress;
-- a busca exigiria enviar segredo ou conteúdo sensível desnecessário.
+- fonte corporativa canônica já resolve a necessidade;
+- policy proíbe egress;
+- seria necessário enviar segredo ou contexto sensível desnecessário.
 
 ## 5. Safe Web Fetch / Egress Boundary
 
-Nenhuma URL produzida por LLM deve ser buscada por um HTTP client irrestrito.
-
-O fetcher deve aplicar, quando pertinente:
-
-```text
-allowed schemes http/https
-DNS/IP validation
-private/link-local/loopback/metadata blocking
-redirect revalidation
-content-type/size/time limits
-download/malware policy
-TLS validation
-rate/concurrency limits
-robots/terms/policy considerations where applicable
-redaction of sensitive query/context
-```
-
-Objetivo: impedir SSRF, acesso acidental à rede interna, metadata endpoints, downloads ilimitados e exfiltração.
+Nenhuma URL sugerida por modelo deve ser buscada por client irrestrito. O boundary deve aplicar scheme allowlist, DNS/IP/private-network protections, redirect revalidation, size/time/content limits, TLS, rate/concurrency, download/malware policy quando aplicável e minimização/redaction do contexto enviado.
 
 ## 6. Browser automation
-
-Browser/interactive web automation não é o mecanismo padrão de integração.
 
 Preferência:
 
 ```text
-official API / connector
-→ structured web search/fetch
-→ browser automation only when justified
+official API
+→ native integration
+→ deterministic function/script
+→ governed RPA
+→ governed computer-use
+→ Human Task
 ```
 
-Se browser automation for introduzida futuramente:
-
-- ambiente sandboxed;
-- bounded domain/session;
-- sem acesso livre à rede interna;
-- credenciais por mecanismo protegido, nunca prompt/plaintext;
-- actions materiais continuam Policy/Decision Gate;
-- não substituir API oficial por scraping frágil quando API existe.
+Browser/computer-use é fallback governado, não integração padrão. Credenciais nunca entram em prompt/plaintext e actions materiais continuam sob AuthZ/Policy/Decision.
 
 ## 7. External Connector Architecture
 
-Fluxo conceitual:
+Target:
 
 ```text
-user/admin chooses provider
-→ authorization/enrollment flow
-→ OAuth/API authorization
+connection intent
+→ official authorization flow
 → callback/verification
-→ ExternalConnection lifecycle
-→ encrypted credential/secret reference
+→ connection lifecycle
+→ protected credential reference
 → provider adapter
-→ normalized connector capabilities
-→ Copilot retrieval/planner
+→ normalized semantic capabilities
+→ DÉLIA planning/orchestration
 ```
 
-O Copilot não recebe tokens como contexto de LLM.
+Tokens/secrets nunca entram no contexto do LLM.
 
 ## 8. Connection ownership
 
-Distinguir pelo menos:
+Classes candidatas:
 
 ```text
 USER_DELEGATED
@@ -159,66 +110,26 @@ SHARED_RESOURCE
 SERVICE_CONNECTION
 ```
 
-Exemplos:
-
-```text
-Gmail pessoal conectado pelo próprio usuário       → USER_DELEGATED
-Outlook corporativo com delegated scopes           → USER_DELEGATED
-shared mailbox                                      → SHARED_RESOURCE
-Teams/tenant app connection                         → ORG_MANAGED / SERVICE_CONNECTION conforme cenário
-WhatsApp Business number da empresa                 → ORG_MANAGED / SERVICE_CONNECTION
-```
-
-Uma conexão de usuário não vira conexão organizacional por conveniência.
+C0 deve provar quais existem, seus owners e lifecycle. Conexão pessoal nunca vira organizacional por conveniência.
 
 ## 9. OAuth e least privilege
 
-Conexões OAuth devem usar o fluxo oficial do provider e solicitar o menor scope necessário.
+Usar fluxo oficial do provider e menor scope necessário. `read != write`; `draft != send`.
 
-Exemplo conceitual:
-
-```text
-mail.read
-!=
-mail.send
-!=
-mail.modify
-```
-
-O produto deve suportar:
-
-- scope disclosure;
-- user/admin consent quando aplicável;
-- state/nonce/callback validation;
-- token refresh por adapter;
-- revocation;
-- reconnect;
-- expiry/failure state;
-- scope change detection;
-- audit.
-
-Scopes concedidos ao provider nunca substituem Core RBAC/policy do Copilot.
+Provider scope é requisito de acesso externo, não autoridade final da DELPI. Core/domain permissions e Policy/Decision continuam independentes.
 
 ## 10. Secrets e tokens
 
-Access/refresh tokens, client secrets e provider credentials são infraestrutura sensível.
+Secrets/tokens:
 
-Regras:
-
-- encrypted secret/vault storage ou owner corporativo equivalente;
-- Copilot DB armazena apenas `secretRef` quando possível;
-- nunca logar token;
-- nunca enviar token para LLM/RAG;
-- nunca retornar refresh token ao MFE;
-- rotation/revocation suportadas;
-- provider credentials separados por environment;
-- emergency disconnect.
+- ficam em vault/secret owner apropriado;
+- podem ser referenciados por secretRef quando aplicável;
+- nunca vão para LLM/RAG/Personal Memory/MFE/log comum;
+- suportam rotation/revocation/reconnect conforme contrato real.
 
 ## 11. Connector capability model
 
-O planner deve trabalhar com capabilities semânticas, não provider endpoints hardcoded.
-
-Exemplo:
+O planner usa capabilities semânticas, por exemplo:
 
 ```text
 communication.email.search
@@ -234,411 +145,219 @@ messaging.message.send
 collaboration.teams.channel.messages.read
 collaboration.teams.chat.messages.read
 collaboration.teams.message.send
-collaboration.teams.meeting.transcript.read
 ```
 
-Provider adapter resolve isso contra o contrato real permitido.
-
-Se a integração possuir OpenAPI/schema oficial utilizável, preferir ingestão/normalização contract-driven conforme a filosofia OpenAPI-first do Copilot.
+Esses nomes são candidates; C0/C3 congelam catálogo real, owner e consumers.
 
 ## 12. External Reads
 
-Exemplos permitidos quando conectados/autorizados:
-
-- buscar e-mails relacionados a cliente/projeto;
-- resumir thread;
-- localizar anexos;
-- consultar agenda;
-- localizar arquivos no Drive/OneDrive/SharePoint;
-- consultar mensagens/canais suportados;
-- consultar chats/canais/reuniões/transcrições do Teams conforme autorização;
-- correlacionar informação externa com EntityRefs DELPI;
-- comparar dados internos com informação pública.
-
-Resultados externos entram como `SourceRef/EvidenceRef` com provider/resource/user scope/freshness.
+Reads autorizados podem produzir `SourceRef/EvidenceRef` com provider/resource scope/freshness/provenance, sem transformar cache/conexão em authority.
 
 ## 13. External Writes / comunicação
 
-Ações externas materiais são separadas de reads.
-
-Exemplos:
-
-```text
-criar rascunho
-responder e-mail
-enviar e-mail
-criar evento
-alterar evento
-enviar mensagem
-responder mensagem Teams
-upload/alteração de arquivo
-```
-
-Preferência de governance:
-
 ```text
 draft/preview
-→ user review when material
-→ Decision Gate
+→ review when required
+→ live AuthZ + Policy/Decision
 → provider adapter
-→ verified external outcome
+→ provider action
+→ authoritative/contractual outcome verification when possible
 ```
 
-`draft` e `send` são capabilities diferentes.
+`draft` e `send` são capabilities distintas. Technical success não equivale automaticamente a business/provider outcome final.
 
-Nenhum modelo pode transformar uma resposta sugerida em mensagem enviada implicitamente.
+## 14. Microsoft 365 / Teams
 
-## 14. Outlook / Microsoft 365 / Teams
+Microsoft/Teams é uma provider family candidata. Contratos, permissions, resource scopes, webhook models e capabilities devem ser revalidados em fonte oficial no momento da implementação.
 
-O adapter Microsoft deve tratar Microsoft Graph como contract owner para capabilities suportadas.
+Teams segue `56` e não cria planner/backend separado.
 
-A arquitetura deve suportar, conforme scopes aprovados:
+## 15. Google Workspace
 
-- mail;
-- calendar;
-- contacts quando necessário;
-- files/OneDrive/SharePoint;
-- Teams teams/channels/chats/messages/replies;
-- Teams meetings e meeting metadata;
-- Teams transcripts/recordings quando autorizados;
-- Teams change notifications/subscriptions quando suportadas.
-
-Provider-specific lifecycle permanece no adapter.
-
-Teams é detalhado em [`56-microsoft-teams-connector-and-meeting-integration.md`](./56-microsoft-teams-connector-and-meeting-integration.md) e deve respeitar:
-
-```text
-Teams source/action provider
-→ same Copilot planner/policy/evidence/work runtime
--X→ separate Teams Copilot backend/planner
-```
-
-Change notifications/subscriptions podem alimentar `EventEnvelope/Watch` quando o provider suportar.
-
-## 15. Google Workspace / Gmail
-
-O adapter Google deve usar APIs oficiais e OAuth scopes mínimos.
-
-A arquitetura pode suportar, conforme scopes aprovados:
-
-- Gmail read/search;
-- Gmail draft/send;
-- Calendar;
-- Drive;
-- demais APIs Workspace aprovadas.
-
-Gmail push notifications/Pub/Sub podem alimentar EventEnvelope/Watch, com renewal/reconciliation encapsulados no adapter.
+Google/Gmail/Drive/Calendar são provider candidates sujeitos a APIs oficiais, scopes mínimos, owner e C0 inventory. Push/event capabilities só entram quando suportadas e comprovadas no contrato oficial vigente.
 
 ## 16. WhatsApp
 
-Não assumir que uma conta pessoal de WhatsApp pode ser integrada como se fosse Gmail/Outlook.
+Não assumir suporte a conta pessoal. Qualquer integração deve usar interface oficial aprovada para o caso empresarial vigente.
 
-O target suportado deve usar **interfaces oficiais disponíveis**, especialmente WhatsApp Business Platform/Cloud API para números/canais empresariais quando essa for a necessidade.
-
-Proibido como default:
+Proibido por default:
 
 - scraping de WhatsApp Web;
-- automação de sessão pessoal não suportada;
-- armazenamento de cookies/session secrets em prompt/state comum;
-- bypass de políticas/templates/janelas/regras do provider.
-
-Se no futuro existir contrato oficial adicional para outro tipo de conta, ele entra como novo adapter, sem patch no planner.
+- sessão pessoal não suportada;
+- cookie/session secret em prompt/state comum;
+- bypass de regras/templates/janelas do provider.
 
 ## 17. Eventos, webhooks e sincronização
 
-Quando provider permitir:
+Quando houver contrato suportado:
 
 ```text
-provider webhook/subscription/push
-→ adapter validates authenticity
-→ normalize
+provider event/webhook
+→ authenticity validation
+→ adapter normalization
 → EventEnvelope
 → dedupe/correlation
 → Watch/Inbox/Workflow
 ```
 
-Obrigatório tratar:
-
-- webhook authenticity/signature/validation;
-- duplicate delivery;
-- out-of-order events;
-- subscription expiry/renewal;
-- missed events;
-- reconciliation/full sync fallback;
-- permission revoked;
-- connection disabled.
+Tratar duplicate/out-of-order, expiry/renewal, missed events, reconciliation e revoke/disable conforme contrato do provider.
 
 ## 18. Personal versus organizational privacy
 
-O Copilot deve distinguir dados pessoais/conectados do usuário de dados corporativos compartilhados.
+Dados de conexão pessoal/privada não viram automaticamente Case compartilhado, Organizational Knowledge ou fonte acessível a outros usuários.
 
-Exemplos:
-
-```text
-user personal Gmail connection
--X→ searchable by other employees
-
-user Outlook mailbox
--X→ organizational Knowledge automatically
-
-private Teams chat
--X→ Case/Room/Knowledge accessible by users without source authorization
-
-restricted Teams channel
--X→ organizational Knowledge automatically
-```
-
-Sharing/promotion exige regra explícita.
+Promotion/sharing exige policy explícita e source permission revalidation.
 
 ## 19. External content is untrusted
 
-Email, webpage, attachment, chat message, Teams transcript e documento externo são dados não confiáveis para system/policy.
+Email, webpage, attachment, chat, transcript, tool output, schema e provider metadata são dados não confiáveis para system/policy.
 
-Prompt injection externo não pode:
-
-- solicitar secrets/tokens;
-- modificar policy;
-- ampliar RBAC;
-- autorizar novo connector;
-- disparar write externo;
-- mudar retention;
-- criar persistent Knowledge automaticamente.
+Nunca podem solicitar/alterar secrets, Policy, RBAC, Decision Gates, retention ou autonomy.
 
 ## 20. External attachments
-
-Arquivos externos passam pelo mesmo boundary multimodal/documental:
 
 ```text
 provider resource
 → safe download
 → type/size/malware policy
-→ MediaRef/SourceRef
+→ source/media ref
 → extraction
-→ EvidenceRef
+→ Evidence
 → synthesis
 ```
 
 Nunca executar conteúdo ativo recebido como anexo.
 
-## 21. Learning from Internet / Connected Sources
+## 21. Learning from external sources
 
-"Aprender" possui níveis distintos:
+Separar:
 
 ```text
 TRANSIENT_RESEARCH
-→ usado somente para a resposta/task atual
-
 SESSION_EVIDENCE
-→ persistido somente quando Task/Case/audit exige
-
-USER_KNOWLEDGE_CANDIDATE
-→ memória/conhecimento privado candidato do usuário
-
+PERSONAL_KNOWLEDGE_CANDIDATE
 ORGANIZATIONAL_KNOWLEDGE_CANDIDATE
-→ candidato corporativo com owner/review/eval
 ```
 
-Nunca:
+Fluxo corporativo:
 
 ```text
-web page / email / WhatsApp message / Teams message or transcript
-→ automatic corporate truth
-```
-
-Fluxo organizacional:
-
-```text
-external SourceRef/Evidence
+Evidence
 → candidate
-→ owner/reviewer
-→ eval/freshness/licensing/privacy checks
-→ versioned Knowledge/Playbook
+→ owner/review
+→ eval
+→ version
 → publish
 ```
 
+Nada vira corporate truth automaticamente.
+
 ## 22. Source authority e conflito
 
-O Copilot deve saber distinguir:
-
-```text
-DELPI authoritative source
-external authoritative source
-public reference
-personal communication
-unverified web content
-```
-
-Quando fontes conflitam, apresentar conflito/freshness/provenance em vez de escolher silenciosamente.
-
-Informação pública não substitui dado oficial interno quando o negócio define um owner canônico.
+Distinguir source authority, freshness e provenance. Informação pública não substitui fonte oficial interna quando existe owner canônico.
 
 ## 23. Search/fetch cache
 
-Cache de web/external reads, se criado, é derivado e invalidável.
-
-Regras:
-
-- TTL/freshness explícitos;
-- user/connection/resource scope preservado;
-- no cross-user cache leak;
-- sensitive content não vira shared cache por default;
-- cache não vira authority.
+Cache é derivado/invalidável, com TTL/freshness e isolamento user/connection/resource. Nunca vira authority.
 
 ## 24. Failure/degraded mode
 
-Distinguir:
-
-```text
-not_connected
-scope_missing
-consent_required
-connection_expired
-provider_unavailable
-rate_limited
-resource_not_found
-permission_revoked
-web_fetch_blocked
-unsafe_url
-webhook_invalid
-sync_stale
-```
-
-Não narrar ausência de dado como se fosse dado inexistente quando connector está indisponível.
+Distinguir estados como not_connected, scope_missing, consent_required, expired, unavailable, rate_limited, permission_revoked, unsafe_url e stale sync. Não narrar indisponibilidade como inexistência factual.
 
 ## 25. Kill switches
 
-Deve ser possível desabilitar:
-
-- internet research globalmente;
-- provider específico;
-- connection específica;
-- external writes;
-- outbound messaging;
-- webhook ingestion;
-- background sync/watch;
-- browser automation futura.
-
-Kill switch não depende de prompt/LLM.
+Prever disable independente onde material para internet research, provider, connection, external writes, outbound messaging, webhook ingestion, background sync/watch e browser/computer-use.
 
 ## 26. Arquitetura alvo
 
 ```text
-                    ┌─────────────────────┐
-                    │   Copilot Planner   │
-                    └─────────┬───────────┘
-                              │
-             ┌────────────────┴─────────────────┐
-             │                                  │
-     Internet Research                   External Connectors
-             │                                  │
-       SearchProviderPort                 Capability/Connection
-             │                                  │
-       SafeWebFetchPort             ┌────────────┼────────────┐
-             │                      │            │            │
-       Source/Evidence         Microsoft      Google      WhatsApp/...
-             │                 Adapter        Adapter        Adapter
-             │                    │
-             │                    └─ Teams capability family
-             └──────────────────────┬────────────┴────────────┘
-                                    │
-                              Policy/Decision
-                                    │
-                             verified Outcome
+DÉLIA planner/work
+  ├─ public research adapter(s)
+  └─ provider-neutral connector capabilities
+       ├─ provider adapter A
+       ├─ provider adapter B
+       └─ provider adapter N
+
+ACT
+→ live AuthZ + Policy/Decision
+→ approved provider adapter
+→ provider
+→ Outcome/Evidence
 ```
+
+Nenhum provider vira planner, Policy authority ou Core permission authority.
 
 ## 27. C0 foundation inventory
 
-C0.S0 deve inventariar, com evidence:
+Inventariar com evidence:
 
-- outbound HTTP/egress patterns atuais;
+- outbound HTTP/egress patterns;
 - proxy/DNS/network restrictions;
-- existing web/search providers;
-- existing OAuth callback patterns;
-- Keycloak/SSO relation with external OAuth flows;
-- secrets manager/vault/encryption patterns;
-- existing Microsoft Graph/Google/WhatsApp integrations;
-- existing Teams app registrations/bots/tabs/integrations;
-- Teams tenant/admin/resource-specific consent patterns;
-- provider app registrations/config/env conventions;
-- existing webhook endpoints/signature verification;
-- job/scheduler/event infrastructure;
-- object/file/malware scanning patterns;
-- privacy/LGPD/data-classification owners;
-- approved domains/providers;
-- personal versus organizational connection policy;
-- provider terms/compliance owners.
+- web/search providers;
+- OAuth callback patterns;
+- Keycloak/SSO relation with external authorization;
+- vault/encryption patterns;
+- existing provider integrations;
+- webhook/signature patterns;
+- scheduler/event infrastructure;
+- file/malware scanning;
+- privacy/LGPD owners;
+- provider/compliance owners.
 
-Unknown = `NOT_PROVEN`.
+Unknown = `TO_INVENTORY`.
 
 ## 28. Phase mapping
 
 ### C0
-
-Freeze egress, OAuth, credential, connector ownership, external-data privacy, webhook/event and external-learning boundaries. Teams-specific tenant/Graph/resource-consent boundaries seguem `56`.
+Freeze egress, OAuth, credential, connector ownership, privacy, webhook/event e external-learning boundaries.
 
 ### C1
-
-Bootstrap application/config prepared for protected callback/connection infrastructure, without implementing provider features prematurely.
+Bootstrap somente a infraestrutura aprovada pelo freeze; sem provider feature antecipada.
 
 ### C2
-
-External-source context may be represented in bounded Copilot context, without granting permissions.
+External-source refs podem integrar bounded context sem conceder permission.
 
 ### C3
-
-Implement Internet Research foundation and generic connection/provider ports/adapters only when justified. Teams entra como capability family do Microsoft 365 adapter.
+Provider-neutral research/connection foundations somente quando justificadas.
 
 ### C4
-
-Enable governed External Reads and cross-source analysis, incluindo Teams reads autorizados.
+Governed external reads/cross-source analysis.
 
 ### C5
-
-Enable governed External Writes such as draft/send/create/update, with Decision Gates and verified outcomes, incluindo Teams reply/send quando priorizados.
+Governed external writes/L4 ACT quando explicitamente autorizados, com live AuthZ, Policy/Decision, idempotency/audit quando aplicável e Outcome verification.
 
 ### C6
-
-Integrate provider events with Watch/Inbox/Tasks/Cases and governed learning candidates; Teams meeting artifacts/change notifications seguem `56`.
+Provider events podem alimentar Watch/Inbox/Tasks/Cases; Watch continua `OBSERVE|ADVISE|PREPARE` por default.
 
 ### C7
-
-Selected proactive/automated external actions only under explicit allowlists, budgets, provider policy and kill switches. Teams raw realtime meeting participation é capability avançada e separada.
+Selected proactive/autonomous external ACT somente sob allowlists/limits, L5 OFF por default e kill switches.
 
 ## 29. Acceptance outcomes
 
-A capability está arquiteturalmente correta quando:
+Quando capabilities entrarem em runtime, provar no SHA/config avaliado:
 
 ```text
-internet research has provenance/freshness
-unsafe URLs/private network access are blocked
-external content cannot change system policy
-OAuth scopes are least privilege
-secrets never reach LLM/logs/MFE
-connections are user/org scoped correctly
-read and write capabilities are separate
-send has governance and verified outcome
-provider events normalize to EventEnvelope
-revoke/expiry/missed-event lifecycle works
-external data does not leak across users
-external knowledge is candidate before publication
-new provider does not require planner hardcode
-Teams uses the same Copilot runtime and preserves source ACL
-WhatsApp integration uses supported official contracts
+provenance/freshness
+safe egress
+untrusted-content isolation
+least privilege
+secret isolation
+user/org scope isolation
+read/write/draft/send separation
+verified outcome for material sends/writes
+EventEnvelope authenticity/dedupe/reconciliation
+revoke/expiry lifecycle
+no cross-user leak
+knowledge candidate before publish
+new provider without planner hardcode
 ```
 
-## 30. Current provider facts verified for planning — 2026-09
+Sem evidence obrigatória: `PENDING`/`INCONCLUSIVE`, nunca PASS.
 
-These are **external platform facts**, not Copilot architecture authorities:
+## 30. Provider facts
 
-- Gmail API provides authorized mailbox access and sending via OAuth; Gmail supports push mailbox-change notifications using Cloud Pub/Sub and `watch` lifecycle.
-- Microsoft Graph provides authorized Outlook mail access and supports change-notification subscriptions/webhooks for supported resources.
-- Microsoft Graph Teams APIs support scenarios such as listing chat/channel messages, sending/responding to messages, and change notifications for supported Teams resources.
-- Microsoft Graph supports change-notification scenarios for Teams meeting events and availability of transcripts/recordings under supported permissions/scopes.
-- Teams permissions can vary between delegated, application and resource-specific consent scenarios; exact scopes/limitations must be revalidated during implementation.
-- WhatsApp Business Platform/Cloud API is the official Meta business messaging API; it uses business assets such as a WhatsApp Business Account/business phone number. Personal WhatsApp scraping is not treated as an approved connector contract.
-
-Provider rules/scopes/limits must be revalidated during implementation because they evolve independently of the DELPI repository.
+Este documento **não congela fatos atuais de vendors**. Capabilities, scopes, limits, webhook models e terms mudam fora do repositório DELPI e devem ser verificados em fonte oficial recente na fase de implementação/inventory correspondente.
 
 ## 31. North Star externo
 
-> **O Minha DELPI Copilot deve conseguir combinar o contexto interno autorizado da DELPI com fontes públicas atuais e contas externas explicitamente conectadas, pesquisar, ler, correlacionar, comunicar e acompanhar trabalho entre sistemas sem perder provenance, least privilege, privacidade, Decision Gates, segurança de credenciais e governança de conhecimento.**
+> **A DÉLIA deve combinar contexto interno autorizado com fontes públicas e conexões externas aprovadas sem perder provenance, least privilege, source authority, privacidade, Decision Gates, segurança de credenciais e governança de conhecimento.**
