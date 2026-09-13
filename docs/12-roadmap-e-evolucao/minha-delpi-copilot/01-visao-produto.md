@@ -3,346 +3,260 @@
 **Status:** visão canônica de produto  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
+**Requirements:** `CP-001…CP-310`
 
 ## 1. Definição
 
-O **Minha DELPI Copilot** é uma **nova aplicação standalone** da Minha DELPI e a camada inteligente operacional transversal da plataforma.
+O **Minha DELPI Copilot** é uma nova aplicação standalone e a camada inteligente operacional transversal da Minha DELPI.
 
-Ele acompanha o usuário, entende contexto, conecta dados/conhecimento, navega, executa operações autorizadas e sustenta trabalho além de um turno.
+Ele não é apenas um assistente de chat. O target combina:
 
-A visão de produto vai além do administrativo: o Copilot deve estar preparado para atender **escritório, reuniões, engenharia, manutenção, qualidade e chão de fábrica**, incluindo interação por texto, voz, imagem, câmera, vídeo e documentos quando autorizada.
+```text
+Enterprise Copilot
++ Continuous Operational Intelligence
++ Process Intelligence
++ Decision Intelligence
++ Governed Automation Orchestration
++ Analytical/Predictive Intelligence
++ AI Governance
+```
 
-Ele possui API, MFE, persistência, manifesto e deploy próprios. Não é expansão do `minha-delpi-ai-api` ou `plugins/minha-delpi-chat`.
+Possui API/MFE/persistence/manifest/deploy próprios e não depende do Minha DELPI Chat.
 
 ## 2. North Star
 
-> **Minha DELPI Copilot é a interface inteligente entre as pessoas e a operação da DELPI. Está presente no escritório e na fábrica, entende texto, voz, imagem, vídeo, documentos, contexto operacional e dados empresariais; ajuda pessoas a entender, decidir, executar e aprender, preservando permissões, evidências, segurança, privacidade e governança.**
+> **Um único Copilot acompanha o usuário e a operação, entende texto/voz/imagem/documentos/contexto empresarial e industrial, conhece dados/processos/métricas, pesquisa fontes internas e externas, prevê e simula cenários, toma decisões governadas, coordena APIs/automações/pessoas, verifica o resultado real e transforma experiência validada em conhecimento — preservando autoridades, privacidade e segurança.**
 
 ```text
-PERGUNTAR  → entender, pesquisar, explicar, analisar
-FAZER      → navegar, consultar, criar, alterar, aprovar, executar
-ACOMPANHAR → monitorar, detectar, alertar, reagir
-TRABALHAR  → investigar, colaborar, planejar, acompanhar, concluir
-APRENDER   → transformar experiência validada em conhecimento governado
+PERCEBER
+→ ENTENDER
+→ PESQUISAR
+→ ANALISAR
+→ PREVER/SIMULAR
+→ DECIDIR
+→ PREPARAR/EXECUTAR
+→ VERIFICAR
+→ COMUNICAR
+→ APRENDER COM GOVERNANÇA
 ```
 
 ## 3. Promessa
 
-> O usuário diz ou demonstra o objetivo. O Copilot encontra contexto e recursos autorizados, aplica conhecimento adequado, mostra evidências, executa o permitido, pede a decisão humana correta e acompanha o trabalho até um outcome verificável.
+> O usuário diz, mostra ou demonstra o objetivo. O Copilot encontra contexto e recursos autorizados, aplica conhecimento/semântica adequados, mostra Evidence, escolhe o menor caminho de decisão suficiente, prepara ou executa o permitido e acompanha até Outcome verificável.
 
-“Demonstra” pode significar, quando a surface permitir:
-
-- falar;
-- mostrar uma imagem;
-- apontar a câmera;
-- compartilhar tela;
-- anexar documento/desenho;
-- contextualizar uma OP/máquina/produto/posto.
-
-## 4. Relação com a plataforma
+## 4. Plataforma e authorities
 
 ```text
 Portal      → host/context/navigation
 Core API    → apps/routes/RBAC/governance
 Keycloak    → identity/SSO
 Gateway     → routing
-plugin-ui   → shared design system
-Domain APIs → business data/rules
-Copilot API → intelligence/work/media runtime
-Copilot MFE → product UX
+plugin-ui   → design system
+Domain APIs → business data/rules/actions
+Providers   → external resources/scopes
+OT systems  → machine/safety truth
+Copilot     → intelligence/policy/orchestration/evidence/work
 ```
 
-O Copilot reutiliza a **plataforma**, não o runtime do Minha DELPI Chat.
+Copilot reutiliza a plataforma, não o runtime do Chat.
 
-## 5. Presença e acesso
-
-A direção de produto é disponibilizar o **entry point do Copilot amplamente aos usuários autenticados da Minha DELPI**, condicionado à permissão de acesso do Copilot e ao rollout definido.
-
-Isso não significa que todos veem ou fazem as mesmas coisas.
+## 5. Surfaces
 
 ```text
-Copilot disponível
-+
-permissões efetivas do usuário
-+
-contexto atual
-+
-policies/risk
-=
-capabilities realmente disponíveis
+GLOBAL      → contextual panel
+WORKSPACE   → full-page analysis/work
+MEETING     → meeting assistance
+FRONTLINE   → shopfloor/operator assistance
+TEAMS       → future surface of same Copilot
+BACKGROUND  → Watches/Workflows
+ADMIN       → governance surfaces by role
 ```
 
-Invariante:
+## 6. Personalização sem nova authority
+
+Personal Memory pode lembrar preferências, tópicos/projetos acompanhados e continuidade de trabalho, com controles de inspeção/correção/exclusão/desabilitação.
 
 ```text
-Copilot effective capabilities ⊆ user effective capabilities
+Personal Memory != Organizational Knowledge
+Personal Memory != RBAC
+Personal Memory != live business truth
 ```
 
-## 6. Surfaces do mesmo produto
+## 7. Entendimento empresarial
+
+O Copilot combina:
 
 ```text
-GLOBAL      → painel lateral/contextual no Portal
-WORKSPACE   → página completa para análise e trabalho prolongado
-MEETING     → reunião com voz, tela, mídia, dados e ata viva
-FRONTLINE   → operador/posto/máquina com voz, câmera e UI simplificada
+Business Graph        → relações entre entidades
+Semantic Business Layer → definição oficial de métricas/conceitos
+Process Intelligence  → como o processo realmente acontece
+Knowledge/Expertise   → conhecimento e método
 ```
 
-São quatro experiências sobre **uma única Copilot API, uma identidade Copilot e uma governança comum**.
+Nenhuma camada replica todos os systems of record.
 
-## 7. Pilares
+## 8. Process Intelligence
 
-### Explicar/consultar
-- páginas/campos/indicadores/processos;
-- dados corporativos;
-- documentos/normas;
-- relações entre entities;
-- instruções e procedimentos operacionais.
+A partir de event logs autorizados, o produto pode descobrir variants, gargalos, esperas, retrabalho, desvios de processo e oportunidades de automação, medir before/after e gerar process maps/BPMN candidates.
 
-### Analisar
-- comparar períodos/entities;
-- cruzar APIs;
-- usar Business Graph;
-- analisar documentos/desenhos/imagens/vídeos permitidos;
-- separar fact/calc/hypothesis/conclusion/recommendation;
-- mostrar evidence/provenance.
+Process Mining mede processo; não é mecanismo de scoring oculto de trabalhadores.
 
-### Navegar
-- app/route/entity;
-- view/tab/filter;
-- MFE/iframe context;
-- authorized deep links.
+## 9. Event / Decision Intelligence
 
-### Executar
-- real Business Actions via Domain APIs;
-- Decision Gates;
-- outcome verification;
-- idempotency/audit.
-
-### Trabalhar ao longo do tempo
-- Durable Workflow;
-- Task;
-- Case;
-- Interaction Room;
-- Inbox;
-- Watch/event resume.
-
-### Produzir
-- relatórios/resumos;
-- análises;
-- mensagens/e-mails;
-- planos de ação;
-- atas de reunião;
-- artifacts.
-
-### Assistir pessoas no trabalho físico
-- ajuda hands-free;
-- explicação de operação/desenho;
-- câmera/imagem como Evidence;
-- histórico de problemas;
-- escalation para líder/manutenção/qualidade;
-- treinamento contextual;
-- registro governado de ocorrências.
-
-## 8. Copilot único
-
-O usuário não escolhe “Agente Engenharia”, “Agente Qualidade” etc.
+O usuário não é a única fonte de trigger.
 
 ```text
-one Copilot
-+ Expertise Packs
-+ Domain Playbooks
-+ Knowledge
-+ Multimodal tools
-+ authorized capabilities
+event
+→ context
+→ FAST | OPERATIONAL | REASONING
+→ OBSERVE / ADVISE / PREPARE / ACT conforme policy/fase
 ```
 
-O mesmo Copilot pode atender um comprador, engenheiro, operador, técnico, gestor ou diretor; o que muda é o contexto, expertise e conjunto autorizado de capabilities.
+Nem todo evento chama LLM. Critérios formais de readiness usam facts/regras determinísticas quando disponíveis.
 
-## 9. Experiência-alvo administrativa/técnica
+## 10. Automation & Execution Hub
 
-> “Esse produto está dando problema no cliente. Investigue se é desenho, fabricação ou fornecedor e monte um 8D.”
-
-O Copilot pode:
-
-1. resolver produto/reclamação;
-2. abrir Case;
-3. percorrer Business Graph;
-4. consultar qualidade/produção/suprimentos;
-5. analisar desenho;
-6. organizar Evidence Board;
-7. aplicar Engineering + Quality Expertise;
-8. aplicar 8D Playbook;
-9. criar Tasks;
-10. aguardar evidência/evento;
-11. apresentar conclusions/limitations;
-12. preparar ações;
-13. submeter writes a Decision Gate;
-14. verificar outcomes;
-15. manter audit/continuidade.
-
-## 10. Experiência-alvo em reunião
-
-> “Copilot, mostre a produção de ontem da Linha 2 e compare com a meta.”
-
-Durante Meeting Mode o Copilot pode:
-
-- transcrever com consentimento;
-- responder perguntas usando APIs reais;
-- registrar tópicos/decisões/pendências;
-- gerar ata;
-- transformar ações confirmadas em Tasks/Cases/solicitações;
-- retomar pendências na reunião seguinte.
-
-A ata deve distinguir **transcrição, resumo, decisão humana, ação proposta e ação efetivamente executada**.
-
-## 11. Experiência-alvo Frontline
-
-> “Estou nesta operação e não estou conseguindo encaixar o terminal. Mostra a posição correta e verifica se já aconteceu antes.”
-
-O Copilot pode usar:
+Copilot é cérebro/orquestrador; executors executam.
 
 ```text
-operador autenticado
-+ posto/terminal
-+ OP/operação
-+ máquina
-+ produto/revisão
-+ desenho/instrução
-+ histórico de qualidade/manutenção
-+ voz/câmera
+API
+→ native integration
+→ function/script
+→ RPA
+→ computer-use
+→ Human Task
 ```
 
-para orientar, mostrar Evidence, registrar problema ou escalar ajuda.
+API é preferida quando há contrato autoritativo suportado. Planner nunca manipula click/selector de RPA.
 
-Ele **não** substitui interlock de máquina, critério oficial de inspeção ou autorização humana obrigatória.
-
-## 12. Aprendizado organizacional
-
-O Copilot pode ajudar a capturar conhecimento tácito e práticas observadas, mas não altera produção automaticamente.
+## 11. Outcome truth
 
 ```text
-observação/experiência
-→ candidate knowledge
+technical execution success
+!=
+verified business outcome
+```
+
+O produto deve verificar postconditions em fonte autoritativa antes de afirmar sucesso material.
+
+## 12. Analysis / Artifacts
+
+O Copilot pode executar análises em sandbox isolado e produzir artefatos editáveis/versionados/provenanced: reports, spreadsheets, presentations, charts, BPMN, A3/8D/FMEA candidates, procedures/checklists, project plans e outros work products.
+
+Human edits não são sobrescritos silenciosamente.
+
+## 13. Predictive / Prescriptive / Twin
+
+O produto deve evoluir de descriptive/diagnostic para predictive/prescriptive intelligence.
+
+```text
+Prediction != FACT
+Recommendation != Authorization
+Simulated State != Production State
+Simulate != Apply
+```
+
+Operational Twin permite cenários/what-if sem virar system of record.
+
+## 14. External / Internet / Teams / Interoperability
+
+Copilot pode pesquisar internet, conectar fontes autorizadas e operar com Microsoft 365/Teams/Google/WhatsApp Business/etc. via provider-neutral adapters.
+
+MCP-compatible tools e A2A-compatible agents podem ser integrados sob approval/allowlists; discovery nunca significa trust automático.
+
+## 15. AI Control Tower / Model Lifecycle / Marketplace
+
+A DELPI deve saber:
+
+- quais AI/model/automation/tool/agent/Edge assets existem;
+- quem é owner;
+- que dados/capabilities acessam;
+- risk/eval/health/cost/value/incidents;
+- como disable/rollback/revoke.
+
+Model lifecycle governa eval→approval→deployment→drift→rollback/revoke. Marketplace governa reusable capabilities/assets. Install/enable não concede permissions.
+
+## 16. Meeting / Frontline / Edge
+
+Meeting distingue transcript/resumo/decisão/candidate action/executed outcome.
+
+Frontline prioriza hands-free/large-touch/current procedure/drawing/OP/machine context e pode usar governed Edge/offline assistance quando C0/C7 provarem infraestrutura e safety boundaries.
+
+Offline never widens authority.
+
+## 17. Biometric Identity / Human Observation
+
+**Decisão atual:** reconhecimento de usuários conhecidos/enrolled por face/voz pode existir como capability governada, closed-set e purpose-specific.
+
+```text
+biometric match
+!= authentication
+!= permission
+```
+
+Unknown/low-confidence stays unknown/confirmable; enrollment/templates are explicit/revocable/protected.
+
+Human Observation fica limitada a evidência observável do processo; não infere personality, honesty, emotion-as-truth, health/sensitive traits ou employee potential/disciplinary propensity.
+
+## 18. Industrial safety
+
+Copilot não é safety controller.
+
+```text
+free-form LLM/model/vision/voice/RPA/Edge
+-X→ arbitrary PLC/CNC/robot/machine command
+```
+
+Future physical actuation requires separate industrial safety initiative/gate with deterministic typed commands/interlocks/owners/fail-safe/audit.
+
+## 19. Governed learning
+
+```text
+experience/source/process/execution
 → Evidence
-→ specialist/owner review
-→ eval
+→ candidate
+→ review/eval/privacy/freshness
 → versioned publish
 ```
 
-Nunca:
+No conversation, observation, public page, process variant or successful automation becomes production policy automatically.
+
+## 20. Non-goals / prohibitions
+
+- depend on Chat runtime/database/API;
+- duplicate Core/RBAC/domain rules;
+- provider/executor/model/tool hardcode in planner;
+- unrestricted browser/sandbox/computer control;
+- hidden media/biometric/task surveillance;
+- Process Mining employee ranking;
+- Personal Memory as company truth;
+- metric formula invented ad hoc by LLM;
+- prediction as fact;
+- simulation/twin writing production directly;
+- Edge/offline wider permissions;
+- Marketplace/package granting permission;
+- global unrestricted L5;
+- arbitrary machine actuation.
+
+## 21. Product metrics
+
+Track task/case completion, Evidence Coverage, Process improvement, Watch quality, verified automation outcomes, exception/human intervention, Meeting/Frontline success, prediction quality, artifact usefulness, memory corrections, model health/drift, cost and **verified business value**.
+
+Avoid vanity metrics and hidden people scoring.
+
+## 22. Implantação
+
+Foundation-first only:
 
 ```text
-uma observação do operador
-→ nova regra de produção automática
-```
-
-## 13. Personas
-
-- operador de produção;
-- técnico/manutenção;
-- inspetor/qualidade;
-- usuário operacional;
-- analista;
-- engenheiro/especialista;
-- comprador/comercial/financeiro;
-- gestor;
-- participante de reunião;
-- colaborador de Case/Room;
-- administrador/governança.
-
-## 14. UX principles
-
-- linguagem natural é entrada, não única surface;
-- voz/câmera/vídeo são modalidades, não bypasses de autorização;
-- evidence/state visíveis;
-- hypothesis não vira fact;
-- Decision Gate explica impacto;
-- contexto corrigível/removível;
-- não repetir pergunta respondida;
-- distinguir prepared/executed/verified;
-- Task/Case/Inbox quando chat é insuficiente;
-- no manual agent selection;
-- accessibility by default;
-- full-page/panel/meeting/frontline usam o mesmo produto/runtime;
-- capture de mídia sempre explícita e visível;
-- data minimization por padrão.
-
-## 15. Segurança industrial e privacidade
-
-O Copilot não deve virar caminho livre:
-
-```text
-LLM → PLC/CNC/robô/máquina
-```
-
-Qualquer futura atuação OT requer gate arquitetural e de segurança industrial separado, com comando determinístico, allowlist, interlocks independentes, autorização, simulation/test environment, fail-safe e audit.
-
-Também não é objetivo inicial:
-
-- reconhecimento facial;
-- emotion detection;
-- vigilância contínua;
-- scoring oculto de pessoas;
-- armazenamento indiscriminado de vídeo/áudio;
-- aprovação/reprovação de peça baseada apenas em impressão visual de LLM.
-
-## 16. Non-goals
-
-O Copilot não deve:
-
-- depender do runtime/database/API do Minha DELPI Chat;
-- obter mais permission que o usuário;
-- duplicar Core/RBAC;
-- duplicar domain business rules;
-- usar DOM automation quando API existe;
-- inventar endpoint/URL/action/permission;
-- usar Graph como master database;
-- criar AI engine por departamento;
-- persistir chain-of-thought;
-- executar write sem required policy/Decision Gate;
-- auto-learn production behavior;
-- tratar Simulation como efeito real;
-- operar máquina arbitrariamente;
-- capturar pessoas/mídia sem finalidade e policy explícitas.
-
-## 17. Métricas
-
-Macro: **Task Completion Rate**.
-
-Complementares:
-
-- Safe Execution Rate;
-- Evidence Coverage;
-- First Plan Success;
-- Clarification Efficiency;
-- Correction Rate;
-- Case Resolution Rate;
-- Watch Signal Quality;
-- Meeting Action Closure Rate;
-- Meeting Summary Correction Rate;
-- Frontline Help Resolution Rate;
-- Escalation Quality;
-- media/session latency and cost;
-- privacy/consent violations = zero;
-- unsafe OT actuation attempts blocked = 100%;
-- AI-ready coverage;
-- standalone availability;
-- Chat-independence failures = zero.
-
-## 18. Implantação
-
-A ordem é foundation-first:
-
-```text
-platform/architecture/media/OT/privacy foundations
-→ standalone bootstrap
-→ context/platform commands
-→ intelligence + multimodal foundations
-→ reads/graph
-→ writes/durable
-→ work + Meeting/Frontline + proactivity
-→ advanced realtime/autonomy/optimization
+C0 Foundation Freeze
+→ C1 Standalone Bootstrap
+→ C2 Context/Commands
+→ C3 Capability Foundations
+→ C4 Reads/Analysis
+→ C5 Governed Writes/Executors
+→ C6 Product Governance/Experience
+→ C7 Advanced Autonomy/Scale
 ```
 
 Fonte de verdade: `16-execution-master-plan.md`.
