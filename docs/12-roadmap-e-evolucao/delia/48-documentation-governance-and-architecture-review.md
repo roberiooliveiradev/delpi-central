@@ -45,7 +45,8 @@ Ledger registra estado; não redefine arquitetura.
 | `20` | tests/gates |
 | `23` | Cursor master prompt |
 | `25` | requirements `CP-001…CP-310` |
-| `59-delia-product-identity-and-naming` | naming/product identity |
+| `67` | cross-cutting market/intelligence capability map |
+| `68` | naming/product identity |
 | ledger | current execution/evidence |
 
 ## 4. Specs temáticas ativas
@@ -69,7 +70,12 @@ Ledger registra estado; não redefine arquitetura.
 
 Todas são subordinadas à precedência da seção 2. Nenhuma cria segunda requirement matrix, phase order, RBAC, workflow, planner ou business authority.
 
-`59-delia-product-identity-and-naming.md` não integra a sequência temática; é authority transversal de naming. O prefixo físico duplicado `59` é um finding estrutural pendente até rename coordenado dos consumers.
+Cross-cutting docs fora da sequência temática:
+
+```text
+67 Market Capability Expansion / Intelligence Platform Map
+68 DÉLIA Product Identity / Naming Authority
+```
 
 ## 5. Reference-only / superseded
 
@@ -159,6 +165,10 @@ Já corrigidos anteriormente: single execution authority, shared primitives, sta
 
 Produto user-facing = **DÉLIA**. `minha-delpi-copilot-*` permanece somente como namespace técnico temporário até decisão de C0.S1. Documentação em `docs/.../delia/` já usa namespace físico DÉLIA.
 
+### F40 — prefixos `58/59` duplicavam responsabilidades distintas
+
+A sequência temática foi normalizada para manter `58 = Process Intelligence` e `59 = AI Control Tower`. A visão transversal de expansão passou a `67` e a authority de naming passou a `68`, eliminando a colisão sem alterar a ordem temática `53–66`.
+
 ## 8. Foundation invariants após C0.S7
 
 ```text
@@ -203,6 +213,7 @@ Material architecture/product change updates, when applicable:
 02/24/12/15 product/architecture/roadmap/integration views
 08/09/11/14 security/UX/observability/DoD
 relevant thematic specs
+67/68 cross-cutting views when affected
 README/INDEX
 audit evidence
 ledger
@@ -300,6 +311,7 @@ duplicate numeric prefixes presented as one canonical sequence
 PROGRAM = PLANNED / NOT_STARTED
 REQUIREMENTS = CP-001…CP-310
 THEMATIC_SPECS = 53–66
+CROSS_CUTTING = 67–68
 NEXT = C0.S0
 RUNTIME_DIFF = NONE
 ```
