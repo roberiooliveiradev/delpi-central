@@ -2,27 +2,15 @@
 
 **Status:** thematic spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)
+**Automation fallback:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)
 
 ## 1. Objetivo
 
-Garantir que toda operação material disponível na UI possua use case/API reutilizável pelo Copilot sob as mesmas regras de negócio e autorização.
+Garantir que operações materiais possuam **use case/contract reutilizável e verificável** para UI/Copilot, preservando as mesmas regras de negócio e autorização.
 
-> Se a UI consegue executar uma ação de negócio, o Copilot deve conseguir usar o mesmo contrato quando o usuário estiver autorizado — sem automatizar a tela.
+> Se uma operação pode ser exposta por Domain API/use case autoritativo, esse contrato é o caminho preferencial do Copilot.
 
-## 2. Anti-padrão
-
-```text
-Copilot
-→ abre tela
-→ procura botão/input
-→ preenche DOM
-→ clica salvar
-```
-
-Se não existir API/use case, o gap pertence ao domínio. DOM/browser workaround não torna a operação AI-ready.
-
-## 3. Padrão correto
+## 2. Caminho preferencial
 
 ```text
 UI ──────────────┐
@@ -32,76 +20,88 @@ UI ──────────────┐
 Copilot ─────────┘
 ```
 
-## 4. Runtime standalone
+O formulário/tela não é business contract.
 
-A cadeia é implementada **na nova Copilot API**, diretamente sobre Domain OpenAPIs/APIs.
+## 3. Legacy fallback — nuance importante
+
+A ausência de API continua sendo um **AI-readiness gap do domínio**, mas `57` permite, quando C0/produto justificar, um executor legado governado:
+
+```text
+semantic capability
+→ Policy/Decision
+→ Automation & Execution Hub
+→ RPA / computer-use adapter
+→ legacy UI
+→ Outcome verification
+```
+
+Esse fallback:
+
+- não transforma DOM em contrato de negócio;
+- não coloca click/selector no planner;
+- não vira regra de negócio;
+- não impede evolução futura RPA→API;
+- exige idempotency/credentials/session isolation/outcome verification;
+- computer-use é ainda mais restrito/sandboxed.
+
+Portanto: **API-first, legacy executor only when justified**.
+
+## 4. Runtime standalone
 
 ```text
 Domain OpenAPI
 → Copilot importer/Action Catalog
-→ authorized Capability Projection
+→ Capability Projection
 → retrieval/planner
 → schema/argument validation
-→ policy/Decision Gate
-→ generic executor
-→ Domain API
-→ Outcome/Evidence
+→ Policy/Decision Gate
+→ executor selection
+→ Domain API or governed legacy adapter
+→ verified Outcome/Evidence
 ```
 
-Não usar `minha-delpi-ai-api` como proxy/runtime.
+Never use Chat runtime as proxy.
 
-## 5. Requisitos Copilot-ready
+## 5. Requirements for Copilot-ready operation
 
-Uma operação deve possuir, conforme aplicável:
+As applicable:
 
 - business owner;
-- use case/contract claro;
-- HTTP/API ou internal capability tipada;
-- OpenAPI quando HTTP;
-- input/output schema;
-- errors;
-- RBAC;
+- use case/contract;
+- schema/errors;
+- RBAC/domain validation;
 - risk/sensitivity;
-- Decision Gate policy;
+- Decision/Autonomy policy;
 - idempotency/concurrency semantics;
-- correlation/audit para writes;
-- tests;
-- outcome verificável;
-- entity/source metadata suficiente para presentation/evidence.
+- correlation/audit;
+- pre/postconditions;
+- authoritative outcome verification source;
+- tests/evals;
+- entity/source metadata.
 
 ## 6. Reads — C4
 
-C4 libera generic reads após C3 estabilizar o Intelligence Core/OpenAPI Action foundation.
+Reads validate schema/authorization, normalize Evidence/Outcome/freshness, and never unexpectedly mutate state.
 
-Reads devem:
+Analysis/metric/process reads do not create write authority.
 
-- validar schema/args;
-- revalidar authorization;
-- normalizar outcome;
-- registrar source/freshness/evidence quando material;
-- não mutar estado inesperadamente.
-
-## 7. Writes — C5
-
-C5 libera writes após reads/evidence C4 e Decision Gate contracts C0.
+## 7. Writes — C5+
 
 ```text
-intent
-→ allowed action
+intent/event
+→ allowed semantic capability
 → grounded arguments
 → schema validation
-→ RBAC/policy
-→ impact preview
+→ live authorization/policy
+→ preview when material
 → Decision Gate
 → revalidation
-→ execute
-→ verify outcome
-→ evidence/audit/deep link
+→ executor
+→ Outcome verification
+→ Evidence/Audit/Notification
 ```
 
 ## 8. Decision Gate
-
-Não usar boolean `requiresConfirmation` como modelo final.
 
 ```text
 NO_GATE
@@ -112,98 +112,57 @@ APPROVAL_WORKFLOW
 BLOCK
 ```
 
-Decision vincula arguments/evidence/impact e possui expiry/invalidation semantics.
+Decision binds arguments/evidence/impact/version and can expire/invalidate on material state/metric/model/policy change.
 
 ## 9. High-risk/destructive
 
-Cancelamento, exclusão, rejeição irreversível, aprovação de alto impacto e alteração financeira/sensível podem exigir gate/approver/audit mais forte.
+Financial/material/admin/destructive/people/sensitive/external actions receive stronger policy/approval/audit and generally lower autonomy.
 
-## 10. Formulário não é contrato
-
-Schema vem do Domain API/use case, não da tela.
+## 10. Binding / Validation
 
 ```text
-User request
-→ grounded fields
-→ required missing
-→ clarify only missing
-→ Decision Gate when required
-→ Domain API
-```
-
-## 11. Validation
-
-```text
-Copilot binder/validator
+Copilot binder/schema validator
 → early structured validation
 
 Domain API/use case
 → definitive business validation/authority
 ```
 
-## 12. Outcome/Evidence
+RPA does not bypass domain/business validation; when legacy UI is the only formal boundary, C0 must document how business errors/postconditions are detected.
 
-Write só é narrado como executado após outcome real.
+## 11. Outcome truth
 
-Errors/states podem incluir:
-
-```text
-validation_error
-permission_denied
-not_found
-conflict
-policy_blocked
-decision_required
-decision_expired
-provider_unavailable
-timeout
-ambiguous_outcome
-business_rule_violation
-partial_failure
-```
-
-Ambiguous outcome requer reconciliation antes de retry.
-
-## 13. Idempotency
-
-Preferir garantia do domínio. Retry write somente com idempotency comprovada ou reconciliation segura.
-
-Essas semantics nascem em C0 e são usadas por C5 Durable Work.
-
-## 14. Coverage matrix por app
-
-| UI function | Domain API/use case | OpenAPI | Permission | Risk | Decision Gate | Idempotency | Outcome/Evidence | AI-ready |
-|---|---|---|---|---|---|---|---|---|
-
-Matriz baseada em código/contratos reais durante onboarding.
-
-## 15. Ordem canônica
+Do not narrate success from transport/technical state alone.
 
 ```text
-C3 intelligence/action foundation
-→ C4 reads + Graph
-→ C5 prepare/Decision Gate/non-destructive writes
-→ C5 high-risk writes when gates pass
-→ C5 durable foundation
-→ C6 Tasks/Cases/Watch composition
+API 200
+RPA Save clicked
+provider accepted
 ```
 
-Não criar write-demo antes das foundations.
+may still require authoritative postcondition verification.
 
-## 16. Iframe
+Ambiguous outcome is explicit and blocks blind retry.
 
-Mesmo com UI em iframe:
+## 12. Idempotency
 
-```text
-Copilot → Domain API Business Action
-```
+Prefer domain guarantee. Otherwise use documented idempotency/reconciliation/lease semantics appropriate to executor. Resume/event duplicate cannot duplicate effect.
 
-Nunca `view.click_button` como substituto.
+## 13. Coverage matrix
 
-## 17. Generalization
+| Business function | Domain use case/API | OpenAPI | Permission | Risk | Decision/Autonomy | Idempotency | Outcome verifier | Legacy executor? | AI-ready |
+|---|---|---|---|---|---|---|---|---|---|
 
-Novo OpenAPI/provider semanticamente descrito e autorizado deve funcionar pelo pipeline genérico sem selector por path/provider/opId.
+Populate from real code/contracts during onboarding.
 
-## 18. Benefício
+## 14. Iframe / UI
 
-Parity melhora simultaneamente UI, integrações, automação e Copilot porque força o negócio para contratos reutilizáveis, verificáveis e owner-driven.
+Iframe/view commands remain presentation-only. Business Action uses API when available. Legacy executor is an Automation Hub concern, never an IframeBridge/Portal shortcut.
+
+## 15. Generalization
+
+New OpenAPI/provider/executor implementation should satisfy same semantic capability without planner core patch. RPA→API migration changes adapter/mapping, not user intent/policy/workflow.
+
+## 16. Benefit
+
+Business Action parity improves UI, integrations, automation and Copilot by forcing reusable contracts and preserving a clean migration path away from fragile UI automation.
