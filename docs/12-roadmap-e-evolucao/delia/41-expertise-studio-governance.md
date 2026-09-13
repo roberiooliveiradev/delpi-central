@@ -1,17 +1,18 @@
-# Minha DELPI Copilot — Expertise Studio
+# DÉLIA — Expertise Studio
 
-**Status:** thematic admin spec  
+**Status:** `TARGET` — thematic admin spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Runtime phase:** C6.S8, após Expertise/Playbook runtime próprio da Copilot API em C3 estar estável.
+**Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)
 
 ## 1. Conceito
 
-Expertise Studio é a superfície de governança para:
+Expertise Studio é uma **surface target de governança**, não prova de runtime, catalog, repository ou storage existente.
+
+Pode administrar, se C0/C3 congelarem esses contracts/owners:
 
 - Expertise Packs;
 - Domain Playbooks;
-- terminology/glossary;
+- terminology/glossary refs;
 - knowledge refs/scopes;
 - output guidance/schemas;
 - examples/eval datasets;
@@ -23,6 +24,8 @@ Expertise Studio é a superfície de governança para:
 
 ## 2. Lifecycle
 
+Candidate lifecycle, sujeito ao owner canônico:
+
 ```text
 DRAFT
 → REVIEW
@@ -33,98 +36,59 @@ DRAFT
 → RETIRED
 ```
 
-Mudança material publicada cria versão/candidate novo e passa por evals.
+Não criar lifecycle paralelo se o owner corporativo aprovado já possuir um equivalente compatível.
 
 ## 3. Roles
 
-Conforme RBAC administrativo real:
-
-- Expertise Author;
-- Domain Reviewer;
-- AI/Platform Reviewer;
-- Security Reviewer quando necessário;
-- Publisher/Admin.
-
-Admin de conteúdo não concede business permission ao Copilot.
+Roles dependem do RBAC real do Core e separation-of-duties aplicável. Admin de conteúdo não concede business permission à DÉLIA nem provider scope.
 
 ## 4. Pack editor
 
-Pode editar campos permitidos pelo `ExpertisePack` foundation:
-
-- identity/version;
-- domains/signals;
-- terminology;
-- analysis/output guidance;
-- Evidence expectations;
-- knowledge refs;
-- playbook refs;
-- multimodal needs;
-- eval refs;
-- owner/reviewers.
-
-Não cadastrar path/method/operationId como API catalog.
+Só pode editar fields permitidos pelo contract canônico. Não cadastrar endpoint/path/method/operationId, secrets ou permission overrides.
 
 ## 5. Playbook editor
 
-Pode editar:
-
-- purpose/applicability;
-- stages;
-- Evidence requirements;
-- decision criteria;
-- completion criteria;
-- optional/required stages;
-- artifact/output guidance;
-- evals/owner.
-
-Não embutir HTTP executor.
+Pode administrar method/evidence/criteria/output guidance conforme contract aprovado. Não embute HTTP/RPA executor nem technical worker state.
 
 ## 6. Preview/eval
 
 Antes de publicar:
 
-- compile/validate content;
-- refs exist/authorized structurally;
-- run positive/sibling/negative/safety cases;
-- compare current vs candidate;
-- measure token/context footprint;
-- detect secret/technical authority violations;
-- review semantic diff.
+- validate schema/refs;
+- positive/sibling/negative/safety evals;
+- current vs candidate diff;
+- token/context footprint quando aplicável;
+- secret/technical-authority checks;
+- semantic review;
+- task outcome/generalization proof para mudanças de IA.
 
 ## 7. Versioning
 
-Scheme final depende do owner, mas precisa distinguir compatible vs material change e registrar version/hash no runtime/audit.
+Scheme final depende do owner. Deve distinguir mudança material/compatível quando isso for relevante e registrar version/hash auditável.
 
 ## 8. Rollout
 
 ```text
-published candidate
-→ internal/canary
+approved candidate
+→ canary/internal
 → metrics/domain review
-→ wider rollout
+→ broader publish
 ```
 
-Rollback para versão anterior deve existir.
+Rollback/revoke precisam existir quando asset material puder afetar comportamento.
 
 ## 9. Metrics
 
-- selection precision;
-- task completion;
-- correction rate;
-- Evidence coverage;
-- clarification efficiency;
-- review/approval rate;
-- latency/token impact;
-- unsafe/blocked outcomes.
+Selection precision, task outcome, correction rate, Evidence coverage, review/approval rate, latency/cost impact e unsafe/blocked outcomes, sem employee scoring.
 
 ## 10. Governed Learning integration
 
 ```text
 candidate improvement
-→ author/reviewer decision
+→ owner/reviewer decision
 → edit
 → eval
-→ publish
+→ versioned publish
 ```
 
 Feedback não publica mudança automaticamente.
@@ -132,31 +96,30 @@ Feedback não publica mudança automaticamente.
 ## 11. Implementation mapping
 
 ```text
-C0 → Pack/Playbook contracts/lifecycle/persistence boundaries
-C3.S6–S7 → Copilot-owned Expertise/Playbook runtime outside Studio UX
-C6.S7 → Governed Learning candidate pipeline
-C6.S8 → Expertise Studio admin capability + governance workflows
-C7 → optimization/rollout refinements
+C0 → decide owners/contracts/lifecycle/persistence boundaries
+C3 → minimal Expertise/Playbook runtime only if unlocked
+C6 → Studio/admin capability when real consumers/governance need exists
+C7 → scale/rollout refinements only
 ```
 
-Não iniciar “MVP Studio storage” antecipadamente. O Studio administra o mesmo owner/catálogo criado para o runtime standalone da Copilot API.
+Não iniciar “Studio storage” ou repository antecipadamente. A surface deve administrar o mesmo owner/catalog aprovado pelo runtime, não criar fonte paralela.
 
 ## 12. Independence
 
-O Studio não migra, edita nem publica Agents/Skills do Minha DELPI Chat. Conteúdo do Chat pode apenas servir como referência histórica durante C0 quando houver valor comprovado.
+Studio não migra, edita nem publica Agents/Skills do Minha DELPI Chat.
 
 ## 13. Anti-patterns
 
-- arbitrary prompt publish sem review;
+- arbitrary prompt publish;
 - Expertise as permission;
 - agentId por pack;
 - secrets;
 - endpoint technical catalog;
-- publish após um único manual example;
-- Studio repository paralelo ao Expertise Catalog canônico;
-- lifecycle próprio diferente do runtime catalog;
-- CRUD de Agent legado disfarçado de Expertise Studio.
+- publish após um único example;
+- repository/lifecycle paralelo;
+- CRUD de Agent legado disfarçado;
+- admin role como business authorization.
 
 ## 14. Gate
 
-Studio só passa quando administra o **mesmo** Pack/Playbook owner usado pela Copilot API, com RBAC, versioning, eval, audit e rollback.
+PASS somente quando a surface administrar o owner/contract real com Core RBAC, versioning, eval, audit, rollback/revoke e runtime proof no SHA/config avaliado.
