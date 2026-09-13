@@ -9,7 +9,7 @@ Uma **Capability** representa algo semanticamente realizável pelo ecossistema p
 
 ## 2. Capability families
 
-Exemplos de classes:
+Exemplos de classes TARGET:
 
 ```text
 business.read / business.write / business.destructive
@@ -29,7 +29,7 @@ multimodal.inspect
 workflow.run
 ```
 
-A lista é classificatória, não catálogo hardcoded de operações.
+A lista é classificatória, não catálogo hardcoded de operações e não prova implementação.
 
 ## 3. Semantic IDs
 
@@ -51,7 +51,7 @@ Não usar path/opId/provider/RPA package como semântica principal.
 
 ## 4. Capability Projection
 
-Copilot usa uma **authorized semantic projection**, não cópia do OpenAPI ou catálogo técnico.
+DÉLIA deve usar uma **authorized semantic projection**, não cópia do OpenAPI ou catálogo técnico. `CapabilityProjection` é TARGET até C0 confirmar/criar o contrato no owner correto.
 
 Candidate fields:
 
@@ -68,9 +68,11 @@ health/degraded state
 provenance/version
 ```
 
-Technical resolution stays with canonical source/adapter.
+Technical resolution stays with canonical source/adapter/execution owner.
 
 ## 5. Capability sources
+
+Potenciais fontes, condicionadas a C0 evidence:
 
 ```text
 Domain OpenAPI / Action Catalog
@@ -81,26 +83,26 @@ Semantic Metric Registry
 Process Intelligence
 Analysis / Artifact contracts
 Model Registry approved inference
-Automation Capability Registry
+Automation capability mapping / Automation Hub contract
 Approved MCP tools / A2A agents
 Edge local approved capabilities
 ```
 
-Each source keeps its authority.
+Each source keeps its authority. Presence in this list is `TARGET`, not `PROVEN`.
 
 ## 6. Authorization / availability
 
 ```text
 identity/service actor
-→ Core/domain/provider/tool/asset policy
+→ Keycloak/Core/domain/provider/tool/asset policy as applicable
 → source availability
-→ Capability Projection
+→ authorized Capability Projection
 → semantic retrieval
 ```
 
 Filter by permission/scope/policy/context/environment/health/model or asset approval/autonomy where applicable.
 
-Expertise/Memory/Process insight/Model output may influence ranking/context, **never availability authority**.
+Expertise/Memory/Process insight/Model output may influence ranking/context, **never availability authority**. Provider scope, tool metadata and event payload never substitute Core/domain authorization.
 
 ## 7. Discovery / Planning
 
@@ -117,9 +119,9 @@ Planner cannot invent missing capabilities.
 
 ```text
 technical contract = Domain OpenAPI/Action Catalog
-availability = RBAC/domain policy
-semantic projection = CapabilityProjection
-execution = selected canonical executor
+availability = Core/domain policy
+semantic projection = CapabilityProjection target
+execution = owner-approved contract/path
 ```
 
 When official API exists, use it before RPA/computer-use unless evidence/policy requires otherwise.
@@ -136,13 +138,15 @@ Provider/MCP/A2A metadata is untrusted and cannot grant capability by descriptio
 
 ## 10. Automation capabilities
 
-Planner sees semantic operation; Automation Hub maps it to:
+Planner sees semantic operation. DÉLIA owns capability/Policy/Decision/Work orchestration; technical automation execution is resolved through the Automation Hub boundary when applicable.
+
+Possible technical executor classes behind that boundary:
 
 ```text
 API | FUNCTION | RPA | COMPUTER_USE | HUMAN_TASK
 ```
 
-Executor mapping/version may change without changing capability ID/planner semantics.
+Executor mapping/version may change without changing capability ID/planner semantics. Planner never receives executor UI mechanics.
 
 ## 11. Analysis / Process / Semantic / Model capabilities
 
@@ -151,11 +155,11 @@ Executor mapping/version may change without changing capability ID/planner seman
 - `analysis.*` executes only in bounded sandbox;
 - `prediction.*` uses approved ModelRef and yields PredictionRef, not FACT;
 - `scenario.*` yields isolated ScenarioRef, never production write;
-- `artifact.*` creates/versioned ArtifactRef.
+- `artifact.*` creates/versioned ArtifactRef when that contract is frozen.
 
 ## 12. Platform capability
 
-Derived from Core/Portal authorized routes + generic platform actions. Portal resolves target and revalidates. No `app→URL` AI catalog.
+Derived from Core/Portal authorized routes + generic platform actions when contracts are proven. Portal resolves target and revalidates. No `app→URL` AI catalog.
 
 ## 13. Multimodal / Knowledge capabilities
 
@@ -163,7 +167,7 @@ Document/image/voice/video/biometric capabilities produce Evidence/context under
 
 ## 14. Workflow capability
 
-High-level objective/method may compose allowed capabilities through Playbook/Durable Workflow. It never owns separate executor or permission model.
+High-level objective/method may compose allowed capabilities through Playbook/Durable Workflow. It never owns separate technical executor or permission model.
 
 ## 15. Risk / Decision / Autonomy
 
@@ -178,7 +182,7 @@ capability metadata
 → Decision Gate + allowed autonomy level
 ```
 
-`PREPARE != ACT`; L5 OFF by default.
+`PREPARE != ACT`; `L4 governed execute != L5 autonomous execute`; L5 OFF by default.
 
 ## 16. Idempotency / Outcome
 
@@ -186,7 +190,7 @@ Projection may expose hints, but guarantees come from source/use case/executor c
 
 ## 17. Availability states
 
-Candidate semantics:
+Candidate semantics only if a real consumer/lifecycle requires them:
 
 ```text
 AVAILABLE
@@ -203,15 +207,15 @@ Pending Decision is execution state, not necessarily capability availability.
 
 ## 18. Shared refs
 
-Capabilities consume/produce canonical refs:
+Capabilities should consume/produce canonical refs only when C0 proves/finalizes them:
 
 ```text
 EntityRef
 SourceRef
 EvidenceRef
 OutcomeRef
-ArtifactRef? when C0 proves
-PredictionRef? when C0 proves
+ArtifactRef?
+PredictionRef?
 ```
 
 Avoid incompatible DTOs per capability.
@@ -230,8 +234,9 @@ Record candidate/selected capability, source/asset/executor refs, policy/Decisio
 - MCP/A2A discovery as auto-approved capability;
 - model/Marketplace install as capability permission;
 - global L5 attribute replacing policy;
-- duplicated capability projection per app.
+- duplicated capability projection per app;
+- DÉLIA capability mapping becoming technical-execution source of truth for Automation Hub.
 
 ## 21. Foundation rule
 
-`CapabilityProjection` is frozen/reused in C0. Later capabilities extend through versioned contracts/metadata, not parallel registries with competing semantics.
+C0 must decide whether `CapabilityProjection` exists, can be reused, must be created, and who consumes it. Later capabilities extend through versioned contracts/metadata after the foundation is actually frozen; this document alone does not freeze or implement the primitive.
