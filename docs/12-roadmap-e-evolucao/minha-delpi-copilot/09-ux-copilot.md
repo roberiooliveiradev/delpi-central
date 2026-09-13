@@ -2,55 +2,14 @@
 
 **Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
-**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)
+**Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
+**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)
 
 ## 1. Princípio
 
-O Copilot deve parecer parte da plataforma e do trabalho real, não uma janela de chat isolada. Ao mesmo tempo, ele é uma **aplicação própria**, com MFE e API próprios, hospedada de forma integrada pelo Portal e adaptável a diferentes dispositivos/surfaces.
+O Copilot deve parecer parte do trabalho real, não apenas uma janela de chat. Texto, voz, mídia, dados DELPI, internet e fontes conectadas convergem para a mesma experiência, com provenance e governança visíveis quando materiais.
 
-A linguagem natural é a porta de entrada; texto não é a única modalidade e conversa não é a única surface.
-
-```text
-Conversation
-+ Context
-+ Voice/Media/Biometric Identity when authorized
-+ Activity
-+ Evidence
-+ Decisions
-+ Tasks
-+ Cases
-+ Rooms
-+ Inbox
-+ Watch
-```
-
-## 2. Uma única identidade de produto
-
-A UI não deve exigir que o usuário escolha “Agente Engenharia”, “Agente Qualidade” etc.
-
-Quando útil, pode mostrar conhecimentos aplicados sem representar troca de runtime.
-
-Biometric recognition também não cria uma segunda identidade de produto nem uma nova user authority: apenas sugere/associa `userRef` quando governado.
-
-## 3. Disponibilidade para usuários
-
-A direção de produto é que o entry point do Copilot possa estar presente para usuários autenticados da Minha DELPI conforme rollout/permissão do próprio Copilot.
-
-Presença não implica capability universal.
-
-A UI deve deixar claro quando algo está indisponível por:
-
-- permissão;
-- app/contexto;
-- policy;
-- device;
-- modality/provider;
-- biometric governance;
-- safety restriction.
-
-## 4. Surfaces
-
-O mesmo MFE/runtime deve poder materializar experiências distintas:
+## 2. Surfaces
 
 ```text
 GLOBAL
@@ -59,603 +18,318 @@ MEETING
 FRONTLINE
 ```
 
-Nenhuma surface cria segundo product state ou segundo planner.
+Mesma Copilot API/MFE/policy/state. Nenhuma surface cria outro agente/runtime.
 
-## 5. Painel lateral global
+## 3. Fontes visíveis
 
-Uso cotidiano:
-
-- conversar sem sair do app;
-- receber Workspace Context;
-- mostrar context chips;
-- navegar;
-- executar reads/writes governados;
-- acompanhar activity;
-- mostrar sources/evidence;
-- receber Decision Gates;
-- criar/abrir Task/Case;
-- anexar imagem/documento ou usar voz quando autorizado.
-
-O painel é uma **surface do mesmo `plugins/minha-delpi-copilot`**, hospedada pelo Portal.
-
-## 6. Página completa / Workspace
-
-Adequada para:
-
-- análise longa;
-- comparação;
-- multimodalidade;
-- Tasks/Workflows;
-- Cases/Evidence Board;
-- artifacts;
-- histórico;
-- meeting/frontline history quando autorizado;
-- administração.
-
-A página completa usa o mesmo MFE, a mesma Copilot API, a mesma sessão/contexto e os mesmos contracts do painel global.
-
-## 7. Meeting Mode UX
-
-Meeting Mode é iniciado explicitamente.
-
-Exemplo de cabeçalho:
+Quando útil, a resposta deve deixar claro de onde veio a informação:
 
 ```text
-Minha DELPI Copilot — Reunião
-Revisão diária de produção
-
-🎤 Microfone: ATIVO
-📝 Transcrição: ATIVA
-📷 Câmera: ATIVA
-👤 Reconhecimento de participantes: ATIVO
-🖥 Tela: INATIVA
-⏺ Gravação bruta: INATIVA
+Minha DELPI
+Internet
+Outlook / Microsoft 365
+Gmail / Google Workspace
+WhatsApp Business
+Drive / OneDrive / SharePoint
+outra fonte conectada
 ```
 
-O usuário deve conseguir ver e alterar, conforme policy:
+Fonte externa não deve ser apresentada como dado oficial DELPI sem classificação adequada.
 
-- modalidades ativas;
-- identity recognition ativo/inativo;
-- finalidade;
-- participantes/contexto;
-- retenção quando relevante;
-- stop/pause capture.
+## 4. Research UX
 
-### Durante a reunião
+Exemplo:
 
-UX pode combinar:
+> “Pesquise na internet a norma mais recente e compare com nosso procedimento.”
+
+Activity pode mostrar:
 
 ```text
-transcrição ao vivo
-participante/speaker associado
-confidence/correção quando material
-respostas do Copilot
-dados/gráficos consultados
-lista de decisões
-pendências
-ações candidatas
-sources/evidence
+Consultando procedimento interno
+Pesquisando fontes externas
+Abrindo fontes relevantes
+Comparando versões
+Preparando resposta
 ```
 
-O Copilot deve conseguir responder por voz/texto sem esconder a origem dos dados.
+Resultado deve permitir progressive disclosure de:
 
-## 8. Ata viva
+- source/title/provider;
+- data/freshness;
+- Evidence usada;
+- conflito entre fontes;
+- classificação como fonte interna oficial, externa oficial, referência pública ou conteúdo não verificado.
 
-Ao encerrar, Meeting Mode pode oferecer:
+## 5. Connections UX
 
-```text
-Resumo
-Participantes/associações confirmadas
-Dados consultados
-Decisões confirmadas
-Pendências
-Ações propostas
-Responsáveis/prazos
-Sources/Evidence
-```
-
-Cada ação proposta deve ter estado explícito:
-
-```text
-PROPOSTA
-CONFIRMADA
-CRIADA/EXECUTADA
-FALHOU
-```
-
-Ata não executa Business Action implicitamente.
-
-## 9. Frontline Mode UX
-
-Frontline prioriza uso no posto de trabalho.
-
-Características:
-
-- componentes grandes;
-- fluxo simples;
-- alto contraste;
-- poucas ações simultâneas;
-- voz hands-free;
-- leitura curta;
-- feedback sonoro/visual;
-- desenho/imagem em destaque;
-- tolerância a ruído/latência/degraded mode;
-- suporte a touch/tablet/kiosk conforme hardware.
+O Copilot deve possuir surface de **Conexões** dentro do próprio produto.
 
 Exemplo:
 
 ```text
-Usuário reconhecido: Carlos
-Status: identidade confirmada
+Conexões
 
-OP 583922
-Produto 90264238
-Operação 30 — Crimpagem
-Máquina PRESS-04
-
-[ INICIAR / CONTINUAR ASSISTÊNCIA ]
-
-🎤 Perguntar ao Copilot
-📷 Mostrar problema
-📄 Abrir desenho
-⚠ Registrar ocorrência
-🛠 Chamar manutenção
+Microsoft 365        Conectado
+Gmail                 Não conectado
+WhatsApp Business     Administrado pela empresa
+Google Drive          Conectado via Google Workspace
 ```
 
-Se biometric match for ambíguo:
+Para cada conexão mostrar, quando material:
+
+- owner/type (`Pessoal`, `Organizacional`, `Compartilhado`, `Serviço`);
+- conta/resource label;
+- capabilities/scopes concedidos em linguagem humana;
+- data da última validação/sync;
+- status;
+- reconnect/revoke/disconnect;
+- política de compartilhamento/retenção relevante.
+
+Nunca exibir token/secret.
+
+## 6. Connect flow
 
 ```text
-Não consegui confirmar quem está usando este posto.
-
-[Sou Carlos]
-[Entrar com minha conta]
-[Cancelar]
+[Conectar Microsoft 365]
+→ explicar o que será acessado
+→ provider authorization/consent
+→ retorno ao Copilot
+→ status da conexão
 ```
 
-Nunca assumir identidade de baixa confiança silenciosamente.
+Se um scope adicional for necessário depois, a UI deve pedir nova autorização; nunca elevar silenciosamente.
 
-## 10. Contexto operacional visível
+## 7. Personal versus organizational UX
 
-Frontline deve exibir context chips simples e corrigíveis:
+O usuário deve saber quando está usando uma fonte pessoal/delegada.
+
+Exemplo:
 
 ```text
-OP 583922
-PRESS-04
-Produto 90264238 · Rev. F
-Operação 30
+Fonte: Gmail conectado por você
+Visibilidade: somente você
 ```
 
-Esses elementos vêm de `WorkspaceContext`/`EntityRef`, não de inferência visual isolada.
+Compartilhar em Case/Room ou promover para Knowledge deve ser uma ação explícita e mostrar o impacto.
 
-Usuário deve poder corrigir entidade errada antes de uma ação material.
+## 8. External search/read UX
 
-## 11. Voice UX
+Exemplos naturais:
 
-Comandos/falas comuns:
+> “Ache no Outlook a última conversa com o fornecedor ACME sobre o item 90264238.”
+
+> “Procure no Gmail o orçamento que recebi ontem e compare com a última OC.”
+
+> “Busque no OneDrive o certificado deste lote.”
+
+Resultado pode trazer cards de recurso com source, data, participantes, attachment refs e ações permitidas.
+
+Se source não estiver conectado ou scope faltar, explicar isso sem fingir que o dado não existe.
+
+## 9. Draft versus Send UX
+
+Separação visual obrigatória:
 
 ```text
-“próxima etapa”
-“repete”
-“mais devagar”
-“abra o desenho”
-“qual medida devo conferir?”
-“isso já aconteceu?”
-“registre um problema”
-“chame o líder”
+RASCUNHO GERADO
+[Editar]
+[Revisar fontes]
+[Enviar]
 ```
 
-Regras:
+Gerar rascunho não envia nada.
 
-- transcript parcial pode ser mostrado;
-- speaker association pode ser mostrada quando habilitada;
-- comando material deve confirmar entendimento quando necessário;
-- voz não reduz Decision Gate;
-- erro de reconhecimento deve ser corrigível;
-- em ambiente ruidoso, oferecer fallback touch/text.
-
-## 12. Camera/image UX
-
-Ao ativar câmera:
-
-- indicator persistente;
-- finalidade explícita;
-- mostrar se face recognition está ativo;
-- botão stop;
-- snapshot/frame usado pode ser mostrado;
-- finding aponta para região quando possível;
-- confidence/limitations visíveis quando materiais.
-
-Finding visual de peça/produto e candidate identity de pessoa são resultados distintos e devem ser apresentados separadamente.
-
-## 13. Video UX
-
-Progressive capability:
+Antes de send material, mostrar conforme policy:
 
 ```text
-imagem
-→ vídeo curto
-→ sessão assistida com amostragem
-→ realtime avançado
+De: conta/conexão
+Para: destinatários
+Assunto/canal
+Conteúdo
+Anexos
+Fonte/contexto usados
+Gate requerido
 ```
 
-Usuário deve saber se o vídeo está:
+Send segue Decision Gate e apresenta outcome real.
 
-- apenas sendo processado;
-- usado para identity recognition;
-- persistido;
-- convertido em Evidence;
-- descartado após processamento.
+## 10. External outcome UX
 
-Long video pode mostrar progresso assíncrono em Task/Activity.
-
-## 14. Biometric Identity UX
-
-Quando a capability estiver habilitada, reconhecimento de face/voz deve ser **visível, corrigível e não autoritativo**.
-
-A UI pode mostrar:
+Estados explícitos:
 
 ```text
-Reconhecido como: Carlos Oliveira
-Confiança: alta
-Fonte: face + sessão atual
-
-[Está correto]
-[Não sou eu]
-[Trocar usuário]
+RASCUNHO
+AGUARDANDO CONFIRMAÇÃO
+ENVIANDO
+ENVIADO / CRIADO / ATUALIZADO
+FALHOU
+RESULTADO INCERTO — verificando
 ```
 
-Para baixa confiança:
+Nunca mostrar sucesso antes de provider outcome verificável.
+
+## 11. Provider event / Watch UX
+
+Usuário pode pedir:
+
+> “Me avise quando o fornecedor responder.”
+
+Item de Watch deve mostrar:
+
+- source/connection;
+- condição;
+- modo `OBSERVE | ADVISE | ACT`;
+- expiry/status;
+- o que acontecerá ao disparar;
+- como pausar/desabilitar.
+
+Se subscription/connection ficar stale, mostrar degraded state em vez de falsa tranquilidade.
+
+## 12. External Knowledge UX
+
+Depois de pesquisa ou leitura externa, o usuário pode ter opções distintas:
 
 ```text
-Não foi possível confirmar sua identidade.
-
-[Selecionar meu usuário]
-[Entrar novamente]
+[Usar somente nesta conversa]
+[Anexar como Evidence ao Case]
+[Salvar como conhecimento pessoal candidato]
+[Propor para conhecimento organizacional]
 ```
 
-Regras:
+A última opção inicia governance/review; não publica automaticamente.
 
-- não mostrar embedding/template;
-- não expor lista de candidatos desnecessariamente;
-- não criar enrollment automaticamente a partir de uma correção;
-- permitir recusar/corrigir association;
-- enrollment/revocation ficam em fluxo administrativo/seguro apropriado;
-- pessoa não enrolled permanece `Participante N`/`Usuário não confirmado` quando necessário;
-- biometric result não deve ser apresentado como “autorizado a executar”.
+## 13. Meeting Mode
 
-## 15. Enrollment UX
-
-Se enrollment biométrico for disponibilizado ao usuário/admin autorizado, o fluxo deve explicar:
-
-- modalidade (`face`/`voice`);
-- finalidade;
-- onde/como o template será usado;
-- retenção/revogação;
-- necessidade de novas amostras;
-- estado `ACTIVE | REVOKED | DELETED`;
-- opção de revogar/deletar conforme policy.
-
-Não misturar “tirar foto de perfil” com enrollment biométrico sem decisão explícita.
-
-## 16. Human Observation UX
-
-Quando o Copilot analisar processo humano, apresentar **o que foi observado**, não um julgamento sobre a pessoa.
-
-Bom:
+Meeting pode consultar DELPI + internet + sources conectadas autorizadas. A ata distingue:
 
 ```text
-Observação
-• etapa 4 foi repetida 3 vezes
-• houve 42 s entre as etapas 5 e 6
-• o operador solicitou ajuda antes da inspeção
-
-Hipótese de processo
-• pode existir dificuldade na montagem do terminal X4
+transcript
+resumo
+fonte interna/externa
+decisão humana
+ação candidata
+ação executada
 ```
 
-Proibido como UX default:
+External send citado em reunião ainda precisa do mesmo review/gate.
+
+## 14. Frontline Mode
+
+Frontline mantém UI large-touch/hands-free e prioriza procedimento/desenho/revisão interna vigente. Internet/external sources podem complementar, mas não substituir silenciosamente authority operacional interna.
+
+## 15. Biometric UX
+
+Quando habilitado:
 
 ```text
-“operador desmotivado”
-“pessoa pouco confiável”
-“parece nervoso”
-“baixo potencial”
+UNKNOWN → CANDIDATE → CONFIRMED/CORRECTED
 ```
 
-Não apresentar person score oculto ou ranking derivado de rosto/voz/comportamento.
+Biometric association é visível/corrigível e nunca apresentada como permission grant.
 
-## 17. Screen share UX
+## 16. Activity operacional
 
-Meeting/Workspace podem permitir screen share quando autorizado.
+Mostrar estado verificável, não CoT:
 
-Indicadores:
+```text
+Consultando Minha DELPI
+Pesquisando internet
+Consultando Outlook
+Lendo arquivo conectado
+Analisando Evidence
+Gerando rascunho
+Aguardando confirmação
+Enviando
+Verificando resultado
+Aguardando resposta externa
+```
 
-- surface compartilhada;
-- status on/off;
-- redaction warning;
-- stop rápido.
+## 17. Evidence/Sources
 
-Screen share não autoriza o Copilot a clicar/automatizar negócio no DOM.
+Progressive disclosure pode mostrar:
 
-## 18. Entry points contextuais
+- source system/provider;
+- account/connection label sem credential;
+- entity/resource;
+- timestamp/freshness;
+- page/region/frame/time range;
+- confidence/limitations;
+- internal versus external authority classification.
+
+## 18. Decision Gate UX
+
+Exibir ação, target, mudanças/impacto, Evidence, risk, connection/source e gate. Não esconder external write atrás de texto, voz ou gesture ambíguo.
+
+## 19. Context chips
 
 Exemplos:
 
 ```text
-Analisar com Copilot
-Explicar indicador
-Perguntar sobre cliente
-Investigar problema
-Criar ação a partir deste resultado
-Perguntar por voz
-Mostrar problema com câmera
-Iniciar reunião assistida
-Iniciar assistência Frontline
+Portal Comercial · Cliente 000123 · Filial 01
+Outlook · thread fornecedor ACME
+Internet · pesquisa de norma atual
+Case Q-2026-0042
 ```
 
-Passar `EntityRef`, `EvidenceRef`, `OutcomeRef` ou Workspace Context estruturado; evitar prompts gigantes hardcoded.
+Usuário pode remover/corrigir contexto.
 
-## 19. Activity operacional
+## 20. Reload/logout/user switch
 
-Mostrar estado verificável, não CoT.
+- pending send nunca executa automaticamente;
+- provider token nunca fica no browser state;
+- user switch limpa resources/caches locais do usuário anterior;
+- source/connection permissions são revalidadas;
+- media capture não reinicia silenciosamente;
+- Chat offline não altera Copilot.
 
-Exemplo:
+## 21. Error UX
 
-```text
-Investigando reclamação
-✓ Produto identificado
-✓ Histórico de qualidade consultado
-✓ Desenho analisado
-○ Consultando lote/OP
-○ Aguardando nova revisão
-```
-
-Media/biometric activity pode mostrar:
+Distinguir:
 
 ```text
-Ouvindo
-Transcrevendo
-Analisando imagem
-Processando vídeo
-Reconhecendo participante
-Identidade não confirmada
-Consultando OP
-Aguardando confirmação
-```
-
-## 20. Estados UX
-
-Turn/task/workflow/media session podem usar estados coerentes:
-
-```text
-planning
-running
-capturing
-processing
-waiting_for_input
+not_connected
+consent_required
+scope_missing
+connection_expired
+permission_revoked
+provider_unavailable
+rate_limited
+resource_not_found
+external_access_blocked
+subscription_stale
 waiting_for_decision
-waiting_for_event
-partially_completed
-completed
-blocked
-failed
-cancelled
 ```
 
-Identity association usa estados próprios quando exibidos:
+Não confundir `provider indisponível` com `não existem resultados`.
 
-```text
-unknown
-candidate
-confirmed
-corrected
-rejected
-```
+## 22. Privacy UX
 
-## 21. Epistemic UX
+Mostrar quando necessário:
 
-Distinguir visualmente quando material:
+- qual conta/source será consultada;
+- se source é pessoal ou organizacional;
+- se dado será compartilhado/persistido;
+- scopes/capabilities em linguagem humana;
+- como desconectar/revogar;
+- quando external data está sendo promovida para Knowledge.
 
-- **Fato**;
-- **Cálculo**;
-- **Hipótese**;
-- **Conclusão**;
-- **Recomendação**.
+## 23. Accessibility
 
-Uma hipótese visual/Human Observation não deve ter o mesmo tratamento de um fato confirmado por medição/regra oficial.
+Keyboard/focus/screen-reader/contrast/live regions/captions/large-touch/non-voice fallback continuam obrigatórios. Connection/Decision/send UIs precisam ser acessíveis.
 
-## 22. Evidence/Sources
-
-Permitir expandir:
-
-- source system/document/media;
-- entity;
-- participant/userRef quando realmente necessário;
-- timestamp/freshness;
-- filtros/período;
-- page/region/frame/time range quando aplicável;
-- confidence/limitations;
-- transcript segment quando permitido.
-
-Não expor biometric template como Evidence.
-
-## 23. Decision Gate UX
-
-Substitui cartão genérico de “confirmar”.
-
-Pode apresentar:
-
-```text
-Ação
-Entidade
-Mudanças principais
-Impacto
-Evidence usada
-Risco
-Gate requerido
-```
-
-Biometric identity pode ajudar a contextualizar o actor, mas Decision Gate usa sessão/actor autenticado.
-
-Não esconder write atrás de texto, voz, gesto ou reconhecimento biométrico ambíguo.
-
-## 24. Resultados ricos
-
-Usar componentes/rendering do próprio Copilot e `@delpi/plugin-ui` quando houver equivalente compartilhado para texto, KPI, tabela, gráfico, árvore, cards de entidade, timeline, checklist, evidence board, workflow/task progress, comparison, transcript, media evidence, meeting decisions/actions e frontline instruction step.
-
-Não importar renderer/component interno de `plugins/minha-delpi-chat` como dependency.
-
-## 25. Suggested actions
-
-Somente capabilities autorizadas. Sugestão não significa execução.
-
-## 26. Navigation UX
-
-Quando Copilot navegar:
-
-- activity curta;
-- conversa preservada pela própria Copilot API;
-- painel permanece quando apropriado;
-- Workspace Context atualiza após navegação;
-- focus acessível/previsível.
-
-## 27. Context chips
-
-Contexto administrativo e operacional deve ser removível/corrigível. Contexto explícito novo vence memória antiga.
-
-## 28. Copilot Task UX
-
-Task card/page mostra objetivo, status, progresso real, steps resumidos, pending decisions, results/evidence, links e cancel quando permitido.
-
-Task não precisa parecer conversa.
-
-## 29. Copilot Case UX
-
-Case é workspace de investigação/trabalho e deve deixar claro o que é source data e o que é interpretação do Copilot.
-
-## 30. Interaction Room UX
-
-Room associada a Case pode oferecer conversa humana, arquivos, menções, resumo do Copilot, decisões/pending actions, evidence/entidades e ata relacionada. Resumo respeita source ACL.
-
-## 31. Copilot Inbox UX
-
-Sections possíveis:
-
-```text
-Aguardando você
-Em andamento
-Concluído
-Alertas
-```
-
-Leitura de item nunca executa write implicitamente.
-
-## 32. Watch UX
-
-Usuário deve entender o que está sendo acompanhado, condição, modo `OBSERVE | ADVISE | ACT`, prazo, pause/disable e actions possíveis. ACT requer destaque de autonomia/policy.
-
-## 33. Multimodal UX
-
-Para desenho/documento/imagem/vídeo:
-
-- mostrar arquivo/página/região/frame/time range quando possível;
-- destacar findings com confidence/limitation;
-- permitir voltar à evidência;
-- não fingir leitura de região ilegível;
-- mostrar quando um resultado veio de áudio/transcrição versus API oficial.
-
-## 34. Training/help UX
-
-Frontline pode oferecer modo passo a passo com próxima/repetir/desenho/vídeo/pedir ajuda/registrar problema. Isso não substitui certificação/qualificação oficial.
-
-## 35. Privacy UX
-
-Captura e identity recognition precisam ser observáveis pelo usuário.
-
-Quando material, mostrar:
-
-- finalidade;
-- modalidades ativas;
-- reconhecimento de identidade ativo/inativo;
-- retenção;
-- quem poderá acessar;
-- se raw media será persistida;
-- como encerrar a sessão.
-
-## 36. Shared-device UX
-
-Em terminal compartilhado:
-
-- indicar usuário ativo;
-- indicar quando identidade é apenas candidate versus sessão confirmada;
-- oferecer logout/troca de usuário rápida;
-- limpar conversation/context/media/identity-candidate local ao trocar usuário;
-- não mostrar conteúdo do usuário anterior;
-- exigir reautenticação quando policy determinar.
-
-## 37. Industrial safety UX
-
-Copilot deve diferenciar claramente orientação, recomendação, solicitação empresarial e comando físico de máquina. Comando físico não faz parte da experiência default.
-
-## 38. Simulation UX
-
-Separar estado atual, premissas simuladas, resultado projetado e limitações. `Aplicar` inicia nova Business Action governada.
-
-## 39. Histórico/reload
-
-Após F5/reload/session resume:
-
-- conversa permanece conforme persistence da Copilot API;
-- Task/Case/Workflow recupera status real;
-- pending Decision não executa automaticamente;
-- completed write não repete;
-- Workspace Context é revalidado;
-- media capture/identity recognition não reinicia silenciosamente;
-- microphone/camera/screen exigem estado/permission explícitos;
-- biometric candidate anterior não autentica nova sessão automaticamente;
-- ausência do Chat não altera a experiência.
-
-## 40. Correção e feedback
-
-Usuário pode corrigir contexto/entidade/interpretação/transcrição/identity association.
-
-Correção de identidade:
-
-- corrige associação da sessão/evidence;
-- não re-enrolla silenciosamente;
-- gera telemetry/eval signal;
-- respeita revoke/delete policy.
-
-Feedback alimenta telemetry/evals/candidate improvement, não altera production behavior imediatamente.
-
-## 41. Acessibilidade
-
-- keyboard navigation;
-- focus management;
-- screen-reader labels;
-- status não depende só de cor;
-- captions/transcript para áudio;
-- visual alternative para feedback sonoro;
-- large-touch targets para Frontline;
-- contraste/legibilidade industrial;
-- voice/biometric recognition não podem ser o único meio de executar função crítica.
-
-## 42. UX success
+## 24. UX success
 
 O usuário deve conseguir evoluir naturalmente:
 
 ```text
-Turn
-→ Task
-→ Case
-→ Room/Inbox/Watch
+pergunta
+→ pesquisa interna/externa
+→ Evidence
+→ draft/action
+→ Decision
+→ Task/Case/Watch
+→ follow-up externo
+→ Knowledge candidate
 ```
 
-ou mudar de modalidade/surface:
-
-```text
-texto ↔ voz ↔ imagem/vídeo
-Global ↔ Workspace ↔ Meeting ↔ Frontline
-```
-
-Biometric identity, quando ativa, reduz fricção sem virar permission authority; Human Observation aumenta contexto sem transformar o Copilot em avaliador psicológico do trabalhador.
+sem precisar conhecer APIs, escolher agentes ou entender diferenças técnicas entre Gmail, Outlook, WhatsApp Business e futuros providers.
