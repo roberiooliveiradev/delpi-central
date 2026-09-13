@@ -1,13 +1,13 @@
-# Minha DELPI Copilot — Decision Gates e What-if Simulation
+# DÉLIA — Decision Gates e What-if Simulation
 
-**Status:** thematic spec  
+**Status:** `TARGET` — thematic spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Foundation:** Decision Gate contracts nascem em C0; engine e `wait_approval` durável em C5; Simulation em C7.
+**Evidence rule:** contracts/engine/simulation runtime só existem quando fase, owner, contract e implementation forem provados.
 
 ## 1. Decision Gate
 
-O produto usa um único modelo de decisão proporcional ao risco:
+O target usa um modelo único de decisão proporcional ao risco:
 
 ```text
 NO_GATE
@@ -29,54 +29,33 @@ Podem incluir:
 - financial/operational impact;
 - volume/scope;
 - reversibility;
-- arguments final;
+- final arguments;
 - Evidence refs/freshness;
-- user/approver permissions;
+- actor/approver permissions;
 - autonomy level;
-- business criticality.
+- business criticality;
+- environment and materiality.
 
-O LLM pode ajudar a preparar preview, mas gate level é determinado por policy/owner governado.
+LLM pode ajudar a preparar preview, nunca definir authority final de gate.
 
 ## 3. Contracts compartilhados
 
-Usar `DecisionGateRequest` e `DecisionGateDecision` C0.
+Request/Decision contracts são target até C0 congelar owner/source/consumers. Não criar `DecisionGateV1` local ou lifecycle paralelo.
 
-Request conceitual:
-
-```text
-decisionId
-action/capability ref
-argumentsHash
-impactSummary
-evidenceRefs[]
-risk/sensitivity
-requiredGate
-expiresAt
-```
-
-Decision conceitual:
-
-```text
-decisionId
-decision/status
-actor/approver ref
-decidedAt
-```
-
-Não criar `DecisionGateV1` local com lifecycle incompatível.
+Decision precisa vincular materialmente args/evidence/policy/version/expiry quando isso for necessário para evitar TOCTOU.
 
 ## 4. Invalidation
 
 Pode invalidar decisão anterior:
 
-- arguments hash materialmente diferente;
-- evidence crítica mudou/stale;
+- arguments materialmente diferentes;
+- Evidence crítica mudou/stale;
 - permission/policy alterada;
 - entity version/precondition mudou;
 - expiry;
 - approver perdeu autoridade.
 
-Sempre revalidar antes de execute.
+Revalidar live AuthZ/Policy imediatamente antes do ACT.
 
 ## 5. Approval workflow
 
@@ -85,26 +64,20 @@ Decision request
 → pending approval
 → approved | rejected | expired
 → current-state revalidation
-→ execute | block
+→ ACT | BLOCK
 ```
 
-Approval não substitui backend authorization.
+Approval não substitui Core/domain authorization.
 
 ## 6. What-if / Simulation
 
-C7 pode introduzir simulações somente quando existe modelo/cálculo owner e reproduzível.
+What-if/Scenario/Simulation podem aparecer de forma incremental conforme `16` e specs de predictive/prescriptive/twin. Este documento **não restringe toda simulação a C7**.
 
-Exemplos:
-
-- atraso adicional de fornecedor;
-- priorização de OP;
-- alteração de estoque de segurança;
-- impacto de capacidade;
-- cenários financeiros com modelo aprovado.
+C4/C5 podem produzir analysis/scenario/PREPARE quando contracts/models aprovados existirem. C7 é reservado para advanced autonomy/optimization/scale e aplicações avançadas do Twin, conforme Plano Mestre.
 
 ## 7. Simulation state
 
-Uma simulação pode registrar semanticamente:
+Candidate semantics:
 
 ```text
 simulationId
@@ -117,13 +90,13 @@ limitations
 createdAt
 ```
 
-Isso não cria automaticamente um foundation global se um domínio já possuir contrato de simulação. Reutilizar/adapter antes de criar schema transversal.
+Não criar foundation global se domínio/model owner já tiver contrato adequado. Reuse/adapter antes de schema transversal.
 
 ## 8. Fontes de cálculo
 
 Preferência:
 
-1. domain simulation API/use case;
+1. authoritative domain simulation API/use case;
 2. deterministic versioned rules;
 3. governed analytical/optimization model;
 4. LLM para estruturar/explain, não inventar números.
@@ -132,15 +105,15 @@ Preferência:
 
 ```text
 simulate
-→ projected outcome
-→ user reviews
-→ separate Business Action intent
-→ current RBAC/policy/Decision Gate
-→ execute
-→ verify actual outcome
+→ projected result
+→ review/PREPARE
+→ separate ACT intent
+→ live AuthZ/Policy/Decision
+→ approved executor path
+→ authoritative Outcome verification
 ```
 
-Resultado simulado não é autorização nem outcome real.
+Simulation nunca concede autorização.
 
 ## 10. Epistemic UX
 
@@ -151,19 +124,21 @@ Separar:
 - assumption;
 - model/calculation;
 - projected result;
-- confidence/uncertainty se metodologicamente suportada;
+- confidence/uncertainty quando suportada;
 - limitations.
 
-Simulation output nunca é FACT atual.
+Simulation output nunca é current FACT.
 
 ## 11. Security
 
 - no hidden write;
 - source RBAC;
-- owner/version do modelo;
+- model/rule owner/version;
 - sensitive assumptions redacted in logs;
 - stale baseline handling;
-- provider/data policy quando model/LLM envolvido.
+- provider/data policy;
+- external/tool content treated as untrusted;
+- `recommendation != authorization`.
 
 ## 12. Tests
 
@@ -171,10 +146,10 @@ Decision:
 
 - each gate level;
 - args changed;
-- evidence changed;
+- Evidence changed;
 - expired;
-- approver unauthorized;
-- revalidation.
+- unauthorized approver;
+- live revalidation.
 
 Simulation:
 
@@ -184,22 +159,24 @@ Simulation:
 - unsupported scenario;
 - stale baseline;
 - no hidden write;
-- Apply requires new gate.
+- Apply requires new live Decision path.
 
 ## 13. Mapping
 
 ```text
-C0 → Decision contracts/semantics
-C5 → Decision Gate Engine before production writes + wait_approval durability
-C7 → Simulation pilots and autonomy-selected gates
+C0 → owner/contracts/semantics
+C5 → Decision Gate + wait_approval before governed material ACT
+C4/C5/C6 → scenario/simulation/PREPARE only where model/contract is ready and master-plan dependencies allow
+C7 → advanced Twin/optimization/autonomous application and scale
 ```
 
-## 14. Independence
+## 14. Ownership
 
-Decision Gates e Simulation pertencem à `minha-delpi-copilot-api`. Nenhum lifecycle, confirmation state ou approval runtime do Minha DELPI Chat é dependency do Copilot.
+DÉLIA owns Policy/Decision orchestration within its boundary. Domain APIs/Core remain final authorities for permission/business rules; models/simulation owners remain authorities for calculation semantics.
 
 ## 15. Gate
 
-- nenhum write material bypassa required Decision Gate;
-- Simulation só é chamada assim quando existe cálculo/modelo governado;
-- análise qualitativa sem modelo permanece hipótese/cenário, não simulação quantitativa.
+- nenhum material ACT bypassa required Policy/Decision/AuthZ;
+- Simulation só é chamada assim quando cálculo/modelo governado existe;
+- qualitative scenario sem modelo permanece hypothesis/scenario, não quantitative simulation;
+- missing proof remains `PENDING/INCONCLUSIVE`.
