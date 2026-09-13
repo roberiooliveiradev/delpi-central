@@ -1,12 +1,12 @@
 # Minha DELPI Copilot — Governança Documental e Revisão Arquitetural
 
 **Status:** canônico para precedência documental  
-**Revisão:** foundation-first + standalone + multimodal/biometric/external/industrial boundaries  
+**Revisão:** foundation-first + standalone + multimodal/biometric/external/automation/industrial boundaries  
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
 
 ## 1. Objetivo
 
-Evitar ordens, owners, contracts, patterns, security/privacy/external-data boundaries concorrentes.
+Evitar ordens, owners, contracts, patterns, security/privacy/external/automation boundaries concorrentes.
 
 ## 2. Precedência
 
@@ -25,7 +25,7 @@ Em caso de conflito:
 10. 25 — CP requirements
 11. 02 — technical target
 12. 24 — product target
-13. thematic specs, including 53/54/55
+13. thematic specs, including 53/54/55/56/57
 14. ledger — execution evidence/status
 ```
 
@@ -42,9 +42,9 @@ Ledger registra estado; não redefine arquitetura.
 | `51` | factual platform baseline |
 | `52` | physical/bootstrap target |
 | `20` | tests/gates |
-| `21` | state/persistence/media/biometric/external refs |
+| `21` | state/persistence/media/biometric/external/automation refs |
 | `23` | Cursor master prompt |
-| `25` | requirements `CP-001…CP-214` |
+| `25` | requirements `CP-001…CP-248` |
 | ledger | current execution/evidence |
 
 ## 4. Specs temáticas relevantes
@@ -53,11 +53,13 @@ Ledger registra estado; não redefine arquitetura.
 53 multimodal/Meeting/Frontline/industrial
 54 biometric identity/Human Observation
 55 Internet Research/external connectors/OAuth/external learning
+56 Microsoft Teams connector/meeting integration
+57 Event-Driven Autonomous Operations + Automation & Execution Hub
 ```
 
-`55` não cria outra ordem, outro requirement matrix ou outro action executor. Sua implementação é materializada exclusivamente por `16`.
+Specs temáticas não criam outra ordem, outra requirement matrix ou outro planner/workflow authority. Sua implementação é materializada exclusivamente por `16`.
 
-## 5. Findings arquiteturais já corrigidos
+## 5. Findings arquiteturais corrigidos
 
 ### F1 — Multiple execution authorities
 `16` é única authority de ordem.
@@ -81,31 +83,58 @@ Media/privacy/device/OT boundaries entram em C0.
 `54`: somente sinais observáveis do processo; no sensitive/psychological inference or automatic employment decision.
 
 ### F8 — Internet poderia virar HTTP irrestrito
-`55`: pesquisa passa por Search + Safe Fetch + egress policy; content externo é untrusted.
+`55`: pesquisa passa por Search + Safe Fetch + egress policy; external content é untrusted.
 
 ### F9 — Connectors poderiam hardcodar provider no planner
-`55` + `49`: semantic connector capabilities + provider adapters; no `if gmail/outlook/whatsapp` no planner.
+`55` + `49`: semantic connector capabilities + provider adapters.
 
 ### F10 — OAuth scope poderia ser confundido com RBAC
-Corrigido: provider scope é connection-specific e não altera Core permissions.
+Provider scope é connection-specific e não altera Core permissions.
 
 ### F11 — Tokens poderiam contaminar state/LLM/MFE
-Corrigido: Secret/Vault boundary + `secretRef`; credentials nunca são prompt/context/ordinary log data.
+Secret/Vault boundary + `secretRef`; credentials nunca são prompt/context/ordinary log data.
 
 ### F12 — Conta pessoal poderia virar source corporativo
-Corrigido: USER_DELEGATED/ORG_MANAGED/SHARED_RESOURCE/SERVICE_CONNECTION possuem ownership e visibility distintos.
+Connection ownership/visibility classes impedem promoção implícita.
 
 ### F13 — Read e send poderiam convergir cedo demais
-Corrigido: read/write capabilities separadas; `draft != send`; writes usam Policy/Decision/outcome verification.
+Read/write capabilities separadas; `draft != send`; writes usam Policy/Decision/outcome verification.
 
 ### F14 — Webhooks poderiam virar action channel paralelo
-Corrigido: provider event → validation → EventEnvelope → dedupe/reconciliation → Watch/Workflow. Event payload nunca autoriza write.
+Provider/domain event → validation → EventEnvelope → dedupe/correlation → Watch/Workflow. Event nunca autoriza write.
 
-### F15 — “Aprender com internet” poderia auto-publicar truth
-Corrigido: transient research ou Knowledge candidate; organizational publish exige governance/freshness/privacy/licensing.
+### F15 — External learning poderia auto-publicar truth
+Transient research ou Knowledge candidate; publish exige governance/freshness/privacy/licensing.
 
-### F16 — WhatsApp pessoal poderia induzir scraping frágil
-Corrigido: target default usa contratos oficiais suportados, especialmente WhatsApp Business Platform quando aplicável.
+### F16 — Teams poderia criar outro Copilot
+`56`: Teams é capability family/surface do mesmo Copilot runtime.
+
+### F17 — “Hub de RPAs” poderia virar arquitetura RPA-first
+`57`: produto alvo é **Automation & Execution Hub**; executor preference é API → native integration → function → RPA → computer-use → human.
+
+### F18 — RPA poderia absorver regra/decisão
+`57` + `49`: Copilot/Domain owners decidem; RPA é adapter/executor substituível.
+
+### F19 — Planner poderia carregar clicks/selectors
+Corrigido: semantic capability contract; UI mechanics ficam exclusivamente no executor adapter.
+
+### F20 — Todo evento poderia chamar LLM
+Corrigido: DecisionPathPolicy `FAST | OPERATIONAL | REASONING`; deterministic path quando suficiente.
+
+### F21 — Evento poderia ser confundido com autoridade
+Corrigido: event payload/source não concede permission nem ACT.
+
+### F22 — Technical success poderia ser narrado como business success
+Corrigido: Outcome Verification distingue executor result de postcondition autoritativa.
+
+### F23 — Watch PREPARE poderia executar implicitamente
+Corrigido: `PREPARE != ACT`; ACT somente C7 sob AutonomyPolicy.
+
+### F24 — Autonomy poderia virar flag global
+Corrigido: capability/context/risk-scoped; L5 OFF por default, allowlist/budgets/kill switch.
+
+### F25 — Computer-use poderia virar desktop/network irrestrito
+Corrigido: advanced sandboxed/allowlisted fallback, nunca default executor.
 
 ## 6. Foundation invariants
 
@@ -118,92 +147,83 @@ Core = platform authorization authority
 Keycloak = identity authority
 Domain API = business authority
 External provider = external resource authority
-Portal = navigation/hosting authority
-OpenAPI = business action technical source
-SourceRef/EvidenceRef = cross-source provenance
-ExternalConnection = explicit owner/scopes/lifecycle
-Secret material = protected secret owner
-Internet Research = safe egress + provenance
-External content = untrusted
-provider scope != Core permission
-personal connection != organizational source
-read != write
-draft != send
-provider event != write authorization
-external Knowledge = candidate before publish
-Chat runtime dependency = zero
-OT free-form actuation = blocked
+RPA/executor = execution mechanism, not business authority
+Event source = signal authority only for its factual event, not permission
+Durable Workflow = one canonical work runtime
+Automation Hub = execution bounded context, not second planner/workflow
+semantic capability != concrete executor
+planner contains no RPA UI mechanics
+background ACT has explicit user/service identity
+technical success != verified business outcome
+Watch PREPARE != ACT
+Autonomy = capability/context/risk scoped
+L5 default = OFF
+OT safety remains external authority
+Chat runtime dependency = 0
 ```
 
-## 7. Reading minimization
+## 7. Documentation update rules
 
-### Sempre
+Any material architecture change must update, in this order where applicable:
 
 ```text
-official rules
-applicable .cursor rules
-README
-16
-50
-17
-49
-20 applicable section
-25 applicable CPs
+16 order/phase mapping
+17 owner/contracts
+49 architecture/patterns
+51 factual baseline if evidence changed
+21 state model
+20 tests/gates
+25 CP traceability
+23 Cursor prompt
+product/thematic specs
 ledger
 ```
 
-### C0/C1
+Documentation-only planning does not advance runtime status.
+
+## 8. New technology/provider rule
+
+Do not record a market capability/tool as platform fact merely because it exists externally.
+
+Example:
 
 ```text
-51
-52
-53/54/55 because C0 inventories all corresponding boundaries
+UiPath/Automation Anywhere/Power Automate exists in market
+!=
+DELPI currently has a reusable RPA platform
 ```
 
-### State/persistence
+Only C0 repo/infra evidence can produce `PLATFORM_REUSE` or `NEUTRAL_SHARED_REUSE`.
+
+## 9. Anti-drift checklist
+
+Search/review for:
 
 ```text
-21
+old CP upper range
+Chat runtime dependency
+provider/executor hardcode
+RPA-first wording
+second workflow/planner
+click/selector in semantic planner contracts
+event == permission/action
+every event == LLM
+technical success == business completion
+PREPARE == ACT
+global L5
+computer-use unrestricted
+OT actuation implied by enterprise autonomy
 ```
 
-### External feature step
+Any occurrence is reviewed against `16/17/20/25/49/57`.
+
+## 10. Current governance state
 
 ```text
-55
-+ relevant 16 step
-+ relevant 20 gate
-+ relevant CPs 194–214
+PROGRAM = PLANNED / NOT_STARTED
+REQUIREMENTS = CP-001…CP-248
+NEXT = C0.S0
+RUNTIME_DIFF = NONE
 ```
 
-## 8. Future-doc rule
-
-Every new doc declares status/order authority/standalone boundary and relevant thematic authority.
-
-Thematic doc may not:
-
-- create another phase sequence/CP matrix/test matrix/master prompt;
-- redefine shared primitive silently;
-- introduce Chat runtime dependency;
-- create duplicate Core/domain/provider authority;
-- move AI/connector intelligence into Portal;
-- store credentials in normal state;
-- create provider-specific planner routing;
-- make personal source organizational implicitly;
-- convert event/web content into action authority;
-- weaken biometric/privacy/OT boundaries.
-
-## 9. Current executable state
-
-```text
-C0.S0 platform/monorepo/media/device/biometric/external/OT inventory
-→ C0.S1 standalone boundary/names
-→ C0.S2 authorities
-→ C0.S3 primitives/refs
-→ C0.S4 architecture/persistence/privacy/egress/OAuth/secrets
-→ C0.S5 integration contracts
-→ C0.S6 RED harness including external negatives
-→ C0.S7 FOUNDATION_FREEZE
-→ C1.S1 standalone API skeleton
-```
-
-No runtime implementation before this sequence permits it.
+C0.S0 is factual inventory only, now including events/RPA/executors/workers/service identities/outcome sources/autonomy boundaries. It does not create Automation Hub runtime.
