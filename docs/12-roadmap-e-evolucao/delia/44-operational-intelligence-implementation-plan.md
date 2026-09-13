@@ -1,189 +1,138 @@
-# Minha DELPI Copilot — Detalhamento da Inteligência Operacional
+# DÉLIA — Detalhamento da Inteligência Operacional
 
-**Status:** detalhamento temático  
+**Status:** `PLANNED / TARGET` — detalhamento temático  
 **Autoridade de ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Regra:** identificadores `O*` são referência de assunto, não sequência independente.
+**Regra:** identificadores `O*` são referência de assunto, não sequência independente nem prova de implementação.
 
 ## 1. Objetivo
 
-Detalhar Evidence, Business Graph, Durable Work, Tasks, Cases, Rooms, Inbox, Watch, Decision Gates, Organizational Knowledge, Expertise Studio, Simulation e Model Router sem competir com a ordem C0–C7 e sem reutilizar o runtime do Minha DELPI Chat.
+Detalhar Evidence, Business Graph, Durable Work, Tasks, Cases, Rooms, Inbox, Watch, Decision Gates, Organizational Knowledge, Expertise Studio, Simulation e Model Router sem competir com C0–C7 e sem criar authority/executor paralelo.
 
 ## 2. Mapeamento canônico
 
-| O* | Conceito | Contrato/foundation | Runtime canônico |
+| O* | Conceito | Foundation/decision | Runtime target |
 |---|---|---|---|
 | O0 | inventário operacional | C0.S0 | — |
-| O1 | Evidence/Provenance | C0 shared refs | C3.S9–S10 + C4.S3 |
-| O2 | DELPI Business Graph | C0 Entity/Relationship contracts | C4.S4–S5 |
-| O3 | Copilot Task | C0 TaskRef/lifecycle | C6.S1 |
-| O4 | Durable Workflow | C0 Workflow/Step/wait semantics | C5.S4–S6 |
-| O5 | Copilot Case/Evidence Board | C0 CaseRef + EvidenceRef | C6.S2 |
-| O6 | Interaction Room | C0 inventory/owner | C6.S3 |
-| O7 | Copilot Inbox | C0 refs/state semantics | C6.S4 |
-| O8 | Watch | C0 EventEnvelope | C6.S5; ACT C7.S2 |
-| O9 | Decision Gates | C0 Decision contracts | C5.S1–S3 |
-| O10 | Organizational Knowledge/Learning | C0 provenance/lifecycle | C3.S8 + C6.S6–S7 |
-| O11 | Expertise Studio | Expertise/Playbook contracts C0 | C6.S8 |
-| O12 | What-if/Simulation | owner/model assumptions | C7.S3 |
-| O13 | Model Router | provider baseline/policy | C3.S1 baseline; C7.S4 router |
+| O1 | Evidence/Provenance | C0 owner/contracts | C3/C4 conforme `16` |
+| O2 | DELPI Business Graph | C0 owner/contracts | C4 pilot quando unlocked |
+| O3 | DÉLIA Task | C0 lifecycle/owner | C6 |
+| O4 | Durable Workflow | C0 Workflow/Step/wait semantics | C5 |
+| O5 | DÉLIA Case/Evidence Board | C0 owner/refs | C6 |
+| O6 | Interaction Room | C0 inventory/owner | C6 |
+| O7 | DÉLIA Inbox | C0 refs/state semantics | C6 |
+| O8 | Watch | C0 Event/Watch semantics | C6 OBSERVE/ADVISE/PREPARE; selected autonomous ACT C7 |
+| O9 | Decision Gates | C0 Decision semantics | C5 before governed material ACT |
+| O10 | Organizational Knowledge/Learning | C0 provenance/lifecycle | C3/C6 |
+| O11 | Expertise Studio | C0/C3 owner/contracts | C6 when justified |
+| O12 | What-if/Simulation | model/source owner + assumptions | incremental per `16`; advanced Twin/optimization C7 |
+| O13 | Model Router | approved model/provider baseline | simple abstraction earlier; intelligent routing C7 if justified |
 
-Esse mapeamento substitui qualquer ordem antiga `O0→O13` como regra de execução.
+Esse mapeamento não redefine fases do Plano Mestre.
 
 ## 3. Princípio de construção
 
 ```text
-contract first
-→ owner/port
-→ persistence boundary
-→ tests
-→ runtime
-→ UX
-→ rollout
+cross-cutting responsibility
+→ owner
+→ canonical source
+→ consumers
+→ contract
+→ implementation
 ```
 
-Nenhum conceito operacional cria primitive próprio quando C0 já oferece um compartilhado.
+Só depois entram persistence, ports, registries, engines, queues ou stores, sujeitos ao Abstraction Gate.
 
 ## 4. Evidence
 
-Reutiliza `SourceRef`, `EvidenceRef`, `OutcomeRef` e epistemic classes C0.
-
-```text
-C3.S9–S10
-→ multimodal evidence + epistemic synthesis
-
-C4.S3
-→ Evidence normalizada de resultados das Domain APIs
-
-C6.S2
-→ Evidence Board reutiliza as mesmas refs
-```
-
-Case, Workflow, Graph e Simulation nunca criam Evidence model paralelo.
+Reutilizar contratos canônicos somente quando C0 os congelar. Case, Workflow, Graph, Simulation e provider adapters não criam Evidence model paralelo.
 
 ## 5. Business Graph
 
-Reutiliza `EntityRef`/`RelationshipRef`.
-
-Runtime C4:
-
-- relationship registry/index se necessário;
-- permission-aware traversal;
-- source fetch nas APIs owners;
-- provenance;
-- depth/cycle budget;
-- authoritative vs inferred;
-- cross-domain analysis.
-
-Não replica tabelas operacionais.
+Graph é relação/projeção, não master data nem Semantic Layer. Runtime/index/materialization só entram se consumers reais e performance/lifecycle justificarem.
 
 ## 6. Durable Work Foundation
 
-C5 implementa somente a fundação executora/durável:
+C5 implementa Work/orchestration da DÉLIA, não um technical executor paralelo:
 
 ```text
-Decision Gate Engine
-→ governed write executor
-→ outcome verification
-→ WorkflowPlan/DAG runtime
-→ checkpoints/waits
-→ crash/retry/idempotency gate
+Policy/Decision
+→ governed ACT orchestration
+→ Domain API direct path OR Automation Hub/approved executor contract
+→ technical result
+→ authoritative Outcome verification
+→ checkpoint/waits/retry/reconciliation
 ```
 
-Task/Case/Room/Inbox não são motores C5; entram como produtos/consumidores em C6.
+DÉLIA Work nunca contém RPA clicks/selectors ou worker credentials.
+
+Task/Case/Room/Inbox são product/work projections consumidoras, não motores separados.
 
 ## 7. Product Work em C6
 
 ```text
-C6.S1 Task
-→ C6.S2 Case + Evidence Board
-→ C6.S3 Interaction Room integration
-→ C6.S4 Inbox
+Task
+→ Case/Evidence Board
+→ Room integration
+→ Inbox
 ```
 
-Todos usam o mesmo Durable Workflow Runtime C5 e os mesmos refs compartilhados.
+Todos compartilham Work/Evidence/Decision semantics canônicas, sem duplicar technical-execution lifecycle do Automation Hub.
 
-## 8. Proatividade
+## 8. Proatividade / Watch
 
-C6.S5 começa somente com:
+C6 default:
 
 ```text
 OBSERVE
 ADVISE
+PREPARE
 ```
 
-Watch `ACT` exige C7.S2 + autonomy/policy/Decision Gate adequados.
+`PREPARE` não produz side effect material.
 
-Event processing precisa dedupe/cooldown/expiry/revalidation.
+C5 governed ACT de capabilities explícitas pode existir independentemente do Watch. C7 adiciona **selected autonomous Watch ACT / advanced autonomy**, sempre capability-scoped, com L5 OFF por default.
+
+Event processing requer authenticity/trust, dedupe, cooldown, expiry, actor resolution e live revalidation.
 
 ## 9. Decision Gates
 
-Contrato nasce em C0; engine entra em C5 antes do primeiro write production-ready.
-
-Níveis:
-
-```text
-NO_GATE
-ACKNOWLEDGE
-CONFIRM
-REVIEW_AND_CONFIRM
-APPROVAL_WORKFLOW
-BLOCK
-```
-
-Approval antiga não autoriza payload/evidence materialmente alterado.
+Decision contract nasce em C0; runtime/gates entram antes do primeiro governed material ACT. Approval não substitui Core/domain authorization e é invalidável por mudança material de args/evidence/policy/state.
 
 ## 10. Organizational Knowledge
 
 ```text
-C3.S8 → Reference Knowledge/RAG da Copilot API
-C6.S6 → Decision/Experience/Solution Patterns
-C6.S7 → Governed Learning
+Evidence
+→ candidate
+→ owner/review
+→ eval
+→ version
+→ publish
 ```
 
-Case resolution gera candidate, nunca auto-publish.
+Case/meeting/frontline/process outcome nunca auto-publica corporate truth.
 
 ## 11. Expertise Studio
 
-C6.S8, após Expertise runtime C3 estar estável:
-
-```text
-draft → review → eval → published → deprecated/rollback
-```
-
-Não criar agente por pack e não migrar CRUD de agents do Chat.
+C6 somente se runtime/owner/consumer real já justificar. Não cria agent CRUD, catalog paralelo ou storage próprio antecipado.
 
 ## 12. Simulation
 
-C7.S3 somente para domínio com modelo/calculadora owner, baseline e premissas reproduzíveis.
+Simulation/Scenario podem surgir antes de C7 quando `16` permitir análise/PREPARE e houver modelo owner/reproduzível. C7 fica para Twin/optimization/autonomy avançados e scale.
 
 ```text
 SIMULATE != APPLY
 ```
 
-Apply passa por Business Action/Decision Gate.
+Apply inicia nova live Decision/ACT path.
 
 ## 13. Model Router
 
-C3.S1 fornece provider/model abstraction baseline simples.
-
-C7.S4 só adiciona roteamento inteligente depois de métricas reais da própria Copilot API.
-
-Compute policy pode selecionar:
-
-```text
-FAST
-STANDARD
-DEEP_REASONING
-MULTIMODAL
-LONG_CONTEXT
-```
-
-com privacy/provider/latency/cost/output constraints.
+C3 pode ter provider-neutral abstraction mínima quando necessária. Model lifecycle/approval/revoke é authority separada. C7 só adiciona intelligent routing se métricas/evals reais justificarem.
 
 ## 14. Independence
 
-É proibido usar como runtime dependency:
+Proibido runtime dependency em:
 
 ```text
 minha-delpi-ai-api planner/executor/RAG/session
@@ -193,39 +142,39 @@ Chat workflow/persistence
 Chat provider routing
 ```
 
-C0 pode estudar esses componentes somente como referência técnica/anti-pattern. Reuso só é válido via componente neutro com owner compartilhado real.
+C0 pode inspecionar esses componentes somente como reference/inventory.
 
 ## 15. Anti-duplicação
 
 Não criar:
 
-- `CaseEvidence` incompatível com EvidenceRef;
-- `WatchEvent` incompatível com EventEnvelope;
+- Evidence/Entity/Event/Decision refs incompatíveis;
 - Task workflow engine;
-- confirmation system paralelo ao Decision Gate;
+- confirmation system paralelo;
 - graph entity ID próprio;
-- room storage duplicado sem gap provado;
-- Experience auto-learning pipeline sem governance;
-- model selection conditions espalhadas pelas features;
-- runtime fallback para Minha DELPI Chat.
+- room storage duplicado sem gap;
+- auto-learning production path;
+- model routing espalhado em features;
+- DÉLIA technical executor paralelo ao Automation Hub;
+- runtime fallback para Chat.
 
 ## 16. Cenário âncora
 
 ```text
 reclamação
 → Case
-→ Graph
+→ Graph/source relations
 → desenho multimodal
 → Evidence Board
 → Engineering + Quality expertise
-→ 8D
-→ Task/Durable Workflow
+→ 8D candidate
+→ Task/Durable Work
 → wait_event
 → Watch/Inbox
-→ Decision Gate
-→ Business Action
-→ Outcome/Audit
+→ Policy/Decision
+→ Domain API or Automation Hub technical execution
+→ authoritative Outcome
 → Experience candidate
 ```
 
-A execução desse cenário é liberada gradualmente conforme C3–C7 e seus gates estejam PASS; nenhuma etapa depende de migração/cutover do Chat.
+A execução é liberada gradualmente conforme `16` e gates/evidence. Documentação não avança fase nem prova runtime.
