@@ -2,22 +2,21 @@
 
 **Status:** catálogo funcional temático  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)
+**Requirements:** [`25-requirements-traceability.md`](./25-requirements-traceability.md) — `CP-001…CP-310`
 
 ## 1. Objetivo
 
-Descrever as capacidades do produto independentemente da fase, sem duplicar a ordem de implementação. A sequência canônica vive em `16-execution-master-plan.md`.
+Descrever o que o produto pode evoluir para fazer, sem duplicar a ordem C0–C7.
 
-## 2. Conversa e entendimento
+## 2. Conversation / Understanding
 
-- linguagem natural PT-BR;
-- pedidos simples/compostos;
-- follow-up contextual;
-- clarify mínimo;
-- entity resolution;
+- natural PT-BR;
+- multi-intent/follow-up;
 - structured goals;
-- memória/references sem chain-of-thought;
-- texto e voz como modalidades de entrada.
+- entity resolution;
+- text/voice/media;
+- contextual clarification only when needed;
+- no chain-of-thought persistence.
 
 ## 3. Surfaces
 
@@ -26,476 +25,426 @@ GLOBAL
 WORKSPACE
 MEETING
 FRONTLINE
+TEAMS future surface
+BACKGROUND Watches/Workflows
+ADMIN governance surfaces
 ```
 
-Todas usam a mesma Copilot API, identidade, policies e Evidence model.
+Same Copilot API/product/policy/evidence/work runtime.
 
-## 4. Navegação e contexto
+## 4. Portal / Context / Navigation
 
-- abrir app/rota/entidade;
-- selecionar view/aba;
-- aplicar filtro visual;
-- focus;
-- deep link;
-- Workspace Context;
-- context chips;
-- contexto por MFE/iframe;
-- contexto operacional via EntityRefs para OP, máquina, produto, lote, operação, posto e material;
-- bounded device/session metadata quando necessário.
+- open app/route/entity;
+- deep links/view/filter/focus;
+- WorkspaceContext + EntityRefs + SourceRefs;
+- iframe bridge;
+- operational context OP/machine/product/operation/workstation/lot/material;
+- shared-device/session hygiene.
 
-## 5. Copilot único e especialização
+## 5. Expertise / Playbooks / Knowledge
 
-- uma identidade de produto;
+- one Copilot identity;
 - Expertise Packs;
 - Domain Playbooks;
-- composição cross-domain;
-- project preferences;
-- unknown pack sem core patch;
-- nenhuma capability concedida por expertise.
+- Reference/Decision/Experience/Solution Pattern Knowledge;
+- cross-domain composition;
+- version/review/eval/publish/rollback;
+- expertise never grants permission.
 
-## 6. Knowledge
+## 6. Personal Memory / Personalization
 
-- procedimentos/manuais/normas;
-- help contextual;
-- Reference Knowledge;
-- Operational Knowledge;
-- Decision Knowledge;
-- Experience Knowledge;
-- Semantic Knowledge;
-- ACL em todas as camadas;
-- candidate knowledge a partir de reuniões/processos somente com governance.
+- user preferences;
+- confirmed personal work facts;
+- followed topics/projects/metrics;
+- work continuity refs;
+- personalized briefing;
+- view/correct/delete/disable controls;
+- no hidden sensitive/personality profile;
+- memory never overrides live business truth/RBAC.
 
-## 7. Multimodalidade
+## 7. Multimodal / Voice / Biometrics
 
-- PDF;
-- imagem;
-- desenho técnico;
-- foto de defeito;
-- certificados/relatórios;
-- áudio/voz;
-- câmera;
-- vídeo curto;
-- screen share quando autorizado;
-- OCR/VLM/STT/TTS quando necessário;
-- page/region/frame/time-range provenance;
-- confidence/limitations;
-- media retention/policy refs.
+- PDF/image/drawing/photo/certificates/spreadsheets;
+- STT/TTS/voice commands;
+- camera/video/screen share;
+- page/region/frame/time provenance;
+- closed-set enrolled face/speaker recognition when governed;
+- explicit capture/retention;
+- Human Observation limited to observable process evidence.
 
-## 8. Voice
+## 8. Internet Research
 
-- speech-to-text;
-- text-to-speech;
-- hands-free commands;
-- correction/repeat;
-- voice activity em Meeting/Frontline;
-- mesma policy/Decision Gate do texto.
+- current public research;
+- safe search/fetch;
+- source authority/freshness;
+- conflict handling;
+- provenance/citations;
+- untrusted-content boundaries.
 
-Voz nunca é bypass de autorização.
+## 9. External Connectors
 
-## 9. Meeting Mode
+Potential approved connectors:
 
-- sessão explícita;
-- transcrição;
-- perguntas por voz/texto;
-- consulta de dados reais durante reunião;
-- screen/camera/media quando autorizado;
-- fatos/decisões/pendências;
-- candidate actions;
-- ata viva;
-- Tasks/Cases/Room linkage;
-- retomada na reunião seguinte.
+- Microsoft 365 / Outlook / Teams / OneDrive / SharePoint;
+- Google Workspace / Gmail / Drive / Calendar;
+- WhatsApp Business;
+- Slack/GitHub/CRMs/service desks/future providers.
 
-## 10. Meeting artifacts
+Capabilities include search/read/draft/send/create/update according to scopes/policy. `read != write`, `draft != send`.
 
-Ata/meeting artifact pode conter:
+## 10. Microsoft Teams
 
-```text
-participants refs
-transcript ref
-summary
-source data/evidence
-decisions
-pending topics
-candidate actions
-confirmed actions
-Task/Case refs
-```
+- teams/channels/chats/messages/replies;
+- meeting metadata/transcripts/recordings when authorized;
+- change notifications;
+- meeting artifacts to Evidence/Task/Case/Watch;
+- future app/tab/bot as same Copilot runtime;
+- live raw media advanced/optional only.
 
-Ação extraída da fala não é execução automática.
-
-## 11. Frontline Mode
-
-- UI simplificada;
-- touch/tablet/kiosk;
-- voz hands-free;
-- câmera/imagem;
-- instrução passo a passo;
-- desenho/revisão;
-- OP/operação/máquina contextual;
-- histórico de qualidade/manutenção;
-- registrar ocorrência;
-- chamar líder/manutenção/qualidade;
-- training assistance;
-- degraded fallback quando modalidade não estiver disponível.
-
-## 12. Process learning
-
-- observar processo apenas quando autorizado;
-- capturar insight/prática como candidate;
-- associar Evidence/context;
-- expert/owner review;
-- eval/version/publish;
-- nunca auto-mudar instrução/processo.
-
-## 13. Evidence e explicabilidade
+## 11. Evidence / Epistemic UX
 
 - SourceRef/EvidenceRef;
-- media provenance;
-- freshness;
-- facts;
-- calculations;
-- hypotheses;
-- conclusions;
-- recommendations;
+- freshness/confidence/limitations;
+- FACT/CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION;
 - conflicting evidence;
-- source expansion na UX.
+- source drill-down;
+- outcome provenance.
 
-## 14. Business Reads
+## 12. Business Reads / Writes
 
-Quando APIs/actions autorizadas existirem:
+Read/compare/analyze data from onboarded domain APIs. Writes create/edit/approve/reject/assign/comment/cancel/initiate domain processes only through authorized Business Actions, Policy/Decision and final domain validation.
 
-- produtos/estoque/estrutura;
-- comercial;
-- suprimentos;
-- produção;
-- financeiro;
-- qualidade;
-- engenharia;
-- manutenção;
-- solicitações;
-- demais domínios onboarded.
+## 13. Business Graph
 
-Concreto = OpenAPI/Action Catalog + RBAC, nunca lista hardcoded deste documento.
+- canonical entity relationships;
+- cross-domain traversal;
+- provenance/freshness;
+- permission-aware fetch;
+- no master-data replication.
 
-## 15. DELPI Business Graph
+## 14. Semantic Business Layer
 
-- canonical EntityRef;
-- relações cross-domain;
-- authoritative/inferred provenance;
-- permission-aware traversal;
-- source API fetch;
-- depth/cycle budgets;
-- sibling relation onboarding;
-- ligação de media/evidence/meeting/frontline refs às entities sem replicar master data.
+- governed MetricDefinitions;
+- business glossary;
+- dimensions/grain/units;
+- official formulas/owners/versions;
+- conflict/deprecation handling;
+- reproducible semantic queries;
+- zero-copy/federated source preference.
 
-## 16. Análise
+Graph relates entities; Semantic Layer defines business meaning.
 
-- comparar períodos/entidades;
-- métricas/cálculos grounded;
-- anomalias/tendências quando método suportar;
-- causalidade somente com evidence suficiente;
-- cross-domain synthesis;
-- processo/tempo/ciclo quando dados oficiais sustentarem;
-- limitação explícita.
+## 15. Event-Driven Operational Intelligence
 
-## 17. Recommendations
+- real event ingestion;
+- EventEnvelope;
+- authenticity/dedupe/order/correlation;
+- polling only as bounded fallback;
+- `FAST|OPERATIONAL|REASONING` paths;
+- deterministic readiness/anomaly policies;
+- proactive Watches.
 
-Próximos passos baseados em:
+## 16. Process Intelligence
 
-- goals;
-- evidence/outcomes;
-- Workspace Context;
-- authorized capabilities;
-- policy;
-- work state.
+- Process Discovery;
+- Process Mining;
+- Task Mining only when explicitly governed;
+- conformance checking;
+- variants;
+- bottlenecks/waits/rework;
+- process KPI mining;
+- automation opportunity detection;
+- before/after measurement;
+- BPMN/process-map artifacts.
 
-Sugestão não é execução.
+No hidden employee productivity/person score.
 
-## 18. Business Writes
+## 17. Automation & Execution Hub
 
-Conforme API/RBAC/policy:
+Executor types:
 
-- criar;
-- editar;
-- aprovar/rejeitar;
-- atribuir;
-- comentar;
-- cancelar/arquivar;
-- iniciar processos;
-- registrar ocorrência/solicitação.
+```text
+API
+native integration
+function/script
+RPA
+computer-use
+Human Task
+```
 
-Sempre via Business Action, não UI automation.
+Functions:
 
-## 19. Decision Gates
+- semantic capability→executor mapping;
+- execution queues/state;
+- RPA worker visibility when applicable;
+- idempotency/retry/cancel;
+- exception handling;
+- outcome verification;
+- notification/escalation;
+- kill switches.
 
-- NO_GATE;
-- ACKNOWLEDGE;
-- CONFIRM;
-- REVIEW_AND_CONFIRM;
-- APPROVAL_WORKFLOW;
-- BLOCK.
+API is preferred when supported/authoritative.
 
-Inclui impact preview, args hash, evidence refs, expiry e revalidation.
+## 18. Watch / Proactivity
 
-## 20. Artefatos
+```text
+OBSERVE → detect/record
+ADVISE  → analyze/notify
+PREPARE → prepare draft/action/work plan, no side effect
+ACT     → C7 only under explicit autonomy
+```
 
-- relatório;
-- resumo executivo;
-- tabela;
-- comunicação/e-mail;
-- plano de ação;
-- documentação;
-- ata de reunião;
-- transcript/meeting summary quando permitido;
-- apresentação/arquivo quando capability existir.
+## 19. Durable Workflow / Work Management
 
-Artefato não executa business write implicitamente.
-
-## 21. Workflows
-
-- goal/DAG;
-- dependencies;
+- DAG/dependencies;
 - safe parallel reads;
-- Decision Gates;
-- retry/idempotency;
-- partial failure;
-- checkpoints;
-- activity;
-- cancel/timeout;
-- no duplicate write.
+- wait_user/wait_approval/wait_event/wait_time;
+- checkpoints/restart/resume;
+- no duplicate write;
+- Task/Case/Room/Inbox;
+- human exceptions resume same Workflow.
 
-## 22. Durable Work
-
-- wait_user;
-- wait_approval;
-- wait_event;
-- wait_time;
-- resume após F5/restart;
-- event correlation;
-- state persistence quando necessário;
-- Meeting/Frontline actions podem virar Task/Workflow sem engine paralela.
-
-## 23. Copilot Tasks
-
-- objective;
-- progress;
-- steps;
-- decisions pendentes;
-- result/evidence refs;
-- meeting/frontline refs quando aplicável;
-- links;
-- cancel quando suportado.
-
-## 24. Copilot Cases
-
-- investigação longa;
-- entity refs;
-- Evidence Board;
-- hypotheses/decisions/actions;
-- Tasks/Workflows;
-- timeline;
-- Room;
-- artifacts;
-- meeting/frontline refs;
-- lifecycle/resolution/reopen.
-
-## 25. Interaction Rooms
-
-- participantes;
-- mensagens;
-- arquivos;
-- resumo grounded;
-- pending actions;
-- Case linkage;
-- meeting artifact linkage;
-- source permissions preservadas.
-
-## 26. Copilot Inbox
-
-- waiting_for_user;
-- working;
-- completed;
-- alerts;
-- Decision/Task/Case/Workflow links;
-- meeting actions pendentes;
-- dedupe/status lifecycle.
-
-## 27. Copilot Watch
-
-- OBSERVE;
-- ADVISE;
-- ACT.
-
-Com event matching, dedupe, cooldown, expiry, permission revalidation e autonomy policy.
-
-## 28. Event-driven continuity
-
-- resume workflow por evento;
-- alertas;
-- acompanhar status;
-- continuar investigação após dependência externa;
-- preferir event source real a polling hardcoded.
-
-## 29. Organizational Knowledge e Governed Learning
-
-- Decision/Experience records;
-- Solution Patterns;
-- feedback → candidate;
-- meeting/process/frontline insight → candidate;
-- review/eval/version/publish;
-- rollback;
-- nunca auto-publicar conversa/correção/observação.
-
-## 30. Expertise Studio
-
-- draft;
-- review;
-- eval;
-- publish;
-- deprecate;
-- rollback;
-- usage/quality telemetry.
-
-Não é criador de agentes.
-
-## 31. Simulation
-
-- baseline;
-- assumptions;
-- deterministic/domain model owner;
-- projected impact;
-- limitations;
-- `SIMULATE != APPLY`.
-
-## 32. Model Router
-
-Classes conceituais:
+## 20. Decision Gates / Autonomy
 
 ```text
-FAST
-STANDARD
-DEEP_REASONING
-MULTIMODAL
-LONG_CONTEXT
-REALTIME_MEDIA quando futuramente justificado
+NO_GATE
+ACKNOWLEDGE
+CONFIRM
+REVIEW_AND_CONFIRM
+APPROVAL_WORKFLOW
+BLOCK
 ```
 
-Seleção por Compute Policy, data policy, latency/cost e quality requirements.
+Autonomy L0–L5 is capability/context/risk scoped; L5 OFF by default. No global unrestricted autonomy.
 
-## 33. Iframes
+## 21. Outcome Verification
+
+Material actions distinguish technical execution from authoritative business completion:
 
 ```text
-PORTAL_ONLY
-CONTEXTUAL
-INTERACTIVE
-AI_READY
+EXECUTED?
+AND
+EXPECTED POSTCONDITION VERIFIED?
 ```
 
-Contexto/comandos visuais por bridge seguro; Business Actions por API.
+No false “success” notifications.
 
-## 34. Autonomia
+## 22. Analysis Sandbox
+
+- bounded Python/SQL/DataFrame/statistics/forecast/optimization/chart workloads;
+- isolated runtime;
+- authorized read inputs;
+- quotas/timeouts;
+- no unrestricted host/private network;
+- reproducibility metadata;
+- truthful failure.
+
+## 23. Artifact Workspace
+
+Generate/manage:
 
 ```text
-L0 explain
-L1 navigate
-L2 read/analyze
-L3 prepare
-L4 governed execute
-L5 explicitly allowlisted autonomy
+reports/documents
+spreadsheets
+presentations
+PDFs
+charts
+process maps/BPMN
+A3/8D/FMEA candidates
+checklists/procedure drafts
+project plans
+meeting minutes
+analysis packages
 ```
 
-L5 OFF por default.
+With version/provenance/ACL/review/human edit preservation/export/share governance.
 
-**Autonomia empresarial não implica comando físico de máquina.**
+## 24. Predictive Intelligence
 
-## 35. Industrial/OT boundary
+Potential use cases:
 
-Default:
+- demand/stockout risk;
+- supplier delay;
+- machine failure/maintenance;
+- quality/scrap risk;
+- production delay/capacity;
+- SLA/financial risks where approved.
+
+Prediction carries model/version/horizon/confidence/freshness/limitations and is not FACT.
+
+## 25. Prescriptive Intelligence
+
+- objectives/constraints;
+- alternative actions;
+- predicted outcomes;
+- trade-offs/risk;
+- recommendation/PREPARE;
+- never implicit authorization.
+
+## 26. Operational Twin / What-if
+
+- dynamic source-state projection;
+- scenario branches;
+- simulation/compare;
+- impact on OP/capacity/inventory/customer/etc.;
+- `SIMULATE != APPLY`;
+- scenario never writes production directly.
+
+## 27. MCP / A2A interoperability
+
+- approved MCP tool/resource integrations;
+- approved A2A external-agent delegation;
+- lifecycle/allowlists/scopes;
+- minimal delegated context;
+- cancellation/budget;
+- normalized Evidence/Outcome;
+- same write governance;
+- discovery != approval.
+
+## 28. AI Control Tower
+
+Central Digital Workforce governance:
+
+- AI asset/model/automation/connectors/tool-agent/Edge inventory;
+- owner/version/risk/data scope;
+- eval freshness/health;
+- cost and verified value;
+- incidents/dependencies;
+- rollout/cohorts;
+- kill switches/rollback.
+
+Admin does not inherit business action permissions.
+
+## 29. AI Model Lifecycle / MLOps
+
+- LLM/embedding/vision/speech/classifier/forecast/anomaly/optimization models;
+- eval/approval/deployment;
+- drift/latency/cost/availability;
+- datasets/eval governance;
+- rollback/revoke;
+- cloud/provider/batch/Edge deployments.
+
+## 30. Capability Marketplace
+
+Governed lifecycle for:
+
+- Expertise/Playbooks;
+- Watches;
+- automations;
+- connector packs;
+- MCP/A2A integrations;
+- analysis/artifact templates;
+- semantic metric packs;
+- Frontline skills;
+- approved models.
+
+Package requirements never grant permissions. Executable assets pass supply-chain controls.
+
+## 31. Edge / Offline Industrial Copilot
+
+- current procedure/drawing cache;
+- bounded local search/STT/vision/model inference;
+- telemetry reads;
+- FAST path;
+- offline Frontline assistance;
+- event buffering/store-and-forward;
+- device/package/model management;
+- explicit online/degraded/offline modes;
+- no authority widening offline.
+
+## 32. Meeting Mode
+
+- explicit session/capture;
+- transcript + authorized business/external queries;
+- participant/speaker association when governed;
+- facts/decisions/pending topics;
+- candidate actions;
+- ata viva;
+- Task/Case/Room follow-up.
+
+Transcript != decision != executed action.
+
+## 33. Frontline Mode
+
+- large touch/hands-free;
+- camera/image;
+- current procedure/drawing/revision;
+- OP/machine/product context;
+- maintenance/quality support;
+- occurrence/help request;
+- training assistance;
+- governed biometric identity assistance;
+- Edge/offline support when available.
+
+## 34. Organizational Learning
 
 ```text
-Copilot observa/consulta/explica/recomenda
-Copilot prepara ação empresarial
-Copilot -X→ comando físico arbitrário
+source/experience/process/execution
+→ Evidence
+→ candidate
+→ review/eval/freshness/privacy/licensing
+→ versioned publish
 ```
 
-Qualquer future machine control exige safety gate separado, deterministic adapters, interlocks independentes, authorization e audit.
+No one-run auto-learning into production policy.
 
-## 36. Privacy/media governance
+## 35. Iframe / AI-ready onboarding
 
-- visible capture state;
-- purpose;
-- consent/policy;
-- class-specific retention;
-- data minimization;
-- shared-device session isolation;
-- no implicit facial recognition/emotion detection;
-- no hidden worker surveillance.
+Secure bridge for context/visual commands; Business Actions remain API-based. Apps onboard through shared contracts/readiness without central planner hardcode.
 
-## 37. Administração
+## 36. Model Router / Compute Policy
 
-- capability/action coverage;
-- app readiness;
-- expertise/playbooks;
-- knowledge lifecycle;
-- Task/Case/Workflow;
-- Decision Gates;
-- Watch;
-- media providers/session budgets;
-- meeting/frontline coverage;
-- model usage/cost;
-- failures/retries;
-- privacy/retention;
-- safe execution;
-- audit;
-- rollout/kill switch.
+Choose only approved models based on capability, quality, latency, cost, data policy and deployment availability. Revoked model unavailable.
 
-## 38. Onboarding AI-ready
+## 37. Security / Privacy / Industrial Safety
+
+- no secret/token leakage;
+- source/user isolation;
+- safe egress;
+- no hidden capture/biometric surveillance;
+- Process Mining not employee scoring;
+- sandbox bounded;
+- tool/agent/package untrusted;
+- Prediction not fact;
+- Twin not production;
+- Edge offline not permission expansion;
+- Marketplace install not permission;
+- no arbitrary LLM/RPA/Edge→machine actuation.
+
+## 38. Administração
+
+Role-gated surfaces may include:
 
 ```text
-L1 discoverable
-L2 context-ready
-L3 read-ready
-L4 write-ready
-L5 workflow-ready
+Connections
+Automation Hub
+Process Intelligence
+AI Control Tower
+Semantic Catalog
+Memory controls
+Artifact Workspace
+Model Governance
+Marketplace
+Edge Fleet
 ```
 
-Novo app entra por shared contracts sem patch central.
+## 39. Final experience
 
-Frontline-ready pode ainda exigir device/context/media requirements próprios sem alterar os níveis AI-ready de negócio.
-
-## 39. Fora do padrão
-
-- DOM automation para substituir API;
-- browser/cross-origin hacks;
-- bypass de permission;
-- endpoint selector hardcoded;
-- chain-of-thought persistence;
-- agent engine por departamento;
-- Business Graph duplicando bancos;
-- confirmation system paralelo ao Decision Gate;
-- automatic production learning por feedback;
-- hidden audio/video capture;
-- raw-media retention sem policy;
-- facial/emotion surveillance por default;
-- arbitrary LLM→machine control;
-- qualidade automática baseada apenas em impressão visual não validada.
-
-## 40. Experiência final
-
-O usuário deve sentir que o Copilot:
+The user should feel that the Copilot:
 
 ```text
-sabe onde estou
-+ entende o objetivo
-+ entende quando falo/mostro algo
-+ encontra entidades/fontes corretas
-+ aplica conhecimento especializado
-+ mostra evidence
-+ navega e executa com governança
-+ acompanha trabalho ao longo do tempo
-+ participa de reuniões de forma transparente
-+ ajuda o operador no trabalho real
-+ colabora com pessoas
-+ aprende somente por processo governado
-+ respeita minhas permissões e privacidade
+understands where I am and what matters to me
+knows business meaning and process reality
+finds internal/external evidence
+can perform reproducible analysis
+anticipates risks and simulates alternatives
+produces usable artifacts
+prepares/executes governed work
+coordinates APIs/RPAs/tools/agents/people
+verifies what really happened
+keeps me informed
+works in meeting and shopfloor contexts
+can remain useful in bounded offline scenarios
+governs models/assets safely
+learns only through explicit governance
 ```
