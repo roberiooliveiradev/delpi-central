@@ -6,7 +6,8 @@
 **Testes:** [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md)  
 **Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
 **Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
-**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)
+**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)  
+**Microsoft Teams:** [`56-microsoft-teams-connector-and-meeting-integration.md`](./56-microsoft-teams-connector-and-meeting-integration.md)
 
 > Esta é a única authority `CP-*`. IDs históricos não são reutilizados nem apagados; requisitos ligados à migração do Minha DELPI Chat são preservados como `OUT_OF_SCOPE_WITH_DECISION`.
 
@@ -86,6 +87,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-210 | Provider terms/scopes/limits/compliance são revalidados na implementação e rollout | Copilot Governance | provider compliance gate | PLANNED |
 | CP-211 | WhatsApp usa contratos oficiais suportados; scraping/automação de sessão pessoal é proibido por default | Copilot Connectors/Security | supported-contract gate | PLANNED |
 | CP-214 | Internet/connector/write/webhook possuem kill switches independentes de prompt/LLM | Copilot Admin/Security | emergency disable gate | PLANNED |
+| CP-223 | Teams inventory congela Entra app registration, tenant/admin owner, Graph scopes, resource-specific consent, webhooks, app distribution e meeting-artifact privacy antes do runtime | Copilot Teams/Architecture/Security | Teams foundation gate | PLANNED |
 
 ## 3. C1 — Standalone Application Bootstrap
 
@@ -163,6 +165,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-200 | Internet Research usa search + safe fetch + SourceRef/EvidenceRef + freshness/provenance | Copilot Internet Research | grounded research eval | LOCKED |
 | CP-201 | Connector runtime é provider-neutral; planner não contém branches Gmail/Outlook/WhatsApp | Copilot Connectors/Planner | provider generalization | LOCKED |
 | CP-205 | Connector capabilities são semânticas/contract-driven e separadas de endpoints específicos | Copilot Capability/Connectors | capability contract gate | LOCKED |
+| CP-215 | Teams é capability family do Microsoft 365 connector; planner não depende de Graph paths nem cria runtime Teams separado | Copilot Teams/Connectors/Planner | Teams provider-neutral architecture | LOCKED |
 
 ## 6. C4 — Business + External Reads + Business Graph
 
@@ -180,6 +183,9 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-128 | Business Graph sibling onboarding | Copilot Graph | no planner hardcode | LOCKED |
 | CP-202 | External reads suportam fontes conectadas autorizadas sem vazar dados entre usuários/conexões | Copilot Connectors/Privacy | read isolation gate | LOCKED |
 | CP-206 | Todo external read material gera SourceRef/EvidenceRef com provider/resource/scope/freshness | Copilot Evidence/Connectors | provenance gate | LOCKED |
+| CP-216 | Teams reads suportam teams/channels/chats/messages/replies e meeting metadata somente dentro dos scopes/resources autorizados | Copilot Teams/Privacy | Teams read isolation gate | LOCKED |
+| CP-219 | Transcript/recording/meeting artifact do Teams preserva SourceRef/EvidenceRef, meeting resource, provenance, permission scope, freshness/version e retention policy | Copilot Teams/Meeting/Evidence | Teams meeting provenance gate | LOCKED |
+| CP-225 | Identidade de participante resolvida pelo Teams/tenant é primária quando authoritative; biometria é somente evidência suplementar governada | Copilot Teams/Biometric/Identity | participant identity precedence gate | LOCKED |
 
 ## 7. C5 — Governed Business/External Writes + Durable Work Foundation
 
@@ -209,6 +215,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-168 | Candidate action de voz/reunião/frontline exige transition governada antes de write | Copilot Policy/Work | Decision/idempotency | LOCKED |
 | CP-203 | External write/send/create/update é capability distinta de read e exige policy/Decision/outcome verification | Copilot External Actions | external write gate | LOCKED |
 | CP-204 | Draft/preview é separado de send; mensagem sugerida nunca é enviada implicitamente | Copilot Communication/MFE | draft-send separation | LOCKED |
+| CP-217 | Teams reply/send são capabilities governadas distintas de read/draft, com target preview, policy/Decision Gate e verified Graph outcome | Copilot Teams/External Actions | Teams write gate | LOCKED |
 
 ## 8. C6 — Product Work + Proactivity + Meeting/Frontline + External Events/Learning
 
@@ -257,6 +264,10 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-208 | External source só vira user/org Knowledge por candidate→review/eval/publish; nunca auto-truth | Copilot Knowledge/Governance | external learning gate | LOCKED |
 | CP-212 | Personal connection data não vira shared Knowledge/Case/Room sem sharing/promotion explícito | Copilot Privacy/Knowledge | personal-data isolation gate | LOCKED |
 | CP-213 | Subscription expiry/missed events/revocation exigem renewal/reconciliation/degraded state truthful | Copilot Connectors/Work | external event reliability | LOCKED |
+| CP-218 | Teams change notifications de mensagens/canais/reuniões/transcrições/gravações, quando suportadas, entram por autenticidade→EventEnvelope→dedupe/reconciliation | Copilot Teams/Events | Teams event lifecycle gate | LOCKED |
+| CP-220 | Teams meeting artifacts podem alimentar ata viva, Evidence, Task, Case, Room e Watch sem transformar transcript em decisão/ação automática | Copilot Teams/Meeting/Work | Teams meeting-to-work gate | LOCKED |
+| CP-221 | App/tab/bot do Copilot no Teams, quando implementado, usa a mesma Copilot API, Core/RBAC, Policy, Evidence e Work runtime; nenhum `teams-copilot-api` paralelo | Copilot Teams/MFE/Platform | same-runtime surface gate | LOCKED |
+| CP-224 | Chat privado, canal restrito, transcript e recording do Teams preservam source ACL; não viram shared Knowledge/Case/Room sem autorização/promotion explícita | Copilot Teams/Privacy/Knowledge | Teams private-resource isolation gate | LOCKED |
 
 ## 9. C7 — Autonomy + Advanced Realtime + External Proactivity + Optimization + Rollout
 
@@ -275,6 +286,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-122 | Compute Policy | Copilot Policy | provider constraints | LOCKED |
 | CP-129 | Anchor reclamação→8D→Watch→ação | Cross-domain/Copilot | full integration | LOCKED |
 | CP-180 | Advanced realtime media possui budgets/backpressure/degraded mode/cost telemetry | Copilot Media/Infra | realtime reliability gate | LOCKED |
+| CP-222 | Participação Teams ao vivo com raw realtime media só entra após evidence + ADR + tenant/media/privacy/cost/reliability gates; não é requisito do conector base | Copilot Teams/Realtime/Architecture | Teams advanced realtime gate | LOCKED |
 
 ## 10. Requisitos históricos do Chat — fora do escopo Copilot
 
@@ -304,6 +316,9 @@ Esses IDs não podem ser reativados como dependência do Copilot.
 - OAuth/provider scopes não substituem Core/domain authorization;
 - personal connection data não pode vazar para outro usuário ou virar conhecimento organizacional automaticamente;
 - `draft != send`; external write exige governance e verified outcome;
+- Teams é capability family do Microsoft 365 connector e não novo runtime;
+- Teams source ACL/tenant/resource scope permanecem obrigatórios em Evidence/Knowledge/Work;
+- Teams live raw-media participation é advanced capability, nunca pré-requisito do conector base;
 - OT physical actuation não é inferida a partir de autonomia L5.
 
 ## 12. Coverage final
@@ -332,6 +347,8 @@ EXTERNAL_CONNECTORS
 EXTERNAL_EVENTS
 EXTERNAL_COMMUNICATION
 EXTERNAL_KNOWLEDGE
+MICROSOFT_TEAMS
+TEAMS_MEETING_INTEGRATION
 MEETING
 FRONTLINE
 PRIVACY_SHARED_DEVICE
@@ -354,3 +371,11 @@ CP-194–CP-214
 ```
 
 Essa faixa cobre foundation de egress/OAuth/secrets, Internet Research, connectors provider-neutral, reads/writes, webhooks/event reliability, privacy de conexões pessoais, knowledge promotion e kill switches. A ordem de implementação permanece exclusivamente a do `16`.
+
+## 14. Microsoft Teams requirement range
+
+```text
+CP-215–CP-225
+```
+
+Essa faixa cobre Teams como capability family do Microsoft 365 connector, reads/writes, meetings/transcripts/recordings, change notifications, source ACL, participant identity precedence, same-runtime Teams surface e advanced live meeting participation. A ordem continua sendo definida exclusivamente por `16`; `56` detalha comportamento e gates temáticos.
