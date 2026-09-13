@@ -2,17 +2,17 @@
 
 > **Status:** `PLANNED / NOT_STARTED`  
 > **Decisão de produto:** **aplicação nova e standalone**  
-> **Visão:** **um único Copilot para escritório, reuniões, chão de fábrica e fontes externas autorizadas**  
-> **Próxima etapa:** **C0.S0 — Platform/Media/Device/Biometric/External/OT Rebaseline Inventory**  
+> **Visão:** **um único Copilot para escritório, reuniões, chão de fábrica, fontes externas e operações autônomas governadas**  
+> **Próxima etapa:** **C0.S0 — Platform/Media/Device/Biometric/External/Automation/OT Rebaseline Inventory**  
 > **Ordem executável:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 > **Boundary standalone:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 > **Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
 > **Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
 > **Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)  
-> **Baseline da plataforma:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
-> **Estrutura/Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
-> **Arquitetura/design patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
+> **Microsoft Teams:** [`56-microsoft-teams-connector-and-meeting-integration.md`](./56-microsoft-teams-connector-and-meeting-integration.md)  
+> **Autonomous Operations/Execution Hub:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
 > **Prompt do Cursor:** [`23-prompt-cursor-execucao.md`](./23-prompt-cursor-execucao.md)  
+> **Requirements:** [`25-requirements-traceability.md`](./25-requirements-traceability.md) — `CP-001…CP-248`  
 > **Ledger:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
 
 ## 1. Decisão fundamental
@@ -30,469 +30,298 @@ release do Chat                  release próprio
                  SEM DEPENDÊNCIA DE RUNTIME
 ```
 
-O Copilot será construído **do zero até 100%**, preservando as fundações corporativas da Minha DELPI: Portal, Core API, Keycloak, Gateway, Manifest, Module Federation, `plugin-ui` e APIs de domínio.
+O Copilot preserva as fundações corporativas existentes — Portal, Core API, Keycloak, Gateway, Manifest, Module Federation, `plugin-ui` e Domain APIs — mas possui inteligência, estado, deploy e evolução próprios.
 
-O código do Chat pode ser consultado como referência técnica durante inventário, mas não pode virar dependency, base class, proxy, database authority ou migration path do Copilot.
+## 2. North Star
 
-## 2. North Star ampliado
-
-> **Minha DELPI Copilot é a interface inteligente entre as pessoas, a operação da DELPI e o mundo externo autorizado. Está presente no escritório e na fábrica, entende texto, voz, imagem, vídeo, documentos, contexto operacional e dados empresariais; pode pesquisar a internet, consultar fontes externas conectadas, reconhecer usuários conhecidos sob governança explícita e compreender padrões observáveis de trabalho; ajuda pessoas a entender, decidir, executar, comunicar, acompanhar e aprender preservando permissões, evidências, segurança, privacidade e governança.**
+> **Minha DELPI Copilot é a interface e a inteligência operacional entre pessoas, sistemas, dados, automações e a operação física da DELPI. Ele pesquisa, percebe eventos, entende contexto, combina regras determinísticas e raciocínio de IA, toma decisões governadas, coordena APIs, automações/RPAs e pessoas, verifica resultados, comunica os envolvidos e transforma experiência validada em aprendizado governado.**
 
 ```text
-PERGUNTAR  → entender, pesquisar, explicar, analisar
-FAZER      → navegar, consultar, criar, alterar, aprovar, executar, comunicar
-ACOMPANHAR → monitorar, detectar, alertar, reagir
-TRABALHAR  → investigar, colaborar, planejar, acompanhar, concluir
-APRENDER   → transformar experiência e fontes validadas em conhecimento governado
+PERCEBER   → eventos, dados, mensagens, mídia e contexto operacional
+ENTENDER   → pesquisar, correlacionar, explicar, analisar
+DECIDIR    → rules/policies + AI reasoning quando necessário
+PREPARAR   → plano, draft, preview, Task, Decision
+EXECUTAR   → APIs, functions, RPA, computer-use governado, Human Task
+VERIFICAR  → outcome/postcondition real
+COMUNICAR  → Minha DELPI, email, Teams, WhatsApp e canais autorizados
+APRENDER   → candidate knowledge/policy/playbook após review/eval
 ```
 
-## 3. Presença e acesso
+## 3. Não é “Chat + RAG”
 
-A direção do produto é permitir que o **entry point do Copilot esteja amplamente disponível aos usuários autenticados da Minha DELPI**, conforme rollout e permissão de acesso ao próprio Copilot.
-
-Isso não significa acesso universal a dados ou ações.
+O runtime alvo aceita tanto intenção humana quanto eventos:
 
 ```text
-Copilot disponível
-+
-permissões efetivas do usuário
-+
-contexto atual
-+
-connected sources autorizadas
-+
-capability/policy/risk
-=
-comportamento realmente disponível
+user request OR EventEnvelope
+→ context / Business Graph / Evidence
+→ DecisionPathPolicy
+   FAST | OPERATIONAL | REASONING
+→ Policy / Decision Gate / AutonomyPolicy
+→ Durable Workflow
+→ semantic capability
+→ executor
+→ verified Outcome
+→ Evidence / Notification / Learning candidate
 ```
+
+Nem todo evento chama um LLM. Condições determinísticas usam regras/Policies/State Machines quando suficientes.
+
+## 4. Surfaces e presença
+
+```text
+GLOBAL      → painel contextual no Portal
+WORKSPACE   → página completa
+MEETING     → reunião assistida multimodal
+FRONTLINE   → operador/posto/máquina
+TEAMS       → futura surface app/tab/bot do mesmo Copilot
+BACKGROUND  → Watch/Workflow reagindo a eventos governados
+```
+
+Todas compartilham a mesma Copilot API, Core/RBAC, Policy/Decision Gate, Evidence e Durable Work runtime.
+
+## 5. Três espaços de informação
+
+```text
+MINHA DELPI
+→ Core / Domain APIs / Business Graph / Knowledge / apps
+
+INTERNET
+→ Search + Safe Web Fetch + SourceRef/EvidenceRef
+
+CONNECTED SOURCES
+→ Microsoft 365/Outlook/Teams
+→ Google Workspace/Gmail
+→ WhatsApp Business
+→ Slack/GitHub/outros futuros connectors
+```
+
+External scopes nunca elevam Core RBAC. Conteúdo externo é untrusted data para system/policy.
+
+## 6. Automation & Execution Hub
+
+Não construir apenas um “Hub de RPAs”. O target conceitual é:
+
+> **Minha DELPI Automation & Execution Hub**
+
+Separação:
+
+```text
+COPILOT
+= inteligência, contexto, decisão, planning e orquestração
+
+AUTOMATION & EXECUTION HUB
+= execução por contracts governados
+```
+
+Executor preference:
+
+```text
+1. API oficial
+2. integração nativa suportada
+3. função/script determinístico
+4. RPA
+5. computer-use/UI automation governada
+6. Human Task
+```
+
+RPA é executor substituível, nunca authority de business rule.
+
+## 7. Semantic capability antes do executor
+
+O planner conhece:
+
+```text
+billing.invoice.issue
+maintenance.request.create
+production.report.validate
+communication.email.send
+inventory.read
+```
+
+Não conhece:
+
+```text
+click(x,y)
+CSS/XPath selector
+screen coordinate
+RPA package internals
+```
+
+Uma capability pode migrar de RPA para API sem patch no planner/workflow.
+
+## 8. Continuous Operational Intelligence
+
+Watches podem observar condições como:
+
+```text
+pedido pronto para faturar
+máquina parada
+apontamento improvável
+estoque crítico
+fornecedor atrasado
+OP aguardando material
+qualidade desviando
+prazo/approval expirando
+resposta externa recebida
+```
+
+Modes:
+
+```text
+OBSERVE
+ADVISE
+PREPARE
+ACT   # C7 only
+```
+
+`PREPARE != ACT`.
+
+## 9. Outcome truth
 
 Invariante:
 
 ```text
-Copilot effective capabilities ⊆ user effective capabilities + explicitly granted external scopes
+technical executor success != verified business outcome
 ```
 
-Os external scopes ampliam apenas o acesso do connector correspondente; não ampliam Core RBAC nem Domain API authorization.
-
-Biometria pode ajudar a reconhecer quem é um usuário conhecido, mas:
+Exemplos:
 
 ```text
-biometric match
+HTTP 200 != nota emitida corretamente
+RPA clicou Salvar != transação confirmada
+provider accepted != entrega final quando async
+```
+
+Toda ação material usa postcondition/Outcome verification quando aplicável antes de comunicar conclusão.
+
+## 10. Autonomia
+
+Autonomia é resolvida por:
+
+```text
+capability
++ actor/service identity
++ source/event trust
++ context
++ risk/sensitivity
++ financial/material limits
++ environment
++ reversibility
++ policy
+```
+
+Não existe `Copilot=L5` global. L5 permanece OFF por default e exige allowlist, budgets/limits, revalidation, kill switch e verified Outcome.
+
+## 11. Meeting / Frontline / Biometria
+
+Meeting e Frontline são surfaces do mesmo runtime. Voz/câmera/biometria são modalidades/contexto, não permission bypass.
+
+Biometric match:
+
+```text
 != authenticated session
 != Core permission
 != Business Action authorization
 ```
 
-## 4. Quatro surfaces, um produto
+Human Observation permanece limitada a fatos/padrões objetivos do processo e não pode virar inferência psicológica/sensível ou decisão trabalhista automática.
+
+## 12. OT / máquinas
+
+Copilot não é safety controller.
 
 ```text
-GLOBAL      → painel lateral/contextual no Portal
-WORKSPACE   → página completa para análise/trabalho prolongado
-MEETING     → reunião assistida com voz, dados e mídia autorizada
-FRONTLINE   → operador/posto/máquina com voz, câmera e UI simplificada
+approved telemetry/read
+→ context/Evidence/analysis/recommendation
+
+free-form LLM/RPA/computer-use
+-X→ PLC/CNC/robot/machine safety actuation
 ```
 
-Todas usam:
+Qualquer future physical actuation exige iniciativa/safety gate separado com typed deterministic commands, allowlist, state checks, industrial owner, interlocks independentes, test/simulation, fail-safe e audit.
+
+## 13. Owners alvo
 
 ```text
-uma Copilot API
-um Copilot MFE
-uma identidade de produto
-Core/RBAC
-Policy/Decision Gate
-Evidence
-Durable Work
-Internet Research / External Connectors quando autorizados
+minha-delpi-copilot-api/       → intelligence/work/automation orchestration runtime
+plugins/minha-delpi-copilot/   → Global/Workspace/Meeting/Frontline/admin MFE
+portal/                        → host/context/navigation
+core-api/                      → apps/routes/RBAC/governance/user authority
+keycloak                       → identity/SSO
+gateway/                       → routing
+plugins/plugin-ui/             → shared design system
+Domain APIs                    → business data/rules/actions
+External Providers             → external resource authority
+Secret/Vault owner             → credential material
+Automation executors           → execution mechanisms behind adapters
+OT/domain systems              → machine/process truth and industrial safety owners
 ```
 
-Não existem agentes/backends separados por departamento, provider ou surface.
+Automation & Execution Hub pode ser bounded module do Copilot ou neutral platform service somente após C0 ownership analysis. “Hub” não implica microservice antecipadamente.
 
-## 5. Owners alvo
-
-```text
-minha-delpi-copilot-api/          → backend/runtime inteligente independente
-plugins/minha-delpi-copilot/      → MFE React/Vite independente e suas surfaces
-portal/                           → Shell/host/navegação/contexto global
-core-api/                         → apps/rotas/RBAC/governança/user authority
-keycloak                          → identidade/SSO
-gateway/                          → entrada/routing
-plugins/plugin-ui/                → design system compartilhado
-APIs de domínio                   → dados e regras de negócio
-external providers               → source truth de contas/recursos externos
-OT/domain systems                 → machine/process truth e safety owners
-infra/                            → compose/deploy/env/network/storage/secrets/egress
-```
-
-Nomes finais são congelados em C0; a arquitetura física recomendada está em `52`.
-
-## 6. Arquitetura resumida
+## 14. Ordem canônica
 
 ```text
-Usuário / Device
-      ↓
-Portal / Copilot Surface
-      ↓
-Minha DELPI Copilot MFE (federated)
-      ↓
-Gateway
-      ↓
-Minha DELPI Copilot API
-  ├─ Core API / RBAC / apps/routes
-  ├─ Domain APIs / OpenAPI
-  ├─ Internet Research / Safe Web Fetch
-  ├─ External Connectors / OAuth / provider adapters
-  ├─ Knowledge / Graph / Evidence
-  ├─ LLM / Speech / Vision / Biometric adapters
-  └─ Copilot-owned persistence
-```
-
-O Portal **hospeda** o Copilot; não implementa sua inteligência.
-
-A Copilot API **orquestra**; não assume ownership das regras de negócio das outras APIs, da identidade corporativa, dos providers externos nem da segurança industrial.
-
-## 7. Meeting Mode
-
-Quando liberado, Meeting Mode poderá:
-
-- iniciar/parar captura explicitamente;
-- transcrever voz;
-- responder perguntas consultando dados reais e autorizados;
-- pesquisar fontes externas quando necessário e permitido;
-- consultar e-mails/calendários/arquivos conectados conforme scope;
-- usar câmera/tela quando policy/device permitirem;
-- associar participante/speaker a usuário enrolled quando biometric capability estiver habilitada;
-- registrar fatos, decisões e pendências;
-- gerar **ata viva**;
-- propor ações;
-- criar Tasks/Cases/solicitações após governance;
-- retomar pendências em reunião futura.
-
-A ata distingue:
-
-```text
-transcrição
-resumo
-identity candidate/confirmed association
-source data/evidence interno ou externo
-decisão humana confirmada
-ação candidata
-ação executada/verificada
-```
-
-## 8. Frontline Mode
-
-Frontline leva o mesmo Copilot ao trabalho operacional.
-
-Experiência alvo:
-
-```text
-usuário autenticado
-+ optional governed biometric identity assistance
-+ device/posto
-+ OP/operação
-+ máquina
-+ produto/revisão
-+ voz/câmera
-→ Copilot
-→ procedimento/desenho/APIs/histórico/Evidence
-→ orientação ou ação governada
-```
-
-Prioridades:
-
-- large-touch UI;
-- hands-free voice;
-- touch/text fallback;
-- câmera/imagem;
-- reconhecimento de usuário conhecido quando habilitado;
-- desenho/procedimento vigente;
-- manutenção/qualidade contextual;
-- registrar ocorrência/escalar ajuda;
-- treinamento contextual;
-- shared-device isolation.
-
-## 9. Identidade biométrica e análise humana
-
-O Copilot pode reconhecer **usuários conhecidos e enrolled** por foto/vídeo/rosto e voz conforme finalidade/policy explícitas.
-
-Target:
-
-```text
-explicit enrollment
-→ protected face/voice template
-→ current sample
-→ closed-set candidate match
-→ confidence/policy/liveness when required
-→ correctable userRef association
-```
-
-Unknown/low-confidence permanece desconhecido ou pede confirmação.
-
-A capability pode ajudar em:
-
-- participant attribution em Meeting;
-- speaker diarization/recognition;
-- shared-device identity assistance;
-- associação de Evidence a participante/operador;
-- continuidade contextual.
-
-Ela **não** cria permission.
-
-O Copilot também pode analisar padrões **objetivos e observáveis do processo**, como sequência de etapas, interação com ferramenta/máquina, repetição/retrabalho, tempos, deslocamentos relevantes ao fluxo e pedidos de ajuda.
-
-Por default, não inferir de rosto/voz/comportamento:
-
-- personalidade;
-- honestidade/confiabilidade;
-- intenção moral/lealdade;
-- emoção como truth;
-- saúde/diagnóstico;
-- atributos sensíveis;
-- aptidão profissional global;
-- propensão disciplinar.
-
-Biometria/Human Observation também não podem ser authority automática para contratação, promoção, punição, remuneração, avaliação formal, suspensão ou desligamento.
-
-## 10. Internet Research e fontes externas
-
-O Copilot deve combinar informação interna com fontes externas sem misturar authority.
-
-```text
-PUBLIC INTERNET
-→ search
-→ safe fetch
-→ SourceRef/EvidenceRef
-→ grounded synthesis
-
-CONNECTED SOURCES
-→ OAuth/API connection
-→ provider adapter
-→ authorized read/write capability
-→ SourceRef/OutcomeRef/EvidenceRef
-```
-
-Exemplos de connectors alvo, conforme APIs oficiais e aprovação:
-
-- Microsoft 365 / Outlook / Calendar / OneDrive / SharePoint / Teams;
-- Google Workspace / Gmail / Calendar / Drive;
-- WhatsApp Business Platform;
-- Slack;
-- GitHub;
-- service desks, CRMs e demais fontes futuras.
-
-O planner é provider-neutral. Novo connector não deve exigir branch central `if gmail/outlook/whatsapp`.
-
-Regras fundamentais:
-
-```text
-external content = untrusted data
-OAuth scope != Core permission
-personal connection != organizational source
-read != write
-draft != send
-web/email/message != automatic corporate knowledge
-```
-
-Tokens/refresh tokens nunca chegam ao LLM, ao MFE ou a logs comuns.
-
-## 11. Aprendizagem do processo e de fontes externas
-
-O Copilot pode ajudar a capturar conhecimento tácito e conhecimento encontrado fora da DELPI, mas somente de forma governada.
-
-```text
-observação/experiência/external source
-→ Evidence/context
-→ transient research ou candidate
-→ owner/specialist review quando durável
-→ eval/freshness/privacy/licensing checks
-→ version/publish
-```
-
-Nunca:
-
-```text
-uma observação do operador
-→ alteração automática do procedimento de produção
-
-web page / email / WhatsApp message
-→ verdade corporativa automática
-```
-
-Também não criar perfil secreto do trabalhador como mecanismo de aprendizagem.
-
-## 12. Segurança industrial, externa e privacidade
-
-Não fazem parte do default scope:
-
-- câmera/microfone/identity recognition ocultos;
-- open-world/indiscriminate facial recognition;
-- emotion/personality/honesty inference;
-- scoring/vigilância oculta de pessoas;
-- raw audio/video/biometric templates sem purpose/retention definidos;
-- decisão trabalhista automática baseada em biometria;
-- URL/fetch irrestrito gerado pelo LLM;
-- acesso a private/link-local/metadata endpoints via web fetch;
-- tokens OAuth/provider secrets em prompt/log/MFE;
-- cross-user leak de e-mail/mensagem/arquivo conectado;
-- envio externo implícito sem governance;
-- scraping de WhatsApp Web/personal session como connector default;
-- visual finding tratado automaticamente como aprovação/reprovação oficial;
-- free-form LLM → PLC/CNC/robô/máquina;
-- Copilot substituindo safety PLC/interlocks.
-
-Autonomia L5 empresarial **não** concede autoridade OT nem autorização externa irrestrita.
-
-Qualquer futura atuação física requer safety gate separado, deterministic typed commands, allowlist, machine-state checks, industrial owner, interlocks independentes, autorização, test/simulation, fail-safe e audit.
-
-## 13. Integração com o Portal
-
-O Portal atual já suporta MFEs `federated` via `AppHost`, que resolve `remoteEntry`, carrega `mount()` e injeta `getAccessToken`, `basePath`, pathname, rotas e contexto do usuário.
-
-O Copilot terá progressivamente:
-
-1. **app/full page** registrado por manifesto;
-2. **surface global** no Shell;
-3. **Meeting surface** do mesmo MFE/runtime;
-4. **Frontline surface** do mesmo MFE/runtime para devices compatíveis;
-5. **Connections/Admin surface** do mesmo produto para fontes externas autorizadas.
-
-Workspace Context e Platform Commands atravessam contratos tipados; autorização continua em Core/domain/provider owners conforme o boundary.
-
-## 14. Princípios não negociáveis
-
-1. Copilot API própria; nenhum endpoint do Chat é requisito de funcionamento.
-2. Copilot MFE próprio; nenhum source import de `plugins/minha-delpi-chat`.
-3. Persistência/migrations próprias; nenhuma tabela do Chat é authority.
-4. Core/RBAC continua authority de permissões e identidade corporativa materializada.
-5. Domain APIs continuam authority de dados/regras.
-6. Business Actions são OpenAPI-first.
-7. Portal continua authority de navegação/hosting.
-8. `plugin-ui` é o design system compartilhado.
-9. Um único Copilot; Expertise/Playbooks especializam sem agentes departamentais.
-10. Entity/Evidence/Decision/Workflow/Event usam foundations compartilhadas.
-11. Business Graph conecta referências e não replica bancos.
-12. Durable Work reutiliza executors canônicos.
-13. Chain-of-thought não é persistida/exposta.
-14. Clean Architecture + Ports & Adapters + DDD pragmático conforme `49`.
-15. Voice/image/video/biometric signals são modalidades/contexto, não bypass de permission.
-16. Contexto industrial reutiliza WorkspaceContext + EntityRef.
-17. Data minimization é default para mídia/biometria/external cache.
-18. Device identity != user identity; biometric candidate != authenticated session.
-19. Process/external learning publica somente via governance.
-20. Human Observation fica limitado a sinais observáveis do processo.
-21. Internet/external content é untrusted e sempre preserva provenance/freshness.
-22. OAuth/provider credentials permanecem fora do LLM/MFE e sob least privilege/revocation.
-23. Reads e writes externos são capabilities separadas; `draft != send`.
-24. Personal source não vira organizational source automaticamente.
-25. Copilot não é industrial safety authority.
-
-## 15. Ordem foundation-first
-
-```text
-C0 — Platform + Architecture + Media/Privacy/Biometric/External/OT Foundation Freeze
-→ C1 — Standalone App Bootstrap
+C0 — Platform + Architecture + Media/Privacy/Biometric/External/Automation/OT Foundation Freeze
+→ C1 — Standalone Application Bootstrap
 → C2 — Portal + Operational Context + Platform Commands
-→ C3 — Intelligence Core + Multimodal/Biometric/Internet/Connector Foundations
-→ C4 — Business + External Reads + Business Graph
-→ C5 — Governed Business/External Writes + Durable Work Foundation
-→ C6 — Tasks/Cases/Rooms/Inbox/Watch + Meeting/Frontline + External Events/Ecosystem/Learning
-→ C7 — Advanced Realtime + External Proactivity + Autonomy/Simulation/Model Routing/Rollout
+→ C3 — Intelligence + Multimodal/Biometric/Internet/Connector/Decision Foundations
+→ C4 — Business + External Reads + Graph + Operational Read Intelligence
+→ C5 — Governed Business/External/Automation Writes + Durable Foundation
+→ C6 — Product Work + Meeting/Frontline + Automation Hub + Events/Learning
+→ C7 — Autonomous Operations + Advanced Realtime/External Proactivity + Rollout
 ```
 
-Primeiro provamos boundaries e integração; depois construímos intelligence/media/biometric/external/work surfaces.
+## 15. C0 precisa congelar antes de qualquer runtime
 
-## 16. C0 — o que precisa congelar
+Além do inventário já definido, C0 agora inclui:
 
 ```text
-platform inventory
-standalone boundaries
-repo/service names
-Gateway/Compose/Manifest contracts
-Core/RBAC integration
-MFE hosting contract
-media/device/realtime inventory
-privacy/consent/retention boundaries
-biometric enrollment/template/liveness boundaries
-shared-device identity/session boundary
-Human Observation prohibited-inference boundary
-outbound HTTP/egress boundary
-OAuth callback/connection ownership
-secret/vault/key-management boundary
-personal vs organizational external-source privacy
-provider webhook/subscription lifecycle
-external-learning promotion rules
-operational context sources
-OT/industrial safety boundary
-shared primitives / MediaRef / biometric-ref / connection-ref decisions
-architecture/patterns
-ports/persistence boundaries
-error/event/state/resilience rules
-contract/conformance harness
+event sources/brokers/webhooks/schedulers
+RPA tools/orchestrators/licences/bots/packages
+scripts/functions/jobs
+queues/workers/desktop execution infrastructure
+service accounts/background identities
+credential owners/injection
+business postcondition/outcome sources
+executor contracts/idempotency/retry
+RPA artifacts/retention
+notification/escalation channels
+automation ownership/governance
+kill switches/emergency stop
 ```
 
-C1 só inicia com `FOUNDATION_FREEZE=PASS`.
+Nenhum Automation Hub/RPA runtime é criado em C0.S0.
 
-## 17. Business e External Actions não dependem do Chat
-
-Business Actions:
-
-```text
-OpenAPI
-→ Copilot Action Catalog/index
-→ allowed capabilities
-→ retrieval/planner
-→ schema/argument validation
-→ RBAC/policy/Decision Gate
-→ generic executor
-→ Domain API
-→ Outcome/Evidence
-```
-
-External capabilities:
-
-```text
-provider connection/scopes
-→ normalized capability
-→ retrieval/planner
-→ connector validation
-→ policy/Decision Gate when write
-→ provider adapter
-→ verified Outcome/Evidence
-```
-
-Texto, voz, Meeting ou Frontline convergem para esses mesmos contracts. Biometric identity apenas ajuda a resolver contexto/participante; não cria action authority.
-
-## 18. Documentos canônicos
+## 16. Documentos canônicos
 
 | Documento | Papel |
 |---|---|
 | `16` | única ordem de implementação |
 | `17` | owners/primitives/contracts |
 | `20` | testes/gates |
-| `21` | state/persistence/media/biometric/external refs |
+| `21` | state/persistence |
 | `23` | prompt mestre Cursor |
-| `25` | requisitos `CP-*` |
+| `25` | requirements `CP-*` |
 | `49` | architecture/design patterns |
-| `50` | boundary standalone |
-| `51` | baseline factual Portal/Core/APIs/MFEs |
+| `50` | standalone product boundary |
+| `51` | factual platform baseline |
 | `52` | estrutura física/bootstrap |
-| `53` | multimodal/Meeting/Frontline/industrial safety |
-| `54` | biometric identity/Human Observation governance |
-| `55` | Internet Research/external connectors/OAuth/external learning |
-| ledger | estado/evidence executável |
+| `53` | multimodal/Meeting/Frontline/industrial |
+| `54` | biometric/Human Observation |
+| `55` | Internet/external connectors |
+| `56` | Microsoft Teams |
+| `57` | autonomous operations/Automation & Execution Hub |
+| ledger | execution evidence/status |
 
-Specs temáticas detalham comportamento, mas não podem contradizer authorities acima.
+## 17. Primeiro passo
 
-## 19. Relação com documentos antigos de migração de agents
+Abrir [`23-prompt-cursor-execucao.md`](./23-prompt-cursor-execucao.md) e executar **somente C0.S0**.
 
-Qualquer trecho que trate o Copilot como migração de `AgentSpecializationService`, `userActivatedAgent`, `softAgentHandoff`, `agent_id` ou sessions do Chat está **SUPERSEDED / OUT_OF_SCOPE**.
+```text
+PROGRAM = PLANNED / NOT_STARTED
+NEXT = C0.S0
+RUNTIME_DIFF = NONE
+```
 
-O Copilot novo simplesmente não nasce com essas dependências.
-
-## 20. Primeiro passo
-
-Abrir `23-prompt-cursor-execucao.md` e executar **somente C0.S0**.
-
-C0.S0 é inventário/evidence, agora incluindo media/device/privacy/frontline/biometric/Internet/egress/OAuth/connectors/webhooks/secrets/OT. Não cria planner, RAG, connector runtime, biometric runtime, Meeting, Frontline, Graph, Case, Watch ou Model Router.
-
-O primeiro runtime após Foundation Freeze será o **bootstrap standalone**: API + MFE + auth + Core + Gateway + Compose + Manifest + Portal federated mount.
+A primeira implementação após `C0.S7 FOUNDATION_FREEZE=PASS` continua sendo o **bootstrap standalone** da Copilot API/MFE — não RPA, não Event engine, não LLM autonomy.
