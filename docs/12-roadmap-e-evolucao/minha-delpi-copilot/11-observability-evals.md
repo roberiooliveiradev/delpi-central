@@ -3,32 +3,34 @@
 **Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
 **Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
-**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)
+**Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)  
+**Autonomous Operations/Execution Hub:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)
 
 ## 1. Objetivo
 
-Provar qualidade, groundedness, policy, execução, continuidade, privacidade, custo e independência do Chat — inclusive para Internet Research e External Connectors — sem transformar telemetry em cópia de mailbox, raw media ou secrets.
+Provar qualidade, groundedness, policy, execução, continuidade, privacidade, custo, outcome truth, automação e independência do Chat sem transformar telemetry em cópia de business data, mailbox, raw media, desktop screenshots ou secrets.
 
 ## 2. Correlation model
 
 ```text
 requestId
-conversationId
-turnId
+conversationId?
+turnId?
 traceId
 workflowId?
 taskId?
 caseId?
 decisionId?
 watchId?
+eventId?
+executionId?
 meetingId?
 frontlineSessionId?
-mediaSessionId?
-externalConnectionRef? bounded/opaque
-externalSubscriptionRef? bounded/opaque
+externalConnectionRef? opaque
+executorRef? bounded
 ```
 
-Nunca token/secret.
+Nunca token/password/secret/biometric template.
 
 ## 3. Spans/eventos sugeridos
 
@@ -37,22 +39,26 @@ copilot.turn
 ├─ understand
 ├─ capability_discovery
 ├─ knowledge_retrieval
-├─ internet_search
-├─ web_fetch
-├─ external_connection_check
-├─ external_read
-├─ external_write_preview
-├─ policy_check
-├─ decision_gate
-├─ external_write
+├─ internet_search / web_fetch
+├─ external_read/write
+├─ event_ingest
+├─ decision_path
+├─ policy_check / decision_gate
+├─ workflow
+├─ automation_select_executor
+├─ automation_execute
 ├─ outcome_verify
+├─ notification
 ├─ evidence_compose
 └─ synthesis
 
+copilot.event
+copilot.watch
+copilot.automation.execution
+copilot.automation.worker
 copilot.external.connection
 copilot.external.subscription
-copilot.external.event
-copilot.workflow/task/case/watch
+copilot.workflow/task/case
 copilot.media/meeting/frontline
 ```
 
@@ -60,23 +66,29 @@ copilot.media/meeting/frontline
 
 ```text
 surface
-sourceClass = delpi|public_web|external_connected
-providerKey bounded
-connectionType
-connectionStatus
-requiredScopePresent yes/no
-externalCapabilityId
-source/evidence counts
-freshness class
-policy/decision outcome
-external action status
-subscription status
-retry/reconciliation flags
+sourceClass
+capabilityRef
+actorType USER|SERVICE
+policyVersion
+decisionPath FAST|OPERATIONAL|REASONING
+eventSourceClass/eventTrustResult
+eventDedupeResult
+executorType API|FUNCTION|RPA|COMPUTER_USE|HUMAN_TASK
+executorVersion bounded
+executionStatus
+attempt
+queueLatency
+workerClass/environment bounded
+outcomeVerificationStatus
+notificationStatus
+autonomyLevelAllowed
+autonomyPolicyVersion
+killSwitchState
 latency/error class
-token/model/tool usage
+model/tool/token/cost usage when applicable
 ```
 
-Não logar message body/file content/raw page/credentials só por observabilidade.
+Não logar message body/full page/raw screenshot/credential apenas por observabilidade.
 
 ## 5. Métricas de produto
 
@@ -86,172 +98,264 @@ Não logar message body/file content/raw page/credentials só por observabilidad
 - Correction/Replan Rate;
 - Case Resolution Rate;
 - Meeting/Frontline success;
-- Internet Research usefulness/source correction rate;
-- External Read Success Rate;
-- External Draft-to-Send conversion quando relevante;
+- Internet Research usefulness;
 - External Action Verified Success Rate;
 - Watch Signal Quality;
-- External Follow-up Closure Rate;
+- **Operational Detection-to-Decision Time**;
+- **Decision-to-Execution Time**;
+- **Automation Verified Outcome Rate**;
+- **Human Intervention Rate**;
+- **Exception Resolution Time**;
+- **Autonomous Completion Rate por capability**;
+- **False/Unnecessary Automation Rate**;
 - Knowledge Candidate Acceptance/Reject Rate;
 - Standalone Independence Rate = 100% fora reference-only tests.
 
-## 6. Métricas técnicas externas
+Nunca usar uma métrica agregada de “autonomia” sem separar capability/risco/contexto.
+
+## 6. Métricas Event / Decision Intelligence
+
+```text
+events received
+invalid/untrusted events rejected
+duplicate events suppressed
+out-of-order/stale events
+watch matches
+FAST path rate/latency
+OPERATIONAL path rate/latency
+REASONING path rate/latency
+LLM avoided by deterministic path
+readiness PASS|NOT_READY|INCONCLUSIVE distribution
+policy blocks
+Decision Gate frequency
+```
+
+Decision path metadata é bounded telemetry, não CoT.
+
+## 7. Métricas Automation & Execution Hub
+
+```text
+executions queued/running/completed
+execution success/failure/ambiguous/cancelled/timeout
+technical success rate
+verified business outcome success rate
+technical-success-but-verification-failed count
+ambiguous outcome rate
+retry rate
+idempotency conflicts prevented
+duplicate execution prevented
+queue latency
+executor latency
+worker online/busy/offline/draining when RPA exists
+worker utilization
+package/executor version distribution
+RPA UI/selector failure class
+computer-use takeover/stop rate
+kill-switch activations
+cost per execution/capability when material
+```
+
+Technical success and verified outcome must be separate charts/metrics.
+
+## 8. Notification/escalation metrics
+
+- notification requested/sent/failed;
+- dedupe suppression;
+- acknowledgement time;
+- SLA escalation count/time;
+- channel fallback when policy allows;
+- incorrect “success” notification incidents = 0.
+
+## 9. External/connector metrics
 
 - search/fetch latency/error;
 - blocked external-access attempts;
-- external provider latency/error/rate-limit;
+- provider latency/rate limit;
 - connection refresh/re-auth rate;
 - scope-missing rate;
-- provider event duplicate/out-of-order rate;
-- subscription renewal success;
-- reconciliation lag;
-- stale subscription duration;
-- external action ambiguous-outcome rate;
-- duplicate outbound effect prevented;
-- cache hit/staleness per source class;
-- credential leakage incidents = 0;
-- cross-user external data leak = 0;
+- event duplicate/out-of-order rate;
+- subscription renewal/reconciliation lag;
+- external ambiguous-outcome rate;
+- credential leak incidents = 0;
+- cross-user data leak = 0;
 - implicit send incidents = 0.
 
-## 7. Evals families
-
-Além dos evals de context/action/expertise/multimodal/biometric/workflow:
+## 10. Evals families — Event/Automation
 
 ```text
-Internet Research known topic
-Internet Research current/fresh topic
-conflicting public sources
-external prompt injection
-safe external-access policy
-OAuth connect/cancel/fail/revoke
-scope missing / scope upgrade
-user-delegated isolation
-unknown connector onboarding
-external read source provenance
-external attachment handling
-draft != send
-external write Decision/TOCTOU
-provider timeout/verified outcome
-webhook authenticity/dedupe
-subscription expiry/renewal
-missed-event reconciliation
-personal source sharing/promotion
-external Knowledge candidate governance
-background/proactive external action limits
+trusted event positive
+forged/untrusted event negative
+duplicate event
+event replay after workflow resume
+stale event
+FAST path deterministic condition
+OPERATIONAL bounded condition
+REASONING complex condition
+equivalent condition with LLM unavailable
+readiness positive/negative/inconclusive
+planner no RPA click/selector
+API executor preferred over RPA when supported
+RPA fallback when API unavailable by approved mapping
+executor swap RPA→API without planner patch
+worker offline/busy/lease conflict
+credential/session isolation
+executor timeout before side effect
+executor timeout after possible side effect → AMBIGUOUS
+outcome verification success/failure/pending
+notification only after truthful outcome
+PREPARE no side effect
+ACT requires capability-scoped autonomy
+kill switch before ACT
+policy revocation during wait
+computer-use allowlist negative
 ```
 
-## 8. Generalization
+## 11. External/Media/Biometric evals
 
-Novo provider deve poder entrar por adapter/capability contract sem patch semântico no planner.
+Manter famílias de Internet Research, OAuth/connectors, Teams, multimodal, biometric/Human Observation, source ACL, external Knowledge promotion, Meeting/Frontline e privacy conforme `20`.
 
-Metamorphic tests podem trocar provider implementation/technical identifiers preservando semantic capability e esperar comportamento equivalente.
+## 12. Generalization
 
-## 9. Safety evals
+Novo provider ou executor equivalente deve entrar por adapter/capability mapping sem patch semântico no planner.
 
-- external content não altera policy/system;
-- external source não concede Core permission;
-- provider credential não aparece em LLM/MFE/log;
-- user A não acessa connection/cache de user B;
-- read scope não permite send;
-- scope revogado bloqueia action;
-- draft não envia;
-- webhook não executa write diretamente;
-- personal source não publica organizational Knowledge automaticamente;
-- public source não substitui internal authority silenciosamente;
-- provider unavailable não é narrado como “sem resultados”;
-- WhatsApp connector usa contract suportado;
-- kill switch interrompe capability correspondente.
-
-## 10. Evidence quality
-
-Para source externo, medir:
-
-- SourceRef presente;
-- freshness/data quando material;
-- provider/resource identificável sem credential;
-- authoritative/reference/unverified classification adequada;
-- conflito/staleness explícito;
-- external communication outcome verificável;
-- Knowledge candidate ligado à Evidence original.
-
-## 11. External connection evals
-
-Estados mínimos:
+Metamorphic tests devem poder trocar:
 
 ```text
-PENDING_AUTH
-ACTIVE
-EXPIRED
-REAUTH_REQUIRED
-REVOKED
-DISABLED
-ERROR
+Microsoft ↔ another supported provider
+RPA executor ↔ API executor
+technical executor identifiers/package versions
 ```
 
-Testar transitions, reconnect, revoke, cleanup, owner isolation e stale capability invalidation.
+preservando semantic capability e policy/outcome expectations.
 
-## 12. Provider event evals
+## 13. Safety evals
 
-- valid/invalid event;
-- duplicate;
-- out-of-order;
-- expired subscription;
-- renew success/failure;
-- missed event + reconciliation;
-- revoked connection;
-- stale state reflected in UX/Watch.
+- event content não altera policy;
+- event/worker identity não concede permission;
+- external/RPA content não concede Core permission;
+- provider/RPA credential não aparece em LLM/MFE/log/artifact;
+- RPA screenshot não vaza unrelated sensitive data;
+- read scope não permite write;
+- PREPARE não executa;
+- global L5 não existe;
+- L5 disabled by default;
+- kill switch blocks ACT independent of LLM;
+- ambiguous write not blindly retried;
+- technical success not presented as business success;
+- computer-use cannot access non-allowlisted app/network;
+- biometric/worker profiling prohibitions remain;
+- arbitrary OT command blocked.
 
-## 13. External write evals
+## 14. Outcome quality
 
-- draft only;
-- send after allowed gate;
-- recipient/target change invalidates prior decision when material;
-- revoked connection after preview;
-- duplicate resume;
-- provider timeout and outcome check;
-- partial/ambiguous failure truthfulness;
-- verified OutcomeRef/Audit.
-
-## 14. Privacy evals
-
-- user-delegated source isolation;
-- organizational/shared source policy;
-- external content retention/cache TTL;
-- explicit sharing to Case/Room;
-- explicit promotion to Knowledge;
-- delete/revoke behavior;
-- no raw sensitive payload in telemetry.
-
-## 15. Dashboards/admin
-
-Visões futuras:
-
-- research usage/quality/cost;
-- provider/connection health;
-- scope/reauth issues;
-- external read/write outcomes;
-- subscription/reconciliation health;
-- external Watch results;
-- knowledge promotion outcomes;
-- privacy/security blocks;
-- connector readiness/coverage;
-- standalone independence violations.
-
-## 16. Release blockers
+Para cada material execution medir/provar:
 
 ```text
-required safety FAIL/INCONCLUSIVE
-credential leakage
-cross-user external data leak
-implicit send
-unverified external success
-invalid provider event accepted
-stale subscription without truthful degraded state
-personal source auto-promoted to org Knowledge
-provider-specific planner hardcode
-Chat runtime dependency
+capabilityRef
+technical result
+expected postcondition
+verification source authority
+verification status
+verifiedAt
+Evidence/Outcome refs
 ```
 
-## 17. Regra de privacidade
+Se verification source estiver indisponível, state deve ser `PENDING|INCONCLUSIVE`, não success inventado.
 
-Observabilidade registra metadata operacional estruturada, não chain-of-thought, JWT, provider tokens, client secrets, full emails/messages/files/pages, raw media ou biometric templates sem purpose/owner/policy explícitos.
+## 15. RPA observability privacy
+
+Quando RPA existir:
+
+- screenshots somente quando necessário;
+- classification/retention/redaction explícitos;
+- no password/token capture;
+- worker/session identifiers bounded;
+- no person productivity score derived from bot/desktop telemetry;
+- support artifact access audited.
+
+## 16. Autonomy metrics
+
+Medir por capability/policy version:
+
+```text
+L0/L1/L2/L3/L4/L5 usage
+L5 eligible vs executed
+policy-blocked ACT
+human-confirmed ACT
+autonomous ACT
+kill-switch block
+budget/limit block
+post-ACT verification failure
+manual override/correction
+```
+
+Não usar autonomia como permission authority.
+
+## 17. Incident classes
+
+```text
+EVENT_AUTH_FAILURE
+EVENT_DUPLICATE_EFFECT
+BACKGROUND_IDENTITY_ERROR
+EXECUTION_DUPLICATE
+RPA_CREDENTIAL_LEAK
+RPA_SESSION_LEAK
+OUTCOME_FALSE_SUCCESS
+AUTONOMY_SCOPE_BYPASS
+KILL_SWITCH_BYPASS
+COMPUTER_USE_BOUNDARY_BYPASS
+EXTERNAL_DATA_LEAK
+BIOMETRIC_PRIVACY_INCIDENT
+OT_SAFETY_BOUNDARY_ATTEMPT
+```
+
+Incident metrics devem ter correlation/evidence sem guardar secret/CoT.
+
+## 18. Dashboards alvo
+
+### Operational Intelligence
+Events → Watches → decision path → detections → decisions → latency.
+
+### Automation Hub
+Queued/running/failed/ambiguous → executors/workers → technical success → verified outcome → exceptions.
+
+### Autonomy
+Capabilities/policy levels → PREPARE/ACT → blocks/kill switches → verified outcomes.
+
+### External/Media
+Provider health, research/connectors, source provenance, privacy/retention incidents.
+
+## 19. Release blocking metrics
+
+Material incident/eval failures block release when involving:
+
+```text
+permission elevation
+duplicate material execution
+unverified success narrative
+credential leak
+cross-user/source leak
+PREPARE→ACT bypass
+global autonomy bypass
+kill-switch failure
+computer-use boundary breach
+OT safety boundary breach
+```
+
+## 20. Regra final
+
+Observability must answer:
+
+```text
+what event/intent triggered this?
+which facts/evidence were used?
+which decision path/policy version ran?
+which capability/executor/version executed?
+under whose authority?
+what was the technical result?
+what authoritative source verified the business outcome?
+who was notified?
+what was learned only as candidate?
+```
+
+without storing chain-of-thought or secrets.
