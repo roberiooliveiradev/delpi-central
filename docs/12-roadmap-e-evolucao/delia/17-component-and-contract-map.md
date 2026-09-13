@@ -13,30 +13,30 @@
 
 | Responsabilidade | Authority / owner | Proibido |
 |---|---|---|
-| corporate identity | Keycloak + Core | shadow user via biometric/device/memory |
-| platform permissions/apps/routes | Core API/RBAC | prompt/context/asset granting permission |
+| corporate identity / SSO | Keycloak | shadow login/auth via biometric/device/memory |
+| apps/routes/platform RBAC/governance | Core API | prompt/context/asset/provider scope granting platform permission |
 | DELPI business rules/data/actions | Domain APIs/use cases | duplicar em DÉLIA/RPA/model |
-| navigation/hosting | Portal | free URL/control from LLM |
+| navigation/hosting/published host context | Portal | free URL/control from LLM; host context as permission authority |
+| operational/intelligence context | DÉLIA over authorized refs/sources | second source of truth; context as authorization |
 | DÉLIA UI | MFE próprio da DÉLIA; namespace técnico temporário `plugins/minha-delpi-copilot` | Chat MFE as base |
 | DÉLIA runtime/persistence | API própria da DÉLIA; namespace técnico temporário `minha-delpi-copilot-api` | Chat API/tables/runtime authority |
 | Business Action discovery | Domain OpenAPI + Action Catalog derivado pela DÉLIA | manual endpoint authority |
-| Workspace Context | Portal/MFE/adapters | context as authorization |
 | Evidence/Source/Outcome | DÉLIA contracts + source authority | feature-specific duplicate truth |
 | Business Graph | DÉLIA projection + domain source owners | graph as master database |
 | Semantic Business Layer | DÉLIA semantic registry + metric business owners | LLM-invented KPI formula |
 | Organizational Knowledge | DÉLIA Knowledge governance + source owners | auto-publish from memory/web/process |
 | Personal Memory | user-owned DÉLIA memory context | memory as organizational truth/RBAC |
 | Internet Research | DÉLIA orchestration + public source authority | unrestricted HTTP / cache truth |
-| External resources/scopes | provider + connection owner | provider scope as Core permission |
+| External resources/scopes | provider + connection owner | provider scope as Core/domain permission |
 | Teams | Microsoft 365 source owner + DÉLIA adapter | Teams-specific DÉLIA runtime |
-| biometrics | DÉLIA biometric boundary + Core userRef, quando aprovado | match as login/permission |
+| biometrics | DÉLIA biometric boundary + Keycloak/Core `UserRef`, quando aprovado | match as login/permission |
 | Human Observation | DÉLIA Evidence/governance + process owner | psychological/employee scoring |
 | Event/Signal ingestion | source owner + DÉLIA adapter/EventEnvelope | event payload as permission/action |
 | Decision Intelligence | DÉLIA Application/Policy + authoritative facts | LLM/RPA as sole formal rule when deterministic criteria exist |
 | Process Intelligence | DÉLIA process projection + process/source owners | Process Mining as employee surveillance |
 | Automation capability mapping | DÉLIA Capability/Action projection + contrato semântico do executor | UI mechanics in planner |
 | Automation decision/work orchestration | DÉLIA Policy/Decision/Work | second planner/workflow engine in executor |
-| Automation technical execution | Automation Hub | DÉLIA, provider ou bot becoming business/permission authority |
+| Automation technical execution | Automation Hub | DÉLIA, provider or bot becoming business/permission authority |
 | RPA mechanics | Automation Hub / approved RPA adapter | bot as business authority |
 | Computer-use mechanics | Automation Hub / sandboxed governed executor | unrestricted desktop/network |
 | Outcome verification | authoritative Domain/provider/source + DÉLIA orchestration | technical success as business completion |
@@ -54,7 +54,7 @@
 | notifications | shared channel owner + DÉLIA orchestration | notification as proof of outcome |
 | audit/evals | DÉLIA observability + platform audit | CoT/secrets/raw surveillance telemetry |
 
-`Automation Hub` acima é a autoridade **semântica alvo para execução técnica**. `C0.S0/C0.S1` deve provar o runtime existente, owner físico, contratos e gaps; falta de implementação comprovada vira `TO_INVENTORY/PLANNED`, não permissão para deslocar execução técnica para a DÉLIA.
+`Automation Hub` acima é a authority **semântica alvo para execução técnica**. `C0.S0/C0.S1` deve provar runtime existente, owner físico, contracts e gaps; falta de implementação comprovada vira `TO_INVENTORY/PLANNED`, não permissão para deslocar execução técnica para a DÉLIA.
 
 ## 2. Componentes físicos alvo
 
@@ -96,7 +96,7 @@ Media / Biometric / Meeting / Frontline
 Observability / Evals
 ```
 
-**Module name does not imply microservice.** C0 decide physical split only from real ownership/consumers/scale/isolation needs. A module de integração com automação não transforma a DÉLIA em owner da execução técnica do Automation Hub.
+**Module name does not imply microservice.** C0 decide physical split only from real ownership/consumers/scale/isolation needs. Um module de integração com automação não transforma a DÉLIA em owner da execução técnica do Automation Hub.
 
 ## 3. Shared primitive registry
 
@@ -117,7 +117,7 @@ TaskRef/CaseRef
 EventEnvelope/AuditEvent
 ```
 
-A presença nesta lista **não prova implementação atual**. C0.S0 deve localizar definição, owner, consumers e evidência antes de reutilizar ou criar qualquer tipo.
+A presença nesta lista **não prova implementação atual**. C0.S0 deve localizar definição, owner, consumers e evidência antes de reutilizar ou criar qualquer type.
 
 Candidate refs somente se C0 provar necessidade transversal:
 
@@ -142,8 +142,17 @@ Do not create feature-specific duplicate Evidence/Event/Outcome/Workflow models.
 ## 4. Core producer → consumer graph
 
 ```text
-Keycloak/Core
-→ authenticated user/service + platform authorization
+Keycloak
+→ authenticated identity / SSO context
+
+Core API
+→ apps/routes/platform permissions/governance context
+
+Portal
+→ bounded host/navigation/workspace context
+
+Authorized Domain/External/Operational sources
+→ DÉLIA operational/intelligence context
 
 Domain/OpenAPI
 → Action Catalog / Capability Projection
@@ -169,7 +178,7 @@ Decision
 Authorized data
 → Sandbox / Predictive / Scenario
 → Artifact/Prediction/Recommendation
-→ PREPARE/Decision only until governed ACT
+→ PREPARE or governed Decision/ACT according to phase/capability
 ```
 
 ## 5. Semantic distinctions
@@ -196,7 +205,7 @@ SHARED_RESOURCE
 SERVICE_CONNECTION
 ```
 
-Personal/restricted source remains bounded. Provider scope does not mutate Core permission.
+Personal/restricted source remains bounded. Provider scope does not mutate Core/domain permission.
 
 ## 7. Semantic capability graph
 
@@ -267,7 +276,7 @@ official API
 → native integration
 → deterministic function/script
 → RPA
-→ computer-use
+→ governed computer-use
 → Human Task
 ```
 
@@ -310,7 +319,7 @@ Marketplace owns package/catalog lifecycle. Manifest permissions/scopes are requ
 
 ## 18. Edge ownership
 
-Device/Edge platform owns device runtime/health. DÉLIA owns approved package/content/model projection/sync semantics when applicable. User identity/permissions remain central/domain authorities; offline cache cannot create indefinite authority.
+Device/Edge platform owns device runtime/health. DÉLIA owns approved package/content/model projection/sync semantics when applicable. User identity/permissions remain Keycloak/Core/domain authorities; offline cache cannot create indefinite authority.
 
 ## 19. Independence graph
 
@@ -352,7 +361,7 @@ Could personal/employee data leak or become a score?
 Could offline/simulation/tool metadata widen authority?
 ```
 
-Unknown = `NOT_PROVEN`.
+Unknown = `TO_INVENTORY`; never infer implementation or readiness from a document/filename.
 
 ## 21. Stabilization order
 
@@ -366,7 +375,7 @@ factual inventory
 → standalone bootstrap
 → capability foundations
 → read-only analysis/discovery
-→ governed writes/executors/artifacts
+→ governed ACT/executors/artifacts
 → product governance/experience
 → selected advanced autonomy/Edge/Marketplace
 ```
