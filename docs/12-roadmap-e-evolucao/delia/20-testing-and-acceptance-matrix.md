@@ -1,4 +1,4 @@
-# Minha DELPI Copilot — Matriz Canônica de Testes e Aceitação
+# DÉLIA — Matriz Canônica de Testes e Aceitação
 
 **Status:** gate transversal canônico  
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
@@ -7,13 +7,15 @@
 **Requirements:** [`25-requirements-traceability.md`](./25-requirements-traceability.md)  
 **Specs temáticas:** `53–66`
 
+> DÉLIA é o nome do produto. Prefixos técnicos históricos como `COPILOT_*` podem permanecer apenas como identificadores temporários até `C0.S1`; não constituem identidade de produto nem prova de runtime.
+
 ## 1. Regra de evidence
 
 Todo PASS material registra, conforme aplicável:
 
 ```text
 gitSha
-Copilot API/MFE version
+DÉLIA API/MFE version
 manifest/config/schema hashes
 OpenAPI/Action Catalog hashes
 model/provider/deployment/eval versions
@@ -36,7 +38,9 @@ test/eval version
 timestamp
 ```
 
-Evidence incompatible, stale ou não reproduzível invalida o PASS afetado.
+Evidence incompatível, stale ou não reproduzível invalida o PASS afetado.
+
+Estados factuais de inventário seguem `PROVEN | TO_INVENTORY`; planejamento usa `PLANNED | TARGET`. Gate de execução pode usar `PASS | FAIL | PENDING | INCONCLUSIVE | TEST_NOT_RUN | STALE_EVIDENCE` conforme esta matriz.
 
 ## 2. Gate C0 — Foundation Freeze
 
@@ -61,16 +65,16 @@ Provar com paths/contracts reais:
 - factory Edge/devices/MDM/local inference/offline requirements;
 - model registry/MLOps/package/catalog/signing/supply-chain controls;
 - OT/industrial boundaries;
-- Chat reference-only.
+- Minha DELPI Chat apenas como referência de inventário.
 
-Unknown = `NOT_PROVEN`, nunca `PASS` por suposição.
+Unknown = `TO_INVENTORY`, nunca `PASS` por suposição.
 
 ### Standalone negatives
 
 ```text
-Copilot importa runtime/source do Chat
-Copilot depende de Chat API/container/database authority
-Copilot usa Chat media/external/automation/model runtime como dependency obrigatória
+DÉLIA importa runtime/source do Chat
+DÉLIA depende de Chat API/container/database authority
+DÉLIA usa Chat media/external/automation/model runtime como dependency obrigatória
 ```
 
 ### Foundation boundaries REQUIRED
@@ -143,6 +147,8 @@ NO_CHAT_DB_AUTHORITY=PASS
 INDEPENDENT_DEPLOY_ROLLBACK=PASS
 ```
 
+Os identificadores `COPILOT_*` acima são nomes técnicos temporários; C0.S1 decide eventual rename sem alterar a semântica do gate.
+
 Também provar:
 
 - health/config/logging/JWT/Core;
@@ -187,7 +193,7 @@ Manter todos os gates positivos/negativos de `53–56`: provenance, explicit cap
 - OPERATIONAL uses bounded reads/rules and optional classifier only when justified;
 - REASONING uses Graph/Knowledge/Expertise/LLM when needed;
 - path choice observable;
-- no ACT in C3.
+- no material ACT in C3.
 
 ### Process Intelligence foundation
 
@@ -325,11 +331,33 @@ Manter todos os gates positivos/negativos de `53–56`: provenance, explicit cap
 - live Domain fact overrides stale memory;
 - shared-device cache cleared on user switch.
 
-## 7. Gate C5 — Governed Writes + Durable Work + Artifacts
+## 7. Gate C5 — Governed ACT + Durable Work + Artifacts
+
+C5 é o primeiro gate que pode liberar **ACT governado** para capabilities materiais específicas. Isso não significa autonomia L5, Watch autônomo ou autoridade ampliada.
+
+Invariante:
+
+```text
+PREPARE != ACT
+ACT_C5 = explicit authorized governed execution
+ACT_C5 != autonomous L5
+ACT_C5 != Watch autonomous trigger
+```
 
 ### Business/external/Teams writes
 
-Decision Gate/revalidation/idempotency/no blind retry/verified outcome and `draft != send` remain mandatory.
+Decision Gate/revalidation/AuthZ/idempotency/audit/no blind retry/verified Outcome e `draft != send` são obrigatórios.
+
+Teste positivo de ACT C5 deve provar:
+
+- capability write explicitamente habilitada;
+- actor/user/service identity explícita;
+- Core/domain authorization válida no momento da ação;
+- arguments/impact revalidados após Decision quando aplicável;
+- idempotency/correlation preservadas;
+- executor não amplia permission;
+- postcondition material verificada em source autoritativa;
+- technical success não substitui business Outcome.
 
 ### Automation/Executors
 
@@ -375,7 +403,9 @@ Metric/semantic definition version change material invalidates old decision/prev
 
 ### Watch/Product Work
 
-`OBSERVE|ADVISE|PREPARE` only; PREPARE no side effect; ACT remains blocked in C6. Task/Case/Room/Inbox/source ACL and Workflow correlation remain.
+Watch permanece, por default, em `OBSERVE|ADVISE|PREPARE`; PREPARE não produz side effect. **Watch não dispara ACT autonomamente em C6.** Isso não revoga as capabilities de ACT governado já liberadas em C5: uma ação C5 pode ser iniciada por fluxo explicitamente autorizado/confirmado e deve passar novamente pelos mesmos gates de Policy/Decision/AuthZ/idempotency/audit/Outcome.
+
+Task/Case/Room/Inbox/source ACL e Workflow correlation permanecem obrigatórios.
 
 ### Process Intelligence UX
 
@@ -425,7 +455,7 @@ Metric/semantic definition version change material invalidates old decision/prev
 - source freshness present;
 - scenario assumptions explicit;
 - compare alternatives reproducibly;
-- no production write.
+- no production write from scenario state.
 
 ### Edge/Offline pilot
 
@@ -444,9 +474,15 @@ Metric/semantic definition version change material invalidates old decision/prev
 
 ## 9. Gate C7 — Advanced Autonomy / Scale
 
+C7 não cria o conceito de ACT; amplia **autonomia operacional governada** sobre capabilities que já possuem contratos, enforcement e Outcome verification comprovados.
+
 ### Capability-scoped autonomy
 
 No global unrestricted L5. L5 OFF default; allowlist/actor/service identity/business limits/budget/rate/kill switch/live revalidation/verified Outcome.
+
+### Watch autonomous ACT
+
+Selected Watch ACT só pode ser habilitado por capability/context/risk scope explícito, após C5/C6 gates e com policy live, service/user identity, limits, idempotency, audit, kill switch e verified Outcome.
 
 ### Closed-loop Process Intelligence
 
@@ -561,6 +597,10 @@ BACKGROUND_EXECUTION_WITHOUT_EXPLICIT_IDENTITY
 AMBIGUOUS_WRITE_BLIND_RETRY
 EXECUTOR_TECHNICAL_SUCCESS_AS_BUSINESS_SUCCESS
 PREPARE_BECOMES_ACT_IMPLICITLY
+ACT_WITHOUT_LIVE_AUTHZ
+ACT_WITHOUT_IDEMPOTENCY_OR_AUDIT
+ACT_WITHOUT_REQUIRED_OUTCOME_VERIFICATION
+WATCH_AUTONOMOUS_ACT_BEFORE_C7
 GLOBAL_UNSCOPED_L5
 PROCESS_MINING_WORKER_PROFILING
 MCP_A2A_AUTO_TRUST
@@ -585,3 +625,5 @@ STALE_NONREPRODUCIBLE_EVIDENCE
 ## 13. Regra final
 
 Qualquer gate REQUIRED em `FAIL | INCONCLUSIVE | PENDING | TEST_NOT_RUN | STALE_EVIDENCE` bloqueia a fase. Nunca enfraquecer teste para fazer candidate passar.
+
+Documentação, target, schema candidate ou commit documental não promovem gate a PASS. Evidence vale somente para o SHA/config realmente avaliados.
