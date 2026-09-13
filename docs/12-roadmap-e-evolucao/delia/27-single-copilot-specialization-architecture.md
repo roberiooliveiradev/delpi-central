@@ -1,12 +1,12 @@
-# Minha DELPI Copilot — Arquitetura de Copilot Único e Especialização Componível
+# DÉLIA — Arquitetura de Inteligência Única e Especialização Componível
 
-**Status:** thematic architecture spec  
+**Status:** thematic architecture spec / TARGET  
 **Standalone boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
 
 ## 1. Decisão
 
-Existe **um único Minha DELPI Copilot**, implementado na nova `minha-delpi-copilot-api`.
+Existe **uma única DÉLIA**, implementada no novo runtime standalone da DÉLIA. O namespace técnico de API permanece temporariamente `minha-delpi-copilot-api` até C0.S1.
 
 ```text
 NÃO
@@ -15,12 +15,12 @@ usuário escolhe agente RH/Qualidade/Engenharia
 → handoff entre identidades
 
 SIM
-usuário fala com o mesmo Copilot
+usuário fala com a mesma DÉLIA
 → goals/context
 → capabilities autorizadas
 → Expertise Packs/Playbooks relevantes
 → Knowledge/Multimodal
-→ planner/policy/execution
+→ planner/policy/work orchestration
 ```
 
 Nenhum componente desta arquitetura depende dos agents do Minha DELPI Chat.
@@ -28,7 +28,7 @@ Nenhum componente desta arquitetura depende dos agents do Minha DELPI Chat.
 ## 2. Modelo conceitual
 
 ```text
-Copilot Runtime
+DÉLIA Runtime
 ├─ Base Behavior / Safety / Policy
 ├─ Structured Understanding
 ├─ Workspace + Conversation Context
@@ -36,9 +36,9 @@ Copilot Runtime
 ├─ Expertise Retrieval
 ├─ Playbook Retrieval
 ├─ Knowledge Retrieval
-├─ Multimodal Tools
+├─ Multimodal Intelligence
 ├─ Structured Planner
-├─ Generic Executors
+├─ Decision / Work Orchestration
 ├─ Durable Work
 └─ Presentation / Audit / Evals
 
@@ -51,9 +51,11 @@ Per-turn specialization
 └─ eval expectations
 ```
 
+Technical execution is not a “Generic Executors” subsystem owned by the DÉLIA core. Approved Domain APIs, provider adapters and the Automation Hub technical-execution boundary remain separate owners/contracts.
+
 ## 3. Capability
 
-Representa **o que** o Copilot pode fazer.
+Representa **o que** a DÉLIA pode fazer semanticamente.
 
 Examples:
 
@@ -64,7 +66,7 @@ Examples:
 - buscar knowledge;
 - gerar artifact.
 
-Authority técnica permanece no owner real: Portal/Core/OpenAPI/Domain API.
+Authority técnica permanece no owner real: Portal/Core/Domain API/provider/Automation Hub conforme o tipo de capability.
 
 ## 4. Expertise Pack
 
@@ -81,7 +83,7 @@ Examples:
 - maintenance;
 - HR.
 
-Pack não concede permission e não define endpoint technical authority.
+Pack não concede permission e não define endpoint/executor technical authority.
 
 ## 5. Domain Playbook
 
@@ -98,9 +100,9 @@ Playbook define stages/evidence/criteria. Planner resolve capabilities autorizad
 
 ## 6. Knowledge / Multimodal
 
-Knowledge scopes e multimodal tools são implementados na Copilot API por ports/adapters próprios.
+Knowledge scopes e multimodal capabilities são implementados no runtime standalone da DÉLIA por boundaries/adapters aprovados quando necessários.
 
-A existência de document vision/drawing analysis no Minha DELPI Chat pode informar C0, mas o Copilot não chama nem importa aquele runtime.
+A existência de document vision/drawing analysis no Minha DELPI Chat pode informar C0, mas a DÉLIA não chama nem importa aquele runtime.
 
 ## 7. Composição
 
@@ -117,7 +119,7 @@ Um turno pode ativar múltiplas expertises:
 → one synthesis/workflow
 ```
 
-Sem handoff entre agents.
+Sem handoff entre agents departamentais.
 
 ## 8. Pipeline
 
@@ -130,9 +132,11 @@ message + workspace + attachments
 → knowledge/multimodal evidence
 → bounded context
 → structured plan
-→ policy/Decision Gate
-→ execution/wait
+→ Policy/Decision Gate
+→ DÉLIA Work orchestration
+→ Domain API / approved provider / Automation Hub execution contract as applicable
 → observations/evidence
+→ authoritative Outcome verification when material
 → synthesis/presentation
 → persist/audit/evals
 ```
@@ -141,16 +145,19 @@ message + workspace + attachments
 
 | Conceito | Authority |
 |---|---|
-| identity | Keycloak |
-| platform permissions/apps/routes | Core API |
-| business actions | Domain OpenAPI + Domain API |
-| platform actions | Core + Portal |
-| expertise | Copilot Expertise Catalog |
-| playbooks | Copilot Playbook Catalog |
-| knowledge retrieval | Copilot Knowledge runtime + source ACL |
-| multimodal | Copilot multimodal adapters |
-| policy/decision | Copilot Policy + Domain final authorization |
-| visual context | Portal Workspace Context |
+| identity/SSO | Keycloak |
+| platform apps/routes/RBAC/governance | Core API |
+| platform host/navigation/published context | Portal |
+| business actions/data/rules | Domain OpenAPI + Domain API |
+| expertise | DÉLIA Expertise governance, when implemented |
+| playbooks | DÉLIA Playbook governance, when implemented |
+| knowledge retrieval | DÉLIA Knowledge boundary + source ACL |
+| multimodal intelligence | DÉLIA orchestration + approved provider/media adapters |
+| policy/decision/work | DÉLIA + Domain final authorization where applicable |
+| technical automation execution | Automation Hub |
+| external resources/scopes | provider + connection owner |
+| visual host context | Portal/app source; DÉLIA contextualizes bounded refs |
+| OT/safety | industrial/safety owner |
 
 ## 10. Retrieval
 
@@ -182,7 +189,7 @@ It never creates another runtime or grants permission.
 
 ## 12. Administration
 
-C6 Expertise Studio can:
+C6 Expertise Studio target can:
 
 - list/version packs/playbooks;
 - draft/review/eval/publish/rollback;
@@ -190,9 +197,11 @@ C6 Expertise Studio can:
 - inspect coverage/metrics;
 - validate knowledge/capability references.
 
+This is `TARGET` until phase/evidence permits implementation.
+
 ## 13. No Chat migration
 
-The following are explicitly out of scope for this Copilot architecture:
+The following are explicitly out of scope for this DÉLIA architecture:
 
 ```text
 AgentSpecializationService migration
@@ -208,13 +217,14 @@ Those concerns remain with the Chat product if ever addressed.
 ## 14. Acceptance
 
 ```text
-SINGLE_COPILOT_IDENTITY
+SINGLE_DELIA_IDENTITY
 NO_DEPARTMENT_AGENT_RUNTIME
 EXPERTISE_COMPOSITION
 NO_PERMISSION_ELEVATION
 UNKNOWN_PACK_GENERALIZATION
 MULTIMODAL_WITHOUT_AGENT_CONCEPT
+NO_PARALLEL_TECHNICAL_EXECUTOR_IN_DELIA
 NO_CHAT_RUNTIME_DEPENDENCY
 ```
 
-All must pass in the Copilot-owned runtime.
+All must pass in the DÉLIA-owned runtime for the declared scope; documentation alone does not produce PASS.
