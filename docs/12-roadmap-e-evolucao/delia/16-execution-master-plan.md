@@ -1,8 +1,8 @@
-# Minha DELPI Copilot — Plano Mestre Executável
+# DÉLIA — Plano Mestre Executável
 
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
-**Produto:** aplicação standalone nova  
+**Produto:** **DÉLIA**, aplicação standalone nova  
 **Próxima etapa:** `C0.S0`  
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
@@ -16,18 +16,18 @@
 
 ## 1. Decisão de execução
 
-O Copilot será construído do zero como aplicação independente.
+A DÉLIA será construída do zero como aplicação independente.
 
 ```text
 PROIBIDO
-→ evoluir minha-delpi-ai-api para virar Copilot
-→ evoluir plugins/minha-delpi-chat para virar Copilot
-→ esperar correções/refactors do Chat para continuar Copilot
+→ evoluir minha-delpi-ai-api para virar DÉLIA
+→ evoluir plugins/minha-delpi-chat para virar DÉLIA
+→ esperar correções/refactors do Chat para continuar DÉLIA
 → compartilhar tabelas/runtime do Chat como foundation
 
 OBRIGATÓRIO
-→ nova Copilot API
-→ novo Copilot MFE
+→ nova API da DÉLIA
+→ novo MFE da DÉLIA
 → migrations próprias
 → manifesto próprio
 → Gateway/Compose próprios
@@ -35,11 +35,13 @@ OBRIGATÓRIO
 → integração normal com Portal/Core/Keycloak/APIs
 ```
 
+Os namespaces técnicos planejados `minha-delpi-copilot-*` permanecem temporários até a decisão de naming em C0.S1; “Copilot” não é o nome de produto.
+
 O Chat é apenas sistema vizinho/referência durante inventário.
 
 ## 2. North Star de execução
 
-O Copilot deixa de ser apenas request/response e deve evoluir de forma foundation-first para:
+A DÉLIA deixa de ser apenas request/response e deve evoluir de forma foundation-first para:
 
 ```text
 PERCEBER
@@ -95,7 +97,7 @@ pessoas / Portal / Meeting / Frontline
 62 = Semantic Business Layer
 63 = Analysis Sandbox/Artifact Workspace
 64 = Predictive/Prescriptive Intelligence/Operational Twin
-65 = Edge/Offline Industrial Copilot
+65 = Edge/Offline Industrial DÉLIA
 66 = AI Model Lifecycle/Capability Marketplace
 ledger = execution evidence/status
 ```
@@ -104,7 +106,7 @@ Nenhuma spec temática cria ordem, permission authority ou runtime paralelo.
 
 ## 4. Invariantes
 
-1. Copilot API/MFE/persistence/deploy são próprios e independentes do Chat.
+1. API/MFE/persistence/deploy da DÉLIA são próprios e independentes do Chat.
 2. Core/Keycloak/Portal/Domain APIs mantêm suas authorities atuais.
 3. Business Actions são OpenAPI-first; planner não hardcoda endpoint/provider/executor.
 4. `EntityRef/SourceRef/EvidenceRef/OutcomeRef/EventEnvelope/Workflow/Decision` são foundations compartilhadas antes de feature-specific types.
@@ -134,7 +136,7 @@ Nenhuma spec temática cria ordem, permission authority ou runtime paralelo.
 28. Control Tower governa assets/risco/health/cost/kill switches; não concede business permission.
 29. Model/Marketplace lifecycle é versionado/revogável; instalação não concede permission.
 30. Edge/model/package deployment exige version/health/rollback/revoke.
-31. Copilot não é safety controller; autonomia empresarial não implica OT actuation.
+31. DÉLIA não é safety controller; autonomia empresarial não implica OT actuation.
 32. Chain-of-thought não é persistida/exposta.
 33. Specs `31/45/46/47` permanecem reference-only/superseded.
 
@@ -272,6 +274,8 @@ NOT_PROVEN
 OUT_OF_SCOPE
 ```
 
+`COPILOT_IMPLEMENT_NEW` é mantido temporariamente como token técnico legado do planejamento até C0.S1; não representa o nome do produto.
+
 Nenhuma capability/fornecedor/ferramenta é considerada existente sem evidence.
 
 ### Saídas obrigatórias C0.S0
@@ -291,11 +295,11 @@ Nenhuma capability/fornecedor/ferramenta é considerada existente sem evidence.
 - `51` revalidated;
 - ledger HEAD/evidence.
 
-**Sem runtime diff do Copilot.**
+**Sem runtime diff da DÉLIA.**
 
 ## C0.S1 — Product boundary / nomes / physical ownership
 
-Congelar API/MFE/service/container/path/manifest/DB ownership, admin/callback/webhook paths e decidir, por evidence/ADR, se Automation Hub, Control Tower, Process Intelligence, Sandbox, Semantic Layer e Edge são módulos da Copilot API, neutral shared services ou adapters — **sem criar microservice por nome de feature**.
+Congelar API/MFE/service/container/path/manifest/DB ownership, admin/callback/webhook paths e decidir, por evidence/ADR, se Automation Hub, Control Tower, Process Intelligence, Sandbox, Semantic Layer e Edge são módulos da API da DÉLIA, neutral shared services ou adapters — **sem criar microservice por nome de feature**.
 
 ## C0.S2 — Authorities / bounded contexts
 
@@ -515,6 +519,8 @@ C3 ainda não libera material autonomous ACT.
 - Artifact lifecycle/version/provenance/ACL;
 - Prescriptive output → PREPARE/Decision; no implicit Apply.
 
+C5 pode liberar `ACT` material somente para capabilities explicitamente autorizadas, sob Decision Gate, policy, identidade, idempotência, auditabilidade e verificação de Outcome. Isso não equivale a autonomia avançada nem a L5.
+
 ---
 
 # C6 — Product Work + Process/Control/Experience Ecosystem
@@ -535,7 +541,7 @@ C3 ainda não libera material autonomous ACT.
 - Model lifecycle drift views;
 - Capability Marketplace draft/review/catalog;
 - Organizational Knowledge/Governed Learning/Expertise Studio;
-- `ACT` remains blocked unless C7 gate is reached.
+- governed `ACT` continua sujeito aos gates de C5; **autonomous ACT avançado** permanece bloqueado até os gates de C7.
 
 ---
 
@@ -567,7 +573,7 @@ C3 ainda não libera material autonomous ACT.
 ## 6. Fora do default scope
 
 ```text
-Chat→Copilot migration
+Chat→DÉLIA migration
 open-world biometric surveillance
 psychological/worker scoring
 unrestricted web/browser/sandbox/desktop access
@@ -584,7 +590,7 @@ twin simulation writing production automatically
 offline mode widening authority
 Marketplace package granting RBAC
 free-form LLM→PLC/CNC/robot
-Copilot replacing safety interlocks
+DÉLIA replacing safety interlocks
 ```
 
 ## 7. Protocolo por subetapa
