@@ -1,21 +1,28 @@
-# Minha DELPI Copilot — Rollout, Migrações e Implantação
+# DÉLIA — Rollout, Migrações e Implantação
 
+**Status:** `PLANNED / TARGET`  
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Specs temáticas:** `53–66`
+**Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)
 
 ## 1. Princípio
 
-Rollout é progressivo por risco/capability/source/asset, mas nunca mantém duas authorities permanentes.
+Rollout é progressivo por risco/capability/source/asset, sem manter duas authorities permanentes e sem tratar rollout como permission grant.
 
 ```text
-read before write
-observe before act
-prepare before autonomous act
-simulation before apply
-offline read before offline action
-model eval before deployment
-review before Marketplace publish
+read != write
+PREPARE != ACT
+recommendation != authorization
+simulation != apply
+technical success != business outcome
+```
+
+Progressão de autonomia:
+
+```text
+observe before advice
+advice before prepare
+prepare before governed ACT
+C5 governed ACT before C7 advanced/autonomous ACT
 ```
 
 ## 2. Macro rollout
@@ -26,10 +33,12 @@ C0 foundations/inventory
 → C2 context/navigation
 → C3 capability foundations
 → C4 read-only connected/analytical pilots
-→ C5 governed writes/executors/artifacts
+→ C5 governed ACT + Durable Work + approved execution contracts
 → C6 product/governance experiences
-→ C7 selected autonomy/Edge/Marketplace scale
+→ C7 selected advanced autonomy/Edge/Marketplace scale
 ```
+
+Este documento não prova que qualquer piloto/cohort/runtime já exista.
 
 ## 3. Internal/domain rollout
 
@@ -37,8 +46,8 @@ C0 foundations/inventory
 read-only Domain capabilities
 → Graph/Semantic/process analysis
 → PREPARE/preview
-→ explicit governed writes
-→ durable workflows
+→ explicit governed ACT from C5 when capability is authorized and gated
+→ Durable Work
 → selected autonomous ACT only after C7 gates
 ```
 
@@ -51,26 +60,26 @@ inventory/auth contract
 → narrow read-only connection
 → Source/Evidence validation
 → draft capability
-→ explicit governed write
+→ explicit governed write/ACT when C5 gates allow
 → webhook/subscription/reconciliation
-→ selected proactive capability much later
+→ selected autonomous/proactive ACT only after C7 gates
 ```
 
-Provider-neutral planner remains unchanged.
+Provider-neutral planner remains unchanged. Provider scope never becomes Core/domain permission.
 
 ## 5. Process Intelligence rollout
 
 ```text
-one well-understood process + clean event log
+one well-understood process + authorized event log
 → reconstruct/validate trace
 → variants/conformance/bottleneck pilot
 → owner review
-→ automation opportunity backlog
+→ automation opportunity candidate backlog
 → before/after measurement
 → additional processes
 ```
 
-Do not start with company-wide desktop Task Mining. Actor-level telemetry requires separate privacy/governance pilot.
+Do not start with company-wide desktop Task Mining. Actor-level telemetry requires explicit privacy/governance justification and may remain out of scope.
 
 ## 6. Semantic Layer rollout
 
@@ -80,22 +89,22 @@ high-value disputed KPIs
 → semantic query pilot
 → cross-UI consistency checks
 → broader glossary/metrics
-→ federated/materialized optimization later
+→ federation/materialization only if justified later
 ```
 
-No bulk migration of all BI models before priority/owner validation.
+No bulk migration of BI models before priority/owner validation.
 
 ## 7. Personal Memory rollout
 
 ```text
 opt-in low-risk preferences
-→ user view/correct/delete controls
+→ user view/correct/delete/disable controls
 → followed topics/work continuity
 → personalized briefing
 → advanced personalization only after privacy/eval evidence
 ```
 
-Never bootstrap memory by silently ingesting personal mailbox/history into durable memory.
+Never bootstrap durable memory by silently ingesting personal mailbox/history. Personal Memory never grants authorization.
 
 ## 8. Analysis Sandbox rollout
 
@@ -105,10 +114,10 @@ isolated read-only sandbox
 → reproducible charts/tables
 → artifact generation
 → advanced statistical/forecast/optimization workloads
-→ scaled pools C7
+→ scaled pools only when justified
 ```
 
-No production DB credentials or unrestricted network at any stage.
+No unrestricted production credentials/network at any stage.
 
 ## 9. Artifact Workspace rollout
 
@@ -117,11 +126,9 @@ report/chart drafts
 → version/provenance/ACL
 → human edit/review
 → Case/Task/Meeting attachment
-→ export/share
-→ governed templates/library
+→ export/share PREPARE
+→ separately governed external send/share
 ```
-
-External send/share remains separate action.
 
 ## 10. Predictive / Prescriptive rollout
 
@@ -131,36 +138,49 @@ historical model validation
 → calibration/drift monitoring
 → recommendation/PREPARE
 → scenario/what-if
-→ selected ACT only after C7 policy/outcome proof
+→ governed ACT from C5 only where the underlying action capability is explicitly authorized
+→ advanced/autonomous predictive/prescriptive ACT only after C7 gates
 ```
 
-Prediction is never promoted to fact by rollout stage.
+Prediction is never promoted to FACT by rollout stage.
 
 ## 11. Operational Twin rollout
 
 ```text
-bounded one-process/line scenario model
+bounded scenario model
 → validate live source mapping/freshness
 → what-if comparison
-→ user scenario workspace
-→ apply remains separate governed action
-→ expand only after accuracy/value proof
+→ scenario workspace
+→ separate live Apply intent
+→ live AuthZ/Policy/Decision
+→ governed ACT path
 ```
+
+Twin/scenario remains projection, not source of truth.
 
 ## 12. Automation / RPA rollout
 
-Prefer API executor first. For legacy RPA:
+Prefer authoritative API first. For legacy RPA or computer-use:
 
 ```text
-one deterministic capability
-→ package/version/credential/worker isolation
-→ manual trigger + Outcome verification
-→ Durable Workflow integration
-→ PREPARE/explicit execute
-→ selected autonomous execution only after C7
+semantic capability
+→ DÉLIA Policy/Decision/Work
+→ Automation Hub / approved technical executor
+→ package/version/credential/worker/session isolation
+→ technical result
+→ authoritative Outcome verification
 ```
 
-RPA→API migration later changes adapter/mapping, not planner/workflow.
+Progression may be:
+
+```text
+manual/explicit governed trigger
+→ Durable Work integration
+→ PREPARE + governed ACT from C5 when all gates pass
+→ selected autonomous execution only after C7 gates
+```
+
+RPA→API migration changes executor mapping/adapter, not planner semantics. DÉLIA does not own RPA worker mechanics by default.
 
 ## 13. MCP / A2A rollout
 
@@ -170,52 +190,52 @@ inventory/discovery
 → APPROVED read-only server/agent
 → narrow pilot
 → monitored usage/result provenance
-→ write capability under same Decision gates
-→ autonomous delegation only C7
+→ write capability under same C5 governance when authorized
+→ autonomous delegation only after C7 gates
 ```
 
-Discovery never auto-enables.
+Discovery never auto-enables or grants permission.
 
 ## 14. AI Control Tower rollout
 
-Start with inventory/read-only governance view:
+Start with inventory/read-only governance projection when owner/contracts exist:
 
 ```text
-asset registry
+asset inventory
 → owner/version/risk/eval/health
 → cost/usage
 → incidents/dependencies
 → kill switches/rollout controls
-→ verified value/ROI
+→ verified value
 ```
 
-Control Tower must be useful before it becomes a broad admin command surface.
+Control Tower is not business permission authority or second planner.
 
 ## 15. Model lifecycle rollout
 
 ```text
 inventory active models/providers
-→ minimum owner/version/eval registry
+→ canonical owner/version/eval registry or source
 → deployment health
 → drift/cost telemetry
 → rollback/revoke
-→ advanced Model Router/Edge deployment
+→ advanced routing/Edge deployment
 ```
 
-Existing production model with unknown owner/eval becomes governance debt, not auto-approved.
+Unknown owner/eval means governance debt, not auto-approval.
 
 ## 16. Capability Marketplace rollout
 
 ```text
 catalog read-only
-→ internal publisher review
-→ approved non-executable templates/packs
-→ connectors/models/automations with stronger gates
+→ publisher review
+→ approved non-executable assets
+→ stronger gates for connectors/models/automations/executable assets
 → publish/enable workflows
-→ supply-chain automation
+→ supply-chain controls
 ```
 
-No public/external Marketplace auto-install into production.
+Install/enable never grants RBAC/provider scope.
 
 ## 17. Edge / Offline rollout
 
@@ -223,13 +243,13 @@ No public/external Marketplace auto-install into production.
 network/device inventory
 → selected Frontline device cohort
 → read-only current procedure/cache
-→ local inference pilot
+→ bounded local inference pilot
 → buffered events/sync
 → fleet health/rollback
-→ bounded offline action only after separate C7 proof
+→ bounded offline action only after separate safety/authority proof
 ```
 
-Loss of cloud never upgrades permission.
+Loss of cloud never upgrades permission. Edge does not grant OT authority.
 
 ## 18. Database/schema migration pattern
 
@@ -243,19 +263,17 @@ EXPAND
 → CLEANUP
 ```
 
-No migration from Chat DB.
-
-Definitions/models/packages are versioned rather than silently overwritten.
+Only DÉLIA-owned persistence is migrated here. No migration from Chat DB and no migration of another bounded context's database.
 
 ## 19. Provider/executor/model migration
 
-Volatile implementation swaps use adapters and canary:
+Volatile implementation swaps use contract/eval compatibility and canary when justified:
 
 ```text
 new provider/executor/model
-→ contract/eval compatibility
+→ owner/contract/eval compatibility
 → cohort/canary
-→ compare Outcome/quality
+→ compare quality/technical result/verified Outcome
 → cutover
 → revoke/deprecate old
 → cleanup
@@ -263,35 +281,18 @@ new provider/executor/model
 
 ## 20. Derived index/cache migration
 
-External/process/semantic/Graph/Edge caches are derived. Prefer rebuild/invalidate where possible. Preserve user/source/connection/domain isolation and freshness.
+External/process/semantic/Graph/Edge caches are derived only when their owners/contracts say so. Prefer rebuild/invalidate where possible. Preserve source/user/domain isolation and freshness.
 
 ## 21. Feature flags / rollout controls
 
-Examples:
-
-```text
-internet_research_enabled
-provider_x_enabled
-process_intelligence_enabled
-personal_memory_enabled
-analysis_sandbox_enabled
-prediction_x_enabled
-automation_x_enabled
-mcp_server_x_enabled
-a2a_agent_x_enabled
-edge_cohort_x_enabled
-marketplace_asset_x_enabled
-model_deployment_x_enabled
-```
-
-Each flag has owner/purpose/risk/exit criteria/rollback. Flag never grants permission.
+Flags are operational controls, never authorization. Each has owner/purpose/risk/exit criteria/rollback and cannot bypass Core/domain Policy/Decision.
 
 ## 22. Kill switches
 
 Independent disable where material:
 
 - Internet/provider/connection/external send;
-- Watch ACT/autonomy;
+- selected Watch ACT/autonomy;
 - specific automation/executor/RPA worker class;
 - MCP server/A2A agent;
 - sandbox;
@@ -303,45 +304,20 @@ Independent disable where material:
 
 ## 23. Cohort strategy
 
-Use the smallest cohort that proves value/safety:
-
-```text
-TI/internal owner
-→ selected specialists/power users
-→ one process/team/site/device cohort
-→ wider departments
-→ broader rollout
-```
-
-Personal connections/memory remain owner-specific regardless of broad feature flag.
+Use the smallest cohort that proves value/safety. Personal connections/memory remain owner-specific regardless of broad rollout.
 
 ## 24. Metrics before expansion
 
-Require metrics appropriate to capability:
-
-```text
-verified Outcome rate
-privacy/security incidents = 0 target
-process before/after improvement
-metric reproducibility
-memory correction/opt-out
-sandbox failures/blocked escapes
-prediction calibration/drift
-artifact usefulness/edit preservation
-MCP/A2A blocked/unapproved calls
-model eval freshness/rollback
-Edge cache/sync health
-cost vs verified business value
-```
+Use capability-appropriate metrics: verified Outcome rate, security/privacy incidents, process before/after improvement, metric reproducibility, memory corrections/opt-out, sandbox isolation failures, prediction calibration/drift, artifact edit preservation, tool/agent trust blocks, model eval freshness, Edge sync health and cost vs verified business value.
 
 ## 25. Stop-the-line
 
-Pause rollout on any release blocker from `20`, especially data/credential leak, duplicate autonomous effect, false-success Outcome, Process Mining surveillance, tool/agent trust bypass, memory cross-user leak, semantic formula drift, sandbox escape, prediction-as-fact, simulation production mutation, Edge authority expansion, revoked asset still active, supply-chain bypass or OT safety boundary violation.
+Pause rollout on release blockers from `20`, especially authority/permission bypass, data/credential leak, duplicate material effect, false-success Outcome, worker surveillance, tool/agent trust bypass, memory leak, semantic formula drift, sandbox escape, prediction-as-fact, simulation→production mutation, Edge authority expansion, revoked asset still active, supply-chain bypass or OT safety-boundary violation.
 
 ## 26. Rollback
 
-Rollback preserves source/connection/state integrity, prevents duplicate side effects, marks stale/degraded projections truthfully, revokes old credentials/assets/packages where needed and maintains interpretability of historical Evidence/Outcome/artifacts.
+Rollback preserves source/state integrity, prevents duplicate side effects, marks stale/degraded projections truthfully, revokes credentials/assets/packages where applicable and preserves interpretability of historical Evidence/Outcome/artifacts.
 
 ## 27. Final maturity criterion
 
-A capability is mature only when it remains owner-driven, auditable, independently disableable/rollbackable, privacy/security scoped, observable for real outcomes and replaceable behind canonical contracts without destabilizing the rest of the Copilot.
+A capability é madura somente quando owner/source/contract estão claros, permissions continuam nas authorities canônicas, rollout é auditável e reversível, real outcomes são observáveis, e provider/executor/model pode ser substituído por contrato sem destabilizar DÉLIA.
