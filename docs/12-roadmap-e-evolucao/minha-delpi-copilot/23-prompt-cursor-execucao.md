@@ -2,7 +2,9 @@
 
 Implemente o **Minha DELPI Copilot como aplicação nova e independente**, do zero até o produto completo. Não evolua nem refatore o Minha DELPI Chat para atingir este objetivo.
 
-A visão alvo inclui **escritório, reuniões, chão de fábrica e fontes externas autorizadas**, com texto, voz, imagem, câmera, vídeo e documentos quando autorizados. Também inclui **identidade biométrica governada** de usuários conhecidos/enrolled, análise objetiva de padrões de processo, **Internet Research**, **External Connectors** e **Microsoft Teams como capability family do Microsoft 365 connector** conforme `54`, `55` e `56`. Essas capacidades não criam outro runtime nem bypassam RBAC, policy, Evidence, Decision Gate, privacidade, provider scopes ou segurança industrial.
+A visão alvo inclui **escritório, reuniões, chão de fábrica, fontes externas autorizadas e operações autônomas governadas**, com texto, voz, imagem, câmera, vídeo e documentos quando autorizados. Também inclui **identidade biométrica governada**, **Internet Research**, **External Connectors**, **Microsoft Teams** e **Event-Driven Autonomous Operations + Automation & Execution Hub** conforme `54`, `55`, `56` e `57`.
+
+O Copilot é o cérebro de contexto/decisão/orquestração; executors/API/RPA/computer-use são mecanismos de execução e nunca viram uma segunda inteligência ou authority de regra de negócio.
 
 ## 1. Decisão inegociável
 
@@ -18,9 +20,10 @@ Proibido:
 ```text
 importar runtime do minha-delpi-ai-api
 importar source do plugins/minha-delpi-chat
-usar Chat API como proxy/planner/tool/media/biometric/external runtime
+usar Chat API como proxy/planner/tool/media/biometric/external/automation runtime
 usar Chat tables/sessions/agents como Copilot authority
 criar teams-copilot-api ou Teams planner separado
+criar RPA planner/AI paralelo ao Copilot
 alterar Chat para desbloquear Copilot
 esperar roadmap/Onda J do Chat
 ```
@@ -36,41 +39,21 @@ GLOBAL      → painel contextual no Portal
 WORKSPACE   → página completa
 MEETING     → reunião assistida multimodal
 FRONTLINE   → operador/posto/máquina
-TEAMS       → futura surface app/tab/bot do mesmo Copilot, quando priorizada
+TEAMS       → futura surface app/tab/bot do mesmo Copilot
+BACKGROUND  → Watches/Workflows governados reagindo a eventos sem user prompt
 ```
 
-Todas as surfaces usam:
+Todas as surfaces e background operations usam:
 
 ```text
 same Copilot API
 same product identity
 same Core/RBAC
-same policy/Decision Gate
+same Policy/Decision Gate
 same Evidence model
 same Durable Work runtime
-same Internet/External Connector governance
-```
-
-Meeting, Frontline e eventual Teams surface **não** são agentes nem backends separados.
-
-Quando biometric identity estiver habilitada:
-
-```text
-face/voice sample
-→ enrolled-user candidate
-→ confidence/policy/correction
-→ userRef association
--X→ authentication/permission grant
-```
-
-Quando fonte externa estiver conectada:
-
-```text
-provider scope
-→ allowed connector capability
-→ read/write separation
-→ policy/Decision when required
--X→ Core permission elevation
+same External Connector governance
+same Automation/Outcome governance
 ```
 
 ## 3. Ordem de leitura
@@ -87,30 +70,29 @@ provider scope
 10. `.../53-multimodal-meeting-frontline-and-industrial-copilot.md`
 11. `.../54-biometric-identity-and-human-observation-governance.md`
 12. `.../55-internet-research-and-external-connectors.md`
-13. `.../56-microsoft-teams-connector-and-meeting-integration.md` quando Teams/Microsoft 365 collaboration for material
-14. `.../20-testing-and-acceptance-matrix.md` seções aplicáveis
-15. `.../21-data-and-state-model.md` quando houver state/persistence/media/biometric/external retention
-16. `.../22-cursor-execution-protocol.md`
-17. `.../25-requirements-traceability.md` CPs aplicáveis
-18. `.../evidence/execution-ledger.md`
-19. specs temáticas da etapa.
+13. `.../56-microsoft-teams-connector-and-meeting-integration.md` quando Teams for material
+14. `.../57-event-driven-autonomous-operations-and-automation-execution-hub.md` quando events/automation/RPA/autonomy forem materiais
+15. `.../20-testing-and-acceptance-matrix.md`
+16. `.../21-data-and-state-model.md`
+17. `.../22-cursor-execution-protocol.md`
+18. `.../25-requirements-traceability.md`
+19. `.../evidence/execution-ledger.md`
+20. specs temáticas da etapa.
 
-`16` é a única authority de ordem. `50` é authority do product boundary. `49` é authority de arquitetura/patterns. `53` governa media/Meeting/Frontline/industrial safety. `54` governa biometric identity e Human Observation. `55` governa Internet Research, egress, OAuth, external connectors, external actions/events e external learning. `56` governa Teams como capability family Microsoft 365, Teams meetings/artifacts/events, future Teams surface e o boundary de raw realtime media.
+`16` é a única authority de ordem. `49` é authority de code architecture/patterns. `57` governa Event/Signal Plane, Decision Intelligence, executor boundaries, RPA/computer-use, outcome verification e capability-scoped autonomy.
 
 ## 4. Ordem de construção
 
 ```text
-C0 Platform + Architecture + Media/Privacy/Biometric/External/OT Foundation Freeze
+C0 Platform + Architecture + Media/Privacy/Biometric/External/Automation/OT Foundation Freeze
 → C1 Standalone App Bootstrap
 → C2 Portal + Operational Context + Platform Commands
-→ C3 Intelligence Core + Multimodal/Biometric/Internet/Connector Foundations
-→ C4 Business + External Reads + Graph
-→ C5 Governed Business/External Writes + Durable Foundation
-→ C6 Product Work + Meeting/Frontline + External Events + Proactivity + Ecosystem
-→ C7 Advanced Realtime + External Proactivity + Autonomy + Optimization + Rollout
+→ C3 Intelligence + Multimodal/Biometric/Internet/Connector/Decision Foundations
+→ C4 Business + External Reads + Graph + Operational Read Intelligence
+→ C5 Governed Business/External/Automation Writes + Durable Foundation
+→ C6 Product Work + Meeting/Frontline + Automation Hub + Events + Ecosystem
+→ C7 Autonomous Operations + Advanced Realtime/External Proactivity + Rollout
 ```
-
-Teams segue essa ordem: foundation em C0/C3, reads C4, writes C5, events/meeting artifacts/app surface C6, raw realtime avançado somente C7 se justificado.
 
 ## 5. Primeira ação — C0.S0
 
@@ -121,144 +103,57 @@ git status
 git rev-parse HEAD
 ```
 
-Inventarie com paths/symbols/contracts/evidence:
+Inventarie com paths/symbols/contracts/evidence.
 
-### Portal
-- AuthContext/Keycloak;
-- AppHost federated lifecycle;
-- AppLauncher/Router;
-- global layout/drawer/panel infrastructure;
-- getAccessToken host contract;
-- federation share scope;
-- notifications/socket/context patterns;
-- responsive/accessibility patterns;
-- browser media permission/capture patterns, se existirem.
+### Portal/Core/Gateway/Infra/MFEs/APIs
 
-### Core
-- `/me`, `/me/apps`, `/me/routes`;
-- RBAC/permission resolver;
-- manifest registration/versioning;
-- app/route models;
-- notification/audit/presence patterns;
-- corporate avatar/photo sources;
-- device/session registration patterns, se existirem.
-
-### Gateway/Infra
-- API/MFE path conventions;
-- dev/prod parity;
-- Compose profiles/services;
-- env examples;
-- health/scripts/storage/network;
-- SSE/WebSocket/WebRTC/realtime proxy patterns;
-- object/media storage;
-- encrypted sensitive storage/key-management patterns;
-- outbound HTTP/proxy/DNS/egress patterns;
-- safe-fetch/SSRF/private-network/metadata protection patterns;
-- OAuth callback patterns;
-- webhook ingress/signature validation patterns;
-- secret/vault owner;
-- factory-network constraints quando documentadas.
-
-### MFEs
-- manifests;
-- mount/unmount;
-- federation config;
-- plugin-ui usage;
-- auth/API clients;
-- context/deep links;
-- responsive/touch/accessibility patterns;
-- mic/camera/file/media usage existente;
-- external connections/settings UX, se existir.
-
-### APIs
-- existing APIs and OpenAPIs;
-- auth/permissions;
-- error/pagination envelopes;
-- idempotency/write semantics;
-- entity IDs;
-- events/websockets;
-- sources para OP, operação, máquina, produto, lote, material, posto, manutenção e qualidade.
-
-### Collaboration/work infrastructure
-- interaction rooms;
-- requests/cases;
-- notifications/inbox-like concepts;
-- approvals/jobs/workers/events;
-- meeting/collaboration artifacts;
-- procedures/training sources.
+Mapear auth/RBAC/manifest/federation/plugin-ui, HTTP clients, API/OpenAPI contracts, events/sockets/jobs, storage/network/secrets, deep links/context, notifications, workers/schedulers e domain sources conforme authorities existentes.
 
 ### Media/Meeting/Frontline/Biometric
-- speech/vision/media providers/configs;
-- recording/transcription patterns;
-- media/file/object storage;
-- privacy/consent/retention owners;
-- shared workstations/tablets/kiosks;
-- production terminals;
-- meeting-room devices/processes;
-- accessibility/noise constraints;
-- device identity/session patterns;
-- corporate avatar/photo sources;
-- voice samples, se existirem e forem governados;
-- biometric enrollment owner/process;
-- biometric template storage/key management;
-- face/speaker recognition provider/capability, se existir;
-- liveness/anti-spoof support, se existir;
-- participant/presence sources;
-- governance owner para Human Observation;
-- prohibited person-inference classes.
 
-Não assumir que fotos/avatares existentes podem ser usados para enrollment biométrico sem owner/purpose/policy explícitos.
+Mapear speech/vision/media providers, recording/transcription, storage, privacy/consent/retention, shared devices, production terminals, biometric enrollment/templates/providers/liveness e governance owner.
 
 ### Internet/External Connectors
-- search/web research providers existentes;
-- safe fetch/browser automation infra, se existir;
-- Microsoft Graph app registrations/integrations;
-- Google Workspace/Gmail app registrations/integrations;
-- WhatsApp Business integrations;
-- Slack/GitHub/other external connectors;
-- OAuth delegated/application/service auth patterns;
-- state/nonce/PKCE/callback validation patterns quando aplicáveis;
-- provider token storage/rotation/revocation;
-- user-delegated vs org-managed/shared/service ownership;
-- provider webhook/subscription/push lifecycle;
-- scheduler/reconciliation/full-sync fallback;
-- attachment download/malware scanning;
-- provider terms/compliance/data-classification owners.
 
-Não assuma que uma conexão ou token existente pode ser reutilizado pelo Copilot. Não assuma que uma conta pessoal pode ser lida organizacionalmente.
+Mapear web/search, safe fetch, Microsoft Graph, Google Workspace, WhatsApp Business, OAuth flows, token storage, provider webhooks/subscriptions, reconciliation, attachment scanning e compliance owners.
 
 ### Microsoft Teams
-- Microsoft Entra/Azure app registrations existentes;
-- Microsoft Graph Teams integrations existentes;
-- tenant/admin owner;
-- delegated/application/resource-specific consent patterns;
-- chat/channel/message permissions;
-- online meeting permissions;
-- transcript/recording permissions;
-- Teams bot/tab/app inventory;
-- app distribution/deep-link patterns;
-- change-notification/webhook subscriptions;
-- subscription renewal/lifecycle notification patterns;
-- meeting call event subscriptions;
-- transcript/recording availability notification patterns;
-- Teams privacy/retention owners;
-- whether any existing realtime media bot exists.
 
-Não assuma que Teams precisa de raw media bot. Priorize Graph/API artifacts e change notifications conforme `56`.
+Mapear Entra app registrations, tenant/admin owner, delegated/application/resource-specific consent, chats/channels/messages, meetings/transcripts/recordings, change notifications, app/tab/bot inventory, privacy/retention e raw-media constraints. Não assumir raw media bot como requirement do connector base.
+
+### Automation / RPA / Autonomous Operations
+
+Mapear factual:
+
+- RPA tools/orchestrators/licences existentes;
+- bots/robots/packages e owners;
+- automações desktop/web;
+- scripts/functions/jobs;
+- event sources/brokers/topics/webhooks;
+- queues/workers/worker pools/heartbeats;
+- schedulers/polling jobs;
+- service accounts/background identities;
+- credential injection/secret owners;
+- desktop/session/VDI execution infrastructure;
+- package/version/deploy/rollback patterns;
+- retry/idempotency/lease/lock patterns;
+- RPA screenshots/artifacts/logging/retention;
+- rule/decision engines existentes;
+- BPM/workflow/process engines;
+- business postcondition/outcome verification sources;
+- notification/escalation channels;
+- kill switch/emergency stop patterns;
+- automation ownership/governance/SLA/support.
+
+Não criar Automation Hub/RPA service por suposição. Classificar `REUSE | EXTEND | ADAPTER | CREATE_REQUIRED/IMPLEMENT_NEW` somente com evidence.
 
 ### Industrial/OT — inventário somente
-- machine/PLC/CNC/robot/SCADA/MES interfaces;
-- telemetry/events owners;
-- approved read-only APIs;
-- machine command APIs/protocols existentes apenas como fato;
-- safety PLC/interlocks/industrial owners;
-- IT/OT segmentation/security ownership.
 
-Não assuma que a existência de uma API/protocolo de comando autoriza o Copilot a usá-lo.
+Mapear telemetry/read interfaces e safety owners; command APIs apenas como fato. Não assumir autoridade de atuação física.
 
 ### Chat reference only
-- inspect architecture/providers/RAG/multimodal/actions only to avoid repeating debt;
-- never classify Chat runtime as `REUSE` for Copilot.
+
+Inspect lessons/anti-patterns only; nunca `REUSE` como Copilot runtime.
 
 Classify findings:
 
@@ -296,10 +191,13 @@ OAUTH_CONNECTION_BOUNDARY=PASS
 PROVIDER_SECRET_BOUNDARY=PASS
 EXTERNAL_SOURCE_PRIVACY_BOUNDARY=PASS
 EXTERNAL_EVENT_BOUNDARY=PASS
-EXTERNAL_LEARNING_BOUNDARY=PASS
 TEAMS_TENANT_GRAPH_BOUNDARY=PASS
-TEAMS_RESOURCE_CONSENT_BOUNDARY=PASS
-TEAMS_MEETING_ARTIFACT_BOUNDARY=PASS
+AUTOMATION_EXECUTION_BOUNDARY=PASS
+EVENT_SIGNAL_BOUNDARY=PASS
+BACKGROUND_IDENTITY_BOUNDARY=PASS
+EXECUTOR_CONTRACT_BOUNDARY=PASS
+OUTCOME_VERIFICATION_BOUNDARY=PASS
+AUTONOMY_SCOPE_BOUNDARY=PASS
 SHARED_DEVICE_BOUNDARY=PASS
 OPERATIONAL_CONTEXT_BOUNDARY=PASS
 OT_SAFETY_BOUNDARY=PASS
@@ -310,7 +208,7 @@ FOUNDATION_DUPLICATION=0 material
 
 ## 7. Target physical structure
 
-Recommended, unless C0 evidence/ADR changes it:
+Recommended unless C0 evidence/ADR changes it:
 
 ```text
 minha-delpi-copilot-api/
@@ -330,7 +228,7 @@ plugins/minha-delpi-copilot/
   src/adapters
 ```
 
-Meeting/Frontline/Biometric/Internet/Connectors/Teams belong to these owners. Never create source inside Chat folders or separate product APIs merely because a capability/provider/surface is different.
+Automation & Execution Hub does **not** imply new service. C0 decides whether it is a bounded module inside Copilot API or neutral platform service based on ownership/consumers/evidence.
 
 ## 8. Architecture rules
 
@@ -340,473 +238,304 @@ Clean Architecture
 + pragmatic DDD
 + Event-Driven only with real event owner
 + State Machines for nontrivial lifecycle
++ Policy/Specification for deterministic decisions
 + light CQRS only when justified
 ```
 
-External dependencies are adapters. Concrete wiring happens in Composition Root. Durable state is backend-owned.
+Concrete providers/executors only in Infrastructure/Adapters. Composition Root wires implementations.
 
-Media/biometric/search/web/provider/secret/connector/Teams dependencies sit behind justified ports/adapters. Before creating interface/port/repository/factory/strategy/registry/base class/media service/biometric service/connector framework/web fetcher/realtime gateway, pass the Abstraction Gate in `49`.
+Before creating port/repository/factory/strategy/registry/event bus/RPA hub/worker queue/computer-use adapter, pass `49` Abstraction Gate.
 
-## 9. Portal integration
-
-Copilot MFE is `federated`.
-
-Full page:
-
-```text
-Core app/route
-→ Portal AppHost
-→ remoteEntry
-→ Copilot MFE mount
-```
-
-Global panel:
-
-```text
-Portal thin host
-→ same Copilot MFE/package
-→ WorkspaceContext
-→ typed PlatformCommands
-```
-
-Meeting/Frontline:
-
-```text
-same Copilot MFE/API
-→ different surface/layout/device capabilities
-→ same auth/policy/state contracts
-```
-
-A future Teams app/tab/bot is another entry surface to the same Copilot API/runtime, never another product backend.
-
-External connections/settings stay in the same product/MFE. Portal must not contain planner, prompts, RAG, media/biometric/search/connector intelligence, business action routing or Copilot persistence.
-
-## 10. Auth/RBAC, biometria e external scopes
+## 9. Auth/RBAC and background identity
 
 ```text
 Keycloak → identity/JWT
-Core API → platform permissions/apps/routes
-Domain API → final business authorization/rules
-External Provider OAuth/API → connection-specific scopes
-Microsoft tenant/resource consent → Teams provider authorization boundary
-Copilot → cannot elevate any of them
+Core → platform permissions
+Domain API → final business rule/authorization
+External provider → connection scopes
+AutonomyPolicy → additional execution constraints, never permission elevation
 ```
 
-MFE receives `getAccessToken` from host. Copilot API validates JWT and uses official Core contracts.
-
-In shared devices:
+Background/autonomous action requires explicit actor:
 
 ```text
-device identity != user identity
-biometric candidate != authenticated user/session
-```
-
-External scopes:
-
-```text
-provider scope != Core permission
-provider scope != permission for another user
-user-delegated connection != org-managed connection
-```
-
-Teams resource/tenant permission does not create Core permission. Teams participant identity is not a substitute for the authenticated Copilot actor.
-
-Biometric identity may assist recognition of a known enrolled user, but never grants permission by itself.
-
-Provider access/refresh tokens never go to LLM/MFE/logs. User switching must clear prior local state/context/media/external-source views.
-
-## 11. Operational/external context
-
-Do not create parallel context models.
-
-Use:
-
-```text
-WorkspaceContext
-+ EntityRef(OP/machine/product/operation/...)
-+ SourceRef for external/Teams resources when material
-+ bounded device/session metadata
-```
-
-Never place provider token, external credential or permission truth in WorkspaceContext.
-
-## 12. Business Actions — build natively in Copilot
-
-Do not inherit Chat Action Catalog/runtime.
-
-```text
-Domain OpenAPI
-→ Copilot importer/normalizer/index
-→ Copilot Action Catalog
-→ permission-aware Capability Projection
-→ semantic retrieval/planner
-→ schema/argument validation
-→ policy/Decision Gate
-→ generic executor
-→ Domain API
-→ verified Outcome/Evidence
-```
-
-No manual endpoint catalog. No path/opId semantic hardcode.
-
-Input modality does not change this pipeline.
-
-Biometric match only contributes identity/context evidence; it does not create a write channel.
-
-## 13. Internet Research rules
-
-Follow `55`.
-
-Target:
-
-```text
-research need
-→ SearchProviderPort
-→ search candidates
-→ SafeWebFetchPort
-→ extraction
-→ SourceRef/EvidenceRef
-→ freshness/relevance
-→ grounded synthesis/citations
-```
-
-Required:
-
-- external web is untrusted content;
-- no arbitrary unrestricted HTTP from LLM URL;
-- block private/link-local/loopback/metadata targets;
-- revalidate redirects;
-- type/size/time/concurrency limits;
-- no sensitive context/secret exfiltration in search/fetch;
-- sources/freshness visible when material;
-- public web never silently overrides corporate source authority.
-
-Browser automation is not the default integration. Prefer official API/connector, then structured search/fetch, browser only when justified and sandboxed.
-
-## 14. External Connector rules
-
-Follow `55`.
-
-Connection lifecycle:
-
-```text
-connect request
-→ official OAuth/API authorization
-→ callback validation
-→ ExternalConnection
-→ protected secretRef
-→ provider adapter
-→ normalized connector capabilities
-```
-
-Distinguish:
-
-```text
-USER_DELEGATED
-ORG_MANAGED
-SHARED_RESOURCE
-SERVICE_CONNECTION
-```
-
-Required:
-
-- least privilege scopes;
-- scope disclosure/consent;
-- state/nonce/PKCE/callback validation as applicable;
-- token refresh/revoke/reconnect;
-- secrets outside LLM/MFE/logs;
-- no cross-user connection leak;
-- provider-neutral planner;
-- provider-specific rules inside adapters;
-- kill switches.
-
-WhatsApp: use supported official contracts (not default WhatsApp Web personal-session scraping). Current target is business messaging through official WhatsApp Business Platform contracts when applicable.
-
-## 14A. Microsoft Teams rules
-
-Follow `56`.
-
-Teams is a capability family of the Microsoft 365 connection:
-
-```text
-Microsoft365Adapter
-├─ mail
-├─ calendar
-├─ files
-└─ Teams
-   ├─ chats/channels/messages
-   ├─ meetings
-   ├─ transcripts/recordings
-   └─ change notifications
-```
-
-Required:
-
-- no Graph endpoint/path hardcode in planner;
-- reads respect delegated/application/resource-specific scope and source ACL;
-- reply/send are separate governed writes;
-- `draft != send`;
-- messages/transcripts/recordings are untrusted external content for policy;
-- change notifications normalize to EventEnvelope with dedupe/reconciliation;
-- transcript != summary != human decision != candidate action != executed action;
-- Teams participant identity from tenant/provider is primary when authoritative; biometrics only supplement;
-- private chat/restricted channel/meeting artifact never becomes shared Knowledge/Case/Room without authorization/promotion;
-- future Teams app/tab/bot uses the same Copilot API/runtime;
-- base Teams connector must not depend on live raw-media bot;
-- live raw-media participation is C7 advanced capability only after evidence + ADR + privacy/tenant/media/cost/reliability gates.
-
-## 15. External Read/Write rules
-
-Reads may include, when connected and authorized:
-
-```text
-email search/read
-calendar read
-files search/read
-messaging conversation read
-Teams chat/channel/message read
-Teams meeting/transcript/recording metadata/read when authorized
-```
-
-Writes are separate capabilities:
-
-```text
-draft
-send
-create/update event
-message send
-Teams reply/send
-file create/update
-```
-
-Invariant:
-
-```text
-read != write
-draft != send
-```
-
-External write requires live connection/scope validation, policy/Decision Gate when material, target/payload preview where needed, idempotency/outcome handling and verified provider outcome.
-
-Generated text is never sent merely because it was drafted.
-
-## 16. External Events / Webhooks
-
-When provider supports events:
-
-```text
-provider push/webhook/subscription
-→ authenticity validation
-→ normalize
-→ EventEnvelope
-→ dedupe/correlation
-→ Watch/Inbox/Workflow
-```
-
-Handle:
-
-- duplicate/out-of-order events;
-- subscription expiry/renewal;
-- missed events/reconciliation;
-- revoked permission;
-- disabled connection;
-- stale/degraded state.
-
-Teams subscriptions/change notifications follow the same EventEnvelope pipeline and preserve tenant/resource scope.
-
-Do not let webhook payload alter system policy or execute ungoverned write.
-
-## 17. External Learning rules
-
-Classify:
-
-```text
-TRANSIENT_RESEARCH
-SESSION_EVIDENCE
-USER_KNOWLEDGE_CANDIDATE
-ORGANIZATIONAL_KNOWLEDGE_CANDIDATE
+authenticated/delegated user
+or
+approved service identity with bounded capability scope
 ```
 
 Never:
 
 ```text
-web/email/message/file/Teams transcript
-→ automatic corporate truth
+event source = permission
+worker identity = business user
+device identity = authorization
+biometric match = permission
 ```
 
-Durable promotion requires source/provenance/freshness/privacy/licensing checks plus owner/review/eval/version/publish as appropriate.
+## 10. Workspace/Operational Context
 
-Personal mailbox/message/file or restricted Teams resource does not become shared Knowledge/Case/Room content without explicit authorized sharing/promotion.
+Reuse `WorkspaceContext + EntityRef + SourceRef` where material. Never include secrets or permission truth.
 
-## 18. Multimodal/media rules
+## 11. Business Actions
 
-Progressive scope:
+OpenAPI-first chain remains native to Copilot:
 
 ```text
-document/image
-→ voice/audio
-→ short video/screen
-→ sampled/realtime only when justified
+OpenAPI
+→ Action Catalog
+→ Capability Projection
+→ planner
+→ validation
+→ Policy/Decision
+→ executor
+→ Domain API
+→ verified Outcome/Evidence
 ```
 
-Required principles:
+## 12. Event / Signal rules
 
-- explicit capture state;
-- visible mic/camera/screen/identity-recognition indicators;
-- no silent auto-resume after reload;
-- provider behind adapters;
-- size/duration/concurrency budgets;
-- provenance: page/region/frame/time range;
-- confidence/limitations;
-- raw media persistence is optional, not default;
-- transcript/raw audio/raw video/screen/derived Evidence/biometric template have distinct retention classes.
-
-External attachments also pass safe download/type/size/malware policy before extraction.
-
-Teams transcript/recording artifacts should be consumed through provider-supported artifacts before inventing a parallel raw capture path.
-
-## 19. Biometric Identity rules
-
-Follow `54`.
-
-Allowed target:
+Follow `57`.
 
 ```text
-explicit enrollment
-→ protected biometric template
-→ face/voice sample
-→ closed-set match against approved enrolled users
-→ candidateUserRef + confidence
-→ threshold/policy/liveness when required
-→ correctable association
+source event
+→ validate/authenticate source
+→ EventEnvelope
+→ dedupe/order/correlation
+→ Watch/Workflow/Decision use case
 ```
 
 Required:
 
-- unknown/ambiguous stays unknown or requires confirmation;
-- enrollment is explicit/revocable/versioned;
-- template/embedding is protected and never ordinary log data;
-- correction does not silently retrain enrollment;
-- revoke/delete prevents future use;
-- liveness/anti-spoof when purpose requires higher trust;
-- biometric match never replaces login/session/Core RBAC/Decision Gate.
+- event payload is untrusted for policy/permission;
+- duplicate event cannot duplicate execution;
+- polling/scheduler is bounded fallback only when source lacks event contract;
+- freshness/cost/dedupe explicit;
+- no new event bus by speculation.
 
-Do not implement open-world/indiscriminate face identification by default.
+## 13. Decision Intelligence rules
 
-## 20. Human Observation rules
-
-Copilot may analyze observable process-related behavior only, as specified in `54`.
-
-Do not infer from face/voice/behavior:
+Not every event invokes an LLM.
 
 ```text
-personality
-honesty/trustworthiness
-moral intent/loyalty
-emotion as truth
-health/diagnosis
-sensitive attributes
-global professional fitness
-disciplinary propensity
+DecisionPathPolicy
+├─ FAST        deterministic Policy/State Machine
+├─ OPERATIONAL bounded reads/rules + optional classifier
+└─ REASONING   Graph/Knowledge/Expertise/LLM
 ```
 
-Do not use biometrics/Human Observation as automatic authority for hiring, promotion, punishment, pay, formal performance evaluation, suspension or dismissal.
+Material business readiness with known criteria uses deterministic `Policy/Specification` over authoritative facts. LLM may explain/investigate but is not the only authority.
 
-## 21. Meeting Mode rules
+No chain-of-thought persistence.
 
-Meeting Mode must be a surface of the same Copilot.
+## 14. Automation & Execution Hub rules
 
-When implemented:
+Canonical separation:
 
 ```text
-explicit start/stop
-→ mic/transcription/camera/identity-recognition/screen status visible
-→ optional governed participant/speaker association
-→ authorized live internal/external queries
-→ facts/evidence
-→ decisions/pending topics
-→ candidate actions
-→ ata viva
-→ Task/Case/Room linkage
+Copilot
+= context + decision + orchestration
+
+Automation & Execution Hub
+= execution
 ```
 
-Teams-hosted meetings may provide meeting/transcript/recording artifacts through Graph/approved provider contracts. These artifacts enter the same Meeting semantics; they do not create a second meeting runtime.
-
-Keep semantics distinct:
+Executor preference:
 
 ```text
-transcript != summary != biometric candidate != external source != confirmed human decision != candidate action != executed action
+1 API official
+2 native supported integration
+3 deterministic function/script
+4 RPA
+5 computer-use
+6 human task
 ```
 
-A sentence in a meeting never becomes a write merely because the Copilot understood it.
+Planner sees semantic capability, never implementation mechanics.
 
-## 22. Frontline rules
-
-Frontline must prioritize operator reality and preserve the same security/external-source governance. External sources are supplementary, not a replacement for current internal procedure/revision authority.
-
-Observation of operator/process produces **candidate knowledge**, not automatic production behavior or secret worker profile.
-
-## 23. Privacy and people/external-data rules
-
-Default prohibitions:
-
-- hidden mic/camera/screen/identity recognition;
-- raw media/biometric/external sensitive retention without explicit purpose/policy;
-- open-world/indiscriminate facial recognition;
-- emotion/personality/honesty/character inference from face/voice;
-- sensitive attribute inference;
-- hidden individual productivity/person scoring;
-- automatic employment decisions based on biometric/Human Observation;
-- unrestricted web fetch/browser access;
-- provider credentials/tokens in prompt/LLM/MFE/logs;
-- cross-user external data leakage;
-- Teams private/restricted source leakage;
-- personal-source auto-promotion to organization;
-- implicit external send;
-- reusing external data for unrelated purpose without governance.
-
-Use data minimization by default.
-
-## 24. Industrial/OT safety rule
-
-Copilot is not a safety controller.
-
-Default:
+Example:
 
 ```text
-OT telemetry/read → adapter → Evidence/context → analysis/recommendation
-free-form LLM output → machine command = BLOCK
-voice command → direct machine actuation = BLOCK
-Copilot L5 → implicit OT permission = BLOCK
+billing.invoice.issue
 ```
 
-Any future physical actuation requires a separate explicitly approved industrial safety gate.
-
-## 25. Shared code policy
-
-Reuse platform-neutral code only when owner is already shared or extraction is justified by real consumers and independent contracts/tests.
-
-Never turn Chat into a library. Do not create one universal connector framework before real boundaries/providers justify it. Do not create a Teams-specific planner or work engine.
-
-## 26. C1 special rule
-
-First runtime work is bootstrap, not intelligence/media/biometric/Internet/connector/Teams feature:
+Allowed mapping:
 
 ```text
-own API skeleton
-→ health/config/logging
-→ JWT/Core integration
-→ own MFE skeleton
-→ federation/plugin-ui
-→ responsive/accessibility/media-permission baseline
-→ own manifest
-→ Gateway/Compose
-→ Portal full-page mount
-→ global host contract
-→ Chat-offline independence test
+billing.invoice.issue → API executor
 ```
 
-LLM/planner/RAG/media/biometric/Internet/connector/Teams runtime starts only in later phases after corresponding foundation gates.
+or, if legacy evidence requires:
+
+```text
+billing.invoice.issue → RPA executor
+```
+
+Forbidden:
+
+```text
+planner outputs click(x,y)
+planner outputs CSS selector for ERP
+planner embeds RPA package internals
+```
+
+## 15. Automation execution rules
+
+Execution contract/lifecycle when implemented:
+
+```text
+QUEUED
+→ RUNNING
+→ SUCCEEDED | FAILED | AMBIGUOUS | CANCELLED | TIMED_OUT
+```
+
+Required metadata: correlation, capabilityRef, executorRef/version, actorRef, inputHash, attempt, idempotency, result/error refs, outcomeVerificationRef.
+
+No duplicate effect after event replay, retry or workflow resume.
+
+## 16. RPA rules
+
+RPA is replaceable Infrastructure executor, never business authority.
+
+When in scope require:
+
+- package/version traceability;
+- worker health/heartbeat;
+- queue/lease/concurrency;
+- environment separation;
+- protected credential injection;
+- desktop/session isolation;
+- screenshot/artifact classification/retention;
+- timeout/cancel;
+- retry eligibility;
+- ambiguous outcome handling;
+- audit/correlation.
+
+Prefer API when reliable authoritative contract exists.
+
+## 17. Computer-use rules
+
+Advanced fallback only, not default.
+
+Requires sandbox/session isolation, app/domain/network allowlist, protected credentials, bounded actions, takeover/stop, audit and same Policy/Decision semantics.
+
+Never arbitrary corporate-network browsing.
+
+## 18. Outcome verification rules
+
+Invariant:
+
+```text
+technical executor success != verified business outcome
+```
+
+Examples:
+
+```text
+HTTP 200 != invoice definitely issued
+RPA clicked Save != transaction committed
+provider accepted message != final delivery when async
+```
+
+Use authoritative API/event/record/postcondition verifier where material.
+
+Never notify “concluído” when Outcome is pending/ambiguous.
+
+## 19. Watch / Proactivity rules
+
+C6:
+
+```text
+OBSERVE
+ADVISE
+PREPARE
+```
+
+C7 only:
+
+```text
+ACT
+```
+
+PREPARE builds candidate action/preview/draft/work plan and has no side effect.
+
+ACT requires capability-scoped AutonomyPolicy, identity, limits, revalidation, kill switch and Outcome verification.
+
+## 20. Autonomy rules
+
+No global `Copilot=L5`.
+
+Autonomy input:
+
+```text
+capability
++ actor/service identity
++ source/event trust
++ business context
++ risk/sensitivity
++ financial/material limits
++ environment
++ reversibility
++ policy
+```
+
+L5 is OFF by default.
+
+Example levels are configured by policy, never hardcoded in planner.
+
+## 21. Human-in-the-loop
+
+Manual exception uses same Durable Workflow:
+
+```text
+Workflow
+→ wait_user / wait_approval
+→ Inbox/Decision
+→ human resolution
+→ resume same Workflow
+```
+
+No parallel “manual process engine”.
+
+## 22. Notifications/escalations
+
+Outcome/event/Watch can notify through approved Minha DELPI/email/Teams/WhatsApp channels.
+
+Recipients, severity, dedupe, SLA/escalation and acknowledgement follow explicit policy. Notification success is not business Outcome.
+
+## 23. External/Teams/Media/Biometric rules
+
+Follow `53–56` without weakening privacy/RBAC/source ACLs. External/meeting content remains untrusted for policy. Teams is same Copilot runtime. Biometrics never grant permission.
+
+## 24. OT safety rule
+
+Copilot/Automation Hub is not a safety controller.
+
+```text
+free-form LLM → PLC/CNC/robot/machine = BLOCK
+voice command → direct actuation = BLOCK
+Copilot L5 → implicit OT authority = BLOCK
+RPA/computer-use → machine safety bypass = BLOCK
+```
+
+Future physical actuation requires separate industrial safety architecture/gate.
+
+## 25. C1 special rule
+
+First runtime work is standalone bootstrap only. No RPA Hub/Event engine/autonomous runtime before Foundation Freeze.
+
+## 26. Phase-specific automation mapping
+
+```text
+C0 → inventory/freeze events, executors, workers, service identity, outcome/autonomy boundaries
+C1 → standalone bootstrap, no automation runtime
+C2 → context/commands only
+C3 → event/decision-path foundations, no material ACT
+C4 → read-only readiness/anomaly intelligence
+C5 → executor ports/adapters + execution lifecycle + outcome verification + governed writes
+C6 → Watch OBSERVE/ADVISE/PREPARE + Automation Hub admin + exceptions/notifications
+C7 → selected Watch ACT + capability-scoped L5 + advanced computer-use
+```
 
 ## 27. Generic implementation protocol
 
@@ -814,7 +543,7 @@ For one `C*.S*` at a time:
 
 ```text
 REVALIDATE HEAD
-→ READ AUTHORITIES INCLUDING 55 AND 56 WHEN EXTERNAL/TEAMS IS MATERIAL
+→ READ AUTHORITIES INCLUDING 57 WHEN AUTOMATION/EVENT/RPA IS MATERIAL
 → IDENTIFY OWNER/LAYER/PATTERN
 → ABSTRACTION GATE
 → DEPENDENCY GATE
@@ -823,7 +552,7 @@ REVALIDATE HEAD
 → WIRE PRODUCER/CONSUMER
 → UNIT/CONTRACT/INTEGRATION
 → POSITIVE/SIBLING/NEGATIVE
-→ SECURITY/RBAC/PRIVACY/BIOMETRIC/EXTERNAL/TEAMS/SAFETY
+→ SECURITY/RBAC/PRIVACY/EXTERNAL/AUTOMATION/SAFETY
 → GENERALIZATION/METAMORPHIC/UNKNOWN
 → CHAT-INDEPENDENCE CHECK
 → ARCHITECTURE CONFORMANCE
@@ -835,116 +564,57 @@ REVALIDATE HEAD
 
 ## 28. Prohibitions
 
-- Chat runtime dependency;
-- Chat DB authority;
-- Chat agent/session migration;
+- Chat runtime/database/API dependency;
 - second RBAC/user authority;
-- business rules in MFE/LLM;
-- Portal AI/media/biometric/external intelligence;
-- manual app URL catalog;
-- manual endpoint catalog;
-- provider hardcode in planner;
-- DOM business automation;
-- Graph as operational master database;
-- feature-specific Entity/Evidence/Decision/Event types;
-- `FrontlineContext` duplicating WorkspaceContext;
-- Task executor parallel to Workflow runtime;
-- Meeting-specific business action executor;
-- Teams-specific planner/work runtime/backend;
-- voice-specific RBAC;
-- biometric match as authentication/permission grant;
-- biometric shadow user directory;
-- open-world/indiscriminate face recognition by default;
-- emotion/personality/trustworthiness inference from face/voice;
-- automatic employment decisions from biometric/Human Observation;
-- unrestricted URL fetch/browser;
-- SSRF/private-network/metadata access;
-- provider token/secret in LLM/MFE/log;
-- cross-user external source leak;
-- Teams private/restricted resource leak;
-- read scope used as write scope;
-- generated draft sent implicitly;
-- Teams message sent without governance;
-- Teams transcript promoted to decision/action automatically;
-- external message/web content changing policy;
-- personal source auto-promoted to org Knowledge;
-- base Teams connector depending on raw realtime media bot;
-- WhatsApp Web personal-session scraping as default connector;
-- CoT persistence;
-- speculative abstractions;
-- hidden media/identity recognition capture;
-- undefined raw-media/template/external retention;
-- shared-device state leakage;
-- hidden worker profiling/scoring;
-- visual finding promoted to official fact without authority;
-- arbitrary LLM→PLC/CNC/robot command;
+- business rules in MFE/LLM/RPA bot;
+- provider/executor hardcode in planner;
+- manual endpoint catalog authority;
+- RPA click/selector/coordenada in planner/domain/application;
+- RPA selected over authoritative supported API without evidence;
+- second Workflow engine inside Automation Hub;
+- event payload directly executing write;
+- event/worker/device identity granting permission;
+- background execution without explicit bounded identity;
+- blind retry after ambiguous write;
+- technical executor success treated as business success;
+- PREPARE silently becoming ACT;
+- global unrestricted L5;
+- autonomy kill-switch bypass;
+- computer-use without sandbox/allowlist;
+- secrets in prompt/LLM/MFE/log/screenshots;
+- Chat/Teams-specific planner runtime;
+- implicit external send;
+- raw media/biometric policy bypass;
+- hidden worker/person profiling;
+- arbitrary LLM/RPA→PLC/CNC/robot;
 - safety-interlock bypass.
 
 ## 29. Required tests
 
-Use `20` as authority. In addition to feature tests, every relevant release boundary includes:
+Use `20` as authority.
+
+Automation scope must include:
 
 ```text
-NO_CHAT_IMPORT
-NO_CHAT_API_DEP
-NO_CHAT_DB_AUTHORITY
-CHAT_OFFLINE_INDEPENDENCE
-PORTAL_HOST_ONLY
-CORE_RBAC_AUTHORITY
-DOMAIN_API_AUTHORITY
-DEV_PROD_ROUTE_PARITY
-INDEPENDENT_ROLLBACK
-```
-
-When media/Meeting/Frontline/Biometric apply:
-
-```text
-NO_HIDDEN_CAPTURE
-RETENTION_POLICY_ENFORCED
-MODALITY_RBAC_PARITY
-SHARED_DEVICE_ISOLATION
-BIOMETRIC_MATCH_NOT_AUTHORITY
-UNKNOWN_IDENTITY_REMAINS_UNKNOWN
-BIOMETRIC_TEMPLATE_PROTECTED
-NO_SENSITIVE_PERSON_INFERENCE
-NO_AUTOMATIC_EMPLOYMENT_DECISION_FROM_BIOMETRICS
-VISUAL_EVIDENCE_SEMANTICS
-NO_HIDDEN_WORKER_PROFILING
+EVENT_SOURCE_AUTHENTICITY
+EVENT_DEDUPE_NO_DUPLICATE_EXECUTION
+EVENT_NOT_PERMISSION
+FAST_PATH_NO_LLM_WHEN_DETERMINISTIC
+DETERMINISTIC_READINESS_REPRODUCIBLE
+PLANNER_NO_RPA_UI_MECHANICS
+API_PREFERRED_OVER_RPA_WHEN_SUPPORTED
+EXECUTOR_SUBSTITUTION_NO_PLANNER_PATCH
+BACKGROUND_IDENTITY_EXPLICIT
+AUTOMATION_EXECUTION_IDEMPOTENT
+RPA_WORKER_SESSION_CREDENTIAL_ISOLATION
+AMBIGUOUS_WRITE_NO_BLIND_RETRY
+VERIFIED_BUSINESS_OUTCOME
+PREPARE_NOT_ACT
+CAPABILITY_SCOPED_AUTONOMY
+L5_OFF_DEFAULT
+AUTONOMY_KILL_SWITCH
+COMPUTER_USE_BOUNDED
 NO_ARBITRARY_OT_COMMAND
-```
-
-When Internet/External Connectors apply:
-
-```text
-SAFE_WEB_FETCH_SSRF_BLOCK
-EXTERNAL_CONTENT_UNTRUSTED
-OAUTH_LEAST_PRIVILEGE
-OAUTH_CALLBACK_VALIDATION
-NO_PROVIDER_TOKEN_LEAK
-EXTERNAL_CONNECTION_ISOLATION
-DRAFT_NOT_SEND
-EXTERNAL_WRITE_DECISION_GATE
-VERIFIED_EXTERNAL_OUTCOME
-WEBHOOK_AUTH_DEDUPE_RECONCILIATION
-NO_PERSONAL_SOURCE_AUTO_PROMOTION
-UNKNOWN_CONNECTOR_NO_PLANNER_PATCH
-WHATSAPP_SUPPORTED_CONTRACT_ONLY
-```
-
-When Teams applies:
-
-```text
-TEAMS_PROVIDER_NEUTRAL_CAPABILITIES
-TEAMS_READ_SCOPE_ISOLATION
-TEAMS_DRAFT_SEND_SEPARATION
-TEAMS_WRITE_VERIFIED_OUTCOME
-TEAMS_EVENT_AUTH_DEDUPE_RECONCILIATION
-TEAMS_TRANSCRIPT_PROVENANCE
-TEAMS_PRIVATE_RESOURCE_NO_LEAK
-TEAMS_MEETING_ARTIFACT_TO_EVIDENCE
-TEAMS_APP_SAME_COPILOT_RUNTIME when surface exists
-TEAMS_RAW_REALTIME_NOT_REQUIRED_FOR_BASE_CONNECTOR
-NO_TEAMS_TOKEN_TO_LLM_MFE_LOG
 ```
 
 ## 30. Complete Gate blockers
@@ -960,39 +630,23 @@ FOUNDATION_DRIFT
 ARCHITECTURE_PATTERN_DRIFT
 UNJUSTIFIED_ABSTRACTION
 CHAT_RUNTIME_IMPORT
-CHAT_API_REQUIRED
-CHAT_DATABASE_AUTHORITY
-CHAT_MIGRATION_DEPENDENCY
 PORTAL_AI_LOGIC_LEAK
 DOMAIN_RULE_DUPLICATION
-HIDDEN_MEDIA_CAPTURE
-UNDEFINED_MEDIA_RETENTION
-SHARED_DEVICE_STATE_LEAK
-VOICE_PERMISSION_BYPASS
-VISUAL_FINDING_AS_UNVALIDATED_FACT
-BIOMETRIC_PERMISSION_ELEVATION
-LOW_CONFIDENCE_FORCED_IDENTITY
-REVOKED_BIOMETRIC_STILL_ACTIVE
-BIOMETRIC_TEMPLATE_LEAK
-EMOTION_PERSONALITY_CHARACTER_INFERENCE
-AUTOMATIC_EMPLOYMENT_DECISION_FROM_BIOMETRICS
-HIDDEN_WORKER_PROFILING
-UNSAFE_WEB_FETCH
-SSRF_PRIVATE_NETWORK_ACCESS
-EXTERNAL_PROMPT_INJECTION_POLICY_CHANGE
+EVENT_PERMISSION_ELEVATION
+DUPLICATE_EVENT_DUPLICATE_EXECUTION
+PLANNER_RPA_UI_MECHANICS_LEAK
+RPA_SELECTED_OVER_AUTHORITATIVE_API_WITHOUT_JUSTIFICATION
+BACKGROUND_EXECUTION_WITHOUT_EXPLICIT_IDENTITY
+AUTOMATION_EXECUTION_DUPLICATE
+AMBIGUOUS_WRITE_BLIND_RETRY
+EXECUTOR_TECHNICAL_SUCCESS_AS_BUSINESS_SUCCESS
+PREPARE_BECOMES_ACT_IMPLICITLY
+GLOBAL_UNSCOPED_L5
+AUTONOMY_KILL_SWITCH_BYPASS
+COMPUTER_USE_UNBOUNDED_ACCESS
 PROVIDER_TOKEN_LEAK
 CROSS_USER_EXTERNAL_DATA_LEAK
-EXTERNAL_WRITE_WITHOUT_GATE
-DRAFT_SENT_IMPLICITLY
-INVALID_WEBHOOK_ACCEPTED
-PERSONAL_SOURCE_AUTO_PROMOTED_TO_ORG_KNOWLEDGE
-TEAMS_SCOPE_OR_RESOURCE_LEAK
-TEAMS_MESSAGE_SENT_WITHOUT_GATE
-TEAMS_TRANSCRIPT_PROVENANCE_MISSING
-TEAMS_PRIVATE_RESOURCE_PROMOTED_WITHOUT_AUTH
-TEAMS_SEPARATE_COPILOT_RUNTIME
-TEAMS_RAW_REALTIME_REQUIRED_FOR_BASE_CONNECTOR
-UNSUPPORTED_WHATSAPP_SESSION_AUTOMATION
+BIOMETRIC_PERMISSION_ELEVATION
 ARBITRARY_LLM_OT_COMMAND
 SAFETY_INTERLOCK_BYPASS
 ```
@@ -1012,12 +666,14 @@ LAYER/PATTERNS:
 PLATFORM_REUSE:
 COPILOT_NEW_CODE:
 CHAT_DEPENDENCIES:
-MEDIA_DEVICE_BIOMETRIC_EXTERNAL_OT_IMPACT:
+EVENT_AUTOMATION_RPA_IMPACT:
 WIRING_PROOF:
 TESTS:
 SECURITY_RBAC:
 PRIVACY_RETENTION:
-BIOMETRIC_HUMAN_OBSERVATION:
+BACKGROUND_IDENTITY:
+EXECUTOR_OUTCOME_VERIFICATION:
+AUTONOMY_POLICY:
 EXTERNAL_CONNECTIONS_EGRESS:
 TEAMS_INTEGRATION:
 INDUSTRIAL_SAFETY:
@@ -1040,4 +696,4 @@ Execute only:
 C0.S0
 ```
 
-Do not create the Copilot API/MFE, media/biometric/Internet/connector/Teams runtime, Meeting Mode or Frontline Mode until C0.S7 `FOUNDATION_FREEZE=PASS`. After the freeze, start C1.S1 with the standalone API skeleton.
+Do not create Copilot API/MFE runtime features, Automation Hub, RPA executor, background ACT, Meeting/Frontline or advanced integrations until C0.S7 `FOUNDATION_FREEZE=PASS`. After freeze, start C1.S1 with standalone API skeleton.
