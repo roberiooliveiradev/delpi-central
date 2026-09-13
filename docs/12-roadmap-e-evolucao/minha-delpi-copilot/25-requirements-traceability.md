@@ -8,7 +8,16 @@
 **Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
 **Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`56-microsoft-teams-connector-and-meeting-integration.md`](./56-microsoft-teams-connector-and-meeting-integration.md)  
-**Autonomous Operations/Execution Hub:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)
+**Autonomous Operations/Execution Hub:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
+**Process Intelligence:** [`58-process-intelligence-and-process-mining.md`](./58-process-intelligence-and-process-mining.md)  
+**AI Control Tower:** [`59-ai-control-tower-and-digital-workforce-governance.md`](./59-ai-control-tower-and-digital-workforce-governance.md)  
+**MCP/A2A:** [`60-agent-interoperability-mcp-a2a-and-tool-protocols.md`](./60-agent-interoperability-mcp-a2a-and-tool-protocols.md)  
+**Personal Memory:** [`61-personal-memory-and-personalization.md`](./61-personal-memory-and-personalization.md)  
+**Semantic Business Layer:** [`62-semantic-business-layer-and-governed-metrics.md`](./62-semantic-business-layer-and-governed-metrics.md)  
+**Analysis/Artifacts:** [`63-analysis-sandbox-and-artifact-workspace.md`](./63-analysis-sandbox-and-artifact-workspace.md)  
+**Predictive/Twin:** [`64-predictive-prescriptive-intelligence-and-operational-twin.md`](./64-predictive-prescriptive-intelligence-and-operational-twin.md)  
+**Edge/Offline:** [`65-edge-offline-industrial-copilot.md`](./65-edge-offline-industrial-copilot.md)  
+**Model Lifecycle/Marketplace:** [`66-ai-model-lifecycle-and-capability-marketplace.md`](./66-ai-model-lifecycle-and-capability-marketplace.md)
 
 > Esta é a única authority `CP-*`. IDs históricos não são reutilizados nem apagados; requisitos ligados à migração do Minha DELPI Chat são preservados como `OUT_OF_SCOPE_WITH_DECISION`.
 
@@ -95,6 +104,15 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-229 | Background/autonomous execution usa user/service identity explícita, auditável e não deriva autoridade de evento/LLM | Copilot Security/Core/Automation | background identity gate | PLANNED |
 | CP-230 | Execution contract define correlation, idempotency, pre/postconditions, timeout/retry e verified Outcome semantics antes de executors materiais | Copilot Automation/Work | execution contract gate | PLANNED |
 | CP-231 | Event source authenticity/trust, dedupe, ordering/correlation e polling fallback bounded são definidos antes de continuous operations | Copilot Events/Architecture | event foundation gate | PLANNED |
+| CP-249 | C0 inventaria event logs, process owners, case keys, BPMN/process docs, task-mining telemetry/privacy e data quality antes de Process Intelligence runtime | Copilot Process Intelligence/Architecture | process-intelligence foundation inventory | PLANNED |
+| CP-256 | C0 inventaria todos os AI/automation assets, owners, risk/compliance, evals, cost telemetry, incidents e kill-switch mechanisms antes da Control Tower | Copilot Control Tower/Governance | AI asset governance foundation | PLANNED |
+| CP-262 | C0 inventaria MCP/A2A/tool registries, external agents, service identities, delegation credentials, protocol versions e trust boundaries | Copilot Interoperability/Security | protocol interoperability foundation | PLANNED |
+| CP-268 | C0 congela ownership/classes/retention/export/delete/user-controls para Personal Memory; memória não é Knowledge nem permission authority | Copilot Memory/Privacy | personal-memory foundation | PLANNED |
+| CP-274 | C0 inventaria business glossary, KPI formulas, BI semantic models, metric owners, grain/dimensions, freshness e definition conflicts | Copilot Semantic Layer/Data owners | semantic foundation inventory | PLANNED |
+| CP-280 | C0 inventaria code/data-analysis sandbox, BI/query engines, file scanning/storage e artifact-generation/versioning infrastructure e boundaries | Copilot Analysis/Artifacts/Security | sandbox/artifact foundation inventory | PLANNED |
+| CP-287 | C0 inventaria predictive/anomaly/optimization/simulation models, datasets, ground truth, owners e operational/digital-twin sources | Copilot Predictive/Twin/Data owners | predictive/twin foundation inventory | PLANNED |
+| CP-295 | C0 inventaria factory network, Edge platforms/devices, MDM, local inference, offline requirements, time sync, OT segmentation e cache/update owners | Copilot Edge/Industrial/Infrastructure | edge/offline foundation inventory | PLANNED |
+| CP-302 | C0 inventaria model providers, local ML models, registries/MLOps, datasets/evals, CI/CD, package catalogs/signing e supply-chain controls | Copilot Model Governance/Control Tower | model/marketplace foundation inventory | PLANNED |
 
 ## 3. C1 — Standalone Application Bootstrap
 
@@ -142,7 +160,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-159 | Contexto operacional OP/máquina/produto/operação/posto usa WorkspaceContext + EntityRef | Portal/MFE/Copilot | operational context contract | LOCKED |
 | CP-171 | Device metadata não substitui identidade/autorização | Portal/Copilot Security | shared-device/context negative | LOCKED |
 
-## 5. C3 — Intelligence Core Standalone + Multimodal/Biometric + External Foundations
+## 5. C3 — Intelligence Core + Extended Foundations
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
@@ -175,8 +193,17 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-215 | Teams é capability family do Microsoft 365 connector; planner não depende de Graph paths nem cria runtime Teams separado | Copilot Teams/Connectors/Planner | Teams provider-neutral architecture | LOCKED |
 | CP-232 | Copilot suporta decision-path routing `FAST | OPERATIONAL | REASONING`; nem todo evento chama LLM | Copilot Intelligence/Policy | decision-path routing eval | LOCKED |
 | CP-233 | Business readiness/anomaly material usa deterministic Policy/Specification sobre fatos autoritativos; LLM não é única autoridade da decisão | Copilot Policy/Domain owners | deterministic-decision gate | LOCKED |
+| CP-250 | Process Intelligence usa EventLog/ProcessTrace contracts com case/activity/time/source/provenance e não inventa eventos ausentes | Copilot Process Intelligence | process-contract/conformance gate | LOCKED |
+| CP-257 | AI Control Tower possui AI Asset Registry/projection com owner/version/risk/data scope/eval/status/dependencies/kill-switch refs sem duplicar owner truth | Copilot Control Tower | asset-registry contract gate | LOCKED |
+| CP-263 | MCP/A2A entram por adapters/allowlists provider-neutral; discovery de server/agent nunca equivale a aprovação/permission | Copilot Interoperability/Security | tool-agent trust gate | LOCKED |
+| CP-269 | Personal Memory possui classes/provenance/version/retention e write policy; conversation não cria memória material silenciosamente | Copilot Memory/Privacy | memory lifecycle gate | LOCKED |
+| CP-275 | Semantic Business Layer possui MetricDefinition/Glossary versionados com formula/grain/dimensions/unit/owner/source/freshness/security | Copilot Semantic Layer | metric-definition contract gate | LOCKED |
+| CP-281 | Analysis Sandbox é isolado, quota-bounded, sem host/network/secret access irrestrito, e recebe dados apenas via reads autorizados | Copilot Analysis/Security | sandbox isolation gate | LOCKED |
+| CP-288 | Prediction/Prescription contracts preservam model/version/horizon/confidence/inputs/limitations e não promovem previsão a FACT | Copilot Predictive/Evidence | prediction semantics gate | LOCKED |
+| CP-296 | Edge runtime usa device/package/model/cache contracts versionados; device identity nunca substitui user identity | Copilot Edge/Architecture | edge contract gate | LOCKED |
+| CP-303 | Model Registry/projection cobre LLM/embedding/vision/speech/classifier/forecast/anomaly/optimization com owner/version/eval/risk/deployment/rollback metadata | Copilot Model Governance | model registry gate | LOCKED |
 
-## 6. C4 — Business + External Reads + Business Graph
+## 6. C4 — Business + External Reads + Graph + Intelligence Reads
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
@@ -196,8 +223,16 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-219 | Transcript/recording/meeting artifact do Teams preserva SourceRef/EvidenceRef, meeting resource, provenance, permission scope, freshness/version e retention policy | Copilot Teams/Meeting/Evidence | Teams meeting provenance gate | LOCKED |
 | CP-225 | Identidade de participante resolvida pelo Teams/tenant é primária quando authoritative; biometria é somente evidência suplementar governada | Copilot Teams/Biometric/Identity | participant identity precedence gate | LOCKED |
 | CP-234 | Operational readiness/anomaly evaluation correlaciona Domain reads/Graph/Evidence e produz resultado read-only antes de qualquer side effect | Copilot Operational Intelligence/Domain owners | read-only decision evidence gate | LOCKED |
+| CP-251 | Process Mining reconstrói variants/bottlenecks/conformance somente de event logs autorizados; ausência/incompletude permanece explícita | Copilot Process Intelligence | read-only process mining eval | LOCKED |
+| CP-264 | MCP/A2A read-only tools/agents preservam tool/agent provenance, data minimization, timeout/cancellation e não recebem contexto irrestrito | Copilot Interoperability | read-only delegation gate | LOCKED |
+| CP-270 | Personalization prioriza conteúdo/formatos usando memória, mas live domain/source facts continuam authority e stale memory não os substitui | Copilot Memory/Planner | personalization authority gate | LOCKED |
+| CP-276 | Semantic Query resolve métrica governada e calcula por definição estruturada/reprodutível; LLM não inventa fórmula empresarial material | Copilot Semantic Layer/Analytics | governed metric query gate | LOCKED |
+| CP-282 | Sandbox executa análise read-only reproduzível com SourceRefs/runtime/code hash/parameters e não permite DDL/DML por connector analítico read-only | Copilot Analysis | reproducible analysis gate | LOCKED |
+| CP-289 | Predictive reads mostram model/version/horizon/freshness/calibration/limitations e degradam explicitamente em stale/OOD/unavailable | Copilot Predictive | predictive read eval | LOCKED |
+| CP-297 | Edge read-only/offline cache preserva source revision/syncedAt/freshness e sinaliza ou bloqueia conteúdo stale conforme criticidade | Copilot Edge/Frontline | offline freshness gate | LOCKED |
+| CP-304 | Uso de modelo material gera lineage suficiente para ligar prediction/result ao model/version/eval/deployment ref sem expor segredo | Copilot Model Governance/Evidence | model lineage gate | LOCKED |
 
-## 7. C5 — Governed Business/External Writes + Durable Work Foundation
+## 7. C5 — Governed Writes + Durable Work + Prepared Intelligence
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
@@ -232,8 +267,13 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-238 | RPA worker/queue execution, quando priorizada, possui worker health/lease/concurrency/environment/package-version/credential isolation/audit | Copilot RPA/Infrastructure/Security | RPA execution reliability gate | LOCKED |
 | CP-239 | Sucesso técnico do executor não equivale a sucesso de negócio; ação material exige postcondition/Outcome verification quando aplicável | Copilot Automation/Domain owners | verified business outcome gate | LOCKED |
 | CP-240 | Notification/escalation deriva de estado/outcome verdadeiro e não é usada como prova de sucesso da execução | Copilot Notifications/Automation | truthful notification gate | LOCKED |
+| CP-252 | Oportunidade descoberta por Process Intelligence vira candidate/Task/PREPARE com Evidence; nunca cria RPA/automation ativa automaticamente | Copilot Process Intelligence/Automation | opportunity governance gate | LOCKED |
+| CP-265 | MCP/A2A tool/agent com write capability passa pela mesma Policy/Decision/idempotency/Outcome verification das Business/External Actions | Copilot Interoperability/Policy | delegated write gate | LOCKED |
+| CP-277 | Métrica/semantic rule usada em Decision/Write é versionada e revalidada; mudança material invalida decisão anterior quando aplicável | Copilot Semantic Layer/Decision | semantic TOCTOU gate | LOCKED |
+| CP-283 | Artifact Workspace possui artifact version/lifecycle/provenance/ACL e external share/send continua ação governada separada | Copilot Artifacts/Work | artifact lifecycle/share gate | LOCKED |
+| CP-290 | Prescriptive output gera alternatives/trade-offs/PREPARE; `recommendation != authorization` e `simulate != apply` | Copilot Prescriptive/Decision | prescriptive action separation gate | LOCKED |
 
-## 8. C6 — Product Work + Proactivity + Meeting/Frontline + External Events/Learning
+## 8. C6 — Product Work + Ecosystem + Human Experience
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
@@ -288,8 +328,18 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-242 | Automation Hub Admin expõe automations/executions/workers/exceptions, owner/version/executor/status/outcome/evidence sem virar segundo workflow engine | Copilot Automation Admin/MFE/API | admin ownership/observability gate | LOCKED |
 | CP-243 | Event-driven notification/escalation usa recipients/severity/dedupe/SLA/channel policy e pode combinar Minha DELPI/email/Teams/WhatsApp Business | Copilot Notifications/Watch | notification orchestration gate | LOCKED |
 | CP-244 | Manual exception/human-in-the-loop pausa e retoma o mesmo Durable Workflow; não cria processo paralelo sem correlation | Copilot Work/Inbox/Decision | HITL resume gate | LOCKED |
+| CP-253 | Process Intelligence UX expõe process map/variants/bottlenecks/conformance/automation backlog e before-after metrics com Evidence | Copilot Process Intelligence/MFE | process product gate | LOCKED |
+| CP-258 | AI Control Tower oferece inventory/ownership/risk/health/eval/cost/value/incidents/dependencies/kill-switch UX sem conceder business permission | Copilot Control Tower/Admin | control-tower governance gate | LOCKED |
+| CP-266 | MCP/A2A servers/agents possuem lifecycle `DISCOVERED→REVIEWED→APPROVED→ACTIVE→DISABLED/REVOKED` e health/usage no Control Tower | Copilot Interoperability/Control Tower | agent-tool lifecycle gate | LOCKED |
+| CP-271 | Usuário possui controles para inspecionar/corrigir/apagar/desabilitar Personal Memory e recebe briefing personalizado grounded em authorities live | Copilot Memory/MFE | user memory control gate | LOCKED |
+| CP-278 | Semantic Layer possui catalog/admin/lineage/conflict UX; mesma label com definições distintas não é fundida silenciosamente | Copilot Semantic Layer/Admin | semantic governance UX gate | LOCKED |
+| CP-284 | Artifact Workspace suporta draft/review/version/collaboration/attach/export sem sobrescrever silenciosamente edição humana | Copilot Artifacts/MFE/Work | artifact collaboration gate | LOCKED |
+| CP-291 | Operational Twin/Scenario Workspace mantém simulated state separado de production state e permite comparar alternativas com assumptions/Evidence | Copilot Twin/MFE | scenario isolation gate | LOCKED |
+| CP-298 | Frontline Edge suporta modos `ONLINE/DEGRADED/OFFLINE_READ_ONLY/SYNCING`, event buffering idempotente e device/cache admin quando priorizado | Copilot Edge/Frontline | edge offline product gate | LOCKED |
+| CP-305 | Capability Marketplace oferece lifecycle draft/review/approved/published/deprecated/revoked para packs/playbooks/Watches/automations/connectors/MCP/A2A/templates/models | Copilot Marketplace/Admin | marketplace lifecycle gate | LOCKED |
+| CP-306 | Model lifecycle monitora quality/input/calibration drift, latency, availability, cost e correction/outcome metrics conforme model type | Copilot Model Governance/Observability | model drift gate | LOCKED |
 
-## 9. C7 — Autonomy + Advanced Realtime + External Proactivity + Optimization + Rollout
+## 9. C7 — Autonomy + Advanced Intelligence + Scale/Rollout
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
@@ -311,6 +361,23 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-246 | L5 permanece OFF por default e exige allowlist, budgets/limits, kill switch, revalidation e verified Outcome por capability | Copilot Policy/Admin/Automation | autonomous ACT gate | LOCKED |
 | CP-247 | Computer-use/UI automation é fallback avançado sandboxed/allowlisted/auditado e não substitui API/RPA determinístico sem justificativa | Copilot Automation/Security | computer-use boundary gate | LOCKED |
 | CP-248 | Anchor autonomous operation `ready-to-invoice → execute → verify → notify` funciona end-to-end sob policy sem user prompt quando capability L5 estiver explicitamente aprovada | Copilot Automation/Cross-domain | autonomous invoicing anchor gate | LOCKED |
+| CP-254 | Closed-loop process optimization nunca altera processo/policy automaticamente; ACT exige capability-scoped autonomy e before/after measurement | Copilot Process Intelligence/Automation | process closed-loop gate | LOCKED |
+| CP-259 | AI Control Tower aplica cross-runtime budgets/cohorts/kill switches/rollback e incident containment por asset/capability sem prompt authority | Copilot Control Tower/Governance | mature AI governance gate | LOCKED |
+| CP-267 | Autonomous A2A delegation exige approved agent/capability, bounded goal/context/budget, cancellation, verified result e L5 allowlist quando material | Copilot Interoperability/Autonomy | autonomous delegation gate | LOCKED |
+| CP-272 | Advanced personalization optimization não cria hidden employee score, sensitive inference ou authority; user privacy/control permanece | Copilot Memory/Privacy | personalization optimization gate | LOCKED |
+| CP-279 | Semantic federation/materialization optimization preserva owner/permission/freshness/lineage; cache nunca vira authority | Copilot Semantic Layer/Infrastructure | semantic scale gate | LOCKED |
+| CP-285 | Scaled sandbox pools mantêm isolation/quotas/reproducibility/cleanup e não se tornam general-purpose corporate shell | Copilot Analysis/Infrastructure | sandbox scale gate | LOCKED |
+| CP-286 | Advanced artifact generation/templates permanecem versioned/provenanced e publish/share continua policy-governed | Copilot Artifacts/Marketplace | artifact scale gate | LOCKED |
+| CP-292 | Operational Twin avançado preserva source/freshness e cenário isolado; twin não vira OT/domain master | Copilot Twin/Domain owners | twin authority gate | LOCKED |
+| CP-293 | Predictive/prescriptive output pode acionar ACT somente por explicit Policy/Decision/autonomy e verified Outcome; model output sozinho nunca autoriza | Copilot Predictive/Autonomy | prescriptive autonomy gate | LOCKED |
+| CP-294 | `SIMULATE != APPLY`: qualquer Apply revalida live state/permissions/policy e gera novo action/decision context | Copilot Simulation/Decision | simulate-apply TOCTOU gate | LOCKED |
+| CP-299 | Edge rollout escala por device class/cohort com signed/versioned packages/models, health e rollback | Copilot Edge/Control Tower | edge rollout gate | LOCKED |
+| CP-300 | Offline bounded actions, se existirem, exigem explicit allowlist/expiry/idempotency/reconciliation; perda de cloud nunca amplia authority | Copilot Edge/Policy | offline action gate | LOCKED |
+| CP-301 | Edge revocation/model/package update é rastreável e stale/revoked artifact deixa de ser usado no enforcement point definido | Copilot Edge/Model Governance | edge revocation gate | LOCKED |
+| CP-307 | Production model deployment possui approved environment/cohort/health/rollback/kill switch e revoked model não é selecionável | Copilot Model Governance/Control Tower | model deployment gate | LOCKED |
+| CP-308 | Marketplace publish/enable exige manifest/dependencies/permissions/data scopes/evals/compatibility e não concede RBAC/provider scope sozinho | Copilot Marketplace/Security | marketplace enable gate | LOCKED |
+| CP-309 | Executable/model/connector packages usam supply-chain controls apropriados: trusted publisher, hash/signature when applicable, dependency/license/vulnerability review e revoke path | Copilot Marketplace/Security | AI supply-chain gate | LOCKED |
+| CP-310 | Nenhum Model/Marketplace/MCP/A2A/Edge asset pode ampliar Core/domain/provider authority por instalação, prompt, metadata ou package manifest | Copilot Security/Governance | no asset permission elevation gate | LOCKED |
 
 ## 10. Requisitos históricos do Chat — fora do escopo Copilot
 
@@ -349,6 +416,15 @@ Esses IDs não podem ser reativados como dependência do Copilot.
 - deterministic Policy/Specification governa readiness material quando facts/rules suportam a decisão;
 - technical execution success não substitui verified business Outcome;
 - autonomy é capability/context/risk scoped e L5 permanece OFF por default;
+- Process Mining mede processo e não vira worker surveillance;
+- Control Tower governa assets; não concede business permission;
+- MCP/A2A/tool metadata são untrusted integration data;
+- Personal Memory não é Organizational Knowledge nem business truth;
+- Semantic Layer define significado/cálculo, Business Graph define relações;
+- Analysis Sandbox é isolado e read-only por default;
+- prediction != fact; recommendation != authorization; simulate != apply;
+- Edge/offline não amplia autoridade por falta de conectividade;
+- Marketplace/model package não concede permission;
 - OT physical actuation não é inferida a partir de autonomia L5.
 
 ## 12. Coverage final
@@ -386,6 +462,18 @@ RPA_EXECUTION
 COMPUTER_USE
 OUTCOME_VERIFICATION
 CAPABILITY_SCOPED_AUTONOMY
+PROCESS_INTELLIGENCE
+AI_CONTROL_TOWER
+AGENT_INTEROPERABILITY_MCP_A2A
+PERSONAL_MEMORY_PERSONALIZATION
+SEMANTIC_BUSINESS_LAYER
+ANALYSIS_SANDBOX
+ARTIFACT_WORKSPACE
+PREDICTIVE_PRESCRIPTIVE_INTELLIGENCE
+OPERATIONAL_TWIN
+EDGE_OFFLINE_COPILOT
+AI_MODEL_LIFECYCLE
+CAPABILITY_MARKETPLACE
 MEETING
 FRONTLINE
 PRIVACY_SHARED_DEVICE
@@ -401,26 +489,21 @@ EVIDENCE
 
 `UNMAPPED = 0` para qualquer release declarado completo.
 
-## 13. External Information & Connector requirement range
+## 13. Requirement ranges
 
 ```text
-CP-194–CP-214
+CP-194–CP-214  Internet Research / External Connectors
+CP-215–CP-225  Microsoft Teams
+CP-226–CP-248  Autonomous Operations / Automation & Execution Hub
+CP-249–CP-255  Process Intelligence / Process Mining
+CP-256–CP-261  AI Control Tower
+CP-262–CP-267  MCP/A2A / Agent Interoperability
+CP-268–CP-273  Personal Memory / Personalization
+CP-274–CP-279  Semantic Business Layer
+CP-280–CP-286  Analysis Sandbox / Artifact Workspace
+CP-287–CP-294  Predictive/Prescriptive Intelligence / Operational Twin
+CP-295–CP-301  Edge/Offline Industrial Copilot
+CP-302–CP-310  AI Model Lifecycle / Capability Marketplace
 ```
 
-Essa faixa cobre foundation de egress/OAuth/secrets, Internet Research, connectors provider-neutral, reads/writes, webhooks/event reliability, privacy de conexões pessoais, knowledge promotion e kill switches. A ordem de implementação permanece exclusivamente a do `16`.
-
-## 14. Microsoft Teams requirement range
-
-```text
-CP-215–CP-225
-```
-
-Essa faixa cobre Teams como capability family do Microsoft 365 connector, reads/writes, meetings/transcripts/recordings, change notifications, source ACL, participant identity precedence, same-runtime Teams surface e advanced live meeting participation.
-
-## 15. Autonomous Operations / Automation & Execution Hub requirement range
-
-```text
-CP-226–CP-248
-```
-
-Essa faixa cobre inventário de RPA/automation/event infrastructure, separação intelligence/execution, event trust, decision-path routing, deterministic readiness, semantic executor contracts, API/RPA/computer-use executors, execution lifecycle/idempotency, outcome verification, Watch PREPARE, admin/worker/exception observability e capability-scoped autonomous ACT. A ordem continua exclusivamente definida por `16`; `57` detalha comportamento e boundaries temáticos.
+Todas as faixas temáticas são subordinadas à ordem de `16`. Nenhuma spec temática cria fase, runtime, requirement authority ou permission authority paralela.
