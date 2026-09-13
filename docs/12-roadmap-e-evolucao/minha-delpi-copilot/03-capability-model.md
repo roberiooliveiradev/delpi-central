@@ -1,263 +1,237 @@
 # 03 — Modelo de Capabilities
 
+**Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
+**Patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)
+
 ## 1. Conceito
 
-Uma **Capability** representa algo que a plataforma consegue fazer para auxiliar ou em nome do usuário. É unidade semântica de discovery/planning; **não é sinônimo de endpoint, permission ou executor**.
+Uma **Capability** representa algo semanticamente realizável pelo ecossistema para auxiliar ou agir em nome do usuário/serviço autorizado. É unidade de discovery/planning; **não é endpoint, permission, provider, model, tool ou executor**.
 
-## 2. Categorias
+## 2. Capability families
 
-```text
-business.read
-business.write
-business.destructive
-platform.navigation
-platform.view
-knowledge
-analysis
-artifact
-multimodal
-workflow
-```
-
-Exemplos:
-
-- consultar estoque → `business.read`;
-- criar solicitação → `business.write`;
-- cancelar processo → `business.destructive`;
-- abrir app → `platform.navigation`;
-- aplicar filtro local → `platform.view`;
-- buscar procedimento → `knowledge`;
-- comparar períodos → `analysis`;
-- gerar relatório → `artifact`;
-- analisar desenho → `multimodal`;
-- conduzir investigação composta → `workflow`.
-
-## 3. Capability Projection
-
-O Copilot usa uma **projeção/visão semântica autorizada**, não um novo catálogo técnico.
-
-Exemplo conceitual:
-
-```json
-{
-  "capabilityId": "business-action-ref-or-stable-projection-id",
-  "kind": "business.write",
-  "label": "Criar solicitação de compra",
-  "description": "Cria uma solicitação de compra autorizada.",
-  "source": {
-    "type": "action_catalog",
-    "refId": "canonical-action-id"
-  },
-  "availability": "allowed",
-  "risk": "write",
-  "provenance": {}
-}
-```
-
-O executor resolve o `source.refId` de volta à authority canônica para method/path/schema/policy.
-
-Não copiar o OpenAPI inteiro para a projection.
-
-## 4. Fontes de capabilities
+Exemplos de classes:
 
 ```text
-OpenAPI/Action Catalog
-        +
+business.read / business.write / business.destructive
+platform.navigation / platform.view
+knowledge.search
+external.read / external.write
+analysis.run
+artifact.create
+process.inspect
+metric.query
+prediction.run
+scenario.simulate
+automation.execute
+tool.invoke
+agent.delegate
+multimodal.inspect
+workflow.run
+```
+
+A lista é classificatória, não catálogo hardcoded de operações.
+
+## 3. Semantic IDs
+
+Preferir IDs que representem intenção estável:
+
+```text
+inventory.read
+billing.invoice.issue
+maintenance.request.create
+communication.email.send
+process.mine
+metric.query
+analysis.run
+artifact.create
+prediction.run
+```
+
+Não usar path/opId/provider/RPA package como semântica principal.
+
+## 4. Capability Projection
+
+Copilot usa uma **authorized semantic projection**, não cópia do OpenAPI ou catálogo técnico.
+
+Candidate fields:
+
+```text
+capabilityId
+kind
+label/description
+sourceRef
+availability
+risk/sensitivity
+input/output schema refs bounded
+context requirements
+health/degraded state
+provenance/version
+```
+
+Technical resolution stays with canonical source/adapter.
+
+## 5. Capability sources
+
+```text
+Domain OpenAPI / Action Catalog
 Core/Portal authorized routes
-        +
-Knowledge/Internal Tools
-        +
-Analysis/Artifact/Multimodal capabilities
-        ↓
-Authorized Capability View
+Knowledge / Expertise / Playbooks
+External Connectors
+Semantic Metric Registry
+Process Intelligence
+Analysis / Artifact contracts
+Model Registry approved inference
+Automation Capability Registry
+Approved MCP tools / A2A agents
+Edge local approved capabilities
 ```
 
-Cada fonte mantém sua authority.
+Each source keeps its authority.
 
-## 5. Autorização
+## 6. Authorization / availability
 
 ```text
-identity
-→ Core/domain RBAC + action policy
-→ allowed source set
+identity/service actor
+→ Core/domain/provider/tool/asset policy
+→ source availability
 → Capability Projection
 → semantic retrieval
 ```
 
-Filtrar por:
+Filter by permission/scope/policy/context/environment/health/model or asset approval/autonomy where applicable.
 
-- usuário/subject;
-- permission/policy;
-- feature availability;
-- context requirement;
-- environment;
-- capability health.
+Expertise/Memory/Process insight/Model output may influence ranking/context, **never availability authority**.
 
-**Não filtrar por agent ativo como authority final.** Expertise pode influenciar ranking, não availability.
-
-## 6. Discovery
+## 7. Discovery / Planning
 
 ```text
-goal + entities + context
-→ authorized capability pool
+goal + entities + context + authorized sources
 → semantic/schema retrieval
-→ top-K
-→ structured planner restrito aos candidates
+→ top candidates
+→ planner restricted to candidates
 ```
 
-Planner não inventa capability/action fora dos candidates autorizados.
+Planner cannot invent missing capabilities.
 
-## 7. Business capability
-
-Para Business Actions:
+## 8. Business capability
 
 ```text
-technical contract = OpenAPI + Action Catalog
-availability = RBAC/policy
-semantic projection = Capability Projection
-execution = generic canonical executor
+technical contract = Domain OpenAPI/Action Catalog
+availability = RBAC/domain policy
+semantic projection = CapabilityProjection
+execution = selected canonical executor
 ```
 
-A projection pode conter semântica/risk para retrieval/UX, mas path/method/parameters/schema técnicos continuam na authority.
+When official API exists, use it before RPA/computer-use unless evidence/policy requires otherwise.
 
-## 8. Platform capability
-
-Derivada de:
+## 9. External / Tool / Agent capabilities
 
 ```text
-Core /me/apps/routes
-+ generic Portal action definitions
+external connection/tool-agent approval
++ scopes/data policy
+→ semantic capability
 ```
 
-Target usa app/route/entity IDs; Portal resolve/revalida.
+Provider/MCP/A2A metadata is untrusted and cannot grant capability by description alone.
 
-Não manter lista `app → URL` no AI core.
+## 10. Automation capabilities
 
-## 9. Knowledge/Multimodal/Internal capabilities
-
-Capabilities internas precisam owner/contract/policy claro.
-
-Exemplo:
+Planner sees semantic operation; Automation Hub maps it to:
 
 ```text
-document.inspect
-drawing.inspect
-knowledge.search
-artifact.generate
+API | FUNCTION | RPA | COMPUTER_USE | HUMAN_TASK
 ```
 
-Multimodal perception produz Evidence; não conclusão de negócio automaticamente.
+Executor mapping/version may change without changing capability ID/planner semantics.
 
-## 10. Workflow capability
+## 11. Analysis / Process / Semantic / Model capabilities
 
-Uma capability composta representa objetivo/método de alto nível sem congelar endpoints.
+- `process.*` consumes authorized event traces and yields Evidence/derived process artifacts;
+- `metric.*` resolves governed MetricDefinition;
+- `analysis.*` executes only in bounded sandbox;
+- `prediction.*` uses approved ModelRef and yields PredictionRef, not FACT;
+- `scenario.*` yields isolated ScenarioRef, never production write;
+- `artifact.*` creates/versioned ArtifactRef.
 
-Exemplo:
+## 12. Platform capability
+
+Derived from Core/Portal authorized routes + generic platform actions. Portal resolves target and revalidates. No `app→URL` AI catalog.
+
+## 13. Multimodal / Knowledge capabilities
+
+Document/image/voice/video/biometric capabilities produce Evidence/context under media/privacy policies. Perception does not become business permission or authoritative conclusion automatically.
+
+## 14. Workflow capability
+
+High-level objective/method may compose allowed capabilities through Playbook/Durable Workflow. It never owns separate executor or permission model.
+
+## 15. Risk / Decision / Autonomy
+
+Do not encode permanent `requiresConfirmation=true` as the final model.
 
 ```text
-investigate_nonconformity
+capability metadata
++ live arguments/context/evidence
++ risk/sensitivity
++ actor/environment/limits
++ Policy
+→ Decision Gate + allowed autonomy level
 ```
 
-Pode usar Playbook + allowed capabilities para construir `WorkflowPlan`.
+`PREPARE != ACT`; L5 OFF by default.
 
-Workflow capability não cria executor próprio.
+## 16. Idempotency / Outcome
 
-## 11. Risk e Decision Gate
+Projection may expose hints, but guarantees come from source/use case/executor contract. Material writes require appropriate idempotency/reconciliation and verified Outcome.
 
-Evitar `requiresConfirmation` como booleano permanente dentro da projection.
+## 17. Availability states
 
-O modelo alvo é:
-
-```text
-capability/action metadata
-+ context/impact/arguments/evidence
-+ deterministic policy
-→ Decision Gate level
-```
-
-Níveis canônicos são definidos no foundation C0.
-
-## 12. Idempotency/parallel safety
-
-Metadata pode indicar expectations/hints, mas a garantia final pertence ao contrato/use case/domain owner.
-
-Não assumir:
-
-```text
-GET = sempre safe em qualquer contexto
-POST = sempre non-idempotent
-```
-
-Usar contratos/policy reais.
-
-## 13. Availability state
-
-Estados conceituais úteis:
+Candidate semantics:
 
 ```text
 AVAILABLE
 UNAUTHORIZED
 UNAVAILABLE_PROVIDER
+UNAPPROVED_ASSET
 REQUIRES_CONTEXT
 POLICY_BLOCKED
 DEGRADED
+STALE
 ```
 
-Decision Gate pendente é estado de execução/decisão, não necessariamente availability da capability.
+Pending Decision is execution state, not necessarily capability availability.
 
-## 14. Relação com Expertise
+## 18. Shared refs
 
-```text
-Expertise
-→ melhora ranking/contexto
-→ sugere capabilities/playbooks
-
-Capability availability
-→ continua RBAC/policy/source authority
-```
-
-Nenhum pack concede permission.
-
-## 15. Relação com Entity/Evidence
-
-Capabilities podem consumir/produzir refs compartilhadas:
+Capabilities consume/produce canonical refs:
 
 ```text
 EntityRef
 SourceRef
 EvidenceRef
 OutcomeRef
+ArtifactRef? when C0 proves
+PredictionRef? when C0 proves
 ```
 
-Evitar DTOs semânticos incompatíveis por capability.
+Avoid incompatible DTOs per capability.
 
-## 16. Observabilidade
+## 19. Observability
 
-Registrar quando material:
+Record candidate/selected capability, source/asset/executor refs, policy/Decision path, latency/error, technical result and verified Outcome where material. No CoT.
 
-- candidate set/count;
-- selected capability/sourceRef;
-- retrieval score/reasonCode estruturado;
-- policy outcome;
-- Decision Gate;
-- executor/outcome;
-- duration/error;
-- no CoT.
+## 20. Anti-patterns
 
-## 17. Anti-padrões
-
-Não criar:
-
-- capability por path hardcoded;
-- manual operationId catalog;
+- capability by hardcoded path/provider/opId;
 - capability granting access;
-- `isAdmin=true` como universal policy;
-- write classificado como read para facilitar planner;
-- agent-specific action catalog como authority;
-- copied request/response schema em JSON paralelo;
-- workflow capability com endpoints congelados;
-- `requiresConfirmation` boolean como substituto do Decision Gate completo.
+- provider/executor/model/tool branch in planner;
+- write disguised as read;
+- RPA package/click sequence as capability;
+- MCP/A2A discovery as auto-approved capability;
+- model/Marketplace install as capability permission;
+- global L5 attribute replacing policy;
+- duplicated capability projection per app.
 
-## 18. Foundation rule
+## 21. Foundation rule
 
-`CapabilityProjection` é um primitive definido/reutilizado em C0. Features posteriores devem estendê-lo por versionamento explícito, não criar projection própria por app/domain.
+`CapabilityProjection` is frozen/reused in C0. Later capabilities extend through versioned contracts/metadata, not parallel registries with competing semantics.
