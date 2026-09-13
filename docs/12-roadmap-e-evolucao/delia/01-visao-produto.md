@@ -7,13 +7,12 @@
 
 ## 1. Definição
 
-O **Minha DELPI Copilot** é uma nova aplicação standalone e a camada inteligente operacional transversal da Minha DELPI.
+A **DÉLIA — DELPI · Ecossistema de Ligações, Inteligência e Automação** é uma nova aplicação standalone de Continuous Operational Intelligence e a camada inteligente operacional transversal da Minha DELPI.
 
-Ele não é apenas um assistente de chat. O target combina:
+Ela não é apenas um assistente de chat. O target combina:
 
 ```text
-Enterprise Copilot
-+ Continuous Operational Intelligence
+Continuous Operational Intelligence
 + Process Intelligence
 + Decision Intelligence
 + Governed Automation Orchestration
@@ -25,7 +24,7 @@ Possui API/MFE/persistence/manifest/deploy próprios e não depende do Minha DEL
 
 ## 2. North Star
 
-> **Um único Copilot acompanha o usuário e a operação, entende texto/voz/imagem/documentos/contexto empresarial e industrial, conhece dados/processos/métricas, pesquisa fontes internas e externas, prevê e simula cenários, toma decisões governadas, coordena APIs/automações/pessoas, verifica o resultado real e transforma experiência validada em conhecimento — preservando autoridades, privacidade e segurança.**
+> **A DÉLIA acompanha o usuário e a operação, entende texto/voz/imagem/documentos/contexto empresarial e industrial, conhece dados/processos/métricas autorizados, pesquisa fontes internas e externas, prevê e simula cenários, toma decisões governadas, coordena APIs/automações/pessoas, verifica o resultado real e transforma experiência validada em conhecimento — preservando authorities, privacidade e segurança.**
 
 ```text
 PERCEBER
@@ -42,23 +41,24 @@ PERCEBER
 
 ## 3. Promessa
 
-> O usuário diz, mostra ou demonstra o objetivo. O Copilot encontra contexto e recursos autorizados, aplica conhecimento/semântica adequados, mostra Evidence, escolhe o menor caminho de decisão suficiente, prepara ou executa o permitido e acompanha até Outcome verificável.
+> O usuário diz, mostra ou demonstra o objetivo. A DÉLIA encontra contexto e recursos autorizados, aplica conhecimento/semântica adequados, mostra Evidence, escolhe o menor caminho de decisão suficiente, prepara ou executa o permitido e acompanha até Outcome verificável.
 
 ## 4. Plataforma e authorities
 
 ```text
-Portal      → host/context/navigation
-Core API    → apps/routes/RBAC/governance
-Keycloak    → identity/SSO
-Gateway     → routing
-plugin-ui   → design system
-Domain APIs → business data/rules/actions
-Providers   → external resources/scopes
-OT systems  → machine/safety truth
-Copilot     → intelligence/policy/orchestration/evidence/work
+Portal         → host/navigation/published context
+Core API       → apps/routes/RBAC/governance
+Keycloak       → identity/SSO
+Gateway        → routing
+plugin-ui      → design system
+Domain APIs    → business data/rules/actions
+Providers      → external resources/scopes
+Automation Hub → technical execution
+OT systems     → machine/safety truth
+DÉLIA          → intelligence/context/Evidence/Policy/Decision/Work/orchestration/outcome coordination
 ```
 
-Copilot reutiliza a plataforma, não o runtime do Chat.
+DÉLIA reutiliza a plataforma, não o runtime do Chat. Nenhuma dessas integrações amplia a authority do respectivo owner.
 
 ## 5. Surfaces
 
@@ -67,7 +67,7 @@ GLOBAL      → contextual panel
 WORKSPACE   → full-page analysis/work
 MEETING     → meeting assistance
 FRONTLINE   → shopfloor/operator assistance
-TEAMS       → future surface of same Copilot
+TEAMS       → future surface of same DÉLIA runtime
 BACKGROUND  → Watches/Workflows
 ADMIN       → governance surfaces by role
 ```
@@ -84,13 +84,13 @@ Personal Memory != live business truth
 
 ## 7. Entendimento empresarial
 
-O Copilot combina:
+A DÉLIA combina:
 
 ```text
-Business Graph        → relações entre entidades
+Business Graph          → relações entre entidades
 Semantic Business Layer → definição oficial de métricas/conceitos
-Process Intelligence  → como o processo realmente acontece
-Knowledge/Expertise   → conhecimento e método
+Process Intelligence    → como o processo realmente acontece
+Knowledge/Expertise     → conhecimento e método
 ```
 
 Nenhuma camada replica todos os systems of record.
@@ -114,20 +114,24 @@ event
 
 Nem todo evento chama LLM. Critérios formais de readiness usam facts/regras determinísticas quando disponíveis.
 
-## 10. Automation & Execution Hub
+C5 pode liberar ACT governado de capabilities específicas; C7 adiciona autonomia avançada/Watch ACT selecionado. L5 permanece OFF por default.
 
-Copilot é cérebro/orquestrador; executors executam.
+## 10. Automation Hub / execução
+
+DÉLIA é owner de inteligência, Policy, Decision e Work/orquestração. Automation Hub é owner da execução técnica de automações sob seu boundary.
+
+Preferência de executor:
 
 ```text
-API
+official API
 → native integration
-→ function/script
+→ deterministic function/script
 → RPA
-→ computer-use
+→ governed computer-use
 → Human Task
 ```
 
-API é preferida quando há contrato autoritativo suportado. Planner nunca manipula click/selector de RPA.
+API é preferida quando há contrato autoritativo suportado. Planner trabalha com capabilities semânticas e nunca manipula click/selector de RPA.
 
 ## 11. Outcome truth
 
@@ -137,11 +141,11 @@ technical execution success
 verified business outcome
 ```
 
-O produto deve verificar postconditions em fonte autoritativa antes de afirmar sucesso material.
+A DÉLIA deve verificar postconditions em fonte autoritativa antes de afirmar sucesso material.
 
 ## 12. Analysis / Artifacts
 
-O Copilot pode executar análises em sandbox isolado e produzir artefatos editáveis/versionados/provenanced: reports, spreadsheets, presentations, charts, BPMN, A3/8D/FMEA candidates, procedures/checklists, project plans e outros work products.
+A DÉLIA pode executar análises em sandbox isolado e produzir artefatos editáveis/versionados/provenanced: reports, spreadsheets, presentations, charts, BPMN, A3/8D/FMEA candidates, procedures/checklists, project plans e outros work products.
 
 Human edits não são sobrescritos silenciosamente.
 
@@ -160,7 +164,7 @@ Operational Twin permite cenários/what-if sem virar system of record.
 
 ## 14. External / Internet / Teams / Interoperability
 
-Copilot pode pesquisar internet, conectar fontes autorizadas e operar com Microsoft 365/Teams/Google/WhatsApp Business/etc. via provider-neutral adapters.
+DÉLIA pode pesquisar internet, conectar fontes autorizadas e operar com Microsoft 365/Teams/Google/WhatsApp Business/etc. via provider-neutral adapters quando os contratos/providers forem aprovados.
 
 MCP-compatible tools e A2A-compatible agents podem ser integrados sob approval/allowlists; discovery nunca significa trust automático.
 
@@ -180,13 +184,13 @@ Model lifecycle governa eval→approval→deployment→drift→rollback/revoke. 
 
 Meeting distingue transcript/resumo/decisão/candidate action/executed outcome.
 
-Frontline prioriza hands-free/large-touch/current procedure/drawing/OP/machine context e pode usar governed Edge/offline assistance quando C0/C7 provarem infraestrutura e safety boundaries.
+Frontline prioriza hands-free/large-touch/current procedure/drawing/OP/machine context e pode usar governed Edge/offline assistance quando gates e evidência provarem infraestrutura e safety boundaries.
 
 Offline never widens authority.
 
 ## 17. Biometric Identity / Human Observation
 
-**Decisão atual:** reconhecimento de usuários conhecidos/enrolled por face/voz pode existir como capability governada, closed-set e purpose-specific.
+Reconhecimento de usuários conhecidos/enrolled por face/voz pode existir como capability governada, closed-set e purpose-specific, quando priorizado/aprovado.
 
 ```text
 biometric match
@@ -200,7 +204,7 @@ Human Observation fica limitada a evidência observável do processo; não infer
 
 ## 18. Industrial safety
 
-Copilot não é safety controller.
+DÉLIA não é safety controller.
 
 ```text
 free-form LLM/model/vision/voice/RPA/Edge
@@ -225,6 +229,7 @@ No conversation, observation, public page, process variant or successful automat
 
 - depend on Chat runtime/database/API;
 - duplicate Core/RBAC/domain rules;
+- bypass Automation Hub technical-execution ownership where applicable;
 - provider/executor/model/tool hardcode in planner;
 - unrestricted browser/sandbox/computer control;
 - hidden media/biometric/task surveillance;
@@ -254,7 +259,7 @@ C0 Foundation Freeze
 → C2 Context/Commands
 → C3 Capability Foundations
 → C4 Reads/Analysis
-→ C5 Governed Writes/Executors
+→ C5 Governed ACT + Durable Work
 → C6 Product Governance/Experience
 → C7 Advanced Autonomy/Scale
 ```
