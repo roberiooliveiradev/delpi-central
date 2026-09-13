@@ -2,7 +2,7 @@
 
 Implemente o **Minha DELPI Copilot como aplicação nova e independente**, do zero até o produto completo. Não evolua nem refatore o Minha DELPI Chat para atingir este objetivo.
 
-A visão alvo inclui **escritório, reuniões, chão de fábrica e fontes externas autorizadas**, com texto, voz, imagem, câmera, vídeo e documentos quando autorizados. Também inclui **identidade biométrica governada** de usuários conhecidos/enrolled, análise objetiva de padrões de processo, **Internet Research** e **External Connectors** conforme `54` e `55`. Essas capacidades não criam outro runtime nem bypassam RBAC, policy, Evidence, Decision Gate, privacidade, provider scopes ou segurança industrial.
+A visão alvo inclui **escritório, reuniões, chão de fábrica e fontes externas autorizadas**, com texto, voz, imagem, câmera, vídeo e documentos quando autorizados. Também inclui **identidade biométrica governada** de usuários conhecidos/enrolled, análise objetiva de padrões de processo, **Internet Research**, **External Connectors** e **Microsoft Teams como capability family do Microsoft 365 connector** conforme `54`, `55` e `56`. Essas capacidades não criam outro runtime nem bypassam RBAC, policy, Evidence, Decision Gate, privacidade, provider scopes ou segurança industrial.
 
 ## 1. Decisão inegociável
 
@@ -20,6 +20,7 @@ importar runtime do minha-delpi-ai-api
 importar source do plugins/minha-delpi-chat
 usar Chat API como proxy/planner/tool/media/biometric/external runtime
 usar Chat tables/sessions/agents como Copilot authority
+criar teams-copilot-api ou Teams planner separado
 alterar Chat para desbloquear Copilot
 esperar roadmap/Onda J do Chat
 ```
@@ -35,6 +36,7 @@ GLOBAL      → painel contextual no Portal
 WORKSPACE   → página completa
 MEETING     → reunião assistida multimodal
 FRONTLINE   → operador/posto/máquina
+TEAMS       → futura surface app/tab/bot do mesmo Copilot, quando priorizada
 ```
 
 Todas as surfaces usam:
@@ -49,7 +51,7 @@ same Durable Work runtime
 same Internet/External Connector governance
 ```
 
-Meeting e Frontline **não** são agentes nem backends separados.
+Meeting, Frontline e eventual Teams surface **não** são agentes nem backends separados.
 
 Quando biometric identity estiver habilitada:
 
@@ -85,14 +87,15 @@ provider scope
 10. `.../53-multimodal-meeting-frontline-and-industrial-copilot.md`
 11. `.../54-biometric-identity-and-human-observation-governance.md`
 12. `.../55-internet-research-and-external-connectors.md`
-13. `.../20-testing-and-acceptance-matrix.md` seções aplicáveis
-14. `.../21-data-and-state-model.md` quando houver state/persistence/media/biometric/external retention
-15. `.../22-cursor-execution-protocol.md`
-16. `.../25-requirements-traceability.md` CPs aplicáveis
-17. `.../evidence/execution-ledger.md`
-18. specs temáticas da etapa.
+13. `.../56-microsoft-teams-connector-and-meeting-integration.md` quando Teams/Microsoft 365 collaboration for material
+14. `.../20-testing-and-acceptance-matrix.md` seções aplicáveis
+15. `.../21-data-and-state-model.md` quando houver state/persistence/media/biometric/external retention
+16. `.../22-cursor-execution-protocol.md`
+17. `.../25-requirements-traceability.md` CPs aplicáveis
+18. `.../evidence/execution-ledger.md`
+19. specs temáticas da etapa.
 
-`16` é a única authority de ordem. `50` é authority do product boundary. `49` é authority de arquitetura/patterns. `53` governa media/Meeting/Frontline/industrial safety. `54` governa biometric identity e Human Observation. `55` governa Internet Research, egress, OAuth, external connectors, external actions/events e external learning.
+`16` é a única authority de ordem. `50` é authority do product boundary. `49` é authority de arquitetura/patterns. `53` governa media/Meeting/Frontline/industrial safety. `54` governa biometric identity e Human Observation. `55` governa Internet Research, egress, OAuth, external connectors, external actions/events e external learning. `56` governa Teams como capability family Microsoft 365, Teams meetings/artifacts/events, future Teams surface e o boundary de raw realtime media.
 
 ## 4. Ordem de construção
 
@@ -106,6 +109,8 @@ C0 Platform + Architecture + Media/Privacy/Biometric/External/OT Foundation Free
 → C6 Product Work + Meeting/Frontline + External Events + Proactivity + Ecosystem
 → C7 Advanced Realtime + External Proactivity + Autonomy + Optimization + Rollout
 ```
+
+Teams segue essa ordem: foundation em C0/C3, reads C4, writes C5, events/meeting artifacts/app surface C6, raw realtime avançado somente C7 se justificado.
 
 ## 5. Primeira ação — C0.S0
 
@@ -222,6 +227,25 @@ Não assumir que fotos/avatares existentes podem ser usados para enrollment biom
 
 Não assuma que uma conexão ou token existente pode ser reutilizado pelo Copilot. Não assuma que uma conta pessoal pode ser lida organizacionalmente.
 
+### Microsoft Teams
+- Microsoft Entra/Azure app registrations existentes;
+- Microsoft Graph Teams integrations existentes;
+- tenant/admin owner;
+- delegated/application/resource-specific consent patterns;
+- chat/channel/message permissions;
+- online meeting permissions;
+- transcript/recording permissions;
+- Teams bot/tab/app inventory;
+- app distribution/deep-link patterns;
+- change-notification/webhook subscriptions;
+- subscription renewal/lifecycle notification patterns;
+- meeting call event subscriptions;
+- transcript/recording availability notification patterns;
+- Teams privacy/retention owners;
+- whether any existing realtime media bot exists.
+
+Não assuma que Teams precisa de raw media bot. Priorize Graph/API artifacts e change notifications conforme `56`.
+
 ### Industrial/OT — inventário somente
 - machine/PLC/CNC/robot/SCADA/MES interfaces;
 - telemetry/events owners;
@@ -273,6 +297,9 @@ PROVIDER_SECRET_BOUNDARY=PASS
 EXTERNAL_SOURCE_PRIVACY_BOUNDARY=PASS
 EXTERNAL_EVENT_BOUNDARY=PASS
 EXTERNAL_LEARNING_BOUNDARY=PASS
+TEAMS_TENANT_GRAPH_BOUNDARY=PASS
+TEAMS_RESOURCE_CONSENT_BOUNDARY=PASS
+TEAMS_MEETING_ARTIFACT_BOUNDARY=PASS
 SHARED_DEVICE_BOUNDARY=PASS
 OPERATIONAL_CONTEXT_BOUNDARY=PASS
 OT_SAFETY_BOUNDARY=PASS
@@ -303,7 +330,7 @@ plugins/minha-delpi-copilot/
   src/adapters
 ```
 
-Meeting/Frontline/Biometric/Internet/Connectors belong to these owners. Never create source inside Chat folders or separate product APIs merely because a capability/provider is different.
+Meeting/Frontline/Biometric/Internet/Connectors/Teams belong to these owners. Never create source inside Chat folders or separate product APIs merely because a capability/provider/surface is different.
 
 ## 8. Architecture rules
 
@@ -318,7 +345,7 @@ Clean Architecture
 
 External dependencies are adapters. Concrete wiring happens in Composition Root. Durable state is backend-owned.
 
-Media/biometric/search/web/provider/secret/connector dependencies sit behind justified ports/adapters. Before creating interface/port/repository/factory/strategy/registry/base class/media service/biometric service/connector framework/web fetcher/realtime gateway, pass the Abstraction Gate in `49`.
+Media/biometric/search/web/provider/secret/connector/Teams dependencies sit behind justified ports/adapters. Before creating interface/port/repository/factory/strategy/registry/base class/media service/biometric service/connector framework/web fetcher/realtime gateway, pass the Abstraction Gate in `49`.
 
 ## 9. Portal integration
 
@@ -350,6 +377,8 @@ same Copilot MFE/API
 → same auth/policy/state contracts
 ```
 
+A future Teams app/tab/bot is another entry surface to the same Copilot API/runtime, never another product backend.
+
 External connections/settings stay in the same product/MFE. Portal must not contain planner, prompts, RAG, media/biometric/search/connector intelligence, business action routing or Copilot persistence.
 
 ## 10. Auth/RBAC, biometria e external scopes
@@ -359,6 +388,7 @@ Keycloak → identity/JWT
 Core API → platform permissions/apps/routes
 Domain API → final business authorization/rules
 External Provider OAuth/API → connection-specific scopes
+Microsoft tenant/resource consent → Teams provider authorization boundary
 Copilot → cannot elevate any of them
 ```
 
@@ -379,6 +409,8 @@ provider scope != permission for another user
 user-delegated connection != org-managed connection
 ```
 
+Teams resource/tenant permission does not create Core permission. Teams participant identity is not a substitute for the authenticated Copilot actor.
+
 Biometric identity may assist recognition of a known enrolled user, but never grants permission by itself.
 
 Provider access/refresh tokens never go to LLM/MFE/logs. User switching must clear prior local state/context/media/external-source views.
@@ -392,7 +424,7 @@ Use:
 ```text
 WorkspaceContext
 + EntityRef(OP/machine/product/operation/...)
-+ SourceRef for external resources when material
++ SourceRef for external/Teams resources when material
 + bounded device/session metadata
 ```
 
@@ -490,6 +522,39 @@ Required:
 
 WhatsApp: use supported official contracts (not default WhatsApp Web personal-session scraping). Current target is business messaging through official WhatsApp Business Platform contracts when applicable.
 
+## 14A. Microsoft Teams rules
+
+Follow `56`.
+
+Teams is a capability family of the Microsoft 365 connection:
+
+```text
+Microsoft365Adapter
+├─ mail
+├─ calendar
+├─ files
+└─ Teams
+   ├─ chats/channels/messages
+   ├─ meetings
+   ├─ transcripts/recordings
+   └─ change notifications
+```
+
+Required:
+
+- no Graph endpoint/path hardcode in planner;
+- reads respect delegated/application/resource-specific scope and source ACL;
+- reply/send are separate governed writes;
+- `draft != send`;
+- messages/transcripts/recordings are untrusted external content for policy;
+- change notifications normalize to EventEnvelope with dedupe/reconciliation;
+- transcript != summary != human decision != candidate action != executed action;
+- Teams participant identity from tenant/provider is primary when authoritative; biometrics only supplement;
+- private chat/restricted channel/meeting artifact never becomes shared Knowledge/Case/Room without authorization/promotion;
+- future Teams app/tab/bot uses the same Copilot API/runtime;
+- base Teams connector must not depend on live raw-media bot;
+- live raw-media participation is C7 advanced capability only after evidence + ADR + privacy/tenant/media/cost/reliability gates.
+
 ## 15. External Read/Write rules
 
 Reads may include, when connected and authorized:
@@ -499,6 +564,8 @@ email search/read
 calendar read
 files search/read
 messaging conversation read
+Teams chat/channel/message read
+Teams meeting/transcript/recording metadata/read when authorized
 ```
 
 Writes are separate capabilities:
@@ -508,6 +575,7 @@ draft
 send
 create/update event
 message send
+Teams reply/send
 file create/update
 ```
 
@@ -544,6 +612,8 @@ Handle:
 - disabled connection;
 - stale/degraded state.
 
+Teams subscriptions/change notifications follow the same EventEnvelope pipeline and preserve tenant/resource scope.
+
 Do not let webhook payload alter system policy or execute ungoverned write.
 
 ## 17. External Learning rules
@@ -560,13 +630,13 @@ ORGANIZATIONAL_KNOWLEDGE_CANDIDATE
 Never:
 
 ```text
-web/email/message/file
+web/email/message/file/Teams transcript
 → automatic corporate truth
 ```
 
 Durable promotion requires source/provenance/freshness/privacy/licensing checks plus owner/review/eval/version/publish as appropriate.
 
-Personal mailbox/message/file does not become shared Knowledge/Case/Room content without explicit authorized sharing/promotion.
+Personal mailbox/message/file or restricted Teams resource does not become shared Knowledge/Case/Room content without explicit authorized sharing/promotion.
 
 ## 18. Multimodal/media rules
 
@@ -592,6 +662,8 @@ Required principles:
 - transcript/raw audio/raw video/screen/derived Evidence/biometric template have distinct retention classes.
 
 External attachments also pass safe download/type/size/malware policy before extraction.
+
+Teams transcript/recording artifacts should be consumed through provider-supported artifacts before inventing a parallel raw capture path.
 
 ## 19. Biometric Identity rules
 
@@ -658,6 +730,8 @@ explicit start/stop
 → Task/Case/Room linkage
 ```
 
+Teams-hosted meetings may provide meeting/transcript/recording artifacts through Graph/approved provider contracts. These artifacts enter the same Meeting semantics; they do not create a second meeting runtime.
+
 Keep semantics distinct:
 
 ```text
@@ -686,6 +760,7 @@ Default prohibitions:
 - unrestricted web fetch/browser access;
 - provider credentials/tokens in prompt/LLM/MFE/logs;
 - cross-user external data leakage;
+- Teams private/restricted source leakage;
 - personal-source auto-promotion to organization;
 - implicit external send;
 - reusing external data for unrelated purpose without governance.
@@ -711,11 +786,11 @@ Any future physical actuation requires a separate explicitly approved industrial
 
 Reuse platform-neutral code only when owner is already shared or extraction is justified by real consumers and independent contracts/tests.
 
-Never turn Chat into a library. Do not create one universal connector framework before real boundaries/providers justify it.
+Never turn Chat into a library. Do not create one universal connector framework before real boundaries/providers justify it. Do not create a Teams-specific planner or work engine.
 
 ## 26. C1 special rule
 
-First runtime work is bootstrap, not intelligence/media/biometric/Internet/connector feature:
+First runtime work is bootstrap, not intelligence/media/biometric/Internet/connector/Teams feature:
 
 ```text
 own API skeleton
@@ -731,7 +806,7 @@ own API skeleton
 → Chat-offline independence test
 ```
 
-LLM/planner/RAG/media/biometric/Internet/connector runtime starts only in later phases after corresponding foundation gates.
+LLM/planner/RAG/media/biometric/Internet/connector/Teams runtime starts only in later phases after corresponding foundation gates.
 
 ## 27. Generic implementation protocol
 
@@ -739,7 +814,7 @@ For one `C*.S*` at a time:
 
 ```text
 REVALIDATE HEAD
-→ READ AUTHORITIES INCLUDING 55 WHEN EXTERNAL IS MATERIAL
+→ READ AUTHORITIES INCLUDING 55 AND 56 WHEN EXTERNAL/TEAMS IS MATERIAL
 → IDENTIFY OWNER/LAYER/PATTERN
 → ABSTRACTION GATE
 → DEPENDENCY GATE
@@ -748,7 +823,7 @@ REVALIDATE HEAD
 → WIRE PRODUCER/CONSUMER
 → UNIT/CONTRACT/INTEGRATION
 → POSITIVE/SIBLING/NEGATIVE
-→ SECURITY/RBAC/PRIVACY/BIOMETRIC/EXTERNAL/SAFETY
+→ SECURITY/RBAC/PRIVACY/BIOMETRIC/EXTERNAL/TEAMS/SAFETY
 → GENERALIZATION/METAMORPHIC/UNKNOWN
 → CHAT-INDEPENDENCE CHECK
 → ARCHITECTURE CONFORMANCE
@@ -775,6 +850,7 @@ REVALIDATE HEAD
 - `FrontlineContext` duplicating WorkspaceContext;
 - Task executor parallel to Workflow runtime;
 - Meeting-specific business action executor;
+- Teams-specific planner/work runtime/backend;
 - voice-specific RBAC;
 - biometric match as authentication/permission grant;
 - biometric shadow user directory;
@@ -785,10 +861,14 @@ REVALIDATE HEAD
 - SSRF/private-network/metadata access;
 - provider token/secret in LLM/MFE/log;
 - cross-user external source leak;
+- Teams private/restricted resource leak;
 - read scope used as write scope;
 - generated draft sent implicitly;
+- Teams message sent without governance;
+- Teams transcript promoted to decision/action automatically;
 - external message/web content changing policy;
 - personal source auto-promoted to org Knowledge;
+- base Teams connector depending on raw realtime media bot;
 - WhatsApp Web personal-session scraping as default connector;
 - CoT persistence;
 - speculative abstractions;
@@ -851,6 +931,22 @@ UNKNOWN_CONNECTOR_NO_PLANNER_PATCH
 WHATSAPP_SUPPORTED_CONTRACT_ONLY
 ```
 
+When Teams applies:
+
+```text
+TEAMS_PROVIDER_NEUTRAL_CAPABILITIES
+TEAMS_READ_SCOPE_ISOLATION
+TEAMS_DRAFT_SEND_SEPARATION
+TEAMS_WRITE_VERIFIED_OUTCOME
+TEAMS_EVENT_AUTH_DEDUPE_RECONCILIATION
+TEAMS_TRANSCRIPT_PROVENANCE
+TEAMS_PRIVATE_RESOURCE_NO_LEAK
+TEAMS_MEETING_ARTIFACT_TO_EVIDENCE
+TEAMS_APP_SAME_COPILOT_RUNTIME when surface exists
+TEAMS_RAW_REALTIME_NOT_REQUIRED_FOR_BASE_CONNECTOR
+NO_TEAMS_TOKEN_TO_LLM_MFE_LOG
+```
+
 ## 30. Complete Gate blockers
 
 ```text
@@ -890,6 +986,12 @@ EXTERNAL_WRITE_WITHOUT_GATE
 DRAFT_SENT_IMPLICITLY
 INVALID_WEBHOOK_ACCEPTED
 PERSONAL_SOURCE_AUTO_PROMOTED_TO_ORG_KNOWLEDGE
+TEAMS_SCOPE_OR_RESOURCE_LEAK
+TEAMS_MESSAGE_SENT_WITHOUT_GATE
+TEAMS_TRANSCRIPT_PROVENANCE_MISSING
+TEAMS_PRIVATE_RESOURCE_PROMOTED_WITHOUT_AUTH
+TEAMS_SEPARATE_COPILOT_RUNTIME
+TEAMS_RAW_REALTIME_REQUIRED_FOR_BASE_CONNECTOR
 UNSUPPORTED_WHATSAPP_SESSION_AUTOMATION
 ARBITRARY_LLM_OT_COMMAND
 SAFETY_INTERLOCK_BYPASS
@@ -917,6 +1019,7 @@ SECURITY_RBAC:
 PRIVACY_RETENTION:
 BIOMETRIC_HUMAN_OBSERVATION:
 EXTERNAL_CONNECTIONS_EGRESS:
+TEAMS_INTEGRATION:
 INDUSTRIAL_SAFETY:
 GENERALIZATION:
 CHAT_INDEPENDENCE:
@@ -937,4 +1040,4 @@ Execute only:
 C0.S0
 ```
 
-Do not create the Copilot API/MFE, media/biometric/Internet/connector runtime, Meeting Mode or Frontline Mode until C0.S7 `FOUNDATION_FREEZE=PASS`. After the freeze, start C1.S1 with the standalone API skeleton.
+Do not create the Copilot API/MFE, media/biometric/Internet/connector/Teams runtime, Meeting Mode or Frontline Mode until C0.S7 `FOUNDATION_FREEZE=PASS`. After the freeze, start C1.S1 with the standalone API skeleton.
