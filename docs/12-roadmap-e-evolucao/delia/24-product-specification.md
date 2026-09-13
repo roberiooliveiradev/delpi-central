@@ -1,4 +1,4 @@
-# Minha DELPI Copilot — Especificação Funcional e Técnica Completa
+# DÉLIA — Especificação Funcional e Técnica Completa
 
 **Status:** especificação canônica de produto  
 **Produto:** aplicação standalone nova  
@@ -9,13 +9,12 @@
 
 ## 1. Definição
 
-O Minha DELPI Copilot é a **camada inteligente entre pessoas, sistemas, processos, dados e operação da DELPI e fontes externas autorizadas**.
+A **DÉLIA — DELPI · Ecossistema de Ligações, Inteligência e Automação** é a inteligência operacional entre pessoas, sistemas, processos, dados e operação da DELPI e fontes externas autorizadas.
 
-Não é apenas Chat+RAG. O target é:
+Não é Chat+RAG. O target é:
 
 ```text
 Continuous Operational Intelligence
-+ Enterprise Copilot
 + Decision Intelligence
 + Governed Automation Orchestration
 + Process Intelligence
@@ -27,13 +26,13 @@ Possui API/MFE/persistence/manifest/deploy próprios e não depende do Minha DEL
 
 ## 2. North Star
 
-> Entender contexto interno e externo, perceber mudanças, explicar processos, pesquisar, analisar, prever, simular, decidir dentro de políticas, coordenar trabalho e automações, verificar resultados, produzir artefatos e transformar experiência validada em conhecimento — preservando autoridades, privacidade, segurança e controle humano.
+> Entender contexto interno e externo, perceber mudanças, explicar processos, pesquisar, analisar, prever, simular, decidir dentro de políticas, coordenar trabalho e automações, verificar resultados, produzir artefatos e transformar experiência validada em conhecimento — preservando authorities, privacidade, segurança e controle humano.
 
 ## 3. Information/operational spaces
 
 ```text
 MINHA DELPI
-→ Core + Domain APIs + apps + Knowledge + operational events
+→ Keycloak + Core + Domain APIs + apps + Knowledge + operational events
 
 PUBLIC INTERNET
 → search/safe fetch
@@ -53,6 +52,19 @@ EDGE / FRONTLINE SPACE
 
 Nenhum espaço herda automaticamente authority do outro.
 
+Authorities fundamentais:
+
+```text
+Keycloak       = identity/SSO
+Core API       = apps/routes/RBAC/governance
+Portal         = host/navigation/published context
+Domain APIs    = business data/rules/actions
+Providers      = external resources/scopes
+DÉLIA          = intelligence/context/Evidence/Policy/Decision/Work/orchestration/outcome coordination
+Automation Hub = technical execution
+OT/Safety      = machine/safety authority
+```
+
 ## 4. Surfaces
 
 ```text
@@ -65,13 +77,13 @@ BACKGROUND Watches/Workflows
 ADMIN governance surfaces
 ```
 
-Same Copilot API/product identity/policy/evidence/work runtime.
+Same DÉLIA API/product identity/policy/evidence/work runtime.
 
-## 5. Copilot único
+## 5. DÉLIA única
 
-One Copilot dynamically specialized by Expertise Packs, Playbooks, Knowledge, Personal Memory, current context and authorized capabilities. No departmental-agent runtime.
+Uma DÉLIA dinamicamente especializada por Expertise Packs, Playbooks, Knowledge, Personal Memory, contexto atual e capabilities autorizadas. Sem runtime de agentes departamentais.
 
-External A2A agents are integrations, not alternative user-facing Copilots.
+External A2A agents são integrações, não alternativas user-facing à DÉLIA.
 
 ## 6. Conversation / Context / Memory
 
@@ -92,11 +104,12 @@ Domain OpenAPI
 → planner
 → validation
 → Policy/Decision
-→ executor
+→ DÉLIA Work/orchestration
+→ direct Domain API or Automation Hub execution contract as applicable
 → verified Outcome/Evidence
 ```
 
-No manual endpoint authority or provider/executor hardcode.
+No manual endpoint authority or provider/executor hardcode. Direct Domain API execution is valid when it is the approved authoritative contract; technical automation execution belongs to the Automation Hub boundary.
 
 ## 8. Internet Research / External Connectors / Teams
 
@@ -110,7 +123,7 @@ draft != send
 external content = untrusted
 ```
 
-Teams remains Microsoft 365 capability family and future surface of same Copilot runtime.
+Teams remains Microsoft 365 capability family and future surface of same DÉLIA runtime.
 
 ## 9. Multimodal / Biometrics / Human Observation
 
@@ -135,9 +148,11 @@ EVENT/SIGNAL
 
 Not every event calls an LLM. Deterministic readiness uses structured rules when criteria exist.
 
-## 11. Automation & Execution Hub
+C5 may allow governed ACT for explicit capabilities. C6 keeps Watch autonomous ACT disabled by default. C7 adds selected advanced autonomy/Watch ACT; L5 remains OFF by default.
 
-Copilot is intelligence/orchestration; Hub is execution boundary.
+## 11. Automation Hub
+
+DÉLIA is intelligence/Policy/Decision/Work/orchestration; Automation Hub is the technical-execution boundary.
 
 Executor preference:
 
@@ -146,13 +161,13 @@ official API
 → native integration
 → deterministic function/script
 → RPA
-→ computer-use
+→ governed computer-use
 → Human Task
 ```
 
 Planner works with semantic capabilities such as `billing.invoice.issue`, never clicks/selectors.
 
-Technical executor success is separated from verified business Outcome.
+Technical executor success is separated from verified business Outcome. Automation Hub never becomes business/permission authority or a second DÉLIA planner/workflow authority.
 
 ## 12. Process Intelligence
 
@@ -168,7 +183,7 @@ Automation Opportunity Detection
 Before/After Measurement
 ```
 
-Process Mining understands the real process from authorized event logs. It does not become employee surveillance or automatic RPA deployment.
+Process Mining understands the real process from authorized event logs. It does not become employee surveillance or automatic automation deployment.
 
 ## 13. Business Graph
 
@@ -203,12 +218,12 @@ Read-only toward authoritative sources by default, no unrestricted host/private 
 
 ## 16. Artifact Workspace
 
-The Copilot produces editable/versioned/provenanced work objects:
+A DÉLIA produces editable/versioned/provenanced work objects:
 
 ```text
 report/document
 spreadsheet
-a presentation
+presentation
 PDF/export
 chart
 dashboard snapshot
@@ -264,7 +279,7 @@ Minimum context, scoped credentials, timeout/cancel/budget and same write govern
 Central governance plane for Digital Workforce/AI assets:
 
 ```text
-Copilot
+DÉLIA runtime
 models
 Watches
 workflows
@@ -290,9 +305,9 @@ Governed catalog for Expertise, Playbooks, Watches, Automations, Connectors, MCP
 
 Manifest declares dependencies/scopes/permissions as requirements, not grants. Executable assets pass supply-chain controls.
 
-## 23. Edge / Offline Industrial Copilot
+## 23. Edge / Offline Industrial
 
-Cloud Copilot + governed Edge runtime for approved use cases:
+Cloud DÉLIA + governed Edge runtime for approved use cases:
 
 - cached current procedure/drawing;
 - local bounded search/STT/vision/model inference;
@@ -319,8 +334,10 @@ Watch modes:
 OBSERVE
 ADVISE
 PREPARE
-ACT only in C7 under explicit autonomy
+ACT — only when the Watch itself is explicitly approved for autonomous ACT under C7 gates
 ```
+
+This does **not** mean all ACT is deferred to C7. Governed L4 execution of explicit capabilities may exist from C5 through authorized/confirmed flows. Watch in C6 remains `OBSERVE|ADVISE|PREPARE` by default.
 
 ## 26. Organizational Knowledge / Governed Learning
 
@@ -350,6 +367,8 @@ simulation writing production
 Edge offline authority expansion
 Marketplace install granting permission
 implicit send/write/ACT
+Automation Hub becoming business permission/planner authority
+DÉLIA bypassing technical execution boundary with ad hoc executor internals
 free-form LLM/RPA/Edge→machine actuation
 ```
 
@@ -359,7 +378,7 @@ Role-gated product surfaces can include:
 
 ```text
 Connections
-Automation & Execution Hub
+Automation Hub observability/admin projection
 Process Intelligence
 AI Control Tower
 Semantic Catalog
@@ -370,7 +389,7 @@ Marketplace
 Edge Fleet
 ```
 
-Admin access respects separation of duties.
+Admin access respects separation of duties. DÉLIA admin UI may project Automation Hub state/contracts but does not become the Hub technical runtime.
 
 ## 29. Non-functionals
 
@@ -398,7 +417,7 @@ real event logs
 → automation opportunity candidate
 → owner review
 → PREPARE automation
-→ governed deployment
+→ governed deployment/execution through approved boundary
 → before/after measurement
 ```
 
@@ -437,4 +456,4 @@ Edge cached current procedure/model
 
 Release complete for declared scope requires CP coverage through current authority, standalone independence, correct owners, tests/gates, safe data/model/tool lifecycle, verified outcomes, privacy/security/safety, observability/rollback and no material unresolved drift.
 
-Estado real vive no execution ledger.
+Estado real vive no execution ledger. Documentation alone does not prove runtime implementation or advance phase.
