@@ -1,49 +1,55 @@
-# Minha DELPI Copilot — AI Control Tower e Governança da Força de Trabalho Digital
+# DÉLIA — AI Control Tower e Governança da Força de Trabalho Digital
 
-**Status:** thematic architecture/product/governance spec  
+**Status:** `TARGET` — thematic architecture/product/governance spec  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Observability:** [`11-observability-evals.md`](./11-observability-evals.md)  
 **Automation Hub:** [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)
 
 ## 1. Decisão de produto
 
-A DELPI deve possuir uma visão central de **todos os ativos de IA e automação relevantes**, não apenas do Copilot.
+A visão alvo prevê uma visão central governada dos ativos de IA e automação relevantes para a DELPI.
 
 Nome conceitual:
 
-> **Minha DELPI AI Control Tower**
+> **DÉLIA AI Control Tower**
 
-Ela é plano de governança/observabilidade/administração; não é um segundo planner nem um segundo runtime de decisão.
+Control Tower é uma **projeção/experiência de governança, observabilidade e administração**. Não é segundo planner, segundo Work runtime, segundo executor, permission authority ou source of truth dos ativos que pertencem a outros owners.
 
 ## 2. Escopo de ativos
 
+Candidates a serem projetados, conforme C0 provar owners/fontes/contratos:
+
 ```text
-Copilot surfaces/runtime
+DÉLIA surfaces/runtime refs
 LLM/model providers
 Vision/Speech/Embedding/Predictive models
 Expertise Packs
 Domain Playbooks
 Watches
-Durable Workflows
-Automations/Executors/RPAs
+Durable Work refs
+Automation Hub execution assets
 MCP servers/tools
 A2A agents
 External Connectors
 Edge AI deployments
 Semantic metrics/models
-Knowledge sources
+Knowledge assets
 Prompt/policy versions
 ```
 
-## 3. AI Asset Registry
+A lista é `TARGET`; não prova que registry, telemetry ou control plane já existam.
 
-Cada ativo material deve poder ser representado por metadata governável:
+## 3. AI Asset Registry projection
+
+Se C0 justificar um registry/projection, ele deve manter metadata/ref mínima suficiente para governança sem duplicar o master do owner.
+
+Candidate shape:
 
 ```text
 assetId
 assetType
 name/version
-owner
+owner/sourceRef
 status
 criticality/risk
 capabilities
@@ -58,20 +64,21 @@ dependencies
 killSwitchRef?
 ```
 
-Registro não duplica o master do owner; mantém refs/projection.
+O shape não é contrato congelado antes de C0/Abstraction Gate.
 
 ## 4. Digital Workforce view
 
-A Control Tower deve responder:
+A experiência deve poder responder, quando houver fonte autoritativa:
 
 ```text
-quais automações/agentes estão ativos?
+quais automações/agentes/modelos estão ativos?
 quem é o owner?
 o que podem fazer?
 quais dados acessam?
 qual autonomia possuem?
 qual custo/latência?
-qual taxa de sucesso real?
+qual taxa de sucesso técnico?
+qual taxa de Outcome verificado?
 quais estão degradados?
 quais possuem incidentes?
 quais estão sem avaliação válida?
@@ -79,10 +86,10 @@ quais estão sem avaliação válida?
 
 ## 5. Governance controls
 
-Target:
+Controls podem existir apenas quando o owner/contrato permitir e não criam authority paralela:
 
 ```text
-approve / publish / deprecate / revoke
+request approve / publish / deprecate / revoke
 enable / disable
 cohort rollout
 budget / rate limit
@@ -95,24 +102,24 @@ incident containment
 rollback
 ```
 
-Controles nunca podem ser alterados por prompt normal do usuário.
+Control Tower pode invocar contratos dos owners; não redefine suas regras. Admin da Control Tower não herda business permission.
 
 ## 6. Risk tiers
 
-C0 deve congelar uma taxonomia simples, por exemplo:
+C0 deve decidir se uma taxonomia compartilhada é necessária e quem a possui. Exemplo apenas ilustrativo:
 
 ```text
-LOW      → read-only/low sensitivity
-MEDIUM   → bounded internal write / communication
-HIGH     → financial/material/external/people impact
-CRITICAL → safety/regulated/high irreversible impact
+LOW
+MEDIUM
+HIGH
+CRITICAL
 ```
 
-Risk tier influencia evals, approval, rollout, autonomy, observability e retention.
+Não congelar classificação por conveniência documental. Risk tier informa policy/eval/rollout; nunca concede permissão.
 
 ## 7. Cost / value governance
 
-Medir separadamente:
+Medir separadamente, quando as fontes existirem:
 
 ```text
 model/provider cost
@@ -126,86 +133,104 @@ recovered value / avoided loss
 verified business outcomes
 ```
 
-Não declarar ROI apenas com tokens ou número de execuções.
+Tokens ou número de execuções não provam ROI.
 
 ## 8. Incident management
 
-AI/automation incident deve ser first-class:
+Incidentes de IA/automação devem referenciar os ativos/owners reais e seguir o processo corporativo autoritativo de incident/change management, se existente.
+
+Candidate projection:
 
 ```text
-incidentId
+incidentRef
 assetRefs[]
 severity
 detectedAt
 symptoms/evidence
 impact
 containment
-kill switches used
+killSwitchRefs used
 owner
-resolution
-postmortem/actions
+resolutionRef
+postmortem/actions refs
 ```
 
-Exemplos: provider leak, false autonomous write, repeated RPA failure, model drift, unsafe tool exposure, privacy incident.
+Control Tower não cria incident authority paralela.
 
 ## 9. Audit and lineage
 
-Para ação material deve ser possível reconstruir:
+Para ação material deve ser reconstruível, a partir das fontes corretas:
 
 ```text
-who/what triggered
-which asset/version
-which model/provider/policy
-which Evidence/context
-which Decision Gate
+trigger/actor
+asset/version refs
+model/provider/policy refs
+Evidence/context refs
+Decision ref
 autonomy level
-which executor
+technical execution ref
 verified Outcome
 notifications
 ```
 
-Sem persistir chain-of-thought.
+Sem chain-of-thought ou secrets.
 
 ## 10. Separation of duties
 
-Admin de Control Tower não implica automaticamente business permission para executar capability. Business/domain authorization continua nos owners oficiais.
+```text
+Keycloak = identity/SSO
+Core = apps/routes/RBAC/governance
+Domain APIs = business authority
+DÉLIA = intelligence/Evidence/Policy/Decision/Work orchestration
+Automation Hub = technical execution
+Control Tower = governed projection/admin experience over authorized owner contracts
+```
+
+Control Tower não se torna business authority, planner ou executor.
 
 ## 11. C0 inventory
 
-Inventariar:
+Inventariar factual:
 
 - AI/model inventories atuais;
 - provider accounts/contracts;
-- existing monitoring/eval tooling;
+- monitoring/eval tooling;
 - cost telemetry;
 - RPA/automation inventory;
 - prompt/policy registries;
 - model deployment systems;
 - incident/change-management owners;
 - risk/compliance owners;
-- current kill switches/feature flags;
+- kill switches/feature flags;
 - asset ownership gaps.
+
+Sem evidence suficiente = `TO_INVENTORY`.
 
 ## 12. Phase mapping
 
 ```text
-C0 → asset/risk/owner/control inventory and registry contracts
-C3 → baseline asset metadata/eval lineage
-C5 → execution/policy/outcome telemetry feeds Control Tower
-C6 → admin/dashboard, health, coverage, incidents, cost/value
-C7 → mature cross-runtime governance, budgets, advanced rollout and optimization
+C0 → inventory + owner/source/contract freeze
+C3 → metadata/eval-lineage foundations only when justified
+C5 → execution/policy/Outcome refs may feed governed projections
+C6 → Control Tower admin/dashboard/health/coverage/incidents/cost/value experience
+C7 → mature cross-runtime governance, budgets, advanced rollout/optimization where owners expose safe controls
 ```
 
 ## 13. Acceptance
 
-- every enabled L4/L5 capability has owner/policy/eval/kill switch;
-- unknown/unregistered high-risk executor cannot run;
-- asset version is traceable from material outcome;
-- provider/model rollback is auditable;
-- Control Tower can disable one capability without shutting down unrelated capabilities;
+Quando implementada, provar:
+
+- every enabled high-risk capability references an explicit owner/policy/eval/disable path;
+- unknown/unapproved high-risk asset cannot be activated through Control Tower alone;
+- asset/version is traceable from material Outcome;
+- provider/model rollback/revoke reaches the authoritative owner;
+- one capability can be disabled without unrelated shutdown when architecture supports it;
 - ROI uses verified outcome metrics;
-- no secret/raw credential exposed in registry/UI.
+- no secret/raw credential exposed in registry/UI;
+- Control Tower cannot grant business permission.
+
+Sem prova obrigatória: `PENDING`/`INCONCLUSIVE`.
 
 ## 14. North Star
 
-> **A DELPI deve saber quais inteligências e automações existem, quem é responsável por elas, o que podem fazer, quanto custam, que valor entregam e como interrompê-las com segurança.**
+> **A DELPI deve conseguir enxergar e governar seu ecossistema de IA e automação por meio de uma Control Tower que projeta owners, riscos, custos, evals, health e outcomes sem criar uma segunda authority operacional.**
