@@ -1,97 +1,96 @@
-# Minha DELPI Copilot — Detalhamento do Runtime de Expertise
+# DÉLIA — Detalhamento do Runtime de Expertise
 
-**Status:** thematic spec  
+**Status:** `PLANNED / TARGET` — thematic implementation detail  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)
 
 ## 1. Objetivo
 
-Implementar **nativamente na nova Copilot API** a especialização dinâmica do Copilot único.
+Detalhar como a DÉLIA pode implementar especialização dinâmica sem migrar agents do Minha DELPI Chat e sem criar abstrações antecipadas.
 
-Não existe migration de agents do Minha DELPI Chat nesta iniciativa.
+Este documento não prova que catalog, repository, retriever, embeddings ou storage existam.
 
 ## 2. Componentes conceituais
 
-Conforme gaps e Abstraction Gate:
+Somente após owner/source/consumer/contract e Abstraction Gate:
 
 ```text
-ExpertiseCatalogPort
-ExpertiseRepository
-ExpertiseRetriever
-ExpertisePolicyFilter
-ExpertiseContextComposer
-DomainPlaybookCatalogPort
-DomainPlaybookRepository
-DomainPlaybookRetriever
-PlaybookPlannerAdapter
-MultimodalEvidenceAdapter
-ExpertiseTelemetry
+Expertise catalog/retrieval capability
+Playbook catalog/retrieval capability
+bounded ExpertiseContext composition
+storage/index adapters when needed
+telemetry/evals
 ```
 
-Nomes finais seguem C0/`49`; não criar todos antecipadamente.
+Os nomes abaixo são apenas exemplos e não devem ser criados por default:
+
+```text
+ExpertiseCatalogPort?
+ExpertiseRepository?
+ExpertiseRetriever?
+DomainPlaybookCatalogPort?
+DomainPlaybookRepository?
+```
+
+Uma coleção/config simples pode ser suficiente. “Pode ser útil depois” não justifica interface/repository/registry.
 
 ## 3. Layers
 
 ### Domain
-- Expertise/Playbook value/domain models;
+- value/semantic models somente se ownership/lifecycle real justificar;
 - pure applicability/composition semantics;
 - no DB/HTTP/LLM/framework.
 
 ### Application
-- retrieve/rank packs;
-- compose bounded ExpertiseContext;
+- retrieve/rank packs quando capability existir;
+- compose bounded context;
 - resolve playbook applicability;
-- combine with evidence/planning;
+- combine with Evidence/planning;
 - project preference without permission elevation.
 
 ### Infrastructure
-- storage/index adapters;
-- embedding/provider adapters;
-- import/version adapters;
+- concrete storage/index/model/provider adapters;
+- credentials e provider SDKs somente aqui;
 - telemetry.
 
 ### Interfaces
-- admin/read DTO/endpoints when C6 requires them.
+- admin/read DTO/endpoints somente quando product consumer real exigir.
 
 ## 4. Fase canônica
 
 ```text
 C0
-→ Expertise/Playbook contracts, owners, persistence boundaries
+→ owner/source/consumers/contracts/persistence decisions
 
 C3
-→ Catalog/Repository if required
-→ retrieval/ranking
-→ context composition
-→ playbooks
-→ Knowledge ACL integration
-→ multimodal integration
+→ minimal expertise/playbook runtime only when unlocked
+→ retrieval/ranking/context composition
+→ Knowledge ACL + multimodal integration as applicable
 → evals/generalization
 
 C6
-→ project preferences
-→ Expertise Studio/admin/coverage
+→ governance/admin/product preferences when prioritized
 
 C7
-→ performance/model-routing optimization only if justified
+→ performance/model-routing optimization only if metrics justify
 ```
 
 ## 5. Regras
 
-- one Copilot identity;
+- one DÉLIA product identity;
 - pack/playbook never grants permission;
 - no path/method/opId as semantic authority;
-- unknown/new pack works without planner patch;
-- retrieval uses goals/context/entities/attachments/preferences boundedly;
-- project preference improves ranking, not authorization;
-- Knowledge source ACL remains authoritative;
+- unknown/new pack should not require planner-core patch;
+- project/user preference improves ranking, not authorization;
+- Knowledge/source ACL remains authoritative;
 - multimodal capability does not depend on agent activation;
-- versions/hashes are auditable;
-- packs/playbooks are data/configuration of the Copilot product, not user-facing agents.
+- versions/hashes are auditable when implemented;
+- pack/playbook content is untrusted input to policy/system boundaries;
+- no technical executor inside Expertise runtime.
 
 ## 6. No Chat migration
 
-These concepts are explicitly **not inputs** to this runtime:
+Explicitly not runtime dependencies:
 
 ```text
 AgentSpecializationService
@@ -103,9 +102,11 @@ Chat chat_mode
 Chat project default agent
 ```
 
-They may be observed during C0 only to understand lessons/anti-patterns.
+Podem ser observados em C0 apenas como inventory/reference.
 
 ## 7. Tests
+
+Quando implementado:
 
 ```text
 positive domain selection
@@ -123,8 +124,10 @@ version regression
 full-page/panel parity
 ```
 
+PASS requer runtime/evidence do SHA/config avaliado.
+
 ## 8. Resultado alvo
 
 > “Use Engenharia e Qualidade para analisar este desenho, consulte problemas anteriores e monte um 8D preliminar.”
 
-O mesmo Copilot deve compor os packs/playbooks necessários sem troca de agent e sem depender do Minha DELPI Chat.
+A DÉLIA deve poder compor os métodos/capabilities necessários sem troca de agent, sem permission elevation e sem depender do Minha DELPI Chat.
