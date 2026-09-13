@@ -1,14 +1,16 @@
-# Minha DELPI Copilot — Modelo Canônico de Dados, Estado e Persistência
+# DÉLIA — Modelo Canônico de Dados, Estado e Persistência
 
-**Status:** target arquitetural standalone  
+**Status:** `TARGET` arquitetural standalone  
 **Autoridade de ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Requirements:** [`25-requirements-traceability.md`](./25-requirements-traceability.md)  
 **Specs temáticas:** `53–66`
 
+> Este documento define modelo alvo e candidatos. Nenhuma entidade, tabela, migration, registry, workflow ou state machine aqui descrita é considerada implementada sem evidência válida no HEAD/config correspondente.
+
 ## 1. Princípio
 
-Todo estado durável pertence ao **owner correto**. Copilot persiste somente state que possui ou projections/refs bounded necessários para continuidade, audit, search ou performance.
+Todo estado durável pertence ao **owner correto**. A DÉLIA persiste somente state que possui ou projections/refs bounded necessários para continuidade, audit, search ou performance.
 
 ```text
 CORPORATE IDENTITY / RBAC
@@ -23,8 +25,11 @@ EXTERNAL RESOURCES
 OT / MACHINE TRUTH
 → industrial/domain owners
 
-COPILOT-OWNED STATE
-→ conversation/intelligence/work/policy/memory/artifact/automation metadata only when owned
+DÉLIA-OWNED STATE
+→ conversation/intelligence/Evidence/Policy/Decision/Work/memory/artifact/orchestration metadata only when owned
+
+AUTOMATION TECHNICAL EXECUTION STATE
+→ Automation Hub / executor owner, quando implementation/contract forem provados
 
 DERIVED PROJECTIONS/CACHES
 → invalidable, versioned, freshness-aware, never authority
@@ -34,11 +39,11 @@ Proibido criar shadow system of record apenas para facilitar IA.
 
 ## 2. Storage ownership
 
-Target default:
+Target default, sujeito a C0.S1:
 
 ```text
-minha-delpi-copilot-api/migrations/
-→ única migration chain do Copilot
+minha-delpi-copilot-api/migrations/   # namespace técnico temporário
+→ migration chain própria somente para state realmente owned pela DÉLIA
 ```
 
 Serviço separado só existe com boundary/owner/consumers reais e ADR. “Hub”, “Tower”, “Twin”, “Marketplace” ou “Sandbox” não justificam microservice por nome.
@@ -56,13 +61,15 @@ Congelar:
 - source authority/freshness;
 - idempotency/concurrency;
 - migration/rollback;
-- Copilot-owned state vs projection/ref;
+- DÉLIA-owned state vs projection/ref vs Automation Hub technical state;
 - cache TTL/invalidation;
 - audit/evidence lineage;
 - state-machine transitions;
 - data classes novas somente se shared primitives existentes forem insuficientes.
 
 ## 4. Shared foundations
+
+Todos os tipos abaixo são `TARGET/CANDIDATE` até C0 provar necessidade e ownership.
 
 ### CorrelationContext
 
@@ -103,7 +110,7 @@ version/revision?
 
 ### SourceRef / EvidenceRef / OutcomeRef
 
-Usados transversalmente por APIs, web, connectors, Process Intelligence, analysis, predictive/twin, automation, Meeting/Frontline e audit.
+Usados transversalmente por APIs, web, connectors, Process Intelligence, analysis, predictive/twin, automation, Meeting/Frontline e audit quando os contracts forem congelados.
 
 Nunca guardar credential em Source/Evidence/Outcome.
 
@@ -125,7 +132,7 @@ model/package trust decision
 
 ## 6. Media/Biometric/Human Observation
 
-Mantém separação já congelada:
+Mantém separação conceitual:
 
 ```text
 RAW MEDIA
@@ -164,9 +171,9 @@ Subscription/sync state mantém provider subscription/cursor/expiry/reconciliati
 
 ## 8. Conversation state
 
-Copilot-owned. Turn pode referenciar WorkspaceContext snapshot, Evidence, memory influence refs, plans/outcomes/artifacts, nunca chain-of-thought ou credentials.
+DÉLIA-owned quando implementado. Turn pode referenciar WorkspaceContext snapshot, Evidence, memory influence refs, plans/outcomes/artifacts, nunca chain-of-thought ou credentials.
 
-## 9. Personal Memory — owned state
+## 9. Personal Memory — owned state candidate
 
 Personal Memory é separada de conversation e Organizational Knowledge.
 
@@ -196,7 +203,7 @@ PersonalMemory != permission
 PersonalMemory != live business truth
 ```
 
-User deletion/correction propagates to derived indexes according to policy.
+User deletion/correction propaga a derived indexes de acordo com policy quando esse lifecycle existir.
 
 ## 10. Organizational Knowledge
 
@@ -206,7 +213,7 @@ Reference/Decision/Experience/Solution Pattern knowledge segue candidate→revie
 
 Graph armazena refs/relationships/provenance/materializations quando justificadas. Não duplica master data.
 
-`RelationshipRef` deve carregar source/provenance/freshness suficientes para ser invalidável.
+`RelationshipRef`, se criado, deve carregar source/provenance/freshness suficientes para ser invalidável.
 
 ## 12. Semantic Business Layer state
 
@@ -248,7 +255,7 @@ Conflicting definitions keep separate IDs/versions; do not silently merge.
 
 ## 13. Event / Watch state
 
-`EventEnvelope` normalizes internal/external/automation/Edge events:
+Candidate `EventEnvelope` normaliza internal/external/automation/Edge events:
 
 ```text
 eventId
@@ -264,7 +271,7 @@ trust/auth metadata bounded
 
 Event payload never grants permission.
 
-Watch:
+Candidate Watch:
 
 ```text
 watchId
@@ -278,11 +285,19 @@ cooldown/dedupe policy
 expiresAt?
 ```
 
-C6: OBSERVE/ADVISE/PREPARE. ACT: C7 only.
+Semântica de fase:
+
+```text
+C5 → ACT governado pode existir para capability explicitamente autorizada e aprovada pelos gates de write/Decision/idempotency/audit/Outcome
+C6 → produto Watch usa OBSERVE|ADVISE|PREPARE por default; PREPARE continua sem side effect
+C7 → selected autonomous Watch ACT / advanced autonomy, capability-scoped; L5 continua OFF por default
+```
+
+Logo, `ACT` não é sinônimo de “C7-only”; o que é C7 é **autonomous/advanced ACT** conforme `16`.
 
 ## 14. Durable Workflow / Decision state
 
-Workflow is single durable orchestration runtime for internal/external/automation/tool/agent actions.
+Workflow é o target de runtime durável único de **Work/orquestração da DÉLIA**, não um executor técnico paralelo ao Automation Hub.
 
 ```text
 stepId
@@ -303,9 +318,9 @@ Decision stores action/arguments hash/impact/evidence/risk/actor/approver/policy
 
 Material semantic/model/policy changes may invalidate an old Decision.
 
-## 15. Automation Capability / Executor state
+## 15. Automation Capability / Executor mapping
 
-Candidate mapping:
+Candidate projection owned pela DÉLIA somente se C0 provar necessidade:
 
 ```text
 automationId
@@ -325,9 +340,15 @@ idempotencyPolicyRef
 status
 ```
 
-Planner gets capability/schema, not click/selector mechanics.
+Planner recebe capability/schema, não click/selector mechanics.
+
+Esse mapping não transforma a DÉLIA em owner do runtime técnico de execução. Automation Hub/executor owner permanece responsável pela execução técnica conforme contrato congelado em C0.
 
 ## 16. AutomationExecution
+
+A DÉLIA pode manter uma **projection/correlation lifecycle** necessária para Work/Decision/Outcome; o Automation Hub pode possuir estado técnico adicional de worker/job/runtime. Não duplicar authority ou lifecycle sem contrato explícito.
+
+Candidate orchestration projection:
 
 ```text
 executionId
@@ -351,7 +372,7 @@ outcomeVerificationRef?
 
 `SUCCEEDED` técnico não implica verified business Outcome.
 
-RPA worker/queue state existe somente se RPA for priorizado/owned:
+RPA worker/queue state só existe no owner técnico se RPA for priorizado/provado:
 
 ```text
 workerRef
@@ -363,9 +384,11 @@ lease/currentExecutionRef
 package/runtime versions
 ```
 
-Credential nunca entra no state comum.
+Credential nunca entra no state comum da DÉLIA.
 
 ## 17. Outcome verification
+
+Candidate:
 
 ```text
 verificationRef
@@ -653,7 +676,7 @@ Offline mode must not widen authority.
 
 ## 28. Retention classes
 
-At minimum distinguish:
+At minimum distinguish, quando as respectivas capabilities existirem:
 
 ```text
 TRANSIENT_MEDIA
@@ -676,7 +699,7 @@ EDGE_CACHE/EDGE_BUFFERED_EVENT
 MEETING_ARTIFACT/FRONTLINE_RECORD
 ```
 
-Cada classe define purpose/access/retention/redaction/encryption/delete/export/revoke/anonymize.
+Cada classe implementada precisa de purpose/access/retention/redaction/encryption/delete/export/revoke/anonymize conforme aplicável.
 
 ## 29. Cache/materialization rules
 
@@ -698,7 +721,7 @@ Cache/materialization never becomes permission or business authority.
 - duplicate event must not duplicate action;
 - Workflow resume must not duplicate side effect;
 - ambiguous write verified before retry when possible;
-- queue lease prevents double worker pickup;
+- queue lease prevents double worker pickup quando queue/worker fizerem parte do owner técnico;
 - external provider/RPA/domain idempotency differences modeled explicitly;
 - offline Edge sync deduplicates/reconciles;
 - A2A delegated write protects duplicate task/result handling.
@@ -724,11 +747,13 @@ Metric/model/process definition changes are versioned, never silent overwrite.
 
 ## 33. State machines relevantes
 
+Candidate lifecycles, somente quando ownership e persistência forem provados:
+
 ```text
 ExternalConnection:
 PENDING_AUTH → ACTIVE → EXPIRED|REAUTH_REQUIRED|REVOKED|DISABLED|ERROR
 
-AutomationExecution:
+AutomationExecution orchestration projection:
 QUEUED → RUNNING → SUCCEEDED|FAILED|AMBIGUOUS|CANCELLED|TIMED_OUT
 
 MCP/A2A integration:
@@ -754,8 +779,9 @@ Persistir state machine somente quando lifecycle real justificar.
 
 ## 34. Explicitamente proibido
 
-- Chat tables/runtime as Copilot storage;
+- Chat tables/runtime as DÉLIA storage;
 - shadow Core user/RBAC/domain database;
+- duplicar no state da DÉLIA o runtime técnico autoritativo do Automation Hub/executor;
 - provider/RPA/model/tool secret in prompt/log/MFE/Evidence;
 - personal memory/source auto-shared to organization;
 - memory as live business truth or permission;
@@ -772,4 +798,4 @@ Persistir state machine somente quando lifecycle real justificar.
 - RPA bot/package as business-rule authority;
 - technical executor success as business success without required verification;
 - global unrestricted `autonomyLevel=L5`;
-- free-form machine-control state as Copilot authority.
+- free-form machine-control state as DÉLIA authority.
