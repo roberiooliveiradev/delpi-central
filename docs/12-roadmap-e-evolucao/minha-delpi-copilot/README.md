@@ -2,12 +2,13 @@
 
 > **Status:** `PLANNED / NOT_STARTED`  
 > **Decisão de produto:** **aplicação nova e standalone**  
-> **Visão:** **um único Copilot para escritório, reuniões e chão de fábrica**  
-> **Próxima etapa:** **C0.S0 — Platform/Media/Device/Biometric/OT Rebaseline Inventory**  
+> **Visão:** **um único Copilot para escritório, reuniões, chão de fábrica e fontes externas autorizadas**  
+> **Próxima etapa:** **C0.S0 — Platform/Media/Device/Biometric/External/OT Rebaseline Inventory**  
 > **Ordem executável:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 > **Boundary standalone:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 > **Multimodal/Meeting/Frontline:** [`53-multimodal-meeting-frontline-and-industrial-copilot.md`](./53-multimodal-meeting-frontline-and-industrial-copilot.md)  
 > **Biometric/Human Observation:** [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)  
+> **Internet/External Connectors:** [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)  
 > **Baseline da plataforma:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 > **Estrutura/Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
 > **Arquitetura/design patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
@@ -35,14 +36,14 @@ O código do Chat pode ser consultado como referência técnica durante inventá
 
 ## 2. North Star ampliado
 
-> **Minha DELPI Copilot é a interface inteligente entre as pessoas e a operação da DELPI. Está presente no escritório e na fábrica, entende texto, voz, imagem, vídeo, documentos, contexto operacional e dados empresariais; pode reconhecer usuários conhecidos sob governança explícita e compreender padrões observáveis de trabalho; ajuda pessoas a entender, decidir, executar e aprender, preservando permissões, evidências, segurança, privacidade e governança.**
+> **Minha DELPI Copilot é a interface inteligente entre as pessoas, a operação da DELPI e o mundo externo autorizado. Está presente no escritório e na fábrica, entende texto, voz, imagem, vídeo, documentos, contexto operacional e dados empresariais; pode pesquisar a internet, consultar fontes externas conectadas, reconhecer usuários conhecidos sob governança explícita e compreender padrões observáveis de trabalho; ajuda pessoas a entender, decidir, executar, comunicar, acompanhar e aprender preservando permissões, evidências, segurança, privacidade e governança.**
 
 ```text
 PERGUNTAR  → entender, pesquisar, explicar, analisar
-FAZER      → navegar, consultar, criar, alterar, aprovar, executar
+FAZER      → navegar, consultar, criar, alterar, aprovar, executar, comunicar
 ACOMPANHAR → monitorar, detectar, alertar, reagir
 TRABALHAR  → investigar, colaborar, planejar, acompanhar, concluir
-APRENDER   → transformar experiência validada em conhecimento governado
+APRENDER   → transformar experiência e fontes validadas em conhecimento governado
 ```
 
 ## 3. Presença e acesso
@@ -58,6 +59,8 @@ permissões efetivas do usuário
 +
 contexto atual
 +
+connected sources autorizadas
++
 capability/policy/risk
 =
 comportamento realmente disponível
@@ -66,8 +69,10 @@ comportamento realmente disponível
 Invariante:
 
 ```text
-Copilot effective capabilities ⊆ user effective capabilities
+Copilot effective capabilities ⊆ user effective capabilities + explicitly granted external scopes
 ```
+
+Os external scopes ampliam apenas o acesso do connector correspondente; não ampliam Core RBAC nem Domain API authorization.
 
 Biometria pode ajudar a reconhecer quem é um usuário conhecido, mas:
 
@@ -97,9 +102,10 @@ Core/RBAC
 Policy/Decision Gate
 Evidence
 Durable Work
+Internet Research / External Connectors quando autorizados
 ```
 
-Não existem agentes/backends separados por departamento ou surface.
+Não existem agentes/backends separados por departamento, provider ou surface.
 
 ## 5. Owners alvo
 
@@ -112,8 +118,9 @@ keycloak                          → identidade/SSO
 gateway/                          → entrada/routing
 plugins/plugin-ui/                → design system compartilhado
 APIs de domínio                   → dados e regras de negócio
+external providers               → source truth de contas/recursos externos
 OT/domain systems                 → machine/process truth e safety owners
-infra/                            → compose/deploy/env/network/storage
+infra/                            → compose/deploy/env/network/storage/secrets/egress
 ```
 
 Nomes finais são congelados em C0; a arquitetura física recomendada está em `52`.
@@ -132,6 +139,8 @@ Gateway
 Minha DELPI Copilot API
   ├─ Core API / RBAC / apps/routes
   ├─ Domain APIs / OpenAPI
+  ├─ Internet Research / Safe Web Fetch
+  ├─ External Connectors / OAuth / provider adapters
   ├─ Knowledge / Graph / Evidence
   ├─ LLM / Speech / Vision / Biometric adapters
   └─ Copilot-owned persistence
@@ -139,7 +148,7 @@ Minha DELPI Copilot API
 
 O Portal **hospeda** o Copilot; não implementa sua inteligência.
 
-A Copilot API **orquestra**; não assume ownership das regras de negócio das outras APIs, da identidade corporativa nem da segurança industrial.
+A Copilot API **orquestra**; não assume ownership das regras de negócio das outras APIs, da identidade corporativa, dos providers externos nem da segurança industrial.
 
 ## 7. Meeting Mode
 
@@ -148,6 +157,8 @@ Quando liberado, Meeting Mode poderá:
 - iniciar/parar captura explicitamente;
 - transcrever voz;
 - responder perguntas consultando dados reais e autorizados;
+- pesquisar fontes externas quando necessário e permitido;
+- consultar e-mails/calendários/arquivos conectados conforme scope;
 - usar câmera/tela quando policy/device permitirem;
 - associar participante/speaker a usuário enrolled quando biometric capability estiver habilitada;
 - registrar fatos, decisões e pendências;
@@ -162,7 +173,7 @@ A ata distingue:
 transcrição
 resumo
 identity candidate/confirmed association
-source data/evidence
+source data/evidence interno ou externo
 decisão humana confirmada
 ação candidata
 ação executada/verificada
@@ -242,16 +253,58 @@ Por default, não inferir de rosto/voz/comportamento:
 
 Biometria/Human Observation também não podem ser authority automática para contratação, promoção, punição, remuneração, avaliação formal, suspensão ou desligamento.
 
-## 10. Aprendizagem do processo
+## 10. Internet Research e fontes externas
 
-O Copilot pode ajudar a capturar conhecimento tácito e experiências do processo, mas somente como **candidate knowledge**:
+O Copilot deve combinar informação interna com fontes externas sem misturar authority.
 
 ```text
-observação/experiência
+PUBLIC INTERNET
+→ search
+→ safe fetch
+→ SourceRef/EvidenceRef
+→ grounded synthesis
+
+CONNECTED SOURCES
+→ OAuth/API connection
+→ provider adapter
+→ authorized read/write capability
+→ SourceRef/OutcomeRef/EvidenceRef
+```
+
+Exemplos de connectors alvo, conforme APIs oficiais e aprovação:
+
+- Microsoft 365 / Outlook / Calendar / OneDrive / SharePoint / Teams;
+- Google Workspace / Gmail / Calendar / Drive;
+- WhatsApp Business Platform;
+- Slack;
+- GitHub;
+- service desks, CRMs e demais fontes futuras.
+
+O planner é provider-neutral. Novo connector não deve exigir branch central `if gmail/outlook/whatsapp`.
+
+Regras fundamentais:
+
+```text
+external content = untrusted data
+OAuth scope != Core permission
+personal connection != organizational source
+read != write
+draft != send
+web/email/message != automatic corporate knowledge
+```
+
+Tokens/refresh tokens nunca chegam ao LLM, ao MFE ou a logs comuns.
+
+## 11. Aprendizagem do processo e de fontes externas
+
+O Copilot pode ajudar a capturar conhecimento tácito e conhecimento encontrado fora da DELPI, mas somente de forma governada.
+
+```text
+observação/experiência/external source
 → Evidence/context
-→ candidate
-→ owner/specialist review
-→ eval
+→ transient research ou candidate
+→ owner/specialist review quando durável
+→ eval/freshness/privacy/licensing checks
 → version/publish
 ```
 
@@ -260,11 +313,14 @@ Nunca:
 ```text
 uma observação do operador
 → alteração automática do procedimento de produção
+
+web page / email / WhatsApp message
+→ verdade corporativa automática
 ```
 
 Também não criar perfil secreto do trabalhador como mecanismo de aprendizagem.
 
-## 11. Segurança industrial e privacidade
+## 12. Segurança industrial, externa e privacidade
 
 Não fazem parte do default scope:
 
@@ -274,15 +330,21 @@ Não fazem parte do default scope:
 - scoring/vigilância oculta de pessoas;
 - raw audio/video/biometric templates sem purpose/retention definidos;
 - decisão trabalhista automática baseada em biometria;
+- URL/fetch irrestrito gerado pelo LLM;
+- acesso a private/link-local/metadata endpoints via web fetch;
+- tokens OAuth/provider secrets em prompt/log/MFE;
+- cross-user leak de e-mail/mensagem/arquivo conectado;
+- envio externo implícito sem governance;
+- scraping de WhatsApp Web/personal session como connector default;
 - visual finding tratado automaticamente como aprovação/reprovação oficial;
 - free-form LLM → PLC/CNC/robô/máquina;
 - Copilot substituindo safety PLC/interlocks.
 
-Autonomia L5 empresarial **não** concede autoridade OT.
+Autonomia L5 empresarial **não** concede autoridade OT nem autorização externa irrestrita.
 
 Qualquer futura atuação física requer safety gate separado, deterministic typed commands, allowlist, machine-state checks, industrial owner, interlocks independentes, autorização, test/simulation, fail-safe e audit.
 
-## 12. Integração com o Portal
+## 13. Integração com o Portal
 
 O Portal atual já suporta MFEs `federated` via `AppHost`, que resolve `remoteEntry`, carrega `mount()` e injeta `getAccessToken`, `basePath`, pathname, rotas e contexto do usuário.
 
@@ -291,11 +353,12 @@ O Copilot terá progressivamente:
 1. **app/full page** registrado por manifesto;
 2. **surface global** no Shell;
 3. **Meeting surface** do mesmo MFE/runtime;
-4. **Frontline surface** do mesmo MFE/runtime para devices compatíveis.
+4. **Frontline surface** do mesmo MFE/runtime para devices compatíveis;
+5. **Connections/Admin surface** do mesmo produto para fontes externas autorizadas.
 
-Workspace Context e Platform Commands atravessam contratos tipados; autorização continua em Core/domain owners.
+Workspace Context e Platform Commands atravessam contratos tipados; autorização continua em Core/domain/provider owners conforme o boundary.
 
-## 13. Princípios não negociáveis
+## 14. Princípios não negociáveis
 
 1. Copilot API própria; nenhum endpoint do Chat é requisito de funcionamento.
 2. Copilot MFE próprio; nenhum source import de `plugins/minha-delpi-chat`.
@@ -313,28 +376,32 @@ Workspace Context e Platform Commands atravessam contratos tipados; autorizaçã
 14. Clean Architecture + Ports & Adapters + DDD pragmático conforme `49`.
 15. Voice/image/video/biometric signals são modalidades/contexto, não bypass de permission.
 16. Contexto industrial reutiliza WorkspaceContext + EntityRef.
-17. Data minimization é default para mídia/biometria.
+17. Data minimization é default para mídia/biometria/external cache.
 18. Device identity != user identity; biometric candidate != authenticated session.
-19. Process learning publica somente via governance.
+19. Process/external learning publica somente via governance.
 20. Human Observation fica limitado a sinais observáveis do processo.
-21. Copilot não é industrial safety authority.
+21. Internet/external content é untrusted e sempre preserva provenance/freshness.
+22. OAuth/provider credentials permanecem fora do LLM/MFE e sob least privilege/revocation.
+23. Reads e writes externos são capabilities separadas; `draft != send`.
+24. Personal source não vira organizational source automaticamente.
+25. Copilot não é industrial safety authority.
 
-## 14. Ordem foundation-first
+## 15. Ordem foundation-first
 
 ```text
-C0 — Platform + Architecture + Media/Privacy/Biometric/OT Foundation Freeze
+C0 — Platform + Architecture + Media/Privacy/Biometric/External/OT Foundation Freeze
 → C1 — Standalone App Bootstrap
 → C2 — Portal + Operational Context + Platform Commands
-→ C3 — Intelligence Core + Multimodal/Biometric Foundations
-→ C4 — Business Reads + Business Graph
-→ C5 — Governed Writes + Durable Work Foundation
-→ C6 — Tasks/Cases/Rooms/Inbox/Watch + Meeting/Frontline + Ecosystem/Learning
-→ C7 — Advanced Realtime + Autonomy/Simulation/Model Routing/Rollout
+→ C3 — Intelligence Core + Multimodal/Biometric/Internet/Connector Foundations
+→ C4 — Business + External Reads + Business Graph
+→ C5 — Governed Business/External Writes + Durable Work Foundation
+→ C6 — Tasks/Cases/Rooms/Inbox/Watch + Meeting/Frontline + External Events/Ecosystem/Learning
+→ C7 — Advanced Realtime + External Proactivity + Autonomy/Simulation/Model Routing/Rollout
 ```
 
-Primeiro provamos boundaries e integração; depois construímos intelligence/media/biometric/work surfaces.
+Primeiro provamos boundaries e integração; depois construímos intelligence/media/biometric/external/work surfaces.
 
-## 15. C0 — o que precisa congelar
+## 16. C0 — o que precisa congelar
 
 ```text
 platform inventory
@@ -348,9 +415,15 @@ privacy/consent/retention boundaries
 biometric enrollment/template/liveness boundaries
 shared-device identity/session boundary
 Human Observation prohibited-inference boundary
+outbound HTTP/egress boundary
+OAuth callback/connection ownership
+secret/vault/key-management boundary
+personal vs organizational external-source privacy
+provider webhook/subscription lifecycle
+external-learning promotion rules
 operational context sources
 OT/industrial safety boundary
-shared primitives / MediaRef / biometric-ref decisions
+shared primitives / MediaRef / biometric-ref / connection-ref decisions
 architecture/patterns
 ports/persistence boundaries
 error/event/state/resilience rules
@@ -359,9 +432,9 @@ contract/conformance harness
 
 C1 só inicia com `FOUNDATION_FREEZE=PASS`.
 
-## 16. Business Actions não dependem do Chat
+## 17. Business e External Actions não dependem do Chat
 
-O Copilot implementará sua própria cadeia:
+Business Actions:
 
 ```text
 OpenAPI
@@ -375,16 +448,28 @@ OpenAPI
 → Outcome/Evidence
 ```
 
-Texto, voz, Meeting ou Frontline convergem para esse mesmo pipeline. Biometric identity apenas ajuda a resolver contexto/participante; não cria action authority.
+External capabilities:
 
-## 17. Documentos canônicos
+```text
+provider connection/scopes
+→ normalized capability
+→ retrieval/planner
+→ connector validation
+→ policy/Decision Gate when write
+→ provider adapter
+→ verified Outcome/Evidence
+```
+
+Texto, voz, Meeting ou Frontline convergem para esses mesmos contracts. Biometric identity apenas ajuda a resolver contexto/participante; não cria action authority.
+
+## 18. Documentos canônicos
 
 | Documento | Papel |
 |---|---|
 | `16` | única ordem de implementação |
 | `17` | owners/primitives/contracts |
 | `20` | testes/gates |
-| `21` | state/persistence/media/biometric refs |
+| `21` | state/persistence/media/biometric/external refs |
 | `23` | prompt mestre Cursor |
 | `25` | requisitos `CP-*` |
 | `49` | architecture/design patterns |
@@ -393,20 +478,21 @@ Texto, voz, Meeting ou Frontline convergem para esse mesmo pipeline. Biometric i
 | `52` | estrutura física/bootstrap |
 | `53` | multimodal/Meeting/Frontline/industrial safety |
 | `54` | biometric identity/Human Observation governance |
+| `55` | Internet Research/external connectors/OAuth/external learning |
 | ledger | estado/evidence executável |
 
 Specs temáticas detalham comportamento, mas não podem contradizer authorities acima.
 
-## 18. Relação com documentos antigos de migração de agents
+## 19. Relação com documentos antigos de migração de agents
 
 Qualquer trecho que trate o Copilot como migração de `AgentSpecializationService`, `userActivatedAgent`, `softAgentHandoff`, `agent_id` ou sessions do Chat está **SUPERSEDED / OUT_OF_SCOPE**.
 
 O Copilot novo simplesmente não nasce com essas dependências.
 
-## 19. Primeiro passo
+## 20. Primeiro passo
 
 Abrir `23-prompt-cursor-execucao.md` e executar **somente C0.S0**.
 
-C0.S0 é inventário/evidence, agora incluindo media/device/privacy/frontline/biometric/OT. Não cria planner, RAG, biometric runtime, Meeting, Frontline, Graph, Case, Watch ou Model Router.
+C0.S0 é inventário/evidence, agora incluindo media/device/privacy/frontline/biometric/Internet/egress/OAuth/connectors/webhooks/secrets/OT. Não cria planner, RAG, connector runtime, biometric runtime, Meeting, Frontline, Graph, Case, Watch ou Model Router.
 
 O primeiro runtime após Foundation Freeze será o **bootstrap standalone**: API + MFE + auth + Core + Gateway + Compose + Manifest + Portal federated mount.
