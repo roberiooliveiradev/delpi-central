@@ -1,4 +1,4 @@
-# Minha DELPI Copilot — Requisitos da Inteligência Operacional
+# DÉLIA — Requisitos da Inteligência Operacional
 
 **Status:** `SUPERSEDED / REFERENCE_ONLY`
 
