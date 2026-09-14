@@ -3,6 +3,11 @@ from tm_app.application.gpt_actions.improvement_package_contract import (
     PACKAGE_TOP_LEVEL_KEYS,
     build_package_hints,
 )
+from tm_app.application.gpt_actions.openapi_builder import (
+    GPT_ACTIONS_OPERATION_IDS,
+    build_gpt_actions_openapi,
+    count_operations,
+)
 from tm_app.application.gpt_actions.registration_guide import build_registration_guide
 
 
@@ -76,3 +81,72 @@ def test_package_hints_examples_include_create_and_baseline_plus_scenario():
     validate = hints["validate_example"]
     assert "dry_run" not in validate
     assert "revision" in validate["scenario"]
+
+
+def test_registration_guide_official_flow_validate_confirm_commit_readback():
+    hints = build_registration_guide()["package_hints"]
+    seq = " | ".join(hints["operational_sequence"])
+    assert "VALIDATE PACKAGE" in seq
+    assert "SHOW USER" in seq
+    assert "EXPLICIT CONFIRMATION" in seq
+    assert "COMMIT" in seq
+    assert "READ-BACK" in seq
+    assert "VERIFY" in seq
+    # Validate before commit in sequence order.
+    assert seq.index("VALIDATE") < seq.index("COMMIT")
+    assert seq.index("COMMIT") < seq.index("READ-BACK")
+
+
+def test_registration_guide_commit_result_unknown_policy():
+    hints = build_registration_guide()["package_hints"]
+    unknown = hints["commit_result_unknown"]
+    assert unknown["do_not_claim_success"] is True
+    assert unknown["inspect_read_current_state_before_retry"] is True
+    assert unknown["avoid_duplicate_write"] is True
+    assert unknown["no_http_bypass"] is True
+    assert unknown["no_silent_create_update_substitute"] is True
+    assert unknown["no_retry_loop"] is True
+    assert unknown["package_change_invalidates_confirmation"] is True
+    assert "read_back" in unknown["success_requires"]
+    assert "verify" in unknown["success_requires"]
+    joined = " ".join(unknown["notes"]).lower()
+    assert "unknown" in joined
+    assert "saved" in joined or "cadastrado" in joined or "gravado" in joined
+    states = hints["persistence_outcome_states"]
+    assert states == [
+        "VALIDATED",
+        "CONFIRMED",
+        "COMMIT_ATTEMPTED",
+        "COMMIT_CONFIRMED",
+        "PERSISTED",
+        "VERIFIED",
+    ]
+
+
+def test_teo_contract_drift_openapi_guide_instructions():
+    """Drift gate: OpenAPI ↔ guide ↔ specialist instructions stay aligned."""
+    from pathlib import Path
+
+    doc = build_gpt_actions_openapi()
+    assert count_operations(doc) == 14
+    assert "gpt_validate_improvement_package" in GPT_ACTIONS_OPERATION_IDS
+    assert "gpt_commit_improvement_package" in GPT_ACTIONS_OPERATION_IDS
+
+    validate = doc["paths"]["/transformometro/gpt-actions/v1/improvement-packages/validate"][
+        "post"
+    ]
+    commit = doc["paths"]["/transformometro/gpt-actions/v1/improvement-packages"]["post"]
+    assert validate["x-openai-isConsequential"] is False
+    assert commit["x-openai-isConsequential"] is True
+
+    hints = build_registration_guide()["package_hints"]
+    assert hints["validate_operationId"] == validate["operationId"]
+    assert hints["commit_operationId"] == commit["operationId"]
+
+    text = Path("docs/gpt-actions/specialist-instructions.md").read_text(encoding="utf-8")
+    assert "gpt_validate_improvement_package" in text
+    assert "gpt_commit_improvement_package" in text
+    assert "VALIDATE != WRITE" in text
+    assert "AUTHORITATIVE READ-BACK" in text
+    assert "UNKNOWN" in text
+    assert "COMMIT_ATTEMPTED" in text

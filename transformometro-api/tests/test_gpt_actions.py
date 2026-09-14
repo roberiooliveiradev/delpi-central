@@ -1718,3 +1718,39 @@ def test_specialist_instructions_discovery_and_mermaid_contract():
     assert "não invente shape" in text.lower() or "Não invente shape" in text
     assert "gpt_validate_improvement_package" in text
     assert "VALIDATE != WRITE" in text
+
+
+def test_openapi_validate_non_consequential_commit_consequential():
+    """CASO 9–10: validate remains no-write/non-consequential; commit stays consequential."""
+    doc = build_gpt_actions_openapi()
+    assert count_operations(doc) == 14
+    validate = doc["paths"]["/transformometro/gpt-actions/v1/improvement-packages/validate"][
+        "post"
+    ]
+    commit = doc["paths"]["/transformometro/gpt-actions/v1/improvement-packages"]["post"]
+    assert validate["operationId"] == "gpt_validate_improvement_package"
+    assert commit["operationId"] == "gpt_commit_improvement_package"
+    assert validate["x-openai-isConsequential"] is False
+    assert commit["x-openai-isConsequential"] is True
+    # Never weaken commit consequential flag to accommodate runtime flakes.
+    assert commit.get("x-openai-isConsequential") is not False
+
+
+def test_specialist_instructions_never_equate_ready_or_attempt_with_saved():
+    from pathlib import Path
+
+    text = Path("docs/gpt-actions/specialist-instructions.md").read_text(encoding="utf-8")
+    assert "ready=true != saved" in text
+    assert "COMMIT_ATTEMPTED" in text
+    assert "não afirme salvo" in text.lower() or "não afirme salvo/cadastrado" in text.lower()
+    # Must not teach dangerous equivalences.
+    forbidden_snippets = [
+        "ready=true = saved",
+        "ready=true means saved",
+        "confirmation = authorization",
+        "commit attempted = persisted",
+    ]
+    lowered = text.lower()
+    for snippet in forbidden_snippets:
+        assert snippet not in lowered
+

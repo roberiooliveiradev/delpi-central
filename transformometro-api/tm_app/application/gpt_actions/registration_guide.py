@@ -26,6 +26,32 @@ from tm_app.core.catalogs import (
 
 def build_registration_guide() -> dict[str, Any]:
     """Structured guide returned inside gpt_get_catalog."""
+    package_hints = build_package_hints()
+    # Operational policy for inconclusive consequential commit (TÉO regression).
+    package_hints["commit_result_unknown"] = {
+        "do_not_claim_success": True,
+        "inspect_read_current_state_before_retry": True,
+        "avoid_duplicate_write": True,
+        "no_http_bypass": True,
+        "no_silent_create_update_substitute": True,
+        "no_retry_loop": True,
+        "package_change_invalidates_confirmation": True,
+        "success_requires": ["authoritative_commit_result", "read_back", "verify"],
+        "notes": [
+            "If gpt_commit_improvement_package is unavailable/disabled or returns no authoritative result, treat persistence as UNKNOWN.",
+            "Do not claim saved/cadastrado/gravado.",
+            "Before retry of an identical package, read current state when possible to avoid duplicates.",
+            "If any package field changes, previous confirmation is invalid.",
+        ],
+    }
+    package_hints["persistence_outcome_states"] = [
+        "VALIDATED",
+        "CONFIRMED",
+        "COMMIT_ATTEMPTED",
+        "COMMIT_CONFIRMED",
+        "PERSISTED",
+        "VERIFIED",
+    ]
     return {
         "concepts": {
             "process": (
@@ -250,5 +276,5 @@ def build_registration_guide() -> dict[str, Any]:
                 "notes": ["Usually attached to the scenario revision, not baseline."],
             },
         },
-        "package_hints": build_package_hints(),
+        "package_hints": package_hints,
     }
