@@ -1306,6 +1306,7 @@ class GptActionsDispatchService:
             "create",
             {**body.model_dump(), "processo_id": processo_id, "instancia_id": iid},
         )
+        self._recalc_hook.after_processo(processo_id)
         return row_to_json(row), "Melhoria criada.", 201
 
     def _update_instancia(
@@ -1340,6 +1341,7 @@ class GptActionsDispatchService:
         except (ProcessoInstanciaDomainError, ValueError) as exc:
             raise GptActionsError(str(exc), 400) from exc
         self._audit(request, "processo_instancia", instancia_id, "update", body.model_dump())
+        self._recalc_hook.after_processo(str(existing.get("processo_id") or ""))
         return row_to_json(row), "Melhoria atualizada."
 
     def _has_processo_escopo(self, body: ProcessoCreateBody | ProcessoUpdateBody) -> bool:

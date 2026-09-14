@@ -19,6 +19,9 @@ def test_after_processo_invalidates_cache_and_skips_persist_by_default():
         patch(
             "tm_app.application.services.dashboard_recalc_hook_service.dashboard_query_cache"
         ) as mock_cache,
+        patch(
+            "tm_app.application.services.dashboard_recalc_hook_service.ProcessoRepository"
+        ) as proc_cls,
     ):
         mock_settings.TM_DASHBOARD_AUTO_RECALC = True
         mock_settings.TM_DASHBOARD_PERSIST_CACHE = False
@@ -28,6 +31,7 @@ def test_after_processo_invalidates_cache_and_skips_persist_by_default():
         result = svc.after_processo("proc-1")
 
     mock_cache.invalidate.assert_called_once()
+    proc_cls.return_value.touch_updated_at.assert_called_once_with("proc-1")
     recalc.recalculate.assert_not_called()
     assert result["cache_invalidated"] is True
     assert result["persisted"] is False
@@ -42,6 +46,9 @@ def test_after_processo_persists_when_enabled():
         patch(
             "tm_app.application.services.dashboard_recalc_hook_service.dashboard_query_cache"
         ) as mock_cache,
+        patch(
+            "tm_app.application.services.dashboard_recalc_hook_service.ProcessoRepository"
+        ),
     ):
         mock_settings.TM_DASHBOARD_AUTO_RECALC = True
         mock_settings.TM_DASHBOARD_PERSIST_CACHE = True
@@ -64,6 +71,9 @@ def test_after_revisao_with_processo_id_prefers_processo_scope():
         patch(
             "tm_app.application.services.dashboard_recalc_hook_service.dashboard_query_cache"
         ) as mock_cache,
+        patch(
+            "tm_app.application.services.dashboard_recalc_hook_service.ProcessoRepository"
+        ) as proc_cls,
     ):
         mock_settings.TM_DASHBOARD_AUTO_RECALC = True
         mock_settings.TM_DASHBOARD_PERSIST_CACHE = True
@@ -73,6 +83,32 @@ def test_after_revisao_with_processo_id_prefers_processo_scope():
         svc.after_revisao("rev-1", processo_id="proc-1")
 
     recalc.recalculate.assert_called_once_with(processo_id="proc-1")
+    proc_cls.return_value.touch_updated_at.assert_called_once_with("proc-1")
+
+
+def test_after_revisao_resolves_processo_id_when_omitted():
+    recalc = MagicMock()
+    with (
+        patch("tm_app.application.services.dashboard_recalc_hook_service.settings") as mock_settings,
+        patch(
+            "tm_app.application.services.dashboard_recalc_hook_service.dashboard_query_cache"
+        ) as mock_cache,
+        patch(
+            "tm_app.application.services.dashboard_recalc_hook_service.ProcessoRepository"
+        ) as proc_cls,
+        patch(
+            "tm_app.application.services.dashboard_recalc_hook_service.RevisaoRepository"
+        ) as rev_cls,
+    ):
+        mock_settings.TM_DASHBOARD_AUTO_RECALC = True
+        mock_settings.TM_DASHBOARD_PERSIST_CACHE = False
+        mock_cache.invalidate.return_value = 0
+        rev_cls.return_value.get.return_value = {"processo_id": "proc-from-rev"}
+
+        svc = _make_service(recalc)
+        svc.after_revisao("rev-1")
+
+    proc_cls.return_value.touch_updated_at.assert_called_once_with("proc-from-rev")
 
 
 def test_after_global_resource_change_runs_full_recalc_when_enabled():
@@ -101,6 +137,9 @@ def test_invalidate_runs_even_when_auto_recalc_disabled():
         patch(
             "tm_app.application.services.dashboard_recalc_hook_service.dashboard_query_cache"
         ) as mock_cache,
+        patch(
+            "tm_app.application.services.dashboard_recalc_hook_service.ProcessoRepository"
+        ),
     ):
         mock_settings.TM_DASHBOARD_AUTO_RECALC = False
         mock_settings.TM_DASHBOARD_PERSIST_CACHE = True

@@ -242,6 +242,27 @@ class ProcessoRepository(PluginBaseRepository):
         )
         return row is not None
 
+    def touch_updated_at(self, processo_id: str, *, auto_commit: bool = True) -> bool:
+        """Bump process list activity timestamp without changing business fields.
+
+        Used when child entities (instance/revision/measurement/…) change so
+        "Data de atualização" ordering reflects real work on the process.
+        """
+        pid = str(processo_id or "").strip()
+        if not pid:
+            return False
+        row = self.execute_returning_one(
+            """
+            UPDATE transformometro.processos
+            SET updated_at = NOW()
+            WHERE processo_id = %s::uuid AND deletado = FALSE
+            RETURNING processo_id
+            """,
+            (pid,),
+            auto_commit=auto_commit,
+        )
+        return row is not None
+
     def list_distinct_tag_values(self, column: str) -> list[str]:
         """Valores distintos não vazios para catálogo de tags (família / agrupador)."""
         allowed = {

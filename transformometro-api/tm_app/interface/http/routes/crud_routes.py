@@ -484,6 +484,7 @@ def create_processo_instancia(processo_id: str, body: InstanciaBody, request: Re
         "create",
         {**body.model_dump(), "processo_id": processo_id, "instancia_id": iid},
     )
+    _recalc_after_processo(processo_id)
     return ok(row_to_json(row), "Melhoria criada.", 201)
 
 
@@ -567,9 +568,7 @@ def update_instancia(instancia_id: str, body: InstanciaUpdateBody, request: Requ
             "instancia_id": instancia_id,
         },
     )
-    if scope_changed:
-        # Cache do dashboard é denormalizado por filial: recalcula ao mudar o escopo.
-        _recalc_after_processo(str(existing["processo_id"]))
+    _recalc_after_processo(str(existing["processo_id"]))
     return ok(row_to_json(row), "Melhoria atualizada.")
 
 
@@ -604,6 +603,7 @@ def delete_instancia(instancia_id: str, request: Request):
             "instancia_id": instancia_id,
         },
     )
+    _recalc_after_processo(str(existing["processo_id"]))
     return ok(message="Instância operacional excluída.")
 
 
