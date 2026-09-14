@@ -69,6 +69,12 @@ PACKAGE_MEASUREMENT_FIELDS = (
     "observacoes",
 )
 
+# Required when creating a new revision block (reuse-by-id may omit).
+PACKAGE_MEASUREMENT_REQUIRED_FIELDS = (
+    "volume_mensal",
+    "tempo_medio_execucao_min",
+)
+
 # Investment item fields inside scenario.investments[] (revisao_id injected).
 PACKAGE_INVESTMENT_FIELDS = (
     "tipo_investimento",
@@ -88,6 +94,7 @@ NESTING_RULES = [
     "Always use scenario.revision.{fields} and baseline.revision.{fields}.",
     "Never put processo_id/instancia_id on scenario root; use process and instance.",
     "measurement belongs under baseline.measurement or scenario.measurement.",
+    "New revision blocks REQUIRE measurement with volume_mensal + tempo_medio_execucao_min.",
     "investments belongs only under scenario.investments (array; [] allowed).",
     "beneficio_calculo_categoria belongs on revision, not measurement.",
     "Flat package shapes are invalid: validate/dry_run returns ready=false with missing.",
@@ -220,8 +227,10 @@ def build_package_hints() -> dict[str, Any]:
             "baseline": {
                 "keys": ["revision", "measurement"],
                 "notes": [
-                    "Optional. When present, revision.cenario_tipo is forced to baseline.",
+                    "Optional block. When present, revision.cenario_tipo is forced to baseline.",
                     "baseline.revision must NOT include revisao_referencia_id.",
+                    "Creating a new baseline.revision REQUIRES baseline.measurement "
+                    "(volume_mensal + tempo_medio_execucao_min).",
                 ],
             },
             "scenario": {
@@ -231,10 +240,13 @@ def build_package_hints() -> dict[str, Any]:
                     "When present, scenario.revision is REQUIRED (never flat fields).",
                     "cenario_tipo must be melhoria|automacao|correcao (not baseline).",
                     "revisao_referencia_id required unless baseline is created in same package.",
+                    "Creating a new scenario.revision REQUIRES scenario.measurement "
+                    "(volume_mensal + tempo_medio_execucao_min). investments may be [].",
                 ],
             },
             "revision_fields": list(PACKAGE_REVISION_FIELDS),
             "measurement_fields": list(PACKAGE_MEASUREMENT_FIELDS),
+            "measurement_required_fields": list(PACKAGE_MEASUREMENT_REQUIRED_FIELDS),
             "investment_fields": list(PACKAGE_INVESTMENT_FIELDS),
             "enums": {
                 "cenario_tipo": list(CENARIO_TIPO),

@@ -675,7 +675,7 @@ def test_improvement_package_commit_missing_process_ref_is_400_not_404():
                         "cenario_tipo": "melhoria",
                         "data_inicio_vigencia": "2026-09-02",
                     },
-                    "measurement": {"volume_mensal": 1},
+                    "measurement": {"volume_mensal": 1, "tempo_medio_execucao_min": 1},
                     "investments": [],
                 },
             },
@@ -712,6 +712,10 @@ def test_improvement_package_commit_missing_reference_revision_is_400():
                         "versao_revisao": "2.1.0",
                         "cenario_tipo": "melhoria",
                         "data_inicio_vigencia": "2026-09-02",
+                    },
+                    "measurement": {
+                        "volume_mensal": 10,
+                        "tempo_medio_execucao_min": 5,
                     },
                     "investments": [],
                 },
@@ -942,7 +946,7 @@ def test_improvement_package_dry_run_does_not_dispatch_writes():
                     "data_inicio_vigencia": "2026-09-02",
                     "beneficio_calculo_categoria": "automatico",
                 },
-                "measurement": {"volume_mensal": 1},
+                "measurement": {"volume_mensal": 1, "tempo_medio_execucao_min": 1},
                 "investments": [],
             },
         },
@@ -972,7 +976,7 @@ def test_improvement_package_empty_investments_valid_on_dry_run():
                     "cenario_tipo": "melhoria",
                     "data_inicio_vigencia": "2026-01-01",
                 },
-                "measurement": {"volume_mensal": 10},
+                "measurement": {"volume_mensal": 10, "tempo_medio_execucao_min": 5},
                 "investments": [],
             },
         },
@@ -980,11 +984,74 @@ def test_improvement_package_empty_investments_valid_on_dry_run():
     assert result["ready"] is True
 
 
+def test_improvement_package_missing_measurement_not_ready():
+    """Live class: commit without measurement created revision-only packages."""
+    from tm_app.application.gpt_actions.improvement_package_service import (
+        GuidedImprovementPackageService,
+    )
+
+    result = GuidedImprovementPackageService(MagicMock()).validate(
+        MagicMock(),
+        {
+            "process": {"processo_id": "p1"},
+            "instance": {"instancia_id": "i1"},
+            "scenario": {
+                "revision": {
+                    "revisao_referencia_id": "b1",
+                    "versao_revisao": "2.1.0",
+                    "cenario_tipo": "melhoria",
+                    "data_inicio_vigencia": "2026-09-14",
+                },
+                "investments": [],
+            },
+        },
+    )
+    assert result["ready"] is False
+    assert "scenario.measurement" in result["missing"]
+
+
+def test_improvement_package_measurement_requires_tempo_medio():
+    from tm_app.application.gpt_actions.improvement_package_service import (
+        GuidedImprovementPackageService,
+    )
+
+    result = GuidedImprovementPackageService(MagicMock()).validate(
+        MagicMock(),
+        {
+            "process": {"processo_id": "p1"},
+            "instance": {"instancia_id": "i1"},
+            "scenario": {
+                "revision": {
+                    "revisao_referencia_id": "b1",
+                    "versao_revisao": "2.1.0",
+                    "cenario_tipo": "melhoria",
+                    "data_inicio_vigencia": "2026-09-14",
+                },
+                "measurement": {"volume_mensal": 22},
+                "investments": [],
+            },
+        },
+    )
+    assert result["ready"] is False
+    assert "scenario.measurement.tempo_medio_execucao_min" in result["missing"]
+
+
+def test_http_key_error_is_500_not_404(tm_client):
+    """KeyError must not be remapped to opaque 404 (Custom GPT Action disable class)."""
+    from tm_app.interface.http.routes import gpt_actions_routes as routes
+
+    with patch.object(routes._dispatch, "get_catalog", side_effect=KeyError("reused")):
+        response = tm_client.get("/transformometro/gpt-actions/v1/catalog")
+    assert response.status_code == 500
+    assert response.json()["success"] is False
+
+
 def test_improvement_package_contract_drift_guide_openapi_service():
     """Guide + OpenAPI nesting must stay aligned with service expectations."""
     from tm_app.application.gpt_actions.improvement_package_contract import (
         PACKAGE_BLOCK_KEYS,
         PACKAGE_MEASUREMENT_FIELDS,
+        PACKAGE_MEASUREMENT_REQUIRED_FIELDS,
         PACKAGE_REVISION_FIELDS,
         build_package_hints,
     )
@@ -1015,8 +1082,13 @@ def test_improvement_package_contract_drift_guide_openapi_service():
         doc["components"]["schemas"]["GptPackageMeasurement"]["properties"]
     )
     assert set(PACKAGE_MEASUREMENT_FIELDS).issubset(openapi_meas)
-
-    # Service treats flat scenario as missing scenario.revision (no silent normalize).
+    assert set(PACKAGE_MEASUREMENT_REQUIRED_FIELDS).issubset(openapi_meas)
+    assert contract["canonical_package_shape"]["measurement_required_fields"] == list(
+        PACKAGE_MEASUREMENT_REQUIRED_FIELDS
+    )
+    assert any(
+        "REQUIRE measurement" in rule for rule in contract["nesting_rules"]
+    )
     flat = GuidedImprovementPackageService(MagicMock()).commit(
         MagicMock(),
         {
@@ -1041,7 +1113,7 @@ _NESTED_READY_PACKAGE = {
             "data_inicio_vigencia": "2026-09-02",
             "beneficio_calculo_categoria": "automatico",
         },
-        "measurement": {"volume_mensal": 22},
+        "measurement": {"volume_mensal": 22, "tempo_medio_execucao_min": 5},
         "investments": [],
     },
 }

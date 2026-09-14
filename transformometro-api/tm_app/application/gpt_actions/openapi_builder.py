@@ -977,7 +977,8 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "baseline": {
                             "type": "object",
                             "description": (
-                                "Optional baseline block. Nested revision (+ optional measurement). "
+                                "Optional baseline block. Nested revision + measurement "
+                                "(volume_mensal + tempo_medio_execucao_min required when creating). "
                                 "cenario_tipo is forced to baseline by the service."
                             ),
                             "properties": {
@@ -995,6 +996,8 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                             "description": (
                                 "Optional scenario block. MUST nest revision under scenario.revision "
                                 "(never flat versao_revisao/processo_id on scenario root). "
+                                "New scenario.revision REQUIRES scenario.measurement "
+                                "(volume_mensal + tempo_medio_execucao_min). "
                                 "revisao_referencia_id required unless baseline is in the same package. "
                                 "investments may be []."
                             ),
@@ -1028,7 +1031,11 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 },
                 "GptPackageMeasurement": {
                     "type": "object",
-                    "description": "Measurement fields for baseline.measurement or scenario.measurement.",
+                    "description": (
+                        "Required when creating a new revision in the package. "
+                        "Must include volume_mensal and tempo_medio_execucao_min."
+                    ),
+                    "required": ["volume_mensal", "tempo_medio_execucao_min"],
                     "properties": openapi_measurement_properties(),
                     "additionalProperties": True,
                 },

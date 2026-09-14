@@ -67,7 +67,9 @@ def build_registration_guide() -> dict[str, Any]:
                 "Types: baseline (before) or melhoria|automacao|correcao (after)."
             ),
             "measurement": (
-                "Monthly operating metrics for one revision (upsert by revisao_id)."
+                "Monthly operating metrics for one revision (upsert by revisao_id). "
+                "Required on new baseline/scenario revision in improvement packages "
+                "(volume_mensal + tempo_medio_execucao_min)."
             ),
             "investment": "One-time or recurring cost lines on a non-baseline revision.",
         },

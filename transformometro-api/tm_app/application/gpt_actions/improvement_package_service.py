@@ -15,6 +15,9 @@ from tm_app.application.gpt_actions.dispatch_service import (
     GptActionsDispatchService,
     GptActionsError,
 )
+from tm_app.application.gpt_actions.improvement_package_contract import (
+    PACKAGE_MEASUREMENT_REQUIRED_FIELDS,
+)
 from tm_app.core.catalogs import CENARIO_TIPO
 
 logger = logging.getLogger(__name__)
@@ -339,8 +342,12 @@ class GuidedImprovementPackageService:
             if ref is None or (isinstance(ref, str) and not ref.strip()):
                 missing.append(f"{prefix}.revision.revisao_referencia_id")
         measurement = block.get("measurement")
-        if measurement is not None and not isinstance(measurement, dict):
+        if not isinstance(measurement, dict) or not measurement:
             missing.append(f"{prefix}.measurement")
+        else:
+            for field in PACKAGE_MEASUREMENT_REQUIRED_FIELDS:
+                if measurement.get(field) is None:
+                    missing.append(f"{prefix}.measurement.{field}")
         return missing
 
     def _checklist(self, body: dict[str, Any], missing: list[str]) -> list[dict[str, Any]]:

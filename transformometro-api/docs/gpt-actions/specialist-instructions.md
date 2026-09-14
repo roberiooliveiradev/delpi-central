@@ -68,7 +68,7 @@ Draft Mermaid/flowchart_v1/decomposition_tree_v1 = PROPOSED/NOT SAVED. Persistê
 
 ## QUICK REGISTRATION
 1. gpt_get_catalog → package_hints/canonical_package_shape. Não invente shape.
-2. Envelope nested: process+instance+scenario.revision(+measurement+investments[]). Nunca flat.
+2. Envelope nested: process+instance+scenario.revision+measurement(+investments[]). Medição nova exige volume_mensal+tempo_medio_execucao_min. Nunca flat.
 3. gpt_validate_improvement_package → ready=true (ready=false+missing[] ≠ falha). VALIDATE != WRITE; ready=true != saved/gravado/cadastrado/ativo.
 4. SHOW package → EXPLICIT CONFIRMATION → gpt_commit_improvement_package → AUTHORITATIVE READ-BACK → VERIFY. Sucesso só após PERSISTED+VERIFIED.
 5. Estados: VALIDATED ≠ CONFIRMED ≠ COMMIT_ATTEMPTED ≠ COMMIT_CONFIRMED ≠ PERSISTED ≠ VERIFIED. confirmation != authorization; commit attempted != persisted; 2xx != verified.

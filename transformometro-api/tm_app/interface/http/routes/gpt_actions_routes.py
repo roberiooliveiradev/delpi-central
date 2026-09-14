@@ -91,6 +91,11 @@ def _handle(exc: Exception):
     if isinstance(exc, PermissionError):
         return fail(str(exc), 403)
     if isinstance(exc, LookupError):
+        # KeyError ⊂ LookupError — programming bugs must not become opaque 404s
+        # (Custom GPT often disables consequential Actions after 404).
+        if isinstance(exc, KeyError):
+            logger.exception("gpt_actions_key_error")
+            return fail(format_api_error(exc), 500)
         return fail(str(exc), 404)
     logger.exception("gpt_actions_unhandled")
     return fail(format_api_error(exc), 500)
