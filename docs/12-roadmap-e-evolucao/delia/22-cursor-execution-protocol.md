@@ -4,7 +4,7 @@
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
-**Requirements:** `CP-001…CP-310`  
+**Requirements:** `CP-001…CP-316`  
 **Specs temáticas:** `53–66`
 
 ## 1. Objetivo
@@ -61,6 +61,7 @@ Platform: Portal/Core/Keycloak/Gateway/Compose/plugin-ui/MFEs/APIs/OpenAPIs
 Media/Biometric/Meeting/Frontline/Devices/OT
 Internet/OAuth/External Connectors/Teams/Webhooks
 Events/RPA/Automation Hub/Queues/Workers/Service Identities/Outcome Sources
+Schedulers/Timers/Cron/Polling/Recurring Job Definitions/Timezone/Misfire/Overlap
 Process Logs/Process Owners/Task Mining
 AI Assets/Models/Evals/Cost/Incidents/Control mechanisms
 MCP/A2A/Tools/Agents/Delegation identities
@@ -71,6 +72,16 @@ Predictive/Optimization/Simulation/Twin
 Edge/Offline/Devices/MDM/Local inference
 Model Registry/MLOps/Marketplace/Package Supply Chain
 ```
+
+Para recurring work, separar obrigatoriamente:
+
+```text
+DÉLIA RecurringWorkDefinition/lifecycle/correlation owner
+!=
+physical scheduler/timer/job runtime owner
+```
+
+Inventariar também background identity/AuthZ/revoke, timezone/DST/calendar, missed-run/misfire/reconciliation, overlap/concurrency e idempotência por ocorrência. Não criar scheduler novo apenas porque nenhum foi encontrado na primeira busca.
 
 Classify factual state only as:
 
@@ -97,9 +108,39 @@ Market availability without DELPI evidence = `TO_INVENTORY`, never `PROVEN`.
 
 No runtime diff in C0.S0.
 
+## 4.1 Evidence discovery rule
+
+GitHub/code search é discovery/residual, não prova canônica de ausência.
+
+```text
+search hit
+→ localizar fonte candidata
+→ abrir authority por path no HEAD relevante
+→ verificar owner/contract/requirement
+→ classificar
+
+search miss
+!= ausência no repositório
+!= ausência na documentação
+!= TO_INVENTORY automaticamente
+```
+
+Antes de afirmar que uma capability/requisito “não existe” ou “não está previsto”, abrir diretamente as authorities prováveis, `25` e a spec temática aplicável.
+
+Separar sempre:
+
+```text
+PRODUCT/CAPABILITY INTENT
+CONTRACT / FIRST-CLASS REQUIREMENT
+PHYSICAL MECHANISM / OWNER
+RUNTIME IMPLEMENTATION
+```
+
+Exemplo: `timers/schedules` pode ser `TARGET`; scheduler físico pode continuar `TO_INVENTORY`; runtime segue não `PROVEN` até evidence. Não propagar o estado de uma camada para outra.
+
 ## 5. Foundation Freeze
 
-No C1+ before all REQUIRED foundation boundaries in `16/20` are PASS, including Process Intelligence, AI Asset governance, MCP/A2A trust, Personal Memory, Semantic Layer, Sandbox/Artifacts, Predictive/Twin, Edge/Offline, Model/Marketplace and OT safety.
+No C1+ before all REQUIRED foundation boundaries in `16/20` are PASS, including Recurring Governed Work, Process Intelligence, AI Asset governance, MCP/A2A trust, Personal Memory, Semantic Layer, Sandbox/Artifacts, Predictive/Twin, Edge/Offline, Model/Marketplace and OT safety.
 
 ## 6. Single phase order
 
@@ -109,12 +150,12 @@ C0 Foundation Freeze
 → C2 Context/Commands
 → C3 Capability Foundations
 → C4 Governed Reads/Analysis
-→ C5 Governed ACT/Executors/Durable Work
+→ C5 Governed ACT/Executors/Durable Work/Recurring Work
 → C6 Product Governance/Experience
 → C7 Advanced Autonomy/Scale
 ```
 
-C5 may enable L4 governed execute for explicitly authorized capabilities. C6 does not autonomously trigger Watch ACT by default. C7 adds selected Watch ACT/L5 under explicit limits; L5 remains OFF by default.
+C5 may enable L4 governed execute for explicitly authorized capabilities, including bounded Recurring Governed Work occurrences that revalidate live gates. C6 does not autonomously trigger Watch ACT by default. C7 adds selected Watch ACT/L5 under explicit limits; L5 remains OFF by default.
 
 No thematic plan changes this order.
 
@@ -163,11 +204,24 @@ Could it create employee surveillance?
 Can sibling implementation work by adapter?
 ```
 
+For recurring/scheduled work additionally answer:
+
+```text
+Who owns RecurringWorkDefinition?
+Who owns the physical timer/scheduler runtime?
+What is the canonical recurrence + IANA timezone contract?
+What are DST/misfire/missed-run/overlap semantics?
+How is occurrence idempotency derived?
+Which identity is resolved at execution time?
+How are live AuthZ/Policy/provider revoke revalidated per occurrence?
+What prevents paused/cancelled definitions from firing?
+```
+
 If material answer is unresolved: `BLOCKED_WITH_EVIDENCE` or return to foundation/ADR.
 
 ## 9. Anti-refactor checklist
 
-Before new schema/service/table/interface/registry/engine/server/sandbox/twin/Edge module/Marketplace:
+Before new schema/service/table/interface/registry/engine/server/sandbox/twin/Edge module/Marketplace/scheduler:
 
 ```text
 A owner/source authority?
@@ -183,7 +237,7 @@ J sibling/unknown generalization?
 K credentials/data bounded?
 L read/write/PREPARE/ACT/simulate/apply separated?
 M rollback/revoke path?
-N user/device/service/worker identities distinct?
+N user/device/service/worker/scheduler identities distinct?
 O Outcome verified by authoritative source?
 P OT safety boundary preserved?
 ```
@@ -201,11 +255,15 @@ SIMULATE != APPLY
 PREPARE != ACT
 Read != Write
 Draft != Send
+Schedule != Permission
+Stored Schedule Intent != Eternal Authorization
+Recurring Governed Work != Watch Autonomous ACT
+Physical Scheduler != DÉLIA Work/Policy Authority
 L4 governed execute != L5 autonomous execute
 Technical Success != Verified Business Outcome
 MCP/A2A Discovery != Approval
 Marketplace Install != Permission
-Device/Biometric/Worker Identity != User Authorization
+Device/Biometric/Worker/Scheduler Identity != User Authorization
 Edge Offline != Wider Authority
 ```
 
@@ -214,6 +272,11 @@ Edge Offline != Wider Authority
 - Chat dependency/migration;
 - duplicate Keycloak/Core/domain authority;
 - DÉLIA bypassing Automation Hub technical-execution ownership with ad hoc executor internals;
+- DÉLIA duplicating physical scheduler job/lease/worker truth without proven ownership;
+- schedule/timer/cron metadata as permission or ACT authority;
+- stale authorization snapshot reused for future recurring occurrences;
+- paused/cancelled recurring Work continuing to fire;
+- silent misfire catch-up of material ACT;
 - manual endpoint/app/provider/executor/model/tool routing in planner;
 - DOM business automation as default when API exists;
 - RPA clicks/selectors in planner;
@@ -234,7 +297,7 @@ Edge Offline != Wider Authority
 
 ## 12. C1 special rule
 
-First runtime work after C0 is own API/MFE/health/JWT-Core/federation/plugin-ui/manifest/Gateway/Compose/Portal host/independence. No intelligence/process/RPA/MCP/sandbox/twin/Edge/Marketplace runtime before dependencies unlock them.
+First runtime work after C0 is own API/MFE/health/JWT-Core/federation/plugin-ui/manifest/Gateway/Compose/Portal host/independence. No intelligence/process/RPA/MCP/sandbox/twin/Edge/Marketplace/recurring ACT runtime before dependencies unlock them.
 
 ## 13. Meeting/Frontline/Edge
 
@@ -257,16 +320,19 @@ Was technical execution attempted/completed?
 Was expected business postcondition observed in authoritative source?
 ```
 
-Do not use notifications or RPA UI state as final proof when better authoritative source exists.
+Do not use notifications, scheduler fire or RPA UI state as final proof when better authoritative source exists.
 
-## 17. Automation ownership rule
+## 17. Automation and recurring-work ownership rule
 
 ```text
-DÉLIA = intelligence + Policy + Decision + Work/orchestration + Outcome coordination
+DÉLIA = intelligence + Policy + Decision + Work/orchestration + RecurringWork definition/correlation + Outcome coordination
 Automation Hub = technical execution
+Physical scheduler/timer owner = technical time-trigger materialization
 ```
 
-C0 must prove whether a physical Hub/runtime/contract already exists. Lack of implementation evidence does not transfer technical execution authority into DÉLIA.
+C0 must prove whether physical Hub/scheduler runtimes/contracts already exist. Lack of implementation evidence does not transfer technical execution authority into DÉLIA.
+
+A Recurring Work occurrence may reach C5 L4 governed ACT only after live identity/Core/domain AuthZ/Policy/Decision/provider/source revalidation. It does not require C7 L5, and it does not enable C6 Watch autonomous ACT.
 
 ## 18. OT rule
 
@@ -290,6 +356,8 @@ owner/source/consumers/contract/layer/pattern
 CPs
 commands/tests/results
 contract/schema/model/metric/executor/package versions
+recurring definition/version/timezone/misfire/overlap policy when applicable
+occurrence/idempotency/AuthZ/revoke evidence when applicable
 Evidence/Outcome proof
 security/privacy/autonomy impact
 residual scans
@@ -304,9 +372,9 @@ Ask:
 1. Works with Chat offline?
 2. Any duplicate authority?
 3. Any hidden provider/executor/model/tool branch?
-4. Any permission from event/memory/model/package/tool/agent/device?
-5. Retry/resume/event duplicate causes duplicate effect?
-6. Technical success narrated as business success?
+4. Any permission from event/memory/model/package/tool/agent/device/schedule?
+5. Retry/resume/event/timer duplicate causes duplicate effect?
+6. Technical success or timer fire narrated as business success?
 7. Process/user data becoming surveillance?
 8. Memory overriding live source?
 9. Metric formula reproducible/owned?
@@ -319,6 +387,9 @@ Ask:
 16. Any LLM→machine path without safety architecture?
 17. Any stale/missing evidence being hidden?
 18. Any DÉLIA technical executor bypassing Automation Hub ownership?
+19. Any DÉLIA scheduler implementation duplicating a platform owner without inventory/Abstraction Gate?
+20. Does a recurring occurrence revalidate current authorization instead of trusting creation-time permission?
+21. Do pause/cancel/revoke/misfire/overlap semantics actually work under restart/duplicate trigger?
 
 ## 21. COMPLETE_GATE
 
@@ -351,6 +422,7 @@ MEMORY_PERSONALIZATION:
 SANDBOX_ARTIFACTS:
 PREDICTIVE_TWIN:
 AUTOMATION_EXECUTION_OUTCOME:
+RECURRING_WORK_SCHEDULING:
 MCP_A2A:
 MODEL_CONTROL_TOWER_MARKETPLACE:
 EDGE_OFFLINE:
@@ -521,4 +593,47 @@ Quanto desta implementação específica terminou?
 
 Quanto da DÉLIA inteira prevista terminou?
 → VERIFIED_PROGRAM_COMPLETION_PCT / PROGRAM_COMPLETE
+```
+
+## 26. Recurring Governed Work — execution specialization
+
+Para qualquer tarefa que envolva schedule/timer/recurrence/background report/job, carregar obrigatoriamente `16`, `17`, `20`, `21`, `25` (`CP-311–CP-316`) e `57`.
+
+O brief deve separar explicitamente:
+
+```text
+PRODUCT CAPABILITY = Recurring Governed Work
+DÉLIA STATE = definition/lifecycle/occurrence correlation
+PHYSICAL SCHEDULER = TO_INVENTORY until C0 proof
+MATERIAL ACT = only after per-occurrence live gates
+```
+
+O Cursor não pode concluir “scheduling não está previsto” porque um code search retornou zero resultados. Também não pode concluir que scheduling está implementado porque encontrou cron/job infrastructure.
+
+Evidence necessária varia por camada:
+
+```text
+TARGET/PLANNED
+→ authority/CP/spec
+
+PROVEN platform mechanism
+→ factual path/config/owner/contract evidence
+
+PASS runtime
+→ implementation + wiring + tests + restart/duplicate/revoke/misfire cases + outcome evidence
+```
+
+Anchor obrigatório quando `CP-315` for implementado:
+
+```text
+user creates recurring daily report
+→ survives session/restart
+→ deterministic occurrence at IANA timezone
+→ live AuthZ/Policy
+→ current authorized reads
+→ grounded report artifact
+→ separate email.send ACT
+→ no duplicate send on duplicate/retry/restart
+→ verified provider/business outcome when contract supports
+→ Evidence/Audit/Outcome
 ```
