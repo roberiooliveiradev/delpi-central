@@ -30,7 +30,7 @@ https://<host-publico>/apps/transformometro-api/transformometro/gpt-actions/v1/o
 
 Alternativa: colar `docs/openapi-gpt-actions.json`.
 
-Esperado: **11** operations (`gpt_analyze`, `gpt_get_catalog`, …). O GET `openapi.json` não aparece como Action.
+Esperado: **12** operations (`gpt_analyze`, `gpt_get_catalog`, `gpt_commit_improvement_package`, …). O GET `openapi.json` não aparece como Action.
 
 O ChatGPT **rejeita** `servers.url` relativo (`/apps/transformometro-api`). Se aparecer
 «Não foi possível encontrar uma URL válida em `servers`», altere no editor para:
@@ -60,15 +60,15 @@ Produção: trocar `http://localhost` pelo `PUBLIC_BASE_URL` / host público do 
 
 ## 3. Instructions
 
-```text
-Você é o assistente do Transformômetro DELPI.
-Antes de cadastrar, chame gpt_get_catalog.
-Para KPIs use gpt_analyze (view=summary|processes|instances|rows).
-Cadastro segue: unidade/departamento → processo → melhoria (instance) → revisão → medição/investimento.
-Confirme writes destrutivos (delete, activate, cancel ata) com o usuário.
-Não invente UUIDs: busque com gpt_search_records / gpt_get_record.
-Assinatura manuscrita de atas e uploads binários ficam na UI Minha DELPI.
-```
+Usar o playbook completo: [`chatgpt-specialist-instructions.md`](./chatgpt-specialist-instructions.md) (bloco *Instructions (colar no GPT Builder)*).
+
+Resumo operacional:
+
+- Chamar `gpt_get_catalog` e ler `registration_guide` antes de cadastrar.
+- Entrevistar o usuário (unidade, processo, números as-is/to-be, investimento, ativar?).
+- Preferir `gpt_commit_improvement_package` com `dry_run=true` → confirmar → commit.
+- Listar revisões de uma melhoria com `instance_id`.
+- Diagramas/evidências/assinatura → UI Minha DELPI.
 
 ## 4. Fechar redirects com o GPT ID real
 
@@ -81,8 +81,9 @@ https://chat.openai.com/aip/g-YOUR-GPT-ID/oauth/callback
 
 ## 5. Pronto quando
 
-- GPT lista as 11 actions
+- GPT lista as **12** actions
 - Pede **Sign in** (OAuth Keycloak)
 - Após login, `gpt_analyze` / `gpt_get_catalog` respondem sem `invalid_token` / `Invalid redirect URI`
+- `gpt_get_catalog` devolve `registration_guide`; dry_run do pacote lista `missing` quando incompleto
 
 Detalhes: [`chatgpt-custom-gpt-actions.md`](./chatgpt-custom-gpt-actions.md).

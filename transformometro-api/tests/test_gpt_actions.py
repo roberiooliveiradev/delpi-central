@@ -37,6 +37,7 @@ _COVERAGE_ANCHORS = (
     "gpt_activate_revision",
     "gpt_recalculate_dashboard",
     "gpt_meeting_minute_workflow",
+    "gpt_commit_improvement_package",
     "gpt_get_openapi_schema",
 )
 
@@ -446,3 +447,187 @@ def test_gpt_create_measurement_sibling(tm_client):
         )
     assert response.status_code == 200
     assert response.json()["data"]["medicao_id"] == medicao["medicao_id"]
+
+
+def test_registration_guide_exposes_entity_schemas():
+    from tm_app.application.gpt_actions.registration_guide import build_registration_guide
+    from tm_app.core.catalogs import FASE_MELHORIA, PRIORIDADE_MELHORIA
+
+    guide = build_registration_guide()
+    assert "concepts" in guide
+    assert guide["entity_schemas"]["instance"]["enums"]["fase_melhoria"] == list(
+        FASE_MELHORIA
+    )
+    assert guide["entity_schemas"]["instance"]["enums"]["prioridade"] == list(
+        PRIORIDADE_MELHORIA
+    )
+    assert guide["package_hints"]["operationId"] == "gpt_commit_improvement_package"
+
+
+def test_gpt_catalog_includes_registration_guide(tm_client):
+    with (
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.FilialRepository"
+        ) as filial_cls,
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.SetorRepository"
+        ) as setor_cls,
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.ProcessoRepository"
+        ) as proc_cls,
+    ):
+        filial_cls.return_value.list_for_options.return_value = [
+            {"id": "01", "label": "SC"}
+        ]
+        setor_cls.return_value.list_for_options.return_value = []
+        proc_cls.return_value.list_distinct_tag_values.return_value = []
+        response = tm_client.get("/transformometro/gpt-actions/v1/catalog")
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert "registration_guide" in data
+    assert "fase_melhoria" in data
+    assert "prioridade_melhoria" in data
+    assert data["registration_guide"]["entity_schemas"]["revision"]["required"]
+
+
+def test_search_revisions_by_instance_id(tm_client):
+    instancia_id = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    rows = [
+        {
+            "revisao_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+            "instancia_id": instancia_id,
+            "cenario_tipo": "baseline",
+        }
+    ]
+    with (
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.check_instancia_view_access",
+            return_value=None,
+        ),
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.RevisaoRepository"
+        ) as rev_cls,
+    ):
+        rev_cls.return_value.list_by_instancia.return_value = rows
+        response = tm_client.get(
+            "/transformometro/gpt-actions/v1/records/revision",
+            params={"instance_id": instancia_id},
+        )
+    assert response.status_code == 200
+    body = response.json()["data"]
+    assert body["total"] == 1
+    assert body["items"][0]["instancia_id"] == instancia_id
+    rev_cls.return_value.list_by_processo.assert_not_called()
+
+
+def test_improvement_package_dry_run_incomplete(tm_client):
+    response = tm_client.post(
+        "/transformometro/gpt-actions/v1/improvement-packages",
+        json={"dry_run": True, "process": {"nome_processo": "X"}},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["dry_run"] is True
+    assert data["ready"] is False
+    assert any("instance" in m or m == "instance" for m in data["missing"])
+
+
+def test_improvement_package_commit_positive():
+    from tm_app.application.gpt_actions.improvement_package_service import (
+        GuidedImprovementPackageService,
+    )
+
+    dispatch = MagicMock()
+    dispatch.create_record.side_effect = [
+        ({"processo_id": "p1"}, "ok", 201),
+        ({"instancia_id": "i1"}, "ok", 201),
+        ({"revisao_id": "b1"}, "ok", 201),
+        ({"medicao_id": "m1"}, "ok", 200),
+        ({"revisao_id": "s1"}, "ok", 201),
+        ({"medicao_id": "m2"}, "ok", 200),
+        ({"investimento_id": "inv1"}, "ok", 201),
+    ]
+    dispatch.activate_revision.return_value = {
+        "revisao_id": "s1",
+        "revisao_ativa": True,
+    }
+    dispatch.recalculate_dashboard.return_value = {"mode": "incremental"}
+
+    svc = GuidedImprovementPackageService(dispatch)
+    request = MagicMock()
+    result = svc.commit(
+        request,
+        {
+            "dry_run": False,
+            "activate_scenario": True,
+            "recalculate": True,
+            "process": {"nome_processo": "Proc GPT", "status_processo": "ativo"},
+            "instance": {
+                "filial_id": "01",
+                "setor_ids": ["engenharia"],
+                "resumo_melhoria": "Automatizou o fechamento",
+            },
+            "baseline": {
+                "revision": {
+                    "versao_revisao": "v1.0",
+                    "data_inicio_vigencia": "2026-01-01",
+                },
+                "measurement": {"volume_mensal": 100, "tempo_medio_execucao_min": 30},
+            },
+            "scenario": {
+                "revision": {
+                    "versao_revisao": "v2.0",
+                    "cenario_tipo": "melhoria",
+                    "data_inicio_vigencia": "2026-03-01",
+                },
+                "measurement": {"volume_mensal": 100, "tempo_medio_execucao_min": 10},
+                "investments": [
+                    {
+                        "tipo_investimento": "unico",
+                        "descricao_item": "Licença RPA",
+                        "valor_unitario": 5000,
+                    }
+                ],
+            },
+        },
+    )
+    assert result["ids"]["processo_id"] == "p1"
+    assert result["ids"]["instancia_id"] == "i1"
+    assert result["ids"]["baseline_revisao_id"] == "b1"
+    assert result["ids"]["scenario_revisao_id"] == "s1"
+    dispatch.activate_revision.assert_called_once_with(request, "s1")
+    assert result["next_steps"]
+
+
+def test_improvement_package_rejects_baseline_as_scenario():
+    from tm_app.application.gpt_actions.improvement_package_service import (
+        GuidedImprovementPackageService,
+    )
+
+    svc = GuidedImprovementPackageService(MagicMock())
+    with pytest.raises(GptActionsError, match="incomplete"):
+        svc.commit(
+            MagicMock(),
+            {
+                "dry_run": False,
+                "process": {"id": "p1"},
+                "instance": {"id": "i1"},
+                "scenario": {
+                    "revision": {
+                        "versao_revisao": "v2",
+                        "cenario_tipo": "baseline",
+                        "data_inicio_vigencia": "2026-01-01",
+                        "revisao_referencia_id": "b1",
+                    }
+                },
+            },
+        )
+
+
+def test_openapi_includes_improvement_package():
+    doc = build_gpt_actions_openapi()
+    assert "gpt_commit_improvement_package" in GPT_ACTIONS_OPERATION_IDS
+    assert (
+        "/transformometro/gpt-actions/v1/improvement-packages" in doc["paths"]
+    )
+    assert count_operations(doc) == 12

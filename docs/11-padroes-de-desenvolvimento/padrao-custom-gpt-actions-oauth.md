@@ -289,14 +289,18 @@ Nunca editar código “só no container” de produção: alterar local → Git
 | Item | Local |
 |---|---|
 | Facade + builder + dispatch | `transformometro-api/tm_app/application/gpt_actions/` |
+| Guia + pacote guiado | `registration_guide.py`, `improvement_package_service.py` |
 | Rotas | `transformometro-api/tm_app/interface/http/routes/gpt_actions_routes.py` |
-| OpenAPI versionado | `transformometro-api/docs/openapi-gpt-actions.json` |
+| OpenAPI versionado | `transformometro-api/docs/openapi-gpt-actions.json` (**12** ops) |
+| Instructions do especialista | [`chatgpt-specialist-instructions.md`](../../transformometro-api/docs/chatgpt-specialist-instructions.md) |
 | Doc produto | [`chatgpt-custom-gpt-actions.md`](../../transformometro-api/docs/chatgpt-custom-gpt-actions.md) |
 | Checklist GPT Builder | [`chatgpt-gpt-builder-go-live.md`](../../transformometro-api/docs/chatgpt-gpt-builder-go-live.md) |
 | Keycloak §10b | [`configurar-keycloak.md`](../10-guias-operacionais/configurar-keycloak.md) |
 | Evidência ops | [`OPERATIONS.md`](../12-roadmap-e-evolucao/transformometro-app/OPERATIONS.md) |
 | Client Keycloak | `chatgpt-transformometro` |
 | Host prod | `https://minhadelpi.com.br` |
+
+Padrão Transformômetro para especialistas guiados: catalog com `registration_guide` + operation composta `gpt_commit_improvement_package` (`dry_run` → commit). Replicar a mesma ideia (guia no catalog + pacote de domínio) em outros produtos quando o cadastro for multi-etapa.
 
 Chat Minha DELPI do Transformômetro permanece read-only (`openapi-snapshot-chat.json`, `allowWrite: false`).
 

@@ -24,6 +24,8 @@ Cadastro/análise via ChatGPT usa a superfície compacta `gpt-actions/v1` (mesmo
 
 Padrão generalista (replicar em outros produtos): [padrao-custom-gpt-actions-oauth.md](../../11-padroes-de-desenvolvimento/padrao-custom-gpt-actions-oauth.md).
 
+Instructions do especialista (colar no GPT Builder): [chatgpt-specialist-instructions.md](../../../transformometro-api/docs/chatgpt-specialist-instructions.md).
+
 Procedimento completo: [chatgpt-custom-gpt-actions.md](../../../transformometro-api/docs/chatgpt-custom-gpt-actions.md).
 
 Checklist GPT Builder (colar schema/OAuth/instructions): [chatgpt-gpt-builder-go-live.md](../../../transformometro-api/docs/chatgpt-gpt-builder-go-live.md).
@@ -31,9 +33,10 @@ Checklist GPT Builder (colar schema/OAuth/instructions): [chatgpt-gpt-builder-go
 Resumo:
 
 1. Criar client Keycloak confidencial `chatgpt-transformometro` (audience `delpi-central`).
-2. Importar `openapi-gpt-actions.json` (ou a URL pública acima) no GPT Builder.
-3. Auth = OAuth (não API Key).
-4. O Chat da Minha DELPI continua somente leitura (`openapi-snapshot-chat.json`, `allowWrite: false`).
+2. Importar `openapi-gpt-actions.json` (ou a URL pública acima) no GPT Builder — **12** actions.
+3. Auth = OAuth (não API Key); Instructions = playbook do especialista.
+4. Cadastro guiado: `registration_guide` no catalog + `gpt_commit_improvement_package`.
+5. O Chat da Minha DELPI continua somente leitura (`openapi-snapshot-chat.json`, `allowWrite: false`).
 
 ### Evidência go-live (dev local)
 

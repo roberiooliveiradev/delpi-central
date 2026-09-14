@@ -13,6 +13,9 @@ Superfície compacta para o **ChatGPT Custom GPT** analisar, cadastrar e editar 
 | Endpoint público do schema | `GET /apps/transformometro-api/transformometro/gpt-actions/v1/openapi.json` |
 | Builder canônico | `tm_app/application/gpt_actions/openapi_builder.py` |
 | Dispatcher | `tm_app/application/gpt_actions/dispatch_service.py` |
+| Guia de cadastro (catalog) | `tm_app/application/gpt_actions/registration_guide.py` |
+| Pacote guiado | `tm_app/application/gpt_actions/improvement_package_service.py` |
+| Instructions do especialista | [`chatgpt-specialist-instructions.md`](./chatgpt-specialist-instructions.md) |
 | Rotas | `tm_app/interface/http/routes/gpt_actions_routes.py` |
 
 Regenerar o JSON versionado:
@@ -22,13 +25,13 @@ cd transformometro-api
 PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 ```
 
-## Operations (11 no schema importado)
+## Operations (12 no schema importado)
 
 | operationId | Método / path |
 |-------------|----------------|
-| `gpt_get_catalog` | `GET .../catalog` |
+| `gpt_get_catalog` | `GET .../catalog` (inclui `registration_guide` + enums `fase_melhoria` / `prioridade_melhoria`) |
 | `gpt_analyze` | `GET .../analysis?view=meta\|summary\|processes\|instances\|rows` |
-| `gpt_search_records` | `GET .../records/{entity}` |
+| `gpt_search_records` | `GET .../records/{entity}` (`instance_id` para revisões de uma melhoria) |
 | `gpt_get_record` | `GET .../records/{entity}/{id}` |
 | `gpt_create_record` | `POST .../records/{entity}` |
 | `gpt_update_record` | `PUT .../records/{entity}/{id}` |
@@ -37,6 +40,7 @@ PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 | `gpt_activate_revision` | `POST .../revisions/{id}/activate` |
 | `gpt_recalculate_dashboard` | `POST .../dashboard/recalculate` |
 | `gpt_meeting_minute_workflow` | `POST .../meeting-minutes/{id}/workflow` |
+| `gpt_commit_improvement_package` | `POST .../improvement-packages` (`dry_run` → commit orquestrado) |
 
 `GET .../openapi.json` continua público só para o botão **Importar de URL**. Não entra no schema: o GPT Builder trata esse path como OpenAPI 3.1 e rejeita o documento.
 
@@ -80,23 +84,17 @@ URLs OAuth (substituir host público):
 
 ## GPT Builder — Actions
 
-Checklist operacional com valores para colar: [`chatgpt-gpt-builder-go-live.md`](./chatgpt-gpt-builder-go-live.md).
+Checklist operacional: [`chatgpt-gpt-builder-go-live.md`](./chatgpt-gpt-builder-go-live.md).
+
+**Instructions completas do especialista (colar no Builder):** [`chatgpt-specialist-instructions.md`](./chatgpt-specialist-instructions.md).
 
 1. Create GPT → Actions → Import from URL  
    `https://<host>/apps/transformometro-api/transformometro/gpt-actions/v1/openapi.json`  
-   ou cole o conteúdo de `docs/openapi-gpt-actions.json`.
+   ou cole o conteúdo de `docs/openapi-gpt-actions.json` (esperar **12** actions).
 2. Authentication → OAuth (valores da tabela acima).
-3. Instructions (resumo):
+3. Colar o playbook de [`chatgpt-specialist-instructions.md`](./chatgpt-specialist-instructions.md).
 
-```text
-Você é o assistente do Transformômetro DELPI.
-Antes de cadastrar, chame gpt_get_catalog.
-Para KPIs use gpt_analyze (view=summary|processes|instances|rows).
-Cadastro segue: unidade/departamento → processo → melhoria (instance) → revisão → medição/investimento.
-Confirme writes destrutivos (delete, activate, cancel ata) com o usuário.
-Não invente UUIDs: busque com gpt_search_records / gpt_get_record.
-Assinatura manuscrita de atas e uploads binários ficam na UI Minha DELPI.
-```
+Fluxo guiado preferido: `gpt_get_catalog` → entrevista → `gpt_commit_improvement_package` (`dry_run=true` → confirmar → commit).
 
 ## Fora desta superfície
 

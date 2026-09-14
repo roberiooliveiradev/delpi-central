@@ -12,6 +12,9 @@ from tm_app.application.gpt_actions.dispatch_service import (
     GptActionsError,
 )
 from tm_app.application.gpt_actions.entities import parse_entity
+from tm_app.application.gpt_actions.improvement_package_service import (
+    GuidedImprovementPackageService,
+)
 from tm_app.application.gpt_actions.openapi_builder import (
     build_gpt_actions_openapi,
     resolve_gpt_actions_server_url,
@@ -26,6 +29,7 @@ router = APIRouter(
 )
 logger = logging.getLogger(__name__)
 _dispatch = GptActionsDispatchService()
+_packages = GuidedImprovementPackageService(_dispatch)
 
 
 class GptRecordBody(BaseModel):
@@ -42,6 +46,16 @@ class GptRecalculateBody(BaseModel):
 class GptMeetingMinuteWorkflowBody(BaseModel):
     action: str
     reason: str | None = None
+
+
+class GptImprovementPackageBody(BaseModel):
+    dry_run: bool = False
+    activate_scenario: bool = False
+    recalculate: bool = False
+    process: dict = Field(default_factory=dict)
+    instance: dict = Field(default_factory=dict)
+    baseline: dict | None = None
+    scenario: dict | None = None
 
 
 def _handle(exc: Exception):
@@ -127,6 +141,7 @@ def gpt_search_records(
     entity: str,
     request: Request,
     parent_id: str | None = None,
+    instance_id: str | None = None,
     filial_id: str | None = None,
     setor_id: str | None = None,
     status: str | None = None,
@@ -140,6 +155,7 @@ def gpt_search_records(
             request,
             entity,
             parent_id=parent_id,
+            instance_id=instance_id,
             filial_id=filial_id,
             setor_id=setor_id,
             status=status,
@@ -291,5 +307,26 @@ def gpt_meeting_minute_workflow(
             ),
             "Workflow de ata executado.",
         )
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.post(
+    "/improvement-packages",
+    operation_id="gpt_commit_improvement_package",
+    summary="Validate or commit a guided improvement package",
+)
+def gpt_commit_improvement_package(body: GptImprovementPackageBody, request: Request):
+    try:
+        data = _packages.commit(request, body.model_dump())
+        if body.dry_run:
+            message = (
+                "Pacote pronto para commit."
+                if data.get("ready")
+                else "Pacote incompleto — veja missing."
+            )
+        else:
+            message = "Pacote de melhoria gravado."
+        return ok(data, message)
     except Exception as exc:
         return _handle(exc)

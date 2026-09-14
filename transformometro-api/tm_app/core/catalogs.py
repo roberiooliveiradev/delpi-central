@@ -14,6 +14,10 @@ STATUS_SETOR = ("ativo", "inativo")
 STATUS_FILIAL = ("ativo", "inativo")
 STATUS_PROCESSO = ("ativo", "descontinuado", "em_implantacao")
 CENARIO_TIPO = ("baseline", "melhoria", "automacao", "correcao")
+# Operational improvement (processo_instancia) — keep in sync with UI melhoriaForm.ts
+FASE_MELHORIA = ("planejado", "piloto", "implantado", "encerrado")
+PRIORIDADE_MELHORIA = ("baixa", "media", "alta")
+STATUS_INSTANCIA = ("ativo", "inativo")
 TIPO_INVESTIMENTO = ("fixo", "variavel", "recorrente", "unico")
 TIPO_CUSTO_RECURSO = ("fixo", "variavel", "assinatura", "licenca")
 CATEGORIAS = ("software", "treinamento", "consultoria", "equipamento", "horas_internas", "terceiros")
@@ -75,6 +79,9 @@ def options_payload(
         "status_filial": list(STATUS_FILIAL),
         "status_processo": list(STATUS_PROCESSO),
         "cenario_tipo": list(CENARIO_TIPO),
+        "fase_melhoria": list(FASE_MELHORIA),
+        "prioridade_melhoria": list(PRIORIDADE_MELHORIA),
+        "status_instancia": list(STATUS_INSTANCIA),
         "tipo_investimento": list(TIPO_INVESTIMENTO),
         "tipo_custo": list(TIPO_CUSTO_RECURSO),
         "categorias": list(CATEGORIAS),

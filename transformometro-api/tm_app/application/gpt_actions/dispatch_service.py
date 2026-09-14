@@ -14,6 +14,7 @@ from tm_app.application.gpt_actions.entities import (
     entity_supports,
     parse_entity,
 )
+from tm_app.application.gpt_actions.registration_guide import build_registration_guide
 from tm_app.application.services.dashboard_recalc_service import DashboardRecalcService
 from tm_app.application.services.dashboard_snapshot_read_service import (
     DashboardSnapshotReadService,
@@ -296,6 +297,7 @@ class GptActionsDispatchService:
         payload = options_payload(setores, filiais)
         payload["access_scope"] = scope.meta()
         payload["entities"] = [e.value for e in GptEntity]
+        payload["registration_guide"] = build_registration_guide()
         try:
             repo = ProcessoRepository()
             payload["familias_processo"] = repo.list_distinct_tag_values("familia_processo")
@@ -383,6 +385,7 @@ class GptActionsDispatchService:
         entity_value: str,
         *,
         parent_id: str | None = None,
+        instance_id: str | None = None,
         filial_id: str | None = None,
         setor_id: str | None = None,
         status: str | None = None,
@@ -426,9 +429,15 @@ class GptActionsDispatchService:
             return {"total": len(rows), "items": rows_to_json(rows)}
 
         if entity == GptEntity.REVISION:
+            instancia_id = (instance_id or "").strip() or None
+            if instancia_id:
+                self._raise_http_err(check_instancia_view_access(request, instancia_id))
+                rows = RevisaoRepository().list_by_instancia(instancia_id)
+                return {"total": len(rows), "items": rows_to_json(rows)}
             if not parent_id:
                 raise GptActionsError(
-                    "parent_id (processo_id) is required to list revisions.", 400
+                    "parent_id (processo_id) or instance_id is required to list revisions.",
+                    400,
                 )
             self._raise_http_err(check_processo_view_access(request, parent_id))
             rows = RevisaoRepository().list_by_processo(parent_id)

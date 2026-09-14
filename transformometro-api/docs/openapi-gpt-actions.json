@@ -22,7 +22,7 @@
       "get": {
         "operationId": "gpt_get_catalog",
         "summary": "Catalog options for Transformômetro forms",
-        "description": "Returns units (filiais), departments (setores), enums (status, cenário, investimento, etc.) and the user's access scope. Call this before creating processes or instances.",
+        "description": "Returns units, departments, enums, access scope, and registration_guide (concepts, flow, entity_schemas) for guided signup. Call this before creating processes or instances.",
         "tags": [
           "Transformômetro GPT"
         ],
@@ -246,7 +246,7 @@
       "get": {
         "operationId": "gpt_search_records",
         "summary": "Search or list records by entity",
-        "description": "List records. Use `parent_id` for children (instances of a process, revisions of a process, investments of a revision, costs/links of a resource). Use `q` for process text search.",
+        "description": "List records. Use `parent_id` for children (instances/revisions of a process, investments of a revision). For revisions prefer `instance_id` to isolate one melhoria. Use `q` for process text search.",
         "tags": [
           "Transformômetro GPT"
         ],
@@ -291,6 +291,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "instance_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "When entity=revision, list only revisions of this instancia_id (melhoria). Preferred over parent_id."
           },
           {
             "name": "filial_id",
@@ -1216,6 +1224,84 @@
         },
         "x-openai-isConsequential": true
       }
+    },
+    "/transformometro/gpt-actions/v1/improvement-packages": {
+      "post": {
+        "operationId": "gpt_commit_improvement_package",
+        "summary": "Validate or commit a guided improvement package",
+        "description": "Orchestrates process+instance+baseline+scenario(+investments). Use dry_run=true first; then commit. Prefer over many create calls.",
+        "tags": [
+          "Transformômetro GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GptImprovementPackageBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Dry-run checklist or commit result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or domain error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking Transformômetro permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-openai-isConsequential": true
+      }
     }
   },
   "components": {
@@ -1255,6 +1341,71 @@
             "type": "object",
             "description": "Entity payload. Field names match transformometro-api CRUD (nome_processo, filial_id, setor_ids, versao_revisao, volume_mensal, unit_code, title, conteudo, etc.).",
             "additionalProperties": true
+          }
+        }
+      },
+      "GptImprovementPackageBody": {
+        "type": "object",
+        "properties": {
+          "dry_run": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true, validate only and return missing fields."
+          },
+          "activate_scenario": {
+            "type": "boolean",
+            "default": false,
+            "description": "Activate the scenario revision after commit."
+          },
+          "recalculate": {
+            "type": "boolean",
+            "default": false,
+            "description": "Recalculate dashboard cache after commit."
+          },
+          "process": {
+            "type": "object",
+            "description": "Create fields or {id|processo_id} to reuse.",
+            "additionalProperties": true
+          },
+          "instance": {
+            "type": "object",
+            "description": "Create fields or {id|instancia_id} to reuse.",
+            "additionalProperties": true
+          },
+          "baseline": {
+            "type": "object",
+            "description": "revision (+ optional measurement). cenario forced to baseline.",
+            "properties": {
+              "revision": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "measurement": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          },
+          "scenario": {
+            "type": "object",
+            "description": "revision (melhoria|automacao|correcao) + measurement + investments[]. revisao_referencia_id optional if baseline is in the same package.",
+            "properties": {
+              "revision": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "measurement": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "investments": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
           }
         }
       }

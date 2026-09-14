@@ -48,6 +48,7 @@ GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
     "gpt_activate_revision",
     "gpt_recalculate_dashboard",
     "gpt_meeting_minute_workflow",
+    "gpt_commit_improvement_package",
 )
 
 # HTTP público para import no GPT Builder — não entra no schema importado.
@@ -116,8 +117,8 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_get_catalog",
                 "summary": "Catalog options for Transformômetro forms",
                 "description": (
-                    "Returns units (filiais), departments (setores), enums "
-                    "(status, cenário, investimento, etc.) and the user's access scope. "
+                    "Returns units, departments, enums, access scope, and "
+                    "registration_guide (concepts, flow, entity_schemas) for guided signup. "
                     "Call this before creating processes or instances."
                 ),
                 "tags": ["Transformômetro GPT"],
@@ -212,14 +213,24 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "summary": "Search or list records by entity",
                 "description": (
                     "List records. Use `parent_id` for children "
-                    "(instances of a process, revisions of a process, investments of a revision, "
-                    "costs/links of a resource). Use `q` for process text search."
+                    "(instances/revisions of a process, investments of a revision). "
+                    "For revisions prefer `instance_id` to isolate one melhoria. "
+                    "Use `q` for process text search."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
                 "parameters": [
                     _entity_path_param(),
                     {"name": "parent_id", "in": "query", "schema": {"type": "string"}},
+                    {
+                        "name": "instance_id",
+                        "in": "query",
+                        "schema": {"type": "string"},
+                        "description": (
+                            "When entity=revision, list only revisions of this "
+                            "instancia_id (melhoria). Preferred over parent_id."
+                        ),
+                    },
                     {"name": "filial_id", "in": "query", "schema": {"type": "string"}},
                     {"name": "setor_id", "in": "query", "schema": {"type": "string"}},
                     {"name": "status", "in": "query", "schema": {"type": "string"}},
@@ -443,6 +454,33 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "x-openai-isConsequential": True,
             }
         },
+        f"{GPT_ACTIONS_BASE_PATH}/improvement-packages": {
+            "post": {
+                "operationId": "gpt_commit_improvement_package",
+                "summary": "Validate or commit a guided improvement package",
+                "description": (
+                    "Orchestrates process+instance+baseline+scenario(+investments). "
+                    "Use dry_run=true first; then commit. Prefer over many create calls."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GptImprovementPackageBody"
+                            }
+                        }
+                    },
+                },
+                "responses": {
+                    "200": _ok_response("Dry-run checklist or commit result"),
+                    **_error_responses(),
+                },
+                "x-openai-isConsequential": True,
+            }
+        },
     }
 
     return {
@@ -493,6 +531,74 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                             ),
                             "additionalProperties": True,
                         }
+                    },
+                },
+                "GptImprovementPackageBody": {
+                    "type": "object",
+                    "properties": {
+                        "dry_run": {
+                            "type": "boolean",
+                            "default": False,
+                            "description": "When true, validate only and return missing fields.",
+                        },
+                        "activate_scenario": {
+                            "type": "boolean",
+                            "default": False,
+                            "description": "Activate the scenario revision after commit.",
+                        },
+                        "recalculate": {
+                            "type": "boolean",
+                            "default": False,
+                            "description": "Recalculate dashboard cache after commit.",
+                        },
+                        "process": {
+                            "type": "object",
+                            "description": "Create fields or {id|processo_id} to reuse.",
+                            "additionalProperties": True,
+                        },
+                        "instance": {
+                            "type": "object",
+                            "description": "Create fields or {id|instancia_id} to reuse.",
+                            "additionalProperties": True,
+                        },
+                        "baseline": {
+                            "type": "object",
+                            "description": "revision (+ optional measurement). cenario forced to baseline.",
+                            "properties": {
+                                "revision": {
+                                    "type": "object",
+                                    "additionalProperties": True,
+                                },
+                                "measurement": {
+                                    "type": "object",
+                                    "additionalProperties": True,
+                                },
+                            },
+                        },
+                        "scenario": {
+                            "type": "object",
+                            "description": (
+                                "revision (melhoria|automacao|correcao) + measurement + investments[]. "
+                                "revisao_referencia_id optional if baseline is in the same package."
+                            ),
+                            "properties": {
+                                "revision": {
+                                    "type": "object",
+                                    "additionalProperties": True,
+                                },
+                                "measurement": {
+                                    "type": "object",
+                                    "additionalProperties": True,
+                                },
+                                "investments": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "additionalProperties": True,
+                                    },
+                                },
+                            },
+                        },
                     },
                 },
             },
