@@ -3,7 +3,7 @@
 > **Status:** planejamento canônico  
 > **Produto:** aplicação standalone nova de Continuous Operational Intelligence  
 > **Autoridade de execução:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-> **Requirements:** `CP-001…CP-310`  
+> **Requirements:** `CP-001…CP-316`  
 > **Próxima etapa:** `C0.S0`
 
 Este documento mostra a evolução macro. Ordem atômica, dependências e gates vivem somente em `16`. Nada neste roadmap prova runtime implementado ou fase concluída.
@@ -16,7 +16,7 @@ C1 — Standalone Application Bootstrap
 C2 — Portal Context + Platform Commands
 C3 — Intelligence Core + Capability Foundations
 C4 — Governed Reads + Graph/Semantics/Analysis/Predictive Discovery
-C5 — Governed ACT + Durable Work + Approved Execution Contracts
+C5 — Governed ACT + Durable/Recurring Work + Approved Execution Contracts
 C6 — Product Work + Process/Control/Meeting/Frontline/Ecosystem
 C7 — Advanced Autonomy + Twin/Edge/Marketplace/Optimization + Rollout
 ```
@@ -29,6 +29,9 @@ Inventariar e congelar, sem runtime diff:
 - media/devices/biometric/privacy/OT;
 - Internet/OAuth/connectors/Teams;
 - events/RPA/automation/queues/workers/service identities/outcome sources;
+- schedulers/timers/cron/polling, recurring job/work definitions e owners;
+- timezone/DST/calendar, misfire/missed-run/reconciliation, overlap/concurrency e occurrence idempotency;
+- background identity/AuthZ/revoke semantics para execução temporal;
 - process logs/process owners/task mining;
 - AI/model/automation assets/evals/cost/incidents/kill switches;
 - MCP/A2A/tool/agent infrastructure;
@@ -39,6 +42,8 @@ Inventariar e congelar, sem runtime diff:
 - Edge/offline/network/device/MDM/local inference;
 - model registry/MLOps/Marketplace/supply-chain;
 - ownership/primitives/state/security/tests.
+
+C0 separa `RecurringWorkDefinition`/Work ownership do owner físico do scheduler/timer. `schedule != permission`; scheduler existente não vira Work/Policy authority e ausência de scheduler provado não autoriza criar um novo sem Abstraction Gate.
 
 Output só pode ser `FOUNDATION_FREEZE=PASS` quando `20` e o ledger tiverem evidence válida no SHA/config avaliado. Até lá, programa permanece `PLANNED / NOT_STARTED`.
 
@@ -88,7 +93,7 @@ No material ACT in C3. `PREPARE != ACT`.
 - Edge read-only cached knowledge/telemetry;
 - source/model/metric provenance.
 
-## C5 — Governed ACT + Durable Foundation
+## C5 — Governed ACT + Durable/Recurring Foundation
 
 C5 é o primeiro gate que pode liberar material `ACT` governado para capabilities explicitamente autorizadas. Na taxonomia de autonomia de `08`, isso corresponde a `L4 governed execute`; não equivale a L5/autonomous execution.
 
@@ -100,6 +105,12 @@ C5 é o primeiro gate que pode liberar material `ACT` governado para capabilitie
 - DÉLIA Work/execution correlation sem duplicar technical worker state;
 - authoritative Outcome Verification;
 - Durable Workflow/waits/resume;
+- Recurring Governed Work persisted independently of chat session;
+- create/inspect/list/pause/resume/cancel recurring Work;
+- explicit IANA timezone/start/end/DST/misfire/overlap semantics;
+- one correlated/idempotent occurrence across duplicate tick/retry/restart/reconciliation;
+- live identity/Core/domain AuthZ + Policy/Decision/provider/source revalidation per material occurrence;
+- canonical recurring report→Artifact→`communication.email.send` anchor with verified Outcome;
 - Process opportunity → candidate/PREPARE;
 - MCP/A2A writes sob mesmos gates;
 - Artifact lifecycle/version/provenance/ACL;
@@ -112,9 +123,12 @@ L4 = GOVERNED EXECUTE
 L5 = AUTONOMOUS EXECUTE WITH EXPLICIT LIMITS
 ```
 
+Recurring Work temporal bounded pode usar L4 em C5 quando todos os live gates passarem. Isso não é Watch autonomous ACT e não exige C7/L5.
+
 ## C6 — Product Work + Governance Experience
 
 - Task/Case/Room/Inbox/Watch `OBSERVE|ADVISE|PREPARE` by default;
+- Recurring Work admin/history UX: status/recurrence/timezone/next occurrence quando derivável/last outcome/pause/resume/cancel;
 - Meeting/Frontline;
 - external/provider events;
 - Automation Hub governance/projection UX sem tomar technical ownership;
@@ -130,7 +144,7 @@ L5 = AUTONOMOUS EXECUTE WITH EXPLICIT LIMITS
 - Capability Marketplace draft/review/catalog;
 - Organizational Knowledge/Governed Learning/Expertise Studio.
 
-Watch não dispara ACT autonomamente em C6. Capabilities de L4/governed ACT liberadas em C5 continuam sujeitas aos mesmos gates.
+Watch não dispara ACT autonomamente em C6. Capabilities de L4/governed ACT liberadas em C5, incluindo Recurring Governed Work bounded, continuam sujeitas aos mesmos gates. Schedule admin não concede domain/provider permission.
 
 ## C7 — Advanced Autonomy + Scale
 
@@ -155,6 +169,8 @@ C7 adiciona autonomia avançada; não inaugura ACT.
 - canary/rollback/performance/cost;
 - OT actuation remains separate industrial-safety initiative.
 
+Recurring Governed Work C5 não precisa de L5/C7 quando a recorrência é bounded e cada ocorrência revalida autorização. C7 não transforma schedule em permission authority.
+
 ## Releases conceituais
 
 ```text
@@ -172,7 +188,7 @@ Governed Autonomous Enterprise   → C7
 
 ```text
 boundary before provider code
-Abstraction Gate before interface/registry/engine
+Abstraction Gate before interface/registry/engine/scheduler
 Graph != Semantic Layer
 Memory != Knowledge
 Process Mining != surveillance
@@ -185,6 +201,8 @@ Edge offline != wider authority
 Model/Marketplace install != permission
 API before RPA where authoritative contract exists
 DÉLIA Work != Automation Hub technical execution
+DÉLIA RecurringWork definition != physical scheduler technical state
+schedule != permission
 technical success != verified Outcome
 PREPARE != ACT
 C5 governed ACT != C7 autonomous ACT
