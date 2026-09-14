@@ -2026,10 +2026,25 @@ def test_openapi_all_write_actions_have_typed_examples():
     data_props = schemas["GptRecordBody"]["properties"]["data"]["properties"]
     assert "todas_filiais_ativas" in data_props
     assert data_props["todas_filiais_ativas"]["type"] == "boolean"
+    from tm_app.application.gpt_actions.record_write_contract import (
+        REQUIRED_GPT_RECORD_WRITE_FIELDS,
+    )
+
+    missing = sorted(REQUIRED_GPT_RECORD_WRITE_FIELDS - set(data_props))
+    assert not missing, f"GptRecordBody.data missing write fields: {missing}"
+    assert data_props["valor_mensal"]["type"] == "number"
+    assert "resource_cost_create" in create_examples
+    assert "resource_cost_update" in create_examples
+    assert create_examples["resource_cost_update"]["value"]["data"]["valor_mensal"] == 6051.61
     create_desc = doc["paths"]["/transformometro/gpt-actions/v1/records/{entity}"]["post"][
         "description"
     ]
     assert "todas_filiais_ativas" in create_desc
+    assert "valor_mensal" in create_desc
+    update_desc = doc["paths"]["/transformometro/gpt-actions/v1/records/{entity}/{id}"][
+        "put"
+    ]["description"]
+    assert "resource_cost" in update_desc
     assert "revision_create" in create_examples
     assert "measurement_upsert" in create_examples
     assert "investment_create" in create_examples

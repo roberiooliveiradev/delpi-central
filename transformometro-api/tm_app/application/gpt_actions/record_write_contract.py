@@ -1,0 +1,240 @@
+"""Canonical GPT record write fields for Custom GPT OpenAPI.
+
+GPT Actions tend to send only properties listed under GptRecordBody.data.
+``additionalProperties: true`` is not enough — fields must be explicit.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+
+def openapi_record_data_properties() -> dict[str, Any]:
+    """All create/update fields accepted under ``{data:{...}}`` across entities."""
+    return {
+        # --- process ---
+        "nome_processo": {
+            "type": "string",
+            "description": "Required when entity=process (create).",
+        },
+        "status_processo": {
+            "type": "string",
+            "description": "Required when entity=process. Typical: ativo.",
+        },
+        "descricao_processo": {"type": "string"},
+        "gestor_responsavel": {"type": "string"},
+        "objetivo_processo": {"type": "string"},
+        "codigo_processo": {"type": "string"},
+        "familia_processo": {"type": "string"},
+        "agrupador_ferramenta": {"type": "string"},
+        "filial_ids": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Process scope units (when not todas_filiais_ativas).",
+        },
+        # --- parents / ids ---
+        "processo_id": {
+            "type": "string",
+            "description": "Parent/process id when creating instance/revision.",
+        },
+        "instancia_id": {"type": "string"},
+        "revisao_id": {"type": "string"},
+        "recurso_compartilhado_id": {
+            "type": "string",
+            "description": (
+                "Required when entity=resource_cost (create) or entity=resource_link. "
+                "Alias: recurso_id."
+            ),
+        },
+        "recurso_id": {
+            "type": "string",
+            "description": "Alias of recurso_compartilhado_id for resource_cost create.",
+        },
+        # --- instance ---
+        "filial_id": {
+            "type": "string",
+            "description": (
+                "Required for entity=instance unless todas_filiais_ativas=true "
+                "(omit filial_id then)."
+            ),
+        },
+        "todas_filiais_ativas": {
+            "type": "boolean",
+            "description": (
+                "When true, instance applies to all active units; do not send filial_id."
+            ),
+            "default": False,
+        },
+        "setor_ids": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Required for entity=instance (at least one).",
+        },
+        "setor_id": {
+            "type": "string",
+            "description": "Legacy single-department shortcut.",
+        },
+        "status_instancia": {"type": "string"},
+        "rotulo_instancia": {"type": "string"},
+        "responsavel_local": {"type": "string"},
+        "data_alvo_go_live": {"type": "string"},
+        "resumo_melhoria": {"type": "string"},
+        "fase_melhoria": {"type": "string"},
+        "prioridade": {"type": "string"},
+        # --- revision ---
+        "versao_revisao": {"type": "string"},
+        "cenario_tipo": {"type": "string"},
+        "data_inicio_vigencia": {
+            "type": "string",
+            "format": "date",
+            "description": (
+                "Revision or resource_cost start date (YYYY-MM-DD). "
+                "Required on resource_cost create; optional on update (merges)."
+            ),
+        },
+        "data_fim_vigencia": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": (
+                "Omit = open/unset on create; null = clear on update; date = set. "
+                "Never invent today."
+            ),
+        },
+        "revisao_referencia_id": {"type": "string"},
+        "beneficio_calculo_categoria": {"type": "string"},
+        "descricao_revisao": {"type": "string"},
+        "motivo_revisao": {"type": "string"},
+        "data_implantacao": {"type": "string", "format": "date"},
+        "revisao_ativa": {"type": "boolean"},
+        "confirm_vigencia_change": {
+            "type": "boolean",
+            "description": (
+                "Required true when changing revision vigência and measurement exists."
+            ),
+        },
+        "observacoes": {"type": "string"},
+        # --- measurement ---
+        "volume_mensal": {"type": "number"},
+        "tempo_medio_execucao_min": {"type": "number"},
+        "tempo_retrabalho_min": {"type": "number"},
+        "percentual_retrabalho": {"type": "number"},
+        "percentual_erro": {"type": "number"},
+        "quantidade_erros_mes": {"type": "number"},
+        "custo_hora_mao_obra": {"type": "number"},
+        "custo_unitario_erro": {"type": "number"},
+        "custo_unitario_retrabalho": {"type": "number"},
+        "custo_outros_desperdicios": {"type": "number"},
+        "base_referencia_mes": {"type": "string"},
+        # --- investment ---
+        "tipo_investimento": {"type": "string"},
+        "descricao_item": {"type": "string"},
+        "quantidade": {"type": "number"},
+        "valor_unitario": {"type": "number"},
+        "recorrencia": {
+            "type": "string",
+            "description": "Investment or shared_resource recurrence (e.g. unico, mensal).",
+        },
+        "categoria_investimento": {"type": "string"},
+        "data_investimento": {"type": "string", "format": "date"},
+        "meses_vigencia": {"type": "integer"},
+        "centro_custo": {"type": "string"},
+        # --- shared_resource ---
+        "nome_recurso": {"type": "string"},
+        "tipo_custo": {"type": "string"},
+        "valor_total_recorrente": {
+            "type": "number",
+            "description": "Legacy catalog total; prefer entity=resource_cost for vigências.",
+        },
+        "criterio_rateio": {"type": "string"},
+        "escopo_recurso": {"type": "string"},
+        "base_competencia": {"type": "string"},
+        "status_recurso": {"type": "string"},
+        "categoria_recurso": {"type": "string"},
+        "fornecedor": {"type": "string"},
+        "codigo_recurso": {"type": "string"},
+        # --- resource_cost ---
+        "valor_mensal": {
+            "type": "number",
+            "minimum": 0,
+            "description": (
+                "Monthly cost for entity=resource_cost. Required on create; "
+                "on update may be sent alone (other fields merge from current row)."
+            ),
+        },
+        "vigente_desde": {
+            "type": "string",
+            "format": "date",
+            "description": "Used by UI reajuste flows; prefer data_inicio_vigencia in GPT writes.",
+        },
+        # --- resource_link ---
+        "ativo": {"type": "boolean"},
+        "data_inicio_uso": {"type": "string", "format": "date"},
+        "data_fim_uso": {"type": "string", "format": "date"},
+        "peso_rateio": {"type": "number"},
+        # --- branch / department ---
+        "codigo_filial": {"type": "string"},
+        "nome_filial": {"type": "string"},
+        "status_filial": {"type": "string"},
+        "codigo_setor": {"type": "string"},
+        "nome_setor": {"type": "string"},
+        "status_setor": {"type": "string"},
+        "filiais": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Unit codes for entity=department.",
+        },
+        # --- meeting_minute / matrix / documents ---
+        "unit_code": {"type": "string"},
+        "title": {"type": "string"},
+        "conteudo": {
+            "type": "object",
+            "additionalProperties": True,
+            "properties": {},
+            "description": "Document payload (diagram flowchart or decomposition tree/overlay).",
+        },
+        "node_ids": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Scope node ids for instance diagram/decomposition scope.",
+        },
+        "inherit_all": {"type": "boolean"},
+        "include_boundary_edges": {"type": "boolean"},
+        "include_descendants": {"type": "boolean"},
+        "modo": {
+            "type": "string",
+            "description": "Impact×effort matrix mode (entity=impact_effort_matrix).",
+        },
+        "inputs_manuais": {
+            "type": "object",
+            "additionalProperties": True,
+            "properties": {},
+        },
+        "overrides": {
+            "type": "object",
+            "additionalProperties": True,
+            "properties": {},
+        },
+    }
+
+
+# Contract gate: fields that must stay visible to Custom GPT for write actions.
+REQUIRED_GPT_RECORD_WRITE_FIELDS: frozenset[str] = frozenset(
+    {
+        "valor_mensal",
+        "recurso_compartilhado_id",
+        "nome_recurso",
+        "tipo_custo",
+        "tipo_investimento",
+        "descricao_item",
+        "valor_unitario",
+        "quantidade",
+        "peso_rateio",
+        "ativo",
+        "custo_hora_mao_obra",
+        "percentual_retrabalho",
+        "confirm_vigencia_change",
+        "todas_filiais_ativas",
+        "nome_processo",
+        "conteudo",
+    }
+)

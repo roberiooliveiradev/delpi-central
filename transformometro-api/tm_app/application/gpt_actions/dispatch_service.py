@@ -888,7 +888,34 @@ class GptActionsDispatchService:
             return row_to_json(row), "Medição salva."
 
         if entity == GptEntity.INVESTMENT:
-            body = InvestimentoUpdateBody.model_validate(data)
+            existing = InvestimentoRepository().get(rid)
+            if not existing:
+                raise GptActionsError("Investimento não encontrado.", 404)
+            merged = self._merge_named_update_payload(
+                existing,
+                data,
+                fields=(
+                    "tipo_investimento",
+                    "descricao_item",
+                    "quantidade",
+                    "valor_unitario",
+                    "recorrencia",
+                    "categoria_investimento",
+                    "data_investimento",
+                    "meses_vigencia",
+                    "centro_custo",
+                    "observacoes",
+                ),
+                date_fields=("data_investimento",),
+                nullable_clearable=(
+                    "categoria_investimento",
+                    "data_investimento",
+                    "meses_vigencia",
+                    "centro_custo",
+                    "observacoes",
+                ),
+            )
+            body = InvestimentoUpdateBody.model_validate(merged)
             assert_in(body.tipo_investimento, TIPO_INVESTIMENTO, "tipo_investimento")
             assert_in(body.recorrencia, RECORRENCIAS, "recorrencia")
             row = InvestimentoRepository().update(rid, body.model_dump())
@@ -900,7 +927,41 @@ class GptActionsDispatchService:
             return row_to_json(row), "Investimento atualizado."
 
         if entity == GptEntity.SHARED_RESOURCE:
-            body = RecursoBody.model_validate(data)
+            existing = RecursoRepository().get(rid)
+            if not existing:
+                raise GptActionsError("Recurso não encontrado.", 404)
+            merged = self._merge_named_update_payload(
+                existing,
+                data,
+                fields=(
+                    "nome_recurso",
+                    "tipo_custo",
+                    "recorrencia",
+                    "valor_total_recorrente",
+                    "criterio_rateio",
+                    "escopo_recurso",
+                    "base_competencia",
+                    "status_recurso",
+                    "categoria_recurso",
+                    "fornecedor",
+                    "data_inicio_vigencia",
+                    "data_fim_vigencia",
+                    "centro_custo",
+                    "observacoes",
+                    "codigo_recurso",
+                ),
+                date_fields=("data_inicio_vigencia", "data_fim_vigencia"),
+                nullable_clearable=(
+                    "categoria_recurso",
+                    "fornecedor",
+                    "data_inicio_vigencia",
+                    "data_fim_vigencia",
+                    "centro_custo",
+                    "observacoes",
+                    "codigo_recurso",
+                ),
+            )
+            body = RecursoBody.model_validate(merged)
             self._validate_recurso(body)
             row = RecursoRepository().update(rid, body.model_dump())
             if not row:
@@ -910,7 +971,22 @@ class GptActionsDispatchService:
             return row_to_json(row), "Recurso atualizado."
 
         if entity == GptEntity.RESOURCE_COST:
-            body = RecursoCustoBody.model_validate(data)
+            existing = RecursoCustoRepository().get(rid)
+            if not existing:
+                raise GptActionsError("Custo de recurso não encontrado.", 404)
+            merged = self._merge_named_update_payload(
+                existing,
+                data,
+                fields=(
+                    "valor_mensal",
+                    "data_inicio_vigencia",
+                    "data_fim_vigencia",
+                    "observacoes",
+                ),
+                date_fields=("data_inicio_vigencia", "data_fim_vigencia"),
+                nullable_clearable=("data_fim_vigencia", "observacoes"),
+            )
+            body = RecursoCustoBody.model_validate(merged)
             row = RecursoCustoRepository().update(rid, body.model_dump())
             if not row:
                 raise GptActionsError("Custo de recurso não encontrado.", 404)
@@ -1638,6 +1714,39 @@ class GptActionsDispatchService:
             raise GptActionsError(exc.message, exc.status_code) from exc
 
         raise GptActionsError(f"Document upsert not implemented for {entity.value}.", 400)
+
+    @staticmethod
+    def _merge_named_update_payload(
+        existing: dict[str, Any],
+        data: dict[str, Any],
+        *,
+        fields: tuple[str, ...],
+        date_fields: tuple[str, ...] = (),
+        nullable_clearable: tuple[str, ...] = (),
+    ) -> dict[str, Any]:
+        """Merge GPT update ``data`` over ``existing`` for a fixed field set.
+
+        Omitted keys keep current values. Explicit null clears only nullable_clearable.
+        """
+        from tm_app.core.serialize import json_safe
+
+        current = json_safe(dict(existing)) or {}
+        merged: dict[str, Any] = {}
+        for key in fields:
+            value = current.get(key)
+            if key in date_fields and value is not None:
+                value = str(value)[:10] or None
+            merged[key] = value
+        for key, value in data.items():
+            if key not in fields:
+                continue
+            if value is None and key not in nullable_clearable:
+                continue
+            if key in date_fields and value is not None:
+                merged[key] = str(value)[:10] or None
+            else:
+                merged[key] = value
+        return merged
 
     @staticmethod
     def _merge_revision_update_payload(

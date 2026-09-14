@@ -496,7 +496,7 @@
       "post": {
         "operationId": "gpt_create_record",
         "summary": "Create a Transformômetro record",
-        "description": "Body MUST be {data:{...}}. entity=process requires data.nome_processo + data.status_processo. entity=instance requires data.processo_id + data.setor_ids and (data.filial_id OR data.todas_filiais_ativas=true). Fields go inside data, not root.",
+        "description": "Body MUST be {data:{...}}. process: nome_processo+status_processo. instance: processo_id+setor_ids+(filial_id|todas_filiais_ativas). resource_cost: recurso_compartilhado_id+valor_mensal+data_inicio_vigencia.",
         "tags": [
           "Transformômetro GPT"
         ],
@@ -641,6 +641,40 @@
                       "quantidade": 1,
                       "valor_unitario": 1000,
                       "recorrencia": "unico"
+                    }
+                  }
+                },
+                "shared_resource_create": {
+                  "summary": "entity=shared_resource create",
+                  "value": {
+                    "data": {
+                      "nome_recurso": "Embaixador exemplo",
+                      "tipo_custo": "mao_obra",
+                      "recorrencia": "mensal",
+                      "criterio_rateio": "igualitario",
+                      "escopo_recurso": "empresa",
+                      "status_recurso": "ativo",
+                      "valor_total_recorrente": 0
+                    }
+                  }
+                },
+                "resource_cost_create": {
+                  "summary": "entity=resource_cost create",
+                  "value": {
+                    "data": {
+                      "recurso_compartilhado_id": "<recurso_compartilhado_uuid>",
+                      "valor_mensal": 6051.61,
+                      "data_inicio_vigencia": "2026-07-06",
+                      "data_fim_vigencia": null,
+                      "observacoes": "Vigência de custo mensal"
+                    }
+                  }
+                },
+                "resource_cost_update": {
+                  "summary": "entity=resource_cost update (partial valor_mensal)",
+                  "value": {
+                    "data": {
+                      "valor_mensal": 6051.61
                     }
                   }
                 }
@@ -821,7 +855,7 @@
       "put": {
         "operationId": "gpt_update_record",
         "summary": "Update a Transformômetro record",
-        "description": "Body MUST be {data:{...}}. Put changed fields inside data (e.g. nome_processo, status_processo).",
+        "description": "Body MUST be {data:{...}}. Partial updates merge omitted fields for resource_cost, shared_resource and investment.",
         "tags": [
           "Transformômetro GPT"
         ],
@@ -973,6 +1007,40 @@
                       "quantidade": 1,
                       "valor_unitario": 1000,
                       "recorrencia": "unico"
+                    }
+                  }
+                },
+                "shared_resource_create": {
+                  "summary": "entity=shared_resource create",
+                  "value": {
+                    "data": {
+                      "nome_recurso": "Embaixador exemplo",
+                      "tipo_custo": "mao_obra",
+                      "recorrencia": "mensal",
+                      "criterio_rateio": "igualitario",
+                      "escopo_recurso": "empresa",
+                      "status_recurso": "ativo",
+                      "valor_total_recorrente": 0
+                    }
+                  }
+                },
+                "resource_cost_create": {
+                  "summary": "entity=resource_cost create",
+                  "value": {
+                    "data": {
+                      "recurso_compartilhado_id": "<recurso_compartilhado_uuid>",
+                      "valor_mensal": 6051.61,
+                      "data_inicio_vigencia": "2026-07-06",
+                      "data_fim_vigencia": null,
+                      "observacoes": "Vigência de custo mensal"
+                    }
+                  }
+                },
+                "resource_cost_update": {
+                  "summary": "entity=resource_cost update (partial valor_mensal)",
+                  "value": {
+                    "data": {
+                      "valor_mensal": 6051.61
                     }
                   }
                 }
@@ -1779,11 +1847,11 @@
         "required": [
           "data"
         ],
-        "description": "Wrapper required by GPT Actions. Never put CRUD fields at the root; always nest them under data.",
+        "description": "Wrapper required by GPT Actions. Never put CRUD fields at the root; always nest them under data. See gpt_get_catalog.registration_guide entity_schemas for required/optional per entity.",
         "properties": {
           "data": {
             "type": "object",
-            "description": "CRUD payload. For entity=process REQUIRED: nome_processo, status_processo. Other entities: see gpt_get_catalog.",
+            "description": "CRUD payload keyed by entity. Explicit properties cover process, instance, revision, measurement, investment, shared_resource, resource_cost, resource_link, catalogs, documents and matrix writes.",
             "properties": {
               "nome_processo": {
                 "type": "string",
@@ -1808,6 +1876,16 @@
               "familia_processo": {
                 "type": "string"
               },
+              "agrupador_ferramenta": {
+                "type": "string"
+              },
+              "filial_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Process scope units (when not todas_filiais_ativas)."
+              },
               "processo_id": {
                 "type": "string",
                 "description": "Parent/process id when creating instance/revision."
@@ -1818,13 +1896,21 @@
               "revisao_id": {
                 "type": "string"
               },
+              "recurso_compartilhado_id": {
+                "type": "string",
+                "description": "Required when entity=resource_cost (create) or entity=resource_link. Alias: recurso_id."
+              },
+              "recurso_id": {
+                "type": "string",
+                "description": "Alias of recurso_compartilhado_id for resource_cost create."
+              },
               "filial_id": {
                 "type": "string",
                 "description": "Required for entity=instance unless todas_filiais_ativas=true (omit filial_id then)."
               },
               "todas_filiais_ativas": {
                 "type": "boolean",
-                "description": "When true, instance applies to all active units; do not send filial_id. Required alternative to filial_id for corporate instances.",
+                "description": "When true, instance applies to all active units; do not send filial_id.",
                 "default": false
               },
               "setor_ids": {
@@ -1866,7 +1952,9 @@
                 "type": "string"
               },
               "data_inicio_vigencia": {
-                "type": "string"
+                "type": "string",
+                "format": "date",
+                "description": "Revision or resource_cost start date (YYYY-MM-DD). Required on resource_cost create; optional on update (merges)."
               },
               "data_fim_vigencia": {
                 "type": [
@@ -1882,11 +1970,167 @@
               "beneficio_calculo_categoria": {
                 "type": "string"
               },
+              "descricao_revisao": {
+                "type": "string"
+              },
+              "motivo_revisao": {
+                "type": "string"
+              },
+              "data_implantacao": {
+                "type": "string",
+                "format": "date"
+              },
+              "revisao_ativa": {
+                "type": "boolean"
+              },
+              "confirm_vigencia_change": {
+                "type": "boolean",
+                "description": "Required true when changing revision vigência and measurement exists."
+              },
+              "observacoes": {
+                "type": "string"
+              },
               "volume_mensal": {
                 "type": "number"
               },
               "tempo_medio_execucao_min": {
                 "type": "number"
+              },
+              "tempo_retrabalho_min": {
+                "type": "number"
+              },
+              "percentual_retrabalho": {
+                "type": "number"
+              },
+              "percentual_erro": {
+                "type": "number"
+              },
+              "quantidade_erros_mes": {
+                "type": "number"
+              },
+              "custo_hora_mao_obra": {
+                "type": "number"
+              },
+              "custo_unitario_erro": {
+                "type": "number"
+              },
+              "custo_unitario_retrabalho": {
+                "type": "number"
+              },
+              "custo_outros_desperdicios": {
+                "type": "number"
+              },
+              "base_referencia_mes": {
+                "type": "string"
+              },
+              "tipo_investimento": {
+                "type": "string"
+              },
+              "descricao_item": {
+                "type": "string"
+              },
+              "quantidade": {
+                "type": "number"
+              },
+              "valor_unitario": {
+                "type": "number"
+              },
+              "recorrencia": {
+                "type": "string",
+                "description": "Investment or shared_resource recurrence (e.g. unico, mensal)."
+              },
+              "categoria_investimento": {
+                "type": "string"
+              },
+              "data_investimento": {
+                "type": "string",
+                "format": "date"
+              },
+              "meses_vigencia": {
+                "type": "integer"
+              },
+              "centro_custo": {
+                "type": "string"
+              },
+              "nome_recurso": {
+                "type": "string"
+              },
+              "tipo_custo": {
+                "type": "string"
+              },
+              "valor_total_recorrente": {
+                "type": "number",
+                "description": "Legacy catalog total; prefer entity=resource_cost for vigências."
+              },
+              "criterio_rateio": {
+                "type": "string"
+              },
+              "escopo_recurso": {
+                "type": "string"
+              },
+              "base_competencia": {
+                "type": "string"
+              },
+              "status_recurso": {
+                "type": "string"
+              },
+              "categoria_recurso": {
+                "type": "string"
+              },
+              "fornecedor": {
+                "type": "string"
+              },
+              "codigo_recurso": {
+                "type": "string"
+              },
+              "valor_mensal": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Monthly cost for entity=resource_cost. Required on create; on update may be sent alone (other fields merge from current row)."
+              },
+              "vigente_desde": {
+                "type": "string",
+                "format": "date",
+                "description": "Used by UI reajuste flows; prefer data_inicio_vigencia in GPT writes."
+              },
+              "ativo": {
+                "type": "boolean"
+              },
+              "data_inicio_uso": {
+                "type": "string",
+                "format": "date"
+              },
+              "data_fim_uso": {
+                "type": "string",
+                "format": "date"
+              },
+              "peso_rateio": {
+                "type": "number"
+              },
+              "codigo_filial": {
+                "type": "string"
+              },
+              "nome_filial": {
+                "type": "string"
+              },
+              "status_filial": {
+                "type": "string"
+              },
+              "codigo_setor": {
+                "type": "string"
+              },
+              "nome_setor": {
+                "type": "string"
+              },
+              "status_setor": {
+                "type": "string"
+              },
+              "filiais": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Unit codes for entity=department."
               },
               "unit_code": {
                 "type": "string"
@@ -1894,7 +2138,42 @@
               "title": {
                 "type": "string"
               },
-              "conteudo": {}
+              "conteudo": {
+                "type": "object",
+                "additionalProperties": true,
+                "properties": {},
+                "description": "Document payload (diagram flowchart or decomposition tree/overlay)."
+              },
+              "node_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Scope node ids for instance diagram/decomposition scope."
+              },
+              "inherit_all": {
+                "type": "boolean"
+              },
+              "include_boundary_edges": {
+                "type": "boolean"
+              },
+              "include_descendants": {
+                "type": "boolean"
+              },
+              "modo": {
+                "type": "string",
+                "description": "Impact×effort matrix mode (entity=impact_effort_matrix)."
+              },
+              "inputs_manuais": {
+                "type": "object",
+                "additionalProperties": true,
+                "properties": {}
+              },
+              "overrides": {
+                "type": "object",
+                "additionalProperties": true,
+                "properties": {}
+              }
             },
             "additionalProperties": true,
             "example": {

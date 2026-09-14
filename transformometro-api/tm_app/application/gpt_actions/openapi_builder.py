@@ -17,6 +17,9 @@ from tm_app.application.gpt_actions.improvement_package_contract import (
     openapi_measurement_properties,
     openapi_revision_properties,
 )
+from tm_app.application.gpt_actions.record_write_contract import (
+    openapi_record_data_properties,
+)
 
 GPT_ACTIONS_BASE_PATH = "/transformometro/gpt-actions/v1"
 GPT_ACTIONS_GATEWAY_ROOT = "/apps/transformometro-api"
@@ -196,6 +199,40 @@ def _example_investment_create() -> dict[str, Any]:
     }
 
 
+def _example_resource_cost_create() -> dict[str, Any]:
+    return {
+        "data": {
+            "recurso_compartilhado_id": "<recurso_compartilhado_uuid>",
+            "valor_mensal": 6051.61,
+            "data_inicio_vigencia": "2026-07-06",
+            "data_fim_vigencia": None,
+            "observacoes": "Vigência de custo mensal",
+        }
+    }
+
+
+def _example_resource_cost_update() -> dict[str, Any]:
+    return {
+        "data": {
+            "valor_mensal": 6051.61,
+        }
+    }
+
+
+def _example_shared_resource_create() -> dict[str, Any]:
+    return {
+        "data": {
+            "nome_recurso": "Embaixador exemplo",
+            "tipo_custo": "mao_obra",
+            "recorrencia": "mensal",
+            "criterio_rateio": "igualitario",
+            "escopo_recurso": "empresa",
+            "status_recurso": "ativo",
+            "valor_total_recorrente": 0,
+        }
+    }
+
+
 def _record_body_media(*, primary: dict[str, Any] | None = None) -> dict[str, Any]:
     """Typed {data:{...}} media object with multi-entity examples for Custom GPT."""
     primary = primary or _example_process_create()
@@ -235,6 +272,18 @@ def _record_body_media(*, primary: dict[str, Any] | None = None) -> dict[str, An
             "investment_create": {
                 "summary": "entity=investment create",
                 "value": _example_investment_create(),
+            },
+            "shared_resource_create": {
+                "summary": "entity=shared_resource create",
+                "value": _example_shared_resource_create(),
+            },
+            "resource_cost_create": {
+                "summary": "entity=resource_cost create",
+                "value": _example_resource_cost_create(),
+            },
+            "resource_cost_update": {
+                "summary": "entity=resource_cost update (partial valor_mensal)",
+                "value": _example_resource_cost_update(),
             },
         },
     }
@@ -460,11 +509,9 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_create_record",
                 "summary": "Create a Transformômetro record",
                 "description": (
-                    "Body MUST be {data:{...}}. entity=process requires "
-                    "data.nome_processo + data.status_processo. "
-                    "entity=instance requires data.processo_id + data.setor_ids and "
-                    "(data.filial_id OR data.todas_filiais_ativas=true). "
-                    "Fields go inside data, not root."
+                    "Body MUST be {data:{...}}. process: nome_processo+status_processo. "
+                    "instance: processo_id+setor_ids+(filial_id|todas_filiais_ativas). "
+                    "resource_cost: recurso_compartilhado_id+valor_mensal+data_inicio_vigencia."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
@@ -511,8 +558,8 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_update_record",
                 "summary": "Update a Transformômetro record",
                 "description": (
-                    "Body MUST be {data:{...}}. Put changed fields inside data "
-                    "(e.g. nome_processo, status_processo)."
+                    "Body MUST be {data:{...}}. Partial updates merge omitted fields for "
+                    "resource_cost, shared_resource and investment."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
@@ -807,90 +854,19 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     "required": ["data"],
                     "description": (
                         "Wrapper required by GPT Actions. Never put CRUD fields at the root; "
-                        "always nest them under data."
+                        "always nest them under data. See gpt_get_catalog.registration_guide "
+                        "entity_schemas for required/optional per entity."
                     ),
                     "properties": {
                         "data": {
                             "type": "object",
                             "description": (
-                                "CRUD payload. For entity=process REQUIRED: nome_processo, "
-                                "status_processo. Other entities: see gpt_get_catalog."
+                                "CRUD payload keyed by entity. Explicit properties cover "
+                                "process, instance, revision, measurement, investment, "
+                                "shared_resource, resource_cost, resource_link, catalogs, "
+                                "documents and matrix writes."
                             ),
-                            "properties": {
-                                "nome_processo": {
-                                    "type": "string",
-                                    "description": "Required when entity=process (create).",
-                                },
-                                "status_processo": {
-                                    "type": "string",
-                                    "description": (
-                                        "Required when entity=process. Typical: ativo."
-                                    ),
-                                },
-                                "descricao_processo": {"type": "string"},
-                                "gestor_responsavel": {"type": "string"},
-                                "objetivo_processo": {"type": "string"},
-                                "codigo_processo": {"type": "string"},
-                                "familia_processo": {"type": "string"},
-                                "processo_id": {
-                                    "type": "string",
-                                    "description": "Parent/process id when creating instance/revision.",
-                                },
-                                "instancia_id": {"type": "string"},
-                                "revisao_id": {"type": "string"},
-                                "filial_id": {
-                                    "type": "string",
-                                    "description": (
-                                        "Required for entity=instance unless "
-                                        "todas_filiais_ativas=true (omit filial_id then)."
-                                    ),
-                                },
-                                "todas_filiais_ativas": {
-                                    "type": "boolean",
-                                    "description": (
-                                        "When true, instance applies to all active units; "
-                                        "do not send filial_id. Required alternative to "
-                                        "filial_id for corporate instances."
-                                    ),
-                                    "default": False,
-                                },
-                                "setor_ids": {
-                                    "type": "array",
-                                    "items": {"type": "string"},
-                                    "description": (
-                                        "Required for entity=instance (at least one)."
-                                    ),
-                                },
-                                "setor_id": {
-                                    "type": "string",
-                                    "description": "Legacy single-department shortcut.",
-                                },
-                                "status_instancia": {"type": "string"},
-                                "rotulo_instancia": {"type": "string"},
-                                "responsavel_local": {"type": "string"},
-                                "data_alvo_go_live": {"type": "string"},
-                                "resumo_melhoria": {"type": "string"},
-                                "fase_melhoria": {"type": "string"},
-                                "prioridade": {"type": "string"},
-                                "versao_revisao": {"type": "string"},
-                                "cenario_tipo": {"type": "string"},
-                                "data_inicio_vigencia": {"type": "string"},
-                                "data_fim_vigencia": {
-                                    "type": ["string", "null"],
-                                    "format": "date",
-                                    "description": (
-                                        "Omit = open/unset on create; null = clear on update; "
-                                        "date = set. Never invent today."
-                                    ),
-                                },
-                                "revisao_referencia_id": {"type": "string"},
-                                "beneficio_calculo_categoria": {"type": "string"},
-                                "volume_mensal": {"type": "number"},
-                                "tempo_medio_execucao_min": {"type": "number"},
-                                "unit_code": {"type": "string"},
-                                "title": {"type": "string"},
-                                "conteudo": {},
-                            },
+                            "properties": openapi_record_data_properties(),
                             "additionalProperties": True,
                             "example": {
                                 "nome_processo": "Processo teste GPT",
