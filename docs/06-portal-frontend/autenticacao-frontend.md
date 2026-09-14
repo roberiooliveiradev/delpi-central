@@ -139,12 +139,18 @@ VITE_FRONT_CHANNEL_LOGOUT_URLS=https://app1/logout,https://app2/logout
 
 ## 8. Socket.IO
 
-Após token válido:
+Após sessão autenticada (`useSocket` + `getAccessToken`):
 
 ```typescript
-socket.auth = { token };
+socket.auth = { token: getAccessToken() };
 socket.connect();  // path /socket.io → core-api
 ```
+
+Antes de cada reconnect (`reconnect_attempt`), o Portal reescreve `socket.auth`
+com o JWT atual de `tokenRef` — o refresh silencioso do Keycloak não dispara
+re-render, então o handshake não pode depender só de prop `token` em React.
+
+Não usar `emit("auth.refresh")`: a core-api valida JWT apenas no `connect`.
 
 Eventos: `notification`, `admin.changed`.
 

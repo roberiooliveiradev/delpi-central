@@ -541,7 +541,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [refreshToken]);
 
   useSocket({
-    token: !loading && isAuthenticated ? tokenRef.current : undefined,
+    enabled: !loading && isAuthenticated,
+    getAccessToken,
     onConnected: async () => {
       await Promise.all([loadIdentityAndNavigation(), loadNotificationsData()]);
     },

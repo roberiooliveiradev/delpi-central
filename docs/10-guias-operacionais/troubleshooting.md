@@ -357,14 +357,17 @@ docker exec -it delpi-ollama ollama pull bge-m3
 
 ## 15. Socket.IO não conecta
 
-Sintoma: notificações/admin.changed não chegam; console `WebSocket erro`.
+Sintoma: notificações/admin.changed não chegam; console `WebSocket erro` /
+`Connection rejected by server` após `transport close`.
 
 Verificar:
 
 - Portal usa `path: /socket.io` (mesma origem do gateway)
-- Token em `socket.auth = { token }` após login
+- `socket.auth` renovado em `reconnect_attempt` via `getAccessToken()` (não só no mount)
 - Gateway location `/socket.io/` → `core-api:8000`
-- Token não expirado — refresh no Portal (`keycloak.updateToken`)
+- Token não expirado — refresh no Portal (`keycloak.updateToken`); se o JWT
+  silencioso atualizou `tokenRef` sem re-render, o reconnect ainda deve ler o fresco
+- Evitar `socket.connect()` concorrente enquanto `socket.active` (reconnect em curso)
 
 ```bash
 docker compose -f docker-compose.dev.yml logs -f core-api | grep -i socket

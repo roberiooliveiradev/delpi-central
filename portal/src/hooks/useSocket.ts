@@ -14,16 +14,21 @@ import {
   shouldCloseExternalUsage,
   shouldPingExternalUsage,
 } from "../utils/appUsageSession";
+import { applySocketAuthToken, resolveSocketAccessToken } from "./socketAuth";
 
 interface UseSocketProps {
-  token?: string;
+  /** When false, socket stays idle (no connect). */
+  enabled?: boolean;
+  /** Always read the current JWT (tokenRef); required for reconnect handshake. */
+  getAccessToken: () => string | undefined;
   onNotification?: (data: any) => void;
   onAdminChanged?: (data: any) => void;
   onConnected?: () => void;
 }
 
 export const useSocket = ({
-  token,
+  enabled = true,
+  getAccessToken,
   onNotification,
   onAdminChanged,
   onConnected,
@@ -31,9 +36,14 @@ export const useSocket = ({
   const socketRef = useRef<Socket | null>(null);
   const activeAppRef = useRef<ActiveAppUsage | null>(null);
 
+  const getAccessTokenRef = useRef(getAccessToken);
   const onNotificationRef = useRef(onNotification);
   const onAdminChangedRef = useRef(onAdminChanged);
   const onConnectedRef = useRef(onConnected);
+
+  useEffect(() => {
+    getAccessTokenRef.current = getAccessToken;
+  }, [getAccessToken]);
 
   useEffect(() => {
     onNotificationRef.current = onNotification;
@@ -66,6 +76,17 @@ export const useSocket = ({
 
     socketRef.current = socket;
 
+    const refreshSocketAuth = () => {
+      const next = resolveSocketAccessToken(getAccessTokenRef.current());
+      if (next) {
+        socket.auth = { token: next };
+      }
+    };
+
+    // Silent Keycloak refresh updates tokenRef without React re-render;
+    // refresh auth immediately before every Engine.IO reconnect handshake.
+    socket.io.on("reconnect_attempt", refreshSocketAuth);
+
     const handleConnect = () => {
       console.log("✅ WebSocket conectado:", socket.id);
       onConnectedRef.current?.();
@@ -97,6 +118,7 @@ export const useSocket = ({
     return () => {
       console.log("🧹 WebSocket finalizado");
 
+      socket.io.off("reconnect_attempt", refreshSocketAuth);
       socket.removeAllListeners();
       socket.disconnect();
       socketRef.current = null;
@@ -104,29 +126,23 @@ export const useSocket = ({
   }, []);
 
   // ============================================
-  // AUTH UPDATE (quando token muda)
+  // AUTH + CONNECT (quando sessão Portal fica pronta)
   // ============================================
 
   useEffect(() => {
     const socket = socketRef.current;
+    if (!socket || !enabled) return;
 
-    if (!socket) return;
-    if (!token || token.length < 20) return;
-
-    console.log("🔑 Atualizando token WebSocket");
-
-    socket.auth = { token };
-
-    if (!socket.connected) {
-      socket.connect();
-    } else {
-      socket.emit("auth.refresh", { token });
+    const result = applySocketAuthToken(socket, getAccessToken());
+    if (result !== "skipped") {
+      console.log("🔑 Atualizando token WebSocket");
     }
-  }, [token]);
+  }, [enabled, getAccessToken]);
 
   useEffect(() => {
     const socket = socketRef.current;
-    if (!socket || !token || token.length < 20) return;
+    if (!socket || !enabled) return;
+    if (!resolveSocketAccessToken(getAccessToken())) return;
 
     const emitAppClose = (appId?: string) => {
       if (!socket.connected) return;
@@ -247,7 +263,7 @@ export const useSocket = ({
       window.removeEventListener(APP_USAGE_CLOSE_EVENT, onAppClosed);
       window.clearInterval(intervalId);
     };
-  }, [token]);
+  }, [enabled, getAccessToken]);
 
   return socketRef;
 };
