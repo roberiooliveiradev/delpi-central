@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "/apps/transformometro-api",
+      "url": "https://minhadelpi.com.br/apps/transformometro-api",
       "description": "Minha DELPI gateway"
     }
   ],
@@ -283,7 +283,7 @@
                 "impact_effort_matrix"
               ]
             },
-            "description": "Record type. `branch`: Operational unit (filial). Catalog admin.; `department`: Department (setor) linked to one or more units.; `process`: Master process (processo-mestre).; `instance`: Operational improvement (melhoria = process × unit × departments).; `revision`: Calculable scenario (baseline/melhoria/automacao/correcao).; `measurement`: Monthly measurement for a revision (upsert by revisao_id).; `investment`: Investment line on a revision.; `shared_resource`: Shared resource (license/tool) catalog.; `resource_cost`: Cost validity period for a shared resource.; `resource_link`: Link between a revision and a shared resource.; `meeting_minute`: Transforma+ meeting minute (ata).; `decomposition_tree`: Process WBS/decomposition tree (id = processo_id).; `instance_decomposition_scope`: Instance WBS scope (id = instancia_id).; `revision_decomposition_overlay`: Revision WBS overlay (id = revisao_id).; `process_diagram`: Process macro flowchart (id = processo_id).; `instance_diagram_scope`: Instance diagram scope (id = instancia_id).; `revision_diagram_overlay`: Revision diagram overlay (id = revisao_id).; `impact_effort_matrix`: Impact×effort matrix for a revision (id = revisao_id)."
+            "description": "Entity slug (see enum). Cadastro: process, instance, revision, measurement, investment. Catalog: branch, department, shared_resource. Atas: meeting_minute. Documents: decomposition_tree, process_diagram, impact_effort_matrix and related overlays."
           },
           {
             "name": "parent_id",
@@ -391,7 +391,7 @@
       "post": {
         "operationId": "gpt_create_record",
         "summary": "Create a Transformômetro record",
-        "description": "Create entity. Body `data` must match the entity schema used by the UI API (ProcessoCreateBody, InstanciaBody, RevisaoBody, MedicaoBody, etc.). For tree/diagram/overlay entities, `data` is the content document; path id is unused — put parent id inside `data` (`processo_id`, `instancia_id`, or `revisao_id`).",
+        "description": "Create record. Body `{data:{...}}` matches UI CRUD fields. For tree/diagram overlays, put parent id in data (processo_id, instancia_id, or revisao_id).",
         "tags": [
           "Transformômetro GPT"
         ],
@@ -428,7 +428,7 @@
                 "impact_effort_matrix"
               ]
             },
-            "description": "Record type. `branch`: Operational unit (filial). Catalog admin.; `department`: Department (setor) linked to one or more units.; `process`: Master process (processo-mestre).; `instance`: Operational improvement (melhoria = process × unit × departments).; `revision`: Calculable scenario (baseline/melhoria/automacao/correcao).; `measurement`: Monthly measurement for a revision (upsert by revisao_id).; `investment`: Investment line on a revision.; `shared_resource`: Shared resource (license/tool) catalog.; `resource_cost`: Cost validity period for a shared resource.; `resource_link`: Link between a revision and a shared resource.; `meeting_minute`: Transforma+ meeting minute (ata).; `decomposition_tree`: Process WBS/decomposition tree (id = processo_id).; `instance_decomposition_scope`: Instance WBS scope (id = instancia_id).; `revision_decomposition_overlay`: Revision WBS overlay (id = revisao_id).; `process_diagram`: Process macro flowchart (id = processo_id).; `instance_diagram_scope`: Instance diagram scope (id = instancia_id).; `revision_diagram_overlay`: Revision diagram overlay (id = revisao_id).; `impact_effort_matrix`: Impact×effort matrix for a revision (id = revisao_id)."
+            "description": "Entity slug (see enum). Cadastro: process, instance, revision, measurement, investment. Catalog: branch, department, shared_resource. Atas: meeting_minute. Documents: decomposition_tree, process_diagram, impact_effort_matrix and related overlays."
           }
         ],
         "requestBody": {
@@ -547,7 +547,7 @@
                 "impact_effort_matrix"
               ]
             },
-            "description": "Record type. `branch`: Operational unit (filial). Catalog admin.; `department`: Department (setor) linked to one or more units.; `process`: Master process (processo-mestre).; `instance`: Operational improvement (melhoria = process × unit × departments).; `revision`: Calculable scenario (baseline/melhoria/automacao/correcao).; `measurement`: Monthly measurement for a revision (upsert by revisao_id).; `investment`: Investment line on a revision.; `shared_resource`: Shared resource (license/tool) catalog.; `resource_cost`: Cost validity period for a shared resource.; `resource_link`: Link between a revision and a shared resource.; `meeting_minute`: Transforma+ meeting minute (ata).; `decomposition_tree`: Process WBS/decomposition tree (id = processo_id).; `instance_decomposition_scope`: Instance WBS scope (id = instancia_id).; `revision_decomposition_overlay`: Revision WBS overlay (id = revisao_id).; `process_diagram`: Process macro flowchart (id = processo_id).; `instance_diagram_scope`: Instance diagram scope (id = instancia_id).; `revision_diagram_overlay`: Revision diagram overlay (id = revisao_id).; `impact_effort_matrix`: Impact×effort matrix for a revision (id = revisao_id)."
+            "description": "Entity slug (see enum). Cadastro: process, instance, revision, measurement, investment. Catalog: branch, department, shared_resource. Atas: meeting_minute. Documents: decomposition_tree, process_diagram, impact_effort_matrix and related overlays."
           },
           {
             "name": "id",
@@ -651,7 +651,7 @@
                 "impact_effort_matrix"
               ]
             },
-            "description": "Record type. `branch`: Operational unit (filial). Catalog admin.; `department`: Department (setor) linked to one or more units.; `process`: Master process (processo-mestre).; `instance`: Operational improvement (melhoria = process × unit × departments).; `revision`: Calculable scenario (baseline/melhoria/automacao/correcao).; `measurement`: Monthly measurement for a revision (upsert by revisao_id).; `investment`: Investment line on a revision.; `shared_resource`: Shared resource (license/tool) catalog.; `resource_cost`: Cost validity period for a shared resource.; `resource_link`: Link between a revision and a shared resource.; `meeting_minute`: Transforma+ meeting minute (ata).; `decomposition_tree`: Process WBS/decomposition tree (id = processo_id).; `instance_decomposition_scope`: Instance WBS scope (id = instancia_id).; `revision_decomposition_overlay`: Revision WBS overlay (id = revisao_id).; `process_diagram`: Process macro flowchart (id = processo_id).; `instance_diagram_scope`: Instance diagram scope (id = instancia_id).; `revision_diagram_overlay`: Revision diagram overlay (id = revisao_id).; `impact_effort_matrix`: Impact×effort matrix for a revision (id = revisao_id)."
+            "description": "Entity slug (see enum). Cadastro: process, instance, revision, measurement, investment. Catalog: branch, department, shared_resource. Atas: meeting_minute. Documents: decomposition_tree, process_diagram, impact_effort_matrix and related overlays."
           },
           {
             "name": "id",
@@ -766,7 +766,7 @@
                 "impact_effort_matrix"
               ]
             },
-            "description": "Record type. `branch`: Operational unit (filial). Catalog admin.; `department`: Department (setor) linked to one or more units.; `process`: Master process (processo-mestre).; `instance`: Operational improvement (melhoria = process × unit × departments).; `revision`: Calculable scenario (baseline/melhoria/automacao/correcao).; `measurement`: Monthly measurement for a revision (upsert by revisao_id).; `investment`: Investment line on a revision.; `shared_resource`: Shared resource (license/tool) catalog.; `resource_cost`: Cost validity period for a shared resource.; `resource_link`: Link between a revision and a shared resource.; `meeting_minute`: Transforma+ meeting minute (ata).; `decomposition_tree`: Process WBS/decomposition tree (id = processo_id).; `instance_decomposition_scope`: Instance WBS scope (id = instancia_id).; `revision_decomposition_overlay`: Revision WBS overlay (id = revisao_id).; `process_diagram`: Process macro flowchart (id = processo_id).; `instance_diagram_scope`: Instance diagram scope (id = instancia_id).; `revision_diagram_overlay`: Revision diagram overlay (id = revisao_id).; `impact_effort_matrix`: Impact×effort matrix for a revision (id = revisao_id)."
+            "description": "Entity slug (see enum). Cadastro: process, instance, revision, measurement, investment. Catalog: branch, department, shared_resource. Atas: meeting_minute. Documents: decomposition_tree, process_diagram, impact_effort_matrix and related overlays."
           },
           {
             "name": "id",
@@ -1228,11 +1228,12 @@
         "security": [],
         "responses": {
           "200": {
-            "description": "OpenAPI 3.0 document",
+            "description": "JSON document used to import Actions",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "additionalProperties": true
                 }
               }
             }

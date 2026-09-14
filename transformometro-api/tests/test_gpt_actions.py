@@ -13,6 +13,7 @@ from tm_app.application.gpt_actions.entities import (
 )
 from tm_app.application.gpt_actions.openapi_builder import (
     GPT_ACTIONS_OPERATION_IDS,
+    _ENTITY_DESCRIPTION,
     build_gpt_actions_openapi,
     count_operations,
     resolve_gpt_actions_server_url,
@@ -85,6 +86,31 @@ def test_openapi_servers_url_is_absolute_https():
     # relative leftover must not be used as the live default
     fallback = build_gpt_actions_openapi()
     assert fallback["servers"][0]["url"].startswith("http")
+
+
+def test_openapi_respects_openai_custom_gpt_description_limits():
+    """GPT Builder: param description ≤700, operation description ≤300."""
+    doc = build_gpt_actions_openapi()
+    assert len(_ENTITY_DESCRIPTION) <= 700
+    create_desc = doc["paths"][
+        "/transformometro/gpt-actions/v1/records/{entity}"
+    ]["post"]["description"]
+    assert len(create_desc) <= 300
+    for methods in doc["paths"].values():
+        for method, op in methods.items():
+            if method.lower() not in {"get", "post", "put", "patch", "delete"}:
+                continue
+            desc = op.get("description") or ""
+            assert len(desc) <= 300, op.get("operationId")
+            for param in op.get("parameters") or []:
+                pdesc = param.get("description") or ""
+                assert len(pdesc) <= 700, param.get("name")
+    oa_schema = (
+        doc["paths"]["/transformometro/gpt-actions/v1/openapi.json"]["get"]
+        ["responses"]["200"]["content"]["application/json"]["schema"]
+    )
+    assert oa_schema.get("additionalProperties") is True
+    assert "properties" not in oa_schema
 
 
 def test_parse_entity_rejects_unknown():

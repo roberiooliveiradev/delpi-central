@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Any
 
 from tm_app.application.gpt_actions.entities import (
-    ENTITY_DESCRIPTIONS,
     GptAnalysisView,
     GptEntity,
     GptMeetingMinuteWorkflow,
@@ -56,10 +55,22 @@ _ENTITY_ENUM = [e.value for e in GptEntity]
 _VIEW_ENUM = [v.value for v in GptAnalysisView]
 _WORKFLOW_ENUM = [w.value for w in GptMeetingMinuteWorkflow]
 
+# OpenAI Custom GPT: parameter description ≤700 chars, operation description ≤300.
 _ENTITY_DESCRIPTION = (
-    "Record type. "
-    + "; ".join(f"`{e.value}`: {ENTITY_DESCRIPTIONS[e]}" for e in GptEntity)
+    "Entity slug (see enum). Cadastro: process, instance, revision, measurement, "
+    "investment. Catalog: branch, department, shared_resource. Atas: meeting_minute. "
+    "Documents: decomposition_tree, process_diagram, impact_effort_matrix and related overlays."
 )
+
+
+def _entity_path_param() -> dict[str, Any]:
+    return {
+        "name": "entity",
+        "in": "path",
+        "required": True,
+        "schema": {"type": "string", "enum": _ENTITY_ENUM},
+        "description": _ENTITY_DESCRIPTION,
+    }
 
 
 def _envelope_schema() -> dict[str, Any]:
@@ -204,13 +215,7 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
                 "parameters": [
-                    {
-                        "name": "entity",
-                        "in": "path",
-                        "required": True,
-                        "schema": {"type": "string", "enum": _ENTITY_ENUM},
-                        "description": _ENTITY_DESCRIPTION,
-                    },
+                    _entity_path_param(),
                     {"name": "parent_id", "in": "query", "schema": {"type": "string"}},
                     {"name": "filial_id", "in": "query", "schema": {"type": "string"}},
                     {"name": "setor_id", "in": "query", "schema": {"type": "string"}},
@@ -228,21 +233,14 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_create_record",
                 "summary": "Create a Transformômetro record",
                 "description": (
-                    "Create entity. Body `data` must match the entity schema used by the UI API "
-                    "(ProcessoCreateBody, InstanciaBody, RevisaoBody, MedicaoBody, etc.). "
-                    "For tree/diagram/overlay entities, `data` is the content document; path id is unused — "
-                    "put parent id inside `data` (`processo_id`, `instancia_id`, or `revisao_id`)."
+                    "Create record. Body `{data:{...}}` matches UI CRUD fields. "
+                    "For tree/diagram overlays, put parent id in data "
+                    "(processo_id, instancia_id, or revisao_id)."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
                 "parameters": [
-                    {
-                        "name": "entity",
-                        "in": "path",
-                        "required": True,
-                        "schema": {"type": "string", "enum": _ENTITY_ENUM},
-                        "description": _ENTITY_DESCRIPTION,
-                    },
+                    _entity_path_param(),
                 ],
                 "requestBody": {
                     "required": True,
@@ -272,13 +270,7 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
                 "parameters": [
-                    {
-                        "name": "entity",
-                        "in": "path",
-                        "required": True,
-                        "schema": {"type": "string", "enum": _ENTITY_ENUM},
-                        "description": _ENTITY_DESCRIPTION,
-                    },
+                    _entity_path_param(),
                     {"name": "id", "in": "path", "required": True, "schema": {"type": "string"}},
                 ],
                 "responses": {
@@ -293,13 +285,7 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
                 "parameters": [
-                    {
-                        "name": "entity",
-                        "in": "path",
-                        "required": True,
-                        "schema": {"type": "string", "enum": _ENTITY_ENUM},
-                        "description": _ENTITY_DESCRIPTION,
-                    },
+                    _entity_path_param(),
                     {"name": "id", "in": "path", "required": True, "schema": {"type": "string"}},
                 ],
                 "requestBody": {
@@ -323,13 +309,7 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
                 "parameters": [
-                    {
-                        "name": "entity",
-                        "in": "path",
-                        "required": True,
-                        "schema": {"type": "string", "enum": _ENTITY_ENUM},
-                        "description": _ENTITY_DESCRIPTION,
-                    },
+                    _entity_path_param(),
                     {"name": "id", "in": "path", "required": True, "schema": {"type": "string"}},
                 ],
                 "responses": {
@@ -469,9 +449,14 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "security": [],
                 "responses": {
                     "200": {
-                        "description": "OpenAPI 3.0 document",
+                        "description": "JSON document used to import Actions",
                         "content": {
-                            "application/json": {"schema": {"type": "object"}}
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": True,
+                                }
+                            }
                         },
                     }
                 },
