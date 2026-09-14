@@ -7,18 +7,18 @@ from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, Field
 
 from tv_app.application.services.playlist_access_service import PlaylistAccessService
-from tv_app.application.services.presentation_change_notifier import notify_presentation_changed
 from tv_app.application.services.presentation_transition_catalog import TRANSITION_STYLE_PATTERN
+from tv_app.application.services.tv_presentation_write_service import (
+    PresentationWriteError,
+    TvPresentationWriteService,
+)
 from tv_app.core.responses import fail, ok
 from tv_app.infrastructure.persistence.repositories.playlist_repository import (
-    MainSectionProtectedError,
     PlaylistNotFoundError,
     PlaylistRepository,
-    SectionNotFoundError,
 )
 from tv_app.interface.http.playlist_access_http import is_access_error, require_playlist_access
 from tv_app.interface.http.playlist_revision_http import (
-    assert_playlist_revision_or_conflict,
     parse_if_match_revision,
     revision_response_headers,
     with_revision,
@@ -26,6 +26,7 @@ from tv_app.interface.http.playlist_revision_http import (
 
 router = APIRouter(prefix="/playlists/{playlist_id}/sections", tags=["Sections"])
 _repo = PlaylistRepository()
+_writes = TvPresentationWriteService(repo=_repo)
 _access = PlaylistAccessService()
 
 
@@ -64,20 +65,15 @@ def _actor_id(user: Any) -> str | None:
 
 
 def _ok_with_revision(data: Any, *, playlist_id: UUID, message: str = "OK", status_code: int = 200):
-    revision = _repo.get_revision(playlist_id)
+    revision = _writes.get_revision(playlist_id)
     response = ok(with_revision(data, revision), message=message, status_code=status_code)
     for key, value in revision_response_headers(revision).items():
         response.headers[key] = value
     return response
 
 
-def _guard_revision(request: Request, playlist_id: UUID):
-    conflict = assert_playlist_revision_or_conflict(
-        _repo, playlist_id, expected=parse_if_match_revision(request)
-    )
-    if not isinstance(conflict, int):
-        return conflict
-    return None
+def _map_write_error(exc: PresentationWriteError):
+    return fail(exc.message, exc.status_code, data=exc.details or None)
 
 
 @router.get("")
@@ -98,16 +94,20 @@ def ensure_main_section(request: Request, playlist_id: UUID):
     if is_access_error(guarded):
         return guarded
     user, _ = guarded
-    blocked = _guard_revision(request, playlist_id)
-    if blocked is not None:
-        return blocked
     try:
+        _writes.assert_expected_revision(playlist_id, parse_if_match_revision(request))
         section = _repo.ensure_main_section(
             playlist_id,
             actor_user_id=_actor_id(user) or "unknown",
         )
+    except PresentationWriteError as exc:
+        return _map_write_error(exc)
     except PlaylistNotFoundError:
         return fail("Programação não encontrada.", status_code=404)
+    from tv_app.application.services.presentation_change_notifier import (
+        notify_presentation_changed,
+    )
+
     notify_presentation_changed(
         playlist_id=str(playlist_id),
         reason="section_main_ensured",
@@ -121,22 +121,15 @@ def create_section(request: Request, playlist_id: UUID, body: CreateSectionBody)
     if is_access_error(guarded):
         return guarded
     user, _ = guarded
-    blocked = _guard_revision(request, playlist_id)
-    if blocked is not None:
-        return blocked
-    payload = body.model_dump(exclude_none=True)
     try:
-        section = _repo.add_section(
+        section = _writes.add_section(
             playlist_id,
-            payload,
+            body.model_dump(exclude_none=True),
             actor_user_id=_actor_id(user) or "unknown",
+            expected_revision=parse_if_match_revision(request),
         )
-    except PlaylistNotFoundError:
-        return fail("Programação não encontrada.", status_code=404)
-    notify_presentation_changed(
-        playlist_id=str(playlist_id),
-        reason="section_created",
-    )
+    except PresentationWriteError as exc:
+        return _map_write_error(exc)
     return _ok_with_revision(section, playlist_id=playlist_id, status_code=201)
 
 
@@ -151,25 +144,16 @@ def update_section(
     if is_access_error(guarded):
         return guarded
     user, _ = guarded
-    blocked = _guard_revision(request, playlist_id)
-    if blocked is not None:
-        return blocked
-    payload = body.model_dump(exclude_unset=True)
     try:
-        section = _repo.update_section(
+        section = _writes.update_section(
             playlist_id,
             section_id,
-            payload,
+            body.model_dump(exclude_unset=True),
             actor_user_id=_actor_id(user) or "unknown",
+            expected_revision=parse_if_match_revision(request),
         )
-    except PlaylistNotFoundError:
-        return fail("Programação não encontrada.", status_code=404)
-    except SectionNotFoundError:
-        return fail("Seção não encontrada.", status_code=404)
-    notify_presentation_changed(
-        playlist_id=str(playlist_id),
-        reason="section_updated",
-    )
+    except PresentationWriteError as exc:
+        return _map_write_error(exc)
     return _ok_with_revision(section, playlist_id=playlist_id)
 
 
@@ -184,26 +168,16 @@ def delete_section(
     if is_access_error(guarded):
         return guarded
     user, _ = guarded
-    blocked = _guard_revision(request, playlist_id)
-    if blocked is not None:
-        return blocked
     try:
-        _repo.delete_section(
+        _writes.delete_section(
             playlist_id,
             section_id,
             actor_user_id=_actor_id(user) or "unknown",
             delete_slides=deleteSlides,
+            expected_revision=parse_if_match_revision(request),
         )
-    except PlaylistNotFoundError:
-        return fail("Programação não encontrada.", status_code=404)
-    except SectionNotFoundError:
-        return fail("Seção não encontrada.", status_code=404)
-    except MainSectionProtectedError:
-        return fail("A seção principal não pode ser excluída.", status_code=409)
-    notify_presentation_changed(
-        playlist_id=str(playlist_id),
-        reason="section_deleted",
-    )
+    except PresentationWriteError as exc:
+        return _map_write_error(exc)
     return _ok_with_revision({"deleted": True}, playlist_id=playlist_id)
 
 
@@ -213,20 +187,14 @@ def reorder_sections(request: Request, playlist_id: UUID, body: ReorderBody):
     if is_access_error(guarded):
         return guarded
     user, _ = guarded
-    blocked = _guard_revision(request, playlist_id)
-    if blocked is not None:
-        return blocked
     items = [{"id": str(item.id), "sortOrder": item.sortOrder} for item in body.items]
     try:
-        sections = _repo.reorder_sections(
+        sections = _writes.reorder_sections(
             playlist_id,
             items,
             actor_user_id=_actor_id(user) or "unknown",
+            expected_revision=parse_if_match_revision(request),
         )
-    except PlaylistNotFoundError:
-        return fail("Programação não encontrada.", status_code=404)
-    notify_presentation_changed(
-        playlist_id=str(playlist_id),
-        reason="sections_reordered",
-    )
+    except PresentationWriteError as exc:
+        return _map_write_error(exc)
     return _ok_with_revision({"items": sections}, playlist_id=playlist_id)

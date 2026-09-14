@@ -129,6 +129,15 @@ Composites rota → visual + bind:
 | QR / editores / admin playlist | **Fora** | Governança |
 | Script M / DAX / SQL livre | **Fora** | Intencional (`mForbidden`) |
 
+## Custom GPT Actions (consumer externo)
+
+Façade OAuth em `/gpt-actions/v1` (ver `docs/gpt-actions/custom-gpt-actions.md`).
+
+- **Não** é owner do catálogo — continua `tv_copilot_content.json` / Copilot services.
+- PREPARE = suggest/preview; ACT = `gpt_commit_change` via `TvPresentationWriteService`
+  (mesmo write boundary das rotas CRUD UI). Sem loopback HTTP.
+- Draft local do MFE permanece `unavailable_external` para o Custom GPT.
+
 ## Chat base (consumer)
 
 - Skill genérica: `tv-dashboard-copilot` (sem listar ops no markdown)

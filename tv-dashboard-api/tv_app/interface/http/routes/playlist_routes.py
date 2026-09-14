@@ -24,6 +24,7 @@ from tv_app.application.services.tv_deck_package_service import (
     TvDeckPackageError,
     TvDeckPackageService,
 )
+from tv_app.application.services.tv_presentation_write_service import TvPresentationWriteService
 from tv_app.application.services.viewport_profile_service import normalize_playlist_viewport_update
 from tv_app.core.responses import fail, ok
 from tv_app.core.security import TV_ADMIN, TV_READ, TV_WRITE, assert_permission, can
@@ -36,6 +37,7 @@ from tv_app.interface.http.playlist_access_http import is_access_error, require_
 
 router = APIRouter(prefix="/playlists", tags=["Playlists"])
 _repo = PlaylistRepository()
+_writes = TvPresentationWriteService(repo=_repo)
 _present = PresentationPayloadService()
 _access = PlaylistAccessService()
 _deck_package = TvDeckPackageService()
@@ -127,10 +129,10 @@ def create_playlist(request: Request, body: CreatePlaylistBody):
     created_by = _actor_id(user)
     if not created_by:
         return fail("Usuário não identificado.", 401)
-    playlist = _repo.create(
+    playlist = _writes.create_playlist(
         name=body.name,
         description=body.description,
-        created_by=created_by,
+        actor_user_id=created_by,
     )
     playlist["accessRole"] = "owner"
     return ok(_with_public_url(playlist), message="Programação criada.", status_code=201)

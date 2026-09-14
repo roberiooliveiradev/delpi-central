@@ -339,15 +339,20 @@ def test_update_and_delete_slide_scope_mutation_by_playlist():
     playlist_id = uuid4()
     slide_id = uuid4()
     repo = MagicMock()
+    repo.get_revision.return_value = 1
     repo.update_slide.return_value = {"id": str(slide_id)}
+    writes = slide_routes.TvPresentationWriteService(repo=repo)
 
     with (
         patch.object(slide_routes, "_repo", repo),
+        patch.object(slide_routes, "_writes", writes),
         patch(
             "tv_app.interface.http.routes.slide_routes.require_playlist_access",
             return_value=_access(playlist_id),
         ),
-        patch.object(slide_routes, "notify_presentation_changed"),
+        patch(
+            "tv_app.application.services.tv_presentation_write_service.notify_presentation_changed"
+        ),
     ):
         update_response = slide_routes.update_slide(
             _request(),

@@ -10,11 +10,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
 from delpi_auth.credential_guard import check_credentials
+from tv_app.application.gpt_actions import CUSTOM_GPT_CORS_ORIGINS
 from tv_app.config import settings
 from tv_app.core.responses import fail
 from tv_app.interface.http.routes.data_api_routes import router as data_api_router
 from tv_app.interface.http.routes.data_routes import router as data_routes_router
 from tv_app.interface.http.routes.content_routes import router as content_router
+from tv_app.interface.http.routes.gpt_actions_routes import router as gpt_actions_router
 from tv_app.interface.http.routes.media_routes import router as media_router
 from tv_app.interface.http.routes.native_screen_routes import router as native_screen_router
 from tv_app.application.services.presentation_realtime_hub import presentation_realtime_hub
@@ -36,7 +38,7 @@ logging.basicConfig(
 
 
 def build_allowed_origins() -> list[str]:
-    origins: set[str] = set()
+    origins: set[str] = set(CUSTOM_GPT_CORS_ORIGINS)
     if settings.PUBLIC_BASE_URL:
         origins.add(settings.PUBLIC_BASE_URL.rstrip("/"))
     if settings.VITE_KC_URL:
@@ -135,5 +137,6 @@ app.include_router(template_router)
 app.include_router(native_screen_router)
 app.include_router(data_routes_router)
 app.include_router(data_api_router)
+app.include_router(gpt_actions_router)
 app.include_router(public_router)
 app.include_router(presentation_realtime_router)

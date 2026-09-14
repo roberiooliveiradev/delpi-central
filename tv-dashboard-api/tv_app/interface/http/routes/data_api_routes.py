@@ -635,7 +635,12 @@ def copilot_preview_patch(request: Request, body: CopilotPatchBody):
 
 @router.post("/copilot/apply-patch")
 def copilot_apply_patch(request: Request, body: CopilotPatchBody):
-    """Aplica patch tipado: persiste native_config / playlist + notify (cache + WS)."""
+    """Planner de compatibilidade — não persiste.
+
+    Retorna o mesmo plano do preview com ``persisted=false`` e
+    ``executionMode=crud_http``. Persistência ocorre via writer canônico
+    (CRUD ``/playlists/**`` ou ``POST /gpt-actions/v1/changes/commit``).
+    """
     user = resolve_user(request)
     try:
         assert_permission(user, TV_WRITE)

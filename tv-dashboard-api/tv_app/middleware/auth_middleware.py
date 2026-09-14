@@ -9,7 +9,14 @@ from tv_app.middleware.media_access_token import (
 )
 
 PUBLIC_PREFIXES: tuple[str, ...] = ("/public/",)
-PUBLIC_EXACT: frozenset[str] = frozenset({"/public", "/health"})
+PUBLIC_EXACT: frozenset[str] = frozenset(
+    {
+        "/public",
+        "/health",
+        # Custom GPT import — exact schema path only (fail-closed; never prefix /gpt-actions/).
+        "/gpt-actions/v1/openapi.json",
+    }
+)
 
 
 def _strip_root_path(request: Request) -> str:
