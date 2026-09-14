@@ -4,7 +4,7 @@
 **Produto:** aplicação standalone nova  
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Rastreabilidade:** [`25-requirements-traceability.md`](./25-requirements-traceability.md) — `CP-001…CP-310`  
+**Rastreabilidade:** [`25-requirements-traceability.md`](./25-requirements-traceability.md) — `CP-001…CP-316`  
 **Specs temáticas:** `53–66`
 
 ## 1. Definição
@@ -17,6 +17,7 @@ Não é Chat+RAG. O target é:
 Continuous Operational Intelligence
 + Decision Intelligence
 + Governed Automation Orchestration
++ Durable / Recurring Governed Work
 + Process Intelligence
 + Analytical / Predictive / Scenario Intelligence
 + AI Governance
@@ -26,7 +27,7 @@ Possui API/MFE/persistence/manifest/deploy próprios e não depende do Minha DEL
 
 ## 2. North Star
 
-> Entender contexto interno e externo, perceber mudanças, explicar processos, pesquisar, analisar, prever, simular, decidir dentro de políticas, coordenar trabalho e automações, verificar resultados, produzir artefatos e transformar experiência validada em conhecimento — preservando authorities, privacidade, segurança e controle humano.
+> Entender contexto interno e externo, perceber mudanças e tempo, explicar processos, pesquisar, analisar, prever, simular, decidir dentro de políticas, coordenar trabalho pontual ou recorrente e automações, verificar resultados, produzir artefatos e transformar experiência validada em conhecimento — preservando authorities, privacidade, segurança e controle humano.
 
 ## 3. Information/operational spaces
 
@@ -40,8 +41,8 @@ PUBLIC INTERNET
 CONNECTED SOURCES
 → Microsoft 365/Teams, Google, WhatsApp Business, etc.
 
-PROCESS / EVENT SPACE
-→ event logs, Watches, Process Intelligence
+PROCESS / EVENT / TIME SPACE
+→ event logs, Watches, Recurring Governed Work, Process Intelligence
 
 ANALYTICAL / MODEL SPACE
 → Semantic Layer, Sandbox, Predictive/Twin
@@ -60,10 +61,13 @@ Core API       = apps/routes/RBAC/governance
 Portal         = host/navigation/published context
 Domain APIs    = business data/rules/actions
 Providers      = external resources/scopes
-DÉLIA          = intelligence/context/Evidence/Policy/Decision/Work/orchestration/outcome coordination
+DÉLIA          = intelligence/context/Evidence/Policy/Decision/Work/RecurringWork/orchestration/outcome coordination
 Automation Hub = technical execution
+Scheduler      = technical time-trigger materialization; physical owner TO_INVENTORY until C0
 OT/Safety      = machine/safety authority
 ```
+
+Scheduler/timer nunca se torna business/permission authority por materializar horário.
 
 ## 4. Surfaces
 
@@ -73,7 +77,7 @@ WORKSPACE
 MEETING
 FRONTLINE
 TEAMS future surface
-BACKGROUND Watches/Workflows
+BACKGROUND Watches/Workflows/Recurring Work
 ADMIN governance surfaces
 ```
 
@@ -94,6 +98,8 @@ External A2A agents são integrações, não alternativas user-facing à DÉLIA.
 - no CoT persistence;
 - Personal Memory for user preferences/continuity with inspect/correct/delete/disable controls;
 - memory never grants permission or overrides live business truth.
+
+Conversation pode originar Recurring Work por use case autorizado, mas o Work recorrente não depende da sessão permanecer aberta.
 
 ## 7. Business capabilities
 
@@ -135,11 +141,11 @@ Human Observation is limited to observable process evidence, not personality/emo
 
 ## 10. Event-Driven Operational Intelligence
 
-The user is not the only trigger.
+The user is not the only trigger. Time can also be a deterministic trigger under a frozen scheduling contract.
 
 ```text
-EVENT/SIGNAL
-→ validate/normalize EventEnvelope
+EVENT / SIGNAL / TIME OCCURRENCE
+→ validate/normalize
 → dedupe/correlate
 → context
 → FAST | OPERATIONAL | REASONING decision path
@@ -147,6 +153,12 @@ EVENT/SIGNAL
 ```
 
 Not every event calls an LLM. Deterministic readiness uses structured rules when criteria exist.
+
+```text
+event payload != permission
+timer tick != permission
+schedule != permission
+```
 
 C5 may allow governed ACT for explicit capabilities. C6 keeps Watch autonomous ACT disabled by default. C7 adds selected advanced autonomy/Watch ACT; L5 remains OFF by default.
 
@@ -168,6 +180,93 @@ official API
 Planner works with semantic capabilities such as `billing.invoice.issue`, never clicks/selectors.
 
 Technical executor success is separated from verified business Outcome. Automation Hub never becomes business/permission authority or a second DÉLIA planner/workflow authority.
+
+### 11.1 Recurring Governed Work / Scheduling
+
+Recurring Governed Work is a first-class `TARGET` capability, traced by `CP-311–CP-316`.
+
+A user/owner authorized to do so can define persistent bounded Work such as:
+
+> “Todos os dias às 09:00 gere o relatório de produção do dia anterior e envie por email para a diretoria.”
+
+This is **not** “the LLM remembering to wake up”. The recurrence is persistent and deterministic and survives the initiating chat/session.
+
+Minimum product lifecycle target:
+
+```text
+CREATE
+INSPECT / LIST
+PAUSE
+RESUME
+CANCEL
+```
+
+Definition semantics include, when applicable:
+
+```text
+owner/creator refs
+versioned Work template/definition
+recurrence/calendar expression
+IANA timezone
+startAt/endAt
+capability/scope/target refs
+policy ref
+misfire/missed-run policy
+overlap/concurrency policy
+failure/retry policy
+lifecycle status
+```
+
+DÉLIA owns the governed Work definition/lifecycle/correlation when C0 confirms the state boundary. The physical timer/scheduler owner is independently inventoried in C0 and owns timer/job runtime mechanics. It may be platform reuse, a neutral shared capability or a new adapter/implementation only after the Abstraction Gate.
+
+Each temporal occurrence is a distinct correlated/idempotent execution opportunity. Duplicate tick, retry, process restart or reconciliation must not duplicate a material effect.
+
+Authorization invariants:
+
+```text
+schedule != permission
+stored intent != eternal authorization
+timer/scheduler identity != business actor
+physical scheduler success != business Outcome
+```
+
+Every material occurrence re-resolves the current user/service actor and revalidates live Core/domain AuthZ, Policy/Decision, connection/provider status, current source permissions and capability limits before ACT.
+
+If the creator loses access, leaves the organization, a connection is revoked, recipients/scope become invalid or policy changes, future occurrences block/degrade/pause truthfully rather than reusing stale authorization.
+
+Phase semantics:
+
+```text
+C0 = inventory/freeze scheduler owner + recurrence/timezone/misfire/overlap/idempotency/AuthZ contract
+C5 = Recurring Governed Work runtime; bounded L4 ACT may execute under live gates
+C6 = schedule/admin/history UX; Watch still has no autonomous ACT by default
+C7 = not required for bounded C5 recurring L4; only advanced autonomy/L5 remains C7
+```
+
+Recurring Work is therefore distinct from Watch autonomous ACT.
+
+Canonical report/email flow:
+
+```text
+RecurringWorkDefinition
+→ deterministic time occurrence
+→ one correlated occurrence/idempotency key
+→ current user/service identity
+→ live AuthZ + Policy/Decision
+→ authorized previous-period reads
+→ grounded/versioned report Artifact
+→ PREPARE communication send intent
+→ revalidate recipient/connection/write capability
+→ communication.email.send
+→ provider/executor technical result
+→ authoritative/contractual Outcome verification when available
+→ Evidence + Audit + Outcome
+```
+
+```text
+report generated != email authorized
+provider accepted != verified final outcome automatically
+```
 
 ## 12. Process Intelligence
 
@@ -283,6 +382,7 @@ DÉLIA runtime
 models
 Watches
 workflows
+recurring Work definitions/outcomes projection
 automations/RPAs
 connectors
 MCP/A2A
@@ -339,6 +439,8 @@ ACT — only when the Watch itself is explicitly approved for autonomous ACT und
 
 This does **not** mean all ACT is deferred to C7. Governed L4 execution of explicit capabilities may exist from C5 through authorized/confirmed flows. Watch in C6 remains `OBSERVE|ADVISE|PREPARE` by default.
 
+Recurring Governed Work is not represented by enabling `Watch ACT`: a recurring time trigger is a previously defined bounded Work recurrence whose material occurrences still pass C5 live gates.
+
 ## 26. Organizational Knowledge / Governed Learning
 
 ```text
@@ -356,7 +458,7 @@ Personal Memory, one successful automation run or public webpage never auto-publ
 Fundamental negatives:
 
 ```text
-permission elevation from prompt/event/tool/agent/model/package/memory
+permission elevation from prompt/event/timer/tool/agent/model/package/memory
 secret/token exposure
 cross-user external/memory leak
 Process Mining employee scoring
@@ -367,6 +469,11 @@ simulation writing production
 Edge offline authority expansion
 Marketplace install granting permission
 implicit send/write/ACT
+schedule/timer as permission authority
+stale creator authorization reused for future scheduled ACT
+duplicate timer/retry/restart causing duplicate material ACT
+paused/cancelled schedule still firing
+undefined/implicit timezone/misfire/overlap semantics
 Automation Hub becoming business permission/planner authority
 DÉLIA bypassing technical execution boundary with ad hoc executor internals
 free-form LLM/RPA/Edge→machine actuation
@@ -378,6 +485,7 @@ Role-gated product surfaces can include:
 
 ```text
 Connections
+Recurring Work / Schedule management
 Automation Hub observability/admin projection
 Process Intelligence
 AI Control Tower
@@ -389,16 +497,18 @@ Marketplace
 Edge Fleet
 ```
 
-Admin access respects separation of duties. DÉLIA admin UI may project Automation Hub state/contracts but does not become the Hub technical runtime.
+Admin access respects separation of duties. Recurring Work admin can inspect/pause/resume/cancel within its own authorization but never grants underlying domain/provider write permission. DÉLIA admin UI may project Automation Hub/scheduler state/contracts but does not become their technical runtime.
 
 ## 29. Non-functionals
 
 - standalone deployment/rollback;
 - security/privacy/data minimization;
-- provider/executor/model/tool neutrality;
+- provider/executor/model/tool/scheduler neutrality;
 - reproducible evidence/analysis;
 - source freshness/provenance;
 - idempotency/outcome verification;
+- deterministic recurrence/timezone semantics;
+- restart/retry/misfire safety for recurring occurrences;
 - cost/rate/resource budgets;
 - model/process/data quality monitoring;
 - accessibility;
@@ -434,6 +544,20 @@ stock/production/supplier data
 → verified Outcome
 ```
 
+### Recurring daily production report
+
+```text
+authorized user creates “daily 09:00 <IANA timezone>” recurring Work
+→ persisted definition independent of chat
+→ deterministic occurrence
+→ live identity/AuthZ/Policy
+→ previous-day production reads
+→ grounded/versioned report
+→ separate governed email.send
+→ no duplicate send on duplicate/retry/restart
+→ verified Outcome/Evidence/Audit
+```
+
 ### Personal daily briefing
 
 ```text
@@ -454,6 +578,6 @@ Edge cached current procedure/model
 
 ## 31. Product Complete
 
-Release complete for declared scope requires CP coverage through current authority, standalone independence, correct owners, tests/gates, safe data/model/tool lifecycle, verified outcomes, privacy/security/safety, observability/rollback and no material unresolved drift.
+Release complete for declared scope requires CP coverage through current authority (`CP-001…CP-316`), standalone independence, correct owners, tests/gates, safe data/model/tool/scheduler lifecycle, verified outcomes, privacy/security/safety, observability/rollback and no material unresolved drift.
 
 Estado real vive no execution ledger. Documentation alone does not prove runtime implementation or advance phase.
