@@ -31,14 +31,18 @@ class FakeQuery:
         self._direct = direct or []
         self._group = group or []
         self._overrides = overrides or []
+        self.direct_calls = 0
+        self.group_calls = 0
 
     def list_all_permission_codes(self):
         return self._all
 
     def list_direct_role_permissions(self, user_id):
+        self.direct_calls += 1
         return self._direct
 
     def list_group_role_permissions(self, user_id):
+        self.group_calls += 1
         return self._group
 
     def list_user_overrides(self, user_id):
@@ -49,15 +53,24 @@ class FakeQuery:
 # TESTS
 # ---------------------------------------------------------
 
-def test_superadmin_returns_all_permissions():
+def test_direct_role_permissions_only():
     uid = uuid4()
-
-    query = FakeQuery(all_permissions=["a", "b", "c"])
+    query = FakeQuery(direct=["permission.a", "permission.b"], group=[])
     resolver = PermissionResolver(query, FakeCache())
 
-    result = resolver.resolve(uid, is_superadmin=True)
+    result = resolver.resolve(uid, is_superadmin=False)
 
-    assert sorted(result) == ["a", "b", "c"]
+    assert sorted(result) == ["permission.a", "permission.b"]
+
+
+def test_group_role_permissions_only():
+    uid = uuid4()
+    query = FakeQuery(direct=[], group=["permission.c"])
+    resolver = PermissionResolver(query, FakeCache())
+
+    result = resolver.resolve(uid, is_superadmin=False)
+
+    assert sorted(result) == ["permission.c"]
 
 
 def test_resolve_merges_direct_and_group_permissions():
@@ -74,20 +87,58 @@ def test_resolve_merges_direct_and_group_permissions():
     assert sorted(result) == ["apps.manage", "dashboard.view"]
 
 
-def test_resolve_applies_overrides():
+def test_allow_override_adds_permission():
+    uid = uuid4()
+    query = FakeQuery(
+        direct=["permission.a"],
+        group=[],
+        overrides=[("permission.d", True)],
+    )
+    resolver = PermissionResolver(query, FakeCache())
+
+    result = resolver.resolve(uid, is_superadmin=False)
+
+    assert sorted(result) == ["permission.a", "permission.d"]
+
+
+def test_deny_override_removes_permission():
+    uid = uuid4()
+    query = FakeQuery(
+        direct=["permission.a", "permission.b"],
+        group=["permission.c"],
+        overrides=[("permission.b", False)],
+    )
+    resolver = PermissionResolver(query, FakeCache())
+
+    result = resolver.resolve(uid, is_superadmin=False)
+
+    assert sorted(result) == ["permission.a", "permission.c"]
+
+
+def test_resolve_applies_allow_and_deny_overrides_together():
     uid = uuid4()
 
     query = FakeQuery(
-        direct=["a", "b"],
-        group=[],
-        overrides=[("b", False), ("c", True)],
+        direct=["permission.a", "permission.b"],
+        group=["permission.c"],
+        overrides=[("permission.b", False), ("permission.d", True)],
     )
 
     resolver = PermissionResolver(query, FakeCache())
     result = resolver.resolve(uid, is_superadmin=False)
 
-    # b removido, c adicionado
-    assert sorted(result) == ["a", "c"]
+    assert sorted(result) == ["permission.a", "permission.c", "permission.d"]
+
+
+def test_superadmin_returns_all_permissions():
+    uid = uuid4()
+
+    query = FakeQuery(all_permissions=["a", "b", "c"])
+    resolver = PermissionResolver(query, FakeCache())
+
+    result = resolver.resolve(uid, is_superadmin=True)
+
+    assert sorted(result) == ["a", "b", "c"]
 
 
 def test_cache_is_used():
@@ -101,6 +152,19 @@ def test_cache_is_used():
     result = resolver.resolve(uid, is_superadmin=False)
 
     assert result == ["cached"]
+    assert query.direct_calls == 0
+
+
+def test_cache_is_populated_on_resolve():
+    uid = uuid4()
+    cache = FakeCache()
+    query = FakeQuery(direct=["permission.a"])
+    resolver = PermissionResolver(query, cache)
+
+    result = resolver.resolve(uid, is_superadmin=False)
+
+    assert result == ["permission.a"]
+    assert cache.get(str(uid)) == ["permission.a"]
 
 
 def test_cache_is_invalidated():
@@ -115,3 +179,23 @@ def test_cache_is_invalidated():
 
     resolver.invalidate(uid)
     assert cache.get(str(uid)) is None
+
+
+def test_resolve_after_invalidation_recalculates():
+    uid = uuid4()
+    cache = FakeCache()
+    query = FakeQuery(direct=["permission.a"])
+    resolver = PermissionResolver(query, cache)
+
+    first = resolver.resolve(uid, is_superadmin=False)
+    assert first == ["permission.a"]
+    assert cache.get(str(uid)) == ["permission.a"]
+
+    resolver.invalidate(uid)
+    assert cache.get(str(uid)) is None
+
+    query._direct = ["permission.a", "permission.z"]
+    second = resolver.resolve(uid, is_superadmin=False)
+
+    assert sorted(second) == ["permission.a", "permission.z"]
+    assert cache.get(str(uid)) == ["permission.a", "permission.z"]

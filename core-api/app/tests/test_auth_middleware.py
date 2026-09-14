@@ -60,19 +60,71 @@ class FakeUsersRepo:
 
 class FakeRbacQueries:
     def list_role_codes_by_user(self, _user_id):
-        return []
+        return ["role.direct"]
 
     def list_group_codes_by_user(self, _user_id):
-        return []
+        return ["group.ops"]
 
     def list_permission_codes_by_user(self, _user_id):
-        return []
+        # Inherited-only query — must NOT be the auth context authority.
+        return ["permission.a", "permission.b", "permission.c"]
+
+
+class FakePermissionQueries:
+    def __init__(
+        self,
+        *,
+        all_permissions=None,
+        direct=None,
+        group=None,
+        overrides=None,
+    ):
+        self._all = all_permissions or []
+        self._direct = direct or []
+        self._group = group or []
+        self._overrides = overrides or []
+        self.resolve_calls = 0
+
+    def list_all_permission_codes(self):
+        return list(self._all)
+
+    def list_direct_role_permissions(self, _user_id):
+        self.resolve_calls += 1
+        return list(self._direct)
+
+    def list_group_role_permissions(self, _user_id):
+        return list(self._group)
+
+    def list_user_overrides(self, _user_id):
+        return list(self._overrides)
+
+
+class FakeCache:
+    def __init__(self):
+        self.store = {}
+
+    def get(self, user_id):
+        return self.store.get(user_id)
+
+    def set(self, user_id, permissions):
+        self.store[user_id] = permissions
+
+    def invalidate(self, user_id):
+        self.store.pop(user_id, None)
 
 
 class FakeUow:
-    def __init__(self, existing_user=None):
+    def __init__(
+        self,
+        existing_user=None,
+        *,
+        permission_queries=None,
+        cache=None,
+    ):
         self.users = FakeUsersRepo(existing_user=existing_user)
         self.rbac_queries = FakeRbacQueries()
+        self.permission_queries = permission_queries or FakePermissionQueries()
+        self.cache = cache if cache is not None else FakeCache()
         self.session = self
         self.commits = 0
 
@@ -177,4 +229,88 @@ def test_authenticate_skips_jwt_for_integrations_service_token(app, monkeypatch)
         headers={"Authorization": "Bearer service-token-secret"},
     ):
         assert am.authenticate() is None
-        assert g.current_user is None
+        assert not hasattr(g, "current_user")
+
+
+def test_authenticate_sets_effective_permissions_via_permission_resolver(
+    app, monkeypatch
+):
+    user_id = uuid4()
+    existing = SimpleNamespace(
+        id=user_id,
+        email="user@test.com",
+        name="User",
+        is_superadmin=False,
+    )
+
+    monkeypatch.setattr(
+        am,
+        "validate_token",
+        lambda _t: {
+            "sub": str(user_id),
+            "email": "user@test.com",
+            "name": "User",
+        },
+    )
+
+    permission_queries = FakePermissionQueries(
+        direct=["permission.a", "permission.b"],
+        group=["permission.c"],
+        overrides=[("permission.b", False), ("permission.d", True)],
+    )
+    uow = FakeUow(existing_user=existing, permission_queries=permission_queries)
+    monkeypatch.setattr(am, "SqlAlchemyUnitOfWork", lambda: uow)
+
+    with app.test_request_context("/any", headers=_auth_headers()):
+        assert am.authenticate() is None
+
+        # Inherited-only would be a/b/c; effective must drop b and add d.
+        assert sorted(g.current_user.permissions) == [
+            "permission.a",
+            "permission.c",
+            "permission.d",
+        ]
+        assert g.current_user.roles == ["role.direct"]
+        assert g.current_user.groups == ["group.ops"]
+        assert g.current_user.is_superadmin is False
+        assert permission_queries.resolve_calls >= 1
+
+
+def test_authenticate_superadmin_gets_all_registered_permission_codes(
+    app, monkeypatch
+):
+    user_id = uuid4()
+    existing = SimpleNamespace(
+        id=user_id,
+        email="admin@test.com",
+        name="Admin",
+        is_superadmin=True,
+    )
+
+    monkeypatch.setattr(
+        am,
+        "validate_token",
+        lambda _t: {
+            "sub": str(user_id),
+            "email": "admin@test.com",
+            "name": "Admin",
+        },
+    )
+
+    permission_queries = FakePermissionQueries(
+        all_permissions=["permission.a", "permission.z", "rbac.manage"],
+        direct=["permission.a"],
+        group=[],
+        overrides=[],
+    )
+    uow = FakeUow(existing_user=existing, permission_queries=permission_queries)
+    monkeypatch.setattr(am, "SqlAlchemyUnitOfWork", lambda: uow)
+
+    with app.test_request_context("/any", headers=_auth_headers()):
+        assert am.authenticate() is None
+        assert sorted(g.current_user.permissions) == [
+            "permission.a",
+            "permission.z",
+            "rbac.manage",
+        ]
+        assert g.current_user.is_superadmin is True

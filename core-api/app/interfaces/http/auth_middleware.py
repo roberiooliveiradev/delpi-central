@@ -14,6 +14,7 @@ from delpi_auth.jwt_validator import validate_token
 from app.application.use_cases.send_welcome_notification_use_case import (
     SendWelcomeNotificationUseCase,
 )
+from app.domain.services.permission_resolver import PermissionResolver
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
 
 logger = logging.getLogger(__name__)
@@ -109,7 +110,10 @@ def authenticate():
 
         roles = uow.rbac_queries.list_role_codes_by_user(user.id)
         groups = uow.rbac_queries.list_group_codes_by_user(user.id)
-        permissions = uow.rbac_queries.list_permission_codes_by_user(user.id)
+        permissions = PermissionResolver(
+            uow.permission_queries,
+            uow.cache,
+        ).resolve(user.id, bool(user.is_superadmin))
 
     if is_new_user and user:
         try:
