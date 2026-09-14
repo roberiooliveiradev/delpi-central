@@ -44,7 +44,7 @@ PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 | `gpt_meeting_minute_workflow` | `POST .../meeting-minutes/{id}/workflow` |
 | `gpt_commit_improvement_package` | `POST .../improvement-packages` (`dry_run` → commit orquestrado) |
 
-`gpt_get_process_context` monta o Process Business Graph / Process Intelligence Context a partir dos records e services canônicos. Sem persistência de grafo. Diagramas/WBS podem ser **rascunhados** na conversa; persistência validada desses artefatos via GPT ainda não tem paridade com as rotas canônicas — use a UI.
+`gpt_get_process_context` monta o Process Business Graph / Process Intelligence Context a partir dos records e services canônicos. Sem persistência de grafo. Comparativo/composição/stats ficam restritos ao escopo de filial visível. Distinga `as_is` (AS_IS), `current_composed` (CURRENT_COMPOSED) e `to_be` (TO_BE). `surface_supports` ≠ autorização de write. Diagramas/WBS: rascunho na conversa; persistência validada via GPT ainda não — use a UI.
 
 `GET .../openapi.json` continua público só para o botão **Importar de URL**. Não entra no schema: o GPT Builder trata esse path como OpenAPI 3.1 e rejeita o documento.
 

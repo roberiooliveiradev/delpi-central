@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contextlib import ExitStack
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -636,13 +637,8 @@ def test_openapi_includes_improvement_package():
     assert count_operations(doc) == 13
 
 
-def test_process_context_positive():
-    from tm_app.application.gpt_actions.process_context_service import (
-        ProcessContextService,
-    )
-
-    request = MagicMock()
-    with (
+def _process_context_patches():
+    return [
         patch(
             "tm_app.application.gpt_actions.process_context_service.require_transformometro_view_access",
             return_value=None,
@@ -652,49 +648,82 @@ def test_process_context_positive():
             return_value=None,
         ),
         patch(
-            "tm_app.application.gpt_actions.process_context_service.ProcessoRepository"
-        ) as proc_cls,
+            "tm_app.application.gpt_actions.process_context_service.check_instancia_view_access",
+            return_value=None,
+        ),
         patch(
-            "tm_app.application.gpt_actions.process_context_service.ProcessoSetupStatsService"
-        ) as stats_cls,
+            "tm_app.application.gpt_actions.process_context_service.ProcessoRepository"
+        ),
         patch(
             "tm_app.application.gpt_actions.process_context_service.ProcessoInstanciaRepository"
-        ) as inst_cls,
-        patch(
-            "tm_app.application.gpt_actions.process_context_service.filter_rows_for_access",
-            side_effect=lambda _req, rows, **_kw: rows,
         ),
         patch(
             "tm_app.application.gpt_actions.process_context_service.RevisaoRepository"
-        ) as rev_cls,
+        ),
         patch(
             "tm_app.application.gpt_actions.process_context_service.MedicaoRepository"
-        ) as med_cls,
+        ),
         patch(
             "tm_app.application.gpt_actions.process_context_service.InvestimentoRepository"
-        ) as inv_cls,
+        ),
         patch(
             "tm_app.application.gpt_actions.process_context_service.VinculoRepository"
-        ) as vin_cls,
+        ),
         patch(
             "tm_app.application.gpt_actions.process_context_service.ProcessoDiagramRepository"
-        ) as diag_cls,
+        ),
         patch(
             "tm_app.application.gpt_actions.process_context_service.ProcessoDecomposicaoRepository"
-        ) as decomp_cls,
+        ),
         patch(
             "tm_app.application.gpt_actions.process_context_service.ProcessRevisionCompareService"
-        ) as cmp_cls,
+        ),
         patch(
             "tm_app.application.gpt_actions.process_context_service.RevisaoImpactEffortMatrixService"
         ),
         patch(
             "tm_app.application.gpt_actions.process_context_service.DiagramaCompositionService"
-        ) as dcomp_cls,
+        ),
         patch(
             "tm_app.application.gpt_actions.process_context_service.DecomposicaoCompositionService"
         ),
-    ):
+    ]
+
+
+def _enter_process_context_patches(stack: ExitStack):
+    return tuple(stack.enter_context(p) for p in _process_context_patches())
+
+
+def test_process_context_positive():
+    from tm_app.application.gpt_actions.process_context_service import (
+        ProcessContextService,
+    )
+
+    request = MagicMock()
+    with ExitStack() as stack:
+        (
+            _view,
+            _proc_view,
+            _inst_view,
+            proc_cls,
+            inst_cls,
+            rev_cls,
+            med_cls,
+            inv_cls,
+            vin_cls,
+            diag_cls,
+            decomp_cls,
+            cmp_cls,
+            _matrix,
+            dcomp_cls,
+            _decomp_comp,
+        ) = _enter_process_context_patches(stack)
+        stack.enter_context(
+            patch(
+                "tm_app.application.gpt_actions.process_context_service.filter_rows_for_access",
+                side_effect=lambda _req, rows, **_kw: rows,
+            )
+        )
         pid = "pppppppp-pppp-pppp-pppp-pppppppppppp"
         iid = "iiiiiiii-iiii-iiii-iiii-iiiiiiiiiiii"
         bid = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
@@ -704,7 +733,6 @@ def test_process_context_positive():
             "nome_processo": "Fechamento",
             "status_processo": "ativo",
         }
-        stats_cls.return_value.enrich_processos.side_effect = lambda rows: rows
         inst_cls.return_value.list_by_processo.return_value = [
             {
                 "instancia_id": iid,
@@ -741,9 +769,14 @@ def test_process_context_positive():
         }
         inv_cls.return_value.list_by_revisao.return_value = []
         vin_cls.return_value.list_by_revisao.return_value = []
-        diag_cls.return_value.get.return_value = {"conteudo": {"format": "flowchart_v1"}}
+        diag_cls.return_value.get.return_value = {
+            "conteudo": {"format": "flowchart_v1", "nodes": [{"id": "n1"}]}
+        }
         decomp_cls.return_value.get.return_value = None
-        cmp_cls.return_value.compare.return_value = {"items": []}
+        cmp_cls.return_value.compare.return_value = {
+            "total_revisoes": 2,
+            "items": [{"revisao_id": bid}, {"revisao_id": sid}],
+        }
         dcomp_cls.return_value.compose_for_processo.return_value = {
             "mermaid": "flowchart TD; A-->B"
         }
@@ -751,13 +784,372 @@ def test_process_context_positive():
         result = ProcessContextService().get_context(request, process_id=pid)
 
     assert result["context_version"] == "process_intelligence_context_v1"
-    assert result["capabilities"]["side_effect"] is False
-    assert result["capabilities"]["persist_diagram_via_gpt"] is False
+    assert "capabilities" not in result
+    assert result["surface_supports"]["side_effect"] is False
+    assert result["surface_supports"]["persist_diagram_via_gpt"] is False
+    assert "write_records" not in result["surface_supports"]
+    assert result["as_is"]["role"] == "AS_IS"
+    assert result["as_is"]["mermaid"] is None
+    assert result["as_is"]["diagram"]["epistemic_status"] == "UNKNOWN"
+    assert result["current_composed"]["role"] == "CURRENT_COMPOSED"
+    assert result["current_composed"]["mermaid"] == "flowchart TD; A-->B"
+    assert result["process"]["visible_scope_stats"]["instancia_count"] == 1
+    assert "setup_stats" not in result["process"]
+    dcomp_cls.return_value.compose_for_processo.assert_called_once()
+    assert (
+        dcomp_cls.return_value.compose_for_processo.call_args.kwargs["instancia_id"]
+        == iid
+    )
     assert any(n["type"] == "process" for n in result["process_graph"]["nodes"])
     assert any(e["type"] == "has_instance" for e in result["process_graph"]["edges"])
     assert any(e["type"] == "references" for e in result["process_graph"]["edges"])
     assert "decomposition_tree" in result["data_quality"]["missing"]
     assert result["as_is"]["epistemic_status"] == "OBSERVED"
+
+
+def test_process_context_hides_forbidden_branch_instance_and_comparison():
+    from tm_app.application.gpt_actions.process_context_service import (
+        ProcessContextService,
+    )
+
+    request = MagicMock()
+    pid = "pppppppp-pppp-pppp-pppp-pppppppppppp"
+    iid_a = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    iid_b = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+    rid_a = "raaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    rid_b = "rbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+
+    def _filter_visible(_req, rows, **_kw):
+        return [r for r in rows if str(r.get("codigo_filial")) == "01"]
+
+    with ExitStack() as stack:
+        (
+            _view,
+            _proc_view,
+            _inst_view,
+            proc_cls,
+            inst_cls,
+            rev_cls,
+            med_cls,
+            inv_cls,
+            vin_cls,
+            diag_cls,
+            decomp_cls,
+            cmp_cls,
+            matrix_cls,
+            dcomp_cls,
+            decomp_comp_cls,
+        ) = _enter_process_context_patches(stack)
+        stack.enter_context(
+            patch(
+                "tm_app.application.gpt_actions.process_context_service.filter_rows_for_access",
+                side_effect=_filter_visible,
+            )
+        )
+        proc_cls.return_value.get.return_value = {
+            "processo_id": pid,
+            "nome_processo": "Proc",
+        }
+        inst_cls.return_value.list_by_processo.return_value = [
+            {
+                "instancia_id": iid_a,
+                "processo_id": pid,
+                "codigo_filial": "01",
+                "resumo_melhoria": "A",
+            },
+            {
+                "instancia_id": iid_b,
+                "processo_id": pid,
+                "codigo_filial": "02",
+                "resumo_melhoria": "B forbidden",
+            },
+        ]
+        rev_cls.return_value.list_by_processo.return_value = [
+            {
+                "revisao_id": rid_a,
+                "processo_id": pid,
+                "instancia_id": iid_a,
+                "cenario_tipo": "baseline",
+                "data_inicio_vigencia": "2026-01-01",
+            },
+            {
+                "revisao_id": rid_b,
+                "processo_id": pid,
+                "instancia_id": iid_b,
+                "cenario_tipo": "melhoria",
+                "data_inicio_vigencia": "2026-02-01",
+                "revisao_ativa": True,
+            },
+        ]
+        med_cls.return_value.get_by_revisao.return_value = None
+        inv_cls.return_value.list_by_revisao.return_value = []
+        vin_cls.return_value.list_by_revisao.return_value = []
+        diag_cls.return_value.get.return_value = None
+        decomp_cls.return_value.get.return_value = None
+        cmp_cls.return_value.compare.return_value = {
+            "total_revisoes": 2,
+            "items": [
+                {"revisao_id": rid_a, "cenario_tipo": "baseline"},
+                {"revisao_id": rid_b, "cenario_tipo": "melhoria"},
+            ],
+        }
+        dcomp_cls.return_value.compose_for_processo.return_value = {
+            "mermaid": "SAFE_A_ONLY"
+        }
+        decomp_comp_cls.return_value.compose_for_processo.return_value = {}
+
+        result = ProcessContextService().get_context(request, process_id=pid)
+
+    instance_ids = {i["instancia_id"] for i in result["instances"]}
+    revision_ids = {r["revisao_id"] for r in result["revisions"]}
+    compare_ids = {i["revisao_id"] for i in result["comparison"]["items"]}
+    assert iid_a in instance_ids
+    assert iid_b not in instance_ids
+    assert rid_b not in revision_ids
+    assert rid_b not in compare_ids
+    assert result["comparison"]["total_revisoes"] == 1
+    assert result["process"]["visible_scope_stats"]["instancia_count"] == 1
+    assert result["current_composed"]["mermaid"] == "SAFE_A_ONLY"
+    dcomp_cls.return_value.compose_for_processo.assert_called_once()
+    assert (
+        dcomp_cls.return_value.compose_for_processo.call_args.kwargs["instancia_id"]
+        == iid_a
+    )
+    matrix_cls.return_value.build_for_instancia.assert_called_once_with(iid_a)
+
+
+def test_process_context_forbidden_overlay_not_composed_without_instance():
+    from tm_app.application.gpt_actions.process_context_service import (
+        ProcessContextService,
+    )
+
+    request = MagicMock()
+    pid = "pppppppp-pppp-pppp-pppp-pppppppppppp"
+    iid_a = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    iid_b = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+
+    with ExitStack() as stack:
+        (
+            _view,
+            _proc_view,
+            _inst_view,
+            proc_cls,
+            inst_cls,
+            rev_cls,
+            med_cls,
+            inv_cls,
+            vin_cls,
+            diag_cls,
+            decomp_cls,
+            cmp_cls,
+            _matrix,
+            dcomp_cls,
+            decomp_comp_cls,
+        ) = _enter_process_context_patches(stack)
+        stack.enter_context(
+            patch(
+                "tm_app.application.gpt_actions.process_context_service.filter_rows_for_access",
+                side_effect=lambda _req, rows, **_kw: rows,
+            )
+        )
+        proc_cls.return_value.get.return_value = {"processo_id": pid, "nome_processo": "P"}
+        inst_cls.return_value.list_by_processo.return_value = [
+            {"instancia_id": iid_a, "processo_id": pid, "codigo_filial": "01"},
+            {"instancia_id": iid_b, "processo_id": pid, "codigo_filial": "01"},
+        ]
+        rev_cls.return_value.list_by_processo.return_value = [
+            {
+                "revisao_id": "r1",
+                "instancia_id": iid_a,
+                "cenario_tipo": "baseline",
+                "data_inicio_vigencia": "2026-01-01",
+            },
+            {
+                "revisao_id": "r2",
+                "instancia_id": iid_b,
+                "cenario_tipo": "melhoria",
+                "data_inicio_vigencia": "2026-02-01",
+                "revisao_ativa": True,
+            },
+        ]
+        med_cls.return_value.get_by_revisao.return_value = None
+        inv_cls.return_value.list_by_revisao.return_value = []
+        vin_cls.return_value.list_by_revisao.return_value = []
+        diag_cls.return_value.get.return_value = {"conteudo": {"nodes": []}}
+        decomp_cls.return_value.get.return_value = None
+        cmp_cls.return_value.compare.return_value = {"items": [], "total_revisoes": 0}
+
+        result = ProcessContextService().get_context(request, process_id=pid)
+
+    assert result["selection"]["requires_instance_selection"] is True
+    assert result["selection"]["baseline_revisao_id"] is None
+    assert result["selection"]["scenario_revisao_id"] is None
+    assert "requires_instance_selection" in result["data_quality"]["ambiguities"]
+    assert result["current_composed"]["mermaid"] is None
+    assert result["current_composed"]["epistemic_status"] == "UNKNOWN"
+    dcomp_cls.return_value.compose_for_processo.assert_not_called()
+    decomp_comp_cls.return_value.compose_for_processo.assert_not_called()
+
+
+def test_process_context_revision_id_constrains_instance_selection():
+    from tm_app.application.gpt_actions.process_context_service import (
+        ProcessContextService,
+    )
+
+    request = MagicMock()
+    pid = "pppppppp-pppp-pppp-pppp-pppppppppppp"
+    iid_a = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    iid_b = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+    base_a = "baaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    scen_a = "saaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    base_b = "bbbbbbbb-1111-1111-1111-bbbbbbbbbbbb"
+    scen_b = "sbbbbbbb-2222-2222-2222-bbbbbbbbbbbb"
+
+    with ExitStack() as stack:
+        (
+            _view,
+            _proc_view,
+            _inst_view,
+            proc_cls,
+            inst_cls,
+            rev_cls,
+            med_cls,
+            inv_cls,
+            vin_cls,
+            diag_cls,
+            decomp_cls,
+            cmp_cls,
+            _matrix,
+            dcomp_cls,
+            _decomp_comp,
+        ) = _enter_process_context_patches(stack)
+        stack.enter_context(
+            patch(
+                "tm_app.application.gpt_actions.process_context_service.filter_rows_for_access",
+                side_effect=lambda _req, rows, **_kw: rows,
+            )
+        )
+        proc_cls.return_value.get.return_value = {"processo_id": pid, "nome_processo": "P"}
+        inst_cls.return_value.list_by_processo.return_value = [
+            {"instancia_id": iid_a, "processo_id": pid, "codigo_filial": "01"},
+            {"instancia_id": iid_b, "processo_id": pid, "codigo_filial": "01"},
+        ]
+        rev_cls.return_value.list_by_processo.return_value = [
+            {
+                "revisao_id": base_a,
+                "instancia_id": iid_a,
+                "cenario_tipo": "baseline",
+                "data_inicio_vigencia": "2026-01-01",
+            },
+            {
+                "revisao_id": scen_a,
+                "instancia_id": iid_a,
+                "cenario_tipo": "melhoria",
+                "data_inicio_vigencia": "2026-03-01",
+                "revisao_referencia_id": base_a,
+                "revisao_ativa": True,
+            },
+            {
+                "revisao_id": base_b,
+                "instancia_id": iid_b,
+                "cenario_tipo": "baseline",
+                "data_inicio_vigencia": "2026-01-01",
+            },
+            {
+                "revisao_id": scen_b,
+                "instancia_id": iid_b,
+                "cenario_tipo": "melhoria",
+                "data_inicio_vigencia": "2026-04-01",
+                "revisao_referencia_id": base_b,
+                "revisao_ativa": True,
+            },
+        ]
+        med_cls.return_value.get_by_revisao.return_value = None
+        inv_cls.return_value.list_by_revisao.return_value = []
+        vin_cls.return_value.list_by_revisao.return_value = []
+        diag_cls.return_value.get.return_value = None
+        decomp_cls.return_value.get.return_value = None
+        cmp_cls.return_value.compare.return_value = {
+            "items": [
+                {"revisao_id": base_a},
+                {"revisao_id": scen_a},
+                {"revisao_id": base_b},
+                {"revisao_id": scen_b},
+            ],
+            "total_revisoes": 4,
+        }
+        dcomp_cls.return_value.compose_for_processo.return_value = {
+            "mermaid": "INSTANCE_A"
+        }
+
+        result = ProcessContextService().get_context(
+            request, process_id=pid, revision_id=scen_a
+        )
+
+    assert result["selection"]["instance_id"] == iid_a
+    assert result["selection"]["baseline_revisao_id"] == base_a
+    assert result["selection"]["scenario_revisao_id"] == scen_a
+    assert {i["instancia_id"] for i in result["instances"]} == {iid_a}
+    assert {r["revisao_id"] for r in result["revisions"]} == {base_a, scen_a}
+    assert {i["revisao_id"] for i in result["comparison"]["items"]} == {base_a, scen_a}
+    assert result["comparison"]["total_revisoes"] == 2
+    assert result["as_is"]["mermaid"] is None
+    assert result["current_composed"]["mermaid"] == "INSTANCE_A"
+
+
+def test_process_context_view_only_surface_does_not_claim_write_auth():
+    from tm_app.application.gpt_actions.process_context_service import (
+        ProcessContextService,
+    )
+
+    request = MagicMock()
+    with ExitStack() as stack:
+        (
+            _view,
+            _proc_view,
+            _inst_view,
+            proc_cls,
+            inst_cls,
+            rev_cls,
+            med_cls,
+            inv_cls,
+            vin_cls,
+            diag_cls,
+            decomp_cls,
+            cmp_cls,
+            _matrix,
+            dcomp_cls,
+            _decomp_comp,
+        ) = _enter_process_context_patches(stack)
+        stack.enter_context(
+            patch(
+                "tm_app.application.gpt_actions.process_context_service.filter_rows_for_access",
+                side_effect=lambda _req, rows, **_kw: rows,
+            )
+        )
+        proc_cls.return_value.get.return_value = {
+            "processo_id": "pppppppp-pppp-pppp-pppp-pppppppppppp",
+            "nome_processo": "P",
+        }
+        inst_cls.return_value.list_by_processo.return_value = []
+        rev_cls.return_value.list_by_processo.return_value = []
+        med_cls.return_value.get_by_revisao.return_value = None
+        inv_cls.return_value.list_by_revisao.return_value = []
+        vin_cls.return_value.list_by_revisao.return_value = []
+        diag_cls.return_value.get.return_value = None
+        decomp_cls.return_value.get.return_value = None
+        cmp_cls.return_value.compare.return_value = {"items": [], "total_revisoes": 0}
+
+        result = ProcessContextService().get_context(
+            request, process_id="pppppppp-pppp-pppp-pppp-pppppppppppp"
+        )
+
+    supports = result["surface_supports"]
+    assert supports["records_api"] is True
+    assert supports["improvement_package_api"] is True
+    assert "write_records" not in supports
+    assert "write_improvement_package" not in supports
+    assert "authorization" in supports["support_vs_authorization"].lower()
 
 
 def test_process_context_forbidden_without_view():

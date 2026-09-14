@@ -20,9 +20,6 @@ from tm_app.application.services.diagram_composition_service import (
 from tm_app.application.services.process_revision_compare_service import (
     ProcessRevisionCompareService,
 )
-from tm_app.application.services.process_setup_stats_service import (
-    ProcessoSetupStatsService,
-)
 from tm_app.application.services.revision_impact_effort_matrix_service import (
     RevisaoImpactEffortMatrixService,
 )
@@ -59,6 +56,9 @@ from tm_app.infrastructure.persistence.repositories.shared_resource_repository i
 )
 
 CONTEXT_VERSION = "process_intelligence_context_v1"
+_DIAGRAM_UNAVAILABLE_V1 = (
+    "revision_specific_as_is_or_to_be_diagram_not_available_in_v1"
+)
 
 
 class ProcessContextService:
@@ -83,46 +83,38 @@ class ProcessContextService:
         if not processo:
             raise GptActionsError("Processo não encontrado.", 404)
 
-        enriched = ProcessoSetupStatsService().enrich_processos([processo])[0]
-        process_json = row_to_json(enriched) or {}
+        process_json = row_to_json(processo) or {}
 
         instancias_all = ProcessoInstanciaRepository().list_by_processo(processo_id)
-        instancias = filter_rows_for_access(
+        instancias_visible = filter_rows_for_access(
             request, instancias_all, codigo_key="codigo_filial"
         )
-        instancia_ids = {str(i.get("instancia_id") or "") for i in instancias}
+        instancia_ids = {
+            str(i.get("instancia_id") or "") for i in instancias_visible if i.get("instancia_id")
+        }
 
         selected_instance_id = (instance_id or "").strip() or None
-        if selected_instance_id:
-            self._raise(check_instancia_view_access(request, selected_instance_id))
-            if selected_instance_id not in instancia_ids:
-                # Fail closed: do not expand scope via parent process linkage alone.
-                raise GptActionsError(
-                    "Instância fora do escopo visível ou não pertence ao processo.",
-                    403,
-                )
+        selected_revision_id = (revision_id or "").strip() or None
 
         revisoes_all = RevisaoRepository().list_by_processo(processo_id)
-        revisoes = [
+        revisoes_visible = [
             r
             for r in revisoes_all
             if not str(r.get("instancia_id") or "")
             or str(r.get("instancia_id") or "") in instancia_ids
         ]
-        if selected_instance_id:
-            revisoes = [
-                r
-                for r in revisoes
-                if str(r.get("instancia_id") or "") == selected_instance_id
-            ]
 
-        selected_revision_id = (revision_id or "").strip() or None
+        missing: list[str] = []
+        warnings: list[str] = []
+        ambiguities: list[str] = []
+        requires_instance_selection = False
+
         selected_revision = None
         if selected_revision_id:
             selected_revision = next(
                 (
                     r
-                    for r in revisoes
+                    for r in revisoes_visible
                     if str(r.get("revisao_id") or "") == selected_revision_id
                 ),
                 None,
@@ -132,31 +124,78 @@ class ProcessContextService:
                     "Revisão não encontrada no escopo do processo/melhoria.",
                     404,
                 )
+            rev_instance_id = str(selected_revision.get("instancia_id") or "").strip() or None
+            if rev_instance_id:
+                if selected_instance_id and selected_instance_id != rev_instance_id:
+                    raise GptActionsError(
+                        "revision_id does not belong to the given instance_id.",
+                        400,
+                    )
+                selected_instance_id = rev_instance_id
 
-        baseline = self._pick_baseline(revisoes, selected_instance_id)
-        scenario = self._pick_scenario(
-            revisoes,
-            selected_revision=selected_revision,
-            selected_instance_id=selected_instance_id,
-        )
+        if selected_instance_id:
+            self._raise(check_instancia_view_access(request, selected_instance_id))
+            if selected_instance_id not in instancia_ids:
+                raise GptActionsError(
+                    "Instância fora do escopo visível ou não pertence ao processo.",
+                    403,
+                )
+        elif len(instancias_visible) > 1:
+            requires_instance_selection = True
+            ambiguities.append("requires_instance_selection")
+        elif len(instancias_visible) == 1:
+            selected_instance_id = str(instancias_visible[0].get("instancia_id") or "") or None
 
-        missing: list[str] = []
-        warnings: list[str] = []
-        ambiguities: list[str] = []
+        if selected_instance_id:
+            instancias = [
+                i
+                for i in instancias_visible
+                if str(i.get("instancia_id") or "") == selected_instance_id
+            ]
+            revisoes = [
+                r
+                for r in revisoes_visible
+                if str(r.get("instancia_id") or "") == selected_instance_id
+            ]
+        else:
+            instancias = list(instancias_visible)
+            revisoes = list(revisoes_visible)
+
+        allowed_revision_ids = {
+            str(r.get("revisao_id") or "") for r in revisoes if r.get("revisao_id")
+        }
+
+        baseline = None
+        scenario = None
+        if not requires_instance_selection:
+            baseline = self._pick_baseline(revisoes, selected_instance_id)
+            scenario = self._pick_scenario(
+                revisoes,
+                selected_revision=selected_revision,
+                selected_instance_id=selected_instance_id,
+            )
+            if baseline and scenario:
+                b_inst = str(baseline.get("instancia_id") or "")
+                s_inst = str(scenario.get("instancia_id") or "")
+                if b_inst and s_inst and b_inst != s_inst:
+                    warnings.append("baseline_scenario_instance_mismatch_blocked")
+                    baseline = None
+                    scenario = None
 
         if not instancias:
             missing.append("instances")
             warnings.append("Process has no visible operational improvements (instances).")
         if not revisoes:
             missing.append("revisions")
-        if not baseline:
+        if requires_instance_selection:
+            missing.append("instance_selection")
             missing.append("baseline_revision")
-        if not scenario:
             missing.append("comparable_scenario_revision")
-        if selected_instance_id is None and len(instancias) > 1:
-            ambiguities.append(
-                "Multiple instances visible; pass instance_id to isolate one melhoria."
-            )
+        else:
+            if not baseline:
+                missing.append("baseline_revision")
+            if not scenario:
+                missing.append("comparable_scenario_revision")
 
         diagram_row = ProcessoDiagramRepository().get(processo_id)
         decomp_row = ProcessoDecomposicaoRepository().get(processo_id)
@@ -166,6 +205,15 @@ class ProcessContextService:
             missing.append("process_diagram")
         if not has_decomp:
             missing.append("decomposition_tree")
+
+        process_json["visible_scope_stats"] = self._visible_scope_stats(
+            instances=instancias_visible if requires_instance_selection else instancias,
+            revisions=revisoes_visible if requires_instance_selection else revisoes,
+            has_diagram=has_diagram,
+            has_decomp=has_decomp,
+            diagram_row=diagram_row,
+            decomp_row=decomp_row,
+        )
 
         as_is = self._revision_snapshot(baseline, label="as_is")
         to_be = self._revision_snapshot(scenario, label="to_be")
@@ -177,45 +225,41 @@ class ProcessContextService:
 
         comparison = None
         try:
-            comparison = ProcessRevisionCompareService().compare(processo_id)
+            raw_comparison = ProcessRevisionCompareService().compare(processo_id)
+            comparison = self._filter_comparison(raw_comparison, allowed_revision_ids)
         except Exception:
             warnings.append("process_revision_compare_unavailable")
 
         impact_effort = None
-        matrix_target = selected_instance_id or (
-            str((scenario or baseline or {}).get("instancia_id") or "") or None
-        )
-        if matrix_target:
+        if selected_instance_id and not requires_instance_selection:
             try:
                 impact_effort = RevisaoImpactEffortMatrixService().build_for_instancia(
-                    matrix_target
-                )
-            except Exception:
-                warnings.append("impact_effort_unavailable")
-        elif scenario:
-            try:
-                impact_effort = RevisaoImpactEffortMatrixService().build_for_revisao(
-                    str(scenario.get("revisao_id"))
+                    selected_instance_id
                 )
             except Exception:
                 warnings.append("impact_effort_unavailable")
 
         composed_diagram = None
         composed_decomp = None
-        try:
-            composed_diagram = DiagramaCompositionService().compose_for_processo(
-                processo_id,
-                instancia_id=selected_instance_id,
-            )
-        except Exception:
-            warnings.append("diagram_composition_unavailable")
-        try:
-            composed_decomp = DecomposicaoCompositionService().compose_for_processo(
-                processo_id,
-                instancia_id=selected_instance_id,
-            )
-        except Exception:
-            warnings.append("decomposition_composition_unavailable")
+        # Never compose with instancia_id=None: that loads all process revisions
+        # and can mix unauthorized instance overlays.
+        if selected_instance_id and not requires_instance_selection:
+            try:
+                composed_diagram = DiagramaCompositionService().compose_for_processo(
+                    processo_id,
+                    instancia_id=selected_instance_id,
+                )
+            except Exception:
+                warnings.append("diagram_composition_unavailable")
+            try:
+                composed_decomp = DecomposicaoCompositionService().compose_for_processo(
+                    processo_id,
+                    instancia_id=selected_instance_id,
+                )
+            except Exception:
+                warnings.append("decomposition_composition_unavailable")
+        elif requires_instance_selection:
+            ambiguities.append("composition_requires_instance_selection")
 
         graph = self._build_graph(
             process_id=processo_id,
@@ -230,6 +274,10 @@ class ProcessContextService:
 
         resources = self._collect_resources(as_is, to_be)
 
+        selection_resolved = not requires_instance_selection and bool(
+            selected_instance_id or selected_revision_id or baseline or scenario
+        )
+
         return {
             "context_version": CONTEXT_VERSION,
             "process": process_json,
@@ -239,33 +287,59 @@ class ProcessContextService:
             "selection": {
                 "process_id": processo_id,
                 "instance_id": selected_instance_id,
-                "revision_id": selected_revision_id
-                or (str(scenario.get("revisao_id")) if scenario else None),
+                "revision_id": selected_revision_id,
                 "baseline_revisao_id": str(baseline.get("revisao_id"))
                 if baseline
                 else None,
                 "scenario_revisao_id": str(scenario.get("revisao_id"))
                 if scenario
                 else None,
+                "resolved": selection_resolved and not requires_instance_selection,
+                "requires_instance_selection": requires_instance_selection,
             },
             "baseline": as_is,
             "scenario": to_be,
             "as_is": {
+                "role": "AS_IS",
                 "revision": as_is.get("revision"),
                 "measurement": as_is.get("measurement"),
                 "investments": as_is.get("investments") or [],
-                "diagram_composed_present": bool(composed_diagram),
-                "decomposition_composed_present": bool(composed_decomp),
-                "mermaid": (composed_diagram or {}).get("mermaid")
-                if isinstance(composed_diagram, dict)
-                else None,
+                "mermaid": None,
+                "diagram": {
+                    "epistemic_status": "UNKNOWN",
+                    "reason": _DIAGRAM_UNAVAILABLE_V1,
+                },
                 "epistemic_status": "OBSERVED" if baseline else "UNKNOWN",
             },
             "to_be": {
+                "role": "TO_BE",
                 "revision": to_be.get("revision"),
                 "measurement": to_be.get("measurement"),
                 "investments": to_be.get("investments") or [],
+                "mermaid": None,
+                "diagram": {
+                    "epistemic_status": "UNKNOWN",
+                    "reason": _DIAGRAM_UNAVAILABLE_V1,
+                },
                 "epistemic_status": "OBSERVED" if scenario else "UNKNOWN",
+            },
+            "current_composed": {
+                "role": "CURRENT_COMPOSED",
+                "instance_id": selected_instance_id
+                if selected_instance_id and not requires_instance_selection
+                else None,
+                "diagram_available": composed_diagram is not None,
+                "decomposition_available": composed_decomp is not None,
+                "mermaid": (composed_diagram or {}).get("mermaid")
+                if isinstance(composed_diagram, dict)
+                else None,
+                "epistemic_status": "CALCULATED"
+                if composed_diagram is not None
+                else "UNKNOWN",
+                "note": (
+                    "Temporal composition of process macro + overlays for the "
+                    "authorized selected instance only. Not AS-IS baseline."
+                ),
             },
             "comparison": comparison,
             "impact_effort": impact_effort,
@@ -275,12 +349,14 @@ class ProcessContextService:
                 "decomposition_tree_present": has_decomp,
                 "diagram_composition": {
                     "available": composed_diagram is not None,
+                    "role": "CURRENT_COMPOSED",
                     "epistemic_status": "CALCULATED"
                     if composed_diagram is not None
                     else "UNKNOWN",
                 },
                 "decomposition_composition": {
                     "available": composed_decomp is not None,
+                    "role": "CURRENT_COMPOSED",
                     "epistemic_status": "CALCULATED"
                     if composed_decomp is not None
                     else "UNKNOWN",
@@ -291,33 +367,99 @@ class ProcessContextService:
                 "warnings": warnings,
                 "ambiguities": ambiguities,
             },
-            "capabilities": {
+            "surface_supports": {
                 "quick_registration": True,
                 "guided_transformation": True,
-                "write_records": True,
-                "write_improvement_package": True,
-                "write_diagram_validated": False,
-                "write_decomposition_validated": False,
+                "records_api": True,
+                "improvement_package_api": True,
+                "diagram_validated_write": False,
+                "decomposition_validated_write": False,
                 "persist_diagram_via_gpt": False,
                 "conversational_draft_flows": True,
                 "side_effect": False,
+                "support_vs_authorization": (
+                    "surface_supports describes API surface only; "
+                    "write authorization is enforced by the backend at write time"
+                ),
             },
         }
 
     def _raise(self, err) -> None:
         if err is not None:
-            # JSONResponse from branch_access_http
-            detail = getattr(err, "body", None)
             message = "Acesso negado."
             status = getattr(err, "status_code", 403) or 403
             try:
                 import json
 
-                payload = json.loads(err.body.decode() if isinstance(err.body, bytes) else err.body)
+                payload = json.loads(
+                    err.body.decode() if isinstance(err.body, bytes) else err.body
+                )
                 message = payload.get("message") or message
             except Exception:
                 pass
             raise GptActionsError(message, status)
+
+    def _visible_scope_stats(
+        self,
+        *,
+        instances: list[dict[str, Any]],
+        revisions: list[dict[str, Any]],
+        has_diagram: bool,
+        has_decomp: bool,
+        diagram_row: dict[str, Any] | None,
+        decomp_row: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        """Stats derived only from already-authorized visible records."""
+        diagram_nodes = 0
+        if has_diagram and isinstance((diagram_row or {}).get("conteudo"), dict):
+            nodes = (diagram_row or {}).get("conteudo", {}).get("nodes") or []
+            diagram_nodes = len(nodes) if isinstance(nodes, list) else 0
+        decomp_nodes = 0
+        if has_decomp and isinstance((decomp_row or {}).get("conteudo"), dict):
+            nodes = (decomp_row or {}).get("conteudo", {}).get("nodes") or []
+            decomp_nodes = len(nodes) if isinstance(nodes, list) else 0
+
+        has_baseline = any(
+            str(r.get("cenario_tipo") or "").lower() == "baseline" for r in revisions
+        )
+        has_melhoria = any(
+            str(r.get("cenario_tipo") or "").lower()
+            in {"melhoria", "automacao", "correcao"}
+            for r in revisions
+        )
+        has_medicao = False
+        for r in revisions:
+            rid = str(r.get("revisao_id") or "")
+            if rid and MedicaoRepository().get_by_revisao(rid):
+                has_medicao = True
+                break
+
+        return {
+            "instancia_count": len(instances),
+            "diagram_node_count": diagram_nodes,
+            "decomposition_node_count": decomp_nodes,
+            "has_baseline": has_baseline,
+            "has_melhoria": has_melhoria,
+            "has_medicao": has_medicao,
+            "scope": "visible_authorized_only",
+        }
+
+    def _filter_comparison(
+        self,
+        comparison: dict[str, Any] | None,
+        allowed_revision_ids: set[str],
+    ) -> dict[str, Any] | None:
+        if not comparison:
+            return comparison
+        items = [
+            item
+            for item in (comparison.get("items") or [])
+            if str(item.get("revisao_id") or "") in allowed_revision_ids
+        ]
+        filtered = dict(comparison)
+        filtered["items"] = items
+        filtered["total_revisoes"] = len(items)
+        return filtered
 
     def _pick_baseline(
         self, revisoes: list[dict[str, Any]], instance_id: str | None
