@@ -499,3 +499,255 @@ Qualquer comparação de mercado é reference-only e deve ser revalidada com fon
 ## 33. North Star
 
 > **A DÉLIA observa sinais autorizados, contextualiza, combina políticas determinísticas e raciocínio quando necessário, coordena trabalho governado, delega execução técnica ao owner correto, verifica outcomes em fontes autoritativas, comunica e transforma resultados em learning candidates sem criar autoridade paralela.**
+
+## 34. Recurring Governed Work / scheduling
+
+### 34.1 Decisão de produto
+
+**Recurring Governed Work é capability `TARGET` de primeira classe da DÉLIA.** Um usuário autorizado deve poder definir trabalho recorrente persistente, independente de sessão de chat, por exemplo:
+
+```text
+“Todos os dias às 09:00 gere o relatório de produção do dia anterior e envie por email para a diretoria.”
+```
+
+Isso não significa que a DÉLIA “lembra de acordar”. O trigger deve ser determinístico e persistente, usando infraestrutura cujo owner físico será provado em C0.
+
+### 34.2 Quatro camadas que não podem ser confundidas
+
+```text
+PRODUCT CAPABILITY
+= Recurring Governed Work é TARGET
+
+DÉLIA-OWNED DEFINITION
+= definição/versionamento/lifecycle do Work recorrente e correlação das ocorrências
+
+PHYSICAL TIMER/SCHEDULER
+= plataforma/serviço que materializa o trigger temporal; owner = TO_INVENTORY em C0
+
+TECHNICAL EXECUTION
+= Automation Hub | Domain API | Provider | outro executor aprovado conforme capability
+```
+
+`TO_INVENTORY` do scheduler físico não rebaixa a capability de produto para “não prevista”.
+
+### 34.3 Lifecycle mínimo
+
+Quando implementado, o usuário/owner autorizado deve conseguir:
+
+```text
+CREATE
+INSPECT/LIST
+PAUSE
+RESUME
+CANCEL
+```
+
+Update/reschedule só entra se contrato explícito preservar versionamento, idempotência e audit; caso contrário, usar cancel + create de nova versão.
+
+Estados candidates:
+
+```text
+ACTIVE
+PAUSED
+CANCELLED
+EXPIRED
+DISABLED_BY_POLICY
+```
+
+### 34.4 Definição persistente candidata
+
+A modelagem final pertence a `21` e deve ser congelada em C0 antes de migration. Campos semânticos mínimos candidatos:
+
+```text
+recurringWorkId
+ownerRef
+createdByActorRef
+workTemplateRef / workflowDefinitionRef
+scheduleSpec
+scheduleTimezone
+startAt?
+endAt?
+status
+capabilityRefs[]
+scopeRefs[]
+connectionRefs[]?
+recipient/target refs bounded
+policyRef
+misfirePolicy
+failurePolicy
+createdAt/updatedAt
+version
+```
+
+`nextRunAt` pode ser projection/derived state se necessário; não deve criar segundo source of truth do scheduler físico.
+
+### 34.5 Recurrence e timezone
+
+Contrato de recurrence deve ser determinístico e versionado. Deve definir explicitamente:
+
+```text
+timezone IANA
+calendar/recurrence expression
+start/end bounds
+daylight-saving behavior quando aplicável
+missed-run/misfire semantics
+concurrency/overlap policy
+```
+
+Não usar timezone implícito do servidor ou do browser como regra empresarial.
+
+### 34.6 Occurrence
+
+Cada materialização temporal gera uma ocorrência correlacionável e idempotente, candidate:
+
+```text
+occurrenceId
+recurringWorkRef + definitionVersion
+scheduledFor
+triggeredAt?
+correlationContext
+idempotencyKey
+actor/service identity ref
+status
+workflow/execution/outcome refs
+```
+
+A mesma ocorrência não pode produzir side effect duplicado por duplicate tick, retry, restart ou reconciliation.
+
+### 34.7 Trigger não é autorização
+
+Invariantes obrigatórios:
+
+```text
+schedule != permission
+stored intent != eternal authorization
+timer tick != ACT authority
+recurrence definition != provider scope
+```
+
+Em cada ocorrência material, revalidar conforme capability:
+
+```text
+current user/service identity
+→ live Core AuthZ
+→ live Domain/business authority
+→ current Policy/Decision
+→ current connection/provider availability/scope
+→ current data/source permissions
+→ PREPARE or ACT
+```
+
+Se creator/user perder acesso, sair da empresa, connection for revogada, recipient/scope ficar inválido ou Policy mudar, a execução deve bloquear/degradar/pausar de forma truthful; nunca reutilizar autorização stale silenciosamente.
+
+### 34.8 Recurring Work não é Watch autônomo
+
+Recurring Work temporal e Watch são triggers distintos.
+
+```text
+Recurring Work
+= usuário/owner define previamente uma recorrência bounded para um Work específico
+
+Watch
+= condição/evento observado que pode OBSERVE|ADVISE|PREPARE e, somente nas fases/policies permitidas, ACT
+```
+
+Em C5, uma ocorrência de Recurring Governed Work pode chegar a L4 governed ACT se a capability estiver explicitamente autorizada e todos os gates forem revalidados. Isso **não** habilita Watch autonomous ACT em C6 e **não** equivale a L5.
+
+### 34.9 Exemplo canônico — relatório diário por email
+
+Target:
+
+```text
+RecurringWorkDefinition
+“daily 09:00 <timezone>”
+        ↓
+deterministic schedule trigger
+        ↓
+create occurrence + idempotency/correlation
+        ↓
+resolve current actor/service identity
+        ↓
+live AuthZ + Policy/Decision
+        ↓
+authorized reads for previous-day production data
+        ↓
+report.generate / Artifact with provenance
+        ↓
+PREPARE send intent
+        ↓
+revalidate recipients/connection/write capability
+        ↓
+communication.email.send
+        ↓
+provider/executor technical result
+        ↓
+authoritative/contractual send outcome verification when available
+        ↓
+Outcome + Evidence + Audit + Notification
+```
+
+```text
+report generated != email authorized
+email API accepted != verified final outcome automatically
+```
+
+### 34.10 C0 inventory/freeze
+
+C0 deve responder com evidence:
+
+1. quais schedulers/timers/cron/job systems já existem;
+2. owner físico de cada mecanismo e SLA/HA;
+3. se Automation Hub/plataforma já materializa timer triggers;
+4. se DÉLIA deve persistir apenas RecurringWorkDefinition/occurrence refs ou também algum trigger state bounded;
+5. contrato de timezone/DST/recurrence;
+6. misfire/missed-run/reconciliation semantics;
+7. overlap/concurrency semantics;
+8. idempotência por ocorrência;
+9. identity/AuthZ/revocation semantics de background execution;
+10. pause/cancel/revoke/disable/kill-switch;
+11. retention/audit/history;
+12. authoritative Outcome sources para capabilities agendáveis.
+
+C0 **não** cria scheduler novo por conveniência. Primeiro aplica Abstraction Gate e inventaria plataforma equivalente.
+
+### 34.11 Phase mapping específico
+
+```text
+C0
+= inventory + owner + contract + recurrence/timezone/misfire/idempotency/authz freeze
+
+C1–C4
+= foundations/reads necessários; nenhum side effect agendado material antecipado
+
+C5
+= runtime de Recurring Governed Work e ocorrência; L4 ACT agendado somente quando explicitamente authorized/gated
+
+C6
+= UX/admin para inspect/list/pause/resume/cancel/history/outcomes; Watch continua sem autonomous ACT
+
+C7
+= não é pré-requisito para recurring L4 governed ACT; L5/selected autonomous Watch ACT continuam separados
+```
+
+### 34.12 Acceptance outcomes específicos
+
+Quando implementado, provar no SHA/config avaliado:
+
+```text
+recurring definition survives session/restart
+timezone/recurrence is deterministic
+pause prevents future occurrences
+resume does not replay unauthorized history
+cancel/revoke prevents future occurrences
+duplicate timer signal does not duplicate side effect
+retry/restart does not duplicate same occurrence
+missed-run policy is explicit and reproducible
+overlap/concurrency policy is explicit
+live AuthZ/Policy is revalidated per material occurrence
+revoked user/connection/capability cannot continue silently
+occurrence links Work/Decision/Execution/Outcome/Evidence
+material ACT verifies authoritative/contractual postcondition
+scheduled report→email anchor works without open chat session
+```
+
+Sem evidence obrigatória: `PENDING`/`INCONCLUSIVE`, nunca PASS.
