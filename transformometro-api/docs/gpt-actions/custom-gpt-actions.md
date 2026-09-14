@@ -104,7 +104,20 @@ Checklist operacional: [`gpt-builder-go-live.md`](./gpt-builder-go-live.md).
 4. Adicionar [`teo-method-playbooks.md`](./teo-method-playbooks.md) como Knowledge do GPT (metodologia; não authority de dados).
 5. OpenAPI: reimportar **somente** se o schema publicado mudou (default esperado: **13** actions).
 
-Fluxo guiado preferido: `gpt_get_catalog` → entrevista → `gpt_commit_improvement_package` (`dry_run=true` → confirmar → commit).
+Fluxo guiado preferido: `gpt_get_catalog` → ler `registration_guide.package_hints` → entrevista → `gpt_commit_improvement_package` (`dry_run=true` → `ready=true` → confirmar → commit).
+
+### Envelope canônico de `gpt_commit_improvement_package`
+
+```text
+process + instance + baseline? + scenario?
+  baseline → { revision, measurement? }
+  scenario → { revision, measurement?, investments? }
+```
+
+- Reuso: `process.processo_id` / `instance.instancia_id`.
+- Cenário: campos de revisão **somente** em `scenario.revision` (nunca flat em `scenario`).
+- `dry_run=true` incompleto → HTTP 200, `ready=false`, `missing[]`, sem escrita.
+- Não há dialeto flat→nested; um único contrato.
 Method playbooks (SIPOC, Lean, Ishikawa, CTP, TDR, KPI, SWOT…) são reasoning/conversa via Instructions+Knowledge; **não** geram novas Actions.
 
 ## Fora desta superfície

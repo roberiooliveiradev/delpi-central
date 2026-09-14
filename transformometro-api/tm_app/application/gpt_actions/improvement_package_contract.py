@@ -1,0 +1,330 @@
+"""Improvement package contract projection for GPT catalog + OpenAPI.
+
+Owner of validation remains GuidedImprovementPackageService.
+This module only documents the nesting/fields consumers must send —
+it does not validate or normalize flat payloads.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+from tm_app.core.catalogs import (
+    BENEFICIO_CALCULO_CATEGORIA,
+    BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
+    CENARIO_TIPO,
+    RECORRENCIAS,
+    TIPO_INVESTIMENTO,
+)
+
+# Nested keys under baseline / scenario (service reads these exact names).
+PACKAGE_BLOCK_KEYS = ("revision", "measurement", "investments")
+
+# Top-level keys of gpt_commit_improvement_package.
+PACKAGE_TOP_LEVEL_KEYS = (
+    "dry_run",
+    "activate_scenario",
+    "recalculate",
+    "process",
+    "instance",
+    "baseline",
+    "scenario",
+)
+
+# Revision fields accepted inside package blocks (processo_id/instancia_id injected on create).
+PACKAGE_REVISION_FIELDS = (
+    "id",
+    "revisao_id",
+    "versao_revisao",
+    "cenario_tipo",
+    "data_inicio_vigencia",
+    "revisao_ativa",
+    "revisao_referencia_id",
+    "beneficio_calculo_categoria",
+    "descricao_revisao",
+    "motivo_revisao",
+    "data_implantacao",
+    "data_fim_vigencia",
+    "observacoes",
+)
+
+# Measurement fields inside package (revisao_id injected by service).
+PACKAGE_MEASUREMENT_FIELDS = (
+    "volume_mensal",
+    "tempo_medio_execucao_min",
+    "tempo_retrabalho_min",
+    "percentual_retrabalho",
+    "percentual_erro",
+    "quantidade_erros_mes",
+    "custo_hora_mao_obra",
+    "custo_unitario_erro",
+    "custo_unitario_retrabalho",
+    "custo_outros_desperdicios",
+    "base_referencia_mes",
+    "observacoes",
+)
+
+# Investment item fields inside scenario.investments[] (revisao_id injected).
+PACKAGE_INVESTMENT_FIELDS = (
+    "tipo_investimento",
+    "descricao_item",
+    "quantidade",
+    "valor_unitario",
+    "recorrencia",
+    "categoria_investimento",
+    "data_investimento",
+    "meses_vigencia",
+    "centro_custo",
+    "observacoes",
+)
+
+NESTING_RULES = [
+    "Never put revision fields flat under scenario (e.g. scenario.versao_revisao).",
+    "Always use scenario.revision.{fields} and baseline.revision.{fields}.",
+    "Never put processo_id/instancia_id on scenario root; use process and instance.",
+    "measurement belongs under baseline.measurement or scenario.measurement.",
+    "investments belongs only under scenario.investments (array; [] allowed).",
+    "beneficio_calculo_categoria belongs on revision, not measurement.",
+    "Flat package shapes are invalid: dry_run returns ready=false with missing.",
+    "Do not invent alternate dialetos; only this nested envelope is canonical.",
+]
+
+OPERATIONAL_SEQUENCE = [
+    "READ CONTRACT (gpt_get_catalog.registration_guide.package_hints)",
+    "RESOLVE IDs / CONTEXT (gpt_search_records / gpt_get_process_context)",
+    "PREPARE nested package payload",
+    "DRY RUN (dry_run=true)",
+    "REQUIRE ready=true (ready=false is checklist, not tool failure)",
+    "SHOW proposed package to user",
+    "CONFIRM explicit user confirmation",
+    "WRITE (dry_run=false)",
+    "VERIFY (gpt_get_record / gpt_get_process_context)",
+    "OPTIONAL RECALCULATE (recalculate=true only after successful commit)",
+]
+
+
+def _reuse_existing_example() -> dict[str, Any]:
+    return {
+        "dry_run": True,
+        "activate_scenario": False,
+        "recalculate": False,
+        "process": {"processo_id": "<uuid>"},
+        "instance": {"instancia_id": "<uuid>"},
+        "scenario": {
+            "revision": {
+                "revisao_referencia_id": "<uuid>",
+                "versao_revisao": "2.1.0",
+                "cenario_tipo": "melhoria",
+                "data_inicio_vigencia": "YYYY-MM-DD",
+                "data_implantacao": "YYYY-MM-DD",
+                "descricao_revisao": "...",
+                "motivo_revisao": "...",
+                "beneficio_calculo_categoria": BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
+            },
+            "measurement": {
+                "volume_mensal": 0,
+                "tempo_medio_execucao_min": 0,
+                "percentual_retrabalho": 0,
+                "percentual_erro": 0,
+                "base_referencia_mes": "YYYY-MM",
+            },
+            "investments": [],
+        },
+    }
+
+
+def _create_new_example() -> dict[str, Any]:
+    return {
+        "dry_run": True,
+        "activate_scenario": False,
+        "recalculate": False,
+        "process": {
+            "nome_processo": "Nome do processo",
+            "status_processo": "ativo",
+            "descricao_processo": "...",
+        },
+        "instance": {
+            "filial_id": "01",
+            "setor_ids": ["<setor_id_or_codigo>"],
+            "resumo_melhoria": "...",
+            "fase_melhoria": "planejado",
+            "prioridade": "media",
+        },
+        "baseline": {
+            "revision": {
+                "versao_revisao": "1.0.0",
+                "data_inicio_vigencia": "YYYY-MM-DD",
+            },
+            "measurement": {
+                "volume_mensal": 100,
+                "tempo_medio_execucao_min": 30,
+            },
+        },
+        "scenario": {
+            "revision": {
+                "versao_revisao": "2.0.0",
+                "cenario_tipo": "melhoria",
+                "data_inicio_vigencia": "YYYY-MM-DD",
+                "beneficio_calculo_categoria": BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
+            },
+            "measurement": {
+                "volume_mensal": 100,
+                "tempo_medio_execucao_min": 10,
+            },
+            "investments": [
+                {
+                    "tipo_investimento": "unico",
+                    "descricao_item": "Licença",
+                    "valor_unitario": 0,
+                    "recorrencia": "unico",
+                }
+            ],
+        },
+    }
+
+
+def _baseline_plus_scenario_example() -> dict[str, Any]:
+    """Same package creates baseline then scenario; reference can be omitted on scenario."""
+    example = _create_new_example()
+    # Service injects revisao_referencia_id from baseline created in the same package.
+    example["scenario"]["revision"].pop("revisao_referencia_id", None)
+    return example
+
+
+def build_package_hints() -> dict[str, Any]:
+    """Structured package contract exposed via gpt_get_catalog."""
+    return {
+        "operationId": "gpt_commit_improvement_package",
+        "dry_run_first": True,
+        "process_context_operationId": "gpt_get_process_context",
+        "canonical_package_shape": {
+            "top_level": list(PACKAGE_TOP_LEVEL_KEYS),
+            "process": "Reuse with {id|processo_id} OR create with nome_processo+status_processo (+optional fields).",
+            "instance": (
+                "Reuse with {id|instancia_id} OR create with setor_ids and "
+                "filial_id|todas_filiais_ativas."
+            ),
+            "baseline": {
+                "keys": ["revision", "measurement"],
+                "notes": [
+                    "Optional. When present, revision.cenario_tipo is forced to baseline.",
+                    "baseline.revision must NOT include revisao_referencia_id.",
+                ],
+            },
+            "scenario": {
+                "keys": list(PACKAGE_BLOCK_KEYS),
+                "notes": [
+                    "Optional if baseline-only package.",
+                    "When present, scenario.revision is REQUIRED (never flat fields).",
+                    "cenario_tipo must be melhoria|automacao|correcao (not baseline).",
+                    "revisao_referencia_id required unless baseline is created in same package.",
+                ],
+            },
+            "revision_fields": list(PACKAGE_REVISION_FIELDS),
+            "measurement_fields": list(PACKAGE_MEASUREMENT_FIELDS),
+            "investment_fields": list(PACKAGE_INVESTMENT_FIELDS),
+            "enums": {
+                "cenario_tipo": list(CENARIO_TIPO),
+                "beneficio_calculo_categoria": list(BENEFICIO_CALCULO_CATEGORIA),
+                "tipo_investimento": list(TIPO_INVESTIMENTO),
+                "recorrencia": list(RECORRENCIAS),
+            },
+        },
+        "nesting_rules": list(NESTING_RULES),
+        "operational_sequence": list(OPERATIONAL_SEQUENCE),
+        "reuse_existing_example": _reuse_existing_example(),
+        "create_new_example": _create_new_example(),
+        "baseline_plus_scenario_example": _baseline_plus_scenario_example(),
+        "dry_run_semantics": {
+            "incomplete_http_status": 200,
+            "incomplete_means": "success=true, data.ready=false, data.missing=[...], no writes",
+            "ready_true_means": "shape complete for commit attempt; AuthZ/domain still apply on write",
+            "ready_false_is_not_tool_failure": True,
+        },
+        "governed_document_writes": {
+            "diagram": "Use only when surface_supports.persist_diagram_via_gpt=true and live manage authorization succeeds.",
+            "decomposition": "Use only when surface_supports.persist_decomposition_via_gpt=true and live manage authorization succeeds.",
+            "flow": "PREPARE → SHOW → CONFIRM → WRITE → VERIFY",
+            "support_is_not_authorization": True,
+        },
+        "ui_only_persist": [
+            "evidence uploads",
+            "meeting-minute handwritten signature",
+        ],
+        "conversational_draft_ok": [
+            "Mermaid AS-IS/TO-BE drafts",
+            "diagnostic hypotheses",
+            "TO-BE proposals",
+        ],
+    }
+
+
+def openapi_revision_properties() -> dict[str, Any]:
+    props: dict[str, Any] = {
+        "id": {"type": "string", "description": "Existing revisao_id alias for update/reuse."},
+        "revisao_id": {"type": "string", "description": "Existing revision id for update/reuse."},
+        "versao_revisao": {"type": "string", "description": "Required on create (e.g. 2.1.0)."},
+        "cenario_tipo": {
+            "type": "string",
+            "enum": list(CENARIO_TIPO),
+            "description": "Required on create for scenario; forced to baseline in baseline block.",
+        },
+        "data_inicio_vigencia": {
+            "type": "string",
+            "description": "Required on create (YYYY-MM-DD).",
+        },
+        "revisao_ativa": {"type": "boolean", "default": False},
+        "revisao_referencia_id": {
+            "type": "string",
+            "description": (
+                "Required for non-baseline create unless baseline is created in the same package."
+            ),
+        },
+        "beneficio_calculo_categoria": {
+            "type": "string",
+            "enum": list(BENEFICIO_CALCULO_CATEGORIA),
+            "default": BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
+            "description": "Belongs on revision, not measurement.",
+        },
+        "descricao_revisao": {"type": "string"},
+        "motivo_revisao": {"type": "string"},
+        "data_implantacao": {"type": "string", "description": "YYYY-MM-DD"},
+        "data_fim_vigencia": {"type": "string", "description": "YYYY-MM-DD"},
+        "observacoes": {"type": "string"},
+    }
+    return props
+
+
+def openapi_measurement_properties() -> dict[str, Any]:
+    return {
+        "volume_mensal": {"type": "number", "default": 0},
+        "tempo_medio_execucao_min": {"type": "number", "default": 0},
+        "tempo_retrabalho_min": {"type": "number", "default": 0},
+        "percentual_retrabalho": {"type": "number", "default": 0},
+        "percentual_erro": {"type": "number", "default": 0},
+        "quantidade_erros_mes": {"type": "number", "default": 0},
+        "custo_hora_mao_obra": {"type": "number", "default": 0},
+        "custo_unitario_erro": {"type": "number", "default": 0},
+        "custo_unitario_retrabalho": {"type": "number", "default": 0},
+        "custo_outros_desperdicios": {"type": "number", "default": 0},
+        "base_referencia_mes": {
+            "type": "string",
+            "description": "Optional YYYY-MM reference month.",
+        },
+        "observacoes": {"type": "string"},
+    }
+
+
+def openapi_investment_properties() -> dict[str, Any]:
+    return {
+        "tipo_investimento": {"type": "string", "enum": list(TIPO_INVESTIMENTO)},
+        "descricao_item": {"type": "string"},
+        "quantidade": {"type": "number", "default": 1},
+        "valor_unitario": {"type": "number", "default": 0},
+        "recorrencia": {"type": "string", "enum": list(RECORRENCIAS), "default": "unico"},
+        "categoria_investimento": {"type": "string"},
+        "data_investimento": {"type": "string"},
+        "meses_vigencia": {"type": "integer"},
+        "centro_custo": {"type": "string"},
+        "observacoes": {"type": "string"},
+    }

@@ -89,7 +89,7 @@ Resumo operacional:
 - Problem-first e entrevista adaptativa.
 - Method Router escolhe o menor método suficiente; `INFERRED != FACT`; `PROPOSED != SAVED`.
 - `gpt_get_catalog` + `registration_guide` antes de cadastro.
-- `gpt_commit_improvement_package` com `dry_run=true` → mostrar → confirmar → commit.
+- `gpt_commit_improvement_package` com envelope nested (`process` + `instance` + `scenario.revision`) e `dry_run=true` → exigir `ready=true` → mostrar → confirmar → commit.
 - Diagramas/WBS: draft = PROPOSED; persistência governada com validators, manage AuthZ e read-back.
 - Evidências/upload e assinatura manuscrita continuam UI-only quando não suportados pela Action.
 - REIMPORT OpenAPI somente se schema mudar; esperado estável: **13 actions**.

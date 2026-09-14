@@ -8,6 +8,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from tm_app.application.gpt_actions.improvement_package_contract import (
+    build_package_hints,
+)
 from tm_app.core.catalogs import (
     BENEFICIO_CALCULO_CATEGORIA,
     BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
@@ -247,24 +250,5 @@ def build_registration_guide() -> dict[str, Any]:
                 "notes": ["Usually attached to the scenario revision, not baseline."],
             },
         },
-        "package_hints": {
-            "operationId": "gpt_commit_improvement_package",
-            "dry_run_first": True,
-            "process_context_operationId": "gpt_get_process_context",
-            "governed_document_writes": {
-                "diagram": "Use only when surface_supports.persist_diagram_via_gpt=true and live manage authorization succeeds.",
-                "decomposition": "Use only when surface_supports.persist_decomposition_via_gpt=true and live manage authorization succeeds.",
-                "flow": "PREPARE → SHOW → CONFIRM → WRITE → VERIFY",
-                "support_is_not_authorization": True,
-            },
-            "ui_only_persist": [
-                "evidence uploads",
-                "meeting-minute handwritten signature",
-            ],
-            "conversational_draft_ok": [
-                "Mermaid AS-IS/TO-BE drafts",
-                "diagnostic hypotheses",
-                "TO-BE proposals",
-            ],
-        },
+        "package_hints": build_package_hints(),
     }

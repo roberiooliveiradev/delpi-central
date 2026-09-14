@@ -637,6 +637,217 @@ def test_openapi_includes_improvement_package():
     assert count_operations(doc) == 13
 
 
+def test_openapi_documents_nested_improvement_package():
+    doc = build_gpt_actions_openapi()
+    body = doc["components"]["schemas"]["GptImprovementPackageBody"]
+    props = body["properties"]
+    assert "process" in props
+    assert "instance" in props
+    assert "scenario" in props
+    assert "processo_id" in props["process"]["properties"]
+    assert "instancia_id" in props["instance"]["properties"]
+    scenario = props["scenario"]["properties"]
+    assert "revision" in scenario
+    assert "measurement" in scenario
+    assert "investments" in scenario
+    revision = doc["components"]["schemas"]["GptPackageRevision"]["properties"]
+    assert "versao_revisao" in revision
+    assert "beneficio_calculo_categoria" in revision
+    assert "revisao_referencia_id" in revision
+    measurement = doc["components"]["schemas"]["GptPackageMeasurement"]["properties"]
+    assert "volume_mensal" in measurement
+    assert "beneficio_calculo_categoria" not in measurement
+    investment = doc["components"]["schemas"]["GptPackageInvestment"]["properties"]
+    assert "tipo_investimento" in investment
+    path_desc = doc["paths"]["/transformometro/gpt-actions/v1/improvement-packages"][
+        "post"
+    ]["description"]
+    assert "INVALID" in path_desc or "Flat" in path_desc
+
+
+def test_improvement_package_flat_incident_payload_not_ready(tm_client):
+    """Incident-like flat scenario must not be treated as a valid package."""
+    response = tm_client.post(
+        "/transformometro/gpt-actions/v1/improvement-packages",
+        json={
+            "dry_run": True,
+            "scenario": {
+                "processo_id": "11111111-1111-1111-1111-111111111111",
+                "instancia_id": "22222222-2222-2222-2222-222222222222",
+                "versao_revisao": "2.1.0",
+                "cenario_tipo": "melhoria",
+                "data_inicio_vigencia": "2026-09-02",
+            },
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    data = payload["data"]
+    assert data["dry_run"] is True
+    assert data["ready"] is False
+    missing = data["missing"]
+    assert "process" in missing
+    assert "instance" in missing
+    assert "scenario.revision" in missing
+    assert "checklist" in data
+
+
+def test_improvement_package_dry_run_nested_ready_true(tm_client):
+    response = tm_client.post(
+        "/transformometro/gpt-actions/v1/improvement-packages",
+        json={
+            "dry_run": True,
+            "activate_scenario": False,
+            "recalculate": False,
+            "process": {"processo_id": "11111111-1111-1111-1111-111111111111"},
+            "instance": {"instancia_id": "22222222-2222-2222-2222-222222222222"},
+            "scenario": {
+                "revision": {
+                    "revisao_referencia_id": "33333333-3333-3333-3333-333333333333",
+                    "versao_revisao": "2.1.0",
+                    "cenario_tipo": "melhoria",
+                    "data_implantacao": "2026-09-02",
+                    "data_inicio_vigencia": "2026-09-02",
+                    "descricao_revisao": "teste",
+                    "motivo_revisao": "teste",
+                    "observacoes": "teste",
+                    "beneficio_calculo_categoria": "automatico",
+                },
+                "measurement": {
+                    "volume_mensal": 22,
+                    "tempo_medio_execucao_min": 0.0083333333,
+                    "tempo_retrabalho_min": 0,
+                    "percentual_retrabalho": 0,
+                    "percentual_erro": 0,
+                    "quantidade_erros_mes": 0,
+                    "custo_hora_mao_obra": 34.38,
+                    "custo_unitario_erro": 0,
+                    "custo_unitario_retrabalho": 0,
+                    "custo_outros_desperdicios": 0,
+                    "base_referencia_mes": "2026-09",
+                    "observacoes": "teste",
+                },
+                "investments": [],
+            },
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["ready"] is True
+    assert data["missing"] == []
+    assert data["dry_run"] is True
+
+
+def test_improvement_package_dry_run_does_not_dispatch_writes():
+    from tm_app.application.gpt_actions.improvement_package_service import (
+        GuidedImprovementPackageService,
+    )
+
+    dispatch = MagicMock()
+    svc = GuidedImprovementPackageService(dispatch)
+    result = svc.commit(
+        MagicMock(),
+        {
+            "dry_run": True,
+            "process": {"processo_id": "p1"},
+            "instance": {"instancia_id": "i1"},
+            "scenario": {
+                "revision": {
+                    "revisao_referencia_id": "b1",
+                    "versao_revisao": "2.1.0",
+                    "cenario_tipo": "melhoria",
+                    "data_inicio_vigencia": "2026-09-02",
+                    "beneficio_calculo_categoria": "automatico",
+                },
+                "measurement": {"volume_mensal": 1},
+                "investments": [],
+            },
+        },
+    )
+    assert result["ready"] is True
+    dispatch.create_record.assert_not_called()
+    dispatch.update_record.assert_not_called()
+    dispatch.activate_revision.assert_not_called()
+    dispatch.recalculate_dashboard.assert_not_called()
+
+
+def test_improvement_package_empty_investments_valid_on_dry_run():
+    from tm_app.application.gpt_actions.improvement_package_service import (
+        GuidedImprovementPackageService,
+    )
+
+    result = GuidedImprovementPackageService(MagicMock()).commit(
+        MagicMock(),
+        {
+            "dry_run": True,
+            "process": {"processo_id": "p1"},
+            "instance": {"instancia_id": "i1"},
+            "scenario": {
+                "revision": {
+                    "revisao_referencia_id": "b1",
+                    "versao_revisao": "2.0.0",
+                    "cenario_tipo": "melhoria",
+                    "data_inicio_vigencia": "2026-01-01",
+                },
+                "measurement": {"volume_mensal": 10},
+                "investments": [],
+            },
+        },
+    )
+    assert result["ready"] is True
+
+
+def test_improvement_package_contract_drift_guide_openapi_service():
+    """Guide + OpenAPI nesting must stay aligned with service expectations."""
+    from tm_app.application.gpt_actions.improvement_package_contract import (
+        PACKAGE_BLOCK_KEYS,
+        PACKAGE_MEASUREMENT_FIELDS,
+        PACKAGE_REVISION_FIELDS,
+        build_package_hints,
+    )
+    from tm_app.application.gpt_actions.improvement_package_service import (
+        GuidedImprovementPackageService,
+    )
+    from tm_app.application.gpt_actions.registration_guide import build_registration_guide
+
+    hints = build_registration_guide()["package_hints"]
+    contract = build_package_hints()
+    assert hints["canonical_package_shape"] == contract["canonical_package_shape"]
+    assert hints["reuse_existing_example"]["scenario"]["revision"]
+    assert set(hints["canonical_package_shape"]["scenario"]["keys"]) == set(
+        PACKAGE_BLOCK_KEYS
+    )
+
+    doc = build_gpt_actions_openapi()
+    scenario_props = doc["components"]["schemas"]["GptImprovementPackageBody"][
+        "properties"
+    ]["scenario"]["properties"]
+    assert set(scenario_props) == set(PACKAGE_BLOCK_KEYS)
+
+    openapi_rev = set(
+        doc["components"]["schemas"]["GptPackageRevision"]["properties"]
+    )
+    assert set(PACKAGE_REVISION_FIELDS).issubset(openapi_rev)
+    openapi_meas = set(
+        doc["components"]["schemas"]["GptPackageMeasurement"]["properties"]
+    )
+    assert set(PACKAGE_MEASUREMENT_FIELDS).issubset(openapi_meas)
+
+    # Service treats flat scenario as missing scenario.revision (no silent normalize).
+    flat = GuidedImprovementPackageService(MagicMock()).commit(
+        MagicMock(),
+        {
+            "dry_run": True,
+            "scenario": {"versao_revisao": "2.1.0", "processo_id": "p"},
+        },
+    )
+    assert flat["ready"] is False
+    assert "scenario.revision" in flat["missing"]
+    assert "process" in flat["missing"]
+    assert "instance" in flat["missing"]
+
+
 def _process_context_patches():
     return [
         patch(
@@ -1352,3 +1563,6 @@ def test_specialist_instructions_discovery_and_mermaid_contract():
     assert "não existe" in text.lower()
     assert "svg" in text.lower()
     assert "progressive" in text.lower() or "STEP1" in text or "STEP2" in text
+    assert "canonical_package_shape" in text or "scenario.revision" in text
+    assert "ready=false" in text
+    assert "não invente shape" in text.lower() or "Não invente shape" in text

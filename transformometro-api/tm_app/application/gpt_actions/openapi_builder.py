@@ -11,6 +11,12 @@ from tm_app.application.gpt_actions.entities import (
     GptEntity,
     GptMeetingMinuteWorkflow,
 )
+from tm_app.application.gpt_actions.improvement_package_contract import (
+    NESTING_RULES,
+    openapi_investment_properties,
+    openapi_measurement_properties,
+    openapi_revision_properties,
+)
 
 GPT_ACTIONS_BASE_PATH = "/transformometro/gpt-actions/v1"
 GPT_ACTIONS_GATEWAY_ROOT = "/apps/transformometro-api"
@@ -520,8 +526,9 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_commit_improvement_package",
                 "summary": "Validate or commit a guided improvement package",
                 "description": (
-                    "Orchestrates process+instance+baseline+scenario(+investments). "
-                    "Use dry_run=true first; then commit. Prefer over many create calls."
+                    "Nested package: process, instance, baseline.{revision,measurement}, "
+                    "scenario.{revision,measurement,investments}. Flat scenario fields INVALID. "
+                    "dry_run=true first; ready=false+missing[] is checklist, not tool failure."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
@@ -596,71 +603,154 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 },
                 "GptImprovementPackageBody": {
                     "type": "object",
+                    "description": (
+                        "Nested improvement package only. "
+                        + " ".join(NESTING_RULES[:4])
+                    ),
                     "properties": {
                         "dry_run": {
                             "type": "boolean",
                             "default": False,
-                            "description": "When true, validate only and return missing fields.",
+                            "description": (
+                                "When true: HTTP 200, no writes; ready=false + missing[] if incomplete. "
+                                "ready=false is checklist guidance, not tool failure."
+                            ),
                         },
                         "activate_scenario": {
                             "type": "boolean",
                             "default": False,
-                            "description": "Activate the scenario revision after commit.",
+                            "description": (
+                                "Activate the scenario revision after successful commit only "
+                                "(never during dry_run)."
+                            ),
                         },
                         "recalculate": {
                             "type": "boolean",
                             "default": False,
-                            "description": "Recalculate dashboard cache after commit.",
+                            "description": "Recalculate dashboard cache after successful commit.",
                         },
                         "process": {
                             "type": "object",
-                            "description": "Create fields or {id|processo_id} to reuse.",
+                            "description": (
+                                "REQUIRED. Reuse with id or processo_id, OR create with "
+                                "nome_processo + status_processo (+ optional process fields)."
+                            ),
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "description": "Existing processo_id alias.",
+                                },
+                                "processo_id": {
+                                    "type": "string",
+                                    "description": "Existing process id to reuse.",
+                                },
+                                "nome_processo": {"type": "string"},
+                                "status_processo": {"type": "string"},
+                                "descricao_processo": {"type": "string"},
+                                "gestor_responsavel": {"type": "string"},
+                                "objetivo_processo": {"type": "string"},
+                                "codigo_processo": {"type": "string"},
+                                "familia_processo": {"type": "string"},
+                                "agrupador_ferramenta": {"type": "string"},
+                                "filial_id": {"type": "string"},
+                            },
                             "additionalProperties": True,
                         },
                         "instance": {
                             "type": "object",
-                            "description": "Create fields or {id|instancia_id} to reuse.",
+                            "description": (
+                                "REQUIRED. Reuse with id or instancia_id, OR create with "
+                                "setor_ids and filial_id|todas_filiais_ativas."
+                            ),
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "description": "Existing instancia_id alias.",
+                                },
+                                "instancia_id": {
+                                    "type": "string",
+                                    "description": "Existing instance id to reuse.",
+                                },
+                                "filial_id": {"type": "string"},
+                                "todas_filiais_ativas": {"type": "boolean"},
+                                "setor_ids": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                },
+                                "setor_id": {
+                                    "type": "string",
+                                    "description": "Legacy single setor; prefer setor_ids.",
+                                },
+                                "resumo_melhoria": {"type": "string"},
+                                "fase_melhoria": {"type": "string"},
+                                "prioridade": {"type": "string"},
+                                "status_instancia": {"type": "string"},
+                            },
                             "additionalProperties": True,
                         },
                         "baseline": {
                             "type": "object",
-                            "description": "revision (+ optional measurement). cenario forced to baseline.",
+                            "description": (
+                                "Optional baseline block. Nested revision (+ optional measurement). "
+                                "cenario_tipo is forced to baseline by the service."
+                            ),
                             "properties": {
                                 "revision": {
-                                    "type": "object",
-                                    "additionalProperties": True,
+                                    "$ref": "#/components/schemas/GptPackageRevision",
                                 },
                                 "measurement": {
-                                    "type": "object",
-                                    "additionalProperties": True,
+                                    "$ref": "#/components/schemas/GptPackageMeasurement",
                                 },
                             },
+                            "additionalProperties": False,
                         },
                         "scenario": {
                             "type": "object",
                             "description": (
-                                "revision (melhoria|automacao|correcao) + measurement + investments[]. "
-                                "revisao_referencia_id optional if baseline is in the same package."
+                                "Optional scenario block. MUST nest revision under scenario.revision "
+                                "(never flat versao_revisao/processo_id on scenario root). "
+                                "revisao_referencia_id required unless baseline is in the same package. "
+                                "investments may be []."
                             ),
                             "properties": {
                                 "revision": {
-                                    "type": "object",
-                                    "additionalProperties": True,
+                                    "$ref": "#/components/schemas/GptPackageRevision",
                                 },
                                 "measurement": {
-                                    "type": "object",
-                                    "additionalProperties": True,
+                                    "$ref": "#/components/schemas/GptPackageMeasurement",
                                 },
                                 "investments": {
                                     "type": "array",
+                                    "description": "Investment lines; empty array is valid.",
                                     "items": {
-                                        "type": "object",
-                                        "additionalProperties": True,
+                                        "$ref": "#/components/schemas/GptPackageInvestment"
                                     },
                                 },
                             },
+                            "additionalProperties": False,
                         },
                     },
+                },
+                "GptPackageRevision": {
+                    "type": "object",
+                    "description": (
+                        "Revision fields for baseline.revision or scenario.revision. "
+                        "beneficio_calculo_categoria belongs here, not on measurement."
+                    ),
+                    "properties": openapi_revision_properties(),
+                    "additionalProperties": True,
+                },
+                "GptPackageMeasurement": {
+                    "type": "object",
+                    "description": "Measurement fields for baseline.measurement or scenario.measurement.",
+                    "properties": openapi_measurement_properties(),
+                    "additionalProperties": True,
+                },
+                "GptPackageInvestment": {
+                    "type": "object",
+                    "description": "One investment item inside scenario.investments[].",
+                    "properties": openapi_investment_properties(),
+                    "additionalProperties": True,
                 },
             },
         },

@@ -71,10 +71,10 @@ Saída de playbook não vira registro automaticamente. Persista somente entities
 Draft Mermaid/flowchart_v1/decomposition_tree_v1 = PROPOSED/NOT SAVED. Persistência usa gpt_create_record/gpt_update_record nas entities suportadas. Backend aplica validators canônicos; Mermaid é DERIVED BY SERVER, ignore mermaid_cached do modelo. Só declare sucesso após verified/persisted + read-back. OUTCOME_VERIFICATION_FAILED = não sucesso.
 
 ## QUICK REGISTRATION
-1. gpt_get_catalog e use registration_guide/enums.
-2. Colete somente o que falta: melhoria; unidade/setor; processo existente/novo; AS-IS/TO-BE; cenário; investimento; vigência; ativar?
-3. gpt_commit_improvement_package dry_run=true → mostrar → confirmar → commit.
-4. Baseline sem revisao_referencia_id e sem activate; cenário exige referência; preserve instancia_id.
+1. Antes de writes complexos: gpt_get_catalog → package_hints/canonical_package_shape. Não invente shape nem use memória de payload.
+2. Envelope: process+instance+scenario.revision(+measurement+investments[]). Nunca flat em scenario.
+3. Colete lacunas; dry_run=true → ready=true (ready=false+missing[] ≠ falha) → SHOW → CONFIRM → WRITE → VERIFY.
+4. Baseline sem referência/activate; cenário exige scenario.revision.revisao_referencia_id se sem baseline no pacote; investments=[]; beneficio_calculo_categoria em revision.
 
 ## Limites
 Conta ChatGPT != Minha DELPI. Autoridade = OAuth Keycloak + RBAC + regras backend/domain.

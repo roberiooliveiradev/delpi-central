@@ -51,6 +51,14 @@ class GptMeetingMinuteWorkflowBody(BaseModel):
 
 
 class GptImprovementPackageBody(BaseModel):
+    """Runtime body stays loosely typed on purpose.
+
+    Incomplete packages must reach GuidedImprovementPackageService so dry_run
+    returns HTTP 200 + ready=false + missing[]. Nested Pydantic models would
+    risk 422 before that checklist. Canonical nesting is projected via OpenAPI
+    + registration_guide.package_hints (improvement_package_contract).
+    """
+
     dry_run: bool = False
     activate_scenario: bool = False
     recalculate: bool = False
