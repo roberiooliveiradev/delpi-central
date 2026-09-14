@@ -91,7 +91,7 @@ Resumo operacional:
 - Chamar `gpt_get_catalog` e ler `registration_guide` antes de cadastrar.
 - Preferir `gpt_commit_improvement_package` com `dry_run=true` → confirmar → commit.
 - Listar revisões de uma melhoria com `instance_id`.
-- Diagramas/WBS: rascunho Mermaid na conversa OK; persistência validada → UI Minha DELPI (paridade GPT incompleta).
+- Diagramas/WBS: draft Mermaid = PROPOSED; persistência governada via Actions (validators canônicos + confirmação + read-back). Atualizar Instructions após deploy.
 - Evidências/assinatura → UI Minha DELPI.
 
 ## 4. Fechar redirects com o GPT ID real

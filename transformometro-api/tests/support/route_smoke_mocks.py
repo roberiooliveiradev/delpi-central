@@ -250,6 +250,61 @@ class SmokeDouble:
                 return {"valid": True, "ok": True, "diff": {}, "entities": {}}
             if name in {"apply", "apply_package"}:
                 return {"ok": True, "entities": {}}
+            if name in {
+                "save_macro",
+                "save_tree",
+                "prepare_macro",
+                "prepare_tree",
+            }:
+                return {
+                    "row": dict(_ENTITY_ROW),
+                    "conteudo": _EMPTY_FLOW,
+                    "mermaid": "graph TD; A-->B;",
+                    "processo_id": _IDS["processo_id"],
+                    "nodes": 0,
+                    "valid": True,
+                    "persisted": False,
+                    "normalized_payload": _EMPTY_FLOW,
+                }
+            if name in {
+                "save_instance_scope",
+                "prepare_instance_scope",
+            }:
+                return {
+                    "row": dict(_ENTITY_ROW),
+                    "escopo": {
+                        "node_ids": [],
+                        "inherit_all": True,
+                        "include_boundary_edges": False,
+                        "include_descendants": True,
+                    },
+                    "instancia_id": _IDS["instancia_id"],
+                    "inherit_all": True,
+                    "nodes": 0,
+                    "valid": True,
+                    "persisted": False,
+                    "normalized_payload": {
+                        "node_ids": [],
+                        "inherit_all": True,
+                        "include_boundary_edges": False,
+                        "include_descendants": True,
+                    },
+                }
+            if name in {
+                "save_revision_overlay",
+                "prepare_revision_overlay",
+            }:
+                return {
+                    "row": dict(_ENTITY_ROW),
+                    "overlay": _EMPTY_FLOW_OVERLAY,
+                    "mermaid": "graph TD; A-->B;",
+                    "merged_preview": _EMPTY_FLOW,
+                    "revisao_id": _IDS["revisao_id"],
+                    "overrides": 0,
+                    "valid": True,
+                    "persisted": False,
+                    "normalized_payload": _EMPTY_FLOW_OVERLAY,
+                }
             if name == "export_bundle":
                 return {"version": 1, "entities": {}}
             if name == "heartbeat":

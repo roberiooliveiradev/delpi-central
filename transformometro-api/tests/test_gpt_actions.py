@@ -786,7 +786,8 @@ def test_process_context_positive():
     assert result["context_version"] == "process_intelligence_context_v1"
     assert "capabilities" not in result
     assert result["surface_supports"]["side_effect"] is False
-    assert result["surface_supports"]["persist_diagram_via_gpt"] is False
+    assert result["surface_supports"]["persist_diagram_via_gpt"] is True
+    assert result["surface_supports"]["persist_decomposition_via_gpt"] is True
     assert "write_records" not in result["surface_supports"]
     assert result["as_is"]["role"] == "AS_IS"
     assert result["as_is"]["mermaid"] is None

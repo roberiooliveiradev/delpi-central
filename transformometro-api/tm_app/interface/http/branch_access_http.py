@@ -133,6 +133,23 @@ def check_processo_view_access(request: Request, processo_id: str) -> JSONRespon
     return access_denied()
 
 
+def check_processo_manage_access(request: Request, processo_id: str) -> JSONResponse | None:
+    """Write gate: view is not sufficient — require manage on a related branch."""
+    scope = resolve_access_scope(request)
+    if scope.is_unrestricted:
+        return None
+    user = getattr(request.state, "user", None)
+    instancias = ProcessoInstanciaRepository().list_by_processo(processo_id)
+    if not instancias:
+        return None
+    if any(
+        _scope_service.can_manage_filial(scope, row.get("codigo_filial"), user=user)
+        for row in instancias
+    ):
+        return None
+    return access_denied("Sem permissão para gerenciar dados nesta unidade.")
+
+
 def check_instancia_view_access(request: Request, instancia_id: str) -> JSONResponse | None:
     row = ProcessoInstanciaRepository().get(instancia_id)
     if not row:
@@ -145,6 +162,22 @@ def check_instancia_view_access(request: Request, instancia_id: str) -> JSONResp
     if _scope_service.can_view_filial(scope, row.get("codigo_filial")):
         return None
     return access_denied()
+
+
+def check_instancia_manage_access(request: Request, instancia_id: str) -> JSONResponse | None:
+    """Write gate for instance-scoped documents (diagram/WBS scope)."""
+    row = ProcessoInstanciaRepository().get(instancia_id)
+    if not row:
+        return None
+    scope = resolve_access_scope(request)
+    user = getattr(request.state, "user", None)
+    if row.get("todas_filiais_ativas"):
+        if scope.is_unrestricted:
+            return None
+        return access_denied("Sem permissão para gerenciar dados nesta unidade.")
+    if _scope_service.can_manage_filial(scope, row.get("codigo_filial"), user=user):
+        return None
+    return access_denied("Sem permissão para gerenciar dados nesta unidade.")
 
 
 def filter_rows_for_access(

@@ -10,6 +10,10 @@ from pydantic import BaseModel, Field
 
 from tm_app.application.services.diagram_mermaid_export_service import DiagramMermaidExportService
 from tm_app.application.services.diagram_composition_service import DiagramaCompositionService
+from tm_app.application.services.diagram_write_service import (
+    DiagramWriteError,
+    DiagramWriteService,
+)
 from tm_app.application.services.flowchart_bpmn_xml_service import FlowchartBpmnXmlService
 from tm_app.application.services.revision_diagram_merge_service import RevisaoDiagramMergeService
 from tm_app.application.services.transformometro_realtime_notify import notify_from_audit
@@ -23,10 +27,11 @@ from tm_app.domain.diagram.flowchart_v1 import (
     empty_escopo,
     empty_flowchart,
     empty_overlay,
-    macro_node_ids,
-    validate_escopo,
     validate_flowchart_v1,
-    validate_overlay_v1,
+)
+from tm_app.interface.http.branch_access_http import (
+    check_instancia_manage_access,
+    check_processo_manage_access,
 )
 from tm_app.infrastructure.persistence.repositories.audit_repository import AuditRepository
 from tm_app.infrastructure.persistence.repositories.instance_scope_diagram_repository import (
@@ -53,6 +58,7 @@ _merge = RevisaoDiagramMergeService(_mermaid)
 _composition = DiagramaCompositionService()
 _validator = FlowchartValidationService()
 _bpmn_xml = FlowchartBpmnXmlService()
+_writes = DiagramWriteService()
 
 
 class FlowchartBody(BaseModel):
@@ -191,21 +197,21 @@ def get_processo_diagrama_composed(
 @router.put("/processos/{processo_id}/diagrama",
     operation_id="put_processo_diagrama")
 def put_processo_diagrama(processo_id: str, body: FlowchartBody, request: Request):
-    if not ProcessoRepository().get(processo_id):
-        return fail("Processo não encontrado.", 404)
+    if err := check_processo_manage_access(request, processo_id):
+        return err
     try:
-        conteudo = validate_flowchart_v1(body.conteudo)
-    except FlowchartValidationError as exc:
-        return fail(str(exc), 400)
+        saved = _writes.save_macro(processo_id, body.conteudo)
+    except DiagramWriteError as exc:
+        return fail(exc.message, exc.status_code)
 
-    mermaid = _mermaid.flowchart_to_mermaid(conteudo)
-    row = ProcessoDiagramRepository().upsert(
+    _audit(
+        request,
+        "processo",
         processo_id,
-        conteudo=conteudo,
-        mermaid_cached=mermaid,
+        "diagram.macro.updated",
+        {"nodes": saved["nodes"]},
     )
-    _audit(request, "processo", processo_id, "diagram.macro.updated", {"nodes": len(conteudo.get("nodes", []))})
-    payload = _macro_response(row)
+    payload = _macro_response(saved["row"])
     payload["processo_id"] = processo_id
     return ok(payload, "Diagrama macro salvo.")
 
@@ -244,6 +250,8 @@ def get_processo_diagrama_bpmn_xml(processo_id: str):
 @router.put("/processos/{processo_id}/diagrama/bpmn.xml",
     operation_id="put_processo_diagrama_bpmn_xml")
 def put_processo_diagrama_bpmn_xml(processo_id: str, body: BpmnImportBody, request: Request):
+    if err := check_processo_manage_access(request, processo_id):
+        return err
     if not ProcessoRepository().get(processo_id):
         return fail("Processo não encontrado.", 404)
     try:
@@ -251,20 +259,18 @@ def put_processo_diagrama_bpmn_xml(processo_id: str, body: BpmnImportBody, reque
     except FlowchartValidationError as exc:
         return fail(str(exc), 400)
 
-    mermaid = _mermaid.flowchart_to_mermaid(conteudo)
-    row = ProcessoDiagramRepository().upsert(
-        processo_id,
-        conteudo=conteudo,
-        mermaid_cached=mermaid,
-    )
+    try:
+        saved = _writes.save_macro(processo_id, conteudo)
+    except DiagramWriteError as exc:
+        return fail(exc.message, exc.status_code)
     _audit(
         request,
         "processo",
         processo_id,
         "diagram.macro.imported_bpmn",
-        {"nodes": len(conteudo.get("nodes", []))},
+        {"nodes": saved["nodes"]},
     )
-    payload = _macro_response(row)
+    payload = _macro_response(saved["row"])
     payload["processo_id"] = processo_id
     return ok(payload, "Diagrama importado de BPMN 2.0 XML.")
 
@@ -282,34 +288,20 @@ def get_instancia_diagrama_escopo(instancia_id: str):
 @router.put("/instancias/{instancia_id}/diagrama-escopo",
     operation_id="put_instancia_diagrama_escopo")
 def put_instancia_diagrama_escopo(instancia_id: str, body: EscopoBody, request: Request):
-    instancia = ProcessoInstanciaRepository().get(instancia_id)
-    if not instancia:
-        return fail("Instância não encontrada.", 404)
-
-    macro_row = ProcessoDiagramRepository().get(str(instancia["processo_id"]))
-    macro = (macro_row or {}).get("conteudo") or empty_flowchart()
+    if err := check_instancia_manage_access(request, instancia_id):
+        return err
     try:
-        escopo = validate_escopo(
-            body.model_dump(),
-            macro_node_ids=macro_node_ids(macro),
-        )
-    except FlowchartValidationError as exc:
-        return fail(str(exc), 400)
-
-    row = InstanciaDiagramEscopoRepository().upsert(
-        instancia_id,
-        node_ids=escopo["node_ids"],
-        inherit_all=escopo["inherit_all"],
-        include_boundary_edges=escopo["include_boundary_edges"],
-    )
+        saved = _writes.save_instance_scope(instancia_id, body.model_dump())
+    except DiagramWriteError as exc:
+        return fail(exc.message, exc.status_code)
     _audit(
         request,
         "processo_instancia",
         instancia_id,
         "diagram.escopo.updated",
-        {"inherit_all": escopo["inherit_all"], "nodes": len(escopo["node_ids"])},
+        {"inherit_all": saved["inherit_all"], "nodes": saved["nodes"]},
     )
-    return ok(_escopo_response(row, instancia_id), "Escopo de diagrama salvo.")
+    return ok(_escopo_response(saved["row"], instancia_id), "Escopo de diagrama salvo.")
 
 
 def _load_merge_context(
@@ -399,31 +391,28 @@ def put_revisao_diagrama_overlay(revisao_id: str, body: OverlayBody, request: Re
     revisao = RevisaoRepository().get(revisao_id)
     if not revisao:
         return fail("Revisão não encontrada.", 404)
-
+    instancia_id = str(revisao.get("instancia_id") or "").strip()
+    if instancia_id:
+        if err := check_instancia_manage_access(request, instancia_id):
+            return err
+    else:
+        if err := check_processo_manage_access(request, str(revisao["processo_id"])):
+            return err
     try:
-        overlay = validate_overlay_v1(body.conteudo)
-    except FlowchartValidationError as exc:
-        return fail(str(exc), 400)
+        saved = _writes.save_revision_overlay(revisao_id, body.conteudo)
+    except DiagramWriteError as exc:
+        return fail(exc.message, exc.status_code)
 
-    _, macro, escopo, _ = _load_merge_context(revisao_id)
-    merged = _merge.merge(macro=macro, escopo=escopo, overlay=overlay)
-    mermaid = merged["mermaid"]
-
-    row = RevisaoDiagramOverlayRepository().upsert(
-        revisao_id,
-        conteudo=overlay,
-        mermaid_cached=mermaid,
-    )
     _audit(
         request,
         "revisao",
         revisao_id,
         "diagram.overlay.updated",
-        {"overrides": len(overlay.get("node_overrides") or {})},
+        {"overrides": saved["overrides"]},
     )
-    payload = _overlay_response(row, revisao_id)
-    payload["mermaid"] = mermaid
-    payload["merged_preview"] = merged["flowchart"]
+    payload = _overlay_response(saved["row"], revisao_id)
+    payload["mermaid"] = saved["mermaid"]
+    payload["merged_preview"] = saved["merged_preview"]
     return ok(payload, "Overlay da revisão salvo.")
 
 

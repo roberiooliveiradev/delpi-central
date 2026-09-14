@@ -116,6 +116,14 @@ from tm_app.infrastructure.persistence.repositories.shared_resource_repository i
 )
 from tm_app.application.services.branch_access_scope_service import FilialAccessScopeService
 from tm_app.application.services.dashboard_recalc_hook_service import DashboardRecalcHookService
+from tm_app.application.services.decomposition_write_service import (
+    DecompositionWriteError,
+    DecompositionWriteService,
+)
+from tm_app.application.services.diagram_write_service import (
+    DiagramWriteError,
+    DiagramWriteService,
+)
 from tm_app.application.services.process_setup_stats_service import ProcessoSetupStatsService
 from tm_app.application.services.process_write_service import (
     ProcessWriteError,
@@ -124,8 +132,10 @@ from tm_app.application.services.process_write_service import (
 )
 from tm_app.interface.http.branch_access_http import (
     check_dashboard_filial_access,
+    check_instancia_manage_access,
     check_instancia_view_access,
     check_manage_filial_access,
+    check_processo_manage_access,
     check_processo_view_access,
     check_view_filial_access,
     filter_rows_for_access,
@@ -184,6 +194,8 @@ class GptActionsDispatchService:
         self._snapshot = DashboardSnapshotReadService()
         self._recalc_hook = DashboardRecalcHookService()
         self._minutes = MeetingMinutesService()
+        self._diagram_writes = DiagramWriteService()
+        self._decomp_writes = DecompositionWriteService()
 
     # --- helpers ---------------------------------------------------------
 
@@ -1387,6 +1399,40 @@ class GptActionsDispatchService:
             raise GptActionsError(f"data.{key} is required.", 400)
         return parent_id
 
+    def _require_revisao_manage_access(self, request: Request, revisao_id: str) -> None:
+        revisao = RevisaoRepository().get(revisao_id)
+        if not revisao:
+            raise GptActionsError("Revisão não encontrada.", 404)
+        instancia_id = str(revisao.get("instancia_id") or "").strip()
+        if instancia_id:
+            self._raise_http_err(check_instancia_manage_access(request, instancia_id))
+            return
+        processo_id = str(revisao.get("processo_id") or "").strip()
+        if processo_id:
+            self._raise_http_err(check_processo_manage_access(request, processo_id))
+
+    def _verify_document_postcondition(
+        self,
+        *,
+        expected: dict[str, Any],
+        actual: dict[str, Any] | None,
+        label: str,
+    ) -> None:
+        if actual is None:
+            raise GptActionsError(
+                f"OUTCOME_VERIFICATION_FAILED: {label} não encontrado após persistência.",
+                500,
+            )
+        # Compare normalized content when present; otherwise compare row identity fields.
+        for key in ("conteudo", "node_ids", "inherit_all", "include_boundary_edges", "include_descendants"):
+            if key not in expected:
+                continue
+            if actual.get(key) != expected.get(key):
+                raise GptActionsError(
+                    f"OUTCOME_VERIFICATION_FAILED: {label} divergiu no campo '{key}'.",
+                    500,
+                )
+
     def _upsert_document(
         self,
         request: Request,
@@ -1394,72 +1440,191 @@ class GptActionsDispatchService:
         parent_id: str,
         data: dict,
     ) -> tuple[dict[str, Any], str, int] | tuple[dict[str, Any], str]:
-        if entity == GptEntity.DECOMPOSITION_TREE:
-            self._raise_http_err(check_processo_view_access(request, parent_id))
-            conteudo = data.get("conteudo") if isinstance(data.get("conteudo"), dict) else data
-            row = ProcessoDecomposicaoRepository().upsert(parent_id, conteudo=conteudo)
-            self._audit(request, "processo", parent_id, "decomposition.updated", {})
-            return row_to_json(row), "Decomposição salva.", 200
+        """Persist document entities via canonical write services (UI parity)."""
+        try:
+            if entity == GptEntity.DECOMPOSITION_TREE:
+                self._raise_http_err(check_processo_manage_access(request, parent_id))
+                conteudo = (
+                    data.get("conteudo") if isinstance(data.get("conteudo"), dict) else data
+                )
+                saved = self._decomp_writes.save_tree(parent_id, conteudo)
+                read_back = self._decomp_writes.read_back_tree(parent_id)
+                self._verify_document_postcondition(
+                    expected={"conteudo": saved["conteudo"]},
+                    actual=read_back,
+                    label="decomposition_tree",
+                )
+                self._audit(
+                    request,
+                    "processo",
+                    parent_id,
+                    "decomposition.updated",
+                    {"nodes": saved["nodes"]},
+                )
+                return (
+                    {
+                        **row_to_json(saved["row"]),
+                        "verified": True,
+                        "persisted": True,
+                        "nodes": saved["nodes"],
+                    },
+                    "Decomposição salva e verificada.",
+                    200,
+                )
 
-        if entity == GptEntity.INSTANCE_DECOMPOSITION_SCOPE:
-            self._raise_http_err(check_instancia_view_access(request, parent_id))
-            row = InstanciaDecomposicaoEscopoRepository().upsert(
-                parent_id,
-                node_ids=list(data.get("node_ids") or []),
-                inherit_all=bool(data.get("inherit_all", False)),
-                include_descendants=bool(data.get("include_descendants", True)),
-            )
-            self._audit(
-                request,
-                "processo_instancia",
-                parent_id,
-                "decomposition.scope.updated",
-                {},
-            )
-            return row_to_json(row), "Escopo de decomposição salvo.", 200
+            if entity == GptEntity.INSTANCE_DECOMPOSITION_SCOPE:
+                self._raise_http_err(check_instancia_manage_access(request, parent_id))
+                saved = self._decomp_writes.save_instance_scope(parent_id, data)
+                read_back = InstanciaDecomposicaoEscopoRepository().get(parent_id)
+                self._verify_document_postcondition(
+                    expected={
+                        "node_ids": saved["escopo"]["node_ids"],
+                        "inherit_all": saved["escopo"]["inherit_all"],
+                        "include_descendants": saved["escopo"]["include_descendants"],
+                    },
+                    actual=read_back,
+                    label="instance_decomposition_scope",
+                )
+                self._audit(
+                    request,
+                    "processo_instancia",
+                    parent_id,
+                    "decomposition.scope.updated",
+                    {"nodes": saved["nodes"]},
+                )
+                return (
+                    {**row_to_json(saved["row"]), "verified": True, "persisted": True},
+                    "Escopo de decomposição salvo e verificado.",
+                    200,
+                )
 
-        if entity == GptEntity.REVISION_DECOMPOSITION_OVERLAY:
-            conteudo = data.get("conteudo") if isinstance(data.get("conteudo"), dict) else data
-            row = RevisaoDecomposicaoOverlayRepository().upsert(
-                parent_id, conteudo=conteudo
-            )
-            self._audit(request, "revisao", parent_id, "decomposition.overlay.updated", {})
-            return row_to_json(row), "Overlay de decomposição salvo.", 200
+            if entity == GptEntity.REVISION_DECOMPOSITION_OVERLAY:
+                self._require_revisao_manage_access(request, parent_id)
+                conteudo = (
+                    data.get("conteudo") if isinstance(data.get("conteudo"), dict) else data
+                )
+                saved = self._decomp_writes.save_revision_overlay(parent_id, conteudo)
+                read_back = RevisaoDecomposicaoOverlayRepository().get(parent_id)
+                self._verify_document_postcondition(
+                    expected={"conteudo": saved["overlay"]},
+                    actual=read_back,
+                    label="revision_decomposition_overlay",
+                )
+                self._audit(
+                    request,
+                    "revisao",
+                    parent_id,
+                    "decomposition.overlay.updated",
+                    {"overrides": saved["overrides"]},
+                )
+                return (
+                    {
+                        **row_to_json(saved["row"]),
+                        "merged_preview": saved["merged_preview"],
+                        "verified": True,
+                        "persisted": True,
+                    },
+                    "Overlay de decomposição salvo e verificado.",
+                    200,
+                )
 
-        if entity == GptEntity.PROCESS_DIAGRAM:
-            self._raise_http_err(check_processo_view_access(request, parent_id))
-            conteudo = data.get("conteudo") if isinstance(data.get("conteudo"), dict) else data
-            mermaid = data.get("mermaid_cached")
-            row = ProcessoDiagramRepository().upsert(
-                parent_id,
-                conteudo=conteudo,
-                mermaid_cached=mermaid if isinstance(mermaid, str) else None,
-            )
-            self._audit(request, "processo", parent_id, "diagram.macro.updated", {})
-            return row_to_json(row), "Diagrama salvo.", 200
+            if entity == GptEntity.PROCESS_DIAGRAM:
+                self._raise_http_err(check_processo_manage_access(request, parent_id))
+                conteudo = (
+                    data.get("conteudo") if isinstance(data.get("conteudo"), dict) else data
+                )
+                # Ignore client mermaid_cached — always server-derived.
+                saved = self._diagram_writes.save_macro(parent_id, conteudo)
+                read_back = self._diagram_writes.read_back_macro(parent_id)
+                self._verify_document_postcondition(
+                    expected={"conteudo": saved["conteudo"]},
+                    actual=read_back,
+                    label="process_diagram",
+                )
+                if read_back and read_back.get("mermaid_cached") != saved["mermaid"]:
+                    raise GptActionsError(
+                        "OUTCOME_VERIFICATION_FAILED: mermaid_cached não é derivado do servidor.",
+                        500,
+                    )
+                self._audit(
+                    request,
+                    "processo",
+                    parent_id,
+                    "diagram.macro.updated",
+                    {"nodes": saved["nodes"]},
+                )
+                return (
+                    {
+                        **row_to_json(saved["row"]),
+                        "mermaid": saved["mermaid"],
+                        "verified": True,
+                        "persisted": True,
+                    },
+                    "Diagrama salvo e verificado.",
+                    200,
+                )
 
-        if entity == GptEntity.INSTANCE_DIAGRAM_SCOPE:
-            self._raise_http_err(check_instancia_view_access(request, parent_id))
-            row = InstanciaDiagramEscopoRepository().upsert(
-                parent_id,
-                node_ids=list(data.get("node_ids") or []),
-                inherit_all=bool(data.get("inherit_all", False)),
-                include_boundary_edges=bool(data.get("include_boundary_edges", True)),
-            )
-            self._audit(
-                request, "processo_instancia", parent_id, "diagram.escopo.updated", {}
-            )
-            return row_to_json(row), "Escopo de diagrama salvo.", 200
+            if entity == GptEntity.INSTANCE_DIAGRAM_SCOPE:
+                self._raise_http_err(check_instancia_manage_access(request, parent_id))
+                saved = self._diagram_writes.save_instance_scope(parent_id, data)
+                read_back = InstanciaDiagramEscopoRepository().get(parent_id)
+                self._verify_document_postcondition(
+                    expected={
+                        "node_ids": saved["escopo"]["node_ids"],
+                        "inherit_all": saved["escopo"]["inherit_all"],
+                        "include_boundary_edges": saved["escopo"][
+                            "include_boundary_edges"
+                        ],
+                    },
+                    actual=read_back,
+                    label="instance_diagram_scope",
+                )
+                self._audit(
+                    request,
+                    "processo_instancia",
+                    parent_id,
+                    "diagram.escopo.updated",
+                    {"nodes": saved["nodes"]},
+                )
+                return (
+                    {**row_to_json(saved["row"]), "verified": True, "persisted": True},
+                    "Escopo de diagrama salvo e verificado.",
+                    200,
+                )
 
-        if entity == GptEntity.REVISION_DIAGRAM_OVERLAY:
-            conteudo = data.get("conteudo") if isinstance(data.get("conteudo"), dict) else data
-            mermaid = data.get("mermaid_cached")
-            row = RevisaoDiagramOverlayRepository().upsert(
-                parent_id,
-                conteudo=conteudo,
-                mermaid_cached=mermaid if isinstance(mermaid, str) else None,
-            )
-            self._audit(request, "revisao", parent_id, "diagram.overlay.updated", {})
-            return row_to_json(row), "Overlay de diagrama salvo.", 200
+            if entity == GptEntity.REVISION_DIAGRAM_OVERLAY:
+                self._require_revisao_manage_access(request, parent_id)
+                conteudo = (
+                    data.get("conteudo") if isinstance(data.get("conteudo"), dict) else data
+                )
+                saved = self._diagram_writes.save_revision_overlay(parent_id, conteudo)
+                read_back = RevisaoDiagramOverlayRepository().get(parent_id)
+                self._verify_document_postcondition(
+                    expected={"conteudo": saved["overlay"]},
+                    actual=read_back,
+                    label="revision_diagram_overlay",
+                )
+                self._audit(
+                    request,
+                    "revisao",
+                    parent_id,
+                    "diagram.overlay.updated",
+                    {"overrides": saved["overrides"]},
+                )
+                return (
+                    {
+                        **row_to_json(saved["row"]),
+                        "mermaid": saved["mermaid"],
+                        "merged_preview": saved["merged_preview"],
+                        "verified": True,
+                        "persisted": True,
+                    },
+                    "Overlay de diagrama salvo e verificado.",
+                    200,
+                )
+        except DiagramWriteError as exc:
+            raise GptActionsError(exc.message, exc.status_code) from exc
+        except DecompositionWriteError as exc:
+            raise GptActionsError(exc.message, exc.status_code) from exc
 
         raise GptActionsError(f"Document upsert not implemented for {entity.value}.", 400)

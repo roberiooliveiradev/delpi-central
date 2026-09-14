@@ -18,6 +18,10 @@ from tm_app.application.services.decomposition_flowchart_link_validator import (
 from tm_app.application.services.decomposition_composition_service import (
     DecomposicaoCompositionService,
 )
+from tm_app.application.services.decomposition_write_service import (
+    DecompositionWriteError,
+    DecompositionWriteService,
+)
 from tm_app.application.services.revision_decomposition_merge_service import (
     RevisaoDecomposicaoMergeService,
 )
@@ -25,6 +29,10 @@ from tm_app.application.services.transformometro_realtime_notify import notify_f
 from tm_app.core.auth_actor import actor_from_request, client_id_from_request
 from tm_app.core.errors import format_api_error
 from tm_app.core.responses import fail, ok
+from tm_app.interface.http.branch_access_http import (
+    check_instancia_manage_access,
+    check_processo_manage_access,
+)
 from tm_app.domain.decomposition.decomposition_tree_v1 import (
     DecompositionValidationError,
     empty_contexto,
@@ -64,6 +72,7 @@ _merge = RevisaoDecomposicaoMergeService()
 _composition = DecomposicaoCompositionService()
 _export = DecompositionFlatExportService()
 _link_validator = DecompositionFlowchartLinkValidator()
+_writes = DecompositionWriteService()
 
 
 class TreeBody(BaseModel):
@@ -227,22 +236,21 @@ def get_processo_decomposicao_composed(
 @router.put("/processos/{processo_id}/decomposicao",
     operation_id="put_processo_decomposicao")
 def put_processo_decomposicao(processo_id: str, body: TreeBody, request: Request):
-    if not ProcessoRepository().get(processo_id):
-        return fail("Processo não encontrado.", 404)
+    if err := check_processo_manage_access(request, processo_id):
+        return err
     try:
-        conteudo = validate_decomposition_tree_v1(body.conteudo)
-    except DecompositionValidationError as exc:
-        return fail(str(exc), 400)
+        saved = _writes.save_tree(processo_id, body.conteudo)
+    except DecompositionWriteError as exc:
+        return fail(exc.message, exc.status_code)
 
-    row = ProcessoDecomposicaoRepository().upsert(processo_id, conteudo=conteudo)
     _audit(
         request,
         "processo",
         processo_id,
         "decomposition.updated",
-        {"nodes": len(conteudo.get("nodes", []))},
+        {"nodes": saved["nodes"]},
     )
-    payload = _tree_response(row, processo_id)
+    payload = _tree_response(saved["row"], processo_id)
     return ok(payload, "Árvore de decomposição salva.")
 
 
@@ -396,34 +404,20 @@ def put_instancia_decomposicao_escopo(
     body: DecompositionEscopoBody,
     request: Request,
 ):
-    instancia = ProcessoInstanciaRepository().get(instancia_id)
-    if not instancia:
-        return fail("Instância não encontrada.", 404)
-
-    tree_row = ProcessoDecomposicaoRepository().get(str(instancia["processo_id"]))
-    tree = (tree_row or {}).get("conteudo") or empty_tree()
+    if err := check_instancia_manage_access(request, instancia_id):
+        return err
     try:
-        escopo = validate_decomposition_escopo(
-            body.model_dump(),
-            tree_node_ids_set=tree_node_ids(tree),
-        )
-    except DecompositionValidationError as exc:
-        return fail(str(exc), 400)
-
-    row = InstanciaDecomposicaoEscopoRepository().upsert(
-        instancia_id,
-        node_ids=escopo["node_ids"],
-        inherit_all=escopo["inherit_all"],
-        include_descendants=escopo["include_descendants"],
-    )
+        saved = _writes.save_instance_scope(instancia_id, body.model_dump())
+    except DecompositionWriteError as exc:
+        return fail(exc.message, exc.status_code)
     _audit(
         request,
         "processo_instancia",
         instancia_id,
         "decomposition.scope.updated",
-        {"inherit_all": escopo["inherit_all"], "nodes": len(escopo["node_ids"])},
+        {"inherit_all": saved["inherit_all"], "nodes": saved["nodes"]},
     )
-    return ok(_escopo_response(row, instancia_id), "Escopo WBS salvo.")
+    return ok(_escopo_response(saved["row"], instancia_id), "Escopo WBS salvo.")
 
 
 @router.get("/instancias/{instancia_id}/contexto",
@@ -520,22 +514,22 @@ def put_revisao_decomposicao_overlay(revisao_id: str, body: OverlayBody, request
     revisao = RevisaoRepository().get(revisao_id)
     if not revisao:
         return fail("Revisão não encontrada.", 404)
-    _, tree, escopo, _ = _load_decomposition_merge_context(revisao_id)
+    instancia_id = str(revisao.get("instancia_id") or "").strip()
+    if instancia_id:
+        if err := check_instancia_manage_access(request, instancia_id):
+            return err
+    else:
+        if err := check_processo_manage_access(request, str(revisao["processo_id"])):
+            return err
     try:
-        conteudo = _merge.assert_overlay_within_escopo(
-            tree=tree,
-            escopo=escopo,
-            overlay=body.conteudo,
-        )
-    except DecompositionValidationError as exc:
-        return fail(str(exc), 400)
-
-    row = RevisaoDecomposicaoOverlayRepository().upsert(revisao_id, conteudo=conteudo)
+        saved = _writes.save_revision_overlay(revisao_id, body.conteudo)
+    except DecompositionWriteError as exc:
+        return fail(exc.message, exc.status_code)
     _audit(
         request,
         "revisao",
         revisao_id,
         "decomposition.overlay.updated",
-        {"overrides": len(conteudo.get("node_overrides") or {})},
+        {"overrides": saved["overrides"]},
     )
-    return ok(_overlay_response(row, revisao_id), "Overlay de decomposição salvo.")
+    return ok(_overlay_response(saved["row"], revisao_id), "Overlay de decomposição salvo.")

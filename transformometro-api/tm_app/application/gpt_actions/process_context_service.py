@@ -372,9 +372,10 @@ class ProcessContextService:
                 "guided_transformation": True,
                 "records_api": True,
                 "improvement_package_api": True,
-                "diagram_validated_write": False,
-                "decomposition_validated_write": False,
-                "persist_diagram_via_gpt": False,
+                "diagram_validated_write": True,
+                "decomposition_validated_write": True,
+                "persist_diagram_via_gpt": True,
+                "persist_decomposition_via_gpt": True,
                 "conversational_draft_flows": True,
                 "side_effect": False,
                 "support_vs_authorization": (
