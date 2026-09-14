@@ -375,3 +375,150 @@ First order remains:
 ```text
 C0.S0 → C0.S1 → C0.S2 → C0.S3 → C0.S4 → C0.S5 → C0.S6 → C0.S7 FOUNDATION_FREEZE → C1.S1
 ```
+
+## 24. Requirements completeness gate
+
+Toda unidade de implementação precisa provar não só o que foi feito, mas também o que **faltou**.
+
+Antes do diff, decompor o escopo autorizado em requisitos atômicos `RQ-*` e acceptance criteria `AC-*`. Requisitos materiais que pertencem ao produto devem mapear para `CP-*` da authority `25-requirements-traceability.md`.
+
+Estados permitidos por `RQ-*`:
+
+```text
+IMPLEMENTED
+PARTIAL
+NOT_IMPLEMENTED
+BLOCKED
+NOT_APPLICABLE
+```
+
+Regras obrigatórias:
+
+- todo `RQ-*` do brief aparece no relatório final;
+- nenhum requisito pode ser removido, fundido implicitamente ou considerado atendido sem evidence;
+- `PARTIAL` não conta como implementado;
+- `NOT_APPLICABLE` exige rationale explícito e não pode mascarar requisito obrigatório;
+- requisito material descoberto durante execução vira `DRQ-*` / `DISCOVERED_REQUIREMENT`;
+- se um requisito material descoberto não possui `CP-*` correspondente, registrar `TRACEABILITY_GAP`; não declarar completude global até a matriz `25` ser reconciliada;
+- cada `RQ-*` aponta, quando aplicável, para `CP-*`, `AC-*`, teste/postcondition e evidence.
+
+Métricas da tarefa:
+
+```text
+APPLICABLE_RQ = TOTAL_RQ - NOT_APPLICABLE
+TASK_IMPLEMENTED = count(RQ = IMPLEMENTED)
+TASK_VERIFIED_COVERAGE_PCT = 100 * TASK_IMPLEMENTED / APPLICABLE_RQ
+TASK_REMAINING_PCT = 100 - TASK_VERIFIED_COVERAGE_PCT
+CRITICAL_RQ_TOTAL = count(RQ critical)
+CRITICAL_RQ_IMPLEMENTED = count(critical RQ = IMPLEMENTED)
+```
+
+Não conceder crédito fracionário a `PARTIAL`. A porcentagem mede cobertura verificada de requisitos, não esforço ou tempo consumido.
+
+`TASK_COMPLETENESS = COMPLETE` somente quando:
+
+```text
+todos os RQ obrigatórios = IMPLEMENTED
+nenhum RQ crítico = PARTIAL | NOT_IMPLEMENTED | BLOCKED
+todos AC obrigatórios = PASS
+todos testes/evals obrigatórios = PASS
+residual search sem gap material
+planned scope = actual diff
+contract/security/postcondition gates resolvidos
+EXECUTION_DRIFT aberto = NONE
+```
+
+O relatório final deve incluir:
+
+```text
+REQUIREMENTS COMPLETENESS
+RQ | Critical | CP | Status | Evidence
+TOTAL_RQ
+APPLICABLE_RQ
+IMPLEMENTED_RQ
+PARTIAL_RQ
+NOT_IMPLEMENTED_RQ
+BLOCKED_RQ
+TASK_VERIFIED_COVERAGE_PCT
+TASK_REMAINING_PCT
+CRITICAL_COVERAGE
+TASK_COMPLETENESS
+DISCOVERED_REQUIREMENTS
+TRACEABILITY_GAPS
+```
+
+## 25. Program-wide verified completion
+
+Para saber quanto falta para a DÉLIA estar **100% implementada no escopo previsto**, usar a matriz `25-requirements-traceability.md` como denominador canônico e o execution ledger como autoridade de estado.
+
+Não medir progresso global por commits, arquivos, linhas, quantidade de código, fases iniciadas ou declaração do agente.
+
+Definições:
+
+```text
+ACTIVE_CP = todo CP-* da matriz cujo status != OUT_OF_SCOPE_WITH_DECISION
+PASS_CP = ACTIVE_CP cujo status = PASS
+REMAINING_CP = ACTIVE_CP - PASS_CP
+VERIFIED_PROGRAM_COMPLETION_PCT = 100 * PASS_CP / ACTIVE_CP
+VERIFIED_PROGRAM_REMAINING_PCT = 100 - VERIFIED_PROGRAM_COMPLETION_PCT
+```
+
+`PLANNED | REVALIDATE | TO_INVENTORY | LOCKED | IN_PROGRESS | BLOCKED_WITH_EVIDENCE | FAIL` continuam no denominador e valem zero no numerador. Isso evita transformar trabalho parcial em progresso comprovado.
+
+`OUT_OF_SCOPE_WITH_DECISION` é excluído do denominador porque deixou formalmente o escopo ativo; o ID permanece histórico.
+
+A mesma métrica deve ser calculada por fase `C0…C7`:
+
+```text
+PHASE_ACTIVE_CP
+PHASE_PASS_CP
+PHASE_REMAINING_CP
+PHASE_VERIFIED_COMPLETION_PCT
+PHASE_REMAINING_PCT
+```
+
+A porcentagem é **Verified Scope Completion**: cobertura de escopo previsto comprovadamente concluída. Não é estimativa de esforço, custo ou calendário.
+
+### Gate de 100%
+
+Mesmo com `VERIFIED_PROGRAM_COMPLETION_PCT = 100`, declarar `PROGRAM_COMPLETE = TRUE` somente se, no SHA/config/evidence aplicável:
+
+```text
+todos ACTIVE_CP = PASS
+C0…C7 gates obrigatórios = PASS
+20-testing-and-acceptance-matrix gates obrigatórios = PASS
+nenhum PENDING | INCONCLUSIVE | TEST_NOT_RUN | STALE_EVIDENCE material aberto
+nenhum EXECUTION_DRIFT material aberto
+nenhum TRACEABILITY_GAP material aberto
+postconditions/outcomes autoritativos exigidos = verificados
+documentação/ledger = reconciliados com runtime comprovado
+```
+
+Se uma spec trouxer capability/requisito material que ainda não esteja mapeado em `25`, isso é `TRACEABILITY_GAP`; o programa não pode permanecer “100%” até canonizar o requisito ou removê-lo formalmente do escopo com `OUT_OF_SCOPE_WITH_DECISION`.
+
+Após toda implementação aceita que altere status `CP-*`, atualizar/recalcular no relatório:
+
+```text
+PROGRAM PROGRESS
+ACTIVE_CP_TOTAL
+PASS_CP_TOTAL
+REMAINING_CP_TOTAL
+VERIFIED_PROGRAM_COMPLETION_PCT
+VERIFIED_PROGRAM_REMAINING_PCT
+CURRENT_PHASE
+CURRENT_PHASE_ACTIVE_CP
+CURRENT_PHASE_PASS_CP
+CURRENT_PHASE_COMPLETION_PCT
+CURRENT_PHASE_REMAINING_PCT
+PROGRAM_COMPLETE = TRUE | FALSE
+```
+
+Assim há duas respostas objetivas diferentes:
+
+```text
+Quanto desta implementação específica terminou?
+→ TASK_VERIFIED_COVERAGE_PCT / TASK_COMPLETENESS
+
+Quanto da DÉLIA inteira prevista terminou?
+→ VERIFIED_PROGRAM_COMPLETION_PCT / PROGRAM_COMPLETE
+```
