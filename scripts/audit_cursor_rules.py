@@ -62,6 +62,15 @@ REQUIRED_SPECIALIZED_RULES = {
 MAX_RULE_BYTES = 20_000
 REFERENCE_RE = re.compile(r"(?:`|\b)([A-Za-z0-9_.-]+\.mdc)(?:`|\b)")
 TOP_LEVEL_KEY_RE = re.compile(r"^([A-Za-z][A-Za-z0-9_-]*):(?:\s*(.*))?$")
+INVENTORY_SECTION_RE = re.compile(
+    r"(?ms)^## (?P<title>[^\n]+)\n(?P<body>.*?)(?=^## |\Z)"
+)
+INVENTORY_OWNER_RE = re.compile(
+    r"(?m)^Owner: `(?P<owner>[A-Za-z0-9_.-]+\.mdc)`\s*$"
+)
+INVENTORY_RULE_ITEM_RE = re.compile(
+    r"(?m)^- `(?P<rule>[A-Za-z0-9_.-]+\.mdc)`\s*$"
+)
 
 
 def parse_frontmatter(path: Path) -> tuple[dict[str, str], str, list[str]]:
@@ -112,6 +121,88 @@ def parse_frontmatter(path: Path) -> tuple[dict[str, str], str, list[str]]:
         data[key] = ",".join(values)
 
     return data, body, errors
+
+
+def parse_inventory_owner_sections(
+    inventory_text: str,
+) -> tuple[dict[str, set[str]], dict[str, list[str]], list[str]]:
+    """Extrai seções Owner -> regras listadas, sem aceitar menções soltas em prosa."""
+    sections: dict[str, set[str]] = {}
+    rule_locations: dict[str, list[str]] = {}
+    errors: list[str] = []
+
+    for match in INVENTORY_SECTION_RE.finditer(inventory_text):
+        title = match.group("title").strip()
+        body = match.group("body")
+        owners = INVENTORY_OWNER_RE.findall(body)
+        if not owners:
+            continue
+        if len(owners) != 1:
+            errors.append(
+                f"inventário Cursor: seção {title!r} deve declarar exatamente um Owner: `*.mdc`"
+            )
+            continue
+
+        owner = owners[0]
+        if owner in sections:
+            errors.append(
+                f"{owner}: owner documentado em mais de uma seção do inventário Cursor"
+            )
+            continue
+
+        rules = INVENTORY_RULE_ITEM_RE.findall(body)
+        sections[owner] = set(rules)
+        for rule in rules:
+            rule_locations.setdefault(rule, []).append(owner)
+
+    return sections, rule_locations, errors
+
+
+def audit_inventory_ownership(
+    inventory_text: str,
+    ownership: dict[str, list[str]],
+    errors: list[str],
+) -> None:
+    """Garante que o inventário Markdown reflita o owner de cada regra no mapa."""
+    sections, rule_locations, parse_errors = parse_inventory_owner_sections(
+        inventory_text
+    )
+    errors.extend(parse_errors)
+
+    expected_owners = set(ownership)
+    documented_owners = set(sections)
+
+    for owner in sorted(expected_owners - documented_owners):
+        errors.append(f"{owner}: seção de owner ausente no inventário Cursor")
+    for owner in sorted(documented_owners - expected_owners):
+        errors.append(
+            f"{owner}: seção de owner não existe no responsibility-map.json"
+        )
+
+    expected_owner_by_rule = {
+        rule: owner for owner, children in ownership.items() for rule in children
+    }
+
+    for rule, expected_owner in sorted(expected_owner_by_rule.items()):
+        actual_owners = rule_locations.get(rule, [])
+        if not actual_owners:
+            errors.append(
+                f"{rule}: regra não listada na seção do owner {expected_owner}"
+            )
+            continue
+        if len(actual_owners) != 1 or actual_owners[0] != expected_owner:
+            actual = ", ".join(actual_owners)
+            errors.append(
+                f"{rule}: inventário lista sob [{actual}], "
+                f"mas responsibility-map define {expected_owner}"
+            )
+
+    for rule, actual_owners in sorted(rule_locations.items()):
+        if rule not in expected_owner_by_rule:
+            actual = ", ".join(actual_owners)
+            errors.append(
+                f"{rule}: inventário lista regra não classificada sob [{actual}]"
+            )
 
 
 def audit_responsibility_map(rule_names: set[str], errors: list[str]) -> dict[str, list[str]]:
@@ -257,18 +348,14 @@ def main() -> int:
                 f"{required_name}: responsabilidade transversal não documentada em responsabilidades-transversais.md"
             )
 
+    inventory_ownership_ok = False
     if not INVENTORY_DOC_PATH.exists():
         errors.append("docs/11-padroes-de-desenvolvimento/inventario-regras-cursor.md ausente")
-        inventory_text = ""
     else:
         inventory_text = INVENTORY_DOC_PATH.read_text(encoding="utf-8")
-
-    for owner, children in ownership.items():
-        if owner not in inventory_text:
-            errors.append(f"{owner}: owner não documentado no inventário Cursor")
-        for child in children:
-            if child not in inventory_text:
-                errors.append(f"{child}: regra não documentada no inventário Cursor")
+        inventory_errors_before = len(errors)
+        audit_inventory_ownership(inventory_text, ownership, errors)
+        inventory_ownership_ok = len(errors) == inventory_errors_before
 
     if not TRANSVERSAL_DOCS_INDEX_PATH.exists():
         errors.append("docs/11-padroes-de-desenvolvimento/README.md ausente")
@@ -390,8 +477,8 @@ def main() -> int:
         + ("OK" if TRANSVERSAL_DOC_PATH.exists() else "AUSENTE")
     )
     print(
-        "- inventário Cursor: "
-        + ("OK" if INVENTORY_DOC_PATH.exists() else "AUSENTE")
+        "- inventário Cursor por owner: "
+        + ("OK" if inventory_ownership_ok else "FALHA")
     )
 
     for warning in warnings:
