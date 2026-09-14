@@ -3,7 +3,9 @@
 **Status:** `CANONICAL_BASELINE` de evidências para integração  
 **Escopo:** fatos `PROVEN` + gaps `TO_INVENTORY` + decisões `PLANNED` + arquitetura `TARGET`  
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Evidence snapshot inicial desta revisão:** `dc1d96f787cca66116e328c32c5a9124d31664df`
+**Evidence snapshot inicial desta revisão:** `dc1d96f787cca66116e328c32c5a9124d31664df`  
+**C0.S0-B revalidation HEAD:** `5deb7fc2c2f1683ebc3f7224e8f6fba99e35854d`  
+**C0.S0-B scope:** Portal host/auth, Core `/me` `/me/apps`, `/me/routes` resolution, Gateway/Compose declarations, `shared/delpi_auth`, federation/`plugin-ui`, representative Domain OpenAPI. Thematic inventories in later sections remain `TO_INVENTORY` unless revalidated here.
 
 ## 1. Objetivo
 
@@ -28,8 +30,11 @@ Não usar `PARTIAL PROVEN`, `DERIVED FROM PROVEN PLATFORM`, `NOT YET PROVEN` ou 
 | Federated mount | `PROVEN` | `portal/src/ui/AppHost.tsx` | `container.get`, `mount()`, `unmount()`, host props e share scope existem | contrato congelado para DÉLIA |
 | Portal auth/context | `PROVEN` | `portal/src/state/AuthContext.tsx` blob `be12e8b7bf10f8017ed1c14fb39e09ee2f8ee1e1` | integração client-side com Keycloak/Core, `getAccessToken`, apps/routes e state de usuário existem | autorização final de cada Domain API |
 | Shared federation | `PROVEN` | `plugins/vite/federation.shared.ts` blob `37f87c8998f3b11ab37e1e514cab623c746c8da2` | config compartilhada, `@delpi/plugin-ui`, React singleton e helpers existem | que toda futura surface da DÉLIA deva usar exatamente a mesma shape sem revalidação |
-| Core API repository | `PROVEN` | diretório raiz `core-api/` no snapshot | serviço/repositório existe | todos os endpoints/semânticas exigidos pela DÉLIA |
-| Gateway repository | `PROVEN` | diretório raiz `gateway/` no snapshot | owner físico de gateway existe | rota/config final da DÉLIA |
+| Core API repository | `PROVEN` | diretório raiz `core-api/` no HEAD `5deb7fc2c` | serviço/repositório existe | todos os endpoints/semânticas exigidos pela DÉLIA |
+| Core `/me` | `PROVEN` no escopo HTTP+payload+auth boundary | `core-api/app/interfaces/http/me_controller.py` `get_me` blob `ad9420423c12433bcada23941171c18d3327bb42`; `auth_middleware.authenticate` blob `2cdbcf06da86261fa2e66c2e5dad2e1bfe93861c`; consumer `portal/src/data/coreApi.ts` `getMe()` → `/core-api/me` | GET autenticado devolve id/name/email/roles/groups/permissions/is_superadmin (+ `consent_pending` opcional) | OpenAPI Core, catálogo de erros completo, limits/observability, overrides vs query path |
+| Core `/me/apps` | `PROVEN` no escopo HTTP+filter+consumer | `ListUserAppsUseCase` + `AppAuthorizationService.filter_apps`; Portal `getApps()` + `AuthContext.loadIdentityAndNavigation` deriva `routes` de `apps[].routes` | apps visíveis já vêm com rotas filtradas por permission/superadmin | autorização de negócio de Domain API; schema OpenAPI |
+| Core `/me/routes` | **não é contrato vigente** | nenhum `@route("/me/routes")` em `core-api/app`; teste órfão `test_get_me_routes_endpoint`; Chat `CoreApiHttpGateway.get_routes` chama `me/routes` sem outro consumidor; Project Instructions ainda citam o path | ausência do producer no HEAD | não inventar a rota |
+| Gateway repository | `PROVEN` | `gateway/nginx.conf` + `gateway/nginx.dev.conf` | `/core-api/`, `/apps/<service>-api/`, generic `/apps/([^/]+)/assets/remoteEntry.js` → `delpi-$1`; Chat `/apps/minha-delpi-ai/api/` | rota/config final da DÉLIA; JWT no gateway (não evidenciado) |
 | Infra repository | `PROVEN` | diretório raiz `infra/` no snapshot | infraestrutura versionada existe | storage/network/deploy adequados a cada capability futura |
 | API DELPI repository | `PROVEN` | diretório raiz `api-delpi/` no snapshot | componente existe | manifesto/OpenAPI/ownership funcional específico sem inspeção adicional |
 | APIs dedicadas | `PROVEN` | múltiplos diretórios de APIs no snapshot raiz | padrão de serviços independentes existe no monorepo | que uma estrutura específica seja automaticamente correta para a DÉLIA |
@@ -70,7 +75,20 @@ Domain API = regra/autorização final de negócio
 DÉLIA = não amplia permission
 ```
 
-Endpoints concretos e semantics Core necessários à DÉLIA permanecem `TO_INVENTORY` até C0.S0 seguir producer/consumer/contract reais.
+C0.S0-B seguiu producer/consumer no HEAD `5deb7fc2c`:
+
+```text
+Portal keycloak-js (VITE_KC_URL/REALM/CLIENT_ID, PKCE S256)
+→ access token em tokenRef / getAccessToken
+→ GET /core-api/me
+→ GET /core-api/me/apps
+→ AuthContext.user / apps / routes derivadas de apps[].routes
+→ AppHost federated props (inclui permissions/isSuperadmin como contexto de host)
+```
+
+`GET /me/routes` **não existe** no Core neste HEAD. Rotas autorizadas vivem em `/me/apps` (`apps[].routes`). Referências restantes (Project Instructions, docs históricos, teste órfão, Chat `get_routes`) são `STALE_DOCUMENTATION` / `STALE_TEST` / `LEGACY_REFERENCE`.
+
+Campos de contrato ainda `TO_INVENTORY`: catálogo completo de erros, limits, idempotency de writes de favorites, observability, OpenAPI do Core, paridade `PermissionResolver` (inclui overrides) vs `rbac_queries.list_permission_codes_by_user` usado em `authenticate()` (roles diretas ∪ grupos, sem overrides no SQL inspecionado).
 
 ## 5. Module Federation / plugin-ui — PROVEN no escopo atual
 
@@ -78,22 +96,22 @@ Endpoints concretos e semantics Core necessários à DÉLIA permanecem `TO_INVEN
 
 **TARGET:** MFE da DÉLIA reutiliza foundation neutra confirmada, sem source-import de Portal/Chat. Qualquer nova abstração compartilhada passa Abstraction Gate e exige 2+ consumers reais, owner, contrato pequeno e testes.
 
+C0.S0-B: `plugins/commercial/vite.config.ts` consome `pluginUiRemote()` + `FEDERATION_SHARED_WITH_DIAGRAM`; `commercial.manifest.json` usa `schemaVersion 1.0.0`, `type: microfrontend`, `entry: /apps/commercial/assets/remoteEntry.js`. `shared/delpi_auth` valida JWT (AuthN) e, no middleware FastAPI, busca RBAC em Core `GET /me`. O helper Flask `shared/delpi_auth/middleware/flask_auth.py` lê `permissions` do JWT e **não teve consumidores** neste HEAD — não classificar como reuse seguro.
+
 ## 6. Core API — owner normativo; implementação detalhada TO_INVENTORY
 
 `core-api/` existe no HEAD. Pelas autoridades oficiais, Core permanece owner de apps/rotas/RBAC/governança.
 
-`C0.S0` deve provar:
+C0.S0-B provou, no HEAD `5deb7fc2c`, estes endpoints efetivamente usados pelo Portal:
 
 ```text
-endpoints efetivamente usados
-request/response/error contracts
-operationIds/OpenAPI quando aplicável
-permission resolution
-service identity/background patterns
-manifest/app registration
-idempotency/audit where relevant
-consumers reais
+GET /me
+GET /me/apps
 ```
+
+JWT é validado por `delpi_auth.jwt_validator.validate_token` (issuer/audience obrigatórios). Permissões efetivas em `/me` vêm do Postgres Core via `authenticate()`, não do JWT. Domain APIs FastAPI (`shared/delpi_auth/middleware/fastapi_auth.py`) recarregam RBAC com `GET {CORE_API_URL}/me`.
+
+Ainda `TO_INVENTORY`: OpenAPI/operationIds do Core; service identity/background além de `CORE_API_INTEGRATIONS_SERVICE_TOKEN`; catálogo de erros; paridade PermissionResolver vs query do middleware; consumers além de Portal e `delpi_auth` FastAPI.
 
 Não inferir contrato a partir do nome do serviço.
 
@@ -125,7 +143,18 @@ DÉLIA consome contratos aprovados; não replica business rule nem integração 
 
 ## 9. Gateway / Infra — presença PROVEN; readiness DÉLIA TO_INVENTORY
 
-`gateway/` e `infra/` existem no HEAD. Rotas, Compose, network, secrets, storage, health, deployment e rollback específicos da DÉLIA permanecem `TO_INVENTORY` até C0/C1.
+`gateway/` e `infra/` existem no HEAD. C0.S0-B inspecionou **declarações** (não prova de processo em execução):
+
+```text
+location ^~ /core-api/     → core-api:8000
+location ^~ /apps/<name>-api/  → delpi-<name>-api (padrão BFF)
+location ~ ^/apps/([^/]+)/assets/remoteEntry.js$ → http://delpi-$1/assets/remoteEntry.js
+location ^~ /apps/minha-delpi-ai/api/ → Chat (vizinho)
+/apps/minha-delpi-copilot-api/  AUSENTE
+Compose: keycloak, core-api, portal, gateway, minha-delpi-ai-api, minha-delpi-chat, Domain APIs
+```
+
+Rotas, Compose, network, secrets, storage, health, deployment e rollback específicos da DÉLIA permanecem `TO_INVENTORY` até C0/C1.
 
 **PLANNED:** runtime da DÉLIA terá deploy/rollback próprios e nenhuma dependência operacional do Chat.
 
@@ -361,17 +390,26 @@ OT safety
 ### PROVEN neste snapshot, no escopo explicitamente observado
 
 ```text
-Portal AppHost/federated mount artifacts
-Portal AuthContext Keycloak/Core client integration
-shared federation/plugin-ui configuration artifact
+Portal AppHost/federated mount artifacts (blob inalterado vs snapshot inicial)
+Portal AuthContext Keycloak/Core client integration (blob inalterado)
+shared federation/plugin-ui configuration artifact (blob inalterado)
 presence of Core API, Gateway, Infra, api-delpi and multiple dedicated API repositories
+GET /me and GET /me/apps producer + Portal consumer + FastAPI delpi_auth RBAC lookup
+Portal derives navigation routes from /me/apps[].routes
+GET /me/routes producer absent
+Gateway path patterns for Core, Domain *-api, generic MFE remoteEntry; Chat neighbor; no DÉLIA locations
+Compose service declarations for Keycloak/Core/Portal/Gateway/Chat/Domain APIs (not runtime proof)
+api-delpi OpenAPI served at /openapi.json with BearerAuth + x-delpi extensions; baseline JSON versionado
+transformometro-api FastAPI + delpi_auth JWT middleware (BFF sample; GPT Actions OpenAPI is a facade)
 ```
 
 ### TO_INVENTORY antes de declarar reusable/runtime-ready
 
 ```text
-contratos completos e consumers de Core/Domain APIs
-Gateway/Compose/storage/secrets/network readiness para DÉLIA
+OpenAPI/error catalog/limits/observability do Core
+paridade PermissionResolver (overrides) vs list_permission_codes_by_user no authenticate()
+consumers Domain API além da amostra FastAPI/api-delpi/transformometro
+Gateway/Compose/storage/secrets/network readiness para DÉLIA (declaração ≠ processo running)
 background identity/workers/events
 media/biometric/Internet/OAuth/connectors/Teams
 Automation Hub/RPA executors
