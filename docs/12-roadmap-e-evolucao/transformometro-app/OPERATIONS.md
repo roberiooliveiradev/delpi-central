@@ -24,12 +24,31 @@ Cadastro/análise via ChatGPT usa a superfície compacta `gpt-actions/v1` (mesmo
 
 Procedimento completo: [chatgpt-custom-gpt-actions.md](../../../transformometro-api/docs/chatgpt-custom-gpt-actions.md).
 
+Checklist GPT Builder (colar schema/OAuth/instructions): [chatgpt-gpt-builder-go-live.md](../../../transformometro-api/docs/chatgpt-gpt-builder-go-live.md).
+
 Resumo:
 
 1. Criar client Keycloak confidencial `chatgpt-transformometro` (audience `delpi-central`).
 2. Importar `openapi-gpt-actions.json` (ou a URL pública acima) no GPT Builder.
 3. Auth = OAuth (não API Key).
 4. O Chat da Minha DELPI continua somente leitura (`openapi-snapshot-chat.json`, `allowWrite: false`).
+
+### Evidência go-live (dev local)
+
+| Data | Host | Caso | Resultado |
+|------|------|------|-----------|
+| 2026-09-14 | `http://localhost` | OpenAPI público sem token | **PASS** |
+| 2026-09-14 | `http://localhost` | Client Keycloak `chatgpt-transformometro` + `aud=delpi-central` | **PASS** |
+| 2026-09-14 | `http://localhost` | GPT Builder (schema/OAuth/instructions) | **READY** — [`chatgpt-gpt-builder-go-live.md`](../../../transformometro-api/docs/chatgpt-gpt-builder-go-live.md) (Sign in no ChatGPT Editor é passo do operador) |
+| 2026-09-14 | `http://localhost` | `gpt_get_catalog` / `gpt_analyze` summary filial 01 | **PASS** |
+| 2026-09-14 | `http://localhost` | `gpt_create_record` process + `gpt_update_record` | **PASS** (`5011dcd5-…`) |
+| 2026-09-14 | `http://localhost` | Sibling `gpt_create_record` instance | **PASS** |
+| 2026-09-14 | `http://localhost` | F5 GET processo após create/edit | **PASS** |
+| 2026-09-14 | `http://localhost` | POST sem Bearer → 401 | **PASS** |
+| 2026-09-14 | `http://localhost` | Catalog/analyze sem `transformometro.view` → 403 | **PASS** |
+| 2026-09-14 | `http://localhost` | Write com filial sem manage → 403 | **PASS** |
+| 2026-09-14 | `http://localhost` | Delete measurement / entity inválida → 400 | **PASS** |
+| 2026-09-14 | docs + upsert script | Minha DELPI provider `allowWrite: false` | **PASS** (inalterado) |
 
 ## Rotina diária
 

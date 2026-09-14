@@ -32,6 +32,21 @@ def test_rewrite_skips_engineering_integrations_en_contract():
     assert rewrite_en_path_to_legacy_pt(listing) == listing
 
 
+def test_rewrite_skips_gpt_actions_en_surface():
+    """Custom GPT Actions usam paths EN; /catalog→/catalogo quebrava gpt_get_catalog."""
+    catalog = "/transformometro/gpt-actions/v1/catalog"
+    activate = "/transformometro/gpt-actions/v1/revisions/r1/activate"
+    duplicate = "/transformometro/gpt-actions/v1/records/process/p1/duplicate"
+    recalc = "/transformometro/gpt-actions/v1/dashboard/recalculate"
+    assert rewrite_en_path_to_legacy_pt(catalog) == catalog
+    assert rewrite_en_path_to_legacy_pt(activate) == activate
+    assert rewrite_en_path_to_legacy_pt(duplicate) == duplicate
+    assert rewrite_en_path_to_legacy_pt(recalc) == recalc
+    # gateway path com prefixo /apps/... também deve preservar
+    gw = "/apps/transformometro-api/transformometro/gpt-actions/v1/catalog"
+    assert rewrite_en_path_to_legacy_pt(gw) == gw
+
+
 def test_rewrite_dashboard_verbs():
     assert (
         rewrite_en_path_to_legacy_pt("/transformometro/dashboard/recalculate")

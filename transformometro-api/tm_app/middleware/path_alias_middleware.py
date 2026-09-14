@@ -60,6 +60,8 @@ _SKIP_PREFIXES: tuple[str, ...] = (
     "/transformometro/signatures",
     # Contrato S2S EN (api-delpi / SI) — paths canônicos, sem rewrite PT.
     "/transformometro/integrations",
+    # Custom GPT Actions — superfície 100% EN (catalog/activate/duplicate/recalculate).
+    "/transformometro/gpt-actions",
     "/health",
 )
 
@@ -94,10 +96,18 @@ def _replace_path_token(path: str, en: str, pt: str) -> str:
 
 def rewrite_en_path_to_legacy_pt(path: str) -> str:
     """Map canonical EN path segments onto legacy PT route paths."""
-    if not path or any(path == p or path.startswith(p + "/") or path.startswith(p + "?") for p in _SKIP_PREFIXES):
-        # Exact skip prefixes: still allow rewrite only outside these trees.
-        if any(path == p or path.startswith(p + "/") for p in _SKIP_PREFIXES):
-            return path
+    if not path:
+        return path
+    # Prefix match (incl. gateway path that still contains the marker).
+    if any(
+        path == p
+        or path.startswith(p + "/")
+        or path.startswith(p + "?")
+        or f"{p}/" in path
+        or path.endswith(p)
+        for p in _SKIP_PREFIXES
+    ):
+        return path
     rewritten = path
     for en, pt in _EN_TO_PT:
         rewritten = _replace_path_token(rewritten, en, pt)

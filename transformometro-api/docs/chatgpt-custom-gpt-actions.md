@@ -76,6 +76,8 @@ URLs OAuth (substituir host público):
 
 ## GPT Builder — Actions
 
+Checklist operacional com valores para colar: [`chatgpt-gpt-builder-go-live.md`](./chatgpt-gpt-builder-go-live.md).
+
 1. Create GPT → Actions → Import from URL  
    `https://<host>/apps/transformometro-api/transformometro/gpt-actions/v1/openapi.json`  
    ou cole o conteúdo de `docs/openapi-gpt-actions.json`.

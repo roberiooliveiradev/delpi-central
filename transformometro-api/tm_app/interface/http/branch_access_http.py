@@ -7,6 +7,10 @@ from uuid import UUID
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
+from tm_app.application.security.transformometro_permissions import (
+    GLOBAL_MANAGE_PERMISSIONS,
+    TRANSFORMOMETRO_VIEW_CONSOLIDATED,
+)
 from tm_app.application.services.dashboard_view_scope_service import (
     DashboardView,
     DashboardViewScopeService,
@@ -164,3 +168,24 @@ def require_unrestricted_catalog_admin(request: Request) -> JSONResponse | None:
     if scope.is_unrestricted:
         return None
     return access_denied("Operação restrita a perfis globais do Transformômetro.")
+
+
+def require_transformometro_view_access(request: Request) -> JSONResponse | None:
+    """Require transformometro.view or an equivalent branch/manage capability."""
+    user = getattr(request.state, "user", None)
+    if user is None:
+        return access_denied("Usuário não autenticado.")
+    if getattr(user, "is_superadmin", False):
+        return None
+    if _scope_service.user_has_legacy_view(user):
+        return None
+    if _scope_service.user_has_branch_view_permissions(user):
+        return None
+    permissions = list(getattr(user, "permissions", []) or [])
+    if TRANSFORMOMETRO_VIEW_CONSOLIDATED in permissions:
+        return None
+    if any(perm in permissions for perm in GLOBAL_MANAGE_PERMISSIONS):
+        return None
+    return access_denied(
+        "Sem permissão transformometro.view (ou equivalente de filial/capacidade)."
+    )

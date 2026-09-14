@@ -90,7 +90,7 @@ def test_dispatch_create_process_positive(tm_client):
     }
     with (
         patch(
-            "tm_app.application.gpt_actions.dispatch_service.ProcessoRepository"
+            "tm_app.application.services.process_write_service.ProcessoRepository"
         ) as repo_cls,
         patch(
             "tm_app.application.gpt_actions.dispatch_service.AuditRepository"
@@ -240,3 +240,161 @@ def test_dispatch_service_rejects_unsupported_delete():
     request = MagicMock()
     with pytest.raises(GptActionsError, match="does not support"):
         service.delete_record(request, "measurement", "x")
+
+
+def _gpt_client_without_universal_mocks():
+    """Client sem universal_route_mocks — necessário para testes de RBAC reais."""
+    from starlette.testclient import TestClient
+
+    from tests.support.test_app import create_test_app
+
+    return TestClient(create_test_app())
+
+
+def test_gpt_catalog_forbidden_without_view():
+    """Negative: authenticated user without transformometro.view → 403."""
+    from tests.support import test_app as support
+
+    client = _gpt_client_without_universal_mocks()
+    prev_super = support.TEST_USER.is_superadmin
+    prev_perms = list(support.TEST_USER.permissions)
+    support.TEST_USER.is_superadmin = False
+    support.TEST_USER.permissions = []
+    try:
+        response = client.get("/transformometro/gpt-actions/v1/catalog")
+    finally:
+        support.TEST_USER.is_superadmin = prev_super
+        support.TEST_USER.permissions = prev_perms
+    assert response.status_code == 403
+    assert response.json()["success"] is False
+    assert "transformometro.view" in response.json()["message"]
+
+
+def test_gpt_analyze_forbidden_without_view():
+    from tests.support import test_app as support
+
+    client = _gpt_client_without_universal_mocks()
+    prev_super = support.TEST_USER.is_superadmin
+    prev_perms = list(support.TEST_USER.permissions)
+    support.TEST_USER.is_superadmin = False
+    support.TEST_USER.permissions = ["commercial.access"]
+    try:
+        with patch(
+            "tm_app.application.gpt_actions.dispatch_service.DashboardSnapshotReadService"
+        ):
+            response = client.get(
+                "/transformometro/gpt-actions/v1/analysis",
+                params={"view": "summary", "filial_id": "01"},
+            )
+    finally:
+        support.TEST_USER.is_superadmin = prev_super
+        support.TEST_USER.permissions = prev_perms
+    assert response.status_code == 403
+
+
+def test_gpt_catalog_allowed_with_legacy_view():
+    from tests.support import test_app as support
+
+    client = _gpt_client_without_universal_mocks()
+    prev_super = support.TEST_USER.is_superadmin
+    prev_perms = list(support.TEST_USER.permissions)
+    support.TEST_USER.is_superadmin = False
+    support.TEST_USER.permissions = ["transformometro.view"]
+    try:
+        with (
+            patch(
+                "tm_app.application.gpt_actions.dispatch_service.FilialRepository"
+            ) as filial_cls,
+            patch(
+                "tm_app.application.gpt_actions.dispatch_service.SetorRepository"
+            ) as setor_cls,
+            patch(
+                "tm_app.application.gpt_actions.dispatch_service.ProcessoRepository"
+            ) as proc_cls,
+        ):
+            filial_cls.return_value.list_for_options.return_value = []
+            setor_cls.return_value.list_for_options.return_value = []
+            proc_cls.return_value.list_distinct_tag_values.return_value = []
+            response = client.get("/transformometro/gpt-actions/v1/catalog")
+    finally:
+        support.TEST_USER.is_superadmin = prev_super
+        support.TEST_USER.permissions = prev_perms
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+
+
+def test_gpt_delete_measurement_capability_denied(tm_client):
+    """Negative sibling: measurement delete is not a GPT capability."""
+    response = tm_client.delete(
+        "/transformometro/gpt-actions/v1/records/measurement/m1"
+    )
+    assert response.status_code == 400
+    assert "does not support" in response.json()["message"]
+
+
+def test_gpt_meeting_minute_cancel_without_manage_forbidden():
+    from tests.support import test_app as support
+
+    client = _gpt_client_without_universal_mocks()
+    prev_super = support.TEST_USER.is_superadmin
+    prev_perms = list(support.TEST_USER.permissions)
+    support.TEST_USER.is_superadmin = False
+    support.TEST_USER.permissions = ["transformometro.view"]
+    try:
+        with patch(
+            "tm_app.application.gpt_actions.dispatch_service.MeetingMinutesService"
+        ) as svc_cls:
+            instance = MagicMock()
+            instance.cancel.side_effect = PermissionError(
+                "Sem permissão para gerenciar atas."
+            )
+            svc_cls.return_value = instance
+            # Rebind dispatcher singleton's minutes service
+            from tm_app.interface.http.routes import gpt_actions_routes as routes
+
+            routes._dispatch._minutes = instance
+            response = client.post(
+                "/transformometro/gpt-actions/v1/meeting-minutes/mm1/workflow",
+                json={"action": "cancel", "reason": "teste"},
+            )
+    finally:
+        support.TEST_USER.is_superadmin = prev_super
+        support.TEST_USER.permissions = prev_perms
+    assert response.status_code == 403
+
+
+def test_gpt_create_measurement_sibling(tm_client):
+    """Sibling: upsert measurement via GPT facade."""
+    medicao = {
+        "medicao_id": "44444444-4444-4444-4444-444444444444",
+        "revisao_id": "55555555-5555-5555-5555-555555555555",
+        "competencia": "2026-09",
+        "volume_mensal": 10,
+    }
+    with (
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.MedicaoRepository"
+        ) as repo_cls,
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.AuditRepository"
+        ),
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.notify_from_audit"
+        ),
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.DashboardRecalcHookService"
+        ),
+    ):
+        repo_cls.return_value.upsert.return_value = medicao
+        response = tm_client.post(
+            "/transformometro/gpt-actions/v1/records/measurement",
+            json={
+                "data": {
+                    "revisao_id": medicao["revisao_id"],
+                    "volume_mensal": 10,
+                    "tempo_medio_execucao_min": 5,
+                }
+            },
+        )
+    assert response.status_code == 200
+    assert response.json()["data"]["medicao_id"] == medicao["medicao_id"]

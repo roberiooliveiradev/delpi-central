@@ -116,6 +116,11 @@ from tm_app.infrastructure.persistence.repositories.shared_resource_repository i
 from tm_app.application.services.branch_access_scope_service import FilialAccessScopeService
 from tm_app.application.services.dashboard_recalc_hook_service import DashboardRecalcHookService
 from tm_app.application.services.process_setup_stats_service import ProcessoSetupStatsService
+from tm_app.application.services.process_write_service import (
+    ProcessWriteError,
+    ProcessWriteService,
+    RevisionActivationService,
+)
 from tm_app.interface.http.branch_access_http import (
     check_dashboard_filial_access,
     check_instancia_view_access,
@@ -123,6 +128,7 @@ from tm_app.interface.http.branch_access_http import (
     check_processo_view_access,
     check_view_filial_access,
     filter_rows_for_access,
+    require_transformometro_view_access,
     require_unrestricted_catalog_admin,
     resolve_access_scope,
 )
@@ -268,6 +274,7 @@ class GptActionsDispatchService:
     # --- catalog / analysis ----------------------------------------------
 
     def get_catalog(self, request: Request) -> dict[str, Any]:
+        self._raise_http_err(require_transformometro_view_access(request))
         scope = resolve_access_scope(request)
         try:
             filiais = FilialRepository().list_for_options() or []
@@ -314,6 +321,7 @@ class GptActionsDispatchService:
         competencia_fim: str | None = None,
         limit: int | None = None,
     ) -> dict[str, Any]:
+        self._raise_http_err(require_transformometro_view_access(request))
         try:
             analysis_view = GptAnalysisView(str(view or "").strip())
         except ValueError as exc:
@@ -1072,7 +1080,7 @@ class GptActionsDispatchService:
         raise GptActionsError(f"Duplicate not implemented for {entity.value}.", 400)
 
     def activate_revision(self, request: Request, revisao_id: str) -> dict[str, Any]:
-        row = RevisaoRepository().activate(str(revisao_id))
+        row = RevisionActivationService().activate(str(revisao_id))
         if not row:
             raise GptActionsError("Revisão não encontrada.", 404)
         self._audit(
@@ -1174,46 +1182,13 @@ class GptActionsDispatchService:
         if create_instancia:
             self._raise_http_err(check_manage_filial_access(request, filial_id))
         self._raise_http_err(self._validate_processo_escopo_access(request, body))
-        assert_in(body.status_processo, STATUS_PROCESSO, "status_processo")
-        has_filial = bool(filial_id)
-        has_setor = bool(setor_id)
-        if has_filial != has_setor:
-            raise GptActionsError(
-                "filial_id e setor_id devem ser informados juntos para criar instância operacional.",
-                400,
-            )
-        if has_filial:
-            assert_filial_ativa(filial_id, self._active_filial_codigos())
-            if not SetorRepository().is_active_for_filial(setor_id, filial_id):
-                raise GptActionsError(
-                    f"setor_id '{setor_id}' não está vinculado à unidade {filial_id}",
-                    400,
-                )
-        master = {
-            "nome_processo": body.nome_processo,
-            "descricao_processo": body.descricao_processo,
-            "gestor_responsavel": body.gestor_responsavel,
-            "objetivo_processo": body.objetivo_processo,
-            "status_processo": body.status_processo,
-            "codigo_processo": body.codigo_processo,
-            "familia_processo": body.familia_processo,
-            "agrupador_ferramenta": body.agrupador_ferramenta,
-        }
         try:
-            repo = ProcessoRepository()
-            row = repo.create(master)
-            pid = str(row["processo_id"])
-            self._save_processo_escopo(pid, body)
-            if create_instancia:
-                ProcessoInstanciaRepository().create(
-                    {
-                        "processo_id": pid,
-                        "filial_id": filial_id,
-                        "setor_ids": [setor_id],
-                    }
-                )
-            row = repo.get(pid) or row
-        except (ProcessoEscopoDomainError, ProcessoInstanciaDomainError, ValueError) as exc:
+            row = ProcessWriteService().create(
+                body,
+                active_filial_codigos=self._active_filial_codigos(),
+                save_escopo=self._save_processo_escopo,
+            )
+        except ProcessWriteError as exc:
             raise GptActionsError(str(exc), 400) from exc
         pid = str(row["processo_id"])
         self._audit(request, "processo", pid, "create", body.model_dump())
@@ -1226,25 +1201,16 @@ class GptActionsDispatchService:
         body = ProcessoUpdateBody.model_validate(data)
         self._raise_http_err(check_processo_view_access(request, processo_id))
         self._raise_http_err(self._validate_processo_escopo_access(request, body))
-        assert_in(body.status_processo, STATUS_PROCESSO, "status_processo")
-        master = {
-            "nome_processo": body.nome_processo,
-            "descricao_processo": body.descricao_processo,
-            "gestor_responsavel": body.gestor_responsavel,
-            "objetivo_processo": body.objetivo_processo,
-            "status_processo": body.status_processo,
-            "codigo_processo": body.codigo_processo,
-            "familia_processo": body.familia_processo,
-            "agrupador_ferramenta": body.agrupador_ferramenta,
-        }
         try:
-            row = ProcessoRepository().update(processo_id, master)
-            if not row:
-                raise GptActionsError("Processo não encontrado.", 404)
-            self._save_processo_escopo(processo_id, body)
-            row = ProcessoRepository().get(processo_id) or row
-        except (ProcessoEscopoDomainError, ValueError) as exc:
+            row = ProcessWriteService().update(
+                processo_id,
+                body,
+                save_escopo=self._save_processo_escopo,
+            )
+        except ProcessWriteError as exc:
             raise GptActionsError(str(exc), 400) from exc
+        if not row:
+            raise GptActionsError("Processo não encontrado.", 404)
         self._audit(request, "processo", processo_id, "update", body.model_dump())
         self._recalc_hook.after_processo(processo_id)
         return row_to_json(row), "Processo atualizado."

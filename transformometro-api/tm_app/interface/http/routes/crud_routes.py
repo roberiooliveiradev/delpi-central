@@ -61,6 +61,12 @@ from tm_app.application.services.process_duplicate_service import (
     ProcessoDuplicateService,
     ProcessoNotFoundError,
 )
+from tm_app.application.services.process_write_service import (
+    ProcessWriteError,
+    ProcessWriteService,
+    RevisionActivationService,
+    process_master_payload,
+)
 from tm_app.application.services.instance_duplicate_service import (
     InstanciaDuplicateService,
     InstanciaNotFoundError,
@@ -264,20 +270,9 @@ def _save_processo_escopo(
 
 
 def _validate_processo_body(body: ProcessoCreateBody):
-    assert_in(body.status_processo, STATUS_PROCESSO, "status_processo")
-    has_filial = bool((body.filial_id or "").strip())
-    has_setor = bool((body.setor_id or "").strip())
-    if has_filial != has_setor:
-        raise ValueError(
-            "filial_id e setor_id devem ser informados juntos para criar instância operacional."
-        )
-    if not has_filial:
-        return
-    assert_filial_ativa(body.filial_id, _active_filial_codigos())
-    if not SetorRepository().is_active_for_filial(body.setor_id, body.filial_id):
-        raise ValueError(
-            f"setor_id '{body.setor_id}' não está vinculado à unidade {body.filial_id}"
-        )
+    ProcessWriteService().validate_create_body(
+        body, active_filial_codigos=_active_filial_codigos()
+    )
 
 
 def _validate_filial_body(body: FilialBody | FilialUpdateBody, *, is_create: bool):
@@ -404,17 +399,8 @@ def processo_timeline(
     )
 
 
-def _processo_master_payload(body: ProcessoCreateBody) -> dict:
-    return {
-        "nome_processo": body.nome_processo,
-        "descricao_processo": body.descricao_processo,
-        "gestor_responsavel": body.gestor_responsavel,
-        "objetivo_processo": body.objetivo_processo,
-        "status_processo": body.status_processo,
-        "codigo_processo": body.codigo_processo,
-        "familia_processo": body.familia_processo,
-        "agrupador_ferramenta": body.agrupador_ferramenta,
-    }
+def _processo_master_payload(body: ProcessoCreateBody | ProcessoUpdateBody) -> dict:
+    return process_master_payload(body)
 
 
 @router.post("/processos",
@@ -429,27 +415,12 @@ def create_processo(body: ProcessoCreateBody, request: Request):
     if err := _validate_processo_escopo_access(request, body):
         return err
     try:
-        _validate_processo_body(body)
-        repo = ProcessoRepository()
-        row = repo.create(_processo_master_payload(body))
-        pid = str(row["processo_id"])
-        _save_processo_escopo(pid, body)
-        if create_instancia:
-            instancia = ProcessoInstanciaRepository().create(
-                {
-                    "processo_id": pid,
-                    "filial_id": filial_id,
-                    "setor_ids": [setor_id],
-                }
-            )
-            row = repo.get(pid) or {**row, **instancia}
-        else:
-            row = repo.get(pid) or row
-    except ProcessoEscopoDomainError as exc:
-        return fail(str(exc), 400)
-    except ProcessoInstanciaDomainError as exc:
-        return fail(str(exc), 400)
-    except ValueError as exc:
+        row = ProcessWriteService().create(
+            body,
+            active_filial_codigos=_active_filial_codigos(),
+            save_escopo=_save_processo_escopo,
+        )
+    except ProcessWriteError as exc:
         return fail(str(exc), 400)
     except Exception as exc:
         logger.exception("create_processo_failed")
@@ -693,14 +664,12 @@ def update_processo(processo_id: str, body: ProcessoUpdateBody, request: Request
     if err := _validate_processo_escopo_access(request, body):
         return err
     try:
-        assert_in(body.status_processo, STATUS_PROCESSO, "status_processo")
-        row = ProcessoRepository().update(processo_id, _processo_master_payload(body))
-        if row:
-            _save_processo_escopo(processo_id, body)
-            row = ProcessoRepository().get(processo_id)
-    except ProcessoEscopoDomainError as exc:
-        return fail(str(exc), 400)
-    except ValueError as exc:
+        row = ProcessWriteService().update(
+            processo_id,
+            body,
+            save_escopo=_save_processo_escopo,
+        )
+    except ProcessWriteError as exc:
         return fail(str(exc), 400)
     except PluginsRepositoryError as exc:
         logger.exception("update_processo_persistence_failed processo_id=%s", processo_id)
@@ -879,8 +848,7 @@ def update_revisao(revisao_id: str, body: RevisaoBody, request: Request):
 @router.post("/revisoes/{revisao_id}/ativar",
     operation_id="activate_revisao")
 def activate_revisao(revisao_id: str, request: Request):
-    repo = RevisaoRepository()
-    row = repo.activate(revisao_id)
+    row = RevisionActivationService().activate(revisao_id)
     if not row:
         return fail("Revisão não encontrada.", 404)
     _audit(request, "revisao", revisao_id, "activate", {
