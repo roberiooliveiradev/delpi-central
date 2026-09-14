@@ -12,7 +12,7 @@ DÉLIA frontend = novo MFE próprio; namespace técnico temporário plugins/minh
 Chat backend/MFE = sistemas separados/reference-only
 ```
 
-Proibido importar/depender de runtime/API/tables/source do Chat ou criar runtimes paralelos por Teams, RPA, Process Mining, MCP/A2A, Twin, Edge, Marketplace ou outro tema sem C0/ADR provar boundary real.
+Proibido importar/depender de runtime/API/tables/source do Chat ou criar runtimes paralelos por Teams, RPA, Scheduler, Process Mining, MCP/A2A, Twin, Edge, Marketplace ou outro tema sem C0/ADR provar boundary real.
 
 ## 2. North Star
 
@@ -24,7 +24,7 @@ WORKSPACE   → full-page work/analysis
 MEETING     → meeting assistance
 FRONTLINE   → operator/shopfloor assistance
 TEAMS       → future surface of same runtime
-BACKGROUND  → governed Watches/Workflows reacting to events
+BACKGROUND  → governed Watches/Workflows/Recurring Work reacting to events/time
 ```
 
 E deve evoluir para:
@@ -60,7 +60,7 @@ PERCEBER
 14. `22-cursor-execution-protocol.md`
 15. `evidence/execution-ledger.md`
 
-Precedência é definida por `48`. `16` é a única authority de ordem. `25` é a única authority `CP-*`.
+Precedência é definida por `48`. `16` é a única authority de ordem. `25` é a única authority `CP-*` (`CP-001…CP-316`).
 
 ## 4. Specs temáticas ativas
 
@@ -69,7 +69,7 @@ Precedência é definida por `48`. `16` é a única authority de ordem. `25` é 
 54 biometric identity / Human Observation
 55 Internet Research / external connectors
 56 Microsoft Teams
-57 Event-Driven Autonomous Operations / Automation Hub integration
+57 Event-Driven Autonomous Operations / Automation Hub integration / Recurring Governed Work
 58 Process Intelligence / Process Mining / Task Mining
 59 AI Control Tower / Digital Workforce Governance
 60 MCP / A2A / tool-agent interoperability
@@ -91,14 +91,14 @@ C0 Foundation Freeze
 → C2 Portal/Context/Commands
 → C3 Intelligence + capability foundations
 → C4 Governed reads + analysis/discovery
-→ C5 Governed ACT + executors + durable work
+→ C5 Governed ACT + executors + durable/recurring work
 → C6 Product work + governance/experience ecosystem
 → C7 Advanced autonomy + scale/optimization/rollout
 ```
 
-C5 pode liberar L4/governed execute para capabilities explicitamente autorizadas. C6 não libera Watch ACT autônomo por default. C7 adiciona L5/Watch autonomous ACT selecionado sob policy/limits/kill switch/verified Outcome.
+C5 pode liberar L4/governed execute para capabilities explicitamente autorizadas, inclusive ocorrências bounded de Recurring Governed Work que revalidem live gates. C6 não libera Watch ACT autônomo por default. C7 adiciona L5/Watch autonomous ACT selecionado sob policy/limits/kill switch/verified Outcome.
 
-Nunca pular fase porque um SDK/provider/tool já existe no mercado.
+Nunca pular fase porque um SDK/provider/tool/scheduler já existe no mercado.
 
 ## 6. Primeira ação: execute apenas C0.S0
 
@@ -123,7 +123,7 @@ Inventarie speech/vision/media providers, capture/storage/retention, devices/kio
 
 Inventarie egress/search/safe fetch, OAuth/vault, Microsoft Graph/Google/WhatsApp/Slack/GitHub, webhooks/subscriptions/reconciliation, attachment scanning, Entra/Teams scopes/artifacts/app/tab/bot/privacy.
 
-### 6.4 Automation/Event/RPA
+### 6.4 Automation/Event/RPA/Scheduling
 
 Inventarie:
 
@@ -132,8 +132,13 @@ Automation Hub implementation/owner/runtime/contracts if any
 RPA platforms/licenses/orchestrators/bots/packages
 scripts/functions/jobs
 queues/workers/heartbeats/leases
-schedulers/polling/event buses/topics/webhooks
+schedulers/timers/cron/polling/event buses/topics/webhooks
+existing recurring job/work definitions + owners
+timezone/DST/calendar semantics
+misfire/missed-run/reconciliation semantics
+overlap/concurrency semantics
 service accounts/background identities
+background AuthZ/revocation patterns
 credential injection/storage
 VDI/desktop/session infrastructure
 existing rule/decision/process engines
@@ -143,7 +148,15 @@ kill switches/emergency stop
 support/SLA/ownership
 ```
 
-Não assumir ferramenta RPA nem implementação física do Automation Hub. A authority semântica permanece: DÉLIA decide/orquestra; Automation Hub executa tecnicamente.
+Separar factual e explicitamente:
+
+```text
+DÉLIA RecurringWorkDefinition/lifecycle/correlation owner
+!=
+physical scheduler/timer/job runtime owner
+```
+
+Não assumir ferramenta RPA, scheduler ou implementação física do Automation Hub. A authority semântica permanece: DÉLIA decide/orquestra e possui o Work; Automation Hub executa tecnicamente; scheduler/timer apenas materializa trigger temporal conforme contrato e nunca concede permission.
 
 ### 6.5 Process Intelligence
 
@@ -206,6 +219,19 @@ OUT_OF_SCOPE
 
 A segunda lista não substitui o estado factual. Market availability without repo/infra evidence = `TO_INVENTORY`, nunca `PROVEN`.
 
+### 6.15 Evidence discovery
+
+GitHub/code search é descoberta/residual. Nunca usar `0 results` como prova de ausência.
+
+```text
+search miss
+!= feature ausente
+!= documentação ausente
+!= TO_INVENTORY automaticamente
+```
+
+Quando uma conclusão depender de ausência, abra diretamente owner/authority provável, `25` e spec temática. Separe capability/product target, requirement/contract, physical mechanism e runtime implementation.
+
 ## 7. Foundation Freeze before C1
 
 At minimum:
@@ -219,6 +245,7 @@ ARCHITECTURE_PATTERNS=PASS
 PERSISTENCE_BOUNDARIES=PASS
 MEDIA/BIOMETRIC/EXTERNAL BOUNDARIES=PASS
 EVENT/AUTOMATION/OUTCOME/AUTONOMY BOUNDARIES=PASS
+RECURRING_WORK_BOUNDARY=PASS
 PROCESS_INTELLIGENCE_BOUNDARY=PASS
 AI_ASSET_GOVERNANCE_BOUNDARY=PASS
 MCP_A2A_TRUST_BOUNDARY=PASS
@@ -246,9 +273,9 @@ Clean Architecture
 + light CQRS only when justified
 ```
 
-Follow `49`. Concrete providers/executors/models/tools live in Infrastructure. Composition Root wires them.
+Follow `49`. Concrete providers/executors/models/tools/schedulers live in Infrastructure. Composition Root wires them.
 
-No speculative microservice/framework/registry before Abstraction Gate.
+No speculative microservice/framework/registry/scheduler before Abstraction Gate.
 
 ## 9. Authorities
 
@@ -258,8 +285,9 @@ Core = platform apps/routes/RBAC/governance
 Portal = host/navigation/published context
 Domain APIs = business data/rules/actions
 External providers = external resources/scopes
-DÉLIA = intelligence/context/Evidence/Policy/Decision/Work/orchestration/outcome coordination
+DÉLIA = intelligence/context/Evidence/Policy/Decision/Work/RecurringWork/orchestration/outcome coordination
 Automation Hub = technical execution, not business/permission authority
+Physical scheduler = technical time-trigger materialization, owner TO_INVENTORY until C0 proof
 Control Tower = governance plane, not business authority
 OT/safety systems = machine truth/safety
 ```
@@ -279,11 +307,15 @@ SIMULATE != APPLY
 PREPARE != ACT
 Read != Write
 Draft != Send
+Schedule != Permission
+Stored Schedule Intent != Eternal Authorization
+Recurring Governed Work != Watch Autonomous ACT
+Physical Scheduler != Work/Policy Authority
 L4 governed execute != L5 autonomous execute
 Technical Execution Success != Verified Business Outcome
 MCP/A2A Discovery != Approval
 Marketplace Install != Permission Grant
-Device/Biometric/Worker Identity != User Authorization
+Device/Biometric/Worker/Scheduler Identity != User Authorization
 ```
 
 ## 11. Event / Decision Intelligence
@@ -300,6 +332,8 @@ source event
 FAST uses deterministic rules. OPERATIONAL uses bounded reads/rules + optional small model. REASONING uses Graph/Knowledge/Expertise/LLM.
 
 Not every event calls an LLM.
+
+A timer occurrence only proves that configured time was reached under its trigger contract. It does not authorize ACT.
 
 ## 12. Automation / Executors
 
@@ -323,6 +357,39 @@ Planner sees semantic capability, never click/selector/coordinate/package UI mec
 
 RPA is replaceable adapter behind the approved execution boundary. Computer-use is advanced sandboxed fallback.
 
+### 12.1 Recurring Governed Work
+
+`CP-311–CP-316` make Recurring Governed Work a first-class target.
+
+Target:
+
+```text
+user/owner creates bounded RecurringWorkDefinition
+→ persistent independent of chat session
+→ physical scheduler materializes deterministic occurrence
+→ occurrence correlation + idempotency
+→ current user/service identity
+→ live Core/domain AuthZ + Policy/Decision
+→ current authorized data
+→ PREPARE or C5 L4 governed ACT
+→ executor/provider
+→ authoritative Outcome + Evidence + Audit
+```
+
+Required lifecycle target:
+
+```text
+CREATE
+INSPECT/LIST
+PAUSE
+RESUME
+CANCEL
+```
+
+Contract must make explicit IANA timezone, recurrence/calendar, start/end, DST when applicable, misfire/missed-run, overlap/concurrency, failure/retry, idempotency and revoke semantics.
+
+C5 can execute bounded recurring L4 ACT after live gates. C6 can expose schedule/admin UX but Watch remains `OBSERVE|ADVISE|PREPARE` by default. C7 is not required for this bounded governed recurring ACT.
+
 ## 13. Outcome verification
 
 ```text
@@ -331,7 +398,7 @@ technical result
 → VERIFIED_SUCCESS|VERIFIED_FAILURE|PENDING|INCONCLUSIVE
 ```
 
-Never announce material success solely from HTTP 200, RPA Save click or provider accepted response when final outcome is not confirmed.
+Never announce material success solely from HTTP 200, scheduler fire, RPA Save click or provider accepted response when final outcome is not confirmed.
 
 ## 14. Process Intelligence
 
@@ -406,7 +473,7 @@ Marketplace assets declare requirements/dependencies/data scopes; publish/enable
 
 ## 23. Security/privacy
 
-Follow `08/20` exactly. Treat all external/tool/model/package/generated content as untrusted. Secrets never reach LLM/MFE/logs. Biometric/Human Observation and employee privacy boundaries remain.
+Follow `08/20` exactly. Treat all external/tool/model/package/generated/scheduler metadata as untrusted for authorization. Secrets never reach LLM/MFE/logs. Biometric/Human Observation and employee privacy boundaries remain.
 
 ## 24. OT safety
 
@@ -419,7 +486,7 @@ Physical actuation requires separate industrial safety initiative/gate.
 
 ## 25. C1 rule
 
-First runtime work after Foundation Freeze is standalone API/MFE bootstrap. No Process Mining engine, Control Tower, MCP/A2A runtime, sandbox, Twin, Edge, Marketplace, RPA runtime or autonomous ACT before foundations and phase dependencies.
+First runtime work after Foundation Freeze is standalone API/MFE bootstrap. No Process Mining engine, Control Tower, MCP/A2A runtime, sandbox, Twin, Edge, Marketplace, RPA runtime, Recurring Work ACT or autonomous ACT before foundations and phase dependencies.
 
 ## 26. Generic execution protocol
 
@@ -465,6 +532,11 @@ simulation→production mutation
 Edge authority expansion
 revoked asset still active
 Marketplace permission escalation
+schedule/timer permission elevation
+scheduled occurrence without live AuthZ
+schedule duplicate/retry/restart duplicate ACT
+paused/cancelled schedule executes
+implicit timezone/undefined misfire/overlap
 RPA duplicate/credential leak
 unverified success
 PREPARE→ACT bypass
@@ -501,6 +573,7 @@ MEMORY_PERSONALIZATION:
 SANDBOX_ARTIFACTS:
 PREDICTIVE_TWIN:
 AUTOMATION_EXECUTION_OUTCOME:
+RECURRING_WORK_SCHEDULING:
 MCP_A2A:
 MODEL_CONTROL_TOWER_MARKETPLACE:
 EDGE_OFFLINE:
