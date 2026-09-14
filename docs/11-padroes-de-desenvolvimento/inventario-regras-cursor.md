@@ -155,6 +155,7 @@ Owner: `platform-frontend-mfe-experience.mdc`
 - `plugins-overlay-positioning.mdc`
 - `plugins-reusable-components.mdc`
 - `plugins-visual-design-system.mdc`
+- `production-pulse-admin-hub.mdc`
 - `tv-dashboard-editor-pasteboard.mdc`
 - `tv-dashboard-presentation-parity.mdc`
 
@@ -233,7 +234,7 @@ audit_fastapi_authz.py
 shared/delpi_auth/tests/test_jwt_validator.py
 ```
 
-Todos os auditores possuem testes próprios. `Cursor Rules Governance` valida ownership via `responsibility-map.json`.
+Todos os auditores possuem testes próprios. `Cursor Rules Governance` valida o `responsibility-map.json` e também exige que cada regra especializada esteja listada como item na seção do owner correto deste inventário; menção em prosa não satisfaz o gate.
 
 ## 7. Delivery, runtime e operações
 
@@ -313,7 +314,8 @@ Revisar após estabilização. Regra criada por incidente não deve permanecer i
 9. breaking estrutural OpenAPI selecionado;
 10. HTTP timeout/retry/secrets;
 11. protocolo semântico de execução de planos com gates `READY_TO_EXECUTE`, `EXECUTION_DRIFT` e `READY_TO_COMMIT`;
-12. protocolo especializado DÉLIA para handoff GPT↔Cursor↔GitHub e gates de fase/evidência.
+12. protocolo especializado DÉLIA para handoff GPT↔Cursor↔GitHub e gates de fase/evidência;
+13. consistência semântica entre `responsibility-map.json` e a seção `Owner:` correspondente deste inventário.
 
 ## Próximos, após modelagem segura
 
@@ -336,8 +338,10 @@ responsabilidade nova realmente existe?
     não → estender regra existente
     sim → owner transversal continua o mesmo
 → adicionar ao responsibility-map.json
-→ atualizar este inventário se a regra for durável
+→ listar a regra na seção Owner correta deste inventário
 → executar audit_cursor_rules.py
 ```
 
-Uma regra não classificada é erro de governança.
+O auditor exige correspondência estrutural: estar citado em qualquer outro ponto do Markdown não substitui a listagem sob o owner correto.
+
+Uma regra não classificada ou documentada sob owner divergente é erro de governança.
