@@ -56,16 +56,10 @@ Alternativa: colar `docs/gpt-actions/openapi-gpt-actions.json`.
 
 Esperado: **13** operations (`gpt_get_process_context`, `gpt_analyze`, `gpt_get_catalog`, `gpt_commit_improvement_package`, …). O GET `openapi.json` não aparece como Action.
 
-O ChatGPT **rejeita** `servers.url` relativo (`/apps/transformometro-api`). Se aparecer
-«Não foi possível encontrar uma URL válida em `servers`», altere no editor para:
+O ChatGPT **rejeita** `servers.url` relativo (`/apps/transformometro-api`). Se aparecer «Não foi possível encontrar uma URL válida em `servers`», altere no editor para:
 
 ```json
-"servers": [
-  {
-    "url": "https://minhadelpi.com.br/apps/transformometro-api",
-    "description": "Minha DELPI gateway"
-  }
-]
+"servers": [{"url": "https://minhadelpi.com.br/apps/transformometro-api", "description": "Minha DELPI gateway"}]
 ```
 
 Depois: Autenticação → **OAuth** (não «Nenhum»).
@@ -84,23 +78,25 @@ Produção: trocar `http://localhost` pelo `PUBLIC_BASE_URL` / host público do 
 
 ## 3. Instructions + Knowledge
 
-1. Colar o bloco *Instructions* de [`specialist-instructions.md`](./specialist-instructions.md) (**REPLACE INSTRUCTIONS** — persona **TÉO** + Method Router).
-2. Adicionar [`teo-method-playbooks.md`](./teo-method-playbooks.md) como Knowledge File do GPT (**ADD/UPDATE KNOWLEDGE**). O arquivo é metodologia/reasoning; não cria Action, AuthZ nem persistência.
+O Builder limita **Instructions a 8.000 caracteres**. O repositório impõe meta mais conservadora de **<= 7.000 caracteres** para o bloco canônico.
+
+1. Colar **somente** o bloco `Instructions (colar no GPT Builder)` de [`specialist-instructions.md`](./specialist-instructions.md). Não colar cabeçalhos/notas do arquivo inteiro.
+2. Adicionar [`teo-method-playbooks.md`](./teo-method-playbooks.md) como Knowledge File do GPT. Detalhes de SIPOC/Lean/Ishikawa/CTP/TDR/KPI/SWOT ficam no Knowledge, não duplicados em Instructions.
+3. Se o Builder mostrar erro de tamanho, **não cortar manualmente**: corrigir a fonte canônica e o teste de budget no repositório.
 
 Resumo operacional:
 
-- Problem-first: diagnóstico via `gpt_get_process_context` antes de cadastro, salvo QUICK REGISTRATION.
-- Method playbooks: menor método suficiente; entrevista adaptativa; INFERRED ≠ FACT; PROPOSED ≠ SAVED.
-- Chamar `gpt_get_catalog` e ler `registration_guide` antes de cadastrar.
-- Preferir `gpt_commit_improvement_package` com `dry_run=true` → confirmar → commit.
-- Listar revisões de uma melhoria com `instance_id`.
-- Diagramas/WBS: draft Mermaid = PROPOSED; persistência governada (validators canônicos + confirmação + read-back).
-- Evidências/assinatura → UI Minha DELPI.
-- REIMPORT OpenAPI somente se o schema mudou (esperado estável: **13** actions).
+- Problem-first e entrevista adaptativa.
+- Method Router escolhe o menor método suficiente; `INFERRED != FACT`; `PROPOSED != SAVED`.
+- `gpt_get_catalog` + `registration_guide` antes de cadastro.
+- `gpt_commit_improvement_package` com `dry_run=true` → mostrar → confirmar → commit.
+- Diagramas/WBS: draft = PROPOSED; persistência governada com validators, manage AuthZ e read-back.
+- Evidências/upload e assinatura manuscrita continuam UI-only quando não suportados pela Action.
+- REIMPORT OpenAPI somente se schema mudar; esperado estável: **13 actions**.
 
 ## 4. Fechar redirects com o GPT ID real
 
-Após salvar o GPT, copiar o `g-...` da URL e (opcional, se wildcards forem rejeitados pela OpenAI/Keycloak) restringir no Keycloak:
+Após salvar o GPT, copiar o `g-...` da URL e, se necessário, restringir no Keycloak:
 
 ```text
 https://chatgpt.com/aip/g-YOUR-GPT-ID/oauth/callback
@@ -109,10 +105,13 @@ https://chat.openai.com/aip/g-YOUR-GPT-ID/oauth/callback
 
 ## 5. Pronto quando
 
-- Name do GPT = **TÉO — Especialista em Transformação Digital**
+- Name = **TÉO — Especialista em Transformação Digital**
+- Instructions aceitas sem erro de 8.000 caracteres
+- `teo-method-playbooks.md` presente em Knowledge
 - GPT lista as **13** actions
-- Pede **Sign in** (OAuth Keycloak)
-- Após login, `gpt_analyze` / `gpt_get_catalog` / `gpt_get_process_context` respondem sem `invalid_token` / `Invalid redirect URI`
-- `gpt_get_catalog` devolve `registration_guide`; dry_run do pacote lista `missing` quando incompleto
+- OAuth pede **Sign in**
+- `gpt_analyze` / `gpt_get_catalog` / `gpt_get_process_context` respondem sem erro de token/redirect
+- `gpt_get_catalog` devolve `registration_guide`
+- Builder evals M01–M10 executados na configuração documentada
 
 Detalhes: [`custom-gpt-actions.md`](./custom-gpt-actions.md).
