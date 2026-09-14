@@ -590,19 +590,6 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "description": "revisao_id to activate.",
                     },
                 ],
-                "requestBody": {
-                    "required": False,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "description": "Empty object allowed.",
-                                "additionalProperties": False,
-                            },
-                            "example": {},
-                        }
-                    },
-                },
                 "responses": {
                     "200": _ok_response("Activated revision"),
                     **_error_responses(),

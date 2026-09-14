@@ -1231,19 +1231,6 @@
             "description": "revisao_id to activate."
           }
         ],
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "description": "Empty object allowed.",
-                "additionalProperties": false
-              },
-              "example": {}
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Activated revision",

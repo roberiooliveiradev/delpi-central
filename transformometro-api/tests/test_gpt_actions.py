@@ -1845,12 +1845,6 @@ def test_openapi_all_write_actions_have_typed_examples():
             True,
         ),
         (
-            "/transformometro/gpt-actions/v1/revisions/{id}/activate",
-            "post",
-            True,
-            True,
-        ),
-        (
             "/transformometro/gpt-actions/v1/dashboard/recalculate",
             "post",
             True,
@@ -1882,10 +1876,17 @@ def test_openapi_all_write_actions_have_typed_examples():
             media = spec["requestBody"]["content"]["application/json"]
             assert "example" in media
             assert "schema" in media
-    # delete has no body but remains consequential
-    delete = doc["paths"]["/transformometro/gpt-actions/v1/records/{entity}/{id}"]["delete"]
-    assert delete["x-openai-isConsequential"] is True
-    assert "requestBody" not in delete
+            schema = media["schema"]
+            if "$ref" not in schema and schema.get("type") == "object":
+                assert "properties" in schema, path
+    # no-body writes stay consequential; OpenAI rejects object schema without properties
+    for path, method in (
+        ("/transformometro/gpt-actions/v1/records/{entity}/{id}", "delete"),
+        ("/transformometro/gpt-actions/v1/revisions/{id}/activate", "post"),
+    ):
+        spec = doc["paths"][path][method]
+        assert spec["x-openai-isConsequential"] is True
+        assert "requestBody" not in spec
 
     schemas = doc["components"]["schemas"]
     assert "nome_processo" in schemas["GptRecordBody"]["properties"]["data"]["properties"]
@@ -1904,6 +1905,19 @@ def test_openapi_all_write_actions_have_typed_examples():
     ]["requestBody"]["content"]["application/json"]["example"]
     assert "process" in commit_ex and "scenario" in commit_ex
     assert commit_ex.get("dry_run") is False
+
+    # OpenAI Custom GPT: every inline object schema must declare properties
+    def _assert_object_schemas_have_properties(node: object, path: str = "") -> None:
+        if isinstance(node, dict):
+            if node.get("type") == "object" and "$ref" not in node:
+                assert "properties" in node, path
+            for key, value in node.items():
+                _assert_object_schemas_have_properties(value, f"{path}/{key}")
+        elif isinstance(node, list):
+            for idx, value in enumerate(node):
+                _assert_object_schemas_have_properties(value, f"{path}[{idx}]")
+
+    _assert_object_schemas_have_properties(doc)
 
 
 def test_openapi_validate_non_consequential_commit_consequential():
