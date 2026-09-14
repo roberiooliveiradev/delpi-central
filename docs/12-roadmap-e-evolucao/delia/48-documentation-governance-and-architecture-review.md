@@ -44,7 +44,7 @@ Ledger registra estado; não redefine arquitetura.
 | `21` | state/persistence/retention |
 | `20` | tests/gates |
 | `23` | Cursor master prompt |
-| `25` | requirements `CP-001…CP-310` |
+| `25` | requirements `CP-001…CP-316` |
 | `67` | cross-cutting market/intelligence capability map |
 | `68` | naming/product identity |
 | ledger | current execution/evidence |
@@ -56,7 +56,7 @@ Ledger registra estado; não redefine arquitetura.
 54 biometric identity / Human Observation
 55 Internet Research / external connectors
 56 Microsoft Teams
-57 Event-Driven Autonomous Operations / Automation Hub
+57 Event-Driven Autonomous Operations / Automation Hub / Recurring Governed Work
 58 Process Intelligence / Process Mining / Task Mining
 59 AI Control Tower / Digital Workforce Governance
 60 MCP / A2A / agent-tool interoperability
@@ -95,13 +95,23 @@ Keycloak = identity / SSO
 Core API = apps / routes / RBAC / governance
 Domain APIs = dados / regras / autoridade final do domínio
 Portal = host / navigation / published workspace context
-DÉLIA = intelligence / operational context / Evidence / Policy / Decision / Work orchestration
+DÉLIA = intelligence / operational context / Evidence / Policy / Decision / Work/RecurringWork orchestration
 Automation Hub = technical execution
+Physical scheduler/timer = technical time-trigger mechanism; owner proven in C0
 External providers = external resource authority
 OT/Safety = machine / industrial safety authority
 ```
 
 Nenhum documento inferior pode fundir essas authorities por conveniência local.
+
+Especialmente:
+
+```text
+schedule != permission
+stored schedule intent != eternal authorization
+physical scheduler != DÉLIA Work/Policy authority
+Recurring Governed Work != Watch autonomous ACT
+```
 
 ## 7. Findings arquiteturais corrigidos
 
@@ -169,6 +179,35 @@ Produto user-facing = **DÉLIA**. `minha-delpi-copilot-*` permanece somente como
 
 A sequência temática foi normalizada para manter `58 = Process Intelligence` e `59 = AI Control Tower`. A visão transversal de expansão passou a `67` e a authority de naming passou a `68`, eliminando a colisão sem alterar a ordem temática `53–66`.
 
+### F41 — scheduling previsto arquiteturalmente, mas não rastreado como produto de primeira classe
+
+`57` já previa `timers/schedules`, `16` já inventariava schedulers e `55` já previa `communication.email.send`, porém faltavam lifecycle/contract/requirements explícitos para **Recurring Governed Work criado e gerenciado pelo usuário**.
+
+Correção:
+
+```text
+CP-311–CP-316
++ 16 phase mapping
++ 17 ownership
++ 20 acceptance gates
++ 21 state candidates
++ 57 target semantics
++ 12/13/14/22/23/24/README/INDEX/ledger alignment
+```
+
+Resultado semântico:
+
+```text
+Recurring Governed Work = TARGET first-class capability
+physical scheduler owner = TO_INVENTORY until C0 evidence
+C5 = bounded recurring L4 governed ACT when live gates pass
+C6 = schedule/admin UX; Watch remains no autonomous ACT by default
+C7/L5 = not required for bounded C5 recurring ACT
+runtime implementation = not PROVEN by documentation
+```
+
+A busca indexada por código/documentação não é authority de ausência: `search miss != feature absent`. Ausência material exige leitura direta das authorities prováveis antes de classificar.
+
 ## 8. Foundation invariants após C0.S7
 
 ```text
@@ -176,7 +215,11 @@ one DÉLIA API/runtime boundary
 one DÉLIA MFE/product identity
 Keycloak/Core/Domain/External/OT authorities preserved
 Durable Work = one canonical DÉLIA work/orchestration authority
+Recurring Governed Work = DÉLIA Work definition/lifecycle/correlation authority
+Physical scheduler = technical time trigger only, not permission/Work authority
 Automation Hub = technical execution, not second planner/workflow authority
+Schedule != Permission
+Stored Schedule Intent != Eternal Authorization
 Graph != Semantic Layer
 Personal Memory != Organizational Knowledge
 Process Mining != employee scoring
@@ -191,6 +234,7 @@ Edge offline != wider authority
 Model/Marketplace install != permission
 technical success != verified business Outcome
 C5 governed ACT != C7 advanced autonomous ACT
+Recurring Work C5 != Watch autonomous ACT C7
 L5 default = OFF
 OT safety remains external authority
 Chat runtime dependency = 0
@@ -209,8 +253,9 @@ Material architecture/product change updates, when applicable:
 21 state model
 20 tests/gates
 25 CP traceability
+22 execution protocol
 23 Cursor prompt
-02/24/12/15 product/architecture/roadmap/integration views
+02/12/13/24/15 product/architecture/roadmap/catalog/integration views
 08/09/11/14 security/UX/observability/DoD
 relevant thematic specs
 67/68 cross-cutting views when affected
@@ -263,6 +308,9 @@ MCP/A2A exist
 
 Edge AI exists
 != factory devices/network support it
+
+scheduler technology exists
+!= DELPI has an approved reusable scheduler owner/contract
 ```
 
 Somente evidência factual de repo/infra/contrato pode produzir `PROVEN` para foundations existentes. Reuse/implementação futura continua `TO_INVENTORY | PLANNED | TARGET` até decisão e prova correspondentes.
@@ -274,15 +322,19 @@ Search/review all docs for:
 ```text
 Minha DELPI Copilot used as product name instead of DÉLIA
 old documentation path minha-delpi-copilot/
-old CP upper range (<310)
+old CP upper range (<316)
 old thematic range ending at 57
 Chat runtime dependency
 multiple execution order authorities
 Keycloak/Core identity authority conflation
-provider/executor/model/tool hardcode in planner
+provider/executor/model/tool/scheduler hardcode in planner
 RPA-first wording
 second workflow/planner/RBAC
 DÉLIA state duplicating Automation Hub technical execution state
+DÉLIA state duplicating physical scheduler technical job truth
+schedule/timer metadata treated as permission
+stored schedule authorization treated as eternal
+Recurring Work conflated with Watch autonomous ACT
 Process Mining as employee score
 Memory == Knowledge or permission
 Graph == Semantic Layer
@@ -309,11 +361,11 @@ duplicate numeric prefixes presented as one canonical sequence
 
 ```text
 PROGRAM = PLANNED / NOT_STARTED
-REQUIREMENTS = CP-001…CP-310
+REQUIREMENTS = CP-001…CP-316
 THEMATIC_SPECS = 53–66
 CROSS_CUTTING = 67–68
 NEXT = C0.S0
 RUNTIME_DIFF = NONE
 ```
 
-C0.S0 é inventário factual e inclui platform/media/biometric/external/automation/process/AI-assets/tools-agents/memory/semantics/sandbox/predictive/twin/Edge/model-marketplace/OT boundaries. Não cria nenhum desses runtimes.
+C0.S0 é inventário factual e inclui platform/media/biometric/external/automation/scheduling/process/AI-assets/tools-agents/memory/semantics/sandbox/predictive/twin/Edge/model-marketplace/OT boundaries. Não cria nenhum desses runtimes.
