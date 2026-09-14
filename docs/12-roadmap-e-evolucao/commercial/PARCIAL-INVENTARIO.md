@@ -4,7 +4,8 @@
 > **Atualização W0:** **fechada** (E0–E7) — itens W0 = Existe; W1–W5 = backlog  
 > **Correções pós-W0:** hub SI + shell (meta sum/average, rótulos, favoritos na topbar, filtros Opp) — **Existe**  
 > **Revisão código ago/2026:** itens W1/DOC cuja entrega já está no `main` promovidos a **Existe** (não confundir com backlog de produto W2–W5)  
-> **Não substitui:** [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md) · [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md)
+> **Não substitui:** [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md) · [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md)  
+> **Current State (Fase 1):** inventário factual em [INVENTARIO-ESTADO-ATUAL.md](./INVENTARIO-ESTADO-ATUAL.md) — este arquivo permanece backlog/parcial/bloqueado, não prova de runtime.
 
 Inventário **deduplicado** de itens com status **Parcial** (e afins) na documentação commercial. Classes: `W0` (implementação imediata) · `W1`…`W5` (backlog) · `HOMOLOG` · `DOC` · `FORA`.
 

@@ -35,7 +35,8 @@ O **Portal Comercial** é a UX canônica: carteira (N membros), pedidos, Meu dia
 | **[WIREFRAMES.md](./WIREFRAMES.md)** | Wireframes WF-01–10 (+ WF-01R / Meu dia / WF-05R multi-membro) |
 | **[playbook-mfe-page-excellence.md](../../05-plugin-system/playbook-mfe-page-excellence.md)** | Excelência lista+detalhe MFE (P0–P2) — caso Pedidos / WF-02R |
 | **[PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md)** | Fronteira api-delpi × commercial-api |
-| **[INVENTARIO-ATIVOS.md](./INVENTARIO-ATIVOS.md)** | Baseline de rotas, plugins e gaps |
+| **[INVENTARIO-ESTADO-ATUAL.md](./INVENTARIO-ESTADO-ATUAL.md)** | **Fase 1 — Current State** (código + evidência; não misturar com backlog) |
+| **[INVENTARIO-ATIVOS.md](./INVENTARIO-ATIVOS.md)** | Baseline histórico de rotas/plugins (parcialmente desatualizado; ver inventário de estado atual) |
 | **[ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md)** | Ata × Portal — temos/falta/onde acessar + ondas A–E + **ecossistema MFEs** (§7) |
 | **[ATA-FOLLOWUP-IMPLEMENTACOES-AGO2026.md](./ATA-FOLLOWUP-IMPLEMENTACOES-AGO2026.md)** | Follow-up ata — pedidos/Kanban, carteira YoY, Meu Dia×frota, perfis/notif, colaboração Teams/Outlook |
 | **[ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md)** | **Ata alinhamento 2** — meta proporcional, rename faturamento, confirmação, sala, Diretoria, MyVEG; **GR → TV Dashboard** |
