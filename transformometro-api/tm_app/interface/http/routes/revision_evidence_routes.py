@@ -6,6 +6,7 @@ from fastapi import APIRouter, File, Form, Request, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
+from tm_app.application.services.process_activity_touch import touch_processo_for_revisao
 from tm_app.application.services.revision_evidence_storage import (
     RevisaoEvidenceStorage,
     RevisaoEvidenceStorageError,
@@ -131,6 +132,10 @@ async def attach_revisao_evidencia(
         return fail(f"Falha ao gravar evidência: {exc}", 500)
 
     evidencia_id = str(row.get("evidencia_id") or row.get("revisao_evidencia_id") or "")
+    touch_processo_for_revisao(
+        revisao_id,
+        processo_id=str(revisao.get("processo_id") or "") or None,
+    )
     _notify_evidencia(
         request=request,
         revisao=revisao,
@@ -180,6 +185,10 @@ def update_revisao_evidencia(
     row = repo.update(revisao_id, evidencia_id, body.model_dump(exclude_unset=True))
     if not row:
         return fail("Evidência não encontrada.", 404)
+    touch_processo_for_revisao(
+        revisao_id,
+        processo_id=str(revisao.get("processo_id") or "") or None,
+    )
     _notify_evidencia(
         request=request,
         revisao=revisao,
@@ -207,6 +216,10 @@ def delete_revisao_evidencia(revisao_id: str, evidencia_id: str, request: Reques
             stored_name=str(stored_name),
         )
 
+    touch_processo_for_revisao(
+        revisao_id,
+        processo_id=str(revisao.get("processo_id") or "") or None,
+    )
     _notify_evidencia(
         request=request,
         revisao=revisao,

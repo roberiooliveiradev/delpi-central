@@ -97,30 +97,6 @@ def test_diagram_prepare_macro_valid_no_persist():
         diag.return_value.upsert.assert_not_called()
 
 
-def test_diagram_save_macro_rejects_invalid_and_does_not_write():
-    pid = "pppppppp-pppp-pppp-pppp-pppppppppppp"
-    with (
-        patch(
-            "tm_app.application.services.diagram_write_service.ProcessoRepository"
-        ) as proc,
-        patch(
-            "tm_app.application.services.diagram_write_service.ProcessoDiagramRepository"
-        ) as diag,
-    ):
-        proc.return_value.get.return_value = {"processo_id": pid}
-        with pytest.raises(DiagramWriteError):
-            DiagramWriteService().save_macro(
-                pid,
-                {
-                    "format": "flowchart_v1",
-                    "format_version": 1,
-                    "nodes": [{"id": "bad"}],
-                    "edges": [{"id": "e1", "from": "x", "to": "y"}],
-                },
-            )
-        diag.return_value.upsert.assert_not_called()
-
-
 def test_diagram_save_macro_server_derives_mermaid_ignores_client_cache():
     pid = "pppppppp-pppp-pppp-pppp-pppppppppppp"
     macro = _valid_macro()
@@ -131,6 +107,9 @@ def test_diagram_save_macro_server_derives_mermaid_ignores_client_cache():
         patch(
             "tm_app.application.services.diagram_write_service.ProcessoDiagramRepository"
         ) as diag,
+        patch(
+            "tm_app.application.services.diagram_write_service.touch_processo_updated_at"
+        ) as touch,
     ):
         proc.return_value.get.return_value = {"processo_id": pid}
         diag.return_value.get.return_value = None
@@ -147,6 +126,35 @@ def test_diagram_save_macro_server_derives_mermaid_ignores_client_cache():
         assert diag.return_value.upsert.call_args.kwargs["mermaid_cached"] == saved[
             "mermaid"
         ]
+        touch.assert_called_once_with(pid)
+
+
+def test_diagram_save_macro_rejects_invalid_and_does_not_write():
+    pid = "pppppppp-pppp-pppp-pppp-pppppppppppp"
+    with (
+        patch(
+            "tm_app.application.services.diagram_write_service.ProcessoRepository"
+        ) as proc,
+        patch(
+            "tm_app.application.services.diagram_write_service.ProcessoDiagramRepository"
+        ) as diag,
+        patch(
+            "tm_app.application.services.diagram_write_service.touch_processo_updated_at"
+        ) as touch,
+    ):
+        proc.return_value.get.return_value = {"processo_id": pid}
+        with pytest.raises(DiagramWriteError):
+            DiagramWriteService().save_macro(
+                pid,
+                {
+                    "format": "flowchart_v1",
+                    "format_version": 1,
+                    "nodes": [{"id": "bad"}],
+                    "edges": [{"id": "e1", "from": "x", "to": "y"}],
+                },
+            )
+        diag.return_value.upsert.assert_not_called()
+        touch.assert_not_called()
 
 
 def test_diagram_instance_scope_rejects_unknown_macro_node():
@@ -232,6 +240,9 @@ def test_decomposition_save_tree_valid_and_invalid():
         patch(
             "tm_app.application.services.decomposition_write_service.ProcessoDecomposicaoRepository"
         ) as decomp,
+        patch(
+            "tm_app.application.services.decomposition_write_service.touch_processo_updated_at"
+        ) as touch,
     ):
         proc.return_value.get.return_value = {"processo_id": pid}
         decomp.return_value.get.return_value = None
@@ -241,6 +252,7 @@ def test_decomposition_save_tree_valid_and_invalid():
         }
         saved = DecompositionWriteService().save_tree(pid, _valid_tree())
         assert saved["nodes"] == 2
+        touch.assert_called_once_with(pid)
 
         with pytest.raises(DecompositionWriteError):
             DecompositionWriteService().save_tree(
@@ -259,6 +271,7 @@ def test_decomposition_save_tree_valid_and_invalid():
                     ],
                 },
             )
+        assert touch.call_count == 1
 
 
 def test_decomposition_instance_scope_rejects_unknown_node():

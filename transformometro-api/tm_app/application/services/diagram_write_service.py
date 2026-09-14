@@ -11,6 +11,9 @@ from typing import Any
 from tm_app.application.services.diagram_mermaid_export_service import (
     DiagramMermaidExportService,
 )
+from tm_app.application.services.process_activity_touch import (
+    touch_processo_updated_at,
+)
 from tm_app.application.services.revision_diagram_merge_service import (
     RevisaoDiagramMergeService,
 )
@@ -96,6 +99,7 @@ class DiagramWriteService:
             conteudo=validated,
             mermaid_cached=mermaid,
         )
+        touch_processo_updated_at(processo_id)
         return {
             "row": row,
             "conteudo": validated,
@@ -142,6 +146,7 @@ class DiagramWriteService:
             inherit_all=escopo["inherit_all"],
             include_boundary_edges=escopo["include_boundary_edges"],
         )
+        touch_processo_updated_at(prepared.get("processo_id"))
         return {
             "row": row,
             "escopo": escopo,
@@ -209,6 +214,7 @@ class DiagramWriteService:
             conteudo=overlay,
             mermaid_cached=mermaid,
         )
+        touch_processo_updated_at(prepared.get("processo_id"))
         return {
             "row": row,
             "overlay": overlay,

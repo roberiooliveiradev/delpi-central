@@ -22,6 +22,7 @@ from tm_app.application.services.decomposition_write_service import (
     DecompositionWriteError,
     DecompositionWriteService,
 )
+from tm_app.application.services.process_activity_touch import touch_processo_updated_at
 from tm_app.application.services.revision_decomposition_merge_service import (
     RevisaoDecomposicaoMergeService,
 )
@@ -445,6 +446,7 @@ def put_instancia_contexto(instancia_id: str, body: ContextoBody, request: Reque
         return fail(str(exc), 400)
 
     ProcessoInstanciaRepository().update_contexto(instancia_id, contexto)
+    touch_processo_updated_at(str(instancia.get("processo_id") or ""))
     _audit(
         request,
         "processo_instancia",

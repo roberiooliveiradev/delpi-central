@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from tm_app.application.services.process_activity_touch import (
+    touch_processo_updated_at,
+)
 from tm_app.application.services.revision_decomposition_merge_service import (
     RevisaoDecomposicaoMergeService,
 )
@@ -73,6 +76,7 @@ class DecompositionWriteService:
         prepared = self.prepare_tree(processo_id, conteudo)
         validated = prepared["normalized_payload"]
         row = ProcessoDecomposicaoRepository().upsert(processo_id, conteudo=validated)
+        touch_processo_updated_at(processo_id)
         return {
             "row": row,
             "conteudo": validated,
@@ -118,6 +122,7 @@ class DecompositionWriteService:
             inherit_all=escopo["inherit_all"],
             include_descendants=escopo["include_descendants"],
         )
+        touch_processo_updated_at(prepared.get("processo_id"))
         return {
             "row": row,
             "escopo": escopo,
@@ -189,6 +194,7 @@ class DecompositionWriteService:
         row = RevisaoDecomposicaoOverlayRepository().upsert(
             revisao_id, conteudo=validated
         )
+        touch_processo_updated_at(prepared.get("processo_id"))
         return {
             "row": row,
             "overlay": validated,

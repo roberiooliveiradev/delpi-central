@@ -1525,6 +1525,7 @@ def create_vinculo(body: VinculoBody, request: Request):
         "create",
         _payload_with_revisao_scope(body.model_dump(), str(body.revisao_id)),
     )
+    _recalc_after_revisao(str(body.revisao_id))
     _recalc_after_global_resource_change()
     return ok(row_to_json(row), "Vínculo criado.", 201)
 
@@ -1542,6 +1543,7 @@ def update_vinculo(vinculo_id: str, body: VinculoUpdateBody, request: Request):
         "update",
         _payload_with_revisao_scope(body.model_dump(), str(row["revisao_id"])),
     )
+    _recalc_after_revisao(str(row["revisao_id"]))
     _recalc_after_global_resource_change()
     return ok(row_to_json(row), "Vínculo atualizado.")
 
@@ -1564,5 +1566,6 @@ def delete_vinculo(vinculo_id: str, request: Request):
             str(existing["revisao_id"]),
         ),
     )
+    _recalc_after_revisao(str(existing["revisao_id"]))
     _recalc_after_global_resource_change()
     return ok(message="Vínculo excluído.")

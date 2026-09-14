@@ -5,13 +5,11 @@ from typing import Any
 
 from tm_app.application.services.dashboard_query_cache import dashboard_query_cache
 from tm_app.application.services.dashboard_recalc_service import DashboardRecalcService
+from tm_app.application.services.process_activity_touch import (
+    touch_processo_for_revisao,
+    touch_processo_updated_at,
+)
 from tm_app.config import settings
-from tm_app.infrastructure.persistence.repositories.process_repository import (
-    ProcessoRepository,
-)
-from tm_app.infrastructure.persistence.repositories.revision_repository import (
-    RevisaoRepository,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -71,22 +69,9 @@ class DashboardRecalcHookService:
             result["persisted"] = False
         return result
 
-    def _touch_processo(self, processo_id: str | None) -> None:
-        pid = str(processo_id or "").strip()
-        if not pid:
-            return
-        try:
-            ProcessoRepository().touch_updated_at(pid)
-        except Exception as exc:  # pragma: no cover - never break write path
-            logger.warning(
-                "transformometro_processo_touch_updated_at_failed processo_id=%s err=%s",
-                pid,
-                exc,
-            )
-
     def after_processo(self, processo_id: str) -> dict[str, Any] | None:
         """Medição, revisão, investimento, instância ou metadados do processo."""
-        self._touch_processo(processo_id)
+        touch_processo_updated_at(processo_id)
         return self._handle(processo_id=str(processo_id))
 
     def after_revisao(
@@ -96,19 +81,7 @@ class DashboardRecalcHookService:
         processo_id: str | None = None,
     ) -> dict[str, Any] | None:
         """Alteração em revisão; ``processo_id`` cobre ativação (revisões irmãs)."""
-        pid = str(processo_id or "").strip() or None
-        if not pid:
-            try:
-                row = RevisaoRepository().get(str(revisao_id))
-                pid = str((row or {}).get("processo_id") or "").strip() or None
-            except Exception as exc:  # pragma: no cover
-                logger.warning(
-                    "transformometro_processo_touch_lookup_failed revisao_id=%s err=%s",
-                    revisao_id,
-                    exc,
-                )
-                pid = None
-        self._touch_processo(pid)
+        pid = touch_processo_for_revisao(revisao_id, processo_id=processo_id)
         if pid:
             return self._handle(processo_id=str(pid))
         return self._handle(revisao_id=str(revisao_id))

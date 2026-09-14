@@ -6,6 +6,7 @@ from fastapi import APIRouter, File, Form, Request, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
+from tm_app.application.services.process_activity_touch import touch_processo_updated_at
 from tm_app.application.services.process_file_storage import (
     ProcessoArquivoStorage,
     ProcessoArquivoStorageError,
@@ -121,6 +122,7 @@ async def attach_processo_arquivo(
         logger.exception("attach_processo_arquivo failed")
         return fail(f"Falha ao gravar arquivo: {exc}", 500)
 
+    touch_processo_updated_at(processo_id)
     _notify_arquivo_change(
         request,
         processo_id=processo_id,
@@ -166,6 +168,7 @@ def update_processo_arquivo(
     row = repo.update(processo_id, arquivo_id, body.model_dump(exclude_unset=True))
     if not row:
         return fail("Arquivo não encontrado.", 404)
+    touch_processo_updated_at(processo_id)
     _notify_arquivo_change(
         request,
         processo_id=processo_id,
@@ -190,6 +193,7 @@ def delete_processo_arquivo(processo_id: str, arquivo_id: str, request: Request)
             stored_name=str(stored_name),
         )
 
+    touch_processo_updated_at(processo_id)
     _notify_arquivo_change(
         request,
         processo_id=processo_id,
