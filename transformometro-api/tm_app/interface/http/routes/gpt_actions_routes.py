@@ -12,7 +12,11 @@ from tm_app.application.gpt_actions.dispatch_service import (
     GptActionsError,
 )
 from tm_app.application.gpt_actions.entities import parse_entity
-from tm_app.application.gpt_actions.openapi_builder import build_gpt_actions_openapi
+from tm_app.application.gpt_actions.openapi_builder import (
+    build_gpt_actions_openapi,
+    resolve_gpt_actions_server_url,
+)
+from tm_app.config import settings
 from tm_app.core.errors import format_api_error
 from tm_app.core.responses import fail, ok
 
@@ -59,7 +63,12 @@ def _handle(exc: Exception):
     summary="Public OpenAPI schema for Custom GPT import",
 )
 def gpt_get_openapi_schema():
-    return build_gpt_actions_openapi()
+    return build_gpt_actions_openapi(
+        server_url=resolve_gpt_actions_server_url(
+            public_base_url=settings.PUBLIC_BASE_URL,
+            root_path=settings.TM_API_ROOT_PATH,
+        )
+    )
 
 
 @router.get(

@@ -15,6 +15,7 @@ from tm_app.application.gpt_actions.openapi_builder import (
     GPT_ACTIONS_OPERATION_IDS,
     build_gpt_actions_openapi,
     count_operations,
+    resolve_gpt_actions_server_url,
 )
 from tm_app.application.gpt_actions.dispatch_service import (
     GptActionsDispatchService,
@@ -67,6 +68,23 @@ def test_openapi_paths_are_english_only():
         assert "processos" not in path
         assert "revisoes" not in path
         assert "filiais" not in path
+
+
+def test_openapi_servers_url_is_absolute_https():
+    """OpenAI Custom GPT rejects relative servers[].url."""
+    assert resolve_gpt_actions_server_url(
+        public_base_url="https://minhadelpi.com.br",
+        root_path="/apps/transformometro-api",
+    ) == "https://minhadelpi.com.br/apps/transformometro-api"
+    doc = build_gpt_actions_openapi(
+        server_url="https://minhadelpi.com.br/apps/transformometro-api"
+    )
+    url = doc["servers"][0]["url"]
+    assert url.startswith("https://")
+    assert url.endswith("/apps/transformometro-api")
+    # relative leftover must not be used as the live default
+    fallback = build_gpt_actions_openapi()
+    assert fallback["servers"][0]["url"].startswith("http")
 
 
 def test_parse_entity_rejects_unknown():

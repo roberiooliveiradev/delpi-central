@@ -30,6 +30,20 @@ Alternativa: colar `docs/openapi-gpt-actions.json`.
 
 Esperado: **12** operations (`gpt_analyze`, `gpt_get_catalog`, …).
 
+O ChatGPT **rejeita** `servers.url` relativo (`/apps/transformometro-api`). Se aparecer
+«Não foi possível encontrar uma URL válida em `servers`», altere no editor para:
+
+```json
+"servers": [
+  {
+    "url": "https://minhadelpi.com.br/apps/transformometro-api",
+    "description": "Minha DELPI gateway"
+  }
+]
+```
+
+Depois: Autenticação → **OAuth** (não «Nenhum»).
+
 ## 2. Authentication → OAuth (não API Key)
 
 | Campo | Valor (dev) |

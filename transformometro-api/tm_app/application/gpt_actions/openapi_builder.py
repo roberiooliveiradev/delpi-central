@@ -14,6 +14,28 @@ from tm_app.application.gpt_actions.entities import (
 )
 
 GPT_ACTIONS_BASE_PATH = "/transformometro/gpt-actions/v1"
+GPT_ACTIONS_GATEWAY_ROOT = "/apps/transformometro-api"
+# OpenAI Custom GPT rejects relative servers[].url ("Não foi possível encontrar uma URL válida").
+GPT_ACTIONS_PUBLIC_FALLBACK_ORIGIN = "https://minhadelpi.com.br"
+
+
+def resolve_gpt_actions_server_url(
+    *,
+    public_base_url: str | None = None,
+    root_path: str | None = None,
+    explicit: str | None = None,
+) -> str:
+    """Absolute gateway URL for Custom GPT Actions (OpenAI requires https/http origin)."""
+    if explicit and str(explicit).startswith(("http://", "https://")):
+        return str(explicit).rstrip("/")
+    root = (root_path or GPT_ACTIONS_GATEWAY_ROOT).strip() or GPT_ACTIONS_GATEWAY_ROOT
+    if not root.startswith("/"):
+        root = f"/{root}"
+    root = root.rstrip("/") or GPT_ACTIONS_GATEWAY_ROOT
+    base = (public_base_url or "").rstrip("/")
+    if base.startswith(("http://", "https://")):
+        return f"{base}{root}"
+    return f"{GPT_ACTIONS_PUBLIC_FALLBACK_ORIGIN}{root}"
 
 GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
     "gpt_get_catalog",
@@ -70,8 +92,10 @@ def _error_responses() -> dict[str, Any]:
     }
 
 
-def build_gpt_actions_openapi(*, server_url: str = "/apps/transformometro-api") -> dict[str, Any]:
+def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any]:
     """Return OpenAPI 3.0 document with ≤30 operations for Custom GPT import."""
+    if not server_url or not str(server_url).startswith(("http://", "https://")):
+        server_url = resolve_gpt_actions_server_url(explicit=server_url)
     paths: dict[str, Any] = {
         f"{GPT_ACTIONS_BASE_PATH}/catalog": {
             "get": {
@@ -510,7 +534,7 @@ def build_gpt_actions_openapi(*, server_url: str = "/apps/transformometro-api") 
     }
 
 
-def write_gpt_actions_openapi(path: Path, *, server_url: str = "/apps/transformometro-api") -> dict[str, Any]:
+def write_gpt_actions_openapi(path: Path, *, server_url: str | None = None) -> dict[str, Any]:
     doc = build_gpt_actions_openapi(server_url=server_url)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
