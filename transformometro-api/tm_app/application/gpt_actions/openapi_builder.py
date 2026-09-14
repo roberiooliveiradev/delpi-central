@@ -315,9 +315,8 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_create_record",
                 "summary": "Create a Transformômetro record",
                 "description": (
-                    "Create record. Body `{data:{...}}` matches UI CRUD fields. "
-                    "For tree/diagram overlays, put parent id in data "
-                    "(processo_id, instancia_id, or revisao_id)."
+                    "Body MUST be {data:{...}}. entity=process requires "
+                    "data.nome_processo + data.status_processo. Fields go inside data, not root."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
@@ -328,7 +327,14 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     "required": True,
                     "content": {
                         "application/json": {
-                            "schema": {"$ref": "#/components/schemas/GptRecordBody"}
+                            "schema": {"$ref": "#/components/schemas/GptRecordBody"},
+                            "example": {
+                                "data": {
+                                    "nome_processo": "Processo teste GPT",
+                                    "status_processo": "ativo",
+                                    "descricao_processo": "Criado via Custom GPT Action",
+                                }
+                            },
                         }
                     },
                 },
@@ -363,7 +369,10 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
             "put": {
                 "operationId": "gpt_update_record",
                 "summary": "Update a Transformômetro record",
-                "description": "Full/partial update depending on entity. Body: `{ \"data\": { ... } }`.",
+                "description": (
+                    "Body MUST be {data:{...}}. Put changed fields inside data "
+                    "(e.g. nome_processo, status_processo)."
+                ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
                 "parameters": [
@@ -374,7 +383,13 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     "required": True,
                     "content": {
                         "application/json": {
-                            "schema": {"$ref": "#/components/schemas/GptRecordBody"}
+                            "schema": {"$ref": "#/components/schemas/GptRecordBody"},
+                            "example": {
+                                "data": {
+                                    "nome_processo": "Processo teste GPT (atualizado)",
+                                    "status_processo": "ativo",
+                                }
+                            },
                         }
                     },
                 },
@@ -616,15 +631,71 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "GptRecordBody": {
                     "type": "object",
                     "required": ["data"],
+                    "description": (
+                        "Wrapper required by GPT Actions. Never put CRUD fields at the root; "
+                        "always nest them under data."
+                    ),
                     "properties": {
                         "data": {
                             "type": "object",
                             "description": (
-                                "Entity payload. Field names match transformometro-api CRUD "
-                                "(nome_processo, filial_id, setor_ids, versao_revisao, "
-                                "volume_mensal, unit_code, title, conteudo, etc.)."
+                                "CRUD payload. For entity=process REQUIRED: nome_processo, "
+                                "status_processo. Other entities: see gpt_get_catalog."
                             ),
+                            "properties": {
+                                "nome_processo": {
+                                    "type": "string",
+                                    "description": "Required when entity=process (create).",
+                                },
+                                "status_processo": {
+                                    "type": "string",
+                                    "description": (
+                                        "Required when entity=process. Typical: ativo."
+                                    ),
+                                },
+                                "descricao_processo": {"type": "string"},
+                                "gestor_responsavel": {"type": "string"},
+                                "objetivo_processo": {"type": "string"},
+                                "codigo_processo": {"type": "string"},
+                                "familia_processo": {"type": "string"},
+                                "processo_id": {
+                                    "type": "string",
+                                    "description": "Parent/process id when creating instance/revision.",
+                                },
+                                "instancia_id": {"type": "string"},
+                                "revisao_id": {"type": "string"},
+                                "filial_id": {"type": "string"},
+                                "setor_ids": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                },
+                                "resumo_melhoria": {"type": "string"},
+                                "fase_melhoria": {"type": "string"},
+                                "prioridade": {"type": "string"},
+                                "versao_revisao": {"type": "string"},
+                                "cenario_tipo": {"type": "string"},
+                                "data_inicio_vigencia": {"type": "string"},
+                                "revisao_referencia_id": {"type": "string"},
+                                "beneficio_calculo_categoria": {"type": "string"},
+                                "volume_mensal": {"type": "number"},
+                                "tempo_medio_execucao_min": {"type": "number"},
+                                "unit_code": {"type": "string"},
+                                "title": {"type": "string"},
+                                "conteudo": {},
+                            },
                             "additionalProperties": True,
+                            "example": {
+                                "nome_processo": "Processo teste GPT",
+                                "status_processo": "ativo",
+                                "descricao_processo": "Criado via Custom GPT Action",
+                            },
+                        }
+                    },
+                    "example": {
+                        "data": {
+                            "nome_processo": "Processo teste GPT",
+                            "status_processo": "ativo",
+                            "descricao_processo": "Criado via Custom GPT Action",
                         }
                     },
                 },

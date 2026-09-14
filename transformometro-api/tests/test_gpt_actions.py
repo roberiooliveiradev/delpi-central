@@ -1822,6 +1822,27 @@ def test_specialist_instructions_discovery_and_mermaid_contract():
     assert "VALIDATE != WRITE" in text
 
 
+def test_openapi_gpt_record_body_exposes_process_fields_and_example():
+    """ChatGPT fails to fill free-form data{}; schema must advertise nome/status."""
+    doc = build_gpt_actions_openapi()
+    body = doc["components"]["schemas"]["GptRecordBody"]
+    data_props = body["properties"]["data"]["properties"]
+    assert "nome_processo" in data_props
+    assert "status_processo" in data_props
+    assert body["example"]["data"]["nome_processo"]
+    assert body["example"]["data"]["status_processo"] == "ativo"
+
+    create = doc["paths"]["/transformometro/gpt-actions/v1/records/{entity}"]["post"]
+    example = create["requestBody"]["content"]["application/json"]["example"]
+    assert example["data"]["nome_processo"]
+    assert example["data"]["status_processo"] == "ativo"
+    assert "data.nome_processo" in create["description"]
+    assert create["x-openai-isConsequential"] is True
+
+    update = doc["paths"]["/transformometro/gpt-actions/v1/records/{entity}/{id}"]["put"]
+    assert "example" in update["requestBody"]["content"]["application/json"]
+
+
 def test_openapi_validate_non_consequential_commit_consequential():
     """CASO 9–10: validate remains no-write/non-consequential; commit stays consequential."""
     doc = build_gpt_actions_openapi()
