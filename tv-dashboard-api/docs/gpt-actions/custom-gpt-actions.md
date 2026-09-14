@@ -57,7 +57,19 @@ claim the client already exists or that Builder is configured.
   Same key+fingerprint completed → replay; different fingerprint → 409 ``IDEMPOTENCY_CONFLICT``;
   in-progress → 409 ``IDEMPOTENCY_IN_PROGRESS`` (retryable). PARTIAL outcomes are completed
   into the idempotency record and replayed without re-executing writes.
-  Store: ``tv_dashboard.gpt_actions_idempotency_keys`` (+ V017 ``status``).
+  Known deterministic pre-write rejections (e.g. invalid ``playlistId`` UUID) complete the
+  reservation with a stable error outcome so replay never returns ``IDEMPOTENCY_IN_PROGRESS``.
+  Store: ``tv_dashboard.gpt_actions_idempotency_keys`` (V016 table + V017 ``status`` column).
+
+## Migrations (operational chain)
+
+Do **not** treat V017 as standalone. On each environment:
+
+1. Run the canonical TV Dashboard migration mechanism (`migrations_runner` / container startup path).
+2. Verify **V016** applied (creates ``gpt_actions_idempotency_keys``).
+3. Verify **V017** applied **after** V016 (adds ``status`` for atomic acquire).
+
+This package documents the chain only; it does not apply migrations to remote environments.
 
 - ``expectedRevision`` is **required** when ``target.playlistId`` exists. Omit only for
   ``create_playlist`` without a pre-existing playlist. Missing → 422 ``INVALID_CHANGE``.

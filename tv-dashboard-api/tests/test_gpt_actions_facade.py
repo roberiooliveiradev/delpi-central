@@ -581,24 +581,102 @@ def test_gpt_pydantic_422_uses_error_envelope():
 
 def test_application_layer_ports_no_concrete_postgres():
     from pathlib import Path
+    import re
 
     app_root = Path(__file__).resolve().parents[1] / "tv_app" / "application"
     gpt_files = list((app_root / "gpt_actions").glob("*.py"))
     write_file = app_root / "services" / "tv_presentation_write_service.py"
-    ports_file = app_root / "ports" / "__init__.py"
-    for path in gpt_files + [write_file, ports_file]:
+    ports_dir = app_root / "ports"
+    ports_files = list(ports_dir.glob("*.py")) if ports_dir.is_dir() else []
+    boundary = gpt_files + [write_file] + ports_files
+    infra_import = re.compile(
+        r"(?:from|import)\s+tv_app\.infrastructure\b|"
+        r"import\s+tv_app\.infrastructure\b"
+    )
+    for path in boundary:
         text = path.read_text(encoding="utf-8")
         assert "PostgresIdempotencyRepository" not in text
         assert "plugins_postgres_connection" not in text
         assert "PlaylistRepository()" not in text
+        assert not infra_import.search(text), (
+            f"{path.relative_to(app_root.parent.parent)} must not import tv_app.infrastructure"
+        )
     write_src = write_file.read_text(encoding="utf-8")
     assert "PresentationRepositoryPort" in write_src
-    dispatch_src = (app_root / "gpt_actions" / "dispatch_service.py").read_text(
-        encoding="utf-8"
+    assert "from tv_app.application.errors" in write_src or "playlist_persistence" in write_src
+
+
+def test_invalid_playlist_uuid_completes_idempotency_and_replays():
+    writes = _writes_mock()
+    idem = InMemoryIdempotencyRepository()
+    service = TvGptCommitService(
+        writes=writes,
+        idempotency=idem,
+        patch=MagicMock(),
+        access=MagicMock(),
     )
-    assert "from tv_app.infrastructure" not in dispatch_src
-    commit_src = (app_root / "gpt_actions" / "commit_service.py").read_text(encoding="utf-8")
-    assert "from tv_app.infrastructure" not in commit_src
+    catalog = TvCopilotContentService.catalog_version()
+    target = {"playlistId": "not-a-uuid"}
+    ops = [{"op": "add_blank_slide", "title": "A"}]
+    digest = compute_plan_digest(
+        actor_id="actor-1",
+        target=target,
+        ops=ops,
+        catalog_version=catalog,
+        base_revision=1,
+    )
+    with pytest.raises(GptActionsError) as first:
+        service.commit(
+            user=_superadmin(),
+            actor_id="actor-1",
+            target=target,
+            ops=ops,
+            catalog_version=catalog,
+            expected_revision=1,
+            plan_digest=digest,
+            idempotency_key="bad-uuid-key",
+        )
+    assert first.value.code == "INVALID_CHANGE"
+    assert first.value.status_code == 422
+    writes.assert_expected_revision.assert_not_called()
+    writes.add_slide.assert_not_called()
+    writes.create_playlist.assert_not_called()
+
+    with pytest.raises(GptActionsError) as replay:
+        service.commit(
+            user=_superadmin(),
+            actor_id="actor-1",
+            target=target,
+            ops=ops,
+            catalog_version=catalog,
+            expected_revision=1,
+            plan_digest=digest,
+            idempotency_key="bad-uuid-key",
+        )
+    assert replay.value.code == "INVALID_CHANGE"
+    assert replay.value.status_code == 422
+    assert replay.value.code != "IDEMPOTENCY_IN_PROGRESS"
+
+    ops_other = [{"op": "add_blank_slide", "title": "B"}]
+    digest_other = compute_plan_digest(
+        actor_id="actor-1",
+        target=target,
+        ops=ops_other,
+        catalog_version=catalog,
+        base_revision=1,
+    )
+    with pytest.raises(GptActionsError) as conflict:
+        service.commit(
+            user=_superadmin(),
+            actor_id="actor-1",
+            target=target,
+            ops=ops_other,
+            catalog_version=catalog,
+            expected_revision=1,
+            plan_digest=digest_other,
+            idempotency_key="bad-uuid-key",
+        )
+    assert conflict.value.code == "IDEMPOTENCY_CONFLICT"
 
 
 def test_viewer_forbidden_on_commit_http():

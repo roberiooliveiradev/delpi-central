@@ -44,6 +44,24 @@ _ERROR_OUTCOME_STATUSES = frozenset(
 )
 
 
+class _DeterministicPreWriteError(Exception):
+    """Known rejection after acquire and before any material write."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        code: str = "INVALID_CHANGE",
+        status_code: int = 422,
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.message = message
+        self.code = code
+        self.status_code = status_code
+        self.details = details or {}
+
+
 def _canonical_json(value: Any) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
@@ -133,18 +151,57 @@ class TvGptCommitService:
             return self._replay_snapshot(acquired.response_snapshot or {})
 
         # ACQUIRED — reservation held before any write.
-        return self._execute_acquired(
-            user=user,
-            actor_id=actor_id,
-            target=target,
-            ops=ops,
-            catalog_version=catalog_version,
-            expected_revision=expected_revision,
-            plan_digest=plan_digest,
-            key=key,
-            request_fingerprint=request_fingerprint,
-            authorization=authorization,
-        )
+        try:
+            return self._execute_acquired(
+                user=user,
+                actor_id=actor_id,
+                target=target,
+                ops=ops,
+                catalog_version=catalog_version,
+                expected_revision=expected_revision,
+                plan_digest=plan_digest,
+                key=key,
+                request_fingerprint=request_fingerprint,
+                authorization=authorization,
+            )
+        except _DeterministicPreWriteError as exc:
+            err = {
+                "status": exc.code,
+                "_raise": True,
+                "_code": exc.code,
+                "_statusCode": exc.status_code,
+                "message": exc.message,
+                **(exc.details or {}),
+            }
+            self._complete(
+                key=key,
+                actor_id=actor_id,
+                request_fingerprint=request_fingerprint,
+                snapshot=err,
+            )
+            raise GptActionsError(
+                exc.message,
+                code=exc.code,
+                status_code=exc.status_code,
+                details=exc.details,
+            ) from exc
+
+    def _parse_uuid_prewrite(self, raw: str, *, field: str) -> UUID:
+        try:
+            return UUID(str(raw).strip())
+        except ValueError as exc:
+            raise _DeterministicPreWriteError(f"{field} inválido.") from exc
+
+    def _parse_uuid_op(self, raw: str, *, field: str) -> UUID:
+        """UUID from op payload during execution — maps to write-path errors."""
+        try:
+            return UUID(str(raw).strip())
+        except ValueError as exc:
+            raise PresentationWriteError(
+                f"{field} inválido.",
+                status_code=422,
+                code="INVALID_CHANGE",
+            ) from exc
 
     def _replay_snapshot(self, snapshot: dict[str, Any]) -> dict[str, Any]:
         status = str(snapshot.get("status") or "")
@@ -240,7 +297,7 @@ class TvGptCommitService:
                     code="INVALID_CHANGE",
                     status_code=422,
                 )
-            playlist_uuid = UUID(playlist_id_raw)
+            playlist_uuid = self._parse_uuid_prewrite(playlist_id_raw, field="playlistId")
             access = self._access.resolve(playlist_uuid, user)
             if not access.can_edit:
                 err = {
@@ -355,7 +412,11 @@ class TvGptCommitService:
         outcome: dict[str, Any] = {"appliedOps": [], "created": {}}
         current_playlist = playlist_uuid
         current_slide_raw = str((target or {}).get("slideId") or "").strip() or None
-        current_slide = UUID(current_slide_raw) if current_slide_raw else None
+        current_slide = (
+            self._parse_uuid_prewrite(current_slide_raw, field="slideId")
+            if current_slide_raw
+            else None
+        )
         pending_native = False
         chain_revision: int | None = expected_revision
         expected_native_for_verify: dict[str, Any] | None = None
@@ -559,7 +620,7 @@ class TvGptCommitService:
                             body["isActive"] = bool(raw["isActive"])
                         section = self._writes.update_section(
                             current_playlist,
-                            UUID(section_id),
+                            self._parse_uuid_op(section_id, field="sectionId"),
                             body,
                             actor_user_id=actor_id,
                             expected_revision=chain_revision,
@@ -594,7 +655,7 @@ class TvGptCommitService:
                     section_id = str(raw.get("sectionId") or "").strip()
                     self._writes.delete_section(
                         current_playlist,
-                        UUID(section_id),
+                        self._parse_uuid_op(section_id, field="sectionId"),
                         actor_user_id=actor_id,
                         delete_slides=bool(raw.get("deleteSlides")),
                         expected_revision=chain_revision,
@@ -733,6 +794,56 @@ class TvGptCommitService:
                 status_code=exc.status_code,
                 details=exc.details,
             ) from exc
+        except GptActionsError as exc:
+            # Deterministic rejects raised inside the write loop (before or after
+            # material effects) must complete the reservation; uncertain infra
+            # failures are not converted here.
+            if applied:
+                partial = {
+                    "status": "PARTIAL_COMMIT",
+                    "persisted": True,
+                    "verified": False,
+                    "revisionBefore": revision_before,
+                    "revisionAfter": (
+                        self._writes.get_revision(current_playlist)
+                        if current_playlist is not None
+                        else None
+                    ),
+                    "outcome": {"appliedOps": applied, "created": outcome.get("created")},
+                    "failed": {"code": exc.code, "message": str(exc)},
+                    "_raise": True,
+                    "_code": "PARTIAL_COMMIT",
+                    "_statusCode": 409,
+                    "message": f"Commit parcial: {exc}",
+                }
+                self._complete(
+                    key=key,
+                    actor_id=actor_id,
+                    request_fingerprint=request_fingerprint,
+                    snapshot=partial,
+                )
+                raise GptActionsError(
+                    partial["message"],
+                    code="PARTIAL_COMMIT",
+                    status_code=409,
+                    details=partial,
+                ) from exc
+            err = {
+                "status": exc.code,
+                "_raise": True,
+                "_code": exc.code,
+                "_statusCode": exc.status_code,
+                "message": str(exc),
+            }
+            if exc.details:
+                err.update(exc.details)
+            self._complete(
+                key=key,
+                actor_id=actor_id,
+                request_fingerprint=request_fingerprint,
+                snapshot=err,
+            )
+            raise
 
         outcome["appliedOps"] = applied
         revision_after = (

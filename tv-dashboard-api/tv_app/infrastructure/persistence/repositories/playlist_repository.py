@@ -7,6 +7,12 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID
 
+from tv_app.application.errors.playlist_persistence import (
+    MainSectionProtectedError,
+    PlaylistNotFoundError,
+    SectionNotFoundError,
+    SlideNotFoundError,
+)
 from tv_app.infrastructure.persistence.plugins_postgres_connection import get_connection
 from tv_app.infrastructure.persistence.repositories.playlist_history_repository import (
     PlaylistHistoryNotFoundError,
@@ -15,23 +21,14 @@ from tv_app.infrastructure.persistence.repositories.playlist_history_repository 
 
 NATIVE_SCREENS_PATH = Path(__file__).resolve().parents[3] / "content" / "native_screens.json"
 
-
-class PlaylistNotFoundError(LookupError):
-    pass
-
-
-class SlideNotFoundError(LookupError):
-    pass
-
-
-class SectionNotFoundError(LookupError):
-    pass
-
-
-class MainSectionProtectedError(ValueError):
-    """Seção principal não pode ser excluída."""
-
-    pass
+# Compatibility re-exports — authority lives in application.errors.
+__all__ = [
+    "MainSectionProtectedError",
+    "PlaylistNotFoundError",
+    "PlaylistRepository",
+    "SectionNotFoundError",
+    "SlideNotFoundError",
+]
 
 
 def _utcnow() -> datetime:

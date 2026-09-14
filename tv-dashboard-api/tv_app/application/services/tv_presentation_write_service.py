@@ -9,6 +9,12 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
+from tv_app.application.errors.playlist_persistence import (
+    MainSectionProtectedError,
+    PlaylistNotFoundError,
+    SectionNotFoundError,
+    SlideNotFoundError,
+)
 from tv_app.application.ports import PresentationRepositoryPort
 from tv_app.application.services.branch_policy_service import validate_native_branch
 from tv_app.application.services.comunicado_config_validation_service import (
@@ -19,12 +25,6 @@ from tv_app.application.services.presentation_change_notifier import notify_pres
 from tv_app.application.services.slide_preset_service import (
     SlidePresetNotFoundError,
     resolve_preset_slide,
-)
-from tv_app.infrastructure.persistence.repositories.playlist_repository import (
-    MainSectionProtectedError,
-    PlaylistNotFoundError,
-    SectionNotFoundError,
-    SlideNotFoundError,
 )
 
 
