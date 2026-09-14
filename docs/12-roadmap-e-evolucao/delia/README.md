@@ -2,7 +2,7 @@
 
 > **Status:** `PLANNED / NOT_STARTED`  
 > **Produto:** aplicação nova e standalone de Continuous Operational Intelligence  
-> **Requirements:** `CP-001…CP-310`  
+> **Requirements:** `CP-001…CP-316`  
 > **Specs temáticas:** `53–66`  
 > **Próxima etapa:** `C0.S0 — Enterprise AI/Platform Foundation Rebaseline`  
 > **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
@@ -28,7 +28,7 @@ Chat release                      independent release
 
 ## 2. North Star
 
-> **Uma única DÉLIA para escritório, reuniões, chão de fábrica, fontes externas e operações governadas, capaz de perceber eventos, entender contexto/dados/processos, pesquisar, analisar, prever, simular, decidir sob políticas, preparar/executar trabalho, verificar resultados, comunicar e aprender sob governança.**
+> **Uma única DÉLIA para escritório, reuniões, chão de fábrica, fontes externas e operações governadas, capaz de perceber eventos e tempo, entender contexto/dados/processos, pesquisar, analisar, prever, simular, decidir sob políticas, preparar/executar trabalho pontual ou recorrente, verificar resultados, comunicar e aprender sob governança.**
 
 ```text
 PERCEBER
@@ -53,7 +53,7 @@ WORKSPACE
 MEETING
 FRONTLINE
 TEAMS future surface
-BACKGROUND Watches/Workflows
+BACKGROUND Watches/Workflows/Recurring Work
 ADMIN governance surfaces
 ```
 
@@ -72,7 +72,7 @@ Semantic Business Layer
 Event / Decision Intelligence
 Process Intelligence / Process Mining
 Automation Hub / RPA / Computer-use execution boundaries
-Durable Work / Tasks / Cases / Rooms / Inbox / Watch
+Durable Work / Recurring Governed Work / Tasks / Cases / Rooms / Inbox / Watch
 Analysis Sandbox / Artifact Workspace
 Predictive / Prescriptive Intelligence
 Operational Twin / Simulation
@@ -94,6 +94,7 @@ Domain APIs = business data / rules / final domain authority
 Portal = host / navigation / published workspace context
 DÉLIA = intelligence / operational context / Evidence / Policy / Decision / Work orchestration
 Automation Hub = technical execution
+Physical scheduler/timer = technical time-trigger mechanism; owner to inventory in C0
 External providers = external-resource authority
 OT/safety systems = machine/safety authority
 ```
@@ -110,6 +111,9 @@ Twin != source of truth
 PREPARE != ACT
 Read != Write
 Draft != Send
+Schedule != Permission
+Stored Schedule Intent != Eternal Authorization
+Recurring Governed Work != Watch Autonomous ACT
 Technical Success != Verified Business Outcome
 MCP/A2A Discovery != Approval
 Marketplace Install != Permission
@@ -118,7 +122,7 @@ Edge Offline != Wider Authority
 
 ## 6. Automation principle
 
-DÉLIA decide/orquestra sob policy; Automation Hub executa tecnicamente.
+DÉLIA decide/orquestra sob policy; Automation Hub executa tecnicamente. Um scheduler/timer, quando comprovado, apenas materializa o trigger temporal; ele não possui Work, business decision ou permission authority.
 
 Preferência default de executor:
 
@@ -133,7 +137,22 @@ Official API
 
 Planner usa capabilities semânticas, nunca clicks/selectors.
 
-C5 pode liberar `ACT` governado para capabilities explicitamente autorizadas. C7 adiciona autonomia avançada/Watch autonomous ACT/L5 capability-scoped; não é o primeiro momento em que qualquer ACT pode existir.
+C5 pode liberar `ACT` governado para capabilities explicitamente autorizadas. Isso inclui Recurring Governed Work bounded quando cada ocorrência revalida identidade/AuthZ/Policy/Decision/idempotência/Outcome. C6 mantém Watch sem ACT autônomo por default. C7 adiciona autonomia avançada/Watch autonomous ACT/L5 capability-scoped; não é o primeiro momento em que qualquer ACT pode existir.
+
+Exemplo target de primeira classe:
+
+```text
+“todos os dias às 09:00 gere o relatório de produção do dia anterior e envie por email”
+→ Recurring Governed Work persistente
+→ deterministic time trigger
+→ live authorization per occurrence
+→ current authorized reads
+→ report artifact
+→ separate governed communication.email.send
+→ verified Outcome/Evidence/Audit
+```
+
+A capability é `TARGET`; o scheduler físico/owner permanece `TO_INVENTORY` até C0 provar a infraestrutura e o contrato. Documentação não prova runtime implementado.
 
 ## 7. Process / Data intelligence
 
@@ -191,7 +210,7 @@ Full index: [`INDEX.md`](./INDEX.md).
 54 Biometric Identity / Human Observation
 55 Internet Research / External Connectors
 56 Microsoft Teams
-57 Event-Driven Autonomous Operations / Automation Hub
+57 Event-Driven Autonomous Operations / Automation Hub / Recurring Governed Work
 58 Process Intelligence / Process Mining
 59 AI Control Tower
 60 MCP / A2A / Tool-Agent Interoperability
@@ -218,4 +237,4 @@ RUNTIME_DIFF = NONE
 NEXT = C0.S0
 ```
 
-C0.S0 é inventário factual. Nenhum runtime/capability da DÉLIA é considerado entregue até evidence válida do SHA/config correspondente e os gates da fase aplicável.
+A formalização de `CP-311–CP-316` é documentação/planejamento. Não altera os estados acima nem prova scheduler, email provider ou Recurring Work runtime.
