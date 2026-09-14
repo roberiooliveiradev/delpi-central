@@ -34,6 +34,8 @@
 | Event/Signal ingestion | source owner + DÉLIA adapter/EventEnvelope | event payload as permission/action |
 | Decision Intelligence | DÉLIA Application/Policy + authoritative facts | LLM/RPA as sole formal rule when deterministic criteria exist |
 | Process Intelligence | DÉLIA process projection + process/source owners | Process Mining as employee surveillance |
+| Recurring Governed Work definition/lifecycle | DÉLIA Work/Policy | physical scheduler job state or schedule metadata as permission authority |
+| Physical timer/scheduler trigger | platform/scheduler/execution owner proven in C0 | becoming DÉLIA Work/Policy/business authority |
 | Automation capability mapping | DÉLIA Capability/Action projection + contrato semântico do executor | UI mechanics in planner |
 | Automation decision/work orchestration | DÉLIA Policy/Decision/Work | second planner/workflow engine in executor |
 | Automation technical execution | Automation Hub | DÉLIA, provider or bot becoming business/permission authority |
@@ -55,6 +57,8 @@
 | audit/evals | DÉLIA observability + platform audit | CoT/secrets/raw surveillance telemetry |
 
 `Automation Hub` acima é a authority **semântica alvo para execução técnica**. `C0.S0/C0.S1` deve provar runtime existente, owner físico, contracts e gaps; falta de implementação comprovada vira `TO_INVENTORY/PLANNED`, não permissão para deslocar execução técnica para a DÉLIA.
+
+O owner físico de timer/scheduler também é `TO_INVENTORY` até C0. A DÉLIA possuir `RecurringWorkDefinition` não significa possuir job runner/cron/lease/worker; inversamente, um scheduler existente não passa a possuir Work, Policy ou autorização.
 
 ## 2. Componentes físicos alvo
 
@@ -81,6 +85,7 @@ Expertise / Playbooks / Knowledge
 Personal Memory
 Evidence / Policy / Decision
 Durable Work / Task / Case / Watch
+Recurring Governed Work / Scheduling definition & occurrence correlation
 Event & Operational Intelligence
 Process Intelligence
 Business Graph
@@ -96,7 +101,7 @@ Media / Biometric / Meeting / Frontline
 Observability / Evals
 ```
 
-**Module name does not imply microservice.** C0 decide physical split only from real ownership/consumers/scale/isolation needs. Um module de integração com automação não transforma a DÉLIA em owner da execução técnica do Automation Hub.
+**Module name does not imply microservice.** C0 decide physical split only from real ownership/consumers/scale/isolation needs. Um module de integração com automação ou scheduling não transforma a DÉLIA em owner da execução técnica do Automation Hub/scheduler.
 
 ## 3. Shared primitive registry
 
@@ -126,6 +131,7 @@ MediaRef
 Biometric refs
 ExternalConnectionRef
 AutomationExecutionRef / ExecutorRef
+RecurringWorkRef / WorkOccurrenceRef
 ProcessTraceRef
 MetricDefinitionRef
 MemoryItemRef
@@ -163,6 +169,13 @@ Public/External/Domain/Edge Events
 → SourceRef/EventEnvelope
 → Evidence/Watch/Workflow/Decision
 
+RecurringWorkDefinition
+→ approved physical scheduler/timer adapter
+→ time occurrence signal
+→ DÉLIA occurrence correlation/idempotency
+→ live identity + Core/domain AuthZ + Policy/Decision
+→ Durable Workflow
+
 Business/Process data
 → Graph + Semantic Layer + Process Intelligence
 → grounded analysis
@@ -189,6 +202,9 @@ Semantic Layer = metric/concept meaning
 Process Intelligence = observed process behavior
 Personal Memory = user-private continuity/preferences
 Knowledge = governed reusable organizational/user knowledge
+Recurring Governed Work = persistent bounded Work intent/lifecycle triggered by recurrence
+Physical scheduler = technical timer/job trigger mechanism
+Watch = condition/event observation product with phase-bounded modes
 Operational Twin = scenario projection
 Control Tower = governance projection
 Marketplace = governed asset catalog
@@ -226,6 +242,8 @@ scenario.simulate
 
 Planner asks for capability; approved adapters resolve provider/executor/model/tool without exposing UI mechanics.
 
+Scheduling lifecycle (`create/list/pause/resume/cancel`) belongs ao Work product/use cases and must not be confused with business action authorization. Um timer fire não é semantic business capability permission.
+
 ## 8. Event / Decision ownership
 
 ```text
@@ -238,6 +256,8 @@ source event
 ```
 
 Source event proves only its factual event, not authorization.
+
+Time/schedule trigger is treated with the same authority discipline: it proves that an occurrence time was reached under the scheduler contract, **not** that ACT is authorized.
 
 ## 9. Process Intelligence ownership
 
@@ -284,6 +304,41 @@ DÉLIA works with semantic capabilities and governed Work/Decision. Automation H
 
 Planner never receives clicks/selectors/package internals.
 
+### 12.1 Recurring Work / scheduler ownership
+
+Target contract:
+
+```text
+DÉLIA Work
+owns:
+- recurring definition intent/version/lifecycle
+- owner/scope/capability/target refs
+- occurrence correlation/idempotency refs
+- Policy/Decision coordination
+- Outcome/Evidence/Audit linkage
+
+Physical scheduler/timer owner
+owns:
+- timer/job runtime
+- trigger materialization mechanics
+- job leases/heartbeats/technical retry state when applicable
+- scheduler-specific HA/operational state
+```
+
+Boundary invariants:
+
+```text
+schedule != permission
+stored intent != eternal authorization
+scheduler identity != business actor
+scheduler success != business Outcome
+Recurring Work != Watch autonomous ACT
+```
+
+A material occurrence must re-resolve current user/service identity and revalidate live Core/domain AuthZ, Policy/Decision, provider/connection and source scope before ACT.
+
+A scheduler implementation can be replaced by adapter/contract without changing Recurring Work domain semantics. C0 decides reuse versus adapter versus new implementation only after inventory and Abstraction Gate.
+
 ## 13. Outcome ownership
 
 ```text
@@ -328,7 +383,10 @@ Must remain true:
 ```text
 DÉLIA ─X→ Chat runtime/API/tables
 DÉLIA ─X→ Automation Hub technical internals as business authority
+DÉLIA ─X→ physical scheduler technical internals as Work/permission authority
 Automation Hub ─X→ business decision/permission authority
+Scheduler/timer ─X→ business decision/permission/ACT authority
+Timer tick ─X→ implicit ACT authority
 Control Tower ─X→ domain permission authority
 Process Mining ─X→ employee scoring authority
 Memory ─X→ RBAC/business truth
@@ -351,14 +409,18 @@ Who approves meaning/rule/model/process?
 Does canonical ref already represent it?
 Is persistence content or only ref/projection?
 Who owns credential/key/package?
+Who owns recurring definition versus physical scheduler/job state?
+What are timezone/DST/misfire/overlap semantics?
+How is per-occurrence idempotency derived and persisted?
+How are background identity and revocation revalidated at occurrence time?
 Is this read, prepare, simulate or write?
 What verifies the business outcome?
 Does this create a new permission authority?
 Can implementation be swapped by adapter?
 What is the revoke/rollback/kill-switch path?
-What happens when source/model/network is stale/unavailable?
+What happens when source/model/network/scheduler is stale/unavailable?
 Could personal/employee data leak or become a score?
-Could offline/simulation/tool metadata widen authority?
+Could offline/simulation/tool/scheduler metadata widen authority?
 ```
 
 Unknown = `TO_INVENTORY`; never infer implementation or readiness from a document/filename.
@@ -371,11 +433,12 @@ factual inventory
 → authorities/bounded contexts
 → shared primitives
 → privacy/data/trust/state contracts
+→ recurring Work/scheduler boundary freeze
 → architecture/test freeze
 → standalone bootstrap
 → capability foundations
 → read-only analysis/discovery
-→ governed ACT/executors/artifacts
+→ governed ACT/executors/recurring Work/artifacts
 → product governance/experience
 → selected advanced autonomy/Edge/Marketplace
 ```
