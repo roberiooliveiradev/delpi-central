@@ -19,16 +19,19 @@ Uma fase só fecha com comportamento, integração, segurança, privacidade, out
 [ ] Portal = host/navigation/published-context authority
 [ ] Domain APIs mantêm business authority
 [ ] Automation Hub mantém technical-execution authority
+[ ] physical scheduler/timer, if used, remains technical trigger owner only
 [ ] external/OT owners mantêm source/safety authority
 [ ] shared primitives não duplicados
 [ ] OpenAPI/semantic capabilities governam actions
-[ ] planner provider/executor/model/tool-neutral
+[ ] planner provider/executor/model/tool/scheduler-neutral
 [ ] read != write; draft != send; PREPARE != ACT; simulate != apply
+[ ] schedule != permission; stored schedule intent != eternal authorization
+[ ] Recurring Governed Work != Watch autonomous ACT
 [ ] recommendation != authorization; prediction != FACT
-[ ] event/tool/agent/model/package/device/biometric identity não concede permission
+[ ] event/tool/agent/model/package/device/biometric/scheduler identity não concede permission
 [ ] deterministic readiness usa Policy/Specification quando aplicável
 [ ] not every event invokes LLM
-[ ] technical executor success != verified business Outcome
+[ ] technical executor/scheduler success != verified business Outcome
 [ ] no blind retry after ambiguous material write
 [ ] autonomy capability/context/risk-scoped; L5 OFF default
 [ ] kill switches/rollback/revoke paths independem de prompt
@@ -52,6 +55,10 @@ Uma fase só fecha com comportamento, integração, segurança, privacidade, out
 [ ] media/device/biometric/OT inventory
 [ ] Internet/OAuth/connector/Teams inventory
 [ ] event/RPA/automation/queue/worker/service-identity inventory
+[ ] scheduler/timer/cron/polling/recurring-job inventory
+[ ] Recurring Work definition owner vs physical scheduler owner frozen
+[ ] recurrence/IANA timezone/DST/misfire/overlap/idempotency semantics frozen
+[ ] background identity/AuthZ/revoke semantics per occurrence frozen
 [ ] Automation Hub physical owner/runtime/contract status classified
 [ ] outcome/postcondition/notification owners inventory
 [ ] event logs/process owners/case keys/task-mining inventory
@@ -65,7 +72,7 @@ Uma fase só fecha com comportamento, integração, segurança, privacidade, out
 [ ] model registry/MLOps/catalog/signing/supply-chain inventory
 [ ] standalone ownership/names/storage boundaries frozen
 [ ] shared primitive decisions frozen
-[ ] process/memory/semantic/sandbox/twin/edge/model boundaries frozen
+[ ] recurring Work/process/memory/semantic/sandbox/twin/edge/model boundaries frozen
 [ ] contract/conformance harness reproducible
 [ ] CHAT_RUNTIME_DEPENDENCY=0
 [ ] FOUNDATION_DUPLICATION=0 material
@@ -82,6 +89,7 @@ Uma fase só fecha com comportamento, integração, segurança, privacidade, out
 [ ] full-page/global host contract
 [ ] responsive/accessibility baseline
 [ ] no thematic runtime feature activates implicitly
+[ ] no recurring material ACT before C5 gates
 [ ] secrets absent from browser
 [ ] Chat offline does not break DÉLIA
 [ ] independent rollback/shutdown
@@ -92,7 +100,7 @@ Uma fase só fecha com comportamento, integração, segurança, privacidade, out
 ```text
 [ ] WorkspaceContext bounded/sanitized
 [ ] EntityRef/SourceRef without permission/credential truth
-[ ] device/memory/model/execution refs do not grant authority
+[ ] device/memory/model/execution/schedule refs do not grant authority
 [ ] shared-device user switch clears local personalized/media/source state
 [ ] typed authorized navigation/actions
 [ ] iframe bridge safe
@@ -134,7 +142,7 @@ Uma fase só fecha com comportamento, integração, segurança, privacidade, out
 [ ] no side effect implicit
 ```
 
-## 8. DoD C5 — Governed ACT + Durable Foundation
+## 8. DoD C5 — Governed ACT + Durable/Recurring Foundation
 
 ```text
 [ ] Decision Gate/revalidation/AuthZ/idempotency/audit
@@ -148,6 +156,17 @@ Uma fase só fecha com comportamento, integração, segurança, privacidade, out
 [ ] ambiguous write no blind retry
 [ ] postcondition/Outcome verified where material
 [ ] same DÉLIA Durable Workflow coordinates writes/tools/agents/execution requests
+[ ] Recurring Work create/inspect/list/pause/resume/cancel lifecycle works
+[ ] recurring definition survives chat/session/restart independently
+[ ] recurrence uses explicit IANA timezone/start/end and deterministic calendar semantics
+[ ] DST/misfire/missed-run/overlap semantics are explicit and tested when applicable
+[ ] duplicate timer/retry/restart/reconciliation does not duplicate a material occurrence/effect
+[ ] paused/cancelled/expired/disabled schedule does not create future material ACT
+[ ] each material occurrence revalidates current identity + Core/domain AuthZ + Policy/Decision + provider/source permission
+[ ] revoked creator/connection/capability cannot continue on stale authorization
+[ ] occurrence links Work/Decision/Execution/Outcome/Evidence/Audit
+[ ] recurring report→email anchor works without open chat session and without duplicate send
+[ ] report generated != send authorized; provider accepted != verified final Outcome automatically
 [ ] Process Intelligence opportunity remains candidate/PREPARE
 [ ] MCP/A2A writes pass same governance
 [ ] semantic definition/model/policy TOCTOU handled
@@ -163,6 +182,10 @@ Uma fase só fecha com comportamento, integração, segurança, privacidade, out
 [ ] Watch OBSERVE/ADVISE/PREPARE works
 [ ] Watch does not autonomously trigger ACT in C6
 [ ] C5 governed ACT remains available only through explicitly authorized/confirmed flows
+[ ] Recurring Work UX shows status/recurrence/timezone/next occurrence when derivable/last outcome/history
+[ ] recurring pause/resume/cancel actions are RBAC-governed and audited
+[ ] schedule admin does not grant underlying domain/provider write permission
+[ ] C5 recurring Work remains distinct from C6 Watch autonomous behavior
 [ ] Automation Hub admin shows truthful technical vs verified outcome states
 [ ] Process Intelligence UX provides maps/variants/bottlenecks/conformance/backlog
 [ ] before/after process metrics reproducible
@@ -186,6 +209,7 @@ Uma fase só fecha com comportamento, integração, segurança, privacidade, out
 [ ] L5 OFF default
 [ ] capability/actor/context/risk/amount/environment/budget limits
 [ ] selected Watch ACT has explicit allowlist/policy/identity/limits
+[ ] recurring governed L4 does not require or imply L5
 [ ] kill switch blocks new autonomous ACT independently of LLM
 [ ] autonomous action produces verified Outcome
 [ ] closed-loop process optimization is measured/reversible/governed
@@ -216,6 +240,13 @@ Decision Gate
 idempotency/replay
 partial/ambiguous outcome
 persist/reload/restart
+SCHEDULE_NOT_PERMISSION
+SCHEDULE_LIVE_AUTHZ_REVALIDATION
+SCHEDULE_OCCURRENCE_IDEMPOTENT
+SCHEDULE_PAUSE_CANCEL_ENFORCED
+SCHEDULE_TIMEZONE_EXPLICIT
+SCHEDULE_MISFIRE_OVERLAP_EXPLICIT
+SCHEDULE_RETRY_RESTART_NO_DUPLICATE_ACT
 layer/dependency conformance
 CHAT_OFFLINE_INDEPENDENCE
 PROCESS_LOG_PROVENANCE
@@ -248,6 +279,13 @@ DUPLICATE_AUTHORITY
 CHAT_RUNTIME_IMPORT
 ACT_WITHOUT_LIVE_AUTHZ
 ACT_WITHOUT_IDEMPOTENCY_OR_AUDIT
+SCHEDULE_PERMISSION_ELEVATION
+SCHEDULE_WITHOUT_LIVE_AUTHZ
+DUPLICATE_SCHEDULE_OCCURRENCE_SIDE_EFFECT
+PAUSED_OR_CANCELLED_SCHEDULE_EXECUTES
+SCHEDULE_MISFIRE_POLICY_UNDEFINED
+SCHEDULE_TIMEZONE_IMPLICIT
+SCHEDULE_RETRY_DUPLICATE_ACT
 WATCH_AUTONOMOUS_ACT_BEFORE_C7
 EXECUTOR_TECHNICAL_SUCCESS_AS_BUSINESS_SUCCESS
 PROCESS_MINING_WORKER_PROFILING
