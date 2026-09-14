@@ -36,3 +36,23 @@ def test_teo_builder_core_keeps_required_invariants():
     ]
     for marker in required:
         assert marker in block
+
+
+def test_teo_builder_user_facing_language_is_portuguese_first():
+    block = _builder_instructions_block()
+    required = [
+        "## Linguagem com o usuário",
+        "na conversa use português claro",
+        "OBSERVED/INFORMED → Informado/Observado",
+        "INFERRED → Hipótese",
+        "PROPOSED → Proposto",
+        "UNKNOWN → Ainda não sabemos",
+        "AS-IS → processo atual",
+        "TO-BE → processo futuro proposto",
+        "E2E → processo ponta a ponta",
+        "Evite AuthZ, surface_supports, write, read-back, runtime, instance_id",
+        "explique em português na primeira ocorrência",
+        "Não altere nomes técnicos ao chamar Actions",
+    ]
+    for marker in required:
+        assert marker in block
