@@ -265,26 +265,69 @@ Classificar `EXECUTION_DRIFT` ou `INCONCLUSIVE`, delimitar subgrafo afetado e n�
 
 ## Evidence report
 
+Toda implementação DÉLIA deve encerrar com um `DÉLIA EXECUTION REPORT`. É proibido terminar apenas com resumo narrativo, “implementado com sucesso”, “concluído” ou equivalente sem o relatório estruturado.
+
 Ao concluir, devolver objetivamente:
 
 ```text
 TASK
+PHASE
 BASE HEAD
 FINAL HEAD
 STATUS
+GOAL / RESULT
 FACTS PROVEN
 TO_INVENTORY
 EXECUTION_DRIFT
+AUTHORITIES / SOURCES USED
 FILES INSPECTED
 FILES CHANGED
+IMPLEMENTATION
 CONTRACT IMPACT: NONE | ADDITIVE | BEHAVIORAL | DEPRECATED | BREAKING
-TESTS EXECUTED + exact results
-EVALS / SECURITY CHECKS
+SECURITY / AUTHORITY CHECK
+TESTS EXECUTED + exact commands/results
+EVALS / SAFETY CHECKS
 RESIDUAL SEARCH
 POSTCONDITION / OUTCOME EVIDENCE
 UNRESOLVED
+SCOPE CHECK: planned scope × actual diff × scope creep
+WORKING TREE
+FINAL VERDICT FROM CURSOR
 RECOMMENDED NEXT STEP
 ```
+
+Se uma seção obrigatória não tiver evidência, não omitir silenciosamente. Registrar explicitamente um dos estados adequados:
+
+```text
+PENDING
+INCONCLUSIVE
+TEST_NOT_RUN
+STALE_EVIDENCE
+N/A — <motivo objetivo>
+```
+
+`N/A` só é permitido quando a seção realmente não se aplica; não pode esconder teste, eval, postcondition ou evidência obrigatória que deveria existir.
+
+O Cursor pode declarar `PASS` para teste/eval/gate que executou e cuja evidência possui. O Cursor não decide aceite arquitetural final da implementação.
+
+O campo `FINAL VERDICT FROM CURSOR` deve usar apenas:
+
+```text
+IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+IMPLEMENTATION_FAILED
+IMPLEMENTATION_INCONCLUSIVE
+EXECUTION_DRIFT
+```
+
+Nunca encerrar uma tarefa DÉLIA com:
+
+```text
+ACCEPT
+ACCEPT_WITH_RESIDUAL
+REWORK
+```
+
+Esses veredictos pertencem ao review GPT após receber o relatório e confrontá-lo com authorities, contracts, gates, testes e evidência.
 
 Não declarar PASS porque “parece correto”, build passou, arquivo existe, HTTP retornou 200, executor informou sucesso ou documentação diz que existe.
 
