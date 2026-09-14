@@ -602,6 +602,108 @@ def test_improvement_package_commit_positive():
     assert result["next_steps"]
 
 
+def test_improvement_package_commit_missing_process_ref_is_400_not_404():
+    """Live incident class: ready shape + missing process id must not return opaque 404."""
+    from tm_app.application.gpt_actions.improvement_package_service import (
+        GuidedImprovementPackageService,
+    )
+
+    dispatch = MagicMock()
+    dispatch.get_record.side_effect = GptActionsError("Processo não encontrado.", 404)
+    svc = GuidedImprovementPackageService(dispatch)
+    with pytest.raises(GptActionsError) as ei:
+        svc.commit(
+            MagicMock(),
+            {
+                "dry_run": False,
+                "process": {"processo_id": "missing-process"},
+                "instance": {"instancia_id": "i1"},
+                "scenario": {
+                    "revision": {
+                        "revisao_referencia_id": "b1",
+                        "versao_revisao": "2.1.0",
+                        "cenario_tipo": "melhoria",
+                        "data_inicio_vigencia": "2026-09-02",
+                    },
+                    "measurement": {"volume_mensal": 1},
+                    "investments": [],
+                },
+            },
+        )
+    assert ei.value.status_code == 400
+    assert ei.value.data["not_found"] == "process"
+    dispatch.create_record.assert_not_called()
+
+
+def test_improvement_package_commit_missing_reference_revision_is_400():
+    from tm_app.application.gpt_actions.improvement_package_service import (
+        GuidedImprovementPackageService,
+    )
+
+    dispatch = MagicMock()
+
+    def _get(_request, entity, record_id):
+        if entity == "revision" and record_id == "missing-ref":
+            raise GptActionsError("Revisão não encontrada.", 404)
+        return {"id": record_id}
+
+    dispatch.get_record.side_effect = _get
+    svc = GuidedImprovementPackageService(dispatch)
+    with pytest.raises(GptActionsError) as ei:
+        svc.commit(
+            MagicMock(),
+            {
+                "dry_run": False,
+                "process": {"processo_id": "p1"},
+                "instance": {"instancia_id": "i1"},
+                "scenario": {
+                    "revision": {
+                        "revisao_referencia_id": "missing-ref",
+                        "versao_revisao": "2.1.0",
+                        "cenario_tipo": "melhoria",
+                        "data_inicio_vigencia": "2026-09-02",
+                    },
+                    "investments": [],
+                },
+            },
+        )
+    assert ei.value.status_code == 400
+    assert ei.value.data["not_found"] == "revision"
+    assert "revisao_referencia_id" in ei.value.data["field"]
+    dispatch.create_record.assert_not_called()
+
+
+def test_http_commit_maps_domain_404_to_400(tm_client):
+    """Regression: Custom GPT disables Actions on opaque 404; commit must answer 400."""
+    from tm_app.interface.http.routes import gpt_actions_routes as routes
+
+    with patch.object(
+        routes._packages,
+        "commit",
+        side_effect=GptActionsError("Processo não encontrado.", 404),
+    ):
+        response = tm_client.post(
+            "/transformometro/gpt-actions/v1/improvement-packages",
+            json={
+                "process": {"processo_id": "p1"},
+                "instance": {"instancia_id": "i1"},
+                "scenario": {
+                    "revision": {
+                        "revisao_referencia_id": "b1",
+                        "versao_revisao": "2.1.0",
+                        "cenario_tipo": "melhoria",
+                        "data_inicio_vigencia": "2026-09-02",
+                    }
+                },
+            },
+        )
+    assert response.status_code == 400
+    payload = response.json()
+    assert payload["success"] is False
+    assert payload["data"]["not_found"] is True
+    assert "não encontrado" in payload["message"].lower() or "not found" in payload["message"].lower()
+
+
 def test_improvement_package_rejects_baseline_as_scenario():
     from tm_app.application.gpt_actions.improvement_package_service import (
         GuidedImprovementPackageService,

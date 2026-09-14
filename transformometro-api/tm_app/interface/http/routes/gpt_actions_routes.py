@@ -396,5 +396,23 @@ def gpt_commit_improvement_package(body: GptImprovementPackageBody, request: Req
         else:
             message = "Pacote de melhoria gravado."
         return ok(data, message)
+    except GptActionsError as exc:
+        # Custom GPT often disables consequential Actions after opaque 404s.
+        # Keep "not found" semantics in the body, but answer with 400.
+        if exc.status_code == 404:
+            logger.warning(
+                "gpt_commit_improvement_package_not_found_as_400 message=%s",
+                exc.message,
+            )
+            data = dict(exc.data or {})
+            data.setdefault("not_found", True)
+            return fail(exc.message, 400, data)
+        return _handle(exc)
+    except LookupError as exc:
+        logger.warning(
+            "gpt_commit_improvement_package_lookup_as_400 message=%s",
+            exc,
+        )
+        return fail(str(exc), 400, {"not_found": True})
     except Exception as exc:
         return _handle(exc)

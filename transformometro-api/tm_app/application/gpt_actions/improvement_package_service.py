@@ -6,6 +6,7 @@ so RBAC and domain rules stay single-sourced.
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from fastapi import Request
@@ -15,6 +16,8 @@ from tm_app.application.gpt_actions.dispatch_service import (
     GptActionsError,
 )
 from tm_app.core.catalogs import CENARIO_TIPO
+
+logger = logging.getLogger(__name__)
 
 
 _UI_NEXT_STEPS = [
@@ -77,6 +80,15 @@ class GuidedImprovementPackageService:
                 400,
                 {"missing": missing, "checklist": checklist},
             )
+
+        # Shape-ready != referentially valid. Fail fast with 400 (not 404) so Custom GPT
+        # keeps the Action available and TÉO can report a clear reference error.
+        self._preflight_existing_refs(request, body)
+        logger.info(
+            "gpt_commit_improvement_package_write_start activate=%s recalculate=%s",
+            activate_scenario,
+            recalculate,
+        )
 
         result: dict[str, Any] = {
             "dry_run": False,
@@ -175,7 +187,72 @@ class GuidedImprovementPackageService:
             "scenario_revisao_id": scenario_revisao_id,
         }
         result["next_steps"] = list(_UI_NEXT_STEPS)
+        logger.info(
+            "gpt_commit_improvement_package_write_done processo_id=%s instancia_id=%s "
+            "scenario_revisao_id=%s",
+            processo_id,
+            instancia_id,
+            scenario_revisao_id,
+        )
         return result
+
+    def _preflight_existing_refs(self, request: Request, body: dict[str, Any]) -> None:
+        """Ensure reused IDs exist before any write. Raises GptActionsError 400 on miss."""
+        process = body.get("process") or {}
+        pid = str(process.get("id") or process.get("processo_id") or "").strip()
+        if pid:
+            self._require_existing(request, "process", pid, field="processo_id")
+
+        instance = body.get("instance") or {}
+        iid = str(instance.get("id") or instance.get("instancia_id") or "").strip()
+        if iid:
+            self._require_existing(request, "instance", iid, field="instancia_id")
+
+        for prefix, block in (
+            ("baseline", body.get("baseline")),
+            ("scenario", body.get("scenario")),
+        ):
+            if not isinstance(block, dict) or not block:
+                continue
+            rev = block.get("revision") or {}
+            if not isinstance(rev, dict):
+                continue
+            rid = str(rev.get("id") or rev.get("revisao_id") or "").strip()
+            if rid:
+                self._require_existing(
+                    request, "revision", rid, field=f"{prefix}.revision.revisao_id"
+                )
+            ref = str(rev.get("revisao_referencia_id") or "").strip()
+            if ref:
+                self._require_existing(
+                    request,
+                    "revision",
+                    ref,
+                    field=f"{prefix}.revision.revisao_referencia_id",
+                )
+
+    def _require_existing(
+        self, request: Request, entity: str, record_id: str, *, field: str
+    ) -> None:
+        try:
+            self._dispatch.get_record(request, entity, record_id)
+        except GptActionsError as exc:
+            if exc.status_code == 404:
+                raise GptActionsError(
+                    f"Referenced {entity} not found ({field}={record_id}).",
+                    400,
+                    {
+                        "not_found": entity,
+                        "field": field,
+                        "id": record_id,
+                        "hint": (
+                            "Package shape was ready, but a referenced id does not exist "
+                            "or is not visible to this user. Re-resolve ids via catalog/"
+                            "search/process-context before commit."
+                        ),
+                    },
+                ) from exc
+            raise
 
     def _collect_missing(self, body: dict[str, Any]) -> list[str]:
         missing: list[str] = []
