@@ -549,6 +549,76 @@
                   "status_processo": "ativo",
                   "descricao_processo": "Criado via Custom GPT Action"
                 }
+              },
+              "examples": {
+                "process_create": {
+                  "summary": "entity=process create",
+                  "value": {
+                    "data": {
+                      "nome_processo": "Processo teste GPT",
+                      "status_processo": "ativo",
+                      "descricao_processo": "Criado via Custom GPT Action"
+                    }
+                  }
+                },
+                "instance_create": {
+                  "summary": "entity=instance create",
+                  "value": {
+                    "data": {
+                      "processo_id": "<processo_uuid>",
+                      "filial_id": "01",
+                      "setor_ids": [
+                        "<setor_id_or_codigo>"
+                      ],
+                      "resumo_melhoria": "Melhoria teste GPT",
+                      "fase_melhoria": "planejado",
+                      "prioridade": "media",
+                      "status_instancia": "ativo"
+                    }
+                  }
+                },
+                "revision_create": {
+                  "summary": "entity=revision create",
+                  "value": {
+                    "data": {
+                      "processo_id": "<processo_uuid>",
+                      "instancia_id": "<instancia_uuid>",
+                      "versao_revisao": "2.1.0",
+                      "cenario_tipo": "melhoria",
+                      "data_inicio_vigencia": "2026-09-14",
+                      "revisao_referencia_id": "<baseline_revisao_uuid>",
+                      "beneficio_calculo_categoria": "automatico",
+                      "descricao_revisao": "Cenário teste GPT"
+                    }
+                  }
+                },
+                "measurement_upsert": {
+                  "summary": "entity=measurement upsert",
+                  "value": {
+                    "data": {
+                      "revisao_id": "<revisao_uuid>",
+                      "volume_mensal": 100,
+                      "tempo_medio_execucao_min": 30,
+                      "percentual_retrabalho": 0,
+                      "percentual_erro": 0,
+                      "custo_hora_mao_obra": 34.38,
+                      "base_referencia_mes": "2026-09"
+                    }
+                  }
+                },
+                "investment_create": {
+                  "summary": "entity=investment create",
+                  "value": {
+                    "data": {
+                      "revisao_id": "<revisao_uuid>",
+                      "tipo_investimento": "unico",
+                      "descricao_item": "Licença teste GPT",
+                      "quantidade": 1,
+                      "valor_unitario": 1000,
+                      "recorrencia": "unico"
+                    }
+                  }
+                }
               }
             }
           }
@@ -786,6 +856,76 @@
                   "nome_processo": "Processo teste GPT (atualizado)",
                   "status_processo": "ativo"
                 }
+              },
+              "examples": {
+                "process_create": {
+                  "summary": "entity=process create",
+                  "value": {
+                    "data": {
+                      "nome_processo": "Processo teste GPT",
+                      "status_processo": "ativo",
+                      "descricao_processo": "Criado via Custom GPT Action"
+                    }
+                  }
+                },
+                "instance_create": {
+                  "summary": "entity=instance create",
+                  "value": {
+                    "data": {
+                      "processo_id": "<processo_uuid>",
+                      "filial_id": "01",
+                      "setor_ids": [
+                        "<setor_id_or_codigo>"
+                      ],
+                      "resumo_melhoria": "Melhoria teste GPT",
+                      "fase_melhoria": "planejado",
+                      "prioridade": "media",
+                      "status_instancia": "ativo"
+                    }
+                  }
+                },
+                "revision_create": {
+                  "summary": "entity=revision create",
+                  "value": {
+                    "data": {
+                      "processo_id": "<processo_uuid>",
+                      "instancia_id": "<instancia_uuid>",
+                      "versao_revisao": "2.1.0",
+                      "cenario_tipo": "melhoria",
+                      "data_inicio_vigencia": "2026-09-14",
+                      "revisao_referencia_id": "<baseline_revisao_uuid>",
+                      "beneficio_calculo_categoria": "automatico",
+                      "descricao_revisao": "Cenário teste GPT"
+                    }
+                  }
+                },
+                "measurement_upsert": {
+                  "summary": "entity=measurement upsert",
+                  "value": {
+                    "data": {
+                      "revisao_id": "<revisao_uuid>",
+                      "volume_mensal": 100,
+                      "tempo_medio_execucao_min": 30,
+                      "percentual_retrabalho": 0,
+                      "percentual_erro": 0,
+                      "custo_hora_mao_obra": 34.38,
+                      "base_referencia_mes": "2026-09"
+                    }
+                  }
+                },
+                "investment_create": {
+                  "summary": "entity=investment create",
+                  "value": {
+                    "data": {
+                      "revisao_id": "<revisao_uuid>",
+                      "tipo_investimento": "unico",
+                      "descricao_item": "Licença teste GPT",
+                      "quantidade": 1,
+                      "valor_unitario": 1000,
+                      "recorrencia": "unico"
+                    }
+                  }
+                }
               }
             }
           }
@@ -847,7 +987,7 @@
       "delete": {
         "operationId": "gpt_delete_record",
         "summary": "Soft-delete a Transformômetro record",
-        "description": "Destructive. Requires the same manage permissions as the UI.",
+        "description": "Destructive soft-delete. Path: entity + id. No JSON body. Requires the same manage permissions as the UI.",
         "tags": [
           "Transformômetro GPT"
         ],
@@ -954,7 +1094,7 @@
       "post": {
         "operationId": "gpt_duplicate_record",
         "summary": "Duplicate process, instance, or revision",
-        "description": "Supported entities: process, instance, revision. Optional body `data` with rename fields.",
+        "description": "Entities: process|instance|revision. Optional body {data:{...}} for rename fields (e.g. nome_processo).",
         "tags": [
           "Transformômetro GPT"
         ],
@@ -992,6 +1132,12 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/GptRecordBody"
+              },
+              "example": {
+                "data": {
+                  "nome_processo": "Processo teste GPT (cópia)",
+                  "status_processo": "ativo"
+                }
               }
             }
           }
@@ -1065,6 +1211,7 @@
       "post": {
         "operationId": "gpt_activate_revision",
         "summary": "Activate a revision as the operational current version",
+        "description": "Path id = revisao_id UUID. No required body. Consequential write.",
         "tags": [
           "Transformômetro GPT"
         ],
@@ -1080,9 +1227,23 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "revisao_id to activate."
           }
         ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Empty object allowed.",
+                "additionalProperties": false
+              },
+              "example": {}
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Activated revision",
@@ -1142,7 +1303,7 @@
       "post": {
         "operationId": "gpt_recalculate_dashboard",
         "summary": "Recalculate materialised dashboard cache",
-        "description": "Optional filters: revisao_id, processo_id, competencia_inicio, competencia_fim.",
+        "description": "Optional filters in JSON body: revisao_id, processo_id, competencia_inicio, competencia_fim.",
         "tags": [
           "Transformômetro GPT"
         ],
@@ -1156,21 +1317,11 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "revisao_id": {
-                    "type": "string"
-                  },
-                  "processo_id": {
-                    "type": "string"
-                  },
-                  "competencia_inicio": {
-                    "type": "string"
-                  },
-                  "competencia_fim": {
-                    "type": "string"
-                  }
-                }
+                "$ref": "#/components/schemas/GptRecalculateBody"
+              },
+              "example": {
+                "processo_id": "<processo_uuid>",
+                "revisao_id": "<revisao_uuid>"
               }
             }
           }
@@ -1234,7 +1385,7 @@
       "post": {
         "operationId": "gpt_meeting_minute_workflow",
         "summary": "Send, finalize, or cancel a meeting minute",
-        "description": "Workflow actions for atas. Handwritten signature stays in the UI / magic link.",
+        "description": "Body requires action enum. Handwritten signature stays in UI/magic link.",
         "tags": [
           "Transformômetro GPT"
         ],
@@ -1250,7 +1401,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "meeting_minute id."
           }
         ],
         "requestBody": {
@@ -1258,22 +1410,29 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": [
-                  "action"
-                ],
-                "properties": {
-                  "action": {
-                    "type": "string",
-                    "enum": [
-                      "send",
-                      "finalize",
-                      "cancel"
-                    ]
-                  },
-                  "reason": {
-                    "type": "string",
-                    "description": "Optional cancel reason."
+                "$ref": "#/components/schemas/GptMeetingMinuteWorkflowBody"
+              },
+              "example": {
+                "action": "send"
+              },
+              "examples": {
+                "send": {
+                  "summary": "Send",
+                  "value": {
+                    "action": "send"
+                  }
+                },
+                "finalize": {
+                  "summary": "Finalize",
+                  "value": {
+                    "action": "finalize"
+                  }
+                },
+                "cancel": {
+                  "summary": "Cancel",
+                  "value": {
+                    "action": "cancel",
+                    "reason": "Cancelado no teste GPT"
                   }
                 }
               }
@@ -1354,6 +1513,34 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/GptValidateImprovementPackageBody"
+              },
+              "example": {
+                "process": {
+                  "processo_id": "<uuid>"
+                },
+                "instance": {
+                  "instancia_id": "<uuid>"
+                },
+                "scenario": {
+                  "revision": {
+                    "revisao_referencia_id": "<uuid>",
+                    "versao_revisao": "2.1.0",
+                    "cenario_tipo": "melhoria",
+                    "data_inicio_vigencia": "YYYY-MM-DD",
+                    "data_implantacao": "YYYY-MM-DD",
+                    "descricao_revisao": "...",
+                    "motivo_revisao": "...",
+                    "beneficio_calculo_categoria": "automatico"
+                  },
+                  "measurement": {
+                    "volume_mensal": 0,
+                    "tempo_medio_execucao_min": 0,
+                    "percentual_retrabalho": 0,
+                    "percentual_erro": 0,
+                    "base_referencia_mes": "YYYY-MM"
+                  },
+                  "investments": []
+                }
               }
             }
           }
@@ -1432,6 +1619,37 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/GptImprovementPackageBody"
+              },
+              "example": {
+                "dry_run": false,
+                "activate_scenario": false,
+                "recalculate": false,
+                "process": {
+                  "processo_id": "<uuid>"
+                },
+                "instance": {
+                  "instancia_id": "<uuid>"
+                },
+                "scenario": {
+                  "revision": {
+                    "revisao_referencia_id": "<uuid>",
+                    "versao_revisao": "2.1.0",
+                    "cenario_tipo": "melhoria",
+                    "data_inicio_vigencia": "YYYY-MM-DD",
+                    "data_implantacao": "YYYY-MM-DD",
+                    "descricao_revisao": "...",
+                    "motivo_revisao": "...",
+                    "beneficio_calculo_categoria": "automatico"
+                  },
+                  "measurement": {
+                    "volume_mensal": 0,
+                    "tempo_medio_execucao_min": 0,
+                    "percentual_retrabalho": 0,
+                    "percentual_erro": 0,
+                    "base_referencia_mes": "YYYY-MM"
+                  },
+                  "investments": []
+                }
               }
             }
           }
@@ -1624,6 +1842,59 @@
             "status_processo": "ativo",
             "descricao_processo": "Criado via Custom GPT Action"
           }
+        }
+      },
+      "GptRecalculateBody": {
+        "type": "object",
+        "description": "Optional filters for dashboard recalculation.",
+        "properties": {
+          "revisao_id": {
+            "type": "string",
+            "description": "Limit recalculation to one revision."
+          },
+          "processo_id": {
+            "type": "string",
+            "description": "Limit recalculation to one process."
+          },
+          "competencia_inicio": {
+            "type": "string",
+            "description": "Optional YYYY-MM start competence."
+          },
+          "competencia_fim": {
+            "type": "string",
+            "description": "Optional YYYY-MM end competence."
+          }
+        },
+        "additionalProperties": false,
+        "example": {
+          "processo_id": "<processo_uuid>",
+          "revisao_id": "<revisao_uuid>"
+        }
+      },
+      "GptMeetingMinuteWorkflowBody": {
+        "type": "object",
+        "required": [
+          "action"
+        ],
+        "description": "Meeting-minute workflow command.",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "send",
+              "finalize",
+              "cancel"
+            ],
+            "description": "Workflow verb for the ata."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Optional cancel reason."
+          }
+        },
+        "additionalProperties": false,
+        "example": {
+          "action": "send"
         }
       },
       "GptImprovementPackageBody": {

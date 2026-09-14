@@ -1822,25 +1822,88 @@ def test_specialist_instructions_discovery_and_mermaid_contract():
     assert "VALIDATE != WRITE" in text
 
 
-def test_openapi_gpt_record_body_exposes_process_fields_and_example():
-    """ChatGPT fails to fill free-form data{}; schema must advertise nome/status."""
+def test_openapi_all_write_actions_have_typed_examples():
+    """Every mutating Action must expose concrete request examples for Custom GPT."""
     doc = build_gpt_actions_openapi()
-    body = doc["components"]["schemas"]["GptRecordBody"]
-    data_props = body["properties"]["data"]["properties"]
-    assert "nome_processo" in data_props
-    assert "status_processo" in data_props
-    assert body["example"]["data"]["nome_processo"]
-    assert body["example"]["data"]["status_processo"] == "ativo"
+    checks = [
+        (
+            "/transformometro/gpt-actions/v1/records/{entity}",
+            "post",
+            True,
+            True,
+        ),
+        (
+            "/transformometro/gpt-actions/v1/records/{entity}/{id}",
+            "put",
+            True,
+            True,
+        ),
+        (
+            "/transformometro/gpt-actions/v1/records/{entity}/{id}/duplicate",
+            "post",
+            True,
+            True,
+        ),
+        (
+            "/transformometro/gpt-actions/v1/revisions/{id}/activate",
+            "post",
+            True,
+            True,
+        ),
+        (
+            "/transformometro/gpt-actions/v1/dashboard/recalculate",
+            "post",
+            True,
+            True,
+        ),
+        (
+            "/transformometro/gpt-actions/v1/meeting-minutes/{id}/workflow",
+            "post",
+            True,
+            True,
+        ),
+        (
+            "/transformometro/gpt-actions/v1/improvement-packages/validate",
+            "post",
+            False,
+            True,
+        ),
+        (
+            "/transformometro/gpt-actions/v1/improvement-packages",
+            "post",
+            True,
+            True,
+        ),
+    ]
+    for path, method, consequential, require_example in checks:
+        spec = doc["paths"][path][method]
+        assert spec.get("x-openai-isConsequential") is consequential
+        if require_example:
+            media = spec["requestBody"]["content"]["application/json"]
+            assert "example" in media
+            assert "schema" in media
+    # delete has no body but remains consequential
+    delete = doc["paths"]["/transformometro/gpt-actions/v1/records/{entity}/{id}"]["delete"]
+    assert delete["x-openai-isConsequential"] is True
+    assert "requestBody" not in delete
 
-    create = doc["paths"]["/transformometro/gpt-actions/v1/records/{entity}"]["post"]
-    example = create["requestBody"]["content"]["application/json"]["example"]
-    assert example["data"]["nome_processo"]
-    assert example["data"]["status_processo"] == "ativo"
-    assert "data.nome_processo" in create["description"]
-    assert create["x-openai-isConsequential"] is True
-
-    update = doc["paths"]["/transformometro/gpt-actions/v1/records/{entity}/{id}"]["put"]
-    assert "example" in update["requestBody"]["content"]["application/json"]
+    schemas = doc["components"]["schemas"]
+    assert "nome_processo" in schemas["GptRecordBody"]["properties"]["data"]["properties"]
+    assert "GptRecalculateBody" in schemas
+    assert "GptMeetingMinuteWorkflowBody" in schemas
+    assert "action" in schemas["GptMeetingMinuteWorkflowBody"]["properties"]
+    create_examples = doc["paths"]["/transformometro/gpt-actions/v1/records/{entity}"][
+        "post"
+    ]["requestBody"]["content"]["application/json"]["examples"]
+    assert "instance_create" in create_examples
+    assert "revision_create" in create_examples
+    assert "measurement_upsert" in create_examples
+    assert "investment_create" in create_examples
+    commit_ex = doc["paths"]["/transformometro/gpt-actions/v1/improvement-packages"][
+        "post"
+    ]["requestBody"]["content"]["application/json"]["example"]
+    assert "process" in commit_ex and "scenario" in commit_ex
+    assert commit_ex.get("dry_run") is False
 
 
 def test_openapi_validate_non_consequential_commit_consequential():

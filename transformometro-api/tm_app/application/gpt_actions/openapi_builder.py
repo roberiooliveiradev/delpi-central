@@ -115,6 +115,123 @@ def _error_responses() -> dict[str, Any]:
     }
 
 
+def _example_process_create() -> dict[str, Any]:
+    return {
+        "data": {
+            "nome_processo": "Processo teste GPT",
+            "status_processo": "ativo",
+            "descricao_processo": "Criado via Custom GPT Action",
+        }
+    }
+
+
+def _example_instance_create() -> dict[str, Any]:
+    return {
+        "data": {
+            "processo_id": "<processo_uuid>",
+            "filial_id": "01",
+            "setor_ids": ["<setor_id_or_codigo>"],
+            "resumo_melhoria": "Melhoria teste GPT",
+            "fase_melhoria": "planejado",
+            "prioridade": "media",
+            "status_instancia": "ativo",
+        }
+    }
+
+
+def _example_revision_create() -> dict[str, Any]:
+    return {
+        "data": {
+            "processo_id": "<processo_uuid>",
+            "instancia_id": "<instancia_uuid>",
+            "versao_revisao": "2.1.0",
+            "cenario_tipo": "melhoria",
+            "data_inicio_vigencia": "2026-09-14",
+            "revisao_referencia_id": "<baseline_revisao_uuid>",
+            "beneficio_calculo_categoria": "automatico",
+            "descricao_revisao": "Cenário teste GPT",
+        }
+    }
+
+
+def _example_measurement_upsert() -> dict[str, Any]:
+    return {
+        "data": {
+            "revisao_id": "<revisao_uuid>",
+            "volume_mensal": 100,
+            "tempo_medio_execucao_min": 30,
+            "percentual_retrabalho": 0,
+            "percentual_erro": 0,
+            "custo_hora_mao_obra": 34.38,
+            "base_referencia_mes": "2026-09",
+        }
+    }
+
+
+def _example_investment_create() -> dict[str, Any]:
+    return {
+        "data": {
+            "revisao_id": "<revisao_uuid>",
+            "tipo_investimento": "unico",
+            "descricao_item": "Licença teste GPT",
+            "quantidade": 1,
+            "valor_unitario": 1000,
+            "recorrencia": "unico",
+        }
+    }
+
+
+def _record_body_media(*, primary: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Typed {data:{...}} media object with multi-entity examples for Custom GPT."""
+    primary = primary or _example_process_create()
+    return {
+        "schema": {"$ref": "#/components/schemas/GptRecordBody"},
+        "example": primary,
+        "examples": {
+            "process_create": {
+                "summary": "entity=process create",
+                "value": _example_process_create(),
+            },
+            "instance_create": {
+                "summary": "entity=instance create",
+                "value": _example_instance_create(),
+            },
+            "revision_create": {
+                "summary": "entity=revision create",
+                "value": _example_revision_create(),
+            },
+            "measurement_upsert": {
+                "summary": "entity=measurement upsert",
+                "value": _example_measurement_upsert(),
+            },
+            "investment_create": {
+                "summary": "entity=investment create",
+                "value": _example_investment_create(),
+            },
+        },
+    }
+
+
+def _package_validate_example() -> dict[str, Any]:
+    from tm_app.application.gpt_actions.improvement_package_contract import (
+        build_package_hints,
+    )
+
+    return build_package_hints()["validate_example"]
+
+
+def _package_commit_example() -> dict[str, Any]:
+    from tm_app.application.gpt_actions.improvement_package_contract import (
+        build_package_hints,
+    )
+
+    example = dict(build_package_hints()["reuse_existing_example"])
+    example["dry_run"] = False
+    example["activate_scenario"] = False
+    example["recalculate"] = False
+    return example
+
+
 def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any]:
     """Return OpenAPI 3.0 document with ≤30 operations for Custom GPT import."""
     if not server_url or not str(server_url).startswith(("http://", "https://")):
@@ -326,16 +443,9 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "requestBody": {
                     "required": True,
                     "content": {
-                        "application/json": {
-                            "schema": {"$ref": "#/components/schemas/GptRecordBody"},
-                            "example": {
-                                "data": {
-                                    "nome_processo": "Processo teste GPT",
-                                    "status_processo": "ativo",
-                                    "descricao_processo": "Criado via Custom GPT Action",
-                                }
-                            },
-                        }
+                        "application/json": _record_body_media(
+                            primary=_example_process_create()
+                        )
                     },
                 },
                 "responses": {
@@ -382,15 +492,14 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "requestBody": {
                     "required": True,
                     "content": {
-                        "application/json": {
-                            "schema": {"$ref": "#/components/schemas/GptRecordBody"},
-                            "example": {
+                        "application/json": _record_body_media(
+                            primary={
                                 "data": {
                                     "nome_processo": "Processo teste GPT (atualizado)",
                                     "status_processo": "ativo",
                                 }
-                            },
-                        }
+                            }
+                        )
                     },
                 },
                 "responses": {
@@ -402,7 +511,10 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
             "delete": {
                 "operationId": "gpt_delete_record",
                 "summary": "Soft-delete a Transformômetro record",
-                "description": "Destructive. Requires the same manage permissions as the UI.",
+                "description": (
+                    "Destructive soft-delete. Path: entity + id. No JSON body. "
+                    "Requires the same manage permissions as the UI."
+                ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
                 "parameters": [
@@ -420,7 +532,10 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
             "post": {
                 "operationId": "gpt_duplicate_record",
                 "summary": "Duplicate process, instance, or revision",
-                "description": "Supported entities: process, instance, revision. Optional body `data` with rename fields.",
+                "description": (
+                    "Entities: process|instance|revision. Optional body {data:{...}} "
+                    "for rename fields (e.g. nome_processo)."
+                ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
                 "parameters": [
@@ -439,7 +554,13 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     "required": False,
                     "content": {
                         "application/json": {
-                            "schema": {"$ref": "#/components/schemas/GptRecordBody"}
+                            "schema": {"$ref": "#/components/schemas/GptRecordBody"},
+                            "example": {
+                                "data": {
+                                    "nome_processo": "Processo teste GPT (cópia)",
+                                    "status_processo": "ativo",
+                                }
+                            },
                         }
                     },
                 },
@@ -455,11 +576,33 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
             "post": {
                 "operationId": "gpt_activate_revision",
                 "summary": "Activate a revision as the operational current version",
+                "description": (
+                    "Path id = revisao_id UUID. No required body. Consequential write."
+                ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
                 "parameters": [
-                    {"name": "id", "in": "path", "required": True, "schema": {"type": "string"}},
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string"},
+                        "description": "revisao_id to activate.",
+                    },
                 ],
+                "requestBody": {
+                    "required": False,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "description": "Empty object allowed.",
+                                "additionalProperties": False,
+                            },
+                            "example": {},
+                        }
+                    },
+                },
                 "responses": {
                     "200": _ok_response("Activated revision"),
                     **_error_responses(),
@@ -471,7 +614,10 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
             "post": {
                 "operationId": "gpt_recalculate_dashboard",
                 "summary": "Recalculate materialised dashboard cache",
-                "description": "Optional filters: revisao_id, processo_id, competencia_inicio, competencia_fim.",
+                "description": (
+                    "Optional filters in JSON body: revisao_id, processo_id, "
+                    "competencia_inicio, competencia_fim."
+                ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
                 "requestBody": {
@@ -479,14 +625,12 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "revisao_id": {"type": "string"},
-                                    "processo_id": {"type": "string"},
-                                    "competencia_inicio": {"type": "string"},
-                                    "competencia_fim": {"type": "string"},
-                                },
-                            }
+                                "$ref": "#/components/schemas/GptRecalculateBody"
+                            },
+                            "example": {
+                                "processo_id": "<processo_uuid>",
+                                "revisao_id": "<revisao_uuid>",
+                            },
                         }
                     },
                 },
@@ -502,31 +646,41 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_meeting_minute_workflow",
                 "summary": "Send, finalize, or cancel a meeting minute",
                 "description": (
-                    "Workflow actions for atas. Handwritten signature stays in the UI / magic link."
+                    "Body requires action enum. Handwritten signature stays in UI/magic link."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
                 "parameters": [
-                    {"name": "id", "in": "path", "required": True, "schema": {"type": "string"}},
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string"},
+                        "description": "meeting_minute id.",
+                    },
                 ],
                 "requestBody": {
                     "required": True,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "required": ["action"],
-                                "properties": {
-                                    "action": {
-                                        "type": "string",
-                                        "enum": _WORKFLOW_ENUM,
-                                    },
-                                    "reason": {
-                                        "type": "string",
-                                        "description": "Optional cancel reason.",
+                                "$ref": "#/components/schemas/GptMeetingMinuteWorkflowBody"
+                            },
+                            "example": {"action": "send"},
+                            "examples": {
+                                "send": {"summary": "Send", "value": {"action": "send"}},
+                                "finalize": {
+                                    "summary": "Finalize",
+                                    "value": {"action": "finalize"},
+                                },
+                                "cancel": {
+                                    "summary": "Cancel",
+                                    "value": {
+                                        "action": "cancel",
+                                        "reason": "Cancelado no teste GPT",
                                     },
                                 },
-                            }
+                            },
                         }
                     },
                 },
@@ -553,7 +707,8 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/GptValidateImprovementPackageBody"
-                            }
+                            },
+                            "example": _package_validate_example(),
                         }
                     },
                 },
@@ -580,7 +735,8 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/GptImprovementPackageBody"
-                            }
+                            },
+                            "example": _package_commit_example(),
                         }
                     },
                 },
@@ -698,6 +854,51 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                             "descricao_processo": "Criado via Custom GPT Action",
                         }
                     },
+                },
+                "GptRecalculateBody": {
+                    "type": "object",
+                    "description": "Optional filters for dashboard recalculation.",
+                    "properties": {
+                        "revisao_id": {
+                            "type": "string",
+                            "description": "Limit recalculation to one revision.",
+                        },
+                        "processo_id": {
+                            "type": "string",
+                            "description": "Limit recalculation to one process.",
+                        },
+                        "competencia_inicio": {
+                            "type": "string",
+                            "description": "Optional YYYY-MM start competence.",
+                        },
+                        "competencia_fim": {
+                            "type": "string",
+                            "description": "Optional YYYY-MM end competence.",
+                        },
+                    },
+                    "additionalProperties": False,
+                    "example": {
+                        "processo_id": "<processo_uuid>",
+                        "revisao_id": "<revisao_uuid>",
+                    },
+                },
+                "GptMeetingMinuteWorkflowBody": {
+                    "type": "object",
+                    "required": ["action"],
+                    "description": "Meeting-minute workflow command.",
+                    "properties": {
+                        "action": {
+                            "type": "string",
+                            "enum": _WORKFLOW_ENUM,
+                            "description": "Workflow verb for the ata.",
+                        },
+                        "reason": {
+                            "type": "string",
+                            "description": "Optional cancel reason.",
+                        },
+                    },
+                    "additionalProperties": False,
+                    "example": {"action": "send"},
                 },
                 "GptImprovementPackageBody": {
                     "type": "object",
