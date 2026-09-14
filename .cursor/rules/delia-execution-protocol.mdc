@@ -1,0 +1,302 @@
+---
+description: DÉLIA — protocolo especializado de execução GPT↔Cursor↔GitHub; owner primário platform-quality-testing.mdc; carregar para qualquer tarefa DÉLIA, C0–C7, docs/.../delia ou namespace técnico minha-delpi-copilot*
+alwaysApply: false
+---
+
+# DÉLIA — protocolo especializado de execução
+
+Owner transversal primário: `platform-quality-testing.mdc`.
+
+Esta regra especializa execução/evidência para DÉLIA. Arquitetura, segurança, contratos, dados, frontend, runtime e observabilidade continuam pertencendo às respectivas responsabilidades `platform-*.mdc`; esta regra não cria 9ª responsabilidade transversal.
+
+Fonte detalhada no repositório: `docs/12-roadmap-e-evolucao/delia/22-cursor-execution-protocol.md`.
+
+## Quando carregar
+
+Carregar esta regra quando a tarefa mencionar ou alterar:
+
+- DÉLIA / `delia`;
+- fases `C0`–`C7` da DÉLIA;
+- `docs/12-roadmap-e-evolucao/delia`;
+- namespaces técnicos temporários `minha-delpi-copilot*` quando o trabalho for da DÉLIA;
+- contratos, bootstrap, inventory, Work, Evidence, Policy, Decision, Watch, Automation Hub ou capabilities descritas nas specs DÉLIA.
+
+Não carregar apenas porque a tarefa envolve Chat/LLM. DÉLIA é aplicação standalone; Minha DELPI Chat é somente inventário/referência quando uma fonte canônica DÉLIA exigir comparação.
+
+## Estado default
+
+Até o execution ledger provar mudança:
+
+```text
+PROGRAM = PLANNED / NOT_STARTED
+C0 = NOT_STARTED
+NEXT = C0.S0
+RUNTIME_DIFF = NONE
+```
+
+Documentação não avança fase nem prova runtime.
+
+## Antes de qualquer diff
+
+Executar/revalidar:
+
+```text
+git status
+git rev-parse HEAD
+```
+
+Registrar `HEAD_BEFORE` e então resolver, no mínimo:
+
+```text
+TASK
+PHASE
+GOAL
+REQUIREMENTS
+OWNER
+CANONICAL SOURCES
+CURRENT EVIDENCE
+CONTRACT
+ALLOWED SCOPE
+FORBIDDEN SCOPE
+ACCEPTANCE
+```
+
+Leitura deve ser mínima suficiente, não catálogo inteiro. Ordem DÉLIA em conflito:
+
+```text
+instruções oficiais/.cursor
+→ 16 execution master plan
+→ 50 standalone boundary
+→ 17 ownership/contracts
+→ 49 architecture/patterns
+→ 51 factual baseline
+→ 52 repository/bootstrap
+→ 21 state
+→ 20 testing
+→ 25 requirements
+→ arquitetura técnica/product spec/specs temáticas
+→ execution ledger para estado de execução
+```
+
+Carregar somente specs temáticas materiais à tarefa.
+
+## Vocabulário obrigatório
+
+Fato/planejamento:
+
+```text
+PROVEN | TO_INVENTORY | PLANNED | TARGET
+```
+
+Execução/teste:
+
+```text
+PASS | FAIL | PENDING | INCONCLUSIVE | TEST_NOT_RUN | STALE_EVIDENCE
+```
+
+Premissa material invalidada durante execução:
+
+```text
+EXECUTION_DRIFT
+```
+
+Nunca preencher lacuna factual por inferência conveniente.
+
+## Fluxo Cursor
+
+```text
+OBSERVE / INVENTORY
+→ identificar owner + source + consumers + contract
+→ aplicar gates
+→ READY_TO_EXECUTE quando a fase/evidência permitirem
+→ menor diff correto
+→ testes + wiring + casos negativos/irmãos quando materiais
+→ revisão adversarial do diff
+→ residual search
+→ provar postconditions/outcome
+→ reportar evidência no SHA/config avaliado
+```
+
+Para execução de plano aprovado, compor com `plan-execution.mdc` e `test-and-commit.mdc`. Para investigação/causa/evidência, compor com `evidence-driven-execution.mdc`.
+
+## C0 gate
+
+Em C0, o default é:
+
+```text
+INVENTORY
+OWNERSHIP
+CONTRACT FREEZE
+EVIDENCE
+```
+
+Não criar por antecipação:
+
+```text
+NEW RUNTIME
+NEW ENGINE
+NEW REGISTRY
+NEW SOURCE OF TRUTH
+NEW PLATFORM
+```
+
+Criar algo em C0 somente quando a authority aplicável exigir e a evidência justificar.
+
+## Standalone boundary
+
+Tratar como erro arquitetural:
+
+```text
+DÉLIA API → dependência obrigatória do Chat runtime/API/tables
+DÉLIA MFE → import de source do Chat
+DÉLIA planner → reuse obrigatório de agent/prompt/tool/provider do Chat
+DÉLIA progress → refactor do Chat como pré-condição
+```
+
+Chat pode ser inventariado; não vira implementação canônica DÉLIA por conveniência.
+
+## Abstraction Gate
+
+Antes de novo port/interface/repository/registry/factory/engine/shared service, provar:
+
+- boundary e owner reais;
+- consumer/variation/lifecycle reais;
+- equivalente existente inventariado;
+- redução de coupling;
+- solução simples insuficiente;
+- mechanics de provider/executor permanecem adapter-side;
+- credentials/identity continuam bounded;
+- `read != write`;
+- `PREPARE != ACT`;
+- `simulate != apply`;
+- rollback/revoke/disable possíveis;
+- fase atual permite a abstração.
+
+“Pode ser útil depois” = rejeitar.
+
+## Contract Gate
+
+Antes de implementar integração/ação material, resolver:
+
+```text
+owner
+consumers
+request/response
+errors
+security/AuthZ
+idempotency
+limits
+compatibility
+observability
+postcondition
+```
+
+OpenAPI é preferido quando aplicável; `operationId` estável. Não criar contrato paralelo a Domain API/provider/owner existente.
+
+## Action Gate
+
+Invariantes:
+
+```text
+JWT/context != final permission
+provider scope != Core/domain permission
+event/tool metadata != authorization
+read != write
+draft != send
+recommendation != authorization
+simulate != apply
+PREPARE != ACT
+technical success != business outcome
+```
+
+Ação material exige live AuthZ/Policy conforme owner, idempotência/audit quando aplicáveis e postcondition autoritativa.
+
+Planner usa capabilities semânticas, não cliques/seletores. Preferência:
+
+```text
+API oficial
+→ integração nativa
+→ função/script determinístico
+→ RPA
+→ computer-use governado
+→ Human Task
+```
+
+## Autonomia e safety
+
+```text
+C5 = L4 governed ACT somente para capability explicitamente autorizada/gated
+C6 Watch = OBSERVE | ADVISE | PREPARE; sem ACT autônomo disparado pelo Watch
+C7 = selected autonomous ACT/L5
+L5 = OFF por default
+```
+
+DÉLIA não é safety controller. Não ligar LLM/voz/visão livres a PLC/CNC/robô/máquina, não criar safety override por IA e não inferir permissão OT. Atuação física futura exige gate industrial separado.
+
+## Handoff GPT → Cursor
+
+Se receber `DÉLIA EXECUTION BRIEF`, tratá-lo como input de tarefa, não como authority superior ao repo. Revalidar antes do diff:
+
+```text
+TASK / PHASE / GOAL / REQUIREMENTS
+AUTHORITIES / OWNER / CURRENT STATE
+EVIDENCE REQUIRED
+SCOPE / DO NOT
+CONTRACT / SECURITY
+ACCEPTANCE / TESTS
+STOP CONDITION
+```
+
+Se brief e evidence atual divergirem, seguir fonte canônica e reportar `EXECUTION_DRIFT`.
+
+## STOP-THE-LINE
+
+Não improvisar implementação quando ocorrer:
+
+- owner ausente/conflitante;
+- contract canônico ausente para write material;
+- authority documental incompatível;
+- fase não permite o trabalho;
+- necessidade de novo bounded context/source of truth/permission authority não prevista;
+- premissa factual do brief/plano invalidada;
+- mudança exigiria relaxar segurança, teste, eval ou postcondition.
+
+Classificar `EXECUTION_DRIFT` ou `INCONCLUSIVE`, delimitar subgrafo afetado e não empilhar patches sobre hipótese falha.
+
+## Evidence report
+
+Ao concluir, devolver objetivamente:
+
+```text
+TASK
+BASE HEAD
+FINAL HEAD
+STATUS
+FACTS PROVEN
+TO_INVENTORY
+EXECUTION_DRIFT
+FILES INSPECTED
+FILES CHANGED
+CONTRACT IMPACT: NONE | ADDITIVE | BEHAVIORAL | DEPRECATED | BREAKING
+TESTS EXECUTED + exact results
+EVALS / SECURITY CHECKS
+RESIDUAL SEARCH
+POSTCONDITION / OUTCOME EVIDENCE
+UNRESOLVED
+RECOMMENDED NEXT STEP
+```
+
+Não declarar PASS porque “parece correto”, build passou, arquivo existe, HTTP retornou 200, executor informou sucesso ou documentação diz que existe.
+
+## Completion gate
+
+PASS exige evidência obrigatória no SHA/config realmente avaliado. Para IA, teste verde isolado não basta: quando material, provar generalização, safety, groundedness, permission boundaries e task outcome.
+
+Antes de commit/conclusão:
+
+- comparar planned scope × actual diff;
+- preservar alterações preexistentes;
+- fazer residual search;
+- atualizar docs/ledger somente com estado comprovado;
+- não transformar `TARGET` em `PROVEN` por implementação parcial;
+- não avançar dependentes sem provar a postcondition que os desbloqueia.
