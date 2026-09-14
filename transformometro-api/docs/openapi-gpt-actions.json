@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.3",
+  "openapi": "3.1.1",
   "info": {
     "title": "Transformômetro API — Custom GPT Actions",
     "description": "Compact facade for OpenAI Custom GPT. Analyzes KPIs and creates/edits Transformômetro records with the same Keycloak JWT + Core RBAC as the UI. Do not expose binary uploads, collaboration locks, or public signature signing here.",

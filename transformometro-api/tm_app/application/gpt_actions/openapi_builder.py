@@ -446,7 +446,7 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
     }
 
     return {
-        "openapi": "3.0.3",
+        "openapi": "3.1.1",
         "info": {
             "title": "Transformômetro API — Custom GPT Actions",
             "description": (

@@ -233,8 +233,14 @@ def test_gpt_openapi_schema_endpoint_public(tm_client):
     assert response.status_code == 200
     payload = response.json()
     # Envelope is NOT used — raw OpenAPI document
-    assert payload.get("openapi", "").startswith("3.")
+    assert payload.get("openapi") in {"3.1.0", "3.1.1"}
     assert "gpt_analyze" in str(payload)
+    assert "/transformometro/gpt-actions/v1/openapi.json" not in (payload.get("paths") or {})
+
+
+def test_openapi_version_is_31_for_custom_gpt_builder():
+    doc = build_gpt_actions_openapi()
+    assert doc["openapi"] in {"3.1.0", "3.1.1"}
 
 
 def test_gpt_create_without_capability(tm_client):
