@@ -309,6 +309,29 @@ class GptActionsDispatchService:
             payload.setdefault("agrupadores_ferramenta", [])
         return payload
 
+    def _resolve_setor_codigo(self, setor_ref: str | None) -> str | None:
+        """Normalize GPT `setor_id` (UUID or codigo_setor) to business code.
+
+        ProcessoRepository.list and dashboard scope filters match ``codigo_setor``.
+        Reuses SetorRepository.get — no parallel resolver.
+        """
+        ref = (setor_ref or "").strip()
+        if not ref:
+            return None
+        row = SetorRepository().get(ref)
+        if not row:
+            raise GptActionsError(
+                "Unknown/invalid department reference (setor_id).",
+                400,
+            )
+        codigo = str(row.get("codigo_setor") or "").strip()
+        if not codigo:
+            raise GptActionsError(
+                "Unknown/invalid department reference (setor_id).",
+                400,
+            )
+        return codigo
+
     def analyze(
         self,
         request: Request,
@@ -332,13 +355,15 @@ class GptActionsDispatchService:
                 400,
             ) from exc
 
+        setor_codigo = self._resolve_setor_codigo(setor_id)
+
         if analysis_view != GptAnalysisView.META:
             self._raise_http_err(
                 check_dashboard_filial_access(
                     request,
                     view=None,
                     filial_id=filial_id,
-                    setor_id=setor_id,
+                    setor_id=setor_codigo,
                 )
             )
 
@@ -347,14 +372,14 @@ class GptActionsDispatchService:
         if analysis_view == GptAnalysisView.SUMMARY:
             return self._snapshot.resumo(
                 filial_id=filial_id,
-                setor_id=setor_id,
+                setor_id=setor_codigo,
                 competencia_inicio=competencia_inicio,
                 competencia_fim=competencia_fim,
             )
         if analysis_view == GptAnalysisView.PROCESSES:
             return self._snapshot.processos(
                 filial_id=filial_id,
-                setor_id=setor_id,
+                setor_id=setor_codigo,
                 familia_processo=familia_processo,
                 processo_id=processo_id,
                 competencia_inicio=competencia_inicio,
@@ -364,14 +389,15 @@ class GptActionsDispatchService:
         if analysis_view == GptAnalysisView.INSTANCES:
             return self._snapshot.instancias(
                 filial_id=filial_id,
-                setor_id=setor_id,
+                setor_id=setor_codigo,
+                processo_id=processo_id,
                 limit=limit or 500,
             )
         return self._snapshot.linhas(
             processo_id=processo_id,
             revisao_id=revisao_id,
             filial_id=filial_id,
-            setor_id=setor_id,
+            setor_id=setor_codigo,
             competencia_inicio=competencia_inicio,
             competencia_fim=competencia_fim,
             limit=limit or 500,
@@ -407,9 +433,10 @@ class GptActionsDispatchService:
         if entity == GptEntity.PROCESS:
             if filial_id:
                 self._raise_http_err(check_view_filial_access(request, filial_id))
+            setor_codigo = self._resolve_setor_codigo(setor_id)
             rows = ProcessoRepository().list(
                 filial_id=filial_id,
-                setor_id=setor_id,
+                setor_id=setor_codigo,
                 status_processo=status,
                 familia_processo=familia_processo,
                 q=q,

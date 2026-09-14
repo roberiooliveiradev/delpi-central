@@ -190,13 +190,16 @@ class DashboardSnapshotReadService:
         view: str | None = None,
         filial_id: str | None = None,
         setor_id: str | None = None,
+        processo_id: str | None = None,
         limit: int = 500,
     ) -> dict[str, Any]:
         scope = self._resolve(view=view, filial_id=filial_id, setor_id=setor_id)
+        pid = (processo_id or "").strip() or None
         if self._use_persisted():
             rows = self._repo.query_instancias_operacionais(
                 filial_id=scope.filial_id,
                 setor_id=scope.setor_id,
+                processo_id=pid,
                 limit=limit,
             )
         else:
@@ -204,6 +207,12 @@ class DashboardSnapshotReadService:
                 filial_id=scope.filial_id,
                 setor_id=scope.setor_id,
             )
+            if pid:
+                items = [
+                    item
+                    for item in items
+                    if str(item.get("processo_id") or "") == str(pid)
+                ]
             rows = [_map_instancia_live(item) for item in items][:limit]
         return {
             "meta": {**self.meta(), "scope": self._scope.scope_meta(scope)},

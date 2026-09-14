@@ -225,7 +225,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "Department id."
+            "description": "Department reference: UUID (setor_id) or business code (codigo_setor, e.g. comercial)."
           },
           {
             "name": "processo_id",
@@ -233,7 +233,8 @@
             "required": false,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "Filter processes/instances/rows to this process UUID. Does not widen authorization scope."
           },
           {
             "name": "revisao_id",
@@ -406,7 +407,8 @@
             "in": "query",
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "Department reference: UUID (setor_id) or business code (codigo_setor, e.g. comercial)."
           },
           {
             "name": "status",
@@ -427,7 +429,8 @@
             "in": "query",
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "Process text search (nome, codigo, familia, descricao, objetivo). Use short keywords; try progressive fallbacks if empty."
           },
           {
             "name": "unit_code",

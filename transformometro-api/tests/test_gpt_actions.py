@@ -1174,3 +1174,180 @@ def test_process_context_forbidden_without_view():
 def test_process_context_missing_process_id(tm_client):
     response = tm_client.get("/transformometro/gpt-actions/v1/process-context")
     assert response.status_code in {400, 422}
+
+
+def test_resolve_setor_codigo_accepts_uuid_and_business_code():
+    from tm_app.application.gpt_actions.dispatch_service import GptActionsDispatchService
+
+    svc = GptActionsDispatchService()
+    setor_uuid = "293ebdef-16f5-4691-bac0-627f8e55c7bf"
+    row = {
+        "setor_id": setor_uuid,
+        "codigo_setor": "comercial",
+        "nome_setor": "Comercial",
+    }
+    with patch(
+        "tm_app.application.gpt_actions.dispatch_service.SetorRepository"
+    ) as setor_cls:
+        setor_cls.return_value.get.return_value = row
+        assert svc._resolve_setor_codigo(setor_uuid) == "comercial"
+        assert svc._resolve_setor_codigo("comercial") == "comercial"
+        assert setor_cls.return_value.get.call_count == 2
+
+
+def test_resolve_setor_codigo_unknown_is_400():
+    from tm_app.application.gpt_actions.dispatch_service import (
+        GptActionsDispatchService,
+        GptActionsError,
+    )
+
+    svc = GptActionsDispatchService()
+    with patch(
+        "tm_app.application.gpt_actions.dispatch_service.SetorRepository"
+    ) as setor_cls:
+        setor_cls.return_value.get.return_value = None
+        with pytest.raises(GptActionsError) as exc:
+            svc._resolve_setor_codigo("departamento-inexistente")
+    assert exc.value.status_code == 400
+    assert "department" in exc.value.message.lower()
+
+
+def test_search_process_resolves_setor_uuid_to_codigo_before_list():
+    from tm_app.application.gpt_actions.dispatch_service import GptActionsDispatchService
+
+    request = MagicMock()
+    setor_uuid = "293ebdef-16f5-4691-bac0-627f8e55c7bf"
+    process_row = {
+        "processo_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        "nome_processo": "Acompanhamentos dos Pedidos de Venda",
+        "codigo_processo": "PROC-0008",
+    }
+    with (
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.require_transformometro_view_access",
+            return_value=None,
+        ),
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.SetorRepository"
+        ) as setor_cls,
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.ProcessoRepository"
+        ) as proc_cls,
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.filter_rows_for_access",
+            side_effect=lambda _req, rows, **_kw: rows,
+        ),
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.ProcessoSetupStatsService"
+        ) as stats_cls,
+    ):
+        setor_cls.return_value.get.return_value = {
+            "setor_id": setor_uuid,
+            "codigo_setor": "comercial",
+        }
+        proc_cls.return_value.list.return_value = [process_row]
+        stats_cls.return_value.enrich_processos.side_effect = lambda rows: rows
+
+        via_uuid = GptActionsDispatchService().search_records(
+            request, "process", setor_id=setor_uuid
+        )
+        via_code = GptActionsDispatchService().search_records(
+            request, "process", setor_id="comercial"
+        )
+
+    assert via_uuid["total"] == via_code["total"] == 1
+    assert proc_cls.return_value.list.call_args_list[0].kwargs["setor_id"] == "comercial"
+    assert proc_cls.return_value.list.call_args_list[1].kwargs["setor_id"] == "comercial"
+
+
+def test_search_process_unknown_setor_does_not_silent_zero():
+    from tm_app.application.gpt_actions.dispatch_service import (
+        GptActionsDispatchService,
+        GptActionsError,
+    )
+
+    request = MagicMock()
+    with (
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.require_transformometro_view_access",
+            return_value=None,
+        ),
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.SetorRepository"
+        ) as setor_cls,
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.ProcessoRepository"
+        ) as proc_cls,
+    ):
+        setor_cls.return_value.get.return_value = None
+        with pytest.raises(GptActionsError) as exc:
+            GptActionsDispatchService().search_records(
+                request, "process", setor_id="departamento-inexistente"
+            )
+    assert exc.value.status_code == 400
+    proc_cls.return_value.list.assert_not_called()
+
+
+def test_analyze_instances_honors_processo_id():
+    from tm_app.application.gpt_actions.dispatch_service import GptActionsDispatchService
+
+    request = MagicMock()
+    pid_a = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    snapshot = MagicMock()
+    snapshot.instancias.return_value = {
+        "total": 1,
+        "items": [{"processo_id": pid_a, "instancia_id": "i1"}],
+    }
+    with (
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.require_transformometro_view_access",
+            return_value=None,
+        ),
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.check_dashboard_filial_access",
+            return_value=None,
+        ),
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.DashboardSnapshotReadService",
+            return_value=snapshot,
+        ),
+    ):
+        result = GptActionsDispatchService().analyze(
+            request,
+            view="instances",
+            processo_id=pid_a,
+        )
+    snapshot.instancias.assert_called_once()
+    assert snapshot.instancias.call_args.kwargs["processo_id"] == pid_a
+    assert result["total"] == 1
+    assert all(i["processo_id"] == pid_a for i in result["items"])
+
+
+def test_openapi_setor_id_documents_uuid_or_code_and_stable_surface():
+    doc = build_gpt_actions_openapi()
+    assert count_operations(doc) == 13
+    assert "gpt_get_process_context" in GPT_ACTIONS_OPERATION_IDS
+    assert "gpt_analyze" in GPT_ACTIONS_OPERATION_IDS
+    analysis = doc["paths"]["/transformometro/gpt-actions/v1/analysis"]["get"]
+    setor = next(p for p in analysis["parameters"] if p["name"] == "setor_id")
+    assert "UUID" in setor["description"]
+    assert "codigo_setor" in setor["description"]
+    assert any(p["name"] == "processo_id" for p in analysis["parameters"])
+    search = doc["paths"]["/transformometro/gpt-actions/v1/records/{entity}"]["get"]
+    search_setor = next(p for p in search["parameters"] if p["name"] == "setor_id")
+    assert "UUID" in search_setor["description"]
+
+
+def test_specialist_instructions_discovery_and_mermaid_contract():
+    from pathlib import Path
+
+    text = Path("docs/gpt-actions/specialist-instructions.md").read_text(encoding="utf-8")
+    assert "compact phrase" in text
+    assert "pesquisáveis e autorizados" in text
+    assert "peça escolha" in text or "silent selection" in text
+    assert "setor_id" in text and "comercial" in text
+    assert "mermaid" in text.lower()
+    assert "draft" in text.lower()
+    assert "não existe" in text.lower()
+    assert "svg" in text.lower()
+    assert "progressive" in text.lower() or "STEP1" in text or "STEP2" in text

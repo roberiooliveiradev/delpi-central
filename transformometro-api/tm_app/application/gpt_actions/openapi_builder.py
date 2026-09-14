@@ -198,13 +198,20 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "in": "query",
                         "required": False,
                         "schema": {"type": "string"},
-                        "description": "Department id.",
+                        "description": (
+                            "Department reference: UUID (setor_id) or business code "
+                            "(codigo_setor, e.g. comercial)."
+                        ),
                     },
                     {
                         "name": "processo_id",
                         "in": "query",
                         "required": False,
                         "schema": {"type": "string"},
+                        "description": (
+                            "Filter processes/instances/rows to this process UUID. "
+                            "Does not widen authorization scope."
+                        ),
                     },
                     {
                         "name": "revisao_id",
@@ -270,10 +277,26 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         ),
                     },
                     {"name": "filial_id", "in": "query", "schema": {"type": "string"}},
-                    {"name": "setor_id", "in": "query", "schema": {"type": "string"}},
+                    {
+                        "name": "setor_id",
+                        "in": "query",
+                        "schema": {"type": "string"},
+                        "description": (
+                            "Department reference: UUID (setor_id) or business code "
+                            "(codigo_setor, e.g. comercial)."
+                        ),
+                    },
                     {"name": "status", "in": "query", "schema": {"type": "string"}},
                     {"name": "familia_processo", "in": "query", "schema": {"type": "string"}},
-                    {"name": "q", "in": "query", "schema": {"type": "string"}},
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "schema": {"type": "string"},
+                        "description": (
+                            "Process text search (nome, codigo, familia, descricao, objetivo). "
+                            "Use short keywords; try progressive fallbacks if empty."
+                        ),
+                    },
                     {"name": "unit_code", "in": "query", "schema": {"type": "string"}},
                 ],
                 "responses": {

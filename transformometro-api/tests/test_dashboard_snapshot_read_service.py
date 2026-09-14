@@ -111,3 +111,50 @@ def test_resumo_maps_live_summary_keys():
     # Não vaza chaves fora do contrato do resumo.
     assert "evolucao_mensal" not in summary
     assert "roi_medio" not in summary
+
+
+def test_instancias_live_filters_by_processo_id_before_limit():
+    live = MagicMock()
+    live.list_processos_calculados.return_value = [
+        {"processo_id": "A", "instancia_id": "i1", "nome_processo": "Proc A"},
+        {"processo_id": "B", "instancia_id": "i2", "nome_processo": "Proc B"},
+        {"processo_id": "A", "instancia_id": "i3", "nome_processo": "Proc A2"},
+    ]
+    with patch(_SETTINGS) as mock_settings:
+        mock_settings.TM_DASHBOARD_PERSIST_CACHE = False
+        svc = _make_service(live=live)
+        data = svc.instancias(filial_id="01", processo_id="A", limit=10)
+
+    assert data["total"] == 2
+    assert {i["processo_id"] for i in data["items"]} == {"A"}
+    live.list_processos_calculados.assert_called_once()
+
+
+def test_instancias_persisted_passes_processo_id_to_repo():
+    repo = MagicMock()
+    repo.query_instancias_operacionais.return_value = [
+        {"processo_id": "A", "instancia_id": "i1"},
+    ]
+    with patch(_SETTINGS) as mock_settings:
+        mock_settings.TM_DASHBOARD_PERSIST_CACHE = True
+        svc = _make_service(repo=repo)
+        svc._use_persisted = MagicMock(return_value=True)
+        data = svc.instancias(filial_id="01", processo_id="A", limit=50)
+
+    assert data["total"] == 1
+    assert data["items"][0]["processo_id"] == "A"
+    assert repo.query_instancias_operacionais.call_args.kwargs["processo_id"] == "A"
+    assert repo.query_instancias_operacionais.call_args.kwargs["limit"] == 50
+
+
+def test_instancias_process_filter_does_not_bypass_scope_resolve():
+    live = MagicMock()
+    live.list_processos_calculados.return_value = [
+        {"processo_id": "A", "instancia_id": "visible"},
+    ]
+    with patch(_SETTINGS) as mock_settings:
+        mock_settings.TM_DASHBOARD_PERSIST_CACHE = False
+        svc = _make_service(live=live)
+        svc.instancias(filial_id="01", processo_id="A")
+    svc._scope.resolve.assert_called()
+    assert live.list_processos_calculados.call_args.kwargs["filial_id"] == "01"

@@ -680,6 +680,7 @@ class DashboardCalculoRepository(PluginBaseRepository):
         *,
         filial_id: str | None = None,
         setor_id: str | None = None,
+        processo_id: str | None = None,
         limit: int = 5000,
     ) -> list[dict[str, Any]]:
         clauses: list[str] = []
@@ -692,6 +693,9 @@ class DashboardCalculoRepository(PluginBaseRepository):
             filial_id=filial_id,
             setor_id=setor_id,
         )
+        if processo_id:
+            clauses.append("ios.processo_id = %s")
+            params.append(str(processo_id))
         where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
         params.append(limit)
 

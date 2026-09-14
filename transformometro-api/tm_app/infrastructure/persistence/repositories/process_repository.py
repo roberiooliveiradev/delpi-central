@@ -132,11 +132,20 @@ class ProcessoRepository(PluginBaseRepository):
             clauses.append("p.familia_processo = %s")
             params.append(familia_processo)
         if q:
+            # Deterministic ILIKE over canonical textual fields (no fuzzy/ranking).
             clauses.append(
-                "(p.nome_processo ILIKE %s OR p.codigo_processo ILIKE %s OR p.familia_processo ILIKE %s)"
+                """
+                (
+                    p.nome_processo ILIKE %s
+                    OR p.codigo_processo ILIKE %s
+                    OR p.familia_processo ILIKE %s
+                    OR COALESCE(p.descricao_processo, '') ILIKE %s
+                    OR COALESCE(p.objetivo_processo, '') ILIKE %s
+                )
+                """
             )
             like = f"%{q}%"
-            params.extend([like, like, like])
+            params.extend([like, like, like, like, like])
 
         where_sql = " AND ".join(clauses)
         return self._enrich_rows(
