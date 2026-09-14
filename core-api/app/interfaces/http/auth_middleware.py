@@ -27,6 +27,13 @@ def _matches_integrations_service_token(token: str) -> bool:
     return secrets.compare_digest(token.strip(), expected)
 
 
+def _matches_effective_access_service_token(token: str) -> bool:
+    expected = os.getenv("CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN", "").strip()
+    if not expected or not token:
+        return False
+    return secrets.compare_digest(token.strip(), expected)
+
+
 def _name_from_keycloak_claims(claims: dict, *, email: str) -> str:
     name = (claims.get("name") or "").strip()
     if name:
@@ -54,6 +61,10 @@ def authenticate():
     token = auth_header.split(" ", 1)[1]
 
     if _matches_integrations_service_token(token):
+        return None
+
+    # Dedicated S2S secret for effective-access lookup — skip end-user JWT validation.
+    if _matches_effective_access_service_token(token):
         return None
 
     try:

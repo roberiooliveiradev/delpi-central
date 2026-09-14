@@ -29,6 +29,11 @@ class Config:
     CORE_API_INTEGRATIONS_SERVICE_TOKEN = os.getenv(
         "CORE_API_INTEGRATIONS_SERVICE_TOKEN", ""
     ).strip()
+    # Dedicated S2S secret for GET /integrations/effective-access/** (TV MCP future).
+    # Do not reuse CORE_API_INTEGRATIONS_SERVICE_TOKEN for this capability.
+    CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN = os.getenv(
+        "CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN", ""
+    ).strip()
 
     NOTIFICATIONS_DISPATCH_SCHEDULER_ENABLED = _env_bool(
         "NOTIFICATIONS_DISPATCH_SCHEDULER_ENABLED",

@@ -54,6 +54,47 @@ def test_decode_passes_audience_issuer_and_algorithms_to_jose(monkeypatch):
     )
 
 
+def test_explicit_expected_audience_overrides_env(monkeypatch):
+    monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
+    monkeypatch.setenv("KEYCLOAK_ISSUER", "https://portal.example/auth/realms/delpi")
+    monkeypatch.setenv("JWT_ALGORITHMS", "RS256")
+    mcp = "https://minhadelpi.com.br/apps/tv-dashboard-api/mcp"
+    jwks = {"keys": [{"kid": "key-1", "kty": "RSA"}]}
+    claims = {"sub": "user-1", "aud": mcp}
+
+    with (
+        patch.object(jwt_validator, "_get_jwks", return_value=jwks),
+        patch.object(jwt_validator.jwt, "get_unverified_header", return_value={"kid": "key-1"}),
+        patch.object(jwt_validator.jwt, "decode", return_value=claims) as decode,
+    ):
+        assert (
+            jwt_validator.validate_token("token", expected_audience=mcp) == claims
+        )
+
+    decode.assert_called_once_with(
+        "token",
+        jwks["keys"][0],
+        algorithms=["RS256"],
+        audience=mcp,
+        issuer="https://portal.example/auth/realms/delpi",
+    )
+
+
+def test_empty_explicit_expected_audience_fails_closed(monkeypatch):
+    monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
+    monkeypatch.setenv("KEYCLOAK_ISSUER", "https://portal.example/auth/realms/delpi")
+
+    with pytest.raises(jwt_validator.JwtConfigurationError, match="expected_audience"):
+        jwt_validator._decode_token("token", expected_audience="   ")
+
+
+def test_default_still_requires_keycloak_audience_env(monkeypatch):
+    monkeypatch.delenv("KEYCLOAK_AUDIENCE", raising=False)
+    monkeypatch.setenv("KEYCLOAK_ISSUER", "https://portal.example/auth/realms/delpi")
+    with pytest.raises(jwt_validator.JwtConfigurationError, match="KEYCLOAK_AUDIENCE"):
+        jwt_validator.validate_token("token")
+
+
 def test_multiple_algorithms_are_explicitly_parsed(monkeypatch):
     monkeypatch.setenv("JWT_ALGORITHMS", "RS256, RS512")
     assert jwt_validator._allowed_algorithms() == ["RS256", "RS512"]

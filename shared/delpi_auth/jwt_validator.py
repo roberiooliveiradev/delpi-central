@@ -69,9 +69,20 @@ def _get_jwks():
     return _jwks_cache
 
 
-def validate_token(token: str):
+def validate_token(token: str, *, expected_audience: str | None = None):
+    """Validate JWT signature/issuer/audience.
+
+    Default (``expected_audience is None``): requires ``KEYCLOAK_AUDIENCE`` env
+    (typically ``delpi-central``) — existing platform behavior.
+
+    Explicit audience: trusted server configuration may pass the exact audience
+    string (e.g. canonical MCP resource URL). Never accept audience from
+    request body, query, LLM, or unverified JWT claims.
+
+    Empty/whitespace ``expected_audience`` fails closed.
+    """
     try:
-        return _decode_token(token)
+        return _decode_token(token, expected_audience=expected_audience)
     except JwtConfigurationError:
         # Configuration errors cannot be fixed by refreshing JWKS and must fail closed.
         raise
@@ -79,11 +90,19 @@ def validate_token(token: str):
         # A single JWKS refresh preserves the existing key-rotation recovery behavior.
         global _jwks_cache
         _jwks_cache = None
-        return _decode_token(token)
+        return _decode_token(token, expected_audience=expected_audience)
 
 
-def _decode_token(token: str):
-    audience = _required_env("KEYCLOAK_AUDIENCE")
+def _decode_token(token: str, *, expected_audience: str | None = None):
+    if expected_audience is None:
+        audience = _required_env("KEYCLOAK_AUDIENCE")
+    else:
+        audience = str(expected_audience).strip()
+        if not audience:
+            raise JwtConfigurationError(
+                "expected_audience must be a non-empty trusted audience string"
+            )
+
     issuer = _required_env("KEYCLOAK_ISSUER")
     algorithms = _allowed_algorithms()
 
