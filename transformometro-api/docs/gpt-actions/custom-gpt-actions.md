@@ -18,6 +18,7 @@ Superfície compacta para o **ChatGPT Custom GPT** (TÉO) analisar, cadastrar e 
 | Pacote guiado | `tm_app/application/gpt_actions/improvement_package_service.py` |
 | Contexto de inteligência (read-only) | `tm_app/application/gpt_actions/process_context_service.py` |
 | Instructions do especialista | [`specialist-instructions.md`](./specialist-instructions.md) (persona **TÉO**) |
+| Method playbooks (Knowledge) | [`teo-method-playbooks.md`](./teo-method-playbooks.md) — metodologia conversacional; **não** cria Action/AuthZ/persistência |
 | Rotas | `tm_app/interface/http/routes/gpt_actions_routes.py` |
 
 Regenerar o JSON versionado:
@@ -99,9 +100,12 @@ Checklist operacional: [`gpt-builder-go-live.md`](./gpt-builder-go-live.md).
    `https://<host>/apps/transformometro-api/transformometro/gpt-actions/v1/openapi.json`  
    ou cole o conteúdo de `docs/gpt-actions/openapi-gpt-actions.json` (esperar **13** actions).
 2. Authentication → OAuth (valores da tabela acima).
-3. Colar o playbook de [`specialist-instructions.md`](./specialist-instructions.md).
+3. Colar o bloco Instructions de [`specialist-instructions.md`](./specialist-instructions.md) (**REPLACE INSTRUCTIONS**).
+4. Adicionar [`teo-method-playbooks.md`](./teo-method-playbooks.md) como Knowledge do GPT (metodologia; não authority de dados).
+5. OpenAPI: reimportar **somente** se o schema publicado mudou (default esperado: **13** actions).
 
 Fluxo guiado preferido: `gpt_get_catalog` → entrevista → `gpt_commit_improvement_package` (`dry_run=true` → confirmar → commit).
+Method playbooks (SIPOC, Lean, Ishikawa, CTP, TDR, KPI, SWOT…) são reasoning/conversa via Instructions+Knowledge; **não** geram novas Actions.
 
 ## Fora desta superfície
 

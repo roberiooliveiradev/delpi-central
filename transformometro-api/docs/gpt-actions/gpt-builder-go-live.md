@@ -19,10 +19,11 @@ Conversation starters sugeridos:
 
 ```text
 Quero melhorar um processo
-Tenho um problema operacional e não sei como resolver
+Quero mapear os macroprocessos da empresa
 Me ajude a desenhar o AS-IS e o TO-BE
-Quero analisar uma melhoria antes de cadastrá-la
-Quero medir o resultado de uma transformação
+Quero descobrir a causa de um problema operacional
+Quero criar indicadores para medir uma transformação
+Quero fazer uma análise SWOT
 ```
 
 Produto = **Transformômetro**. Persona/especialista = **TÉO**. Não renomear o produto.
@@ -81,18 +82,21 @@ Depois: Autenticação → **OAuth** (não «Nenhum»).
 
 Produção: trocar `http://localhost` pelo `PUBLIC_BASE_URL` / host público do realm.
 
-## 3. Instructions
+## 3. Instructions + Knowledge
 
-Usar o playbook completo: [`specialist-instructions.md`](./specialist-instructions.md) (bloco *Instructions (colar no GPT Builder)* — persona **TÉO**).
+1. Colar o bloco *Instructions* de [`specialist-instructions.md`](./specialist-instructions.md) (**REPLACE INSTRUCTIONS** — persona **TÉO** + Method Router).
+2. Adicionar [`teo-method-playbooks.md`](./teo-method-playbooks.md) como Knowledge File do GPT (**ADD/UPDATE KNOWLEDGE**). O arquivo é metodologia/reasoning; não cria Action, AuthZ nem persistência.
 
 Resumo operacional:
 
 - Problem-first: diagnóstico via `gpt_get_process_context` antes de cadastro, salvo QUICK REGISTRATION.
+- Method playbooks: menor método suficiente; entrevista adaptativa; INFERRED ≠ FACT; PROPOSED ≠ SAVED.
 - Chamar `gpt_get_catalog` e ler `registration_guide` antes de cadastrar.
 - Preferir `gpt_commit_improvement_package` com `dry_run=true` → confirmar → commit.
 - Listar revisões de uma melhoria com `instance_id`.
-- Diagramas/WBS: draft Mermaid = PROPOSED; persistência governada via Actions (validators canônicos + confirmação + read-back). Atualizar Instructions após deploy.
+- Diagramas/WBS: draft Mermaid = PROPOSED; persistência governada (validators canônicos + confirmação + read-back).
 - Evidências/assinatura → UI Minha DELPI.
+- REIMPORT OpenAPI somente se o schema mudou (esperado estável: **13** actions).
 
 ## 4. Fechar redirects com o GPT ID real
 
