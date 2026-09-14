@@ -1,6 +1,6 @@
 # Contratos de integração — maintenance-api → api-delpi
 
-Leitura **TOTVS / Protheus** para mini-aplicadores passa **exclusivamente** pela api-delpi. Este documento espelha o padrão [transformometro-api/docs/integration-contracts.md](../../transformometro-api/docs/integration-contracts.md), invertendo o fluxo: somos **consumidor**, não exportador.
+Leitura **TOTVS / Protheus** para mini-aplicadores passa **exclusivamente** pela api-delpi. Este documento espelha o padrão [transformometro-api/docs/architecture/integration-contracts.md](../../transformometro-api/docs/architecture/integration-contracts.md), invertendo o fluxo: somos **consumidor**, não exportador.
 
 **Status:** jun/2026 — contratos **propostos** (Playbook 01).
 

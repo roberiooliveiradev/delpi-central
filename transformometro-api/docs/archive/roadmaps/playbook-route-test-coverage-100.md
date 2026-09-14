@@ -1,10 +1,10 @@
 # Playbook — cobertura de testes em 100% das rotas (transformometro-api)
 
 **Status:** concluído (ago/2026) — `gap=0`, `--check-complete` verde (inclui atas/assinaturas)  
-**Baseline:** [`tm_app/content/openapi_baseline.json`](../../tm_app/content/openapi_baseline.json) (~149 ops)  
-**Inventário:** [`tm_app/content/route_test_coverage.json`](../../tm_app/content/route_test_coverage.json)  
+**Baseline:** [`tm_app/content/openapi_baseline.json`](../../../tm_app/content/openapi_baseline.json) (~149 ops)  
+**Inventário:** [`tm_app/content/route_test_coverage.json`](../../../tm_app/content/route_test_coverage.json)  
 **Gate:** `python scripts/audit_route_test_coverage.py`  
-**CI:** [`.github/workflows/transformometro-api-routes.yml`](../../../.github/workflows/transformometro-api-routes.yml)
+**CI:** [`.github/workflows/transformometro-api-routes.yml`](../../../../.github/workflows/transformometro-api-routes.yml)
 
 | Métrica | Valor |
 |---------|-------|
@@ -51,10 +51,10 @@ openapi_baseline → operationId
 
 Helpers:
 
-- [`tests/support/test_app.py`](../../tests/support/test_app.py) — app sem migrations
-- [`tests/support/route_envelope_smoke.py`](../../tests/support/route_envelope_smoke.py)
-- [`tests/support/route_smoke_mocks.py`](../../tests/support/route_smoke_mocks.py)
-- [`tests/support/route_smoke_runner.py`](../../tests/support/route_smoke_runner.py)
+- [`tests/support/test_app.py`](../../../tests/support/test_app.py) — app sem migrations
+- [`tests/support/route_envelope_smoke.py`](../../../tests/support/route_envelope_smoke.py)
+- [`tests/support/route_smoke_mocks.py`](../../../tests/support/route_smoke_mocks.py)
+- [`tests/support/route_smoke_runner.py`](../../../tests/support/route_smoke_runner.py)
 
 ### Inventário — status
 

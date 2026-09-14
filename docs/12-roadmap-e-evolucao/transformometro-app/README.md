@@ -15,20 +15,22 @@ Documentação de arquitetura e plano de entrega do **Transformômetro** como pr
 | [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md) | Árvore de decomposição, export planilha, vínculo com fluxo (Playbook 20) |
 | [PLAYBOOK-21-matriz-impacto-esforco-revisao.md](./PLAYBOOK-21-matriz-impacto-esforco-revisao.md) | Matriz impacto × esforço por revisão (Playbook 21) |
 | [PLAYBOOK-23-decomposicao-composicao-macro-data.md](./PLAYBOOK-23-decomposicao-composicao-macro-data.md) | Macro composto por vigência, delta estrutural, âncora na referência, limites multi-melhoria |
-| [playbook-21-implementation-status.md](../../../transformometro-api/docs/playbook-21-implementation-status.md) | Status técnico Playbook 21 (S0–S4) |
-| [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md) | Status técnico S0–S6 (API + MFE) |
-| [playbook-20-implementation-status.md](../../../transformometro-api/docs/playbook-20-implementation-status.md) | Status técnico Playbook 20 (S0–S6) |
-| [adr-diagramas-processo.md](../../../transformometro-api/docs/adr-diagramas-processo.md) | ADR diagramas — decisões e endpoints |
-| [playbook-18-implementation-status.md](../../../transformometro-api/docs/playbook-18-implementation-status.md) | Status técnico S1–S12 + MFE §9 (API) |
-| [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md) | Fórmulas oficiais + escopo de recurso e visões |
+| [playbook-21-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-21-implementation-status.md) | Status técnico Playbook 21 (S0–S4) |
+| [playbook-19-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-19-implementation-status.md) | Status técnico S0–S6 (API + MFE) |
+| [playbook-20-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-20-implementation-status.md) | Status técnico Playbook 20 (S0–S6) |
+| [adr-diagramas-processo.md](../../../transformometro-api/docs/architecture/adr-diagramas-processo.md) | ADR diagramas — decisões e endpoints |
+| [playbook-18-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-18-implementation-status.md) | Status técnico S1–S12 + MFE §9 (API) |
+| [regras-de-calculo.md](../../../transformometro-api/docs/domain/regras-de-calculo.md) | Fórmulas oficiais + escopo de recurso e visões |
 | [status-atual.md](./status-atual.md) | Snapshot do que está em produção / deploy |
 | [ATAS-TRANSFORMA-MAIS.md](./ATAS-TRANSFORMA-MAIS.md) | Atas Transforma+ — fluxo, RBAC, status (incl. Kimi) |
-| [atas.md (MFE)](../../../plugins/transformometro/docs/atas.md) | UI das atas no plugin |
-| [atas-kimi.md (API)](../../../transformometro-api/docs/atas-kimi.md) | Endpoints + configuração OpenRouter/Kimi |
+| [meeting-minutes.md (MFE)](../../../plugins/transformometro/docs/meeting-minutes.md) | UI das atas no plugin |
+| [kimi.md (API)](../../../transformometro-api/docs/meeting-minutes/kimi.md) | Endpoints + configuração OpenRouter/Kimi |
+| [gpt-actions/](../../../transformometro-api/docs/gpt-actions/) | Custom GPT OpenAI (Actions + especialista) |
+| [docs API (índice)](../../../transformometro-api/docs/README.md) | Índice da documentação da transformometro-api |
 | [ROADMAP.md](./ROADMAP.md) | Fases de entrega e Playbook 18 |
 | [ESPECIFICACAO.md](./ESPECIFICACAO.md) | Especificação funcional (planilha + Apps Script) |
 | [OPERATIONS.md](./OPERATIONS.md) | Runbook operacional e deploy Playbook 18 |
-| [DEPLOYMENT.md](../../../transformometro-api/docs/DEPLOYMENT.md) | Docker, compose, migrations, checklist |
+| [DEPLOYMENT.md](../../../transformometro-api/docs/operations/DEPLOYMENT.md) | Docker, compose, migrations, checklist |
 
 ## Estado atual no monorepo (jul/2026)
 

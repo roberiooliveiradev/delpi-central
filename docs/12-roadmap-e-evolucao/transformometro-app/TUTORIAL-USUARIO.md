@@ -550,7 +550,7 @@ Menu **Atas** (`/apps/transformometro/atas`) — atas oficiais do programa, com 
 2. Cada signatário abre a pendência em **Atas → Pendências** ou o link da notificação, lê o documento e **Assina** (assinatura cadastrada em **Minha assinatura** ou pad na tela) ou **Recusa**.
 3. Quando todos assinarem, **Finalizar** gera o PDF oficial (download disponível).
 
-Documentação técnica: [ATAS-TRANSFORMA-MAIS.md](./ATAS-TRANSFORMA-MAIS.md) · [atas.md](../../../plugins/transformometro/docs/atas.md) · [atas-kimi.md](../../../transformometro-api/docs/atas-kimi.md).
+Documentação técnica: [ATAS-TRANSFORMA-MAIS.md](./ATAS-TRANSFORMA-MAIS.md) · [atas.md](../../../plugins/transformometro/docs/meeting-minutes.md) · [atas-kimi.md](../../../transformometro-api/docs/meeting-minutes/kimi.md).
 
 ---
 
@@ -638,14 +638,14 @@ No detalhe do processo → **Linha do tempo** (audit log).
 | Diagramas fluxo (técnico) | [PLAYBOOK-19-diagramas-processo-revisao-escopo.md](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) |
 | Árvore / planilha mapeamento | [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md) |
 | Macro composto / delta por revisão | [PLAYBOOK-23-decomposicao-composicao-macro-data.md](./PLAYBOOK-23-decomposicao-composicao-macro-data.md) |
-| Status técnico Playbook 20 | [playbook-20-implementation-status.md](../../../transformometro-api/docs/playbook-20-implementation-status.md) |
-| Fórmulas de cálculo | [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md) |
+| Status técnico Playbook 20 | [playbook-20-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-20-implementation-status.md) |
+| Fórmulas de cálculo | [regras-de-calculo.md](../../../transformometro-api/docs/domain/regras-de-calculo.md) |
 | Status técnico e deploy | [status-atual.md](./status-atual.md) |
 | Deploy e migrations | [OPERATIONS.md](./OPERATIONS.md) |
 | Atas Transforma+ (produto) | [ATAS-TRANSFORMA-MAIS.md](./ATAS-TRANSFORMA-MAIS.md) |
-| Atas — UI | [plugins/transformometro/docs/atas.md](../../../plugins/transformometro/docs/atas.md) |
-| Atas — API e Kimi | [atas-kimi.md](../../../transformometro-api/docs/atas-kimi.md) |
-| Custom GPT (ChatGPT Actions) | [chatgpt-custom-gpt-actions.md](../../../transformometro-api/docs/chatgpt-custom-gpt-actions.md) |
+| Atas — UI | [plugins/transformometro/docs/meeting-minutes.md](../../../plugins/transformometro/docs/meeting-minutes.md) |
+| Atas — API e Kimi | [atas-kimi.md](../../../transformometro-api/docs/meeting-minutes/kimi.md) |
+| Custom GPT (ChatGPT Actions) | [chatgpt-custom-gpt-actions.md](../../../transformometro-api/docs/gpt-actions/custom-gpt-actions.md) |
 
 ---
 
@@ -667,7 +667,7 @@ Regras:
 3. Assinatura manuscrita, uploads e locks de colaboração continuam **só na UI**.
 4. Ordem de cadastro recomendada: unidades/departamentos → processo → melhoria → revisão → medição/investimento (igual à seção 3).
 
-Detalhe operacional (Keycloak, import OpenAPI): [OPERATIONS.md](./OPERATIONS.md) · [chatgpt-custom-gpt-actions.md](../../../transformometro-api/docs/chatgpt-custom-gpt-actions.md).
+Detalhe operacional (Keycloak, import OpenAPI): [OPERATIONS.md](./OPERATIONS.md) · [chatgpt-custom-gpt-actions.md](../../../transformometro-api/docs/gpt-actions/custom-gpt-actions.md).
 
 ---
 

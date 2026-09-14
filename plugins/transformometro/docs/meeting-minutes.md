@@ -5,7 +5,7 @@ Atualizado: **ago/2026**
 Implementação de UI do módulo de atas no plugin Transformômetro.
 
 - Produto / fluxo: [ATAS-TRANSFORMA-MAIS.md](../../../docs/12-roadmap-e-evolucao/transformometro-app/ATAS-TRANSFORMA-MAIS.md)
-- API + Kimi: [transformometro-api/docs/atas-kimi.md](../../../transformometro-api/docs/atas-kimi.md)
+- API + Kimi: [transformometro-api/docs/meeting-minutes/kimi.md](../../../transformometro-api/docs/meeting-minutes/kimi.md)
 - Magic link: [public-hub](../../public-hub/README.md) → `/p/transformometro/sign/{token}`
 
 ---

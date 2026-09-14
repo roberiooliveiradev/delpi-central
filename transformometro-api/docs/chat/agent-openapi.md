@@ -5,9 +5,9 @@
 | Consumidor | Schema | Write |
 |------------|--------|-------|
 | **Chat Minha DELPI** (agente interno) | [`openapi-snapshot-chat.json`](./openapi-snapshot-chat.json) | **Não** (`allowWrite: false`) |
-| **Custom GPT OpenAI** | [`openapi-gpt-actions.json`](./openapi-gpt-actions.json) | **Sim**, com OAuth usuário + RBAC |
+| **Custom GPT OpenAI** | [`../gpt-actions/openapi-gpt-actions.json`](../gpt-actions/openapi-gpt-actions.json) | **Sim**, com OAuth usuário + RBAC |
 
-Doc do Custom GPT: [`chatgpt-custom-gpt-actions.md`](./chatgpt-custom-gpt-actions.md).
+Doc do Custom GPT: [`../gpt-actions/custom-gpt-actions.md`](../gpt-actions/custom-gpt-actions.md).
 
 ---
 
@@ -17,7 +17,7 @@ Rotas de leitura sobre o cache materializado (`dashboard_calculos`), sem expor C
 
 ### Arquivo OpenAPI
 
-`docs/openapi-snapshot-chat.json` — 4 rotas:
+`docs/chat/openapi-snapshot-chat.json` — 4 rotas:
 
 | operationId | Path |
 |-------------|------|

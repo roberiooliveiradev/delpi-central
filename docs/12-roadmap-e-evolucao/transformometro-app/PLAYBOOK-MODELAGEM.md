@@ -5,7 +5,7 @@
 
 Este playbook define como modelar, calcular e evoluir o Transformômetro sem quebrar a coerência entre cadastro, API, dashboard, exportações e integrações.
 
-Relacionado: [PLAYBOOK-18](./PLAYBOOK-18-instancias-filial-setor-escopo.md) · [PLAYBOOK-19 — diagramas processo/revisão/escopo](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) · [PLAYBOOK-20 — decomposição árvore/mapeamento](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md) · [PLAYBOOK-21 — matriz impacto × esforço por revisão](./PLAYBOOK-21-matriz-impacto-esforco-revisao.md) · [PLAYBOOK-23 — composição do macro por vigência](./PLAYBOOK-23-decomposicao-composicao-macro-data.md) · [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md) · [playbook-18-implementation-status.md](../../../transformometro-api/docs/playbook-18-implementation-status.md) · [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md) · [playbook-20-implementation-status.md](../../../transformometro-api/docs/playbook-20-implementation-status.md) · [playbook-21-implementation-status.md](../../../transformometro-api/docs/playbook-21-implementation-status.md)
+Relacionado: [PLAYBOOK-18](./PLAYBOOK-18-instancias-filial-setor-escopo.md) · [PLAYBOOK-19 — diagramas processo/revisão/escopo](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) · [PLAYBOOK-20 — decomposição árvore/mapeamento](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md) · [PLAYBOOK-21 — matriz impacto × esforço por revisão](./PLAYBOOK-21-matriz-impacto-esforco-revisao.md) · [PLAYBOOK-23 — composição do macro por vigência](./PLAYBOOK-23-decomposicao-composicao-macro-data.md) · [regras-de-calculo.md](../../../transformometro-api/docs/domain/regras-de-calculo.md) · [playbook-18-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-18-implementation-status.md) · [playbook-19-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-19-implementation-status.md) · [playbook-20-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-20-implementation-status.md) · [playbook-21-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-21-implementation-status.md)
 
 ## 1. Princípios
 
@@ -111,7 +111,7 @@ Define o pool de vínculos elegíveis ao rateio **antes** de aplicar `criterio_r
 | `filial` | Vínculos cuja instância tem a mesma filial da revisão âncora |
 | `setor` | Vínculos cuja instância tem o mesmo par filial × setor |
 
-Módulo: `SharedResourceScopeService`. Detalhe numérico: [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md).
+Módulo: `SharedResourceScopeService`. Detalhe numérico: [regras-de-calculo.md](../../../transformometro-api/docs/domain/regras-de-calculo.md).
 
 **Visão analítica (`view`)**  
 Parâmetro de dashboard: `consolidated` (default) \| `filial` \| `department`. Filtra instâncias/revisões nos KPIs; não altera o pool global de recursos `empresa` — apenas a fatia exibida. Módulo: `DashboardViewScopeService`.
@@ -475,7 +475,7 @@ Antes de mudar qualquer regra:
 - `transformometro-api/tm_app/application/services/filial_access_scope_service.py`
 - `transformometro-api/tm_app/application/services/dashboard_live_service.py`
 - `transformometro-api/tm_app/application/services/dashboard_recalc_service.py`
-- `transformometro-api/docs/regras-de-calculo.md`
+- `transformometro-api/docs/domain/regras-de-calculo.md`
 - `transformometro-api/migrations/V011__create_filiais.sql` … `V018__revisoes_unique_por_instancia.sql`
 - `plugins/transformometro/src/utils/dashboardViewScope.ts`
 - `plugins/transformometro/src/ui/processos/ProcessoInstanciasPanel.tsx`

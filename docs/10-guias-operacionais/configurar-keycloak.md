@@ -159,7 +159,7 @@ Um client **confidential** por especialista (`chatgpt-{product}`), com audience 
 | Web origins | `https://chatgpt.com`, `https://chat.openai.com` |
 | Redirect URIs | `https://chatgpt.com/aip/g-{GPT_ID}/oauth/callback` e `https://chat.openai.com/aip/g-{GPT_ID}/oauth/callback` |
 
-Procedimento do produto: [`transformometro-api/docs/chatgpt-custom-gpt-actions.md`](../../transformometro-api/docs/chatgpt-custom-gpt-actions.md).
+Procedimento do produto: [`transformometro-api/docs/gpt-actions/custom-gpt-actions.md`](../../transformometro-api/docs/gpt-actions/custom-gpt-actions.md).
 
 ---
 

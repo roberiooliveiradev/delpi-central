@@ -1,8 +1,8 @@
 # Playbook 21 — status de implementação
 
-**Playbook:** [`PLAYBOOK-21-matriz-impacto-esforco-revisao.md`](../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-21-matriz-impacto-esforco-revisao.md)  
-**Schema:** [`revisao_matriz_impacto_esforco_v1.schema.json`](./revisao_matriz_impacto_esforco_v1.schema.json)  
-**Wireframe:** [`plugins/transformometro/docs/wireframes/matriz-impacto-esforco.md`](../../plugins/transformometro/docs/wireframes/matriz-impacto-esforco.md)  
+**Playbook:** [`PLAYBOOK-21-matriz-impacto-esforco-revisao.md`](../../../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-21-matriz-impacto-esforco-revisao.md)  
+**Schema:** [`revisao_matriz_impacto_esforco_v1.schema.json`](../../schemas/revisao_matriz_impacto_esforco_v1.schema.json)  
+**Wireframe:** [`plugins/transformometro/docs/wireframes/matriz-impacto-esforco.md`](../../../../plugins/transformometro/docs/wireframes/matriz-impacto-esforco.md)  
 **Última atualização:** jul/2026
 
 ## Resumo

@@ -518,7 +518,7 @@ Camadas: routes fino → application/services → repositories.
 - `tests/test_decomposition_flat_export_service.py`
 - `tests/test_revisao_decomposition_merge_service.py`
 
-Status: [`playbook-20-implementation-status.md`](../../../transformometro-api/docs/playbook-20-implementation-status.md)
+Status: [`playbook-20-implementation-status.md`](../../../transformometro-api/docs/archive/playbooks/playbook-20-implementation-status.md)
 
 ### MFE
 
@@ -562,7 +562,7 @@ Status: [`playbook-20-implementation-status.md`](../../../transformometro-api/do
 |--------------|----------|
 | [`PLAYBOOK-19`](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) | Diagrama macro, escopo fluxo, overlay fluxo |
 | [`PLAYBOOK-18`](./PLAYBOOK-18-instancias-filial-setor-escopo.md) | Instância × departamento |
-| [`adr-decomposicao-processo.md`](../../../transformometro-api/docs/adr-decomposicao-processo.md) | ADR técnico |
+| [`adr-decomposicao-processo.md`](../../../transformometro-api/docs/architecture/adr-decomposicao-processo.md) | ADR técnico |
 | [`decomposition_tree_v1.schema.json`](../../../transformometro-api/docs/decomposition_tree_v1.schema.json) | Schema árvore |
 | [`TUTORIAL-USUARIO.md`](./TUTORIAL-USUARIO.md) | Guia operacional |
 

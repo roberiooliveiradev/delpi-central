@@ -5,7 +5,7 @@
 - **Opção C** — cada unidade `(filial × setor)` possui **sua própria timeline de revisões**; processo-mestre agrupa instâncias; dashboard **por unidade** ou **consolidado**.  
 - **PK UUID** — toda entidade cadastral usa **`uuid` como chave primária**; códigos legíveis (`codigo_*`) ficam em colunas separadas, nunca como PK.  
 **Parent:** [`PLAYBOOK-MODELAGEM.md`](./PLAYBOOK-MODELAGEM.md) · [`ARCHITECTURE.md`](./ARCHITECTURE.md)  
-**Relacionado:** [`regras-de-calculo.md`](../../../transformometro-api/docs/regras-de-calculo.md) · Strategic Indicators (`goal_scope_branch`, visão consolidado/filial)
+**Relacionado:** [`regras-de-calculo.md`](../../../transformometro-api/docs/domain/regras-de-calculo.md) · Strategic Indicators (`goal_scope_branch`, visão consolidado/filial)
 
 ---
 
@@ -272,7 +272,7 @@ Envelope resposta TM nativo: `{ success, message, data }`. Contrato **público**
 
 **Fronteira externa:** **api-delpi** entrega Transforma+ para o resto da plataforma. transformometro-api é backend interno (S2S).
 
-Documento: [`transformometro-api/docs/integration-contracts.md`](../../../transformometro-api/docs/integration-contracts.md).
+Documento: [`transformometro-api/docs/architecture/integration-contracts.md`](../../../transformometro-api/docs/architecture/integration-contracts.md).
 
 #### Cadeia
 
@@ -447,11 +447,11 @@ Arquivo alvo: `transformometro-api/tests/fixtures/instancia_escopo_cases.py` (+ 
 |--------------|----------|
 | [`PLAYBOOK-MODELAGEM.md`](./PLAYBOOK-MODELAGEM.md) | Regras vigentes de revisão/vigência (atualizar pós-S2) |
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Camadas API/MFE |
-| [`regras-de-calculo.md`](../../../transformometro-api/docs/regras-de-calculo.md) | Fórmulas oficiais |
+| [`regras-de-calculo.md`](../../../transformometro-api/docs/domain/regras-de-calculo.md) | Fórmulas oficiais |
 | `tm_app/domain/services/dashboard_calculator.py` | Calculador canônico |
 | `tm_app/core/catalogs.py` | Catálogos (`escopo_recurso`, …); filiais vêm do banco (S1) |
 | `migrations/V010__create_setores.sql` | Setores × filiais |
-| [`integration-contracts.md`](../../../transformometro-api/docs/integration-contracts.md) | **api-delpi** como fronteira pública; TM S2S interno |
+| [`integration-contracts.md`](../../../transformometro-api/docs/architecture/integration-contracts.md) | **api-delpi** como fronteira pública; TM S2S interno |
 
 ---
 

@@ -213,5 +213,5 @@ Falha ao gravar audit **não bloqueia** a mutação — log de warning apenas.
 |--------|------------|
 | API + Postgres + MFE | `transformometro-api`, `plugins/transformometro` |
 | Gateway api-delpi | `si_app/infrastructure/gateways/delpi_production_gateway.py` |
-| Contratos integração | `transformometro-api/docs/integration-contracts.md` |
+| Contratos integração | `transformometro-api/docs/architecture/integration-contracts.md` |
 | Playbook envelope | `minha-delpi-ai-api/docs/roadmap/playbook-10-contrato-respostas-api-delpi.md` |

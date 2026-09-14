@@ -1,7 +1,7 @@
 # Operações — Transformômetro
 
 Runbook para equipe após go-live (Postgres como fonte de verdade).  
-**Playbook 18 (jun/2026):** ver também [status-atual.md](./status-atual.md) e [playbook-18-implementation-status.md](../../../transformometro-api/docs/playbook-18-implementation-status.md).
+**Playbook 18 (jun/2026):** ver também [status-atual.md](./status-atual.md) e [playbook-18-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-18-implementation-status.md).
 
 ## URLs
 
@@ -24,11 +24,11 @@ Cadastro/análise via ChatGPT usa a superfície compacta `gpt-actions/v1` (mesmo
 
 Padrão generalista (replicar em outros produtos): [padrao-custom-gpt-actions-oauth.md](../../11-padroes-de-desenvolvimento/padrao-custom-gpt-actions-oauth.md).
 
-Instructions do especialista (colar no GPT Builder): [chatgpt-specialist-instructions.md](../../../transformometro-api/docs/chatgpt-specialist-instructions.md).
+Instructions do especialista (colar no GPT Builder): [specialist-instructions.md](../../../transformometro-api/docs/gpt-actions/specialist-instructions.md).
 
-Procedimento completo: [chatgpt-custom-gpt-actions.md](../../../transformometro-api/docs/chatgpt-custom-gpt-actions.md).
+Procedimento completo: [custom-gpt-actions.md](../../../transformometro-api/docs/gpt-actions/custom-gpt-actions.md).
 
-Checklist GPT Builder (colar schema/OAuth/instructions): [chatgpt-gpt-builder-go-live.md](../../../transformometro-api/docs/chatgpt-gpt-builder-go-live.md).
+Checklist GPT Builder (colar schema/OAuth/instructions): [gpt-builder-go-live.md](../../../transformometro-api/docs/gpt-actions/gpt-builder-go-live.md).
 
 Resumo:
 
@@ -44,7 +44,7 @@ Resumo:
 |------|------|------|-----------|
 | 2026-09-14 | `http://localhost` | OpenAPI público sem token | **PASS** |
 | 2026-09-14 | `http://localhost` | Client Keycloak `chatgpt-transformometro` + `aud=delpi-central` | **PASS** |
-| 2026-09-14 | `http://localhost` | GPT Builder (schema/OAuth/instructions) | **READY** — [`chatgpt-gpt-builder-go-live.md`](../../../transformometro-api/docs/chatgpt-gpt-builder-go-live.md) (Sign in no ChatGPT Editor é passo do operador) |
+| 2026-09-14 | `http://localhost` | GPT Builder (schema/OAuth/instructions) | **READY** — [`chatgpt-gpt-builder-go-live.md`](../../../transformometro-api/docs/gpt-actions/gpt-builder-go-live.md) (Sign in no ChatGPT Editor é passo do operador) |
 | 2026-09-14 | `http://localhost` | `gpt_get_catalog` / `gpt_analyze` summary filial 01 | **PASS** |
 | 2026-09-14 | `http://localhost` | `gpt_create_record` process + `gpt_update_record` | **PASS** (`5011dcd5-…`) |
 | 2026-09-14 | `http://localhost` | Sibling `gpt_create_record` instance | **PASS** |
@@ -132,7 +132,7 @@ KIMI_BASE_URL=https://openrouter.ai/api/v1
 KIMI_MODEL=moonshotai/kimi-k3
 ```
 
-Doc completa: [atas-kimi.md](../../../transformometro-api/docs/atas-kimi.md). Sem chave, a rota retorna **502** com mensagem clara.
+Doc completa: [atas-kimi.md](../../../transformometro-api/docs/meeting-minutes/kimi.md). Sem chave, a rota retorna **502** com mensagem clara.
 
 ## Troubleshooting
 
@@ -150,7 +150,7 @@ Doc completa: [atas-kimi.md](../../../transformometro-api/docs/atas-kimi.md). Se
 | SI 401 Transformômetro | `API_DELPI_INTERNAL_SERVICE_TOKEN` nos 3 serviços; rebuild SI |
 | SI 404 Transformômetro | `TRANSFORMOMETRO_API_BASE_URL=http://transformometro-api:8000` (sem `/apps/`) |
 | Ata IA 502 / «KIMI_API_KEY» | Definir `KIMI_*` em `infra/.env` e recreate `transformometro-api` |
-| Ata IA timeout | Transcrição muito longa; ver caps em [atas-kimi.md](../../../transformometro-api/docs/atas-kimi.md) |
+| Ata IA timeout | Transcrição muito longa; ver caps em [atas-kimi.md](../../../transformometro-api/docs/meeting-minutes/kimi.md) |
 | Assinatura/PDF sumiu após recreate | Conferir volumes `TM_ATA_*` em [README-ambiente](../../../infra/README-ambiente.md) |
 
 ## Auditoria

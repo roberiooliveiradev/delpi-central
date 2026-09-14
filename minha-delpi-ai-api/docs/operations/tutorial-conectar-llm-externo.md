@@ -172,7 +172,7 @@ docker compose -f infra/docker-compose.yml up -d --force-recreate minha-delpi-ai
 
 Modos Rápida/Normal/Pensador: com `openai_compatible`, tags Ollama (`qwen2.5:1.5b`) em `CHAT_RESPONSE_MODE_*_MODEL` são **ignoradas** e o chat usa `KIMI_MODEL` / `LLM_TEXT_MODEL`. Para outro modelo OpenRouter por modo, use id com `/` (ex.: `moonshotai/kimi-k3`).
 
-Doc atas: [meeting-minutes-kimi.md](../../../transformometro-api/docs/meeting-minutes-kimi.md).
+Doc atas: [kimi.md](../../../transformometro-api/docs/meeting-minutes/kimi.md).
 
 ### 4.1 OpenAI
 

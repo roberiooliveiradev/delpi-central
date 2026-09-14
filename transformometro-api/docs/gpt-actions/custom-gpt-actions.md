@@ -1,6 +1,6 @@
 # Transformômetro — Custom GPT (OpenAI Actions)
 
-> **Padrão transversal:** [padrao-custom-gpt-actions-oauth.md](../../docs/11-padroes-de-desenvolvimento/padrao-custom-gpt-actions-oauth.md)  
+> **Padrão transversal:** [padrao-custom-gpt-actions-oauth.md](../../../docs/11-padroes-de-desenvolvimento/padrao-custom-gpt-actions-oauth.md)  
 > Este arquivo é a **instância** Transformômetro (paths, client, operations). Para Action Plans e outros produtos, seguir o padrão geral e espelhar esta estrutura.
 
 Superfície compacta para o **ChatGPT Custom GPT** analisar, cadastrar e editar o Transformômetro sem expor as ~150 rotas internas (limite ~30 operations por schema da OpenAI).
@@ -9,13 +9,13 @@ Superfície compacta para o **ChatGPT Custom GPT** analisar, cadastrar e editar 
 
 | Artefato | Caminho |
 |----------|---------|
-| OpenAPI para importar no GPT Builder | [`docs/openapi-gpt-actions.json`](./openapi-gpt-actions.json) |
+| OpenAPI para importar no GPT Builder | [`openapi-gpt-actions.json`](./openapi-gpt-actions.json) |
 | Endpoint público do schema | `GET /apps/transformometro-api/transformometro/gpt-actions/v1/openapi.json` |
 | Builder canônico | `tm_app/application/gpt_actions/openapi_builder.py` |
 | Dispatcher | `tm_app/application/gpt_actions/dispatch_service.py` |
 | Guia de cadastro (catalog) | `tm_app/application/gpt_actions/registration_guide.py` |
 | Pacote guiado | `tm_app/application/gpt_actions/improvement_package_service.py` |
-| Instructions do especialista | [`chatgpt-specialist-instructions.md`](./chatgpt-specialist-instructions.md) |
+| Instructions do especialista | [`specialist-instructions.md`](./specialist-instructions.md) |
 | Rotas | `tm_app/interface/http/routes/gpt_actions_routes.py` |
 
 Regenerar o JSON versionado:
@@ -84,15 +84,15 @@ URLs OAuth (substituir host público):
 
 ## GPT Builder — Actions
 
-Checklist operacional: [`chatgpt-gpt-builder-go-live.md`](./chatgpt-gpt-builder-go-live.md).
+Checklist operacional: [`gpt-builder-go-live.md`](./gpt-builder-go-live.md).
 
-**Instructions completas do especialista (colar no Builder):** [`chatgpt-specialist-instructions.md`](./chatgpt-specialist-instructions.md).
+**Instructions completas do especialista (colar no Builder):** [`specialist-instructions.md`](./specialist-instructions.md).
 
 1. Create GPT → Actions → Import from URL  
    `https://<host>/apps/transformometro-api/transformometro/gpt-actions/v1/openapi.json`  
-   ou cole o conteúdo de `docs/openapi-gpt-actions.json` (esperar **12** actions).
+   ou cole o conteúdo de `docs/gpt-actions/openapi-gpt-actions.json` (esperar **12** actions).
 2. Authentication → OAuth (valores da tabela acima).
-3. Colar o playbook de [`chatgpt-specialist-instructions.md`](./chatgpt-specialist-instructions.md).
+3. Colar o playbook de [`specialist-instructions.md`](./specialist-instructions.md).
 
 Fluxo guiado preferido: `gpt_get_catalog` → entrevista → `gpt_commit_improvement_package` (`dry_run=true` → confirmar → commit).
 
@@ -106,7 +106,7 @@ Fluxo guiado preferido: `gpt_get_catalog` → entrevista → `gpt_commit_improve
 
 ## Relação com o Chat da Minha DELPI
 
-O agente interno continua no schema **somente leitura** [`openapi-snapshot-chat.json`](./openapi-snapshot-chat.json) com `allowWrite: false`.  
+O agente interno continua no schema **somente leitura** [`../chat/openapi-snapshot-chat.json`](../chat/openapi-snapshot-chat.json) com `allowWrite: false`.  
 Esta superfície GPT **não** altera esse provider.
 
 ## Sync pós-mudança

@@ -40,7 +40,7 @@ Serviço em `infra/docker-compose.yml` e `infra/docker-compose.dev.yml`:
 | `API_DELPI_INTERNAL_SERVICE_TOKEN` | — | Auth S2S nas rotas `/integrations/engineering/*` (mesmo valor em SI e api-delpi) |
 | `TRANSFORMOMETRO_API_BASE_URL` | `http://transformometro-api:8000` | Só nos **consumidores** (SI, api-delpi), não neste serviço |
 | `TM_ATA_SIGNATURE_UPLOAD_DIR` / `TM_ATA_PDF_UPLOAD_DIR` | paths sob `/app/data/transformometro/meeting-minutes/…` | Volumes persistentes de assinatura/PDF |
-| `KIMI_API_KEY` | vazio | Obrigatória para geração de ata; ver [atas-kimi.md](./atas-kimi.md) |
+| `KIMI_API_KEY` | vazio | Obrigatória para geração de ata; ver [meeting-minutes/kimi.md](../meeting-minutes/kimi.md) |
 | `KIMI_BASE_URL` | `https://openrouter.ai/api/v1` | Endpoint OpenAI-compatible |
 | `KIMI_MODEL` | `moonshotai/kimi-k3` | Modelo no provedor |
 
@@ -57,7 +57,7 @@ docker exec delpi-transformometro-api python -m tm_app.infrastructure.persistenc
 docker exec delpi-transformometro-api python -m tm_app.infrastructure.persistence.plugins.migrations_runner up
 ```
 
-Versões: ver [migrations/README.md](../migrations/README.md) (**V001–V020**).
+Versões: ver [migrations/README.md](../../migrations/README.md) (**V001–V020**).
 
 ### Pós-migration Playbook 18
 
@@ -71,7 +71,7 @@ Versões: ver [migrations/README.md](../migrations/README.md) (**V001–V020**).
 
 **V020:** cria views `dashboard_competencia_evolucao` e `instancia_operacional_snapshot`.
 
-Ver [playbook-18-implementation-status.md](playbook-18-implementation-status.md) e [status-atual.md](../../docs/12-roadmap-e-evolucao/transformometro-app/status-atual.md).
+Ver [playbook-18-implementation-status.md](../archive/playbooks/playbook-18-implementation-status.md) e [status-atual.md](../../../docs/12-roadmap-e-evolucao/transformometro-app/status-atual.md).
 
 ## Checklist produção
 
@@ -81,4 +81,4 @@ Ver [playbook-18-implementation-status.md](playbook-18-implementation-status.md)
 4. RBAC (Core API): vincular `transformometro.*` às roles/grupos no admin do portal — ex.: `transformometro.shared-resources.manage` para quem edita o catálogo; `transformometro.meeting-minutes.view|manage|sign` para atas
 5. Health: `GET /apps/transformometro-api/transformometro/health` → `db_ready: true`
 6. Integração (rede Docker): `curl -H "X-Delpi-Service-Token: $API_DELPI_INTERNAL_SERVICE_TOKEN" http://transformometro-api:8000/transformometro/integrations/engineering/transforma-mais/processes/summary`
-7. Se usar IA nas atas: `KIMI_API_KEY` no `.env` + smoke em [atas-kimi.md](./atas-kimi.md)
+7. Se usar IA nas atas: `KIMI_API_KEY` no `.env` + smoke em [meeting-minutes/kimi.md](../meeting-minutes/kimi.md)

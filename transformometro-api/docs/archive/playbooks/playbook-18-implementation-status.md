@@ -1,6 +1,6 @@
 # Playbook 18 — status de implementação (API)
 
-Referência: [`docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-18-instancias-filial-setor-escopo.md`](../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-18-instancias-filial-setor-escopo.md)
+Referência: [`docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-18-instancias-filial-setor-escopo.md`](../../../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-18-instancias-filial-setor-escopo.md)
 
 Última atualização: jul/2026
 
@@ -25,7 +25,7 @@ Referência: [`docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-18-instan
 
 V001–V010 (legado) · **V011–V020** (Playbook 18 S1–S12)
 
-Ver [migrations/README.md](../migrations/README.md).
+Ver [migrations/README.md](../../../migrations/README.md).
 
 ## Cache dashboard (`dashboard_calculos`)
 
@@ -111,7 +111,7 @@ Módulo canônico: `ProcessoInstanciaRepository` · junction sync em `_sync_seto
 | Validação `processo_instancia_setores` (FK + duplicatas) | ✅ `JsonBackupService` |
 | Motor: multiplicador de economia multi-unidade | ✅ `DashboardCalculatorService` (`escopo_unidades`) |
 | Propagar `escopo_unidades` no live/recalc consolidado | ✅ `DashboardViewScopeService` + live/recalc/Transforma+ |
-| Runbook export → edição manual → replace | ✅ [json-backup.md](json-backup.md) § Consolidação cadastral |
+| Runbook export → edição manual → replace | ✅ [../../operations/json-backup.md](../../operations/json-backup.md) § Consolidação cadastral |
 
 Exemplo de redução validada em dev: 49 processos / 49 instâncias → **25 processos / 27 instâncias** (21 multi-unidade, 2 divergentes com 2 instâncias/filial, 2 singletons).
 
@@ -198,21 +198,21 @@ Consumidores ativos: `plugins/transformometro` (cadastro), `dashboard-engineerin
 
 | Item | Foco |
 |--------|------|
-| **Deploy produção** | Runbook em [status-atual.md](../../docs/12-roadmap-e-evolucao/transformometro-app/status-atual.md) |
+| **Deploy produção** | Runbook em [status-atual.md](../../../../docs/12-roadmap-e-evolucao/transformometro-app/status-atual.md) |
 | **RBAC Core API** | Atribuir `transformometro.*` escopadas às roles/grupos no admin do portal |
-| **Limpeza Fase 6** | Remover código Sheets morto e env vars órfãs na api-delpi — [ROADMAP.md](../../docs/12-roadmap-e-evolucao/transformometro-app/ROADMAP.md) |
+| **Limpeza Fase 6** | Remover código Sheets morto e env vars órfãs na api-delpi — [ROADMAP.md](../../../../docs/12-roadmap-e-evolucao/transformometro-app/ROADMAP.md) |
 
 ## Documentação (índice)
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [PLAYBOOK-18](../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-18-instancias-filial-setor-escopo.md) | Plano e checklist §9 |
-| [PLAYBOOK-MODELAGEM](../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-MODELAGEM.md) | Entidades, instâncias, escopo, pipeline |
-| [ARCHITECTURE](../../docs/12-roadmap-e-evolucao/transformometro-app/ARCHITECTURE.md) | Diagramas, rotas, RBAC, MFE |
-| [regras-de-calculo.md](regras-de-calculo.md) | Fórmulas + `escopo_recurso` + visões + multi-unidade |
-| [json-backup.md](json-backup.md) | Export/import JSON + consolidação cadastral manual |
-| [OPERATIONS](../../docs/12-roadmap-e-evolucao/transformometro-app/OPERATIONS.md) | Runbook deploy e troubleshooting |
-| [migrations/README.md](../migrations/README.md) | V001–V020 |
+| [PLAYBOOK-18](../../../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-18-instancias-filial-setor-escopo.md) | Plano e checklist §9 |
+| [PLAYBOOK-MODELAGEM](../../../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-MODELAGEM.md) | Entidades, instâncias, escopo, pipeline |
+| [ARCHITECTURE](../../../../docs/12-roadmap-e-evolucao/transformometro-app/ARCHITECTURE.md) | Diagramas, rotas, RBAC, MFE |
+| [../../domain/regras-de-calculo.md](../../domain/regras-de-calculo.md) | Fórmulas + `escopo_recurso` + visões + multi-unidade |
+| [../../operations/json-backup.md](../../operations/json-backup.md) | Export/import JSON + consolidação cadastral manual |
+| [OPERATIONS](../../../../docs/12-roadmap-e-evolucao/transformometro-app/OPERATIONS.md) | Runbook deploy e troubleshooting |
+| [migrations/README.md](../../../migrations/README.md) | V001–V020 |
 
 ## MFE Playbook §9 (jun/2026)
 
@@ -227,7 +227,7 @@ Consumidores ativos: `plugins/transformometro` (cadastro), `dashboard-engineerin
 | Create processo com primeira instância | ✅ `createPayloadFromProcessoForm` |
 | Setores: `codigo_setor` na UI (UUID só na API) | ✅ `setorCatalogForm` |
 | Recursos: campo `escopo_recurso` no formulário | ✅ `recursoCatalogForm` + `RecursoCatalogFormFields` |
-| Doc `regras-de-calculo.md` § escopo recurso | ✅ alinhado a `SharedResourceScopeService` |
+| Doc `../../domain/regras-de-calculo.md` § escopo recurso | ✅ alinhado a `SharedResourceScopeService` |
 
 Módulos: `plugins/transformometro/src/utils/dashboardViewScope.ts`, `ProcessoInstanciasPanel.tsx`, `routeParser.ts`.
 

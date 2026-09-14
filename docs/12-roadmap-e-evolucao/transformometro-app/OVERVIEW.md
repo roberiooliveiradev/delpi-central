@@ -71,7 +71,7 @@ Integração Transforma+: **`id` na listagem = `instancia_id`** (uma linha por i
 
 ## O que não é
 
-- **Não** é extensão do painel Strategic Indicators — o SI e o `dashboard-engineering` consomem Transforma+ via **api-delpi** (`GET /engineering/transforma-mais/*`). A transformometro-api expõe rotas S2S internas (`/integrations/engineering/transforma-mais/*`) só para o gateway api-delpi. Ver [`transformometro-api/docs/integration-contracts.md`](../../../transformometro-api/docs/integration-contracts.md).
+- **Não** é extensão do painel Strategic Indicators — o SI e o `dashboard-engineering` consomem Transforma+ via **api-delpi** (`GET /engineering/transforma-mais/*`). A transformometro-api expõe rotas S2S internas (`/integrations/engineering/transforma-mais/*`) só para o gateway api-delpi. Ver [`transformometro-api/docs/architecture/integration-contracts.md`](../../../transformometro-api/docs/architecture/integration-contracts.md).
 - O `dashboard-engineering` (TRANSFORMA+) continua ativo como painel **somente leitura**; usa `/engineering/transforma-mais/*` na api-delpi, que faz proxy para o Postgres.
 - **Não** usa planilha Google como fonte de dados em runtime (cadastro somente no app / API).
 

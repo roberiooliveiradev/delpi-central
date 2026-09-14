@@ -151,7 +151,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Despesas de Viagem | `/apps/travel-expenses-api/*` (prestações, cupons, PDF; Postgres plugins) |
 | Pulso de Produção | `/apps/production-pulse-api/*` (devices, bindings, readings, poll, operador; Postgres plugins; CT via api-delpi gateway) |
 | Painéis TV | `/apps/tv-dashboard-api/*` (programações + payload público); agregadores nativos via api-delpi |
-| Transformômetro | `/apps/transformometro-api/transformometro/*` (Postgres; atas + Kimi) — [README](../../plugins/transformometro/README.md) · [atas](../../plugins/transformometro/docs/atas.md) · [Kimi](../../transformometro-api/docs/atas-kimi.md) |
+| Transformômetro | `/apps/transformometro-api/transformometro/*` (Postgres; atas + Kimi) — [README](../../plugins/transformometro/README.md) · [atas](../../plugins/transformometro/docs/meeting-minutes.md) · [Kimi](../../transformometro-api/docs/meeting-minutes/kimi.md) |
 | Comitê de Ética e Conduta | `/apps/comite-etica-conduta-api/*` (Postgres; atas + membros) — [README](../../plugins/comite-etica-conduta/README.md) · [API](../../comite-etica-conduta-api/README.md) · [roadmap](../12-roadmap-e-evolucao/comite-etica-conduta/) |
 | CIPA | `/apps/cipa-api/*` (atas, membros, SIPAT); público `/p/cipa/sipat/{token}` — [README](../../plugins/cipa/README.md) · [API](../../cipa-api/README.md) · [playbook](../12-roadmap-e-evolucao/cipa/PLAYBOOK.md) |
 | Mural de Acessos | `/apps/api-delpi/mural-acessos/*` + público `/public/mural-acessos/*` — [README](../../plugins/mural-acessos/README.md) · [API](../../api-delpi/docs/api/mural-acessos.md) |

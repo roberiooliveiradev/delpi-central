@@ -1,7 +1,7 @@
 # Playbook 20 — status de implementação
 
-**Playbook:** [`PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md`](../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md)  
-**ADR:** [`adr-decomposicao-processo.md`](./adr-decomposicao-processo.md)  
+**Playbook:** [`PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md`](../../../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md)  
+**ADR:** [`adr-decomposicao-processo.md`](../../architecture/adr-decomposicao-processo.md)  
 **Última atualização:** jul/2026
 
 ## Resumo

@@ -1,8 +1,8 @@
 # ADR — Diagramas de processo (Playbook 19)
 
 **Status:** implementado (jul/2026)  
-**Contexto:** [`PLAYBOOK-19-diagramas-processo-revisao-escopo.md`](../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-19-diagramas-processo-revisao-escopo.md)  
-**Status técnico:** [`playbook-19-implementation-status.md`](./playbook-19-implementation-status.md)
+**Contexto:** [`PLAYBOOK-19-diagramas-processo-revisao-escopo.md`](../../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-19-diagramas-processo-revisao-escopo.md)  
+**Status técnico:** [`playbook-19-implementation-status.md`](../archive/playbooks/playbook-19-implementation-status.md)
 
 ## Decisão
 
@@ -24,8 +24,8 @@ Layout e posições vivem no JSON; Mermaid é derivado sem swimlanes no MVP.
 
 ## Schemas
 
-- [`flowchart_v1.schema.json`](./flowchart_v1.schema.json)
-- [`flowchart_overlay_v1.schema.json`](./flowchart_overlay_v1.schema.json)
+- [`flowchart_v1.schema.json`](../schemas/flowchart_v1.schema.json)
+- [`flowchart_overlay_v1.schema.json`](../schemas/flowchart_overlay_v1.schema.json)
 
 Validação runtime: `tm_app/domain/diagram/flowchart_v1.py`.
 

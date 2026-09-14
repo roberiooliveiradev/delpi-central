@@ -77,12 +77,15 @@ Backend interno (S2S):
 - `GET /transformometro/integrations/engineering/transforma-mais/processes`
 - `GET /transformometro/integrations/engineering/transforma-mais/processes/summary`
 
-Detalhes: [`docs/integration-contracts.md`](docs/integration-contracts.md) · consumidores: `shared/transformometro_client` + gateway api-delpi + `API_DELPI_INTERNAL_SERVICE_TOKEN`.
+Detalhes: [`docs/architecture/integration-contracts.md`](docs/architecture/integration-contracts.md) · consumidores: `shared/transformometro_client` + gateway api-delpi + `API_DELPI_INTERNAL_SERVICE_TOKEN`.
 
 ## Documentação
 
-- [docs/playbook-18-implementation-status.md](docs/playbook-18-implementation-status.md) — Playbook 18 (S1–S12 + MFE §9)
-- [docs/regras-de-calculo.md](docs/regras-de-calculo.md) — fórmulas e escopo de recurso
-- [docs/12-roadmap-e-evolucao/transformometro-app/](../docs/12-roadmap-e-evolucao/transformometro-app/README.md) — índice completo
-- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
-- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
+Índice: [`docs/README.md`](docs/README.md)
+
+- [docs/domain/regras-de-calculo.md](docs/domain/regras-de-calculo.md) — fórmulas e escopo de recurso
+- [docs/gpt-actions/](docs/gpt-actions/) — Custom GPT (OpenAI Actions)
+- [docs/meeting-minutes/kimi.md](docs/meeting-minutes/kimi.md) — atas + Kimi
+- [docs/operations/DEPLOYMENT.md](docs/operations/DEPLOYMENT.md) · [DEVELOPMENT.md](docs/operations/DEVELOPMENT.md)
+- [docs/12-roadmap-e-evolucao/transformometro-app/](../docs/12-roadmap-e-evolucao/transformometro-app/README.md) — product/roadmap
+- [docs/archive/playbooks/](docs/archive/playbooks/) — status histórico PB18–21

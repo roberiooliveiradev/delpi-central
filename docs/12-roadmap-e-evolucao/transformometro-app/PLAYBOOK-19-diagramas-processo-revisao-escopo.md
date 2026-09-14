@@ -1,6 +1,6 @@
 # Playbook 19 — Diagramas de processo (macro), escopo por instância e overlays por revisão
 
-**Status:** entregue S0–S7 (jul/2026) — S7 espelha PB23 (âncora + composto) · ver [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md)  
+**Status:** entregue S0–S7 (jul/2026) — S7 espelha PB23 (âncora + composto) · ver [playbook-19-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-19-implementation-status.md)  
 **Decisões fechadas (S0):**  
 - **Diagrama-macro único por processo-mestre** — mapa canônico do fluxo end-to-end; nós com **ID estável**.  
 - **Instância declara escopo** — subset de nós do macro (um ou mais subprocessos-chave).  
@@ -305,7 +305,7 @@ Camadas: `routes/` fino → `application/services/` → `repositories/` (padrão
 
 | Sprint | Entrega | Critério de pronto |
 |--------|---------|-------------------|
-| **S0 — Design lock** | Este playbook aprovado; JSON Schema `flowchart_v1` em `transformometro-api/docs/` | Product + engenharia assinam §2 e §3 |
+| **S0 — Design lock** | Este playbook aprovado; JSON Schema `flowchart_v1` em `transformometro-api/docs/schemas/` | Product + engenharia assinam §2 e §3 |
 | **S1 — Macro + API** | V026, CRUD macro, editor em `ProcessoDetailPage`, preview Mermaid, testes validação | I1, I2 |
 | **S2 — Escopo instância** | V027, UI `InstanciaDetailPage`, merge parcial no GET revisão | I3, I4 |
 | **S3 — Overlay revisão** | V028, seção `RevisaoCadastroPanel`, save/load overlay, merged preview | I5, I6 |
@@ -391,7 +391,7 @@ O **mapeamento WBS** (PB23) e o **diagrama** compartilham o mesmo modelo mental:
 - `tm_app/interface/http/routes/diagram_routes.py`
 - `tests/test_flowchart_v1.py`, `tests/test_diagram_mermaid_export_service.py`, `tests/test_revisao_diagram_merge_service.py`, `tests/test_diagrama_composition_service.py`
 
-Status detalhado: [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md).
+Status detalhado: [playbook-19-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-19-implementation-status.md).
 
 ### MFE
 

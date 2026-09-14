@@ -1,7 +1,7 @@
 # Custom GPT — Instructions do especialista Transformômetro
 
 > **Uso:** copiar o bloco **Instructions (colar no GPT Builder)** para o campo *Instructions* do Custom GPT.  
-> **Padrão transversal:** [padrao-custom-gpt-actions-oauth.md](../../docs/11-padroes-de-desenvolvimento/padrao-custom-gpt-actions-oauth.md)  
+> **Padrão transversal:** [padrao-custom-gpt-actions-oauth.md](../../../docs/11-padroes-de-desenvolvimento/padrao-custom-gpt-actions-oauth.md)  
 > **API:** `gpt_get_catalog` → `registration_guide`; pacote `gpt_commit_improvement_package`.
 
 ---
@@ -76,4 +76,4 @@ Seja um analista de processos: confirme entendimento (“Entendi: vocês reduzir
 1. Após deploy da API, **reimportar** o OpenAPI no GPT Builder (URL pública `…/gpt-actions/v1/openapi.json`). Esperado: **12** actions.
 2. Substituir o bloco Instructions antigo pelo texto acima.
 3. Auth continua OAuth (`chatgpt-transformometro`), não API Key.
-4. Detalhes de API: [chatgpt-custom-gpt-actions.md](./chatgpt-custom-gpt-actions.md).
+4. Detalhes de API: [custom-gpt-actions.md](./custom-gpt-actions.md).

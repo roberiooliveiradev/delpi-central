@@ -11,10 +11,10 @@
 - **Componente visual canônico** — `@delpi/plugin-ui` `ImpactEffortMatrix` (headless SVG + BEM); Transformômetro só consome + estiliza.
 - **Cálculo na API** — serviço de domínio único; MFE render-only (sem reimplementar ROI/economia).
 
-**Parent:** [`PLAYBOOK-MODELAGEM.md`](./PLAYBOOK-MODELAGEM.md) · [`PLAYBOOK-18`](./PLAYBOOK-18-instancias-filial-setor-escopo.md) · [`regras-de-calculo.md`](../../../transformometro-api/docs/regras-de-calculo.md)  
+**Parent:** [`PLAYBOOK-MODELAGEM.md`](./PLAYBOOK-MODELAGEM.md) · [`PLAYBOOK-18`](./PLAYBOOK-18-instancias-filial-setor-escopo.md) · [`regras-de-calculo.md`](../../../transformometro-api/docs/domain/regras-de-calculo.md)  
 **Wireframe:** [`plugins/transformometro/docs/wireframes/matriz-impacto-esforco.md`](../../../plugins/transformometro/docs/wireframes/matriz-impacto-esforco.md)  
 **Schema:** [`revisao_matriz_impacto_esforco_v1.schema.json`](../../../transformometro-api/docs/revisao_matriz_impacto_esforco_v1.schema.json)  
-**Status implementação:** [`playbook-21-implementation-status.md`](../../../transformometro-api/docs/playbook-21-implementation-status.md)
+**Status implementação:** [`playbook-21-implementation-status.md`](../../../transformometro-api/docs/archive/playbooks/playbook-21-implementation-status.md)
 
 ---
 

@@ -4,8 +4,8 @@ Atualizado: **jul/2026**
 
 Backend do módulo de atas no `transformometro-api`: CRUD, assinaturas, PDF e **geração assistida** via gateway OpenAI-compatible (padrão: **OpenRouter + modelo Kimi**).
 
-Visão de produto: [ATAS-TRANSFORMA-MAIS.md](../../docs/12-roadmap-e-evolucao/transformometro-app/ATAS-TRANSFORMA-MAIS.md).  
-MFE: [plugins/transformometro/docs/atas.md](../../plugins/transformometro/docs/atas.md).
+Visão de produto: [ATAS-TRANSFORMA-MAIS.md](../../../docs/12-roadmap-e-evolucao/transformometro-app/ATAS-TRANSFORMA-MAIS.md).  
+MFE: [plugins/transformometro/docs/meeting-minutes.md](../../../plugins/transformometro/docs/meeting-minutes.md).
 
 ---
 
@@ -141,7 +141,7 @@ KIMI_MODEL=moonshotai/kimi-k3
 # LLM_PROVIDER=openai_compatible
 ```
 
-O `minha-delpi-ai-api` recebe as mesmas `KIMI_*` no Compose; com `LLM_PROVIDER=openai_compatible`, `LLM_TEXT_*` vazio herda `KIMI_*`. Ver [tutorial-conectar-llm-externo.md](../../minha-delpi-ai-api/docs/operations/tutorial-conectar-llm-externo.md) § 4.0.
+O `minha-delpi-ai-api` recebe as mesmas `KIMI_*` no Compose; com `LLM_PROVIDER=openai_compatible`, `LLM_TEXT_*` vazio herda `KIMI_*`. Ver [tutorial-conectar-llm-externo.md](../../../minha-delpi-ai-api/docs/operations/tutorial-conectar-llm-externo.md) § 4.0.
 
 Exemplos versionados: `transformometro-api/.env.example`, `infra/env.local.example`.
 
@@ -191,7 +191,7 @@ Esperado: `success: true` e chaves `agenda_html`, `body_html`, …
 | `TM_ATA_SIGNATURE_UPLOAD_DIR` | `/app/data/transformometro/atas/signatures` | `${DELPI_DATA_HOST_DIR}/transformometro/atas/signatures` |
 | `TM_ATA_PDF_UPLOAD_DIR` | `/app/data/transformometro/atas/pdfs` | `${DELPI_DATA_HOST_DIR}/transformometro/atas/pdfs` |
 
-Metadado no Postgres; binário no volume. Ver regra `persistent-upload-storage` e [infra/README-ambiente.md](../../infra/README-ambiente.md).
+Metadado no Postgres; binário no volume. Ver regra `persistent-upload-storage` e [infra/README-ambiente.md](../../../infra/README-ambiente.md).
 
 Migration: `migrations/V042__meeting_minutes_transforma_mais.sql` (imutável após apply).
 

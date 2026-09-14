@@ -175,4 +175,4 @@ Se chat, SI ou outro módulo precisar de **resumo preventivo** sem falar com a A
 - Legado queries: `/home/analistaptd/projetos/MiniAplicadores/Infrastructure/Queries/`
 - SI gateways: `strategic-indicators-api/si_app/infrastructure/gateways/`
 - Playbook envelope: `minha-delpi-ai-api/docs/roadmap/playbook-10-contrato-respostas-api-delpi.md`
-- Transformômetro contratos: `transformometro-api/docs/integration-contracts.md`
+- Transformômetro contratos: `transformometro-api/docs/architecture/integration-contracts.md`

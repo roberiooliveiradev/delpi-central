@@ -4,11 +4,11 @@ Atualizado: **jul/2026** (workspace Processos + Configurações; subpastas de re
 
 > **Regra jul/2026 — referência de comparação (`revisao_referencia_id`, V035).** Revisões não-baseline indicam **contra qual revisão** calcular economia e diffs (diagrama/WBS). A **baseline** não precisa de referência. Se `revisao_referencia_id` estiver vazio (legado), o motor usa a **baseline da instância** (`_pick_reference_review` → fallback `_pick_baseline_review`). Migration V035 faz backfill das revisões existentes apontando para a baseline da mesma melhoria.
 
-> **Regra jul/2026 — média por instância.** Cada instância tem baseline/parâmetros próprios. A economia consolidada de um processo é a **média aritmética das instâncias ativas no mês** (`Σ economia_instância / nº_instâncias_ativas`); investimento, horas e ROI seguem a mesma média. Recorte por unidade/setor mostra o **valor real** da instância (média de 1 = ela mesma). Fonte da regra: `transformometro-api/docs/regras-de-calculo.md`.
+> **Regra jul/2026 — média por instância.** Cada instância tem baseline/parâmetros próprios. A economia consolidada de um processo é a **média aritmética das instâncias ativas no mês** (`Σ economia_instância / nº_instâncias_ativas`); investimento, horas e ROI seguem a mesma média. Recorte por unidade/setor mostra o **valor real** da instância (média de 1 = ela mesma). Fonte da regra: `transformometro-api/docs/domain/regras-de-calculo.md`.
 
 > **Arquitetura jul/2026 — fonte única + query cache.** A planilha materializada `dashboard_calculos` deixou de ser a fonte: UI, snapshot/chat e Transforma+ leem do **motor live** (`DashboardLiveService`) com `DashboardQueryCache` (TTL + invalidação por geração). O CRUD **não** dispara mais recálculo pesado — apenas invalida o cache em O(1). Faixas de tempo por dia (`YYYY-MM-DD`) passam a valer em todas as leituras. A tabela materializada e o recálculo viram **opt-in** (`TM_DASHBOARD_PERSIST_CACHE`). Flags: `TM_DASHBOARD_QUERY_CACHE` (on), `TM_DASHBOARD_QUERY_CACHE_TTL_SECONDS` (120), `TM_DASHBOARD_PERSIST_CACHE` (off).
 
-> **Regra jul/2026 — instância multi-unidade.** Instâncias com `todas_filiais_ativas` compartilham uma timeline entre filiais. Na visão consolidada, `economia_bruta`, `economia_liquida_mes` e `horas_economizadas_mes` da instância escalam pelo nº de filiais ativas (`escopo_unidades`); recursos compartilhados **não** multiplicam. Cadastro legado duplicado por filial deve ser consolidado via **export JSON → edição manual → import replace** ([json-backup.md](../../../transformometro-api/docs/json-backup.md) § Consolidação cadastral). Detalhe: [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md) § Instância multi-unidade.
+> **Regra jul/2026 — instância multi-unidade.** Instâncias com `todas_filiais_ativas` compartilham uma timeline entre filiais. Na visão consolidada, `economia_bruta`, `economia_liquida_mes` e `horas_economizadas_mes` da instância escalam pelo nº de filiais ativas (`escopo_unidades`); recursos compartilhados **não** multiplicam. Cadastro legado duplicado por filial deve ser consolidado via **export JSON → edição manual → import replace** ([json-backup.md](../../../transformometro-api/docs/operations/json-backup.md) § Consolidação cadastral). Detalhe: [regras-de-calculo.md](../../../transformometro-api/docs/domain/regras-de-calculo.md) § Instância multi-unidade.
 
 > **Regra jul/2026 — validade de 1 ano por revisão.** A economia de uma revisão comparável só conta por **12 meses** a partir do início (`data_implantacao`/`data_inicio_vigencia`); a partir do **aniversário** (`início + 12m`, exclusivo) deixa de ser contabilizada (`calc_rules.review_validity_end_date` / `review_effective_end_date`). Uma **nova revisão implantada** (`revisao_ativa`) assume o cálculo com seu próprio ciclo de 12 meses; sem sucessora, o ambiente passa a contribuir 0. O dashboard acompanha as que vencem nos **próximos 90 dias** (`GET /dashboard/vencimentos`, painel “Revisões a vencer”; campos `data_vencimento`/`dias_para_vencer`/`status_vigencia`).
 
@@ -58,14 +58,14 @@ Atualizado: **jul/2026** (workspace Processos + Configurações; subpastas de re
 | **Mapeamento WBS (Playbook 20)** | ✅ V030–V033; árvore + CSV + escopo/overlay por melhoria/revisão |
 | **Colaboração presença (WS)** | ✅ V029 |
 | **Campos melhoria** (resumo, fase, prioridade, go-live) | ✅ V034 |
-| Documentação Playbook 19 | ✅ playbook, ADR, schemas, [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md) |
-| Documentação Playbook 20 | ✅ [playbook-20-implementation-status.md](../../../transformometro-api/docs/playbook-20-implementation-status.md) |
+| Documentação Playbook 19 | ✅ playbook, ADR, schemas, [playbook-19-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-19-implementation-status.md) |
+| Documentação Playbook 20 | ✅ [playbook-20-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-20-implementation-status.md) |
 | **Matriz impacto × esforço (Playbook 21)** | ✅ S0–S4 — cadastro revisão, melhoria, badge árvore, migration V038; S5 multi-processo/export backlog |
 | **Workspace Processos** | ✅ Árvore lateral colapsável/redimensionável; subpastas por revisão (hash); badges matriz |
 | **Workspace Configurações** | ✅ Unidades + departamentos + recursos unificados em `/configuracoes/*`; rotas legadas compatíveis |
 | **Duplicar revisão** | ✅ `POST /revisoes/{id}/duplicar` + botão na listagem de revisões |
 | **MFE UX jul/2026** | ✅ SelectField (padrão PAC), modal de confirmação centralizado, transições suaves, linha do tempo |
-| **Atas Transforma+** | ✅ V042 + API + MFE Fluent; import DOCX; **Kimi real** (`POST …/generate-from-transcript`, `KIMI_*`); logo + faixa de marca; fora: anexos, vínculo a processo, ICP — [ATAS-TRANSFORMA-MAIS.md](./ATAS-TRANSFORMA-MAIS.md) · [atas-kimi.md](../../../transformometro-api/docs/atas-kimi.md) |
+| **Atas Transforma+** | ✅ V042 + API + MFE Fluent; import DOCX; **Kimi real** (`POST …/generate-from-transcript`, `KIMI_*`); logo + faixa de marca; fora: anexos, vínculo a processo, ICP — [ATAS-TRANSFORMA-MAIS.md](./ATAS-TRANSFORMA-MAIS.md) · [atas-kimi.md](../../../transformometro-api/docs/meeting-minutes/kimi.md) |
 
 ## Migrations automáticas
 
@@ -90,7 +90,7 @@ docker exec delpi-transformometro-api python -m tm_app.infrastructure.persistenc
 6. Registrar manifesto atualizado (`register-manifest.sh`) — permissões RBAC filial + rota `/configuracoes/unidades`.
 7. Smoke: dashboard (3 visões), processo → workspace → melhorias → revisão (subpastas + matriz), configurações (árvore unidades/dept/recursos), macro → escopo → overlay, mapeamento WBS, Transforma+ summary (<500ms com cache).
 
-Detalhe: [playbook-18-implementation-status.md](../../../transformometro-api/docs/playbook-18-implementation-status.md) · [OPERATIONS.md](./OPERATIONS.md).
+Detalhe: [playbook-18-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-18-implementation-status.md) · [OPERATIONS.md](./OPERATIONS.md).
 
 ## Verificação ambiente dev (jun/2026)
 
@@ -116,7 +116,7 @@ print('total instancias:', d.get('total'), 'items:', len(d.get('items') or []))
 
 1. `git pull` + rebuild `transformometro-api` (commit com import multi-unidade + calculador).
 2. **Export** backup: `python scripts/import_cadastro_json.py export -o backup-pre-consolidacao.json`.
-3. Aplicar bundle consolidado (edição manual conforme [json-backup.md](../../../transformometro-api/docs/json-backup.md)).
+3. Aplicar bundle consolidado (edição manual conforme [json-backup.md](../../../transformometro-api/docs/operations/json-backup.md)).
 4. `preview` + `apply --mode replace --yes`.
 5. Recalc / smoke dashboard (3 visões, instâncias multi-unidade no MFE).
 
@@ -164,17 +164,17 @@ export TOKEN="..." BASE_URL="https://www.minhadelpi.com.br"
 - [ARCHITECTURE.md](./ARCHITECTURE.md)
 - [ROADMAP.md](./ROADMAP.md)
 - [OPERATIONS.md](./OPERATIONS.md)
-- [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md)
+- [regras-de-calculo.md](../../../transformometro-api/docs/domain/regras-de-calculo.md)
 - [PLAYBOOK-19-diagramas-processo-revisao-escopo.md](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md)
-- [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md)
-- [adr-diagramas-processo.md](../../../transformometro-api/docs/adr-diagramas-processo.md)
+- [playbook-19-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-19-implementation-status.md)
+- [adr-diagramas-processo.md](../../../transformometro-api/docs/architecture/adr-diagramas-processo.md)
 - [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md)
-- [playbook-20-implementation-status.md](../../../transformometro-api/docs/playbook-20-implementation-status.md)
+- [playbook-20-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-20-implementation-status.md)
 - [PLAYBOOK-21-matriz-impacto-esforco-revisao.md](./PLAYBOOK-21-matriz-impacto-esforco-revisao.md)
-- [playbook-21-implementation-status.md](../../../transformometro-api/docs/playbook-21-implementation-status.md)
+- [playbook-21-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-21-implementation-status.md)
 - [PLAYBOOK-23-decomposicao-composicao-macro-data.md](./PLAYBOOK-23-decomposicao-composicao-macro-data.md)
 - [ATAS-TRANSFORMA-MAIS.md](./ATAS-TRANSFORMA-MAIS.md)
-- [atas.md (MFE)](../../../plugins/transformometro/docs/atas.md)
-- [atas-kimi.md (API)](../../../transformometro-api/docs/atas-kimi.md)
+- [atas.md (MFE)](../../../plugins/transformometro/docs/meeting-minutes.md)
+- [atas-kimi.md (API)](../../../transformometro-api/docs/meeting-minutes/kimi.md)
 - [TUTORIAL-USUARIO.md](./TUTORIAL-USUARIO.md)
-- [DEPLOYMENT.md](../../../transformometro-api/docs/DEPLOYMENT.md)
+- [DEPLOYMENT.md](../../../transformometro-api/docs/operations/DEPLOYMENT.md)

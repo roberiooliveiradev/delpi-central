@@ -2,7 +2,7 @@
 
 **Uso:** anexar à base de conhecimento / RAG do agente Transformômetro ou colar trechos no `system_prompt`.
 
-**Provider:** `transformometro-api` · **Base:** `/apps/transformometro-api` · **OpenAPI (chat):** `transformometro-api/docs/openapi-snapshot-chat.json`
+**Provider:** `transformometro-api` · **Base:** `/apps/transformometro-api` · **OpenAPI (chat):** `transformometro-api/docs/chat/openapi-snapshot-chat.json`
 
 Após mudanças nas rotas snapshot, rode `scripts/sync_transformometro_openapi.py` e reindexe este documento.
 
@@ -84,7 +84,7 @@ Na UI **Actions do agente** ou via API `POST /chat/agents/{id}/providers/create`
   "allowRead": true,
   "allowWrite": false,
   "allowAdmin": false,
-  "schema": "<conteúdo de transformometro-api/docs/openapi-snapshot-chat.json>"
+  "schema": "<conteúdo de transformometro-api/docs/chat/openapi-snapshot-chat.json>"
 }
 ```
 

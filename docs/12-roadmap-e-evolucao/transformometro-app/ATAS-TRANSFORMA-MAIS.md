@@ -7,8 +7,8 @@ Documentação de produto e implementação do módulo de **atas oficiais Transf
 | Documento | Conteúdo |
 |-----------|----------|
 | **Este arquivo** | Visão, fluxo, RBAC, pacotes, status |
-| [plugins/transformometro/docs/atas.md](../../../plugins/transformometro/docs/atas.md) | MFE — rotas, UI, port de IA, marca visual |
-| [transformometro-api/docs/atas-kimi.md](../../../transformometro-api/docs/atas-kimi.md) | API HTTP, Kimi/env, smoke, troubleshooting |
+| [plugins/transformometro/docs/meeting-minutes.md](../../../plugins/transformometro/docs/meeting-minutes.md) | MFE — rotas, UI, port de IA, marca visual |
+| [transformometro-api/docs/meeting-minutes/kimi.md](../../../transformometro-api/docs/meeting-minutes/kimi.md) | API HTTP, Kimi/env, smoke, troubleshooting |
 | [plugins/public-hub/README.md](../../../plugins/public-hub/README.md) | Magic link `/p/transformometro/sign/{token}` |
 | [infra/README-ambiente.md](../../../infra/README-ambiente.md) § Atas | Volumes + Graph + notificações |
 
@@ -133,7 +133,7 @@ A resposta do Kimi usa as mesmas chaves em snake_case; o MFE mapeia para camelCa
 ./infra/scripts/up-dev-sequential.sh --fase mfe --build transformometro
 ```
 
-Produção: `./infra/scripts/up-prod-sequential.sh` com `--build` nos mesmos serviços. Configurar `KIMI_*` em `infra/.env` antes do recreate da API — ver [atas-kimi.md](../../../transformometro-api/docs/atas-kimi.md).
+Produção: `./infra/scripts/up-prod-sequential.sh` com `--build` nos mesmos serviços. Configurar `KIMI_*` em `infra/.env` antes do recreate da API — ver [atas-kimi.md](../../../transformometro-api/docs/meeting-minutes/kimi.md).
 
 ---
 

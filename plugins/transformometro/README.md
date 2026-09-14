@@ -39,7 +39,7 @@ Módulo de atas oficiais (CRUD, assinatura eletrônica manuscrita, PDF, geraçã
 |-----|----------|
 | [docs/atas.md](./docs/atas.md) | Implementação MFE (rotas, port de IA, marca visual) |
 | [ATAS-TRANSFORMA-MAIS.md](../../docs/12-roadmap-e-evolucao/transformometro-app/ATAS-TRANSFORMA-MAIS.md) | Visão de produto e fluxo |
-| [atas-kimi.md](../../transformometro-api/docs/atas-kimi.md) | API + configuração `KIMI_*` |
+| [atas-kimi.md](../../transformometro-api/docs/meeting-minutes/kimi.md) | API + configuração `KIMI_*` |
 
 **API base:** `/apps/transformometro-api/transformometro/meeting-minutes` (JWT).  
 **Permissões:** `transformometro.meeting-minutes.view` / `.manage` / `.sign`.  
@@ -69,7 +69,7 @@ Preview na seção `#diagrama` é somente leitura (com «Tela cheia» ampliada).
 
 Editor: React Flow (`FlowchartEditor`, lazy) — BPMN-lite, swimlanes, templates, auto-layout, export PNG.
 
-Documentação: [PLAYBOOK-19](../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-19-diagramas-processo-revisao-escopo.md) · [status implementação](../../transformometro-api/docs/playbook-19-implementation-status.md).
+Documentação: [PLAYBOOK-19](../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-19-diagramas-processo-revisao-escopo.md) · [status implementação](../../transformometro-api/docs/archive/playbooks/playbook-19-implementation-status.md).
 
 ## Desenvolvimento
 

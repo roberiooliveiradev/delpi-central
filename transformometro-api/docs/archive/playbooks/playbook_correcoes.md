@@ -868,7 +868,7 @@ diferenca_liquida = 0,00 ou diferença mínima de centavos
 
 ## 5. O que ainda falta avaliar, verificar e corrigir
 
-> **Atualização (implementado no código):** itens 5.1–5.10 implementados ou documentados. Regras oficiais em [regras-de-calculo.md](regras-de-calculo.md). Após deploy, rodar recálculo do cache (seção 3.6).
+> **Atualização (implementado no código):** itens 5.1–5.10 implementados ou documentados. Regras oficiais em [../../domain/regras-de-calculo.md](../../domain/regras-de-calculo.md). Após deploy, rodar recálculo do cache (seção 3.6).
 
 ## 5.1. Economia diária e ranking “Top economia diária” ✅
 
@@ -1274,7 +1274,7 @@ Atualizar documentação com as novas regras:
 Criar ou atualizar:
 
 ```text
-docs/transformometro/regras-de-calculo.md
+transformometro-api/docs/domain/../../domain/regras-de-calculo.md
 ```
 
 ou dentro da documentação existente do plugin.

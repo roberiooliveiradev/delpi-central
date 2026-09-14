@@ -1,8 +1,8 @@
 # ADR — Decomposição de processo (Playbook 20)
 
 **Status:** proposto (jul/2026)  
-**Contexto:** [`PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md`](../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md)  
-**Status técnico:** [`playbook-20-implementation-status.md`](./playbook-20-implementation-status.md)
+**Contexto:** [`PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md`](../../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md)  
+**Status técnico:** [`playbook-20-implementation-status.md`](../archive/playbooks/playbook-20-implementation-status.md)
 
 ## Decisão
 
@@ -25,8 +25,8 @@
 
 ## Schemas
 
-- [`decomposition_tree_v1.schema.json`](./decomposition_tree_v1.schema.json)
-- [`decomposition_overlay_v1.schema.json`](./decomposition_overlay_v1.schema.json)
+- [`decomposition_tree_v1.schema.json`](../schemas/decomposition_tree_v1.schema.json)
+- [`decomposition_overlay_v1.schema.json`](../schemas/decomposition_overlay_v1.schema.json)
 
 Validação runtime prevista: `tm_app/domain/decomposition/decomposition_tree_v1.py`.
 

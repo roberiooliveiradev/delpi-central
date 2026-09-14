@@ -98,7 +98,7 @@ Não usar quando:
 | `operationId` | `gpt_*` em snake_case inglês |
 | Paths | kebab-case inglês |
 | Secret do client | **somente** GPT Editor / cofre — **nunca** Git |
-| OpenAPI versionado | `docs/openapi-gpt-actions.json` no repo da API dona |
+| OpenAPI versionado | `docs/gpt-actions/openapi-gpt-actions.json` (ou equivalente) no repo da API dona |
 
 Produto de referência: `transformometro-api` (`chatgpt-transformometro`).
 
@@ -291,10 +291,10 @@ Nunca editar código “só no container” de produção: alterar local → Git
 | Facade + builder + dispatch | `transformometro-api/tm_app/application/gpt_actions/` |
 | Guia + pacote guiado | `registration_guide.py`, `improvement_package_service.py` |
 | Rotas | `transformometro-api/tm_app/interface/http/routes/gpt_actions_routes.py` |
-| OpenAPI versionado | `transformometro-api/docs/openapi-gpt-actions.json` (**12** ops) |
-| Instructions do especialista | [`chatgpt-specialist-instructions.md`](../../transformometro-api/docs/chatgpt-specialist-instructions.md) |
-| Doc produto | [`chatgpt-custom-gpt-actions.md`](../../transformometro-api/docs/chatgpt-custom-gpt-actions.md) |
-| Checklist GPT Builder | [`chatgpt-gpt-builder-go-live.md`](../../transformometro-api/docs/chatgpt-gpt-builder-go-live.md) |
+| OpenAPI versionado | `transformometro-api/docs/gpt-actions/openapi-gpt-actions.json` (**12** ops) |
+| Instructions do especialista | [`specialist-instructions.md`](../../transformometro-api/docs/gpt-actions/specialist-instructions.md) |
+| Doc produto | [`custom-gpt-actions.md`](../../transformometro-api/docs/gpt-actions/custom-gpt-actions.md) |
+| Checklist GPT Builder | [`gpt-builder-go-live.md`](../../transformometro-api/docs/gpt-actions/gpt-builder-go-live.md) |
 | Keycloak §10b | [`configurar-keycloak.md`](../10-guias-operacionais/configurar-keycloak.md) |
 | Evidência ops | [`OPERATIONS.md`](../12-roadmap-e-evolucao/transformometro-app/OPERATIONS.md) |
 | Client Keycloak | `chatgpt-transformometro` |

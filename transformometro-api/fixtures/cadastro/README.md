@@ -50,7 +50,7 @@ Modo `merge`: upsert por PK; útil para sincronizar deltas sem truncate.
 
 ## Consolidação multi-unidade (jul/2026)
 
-Para bases com processos duplicados por filial, ver runbook completo em [docs/json-backup.md](../../docs/json-backup.md) (seção **Consolidação cadastral manual**). Resumo: export → merge manual no JSON (instância `todas_filiais_ativas` ou 2 instâncias se divergente) → `apply --mode replace`.
+Para bases com processos duplicados por filial, ver runbook completo em [json-backup.md](../../docs/operations/json-backup.md) (seção **Consolidação cadastral manual**). Resumo: export → merge manual no JSON (instância `todas_filiais_ativas` ou 2 instâncias se divergente) → `apply --mode replace`.
 
 ## Git
 
@@ -58,4 +58,4 @@ Arquivos `*.json` nesta pasta estão no `.gitignore` (dados operacionais). Versi
 
 ## Schema
 
-`schema_version: "1.1"` — ver [docs/json-backup.md](../../docs/json-backup.md).
+`schema_version: "1.1"` — ver [json-backup.md](../../docs/operations/json-backup.md).

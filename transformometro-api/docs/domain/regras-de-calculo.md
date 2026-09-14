@@ -1,6 +1,6 @@
 # Regras de cálculo — Transformômetro
 
-Documento oficial alinhado ao [playbook de correções](playbook_correcoes.md). A implementação canônica está em **`tm_app/domain/calc_rules.py`**; `DashboardCalculatorService` e `DashboardLiveService` apenas delegam. O cache `transformometro.dashboard_calculos` deve refletir as mesmas regras do cálculo em tempo real.
+Documento oficial alinhado ao [playbook de correções](../archive/playbooks/playbook_correcoes.md). A implementação canônica está em **`tm_app/domain/calc_rules.py`**; `DashboardCalculatorService` e `DashboardLiveService` apenas delegam. O cache `transformometro.dashboard_calculos` deve refletir as mesmas regras do cálculo em tempo real.
 
 ## Instância = ambiente isolado; processo = soma das instâncias
 
@@ -347,4 +347,4 @@ print(DashboardRecalcService().recalculate())
 PY'
 ```
 
-Validação SQL: ver seção 4 do [playbook_correcoes.md](playbook_correcoes.md).
+Validação SQL: ver seção 4 do [playbook_correcoes.md](../archive/playbooks/playbook_correcoes.md).

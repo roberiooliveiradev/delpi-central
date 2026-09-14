@@ -1,6 +1,6 @@
 # GPT Builder — checklist go-live (Custom GPT Transformômetro)
 
-> Padrão transversal (outros produtos): [padrao-custom-gpt-actions-oauth.md](../../docs/11-padroes-de-desenvolvimento/padrao-custom-gpt-actions-oauth.md)
+> Padrão transversal (outros produtos): [padrao-custom-gpt-actions-oauth.md](../../../docs/11-padroes-de-desenvolvimento/padrao-custom-gpt-actions-oauth.md)
 
 Valores prontos para colar no ChatGPT GPT Editor. O **client secret** fica só no Keycloak → Credentials — **nunca** no Git.
 
@@ -28,7 +28,7 @@ Produção:
 https://<host-publico>/apps/transformometro-api/transformometro/gpt-actions/v1/openapi.json
 ```
 
-Alternativa: colar `docs/openapi-gpt-actions.json`.
+Alternativa: colar `docs/gpt-actions/openapi-gpt-actions.json`.
 
 Esperado: **12** operations (`gpt_analyze`, `gpt_get_catalog`, `gpt_commit_improvement_package`, …). O GET `openapi.json` não aparece como Action.
 
@@ -60,7 +60,7 @@ Produção: trocar `http://localhost` pelo `PUBLIC_BASE_URL` / host público do 
 
 ## 3. Instructions
 
-Usar o playbook completo: [`chatgpt-specialist-instructions.md`](./chatgpt-specialist-instructions.md) (bloco *Instructions (colar no GPT Builder)*).
+Usar o playbook completo: [`specialist-instructions.md`](./specialist-instructions.md) (bloco *Instructions (colar no GPT Builder)*).
 
 Resumo operacional:
 
@@ -86,4 +86,4 @@ https://chat.openai.com/aip/g-YOUR-GPT-ID/oauth/callback
 - Após login, `gpt_analyze` / `gpt_get_catalog` respondem sem `invalid_token` / `Invalid redirect URI`
 - `gpt_get_catalog` devolve `registration_guide`; dry_run do pacote lista `missing` quando incompleto
 
-Detalhes: [`chatgpt-custom-gpt-actions.md`](./chatgpt-custom-gpt-actions.md).
+Detalhes: [`custom-gpt-actions.md`](./custom-gpt-actions.md).

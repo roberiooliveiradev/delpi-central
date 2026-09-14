@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gera docs/openapi-gpt-actions.json a partir do builder canônico.
+"""Gera docs/gpt-actions/openapi-gpt-actions.json a partir do builder canônico.
 
 Uso:
   PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
@@ -25,7 +25,7 @@ from tm_app.application.gpt_actions.openapi_builder import (  # noqa: E402
 
 
 def main() -> int:
-    out = API_ROOT / "docs" / "openapi-gpt-actions.json"
+    out = API_ROOT / "docs" / "gpt-actions" / "openapi-gpt-actions.json"
     doc = write_gpt_actions_openapi(out)
     total = count_operations(doc)
     print(f"Wrote {out} with {total} operations")

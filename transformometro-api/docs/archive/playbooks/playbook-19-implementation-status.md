@@ -1,6 +1,6 @@
 # Playbook 19 — status de implementação (API + MFE)
 
-Referência: [`docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-19-diagramas-processo-revisao-escopo.md`](../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-19-diagramas-processo-revisao-escopo.md)
+Referência: [`docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-19-diagramas-processo-revisao-escopo.md`](../../../../docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-19-diagramas-processo-revisao-escopo.md)
 
 Última atualização: **jul/2026**
 
@@ -27,7 +27,7 @@ Referência: [`docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-19-diagra
 | V027 | `instancia_diagrama_escopo` — `node_ids`, `inherit_all` |
 | V028 | `revisao_diagrama_overlays` — overlay `flowchart_overlay_v1` |
 
-Ver [migrations/README.md](../migrations/README.md).
+Ver [migrations/README.md](../../../migrations/README.md).
 
 ## Módulos canônicos (API)
 
@@ -77,7 +77,7 @@ Validação API: `lanes`, `lane_id`, `routing` (`straight` \| `step` \| `smooths
 
 ## Diff de diagrama e referência de revisão (V035)
 
-Diffs baseline/melhoria e overlay usam `find_reference_for_revisao()` — mesma regra do cálculo (`revisao_referencia_id` ou fallback baseline da instância). Ver [regras-de-calculo.md](./regras-de-calculo.md) § referência de comparação.
+Diffs baseline/melhoria e overlay usam `find_reference_for_revisao()` — mesma regra do cálculo (`revisao_referencia_id` ou fallback baseline da instância). Ver [../../domain/regras-de-calculo.md](../../domain/regras-de-calculo.md) § referência de comparação.
 
 ## Testes
 
@@ -109,7 +109,7 @@ Diffs baseline/melhoria e overlay usam `find_reference_for_revisao()` — mesma 
 
 ## Referências
 
-- [adr-diagramas-processo.md](./adr-diagramas-processo.md)
-- [flowchart_v1.schema.json](./flowchart_v1.schema.json)
-- [json-backup.md](./json-backup.md) — bundles de diagrama
-- [status-atual.md](../../docs/12-roadmap-e-evolucao/transformometro-app/status-atual.md)
+- [adr-diagramas-processo.md](../../architecture/adr-diagramas-processo.md)
+- [flowchart_v1.schema.json](../../schemas/flowchart_v1.schema.json)
+- [../../operations/json-backup.md](../../operations/json-backup.md) — bundles de diagrama
+- [status-atual.md](../../../../docs/12-roadmap-e-evolucao/transformometro-app/status-atual.md)

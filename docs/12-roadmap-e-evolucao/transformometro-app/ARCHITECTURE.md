@@ -89,7 +89,7 @@ processo_instancias (1) ── instancia_diagrama_escopo (node_ids | inherit_all
 revisoes (1) ── revisao_diagrama_overlays (flowchart_overlay_v1)
 ```
 
-Merge para UI: `RevisaoDiagramMergeService` → macro filtrado pelo escopo + overrides da revisão → Mermaid via `DiagramMermaidExportService`. Detalhe: [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md).
+Merge para UI: `RevisaoDiagramMergeService` → macro filtrado pelo escopo + overrides da revisão → Mermaid via `DiagramMermaidExportService`. Detalhe: [playbook-19-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-19-implementation-status.md).
 
 ## Serviços canônicos (pós–Playbook 18)
 
@@ -249,7 +249,7 @@ Alinhada à [ESPECIFICACAO.md §15](./ESPECIFICACAO.md), com convenção Delpi:
 | Sistema | `GET /health` |
 | Integrações S2S | `GET /integrations/engineering/transforma-mais/*` — **`id` = `instancia_id`** |
 
-**Contrato público Transforma+** (SI, dashboard-engineering): `GET /engineering/transforma-mais/*` na **api-delpi** — ver [`transformometro-api/docs/integration-contracts.md`](../../../transformometro-api/docs/integration-contracts.md).
+**Contrato público Transforma+** (SI, dashboard-engineering): `GET /engineering/transforma-mais/*` na **api-delpi** — ver [`transformometro-api/docs/architecture/integration-contracts.md`](../../../transformometro-api/docs/architecture/integration-contracts.md).
 
 **URL interna (Docker):** `http://transformometro-api:8000/transformometro/...`  
 **URL pública (nginx):** `/apps/transformometro-api/transformometro/...`
@@ -327,7 +327,7 @@ Espelhar `strategic-indicators` em `infra/docker-compose.dev.yml`:
 - Serviço `transformometro-api` (porta interna 8000, `TM_API_ROOT_PATH`)
 - Serviço `transformometro` (Vite dev / build estático)
 - Traefik/nginx: `/apps/transformometro` e `/apps/transformometro-api`
-- Variáveis: `PLUGINS_DB_*`, `TM_RUN_MIGRATIONS_ON_STARTUP` (ver [DEPLOYMENT.md](../../../transformometro-api/docs/DEPLOYMENT.md))
+- Variáveis: `PLUGINS_DB_*`, `TM_RUN_MIGRATIONS_ON_STARTUP` (ver [DEPLOYMENT.md](../../../transformometro-api/docs/operations/DEPLOYMENT.md))
 - Registro Core API: `POST /core-api/admin/apps/register` com manifesto
 
 ## Auditoria

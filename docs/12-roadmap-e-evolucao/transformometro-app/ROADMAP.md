@@ -58,7 +58,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | Entrega | Detalhe | Status |
 |---------|---------|--------|
 | Dados em produção | Migração via backup JSON (`import_cadastro_json.py --apply --replace`) | ✅ |
-| Documentação | [OPERATIONS.md](./OPERATIONS.md), [DEPLOYMENT.md](../../../transformometro-api/docs/DEPLOYMENT.md), [status-atual.md](./status-atual.md) | ✅ |
+| Documentação | [OPERATIONS.md](./OPERATIONS.md), [DEPLOYMENT.md](../../../transformometro-api/docs/operations/DEPLOYMENT.md), [status-atual.md](./status-atual.md) | ✅ |
 | Manifesto + script registro | `register-manifest.sh`, permissões completas | ✅ repo |
 | Registro RBAC no portal | Atribuir `transformometro.*` às roles/grupos na **Core API** | Pendente (manual) |
 | Desativar escrita na planilha | somente leitura ou desligada | Pendente (Google) |
@@ -107,7 +107,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 
 **Objetivo:** processo-mestre + instâncias `(filial × setor)`, PK UUID, rateio híbrido, visões consolidado/filial/dept, RBAC filial — sem quebrar contrato **api-delpi** Transforma+.
 
-Plano: [PLAYBOOK-18-instancias-filial-setor-escopo.md](./PLAYBOOK-18-instancias-filial-setor-escopo.md) · status: [playbook-18-implementation-status.md](../../../transformometro-api/docs/playbook-18-implementation-status.md).
+Plano: [PLAYBOOK-18-instancias-filial-setor-escopo.md](./PLAYBOOK-18-instancias-filial-setor-escopo.md) · status: [playbook-18-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-18-implementation-status.md).
 
 | Sprint | Entrega | Status |
 |--------|---------|--------|
@@ -128,7 +128,7 @@ Plano: [PLAYBOOK-18-instancias-filial-setor-escopo.md](./PLAYBOOK-18-instancias-
 
 **Objetivo:** diagrama-macro no processo, escopo por instância, overlay as-is/to-be por revisão — documentação visual estruturada (não BPMN XML).
 
-Plano: [PLAYBOOK-19-diagramas-processo-revisao-escopo.md](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) · status: [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md).
+Plano: [PLAYBOOK-19-diagramas-processo-revisao-escopo.md](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) · status: [playbook-19-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-19-implementation-status.md).
 
 | Sprint | Entrega | Status |
 |--------|---------|--------|
@@ -146,7 +146,7 @@ Plano: [PLAYBOOK-19-diagramas-processo-revisao-escopo.md](./PLAYBOOK-19-diagrama
 
 **Objetivo:** árvore WBS no processo-mestre (processo-chave → tarefa → sub-tarefa), export tabular no formato planilha operacional, escopo/overlay por melhoria/revisão, vínculo com diagrama macro (Playbook 19).
 
-Plano: [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md) · status: [playbook-20-implementation-status.md](../../../transformometro-api/docs/playbook-20-implementation-status.md).
+Plano: [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md) · status: [playbook-20-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-20-implementation-status.md).
 
 | Sprint | Entrega | Status |
 |--------|---------|--------|

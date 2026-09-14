@@ -5,7 +5,7 @@ Uso (container minha-delpi-ai-api):
 
   PYTHONPATH=/app python scripts/sync_transformometro_openapi.py
   PYTHONPATH=/app python scripts/sync_transformometro_openapi.py \\
-      --from-file /repo/transformometro-api/docs/openapi-snapshot-chat.json
+      --from-file /repo/transformometro-api/docs/chat/openapi-snapshot-chat.json
 
 Pré-requisito: provider `transformometro-api` cadastrado no agente com `authMode=user_token`
 e `baseUrl` apontando para `/apps/transformometro-api`.
@@ -31,6 +31,7 @@ DEFAULT_SCHEMA_FILE = (
     Path(__file__).resolve().parents[2]
     / "transformometro-api"
     / "docs"
+    / "chat"
     / "openapi-snapshot-chat.json"
 )
 DEFAULT_CATALOG_PATH = (
@@ -75,7 +76,7 @@ def main() -> int:
         "--from-file",
         type=Path,
         default=DEFAULT_SCHEMA_FILE,
-        help="Schema OpenAPI local (default: transformometro-api/docs/openapi-snapshot-chat.json).",
+        help="Schema OpenAPI local (default: transformometro-api/docs/chat/openapi-snapshot-chat.json).",
     )
     parser.add_argument(
         "--skip-import",
