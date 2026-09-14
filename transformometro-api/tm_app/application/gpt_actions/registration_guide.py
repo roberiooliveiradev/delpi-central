@@ -191,6 +191,9 @@ def build_registration_guide() -> dict[str, Any]:
                     "Need filial_id OR todas_filiais_ativas=true.",
                     "setor_ids must have at least one department.",
                     "Create body also needs processo_id in data.",
+                    "Corporate/all-units instance: todas_filiais_ativas=true and omit filial_id "
+                    "(use gpt_create_record entity=instance; improvement package still needs "
+                    "baseline or scenario for revisions).",
                 ],
             },
             "revision": {

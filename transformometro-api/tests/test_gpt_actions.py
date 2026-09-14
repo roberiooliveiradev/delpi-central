@@ -2019,6 +2019,17 @@ def test_openapi_all_write_actions_have_typed_examples():
         "post"
     ]["requestBody"]["content"]["application/json"]["examples"]
     assert "instance_create" in create_examples
+    assert "instance_create_all_units" in create_examples
+    all_units = create_examples["instance_create_all_units"]["value"]["data"]
+    assert all_units["todas_filiais_ativas"] is True
+    assert "filial_id" not in all_units
+    data_props = schemas["GptRecordBody"]["properties"]["data"]["properties"]
+    assert "todas_filiais_ativas" in data_props
+    assert data_props["todas_filiais_ativas"]["type"] == "boolean"
+    create_desc = doc["paths"]["/transformometro/gpt-actions/v1/records/{entity}"]["post"][
+        "description"
+    ]
+    assert "todas_filiais_ativas" in create_desc
     assert "revision_create" in create_examples
     assert "measurement_upsert" in create_examples
     assert "investment_create" in create_examples
@@ -2040,6 +2051,58 @@ def test_openapi_all_write_actions_have_typed_examples():
                 _assert_object_schemas_have_properties(value, f"{path}[{idx}]")
 
     _assert_object_schemas_have_properties(doc)
+
+
+def test_create_instance_todas_filiais_ativas_reaches_domain():
+    """PROC-0008 class: corporate instance must accept todas_filiais_ativas without filial_id."""
+    from tm_app.application.gpt_actions.dispatch_service import GptActionsDispatchService
+
+    dispatch = GptActionsDispatchService()
+    captured: dict = {}
+
+    with (
+        patch.object(dispatch, "_raise_http_err"),
+        patch.object(dispatch, "_audit"),
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.ProcessoRepository"
+        ) as proc_cls,
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.ProcessoInstanciaRepository"
+        ) as repo_cls,
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.check_processo_manage_access",
+            return_value=None,
+        ),
+    ):
+        proc_cls.return_value.get.return_value = {
+            "processo_id": "801f161a-71e6-4591-865c-eff294525420"
+        }
+        repo = repo_cls.return_value
+
+        def _create(payload):
+            captured["payload"] = dict(payload)
+            return {
+                "instancia_id": "i-corp",
+                **payload,
+            }
+
+        repo.create.side_effect = _create
+        row, _msg, status = dispatch.create_record(
+            MagicMock(),
+            "instance",
+            {
+                "data": {
+                    "processo_id": "801f161a-71e6-4591-865c-eff294525420",
+                    "todas_filiais_ativas": True,
+                    "setor_ids": ["293ebdef-16f5-4691-bac0-627f8e55c7bf"],
+                    "resumo_melhoria": "Comercial todas filiais",
+                }
+            },
+        )
+    assert status == 201
+    assert captured["payload"]["todas_filiais_ativas"] is True
+    assert captured["payload"].get("filial_id") in (None, "")
+    assert row["instancia_id"] == "i-corp"
 
 
 def test_openapi_validate_non_consequential_commit_consequential():

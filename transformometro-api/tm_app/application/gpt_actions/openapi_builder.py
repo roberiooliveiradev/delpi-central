@@ -139,6 +139,21 @@ def _example_instance_create() -> dict[str, Any]:
     }
 
 
+def _example_instance_create_all_units() -> dict[str, Any]:
+    """Corporate instance: all active units, no filial_id."""
+    return {
+        "data": {
+            "processo_id": "<processo_uuid>",
+            "todas_filiais_ativas": True,
+            "setor_ids": ["<setor_id_or_codigo>"],
+            "resumo_melhoria": "Melhoria corporativa (todas as filiais)",
+            "fase_melhoria": "planejado",
+            "prioridade": "media",
+            "status_instancia": "ativo",
+        }
+    }
+
+
 def _example_revision_create() -> dict[str, Any]:
     return {
         "data": {
@@ -193,8 +208,12 @@ def _record_body_media(*, primary: dict[str, Any] | None = None) -> dict[str, An
                 "value": _example_process_create(),
             },
             "instance_create": {
-                "summary": "entity=instance create",
+                "summary": "entity=instance create (one filial)",
                 "value": _example_instance_create(),
+            },
+            "instance_create_all_units": {
+                "summary": "entity=instance create (todas_filiais_ativas)",
+                "value": _example_instance_create_all_units(),
             },
             "revision_create": {
                 "summary": "entity=revision create",
@@ -442,7 +461,10 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "summary": "Create a Transformômetro record",
                 "description": (
                     "Body MUST be {data:{...}}. entity=process requires "
-                    "data.nome_processo + data.status_processo. Fields go inside data, not root."
+                    "data.nome_processo + data.status_processo. "
+                    "entity=instance requires data.processo_id + data.setor_ids and "
+                    "(data.filial_id OR data.todas_filiais_ativas=true). "
+                    "Fields go inside data, not root."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
@@ -816,11 +838,37 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                                 },
                                 "instancia_id": {"type": "string"},
                                 "revisao_id": {"type": "string"},
-                                "filial_id": {"type": "string"},
+                                "filial_id": {
+                                    "type": "string",
+                                    "description": (
+                                        "Required for entity=instance unless "
+                                        "todas_filiais_ativas=true (omit filial_id then)."
+                                    ),
+                                },
+                                "todas_filiais_ativas": {
+                                    "type": "boolean",
+                                    "description": (
+                                        "When true, instance applies to all active units; "
+                                        "do not send filial_id. Required alternative to "
+                                        "filial_id for corporate instances."
+                                    ),
+                                    "default": False,
+                                },
                                 "setor_ids": {
                                     "type": "array",
                                     "items": {"type": "string"},
+                                    "description": (
+                                        "Required for entity=instance (at least one)."
+                                    ),
                                 },
+                                "setor_id": {
+                                    "type": "string",
+                                    "description": "Legacy single-department shortcut.",
+                                },
+                                "status_instancia": {"type": "string"},
+                                "rotulo_instancia": {"type": "string"},
+                                "responsavel_local": {"type": "string"},
+                                "data_alvo_go_live": {"type": "string"},
                                 "resumo_melhoria": {"type": "string"},
                                 "fase_melhoria": {"type": "string"},
                                 "prioridade": {"type": "string"},
