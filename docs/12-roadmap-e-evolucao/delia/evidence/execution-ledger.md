@@ -9,13 +9,15 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** **C0.S0 — factual Platform/Media/Device/Biometric/External/Automation/Intelligence-Platform/OT rebaseline**
+**Next:** **C0.S0 — factual Platform/Media/Device/Biometric/External/Automation/Scheduling/Intelligence-Platform/OT rebaseline**
 
 ## 1. Ledger rule
 
 Este arquivo registra estado/evidence de execução. Mudanças somente documentais não avançam fase runtime.
 
 Um status `PASS` só é válido para o SHA/config/evidence explicitamente avaliados. Ausência de prova obrigatória mantém `PENDING | INCONCLUSIVE | TEST_NOT_RUN | STALE_EVIDENCE`, nunca `PASS`.
+
+Estado factual de inventory usa `PROVEN | TO_INVENTORY`; planejamento usa `PLANNED | TARGET`. `NOT_PROVEN` não é estado canônico.
 
 ## 2. Canonical phase status
 
@@ -26,14 +28,14 @@ Um status `PASS` só é válido para o SHA/config/evidence explicitamente avalia
 | C2 Portal + Operational Context + Commands | LOCKED | — | C1 independence gate |
 | C3 Intelligence + Capability Foundations | LOCKED | — | C1+C2 foundations |
 | C4 Governed Reads + Graph/Semantics/Analysis/Predictive Discovery | LOCKED | — | C3 foundations |
-| C5 Governed Writes + Executors + Durable Work + Artifacts/Prescriptive Prepare | LOCKED | — | C4 reads/evidence |
+| C5 Governed Writes + Executors + Durable/Recurring Work + Artifacts/Prescriptive Prepare | LOCKED | — | C4 reads/evidence |
 | C6 Product Work + Process Intelligence + Control Tower + Meeting/Frontline + Ecosystem | LOCKED | — | C5 governed-write/durable foundation |
 | C7 Advanced Autonomy + Twin/Edge/Marketplace + Optimization + Scale/Rollout | LOCKED | — | C0–C6 gates |
 
 ## 3. C0 sequence
 
 ```text
-C0.S0 factual platform/monorepo/media/device/biometric/external/automation/intelligence-platform/OT inventory
+C0.S0 factual platform/monorepo/media/device/biometric/external/automation/scheduling/intelligence-platform/OT inventory
 → C0.S1 standalone boundary/names/physical ownership
 → C0.S2 authorities/bounded contexts
 → C0.S3 shared primitives/ref decisions
@@ -65,6 +67,15 @@ DURABLE_WORKFLOW = SINGLE_CANONICAL_DÉLIA_WORK_RUNTIME_TARGET
 
 DÉLIA_SURFACES = GLOBAL | WORKSPACE | MEETING | FRONTLINE | FUTURE_TEAMS_SURFACE
 BACKGROUND_OPERATION = WATCH_WORKFLOW_GOVERNED
+RECURRING_GOVERNED_WORK = TARGET_FIRST_CLASS_CAPABILITY
+RECURRING_WORK_DEFINITION_OWNER = DÉLIA_WORK_TARGET
+PHYSICAL_SCHEDULER_OWNER = TO_INVENTORY_C0
+SCHEDULE_EQUALS_PERMISSION = FALSE
+STORED_SCHEDULE_INTENT_EQUALS_ETERNAL_AUTHORIZATION = FALSE
+RECURRING_WORK_RUNTIME = C5_GOVERNED_TARGET
+RECURRING_WORK_ADMIN_UX = C6_TARGET
+RECURRING_WORK_REQUIRES_L5 = FALSE
+RECURRING_WORK_EQUALS_WATCH_AUTONOMOUS_ACT = FALSE
 
 MULTIMODAL_TARGET = TEXT | VOICE | IMAGE | DOCUMENT | VIDEO | SCREEN
 BIOMETRIC_IDENTITY = GOVERNED_OPTIONAL_CAPABILITY
@@ -134,6 +145,9 @@ All events require LLM                          = FORBIDDEN_DESIGN
 One global DÉLIA L5                             = FORBIDDEN
 Technical executor success means process done   = FORBIDDEN
 Event payload directly executes write           = FORBIDDEN
+Schedule/timer implies permission               = FORBIDDEN
+Recurring Work requires C7/L5                   = FALSE; C5_L4_BOUNDED_ALLOWED_WHEN_GATED
+Recurring Work is Watch autonomous ACT          = FALSE
 All ACT blocked until C7                        = SUPERSEDED_BY_C5_GOVERNED_ACT_C7_ADVANCED_AUTONOMY
 ```
 
@@ -151,25 +165,26 @@ All ACT blocked until C7                        = SUPERSEDED_BY_C5_GOVERNED_ACT_
 | 2026-09-13 | Event-Driven Autonomous Operations + Automation & Execution Hub (`57`, through CP-248) | PLAN_ONLY; docs only |
 | 2026-09-13 | Process Intelligence through AI Model Lifecycle/Marketplace (`58–66`, through CP-310) | PLAN_ONLY; docs only |
 | 2026-09-13 | product naming frozen internally as DÉLIA; technical namespace remains temporary | PLAN_ONLY; docs only |
+| 2026-09-14 | Recurring Governed Work formalized as first-class target (`CP-311–CP-316`), preserving physical scheduler as C0 inventory boundary | PLAN_ONLY; docs only |
 
 Actual `HEAD_BEFORE` for runtime is captured at C0.S0. Documentation-only commits do not advance execution status.
 
 ## 7. Canonical phase mapping
 
 ```text
-C0 → factual inventory + authority/architecture/privacy/security/data/automation/AI/OT freeze
+C0 → factual inventory + authority/architecture/privacy/security/data/automation/scheduling/AI/OT freeze
 C1 → standalone API/MFE/Manifest/Gateway/Compose/Portal bootstrap
 C2 → Workspace/Operational Context + Platform Commands
 C3 → Intelligence Core + capability foundations
 C4 → governed reads + Graph/Semantics/Analysis/Predictive discovery
-C5 → Decision Gates + governed writes + executor contracts + AutomationExecution + Outcome verification + Durable Workflow + Artifacts
-C6 → Task/Case/Room/Inbox + Watch default OBSERVE/ADVISE/PREPARE + Process/Control/Meeting/Frontline ecosystem
+C5 → Decision Gates + governed writes + executor contracts + AutomationExecution + Outcome verification + Durable/Recurring Work + Artifacts
+C6 → Task/Case/Room/Inbox + Recurring Work admin UX + Watch default OBSERVE/ADVISE/PREPARE + Process/Control/Meeting/Frontline ecosystem
 C7 → selected autonomous Watch ACT + advanced capability-scoped autonomy + Twin/Edge/Marketplace/optimization/scale
 ```
 
-C5 governed `ACT` and C7 advanced autonomous `ACT` are distinct. `PREPARE != ACT` remains invariant in every phase.
+C5 governed `ACT` and C7 advanced autonomous `ACT` are distinct. `PREPARE != ACT` remains invariant in every phase. Recurring Governed Work C5 is a bounded temporal trigger whose material occurrence revalidates live gates; it is not C6 Watch autonomous ACT and does not require L5.
 
-## 8. Required C0.S0 automation inventory
+## 8. Required C0.S0 automation/scheduling inventory
 
 ```text
 RPA platforms/tools/licences/orchestrators
@@ -178,8 +193,13 @@ automation scripts/functions/jobs
 queues/workers/worker pools/heartbeats
 desktop/session/VDI execution infrastructure
 event sources/buses/topics/webhooks
-schedulers/polling jobs
+schedulers/timers/cron/polling jobs
+existing recurring job/work definitions and their owners
+timezone/DST/calendar semantics
+misfire/missed-run/reconciliation semantics
+overlap/concurrency semantics
 service accounts/background identities
+background AuthZ/revocation patterns
 credential/secret owners and injection patterns
 package/version/deploy/rollback patterns
 retry/idempotency/lease/lock patterns
@@ -191,13 +211,17 @@ automation governance/SLA/support
 kill switches/emergency stop patterns
 ```
 
-Unknown = `NOT_PROVEN` / `TO_INVENTORY`, never assumed reusable.
+Unknown factual mechanism/owner = `TO_INVENTORY`, never assumed reusable or absent from product scope.
 
 ## 9. Required C0 outputs
 
 Além dos outputs existentes:
 
 - automation/RPA/event/worker/service-identity inventory;
+- scheduler/timer/cron/polling inventory + physical owner/contract/reuse decision;
+- Recurring Governed Work definition owner versus physical scheduler boundary decision;
+- recurrence/timezone/DST/misfire/overlap/idempotency contract;
+- per-occurrence background identity/AuthZ/revoke contract;
 - Automation Hub physical implementation/owner/contract/reuse decision, preserving the semantic boundary `DÉLIA orchestration → Hub technical execution`;
 - executor preference/selection contract;
 - semantic capability→executor contract decision;
@@ -207,18 +231,19 @@ Além dos outputs existentes:
 - RPA worker/queue/credential/artifact boundary if RPA is real scope;
 - outcome verification contract;
 - Watch PREPARE vs governed ACT vs autonomous ACT semantics;
+- Recurring Work vs Watch semantic distinction;
 - capability-scoped autonomy/kill-switch model;
-- RED automation/event/autonomy conformance harness.
+- RED automation/event/scheduling/autonomy conformance harness.
 
 ## 10. Requirements authority
 
 `25-requirements-traceability.md` is the single CP authority.
 
 ```text
-CP-001–CP-310
+CP-001–CP-316
 ```
 
-Current thematic ranges include:
+Current thematic/cross-cutting ranges include:
 
 ```text
 CP-194–CP-214 = Internet Research / External Connectors
@@ -233,6 +258,7 @@ CP-280–CP-286 = Analysis Sandbox / Artifact Workspace
 CP-287–CP-294 = Predictive/Prescriptive Intelligence / Operational Twin
 CP-295–CP-301 = Edge/Offline Industrial
 CP-302–CP-310 = AI Model Lifecycle / Capability Marketplace
+CP-311–CP-316 = Recurring Governed Work / Scheduling
 ```
 
 Historical Chat migration requirements remain `OUT_OF_SCOPE_WITH_DECISION`.
@@ -241,12 +267,19 @@ Historical Chat migration requirements remain `OUT_OF_SCOPE_WITH_DECISION`.
 
 `20-testing-and-acceptance-matrix.md`.
 
-Automation gates include:
+Automation/scheduling gates include:
 
 ```text
 EVENT_SOURCE_AUTHENTICITY
 EVENT_DEDUPE_NO_DUPLICATE_EXECUTION
 EVENT_NOT_PERMISSION
+SCHEDULE_NOT_PERMISSION
+SCHEDULE_LIVE_AUTHZ_REVALIDATION
+SCHEDULE_OCCURRENCE_IDEMPOTENT
+SCHEDULE_PAUSE_CANCEL_ENFORCED
+SCHEDULE_TIMEZONE_EXPLICIT
+SCHEDULE_MISFIRE_OVERLAP_EXPLICIT
+SCHEDULE_RETRY_RESTART_NO_DUPLICATE_ACT
 FAST_PATH_NO_LLM_WHEN_DETERMINISTIC
 DETERMINISTIC_READINESS_REPRODUCIBLE
 PLANNER_NO_RPA_UI_MECHANICS
@@ -282,6 +315,7 @@ PLATFORM_REUSE:
 DÉLIA_NEW_CODE:
 CHAT_DEPENDENCIES:
 EVENT_AUTOMATION_RPA_IMPACT:
+RECURRING_WORK_SCHEDULING:
 EVIDENCE:
 TESTS:
 SECURITY_RBAC:
@@ -317,6 +351,13 @@ PORTAL_AI_LOGIC_LEAK
 DOMAIN_RULE_DUPLICATION
 EVENT_PERMISSION_ELEVATION
 DUPLICATE_EVENT_DUPLICATE_EXECUTION
+SCHEDULE_PERMISSION_ELEVATION
+SCHEDULE_WITHOUT_LIVE_AUTHZ
+DUPLICATE_SCHEDULE_OCCURRENCE_SIDE_EFFECT
+PAUSED_OR_CANCELLED_SCHEDULE_EXECUTES
+SCHEDULE_MISFIRE_POLICY_UNDEFINED
+SCHEDULE_TIMEZONE_IMPLICIT
+SCHEDULE_RETRY_DUPLICATE_ACT
 PLANNER_RPA_UI_MECHANICS_LEAK
 RPA_SELECTED_OVER_AUTHORITATIVE_API_WITHOUT_JUSTIFICATION
 BACKGROUND_EXECUTION_WITHOUT_EXPLICIT_IDENTITY
@@ -337,4 +378,4 @@ SAFETY_INTERLOCK_BYPASS
 
 Open `23-prompt-cursor-execucao.md` and execute **C0.S0 only**.
 
-The first runtime after Foundation Freeze remains the standalone DÉLIA API/MFE bootstrap — **not** RPA, Event engine, Automation Hub, advanced autonomous ACT or thematic capability runtime.
+The first runtime after Foundation Freeze remains the standalone DÉLIA API/MFE bootstrap — **not** RPA, Event engine, Automation Hub, Recurring Work ACT, advanced autonomous ACT or thematic capability runtime.
