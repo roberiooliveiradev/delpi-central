@@ -409,6 +409,9 @@ def gpt_commit_improvement_package(body: GptImprovementPackageBody, request: Req
             return fail(exc.message, 400, data)
         return _handle(exc)
     except LookupError as exc:
+        # KeyError is a LookupError subclass — do not remap programming bugs as not_found.
+        if isinstance(exc, KeyError):
+            return _handle(exc)
         logger.warning(
             "gpt_commit_improvement_package_lookup_as_400 message=%s",
             exc,

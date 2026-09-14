@@ -602,6 +602,56 @@ def test_improvement_package_commit_positive():
     assert result["next_steps"]
 
 
+def test_improvement_package_commit_reuses_existing_process_and_instance():
+    """Live 20:56: KeyError('reused') was remapped to 400 not_found via LookupError."""
+    from tm_app.application.gpt_actions.improvement_package_service import (
+        GuidedImprovementPackageService,
+    )
+
+    dispatch = MagicMock()
+    dispatch.get_record.side_effect = lambda _req, entity, rid: {
+        "process": {"processo_id": rid, "nome_processo": "Existente", "status_processo": "ativo"},
+        "instance": {"instancia_id": rid, "processo_id": "p1", "status_instancia": "ativo"},
+        "revision": {
+            "revisao_id": rid,
+            "processo_id": "p1",
+            "instancia_id": "i1",
+            "versao_revisao": "2.0.0",
+            "cenario_tipo": "baseline",
+        },
+    }[entity]
+    dispatch.create_record.side_effect = [
+        ({"revisao_id": "s-new"}, "ok", 201),
+        ({"medicao_id": "m-new"}, "ok", 200),
+    ]
+
+    svc = GuidedImprovementPackageService(dispatch)
+    result = svc.commit(
+        MagicMock(),
+        {
+            "dry_run": False,
+            "process": {"id": "p1"},
+            "instance": {"id": "i1"},
+            "scenario": {
+                "revision": {
+                    "revisao_referencia_id": "b1",
+                    "versao_revisao": "2.1.0",
+                    "cenario_tipo": "melhoria",
+                    "data_inicio_vigencia": "2026-09-14",
+                    "motivo_revisao": "Teste GPT",
+                },
+                "measurement": {"volume_mensal": 100, "tempo_medio_execucao_min": 20},
+                "investments": [],
+            },
+        },
+    )
+    assert result["reused"]["process"]["processo_id"] == "p1"
+    assert result["reused"]["instance"]["instancia_id"] == "i1"
+    assert result["created"]["scenario_revision"]["revisao_id"] == "s-new"
+    assert result["ids"]["scenario_revisao_id"] == "s-new"
+    assert dispatch.create_record.call_count == 2
+
+
 def test_improvement_package_commit_missing_process_ref_is_400_not_404():
     """Live incident class: ready shape + missing process id must not return opaque 404."""
     from tm_app.application.gpt_actions.improvement_package_service import (

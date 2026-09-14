@@ -99,7 +99,7 @@ class GuidedImprovementPackageService:
 
         processo_id, process_action = self._resolve_process(request, body.get("process") or {})
         result["steps"].append({"step": "process", "action": process_action, "id": processo_id})
-        result[process_action]["process"] = {"processo_id": processo_id}
+        result.setdefault(process_action, {})["process"] = {"processo_id": processo_id}
 
         instancia_id, instance_action = self._resolve_instance(
             request, processo_id, body.get("instance") or {}
@@ -107,7 +107,7 @@ class GuidedImprovementPackageService:
         result["steps"].append(
             {"step": "instance", "action": instance_action, "id": instancia_id}
         )
-        result[instance_action]["instance"] = {"instancia_id": instancia_id}
+        result.setdefault(instance_action, {})["instance"] = {"instancia_id": instancia_id}
 
         baseline_block = body.get("baseline")
         baseline_revisao_id: str | None = None
