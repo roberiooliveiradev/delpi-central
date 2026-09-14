@@ -167,8 +167,10 @@ All ACT blocked until C7                        = SUPERSEDED_BY_C5_GOVERNED_ACT_
 | 2026-09-13 | product naming frozen internally as DÉLIA; technical namespace remains temporary | PLAN_ONLY; docs only |
 | 2026-09-14 | Recurring Governed Work formalized as first-class target (`CP-311–CP-316`), preserving physical scheduler as C0 inventory boundary | PLAN_ONLY; docs only |
 | 2026-09-14 | C0.S0-B platform baseline revalidation at `5deb7fc2c2f1683ebc3f7224e8f6fba99e35854d` | PLAN_ONLY; inventory/docs; CP-154 remains PLANNED; no runtime |
+| 2026-09-14 | C0.S0-C identity/Core authorization baseline at `90730043c79cbb984a42db6bbbc615c03091094b` | PLAN_ONLY; inventory/docs; no runtime; dual permission path documented |
+| 2026-09-14 | C0.S0-D automation/workers/schedulers/RPA/recurring-work baseline at `566def330798b6fefe1eda37b3eebd3e46686aba` | PLAN_ONLY; inventory/docs; no runtime; Hub not physical |
 
-Actual `HEAD_BEFORE` for **runtime** remains uncaptured (no DÉLIA runtime). Inventory evidence SHA for C0.S0-B is `5deb7fc2c2f1683ebc3f7224e8f6fba99e35854d`. Documentation-only commits do not advance execution status.
+Actual `HEAD_BEFORE` for **runtime** remains uncaptured (no DÉLIA runtime). Inventory evidence SHA for C0.S0-D is `566def330798b6fefe1eda37b3eebd3e46686aba`. Documentation-only commits do not advance execution status.
 
 ## 6.1 C0.S0-B evidence event
 
@@ -187,6 +189,50 @@ DÉLIA_NEW_CODE: NONE
 CHAT_DEPENDENCIES: NONE created; Chat remains neighbor (legacy get_routes caller)
 TESTS: TEST_NOT_RUN (host python3 without pytest); inspected test_me_controller.py including stale /me/routes test
 FOUNDATION_DRIFT: DOCUMENTATION_DRIFT on /me/routes (Project Instructions vs Core); STALE_TEST test_get_me_routes_endpoint
+COMPLETE_GATE: not claimed
+NEXT_UNLOCKED: none; remaining C0.S0 inventories still required
+```
+
+## 6.2 C0.S0-C evidence event
+
+```text
+DATE: 2026-09-14
+STEP: C0.S0-C — IDENTITY_CORE_AUTHORIZATION_BASELINE
+HEAD_BEFORE: 90730043c79cbb984a42db6bbbc615c03091094b
+HEAD_AFTER: 90730043c79cbb984a42db6bbbc615c03091094b
+STATUS: PLAN_ONLY
+DEPENDENCY_GATE: C0.S0 still open; C0 = NOT_STARTED; NEXT = C0.S0
+CP_REQUIREMENTS: CP-154 (PLANNED); CP-150 (LOCKED/C1 JWT+Core/RBAC); no dedicated C0.S0-C CP → TRACEABILITY_GAP
+SCOPE: Keycloak/OIDC Portal, Core JWT+user+RBAC, authenticate vs PermissionResolver, /me /me/apps, delpi_auth FastAPI/Flask, Domain AuthZ samples, Chat legacy auth
+EVIDENCE: 51 §10 + âncora table updated; permission paths SEMANTICALLY_DIFFERENT
+RUNTIME_DIFF: NONE
+PLATFORM_BEHAVIOR_CHANGE: NONE
+FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
+DÉLIA_NEW_CODE: NONE
+UNRESOLVED: Core canonical effective-permission path (ARCHITECTURE_DECISION_REQUIRED); Keycloak realm export deployado; Domain APIs beyond samples; inactive-user path
+FOUNDATION_DRIFT: DOCUMENTATION_DRIFT (jwt.md P0 debt stale); IMPLEMENTATION_DRIFT (+ SECURITY_DRIFT risk on deny overrides) dual permission path; DEAD_CODE_CANDIDATE flask_auth + Chat get_authorized_routes
+COMPLETE_GATE: not claimed
+NEXT_UNLOCKED: none; remaining C0.S0 inventories still required
+```
+
+## 6.3 C0.S0-D evidence event
+
+```text
+DATE: 2026-09-14
+STEP: C0.S0-D — AUTOMATION_WORKERS_SCHEDULERS_RPA_RECURRING_WORK_BASELINE
+HEAD_BEFORE: 566def330798b6fefe1eda37b3eebd3e46686aba
+HEAD_AFTER: 566def330798b6fefe1eda37b3eebd3e46686aba
+STATUS: PLAN_ONLY
+DEPENDENCY_GATE: C0.S0 still open; C0 = NOT_STARTED; NEXT = C0.S0
+CP_REQUIREMENTS: CP-226 (C0 automation inventory, PLANNED); CP-311 (recurring-work freeze, PLANNED); CP-227 Hub vs orchestration (PLANNED). TRACEABILITY_GAP: no dedicated C0.S0-D CP id
+SCOPE: Automation Hub physical, in-process schedulers/workers, Redis cache vs queue, RPA, report_schedules, notifications/Graph, idempotency/retry samples, Chat tools reference
+EVIDENCE: 51 §§12,23–28 + âncora table; Hub = NOT_PROVEN_AS_PHYSICAL_SERVICE; Recurring Governed Work = TARGET; Domain report schedules = PARTIAL
+RUNTIME_DIFF: NONE
+PLATFORM_BEHAVIOR_CHANGE: NONE
+FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
+DÉLIA_NEW_CODE: NONE
+UNRESOLVED: physical scheduler owner for DÉLIA (ADAPTER vs new after Abstraction Gate); EventEnvelope/outbox platform; Teams/WhatsApp channels; BPM engines; outcome sources by remaining domains
+FOUNDATION_DRIFT: none that invalidates Hub=technical / DÉLIA=orchestration
 COMPLETE_GATE: not claimed
 NEXT_UNLOCKED: none; remaining C0.S0 inventories still required
 ```

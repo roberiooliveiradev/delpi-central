@@ -5,7 +5,11 @@
 **Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Evidence snapshot inicial desta revisão:** `dc1d96f787cca66116e328c32c5a9124d31664df`  
 **C0.S0-B revalidation HEAD:** `5deb7fc2c2f1683ebc3f7224e8f6fba99e35854d`  
-**C0.S0-B scope:** Portal host/auth, Core `/me` `/me/apps`, `/me/routes` resolution, Gateway/Compose declarations, `shared/delpi_auth`, federation/`plugin-ui`, representative Domain OpenAPI. Thematic inventories in later sections remain `TO_INVENTORY` unless revalidated here.
+**C0.S0-C identity/AuthZ HEAD:** `90730043c79cbb984a42db6bbbc615c03091094b`  
+**C0.S0-D automation/workers/schedulers HEAD:** `566def330798b6fefe1eda37b3eebd3e46686aba`  
+**C0.S0-B scope:** Portal host/auth, Core `/me` `/me/apps`, `/me/routes` resolution, Gateway/Compose declarations, `shared/delpi_auth`, federation/`plugin-ui`, representative Domain OpenAPI. Thematic inventories in later sections remain `TO_INVENTORY` unless revalidated here.  
+**C0.S0-C scope:** Keycloak/OIDC Portal client path, Core JWT + user resolution, `authenticate()` vs `PermissionResolver`, `/me` `/me/apps` AuthZ projection, shared FastAPI/Flask auth, Domain AuthZ samples, Chat legacy auth refs.  
+**C0.S0-D scope:** Automation Hub physical status, in-process schedulers/workers/outbox, Redis-as-cache vs queue, RPA/computer-use, Domain report schedules, notification/email execution, idempotency/retry samples, Chat tools as reference-only.
 
 ## 1. Objetivo
 
@@ -31,14 +35,27 @@ Não usar `PARTIAL PROVEN`, `DERIVED FROM PROVEN PLATFORM`, `NOT YET PROVEN` ou 
 | Portal auth/context | `PROVEN` | `portal/src/state/AuthContext.tsx` blob `be12e8b7bf10f8017ed1c14fb39e09ee2f8ee1e1` | integração client-side com Keycloak/Core, `getAccessToken`, apps/routes e state de usuário existem | autorização final de cada Domain API |
 | Shared federation | `PROVEN` | `plugins/vite/federation.shared.ts` blob `37f87c8998f3b11ab37e1e514cab623c746c8da2` | config compartilhada, `@delpi/plugin-ui`, React singleton e helpers existem | que toda futura surface da DÉLIA deva usar exatamente a mesma shape sem revalidação |
 | Core API repository | `PROVEN` | diretório raiz `core-api/` no HEAD `5deb7fc2c` | serviço/repositório existe | todos os endpoints/semânticas exigidos pela DÉLIA |
-| Core `/me` | `PROVEN` no escopo HTTP+payload+auth boundary | `core-api/app/interfaces/http/me_controller.py` `get_me` blob `ad9420423c12433bcada23941171c18d3327bb42`; `auth_middleware.authenticate` blob `2cdbcf06da86261fa2e66c2e5dad2e1bfe93861c`; consumer `portal/src/data/coreApi.ts` `getMe()` → `/core-api/me` | GET autenticado devolve id/name/email/roles/groups/permissions/is_superadmin (+ `consent_pending` opcional) | OpenAPI Core, catálogo de erros completo, limits/observability, overrides vs query path |
-| Core `/me/apps` | `PROVEN` no escopo HTTP+filter+consumer | `ListUserAppsUseCase` + `AppAuthorizationService.filter_apps`; Portal `getApps()` + `AuthContext.loadIdentityAndNavigation` deriva `routes` de `apps[].routes` | apps visíveis já vêm com rotas filtradas por permission/superadmin | autorização de negócio de Domain API; schema OpenAPI |
+| Core `/me` | `PROVEN` no escopo HTTP+payload+auth boundary | `core-api/app/interfaces/http/me_controller.py` `get_me`; `auth_middleware.authenticate` blob `2cdbcf06da86261fa2e66c2e5dad2e1bfe93861c`; consumer `portal/src/data/coreApi.ts` `getMe()` → `/core-api/me` | GET autenticado devolve id/name/email/roles/groups/permissions/is_superadmin (+ `consent_pending` opcional); `permissions` vêm de Core persistence via `list_permission_codes_by_user` (**sem** user overrides; superadmin **não** expande para todos os codes) | OpenAPI Core; paridade com `PermissionResolver` |
+| Core `/me/apps` | `PROVEN` no escopo HTTP+filter+consumer | `ListUserAppsUseCase` + `AppAuthorizationService.filter_apps` usando `g.current_user.permissions` do `authenticate()`; Portal deriva `routes` de `apps[].routes` | navegação/apresentação filtrada por permission codes + bypass superadmin | **não** é autorização de negócio Domain; herda gap de overrides do `authenticate()` |
+| Core JWT validation | `PROVEN` | `shared/delpi_auth/jwt_validator.py` blob `cc04efdce0663ef9d752b9f38fb01c4c9b0a2cde` usado por Core `authenticate()` | fail-closed: exige `KEYCLOAK_AUDIENCE` + `KEYCLOAK_ISSUER`; JWKS + RS256; refresh JWKS em falha de decode | valores runtime de issuer/audience (env); realm export deployado |
+| Core user resolution | `PROVEN` | `auth_middleware.authenticate` | `sub`→UUID; lookup by id/email; auto-create; sync name/email; `last_login`; roles/groups/permissions via `rbac_queries` | disabled/inactive user path (não evidenciado) |
+| `PermissionResolver` | `PROVEN` | `core-api/app/domain/services/permission_resolver.py` blob `74b89c56552c1c21b6a3f32395550aac4ae92330` | direct∪group + allow/deny overrides; superadmin → `list_all_permission_codes`; cache | **não** usado por `authenticate()` / `/me` / `/me/apps` |
+| Permission semantic parity | `SEMANTICALLY_DIFFERENT` | `authenticate`→`list_permission_codes_by_user` vs `PermissionResolver.resolve` | consumers de Resolver: access-profile, export, IAM sync, notifications eligibility, admin explorers, RBAC delta, replace roles/groups | Canonical effective-permission path for `/me` requires Core owner decision |
+| Portal OIDC | `PROVEN` path / `CONFIGURED_BY_ENV` values | `portal/src/data/keycloakClient.ts` blob `c432c01e7468cb4f2e203c10c6f1486006def6be`; `AuthContext` refresh/logout | `check-sso` + PKCE S256; `updateToken(60)`; token in memory/`tokenRef`; logout Keycloak + `DELPI_GLOBAL_LOGOUT` | realm/client/issuer values reais = env (`VITE_KC_*`); sem realm JSON no repo |
+| Shared FastAPI auth | `PROVEN` | `shared/delpi_auth/middleware/fastapi_auth.py` blob `7fd11c8b76944af4ed3eb81b7653c441e6b9452e` | JWT validate → `GET Core /me` reload RBAC; fallback claims com `permissions=[]` + `rbac_unavailable` | herda semantics de `/me` (sem overrides) |
+| Shared Flask auth | `DEAD_CODE_CANDIDATE` | `shared/delpi_auth/middleware/flask_auth.py` blob `ec5a2bf96e1a243881724e7a84910e19913b5742` | lê `permissions`/`roles`/`groups`/`is_superadmin` **direto do JWT** | **zero** imports de produção encontrados; se ativado = `SECURITY_DRIFT` potencial |
+| Domain AuthZ samples | `PROVEN` (amostra, não universal) | `api-delpi` `BranchAccessGate` + `delpi_auth`; `transformometro-api` `FilialAccessScopeService` | platform permission codes + regras de escopo de filial Domain | demais APIs = `TO_INVENTORY` |
 | Core `/me/routes` | **não é contrato vigente** | nenhum `@route("/me/routes")` em `core-api/app`; teste órfão `test_get_me_routes_endpoint`; Chat `CoreApiHttpGateway.get_routes` chama `me/routes` sem outro consumidor; Project Instructions ainda citam o path | ausência do producer no HEAD | não inventar a rota |
 | Gateway repository | `PROVEN` | `gateway/nginx.conf` + `gateway/nginx.dev.conf` | `/core-api/`, `/apps/<service>-api/`, generic `/apps/([^/]+)/assets/remoteEntry.js` → `delpi-$1`; Chat `/apps/minha-delpi-ai/api/` | rota/config final da DÉLIA; JWT no gateway (não evidenciado) |
 | Infra repository | `PROVEN` | diretório raiz `infra/` no snapshot | infraestrutura versionada existe | storage/network/deploy adequados a cada capability futura |
 | API DELPI repository | `PROVEN` | diretório raiz `api-delpi/` no snapshot | componente existe | manifesto/OpenAPI/ownership funcional específico sem inspeção adicional |
 | APIs dedicadas | `PROVEN` | múltiplos diretórios de APIs no snapshot raiz | padrão de serviços independentes existe no monorepo | que uma estrutura específica seja automaticamente correta para a DÉLIA |
 | DÉLIA runtime | `TO_INVENTORY` quanto a qualquer implementação; programa `PLANNED / NOT_STARTED` | ledger + placeholder documental | não há prova documental de runtime entregue | qualquer API/MFE/DB/deploy da DÉLIA |
+| Automation Hub physical | `NOT_PROVEN_AS_PHYSICAL_SERVICE` | nenhum serviço/compose/gateway `automation-hub`; `52` cita `automation_hub/` só como adapter futuro | autoridade semântica permanece TARGET | runtime Hub |
+| Platform schedulers | `PROVEN` como loops in-process **por serviço**, não scheduler corporativo | Core `notification_dispatch_scheduler` + `usage_session_flush_scheduler`; commercial `integration_jobs_scheduler`; requests `outbox_worker`; Pulse `DevicePollSchedulerService`; SI `period_scores_scheduler`; TM/CIPA mail-trace loops; purchase-requests pollers | timer técnico Domain/Core | Recurring Governed Work; timezone/DST/misfire corporativos |
+| Queues/brokers | `PROVEN` cache Redis opcional; `NOT_PROVEN` job broker | `api-delpi` `RedisQueryCache`; Compose `REDIS_URL` env; sem RabbitMQ/Kafka/NATS/Celery no HEAD | Redis ≠ fila de jobs | Event Bus / worker pool |
+| RPA / computer-use | `NOT_PROVEN` como business RPA | Playwright em `portal/scripts/test-launcher-routes-alignment.mjs` = TEST_AUTOMATION | nenhum UiPath/Selenium/Robocorp runtime | Automation Hub RPA |
+| Recurring user intent | `PARTIAL` Domain-only | api-delpi `reports.report_schedules` + personal subscription + `process-pending-report-schedules.sh` (cron **host**, não Compose) | agenda de relatório + e-mail Graph | Recurring Governed Work first-class DÉLIA |
 
 A presença de arquivo/diretório não prova uso, readiness, contrato completo, produção, segurança ou compatibilidade. `C0.S0` deve seguir producers/consumers e contratos reais.
 
@@ -158,19 +175,50 @@ Rotas, Compose, network, secrets, storage, health, deployment e rollback especí
 
 **PLANNED:** runtime da DÉLIA terá deploy/rollback próprios e nenhuma dependência operacional do Chat.
 
-## 10. SSO/autorização DÉLIA — TARGET derivado das authorities, não runtime provado
+## 10. SSO/autorização — baseline factual (C0.S0-C) + TARGET DÉLIA
+
+### 10.1 Authority boundary — `PROVEN` no HEAD atual
 
 ```text
-Keycloak
-→ Portal/session context
-→ DÉLIA MFE host contract
-→ Gateway
-→ DÉLIA API JWT validation
-→ Core permission context
-→ Domain API final business authorization
+Keycloak = AuthN / SSO identity (JWT)
+Core = platform AuthZ (RBAC persistence + /me projection)
+Domain API = final business/domain AuthZ (revalida codes + regras de domínio)
+Portal = apresenta context (token + /me + /me/apps); não é autoridade
+DÉLIA = consumidor futuro; não é authority
 ```
 
-Background/service identity específico para continuous/autonomous operations é `TO_INVENTORY`.
+### 10.2 Cadeia factual atual
+
+```text
+Keycloak-js (Portal)
+→ Bearer JWT
+→ Core authenticate(): validate_token + user resolve + list_permission_codes_by_user
+→ GET /me | GET /me/apps (permissions sem overrides)
+→ Domain FastAPI jwt_middleware: validate_token + reload Core /me
+→ Domain helpers (has_permission / BranchAccessGate / FilialAccessScope…)
+```
+
+### 10.3 Drift material — permission dual path
+
+| Path | Overrides | Superadmin permissions list |
+|---|---|---|
+| `authenticate()` / `/me` / `/me/apps` / Domain reload via `/me` | **não** | flags `is_superadmin`; lista = só roles∪groups |
+| `PermissionResolver` (`/me/access-profile`, admin/export/notif…) | allow/deny | **todos** os codes |
+
+Classificação: `SEMANTICALLY_DIFFERENT` + `IMPLEMENTATION_DRIFT` (+ `SECURITY_DRIFT` se deny-override existir em dados reais).  
+`ARCHITECTURE_DECISION_REQUIRED` (owner Core): qual path é canônico para projeção efetiva em `/me`.
+
+### 10.4 Docs vs código
+
+`docs/03-autenticacao-autorizacao/jwt.md` ainda descreve dívida P0 (`verify_aud` condicional / issuer não passado). Código atual de `jwt_validator.py` **exige** issuer+audience fail-closed → `DOCUMENTATION_DRIFT`.
+
+### 10.5 TARGET DÉLIA (não runtime)
+
+```text
+Keycloak → Portal/session → DÉLIA MFE → Gateway → DÉLIA API JWT → Core permission context → Domain final AuthZ
+```
+
+Background/service identity para continuous/autonomous operations permanece `TO_INVENTORY`.
 
 ## 11. OpenAPI Business Action integration — TARGET
 
@@ -187,13 +235,30 @@ OpenAPI/contract
 
 Sem endpoint-specific planner teaching. Provider/executor metadata nunca concede permission.
 
-## 12. Notifications / sockets / workers / schedulers — escopo misto
+## 12. Notifications / sockets / workers / schedulers — C0.S0-D factual
 
-`PROVEN`: o Portal possui código de notifications/socket e o monorepo contém padrões de execução assíncrona em partes da plataforma.
+### 12.1 Notifications — `PROVEN` (execução técnica fragmentada)
 
-`TO_INVENTORY`: owner transversal, broker/queue standard, durable workflow platform, scheduler governance, worker/service identity, delivery semantics e suitability para DÉLIA.
+```text
+Domain/Core decide criar notificação
+→ Core persistência + dispatch pending (DB poll)
+→ Core notification_dispatch_scheduler (socketio background, poll ~60s)
+→ in-app Portal/socket
+→ e-mail Graph opcional (CORE_NOTIFICATION_MAIL_ENABLED)
+```
 
-Nada disso prova, isoladamente, Event Bus corporativo, Automation Hub reutilizável, Process Mining platform ou AI Control Tower.
+Outbox Domain (commercial/requests) publica no Core via HTTP; retry/backoff é **por serviço**.  
+Graph `send_mail_to` = aceite do provider (HTTP), **não** outcome de negócio (leitura/entrega).
+
+### 12.2 Workers / schedulers — `PROVEN` in-process; sem worker platform
+
+Não há Celery/RQ/Dramatiq/APScheduler/Temporal/Airflow/K8s CronJob/GitHub `schedule:` no HEAD.
+
+Mecanismos físicos: loops `asyncio`/`threading`/`socketio.start_background_task` **dentro** do processo da API dona. Realtime hubs (commercial/TM/Pulse/requests/TV) são **pub/sub in-memory**, não fila.
+
+### 12.3 O que isso **não** prova
+
+Event Bus corporativo, Automation Hub, Recurring Governed Work, Process Mining worker, AI Control Tower.
 
 ## 13. DÉLIA surfaces — TARGET
 
@@ -247,54 +312,52 @@ Mapear integrações oficiais suportadas e Slack/GitHub/CRMs/service desks somen
 
 Mapear event/webhook authenticity, EventEnvelope compatibility, dedupe/order, renewal/reconciliation, polling fallback, domain owners, replay/freshness. Não inventar event platform antes de gap proof.
 
-## 23. Automation / RPA / Automation Hub — TO_INVENTORY de implementação
+## 23. Automation / RPA / Automation Hub — C0.S0-D
 
-A autoridade semântica já está definida:
+Autoridade semântica (TARGET, inalterada):
 
 ```text
 DÉLIA = inteligência + Policy + Decision + Work/orquestração + Outcome coordination
 Automation Hub = execução técnica
+Domain API = autoridade de negócio + postcondition
 ```
 
-O que C0 ainda precisa provar é **implementação física/owner técnico/contrato/reuse** do Automation Hub e executors existentes. Ausência de runtime comprovado não reabre a autoridade acima.
+Implementação física do Hub: `NOT_PROVEN_AS_PHYSICAL_SERVICE`.  
+RPA/computer-use de negócio: `NOT_PROVEN`. Playwright = TEST_AUTOMATION.
 
-C0 mapeia:
+Execução técnica **hoje** = HTTP nas Domain APIs + loops in-process + Graph mail + Core notify. Não é Hub.
 
-```text
-vendors/tools/licenses/orchestrators
-bots/packages
-desktop/web automations
-queues/workers/heartbeats/leases
-VDI/session environments
-service accounts
-credential injection
-package/version/deploy/rollback
-retry/idempotency
-screenshots/artifacts/logs/retention
-support/SLA/kill switches
-```
+Residual `TO_INVENTORY`: vendors/licenças RPA, VDI, worker leases, kill-switch corporativo.
 
-Nenhum vendor é selecionado por suposição.
+## 24. Scripts / Functions / Jobs — C0.S0-D
 
-## 24. Scripts / Functions / Jobs — TO_INVENTORY
+`PROVEN`: `api-delpi/scripts/process-pending-report-schedules.sh` (cron host documentado; dispara HTTP S2S). Chat attachment indexer = thread daemon (CHAT_ONLY). CLI/scripts de CI = CI, não executor de negócio.
 
-Mapear scheduled scripts/functions/cron/jobs/browser automations com owner, trigger, contract, credential model, authority, idempotency, observability e support. Script existente não vira executor da DÉLIA automaticamente.
+Script existente **não** é executor da DÉLIA.
 
-## 25. Background execution / service identity — TO_INVENTORY
+## 25. Background execution / service identity — C0.S0-D
 
-Provar queue/broker standard, worker lease/heartbeat, service identities, cancellation/draining, priority/concurrency e environment isolation. Worker identity != business actor.
+`PROVEN`: tokens S2S (`X-Delpi-Service-Token` / `CORE_API_INTEGRATIONS_SERVICE_TOKEN`) em jobs de reports/notificações.  
+`TO_INVENTORY`: identidade de background auditável unificada, lease/heartbeat, drain, isolation.
+
+Worker identity != business actor permanece invariante.
 
 ## 26. Rule / Decision / BPM engines — TO_INVENTORY
 
-Inventariar regras/engines/BPM/process validators existentes. Se readiness autoritativo já existir em Domain API, consumir contrato em vez de duplicar.
+Sem engine BPM corporativo evidenciado neste passo. Regras Domain (ex. filial) permanecem na API dona.
 
-## 27. Business postcondition / Outcome sources — TO_INVENTORY BY DOMAIN
+## 27. Business postcondition / Outcome sources — C0.S0-D amostra
 
-Mapear fonte autoritativa de verificação para invoice, maintenance request, message delivery, production report, records committed etc. Technical executor success != business completion.
+Padrão atual: HTTP 2xx / Graph accepted / outbox `published` = sucesso **técnico**.  
+Postcondition de negócio (invoice existe, destinatário leu) **não** é verificada de forma uniforme → `TO_INVENTORY BY DOMAIN`.  
+Idempotência: `PROVEN` em requests-api `idempotency_keys`; `PARTIAL` via `dedupeKey` de notificação; `ABSENT` como contrato transversal.
 
-## 28. Notification / Escalation channels — TO_INVENTORY além do Portal
+## 28. Notification / Escalation channels — C0.S0-D
 
-Portal notifications são `PROVEN` no escopo de presença/uso client-side. Canais externos, owner/contracts, dedupe/ack/SLA/escalation permanecem `TO_INVENTORY`.
+Portal in-app + Core dispatch: `PROVEN`.  
+E-mail Graph: `PROVEN` como provider técnico (Core, api-delpi reports, atas TM/CIPA/CEC).  
+Teams/WhatsApp Business como canal de execução: `TO_INVENTORY`.  
+Escalation/SLA unificado: `TO_INVENTORY`.
 
 ## 29. Process Intelligence / Process Mining — TO_INVENTORY
 
