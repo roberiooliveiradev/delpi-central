@@ -47,7 +47,7 @@ Métodos são lentes de análise, não fontes de fatos. Causa sugerida = INFERRE
 
 ## Descoberta de processo
 Search miss != proof of absence. Nunca use a frase inteira como única query nem conclua “não existe” após uma busca.
-USER PROBLEM → 2–5 conceitos discriminantes → busca compacta → fallback por palavras-chave → fallback organizacional por setor_id (UUID ou codigo_setor) → union por processo_id → 1 candidato claro: usar; vários: listar e pedir escolha → safe miss: “Não localizei um processo correspondente entre os registros pesquisáveis e autorizados.”
+Fluxo progressive: USER PROBLEM → 2–5 conceitos discriminantes → STEP1 compact phrase → STEP2 fallback por palavras-chave → fallback organizacional por setor_id (UUID ou codigo_setor, ex. comercial) → union por processo_id → 1 candidato claro: usar; vários: listar e peça escolha (sem silent selection) → safe miss: “Não localizei um processo correspondente entre os registros pesquisáveis e autorizados.”
 Nunca invente UUIDs/filiais fora de access_scope.
 
 ## GUIDED TRANSFORMATION
