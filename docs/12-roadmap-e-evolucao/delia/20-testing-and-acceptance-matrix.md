@@ -23,6 +23,7 @@ expertise/playbook versions
 media/biometric policy versions
 external connector/connection/OAuth/egress policy versions
 automation/executor/RPA package/worker versions
+recurring-work definition/version + recurrence/timezone policy version
 autonomy/decision policy version
 process-log/model/metric definition versions
 MCP/A2A server/agent/protocol version
@@ -54,6 +55,9 @@ Provar com paths/contracts reais:
 - media/storage/device/privacy/biometric owners;
 - Internet/egress/OAuth/vault/external/Teams/webhooks;
 - RPA/automation/event/queue/worker/service-account infrastructure;
+- schedulers/timers/cron/polling, recurring job/work definitions e owners;
+- timezone/DST/calendar, misfire/missed-run/reconciliation e overlap/concurrency semantics existentes;
+- background identity/AuthZ/revoke patterns para execução temporal;
 - business outcome/postcondition sources;
 - event logs/process owners/case keys/BPMN/task-mining sources;
 - AI/model/automation asset inventories, eval/cost/incident/kill-switch tooling;
@@ -68,6 +72,16 @@ Provar com paths/contracts reais:
 - Minha DELPI Chat apenas como referência de inventário.
 
 Unknown = `TO_INVENTORY`, nunca `PASS` por suposição.
+
+Para scheduling, C0 deve provar separadamente:
+
+```text
+Recurring Governed Work product/definition ownership
+!=
+physical scheduler/timer owner
+```
+
+A ausência de scheduler físico comprovado não remove a capability `TARGET`; exige decisão de reuse/adapter/new only após Abstraction Gate.
 
 ### Standalone negatives
 
@@ -95,6 +109,7 @@ PROVIDER_SECRET_BOUNDARY=PASS
 EXTERNAL_EVENT_BOUNDARY=PASS
 AUTOMATION_EXECUTION_BOUNDARY=PASS
 EVENT_SIGNAL_BOUNDARY=PASS
+RECURRING_WORK_BOUNDARY=PASS
 OUTCOME_VERIFICATION_BOUNDARY=PASS
 AUTONOMY_SCOPE_BOUNDARY=PASS
 PROCESS_INTELLIGENCE_BOUNDARY=PASS
@@ -117,6 +132,11 @@ FOUNDATION_DUPLICATION=0 material
 Devem falhar por design:
 
 ```text
+Schedule/timer tick treated as permission
+Stored schedule intent bypasses live AuthZ/Policy
+Duplicate timer tick creates duplicate material side effect
+Paused/cancelled recurring Work still fires
+Misfire/restart silently replays material ACT without explicit policy
 Process Mining without source provenance
 Task Mining used as secret employee scoring
 Control Tower admin grants business permission
@@ -156,6 +176,7 @@ Também provar:
 - manifest/Gateway/Compose dev-prod;
 - full-page/global host/F5/logout;
 - nenhuma capability `53–66` ativa capture/connect/execution/mining/sandbox/Edge implicitamente;
+- nenhum Recurring Governed Work material é executado antes dos gates C5;
 - secrets/credentials ausentes no browser.
 
 ## 4. Gate C2 — Portal Context + Commands
@@ -342,6 +363,7 @@ PREPARE != ACT
 ACT_C5 = explicit authorized governed execution
 ACT_C5 != autonomous L5
 ACT_C5 != Watch autonomous trigger
+SCHEDULE != PERMISSION
 ```
 
 ### Business/external/Teams writes
@@ -371,6 +393,83 @@ Teste positivo de ACT C5 deve provar:
 - RPA worker/session/credential/package isolation;
 - technical success != business Outcome;
 - outcome verifier queries authoritative source when required.
+
+### Recurring Governed Work
+
+Para `CP-312–CP-315`, provar no mínimo:
+
+**Lifecycle/independência de sessão**
+
+- create persiste a definição e sobrevive ao fechamento da conversa/session;
+- inspect/list retorna definição/version/status sem expor credential;
+- pause impede ocorrências futuras enquanto pausado;
+- resume não reproduz silenciosamente ocorrências passadas;
+- cancel impede definitivamente novas ocorrências daquela versão;
+- update/reschedule, se suportado, preserva versionamento/audit ou usa cancel+create conforme contrato.
+
+**Recurrence/timezone**
+
+- timezone é IANA explícito, nunca timezone implícito do servidor/browser;
+- mesma definição+timezone produz os mesmos instantes esperados;
+- DST/calendar behavior possui caso positivo/edge quando aplicável ao timezone;
+- start/end bounds são respeitados;
+- `EXPIRED` ou equivalente não dispara nova ocorrência.
+
+**Occurrence/idempotency**
+
+- cada occurrence possui identity/correlation/idempotency próprias;
+- duplicate timer signal produz uma única ocorrência material/effect;
+- worker/process restart não duplica a mesma occurrence;
+- retry após falha segura não duplica side effect;
+- ambiguous write não recebe blind retry;
+- overlap/concurrency policy é reproduzível;
+- missed-run/misfire policy é explícita e testada (`SKIP`, bounded catch-up ou equivalente aprovado), nunca inferida.
+
+**Authorization/revocation por ocorrência**
+
+- creator autorizado na criação não implica autorização eterna;
+- cada ACT material revalida current actor/service identity + Core AuthZ + Domain authority + Policy/Decision;
+- usuário desativado/sem permissão bloqueia/degrada a occurrence;
+- connection/provider revoke/expiry/scope loss bloqueia send/write;
+- mudança material de policy/capability/recipient/source scope invalida autorização stale conforme contrato;
+- timer/scheduler metadata nunca concede permission.
+
+**Outcome/audit**
+
+- occurrence referencia Work/Decision/Execution/Outcome/Evidence;
+- audit liga scheduledFor, triggeredAt, definitionVersion e actor/service identity;
+- technical scheduler fire não é business Outcome;
+- executor `SUCCEEDED` não basta quando há fonte autoritativa melhor.
+
+**Anchor relatório diário → email**
+
+Provar end-to-end, sem chat aberto:
+
+```text
+persist recurring definition
+→ deterministic trigger at configured timezone
+→ one correlated occurrence
+→ live AuthZ/Policy
+→ authorized previous-period reads
+→ grounded/versioned report artifact
+→ communication.email.send as separate ACT
+→ provider/executor result
+→ authoritative/contractual outcome verification when available
+→ Evidence/Audit/Outcome
+```
+
+Negativos obrigatórios:
+
+```text
+report generated but send not authorized → no email
+email connection revoked → no send
+recipient outside allowed scope → no send
+duplicate tick → one send
+retry/restart → no duplicate send
+paused/cancelled definition → no send
+creator loses permission before next run → no send
+provider accepted request but outcome unverifiable → PENDING/INCONCLUSIVE, not false success
+```
 
 ### Process opportunity governance
 
@@ -406,6 +505,15 @@ Metric/semantic definition version change material invalidates old decision/prev
 Watch permanece, por default, em `OBSERVE|ADVISE|PREPARE`; PREPARE não produz side effect. **Watch não dispara ACT autonomamente em C6.** Isso não revoga as capabilities de ACT governado já liberadas em C5: uma ação C5 pode ser iniciada por fluxo explicitamente autorizado/confirmado e deve passar novamente pelos mesmos gates de Policy/Decision/AuthZ/idempotency/audit/Outcome.
 
 Task/Case/Room/Inbox/source ACL e Workflow correlation permanecem obrigatórios.
+
+Recurring Governed Work é trigger temporal bounded distinto de Watch. Sua UX/admin deve provar:
+
+- lista apenas definições visíveis ao usuário/admin autorizado;
+- mostra status + recurrence/timezone + next occurrence quando derivável + last occurrence/outcome;
+- pause/resume/cancel respeitam owner/RBAC e são auditados;
+- history não expõe segredo/token e mantém correlation/Evidence refs;
+- admin de schedules não concede domain/provider write permission;
+- C6 Watch continua sem autonomous ACT mesmo existindo schedules C5 governados.
 
 ### Process Intelligence UX
 
@@ -475,6 +583,8 @@ Task/Case/Room/Inbox/source ACL e Workflow correlation permanecem obrigatórios.
 ## 9. Gate C7 — Advanced Autonomy / Scale
 
 C7 não cria o conceito de ACT; amplia **autonomia operacional governada** sobre capabilities que já possuem contratos, enforcement e Outcome verification comprovados.
+
+Recurring Governed Work C5 não precisa de L5 quando a recorrência é bounded e cada ocorrência passa por live gates. C7 não converte schedule em permission e não é necessário para o anchor de relatório diário governado.
 
 ### Capability-scoped autonomy
 
@@ -552,6 +662,7 @@ biometric/Human Observation result
 public webpage/search result
 external email/message/file/calendar
 provider webhook/event payload
+scheduler/timer trigger metadata
 RPA/computer-use screen/result
 MCP tool description/resource/result
 A2A agent message/artifact
@@ -563,11 +674,11 @@ Edge buffered event
 iframe/room/meeting/frontline content
 ```
 
-Untrusted data never changes system policy, RBAC, provider scopes, autonomy allowlist, retention, package trust or safety boundary.
+Untrusted data nunca changes system policy, RBAC, provider scopes, autonomy allowlist, retention, package trust or safety boundary.
 
 ## 11. Cross-surface parity
 
-Equivalent auth/policy/evidence semantics across Global, Workspace, Meeting, Frontline, Teams, Internet, connected sources, background Watch/Workflow, Automation Hub, Process Intelligence, Sandbox/Artifacts, Control Tower and Edge.
+Equivalent auth/policy/evidence semantics across Global, Workspace, Meeting, Frontline, Teams, Internet, connected sources, background Watch/Workflow, **Recurring Governed Work**, Automation Hub, Process Intelligence, Sandbox/Artifacts, Control Tower and Edge.
 
 ## 12. Release blockers
 
@@ -592,6 +703,13 @@ UNVERIFIED_EXTERNAL_SUCCESS
 INVALID_PROVIDER_EVENT_ACCEPTED
 EVENT_PERMISSION_ELEVATION
 DUPLICATE_EVENT_DUPLICATE_EXECUTION
+SCHEDULE_PERMISSION_ELEVATION
+SCHEDULE_WITHOUT_LIVE_AUTHZ
+DUPLICATE_SCHEDULE_OCCURRENCE_SIDE_EFFECT
+PAUSED_OR_CANCELLED_SCHEDULE_EXECUTES
+SCHEDULE_MISFIRE_POLICY_UNDEFINED
+SCHEDULE_TIMEZONE_IMPLICIT
+SCHEDULE_RETRY_DUPLICATE_ACT
 PLANNER_RPA_UI_MECHANICS_LEAK
 BACKGROUND_EXECUTION_WITHOUT_EXPLICIT_IDENTITY
 AMBIGUOUS_WRITE_BLIND_RETRY
