@@ -1,5 +1,8 @@
 # Transformômetro — Custom GPT (OpenAI Actions)
 
+> **Padrão transversal:** [padrao-custom-gpt-actions-oauth.md](../../docs/11-padroes-de-desenvolvimento/padrao-custom-gpt-actions-oauth.md)  
+> Este arquivo é a **instância** Transformômetro (paths, client, operations). Para Action Plans e outros produtos, seguir o padrão geral e espelhar esta estrutura.
+
 Superfície compacta para o **ChatGPT Custom GPT** analisar, cadastrar e editar o Transformômetro sem expor as ~150 rotas internas (limite ~30 operations por schema da OpenAI).
 
 ## Arquivos

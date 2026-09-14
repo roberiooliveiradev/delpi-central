@@ -22,6 +22,8 @@ Runbook para equipe após go-live (Postgres como fonte de verdade).
 
 Cadastro/análise via ChatGPT usa a superfície compacta `gpt-actions/v1` (mesmo JWT Keycloak + RBAC da UI).
 
+Padrão generalista (replicar em outros produtos): [padrao-custom-gpt-actions-oauth.md](../../11-padroes-de-desenvolvimento/padrao-custom-gpt-actions-oauth.md).
+
 Procedimento completo: [chatgpt-custom-gpt-actions.md](../../../transformometro-api/docs/chatgpt-custom-gpt-actions.md).
 
 Checklist GPT Builder (colar schema/OAuth/instructions): [chatgpt-gpt-builder-go-live.md](../../../transformometro-api/docs/chatgpt-gpt-builder-go-live.md).

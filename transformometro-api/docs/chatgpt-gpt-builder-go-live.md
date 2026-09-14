@@ -1,5 +1,7 @@
 # GPT Builder — checklist go-live (Custom GPT Transformômetro)
 
+> Padrão transversal (outros produtos): [padrao-custom-gpt-actions-oauth.md](../../docs/11-padroes-de-desenvolvimento/padrao-custom-gpt-actions-oauth.md)
+
 Valores prontos para colar no ChatGPT GPT Editor. O **client secret** fica só no Keycloak → Credentials — **nunca** no Git.
 
 ## Pré-requisitos já feitos no ambiente

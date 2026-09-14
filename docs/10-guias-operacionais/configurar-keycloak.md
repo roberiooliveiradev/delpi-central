@@ -140,20 +140,26 @@ Nunca expor no frontend.
 
 ---
 
-## 10b. Client OAuth — Custom GPT Transformômetro
+## 10b. Client OAuth — Custom GPT (OpenAI Actions)
 
-Para Actions do ChatGPT (OpenAI Custom GPT) que chamam `transformometro-api`:
+Padrão **geral** (qualquer produto): [padrao-custom-gpt-actions-oauth.md](../11-padroes-de-desenvolvimento/padrao-custom-gpt-actions-oauth.md).
+
+Um client **confidential** por especialista (`chatgpt-{product}`), com audience `delpi-central`, redirects do GPT Builder e secret **somente** no GPT Editor (nunca no Git).
+
+### Exemplo — Transformômetro
 
 | Campo | Valor |
 |---|---|
 | Client ID | `chatgpt-transformometro` |
 | Client authentication | **On** (confidential) |
 | Standard flow | **On** |
+| Direct access grants | **Off** (produção) |
 | Audience mapper | `aud` inclui `delpi-central` (`KEYCLOAK_AUDIENCE`) |
-| Scopes | `openid email profile` |
+| Scopes | `openid`, `email`, `profile`, `audience-delpi` |
+| Web origins | `https://chatgpt.com`, `https://chat.openai.com` |
 | Redirect URIs | `https://chatgpt.com/aip/g-{GPT_ID}/oauth/callback` e `https://chat.openai.com/aip/g-{GPT_ID}/oauth/callback` |
 
-O secret fica só no GPT Editor. Procedimento completo: [`transformometro-api/docs/chatgpt-custom-gpt-actions.md`](../../transformometro-api/docs/chatgpt-custom-gpt-actions.md).
+Procedimento do produto: [`transformometro-api/docs/chatgpt-custom-gpt-actions.md`](../../transformometro-api/docs/chatgpt-custom-gpt-actions.md).
 
 ---
 
@@ -172,6 +178,8 @@ Volumes do Keycloak são apagados. Refazer: realm, client, mappers, usuários, r
 | Token sem `email` | Client scopes + mapper |
 | Loop de login | Web origins; cookie third-party (raro em localhost) |
 | Issuer mismatch | `KEYCLOAK_ISSUER` = URL pública do realm, não interna |
+| Custom GPT OAuth HTTP 401 | Secret de prod + token exchange com Basic; ver [padrão GPT Actions](../11-padroes-de-desenvolvimento/padrao-custom-gpt-actions-oauth.md) §11 |
+| Custom GPT Invalid redirect URI | Cadastrar callbacks `chatgpt.com` / `chat.openai.com` com `g-…` real |
 
 ---
 
