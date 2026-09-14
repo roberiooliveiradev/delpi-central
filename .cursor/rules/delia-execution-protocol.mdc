@@ -265,52 +265,34 @@ Classificar `EXECUTION_DRIFT` ou `INCONCLUSIVE`, delimitar subgrafo afetado e n�
 
 ## Evidence report
 
-Toda implementação DÉLIA deve encerrar com um `DÉLIA EXECUTION REPORT`. É proibido terminar apenas com resumo narrativo, “implementado com sucesso”, “concluído” ou equivalente sem o relatório estruturado.
-
 Ao concluir, devolver objetivamente:
 
 ```text
 TASK
-PHASE
 BASE HEAD
 FINAL HEAD
 STATUS
-GOAL / RESULT
 FACTS PROVEN
 TO_INVENTORY
 EXECUTION_DRIFT
-AUTHORITIES / SOURCES USED
 FILES INSPECTED
 FILES CHANGED
-IMPLEMENTATION
 CONTRACT IMPACT: NONE | ADDITIVE | BEHAVIORAL | DEPRECATED | BREAKING
-SECURITY / AUTHORITY CHECK
-TESTS EXECUTED + exact commands/results
-EVALS / SAFETY CHECKS
+TESTS EXECUTED + exact results
+EVALS / SECURITY CHECKS
 RESIDUAL SEARCH
 POSTCONDITION / OUTCOME EVIDENCE
 UNRESOLVED
-SCOPE CHECK: planned scope × actual diff × scope creep
-WORKING TREE
-FINAL VERDICT FROM CURSOR
 RECOMMENDED NEXT STEP
 ```
 
-Se uma seção obrigatória não tiver evidência, não omitir silenciosamente. Registrar explicitamente um dos estados adequados:
+Não declarar PASS porque “parece correto”, build passou, arquivo existe, HTTP retornou 200, executor informou sucesso ou documentação diz que existe.
 
-```text
-PENDING
-INCONCLUSIVE
-TEST_NOT_RUN
-STALE_EVIDENCE
-N/A — <motivo objetivo>
-```
+Toda implementação DÉLIA deve terminar com `DÉLIA EXECUTION REPORT`; não encerrar somente com “implementado”, “concluído” ou resumo narrativo.
 
-`N/A` só é permitido quando a seção realmente não se aplica; não pode esconder teste, eval, postcondition ou evidência obrigatória que deveria existir.
+Se uma seção obrigatória não possuir evidência, declarar explicitamente `PENDING`, `INCONCLUSIVE`, `TEST_NOT_RUN`, `STALE_EVIDENCE` ou `N/A — <motivo>`. `N/A` só é válido quando a seção realmente não se aplica; nunca usar para esconder teste/evidência obrigatórios ausentes.
 
-O Cursor pode declarar `PASS` para teste/eval/gate que executou e cuja evidência possui. O Cursor não decide aceite arquitetural final da implementação.
-
-O campo `FINAL VERDICT FROM CURSOR` deve usar apenas:
+O Cursor pode declarar `PASS` de teste/gate que executou e provou, mas não declara aceite arquitetural final. Encerrar o relatório com exatamente um veredito factual:
 
 ```text
 IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
@@ -319,17 +301,111 @@ IMPLEMENTATION_INCONCLUSIVE
 EXECUTION_DRIFT
 ```
 
-Nunca encerrar uma tarefa DÉLIA com:
+`ACCEPT | ACCEPT_WITH_RESIDUAL | REWORK | EXECUTION_DRIFT | INCONCLUSIVE` como veredito de review pertencem ao GPT após analisar o relatório. O Cursor não encerra com `ACCEPT`, `ACCEPT_WITH_RESIDUAL` ou `REWORK`.
+
+## Requirements completeness gate
+
+Antes da implementação, decompor o escopo autorizado em requisitos atômicos `RQ-*` e acceptance criteria `AC-*` suficientes para provar o objetivo. Todo requisito material da tarefa deve mapear para pelo menos um `CP-*` existente quando fizer parte do escopo canônico DÉLIA; se não houver CP correspondente, registrar `DISCOVERED_REQUIREMENT`/`TRACEABILITY_GAP` e não declarar completude global até a authority `25-requirements-traceability.md` ser atualizada pelo fluxo governado.
+
+Estados permitidos por requisito da tarefa:
 
 ```text
-ACCEPT
-ACCEPT_WITH_RESIDUAL
-REWORK
+IMPLEMENTED
+PARTIAL
+NOT_IMPLEMENTED
+BLOCKED
+NOT_APPLICABLE
 ```
 
-Esses veredictos pertencem ao review GPT após receber o relatório e confrontá-lo com authorities, contracts, gates, testes e evidência.
+Regras:
 
-Não declarar PASS porque “parece correto”, build passou, arquivo existe, HTTP retornou 200, executor informou sucesso ou documentação diz que existe.
+- nenhum `RQ-*` recebido no brief pode desaparecer, ser fundido implicitamente ou ser considerado atendido sem evidência;
+- `PARTIAL` nunca conta como `IMPLEMENTED`;
+- `NOT_APPLICABLE` exige rationale explícito e não pode mascarar requisito obrigatório;
+- requisito material descoberto durante execução deve aparecer como `DRQ-*`/`DISCOVERED_REQUIREMENT`, não ser ignorado nem implementado silenciosamente fora de scope;
+- cada `RQ-*` deve apontar para evidência e, quando aplicável, `AC-*`, teste/postcondition e `CP-*` relacionado.
+
+Calcular no relatório:
+
+```text
+APPLICABLE_RQ = TOTAL_RQ - NOT_APPLICABLE
+TASK_IMPLEMENTED = count(RQ status = IMPLEMENTED)
+TASK_VERIFIED_COVERAGE_PCT = 100 * TASK_IMPLEMENTED / APPLICABLE_RQ
+TASK_REMAINING_PCT = 100 - TASK_VERIFIED_COVERAGE_PCT
+CRITICAL_RQ_TOTAL = requisitos marcados CRITICAL
+CRITICAL_RQ_IMPLEMENTED = CRITICAL com status IMPLEMENTED
+```
+
+A porcentagem é cobertura verificada de requisitos, não estimativa de esforço/tempo. Não dar crédito fracionário para `PARTIAL`.
+
+`TASK_COMPLETENESS = COMPLETE` somente se:
+
+```text
+todos RQ obrigatórios = IMPLEMENTED
+nenhum RQ crítico = PARTIAL | NOT_IMPLEMENTED | BLOCKED
+todos AC obrigatórios = PASS
+testes/evals obrigatórios = PASS
+residual search sem gap material
+planned scope = actual diff
+contract/security/postcondition gates resolvidos
+EXECUTION_DRIFT aberto = NONE
+```
+
+O `DÉLIA EXECUTION REPORT` deve conter seção `REQUIREMENTS COMPLETENESS` com tabela `RQ | Critical | CP | Status | Evidence`, totais, `TASK_VERIFIED_COVERAGE_PCT`, `TASK_REMAINING_PCT`, `CRITICAL_COVERAGE` e `TASK_COMPLETENESS`.
+
+## Program-wide verified completion
+
+O progresso global da DÉLIA é derivado da authority `25-requirements-traceability.md` e do estado de fases/gates no execution ledger. Não usar número de commits, arquivos, linhas, etapas iniciadas ou opinião do agente como percentual global.
+
+Definições:
+
+```text
+ACTIVE_CP = todo CP-* da matriz cujo status != OUT_OF_SCOPE_WITH_DECISION
+PASS_CP = ACTIVE_CP com status PASS
+VERIFIED_PROGRAM_COMPLETION_PCT = 100 * PASS_CP / ACTIVE_CP
+VERIFIED_PROGRAM_REMAINING_PCT = 100 - VERIFIED_PROGRAM_COMPLETION_PCT
+```
+
+Status `PLANNED | REVALIDATE | TO_INVENTORY | LOCKED | IN_PROGRESS | BLOCKED_WITH_EVIDENCE | FAIL` permanecem no denominador e valem zero no numerador. Isso evita inflar progresso por trabalho parcial. `OUT_OF_SCOPE_WITH_DECISION` é excluído do denominador porque não pertence mais ao escopo ativo aprovado.
+
+Também reportar por fase `C0…C7`:
+
+```text
+PHASE_ACTIVE_CP
+PHASE_PASS_CP
+PHASE_VERIFIED_COMPLETION_PCT
+PHASE_REMAINING_PCT
+```
+
+`100%` de requirements não é, isoladamente, autorização para afirmar produto completo. `PROGRAM_COMPLETE = TRUE` somente quando, no mesmo SHA/config/evidence aplicável:
+
+```text
+todos ACTIVE_CP = PASS
+C0…C7 gates obrigatórios = PASS
+20-testing-and-acceptance-matrix gates obrigatórios = PASS
+nenhum PENDING | INCONCLUSIVE | TEST_NOT_RUN | STALE_EVIDENCE material aberto
+nenhum EXECUTION_DRIFT/TRACEABILITY_GAP material aberto
+authoritative postconditions/outcomes exigidos = verificados
+documentação/ledger = reconciliados com o runtime provado
+```
+
+Se uma spec introduzir capability/requisito material ainda não mapeado em `25`, registrar `TRACEABILITY_GAP`; não manter 100% até que o requisito seja canonizado ou formalmente `OUT_OF_SCOPE_WITH_DECISION`.
+
+Após cada implementação aceita que altere status `CP-*`, recalcular e incluir no relatório:
+
+```text
+PROGRAM PROGRESS
+ACTIVE_CP_TOTAL:
+PASS_CP_TOTAL:
+REMAINING_CP_TOTAL:
+VERIFIED_PROGRAM_COMPLETION_PCT:
+VERIFIED_PROGRAM_REMAINING_PCT:
+CURRENT_PHASE:
+CURRENT_PHASE_COMPLETION_PCT:
+PROGRAM_COMPLETE: TRUE | FALSE
+```
+
+Esse percentual representa **escopo previsto comprovadamente implementado**, não percentual de esforço, custo ou calendário consumido.
 
 ## Completion gate
 
