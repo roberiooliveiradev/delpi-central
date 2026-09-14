@@ -98,10 +98,11 @@ def build_registration_guide() -> dict[str, Any]:
             },
             {
                 "step": 5,
-                "id": "ui_followups",
+                "id": "governed_followups",
                 "ask": [],
                 "actions": [
-                    "Point user to Minha DELPI UI for diagrams, WBS, evidence uploads, and meeting-minute signatures.",
+                    "Diagrams and WBS/decomposition may be persisted via GPT only when the API surface supports the write and live manage authorization succeeds; always PREPARE → SHOW → CONFIRM → WRITE → VERIFY.",
+                    "Point user to Minha DELPI UI for evidence uploads and meeting-minute handwritten signatures.",
                     "Offer gpt_analyze for KPIs after recalculate.",
                 ],
             },
@@ -250,9 +251,13 @@ def build_registration_guide() -> dict[str, Any]:
             "operationId": "gpt_commit_improvement_package",
             "dry_run_first": True,
             "process_context_operationId": "gpt_get_process_context",
+            "governed_document_writes": {
+                "diagram": "Use only when surface_supports.persist_diagram_via_gpt=true and live manage authorization succeeds.",
+                "decomposition": "Use only when surface_supports.persist_decomposition_via_gpt=true and live manage authorization succeeds.",
+                "flow": "PREPARE → SHOW → CONFIRM → WRITE → VERIFY",
+                "support_is_not_authorization": True,
+            },
             "ui_only_persist": [
-                "diagrams",
-                "WBS/decomposition",
                 "evidence uploads",
                 "meeting-minute handwritten signature",
             ],
