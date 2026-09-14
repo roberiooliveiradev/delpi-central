@@ -97,6 +97,64 @@ def test_push_skips_pulse_only_poll_update(monkeypatch):
     assert driver.calls == 0
 
 
+def test_push_skips_replace_echo_without_force_ota(monkeypatch):
+    """MFE edit uses PUT replace with full form echo — must not force chip push."""
+    driver = _FakeDriver()
+    service = DeviceConfigPushService()
+    monkeypatch.setattr(service, "_registry", _FakeRegistry(driver))
+    monkeypatch.setattr(
+        "production_pulse_app.application.services.device_config_push_service.settings.PP_DEVICE_OTA_BASE_URL",
+        "http://192.168.1.10/apps/production-pulse-api",
+    )
+
+    previous = _device()
+    result = service.push_after_save(
+        previous,
+        request_payload={
+            "name": "ESP8266-001",
+            "branch": "01",
+            "ipAddress": "192.168.20.2",
+            "driverKey": "esp8266_http_v1",
+            "wifiSsid": "Delpi-Desenvolvimento",
+            "debounceMs": 100,
+            "pollIntervalMs": 300,
+            "enabled": True,
+            "controllerCode": "ESP-00B7942B",
+            "apiToken": "",
+            "wifiPassword": "",
+        },
+        force_ota_provision=False,
+        previous_row=previous,
+    )
+
+    assert result["status"] == "skipped"
+    assert driver.calls == 0
+
+
+def test_push_still_runs_when_replace_would_have_forced_but_ssid_changed(monkeypatch):
+    driver = _FakeDriver()
+    service = DeviceConfigPushService()
+    monkeypatch.setattr(service, "_registry", _FakeRegistry(driver))
+    monkeypatch.setattr(
+        "production_pulse_app.application.services.device_config_push_service.settings.PP_DEVICE_OTA_BASE_URL",
+        "http://192.168.1.10/apps/production-pulse-api",
+    )
+
+    result = service.push_after_save(
+        _device(wifi_ssid="Nova-Rede"),
+        request_payload={
+            "wifiSsid": "Nova-Rede",
+            "debounceMs": 100,
+            "branch": "01",
+        },
+        force_ota_provision=False,
+        previous_row=_device(wifi_ssid="Delpi-Desenvolvimento"),
+    )
+
+    assert result["status"] == "ok"
+    assert driver.calls == 1
+
+
 def test_push_after_create_force_includes_ota_fields(monkeypatch):
     driver = _FakeDriver()
     service = DeviceConfigPushService()

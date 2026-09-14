@@ -286,10 +286,13 @@ class DeviceService:
             device_api_token=device_api_token,
             actor_sub=actor_sub,
         )
+        # Edit/replace must not force chip contact: the MFE always PUTs the full
+        # form (wifi/debounce/branch echoes). Push only when chip fields change
+        # (same gate as patch). Create keeps force_ota_provision=True.
         result = self._with_config_push(
             row,
             payload=payload,
-            force_ota_provision=True,
+            force_ota_provision=False,
             previous_row=existing,
         )
         safe_realtime(
