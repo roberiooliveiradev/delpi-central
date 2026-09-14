@@ -8,6 +8,7 @@ from uuid import UUID
 from tv_app.application.gpt_actions.commit_service import TvGptCommitService
 from tv_app.application.gpt_actions.errors import GptActionsError
 from tv_app.application.gpt_actions.plan_digest import compute_plan_digest
+from tv_app.application.ports import PresentationRepositoryPort
 from tv_app.application.services.data.tv_copilot_command_planner_service import (
     TvCopilotCommandPlannerService,
 )
@@ -28,38 +29,39 @@ from tv_app.application.services.presentation_payload_service import Presentatio
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
 from tv_app.application.services.tv_presentation_write_service import TvPresentationWriteService
 from tv_app.core.security import TV_READ, TV_WRITE, assert_permission
-from tv_app.infrastructure.persistence.repositories.playlist_repository import PlaylistRepository
+
+
+def _typed_ops(ops: list[Any] | None) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for raw in ops or []:
+        if isinstance(raw, dict) and str(raw.get("op") or "").strip():
+            out.append(dict(raw))
+    return out
 
 
 class GptActionsDispatchService:
     def __init__(
         self,
         *,
-        repo: PlaylistRepository | None = None,
-        writes: TvPresentationWriteService | None = None,
+        repo: PresentationRepositoryPort,
+        writes: TvPresentationWriteService,
+        commit: TvGptCommitService,
         access: PlaylistAccessService | None = None,
         patch: TvCopilotPatchService | None = None,
-        commit: TvGptCommitService | None = None,
         catalog: TvDataRouteCatalogService | None = None,
         validation: TvDataConfigValidationService | None = None,
         preview: TvDataPreviewService | None = None,
         suggest: TvDataRouteSuggestService | None = None,
-        planner: TvCopilotCommandPlannerService | None = None,
     ) -> None:
-        self._repo = repo or PlaylistRepository()
-        self._writes = writes or TvPresentationWriteService(repo=self._repo)
+        self._repo = repo
+        self._writes = writes
         self._access = access or PlaylistAccessService()
         self._patch = patch or TvCopilotPatchService()
-        self._commit = commit or TvGptCommitService(
-            writes=self._writes,
-            patch=self._patch,
-            access=self._access,
-        )
+        self._commit = commit
         self._catalog = catalog or TvDataRouteCatalogService()
         self._validation = validation or TvDataConfigValidationService()
         self._preview = preview or TvDataPreviewService()
         self._suggest = suggest or TvDataRouteSuggestService(self._catalog)
-        self._planner = planner or TvCopilotCommandPlannerService()
         self._present = PresentationPayloadService()
 
     def _actor(self, user: Any) -> str:
@@ -238,9 +240,10 @@ class GptActionsDispatchService:
                     code="RESOURCE_NOT_FOUND",
                     status_code=404,
                 )
+        typed_ops = _typed_ops(ops)
         envelope = {
             "target": target if isinstance(target, dict) else {},
-            "ops": ops if isinstance(ops, list) else [],
+            "ops": typed_ops,
             "catalogVersion": str(
                 catalog_version or TvCopilotContentService.catalog_version()
             ).strip(),
@@ -255,18 +258,24 @@ class GptActionsDispatchService:
         except TvCopilotPatchError as exc:
             raise GptActionsError(str(exc), code="INVALID_CHANGE", status_code=422) from exc
 
+        # appliedOps from patch service is list[str] — expose as operationNames only.
+        applied_names = result.get("appliedOps") or []
+        operation_names = [
+            str(name) for name in applied_names if isinstance(name, str) and name.strip()
+        ]
         base_revision = result.get("baseRevision")
+        # Digest binds the same typed ops returned for commit.
         plan_digest = compute_plan_digest(
             actor_id=actor,
             target=envelope["target"],
-            ops=envelope["ops"],
+            ops=typed_ops,
             catalog_version=envelope["catalogVersion"],
             base_revision=int(base_revision) if base_revision is not None else None,
         )
-        # Public DTO — strip httpCommands.
-        public = {
+        return {
             "target": envelope["target"],
-            "ops": result.get("appliedOps") or envelope["ops"],
+            "ops": typed_ops,
+            "operationNames": operation_names,
             "catalogVersion": envelope["catalogVersion"],
             "baseRevision": base_revision,
             "risk": result.get("risk"),
@@ -279,7 +288,6 @@ class GptActionsDispatchService:
             "persisted": False,
             "message": result.get("message"),
         }
-        return public
 
     def commit_change(
         self,
@@ -299,7 +307,7 @@ class GptActionsDispatchService:
             user=user,
             actor_id=actor,
             target=target,
-            ops=ops,
+            ops=_typed_ops(ops),
             catalog_version=catalog_version,
             expected_revision=expected_revision,
             plan_digest=plan_digest,

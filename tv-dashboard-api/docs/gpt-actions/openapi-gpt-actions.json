@@ -30,7 +30,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptSuccessEnvelope"
                 }
               }
             }
@@ -40,7 +40,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -50,7 +50,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -60,7 +60,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -70,17 +70,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
           },
           "409": {
-            "description": "Conflict (revision/catalog/plan/idempotency/partial)",
+            "description": "Conflict (revision/catalog/plan/idempotency/partial/in-progress)",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -90,7 +90,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -137,7 +147,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptSuccessEnvelope"
                 }
               }
             }
@@ -147,7 +157,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -157,7 +167,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -167,7 +177,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -177,17 +187,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
           },
           "409": {
-            "description": "Conflict (revision/catalog/plan/idempotency/partial)",
+            "description": "Conflict (revision/catalog/plan/idempotency/partial/in-progress)",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -197,7 +207,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -236,7 +256,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptSuccessEnvelope"
                 }
               }
             }
@@ -246,7 +266,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -256,7 +276,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -266,7 +286,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -276,17 +296,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
           },
           "409": {
-            "description": "Conflict (revision/catalog/plan/idempotency/partial)",
+            "description": "Conflict (revision/catalog/plan/idempotency/partial/in-progress)",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -296,7 +316,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -342,7 +372,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptSuccessEnvelope"
                 }
               }
             }
@@ -352,7 +382,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -362,7 +392,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -372,7 +402,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -382,17 +412,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
           },
           "409": {
-            "description": "Conflict (revision/catalog/plan/idempotency/partial)",
+            "description": "Conflict (revision/catalog/plan/idempotency/partial/in-progress)",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -402,7 +432,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -466,7 +506,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptSuccessEnvelope"
                 }
               }
             }
@@ -476,7 +516,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -486,7 +526,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -496,7 +536,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -506,17 +546,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
           },
           "409": {
-            "description": "Conflict (revision/catalog/plan/idempotency/partial)",
+            "description": "Conflict (revision/catalog/plan/idempotency/partial/in-progress)",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -526,7 +566,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -574,7 +624,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptSuccessEnvelope"
                 }
               }
             }
@@ -584,7 +634,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -594,7 +644,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -604,7 +654,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -614,17 +664,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
           },
           "409": {
-            "description": "Conflict (revision/catalog/plan/idempotency/partial)",
+            "description": "Conflict (revision/catalog/plan/idempotency/partial/in-progress)",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -634,7 +684,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -688,7 +748,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptSuccessEnvelope"
                 }
               }
             }
@@ -698,7 +758,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -708,7 +768,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -718,7 +778,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -728,17 +788,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
           },
           "409": {
-            "description": "Conflict (revision/catalog/plan/idempotency/partial)",
+            "description": "Conflict (revision/catalog/plan/idempotency/partial/in-progress)",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -748,7 +808,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -760,7 +830,7 @@
       "post": {
         "operationId": "gpt_commit_change",
         "summary": "Commit a previously previewed change",
-        "description": "ACT via shared write boundary. Requires Idempotency-Key, planDigest, catalogVersion and expectedRevision. Authoritative read-back required.",
+        "description": "ACT via shared write boundary. Requires Idempotency-Key, planDigest, catalogVersion. expectedRevision is required when target.playlistId refers to an existing playlist; omit only for create_playlist without pre-existing playlist. Authoritative read-back required.",
         "tags": [
           "TV Dashboard GPT"
         ],
@@ -778,7 +848,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "Client-generated key scoped to actor+operation. Same key+payload replays outcome; same key+different payload → 409 IDEMPOTENCY_CONFLICT."
+            "description": "Client-generated key scoped to actor+operation. Atomic acquire before write; same key+payload replays; different payload → 409."
           }
         ],
         "requestBody": {
@@ -800,13 +870,15 @@
                     "type": "array",
                     "items": {
                       "type": "object"
-                    }
+                    },
+                    "description": "Typed Copilot ops from gpt_preview_change (objects with op field — never string names)."
                   },
                   "catalogVersion": {
                     "type": "string"
                   },
                   "expectedRevision": {
-                    "type": "integer"
+                    "type": "integer",
+                    "description": "Required OCC revision for existing playlist. Omit only when creating a new playlist without playlistId. Missing on existing playlist → 422."
                   },
                   "planDigest": {
                     "type": "string"
@@ -822,7 +894,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptSuccessEnvelope"
                 }
               }
             }
@@ -832,7 +904,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -842,7 +914,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -852,7 +924,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -862,17 +934,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
           },
           "409": {
-            "description": "Conflict (revision/catalog/plan/idempotency/partial)",
+            "description": "Conflict (revision/catalog/plan/idempotency/partial/in-progress)",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -882,7 +954,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiEnvelope"
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
                 }
               }
             }
@@ -901,6 +983,69 @@
       }
     },
     "schemas": {
+      "GptSuccessEnvelope": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {}
+        }
+      },
+      "GptErrorEnvelope": {
+        "type": "object",
+        "required": [
+          "ok",
+          "error",
+          "meta"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          },
+          "error": {
+            "type": "object",
+            "required": [
+              "code",
+              "message",
+              "retryable"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "retryable": {
+                "type": "boolean"
+              },
+              "details": {
+                "type": "object"
+              }
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "correlationId": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
       "ApiEnvelope": {
         "type": "object",
         "required": [

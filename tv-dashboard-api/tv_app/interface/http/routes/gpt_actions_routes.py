@@ -11,20 +11,31 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from tv_app.application.gpt_actions import GPT_ACTIONS_BASE_PATH, GPT_ACTIONS_SCHEMA_HTTP_OPERATION_ID
+from tv_app.application.gpt_actions.commit_service import TvGptCommitService
 from tv_app.application.gpt_actions.dispatch_service import GptActionsDispatchService
 from tv_app.application.gpt_actions.errors import GptActionsError
 from tv_app.application.gpt_actions.openapi_builder import (
     build_gpt_actions_openapi,
     resolve_gpt_actions_server_url,
 )
+from tv_app.application.services.tv_presentation_write_service import TvPresentationWriteService
 from tv_app.config import settings
 from tv_app.core.responses import ok
 from tv_app.core.serialize import json_safe
+from tv_app.infrastructure.persistence.repositories.idempotency_repository import (
+    PostgresIdempotencyRepository,
+)
+from tv_app.infrastructure.persistence.repositories.playlist_repository import PlaylistRepository
 from tv_app.interface.http.auth_http import resolve_user
 
 router = APIRouter(prefix=GPT_ACTIONS_BASE_PATH, tags=["TV Dashboard GPT Actions"])
 logger = logging.getLogger(__name__)
-_dispatch = GptActionsDispatchService()
+
+_repo = PlaylistRepository()
+_writes = TvPresentationWriteService(repo=_repo)
+_idempotency = PostgresIdempotencyRepository()
+_commit = TvGptCommitService(writes=_writes, idempotency=_idempotency)
+_dispatch = GptActionsDispatchService(repo=_repo, writes=_writes, commit=_commit)
 
 
 class SuggestBody(BaseModel):

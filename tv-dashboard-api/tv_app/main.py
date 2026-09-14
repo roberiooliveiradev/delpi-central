@@ -13,6 +13,7 @@ from delpi_auth.credential_guard import check_credentials
 from tv_app.application.gpt_actions import CUSTOM_GPT_CORS_ORIGINS
 from tv_app.config import settings
 from tv_app.core.responses import fail
+from tv_app.core.serialize import json_safe
 from tv_app.interface.http.routes.data_api_routes import router as data_api_router
 from tv_app.interface.http.routes.data_routes import router as data_routes_router
 from tv_app.interface.http.routes.content_routes import router as content_router
@@ -96,12 +97,22 @@ app = FastAPI(
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(_request: Request, exc: RequestValidationError):
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
     details = exc.errors()
     first = details[0] if details else {}
     loc = ".".join(str(part) for part in first.get("loc", []))
     msg = first.get("msg", "Dados inválidos.")
     message = f"{loc}: {msg}" if loc else msg
+    path = str(request.url.path or "")
+    if "/gpt-actions/v1" in path:
+        from tv_app.interface.http.routes.gpt_actions_routes import gpt_fail
+
+        return gpt_fail(
+            code="INVALID_CHANGE",
+            message=message,
+            status_code=422,
+            details={"validation": json_safe(details)},
+        )
     return fail(message, 422)
 
 

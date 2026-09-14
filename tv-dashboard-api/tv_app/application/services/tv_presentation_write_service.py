@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
+from tv_app.application.ports import PresentationRepositoryPort
 from tv_app.application.services.branch_policy_service import validate_native_branch
 from tv_app.application.services.comunicado_config_validation_service import (
     sanitize_and_hydrate_comunicado_config,
@@ -22,7 +23,6 @@ from tv_app.application.services.slide_preset_service import (
 from tv_app.infrastructure.persistence.repositories.playlist_repository import (
     MainSectionProtectedError,
     PlaylistNotFoundError,
-    PlaylistRepository,
     SectionNotFoundError,
     SlideNotFoundError,
 )
@@ -69,11 +69,11 @@ class RevisionConflictError(PresentationWriteError):
 class TvPresentationWriteService:
     """Application owner for playlist/slide/section persistence (UI + GPT)."""
 
-    def __init__(self, repo: PlaylistRepository | None = None) -> None:
-        self._repo = repo or PlaylistRepository()
+    def __init__(self, repo: PresentationRepositoryPort) -> None:
+        self._repo = repo
 
     @property
-    def repo(self) -> PlaylistRepository:
+    def repo(self) -> PresentationRepositoryPort:
         return self._repo
 
     def get_revision(self, playlist_id: UUID) -> int:

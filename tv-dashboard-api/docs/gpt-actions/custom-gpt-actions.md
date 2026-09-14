@@ -48,13 +48,19 @@ claim the client already exists or that Builder is configured.
 
 ## OCC / catalog / digest / idempotency
 
-- ``expectedRevision`` must match persisted revision (409 ``REVISION_CONFLICT``).
+- ``expectedRevision`` is required for existing playlist (422 if missing) and must match
+  persisted revision (409 ``REVISION_CONFLICT``).
 - ``catalogVersion`` must match current authority (409 ``CATALOG_VERSION_STALE``).
-- ``planDigest`` binds actor + target + ops + catalogVersion + baseRevision
-  (409 ``PLAN_MISMATCH``).
-- ``Idempotency-Key`` required on commit; same key+fingerprint replays outcome;
-  same key+different fingerprint → 409 ``IDEMPOTENCY_CONFLICT``.
-  Store: ``tv_dashboard.gpt_actions_idempotency_keys`` (24h retention on get).
+- ``planDigest`` binds actor + target + **typed ops** + catalogVersion + baseRevision
+  (409 ``PLAN_MISMATCH``). Preview returns the same typed ``ops`` used to compute the digest.
+- ``Idempotency-Key`` required on commit; atomic acquire (UNIQUE + status) before first write.
+  Same key+fingerprint completed → replay; different fingerprint → 409 ``IDEMPOTENCY_CONFLICT``;
+  in-progress → 409 ``IDEMPOTENCY_IN_PROGRESS`` (retryable). PARTIAL outcomes are completed
+  into the idempotency record and replayed without re-executing writes.
+  Store: ``tv_dashboard.gpt_actions_idempotency_keys`` (+ V017 ``status``).
+
+- ``expectedRevision`` is **required** when ``target.playlistId`` exists. Omit only for
+  ``create_playlist`` without a pre-existing playlist. Missing → 422 ``INVALID_CHANGE``.
 
 ``RATE_LIMITED`` (429) is **not implemented** in this V1 — no rate limiter was added.
 

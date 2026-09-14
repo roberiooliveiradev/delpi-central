@@ -44,23 +44,63 @@ def _envelope_schema() -> dict[str, Any]:
     }
 
 
+def _error_envelope_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "required": ["ok", "error", "meta"],
+        "properties": {
+            "ok": {"type": "boolean", "enum": [False]},
+            "error": {
+                "type": "object",
+                "required": ["code", "message", "retryable"],
+                "properties": {
+                    "code": {"type": "string"},
+                    "message": {"type": "string"},
+                    "retryable": {"type": "boolean"},
+                    "details": {"type": "object"},
+                },
+            },
+            "meta": {
+                "type": "object",
+                "properties": {"correlationId": {"type": "string"}},
+            },
+        },
+    }
+
+
 def _ok_response(description: str) -> dict[str, Any]:
     return {
         "description": description,
         "content": {
-            "application/json": {"schema": {"$ref": "#/components/schemas/ApiEnvelope"}}
+            "application/json": {
+                "schema": {"$ref": "#/components/schemas/GptSuccessEnvelope"}
+            }
+        },
+    }
+
+
+def _error_response(description: str) -> dict[str, Any]:
+    return {
+        "description": description,
+        "content": {
+            "application/json": {
+                "schema": {"$ref": "#/components/schemas/GptErrorEnvelope"}
+            }
         },
     }
 
 
 def _error_responses() -> dict[str, Any]:
     return {
-        "400": _ok_response("Validation or unsupported capability"),
-        "401": _ok_response("Missing or invalid Bearer token"),
-        "403": _ok_response("Authenticated but lacking TV permission"),
-        "404": _ok_response("Resource not found"),
-        "409": _ok_response("Conflict (revision/catalog/plan/idempotency/partial)"),
-        "422": _ok_response("Invalid change payload"),
+        "400": _error_response("Validation or unsupported capability"),
+        "401": _error_response("Missing or invalid Bearer token"),
+        "403": _error_response("Authenticated but lacking TV permission"),
+        "404": _error_response("Resource not found"),
+        "409": _error_response(
+            "Conflict (revision/catalog/plan/idempotency/partial/in-progress)"
+        ),
+        "422": _error_response("Invalid change payload"),
+        "502": _error_response("Upstream failure"),
     }
 
 
@@ -255,7 +295,9 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "summary": "Commit a previously previewed change",
                 "description": (
                     "ACT via shared write boundary. Requires Idempotency-Key, planDigest, "
-                    "catalogVersion and expectedRevision. Authoritative read-back required."
+                    "catalogVersion. expectedRevision is required when target.playlistId "
+                    "refers to an existing playlist; omit only for create_playlist without "
+                    "pre-existing playlist. Authoritative read-back required."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],
@@ -267,8 +309,8 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "required": True,
                         "schema": {"type": "string"},
                         "description": (
-                            "Client-generated key scoped to actor+operation. Same key+payload "
-                            "replays outcome; same key+different payload → 409 IDEMPOTENCY_CONFLICT."
+                            "Client-generated key scoped to actor+operation. Atomic acquire "
+                            "before write; same key+payload replays; different payload → 409."
                         ),
                     }
                 ],
@@ -281,9 +323,23 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                                 "required": ["ops", "catalogVersion", "planDigest"],
                                 "properties": {
                                     "target": {"type": "object"},
-                                    "ops": {"type": "array", "items": {"type": "object"}},
+                                    "ops": {
+                                        "type": "array",
+                                        "items": {"type": "object"},
+                                        "description": (
+                                            "Typed Copilot ops from gpt_preview_change "
+                                            "(objects with op field — never string names)."
+                                        ),
+                                    },
                                     "catalogVersion": {"type": "string"},
-                                    "expectedRevision": {"type": "integer"},
+                                    "expectedRevision": {
+                                        "type": "integer",
+                                        "description": (
+                                            "Required OCC revision for existing playlist. "
+                                            "Omit only when creating a new playlist without "
+                                            "playlistId. Missing on existing playlist → 422."
+                                        ),
+                                    },
                                     "planDigest": {"type": "string"},
                                 },
                             }
@@ -316,7 +372,12 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     "description": "Keycloak access token for the authenticated human actor.",
                 }
             },
-            "schemas": {"ApiEnvelope": _envelope_schema()},
+            "schemas": {
+                "GptSuccessEnvelope": _envelope_schema(),
+                "GptErrorEnvelope": _error_envelope_schema(),
+                # Compat alias
+                "ApiEnvelope": _envelope_schema(),
+            },
         },
     }
 
