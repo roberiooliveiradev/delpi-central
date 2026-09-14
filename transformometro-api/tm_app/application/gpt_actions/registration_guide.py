@@ -249,11 +249,17 @@ def build_registration_guide() -> dict[str, Any]:
         "package_hints": {
             "operationId": "gpt_commit_improvement_package",
             "dry_run_first": True,
-            "ui_only": [
+            "process_context_operationId": "gpt_get_process_context",
+            "ui_only_persist": [
                 "diagrams",
                 "WBS/decomposition",
                 "evidence uploads",
                 "meeting-minute handwritten signature",
+            ],
+            "conversational_draft_ok": [
+                "Mermaid AS-IS/TO-BE drafts",
+                "diagnostic hypotheses",
+                "TO-BE proposals",
             ],
         },
     }

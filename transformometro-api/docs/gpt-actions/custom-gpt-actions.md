@@ -15,6 +15,7 @@ Superfície compacta para o **ChatGPT Custom GPT** analisar, cadastrar e editar 
 | Dispatcher | `tm_app/application/gpt_actions/dispatch_service.py` |
 | Guia de cadastro (catalog) | `tm_app/application/gpt_actions/registration_guide.py` |
 | Pacote guiado | `tm_app/application/gpt_actions/improvement_package_service.py` |
+| Contexto de inteligência (read-only) | `tm_app/application/gpt_actions/process_context_service.py` |
 | Instructions do especialista | [`specialist-instructions.md`](./specialist-instructions.md) |
 | Rotas | `tm_app/interface/http/routes/gpt_actions_routes.py` |
 
@@ -25,11 +26,12 @@ cd transformometro-api
 PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 ```
 
-## Operations (12 no schema importado)
+## Operations (13 no schema importado)
 
 | operationId | Método / path |
 |-------------|----------------|
 | `gpt_get_catalog` | `GET .../catalog` (inclui `registration_guide` + enums `fase_melhoria` / `prioridade_melhoria`) |
+| `gpt_get_process_context` | `GET .../process-context?process_id=&instance_id=&revision_id=` (projeção efêmera read-only) |
 | `gpt_analyze` | `GET .../analysis?view=meta\|summary\|processes\|instances\|rows` |
 | `gpt_search_records` | `GET .../records/{entity}` (`instance_id` para revisões de uma melhoria) |
 | `gpt_get_record` | `GET .../records/{entity}/{id}` |
@@ -41,6 +43,8 @@ PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 | `gpt_recalculate_dashboard` | `POST .../dashboard/recalculate` |
 | `gpt_meeting_minute_workflow` | `POST .../meeting-minutes/{id}/workflow` |
 | `gpt_commit_improvement_package` | `POST .../improvement-packages` (`dry_run` → commit orquestrado) |
+
+`gpt_get_process_context` monta o Process Business Graph / Process Intelligence Context a partir dos records e services canônicos. Sem persistência de grafo. Diagramas/WBS podem ser **rascunhados** na conversa; persistência validada desses artefatos via GPT ainda não tem paridade com as rotas canônicas — use a UI.
 
 `GET .../openapi.json` continua público só para o botão **Importar de URL**. Não entra no schema: o GPT Builder trata esse path como OpenAPI 3.1 e rejeita o documento.
 
@@ -90,7 +94,7 @@ Checklist operacional: [`gpt-builder-go-live.md`](./gpt-builder-go-live.md).
 
 1. Create GPT → Actions → Import from URL  
    `https://<host>/apps/transformometro-api/transformometro/gpt-actions/v1/openapi.json`  
-   ou cole o conteúdo de `docs/gpt-actions/openapi-gpt-actions.json` (esperar **12** actions).
+   ou cole o conteúdo de `docs/gpt-actions/openapi-gpt-actions.json` (esperar **13** actions).
 2. Authentication → OAuth (valores da tabela acima).
 3. Colar o playbook de [`specialist-instructions.md`](./specialist-instructions.md).
 

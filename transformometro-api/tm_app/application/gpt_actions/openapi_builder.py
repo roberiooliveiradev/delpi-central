@@ -49,6 +49,7 @@ GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
     "gpt_recalculate_dashboard",
     "gpt_meeting_minute_workflow",
     "gpt_commit_improvement_package",
+    "gpt_get_process_context",
 )
 
 # HTTP público para import no GPT Builder — não entra no schema importado.
@@ -125,6 +126,43 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "security": [{"BearerAuth": []}],
                 "responses": {
                     "200": _ok_response("Catalog payload"),
+                    **_error_responses(),
+                },
+            }
+        },
+        f"{GPT_ACTIONS_BASE_PATH}/process-context": {
+            "get": {
+                "operationId": "gpt_get_process_context",
+                "summary": "Aggregated read-only process intelligence context",
+                "description": (
+                    "Ephemeral Process Business Graph from authoritative records. "
+                    "No side effects. Use before diagnosis or registration."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "process_id",
+                        "in": "query",
+                        "required": True,
+                        "schema": {"type": "string"},
+                        "description": "Master process UUID (processo_id).",
+                    },
+                    {
+                        "name": "instance_id",
+                        "in": "query",
+                        "schema": {"type": "string"},
+                        "description": "Optional melhoria UUID to isolate one instance.",
+                    },
+                    {
+                        "name": "revision_id",
+                        "in": "query",
+                        "schema": {"type": "string"},
+                        "description": "Optional revision UUID for scenario selection.",
+                    },
+                ],
+                "responses": {
+                    "200": _ok_response("Process intelligence context"),
                     **_error_responses(),
                 },
             }

@@ -38,6 +38,7 @@ _COVERAGE_ANCHORS = (
     "gpt_recalculate_dashboard",
     "gpt_meeting_minute_workflow",
     "gpt_commit_improvement_package",
+    "gpt_get_process_context",
     "gpt_get_openapi_schema",
 )
 
@@ -630,4 +631,154 @@ def test_openapi_includes_improvement_package():
     assert (
         "/transformometro/gpt-actions/v1/improvement-packages" in doc["paths"]
     )
-    assert count_operations(doc) == 12
+    assert "gpt_get_process_context" in GPT_ACTIONS_OPERATION_IDS
+    assert "/transformometro/gpt-actions/v1/process-context" in doc["paths"]
+    assert count_operations(doc) == 13
+
+
+def test_process_context_positive():
+    from tm_app.application.gpt_actions.process_context_service import (
+        ProcessContextService,
+    )
+
+    request = MagicMock()
+    with (
+        patch(
+            "tm_app.application.gpt_actions.process_context_service.require_transformometro_view_access",
+            return_value=None,
+        ),
+        patch(
+            "tm_app.application.gpt_actions.process_context_service.check_processo_view_access",
+            return_value=None,
+        ),
+        patch(
+            "tm_app.application.gpt_actions.process_context_service.ProcessoRepository"
+        ) as proc_cls,
+        patch(
+            "tm_app.application.gpt_actions.process_context_service.ProcessoSetupStatsService"
+        ) as stats_cls,
+        patch(
+            "tm_app.application.gpt_actions.process_context_service.ProcessoInstanciaRepository"
+        ) as inst_cls,
+        patch(
+            "tm_app.application.gpt_actions.process_context_service.filter_rows_for_access",
+            side_effect=lambda _req, rows, **_kw: rows,
+        ),
+        patch(
+            "tm_app.application.gpt_actions.process_context_service.RevisaoRepository"
+        ) as rev_cls,
+        patch(
+            "tm_app.application.gpt_actions.process_context_service.MedicaoRepository"
+        ) as med_cls,
+        patch(
+            "tm_app.application.gpt_actions.process_context_service.InvestimentoRepository"
+        ) as inv_cls,
+        patch(
+            "tm_app.application.gpt_actions.process_context_service.VinculoRepository"
+        ) as vin_cls,
+        patch(
+            "tm_app.application.gpt_actions.process_context_service.ProcessoDiagramRepository"
+        ) as diag_cls,
+        patch(
+            "tm_app.application.gpt_actions.process_context_service.ProcessoDecomposicaoRepository"
+        ) as decomp_cls,
+        patch(
+            "tm_app.application.gpt_actions.process_context_service.ProcessRevisionCompareService"
+        ) as cmp_cls,
+        patch(
+            "tm_app.application.gpt_actions.process_context_service.RevisaoImpactEffortMatrixService"
+        ),
+        patch(
+            "tm_app.application.gpt_actions.process_context_service.DiagramaCompositionService"
+        ) as dcomp_cls,
+        patch(
+            "tm_app.application.gpt_actions.process_context_service.DecomposicaoCompositionService"
+        ),
+    ):
+        pid = "pppppppp-pppp-pppp-pppp-pppppppppppp"
+        iid = "iiiiiiii-iiii-iiii-iiii-iiiiiiiiiiii"
+        bid = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+        sid = "ssssssss-ssss-ssss-ssss-ssssssssssss"
+        proc_cls.return_value.get.return_value = {
+            "processo_id": pid,
+            "nome_processo": "Fechamento",
+            "status_processo": "ativo",
+        }
+        stats_cls.return_value.enrich_processos.side_effect = lambda rows: rows
+        inst_cls.return_value.list_by_processo.return_value = [
+            {
+                "instancia_id": iid,
+                "processo_id": pid,
+                "codigo_filial": "01",
+                "resumo_melhoria": "Automação",
+            }
+        ]
+        rev_cls.return_value.list_by_processo.return_value = [
+            {
+                "revisao_id": bid,
+                "processo_id": pid,
+                "instancia_id": iid,
+                "cenario_tipo": "baseline",
+                "versao_revisao": "v1",
+                "data_inicio_vigencia": "2026-01-01",
+                "revisao_ativa": False,
+            },
+            {
+                "revisao_id": sid,
+                "processo_id": pid,
+                "instancia_id": iid,
+                "cenario_tipo": "melhoria",
+                "versao_revisao": "v2",
+                "data_inicio_vigencia": "2026-03-01",
+                "revisao_referencia_id": bid,
+                "revisao_ativa": True,
+            },
+        ]
+        med_cls.return_value.get_by_revisao.side_effect = lambda rid: {
+            "medicao_id": f"m-{rid[:4]}",
+            "revisao_id": rid,
+            "volume_mensal": 10,
+        }
+        inv_cls.return_value.list_by_revisao.return_value = []
+        vin_cls.return_value.list_by_revisao.return_value = []
+        diag_cls.return_value.get.return_value = {"conteudo": {"format": "flowchart_v1"}}
+        decomp_cls.return_value.get.return_value = None
+        cmp_cls.return_value.compare.return_value = {"items": []}
+        dcomp_cls.return_value.compose_for_processo.return_value = {
+            "mermaid": "flowchart TD; A-->B"
+        }
+
+        result = ProcessContextService().get_context(request, process_id=pid)
+
+    assert result["context_version"] == "process_intelligence_context_v1"
+    assert result["capabilities"]["side_effect"] is False
+    assert result["capabilities"]["persist_diagram_via_gpt"] is False
+    assert any(n["type"] == "process" for n in result["process_graph"]["nodes"])
+    assert any(e["type"] == "has_instance" for e in result["process_graph"]["edges"])
+    assert any(e["type"] == "references" for e in result["process_graph"]["edges"])
+    assert "decomposition_tree" in result["data_quality"]["missing"]
+    assert result["as_is"]["epistemic_status"] == "OBSERVED"
+
+
+def test_process_context_forbidden_without_view():
+    from tests.support import test_app as support
+
+    client = _gpt_client_without_universal_mocks()
+    prev_super = support.TEST_USER.is_superadmin
+    prev_perms = list(support.TEST_USER.permissions)
+    support.TEST_USER.is_superadmin = False
+    support.TEST_USER.permissions = []
+    try:
+        response = client.get(
+            "/transformometro/gpt-actions/v1/process-context",
+            params={"process_id": "pppppppp-pppp-pppp-pppp-pppppppppppp"},
+        )
+    finally:
+        support.TEST_USER.is_superadmin = prev_super
+        support.TEST_USER.permissions = prev_perms
+    assert response.status_code == 403
+
+
+def test_process_context_missing_process_id(tm_client):
+    response = tm_client.get("/transformometro/gpt-actions/v1/process-context")
+    assert response.status_code in {400, 422}

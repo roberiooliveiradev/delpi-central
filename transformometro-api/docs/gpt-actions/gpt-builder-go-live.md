@@ -30,7 +30,7 @@ https://<host-publico>/apps/transformometro-api/transformometro/gpt-actions/v1/o
 
 Alternativa: colar `docs/gpt-actions/openapi-gpt-actions.json`.
 
-Esperado: **12** operations (`gpt_analyze`, `gpt_get_catalog`, `gpt_commit_improvement_package`, …). O GET `openapi.json` não aparece como Action.
+Esperado: **13** operations (`gpt_get_process_context`, `gpt_analyze`, `gpt_get_catalog`, `gpt_commit_improvement_package`, …). O GET `openapi.json` não aparece como Action.
 
 O ChatGPT **rejeita** `servers.url` relativo (`/apps/transformometro-api`). Se aparecer
 «Não foi possível encontrar uma URL válida em `servers`», altere no editor para:
@@ -68,7 +68,8 @@ Resumo operacional:
 - Entrevistar o usuário (unidade, processo, números as-is/to-be, investimento, ativar?).
 - Preferir `gpt_commit_improvement_package` com `dry_run=true` → confirmar → commit.
 - Listar revisões de uma melhoria com `instance_id`.
-- Diagramas/evidências/assinatura → UI Minha DELPI.
+- Diagramas/WBS: rascunho Mermaid na conversa OK; persistência validada → UI Minha DELPI (paridade GPT incompleta).
+- Evidências/assinatura → UI Minha DELPI.
 
 ## 4. Fechar redirects com o GPT ID real
 
@@ -81,7 +82,7 @@ https://chat.openai.com/aip/g-YOUR-GPT-ID/oauth/callback
 
 ## 5. Pronto quando
 
-- GPT lista as **12** actions
+- GPT lista as **13** actions
 - Pede **Sign in** (OAuth Keycloak)
 - Após login, `gpt_analyze` / `gpt_get_catalog` respondem sem `invalid_token` / `Invalid redirect URI`
 - `gpt_get_catalog` devolve `registration_guide`; dry_run do pacote lista `missing` quando incompleto

@@ -85,6 +85,100 @@
         }
       }
     },
+    "/transformometro/gpt-actions/v1/process-context": {
+      "get": {
+        "operationId": "gpt_get_process_context",
+        "summary": "Aggregated read-only process intelligence context",
+        "description": "Ephemeral Process Business Graph from authoritative records. No side effects. Use before diagnosis or registration.",
+        "tags": [
+          "Transformômetro GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "process_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Master process UUID (processo_id)."
+          },
+          {
+            "name": "instance_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional melhoria UUID to isolate one instance."
+          },
+          {
+            "name": "revision_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional revision UUID for scenario selection."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Process intelligence context",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or domain error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking Transformômetro permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/transformometro/gpt-actions/v1/analysis": {
       "get": {
         "operationId": "gpt_analyze",

@@ -15,6 +15,7 @@ from tm_app.application.gpt_actions.entities import parse_entity
 from tm_app.application.gpt_actions.improvement_package_service import (
     GuidedImprovementPackageService,
 )
+from tm_app.application.gpt_actions.process_context_service import ProcessContextService
 from tm_app.application.gpt_actions.openapi_builder import (
     build_gpt_actions_openapi,
     resolve_gpt_actions_server_url,
@@ -30,6 +31,7 @@ router = APIRouter(
 logger = logging.getLogger(__name__)
 _dispatch = GptActionsDispatchService()
 _packages = GuidedImprovementPackageService(_dispatch)
+_process_context = ProcessContextService()
 
 
 class GptRecordBody(BaseModel):
@@ -93,6 +95,29 @@ def gpt_get_openapi_schema():
 def gpt_get_catalog(request: Request):
     try:
         return ok(_dispatch.get_catalog(request), "Catálogo do Transformômetro.")
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.get(
+    "/process-context",
+    operation_id="gpt_get_process_context",
+    summary="Aggregated read-only process intelligence context",
+)
+def gpt_get_process_context(
+    request: Request,
+    process_id: str = Query(..., description="Master process UUID"),
+    instance_id: str | None = None,
+    revision_id: str | None = None,
+):
+    try:
+        data = _process_context.get_context(
+            request,
+            process_id=process_id,
+            instance_id=instance_id,
+            revision_id=revision_id,
+        )
+        return ok(data, "Contexto de inteligência do processo.")
     except Exception as exc:
         return _handle(exc)
 

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "generatedAt": "2026-09-14",
-  "operation_count": 163,
+  "operation_count": 165,
   "operations": [
     {
       "operationId": "post_liberar",
@@ -742,6 +742,12 @@
       "module": "gpt_actions"
     },
     {
+      "operationId": "gpt_commit_improvement_package",
+      "method": "POST",
+      "path": "/transformometro/gpt-actions/v1/improvement-packages",
+      "module": "gpt_actions"
+    },
+    {
       "operationId": "gpt_meeting_minute_workflow",
       "method": "POST",
       "path": "/transformometro/gpt-actions/v1/meeting-minutes/{id}/workflow",
@@ -751,6 +757,12 @@
       "operationId": "gpt_get_openapi_schema",
       "method": "GET",
       "path": "/transformometro/gpt-actions/v1/openapi.json",
+      "module": "gpt_actions"
+    },
+    {
+      "operationId": "gpt_get_process_context",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/process-context",
       "module": "gpt_actions"
     },
     {
