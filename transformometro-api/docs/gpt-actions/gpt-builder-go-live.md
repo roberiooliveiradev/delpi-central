@@ -1,8 +1,31 @@
-# GPT Builder — checklist go-live (Custom GPT Transformômetro)
+# GPT Builder — checklist go-live (TÉO · Custom GPT Transformômetro)
 
 > Padrão transversal (outros produtos): [padrao-custom-gpt-actions-oauth.md](../../../docs/11-padroes-de-desenvolvimento/padrao-custom-gpt-actions-oauth.md)
 
 Valores prontos para colar no ChatGPT GPT Editor. O **client secret** fica só no Keycloak → Credentials — **nunca** no Git.
+
+## Identidade do GPT (manual no Builder)
+
+`MANUAL_CONFIGURATION_REQUIRED` — Name / Description / Conversation starters só existem na UI do ChatGPT.
+
+| Campo (GPT Builder) | Valor |
+|---------------------|--------|
+| **Name** | `TÉO — Especialista em Transformação Digital` |
+| **Description** | Transforme problemas em processos melhores. TÉO analisa processos, identifica gargalos, desenha melhorias, propõe indicadores e ajuda a registrar resultados no Transformômetro. |
+| **Tagline** | Transforme problemas em processos melhores. |
+| **Acrônimo** | TÉO = Transformação · Eficiência · Otimização |
+
+Conversation starters sugeridos:
+
+```text
+Quero melhorar um processo
+Tenho um problema operacional e não sei como resolver
+Me ajude a desenhar o AS-IS e o TO-BE
+Quero analisar uma melhoria antes de cadastrá-la
+Quero medir o resultado de uma transformação
+```
+
+Produto = **Transformômetro**. Persona/especialista = **TÉO**. Não renomear o produto.
 
 ## Pré-requisitos já feitos no ambiente
 
@@ -60,12 +83,12 @@ Produção: trocar `http://localhost` pelo `PUBLIC_BASE_URL` / host público do 
 
 ## 3. Instructions
 
-Usar o playbook completo: [`specialist-instructions.md`](./specialist-instructions.md) (bloco *Instructions (colar no GPT Builder)*).
+Usar o playbook completo: [`specialist-instructions.md`](./specialist-instructions.md) (bloco *Instructions (colar no GPT Builder)* — persona **TÉO**).
 
 Resumo operacional:
 
+- Problem-first: diagnóstico via `gpt_get_process_context` antes de cadastro, salvo QUICK REGISTRATION.
 - Chamar `gpt_get_catalog` e ler `registration_guide` antes de cadastrar.
-- Entrevistar o usuário (unidade, processo, números as-is/to-be, investimento, ativar?).
 - Preferir `gpt_commit_improvement_package` com `dry_run=true` → confirmar → commit.
 - Listar revisões de uma melhoria com `instance_id`.
 - Diagramas/WBS: rascunho Mermaid na conversa OK; persistência validada → UI Minha DELPI (paridade GPT incompleta).
@@ -82,9 +105,10 @@ https://chat.openai.com/aip/g-YOUR-GPT-ID/oauth/callback
 
 ## 5. Pronto quando
 
+- Name do GPT = **TÉO — Especialista em Transformação Digital**
 - GPT lista as **13** actions
 - Pede **Sign in** (OAuth Keycloak)
-- Após login, `gpt_analyze` / `gpt_get_catalog` respondem sem `invalid_token` / `Invalid redirect URI`
+- Após login, `gpt_analyze` / `gpt_get_catalog` / `gpt_get_process_context` respondem sem `invalid_token` / `Invalid redirect URI`
 - `gpt_get_catalog` devolve `registration_guide`; dry_run do pacote lista `missing` quando incompleto
 
 Detalhes: [`custom-gpt-actions.md`](./custom-gpt-actions.md).

@@ -1,9 +1,10 @@
-# Transformômetro — Custom GPT (OpenAI Actions)
+# Transformômetro — Custom GPT (OpenAI Actions) · persona TÉO
 
 > **Padrão transversal:** [padrao-custom-gpt-actions-oauth.md](../../../docs/11-padroes-de-desenvolvimento/padrao-custom-gpt-actions-oauth.md)  
-> Este arquivo é a **instância** Transformômetro (paths, client, operations). Para Action Plans e outros produtos, seguir o padrão geral e espelhar esta estrutura.
+> Este arquivo é a **instância** Transformômetro (paths, client, operations). Para Action Plans e outros produtos, seguir o padrão geral e espelhar esta estrutura.  
+> **Persona user-facing:** [TÉO — Especialista em Transformação Digital](./specialist-instructions.md) (produto = Transformômetro; TÉO ≠ novo serviço/bounded context).
 
-Superfície compacta para o **ChatGPT Custom GPT** analisar, cadastrar e editar o Transformômetro sem expor as ~150 rotas internas (limite ~30 operations por schema da OpenAI).
+Superfície compacta para o **ChatGPT Custom GPT** (TÉO) analisar, cadastrar e editar o Transformômetro sem expor as ~150 rotas internas (limite ~30 operations por schema da OpenAI).
 
 ## Arquivos
 
@@ -16,7 +17,7 @@ Superfície compacta para o **ChatGPT Custom GPT** analisar, cadastrar e editar 
 | Guia de cadastro (catalog) | `tm_app/application/gpt_actions/registration_guide.py` |
 | Pacote guiado | `tm_app/application/gpt_actions/improvement_package_service.py` |
 | Contexto de inteligência (read-only) | `tm_app/application/gpt_actions/process_context_service.py` |
-| Instructions do especialista | [`specialist-instructions.md`](./specialist-instructions.md) |
+| Instructions do especialista | [`specialist-instructions.md`](./specialist-instructions.md) (persona **TÉO**) |
 | Rotas | `tm_app/interface/http/routes/gpt_actions_routes.py` |
 
 Regenerar o JSON versionado:
@@ -90,7 +91,7 @@ URLs OAuth (substituir host público):
 
 Checklist operacional: [`gpt-builder-go-live.md`](./gpt-builder-go-live.md).
 
-**Instructions completas do especialista (colar no Builder):** [`specialist-instructions.md`](./specialist-instructions.md).
+**Instructions completas do TÉO (colar no Builder):** [`specialist-instructions.md`](./specialist-instructions.md). Name do GPT no Builder: `TÉO — Especialista em Transformação Digital` (`MANUAL_CONFIGURATION_REQUIRED`).
 
 1. Create GPT → Actions → Import from URL  
    `https://<host>/apps/transformometro-api/transformometro/gpt-actions/v1/openapi.json`  

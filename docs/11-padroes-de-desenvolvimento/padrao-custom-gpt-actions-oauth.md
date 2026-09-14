@@ -291,8 +291,8 @@ Nunca editar código “só no container” de produção: alterar local → Git
 | Facade + builder + dispatch | `transformometro-api/tm_app/application/gpt_actions/` |
 | Guia + pacote guiado | `registration_guide.py`, `improvement_package_service.py` |
 | Rotas | `transformometro-api/tm_app/interface/http/routes/gpt_actions_routes.py` |
-| OpenAPI versionado | `transformometro-api/docs/gpt-actions/openapi-gpt-actions.json` (**12** ops) |
-| Instructions do especialista | [`specialist-instructions.md`](../../transformometro-api/docs/gpt-actions/specialist-instructions.md) |
+| OpenAPI versionado | `transformometro-api/docs/gpt-actions/openapi-gpt-actions.json` (**13** ops) |
+| Instructions do especialista (**TÉO**) | [`specialist-instructions.md`](../../transformometro-api/docs/gpt-actions/specialist-instructions.md) — Name no Builder: `TÉO — Especialista em Transformação Digital` |
 | Doc produto | [`custom-gpt-actions.md`](../../transformometro-api/docs/gpt-actions/custom-gpt-actions.md) |
 | Checklist GPT Builder | [`gpt-builder-go-live.md`](../../transformometro-api/docs/gpt-actions/gpt-builder-go-live.md) |
 | Keycloak §10b | [`configurar-keycloak.md`](../10-guias-operacionais/configurar-keycloak.md) |

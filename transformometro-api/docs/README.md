@@ -10,7 +10,7 @@
 | [`architecture/`](./architecture/) | Contratos de integração, ADRs, realtime |
 | [`domain/`](./domain/) | Regras de cálculo e categorias de benefício |
 | [`schemas/`](./schemas/) | JSON Schemas canônicos (flowchart, WBS, matriz) |
-| [`gpt-actions/`](./gpt-actions/) | Custom GPT OpenAI (OAuth, OpenAPI, instructions) |
+| [`gpt-actions/`](./gpt-actions/) | Custom GPT OpenAI · persona **TÉO** (OAuth, OpenAPI, instructions) |
 | [`chat/`](./chat/) | Snapshot OpenAPI read-only do Chat Minha DELPI |
 | [`meeting-minutes/`](./meeting-minutes/) | Atas Transforma+ / Kimi |
 | [`archive/`](./archive/) | Status de playbooks entregues e histórico (não é fonte vigente) |
