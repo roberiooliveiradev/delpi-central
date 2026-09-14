@@ -95,7 +95,7 @@ def build_registration_guide() -> dict[str, Any]:
                 "actions": [
                     "Create non-baseline revision with revisao_referencia_id = baseline (or prior active).",
                     "Upsert measurement + investments.",
-                    "Prefer gpt_commit_improvement_package dry_run then commit.",
+                    "Prefer gpt_validate_improvement_package then gpt_commit_improvement_package.",
                     "Activate only the scenario revision when the user confirms.",
                 ],
             },

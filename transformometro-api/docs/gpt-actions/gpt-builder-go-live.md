@@ -54,7 +54,7 @@ https://<host-publico>/apps/transformometro-api/transformometro/gpt-actions/v1/o
 
 Alternativa: colar `docs/gpt-actions/openapi-gpt-actions.json`.
 
-Esperado: **13** operations (`gpt_get_process_context`, `gpt_analyze`, `gpt_get_catalog`, `gpt_commit_improvement_package`, …). O GET `openapi.json` não aparece como Action.
+Esperado: **14** operations (`gpt_get_process_context`, `gpt_analyze`, `gpt_get_catalog`, `gpt_validate_improvement_package`, `gpt_commit_improvement_package`, …). O GET `openapi.json` não aparece como Action.
 
 O ChatGPT **rejeita** `servers.url` relativo (`/apps/transformometro-api`). Se aparecer «Não foi possível encontrar uma URL válida em `servers`», altere no editor para:
 
@@ -89,10 +89,10 @@ Resumo operacional:
 - Problem-first e entrevista adaptativa.
 - Method Router escolhe o menor método suficiente; `INFERRED != FACT`; `PROPOSED != SAVED`.
 - `gpt_get_catalog` + `registration_guide` antes de cadastro.
-- `gpt_commit_improvement_package` com envelope nested (`process` + `instance` + `scenario.revision`) e `dry_run=true` → exigir `ready=true` → mostrar → confirmar → commit.
+- Envelope nested (`process` + `instance` + `scenario.revision`) → `gpt_validate_improvement_package` → `ready=true` → mostrar → confirmar → `gpt_commit_improvement_package`.
 - Diagramas/WBS: draft = PROPOSED; persistência governada com validators, manage AuthZ e read-back.
 - Evidências/upload e assinatura manuscrita continuam UI-only quando não suportados pela Action.
-- REIMPORT OpenAPI somente se schema mudar; esperado estável: **13 actions**.
+- REIMPORT OpenAPI somente se schema mudar; esperado estável: **14 actions**.
 
 ## 4. Fechar redirects com o GPT ID real
 
@@ -108,7 +108,7 @@ https://chat.openai.com/aip/g-YOUR-GPT-ID/oauth/callback
 - Name = **TÉO — Especialista em Transformação Digital**
 - Instructions aceitas sem erro de 8.000 caracteres
 - `teo-method-playbooks.md` presente em Knowledge
-- GPT lista as **13** actions
+- GPT lista as **14** actions
 - OAuth pede **Sign in**
 - `gpt_analyze` / `gpt_get_catalog` / `gpt_get_process_context` respondem sem erro de token/redirect
 - `gpt_get_catalog` devolve `registration_guide`

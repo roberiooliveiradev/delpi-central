@@ -1,7 +1,7 @@
 {
   "version": 1,
   "generatedAt": "2026-09-14",
-  "operation_count": 165,
+  "operation_count": 166,
   "operations": [
     {
       "operationId": "post_liberar",
@@ -745,6 +745,12 @@
       "operationId": "gpt_commit_improvement_package",
       "method": "POST",
       "path": "/transformometro/gpt-actions/v1/improvement-packages",
+      "module": "gpt_actions"
+    },
+    {
+      "operationId": "gpt_validate_improvement_package",
+      "method": "POST",
+      "path": "/transformometro/gpt-actions/v1/improvement-packages/validate",
       "module": "gpt_actions"
     },
     {

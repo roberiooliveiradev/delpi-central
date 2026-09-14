@@ -54,6 +54,7 @@ GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
     "gpt_activate_revision",
     "gpt_recalculate_dashboard",
     "gpt_meeting_minute_workflow",
+    "gpt_validate_improvement_package",
     "gpt_commit_improvement_package",
     "gpt_get_process_context",
 )
@@ -521,14 +522,40 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "x-openai-isConsequential": True,
             }
         },
+        f"{GPT_ACTIONS_BASE_PATH}/improvement-packages/validate": {
+            "post": {
+                "operationId": "gpt_validate_improvement_package",
+                "summary": "Validate a guided improvement package (no write)",
+                "description": (
+                    "Validates a nested improvement package. Never writes, activates or "
+                    "recalculates. Returns ready/missing/checklist."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GptValidateImprovementPackageBody"
+                            }
+                        }
+                    },
+                },
+                "responses": {
+                    "200": _ok_response("Validation checklist (never persists)"),
+                    **_error_responses(),
+                },
+                "x-openai-isConsequential": False,
+            }
+        },
         f"{GPT_ACTIONS_BASE_PATH}/improvement-packages": {
             "post": {
                 "operationId": "gpt_commit_improvement_package",
-                "summary": "Validate or commit a guided improvement package",
+                "summary": "Commit a guided improvement package",
                 "description": (
-                    "Nested package: process, instance, baseline.{revision,measurement}, "
-                    "scenario.{revision,measurement,investments}. Flat scenario fields INVALID. "
-                    "dry_run=true first; ready=false+missing[] is checklist, not tool failure."
+                    "Commits an already-reviewed improvement package. This operation may "
+                    "persist data. Prefer gpt_validate_improvement_package first."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
@@ -551,7 +578,7 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
         },
     }
 
-    return {
+    doc = {
         "openapi": "3.1.1",
         "info": {
             "title": "Transformômetro API — Custom GPT Actions",
@@ -755,6 +782,19 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
             },
         },
     }
+    commit_props = doc["components"]["schemas"]["GptImprovementPackageBody"]["properties"]
+    doc["components"]["schemas"]["GptValidateImprovementPackageBody"] = {
+        "type": "object",
+        "description": (
+            "Nested package only: process, instance, baseline?, scenario?. "
+            "No dry_run/activate_scenario/recalculate. Never persists."
+        ),
+        "properties": {
+            key: commit_props[key]
+            for key in ("process", "instance", "baseline", "scenario")
+        },
+    }
+    return doc
 
 
 def write_gpt_actions_openapi(path: Path, *, server_url: str | None = None) -> dict[str, Any]:

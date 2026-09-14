@@ -29,26 +29,47 @@ class GuidedImprovementPackageService:
     def __init__(self, dispatch: GptActionsDispatchService | None = None) -> None:
         self._dispatch = dispatch or GptActionsDispatchService()
 
+    def validate(self, request: Request, payload: dict[str, Any]) -> dict[str, Any]:
+        """Checklist only. Never writes, activates, or recalculates.
+
+        Client flags (dry_run / activate_scenario / recalculate) are ignored.
+        ``request`` is accepted for signature parity with commit; unused here.
+        """
+        del request
+        body = {
+            "process": (payload or {}).get("process") or {},
+            "instance": (payload or {}).get("instance") or {},
+            "baseline": (payload or {}).get("baseline"),
+            "scenario": (payload or {}).get("scenario"),
+        }
+        missing = self._collect_missing(body)
+        return {
+            "dry_run": True,
+            "ready": len(missing) == 0,
+            "missing": missing,
+            "checklist": self._checklist(body, missing),
+            "hints": {
+                "activate_scenario": False,
+                "recalculate": False,
+            },
+        }
+
     def commit(self, request: Request, payload: dict[str, Any]) -> dict[str, Any]:
         body = dict(payload or {})
         dry_run = bool(body.get("dry_run", False))
         activate_scenario = bool(body.get("activate_scenario", False))
         recalculate = bool(body.get("recalculate", False))
 
+        if dry_run:
+            result = self.validate(request, body)
+            result["hints"] = {
+                "activate_scenario": activate_scenario,
+                "recalculate": recalculate,
+            }
+            return result
+
         missing = self._collect_missing(body)
         checklist = self._checklist(body, missing)
-
-        if dry_run:
-            return {
-                "dry_run": True,
-                "ready": len(missing) == 0,
-                "missing": missing,
-                "checklist": checklist,
-                "hints": {
-                    "activate_scenario": activate_scenario,
-                    "recalculate": recalculate,
-                },
-            }
 
         if missing:
             raise GptActionsError(

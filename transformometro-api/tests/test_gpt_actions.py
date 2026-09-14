@@ -39,6 +39,7 @@ _COVERAGE_ANCHORS = (
     "gpt_recalculate_dashboard",
     "gpt_meeting_minute_workflow",
     "gpt_commit_improvement_package",
+    "gpt_validate_improvement_package",
     "gpt_get_process_context",
     "gpt_get_openapi_schema",
 )
@@ -634,7 +635,34 @@ def test_openapi_includes_improvement_package():
     )
     assert "gpt_get_process_context" in GPT_ACTIONS_OPERATION_IDS
     assert "/transformometro/gpt-actions/v1/process-context" in doc["paths"]
-    assert count_operations(doc) == 13
+    assert "gpt_validate_improvement_package" in GPT_ACTIONS_OPERATION_IDS
+    assert (
+        "/transformometro/gpt-actions/v1/improvement-packages/validate" in doc["paths"]
+    )
+    assert count_operations(doc) == 14
+
+
+def test_openapi_validate_vs_commit_consequential_flags():
+    doc = build_gpt_actions_openapi()
+    validate = doc["paths"][
+        "/transformometro/gpt-actions/v1/improvement-packages/validate"
+    ]["post"]
+    commit = doc["paths"]["/transformometro/gpt-actions/v1/improvement-packages"]["post"]
+    assert validate["operationId"] == "gpt_validate_improvement_package"
+    assert validate["x-openai-isConsequential"] is False
+    assert commit["operationId"] == "gpt_commit_improvement_package"
+    assert commit["x-openai-isConsequential"] is True
+    assert "Never writes" in validate["description"]
+    assert "may persist" in commit["description"]
+    v_schema = validate["requestBody"]["content"]["application/json"]["schema"]["$ref"]
+    assert v_schema.endswith("GptValidateImprovementPackageBody")
+    v_props = doc["components"]["schemas"]["GptValidateImprovementPackageBody"][
+        "properties"
+    ]
+    assert set(v_props) == {"process", "instance", "baseline", "scenario"}
+    assert "dry_run" not in v_props
+    assert "activate_scenario" not in v_props
+    assert "recalculate" not in v_props
 
 
 def test_openapi_documents_nested_improvement_package():
@@ -659,10 +687,12 @@ def test_openapi_documents_nested_improvement_package():
     assert "beneficio_calculo_categoria" not in measurement
     investment = doc["components"]["schemas"]["GptPackageInvestment"]["properties"]
     assert "tipo_investimento" in investment
-    path_desc = doc["paths"]["/transformometro/gpt-actions/v1/improvement-packages"][
+    body_desc = body["description"]
+    assert "flat" in body_desc.lower()
+    commit_desc = doc["paths"]["/transformometro/gpt-actions/v1/improvement-packages"][
         "post"
     ]["description"]
-    assert "INVALID" in path_desc or "Flat" in path_desc
+    assert "persist" in commit_desc
 
 
 def test_improvement_package_flat_incident_payload_not_ready(tm_client):
@@ -846,6 +876,126 @@ def test_improvement_package_contract_drift_guide_openapi_service():
     assert "scenario.revision" in flat["missing"]
     assert "process" in flat["missing"]
     assert "instance" in flat["missing"]
+
+
+_NESTED_READY_PACKAGE = {
+    "process": {"processo_id": "11111111-1111-1111-1111-111111111111"},
+    "instance": {"instancia_id": "22222222-2222-2222-2222-222222222222"},
+    "scenario": {
+        "revision": {
+            "revisao_referencia_id": "33333333-3333-3333-3333-333333333333",
+            "versao_revisao": "2.1.0",
+            "cenario_tipo": "melhoria",
+            "data_inicio_vigencia": "2026-09-02",
+            "beneficio_calculo_categoria": "automatico",
+        },
+        "measurement": {"volume_mensal": 22},
+        "investments": [],
+    },
+}
+
+
+def test_validate_improvement_package_nested_ready(tm_client):
+    response = tm_client.post(
+        "/transformometro/gpt-actions/v1/improvement-packages/validate",
+        json=_NESTED_READY_PACKAGE,
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    data = payload["data"]
+    assert data["ready"] is True
+    assert data["missing"] == []
+    assert data["dry_run"] is True
+    assert data["hints"]["activate_scenario"] is False
+    assert data["hints"]["recalculate"] is False
+
+
+def test_validate_improvement_package_incomplete_ready_false(tm_client):
+    response = tm_client.post(
+        "/transformometro/gpt-actions/v1/improvement-packages/validate",
+        json={"process": {"nome_processo": "X"}},
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["ready"] is False
+    assert any("instance" in m or m == "instance" for m in data["missing"])
+    assert "checklist" in data
+
+
+def test_validate_improvement_package_flat_scenario_not_ready(tm_client):
+    response = tm_client.post(
+        "/transformometro/gpt-actions/v1/improvement-packages/validate",
+        json={
+            "scenario": {
+                "processo_id": "11111111-1111-1111-1111-111111111111",
+                "instancia_id": "22222222-2222-2222-2222-222222222222",
+                "versao_revisao": "2.1.0",
+            }
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["ready"] is False
+    assert "process" in data["missing"]
+    assert "instance" in data["missing"]
+    assert "scenario.revision" in data["missing"]
+
+
+def test_validate_improvement_package_never_dispatches_writes():
+    from tm_app.application.gpt_actions.improvement_package_service import (
+        GuidedImprovementPackageService,
+    )
+
+    dispatch = MagicMock()
+    svc = GuidedImprovementPackageService(dispatch)
+    result = svc.validate(MagicMock(), _NESTED_READY_PACKAGE)
+    assert result["ready"] is True
+    dispatch.create_record.assert_not_called()
+    dispatch.update_record.assert_not_called()
+    dispatch.delete_record.assert_not_called()
+    dispatch.activate_revision.assert_not_called()
+    dispatch.recalculate_dashboard.assert_not_called()
+
+
+def test_validate_improvement_package_ignores_malicious_write_flags(tm_client):
+    dispatch_path = (
+        "tm_app.interface.http.routes.gpt_actions_routes._packages._dispatch"
+    )
+    with patch(dispatch_path) as dispatch:
+        response = tm_client.post(
+            "/transformometro/gpt-actions/v1/improvement-packages/validate",
+            json={
+                **_NESTED_READY_PACKAGE,
+                "dry_run": False,
+                "activate_scenario": True,
+                "recalculate": True,
+            },
+        )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["ready"] is True
+    assert data["hints"]["activate_scenario"] is False
+    assert data["hints"]["recalculate"] is False
+    dispatch.create_record.assert_not_called()
+    dispatch.update_record.assert_not_called()
+    dispatch.delete_record.assert_not_called()
+    dispatch.activate_revision.assert_not_called()
+    dispatch.recalculate_dashboard.assert_not_called()
+
+
+def test_validate_and_commit_dry_run_checklists_match():
+    from tm_app.application.gpt_actions.improvement_package_service import (
+        GuidedImprovementPackageService,
+    )
+
+    svc = GuidedImprovementPackageService(MagicMock())
+    request = MagicMock()
+    validated = svc.validate(request, _NESTED_READY_PACKAGE)
+    dry = svc.commit(request, {**_NESTED_READY_PACKAGE, "dry_run": True})
+    assert validated["ready"] == dry["ready"]
+    assert validated["missing"] == dry["missing"]
+    assert validated["checklist"] == dry["checklist"]
 
 
 def _process_context_patches():
@@ -1537,7 +1687,7 @@ def test_analyze_instances_honors_processo_id():
 
 def test_openapi_setor_id_documents_uuid_or_code_and_stable_surface():
     doc = build_gpt_actions_openapi()
-    assert count_operations(doc) == 13
+    assert count_operations(doc) == 14
     assert "gpt_get_process_context" in GPT_ACTIONS_OPERATION_IDS
     assert "gpt_analyze" in GPT_ACTIONS_OPERATION_IDS
     analysis = doc["paths"]["/transformometro/gpt-actions/v1/analysis"]["get"]
@@ -1566,3 +1716,5 @@ def test_specialist_instructions_discovery_and_mermaid_contract():
     assert "canonical_package_shape" in text or "scenario.revision" in text
     assert "ready=false" in text
     assert "não invente shape" in text.lower() or "Não invente shape" in text
+    assert "gpt_validate_improvement_package" in text
+    assert "VALIDATE != WRITE" in text

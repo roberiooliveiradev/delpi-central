@@ -20,15 +20,20 @@ from tm_app.core.catalogs import (
 # Nested keys under baseline / scenario (service reads these exact names).
 PACKAGE_BLOCK_KEYS = ("revision", "measurement", "investments")
 
-# Top-level keys of gpt_commit_improvement_package.
-PACKAGE_TOP_LEVEL_KEYS = (
-    "dry_run",
-    "activate_scenario",
-    "recalculate",
+# Nested package envelope shared by validate + commit.
+PACKAGE_CORE_KEYS = (
     "process",
     "instance",
     "baseline",
     "scenario",
+)
+
+# Top-level keys of gpt_commit_improvement_package (includes write flags).
+PACKAGE_TOP_LEVEL_KEYS = (
+    "dry_run",
+    "activate_scenario",
+    "recalculate",
+    *PACKAGE_CORE_KEYS,
 )
 
 # Revision fields accepted inside package blocks (processo_id/instancia_id injected on create).
@@ -85,7 +90,7 @@ NESTING_RULES = [
     "measurement belongs under baseline.measurement or scenario.measurement.",
     "investments belongs only under scenario.investments (array; [] allowed).",
     "beneficio_calculo_categoria belongs on revision, not measurement.",
-    "Flat package shapes are invalid: dry_run returns ready=false with missing.",
+    "Flat package shapes are invalid: validate/dry_run returns ready=false with missing.",
     "Do not invent alternate dialetos; only this nested envelope is canonical.",
 ]
 
@@ -93,12 +98,12 @@ OPERATIONAL_SEQUENCE = [
     "READ CONTRACT (gpt_get_catalog.registration_guide.package_hints)",
     "RESOLVE IDs / CONTEXT (gpt_search_records / gpt_get_process_context)",
     "PREPARE nested package payload",
-    "DRY RUN (dry_run=true)",
+    "VALIDATE PACKAGE (gpt_validate_improvement_package)",
     "REQUIRE ready=true (ready=false is checklist, not tool failure)",
-    "SHOW proposed package to user",
-    "CONFIRM explicit user confirmation",
-    "WRITE (dry_run=false)",
-    "VERIFY (gpt_get_record / gpt_get_process_context)",
+    "SHOW USER the exact package",
+    "EXPLICIT CONFIRMATION",
+    "COMMIT (gpt_commit_improvement_package)",
+    "READ-BACK / VERIFY (gpt_get_record / gpt_get_process_context)",
     "OPTIONAL RECALCULATE (recalculate=true only after successful commit)",
 ]
 
@@ -195,10 +200,18 @@ def build_package_hints() -> dict[str, Any]:
     """Structured package contract exposed via gpt_get_catalog."""
     return {
         "operationId": "gpt_commit_improvement_package",
-        "dry_run_first": True,
+        "validate_operationId": "gpt_validate_improvement_package",
+        "commit_operationId": "gpt_commit_improvement_package",
+        "dry_run_first": False,
         "process_context_operationId": "gpt_get_process_context",
+        "compatibility": (
+            "commit dry_run remains supported for backward compatibility; "
+            "specialists should use gpt_validate_improvement_package."
+        ),
         "canonical_package_shape": {
             "top_level": list(PACKAGE_TOP_LEVEL_KEYS),
+            "validate_top_level": list(PACKAGE_CORE_KEYS),
+            "commit_top_level": list(PACKAGE_TOP_LEVEL_KEYS),
             "process": "Reuse with {id|processo_id} OR create with nome_processo+status_processo (+optional fields).",
             "instance": (
                 "Reuse with {id|instancia_id} OR create with setor_ids and "
@@ -233,6 +246,11 @@ def build_package_hints() -> dict[str, Any]:
         "nesting_rules": list(NESTING_RULES),
         "operational_sequence": list(OPERATIONAL_SEQUENCE),
         "reuse_existing_example": _reuse_existing_example(),
+        "validate_example": {
+            "process": {"processo_id": "<uuid>"},
+            "instance": {"instancia_id": "<uuid>"},
+            "scenario": _reuse_existing_example()["scenario"],
+        },
         "create_new_example": _create_new_example(),
         "baseline_plus_scenario_example": _baseline_plus_scenario_example(),
         "dry_run_semantics": {

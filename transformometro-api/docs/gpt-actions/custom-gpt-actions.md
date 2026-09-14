@@ -28,7 +28,7 @@ cd transformometro-api
 PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 ```
 
-## Operations (13 no schema importado)
+## Operations (14 no schema importado)
 
 | operationId | Método / path |
 |-------------|----------------|
@@ -44,7 +44,8 @@ PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 | `gpt_activate_revision` | `POST .../revisions/{id}/activate` |
 | `gpt_recalculate_dashboard` | `POST .../dashboard/recalculate` |
 | `gpt_meeting_minute_workflow` | `POST .../meeting-minutes/{id}/workflow` |
-| `gpt_commit_improvement_package` | `POST .../improvement-packages` (`dry_run` → commit orquestrado) |
+| `gpt_validate_improvement_package` | `POST .../improvement-packages/validate` (no-write; `ready`/`missing`) |
+| `gpt_commit_improvement_package` | `POST .../improvement-packages` (commit real; `dry_run` só compatibilidade) |
 
 `gpt_get_process_context` monta o Process Business Graph / Process Intelligence Context a partir dos records e services canônicos. Sem persistência de grafo. Comparativo/composição/stats ficam restritos ao escopo de filial visível. Distinga `as_is` (AS_IS), `current_composed` (CURRENT_COMPOSED) e `to_be` (TO_BE). `surface_supports` ≠ autorização de write. Na facade GPT, `setor_id` aceita UUID **ou** `codigo_setor` (ex. `comercial`); `gpt_analyze(view=instances)` honra `processo_id`.
 
@@ -98,15 +99,15 @@ Checklist operacional: [`gpt-builder-go-live.md`](./gpt-builder-go-live.md).
 
 1. Create GPT → Actions → Import from URL  
    `https://<host>/apps/transformometro-api/transformometro/gpt-actions/v1/openapi.json`  
-   ou cole o conteúdo de `docs/gpt-actions/openapi-gpt-actions.json` (esperar **13** actions).
+   ou cole o conteúdo de `docs/gpt-actions/openapi-gpt-actions.json` (esperar **14** actions).
 2. Authentication → OAuth (valores da tabela acima).
 3. Colar o bloco Instructions de [`specialist-instructions.md`](./specialist-instructions.md) (**REPLACE INSTRUCTIONS**).
 4. Adicionar [`teo-method-playbooks.md`](./teo-method-playbooks.md) como Knowledge do GPT (metodologia; não authority de dados).
-5. OpenAPI: reimportar **somente** se o schema publicado mudou (default esperado: **13** actions).
+5. OpenAPI: reimportar **somente** se o schema publicado mudou (default esperado: **14** actions).
 
-Fluxo guiado preferido: `gpt_get_catalog` → ler `registration_guide.package_hints` → entrevista → `gpt_commit_improvement_package` (`dry_run=true` → `ready=true` → confirmar → commit).
+Fluxo guiado preferido: `gpt_get_catalog` → ler `registration_guide.package_hints` → entrevista → `gpt_validate_improvement_package` (`ready=true`) → confirmar → `gpt_commit_improvement_package`.
 
-### Envelope canônico de `gpt_commit_improvement_package`
+### Envelope canônico do improvement package
 
 ```text
 process + instance + baseline? + scenario?
@@ -116,7 +117,9 @@ process + instance + baseline? + scenario?
 
 - Reuso: `process.processo_id` / `instance.instancia_id`.
 - Cenário: campos de revisão **somente** em `scenario.revision` (nunca flat em `scenario`).
-- `dry_run=true` incompleto → HTTP 200, `ready=false`, `missing[]`, sem escrita.
+- Validar com `gpt_validate_improvement_package` (nunca escreve; flags de write no body são ignoradas).
+- `gpt_commit_improvement_package` com `dry_run=true` permanece só por compatibilidade.
+- Pacote incompleto → HTTP 200, `ready=false`, `missing[]`, sem escrita.
 - Não há dialeto flat→nested; um único contrato.
 Method playbooks (SIPOC, Lean, Ishikawa, CTP, TDR, KPI, SWOT…) são reasoning/conversa via Instructions+Knowledge; **não** geram novas Actions.
 

@@ -47,6 +47,9 @@ def test_registration_guide_contains_canonical_package_shape():
     assert "investments" in shape["scenario"]["keys"]
     assert "beneficio_calculo_categoria" in shape["revision_fields"]
     assert "READ CONTRACT" in hints["operational_sequence"][0]
+    assert "VALIDATE PACKAGE" in hints["operational_sequence"][3]
+    assert hints["validate_operationId"] == "gpt_validate_improvement_package"
+    assert hints["commit_operationId"] == "gpt_commit_improvement_package"
     assert hints["dry_run_semantics"]["ready_false_is_not_tool_failure"] is True
 
 
@@ -70,3 +73,6 @@ def test_package_hints_examples_include_create_and_baseline_plus_scenario():
     assert create["scenario"]["revision"]["cenario_tipo"] == "melhoria"
     assert "revision" in combo["baseline"]
     assert "revision" in combo["scenario"]
+    validate = hints["validate_example"]
+    assert "dry_run" not in validate
+    assert "revision" in validate["scenario"]

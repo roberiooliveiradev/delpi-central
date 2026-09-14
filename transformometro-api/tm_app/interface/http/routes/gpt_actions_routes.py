@@ -68,6 +68,21 @@ class GptImprovementPackageBody(BaseModel):
     scenario: dict | None = None
 
 
+class GptValidateImprovementPackageBody(BaseModel):
+    """No-write package body. Write flags are not part of this contract.
+
+    Extra keys (dry_run/activate_scenario/recalculate) are ignored.
+    The route calls GuidedImprovementPackageService.validate only.
+    """
+
+    model_config = {"extra": "ignore"}
+
+    process: dict = Field(default_factory=dict)
+    instance: dict = Field(default_factory=dict)
+    baseline: dict | None = None
+    scenario: dict | None = None
+
+
 def _handle(exc: Exception):
     if isinstance(exc, GptActionsError):
         return fail(exc.message, exc.status_code, exc.data)
@@ -345,9 +360,29 @@ def gpt_meeting_minute_workflow(
 
 
 @router.post(
+    "/improvement-packages/validate",
+    operation_id="gpt_validate_improvement_package",
+    summary="Validate a guided improvement package without writing",
+)
+def gpt_validate_improvement_package(
+    body: GptValidateImprovementPackageBody, request: Request
+):
+    try:
+        data = _packages.validate(request, body.model_dump())
+        message = (
+            "Pacote pronto para commit."
+            if data.get("ready")
+            else "Pacote incompleto — veja missing."
+        )
+        return ok(data, message)
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.post(
     "/improvement-packages",
     operation_id="gpt_commit_improvement_package",
-    summary="Validate or commit a guided improvement package",
+    summary="Commit a guided improvement package",
 )
 def gpt_commit_improvement_package(body: GptImprovementPackageBody, request: Request):
     try:

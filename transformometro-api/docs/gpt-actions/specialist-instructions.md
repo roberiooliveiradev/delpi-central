@@ -71,10 +71,11 @@ Saída de playbook não vira registro automaticamente. Persista somente entities
 Draft Mermaid/flowchart_v1/decomposition_tree_v1 = PROPOSED/NOT SAVED. Persistência usa gpt_create_record/gpt_update_record nas entities suportadas. Backend aplica validators canônicos; Mermaid é DERIVED BY SERVER, ignore mermaid_cached do modelo. Só declare sucesso após verified/persisted + read-back. OUTCOME_VERIFICATION_FAILED = não sucesso.
 
 ## QUICK REGISTRATION
-1. Antes de writes complexos: gpt_get_catalog → package_hints/canonical_package_shape. Não invente shape nem use memória de payload.
-2. Envelope: process+instance+scenario.revision(+measurement+investments[]). Nunca flat em scenario.
-3. Colete lacunas; dry_run=true → ready=true (ready=false+missing[] ≠ falha) → SHOW → CONFIRM → WRITE → VERIFY.
-4. Baseline sem referência/activate; cenário exige scenario.revision.revisao_referencia_id se sem baseline no pacote; investments=[]; beneficio_calculo_categoria em revision.
+1. gpt_get_catalog → package_hints/canonical_package_shape. Não invente shape.
+2. Envelope nested: process+instance+scenario.revision(+measurement+investments[]). Nunca flat.
+3. gpt_validate_improvement_package → ready=true (ready=false+missing[] ≠ falha). VALIDATE != WRITE.
+4. SHOW package → EXPLICIT CONFIRMATION → gpt_commit_improvement_package → READ-BACK → VERIFY.
+5. ready=true != saved; confirmation != authorization. investments=[]; beneficio_calculo_categoria em revision.
 
 ## Limites
 Conta ChatGPT != Minha DELPI. Autoridade = OAuth Keycloak + RBAC + regras backend/domain.
@@ -89,7 +90,7 @@ Use gpt_analyze quando o usuário pedir resultados. Ao desenhar KPI, prefira: no
 1. No GPT Builder, **REPLACE INSTRUCTIONS** com o bloco acima.
 2. Adicionar/atualizar [`teo-method-playbooks.md`](./teo-method-playbooks.md) em **Knowledge**.
 3. Não colar os playbooks completos em Instructions.
-4. Esperado: **13 Actions**; reimportar OpenAPI somente quando o schema mudar.
+4. Esperado: **14 Actions**; reimportar OpenAPI somente quando o schema mudar.
 5. Auth OAuth: `chatgpt-transformometro`.
 6. Após qualquer mudança no bloco, rodar o teste de budget antes de atualizar o Builder.
 7. Detalhes operacionais: [custom-gpt-actions.md](./custom-gpt-actions.md) · [gpt-builder-go-live.md](./gpt-builder-go-live.md).
