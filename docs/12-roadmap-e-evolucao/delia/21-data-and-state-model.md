@@ -26,7 +26,10 @@ OT / MACHINE TRUTH
 → industrial/domain owners
 
 DÉLIA-OWNED STATE
-→ conversation/intelligence/Evidence/Policy/Decision/Work/memory/artifact/orchestration metadata only when owned
+→ conversation/intelligence/Evidence/Policy/Decision/Work/RecurringWork/memory/artifact/orchestration metadata only when owned
+
+PHYSICAL SCHEDULER/TIMER STATE
+→ platform/scheduler/execution owner provado em C0; não vira Work ou permission authority
 
 AUTOMATION TECHNICAL EXECUTION STATE
 → Automation Hub / executor owner, quando implementation/contract forem provados
@@ -46,9 +49,11 @@ minha-delpi-copilot-api/migrations/   # namespace técnico temporário
 → migration chain própria somente para state realmente owned pela DÉLIA
 ```
 
-Serviço separado só existe com boundary/owner/consumers reais e ADR. “Hub”, “Tower”, “Twin”, “Marketplace” ou “Sandbox” não justificam microservice por nome.
+Serviço separado só existe com boundary/owner/consumers reais e ADR. “Hub”, “Tower”, “Twin”, “Marketplace”, “Sandbox” ou “Scheduler” não justificam microservice por nome.
 
 Segredos, biometric templates e alguns model/package artifacts podem pertencer a stores especializados; o DB transacional guarda refs/metadata, não secret material.
+
+Recurring Governed Work pode justificar state DÉLIA-owned para **definição/lifecycle/correlation**, mas não autoriza duplicar a truth técnica de timer/job/lease/worker de um scheduler físico existente.
 
 ## 3. C0 antes de qualquer migration
 
@@ -61,7 +66,9 @@ Congelar:
 - source authority/freshness;
 - idempotency/concurrency;
 - migration/rollback;
-- DÉLIA-owned state vs projection/ref vs Automation Hub technical state;
+- DÉLIA-owned state vs projection/ref vs physical scheduler vs Automation Hub technical state;
+- recurrence/timezone/DST/misfire/overlap semantics antes de RecurringWork migration;
+- background identity/AuthZ/revoke semantics por ocorrência;
 - cache TTL/invalidation;
 - audit/evidence lineage;
 - state-machine transitions;
@@ -81,6 +88,8 @@ workflowId?
 taskId?
 caseId?
 watchId?
+recurringWorkId?
+occurrenceId?
 eventId?
 executionId?
 analysisRunId?
@@ -107,16 +116,17 @@ version/revision?
 - `DeviceRef` não é usuário.
 - biometric candidate não é usuário autenticado.
 - RPA worker não é business actor.
+- scheduler/timer identity não é business actor nem permission authority.
 
 ### SourceRef / EvidenceRef / OutcomeRef
 
-Usados transversalmente por APIs, web, connectors, Process Intelligence, analysis, predictive/twin, automation, Meeting/Frontline e audit quando os contracts forem congelados.
+Usados transversalmente por APIs, web, connectors, Process Intelligence, analysis, predictive/twin, automation, Recurring Work, Meeting/Frontline e audit quando os contracts forem congelados.
 
 Nunca guardar credential em Source/Evidence/Outcome.
 
 ## 5. WorkspaceContext
 
-Pode carregar app/route/EntityRefs/SourceRefs/filters/selection/dateRange/device metadata e bounded refs para Task/Case/Watch/execution/artifact.
+Pode carregar app/route/EntityRefs/SourceRefs/filters/selection/dateRange/device metadata e bounded refs para Task/Case/Watch/RecurringWork/execution/artifact.
 
 Nunca carregar como authority:
 
@@ -126,6 +136,7 @@ permission/autonomy truth
 raw mailbox/dataset
 biometric permission truth
 RPA desktop state
+scheduler permission truth
 sandbox credential
 model/package trust decision
 ```
@@ -172,6 +183,8 @@ Subscription/sync state mantém provider subscription/cursor/expiry/reconciliati
 ## 8. Conversation state
 
 DÉLIA-owned quando implementado. Turn pode referenciar WorkspaceContext snapshot, Evidence, memory influence refs, plans/outcomes/artifacts, nunca chain-of-thought ou credentials.
+
+Recurring Work não depende de conversation state viva para disparar; conversation pode apenas originar/editar uma definição por use case autorizado.
 
 ## 9. Personal Memory — owned state candidate
 
@@ -295,6 +308,8 @@ C7 → selected autonomous Watch ACT / advanced autonomy, capability-scoped; L5 
 
 Logo, `ACT` não é sinônimo de “C7-only”; o que é C7 é **autonomous/advanced ACT** conforme `16`.
 
+Recurring Governed Work temporal é state/trigger model distinto de Watch; não reutilizar `Watch.mode=ACT` para representar schedule apenas para evitar uma boundary necessária.
+
 ## 14. Durable Workflow / Decision state
 
 Workflow é o target de runtime durável único de **Work/orquestração da DÉLIA**, não um executor técnico paralelo ao Automation Hub.
@@ -317,6 +332,82 @@ decisionRef?
 Decision stores action/arguments hash/impact/evidence/risk/actor/approver/policy/version, never private chain-of-thought.
 
 Material semantic/model/policy changes may invalidate an old Decision.
+
+### 14.1 Recurring Governed Work — owned state candidates
+
+Se C0 confirmar necessidade/persistência DÉLIA-owned, `RecurringWorkDefinition` representa **a intenção/lifecycle governado do Work**, não o job técnico do scheduler.
+
+Candidate:
+
+```text
+recurringWorkId
+ownerRef
+createdByActorRef
+workTemplateRef / workflowDefinitionRef
+scheduleSpec                    # provider-neutral canonical recurrence
+scheduleTimezone                # IANA timezone
+startAt?
+endAt?
+status: ACTIVE|PAUSED|CANCELLED|EXPIRED|DISABLED_BY_POLICY
+capabilityRefs[]
+scopeRefs[]
+connectionRefs[]?
+targetRefs[]?                   # recipients/resources bounded, no credential
+policyRef
+misfirePolicy
+failurePolicy
+overlapPolicy
+createdAt
+updatedAt
+version
+nextRunAt?                      # derived/projection only when needed
+```
+
+`RecurringWorkDefinition` **não** guarda token/provider secret nem copia permission truth. `scheduleSpec` não deve depender do SDK/type de um scheduler específico no Domain/Application canônico.
+
+Lifecycle mínimo target:
+
+```text
+CREATE → ACTIVE
+ACTIVE → PAUSED | CANCELLED | EXPIRED | DISABLED_BY_POLICY
+PAUSED → ACTIVE | CANCELLED | EXPIRED | DISABLED_BY_POLICY
+```
+
+Update/reschedule, se suportado, deve produzir nova versão ou semântica equivalente auditável; não sobrescrever silenciosamente uma definição que já possui ocorrências.
+
+Candidate `WorkOccurrence`/`RecurringWorkOccurrence` para correlation/audit, somente se C0 provar que não existe primitive suficiente:
+
+```text
+occurrenceId
+recurringWorkRef
+recurringWorkVersion
+scheduledFor
+triggeredAt?
+status: SCHEDULED|TRIGGERED|RUNNING|SUCCEEDED|FAILED|SKIPPED|BLOCKED|CANCELLED|INCONCLUSIVE
+correlationContext
+idempotencyKey
+actorRef / serviceActorRef
+workflowRef?
+decisionRef?
+executionRefs[]?
+outcomeRef?
+evidenceRefs[]?
+reasonCode?
+createdAt/updatedAt
+```
+
+Invariantes:
+
+```text
+schedule != permission
+stored intent != live authorization
+occurrence != technical scheduler job authority
+physical scheduler success != Work/business Outcome
+```
+
+O scheduler físico pode manter job/trigger/lease/next-fire state próprio. A DÉLIA referencia apenas o necessário para Work correlation/audit; não duplica a truth técnica do scheduler.
+
+Cada ocorrência material resolve/revalida current user/service identity, Core/domain AuthZ, Policy/Decision e connection/provider state antes de ACT.
 
 ## 15. Automation Capability / Executor mapping
 
@@ -690,6 +781,7 @@ EXTERNAL_CONNECTION_METADATA/EXTERNAL_SUBSCRIPTION_STATE
 PERSONAL_MEMORY
 PROCESS_EVENT_PROJECTION
 PROCESS_MODEL_DERIVED
+RECURRING_WORK_DEFINITION/RECURRING_WORK_OCCURRENCE_METADATA
 AUTOMATION_EXECUTION_METADATA/AUTOMATION_ARTIFACT/RPA_SCREENSHOT
 ANALYSIS_RUN_METADATA/ANALYSIS_TEMP_FILE
 ARTIFACT_WORKSPACE_CONTENT
@@ -719,6 +811,10 @@ Cache/materialization never becomes permission or business authority.
 ## 30. Idempotency / concurrency
 
 - duplicate event must not duplicate action;
+- duplicate timer/scheduler trigger for same recurring occurrence must not duplicate action;
+- recurring occurrence idempotency key must survive retry/restart/reconciliation as defined by contract;
+- overlap/concurrency policy for recurring Work must be explicit rather than accidental worker behavior;
+- missed-run/misfire behavior must be explicit; no silent material catch-up;
 - Workflow resume must not duplicate side effect;
 - ambiguous write verified before retry when possible;
 - queue lease prevents double worker pickup quando queue/worker fizerem parte do owner técnico;
@@ -730,6 +826,7 @@ Cache/materialization never becomes permission or business authority.
 
 - user switch clears personal/context/media/external/memory projections;
 - RPA worker/session cannot leak prior execution credentials/data;
+- scheduler/background occurrence does not reuse browser/session credential as authorization;
 - Edge device local state follows user/device scope;
 - offline cache for one user/domain cannot leak to unauthorized user.
 
@@ -743,6 +840,8 @@ Provider/executor/model swaps use adapters/versioned refs.
 
 RPA→API migration should change capability mapping rather than planner/business logic.
 
+Physical scheduler swap should change adapter/trigger integration rather than RecurringWork domain semantics.
+
 Metric/model/process definition changes are versioned, never silent overwrite.
 
 ## 33. State machines relevantes
@@ -752,6 +851,13 @@ Candidate lifecycles, somente quando ownership e persistência forem provados:
 ```text
 ExternalConnection:
 PENDING_AUTH → ACTIVE → EXPIRED|REAUTH_REQUIRED|REVOKED|DISABLED|ERROR
+
+RecurringWorkDefinition:
+ACTIVE → PAUSED|CANCELLED|EXPIRED|DISABLED_BY_POLICY
+PAUSED → ACTIVE|CANCELLED|EXPIRED|DISABLED_BY_POLICY
+
+RecurringWorkOccurrence:
+SCHEDULED → TRIGGERED → RUNNING → SUCCEEDED|FAILED|SKIPPED|BLOCKED|CANCELLED|INCONCLUSIVE
 
 AutomationExecution orchestration projection:
 QUEUED → RUNNING → SUCCEEDED|FAILED|AMBIGUOUS|CANCELLED|TIMED_OUT
@@ -781,7 +887,10 @@ Persistir state machine somente quando lifecycle real justificar.
 
 - Chat tables/runtime as DÉLIA storage;
 - shadow Core user/RBAC/domain database;
+- duplicar no state da DÉLIA a truth técnica autoritativa de scheduler/timer/job/lease quando pertencer a outro owner;
 - duplicar no state da DÉLIA o runtime técnico autoritativo do Automation Hub/executor;
+- usar schedule/timer/recurring definition como permission truth;
+- persistir authorization snapshot como autorização eterna para ocorrências futuras;
 - provider/RPA/model/tool secret in prompt/log/MFE/Evidence;
 - personal memory/source auto-shared to organization;
 - memory as live business truth or permission;
