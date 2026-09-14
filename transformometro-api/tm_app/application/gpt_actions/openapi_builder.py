@@ -48,8 +48,11 @@ GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
     "gpt_activate_revision",
     "gpt_recalculate_dashboard",
     "gpt_meeting_minute_workflow",
-    "gpt_get_openapi_schema",
 )
+
+# HTTP público para import no GPT Builder — não entra no schema importado.
+# O ChatGPT trata GET .../openapi.json como documento OpenAPI 3.1 e rejeita o schema.
+GPT_ACTIONS_SCHEMA_HTTP_OPERATION_ID = "gpt_get_openapi_schema"
 
 _ENTITY_ENUM = [e.value for e in GptEntity]
 _VIEW_ENUM = [v.value for v in GptAnalysisView]
@@ -438,28 +441,6 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     **_error_responses(),
                 },
                 "x-openai-isConsequential": True,
-            }
-        },
-        f"{GPT_ACTIONS_BASE_PATH}/openapi.json": {
-            "get": {
-                "operationId": "gpt_get_openapi_schema",
-                "summary": "Public OpenAPI schema for Custom GPT import",
-                "description": "Unauthenticated. Import this document in the GPT Builder Actions tab.",
-                "tags": ["Transformômetro GPT"],
-                "security": [],
-                "responses": {
-                    "200": {
-                        "description": "JSON document used to import Actions",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "additionalProperties": True,
-                                }
-                            }
-                        },
-                    }
-                },
             }
         },
     }

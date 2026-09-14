@@ -1216,30 +1216,6 @@
         },
         "x-openai-isConsequential": true
       }
-    },
-    "/transformometro/gpt-actions/v1/openapi.json": {
-      "get": {
-        "operationId": "gpt_get_openapi_schema",
-        "summary": "Public OpenAPI schema for Custom GPT import",
-        "description": "Unauthenticated. Import this document in the GPT Builder Actions tab.",
-        "tags": [
-          "Transformômetro GPT"
-        ],
-        "security": [],
-        "responses": {
-          "200": {
-            "description": "JSON document used to import Actions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {

@@ -28,7 +28,7 @@ https://<host-publico>/apps/transformometro-api/transformometro/gpt-actions/v1/o
 
 Alternativa: colar `docs/openapi-gpt-actions.json`.
 
-Esperado: **12** operations (`gpt_analyze`, `gpt_get_catalog`, …).
+Esperado: **11** operations (`gpt_analyze`, `gpt_get_catalog`, …). O GET `openapi.json` não aparece como Action.
 
 O ChatGPT **rejeita** `servers.url` relativo (`/apps/transformometro-api`). Se aparecer
 «Não foi possível encontrar uma URL válida em `servers`», altere no editor para:
@@ -79,7 +79,7 @@ https://chat.openai.com/aip/g-YOUR-GPT-ID/oauth/callback
 
 ## 5. Pronto quando
 
-- GPT lista as 12 actions
+- GPT lista as 11 actions
 - Pede **Sign in** (OAuth Keycloak)
 - Após login, `gpt_analyze` / `gpt_get_catalog` respondem sem `invalid_token` / `Invalid redirect URI`
 

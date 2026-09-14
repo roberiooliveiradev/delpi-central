@@ -19,7 +19,7 @@ cd transformometro-api
 PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 ```
 
-## Operations (12)
+## Operations (11 no schema importado)
 
 | operationId | Método / path |
 |-------------|----------------|
@@ -34,7 +34,8 @@ PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 | `gpt_activate_revision` | `POST .../revisions/{id}/activate` |
 | `gpt_recalculate_dashboard` | `POST .../dashboard/recalculate` |
 | `gpt_meeting_minute_workflow` | `POST .../meeting-minutes/{id}/workflow` |
-| `gpt_get_openapi_schema` | `GET .../openapi.json` (público) |
+
+`GET .../openapi.json` continua público só para o botão **Importar de URL**. Não entra no schema: o GPT Builder trata esse path como OpenAPI 3.1 e rejeita o documento.
 
 `entity` enum: `branch`, `department`, `process`, `instance`, `revision`, `measurement`, `investment`, `shared_resource`, `resource_cost`, `resource_link`, `meeting_minute`, `decomposition_tree`, `instance_decomposition_scope`, `revision_decomposition_overlay`, `process_diagram`, `instance_diagram_scope`, `revision_diagram_overlay`, `impact_effort_matrix`.
 

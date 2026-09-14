@@ -13,6 +13,7 @@ from tm_app.application.gpt_actions.entities import (
 )
 from tm_app.application.gpt_actions.openapi_builder import (
     GPT_ACTIONS_OPERATION_IDS,
+    GPT_ACTIONS_SCHEMA_HTTP_OPERATION_ID,
     _ENTITY_DESCRIPTION,
     build_gpt_actions_openapi,
     count_operations,
@@ -41,7 +42,9 @@ _COVERAGE_ANCHORS = (
 
 
 def test_coverage_anchors_match_builder():
-    assert set(_COVERAGE_ANCHORS) == set(GPT_ACTIONS_OPERATION_IDS)
+    assert set(GPT_ACTIONS_OPERATION_IDS) <= set(_COVERAGE_ANCHORS)
+    assert GPT_ACTIONS_SCHEMA_HTTP_OPERATION_ID in _COVERAGE_ANCHORS
+    assert GPT_ACTIONS_SCHEMA_HTTP_OPERATION_ID not in GPT_ACTIONS_OPERATION_IDS
 
 
 def test_openapi_has_at_most_30_operations():
@@ -105,12 +108,7 @@ def test_openapi_respects_openai_custom_gpt_description_limits():
             for param in op.get("parameters") or []:
                 pdesc = param.get("description") or ""
                 assert len(pdesc) <= 700, param.get("name")
-    oa_schema = (
-        doc["paths"]["/transformometro/gpt-actions/v1/openapi.json"]["get"]
-        ["responses"]["200"]["content"]["application/json"]["schema"]
-    )
-    assert oa_schema.get("additionalProperties") is True
-    assert "properties" not in oa_schema
+    assert "/transformometro/gpt-actions/v1/openapi.json" not in doc["paths"]
 
 
 def test_parse_entity_rejects_unknown():
