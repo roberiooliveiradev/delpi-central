@@ -13,7 +13,7 @@ Entrada principal: [`README.md`](./README.md).
 7. [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md) — physical/bootstrap target.
 8. [`21-data-and-state-model.md`](./21-data-and-state-model.md) — state/persistence/retention.
 9. [`20-testing-and-acceptance-matrix.md`](./20-testing-and-acceptance-matrix.md) — tests/gates.
-10. [`25-requirements-traceability.md`](./25-requirements-traceability.md) — `CP-001…CP-310` single requirement authority.
+10. [`25-requirements-traceability.md`](./25-requirements-traceability.md) — `CP-001…CP-316` single requirement authority.
 11. arquitetura técnica / product spec.
 12. specs temáticas `53–66`.
 13. [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) — execution state/evidence.
@@ -71,7 +71,7 @@ Cross-cutting capability map: [`67-market-capability-expansion-and-intelligence-
 - [`54-biometric-identity-and-human-observation-governance.md`](./54-biometric-identity-and-human-observation-governance.md)
 - [`55-internet-research-and-external-connectors.md`](./55-internet-research-and-external-connectors.md)
 - [`56-microsoft-teams-connector-and-meeting-integration.md`](./56-microsoft-teams-connector-and-meeting-integration.md)
-- [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md)
+- [`57-event-driven-autonomous-operations-and-automation-execution-hub.md`](./57-event-driven-autonomous-operations-and-automation-execution-hub.md) — includes Recurring Governed Work / Scheduling target and boundaries
 - [`58-process-intelligence-and-process-mining.md`](./58-process-intelligence-and-process-mining.md)
 - [`59-ai-control-tower-and-digital-workforce-governance.md`](./59-ai-control-tower-and-digital-workforce-governance.md)
 - [`60-agent-interoperability-mcp-a2a-and-tool-protocols.md`](./60-agent-interoperability-mcp-a2a-and-tool-protocols.md)
@@ -83,6 +83,30 @@ Cross-cutting capability map: [`67-market-capability-expansion-and-intelligence-
 - [`66-ai-model-lifecycle-and-capability-marketplace.md`](./66-ai-model-lifecycle-and-capability-marketplace.md)
 
 Prefixos temáticos `58` e `59` agora são exclusivos de Process Intelligence e AI Control Tower. Cross-cutting docs usam `67/68`.
+
+## Recurring Governed Work / Scheduling
+
+```text
+Product target / semantics        → 57
+Canonical order / phase mapping   → 16
+Owner / contract boundary         → 17
+State / persistence candidates    → 21
+Acceptance / negative gates       → 20
+Requirements                      → CP-311–CP-316 in 25
+Cursor execution discipline       → 22 / 23
+Execution evidence/status         → ledger
+```
+
+Interpretation:
+
+```text
+Recurring Governed Work = TARGET first-class capability
+physical scheduler/timer owner = TO_INVENTORY until C0 proof
+schedule != permission
+C5 may allow bounded governed occurrence ACT under live gates
+C6 Watch still has no autonomous ACT by default
+runtime implementation = not PROVEN until evidence
+```
 
 ## Reference-only / superseded
 
@@ -117,6 +141,7 @@ biometrics/people analysis?    → 54
 internet/external?             → 55
 Teams?                         → 56
 autonomous operations/RPA?     → 57
+scheduled/recurring work?      → 57 + 16/17/20/21/25 CP-311–316
 Process Mining?                → 58
 AI governance/control tower?   → 59
 MCP/A2A?                       → 60
@@ -143,6 +168,9 @@ Domain APIs = business authority
 Portal = host/navigation/published context
 DÉLIA = intelligence/Evidence/Policy/Decision/Work orchestration
 Automation Hub = technical execution
+Physical scheduler = technical time trigger, not Work/permission authority
+Schedule != Permission
+Recurring Governed Work != Watch autonomous ACT
 Graph != Semantic Layer
 Memory != Knowledge
 Process Mining != employee scoring
