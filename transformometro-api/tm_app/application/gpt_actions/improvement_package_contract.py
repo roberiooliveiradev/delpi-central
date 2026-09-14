@@ -75,6 +75,17 @@ PACKAGE_MEASUREMENT_REQUIRED_FIELDS = (
     "tempo_medio_execucao_min",
 )
 
+# Explicit null is meaningful (clear / open vigencia). Omitted key ≠ null.
+PACKAGE_REVISION_NULLABLE_CLEARABLE = frozenset(
+    {
+        "data_fim_vigencia",
+        "data_implantacao",
+        "descricao_revisao",
+        "motivo_revisao",
+        "observacoes",
+    }
+)
+
 # Investment item fields inside scenario.investments[] (revisao_id injected).
 PACKAGE_INVESTMENT_FIELDS = (
     "tipo_investimento",
@@ -95,6 +106,7 @@ NESTING_RULES = [
     "Never put processo_id/instancia_id on scenario root; use process and instance.",
     "measurement belongs under baseline.measurement or scenario.measurement.",
     "New revision blocks REQUIRE measurement with volume_mensal + tempo_medio_execucao_min.",
+    "data_fim_vigencia: omitted = leave unset/open; explicit null = clear (open vigencia); date = set. Never invent today.",
     "investments belongs only under scenario.investments (array; [] allowed).",
     "beneficio_calculo_categoria belongs on revision, not measurement.",
     "Flat package shapes are invalid: validate/dry_run returns ready=false with missing.",
@@ -318,8 +330,16 @@ def openapi_revision_properties() -> dict[str, Any]:
         },
         "descricao_revisao": {"type": "string"},
         "motivo_revisao": {"type": "string"},
-        "data_implantacao": {"type": "string", "description": "YYYY-MM-DD"},
-        "data_fim_vigencia": {"type": "string", "description": "YYYY-MM-DD"},
+        "data_implantacao": {"type": "string", "description": "YYYY-MM-DD", "nullable": True},
+        "data_fim_vigencia": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": (
+                "YYYY-MM-DD end date, or null for open vigencia. "
+                "Omitted on create = leave NULL (do not invent today). "
+                "Omitted on update (GPT) = keep current; explicit null = clear."
+            ),
+        },
         "observacoes": {"type": "string"},
     }
     return props

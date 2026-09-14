@@ -64,7 +64,9 @@ def build_registration_guide() -> dict[str, Any]:
             ),
             "revision": (
                 "Calculable scenario with validity dates, measurement and costs. "
-                "Types: baseline (before) or melhoria|automacao|correcao (after)."
+                "Types: baseline (before) or melhoria|automacao|correcao (after). "
+                "data_fim_vigencia: omit = open vigencia; null = clear; date = set. "
+                "Never invent today's date when omitted."
             ),
             "measurement": (
                 "Monthly operating metrics for one revision (upsert by revisao_id). "

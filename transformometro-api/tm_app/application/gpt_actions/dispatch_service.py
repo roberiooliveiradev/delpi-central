@@ -848,7 +848,8 @@ class GptActionsDispatchService:
             existing = RevisaoRepository().get(rid)
             if not existing:
                 raise GptActionsError("Revisão não encontrada.", 404)
-            body = RevisaoBody.model_validate(data)
+            merged = self._merge_revision_update_payload(existing, data)
+            body = RevisaoBody.model_validate(merged)
             payload_dump = body.model_dump()
             confirm_vigencia = bool(payload_dump.pop("confirm_vigencia_change", False))
             has_medicao = MedicaoRepository().get_by_revisao(rid) is not None
@@ -856,7 +857,14 @@ class GptActionsDispatchService:
                 old_inicio = str(existing.get("data_inicio_vigencia") or "")[:10]
                 old_fim = str(existing.get("data_fim_vigencia") or "")[:10]
                 new_inicio = str(body.data_inicio_vigencia or "")[:10]
-                new_fim = str(body.data_fim_vigencia or "")[:10]
+                new_fim = (
+                    ""
+                    if body.data_fim_vigencia is None
+                    else str(body.data_fim_vigencia)[:10]
+                )
+                # Distinguish None (clear) from omit (already merged from existing).
+                if "data_fim_vigencia" not in data:
+                    new_fim = old_fim
                 if (old_inicio != new_inicio or old_fim != new_fim) and not confirm_vigencia:
                     raise GptActionsError(
                         "Alteração de vigência com medição existente exige "
@@ -1628,3 +1636,54 @@ class GptActionsDispatchService:
             raise GptActionsError(exc.message, exc.status_code) from exc
 
         raise GptActionsError(f"Document upsert not implemented for {entity.value}.", 400)
+
+    @staticmethod
+    def _merge_revision_update_payload(
+        existing: dict[str, Any], data: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Merge GPT update data over current revision.
+
+        Keys omitted in ``data`` keep the current value (omit ≠ clear).
+        Keys present with JSON null clear nullable fields (explicit null).
+        """
+        from tm_app.application.gpt_actions.improvement_package_contract import (
+            PACKAGE_REVISION_NULLABLE_CLEARABLE,
+        )
+        from tm_app.core.serialize import json_safe
+
+        current = json_safe(dict(existing)) or {}
+        merged: dict[str, Any] = {
+            "processo_id": str(current.get("processo_id") or ""),
+            "instancia_id": (
+                str(current["instancia_id"]) if current.get("instancia_id") else None
+            ),
+            "versao_revisao": str(current.get("versao_revisao") or ""),
+            "cenario_tipo": str(current.get("cenario_tipo") or ""),
+            "data_inicio_vigencia": str(current.get("data_inicio_vigencia") or "")[:10],
+            "revisao_ativa": bool(current.get("revisao_ativa")),
+            "revisao_referencia_id": (
+                str(current["revisao_referencia_id"])
+                if current.get("revisao_referencia_id")
+                else None
+            ),
+            "beneficio_calculo_categoria": str(
+                current.get("beneficio_calculo_categoria") or "automatico"
+            ),
+            "descricao_revisao": current.get("descricao_revisao"),
+            "motivo_revisao": current.get("motivo_revisao"),
+            "data_implantacao": (
+                str(current.get("data_implantacao") or "")[:10] or None
+            ),
+            "data_fim_vigencia": (
+                str(current.get("data_fim_vigencia") or "")[:10] or None
+            ),
+            "observacoes": current.get("observacoes"),
+        }
+        for key, value in data.items():
+            if key == "confirm_vigencia_change":
+                merged[key] = value
+                continue
+            if value is None and key not in PACKAGE_REVISION_NULLABLE_CLEARABLE:
+                continue
+            merged[key] = value
+        return merged

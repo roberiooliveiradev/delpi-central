@@ -342,18 +342,10 @@ class RevisaoRepository(PluginBaseRepository):
                 return self.get(revision_id) or revision
 
             if not bool(revision.get("revisao_ativa")):
-                self.execute(
-                    """
-                    UPDATE transformometro.revisoes
-                    SET data_fim_vigencia = COALESCE(data_fim_vigencia, CURRENT_DATE),
-                        updated_at = NOW()
-                    WHERE revisao_id = %s AND deletado = FALSE
-                    """,
-                    (revision_id,),
-                    auto_commit=False,
-                )
-                if auto_commit:
-                    self.commit()
+                # Inactive / future revisions may keep open vigencia (NULL end date).
+                # Do NOT invent CURRENT_DATE when data_fim_vigencia was omitted.
+                # Closing dates come from an explicit payload or from activating a
+                # successor (which stamps predecessors below).
                 return self.get(revision_id) or revision
 
             boundary_date = revision.get("data_implantacao") or revision.get("data_inicio_vigencia")

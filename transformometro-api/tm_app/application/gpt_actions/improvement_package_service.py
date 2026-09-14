@@ -17,6 +17,7 @@ from tm_app.application.gpt_actions.dispatch_service import (
 )
 from tm_app.application.gpt_actions.improvement_package_contract import (
     PACKAGE_MEASUREMENT_REQUIRED_FIELDS,
+    PACKAGE_REVISION_NULLABLE_CLEARABLE,
 )
 from tm_app.core.catalogs import CENARIO_TIPO
 
@@ -491,34 +492,47 @@ class GuidedImprovementPackageService:
             rev.pop("revisao_referencia_id", None)
 
         if rid:
-            extra = {
-                k: v
-                for k, v in rev.items()
-                if k not in {"id", "revisao_id"} and v is not None
-            }
+            extra: dict[str, Any] = {}
+            for key, value in rev.items():
+                if key in {"id", "revisao_id"}:
+                    continue
+                if value is None and key not in PACKAGE_REVISION_NULLABLE_CLEARABLE:
+                    continue
+                extra[key] = value
             if extra:
                 current = self._dispatch.get_record(request, "revision", rid)
                 data = {
                     "processo_id": current.get("processo_id") or processo_id,
                     "instancia_id": current.get("instancia_id") or instancia_id,
-                    "versao_revisao": extra.get("versao_revisao")
-                    or current.get("versao_revisao"),
-                    "cenario_tipo": extra.get("cenario_tipo") or current.get("cenario_tipo"),
-                    "data_inicio_vigencia": extra.get("data_inicio_vigencia")
-                    or current.get("data_inicio_vigencia"),
-                    **{
-                        k: v
-                        for k, v in extra.items()
-                        if k
-                        not in {
-                            "processo_id",
-                            "instancia_id",
-                            "versao_revisao",
-                            "cenario_tipo",
-                            "data_inicio_vigencia",
-                        }
-                    },
+                    "versao_revisao": (
+                        extra["versao_revisao"]
+                        if "versao_revisao" in extra
+                        else current.get("versao_revisao")
+                    ),
+                    "cenario_tipo": (
+                        extra["cenario_tipo"]
+                        if "cenario_tipo" in extra
+                        else current.get("cenario_tipo")
+                    ),
+                    "data_inicio_vigencia": (
+                        extra["data_inicio_vigencia"]
+                        if "data_inicio_vigencia" in extra
+                        else current.get("data_inicio_vigencia")
+                    ),
                 }
+                for key, value in extra.items():
+                    if key in {
+                        "processo_id",
+                        "instancia_id",
+                        "versao_revisao",
+                        "cenario_tipo",
+                        "data_inicio_vigencia",
+                    }:
+                        continue
+                    data[key] = value
+                # Preserve open vigencia when caller omits data_fim_vigencia.
+                if "data_fim_vigencia" not in extra:
+                    data["data_fim_vigencia"] = current.get("data_fim_vigencia")
                 if force_cenario:
                     data["cenario_tipo"] = force_cenario
                 self._dispatch.update_record(request, "revision", rid, {"data": data})

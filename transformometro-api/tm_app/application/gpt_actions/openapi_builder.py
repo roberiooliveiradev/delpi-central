@@ -200,6 +200,15 @@ def _record_body_media(*, primary: dict[str, Any] | None = None) -> dict[str, An
                 "summary": "entity=revision create",
                 "value": _example_revision_create(),
             },
+            "revision_clear_end_date": {
+                "summary": "entity=revision update — clear data_fim_vigencia",
+                "value": {
+                    "data": {
+                        "data_fim_vigencia": None,
+                        "confirm_vigencia_change": True,
+                    }
+                },
+            },
             "measurement_upsert": {
                 "summary": "entity=measurement upsert",
                 "value": _example_measurement_upsert(),
@@ -818,6 +827,14 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                                 "versao_revisao": {"type": "string"},
                                 "cenario_tipo": {"type": "string"},
                                 "data_inicio_vigencia": {"type": "string"},
+                                "data_fim_vigencia": {
+                                    "type": ["string", "null"],
+                                    "format": "date",
+                                    "description": (
+                                        "Omit = open/unset on create; null = clear on update; "
+                                        "date = set. Never invent today."
+                                    ),
+                                },
                                 "revisao_referencia_id": {"type": "string"},
                                 "beneficio_calculo_categoria": {"type": "string"},
                                 "volume_mensal": {"type": "number"},

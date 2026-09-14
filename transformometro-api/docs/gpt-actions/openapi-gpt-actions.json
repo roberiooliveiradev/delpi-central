@@ -592,6 +592,15 @@
                     }
                   }
                 },
+                "revision_clear_end_date": {
+                  "summary": "entity=revision update — clear data_fim_vigencia",
+                  "value": {
+                    "data": {
+                      "data_fim_vigencia": null,
+                      "confirm_vigencia_change": true
+                    }
+                  }
+                },
                 "measurement_upsert": {
                   "summary": "entity=measurement upsert",
                   "value": {
@@ -896,6 +905,15 @@
                       "revisao_referencia_id": "<baseline_revisao_uuid>",
                       "beneficio_calculo_categoria": "automatico",
                       "descricao_revisao": "Cenário teste GPT"
+                    }
+                  }
+                },
+                "revision_clear_end_date": {
+                  "summary": "entity=revision update — clear data_fim_vigencia",
+                  "value": {
+                    "data": {
+                      "data_fim_vigencia": null,
+                      "confirm_vigencia_change": true
                     }
                   }
                 },
@@ -1795,6 +1813,14 @@
               "data_inicio_vigencia": {
                 "type": "string"
               },
+              "data_fim_vigencia": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date",
+                "description": "Omit = open/unset on create; null = clear on update; date = set. Never invent today."
+              },
               "revisao_referencia_id": {
                 "type": "string"
               },
@@ -2082,11 +2108,16 @@
           },
           "data_implantacao": {
             "type": "string",
-            "description": "YYYY-MM-DD"
+            "description": "YYYY-MM-DD",
+            "nullable": true
           },
           "data_fim_vigencia": {
-            "type": "string",
-            "description": "YYYY-MM-DD"
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "YYYY-MM-DD end date, or null for open vigencia. Omitted on create = leave NULL (do not invent today). Omitted on update (GPT) = keep current; explicit null = clear."
           },
           "observacoes": {
             "type": "string"
