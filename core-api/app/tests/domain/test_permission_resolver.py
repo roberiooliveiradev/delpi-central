@@ -45,13 +45,8 @@ class FakeQuery:
         return self._overrides
 
 
-# ---------------------------------------------------------
-# TESTS
-# ---------------------------------------------------------
-
 def test_superadmin_returns_all_permissions():
     uid = uuid4()
-
     query = FakeQuery(all_permissions=["a", "b", "c"])
     resolver = PermissionResolver(query, FakeCache())
 
@@ -60,34 +55,49 @@ def test_superadmin_returns_all_permissions():
     assert sorted(result) == ["a", "b", "c"]
 
 
+def test_resolve_direct_role_permissions():
+    uid = uuid4()
+    resolver = PermissionResolver(FakeQuery(direct=["apps.manage"]), FakeCache())
+
+    assert resolver.resolve(uid, is_superadmin=False) == ["apps.manage"]
+
+
+def test_resolve_group_role_permissions():
+    uid = uuid4()
+    resolver = PermissionResolver(FakeQuery(group=["dashboard.view"]), FakeCache())
+
+    assert resolver.resolve(uid, is_superadmin=False) == ["dashboard.view"]
+
+
 def test_resolve_merges_direct_and_group_permissions():
     uid = uuid4()
-
     query = FakeQuery(
-        direct=["apps.manage"],
-        group=["dashboard.view"],
+        direct=["apps.manage", "shared.view"],
+        group=["dashboard.view", "shared.view"],
     )
-
     resolver = PermissionResolver(query, FakeCache())
-    result = resolver.resolve(uid, is_superadmin=False)
 
-    assert sorted(result) == ["apps.manage", "dashboard.view"]
+    assert resolver.resolve(uid, is_superadmin=False) == [
+        "apps.manage",
+        "dashboard.view",
+        "shared.view",
+    ]
 
 
-def test_resolve_applies_overrides():
+def test_resolve_allow_override_adds_permission():
     uid = uuid4()
-
-    query = FakeQuery(
-        direct=["a", "b"],
-        group=[],
-        overrides=[("b", False), ("c", True)],
-    )
-
+    query = FakeQuery(direct=["a"], overrides=[("c", True)])
     resolver = PermissionResolver(query, FakeCache())
-    result = resolver.resolve(uid, is_superadmin=False)
 
-    # b removido, c adicionado
-    assert sorted(result) == ["a", "c"]
+    assert resolver.resolve(uid, is_superadmin=False) == ["a", "c"]
+
+
+def test_resolve_deny_override_removes_inherited_permission():
+    uid = uuid4()
+    query = FakeQuery(direct=["a", "b"], overrides=[("b", False)])
+    resolver = PermissionResolver(query, FakeCache())
+
+    assert resolver.resolve(uid, is_superadmin=False) == ["a"]
 
 
 def test_cache_is_used():
@@ -106,7 +116,6 @@ def test_cache_is_used():
 def test_cache_is_invalidated():
     uid = uuid4()
     cache = FakeCache()
-
     query = FakeQuery(direct=["a"])
     resolver = PermissionResolver(query, cache)
 
