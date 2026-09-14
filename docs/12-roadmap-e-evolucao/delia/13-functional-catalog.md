@@ -2,7 +2,7 @@
 
 **Status:** `TARGET` — catálogo funcional temático  
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Requirements:** [`25-requirements-traceability.md`](./25-requirements-traceability.md) — `CP-001…CP-310`
+**Requirements:** [`25-requirements-traceability.md`](./25-requirements-traceability.md) — `CP-001…CP-316`
 
 ## 1. Objetivo
 
@@ -26,7 +26,7 @@ WORKSPACE
 MEETING
 FRONTLINE
 TEAMS future surface
-BACKGROUND Watches/Workflows
+BACKGROUND Watches/Workflows/Recurring Work
 ADMIN governance surfaces
 ```
 
@@ -123,13 +123,13 @@ Reads/writes use authorized Domain APIs/use cases whenever available. Material A
 
 ## 15. Event-Driven Operational Intelligence
 
-- real event ingestion;
+- real event and time-trigger ingestion;
 - EventEnvelope when contract is frozen;
 - authenticity/dedupe/order/correlation;
-- polling as bounded fallback;
+- timers/schedules and polling as bounded trigger/fallback contracts;
 - `FAST|OPERATIONAL|REASONING`;
 - not every event calls an LLM;
-- event never grants permission.
+- event/timer never grants permission.
 
 ## 16. Process Intelligence
 
@@ -155,7 +155,9 @@ Human Task
 
 DÉLIA owns semantic capability/Policy/Decision/Work orchestration. Automation Hub or approved executor owner owns technical execution details, queues/workers/packages/credentials/session mechanics as applicable.
 
-Outcome verification is coordinated by DÉLIA against authoritative business sources; Hub technical success is not business success.
+Physical scheduler/timer mechanics belong to the owner proven in C0 and do not become business/permission authority.
+
+Outcome verification is coordinated by DÉLIA against authoritative business sources; Hub/scheduler technical success is not business success.
 
 ## 18. Watch / Proactivity
 
@@ -178,6 +180,37 @@ C6 Watch defaults to OBSERVE/ADVISE/PREPARE. C7 adds selected **autonomous Watch
 - Task/Case/Room/Inbox;
 - human exceptions resume same Work;
 - no technical executor duplication.
+
+### 19.1 Recurring Governed Work / Scheduling
+
+First-class `TARGET` capability traced by `CP-311–CP-316`:
+
+- authorized user/owner can create, inspect/list, pause, resume and cancel recurring Work;
+- recurrence is persistent and independent of an open chat session;
+- explicit IANA timezone, start/end bounds and versioned schedule semantics;
+- DST/calendar, missed-run/misfire and overlap/concurrency behavior are explicit;
+- each occurrence has correlation/idempotency and survives duplicate timer/retry/restart without duplicate material effect;
+- every material occurrence revalidates current user/service identity, Core/domain AuthZ, Policy/Decision, provider/connection state and source permissions;
+- pause/cancel/revoke prevents future material occurrences;
+- occurrence links Work/Decision/Execution/Outcome/Evidence/Audit;
+- physical scheduler/timer owner is `TO_INVENTORY` until C0 and is replaceable behind a contract/adapter;
+- `schedule != permission` and stored schedule intent is not eternal authorization;
+- Recurring Governed Work is not Watch autonomous ACT and does not require C7/L5 for bounded C5 L4 execution.
+
+Canonical target example:
+
+```text
+“todos os dias às 09:00 gere o relatório de produção do dia anterior e envie por email”
+→ persistent RecurringWorkDefinition
+→ deterministic time occurrence
+→ live authorization
+→ current authorized reads
+→ grounded/versioned report artifact
+→ separate communication.email.send ACT
+→ verified Outcome/Evidence/Audit
+```
+
+`report generated != email authorized`; provider/API acceptance does not automatically equal verified final outcome.
 
 ## 20. Decision Gates / Autonomy
 
@@ -277,7 +310,8 @@ Select only approved model/deployment candidates. Router is not lifecycle/regist
 - safe egress;
 - no hidden biometric/task surveillance;
 - sandbox bounded;
-- external/tool/package content untrusted;
+- external/tool/package/scheduler metadata untrusted for authorization;
+- schedule/timer does not grant permission;
 - Prediction != FACT;
 - Twin != production;
 - Edge offline != permission expansion;
@@ -286,8 +320,8 @@ Select only approved model/deployment candidates. Router is not lifecycle/regist
 
 ## 38. Administração
 
-Role-gated surfaces may include Connections, Automation governance projection, Process Intelligence, Control Tower, Semantic Catalog, Memory controls, Artifact Workspace, Model Governance, Marketplace and Edge Fleet. Admin access does not imply underlying business permission.
+Role-gated surfaces may include Connections, Automation governance projection, Recurring Work/Schedule management, Process Intelligence, Control Tower, Semantic Catalog, Memory controls, Artifact Workspace, Model Governance, Marketplace and Edge Fleet. Admin access does not imply underlying business permission.
 
 ## 39. Final experience
 
-DÉLIA should understand authorized context, find evidence, analyze/predict/simulate with epistemic clarity, prepare/execute governed work through canonical contracts, verify real outcomes, communicate status and learn only through explicit governance.
+DÉLIA should understand authorized context, find evidence, analyze/predict/simulate with epistemic clarity, prepare/execute governed one-time or recurring work through canonical contracts, verify real outcomes, communicate status and learn only through explicit governance.
