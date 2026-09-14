@@ -16,6 +16,7 @@ from tm_app.core.errors import format_api_error
 from tm_app.core.responses import fail
 from tm_app.interface.http.routes.crud_routes import router as crud_router
 from tm_app.interface.http.routes.dashboard_routes import router as dashboard_router
+from tm_app.interface.http.routes.gpt_actions_routes import router as gpt_actions_router
 from tm_app.interface.http.routes.integrations_routes import router as integrations_router
 from tm_app.interface.http.routes.json_backup_routes import router as json_backup_router
 from tm_app.interface.http.routes.collaboration_routes import router as collaboration_router
@@ -56,6 +57,10 @@ def build_allowed_origins() -> list[str]:
     api_env = os.getenv("API_DELPI_ENV", "development")
     if api_env != "production":
         origins.add("http://localhost")
+
+    # Custom GPT Builder / Actions may preflight the public OpenAPI schema.
+    origins.add("https://chatgpt.com")
+    origins.add("https://chat.openai.com")
     return sorted(origins)
 
 
@@ -136,6 +141,7 @@ def health():
 
 
 app.include_router(transformometro_router)
+app.include_router(gpt_actions_router)
 app.include_router(meeting_minutes_router, prefix="/transformometro/meeting-minutes")
 app.include_router(meeting_minutes_router, prefix="/transformometro/atas")
 app.include_router(public_meeting_minutes_router, prefix="/public/meeting-minutes/sign-invites")

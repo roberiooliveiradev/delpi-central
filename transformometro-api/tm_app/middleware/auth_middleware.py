@@ -7,7 +7,12 @@ from delpi_auth.service_token import request_has_valid_internal_service_token
 
 __all__ = ["jwt_middleware", "_is_public", "PUBLIC_PREFIXES", "PUBLIC_EXACT"]
 
-PUBLIC_EXACT: frozenset[str] = frozenset({"/health"})
+PUBLIC_EXACT: frozenset[str] = frozenset(
+    {
+        "/health",
+        "/transformometro/gpt-actions/v1/openapi.json",
+    }
+)
 PUBLIC_PREFIXES: tuple[str, ...] = ("/public/",)
 
 

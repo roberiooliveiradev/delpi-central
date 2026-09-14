@@ -140,6 +140,23 @@ Nunca expor no frontend.
 
 ---
 
+## 10b. Client OAuth — Custom GPT Transformômetro
+
+Para Actions do ChatGPT (OpenAI Custom GPT) que chamam `transformometro-api`:
+
+| Campo | Valor |
+|---|---|
+| Client ID | `chatgpt-transformometro` |
+| Client authentication | **On** (confidential) |
+| Standard flow | **On** |
+| Audience mapper | `aud` inclui `delpi-central` (`KEYCLOAK_AUDIENCE`) |
+| Scopes | `openid email profile` |
+| Redirect URIs | `https://chatgpt.com/aip/g-{GPT_ID}/oauth/callback` e `https://chat.openai.com/aip/g-{GPT_ID}/oauth/callback` |
+
+O secret fica só no GPT Editor. Procedimento completo: [`transformometro-api/docs/chatgpt-custom-gpt-actions.md`](../../transformometro-api/docs/chatgpt-custom-gpt-actions.md).
+
+---
+
 ## 11. Após `docker compose down -v`
 
 Volumes do Keycloak são apagados. Refazer: realm, client, mappers, usuários, redirect URIs.

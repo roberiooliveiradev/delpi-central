@@ -52,6 +52,7 @@ from tm_app.interface.http.routes.crud_routes import router as crud_router
 from tm_app.interface.http.routes.dashboard_routes import router as dashboard_router
 from tm_app.interface.http.routes.decomposition_routes import router as decomposition_router
 from tm_app.interface.http.routes.diagram_routes import router as diagram_router
+from tm_app.interface.http.routes.gpt_actions_routes import router as gpt_actions_router
 from tm_app.interface.http.routes.integrations_routes import router as integrations_router
 from tm_app.interface.http.routes.json_backup_routes import router as json_backup_router
 from tm_app.interface.http.routes.meeting_minutes_routes import router as meeting_minutes_router
@@ -96,6 +97,7 @@ def create_test_app() -> FastAPI:
 
     app.middleware("http")(_fake_jwt_middleware)
     app.include_router(transformometro_router)
+    app.include_router(gpt_actions_router)
     app.include_router(crud_router)
     app.include_router(dashboard_router)
     app.include_router(integrations_router)

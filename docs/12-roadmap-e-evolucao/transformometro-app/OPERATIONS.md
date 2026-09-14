@@ -16,16 +16,30 @@ Runbook para equipe após go-live (Postgres como fonte de verdade).
 | Pendências de assinatura | `/apps/transformometro/meeting-minutes/pending` |
 | Minha assinatura | `/apps/transformometro/my-signature` |
 | API health | `/apps/transformometro-api/transformometro/health` |
+| Custom GPT OpenAPI (público) | `/apps/transformometro-api/transformometro/gpt-actions/v1/openapi.json` |
+
+## Custom GPT (OpenAI)
+
+Cadastro/análise via ChatGPT usa a superfície compacta `gpt-actions/v1` (mesmo JWT Keycloak + RBAC da UI).
+
+Procedimento completo: [chatgpt-custom-gpt-actions.md](../../../transformometro-api/docs/chatgpt-custom-gpt-actions.md).
+
+Resumo:
+
+1. Criar client Keycloak confidencial `chatgpt-transformometro` (audience `delpi-central`).
+2. Importar `openapi-gpt-actions.json` (ou a URL pública acima) no GPT Builder.
+3. Auth = OAuth (não API Key).
+4. O Chat da Minha DELPI continua somente leitura (`openapi-snapshot-chat.json`, `allowWrite: false`).
 
 ## Rotina diária
 
-1. Cadastro e alterações somente pela **UI** ou API (`transformometro-api`).
-2. Após mudanças relevantes (revisão ativa, vigências, medições): **Dashboard → Recalcular**.
+1. Cadastro e alterações pela **UI**, pela API (`transformometro-api`) ou pelo **Custom GPT** (Actions OAuth — mesmas permissões).
+2. Após mudanças relevantes (revisão ativa, vigências, medições): **Dashboard → Recalcular** (também disponível via `gpt_recalculate_dashboard`).
 3. **Alertas** (economia líquida negativa ≥3 meses) e export **CSV** ou **Excel** no dashboard.
 4. Cadastro: preencher **família** e **agrupador ferramenta** quando o processo participa de rateio compartilhado.
 5. **Recursos compartilhados:** cadastrar em **Configurações → Recursos**; vincular na revisão (subpasta Recursos ou workspace).
 6. **Revisões:** cadastrar baseline/melhorias; informar **Compara com** (V035) em cenários não-baseline; **Definir como ativa** quando for usar no dashboard; **Duplicar** para clonar versão (cópia inativa).
-7. Cadastro oficial somente no portal (sem importação de planilha).
+7. Cadastro oficial somente no portal ou via GPT autenticado (sem importação de planilha).
 8. **Instâncias:** replicar timeline entre filiais/setores pelo painel **Replicar instância** (canônico); evitar duplicar processo-mestre (legado deprecado).
 9. **Dashboard:** escolher visão Consolidado / Filial / Departamento; usuários com RBAC filial veem escopo em `/options` → `access_scope`.
 10. **Recursos:** definir **escopo de rateio** (`empresa` / `filial` / `setor`) no cadastro de Recursos.

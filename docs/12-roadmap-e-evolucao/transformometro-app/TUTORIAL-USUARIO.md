@@ -645,6 +645,29 @@ No detalhe do processo → **Linha do tempo** (audit log).
 | Atas Transforma+ (produto) | [ATAS-TRANSFORMA-MAIS.md](./ATAS-TRANSFORMA-MAIS.md) |
 | Atas — UI | [plugins/transformometro/docs/atas.md](../../../plugins/transformometro/docs/atas.md) |
 | Atas — API e Kimi | [atas-kimi.md](../../../transformometro-api/docs/atas-kimi.md) |
+| Custom GPT (ChatGPT Actions) | [chatgpt-custom-gpt-actions.md](../../../transformometro-api/docs/chatgpt-custom-gpt-actions.md) |
+
+---
+
+## 17. Assistente ChatGPT (Custom GPT)
+
+Usuários com permissão no Transformômetro podem **analisar KPIs e cadastrar/editar** pelo Custom GPT da OpenAI, autenticando com a mesma conta Minha DELPI (OAuth Keycloak).
+
+| O que o GPT faz | Equivalente na UI |
+|-----------------|-------------------|
+| Consultar economia / ranking | Dashboard |
+| Criar processo, melhoria, revisão, medição, investimento | Workspace Processos |
+| Ativar revisão, recalcular cache | Toolbar da revisão / Dashboard |
+| Criar/enviar/finalizar ata (sem assinatura manuscrita) | Menu Atas |
+
+Regras:
+
+1. As **mesmas permissões** da tela valem no GPT (`transformometro.view`, `*.manage`, escopo de filial, atas, etc.).
+2. Sem permissão → o GPT recebe **403**; não há bypass por estar no ChatGPT.
+3. Assinatura manuscrita, uploads e locks de colaboração continuam **só na UI**.
+4. Ordem de cadastro recomendada: unidades/departamentos → processo → melhoria → revisão → medição/investimento (igual à seção 3).
+
+Detalhe operacional (Keycloak, import OpenAPI): [OPERATIONS.md](./OPERATIONS.md) · [chatgpt-custom-gpt-actions.md](../../../transformometro-api/docs/chatgpt-custom-gpt-actions.md).
 
 ---
 

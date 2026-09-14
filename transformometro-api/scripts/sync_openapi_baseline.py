@@ -37,6 +37,8 @@ def _module_for_path(path: str) -> str:
     second = parts[1]
     if second in {"dashboard", "data", "colaboracao", "realtime"}:
         return second
+    if second == "gpt-actions":
+        return "gpt_actions"
     if second == "integrations" or (len(parts) > 2 and parts[1] == "integrations"):
         return "integrations"
     if second in {"meeting-minutes", "signatures"}:

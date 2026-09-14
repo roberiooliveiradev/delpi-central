@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-17",
-  "operation_count": 151,
+  "generatedAt": "2026-09-14",
+  "operation_count": 163,
   "operations": [
     {
       "operationId": "post_liberar",
@@ -722,6 +722,78 @@
       "method": "POST",
       "path": "/transformometro/data/import/preview",
       "module": "data"
+    },
+    {
+      "operationId": "gpt_analyze",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/analysis",
+      "module": "gpt_actions"
+    },
+    {
+      "operationId": "gpt_get_catalog",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/catalog",
+      "module": "gpt_actions"
+    },
+    {
+      "operationId": "gpt_recalculate_dashboard",
+      "method": "POST",
+      "path": "/transformometro/gpt-actions/v1/dashboard/recalculate",
+      "module": "gpt_actions"
+    },
+    {
+      "operationId": "gpt_meeting_minute_workflow",
+      "method": "POST",
+      "path": "/transformometro/gpt-actions/v1/meeting-minutes/{id}/workflow",
+      "module": "gpt_actions"
+    },
+    {
+      "operationId": "gpt_get_openapi_schema",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/openapi.json",
+      "module": "gpt_actions"
+    },
+    {
+      "operationId": "gpt_search_records",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/records/{entity}",
+      "module": "gpt_actions"
+    },
+    {
+      "operationId": "gpt_create_record",
+      "method": "POST",
+      "path": "/transformometro/gpt-actions/v1/records/{entity}",
+      "module": "gpt_actions"
+    },
+    {
+      "operationId": "gpt_delete_record",
+      "method": "DELETE",
+      "path": "/transformometro/gpt-actions/v1/records/{entity}/{id}",
+      "module": "gpt_actions"
+    },
+    {
+      "operationId": "gpt_get_record",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/records/{entity}/{id}",
+      "module": "gpt_actions"
+    },
+    {
+      "operationId": "gpt_update_record",
+      "method": "PUT",
+      "path": "/transformometro/gpt-actions/v1/records/{entity}/{id}",
+      "module": "gpt_actions"
+    },
+    {
+      "operationId": "gpt_duplicate_record",
+      "method": "POST",
+      "path": "/transformometro/gpt-actions/v1/records/{entity}/{id}/duplicate",
+      "module": "gpt_actions"
+    },
+    {
+      "operationId": "gpt_activate_revision",
+      "method": "POST",
+      "path": "/transformometro/gpt-actions/v1/revisions/{id}/activate",
+      "module": "gpt_actions"
     },
     {
       "operationId": "health",

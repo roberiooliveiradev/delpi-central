@@ -80,7 +80,9 @@ export const TM_HELP_TOOLTIPS = {
   },
   dashboard: {
     view:
-      "Alterna o recorte: Consolidado (todas as unidades ativas), Unidade ou Departamento. Instâncias multi-unidade contam uma fatia de economia (bruta, líquida, horas) por unidade do recorte — no Consolidado, × unidades ativas; na Unidade/Departamento, × unidades selecionadas. Investimento não multiplica.",
+      "Alterna o recorte: Consolidado (todas as unidades ativas), Unidade ou Departamento. Instâncias multi-unidade contam uma fatia de economia (bruta, líquida, horas) por unidade do recorte — no Consolidado, × unidades ativas; na Unidade/Departamento, × unidades selecionadas. Investimento não multiplica. O Custom GPT usa as mesmas permissões desta tela para analisar e cadastrar.",
+    chatgptAssistente:
+      "O Custom GPT do Transformômetro analisa e cadastra com a mesma conta e permissões desta tela. Assinatura manuscrita e uploads ficam só na Minha DELPI.",
     competencia:
       "Escolhe um mês (competência) e preenche o período automaticamente. Ao ajustar as datas para meses diferentes, a competência fica em branco.",
     dateStart: "Início do período analisado (competência mensal). Filtra economias, custos e horas.",
@@ -462,5 +464,11 @@ export const TM_HELP_TOOLTIPS = {
     previewNoArquivo: "Quantidade de registros deste tipo no arquivo importado.",
     previewInserir: "Registros novos que serão criados no banco.",
     previewAtualizar: "Registros existentes que serão sobrescritos pelo backup.",
+  },
+  chatgpt: {
+    access:
+      "O Custom GPT do Transformômetro usa a mesma conta e as mesmas permissões da tela. Sem manage na filial, o ChatGPT também não cadastra nem edita.",
+    scope:
+      "Pelo GPT dá para analisar o dashboard e cadastrar processos, melhorias, revisões, medições, investimentos, catálogos e atas (envio/finalização). Assinatura manuscrita e uploads ficam só na Minha DELPI.",
   },
 } as const;

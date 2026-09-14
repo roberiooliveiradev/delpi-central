@@ -1,8 +1,21 @@
 # Transformômetro — OpenAPI para agente de chat
 
+## Superfícies
+
+| Consumidor | Schema | Write |
+|------------|--------|-------|
+| **Chat Minha DELPI** (agente interno) | [`openapi-snapshot-chat.json`](./openapi-snapshot-chat.json) | **Não** (`allowWrite: false`) |
+| **Custom GPT OpenAI** | [`openapi-gpt-actions.json`](./openapi-gpt-actions.json) | **Sim**, com OAuth usuário + RBAC |
+
+Doc do Custom GPT: [`chatgpt-custom-gpt-actions.md`](./chatgpt-custom-gpt-actions.md).
+
+---
+
+## Snapshot (agente Minha DELPI) — somente leitura
+
 Rotas de leitura sobre o cache materializado (`dashboard_calculos`), sem expor CRUD de escrita.
 
-## Arquivo OpenAPI
+### Arquivo OpenAPI
 
 `docs/openapi-snapshot-chat.json` — 4 rotas:
 
@@ -13,7 +26,7 @@ Rotas de leitura sobre o cache materializado (`dashboard_calculos`), sem expor C
 | `get_dashboard_snapshot_processos` | `GET /transformometro/dashboard/snapshot/processos` |
 | `get_dashboard_snapshot_linhas` | `GET /transformometro/dashboard/snapshot/linhas` |
 
-## Provider no agente
+### Provider no agente
 
 | Campo | Valor |
 |-------|-------|
@@ -25,7 +38,7 @@ Rotas de leitura sobre o cache materializado (`dashboard_calculos`), sem expor C
 
 Importe o schema inline (`openapi-snapshot-chat.json`) na criação do provider.
 
-## Sync pós-deploy
+### Sync pós-deploy
 
 No container `minha-delpi-ai-api`:
 
@@ -35,11 +48,11 @@ python scripts/sync_transformometro_openapi.py
 
 Gera catálogo em `minha-delpi-ai-api/docs/knowledge/_generated/transformometro-openapi-catalog.md`.
 
-## RAG do agente
+### RAG do agente
 
 Indexar: `minha-delpi-ai-api/docs/knowledge/domains/agents/transformometro/transformometro-snapshot-rotas-agente.md`
 
-## Variáveis
+### Variáveis
 
 | Variável | Default | Efeito |
 |----------|---------|--------|

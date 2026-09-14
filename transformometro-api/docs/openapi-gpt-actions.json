@@ -1,0 +1,1286 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Transformômetro API — Custom GPT Actions",
+    "description": "Compact facade for OpenAI Custom GPT. Analyzes KPIs and creates/edits Transformômetro records with the same Keycloak JWT + Core RBAC as the UI. Do not expose binary uploads, collaboration locks, or public signature signing here.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/apps/transformometro-api",
+      "description": "Minha DELPI gateway"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Transformômetro GPT",
+      "description": "Custom GPT Actions for analyze / register / edit."
+    }
+  ],
+  "paths": {
+    "/transformometro/gpt-actions/v1/catalog": {
+      "get": {
+        "operationId": "gpt_get_catalog",
+        "summary": "Catalog options for Transformômetro forms",
+        "description": "Returns units (filiais), departments (setores), enums (status, cenário, investimento, etc.) and the user's access scope. Call this before creating processes or instances.",
+        "tags": [
+          "Transformômetro GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Catalog payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or domain error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking Transformômetro permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transformometro/gpt-actions/v1/analysis": {
+      "get": {
+        "operationId": "gpt_analyze",
+        "summary": "Analyze dashboard KPIs from snapshot/live cache",
+        "description": "Read-only analytics. Prefer `summary` for totals, `processes` for ranking, `instances` for operational improvements, `rows` for revision-level detail, `meta` to check cache freshness. Competencies use YYYY-MM.",
+        "tags": [
+          "Transformômetro GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "view",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "meta",
+                "summary",
+                "processes",
+                "instances",
+                "rows"
+              ]
+            },
+            "description": "Analysis view to return."
+          },
+          {
+            "name": "filial_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Unit code (01, 02)."
+          },
+          {
+            "name": "setor_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Department id."
+          },
+          {
+            "name": "processo_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "revisao_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "familia_processo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "competencia_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}$"
+            },
+            "description": "Start month YYYY-MM."
+          },
+          {
+            "name": "competencia_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}$"
+            },
+            "description": "End month YYYY-MM."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Analysis payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or domain error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking Transformômetro permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transformometro/gpt-actions/v1/records/{entity}": {
+      "get": {
+        "operationId": "gpt_search_records",
+        "summary": "Search or list records by entity",
+        "description": "List records. Use `parent_id` for children (instances of a process, revisions of a process, investments of a revision, costs/links of a resource). Use `q` for process text search.",
+        "tags": [
+          "Transformômetro GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "entity",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "branch",
+                "department",
+                "process",
+                "instance",
+                "revision",
+                "measurement",
+                "investment",
+                "shared_resource",
+                "resource_cost",
+                "resource_link",
+                "meeting_minute",
+                "decomposition_tree",
+                "instance_decomposition_scope",
+                "revision_decomposition_overlay",
+                "process_diagram",
+                "instance_diagram_scope",
+                "revision_diagram_overlay",
+                "impact_effort_matrix"
+              ]
+            },
+            "description": "Record type. `branch`: Operational unit (filial). Catalog admin.; `department`: Department (setor) linked to one or more units.; `process`: Master process (processo-mestre).; `instance`: Operational improvement (melhoria = process × unit × departments).; `revision`: Calculable scenario (baseline/melhoria/automacao/correcao).; `measurement`: Monthly measurement for a revision (upsert by revisao_id).; `investment`: Investment line on a revision.; `shared_resource`: Shared resource (license/tool) catalog.; `resource_cost`: Cost validity period for a shared resource.; `resource_link`: Link between a revision and a shared resource.; `meeting_minute`: Transforma+ meeting minute (ata).; `decomposition_tree`: Process WBS/decomposition tree (id = processo_id).; `instance_decomposition_scope`: Instance WBS scope (id = instancia_id).; `revision_decomposition_overlay`: Revision WBS overlay (id = revisao_id).; `process_diagram`: Process macro flowchart (id = processo_id).; `instance_diagram_scope`: Instance diagram scope (id = instancia_id).; `revision_diagram_overlay`: Revision diagram overlay (id = revisao_id).; `impact_effort_matrix`: Impact×effort matrix for a revision (id = revisao_id)."
+          },
+          {
+            "name": "parent_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filial_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "setor_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "familia_processo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "unit_code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or domain error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking Transformômetro permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "gpt_create_record",
+        "summary": "Create a Transformômetro record",
+        "description": "Create entity. Body `data` must match the entity schema used by the UI API (ProcessoCreateBody, InstanciaBody, RevisaoBody, MedicaoBody, etc.). For tree/diagram/overlay entities, `data` is the content document; path id is unused — put parent id inside `data` (`processo_id`, `instancia_id`, or `revisao_id`).",
+        "tags": [
+          "Transformômetro GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "entity",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "branch",
+                "department",
+                "process",
+                "instance",
+                "revision",
+                "measurement",
+                "investment",
+                "shared_resource",
+                "resource_cost",
+                "resource_link",
+                "meeting_minute",
+                "decomposition_tree",
+                "instance_decomposition_scope",
+                "revision_decomposition_overlay",
+                "process_diagram",
+                "instance_diagram_scope",
+                "revision_diagram_overlay",
+                "impact_effort_matrix"
+              ]
+            },
+            "description": "Record type. `branch`: Operational unit (filial). Catalog admin.; `department`: Department (setor) linked to one or more units.; `process`: Master process (processo-mestre).; `instance`: Operational improvement (melhoria = process × unit × departments).; `revision`: Calculable scenario (baseline/melhoria/automacao/correcao).; `measurement`: Monthly measurement for a revision (upsert by revisao_id).; `investment`: Investment line on a revision.; `shared_resource`: Shared resource (license/tool) catalog.; `resource_cost`: Cost validity period for a shared resource.; `resource_link`: Link between a revision and a shared resource.; `meeting_minute`: Transforma+ meeting minute (ata).; `decomposition_tree`: Process WBS/decomposition tree (id = processo_id).; `instance_decomposition_scope`: Instance WBS scope (id = instancia_id).; `revision_decomposition_overlay`: Revision WBS overlay (id = revisao_id).; `process_diagram`: Process macro flowchart (id = processo_id).; `instance_diagram_scope`: Instance diagram scope (id = instancia_id).; `revision_diagram_overlay`: Revision diagram overlay (id = revisao_id).; `impact_effort_matrix`: Impact×effort matrix for a revision (id = revisao_id)."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GptRecordBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Created or upserted record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or domain error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking Transformômetro permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-openai-isConsequential": true
+      }
+    },
+    "/transformometro/gpt-actions/v1/records/{entity}/{id}": {
+      "get": {
+        "operationId": "gpt_get_record",
+        "summary": "Get one record by entity and id",
+        "description": "For measurement, id is revisao_id. For decomposition/diagram entities, id is the parent (processo_id / instancia_id / revisao_id).",
+        "tags": [
+          "Transformômetro GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "entity",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "branch",
+                "department",
+                "process",
+                "instance",
+                "revision",
+                "measurement",
+                "investment",
+                "shared_resource",
+                "resource_cost",
+                "resource_link",
+                "meeting_minute",
+                "decomposition_tree",
+                "instance_decomposition_scope",
+                "revision_decomposition_overlay",
+                "process_diagram",
+                "instance_diagram_scope",
+                "revision_diagram_overlay",
+                "impact_effort_matrix"
+              ]
+            },
+            "description": "Record type. `branch`: Operational unit (filial). Catalog admin.; `department`: Department (setor) linked to one or more units.; `process`: Master process (processo-mestre).; `instance`: Operational improvement (melhoria = process × unit × departments).; `revision`: Calculable scenario (baseline/melhoria/automacao/correcao).; `measurement`: Monthly measurement for a revision (upsert by revisao_id).; `investment`: Investment line on a revision.; `shared_resource`: Shared resource (license/tool) catalog.; `resource_cost`: Cost validity period for a shared resource.; `resource_link`: Link between a revision and a shared resource.; `meeting_minute`: Transforma+ meeting minute (ata).; `decomposition_tree`: Process WBS/decomposition tree (id = processo_id).; `instance_decomposition_scope`: Instance WBS scope (id = instancia_id).; `revision_decomposition_overlay`: Revision WBS overlay (id = revisao_id).; `process_diagram`: Process macro flowchart (id = processo_id).; `instance_diagram_scope`: Instance diagram scope (id = instancia_id).; `revision_diagram_overlay`: Revision diagram overlay (id = revisao_id).; `impact_effort_matrix`: Impact×effort matrix for a revision (id = revisao_id)."
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or domain error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking Transformômetro permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "gpt_update_record",
+        "summary": "Update a Transformômetro record",
+        "description": "Full/partial update depending on entity. Body: `{ \"data\": { ... } }`.",
+        "tags": [
+          "Transformômetro GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "entity",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "branch",
+                "department",
+                "process",
+                "instance",
+                "revision",
+                "measurement",
+                "investment",
+                "shared_resource",
+                "resource_cost",
+                "resource_link",
+                "meeting_minute",
+                "decomposition_tree",
+                "instance_decomposition_scope",
+                "revision_decomposition_overlay",
+                "process_diagram",
+                "instance_diagram_scope",
+                "revision_diagram_overlay",
+                "impact_effort_matrix"
+              ]
+            },
+            "description": "Record type. `branch`: Operational unit (filial). Catalog admin.; `department`: Department (setor) linked to one or more units.; `process`: Master process (processo-mestre).; `instance`: Operational improvement (melhoria = process × unit × departments).; `revision`: Calculable scenario (baseline/melhoria/automacao/correcao).; `measurement`: Monthly measurement for a revision (upsert by revisao_id).; `investment`: Investment line on a revision.; `shared_resource`: Shared resource (license/tool) catalog.; `resource_cost`: Cost validity period for a shared resource.; `resource_link`: Link between a revision and a shared resource.; `meeting_minute`: Transforma+ meeting minute (ata).; `decomposition_tree`: Process WBS/decomposition tree (id = processo_id).; `instance_decomposition_scope`: Instance WBS scope (id = instancia_id).; `revision_decomposition_overlay`: Revision WBS overlay (id = revisao_id).; `process_diagram`: Process macro flowchart (id = processo_id).; `instance_diagram_scope`: Instance diagram scope (id = instancia_id).; `revision_diagram_overlay`: Revision diagram overlay (id = revisao_id).; `impact_effort_matrix`: Impact×effort matrix for a revision (id = revisao_id)."
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GptRecordBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or domain error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking Transformômetro permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-openai-isConsequential": true
+      },
+      "delete": {
+        "operationId": "gpt_delete_record",
+        "summary": "Soft-delete a Transformômetro record",
+        "description": "Destructive. Requires the same manage permissions as the UI.",
+        "tags": [
+          "Transformômetro GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "entity",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "branch",
+                "department",
+                "process",
+                "instance",
+                "revision",
+                "measurement",
+                "investment",
+                "shared_resource",
+                "resource_cost",
+                "resource_link",
+                "meeting_minute",
+                "decomposition_tree",
+                "instance_decomposition_scope",
+                "revision_decomposition_overlay",
+                "process_diagram",
+                "instance_diagram_scope",
+                "revision_diagram_overlay",
+                "impact_effort_matrix"
+              ]
+            },
+            "description": "Record type. `branch`: Operational unit (filial). Catalog admin.; `department`: Department (setor) linked to one or more units.; `process`: Master process (processo-mestre).; `instance`: Operational improvement (melhoria = process × unit × departments).; `revision`: Calculable scenario (baseline/melhoria/automacao/correcao).; `measurement`: Monthly measurement for a revision (upsert by revisao_id).; `investment`: Investment line on a revision.; `shared_resource`: Shared resource (license/tool) catalog.; `resource_cost`: Cost validity period for a shared resource.; `resource_link`: Link between a revision and a shared resource.; `meeting_minute`: Transforma+ meeting minute (ata).; `decomposition_tree`: Process WBS/decomposition tree (id = processo_id).; `instance_decomposition_scope`: Instance WBS scope (id = instancia_id).; `revision_decomposition_overlay`: Revision WBS overlay (id = revisao_id).; `process_diagram`: Process macro flowchart (id = processo_id).; `instance_diagram_scope`: Instance diagram scope (id = instancia_id).; `revision_diagram_overlay`: Revision diagram overlay (id = revisao_id).; `impact_effort_matrix`: Impact×effort matrix for a revision (id = revisao_id)."
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or domain error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking Transformômetro permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-openai-isConsequential": true
+      }
+    },
+    "/transformometro/gpt-actions/v1/records/{entity}/{id}/duplicate": {
+      "post": {
+        "operationId": "gpt_duplicate_record",
+        "summary": "Duplicate process, instance, or revision",
+        "description": "Supported entities: process, instance, revision. Optional body `data` with rename fields.",
+        "tags": [
+          "Transformômetro GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "entity",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "process",
+                "instance",
+                "revision"
+              ]
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GptRecordBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Duplicated record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Duplicated record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or domain error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking Transformômetro permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-openai-isConsequential": true
+      }
+    },
+    "/transformometro/gpt-actions/v1/revisions/{id}/activate": {
+      "post": {
+        "operationId": "gpt_activate_revision",
+        "summary": "Activate a revision as the operational current version",
+        "tags": [
+          "Transformômetro GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activated revision",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or domain error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking Transformômetro permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-openai-isConsequential": true
+      }
+    },
+    "/transformometro/gpt-actions/v1/dashboard/recalculate": {
+      "post": {
+        "operationId": "gpt_recalculate_dashboard",
+        "summary": "Recalculate materialised dashboard cache",
+        "description": "Optional filters: revisao_id, processo_id, competencia_inicio, competencia_fim.",
+        "tags": [
+          "Transformômetro GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "revisao_id": {
+                    "type": "string"
+                  },
+                  "processo_id": {
+                    "type": "string"
+                  },
+                  "competencia_inicio": {
+                    "type": "string"
+                  },
+                  "competencia_fim": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recalculation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or domain error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking Transformômetro permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-openai-isConsequential": true
+      }
+    },
+    "/transformometro/gpt-actions/v1/meeting-minutes/{id}/workflow": {
+      "post": {
+        "operationId": "gpt_meeting_minute_workflow",
+        "summary": "Send, finalize, or cancel a meeting minute",
+        "description": "Workflow actions for atas. Handwritten signature stays in the UI / magic link.",
+        "tags": [
+          "Transformômetro GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "action"
+                ],
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "send",
+                      "finalize",
+                      "cancel"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Optional cancel reason."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Workflow result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or domain error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking Transformômetro permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-openai-isConsequential": true
+      }
+    },
+    "/transformometro/gpt-actions/v1/openapi.json": {
+      "get": {
+        "operationId": "gpt_get_openapi_schema",
+        "summary": "Public OpenAPI schema for Custom GPT import",
+        "description": "Unauthenticated. Import this document in the GPT Builder Actions tab.",
+        "tags": [
+          "Transformômetro GPT"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "OpenAPI 3.0 document",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Keycloak access token from OAuth Authorization Code (client chatgpt-transformometro). Audience must include delpi-central."
+      }
+    },
+    "schemas": {
+      "ApiEnvelope": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {}
+        }
+      },
+      "GptRecordBody": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Entity payload. Field names match transformometro-api CRUD (nome_processo, filial_id, setor_ids, versao_revisao, volume_mensal, unit_code, title, conteudo, etc.).",
+            "additionalProperties": true
+          }
+        }
+      }
+    }
+  }
+}
