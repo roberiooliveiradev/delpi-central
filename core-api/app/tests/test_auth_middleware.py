@@ -66,13 +66,49 @@ class FakeRbacQueries:
         return []
 
     def list_permission_codes_by_user(self, _user_id):
-        return []
+        raise AssertionError("inherited permission query must not resolve effective permissions")
+
+
+class FakePermissionQueries:
+    def __init__(self):
+        self.all_permissions = []
+        self.direct = []
+        self.group = []
+        self.overrides = []
+
+    def list_all_permission_codes(self):
+        return list(self.all_permissions)
+
+    def list_direct_role_permissions(self, _user_id):
+        return list(self.direct)
+
+    def list_group_role_permissions(self, _user_id):
+        return list(self.group)
+
+    def list_user_overrides(self, _user_id):
+        return list(self.overrides)
+
+
+class FakeCache:
+    def __init__(self):
+        self.store = {}
+
+    def get(self, key):
+        return self.store.get(key)
+
+    def set(self, key, value):
+        self.store[key] = value
+
+    def invalidate(self, key):
+        self.store.pop(key, None)
 
 
 class FakeUow:
     def __init__(self, existing_user=None):
         self.users = FakeUsersRepo(existing_user=existing_user)
         self.rbac_queries = FakeRbacQueries()
+        self.permission_queries = FakePermissionQueries()
+        self.cache = FakeCache()
         self.session = self
         self.commits = 0
 
@@ -132,6 +168,35 @@ def test_authenticate_syncs_name_and_email_on_login(app, monkeypatch):
         assert g.current_user.name == "Nome Novo"
         assert len(uow.users.identity_updates) == 1
         assert len(uow.users.last_login_updates) == 1
+
+
+def test_authenticate_sets_canonical_effective_permissions(app, monkeypatch):
+    user_id = uuid4()
+    existing = SimpleNamespace(
+        id=user_id,
+        email="user@test.com",
+        name="User",
+        is_superadmin=False,
+    )
+    monkeypatch.setattr(
+        am,
+        "validate_token",
+        lambda _t: {"sub": str(user_id), "email": "user@test.com", "name": "User"},
+    )
+
+    uow = FakeUow(existing_user=existing)
+    uow.permission_queries.direct = ["direct.view", "denied.view"]
+    uow.permission_queries.group = ["group.view"]
+    uow.permission_queries.overrides = [("denied.view", False), ("allowed.extra", True)]
+    monkeypatch.setattr(am, "SqlAlchemyUnitOfWork", lambda: uow)
+
+    with app.test_request_context("/any", headers=_auth_headers()):
+        assert am.authenticate() is None
+        assert g.current_user.permissions == [
+            "allowed.extra",
+            "direct.view",
+            "group.view",
+        ]
 
 
 def test_authenticate_new_user_creates_without_identity_sync(app, monkeypatch):
