@@ -2,7 +2,8 @@
 
 > **Tipo:** inventário factual de Current State (código + fontes canônicas do repositório)  
 > **Não é:** plano de melhoria, redesign, backlog executável nem prova de runtime/produção  
-> **Data da análise:** 2026-09-14T14:23:45-03:00  
+> **Data da análise (Fase 1):** 2026-09-14T14:23:45-03:00  
+> **Fase 1R (residuais técnicos):** 2026-09-14 — § 19 · baseline `47e4c595c`  
 > **Baseline Git:** ver § 1  
 > **Relação com docs existentes:**
 > - [PARCIAL-INVENTARIO.md](./PARCIAL-INVENTARIO.md) — backlog / parcial / bloqueado (não misturar com § Current State)
@@ -516,14 +517,20 @@ Conflitos registrados; **não** corrigidos nesta fase (exceto documentação de 
 
 ## 14. TO_INVENTORY
 
-- Paridade completa `API-ROUTES.md` ↔ cada handler (diff linha a linha).
-- Inventário profundo do legado `plugins/dashboard-commercial` (rotas, consumo api-delpi, overlap funcional).
-- Inventário residual api-delpi paths deprecated PVA ainda ativos no código api-delpi.
-- Strategic-indicators-api: cadeia exata Overview IDD/meta (além do BFF `/analytics/department-*`).
-- Feature help coverage vs `HELP-COVERAGE.md` tela a tela.
-- Confirmar se `AnalyticsTeamPage.tsx` residual é dead code total (só evidência de não-roteamento).
-- Variáveis env de produção efetivas (sem secrets) vs templates Compose.
-- Contagem/amostra de dados reais (carteiras, salas, tasks) — exige runtime.
+### Fechados nesta Fase 1R (ver § 19)
+
+- Paridade `API-ROUTES.md` ↔ handlers (com contagens e divergências)
+- Inventário profundo `dashboard-commercial`
+- Residuais api-delpi / PVA deprecated (consumidores no repo)
+- Help coverage por tela vs `HELP-COVERAGE.md`
+- Cadeia SI/IDD Overview (até strategic-indicators-api)
+
+### Ainda abertos (técnicos menores / runtime)
+
+- Confirmar se `AnalyticsTeamPage.tsx` residual é dead code total além do não-roteamento (`PROVEN_CODE` parcial)
+- Variáveis env de produção efetivas (sem secrets) vs templates Compose — `RUNTIME_REQUIRED`
+- Contagem/amostra de dados reais — `RUNTIME_REQUIRED`
+- Uso real de `dashboard-commercial` e de rotas PVA sellers ainda registradas na api-delpi — `RUNTIME_REQUIRED`
 
 ---
 
@@ -590,3 +597,176 @@ Dependências atribuídas por consumidores reais (MFE→commercial-api→…), n
 ## 18. Invariantes desta Fase 1
 
 Nenhuma melhoria proposta; nenhum código funcional alterado; backlog separado de Current State; hipóteses/runtime explicitamente marcados.
+
+---
+
+## 19. Residual técnico — fechamento Fase 1R
+
+> **Execução:** 2026-09-14 · HEAD baseline pedido `47e4c595cd080660408dde160942d40cba57c3df`  
+> **HEAD ao concluir análise:** `58c51651240044e00e99ecdea2dd24e16e2f8570` (commit externo TV Dashboard; diff scoped commercial/api-delpi/dashboard-commercial/docs commercial vs `47e4c595c` = **vazio**)  
+> **Escopo:** R1–R5 inventário factual apenas · **sem** correção de código/docs contratuais históricos  
+> **Método R1:** parse das tabelas §3 de `API-ROUTES.md` × rotas extraídas de `interface/http/routes/*.py` com `include_router` em `main.py` (cadeia handler→router→app). Health/ready incluídos de `main.py`.
+
+### 19.1 R1 — API contracts (`API-ROUTES.md` × código)
+
+**Resumo quantitativo (linhas de catálogo §3 + endpoints de código não casados):**
+
+```text
+DOC_AND_CODE:          36
+CODE_ONLY:             60
+DOC_ONLY:              96
+DOC_DRIFT:             36
+ROUTER_NOT_REGISTERED:  0
+UNCERTAIN:              0  (nenhum caso marcado; ruído de parse absorvido em DOC_ONLY)
+```
+
+**Leitura dos números (não confundir com “faltam 96 features”):**
+
+| Fatia | Qtd (aprox.) | Significado factual |
+|-------|--------------|---------------------|
+| `DOC_ONLY` fases futuras F6/F7/M5/prospects/forecast/samples/… | ~87 | Catálogo especifica fases **não** implementadas — esperado |
+| `DOC_ONLY` residual / ruído de tabela | ~9 | Ex.: `/me/summary`, `GET /tasks/{id}`, transfer path legado `{seller_id}/customers/transfer`, células multi-método mal parseadas |
+| `DOC_DRIFT` | 36 | Endpoint existe nos dois lados, mas **permissão documental legada** e/ou **nome de path param** diverge |
+| `CODE_ONLY` | 60 | Implementado/registrado sem linha correspondente clara no catálogo §3 (muitos são BFF analytics, ADY, production, jobs, favorites, members/owner, contacts) |
+| `ROUTER_NOT_REGISTERED` | 0 | Todos os routers de `routes/*.py` usados no extract estão no `include_router` de `main.py` |
+
+**Permission drift (material, repetido):**
+
+Doc §3 ainda cita codes históricos (`commercial.accounts.view`, `commercial.analytics.view`, `commercial.seller-portfolios.manage`, `commercial.worklist.view`, `commercial.followups.manage`, `commercial.home.view`, atalhos `accounts.view` / `analytics.view` / `manage`).  
+Código canônico: apenas `commercial.access` / `commercial.manage` / `commercial.billing.notify` (`commercial_permissions.py`).  
+→ classificado como **`DOC_DRIFT`** onde o path casa; **não** corrigido nesta fase.
+
+**Path drift (amostra):**
+
+| Doc | Código | Classe |
+|-----|--------|--------|
+| `/seller-portfolios/{seller_id}` | `/seller-portfolios/{portfolio_id}` | `DOC_DRIFT` |
+| `/customers/{…}/{store}/…` | `/customers/{…}/{customer_store}/…` | `DOC_DRIFT` |
+| `/tasks/{id}` | `/tasks/{task_id}` (e sem `GET` unitário no código) | `DOC_DRIFT` / `DOC_ONLY` |
+| `/me/seller-portfolio` | alias real `/seller-portfolios/me` | `DOC_DRIFT` (alias documentado) |
+| Transfer `…/{seller_id}/customers/transfer` | `POST /seller-portfolios/transfer` (+ bulk) | `DOC_ONLY` + `CODE_ONLY` |
+
+**CODE_ONLY — categorias (código sem entrada §3 casada):**
+
+| Categoria | Exemplos | Evidência |
+|-----------|----------|-----------|
+| Analytics BFF | `/analytics/rol/summary`, `department-idd`, OTD panel/series/lines, proposals OV… | `analytics_routes.py` + `main.include_router` |
+| Proposal documents ADY | `/proposal-documents*` | `proposal_documents_routes.py` |
+| Production BFF | `/production/*`, `/products/*/factory-status\|structure` | `production_bff_routes.py` |
+| Jobs | `/integrations/jobs/ready-to-invoice-scan`, `task-due-scan` | `integration_jobs_routes.py` |
+| Home favorites | `/me/home-favorites` | `home_favorites_routes.py` |
+| Portfolios extras | `…/permanent`, `…/members`, `…/owner`, `transfer-customers-bulk`, `…/audit` | `seller_portfolio_routes.py` |
+| Customers extras | `in-scope`, `search`, `contacts*`, `open-orders` por conta, `audit` | `customer_routes.py` |
+| Realtime | `WEBSOCKET /commercial/realtime/ws` | `realtime_routes.py` (doc §3.21 menciona WS, sem linha de método dedicada no parse) |
+
+**DOC_ONLY planejado (amostra — não implementar aqui):** `/opportunities*`, `/forecast*`, `/prospects*`, `/samples*`, `/visits*`, `/settings/pipelines|stages|reasons|segments…`, `/profitability*`, `/sequences*`, `/accounts` (lista F5), `/audit` global, `/data-quality*`.
+
+**Arquivos analisados R1:**
+
+- `docs/12-roadmap-e-evolucao/commercial/API-ROUTES.md`
+- `commercial-api/commercial_app/main.py`
+- `commercial-api/commercial_app/interface/http/routes/*.py` (18 módulos; todos os routers incluídos)
+- `commercial-api/commercial_app/application/security/commercial_permissions.py`
+
+### 19.2 R2 — dashboard-commercial
+
+| Campo | Valor factual |
+|-------|----------------|
+| Classificação | **`LEGACY_BUT_REGISTERED`** |
+| Pacote | `plugins/dashboard-commercial/` |
+| Manifest | `id=dashboard-commercial`, `basePath=/apps/dashboard-commercial`, permission `dashboard-commercial.view`, **`showInMenu: true`** |
+| Compose | `infra/docker-compose.yml` / `.dev.yml` service `dashboard-commercial` → `delpi-dashboard-commercial` |
+| Gateway | sem location nominal; coberto por padrão `/apps/([^/]+)/assets/` → `delpi-$1` |
+| Destino API | **api-delpi direto** (`/apps/api-delpi/commercial`, `/dashboard`, `/products`) — **não** chama `commercial-api` |
+| Telas | Home KPIs; `/otd`; `/otd/pedido/{b}/{o}/{l}`; `/ov/{proposalNumber}` |
+| Permissão MFE | só manifest; sem gate RBAC React adicional |
+| Relação com `plugins/commercial` | irmão legado coexistente; **sem** redirect F2c; overlap funcional de KPIs/OTD/OV; Portal reutiliza **classe CSS** `dashboard-commercial` como scope (não o MFE) |
+| Stubs client sem UI | `getNewClientsAverage`, `getNewClientsRolPct` definidos no client, sem hook/página |
+| Runtime ainda necessário | uso real, quem tem `dashboard-commercial.view`, se menu é visto em prod |
+
+### 19.3 R3 — api-delpi / PVA
+
+**Consumido por commercial-api** (`DelpiCommercialGateway` — `CONSUMED_COMMERCIAL_API`):
+
+| Contrato (path api-delpi) | Finalidade |
+|---------------------------|------------|
+| `GET …/totvs-open-orders` (+ por cliente) | Pedidos BFF |
+| `GET …/totvs-recently-closed-orders` | Recently closed |
+| `GET …/ops-abertas` | OPs |
+| `GET …/customers/search` | Busca clientes |
+| `POST …/customers/enrichment` | Enrichment |
+| `POST …/customers/open-order-metrics` | Load-summary / in-scope metrics |
+| `POST …/customers/billing-series` | Séries faturamento |
+| `GET …/totvs-outbound-invoices/…` | NF Conta |
+| `GET /commercial/*` (via `get_commercial_analytics`) | KPIs/OTD/OV BFF |
+| `GET /dashboard/department-idd` / `department-indicators` | SI/IDD |
+| `GET/POST /commercial-proposals*` | ADY |
+| `GET /production*` / `/products*` | Production BFF |
+
+**Consumido por dashboard-commercial** (`CONSUMED_DASHBOARD`): `/apps/api-delpi/commercial/*` (ROL, closing, OTD, proposals…), `/dashboard/department-*`, `/products/{code}/structure`.
+
+**Consumido por outros no repo** (`CONSUMED_OTHER`):
+
+| Consumidor | Path | Evidência |
+|------------|------|-----------|
+| `production-control-api` | `totvs-open-orders`, `ops-abertas` | docs/README production-control |
+| `financial-api` | `/commercial/rol/by-branch` | `delpi_financial_gateway.py` |
+| `shared/delpi_api_client` | `/commercial/new-clients-average` | client library |
+| `minha-delpi-ai-api` | referências path em smoke/intent | testes/scripts |
+
+**Legado documentado ainda no código api-delpi** (`LEGACY_DOCUMENTED` + handlers ainda presentes):
+
+| Path | Status no repo |
+|------|----------------|
+| `/pedidos-venda-abertos/sellers*` (CRUD carteira) | Router ativo em `pedidos_venda_abertos_router.py`; **nenhum** consumidor em `commercial-api` / `plugins/commercial` / `dashboard-commercial` → também `NO_REPO_CONSUMER_FOUND` (MFE/BFF) |
+| `/pedidos-venda-abertos/customers/{c}/{l}/avatar` | Idem — canônico em commercial-api |
+| `GET …/clientes/{c}/{l}/notas-fiscais` | Doc `API-ROUTES` §4.1 diz “commercial-api BFF”; **gateway commercial usa `totvs-outbound-invoices`**, não este path → `NO_REPO_CONSUMER_FOUND` + drift documental |
+
+**Prefixo propostas:** commercial-api consome `/commercial-proposals` (EN). Paths `/propostas-comerciais` permanecem no controller api-delpi (`LEGACY_DOCUMENTED` / possível alias — não rastreado como consumer do Portal).
+
+**Não prova:** ausência de consumer no monorepo ≠ ausência de uso em produção.
+
+### 19.4 R4 — Help coverage real
+
+**Distinção:** `HELP-COVERAGE.md` mede gaps de **campo/coluna** (`hint`/`headerHint`) via auditor estrutural (snapshot: 0 gaps). Esta matriz mede **help por tela/área**.
+
+| Cobertura | Telas/áreas (resumo) |
+|-----------|----------------------|
+| **COVERED** | Overview; Minhas tarefas; Meus pedidos (+ detalhe linha/OP); Conta 360; Propostas (+ detalhe); OTD lista; Oportunidades (+ detalhe); Carteiras admin (+ detalhe); Equipe admin; SLAs; Perfil; Manual `/help`; Shell nav |
+| **PARTIAL** | Início (várias keys `CM_HELP.home.*` sem uso em `features/home`); Minha Carteira (literal `hint=` pontual); Pedido na Conta; Admin hub; Grupos; Sala (só panel, inbox/canvas sem `CM_HELP`) |
+| **STALE** | — nenhum classificado com evidência forte de texto obsoleto nesta passagem |
+| **NO_HELP_FOUND** | Detalhe linha OTD (`AnalyticsOtdLineDetailPage`); 404; redirect `analytics/team` (não é tela) |
+| **UNCERTAIN** | NF na Conta (página sem `CM_HELP` direto; pode herdar billing) |
+
+**Fontes:** `helpTooltips.ts` (`CM_HELP`), `userManualContent.ts`, `userManualTermCatalog.ts`, column helps, `HELP-COVERAGE.md`.  
+**Não** foi escrito help novo.
+
+### 19.5 R5 — SI / IDD
+
+**Cadeia comprovada (Overview):**
+
+```text
+OverviewPage (DepartmentIddBadge + useDepartmentIndicatorScores)
+  → GET /apps/commercial-api/analytics/department-idd
+  → GET /apps/commercial-api/analytics/department-indicators
+      → analytics_routes.bff_department_idd / bff_department_indicators
+      → DelpiCommercialGateway.get_dashboard_department_*
+      → api-delpi GET /dashboard/department-idd | /department-indicators
+      → DashboardDepartment*Service
+      → shared StrategicIndicatorsApiClient
+      → strategic-indicators-api
+           /strategic-indicators/integrations/dashboard-department-score
+           /strategic-indicators/integrations/dashboard-department-indicators
+      → GetDashboardDepartment*UseCase → StrategicIndicatorsSnapshotService
+```
+
+**Indicadores SI na Overview (scores por `indicator_id`):**  
+IDs em `plugins/commercial/src/features/overview/siIndicatorIds.ts` — `commercial-rol`, `commercial-rol-weg`, `commercial-rol-new-business`, `commercial-sales-order-otd`, `commercial-closing-rate`, `commercial-new-business-rol-pct` + badge IDD (`department.score`).  
+**Owner aparente do score:** `strategic-indicators-api`.  
+**Valores dos KPIs numéricos da Overview** (R$, %, etc.) vêm de **outras** rotas `/analytics/*` (api-delpi `/commercial/*`), não do endpoint `department-indicators`.
+
+**TO_INVENTORY_EXTERNAL:** detalhe SQL/TOTVS dentro de cada medição do snapshot SI além do hop `CommercialMetricsSnapshotService` / gateways SI→api-delpi (fora do escopo delimitado).
+
+### 19.6 Evidências externas (permanecem abertas)
+
+Inalteradas vs § 15: SHA implantado, migrations aplicadas, env prod, Permissive ativo?, users/roles reais, telemetria, processo humano, uso por filial, uso real do dashboard-commercial e das rotas PVA sellers.
