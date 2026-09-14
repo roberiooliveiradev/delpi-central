@@ -173,13 +173,14 @@ Owner: `platform-quality-testing.mdc`
 - `ai-intelligence-evaluation.mdc`
 - `architecture-ci-enforcement.mdc`
 - `cursor-rules-governance.mdc`
+- `delia-execution-protocol.mdc`
 - `plan-construction.mdc`
 - `plan-execution.mdc`
 - `plugins-documentation.mdc`
 - `root-cause-generalized-fix.mdc`
 - `test-and-commit.mdc`
 
-Racional: investigação, planejamento, execução disciplinada de planos, evidência, regressão, CI, documentação e Definition of Done.
+Racional: investigação, planejamento, execução disciplinada de planos, evidência, regressão, CI, documentação e Definition of Done. `delia-execution-protocol.mdc` é a especialização operacional para tarefas DÉLIA e coordena o handoff GPT↔Cursor↔GitHub sem substituir os owners transversais de arquitetura, segurança, contratos, dados, frontend, runtime ou observabilidade.
 
 ### Planejamento × execução
 
@@ -207,6 +208,8 @@ E*.S*
 → dependentes
 → verify-final
 ```
+
+`delia-execution-protocol.mdc` compõe esse fluxo quando o domínio é DÉLIA e adiciona as authorities internas DÉLIA, standalone boundary, estados de evidência, C0 gate, Abstraction/Contract/Action Gates, C5/C6/C7, safety industrial e formato de Evidence Report.
 
 Se a implementação descobrir que uma premissa do plano ficou inválida, a regra exige `EXECUTION_DRIFT` + STOP-THE-LINE no subgrafo afetado; o agente deve corrigir/revalidar o plano em vez de forçar o código a seguir a instrução obsoleta.
 
@@ -259,11 +262,12 @@ O scanner Phase 3 bloqueia novas chamadas HTTP Python detectáveis sem timeout, 
 
 ## Permanecem separadas
 
-### `plan-construction` × `plan-execution` × `test-and-commit`
+### `plan-construction` × `plan-execution` × `test-and-commit` × `delia-execution-protocol`
 
 - `plan-construction` governa **qualidade e estrutura das decisões antes da implementação**;
 - `plan-execution` governa **revalidação, drift, escopo, diff e pós-condições durante execução de E*.S***;
-- `test-and-commit` governa **Definition of Done, gates e política de commit**.
+- `test-and-commit` governa **Definition of Done, gates e política de commit**;
+- `delia-execution-protocol` especializa **o fluxo de execução/evidência para o domínio DÉLIA**, sem duplicar os owners transversais.
 
 Não copiar o protocolo completo de uma para outra; referências cruzadas são intencionais.
 
@@ -308,7 +312,8 @@ Revisar após estabilização. Regra criada por incidente não deve permanecer i
 8. `operationId` explícito/único;
 9. breaking estrutural OpenAPI selecionado;
 10. HTTP timeout/retry/secrets;
-11. protocolo semântico de execução de planos com gates `READY_TO_EXECUTE`, `EXECUTION_DRIFT` e `READY_TO_COMMIT`.
+11. protocolo semântico de execução de planos com gates `READY_TO_EXECUTE`, `EXECUTION_DRIFT` e `READY_TO_COMMIT`;
+12. protocolo especializado DÉLIA para handoff GPT↔Cursor↔GitHub e gates de fase/evidência.
 
 ## Próximos, após modelagem segura
 
