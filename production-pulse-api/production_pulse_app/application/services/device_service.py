@@ -96,11 +96,15 @@ class DeviceService:
         row: dict[str, Any],
         *,
         payload: dict[str, Any],
+        force_ota_provision: bool = False,
+        previous_row: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         api_payload = json_safe(device_row_to_api(row))
         api_payload["deviceConfigPush"] = self._config_push.push_after_save(
             row,
             request_payload=payload,
+            force_ota_provision=force_ota_provision,
+            previous_row=previous_row,
         )
         return api_payload
 
@@ -208,7 +212,7 @@ class DeviceService:
             device_api_token=config_fields.get("device_api_token"),
             actor_sub=actor_sub,
         )
-        result = self._with_config_push(row, payload=payload)
+        result = self._with_config_push(row, payload=payload, force_ota_provision=True)
         safe_realtime(
             notify_device_updated,
             reason="create",
@@ -282,7 +286,12 @@ class DeviceService:
             device_api_token=device_api_token,
             actor_sub=actor_sub,
         )
-        result = self._with_config_push(row, payload=payload)
+        result = self._with_config_push(
+            row,
+            payload=payload,
+            force_ota_provision=True,
+            previous_row=existing,
+        )
         safe_realtime(
             notify_device_updated,
             reason="replace",
@@ -331,8 +340,16 @@ class DeviceService:
             updates["poll_interval_ms"] = validate_poll_interval_ms(
                 float(payload.get("poll_interval_ms") or payload.get("pollIntervalMs"))
             )
+        existing = self._repository.get_by_id(device_id)
+        if existing is None:
+            raise DeviceNotFoundError(str(device_id))
         row = self._repository.patch(device_id, updates=updates, actor_sub=actor_sub)
-        result = self._with_config_push(row, payload=payload)
+        result = self._with_config_push(
+            row,
+            payload=payload,
+            force_ota_provision=False,
+            previous_row=existing,
+        )
         safe_realtime(
             notify_device_updated,
             reason="patch",

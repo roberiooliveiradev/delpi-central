@@ -90,9 +90,9 @@ export const PP_HELP = {
     debounceMs:
       "Tempo de debounce dos botões no ESP (ms). Em branco no cadastro = default do firmware.",
     apiToken:
-      "Segredo compartilhado plataforma↔chip (header X-Device-Token). Protege status, config e comandos; só a contagem (GET /api/contador) fica pública. Em branco = não altera o token já gravado.",
+      "Segredo compartilhado plataforma↔chip (header X-Device-Token). Em branco no formulário = mantém o token já gravado no cadastro (não apaga e não reenvia). Só gera/envia ao chip se você preencher ou usar «Gerar token» e salvar.",
     apiTokenSetHint:
-      "Já existe token neste cadastro. Deixe em branco para manter, ou informe um novo / use «Gerar token».",
+      "Já existe token neste cadastro. Deixe em branco para manter (updates só de poll/nome não falam com o chip). Para realinhar o IoT, gere um novo token e salve.",
     generateApiTokenAction: "Gerar token",
     deviceConfigPushFailed:
       "Cadastro salvo, mas não foi possível enviar a configuração ao dispositivo. Verifique IP, energia e token.",
@@ -100,6 +100,8 @@ export const PP_HELP = {
       "Cadastro salvo, mas o chip rejeitou o token. Gere um novo token e salve, ou informe o token já gravado no IoT. Em troca de hardware isso é esperado até realinhar o token.",
     deviceConfigPushOk: "Configuração enviada ao dispositivo.",
     deviceConfigPushSkipped: "Cadastro salvo. Nenhuma configuração de chip para enviar.",
+    deviceConfigPushSkippedPulseOnly:
+      "Cadastro salvo. Nenhuma alteração de configuração do chip neste save — o IoT não foi contactado.",
     firmwareSourceDeprecated:
       "Sketch legado no cadastro do device — substituído pelo catálogo de versões. Use a aba Firmware para ver a resolução exact-version.",
     driver:

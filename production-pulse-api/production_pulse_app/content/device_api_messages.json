@@ -37,6 +37,7 @@
   "deviceConfigPush": {
     "ok": "Configuração enviada ao dispositivo.",
     "skipped": "Cadastro salvo. Nenhuma configuração de chip para enviar.",
+    "skipped_pulse_only": "Cadastro salvo. Nenhuma alteração de configuração do chip neste save (ex.: só intervalo de poll) — o IoT não foi contactado.",
     "failed": "Cadastro salvo, mas não foi possível enviar a configuração ao dispositivo.",
     "failed_unauthorized": "Cadastro salvo, mas o chip rejeitou o token (401). O token no cadastro não confere com o gravado no IoT — gere um novo e salve, ou informe o token já existente no chip. Em troca de hardware isso é esperado até realinhar o token.",
     "failed_missing_token": "Cadastro salvo, mas o envio ao chip falhou por falta de token no cadastro enquanto o IoT exige autenticação. Gere um token e salve novamente."

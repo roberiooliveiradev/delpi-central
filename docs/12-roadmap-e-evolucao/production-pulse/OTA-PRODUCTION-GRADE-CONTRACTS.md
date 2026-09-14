@@ -81,7 +81,7 @@ Documento de evidência para o plano hub OTA. Não substitui SCHEMA.md / API-ROU
 
 | Camada | Contrato |
 |---|---|
-| Configure push | API envia `otaBaseUrl`, `branch`, `otaCheckIntervalMs` (`PP_DEVICE_OTA_BASE_URL`) — MFE não é dona da URL; firmwares atuais ignoram intervalo periódico |
+| Configure push | Após **create** (force) ou quando o save **altera** wifi/debounce/token/branch no chip. Update só Pulse (poll/nome/enabled) **não** chama `POST /api/config`. Token em branco no form = mantém o do banco e não reenvia. |
 | Authorize | Job manual ou scheduled autoriza targets (`status=authorized`) |
 | Wake (push) | Após commit: `DeviceOtaWakeService` → `POST http://{ip}/api/ota/check-now` (best-effort). Falha **não** muda `target.status`/`error_code` |
 | Wake retry | Scheduler re-tenta wake em targets `authorized` sem `started_at` após `PP_OTA_WAKE_RETRY_SECONDS` (default 60s) |

@@ -64,3 +64,8 @@ def test_device_config_push_message_unauthorized_is_specific():
     specific = device_config_push_message("failed", error_code="unauthorized")
     assert "token" in specific.lower()
     assert specific != generic
+
+
+def test_device_config_push_message_skipped_pulse_only():
+    message = device_config_push_message("skipped_pulse_only")
+    assert "poll" in message.lower() or "não foi contactado" in message.lower()
