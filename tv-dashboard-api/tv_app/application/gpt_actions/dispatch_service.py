@@ -272,15 +272,17 @@ class GptActionsDispatchService:
             catalog_version=envelope["catalogVersion"],
             base_revision=int(base_revision) if base_revision is not None else None,
         )
+        # Policy authority is the Copilot catalog — not patch-service echo.
+        policy = TvCopilotContentService.aggregate_ops_policy(typed_ops)
         return {
             "target": envelope["target"],
             "ops": typed_ops,
             "operationNames": operation_names,
             "catalogVersion": envelope["catalogVersion"],
             "baseRevision": base_revision,
-            "risk": result.get("risk"),
-            "confirmationPolicy": result.get("confirmationPolicy"),
-            "sideEffectHints": result.get("sideEffectHints"),
+            "risk": policy["risk"],
+            "confirmationPolicy": policy["confirmationPolicy"],
+            "sideEffectHints": policy["sideEffectHints"],
             "diff": result.get("diff"),
             "fingerprint": result.get("fingerprint"),
             "planDigest": plan_digest,

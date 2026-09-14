@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 import logging
-import uuid
 from typing import Any
 
 from fastapi import APIRouter, Header, Query, Request
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from tv_app.application.gpt_actions import GPT_ACTIONS_BASE_PATH, GPT_ACTIONS_SCHEMA_HTTP_OPERATION_ID
@@ -21,12 +19,15 @@ from tv_app.application.gpt_actions.openapi_builder import (
 from tv_app.application.services.tv_presentation_write_service import TvPresentationWriteService
 from tv_app.config import settings
 from tv_app.core.responses import ok
-from tv_app.core.serialize import json_safe
 from tv_app.infrastructure.persistence.repositories.idempotency_repository import (
     PostgresIdempotencyRepository,
 )
 from tv_app.infrastructure.persistence.repositories.playlist_repository import PlaylistRepository
 from tv_app.interface.http.auth_http import resolve_user
+from tv_app.interface.http.gpt_actions_response import (
+    correlation_id_from_request,
+    gpt_fail,
+)
 
 router = APIRouter(prefix=GPT_ACTIONS_BASE_PATH, tags=["TV Dashboard GPT Actions"])
 logger = logging.getLogger(__name__)
@@ -68,36 +69,7 @@ class DataPreviewBody(BaseModel):
 
 
 def _correlation_id(request: Request) -> str:
-    raw = (
-        request.headers.get("x-correlation-id")
-        or request.headers.get("X-Correlation-Id")
-        or ""
-    ).strip()
-    return raw or str(uuid.uuid4())
-
-
-def gpt_fail(
-    *,
-    code: str,
-    message: str,
-    status_code: int,
-    retryable: bool = False,
-    details: dict[str, Any] | None = None,
-    correlation_id: str | None = None,
-) -> JSONResponse:
-    return JSONResponse(
-        status_code=status_code,
-        content={
-            "ok": False,
-            "error": {
-                "code": code,
-                "message": message,
-                "retryable": bool(retryable),
-                "details": json_safe(details or {}),
-            },
-            "meta": {"correlationId": correlation_id or str(uuid.uuid4())},
-        },
-    )
+    return correlation_id_from_request(request)
 
 
 def _handle(exc: Exception, *, correlation_id: str):

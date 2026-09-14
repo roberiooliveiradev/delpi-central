@@ -105,7 +105,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     message = f"{loc}: {msg}" if loc else msg
     path = str(request.url.path or "")
     if "/gpt-actions/v1" in path:
-        from tv_app.interface.http.routes.gpt_actions_routes import gpt_fail
+        from tv_app.interface.http.gpt_actions_response import gpt_fail
 
         return gpt_fail(
             code="INVALID_CHANGE",

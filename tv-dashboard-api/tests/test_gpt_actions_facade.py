@@ -148,9 +148,111 @@ def test_preview_returns_typed_ops_not_string_applied_ops():
         base_revision=7,
     )
     assert public["planDigest"] == expected_digest
+    policy = TvCopilotContentService.aggregate_ops_policy(ops)
+    assert public["risk"] == policy["risk"]
+    assert public["confirmationPolicy"] == policy["confirmationPolicy"]
+    assert public["sideEffectHints"] == policy["sideEffectHints"]
 
 
-def test_preview_ops_feed_commit_digest_match():
+def test_preview_policy_from_catalog_authority_not_patch_echo():
+    """Blocker B — policy comes from TvCopilotContentService, not patch metadata."""
+    repo = MagicMock()
+    writes = _writes_mock()
+    dispatch = GptActionsDispatchService(
+        repo=repo,
+        writes=writes,
+        commit=TvGptCommitService(
+            writes=writes, idempotency=InMemoryIdempotencyRepository()
+        ),
+    )
+    playlist_id = str(uuid4())
+    slide_id = str(uuid4())
+    catalog = TvCopilotContentService.catalog_version()
+
+    cases = [
+        ([{"op": "update_slide", "title": "X"}], "mutation", "direct", "refreshFilmstrip"),
+        ([{"op": "delete_slide"}], "destructive", "confirm", None),
+        (
+            [{"op": "update_slide", "title": "X"}, {"op": "delete_slide"}],
+            "destructive",
+            "confirm",
+            None,
+        ),
+    ]
+    for ops, risk, confirm, hint in cases:
+        expected = TvCopilotContentService.aggregate_ops_policy(ops)
+        assert expected["risk"] == risk
+        assert expected["confirmationPolicy"] == confirm
+        with (
+            patch.object(
+                dispatch._access,
+                "resolve",
+                return_value=SimpleNamespace(can_edit=True, can_read=True, level="owner"),
+            ),
+            patch.object(dispatch._access, "actor_id", return_value="actor-1"),
+            patch.object(
+                TvCopilotPatchService,
+                "preview",
+                return_value={
+                    "appliedOps": [str(op["op"]) for op in ops],
+                    "baseRevision": 1,
+                    # Deliberately wrong — must be ignored for public policy fields.
+                    "risk": "additive",
+                    "confirmationPolicy": None,
+                    "sideEffectHints": ["should-not-leak"],
+                    "diff": {},
+                    "fingerprint": "fp",
+                    "message": "ok",
+                },
+            ),
+        ):
+            public = dispatch.preview_change(
+                user=_superadmin(),
+                target={"playlistId": playlist_id, "slideId": slide_id},
+                ops=ops,
+                catalog_version=catalog,
+                authorization=None,
+            )
+        assert public["risk"] == expected["risk"]
+        assert public["confirmationPolicy"] == expected["confirmationPolicy"]
+        assert public["sideEffectHints"] == expected["sideEffectHints"]
+        if hint:
+            assert hint in public["sideEffectHints"]
+        assert public["persisted"] is False
+
+
+def test_anonymous_gpt_actions_401_uses_error_envelope():
+    client = TestClient(app)
+    catalog = client.get("/gpt-actions/v1/catalog")
+    assert catalog.status_code == 401
+    body = catalog.json()
+    assert body.get("ok") is False
+    assert body["error"]["code"] == "AUTHENTICATION_REQUIRED"
+    assert body["error"]["retryable"] is False
+    assert body["meta"]["correlationId"]
+
+    commit = client.post(
+        "/gpt-actions/v1/changes/commit",
+        json={
+            "ops": [{"op": "update_slide", "title": "nope"}],
+            "catalogVersion": "x",
+            "planDigest": "y",
+        },
+        headers={"Idempotency-Key": "anon-commit"},
+    )
+    assert commit.status_code == 401
+    cbody = commit.json()
+    assert cbody.get("ok") is False
+    assert cbody["error"]["code"] == "AUTHENTICATION_REQUIRED"
+    assert cbody["meta"]["correlationId"]
+
+    schema = client.get("/gpt-actions/v1/openapi.json")
+    assert schema.status_code == 200
+
+    # Non-GPT TV paths keep shared middleware representation.
+    playlists = client.get("/playlists")
+    assert playlists.status_code == 401
+    assert playlists.json() == {"detail": "Unauthorized"}
     repo = MagicMock()
     writes = _writes_mock()
     writes.assert_expected_revision.return_value = 3
