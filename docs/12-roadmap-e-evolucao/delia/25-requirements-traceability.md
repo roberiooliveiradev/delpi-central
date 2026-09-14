@@ -116,6 +116,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-287 | C0 inventaria predictive/anomaly/optimization/simulation models, datasets, ground truth, owners e operational/digital-twin sources | Copilot Predictive/Twin/Data owners | predictive/twin foundation inventory | PLANNED |
 | CP-295 | C0 inventaria factory network, Edge platforms/devices, MDM, local inference, offline requirements, time sync, OT segmentation e cache/update owners | Copilot Edge/Industrial/Infrastructure | edge/offline foundation inventory | PLANNED |
 | CP-302 | C0 inventaria model providers, local ML models, registries/MLOps, datasets/evals, CI/CD, package catalogs/signing e supply-chain controls | Copilot Model Governance/Control Tower | model/marketplace foundation inventory | PLANNED |
+| CP-311 | C0 congela Recurring Governed Work: owner da definição versus owner do timer/scheduler físico, recurrence/timezone/DST, misfire/missed-run, overlap, idempotência por ocorrência, background identity/AuthZ/revoke, pause/cancel e Outcome boundaries | DÉLIA Work/Architecture/Automation/Security | recurring-work foundation contract | PLANNED |
 
 ## 3. C1 — Standalone Application Bootstrap
 
@@ -287,6 +288,10 @@ L5 AUTONOMOUS EXECUTE = C7 only, OFF by default
 | CP-277 | Métrica/semantic rule usada em Decision/Write é versionada e revalidada; mudança material invalida decisão anterior quando aplicável | Copilot Semantic Layer/Decision | semantic TOCTOU gate | LOCKED |
 | CP-283 | Artifact Workspace possui artifact version/lifecycle/provenance/ACL e external share/send continua ação governada separada | Copilot Artifacts/Work | artifact lifecycle/share gate | LOCKED |
 | CP-290 | Prescriptive output gera alternatives/trade-offs/PREPARE; `recommendation != authorization` e `simulate != apply` | Copilot Prescriptive/Decision | prescriptive action separation gate | LOCKED |
+| CP-312 | Usuário/owner autorizado pode criar, inspecionar/listar, pausar, retomar e cancelar Recurring Governed Work persistente com recurrence versionada, timezone IANA, start/end bounds e refs bounded para Work/capabilities/scope/targets | DÉLIA Work/API | recurring-work lifecycle gate | LOCKED |
+| CP-313 | Cada ocorrência agendada é determinística, correlacionada e idempotente; duplicate tick/retry/restart/reconciliation não duplica side effect e misfire/overlap semantics são explícitas | DÉLIA Work/Events/Automation | scheduled-occurrence reliability gate | LOCKED |
+| CP-314 | Cada ocorrência material revalida identity, live Core/domain AuthZ, current Policy/Decision, connection/provider state e source permissions; `schedule != permission` e stored intent nunca vira autorização eterna | DÉLIA Work/Policy/Core/Domain owners | scheduled live-authorization gate | LOCKED |
+| CP-315 | Anchor recurring report→send executa sem sessão de chat aberta: trigger determinístico → reads atuais → relatório grounded/versionado → `communication.email.send` governado → Outcome/Evidence/Audit, sem confundir report generated, provider accepted e verified outcome | DÉLIA Work/Artifacts/External Actions | recurring report-email end-to-end gate | LOCKED |
 
 ## 8. C6 — Product Work + Ecosystem + Human Experience
 
@@ -355,6 +360,7 @@ C6 habilita Product Work e Watch `OBSERVE|ADVISE|PREPARE` por default. `PREPARE`
 | CP-298 | Frontline Edge suporta modos `ONLINE/DEGRADED/OFFLINE_READ_ONLY/SYNCING`, event buffering idempotente e device/cache admin quando priorizado | Copilot Edge/Frontline | edge offline product gate | LOCKED |
 | CP-305 | Capability Marketplace oferece lifecycle draft/review/approved/published/deprecated/revoked para packs/playbooks/Watches/automations/connectors/MCP/A2A/templates/models | Copilot Marketplace/Admin | marketplace lifecycle gate | LOCKED |
 | CP-306 | Model lifecycle monitora quality/input/calibration drift, latency, availability, cost e correction/outcome metrics conforme model type | Copilot Model Governance/Observability | model drift gate | LOCKED |
+| CP-316 | Product UX permite inspecionar Recurring Governed Work com status, recurrence/timezone, next scheduled occurrence quando derivável, last occurrence/outcome e ações governadas pause/resume/cancel, sem transformar schedule admin em permission authority | DÉLIA Work/MFE/Admin | recurring-work product UX gate | LOCKED |
 
 ## 9. C7 — Advanced Autonomy + Advanced Intelligence + Scale/Rollout
 
@@ -421,6 +427,8 @@ Esses IDs não podem ser reativados como dependência da DÉLIA.
 - `L4 = governed execute`; C5 pode liberar ACT material explicitamente autorizado sob live AuthZ/Decision/idempotency/audit/Outcome;
 - `L5 = allowlisted autonomous execute within explicit limits`; permanece C7 e OFF por default;
 - Watch autonomous ACT permanece C7; Watch C6 é `OBSERVE|ADVISE|PREPARE` por default;
+- Recurring Governed Work temporal não é Watch autônomo: C5 pode executar ocorrência L4 bounded, mas `schedule != permission` e cada ocorrência material revalida live AuthZ/Policy/Decision;
+- timer/scheduler físico continua `TO_INVENTORY` até C0 provar owner/contrato; isso não rebaixa a capability de produto Recurring Governed Work;
 - modality/biometric result não pode criar bypass de RBAC/policy;
 - biometric identity é candidate association, não permission authority;
 - Human Observation não pode virar inferência psicológica/sensível ou decisão trabalhista automática;
@@ -479,6 +487,7 @@ TEAMS_MEETING_INTEGRATION
 EVENT_DRIVEN_OPERATIONS
 DECISION_INTELLIGENCE
 AUTOMATION_EXECUTION_HUB
+RECURRING_GOVERNED_WORK
 RPA_EXECUTION
 COMPUTER_USE
 OUTCOME_VERIFICATION
@@ -525,6 +534,7 @@ CP-280–CP-286  Analysis Sandbox / Artifact Workspace
 CP-287–CP-294  Predictive/Prescriptive Intelligence / Operational Twin
 CP-295–CP-301  Edge/Offline Industrial DÉLIA
 CP-302–CP-310  AI Model Lifecycle / Capability Marketplace
+CP-311–CP-316  Recurring Governed Work / Scheduling
 ```
 
 Todas as faixas temáticas são subordinadas à ordem de `16`. Nenhuma spec temática cria fase, runtime, requirement authority ou permission authority paralela.
