@@ -139,6 +139,8 @@ Nenhuma spec temática cria ordem, permission authority ou runtime paralelo.
 31. DÉLIA não é safety controller; autonomia empresarial não implica OT actuation.
 32. Chain-of-thought não é persistida/exposta.
 33. Specs `31/45/46/47` permanecem reference-only/superseded.
+34. `schedule != permission`; timer/recurrence nunca substitui live Core/domain AuthZ, Policy ou Decision.
+35. Recurring Governed Work temporal é distinto de Watch; C5 L4 bounded não implica Watch autonomous ACT/C7 L5.
 
 ## 5. Grafo canônico C0–C7
 
@@ -195,7 +197,11 @@ Seguir `57` e mapear:
 RPA products/licenses/orchestrators/bots/packages
 scripts/functions/jobs
 queues/workers/heartbeats/leases
-schedulers/polling/event sources/brokers/topics
+schedulers/timers/cron/polling/event sources/brokers/topics
+recurring job/work definitions and their owners
+timezone/DST/calendar semantics
+misfire/missed-run/reconciliation behavior
+overlap/concurrency semantics
 service accounts/background identities
 credential injection/storage
 VDI/desktop/session infrastructure
@@ -205,6 +211,8 @@ notification/escalation channels
 kill switches/emergency stop
 support/SLA/ownership
 ```
+
+O inventário deve separar explicitamente **RecurringWorkDefinition/Work ownership** do **timer/scheduler físico**. A existência de scheduler na plataforma não transfere Work/Policy authority para ele; a ausência de scheduler provado não autoriza criar um novo antes do Abstraction Gate.
 
 ### Process Intelligence
 
@@ -285,6 +293,7 @@ Nenhuma capability/fornecedor/ferramenta é considerada existente sem evidence.
 - media/biometric/device/privacy inventory;
 - external/Teams/OAuth/egress inventory;
 - automation/RPA/event/workers/service-identity inventory;
+- recurring Work/scheduler inventory com owner físico, timezone/DST, misfire/overlap, background identity e revoke semantics;
 - process event-log/process-owner inventory;
 - AI/model/tool/agent/Control-Tower inventory;
 - memory/personalization inventory;
@@ -317,6 +326,7 @@ External/Teams
 Process Intelligence
 Decision/Autonomy
 Durable Work
+Recurring Governed Work / scheduling definition
 Automation/Executors
 Analysis/Artifacts
 Predictive/Twin
@@ -326,6 +336,8 @@ Model Lifecycle/Marketplace
 Control Tower
 OT safety
 ```
+
+Timer/scheduler físico é boundary de infraestrutura/execution a ser atribuído ao owner provado; não vira owner do Work da DÉLIA nem permission authority.
 
 ## C0.S3 — Shared primitives
 
@@ -341,6 +353,8 @@ PredictionRef?
 ScenarioRef?
 AutomationExecutionRef?
 ExecutorRef?
+RecurringWorkRef?
+WorkOccurrenceRef?
 AIAssetRef?
 ModelRef?
 EdgeDeviceRef?
@@ -353,6 +367,7 @@ Preferir `EntityRef/SourceRef/EvidenceRef/OutcomeRef/EventEnvelope/CapabilityPro
 Além de `49`, congelar:
 
 - event trust/dedupe/order;
+- recurring Work recurrence/timezone/DST/misfire/overlap/idempotency/background-identity/revoke semantics;
 - decision-path routing;
 - deterministic readiness;
 - automation executor selection/idempotency/outcome verification;
@@ -370,7 +385,7 @@ Além de `49`, congelar:
 
 ## C0.S5 — Integration contracts
 
-Congelar typed contracts para platform/domain/external/event/automation/process/model/sandbox/edge boundaries. Nenhum provider SDK/tool protocol type vaza para Domain/Application canônicos.
+Congelar typed contracts para platform/domain/external/event/automation/**recurring-work trigger**/process/model/sandbox/edge boundaries. O contrato deve separar DÉLIA-owned recurring definition/occurrence correlation do scheduler físico. Nenhum provider SDK/tool protocol/scheduler-specific type vaza para Domain/Application canônicos.
 
 ## C0.S6 — RED contract/conformance/privacy/security harness
 
@@ -383,6 +398,11 @@ unsafe egress/token leak
 hidden capture/biometric elevation
 forged event→write
 duplicate event/execution
+schedule/timer tick treated as permission
+stale creator authorization reused by scheduled occurrence
+duplicate timer tick creates duplicate side effect
+cancelled/paused recurring Work still fires
+misfire/restart silently replays material ACT
 PREPARE→ACT implicit
 executor technical success treated as business success
 process mining worker profiling
@@ -416,6 +436,7 @@ ARCHITECTURE_PATTERNS
 PERSISTENCE/PRIVACY
 MEDIA/BIOMETRIC/EXTERNAL
 EVENT/AUTOMATION/OUTCOME
+RECURRING_WORK_BOUNDARY
 PROCESS_INTELLIGENCE_BOUNDARY
 AI_ASSET_GOVERNANCE_BOUNDARY
 MCP_A2A_TRUST_BOUNDARY
@@ -513,19 +534,25 @@ C3 ainda não libera material autonomous ACT.
 - RPA workers/queues only if prioritized;
 - postcondition/Outcome verification;
 - Durable Workflow/checkpoints/waits/resume;
+- **Recurring Governed Work runtime**: persisted recurring definition + deterministic occurrence materialization/correlation, independent of chat session;
+- create/inspect/list/pause/resume/cancel recurring Work with versioned recurrence, IANA timezone and bounded start/end;
+- per-occurrence live identity/Core/domain AuthZ + Policy/Decision revalidation; `schedule != permission`;
+- per-occurrence idempotency across duplicate timer/retry/restart/reconciliation; explicit misfire/overlap policy;
+- recurring report→artifact→external send anchor using current authorized data and verified Outcome;
 - Process Intelligence automation opportunity → candidate/PREPARE only;
 - MCP/A2A write-capable delegation under same gates;
 - semantic definition TOCTOU handling;
 - Artifact lifecycle/version/provenance/ACL;
 - Prescriptive output → PREPARE/Decision; no implicit Apply.
 
-C5 pode liberar `ACT` material somente para capabilities explicitamente autorizadas, sob Decision Gate, policy, identidade, idempotência, auditabilidade e verificação de Outcome. Isso não equivale a autonomia avançada nem a L5.
+C5 pode liberar `ACT` material somente para capabilities explicitamente autorizadas, sob Decision Gate, policy, identidade, idempotência, auditabilidade e verificação de Outcome. Isso não equivale a autonomia avançada nem a L5. Uma ocorrência temporal bounded de Recurring Governed Work é C5-capable quando esses gates passam; ela não é Watch autonomous ACT.
 
 ---
 
 # C6 — Product Work + Process/Control/Experience Ecosystem
 
 - Tasks/Cases/Rooms/Inbox/Watch `OBSERVE|ADVISE|PREPARE`;
+- recurring Work product/admin UX: inspect/list/status/recurrence-timezone/next occurrence quando derivável/last outcome/pause/resume/cancel/history;
 - provider/Teams events and reconciliation;
 - Meeting/Frontline;
 - Automation Hub admin/execution/worker/exception views;
@@ -542,6 +569,8 @@ C5 pode liberar `ACT` material somente para capabilities explicitamente autoriza
 - Capability Marketplace draft/review/catalog;
 - Organizational Knowledge/Governed Learning/Expertise Studio;
 - governed `ACT` continua sujeito aos gates de C5; **autonomous ACT avançado** permanece bloqueado até os gates de C7.
+
+Recurring Governed Work não altera a regra de Watch: em C6, Watch continua sem autonomous ACT. O schedule é um trigger temporal previamente definido para Work bounded; a ocorrência material continua revalidando gates de C5.
 
 ---
 
@@ -568,6 +597,8 @@ C5 pode liberar `ACT` material somente para capabilities explicitamente autoriza
 - OT actuation remains separate industrial safety initiative;
 - scale/performance/cost/canary/rollback/final CP coverage.
 
+Recurring governed schedules não precisam de L5/C7 para executar L4 bounded já autorizado em C5. C7 só amplia autonomia selecionada; não transforma schedule em permission authority.
+
 ---
 
 ## 6. Fora do default scope
@@ -580,6 +611,7 @@ unrestricted web/browser/sandbox/desktop access
 provider/tool/model secrets in prompts/MFE/logs
 personal source/memory auto-sharing
 implicit send/write/ACT
+schedule/timer as permission authority
 planner with raw RPA clicks/selectors
 one global L5 switch
 process mining as employee ranking
