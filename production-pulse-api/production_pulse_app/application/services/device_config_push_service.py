@@ -13,6 +13,9 @@ from production_pulse_app.domain.services.device_config_payload_service import (
 from production_pulse_app.infrastructure.content.device_api_messages_content_service import (
     device_config_push_message,
 )
+from production_pulse_app.infrastructure.drivers.device_http_support import (
+    resolve_device_api_token,
+)
 
 
 def resolve_device_ota_base_url() -> str:
@@ -109,10 +112,16 @@ class DeviceConfigPushService:
                 "message": device_config_push_message("ok"),
                 "response": result.response_payload or {},
             }
+
+        error_code = str(result.error_code or "http_error").strip() or "http_error"
+        # Chip with token set + Pulse without token → same 401 path; clarify for operators.
+        if error_code == "unauthorized" and resolve_device_api_token(device_row) is None:
+            error_code = "missing_token"
+
         return {
             "status": "failed",
-            "message": device_config_push_message("failed"),
-            "errorCode": result.error_code,
+            "message": device_config_push_message("failed", error_code=error_code),
+            "errorCode": error_code,
         }
 
     @staticmethod

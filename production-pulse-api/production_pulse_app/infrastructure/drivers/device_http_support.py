@@ -82,8 +82,13 @@ def request_device_json(
         ) from exc
 
     if response.status_code >= 400:
+        code = (
+            "unauthorized"
+            if response.status_code in {401, 403}
+            else "http_error"
+        )
         raise DeviceDriverError(
-            "http_error",
+            code,
             technical_detail=f"HTTP {response.status_code} from {url}",
             http_status=response.status_code,
         )

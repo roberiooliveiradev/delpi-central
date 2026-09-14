@@ -99,8 +99,19 @@ def validation_error_message(code: str, *, fallback: str | None = None, **params
     return _lookup_message(_validation_errors_section(), code, fallback=fallback, **params)
 
 
-def device_config_push_message(status: str, *, fallback: str | None = None) -> str:
+def device_config_push_message(
+    status: str,
+    *,
+    error_code: str | None = None,
+    fallback: str | None = None,
+) -> str:
     section = _section("deviceConfigPush")
+    # Prefer specific failure keys (failed_unauthorized, failed_missing_token, …).
+    if error_code:
+        specific_key = f"{status}_{error_code}"
+        specific = section.get(specific_key)
+        if isinstance(specific, str) and specific.strip():
+            return specific.strip()
     mapped = section.get(status)
     if isinstance(mapped, str) and mapped.strip():
         return mapped.strip()

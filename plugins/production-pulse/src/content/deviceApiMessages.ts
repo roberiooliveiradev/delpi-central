@@ -7,6 +7,7 @@ export const DEVICE_CONNECTIVITY_ERROR_CODES = [
   "timeout",
   "network_error",
   "http_error",
+  "unauthorized",
   "invalid_response",
   "device_error",
   "missing_ip",

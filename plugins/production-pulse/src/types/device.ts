@@ -38,6 +38,7 @@ export type DeviceConfigPush = {
   status: DeviceConfigPushStatus;
   message?: string;
   messageKey?: string;
+  errorCode?: string;
 };
 
 export type DeviceListItem = {

@@ -5,6 +5,7 @@
       "timeout",
       "network_error",
       "http_error",
+      "unauthorized",
       "invalid_response",
       "device_error",
       "missing_ip",
@@ -14,6 +15,7 @@
       "timeout": "O dispositivo não respondeu a tempo. Verifique se está ligado e acessível na rede.",
       "network_error": "Não foi possível contactar o dispositivo. Verifique IP, cabo e energia.",
       "http_error": "O dispositivo respondeu com erro HTTP. Confira o firmware ou reinicie o hardware.",
+      "unauthorized": "O chip rejeitou o token do dispositivo. Gere um novo token no cadastro e salve, ou informe o token já gravado no IoT.",
       "invalid_response": "O dispositivo respondeu com dados inválidos. Confira o driver e o firmware.",
       "device_error": "O dispositivo não respondeu à leitura.",
       "missing_ip": "O cadastro do dispositivo não possui endereço IP. Informe o IP antes de ler o hardware.",
@@ -35,7 +37,9 @@
   "deviceConfigPush": {
     "ok": "Configuração enviada ao dispositivo.",
     "skipped": "Cadastro salvo. Nenhuma configuração de chip para enviar.",
-    "failed": "Cadastro salvo, mas não foi possível enviar a configuração ao dispositivo."
+    "failed": "Cadastro salvo, mas não foi possível enviar a configuração ao dispositivo.",
+    "failed_unauthorized": "Cadastro salvo, mas o chip rejeitou o token (401). O token no cadastro não confere com o gravado no IoT — gere um novo e salve, ou informe o token já existente no chip. Em troca de hardware isso é esperado até realinhar o token.",
+    "failed_missing_token": "Cadastro salvo, mas o envio ao chip falhou por falta de token no cadastro enquanto o IoT exige autenticação. Gere um token e salve novamente."
   },
   "validationErrors": {
     "invalid_branch": "A filial deve ser 01 ou 02.",

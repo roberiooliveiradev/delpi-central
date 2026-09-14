@@ -1,23 +1,36 @@
 from production_pulse_app.infrastructure.content.device_api_messages_content_service import (
     command_error_message,
+    device_config_push_message,
     device_connectivity_codes,
     device_connectivity_http_status_code,
     device_connectivity_user_message,
     http_error_message,
+    load_device_api_messages,
     validation_error_message,
 )
+
+
+def setup_function():
+    load_device_api_messages.cache_clear()
+    device_connectivity_codes.cache_clear()
 
 
 def test_device_connectivity_codes_include_timeout_and_missing_ip():
     codes = device_connectivity_codes()
     assert "timeout" in codes
     assert "missing_ip" in codes
+    assert "unauthorized" in codes
     assert "validation_error" not in codes
 
 
 def test_device_connectivity_user_message_maps_timeout():
     message = device_connectivity_user_message("timeout")
     assert "não respondeu a tempo" in message.lower()
+
+
+def test_device_connectivity_user_message_maps_unauthorized():
+    message = device_connectivity_user_message("unauthorized")
+    assert "token" in message.lower()
 
 
 def test_device_connectivity_user_message_falls_back_to_driver_message():
@@ -44,3 +57,10 @@ def test_validation_error_message_supports_placeholders():
     assert "1" in message
     assert "300000" in message
     assert "milissegundos" in message.lower()
+
+
+def test_device_config_push_message_unauthorized_is_specific():
+    generic = device_config_push_message("failed")
+    specific = device_config_push_message("failed", error_code="unauthorized")
+    assert "token" in specific.lower()
+    assert specific != generic

@@ -229,8 +229,14 @@ export function DeviceFormPage({
       }
 
       if (saved.deviceConfigPush?.status === "failed") {
+        const push = saved.deviceConfigPush;
+        const unauthorized =
+          push.errorCode === "unauthorized" || push.errorCode === "missing_token";
         setConfigPushBanner(
-          saved.deviceConfigPush.message ?? PP_HELP.form.deviceConfigPushFailed,
+          push.message ??
+            (unauthorized
+              ? PP_HELP.form.deviceConfigPushFailedUnauthorized
+              : PP_HELP.form.deviceConfigPushFailed),
         );
         setDevice((prev) => ({
           ...prev,

@@ -96,6 +96,8 @@ export const PP_HELP = {
     generateApiTokenAction: "Gerar token",
     deviceConfigPushFailed:
       "Cadastro salvo, mas não foi possível enviar a configuração ao dispositivo. Verifique IP, energia e token.",
+    deviceConfigPushFailedUnauthorized:
+      "Cadastro salvo, mas o chip rejeitou o token. Gere um novo token e salve, ou informe o token já gravado no IoT. Em troca de hardware isso é esperado até realinhar o token.",
     deviceConfigPushOk: "Configuração enviada ao dispositivo.",
     deviceConfigPushSkipped: "Cadastro salvo. Nenhuma configuração de chip para enviar.",
     firmwareSourceDeprecated:

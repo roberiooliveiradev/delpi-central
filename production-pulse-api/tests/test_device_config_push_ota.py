@@ -57,3 +57,57 @@ def test_push_after_save_always_includes_ota_fields(monkeypatch):
     assert driver.last_payload["otaBaseUrl"] == "http://192.168.1.10/apps/production-pulse-api"
     assert driver.last_payload["branch"] == "01"
     assert driver.last_payload["otaCheckIntervalMs"] == 60000
+
+
+class _UnauthorizedDriver:
+    def execute(self, device, command, payload=None):
+        return CommandResult(success=False, error_code="unauthorized")
+
+
+def test_push_maps_unauthorized_to_specific_message(monkeypatch):
+    service = DeviceConfigPushService()
+    monkeypatch.setattr(service, "_registry", _FakeRegistry(_UnauthorizedDriver()))
+    monkeypatch.setattr(
+        "production_pulse_app.application.services.device_config_push_service.settings.PP_DEVICE_OTA_BASE_URL",
+        "http://192.168.1.10/apps/production-pulse-api",
+    )
+
+    result = service.push_after_save(
+        {
+            "id": "d1",
+            "driver_key": "esp8266_counter_v1",
+            "branch": "01",
+            "ip_address": "192.168.20.2",
+            "device_api_token": "stale-token",
+        },
+        request_payload={"pollIntervalMs": 300},
+    )
+
+    assert result["status"] == "failed"
+    assert result["errorCode"] == "unauthorized"
+    assert "token" in result["message"].lower()
+    assert "401" in result["message"] or "rejeitou" in result["message"].lower()
+
+
+def test_push_maps_unauthorized_without_cadastro_token_to_missing_token(monkeypatch):
+    service = DeviceConfigPushService()
+    monkeypatch.setattr(service, "_registry", _FakeRegistry(_UnauthorizedDriver()))
+    monkeypatch.setattr(
+        "production_pulse_app.application.services.device_config_push_service.settings.PP_DEVICE_OTA_BASE_URL",
+        "http://192.168.1.10/apps/production-pulse-api",
+    )
+
+    result = service.push_after_save(
+        {
+            "id": "d1",
+            "driver_key": "esp8266_counter_v1",
+            "branch": "01",
+            "ip_address": "192.168.20.2",
+            "device_api_token": None,
+        },
+        request_payload={"pollIntervalMs": 300},
+    )
+
+    assert result["status"] == "failed"
+    assert result["errorCode"] == "missing_token"
+    assert "falta de token" in result["message"].lower() or "token" in result["message"].lower()
