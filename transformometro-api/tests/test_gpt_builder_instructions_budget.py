@@ -146,3 +146,36 @@ def test_teo_auth_errors_must_not_bypass_security():
     assert "401=AuthN" in block
     assert "403=AuthZ" in block
     assert "confirmation != authorization" in block
+
+
+def test_teo_entity_canonical_contract_precedes_generic_action():
+    """Entity schema from catalog beats generic Action envelope guessing."""
+    block = _builder_instructions_block()
+    for marker in [
+        "Contrato canônico da entidade",
+        "entity_schemas",
+        "Schema canônico da entidade > assinatura genérica",
+        "Entidade específica > tool genérica",
+        "shared_resource",
+        "data.conteudo",
+        "nome_recurso",
+        "tipo_custo",
+        "recorrencia",
+        "Erro de validação",
+        "não persistiu parcial",
+        "Contrato incerto",
+    ]:
+        assert marker in block, marker
+
+
+def test_teo_playbook_documents_canonical_write_contract():
+    playbook = (
+        Path(__file__).resolve().parents[1]
+        / "docs"
+        / "gpt-actions"
+        / "teo-method-playbooks.md"
+    ).read_text(encoding="utf-8")
+    assert "Canonical entity contract before any write" in playbook
+    assert "shared_resource" in playbook
+    assert "data.conteudo" in playbook
+    assert "resource_link" in playbook

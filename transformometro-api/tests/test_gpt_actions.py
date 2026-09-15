@@ -458,12 +458,22 @@ def test_registration_guide_exposes_entity_schemas():
 
     guide = build_registration_guide()
     assert "concepts" in guide
+    assert "write_contract_rules" in guide
+    rules = guide["write_contract_rules"]
+    assert "entity_schemas" in rules["priority"]
+    assert "conteudo" in rules["action_wrapper"]
+    assert "shared_resource" in rules["anti_pattern"]
     assert guide["entity_schemas"]["instance"]["enums"]["fase_melhoria"] == list(
         FASE_MELHORIA
     )
     assert guide["entity_schemas"]["instance"]["enums"]["prioridade"] == list(
         PRIORIDADE_MELHORIA
     )
+    shared = guide["entity_schemas"]["shared_resource"]
+    assert "nome_recurso" in shared["required"]
+    assert any("conteudo" in n for n in shared["notes"])
+    link = guide["entity_schemas"]["resource_link"]
+    assert any("read-back" in n for n in link["notes"])
     assert guide["package_hints"]["operationId"] == "gpt_commit_improvement_package"
 
 

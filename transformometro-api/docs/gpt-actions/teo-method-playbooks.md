@@ -520,6 +520,22 @@ This document defines reasoning/conversation methodology only.
 
 Persistence is allowed only for entities already supported by the GPT Actions contract and the authenticated user's authorization. A method output that has no canonical Transformômetro entity remains a conversational artifact / proposed analysis until a proper owner, contract and storage path exist.
 
+### 15.1 Canonical entity contract before any write
+
+Before create / update / duplicate / activate / delete (or equivalent):
+
+1. Call `gpt_get_catalog` and open `registration_guide.entity_schemas` for the **exact** entity.
+2. Treat that schema (required, optional, enums, defaults, notes, relationships) as the primary write contract.
+3. If the generic Action signature and the entity schema diverge, **follow the entity schema**. Never invent a generic envelope on your own.
+4. Action wrapper is always `{ "data": { ... } }`. Put canonical entity fields at `data.<field>` — do **not** nest them under `data.conteudo`, `payload`, `attributes` or `metadata` unless that entity's contract explicitly requires it (document entities: diagram / decomposition use `conteudo`).
+5. Mental dry-run: required present, exact names, valid enums, date formats, numeric types, IDs from read-back, correct relationships, no invented fields/nesting.
+6. Validation error → do not repeat the same shape; reread catalog; fix payload; authoritative read-back to confirm no partial persistence; never create the same entity twice after a rejected attempt.
+7. If the persistence format is still uncertain → do not improvise, do not write; explain and use catalog/read Actions again.
+8. User confirmation does **not** waive contract validation. Success requires AUTHORITATIVE READ-BACK + VERIFY.
+
+**Anti-pattern (observed):** `shared_resource` with `nome_recurso` / `tipo_custo` / `recorrencia` inside `data.conteudo` → backend rejects missing top-level fields.  
+**Correct:** those fields directly under `data` per `entity_schemas.shared_resource`. For `resource_link`, use real IDs obtained by read-back.
+
 No method playbook authorizes:
 
 - arbitrary HTTP proxying;
@@ -528,4 +544,5 @@ No method playbook authorizes:
 - bypass of canonical validators;
 - hidden batch writes;
 - autonomous activation/deletion/send/finalization;
-- treating conversation confirmation as backend authorization.
+- treating conversation confirmation as backend authorization;
+- packing entity-specific fields into a generic `conteudo`/`payload` envelope when the catalog does not require it.

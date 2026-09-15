@@ -75,6 +75,38 @@ def build_registration_guide() -> dict[str, Any]:
             ),
             "investment": "One-time or recurring cost lines on a non-baseline revision.",
         },
+        "write_contract_rules": {
+            "priority": (
+                "entity_schemas.<entity> is the primary write contract. "
+                "If the generic Action signature diverges, follow the entity schema."
+            ),
+            "action_wrapper": (
+                "Always send {data:{...}}. Put canonical fields at data.<field>. "
+                "Do not nest entity fields under data.conteudo/payload/attributes/metadata "
+                "unless that entity contract requires it (document entities use conteudo)."
+            ),
+            "anti_pattern": (
+                "shared_resource with nome_recurso/tipo_custo/recorrencia inside data.conteudo "
+                "is invalid; those fields belong directly under data."
+            ),
+            "before_write": [
+                "Call gpt_get_catalog and read entity_schemas for the exact entity.",
+                "Check required fields, exact names, enums, dates, numeric types, IDs.",
+                "Use IDs from authoritative read-back for relationships (e.g. resource_link).",
+                "User confirmation does not waive contract validation.",
+            ],
+            "on_validation_error": [
+                "Do not repeat the same payload shape.",
+                "Reread catalog; fix to entity schema.",
+                "Authoritative read-back before retry to avoid partial persistence or duplicates.",
+                "If contract remains unresolved: do not improvise; do not write.",
+            ],
+            "success_requires": [
+                "authoritative write result",
+                "read_back",
+                "verify",
+            ],
+        },
         "registration_flow": [
             {
                 "step": 1,
@@ -309,6 +341,7 @@ def build_registration_guide() -> dict[str, Any]:
                 "notes": [
                     "Catalog resource only. Monthly amount history uses entity=resource_cost.",
                     "Update merges omitted fields from the current row.",
+                    "Put nome_recurso/tipo_custo/recorrencia directly under data — never under data.conteudo.",
                 ],
             },
             "resource_cost": {
@@ -338,7 +371,10 @@ def build_registration_guide() -> dict[str, Any]:
                 ],
                 "enums": {},
                 "defaults": {"ativo": True},
-                "notes": ["Links a shared resource to a revision for rateio."],
+                "notes": [
+                    "Links a shared resource to a revision for rateio.",
+                    "Use real revisao_id and recurso_compartilhado_id from read-back; never invent IDs.",
+                ],
             },
         },
         "package_hints": package_hints,

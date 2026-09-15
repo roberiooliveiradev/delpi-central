@@ -55,7 +55,27 @@ PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 
 `entity` enum: `branch`, `department`, `process`, `instance`, `revision`, `measurement`, `investment`, `shared_resource`, `resource_cost`, `resource_link`, `meeting_minute`, `decomposition_tree`, `instance_decomposition_scope`, `revision_decomposition_overlay`, `process_diagram`, `instance_diagram_scope`, `revision_diagram_overlay`, `impact_effort_matrix`.
 
-Bodies de write usam `{ "data": { ... } }` com os mesmos campos do CRUD da UI.
+Bodies de write usam `{ "data": { ... } }` com os **mesmos campos canônicos** do CRUD/UI da entidade. O wrapper `data` é da Action; os campos específicos **não** devem ser empacotados em `conteudo`/`payload`/`attributes`/`metadata`, exceto entities de documento (diagram/decomposition) onde o contrato exige `conteudo`.
+
+Antes de qualquer gravação: `gpt_get_catalog` → `registration_guide.entity_schemas.<entity>` (required/optional/enums/defaults/notes). Se a assinatura genérica da Action divergir do schema da entidade, **prevalece o schema canônico**. Após erro de validação: não repetir a estrutura; reler catálogo; read-back para evitar persistência parcial/duplicata. Sucesso só com read-back autoritativo.
+
+Exemplos:
+
+```json
+{
+  "data": {
+    "nome_recurso": "Embaixador Robério",
+    "tipo_custo": "mao_obra",
+    "recorrencia": "mensal",
+    "escopo_recurso": "empresa",
+    "status_recurso": "ativo"
+  }
+}
+```
+
+Errado (não fazer): colocar `nome_recurso` / `tipo_custo` / `recorrencia` dentro de `data.conteudo` para `shared_resource`.
+
+`resource_link` deve usar `revisao_id` e `recurso_compartilhado_id` obtidos por read-back, nunca IDs inventados.
 
 ## Auth (obrigatório)
 

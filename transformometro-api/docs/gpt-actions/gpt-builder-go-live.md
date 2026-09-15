@@ -88,9 +88,11 @@ Resumo operacional:
 
 - Problem-first e entrevista adaptativa.
 - Method Router escolhe o menor método suficiente; `INFERRED != FACT`; `PROPOSED != SAVED`.
-- `gpt_get_catalog` + `registration_guide` antes de cadastro.
+- `gpt_get_catalog` + `registration_guide.entity_schemas` antes de qualquer gravação.
+- Schema canônico da entidade prevalece sobre a assinatura genérica da Action; não empacotar campos em `conteudo` (exceto documentos).
 - Envelope nested (`process` + `instance` + `scenario.revision`) → `gpt_validate_improvement_package` → `ready=true` → mostrar → confirmar → `gpt_commit_improvement_package`.
 - Diagramas/WBS: draft = PROPOSED; persistência governada com validators, manage AuthZ e read-back.
+- Após write rejeitado: read-back antes de retry; evitar duplicata.
 - Evidências/upload e assinatura manuscrita continuam UI-only quando não suportados pela Action.
 - REIMPORT OpenAPI somente se schema mudar; esperado estável: **14 actions**.
 
