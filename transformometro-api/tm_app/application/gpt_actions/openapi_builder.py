@@ -60,6 +60,11 @@ GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
     "gpt_validate_improvement_package",
     "gpt_commit_improvement_package",
     "gpt_get_process_context",
+    "gpt_list_evidence",
+    "gpt_manage_evidence",
+    "gpt_get_process_timeline",
+    "gpt_adjust_shared_resource_cost",
+    "gpt_meeting_minute_manage",
 )
 
 # HTTP público para import no GPT Builder — não entra no schema importado.
@@ -901,6 +906,156 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "x-openai-isConsequential": True,
             }
         },
+        f"{GPT_ACTIONS_BASE_PATH}/evidence": {
+            "get": {
+                "operationId": "gpt_list_evidence",
+                "summary": "List process or revision evidence metadata",
+                "description": (
+                    "Read-only. scope=process|revision. No binary download."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "scope",
+                        "in": "query",
+                        "required": True,
+                        "schema": {
+                            "type": "string",
+                            "enum": ["process", "revision"],
+                        },
+                    },
+                    {
+                        "name": "parent_id",
+                        "in": "query",
+                        "required": True,
+                        "schema": {"type": "string"},
+                        "description": "processo_id or revisao_id",
+                    },
+                ],
+                "responses": {
+                    "200": _ok_response("Evidence list"),
+                    **_error_responses(),
+                },
+                "x-openai-isConsequential": False,
+            }
+        },
+        f"{GPT_ACTIONS_BASE_PATH}/evidence/manage": {
+            "post": {
+                "operationId": "gpt_manage_evidence",
+                "summary": "Manage external-link evidence metadata",
+                "description": (
+                    "create_link|update_description|delete. Binary upload blocked. "
+                    "Delete requires confirm_delete=true."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GptEvidenceManageBody"
+                            }
+                        }
+                    },
+                },
+                "responses": {
+                    "200": _ok_response("Evidence write result"),
+                    "201": _ok_response("Evidence created"),
+                    **_error_responses(),
+                },
+                "x-openai-isConsequential": True,
+            }
+        },
+        f"{GPT_ACTIONS_BASE_PATH}/processes/{'{processo_id}'}/timeline": {
+            "get": {
+                "operationId": "gpt_get_process_timeline",
+                "summary": "Read process audit timeline",
+                "description": "Process-scoped audit trail only.",
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "processo_id",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string"},
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "integer", "default": 1},
+                    },
+                    {
+                        "name": "page_size",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "integer", "default": 100},
+                    },
+                ],
+                "responses": {
+                    "200": _ok_response("Timeline"),
+                    **_error_responses(),
+                },
+                "x-openai-isConsequential": False,
+            }
+        },
+        f"{GPT_ACTIONS_BASE_PATH}/shared-resources/adjust-cost": {
+            "post": {
+                "operationId": "gpt_adjust_shared_resource_cost",
+                "summary": "Register shared-resource cost adjustment",
+                "description": (
+                    "Canonical registrar_reajuste. Not generic resource_cost update."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GptAdjustSharedResourceCostBody"
+                            }
+                        }
+                    },
+                },
+                "responses": {
+                    "201": _ok_response("Cost adjustment"),
+                    **_error_responses(),
+                },
+                "x-openai-isConsequential": True,
+            }
+        },
+        f"{GPT_ACTIONS_BASE_PATH}/meeting-minutes/manage": {
+            "post": {
+                "operationId": "gpt_meeting_minute_manage",
+                "summary": "Meeting-minute extras (not send/finalize/cancel)",
+                "description": (
+                    "pending_signatures|audit|versions|resend|create_version|"
+                    "set_participants|set_signers|generate_from_transcript. "
+                    "No PDF/PNG/public sign."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GptMeetingMinuteManageBody"
+                            }
+                        }
+                    },
+                },
+                "responses": {
+                    "200": _ok_response("Meeting minute manage result"),
+                    **_error_responses(),
+                },
+                "x-openai-isConsequential": True,
+            }
+        },
     }
 
     doc = {
@@ -1016,6 +1171,157 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     },
                     "additionalProperties": False,
                     "example": {"action": "send"},
+                },
+                "GptEvidenceManageBody": {
+                    "type": "object",
+                    "required": ["scope", "operation", "parent_id"],
+                    "description": (
+                        "Link/metadata evidence only. Binary upload/download is "
+                        "BLOCKED_BY_PLATFORM for Custom GPT Actions."
+                    ),
+                    "properties": {
+                        "scope": {
+                            "type": "string",
+                            "enum": ["process", "revision"],
+                        },
+                        "operation": {
+                            "type": "string",
+                            "enum": [
+                                "create_link",
+                                "update_description",
+                                "delete",
+                            ],
+                        },
+                        "parent_id": {
+                            "type": "string",
+                            "description": "processo_id or revisao_id",
+                        },
+                        "evidence_id": {
+                            "type": "string",
+                            "description": "Required for update_description|delete",
+                        },
+                        "url_externa": {
+                            "type": "string",
+                            "description": "Required for create_link",
+                        },
+                        "descricao": {"type": "string"},
+                        "confirm_delete": {
+                            "type": "boolean",
+                            "default": False,
+                            "description": "Must be true for delete",
+                        },
+                    },
+                    "additionalProperties": False,
+                    "example": {
+                        "scope": "process",
+                        "operation": "create_link",
+                        "parent_id": "<processo_uuid>",
+                        "url_externa": "https://example.com/evidence",
+                        "descricao": "Link de evidência",
+                    },
+                },
+                "GptAdjustSharedResourceCostBody": {
+                    "type": "object",
+                    "required": [
+                        "recurso_compartilhado_id",
+                        "valor_mensal",
+                        "vigente_desde",
+                    ],
+                    "description": (
+                        "Canonical shared-resource cost adjustment "
+                        "(registrar_reajuste). Not a generic resource_cost CRUD."
+                    ),
+                    "properties": {
+                        "recurso_compartilhado_id": {"type": "string"},
+                        "valor_mensal": {"type": "number", "minimum": 0},
+                        "vigente_desde": {
+                            "type": "string",
+                            "format": "date",
+                            "description": "YYYY-MM-DD",
+                        },
+                        "observacoes": {"type": "string"},
+                    },
+                    "additionalProperties": False,
+                    "example": {
+                        "recurso_compartilhado_id": "<recurso_uuid>",
+                        "valor_mensal": 1500.0,
+                        "vigente_desde": "2026-10-01",
+                        "observacoes": "Reajuste anual",
+                    },
+                },
+                "GptMeetingMinuteManageBody": {
+                    "type": "object",
+                    "required": ["action"],
+                    "description": (
+                        "Meeting-minute extras beyond send/finalize/cancel "
+                        "(use gpt_meeting_minute_workflow for those)."
+                    ),
+                    "properties": {
+                        "action": {
+                            "type": "string",
+                            "enum": [
+                                "pending_signatures",
+                                "audit",
+                                "versions",
+                                "resend",
+                                "create_version",
+                                "set_participants",
+                                "set_signers",
+                                "generate_from_transcript",
+                            ],
+                        },
+                        "minute_id": {
+                            "type": "string",
+                            "description": "Required except pending_signatures",
+                        },
+                        "data": {
+                            "type": "object",
+                            "additionalProperties": True,
+                            "description": (
+                                "Action-specific payload. For resend: "
+                                "{confirm_resend:true}. For set_participants/"
+                                "set_signers: participants[]/signers[]. For "
+                                "generate_from_transcript: unit_code + "
+                                "transcript_html."
+                            ),
+                            "properties": {
+                                "confirm_resend": {"type": "boolean"},
+                                "participants": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "additionalProperties": True,
+                                        "properties": {
+                                            "user_id": {"type": "string"},
+                                            "name": {"type": "string"},
+                                            "email": {"type": "string"},
+                                        },
+                                    },
+                                },
+                                "signers": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "additionalProperties": True,
+                                        "properties": {
+                                            "user_id": {"type": "string"},
+                                            "name": {"type": "string"},
+                                            "email": {"type": "string"},
+                                        },
+                                    },
+                                },
+                                "unit_code": {"type": "string"},
+                                "transcript_html": {"type": "string"},
+                                "meeting_date": {"type": "string"},
+                                "title": {"type": "string"},
+                                "source": {"type": "string"},
+                            },
+                        },
+                    },
+                    "additionalProperties": False,
+                    "example": {
+                        "action": "pending_signatures",
+                    },
                 },
                 "GptImprovementPackageBody": {
                     "type": "object",

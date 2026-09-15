@@ -7,6 +7,7 @@ from typing import Any
 
 from fastapi import Request
 
+from tm_app.application.gpt_actions.errors import GptActionsError
 from tm_app.application.gpt_actions.entities import (
     GptAnalysisView,
     GptEntity,
@@ -179,14 +180,6 @@ _PERSONAL_DATA_FIELDS = frozenset(
 )
 
 
-class GptActionsError(Exception):
-    def __init__(self, message: str, status_code: int = 400, data: Any = None):
-        super().__init__(message)
-        self.message = message
-        self.status_code = status_code
-        self.data = data
-
-
 class GptActionsDispatchService:
     """Application facade used by `/transformometro/gpt-actions/v1/*`."""
 
@@ -196,6 +189,15 @@ class GptActionsDispatchService:
         self._minutes = MeetingMinutesService()
         self._diagram_writes = DiagramWriteService()
         self._decomp_writes = DecompositionWriteService()
+        from tm_app.application.gpt_actions.parity_capabilities_service import (
+            ParityCapabilitiesService,
+        )
+
+        self._parity = ParityCapabilitiesService(
+            minutes=self._minutes,
+            raise_http_err=self._raise_http_err,
+            audit=self._audit,
+        )
 
     # --- helpers ---------------------------------------------------------
 
@@ -1262,6 +1264,74 @@ class GptActionsDispatchService:
             "Cache materializado atualizado. Os endpoints GET do dashboard não dependem deste passo."
         )
         return result
+
+
+    def list_evidence(self, request: Request, *, scope: str, parent_id: str) -> dict[str, Any]:
+        return self._parity.list_evidence(request, scope=scope, parent_id=parent_id)
+
+    def manage_evidence(
+        self,
+        request: Request,
+        *,
+        scope: str,
+        operation: str,
+        parent_id: str,
+        evidence_id: str | None = None,
+        url_externa: str | None = None,
+        descricao: str | None = None,
+        confirm_delete: bool = False,
+    ) -> dict[str, Any]:
+        return self._parity.manage_evidence(
+            request,
+            scope=scope,
+            operation=operation,
+            parent_id=parent_id,
+            evidence_id=evidence_id,
+            url_externa=url_externa,
+            descricao=descricao,
+            confirm_delete=confirm_delete,
+        )
+
+    def get_process_timeline(
+        self,
+        request: Request,
+        *,
+        processo_id: str,
+        page: int = 1,
+        page_size: int = 100,
+    ) -> dict[str, Any]:
+        return self._parity.get_process_timeline(
+            request, processo_id=processo_id, page=page, page_size=page_size
+        )
+
+    def adjust_shared_resource_cost(
+        self,
+        request: Request,
+        *,
+        recurso_compartilhado_id: str,
+        valor_mensal: float,
+        vigente_desde: str,
+        observacoes: str | None = None,
+    ) -> dict[str, Any]:
+        return self._parity.adjust_shared_resource_cost(
+            request,
+            recurso_compartilhado_id=recurso_compartilhado_id,
+            valor_mensal=valor_mensal,
+            vigente_desde=vigente_desde,
+            observacoes=observacoes,
+        )
+
+    def manage_meeting_minute(
+        self,
+        request: Request,
+        *,
+        action: str,
+        minute_id: str | None = None,
+        payload: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        return self._parity.manage_meeting_minute(
+            request, action=action, minute_id=minute_id, payload=payload
+        )
 
     def meeting_minute_workflow(
         self,

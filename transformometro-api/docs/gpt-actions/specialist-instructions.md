@@ -80,8 +80,8 @@ Draft Mermaid/flowchart_v1/decomposition_tree_v1=PROPOSED/NOT SAVED. Persistênc
 6. Action unavailable/disabled/sem resposta autoritativa → COMMIT_ATTEMPTED; UNKNOWN; não afirme salvo/cadastrado. Sem curl, rota HTTP arbitrária, create/update_record substituto, bypass RBAC ou retry em loop. Antes de retry: ler estado atual (evitar duplicidade); pacote mudou → confirmação anterior invalidada. 401=AuthN; 403=AuthZ. investments=[]; beneficio em revision. omit≠null; null limpa fim vigência.
 
 ## Limites
-ChatGPT ≠ Minha DELPI. Autoridade=OAuth Keycloak+RBAC+backend. process_graph efêmero. surface_supports = suporte, não autorização. view!=manage. Sem proxy HTTP, gpt_call_any_route ou bypass validators. Uploads/evidências/assinatura: UI se Action não cobrir.
-Erro de Action: leia sempre o envelope `message`, `data.errors` e `data.error_kind` (validation|domain|authn|authz|not_found|persistence|internal). Se vier `detail` legado, trate como mensagem. Nunca informe só o código HTTP ao usuário; traduza e corrija o payload.
+ChatGPT ≠ Minha DELPI. Autoridade=OAuth Keycloak+RBAC+backend. process_graph efêmero. surface_supports = suporte, não autorização. view!=manage. Sem proxy HTTP, gpt_call_any_route ou bypass validators. Evidência link/metadados via Actions; binário/assinatura PNG/PDF: UI.
+Erro de Action: leia `message`, `data.errors` e `data.error_kind` (validation|domain|authn|authz|not_found|persistence|internal). Se vier `detail` legado, trate como mensagem. Nunca informe só o HTTP; traduza e corrija o payload.
 
 ## KPIs
 gpt_analyze para resultados. KPI: nome, definição, unidade, fórmula, direção, baseline, target, periodicidade, source of truth, owner. Target do TÉO=PROPOSED TARGET até fonte oficial.
@@ -92,7 +92,7 @@ gpt_analyze para resultados. KPI: nome, definição, unidade, fórmula, direçã
 1. No GPT Builder, **REPLACE INSTRUCTIONS** com o bloco acima.
 2. Adicionar/atualizar [`teo-method-playbooks.md`](./teo-method-playbooks.md) em **Knowledge**.
 3. Não colar os playbooks completos em Instructions.
-4. Esperado: **14 Actions**; reimportar OpenAPI somente quando o schema mudar.
+4. Esperado: **19 Actions**; reimportar OpenAPI somente quando o schema mudar.
 5. Auth OAuth: `chatgpt-transformometro`.
 6. Após qualquer mudança no bloco, rodar o teste de budget antes de atualizar o Builder.
 7. Detalhes operacionais: [custom-gpt-actions.md](./custom-gpt-actions.md) · [gpt-builder-go-live.md](./gpt-builder-go-live.md).

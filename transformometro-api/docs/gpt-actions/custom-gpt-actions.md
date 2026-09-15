@@ -28,7 +28,7 @@ cd transformometro-api
 PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 ```
 
-## Operations (14 no schema importado)
+## Operations (19 no schema importado)
 
 | operationId | Método / path |
 |-------------|----------------|
@@ -46,6 +46,26 @@ PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 | `gpt_meeting_minute_workflow` | `POST .../meeting-minutes/{id}/workflow` |
 | `gpt_validate_improvement_package` | `POST .../improvement-packages/validate` (no-write; `ready`/`missing`) |
 | `gpt_commit_improvement_package` | `POST .../improvement-packages` (commit real; `dry_run` só compatibilidade) |
+| `gpt_list_evidence` | `GET .../evidence?scope=process\|revision&parent_id=` (metadados; sem binary) |
+| `gpt_manage_evidence` | `POST .../evidence/manage` (`create_link`\|`update_description`\|`delete` + `confirm_delete`) |
+| `gpt_get_process_timeline` | `GET .../processes/{processo_id}/timeline` (audit do processo) |
+| `gpt_adjust_shared_resource_cost` | `POST .../shared-resources/adjust-cost` (`registrar_reajuste` canônico) |
+| `gpt_meeting_minute_manage` | `POST .../meeting-minutes/manage` (extras; não duplica send/finalize/cancel) |
+
+### Capacidade × superfície (TM-GPI-006)
+
+| Capacidade | Classificação |
+|---|---|
+| Link/metadata de evidência (processo/revisão) | **SUPPORTED_BY_TÉO** (`gpt_list_evidence` / `gpt_manage_evidence`) |
+| Upload/download binário de evidência | **BLOCKED_BY_PLATFORM** / **SUPPORTED_BY_UI_ONLY** |
+| Timeline de auditoria do processo | **SUPPORTED_BY_TÉO** (`gpt_get_process_timeline`) |
+| Reajuste semântico de custo de recurso compartilhado | **SUPPORTED_BY_TÉO** (`gpt_adjust_shared_resource_cost`) |
+| Ata: send/finalize/cancel | **SUPPORTED_BY_TÉO** (`gpt_meeting_minute_workflow`) |
+| Ata: pending/audit/versions/participants/signers/resend/create_version/generate_from_transcript | **SUPPORTED_BY_TÉO** (`gpt_meeting_minute_manage`) |
+| Assinatura PNG / PDF / magic-link público | **NOT_EXPOSED_BY_DESIGN** / **SUPPORTED_BY_UI_ONLY** |
+| Proxy HTTP genérico, locks, websocket, backup JSON, S2S | **NOT_EXPOSED_BY_DESIGN** |
+
+Proveniência: ata = registro formal; áudio/vídeo = evidência original quando governada; transcript = representação derivada; resumo TÉO = conteúdo derivado. Não converter derivado em evidência autoritativa.
 
 `gpt_get_process_context` monta o Process Business Graph / Process Intelligence Context a partir dos records e services canônicos. Sem persistência de grafo. Comparativo/composição/stats ficam restritos ao escopo de filial visível. Distinga `as_is` (AS_IS), `current_composed` (CURRENT_COMPOSED) e `to_be` (TO_BE). `surface_supports` ≠ autorização de write. Na facade GPT, `setor_id` aceita UUID **ou** `codigo_setor` (ex. `comercial`); `gpt_analyze(view=instances)` honra `processo_id`.
 

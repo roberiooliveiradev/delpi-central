@@ -54,7 +54,7 @@ https://<host-publico>/apps/transformometro-api/transformometro/gpt-actions/v1/o
 
 Alternativa: colar `docs/gpt-actions/openapi-gpt-actions.json`.
 
-Esperado: **14** operations (`gpt_get_process_context`, `gpt_analyze`, `gpt_get_catalog`, `gpt_validate_improvement_package`, `gpt_commit_improvement_package`, …). O GET `openapi.json` não aparece como Action.
+Esperado: **19** operations (`gpt_get_process_context`, `gpt_analyze`, `gpt_get_catalog`, `gpt_validate_improvement_package`, `gpt_commit_improvement_package`, `gpt_list_evidence`, `gpt_manage_evidence`, `gpt_get_process_timeline`, `gpt_adjust_shared_resource_cost`, `gpt_meeting_minute_manage`, …). O GET `openapi.json` não aparece como Action.
 
 O ChatGPT **rejeita** `servers.url` relativo (`/apps/transformometro-api`). Se aparecer «Não foi possível encontrar uma URL válida em `servers`», altere no editor para:
 
@@ -93,8 +93,10 @@ Resumo operacional:
 - Envelope nested (`process` + `instance` + `scenario.revision`) → `gpt_validate_improvement_package` → `ready=true` → mostrar → confirmar → `gpt_commit_improvement_package`.
 - Diagramas/WBS: draft = PROPOSED; persistência governada com validators, manage AuthZ e read-back.
 - Após write rejeitado: read-back antes de retry; evitar duplicata.
-- Evidências/upload e assinatura manuscrita continuam UI-only quando não suportados pela Action.
-- REIMPORT OpenAPI somente se schema mudar; esperado estável: **14 actions**.
+- Evidência: links/metadados via `gpt_list_evidence` / `gpt_manage_evidence`; upload/download binário permanece UI-only / BLOCKED_BY_PLATFORM.
+- Assinatura manuscrita PNG/PDF/magic-link público: UI-only / NOT_EXPOSED_BY_DESIGN.
+- Timeline de processo, reajuste canônico de custo e extras de ata: Actions semânticas dedicadas (não proxy genérico).
+- REIMPORT OpenAPI somente se schema mudar; esperado estável: **19 actions**.
 
 ## 4. Fechar redirects com o GPT ID real
 
@@ -110,7 +112,7 @@ https://chat.openai.com/aip/g-YOUR-GPT-ID/oauth/callback
 - Name = **TÉO — Especialista em Transformação Digital**
 - Instructions aceitas sem erro de 8.000 caracteres
 - `teo-method-playbooks.md` presente em Knowledge
-- GPT lista as **14** actions
+- GPT lista as **19** actions
 - OAuth pede **Sign in**
 - `gpt_analyze` / `gpt_get_catalog` / `gpt_get_process_context` respondem sem erro de token/redirect
 - `gpt_get_catalog` devolve `registration_guide`

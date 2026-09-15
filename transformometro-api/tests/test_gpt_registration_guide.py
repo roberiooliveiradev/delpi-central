@@ -17,10 +17,17 @@ def test_registration_guide_does_not_mark_governed_document_writes_ui_only():
 
     assert "diagrams" not in hints["ui_only_persist"]
     assert "WBS/decomposition" not in hints["ui_only_persist"]
-    assert hints["ui_only_persist"] == [
-        "evidence uploads",
-        "meeting-minute handwritten signature",
+    assert "binary evidence uploads" in hints["ui_only_persist"]
+    assert "meeting-minute handwritten signature" in hints["ui_only_persist"]
+    assert "evidence uploads" not in hints["ui_only_persist"]
+    parity = hints["gpt_governed_parity"]
+    assert "gpt_list_evidence" in parity["evidence_link_metadata"]
+    assert "gpt_manage_evidence" in parity["evidence_link_metadata"]
+    assert "gpt_get_process_timeline" in parity["process_timeline"]
+    assert "gpt_adjust_shared_resource_cost" in parity[
+        "shared_resource_cost_adjustment"
     ]
+    assert "gpt_meeting_minute_manage" in parity["meeting_minute_extras"]
 
     governed = hints["governed_document_writes"]
     assert governed["support_is_not_authorization"] is True
@@ -37,9 +44,12 @@ def test_registration_flow_routes_only_unsupported_followups_to_ui():
     actions = " ".join(followup["actions"])
 
     assert "Diagrams and WBS/decomposition may be persisted via GPT" in actions
-    assert "evidence uploads" in actions
+    assert "gpt_list_evidence" in actions
+    assert "gpt_manage_evidence" in actions
+    assert "binary evidence upload" in actions.lower()
     assert "meeting-minute handwritten signatures" in actions
     assert "Point user to Minha DELPI UI for diagrams" not in actions
+    assert "universally UI-only" not in actions.lower()
 
 
 def test_registration_guide_contains_canonical_package_shape():
@@ -128,9 +138,15 @@ def test_teo_contract_drift_openapi_guide_instructions():
     from pathlib import Path
 
     doc = build_gpt_actions_openapi()
-    assert count_operations(doc) == 14
+    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS)
+    assert count_operations(doc) == 19
     assert "gpt_validate_improvement_package" in GPT_ACTIONS_OPERATION_IDS
     assert "gpt_commit_improvement_package" in GPT_ACTIONS_OPERATION_IDS
+    assert "gpt_list_evidence" in GPT_ACTIONS_OPERATION_IDS
+    assert "gpt_manage_evidence" in GPT_ACTIONS_OPERATION_IDS
+    assert "gpt_get_process_timeline" in GPT_ACTIONS_OPERATION_IDS
+    assert "gpt_adjust_shared_resource_cost" in GPT_ACTIONS_OPERATION_IDS
+    assert "gpt_meeting_minute_manage" in GPT_ACTIONS_OPERATION_IDS
 
     validate = doc["paths"]["/transformometro/gpt-actions/v1/improvement-packages/validate"][
         "post"

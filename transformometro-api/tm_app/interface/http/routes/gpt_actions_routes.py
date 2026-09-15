@@ -50,6 +50,29 @@ class GptMeetingMinuteWorkflowBody(BaseModel):
     reason: str | None = None
 
 
+class GptEvidenceManageBody(BaseModel):
+    scope: str
+    operation: str
+    parent_id: str
+    evidence_id: str | None = None
+    url_externa: str | None = None
+    descricao: str | None = None
+    confirm_delete: bool = False
+
+
+class GptAdjustSharedResourceCostBody(BaseModel):
+    recurso_compartilhado_id: str
+    valor_mensal: float
+    vigente_desde: str
+    observacoes: str | None = None
+
+
+class GptMeetingMinuteManageBody(BaseModel):
+    action: str
+    minute_id: str | None = None
+    data: dict = Field(default_factory=dict)
+
+
 class GptImprovementPackageBody(BaseModel):
     """Runtime body stays loosely typed on purpose.
 
@@ -415,3 +438,114 @@ def gpt_commit_improvement_package(body: GptImprovementPackageBody, request: Req
         return fail(str(exc), 400, {"not_found": True})
     except Exception as exc:
         return _handle(exc)
+
+
+@router.get(
+    "/evidence",
+    operation_id="gpt_list_evidence",
+    summary="List process or revision evidence metadata",
+)
+def gpt_list_evidence(
+    request: Request,
+    scope: str = Query(..., description="process|revision"),
+    parent_id: str = Query(
+        ..., description="processo_id when scope=process; revisao_id when scope=revision"
+    ),
+):
+    try:
+        return ok(
+            _dispatch.list_evidence(request, scope=scope, parent_id=parent_id),
+            "Evidências listadas.",
+        )
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.post(
+    "/evidence/manage",
+    operation_id="gpt_manage_evidence",
+    summary="Create external-link evidence, update description, or delete",
+)
+def gpt_manage_evidence(request: Request, body: GptEvidenceManageBody):
+    try:
+        data = _dispatch.manage_evidence(
+            request,
+            scope=body.scope,
+            operation=body.operation,
+            parent_id=body.parent_id,
+            evidence_id=body.evidence_id,
+            url_externa=body.url_externa,
+            descricao=body.descricao,
+            confirm_delete=body.confirm_delete,
+        )
+        status = 201 if body.operation == "create_link" else 200
+        return ok(data, "Evidência atualizada.", status)
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.get(
+    "/processes/{processo_id}/timeline",
+    operation_id="gpt_get_process_timeline",
+    summary="Read process audit timeline",
+)
+def gpt_get_process_timeline(
+    processo_id: str,
+    request: Request,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(100, ge=1, le=200),
+):
+    try:
+        return ok(
+            _dispatch.get_process_timeline(
+                request, processo_id=processo_id, page=page, page_size=page_size
+            ),
+            "Linha do tempo do processo.",
+        )
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.post(
+    "/shared-resources/adjust-cost",
+    operation_id="gpt_adjust_shared_resource_cost",
+    summary="Register shared-resource cost adjustment",
+)
+def gpt_adjust_shared_resource_cost(
+    request: Request, body: GptAdjustSharedResourceCostBody
+):
+    try:
+        return ok(
+            _dispatch.adjust_shared_resource_cost(
+                request,
+                recurso_compartilhado_id=body.recurso_compartilhado_id,
+                valor_mensal=body.valor_mensal,
+                vigente_desde=body.vigente_desde,
+                observacoes=body.observacoes,
+            ),
+            "Reajuste de custo registrado.",
+            201,
+        )
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.post(
+    "/meeting-minutes/manage",
+    operation_id="gpt_meeting_minute_manage",
+    summary="Meeting-minute extras without duplicating workflow send/finalize/cancel",
+)
+def gpt_meeting_minute_manage(request: Request, body: GptMeetingMinuteManageBody):
+    try:
+        return ok(
+            _dispatch.manage_meeting_minute(
+                request,
+                action=body.action,
+                minute_id=body.minute_id,
+                payload=body.data,
+            ),
+            "Operação de ata executada.",
+        )
+    except Exception as exc:
+        return _handle(exc)
+

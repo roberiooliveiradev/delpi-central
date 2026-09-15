@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-14",
-  "operation_count": 166,
+  "generatedAt": "2026-09-15",
+  "operation_count": 171,
   "operations": [
     {
       "operationId": "post_liberar",
@@ -742,6 +742,18 @@
       "module": "gpt_actions"
     },
     {
+      "operationId": "gpt_list_evidence",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/evidence",
+      "module": "gpt_actions"
+    },
+    {
+      "operationId": "gpt_manage_evidence",
+      "method": "POST",
+      "path": "/transformometro/gpt-actions/v1/evidence/manage",
+      "module": "gpt_actions"
+    },
+    {
       "operationId": "gpt_commit_improvement_package",
       "method": "POST",
       "path": "/transformometro/gpt-actions/v1/improvement-packages",
@@ -751,6 +763,12 @@
       "operationId": "gpt_validate_improvement_package",
       "method": "POST",
       "path": "/transformometro/gpt-actions/v1/improvement-packages/validate",
+      "module": "gpt_actions"
+    },
+    {
+      "operationId": "gpt_meeting_minute_manage",
+      "method": "POST",
+      "path": "/transformometro/gpt-actions/v1/meeting-minutes/manage",
       "module": "gpt_actions"
     },
     {
@@ -769,6 +787,12 @@
       "operationId": "gpt_get_process_context",
       "method": "GET",
       "path": "/transformometro/gpt-actions/v1/process-context",
+      "module": "gpt_actions"
+    },
+    {
+      "operationId": "gpt_get_process_timeline",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/processes/{processo_id}/timeline",
       "module": "gpt_actions"
     },
     {
@@ -811,6 +835,12 @@
       "operationId": "gpt_activate_revision",
       "method": "POST",
       "path": "/transformometro/gpt-actions/v1/revisions/{id}/activate",
+      "module": "gpt_actions"
+    },
+    {
+      "operationId": "gpt_adjust_shared_resource_cost",
+      "method": "POST",
+      "path": "/transformometro/gpt-actions/v1/shared-resources/adjust-cost",
       "module": "gpt_actions"
     },
     {

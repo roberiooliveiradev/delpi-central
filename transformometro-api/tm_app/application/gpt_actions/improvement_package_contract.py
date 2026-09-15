@@ -290,9 +290,31 @@ def build_package_hints() -> dict[str, Any]:
             "support_is_not_authorization": True,
         },
         "ui_only_persist": [
-            "evidence uploads",
+            "binary evidence uploads",
+            "binary evidence downloads",
             "meeting-minute handwritten signature",
+            "meeting-minute PDF binary",
+            "public magic-link signing",
         ],
+        "gpt_governed_parity": {
+            "evidence_link_metadata": [
+                "gpt_list_evidence",
+                "gpt_manage_evidence",
+            ],
+            "process_timeline": ["gpt_get_process_timeline"],
+            "shared_resource_cost_adjustment": [
+                "gpt_adjust_shared_resource_cost"
+            ],
+            "meeting_minute_extras": ["gpt_meeting_minute_manage"],
+            "not_exposed": [
+                "arbitrary HTTP proxy",
+                "collaboration locks",
+                "realtime/websocket internals",
+                "JSON backup/import restore",
+                "engineering S2S integration",
+                "authorization metadata as model authority",
+            ],
+        },
         "conversational_draft_ok": [
             "Mermaid AS-IS/TO-BE drafts",
             "diagnostic hypotheses",

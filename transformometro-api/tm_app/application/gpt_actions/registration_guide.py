@@ -199,12 +199,22 @@ def build_registration_guide() -> dict[str, Any]:
                 "id": "governed_followups",
                 "ask": [],
                 "actions": [
-                    "WBS/mapeamento: entity_schemas.decomposition_tree then "
-                    "revision_decomposition_overlay (and instance_decomposition_scope when needed).",
-                    "Diagrams: entity_schemas.process_diagram then revision_diagram_overlay "
-                    "(and instance_diagram_scope when needed).",
+                    "Diagrams and WBS/decomposition may be persisted via GPT when "
+                    "surface_supports allows and manage AuthZ succeeds "
+                    "(entity_schemas.decomposition_* / process_diagram / overlays).",
                     "Always PREPARE → SHOW → CONFIRM → WRITE → VERIFY; manage AuthZ required.",
-                    "Point user to Minha DELPI UI for evidence uploads and meeting-minute handwritten signatures.",
+                    "Evidence link/metadata: gpt_list_evidence + gpt_manage_evidence "
+                    "(create_link|update_description|delete with confirm_delete). "
+                    "Binary evidence upload/download remains UI-only / BLOCKED_BY_PLATFORM.",
+                    "Point user to Minha DELPI UI for binary evidence uploads and "
+                    "meeting-minute handwritten signatures (PNG/PDF/public sign not exposed).",
+                    "Process timeline: gpt_get_process_timeline (read-only, process-scoped).",
+                    "Shared-resource cost adjustment: gpt_adjust_shared_resource_cost "
+                    "(canonical registrar_reajuste — not generic resource_cost update).",
+                    "Meeting-minute extras: gpt_meeting_minute_manage "
+                    "(pending/audit/versions/participants/signers/resend/create_version/"
+                    "generate_from_transcript). send/finalize/cancel stay on "
+                    "gpt_meeting_minute_workflow.",
                     "Offer gpt_analyze for KPIs after recalculate.",
                 ],
             },
@@ -462,7 +472,12 @@ def build_registration_guide() -> dict[str, Any]:
                     "Create/update via gpt_create_record / gpt_update_record entity=meeting_minute.",
                     "unit_code is the filial code (zero-padded to 2 digits by backend).",
                     "Workflow send/finalize/cancel uses gpt_meeting_minute_workflow — not create/update.",
-                    "Handwritten signature and evidence uploads remain UI-only (package_hints.ui_only_persist).",
+                    "Extras (pending_signatures/audit/versions/participants/signers/resend/"
+                    "create_version/generate_from_transcript): gpt_meeting_minute_manage. "
+                    "resend requires data.confirm_resend=true.",
+                    "Handwritten signature PNG/PDF/public magic-link remain UI-only / not exposed.",
+                    "Binary evidence upload/download remains UI-only (BLOCKED_BY_PLATFORM); "
+                    "link/metadata evidence uses gpt_list_evidence / gpt_manage_evidence.",
                     "Alias: ata → meeting_minute.",
                 ],
             },
