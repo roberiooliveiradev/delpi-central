@@ -12,8 +12,13 @@ from fastapi.responses import JSONResponse
 
 from delpi_auth.credential_guard import check_credentials
 from tm_app.config import settings
-from tm_app.core.errors import format_api_error, format_validation_error
+from tm_app.core.errors import format_validation_error
 from tm_app.core.responses import fail
+from tm_app.middleware.auth_middleware import jwt_middleware
+from tm_app.middleware.gpt_actions_error_envelope import (
+    gpt_actions_error_envelope_middleware,
+)
+from tm_app.middleware.path_alias_middleware import path_alias_middleware
 from tm_app.interface.http.routes.crud_routes import router as crud_router
 from tm_app.interface.http.routes.dashboard_routes import router as dashboard_router
 from tm_app.interface.http.routes.gpt_actions_routes import router as gpt_actions_router
@@ -32,8 +37,6 @@ from tm_app.application.services.transformometro_realtime_hub import (
     transformometro_realtime_hub,
 )
 from tm_app.interface.http.routes.realtime_routes import router as realtime_router
-from tm_app.middleware.auth_middleware import jwt_middleware
-from tm_app.middleware.path_alias_middleware import path_alias_middleware
 from tm_app.startup.run_migrations_on_startup import run_migrations_on_startup
 
 logging.basicConfig(
@@ -110,15 +113,21 @@ app = FastAPI(
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(_request: Request, exc: RequestValidationError):
     message, data = format_validation_error(exc)
+    data = {**data, "error_kind": "validation"}
     return fail(message, 422, data)
 
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(_request: Request, exc: Exception):
     logging.getLogger(__name__).exception("unhandled_exception")
-    return fail("Erro interno do servidor.", 500)
+    return fail(
+        "Erro interno do servidor.",
+        500,
+        {"error_kind": "internal", "error_type": type(exc).__name__},
+    )
 
 
+app.middleware("http")(gpt_actions_error_envelope_middleware)
 app.middleware("http")(jwt_middleware)
 app.middleware("http")(path_alias_middleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)

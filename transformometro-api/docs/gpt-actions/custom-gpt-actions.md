@@ -79,9 +79,17 @@ Errado (não fazer): colocar `nome_recurso` / `tipo_custo` / `recorrencia` dentr
 
 ### Erros para o Custom GPT
 
-Envelope de falha: `{ "success": false, "message": "...", "data": { "errors": [{ "field", "reason" }], "error_count" } }`.
+Envelope de falha: `{ "success": false, "message": "...", "data": { "error_kind": "...", "errors": [...], "error_count": N } }`.
 
-O TÉO deve **sempre** ler `message`/`data.errors` e explicar ao usuário — nunca reportar só o código HTTP. Validação Pydantic nas Actions GPT responde **400** com essa estrutura (não mensagem genérica de 500).
+| `error_kind` | Origem típica |
+|---|---|
+| `validation` | Pydantic / campos ausentes ou inválidos |
+| `domain` | `GptActionsError` (negócio/not found/etc.) |
+| `authn` / `authz` | JWT/RBAC (também normaliza `{detail}` legado) |
+| `persistence` | falha de banco/repositório (HTTP 503) |
+| `internal` | bug inesperado (HTTP 500; inclui `error_type`) |
+
+O TÉO deve **sempre** ler `message`/`data` — nunca reportar só o código HTTP.
 
 ## Auth (obrigatório)
 

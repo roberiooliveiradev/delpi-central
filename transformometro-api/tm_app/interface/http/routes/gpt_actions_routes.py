@@ -21,7 +21,7 @@ from tm_app.application.gpt_actions.openapi_builder import (
     resolve_gpt_actions_server_url,
 )
 from tm_app.config import settings
-from tm_app.core.errors import format_api_error, format_validation_error
+from tm_app.core.errors import public_error_parts
 from tm_app.core.responses import fail, ok
 
 router = APIRouter(
@@ -84,31 +84,12 @@ class GptValidateImprovementPackageBody(BaseModel):
 
 
 def _handle(exc: Exception):
-    if isinstance(exc, GptActionsError):
-        return fail(exc.message, exc.status_code, exc.data)
-    # Pydantic ValidationError is a ValueError subclass but str(exc) is long
-    # (doc URLs) — format_api_error used to collapse it to a generic 500 message,
-    # so Custom GPT only saw the HTTP code. Always return structured 400.
-    try:
-        from pydantic import ValidationError as PydanticValidationError
-    except Exception:  # pragma: no cover
-        PydanticValidationError = ()  # type: ignore[misc, assignment]
-    if PydanticValidationError and isinstance(exc, PydanticValidationError):
-        message, data = format_validation_error(exc)
-        return fail(message, 400, data)
-    if isinstance(exc, ValueError):
-        return fail(str(exc), 400)
-    if isinstance(exc, PermissionError):
-        return fail(str(exc), 403)
-    if isinstance(exc, LookupError):
-        # KeyError ⊂ LookupError — programming bugs must not become opaque 404s
-        # (Custom GPT often disables consequential Actions after 404).
-        if isinstance(exc, KeyError):
-            logger.exception("gpt_actions_key_error")
-            return fail(format_api_error(exc), 500)
-        return fail(str(exc), 404)
-    logger.exception("gpt_actions_unhandled")
-    return fail(format_api_error(exc), 500)
+    status, message, data = public_error_parts(exc)
+    if status >= 500 and data.get("error_kind") == "internal":
+        logger.exception("gpt_actions_unhandled")
+    elif isinstance(exc, KeyError):
+        logger.exception("gpt_actions_key_error")
+    return fail(message, status, data)
 
 
 @router.get(

@@ -48,6 +48,9 @@ from fastapi.exceptions import RequestValidationError
 
 from tm_app.core.errors import format_validation_error
 from tm_app.core.responses import fail
+from tm_app.middleware.gpt_actions_error_envelope import (
+    gpt_actions_error_envelope_middleware,
+)
 from tm_app.interface.http.routes.collaboration_routes import router as collaboration_router
 from tm_app.interface.http.routes.crud_routes import router as crud_router
 from tm_app.interface.http.routes.dashboard_routes import router as dashboard_router
@@ -92,6 +95,7 @@ def create_test_app() -> FastAPI:
     def health():
         return {"status": "online", "service": "transformometro-api"}
 
+    app.middleware("http")(gpt_actions_error_envelope_middleware)
     app.middleware("http")(_fake_jwt_middleware)
     app.include_router(transformometro_router)
     app.include_router(gpt_actions_router)

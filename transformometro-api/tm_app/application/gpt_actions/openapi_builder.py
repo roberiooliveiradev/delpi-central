@@ -152,12 +152,51 @@ def _error_responses() -> dict[str, Any]:
                 }
             },
         },
-        "401": _ok_response("Missing or invalid Bearer token"),
-        "403": _ok_response("Authenticated but lacking Transformômetro permission"),
+        "401": {
+            "description": (
+                "Missing/invalid Bearer. ApiEnvelope message explains AuthN; "
+                "read message (not only HTTP 401)."
+            ),
+            "content": {
+                "application/json": {
+                    "schema": {"$ref": "#/components/schemas/ApiEnvelope"},
+                    "example": {
+                        "success": False,
+                        "message": "Unauthorized",
+                        "data": {"error_kind": "authn"},
+                    },
+                }
+            },
+        },
+        "403": {
+            "description": (
+                "Authenticated but lacking permission. Read message + data.error_kind."
+            ),
+            "content": {
+                "application/json": {
+                    "schema": {"$ref": "#/components/schemas/ApiEnvelope"},
+                    "example": {
+                        "success": False,
+                        "message": "Acesso negado.",
+                        "data": {"error_kind": "authz"},
+                    },
+                }
+            },
+        },
         "404": _ok_response("Record not found"),
         "422": {
             "description": (
                 "Request body/query schema invalid. Read message + data.errors."
+            ),
+            "content": {
+                "application/json": {
+                    "schema": {"$ref": "#/components/schemas/ApiEnvelope"}
+                }
+            },
+        },
+        "503": {
+            "description": (
+                "Persistence/infrastructure failure. Read message + data.error_kind=persistence."
             ),
             "content": {
                 "application/json": {

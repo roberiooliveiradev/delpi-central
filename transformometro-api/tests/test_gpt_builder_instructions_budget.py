@@ -184,5 +184,6 @@ def test_teo_playbook_documents_canonical_write_contract():
 def test_teo_must_read_action_error_message_not_only_http_code():
     block = _builder_instructions_block()
     assert "message" in block and "data.errors" in block
+    assert "error_kind" in block
     assert "código HTTP" in block or "HTTP" in block
     assert "Nunca informe só o código HTTP" in block or "nunca informe só" in block.lower()

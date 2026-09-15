@@ -13,20 +13,83 @@ _GENERIC_MESSAGE = "Erro interno do servidor."
 _MAX_PUBLIC_MESSAGE = 480
 
 
+def safe_public_message(message: str | None, *, limit: int = _MAX_PUBLIC_MESSAGE) -> str:
+    """Truncate long public messages instead of collapsing them to a generic 500."""
+    text = str(message or "").strip()
+    if not text:
+        return _GENERIC_MESSAGE
+    if "For further information visit" in text:
+        text = text.split("For further information visit", 1)[0].strip()
+    if len(text) <= limit:
+        return text
+    return text[: limit - 1] + "…"
+
+
 def format_api_error(exc: Exception) -> str:
     """Loga detalhes internos e retorna mensagem segura para o cliente."""
     _logger.debug("api_error_detail: %s", exc, exc_info=True)
+    _status, message, _data = public_error_parts(exc)
+    return message
+
+
+def public_error_parts(exc: BaseException) -> tuple[int, str, dict[str, Any]]:
+    """Map an exception to ``(status_code, message, data)`` for GPT/API clients.
+
+    Always returns a human-readable ``message``. ``data`` includes ``error_kind``
+    so Custom GPT can explain the failure instead of only the HTTP code.
+    """
+    # Duck-type GptActionsError to avoid circular import with dispatch_service.
+    if type(exc).__name__ == "GptActionsError" and hasattr(exc, "message"):
+        data = _as_error_data(getattr(exc, "data", None), error_kind="domain")
+        status = int(getattr(exc, "status_code", 400) or 400)
+        return status, safe_public_message(getattr(exc, "message", "")), data
 
     if _is_pydantic_validation_error(exc):
-        message, _data = format_validation_error(exc)
-        return message
+        message, data = format_validation_error(exc)
+        data = {**data, "error_kind": "validation"}
+        return 400, message, data
 
-    if isinstance(exc, (ValueError, PluginsRepositoryError)):
-        msg = str(exc)
-        if msg and len(msg) < 300:
-            return msg
+    if isinstance(exc, PermissionError):
+        return 403, safe_public_message(str(exc) or "Acesso negado."), {
+            "error_kind": "authz"
+        }
 
-    return _GENERIC_MESSAGE
+    if isinstance(exc, LookupError) and not isinstance(exc, KeyError):
+        return 404, safe_public_message(str(exc) or "Registro não encontrado."), {
+            "error_kind": "not_found"
+        }
+
+    if isinstance(exc, KeyError):
+        # Programming bug — do not claim "not found".
+        return 500, _GENERIC_MESSAGE, {
+            "error_kind": "internal",
+            "error_type": type(exc).__name__,
+        }
+
+    if isinstance(exc, PluginsRepositoryError):
+        return 503, safe_public_message(str(exc) or "Falha de persistência."), {
+            "error_kind": "persistence"
+        }
+
+    if isinstance(exc, ValueError):
+        return 400, safe_public_message(str(exc) or "Dados inválidos."), {
+            "error_kind": "validation"
+        }
+
+    return 500, _GENERIC_MESSAGE, {
+        "error_kind": "internal",
+        "error_type": type(exc).__name__,
+    }
+
+
+def _as_error_data(data: Any, *, error_kind: str) -> dict[str, Any]:
+    if isinstance(data, dict):
+        out = dict(data)
+        out.setdefault("error_kind", error_kind)
+        return out
+    if data is None:
+        return {"error_kind": error_kind}
+    return {"error_kind": error_kind, "details": data}
 
 
 def _is_pydantic_validation_error(exc: BaseException) -> bool:
@@ -72,7 +135,7 @@ def format_validation_error(exc: BaseException) -> tuple[str, dict[str, Any]]:
         items.append({"field": field, "reason": msg})
 
     if not items:
-        return "Dados inválidos.", {"errors": []}
+        return "Dados inválidos.", {"errors": [], "error_count": 0}
 
     missing = [i["field"] for i in items if "required" in i["reason"].lower()]
     if missing:
@@ -84,7 +147,36 @@ def format_validation_error(exc: BaseException) -> tuple[str, dict[str, Any]]:
     if len(items) > 6 and "Campos obrigatórios" not in headline:
         headline += f" (+{len(items) - 6} outros)"
 
-    if len(headline) > _MAX_PUBLIC_MESSAGE:
-        headline = headline[: _MAX_PUBLIC_MESSAGE - 1] + "…"
+    return safe_public_message(headline), {"errors": items, "error_count": len(items)}
 
-    return headline, {"errors": items, "error_count": len(items)}
+
+def envelope_from_detail_body(
+    *,
+    status_code: int,
+    body: Any,
+) -> tuple[str, dict[str, Any]] | None:
+    """Convert auth-style ``{detail: ...}`` JSON into envelope message+data."""
+    if not isinstance(body, dict):
+        return None
+    if "success" in body and "message" in body:
+        return None
+    detail = body.get("detail")
+    if detail is None and "message" not in body:
+        return None
+    if isinstance(detail, list):
+        # FastAPI default validation shape
+        class _Err:
+            def errors(self_inner):  # noqa: N805
+                return detail
+
+        message, data = format_validation_error(_Err())
+        data["error_kind"] = "validation"
+        return message, data
+    if isinstance(detail, dict):
+        text = str(detail.get("message") or detail.get("msg") or detail)
+    else:
+        text = str(detail if detail is not None else body.get("message") or "")
+    kind = "authn" if status_code == 401 else "authz" if status_code == 403 else "http"
+    if status_code >= 500:
+        kind = "internal"
+    return safe_public_message(text or _GENERIC_MESSAGE), {"error_kind": kind}
