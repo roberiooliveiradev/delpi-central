@@ -215,18 +215,36 @@ def openapi_record_data_properties() -> dict[str, Any]:
         "observations_html": {"type": "string"},
         "participants": {
             "type": "array",
-            "items": {"type": "object", "additionalProperties": True},
+            "items": {
+                "type": "object",
+                "additionalProperties": True,
+                "properties": {},
+                "x-delpi-gpt-opaque-object": True,
+                "description": (
+                    "Meeting-minute participant row. Entity-specific bag; "
+                    "signature capture remains UI-only."
+                ),
+            },
             "description": "Participants for entity=meeting_minute.",
         },
         "signers": {
             "type": "array",
-            "items": {"type": "object", "additionalProperties": True},
+            "items": {
+                "type": "object",
+                "additionalProperties": True,
+                "properties": {},
+                "x-delpi-gpt-opaque-object": True,
+                "description": (
+                    "Meeting-minute signer row. Signature capture remains UI-only."
+                ),
+            },
             "description": "Signers for entity=meeting_minute (signature capture remains UI-only).",
         },
         "conteudo": {
             "type": "object",
             "additionalProperties": True,
             "properties": {},
+            "x-delpi-gpt-opaque-object": True,
             "description": "Document payload (diagram flowchart or decomposition tree/overlay).",
         },
         "node_ids": {
@@ -245,11 +263,19 @@ def openapi_record_data_properties() -> dict[str, Any]:
             "type": "object",
             "additionalProperties": True,
             "properties": {},
+            "x-delpi-gpt-opaque-object": True,
+            "description": (
+                "Impact×effort matrix manual inputs. Cell keys vary by matrix mode."
+            ),
         },
         "overrides": {
             "type": "object",
             "additionalProperties": True,
             "properties": {},
+            "x-delpi-gpt-opaque-object": True,
+            "description": (
+                "Impact×effort matrix overrides. Cell keys vary by matrix mode."
+            ),
         },
     }
 

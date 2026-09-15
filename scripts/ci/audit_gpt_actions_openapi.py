@@ -3,10 +3,11 @@
 
 Escopo: ``*/docs/gpt-actions/openapi-gpt-actions.json`` (full-tree).
 
-Foca a classe de falha já observada (TÉO / VISTA): schema genérico
-impossibilita o modelo de construir o tool call. Não percorre envelopes
-de resposta nem bags nested com ``additionalProperties: true`` — esses
-casos atuais gerariam falso positivo sem provar o incidente.
+Percorre schemas de CONSTRUÇÃO de request (requestBody + $ref resolvido).
+Respostas ficam fora deste gate.
+
+Objetos livre-forma só passam com ``x-delpi-gpt-opaque-object: true`` e
+description não vazia. Mapas tipados usam ``additionalProperties`` schema.
 """
 
 from __future__ import annotations
@@ -34,15 +35,7 @@ SKIP_DIR_NAMES = {
 }
 HTTP_METHODS = {"get", "post", "put", "patch", "delete"}
 WRITE_METHODS = {"post", "put", "patch"}
-SEMANTIC_OBJECT_KEYS = {
-    "target",
-    "context",
-    "operation",
-    "configuration",
-    "payload",
-    "filters",
-}
-SEMANTIC_ARRAY_KEYS = {"ops", "commands", "operations", "changes"}
+OPAQUE_EXT = "x-delpi-gpt-opaque-object"
 
 
 @dataclass(frozen=True)
@@ -89,22 +82,6 @@ def resolve_ref(document: dict[str, Any], schema: Any) -> Any:
     return node
 
 
-def is_bare_object(schema: Any) -> bool:
-    if not isinstance(schema, dict) or "$ref" in schema:
-        return False
-    return schema.get("type") == "object" and "properties" not in schema
-
-
-def is_untyped_array_item(items: Any) -> bool:
-    if not isinstance(items, dict):
-        return True
-    if "$ref" in items or "oneOf" in items or "anyOf" in items:
-        return False
-    if items.get("type") == "object" and "properties" not in items:
-        return True
-    return False
-
-
 def json_media(operation: dict[str, Any]) -> dict[str, Any] | None:
     request_body = operation.get("requestBody")
     if not isinstance(request_body, dict):
@@ -142,6 +119,185 @@ def iter_operations(document: dict[str, Any]) -> list[tuple[str, str, dict[str, 
                 continue
             found.append((str(path), method.lower(), operation))
     return found
+
+
+def _is_object_schema(schema: dict[str, Any]) -> bool:
+    if schema.get("type") == "object":
+        return True
+    return any(key in schema for key in ("properties", "additionalProperties"))
+
+
+def _has_meaningful_properties(schema: dict[str, Any]) -> bool:
+    props = schema.get("properties")
+    return isinstance(props, dict) and len(props) > 0
+
+
+def _typed_additional_properties(schema: dict[str, Any]) -> dict[str, Any] | None:
+    additional = schema.get("additionalProperties")
+    return additional if isinstance(additional, dict) else None
+
+
+def _is_explicit_opaque(schema: dict[str, Any]) -> bool:
+    return schema.get(OPAQUE_EXT) is True
+
+
+def _walk_request_schema(
+    document: dict[str, Any],
+    schema: Any,
+    *,
+    loc: str,
+    findings: list[Violation],
+    rel_path: str,
+    seen: set[int],
+) -> None:
+    resolved = resolve_ref(document, schema)
+    if not isinstance(resolved, dict):
+        return
+    marker = id(resolved)
+    if marker in seen:
+        return
+    seen.add(marker)
+
+    for key in ("oneOf", "anyOf", "allOf"):
+        branches = resolved.get(key)
+        if not isinstance(branches, list):
+            continue
+        if key == "oneOf" and not branches:
+            findings.append(
+                Violation(
+                    "GPT_ACTION_UNTYPED_ONEOF_BRANCH",
+                    rel_path,
+                    0,
+                    f"{loc} oneOf vazio",
+                )
+            )
+        for index, branch in enumerate(branches):
+            branch_loc = f"{loc}/{key}[{index}]"
+            resolved_branch = resolve_ref(document, branch)
+            if not isinstance(resolved_branch, dict) or (
+                resolved_branch.get("type") == "object"
+                and not _has_meaningful_properties(resolved_branch)
+                and _typed_additional_properties(resolved_branch) is None
+                and not _is_explicit_opaque(resolved_branch)
+                and "$ref" not in resolved_branch
+            ):
+                findings.append(
+                    Violation(
+                        "GPT_ACTION_UNTYPED_ONEOF_BRANCH",
+                        rel_path,
+                        0,
+                        f"{branch_loc} branch sem shape tipado",
+                    )
+                )
+            _walk_request_schema(
+                document,
+                branch,
+                loc=branch_loc,
+                findings=findings,
+                rel_path=rel_path,
+                seen=seen,
+            )
+
+    if resolved.get("type") == "array":
+        items = resolved.get("items")
+        if items is None:
+            findings.append(
+                Violation(
+                    "GPT_ACTION_UNTYPED_NESTED_ARRAY_ITEM",
+                    rel_path,
+                    0,
+                    f"{loc} array sem items",
+                )
+            )
+            return
+        resolved_items = resolve_ref(document, items)
+        if isinstance(resolved_items, dict) and _is_object_schema(resolved_items):
+            if (
+                not _has_meaningful_properties(resolved_items)
+                and _typed_additional_properties(resolved_items) is None
+                and not _is_explicit_opaque(resolved_items)
+                and "$ref" not in resolved_items
+            ):
+                findings.append(
+                    Violation(
+                        "GPT_ACTION_UNTYPED_NESTED_ARRAY_ITEM",
+                        rel_path,
+                        0,
+                        f"{loc} items object sem properties/mapa tipado",
+                    )
+                )
+        _walk_request_schema(
+            document,
+            items,
+            loc=f"{loc}/items",
+            findings=findings,
+            rel_path=rel_path,
+            seen=seen,
+        )
+        return
+
+    if not _is_object_schema(resolved) or "$ref" in resolved:
+        return
+
+    if _is_explicit_opaque(resolved):
+        description = resolved.get("description")
+        if not isinstance(description, str) or not description.strip():
+            findings.append(
+                Violation(
+                    "GPT_ACTION_OPAQUE_OBJECT_NOT_EXPLICIT",
+                    rel_path,
+                    0,
+                    f"{loc} marca opaca sem description",
+                )
+            )
+        return
+
+    additional = resolved.get("additionalProperties")
+    typed_map = _typed_additional_properties(resolved)
+    meaningful = _has_meaningful_properties(resolved)
+
+    if additional is True and not meaningful:
+        findings.append(
+            Violation(
+                "GPT_ACTION_OPAQUE_OBJECT_NOT_EXPLICIT",
+                rel_path,
+                0,
+                f"{loc} properties:{{}} + additionalProperties:true sem {OPAQUE_EXT}",
+            )
+        )
+        return
+
+    if not meaningful and typed_map is None:
+        findings.append(
+            Violation(
+                "GPT_ACTION_EMPTY_OBJECT_SCHEMA",
+                rel_path,
+                0,
+                f"{loc} object sem properties nem additionalProperties tipado",
+            )
+        )
+        return
+
+    props = resolved.get("properties")
+    if isinstance(props, dict):
+        for key, prop in props.items():
+            _walk_request_schema(
+                document,
+                prop,
+                loc=f"{loc}.properties.{key}",
+                findings=findings,
+                rel_path=rel_path,
+                seen=seen,
+            )
+    if typed_map is not None:
+        _walk_request_schema(
+            document,
+            typed_map,
+            loc=f"{loc}.additionalProperties",
+            findings=findings,
+            rel_path=rel_path,
+            seen=seen,
+        )
 
 
 def validate_document(rel_path: str, document: dict[str, Any]) -> list[Violation]:
@@ -198,46 +354,14 @@ def validate_document(rel_path: str, document: dict[str, Any]) -> list[Violation
                 )
             )
 
-        schema = resolve_ref(document, media.get("schema"))
-        if is_bare_object(media.get("schema")) or is_bare_object(schema):
-            findings.append(
-                Violation(
-                    "GPT_ACTION_OBJECT_WITHOUT_PROPERTIES",
-                    rel_path,
-                    0,
-                    f"{label} usa type=object sem properties no requestBody",
-                )
-            )
-
-        properties = schema.get("properties") if isinstance(schema, dict) else None
-        if isinstance(properties, dict):
-            for key, prop in properties.items():
-                resolved = resolve_ref(document, prop)
-                if key in SEMANTIC_OBJECT_KEYS and (
-                    is_bare_object(prop) or is_bare_object(resolved)
-                ):
-                    findings.append(
-                        Violation(
-                            "GPT_ACTION_OBJECT_WITHOUT_PROPERTIES",
-                            rel_path,
-                            0,
-                            f"{label} campo semântico {key!r} é object sem properties",
-                        )
-                    )
-                items = None
-                if isinstance(resolved, dict) and resolved.get("type") == "array":
-                    items = resolved.get("items")
-                elif isinstance(prop, dict) and prop.get("type") == "array":
-                    items = prop.get("items")
-                if key in SEMANTIC_ARRAY_KEYS and is_untyped_array_item(items):
-                    findings.append(
-                        Violation(
-                            "GPT_ACTION_UNTYPED_ARRAY_ITEM",
-                            rel_path,
-                            0,
-                            f"{label} array semântico {key!r} sem shape de item",
-                        )
-                    )
+        _walk_request_schema(
+            document,
+            media.get("schema"),
+            loc=label,
+            findings=findings,
+            rel_path=rel_path,
+            seen=set(),
+        )
 
         if method in WRITE_METHODS:
             has_example = "example" in media or "examples" in media
