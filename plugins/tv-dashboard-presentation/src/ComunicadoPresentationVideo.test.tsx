@@ -43,7 +43,29 @@ describe("ComunicadoPresentationVideo", () => {
     expect(pause).toHaveBeenCalled();
   });
 
-  it("não autoplaya fora do deck de apresentação (miniatura/editor)", async () => {
+  it("mostra overlay de carga até loadedmetadata", async () => {
+    mockMediaPlayback();
+
+    const { getByText, container } = render(
+      <PresentationPlaybackProvider deckPaused={false}>
+        <div className="tdp-slide tdp-slide--active">
+          <ComunicadoPresentationVideo src="/media/clip.mp4" />
+        </div>
+      </PresentationPlaybackProvider>,
+    );
+
+    expect(getByText("Carregando vídeo…")).toBeTruthy();
+    const video = container.querySelector("video");
+    expect(video).toBeTruthy();
+    Object.defineProperty(video!, "readyState", { configurable: true, get: () => 1 });
+    video!.dispatchEvent(new Event("loadedmetadata"));
+
+    await waitFor(() => {
+      expect(container.querySelector('[aria-busy="true"]')).toBeNull();
+    });
+  });
+
+  it("negative: fora do deck não expõe controles (só media)", async () => {
     const { play } = mockMediaPlayback();
 
     const { queryByLabelText, container } = render(

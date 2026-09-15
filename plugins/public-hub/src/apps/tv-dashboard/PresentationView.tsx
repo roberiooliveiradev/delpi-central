@@ -18,6 +18,7 @@ import {
   resolveSlideTransitionStyle,
   presentationSurfaceFromViewMode,
   presentationStageEntranceClass,
+  presentationSlidesHaveVideo,
   resolvePresentationPlaybackClientId,
   ExternalSlideView,
   type ComunicadoBlock,
@@ -202,6 +203,7 @@ export function PresentationView({
   );
 
   const surface = presentationSurfaceFromViewMode(mode);
+  const preferPaintSafeScale = presentationSlidesHaveVideo(slides);
   const stageClass = [
     "tdp-stage",
     surface === "kiosk" ? "tdp-stage--kiosk" : null,
@@ -241,6 +243,7 @@ export function PresentationView({
         className="tdp-stage__design"
         surface={presentationSurfaceFromViewMode(mode)}
         fit="auto"
+        preferPaintSafeScale={preferPaintSafeScale}
       >
         {(slides as PublicSlide[]).map((slide: PublicSlide, slideIndex: number) => {
           const active = slideIndex === index;

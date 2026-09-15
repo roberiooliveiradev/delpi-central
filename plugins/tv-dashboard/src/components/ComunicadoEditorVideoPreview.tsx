@@ -2,7 +2,11 @@ import { Pause, Play, Square, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 import type { ComunicadoMediaBlock } from "@delpi/tv-dashboard-presentation";
-import { ComunicadoMediaPlaceholder } from "@delpi/tv-dashboard-presentation";
+import {
+  ComunicadoMediaPlaceholder,
+  ComunicadoVideoLoadOverlay,
+  useVideoElementLoadState,
+} from "@delpi/tv-dashboard-presentation";
 import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
 import { resolveBrowserDisplayMediaUrl } from "../api/browserSafeMediaUrl";
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
@@ -36,6 +40,7 @@ type Props = {
 /**
  * Player do editor: stream via URL pública (capability) quando há publicToken;
  * senão admin+access_token; se falhar, blob autenticado.
+ * Overlay de carga enquanto metadados/buffer não chegam (não desmonta o `<video>`).
  */
 export function ComunicadoEditorVideoPreview({ block, style, className = "" }: Props) {
   const { playlistId, publicToken } = useComunicadoEditor();
@@ -47,10 +52,11 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
   const [preferBlob, setPreferBlob] = useState(false);
   const blob = useAuthenticatedBlobUrl(preferBlob ? mediaUrl : undefined);
   const src = preferBlob ? blob.src : streamSrc;
-  const loading = preferBlob ? blob.loading || (!blob.src && !blob.error) : !streamSrc;
+  const blobPending = preferBlob && (blob.loading || (!blob.src && !blob.error));
   const hardError = preferBlob ? blob.error : false;
 
   const videoRef = useRef<HTMLVideoElement>(null);
+  const { phase: mediaPhase, showLoadingOverlay } = useVideoElementLoadState(videoRef, src);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(1);
@@ -165,12 +171,14 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
       .join(" "),
   );
 
+  const showError = hardError || loadError || (preferBlob && mediaPhase === "error");
+
   let body: ReactNode;
   if (!mediaUrl) {
     body = <ComunicadoMediaPlaceholder kind="video" />;
-  } else if (hardError || loadError) {
+  } else if (showError) {
     body = <ComunicadoMediaPlaceholder kind="video" state="error" />;
-  } else if (loading || !src) {
+  } else if (blobPending || !src) {
     body = <ComunicadoMediaPlaceholder kind="video" state="loading" />;
   } else {
     body = (
@@ -184,6 +192,10 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
           preload="metadata"
           style={{ objectFit: block.style?.objectFit ?? "contain" }}
         />
+        <ComunicadoVideoLoadOverlay
+          visible={showLoadingOverlay}
+          className="td-composer__video-load-overlay"
+        />
         <div
           className="td-composer__video-controls"
           onPointerDown={(event) => event.stopPropagation()}
@@ -192,7 +204,7 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
             type="button"
             className="td-composer__video-btn"
             onClick={handlePlay}
-            disabled={playing}
+            disabled={playing || showLoadingOverlay}
             title="Reproduzir com áudio"
             aria-label="Reproduzir com áudio"
           >
@@ -256,7 +268,7 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
             onChange={(event) => handleSeek(Number(event.target.value))}
           />
           <span className="td-composer__video-time" aria-live="polite">
-            {formatTime(currentTime)} / {formatTime(duration)}
+            {showLoadingOverlay ? "Carregando…" : `${formatTime(currentTime)} / ${formatTime(duration)}`}
           </span>
         </div>
       </>

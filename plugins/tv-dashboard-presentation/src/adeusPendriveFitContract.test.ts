@@ -105,9 +105,12 @@ describe("Adeus Pendrive / host-fit — sem corte", () => {
     expect(painted.height).toBeLessThanOrEqual(tv.height + 0.5);
   });
 
-  it("política kiosk escolhe zoom (não transform)", () => {
+  it("política kiosk escolhe zoom (não transform); vídeo força paint-safe", () => {
     expect(resolvePresentationScaleMethod("kiosk")).toBe("zoom");
     expect(resolvePresentationScaleMethod("preview")).toBe("transform");
+    expect(resolvePresentationScaleMethod("kiosk", { preferPaintSafeScale: true })).toBe(
+      "transform",
+    );
   });
 
   it("prévia de validação TV usa kiosk; thumbnails/filmstrip usam preview (contrato fonte)", () => {
@@ -128,7 +131,9 @@ describe("Adeus Pendrive / host-fit — sem corte", () => {
     const policySrc = readFileSync(join(here, "presentationFitPolicy.ts"), "utf8");
 
     expect(policySrc).toMatch(/surface === "kiosk"\s*\?\s*"zoom"/);
+    expect(policySrc).toMatch(/preferPaintSafeScale/);
     expect(stageSrc).toMatch(/zoom:\s*scale/);
+    expect(stageSrc).toMatch(/preferPaintSafeScale/);
     expect(stageSrc).toMatch(/resolvePresentationScaleMethod/);
     expect(stageSrc).toMatch(/contain:\s*"strict"/);
     expect(pinSrc).toMatch(/el\.style\.top\s*=\s*"0"/);

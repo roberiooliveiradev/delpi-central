@@ -2,7 +2,10 @@ import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
 
+import { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
+import { ComunicadoVideoLoadOverlay } from "./ComunicadoVideoLoadOverlay";
 import { usePresentationPlayback } from "./presentationPlaybackContext";
+import { useVideoElementLoadState } from "./useVideoElementLoadState";
 
 type Props = {
   src: string;
@@ -21,7 +24,7 @@ function isSlideActive(node: HTMLElement | null): boolean {
 
 /**
  * Vídeo na apresentação/prévia: autoplay com áudio ao entrar no slide,
- * controles próprios (play/pause/mute) e sincroniza pausa com o deck.
+ * controles próprios (play/pause/mute), overlay de carga e sync com o deck.
  */
 export function ComunicadoPresentationVideo({ src, objectFit = "contain", className = "" }: Props) {
   const { deckPaused } = usePresentationPlayback();
@@ -33,6 +36,7 @@ export function ComunicadoPresentationVideo({ src, objectFit = "contain", classN
   const [muted, setMuted] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
   const hideTimerRef = useRef<number | null>(null);
+  const { phase, showLoadingOverlay } = useVideoElementLoadState(videoRef, src);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -172,12 +176,19 @@ export function ComunicadoPresentationVideo({ src, objectFit = "contain", classN
         preload="auto"
         style={{ objectFit }}
       />
+      {phase === "error" ? (
+        <div className={ensureComunicadoDualClass("tdp-presentation-video__load-overlay")}>
+          <ComunicadoMediaPlaceholder kind="video" state="error" />
+        </div>
+      ) : (
+        <ComunicadoVideoLoadOverlay visible={showLoadingOverlay} />
+      )}
       {inPresentationDeck ? (
         <div
           className={ensureComunicadoDualClass(
             [
               "tdp-presentation-video__controls",
-              controlsVisible || !playing
+              controlsVisible || !playing || showLoadingOverlay
                 ? "tdp-presentation-video__controls--visible"
                 : "tdp-presentation-video__controls--hidden",
             ].join(" "),

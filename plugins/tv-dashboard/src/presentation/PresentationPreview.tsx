@@ -10,6 +10,7 @@ import {
   DesignViewportStage,
   MeetingAnnotationOverlay,
   presentationStageEntranceClass,
+  presentationSlidesHaveVideo,
   buildAdminPresentationWsUrl,
   resolveSlideTransitionStyle,
   applyRuntimeInputValue,
@@ -277,6 +278,7 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
         className="tdp-stage__design"
         surface="kiosk"
         fit="auto"
+        preferPaintSafeScale={presentationSlidesHaveVideo(slides)}
       >
         {slides.map((slide, slideIndex) => {
           const active = slideIndex === index;

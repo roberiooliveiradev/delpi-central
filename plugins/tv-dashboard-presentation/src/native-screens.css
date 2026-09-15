@@ -564,6 +564,23 @@
   height: 100%;
 }
 
+.tdp-presentation-video__load-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  background: color-mix(in srgb, #0b1220 72%, transparent);
+}
+
+.tdp-presentation-video__load-overlay .tdp-comunicado__placeholder,
+.tdp-presentation-video__load-overlay .delpi-ui-comunicado__placeholder {
+  background: transparent;
+  border: none;
+}
+
 .tdp-presentation-video__controls {
   /* Controles do vídeo — âncora no bloco (não no centro do stage), sem cruzar a barra do deck. */
   position: absolute;

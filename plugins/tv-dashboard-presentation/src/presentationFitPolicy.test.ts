@@ -44,6 +44,15 @@ describe("resolvePresentationScaleMethod", () => {
     expect(resolvePresentationScaleMethod("preview")).toBe("transform");
     expect(resolvePresentationScaleMethod("thumbnail")).toBe("transform");
   });
+
+  it("preferPaintSafeScale força transform no kiosk (vídeo / Chromium)", () => {
+    expect(resolvePresentationScaleMethod("kiosk", { preferPaintSafeScale: true })).toBe(
+      "transform",
+    );
+    expect(resolvePresentationScaleMethod("preview", { preferPaintSafeScale: true })).toBe(
+      "transform",
+    );
+  });
 });
 
 describe("presentationSurfaceFromViewMode", () => {

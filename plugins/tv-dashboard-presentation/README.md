@@ -36,7 +36,7 @@ import {
 | `NativeSlideView` | Render por `screenKey` (OEE, OTD, comunicado…) |
 | `DesignViewportStage` | Escala uniforme do canvas de design no container |
 | `resolvePresentationFitMode` | Política contain/cover (`auto`→contain) |
-| `resolvePresentationScaleMethod` | kiosk→`zoom` (Adeus Pendrive); preview→`transform` |
+| `resolvePresentationScaleMethod` | kiosk→`zoom` (Adeus); preview→`transform`; com vídeo→`transform` (paint-safe) |
 | `usePresentationViewportPin` | Fixa palco no `visualViewport` (WebView / apps de roteamento) |
 | `ComunicadoBlockView` | Render blocos comunicado (texto, mídia, crop, formas, dados) |
 | `textViewProjection` | Resolver transversal para `textProjection` / `dataRef` em heading, text e shape (Onda 4P) |
@@ -104,7 +104,8 @@ Docker: `npm install` em **ambos** (`tv-dashboard-presentation` para tipos TS + 
 - Prefixo **`tdp-`** (tv-dashboard presentation)
 - Gráficos: **`tdp-series-chart*`** (título, legenda, eixos, grade, tabela de dados)
 - Modo kiosk público: `.tdp-stage--kiosk` dentro de `.pub-kiosk-root` (public-hub)
-- Preview admin (validação TV): `.tdp-stage--preview-shell` + `DesignViewportStage surface="kiosk"` (zoom). Filmstrip/thumbnail: `surface="preview"` (`transform`).
+- Preview admin (validação TV): `.tdp-stage--preview-shell` + `DesignViewportStage surface="kiosk"` (zoom; `preferPaintSafeScale` se houver vídeo). Filmstrip/thumbnail: `surface="preview"` (`transform`).
+- Vídeo: overlay canônico `ComunicadoVideoLoadOverlay` até `loadedmetadata` / durante `waiting` (editor + apresentação).
 - `ExternalSlideView` — iframe externo canônico (prévia + public-hub)
 - **Playback mode:** `playlist.playbackMode` + `?mode=` + toolbar; `autoAdvance: false` desliga o timer sem apagar `durationSec`. `?presenter=1` (notas) é ortogonal.
 - **Meeting sync:** com `syncPlaybackCursor`, `goNext`/`goPrevious` publicam `playback_cursor`; peers aplicam por `slideId` (ignora eco do `playbackClientId`).

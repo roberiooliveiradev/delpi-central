@@ -33,6 +33,11 @@ type Props = {
    * `contain` / `cover` forçam o modo (overrides).
    */
   fit?: PresentationFitMode;
+  /**
+   * Playlist com `<video>`: força `transform` no kiosk (CSS `zoom` apaga paint).
+   * Frame continua com `contain: strict` + caixa visual para host-fit.
+   */
+  preferPaintSafeScale?: boolean;
 };
 
 /**
@@ -145,11 +150,12 @@ export function DesignViewportStage({
   style,
   surface = "preview",
   fit = "auto",
+  preferPaintSafeScale = false,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState<number | null>(null);
   const [resolvedFit, setResolvedFit] = useState<PresentationFitResolved>("contain");
-  const scaleMethod = resolvePresentationScaleMethod(surface);
+  const scaleMethod = resolvePresentationScaleMethod(surface, { preferPaintSafeScale });
   const { width, height } = resolveViewportPixelSize(viewportProfile, {
     width: viewportWidth,
     height: viewportHeight,

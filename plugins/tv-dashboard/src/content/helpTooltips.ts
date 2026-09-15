@@ -190,7 +190,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertText: "Bloco de texto livre para mensagens e legendas.",
     insertImage: "Imagem posicionável no slide; envie o arquivo após inserir.",
     insertVideo:
-      "Vídeo em loop no slide (MP4/WEBM até 500 MB; arquivos grandes sobem em partes automaticamente); envie o arquivo após inserir.",
+      "Vídeo em loop no slide (MP4/WEBM até 500 MB; arquivos grandes sobem em partes automaticamente). Enquanto o arquivo carrega, o player mostra “Carregando vídeo…” — vídeos grandes podem demorar na primeira abertura; depois o navegador pode reaproveitar o cache HTTP (24h).",
     insertShape:
       "Formas geométricas com preenchimento e contorno. Em Linha, use as alças das pontas; aproxime de outro bloco para conectar.",
     chartData: "Fonte e vínculo dos dados do gráfico.",

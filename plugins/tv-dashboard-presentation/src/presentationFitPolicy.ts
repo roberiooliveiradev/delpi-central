@@ -27,11 +27,21 @@ export type PresentationFitMode = PresentationFitResolved | "auto";
 
 /**
  * Como aplicar a escala uniforme no DOM.
- * - `zoom` — altera caixa de layout (scrollWidth = visual); obrigatório no kiosk
+ * - `zoom` — altera caixa de layout (scrollWidth = visual); default no kiosk
  *   para Adeus Pendrive.
- * - `transform` — só pinta; ok na prévia admin (sem host «ajustar à tela»).
+ * - `transform` — só pinta; preview/thumbnail; **obrigatório** com vídeo
+ *   (`preferPaintSafeScale`) — CSS `zoom` no Chromium deixa `<video>` preto.
  */
 export type PresentationScaleMethod = "zoom" | "transform";
+
+export type ResolvePresentationScaleMethodOptions = {
+  /**
+   * Força `transform` (ex.: playlist com bloco vídeo).
+   * CSS `zoom` em ancestral costuma apagar a pintura do `<video>` no Chromium
+   * enquanto áudio/controles seguem — sintoma: tela preta com Pause ativo.
+   */
+  preferPaintSafeScale?: boolean;
+};
 
 /**
  * Quão perto os aspects precisam estar para tratar como «mesma família»
@@ -66,12 +76,15 @@ export function presentationStageEntranceClass(
 }
 
 /**
- * Kiosk → zoom (layout = visual para Adeus Pendrive).
- * Preview/thumbnail → transform (sem afetar medição do host).
+ * Kiosk → zoom (layout = visual para Adeus Pendrive), salvo paint-safe.
+ * Preview/thumbnail → transform.
+ * Com vídeo → sempre transform (Chromium + CSS zoom).
  */
 export function resolvePresentationScaleMethod(
   surface: PresentationFitSurface,
+  options?: ResolvePresentationScaleMethodOptions,
 ): PresentationScaleMethod {
+  if (options?.preferPaintSafeScale) return "transform";
   return surface === "kiosk" ? "zoom" : "transform";
 }
 

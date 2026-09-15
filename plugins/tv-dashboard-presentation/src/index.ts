@@ -25,6 +25,18 @@ export {
   usePresentationPlayback,
 } from "./presentationPlaybackContext";
 export { ComunicadoPresentationVideo } from "./ComunicadoPresentationVideo";
+export { ComunicadoVideoLoadOverlay } from "./ComunicadoVideoLoadOverlay";
+export { useVideoElementLoadState } from "./useVideoElementLoadState";
+export {
+  deriveVideoElementLoadPhase,
+  comunicadoBlocksHaveVideo,
+  slideNativeHasVideo,
+  presentationSlidesHaveVideo,
+  VIDEO_HAVE_METADATA,
+  type VideoElementLoadPhase,
+  type DeriveVideoElementLoadPhaseInput,
+  type DeriveVideoElementLoadPhaseResult,
+} from "./videoElementLoadState";
 export {
   buildAdminPresentationWsUrl,
   isTvDashboardPortalPath,
@@ -102,6 +114,7 @@ export {
   type PresentationFitResolved,
   type PresentationFitSurface,
   type PresentationScaleMethod,
+  type ResolvePresentationScaleMethodOptions,
 } from "./presentationFitPolicy";
 export { usePresentationViewportPin } from "./usePresentationViewportPin";
 export {

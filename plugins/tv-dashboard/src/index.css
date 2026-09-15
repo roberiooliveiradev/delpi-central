@@ -3184,6 +3184,9 @@ body.td-composer--marqueeing *{
   height: 100%;
   background: #0b1220;
 }
+.dashboard-tv-dashboard .td-composer__video-load-overlay{
+  z-index: 3;
+}
 .dashboard-tv-dashboard .td-composer__video-controls{
   position: absolute;
   left: 0;
