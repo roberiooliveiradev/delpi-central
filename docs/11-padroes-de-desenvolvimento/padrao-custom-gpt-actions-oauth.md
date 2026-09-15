@@ -1,14 +1,18 @@
 # Padrão — Custom GPT Actions (OpenAI) com OAuth Keycloak
 
-> **Status:** documentação oficial — setembro/2026  
-> **Escopo:** como expor um produto da Minha DELPI a um **Custom GPT** da OpenAI (Actions), com a mesma identidade e RBAC da UI  
+> **CURRENT STATUS:** BRIDGE / HISTORICAL IMPLEMENTATION PATTERN  
+> **Usar para:** manter GPT Actions existentes; bridge temporário explicitamente aprovado  
+> **Nova integração externa durável:** verificar a arquitetura suportada pelo provider atual e seguir a decisão arquitetural vigente  
+> **Regra Cursor:** `custom-gpt-actions-integration.mdc`  
 > **Não confundir com:** Chat interno Minha DELPI (`minha-delpi-ai-api` + Action Catalog OpenAPI)
+
+Custom GPT Actions **não** é o target arquitetural durável default. O detalhe operacional abaixo permanece válido para bridges existentes e para manutenção.
 
 ---
 
 ## 1. Objetivo
 
-Registrar o padrão já comprovado no **Transformômetro**, de forma **generalista**, para que outros produtos (Quality Action Plans, cadastros, dashboards operacionais, etc.) possam repetir o mesmo desenho sem reinventar auth, contrato ou ownership.
+Registrar o desenho operacional já comprovado (Transformômetro / TÉO, TV Dashboard / VISTA, API DELPI specialist) para **manter** superfícies GPT Actions e, quando um bridge temporário for aprovado, repetir auth, contrato e ownership sem reinventá-los.
 
 Resultado desejado:
 
@@ -75,13 +79,24 @@ Princípios (alinham às 8 responsabilidades):
 
 ## 4. Quando usar este padrão
 
-Usar quando:
+Antes de qualquer integração nova com provider externo:
 
-- o especialista precisa **consultar e/ou gravar** no mesmo produto da UI;
-- o volume de rotas CRUD é grande (dezenas/centenas) e o Custom GPT limita ~**30 operations**;
-- a empresa quer expertise em linguagem natural **fora** do portal, sem abrir API Key.
+```text
+verify current provider lifecycle
+→ classify durable vs bridge
+→ record migration/exit target when bridge
+```
 
-Não usar quando:
+Usar **este** documento quando:
+
+- a superfície GPT Actions **já existe** e precisa ser mantida;
+- um bridge temporário foi **explicitamente aprovado** após a verificação de lifecycle;
+- o especialista precisa consultar e/ou gravar no mesmo produto da UI, com user-parity OAuth;
+- o volume de rotas CRUD é grande e a façade precisa permanecer compacta.
+
+Não usar como default de integração nova durável. Para target durável, verificar a arquitetura suportada pelo provider atual (hoje: Plugin / remote MCP, quando essa for a decisão vigente).
+
+Também não usar quando:
 
 - basta o Chat Minha DELPI read-only;
 - o fluxo exige upload binário, assinatura manuscrita, locks ou magic-link (manter na UI / superfície dedicada);
@@ -308,7 +323,7 @@ Chat Minha DELPI do Transformômetro permanece read-only (`openapi-snapshot-chat
 
 ## 13. Candidatos a replicação (orientação)
 
-Ao planejar o próximo especialista, repetir este documento na ordem: **contrato facade → Keycloak client → deploy público → GPT Builder → smoke 401/403**.
+Somente após classificar a integração como **bridge temporário aprovado** (não como target durável). Ordem operacional: **contrato facade → Keycloak client → deploy público → GPT Builder → smoke 401/403**. Registrar exit/migration target.
 
 Exemplos de domínio (não prescritivos):
 
@@ -327,11 +342,13 @@ Antes de codificar: confirmar owner, RBAC existente, e se a facade cabe em ≤30
 
 | Tema | Regra / doc |
 |---|---|
+| Especialista externo / GPT Actions | `custom-gpt-actions-integration.mdc` |
 | Boundaries / ownership | `platform-architecture-boundaries.mdc` |
 | JWT / RBAC | `platform-security-identity-authorization.mdc` |
 | OpenAPI / integração | `platform-api-contracts-integration.mdc` |
 | Identifiers EN | `english-code-identifiers.mdc` |
+| Tools externas (segurança) | `ai-external-tools-security.mdc` |
 | Chat interno (outro padrão) | `openapi-first-universal-tool-routing.mdc`, `new-api-route-checklist.mdc` |
 | Deploy sequencial | `infra-sequential-container-startup.mdc` |
 
-Este padrão **não** substitui o checklist de Actions do Chat Minha DELPI; é um canal paralelo com OAuth usuário e facade própria.
+Este padrão operacional **não** substitui o checklist de Actions do Chat Minha DELPI nem a regra `custom-gpt-actions-integration.mdc`. É detalhe de bridge com OAuth usuário e facade própria.

@@ -92,12 +92,13 @@ Owner: `platform-api-contracts-integration.mdc`
 - `api-delpi-openapi-route-standards.mdc`
 - `api-delpi-response-contract.mdc`
 - `contract-evolution-backward-compatibility.mdc`
+- `custom-gpt-actions-integration.mdc`
 - `new-api-route-checklist.mdc`
 - `openapi-first-universal-tool-routing.mdc`
 - `operational-api-routing.mdc`
 - `tv-dashboard-optional-data-filters.mdc`
 
-Racional: identidade/semântica de operações, request/response, parâmetros, evolução e integração por contrato.
+Racional: identidade/semântica de operações, request/response, parâmetros, evolução, integração por contrato e façade compacta de especialista externo (GPT Actions bridge).
 
 ### Gates OpenAPI/FastAPI implementados
 

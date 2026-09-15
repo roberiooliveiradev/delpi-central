@@ -168,6 +168,7 @@ O Cursor deve raciocinar por responsabilidades, mas **não precisa carregar todo
 | Chat/LLM/RAG/agents/tools | `chat-intelligence-base.mdc`, `llm-stack-centralized.mdc` + subdomínio |
 | Inteligência/prompt/retrieval/planner/RAG/contexto | `ai-intelligence-evaluation.mdc`, `ai-context-and-tool-budget.mdc` |
 | OpenAPI/actions/providers externos do chat | `openapi-first-universal-tool-routing.mdc`, `operational-api-routing.mdc`, `new-api-route-checklist.mdc`, `ai-external-tools-security.mdc` |
+| Custom GPT / GPT Actions / GPT Builder / especialista externo / `gpt-actions` | `custom-gpt-actions-integration.mdc` + `platform-api-contracts-integration.mdc` + `platform-security-identity-authorization.mdc` + `ai-external-tools-security.mdc` (+ delivery/quality quando aplicável) |
 | Apresentação do chat | `schema-first-presentation-delivered.mdc`, `presentation-operational-decoupling.mdc` |
 | Conteúdo/regex/vocabulário do chat | `assistant-content-json.mdc` |
 | SQL/TOTVS/performance | `sql-query-development.mdc` + regra TOTVS aplicável |
@@ -175,6 +176,8 @@ O Cursor deve raciocinar por responsabilidades, mas **não precisa carregar todo
 | Module Federation patch | `mf-federation-patch-safety.mdc` |
 | Notificações/preferências | `notification-catalog-preferences.mdc` |
 | Domínio específico (TV Dashboard, Production Pulse Hub OTA, indicadores etc.) | regra do domínio apenas após responsabilidade transversal aplicável |
+
+Custom GPT / especialista externo é superfície distinta do Chat AI interno: não usar `openapi-first-universal-tool-routing.mdc` como owner da façade externa.
 
 Regra especializada de aplicação **não substitui** a responsabilidade transversal. Ela detalha uma exceção/contrato do domínio dentro dos guardrails gerais.
 

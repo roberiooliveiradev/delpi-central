@@ -19,6 +19,7 @@
       "api-delpi-openapi-route-standards.mdc",
       "api-delpi-response-contract.mdc",
       "contract-evolution-backward-compatibility.mdc",
+      "custom-gpt-actions-integration.mdc",
       "new-api-route-checklist.mdc",
       "openapi-first-universal-tool-routing.mdc",
       "operational-api-routing.mdc",

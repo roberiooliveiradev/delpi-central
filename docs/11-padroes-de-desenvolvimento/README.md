@@ -49,7 +49,7 @@ Ownership e inventário das regras filhas: [inventario-regras-cursor.md](./inven
 | Repositories / ports | [padrao-de-repository.md](./padrao-de-repository.md) |
 | Erros API | [padrao-de-erro.md](./padrao-de-erro.md) |
 | Eventos de domínio | [padrao-de-evento.md](./padrao-de-evento.md) |
-| Custom GPT Actions + OAuth Keycloak | [padrao-custom-gpt-actions-oauth.md](./padrao-custom-gpt-actions-oauth.md) |
+| Custom GPT Actions + OAuth Keycloak (bridge / histórico) | [padrao-custom-gpt-actions-oauth.md](./padrao-custom-gpt-actions-oauth.md) |
 | Code review | [checklist-code-review.md](./checklist-code-review.md) |
 
 ---

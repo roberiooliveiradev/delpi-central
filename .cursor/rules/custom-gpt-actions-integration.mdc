@@ -1,0 +1,391 @@
+---
+description: Especialistas externos / Custom GPT Actions — façade semântica owner-local, OpenAPI compacto, OAuth Keycloak user parity, PREPARE/ACT, writes governados, Knowledge e go-live
+alwaysApply: false
+---
+
+# Especialistas externos / Custom GPT Actions
+
+Owner primário: `platform-api-contracts-integration.mdc`.
+
+Cross-references (não ownership): `platform-architecture-boundaries.mdc`, `platform-security-identity-authorization.mdc`, `platform-quality-testing.mdc`, `platform-delivery-runtime-operations.mdc`, `ai-external-tools-security.mdc`.
+
+Não duplicar as decisões genéricas desses owners. Esta regra especializa o **consumidor externo de especialista** (Custom GPT / GPT Actions / GPT Builder).
+
+**Não confundir com** o Chat AI interno. `openapi-first-universal-tool-routing.mdc` continua autoridade de routing/tools do chat. Os conceitos podem compor; as autoridades não se misturam.
+
+## Quando carregar
+
+Carregar quando a tarefa envolver:
+
+```text
+Custom GPT
+GPT Actions
+GPT Builder
+external specialist / especialista externo
+gpt-actions/v1
+chatgpt-{product}
+OAuth para GPT
+OpenAI Actions
+specialist instructions
+Knowledge file de especialista
+```
+
+## Propósito
+
+```text
+application/domain owner
+→ compact semantic external facade
+→ authenticated end-user parity
+→ canonical application/domain behavior
+```
+
+O especialista é **consumidor externo**, não dono de domínio, persistência, RBAC ou catálogo.
+
+Não criar arquitetura paralela “GPT backend”.
+
+## Ciclo de vida
+
+```text
+Custom GPT Actions = TEMPORARY / BRIDGE
+unless a current explicit architecture decision says otherwise
+```
+
+Antes de iniciar integração nova com provider externo:
+
+```text
+verify current provider lifecycle
+→ classify durable vs bridge
+→ record migration/exit target when bridge
+```
+
+Estado atual da plataforma:
+
+```text
+GPT Actions bridge
+→ migration target = supported Plugin / remote MCP architecture
+```
+
+Não apresentar Custom GPT Actions como target arquitetural durável por default.
+
+Datas/cronogramas de vendor ficam em documentação/evidência atualizada — não nesta regra.
+
+Detalhe operacional histórico: `docs/11-padroes-de-desenvolvimento/padrao-custom-gpt-actions-oauth.md`.
+
+## Façade owner-local
+
+Preferir:
+
+```text
+/apps/{owner-api}/gpt-actions/v1
+```
+
+ou equivalente owner-local aprovado.
+
+A façade despacha para use cases, domain services, ports e write boundary **já existentes**.
+
+Proibido:
+
+- proxy HTTP genérico ou endpoint SQL genérico;
+- expor CRUD inteiro automaticamente;
+- regra/persistência dona do GPT;
+- backend central de GPT como autoridade de negócio;
+- `GPT routes → HTTP loopback interno → mesmo CRUD` quando o owner pode chamar o use case/write service local;
+- import de `domain`/`application` entre bounded contexts.
+
+Cross-context: HTTP/evento conforme `platform-architecture-boundaries.mdc`.
+
+## Superfície semântica compacta
+
+Dezenas/centenas de rotas internas **não** se expõem 1:1.
+
+Padrão preferido:
+
+```text
+catalog/context
+search/discovery
+analysis/preview
+prepare/suggest
+commit/workflow
+```
+
+Objetivo: superfície coerente e pequena — não otimizar só contagem.
+
+Guardrail atual: preferir **≤ ~30 operations importadas**. Se precisar muito mais: parar, redesenhar capability, não expor CRUD mecânico.
+
+Limites exatos do provider se verificam na documentação atual; não são verdade eterna.
+
+## Catálogo único
+
+Se o produto já possui capability catalog, operation registry, entity schema ou semantic command catalog, **ele continua autoridade**.
+
+A façade **projeta/expõe** o contrato necessário. Não cria segundo catálogo em instructions, Knowledge, JSON do GPT ou frontend.
+
+## OpenAPI de import
+
+Deve existir contrato específico do especialista. Padrão:
+
+```text
+GET /gpt-actions/v1/openapi.json
+```
+
+Público somente para import quando aprovado — **path exato**, nunca o prefixo inteiro.
+
+O documento importado:
+
+```text
+OpenAPI 3.1.x
+servers[0].url absolute HTTPS
+stable explicit operationId
+English technical identifiers
+schemas / security / errors explícitos
+somente a façade permitida
+```
+
+`/openapi.json` **não** entra em `paths` como Action. Não importar a OpenAPI completa da aplicação.
+
+Identidade de operação e breaking change: `platform-api-contracts-integration.mdc` + `contract-evolution-backward-compatibility.mdc`.
+
+Convenção atual da bridge: `operationId` `gpt_*` semântico e estável (`gpt_get_catalog`, `gpt_search_records`, `gpt_get_context`, `gpt_preview_change`, `gpt_commit_change`). Não usar auto-id de framework. Renomear `operationId` exige análise de compatibilidade.
+
+## AuthN / AuthZ
+
+Bridge atual:
+
+```text
+OpenAI/GPT
+→ OAuth Authorization Code
+→ Keycloak end-user identity
+→ Bearer JWT
+→ application facade
+```
+
+Um client confidencial por produto/especialista: `chatgpt-{product}`.
+
+Não reutilizar client público do Portal, client de outro especialista, service account ou credencial genérica para writes com user-parity.
+
+Client secret: infra/operador → configuração do provider. Nunca repo, prompt, Knowledge, frontend, logs ou relatório de execução.
+
+Autoridade:
+
+```text
+Keycloak = autenticação
+Core = RBAC/permissão de plataforma
+Domain/application API = autorização final de recurso/negócio
+GPT = intenção + interpretação + orquestração
+```
+
+JWT identifica usuário/contexto; JWT sozinho não concede regra final.
+
+Nunca autorizar por e-mail da conta OpenAI, metadata do GPT, tool description, estado de frontend ou scope do provider isolado.
+
+Testar: schema anônimo → 200; action de negócio anônima → 401. Envelope de erro da façade não enfraquece o middleware/shared auth.
+
+Detalhe: `platform-security-identity-authorization.mdc` + `ai-external-tools-security.mdc`.
+
+## READ / PREPARE / ACT
+
+Classificar capabilities. POST **não** é automaticamente ACT.
+
+```text
+suggest / preview / validate / simulate = PREPARE  (sem persistir)
+commit / create / update / delete / send / activate / finalize = ACT
+```
+
+quando materializam efeito. O contrato declara o comportamento real.
+
+PREPARE deve provar `persisted=false` (ou evidência semântica equivalente). Para operações materiais: estado autoritativo antes = estado depois do preview. Sem side effect oculto.
+
+ACT reutiliza o writer canônico da aplicação:
+
+```text
+UI  ↘
+      application write service / use case → persistence
+GPT ↗
+```
+
+Nunca writer GPT + writer UI paralelos.
+
+## Segurança de write
+
+ACT material, conforme aplicável:
+
+```text
+authenticated actor
+Core permission
+resource/domain AuthZ
+validated canonical payload
+idempotency
+OCC / version
+policy/risk
+authoritative postcondition
+audit/correlation
+```
+
+`2xx` ≠ outcome confirmado.
+
+Idempotência real para writes externos sujeitos a retry. Scope explícito, por exemplo `actor + operation + Idempotency-Key`:
+
+```text
+same key + same request → replay, sem segundo write
+same key + different request → conflict
+```
+
+Não implementar só em memória para produção. Concorrência atômica quando necessária.
+
+OCC: `expectedRevision` / `If-Match` / version / etag (ou equivalente) em recurso editável concorrentemente. Stale write = conflict; sem last-write-wins silencioso.
+
+PREPARE → ACT deve ligar o commit ao plano apresentado/validado (`planDigest`, fingerprint ou preparation id). Binding **não** substitui AuthZ, confirmação nem revision.
+
+Detalhe de contrato/idempotência: `platform-api-contracts-integration.mdc`.
+
+## Ações destrutivas e lote
+
+```text
+provider confirmation UI != DELPI authorization
+```
+
+Política canônica de confirmação permanece no backend/domínio.
+
+Sem confirmação backend verificável suficiente para ACT destrutivo externo: permitir PREPARE/preview; **não** declarar production-safe. Não criar `gpt_acknowledge_delete` invocável pelo modelo e tratar isso como gesto humano.
+
+Não assumir atomicidade de batch. Se atomicidade não for PROVEN: execução ordenada, stop on failure, `PARTIAL` explícito, sem rollback falso. O registro de idempotência preserva o outcome real.
+
+## Pós-condição autoritativa
+
+ACT material só é `VERIFIED` quando fonte autoritativa prova o resultado (recurso existe/ausente, campos, relação, ordem). Caso contrário: `OUTCOME_NOT_VERIFIED` (ou equivalente). Nunca `HTTP 200 → "feito"` sem postcondition quando material.
+
+## Instructions e Knowledge
+
+Manter separados:
+
+```text
+specialist-instructions.md
+Knowledge methodology / playbooks
+```
+
+Instructions: identidade, missão, comportamento, epistemologia, tool workflow, write governance, limites. Não colar metodologia inteira no prompt.
+
+Knowledge: métodos, playbooks, interpretação, vocabulário, heurísticas.
+
+Knowledge **não** é fonte de valores operacionais atuais, permissões, catálogo mutável, records nem autorização. Dados atuais vêm de Actions/APIs autoritativas.
+
+Especialistas analíticos preferem estados explícitos:
+
+```text
+OBSERVED / INFORMED
+CALCULATED
+INFERRED
+PROPOSED
+UNKNOWN
+```
+
+Invariantes: `INFERRED != FACT`; `PROPOSED != SAVED`; `PREVIEW != PERSISTED`; sucesso técnico ≠ outcome verificado.
+
+Pacote Builder, quando o produto tiver especialista completo (Abstraction Gate: só criar playbook/persona com necessidade real):
+
+```text
+{owner-api}/docs/gpt-actions/
+├── custom-gpt-actions.md
+├── openapi-gpt-actions.json
+├── specialist-instructions.md
+├── <specialist>-playbooks.md
+└── gpt-builder-go-live.md
+```
+
+## Go-live e evidência
+
+Configuração externa **não** é provada por documentação no repo. Separar:
+
+```text
+HTTP facade implemented
+OAuth client provisioned
+Builder configured
+login proven
+authenticated Actions proven
+production bridge proven
+```
+
+Não colapsar em “implemented”.
+
+Callback/redirect: usar o valor **atual** da superfície de gestão do provider. Configurar o redirect final exato. Wildcard só como bootstrap temporário.
+
+O provider precisa de HTTPS público. Não `localhost`, hostname Docker privado nem URL só interna. CORS/origins mínimos e explícitos conforme provider atual. Delivery: `platform-delivery-runtime-operations.mdc`.
+
+Classificar evidência live em níveis distintos:
+
+```text
+SOURCE IMPLEMENTATION
+LOCAL TEST
+LOCAL RUNTIME
+PUBLIC HTTP
+OAUTH
+PROVIDER BUILDER
+AUTHENTICATED READ
+AUTHENTICATED PREPARE
+AUTHENTICATED ACT
+PRODUCTION
+```
+
+Um nível não prova o próximo.
+
+## Erros e observabilidade
+
+O especialista precisa distinguir ao menos:
+
+```text
+authentication
+authorization
+validation
+not found
+conflict
+idempotency conflict
+revision conflict
+downstream failure
+outcome verification failure
+```
+
+Não vazar stack, SQL, secret, header de auth nem detalhe interno.
+
+Registrar sem secrets: `correlationId`, ator quando a política permitir, `operationId`, target, policy, idempotency, revision conflict, `persisted`, `verified`, duração/status. Sem chain-of-thought.
+
+Owners: `platform-reliability-observability.mdc`, `observability-standards.mdc`.
+
+## Matriz de testes
+
+Conforme aplicável (`platform-quality-testing.mdc`):
+
+- **Contrato:** OpenAPI válido; contagem esperada; `operationId`s estáveis; server absoluto; schema fora de `paths`; security explícita.
+- **Anônimo:** schema 200; action de negócio 401.
+- **RBAC:** sem permissão 403; read-only vs write; segregação de recurso.
+- **Funcional:** positive + sibling + negative.
+- **PREPARE:** sem persistência; policy/risk canônicos; mesmo payload/plano esperado pelo ACT.
+- **ACT:** operação segura/reversível; read-back autoritativo; cleanup.
+- **Reliability:** replay e conflito de idempotência; OCC stale; falha downstream.
+- **Security:** sem secret; sem API-key como autoridade de write; sem segundo RBAC/writer.
+
+ACT destrutivo live só com autorização explícita e política de confirmação backend **provada**.
+
+## Referências — nunca autoridade universal
+
+Extrair o mecanismo; não copiar domínio:
+
+- Transformômetro / TÉO
+- TV Dashboard / VISTA
+- API DELPI specialist (`LEGACY_TRANSITIONAL` / Plugin+MCP)
+
+## O que não generalizar
+
+Não copiar para outras aplicações: revision de playlist da TV, entity schemas do Transformômetro, nome de permissão do Product Master, `operationId`s/entidades/shape de catálogo específicos.
+
+Generalizar somente: façade owner-local, superfície compacta, OAuth user-parity, RBAC/AuthZ canônicos, PREPARE/ACT, idempotência, OCC, postcondition, separação Knowledge, evidência de go-live externo.
+
+## Anti-padrões
+
+- Tratar GPT Actions como target durável default.
+- Importar OpenAPI completa ou prefixo público inteiro.
+- Segunda matriz RBAC / segundo writer / API Key de write.
+- PREPARE que persiste.
+- Confirmação do provider como AuthZ DELPI.
+- Knowledge como fonte operacional/autorização.
+- Hardcodar callback histórico ou data de vendor nesta regra.
+- Usar routing do Chat interno como owner desta superfície.
