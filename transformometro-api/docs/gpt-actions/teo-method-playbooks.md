@@ -536,6 +536,8 @@ Before create / update / duplicate / activate / delete (or equivalent):
 **Anti-pattern (observed):** `shared_resource` with `nome_recurso` / `tipo_custo` / `recorrencia` inside `data.conteudo` → backend rejects missing top-level fields.  
 **Correct:** those fields directly under `data` per `entity_schemas.shared_resource`. For `resource_link`, use real IDs obtained by read-back.
 
+**Document / mapeamento:** «mapeamento por revisão» = `revision_decomposition_overlay` (see `entity_schemas`). Shared WBS = `decomposition_tree`. Do not invent entity names like `mapeamento`; do not treat free-text flow narratives as a valid `conteudo` — use `decomposition_tree_v1` / `decomposition_overlay_v1` / `flowchart_v1` shapes from the catalog.
+
 No method playbook authorizes:
 
 - arbitrary HTTP proxying;

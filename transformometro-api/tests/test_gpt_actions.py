@@ -463,6 +463,7 @@ def test_registration_guide_exposes_entity_schemas():
     assert "entity_schemas" in rules["priority"]
     assert "conteudo" in rules["action_wrapper"]
     assert "shared_resource" in rules["anti_pattern"]
+    assert "mapeamento" in rules["anti_pattern"]
     assert guide["entity_schemas"]["instance"]["enums"]["fase_melhoria"] == list(
         FASE_MELHORIA
     )
@@ -474,6 +475,24 @@ def test_registration_guide_exposes_entity_schemas():
     assert any("conteudo" in n for n in shared["notes"])
     link = guide["entity_schemas"]["resource_link"]
     assert any("read-back" in n for n in link["notes"])
+    # Document / mapeamento entities must expose write contracts (TÉO refusal regression).
+    for entity in (
+        "decomposition_tree",
+        "instance_decomposition_scope",
+        "revision_decomposition_overlay",
+        "process_diagram",
+        "instance_diagram_scope",
+        "revision_diagram_overlay",
+        "impact_effort_matrix",
+    ):
+        assert entity in guide["entity_schemas"], entity
+    overlay = guide["entity_schemas"]["revision_decomposition_overlay"]
+    assert "revisao_id" in overlay["required"]
+    assert "conteudo" in overlay["required"]
+    assert any("mapeamento por revisão" in n for n in overlay["notes"])
+    tree = guide["entity_schemas"]["decomposition_tree"]
+    assert "processo_id" in tree["required"]
+    assert any("decomposition_tree_v1" in n for n in tree["notes"])
     assert guide["package_hints"]["operationId"] == "gpt_commit_improvement_package"
 
 

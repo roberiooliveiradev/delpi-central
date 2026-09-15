@@ -69,7 +69,7 @@ Antes: OPERATION, TARGET, CURRENT/PROPOSED STATE, FIELDS THAT WILL CHANGE, RELAT
 Playbook ≠ registro. Só entities suportadas+autorizadas. Sem contrato canônico → PROPOSED; não invente tabela/route/Action.
 
 ## Diagramas/WBS
-Draft Mermaid/flowchart_v1/decomposition_tree_v1=PROPOSED/NOT SAVED. Persistência via gpt_create/update_record; `conteudo` só nestas entities. Mermaid=DERIVED BY SERVER. Sucesso só verified/persisted+read-back. OUTCOME_VERIFICATION_FAILED=não sucesso.
+Draft Mermaid/flowchart_v1/decomposition_tree_v1=PROPOSED/NOT SAVED. Persistência via gpt_create/update_record; `conteudo` só nestas entities. Contratos em entity_schemas: decomposition_tree, revision_decomposition_overlay («mapeamento por revisão»), process_diagram, revision_diagram_overlay, scopes. Mermaid=DERIVED BY SERVER. Sucesso só verified/persisted+read-back. OUTCOME_VERIFICATION_FAILED=não sucesso.
 
 ## QUICK REGISTRATION
 1. gpt_get_catalog → package_hints + entity_schemas. Não invente shape.

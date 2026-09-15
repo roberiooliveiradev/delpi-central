@@ -74,11 +74,27 @@ def build_registration_guide() -> dict[str, Any]:
                 "(volume_mensal + tempo_medio_execucao_min)."
             ),
             "investment": "One-time or recurring cost lines on a non-baseline revision.",
+            "decomposition_tree": (
+                "Process WBS / mapeamento macro (entity=decomposition_tree, id=processo_id). "
+                "Shared tree for all instances/revisions."
+            ),
+            "revision_decomposition_overlay": (
+                "Per-revision mapeamento delta (entity=revision_decomposition_overlay, "
+                "id=revisao_id). AS-IS vs TO-BE differences on top of the shared tree — "
+                "not free-text prose."
+            ),
+            "process_diagram": (
+                "Process macro flowchart (entity=process_diagram, id=processo_id). "
+                "format=flowchart_v1; Mermaid is server-derived."
+            ),
         },
         "write_contract_rules": {
             "priority": (
                 "entity_schemas.<entity> is the primary write contract. "
-                "If the generic Action signature diverges, follow the entity schema."
+                "If the generic Action signature diverges, follow the entity schema. "
+                "Document entities (decomposition_*/process_diagram/instance_*_scope/"
+                "revision_*_overlay/impact_effort_matrix) are listed in entity_schemas — "
+                "do not treat catalog.entities presence alone as 'no write contract'."
             ),
             "action_wrapper": (
                 "Always send {data:{...}}. Put canonical fields at data.<field>. "
@@ -87,7 +103,9 @@ def build_registration_guide() -> dict[str, Any]:
             ),
             "anti_pattern": (
                 "shared_resource with nome_recurso/tipo_custo/recorrencia inside data.conteudo "
-                "is invalid; those fields belong directly under data."
+                "is invalid; those fields belong directly under data. "
+                "Also invalid: inventing entity names like 'mapeamento' — use "
+                "decomposition_tree / revision_decomposition_overlay / process_diagram."
             ),
             "before_write": [
                 "Call gpt_get_catalog and read entity_schemas for the exact entity.",
@@ -166,7 +184,11 @@ def build_registration_guide() -> dict[str, Any]:
                 "id": "governed_followups",
                 "ask": [],
                 "actions": [
-                    "Diagrams and WBS/decomposition may be persisted via GPT only when the API surface supports the write and live manage authorization succeeds; always PREPARE → SHOW → CONFIRM → WRITE → VERIFY.",
+                    "WBS/mapeamento: entity_schemas.decomposition_tree then "
+                    "revision_decomposition_overlay (and instance_decomposition_scope when needed).",
+                    "Diagrams: entity_schemas.process_diagram then revision_diagram_overlay "
+                    "(and instance_diagram_scope when needed).",
+                    "Always PREPARE → SHOW → CONFIRM → WRITE → VERIFY; manage AuthZ required.",
                     "Point user to Minha DELPI UI for evidence uploads and meeting-minute handwritten signatures.",
                     "Offer gpt_analyze for KPIs after recalculate.",
                 ],
@@ -374,6 +396,96 @@ def build_registration_guide() -> dict[str, Any]:
                 "notes": [
                     "Links a shared resource to a revision for rateio.",
                     "Use real revisao_id and recurso_compartilhado_id from read-back; never invent IDs.",
+                ],
+            },
+            "decomposition_tree": {
+                "required": ["processo_id", "conteudo"],
+                "optional": [],
+                "enums": {},
+                "defaults": {},
+                "notes": [
+                    "Upsert via gpt_create_record or gpt_update_record (id=processo_id).",
+                    "conteudo.format must be decomposition_tree_v1; format_version=1.",
+                    "conteudo.nodes[]: id, level (processo_chave|tarefa|sub_tarefa), "
+                    "ordem, label, parent_id (null for processo_chave).",
+                    "This is the shared WBS/mapeamento macro — not per-revision prose.",
+                    "Requires manage access on the process.",
+                ],
+            },
+            "instance_decomposition_scope": {
+                "required": ["instancia_id"],
+                "optional": [
+                    "node_ids",
+                    "inherit_all",
+                    "include_descendants",
+                ],
+                "enums": {},
+                "defaults": {"inherit_all": True, "include_descendants": True},
+                "notes": [
+                    "Upsert; id on update path = instancia_id.",
+                    "Which WBS nodes from the process tree apply to this instance.",
+                    "Fields go under data (not inside conteudo).",
+                ],
+            },
+            "revision_decomposition_overlay": {
+                "required": ["revisao_id", "conteudo"],
+                "optional": [],
+                "enums": {},
+                "defaults": {},
+                "notes": [
+                    "Canonical name for 'mapeamento por revisão'. Upsert; id=revisao_id.",
+                    "conteudo.format must be decomposition_overlay_v1; format_version=1.",
+                    "conteudo fields: node_overrides{}, disabled_node_ids[], extra_nodes[].",
+                    "node_overrides.<node_id>.highlight in asis|tobe|changed|removed.",
+                    "Do NOT put free-text flow narratives as conteudo; model steps as "
+                    "tree nodes (decomposition_tree) and/or overlay extras/overrides.",
+                    "Requires manage access on the revision's instance/process.",
+                ],
+            },
+            "process_diagram": {
+                "required": ["processo_id", "conteudo"],
+                "optional": [],
+                "enums": {},
+                "defaults": {},
+                "notes": [
+                    "Upsert; id=processo_id. conteudo.format=flowchart_v1; format_version=1.",
+                    "conteudo: nodes[], edges[] (lanes optional). Mermaid is DERIVED BY SERVER.",
+                    "Macro flowchart of the master process (not revision-specific alone).",
+                ],
+            },
+            "instance_diagram_scope": {
+                "required": ["instancia_id"],
+                "optional": [
+                    "node_ids",
+                    "inherit_all",
+                    "include_boundary_edges",
+                    "include_descendants",
+                ],
+                "enums": {},
+                "defaults": {"inherit_all": True, "include_descendants": True},
+                "notes": [
+                    "Upsert; id=instancia_id. Scope of macro diagram nodes for the instance.",
+                    "Fields under data (not conteudo).",
+                ],
+            },
+            "revision_diagram_overlay": {
+                "required": ["revisao_id", "conteudo"],
+                "optional": [],
+                "enums": {},
+                "defaults": {},
+                "notes": [
+                    "Upsert; id=revisao_id. conteudo.format=flowchart_overlay_v1.",
+                    "Per-revision diagram delta on top of the process macro flowchart.",
+                ],
+            },
+            "impact_effort_matrix": {
+                "required": ["revisao_id"],
+                "optional": ["modo", "inputs_manuais", "overrides"],
+                "enums": {},
+                "defaults": {},
+                "notes": [
+                    "Update only (no create). id=revisao_id.",
+                    "Use gpt_update_record entity=impact_effort_matrix.",
                 ],
             },
         },
