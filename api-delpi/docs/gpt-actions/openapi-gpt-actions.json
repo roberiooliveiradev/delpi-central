@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.1",
   "info": {
-    "title": "API DELPI GPT Actions V1",
+    "title": "API DELPI GPT Actions V1 (LEGACY_TRANSITIONAL)",
     "version": "1.0.0",
-    "description": "Compact READ-ONLY facade for Custom GPT. Approval: API-DELPI-GPT-004A.2. AuthZ remains backend ENGINEERING_LMP_ACCESS."
+    "description": "LEGACY_TRANSITIONAL READ-ONLY facade. Strategic target is OpenAI Plugin + MCP. Approval: API-DELPI-GPT-004A.2. AuthZ remains backend ENGINEERING_LMP_ACCESS."
   },
   "servers": [
     {
@@ -16,7 +16,7 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT",
-        "description": "Keycloak access token from OAuth Authorization Code (client chatgpt-api-delpi). Audience must include delpi-central."
+        "description": "Keycloak user access token (OAuth Authorization Code + PKCE). Audience must include delpi-central. Do not use service accounts."
       }
     },
     "schemas": {

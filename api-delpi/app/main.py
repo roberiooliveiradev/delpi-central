@@ -16,6 +16,7 @@ from app.startup.run_plugins_migrations_on_startup import (
 from app.startup.schedule_openapi_consumer_notify import (
     schedule_openapi_consumer_notify_on_startup,
 )
+from app.interface.mcp import combine_lifespan, mcp_http_app, mcp_metadata_router
 
 from app.interface.socket.audit_5s_handlers import register_audit_5s_socket_handlers
 from app.interface.socket.sio_server import create_socket_app
@@ -128,7 +129,7 @@ check_credentials()
 # ==========================================================
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def _app_lifespan(app: FastAPI):
     run_plugins_migrations_on_startup()
     schedule_openapi_consumer_notify_on_startup()
     try:
@@ -148,7 +149,7 @@ app = FastAPI(
     root_path="/apps/api-delpi",
     docs_url=None,
     redoc_url=None,
-    lifespan=lifespan,
+    lifespan=combine_lifespan(_app_lifespan, mcp_http_app),
 )
 
 
@@ -328,6 +329,9 @@ app.include_router(planejamento_orcamentario_router.router)
 app.include_router(product_drawing_routes.router, prefix="/products", tags=["products"])
 app.include_router(product_routes.router, prefix="/products", tags=["products"])
 app.include_router(gpt_actions_routes.router)
+app.include_router(mcp_metadata_router)
+# Streamable HTTP MCP (external path: /apps/api-delpi/mcp). Auth via jwt_middleware.
+app.mount("/mcp", mcp_http_app)
 app.include_router(customer_routes.router)
 app.include_router(sale_routes.router, prefix="/sales", tags=["sales"])
 app.include_router(system_routes.router, prefix="/system", tags=["system"])

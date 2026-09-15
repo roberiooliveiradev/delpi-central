@@ -1,0 +1,9 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "api-delpi": {
+      "type": "streamable-http",
+      "url": "https://minhadelpi.com.br/apps/api-delpi/mcp"
+    }
+  }
+}

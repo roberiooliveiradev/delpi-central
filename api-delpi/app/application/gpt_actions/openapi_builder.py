@@ -185,8 +185,13 @@ def build_gpt_actions_openapi(
             },
         },
         "x-delpi-gpt-actions": {
+            "status": "LEGACY_TRANSITIONAL",
+            "strategicTarget": "openai-plugin-mcp",
             "importedOperationIds": list(GPT_ACTIONS_OPERATION_IDS),
             "schemaHttpOperationId": "gpt_get_openapi_schema",
-            "note": "openapi.json path is public for import but omitted from paths.",
+            "note": (
+                "openapi.json path is public for import but omitted from paths. "
+                "Strategic external integration is OpenAI Plugin + MCP."
+            ),
         },
     }

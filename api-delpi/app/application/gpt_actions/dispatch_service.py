@@ -1,16 +1,11 @@
-"""Dispatch Custom GPT Actions to existing api-delpi application use cases."""
+"""Dispatch Custom GPT Actions to shared external semantic capabilities."""
 
 from __future__ import annotations
 
 from typing import Any
 
-from app.application.dto.product.list_products_requests import ListProductsRequest
-from app.application.gpt_actions.catalog_service import build_gpt_catalog
-from app.application.gpt_actions.constants import GPT_PRODUCT_SEARCH_MAX_PAGE_SIZE
-from app.application.gpt_actions.product_search_projection import (
-    project_product_search_page,
-)
-from app.composition.product_composer import build_search_products_use_case
+from app.application.external_capabilities.catalog_service import build_gpt_catalog
+from app.application.external_capabilities.product_search_service import search_products
 
 
 class GptActionsDispatchService:
@@ -26,18 +21,13 @@ class GptActionsDispatchService:
         page: int = 1,
         page_size: int = 50,
     ) -> dict[str, Any]:
-        safe_page = max(1, int(page or 1))
-        safe_size = min(
-            max(1, int(page_size or GPT_PRODUCT_SEARCH_MAX_PAGE_SIZE)),
-            GPT_PRODUCT_SEARCH_MAX_PAGE_SIZE,
-        )
-        dto = ListProductsRequest(
+        # HTTP decorator already enforces ENGINEERING_LMP_ACCESS; avoid double-check noise.
+        return search_products(
             code=code,
             description=description,
             group_code=group_code,
-            customer_reference=None,
-            page=safe_page,
-            page_size=safe_size,
+            page=page,
+            page_size=page_size,
+            enforce_authz=False,
+            tool_name="gpt_search_products",
         )
-        result = build_search_products_use_case().execute(dto)
-        return project_product_search_page(result.to_dict())

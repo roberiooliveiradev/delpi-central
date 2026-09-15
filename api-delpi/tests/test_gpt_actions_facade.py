@@ -30,6 +30,9 @@ def test_openapi_schema_is_public_exact_path_only() -> None:
     assert _is_public_delpi_path("/gpt-actions/v1/catalog") is False
     assert _is_public_delpi_path("/gpt-actions/v1/products/search") is False
     assert _is_public_delpi_path("/gpt-actions/v1/") is False
+    assert _is_public_delpi_path("/.well-known/oauth-protected-resource") is True
+    assert _is_public_delpi_path("/apps/api-delpi/.well-known/oauth-protected-resource") is True
+    assert _is_public_delpi_path("/mcp") is False
 
 
 def test_openapi_builder_omits_openapi_path_and_uses_31() -> None:
@@ -45,6 +48,7 @@ def test_openapi_builder_omits_openapi_path_and_uses_31() -> None:
         doc["paths"][path]["get"]["operationId"] for path in doc["paths"]
     }
     assert ids == set(GPT_ACTIONS_OPERATION_IDS)
+    assert doc["x-delpi-gpt-actions"]["status"] == "LEGACY_TRANSITIONAL"
 
 
 def test_project_product_search_item_allowlist_fail_closed() -> None:
@@ -84,8 +88,10 @@ def test_project_product_search_page_preserves_pagination() -> None:
     assert page["items"][0]["product_code"] == "A"
 
 
-@patch("app.application.gpt_actions.dispatch_service.build_search_products_use_case")
-def test_gpt_search_products_caps_page_size_and_projects(mock_build) -> None:
+@patch("delpi_auth.authorization.resolve_user_context")
+@patch("app.composition.product_composer.build_search_products_use_case")
+def test_gpt_search_products_caps_page_size_and_projects(mock_build, mock_user) -> None:
+    mock_user.return_value = MagicMock(is_superadmin=True, permissions=[])
     product = MagicMock()
     product.to_dict.return_value = {
         "code": "10080160",
@@ -125,22 +131,56 @@ def test_gpt_search_products_caps_page_size_and_projects(mock_build) -> None:
     assert request.customer_reference is None
 
 
-@patch("app.application.gpt_actions.catalog_service.get_current_user")
-def test_gpt_get_catalog_lists_v1_ops(mock_user) -> None:
-    user = MagicMock()
-    user.is_superadmin = True
-    user.permissions = []
-    mock_user.return_value = user
+@patch("delpi_auth.authorization.resolve_user_context")
+@patch("app.application.external_capabilities.catalog_service.user_can_search_products")
+def test_gpt_get_catalog_lists_v1_ops_without_raw_rbac(mock_can, mock_user) -> None:
+    mock_user.return_value = MagicMock(is_superadmin=True, permissions=[])
+    mock_can.return_value = True
 
     response = gpt_get_catalog()
     body = json.loads(response.body.decode())
+    payload = json.dumps(body)
 
     assert body["success"] is True
     assert body["meta"]["operationId"] == "gpt_get_catalog"
     assert body["data"]["readOnly"] is True
+    assert body["data"]["status"] == "LEGACY_TRANSITIONAL"
     assert body["data"]["approvalReference"] == "API-DELPI-GPT-004A.2"
     assert "gpt_search_products" in body["data"]["allowedCapabilities"]
     assert body["data"]["dataClassification"] == "INTERNAL"
+    assert "requiredPermissionAnyOf" not in payload
+    assert "api-delpi.access" not in payload
+    assert "dashboard-engineering.view" not in payload
+    assert "dashboard-lmps.view" not in payload
+
+
+@patch("delpi_auth.authorization.resolve_user_context")
+@patch("app.application.external_capabilities.catalog_service.user_can_search_products")
+def test_gpt_get_catalog_marks_search_unavailable_without_permission(
+    mock_can, mock_user
+) -> None:
+    mock_user.return_value = MagicMock(is_superadmin=False, permissions=[])
+    mock_can.return_value = False
+    response = gpt_get_catalog()
+    body = json.loads(response.body.decode())
+    caps = {c["operationId"]: c for c in body["data"]["capabilities"]}
+    assert caps["gpt_search_products"]["available"] is False
+    assert "gpt_search_products" not in body["data"]["allowedCapabilities"]
+    assert "requiredPermissionAnyOf" not in json.dumps(body)
+
+
+@patch("delpi_auth.authorization.resolve_user_context")
+@patch("app.application.gpt_actions.dispatch_service.search_products")
+def test_gpt_search_products_sanitizes_500(mock_search, mock_user) -> None:
+    mock_user.return_value = MagicMock(is_superadmin=True, permissions=[])
+    mock_search.side_effect = RuntimeError("SELECT * FROM secret; host=db.internal")
+    response = gpt_search_products(page=1, page_size=10)
+    body = json.loads(response.body.decode())
+    assert response.status_code == 500
+    assert body["success"] is False
+    assert body["message"] == "Internal error while processing the request."
+    assert "SELECT" not in body["message"]
+    assert "db.internal" not in json.dumps(body)
 
 
 def test_gpt_get_openapi_schema_returns_document() -> None:

@@ -1,4 +1,4 @@
-"""HTTP surface for OpenAI Custom GPT Actions (api-delpi V1 facade)."""
+"""HTTP surface for OpenAI Custom GPT Actions (LEGACY_TRANSITIONAL)."""
 
 from __future__ import annotations
 
@@ -8,6 +8,9 @@ from typing import Optional
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 
+from app.application.external_capabilities.constants import (
+    EXTERNAL_INTERNAL_ERROR_MESSAGE,
+)
 from app.application.gpt_actions.constants import (
     GPT_ACTIONS_BASE_PATH,
     GPT_PRODUCT_SEARCH_DEFAULT_PAGE_SIZE,
@@ -20,11 +23,11 @@ from app.config import settings
 from app.utils.logger import log_error
 from app.core.responses import error_response
 from app.interface.http.route_response_helpers import api_delpi_success
-from delpi_auth.authorization import require_any_permission
+from delpi_auth.authorization import require_any_permission, require_auth
 
 router = APIRouter(
     prefix=GPT_ACTIONS_BASE_PATH,
-    tags=["API DELPI GPT Actions"],
+    tags=["API DELPI GPT Actions (legacy)"],
 )
 logger = logging.getLogger(__name__)
 _dispatch = GptActionsDispatchService()
@@ -33,7 +36,7 @@ _dispatch = GptActionsDispatchService()
 @router.get(
     "/openapi.json",
     operation_id="gpt_get_openapi_schema",
-    summary="Public OpenAPI schema for Custom GPT import",
+    summary="Public OpenAPI schema for Custom GPT import (legacy)",
     include_in_schema=False,
 )
 def gpt_get_openapi_schema():
@@ -48,9 +51,9 @@ def gpt_get_openapi_schema():
 @router.get(
     "/catalog",
     operation_id="gpt_get_catalog",
-    summary="List V1 GPT capabilities and field allowlist",
+    summary="List V1 GPT capabilities and field allowlist (legacy)",
 )
-@require_any_permission(ENGINEERING_LMP_ACCESS)
+@require_auth()
 def gpt_get_catalog():
     try:
         data = _dispatch.get_catalog()
@@ -61,13 +64,18 @@ def gpt_get_catalog():
         )
     except Exception as exc:
         log_error(f"gpt_get_catalog failed: {exc}")
-        return error_response(str(exc), status_code=500)
+        return error_response(
+            EXTERNAL_INTERNAL_ERROR_MESSAGE,
+            status_code=500,
+            code="INTERNAL_ERROR",
+            recoverable=True,
+        )
 
 
 @router.get(
     "/products/search",
     operation_id="gpt_search_products",
-    summary="Search products with minimal projection",
+    summary="Search products with minimal projection (legacy)",
 )
 @require_any_permission(ENGINEERING_LMP_ACCESS)
 def gpt_search_products(
@@ -96,4 +104,9 @@ def gpt_search_products(
         )
     except Exception as exc:
         log_error(f"gpt_search_products failed: {exc}")
-        return error_response(str(exc), status_code=500)
+        return error_response(
+            EXTERNAL_INTERNAL_ERROR_MESSAGE,
+            status_code=500,
+            code="INTERNAL_ERROR",
+            recoverable=True,
+        )

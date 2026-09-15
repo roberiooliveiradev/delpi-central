@@ -1,10 +1,19 @@
-"""Frozen V1 constants for api-delpi Custom GPT Actions (004A.2)."""
+"""Frozen V1 constants for api-delpi Custom GPT Actions (LEGACY_TRANSITIONAL)."""
 
 from __future__ import annotations
+
+from app.application.external_capabilities.constants import (
+    PRODUCT_SEARCH_DEFAULT_PAGE_SIZE,
+    PRODUCT_SEARCH_DENIED_QUERY_PARAMS,
+    PRODUCT_SEARCH_FIELD_MAP,
+    PRODUCT_SEARCH_MAX_PAGE_SIZE,
+    PRODUCT_SEARCH_RESPONSE_FIELDS,
+)
 
 GPT_ACTIONS_BASE_PATH = "/gpt-actions/v1"
 GPT_ACTIONS_GATEWAY_ROOT = "/apps/api-delpi"
 GPT_ACTIONS_PUBLIC_FALLBACK_ORIGIN = "https://minhadelpi.com.br"
+GPT_ACTIONS_STATUS = "LEGACY_TRANSITIONAL"
 
 # Imported schema operationIds (openapi.json HTTP id stays outside paths).
 GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
@@ -13,16 +22,9 @@ GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
 )
 GPT_ACTIONS_SCHEMA_HTTP_OPERATION_ID = "gpt_get_openapi_schema"
 
-GPT_PRODUCT_SEARCH_MAX_PAGE_SIZE = 50
-GPT_PRODUCT_SEARCH_DEFAULT_PAGE_SIZE = 50
+GPT_PRODUCT_SEARCH_MAX_PAGE_SIZE = PRODUCT_SEARCH_MAX_PAGE_SIZE
+GPT_PRODUCT_SEARCH_DEFAULT_PAGE_SIZE = PRODUCT_SEARCH_DEFAULT_PAGE_SIZE
 
-# Organizational allowlist (004A.2). Maps GPT field → internal search item key.
-GPT_SEARCH_FIELD_MAP: dict[str, str] = {
-    "product_code": "code",
-    "description": "description",
-    "group_category": "group_code",
-}
-GPT_SEARCH_RESPONSE_FIELDS: tuple[str, ...] = tuple(GPT_SEARCH_FIELD_MAP.keys())
-
-# customer_reference and every other Product DTO field remain DENY_BY_DEFAULT.
-GPT_SEARCH_DENIED_QUERY_PARAMS: frozenset[str] = frozenset({"customer_reference"})
+GPT_SEARCH_FIELD_MAP = PRODUCT_SEARCH_FIELD_MAP
+GPT_SEARCH_RESPONSE_FIELDS = PRODUCT_SEARCH_RESPONSE_FIELDS
+GPT_SEARCH_DENIED_QUERY_PARAMS = PRODUCT_SEARCH_DENIED_QUERY_PARAMS

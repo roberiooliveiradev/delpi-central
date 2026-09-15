@@ -20,3 +20,4 @@ pytest
 pytest-asyncio
 redis
 bleach==6.1.0
+mcp>=1.28,<2
