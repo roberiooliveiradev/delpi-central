@@ -20,9 +20,8 @@ describe("resolveHttpErrorMessage", () => {
     expect(resolveHttpErrorMessage(null, 401)).toBe("Não autorizado. Faça login novamente.");
   });
 
-  it("413 explica limite de upload de vídeo", () => {
-    expect(resolveHttpErrorMessage(null, 413)).toBe(
-      "Arquivo grande demais para o servidor (limite 500 MB).",
-    );
+  it("413 explica limite de borda e teto do Painéis TV", () => {
+    expect(resolveHttpErrorMessage(null, 413)).toMatch(/100 MB/);
+    expect(resolveHttpErrorMessage(null, 413)).toMatch(/500 MB/);
   });
 });

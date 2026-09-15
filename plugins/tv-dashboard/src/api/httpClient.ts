@@ -163,6 +163,12 @@ export type HttpPostFormOptions = {
   onProgress?: (ratio: number) => void;
 };
 
+export type HttpPutBytesOptions = {
+  signal?: AbortSignal;
+  onProgress?: (ratio: number) => void;
+  contentType?: string;
+};
+
 /**
  * Upload multipart com progresso (XHR). `onProgress` recebe 0–1.
  */
@@ -225,6 +231,61 @@ export async function httpPostForm<T>(
       reject(new DOMException("Aborted", "AbortError"));
     };
     xhr.send(form);
+  });
+}
+
+/** PUT de bytes brutos com progresso (chunks de upload). */
+export async function httpPutBytes<T>(
+  url: string,
+  body: Blob,
+  options: HttpPutBytesOptions = {},
+): Promise<T> {
+  const { signal, onProgress, contentType = "application/octet-stream" } = options;
+  return new Promise<T>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", url);
+    const headers = authHeaders();
+    headers["Content-Type"] = contentType;
+    for (const [key, value] of Object.entries(headers)) {
+      xhr.setRequestHeader(key, value);
+    }
+    xhr.responseType = "json";
+
+    const onAbort = () => {
+      xhr.abort();
+    };
+    if (signal) {
+      if (signal.aborted) {
+        reject(new DOMException("Aborted", "AbortError"));
+        return;
+      }
+      signal.addEventListener("abort", onAbort, { once: true });
+    }
+
+    xhr.upload.onprogress = (event) => {
+      if (!onProgress || !event.lengthComputable || event.total <= 0) return;
+      onProgress(Math.min(1, Math.max(0, event.loaded / event.total)));
+    };
+
+    xhr.onload = () => {
+      signal?.removeEventListener("abort", onAbort);
+      const status = xhr.status;
+      const responseBody = xhr.response;
+      if (status < 200 || status >= 300) {
+        reject(new HttpRequestError(resolveHttpErrorMessage(responseBody, status), status));
+        return;
+      }
+      resolve(responseBody as T);
+    };
+    xhr.onerror = () => {
+      signal?.removeEventListener("abort", onAbort);
+      reject(new HttpRequestError("Falha de rede no upload.", 0));
+    };
+    xhr.onabort = () => {
+      signal?.removeEventListener("abort", onAbort);
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+    xhr.send(body);
   });
 }
 

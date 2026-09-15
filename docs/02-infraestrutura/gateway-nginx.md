@@ -88,6 +88,8 @@ Configuração global relevante:
 |---|---|---|
 | `client_max_body_size` | `20m` (global) | Uploads / manifestos grandes |
 | `client_max_body_size` | `520m` em `/apps/tv-dashboard-api/` | Biblioteca TV — vídeo até 500 MB (+ margem multipart) |
+
+**Cloudflare (produção `minhadelpi.com.br`):** Free/Pro rejeitam body **≥ 100 MB** com HTTP 413 (`server: cloudflare`), independentemente do nginx. O MFE/API usam upload em partes (`/media/uploads` + chunks ≤ 90 MB) para vídeos grandes.
 | `proxy_buffer_size` | `256k` | JWT e cookies grandes |
 | `large_client_header_buffers` | `8 256k` | Evita 494 em headers extensos |
 | `proxy_read_timeout` | `86400` em sockets/long poll | SSE/chat |

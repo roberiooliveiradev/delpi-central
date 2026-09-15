@@ -3,8 +3,13 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import APIRouter, File, Request, UploadFile
+from pydantic import BaseModel, Field
 
 from tv_app.application.services.presentation_change_notifier import notify_presentation_changed
+from tv_app.application.services.media_chunked_upload_service import (
+    MediaChunkedUploadError,
+    MediaChunkedUploadService,
+)
 from tv_app.application.services.media_storage_service import (
     MediaStorageService,
     MediaValidationError,
@@ -19,6 +24,13 @@ from tv_app.interface.http.playlist_access_http import is_access_error, require_
 router = APIRouter(prefix="/playlists/{playlist_id}/media", tags=["Media"])
 _media_repo = MediaRepository()
 _storage = MediaStorageService()
+_chunked = MediaChunkedUploadService(storage=_storage)
+
+
+class MediaUploadSessionBody(BaseModel):
+    originalName: str | None = None
+    mimeType: str = Field(..., min_length=1)
+    sizeBytes: int = Field(..., gt=0)
 
 
 async def _upload_file_chunks(file: UploadFile):
@@ -27,6 +39,12 @@ async def _upload_file_chunks(file: UploadFile):
         if not chunk:
             break
         yield chunk
+
+
+async def _request_body_chunks(request: Request):
+    async for chunk in request.stream():
+        if chunk:
+            yield chunk
 
 
 @router.post("")
@@ -61,6 +79,115 @@ async def upload_media(request: Request, playlist_id: UUID, file: UploadFile = F
         reason="media_uploaded",
     )
     return ok(asset, message=message("mediaUploaded", "Mídia enviada."), status_code=201)
+
+
+@router.post("/uploads", operation_id="create_tv_media_upload_session")
+def create_media_upload_session(
+    request: Request,
+    playlist_id: UUID,
+    body: MediaUploadSessionBody,
+):
+    """Inicia upload em partes (bypass do limite ~100 MB da borda Cloudflare)."""
+    guarded = require_playlist_access(request, playlist_id, need="edit")
+    if is_access_error(guarded):
+        return guarded
+    try:
+        session = _chunked.create_session(
+            playlist_id=str(playlist_id),
+            original_name=body.originalName,
+            mime_type=body.mimeType,
+            size_bytes=body.sizeBytes,
+        )
+    except MediaValidationError as exc:
+        return fail(str(exc), 422)
+    except OSError:
+        return fail(message("mediaUploadSessionFailed", "Não foi possível iniciar o upload."), 500)
+    return ok(session, message=message("mediaUploadSessionCreated", "Sessão de upload criada."), status_code=201)
+
+
+@router.put(
+    "/uploads/{upload_id}/chunks/{chunk_index}",
+    operation_id="put_tv_media_upload_chunk",
+)
+async def put_media_upload_chunk(
+    request: Request,
+    playlist_id: UUID,
+    upload_id: str,
+    chunk_index: int,
+):
+    guarded = require_playlist_access(request, playlist_id, need="edit")
+    if is_access_error(guarded):
+        return guarded
+    try:
+        result = await _chunked.save_chunk(
+            upload_id=upload_id,
+            playlist_id=str(playlist_id),
+            chunk_index=chunk_index,
+            chunks=_request_body_chunks(request),
+        )
+    except MediaChunkedUploadError as exc:
+        return fail(str(exc), 422)
+    return ok(result, message=message("mediaUploadChunkSaved", "Parte recebida."))
+
+
+@router.post(
+    "/uploads/{upload_id}/complete",
+    operation_id="complete_tv_media_upload_session",
+)
+async def complete_media_upload_session(
+    request: Request,
+    playlist_id: UUID,
+    upload_id: str,
+):
+    guarded = require_playlist_access(request, playlist_id, need="edit")
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
+    try:
+        stored_name, mime_type, media_kind, size_bytes, original_name = await _chunked.complete(
+            upload_id=upload_id,
+            playlist_id=str(playlist_id),
+        )
+    except MediaChunkedUploadError as exc:
+        return fail(str(exc), 422)
+    except MediaValidationError as exc:
+        return fail(str(exc), 422)
+    asset = _media_repo.create(
+        playlist_id=playlist_id,
+        stored_name=stored_name,
+        original_name=original_name,
+        mime_type=mime_type,
+        media_kind=media_kind,
+        file_size_bytes=size_bytes,
+        created_by=PlaylistAccessService.actor_id(user),
+    )
+    notify_presentation_changed(
+        playlist_id=str(playlist_id),
+        reason="media_uploaded",
+    )
+    return ok(asset, message=message("mediaUploaded", "Mídia enviada."), status_code=201)
+
+
+@router.delete(
+    "/uploads/{upload_id}",
+    operation_id="abort_tv_media_upload_session",
+)
+def abort_media_upload_session(
+    request: Request,
+    playlist_id: UUID,
+    upload_id: str,
+):
+    guarded = require_playlist_access(request, playlist_id, need="edit")
+    if is_access_error(guarded):
+        return guarded
+    try:
+        _chunked.abort(upload_id=upload_id, playlist_id=str(playlist_id))
+    except MediaChunkedUploadError as exc:
+        return fail(str(exc), 404)
+    return ok(
+        {"uploadId": upload_id, "aborted": True},
+        message=message("mediaUploadSessionAborted", "Upload cancelado."),
+    )
 
 
 @router.get("")

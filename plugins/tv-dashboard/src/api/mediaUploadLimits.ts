@@ -2,6 +2,8 @@
 export const MAX_IMAGE_UPLOAD_BYTES = 10 * 1024 * 1024;
 export const MAX_VIDEO_UPLOAD_BYTES = 500 * 1024 * 1024;
 export const MAX_FONT_UPLOAD_BYTES = 5 * 1024 * 1024;
+/** Abaixo do teto ~100 MB do Cloudflare Free/Pro (multipart + margem). */
+export const EDGE_SAFE_UPLOAD_CHUNK_BYTES = 90 * 1024 * 1024;
 
 export function mediaUploadLimitMb(bytes: number = MAX_VIDEO_UPLOAD_BYTES): number {
   return Math.max(1, Math.floor(bytes / (1024 * 1024)));
@@ -74,7 +76,11 @@ export function validateMediaUploadFile(
 
 export function mediaUploadHttpErrorMessage(status: number, fallback: string): string {
   if (status === 413) {
-    return `Arquivo grande demais para o servidor (limite ${mediaUploadLimitMb()} MB).`;
+    return (
+      `Arquivo grande demais para a borda de rede (limite intermediário ~100 MB por requisição). ` +
+      `O editor envia vídeos grandes em partes; se o erro persistir, tente novamente ou contate o suporte. ` +
+      `(limite do Painéis TV: ${mediaUploadLimitMb()} MB).`
+    );
   }
   return fallback;
 }

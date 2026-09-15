@@ -1,4 +1,15 @@
-import { API_BASE, httpDelete, httpGet, httpGetBlob, httpPatch, httpPost, httpPostBlob, httpPostForm } from "./httpClient";
+import {
+  API_BASE,
+  httpDelete,
+  httpGet,
+  httpGetBlob,
+  httpPatch,
+  httpPost,
+  httpPostBlob,
+  httpPostForm,
+  httpPutBytes,
+} from "./httpClient";
+import { EDGE_SAFE_UPLOAD_CHUNK_BYTES } from "./mediaUploadLimits";
 import { resolvePreviewPlaylistId } from "../utils/previewPlaylistId";
 
 type ApiEnvelope<T> = { success: boolean; message?: string; data: T };
@@ -330,6 +341,9 @@ export async function uploadPlaylistMedia(
   file: File,
   options?: { signal?: AbortSignal; onProgress?: (ratio: number) => void },
 ) {
+  if (file.size > EDGE_SAFE_UPLOAD_CHUNK_BYTES) {
+    return uploadPlaylistMediaChunked(playlistId, file, options);
+  }
   const form = new FormData();
   form.append("file", file);
   return unwrap(
@@ -339,6 +353,70 @@ export async function uploadPlaylistMedia(
       options,
     ),
   );
+}
+
+type MediaUploadSession = {
+  uploadId: string;
+  chunkSizeBytes: number;
+  chunkCount: number;
+  sizeBytes: number;
+};
+
+async function uploadPlaylistMediaChunked(
+  playlistId: string,
+  file: File,
+  options?: { signal?: AbortSignal; onProgress?: (ratio: number) => void },
+): Promise<MediaAsset> {
+  const mimeType = (file.type || "application/octet-stream").split(";", 1)[0]!.trim() || "application/octet-stream";
+  const session = await unwrap(
+    httpPost<ApiEnvelope<MediaUploadSession>>(`${API_BASE}/playlists/${playlistId}/media/uploads`, {
+      originalName: file.name,
+      mimeType,
+      sizeBytes: file.size,
+    }),
+  );
+  const chunkSize = Math.max(1, session.chunkSizeBytes || EDGE_SAFE_UPLOAD_CHUNK_BYTES);
+  const chunkCount = Math.max(1, session.chunkCount || Math.ceil(file.size / chunkSize));
+  let uploadedBytes = 0;
+
+  try {
+    for (let index = 0; index < chunkCount; index += 1) {
+      if (options?.signal?.aborted) {
+        throw new DOMException("Aborted", "AbortError");
+      }
+      const start = index * chunkSize;
+      const end = Math.min(file.size, start + chunkSize);
+      const blob = file.slice(start, end);
+      const chunkLength = end - start;
+      await unwrap(
+        httpPutBytes<ApiEnvelope<{ chunkIndex: number }>>(
+          `${API_BASE}/playlists/${playlistId}/media/uploads/${encodeURIComponent(session.uploadId)}/chunks/${index}`,
+          blob,
+          {
+            signal: options?.signal,
+            onProgress: (ratio) => {
+              if (!options?.onProgress) return;
+              const current = uploadedBytes + ratio * chunkLength;
+              options.onProgress(Math.min(1, Math.max(0, current / file.size)));
+            },
+          },
+        ),
+      );
+      uploadedBytes += chunkLength;
+      options?.onProgress?.(Math.min(1, uploadedBytes / file.size));
+    }
+    return unwrap(
+      httpPost<ApiEnvelope<MediaAsset>>(
+        `${API_BASE}/playlists/${playlistId}/media/uploads/${encodeURIComponent(session.uploadId)}/complete`,
+        {},
+      ),
+    );
+  } catch (err) {
+    void httpDelete(
+      `${API_BASE}/playlists/${playlistId}/media/uploads/${encodeURIComponent(session.uploadId)}`,
+    ).catch(() => undefined);
+    throw err;
+  }
 }
 
 export async function listPlaylistMedia(playlistId: string, mediaKind?: "image" | "video" | "font") {

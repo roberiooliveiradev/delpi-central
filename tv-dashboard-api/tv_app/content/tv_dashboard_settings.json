@@ -75,6 +75,7 @@
     "maxImageBytes": 10485760,
     "maxVideoBytes": 524288000,
     "maxFontBytes": 5242880,
+    "maxEdgeChunkBytes": 94371840,
     "imageMimeExtensions": {
       "image/jpeg": ".jpg",
       "image/jpg": ".jpg",

@@ -189,7 +189,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertHeading: "Caixa de título em destaque para comunicados e chamadas principais.",
     insertText: "Bloco de texto livre para mensagens e legendas.",
     insertImage: "Imagem posicionável no slide; envie o arquivo após inserir.",
-    insertVideo: "Vídeo em loop no slide (MP4/WEBM até 500 MB); envie o arquivo após inserir.",
+    insertVideo:
+      "Vídeo em loop no slide (MP4/WEBM até 500 MB; arquivos grandes sobem em partes automaticamente); envie o arquivo após inserir.",
     insertShape:
       "Formas geométricas com preenchimento e contorno. Em Linha, use as alças das pontas; aproxime de outro bloco para conectar.",
     chartData: "Fonte e vínculo dos dados do gráfico.",
