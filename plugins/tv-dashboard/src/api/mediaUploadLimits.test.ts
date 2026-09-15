@@ -18,14 +18,15 @@ describe("mediaUploadLimits", () => {
     expect(detectMediaUploadKind(new File([], "a.pdf", { type: "application/pdf" }))).toBe(null);
   });
 
-  it("rejeita vídeo acima de 200 MB", () => {
+  it("rejeita vídeo acima de 500 MB", () => {
     const big = new File([new Uint8Array(10)], "clip.mp4", { type: "video/mp4" });
     Object.defineProperty(big, "size", { value: MAX_VIDEO_UPLOAD_BYTES + 1 });
-    expect(validateMediaUploadFile(big, ["video"])).toMatch(/limite de 200 MB/);
+    expect(validateMediaUploadFile(big, ["video"])).toMatch(/limite de 500 MB/);
   });
 
   it("aceita vídeo dentro do limite", () => {
     const ok = new File([new Uint8Array(8)], "clip.mp4", { type: "video/mp4" });
+    Object.defineProperty(ok, "size", { value: Math.floor(MAX_VIDEO_UPLOAD_BYTES / 2) });
     expect(validateMediaUploadFile(ok, ["video"])).toBeNull();
   });
 });

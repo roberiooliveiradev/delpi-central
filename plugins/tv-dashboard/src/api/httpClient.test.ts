@@ -22,7 +22,7 @@ describe("resolveHttpErrorMessage", () => {
 
   it("413 explica limite de upload de vídeo", () => {
     expect(resolveHttpErrorMessage(null, 413)).toBe(
-      "Arquivo grande demais para o servidor (limite 200 MB).",
+      "Arquivo grande demais para o servidor (limite 500 MB).",
     );
   });
 });

@@ -176,7 +176,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     iconStrokeWidth:
       "Espessura do traço do ícone, em pixels (0,5–6). Distinta do contorno da caixa.",
     insertTextGroup: "Caixas de título e texto livre no slide.",
-    insertMediaGroup: "Imagens e vídeos da biblioteca da playlist ou upload.",
+    insertMediaGroup:
+      "Imagens e vídeos da biblioteca da playlist ou upload (vídeo até 500 MB).",
     insertIllustrationsGroup: "Biblioteca visual de formas, linhas e ícones editáveis.",
     insertDataGroup: "Fontes de dados, KPI, gráficos e tabelas desacoplados no slide.",
     insertDataSource: "Abre o catálogo de rotas api-delpi em um modal para inserir uma fonte de dados no palco.",
@@ -188,7 +189,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertHeading: "Caixa de título em destaque para comunicados e chamadas principais.",
     insertText: "Bloco de texto livre para mensagens e legendas.",
     insertImage: "Imagem posicionável no slide; envie o arquivo após inserir.",
-    insertVideo: "Vídeo em loop no slide; envie o arquivo após inserir.",
+    insertVideo: "Vídeo em loop no slide (MP4/WEBM até 500 MB); envie o arquivo após inserir.",
     insertShape:
       "Formas geométricas com preenchimento e contorno. Em Linha, use as alças das pontas; aproxime de outro bloco para conectar.",
     chartData: "Fonte e vínculo dos dados do gráfico.",
@@ -665,7 +666,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Efeito de entrada na TV quando o slide aparece (fade ou deslizar). Não anima no palco do editor.",
     entranceDelay: "Atraso em milissegundos antes do elemento entrar na tela.",
     entranceDuration: "Duração da animação de entrada em milissegundos.",
-    uploadMedia: "Substitui a imagem ou vídeo do elemento pelo arquivo enviado.",
+    uploadMedia:
+      "Substitui a imagem ou vídeo do elemento pelo arquivo enviado. Vídeo MP4/WEBM até 500 MB; imagem até 10 MB.",
     backgroundColor: "Cor sólida de fundo do slide personalizado.",
     uploadBackground:
       "Escolha um arquivo ou a biblioteca. A imagem preenche toda a tela (cobertura, centro), no editor e na TV.",

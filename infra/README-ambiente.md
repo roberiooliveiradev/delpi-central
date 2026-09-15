@@ -685,6 +685,7 @@ Doc: `docs/12-roadmap-e-evolucao/tv-dashboard/README.md`.
 ### Mídia de comunicados (Painéis TV)
 
 Imagens e vídeos dos slides «Comunicado interno» ficam em disco no container `delpi-tv-dashboard-api`.
+Limite de vídeo da biblioteca: **500 MB** (`mediaUpload.maxVideoBytes`); o gateway usa `client_max_body_size 520m` em `/apps/tv-dashboard-api/`.
 
 | Variável | Path no container | Host (`DELPI_DATA_HOST_DIR`) |
 |----------|-------------------|------------------------------|

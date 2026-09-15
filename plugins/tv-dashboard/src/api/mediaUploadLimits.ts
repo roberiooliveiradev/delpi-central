@@ -1,7 +1,11 @@
 /** Limites espelhados de `tv_dashboard_settings.json` → mediaUpload. */
 export const MAX_IMAGE_UPLOAD_BYTES = 10 * 1024 * 1024;
-export const MAX_VIDEO_UPLOAD_BYTES = 200 * 1024 * 1024;
+export const MAX_VIDEO_UPLOAD_BYTES = 500 * 1024 * 1024;
 export const MAX_FONT_UPLOAD_BYTES = 5 * 1024 * 1024;
+
+export function mediaUploadLimitMb(bytes: number = MAX_VIDEO_UPLOAD_BYTES): number {
+  return Math.max(1, Math.floor(bytes / (1024 * 1024)));
+}
 
 const IMAGE_MIME = new Set([
   "image/jpeg",
@@ -60,8 +64,7 @@ export function validateMediaUploadFile(
   }
   const max = maxBytesForMediaKind(kind);
   if (file.size > max) {
-    const limitMb = Math.max(1, Math.floor(max / (1024 * 1024)));
-    return `Arquivo acima do limite de ${limitMb} MB.`;
+    return `Arquivo acima do limite de ${mediaUploadLimitMb(max)} MB.`;
   }
   if (file.size <= 0) {
     return "Arquivo vazio.";
@@ -71,7 +74,7 @@ export function validateMediaUploadFile(
 
 export function mediaUploadHttpErrorMessage(status: number, fallback: string): string {
   if (status === 413) {
-    return "Arquivo grande demais para o servidor (limite 200 MB).";
+    return `Arquivo grande demais para o servidor (limite ${mediaUploadLimitMb()} MB).`;
   }
   return fallback;
 }

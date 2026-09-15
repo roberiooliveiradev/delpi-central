@@ -30,7 +30,7 @@ class MediaStorageService:
 
     def _max_bytes(self, media_kind: str) -> int:
         if media_kind == "video":
-            return media_setting_int("maxVideoBytes", 200 * 1024 * 1024)
+            return media_setting_int("maxVideoBytes", 500 * 1024 * 1024)
         if media_kind == "font":
             return media_setting_int("maxFontBytes", 5 * 1024 * 1024)
         return media_setting_int("maxImageBytes", 10 * 1024 * 1024)

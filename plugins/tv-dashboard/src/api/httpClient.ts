@@ -1,3 +1,5 @@
+import { mediaUploadHttpErrorMessage } from "./mediaUploadLimits";
+
 type RequestOptions = { signal?: AbortSignal; keepalive?: boolean };
 
 const API_BASE = "/apps/tv-dashboard-api";
@@ -34,10 +36,10 @@ function authHeaders(): Record<string, string> {
 
 /** Extrai mensagem legível de envelope TV (`message`) ou FastAPI (`detail`). */
 export function resolveHttpErrorMessage(body: unknown, status: number): string {
-  if (status === 413) {
-    return "Arquivo grande demais para o servidor (limite 200 MB).";
-  }
   const fallback = `Erro HTTP ${status}`;
+  if (status === 413) {
+    return mediaUploadHttpErrorMessage(status, fallback);
+  }
   if (!body || typeof body !== "object") {
     return status === 401 ? "Não autorizado. Faça login novamente." : fallback;
   }
