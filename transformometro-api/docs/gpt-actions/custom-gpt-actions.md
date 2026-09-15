@@ -17,6 +17,8 @@ Superfície compacta para o **ChatGPT Custom GPT** (TÉO) analisar, cadastrar e 
 | Guia de cadastro (catalog) | `tm_app/application/gpt_actions/registration_guide.py` |
 | Pacote guiado | `tm_app/application/gpt_actions/improvement_package_service.py` |
 | Contexto de inteligência (read-only) | `tm_app/application/gpt_actions/process_context_service.py` |
+| Contexto pessoal (read-only) | `tm_app/application/gpt_actions/user_context_service.py` + `person_profile_reader_port.py` |
+| Adapter Core PersonProfile | `tm_app/infrastructure/gateways/core_person_profile_gateway.py` (`GET /me/person-profile`, Bearer do usuário) |
 | Instructions do especialista | [`specialist-instructions.md`](./specialist-instructions.md) (persona **TÉO**) |
 | Method playbooks (Knowledge) | [`teo-method-playbooks.md`](./teo-method-playbooks.md) — metodologia conversacional; **não** cria Action/AuthZ/persistência |
 | Rotas | `tm_app/interface/http/routes/gpt_actions_routes.py` |
