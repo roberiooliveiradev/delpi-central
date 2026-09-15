@@ -83,7 +83,7 @@ class GptActionsOpenApiAuditTest(unittest.TestCase):
             },
         }
         findings = mod.validate_document("x.json", document)
-        self.assertIn("GPT_ACTION_OBJECT_WITHOUT_PROPERTIES", [item.rule for item in findings])
+        self.assertIn("GPT_ACTION_EMPTY_OBJECT_SCHEMA", [item.rule for item in findings])
 
     def test_typed_ref_request_body_passes(self):
         document = {
@@ -152,7 +152,7 @@ class GptActionsOpenApiAuditTest(unittest.TestCase):
         findings = mod.validate_document("x.json", document)
         rules = [item.rule for item in findings]
         self.assertIn("GPT_ACTION_FAKE_EMPTY_BODY", rules)
-        self.assertIn("GPT_ACTION_OBJECT_WITHOUT_PROPERTIES", rules)
+        self.assertIn("GPT_ACTION_EMPTY_OBJECT_SCHEMA", rules)
 
     def test_duplicate_operation_id_fails(self):
         document = {
@@ -210,7 +210,7 @@ class GptActionsOpenApiAuditTest(unittest.TestCase):
             },
         }
         findings = mod.validate_document("x.json", document)
-        self.assertIn("GPT_ACTION_UNTYPED_ARRAY_ITEM", [item.rule for item in findings])
+        self.assertIn("GPT_ACTION_UNTYPED_NESTED_ARRAY_ITEM", [item.rule for item in findings])
 
     def test_discover_and_audit_real_layout(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -233,6 +233,164 @@ class GptActionsOpenApiAuditTest(unittest.TestCase):
     def test_current_repo_artifacts_pass(self):
         findings = mod.audit_repository(mod.ROOT)
         self.assertEqual(findings, [], [item.format() for item in findings])
+
+    def _write_body(self, schema: dict, example: dict | None = None) -> dict:
+        media = {"schema": schema, "example": example or {"ok": True}}
+        return {
+            "openapi": "3.1.1",
+            "paths": {
+                "/gpt-actions/v1/preview": operation(
+                    operation_id="gpt_preview_change",
+                    request_body={"content": {"application/json": media}},
+                )
+            },
+        }
+
+    def test_typed_map_additional_properties_passes(self):
+        document = self._write_body(
+            {
+                "type": "object",
+                "properties": {
+                    "fieldLabels": {
+                        "type": "object",
+                        "additionalProperties": {"type": "string"},
+                    }
+                },
+            }
+        )
+        self.assertEqual(mod.validate_document("x.json", document), [])
+
+    def test_oneof_typed_branches_pass(self):
+        document = self._write_body(
+            {
+                "type": "object",
+                "properties": {
+                    "steps": {
+                        "type": "array",
+                        "items": {
+                            "oneOf": [
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "op": {"type": "string", "const": "keepRows"},
+                                        "count": {"type": "integer"},
+                                    },
+                                }
+                            ]
+                        },
+                    }
+                },
+            }
+        )
+        self.assertEqual(mod.validate_document("x.json", document), [])
+
+    def test_explicit_opaque_object_passes(self):
+        document = self._write_body(
+            {
+                "type": "object",
+                "properties": {
+                    "block": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": True,
+                        "x-delpi-gpt-opaque-object": True,
+                        "description": "Editor blob",
+                    }
+                },
+            }
+        )
+        self.assertEqual(mod.validate_document("x.json", document), [])
+
+    def test_typed_nested_array_items_pass(self):
+        document = self._write_body(
+            {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {"type": "string"},
+                                "sortOrder": {"type": "integer"},
+                            },
+                        },
+                    }
+                },
+            }
+        )
+        self.assertEqual(mod.validate_document("x.json", document), [])
+
+    def test_empty_freeform_without_marker_fails(self):
+        document = self._write_body(
+            {
+                "type": "object",
+                "properties": {
+                    "patch": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": True,
+                    }
+                },
+            }
+        )
+        rules = [item.rule for item in mod.validate_document("x.json", document)]
+        self.assertIn("GPT_ACTION_OPAQUE_OBJECT_NOT_EXPLICIT", rules)
+
+    def test_nested_items_empty_object_fails(self):
+        document = self._write_body(
+            {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {"type": "object", "properties": {}},
+                    }
+                },
+            }
+        )
+        rules = [item.rule for item in mod.validate_document("x.json", document)]
+        self.assertTrue(
+            {"GPT_ACTION_UNTYPED_NESTED_ARRAY_ITEM", "GPT_ACTION_EMPTY_OBJECT_SCHEMA"}
+            & set(rules)
+        )
+
+    def test_opaque_marker_without_description_fails(self):
+        document = self._write_body(
+            {
+                "type": "object",
+                "properties": {
+                    "blob": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": True,
+                        "x-delpi-gpt-opaque-object": True,
+                    }
+                },
+            }
+        )
+        rules = [item.rule for item in mod.validate_document("x.json", document)]
+        self.assertIn("GPT_ACTION_OPAQUE_OBJECT_NOT_EXPLICIT", rules)
+
+    def test_untyped_oneof_branch_fails(self):
+        document = self._write_body(
+            {
+                "type": "object",
+                "properties": {
+                    "op": {
+                        "oneOf": [
+                            {"type": "object"},
+                            {
+                                "type": "object",
+                                "properties": {"op": {"type": "string"}},
+                            },
+                        ]
+                    }
+                },
+            }
+        )
+        rules = [item.rule for item in mod.validate_document("x.json", document)]
+        self.assertIn("GPT_ACTION_UNTYPED_ONEOF_BRANCH", rules)
 
 
 if __name__ == "__main__":

@@ -2963,7 +2963,10 @@
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "additionalProperties": true
+                  "additionalProperties": true,
+                  "properties": {},
+                  "x-delpi-gpt-opaque-object": true,
+                  "description": "Meeting-minute participant row. Entity-specific bag; signature capture remains UI-only."
                 },
                 "description": "Participants for entity=meeting_minute."
               },
@@ -2971,7 +2974,10 @@
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "additionalProperties": true
+                  "additionalProperties": true,
+                  "properties": {},
+                  "x-delpi-gpt-opaque-object": true,
+                  "description": "Meeting-minute signer row. Signature capture remains UI-only."
                 },
                 "description": "Signers for entity=meeting_minute (signature capture remains UI-only)."
               },
@@ -2979,6 +2985,7 @@
                 "type": "object",
                 "additionalProperties": true,
                 "properties": {},
+                "x-delpi-gpt-opaque-object": true,
                 "description": "Document payload (diagram flowchart or decomposition tree/overlay)."
               },
               "node_ids": {
@@ -3004,12 +3011,16 @@
               "inputs_manuais": {
                 "type": "object",
                 "additionalProperties": true,
-                "properties": {}
+                "properties": {},
+                "x-delpi-gpt-opaque-object": true,
+                "description": "Impact×effort matrix manual inputs. Cell keys vary by matrix mode."
               },
               "overrides": {
                 "type": "object",
                 "additionalProperties": true,
-                "properties": {}
+                "properties": {},
+                "x-delpi-gpt-opaque-object": true,
+                "description": "Impact×effort matrix overrides. Cell keys vary by matrix mode."
               }
             },
             "additionalProperties": true,
