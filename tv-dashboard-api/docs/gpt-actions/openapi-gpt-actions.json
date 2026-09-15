@@ -476,23 +476,27 @@
                 "properties": {
                   "block": {
                     "type": "object",
-                    "properties": {},
+                    "description": "Editor-native block blob for dry-run resolution. Variability is unbounded across block types; runtime validates downstream. Not a second Copilot operation catalog.",
+                    "x-delpi-gpt-opaque-object": true,
                     "additionalProperties": true,
-                    "description": "Slide block payload (same shape as editor preview)."
+                    "properties": {}
                   },
                   "nativeConfig": {
                     "type": "object",
-                    "properties": {},
+                    "description": "Editor-native slide config for dry-run resolution. Full canvas DTO; not a Copilot op payload.",
+                    "x-delpi-gpt-opaque-object": true,
                     "additionalProperties": true,
-                    "description": "Native slide config used for dry-run resolution."
+                    "properties": {}
                   },
                   "playlistId": {
                     "type": "string"
                   },
                   "playlistDefaults": {
                     "type": "object",
-                    "properties": {},
-                    "additionalProperties": true
+                    "description": "Optional playlist dataDefaults blob inherited during dry-run. Route-specific; not a fixed GPT construction contract.",
+                    "x-delpi-gpt-opaque-object": true,
+                    "additionalProperties": true,
+                    "properties": {}
                   },
                   "forceRefresh": {
                     "type": "boolean"
@@ -502,8 +506,10 @@
                   },
                   "previewOptions": {
                     "type": "object",
-                    "properties": {},
-                    "additionalProperties": true
+                    "description": "Optional resolver flags for dry-run. Intentionally open-ended preview knobs, not a persisted write contract.",
+                    "x-delpi-gpt-opaque-object": true,
+                    "additionalProperties": true,
+                    "properties": {}
                   }
                 }
               },
@@ -842,6 +848,10 @@
                               }
                             }
                           },
+                          "example": {
+                            "op": "create_playlist",
+                            "name": "Testando a VISTA"
+                          },
                           "title": "create_playlist"
                         },
                         {
@@ -917,6 +927,15 @@
                             "op",
                             "patch"
                           ],
+                          "example": {
+                            "op": "patch_native_config",
+                            "patch": {
+                              "background": {
+                                "type": "color",
+                                "value": "#2563eb"
+                              }
+                            }
+                          },
                           "properties": {
                             "op": {
                               "const": "patch_native_config",
@@ -924,7 +943,98 @@
                             },
                             "patch": {
                               "type": "object",
-                              "properties": {}
+                              "minProperties": 1,
+                              "additionalProperties": false,
+                              "description": "Whitelist only: background, dataFilters, speakerNotes, groupTransforms. Illegal keys are rejected.",
+                              "properties": {
+                                "background": {
+                                  "type": "object",
+                                  "description": "Slide background. Canonical color: {type:color, value:#hex}.",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "color",
+                                        "gradient",
+                                        "image"
+                                      ]
+                                    },
+                                    "value": {
+                                      "type": "string"
+                                    },
+                                    "from": {
+                                      "type": "string"
+                                    },
+                                    "to": {
+                                      "type": "string"
+                                    },
+                                    "angle": {
+                                      "type": "number"
+                                    },
+                                    "assetId": {
+                                      "type": "string"
+                                    },
+                                    "stops": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "required": [
+                                          "color"
+                                        ],
+                                        "properties": {
+                                          "color": {
+                                            "type": "string"
+                                          },
+                                          "position": {
+                                            "type": "number"
+                                          },
+                                          "opacity": {
+                                            "type": "number"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                "dataFilters": {
+                                  "type": "object",
+                                  "description": "Slide-level data filters as a primitive param map.",
+                                  "additionalProperties": {
+                                    "oneOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "integer"
+                                      },
+                                      {
+                                        "type": "boolean"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "speakerNotes": {
+                                  "type": "string"
+                                },
+                                "groupTransforms": {
+                                  "type": "object",
+                                  "description": "Group id → persisted transform (rotation degrees).",
+                                  "additionalProperties": {
+                                    "type": "object",
+                                    "required": [
+                                      "rotation"
+                                    ],
+                                    "properties": {
+                                      "rotation": {
+                                        "type": "number"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
                             }
                           },
                           "title": "patch_native_config"
@@ -935,6 +1045,19 @@
                             "op",
                             "items"
                           ],
+                          "example": {
+                            "op": "reorder_slides",
+                            "items": [
+                              {
+                                "id": "00000000-0000-4000-8000-000000000001",
+                                "sortOrder": 0
+                              },
+                              {
+                                "id": "00000000-0000-4000-8000-000000000002",
+                                "sortOrder": 1
+                              }
+                            ]
+                          },
                           "properties": {
                             "op": {
                               "const": "reorder_slides",
@@ -942,10 +1065,24 @@
                             },
                             "items": {
                               "type": "array",
+                              "minItems": 1,
+                              "description": "Full filmstrip order: slide id + sortOrder. Section moves use move_slide_to_section.",
                               "items": {
                                 "type": "object",
-                                "properties": {},
-                                "additionalProperties": true
+                                "required": [
+                                  "id",
+                                  "sortOrder"
+                                ],
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "description": "Existing slide UUID."
+                                  },
+                                  "sortOrder": {
+                                    "type": "integer"
+                                  }
+                                }
                               }
                             }
                           },
@@ -958,6 +1095,17 @@
                             "blockId",
                             "steps"
                           ],
+                          "example": {
+                            "op": "set_data_transform",
+                            "blockId": "blk_demo_source",
+                            "steps": [
+                              {
+                                "op": "keepRows",
+                                "count": 10,
+                                "from": "top"
+                              }
+                            ]
+                          },
                           "properties": {
                             "op": {
                               "const": "set_data_transform",
@@ -968,10 +1116,411 @@
                             },
                             "steps": {
                               "type": "array",
+                              "description": "Allowlisted v1 transform steps (same ops as apply_data_transform_steps). No free SQL/M/DAX.",
                               "items": {
-                                "type": "object",
-                                "properties": {},
-                                "additionalProperties": true
+                                "oneOf": [
+                                  {
+                                    "title": "keepRows",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "count"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "keepRows"
+                                      },
+                                      "count": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                      },
+                                      "from": {
+                                        "type": "string",
+                                        "enum": [
+                                          "top",
+                                          "bottom"
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "removeRows",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "count"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "removeRows"
+                                      },
+                                      "count": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                      },
+                                      "from": {
+                                        "type": "string",
+                                        "enum": [
+                                          "top",
+                                          "bottom"
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "select",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "columns"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "select"
+                                      },
+                                      "columns": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "string"
+                                        },
+                                        "minItems": 1
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "rename",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "from",
+                                      "to"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "rename"
+                                      },
+                                      "from": {
+                                        "type": "string"
+                                      },
+                                      "to": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "filter",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "column",
+                                      "cmp"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "filter"
+                                      },
+                                      "column": {
+                                        "type": "string"
+                                      },
+                                      "cmp": {
+                                        "type": "string",
+                                        "enum": [
+                                          "eq",
+                                          "neq",
+                                          "gt",
+                                          "lt",
+                                          "notNull",
+                                          "contains",
+                                          "startsWith"
+                                        ]
+                                      },
+                                      "value": {
+                                        "oneOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "number"
+                                          },
+                                          {
+                                            "type": "integer"
+                                          },
+                                          {
+                                            "type": "boolean"
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "addColumn",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "name",
+                                      "expr"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "addColumn"
+                                      },
+                                      "name": {
+                                        "type": "string"
+                                      },
+                                      "expr": {
+                                        "type": "string",
+                                        "description": "Safe arithmetic/column expression (no SQL/M)."
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "replace",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "column"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "replace"
+                                      },
+                                      "column": {
+                                        "type": "string"
+                                      },
+                                      "find": {
+                                        "type": "string"
+                                      },
+                                      "replaceWith": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "sort",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "column"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "sort"
+                                      },
+                                      "column": {
+                                        "type": "string"
+                                      },
+                                      "direction": {
+                                        "type": "string",
+                                        "enum": [
+                                          "asc",
+                                          "desc"
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "changeType",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "column"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "changeType"
+                                      },
+                                      "column": {
+                                        "type": "string"
+                                      },
+                                      "to": {
+                                        "type": "string",
+                                        "enum": [
+                                          "string",
+                                          "number"
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "fillDown",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "column"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "fillDown"
+                                      },
+                                      "column": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "firstRowAsHeader",
+                                    "type": "object",
+                                    "required": [
+                                      "op"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "firstRowAsHeader"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "groupBy",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "keys"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "groupBy"
+                                      },
+                                      "keys": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "string"
+                                        },
+                                        "minItems": 1
+                                      },
+                                      "aggregations": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "required": [
+                                            "column",
+                                            "fn"
+                                          ],
+                                          "properties": {
+                                            "column": {
+                                              "type": "string"
+                                            },
+                                            "fn": {
+                                              "type": "string",
+                                              "enum": [
+                                                "sum",
+                                                "avg",
+                                                "min",
+                                                "max",
+                                                "count",
+                                                "first"
+                                              ]
+                                            },
+                                            "as": {
+                                              "type": "string"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "pivot",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "column",
+                                      "valueColumn"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "pivot"
+                                      },
+                                      "column": {
+                                        "type": "string"
+                                      },
+                                      "valueColumn": {
+                                        "type": "string"
+                                      },
+                                      "aggregation": {
+                                        "type": "string",
+                                        "enum": [
+                                          "sum",
+                                          "avg",
+                                          "min",
+                                          "max",
+                                          "count",
+                                          "first"
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "unpivot",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "columns"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "unpivot"
+                                      },
+                                      "columns": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "string"
+                                        },
+                                        "minItems": 1
+                                      },
+                                      "nameColumn": {
+                                        "type": "string"
+                                      },
+                                      "valueColumn": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "merge",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "sourceId",
+                                      "leftKey",
+                                      "rightKey"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "merge"
+                                      },
+                                      "sourceId": {
+                                        "type": "string"
+                                      },
+                                      "leftKey": {
+                                        "type": "string"
+                                      },
+                                      "rightKey": {
+                                        "type": "string"
+                                      },
+                                      "columns": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    }
+                                  }
+                                ]
                               }
                             }
                           },
@@ -1005,6 +1554,14 @@
                             "op",
                             "block"
                           ],
+                          "example": {
+                            "op": "upsert_block",
+                            "block": {
+                              "id": "blk_demo_text",
+                              "type": "text",
+                              "content": "Texto de exemplo"
+                            }
+                          },
                           "properties": {
                             "op": {
                               "const": "upsert_block",
@@ -1012,7 +1569,147 @@
                             },
                             "block": {
                               "type": "object",
-                              "properties": {}
+                              "description": "Smallest semantic block accepted by TvCopilotPatchV1 upsert_block. No resolved/url/mScript. Extra known editor keys may be present and are merged.",
+                              "required": [
+                                "type"
+                              ],
+                              "additionalProperties": true,
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "heading",
+                                    "text",
+                                    "shape",
+                                    "image",
+                                    "video",
+                                    "icon",
+                                    "data_kpi",
+                                    "data_chart",
+                                    "data_table",
+                                    "data_metric",
+                                    "data_source",
+                                    "chart_view",
+                                    "table_view",
+                                    "kpi_view",
+                                    "canvas_table",
+                                    "input"
+                                  ]
+                                },
+                                "content": {
+                                  "type": "string"
+                                },
+                                "assetId": {
+                                  "type": "string"
+                                },
+                                "dataSourceId": {
+                                  "type": "string"
+                                },
+                                "hidden": {
+                                  "type": "boolean"
+                                },
+                                "groupId": {
+                                  "type": "string"
+                                },
+                                "frame": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    },
+                                    "w": {
+                                      "type": "number"
+                                    },
+                                    "h": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "style": {
+                                  "type": "object",
+                                  "description": "Optional visual style. Known keys listed; extras allowed.",
+                                  "additionalProperties": true,
+                                  "properties": {
+                                    "zIndex": {
+                                      "type": "number"
+                                    },
+                                    "fontSize": {
+                                      "type": "number"
+                                    },
+                                    "color": {
+                                      "type": "string"
+                                    },
+                                    "fontFamily": {
+                                      "type": "string"
+                                    },
+                                    "textAlign": {
+                                      "type": "string"
+                                    },
+                                    "verticalAlign": {
+                                      "type": "string"
+                                    },
+                                    "fontWeight": {
+                                      "type": "string"
+                                    },
+                                    "backgroundColor": {
+                                      "type": "string"
+                                    },
+                                    "fill": {
+                                      "type": "string"
+                                    },
+                                    "objectFit": {
+                                      "type": "string"
+                                    }
+                                  }
+                                },
+                                "dataBinding": {
+                                  "type": "object",
+                                  "properties": {
+                                    "operationId": {
+                                      "type": "string"
+                                    },
+                                    "params": {
+                                      "type": "object",
+                                      "additionalProperties": {
+                                        "oneOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "number"
+                                          },
+                                          {
+                                            "type": "integer"
+                                          },
+                                          {
+                                            "type": "boolean"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "displayMode": {
+                                      "type": "string",
+                                      "enum": [
+                                        "auto",
+                                        "kpi",
+                                        "chart",
+                                        "table",
+                                        "line_chart",
+                                        "bar_chart"
+                                      ]
+                                    },
+                                    "label": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              }
                             }
                           },
                           "title": "upsert_block"
@@ -1023,6 +1720,19 @@
                             "op",
                             "operationId"
                           ],
+                          "example": {
+                            "op": "upsert_data_source",
+                            "operationId": "get_overall_equipment_effectiveness_pct",
+                            "blockId": "blk_demo_source",
+                            "params": {
+                              "branch": "01"
+                            },
+                            "displayMode": "kpi",
+                            "label": "OEE",
+                            "fieldLabels": {
+                              "value": "OEE"
+                            }
+                          },
                           "properties": {
                             "op": {
                               "const": "upsert_data_source",
@@ -1036,17 +1746,44 @@
                             },
                             "params": {
                               "type": "object",
-                              "properties": {}
+                              "description": "Route params as a primitive map. Keys depend on the allowlisted operationId; values are validated downstream against the route schema.",
+                              "additionalProperties": {
+                                "oneOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "type": "integer"
+                                  },
+                                  {
+                                    "type": "boolean"
+                                  }
+                                ]
+                              }
                             },
                             "label": {
                               "type": "string"
                             },
                             "displayMode": {
-                              "type": "string"
+                              "type": "string",
+                              "enum": [
+                                "auto",
+                                "kpi",
+                                "chart",
+                                "table",
+                                "line_chart",
+                                "bar_chart"
+                              ]
                             },
                             "fieldLabels": {
                               "type": "object",
-                              "properties": {}
+                              "description": "Column/field key → display label.",
+                              "additionalProperties": {
+                                "type": "string"
+                              }
                             }
                           },
                           "title": "upsert_data_source"
@@ -1089,7 +1826,7 @@
                     "name": "Testando a VISTA"
                   }
                 ],
-                "catalogVersion": "2026.08.05.1"
+                "catalogVersion": "2026.09.15.1"
               }
             }
           }
@@ -1305,6 +2042,10 @@
                               }
                             }
                           },
+                          "example": {
+                            "op": "create_playlist",
+                            "name": "Testando a VISTA"
+                          },
                           "title": "create_playlist"
                         },
                         {
@@ -1380,6 +2121,15 @@
                             "op",
                             "patch"
                           ],
+                          "example": {
+                            "op": "patch_native_config",
+                            "patch": {
+                              "background": {
+                                "type": "color",
+                                "value": "#2563eb"
+                              }
+                            }
+                          },
                           "properties": {
                             "op": {
                               "const": "patch_native_config",
@@ -1387,7 +2137,98 @@
                             },
                             "patch": {
                               "type": "object",
-                              "properties": {}
+                              "minProperties": 1,
+                              "additionalProperties": false,
+                              "description": "Whitelist only: background, dataFilters, speakerNotes, groupTransforms. Illegal keys are rejected.",
+                              "properties": {
+                                "background": {
+                                  "type": "object",
+                                  "description": "Slide background. Canonical color: {type:color, value:#hex}.",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "color",
+                                        "gradient",
+                                        "image"
+                                      ]
+                                    },
+                                    "value": {
+                                      "type": "string"
+                                    },
+                                    "from": {
+                                      "type": "string"
+                                    },
+                                    "to": {
+                                      "type": "string"
+                                    },
+                                    "angle": {
+                                      "type": "number"
+                                    },
+                                    "assetId": {
+                                      "type": "string"
+                                    },
+                                    "stops": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "required": [
+                                          "color"
+                                        ],
+                                        "properties": {
+                                          "color": {
+                                            "type": "string"
+                                          },
+                                          "position": {
+                                            "type": "number"
+                                          },
+                                          "opacity": {
+                                            "type": "number"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                "dataFilters": {
+                                  "type": "object",
+                                  "description": "Slide-level data filters as a primitive param map.",
+                                  "additionalProperties": {
+                                    "oneOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "integer"
+                                      },
+                                      {
+                                        "type": "boolean"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "speakerNotes": {
+                                  "type": "string"
+                                },
+                                "groupTransforms": {
+                                  "type": "object",
+                                  "description": "Group id → persisted transform (rotation degrees).",
+                                  "additionalProperties": {
+                                    "type": "object",
+                                    "required": [
+                                      "rotation"
+                                    ],
+                                    "properties": {
+                                      "rotation": {
+                                        "type": "number"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
                             }
                           },
                           "title": "patch_native_config"
@@ -1398,6 +2239,19 @@
                             "op",
                             "items"
                           ],
+                          "example": {
+                            "op": "reorder_slides",
+                            "items": [
+                              {
+                                "id": "00000000-0000-4000-8000-000000000001",
+                                "sortOrder": 0
+                              },
+                              {
+                                "id": "00000000-0000-4000-8000-000000000002",
+                                "sortOrder": 1
+                              }
+                            ]
+                          },
                           "properties": {
                             "op": {
                               "const": "reorder_slides",
@@ -1405,10 +2259,24 @@
                             },
                             "items": {
                               "type": "array",
+                              "minItems": 1,
+                              "description": "Full filmstrip order: slide id + sortOrder. Section moves use move_slide_to_section.",
                               "items": {
                                 "type": "object",
-                                "properties": {},
-                                "additionalProperties": true
+                                "required": [
+                                  "id",
+                                  "sortOrder"
+                                ],
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "description": "Existing slide UUID."
+                                  },
+                                  "sortOrder": {
+                                    "type": "integer"
+                                  }
+                                }
                               }
                             }
                           },
@@ -1421,6 +2289,17 @@
                             "blockId",
                             "steps"
                           ],
+                          "example": {
+                            "op": "set_data_transform",
+                            "blockId": "blk_demo_source",
+                            "steps": [
+                              {
+                                "op": "keepRows",
+                                "count": 10,
+                                "from": "top"
+                              }
+                            ]
+                          },
                           "properties": {
                             "op": {
                               "const": "set_data_transform",
@@ -1431,10 +2310,411 @@
                             },
                             "steps": {
                               "type": "array",
+                              "description": "Allowlisted v1 transform steps (same ops as apply_data_transform_steps). No free SQL/M/DAX.",
                               "items": {
-                                "type": "object",
-                                "properties": {},
-                                "additionalProperties": true
+                                "oneOf": [
+                                  {
+                                    "title": "keepRows",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "count"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "keepRows"
+                                      },
+                                      "count": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                      },
+                                      "from": {
+                                        "type": "string",
+                                        "enum": [
+                                          "top",
+                                          "bottom"
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "removeRows",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "count"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "removeRows"
+                                      },
+                                      "count": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                      },
+                                      "from": {
+                                        "type": "string",
+                                        "enum": [
+                                          "top",
+                                          "bottom"
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "select",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "columns"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "select"
+                                      },
+                                      "columns": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "string"
+                                        },
+                                        "minItems": 1
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "rename",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "from",
+                                      "to"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "rename"
+                                      },
+                                      "from": {
+                                        "type": "string"
+                                      },
+                                      "to": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "filter",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "column",
+                                      "cmp"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "filter"
+                                      },
+                                      "column": {
+                                        "type": "string"
+                                      },
+                                      "cmp": {
+                                        "type": "string",
+                                        "enum": [
+                                          "eq",
+                                          "neq",
+                                          "gt",
+                                          "lt",
+                                          "notNull",
+                                          "contains",
+                                          "startsWith"
+                                        ]
+                                      },
+                                      "value": {
+                                        "oneOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "number"
+                                          },
+                                          {
+                                            "type": "integer"
+                                          },
+                                          {
+                                            "type": "boolean"
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "addColumn",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "name",
+                                      "expr"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "addColumn"
+                                      },
+                                      "name": {
+                                        "type": "string"
+                                      },
+                                      "expr": {
+                                        "type": "string",
+                                        "description": "Safe arithmetic/column expression (no SQL/M)."
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "replace",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "column"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "replace"
+                                      },
+                                      "column": {
+                                        "type": "string"
+                                      },
+                                      "find": {
+                                        "type": "string"
+                                      },
+                                      "replaceWith": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "sort",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "column"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "sort"
+                                      },
+                                      "column": {
+                                        "type": "string"
+                                      },
+                                      "direction": {
+                                        "type": "string",
+                                        "enum": [
+                                          "asc",
+                                          "desc"
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "changeType",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "column"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "changeType"
+                                      },
+                                      "column": {
+                                        "type": "string"
+                                      },
+                                      "to": {
+                                        "type": "string",
+                                        "enum": [
+                                          "string",
+                                          "number"
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "fillDown",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "column"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "fillDown"
+                                      },
+                                      "column": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "firstRowAsHeader",
+                                    "type": "object",
+                                    "required": [
+                                      "op"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "firstRowAsHeader"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "groupBy",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "keys"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "groupBy"
+                                      },
+                                      "keys": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "string"
+                                        },
+                                        "minItems": 1
+                                      },
+                                      "aggregations": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "required": [
+                                            "column",
+                                            "fn"
+                                          ],
+                                          "properties": {
+                                            "column": {
+                                              "type": "string"
+                                            },
+                                            "fn": {
+                                              "type": "string",
+                                              "enum": [
+                                                "sum",
+                                                "avg",
+                                                "min",
+                                                "max",
+                                                "count",
+                                                "first"
+                                              ]
+                                            },
+                                            "as": {
+                                              "type": "string"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "pivot",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "column",
+                                      "valueColumn"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "pivot"
+                                      },
+                                      "column": {
+                                        "type": "string"
+                                      },
+                                      "valueColumn": {
+                                        "type": "string"
+                                      },
+                                      "aggregation": {
+                                        "type": "string",
+                                        "enum": [
+                                          "sum",
+                                          "avg",
+                                          "min",
+                                          "max",
+                                          "count",
+                                          "first"
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "unpivot",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "columns"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "unpivot"
+                                      },
+                                      "columns": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "string"
+                                        },
+                                        "minItems": 1
+                                      },
+                                      "nameColumn": {
+                                        "type": "string"
+                                      },
+                                      "valueColumn": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "title": "merge",
+                                    "type": "object",
+                                    "required": [
+                                      "op",
+                                      "sourceId",
+                                      "leftKey",
+                                      "rightKey"
+                                    ],
+                                    "properties": {
+                                      "op": {
+                                        "type": "string",
+                                        "const": "merge"
+                                      },
+                                      "sourceId": {
+                                        "type": "string"
+                                      },
+                                      "leftKey": {
+                                        "type": "string"
+                                      },
+                                      "rightKey": {
+                                        "type": "string"
+                                      },
+                                      "columns": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    }
+                                  }
+                                ]
                               }
                             }
                           },
@@ -1468,6 +2748,14 @@
                             "op",
                             "block"
                           ],
+                          "example": {
+                            "op": "upsert_block",
+                            "block": {
+                              "id": "blk_demo_text",
+                              "type": "text",
+                              "content": "Texto de exemplo"
+                            }
+                          },
                           "properties": {
                             "op": {
                               "const": "upsert_block",
@@ -1475,7 +2763,147 @@
                             },
                             "block": {
                               "type": "object",
-                              "properties": {}
+                              "description": "Smallest semantic block accepted by TvCopilotPatchV1 upsert_block. No resolved/url/mScript. Extra known editor keys may be present and are merged.",
+                              "required": [
+                                "type"
+                              ],
+                              "additionalProperties": true,
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "heading",
+                                    "text",
+                                    "shape",
+                                    "image",
+                                    "video",
+                                    "icon",
+                                    "data_kpi",
+                                    "data_chart",
+                                    "data_table",
+                                    "data_metric",
+                                    "data_source",
+                                    "chart_view",
+                                    "table_view",
+                                    "kpi_view",
+                                    "canvas_table",
+                                    "input"
+                                  ]
+                                },
+                                "content": {
+                                  "type": "string"
+                                },
+                                "assetId": {
+                                  "type": "string"
+                                },
+                                "dataSourceId": {
+                                  "type": "string"
+                                },
+                                "hidden": {
+                                  "type": "boolean"
+                                },
+                                "groupId": {
+                                  "type": "string"
+                                },
+                                "frame": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    },
+                                    "w": {
+                                      "type": "number"
+                                    },
+                                    "h": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "style": {
+                                  "type": "object",
+                                  "description": "Optional visual style. Known keys listed; extras allowed.",
+                                  "additionalProperties": true,
+                                  "properties": {
+                                    "zIndex": {
+                                      "type": "number"
+                                    },
+                                    "fontSize": {
+                                      "type": "number"
+                                    },
+                                    "color": {
+                                      "type": "string"
+                                    },
+                                    "fontFamily": {
+                                      "type": "string"
+                                    },
+                                    "textAlign": {
+                                      "type": "string"
+                                    },
+                                    "verticalAlign": {
+                                      "type": "string"
+                                    },
+                                    "fontWeight": {
+                                      "type": "string"
+                                    },
+                                    "backgroundColor": {
+                                      "type": "string"
+                                    },
+                                    "fill": {
+                                      "type": "string"
+                                    },
+                                    "objectFit": {
+                                      "type": "string"
+                                    }
+                                  }
+                                },
+                                "dataBinding": {
+                                  "type": "object",
+                                  "properties": {
+                                    "operationId": {
+                                      "type": "string"
+                                    },
+                                    "params": {
+                                      "type": "object",
+                                      "additionalProperties": {
+                                        "oneOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "number"
+                                          },
+                                          {
+                                            "type": "integer"
+                                          },
+                                          {
+                                            "type": "boolean"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "displayMode": {
+                                      "type": "string",
+                                      "enum": [
+                                        "auto",
+                                        "kpi",
+                                        "chart",
+                                        "table",
+                                        "line_chart",
+                                        "bar_chart"
+                                      ]
+                                    },
+                                    "label": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              }
                             }
                           },
                           "title": "upsert_block"
@@ -1486,6 +2914,19 @@
                             "op",
                             "operationId"
                           ],
+                          "example": {
+                            "op": "upsert_data_source",
+                            "operationId": "get_overall_equipment_effectiveness_pct",
+                            "blockId": "blk_demo_source",
+                            "params": {
+                              "branch": "01"
+                            },
+                            "displayMode": "kpi",
+                            "label": "OEE",
+                            "fieldLabels": {
+                              "value": "OEE"
+                            }
+                          },
                           "properties": {
                             "op": {
                               "const": "upsert_data_source",
@@ -1499,17 +2940,44 @@
                             },
                             "params": {
                               "type": "object",
-                              "properties": {}
+                              "description": "Route params as a primitive map. Keys depend on the allowlisted operationId; values are validated downstream against the route schema.",
+                              "additionalProperties": {
+                                "oneOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "type": "integer"
+                                  },
+                                  {
+                                    "type": "boolean"
+                                  }
+                                ]
+                              }
                             },
                             "label": {
                               "type": "string"
                             },
                             "displayMode": {
-                              "type": "string"
+                              "type": "string",
+                              "enum": [
+                                "auto",
+                                "kpi",
+                                "chart",
+                                "table",
+                                "line_chart",
+                                "bar_chart"
+                              ]
                             },
                             "fieldLabels": {
                               "type": "object",
-                              "properties": {}
+                              "description": "Column/field key → display label.",
+                              "additionalProperties": {
+                                "type": "string"
+                              }
                             }
                           },
                           "title": "upsert_data_source"
@@ -1559,7 +3027,7 @@
                     "name": "Testando a VISTA"
                   }
                 ],
-                "catalogVersion": "2026.08.05.1",
+                "catalogVersion": "2026.09.15.1",
                 "planDigest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
               }
             }
@@ -1712,9 +3180,10 @@
               },
               "details": {
                 "type": "object",
-                "properties": {},
+                "description": "Optional owner-local diagnostic bag. Shape varies by error code; never includes tokens, SQL, or stack traces. Intentionally opaque (response-side only).",
+                "x-delpi-gpt-opaque-object": true,
                 "additionalProperties": true,
-                "description": "Optional structured fields (no secrets)."
+                "properties": {}
               }
             }
           },

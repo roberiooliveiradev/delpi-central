@@ -101,3 +101,17 @@ PYTHONPATH=.:../shared python3 scripts/sync_gpt_actions_openapi.py
 ```
 
 Writes ``docs/gpt-actions/openapi-gpt-actions.json`` from the canonical builder.
+
+## Nested operation schemas
+
+Complex Copilot op shapes (``patch``, ``items``, ``steps``, ``block``, ``params``,
+``fieldLabels``) are owned by ``tv_copilot_content.json`` ``operations.*.inputSchema``.
+The GPT OpenAPI ``ops.items.oneOf`` is a projection of that catalog — not a second
+authority.
+
+Intentional free-form **request** objects (editor-native data-preview blobs) must
+set ``x-delpi-gpt-opaque-object: true`` plus a non-empty description. Response
+``error.details`` is the same class of diagnostic bag.
+
+After any schema change: reimport the public OpenAPI in GPT Builder and start a
+**new** conversation. Stale GPT versions are not acceptance evidence.

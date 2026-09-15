@@ -23,6 +23,11 @@ from tv_app.application.services.data.slide_data_resolution_service import (
 from tv_app.application.services.data.tv_copilot_content_service import (
     TvCopilotContentService,
 )
+from tv_app.application.services.data.tv_copilot_nested_contract import (
+    NestedContractError,
+    patch_native_keys,
+    validate_operation_payload,
+)
 from tv_app.application.services.data.tv_copilot_http_command_planner_service import (
     TvCopilotHttpCommandPlannerService,
 )
@@ -45,9 +50,7 @@ from tv_app.infrastructure.persistence.repositories.playlist_repository import (
     SlideNotFoundError,
 )
 
-_PATCH_NATIVE_KEYS = frozenset(
-    {"background", "dataFilters", "speakerNotes", "groupTransforms"}
-)
+_PATCH_NATIVE_KEYS = patch_native_keys()
 
 _VISUAL_PROJECTION_DEFAULTS = {
     "kpi_view": "kpiProjection",
@@ -372,6 +375,10 @@ class TvCopilotPatchService:
                     TvCopilotContentService.message("unknownOp", op=op_name or "?")
                 )
             _validate_op_required_fields(op_name, raw_op)
+            try:
+                validate_operation_payload(op_name, raw_op)
+            except NestedContractError as exc:
+                raise TvCopilotPatchError(str(exc)) from exc
 
             if op_name == "create_playlist":
                 created = self._op_create_playlist(
