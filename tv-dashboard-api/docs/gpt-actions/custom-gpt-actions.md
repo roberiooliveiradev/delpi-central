@@ -35,9 +35,13 @@ Eight imported Actions (``openapi.json`` is import-only, not in schema paths):
 - Only ``GET /gpt-actions/v1/openapi.json`` is public (exact path).
 - No API Key authority for writes. No OpenAI email identity. No GPT-local RBAC matrix.
 
-OAuth client candidate ``chatgpt-tv-dashboard`` is **TARGET / MANUAL_CONFIGURATION_REQUIRED**
-(Keycloak + GPT Builder). This package prepares the HTTP surface; it does not
-claim the client already exists or that Builder is configured.
+OAuth client ``chatgpt-tv-dashboard`` is a **TEMPORARY_BRIDGE_CLIENT**
+(``MANUAL_CONFIGURATION_REQUIRED`` in Keycloak + GPT Builder). Go-live checklist:
+``docs/gpt-actions/gpt-builder-go-live.md``. Specialist persona **VISTA**:
+``docs/gpt-actions/specialist-instructions.md`` + Knowledge
+``docs/gpt-actions/vista-display-playbooks.md``. This package owns the HTTP façade;
+it does not auto-provision the client. Durable target remains Plugin + MCP
+(Custom GPT bridge is temporary).
 
 ## PREPARE vs ACT
 
