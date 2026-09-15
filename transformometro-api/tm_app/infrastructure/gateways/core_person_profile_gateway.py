@@ -20,7 +20,7 @@ PROFILE_TIMEOUT_SECONDS = float(os.getenv("DELPI_AUTH_RBAC_TIMEOUT_SECONDS", "2.
 class CorePersonProfileGateway:
     """User-parity read of GET /me/person-profile — no S2S, no admin token."""
 
-    def get_my_person_profile(self, authorization: str | None) -> dict:
+    def get_my_person_profile(self, authorization: str) -> dict:
         if not authorization or not str(authorization).strip():
             raise GptActionsError(
                 "Usuário não autenticado.",

@@ -16,14 +16,21 @@ from tm_app.application.gpt_actions.improvement_package_service import (
     GuidedImprovementPackageService,
 )
 from tm_app.application.gpt_actions.process_context_service import ProcessContextService
-from tm_app.application.gpt_actions.user_context_service import UserContextService
+from tm_app.application.gpt_actions.user_context_service import (
+    AuthenticatedUserContext,
+    UserContextService,
+)
 from tm_app.application.gpt_actions.openapi_builder import (
     build_gpt_actions_openapi,
     resolve_gpt_actions_server_url,
 )
 from tm_app.config import settings
+from tm_app.core.auth_actor import actor_from_request
 from tm_app.core.errors import public_error_parts
 from tm_app.core.responses import fail, ok
+from tm_app.infrastructure.gateways.core_person_profile_gateway import (
+    CorePersonProfileGateway,
+)
 
 router = APIRouter(
     prefix="/transformometro/gpt-actions/v1",
@@ -33,7 +40,9 @@ logger = logging.getLogger(__name__)
 _dispatch = GptActionsDispatchService()
 _packages = GuidedImprovementPackageService(_dispatch)
 _process_context = ProcessContextService()
-_user_context = UserContextService()
+_user_context = UserContextService(
+    person_profile_reader=CorePersonProfileGateway()
+)
 
 
 class GptRecordBody(BaseModel):
@@ -138,8 +147,20 @@ def gpt_get_openapi_schema():
 )
 def gpt_get_my_context(request: Request):
     try:
+        if getattr(request.state, "user", None) is None:
+            return fail("Usuário não autenticado.", 401, {"error_kind": "authn"})
+        authorization = str(request.headers.get("Authorization") or "").strip()
+        if not authorization:
+            return fail("Usuário não autenticado.", 401, {"error_kind": "authn"})
+        _user_id, email, display_name = actor_from_request(request)
         return ok(
-            _user_context.get_my_context(request),
+            _user_context.get_my_context(
+                AuthenticatedUserContext(
+                    display_name=display_name,
+                    email=email,
+                    authorization=authorization,
+                )
+            ),
             "Contexto pessoal do usuário autenticado.",
         )
     except Exception as exc:

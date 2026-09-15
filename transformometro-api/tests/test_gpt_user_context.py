@@ -1,7 +1,9 @@
-"""TM-GPI-007 — gpt_get_my_context personal context (not authorization)."""
+"""TM-GPI-007 / 007A — gpt_get_my_context personal context (not authorization)."""
 
 from __future__ import annotations
 
+import ast
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -16,7 +18,10 @@ from tm_app.application.gpt_actions.openapi_builder import (
     build_gpt_actions_openapi,
     count_operations,
 )
-from tm_app.application.gpt_actions.user_context_service import UserContextService
+from tm_app.application.gpt_actions.user_context_service import (
+    AuthenticatedUserContext,
+    UserContextService,
+)
 from tm_app.infrastructure.gateways.core_person_profile_gateway import (
     CorePersonProfileGateway,
 )
@@ -38,20 +43,55 @@ _FORBIDDEN_KEYS = frozenset(
     }
 )
 
+_APP_MODULE = (
+    Path(__file__).resolve().parents[1]
+    / "tm_app"
+    / "application"
+    / "gpt_actions"
+    / "user_context_service.py"
+)
 
-def _request(*, name="Robério", email="roberio@delpi.com.br", perms=None):
-    req = MagicMock()
-    req.state.user = SimpleNamespace(
-        id="11111111-1111-1111-1111-111111111111",
-        name=name,
+
+class _FakePersonProfileReader:
+    def __init__(self, payload: dict | None = None, *, error: Exception | None = None):
+        self.payload = payload or {"job_title": None}
+        self.error = error
+        self.calls: list[str] = []
+
+    def get_my_person_profile(self, authorization: str) -> dict:
+        self.calls.append(authorization)
+        if self.error is not None:
+            raise self.error
+        return self.payload
+
+
+def _context(
+    *,
+    display_name: str | None = "Robério",
+    email: str | None = "roberio@delpi.com.br",
+    authorization: str = "Bearer user-jwt",
+) -> AuthenticatedUserContext:
+    return AuthenticatedUserContext(
+        display_name=display_name,
         email=email,
-        permissions=perms or ["transformometro.view"],
-        roles=["role-x"],
-        groups=["group-y"],
-        is_superadmin=False,
+        authorization=authorization,
     )
-    req.headers = {"Authorization": "Bearer user-jwt"}
-    return req
+
+
+def test_application_user_context_has_no_infrastructure_or_framework_imports():
+    tree = ast.parse(_APP_MODULE.read_text(encoding="utf-8"))
+    imported: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imported.append(node.module)
+    joined = "\n".join(imported)
+    assert "tm_app.infrastructure" not in joined
+    assert not any(name.startswith("tm_app.infrastructure") for name in imported)
+    assert "fastapi" not in imported
+    assert "starlette" not in imported
+    assert not any(name.startswith("fastapi") or name.startswith("starlette") for name in imported)
 
 
 def test_openapi_includes_gpt_get_my_context():
@@ -65,48 +105,42 @@ def test_openapi_includes_gpt_get_my_context():
 
 
 def test_authenticated_user_gets_display_name_email_job_title():
-    svc = UserContextService()
-    request = _request()
-    with patch.object(svc._profiles, "get_my_person_profile") as fetch:
-        fetch.return_value = {"job_title": "Gerente de Processos"}
-        data = svc.get_my_context(request)
+    reader = _FakePersonProfileReader({"job_title": "Gerente de Processos"})
+    svc = UserContextService(person_profile_reader=reader)
+    data = svc.get_my_context(_context())
     assert data["display_name"] == "Robério"
     assert data["email"] == "roberio@delpi.com.br"
     assert data["job_title"] == "Gerente de Processos"
     assert data["profile_complete"] is True
-    fetch.assert_called_once_with("Bearer user-jwt")
+    assert reader.calls == ["Bearer user-jwt"]
 
 
 def test_missing_person_profile_returns_null_job_title_not_invented():
-    svc = UserContextService()
-    request = _request()
-    with patch.object(svc._profiles, "get_my_person_profile") as fetch:
-        fetch.return_value = {
+    reader = _FakePersonProfileReader(
+        {
             "user_id": "11111111-1111-1111-1111-111111111111",
             "job_title": None,
             "has_photo": False,
         }
-        data = svc.get_my_context(request)
+    )
+    svc = UserContextService(person_profile_reader=reader)
+    data = svc.get_my_context(_context())
     assert data["job_title"] is None
     assert data["profile_complete"] is True
 
 
 def test_missing_display_name_sets_profile_complete_false():
-    svc = UserContextService()
-    request = _request(name="roberio@delpi.com.br", email="roberio@delpi.com.br")
-    with patch.object(svc._profiles, "get_my_person_profile") as fetch:
-        fetch.return_value = {"job_title": None}
-        data = svc.get_my_context(request)
+    reader = _FakePersonProfileReader({"job_title": None})
+    svc = UserContextService(person_profile_reader=reader)
+    data = svc.get_my_context(_context(display_name=None))
     assert data["display_name"] is None
     assert data["profile_complete"] is False
 
 
 def test_response_excludes_authz_metadata():
-    svc = UserContextService()
-    request = _request()
-    with patch.object(svc._profiles, "get_my_person_profile") as fetch:
-        fetch.return_value = {"job_title": "Analista"}
-        data = svc.get_my_context(request)
+    reader = _FakePersonProfileReader({"job_title": "Analista"})
+    svc = UserContextService(person_profile_reader=reader)
+    data = svc.get_my_context(_context())
     assert set(data.keys()) == {
         "display_name",
         "email",
@@ -118,12 +152,12 @@ def test_response_excludes_authz_metadata():
 
 
 def test_unauthenticated_service_raises_401():
-    svc = UserContextService()
-    request = MagicMock()
-    request.state.user = None
+    reader = _FakePersonProfileReader()
+    svc = UserContextService(person_profile_reader=reader)
     with pytest.raises(GptActionsError) as exc:
-        svc.get_my_context(request)
+        svc.get_my_context(_context(authorization=""))
     assert exc.value.status_code == 401
+    assert reader.calls == []
 
 
 def test_gpt_me_route_unauthenticated_returns_401():
@@ -133,6 +167,41 @@ def test_gpt_me_route_unauthenticated_returns_401():
     client = TestClient(app)
     response = client.get("/transformometro/gpt-actions/v1/me")
     assert response.status_code == 401
+
+
+def test_gpt_me_route_injects_authenticated_context(tm_client):
+    from tests.support import test_app as support
+
+    prev_name = getattr(support.TEST_USER, "name", None)
+    prev_email = getattr(support.TEST_USER, "email", None)
+    support.TEST_USER.name = "Robério Oliveira"
+    support.TEST_USER.email = "roberio@delpi.com.br"
+    try:
+        with patch(
+            "tm_app.interface.http.routes.gpt_actions_routes._user_context.get_my_context"
+        ) as get_ctx:
+            get_ctx.return_value = {
+                "display_name": "Robério Oliveira",
+                "email": "roberio@delpi.com.br",
+                "job_title": None,
+                "profile_complete": True,
+            }
+            response = tm_client.get(
+                "/transformometro/gpt-actions/v1/me",
+                headers={"Authorization": "Bearer user-jwt"},
+            )
+        assert response.status_code == 200
+        body = get_ctx.call_args[0][0]
+        assert isinstance(body, AuthenticatedUserContext)
+        assert body.display_name == "Robério Oliveira"
+        assert body.email == "roberio@delpi.com.br"
+        assert body.authorization.startswith("Bearer ")
+        payload = response.json()["data"]
+        assert payload["job_title"] is None
+        assert not _FORBIDDEN_KEYS.intersection(payload.keys())
+    finally:
+        support.TEST_USER.name = prev_name
+        support.TEST_USER.email = prev_email
 
 
 def test_core_integration_failure_truthful_503():
@@ -183,6 +252,7 @@ def test_existing_nineteen_operation_ids_unchanged():
         "gpt_get_process_timeline",
         "gpt_adjust_shared_resource_cost",
         "gpt_meeting_minute_manage",
+        "gpt_get_my_context",
     }
-    assert before <= set(GPT_ACTIONS_OPERATION_IDS)
+    assert set(GPT_ACTIONS_OPERATION_IDS) == before
     assert len(GPT_ACTIONS_OPERATION_IDS) == 20
