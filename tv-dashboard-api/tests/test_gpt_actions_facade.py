@@ -827,11 +827,17 @@ def test_catalog_and_openapi_http_smoke():
 
 
 def _assert_object_schemas_have_properties(node: object, path: str = "") -> None:
-    """TÉO/OpenAI Custom GPT invariant: type=object → properties (no bare objects)."""
+    """type=object must be constructible: properties, typed map, or explicit opaque."""
     if isinstance(node, dict):
         if node.get("type") == "object" and "$ref" not in node:
-            assert "properties" in node, path
+            has_props = isinstance(node.get("properties"), dict) and bool(node.get("properties"))
+            typed_map = isinstance(node.get("additionalProperties"), dict)
+            opaque = node.get("x-delpi-gpt-opaque-object") is True
+            empty_props = node.get("properties") == {}
+            assert has_props or typed_map or (opaque and empty_props), path
         for key, value in node.items():
+            if key == "example":
+                continue
             _assert_object_schemas_have_properties(value, f"{path}/{key}")
     elif isinstance(node, list):
         for idx, value in enumerate(node):
@@ -902,20 +908,6 @@ def test_openapi_prepare_act_bodies_have_typed_examples_and_ops_oneof():
             get = methods.get("get")
             if isinstance(get, dict) and get.get("operationId") == oid:
                 assert "requestBody" not in get, oid
-
-
-def test_openapi_artifact_matches_builder():
-    from pathlib import Path
-    import json
-
-    artifact = Path("docs/gpt-actions/openapi-gpt-actions.json")
-    doc = build_gpt_actions_openapi()
-    # After sync, artifact must equal builder (test runs post-sync in CI; regenerate locally).
-    if artifact.exists():
-        on_disk = json.loads(artifact.read_text(encoding="utf-8"))
-        # Compare without requiring pre-sync: structural invariants only when out of sync.
-        assert on_disk.get("openapi") == doc.get("openapi")
-        assert count_operations(on_disk) == 8
 
 
 def test_create_playlist_preview_then_commit_verified_family():
@@ -1044,3 +1036,151 @@ def test_malformed_tool_payloads_return_gpt_error_envelope():
         )
         assert string_ops.status_code < 500
         assert string_ops.status_code >= 400
+
+
+def _ops_oneof_branches() -> list[dict]:
+    doc = build_gpt_actions_openapi(server_url="https://minhadelpi.com.br/apps/tv-dashboard-api")
+    preview = None
+    for methods in doc["paths"].values():
+        post = methods.get("post") if isinstance(methods, dict) else None
+        if isinstance(post, dict) and post.get("operationId") == "gpt_preview_change":
+            preview = post
+            break
+    assert preview is not None
+    schema = preview["requestBody"]["content"]["application/json"]["schema"]
+    return schema["properties"]["ops"]["items"]["oneOf"]
+
+
+def _branch(name: str) -> dict:
+    for item in _ops_oneof_branches():
+        if item.get("title") == name:
+            return item
+    raise AssertionError(name)
+
+
+def test_canonical_complex_ops_are_fully_typed_and_projected():
+    canonical = TvCopilotContentService.operations()
+    for name in (
+        "patch_native_config",
+        "reorder_slides",
+        "set_data_transform",
+        "upsert_block",
+        "upsert_data_source",
+        "create_playlist",
+    ):
+        schema = canonical[name]["inputSchema"]
+        assert schema["type"] == "object"
+        assert schema["properties"]
+        branch = _branch(name)
+        assert branch["properties"]
+        assert branch.get("example")
+
+    patch = _branch("patch_native_config")["properties"]["patch"]
+    assert set(patch["properties"]) == {
+        "background",
+        "dataFilters",
+        "speakerNotes",
+        "groupTransforms",
+    }
+    assert patch.get("additionalProperties") is False
+
+    items = _branch("reorder_slides")["properties"]["items"]
+    assert items["items"]["required"] == ["id", "sortOrder"]
+    assert items["items"]["properties"]["sortOrder"]["type"] == "integer"
+
+    steps = _branch("set_data_transform")["properties"]["steps"]
+    variants = {item["properties"]["op"]["const"] for item in steps["items"]["oneOf"]}
+    assert "keepRows" in variants
+    assert "select" in variants
+    assert "filter" in variants
+
+    labels = _branch("upsert_data_source")["properties"]["fieldLabels"]
+    assert labels["additionalProperties"] == {"type": "string"}
+    params = _branch("upsert_data_source")["properties"]["params"]
+    assert isinstance(params["additionalProperties"], dict)
+
+    block = _branch("upsert_block")["properties"]["block"]
+    assert "text" in block["properties"]["type"]["enum"]
+    assert block["properties"]["frame"]["properties"]
+
+
+def test_gpt_request_opaque_objects_are_explicit():
+    doc = build_gpt_actions_openapi(server_url="https://minhadelpi.com.br/apps/tv-dashboard-api")
+    preview_data = None
+    for methods in doc["paths"].values():
+        post = methods.get("post") if isinstance(methods, dict) else None
+        if isinstance(post, dict) and post.get("operationId") == "gpt_preview_data_block":
+            preview_data = post
+            break
+    assert preview_data is not None
+    props = preview_data["requestBody"]["content"]["application/json"]["schema"]["properties"]
+    for key in ("block", "nativeConfig", "playlistDefaults", "previewOptions"):
+        schema = props[key]
+        assert schema["x-delpi-gpt-opaque-object"] is True
+        assert schema["description"]
+
+    details = doc["components"]["schemas"]["GptErrorEnvelope"]["properties"]["error"][
+        "properties"
+    ]["details"]
+    assert details["x-delpi-gpt-opaque-object"] is True
+
+
+def test_openapi_has_exactly_eight_stable_operation_ids():
+    doc = build_gpt_actions_openapi()
+    assert count_operations(doc) == 8
+    found = []
+    for methods in doc["paths"].values():
+        for method, op in methods.items():
+            if isinstance(op, dict) and op.get("operationId"):
+                found.append(op["operationId"])
+    assert found == list(GPT_ACTIONS_OPERATION_IDS)
+
+
+def test_openapi_artifact_matches_builder():
+    from pathlib import Path
+    import json
+
+    artifact = Path("docs/gpt-actions/openapi-gpt-actions.json")
+    doc = build_gpt_actions_openapi()
+    assert artifact.exists()
+    on_disk = json.loads(artifact.read_text(encoding="utf-8"))
+    assert on_disk == doc
+    assert count_operations(on_disk) == 8
+
+
+def test_dispatch_maps_nested_contract_error_to_invalid_change():
+    from tv_app.application.services.data.tv_copilot_patch_service import TvCopilotPatchError
+
+    repo = MagicMock()
+    writes = _writes_mock()
+    commit = TvGptCommitService(writes=writes, idempotency=InMemoryIdempotencyRepository())
+    dispatch = GptActionsDispatchService(repo=repo, writes=writes, commit=commit)
+    with (
+        patch.object(
+            dispatch._access,
+            "resolve",
+            return_value=SimpleNamespace(can_edit=True, can_read=True, level="owner"),
+        ),
+        patch.object(dispatch._access, "actor_id", return_value="actor-1"),
+        patch.object(
+            TvCopilotPatchService,
+            "preview",
+            side_effect=TvCopilotPatchError("fieldLabels deve ser um mapa string→string."),
+        ),
+    ):
+        with pytest.raises(GptActionsError) as exc:
+            dispatch.preview_change(
+                user=_superadmin(),
+                target={"playlistId": str(uuid4()), "slideId": str(uuid4())},
+                ops=[
+                    {
+                        "op": "upsert_data_source",
+                        "operationId": "op.demo",
+                        "fieldLabels": {"value": 10},
+                    }
+                ],
+                catalog_version=TvCopilotContentService.catalog_version(),
+                authorization=None,
+            )
+    assert exc.value.code == "INVALID_CHANGE"
+    assert exc.value.status_code == 422

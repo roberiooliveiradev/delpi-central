@@ -653,3 +653,121 @@ def test_apply_traduz_erro_de_validacao_em_erro_de_patch(monkeypatch):
             actor_user_id="u1",
         )
     assert repo.updated == []
+
+
+def test_nested_contract_positive_sibling_negative(monkeypatch):
+    svc = _service(monkeypatch=monkeypatch)
+
+    ok_patch = svc.preview(
+        {
+            "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+            "ops": [
+                {
+                    "op": "patch_native_config",
+                    "patch": {"speakerNotes": "Nota de teste"},
+                }
+            ],
+        },
+        user={},
+    )
+    assert ok_patch["nativeConfig"]["speakerNotes"] == "Nota de teste"
+
+    ok_transform = svc.preview(
+        {
+            "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+            "ops": [
+                {
+                    "op": "set_data_transform",
+                    "blockId": "src-a",
+                    "steps": [{"op": "keepRows", "count": 5, "from": "top"}],
+                }
+            ],
+        },
+        user={},
+    )
+    source = next(b for b in ok_transform["nativeConfig"]["blocks"] if b["id"] == "src-a")
+    assert source["dataTransform"]["steps"][0]["op"] == "keepRows"
+
+    ok_labels = svc.preview(
+        {
+            "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+            "ops": [
+                {
+                    "op": "upsert_data_source",
+                    "operationId": "op.demo",
+                    "blockId": "src-a",
+                    "fieldLabels": {"idd": "IDD"},
+                }
+            ],
+        },
+        user={},
+    )
+    updated = next(b for b in ok_labels["nativeConfig"]["blocks"] if b["id"] == "src-a")
+    assert updated["fieldLabels"]["idd"] == "IDD"
+
+    with pytest.raises(TvCopilotPatchError):
+        svc.preview(
+            {
+                "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+                "ops": [{"op": "patch_native_config", "patch": {"blocks": []}}],
+            },
+            user={},
+        )
+    with pytest.raises(TvCopilotPatchError, match="step"):
+        svc.preview(
+            {
+                "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+                "ops": [
+                    {
+                        "op": "set_data_transform",
+                        "blockId": "src-a",
+                        "steps": [{"op": "runSql"}],
+                    }
+                ],
+            },
+            user={},
+        )
+    with pytest.raises(TvCopilotPatchError):
+        svc.preview(
+            {
+                "target": {"playlistId": PLAYLIST_ID},
+                "ops": [{"op": "reorder_slides", "items": [{"sortOrder": 1}]}],
+            },
+            user={},
+        )
+    with pytest.raises(TvCopilotPatchError):
+        svc.preview(
+            {
+                "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+                "ops": [
+                    {
+                        "op": "upsert_data_source",
+                        "operationId": "op.demo",
+                        "fieldLabels": {"value": 9},
+                    }
+                ],
+            },
+            user={},
+        )
+    with pytest.raises(TvCopilotPatchError):
+        svc.preview(
+            {
+                "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+                "ops": [
+                    {
+                        "op": "upsert_data_source",
+                        "operationId": "op.demo",
+                        "params": {"branch": {"nested": True}},
+                    }
+                ],
+            },
+            user={},
+        )
+    with pytest.raises(TvCopilotPatchError):
+        svc.preview(
+            {
+                "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+                "ops": [{"op": "upsert_block", "block": {"content": "sem tipo"}}],
+            },
+            user={},
+        )

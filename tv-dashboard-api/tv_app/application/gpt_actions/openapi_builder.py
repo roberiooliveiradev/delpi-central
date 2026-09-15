@@ -36,41 +36,50 @@ def resolve_gpt_actions_server_url(
     return f"{GPT_ACTIONS_PUBLIC_FALLBACK_ORIGIN}{root}"
 
 
-def _opaque_object_schema(*, description: str | None = None) -> dict[str, Any]:
-    """Builder-compatible free-form object (never bare type=object)."""
-    schema: dict[str, Any] = {
+GPT_OPAQUE_OBJECT_EXTENSION = "x-delpi-gpt-opaque-object"
+
+
+def _opaque_object_schema(*, description: str) -> dict[str, Any]:
+    """Intentional free-form object. Requires marker + description."""
+    return {
         "type": "object",
-        "properties": {},
+        "description": description,
+        GPT_OPAQUE_OBJECT_EXTENSION: True,
         "additionalProperties": True,
+        "properties": {},
     }
-    if description:
-        schema["description"] = description
-    return schema
 
 
-def normalize_json_schema_for_gpt_builder(node: Any) -> Any:
-    """Ensure every type=object has properties; arrays have items (TÉO invariant)."""
+def _project_schema_node(node: Any) -> Any:
+    """Deep-copy JSON Schema preserving composition, maps and typed items."""
     if isinstance(node, list):
-        return [normalize_json_schema_for_gpt_builder(item) for item in node]
+        return [_project_schema_node(item) for item in node]
     if not isinstance(node, dict):
         return node
 
-    out = {key: normalize_json_schema_for_gpt_builder(value) for key, value in node.items()}
+    out: dict[str, Any] = {}
+    for key, value in node.items():
+        if key == "example":
+            out[key] = copy.deepcopy(value)
+            continue
+        out[key] = _project_schema_node(value)
 
     if out.get("type") == "object" and "$ref" not in out:
-        props = out.get("properties")
-        if not isinstance(props, dict):
-            out["properties"] = {}
-        else:
+        additional = out.get("additionalProperties")
+        typed_map = isinstance(additional, dict)
+        if not isinstance(out.get("properties"), dict) and not typed_map:
+            if out.get(GPT_OPAQUE_OBJECT_EXTENSION) is True:
+                out["properties"] = {}
+            # Leave typed maps without dummy properties.
+        elif isinstance(out.get("properties"), dict):
             out["properties"] = {
-                key: normalize_json_schema_for_gpt_builder(value)
-                for key, value in props.items()
+                key: _project_schema_node(value)
+                for key, value in out["properties"].items()
             }
 
     if out.get("type") == "array" and "items" not in out and "$ref" not in out:
-        out["items"] = _opaque_object_schema()
+        raise ValueError("canonical array schema missing items")
 
-    # OpenAPI/GPT Builder: pair const with an explicit type when missing.
     if "const" in out and "type" not in out and "$ref" not in out:
         const_val = out["const"]
         if isinstance(const_val, bool):
@@ -85,6 +94,11 @@ def normalize_json_schema_for_gpt_builder(node: Any) -> Any:
     return out
 
 
+def normalize_json_schema_for_gpt_builder(node: Any) -> Any:
+    """Project canonical JSON Schema for GPT Builder without inventing shapes."""
+    return _project_schema_node(node)
+
+
 def _project_operation_input_schemas() -> list[dict[str, Any]]:
     """Canonical TvCopilot operations → OpenAPI oneOf branches (no parallel catalog)."""
     branches: list[dict[str, Any]] = []
@@ -96,14 +110,20 @@ def _project_operation_input_schemas() -> list[dict[str, Any]]:
             continue
         schema = normalize_json_schema_for_gpt_builder(copy.deepcopy(raw))
         schema.setdefault("title", op_name)
-        props = schema.setdefault("properties", {})
-        if isinstance(props, dict) and "op" not in props:
+        props = schema.get("properties")
+        if not isinstance(props, dict):
+            props = {}
+            schema["properties"] = props
+        if "op" not in props:
             props["op"] = {"type": "string", "const": op_name}
         required = schema.get("required")
         if isinstance(required, list) and "op" not in required:
             schema["required"] = ["op", *required]
         elif not isinstance(required, list):
             schema["required"] = ["op"]
+        example = raw.get("example")
+        if isinstance(example, dict) and example:
+            schema["example"] = copy.deepcopy(example)
         branches.append(schema)
     return branches
 
@@ -218,7 +238,11 @@ def _error_envelope_schema() -> dict[str, Any]:
                     },
                     "retryable": {"type": "boolean"},
                     "details": _opaque_object_schema(
-                        description="Optional structured fields (no secrets)."
+                        description=(
+                            "Optional owner-local diagnostic bag. Shape varies by error "
+                            "code; never includes tokens, SQL, or stack traces. "
+                            "Intentionally opaque (response-side only)."
+                        )
                     ),
                 },
             },
@@ -291,16 +315,33 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
         "required": ["block", "nativeConfig"],
         "properties": {
             "block": _opaque_object_schema(
-                description="Slide block payload (same shape as editor preview)."
+                description=(
+                    "Editor-native block blob for dry-run resolution. Variability is "
+                    "unbounded across block types; runtime validates downstream. "
+                    "Not a second Copilot operation catalog."
+                )
             ),
             "nativeConfig": _opaque_object_schema(
-                description="Native slide config used for dry-run resolution."
+                description=(
+                    "Editor-native slide config for dry-run resolution. Full canvas "
+                    "DTO; not a Copilot op payload."
+                )
             ),
             "playlistId": {"type": "string"},
-            "playlistDefaults": _opaque_object_schema(),
+            "playlistDefaults": _opaque_object_schema(
+                description=(
+                    "Optional playlist dataDefaults blob inherited during dry-run. "
+                    "Route-specific; not a fixed GPT construction contract."
+                )
+            ),
             "forceRefresh": {"type": "boolean"},
             "targetStepName": {"type": "string"},
-            "previewOptions": _opaque_object_schema(),
+            "previewOptions": _opaque_object_schema(
+                description=(
+                    "Optional resolver flags for dry-run. Intentionally open-ended "
+                    "preview knobs, not a persisted write contract."
+                )
+            ),
         },
     }
 

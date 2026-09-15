@@ -119,6 +119,11 @@ https://minhadelpi.com.br/apps/tv-dashboard-api/gpt-actions/v1/openapi.json
 
 Confirmar: editor reconhece **exatamente 8** Actions.
 
+Após qualquer mudança de schema canônico / OpenAPI: **reimportar** esta URL,
+salvar o GPT e abrir conversa **nova**. Nested ops (`patch`, `items`, `steps`,
+`block`, `params`, `fieldLabels`) vêm do catálogo TvCopilot — não de um catálogo
+paralelo no Builder.
+
 ## 3. Smoke (usuários DELPI legítimos)
 
 AuthN = Keycloak; AuthZ plataforma = Core; AuthZ recurso = TV. Conta OpenAI **não** é autoridade.
