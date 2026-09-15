@@ -1,8 +1,15 @@
 # Catálogo OpenAPI — api-delpi (gerado automaticamente)
 
-**Provider:** `api-delpi` · **Rotas:** 700 · **Gerado em:** 2026-09-10 11:34 UTC
+**Provider:** `api-delpi` · **Rotas:** 706 · **Gerado em:** 2026-09-15 19:48 UTC
 
 > Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
+
+## API DELPI GPT Actions (legacy) (2)
+
+| Método | Path | operationId | Summary |
+|--------|------|-------------|---------|
+| `GET` | `/gpt-actions/v1/catalog` | `gpt_get_catalog` | List V1 GPT capabilities and field allowlist (legacy) |
+| `GET` | `/gpt-actions/v1/products/search` | `gpt_search_products` | Search products with minimal projection (legacy) |
 
 ## Agendamento (10)
 
@@ -537,7 +544,7 @@
 | `GET` | `/process-inspection-plans/products/{code}` | `get_process_inspection_plans_product` | Process inspection plan detail by product |
 | `GET` | `/process-inspection-plans/summary` | `get_process_inspection_plans_summary` | Process inspection plans — summary KPIs |
 
-## Produção (13)
+## Produção (15)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
@@ -546,6 +553,8 @@
 | `GET` | `/production/eficiencia-fabril/appointments` | `list_eficiencia_fabril_appointments` | Eficiencia fabril appointments |
 | `GET` | `/production/eficiencia-fabril/dashboard` | `get_eficiencia_fabril_dashboard` | Eficiencia fabril dashboard |
 | `GET` | `/production/eficiencia-fabril/efficiency-by-work-center` | `get_eficiencia_fabril_efficiency_by_work_center` | Factory efficiency average % by work center |
+| `GET` | `/production/eficiencia-fabril/efficiency-series` | `get_eficiencia_fabril_efficiency_series` | Factory efficiency daily series by work center |
+| `GET` | `/production/factory-shifts` | `get_production_factory_shifts` | Factory shifts catalog |
 | `GET` | `/production/oee` | `get_production_oee` | Production OEE — summary and appointments |
 | `GET` | `/production/oee/appointments/{appointment_id}` | `get_production_oee_appointment_by_id` | Production oee appointment by id |
 | `GET` | `/production/oee/series` | `get_production_oee_series` | Production OEE series |
@@ -615,12 +624,13 @@
 |--------|------|-------------|---------|
 | `GET` | `/production/production-order-sets/incomplete` | `get_production_order_sets_incomplete` | Incomplete production order sets |
 
-## Produção — Horas improdutivas (3)
+## Produção — Horas improdutivas (4)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
 | `GET` | `/production/unproductive-hours/items` | `get_production_unproductive_hours_items` | Unproductive hours items |
 | `GET` | `/production/unproductive-hours/ranking` | `get_production_unproductive_hours_ranking` | Unproductive hours ranking |
+| `GET` | `/production/unproductive-hours/series` | `get_production_unproductive_hours_series` | Unproductive hours daily series |
 | `GET` | `/production/unproductive-hours/summary` | `get_production_unproductive_hours_summary` | Unproductive hours summary |
 
 ## Produção — Ordens de produção (3)
@@ -866,6 +876,12 @@
 | `GET` | `/supplies/third-party-materials/shipments` | `get_supplies_third_party_materials_shipments` | Third-party material shipments |
 | `GET` | `/supplies/third-party-materials/shipments/{shipment_recno}` | `get_supplies_third_party_materials_shipment` | Third-party material shipment detail |
 | `GET` | `/supplies/third-party-materials/summary` | `get_supplies_third_party_materials_summary` | Third-party materials summary |
+
+## Suprimentos — Pedidos de compra (1)
+
+| Método | Path | operationId | Summary |
+|--------|------|-------------|---------|
+| `GET` | `/supplies/purchase-orders` | `list_supplies_purchase_orders` | Lista paginada — Linhas de pedidos de compra em aberto (sc7) |
 
 ## Suprimentos — Saldos de estoque (2)
 

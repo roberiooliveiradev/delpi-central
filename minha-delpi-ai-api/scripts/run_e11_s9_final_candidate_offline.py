@@ -47,6 +47,7 @@ SIDECARS: list[dict] = [
         "coversClassIds": [12],
         "requiredDimensions": ["R9", "R10"],
         "harnessRefs": [
+            "tests/unit/application/services/test_j_r5_metamorphic_provider_path_operation_id_rename.py",
             "tests/unit/application/services/test_e1_s6b_selection_cutover.py",
             "tests/unit/application/services/test_e11_s5_registry_operation_ids_cutover.py",
         ],
