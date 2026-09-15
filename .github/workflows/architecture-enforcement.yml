@@ -24,6 +24,8 @@ on:
       - "scripts/ci/test_audit_platform_guardrails.py"
       - "scripts/ci/audit_openapi_contracts.py"
       - "scripts/ci/test_audit_openapi_contracts.py"
+      - "scripts/ci/audit_gpt_actions_openapi.py"
+      - "scripts/ci/test_audit_gpt_actions_openapi.py"
       - "scripts/ci/audit_fastapi_authz.py"
       - "scripts/ci/test_audit_fastapi_authz.py"
       - "scripts/ci/audit_backend_boundaries.py"
@@ -56,6 +58,8 @@ on:
       - "scripts/ci/test_audit_platform_guardrails.py"
       - "scripts/ci/audit_openapi_contracts.py"
       - "scripts/ci/test_audit_openapi_contracts.py"
+      - "scripts/ci/audit_gpt_actions_openapi.py"
+      - "scripts/ci/test_audit_gpt_actions_openapi.py"
       - "scripts/ci/audit_fastapi_authz.py"
       - "scripts/ci/test_audit_fastapi_authz.py"
       - "scripts/ci/audit_backend_boundaries.py"
@@ -92,6 +96,9 @@ jobs:
 
       - name: Test OpenAPI contract guardrails
         run: python -m unittest scripts/ci/test_audit_openapi_contracts.py -v
+
+      - name: Test GPT Actions OpenAPI guardrails
+        run: python -m unittest scripts/ci/test_audit_gpt_actions_openapi.py -v
 
       - name: Test FastAPI AuthZ guardrails
         run: python -m unittest scripts/ci/test_audit_fastapi_authz.py -v
@@ -132,6 +139,9 @@ jobs:
 
       - name: Enforce OpenAPI contract guardrails
         run: python scripts/ci/audit_openapi_contracts.py --check --base "${{ steps.base.outputs.sha }}"
+
+      - name: Enforce GPT Actions OpenAPI compatibility
+        run: python scripts/ci/audit_gpt_actions_openapi.py --check
 
       - name: Enforce FastAPI AuthZ guardrails
         run: python scripts/ci/audit_fastapi_authz.py --check --base "${{ steps.base.outputs.sha }}"

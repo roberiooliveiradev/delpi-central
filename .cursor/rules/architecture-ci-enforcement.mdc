@@ -15,10 +15,12 @@ Fontes executáveis:
 scripts/ci/audit_architecture_phase3.py
 scripts/ci/audit_platform_guardrails.py
 scripts/ci/audit_openapi_contracts.py
+scripts/ci/audit_gpt_actions_openapi.py
 scripts/ci/audit_fastapi_authz.py
 scripts/ci/test_audit_architecture_phase3.py
 scripts/ci/test_audit_platform_guardrails.py
 scripts/ci/test_audit_openapi_contracts.py
+scripts/ci/test_audit_gpt_actions_openapi.py
 scripts/ci/test_audit_fastapi_authz.py
 .github/workflows/architecture-enforcement.yml
 scripts/ci/architecture_phase3_exceptions.json
@@ -162,6 +164,22 @@ Rota FastAPI nova/alterada deve declarar `operation_id="..."` literal. O parser 
 ### `FASTAPI_OPERATION_ID_DUPLICATE`
 Ao alterar/adicionar rota, o auditor examina o bounded context inteiro e bloqueia `operation_id` duplicado.
 
+### GPT Actions Builder compatibility
+
+`scripts/ci/audit_gpt_actions_openapi.py` audita full-tree os artefatos `*/docs/gpt-actions/openapi-gpt-actions.json`.
+
+```text
+GPT_ACTION_OBJECT_WITHOUT_PROPERTIES
+GPT_ACTION_UNTYPED_ARRAY_ITEM
+GPT_ACTION_BODY_WITHOUT_SCHEMA
+GPT_ACTION_BODY_WITHOUT_EXAMPLE
+GPT_ACTION_FAKE_EMPTY_BODY
+GPT_ACTION_OPERATION_ID_MISSING
+GPT_ACTION_OPERATION_ID_DUPLICATE
+```
+
+O recorte é request-construction (root/campos semânticos/`ops`), não envelope de resposta nem bags nested com `additionalProperties: true`. Regra: `custom-gpt-actions-integration.mdc`.
+
 ## O que ainda NÃO deve virar heurística frágil
 
 Não inferir breaking complexo de schema compartilhado por regex. Mudanças de `type`, `enum`, propriedades required aninhadas, `oneOf`/`allOf`/`anyOf` e reutilização do mesmo schema em request/response exigem resolver contexto e `$ref` com semântica suficiente antes de bloquear CI.
@@ -180,11 +198,13 @@ Para os demais guardrails, caso legítimo não modelado deve gerar melhoria gera
 python -m unittest scripts/ci/test_audit_architecture_phase3.py -v
 python -m unittest scripts/ci/test_audit_platform_guardrails.py -v
 python -m unittest scripts/ci/test_audit_openapi_contracts.py -v
+python -m unittest scripts/ci/test_audit_gpt_actions_openapi.py -v
 python -m unittest scripts/ci/test_audit_fastapi_authz.py -v
 
 python scripts/ci/audit_architecture_phase3.py --check --base <commit-base>
 python scripts/ci/audit_platform_guardrails.py --check --base <commit-base>
 python scripts/ci/audit_openapi_contracts.py --check --base <commit-base>
+python scripts/ci/audit_gpt_actions_openapi.py --check
 python scripts/ci/audit_fastapi_authz.py --check --base <commit-base>
 ```
 
