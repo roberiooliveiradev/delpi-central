@@ -7,8 +7,11 @@ from uuid import UUID
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
+from delpi_auth.authz_core import has_permission
+
 from tm_app.application.security.transformometro_permissions import (
     GLOBAL_MANAGE_PERMISSIONS,
+    TRANSFORMOMETRO_SHARED_RESOURCES_MANAGE,
     TRANSFORMOMETRO_VIEW_CONSOLIDATED,
 )
 from tm_app.application.services.dashboard_view_scope_service import (
@@ -201,6 +204,24 @@ def require_unrestricted_catalog_admin(request: Request) -> JSONResponse | None:
     if scope.is_unrestricted:
         return None
     return access_denied("Operação restrita a perfis globais do Transformômetro.")
+
+
+def require_shared_resources_manage(request: Request) -> JSONResponse | None:
+    """Canonical write gate for shared-resource catalog / cost adjustment.
+
+    Permission: ``transformometro.shared-resources.manage`` (superadmin bypass).
+    JWT authentication alone is not sufficient.
+    """
+    user = getattr(request.state, "user", None)
+    if user is None:
+        return access_denied("Usuário não autenticado.")
+    if getattr(user, "is_superadmin", False):
+        return None
+    if has_permission(user, TRANSFORMOMETRO_SHARED_RESOURCES_MANAGE):
+        return None
+    return access_denied(
+        "Sem permissão transformometro.shared-resources.manage."
+    )
 
 
 def require_transformometro_view_access(request: Request) -> JSONResponse | None:

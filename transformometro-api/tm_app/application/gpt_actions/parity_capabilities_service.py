@@ -51,6 +51,7 @@ from tm_app.interface.http.branch_access_http import (
     check_instancia_view_access,
     check_processo_manage_access,
     check_processo_view_access,
+    require_shared_resources_manage,
 )
 
 
@@ -429,6 +430,8 @@ class ParityCapabilitiesService:
         vigente_desde: str,
         observacoes: str | None = None,
     ) -> dict[str, Any]:
+        # Same authoritative gate as UI reajuste_recurso_custo.
+        self._raise_http_err(require_shared_resources_manage(request))
         recurso_id = str(recurso_compartilhado_id or "").strip()
         if not recurso_id:
             raise GptActionsError("recurso_compartilhado_id is required.", 400)
@@ -522,48 +525,92 @@ class ParityCapabilitiesService:
                         400,
                     )
                 data = self._minutes.resend_sign_invites(user, mid)
+                read_back = self._minutes.get_detail(user, mid)
+                resent = int(data.get("resent_count") or 0)
                 return {
                     "action": manage.value,
                     "minute_id": mid,
-                    "data": data,
+                    "data": {**data, "read_back": read_back},
                     "persisted": True,
-                    "verified": True,
+                    "verified": resent > 0 and bool(read_back.get("minute")),
                 }
 
             if manage == GptMeetingMinuteManageAction.CREATE_VERSION:
-                data = self._minutes.create_version(user, mid, body)
+                created = self._minutes.create_version(user, mid, body)
+                read_back = self._minutes.get_detail(user, mid)
+                created_id = str(
+                    (created or {}).get("id")
+                    or (created or {}).get("version_id")
+                    or ""
+                ).strip()
+                current = read_back.get("version") or {}
+                current_id = str(
+                    current.get("id") or current.get("version_id") or ""
+                ).strip()
+                verified = bool(read_back.get("minute")) and (
+                    (created_id and created_id == current_id)
+                    or bool(current)
+                )
                 return {
                     "action": manage.value,
                     "minute_id": mid,
-                    "data": data,
+                    "data": {
+                        "created": created,
+                        "read_back": read_back,
+                    },
                     "persisted": True,
-                    "verified": True,
+                    "verified": verified,
                 }
 
             if manage == GptMeetingMinuteManageAction.SET_PARTICIPANTS:
                 participants = body.get("participants")
                 if not isinstance(participants, list):
                     raise GptActionsError("participants[] is required.", 400)
+                # MeetingMinutesService.set_participants → update → get_detail
+                # (authoritative persisted state).
                 data = self._minutes.set_participants(user, mid, participants)
+                verified = (
+                    isinstance(data, dict)
+                    and bool(data.get("minute"))
+                    and isinstance(data.get("participants"), list)
+                )
                 return {
                     "action": manage.value,
                     "minute_id": mid,
                     "data": data,
                     "persisted": True,
-                    "verified": True,
+                    "verified": verified,
                 }
 
             if manage == GptMeetingMinuteManageAction.SET_SIGNERS:
                 signers = body.get("signers")
                 if not isinstance(signers, list):
                     raise GptActionsError("signers[] is required.", 400)
-                data = self._minutes.set_signers(user, mid, signers)
+                mutated = self._minutes.set_signers(user, mid, signers)
+                read_back = self._minutes.get_detail(user, mid)
+                expected_ids = {
+                    str(s.get("user_id") or s.get("invite_email") or "").strip()
+                    for s in signers
+                    if str(s.get("user_id") or s.get("invite_email") or "").strip()
+                }
+                actual = read_back.get("signers") or []
+                actual_ids = {
+                    str(s.get("user_id") or s.get("invite_email") or "").strip()
+                    for s in actual
+                    if str(s.get("user_id") or s.get("invite_email") or "").strip()
+                }
+                verified = bool(read_back.get("minute")) and (
+                    not expected_ids or expected_ids <= actual_ids
+                )
                 return {
                     "action": manage.value,
                     "minute_id": mid,
-                    "data": data,
+                    "data": {
+                        "mutated": mutated,
+                        "read_back": read_back,
+                    },
                     "persisted": True,
-                    "verified": True,
+                    "verified": verified,
                 }
 
             # generate_from_transcript — no persist

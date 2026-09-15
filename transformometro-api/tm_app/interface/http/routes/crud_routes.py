@@ -115,6 +115,7 @@ from tm_app.interface.http.branch_access_http import (
     check_processo_view_access,
     check_view_filial_access,
     filter_rows_for_access,
+    require_shared_resources_manage,
     require_unrestricted_catalog_admin,
 )
 
@@ -1419,6 +1420,8 @@ def create_recurso_custo(recurso_id: str, body: RecursoCustoBody, request: Reque
 @router.post("/recursos-compartilhados/{recurso_id}/custos/reajuste",
     operation_id="reajuste_recurso_custo")
 def reajuste_recurso_custo(recurso_id: str, body: RecursoCustoReajusteBody, request: Request):
+    if err := require_shared_resources_manage(request):
+        return err
     if not RecursoRepository().get(recurso_id):
         return fail("Recurso não encontrado.", 404)
     try:

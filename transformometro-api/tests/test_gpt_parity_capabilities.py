@@ -273,6 +273,10 @@ def test_adjust_shared_resource_cost_uses_registrar_reajuste():
     }
     with (
         patch(
+            "tm_app.application.gpt_actions.parity_capabilities_service.require_shared_resources_manage",
+            return_value=None,
+        ),
+        patch(
             "tm_app.application.gpt_actions.parity_capabilities_service.RecursoRepository"
         ) as recurso,
         patch(
@@ -295,8 +299,141 @@ def test_adjust_shared_resource_cost_uses_registrar_reajuste():
         )
     assert data["semantic_operation"] == "registrar_reajuste"
     assert data["verified"] is True
+    assert data["custo"]["valor_mensal"] == 10.0
     custo_repo.return_value.registrar_reajuste.assert_called_once()
     hook.return_value.after_global_resource_change.assert_called_once()
+
+
+def test_adjust_shared_resource_cost_denied_without_manage_zero_mutation():
+    svc = GptActionsDispatchService()
+    request = _request()
+    denied = MagicMock()
+    denied.status_code = 403
+    with (
+        patch(
+            "tm_app.application.gpt_actions.parity_capabilities_service.require_shared_resources_manage",
+            return_value=denied,
+        ),
+        patch(
+            "tm_app.application.gpt_actions.parity_capabilities_service.RecursoCustoRepository"
+        ) as custo_repo,
+    ):
+        with pytest.raises(GptActionsError) as exc:
+            svc.adjust_shared_resource_cost(
+                request,
+                recurso_compartilhado_id="rc1",
+                valor_mensal=99.0,
+                vigente_desde="2026-10-01",
+            )
+    assert exc.value.status_code == 403
+    custo_repo.return_value.registrar_reajuste.assert_not_called()
+
+
+def test_adjust_shared_resource_cost_view_only_permission_denied():
+    """view-only (no shared-resources.manage) must not mutate."""
+    from types import SimpleNamespace
+
+    from tm_app.application.gpt_actions.parity_capabilities_service import (
+        ParityCapabilitiesService,
+    )
+
+    request = _request()
+    request.state.user = SimpleNamespace(
+        id="u-view",
+        is_superadmin=False,
+        permissions=["transformometro.view"],
+    )
+    svc = ParityCapabilitiesService(
+        raise_http_err=GptActionsDispatchService()._raise_http_err,
+        audit=lambda *a, **k: None,
+    )
+    with patch(
+        "tm_app.application.gpt_actions.parity_capabilities_service.RecursoCustoRepository"
+    ) as custo_repo:
+        with pytest.raises(GptActionsError) as exc:
+            svc.adjust_shared_resource_cost(
+                request,
+                recurso_compartilhado_id="rc1",
+                valor_mensal=50.0,
+                vigente_desde="2026-10-01",
+            )
+    assert exc.value.status_code == 403
+    assert "shared-resources.manage" in exc.value.message
+    custo_repo.return_value.registrar_reajuste.assert_not_called()
+
+
+def test_adjust_shared_resource_cost_invalid_resource_no_mutation():
+    svc = GptActionsDispatchService()
+    request = _request()
+    with (
+        patch(
+            "tm_app.application.gpt_actions.parity_capabilities_service.require_shared_resources_manage",
+            return_value=None,
+        ),
+        patch(
+            "tm_app.application.gpt_actions.parity_capabilities_service.RecursoRepository"
+        ) as recurso,
+        patch(
+            "tm_app.application.gpt_actions.parity_capabilities_service.RecursoCustoRepository"
+        ) as custo_repo,
+    ):
+        recurso.return_value.get.return_value = None
+        with pytest.raises(GptActionsError) as exc:
+            svc.adjust_shared_resource_cost(
+                request,
+                recurso_compartilhado_id="missing",
+                valor_mensal=10.0,
+                vigente_desde="2026-10-01",
+            )
+    assert exc.value.status_code == 404
+    custo_repo.return_value.registrar_reajuste.assert_not_called()
+
+
+def test_ui_reajuste_requires_shared_resources_manage(tm_client):
+    from tests.support import test_app as support
+
+    prev_super = support.TEST_USER.is_superadmin
+    prev_perms = list(support.TEST_USER.permissions)
+    support.TEST_USER.is_superadmin = False
+    support.TEST_USER.permissions = ["transformometro.view"]
+    try:
+        with patch(
+            "tm_app.interface.http.routes.crud_routes.RecursoCustoRepository"
+        ) as custo_repo:
+            response = tm_client.post(
+                "/transformometro/recursos-compartilhados/rc1/custos/reajuste",
+                json={
+                    "valor_mensal": 10,
+                    "vigente_desde": "2026-10-01",
+                },
+            )
+        assert response.status_code == 403
+        custo_repo.return_value.registrar_reajuste.assert_not_called()
+    finally:
+        support.TEST_USER.is_superadmin = prev_super
+        support.TEST_USER.permissions = prev_perms
+
+
+def test_gpt_adjust_cost_unauthenticated_rejected():
+    from fastapi import FastAPI
+    from starlette.testclient import TestClient
+
+    from tm_app.interface.http.routes.gpt_actions_routes import router as gpt_router
+    from tm_app.middleware.auth_middleware import jwt_middleware
+
+    app = FastAPI()
+    app.middleware("http")(jwt_middleware)
+    app.include_router(gpt_router)
+    client = TestClient(app)
+    denied = client.post(
+        "/transformometro/gpt-actions/v1/shared-resources/adjust-cost",
+        json={
+            "recurso_compartilhado_id": "rc1",
+            "valor_mensal": 10,
+            "vigente_desde": "2026-10-01",
+        },
+    )
+    assert denied.status_code == 401
 
 
 def test_meeting_minute_manage_resend_requires_confirm():
@@ -313,7 +450,11 @@ def test_meeting_minute_manage_resend_requires_confirm():
         assert "confirm_resend" in exc.value.message
         minutes.resend_sign_invites.assert_not_called()
 
-        minutes.resend_sign_invites.return_value = {"resent": 1}
+        minutes.resend_sign_invites.return_value = {"resent_count": 1, "mail_sent": 1}
+        minutes.get_detail.return_value = {
+            "minute": {"id": "m1"},
+            "signers": [{"status": "pending"}],
+        }
         data = svc.manage_meeting_minute(
             request,
             action="resend",
@@ -321,7 +462,64 @@ def test_meeting_minute_manage_resend_requires_confirm():
             payload={"confirm_resend": True},
         )
     assert data["persisted"] is True
-    minutes.resend_sign_invites.assert_called_once()
+    assert data["verified"] is True
+    minutes.get_detail.assert_called_once_with(request.state.user, "m1")
+
+
+def test_meeting_minute_create_version_verified_only_after_readback():
+    svc = GptActionsDispatchService()
+    request = _request()
+    with patch.object(svc._parity, "_minutes") as minutes:
+        minutes.create_version.return_value = {"id": "v2", "version_id": "v2"}
+        minutes.get_detail.return_value = {
+            "minute": {"id": "m1"},
+            "version": {"id": "v2"},
+            "versions": [{"id": "v1"}, {"id": "v2"}],
+        }
+        data = svc.manage_meeting_minute(
+            request,
+            action="create_version",
+            minute_id="m1",
+            payload={"change_reason": "ajuste"},
+        )
+    assert data["persisted"] is True
+    assert data["verified"] is True
+    assert data["data"]["read_back"]["version"]["id"] == "v2"
+
+
+def test_meeting_minute_set_signers_verified_via_get_detail():
+    svc = GptActionsDispatchService()
+    request = _request()
+    signers = [{"user_id": "u1", "display_name": "A", "invite_email": ""}]
+    with patch.object(svc._parity, "_minutes") as minutes:
+        minutes.set_signers.return_value = {"signers": signers}
+        minutes.get_detail.return_value = {
+            "minute": {"id": "m1"},
+            "signers": signers,
+        }
+        data = svc.manage_meeting_minute(
+            request,
+            action="set_signers",
+            minute_id="m1",
+            payload={"signers": signers},
+        )
+    assert data["verified"] is True
+    assert "read_back" in data["data"]
+
+
+def test_meeting_minute_failed_write_never_verified():
+    svc = GptActionsDispatchService()
+    request = _request()
+    with patch.object(svc._parity, "_minutes") as minutes:
+        minutes.set_participants.side_effect = ValueError("bloqueado")
+        with pytest.raises(GptActionsError):
+            svc.manage_meeting_minute(
+                request,
+                action="set_participants",
+                minute_id="m1",
+                payload={"participants": []},
+            )
+    # No successful return with verified=true — exception path only.
 
 
 def test_meeting_minute_manage_generate_from_transcript_is_no_write():
