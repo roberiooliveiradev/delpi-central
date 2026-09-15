@@ -291,3 +291,94 @@ def test_use_case_maps_resolver_failure_to_unavailable():
         resolver_cls.return_value.resolve.side_effect = RuntimeError("boom")
         with pytest.raises(EffectiveAccessUnavailableError):
             GetEffectiveAccessBySubjectUseCase(uow).execute(keycloak_subject=subject)
+
+
+def test_bearer_effective_access_reaches_use_case_on_owned_path(client):
+    subject = uuid4()
+    user = SimpleNamespace(id=subject, is_superadmin=False)
+    with patch.dict(
+        os.environ,
+        {"CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN": EFFECTIVE_TOKEN},
+        clear=False,
+    ):
+        with patch(
+            "app.interfaces.http.integrations_effective_access_controller.SqlAlchemyUnitOfWork"
+        ) as uow_cls:
+            uow = MagicMock()
+            uow.__enter__.return_value = uow
+            uow.__exit__.return_value = False
+            uow.users.get_by_id.return_value = user
+            uow_cls.return_value = uow
+            with patch(
+                "app.application.use_cases.get_effective_access_by_subject_use_case.PermissionResolver"
+            ) as resolver_cls:
+                resolver_cls.return_value.resolve.return_value = ["tv-dashboard.read"]
+                response = client.get(
+                    f"/integrations/effective-access/subjects/{subject}",
+                    headers={"Authorization": f"Bearer {EFFECTIVE_TOKEN}"},
+                )
+
+    assert response.status_code == 200
+    assert response.get_json()["permissions"] == ["tv-dashboard.read"]
+
+
+def test_effective_access_bearer_cannot_bypass_jwt_on_me(client, app):
+    """Path-scope: same secret must not short-circuit JWT on /me."""
+    with patch.dict(
+        os.environ,
+        {"CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN": EFFECTIVE_TOKEN},
+        clear=False,
+    ):
+        # create_app("testing") skips authenticate; enable middleware for this proof.
+        app.config["TESTING"] = False
+        try:
+            response = client.get(
+                "/me",
+                headers={"Authorization": f"Bearer {EFFECTIVE_TOKEN}"},
+            )
+        finally:
+            app.config["TESTING"] = True
+
+    assert response.status_code == 401
+    assert response.get_json()["errors"][0]["code"] == "invalid_token"
+
+
+def test_effective_access_bearer_cannot_authorize_admin_route(client, app):
+    with patch.dict(
+        os.environ,
+        {"CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN": EFFECTIVE_TOKEN},
+        clear=False,
+    ):
+        app.config["TESTING"] = False
+        try:
+            response = client.get(
+                "/admin/statistics",
+                headers={"Authorization": f"Bearer {EFFECTIVE_TOKEN}"},
+            )
+        finally:
+            app.config["TESTING"] = True
+
+    assert response.status_code == 401
+    assert response.get_json()["errors"][0]["code"] == "invalid_token"
+
+
+def test_effective_access_bearer_not_authorized_as_unrelated_integration(client, app):
+    with patch.dict(
+        os.environ,
+        {
+            "CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN": EFFECTIVE_TOKEN,
+            "CORE_API_INTEGRATIONS_SERVICE_TOKEN": INTEGRATIONS_TOKEN,
+        },
+        clear=False,
+    ):
+        app.config["TESTING"] = False
+        try:
+            response = client.get(
+                "/integrations/notifications",
+                headers={"Authorization": f"Bearer {EFFECTIVE_TOKEN}"},
+            )
+        finally:
+            app.config["TESTING"] = True
+
+    assert response.status_code != 200
+    assert response.status_code >= 400
