@@ -147,6 +147,108 @@ Identidade de operação e breaking change: `platform-api-contracts-integration.
 
 Convenção atual da bridge: `operationId` `gpt_*` semântico e estável (`gpt_get_catalog`, `gpt_search_records`, `gpt_get_context`, `gpt_preview_change`, `gpt_commit_change`). Não usar auto-id de framework. Renomear `operationId` exige análise de compatibilidade.
 
+## GPT Builder OpenAPI compatibility
+
+OpenAPI “standards-compliant” é necessário e **não suficiente**. O schema importado precisa ser explícito, bounded, constructível pelo modelo, alinhado ao runtime e testado contra restrições conhecidas do Builder.
+
+Dois especialistas independentes (TÉO, VISTA) exibiram a mesma classe:
+
+```text
+generic/underspecified OpenAPI
+→ unreliable GPT tool argument construction
+→ opaque or interrupted external interaction
+```
+
+Schema model-constructible é atributo obrigatório de contrato desta superfície.
+
+### Object shape
+
+`type: object` **não** é placeholder sem tipo.
+
+```text
+type: object → explicit properties
+```
+
+Preferir `$ref` a componente tipado, ou `type: object` + `properties`.
+
+Não usar `type: object` sem shape para inputs semânticos (`target`, `context`, `operation`, `configuration`, `payload`, `filters`) quando o backend espera forma conhecida.
+
+Free-form intencional exige: prova de necessidade; forma compatível com o Builder; teste dedicado. Não usar object genérico por conveniência.
+
+### Array items
+
+Proibido array semântico importado com `items: { type: object }` quando o item é conhecido.
+
+Exigir `items.$ref` ou `oneOf`/`$ref` projetado do schema canônico de operação. Em command arrays, o discriminator (`op`) e os parâmetros aplicáveis devem ser constructíveis.
+
+Não criar segundo catálogo de operações se o domínio já possui schema de comando machine-readable.
+
+### Canonical projection
+
+```text
+canonical domain/application operation schema
+→ GPT OpenAPI projection
+```
+
+Não: catálogo canônico + catálogo GPT independente. A façade pode filtrar/simplificar campos; a autoridade permanece na aplicação. Drift entre DTO runtime, capability de domínio e OpenAPI importado é falha de contrato.
+
+### Request examples
+
+Toda operation PREPARE/ACT importada que consome JSON **SHOULD** ter `example`/`examples` tipado e realista. Em write/consequential isso é **REQUIRED**, salvo razão documentada de que o provider não precisa.
+
+O example deve usar o nesting real, campos obrigatórios, discriminator/`op`, sem IDs/secrets/tokens de produção e sem ensinar body vazio inválido.
+
+### No fake body
+
+Se o endpoint não consome JSON: **não** inventar `requestBody`. Proibido schema `{ type: object, additionalProperties: false }` + `example: {}` só para uniformizar a Action. Sem body → sem `requestBody`.
+
+### PREPARE / ACT example parity
+
+Quando PREPARE produz payload consumido por ACT, os examples devem ensinar o **mesmo** shape tipado de operação. Não ensinar um shape no preview e outro no commit. `planDigest` / `catalogVersion` / `expectedRevision` / idempotency seguem o contrato real.
+
+Create vs update: examples/schema devem mostrar o lifecycle. Create-new pode omitir revision/version se o recurso ainda não existe; update-existing pode exigir `expectedRevision`/etag/version. Não marcar campo como required global se a exigência for condicional — representar a condicionalidade no schema/description/testes.
+
+### Compatibility test (obrigatório no produtor)
+
+Todo produtor GPT Actions deve ter teste recursivo de compatibilidade no OpenAPI importado:
+
+- todo `type: object` inline/componente tem `properties`, salvo exceção intencional testada;
+- item de array semântico tem shape explícito;
+- todo JSON `requestBody` tem schema;
+- bodies PREPARE/ACT têm examples tipados quando exigidos;
+- actions sem body não têm `requestBody`;
+- `operationId`s explícitos, únicos e estáveis;
+- contagem importada = façade esperada;
+- path do schema público não é Action;
+- artefato estático = output do builder canônico quando o artefato é versionado.
+
+Gate repositório (artefatos `*/docs/gpt-actions/openapi-gpt-actions.json`): `scripts/ci/audit_gpt_actions_openapi.py`.
+
+### Negative payload tests
+
+Cobrir payloads malformados geráveis pelo modelo, quando aplicável: body vazio, discriminator/`op` ausente, string no lugar de objeto, tipo errado, nesting incorreto, campo semântico obrigatório ausente.
+
+Esperado: 4xx de contrato + erro estruturado seguro. Não: 500 não capturado, sucesso silencioso, falha opaca de tool.
+
+### Live Builder evidence
+
+Teste unitário/OpenAPI **não** prova comportamento do GPT Builder.
+
+Integração inicial ou mudança de schema:
+
+```text
+source test
+→ published schema
+→ provider re-import
+→ latest GPT version
+→ fresh conversation
+→ authenticated smoke
+```
+
+Se a UI indicar versão mais nova do GPT, conversa stale **não** é aceite final.
+
+Sintomas como “Raciocínio interrompido”, tool parando, body omitido ou input malformado **não** se atribuem imediatamente ao modelo. Investigar OpenAPI gerado, typing do body, examples, tool call emitida, HTTP status, `correlationId` owner-local e validação runtime. Causa: `PROVEN` ou `INCONCLUSIVE`. Não afirmar que o fix de schema resolveu o incidente até o smoke fresco no Builder passar.
+
 ## AuthN / AuthZ
 
 Bridge atual:
@@ -330,7 +432,7 @@ Um nível não prova o próximo.
 
 ## Erros e observabilidade
 
-O especialista precisa distinguir ao menos:
+Falha de tool deve ser acionável pelo especialista. Expor campos estáveis e seguros que distinguam:
 
 ```text
 authentication
@@ -339,12 +441,14 @@ validation
 not found
 conflict
 idempotency conflict
-revision conflict
-downstream failure
-outcome verification failure
+concurrency/revision conflict
+downstream/persistence failure
+internal/outcome verification failure
 ```
 
-Não vazar stack, SQL, secret, header de auth nem detalhe interno.
+O modelo deve receber: código estável, message segura, `retryable` quando fizer sentido, `correlationId` quando existir, details estruturados seguros quando úteis.
+
+Não devolver `{detail}` opaco ou 500 genérico quando a façade owner-local puder classificar com segurança. Não vazar stack, SQL, token, header de auth nem detalhe interno.
 
 Registrar sem secrets: `correlationId`, ator quando a política permitir, `operationId`, target, policy, idempotency, revision conflict, `persisted`, `verified`, duração/status. Sem chain-of-thought.
 
@@ -354,7 +458,7 @@ Owners: `platform-reliability-observability.mdc`, `observability-standards.mdc`.
 
 Conforme aplicável (`platform-quality-testing.mdc`):
 
-- **Contrato:** OpenAPI válido; contagem esperada; `operationId`s estáveis; server absoluto; schema fora de `paths`; security explícita.
+- **Contrato:** OpenAPI válido; contagem esperada; `operationId`s estáveis; server absoluto; schema fora de `paths`; security explícita; objects/arrays constructíveis; examples PREPARE/ACT; sem fake body.
 - **Anônimo:** schema 200; action de negócio 401.
 - **RBAC:** sem permissão 403; read-only vs write; segregação de recurso.
 - **Funcional:** positive + sibling + negative.
@@ -377,7 +481,7 @@ Extrair o mecanismo; não copiar domínio:
 
 Não copiar para outras aplicações: revision de playlist da TV, entity schemas do Transformômetro, nome de permissão do Product Master, `operationId`s/entidades/shape de catálogo específicos.
 
-Generalizar somente: façade owner-local, superfície compacta, OAuth user-parity, RBAC/AuthZ canônicos, PREPARE/ACT, idempotência, OCC, postcondition, separação Knowledge, evidência de go-live externo.
+Generalizar somente: façade owner-local, superfície compacta, OAuth user-parity, RBAC/AuthZ canônicos, PREPARE/ACT, idempotência, OCC, postcondition, schema constructível no Builder, examples tipados, separação Knowledge, evidência de go-live externo.
 
 ## Anti-padrões
 
@@ -389,3 +493,7 @@ Generalizar somente: façade owner-local, superfície compacta, OAuth user-parit
 - Knowledge como fonte operacional/autorização.
 - Hardcodar callback histórico ou data de vendor nesta regra.
 - Usar routing do Chat interno como owner desta superfície.
+- `type: object` / `items: { type: object }` sem shape como contrato importado.
+- Inventar `requestBody` vazio para Action que não consome JSON.
+- Example de PREPARE com shape diferente do ACT.
+- Tratar teste local de OpenAPI como prova do GPT Builder.
