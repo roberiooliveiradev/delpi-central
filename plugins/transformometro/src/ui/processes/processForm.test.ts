@@ -49,9 +49,20 @@ describe("masterPayloadFromProcessoForm", () => {
     const payload = masterPayloadFromProcessoForm(form);
 
     expect(payload.nome_processo).toBe("Indicadores Estratégicos");
+    expect(payload.codigo_processo).toBeUndefined();
     expect(payload.filial_ids).toBeUndefined();
     expect(payload.setor_ids).toBeUndefined();
     expect(payload.todas_filiais_ativas).toBeUndefined();
+  });
+
+  it("inclui codigo_processo quando informado", () => {
+    const form = emptyProcessoForm();
+    form.nome_processo = "Indicadores";
+    form.codigo_processo = "PROC-0071";
+
+    const payload = masterPayloadFromProcessoForm(form);
+
+    expect(payload.codigo_processo).toBe("PROC-0071");
   });
 
   it("inclui escopo quando departamentos estão definidos", () => {

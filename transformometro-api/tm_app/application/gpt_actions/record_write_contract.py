@@ -24,7 +24,13 @@ def openapi_record_data_properties() -> dict[str, Any]:
         "descricao_processo": {"type": "string"},
         "gestor_responsavel": {"type": "string"},
         "objetivo_processo": {"type": "string"},
-        "codigo_processo": {"type": "string"},
+        "codigo_processo": {
+            "type": "string",
+            "description": (
+                "Business process code. Optional on create (auto-generated if omitted). "
+                "Mutable on update; omit to keep current. Distinct from immutable processo_id."
+            ),
+        },
         "familia_processo": {"type": "string"},
         "agrupador_ferramenta": {"type": "string"},
         "filial_ids": {

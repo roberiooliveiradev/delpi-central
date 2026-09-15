@@ -3512,7 +3512,8 @@
                 "type": "string"
               },
               "codigo_processo": {
-                "type": "string"
+                "type": "string",
+                "description": "Business process code. Optional on create (auto-generated if omitted). Mutable on update; omit to keep current. Distinct from immutable processo_id."
               },
               "familia_processo": {
                 "type": "string"

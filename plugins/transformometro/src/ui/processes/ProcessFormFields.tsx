@@ -16,7 +16,6 @@ import { DS_FILTERS_ROW_EXTENDED, DS_FILTER_BOX_WIDE_MOD } from "../../component
 type Props = {
   form: ProcessoFormState;
   options: OptionsData;
-  codigoProcesso?: string | null;
   showInstanciaFields?: boolean;
   onChange: (next: ProcessoFormState) => void;
 };
@@ -24,7 +23,6 @@ type Props = {
 export function ProcessFormFields({
   form,
   options,
-  codigoProcesso,
   showInstanciaFields = true,
   onChange,
 }: Props) {
@@ -51,16 +49,15 @@ export function ProcessFormFields({
 
   return (
     <div className={DS_FILTERS_ROW_EXTENDED}>
-      {codigoProcesso ? (
-        <TmNativeTextField
-          id="tm-proc-codigo"
-          label="Código"
-          hint={TM_HELP_TOOLTIPS.processos.codigo}
-          value={codigoProcesso}
-          onChange={() => undefined}
-          readOnly
-        />
-      ) : null}
+      <TmNativeTextField
+        id="tm-proc-codigo"
+        label="Código"
+        hint={TM_HELP_TOOLTIPS.processos.codigo}
+        value={form.codigo_processo}
+        onChange={(codigo_processo) => set({ codigo_processo })}
+        maxLength={32}
+        placeholder="Opcional (auto PROC-XXXX)"
+      />
       <TmNativeTextField
         id="tm-proc-nome"
         label="Nome do processo *"

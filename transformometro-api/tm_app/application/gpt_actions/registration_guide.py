@@ -264,6 +264,9 @@ def build_registration_guide() -> dict[str, Any]:
                 "notes": [
                     "filial_id+setor_id on create also creates the first instance.",
                     "Otherwise create instance separately with processo_id.",
+                    "codigo_processo: optional on create (auto PROC-#### if omitted); "
+                    "mutable on update (omit/null preserves current). Unique across all "
+                    "process rows including soft-deleted. processo_id is the immutable id.",
                 ],
             },
             "instance": {

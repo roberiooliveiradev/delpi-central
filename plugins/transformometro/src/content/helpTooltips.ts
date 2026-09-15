@@ -139,7 +139,8 @@ export const TM_HELP_TOOLTIPS = {
     filtroUnidade: "Filtra o catálogo para exibir apenas departamentos vinculados à unidade escolhida.",
   },
   processos: {
-    codigo: "Código gerado automaticamente ao criar o processo (PROC-XXXX).",
+    codigo:
+      "Código de negócio do processo (ex.: PROC-XXXX). Editável; o identificador técnico imutável é o ID do processo.",
     nome: "Nome do processo-mestre monitorado no Transformômetro.",
     familia:
       "Agrupador do processo (ex.: ferramenta ou tema). Usado para consolidar a economia por família no dashboard.",

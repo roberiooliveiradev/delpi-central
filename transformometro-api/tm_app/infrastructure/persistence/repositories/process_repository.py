@@ -201,9 +201,17 @@ class ProcessoRepository(PluginBaseRepository):
         return row
 
     def update(self, processo_id: str, data: dict[str, Any]) -> dict[str, Any] | None:
+        # Optional codigo_processo: None/blank preserves existing (never clears to NULL).
+        # processo_id remains the immutable technical key used by mappings/overlays.
+        codigo = data.get("codigo_processo")
+        if isinstance(codigo, str):
+            codigo = codigo.strip() or None
+        elif codigo is not None:
+            codigo = str(codigo).strip() or None
         row = self.execute_returning_one(
             """
             UPDATE transformometro.processos SET
+                codigo_processo = COALESCE(%s, codigo_processo),
                 nome_processo = %s,
                 descricao_processo = %s,
                 gestor_responsavel = %s,
@@ -216,6 +224,7 @@ class ProcessoRepository(PluginBaseRepository):
             RETURNING processo_id
             """,
             (
+                codigo,
                 data["nome_processo"],
                 data.get("descricao_processo"),
                 data.get("gestor_responsavel"),

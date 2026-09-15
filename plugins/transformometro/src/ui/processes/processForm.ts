@@ -8,6 +8,7 @@ import {
 } from "./processScope";
 
 export type ProcessoFormState = {
+  codigo_processo: string;
   nome_processo: string;
   filial_id: string;
   setor_id: string;
@@ -23,6 +24,7 @@ export type ProcessoFormState = {
 export function emptyProcessoForm(): ProcessoFormState {
   const defaultFilial = "01";
   return {
+    codigo_processo: "",
     nome_processo: "",
     filial_id: defaultFilial,
     setor_id: "engenharia",
@@ -38,6 +40,7 @@ export function emptyProcessoForm(): ProcessoFormState {
 
 export function processFormFromEntity(processo: Processo): ProcessoFormState {
   return {
+    codigo_processo: processo.codigo_processo ?? "",
     nome_processo: processo.nome_processo ?? "",
     filial_id: processo.filial_id ?? "01",
     setor_id: processo.setor_id ?? "",
@@ -56,7 +59,9 @@ export function payloadFromProcessoForm(form: ProcessoFormState): Partial<Proces
 }
 
 export function masterPayloadFromProcessoForm(form: ProcessoFormState): Partial<Processo> {
+  const codigo = form.codigo_processo.trim();
   return {
+    ...(codigo ? { codigo_processo: codigo } : {}),
     nome_processo: form.nome_processo.trim(),
     status_processo: form.status_processo,
     descricao_processo: form.descricao_processo.trim() || undefined,

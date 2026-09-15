@@ -461,7 +461,6 @@ export function ProcessDetailPage({
                   <ProcessFormFields
                     form={processForm}
                     options={options}
-                    codigoProcesso={processo.codigo_processo}
                     showInstanciaFields={false}
                     onChange={setProcessoForm}
                   />

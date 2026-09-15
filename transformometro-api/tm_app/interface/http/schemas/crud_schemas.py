@@ -62,7 +62,14 @@ class ProcessoUpdateBody(BaseModel):
     descricao_processo: Optional[str] = None
     gestor_responsavel: Optional[str] = None
     objetivo_processo: Optional[str] = None
-    codigo_processo: Optional[str] = None
+    codigo_processo: Optional[str] = Field(
+        default=None,
+        max_length=32,
+        description=(
+            "Mutable business code (not processo_id). Omit/null keeps the current value; "
+            "must be unique across processos including soft-deleted rows."
+        ),
+    )
     familia_processo: Optional[str] = Field(default=None, max_length=64)
     agrupador_ferramenta: Optional[str] = Field(default=None, max_length=128)
     todas_filiais_ativas: Optional[bool] = Field(
