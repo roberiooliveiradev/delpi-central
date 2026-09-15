@@ -181,7 +181,12 @@ export function MediaLibraryModal({
   const busy = uploading || loading || deletingId != null;
 
   return (
-    <HostContainedDialog open={open} title={targetTitle(target)} onClose={onClose} className="td-modal--wide">
+    <HostContainedDialog
+      open={open}
+      title={targetTitle(target)}
+      onClose={onClose}
+      className="td-modal--media-library"
+    >
       <div className="td-media-library__toolbar">
         <NativeTextControl
           type="text"
