@@ -61,6 +61,7 @@ from tm_app.core.catalogs import (
 )
 from tm_app.core.errors import format_api_error
 from tm_app.core.serialize import row_to_json, rows_to_json
+from tm_app.domain.diagram.bpmn_mermaid_mapping import build_bpmn_catalog_for_api
 from tm_app.domain.services.branch_catalog_service import assert_filial_ativa
 from tm_app.domain.services.process_instance_service import ProcessoInstanciaDomainError
 from tm_app.domain.services.process_scope_service import ProcessoEscopoDomainError
@@ -312,6 +313,8 @@ class GptActionsDispatchService:
         payload["access_scope"] = scope.meta()
         payload["entities"] = [e.value for e in GptEntity]
         payload["registration_guide"] = build_registration_guide()
+        # Canonical flowchart_v1 node/edge catalog (same builder as GET /diagrama/catalogo).
+        payload["diagram_catalog"] = build_bpmn_catalog_for_api()
         try:
             repo = ProcessoRepository()
             payload["familias_processo"] = repo.list_distinct_tag_values("familia_processo")

@@ -35,7 +35,7 @@ PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 | operationId | Método / path |
 |-------------|----------------|
 | `gpt_get_my_context` | `GET .../me` (contexto pessoal mínimo — **não** autorização) |
-| `gpt_get_catalog` | `GET .../catalog` (inclui `registration_guide` + enums `fase_melhoria` / `prioridade_melhoria`) |
+| `gpt_get_catalog` | `GET .../catalog` (inclui `registration_guide`, `diagram_catalog` canônico BPMN/flowchart_v1, enums `fase_melhoria` / `prioridade_melhoria`) |
 | `gpt_get_process_context` | `GET .../process-context?process_id=&instance_id=&revision_id=` (projeção efêmera read-only) |
 | `gpt_analyze` | `GET .../analysis?view=meta\|summary\|processes\|instances\|rows` |
 | `gpt_search_records` | `GET .../records/{entity}` (`instance_id` para revisões de uma melhoria) |
@@ -74,6 +74,8 @@ Proveniência: ata = registro formal; áudio/vídeo = evidência original quando
 `gpt_get_process_context` monta o Process Business Graph / Process Intelligence Context a partir dos records e services canônicos. Sem persistência de grafo. Comparativo/composição/stats ficam restritos ao escopo de filial visível. Distinga `as_is` (AS_IS), `current_composed` (CURRENT_COMPOSED) e `to_be` (TO_BE). `surface_supports` ≠ autorização de write. Na facade GPT, `setor_id` aceita UUID **ou** `codigo_setor` (ex. `comercial`); `gpt_analyze(view=instances)` honra `processo_id`.
 
 **Governed user-parity (TM-GPI-002):** writes de diagrama/WBS usam `DiagramWriteService` / `DecompositionWriteService` (mesmos validators da UI). Mermaid é derivado no servidor. Persistência via GPT só após confirmação conversacional + Action consequential + AuthZ manage + read-back (`verified`). Draft Mermaid no chat = PROPOSED / NOT SAVED.
+
+**Diagram catalog (TM-GPI-009):** TÉO **deve** descobrir tipos de nó/aresta de `flowchart_v1` em `gpt_get_catalog.diagram_catalog` (`build_bpmn_catalog_for_api()` — mesma fonte de `GET /diagrama/catalogo`). Não inferir tipos só de exemplos; exemplos não são exaustivos. Não inventar tipos fora do catálogo. Não restringir a `start`/`process`/`end` quando o catálogo lista `decision`, gateways, tasks, etc.
 
 `GET .../openapi.json` continua público só para o botão **Importar de URL**. Não entra no schema: o GPT Builder trata esse path como OpenAPI 3.1 e rejeita o documento.
 

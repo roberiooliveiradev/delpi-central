@@ -87,7 +87,8 @@ def build_registration_guide() -> dict[str, Any]:
             ),
             "process_diagram": (
                 "Process macro flowchart (entity=process_diagram, id=processo_id). "
-                "format=flowchart_v1; Mermaid is server-derived. Alias: diagrama / diagrama macro."
+                "format=flowchart_v1; Mermaid is server-derived. Alias: diagrama / diagrama macro. "
+                "Supported node/edge types: gpt_get_catalog.diagram_catalog (canonical)."
             ),
             "branch": (
                 "Operational unit / filial (entity=branch). Catalog admin write; "
@@ -537,6 +538,9 @@ def build_registration_guide() -> dict[str, Any]:
                     "Upsert; id=processo_id. conteudo.format=flowchart_v1; format_version=1.",
                     "conteudo: nodes[], edges[] (lanes optional). Mermaid is DERIVED BY SERVER.",
                     "Macro flowchart of the master process (not revision-specific alone).",
+                    "Node/edge types: use gpt_get_catalog.diagram_catalog (canonical; "
+                    "includes decision, gateways, tasks, events). Do not invent types; "
+                    "do not restrict to start/process/end — catalog is authoritative.",
                 ],
             },
             "instance_diagram_scope": {
