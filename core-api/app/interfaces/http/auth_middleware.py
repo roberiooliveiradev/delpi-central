@@ -34,6 +34,28 @@ def _matches_effective_access_service_token(token: str) -> bool:
     return secrets.compare_digest(token.strip(), expected)
 
 
+def _is_effective_access_service_path(path: str) -> bool:
+    """True only for the owned effective-access capability surface.
+
+    Capability:
+      GET /integrations/effective-access/subjects/{keycloak_sub}
+
+    Accepts an optional gateway prefix before ``/integrations/...``.
+    Does not accept ``/integrations/*`` broadly.
+    """
+    normalized = (path or "").split("?", 1)[0]
+    if normalized.endswith("/") and normalized != "/":
+        normalized = normalized.rstrip("/")
+
+    marker = "/integrations/effective-access/subjects/"
+    idx = normalized.find(marker)
+    if idx < 0:
+        return False
+
+    remainder = normalized[idx + len(marker) :]
+    return bool(remainder) and "/" not in remainder
+
+
 def _name_from_keycloak_claims(claims: dict, *, email: str) -> str:
     name = (claims.get("name") or "").strip()
     if name:
@@ -63,8 +85,10 @@ def authenticate():
     if _matches_integrations_service_token(token):
         return None
 
-    # Dedicated S2S secret for effective-access lookup — skip end-user JWT validation.
-    if _matches_effective_access_service_token(token):
+    # Capability-scoped S2S: skip end-user JWT only on the owned effective-access path.
+    if _is_effective_access_service_path(request.path) and _matches_effective_access_service_token(
+        token
+    ):
         return None
 
     try:

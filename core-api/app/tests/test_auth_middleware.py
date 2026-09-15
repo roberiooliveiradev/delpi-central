@@ -232,6 +232,100 @@ def test_authenticate_skips_jwt_for_integrations_service_token(app, monkeypatch)
         assert not hasattr(g, "current_user")
 
 
+def test_is_effective_access_service_path_only_owned_surface():
+    assert am._is_effective_access_service_path(
+        f"/integrations/effective-access/subjects/{uuid4()}"
+    )
+    assert am._is_effective_access_service_path(
+        f"/apps/core-api/integrations/effective-access/subjects/{uuid4()}"
+    )
+    assert am._is_effective_access_service_path(
+        f"/integrations/effective-access/subjects/{uuid4()}/"
+    )
+    assert not am._is_effective_access_service_path("/integrations/effective-access")
+    assert not am._is_effective_access_service_path(
+        "/integrations/effective-access/subjects/"
+    )
+    assert not am._is_effective_access_service_path(
+        f"/integrations/effective-access/subjects/{uuid4()}/extra"
+    )
+    assert not am._is_effective_access_service_path("/integrations/directory/users")
+    assert not am._is_effective_access_service_path("/me")
+    assert not am._is_effective_access_service_path("/admin/statistics")
+    assert not am._is_effective_access_service_path("/integrations/")
+
+
+def test_authenticate_skips_jwt_for_effective_access_token_only_on_owned_path(
+    app, monkeypatch
+):
+    secret = "effective-access-secret"
+    monkeypatch.setenv("CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN", secret)
+    called = {"validate": 0}
+
+    def _fail_validate(_token):
+        called["validate"] += 1
+        raise ValueError("should not validate jwt for owned path")
+
+    monkeypatch.setattr(am, "validate_token", _fail_validate)
+
+    with app.test_request_context(
+        f"/integrations/effective-access/subjects/{uuid4()}",
+        headers={"Authorization": f"Bearer {secret}"},
+    ):
+        assert am.authenticate() is None
+        assert not hasattr(g, "current_user")
+        assert called["validate"] == 0
+
+
+def test_authenticate_rejects_effective_access_token_on_me(app, monkeypatch):
+    secret = "effective-access-secret"
+    monkeypatch.setenv("CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN", secret)
+
+    with app.test_request_context(
+        "/me",
+        headers={"Authorization": f"Bearer {secret}"},
+    ):
+        result = am.authenticate()
+        assert result is not None
+        body, status = result
+        assert status == 401
+        assert body.get_json()["errors"][0]["code"] == "invalid_token"
+        assert not hasattr(g, "current_user")
+
+
+def test_authenticate_rejects_effective_access_token_on_admin_route(app, monkeypatch):
+    secret = "effective-access-secret"
+    monkeypatch.setenv("CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN", secret)
+
+    with app.test_request_context(
+        "/admin/statistics",
+        headers={"Authorization": f"Bearer {secret}"},
+    ):
+        result = am.authenticate()
+        assert result is not None
+        _, status = result
+        assert status == 401
+        assert not hasattr(g, "current_user")
+
+
+def test_authenticate_rejects_effective_access_token_on_unrelated_integration(
+    app, monkeypatch
+):
+    secret = "effective-access-secret"
+    monkeypatch.setenv("CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN", secret)
+    monkeypatch.setenv("CORE_API_INTEGRATIONS_SERVICE_TOKEN", "integrations-shared-secret")
+
+    with app.test_request_context(
+        "/integrations/notifications",
+        headers={"Authorization": f"Bearer {secret}"},
+    ):
+        result = am.authenticate()
+        assert result is not None
+        _, status = result
+        assert status == 401
+        assert not hasattr(g, "current_user")
+
+
 def test_authenticate_sets_effective_permissions_via_permission_resolver(
     app, monkeypatch
 ):
