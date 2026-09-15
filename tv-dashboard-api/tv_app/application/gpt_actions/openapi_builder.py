@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 from pathlib import Path
 from typing import Any
@@ -11,6 +12,9 @@ from tv_app.application.gpt_actions import (
     GPT_ACTIONS_GATEWAY_ROOT,
     GPT_ACTIONS_OPERATION_IDS,
     GPT_ACTIONS_PUBLIC_FALLBACK_ORIGIN,
+)
+from tv_app.application.services.data.tv_copilot_content_service import (
+    TvCopilotContentService,
 )
 
 
@@ -32,6 +36,151 @@ def resolve_gpt_actions_server_url(
     return f"{GPT_ACTIONS_PUBLIC_FALLBACK_ORIGIN}{root}"
 
 
+def _opaque_object_schema(*, description: str | None = None) -> dict[str, Any]:
+    """Builder-compatible free-form object (never bare type=object)."""
+    schema: dict[str, Any] = {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": True,
+    }
+    if description:
+        schema["description"] = description
+    return schema
+
+
+def normalize_json_schema_for_gpt_builder(node: Any) -> Any:
+    """Ensure every type=object has properties; arrays have items (TÉO invariant)."""
+    if isinstance(node, list):
+        return [normalize_json_schema_for_gpt_builder(item) for item in node]
+    if not isinstance(node, dict):
+        return node
+
+    out = {key: normalize_json_schema_for_gpt_builder(value) for key, value in node.items()}
+
+    if out.get("type") == "object" and "$ref" not in out:
+        props = out.get("properties")
+        if not isinstance(props, dict):
+            out["properties"] = {}
+        else:
+            out["properties"] = {
+                key: normalize_json_schema_for_gpt_builder(value)
+                for key, value in props.items()
+            }
+
+    if out.get("type") == "array" and "items" not in out and "$ref" not in out:
+        out["items"] = _opaque_object_schema()
+
+    # OpenAPI/GPT Builder: pair const with an explicit type when missing.
+    if "const" in out and "type" not in out and "$ref" not in out:
+        const_val = out["const"]
+        if isinstance(const_val, bool):
+            out["type"] = "boolean"
+        elif isinstance(const_val, int) and not isinstance(const_val, bool):
+            out["type"] = "integer"
+        elif isinstance(const_val, float):
+            out["type"] = "number"
+        else:
+            out["type"] = "string"
+
+    return out
+
+
+def _project_operation_input_schemas() -> list[dict[str, Any]]:
+    """Canonical TvCopilot operations → OpenAPI oneOf branches (no parallel catalog)."""
+    branches: list[dict[str, Any]] = []
+    for op_name, spec in sorted(TvCopilotContentService.operations().items()):
+        if not isinstance(spec, dict):
+            continue
+        raw = spec.get("inputSchema")
+        if not isinstance(raw, dict):
+            continue
+        schema = normalize_json_schema_for_gpt_builder(copy.deepcopy(raw))
+        schema.setdefault("title", op_name)
+        props = schema.setdefault("properties", {})
+        if isinstance(props, dict) and "op" not in props:
+            props["op"] = {"type": "string", "const": op_name}
+        required = schema.get("required")
+        if isinstance(required, list) and "op" not in required:
+            schema["required"] = ["op", *required]
+        elif not isinstance(required, list):
+            schema["required"] = ["op"]
+        branches.append(schema)
+    return branches
+
+
+def _typed_ops_schema() -> dict[str, Any]:
+    branches = _project_operation_input_schemas()
+    return {
+        "type": "array",
+        "description": (
+            "Typed Copilot ops from the canonical TV catalog (objects with op — "
+            "never bare strings). Shape projected from TvCopilotContentService."
+        ),
+        "minItems": 1,
+        "items": {
+            "oneOf": branches,
+            "description": "One canonical TV Copilot operation.",
+        },
+    }
+
+
+def _change_target_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "description": (
+            "Change target. Omit or leave empty for create_playlist without an "
+            "existing playlist. playlistId is required by ops that need a playlist."
+        ),
+        "properties": {
+            "playlistId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Existing playlist UUID when the op requires one.",
+            },
+            "slideId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Slide UUID when the op requires slide context.",
+            },
+        },
+        "additionalProperties": False,
+    }
+
+
+def _host_context_schema() -> dict[str, Any]:
+    """Smallest truthful hostContext from Copilot planner/suggest consumers."""
+    return {
+        "type": "object",
+        "description": (
+            "Optional editor/host focus. Custom GPT usually omits this; useful when "
+            "the user already named a playlist/slide in-session."
+        ),
+        "properties": {
+            "playlistId": {"type": "string", "format": "uuid"},
+            "slideId": {"type": "string", "format": "uuid"},
+            "sectionId": {"type": "string"},
+            "selectedBlockIds": {
+                "type": "array",
+                "items": {"type": "string"},
+            },
+            "selectedBlockId": {"type": "string"},
+            "selectedDataSourceId": {"type": "string"},
+            "selectedVisualId": {"type": "string"},
+            "presetKey": {"type": "string"},
+            "hasLocalDraft": {"type": "boolean"},
+        },
+        "additionalProperties": True,
+    }
+
+
+def _catalog_version_placeholder() -> str:
+    return TvCopilotContentService.catalog_version()
+
+
+def _create_playlist_ops_example() -> list[dict[str, Any]]:
+    return [{"op": "create_playlist", "name": "Testando a VISTA"}]
+
+
 def _envelope_schema() -> dict[str, Any]:
     return {
         "type": "object",
@@ -39,6 +188,7 @@ def _envelope_schema() -> dict[str, Any]:
         "properties": {
             "success": {"type": "boolean"},
             "message": {"type": "string"},
+            # Keep data untyped (no type=object) — same pattern as prior TV + TÉO envelope.
             "data": {},
         },
     }
@@ -54,15 +204,28 @@ def _error_envelope_schema() -> dict[str, Any]:
                 "type": "object",
                 "required": ["code", "message", "retryable"],
                 "properties": {
-                    "code": {"type": "string"},
-                    "message": {"type": "string"},
+                    "code": {
+                        "type": "string",
+                        "description": (
+                            "Machine code e.g. INVALID_CHANGE, FORBIDDEN, NOT_FOUND, "
+                            "REVISION_CONFLICT, IDEMPOTENCY_CONFLICT, PLAN_MISMATCH, "
+                            "CATALOG_VERSION_STALE, UPSTREAM_ERROR."
+                        ),
+                    },
+                    "message": {
+                        "type": "string",
+                        "description": "Human-readable explanation for VISTA to relay.",
+                    },
                     "retryable": {"type": "boolean"},
-                    "details": {"type": "object"},
+                    "details": _opaque_object_schema(
+                        description="Optional structured fields (no secrets)."
+                    ),
                 },
             },
             "meta": {
                 "type": "object",
                 "properties": {"correlationId": {"type": "string"}},
+                "additionalProperties": True,
             },
         },
     }
@@ -104,11 +267,90 @@ def _error_responses() -> dict[str, Any]:
     }
 
 
+def _json_body(schema: dict[str, Any], *, example: dict[str, Any] | None = None) -> dict[str, Any]:
+    content: dict[str, Any] = {"schema": schema}
+    if example is not None:
+        content["example"] = example
+    return {
+        "required": True,
+        "content": {"application/json": content},
+    }
+
+
 def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any]:
     if not server_url or not str(server_url).startswith(("http://", "https://")):
         server_url = resolve_gpt_actions_server_url(explicit=server_url)
     base = GPT_ACTIONS_BASE_PATH
     tag = "TV Dashboard GPT"
+    catalog_version = _catalog_version_placeholder()
+    create_ops = _create_playlist_ops_example()
+    typed_ops = _typed_ops_schema()
+
+    data_preview_schema = {
+        "type": "object",
+        "required": ["block", "nativeConfig"],
+        "properties": {
+            "block": _opaque_object_schema(
+                description="Slide block payload (same shape as editor preview)."
+            ),
+            "nativeConfig": _opaque_object_schema(
+                description="Native slide config used for dry-run resolution."
+            ),
+            "playlistId": {"type": "string"},
+            "playlistDefaults": _opaque_object_schema(),
+            "forceRefresh": {"type": "boolean"},
+            "targetStepName": {"type": "string"},
+            "previewOptions": _opaque_object_schema(),
+        },
+    }
+
+    suggest_schema = {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+            "message": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Natural-language change request.",
+            },
+            "hostContext": {"$ref": "#/components/schemas/GptHostContext"},
+        },
+    }
+
+    preview_schema = {
+        "type": "object",
+        "required": ["ops"],
+        "properties": {
+            "target": {"$ref": "#/components/schemas/GptChangeTarget"},
+            "ops": typed_ops,
+            "catalogVersion": {
+                "type": "string",
+                "description": "Must match gpt_get_catalog.catalogVersion.",
+            },
+        },
+    }
+
+    commit_schema = {
+        "type": "object",
+        "required": ["ops", "catalogVersion", "planDigest"],
+        "properties": {
+            "target": {"$ref": "#/components/schemas/GptChangeTarget"},
+            "ops": typed_ops,
+            "catalogVersion": {"type": "string"},
+            "expectedRevision": {
+                "type": "integer",
+                "description": (
+                    "Required OCC revision for an existing playlist. "
+                    "Omit only for create_playlist without playlistId."
+                ),
+            },
+            "planDigest": {
+                "type": "string",
+                "description": "Digest returned by gpt_preview_change for the same ops.",
+            },
+        },
+    }
+
     paths: dict[str, Any] = {
         f"{base}/catalog": {
             "get": {
@@ -209,26 +451,18 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],
-                "requestBody": {
-                    "required": True,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "required": ["block", "nativeConfig"],
-                                "properties": {
-                                    "block": {"type": "object"},
-                                    "nativeConfig": {"type": "object"},
-                                    "playlistId": {"type": "string"},
-                                    "playlistDefaults": {"type": "object"},
-                                    "forceRefresh": {"type": "boolean"},
-                                    "targetStepName": {"type": "string"},
-                                    "previewOptions": {"type": "object"},
-                                },
-                            }
-                        }
+                "requestBody": _json_body(
+                    data_preview_schema,
+                    example={
+                        "block": {
+                            "id": "blk-demo",
+                            "type": "kpi",
+                            "title": "Exemplo",
+                        },
+                        "nativeConfig": {"version": 1, "blocks": []},
+                        "forceRefresh": False,
                     },
-                },
+                ),
                 "responses": {"200": _ok_response("Block preview"), **_error_responses()},
             }
         },
@@ -238,25 +472,17 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "summary": "Suggest typed Copilot ops from NL",
                 "description": (
                     "Uses the canonical Copilot planner. Returns ready|clarification|"
-                    "unsupported|error with typed ops — no free M/SQL."
+                    "unsupported|error with typed ops — no free M/SQL. "
+                    "Example: create a playlist named Testando a VISTA."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],
-                "requestBody": {
-                    "required": True,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "required": ["message"],
-                                "properties": {
-                                    "message": {"type": "string"},
-                                    "hostContext": {"type": "object"},
-                                },
-                            }
-                        }
+                "requestBody": _json_body(
+                    suggest_schema,
+                    example={
+                        "message": "Crie uma playlist chamada Testando a VISTA",
                     },
-                },
+                ),
                 "responses": {"200": _ok_response("Suggestion plan"), **_error_responses()},
             }
         },
@@ -266,26 +492,19 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "summary": "Preview typed change without persisting",
                 "description": (
                     "Dry-run TvCopilotPatchV1. Returns planDigest, risk, confirmationPolicy, "
-                    "diff. Does not persist. Does not expose httpCommands."
+                    "diff. Does not persist. Does not expose httpCommands. "
+                    "For create_playlist, target may be empty and expectedRevision is N/A."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],
-                "requestBody": {
-                    "required": True,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "required": ["ops"],
-                                "properties": {
-                                    "target": {"type": "object"},
-                                    "ops": {"type": "array", "items": {"type": "object"}},
-                                    "catalogVersion": {"type": "string"},
-                                },
-                            }
-                        }
+                "requestBody": _json_body(
+                    preview_schema,
+                    example={
+                        "target": {},
+                        "ops": create_ops,
+                        "catalogVersion": catalog_version,
                     },
-                },
+                ),
                 "responses": {"200": _ok_response("Change preview"), **_error_responses()},
             }
         },
@@ -314,38 +533,18 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         ),
                     }
                 ],
-                "requestBody": {
-                    "required": True,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "required": ["ops", "catalogVersion", "planDigest"],
-                                "properties": {
-                                    "target": {"type": "object"},
-                                    "ops": {
-                                        "type": "array",
-                                        "items": {"type": "object"},
-                                        "description": (
-                                            "Typed Copilot ops from gpt_preview_change "
-                                            "(objects with op field — never string names)."
-                                        ),
-                                    },
-                                    "catalogVersion": {"type": "string"},
-                                    "expectedRevision": {
-                                        "type": "integer",
-                                        "description": (
-                                            "Required OCC revision for existing playlist. "
-                                            "Omit only when creating a new playlist without "
-                                            "playlistId. Missing on existing playlist → 422."
-                                        ),
-                                    },
-                                    "planDigest": {"type": "string"},
-                                },
-                            }
-                        }
+                "requestBody": _json_body(
+                    commit_schema,
+                    example={
+                        "target": {},
+                        "ops": create_ops,
+                        "catalogVersion": catalog_version,
+                        "planDigest": (
+                            "0123456789abcdef0123456789abcdef"
+                            "0123456789abcdef0123456789abcdef"
+                        ),
                     },
-                },
+                ),
                 "responses": {"200": _ok_response("Verified commit"), **_error_responses()},
             }
         },
@@ -375,7 +574,8 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
             "schemas": {
                 "GptSuccessEnvelope": _envelope_schema(),
                 "GptErrorEnvelope": _error_envelope_schema(),
-                # Compat alias
+                "GptChangeTarget": _change_target_schema(),
+                "GptHostContext": _host_context_schema(),
                 "ApiEnvelope": _envelope_schema(),
             },
         },

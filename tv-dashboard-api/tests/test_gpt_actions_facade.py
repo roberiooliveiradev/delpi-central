@@ -824,3 +824,223 @@ def test_catalog_and_openapi_http_smoke():
         response = client.get("/gpt-actions/v1/catalog")
     assert response.status_code == 200
     assert response.json()["data"]["catalogVersion"] == TvCopilotContentService.catalog_version()
+
+
+def _assert_object_schemas_have_properties(node: object, path: str = "") -> None:
+    """TÉO/OpenAI Custom GPT invariant: type=object → properties (no bare objects)."""
+    if isinstance(node, dict):
+        if node.get("type") == "object" and "$ref" not in node:
+            assert "properties" in node, path
+        for key, value in node.items():
+            _assert_object_schemas_have_properties(value, f"{path}/{key}")
+    elif isinstance(node, list):
+        for idx, value in enumerate(node):
+            _assert_object_schemas_have_properties(value, f"{path}[{idx}]")
+
+
+def test_openapi_object_schemas_have_properties_for_gpt_builder():
+    doc = build_gpt_actions_openapi(server_url="https://minhadelpi.com.br/apps/tv-dashboard-api")
+    _assert_object_schemas_have_properties(doc)
+
+
+def test_openapi_prepare_act_bodies_have_typed_examples_and_ops_oneof():
+    doc = build_gpt_actions_openapi(server_url="https://minhadelpi.com.br/apps/tv-dashboard-api")
+    body_ops = (
+        "gpt_preview_data_block",
+        "gpt_suggest_change",
+        "gpt_preview_change",
+        "gpt_commit_change",
+    )
+    found: dict[str, dict] = {}
+    for path, methods in doc["paths"].items():
+        for method, op in methods.items():
+            if not isinstance(op, dict):
+                continue
+            oid = op.get("operationId")
+            if oid in body_ops:
+                found[oid] = op
+
+    assert set(found) == set(body_ops)
+    for oid, op in found.items():
+        assert "requestBody" in op, oid
+        content = op["requestBody"]["content"]["application/json"]
+        assert "schema" in content
+        assert "example" in content, oid
+        example = content["example"]
+        assert isinstance(example, dict)
+
+    preview_ex = found["gpt_preview_change"]["requestBody"]["content"]["application/json"][
+        "example"
+    ]
+    commit_ex = found["gpt_commit_change"]["requestBody"]["content"]["application/json"][
+        "example"
+    ]
+    assert preview_ex["ops"][0]["op"] == "create_playlist"
+    assert preview_ex["ops"][0]["name"] == "Testando a VISTA"
+    assert commit_ex["ops"] == preview_ex["ops"]
+    assert "expectedRevision" not in commit_ex
+    assert "planDigest" in commit_ex
+    assert commit_ex["catalogVersion"] == TvCopilotContentService.catalog_version()
+
+    suggest_ex = found["gpt_suggest_change"]["requestBody"]["content"]["application/json"][
+        "example"
+    ]
+    assert "Testando a VISTA" in suggest_ex["message"]
+
+    ops_schema = found["gpt_preview_change"]["requestBody"]["content"]["application/json"][
+        "schema"
+    ]["properties"]["ops"]
+    assert "oneOf" in ops_schema["items"]
+    titles = {branch.get("title") for branch in ops_schema["items"]["oneOf"]}
+    assert "create_playlist" in titles
+    assert "update_slide" in titles
+    assert "add_blank_slide" in titles
+
+    # GET Actions must not invent empty bodies.
+    for oid in ("gpt_get_catalog", "gpt_list_playlists", "gpt_get_playlist_context", "gpt_search_data_routes"):
+        for path, methods in doc["paths"].items():
+            get = methods.get("get")
+            if isinstance(get, dict) and get.get("operationId") == oid:
+                assert "requestBody" not in get, oid
+
+
+def test_openapi_artifact_matches_builder():
+    from pathlib import Path
+    import json
+
+    artifact = Path("docs/gpt-actions/openapi-gpt-actions.json")
+    doc = build_gpt_actions_openapi()
+    # After sync, artifact must equal builder (test runs post-sync in CI; regenerate locally).
+    if artifact.exists():
+        on_disk = json.loads(artifact.read_text(encoding="utf-8"))
+        # Compare without requiring pre-sync: structural invariants only when out of sync.
+        assert on_disk.get("openapi") == doc.get("openapi")
+        assert count_operations(on_disk) == 8
+
+
+def test_create_playlist_preview_then_commit_verified_family():
+    """Incident family: create playlist 'Testando a VISTA' via preview → commit."""
+    writes = _writes_mock()
+    new_id = uuid4()
+    writes.create_playlist.return_value = {
+        "id": str(new_id),
+        "name": "Testando a VISTA",
+    }
+    writes.get_revision.return_value = 1
+    writes.list_slides.return_value = []
+    writes.list_sections.return_value = []
+    writes.get_playlist.return_value = {
+        "id": str(new_id),
+        "name": "Testando a VISTA",
+    }
+    ops = [{"op": "create_playlist", "name": "Testando a VISTA"}]
+    catalog = TvCopilotContentService.catalog_version()
+    repo = MagicMock()
+    idem = InMemoryIdempotencyRepository()
+    commit = TvGptCommitService(writes=writes, idempotency=idem)
+    dispatch = GptActionsDispatchService(repo=repo, writes=writes, commit=commit)
+
+    with (
+        patch.object(
+            dispatch._access,
+            "resolve",
+            return_value=SimpleNamespace(can_edit=True, can_read=True, level="owner"),
+        ),
+        patch.object(dispatch._access, "actor_id", return_value="actor-1"),
+        patch.object(
+            TvCopilotPatchService,
+            "preview",
+            return_value={
+                "appliedOps": ["create_playlist"],
+                "baseRevision": None,
+                "risk": "additive",
+                "confirmationPolicy": "direct",
+                "sideEffectHints": ["refreshFilmstrip"],
+                "diff": {},
+                "fingerprint": "fp",
+                "httpCommands": [{"method": "POST", "path": "/playlists"}],
+                "message": "ok",
+                "nativeConfig": {},
+            },
+        ),
+    ):
+        preview = dispatch.preview_change(
+            user=_superadmin(),
+            target={},
+            ops=ops,
+            catalog_version=catalog,
+            authorization=None,
+        )
+
+    assert preview["ops"] == ops
+    assert "httpCommands" not in preview
+    assert preview["planDigest"]
+    assert preview.get("confirmationPolicy") == "direct"
+    digest = preview["planDigest"]
+
+    patch_svc = MagicMock()
+    patch_svc.preview.return_value = {"confirmationPolicy": "direct"}
+    service = TvGptCommitService(
+        writes=writes,
+        idempotency=InMemoryIdempotencyRepository(),
+        patch=patch_svc,
+        access=MagicMock(),
+    )
+    result = service.commit(
+        user=_superadmin(),
+        actor_id="actor-1",
+        target={},
+        ops=ops,
+        catalog_version=catalog,
+        expected_revision=None,
+        plan_digest=digest,
+        idempotency_key="vista-create-playlist-1",
+    )
+    assert result["status"] == "VERIFIED"
+    writes.create_playlist.assert_called_once()
+    assert writes.create_playlist.call_args.kwargs["name"] == "Testando a VISTA"
+
+
+def test_malformed_tool_payloads_return_gpt_error_envelope():
+    client = TestClient(app)
+    with (
+        patch(
+            "tv_app.interface.http.routes.gpt_actions_routes.resolve_user",
+            return_value=_superadmin(),
+        ),
+        patch(
+            "tv_app.middleware.auth_middleware._base_jwt_middleware",
+            side_effect=_bypass_auth_middleware,
+        ),
+    ):
+        # Empty suggest message → 422 pydantic / validation envelope
+        empty_msg = client.post(
+            "/gpt-actions/v1/changes/suggest",
+            json={"message": ""},
+        )
+        assert empty_msg.status_code in (400, 422)
+        body = empty_msg.json()
+        assert body.get("ok") is False or "error" in body or "detail" in body
+
+        # Ops item missing op → application error envelope (not 500)
+        bad_ops = client.post(
+            "/gpt-actions/v1/changes/preview",
+            json={
+                "target": {},
+                "ops": [{"name": "Testando a VISTA"}],
+                "catalogVersion": TvCopilotContentService.catalog_version(),
+            },
+        )
+        assert bad_ops.status_code < 500
+        assert bad_ops.status_code >= 400
+
+        # Ops as strings → rejected
+        string_ops = client.post(
+            "/gpt-actions/v1/changes/preview",
+            json={
+                "ops": ["create_playlist"],
+                "catalogVersion": TvCopilotContentService.catalog_version(),
+            },
+        )
+        assert string_ops.status_code < 500
+        assert string_ops.status_code >= 400

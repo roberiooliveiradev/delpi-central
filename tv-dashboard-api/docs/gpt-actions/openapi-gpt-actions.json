@@ -475,16 +475,24 @@
                 ],
                 "properties": {
                   "block": {
-                    "type": "object"
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": true,
+                    "description": "Slide block payload (same shape as editor preview)."
                   },
                   "nativeConfig": {
-                    "type": "object"
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": true,
+                    "description": "Native slide config used for dry-run resolution."
                   },
                   "playlistId": {
                     "type": "string"
                   },
                   "playlistDefaults": {
-                    "type": "object"
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": true
                   },
                   "forceRefresh": {
                     "type": "boolean"
@@ -493,9 +501,23 @@
                     "type": "string"
                   },
                   "previewOptions": {
-                    "type": "object"
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": true
                   }
                 }
+              },
+              "example": {
+                "block": {
+                  "id": "blk-demo",
+                  "type": "kpi",
+                  "title": "Exemplo"
+                },
+                "nativeConfig": {
+                  "version": 1,
+                  "blocks": []
+                },
+                "forceRefresh": false
               }
             }
           }
@@ -588,7 +610,7 @@
       "post": {
         "operationId": "gpt_suggest_change",
         "summary": "Suggest typed Copilot ops from NL",
-        "description": "Uses the canonical Copilot planner. Returns ready|clarification|unsupported|error with typed ops — no free M/SQL.",
+        "description": "Uses the canonical Copilot planner. Returns ready|clarification|unsupported|error with typed ops — no free M/SQL. Example: create a playlist named Testando a VISTA.",
         "tags": [
           "TV Dashboard GPT"
         ],
@@ -608,12 +630,17 @@
                 ],
                 "properties": {
                   "message": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Natural-language change request."
                   },
                   "hostContext": {
-                    "type": "object"
+                    "$ref": "#/components/schemas/GptHostContext"
                   }
                 }
+              },
+              "example": {
+                "message": "Crie uma playlist chamada Testando a VISTA"
               }
             }
           }
@@ -706,7 +733,7 @@
       "post": {
         "operationId": "gpt_preview_change",
         "summary": "Preview typed change without persisting",
-        "description": "Dry-run TvCopilotPatchV1. Returns planDigest, risk, confirmationPolicy, diff. Does not persist. Does not expose httpCommands.",
+        "description": "Dry-run TvCopilotPatchV1. Returns planDigest, risk, confirmationPolicy, diff. Does not persist. Does not expose httpCommands. For create_playlist, target may be empty and expectedRevision is N/A.",
         "tags": [
           "TV Dashboard GPT"
         ],
@@ -726,18 +753,343 @@
                 ],
                 "properties": {
                   "target": {
-                    "type": "object"
+                    "$ref": "#/components/schemas/GptChangeTarget"
                   },
                   "ops": {
                     "type": "array",
+                    "description": "Typed Copilot ops from the canonical TV catalog (objects with op — never bare strings). Shape projected from TvCopilotContentService.",
+                    "minItems": 1,
                     "items": {
-                      "type": "object"
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "required": [
+                            "op"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "add_blank_slide",
+                              "type": "string"
+                            },
+                            "title": {
+                              "type": "string"
+                            }
+                          },
+                          "title": "add_blank_slide"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "presetKey"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "add_slide_from_preset",
+                              "type": "string"
+                            },
+                            "presetKey": {
+                              "type": "string"
+                            },
+                            "branch": {
+                              "type": "string"
+                            }
+                          },
+                          "title": "add_slide_from_preset"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "visualId",
+                            "dataSourceId"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "bind_visual",
+                              "type": "string"
+                            },
+                            "visualId": {
+                              "type": "string"
+                            },
+                            "dataSourceId": {
+                              "type": "string"
+                            }
+                          },
+                          "title": "bind_visual"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "name"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "create_playlist",
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "description": {
+                              "type": "string"
+                            },
+                            "seedPresetKeys": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "title": "create_playlist"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "blockId"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "delete_block",
+                              "type": "string"
+                            },
+                            "blockId": {
+                              "type": "string"
+                            }
+                          },
+                          "title": "delete_block"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "sectionId"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "delete_section",
+                              "type": "string"
+                            },
+                            "sectionId": {
+                              "type": "string"
+                            }
+                          },
+                          "title": "delete_section"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "delete_slide",
+                              "type": "string"
+                            }
+                          },
+                          "title": "delete_slide"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "sectionId"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "move_slide_to_section",
+                              "type": "string"
+                            },
+                            "sectionId": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "title": "move_slide_to_section"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "patch"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "patch_native_config",
+                              "type": "string"
+                            },
+                            "patch": {
+                              "type": "object",
+                              "properties": {}
+                            }
+                          },
+                          "title": "patch_native_config"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "items"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "reorder_slides",
+                              "type": "string"
+                            },
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {},
+                                "additionalProperties": true
+                              }
+                            }
+                          },
+                          "title": "reorder_slides"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "blockId",
+                            "steps"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "set_data_transform",
+                              "type": "string"
+                            },
+                            "blockId": {
+                              "type": "string"
+                            },
+                            "steps": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {},
+                                "additionalProperties": true
+                              }
+                            }
+                          },
+                          "title": "set_data_transform"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "update_slide",
+                              "type": "string"
+                            },
+                            "title": {
+                              "type": "string"
+                            },
+                            "durationSec": {
+                              "type": "number"
+                            },
+                            "isActive": {
+                              "type": "boolean"
+                            }
+                          },
+                          "title": "update_slide"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "block"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "upsert_block",
+                              "type": "string"
+                            },
+                            "block": {
+                              "type": "object",
+                              "properties": {}
+                            }
+                          },
+                          "title": "upsert_block"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "operationId"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "upsert_data_source",
+                              "type": "string"
+                            },
+                            "operationId": {
+                              "type": "string"
+                            },
+                            "blockId": {
+                              "type": "string"
+                            },
+                            "params": {
+                              "type": "object",
+                              "properties": {}
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "displayMode": {
+                              "type": "string"
+                            },
+                            "fieldLabels": {
+                              "type": "object",
+                              "properties": {}
+                            }
+                          },
+                          "title": "upsert_data_source"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "name"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "upsert_section",
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "sectionId": {
+                              "type": "string"
+                            }
+                          },
+                          "title": "upsert_section"
+                        }
+                      ],
+                      "description": "One canonical TV Copilot operation."
                     }
                   },
                   "catalogVersion": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Must match gpt_get_catalog.catalogVersion."
                   }
                 }
+              },
+              "example": {
+                "target": {},
+                "ops": [
+                  {
+                    "op": "create_playlist",
+                    "name": "Testando a VISTA"
+                  }
+                ],
+                "catalogVersion": "2026.08.05.1"
               }
             }
           }
@@ -864,26 +1216,351 @@
                 ],
                 "properties": {
                   "target": {
-                    "type": "object"
+                    "$ref": "#/components/schemas/GptChangeTarget"
                   },
                   "ops": {
                     "type": "array",
+                    "description": "Typed Copilot ops from the canonical TV catalog (objects with op — never bare strings). Shape projected from TvCopilotContentService.",
+                    "minItems": 1,
                     "items": {
-                      "type": "object"
-                    },
-                    "description": "Typed Copilot ops from gpt_preview_change (objects with op field — never string names)."
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "required": [
+                            "op"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "add_blank_slide",
+                              "type": "string"
+                            },
+                            "title": {
+                              "type": "string"
+                            }
+                          },
+                          "title": "add_blank_slide"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "presetKey"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "add_slide_from_preset",
+                              "type": "string"
+                            },
+                            "presetKey": {
+                              "type": "string"
+                            },
+                            "branch": {
+                              "type": "string"
+                            }
+                          },
+                          "title": "add_slide_from_preset"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "visualId",
+                            "dataSourceId"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "bind_visual",
+                              "type": "string"
+                            },
+                            "visualId": {
+                              "type": "string"
+                            },
+                            "dataSourceId": {
+                              "type": "string"
+                            }
+                          },
+                          "title": "bind_visual"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "name"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "create_playlist",
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "description": {
+                              "type": "string"
+                            },
+                            "seedPresetKeys": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "title": "create_playlist"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "blockId"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "delete_block",
+                              "type": "string"
+                            },
+                            "blockId": {
+                              "type": "string"
+                            }
+                          },
+                          "title": "delete_block"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "sectionId"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "delete_section",
+                              "type": "string"
+                            },
+                            "sectionId": {
+                              "type": "string"
+                            }
+                          },
+                          "title": "delete_section"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "delete_slide",
+                              "type": "string"
+                            }
+                          },
+                          "title": "delete_slide"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "sectionId"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "move_slide_to_section",
+                              "type": "string"
+                            },
+                            "sectionId": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "title": "move_slide_to_section"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "patch"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "patch_native_config",
+                              "type": "string"
+                            },
+                            "patch": {
+                              "type": "object",
+                              "properties": {}
+                            }
+                          },
+                          "title": "patch_native_config"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "items"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "reorder_slides",
+                              "type": "string"
+                            },
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {},
+                                "additionalProperties": true
+                              }
+                            }
+                          },
+                          "title": "reorder_slides"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "blockId",
+                            "steps"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "set_data_transform",
+                              "type": "string"
+                            },
+                            "blockId": {
+                              "type": "string"
+                            },
+                            "steps": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {},
+                                "additionalProperties": true
+                              }
+                            }
+                          },
+                          "title": "set_data_transform"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "update_slide",
+                              "type": "string"
+                            },
+                            "title": {
+                              "type": "string"
+                            },
+                            "durationSec": {
+                              "type": "number"
+                            },
+                            "isActive": {
+                              "type": "boolean"
+                            }
+                          },
+                          "title": "update_slide"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "block"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "upsert_block",
+                              "type": "string"
+                            },
+                            "block": {
+                              "type": "object",
+                              "properties": {}
+                            }
+                          },
+                          "title": "upsert_block"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "operationId"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "upsert_data_source",
+                              "type": "string"
+                            },
+                            "operationId": {
+                              "type": "string"
+                            },
+                            "blockId": {
+                              "type": "string"
+                            },
+                            "params": {
+                              "type": "object",
+                              "properties": {}
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "displayMode": {
+                              "type": "string"
+                            },
+                            "fieldLabels": {
+                              "type": "object",
+                              "properties": {}
+                            }
+                          },
+                          "title": "upsert_data_source"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "op",
+                            "name"
+                          ],
+                          "properties": {
+                            "op": {
+                              "const": "upsert_section",
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "sectionId": {
+                              "type": "string"
+                            }
+                          },
+                          "title": "upsert_section"
+                        }
+                      ],
+                      "description": "One canonical TV Copilot operation."
+                    }
                   },
                   "catalogVersion": {
                     "type": "string"
                   },
                   "expectedRevision": {
                     "type": "integer",
-                    "description": "Required OCC revision for existing playlist. Omit only when creating a new playlist without playlistId. Missing on existing playlist → 422."
+                    "description": "Required OCC revision for an existing playlist. Omit only for create_playlist without playlistId."
                   },
                   "planDigest": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Digest returned by gpt_preview_change for the same ops."
                   }
                 }
+              },
+              "example": {
+                "target": {},
+                "ops": [
+                  {
+                    "op": "create_playlist",
+                    "name": "Testando a VISTA"
+                  }
+                ],
+                "catalogVersion": "2026.08.05.1",
+                "planDigest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
               }
             }
           }
@@ -1023,16 +1700,21 @@
             ],
             "properties": {
               "code": {
-                "type": "string"
+                "type": "string",
+                "description": "Machine code e.g. INVALID_CHANGE, FORBIDDEN, NOT_FOUND, REVISION_CONFLICT, IDEMPOTENCY_CONFLICT, PLAN_MISMATCH, CATALOG_VERSION_STALE, UPSTREAM_ERROR."
               },
               "message": {
-                "type": "string"
+                "type": "string",
+                "description": "Human-readable explanation for VISTA to relay."
               },
               "retryable": {
                 "type": "boolean"
               },
               "details": {
-                "type": "object"
+                "type": "object",
+                "properties": {},
+                "additionalProperties": true,
+                "description": "Optional structured fields (no secrets)."
               }
             }
           },
@@ -1042,9 +1724,66 @@
               "correlationId": {
                 "type": "string"
               }
-            }
+            },
+            "additionalProperties": true
           }
         }
+      },
+      "GptChangeTarget": {
+        "type": "object",
+        "description": "Change target. Omit or leave empty for create_playlist without an existing playlist. playlistId is required by ops that need a playlist.",
+        "properties": {
+          "playlistId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Existing playlist UUID when the op requires one."
+          },
+          "slideId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Slide UUID when the op requires slide context."
+          }
+        },
+        "additionalProperties": false
+      },
+      "GptHostContext": {
+        "type": "object",
+        "description": "Optional editor/host focus. Custom GPT usually omits this; useful when the user already named a playlist/slide in-session.",
+        "properties": {
+          "playlistId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slideId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sectionId": {
+            "type": "string"
+          },
+          "selectedBlockIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "selectedBlockId": {
+            "type": "string"
+          },
+          "selectedDataSourceId": {
+            "type": "string"
+          },
+          "selectedVisualId": {
+            "type": "string"
+          },
+          "presetKey": {
+            "type": "string"
+          },
+          "hasLocalDraft": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
       },
       "ApiEnvelope": {
         "type": "object",
