@@ -1,8 +1,10 @@
-# API DELPI — OpenAI Plugin package
+# DAVI — OpenAI Plugin package (technical id: `api-delpi`)
 
 Portable Agent Plugins 1.0 package for ChatGPT / Codex.
 
-**Strategic target:** OpenAI Plugin + MCP (not Custom GPT Actions).
+**Specialist identity (user-facing):** DAVI — Especialista em Dados e Informações DELPI  
+**Technical plugin name:** `api-delpi` (do not rename for branding)  
+**Strategic target:** OpenAI Plugin + MCP (not Custom GPT Actions)
 
 ## Contents
 
@@ -10,26 +12,29 @@ Portable Agent Plugins 1.0 package for ChatGPT / Codex.
 |---|---|
 | `plugin.json` | Agent Plugins manifest (`name`: `api-delpi`) |
 | `mcp.json` | Streamable HTTP MCP server URL |
-| `skills/api-delpi/SKILL.md` | Minimal workflow guidance |
+| `skills/api-delpi/SKILL.md` | DAVI workflow guidance |
 
-User-facing display name: **API DELPI**.
-
-Capability advertised by description: **Read-only** (no Write).
+Capability: **Read-only** V1 (`search_products` only).
 
 ## Developer-mode test (manual)
 
 Documentation does not prove runtime.
 
-1. Ensure `https://{host}/apps/api-delpi/mcp` is reachable over HTTPS.
-2. Confirm `GET /.well-known/oauth-protected-resource` (under `/apps/api-delpi`) returns metadata.
-3. In ChatGPT developer mode, load this plugin directory (or register the MCP URL).
-4. Complete OAuth with a real DELPI user (Keycloak).
-5. Tool scan must list only `search_products`.
-6. Authorized user: search returns allowlisted fields only.
-7. Unauthorized user: fail-closed (403 / tool error).
+1. Ensure `https://minhadelpi.com.br/apps/api-delpi/mcp` is reachable over HTTPS.
+2. Confirm protected-resource metadata includes `mcp:tools` and exact MCP resource URL.
+3. Configure Keycloak client `mcp-api-delpi` per runbook; capture ChatGPT redirect URI exactly.
+4. In ChatGPT, connect remote MCP / load this plugin; specialist presents as **DAVI**.
+5. OAuth with a real DELPI user (Authorization Code + PKCE).
+6. Tool scan must list only `search_products`.
+7. Authorized user: allowlisted fields only.
+8. User without `ENGINEERING_LMP_ACCESS`: Forbidden (not OAuth re-link).
 
 Do not place files under `~/.agents/` or `~/.codex/` from this repository.
 
+## Publication
+
+`homepage = TO_CONFIGURE` is a **PUBLICATION_BLOCKER**, not an internal MCP runtime blocker.
+
 ## Go-live
 
-See `api-delpi/docs/integrations/openai-plugin-mcp.md`. `GO_LIVE` remains **PENDING** until OAuth compatibility and production smoke pass.
+See `api-delpi/docs/integrations/openai-plugin-mcp.md` and Keycloak runbook. `GO_LIVE` remains blocked until operational proofs pass.

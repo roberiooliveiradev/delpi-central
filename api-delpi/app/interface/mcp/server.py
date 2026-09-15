@@ -18,6 +18,7 @@ from app.application.external_capabilities.constants import (
     PRODUCT_SEARCH_MAX_PAGE_SIZE,
 )
 from app.application.external_capabilities.product_search_service import search_products
+from app.interface.mcp.branding import DAVI_MCP_INSTRUCTIONS
 from app.interface.mcp.oauth_contract import (
     SEARCH_PRODUCTS_SECURITY_SCHEMES,
     mcp_www_authenticate_meta,
@@ -74,11 +75,7 @@ def create_mcp_server() -> FastMCP:
     hosts, origins = public_host_allowed_for_mcp()
     mcp = ApiDelpiFastMCP(
         name="api-delpi",
-        instructions=(
-            "Read-only DELPI operational data tools. "
-            "Use search_products for Product Master lookup only. "
-            "Do not invent stock, pricing, customer, or supplier fields."
-        ),
+        instructions=DAVI_MCP_INSTRUCTIONS,
         streamable_http_path="/",
         stateless_http=True,
         json_response=True,

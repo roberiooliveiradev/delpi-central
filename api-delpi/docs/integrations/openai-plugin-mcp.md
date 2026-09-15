@@ -1,6 +1,26 @@
-# API DELPI — OpenAI Plugin + MCP
+# DAVI / API DELPI — OpenAI Plugin + MCP
 
 > **Documentation does not prove runtime.**
+
+## Specialist identity (user-facing)
+
+| Field | Value |
+|---|---|
+| Short name | **DAVI** |
+| Full name | DAVI — Especialista em Dados e Informações DELPI |
+| Mission | Consultar informações autorizadas da DELPI respeitando a identidade e as permissões do usuário |
+
+DAVI is branding/orchestration identity — **not** an authorization authority.
+
+## Technical identities (do not rename for branding)
+
+| Surface | Technical id |
+|---|---|
+| Plugin `name` | `api-delpi` |
+| MCP server name | `api-delpi` |
+| Keycloak client | `mcp-api-delpi` |
+| MCP resource | `https://minhadelpi.com.br/apps/api-delpi/mcp` |
+| Tool | `search_products` |
 
 ## Status
 
@@ -11,8 +31,8 @@
 | V1 business tool | `search_products` (read-only Product Master) |
 | MCP auth model | **A — transport requires OAuth** |
 | Resource audience | `aud` must include exact `{MCP_RESOURCE_URL}` **and** `delpi-central` |
-| Keycloak config | Runbook: [keycloak-mcp-client-runbook.md](./keycloak-mcp-client-runbook.md) (`NOT_APPLIED` until operator) |
-| Go-live | `GO_LIVE_BLOCKED` until Keycloak binding + deploy + e2e |
+| Keycloak config | Runbook: [keycloak-mcp-client-runbook.md](./keycloak-mcp-client-runbook.md) |
+| Go-live | `GO_LIVE_BLOCKED` until operational proofs pass |
 
 ## Architecture
 

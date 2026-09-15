@@ -167,7 +167,7 @@ def test_plugin_package_schemas_and_skill() -> None:
         "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
     )
     assert plugin["name"] == "api-delpi"
-    assert "Read-only" in plugin["description"] or "read-only" in plugin["description"].lower()
+    assert "DAVI" in plugin["description"]
     assert "Write" not in plugin.get("keywords", [])
     blob = json.dumps(plugin) + json.dumps(mcp) + skill
     assert "client_secret" not in blob.lower()
@@ -176,10 +176,12 @@ def test_plugin_package_schemas_and_skill() -> None:
     assert mcp["$schema"] == "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json"
     server = mcp["mcpServers"]["api-delpi"]
     assert server["type"] == "streamable-http"
-    assert server["url"].endswith("/apps/api-delpi/mcp")
+    assert server["url"] == "https://minhadelpi.com.br/apps/api-delpi/mcp"
     assert "localhost" not in server["url"]
 
     assert skill.startswith("---")
     assert "name: api-delpi" in skill
+    assert "DAVI" in skill
     assert "search_products" in skill
     assert "RBAC" not in skill
+    assert "ENGINEERING_LMP" not in skill

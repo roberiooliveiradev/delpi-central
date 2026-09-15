@@ -1,6 +1,9 @@
-# Keycloak runbook — API DELPI MCP resource audience binding
+# Keycloak runbook — API DELPI MCP / DAVI resource audience binding
 
-> **KEYCLOAK_CONFIG = NOT_APPLIED** in PLUGIN-003 execution (no admin mutation from this agent).  
+> **Specialist brand:** DAVI — Especialista em Dados e Informações DELPI  
+> **Technical client id remains:** `mcp-api-delpi` (do not rename to `mcp-davi`)
+
+> **KEYCLOAK_CONFIG = NOT_APPLIED** until an operator with Admin Console access executes this runbook.  
 > Vendor: [Keycloak MCP AuthZ Server](https://www.keycloak.org/securing-apps/mcp-authz-server) — Keycloak does **not** natively process RFC 8707 `resource` → `aud` on 26.0.7; use scope + Audience mapper workaround.
 
 ## Goal

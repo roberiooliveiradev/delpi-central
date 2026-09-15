@@ -2,8 +2,9 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "api-delpi",
   "version": "1.0.0",
-  "description": "Read-only DELPI operational data tools using the authenticated user's DELPI permissions.",
+  "description": "DAVI — Especialista em Dados e Informações DELPI. Consulta informações autorizadas da DELPI usando a identidade e as permissões do próprio usuário.",
   "keywords": [
+    "davi",
     "delpi",
     "read-only",
     "product-master",
