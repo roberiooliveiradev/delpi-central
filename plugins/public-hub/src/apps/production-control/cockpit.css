@@ -703,6 +703,65 @@
   background: #525659;
 }
 
+.pcp-pub-visual-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--pcp-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--pcp-surface) 80%, var(--pcp-border));
+}
+
+.pcp-pub-visual-tabs button {
+  margin: 0;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--pcp-muted);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.pcp-pub-visual-tabs button.is-active {
+  background: var(--pcp-surface);
+  color: var(--pcp-title);
+  box-shadow: 0 0 0 1px var(--pcp-border);
+}
+
+.pcp-pub-viewer__model,
+.pcp-pub__preview-model,
+.pcp-pub-model {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 420px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.pcp-pub-viewer__model {
+  border-radius: 0;
+}
+
+.pcp-pub-model model-viewer,
+.pcp-pub-viewer__model model-viewer,
+.pcp-pub__preview-model model-viewer {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  background-color: #fff;
+}
+
+.pcp-pub__preview-hint {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  color: var(--pcp-muted);
+}
+
 /* ---------- Detalhe da operação: dados à esquerda, desenho à direita ---------- */
 
 .pcp-pub__back {
@@ -847,6 +906,14 @@
   justify-content: space-between;
 }
 
+.pcp-pub__preview-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
 .pcp-pub__preview-title {
   font-size: 0.95rem;
   font-weight: 700;
@@ -908,7 +975,8 @@
     min-height: 0;
   }
 
-  .pcp-pub__preview-frame {
+  .pcp-pub__preview-frame,
+  .pcp-pub__preview-model {
     min-height: 60vh;
   }
 }

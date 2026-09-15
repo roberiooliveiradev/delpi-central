@@ -448,6 +448,25 @@ Doc: `api-delpi/docs/api/14-desenhos-pdf.md`.
 
 ---
 
+## Modelos 3D do produto da OP (production-control-api)
+
+Uploads `.glb` anexados no Portal PCP (produto da ordem — PI ou PA) ficam no filesystem do `production-control-api`. Não usar o FILESERVER de PDF (`:ro`).
+
+| Variável | Default no container | Host (volume) |
+|----------|----------------------|---------------|
+| `PC_PRODUCT_3D_MODELS_DIR` | `/app/data/product-3d-models` | `${DELPI_DATA_HOST_DIR}/product-3d-models` |
+| `PC_PRODUCT_3D_MAX_BYTES` | `26214400` (25 MiB) | — |
+
+Recreate do `production-control-api` **não** apaga os binários enquanto o bind mount existir. O Postgres (`production_control.product_3d_models`) guarda o metadado.
+
+```bash
+# srv-api (produção)
+sudo mkdir -p /var/lib/delpi/product-3d-models
+# em infra/.env: DELPI_DATA_HOST_DIR=/var/lib/delpi
+```
+
+---
+
 ## Anexos e fontes persistentes (chat)
 
 Uploads de conversa e arquivos de fonte de projeto **devem** sobreviver a rebuild do container.

@@ -393,6 +393,28 @@ class MachineLoadService:
                 return True
         return False
 
+    def public_snapshot_contains_product(self, *, branch: str, product_code: str) -> bool:
+        """Confere se o produto da OP aparece na fila congelada — sem puxar o TOTVS."""
+        code = self._branch_access.assert_valid_branch(branch)
+        wanted = str(product_code or "").strip()
+        if not wanted:
+            return False
+        row = self._snapshots.get(branch=code)
+        if row is None:
+            raise SnapshotNotFound(
+                "A fila desta filial ainda não foi publicada pelo PCP."
+            )
+        payload = self._decode_payload(row)
+        operations = visible_operations(
+            self._payload_operations(payload), withdrawn_order_numbers(payload)
+        )
+        wanted_key = wanted.upper()
+        for item in operations:
+            product = str(item.get("product_code") or "").strip()
+            if product.upper() == wanted_key:
+                return True
+        return False
+
     def public_snapshot_work_center_resources(
         self, *, branch: str, work_center: str
     ) -> tuple[str, ...] | None:

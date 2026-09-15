@@ -13,6 +13,7 @@ from production_control_app.composition.pc_composer import (
     build_machine_load_service,
     build_public_cockpit_access_service,
     build_public_machine_load_drawing_service,
+    build_public_machine_load_product_model_service,
     build_public_work_center_performance_service,
 )
 from production_control_app.core.responses import fail, ok
@@ -20,6 +21,7 @@ from production_control_app.domain.errors import (
     DelpiGatewayError,
     DrawingNotFound,
     InvalidBranch,
+    Product3DModelNotFound,
     PublicAccessDenied,
     SnapshotNotFound,
 )
@@ -35,6 +37,8 @@ def _handle_public_errors(exc: Exception):
     if isinstance(exc, SnapshotNotFound):
         return fail(str(exc), 404)
     if isinstance(exc, DrawingNotFound):
+        return fail(str(exc), 404)
+    if isinstance(exc, Product3DModelNotFound):
         return fail(str(exc), 404)
     if isinstance(exc, ValueError):
         return fail(str(exc), 422)
@@ -61,6 +65,7 @@ def get_public_machine_load(
             branch=branch,
             work_center=work_center,
         )
+        data = build_public_machine_load_product_model_service().annotate_public_queue(data)
     except Exception as exc:  # noqa: BLE001
         return _handle_public_errors(exc)
     return ok(data)
@@ -114,6 +119,33 @@ def get_public_machine_load_drawing_pdf(
         filename=drawing.filename,
         content_disposition_type="inline",
         headers={"Cache-Control": "no-store"},
+    )
+
+
+@router.get("/{token}/models/{product_code}/glb")
+def get_public_machine_load_product_model_glb(
+    token: str,
+    product_code: str,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+):
+    """GLB do produto da OP, somente se o código estiver na fila publicada da filial."""
+    try:
+        model = build_public_machine_load_product_model_service().open_glb(
+            token=token,
+            branch=branch,
+            product_code=product_code,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _handle_public_errors(exc)
+    return FileResponse(
+        model.path,
+        media_type=model.media_type or "model/gltf-binary",
+        filename=model.filename,
+        content_disposition_type="inline",
+        headers={
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
     )
 
 

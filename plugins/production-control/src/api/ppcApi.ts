@@ -1,4 +1,4 @@
-import { httpGet, httpGetBlob, httpPatch, httpPost, httpPut, ppcApiUrl, unwrapEnvelope } from "./httpClient";
+import { httpDelete, httpGet, httpGetBlob, httpPatch, httpPost, httpPut, httpPutFormData, ppcApiUrl, unwrapEnvelope } from "./httpClient";
 import type {
   DeliveryMapPayload,
   DeliveryMapProgressPayload,
@@ -15,6 +15,8 @@ import type {
   OverviewPayload,
   ProblemDetectorItemsPayload,
   ProblemDetectorsPayload,
+  Product3DModel,
+  Product3DModelListPayload,
   ReportsCatalogPayload,
   StockBalancesReportPayload,
   Subplugin,
@@ -564,4 +566,50 @@ export async function fetchProblemDetectorItems(params: {
     { signal: params.signal },
   );
   return unwrapEnvelope(envelope, "Não foi possível carregar os registros do detector.");
+}
+
+export async function fetchProduct3DModels(params: {
+  search?: string;
+  signal?: AbortSignal;
+}): Promise<Product3DModelListPayload> {
+  const search = new URLSearchParams();
+  if (params.search) search.set("q", params.search);
+  const suffix = search.toString() ? `?${search.toString()}` : "";
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: Product3DModelListPayload;
+  }>(ppcApiUrl(`/product-3d-models${suffix}`), { signal: params.signal });
+  return unwrapEnvelope(envelope, "Não foi possível carregar os modelos 3D.");
+}
+
+export async function upsertProduct3DModel(params: {
+  productCode: string;
+  file: File;
+  signal?: AbortSignal;
+}): Promise<Product3DModel> {
+  const form = new FormData();
+  form.append("file", params.file, params.file.name);
+  const envelope = await httpPutFormData<{
+    success: boolean;
+    message?: string;
+    data: Product3DModel;
+  }>(ppcApiUrl(`/product-3d-models/${encodeURIComponent(params.productCode)}`), form, {
+    signal: params.signal,
+  });
+  return unwrapEnvelope(envelope, "Não foi possível anexar o modelo 3D.");
+}
+
+export async function deleteProduct3DModel(params: {
+  productCode: string;
+  signal?: AbortSignal;
+}): Promise<Product3DModel> {
+  const envelope = await httpDelete<{
+    success: boolean;
+    message?: string;
+    data: Product3DModel;
+  }>(ppcApiUrl(`/product-3d-models/${encodeURIComponent(params.productCode)}`), {
+    signal: params.signal,
+  });
+  return unwrapEnvelope(envelope, "Não foi possível excluir o modelo 3D.");
 }

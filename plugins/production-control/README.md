@@ -29,6 +29,8 @@ O MFE **não** chama `/apps/api-delpi`. Header: `X-Delpi-Caller-App: production-
 | `…/problem-analysis?branch=01\|02&detector=` | Análise de problemas (grade de detectores + registros) |
 | `…/materials?branch=01\|02&issue=&q=&request=&item=` | Materiais (excesso e falta de SC1; `issue=pa-shortage` consulta ruptura de MP no conjunto) |
 | `…/delivery-map?branch=01\|02&q=` | Mapa de entrega (OPs PA com saldo, agrupadas por entrega prevista) |
+| `…/reports?branch=01\|02&report=` | Relatórios operacionais |
+| `…/product-models?branch=01\|02` | Modelos 3D (.glb) anexados ao código do produto da OP (PI ou PA) |
 
 Subplugins futuros (`capacity`) aparecem na rail com estado *Em breve*.
 
@@ -72,7 +74,9 @@ O terceiro card (`?issue=pa-shortage&q=90263114`) é uma **consulta**: o PCP inf
 
 **Reordenar (DnD):** no CT ativo, arraste pela alça da linha para mudar a sequência. No drop, o MFE aplica a ordem na UI e chama `PATCH /machine-load/sequence` (só aquele CT). **Ctrl+Z** desfaz e **Ctrl+Shift+Z** refaz (pilha local + PATCH). A tabela não usa sort por coluna, para não conflitar com a ordem manual. A barra de período mostra `Sequência ajustada em…` quando houver `sequence_updated_at`.
 
-**Cockpit do operador (link público):** o botão **Link do operador** na barra de período copia `…/p/production-control/cockpit/aberto?branch={filial}` — página aberta no `public-hub`, sem login. O operador escolhe o posto na primeira abertura (a escolha fica no navegador dele), acompanha a fila em tempo real via WebSocket, copia a OP e abre o **desenho do PA** quando o arquivo existe na pasta do FILESERVER montada no `production-control-api`. É **somente leitura**: o sequenciamento continua exclusivo do PCP. Ver [plugins/public-hub/README.md](../public-hub/README.md) § *Fila de produção*.
+**Cockpit do operador (link público):** o botão **Link do operador** na barra de período copia `…/p/production-control/cockpit/aberto?branch={filial}` — página aberta no `public-hub`, sem login. O operador escolhe o posto na primeira abertura (a escolha fica no navegador dele), acompanha a fila em tempo real via WebSocket, copia a OP e abre o **desenho do PA** (PDF da biblioteca FILESERVER) e, quando houver anexo, o **modelo 3D do produto da OP** (`product_code`, PI ou PA). É **somente leitura**: o sequenciamento continua exclusivo do PCP. Ver [plugins/public-hub/README.md](../public-hub/README.md) § *Fila de produção*.
+
+**Modelos 3D:** tela autenticada (`…/product-models`) para anexar um `.glb` ao código DELPI do produto da ordem de produção — o mesmo `product_code` da fila (PI nas operações intermediárias, PA na última). Reenvio substitui o arquivo vigente. No cockpit, a aba **3D** só aparece na operação cujo produto é aquele código; o desenho PDF **continua sendo o do PA**. Operações de PI não herdam o GLB anexado no PA.
 
 ## API
 
@@ -103,13 +107,17 @@ Base: `/apps/production-control-api`
 | GET | `/problem-analysis/{detectorId}?branch=&page=&pageSize=` | Registros do detector |
 | GET | `/public/machine-load/{token}?branch=&workCenter=` | Cockpit do operador (público, somente leitura) |
 | GET | `/public/machine-load/{token}/drawings/{paCode}/pdf?branch=` | PDF do desenho do PA lido da pasta do FILESERVER montada no BFF (público, PA precisa estar na fila) |
+| GET | `/public/machine-load/{token}/models/{productCode}/glb?branch=` | GLB do produto da OP (público; o `product_code` precisa estar como produto de alguma OP na fila) |
+| GET | `/product-3d-models` | Lista os modelos 3D anexados |
+| PUT | `/product-3d-models/{productCode}` | Anexa ou substitui o `.glb` do produto (multipart `file`) |
+| DELETE | `/product-3d-models/{productCode}` | Remove o modelo 3D do produto |
 | WS | `/public/machine-load/{token}/ws?branch=` | Aviso de mudança da fila para o cockpit |
 
 Contrato TOTVS (não duplicado aqui): [production-pcp-orders.md](../../api-delpi/docs/api/production-pcp-orders.md) e [production-machine-load.md](../../api-delpi/docs/api/production-machine-load.md).
 
 ## Permissões
 
-`production-control.access`, `production-control.demand.view`, `production-control.machine-load.view`, `production-control.problem-analysis.view`, `production-control.materials.view`, `production-control.delivery-map.view`, `production-control.view.filial-01`, `production-control.view.filial-02`. A rail só mostra Materiais / Mapa de entrega para quem tem a permissão correspondente — o grant no Keycloak é operação (código e manifesto já declaram a permissão).
+`production-control.access`, `production-control.demand.view`, `production-control.machine-load.view`, `production-control.problem-analysis.view`, `production-control.materials.view`, `production-control.delivery-map.view`, `production-control.product-3d-models.manage`, `production-control.view.filial-01`, `production-control.view.filial-02`. A rail só mostra Materiais / Mapa de entrega / Modelos 3D para quem tem a permissão correspondente — o grant no Keycloak é operação (código e manifesto já declaram a permissão).
 
 ## Desenvolvimento
 

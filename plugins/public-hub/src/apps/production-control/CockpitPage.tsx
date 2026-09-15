@@ -67,7 +67,11 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date>(() => new Date());
-  const [drawingPa, setDrawingPa] = useState<string | null>(null);
+  const [visualTarget, setVisualTarget] = useState<{
+    paCode: string | null;
+    productCode: string | null;
+    has3dModel: boolean;
+  } | null>(null);
   const workCenterRef = useRef(workCenter);
   workCenterRef.current = workCenter;
   const reloadGenerationRef = useRef(0);
@@ -293,7 +297,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
                   key={operationKey(item)}
                   position={index + 1}
                   operation={item}
-                  onOpenDrawing={setDrawingPa}
+                  onOpenVisual={setVisualTarget}
                   onOpenDetail={() => openOperation(item.production_order, item.operation_code)}
                 />
               ))}
@@ -312,12 +316,14 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
         </footer>
       </div>
 
-      {drawingPa ? (
+      {visualTarget ? (
         <DrawingViewer
           token={token}
           branch={branch}
-          paCode={drawingPa}
-          onClose={() => setDrawingPa(null)}
+          paCode={visualTarget.paCode}
+          productCode={visualTarget.productCode}
+          has3dModel={visualTarget.has3dModel}
+          onClose={() => setVisualTarget(null)}
         />
       ) : null}
     </section>
@@ -399,16 +405,25 @@ function WorkCenterPicker({ branch, workCenters, onSelect }: PickerProps) {
 function OperationCard({
   position,
   operation,
-  onOpenDrawing,
+  onOpenVisual,
   onOpenDetail,
 }: {
   position: number;
   operation: MachineLoadOperation;
-  onOpenDrawing: (paCode: string) => void;
+  onOpenVisual: (target: {
+    paCode: string | null;
+    productCode: string | null;
+    has3dModel: boolean;
+  }) => void;
   onOpenDetail: () => void;
 }) {
   const status = resolveStatus(operation);
   const paCode = operation.pa_product_code?.trim() || "";
+  const productCode = operation.product_code?.trim() || "";
+  const has3dModel = Boolean(operation.has_3d_model && productCode);
+  const canOpenVisual = Boolean(paCode) || has3dModel;
+  const visualLabel =
+    paCode && has3dModel ? "Ver desenho / 3D" : has3dModel ? "Ver 3D" : "Ver desenho";
   // No chão de fábrica o operador lê o PA; o intermediário fica só como fallback.
   const displayProductCode = paCode || operation.product_code;
 
@@ -487,13 +502,19 @@ function OperationCard({
             <button type="button" className="pcp-pub__drawing" onClick={onOpenDetail}>
               Detalhes
             </button>
-            {paCode ? (
+            {canOpenVisual ? (
               <button
                 type="button"
                 className="pcp-pub__drawing pcp-pub__drawing--muted"
-                onClick={() => onOpenDrawing(paCode)}
+                onClick={() =>
+                  onOpenVisual({
+                    paCode: paCode || null,
+                    productCode: productCode || null,
+                    has3dModel,
+                  })
+                }
               >
-                Ver desenho
+                {visualLabel}
               </button>
             ) : null}
           </span>

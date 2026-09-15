@@ -1,4 +1,5 @@
 import {
+  Box,
   CalendarClock,
   ClipboardList,
   FileSpreadsheet,
@@ -23,6 +24,7 @@ const ICONS: Record<string, LucideIcon> = {
   "file-spreadsheet": FileSpreadsheet,
   gauge: Gauge,
   package: Package,
+  box: Box,
 };
 
 type PpcRailProps = {

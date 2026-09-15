@@ -11,11 +11,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/model-viewer": "^4.3.1",
     "@originjs/vite-plugin-federation": "^1.4.1",
     "exceljs": "^4.4.0",
     "lucide-react": "^0.576.0",
     "react": "19.2.7",
-    "react-dom": "19.2.7"
+    "react-dom": "19.2.7",
+    "three": "^0.183.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
