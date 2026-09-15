@@ -3172,20 +3172,27 @@ body.td-composer--marqueeing *{
   height: 100%;
   overflow: hidden;
 }
+/* Paridade editor ↔ TV: vídeo preenche 100% do frame; chrome em overlay (não flex). */
 .dashboard-tv-dashboard .td-composer__media-block--video{
-  display: flex;
-  flex-direction: column;
+  display: block;
+  background: #0b1220;
 }
 .dashboard-tv-dashboard .td-composer__media-block--video .td-composer__media-preview{
-  flex: 1;
-  min-height: 0;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   background: #0b1220;
 }
 .dashboard-tv-dashboard .td-composer__video-controls{
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 4px;
-  flex-shrink: 0;
   padding: 4px 6px;
   background: color-mix(in srgb, #000 72%, transparent);
   border-top: 1px solid color-mix(in srgb, #fff 12%, transparent);
