@@ -17,21 +17,31 @@ export type MachineLoadOperation = {
   work_center_name: string;
   scheduled_date: string | null;
   scheduled_start_time: string | null;
+  scheduled_end_date: string | null;
+  scheduled_end_time: string | null;
   production_order: string;
   operation_code: string;
   operation_description: string;
   tool: string;
+  resource: string | null;
   product_code: string;
   product_description: string;
   unit: string | null;
   planned_qty: number;
+  produced_qty: number;
   pending_qty: number;
   pa_product_code: string | null;
+  pa_product_description: string | null;
   pa_due_date: string | null;
+  due_date: string | null;
   production_status: ProductionStatus;
   is_in_production: boolean;
+  production_started_date: string | null;
   production_started_time: string | null;
   active_operator_name: string | null;
+  active_operator_count: number | null;
+  appointment_count: number | null;
+  last_appointment_date: string | null;
 };
 
 export type PublicMachineLoadPayload = {
@@ -117,6 +127,102 @@ export async function fetchPublicDrawingPdf(
     throw new Error(await readError(response, "Desenho não encontrado para este PA."));
   }
   return response.blob();
+}
+
+export type FactoryShift = {
+  id: string;
+  label: string;
+  start_time: string;
+  end_time: string;
+};
+
+export type EfficiencySeriesPoint = {
+  date: string;
+  efficiency_pct: number | null;
+  appointment_count: number | null;
+};
+
+export type WorkCenterAppointment = {
+  production_order: string;
+  operation: string;
+  operation_description: string;
+  product_code: string;
+  quantity: number | null;
+  real_hours: number | null;
+  planned_hours: number | null;
+  efficiency_pct: number | null;
+  start_time: string;
+  end_time: string;
+};
+
+export type DowntimeReason = {
+  stop_reason: string;
+  stop_reason_description: string;
+  hours: number;
+  appointment_count: number | null;
+};
+
+export type DowntimeSeriesPoint = {
+  date: string;
+  hours: number;
+  appointment_count: number | null;
+};
+
+/** Cada bloco degrada sozinho: a api-delpi pode cair sem derrubar a fila. */
+export type PerformanceBlock<T> = ({ available: true } & T) | { available: false; message?: string };
+
+export type WorkCenterEfficiency = {
+  shift_pct: number | null;
+  shift_appointment_count: number | null;
+  day_pct: number | null;
+  day_appointment_count: number | null;
+  period_avg_pct: number | null;
+  series: EfficiencySeriesPoint[];
+  appointments: WorkCenterAppointment[];
+};
+
+export type WorkCenterDowntime = {
+  today_hours: number;
+  today_appointment_count: number | null;
+  period_hours: number;
+  period_appointment_count: number;
+  by_reason: DowntimeReason[];
+  series: DowntimeSeriesPoint[];
+};
+
+export type PublicWorkCenterPerformance = {
+  branch: string;
+  work_center: string;
+  resources: string[];
+  days: number;
+  period: { start_date: string; end_date: string };
+  generated_at: string;
+  shift: FactoryShift | null;
+  efficiency: PerformanceBlock<WorkCenterEfficiency>;
+  downtime: PerformanceBlock<WorkCenterDowntime>;
+};
+
+export async function fetchPublicWorkCenterPerformance(
+  token: string,
+  branch: string,
+  workCenter: string,
+  days?: number,
+): Promise<PublicWorkCenterPerformance> {
+  const params = new URLSearchParams({ branch, workCenter });
+  if (days) params.set("days", String(days));
+
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/performance?${params}`,
+    { headers: { Accept: "application/json" } },
+  );
+  if (!response.ok) {
+    throw new Error(await readError(response, "Desempenho do posto indisponível."));
+  }
+  const envelope = (await response.json()) as ApiEnvelope<PublicWorkCenterPerformance>;
+  if (envelope.success === false || !envelope.data) {
+    throw new Error(envelope.message || "Desempenho do posto indisponível.");
+  }
+  return envelope.data;
 }
 
 export type DeliveryMapRow = {

@@ -397,6 +397,7 @@
   border-radius: 14px;
   background: var(--pcp-surface);
   box-shadow: 0 1px 2px rgba(3, 40, 70, 0.06);
+  cursor: pointer;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -700,6 +701,398 @@
   width: 100%;
   border: 0;
   background: #525659;
+}
+
+/* ---------- Detalhe da operação: dados à esquerda, desenho à direita ---------- */
+
+.pcp-pub__back {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 8px;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+}
+
+.pcp-pub__back:hover,
+.pcp-pub__back:focus-visible {
+  border-color: #ffffff;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.pcp-pub__split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: 18px;
+  align-items: start;
+  margin-top: 16px;
+}
+
+.pcp-pub__split-main,
+.pcp-pub__split-aside {
+  padding: 18px 20px;
+  border: 1px solid var(--pcp-border);
+  border-radius: 16px;
+  background: var(--pcp-surface);
+  box-shadow: 0 1px 2px rgba(3, 40, 70, 0.06);
+}
+
+.pcp-pub__split-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* Altura de leitura no tablet sem obrigar o operador a rolar o desenho inteiro. */
+  min-height: min(76vh, 720px);
+  position: sticky;
+  top: 108px;
+}
+
+.pcp-pub__detail-product {
+  margin: 0;
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--pcp-title);
+}
+
+.pcp-pub__detail-product strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.pcp-pub__detail-operator {
+  margin: 6px 0 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--pcp-running);
+}
+
+.pcp-pub__detail-section {
+  margin: 22px 0 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--pcp-faint);
+}
+
+.pcp-pub__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px 18px;
+  margin: 10px 0 0;
+}
+
+.pcp-pub__fact {
+  min-width: 0;
+}
+
+.pcp-pub__fact dt {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pcp-faint);
+}
+
+.pcp-pub__fact dd {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 3px 0 0;
+  font-size: 1rem;
+  color: var(--pcp-text);
+}
+
+.pcp-pub__facts--num .pcp-pub__fact dd {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--pcp-title);
+}
+
+.pcp-pub__fact--emphasis dd {
+  font-size: 1.25rem;
+  color: var(--pcp-accent);
+}
+
+.pcp-pub__fact-sub {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--pcp-muted);
+}
+
+.pcp-pub__detail-copy {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 22px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--pcp-border);
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--pcp-title);
+}
+
+.pcp-pub__preview-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pcp-pub__preview-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--pcp-title);
+}
+
+.pcp-pub__preview-state {
+  flex: 1 1 auto;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 24px;
+  border: 1px dashed var(--pcp-border);
+  border-radius: 12px;
+  text-align: center;
+  color: var(--pcp-muted);
+}
+
+.pcp-pub__preview-state--error {
+  color: var(--pcp-danger);
+}
+
+.pcp-pub__preview-frame {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 420px;
+  border: 0;
+  border-radius: 12px;
+  background: #525659;
+}
+
+.pcp-pub__card-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.pcp-pub__drawing--muted {
+  border-color: var(--pcp-border);
+  color: var(--pcp-muted);
+  background: transparent;
+}
+
+.pcp-pub__drawing--muted:hover,
+.pcp-pub__drawing--muted:focus-visible {
+  border-color: var(--pcp-accent);
+  color: var(--pcp-accent);
+  background: color-mix(in srgb, var(--pcp-accent) 10%, transparent);
+}
+
+@media (max-width: 1000px) {
+  .pcp-pub__split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pcp-pub__split-aside {
+    position: static;
+    min-height: 0;
+  }
+
+  .pcp-pub__preview-frame {
+    min-height: 60vh;
+  }
+}
+
+/* ---------- Desempenho do posto ---------- */
+
+/* Chips clicáveis de eficiência/paradas na barra de marca. */
+.pcp-pub__chip--metric {
+  display: inline-flex;
+  gap: 6px;
+  align-items: baseline;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+}
+
+.pcp-pub__chip--metric:hover,
+.pcp-pub__chip--metric:focus-visible {
+  border-color: #ffffff;
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.pcp-pub__chip--metric strong {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.pcp-pub__chip-label {
+  opacity: 0.8;
+}
+
+.pcp-pub__chip--eff-good strong {
+  color: #7ef0b4;
+}
+
+.pcp-pub__chip--eff-warn strong {
+  color: #ffd27a;
+}
+
+.pcp-pub__chip--eff-bad strong {
+  color: #ffb4ac;
+}
+
+.pcp-pub__kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 12px 0 0;
+}
+
+.pcp-pub__kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  border: 1px solid var(--pcp-border);
+  border-left: 4px solid var(--pcp-kpi-rail, var(--pcp-accent));
+  border-radius: 14px;
+  background: var(--pcp-surface);
+  box-shadow: 0 1px 2px rgba(3, 40, 70, 0.06);
+}
+
+.pcp-pub__kpi--good {
+  --pcp-kpi-rail: var(--pcp-running);
+}
+
+.pcp-pub__kpi--warn {
+  --pcp-kpi-rail: #b7791f;
+}
+
+.pcp-pub__kpi--bad {
+  --pcp-kpi-rail: var(--pcp-danger);
+}
+
+.pcp-pub__kpi--none {
+  --pcp-kpi-rail: var(--pcp-border);
+}
+
+.pcp-pub__kpi-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pcp-faint);
+}
+
+.pcp-pub__kpi-value {
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  font-weight: 800;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  color: var(--pcp-title);
+}
+
+.pcp-pub__kpi-note {
+  font-size: 0.8rem;
+  color: var(--pcp-muted);
+}
+
+.pcp-pub__chart {
+  margin: 16px 0 0;
+  padding: 16px 18px;
+  border: 1px solid var(--pcp-border);
+  border-radius: 16px;
+  background: var(--pcp-surface);
+  box-shadow: 0 1px 2px rgba(3, 40, 70, 0.06);
+}
+
+.pcp-pub__chart figcaption {
+  margin-bottom: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--pcp-faint);
+}
+
+/*
+ * Ponte de tokens para o kit: o CSS de `.delpi-ui-series-chart*` vem do remote
+ * `@delpi/plugin-ui/styles` (carregado no bootstrap) — aqui só ajustamos escala.
+ */
+.pcp-pub__chart-plot {
+  --delpi-ui-series-chart-plot-height: clamp(220px, 32vh, 320px);
+  --delpi-ui-series-chart-radius: 12px;
+  --delpi-ui-series-chart-tick-font-size: 12px;
+  --delpi-ui-series-chart-axis-title-font-size: 12px;
+  --delpi-ui-series-chart-legend-font-size: 12px;
+}
+
+.pcp-pub__table-wrap {
+  margin: 12px 0 0;
+  overflow-x: auto;
+  border: 1px solid var(--pcp-border);
+  border-radius: 14px;
+  background: var(--pcp-surface);
+}
+
+.pcp-pub__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.pcp-pub__table th,
+.pcp-pub__table td {
+  padding: 10px 14px;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--pcp-border);
+}
+
+.pcp-pub__table th {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pcp-faint);
+}
+
+.pcp-pub__table tr:last-child td {
+  border-bottom: 0;
+}
+
+.pcp-pub__table .pcp-pub__num {
+  text-align: right;
+}
+
+.pcp-pub__pct--good {
+  color: var(--pcp-running);
+}
+
+.pcp-pub__pct--warn {
+  color: #b7791f;
+}
+
+.pcp-pub__pct--bad {
+  color: var(--pcp-danger);
+}
+
+.pcp-pub__empty--soft {
+  margin: 12px 0 0;
+  padding: 20px 16px;
+  font-size: 0.88rem;
 }
 
 /* ---------- Rodapé ---------- */

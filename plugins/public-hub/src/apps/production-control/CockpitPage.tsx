@@ -1,13 +1,30 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import type { MouseEvent } from "react";
 import {
-  fetchPublicDrawingPdf,
   fetchPublicMachineLoad,
   type MachineLoadOperation,
   type MachineLoadWorkCenter,
   type PublicMachineLoadPayload,
 } from "./api";
+import {
+  BrandBar,
+  CopyValueButton,
+  DrawingViewer,
+  efficiencyTone,
+  formatDate,
+  formatDateTime,
+  formatHours,
+  formatPercent,
+  formatQty,
+  formatUnit,
+  operationKey,
+  resolveStatus,
+} from "./cockpitShared";
+import { OperationDetailPage } from "./OperationDetailPage";
 import { usePublicMachineLoadRealtime } from "./usePublicMachineLoadRealtime";
+import { useCockpitView } from "./useCockpitView";
+import { useWorkCenterPerformance } from "./useWorkCenterPerformance";
+import { WorkCenterPerformancePage } from "./WorkCenterPerformancePage";
 import "./cockpit.css";
 
 const LIVE_STATUS_POLL_MS = 15_000;
@@ -54,6 +71,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const workCenterRef = useRef(workCenter);
   workCenterRef.current = workCenter;
   const reloadGenerationRef = useRef(0);
+  const { view, openQueue, openOperation, openPerformance } = useCockpitView();
 
   const reload = useCallback(
     async (center: string | null, options?: { quiet?: boolean }) => {
@@ -108,6 +126,8 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     };
   }, [reload]);
 
+  const performance = useWorkCenterPerformance(token, branch, workCenter);
+
   const selectWorkCenter = (center: string) => {
     storeWorkCenter(branch, center);
     setWorkCenter(center);
@@ -116,7 +136,29 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const clearWorkCenter = () => {
     storeWorkCenter(branch, null);
     setWorkCenter(null);
+    openQueue();
   };
+
+  const activeCenter = payload.work_centers.find((item) => item.work_center === workCenter);
+  const items =
+    workCenter && payload.selected.work_center === workCenter ? payload.selected.items : [];
+
+  const selectedOperation = useMemo(() => {
+    if (view.kind !== "operation") return null;
+    const index = items.findIndex(
+      (item) =>
+        item.production_order === view.productionOrder &&
+        item.operation_code === view.operationCode,
+    );
+    return index >= 0 ? { operation: items[index]!, position: index + 1 } : null;
+  }, [view, items]);
+
+  // A fila some quando o PCP reprograma: sem a operação na tela, volta para a lista.
+  useEffect(() => {
+    if (view.kind !== "operation") return;
+    if (loading || items.length === 0) return;
+    if (!selectedOperation) openQueue();
+  }, [view.kind, loading, items.length, selectedOperation, openQueue]);
 
   if (!workCenter) {
     return (
@@ -128,9 +170,37 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     );
   }
 
-  const activeCenter = payload.work_centers.find((item) => item.work_center === workCenter);
-  const items = payload.selected.work_center === workCenter ? payload.selected.items : [];
+  if (view.kind === "performance") {
+    return (
+      <WorkCenterPerformancePage
+        branch={branch}
+        workCenter={workCenter}
+        workCenterName={activeCenter?.work_center_name || workCenter}
+        performance={performance.data}
+        loading={performance.loading}
+        error={performance.error}
+        onBack={openQueue}
+      />
+    );
+  }
+
+  if (view.kind === "operation" && selectedOperation) {
+    return (
+      <OperationDetailPage
+        token={token}
+        branch={branch}
+        operation={selectedOperation.operation}
+        position={selectedOperation.position}
+        onBack={openQueue}
+      />
+    );
+  }
+
   const running = activeCenter?.in_production_count ?? 0;
+  const efficiency = performance.data?.efficiency;
+  const downtime = performance.data?.downtime;
+  const shiftPct = efficiency?.available ? efficiency.shift_pct : null;
+  const shiftLabel = performance.data?.shift?.label ?? "Turno";
 
   return (
     <section className="pcp-pub">
@@ -146,6 +216,26 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
             {running ? (
               <span className="pcp-pub__chip pcp-pub__chip--running">{running} em produção</span>
             ) : null}
+            <button
+              type="button"
+              className={`pcp-pub__chip pcp-pub__chip--metric pcp-pub__chip--eff-${efficiencyTone(
+                shiftPct,
+              )}`}
+              onClick={openPerformance}
+              title={`Eficiência do posto no ${shiftLabel.toLowerCase()}`}
+            >
+              <span className="pcp-pub__chip-label">{shiftLabel}</span>
+              <strong>{formatPercent(shiftPct)}</strong>
+            </button>
+            <button
+              type="button"
+              className="pcp-pub__chip pcp-pub__chip--metric"
+              onClick={openPerformance}
+              title="Paradas apontadas hoje neste posto"
+            >
+              <span className="pcp-pub__chip-label">Paradas hoje</span>
+              <strong>{downtime?.available ? formatHours(downtime.today_hours) : "—"}</strong>
+            </button>
           </>
         }
         actions={
@@ -161,6 +251,9 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
               <span className="pcp-pub__live-dot" aria-hidden="true" />
               {connected ? "Ao vivo" : "Reconectando"}
             </span>
+            <button type="button" className="pcp-pub__ghost" onClick={openPerformance}>
+              Ver desempenho
+            </button>
             <button type="button" className="pcp-pub__ghost" onClick={clearWorkCenter}>
               Trocar posto
             </button>
@@ -171,6 +264,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
       <div className="pcp-pub__wrap">
         <p className="pcp-pub__notice">
           Sequência definida pelo PCP — esta tela é somente leitura e atualiza automaticamente.
+          Toque em uma operação para ver o detalhe e o desenho.
         </p>
 
         {error ? <p className="pcp-pub__error">{error}</p> : null}
@@ -196,10 +290,11 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
             <ol className="pcp-pub__queue">
               {items.map((item, index) => (
                 <OperationCard
-                  key={`${item.production_order}::${item.operation_code}`}
+                  key={operationKey(item)}
                   position={index + 1}
                   operation={item}
                   onOpenDrawing={setDrawingPa}
+                  onOpenDetail={() => openOperation(item.production_order, item.operation_code)}
                 />
               ))}
             </ol>
@@ -226,42 +321,6 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
         />
       ) : null}
     </section>
-  );
-}
-
-/** Faixa de marca fixa no topo — identidade DELPI e posto em destaque para leitura à distância. */
-function BrandBar({
-  eyebrow,
-  title,
-  code,
-  stats,
-  actions,
-}: {
-  eyebrow: string;
-  title: string;
-  code?: string | null;
-  stats?: ReactNode;
-  actions?: ReactNode;
-}) {
-  return (
-    <header className="pcp-pub__brandbar">
-      <div className="pcp-pub__brandbar-inner">
-        <div className="pcp-pub__identity">
-          <span className="pcp-pub__logo">
-            <img src="/p/logoMinhaDelpi.svg" alt="Minha DELPI" draggable={false} />
-          </span>
-          <div className="pcp-pub__identity-text">
-            <p className="pcp-pub__eyebrow">{eyebrow}</p>
-            <div className="pcp-pub__title-row">
-              {code ? <span className="pcp-pub__code">{code}</span> : null}
-              <h1>{title}</h1>
-            </div>
-            {stats ? <div className="pcp-pub__stats">{stats}</div> : null}
-          </div>
-        </div>
-        {actions ? <div className="pcp-pub__actions">{actions}</div> : null}
-      </div>
-    </header>
   );
 }
 
@@ -341,17 +400,26 @@ function OperationCard({
   position,
   operation,
   onOpenDrawing,
+  onOpenDetail,
 }: {
   position: number;
   operation: MachineLoadOperation;
   onOpenDrawing: (paCode: string) => void;
+  onOpenDetail: () => void;
 }) {
   const status = resolveStatus(operation);
   const paCode = operation.pa_product_code?.trim() || "";
   // No chão de fábrica o operador lê o PA; o intermediário fica só como fallback.
   const displayProductCode = paCode || operation.product_code;
+
+  // Alvo de toque grande no tablet: o card inteiro abre o detalhe, exceto sobre os botões.
+  const openFromCard = (event: MouseEvent<HTMLLIElement>) => {
+    if ((event.target as HTMLElement).closest("button")) return;
+    onOpenDetail();
+  };
+
   return (
-    <li className={`pcp-pub__card pcp-pub__card--${status.tone}`}>
+    <li className={`pcp-pub__card pcp-pub__card--${status.tone}`} onClick={openFromCard}>
       <span className="pcp-pub__position" aria-label={`Posição ${position}`}>
         {position}
       </span>
@@ -415,225 +483,22 @@ function OperationCard({
           {status.operatorNote ? (
             <span className="pcp-pub__operator">{status.operatorNote}</span>
           ) : null}
-          {paCode ? (
-            <button
-              type="button"
-              className="pcp-pub__drawing"
-              onClick={() => onOpenDrawing(paCode)}
-            >
-              Ver desenho
+          <span className="pcp-pub__card-actions">
+            <button type="button" className="pcp-pub__drawing" onClick={onOpenDetail}>
+              Detalhes
             </button>
-          ) : null}
+            {paCode ? (
+              <button
+                type="button"
+                className="pcp-pub__drawing pcp-pub__drawing--muted"
+                onClick={() => onOpenDrawing(paCode)}
+              >
+                Ver desenho
+              </button>
+            ) : null}
+          </span>
         </div>
       </div>
     </li>
   );
-}
-
-function DrawingViewer({
-  token,
-  branch,
-  paCode,
-  onClose,
-}: {
-  token: string;
-  branch: string;
-  paCode: string;
-  onClose: () => void;
-}) {
-  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
-  const [message, setMessage] = useState<string | null>(null);
-  const [objectUrl, setObjectUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    let createdUrl: string | null = null;
-    setStatus("loading");
-    setMessage(null);
-    setObjectUrl(null);
-
-    void fetchPublicDrawingPdf(token, branch, paCode)
-      .then((blob) => {
-        if (!active) return;
-        createdUrl = URL.createObjectURL(blob);
-        setObjectUrl(createdUrl);
-        setStatus("ready");
-      })
-      .catch((err: unknown) => {
-        if (!active) return;
-        setStatus("error");
-        setMessage(err instanceof Error ? err.message : "Desenho não encontrado para este PA.");
-      });
-
-    return () => {
-      active = false;
-      if (createdUrl) URL.revokeObjectURL(createdUrl);
-    };
-  }, [token, branch, paCode]);
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  return (
-    <div className="pcp-pub-viewer" role="dialog" aria-modal="true" aria-labelledby="pcp-pub-viewer-title">
-      <div className="pcp-pub-viewer__bar">
-        <h2 id="pcp-pub-viewer-title">Desenho {paCode}</h2>
-        <button type="button" className="pcp-pub__ghost pcp-pub__ghost--plain" onClick={onClose}>
-          Fechar
-        </button>
-      </div>
-      {status === "loading" ? <p className="pcp-pub-viewer__state">Carregando desenho…</p> : null}
-      {status === "error" ? <p className="pcp-pub-viewer__state pcp-pub-viewer__state--error">{message}</p> : null}
-      {status === "ready" && objectUrl ? (
-        <iframe className="pcp-pub-viewer__frame" title={`Desenho ${paCode}`} src={objectUrl} />
-      ) : null}
-    </div>
-  );
-}
-
-function CopyValueButton({ value, label }: { value: string; label: string }) {
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timer = window.setTimeout(() => setCopied(false), 1600);
-    return () => window.clearTimeout(timer);
-  }, [copied]);
-
-  const copy = async () => {
-    const ok = await copyToClipboard(value);
-    if (ok) setCopied(true);
-  };
-
-  return (
-    <button
-      type="button"
-      className={`pcp-pub__copy ${copied ? "pcp-pub__copy--done" : ""}`}
-      onClick={copy}
-      title={copied ? "Copiado!" : label}
-      aria-label={`${label} ${value}`}
-    >
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        {copied ? (
-          <path
-            d="m5 13 4 4 10-10"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        ) : (
-          <>
-            <rect x="9" y="9" width="11" height="11" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
-            <path
-              d="M15 5.5A2.5 2.5 0 0 0 12.5 3h-7A2.5 2.5 0 0 0 3 5.5v7A2.5 2.5 0 0 0 5.5 15"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-            />
-          </>
-        )}
-      </svg>
-      <span className="pcp-pub__copy-feedback" aria-live="polite">
-        {copied ? "Copiado" : ""}
-      </span>
-    </button>
-  );
-}
-
-async function copyToClipboard(value: string): Promise<boolean> {
-  try {
-    await navigator.clipboard.writeText(value);
-    return true;
-  } catch {
-    // Tablet de chão de fábrica em HTTP não tem Clipboard API (contexto inseguro).
-    return legacyCopy(value);
-  }
-}
-
-function legacyCopy(value: string): boolean {
-  const field = document.createElement("textarea");
-  field.value = value;
-  field.setAttribute("readonly", "");
-  field.style.position = "fixed";
-  field.style.opacity = "0";
-  document.body.appendChild(field);
-  field.select();
-  let ok = false;
-  try {
-    ok = document.execCommand("copy");
-  } catch {
-    ok = false;
-  }
-  document.body.removeChild(field);
-  return ok;
-}
-
-type StatusView = {
-  tone: "running" | "done" | "queued";
-  label: string;
-  operatorNote: string | null;
-};
-
-function resolveStatus(operation: MachineLoadOperation): StatusView {
-  const operator = operation.active_operator_name?.trim() || null;
-  if (operation.is_in_production || operation.production_status === "in_progress") {
-    return {
-      tone: "running",
-      label: "Em produção",
-      operatorNote: operator
-        ? `Operador ${operator}${
-            operation.production_started_time ? ` · desde ${operation.production_started_time}` : ""
-          }`
-        : null,
-    };
-  }
-  if (operation.production_status === "started") {
-    return {
-      tone: "done",
-      label: "Já apontada",
-      operatorNote: operator ? `Último apontamento: ${operator}` : null,
-    };
-  }
-  return { tone: "queued", label: "Na fila", operatorNote: null };
-}
-
-function formatQty(value: number): string {
-  if (!Number.isFinite(value)) return "—";
-  return value.toLocaleString("pt-BR", {
-    minimumFractionDigits: 3,
-    maximumFractionDigits: 3,
-  });
-}
-
-/** Unidade de chão de fábrica: TOTVS envia MI (milheiro); o operador lê como peça. */
-function formatUnit(unit: string | null): string {
-  const cleaned = (unit ?? "").trim();
-  if (!cleaned || cleaned.toUpperCase() === "MI") return "PÇ";
-  return cleaned;
-}
-
-function formatDate(value: string | null): string {
-  if (!value) return "—";
-  const [year, month, day] = value.slice(0, 10).split("-");
-  if (!year || !month || !day) return value;
-  return `${day}/${month}/${year}`;
-}
-
-function formatDateTime(value: string): string {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return parsed.toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
