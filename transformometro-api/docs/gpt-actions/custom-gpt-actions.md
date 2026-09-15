@@ -77,6 +77,12 @@ Errado (não fazer): colocar `nome_recurso` / `tipo_custo` / `recorrencia` dentr
 
 `resource_link` deve usar `revisao_id` e `recurso_compartilhado_id` obtidos por read-back, nunca IDs inventados.
 
+### Erros para o Custom GPT
+
+Envelope de falha: `{ "success": false, "message": "...", "data": { "errors": [{ "field", "reason" }], "error_count" } }`.
+
+O TÉO deve **sempre** ler `message`/`data.errors` e explicar ao usuário — nunca reportar só o código HTTP. Validação Pydantic nas Actions GPT responde **400** com essa estrutura (não mensagem genérica de 500).
+
 ## Auth (obrigatório)
 
 - **Não** use API Key para writes.

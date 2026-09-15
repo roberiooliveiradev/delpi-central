@@ -92,10 +92,25 @@ def _envelope_schema() -> dict[str, Any]:
     return {
         "type": "object",
         "required": ["success", "message", "data"],
+        "description": (
+            "Canonical API envelope. On errors ALWAYS read message and data.errors — "
+            "never report only the HTTP status code to the user."
+        ),
         "properties": {
             "success": {"type": "boolean"},
-            "message": {"type": "string"},
-            "data": {},
+            "message": {
+                "type": "string",
+                "description": (
+                    "Human-readable outcome or validation summary "
+                    "(e.g. missing required fields)."
+                ),
+            },
+            "data": {
+                "description": (
+                    "Payload on success, or structured error details "
+                    "(often {errors:[{field,reason}], error_count})."
+                ),
+            },
         },
     }
 
@@ -111,10 +126,45 @@ def _ok_response(description: str) -> dict[str, Any]:
 
 def _error_responses() -> dict[str, Any]:
     return {
-        "400": _ok_response("Validation or domain error"),
+        "400": {
+            "description": (
+                "Validation or domain error. Body is ApiEnvelope with success=false; "
+                "read message + data.errors (do not show only HTTP 400)."
+            ),
+            "content": {
+                "application/json": {
+                    "schema": {"$ref": "#/components/schemas/ApiEnvelope"},
+                    "example": {
+                        "success": False,
+                        "message": (
+                            "Campos obrigatórios ausentes: nome_recurso, tipo_custo, "
+                            "recorrencia"
+                        ),
+                        "data": {
+                            "error_count": 3,
+                            "errors": [
+                                {"field": "nome_recurso", "reason": "Field required"},
+                                {"field": "tipo_custo", "reason": "Field required"},
+                                {"field": "recorrencia", "reason": "Field required"},
+                            ],
+                        },
+                    },
+                }
+            },
+        },
         "401": _ok_response("Missing or invalid Bearer token"),
         "403": _ok_response("Authenticated but lacking Transformômetro permission"),
         "404": _ok_response("Record not found"),
+        "422": {
+            "description": (
+                "Request body/query schema invalid. Read message + data.errors."
+            ),
+            "content": {
+                "application/json": {
+                    "schema": {"$ref": "#/components/schemas/ApiEnvelope"}
+                }
+            },
+        },
     }
 
 

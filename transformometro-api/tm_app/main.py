@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 
 from delpi_auth.credential_guard import check_credentials
 from tm_app.config import settings
-from tm_app.core.errors import format_api_error
+from tm_app.core.errors import format_api_error, format_validation_error
 from tm_app.core.responses import fail
 from tm_app.interface.http.routes.crud_routes import router as crud_router
 from tm_app.interface.http.routes.dashboard_routes import router as dashboard_router
@@ -109,12 +109,8 @@ app = FastAPI(
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(_request: Request, exc: RequestValidationError):
-    details = exc.errors()
-    first = details[0] if details else {}
-    loc = ".".join(str(part) for part in first.get("loc", []))
-    msg = first.get("msg", "Dados inválidos.")
-    message = f"{loc}: {msg}" if loc else msg
-    return fail(message, 422)
+    message, data = format_validation_error(exc)
+    return fail(message, 422, data)
 
 
 @app.exception_handler(Exception)
