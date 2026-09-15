@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** **C0.S0 — factual Platform/Media/Device/Biometric/External/Automation/Scheduling/Intelligence-Platform/OT rebaseline**
+**Next:** **C0.S0 architecture re-review** (canonical reconciliation after EXECUTION_DRIFT on stale AuthZ docs; `C0.S0_READINESS=CANDIDATE_FOR_ARCHITECTURE_RE_REVIEW`) → then **C0.S1** if accepted. C0 remains **NOT_STARTED**. C0.S1 **not** authorized.
 
 ## 1. Ledger rule
 
@@ -169,8 +169,25 @@ All ACT blocked until C7                        = SUPERSEDED_BY_C5_GOVERNED_ACT_
 | 2026-09-14 | C0.S0-B platform baseline revalidation at `5deb7fc2c2f1683ebc3f7224e8f6fba99e35854d` | PLAN_ONLY; inventory/docs; CP-154 remains PLANNED; no runtime |
 | 2026-09-14 | C0.S0-C identity/Core authorization baseline at `90730043c79cbb984a42db6bbbc615c03091094b` | PLAN_ONLY; inventory/docs; no runtime; dual permission path documented |
 | 2026-09-14 | C0.S0-D automation/workers/schedulers/RPA/recurring-work baseline at `566def330798b6fefe1eda37b3eebd3e46686aba` | PLAN_ONLY; inventory/docs; no runtime; Hub not physical |
+| 2026-09-14 | C0.S0-E event/webhook/connector baseline at `aa3d93eee710c1c74fe56b9f7a45cd652d19c827` (started `96d2591cd`) | PLAN_ONLY; inventory/docs; no EventBus/EventEnvelope runtime; Graph≠Teams |
+| 2026-09-14 | C0.S0-F OAuth/secrets/vault/egress baseline at `c6c9c8370d037edfc3529821b9d63e138b153436` (started `633d10d2a`) | PLAN_ONLY; inventory/docs; vault/ExternalConnection NOT_PROVEN; Chat SSRF PARTIAL |
+| 2026-09-14 | C0.S0-G media/device/biometric/frontline baseline at `79378e48184a118df060e164111d7a5963c06f34` | PLAN_ONLY; realtime A/V NOT_PROVEN; biometrics NOT_PROVEN; Pulse device+operator DOMAIN_LOCAL; Edge/OT PLC NOT_PROVEN |
+| 2026-09-14 | C0.S0-H Process Intelligence / event-log baseline at `79378e48184a118df060e164111d7a5963c06f34` | PLAN_ONLY; mining runtime NOT_PROVEN; Domain histories PARTIAL; Task Mining NOT_PROVEN; CP-249 inventory advanced not PASS |
+| 2026-09-14 | C0.S0-I AI/Control Tower/asset governance at `cd688f2ff0d3829ea20e2c21b140d3378d7cc538` (inventory start `aec6f1294`) | PLAN_ONLY; Control Tower NOT_PROVEN; Chat LLM/admin CHAT_ONLY; CP-256/302 inventory advanced not PASS |
+| 2026-09-14 | C0.S0-J Personal Memory/preferences/privacy at `792cc990c27873a688c0f0638cf6292ed8910a8f` | PLAN_ONLY; DÉLIA PM NOT_PROVEN; Chat ai_memory_items+learning CHAT_ONLY; Core profile/prefs PROVEN≠AI memory; CP-268 advanced not PASS |
+| 2026-09-14 | C0.S0-K Semantic Business Layer / metrics / Business Graph at `792cc990c27873a688c0f0638cf6292ed8910a8f` | PLAN_ONLY; Semantic Layer+Graph NOT_PROVEN; Domain KPIs DOMAIN_LOCAL; Chat glossary CHAT_ONLY; CP-274 advanced not PASS |
+| 2026-09-14 | C0.S0-L Analysis Sandbox / Artifact infrastructure at `d3851a5323347aafb7d2a457c1337ba500abdce5` | PLAN_ONLY; governed sandbox NOT_PROVEN; Domain generators/uploads DOMAIN_LOCAL; Chat OCR PARTIAL; CP-280 advanced not PASS |
+| 2026-09-14 | C0.S0-M Predictive / Prescriptive / Operational Twin at `8d9fa79679e91b5e65aed3c8b57bb2c240f031d7` | PLAN_ONLY; Predictive Engine+Twin NOT_PROVEN; Domain deterministic what-if/KPI; Chat anomaly/recs CHAT_ONLY; CP-287 advanced not PASS |
+| 2026-09-14 | C0.S0-N Edge / Offline / Industrial residual at `6038ec5c841a4f03206b8fa342466dfecb68ef63` | PLAN_ONLY; Edge runtime NOT_PROVEN; Pulse HTTP IoT DOMAIN_LOCAL; offline AuthZ expand NOT_PROVEN; PLC/MES NOT_PROVEN; CP-295 advanced not PASS |
+| 2026-09-14 | C0.S0-O AI Model Lifecycle / MLOps / Marketplace at `6038ec5c841a4f03206b8fa342466dfecb68ef63` | PLAN_ONLY; Model Registry+MLOps+Marketplace NOT_PROVEN; Chat FT/evals CHAT_ONLY; Core plugin catalogs ≠ Marketplace; CP-302 advanced not PASS |
+| 2026-09-14 | C0.S0-P Personal vs Organizational Data / Privacy at `6038ec5c841a4f03206b8fa342466dfecb68ef63` | PLAN_ONLY; data classes inventoried; DÉLIA PM NOT_PROVEN; memory/artifact≠Knowledge auto; Core consents≠training; residency/unified erase OWNER_GAP |
+| 2026-09-14 | C0.S0-Q Operational Context / EntityRef / Workspace at `6038ec5c841a4f03206b8fa342466dfecb68ef63` | PLAN_ONLY; shared EntityRef/WorkspaceContext NOT_PROVEN; Portal+/me PLATFORM_LOCAL; Domain IDs+branch gates DOMAIN_LOCAL; context≠AuthZ; CP-091/159 advanced not PASS |
+| 2026-09-14 | C0.S0-R MCP/A2A/Agent Interoperability residual at `10f874c84f4a661b9851a9179be8d1418e029a2a` | PLAN_ONLY; MCP/A2A runtime NOT_PROVEN; Chat OpenAPI≠MCP; GPT Actions≠MCP; delegation NOT_PROVEN; CP-262 inventory advanced not PASS |
+| 2026-09-14 | C0.S0-S OT Safety / Interlocks / Approval Matrix residual at `bcf23241e058c03fae74dc24231adebdf34d297c` | PLAN_ONLY; safety PLC/e-stop NOT_PROVEN; Pulse IoT≠safety; Domain Capex four-eyes≠OT matrix; CP-178/179 inventory advanced not PASS |
+| 2026-09-14 | C0.S0-T residual consolidation / readiness at `f1cce79b871bf0b5dbd7b8d332ead53e3fb44716` | PLAN_ONLY; C0.S0_READINESS=READY_FOR_ARCHITECTURE_REVIEW; BLOCKING=NONE; RUNTIME_DIFF=NONE; not C0.S0 COMPLETE / not FOUNDATION_FREEZE |
+| 2026-09-14 | C0.S0-T canonical reconciliation after architecture review at `68ea41d9b5aac6216b5ab531f7cdccc93d64c3bc` (start `674670ce7`) | PLAN_ONLY; Core AuthZ dual-path ADR CLOSED (`633d10d2a`); /me/routes non-contract; 25 §14 linkage; CANDIDATE_FOR_ARCHITECTURE_RE_REVIEW; not C0.S0 COMPLETE |
 
-Actual `HEAD_BEFORE` for **runtime** remains uncaptured (no DÉLIA runtime). Inventory evidence SHA for C0.S0-D is `566def330798b6fefe1eda37b3eebd3e46686aba`. Documentation-only commits do not advance execution status.
+Actual `HEAD_BEFORE` for **runtime** remains uncaptured (no DÉLIA runtime). Inventory evidence SHA for C0.S0-F is `c6c9c8370d037edfc3529821b9d63e138b153436`. Documentation-only commits do not advance execution status.
 
 ## 6.1 C0.S0-B evidence event
 
@@ -210,6 +227,7 @@ PLATFORM_BEHAVIOR_CHANGE: NONE
 FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
 DÉLIA_NEW_CODE: NONE
 UNRESOLVED: Core canonical effective-permission path (ARCHITECTURE_DECISION_REQUIRED); Keycloak realm export deployado; Domain APIs beyond samples; inactive-user path
+NOTE_SUPERSEDED_BY_6.20: request-context dual-path ADR CLOSED at runtime SHA 633d10d2a; historical SEMANTICALLY_DIFFERENT claim superseded; CARRY_FORWARD residuals remain
 FOUNDATION_DRIFT: DOCUMENTATION_DRIFT (jwt.md P0 debt stale); IMPLEMENTATION_DRIFT (+ SECURITY_DRIFT risk on deny overrides) dual permission path; DEAD_CODE_CANDIDATE flask_auth + Chat get_authorized_routes
 COMPLETE_GATE: not claimed
 NEXT_UNLOCKED: none; remaining C0.S0 inventories still required
@@ -235,6 +253,422 @@ UNRESOLVED: physical scheduler owner for DÉLIA (ADAPTER vs new after Abstractio
 FOUNDATION_DRIFT: none that invalidates Hub=technical / DÉLIA=orchestration
 COMPLETE_GATE: not claimed
 NEXT_UNLOCKED: none; remaining C0.S0 inventories still required
+```
+
+## 6.4 C0.S0-E evidence event
+
+```text
+DATE: 2026-09-14
+STEP: C0.S0-E — EVENT_SOURCES_WEBHOOKS_CONNECTORS_BASELINE
+HEAD_BEFORE: 96d2591cd946cdf3add3d3396f758b15b95de28a
+HEAD_AFTER: aa3d93eee710c1c74fe56b9f7a45cd652d19c827
+STATUS: PLAN_ONLY
+NOTE: HEAD moved during inventory via unrelated commits (Pulse device-token message; TM OpenAPI 3.1.1); event/webhook conclusions revalidated — no material EXECUTION_DRIFT
+DEPENDENCY_GATE: C0.S0 still open; C0 = NOT_STARTED; NEXT = C0.S0
+CP_REQUIREMENTS: CP-226 (PLANNED, events/webhooks portion inventoried); CP-194 (PLANNED, residual OAuth/vault/egress); CP-231/207 EventEnvelope (LOCKED/TARGET); CP-223 Teams (PLANNED, NOT_PROVEN runtime); CP-211 WhatsApp (PLANNED, NOT_PROVEN); CP-262 MCP/A2A (PLANNED, DOCUMENTATION_ONLY). TRACEABILITY_GAP: no dedicated C0.S0-E CP id
+SCOPE: signal taxonomy, Core EventBus≠broker, inbound/outbound webhooks, Graph mail/trace, Teams/WhatsApp/Google/MCP status, Chat web_search, outbox, device-ota callbacks
+EVIDENCE: 51 §§17–22 + âncora; inbound provider webhooks = NOT_PROVEN; EventEnvelope = TARGET_ONLY; Graph mail PROVEN ≠ Teams
+RUNTIME_DIFF: NONE
+PLATFORM_BEHAVIOR_CHANGE: NONE
+FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
+DÉLIA_NEW_CODE: NONE
+UNRESOLVED: OAuth/vault/ExternalConnection lifecycle; safe-fetch/egress platform; Entra Teams registration if any outside repo; outcome sources by domain; kill-switch matrix beyond feature env flags
+FOUNDATION_DRIFT: none that makes provider/event payload a permission authority
+COMPLETE_GATE: not claimed; CP-226 remains PLANNED (automation residual may remain outside events)
+NEXT_UNLOCKED: none; remaining C0.S0 inventories still required
+```
+
+## 6.5 C0.S0-F evidence event
+
+```text
+DATE: 2026-09-14
+STEP: C0.S0-F — OAUTH_SECRETS_VAULT_EGRESS_CONNECTION_LIFECYCLE_BASELINE
+HEAD_BEFORE: 633d10d2a0d246ae9f4a2a576d76ce935f30be01
+HEAD_AFTER: c6c9c8370d037edfc3529821b9d63e138b153436
+STATUS: PLAN_ONLY
+NOTE: HEAD moved during inventory via unrelated transformometro GPT specialist commit; OAuth/secrets/egress conclusions revalidated — no material EXECUTION_DRIFT
+DEPENDENCY_GATE: C0.S0 still open; C0 = NOT_STARTED; NEXT = C0.S0
+CP_REQUIREMENTS: CP-194 (PLANNED; inventory advanced, not PASS); CP-195 safe-fetch (PLANNED, NOT_PROVEN platform); CP-197 ExternalConnection (PLANNED, TARGET_ONLY); CP-198 token leakage (LOCKED gate; Chat sanitizers PROVEN partial); CP-056 redaction (PLANNED). TRACEABILITY_GAP: no dedicated C0.S0-F CP id
+SCOPE: credential taxonomy, env secret storage, vault, ExternalConnection, Keycloak PKCE, Graph/S2S client_credentials, Chat provider auth_config, egress direct HTTP, ExternalProviderUrlPolicy SSRF, token→LLM/MFE boundaries
+EVIDENCE: 51 §§17–18 + âncora; vault=NOT_PROVEN; ExternalConnection=TARGET_ONLY; safe-fetch platform=NOT_PROVEN; Chat SSRF=PARTIAL
+RUNTIME_DIFF: NONE
+PLATFORM_BEHAVIOR_CHANGE: NONE
+FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
+DÉLIA_NEW_CODE: NONE
+UNRESOLVED: vault/SecretRef owner; ExternalConnection platform lifecycle; platform safe-fetch (CP-195); Graph scope least-privilege evidence; connection audit; media/device/biometric inventory
+FOUNDATION_DRIFT: none that makes provider scope or credential possession into Core/Domain authorization
+COMPLETE_GATE: not claimed; CP-194 remains PLANNED
+NEXT_UNLOCKED: none; remaining C0.S0 inventories still required
+```
+
+## 6.6 C0.S0-G evidence event
+
+```text
+DATE: 2026-09-14
+STEP: C0.S0-G — MEDIA_DEVICE_BIOMETRIC_FRONTLINE_BASELINE
+HEAD: 79378e48184a118df060e164111d7a5963c06f34
+STATUS: PLAN_ONLY
+DEPENDENCY_GATE: C0.S0 still open; C0 = NOT_STARTED; NEXT = C0.S0
+CP_REQUIREMENTS: CP-157/175 media privacy (PLANNED); CP-158/171 device identity (LOCKED gates; Pulse aligns); CP-176/182/183/184/186/188/189/190 biometric/HO (PLANNED/LOCKED; runtime NOT_PROVEN); CP-160/161 voice (LOCKED; STT NOT_PROVEN); CP-178/179 OT (LOCKED/PLANNED; AI→machine NOT_PROVEN); CP-295 Edge (PLANNED; Edge runtime NOT_PROVEN). TRACEABILITY_GAP: no dedicated C0.S0-G CP id
+SCOPE: media taxonomy; uploads; realtime A/V; camera/mic; transcript; Pulse devices/OTA/commands; frontline operator; biometrics; Human Observation; vision/voice; OT; Edge/offline
+EVIDENCE: 51 §§14–16, §38, §43; realtime media=NOT_PROVEN; biometrics=NOT_PROVEN; Pulse device registry=DOMAIN_LOCAL; frontline operator=PROVEN; Chat vision=CHAT_ONLY; OT PLC=NOT_PROVEN; Edge runtime=NOT_PROVEN
+RUNTIME_DIFF: NONE
+PLATFORM_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG_BEHAVIOR_CHANGE: NONE
+FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
+DÉLIA_NEW_CODE: NONE
+UNRESOLVED: media retention/consent class-specific; corporate STT/TTS; Edge MDM/factory net residual; OT safety PLC/interlocks; Process Intelligence + remaining C0.S0 thematic inventories
+FOUNDATION_DRIFT: none equating biometric/device to AuthN/AuthZ; none AI→machine; none offline↑authority
+COMPLETE_GATE: not claimed
+NEXT_UNLOCKED: none; remaining C0.S0 inventories still required
+NEXT_RECOMMENDED: C0.S0-H — PROCESS_INTELLIGENCE_EVENTLOG_TASK_MINING_BASELINE
+```
+
+## 6.7 C0.S0-H evidence event
+
+```text
+DATE: 2026-09-14
+STEP: C0.S0-H — PROCESS_INTELLIGENCE_EVENTLOG_TASK_MINING_BASELINE
+HEAD: 79378e48184a118df060e164111d7a5963c06f34
+STATUS: PLAN_ONLY
+DEPENDENCY_GATE: C0.S0 still open; C0 = NOT_STARTED; NEXT = C0.S0
+CP_REQUIREMENTS: CP-249 (PLANNED; inventory advanced, not PASS); CP-250/251/252/253/254 (LOCKED gates; runtime NOT_PROVEN); CP-188/189/193 Human Observation (PLANNED/LOCKED; no employment/surveillance runtime). TRACEABILITY_GAP: no dedicated C0.S0-H CP id
+SCOPE: process evidence sources; event-log fitness; case/activity/time/grain; mining/discovery/conformance/variant/bottleneck; Task Mining; HO/employment; BPM models; provenance
+EVIDENCE: 51 §§26,29; Process Mining=NOT_PROVEN; Task Mining=NOT_PROVEN; Domain status/history=PARTIAL candidates; BPM engine=NOT_PROVEN; BPMN UI=DOCUMENTATION
+RUNTIME_DIFF: NONE
+PLATFORM_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG_BEHAVIOR_CHANGE: NONE
+FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
+DÉLIA_NEW_CODE: NONE
+UNRESOLVED: per-domain retention/completeness; shared EventLog contract; cross-service case correlation; Control Tower + remaining C0.S0 inventories
+FOUNDATION_DRIFT: none treating mining/deviation as guilt/employment; none replacing Domain truth with process model
+COMPLETE_GATE: not claimed; CP-249 remains PLANNED
+NEXT_UNLOCKED: none; remaining C0.S0 inventories still required
+NEXT_RECOMMENDED: C0.S0-I — AI_CONTROL_TOWER_ASSET_GOVERNANCE_BASELINE
+```
+
+## 6.8 C0.S0-I evidence event
+
+```text
+DATE: 2026-09-14
+STEP: C0.S0-I — AI_CONTROL_TOWER_ASSET_GOVERNANCE_BASELINE
+HEAD_BEFORE_DOCS: 79378e48184a118df060e164111d7a5963c06f34
+HEAD_AT_INVENTORY_START: aec6f129491774e596929d4deacc2d008ef15187
+HEAD: cd688f2ff0d3829ea20e2c21b140d3378d7cc538
+STATUS: PLAN_ONLY
+NOTE: HEAD moved twice during inventory (Transformômetro process-context; Pulse device-save). AI/Control Tower conclusions revalidated — no material EXECUTION_DRIFT
+DEPENDENCY_GATE: C0.S0 still open; C0 = NOT_STARTED; NEXT = C0.S0
+CP_REQUIREMENTS: CP-256 (PLANNED; inventory advanced, not PASS); CP-257/258/259 Control Tower (LOCKED; runtime NOT_PROVEN); CP-302/303/304/307 model lifecycle (LOCKED/PLANNED; registry NOT_PROVEN); CP-232 FAST|OPERATIONAL|REASONING (LOCKED; DÉLIA runtime NOT_PROVEN). TRACEABILITY_GAP: no dedicated C0.S0-I CP id
+SCOPE: providers/models; routing/fallback; prompts; evals; Control Tower; registry; fine-tuning; cost/latency; kill-switches; Chat reference boundary
+EVIDENCE: 51 §30; Control Tower=NOT_PROVEN; Chat openai_compatible+ollama+admin=CHAT_ONLY; TM Kimi=DOMAIN_LOCAL; ModelRegistry=NOT_PROVEN; evals Chat PARTIAL SHA linkage
+RUNTIME_DIFF: NONE
+PLATFORM_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG_BEHAVIOR_CHANGE: NONE
+FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
+DÉLIA_NEW_CODE: NONE
+UNRESOLVED: platform ModelRegistry/PromptAsset; Control Tower UX; org cost budgets; DÉLIA decision-path runtime; Personal Memory + remaining C0.S0 inventories
+FOUNDATION_DRIFT: none treating model output as permission; none Control Tower as second planner; Chat != DÉLIA runtime
+COMPLETE_GATE: not claimed; CP-256 remains PLANNED
+NEXT_UNLOCKED: none; remaining C0.S0 inventories still required
+NEXT_RECOMMENDED: C0.S0-J — PERSONAL_MEMORY_PREFERENCES_PRIVACY_BASELINE
+```
+
+## 6.9 C0.S0-J evidence event
+
+```text
+DATE: 2026-09-14
+STEP: C0.S0-J — PERSONAL_MEMORY_PREFERENCES_PRIVACY_BASELINE
+HEAD: 792cc990c27873a688c0f0638cf6292ed8910a8f
+STATUS: PLAN_ONLY
+DEPENDENCY_GATE: C0.S0 still open; C0 = NOT_STARTED; NEXT = C0.S0
+CP_REQUIREMENTS: CP-268 (PLANNED; inventory advanced, not PASS); CP-269/271 memory lifecycle/user controls (LOCKED; DÉLIA NOT_PROVEN; Chat PARTIAL); CP-174/208 knowledge candidate publish (LOCKED; Chat learning PARTIAL reference). TRACEABILITY_GAP: no dedicated C0.S0-J CP id
+SCOPE: Personal Memory status; session vs durable; Core/Chat prefs/profiles; isolation; retention/delete/export; consent; knowledge candidates; semantic personalization; privacy surfaces
+EVIDENCE: 51 §32; DÉLIA PM=NOT_PROVEN; Chat ai_memory_items+session memory+learning candidates=CHAT_ONLY; Core person_profile/notification prefs/favorites/consents=PROVEN≠AI memory; semantic profile=NOT_PROVEN
+RUNTIME_DIFF: NONE
+PLATFORM_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG_BEHAVIOR_CHANGE: NONE
+FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
+DÉLIA_NEW_CODE: NONE
+UNRESOLVED: DÉLIA PM contract; memory retention/export/consent purpose; user privacy UX parity CP-271; Semantic Layer + remaining C0.S0 inventories
+FOUNDATION_DRIFT: none treating memory/prefs as AuthZ; none auto-promoting Chat memory to Domain truth
+COMPLETE_GATE: not claimed; CP-268 remains PLANNED
+NEXT_UNLOCKED: none; remaining C0.S0 inventories still required
+NEXT_RECOMMENDED: C0.S0-K — SEMANTIC_BUSINESS_LAYER_BASELINE
+```
+
+## 6.10 C0.S0-K evidence event
+
+```text
+DATE: 2026-09-14
+STEP: C0.S0-K — SEMANTIC_BUSINESS_LAYER_BASELINE
+HEAD: 792cc990c27873a688c0f0638cf6292ed8910a8f
+STATUS: PLAN_ONLY
+DEPENDENCY_GATE: C0.S0 still open; C0 = NOT_STARTED; NEXT = C0.S0
+CP_REQUIREMENTS: CP-274 (PLANNED; inventory advanced, not PASS); CP-275/276/277/278/279 Semantic Layer gates (LOCKED; runtime NOT_PROVEN); CP-090/091 Business Graph/EntityRef (LOCKED/PLANNED; graph runtime NOT_PROVEN). TRACEABILITY_GAP: no dedicated C0.S0-K CP id
+SCOPE: Semantic Layer status; entities/metrics/dimensions; glossaries; Business Graph; provenance/versioning; AuthZ; materialization; Chat/Domain boundaries
+EVIDENCE: 51 §33; Semantic Layer=NOT_PROVEN; Business Graph=NOT_PROVEN; Domain KPI endpoints=DOMAIN_LOCAL; Chat vocabulary=CHAT_ONLY; UI metric catalogs≠MetricDefinition; EntityRef shared=NOT_PROVEN
+RUNTIME_DIFF: NONE
+PLATFORM_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG_BEHAVIOR_CHANGE: NONE
+FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
+DÉLIA_NEW_CODE: NONE
+UNRESOLVED: MetricDefinition registry; EntityRef freeze; definition conflict inventory completeness; Sandbox/Artifacts + remaining C0.S0 inventories
+FOUNDATION_DRIFT: none treating Semantic Layer/Graph/KPI cache as Domain SoT or permission authority
+COMPLETE_GATE: not claimed; CP-274 remains PLANNED
+NEXT_UNLOCKED: none; remaining C0.S0 inventories still required
+NEXT_RECOMMENDED: C0.S0-L — ANALYSIS_SANDBOX_ARTIFACT_INFRASTRUCTURE_BASELINE
+```
+
+## 6.11 C0.S0-L evidence event
+
+```text
+DATE: 2026-09-14
+STEP: C0.S0-L — ANALYSIS_SANDBOX_ARTIFACT_INFRASTRUCTURE_BASELINE
+HEAD_BEFORE_DOCS: 792cc990c27873a688c0f0638cf6292ed8910a8f
+HEAD: d3851a5323347aafb7d2a457c1337ba500abdce5
+STATUS: PLAN_ONLY
+NOTE: HEAD moved via unrelated Transformômetro docs commit; sandbox/artifact conclusions revalidated — no material EXECUTION_DRIFT
+DEPENDENCY_GATE: C0.S0 still open; C0 = NOT_STARTED; NEXT = C0.S0
+CP_REQUIREMENTS: CP-280 (PLANNED; inventory advanced, not PASS); CP-281/283/284/285/286 sandbox/artifact gates (LOCKED; runtime NOT_PROVEN). TRACEABILITY_GAP: no dedicated C0.S0-L CP id
+SCOPE: execution inventory; sandbox isolation; SQL/Python/notebook; artifacts generators/storage/AuthZ; malware/path; secrets/egress; Automation Hub boundary
+EVIDENCE: 51 §§34–35; governed sandbox=NOT_PROVEN; Domain PDF/XLSX/uploads=DOMAIN_LOCAL; Chat OCR multiprocess=PARTIAL_SANDBOX CHAT_ONLY; /data/sql=READ_ONLY Domain; object store=NOT_PROVEN; ClamAV=NOT_PROVEN
+RUNTIME_DIFF: NONE
+PLATFORM_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG_BEHAVIOR_CHANGE: NONE
+FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
+DÉLIA_NEW_CODE: NONE
+UNRESOLVED: sandbox isolation design; Artifact Workspace; malware scan; object-store ADR; Predictive/Twin + remaining C0.S0 inventories
+FOUNDATION_DRIFT: none treating sandbox/artifact as Domain SoT or ACT authority; Hub overlap none (both absent)
+COMPLETE_GATE: not claimed; CP-280 remains PLANNED
+NEXT_UNLOCKED: none; remaining C0.S0 inventories still required
+NEXT_RECOMMENDED: C0.S0-M — PREDICTIVE_PRESCRIPTIVE_OPERATIONAL_TWIN_BASELINE
+```
+
+## 6.12 C0.S0-M evidence event
+
+```text
+DATE: 2026-09-14
+STEP: C0.S0-M — PREDICTIVE_PRESCRIPTIVE_OPERATIONAL_TWIN_BASELINE
+HEAD_TASK_START: 09ea5aa797372c599fdf555f54f1fb92ccc00c24
+HEAD: 8d9fa79679e91b5e65aed3c8b57bb2c240f031d7
+STATUS: PLAN_ONLY
+NOTE: HEAD moved during task via unrelated Transformômetro commits (tests then TÉO Builder docs); predictive/twin conclusions revalidated at FINAL HEAD — no material EXECUTION_DRIFT
+DEPENDENCY_GATE: C0.S0 still open; C0 = NOT_STARTED; NEXT = C0.S0
+CP_REQUIREMENTS: CP-287 (PLANNED; inventory advanced, not PASS); CP-288–294 prediction/prescription/twin/simulate-apply gates (LOCKED; runtime NOT_PROVEN). TRACEABILITY_GAP: no dedicated C0.S0-M CP id
+SCOPE: predictive ML vs deterministic KPI; Chat anomaly/recs; optimization/simulation; Operational Twin; SIMULATE≠APPLY; OT/AI→machine
+EVIDENCE: 51 §§36–37; Predictive Engine=NOT_PROVEN; Twin=NOT_PROVEN; Domain cost-impact/TM scenarios/stock projection=DOMAIN_LOCAL deterministic; Chat anomaly/recs=CHAT_ONLY; OR-Tools=NOT_PROVEN; AI→machine=NOT_PROVEN
+RUNTIME_DIFF: NONE
+PLATFORM_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG_BEHAVIOR_CHANGE: NONE
+FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
+DÉLIA_NEW_CODE: NONE
+UNRESOLVED: Predictive/Twin design; ground-truth owners for TARGET families in 64; MLOps/Marketplace; Edge residual; OT/MES residual; semantic "forecast" naming drift
+FOUNDATION_DRIFT: none treating prediction/recommendation/twin as Domain SoT or ACT authority; none AI→PLC path
+COMPLETE_GATE: not claimed; CP-287 remains PLANNED
+NEXT_UNLOCKED: none; remaining C0.S0 inventories still required
+NEXT_RECOMMENDED: C0.S0-N — EDGE_OFFLINE_INDUSTRIAL_RESIDUAL_BASELINE
+```
+
+## 6.13 C0.S0-N evidence event
+
+```text
+DATE: 2026-09-14
+STEP: C0.S0-N — EDGE_OFFLINE_INDUSTRIAL_RESIDUAL_BASELINE
+HEAD_TASK_START: 8d9fa79679e91b5e65aed3c8b57bb2c240f031d7
+HEAD: 6038ec5c841a4f03206b8fa342466dfecb68ef63
+STATUS: PLAN_ONLY
+NOTE: HEAD moved via unrelated Transformômetro PT-first tests; Edge/OT residual revalidated — no material EXECUTION_DRIFT vs C0.S0-G/M
+DEPENDENCY_GATE: C0.S0 still open; C0 = NOT_STARTED; NEXT = C0.S0
+CP_REQUIREMENTS: CP-295 (PLANNED; inventory advanced, not PASS); CP-296–301 Edge gates LOCKED; CP-178/179 OT safety PLANNED; CP-158 shared-device PLANNED. TRACEABILITY_GAP: no dedicated C0.S0-N CP id
+SCOPE: Edge runtime; offline/AuthZ; Pulse identity/OTA/commands; store-and-forward; MQTT/OPC/Modbus/PLC/MES/historian; AI→machine; safety owner; fail-closed
+EVIDENCE: 51 §§38+43; Edge agent=NOT_PROVEN; Pulse BFF+ESP=DOMAIN_LOCAL; offline AuthZ expand=NOT_PROVEN; store-and-forward=NOT_PROVEN; industrial protocols=NOT_PROVEN; AI→machine=NOT_PROVEN; device token≠business AuthZ
+RUNTIME_DIFF: NONE
+PLATFORM_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG_BEHAVIOR_CHANGE: NONE
+FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
+DÉLIA_NEW_CODE: NONE
+UNRESOLVED: MDM/OT zoning/time sync residual; OTA on-device hash verify; MES/historian; independent interlocks CP-179; MLOps/Marketplace; privacy/operational-context inventories
+FOUNDATION_DRIFT: none offline fail-open AuthZ; none AI→PLC; none Edge as SoT
+COMPLETE_GATE: not claimed; CP-295 remains PLANNED
+NEXT_UNLOCKED: none; remaining C0.S0 inventories still required
+NEXT_RECOMMENDED: C0.S0-O — AI_MODEL_LIFECYCLE_MLOPS_AND_CAPABILITY_MARKETPLACE_BASELINE
+```
+
+## 6.14 C0.S0-O evidence event
+
+```text
+DATE: 2026-09-14
+STEP: C0.S0-O — AI_MODEL_LIFECYCLE_MLOPS_CAPABILITY_MARKETPLACE_BASELINE
+HEAD: 6038ec5c841a4f03206b8fa342466dfecb68ef63
+STATUS: PLAN_ONLY
+NOTE: same HEAD as C0.S0-N; I/M/N residuals revalidated — no material EXECUTION_DRIFT
+DEPENDENCY_GATE: C0.S0 still open; C0 = NOT_STARTED; NEXT = C0.S0
+CP_REQUIREMENTS: CP-302 (PLANNED; inventory advanced, not PASS); CP-303–310 model/marketplace gates LOCKED; CP-256/257 Control Tower related. TRACEABILITY_GAP: no dedicated C0.S0-O CP id
+SCOPE: model lifecycle/registry; FT/evals; MLOps tooling; promotion/rollback; catalog vs Marketplace; plugin supply-chain; AuthZ boundaries
+EVIDENCE: 51 §§39–40; Model Registry=NOT_PROVEN; MLOps=NOT_PROVEN; Marketplace=NOT_PROVEN; Chat FT/R1-R11=CHAT_ONLY; Core plugin manifests+/me/apps=PLATFORM_SHARED catalog; enabled≠AuthZ; cosign/SBOM=NOT_PROVEN
+RUNTIME_DIFF: NONE
+PLATFORM_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG_BEHAVIOR_CHANGE: NONE
+FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
+DÉLIA_NEW_CODE: NONE
+UNRESOLVED: Model Registry design; Marketplace product; SBOM/signing; privacy/operational-context inventories; MCP/A2A residual
+FOUNDATION_DRIFT: none treating catalog/marketplace/model deploy as AuthZ or planner authority
+COMPLETE_GATE: not claimed; CP-302 remains PLANNED
+NEXT_UNLOCKED: none; remaining C0.S0 inventories still required
+NEXT_RECOMMENDED: C0.S0-P — PERSONAL_VS_ORGANIZATIONAL_DATA_PRIVACY_BASELINE
+```
+
+## 6.15 C0.S0-P evidence event
+
+```text
+DATE: 2026-09-14
+STEP: C0.S0-P — PERSONAL_VS_ORGANIZATIONAL_DATA_PRIVACY_BASELINE
+HEAD: 6038ec5c841a4f03206b8fa342466dfecb68ef63
+STATUS: PLAN_ONLY
+NOTE: same HEAD as O; G/H/J/K/L/M/N/O privacy-related residuals revalidated — no material EXECUTION_DRIFT
+DEPENDENCY_GATE: C0.S0 still open; C0 = NOT_STARTED; NEXT = C0.S0
+CP_REQUIREMENTS: CP-268/271 Personal Memory privacy (PLANNED/LOCKED); CP-157/175 media retention; CP-188/189 Human Observation; CP-212 personal→Knowledge isolation. TRACEABILITY_GAP: no dedicated C0.S0-P CP id
+SCOPE: data classes; personal vs organizational; consent/purpose; retention/delete/export; provider exposure; Memory/Knowledge boundaries; employment/biometric
+EVIDENCE: 51 §41; DÉLIA PM=NOT_PROVEN; Chat memory=CHAT_ONLY; Core consents PROVEN≠memory/training; memory/artifact≠Org Knowledge auto; biometric/employee-score=NOT_PROVEN; residency=NOT_PROVEN; cross-app erase=OWNER_GAP
+RUNTIME_DIFF: NONE
+PLATFORM_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG/SCHEMA_BEHAVIOR_CHANGE: NONE
+FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
+DÉLIA_NEW_CODE: NONE
+UNRESOLVED: unified erase/export; memory/training consent purposes; residency matrix; operational context inventory; MCP/A2A; OT interlocks
+FOUNDATION_DRIFT: none treating PM as AuthZ; none auto Knowledge from memory/artifact; none employment scoring from observation
+COMPLETE_GATE: not claimed
+NEXT_UNLOCKED: none; remaining C0.S0 inventories still required
+NEXT_RECOMMENDED: C0.S0-Q — OPERATIONAL_CONTEXT_ENTITYREF_WORKSPACE_BASELINE
+```
+
+## 6.16 C0.S0-Q evidence event
+
+```text
+DATE: 2026-09-14
+STEP: C0.S0-Q — OPERATIONAL_CONTEXT_ENTITYREF_WORKSPACE_BASELINE
+HEAD: 6038ec5c841a4f03206b8fa342466dfecb68ef63
+STATUS: PLAN_ONLY
+NOTE: same HEAD as P; B/C/K Portal/me/EntityRef residuals revalidated — no material EXECUTION_DRIFT
+DEPENDENCY_GATE: C0.S0 still open; C0 = NOT_STARTED; NEXT = C0.S0
+CP_REQUIREMENTS: CP-091 EntityRef (PLANNED); CP-159 WorkspaceContext+EntityRef (LOCKED); CP-004/008/009 context/open entity (LOCKED). TRACEABILITY_GAP: no dedicated C0.S0-Q CP id
+SCOPE: Operational Context; Portal/Core/Domain context; EntityRef; Workspace; branch/tenant; context≠AuthZ; TOCTOU
+EVIDENCE: 51 §42; shared EntityRef/WorkspaceContext=NOT_PROVEN; Portal AppHost+/me=PLATFORM_LOCAL; Domain IDs+branch gates=DOMAIN_LOCAL; /me/routes absent; selected branch≠AuthZ; write revalidation PROVEN pattern
+RUNTIME_DIFF: NONE
+PLATFORM_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG/SCHEMA_BEHAVIOR_CHANGE: NONE
+FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
+DÉLIA_NEW_CODE: NONE
+UNRESOLVED: EntityRef freeze decision; Workspace product; MCP/A2A residual; OT interlocks; C0 verify-final remaining TARGET inventories
+FOUNDATION_DRIFT: none treating Portal/context/EntityRef as AuthZ or Domain SoT
+COMPLETE_GATE: not claimed; CP-091 remains PLANNED; CP-159 runtime NOT_PROVEN
+NEXT_UNLOCKED: none; remaining C0.S0 inventories still required
+NEXT_RECOMMENDED: C0.S0-R — MCP_A2A_AGENT_INTEROPERABILITY_RESIDUAL_BASELINE
+```
+
+## 6.17 C0.S0-R evidence event
+
+```text
+DATE: 2026-09-14
+STEP: C0.S0-R — MCP_A2A_AGENT_INTEROPERABILITY_RESIDUAL_BASELINE
+HEAD: 10f874c84f4a661b9851a9179be8d1418e029a2a
+STATUS: PLAN_ONLY
+NOTE: prior Q at 6038ec5c8; HEAD moved via TV Dashboard GPT Actions OAuth façade — MCP/A2A conclusions revalidated; TV GPT Actions = OpenAPI Custom GPT ≠ MCP
+DEPENDENCY_GATE: C0.S0 still open; C0 = NOT_STARTED; NEXT = C0.S0
+CP_REQUIREMENTS: CP-262 (PLANNED; inventory advanced, not PASS); CP-263–267 LOCKED TARGET; CP-305 Marketplace related; CP-310 no asset elevation. TRACEABILITY_GAP: no dedicated C0.S0-R CP id
+SCOPE: MCP/A2A runtime; servers/clients/transport/auth; tool discovery≠AuthZ; write/delegation; agent identity; Marketplace/Hub/planner boundaries; remote trust/egress
+EVIDENCE: 51 §31; MCP/A2A runtime=NOT_PROVEN; zero MCP/A2A SDK deps; Chat OpenAPI Action Catalog=CHAT_ONLY≠MCP; GPT Actions TM/TV=DOMAIN_LOCAL≠MCP; Agent Card/delegation=NOT_PROVEN; Control Tower/Marketplace MCP lifecycle=NOT_PROVEN
+RUNTIME_DIFF: NONE
+PLATFORM_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG/SCHEMA_BEHAVIOR_CHANGE: NONE
+FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
+DÉLIA_NEW_CODE: NONE
+UNRESOLVED: MCP/A2A adapter design when justified; OT interlocks CP-179; EntityRef freeze; C0 verify-final remaining TARGET inventories
+FOUNDATION_DRIFT: none treating MCP tool/A2A agent as AuthZ/planner/Hub; none Chat catalog as MCP
+COMPLETE_GATE: not claimed; CP-262 remains PLANNED
+NEXT_UNLOCKED: none; remaining C0.S0 inventories still required
+NEXT_RECOMMENDED: C0.S0-S — OT_SAFETY_INDEPENDENT_INTERLOCKS_AND_APPROVAL_MATRIX_RESIDUAL_BASELINE
+```
+
+## 6.18 C0.S0-S evidence event
+
+```text
+DATE: 2026-09-14
+STEP: C0.S0-S — OT_SAFETY_INDEPENDENT_INTERLOCKS_APPROVAL_MATRIX_RESIDUAL_BASELINE
+HEAD: bcf23241e058c03fae74dc24231adebdf34d297c
+STATUS: PLAN_ONLY
+NOTE: prior R at 10f874c84; HEAD moved via commercial Fase 1R docs — OT/safety/approval revalidated; no device/PLC actuation
+DEPENDENCY_GATE: C0.S0 still open; C0 = NOT_STARTED; NEXT = C0.S0
+CP_REQUIREMENTS: CP-178 LLM→machine prohibited (PLANNED); CP-179 OT safety gate (PLANNED; inventory advanced not PASS); CP-018/107 approval TARGET; CP-046–049/246 autonomy LOCKED; CP-049 kill≠e-stop. TRACEABILITY_GAP: no dedicated C0.S0-S CP id
+SCOPE: safety controller/interlocks/e-stop; Pulse command materiality; Domain vs industrial approval; PREPARE/ACT; fail-safe; kill-switch≠e-stop; override checks
+EVIDENCE: 51 §43; safety PLC/e-stop/interlock=NOT_PROVEN; Pulse HTTP IoT=DOMAIN_LOCAL OPERATIONAL≠SAFETY; disable≠e-stop; Capex segregação DOMAIN_LOCAL≠OT matrix; Chat confirm≠AuthZ≠safety; LLM→machine=NOT_PROVEN; PREPARE/ACT DÉLIA=TARGET
+RUNTIME_DIFF: NONE
+PLATFORM_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG/SCHEMA_BEHAVIOR_CHANGE: NONE
+FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
+DÉLIA_NEW_CODE: NONE
+UNRESOLVED: factory OT interlocks outside monorepo; industrial approval matrix design (CP-179); EntityRef freeze; PermissionResolver parity; C0.S0 residual consolidation / verify-final readiness
+FOUNDATION_DRIFT: none treating Pulse/disable/Chat confirm/Capex approve as OT safety; none LLM as safety controller
+COMPLETE_GATE: not claimed; CP-178/179 remain PLANNED
+NEXT_UNLOCKED: none; C0.S0 still open
+NEXT_RECOMMENDED: C0.S0-T — C0_S0_RESIDUAL_CONSOLIDATION_AND_VERIFY_FINAL_READINESS
+```
+
+## 6.19 C0.S0-T evidence event
+
+```text
+DATE: 2026-09-14
+STEP: C0.S0-T — C0_S0_RESIDUAL_CONSOLIDATION_AND_FINAL_READINESS_VERIFICATION
+HEAD: f1cce79b871bf0b5dbd7b8d332ead53e3fb44716
+STATUS: PLAN_ONLY
+NOTE: prior S at bcf23241e; HEAD moved via TV GPT Actions 401/policy — consolidation revalidated; minha-delpi-copilot docs-only; DÉLIA_RUNTIME_DIFF=NONE
+DEPENDENCY_GATE: C0 = NOT_STARTED; FOUNDATION_FREEZE = NOT ACHIEVED; C0.S0 inventory themes A–S covered
+CP_REQUIREMENTS: C0.S0 outputs per 16; thematic CPs remain PLANNED/LOCKED as prior; TRACEABILITY_GAP C0.S0-X CP ids NON_BLOCKING
+SCOPE: consolidate A–S; residual classification; drift audit; gate matrix; readiness
+EVIDENCE: 51 §46; C0.S0_READINESS=READY_FOR_ARCHITECTURE_REVIEW; BLOCKING_RESIDUALS=NONE; drifts NONE; dual permission path OPEN_NON_BLOCKING ADR; TARGET absences DEFERRED_BY_PHASE
+RUNTIME_DIFF: NONE
+PLATFORM_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG/SCHEMA_BEHAVIOR_CHANGE: NONE
+FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
+DÉLIA_NEW_CODE: NONE
+UNRESOLVED: architecture review acceptance; Core effective-permission ADR (S2/S4); Hub physical owner (S1); EntityRef/contracts freeze later C0 steps
+FOUNDATION_DRIFT: none promoting TARGET to PROVEN; none Chat=DÉLIA
+COMPLETE_GATE: not claimed — C0.S0 COMPLETE / FOUNDATION_FREEZE NOT claimed
+NEXT_UNLOCKED: architecture review of C0.S0 inventory package
+NEXT_RECOMMENDED: ARCHITECTURE_REVIEW_C0_S0 → (if accepted) C0.S1 — PRODUCT_BOUNDARY_NAMES_PHYSICAL_OWNERSHIP
+NOTE_SUPERSEDED: dual-path ADR and readiness claim superseded by §6.20 reconciliation (Core AuthZ resolved at 633d10d2a; readiness = CANDIDATE_FOR_ARCHITECTURE_RE_REVIEW)
+```
+
+## 6.20 C0.S0-T canonical reconciliation (post architecture review)
+
+```text
+DATE: 2026-09-14
+STEP: C0.S0-T — CANONICAL_RECONCILIATION_AFTER_ARCHITECTURE_REVIEW
+HEAD_BEFORE: 674670ce796959c0a6a8e04e46afdf96bac99ed2
+HEAD_AFTER: 68ea41d9b5aac6216b5ab531f7cdccc93d64c3bc
+STATUS: PLAN_ONLY
+ARCHITECTURE_REVIEW_TRIGGER: prior EXECUTION_DRIFT (stale Core AuthZ text + incomplete closeout vs runtime 633d10d2a) — reconciled in this event
+NOTE: HEAD moved during reconciliation via unrelated transformometro commit; Core AuthZ alignment revalidated (633d10d2a still ancestor; authenticate→PermissionResolver)
+PROGRAM: PLANNED / NOT_STARTED
+C0: NOT_STARTED
+FOUNDATION_FREEZE: NOT ACHIEVED
+C0.S1_AUTHORIZED: NO
+DÉLIA_RUNTIME_DIFF: NONE
+EVIDENCE: A–T consolidated in 51 §46; AuthZ §10 reconciled; 25 §14 CP inventory linkage; this event
+CORE_AUTHZ: RESOLVED request-context effective permissions at accepted SHA 633d10d2a0d246ae9f4a2a576d76ce935f30be01
+  = direct∪group ± overrides; superadmin=all codes; authenticate→PermissionResolver→g.current_user.permissions
+  /me /me/apps /me/access-profile aligned
+/me/routes: not current contract; navigation via /me/apps[].routes; STALE_DOCUMENTATION/STALE_TEST/LEGACY_REFERENCE
+REMAINING_RESIDUALS:
+  CARRY_FORWARD = list_user_ids_by_permission_code (no overrides); override-cache hygiene; IamSync cleanup; Core suite INCONCLUSIVE
+  DEFERRED_BY_PHASE = Hub/Registry/MCP/Marketplace/Graph/Semantic/PM/Workspace/Sandbox/Twin/Edge/OT/Tower
+  CLOSED_AS_NON_ISSUE = TARGET absence; Chat≠DÉLIA; dual-path ADR
+C0.S0_READINESS: CANDIDATE_FOR_ARCHITECTURE_RE_REVIEW
+NOT_CLAIMED: C0.S0 complete; C0.S1 unlocked; Foundation Freeze; CP PASS
+FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; 25-requirements-traceability.md; this ledger
+DÉLIA_NEW_CODE: NONE
+CORE_RUNTIME_CHANGE_IN_THIS_TASK: NONE
+NEXT_RECOMMENDED: ARCHITECTURE_RE_REVIEW_C0_S0 → (if accepted) C0.S1
 ```
 
 ## 7. Canonical phase mapping

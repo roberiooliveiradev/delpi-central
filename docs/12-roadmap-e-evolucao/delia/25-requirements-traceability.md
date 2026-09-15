@@ -538,3 +538,33 @@ CP-311–CP-316  Recurring Governed Work / Scheduling
 ```
 
 Todas as faixas temáticas são subordinadas à ordem de `16`. Nenhuma spec temática cria fase, runtime, requirement authority ou permission authority paralela.
+
+## 14. C0.S0 inventory evidence linkage (reconciled)
+
+Evidence anchors: `51` §§10/31/38–46 + `evidence/execution-ledger.md` §§6.1–6.20.  
+Status vocabulary: inventory **EVIDENCED** ≠ CP **PASS** ≠ C0.S0 COMPLETE.
+
+| CP | Exact gate (inventory) | C0.S0 evidence | Inventory status | CP row status |
+|---|---|---|---|---|
+| CP-154 | Portal/Core/Gateway/APIs/MFEs inventory | B–T; `51` anchors | EVIDENCED | remains PLANNED until C0.S0 acceptance |
+| CP-194 | egress/OAuth/vault/webhooks inventory | E/F | EVIDENCED (vault/ExternalConnection NOT_PROVEN noted) | PLANNED |
+| CP-223 | Teams foundation inventory | E | EVIDENCED (Teams runtime NOT_PROVEN) | PLANNED |
+| CP-226 | automation/events/schedulers/RPA inventory | D/E | EVIDENCED (Hub NOT_PROVEN) | PLANNED |
+| CP-249 | process-intelligence inventory | H | EVIDENCED (mining NOT_PROVEN) | PLANNED |
+| CP-256 | AI asset / Control Tower inventory | I | EVIDENCED (Tower NOT_PROVEN) | PLANNED |
+| CP-262 | MCP/A2A inventory | R (+E) | EVIDENCED (runtime NOT_PROVEN) | PLANNED |
+| CP-268 | Personal Memory ownership freeze | J/P | EVIDENCED PARTIAL (DÉLIA PM TARGET; Chat≠PM) | PLANNED |
+| CP-274 | semantic/glossary inventory | K | EVIDENCED (Semantic Layer NOT_PROVEN) | PLANNED |
+| CP-280 | sandbox/artifact inventory | L | EVIDENCED (governed sandbox NOT_PROVEN) | PLANNED |
+| CP-287 | predictive/twin inventory | M | EVIDENCED (engine/twin NOT_PROVEN) | PLANNED |
+| CP-295 | Edge/offline inventory | N | EVIDENCED (Edge NOT_PROVEN; Pulse DOMAIN_LOCAL) | PLANNED |
+| CP-302 | model/MLOps/catalog inventory | O | EVIDENCED (Registry/Marketplace NOT_PROVEN) | PLANNED |
+| CP-311 | Recurring Work owner vs timer freeze | D | EVIDENCED PARTIAL (definition TARGET; physical scheduler TO_INVENTORY) | PLANNED |
+
+```text
+TRACEABILITY_GAP: no dedicated C0.S0-A…T CP IDs (tasks map via thematic CPs above)
+C0.S0 inventory coverage ≠ 100% CP PASS
+No CP promoted to PASS by documentation alone
+```
+
+Related non-inventory CPs (CP-178/179 OT, CP-091 EntityRef, etc.) remain PLANNED/LOCKED per their rows; inventory evidence does not satisfy runtime gates.
