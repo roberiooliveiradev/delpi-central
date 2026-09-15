@@ -1100,9 +1100,13 @@
 .dashboard-tv-dashboard .td-modal--wide{
   width: min(980px, 100%);
 }
-/* Biblioteca de mídia: caixa viewport-fixa desde o open (não shrink-to-fit no load). */
-.dashboard-tv-dashboard .td-modal--media-library{
+/* Biblioteca de mídia: caixa viewport-fixa desde o open (não shrink-to-fit no load).
+ * Especificidade > `.td-modal` / `.delpi-ui-modal` (560px default do kit). */
+.dashboard-tv-dashboard .td-modal.td-modal--media-library,
+.dashboard-tv-dashboard .delpi-ui-modal.td-modal--media-library{
   width: min(980px, calc(100% - 24px));
+  max-width: min(980px, calc(100% - 24px));
+  min-width: min(980px, calc(100% - 24px));
   height: min(85dvh, 880px);
   max-height: min(85dvh, 880px);
   display: flex;
@@ -1110,7 +1114,8 @@
   box-sizing: border-box;
   overflow: hidden;
 }
-.dashboard-tv-dashboard .td-modal--media-library .td-modal__body{
+.dashboard-tv-dashboard .td-modal--media-library .td-modal__body,
+.dashboard-tv-dashboard .td-modal--media-library .delpi-ui-modal__body{
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -8901,8 +8906,11 @@ body.td-composer--marqueeing *{
     padding: 16px;
   }
 
-  .dashboard-tv-dashboard .td-modal--media-library{
+  .dashboard-tv-dashboard .td-modal.td-modal--media-library,
+  .dashboard-tv-dashboard .delpi-ui-modal.td-modal--media-library{
     width: calc(100% - 16px);
+    max-width: calc(100% - 16px);
+    min-width: 0;
     height: min(90dvh, 100%);
     max-height: min(90dvh, 100%);
   }
@@ -9002,6 +9010,9 @@ body.td-composer--marqueeing *{
   flex: 1 1 auto;
   min-height: 0;
   max-height: none;
+  /* Sem stretch: evita “espaço entre linhas” quando a grade é mais alta que o conteúdo. */
+  align-content: start;
+  justify-content: start;
 }
 .dashboard-tv-dashboard .td-media-library__item{
   position: relative;

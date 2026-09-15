@@ -28,10 +28,11 @@ describe("media library layout contract", () => {
 
     expect(modal).toContain('className="td-modal--media-library"');
     expect(modal).not.toMatch(/HostContainedDialog[^>]*className="td-modal--wide"/);
-    expect(css).toMatch(/\.td-modal--media-library\s*\{[^}]*height:\s*min\(85dvh/s);
-    expect(css).toMatch(/\.td-modal--media-library\s+\.td-modal__body\s*\{[^}]*flex:\s*1/s);
+    expect(css).toMatch(/\.td-modal\.td-modal--media-library/);
+    expect(css).toMatch(/min-width:\s*min\(980px/);
+    expect(css).toMatch(/height:\s*min\(85dvh/);
     expect(css).toMatch(
-      /\.td-modal--media-library\s+\.td-media-library__grid\s*\{[^}]*max-height:\s*none/s,
+      /\.td-modal--media-library\s+\.td-media-library__grid\s*\{[^}]*align-content:\s*start/s,
     );
     expect(css).toContain("@media (max-width: 768px)");
     expect(css).toMatch(/\.td-modal--media-library\s*\{[^}]*90dvh/s);
