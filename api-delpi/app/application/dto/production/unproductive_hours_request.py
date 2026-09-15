@@ -11,6 +11,8 @@ from app.domain.production.unproductive_hours_view_scope import (
     DEFAULT_MONTHS_WINDOW,
     DEFAULT_PAGE_SIZE,
     DEFAULT_RANKING_LIMIT,
+    GRANULARITY_DAY,
+    GRANULARITY_VALUES,
     ITEMS_SORT_VALUES,
     MAX_MONTHS_WINDOW,
     MAX_PAGE_SIZE,
@@ -202,6 +204,20 @@ class UnproductiveHoursItemsRequest(UnproductiveHoursQueryRequest):
     @property
     def offset(self) -> int:
         return (self.page - 1) * self.page_size
+
+
+@dataclass
+class UnproductiveHoursSeriesRequest(UnproductiveHoursQueryRequest):
+    granularity: str = GRANULARITY_DAY
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        granularity = clean_text(self.granularity).lower() or GRANULARITY_DAY
+        if granularity not in GRANULARITY_VALUES:
+            raise ValueError(
+                f"granularity inválida. Use um de: {', '.join(GRANULARITY_VALUES)}."
+            )
+        self.granularity = granularity
 
 
 @dataclass

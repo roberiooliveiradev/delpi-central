@@ -36,6 +36,7 @@ def test_router_exposes_summary_items_ranking(
     assert "/production/unproductive-hours/summary" in paths
     assert "/production/unproductive-hours/items" in paths
     assert "/production/unproductive-hours/ranking" in paths
+    assert "/production/unproductive-hours/series" in paths
 
 
 @patch(
@@ -175,6 +176,97 @@ def test_ranking_invalid_rank_by_pattern(unproductive_hours_client: TestClient) 
             "rank_by": "not_a_dimension",
             "start_date": "2025-07-01",
             "end_date": "2026-07-01",
+        },
+    )
+    assert response.status_code == 422
+
+
+@patch(
+    "app.interface.http.routes.production.unproductive_hours_router"
+    ".build_get_production_unproductive_hours_series_use_case"
+)
+def test_series_returns_envelope(mock_builder, unproductive_hours_client: TestClient) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "periodo": {"dataInicio": "2026-09-01", "dataFim": "2026-09-14", "filial": "01"},
+        "granularity": "day",
+        "items": [
+            {
+                "date": "2026-09-10",
+                "total_appointments": 3,
+                "total_hours": 1.5,
+                "total_cost": 42.0,
+                "dataReferencia": "2026-09-10",
+                "totalApontamentos": 3,
+                "totalHoras": 1.5,
+                "totalCusto": 42.0,
+            }
+        ],
+    }
+    mock_builder.return_value = use_case
+
+    response = unproductive_hours_client.get(
+        "/production/unproductive-hours/series",
+        params={
+            "branch": "01",
+            "start_date": "2026-09-01",
+            "end_date": "2026-09-14",
+            "resource": "CT-12",
+        },
+    )
+    assert response.status_code == 200
+    payload = _body(response)
+    assert payload["meta"]["operationId"] == "get_production_unproductive_hours_series"
+    assert payload["meta"]["entity"] == "production_unproductive_hours_series"
+    assert payload["meta"]["shape"] == "list"
+    assert payload["data"]["granularity"] == "day"
+    assert payload["data"]["items"][0]["total_hours"] == 1.5
+
+    request = use_case.execute.call_args.args[0]
+    assert request.resource == "CT-12"
+    assert request.granularity == "day"
+
+
+@patch(
+    "app.interface.http.routes.production.unproductive_hours_router"
+    ".build_get_production_unproductive_hours_series_use_case"
+)
+def test_series_accepts_multiple_resources(
+    mock_builder, unproductive_hours_client: TestClient
+) -> None:
+    """Um CT pode ter mais de um recurso; o consumidor pede o conjunto de uma vez."""
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "periodo": {"dataInicio": "2026-09-01", "dataFim": "2026-09-14", "filial": "01"},
+        "granularity": "day",
+        "items": [],
+    }
+    mock_builder.return_value = use_case
+
+    response = unproductive_hours_client.get(
+        "/production/unproductive-hours/series",
+        params={
+            "branch": "01",
+            "start_date": "2026-09-01",
+            "end_date": "2026-09-14",
+            "resource": "CT-12,MAQ01",
+        },
+    )
+    assert response.status_code == 200
+    assert use_case.execute.call_args.args[0].resource == "CT-12,MAQ01"
+    assert _body(response)["data"]["items"] == []
+
+
+def test_series_rejects_unsupported_granularity(
+    unproductive_hours_client: TestClient,
+) -> None:
+    response = unproductive_hours_client.get(
+        "/production/unproductive-hours/series",
+        params={
+            "branch": "01",
+            "start_date": "2026-09-01",
+            "end_date": "2026-09-14",
+            "granularity": "month",
         },
     )
     assert response.status_code == 422

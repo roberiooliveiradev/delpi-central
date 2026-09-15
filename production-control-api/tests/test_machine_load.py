@@ -6,6 +6,8 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 from production_control_app.application.services.machine_load_service import MachineLoadService
 from production_control_app.application.services.public_cockpit_access_service import (
@@ -243,6 +245,18 @@ def _service(gateway: FakeGateway, snapshots: FakeSnapshotRepo | None = None) ->
     )
 
 
+@pytest.fixture(autouse=True)
+def _isolate_live_status_cache():
+    """O cache de status é do processo: cada teste começa e termina frio."""
+    from production_control_app.application.services.machine_load_live_status_cache import (
+        clear_live_status_cache,
+    )
+
+    clear_live_status_cache()
+    yield
+    clear_live_status_cache()
+
+
 def test_delivery_window_defaults_to_open_start_and_fourteen_days_ahead() -> None:
     """O PCP precisa ver o atrasado; o horizonte é a entrega de hoje + 14 dias."""
     start, end = _service(FakeGateway()).resolve_delivery_window(
@@ -280,18 +294,13 @@ def test_second_visit_reads_snapshot_without_operations_pull() -> None:
     assert "appointment_status" not in {name for name, _ in gateway.calls}
 
 
-def test_switching_work_center_reuses_live_status_cache() -> None:
-    from production_control_app.application.services.machine_load_live_status_cache import (
-        clear_live_status_cache,
-    )
-
-    clear_live_status_cache()
+def test_queue_read_never_waits_for_the_shop_floor() -> None:
+    """A fila congelada aparece sem consultar o TOTVS: quem faz isso é `live_status`."""
     gateway = FakeGateway()
     snapshots = FakeSnapshotRepo()
     service = _service(gateway, snapshots)
     service.build(_user(*FULL_PERMS), branch="01", work_center="CT-01A")
-    first_status_calls = sum(1 for name, _ in gateway.calls if name == "appointment_status")
-    assert first_status_calls == 1
+    assert "appointment_status" not in {name for name, _ in gateway.calls}
     gateway.calls.clear()
 
     payload = service.build(_user(*FULL_PERMS), branch="01", work_center="CT-02")
@@ -299,12 +308,20 @@ def test_switching_work_center_reuses_live_status_cache() -> None:
     assert "appointment_status" not in {name for name, _ in gateway.calls}
 
 
-def test_refresh_invalidates_live_status_cache() -> None:
-    from production_control_app.application.services.machine_load_live_status_cache import (
-        clear_live_status_cache,
-    )
+def test_live_status_reuses_cache_across_readers() -> None:
+    """Vários leitores no mesmo TTL não multiplicam consulta ao chão de fábrica."""
+    gateway = FakeGateway()
+    service = _service(gateway, FakeSnapshotRepo())
+    service.build(_user(*FULL_PERMS), branch="01")
+    gateway.calls.clear()
 
-    clear_live_status_cache()
+    service.live_status(_user(*FULL_PERMS), branch="01")
+    assert sum(1 for name, _ in gateway.calls if name == "appointment_status") == 1
+    service.live_status(_user(*FULL_PERMS), branch="01")
+    assert sum(1 for name, _ in gateway.calls if name == "appointment_status") == 1
+
+
+def test_refresh_invalidates_live_status_cache() -> None:
     gateway = FakeGateway()
     snapshots = FakeSnapshotRepo()
     service = _service(gateway, snapshots)
@@ -339,13 +356,61 @@ def test_live_status_overrides_frozen_status_fields() -> None:
     }
     snapshots = FakeSnapshotRepo()
     service = _service(gateway, snapshots)
-    payload = service.build(_user(*FULL_PERMS), branch="01", work_center="CT-02")
+    service.build(_user(*FULL_PERMS), branch="01", work_center="CT-02")
 
+    live = service.live_status(_user(*FULL_PERMS), branch="01")
+    running = next(item for item in live["items"] if item["is_in_production"])
+    assert running["production_order"] == "24640401002"
+    assert running["active_operator_name"] == "SILVANA ANDRADE DOS SANTOS"
+    # A fila do fake repete a mesma chave nos dois centros.
+    assert live["summary"]["in_production_count"] == 2
+    assert live["as_of"]
+
+    # Com o status já em cache, a fila sai da API com o override aplicado.
+    payload = service.build(_user(*FULL_PERMS), branch="01", work_center="CT-02")
     operation = payload["selected"]["items"][0]
     assert operation["is_in_production"] is True
     assert operation["active_operator_name"] == "SILVANA ANDRADE DOS SANTOS"
     assert payload["summary"]["in_production_count"] >= 1
     assert payload["work_centers"][1]["in_production_count"] == 1
+
+
+def test_live_status_exposes_only_status_fields() -> None:
+    """A rota leve não vaza identidade do snapshot nem campos da fila."""
+    gateway = FakeGateway()
+    gateway.status_by_key[("24640401002", "03")] = {
+        "production_status": "started",
+        "is_in_production": False,
+        "appointment_count": 2,
+        "last_appointment_date": "2026-08-20",
+    }
+    service = _service(gateway, FakeSnapshotRepo())
+    service.build(_user(*FULL_PERMS), branch="01")
+
+    live = service.live_status(_user(*FULL_PERMS), branch="01")
+    allowed = {
+        "production_order",
+        "operation_code",
+        "production_status",
+        "is_in_production",
+        "production_started_date",
+        "production_started_time",
+        "active_operator_code",
+        "active_operator_name",
+        "active_operator_count",
+        "appointment_count",
+        "last_appointment_date",
+    }
+    assert live["items"]
+    for item in live["items"]:
+        assert set(item) <= allowed
+    assert live["summary"]["operation_count"] == 2
+
+
+def test_live_status_without_snapshot_is_not_found() -> None:
+    service = _service(FakeGateway(), FakeSnapshotRepo())
+    with pytest.raises(SnapshotNotFound):
+        service.live_status(_user(*FULL_PERMS), branch="01")
 
 
 def test_machine_load_honors_requested_work_center() -> None:
@@ -1765,3 +1830,120 @@ def test_public_cockpit_does_not_see_withdrawn_conjunto() -> None:
     assert public_payload["selected"]["items"] == []
     assert "withdrawn" not in public_payload
     assert service.public_snapshot_contains_pa(branch="01", pa_code="90262910") is False
+
+
+def _machine_load_client(service: MachineLoadService) -> TestClient:
+    """App mínimo com o router real — valida o contrato HTTP, não só o service."""
+    from production_control_app.interface.http.routes import machine_load_routes
+
+    machine_load_routes.build_machine_load_service = lambda: service  # type: ignore[assignment]
+    app = FastAPI()
+
+    @app.middleware("http")
+    async def inject_user(request, call_next):
+        request.state.user = _user(*FULL_PERMS)
+        return await call_next(request)
+
+    app.include_router(machine_load_routes.router)
+    return TestClient(app)
+
+
+@pytest.fixture
+def machine_load_routes_module():
+    from production_control_app.interface.http.routes import machine_load_routes
+
+    original = machine_load_routes.build_machine_load_service
+    yield machine_load_routes
+    machine_load_routes.build_machine_load_service = original  # type: ignore[assignment]
+
+
+def test_include_all_centers_returns_the_whole_branch_queue(machine_load_routes_module) -> None:
+    """Fila completa + recorte do CT pedido: o MFE troca de aba sem nova leitura."""
+    service = _service(FakeGateway(), FakeSnapshotRepo())
+    client = _machine_load_client(service)
+
+    response = client.get(
+        "/machine-load",
+        params={"branch": "01", "workCenter": "CT-02", "includeAllCenters": "true"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    centers = {item["work_center"] for item in data["operations"]}
+    assert centers == {"CT-01A", "CT-02"}
+    assert data["selected"]["work_center"] == "CT-02"
+    assert {item["work_center"] for item in data["selected"]["items"]} == {"CT-02"}
+
+
+def test_machine_load_without_opt_in_stays_lean(machine_load_routes_module) -> None:
+    service = _service(FakeGateway(), FakeSnapshotRepo())
+    client = _machine_load_client(service)
+
+    data = client.get("/machine-load", params={"branch": "01"}).json()["data"]
+
+    assert "operations" not in data
+    assert data["selected"]["items"]
+
+
+def test_mutation_returns_the_queue_so_the_client_cache_stays_whole(
+    machine_load_routes_module,
+) -> None:
+    """Depois de reordenar, o MFE precisa da fila inteira — não só do CT ativo."""
+    service = _service(FakeGateway(), FakeSnapshotRepo())
+    client = _machine_load_client(service)
+    client.get("/machine-load", params={"branch": "01"})
+
+    response = client.post(
+        "/machine-load/optimize-delivery",
+        params={"branch": "01", "workCenter": "CT-02", "includeAllCenters": "true"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert {item["work_center"] for item in data["operations"]} == {"CT-01A", "CT-02"}
+    assert data["selected"]["work_center"] == "CT-02"
+
+
+def test_live_status_route_answers_404_without_snapshot(machine_load_routes_module) -> None:
+    gateway = FakeGateway()
+    gateway.status_by_key[("24640401002", "03")] = {
+        "production_status": "in_progress",
+        "is_in_production": True,
+    }
+    service = _service(gateway, FakeSnapshotRepo())
+    client = _machine_load_client(service)
+
+    missing = client.get("/machine-load/live-status", params={"branch": "01"})
+    assert missing.status_code == 404
+
+    client.get("/machine-load", params={"branch": "01"})
+    live = client.get("/machine-load/live-status", params={"branch": "01"})
+    assert live.status_code == 200
+    body = live.json()["data"]
+    assert body["as_of"]
+    assert body["items"][0]["is_in_production"] is True
+    assert body["summary"]["in_production_count"] == 2
+
+
+def test_public_cockpit_never_receives_the_whole_queue() -> None:
+    service = _service(FakeGateway(), FakeSnapshotRepo())
+    service.build(_user(*FULL_PERMS), branch="01")
+
+    public_payload = service.build_public(branch="01", work_center="CT-02")
+
+    assert "operations" not in public_payload
+    assert public_payload["selected"]["items"]
+
+
+def test_live_status_omits_operations_that_match_the_frozen_queue() -> None:
+    """Polling a cada 30 s não repete as ~1780 operações sem novidade."""
+    gateway = FakeGateway()
+    service = _service(gateway, FakeSnapshotRepo())
+    service.build(_user(*FULL_PERMS), branch="01")
+
+    live = service.live_status(_user(*FULL_PERMS), branch="01")
+
+    # O TOTVS responde por todas as chaves, mas nenhuma diverge do snapshot.
+    assert live["items"] == []
+    assert live["summary"]["operation_count"] == 2
+    assert live["summary"]["in_production_count"] == 0

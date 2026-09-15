@@ -12,7 +12,8 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | GET | `/subplugins` | JWT + `production-control.access` |
 | GET | `/overview?branch=01\|02` | JWT + acesso + filial |
 | GET | `/demand?branch=01\|02&search=&status=&dueFrom=&dueTo=&sort=&direction=&page=&pageSize=&refresh=` | JWT + `demand.view` + filial |
-| GET | `/machine-load?branch=01\|02&workCenter=&startDate=&endDate=` | JWT + `machine-load.view` + filial |
+| GET | `/machine-load?branch=01\|02&workCenter=&startDate=&endDate=&includeAllCenters=` | JWT + `machine-load.view` + filial |
+| GET | `/machine-load/live-status?branch=01\|02` | JWT + `machine-load.view` + filial |
 | GET | `/machine-load/locate?branch=01\|02&q=` | JWT + `machine-load.view` + filial |
 | POST | `/machine-load/refresh?branch=01\|02&workCenter=&startDate=&endDate=` | JWT + `machine-load.view` + filial |
 | PATCH | `/machine-load/sequence?branch=01\|02&workCenter=` | JWT + `machine-load.view` + filial |
@@ -29,13 +30,24 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | PUT | `/reports/stock-balances/email-schedule?branch=` | JWT + `reports.view` + filial (body: hour, minute, enabled) |
 | GET | `/public/machine-load/{token}?branch=01\|02&workCenter=` | público (token do cockpit) |
 | GET | `/public/machine-load/{token}/drawings/{paCode}/pdf?branch=01\|02` | público (PDF do PA na fila) |
+| GET | `/public/machine-load/{token}/performance?branch=01\|02&workCenter=&days=` | público (desempenho do posto na fila) |
 | WS | `/public/machine-load/{token}/ws?branch=01\|02` | público (token do cockpit) |
 
 Envelope `{ success, message, data }`.
 
 `GET /overview` agrega OTD do mês corrente (`/production/otd` + `/otd/series`), volume diário de PAs (`/production/appointments/series` — só `qty_produced`, com `weekday_average` excluindo sáb/dom), o checklist **a faturar até hoje** (`billing_due_today`: pedidos com `data_entrega` ≤ hoje + recently-closed com `C6_DATFAT` = hoje; check amarelo = estoque FIFO, verde = faturado) e a fila de OPs atrasadas (`/production/pcp-orders/items?delayed_only=true`). A fila de atraso considera só produtos cujo código começa com `8` ou `9` (`delayedProductCodePrefixes` em `content/overview.json`).
 
-`GET /machine-load` lê o snapshot congelado em `production_control.machine_load_snapshots` (seed automático na 1ª visita). `GET /machine-load/locate?q=` rastreia **conjunto** (`C2_NUM` = 6 primeiros dígitos de `production_order` / H8_OP) — todas as OPs com esse prefixo — ou lista os conjuntos de um **produto** (PA) em **todos** os CTs do mesmo snapshot (com posição na fila e enrich HZA), sem embutir a lista completa em cada GET de aba. `POST /machine-load/refresh` regenera a partir de `/production/machine-load/work-centers` + `/operations` (paginado) e **apaga** a ordem manual do período. `PATCH /machine-load/sequence` reordena só o segmento do `workCenter` no `payload_json` (`ordered_keys` = permutação exata das ops daquele CT), grava `sequence_updated_at` / `sequence_updated_by` e **não** altera `refreshed_at`. Em toda leitura, o status HZA é reaplicado via `/production/machine-load/appointment-status` — a fila SH8 não é remontada. Sem `workCenter`, usa o primeiro CT da lista; se o CT pedido não existir na janela, cai no primeiro e devolve `selected.requested_work_center` para a UI sinalizar.
+`GET /machine-load` lê o snapshot congelado em `production_control.machine_load_snapshots` (seed automático na 1ª visita). `GET /machine-load/locate?q=` rastreia **conjunto** (`C2_NUM` = 6 primeiros dígitos de `production_order` / H8_OP) — todas as OPs com esse prefixo — ou lista os conjuntos de um **produto** (PA) em **todos** os CTs do mesmo snapshot (com posição na fila e enrich HZA), sem embutir a lista completa em cada GET de aba. `POST /machine-load/refresh` regenera a partir de `/production/machine-load/work-centers` + `/operations` (paginado) e **apaga** a ordem manual do período. `PATCH /machine-load/sequence` reordena só o segmento do `workCenter` no `payload_json` (`ordered_keys` = permutação exata das ops daquele CT), grava `sequence_updated_at` / `sequence_updated_by` e **não** altera `refreshed_at`. O status HZA é reaplicado sobre a fila a cada leitura, mas quem consulta o TOTVS é a rota dedicada (ver abaixo). Sem `workCenter`, usa o primeiro CT da lista; se o CT pedido não existir na janela, cai no primeiro e devolve `selected.requested_work_center` para a UI sinalizar.
+
+#### Fila completa e status ao vivo em rotas separadas
+
+O centro de trabalho é **recorte de apresentação**, não uma leitura diferente: `selected.items` é um filtro sobre a mesma fila da filial. Com `includeAllCenters=true`, o payload traz também `operations` com a fila visível inteira (todos os centros, já com a lente de período aplicada) — o MFE do PCP lê uma vez por filial + janela e troca de aba sem nenhuma requisição. São 1783 operações da filial 01 em ~64 KB com o `GZipMiddleware` já ativo. O parâmetro é **opt-in** em `GET /machine-load` e nas mutações (`refresh`, `sequence`, `prioritize`, `optimize-delivery`, `withdraw`, `restore`, `transfer`, `transfer-set`), para que a resposta continue enxuta para quem só precisa do centro ativo. O cockpit público **nunca** recebe a fila completa (`_strip_internal_identity` remove o bloco).
+
+`GET /machine-load/live-status?branch=` é a única leitura do PCP que consulta o chão de fábrica: devolve `items` apenas com a chave da operação (`production_order` + `operation_code`) e os campos de apontamento que **divergem** da fila congelada (`production_status`, `is_in_production`, `active_operator_name`, `appointment_count`, entre outros), mais `summary` (`operation_count`, `in_production_count` da filial inteira) e `as_of`. Operação ausente significa «mantém o valor congelado do snapshot», mesma semântica de `_apply_status_map`. A resposta é **delta** porque o `appointment-status` da api-delpi responde por todas as chaves pedidas, inclusive as ~1780 sem novidade: na filial 01 isso é 5 KB em vez de 593 KB a cada 30 s. Sem snapshot na filial responde `404`.
+
+Por isso `GET /machine-load` lê o status **só do cache** (`allow_remote_status=False`): a fila aparece na tela sem esperar o `POST appointment-status` com ~1800 chaves, que hoje custa ~9 s contra ~20 ms da leitura do snapshot em cache. Esse era o atraso sentido a cada clique de aba. O MFE chama `live-status` logo depois da fila e a cada 30 s, pausando com a aba oculta, e faz o merge por chave. `refresh` e as mutações mantêm a consulta síncrona (a decisão de «não ultrapassar operação já iniciada» depende do status vivo), e o `build_public` do cockpit também — com cache frio o operador não pode perder o status. O TTL curto de `machine_load_live_status_cache.py` (45 s) faz vários leitores no mesmo minuto compartilharem uma consulta.
+
+Leitura do snapshot no Postgres: `xmin::text AS row_version` entra em `_COLUMNS` e o repositório pergunta **primeiro** a versão da tupla (~0,3 ms) para só rebuscar a linha quando o PCP realmente reescreveu a fila (~52 ms de `payload_json` já desserializado pelo psycopg). `xmin` muda em todo `UPDATE`, inclusive no `update_payload`, que não toca `refreshed_at` — por isso ele, e não o timestamp, é a chave de cache. As escritas atualizam o cache com a linha que acabaram de gravar, e o TTL de 5 min em `machine_load_snapshot_row_cache.py` é rede de segurança contra `VACUUM FREEZE`.
 
 #### Janela por entrega do PA e uma fila viva por filial
 
@@ -68,6 +80,8 @@ Diferenças em relação ao `GET /machine-load` autenticado:
 - **Nunca faz seed** — sem snapshot da filial, responde `404`; um link aberto não dispara carga no ERP.
 - **Sem período custom** — mostra a fila congelada inteira, para não virar superfície de varredura.
 - **Sem identidade do PCP** — `refreshed_by` e `sequence_updated_by` são removidos da resposta.
+- **Sem a fila dos outros centros** — o bloco `operations` é removido; a tela mostra um centro por vez.
+- **Status HZA síncrono** — o cockpit não faz polling, então o enrich continua no caminho da leitura.
 
 `GET /public/machine-load/{token}/drawings/{paCode}/pdf` devolve o PDF do desenho **somente** se o código do PA aparecer na fila congelada da filial. O arquivo é lido do disco pelo próprio BFF (`DrawingPdfLibraryStorage` → `FileResponse`), sem passar pela api-delpi. O cockpit do operador abre esse PDF pelo botão **Ver desenho**.
 
@@ -79,6 +93,22 @@ A pasta do FILESERVER é montada read-only no container:
 | `PC_DRAWING_PDF_HOST_PATH` | dev `/mnt/x/DESENHOS DELPI EM PDF` · prod `/mnt/fileserver/desenhos` | Bind no host (`infra/docker-compose*.yml`) |
 
 Convenção de nome resolvida pelo storage: `{codigo}.pdf` → `{base}.pdf` → `{base}_R{NN}.pdf` (maior revisão) → `{base}-{N}.pdf`. Pasta ausente ou vazia gera mensagem própria (`publicCockpit.messages` em `content/machine_load.json`), diferente de "desenho não encontrado".
+
+#### Desempenho do posto
+
+`GET /public/machine-load/{token}/performance?branch=&workCenter=&days=` alimenta os chips de eficiência/paradas na barra do cockpit e o painel de gráficos. O cálculo continua na api-delpi (`/production/eficiencia-fabril/*` e `/production/unproductive-hours/*`, ambas com RBAC); aqui o `PublicWorkCenterPerformanceService` só compõe via `DelpiProductionGateway` (token S2S por `internal_service_authorization`) e recorta o que um link anônimo pode ver.
+
+Guardrails, no mesmo espírito do PDF do desenho:
+
+- o `workCenter` precisa estar na fila publicada da filial — CT fora do snapshot responde `400`;
+- `days` é clampado entre 7 e 30 (default 14), para o link aberto não escolher quanto histórico o TOTVS varre;
+- a resposta sai **sem** `operator_name`, `operator_code`/`login` e **sem** qualquer valor em R$ (`total_cost`, `valor_mod_hora`, `resultado_mod`). O único nome na tela continua sendo o `active_operator_name` que a fila já mostrava.
+
+As paradas do BI são filtradas por `RECURSO` (`H8_RECURSO`), que **não** é o código do CT. A ponte é o próprio snapshot: `public_snapshot_work_center_resources` devolve os recursos das operações daquele centro e o serviço manda a lista separada por vírgula; centro sem recurso cadastrado cai no próprio código.
+
+Resiliência: cache em memória de ~120 s por `branch+work_center+days` (padrão de `machine_load_live_status_cache.py`) e **degradação por bloco** — se as paradas falharem, `efficiency` ainda responde e vice-versa, cada um com `available: false` e mensagem. Nada disso derruba a fila: o cockpit renderiza `—` nos chips e segue mostrando as OPs.
+
+Sem apontamento no turno, a eficiência volta `null`, não `0` — o posto parado não é um posto com 0% de eficiência.
 
 `WS /public/machine-load/{token}/ws?branch=` entra na sala da filial (`MachineLoadRealtimeHub`). Após `PATCH /machine-load/sequence` e `POST /machine-load/refresh`, o serviço publica `{"type": "machine_load_updated", "reason": "sequence|refresh"}` e o cockpit refaz a leitura HTTP — o socket carrega só o aviso, mantendo uma fonte de verdade única. A notificação é best-effort: falha no hub não derruba a escrita já persistida. O gateway precisa dos headers `Upgrade`/`Connection` na location `/apps/production-control-api/` (já configurado em `gateway/nginx.conf` e `nginx.dev.conf`).
 

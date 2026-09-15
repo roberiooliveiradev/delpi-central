@@ -8,6 +8,9 @@ from app.application.use_cases.production.get_production_unproductive_hours_item
 from app.application.use_cases.production.get_production_unproductive_hours_ranking_use_case import (
     GetProductionUnproductiveHoursRankingUseCase,
 )
+from app.application.use_cases.production.get_production_unproductive_hours_series_use_case import (
+    GetProductionUnproductiveHoursSeriesUseCase,
+)
 from app.application.use_cases.production.get_production_unproductive_hours_summary_use_case import (
     GetProductionUnproductiveHoursSummaryUseCase,
 )
@@ -36,5 +39,13 @@ def build_get_production_unproductive_hours_ranking_use_case() -> (
     GetProductionUnproductiveHoursRankingUseCase
 ):
     return GetProductionUnproductiveHoursRankingUseCase(
+        repository=UnproductiveHoursRepository()
+    )
+
+
+def build_get_production_unproductive_hours_series_use_case() -> (
+    GetProductionUnproductiveHoursSeriesUseCase
+):
+    return GetProductionUnproductiveHoursSeriesUseCase(
         repository=UnproductiveHoursRepository()
     )

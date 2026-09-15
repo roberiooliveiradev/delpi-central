@@ -195,6 +195,17 @@ def COMMERCIAL_ANALYSIS_GROUP_BY_QUERY():
     )
 
 
+GRANULARITY_DAY_ONLY_VALUES = ("day",)
+
+
+def GRANULARITY_QUERY_DAY_ONLY():
+    return _closed_domain_query(
+        "day",
+        values=GRANULARITY_DAY_ONLY_VALUES,
+        description="Series bucket size. Only day is supported.",
+    )
+
+
 def GRANULARITY_QUERY_REQUIRED():
     return Query(
     ...,

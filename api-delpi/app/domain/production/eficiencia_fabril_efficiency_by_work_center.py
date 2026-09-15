@@ -51,6 +51,53 @@ def aggregate_efficiency_by_work_center(
     return rows
 
 
+def aggregate_efficiency_by_work_center_and_day(
+    items: Sequence[Mapping[str, Any]],
+    *,
+    status_registro_ok: str = "OK",
+) -> list[dict[str, Any]]:
+    """Série diária por CT — mesma regra de validade da agregação por CT."""
+    buckets: dict[tuple[str, str], list[float]] = defaultdict(list)
+
+    for item in items:
+        if str(item.get("status_registro") or "").strip() != status_registro_ok:
+            continue
+        work_center = str(item.get("centro_trabalho") or "").strip()
+        if not work_center:
+            continue
+        day = _iso_day(item.get("data_producao"))
+        if not day:
+            continue
+        efficiency = item.get("eficiencia_percentual")
+        if not is_valid_production_efficiency_pct(efficiency):
+            continue
+        buckets[(day, work_center)].append(float(efficiency))
+
+    rows: list[dict[str, Any]] = []
+    for day, work_center in sorted(buckets.keys()):
+        values = buckets[(day, work_center)]
+        rows.append(
+            {
+                "date": day,
+                "work_center": work_center,
+                "efficiency_pct": round(sum(values) / len(values), 2),
+                "appointment_count": len(values),
+            }
+        )
+    return rows
+
+
+def _iso_day(value: Any) -> str | None:
+    """Normaliza a data do apontamento para YYYY-MM-DD (aceita ISO com hora)."""
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    text = text.replace("T", " ").split(" ", 1)[0]
+    return text[:10] or None
+
+
 def average_efficiency_across_work_centers(
     rows: Sequence[Mapping[str, Any]],
 ) -> float | None:

@@ -197,6 +197,8 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 | GET | `/production/eficiencia-fabril/dashboard` | Dashboard eficiência fabril (agregado SQL + paginação; `items[].appointment_id`). |
 | GET | `/production/eficiencia-fabril/appointments` | Apontamentos eficiência fabril (carga bulk; % recalculado `HY_TEMPAD`; `appointment_id` para detalhe; campos `turno`/`turno_label`; filtro opcional `shift=1\|2\|3` ou CSV). |
 | GET | `/production/eficiencia-fabril/efficiency-by-work-center` | Média de eficiência (%) por CT — mesma regra do plugin (OK + faixa 0–199%); filtro `shift` opcional. Ideal para gráfico no TV. |
+| GET | `/production/eficiencia-fabril/efficiency-series` | Mesma média por CT quebrada por dia (`granularity=day`) — dia sem apontamento válido fica fora da série, nunca vira 0%. |
+| GET | `/production/factory-shifts` | Catálogo canônico de turnos (`FACTORY_SHIFTS`) mais o turno corrente em `America/Sao_Paulo`. Fonte única contra o drift de constantes no frontend. |
 | GET | `/production/machine-programs/top-intermediates` | Ranking de intermediários (PI) mais produzidos — programas de máquina (Manutenção). Doc: [production-machine-programs.md](./production-machine-programs.md). |
 
 **Performance (`/production/eficiencia-fabril/appointments`):**

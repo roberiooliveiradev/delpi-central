@@ -10,7 +10,7 @@ Gerado: 2026-09-04
 
 | Tier | param | default | le | n |
 |------|-------|--------:|---:|--:|
-| `page_50_200` | page_size | 50 | 200 | 22 |
+| `page_50_200` | page_size | 50 | 200 | 21 |
 | `page_50_500` | page_size | 50 | 500 | 15 |
 | `limit_optional_200` | limit | None | 200 | 14 |
 | `page_20_100` | page_size | 20 | 100 | 10 |
@@ -39,6 +39,7 @@ Gerado: 2026-09-04
 | `limit_20_20` | limit | 20 | 20 | 1 |
 | `limit_8_20` | limit | 8 | 20 | 1 |
 | `top_limit_10_50` | top_limit | 10 | 50 | 1 |
+| `page_100_500` | page_size | 100 | 500 | 1 |
 
 ## Outbound por classificação
 

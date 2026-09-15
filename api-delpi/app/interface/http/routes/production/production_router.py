@@ -7,6 +7,7 @@ from app.interface.http.pagination_query import (
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
     FACTORY_SHIFT_QUERY,
+    GRANULARITY_QUERY_DAY_ONLY,
     GRANULARITY_QUERY_REQUIRED,
     PRODUCTION_OEE_STATUS_QUERY,
     PRODUCTION_OTD_STATUS_QUERY,
@@ -25,6 +26,8 @@ from app.interface.http.openapi_agent_metadata import (
     PRODUCTION_EFICIENCIA_FABRIL_APPOINTMENTS,
     PRODUCTION_EFICIENCIA_FABRIL_DASHBOARD,
     PRODUCTION_EFICIENCIA_FABRIL_EFFICIENCY_BY_WORK_CENTER,
+    PRODUCTION_EFICIENCIA_FABRIL_EFFICIENCY_SERIES,
+    PRODUCTION_FACTORY_SHIFTS,
     PRODUCTION_OEE,
     PRODUCTION_OEE_APPOINTMENT,
     PRODUCTION_OTD,
@@ -73,7 +76,9 @@ from app.composition.production_composer import (
     build_get_eficiencia_fabril_dashboard_use_case,
     build_get_eficiencia_fabril_appointments_use_case,
     build_get_eficiencia_fabril_efficiency_by_work_center_use_case,
+    build_get_eficiencia_fabril_efficiency_series_use_case,
 )
+from app.domain.production.factory_shifts import describe_factory_shifts
 from app.interface.http.kpi_field_labels import (
     PRODUCTION_COST_FIELD_LABELS,
     PRODUCTION_OEE_FIELD_LABELS,
@@ -754,6 +759,74 @@ def get_eficiencia_fabril_efficiency_by_work_center(
         log_error(f"Erro ao carregar eficiência por CT: {exc}")
         return error_response(
             "Erro interno ao carregar eficiência por centro de trabalho.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/eficiencia-fabril/efficiency-series",
+    **PRODUCTION_EFICIENCIA_FABRIL_EFFICIENCY_SERIES,
+)
+@require_any_permission(EFICIENCIA_FABRIL_ACCESS)
+def get_eficiencia_fabril_efficiency_series(
+    start_date: str | None = START_DATE_QUERY(),
+    end_date: str | None = END_DATE_QUERY(),
+    date_start: str | None = LEGACY_DATE_START_QUERY(),
+    date_end: str | None = LEGACY_DATE_END_QUERY(),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
+    op: str | None = Query(default=None),
+    employee: str | None = Query(default=None),
+    work_center: str | None = Query(default=None),
+    shift: str | None = FACTORY_SHIFT_QUERY(),
+    granularity: str = GRANULARITY_QUERY_DAY_ONLY(),
+):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
+    try:
+        use_case = build_get_eficiencia_fabril_efficiency_series_use_case()
+        result = use_case.execute(
+            date_start=start_date,
+            date_end=end_date,
+            branch=branch,
+            op=op,
+            employee=employee,
+            work_center=work_center,
+            shift=shift,
+            granularity=granularity,
+        )
+        return api_delpi_success(
+            result,
+            operation_id="get_eficiencia_fabril_efficiency_series",
+            message="Série de eficiência por centro de trabalho carregada com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação na série de eficiência por CT: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao carregar série de eficiência por CT: {exc}")
+        return error_response(
+            "Erro interno ao carregar série de eficiência por centro de trabalho.",
+            status_code=500,
+        )
+
+
+@router.get("/factory-shifts", **PRODUCTION_FACTORY_SHIFTS)
+@require_any_permission(EFICIENCIA_FABRIL_ACCESS)
+def get_production_factory_shifts():
+    try:
+        return api_delpi_success(
+            describe_factory_shifts(),
+            operation_id="get_production_factory_shifts",
+            message="Turnos de fábrica carregados com sucesso.",
+        )
+    except Exception as exc:
+        log_error(f"Erro ao carregar turnos de fábrica: {exc}")
+        return error_response(
+            "Erro interno ao carregar turnos de fábrica.",
             status_code=500,
         )
 

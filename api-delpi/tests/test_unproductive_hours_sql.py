@@ -88,6 +88,53 @@ def test_ranking_metric_cost_orders_by_custo() -> None:
     assert "SELECT TOP 5" in query
 
 
+def test_series_query_groups_by_reference_date() -> None:
+    query, params = sql.build_series_query(
+        start_date="2026-09-01",
+        end_date="2026-09-14",
+        branch="01",
+    )
+    assert UNPRODUCTIVE_HOURS_VIEW in query
+    assert "WITH (NOLOCK)" in query
+    assert "GROUP BY v.DATA_REFERENCIA" in query
+    assert "ORDER BY v.DATA_REFERENCIA ASC" in query
+    assert "total_horas" in query
+    assert params == ("2026-09-01", "2026-09-14", "01")
+
+
+def test_resource_filter_accepts_single_code() -> None:
+    query, params = sql.build_series_query(
+        start_date="2026-09-01",
+        end_date="2026-09-14",
+        branch="01",
+        resource="CT-12",
+    )
+    assert "LTRIM(RTRIM(v.RECURSO)) = ?" in query
+    assert params == ("2026-09-01", "2026-09-14", "01", "CT-12")
+
+
+def test_resource_filter_accepts_csv_and_dedups() -> None:
+    query, params = sql.build_series_query(
+        start_date="2026-09-01",
+        end_date="2026-09-14",
+        branch="01",
+        resource=" CT-12 , MAQ01 ,CT-12 ",
+    )
+    assert "LTRIM(RTRIM(v.RECURSO)) IN (?, ?)" in query
+    assert params == ("2026-09-01", "2026-09-14", "01", "CT-12", "MAQ01")
+
+
+def test_blank_resource_filter_is_ignored() -> None:
+    query, params = sql.build_series_query(
+        start_date="2026-09-01",
+        end_date="2026-09-14",
+        branch="01",
+        resource="  ,  ",
+    )
+    assert "RECURSO" not in query
+    assert params == ("2026-09-01", "2026-09-14", "01")
+
+
 def test_ranking_invalid_rank_by_raises() -> None:
     with pytest.raises(ValueError, match="rank_by"):
         sql.build_ranking_query(

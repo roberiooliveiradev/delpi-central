@@ -267,6 +267,140 @@ class DelpiProductionGateway:
             },
         )
 
+    def fetch_factory_shifts(self) -> dict[str, Any]:
+        """Catálogo de turnos + turno corrente — a api-delpi é dona dos horários."""
+        return self._request("GET", "/production/factory-shifts")
+
+    def fetch_efficiency_by_work_center(
+        self,
+        *,
+        branch: str,
+        start_date: str,
+        end_date: str,
+        work_center: str | None = None,
+        shift: str | None = None,
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/production/eficiencia-fabril/efficiency-by-work-center",
+            params={
+                "branch": branch,
+                "start_date": start_date,
+                "end_date": end_date,
+                "work_center": work_center,
+                "shift": shift,
+            },
+        )
+
+    def fetch_efficiency_series(
+        self,
+        *,
+        branch: str,
+        start_date: str,
+        end_date: str,
+        work_center: str | None = None,
+        shift: str | None = None,
+        granularity: str = "day",
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/production/eficiencia-fabril/efficiency-series",
+            params={
+                "branch": branch,
+                "start_date": start_date,
+                "end_date": end_date,
+                "work_center": work_center,
+                "shift": shift,
+                "granularity": granularity,
+            },
+        )
+
+    def fetch_eficiencia_fabril_appointments(
+        self,
+        *,
+        branch: str,
+        start_date: str,
+        end_date: str,
+        work_center: str | None = None,
+        shift: str | None = None,
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/production/eficiencia-fabril/appointments",
+            params={
+                "branch": branch,
+                "start_date": start_date,
+                "end_date": end_date,
+                "work_center": work_center,
+                "shift": shift,
+                "status_ok_only": True,
+            },
+        )
+
+    def fetch_unproductive_hours_summary(
+        self,
+        *,
+        branch: str,
+        start_date: str,
+        end_date: str,
+        resource: str | None = None,
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/production/unproductive-hours/summary",
+            params={
+                "branch": branch,
+                "start_date": start_date,
+                "end_date": end_date,
+                "resource": resource,
+            },
+        )
+
+    def fetch_unproductive_hours_ranking(
+        self,
+        *,
+        branch: str,
+        start_date: str,
+        end_date: str,
+        rank_by: str = "stop_reason",
+        resource: str | None = None,
+        limit: int = 10,
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/production/unproductive-hours/ranking",
+            params={
+                "branch": branch,
+                "start_date": start_date,
+                "end_date": end_date,
+                "rank_by": rank_by,
+                "metric": "hours",
+                "resource": resource,
+                "limit": limit,
+            },
+        )
+
+    def fetch_unproductive_hours_series(
+        self,
+        *,
+        branch: str,
+        start_date: str,
+        end_date: str,
+        resource: str | None = None,
+        granularity: str = "day",
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/production/unproductive-hours/series",
+            params={
+                "branch": branch,
+                "start_date": start_date,
+                "end_date": end_date,
+                "resource": resource,
+                "granularity": granularity,
+            },
+        )
+
     def fetch_open_sales_orders(self) -> dict[str, Any]:
         """Linhas de pedido de venda com saldo a entregar (TOTVS puro, todas as filiais).
 

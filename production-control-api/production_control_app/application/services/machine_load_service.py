@@ -111,6 +111,20 @@ _STATUS_FIELDS = (
     "last_appointment_date",
 )
 
+# Fila completa da filial no payload apresentado. A fila é uma só: o centro de
+# trabalho ativo é recorte de apresentação, então quem já tem a fila troca de aba
+# sem nova leitura. Consumidor que não precisa dela usa `strip_all_operations`.
+ALL_OPERATIONS_KEY = "operations"
+
+
+def strip_all_operations(payload: dict[str, Any]) -> dict[str, Any]:
+    """Remove a fila completa do payload apresentado, mantendo `selected` intacto."""
+    if ALL_OPERATIONS_KEY not in payload:
+        return payload
+    scoped = dict(payload)
+    scoped.pop(ALL_OPERATIONS_KEY, None)
+    return scoped
+
 
 @lru_cache(maxsize=1)
 def _machine_load_settings() -> dict[str, Any]:
@@ -276,7 +290,60 @@ class MachineLoadService:
             branch=branch,
             view_start=_parse_iso_date(start_date),
             view_end=_parse_iso_date(end_date),
+            # A fila não espera o chão de fábrica: o status vivo chega por
+            # `live_status`, que é quem consulta o TOTVS e alimenta o cache.
+            allow_remote_status=False,
         )
+
+    def live_status(self, user: object | None, *, branch: str) -> dict[str, Any]:
+        """Status de apontamento vivo (HZA) das operações da fila congelada.
+
+        É a única leitura do PCP que toca o TOTVS: a fila aparece na tela sem
+        esperar o chão de fábrica e o status chega em seguida.
+
+        Devolve a **diferença** entre o chão de fábrica e a fila congelada. O
+        TOTVS responde por todas as chaves pedidas, inclusive as ~1780 sem nada
+        acontecendo; mandar isso a cada 30 s seria repetir o que a tela já tem.
+        Operação ausente significa «mantém o valor do snapshot», mesma semântica
+        de ``_apply_status_map``.
+        """
+        self._assert_can_view(user, branch)
+        _row, payload = self._load_snapshot_payload(branch=branch)
+        operations = visible_operations(
+            self._payload_operations(payload), withdrawn_order_numbers(payload)
+        )
+        status_by_key = self._live_status_map(branch=branch, operations=operations)
+        enriched = self._apply_status_map(operations, status_by_key)
+
+        items: list[dict[str, Any]] = []
+        in_production_count = 0
+        for frozen, live in zip(operations, enriched, strict=True):
+            if live.get("is_in_production"):
+                in_production_count += 1
+            if live is frozen:
+                # `_apply_status_map` devolve o mesmo objeto quando não há status.
+                continue
+            changed = {
+                field: live[field]
+                for field in _STATUS_FIELDS
+                if field in live and live[field] != frozen.get(field)
+            }
+            if not changed:
+                continue
+            order, operation = _operation_key(frozen)
+            items.append(
+                {"production_order": order, "operation_code": operation, **changed}
+            )
+
+        return {
+            "branch": branch,
+            "as_of": datetime.now(timezone.utc).isoformat(),
+            "summary": {
+                "operation_count": len(operations),
+                "in_production_count": in_production_count,
+            },
+            "items": items,
+        }
 
     def build_public(
         self,
@@ -325,6 +392,42 @@ class MachineLoadService:
             if pa.upper() == wanted_key:
                 return True
         return False
+
+    def public_snapshot_work_center_resources(
+        self, *, branch: str, work_center: str
+    ) -> tuple[str, ...] | None:
+        """Recursos (``H8_RECURSO``) do CT na fila publicada, ou ``None`` se o CT não está nela.
+
+        O snapshot é a única fonte que liga centro de trabalho a recurso sem
+        reconsultar o TOTVS; as paradas do BI são filtradas por recurso, não por CT.
+        """
+        code = self._branch_access.assert_valid_branch(branch)
+        wanted = str(work_center or "").strip()
+        if not wanted:
+            return None
+        row = self._snapshots.get(branch=code)
+        if row is None:
+            raise SnapshotNotFound(
+                "A fila desta filial ainda não foi publicada pelo PCP."
+            )
+        payload = self._decode_payload(row)
+        operations = visible_operations(
+            self._payload_operations(payload), withdrawn_order_numbers(payload)
+        )
+        center_operations = [
+            item
+            for item in operations
+            if str(item.get("work_center") or "").strip() == wanted
+        ]
+        if not center_operations:
+            return None
+        resources: list[str] = []
+        for item in center_operations:
+            resource = str(item.get("resource") or "").strip()
+            if resource and resource not in resources:
+                resources.append(resource)
+        # Sem recurso cadastrado na operação, o próprio código do CT é o melhor palpite.
+        return tuple(resources) or (wanted,)
 
     def refresh(
         self,
@@ -1297,6 +1400,8 @@ class MachineLoadService:
         public_payload = dict(payload)
         # O operador não vê a lista de retirados (quem retirou e quando é uso interno do PCP).
         public_payload.pop("withdrawn", None)
+        # O cockpit mostra um centro por tela; a fila inteira só inflaria o payload.
+        public_payload.pop(ALL_OPERATIONS_KEY, None)
         snapshot = public_payload.get("snapshot")
         if isinstance(snapshot, dict):
             public_payload["snapshot"] = {
@@ -1531,6 +1636,7 @@ class MachineLoadService:
         branch: str,
         view_start: date | None = None,
         view_end: date | None = None,
+        allow_remote_status: bool = True,
     ) -> dict[str, Any]:
         raw_payload = row.get("payload_json")
         if isinstance(raw_payload, str):
@@ -1547,7 +1653,11 @@ class MachineLoadService:
         if not operations and isinstance(payload.get("operations"), list):
             operations = _dict_items(payload["operations"])
 
-        operations = self._enrich_live_status(branch=branch, operations=operations)
+        operations = self._enrich_live_status(
+            branch=branch,
+            operations=operations,
+            allow_remote=allow_remote_status,
+        )
         # Conjunto retirado continua no snapshot (posição original preservada), mas some da fila.
         withdrawn_keys = withdrawn_order_numbers(payload)
         operations = visible_operations(operations, withdrawn_keys)
@@ -1629,6 +1739,9 @@ class MachineLoadService:
                 "items": entries,
             },
             "work_centers": work_centers,
+            # Fila inteira da filial: o centro ativo é recorte de apresentação, não
+            # uma leitura diferente. Quem não precisa dela remove com `strip_all_operations`.
+            ALL_OPERATIONS_KEY: operations,
             "selected": {
                 "work_center": selected_center,
                 "requested_work_center": requested or None,
@@ -1642,18 +1755,23 @@ class MachineLoadService:
             },
         }
 
-    def _enrich_live_status(
+    def _live_status_map(
         self,
         *,
         branch: str,
         operations: list[dict[str, Any]],
-    ) -> list[dict[str, Any]]:
-        if not operations:
-            return operations
+        allow_remote: bool = True,
+    ) -> dict[tuple[str, str], dict[str, Any]]:
+        """Mapa OP+operação → status HZA, do cache ou do TOTVS.
 
+        Com ``allow_remote=False`` nunca consulta o ERP: serve para a leitura da
+        fila não ficar presa ao chão de fábrica quando o cache está frio.
+        """
         cached = get_live_status_cache(branch)
         if cached is not None:
-            return self._apply_status_map(operations, cached)
+            return cached
+        if not allow_remote or not operations:
+            return {}
 
         keys = [
             {
@@ -1664,7 +1782,7 @@ class MachineLoadService:
             if order and operation
         ]
         if not keys:
-            return operations
+            return {}
 
         try:
             status_payload = _unwrap_data(
@@ -1675,14 +1793,32 @@ class MachineLoadService:
             )
         except DelpiGatewayError:
             # Snapshot continua útil mesmo se o enrich HZA falhar.
-            return operations
+            return {}
         except Exception:
-            return operations
+            return {}
 
         status_by_key = {
             _operation_key(item): item for item in _dict_items(status_payload)
         }
         put_live_status_cache(branch, status_by_key)
+        return status_by_key
+
+    def _enrich_live_status(
+        self,
+        *,
+        branch: str,
+        operations: list[dict[str, Any]],
+        allow_remote: bool = True,
+    ) -> list[dict[str, Any]]:
+        if not operations:
+            return operations
+        status_by_key = self._live_status_map(
+            branch=branch,
+            operations=operations,
+            allow_remote=allow_remote,
+        )
+        if not status_by_key:
+            return operations
         return self._apply_status_map(operations, status_by_key)
 
     @staticmethod

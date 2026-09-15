@@ -18,11 +18,13 @@ from app.application.dto.production.unproductive_hours_request import (
     UnproductiveHoursPeriod,
     UnproductiveHoursQueryRequest,
     UnproductiveHoursRankingRequest,
+    UnproductiveHoursSeriesRequest,
 )
 from app.application.security.api_delpi_permissions import UNPRODUCTIVE_HOURS_ACCESS
 from app.composition.unproductive_hours_composer import (
     build_get_production_unproductive_hours_items_use_case,
     build_get_production_unproductive_hours_ranking_use_case,
+    build_get_production_unproductive_hours_series_use_case,
     build_get_production_unproductive_hours_summary_use_case,
 )
 from app.core.exceptions import DatabaseConnectionError
@@ -45,7 +47,10 @@ from app.interface.http.period_query_params import (
     START_DATE_QUERY,
     resolve_period_dates,
 )
-from app.interface.http.query_param_enums import BRANCH_QUERY_OPTIONAL
+from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_OPTIONAL,
+    GRANULARITY_QUERY_DAY_ONLY,
+)
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 
@@ -92,6 +97,17 @@ _ITEM_FIELDS = {
     "tempoHoras": {"label": "Horas", "type": "number"},
     "valorParada": {"label": "Valor da parada (R$)", "type": "number"},
     "fonteCusto": {"label": "Fonte de custo", "type": "string"},
+}
+
+_SERIES_FIELDS = {
+    "date": {"label": "Date", "type": "string", "format": "date"},
+    "total_appointments": {"label": "Total appointments", "type": "integer"},
+    "total_hours": {"label": "Total hours", "type": "number"},
+    "total_cost": {"label": "Total cost (BRL)", "type": "number"},
+    "dataReferencia": {"label": "Data de referência", "type": "string", "format": "date"},
+    "totalApontamentos": {"label": "Total de apontamentos", "type": "integer"},
+    "totalHoras": {"label": "Total de horas", "type": "number"},
+    "totalCusto": {"label": "Custo total (R$)", "type": "number"},
 }
 
 _RANKING_FIELDS = {
@@ -153,7 +169,7 @@ def get_production_unproductive_hours_summary(
     ),
     resource: Optional[str] = Query(
         default=None,
-        description="Production resource code filter.",
+        description="Production resource code filter. Accepts a comma-separated list.",
         pattern=_CODE_PATTERN,
     ),
     cost_center: Optional[str] = Query(
@@ -229,7 +245,7 @@ def get_production_unproductive_hours_items(
     ),
     resource: Optional[str] = Query(
         default=None,
-        description="Production resource code filter.",
+        description="Production resource code filter. Accepts a comma-separated list.",
         pattern=_CODE_PATTERN,
     ),
     cost_center: Optional[str] = Query(
@@ -296,6 +312,84 @@ def get_production_unproductive_hours_items(
 
 
 @router.get(
+    "/series",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_production_unproductive_hours_series",
+        path="/production/unproductive-hours/series",
+    ),
+)
+@require_any_permission(UNPRODUCTIVE_HOURS_ACCESS)
+def get_production_unproductive_hours_series(
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
+    stop_reason: Optional[str] = Query(
+        default=None,
+        description="Stop reason code from the view (e.g. RT, OT, MT). Empty = all reasons.",
+        pattern=_STOP_REASON_PATTERN,
+    ),
+    resource: Optional[str] = Query(
+        default=None,
+        description="Production resource code filter. Accepts a comma-separated list.",
+        pattern=_CODE_PATTERN,
+    ),
+    cost_center: Optional[str] = Query(
+        default=None,
+        description="Cost center code filter.",
+        pattern=_CODE_PATTERN,
+    ),
+    operator_code: Optional[str] = Query(
+        default=None,
+        description="Operator code filter.",
+        pattern=_CODE_PATTERN,
+    ),
+    granularity: str = GRANULARITY_QUERY_DAY_ONLY(),
+):
+    try:
+        period = _build_period(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            date_start=date_start,
+            date_end=date_end,
+        )
+        request = UnproductiveHoursSeriesRequest(
+            period=period,
+            stop_reason=stop_reason,
+            resource=resource,
+            cost_center=cost_center,
+            operator_code=operator_code,
+            granularity=granularity,
+        )
+        result = build_get_production_unproductive_hours_series_use_case().execute(
+            request
+        )
+        return api_delpi_success(
+            result,
+            operation_id="get_production_unproductive_hours_series",
+            message="Série de horas improdutivas buscada com sucesso.",
+            fields=_SERIES_FIELDS,
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação ao buscar série de horas improdutivas: {exc}")
+        return error_response(str(exc), status_code=400)
+    except DatabaseConnectionError as exc:
+        log_error(f"Erro de banco ao buscar série de horas improdutivas: {exc}")
+        return error_response(
+            "Erro de conexão com o banco ao buscar série de horas improdutivas.",
+            status_code=503,
+        )
+    except Exception as exc:
+        log_error(f"Erro ao buscar série de horas improdutivas: {exc}")
+        return error_response(
+            "Erro interno ao buscar série de horas improdutivas.",
+            status_code=500,
+        )
+
+
+@router.get(
     "/ranking",
     **OpenApiAgentMetadataBuilder.from_contract(
         "get_production_unproductive_hours_ranking",
@@ -325,7 +419,7 @@ def get_production_unproductive_hours_ranking(
     ),
     resource: Optional[str] = Query(
         default=None,
-        description="Production resource code filter.",
+        description="Production resource code filter. Accepts a comma-separated list.",
         pattern=_CODE_PATTERN,
     ),
     cost_center: Optional[str] = Query(

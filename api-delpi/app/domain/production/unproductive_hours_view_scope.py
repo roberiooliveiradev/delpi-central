@@ -32,6 +32,28 @@ METRIC_HOURS = "hours"
 METRIC_COST = "cost"
 METRIC_VALUES = (METRIC_HOURS, METRIC_COST)
 
+GRANULARITY_DAY = "day"
+GRANULARITY_VALUES = (GRANULARITY_DAY,)
+
+
+def parse_resource_filter(raw: str | None) -> tuple[str, ...]:
+    """Normaliza o filtro de recurso — aceita um código ou CSV.
+
+    Um centro de trabalho pode ter mais de um recurso (``H8_RECURSO``), então o
+    consumidor precisa conseguir pedir o conjunto em uma única consulta.
+    """
+    if raw is None:
+        return ()
+    codes: list[str] = []
+    seen: set[str] = set()
+    for part in str(raw).split(","):
+        code = part.strip()
+        if not code or code in seen:
+            continue
+        seen.add(code)
+        codes.append(code)
+    return tuple(codes)
+
 DEFAULT_MONTHS_WINDOW = 12
 MAX_MONTHS_WINDOW = 24
 DEFAULT_RANKING_LIMIT = 10

@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-11",
-  "baselineOperationCount": 700,
-  "operationCount": 700,
-  "coveredCount": 625,
+  "generatedAt": "2026-09-14",
+  "baselineOperationCount": 703,
+  "operationCount": 703,
+  "coveredCount": 628,
   "gapCount": 74,
   "exemptCount": 1,
   "byModule": {
@@ -128,8 +128,8 @@
       "exempt": 0
     },
     "production": {
-      "total": 47,
-      "covered": 47,
+      "total": 50,
+      "covered": 50,
       "gap": 0,
       "exempt": 0
     },
@@ -3554,6 +3554,24 @@
       "status": "covered"
     },
     {
+      "operationId": "get_eficiencia_fabril_efficiency_series",
+      "method": "GET",
+      "path": "/production/eficiencia-fabril/efficiency-series",
+      "module": "production",
+      "entity": "eficiencia_fabril_efficiency_series",
+      "shape": "list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_production_factory_shifts",
+      "method": "GET",
+      "path": "/production/factory-shifts",
+      "module": "production",
+      "entity": "production_factory_shift",
+      "shape": "list",
+      "status": "covered"
+    },
+    {
       "operationId": "get_production_losses_records",
       "method": "GET",
       "path": "/production/losses/records",
@@ -3784,6 +3802,15 @@
       "path": "/production/unproductive-hours/ranking",
       "module": "production",
       "entity": "production_unproductive_hours_ranking",
+      "shape": "list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_production_unproductive_hours_series",
+      "method": "GET",
+      "path": "/production/unproductive-hours/series",
+      "module": "production",
+      "entity": "production_unproductive_hours_series",
       "shape": "list",
       "status": "covered"
     },

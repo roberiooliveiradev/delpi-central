@@ -91,6 +91,10 @@ _ENTITY_LABELS: dict[str, str] = {
     "production_order_sets_incomplete": (
         "conjuntos de OP cujas ordens filhas não batem com a estrutura do produto raiz"
     ),
+    "production_unproductive_hours_series": (
+        "série diária de horas improdutivas (paradas) apontadas pelo PCP"
+    ),
+    "production_factory_shift": "turnos de fábrica Delpi e turno corrente",
     "supplies_safety_stock_detail": (
         "detalhe de estoque de segurança com cobertura de compras, "
         "empenhos e extrato projetado de saldo"

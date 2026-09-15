@@ -8,8 +8,10 @@ from app.application.dto.production.unproductive_hours_request import (
     UnproductiveHoursItemsRequest,
     UnproductiveHoursQueryRequest,
     UnproductiveHoursRankingRequest,
+    UnproductiveHoursSeriesRequest,
     as_int,
     display_operator_name,
+    iso_date,
     round_cost,
     round_hours,
 )
@@ -103,6 +105,39 @@ class UnproductiveHoursResponseAssembler:
             items=items,
             extra={"periodo": request.periodo_dict(), "sort": request.sort},
         )
+
+    @staticmethod
+    def to_series(
+        *,
+        request: UnproductiveHoursSeriesRequest,
+        rows: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        items = []
+        for row in rows:
+            reference_date = iso_date(row.get("data_referencia"))
+            if not reference_date:
+                continue
+            total_appointments = as_int(row.get("total_apontamentos"))
+            total_hours = round_hours(row.get("total_horas"))
+            total_cost = round_cost(row.get("total_custo"))
+            items.append(
+                {
+                    "date": reference_date,
+                    "total_appointments": total_appointments,
+                    "total_hours": total_hours,
+                    "total_cost": total_cost,
+                    # Aliases camelCase PT
+                    "dataReferencia": reference_date,
+                    "totalApontamentos": total_appointments,
+                    "totalHoras": total_hours,
+                    "totalCusto": total_cost,
+                }
+            )
+        return {
+            "periodo": request.periodo_dict(),
+            "granularity": request.granularity,
+            "items": items,
+        }
 
     @staticmethod
     def to_ranking(

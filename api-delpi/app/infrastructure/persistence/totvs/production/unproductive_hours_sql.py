@@ -9,6 +9,7 @@ from app.domain.production.unproductive_hours_view_scope import (
     ITEMS_SORT_VALUES,
     METRIC_COST,
     METRIC_HOURS,
+    parse_resource_filter,
     RANK_BY_COST_CENTER,
     RANK_BY_OPERATION,
     RANK_BY_OPERATOR,
@@ -123,9 +124,14 @@ def build_base_where(
         clauses.append("LTRIM(RTRIM(v.MOTIVO)) = ?")
         params.append(stop_reason)
 
-    if resource:
+    resource_codes = parse_resource_filter(resource)
+    if len(resource_codes) == 1:
         clauses.append("LTRIM(RTRIM(v.RECURSO)) = ?")
-        params.append(resource)
+        params.append(resource_codes[0])
+    elif resource_codes:
+        placeholders = ", ".join("?" for _ in resource_codes)
+        clauses.append(f"LTRIM(RTRIM(v.RECURSO)) IN ({placeholders})")
+        params.extend(resource_codes)
 
     if cost_center:
         clauses.append("LTRIM(RTRIM(v.CENTRO_CUSTO)) = ?")
@@ -291,6 +297,39 @@ def build_ranking_query(
           AND {spec.non_empty_predicate}
         GROUP BY {spec.group_by}
         ORDER BY {order_column} DESC
+        """,
+        params,
+    )
+
+
+def build_series_query(
+    *,
+    start_date: str,
+    end_date: str,
+    branch: str | None,
+    stop_reason: str | None = None,
+    resource: str | None = None,
+    cost_center: str | None = None,
+    operator_code: str | None = None,
+) -> tuple[str, tuple]:
+    where_clause, params = build_base_where(
+        start_date=start_date,
+        end_date=end_date,
+        branch=branch,
+        stop_reason=stop_reason,
+        resource=resource,
+        cost_center=cost_center,
+        operator_code=operator_code,
+    )
+    return (
+        f"""
+        SELECT
+            v.DATA_REFERENCIA AS data_referencia,
+            {_aggregate_metrics_select()}
+        {_from_view()}
+        WHERE {where_clause}
+        GROUP BY v.DATA_REFERENCIA
+        ORDER BY v.DATA_REFERENCIA ASC
         """,
         params,
     )

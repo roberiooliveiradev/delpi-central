@@ -8,9 +8,13 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Iterable, Optional
+from zoneinfo import ZoneInfo
 
 FACTORY_SHIFT_IDS: tuple[str, ...] = ("1", "2", "3")
+
+FACTORY_TIMEZONE = "America/Sao_Paulo"
 
 
 @dataclass(frozen=True, slots=True)
@@ -124,6 +128,47 @@ def parse_factory_shift_filter(raw: str | None | Iterable[str]) -> tuple[str, ..
         seen.add(part)
         selected.append(part)
     return tuple(selected)
+
+
+def factory_now(timezone_name: str | None = None) -> datetime:
+    """Agora no fuso da fábrica — o turno não pode depender do fuso do container."""
+    return datetime.now(ZoneInfo(timezone_name or FACTORY_TIMEZONE))
+
+
+def current_factory_shift(
+    reference: datetime | None = None,
+    *,
+    timezone_name: str | None = None,
+) -> FactoryShiftDefinition | None:
+    """Turno em andamento no horário de referência (default: agora na fábrica)."""
+    moment = reference or factory_now(timezone_name)
+    return resolve_factory_shift(moment.strftime("%H:%M"))
+
+
+def shift_to_dict(shift: FactoryShiftDefinition) -> dict[str, str]:
+    return {
+        "id": shift.id,
+        "label": shift.label,
+        "start_time": shift.start,
+        "end_time": shift.end,
+    }
+
+
+def describe_factory_shifts(
+    reference: datetime | None = None,
+    *,
+    timezone_name: str | None = None,
+) -> dict:
+    """Catálogo de turnos + turno corrente, para consumidores não duplicarem a tabela."""
+    moment = reference or factory_now(timezone_name)
+    current = current_factory_shift(moment)
+    return {
+        "timezone": timezone_name or FACTORY_TIMEZONE,
+        "reference_time": moment.isoformat(),
+        "current_shift_id": current.id if current else None,
+        "current_shift": shift_to_dict(current) if current else None,
+        "shifts": [shift_to_dict(shift) for shift in FACTORY_SHIFTS],
+    }
 
 
 def matches_factory_shift_filter(

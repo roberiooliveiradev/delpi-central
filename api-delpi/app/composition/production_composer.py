@@ -190,3 +190,13 @@ def build_get_eficiencia_fabril_efficiency_by_work_center_use_case():
         appointments_use_case=build_get_eficiencia_fabril_appointments_use_case(),
     )
 
+
+def build_get_eficiencia_fabril_efficiency_series_use_case():
+    from app.application.use_cases.eficiencia_fabril.get_eficiencia_fabril_efficiency_series_use_case import (
+        GetEficienciaFabrilEfficiencySeriesUseCase,
+    )
+
+    return GetEficienciaFabrilEfficiencySeriesUseCase(
+        appointments_use_case=build_get_eficiencia_fabril_appointments_use_case(),
+    )
+
