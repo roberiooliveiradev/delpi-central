@@ -1,11 +1,20 @@
 """OAuth/MCP contract constants and challenge builders (OpenAI Plugin auth).
 
-OAuth scopes are identity / resource-binding scopes for token issuance.
-They are NOT RBAC permission codes and must never expose ENGINEERING_LMP_ACCESS.
+OAuth scopes advertised/required on the MCP resource server are ONLY those
+expected in the JWT ``scope`` claim.
 
-Keycloak 26.x does not natively process RFC 8707 `resource` → aud.
-Official workaround: optional client scope (e.g. mcp:tools) with Audience mapper
-whose Included Custom Audience equals the MCP resource URL exactly.
+Distinction (proven with Keycloak 26.0.7 + client ``mcp-api-delpi``):
+
+- identity scopes (in JWT scope): ``openid``, ``profile``, ``email``
+- MCP resource-binding scope (in JWT scope): ``mcp:tools``
+- Keycloak internal audience client scope: ``audience-delpi``
+  → causes ``aud`` to include ``delpi-central``
+  → does NOT appear in JWT ``scope`` and MUST NOT be required there
+- business authorization: ``ENGINEERING_LMP_ACCESS`` (RBAC, never an OAuth scope)
+
+Keycloak 26.x does not natively process RFC 8707 ``resource`` → aud.
+Official workaround: client scope ``mcp:tools`` with Audience mapper whose
+Included Custom Audience equals the MCP resource URL exactly.
 """
 
 from __future__ import annotations
@@ -13,16 +22,18 @@ from __future__ import annotations
 import os
 from typing import Any
 
-# Identity + platform audience + MCP resource-binding (Keycloak scope workaround).
+# Required in JWT ``scope`` for MCP transport acceptance.
 MCP_OAUTH_SCOPES: tuple[str, ...] = (
     "openid",
     "profile",
     "email",
-    "audience-delpi",
     "mcp:tools",
 )
 
 MCP_RESOURCE_BINDING_SCOPE = "mcp:tools"
+
+# Assigned on Keycloak client mcp-api-delpi (Default). Not a JWT scope claim.
+KEYCLOAK_INTERNAL_AUDIENCE_CLIENT_SCOPE = "audience-delpi"
 
 SEARCH_PRODUCTS_SECURITY_SCHEMES: list[dict[str, Any]] = [
     {

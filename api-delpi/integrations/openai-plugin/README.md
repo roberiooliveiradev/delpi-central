@@ -22,7 +22,7 @@ Documentation does not prove runtime.
 
 1. Ensure `https://minhadelpi.com.br/apps/api-delpi/mcp` is reachable over HTTPS.
 2. Confirm protected-resource metadata includes `mcp:tools` and exact MCP resource URL.
-3. Configure Keycloak client `mcp-api-delpi` per runbook; capture ChatGPT redirect URI exactly.
+3. Keycloak client `mcp-api-delpi` per runbook (redirect `https://chatgpt.com/connector_platform_oauth_redirect`; JWT `scope` must include `openid profile email mcp:tools` — not `audience-delpi`).
 4. In ChatGPT, connect remote MCP / load this plugin; specialist presents as **DAVI**.
 5. OAuth with a real DELPI user (Authorization Code + PKCE).
 6. Tool scan must list only `search_products`.

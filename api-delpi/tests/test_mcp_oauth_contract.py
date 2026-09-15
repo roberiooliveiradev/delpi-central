@@ -13,6 +13,7 @@ from starlette.requests import Request
 from app.application.external_capabilities.constants import MCP_TOOL_SEARCH_PRODUCTS
 from app.interface.mcp.oauth_contract import (
     CANONICAL_MCP_RESOURCE_URL,
+    KEYCLOAK_INTERNAL_AUDIENCE_CLIENT_SCOPE,
     MCP_AUTH_MODEL,
     MCP_OAUTH_SCOPES,
     MCP_RESOURCE_BINDING_SCOPE,
@@ -53,7 +54,10 @@ def test_auth_model_is_transport_level() -> None:
 
 def test_security_schemes_are_oauth2_without_rbac_codes() -> None:
     assert MCP_RESOURCE_BINDING_SCOPE == "mcp:tools"
+    assert KEYCLOAK_INTERNAL_AUDIENCE_CLIENT_SCOPE == "audience-delpi"
     assert "mcp:tools" in MCP_OAUTH_SCOPES
+    assert "audience-delpi" not in MCP_OAUTH_SCOPES
+    assert MCP_OAUTH_SCOPES == ("openid", "profile", "email", "mcp:tools")
     assert SEARCH_PRODUCTS_SECURITY_SCHEMES == [
         {"type": "oauth2", "scopes": list(MCP_OAUTH_SCOPES)}
     ]
@@ -61,6 +65,7 @@ def test_security_schemes_are_oauth2_without_rbac_codes() -> None:
     assert "ENGINEERING_LMP_ACCESS" not in blob
     assert "api-delpi.access" not in blob
     assert "dashboard-" not in blob
+    assert "audience-delpi" not in blob
 
 
 def test_list_tools_exposes_top_level_security_schemes() -> None:
@@ -144,12 +149,25 @@ def test_tool_forbidden_does_not_oauth_challenge(_authz) -> None:
 def test_missing_oauth_scopes_detection() -> None:
     assert missing_required_oauth_scopes({"scope": "openid profile"}) == [
         "email",
-        "audience-delpi",
         "mcp:tools",
     ]
+    # Proven Keycloak Evaluate token: audience-delpi absent from scope string.
     assert (
         missing_required_oauth_scopes(
-            {"scope": "openid profile email audience-delpi mcp:tools"}
+            {"scope": "openid email profile mcp:tools"}
+        )
+        == []
+    )
+    assert (
+        missing_required_oauth_scopes(
+            {
+                "scope": "openid email profile mcp:tools",
+                "aud": [
+                    "delpi-central",
+                    CANONICAL_MCP_RESOURCE_URL,
+                    "account",
+                ],
+            }
         )
         == []
     )
@@ -271,7 +289,7 @@ async def test_mcp_missing_scopes_rejected(monkeypatch) -> None:
     ), patch(
         "app.middleware.auth_middleware.validate_token",
         return_value={
-            "scope": "openid profile email audience-delpi",
+            "scope": "openid profile email",
             "sub": "u1",
             "aud": ["delpi-central", CANONICAL_MCP_RESOURCE_URL],
         },
@@ -293,7 +311,7 @@ async def test_mcp_token_without_resource_audience_rejected(monkeypatch) -> None
     ), patch(
         "app.middleware.auth_middleware.validate_token",
         return_value={
-            "scope": "openid profile email audience-delpi mcp:tools",
+            "scope": "openid profile email mcp:tools",
             "sub": "u1",
             "aud": "delpi-central",
         },
@@ -305,6 +323,40 @@ async def test_mcp_token_without_resource_audience_rejected(monkeypatch) -> None
     assert response.status_code == 401
     assert 'error="invalid_token"' in response.headers["WWW-Authenticate"]
     assert "MCP resource audience" in response.headers["WWW-Authenticate"]
+
+
+@pytest.mark.asyncio
+async def test_mcp_proven_keycloak_token_shape_accepted(monkeypatch) -> None:
+    """Live Evaluate shape: both auds + scope without audience-delpi string."""
+    monkeypatch.setenv("PUBLIC_BASE_URL", "https://minhadelpi.com.br")
+    ok = JSONResponse(status_code=200, content={"ok": True})
+
+    async def _base(request, call_next):
+        return ok
+
+    with patch(
+        "app.middleware.auth_middleware.request_has_valid_internal_service_token",
+        return_value=False,
+    ), patch(
+        "app.middleware.auth_middleware.validate_token",
+        return_value={
+            "scope": "openid email profile mcp:tools",
+            "sub": "u1",
+            "aud": [
+                "delpi-central",
+                CANONICAL_MCP_RESOURCE_URL,
+                "account",
+            ],
+        },
+    ), patch(
+        "app.middleware.auth_middleware._base_jwt_middleware",
+        side_effect=_base,
+    ):
+        response = await jwt_middleware(
+            _request("/mcp", {"Authorization": "Bearer good"}),
+            AsyncMock(),
+        )
+    assert response.status_code == 200
 
 
 @pytest.mark.asyncio
@@ -321,7 +373,7 @@ async def test_mcp_valid_token_delegates_to_base(monkeypatch) -> None:
     ), patch(
         "app.middleware.auth_middleware.validate_token",
         return_value={
-            "scope": "openid profile email audience-delpi mcp:tools",
+            "scope": "openid profile email mcp:tools",
             "sub": "u1",
             "aud": ["delpi-central", CANONICAL_MCP_RESOURCE_URL],
         },

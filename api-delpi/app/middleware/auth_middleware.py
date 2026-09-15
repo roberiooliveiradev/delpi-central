@@ -111,7 +111,9 @@ async def jwt_middleware(request: Request, call_next):
                     error="invalid_token",
                     error_description="MCP resource audience is required",
                 )
-            # 3) Required OAuth scopes (identity + audience-delpi + mcp:tools).
+            # 3) Required OAuth scopes in JWT scope claim (identity + mcp:tools).
+            #    audience-delpi is a Keycloak client scope that mints aud=delpi-central;
+            #    it is NOT required in the JWT scope string.
             missing = missing_required_oauth_scopes(claims)
             if missing:
                 return _unauthorized_mcp(

@@ -57,19 +57,40 @@ Must match metadata, OAuth `resource`, Keycloak Audience mapper, JWT `aud`, plug
 
 ## OAuth scopes
 
+### Required in JWT ``scope`` (MCP resource server)
+
 ```text
-openid profile email audience-delpi mcp:tools
+openid profile email mcp:tools
 ```
 
-- `audience-delpi` → `aud` includes `delpi-central` (platform)
-- `mcp:tools` → `aud` includes MCP resource URL (Keycloak documented workaround; **not** native RFC8707)
-- Neither scope is business AuthZ
+| Kind | Scopes |
+|---|---|
+| Identity | `openid`, `profile`, `email` |
+| MCP resource-binding | `mcp:tools` |
+
+### Keycloak client scope (not in JWT ``scope``)
+
+```text
+audience-delpi  (Default on mcp-api-delpi)
+```
+
+Postcondition: ``aud`` includes ``delpi-central``.  
+Do **not** require the string ``audience-delpi`` in the JWT ``scope`` claim (proven Keycloak 26.0.7 Evaluate token omits it).
+
+### Business authorization (not OAuth)
+
+```text
+ENGINEERING_LMP_ACCESS
+```
+
+- `mcp:tools` → ``aud`` includes MCP resource URL (Keycloak documented workaround; **not** native RFC8707)
+- Neither OAuth scope is business AuthZ
 
 ## Token validation on `/mcp`
 
 1. Shared `validate_token` → signature, issuer, exp, nbf, `aud` includes `delpi-central`
 2. MCP adapter → `aud` contains exact `MCP_RESOURCE_URL`
-3. Required OAuth scopes including `mcp:tools`
+3. Required OAuth scopes in JWT `scope`: `openid profile email mcp:tools`
 4. User context + `ENGINEERING_LMP_ACCESS` for `search_products`
 
 Ordinary DELPI tokens with only `delpi-central` are **rejected** on `/mcp`.
@@ -80,7 +101,7 @@ Ordinary DELPI tokens with only `delpi-central` are **rejected** on `/mcp`.
 |---|---|
 | Mode | `PREDEFINED` |
 | Client ID | `mcp-api-delpi` |
-| Redirect URI | `TO_CONFIGURE` (ChatGPT MCP UI exact value) |
+| Redirect URI | `https://chatgpt.com/connector_platform_oauth_redirect` |
 
 ## Rate limit
 

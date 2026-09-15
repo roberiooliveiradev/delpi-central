@@ -146,8 +146,8 @@ def test_oauth_resource_metadata_shape(monkeypatch) -> None:
         "https://minhadelpi.com.br/auth/realms/delpi"
     ]
     assert "openid" in doc["scopes_supported"]
-    assert "audience-delpi" in doc["scopes_supported"]
     assert "mcp:tools" in doc["scopes_supported"]
+    assert "audience-delpi" not in doc["scopes_supported"]
     challenge = www_authenticate_challenge(
         error="invalid_token",
         error_description="Authentication required",
@@ -156,6 +156,7 @@ def test_oauth_resource_metadata_shape(monkeypatch) -> None:
     assert "Bearer" in challenge
     assert 'error="invalid_token"' in challenge
     assert "mcp:tools" in challenge
+    assert "audience-delpi" not in challenge
 
 
 def test_plugin_package_schemas_and_skill() -> None:
