@@ -7,7 +7,7 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
-from mcp.types import ToolAnnotations
+from mcp.types import CallToolResult, TextContent, Tool as MCPTool, ToolAnnotations
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.application.external_capabilities.constants import (
@@ -18,6 +18,10 @@ from app.application.external_capabilities.constants import (
     PRODUCT_SEARCH_MAX_PAGE_SIZE,
 )
 from app.application.external_capabilities.product_search_service import search_products
+from app.interface.mcp.oauth_contract import (
+    SEARCH_PRODUCTS_SECURITY_SCHEMES,
+    mcp_www_authenticate_meta,
+)
 from app.interface.mcp.resource_metadata import public_host_allowed_for_mcp
 from app.utils.logger import log_error
 
@@ -41,9 +45,34 @@ class SearchProductsInput(BaseModel):
     )
 
 
+class ApiDelpiFastMCP(FastMCP):
+    """Promote OpenAI `securitySchemes` to the tools/list top-level field."""
+
+    async def list_tools(self) -> list[MCPTool]:
+        tools = self._tool_manager.list_tools()
+        listed: list[MCPTool] = []
+        for info in tools:
+            meta = dict(info.meta or {})
+            schemes = meta.get("securitySchemes")
+            payload: dict[str, Any] = {
+                "name": info.name,
+                "title": info.title,
+                "description": info.description or "",
+                "inputSchema": info.parameters,
+                "outputSchema": info.output_schema,
+                "annotations": info.annotations,
+                "icons": info.icons,
+                "_meta": meta or None,
+            }
+            if schemes:
+                payload["securitySchemes"] = schemes
+            listed.append(MCPTool.model_validate(payload))
+        return listed
+
+
 def create_mcp_server() -> FastMCP:
     hosts, origins = public_host_allowed_for_mcp()
-    mcp = FastMCP(
+    mcp = ApiDelpiFastMCP(
         name="api-delpi",
         instructions=(
             "Read-only DELPI operational data tools. "
@@ -74,6 +103,7 @@ def create_mcp_server() -> FastMCP:
             openWorldHint=False,
             title=MCP_TOOL_SEARCH_PRODUCTS_TITLE,
         ),
+        meta={"securitySchemes": SEARCH_PRODUCTS_SECURITY_SCHEMES},
         structured_output=True,
     )
     def search_products_tool(
@@ -82,8 +112,7 @@ def create_mcp_server() -> FastMCP:
         group_code: str | None = None,
         page: int = 1,
         page_size: int = PRODUCT_SEARCH_DEFAULT_PAGE_SIZE,
-    ) -> dict[str, Any]:
-        # Validate with strict model (rejects customer_reference / unknown fields).
+    ) -> CallToolResult:
         try:
             params = SearchProductsInput(
                 code=code,
@@ -96,7 +125,7 @@ def create_mcp_server() -> FastMCP:
             raise ValueError(f"Invalid search_products arguments: {exc}") from exc
 
         try:
-            return search_products(
+            data = search_products(
                 code=params.code,
                 description=params.description,
                 group_code=params.group_code,
@@ -105,8 +134,38 @@ def create_mcp_server() -> FastMCP:
                 enforce_authz=True,
                 tool_name=MCP_TOOL_SEARCH_PRODUCTS,
             )
+            return CallToolResult(
+                content=[
+                    TextContent(
+                        type="text",
+                        text="Product search completed.",
+                    )
+                ],
+                structuredContent=data,
+                isError=False,
+            )
         except PermissionError as exc:
-            raise PermissionError(str(exc) or "Forbidden") from exc
+            message = str(exc) or "Forbidden"
+            if message == "Unauthorized":
+                return CallToolResult.model_validate(
+                    {
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "Authentication required.",
+                            }
+                        ],
+                        "isError": True,
+                        "_meta": mcp_www_authenticate_meta(
+                            error="invalid_token",
+                            error_description="Authentication required",
+                        ),
+                    }
+                )
+            return CallToolResult(
+                content=[TextContent(type="text", text="Forbidden")],
+                isError=True,
+            )
         except Exception as exc:
             log_error(f"mcp search_products failed: {exc}")
             raise RuntimeError(EXTERNAL_INTERNAL_ERROR_MESSAGE) from exc

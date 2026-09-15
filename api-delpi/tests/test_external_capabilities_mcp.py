@@ -120,7 +120,8 @@ def test_mcp_tool_returns_projected_data(mock_search) -> None:
     mcp = create_mcp_server()
     tool = mcp._tool_manager.get_tool(MCP_TOOL_SEARCH_PRODUCTS)
     result = tool.fn(code="1008", page=1, page_size=50)
-    assert result["items"][0]["product_code"] == "10080160"
+    assert result.isError is False
+    assert result.structuredContent["items"][0]["product_code"] == "10080160"
     mock_search.assert_called_once()
 
 
@@ -145,9 +146,14 @@ def test_oauth_resource_metadata_shape(monkeypatch) -> None:
         "https://minhadelpi.com.br/auth/realms/delpi"
     ]
     assert "openid" in doc["scopes_supported"]
-    challenge = www_authenticate_challenge()
+    assert "audience-delpi" in doc["scopes_supported"]
+    challenge = www_authenticate_challenge(
+        error="invalid_token",
+        error_description="Authentication required",
+    )
     assert "resource_metadata=" in challenge
     assert "Bearer" in challenge
+    assert 'error="invalid_token"' in challenge
 
 
 def test_plugin_package_schemas_and_skill() -> None:

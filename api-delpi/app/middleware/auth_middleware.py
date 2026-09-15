@@ -3,9 +3,11 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
+from delpi_auth.jwt_validator import validate_token
 from delpi_auth.middleware.fastapi_auth import jwt_middleware as _base_jwt_middleware
 from delpi_auth.service_token import request_has_valid_internal_service_token
 
+from app.interface.mcp.oauth_contract import missing_required_oauth_scopes
 from app.interface.mcp.resource_metadata import www_authenticate_challenge
 
 __all__ = ["jwt_middleware", "_is_public_delpi_path"]
@@ -55,11 +57,20 @@ def _is_public_delpi_path(path: str) -> bool:
     return any(normalized.startswith(prefix) for prefix in _PUBLIC_PREFIXES)
 
 
-def _unauthorized_mcp() -> JSONResponse:
+def _unauthorized_mcp(
+    *,
+    error: str = "invalid_token",
+    error_description: str = "Authentication required",
+) -> JSONResponse:
     return JSONResponse(
         status_code=401,
         content={"detail": "Unauthorized"},
-        headers={"WWW-Authenticate": www_authenticate_challenge()},
+        headers={
+            "WWW-Authenticate": www_authenticate_challenge(
+                error=error,
+                error_description=error_description,
+            )
+        },
     )
 
 
@@ -69,12 +80,44 @@ async def jwt_middleware(request: Request, call_next):
 
     normalized = _strip_root(request.url.path.split("?", 1)[0])
     if _is_mcp_data_path(normalized):
-        # User-data MCP surface: machine/service identity is forbidden.
+        # Auth model A: entire MCP transport requires user OAuth before tools/list.
+        # Machine/service identity is forbidden on this user-data surface.
         if request_has_valid_internal_service_token(request):
+            return _unauthorized_mcp(
+                error="invalid_token",
+                error_description="User authentication required",
+            )
+
+        auth_header = request.headers.get("Authorization") or ""
+        if not auth_header.startswith("Bearer "):
             return _unauthorized_mcp()
+
+        token = auth_header.split(" ", 1)[1].strip()
+        if not token:
+            return _unauthorized_mcp()
+
+        try:
+            # Platform JWT verification (signature/issuer/exp/nbf/aud=KEYCLOAK_AUDIENCE).
+            # MCP resource URL audience (RFC 8707) is NOT assumed; see oauth evidence doc.
+            claims = validate_token(token)
+            missing = missing_required_oauth_scopes(claims)
+            if missing:
+                return _unauthorized_mcp(
+                    error="insufficient_scope",
+                    error_description="Required OAuth scopes are missing",
+                )
+        except Exception:
+            return _unauthorized_mcp(
+                error="invalid_token",
+                error_description="Access token validation failed",
+            )
+
         response = await _base_jwt_middleware(request, call_next)
         if getattr(response, "status_code", None) == 401:
-            response.headers["WWW-Authenticate"] = www_authenticate_challenge()
+            response.headers["WWW-Authenticate"] = www_authenticate_challenge(
+                error="invalid_token",
+                error_description="Authentication required",
+            )
         return response
 
     return await _base_jwt_middleware(request, call_next)

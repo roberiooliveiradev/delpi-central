@@ -10,7 +10,10 @@
 | Legacy | `/gpt-actions/v1` = `LEGACY_TRANSITIONAL` |
 | V1 business tool | `search_products` (read-only Product Master) |
 | Custom UI | Not required / not shipped |
-| Go-live | `GO_LIVE_PENDING` |
+| MCP auth model | **A — transport requires OAuth** before `tools/list` |
+| OAuth contract (code) | Implemented (metadata + securitySchemes + challenges) |
+| Keycloak compatibility | Partial evidence — see [keycloak-mcp-oauth-evidence.md](./keycloak-mcp-oauth-evidence.md) |
+| Go-live | `GO_LIVE_BLOCKED` until predefined client + e2e PASS |
 
 ## Architecture
 
@@ -35,6 +38,9 @@ Output fields only: `product_code`, `description`, `group_category` + pagination
 
 Annotations (metadata only — not AuthZ): `readOnlyHint=true`, `destructiveHint=false`, `openWorldHint=false`.
 
+`securitySchemes` (OpenAI tool metadata): `oauth2` with scopes `openid profile email audience-delpi` only.  
+Never advertise RBAC permission codes as OAuth scopes.
+
 ## Field allowlist
 
 Approved: `product_code`, `description`, `group_category`.  
@@ -42,54 +48,57 @@ Denied by default: `customer_reference` and every other Product DTO field.
 
 ## AuthN / AuthZ
 
-- OpenAI account / plugin metadata / MCP annotations are **not** authority.
-- User JWT via Keycloak (OAuth 2.1 authorization-code + PKCE expected by MCP clients).
+- OpenAI account / plugin metadata / MCP annotations / securitySchemes are **not** authority.
+- Auth model **A**: HTTP Bearer required for entire `/mcp` transport (including initialize/tools/list).
+- Unauthenticated `/mcp` → `401` + `WWW-Authenticate` with `resource_metadata`, `error`, `error_description`.
+- Tool-level `_meta["mcp/www_authenticate"]` emitted on Unauthorized tool results (OpenAI linking contract).
+- User JWT via Keycloak (authorization-code + PKCE S256).
+- MCP also requires OAuth scopes: `openid profile email audience-delpi`.
 - Product search AuthZ remains `ENGINEERING_LMP_ACCESS` (unchanged).
 - Service account / client credentials / internal service token: **forbidden** on `/mcp`.
 
 ## OAuth / MCP requirements
 
-MCP resource server exposes RFC 9728 Protected Resource Metadata:
+Protected Resource Metadata:
 
 - `GET /apps/api-delpi/.well-known/oauth-protected-resource`
-- Unauthenticated `/mcp` → `401` + `WWW-Authenticate` with `resource_metadata`
+- scopes_supported = `openid profile email audience-delpi`
 
-Canonical resource candidate: `{PUBLIC_BASE_URL}/apps/api-delpi/mcp` (override with `MCP_RESOURCE_URL`).
+Canonical resource: `{PUBLIC_BASE_URL}/apps/api-delpi/mcp` (override `MCP_RESOURCE_URL`).
 
-Platform access tokens today use audience `delpi-central` (`KEYCLOAK_AUDIENCE`). Full RFC 8707 resource-indicator audience binding for the MCP resource URL requires Keycloak configuration and is **not assumed proven** until live discovery + token inspection pass.
+Token audience today: `delpi-central` via Keycloak scope `audience-delpi`.  
+RFC 8707 MCP-URL audience: **not proven** — see evidence doc. Do not rewrite `aud` locally.
 
-| Probe | Status until live Keycloak proof |
+| Probe | Status |
 |---|---|
-| PKCE_S256 | `NOT_PROVEN` |
-| OFFLINE_ACCESS | `NOT_PROVEN` |
-| RESOURCE_INDICATOR | `NOT_PROVEN` |
-| ISSUER_IDENTIFICATION | `NOT_PROVEN` (env: `KEYCLOAK_ISSUER`) |
-| MCP_CLIENT_MODE | `INCONCLUSIVE` (prefer predefined Keycloak client if CIMD/DCR unavailable) |
-
-If Keycloak cannot satisfy MCP OAuth: `AUTH_MCP_COMPATIBILITY = BLOCKED` — do not work around with service accounts.
+| PKCE_S256 | `PROVEN` |
+| CIMD | `DISPROVEN` |
+| DCR | `INCONCLUSIVE` |
+| PREDEFINED_CLIENT | `SUPPORTED` → **chosen mode** |
+| RESOURCE_TO_TOKEN_AUDIENCE (MCP URL) | `DISPROVEN` |
+| ISSUER_IDENTIFICATION | `PROVEN` |
 
 ## Rate limit
 
-Owner: gateway. `/apps/api-delpi/*` inherits the existing api-delpi zone.  
-`MCP_RATE_POLICY = TO_DEFINE_BEFORE_GO_LIVE`.
+Owner: gateway. Live nginx `location ^~ /apps/api-delpi/` has **no** `limit_req`.
+
+```text
+MCP_RATE_POLICY = PENDING
+```
 
 ## Plugin package
 
-Path: `api-delpi/integrations/openai-plugin/` (not Portal `plugins/`).
+Path: `api-delpi/integrations/openai-plugin/` (not Portal `plugins/`).  
+`homepage = TO_CONFIGURE` until canonical website/privacy/terms URLs are owned.
 
-## Developer-mode test procedure
+## Application boundary
 
-1. Deploy HTTPS endpoint + metadata.
-2. Configure Keycloak OAuth client compatible with MCP (CIMD / DCR / predefined).
-3. Load plugin package in ChatGPT developer mode.
-4. OAuth login as DELPI user.
-5. Tool scan → only `search_products`.
-6. Authorized search PASS; unauthorized FAIL-CLOSED; allowlist PASS.
+`product_search_auth` uses canonical `delpi_auth.request_context` / `authz_core` — accepted api-delpi pattern (same as `@require_*`). No new RBAC matrix.
+
+## Developer-mode / Inspector
+
+Manual until deployed + predefined client configured. Record `TEST_NOT_RUN` until executed.
 
 ## Go-live preconditions
 
-See task brief §38. Until all items PASS in production: `GO_LIVE_PENDING`.
-
-## Migration — Custom GPT Actions
-
-Keep `/gpt-actions/v1` while useful. Do not expand Actions. Do not treat as strategic surface. Catalog requires JWT auth only; search still requires `ENGINEERING_LMP_ACCESS`. Raw permission codes are not exposed in external payloads.
+Remain blocked until: predefined client configured, OAuth login PASS, HTTPS MCP smoke, 401/403/allowlist PASS, ChatGPT developer-mode PASS, rate policy decided.

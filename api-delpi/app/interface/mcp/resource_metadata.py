@@ -6,6 +6,12 @@ import os
 from typing import Any
 from urllib.parse import urlparse
 
+from app.interface.mcp.oauth_contract import (
+    MCP_OAUTH_SCOPES,
+    build_www_authenticate_challenge,
+    resolve_resource_metadata_url,
+)
+
 
 def resolve_public_base_url() -> str | None:
     value = (os.getenv("PUBLIC_BASE_URL") or "").strip().rstrip("/")
@@ -25,15 +31,7 @@ def resolve_mcp_resource_url() -> str:
     base = resolve_public_base_url()
     if base:
         return f"{base}/apps/api-delpi/mcp"
-    # Fail closed for metadata: placeholder host must not be treated as production-ready.
     return "https://TO_CONFIGURE/apps/api-delpi/mcp"
-
-
-def resolve_resource_metadata_url() -> str:
-    base = resolve_public_base_url()
-    if base:
-        return f"{base}/apps/api-delpi/.well-known/oauth-protected-resource"
-    return "https://TO_CONFIGURE/apps/api-delpi/.well-known/oauth-protected-resource"
 
 
 def build_oauth_protected_resource_metadata() -> dict[str, Any]:
@@ -41,31 +39,26 @@ def build_oauth_protected_resource_metadata() -> dict[str, Any]:
     resource = resolve_mcp_resource_url()
     issuer = resolve_authorization_server_issuer()
     auth_servers = [issuer] if issuer else []
-    scopes = [
-        s.strip()
-        for s in (os.getenv("MCP_OAUTH_SCOPES") or "openid profile email").split()
-        if s.strip()
-    ]
-    doc: dict[str, Any] = {
+    return {
         "resource": resource,
         "authorization_servers": auth_servers,
-        "scopes_supported": scopes,
+        "scopes_supported": list(MCP_OAUTH_SCOPES),
         "bearer_methods_supported": ["header"],
         "resource_documentation": (
             "https://github.com/roberiooliveiradev/delpi-central/blob/main/"
             "api-delpi/docs/integrations/openai-plugin-mcp.md"
         ),
     }
-    return doc
 
 
-def www_authenticate_challenge() -> str:
-    metadata_url = resolve_resource_metadata_url()
-    scopes = (os.getenv("MCP_OAUTH_SCOPES") or "openid profile email").strip()
-    return (
-        f'Bearer realm="api-delpi-mcp", '
-        f'resource_metadata="{metadata_url}", '
-        f'scope="{scopes}"'
+def www_authenticate_challenge(
+    *,
+    error: str | None = None,
+    error_description: str | None = None,
+) -> str:
+    return build_www_authenticate_challenge(
+        error=error,
+        error_description=error_description,
     )
 
 
@@ -92,3 +85,14 @@ def public_host_allowed_for_mcp() -> tuple[list[str], list[str]]:
     else:
         origins.append(f"{scheme}://{host}")
     return hosts, origins
+
+
+__all__ = [
+    "build_oauth_protected_resource_metadata",
+    "public_host_allowed_for_mcp",
+    "resolve_authorization_server_issuer",
+    "resolve_mcp_resource_url",
+    "resolve_public_base_url",
+    "resolve_resource_metadata_url",
+    "www_authenticate_challenge",
+]

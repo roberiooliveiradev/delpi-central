@@ -1,4 +1,11 @@
-"""Canonical AuthZ probe for Product Master search (no external RBAC disclosure)."""
+"""Canonical AuthZ probe for Product Master search (no external RBAC disclosure).
+
+Boundary note (PLUGIN-002 Abstraction Gate):
+api-delpi application services already resolve the authenticated actor via the
+canonical `delpi_auth.request_context` + `authz_core` pattern used by HTTP
+`@require_*` decorators. This is an accepted repository pattern, not a new
+RBAC matrix. No parallel permission authority is introduced here.
+"""
 
 from __future__ import annotations
 
