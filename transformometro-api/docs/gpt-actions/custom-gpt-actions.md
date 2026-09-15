@@ -28,10 +28,11 @@ cd transformometro-api
 PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 ```
 
-## Operations (19 no schema importado)
+## Operations (20 no schema importado)
 
 | operationId | Método / path |
 |-------------|----------------|
+| `gpt_get_my_context` | `GET .../me` (contexto pessoal mínimo — **não** autorização) |
 | `gpt_get_catalog` | `GET .../catalog` (inclui `registration_guide` + enums `fase_melhoria` / `prioridade_melhoria`) |
 | `gpt_get_process_context` | `GET .../process-context?process_id=&instance_id=&revision_id=` (projeção efêmera read-only) |
 | `gpt_analyze` | `GET .../analysis?view=meta\|summary\|processes\|instances\|rows` |
@@ -56,6 +57,7 @@ PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 
 | Capacidade | Classificação |
 |---|---|
+| Contexto pessoal (nome/e-mail/cargo) | **SUPPORTED_BY_TÉO** (`gpt_get_my_context`) — perfil ≠ autorização |
 | Link/metadata de evidência (processo/revisão) | **SUPPORTED_BY_TÉO** (`gpt_list_evidence` / `gpt_manage_evidence`) |
 | Upload/download binário de evidência | **BLOCKED_BY_PLATFORM** / **SUPPORTED_BY_UI_ONLY** |
 | Timeline de auditoria do processo | **SUPPORTED_BY_TÉO** (`gpt_get_process_timeline`) |

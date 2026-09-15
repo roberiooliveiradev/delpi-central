@@ -139,7 +139,7 @@ def test_teo_contract_drift_openapi_guide_instructions():
 
     doc = build_gpt_actions_openapi()
     assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS)
-    assert count_operations(doc) == 19
+    assert count_operations(doc) == 20
     assert "gpt_validate_improvement_package" in GPT_ACTIONS_OPERATION_IDS
     assert "gpt_commit_improvement_package" in GPT_ACTIONS_OPERATION_IDS
     assert "gpt_list_evidence" in GPT_ACTIONS_OPERATION_IDS

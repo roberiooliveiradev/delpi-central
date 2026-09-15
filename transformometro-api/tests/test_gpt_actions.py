@@ -27,6 +27,7 @@ from tm_app.application.gpt_actions.dispatch_service import (
 
 # Literal operationIds for audit_route_test_coverage.py (substring scan).
 _COVERAGE_ANCHORS = (
+    "gpt_get_my_context",
     "gpt_get_catalog",
     "gpt_analyze",
     "gpt_search_records",
@@ -848,7 +849,7 @@ def test_openapi_includes_improvement_package():
     assert (
         "/transformometro/gpt-actions/v1/improvement-packages/validate" in doc["paths"]
     )
-    assert count_operations(doc) == 19
+    assert count_operations(doc) == 20
 
 
 def test_openapi_validate_vs_commit_consequential_flags():
@@ -1964,7 +1965,7 @@ def test_analyze_instances_honors_processo_id():
 
 def test_openapi_setor_id_documents_uuid_or_code_and_stable_surface():
     doc = build_gpt_actions_openapi()
-    assert count_operations(doc) == 19
+    assert count_operations(doc) == 20
     assert "gpt_get_process_context" in GPT_ACTIONS_OPERATION_IDS
     assert "gpt_analyze" in GPT_ACTIONS_OPERATION_IDS
     analysis = doc["paths"]["/transformometro/gpt-actions/v1/analysis"]["get"]
@@ -2176,7 +2177,7 @@ def test_create_instance_todas_filiais_ativas_reaches_domain():
 def test_openapi_validate_non_consequential_commit_consequential():
     """CASO 9–10: validate remains no-write/non-consequential; commit stays consequential."""
     doc = build_gpt_actions_openapi()
-    assert count_operations(doc) == 19
+    assert count_operations(doc) == 20
     validate = doc["paths"]["/transformometro/gpt-actions/v1/improvement-packages/validate"][
         "post"
     ]

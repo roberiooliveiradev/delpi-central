@@ -46,6 +46,7 @@ def resolve_gpt_actions_server_url(
     return f"{GPT_ACTIONS_PUBLIC_FALLBACK_ORIGIN}{root}"
 
 GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
+    "gpt_get_my_context",
     "gpt_get_catalog",
     "gpt_analyze",
     "gpt_search_records",
@@ -408,6 +409,25 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
     if not server_url or not str(server_url).startswith(("http://", "https://")):
         server_url = resolve_gpt_actions_server_url(explicit=server_url)
     paths: dict[str, Any] = {
+        f"{GPT_ACTIONS_BASE_PATH}/me": {
+            "get": {
+                "operationId": "gpt_get_my_context",
+                "summary": "Minimal personal context for the authenticated user",
+                "description": (
+                    "Read-only personal context (display name, email, job title). "
+                    "PROFILE CONTEXT != AUTHORIZATION — never exposes roles, "
+                    "permissions, groups or access_scope. Identity is resolved "
+                    "only from the authenticated Bearer token; no user_id input."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": _ok_response("Personal context payload"),
+                    **_error_responses(),
+                },
+                "x-openai-isConsequential": False,
+            }
+        },
         f"{GPT_ACTIONS_BASE_PATH}/catalog": {
             "get": {
                 "operationId": "gpt_get_catalog",
@@ -1093,6 +1113,48 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
             },
             "schemas": {
                 "ApiEnvelope": _envelope_schema(),
+                "GptMyContextResponse": {
+                    "type": "object",
+                    "description": (
+                        "Minimal personal context. Not authorization metadata."
+                    ),
+                    "properties": {
+                        "display_name": {
+                            "type": "string",
+                            "nullable": True,
+                            "description": "Canonical display name from Core identity.",
+                        },
+                        "email": {
+                            "type": "string",
+                            "nullable": True,
+                            "description": "Corporate email from Core identity.",
+                        },
+                        "job_title": {
+                            "type": "string",
+                            "nullable": True,
+                            "description": "PersonProfile.job_title when registered.",
+                        },
+                        "profile_complete": {
+                            "type": "boolean",
+                            "description": (
+                                "True when display_name and email are both present."
+                            ),
+                        },
+                    },
+                    "required": [
+                        "display_name",
+                        "email",
+                        "job_title",
+                        "profile_complete",
+                    ],
+                    "additionalProperties": False,
+                    "example": {
+                        "display_name": "Robério",
+                        "email": "roberio@example.com",
+                        "job_title": "Gerente de Processos",
+                        "profile_complete": True,
+                    },
+                },
                 "GptRecordBody": {
                     "type": "object",
                     "required": ["data"],

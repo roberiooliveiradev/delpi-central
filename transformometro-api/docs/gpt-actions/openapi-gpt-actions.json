@@ -18,6 +18,129 @@
     }
   ],
   "paths": {
+    "/transformometro/gpt-actions/v1/me": {
+      "get": {
+        "operationId": "gpt_get_my_context",
+        "summary": "Minimal personal context for the authenticated user",
+        "description": "Read-only personal context (display name, email, job title). PROFILE CONTEXT != AUTHORIZATION — never exposes roles, permissions, groups or access_scope. Identity is resolved only from the authenticated Bearer token; no user_id input.",
+        "tags": [
+          "Transformômetro GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Personal context payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or domain error. Body is ApiEnvelope with success=false; read message + data.errors (do not show only HTTP 400).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Campos obrigatórios ausentes: nome_recurso, tipo_custo, recorrencia",
+                  "data": {
+                    "error_count": 3,
+                    "errors": [
+                      {
+                        "field": "nome_recurso",
+                        "reason": "Field required"
+                      },
+                      {
+                        "field": "tipo_custo",
+                        "reason": "Field required"
+                      },
+                      {
+                        "field": "recorrencia",
+                        "reason": "Field required"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid Bearer. ApiEnvelope message explains AuthN; read message (not only HTTP 401).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Unauthorized",
+                  "data": {
+                    "error_kind": "authn"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking permission. Read message + data.error_kind.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Acesso negado.",
+                  "data": {
+                    "error_kind": "authz"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request body/query schema invalid. Read message + data.errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Persistence/infrastructure failure. Read message + data.error_kind=persistence.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-openai-isConsequential": false
+      }
+    },
     "/transformometro/gpt-actions/v1/catalog": {
       "get": {
         "operationId": "gpt_get_catalog",
@@ -3320,6 +3443,44 @@
           "data": {
             "description": "Payload on success, or structured error details (often {errors:[{field,reason}], error_count})."
           }
+        }
+      },
+      "GptMyContextResponse": {
+        "type": "object",
+        "description": "Minimal personal context. Not authorization metadata.",
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Canonical display name from Core identity."
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "description": "Corporate email from Core identity."
+          },
+          "job_title": {
+            "type": "string",
+            "nullable": true,
+            "description": "PersonProfile.job_title when registered."
+          },
+          "profile_complete": {
+            "type": "boolean",
+            "description": "True when display_name and email are both present."
+          }
+        },
+        "required": [
+          "display_name",
+          "email",
+          "job_title",
+          "profile_complete"
+        ],
+        "additionalProperties": false,
+        "example": {
+          "display_name": "Robério",
+          "email": "roberio@example.com",
+          "job_title": "Gerente de Processos",
+          "profile_complete": true
         }
       },
       "GptRecordBody": {

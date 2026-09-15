@@ -16,6 +16,7 @@ from tm_app.application.gpt_actions.improvement_package_service import (
     GuidedImprovementPackageService,
 )
 from tm_app.application.gpt_actions.process_context_service import ProcessContextService
+from tm_app.application.gpt_actions.user_context_service import UserContextService
 from tm_app.application.gpt_actions.openapi_builder import (
     build_gpt_actions_openapi,
     resolve_gpt_actions_server_url,
@@ -32,6 +33,7 @@ logger = logging.getLogger(__name__)
 _dispatch = GptActionsDispatchService()
 _packages = GuidedImprovementPackageService(_dispatch)
 _process_context = ProcessContextService()
+_user_context = UserContextService()
 
 
 class GptRecordBody(BaseModel):
@@ -127,6 +129,21 @@ def gpt_get_openapi_schema():
             root_path=settings.TM_API_ROOT_PATH,
         )
     )
+
+
+@router.get(
+    "/me",
+    operation_id="gpt_get_my_context",
+    summary="Minimal personal context for the authenticated user",
+)
+def gpt_get_my_context(request: Request):
+    try:
+        return ok(
+            _user_context.get_my_context(request),
+            "Contexto pessoal do usuário autenticado.",
+        )
+    except Exception as exc:
+        return _handle(exc)
 
 
 @router.get(
