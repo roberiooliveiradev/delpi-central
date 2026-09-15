@@ -29,14 +29,25 @@ def _body(**overrides):
     data = {
         "nome_processo": "Processo X",
         "status_processo": "ativo",
-        "descricao_processo": "desc",
-        "gestor_responsavel": None,
-        "objetivo_processo": None,
-        "familia_processo": None,
-        "agrupador_ferramenta": None,
     }
     data.update(overrides)
     return ProcessoUpdateBody.model_validate(data)
+
+
+def _current(**overrides):
+    row = {
+        "processo_id": "p1",
+        "codigo_processo": "PROC-0001",
+        "nome_processo": "Processo X",
+        "status_processo": "ativo",
+        "descricao_processo": "desc",
+        "gestor_responsavel": "Gestor",
+        "objetivo_processo": "Objetivo",
+        "familia_processo": None,
+        "agrupador_ferramenta": None,
+    }
+    row.update(overrides)
+    return row
 
 
 def test_process_master_payload_includes_codigo_processo():
@@ -110,44 +121,38 @@ def test_update_persists_codigo_processo_change():
     """Observed case: PROC-0001 → PROC-0071 must actually persist."""
     svc = ProcessWriteService()
     body = _body(codigo_processo="PROC-0071")
-    updated = {
-        "processo_id": "p1",
-        "codigo_processo": "PROC-0071",
-        "nome_processo": "Processo X",
-        "status_processo": "ativo",
-    }
+    current = _current()
+    updated = {**current, "codigo_processo": "PROC-0071"}
     with patch(
         "tm_app.application.services.process_write_service.ProcessoRepository"
     ) as repo_cls:
         repo = repo_cls.return_value
+        repo.get.side_effect = [current, updated]
         repo.update.return_value = updated
-        repo.get.return_value = updated
         row = svc.update("p1", body, save_escopo=lambda *_a, **_k: None)
     assert row["codigo_processo"] == "PROC-0071"
     payload = repo.update.call_args.args[1]
     assert payload["codigo_processo"] == "PROC-0071"
+    assert payload["descricao_processo"] == "desc"
 
 
 def test_update_omitted_codigo_forwards_none_for_coalesce_preserve():
     svc = ProcessWriteService()
     body = _body(nome_processo="Renomeado")
-    assert body.codigo_processo is None
-    updated = {
-        "processo_id": "p1",
-        "codigo_processo": "PROC-0001",
-        "nome_processo": "Renomeado",
-        "status_processo": "ativo",
-    }
+    assert "codigo_processo" not in body.model_fields_set
+    current = _current()
+    updated = {**current, "nome_processo": "Renomeado"}
     with patch(
         "tm_app.application.services.process_write_service.ProcessoRepository"
     ) as repo_cls:
         repo = repo_cls.return_value
+        repo.get.side_effect = [current, updated]
         repo.update.return_value = updated
-        repo.get.return_value = updated
         row = svc.update("p1", body, save_escopo=lambda *_a, **_k: None)
     assert row["codigo_processo"] == "PROC-0001"
     payload = repo.update.call_args.args[1]
     assert payload["codigo_processo"] is None
+    assert payload["descricao_processo"] == "desc"
 
 
 def test_update_duplicate_codigo_maps_to_process_write_error():
@@ -157,6 +162,7 @@ def test_update_duplicate_codigo_maps_to_process_write_error():
         "tm_app.application.services.process_write_service.ProcessoRepository"
     ) as repo_cls:
         repo = repo_cls.return_value
+        repo.get.return_value = _current()
         repo.update.side_effect = PluginsRepositoryError(
             'Falha ao gravar registro: duplicate key value violates unique constraint '
             '"uq_processos_codigo" DETAIL: Key (codigo_processo)=(PROC-0071) already exists.'

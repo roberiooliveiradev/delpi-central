@@ -21,15 +21,25 @@ def openapi_record_data_properties() -> dict[str, Any]:
             "type": "string",
             "description": "Required when entity=process. Typical: ativo.",
         },
-        "descricao_processo": {"type": "string"},
-        "gestor_responsavel": {"type": "string"},
-        "objetivo_processo": {"type": "string"},
         "codigo_processo": {
             "type": "string",
             "description": (
                 "Business process code. Optional on create (auto-generated if omitted). "
-                "Mutable on update; omit to keep current. Distinct from immutable processo_id."
+                "Mutable on update; omit/null keeps current (never clears). "
+                "Distinct from immutable processo_id."
             ),
+        },
+        "descricao_processo": {
+            "type": "string",
+            "description": "On process update: omit keeps current; null clears.",
+        },
+        "gestor_responsavel": {
+            "type": "string",
+            "description": "On process update: omit keeps current; null clears.",
+        },
+        "objetivo_processo": {
+            "type": "string",
+            "description": "On process update: omit keeps current; null clears.",
         },
         "familia_processo": {"type": "string"},
         "agrupador_ferramenta": {"type": "string"},

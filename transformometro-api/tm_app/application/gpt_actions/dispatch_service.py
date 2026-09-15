@@ -1416,7 +1416,13 @@ class GptActionsDispatchService:
             raise GptActionsError(str(exc), 400) from exc
         if not row:
             raise GptActionsError("Processo não encontrado.", 404)
-        self._audit(request, "processo", processo_id, "update", body.model_dump())
+        self._audit(
+            request,
+            "processo",
+            processo_id,
+            "update",
+            body.model_dump(exclude_unset=True),
+        )
         self._recalc_hook.after_processo(processo_id)
         return row_to_json(row), "Processo atualizado."
 

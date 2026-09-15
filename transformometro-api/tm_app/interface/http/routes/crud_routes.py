@@ -682,7 +682,7 @@ def update_processo(processo_id: str, body: ProcessoUpdateBody, request: Request
     if not row:
         return fail("Processo não encontrado.", 404)
 
-    _audit(request, "processo", processo_id, "update", body.model_dump())
+    _audit(request, "processo", processo_id, "update", body.model_dump(exclude_unset=True))
     _recalc_after_processo(processo_id)
     return ok(row_to_json(row), "Processo atualizado.")
 

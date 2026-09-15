@@ -64,11 +64,12 @@ export function masterPayloadFromProcessoForm(form: ProcessoFormState): Partial<
     ...(codigo ? { codigo_processo: codigo } : {}),
     nome_processo: form.nome_processo.trim(),
     status_processo: form.status_processo,
-    descricao_processo: form.descricao_processo.trim() || undefined,
-    gestor_responsavel: form.gestor_responsavel.trim() || undefined,
-    objetivo_processo: form.objetivo_processo.trim() || undefined,
-    familia_processo: form.familia_processo.trim() || undefined,
-    agrupador_ferramenta: form.agrupador_ferramenta.trim() || undefined,
+    // Always send clearable optionals so empty UI fields clear (null), not omit-preserve.
+    descricao_processo: form.descricao_processo.trim() || null,
+    gestor_responsavel: form.gestor_responsavel.trim() || null,
+    objetivo_processo: form.objetivo_processo.trim() || null,
+    familia_processo: form.familia_processo.trim() || null,
+    agrupador_ferramenta: form.agrupador_ferramenta.trim() || null,
     ...(hasProcessoEscopo(form.escopo) ? processScopePayload(form.escopo) : {}),
   };
 }

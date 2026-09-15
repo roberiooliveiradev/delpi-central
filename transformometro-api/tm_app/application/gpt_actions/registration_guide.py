@@ -268,6 +268,10 @@ def build_registration_guide() -> dict[str, Any]:
                     "codigo_processo: optional on create (auto PROC-#### if omitted); "
                     "mutable on update (omit/null preserves current). Unique across all "
                     "process rows including soft-deleted. processo_id is the immutable id.",
+                    "Update PATCH semantics: omitted optional fields keep current values; "
+                    "explicit null clears descricao_processo/gestor_responsavel/"
+                    "objetivo_processo/familia_processo/agrupador_ferramenta. "
+                    "Escopo (todas_filiais_ativas/filial_ids/setor_ids): omit = leave escopo unchanged.",
                 ],
             },
             "instance": {

@@ -59,30 +59,49 @@ class ProcessoCreateBody(ProcessoEscopoFields):
 class ProcessoUpdateBody(BaseModel):
     nome_processo: str = Field(min_length=1, max_length=500)
     status_processo: str = Field(min_length=1, max_length=32)
-    descricao_processo: Optional[str] = None
-    gestor_responsavel: Optional[str] = None
-    objetivo_processo: Optional[str] = None
+    descricao_processo: Optional[str] = Field(
+        default=None,
+        description="Omit keeps current; explicit null clears.",
+    )
+    gestor_responsavel: Optional[str] = Field(
+        default=None,
+        description="Omit keeps current; explicit null clears.",
+    )
+    objetivo_processo: Optional[str] = Field(
+        default=None,
+        description="Omit keeps current; explicit null clears.",
+    )
     codigo_processo: Optional[str] = Field(
         default=None,
         max_length=32,
         description=(
-            "Mutable business code (not processo_id). Omit/null keeps the current value; "
-            "must be unique across processos including soft-deleted rows."
+            "Mutable business code (not processo_id). Omit or null keeps the current "
+            "value (never clears). Must be unique across processos including soft-deleted."
         ),
     )
-    familia_processo: Optional[str] = Field(default=None, max_length=64)
-    agrupador_ferramenta: Optional[str] = Field(default=None, max_length=128)
+    familia_processo: Optional[str] = Field(
+        default=None,
+        max_length=64,
+        description="Omit keeps current; explicit null clears.",
+    )
+    agrupador_ferramenta: Optional[str] = Field(
+        default=None,
+        max_length=128,
+        description="Omit keeps current; explicit null clears.",
+    )
     todas_filiais_ativas: Optional[bool] = Field(
         default=None,
-        description="Processo válido em todas as filiais ativas.",
+        description=(
+            "Process scope: omit skips escopo update; when set with filial_ids/setor_ids, replaces escopo."
+        ),
     )
     filial_ids: Optional[list[str]] = Field(
         default=None,
-        description="Unidades amarradas ao processo-mestre.",
+        description="Omit skips escopo update; when set, replaces process unit scope.",
     )
     setor_ids: Optional[list[str]] = Field(
         default=None,
-        description="Departamentos amarrados ao processo-mestre.",
+        description="Omit skips escopo update; when set, replaces process department scope.",
     )
 
     @model_validator(mode="after")

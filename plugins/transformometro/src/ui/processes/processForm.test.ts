@@ -42,7 +42,7 @@ describe("processScope", () => {
 });
 
 describe("masterPayloadFromProcessoForm", () => {
-  it("não envia escopo quando departamentos não estão definidos", () => {
+  it("envia null nos opcionais vazios para permitir limpar no update", () => {
     const form = emptyProcessoForm();
     form.nome_processo = "Indicadores Estratégicos";
 
@@ -50,6 +50,9 @@ describe("masterPayloadFromProcessoForm", () => {
 
     expect(payload.nome_processo).toBe("Indicadores Estratégicos");
     expect(payload.codigo_processo).toBeUndefined();
+    expect(payload.descricao_processo).toBeNull();
+    expect(payload.gestor_responsavel).toBeNull();
+    expect(payload.objetivo_processo).toBeNull();
     expect(payload.filial_ids).toBeUndefined();
     expect(payload.setor_ids).toBeUndefined();
     expect(payload.todas_filiais_ativas).toBeUndefined();

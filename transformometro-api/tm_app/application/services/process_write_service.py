@@ -27,6 +27,16 @@ class ProcessWriteError(Exception):
     """Domain/validation failure while creating or updating a process."""
 
 
+# Optional master fields: omit keeps current; explicit null (or blank str) clears.
+PROCESS_MASTER_CLEARABLE_FIELDS = (
+    "descricao_processo",
+    "gestor_responsavel",
+    "objetivo_processo",
+    "familia_processo",
+    "agrupador_ferramenta",
+)
+
+
 def process_master_payload(body: Any) -> dict[str, Any]:
     return {
         "nome_processo": body.nome_processo,
@@ -38,6 +48,53 @@ def process_master_payload(body: Any) -> dict[str, Any]:
         "familia_processo": body.familia_processo,
         "agrupador_ferramenta": body.agrupador_ferramenta,
     }
+
+
+def _body_provided_fields(body: Any) -> dict[str, Any]:
+    """Fields explicitly present in the request (omit ≠ default None)."""
+    if hasattr(body, "model_dump"):
+        return body.model_dump(exclude_unset=True)
+    if isinstance(body, dict):
+        return dict(body)
+    raise TypeError(f"Unsupported process write body type: {type(body)!r}")
+
+
+def _normalize_optional_text(value: Any) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def process_master_update_payload(
+    provided: dict[str, Any], current: dict[str, Any]
+) -> dict[str, Any]:
+    """PATCH/merge semantics for process master columns.
+
+    - omitted key → keep ``current``
+    - explicit null / blank string → clear (NULL), except ``codigo_processo``
+    - ``codigo_processo`` omit/null/blank → keep (SQL COALESCE); never clears
+    """
+    payload: dict[str, Any] = {
+        "nome_processo": provided.get(
+            "nome_processo", current.get("nome_processo")
+        ),
+        "status_processo": provided.get(
+            "status_processo", current.get("status_processo")
+        ),
+    }
+    for key in PROCESS_MASTER_CLEARABLE_FIELDS:
+        if key in provided:
+            payload[key] = _normalize_optional_text(provided[key])
+        else:
+            payload[key] = current.get(key)
+
+    if "codigo_processo" in provided:
+        # None/blank → repository COALESCE keeps existing (never wipe code).
+        payload["codigo_processo"] = _normalize_codigo(provided.get("codigo_processo"))
+    else:
+        payload["codigo_processo"] = None
+    return payload
 
 
 def _normalize_codigo(value: Any) -> str | None:
@@ -129,15 +186,23 @@ class ProcessWriteService:
         *,
         save_escopo,
     ) -> dict[str, Any]:
-        assert_in(body.status_processo, STATUS_PROCESSO, "status_processo")
-        payload = process_master_payload(body)
+        repo = ProcessoRepository()
+        current = repo.get(processo_id)
+        if not current:
+            return {}
+        provided = _body_provided_fields(body)
+        status = provided.get("status_processo", current.get("status_processo"))
+        assert_in(status, STATUS_PROCESSO, "status_processo")
+        payload = process_master_update_payload(provided, current)
         requested_code = _normalize_codigo(payload.get("codigo_processo"))
+        if requested_code is None and "codigo_processo" not in provided:
+            requested_code = _normalize_codigo(current.get("codigo_processo"))
         try:
-            row = ProcessoRepository().update(processo_id, payload)
+            row = repo.update(processo_id, payload)
             if not row:
                 return {}
             save_escopo(processo_id, body)
-            return ProcessoRepository().get(processo_id) or row
+            return repo.get(processo_id) or row
         except PluginsRepositoryError as exc:
             dup = _duplicate_codigo_message(exc, requested=requested_code)
             if dup:
