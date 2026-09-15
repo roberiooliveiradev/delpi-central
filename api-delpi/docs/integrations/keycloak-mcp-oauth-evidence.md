@@ -116,3 +116,15 @@ Keycloak client scopes (Default): audience-delpi + mcp:tools + email + profile
 ```text
 MCP_RATE_POLICY = PENDING_OWNER_DECISION
 ```
+
+## PLUGIN-005 — live ChatGPT connection failure (2026-09-15)
+
+| Probe | Status |
+|---|---|
+| Unauthenticated `GET/POST /apps/api-delpi/mcp` and `/mcp/` | **401** (no 307/308) — auth middleware before Mount |
+| Authenticated ASGI `Mount("/mcp")` + `streamable_http_path="/"` | **307** `POST /mcp` → `/mcp/` (**PROVEN** in process) |
+| Origin `https://chatgpt.com` / `https://chat.openai.com` | **403** Invalid Origin before allowlist fix (**PROVEN**) |
+| Prod gateway/api-delpi logs @ 16:32–16:35 -03 | **INCONCLUSIVE** — no srv-api log access from diagnostic workstation; local WSL stack had zero matching lines |
+| Deployed SHA | **UNKNOWN** (health has no git SHA); live metadata scopes fingerprint = post-004A (`openid profile email mcp:tools`) |
+
+Fix (code): internal path rewrite `/mcp` → `/mcp/` (no HTTP redirect; canonical resource URL unchanged) + ChatGPT connector Origins on DNS-rebinding allowlist.

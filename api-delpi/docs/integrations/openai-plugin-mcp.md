@@ -53,7 +53,9 @@ ChatGPT / Codex
 https://minhadelpi.com.br/apps/api-delpi/mcp
 ```
 
-Must match metadata, OAuth `resource`, Keycloak Audience mapper, JWT `aud`, plugin `mcp.json`, and MCP validation — no trailing-slash rewrite.
+Must match metadata, OAuth `resource`, Keycloak Audience mapper, JWT `aud`, plugin `mcp.json`, and MCP validation — no trailing-slash rewrite of the **advertised** URL.
+
+Internal ASGI note: FastAPI `Mount("/mcp")` + FastMCP `streamable_http_path="/"` would otherwise HTTP-307 `POST /mcp` → `/mcp/`. The api-delpi middleware rewrites the path internally so ChatGPT can keep the canonical URL without a redirect.
 
 ## OAuth scopes
 

@@ -16,7 +16,12 @@ from app.startup.run_plugins_migrations_on_startup import (
 from app.startup.schedule_openapi_consumer_notify import (
     schedule_openapi_consumer_notify_on_startup,
 )
-from app.interface.mcp import combine_lifespan, mcp_http_app, mcp_metadata_router
+from app.interface.mcp import (
+    combine_lifespan,
+    mcp_http_app,
+    mcp_metadata_router,
+    mcp_mount_path_middleware,
+)
 
 from app.interface.socket.audit_5s_handlers import register_audit_5s_socket_handlers
 from app.interface.socket.sio_server import create_socket_app
@@ -224,6 +229,8 @@ app.middleware("http")(jwt_middleware)
 app.middleware("http")(pac_service_actor_middleware)
 app.middleware("http")(request_observability_middleware)
 app.middleware("http")(app_usage_tracking_middleware)
+# Last registered http middleware runs first: rewrite /mcp → /mcp/ before Mount 307.
+app.middleware("http")(mcp_mount_path_middleware)
 
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 

@@ -57,6 +57,14 @@ def www_authenticate_challenge(
     )
 
 
+# Browser/connector Origins used by ChatGPT MCP (DNS-rebinding allowlist only).
+# Absent Origin remains allowed by TransportSecurityMiddleware.
+_MCP_CONNECTOR_ORIGINS = (
+    "https://chatgpt.com",
+    "https://chat.openai.com",
+)
+
+
 def public_host_allowed_for_mcp() -> tuple[list[str], list[str]]:
     """Hosts/origins for MCP DNS-rebinding protection derived from PUBLIC_BASE_URL."""
     hosts = ["127.0.0.1:*", "localhost:*", "[::1]:*"]
@@ -64,6 +72,7 @@ def public_host_allowed_for_mcp() -> tuple[list[str], list[str]]:
         "http://127.0.0.1:*",
         "http://localhost:*",
         "http://[::1]:*",
+        *_MCP_CONNECTOR_ORIGINS,
     ]
     base = resolve_public_base_url()
     if not base:
