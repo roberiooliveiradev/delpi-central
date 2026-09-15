@@ -62,7 +62,11 @@ O terceiro card (`?issue=pa-shortage&q=90263114`) é uma **consulta**: o PCP inf
 
 **Em produção agora:** a coluna *Situação* mostra `production_status` vindo da API (apontamento `HZA010`). Operação rodando ganha linha verde, ponto pulsante, nome do operador e horário de início. Operação *Já apontada* exibe o último operador, tacha a linha e suaviza o contraste. A aba do centro de trabalho recebe o ponto só quando há OP em produção; o resumo do período mostra quantas estão na máquina. A UI é render-only — quem decide o status é a api-delpi, o MFE só mapeia `production_status` → rótulo e variante (`utils/machineLoadStatus.ts`).
 
-**Fila congelada:** o sequenciamento SH8 fica salvo no BFF (`machine_load_snapshots`), **uma fila viva por filial**. A primeira visita da filial faz seed automático; depois disso, só o botão **Atualizar** (com confirmação) chama `POST /machine-load/refresh` e **substitui** a fila — inclusive qualquer ordem manual. Virada de dia não reseeda: a fila continua a mesma até o PCP atualizar. O status HZA continua vivo a cada GET. Trocar de centro de trabalho ou de recorte não regenera a fila.
+**Fila congelada:** o sequenciamento SH8 fica salvo no BFF (`machine_load_snapshots`), **uma fila viva por filial**. A primeira visita da filial faz seed automático; depois disso, só o botão **Atualizar** (com confirmação) chama `POST /machine-load/refresh` e **substitui** a fila — inclusive qualquer ordem manual. Virada de dia não reseeda: a fila continua a mesma até o PCP atualizar. Trocar de centro de trabalho ou de recorte não regenera a fila.
+
+**Uma leitura por filial, troca de CT local:** o MFE lê a fila **inteira** da filial (`includeAllCenters=true`) uma vez por `filial + janela` e mantém em memória (`useMachineLoad`, cache por escopo dentro do módulo — sem `sessionStorage`). Clicar em outra aba é recorte local (`utils/machineLoadSelection.ts`), com **zero requisição** e sem passar pelo estado «nenhuma operação alocada». As mutações também pedem a fila completa na resposta, para o cache não ficar pela metade depois de reordenar ou transferir.
+
+**Status ao vivo por polling:** a fila aparece sem esperar o chão de fábrica (a consulta de apontamento ao TOTVS leva ~9 s). Logo depois dela o MFE chama `GET /machine-load/live-status` e repete a cada 30 s, pausando quando a aba fica oculta (`document.visibilityState`). A rota devolve só o que **diverge** da fila congelada; o merge é por chave `production_order|operation_code` (`utils/machineLoadLiveStatus.ts`), recalcula os contadores «em produção» do resumo e das abas, e operação ausente mantém o valor congelado. O merge é sempre aplicado sobre a fila original, então status que volta ao valor do snapshot também volta na tela. Falha nessa chamada não derruba a fila que já está visível.
 
 **Período = entrega do PA:** o formulário da barra filtra por **data de entrega do PA** (`COALESCE(PA.DT_ENTREGA, C2_DATPRF)`), não pela programação. Sem recorte na URL, «De» já vem com a entrega mais antiga presente na fila e continua editável; «até» é hoje + 14 dias, o horizonte que o **Atualizar** puxa do TOTVS. Aplicar «De/até» é **lente de leitura** — recorta a fila congelada e esconde centros sem operação visível, sem chamar o ERP; **Voltar ao padrão** limpa o recorte. Se sobrar operação sem entrega, a barra avisa quantas são (falha de vínculo com a OP mãe no TOTVS).
 
@@ -85,7 +89,8 @@ Base: `/apps/production-control-api`
 | GET | `/delivery-map?branch=&search=` | Mapa de entrega (snapshot congelado) |
 | POST | `/delivery-map/refresh?branch=&search=` | Repuxa OPs PA do TOTVS |
 | PATCH | `/delivery-map/overrides?branch=&search=` | Salva MP-OK / Feedback manuais |
-| GET | `/machine-load?branch=&workCenter=&startDate=&endDate=` | Centros de trabalho + fila do CT ativo (snapshot) |
+| GET | `/machine-load?branch=&workCenter=&startDate=&endDate=&includeAllCenters=` | Centros de trabalho + fila do CT ativo; com `includeAllCenters` traz a fila de todos os CTs |
+| GET | `/machine-load/live-status?branch=` | Só os campos de apontamento (HZA) das operações da fila, com `as_of` |
 | GET | `/machine-load/locate?branch=&q=` | Rastreio de conjunto (C2_NUM, 6 dígitos) ou produto (PA) |
 | POST | `/machine-load/refresh?branch=&workCenter=&startDate=&endDate=` | Regenera o snapshot a partir do TOTVS (janela por entrega do PA) |
 | PATCH | `/machine-load/sequence?branch=&workCenter=` | Persiste a ordem manual do CT (`ordered_keys`) |

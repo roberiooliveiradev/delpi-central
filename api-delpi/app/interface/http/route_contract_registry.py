@@ -327,6 +327,10 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_production_unproductive_hours_ranking": RouteContract(
         "production_unproductive_hours_ranking", "list"
     ),
+    "get_production_unproductive_hours_series": RouteContract(
+        "production_unproductive_hours_series", "list"
+    ),
+    "get_production_factory_shifts": RouteContract("production_factory_shift", "list"),
     "get_production_pcp_orders_summary": RouteContract(
         "production_pcp_orders_summary", "playbook_report"
     ),
@@ -415,6 +419,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     ),
     "get_eficiencia_fabril_efficiency_by_work_center": RouteContract(
         "eficiencia_fabril_efficiency_by_work_center", "paged_list"
+    ),
+    "get_eficiencia_fabril_efficiency_series": RouteContract(
+        "eficiencia_fabril_efficiency_series", "list"
     ),
     "get_inspecoes_entrada_resumo": RouteContract(
         "inspecoes_entrada_resumo", "scalar"

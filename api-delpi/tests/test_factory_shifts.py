@@ -2,7 +2,14 @@
 
 import pytest
 
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 from app.domain.production.factory_shifts import (
+    FACTORY_SHIFTS,
+    FACTORY_TIMEZONE,
+    current_factory_shift,
+    describe_factory_shifts,
     factory_shift_id,
     factory_shift_label,
     matches_factory_shift_filter,
@@ -68,3 +75,37 @@ def test_matches_factory_shift_filter_prefers_turno() -> None:
     )
     assert matches_factory_shift_filter("10:00", shifts=("1",), turno=None)
     assert matches_factory_shift_filter("10:00", shifts=())
+
+
+def _at(hour: int, minute: int) -> datetime:
+    return datetime(2026, 9, 14, hour, minute, tzinfo=ZoneInfo(FACTORY_TIMEZONE))
+
+
+@pytest.mark.parametrize(
+    ("moment", "expected_id"),
+    [
+        (_at(10, 0), "1"),
+        (_at(18, 0), "2"),
+        (_at(2, 0), "3"),
+    ],
+)
+def test_current_factory_shift_uses_the_same_boundaries(moment, expected_id) -> None:
+    shift = current_factory_shift(moment)
+    assert shift is not None
+    assert shift.id == expected_id
+
+
+def test_describe_factory_shifts_exposes_catalog_and_current() -> None:
+    payload = describe_factory_shifts(_at(18, 0))
+
+    assert payload["timezone"] == FACTORY_TIMEZONE
+    assert payload["current_shift_id"] == "2"
+    assert payload["current_shift"]["label"] == "2º Turno"
+    assert payload["reference_time"].startswith("2026-09-14T18:00")
+    assert [shift["id"] for shift in payload["shifts"]] == ["1", "2", "3"]
+    assert payload["shifts"][0] == {
+        "id": FACTORY_SHIFTS[0].id,
+        "label": FACTORY_SHIFTS[0].label,
+        "start_time": FACTORY_SHIFTS[0].start,
+        "end_time": FACTORY_SHIFTS[0].end,
+    }

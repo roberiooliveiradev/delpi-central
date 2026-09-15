@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 700,
+  "operation_count": 703,
   "operations": [
     {
       "method": "POST",
@@ -2534,7 +2534,7 @@
       "method": "GET",
       "path": "/commercial/rol/by-branch",
       "operationId": "get_commercial_rol_by_branch",
-      "summary": "Lista paginada — Rol comercial por filial",
+      "summary": "Commercial ROL breakdown by branch (01 vs 02)",
       "tags": [
         "Comercial"
       ],
@@ -2599,6 +2599,23 @@
       "xDelpi": {
         "entity": "commercial_rol_by_branch",
         "shape": "paged_list",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Commercial ROL breakdown by branch (01 vs 02)",
+            "description": "Short tabular list comparing ROL metrics for branches 01 and 02 in a period. Use for «ROL por filial», ranking or side-by-side branch comparison — not a single-branch scalar KPI.",
+            "whenToUse": "Use when the user wants ROL broken down or compared across branches (por filial, 01 e 02, ranking).",
+            "whenNotToUse": "Do not use for «ROL da filial X», consolidado financeiro de uma filial, or a single scalar ROL KPI — prefer /financial/rol. Do not use for a time series — prefer /commercial/rol/series.",
+            "label": "Commercial ROL by branch"
+          },
+          "pt-BR": {
+            "summary": "ROL comercial por filial (comparativo 01×02)",
+            "description": "Lista tabular curta comparando ROL das filiais 01 e 02 no período. Use para «ROL por filial», ranking ou comparativo — não para KPI escalar de uma filial.",
+            "whenToUse": "Use quando o usuário quiser ROL quebrado ou comparado entre filiais (por filial, 01 e 02, ranking).",
+            "whenNotToUse": "Não use para «ROL da filial X», consolidado financeiro de uma filial ou KPI escalar — prefira /financial/rol. Não use para série temporal — prefira /commercial/rol/series.",
+            "label": "Indicador — ROL por filial (breakdown)"
+          }
+        },
         "params": {
           "customer_codes": {
             "locale": {
@@ -2705,9 +2722,15 @@
             "format": "date"
           }
         },
+        "tv": {
+          "whenToUse": "Use quando o usuário quiser ROL quebrado ou comparado entre filiais (por filial, 01 e 02, ranking).",
+          "whenNotToUse": "Não use para «ROL da filial X», consolidado financeiro de uma filial ou KPI escalar — prefira /financial/rol. Não use para série temporal — prefira /commercial/rol/series.",
+          "description": "Lista tabular curta comparando ROL das filiais 01 e 02 no período. Use para «ROL por filial», ranking ou comparativo — não para KPI escalar de uma filial.",
+          "label": "Indicador — ROL por filial (breakdown)"
+        },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Retorna ROL comercial por filial via API DELPI. Lista paginada de registros. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+      "description": "Short tabular list comparing ROL metrics for branches 01 and 02 in a period. Use for «ROL por filial», ranking or side-by-side branch comparison — not a single-branch scalar KPI."
     },
     {
       "method": "GET",
@@ -4355,7 +4378,7 @@
       "method": "GET",
       "path": "/commercial/sales-order-otd/by-branch",
       "operationId": "get_sales_order_otd_by_branch",
-      "summary": "Lista paginada — Otd de pedidos de venda por filial",
+      "summary": "Sales order OTD by branch",
       "tags": [
         "Comercial"
       ],
@@ -4427,6 +4450,19 @@
       "xDelpi": {
         "entity": "sales_order_otd_by_branch",
         "shape": "paged_list",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Sales order OTD by branch",
+            "description": "On-time delivery metrics for branches 01 and 02 as a short tabular list.",
+            "label": "Sales order OTD by branch"
+          },
+          "pt-BR": {
+            "summary": "OTD de pedidos por filial",
+            "description": "Métricas de entrega no prazo das filiais 01 e 02, em lista tabular curta.",
+            "label": "Indicador — OTD por filial"
+          }
+        },
         "params": {
           "customer_codes": {
             "locale": {
@@ -4545,15 +4581,19 @@
             "format": "date"
           }
         },
+        "tv": {
+          "description": "Métricas de entrega no prazo das filiais 01 e 02, em lista tabular curta.",
+          "label": "Indicador — OTD por filial"
+        },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Retorna OTD de pedidos de venda por filial via API DELPI. Lista paginada de registros. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+      "description": "On-time delivery metrics for branches 01 and 02 as a short tabular list."
     },
     {
       "method": "GET",
       "path": "/commercial/sales-order-otd/by-customer",
       "operationId": "get_sales_order_otd_by_customer",
-      "summary": "Lista paginada — Otd de pedidos de venda por cliente",
+      "summary": "Sales order OTD by customer",
       "tags": [
         "Comercial"
       ],
@@ -4653,6 +4693,19 @@
       "xDelpi": {
         "entity": "sales_order_otd_by_customer",
         "shape": "paged_list",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Sales order OTD by customer",
+            "description": "On-time delivery metrics broken down by customer for a period.",
+            "label": "Sales order OTD by customer"
+          },
+          "pt-BR": {
+            "summary": "OTD de pedidos por cliente",
+            "description": "Métricas de entrega no prazo agregadas por cliente no período.",
+            "label": "Indicador — OTD por cliente"
+          }
+        },
         "params": {
           "branch": {
             "locale": {
@@ -4849,9 +4902,13 @@
             "format": "date"
           }
         },
+        "tv": {
+          "description": "Métricas de entrega no prazo agregadas por cliente no período.",
+          "label": "Indicador — OTD por cliente"
+        },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Retorna OTD de pedidos de venda por cliente via API DELPI. Lista paginada de registros. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+      "description": "On-time delivery metrics broken down by customer for a period."
     },
     {
       "method": "GET",
@@ -6344,7 +6401,7 @@
       "method": "GET",
       "path": "/commercial/sales-order-otd/series-by-customer",
       "operationId": "get_sales_order_otd_series_by_customer",
-      "summary": "Lista paginada — Série temporal otd de pedidos de venda por cliente",
+      "summary": "Sales order OTD series by customer",
       "tags": [
         "Comercial"
       ],
@@ -6466,6 +6523,19 @@
       "xDelpi": {
         "entity": "sales_order_otd_series_by_customer",
         "shape": "paged_list",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Sales order OTD series by customer",
+            "description": "On-time delivery metrics per customer for each period bucket (day, week, month or year).",
+            "label": "Sales order OTD series by customer"
+          },
+          "pt-BR": {
+            "summary": "Série temporal de OTD de pedidos por cliente",
+            "description": "OTD, quantidade e atendimento por cliente em cada bucket temporal (dia, semana, mês ou ano).",
+            "label": "Indicador — Série temporal de OTD de pedidos por cliente"
+          }
+        },
         "params": {
           "branch": {
             "locale": {
@@ -6728,9 +6798,13 @@
             "format": "date"
           }
         },
+        "tv": {
+          "description": "OTD, quantidade e atendimento por cliente em cada bucket temporal (dia, semana, mês ou ano).",
+          "label": "Indicador — Série temporal de OTD de pedidos por cliente"
+        },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Retorna Série temporal OTD de pedidos de venda por cliente via API DELPI. Lista paginada de registros. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+      "description": "On-time delivery metrics per customer for each period bucket (day, week, month or year)."
     },
     {
       "method": "GET",
@@ -7687,12 +7761,14 @@
             "summary": "Department IDD with indicators (goals and realized)",
             "description": "Strategic Indicators department IDD plus each indicator with goals (metas) and realized values.",
             "whenToUse": "Use when you need IDD plus metas and realizado per indicator for one department.",
+            "whenNotToUse": "Do not use for commercial ROL, revenue series, closing-rate/conversion KPIs, or billing trends — prefer /commercial/rol/series.",
             "label": "Departamento — IDD, metas e realizado"
           },
           "pt-BR": {
             "summary": "IDD do departamento com indicadores (metas e realizado)",
             "description": "Nota IDD do departamento e, para cada indicador, metas e realizado no período.",
             "whenToUse": "Usar quando precisar do IDD e da lista de indicadores com metas e realizado de um departamento.",
+            "whenNotToUse": "Não use para ROL comercial, série de receita, taxa de conversão ou faturamento — prefira /commercial/rol/series.",
             "label": "Departamento — IDD, metas e realizado"
           }
         },
@@ -7862,6 +7938,7 @@
         },
         "tv": {
           "whenToUse": "Usar quando precisar do IDD e da lista de indicadores com metas e realizado de um departamento.",
+          "whenNotToUse": "Não use para ROL comercial, série de receita, taxa de conversão ou faturamento — prefira /commercial/rol/series.",
           "description": "Nota IDD do departamento e, para cada indicador, metas e realizado no período.",
           "label": "Departamento — IDD, metas e realizado"
         },
@@ -7940,12 +8017,14 @@
             "summary": "All departments with IDD, goals and realized per indicator",
             "description": "Lists every Strategic Indicators department with IDD and nested indicators (goals and realized).",
             "whenToUse": "Use for a full departmental IDD board with metas and realizado per indicator.",
+            "whenNotToUse": "Do not use as a substitute for commercial ROL or sales conversion series.",
             "label": "Departamentos — IDD, metas e realizado"
           },
           "pt-BR": {
             "summary": "Todos os departamentos com IDD, metas e realizado por indicador",
             "description": "Lista cada departamento com IDD e indicadores aninhados (metas e realizado) no período.",
             "whenToUse": "Usar para painel completo de IDDs com metas e realizado por indicador.",
+            "whenNotToUse": "Não use como substituto de ROL comercial ou série de conversão de vendas.",
             "label": "Departamentos — IDD, metas e realizado"
           }
         },
@@ -8115,6 +8194,7 @@
         },
         "tv": {
           "whenToUse": "Usar para painel completo de IDDs com metas e realizado por indicador.",
+          "whenNotToUse": "Não use como substituto de ROL comercial ou série de conversão de vendas.",
           "description": "Lista cada departamento com IDD e indicadores aninhados (metas e realizado) no período.",
           "label": "Departamentos — IDD, metas e realizado"
         },
@@ -13354,12 +13434,14 @@
             "summary": "Custos de Produção / ROL — actual",
             "description": "Actual value for SI indicator «Custos de Produção / ROL» (IGD view).",
             "whenToUse": "Use as a KPI card for the actual Custos de Produção / ROL.",
+            "whenNotToUse": "Do not use when the user asked for production status of a product code (OPs/appointments) — prefer /products/{code}/production-status. This is the SI cost/ROL KPI, not shop-floor status.",
             "label": "Custos de Produção / ROL — actual"
           },
           "pt-BR": {
             "summary": "Custos de Produção / ROL — realizado",
             "description": "Valor realizado do indicador SI «Custos de Produção / ROL» (visão IGD).",
             "whenToUse": "Usar no card KPI do realizado de Custos de Produção / ROL.",
+            "whenNotToUse": "Não use quando o usuário pediu situação de produção de um código (OPs/apontamentos) — prefira /products/{code}/production-status. Este é o KPI SI de custo/ROL, não status de chão de fábrica.",
             "label": "Custos de Produção / ROL — realizado"
           }
         },
@@ -13459,6 +13541,7 @@
         },
         "tv": {
           "whenToUse": "Usar no card KPI do realizado de Custos de Produção / ROL.",
+          "whenNotToUse": "Não use quando o usuário pediu situação de produção de um código (OPs/apontamentos) — prefira /products/{code}/production-status. Este é o KPI SI de custo/ROL, não status de chão de fábrica.",
           "description": "Valor realizado do indicador SI «Custos de Produção / ROL» (visão IGD).",
           "label": "Custos de Produção / ROL — realizado"
         },
@@ -30654,7 +30737,7 @@
       "method": "GET",
       "path": "/financial/rol",
       "operationId": "get_financial_rol",
-      "summary": "Financial ROL (net operating revenue)",
+      "summary": "Financial ROL consolidated KPI by branch",
       "tags": [
         "Financeiro",
         "Financeiro"
@@ -30696,15 +30779,17 @@
         "category": "financial",
         "locale": {
           "en": {
-            "summary": "Financial ROL (net operating revenue)",
-            "description": "Financial ROL indicator consolidated by branch and period. Use for financial ROL / net operating revenue — not commercial ROL (/commercial/rol/series).",
-            "whenToUse": "Use for financial ROL KPI by branch and period.",
+            "summary": "Financial ROL consolidated KPI by branch",
+            "description": "Scalar financial ROL (net operating revenue) for one branch and period. Use for «ROL da filial», consolidado financeiro da filial, KPI escalar de receita operacional líquida.",
+            "whenToUse": "Use when the user asks for the ROL of a specific branch/filial as a consolidated financial KPI (with or without an explicit period).",
+            "whenNotToUse": "Do not use for a side-by-side breakdown of branches 01 vs 02 («ROL por filial» tabular) — prefer /commercial/rol/by-branch. Do not use for a time series chart — prefer /commercial/rol/series.",
             "label": "Financial ROL"
           },
           "pt-BR": {
-            "summary": "ROL financeiro (receita operacional líquida)",
-            "description": "Indicador ROL financeiro consolidado por filial e período. Use para rol financeiro / receita operacional líquida — não confundir com ROL comercial.",
-            "whenToUse": "Use para o KPI de ROL financeiro por filial e período.",
+            "summary": "ROL financeiro consolidado por filial",
+            "description": "KPI escalar de ROL financeiro (receita operacional líquida) de uma filial e período. Use para «ROL da filial», consolidado financeiro da filial.",
+            "whenToUse": "Use quando o usuário pedir o ROL de uma filial específica como consolidado financeiro (com ou sem período explícito).",
+            "whenNotToUse": "Não use para ranking/breakdown tabular das filiais 01×02 («ROL por filial») — prefira /commercial/rol/by-branch. Não use para série temporal — prefira /commercial/rol/series.",
             "label": "ROL financeiro (receita operacional líquida)"
           }
         },
@@ -30791,13 +30876,14 @@
           }
         },
         "tv": {
-          "whenToUse": "Use para o KPI de ROL financeiro por filial e período.",
-          "description": "Indicador ROL financeiro consolidado por filial e período. Use para rol financeiro / receita operacional líquida — não confundir com ROL comercial.",
+          "whenToUse": "Use quando o usuário pedir o ROL de uma filial específica como consolidado financeiro (com ou sem período explícito).",
+          "whenNotToUse": "Não use para ranking/breakdown tabular das filiais 01×02 («ROL por filial») — prefira /commercial/rol/by-branch. Não use para série temporal — prefira /commercial/rol/series.",
+          "description": "KPI escalar de ROL financeiro (receita operacional líquida) de uma filial e período. Use para «ROL da filial», consolidado financeiro da filial.",
           "label": "ROL financeiro (receita operacional líquida)"
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Financial ROL indicator consolidated by branch and period. Use for financial ROL / net operating revenue — not commercial ROL (/commercial/rol/series)."
+      "description": "Scalar financial ROL (net operating revenue) for one branch and period. Use for «ROL da filial», consolidado financeiro da filial, KPI escalar de receita operacional líquida."
     },
     {
       "method": "GET",
@@ -50988,6 +51074,435 @@
     },
     {
       "method": "GET",
+      "path": "/production/eficiencia-fabril/efficiency-series",
+      "operationId": "get_eficiencia_fabril_efficiency_series",
+      "summary": "Factory efficiency daily series by work center",
+      "tags": [
+        "Produção"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "date_start",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "date_end",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "op",
+          "in": "query",
+          "required": false,
+          "description": "Production order query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "employee",
+          "in": "query",
+          "required": false,
+          "description": "Employee query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "work_center",
+          "in": "query",
+          "required": false,
+          "description": "Work center query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "shift",
+          "in": "query",
+          "required": false,
+          "description": "Factory shift filter by appointment start time: 1 (1st), 2 (2nd) or 3 (3rd).",
+          "enum": [
+            "1",
+            "2",
+            "3"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "granularity",
+          "in": "query",
+          "required": false,
+          "description": "Series bucket size. Only day is supported.",
+          "type": "string",
+          "default": "day",
+          "enum": [
+            "day"
+          ]
+        }
+      ],
+      "xDelpi": {
+        "entity": "eficiencia_fabril_efficiency_series",
+        "shape": "list",
+        "category": "production",
+        "locale": {
+          "en": {
+            "summary": "Factory efficiency daily series by work center",
+            "description": "Daily average efficiency percent per work center (OK appointments in 0–199% band), same rule as the factory efficiency plugin.",
+            "label": "Factory efficiency daily series"
+          },
+          "pt-BR": {
+            "summary": "Eficiência fabril — série diária de % por centro de trabalho",
+            "description": "Evolução diária da eficiência (%) por CT (apontamentos OK na faixa 0–199%), mesma regra do plugin eficiência-fabril. Ideal para gráfico de linha de tendência.",
+            "label": "Eficiência fabril — série diária por CT"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "date_end": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "date_start": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "employee": {
+            "locale": {
+              "en": {
+                "description": "Employee query parameter.",
+                "label": "Employee"
+              },
+              "pt-BR": {
+                "description": "Código ou matrícula do colaborador.",
+                "label": "Colaborador"
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "granularity": {
+            "locale": {
+              "en": {
+                "description": "Series bucket size: day, week, month or year.",
+                "label": "Granularity"
+              },
+              "pt-BR": {
+                "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+                "label": "Granularidade"
+              }
+            },
+            "enumLabels": {
+              "auto": {
+                "en": {
+                  "label": "Auto"
+                },
+                "pt-BR": {
+                  "label": "Automático"
+                }
+              },
+              "day": {
+                "en": {
+                  "label": "Day"
+                },
+                "pt-BR": {
+                  "label": "Dia"
+                }
+              },
+              "month": {
+                "en": {
+                  "label": "Month"
+                },
+                "pt-BR": {
+                  "label": "Mês"
+                }
+              },
+              "week": {
+                "en": {
+                  "label": "Week"
+                },
+                "pt-BR": {
+                  "label": "Semana"
+                }
+              },
+              "year": {
+                "en": {
+                  "label": "Year"
+                },
+                "pt-BR": {
+                  "label": "Ano"
+                }
+              }
+            }
+          },
+          "op": {
+            "locale": {
+              "en": {
+                "description": "Production order query parameter.",
+                "label": "Production order"
+              },
+              "pt-BR": {
+                "description": "Número da ordem de produção (OP).",
+                "label": "Ordem de produção"
+              }
+            }
+          },
+          "shift": {
+            "locale": {
+              "en": {
+                "description": "Shift filter. 5S uses TURNO_1|TURNO_2|TURNO_3|ADMINISTRATIVO; factory efficiency uses 1|2|3 (or CSV).",
+                "label": "Shift"
+              },
+              "pt-BR": {
+                "description": "Filtro de turno. 5S: TURNO_1|TURNO_2|TURNO_3|ADMINISTRATIVO; eficiência fabril: 1|2|3 (ou CSV).",
+                "label": "Turno"
+              }
+            },
+            "enumLabels": {
+              "1": {
+                "en": {
+                  "label": "1st shift"
+                },
+                "pt-BR": {
+                  "label": "1º Turno"
+                }
+              },
+              "2": {
+                "en": {
+                  "label": "2nd shift"
+                },
+                "pt-BR": {
+                  "label": "2º Turno"
+                }
+              },
+              "3": {
+                "en": {
+                  "label": "3rd shift"
+                },
+                "pt-BR": {
+                  "label": "3º Turno"
+                }
+              },
+              "ADMINISTRATIVO": {
+                "en": {
+                  "label": "Administrative"
+                },
+                "pt-BR": {
+                  "label": "Administrativo"
+                }
+              },
+              "TURNO_1": {
+                "en": {
+                  "label": "Shift 1"
+                },
+                "pt-BR": {
+                  "label": "Turno 1"
+                }
+              },
+              "TURNO_2": {
+                "en": {
+                  "label": "Shift 2"
+                },
+                "pt-BR": {
+                  "label": "Turno 2"
+                }
+              },
+              "TURNO_3": {
+                "en": {
+                  "label": "Shift 3"
+                },
+                "pt-BR": {
+                  "label": "Turno 3"
+                }
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "work_center": {
+            "locale": {
+              "en": {
+                "description": "Work center query parameter.",
+                "label": "Work center"
+              },
+              "pt-BR": {
+                "description": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros.",
+                "label": "Centro de trabalho"
+              }
+            }
+          }
+        },
+        "tv": {
+          "description": "Evolução diária da eficiência (%) por CT (apontamentos OK na faixa 0–199%), mesma regra do plugin eficiência-fabril. Ideal para gráfico de linha de tendência.",
+          "label": "Eficiência fabril — série diária por CT"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Daily average efficiency percent per work center (OK appointments in 0–199% band), same rule as the factory efficiency plugin."
+    },
+    {
+      "method": "GET",
+      "path": "/production/factory-shifts",
+      "operationId": "get_production_factory_shifts",
+      "summary": "Factory shifts catalog",
+      "tags": [
+        "Produção"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "production_factory_shift",
+        "shape": "list",
+        "category": "production",
+        "locale": {
+          "en": {
+            "summary": "Factory shifts catalog",
+            "description": "Delpi factory shifts with start/end times and which shift is running now.",
+            "whenToUse": "Use to build shift filters or to show the current shift on a panel.",
+            "label": "Factory shifts"
+          },
+          "pt-BR": {
+            "summary": "Turnos de fábrica",
+            "description": "Turnos de fábrica Delpi com horários de início/fim e o turno em andamento agora.",
+            "whenToUse": "Usar para montar filtros por turno ou exibir o turno corrente em um painel.",
+            "label": "Turnos de fábrica"
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar para montar filtros por turno ou exibir o turno corrente em um painel.",
+          "description": "Turnos de fábrica Delpi com horários de início/fim e o turno em andamento agora.",
+          "label": "Turnos de fábrica"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Delpi factory shifts with start/end times and which shift is running now."
+    },
+    {
+      "method": "GET",
       "path": "/production/losses/records",
       "operationId": "get_production_losses_records",
       "summary": "Production losses records",
@@ -51544,7 +52059,7 @@
           "required": false,
           "description": "Page size.",
           "type": "integer",
-          "default": 50
+          "default": 100
         },
         {
           "name": "sort",
@@ -55934,12 +56449,14 @@
             "summary": "Production orders items",
             "description": "Paged production orders with product, dates, quantities, balance and delay flags.",
             "whenToUse": "Use for a table of production orders filtered by delivery date and open/mother/delayed flags.",
+            "whenNotToUse": "Do not use when the user asked for factory-status or production-status of a specific product code — prefer /products/{code}/factory-status or /production-status.",
             "label": "Production orders items"
           },
           "pt-BR": {
             "summary": "Itens de OPs",
             "description": "Lista paginada de ordens de produção com produto, datas, quantidades, saldo e flags.",
             "whenToUse": "Usar em tabela de OPs filtrada por entrega prevista e flags (aberta/mãe/atrasada).",
+            "whenNotToUse": "Não use quando o usuário pediu status fabril ou situação de produção de um código específico — prefira /products/{code}/factory-status ou /production-status.",
             "label": "Itens de OPs"
           }
         },
@@ -56387,6 +56904,7 @@
         },
         "tv": {
           "whenToUse": "Usar em tabela de OPs filtrada por entrega prevista e flags (aberta/mãe/atrasada).",
+          "whenNotToUse": "Não use quando o usuário pediu status fabril ou situação de produção de um código específico — prefira /products/{code}/factory-status ou /production-status.",
           "description": "Lista paginada de ordens de produção com produto, datas, quantidades, saldo e flags.",
           "label": "Itens de OPs"
         },
@@ -57859,7 +58377,7 @@
           "name": "resource",
           "in": "query",
           "required": false,
-          "description": "Production resource code filter.",
+          "description": "Production resource code filter. Accepts a comma-separated list.",
           "type": "string"
         },
         {
@@ -58436,7 +58954,7 @@
           "name": "resource",
           "in": "query",
           "required": false,
-          "description": "Production resource code filter.",
+          "description": "Production resource code filter. Accepts a comma-separated list.",
           "type": "string"
         },
         {
@@ -58811,6 +59329,339 @@
     },
     {
       "method": "GET",
+      "path": "/production/unproductive-hours/series",
+      "operationId": "get_production_unproductive_hours_series",
+      "summary": "Unproductive hours daily series",
+      "tags": [
+        "Produção — Horas improdutivas"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "date_start",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "date_end",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "stop_reason",
+          "in": "query",
+          "required": false,
+          "description": "Stop reason code from the view (e.g. RT, OT, MT). Empty = all reasons.",
+          "type": "string"
+        },
+        {
+          "name": "resource",
+          "in": "query",
+          "required": false,
+          "description": "Production resource code filter. Accepts a comma-separated list.",
+          "type": "string"
+        },
+        {
+          "name": "cost_center",
+          "in": "query",
+          "required": false,
+          "description": "Cost center code filter.",
+          "type": "string"
+        },
+        {
+          "name": "operator_code",
+          "in": "query",
+          "required": false,
+          "description": "Operator code filter.",
+          "type": "string"
+        },
+        {
+          "name": "granularity",
+          "in": "query",
+          "required": false,
+          "description": "Series bucket size. Only day is supported.",
+          "type": "string",
+          "default": "day",
+          "enum": [
+            "day"
+          ]
+        }
+      ],
+      "xDelpi": {
+        "entity": "production_unproductive_hours_series",
+        "shape": "list",
+        "category": "production",
+        "locale": {
+          "en": {
+            "summary": "Unproductive hours daily series",
+            "description": "Unproductive hours and stop appointment count grouped by reference date.",
+            "whenToUse": "Use for a stop-hours trend line or bar chart over the last days.",
+            "label": "Unproductive hours daily series"
+          },
+          "pt-BR": {
+            "summary": "Série diária de horas improdutivas",
+            "description": "Horas paradas e número de apontamentos agrupados por data de referência.",
+            "whenToUse": "Usar em gráfico de evolução das paradas ao longo dos dias.",
+            "label": "Série diária de horas improdutivas"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "cost_center": {
+            "locale": {
+              "en": {
+                "description": "Cost center query parameter.",
+                "label": "Cost center"
+              },
+              "pt-BR": {
+                "description": "Código do centro de custo no Protheus.",
+                "label": "Centro de custo"
+              }
+            }
+          },
+          "date_end": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "date_start": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "granularity": {
+            "locale": {
+              "en": {
+                "description": "Series bucket size: day, week, month or year.",
+                "label": "Granularity"
+              },
+              "pt-BR": {
+                "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+                "label": "Granularidade"
+              }
+            },
+            "enumLabels": {
+              "auto": {
+                "en": {
+                  "label": "Auto"
+                },
+                "pt-BR": {
+                  "label": "Automático"
+                }
+              },
+              "day": {
+                "en": {
+                  "label": "Day"
+                },
+                "pt-BR": {
+                  "label": "Dia"
+                }
+              },
+              "month": {
+                "en": {
+                  "label": "Month"
+                },
+                "pt-BR": {
+                  "label": "Mês"
+                }
+              },
+              "week": {
+                "en": {
+                  "label": "Week"
+                },
+                "pt-BR": {
+                  "label": "Semana"
+                }
+              },
+              "year": {
+                "en": {
+                  "label": "Year"
+                },
+                "pt-BR": {
+                  "label": "Ano"
+                }
+              }
+            }
+          },
+          "operator_code": {
+            "locale": {
+              "en": {
+                "description": "Operator code query parameter.",
+                "label": "Operator code"
+              },
+              "pt-BR": {
+                "description": "Código(s) do operador (CSV).",
+                "label": "Código do operador"
+              }
+            }
+          },
+          "resource": {
+            "locale": {
+              "en": {
+                "description": "Production resource code (machine/work center resource).",
+                "label": "Resource"
+              },
+              "pt-BR": {
+                "description": "Código do recurso de produção (máquina/recurso do centro de trabalho).",
+                "label": "Recurso"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "stop_reason": {
+            "locale": {
+              "en": {
+                "description": "PCP stop reason code from the unproductive-hours view (e.g. RT, OT, MT). Empty = all reasons.",
+                "label": "Stop reason"
+              },
+              "pt-BR": {
+                "description": "Código do motivo de parada na view de horas improdutivas (ex.: RT, OT, MT). Vazio = todos os motivos.",
+                "label": "Motivo de parada"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar em gráfico de evolução das paradas ao longo dos dias.",
+          "description": "Horas paradas e número de apontamentos agrupados por data de referência.",
+          "label": "Série diária de horas improdutivas"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Unproductive hours and stop appointment count grouped by reference date."
+    },
+    {
+      "method": "GET",
       "path": "/production/unproductive-hours/summary",
       "operationId": "get_production_unproductive_hours_summary",
       "summary": "Unproductive hours summary",
@@ -58876,7 +59727,7 @@
           "name": "resource",
           "in": "query",
           "required": false,
-          "description": "Production resource code filter.",
+          "description": "Production resource code filter. Accepts a comma-separated list.",
           "type": "string"
         },
         {
@@ -60905,7 +61756,7 @@
       "method": "GET",
       "path": "/products/{code}",
       "operationId": "get_product_detail",
-      "summary": "Dados cadastrais do product",
+      "summary": "Product cadastro / master data",
       "tags": [
         "products"
       ],
@@ -60945,13 +61796,17 @@
         "category": "products",
         "locale": {
           "en": {
-            "summary": "Dados cadastrais do product",
-            "description": "Product detail.",
-            "label": "Dados cadastrais do product"
+            "summary": "Product cadastro / master data",
+            "description": "Cadastro and master data for a product code (description, group, type).",
+            "whenToUse": "Use for cadastro, descrição or master data of a product code.",
+            "whenNotToUse": "Do not use when the user asked for sale price/pricing tables — prefer /pricing. Do not use when the user asked for stock balance — prefer /stock.",
+            "label": "Product detail"
           },
           "pt-BR": {
             "summary": "Dados cadastrais do produto",
-            "description": "Consulta operacional: «Dados cadastrais do produto».",
+            "description": "Cadastro e dados mestres do código (descrição, grupo, tipo).",
+            "whenToUse": "Use para cadastro, descrição ou dados mestres de um código.",
+            "whenNotToUse": "Não use quando o usuário pediu preço de venda/tabelas — prefira /pricing. Não use quando pediu estoque/saldo — prefira /stock.",
             "label": "Dados cadastrais do produto"
           }
         },
@@ -61052,18 +61907,20 @@
           }
         },
         "tv": {
-          "description": "Consulta operacional: «Dados cadastrais do produto».",
+          "whenToUse": "Use para cadastro, descrição ou dados mestres de um código.",
+          "whenNotToUse": "Não use quando o usuário pediu preço de venda/tabelas — prefira /pricing. Não use quando pediu estoque/saldo — prefira /stock.",
+          "description": "Cadastro e dados mestres do código (descrição, grupo, tipo).",
           "label": "Dados cadastrais do produto"
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Product detail."
+      "description": "Cadastro and master data for a product code (description, group, type)."
     },
     {
       "method": "GET",
       "path": "/products/{code}/analyser",
       "operationId": "get_product_analyser",
-      "summary": "Product analyser",
+      "summary": "Full product analyser / integrated view",
       "tags": [
         "products"
       ],
@@ -61095,14 +61952,16 @@
         "category": "products",
         "locale": {
           "en": {
-            "summary": "Product analyser",
-            "description": "Product analyser.",
+            "summary": "Full product analyser / integrated view",
+            "description": "Consolidates cadastro, BOM structure, routing guide and inspection into one wide analytical sheet (default view=full). Use for visão integrada, ficha completa, análise completa, or when the user asks together for cadastro/ficha + estrutura + roteiro (optionally estoque). For a single intent prefer granular routes: /stock, /structure, /guide, /inspection or /summary (light cadastro+estoque+preços only).",
+            "whenToUse": "Use for integrated/complete product view with structure and routing together — not for a light summary-only glance.",
             "label": "Product analyser"
           },
           "pt-BR": {
-            "summary": "Analisador completo do produto",
-            "description": "Análise composta: «Analisador completo do produto».",
-            "label": "Analisador completo do produto"
+            "summary": "Analisador completo / visão integrada do produto",
+            "description": "Consolida cadastro, estrutura (BOM), roteiro e inspeção numa ficha analítica ampla. Use para visão integrada, ficha completa ou quando o usuário pede juntos cadastro/ficha + estrutura + roteiro.",
+            "whenToUse": "Use para visão integrada ou ficha completa com estrutura e roteiro; não use só para resumo leve.",
+            "label": "Analisador completo / visão integrada do produto"
           }
         },
         "params": {
@@ -61190,18 +62049,19 @@
           }
         },
         "tv": {
-          "description": "Análise composta: «Analisador completo do produto».",
-          "label": "Analisador completo do produto"
+          "whenToUse": "Use para visão integrada ou ficha completa com estrutura e roteiro; não use só para resumo leve.",
+          "description": "Consolida cadastro, estrutura (BOM), roteiro e inspeção numa ficha analítica ampla. Use para visão integrada, ficha completa ou quando o usuário pede juntos cadastro/ficha + estrutura + roteiro.",
+          "label": "Analisador completo / visão integrada do produto"
         },
         "presentationStrategy": "enriched"
       },
-      "description": "Product analyser."
+      "description": "Consolidates cadastro, BOM structure, routing guide and inspection into one wide analytical sheet (default view=full). Use for visão integrada, ficha completa, análise completa, or when the user asks together for cadastro/ficha + estrutura + roteiro (optionally estoque). For a single intent prefer granular routes: /stock, /structure, /guide, /inspection or /summary (light cadastro+estoque+preços only)."
     },
     {
       "method": "GET",
       "path": "/products/{code}/cost-impact-simulation",
       "operationId": "get_product_cost_impact_simulation",
-      "summary": "Product cost impact simulation",
+      "summary": "Finished-product cost impact simulation (BOM materials)",
       "tags": [
         "products"
       ],
@@ -61251,13 +62111,17 @@
         "category": "products",
         "locale": {
           "en": {
-            "summary": "Product cost impact simulation",
-            "description": "Product cost impact simulation.",
+            "summary": "Finished-product cost impact simulation (BOM materials)",
+            "description": "Ranks raw materials that most impact the cost of one finished product (PA) from the current BOM. Supports standard or last-purchase cost and percent adjustment simulation.",
+            "whenToUse": "Use for materials that most impact PA cost, cost Pareto of MPs, or cost increase simulation on a finished product.",
+            "whenNotToUse": "Do not use for raw materials (MP) as the subject product — cost-impact is for finished products (PA). Do not use consumption-by-item dashboards as a substitute for PA cost-impact simulation.",
             "label": "Product cost impact simulation"
           },
           "pt-BR": {
             "summary": "Simulador de impacto de custos do PA",
-            "description": "Análise composta: «Simulador de impacto de custos do PA».",
+            "description": "Ranking das MPs que mais impactam o custo de 1 PA na BOM vigente. Suporta custo padrão ou última compra e simulação percentual de reajuste.",
+            "whenToUse": "Use para materiais críticos de custo do PA, Pareto de MPs ou simulação de aumento de preço no acabado.",
+            "whenNotToUse": "Não use com matéria-prima (MP) como produto sujeito — o simulador é para PA. Não use dashboards de consumo por item no lugar do simulador de impacto de custo do PA.",
             "label": "Simulador de impacto de custos do PA"
           }
         },
@@ -61324,12 +62188,14 @@
           }
         },
         "tv": {
-          "description": "Análise composta: «Simulador de impacto de custos do PA».",
+          "whenToUse": "Use para materiais críticos de custo do PA, Pareto de MPs ou simulação de aumento de preço no acabado.",
+          "whenNotToUse": "Não use com matéria-prima (MP) como produto sujeito — o simulador é para PA. Não use dashboards de consumo por item no lugar do simulador de impacto de custo do PA.",
+          "description": "Ranking das MPs que mais impactam o custo de 1 PA na BOM vigente. Suporta custo padrão ou última compra e simulação percentual de reajuste.",
           "label": "Simulador de impacto de custos do PA"
         },
         "presentationStrategy": "enriched"
       },
-      "description": "Product cost impact simulation."
+      "description": "Ranks raw materials that most impact the cost of one finished product (PA) from the current BOM. Supports standard or last-purchase cost and percent adjustment simulation."
     },
     {
       "method": "GET",
@@ -61543,7 +62409,7 @@
       "method": "GET",
       "path": "/products/{code}/factory-status",
       "operationId": "get_product_factory_status",
-      "summary": "Product factory status",
+      "summary": "Product factory status (integrated shop-floor view)",
       "tags": [
         "products"
       ],
@@ -61632,13 +62498,17 @@
         "category": "products",
         "locale": {
           "en": {
-            "summary": "Product factory status",
-            "description": "Product factory status.",
+            "summary": "Product factory status (integrated shop-floor view)",
+            "description": "Integrated factory status for a product code: structure, exclusive MPs, MP stock, production, shipping and shop-floor status. Prefer for «status fabril» or complete factory view of a product.",
+            "whenToUse": "Use for status fabril / visão fabril integrada of a known product code (optionally with a reference date).",
+            "whenNotToUse": "Do not use company-wide PCP order lists (/production/pcp-orders/*) as a substitute when the user named a product code and asked for factory status of that item.",
             "label": "Product factory status"
           },
           "pt-BR": {
             "summary": "Status fabril completo do produto",
-            "description": "Análise composta: «Status fabril completo do produto».",
+            "description": "Visão fabril integrada do código: estrutura, MPs exclusivas, estoque de MPs, produção, expedição e status fabril. Preferir para «status fabril» ou visão fabril completa do produto.",
+            "whenToUse": "Use para status fabril / visão fabril integrada de um código de produto (data de referência opcional).",
+            "whenNotToUse": "Não use listagens gerais de OPs/PCP (/production/pcp-orders/*) no lugar desta rota quando o usuário citou o código do produto e pediu status fabril do item.",
             "label": "Status fabril completo do produto"
           }
         },
@@ -61800,12 +62670,14 @@
           }
         },
         "tv": {
-          "description": "Análise composta: «Status fabril completo do produto».",
+          "whenToUse": "Use para status fabril / visão fabril integrada de um código de produto (data de referência opcional).",
+          "whenNotToUse": "Não use listagens gerais de OPs/PCP (/production/pcp-orders/*) no lugar desta rota quando o usuário citou o código do produto e pediu status fabril do item.",
+          "description": "Visão fabril integrada do código: estrutura, MPs exclusivas, estoque de MPs, produção, expedição e status fabril. Preferir para «status fabril» ou visão fabril completa do produto.",
           "label": "Status fabril completo do produto"
         },
         "presentationStrategy": "enriched"
       },
-      "description": "Product factory status."
+      "description": "Integrated factory status for a product code: structure, exclusive MPs, MP stock, production, shipping and shop-floor status. Prefer for «status fabril» or complete factory view of a product."
     },
     {
       "method": "GET",
@@ -63089,7 +63961,7 @@
       "method": "GET",
       "path": "/products/{code}/pricing",
       "operationId": "get_product_pricing",
-      "summary": "Product pricing",
+      "summary": "Product sale pricing and commercial price tables",
       "tags": [
         "products"
       ],
@@ -63109,13 +63981,17 @@
         "category": "products",
         "locale": {
           "en": {
-            "summary": "Product pricing",
-            "description": "Product pricing.",
+            "summary": "Product sale pricing and commercial price tables",
+            "description": "Sale price tables and commercial conditions for a product code. Use for «preço de venda», tabela comercial or unit sale price — not cadastro-only detail.",
+            "whenToUse": "Use for sale price / commercial price table of a known product code.",
+            "whenNotToUse": "Do not use product detail/cadastro alone when the user asked for sale price. Do not use for purchase cost / last purchase price — prefer purchase routes.",
             "label": "Product pricing"
           },
           "pt-BR": {
             "summary": "Preços e tabelas comerciais do produto",
-            "description": "Indicador numérico para «Preços e tabelas comerciais do produto».",
+            "description": "Tabelas de preço e condições comerciais do código. Use para preço de venda, tabela comercial ou valor unitário de venda — não só cadastro.",
+            "whenToUse": "Use para preço de venda / tabela comercial de um código conhecido.",
+            "whenNotToUse": "Não use só o detalhe/cadastro do produto quando o usuário pediu preço de venda. Não use para custo/última compra — prefira rotas de compras.",
             "label": "Preços e tabelas comerciais do produto"
           }
         },
@@ -63134,18 +64010,20 @@
           }
         },
         "tv": {
-          "description": "Indicador numérico para «Preços e tabelas comerciais do produto».",
+          "whenToUse": "Use para preço de venda / tabela comercial de um código conhecido.",
+          "whenNotToUse": "Não use só o detalhe/cadastro do produto quando o usuário pediu preço de venda. Não use para custo/última compra — prefira rotas de compras.",
+          "description": "Tabelas de preço e condições comerciais do código. Use para preço de venda, tabela comercial ou valor unitário de venda — não só cadastro.",
           "label": "Preços e tabelas comerciais do produto"
         },
         "presentationStrategy": "enriched"
       },
-      "description": "Product pricing."
+      "description": "Sale price tables and commercial conditions for a product code. Use for «preço de venda», tabela comercial or unit sale price — not cadastro-only detail."
     },
     {
       "method": "GET",
       "path": "/products/{code}/production-status",
       "operationId": "get_product_production_status",
-      "summary": "Product production status",
+      "summary": "Product production status (PA/PI, OPs and appointments)",
       "tags": [
         "products"
       ],
@@ -63200,13 +64078,17 @@
         "category": "products",
         "locale": {
           "en": {
-            "summary": "Product production status",
-            "description": "Product production status.",
+            "summary": "Product production status (PA/PI, OPs and appointments)",
+            "description": "Production situation for a product code: PA/PI, open OPs and shop-floor appointments on a reference date. Use for «situação de produção» / «produção do produto» of a known code.",
+            "whenToUse": "Use when the user asks whether production of a specific product started, how much was pointed, or OP status for that code.",
+            "whenNotToUse": "Do not use SI «Custos de Produção / ROL» KPIs as a substitute. Do not use company-wide PCP order lists when the question is about one product code.",
             "label": "Product production status"
           },
           "pt-BR": {
             "summary": "Situação produtiva do produto (PA, PI, OP e apontamentos)",
-            "description": "Relatório operacional: «Situação produtiva do produto (PA, PI, OP e apontamentos)».",
+            "description": "Situação de produção do código: PA/PI, OPs e apontamentos em uma data de referência. Use para «situação de produção» / «produção do produto» de um código conhecido.",
+            "whenToUse": "Use quando o usuário perguntar se a produção do produto iniciou, quanto foi apontado ou status de OP daquele código.",
+            "whenNotToUse": "Não use KPIs SI «Custos de Produção / ROL» como substituto. Não use listagens gerais de OPs/PCP quando a pergunta é sobre um código de produto.",
             "label": "Situação produtiva do produto (PA, PI, OP e apontamentos)"
           }
         },
@@ -63316,12 +64198,14 @@
           }
         },
         "tv": {
-          "description": "Relatório operacional: «Situação produtiva do produto (PA, PI, OP e apontamentos)».",
+          "whenToUse": "Use quando o usuário perguntar se a produção do produto iniciou, quanto foi apontado ou status de OP daquele código.",
+          "whenNotToUse": "Não use KPIs SI «Custos de Produção / ROL» como substituto. Não use listagens gerais de OPs/PCP quando a pergunta é sobre um código de produto.",
+          "description": "Situação de produção do código: PA/PI, OPs e apontamentos em uma data de referência. Use para «situação de produção» / «produção do produto» de um código conhecido.",
           "label": "Situação produtiva do produto (PA, PI, OP e apontamentos)"
         },
         "presentationStrategy": "enriched"
       },
-      "description": "Product production status."
+      "description": "Production situation for a product code: PA/PI, open OPs and shop-floor appointments on a reference date. Use for «situação de produção» / «produção do produto» of a known code."
     },
     {
       "method": "GET",
@@ -64353,6 +65237,34 @@
           "required": true,
           "description": "Code query parameter.",
           "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number in paginated listing.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "page_size default=50 ge=1 le=500",
+          "type": "integer",
+          "default": 50
         }
       ],
       "xDelpi": {
@@ -64372,6 +65284,60 @@
           }
         },
         "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
           "code": {
             "locale": {
               "en": {
@@ -64381,6 +65347,30 @@
               "pt-BR": {
                 "description": "Código do registro a filtrar.",
                 "label": "Código"
+              }
+            }
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
               }
             }
           }
@@ -64646,7 +65636,7 @@
       "method": "GET",
       "path": "/products/{code}/stock",
       "operationId": "get_product_stock",
-      "summary": "Product stock",
+      "summary": "Product stock by branch and location",
       "tags": [
         "products"
       ],
@@ -64716,13 +65706,17 @@
         "category": "products",
         "locale": {
           "en": {
-            "summary": "Product stock",
-            "description": "Product stock.",
+            "summary": "Product stock by branch and location",
+            "description": "Stock balance and positions for a specific product code. Prefer this over /summary when the user asks for stock, balance or available quantity — including when combined with description/cadastro.",
+            "whenToUse": "Use for stock/balance/available quantity of a product code.",
+            "whenNotToUse": "Do not substitute with /summary when the focus is balance/position. Do not use for company-wide stock value (supplies /stock-value).",
             "label": "Product stock"
           },
           "pt-BR": {
             "summary": "Estoque do produto por filial e local",
-            "description": "Listagem paginada de «Estoque do produto por filial e local» para uso em tabela ou gráfico no TV.",
+            "description": "Saldo e posição de estoque de um código. Prefira esta rota a /summary quando o usuário pediu estoque/saldo/disponível — inclusive junto com descrição/cadastro.",
+            "whenToUse": "Use para estoque, saldo ou disponível de um produto.",
+            "whenNotToUse": "Não substitua por /summary quando o foco é saldo/posição. Não use para valor total de estoque da empresa.",
             "label": "Estoque do produto por filial e local"
           }
         },
@@ -64855,18 +65849,20 @@
           }
         },
         "tv": {
-          "description": "Listagem paginada de «Estoque do produto por filial e local» para uso em tabela ou gráfico no TV.",
+          "whenToUse": "Use para estoque, saldo ou disponível de um produto.",
+          "whenNotToUse": "Não substitua por /summary quando o foco é saldo/posição. Não use para valor total de estoque da empresa.",
+          "description": "Saldo e posição de estoque de um código. Prefira esta rota a /summary quando o usuário pediu estoque/saldo/disponível — inclusive junto com descrição/cadastro.",
           "label": "Estoque do produto por filial e local"
         },
         "presentationStrategy": "enriched"
       },
-      "description": "Product stock."
+      "description": "Stock balance and positions for a specific product code. Prefer this over /summary when the user asks for stock, balance or available quantity — including when combined with description/cadastro."
     },
     {
       "method": "GET",
       "path": "/products/{code}/structure",
       "operationId": "get_product_structure",
-      "summary": "Product structure",
+      "summary": "Product structure (BOM)",
       "tags": [
         "products"
       ],
@@ -64907,13 +65903,15 @@
         "category": "products",
         "locale": {
           "en": {
-            "summary": "Product structure",
-            "description": "Product structure.",
+            "summary": "Product structure (BOM)",
+            "description": "Lists the product BOM / material list from the code. Use for árvore de componentes, child items, estrutura/BOM explosion without exclusividade de matérias-primas. Do not use when the user asks only for exclusividade/MP exclusiva — then use /structure/exclusivity.",
+            "whenToUse": "Use for plain BOM/structure/component tree; not for exclusivity-only requests.",
             "label": "Product structure"
           },
           "pt-BR": {
             "summary": "Estrutura (BOM) do produto",
-            "description": "Visão hierárquica de «Estrutura (BOM) do produto».",
+            "description": "Lista a estrutura / lista de materiais (BOM). Use para árvore de componentes sem exclusividade de matérias-primas. Não usar quando o usuário pedir apenas exclusividade de MPs.",
+            "whenToUse": "Use para BOM/estrutura comum; não use só para exclusividade.",
             "label": "Estrutura (BOM) do produto"
           }
         },
@@ -64968,12 +65966,13 @@
           }
         },
         "tv": {
-          "description": "Visão hierárquica de «Estrutura (BOM) do produto».",
+          "whenToUse": "Use para BOM/estrutura comum; não use só para exclusividade.",
+          "description": "Lista a estrutura / lista de materiais (BOM). Use para árvore de componentes sem exclusividade de matérias-primas. Não usar quando o usuário pedir apenas exclusividade de MPs.",
           "label": "Estrutura (BOM) do produto"
         },
         "presentationStrategy": "enriched"
       },
-      "description": "Product structure."
+      "description": "Lists the product BOM / material list from the code. Use for árvore de componentes, child items, estrutura/BOM explosion without exclusividade de matérias-primas. Do not use when the user asks only for exclusividade/MP exclusiva — then use /structure/exclusivity."
     },
     {
       "method": "GET",
@@ -65057,7 +66056,7 @@
       "method": "GET",
       "path": "/products/{code}/structure/exclusivity",
       "operationId": "get_product_structure_exclusivity",
-      "summary": "Product structure exclusivity",
+      "summary": "Raw-material exclusivity in product structure",
       "tags": [
         "products"
       ],
@@ -65092,14 +66091,16 @@
         "category": "products",
         "locale": {
           "en": {
-            "summary": "Product structure exclusivity",
-            "description": "Product structure exclusivity.",
-            "label": "Product structure exclusivity"
+            "summary": "Raw-material exclusivity in product structure",
+            "description": "Opens the multi-level BOM and marks exclusive MPs (present in only one valid finished good). Use ONLY when the user asks exclusividade, MP exclusiva, matéria-prima exclusiva or component exclusivity. For plain estrutura/BOM (tree, components, explosion) without exclusivity, use /structure.",
+            "whenToUse": "Use only for exclusivity of raw materials; not for a plain BOM request.",
+            "label": "Structure exclusivity"
           },
           "pt-BR": {
-            "summary": "Estrutura do produto com exclusividade de matérias-primas",
-            "description": "Relatório operacional: «Estrutura do produto com exclusividade de matérias-primas».",
-            "label": "Estrutura do produto com exclusividade de matérias-primas"
+            "summary": "Exclusividade de matérias-primas na estrutura",
+            "description": "Marca MPs exclusivas na BOM. Use SOMENTE quando o usuário pedir exclusividade ou MP exclusiva. Para BOM comum use /structure.",
+            "whenToUse": "Use só para exclusividade de MPs; não use para estrutura/BOM comum.",
+            "label": "Exclusividade de matérias-primas na estrutura"
           }
         },
         "params": {
@@ -65141,18 +66142,19 @@
           }
         },
         "tv": {
-          "description": "Relatório operacional: «Estrutura do produto com exclusividade de matérias-primas».",
-          "label": "Estrutura do produto com exclusividade de matérias-primas"
+          "whenToUse": "Use só para exclusividade de MPs; não use para estrutura/BOM comum.",
+          "description": "Marca MPs exclusivas na BOM. Use SOMENTE quando o usuário pedir exclusividade ou MP exclusiva. Para BOM comum use /structure.",
+          "label": "Exclusividade de matérias-primas na estrutura"
         },
         "presentationStrategy": "enriched"
       },
-      "description": "Product structure exclusivity."
+      "description": "Opens the multi-level BOM and marks exclusive MPs (present in only one valid finished good). Use ONLY when the user asks exclusividade, MP exclusiva, matéria-prima exclusiva or component exclusivity. For plain estrutura/BOM (tree, components, explosion) without exclusivity, use /structure."
     },
     {
       "method": "GET",
       "path": "/products/{code}/summary",
       "operationId": "get_product_summary",
-      "summary": "Product summary",
+      "summary": "Light product summary (cadastro + sample stock + prices)",
       "tags": [
         "products"
       ],
@@ -65172,14 +66174,18 @@
         "category": "products",
         "locale": {
           "en": {
-            "summary": "Product summary",
-            "description": "Product summary.",
+            "summary": "Light product summary (cadastro + sample stock + prices)",
+            "description": "Light consolidation of cadastro, sample stock by branch and price table. Use only for a quick overview when the user did NOT ask for BOM/estrutura, roteiro, inspection, full analyser or visão integrada with several blocks. Do NOT use when the user explicitly asked for stock/balance/available quantity — prefer /stock (optionally combined with detail/summary for cadastro). If they ask for wide analytical sheet, structure, routing or integrated view, prefer /analyser or granular /structure, /guide, /stock.",
+            "whenToUse": "Use only for a light overview without BOM, routing or integrated multi-block view.",
+            "whenNotToUse": "Do not use when the user explicitly asked for stock, balance or available quantity — prefer /stock. Do not use for BOM/estrutura, roteiro, inspection or integrated multi-block view.",
             "label": "Product summary"
           },
           "pt-BR": {
-            "summary": "Resumo do produto (cadastro + estoque + preços)",
-            "description": "Consulta operacional: «Resumo do produto (cadastro + estoque + preços)».",
-            "label": "Resumo do produto (cadastro + estoque + preços)"
+            "summary": "Resumo leve do produto (cadastro + amostra de estoque + preços)",
+            "description": "Consulta leve de cadastro, amostra de estoque e preços. Use somente quando NÃO pediu BOM, roteiro, analisador completo nem visão integrada. NÃO use quando pediu explicitamente estoque/saldo/disponível — prefira /stock.",
+            "whenToUse": "Use só para visão geral rápida sem BOM/roteiro/visão integrada.",
+            "whenNotToUse": "Não use quando o usuário pediu estoque, saldo ou disponível — prefira /stock. Não use para BOM/estrutura, roteiro, inspeção ou visão integrada multi-bloco.",
+            "label": "Resumo leve do produto (cadastro + amostra de estoque + preços)"
           }
         },
         "params": {
@@ -65197,12 +66203,14 @@
           }
         },
         "tv": {
-          "description": "Consulta operacional: «Resumo do produto (cadastro + estoque + preços)».",
-          "label": "Resumo do produto (cadastro + estoque + preços)"
+          "whenToUse": "Use só para visão geral rápida sem BOM/roteiro/visão integrada.",
+          "whenNotToUse": "Não use quando o usuário pediu estoque, saldo ou disponível — prefira /stock. Não use para BOM/estrutura, roteiro, inspeção ou visão integrada multi-bloco.",
+          "description": "Consulta leve de cadastro, amostra de estoque e preços. Use somente quando NÃO pediu BOM, roteiro, analisador completo nem visão integrada. NÃO use quando pediu explicitamente estoque/saldo/disponível — prefira /stock.",
+          "label": "Resumo leve do produto (cadastro + amostra de estoque + preços)"
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Product summary."
+      "description": "Light consolidation of cadastro, sample stock by branch and price table. Use only for a quick overview when the user did NOT ask for BOM/estrutura, roteiro, inspection, full analyser or visão integrada with several blocks. Do NOT use when the user explicitly asked for stock/balance/available quantity — prefer /stock (optionally combined with detail/summary for cadastro). If they ask for wide analytical sheet, structure, routing or integrated view, prefer /analyser or granular /structure, /guide, /stock."
     },
     {
       "method": "GET",

@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import APIRouter, Body, Query, Request
 from pydantic import BaseModel, Field
 
+from production_control_app.application.services.machine_load_service import (
+    strip_all_operations,
+)
 from production_control_app.composition.pc_composer import build_machine_load_service
 from production_control_app.core.responses import fail, ok
 from production_control_app.domain.errors import (
@@ -14,6 +19,23 @@ from production_control_app.domain.errors import (
 from production_control_app.interface.http.auth_http import resolve_user
 
 router = APIRouter(tags=["Machine load"])
+
+
+def _include_all_centers_query() -> Any:
+    """Opt-in pela fila completa da filial (todos os centros) no mesmo payload.
+
+    O PCP troca de centro de trabalho sem nova leitura; consumidores que só
+    precisam do centro ativo continuam recebendo o payload enxuto.
+    """
+    return Query(
+        default=False,
+        alias="includeAllCenters",
+        description="Inclui a fila completa da filial (todos os centros) no payload",
+    )
+
+
+def _scoped(data: dict[str, Any], include_all_centers: bool) -> dict[str, Any]:
+    return data if include_all_centers else strip_all_operations(data)
 
 
 class SequenceKeyBody(BaseModel):
@@ -74,6 +96,7 @@ def get_machine_load(
         alias="endDate",
         description="Recorte de leitura: entrega do PA até (YYYY-MM-DD)",
     ),
+    include_all_centers: bool = _include_all_centers_query(),
 ):
     """Fila congelada da filial. As datas só recortam a leitura — não puxam o TOTVS."""
     user = resolve_user(request)
@@ -82,6 +105,24 @@ def get_machine_load(
             user,
             **_query_params(branch, work_center, start_date, end_date),
         )
+    except Exception as exc:
+        return _handle_machine_load_errors(exc)
+    return ok(_scoped(data, include_all_centers))
+
+
+@router.get("/machine-load/live-status")
+def get_machine_load_live_status(
+    request: Request,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+):
+    """Status de apontamento vivo (HZA) da fila: só as operações com apontamento.
+
+    O MFE aplica estes campos sobre a fila congelada que já está na tela, sem
+    recarregar a fila.
+    """
+    user = resolve_user(request)
+    try:
+        data = build_machine_load_service().live_status(user, branch=branch)
     except Exception as exc:
         return _handle_machine_load_errors(exc)
     return ok(data)
@@ -106,6 +147,7 @@ def refresh_machine_load(
         alias="endDate",
         description="Entrega do PA até (YYYY-MM-DD); default hoje + 14 dias",
     ),
+    include_all_centers: bool = _include_all_centers_query(),
 ):
     """Regenera o snapshot congelado a partir do TOTVS (ação explícita do PCP)."""
     user = resolve_user(request)
@@ -116,7 +158,10 @@ def refresh_machine_load(
         )
     except Exception as exc:
         return _handle_machine_load_errors(exc)
-    return ok(data, message="Carga máquina atualizada com os dados do TOTVS.")
+    return ok(
+        _scoped(data, include_all_centers),
+        message="Carga máquina atualizada com os dados do TOTVS.",
+    )
 
 
 @router.patch("/machine-load/sequence")
@@ -128,6 +173,7 @@ def patch_machine_load_sequence(
         alias="workCenter",
         description="Centro de trabalho cuja sequência será reordenada",
     ),
+    include_all_centers: bool = _include_all_centers_query(),
     body: SequenceReorderBody = Body(...),
 ):
     """Persiste a ordem manual das operações de um centro de trabalho no snapshot."""
@@ -141,7 +187,7 @@ def patch_machine_load_sequence(
         )
     except Exception as exc:
         return _handle_machine_load_errors(exc)
-    return ok(data, message="Sequência da carga máquina salva.")
+    return ok(_scoped(data, include_all_centers), message="Sequência da carga máquina salva.")
 
 
 @router.post("/machine-load/prioritize")
@@ -160,6 +206,7 @@ def prioritize_machine_load_conjunto(
         alias="workCenter",
         description="Centro de trabalho que continua ativo na resposta",
     ),
+    include_all_centers: bool = _include_all_centers_query(),
 ):
     """Leva todas as OPs do conjunto ao topo da fila de cada centro, sem ultrapassar ops já iniciadas."""
     user = resolve_user(request)
@@ -172,7 +219,10 @@ def prioritize_machine_load_conjunto(
         )
     except Exception as exc:
         return _handle_machine_load_errors(exc)
-    return ok(data, message=data.get("prioritization", {}).get("message"))
+    return ok(
+        _scoped(data, include_all_centers),
+        message=data.get("prioritization", {}).get("message"),
+    )
 
 
 @router.post("/machine-load/optimize-delivery")
@@ -184,6 +234,7 @@ def optimize_machine_load_delivery_sequence(
         alias="workCenter",
         description="Centro de trabalho que continua ativo na resposta",
     ),
+    include_all_centers: bool = _include_all_centers_query(),
 ):
     """Resequencia a fila de todos os centros pela entrega do PA, sem ultrapassar ops já iniciadas."""
     user = resolve_user(request)
@@ -195,7 +246,10 @@ def optimize_machine_load_delivery_sequence(
         )
     except Exception as exc:
         return _handle_machine_load_errors(exc)
-    return ok(data, message=data.get("optimization", {}).get("message"))
+    return ok(
+        _scoped(data, include_all_centers),
+        message=data.get("optimization", {}).get("message"),
+    )
 
 
 @router.post("/machine-load/withdraw")
@@ -214,6 +268,7 @@ def withdraw_machine_load_conjunto(
         alias="workCenter",
         description="Centro de trabalho que continua ativo na resposta",
     ),
+    include_all_centers: bool = _include_all_centers_query(),
 ):
     """Retira o conjunto da programação: some da fila de todos os centros e do cockpit público."""
     user = resolve_user(request)
@@ -226,7 +281,10 @@ def withdraw_machine_load_conjunto(
         )
     except Exception as exc:
         return _handle_machine_load_errors(exc)
-    return ok(data, message=data.get("withdrawal", {}).get("message"))
+    return ok(
+        _scoped(data, include_all_centers),
+        message=data.get("withdrawal", {}).get("message"),
+    )
 
 
 @router.post("/machine-load/restore")
@@ -245,6 +303,7 @@ def restore_machine_load_conjunto(
         alias="workCenter",
         description="Centro de trabalho que continua ativo na resposta",
     ),
+    include_all_centers: bool = _include_all_centers_query(),
 ):
     """Devolve o conjunto retirado à fila, na posição original do snapshot."""
     user = resolve_user(request)
@@ -257,7 +316,10 @@ def restore_machine_load_conjunto(
         )
     except Exception as exc:
         return _handle_machine_load_errors(exc)
-    return ok(data, message=data.get("withdrawal", {}).get("message"))
+    return ok(
+        _scoped(data, include_all_centers),
+        message=data.get("withdrawal", {}).get("message"),
+    )
 
 
 @router.post("/machine-load/transfer")
@@ -290,6 +352,7 @@ def transfer_machine_load_operation(
         alias="workCenter",
         description="Centro de trabalho que continua ativo na resposta; vazio usa o destino",
     ),
+    include_all_centers: bool = _include_all_centers_query(),
 ):
     """Move a operação para o fim da fila de outro centro de trabalho."""
     user = resolve_user(request)
@@ -304,7 +367,10 @@ def transfer_machine_load_operation(
         )
     except Exception as exc:
         return _handle_machine_load_errors(exc)
-    return ok(data, message=data.get("transfer", {}).get("message"))
+    return ok(
+        _scoped(data, include_all_centers),
+        message=data.get("transfer", {}).get("message"),
+    )
 
 
 @router.post("/machine-load/transfer-set")
@@ -337,6 +403,7 @@ def transfer_machine_load_set(
         alias="workCenter",
         description="Centro de trabalho que continua ativo na resposta; vazio usa o destino",
     ),
+    include_all_centers: bool = _include_all_centers_query(),
 ):
     """Move as OPs do conjunto que estão no centro de origem para o destino."""
     user = resolve_user(request)
@@ -351,7 +418,10 @@ def transfer_machine_load_set(
         )
     except Exception as exc:
         return _handle_machine_load_errors(exc)
-    return ok(data, message=data.get("transfer", {}).get("message"))
+    return ok(
+        _scoped(data, include_all_centers),
+        message=data.get("transfer", {}).get("message"),
+    )
 
 
 @router.get("/machine-load/locate")

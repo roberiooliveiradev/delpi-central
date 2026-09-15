@@ -524,6 +524,36 @@ export type MachineLoadOperation = {
   transferred_from?: string | null;
 };
 
+/** Campos de status que o chão de fábrica (HZA) sobrescreve na fila congelada. */
+export type MachineLoadStatusFields = Pick<
+  MachineLoadOperation,
+  | "production_status"
+  | "is_in_production"
+  | "production_started_date"
+  | "production_started_time"
+  | "active_operator_code"
+  | "active_operator_name"
+  | "active_operator_count"
+  | "appointment_count"
+  | "last_appointment_date"
+>;
+
+/** Só as operações com apontamento; as ausentes mantêm o valor congelado. */
+export type MachineLoadLiveStatusItem = {
+  production_order: string;
+  operation_code: string;
+} & Partial<MachineLoadStatusFields>;
+
+export type MachineLoadLiveStatusPayload = {
+  branch: string;
+  as_of: string;
+  summary: {
+    operation_count: number;
+    in_production_count: number;
+  };
+  items: MachineLoadLiveStatusItem[];
+};
+
 export type MachineLoadLocateStop = {
   work_center: string;
   work_center_name: string;
@@ -628,6 +658,11 @@ export type MachineLoadPayload = {
   };
   withdrawn?: MachineLoadWithdrawnSummary;
   work_centers: MachineLoadWorkCenter[];
+  /**
+   * Fila completa da filial (todos os centros), presente quando a leitura pede
+   * `includeAllCenters`. Trocar de centro de trabalho é recorte local, sem nova leitura.
+   */
+  operations?: MachineLoadOperation[];
   selected: {
     work_center: string | null;
     requested_work_center: string | null;

@@ -295,7 +295,7 @@ def get_production_machine_load_work_centers(
 def get_production_machine_load_operations(
     common: MachineLoadCommonQuery = Depends(machine_load_common_query),
     page: int = Query(default=1, ge=1, description="Page number (1-based)."),
-    page_size: int = PAGE_SIZE_QUERY("page_50_200", description="Page size."),
+    page_size: int = PAGE_SIZE_QUERY("page_100_500", description="Page size."),
     sort: str = Query(
         default=DEFAULT_SORT,
         description=f"Sort: {', '.join(SORT_VALUES)}.",

@@ -732,16 +732,16 @@
     },
     {
       "file": "app/interface/http/routes/production/machine_load_router.py",
-      "line": 294,
+      "line": 298,
       "module": "production",
       "param": "page_size",
       "default": "DEFAULT_PAGE_SIZE",
       "ge": "1",
       "le": "MAX_PAGE_SIZE",
-      "defaultResolved": 50,
+      "defaultResolved": 100,
       "geResolved": 1,
-      "leResolved": 200,
-      "tierId": "page_50_200"
+      "leResolved": 500,
+      "tierId": "page_100_500"
     },
     {
       "file": "app/interface/http/routes/production/pcp_orders_router.py",

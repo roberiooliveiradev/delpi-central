@@ -10,6 +10,7 @@ from app.infrastructure.persistence.totvs.production.unproductive_hours_sql impo
     build_items_count_query,
     build_items_query,
     build_ranking_query,
+    build_series_query,
     build_summary_query,
     build_top_operator_query,
     build_top_resource_query,
@@ -110,6 +111,29 @@ class UnproductiveHoursRepository(BaseRepository, UnproductiveHoursRepositoryPor
             rank_by=rank_by,
             metric=metric,
             limit=limit,
+            stop_reason=stop_reason,
+            resource=resource,
+            cost_center=cost_center,
+            operator_code=operator_code,
+        )
+        with self:
+            return self.execute_query(query, params)
+
+    def get_series(
+        self,
+        *,
+        start_date: str,
+        end_date: str,
+        branch: str | None,
+        stop_reason: str | None = None,
+        resource: str | None = None,
+        cost_center: str | None = None,
+        operator_code: str | None = None,
+    ) -> list[dict]:
+        query, params = build_series_query(
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
             stop_reason=stop_reason,
             resource=resource,
             cost_center=cost_center,

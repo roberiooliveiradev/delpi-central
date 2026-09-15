@@ -3,6 +3,7 @@ import type {
   DeliveryMapPayload,
   DeliveryMapProgressPayload,
   DemandPayload,
+  MachineLoadLiveStatusPayload,
   MachineLoadLocatePayload,
   MachineLoadOptimizePayload,
   MachineLoadPayload,
@@ -295,6 +296,16 @@ export async function fetchDeliveryMapDrawingPdf(params: {
   );
 }
 
+/**
+ * A fila da filial é uma só — o centro de trabalho é recorte de apresentação.
+ * Pedindo todos os centros, trocar de aba não custa nova leitura.
+ */
+function machineLoadSearch(init: Record<string, string>): URLSearchParams {
+  const search = new URLSearchParams(init);
+  search.set("includeAllCenters", "true");
+  return search;
+}
+
 export async function fetchMachineLoad(params: {
   branch: string;
   workCenter?: string | null;
@@ -302,7 +313,7 @@ export async function fetchMachineLoad(params: {
   endDate?: string | null;
   signal?: AbortSignal;
 }): Promise<MachineLoadPayload> {
-  const search = new URLSearchParams({ branch: params.branch });
+  const search = machineLoadSearch({ branch: params.branch });
   if (params.workCenter) search.set("workCenter", params.workCenter);
   if (params.startDate) search.set("startDate", params.startDate);
   if (params.endDate) search.set("endDate", params.endDate);
@@ -321,7 +332,7 @@ export async function refreshMachineLoad(params: {
   endDate?: string | null;
   signal?: AbortSignal;
 }): Promise<MachineLoadPayload> {
-  const search = new URLSearchParams({ branch: params.branch });
+  const search = machineLoadSearch({ branch: params.branch });
   if (params.workCenter) search.set("workCenter", params.workCenter);
   if (params.startDate) search.set("startDate", params.startDate);
   if (params.endDate) search.set("endDate", params.endDate);
@@ -339,7 +350,7 @@ export async function patchMachineLoadSequence(params: {
   orderedKeys: Array<{ production_order: string; operation_code: string }>;
   signal?: AbortSignal;
 }): Promise<MachineLoadPayload> {
-  const search = new URLSearchParams({
+  const search = machineLoadSearch({
     branch: params.branch,
     workCenter: params.workCenter,
   });
@@ -362,7 +373,7 @@ export async function prioritizeMachineLoadConjunto(params: {
   workCenter?: string | null;
   signal?: AbortSignal;
 }): Promise<MachineLoadPrioritizePayload> {
-  const search = new URLSearchParams({
+  const search = machineLoadSearch({
     branch: params.branch,
     orderNumber: params.orderNumber,
   });
@@ -381,7 +392,7 @@ export async function optimizeMachineLoadDeliverySequence(params: {
   workCenter?: string | null;
   signal?: AbortSignal;
 }): Promise<MachineLoadOptimizePayload> {
-  const search = new URLSearchParams({ branch: params.branch });
+  const search = machineLoadSearch({ branch: params.branch });
   if (params.workCenter) search.set("workCenter", params.workCenter);
   const envelope = await httpPost<{
     success: boolean;
@@ -421,7 +432,7 @@ async function postMachineLoadWithdrawal(
   },
   errorMessage: string,
 ): Promise<MachineLoadWithdrawPayload> {
-  const search = new URLSearchParams({
+  const search = machineLoadSearch({
     branch: params.branch,
     orderNumber: params.orderNumber,
   });
@@ -443,7 +454,7 @@ export async function transferMachineLoadOperation(params: {
   workCenter?: string | null;
   signal?: AbortSignal;
 }): Promise<MachineLoadTransferPayload> {
-  const search = new URLSearchParams({
+  const search = machineLoadSearch({
     branch: params.branch,
     productionOrder: params.productionOrder,
     operationCode: params.operationCode,
@@ -467,7 +478,7 @@ export async function transferMachineLoadConjunto(params: {
   workCenter?: string | null;
   signal?: AbortSignal;
 }): Promise<MachineLoadTransferPayload> {
-  const search = new URLSearchParams({
+  const search = machineLoadSearch({
     branch: params.branch,
     orderNumber: params.orderNumber,
     sourceWorkCenter: params.sourceWorkCenter,
@@ -485,6 +496,20 @@ export async function transferMachineLoadConjunto(params: {
     envelope,
     "Não foi possível transferir o conjunto para outro centro de trabalho.",
   );
+}
+
+/** Status de apontamento vivo (HZA) da fila — aplicado sobre a fila já na tela. */
+export async function fetchMachineLoadLiveStatus(params: {
+  branch: string;
+  signal?: AbortSignal;
+}): Promise<MachineLoadLiveStatusPayload> {
+  const search = new URLSearchParams({ branch: params.branch });
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: MachineLoadLiveStatusPayload;
+  }>(ppcApiUrl(`/machine-load/live-status?${search.toString()}`), { signal: params.signal });
+  return unwrapEnvelope(envelope, "Não foi possível atualizar o status da fila.");
 }
 
 export async function fetchMachineLoadLocate(params: {

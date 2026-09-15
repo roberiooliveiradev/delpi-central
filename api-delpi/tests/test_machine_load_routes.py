@@ -141,6 +141,55 @@ def test_invalid_sort_is_rejected_by_query_pattern(
 
 @patch(
     "app.interface.http.routes.production.machine_load_router"
+    ".build_get_production_machine_load_operations_use_case"
+)
+def test_operations_accepts_page_size_used_by_production_control_refresh(
+    mock_builder, machine_load_client: TestClient
+) -> None:
+    """PC API refresh usa operationsPageSize=300; tier HTTP deve ser page_100_500."""
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "filters": {},
+        "items": [],
+        "pagination": {
+            "page": 1,
+            "page_size": 300,
+            "total": 0,
+            "total_pages": 0,
+            "is_complete": True,
+        },
+    }
+    mock_builder.return_value = use_case
+
+    response = machine_load_client.get(
+        "/production/machine-load/operations",
+        params={
+            "branch": "01",
+            "delivery_end": "2026-09-28",
+            "open_only": True,
+            "page": 1,
+            "page_size": 300,
+            "sort": "schedule_asc",
+        },
+    )
+    assert response.status_code == 200
+    use_case.execute.assert_called_once()
+    request = use_case.execute.call_args.args[0]
+    assert request.page_size == 300
+
+
+def test_operations_rejects_page_size_above_tier(
+    machine_load_client: TestClient,
+) -> None:
+    response = machine_load_client.get(
+        "/production/machine-load/operations",
+        params={"branch": "01", "page_size": 501},
+    )
+    assert response.status_code == 422
+
+
+@patch(
+    "app.interface.http.routes.production.machine_load_router"
     ".build_get_production_machine_load_appointment_status_use_case"
 )
 def test_appointment_status_returns_list_envelope(

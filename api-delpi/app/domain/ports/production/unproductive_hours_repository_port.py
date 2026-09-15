@@ -67,6 +67,20 @@ class UnproductiveHoursRepositoryPort(ABC):
         ...
 
     @abstractmethod
+    def get_series(
+        self,
+        *,
+        start_date: str,
+        end_date: str,
+        branch: str | None,
+        stop_reason: str | None = None,
+        resource: str | None = None,
+        cost_center: str | None = None,
+        operator_code: str | None = None,
+    ) -> list[dict[str, Any]]:
+        ...
+
+    @abstractmethod
     def count_items(
         self,
         *,

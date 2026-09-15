@@ -29,6 +29,9 @@ from production_control_app.application.services.public_delivery_map_access_serv
 from production_control_app.application.services.public_machine_load_drawing_service import (
     PublicMachineLoadDrawingService,
 )
+from production_control_app.application.services.public_work_center_performance_service import (
+    PublicWorkCenterPerformanceService,
+)
 from production_control_app.application.services.reports_service import ReportsService
 from production_control_app.application.services.subplugin_catalog_service import SubpluginCatalogService
 from production_control_app.domain.ports.drawing_library import DrawingLibraryPort
@@ -182,6 +185,20 @@ def build_public_machine_load_drawing_service(
         access=build_public_cockpit_access_service(),
         machine_load=build_machine_load_service(gateway, snapshots=snapshots),
         drawings=drawings or build_drawing_library_storage(),
+    )
+
+
+def build_public_work_center_performance_service(
+    gateway: DelpiProductionGateway | None = None,
+    *,
+    snapshots: MachineLoadSnapshotRepositoryPort | None = None,
+) -> PublicWorkCenterPerformanceService:
+    resolved = gateway or DelpiProductionGateway()
+    return PublicWorkCenterPerformanceService(
+        resolved,
+        access=build_public_cockpit_access_service(),
+        machine_load=build_machine_load_service(resolved, snapshots=snapshots),
+        branch_access=build_branch_access_service(),
     )
 
 

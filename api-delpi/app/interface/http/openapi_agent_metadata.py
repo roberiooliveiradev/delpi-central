@@ -713,6 +713,33 @@ PRODUCTION_EFICIENCIA_FABRIL_EFFICIENCY_BY_WORK_CENTER = agent_route(
     operation_id="get_eficiencia_fabril_efficiency_by_work_center",
 )
 
+PRODUCTION_EFICIENCIA_FABRIL_EFFICIENCY_SERIES = agent_route(
+    summary="Eficiência fabril — série diária de % por centro de trabalho",
+    description=(
+        "Evolução diária da eficiência média (%) por centro de trabalho (CT), mesma regra do plugin "
+        "eficiência-fabril: apontamentos STATUS_REGISTRO=OK na faixa 0–199%. "
+        "Retorna uma linha por dia e CT (`date`, `work_center`, `efficiency_pct`, `appointment_count`). "
+        "Use para gráfico de evolução/tendência de eficiência ao longo dos dias, inclusive de um único CT. "
+        "Parâmetros: start_date/end_date (ou aliases), branch, op, employee, work_center, shift (1|2|3), granularity=day. "
+        "Para o valor agregado do período por CT (sem quebra por dia), use "
+        "GET /production/eficiencia-fabril/efficiency-by-work-center."
+    ),
+    operation_id="get_eficiencia_fabril_efficiency_series",
+)
+
+PRODUCTION_FACTORY_SHIFTS = agent_route(
+    summary="Turnos de fábrica Delpi e turno corrente",
+    description=(
+        "Catálogo dos turnos de fábrica (1º, 2º e 3º) com horários de início/fim e qual turno está "
+        "em andamento agora no fuso America/Sao_Paulo. "
+        "Use quando o usuário perguntar qual turno é agora, quais são os horários dos turnos ou para "
+        "montar filtros por turno. "
+        "O turno de um apontamento é classificado pelo horário de início — este catálogo é a fonte "
+        "canônica desses horários."
+    ),
+    operation_id="get_production_factory_shifts",
+)
+
 SUPPLIES_INVENTORY_TURNOVER = agent_route(
     summary="Giro de estoque / IDD (suprimentos)",
     description=(

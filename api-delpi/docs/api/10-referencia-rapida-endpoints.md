@@ -242,6 +242,28 @@ Legenda de permissões:
 
 ---
 
+## Eficiência fabril e paradas (`/production`)
+
+> Eficiência: [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md) · Paradas: [production-unproductive-hours.md](./production-unproductive-hours.md)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/production/eficiencia-fabril/dashboard` | EF |
+| GET | `/production/eficiencia-fabril/appointments` | EF |
+| GET | `/production/eficiencia-fabril/efficiency-by-work-center` | EF |
+| GET | `/production/eficiencia-fabril/efficiency-series` | EF |
+| GET | `/production/factory-shifts` | EF |
+| GET | `/production/unproductive-hours/summary` | UH |
+| GET | `/production/unproductive-hours/items` | UH |
+| GET | `/production/unproductive-hours/ranking` | UH |
+| GET | `/production/unproductive-hours/series` | UH |
+
+**EF** = `EFICIENCIA_FABRIL_ACCESS` · **UH** = `UNPRODUCTIVE_HOURS_ACCESS`.
+
+O cockpit público do PCP não chama estas rotas direto: quem compõe é o `production-control-api` por S2S ([production-control-api/README.md](../../../production-control-api/README.md) § Desempenho do posto).
+
+---
+
 ## Compras operacionais — Playbook 15 (`/purchases`)
 
 | Método | Endpoint | Perm. |

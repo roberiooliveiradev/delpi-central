@@ -15,6 +15,7 @@ Consultas de **horas improdutivas / paradas PCP** alimentadas pela view TOTVS `d
 | `GET` | `/production/unproductive-hours/summary` | `get_production_unproductive_hours_summary` | `playbook_report` |
 | `GET` | `/production/unproductive-hours/items` | `get_production_unproductive_hours_items` | `paged_list` |
 | `GET` | `/production/unproductive-hours/ranking` | `get_production_unproductive_hours_ranking` | `list` |
+| `GET` | `/production/unproductive-hours/series` | `get_production_unproductive_hours_series` | `list` |
 
 ## Parâmetros
 
@@ -23,7 +24,7 @@ Consultas de **horas improdutivas / paradas PCP** alimentadas pela view TOTVS `d
 | `start_date` / `end_date` | todas | ISO `YYYY-MM-DD`; omitidos → últimos 12 meses; máx. 24 meses |
 | `branch` | todas | `01` / `02`; vazio = consolidado |
 | `stop_reason` | todas | Código `MOTIVO` (ex.: `RT`, `OT`); vazio = todos |
-| `resource` | todas | `RECURSO` |
+| `resource` | todas | `RECURSO`; aceita lista separada por vírgula (um CT pode ter vários recursos) |
 | `cost_center` | todas | `CENTRO_CUSTO` |
 | `operator_code` | todas | `CODIGO_OPERADOR` |
 | `page` / `page_size` | items | default 50, máx. 200 |
@@ -31,6 +32,7 @@ Consultas de **horas improdutivas / paradas PCP** alimentadas pela view TOTVS `d
 | `rank_by` | ranking | **obrigatório** — ver abaixo |
 | `metric` | ranking | `hours` (default) \| `cost` |
 | `limit` | ranking | 1–50, default 10 |
+| `granularity` | series | só `day` |
 
 ### `rank_by`
 
@@ -50,6 +52,8 @@ Consultas de **horas improdutivas / paradas PCP** alimentadas pela view TOTVS `d
 **items:** `items[]` com `dataReferencia` (ISO), `motivo`, **`motivoDescricao`**, horas/custo, etc. + `pagination`.
 
 **ranking:** `rankBy`, `metric`, `limit`, `items[]` com `rank` + campos da dimensão ativa + métricas.
+
+**series:** `granularity`, `items[]` com `date` (ISO), `total_hours`, `total_appointments`, `total_cost` — `SUM(TEMPO_HORAS) GROUP BY DATA_REFERENCIA`. Dia sem parada não aparece na série.
 
 ## Fontes TOTVS
 

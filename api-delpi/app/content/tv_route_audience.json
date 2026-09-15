@@ -1331,6 +1331,21 @@
       },
       "category": "production"
     },
+    "get_eficiencia_fabril_efficiency_series": {
+      "locale": {
+        "en": {
+          "summary": "Factory efficiency daily series by work center",
+          "description": "Daily average efficiency percent per work center (OK appointments in 0–199% band), same rule as the factory efficiency plugin.",
+          "label": "Factory efficiency daily series"
+        },
+        "pt-BR": {
+          "label": "Eficiência fabril — série diária por CT",
+          "summary": "Eficiência fabril — série diária de % por centro de trabalho",
+          "description": "Evolução diária da eficiência (%) por CT (apontamentos OK na faixa 0–199%), mesma regra do plugin eficiência-fabril. Ideal para gráfico de linha de tendência."
+        }
+      },
+      "category": "production"
+    },
     "get_envelope_contracts": {
       "locale": {
         "en": {
@@ -3442,6 +3457,40 @@
           "description": "Top N de horas improdutivas por motivo, recurso, centro de custo, operador, produto ou operação.",
           "whenToUse": "Usar em gráfico de barras ou widget de ranking no painel de produção.",
           "label": "Ranking de horas improdutivas"
+        }
+      }
+    },
+    "get_production_unproductive_hours_series": {
+      "category": "production",
+      "locale": {
+        "en": {
+          "summary": "Unproductive hours daily series",
+          "description": "Unproductive hours and stop appointment count grouped by reference date.",
+          "whenToUse": "Use for a stop-hours trend line or bar chart over the last days.",
+          "label": "Unproductive hours daily series"
+        },
+        "pt-BR": {
+          "summary": "Série diária de horas improdutivas",
+          "description": "Horas paradas e número de apontamentos agrupados por data de referência.",
+          "whenToUse": "Usar em gráfico de evolução das paradas ao longo dos dias.",
+          "label": "Série diária de horas improdutivas"
+        }
+      }
+    },
+    "get_production_factory_shifts": {
+      "category": "production",
+      "locale": {
+        "en": {
+          "summary": "Factory shifts catalog",
+          "description": "Delpi factory shifts with start/end times and which shift is running now.",
+          "whenToUse": "Use to build shift filters or to show the current shift on a panel.",
+          "label": "Factory shifts"
+        },
+        "pt-BR": {
+          "summary": "Turnos de fábrica",
+          "description": "Turnos de fábrica Delpi com horários de início/fim e o turno em andamento agora.",
+          "whenToUse": "Usar para montar filtros por turno ou exibir o turno corrente em um painel.",
+          "label": "Turnos de fábrica"
         }
       }
     },

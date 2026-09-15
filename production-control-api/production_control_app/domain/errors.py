@@ -35,3 +35,7 @@ class SnapshotNotFound(ProductionControlError):
 
 class DrawingNotFound(ProductionControlError):
     """PDF do desenho indisponível ou PA fora da fila publicada."""
+
+
+class PublicAccessDenied(ProductionControlError):
+    """Token do link público inválido ou desativado."""

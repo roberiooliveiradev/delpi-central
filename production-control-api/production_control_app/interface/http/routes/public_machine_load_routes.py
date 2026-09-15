@@ -13,12 +13,14 @@ from production_control_app.composition.pc_composer import (
     build_machine_load_service,
     build_public_cockpit_access_service,
     build_public_machine_load_drawing_service,
+    build_public_work_center_performance_service,
 )
 from production_control_app.core.responses import fail, ok
 from production_control_app.domain.errors import (
     DelpiGatewayError,
     DrawingNotFound,
     InvalidBranch,
+    PublicAccessDenied,
     SnapshotNotFound,
 )
 
@@ -26,6 +28,8 @@ router = APIRouter(prefix="/public/machine-load", tags=["Public machine load"])
 
 
 def _handle_public_errors(exc: Exception):
+    if isinstance(exc, PublicAccessDenied):
+        return fail(str(exc), 404)
     if isinstance(exc, InvalidBranch):
         return fail(str(exc), 422)
     if isinstance(exc, SnapshotNotFound):
@@ -56,6 +60,33 @@ def get_public_machine_load(
         data = build_machine_load_service().build_public(
             branch=branch,
             work_center=work_center,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _handle_public_errors(exc)
+    return ok(data)
+
+
+@router.get("/{token}/performance")
+def get_public_machine_load_performance(
+    token: str,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    work_center: str = Query(
+        ...,
+        alias="workCenter",
+        description="Centro de trabalho do operador, obrigatoriamente na fila publicada",
+    ),
+    days: int | None = Query(
+        default=None,
+        description="Janela dos gráficos em dias (7 a 30, padrão 14)",
+    ),
+):
+    """Eficiência do turno e paradas do posto — agregados, sem nomes e sem valores em R$."""
+    try:
+        data = build_public_work_center_performance_service().build(
+            token=token,
+            branch=branch,
+            work_center=work_center,
+            days=days,
         )
     except Exception as exc:  # noqa: BLE001
         return _handle_public_errors(exc)

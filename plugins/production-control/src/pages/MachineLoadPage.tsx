@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+} from "react";
 import {
   createDashboardLoadingActivityCard,
   DataTable,
@@ -102,13 +110,12 @@ export function MachineLoadPage({
   locateQuery = null,
 }: MachineLoadPageProps) {
   const confirm = usePpcConfirm();
-  const { data, loading, switchingCenter, refreshing, error, refreshFromTotvs, applyPayload } =
-    useMachineLoad({
-      branch,
-      workCenter,
-      startDate,
-      endDate,
-    });
+  const { data, loading, refreshing, error, refreshFromTotvs, applyPayload } = useMachineLoad({
+    branch,
+    workCenter,
+    startDate,
+    endDate,
+  });
 
   const period = data?.period;
   const [draftStart, setDraftStart] = useState(startDate ?? "");
@@ -157,7 +164,9 @@ export function MachineLoadPage({
       : copy.machineLoad.periodHintOpenStart(formatIsoDate(pulledEnd));
   }, [period?.pulled_start, period?.pulled_end, period?.end_date]);
 
-  useEffect(() => {
+  // Antes do paint: trocar de centro não pode exibir a fila do centro anterior
+  // nem passar por «nenhuma operação alocada» num frame intermediário.
+  useLayoutEffect(() => {
     setRows(data?.selected.items ?? []);
   }, [data]);
 
@@ -975,7 +984,7 @@ export function MachineLoadPage({
             className="ppc-load__panel"
             id="ppc-load-panel"
             role="tabpanel"
-            aria-busy={switchingCenter || undefined}
+            aria-busy={refreshing || undefined}
             aria-labelledby={selectedCenter ? `ppc-load-tab-${selectedCenter}` : undefined}
           >
             {activeCenter?.work_center_name ? (

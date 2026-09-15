@@ -359,6 +359,59 @@ def test_eficiencia_fabril_efficiency_by_work_center_returns_meta(mock_build) ->
     )
 
 
+@patch(f"{_PRODUCTION}.build_get_eficiencia_fabril_efficiency_series_use_case")
+def test_eficiencia_fabril_efficiency_series_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.production.production_router import (
+        get_eficiencia_fabril_efficiency_series,
+    )
+
+    mock_build.return_value = MagicMock(
+        execute=MagicMock(
+            return_value=[
+                {
+                    "date": "2026-09-14",
+                    "work_center": "CT-01C",
+                    "efficiency_pct": 75.71,
+                    "appointment_count": 20,
+                }
+            ]
+        )
+    )
+    response = get_eficiencia_fabril_efficiency_series(
+        start_date=None,
+        end_date=None,
+        date_start=None,
+        date_end=None,
+        branch=None,
+        op=None,
+        employee=None,
+        work_center=None,
+        shift=None,
+        granularity="day",
+    )
+    assert_envelope_meta(
+        body_json(response),
+        operation_id="get_eficiencia_fabril_efficiency_series",
+        shape="list",
+    )
+
+
+def test_production_factory_shifts_returns_meta() -> None:
+    """Catálogo de turnos vem do domínio — a rota não recebe filtro nem repositório."""
+    from app.interface.http.routes.production.production_router import (
+        get_production_factory_shifts,
+    )
+
+    payload = body_json(get_production_factory_shifts())
+    assert_envelope_meta(
+        payload,
+        operation_id="get_production_factory_shifts",
+        shape="list",
+    )
+    assert [shift["id"] for shift in payload["data"]["shifts"]] == ["1", "2", "3"]
+    assert payload["data"]["current_shift_id"] in {"1", "2", "3"}
+
+
 @patch(f"{_OPERATIONAL}.build_list_production_machine_program_top_intermediates_use_case")
 def test_production_machine_program_top_intermediates_returns_meta(mock_build) -> None:
     from app.interface.http.routes.production.production_operational_router import (
