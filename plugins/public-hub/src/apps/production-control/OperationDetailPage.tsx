@@ -22,7 +22,10 @@ type Props = {
   branch: string;
   operation: MachineLoadOperation;
   position: number;
+  queueSize: number;
   onBack: () => void;
+  onPrevious?: () => void;
+  onNext?: () => void;
 };
 
 /**
@@ -30,8 +33,18 @@ type Props = {
  *
  * Só apresenta o que a fila publicada já traz — nenhuma consulta nova ao TOTVS.
  */
-export function OperationDetailPage({ token, branch, operation, position, onBack }: Props) {
+export function OperationDetailPage({
+  token,
+  branch,
+  operation,
+  position,
+  queueSize,
+  onBack,
+  onPrevious,
+  onNext,
+}: Props) {
   const [fullscreen, setFullscreen] = useState(false);
+  const [appointmentsOpen, setAppointmentsOpen] = useState(false);
   const status = resolveStatus(operation);
   const paCode = operation.pa_product_code?.trim() || "";
   const productCode = operation.product_code?.trim() || "";
@@ -50,19 +63,14 @@ export function OperationDetailPage({ token, branch, operation, position, onBack
   const canFullscreen =
     (mode === "drawing" && canDraw && drawing.status === "ready") ||
     (mode === "model" && has3dModel);
-  const previewTitle =
-    mode === "model" && productCode
-      ? `3D ${productCode}`
-      : paCode
-        ? `Desenho ${paCode}`
-        : "Visualização";
 
   return (
     <section className="pcp-pub pcp-pub--detail">
       <BrandBar
-        eyebrow={`Operação ${position} da fila · ${operation.work_center}`}
         title={`OP ${operation.production_order}`}
-        code={operation.operation_code}
+        titleExtra={
+          <CopyValueButton value={operation.production_order} label="Copiar OP" />
+        }
         stats={
           <span className={`pcp-pub__badge pcp-pub__badge--${status.tone}`}>
             {status.tone === "running" ? (
@@ -76,16 +84,49 @@ export function OperationDetailPage({ token, branch, operation, position, onBack
             <span aria-hidden="true">←</span> Voltar para a fila
           </button>
         }
+        actions={
+          <nav className="pcp-pub__queue-nav" aria-label="Navegação na fila">
+            <button
+              type="button"
+              className="pcp-pub__queue-nav-btn"
+              onClick={onPrevious}
+              disabled={!onPrevious}
+              title={onPrevious ? `Operação ${position - 1} da fila` : "Início da fila"}
+            >
+              <span aria-hidden="true">‹</span> Anterior
+            </button>
+            <span className="pcp-pub__queue-nav-pos" aria-live="polite">
+              {position}/{queueSize}
+            </span>
+            <button
+              type="button"
+              className="pcp-pub__queue-nav-btn"
+              onClick={onNext}
+              disabled={!onNext}
+              title={onNext ? `Operação ${position + 1} da fila` : "Fim da fila"}
+            >
+              Próxima <span aria-hidden="true">›</span>
+            </button>
+          </nav>
+        }
       />
 
       <div className="pcp-pub__wrap">
         <div className="pcp-pub__split">
           <div className="pcp-pub__split-main">
             <h2 className="pcp-pub__detail-product">
-              <strong className={paCode ? "pcp-pub__product-code--pa" : undefined}>
+              <strong
+                className={
+                  paCode
+                    ? "pcp-pub__detail-product-code pcp-pub__product-code--pa"
+                    : "pcp-pub__detail-product-code"
+                }
+              >
                 {displayProductCode}
-              </strong>{" "}
-              {operation.pa_product_description || operation.product_description}
+              </strong>
+              <span className="pcp-pub__detail-product-desc">
+                {operation.pa_product_description || operation.product_description}
+              </span>
             </h2>
 
             {status.operatorNote ? (
@@ -98,7 +139,7 @@ export function OperationDetailPage({ token, branch, operation, position, onBack
               </Fact>
               <Fact label="Ferramenta">{operation.tool || "—"}</Fact>
               <Fact label="Recurso">{operation.resource || "—"}</Fact>
-              <Fact label="Produto da OP">
+              <Fact label="Produto da OP" wide>
                 {operation.product_code}
                 <span className="pcp-pub__fact-sub">{operation.product_description}</span>
               </Fact>
@@ -131,36 +172,30 @@ export function OperationDetailPage({ token, branch, operation, position, onBack
                   <span className="pcp-pub__fact-sub">{operation.scheduled_end_time}</span>
                 ) : null}
               </Fact>
-              <Fact label="Entrega do PA">{formatDate(operation.pa_due_date)}</Fact>
+              <Fact label="Pedido cliente">{formatDate(operation.pa_due_date)}</Fact>
             </dl>
 
-            <h3 className="pcp-pub__detail-section">Apontamentos</h3>
-            <dl className="pcp-pub__facts pcp-pub__facts--num">
-              <Fact label="Registrados">{operation.appointment_count ?? 0}</Fact>
-              <Fact label="Último">
-                {operation.last_appointment_date
-                  ? formatDateTime(operation.last_appointment_date)
-                  : "—"}
-              </Fact>
-              <Fact label="Operadores ativos">{operation.active_operator_count ?? 0}</Fact>
-            </dl>
-
-            <p className="pcp-pub__detail-copy">
-              <span className="pcp-pub__order-label">OP</span>
-              <strong>{operation.production_order}</strong>
-              <CopyValueButton value={operation.production_order} label="Copiar OP" />
-            </p>
+            <div className="pcp-pub__detail-actions">
+              <button
+                type="button"
+                className="pcp-pub__drawing"
+                onClick={() => setAppointmentsOpen(true)}
+              >
+                Ver apontamentos
+                {(operation.appointment_count ?? 0) > 0
+                  ? ` (${operation.appointment_count})`
+                  : ""}
+              </button>
+            </div>
           </div>
 
           <aside className="pcp-pub__split-aside" aria-label="Visualização">
             <div className="pcp-pub__preview-head">
               <div className="pcp-pub__preview-heading">
-                <span className="pcp-pub__preview-title">{previewTitle}</span>
                 <VisualModeTabs
                   show={canDraw && has3dModel}
                   mode={mode}
                   onChange={setMode}
-                  productCode={productCode}
                 />
               </div>
               {canFullscreen ? (
@@ -208,11 +243,6 @@ export function OperationDetailPage({ token, branch, operation, position, onBack
                 Não há modelo 3D anexado ao produto desta operação.
               </p>
             )}
-            {canDraw && has3dModel ? (
-              <p className="pcp-pub__preview-hint">
-                O desenho é o PDF do PA. O 3D é o modelo do produto desta OP ({productCode}).
-              </p>
-            ) : null}
           </aside>
         </div>
       </div>
@@ -227,7 +257,86 @@ export function OperationDetailPage({ token, branch, operation, position, onBack
           onClose={() => setFullscreen(false)}
         />
       ) : null}
+
+      {appointmentsOpen ? (
+        <AppointmentsModal operation={operation} onClose={() => setAppointmentsOpen(false)} />
+      ) : null}
     </section>
+  );
+}
+
+function AppointmentsModal({
+  operation,
+  onClose,
+}: {
+  operation: MachineLoadOperation;
+  onClose: () => void;
+}) {
+  const operatorName = operation.active_operator_name?.trim() || null;
+  const appointmentCount = operation.appointment_count ?? 0;
+  const activeCount = operation.active_operator_count ?? 0;
+  const unit = formatUnit(operation.unit);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="pcp-pub-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pcp-pub-appointments-title"
+    >
+      <button type="button" className="pcp-pub-modal__backdrop" aria-label="Fechar" onClick={onClose} />
+      <div className="pcp-pub-modal__panel">
+        <header className="pcp-pub-modal__head">
+          <h2 id="pcp-pub-appointments-title">Apontamentos</h2>
+          <button type="button" className="pcp-pub__ghost pcp-pub__ghost--plain" onClick={onClose}>
+            Fechar
+          </button>
+        </header>
+
+        <dl className="pcp-pub__facts pcp-pub__facts--num">
+          <Fact label="Registrados">{appointmentCount}</Fact>
+          <Fact label="Último">
+            {operation.last_appointment_date
+              ? formatDateTime(operation.last_appointment_date)
+              : "—"}
+          </Fact>
+          <Fact label="Operadores ativos">{activeCount}</Fact>
+        </dl>
+
+        <h3 className="pcp-pub__detail-section">Quem apontou</h3>
+        {operatorName ? (
+          <ul className="pcp-pub-modal__operators">
+            <li className="pcp-pub-modal__operator">
+              <span className="pcp-pub-modal__operator-name">{operatorName}</span>
+              <span className="pcp-pub-modal__operator-qty">
+                {formatQty(operation.produced_qty)} {unit}
+                <span className="pcp-pub__fact-sub">produzida na OP</span>
+              </span>
+              {activeCount > 1 ? (
+                <span className="pcp-pub__fact-sub">
+                  +{activeCount - 1} operador(es) ativo(s) no coletor
+                </span>
+              ) : null}
+            </li>
+          </ul>
+        ) : appointmentCount > 0 ? (
+          <p className="pcp-pub-modal__empty">
+            Há {appointmentCount} apontamento(s) registrado(s), mas nenhum operador ativo agora.
+            Quantidade produzida: {formatQty(operation.produced_qty)} {unit}.
+          </p>
+        ) : (
+          <p className="pcp-pub-modal__empty">Nenhum apontamento registrado nesta operação.</p>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -235,13 +344,19 @@ function Fact({
   label,
   children,
   emphasis,
+  wide,
 }: {
   label: string;
   children: ReactNode;
   emphasis?: boolean;
+  wide?: boolean;
 }) {
   return (
-    <div className={`pcp-pub__fact ${emphasis ? "pcp-pub__fact--emphasis" : ""}`}>
+    <div
+      className={`pcp-pub__fact${emphasis ? " pcp-pub__fact--emphasis" : ""}${
+        wide ? " pcp-pub__fact--wide" : ""
+      }`}
+    >
       <dt>{label}</dt>
       <dd>{children}</dd>
     </div>

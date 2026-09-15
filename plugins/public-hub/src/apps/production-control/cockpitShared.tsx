@@ -15,13 +15,15 @@ export function BrandBar({
   stats,
   actions,
   lead,
+  titleExtra,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   code?: string | null;
   stats?: ReactNode;
   actions?: ReactNode;
   lead?: ReactNode;
+  titleExtra?: ReactNode;
 }) {
   return (
     <header className="pcp-pub__brandbar">
@@ -33,10 +35,11 @@ export function BrandBar({
             </span>
           )}
           <div className="pcp-pub__identity-text">
-            <p className="pcp-pub__eyebrow">{eyebrow}</p>
+            {eyebrow ? <p className="pcp-pub__eyebrow">{eyebrow}</p> : null}
             <div className="pcp-pub__title-row">
               {code ? <span className="pcp-pub__code">{code}</span> : null}
               <h1>{title}</h1>
+              {titleExtra}
             </div>
             {stats ? <div className="pcp-pub__stats">{stats}</div> : null}
           </div>
@@ -94,12 +97,10 @@ export type VisualMode = "drawing" | "model";
 export function VisualModeTabs({
   mode,
   onChange,
-  productCode,
   show,
 }: {
   mode: VisualMode;
   onChange: (mode: VisualMode) => void;
-  productCode: string;
   show: boolean;
 }) {
   if (!show) return null;
@@ -121,7 +122,7 @@ export function VisualModeTabs({
         className={mode === "model" ? "is-active" : undefined}
         onClick={() => onChange("model")}
       >
-        3D {productCode}
+        Modelo 3D
       </button>
     </div>
   );
@@ -177,7 +178,6 @@ export function DrawingViewer({
           show={canDraw && canModel}
           mode={mode}
           onChange={setMode}
-          productCode={productCode || ""}
         />
         <button type="button" className="pcp-pub__ghost pcp-pub__ghost--plain" onClick={onClose}>
           Fechar

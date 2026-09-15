@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
+import { Search } from "lucide-react";
 import {
   fetchPublicMachineLoad,
   type MachineLoadOperation,
@@ -26,6 +27,14 @@ import { useCockpitView } from "./useCockpitView";
 import { useWorkCenterPerformance } from "./useWorkCenterPerformance";
 import { WorkCenterPerformancePage } from "./WorkCenterPerformancePage";
 import "./cockpit.css";
+
+function matchesQueueSearch(operation: MachineLoadOperation, term: string): boolean {
+  if (!term) return true;
+  const op = operation.production_order.toLowerCase();
+  const pa = (operation.pa_product_code || "").toLowerCase();
+  const product = (operation.product_code || "").toLowerCase();
+  return op.includes(term) || pa.includes(term) || product.includes(term);
+}
 
 const LIVE_STATUS_POLL_MS = 15_000;
 const STORAGE_PREFIX = "delpi.pcp.cockpit.work-center";
@@ -72,6 +81,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     productCode: string | null;
     has3dModel: boolean;
   } | null>(null);
+  const [queueQuery, setQueueQuery] = useState("");
   const workCenterRef = useRef(workCenter);
   workCenterRef.current = workCenter;
   const reloadGenerationRef = useRef(0);
@@ -134,11 +144,13 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
 
   const selectWorkCenter = (center: string) => {
     storeWorkCenter(branch, center);
+    setQueueQuery("");
     setWorkCenter(center);
   };
 
   const clearWorkCenter = () => {
     storeWorkCenter(branch, null);
+    setQueueQuery("");
     setWorkCenter(null);
     openQueue();
   };
@@ -146,6 +158,14 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const activeCenter = payload.work_centers.find((item) => item.work_center === workCenter);
   const items =
     workCenter && payload.selected.work_center === workCenter ? payload.selected.items : [];
+
+  const filteredItems = useMemo(() => {
+    const term = queueQuery.trim().toLowerCase();
+    if (!term) return items.map((operation, index) => ({ operation, position: index + 1 }));
+    return items
+      .map((operation, index) => ({ operation, position: index + 1 }))
+      .filter(({ operation }) => matchesQueueSearch(operation, term));
+  }, [items, queueQuery]);
 
   const selectedOperation = useMemo(() => {
     if (view.kind !== "operation") return null;
@@ -189,13 +209,27 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   }
 
   if (view.kind === "operation" && selectedOperation) {
+    const index = selectedOperation.position - 1;
+    const previous = index > 0 ? items[index - 1] : null;
+    const next = index < items.length - 1 ? items[index + 1] : null;
+
     return (
       <OperationDetailPage
+        key={operationKey(selectedOperation.operation)}
         token={token}
         branch={branch}
         operation={selectedOperation.operation}
         position={selectedOperation.position}
+        queueSize={items.length}
         onBack={openQueue}
+        onPrevious={
+          previous
+            ? () => openOperation(previous.production_order, previous.operation_code)
+            : undefined
+        }
+        onNext={
+          next ? () => openOperation(next.production_order, next.operation_code) : undefined
+        }
       />
     );
   }
@@ -266,10 +300,19 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
       />
 
       <div className="pcp-pub__wrap">
-        <p className="pcp-pub__notice">
-          Sequência definida pelo PCP — esta tela é somente leitura e atualiza automaticamente.
-          Toque em uma operação para ver o detalhe e o desenho.
-        </p>
+        <label className="pcp-pub__search-field">
+          <Search className="pcp-pub__search-icon" size={20} strokeWidth={2} aria-hidden="true" />
+          <input
+            className="pcp-pub__search"
+            type="search"
+            value={queueQuery}
+            onChange={(event) => setQueueQuery(event.target.value)}
+            placeholder="Buscar OP ou PA…"
+            aria-label="Buscar operação por OP ou PA"
+            autoComplete="off"
+            enterKeyHint="search"
+          />
+        </label>
 
         {error ? <p className="pcp-pub__error">{error}</p> : null}
 
@@ -277,6 +320,8 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
           <p className="pcp-pub__empty">
             {loading ? "Carregando fila…" : "Nenhuma operação programada para este posto."}
           </p>
+        ) : filteredItems.length === 0 ? (
+          <p className="pcp-pub__empty">Nenhuma operação encontrada para “{queueQuery.trim()}”.</p>
         ) : (
           <>
             <div className="pcp-pub__queue-head" aria-hidden="true">
@@ -292,13 +337,15 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
             </div>
 
             <ol className="pcp-pub__queue">
-              {items.map((item, index) => (
+              {filteredItems.map(({ operation, position }) => (
                 <OperationCard
-                  key={operationKey(item)}
-                  position={index + 1}
-                  operation={item}
+                  key={operationKey(operation)}
+                  position={position}
+                  operation={operation}
                   onOpenVisual={setVisualTarget}
-                  onOpenDetail={() => openOperation(item.production_order, item.operation_code)}
+                  onOpenDetail={() =>
+                    openOperation(operation.production_order, operation.operation_code)
+                  }
                 />
               ))}
             </ol>
