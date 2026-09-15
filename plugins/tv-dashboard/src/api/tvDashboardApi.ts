@@ -253,6 +253,11 @@ export type MediaAsset = {
   mimeType: string;
   mediaKind: "image" | "video" | "font";
   fileSizeBytes: number;
+  hasPoster?: boolean;
+  posterStoredName?: string | null;
+  durationMs?: number | null;
+  widthPx?: number | null;
+  heightPx?: number | null;
 };
 
 export type PlaylistHistoryPreview = {

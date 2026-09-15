@@ -1635,6 +1635,8 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         groupId,
         assetId: typeof block.assetId === "string" ? block.assetId : undefined,
         url: typeof block.url === "string" ? block.url : undefined,
+        posterUrl:
+          type === "video" && typeof block.posterUrl === "string" ? block.posterUrl : undefined,
         href: links.href,
         linkTarget: links.linkTarget,
         ...(type === "image"

@@ -37,6 +37,24 @@ class ComunicadoEnrichmentService:
             return f"{root}/public/present/{public_token}/media/{asset_id}"
         return f"{root}/playlists/{playlist_id}/media/{asset_id}"
 
+    @staticmethod
+    def build_media_poster_url(
+        *,
+        api_root_path: str,
+        playlist_id: str,
+        asset_id: str,
+        public_token: str | None = None,
+    ) -> str:
+        return (
+            ComunicadoEnrichmentService.build_media_url(
+                api_root_path=api_root_path,
+                playlist_id=playlist_id,
+                asset_id=asset_id,
+                public_token=public_token,
+            )
+            + "/poster"
+        )
+
     def enrich(
         self,
         cfg: dict[str, Any],
@@ -295,6 +313,15 @@ class ComunicadoEnrichmentService:
                 if url:
                     enriched["url"] = url
                 enriched["assetId"] = asset_id.strip()
+                if block_type == "video":
+                    poster_url = self._resolve_asset_poster_url(
+                        asset_id.strip(),
+                        api_root_path=api_root_path,
+                        playlist_id=playlist_id,
+                        public_token=public_token,
+                    )
+                    if poster_url:
+                        enriched["posterUrl"] = poster_url
         elif block_type == "icon":
             for key in ("iconName", "iconSet", "content", "href", "linkTarget"):
                 value = block.get(key)
@@ -353,6 +380,21 @@ class ComunicadoEnrichmentService:
                 out["logo"] = logo_out
         return out
 
+    def _resolve_asset_row(
+        self,
+        asset_id: str,
+        *,
+        playlist_id: str,
+        public_token: str | None,
+    ) -> dict[str, Any] | None:
+        try:
+            parsed = UUID(asset_id)
+        except ValueError:
+            return None
+        if public_token:
+            return self._media_repo.get_for_token(public_token, parsed)
+        return self._media_repo.get_for_playlist(UUID(playlist_id), parsed)
+
     def _resolve_asset_url(
         self,
         asset_id: str,
@@ -361,17 +403,36 @@ class ComunicadoEnrichmentService:
         playlist_id: str,
         public_token: str | None,
     ) -> str | None:
-        try:
-            parsed = UUID(asset_id)
-        except ValueError:
-            return None
-        if public_token:
-            asset = self._media_repo.get_for_token(public_token, parsed)
-        else:
-            asset = self._media_repo.get_for_playlist(UUID(playlist_id), parsed)
+        asset = self._resolve_asset_row(
+            asset_id,
+            playlist_id=playlist_id,
+            public_token=public_token,
+        )
         if not asset:
             return None
         return self.build_media_url(
+            api_root_path=api_root_path,
+            playlist_id=playlist_id,
+            asset_id=asset_id,
+            public_token=public_token,
+        )
+
+    def _resolve_asset_poster_url(
+        self,
+        asset_id: str,
+        *,
+        api_root_path: str,
+        playlist_id: str,
+        public_token: str | None,
+    ) -> str | None:
+        asset = self._resolve_asset_row(
+            asset_id,
+            playlist_id=playlist_id,
+            public_token=public_token,
+        )
+        if not asset or not asset.get("hasPoster"):
+            return None
+        return self.build_media_poster_url(
             api_root_path=api_root_path,
             playlist_id=playlist_id,
             asset_id=asset_id,

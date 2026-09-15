@@ -177,7 +177,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Espessura do traço do ícone, em pixels (0,5–6). Distinta do contorno da caixa.",
     insertTextGroup: "Caixas de título e texto livre no slide.",
     insertMediaGroup:
-      "Imagens e vídeos da biblioteca da playlist ou upload (vídeo até 500 MB).",
+      "Imagens e vídeos da biblioteca da playlist ou upload (vídeo até 500 MB; preferir ≤1080p).",
     insertIllustrationsGroup: "Biblioteca visual de formas, linhas e ícones editáveis.",
     insertDataGroup: "Fontes de dados, KPI, gráficos e tabelas desacoplados no slide.",
     insertDataSource: "Abre o catálogo de rotas api-delpi em um modal para inserir uma fonte de dados no palco.",
@@ -190,7 +190,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertText: "Bloco de texto livre para mensagens e legendas.",
     insertImage: "Imagem posicionável no slide; envie o arquivo após inserir.",
     insertVideo:
-      "Vídeo em loop no slide (MP4/WEBM até 500 MB; arquivos grandes sobem em partes automaticamente). Enquanto o arquivo carrega, o player mostra “Carregando vídeo…” — vídeos grandes podem demorar na primeira abertura; depois o navegador pode reaproveitar o cache HTTP (24h).",
+      "Vídeo em loop (MP4/WEBM até 500 MB; partes automáticas se grande). Após o envio a API prepara o arquivo para início rápido e gera uma capa. Recomendamos até 1080p. Enquanto carrega, aparece “Carregando vídeo…”; o navegador pode reaproveitar cache HTTP (24h).",
     insertShape:
       "Formas geométricas com preenchimento e contorno. Em Linha, use as alças das pontas; aproxime de outro bloco para conectar.",
     chartData: "Fonte e vínculo dos dados do gráfico.",
@@ -668,7 +668,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     entranceDelay: "Atraso em milissegundos antes do elemento entrar na tela.",
     entranceDuration: "Duração da animação de entrada em milissegundos.",
     uploadMedia:
-      "Substitui a imagem ou vídeo do elemento pelo arquivo enviado. Vídeo MP4/WEBM até 500 MB; imagem até 10 MB.",
+      "Substitui a imagem ou vídeo do elemento pelo arquivo enviado. Vídeo MP4/WEBM até 500 MB (recomendado ≤1080p); imagem até 10 MB.",
     backgroundColor: "Cor sólida de fundo do slide personalizado.",
     uploadBackground:
       "Escolha um arquivo ou a biblioteca. A imagem preenche toda a tela (cobertura, centro), no editor e na TV.",

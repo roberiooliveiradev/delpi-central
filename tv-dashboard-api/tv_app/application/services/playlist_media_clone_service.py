@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from datetime import datetime, timezone
+
 from tv_app.application.services.media_storage_service import MediaStorageService
+from tv_app.application.services.media_video_optimize_service import MediaVideoOptimizeService
 from tv_app.application.services.tv_deck_asset_collector import rewrite_asset_ids
 from tv_app.infrastructure.persistence.repositories.media_repository import MediaRepository
 from tv_app.infrastructure.persistence.repositories.playlist_repository import (
@@ -88,6 +91,16 @@ class PlaylistMediaCloneService:
                 content=content,
                 mime_type=mime,
             )
+            poster_name = None
+            source_poster = asset.get("posterStoredName")
+            if isinstance(source_poster, str) and source_poster.strip():
+                poster_name = MediaVideoOptimizeService.copy_poster_file(
+                    storage_base=self._storage.base_dir,
+                    source_poster_name=source_poster.strip(),
+                )
+            optimized_at = None
+            if asset.get("videoOptimizedAt"):
+                optimized_at = datetime.now(timezone.utc)
             created = self._media.create(
                 playlist_id=target_playlist_id,
                 stored_name=new_stored,
@@ -96,6 +109,11 @@ class PlaylistMediaCloneService:
                 media_kind=str(asset.get("mediaKind") or kind),
                 file_size_bytes=len(content),
                 created_by=created_by,
+                poster_stored_name=poster_name,
+                duration_ms=asset.get("durationMs") if isinstance(asset.get("durationMs"), int) else None,
+                width_px=asset.get("widthPx") if isinstance(asset.get("widthPx"), int) else None,
+                height_px=asset.get("heightPx") if isinstance(asset.get("heightPx"), int) else None,
+                video_optimized_at=optimized_at,
             )
             id_map[source_id] = str(created["id"])
         return id_map

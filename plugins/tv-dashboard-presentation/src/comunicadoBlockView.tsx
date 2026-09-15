@@ -209,6 +209,7 @@ export function ComunicadoBlockView({
       interactive ? (
         <video
           src={block.url}
+          poster={typeof block.posterUrl === "string" ? block.posterUrl : undefined}
           muted
           playsInline
           preload="metadata"
@@ -217,6 +218,7 @@ export function ComunicadoBlockView({
       ) : (
         <ComunicadoPresentationVideo
           src={block.url}
+          poster={typeof block.posterUrl === "string" ? block.posterUrl : undefined}
           objectFit={block.style?.objectFit ?? "contain"}
         />
       )

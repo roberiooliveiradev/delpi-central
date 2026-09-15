@@ -8,8 +8,10 @@ import {
   useVideoElementLoadState,
 } from "@delpi/tv-dashboard-presentation";
 import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
-import { resolveBrowserDisplayMediaUrl } from "../api/browserSafeMediaUrl";
-import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
+import {
+  resolveBrowserDisplayMediaPosterUrl,
+  resolveBrowserDisplayMediaUrl,
+} from "../api/browserSafeMediaUrl";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { resolveEditorMediaUrl } from "./slideCardPreview";
 
@@ -38,9 +40,8 @@ type Props = {
 };
 
 /**
- * Player do editor: stream via URL pública (capability) quando há publicToken;
- * senão admin+access_token; se falhar, blob autenticado.
- * Overlay de carga enquanto metadados/buffer não chegam (não desmonta o `<video>`).
+ * Player do editor: apenas stream (URL pública ou admin+access_token).
+ * Sem fallback blob full-file — vídeos grandes não devem baixar inteiros na RAM.
  */
 export function ComunicadoEditorVideoPreview({ block, style, className = "" }: Props) {
   const { playlistId, publicToken } = useComunicadoEditor();
@@ -49,11 +50,12 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
     playlistId && block.assetId
       ? resolveBrowserDisplayMediaUrl(playlistId, block.assetId, publicToken)
       : undefined;
-  const [preferBlob, setPreferBlob] = useState(false);
-  const blob = useAuthenticatedBlobUrl(preferBlob ? mediaUrl : undefined);
-  const src = preferBlob ? blob.src : streamSrc;
-  const blobPending = preferBlob && (blob.loading || (!blob.src && !blob.error));
-  const hardError = preferBlob ? blob.error : false;
+  const posterSrc =
+    (typeof block.posterUrl === "string" && block.posterUrl.trim()) ||
+    (playlistId && block.assetId
+      ? resolveBrowserDisplayMediaPosterUrl(playlistId, block.assetId, publicToken)
+      : undefined);
+  const src = streamSrc;
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const { phase: mediaPhase, showLoadingOverlay } = useVideoElementLoadState(videoRef, src);
@@ -65,12 +67,11 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
   const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
-    setPreferBlob(false);
     setLoadError(false);
     setPlaying(false);
     setCurrentTime(0);
     setDuration(0);
-  }, [mediaUrl]);
+  }, [mediaUrl, src]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -93,13 +94,7 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
     };
     const onPause = () => setPlaying(false);
     const onEnded = () => setPlaying(false);
-    const onError = () => {
-      if (!preferBlob && mediaUrl) {
-        setPreferBlob(true);
-        return;
-      }
-      setLoadError(true);
-    };
+    const onError = () => setLoadError(true);
 
     video.addEventListener("timeupdate", syncTime);
     video.addEventListener("loadedmetadata", syncDuration);
@@ -118,7 +113,7 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
       video.removeEventListener("ended", onEnded);
       video.removeEventListener("error", onError);
     };
-  }, [src, preferBlob, mediaUrl]);
+  }, [src]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -171,14 +166,14 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
       .join(" "),
   );
 
-  const showError = hardError || loadError || (preferBlob && mediaPhase === "error");
+  const showError = loadError || mediaPhase === "error";
 
   let body: ReactNode;
   if (!mediaUrl) {
     body = <ComunicadoMediaPlaceholder kind="video" />;
   } else if (showError) {
     body = <ComunicadoMediaPlaceholder kind="video" state="error" />;
-  } else if (blobPending || !src) {
+  } else if (!src) {
     body = <ComunicadoMediaPlaceholder kind="video" state="loading" />;
   } else {
     body = (
@@ -188,6 +183,7 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
           ref={videoRef}
           className="td-composer__media-preview"
           src={src}
+          poster={posterSrc || undefined}
           playsInline
           preload="metadata"
           style={{ objectFit: block.style?.objectFit ?? "contain" }}

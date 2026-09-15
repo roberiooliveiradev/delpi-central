@@ -64,6 +64,19 @@ export function resolveBrowserDisplayMediaUrl(
   return withBrowserMediaAccessToken(adminMediaUrl(playlist, asset));
 }
 
+/** URL do poster JPEG (`…/media/{assetId}/poster`) para `<video poster>`. */
+export function resolveBrowserDisplayMediaPosterUrl(
+  playlistId: string,
+  assetId: string,
+  publicToken?: string | null,
+): string {
+  const base = resolveBrowserDisplayMediaUrl(playlistId, assetId, publicToken);
+  if (!base) return "";
+  const [path, query] = base.split("?", 2);
+  const posterPath = `${path.replace(/\/$/, "")}/poster`;
+  return query ? `${posterPath}?${query}` : posterPath;
+}
+
 /**
  * Garante URL carregável sem header Authorization.
  * Com `publicToken`, reescreve admin → pública; senão anexa `access_token`.

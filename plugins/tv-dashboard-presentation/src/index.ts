@@ -38,6 +38,13 @@ export {
   type DeriveVideoElementLoadPhaseResult,
 } from "./videoElementLoadState";
 export {
+  collectSlideVideoMediaUrls,
+  collectNextSlideVideoPrefetchUrls,
+  nextPresentationSlideIndex,
+  usePresentationMediaPrefetch,
+  type PresentationMediaPrefetchSlide,
+} from "./presentationMediaPrefetch";
+export {
   buildAdminPresentationWsUrl,
   isTvDashboardPortalPath,
   buildPresentationWsUrl,

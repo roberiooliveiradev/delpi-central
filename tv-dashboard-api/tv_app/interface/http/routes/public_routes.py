@@ -20,6 +20,24 @@ _media_repo = MediaRepository()
 _storage = MediaStorageService()
 
 
+@router.get("/present/{token}/media/{asset_id}/poster")
+def public_media_poster(token: str, asset_id: UUID, request: Request):
+    asset = _media_repo.get_for_token(token, asset_id)
+    if not asset:
+        return fail(message("mediaNotFound"), 404)
+    poster_name = asset.get("posterStoredName")
+    if not isinstance(poster_name, str) or not poster_name.strip():
+        return fail(message("mediaPosterNotFound", "Poster do vídeo não encontrado."), 404)
+    path = _storage.resolve_path(poster_name.strip())
+    if path is None:
+        return fail(message("mediaPosterNotFound", "Poster do vídeo não encontrado."), 404)
+    return build_media_file_response(
+        path=path,
+        mime_type="image/jpeg",
+        range_header=request.headers.get("range"),
+    )
+
+
 @router.get("/present/{token}/media/{asset_id}")
 def public_media(token: str, asset_id: UUID, request: Request):
     asset = _media_repo.get_for_token(token, asset_id)

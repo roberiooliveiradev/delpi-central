@@ -5,6 +5,7 @@ import {
   extractAdminMediaAssetId,
   isAdminProtectedMediaUrl,
   resolveBrowserDisplayMediaUrl,
+  resolveBrowserDisplayMediaPosterUrl,
   resolvePublicMediaToken,
   rewriteAdminMediaUrlsForBrowser,
   withBrowserMediaAccessToken,
@@ -33,6 +34,9 @@ describe("browserSafeMediaUrl", () => {
     // Não usa access_token quando há capability pública.
     expect(resolveBrowserDisplayMediaUrl("p1", "a1", "tok-publico")).not.toContain(
       "access_token",
+    );
+    expect(resolveBrowserDisplayMediaPosterUrl("p1", "a1", "tok-publico")).toBe(
+      "/apps/tv-dashboard-api/public/present/tok-publico/media/a1/poster",
     );
   });
 

@@ -19,6 +19,7 @@ Power Query M: a [Fase 7](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-7-STAT
 | `GET` | `/public/present/{token}` | Payload completo da apresentação (+ view count) |
 | `WS` | `/public/present/{token}/ws` | Push `presentation_updated` para a TV |
 | `GET` | `/public/present/{token}/media/{assetId}` | Mídia de comunicado (imagem/vídeo/fonte) |
+| `GET` | `/public/present/{token}/media/{assetId}/poster` | Capa JPEG do vídeo (quando otimizado) |
 | `POST` | `/public/present/{token}/heartbeat` | Sinal «TV online» para o admin |
 
 ### Admin (JWT + RBAC)
@@ -30,7 +31,7 @@ Power Query M: a [Fase 7](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-7-STAT
 | **Biblioteca de templates** | `GET/POST /slide-templates`, lifecycle publish/unpublish/archive/clone, `import/preview|apply`, `from-slide` — perm. `tv-dashboard.templates.manage` |
 | Telas | `/playlists/{id}/slides` |
 | Histórico | `/playlists/{id}/history` — até 500 versões, detalhes e restauração atômica |
-| Mídia | `/playlists/{id}/media` — `GET` lista `{ items }`, `POST` upload de imagem/vídeo/fonte, `GET /{assetId}` serve |
+| Mídia | `/playlists/{id}/media` — upload (incl. chunked), `GET /{assetId}` serve, `GET /{assetId}/poster`, `POST /{assetId}/optimize` (faststart+capa), `POST /optimize-pending` (batch legado) |
 | Tempo real | `WS /playlists/{id}/presentation-ws?access_token=…` |
 | Catálogo nativo | `/native-screens` |
 | Conteúdo UI / presets | `/content/ui`, `/content/slide-presets`, `/content/branch-scope` |

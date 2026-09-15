@@ -11,6 +11,7 @@ import {
   MeetingAnnotationOverlay,
   presentationStageEntranceClass,
   presentationSlidesHaveVideo,
+  usePresentationMediaPrefetch,
   buildAdminPresentationWsUrl,
   resolveSlideTransitionStyle,
   applyRuntimeInputValue,
@@ -157,6 +158,8 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
     onMeetingInk: (event) => meetingHandlersRef.current.ink(event),
     onMeetingInkClear: (event) => meetingHandlersRef.current.clear(event),
   });
+
+  usePresentationMediaPrefetch(index, slides);
 
   const currentSlideId = slides[index]?.id ?? "";
   const annotations = useMeetingAnnotations({

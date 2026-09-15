@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   MAX_VIDEO_UPLOAD_BYTES,
+  RECOMMENDED_VIDEO_MAX_HEIGHT_PX,
   detectMediaUploadKind,
   validateMediaUploadFile,
+  videoResolutionWarningMessage,
 } from "./mediaUploadLimits";
 
 describe("mediaUploadLimits", () => {
@@ -28,5 +30,12 @@ describe("mediaUploadLimits", () => {
     const ok = new File([new Uint8Array(8)], "clip.mp4", { type: "video/mp4" });
     Object.defineProperty(ok, "size", { value: Math.floor(MAX_VIDEO_UPLOAD_BYTES / 2) });
     expect(validateMediaUploadFile(ok, ["video"])).toBeNull();
+  });
+
+  it("avisa resolução acima de 1080p sem bloquear", () => {
+    expect(videoResolutionWarningMessage(1080)).toBeNull();
+    expect(videoResolutionWarningMessage(RECOMMENDED_VIDEO_MAX_HEIGHT_PX)).toBeNull();
+    expect(videoResolutionWarningMessage(2160)).toMatch(/2160p/);
+    expect(videoResolutionWarningMessage(2160)).toMatch(/1080p/);
   });
 });

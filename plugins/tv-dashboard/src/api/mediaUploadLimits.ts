@@ -74,6 +74,51 @@ export function validateMediaUploadFile(
   return null;
 }
 
+/** Altura máxima recomendada para carga rápida na TV (aviso, não bloqueia). */
+export const RECOMMENDED_VIDEO_MAX_HEIGHT_PX = 1080;
+
+export function videoResolutionWarningMessage(heightPx: number): string | null {
+  if (!(heightPx > RECOMMENDED_VIDEO_MAX_HEIGHT_PX)) return null;
+  return (
+    `Vídeo com ${heightPx}p — recomendamos até ${RECOMMENDED_VIDEO_MAX_HEIGHT_PX}p ` +
+    `para carregar mais rápido na TV e no editor. O envio continua permitido.`
+  );
+}
+
+/**
+ * Lê width/height do arquivo local via `<video>` + object URL.
+ * Resolve null se o browser não conseguir metadados.
+ */
+export function probeVideoFileResolution(
+  file: File,
+): Promise<{ width: number; height: number } | null> {
+  if (detectMediaUploadKind(file) !== "video") {
+    return Promise.resolve(null);
+  }
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    const cleanup = () => {
+      video.removeAttribute("src");
+      video.load();
+      URL.revokeObjectURL(url);
+    };
+    video.onloadedmetadata = () => {
+      const width = video.videoWidth;
+      const height = video.videoHeight;
+      cleanup();
+      if (width > 0 && height > 0) resolve({ width, height });
+      else resolve(null);
+    };
+    video.onerror = () => {
+      cleanup();
+      resolve(null);
+    };
+    video.src = url;
+  });
+}
+
 export function mediaUploadHttpErrorMessage(status: number, fallback: string): string {
   if (status === 413) {
     return (

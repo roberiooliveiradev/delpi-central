@@ -105,7 +105,7 @@ Docker: `npm install` em **ambos** (`tv-dashboard-presentation` para tipos TS + 
 - Gráficos: **`tdp-series-chart*`** (título, legenda, eixos, grade, tabela de dados)
 - Modo kiosk público: `.tdp-stage--kiosk` dentro de `.pub-kiosk-root` (public-hub)
 - Preview admin (validação TV): `.tdp-stage--preview-shell` + `DesignViewportStage surface="kiosk"` (zoom; `preferPaintSafeScale` se houver vídeo). Filmstrip/thumbnail: `surface="preview"` (`transform`).
-- Vídeo: overlay canônico `ComunicadoVideoLoadOverlay` até `loadedmetadata` / durante `waiting` (editor + apresentação).
+- Vídeo: overlay canônico `ComunicadoVideoLoadOverlay` até `loadedmetadata` / durante `waiting` (editor + apresentação). Prefetch do próximo slide via `usePresentationMediaPrefetch`. Poster (`posterUrl` enrich) no `<video poster>`.
 - `ExternalSlideView` — iframe externo canônico (prévia + public-hub)
 - **Playback mode:** `playlist.playbackMode` + `?mode=` + toolbar; `autoAdvance: false` desliga o timer sem apagar `durationSec`. `?presenter=1` (notas) é ortogonal.
 - **Meeting sync:** com `syncPlaybackCursor`, `goNext`/`goPrevious` publicam `playback_cursor`; peers aplicam por `slideId` (ignora eco do `playbackClientId`).

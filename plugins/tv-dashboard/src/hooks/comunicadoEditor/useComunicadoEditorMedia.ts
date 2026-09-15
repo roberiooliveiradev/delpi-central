@@ -9,7 +9,13 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { uploadPlaylistMedia, type MediaAsset } from "../../api/tvDashboardApi";
-import { validateMediaUploadFile } from "../../api/mediaUploadLimits";
+import {
+  detectMediaUploadKind,
+  probeVideoFileResolution,
+  validateMediaUploadFile,
+  videoResolutionWarningMessage,
+} from "../../api/mediaUploadLimits";
+import { resolveBrowserDisplayMediaPosterUrl } from "../../api/browserSafeMediaUrl";
 import type { MediaLibraryTarget } from "../../components/comunicadoEditorTypes";
 import { resolveEditorMediaUrl } from "../../components/slideCardPreview";
 import {
@@ -104,6 +110,9 @@ export function useComunicadoEditorMedia({
           ...createBlock(blockType),
           assetId: asset.id,
           url,
+          ...(blockType === "video" && asset.hasPoster
+            ? { posterUrl: resolveBrowserDisplayMediaPosterUrl(playlistId, asset.id) }
+            : {}),
         } as ComunicadoBlock;
         const cascade = options?.cascadeIndex ?? 0;
         if (
@@ -147,6 +156,11 @@ export function useComunicadoEditorMedia({
               ...block,
               assetId: asset.id,
               url,
+              ...(block.type === "video" && asset.hasPoster
+                ? { posterUrl: resolveBrowserDisplayMediaPosterUrl(playlistId, asset.id) }
+                : block.type === "video"
+                  ? { posterUrl: undefined }
+                  : {}),
               ...(block.type === "image" ? { imageCrop: undefined } : {}),
             } as ComunicadoBlock)
           : block,
@@ -166,6 +180,11 @@ export function useComunicadoEditorMedia({
         setUploadStatusMessage(validationError);
         return;
       }
+      let resolutionWarn: string | null = null;
+      if (detectMediaUploadKind(file) === "video") {
+        const dims = await probeVideoFileResolution(file);
+        if (dims) resolutionWarn = videoResolutionWarningMessage(dims.height);
+      }
       setUploading(true);
       setUploadProgress(0);
       setUploadStatusMessage(null);
@@ -175,6 +194,7 @@ export function useComunicadoEditorMedia({
         });
         /* "block" cai no ramo de substituir mídia selecionada (não é MediaLibraryTarget). */
         applyMediaAsset(asset, target === "background" ? "background" : ("block" as MediaLibraryTarget));
+        if (resolutionWarn) setUploadStatusMessage(resolutionWarn);
       } catch (err) {
         setUploadStatusMessage(err instanceof Error ? err.message : "Falha ao enviar arquivo.");
       } finally {

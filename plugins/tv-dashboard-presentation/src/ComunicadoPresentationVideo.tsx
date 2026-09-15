@@ -9,6 +9,7 @@ import { useVideoElementLoadState } from "./useVideoElementLoadState";
 
 type Props = {
   src: string;
+  poster?: string;
   objectFit?: CSSProperties["objectFit"];
   className?: string;
 };
@@ -26,7 +27,12 @@ function isSlideActive(node: HTMLElement | null): boolean {
  * Vídeo na apresentação/prévia: autoplay com áudio ao entrar no slide,
  * controles próprios (play/pause/mute), overlay de carga e sync com o deck.
  */
-export function ComunicadoPresentationVideo({ src, objectFit = "contain", className = "" }: Props) {
+export function ComunicadoPresentationVideo({
+  src,
+  poster,
+  objectFit = "contain",
+  className = "",
+}: Props) {
   const { deckPaused } = usePresentationPlayback();
   const rootRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -171,6 +177,7 @@ export function ComunicadoPresentationVideo({ src, objectFit = "contain", classN
         ref={videoRef}
         className={ensureComunicadoDualClass("tdp-presentation-video__media")}
         src={src}
+        poster={poster || undefined}
         playsInline
         loop
         preload="auto"

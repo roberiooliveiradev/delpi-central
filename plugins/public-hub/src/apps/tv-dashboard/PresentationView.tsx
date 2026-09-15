@@ -19,6 +19,7 @@ import {
   presentationSurfaceFromViewMode,
   presentationStageEntranceClass,
   presentationSlidesHaveVideo,
+  usePresentationMediaPrefetch,
   resolvePresentationPlaybackClientId,
   ExternalSlideView,
   type ComunicadoBlock,
@@ -204,6 +205,7 @@ export function PresentationView({
 
   const surface = presentationSurfaceFromViewMode(mode);
   const preferPaintSafeScale = presentationSlidesHaveVideo(slides);
+  usePresentationMediaPrefetch(index, slides);
   const stageClass = [
     "tdp-stage",
     surface === "kiosk" ? "tdp-stage--kiosk" : null,

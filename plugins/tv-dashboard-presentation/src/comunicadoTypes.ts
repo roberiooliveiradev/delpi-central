@@ -290,7 +290,10 @@ export type ComunicadoTextBlock = ComunicadoBlockBase &
 export type ComunicadoMediaBlock = ComunicadoBlockBase & {
   type: "image" | "video";
   assetId?: string;
+  /** URL do arquivo — enrich runtime; serialize omite. */
   url?: string;
+  /** Capa JPEG do vídeo — enrich runtime a partir do asset; serialize omite. */
+  posterUrl?: string;
   href?: string;
   linkTarget?: "_blank" | "_self";
   imageCrop?: ComunicadoImageCrop;

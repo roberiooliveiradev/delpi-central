@@ -14,6 +14,10 @@ from tv_app.application.services.media_storage_service import (
     MediaStorageService,
     MediaValidationError,
 )
+from tv_app.application.services.media_video_optimize_apply import (
+    apply_video_optimize_after_create,
+    reoptimize_video_asset,
+)
 from tv_app.application.services.playlist_access_service import PlaylistAccessService
 from tv_app.application.services.tv_dashboard_content_service import message
 from tv_app.core.responses import fail, ok
@@ -73,6 +77,11 @@ async def upload_media(request: Request, playlist_id: UUID, file: UploadFile = F
         media_kind=media_kind,
         file_size_bytes=size_bytes,
         created_by=PlaylistAccessService.actor_id(user),
+    )
+    asset = apply_video_optimize_after_create(
+        asset=asset,
+        media_repo=_media_repo,
+        storage=_storage,
     )
     notify_presentation_changed(
         playlist_id=str(playlist_id),
@@ -161,6 +170,11 @@ async def complete_media_upload_session(
         file_size_bytes=size_bytes,
         created_by=PlaylistAccessService.actor_id(user),
     )
+    asset = apply_video_optimize_after_create(
+        asset=asset,
+        media_repo=_media_repo,
+        storage=_storage,
+    )
     notify_presentation_changed(
         playlist_id=str(playlist_id),
         reason="media_uploaded",
@@ -202,6 +216,80 @@ def list_media(request: Request, playlist_id: UUID, media_kind: str | None = Non
     return ok({"items": items})
 
 
+@router.post("/optimize-pending", operation_id="optimize_tv_playlist_videos")
+def optimize_playlist_videos(request: Request, playlist_id: UUID):
+    """Reprocessa todos os vídeos da playlist ainda sem video_optimized_at."""
+    guarded = require_playlist_access(request, playlist_id, need="edit")
+    if is_access_error(guarded):
+        return guarded
+    pending = _media_repo.list_videos_needing_optimize(playlist_id)
+    items = []
+    for asset in pending:
+        try:
+            asset_id = UUID(str(asset["id"]))
+        except (KeyError, ValueError, TypeError):
+            continue
+        updated = reoptimize_video_asset(
+            playlist_id=playlist_id,
+            asset_id=asset_id,
+            media_repo=_media_repo,
+            storage=_storage,
+        )
+        if updated:
+            items.append(updated)
+    if items:
+        notify_presentation_changed(
+            playlist_id=str(playlist_id),
+            reason="media_optimized",
+        )
+    return ok(
+        {"items": items, "optimizedCount": len(items)},
+        message=message("mediaPlaylistOptimized", "Vídeos da programação otimizados."),
+    )
+
+
+@router.get("/{asset_id}/poster", operation_id="get_tv_media_poster")
+def serve_media_poster(request: Request, playlist_id: UUID, asset_id: UUID):
+    guarded = require_playlist_access(request, playlist_id, need="read")
+    if is_access_error(guarded):
+        return guarded
+    asset = _media_repo.get_for_playlist(playlist_id, asset_id)
+    if not asset:
+        return fail(message("mediaNotFound", "Mídia não encontrada."), 404)
+    poster_name = asset.get("posterStoredName")
+    if not isinstance(poster_name, str) or not poster_name.strip():
+        return fail(message("mediaPosterNotFound", "Poster do vídeo não encontrado."), 404)
+    path = _storage.resolve_path(poster_name.strip())
+    if path is None:
+        return fail(message("mediaPosterNotFound", "Poster do vídeo não encontrado."), 404)
+    return build_media_file_response(
+        path=path,
+        mime_type="image/jpeg",
+        range_header=request.headers.get("range"),
+    )
+
+
+@router.post("/{asset_id}/optimize", operation_id="optimize_tv_media_video")
+def optimize_media_video(request: Request, playlist_id: UUID, asset_id: UUID):
+    """Reprocessa faststart + poster (assets legados ou falha anterior)."""
+    guarded = require_playlist_access(request, playlist_id, need="edit")
+    if is_access_error(guarded):
+        return guarded
+    updated = reoptimize_video_asset(
+        playlist_id=playlist_id,
+        asset_id=asset_id,
+        media_repo=_media_repo,
+        storage=_storage,
+    )
+    if not updated:
+        return fail(message("mediaNotFound", "Mídia não encontrada."), 404)
+    notify_presentation_changed(
+        playlist_id=str(playlist_id),
+        reason="media_optimized",
+    )
+    return ok(updated, message=message("mediaOptimized", "Vídeo otimizado."))
+
+
 @router.get("/{asset_id}")
 def serve_media(request: Request, playlist_id: UUID, asset_id: UUID):
     guarded = require_playlist_access(request, playlist_id, need="read")
@@ -229,6 +317,9 @@ def delete_media(request: Request, playlist_id: UUID, asset_id: UUID):
     if not deleted:
         return fail(message("mediaNotFound", "Mídia não encontrada."), 404)
     _storage.delete(deleted.get("storedName"))
+    poster = deleted.get("posterStoredName")
+    if isinstance(poster, str) and poster.strip():
+        _storage.delete(poster.strip())
     notify_presentation_changed(
         playlist_id=str(playlist_id),
         reason="media_deleted",
