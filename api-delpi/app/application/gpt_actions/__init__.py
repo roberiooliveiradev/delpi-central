@@ -1,0 +1,19 @@
+"""Custom GPT Actions facade — api-delpi V1 (catalog + product search)."""
+
+from app.application.gpt_actions.constants import (
+    GPT_ACTIONS_BASE_PATH,
+    GPT_ACTIONS_GATEWAY_ROOT,
+    GPT_ACTIONS_OPERATION_IDS,
+    GPT_ACTIONS_SCHEMA_HTTP_OPERATION_ID,
+    GPT_PRODUCT_SEARCH_MAX_PAGE_SIZE,
+    GPT_SEARCH_RESPONSE_FIELDS,
+)
+
+__all__ = [
+    "GPT_ACTIONS_BASE_PATH",
+    "GPT_ACTIONS_GATEWAY_ROOT",
+    "GPT_ACTIONS_OPERATION_IDS",
+    "GPT_ACTIONS_SCHEMA_HTTP_OPERATION_ID",
+    "GPT_PRODUCT_SEARCH_MAX_PAGE_SIZE",
+    "GPT_SEARCH_RESPONSE_FIELDS",
+]

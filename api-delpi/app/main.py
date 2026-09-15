@@ -22,6 +22,7 @@ from app.interface.socket.sio_server import create_socket_app
 from delpi_auth.credential_guard import check_credentials
 from app.config import settings
 from app.interface.http.routes import customer_routes, product_drawing_routes, product_routes
+from app.interface.http.routes import gpt_actions_routes
 from app.interface.http.routes import system_routes
 from app.interface.http.routes import data_routes
 from app.interface.http.routes import sale_routes
@@ -110,6 +111,10 @@ def build_allowed_origins() -> list[str]:
     api_env = os.getenv("API_DELPI_ENV", "development")
     if api_env != "production":
         origins.add("http://localhost")
+
+    # Custom GPT Builder / Actions may preflight the public OpenAPI schema.
+    origins.add("https://chatgpt.com")
+    origins.add("https://chat.openai.com")
 
     return sorted(origins)
 
@@ -322,6 +327,7 @@ app.include_router(request_lookups_router.router)
 app.include_router(planejamento_orcamentario_router.router)
 app.include_router(product_drawing_routes.router, prefix="/products", tags=["products"])
 app.include_router(product_routes.router, prefix="/products", tags=["products"])
+app.include_router(gpt_actions_routes.router)
 app.include_router(customer_routes.router)
 app.include_router(sale_routes.router, prefix="/sales", tags=["sales"])
 app.include_router(system_routes.router, prefix="/system", tags=["system"])

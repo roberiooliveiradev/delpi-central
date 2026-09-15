@@ -16,6 +16,13 @@ _PUBLIC_PREFIXES = (
     "/public/scheduling/",
 )
 
+# Exact public paths (Custom GPT OpenAPI import only — no business data).
+_PUBLIC_EXACT = frozenset(
+    {
+        "/gpt-actions/v1/openapi.json",
+    }
+)
+
 # root_path possíveis (o gateway costuma remover, mas mantemos robustez).
 _ROOT_PREFIXES = ("/apps/api-delpi",)
 
@@ -29,6 +36,8 @@ def _strip_root(path: str) -> str:
 
 def _is_public_delpi_path(path: str) -> bool:
     normalized = _strip_root(path.split("?", 1)[0])
+    if normalized in _PUBLIC_EXACT:
+        return True
     return any(normalized.startswith(prefix) for prefix in _PUBLIC_PREFIXES)
 
 
