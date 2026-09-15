@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 from app.interface.mcp.oauth_contract import (
     MCP_OAUTH_SCOPES,
     build_www_authenticate_challenge,
+    resolve_required_mcp_resource_audience,
     resolve_resource_metadata_url,
 )
 
@@ -24,14 +25,8 @@ def resolve_authorization_server_issuer() -> str | None:
 
 
 def resolve_mcp_resource_url() -> str:
-    """Canonical MCP resource identifier (stable path; host from PUBLIC_BASE_URL)."""
-    configured = (os.getenv("MCP_RESOURCE_URL") or "").strip().rstrip("/")
-    if configured:
-        return configured
-    base = resolve_public_base_url()
-    if base:
-        return f"{base}/apps/api-delpi/mcp"
-    return "https://TO_CONFIGURE/apps/api-delpi/mcp"
+    """Canonical MCP resource identifier — exact match, no trailing-slash rewrite."""
+    return resolve_required_mcp_resource_audience()
 
 
 def build_oauth_protected_resource_metadata() -> dict[str, Any]:

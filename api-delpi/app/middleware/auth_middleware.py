@@ -7,7 +7,11 @@ from delpi_auth.jwt_validator import validate_token
 from delpi_auth.middleware.fastapi_auth import jwt_middleware as _base_jwt_middleware
 from delpi_auth.service_token import request_has_valid_internal_service_token
 
-from app.interface.mcp.oauth_contract import missing_required_oauth_scopes
+from app.interface.mcp.oauth_contract import (
+    missing_required_oauth_scopes,
+    resolve_required_mcp_resource_audience,
+    token_has_exact_audience,
+)
 from app.interface.mcp.resource_metadata import www_authenticate_challenge
 
 __all__ = ["jwt_middleware", "_is_public_delpi_path"]
@@ -97,9 +101,17 @@ async def jwt_middleware(request: Request, call_next):
             return _unauthorized_mcp()
 
         try:
-            # Platform JWT verification (signature/issuer/exp/nbf/aud=KEYCLOAK_AUDIENCE).
-            # MCP resource URL audience (RFC 8707) is NOT assumed; see oauth evidence doc.
+            # 1) Canonical platform JWT validation (signature/issuer/exp/nbf/aud=delpi-central).
             claims = validate_token(token)
+            # 2) MCP-specific resource audience (exact MCP_RESOURCE_URL membership).
+            #    Does not alter shared JWT semantics for non-MCP routes.
+            mcp_resource = resolve_required_mcp_resource_audience()
+            if not token_has_exact_audience(claims, mcp_resource):
+                return _unauthorized_mcp(
+                    error="invalid_token",
+                    error_description="MCP resource audience is required",
+                )
+            # 3) Required OAuth scopes (identity + audience-delpi + mcp:tools).
             missing = missing_required_oauth_scopes(claims)
             if missing:
                 return _unauthorized_mcp(
