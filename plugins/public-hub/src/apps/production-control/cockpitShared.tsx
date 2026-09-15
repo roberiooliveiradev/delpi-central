@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { fetchPublicDrawingPdf, type MachineLoadOperation } from "./api";
+import {
+  buildPublicProductModelGlbUrl,
+  fetchPublicDrawingPdf,
+  type MachineLoadOperation,
+} from "./api";
+import { ProductModelViewer } from "./ProductModelViewer";
 
 /** Faixa de marca fixa no topo — identidade DELPI e posto em destaque para leitura à distância. */
 export function BrandBar({
@@ -84,18 +89,65 @@ export function useDrawingObjectUrl(token: string, branch: string, paCode: strin
   return { status, message, objectUrl };
 }
 
+export type VisualMode = "drawing" | "model";
+
+export function VisualModeTabs({
+  mode,
+  onChange,
+  productCode,
+  show,
+}: {
+  mode: VisualMode;
+  onChange: (mode: VisualMode) => void;
+  productCode: string;
+  show: boolean;
+}) {
+  if (!show) return null;
+  return (
+    <div className="pcp-pub-visual-tabs" role="tablist" aria-label="Tipo de visualização">
+      <button
+        type="button"
+        role="tab"
+        aria-selected={mode === "drawing"}
+        className={mode === "drawing" ? "is-active" : undefined}
+        onClick={() => onChange("drawing")}
+      >
+        Desenho
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={mode === "model"}
+        className={mode === "model" ? "is-active" : undefined}
+        onClick={() => onChange("model")}
+      >
+        3D {productCode}
+      </button>
+    </div>
+  );
+}
+
 export function DrawingViewer({
   token,
   branch,
   paCode,
+  productCode,
+  has3dModel,
   onClose,
 }: {
   token: string;
   branch: string;
-  paCode: string;
+  paCode: string | null;
+  productCode?: string | null;
+  has3dModel?: boolean;
   onClose: () => void;
 }) {
+  const canDraw = Boolean(paCode);
+  const canModel = Boolean(has3dModel && productCode);
+  const [mode, setMode] = useState<VisualMode>(canDraw ? "drawing" : "model");
   const { status, message, objectUrl } = useDrawingObjectUrl(token, branch, paCode);
+  const glbUrl =
+    canModel && productCode ? buildPublicProductModelGlbUrl(token, branch, productCode) : null;
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -105,6 +157,13 @@ export function DrawingViewer({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  const title =
+    mode === "model" && productCode
+      ? `Modelo 3D ${productCode}`
+      : paCode
+        ? `Desenho ${paCode}`
+        : "Visualização";
+
   return (
     <div
       className="pcp-pub-viewer"
@@ -113,18 +172,36 @@ export function DrawingViewer({
       aria-labelledby="pcp-pub-viewer-title"
     >
       <div className="pcp-pub-viewer__bar">
-        <h2 id="pcp-pub-viewer-title">Desenho {paCode}</h2>
+        <h2 id="pcp-pub-viewer-title">{title}</h2>
+        <VisualModeTabs
+          show={canDraw && canModel}
+          mode={mode}
+          onChange={setMode}
+          productCode={productCode || ""}
+        />
         <button type="button" className="pcp-pub__ghost pcp-pub__ghost--plain" onClick={onClose}>
           Fechar
         </button>
       </div>
-      {status === "loading" ? <p className="pcp-pub-viewer__state">Carregando desenho…</p> : null}
-      {status === "error" ? (
-        <p className="pcp-pub-viewer__state pcp-pub-viewer__state--error">{message}</p>
-      ) : null}
-      {status === "ready" && objectUrl ? (
-        <iframe className="pcp-pub-viewer__frame" title={`Desenho ${paCode}`} src={objectUrl} />
-      ) : null}
+      {mode === "drawing" ? (
+        <>
+          {status === "loading" ? <p className="pcp-pub-viewer__state">Carregando desenho…</p> : null}
+          {status === "error" ? (
+            <p className="pcp-pub-viewer__state pcp-pub-viewer__state--error">{message}</p>
+          ) : null}
+          {status === "ready" && objectUrl && paCode ? (
+            <iframe className="pcp-pub-viewer__frame" title={`Desenho ${paCode}`} src={objectUrl} />
+          ) : null}
+        </>
+      ) : glbUrl && productCode ? (
+        <ProductModelViewer
+          className="pcp-pub-viewer__model"
+          src={glbUrl}
+          alt={`Modelo 3D do produto ${productCode}`}
+        />
+      ) : (
+        <p className="pcp-pub-viewer__state">Modelo 3D não disponível para este produto.</p>
+      )}
     </div>
   );
 }

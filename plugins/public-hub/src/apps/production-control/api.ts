@@ -42,6 +42,7 @@ export type MachineLoadOperation = {
   active_operator_count: number | null;
   appointment_count: number | null;
   last_appointment_date: string | null;
+  has_3d_model?: boolean;
 };
 
 export type PublicMachineLoadPayload = {
@@ -113,6 +114,15 @@ export function buildPublicMachineLoadWsUrl(token: string, branch: string): stri
 export function buildPublicDrawingPdfUrl(token: string, branch: string, paCode: string): string {
   const params = new URLSearchParams({ branch });
   return `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/drawings/${encodeURIComponent(paCode)}/pdf?${params}`;
+}
+
+export function buildPublicProductModelGlbUrl(
+  token: string,
+  branch: string,
+  productCode: string,
+): string {
+  const params = new URLSearchParams({ branch });
+  return `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/models/${encodeURIComponent(productCode)}/glb?${params}`;
 }
 
 export async function fetchPublicDrawingPdf(

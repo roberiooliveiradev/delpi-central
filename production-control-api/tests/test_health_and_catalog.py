@@ -68,6 +68,7 @@ def test_subplugins_catalog_filters_by_permission() -> None:
     assert "demand" not in only_access_ids
     assert "materials" not in only_access_ids
     assert "delivery-map" not in only_access_ids
+    assert "product-models" not in only_access_ids
 
 
 def test_delivery_map_subplugin_requires_its_own_permission() -> None:
@@ -134,6 +135,29 @@ def test_materials_subplugin_requires_its_own_permission() -> None:
     ids = {item.id for item in visible}
     assert "materials" in ids
     assert "demand" not in ids
+
+
+def test_product_models_subplugin_requires_its_own_permission() -> None:
+    from production_control_app.application.services.subplugin_catalog_service import (
+        SubpluginCatalogService,
+        load_subplugin_catalog,
+    )
+
+    catalog = load_subplugin_catalog()
+    assert any(item.id == "product-models" for item in catalog)
+
+    service = SubpluginCatalogService()
+    visible = service.list_visible(
+        _user(
+            permissions=[
+                "production-control.access",
+                "production-control.product-3d-models.manage",
+            ]
+        )
+    )
+    ids = {item.id for item in visible}
+    assert "product-models" in ids
+    assert "machine-load" not in ids
 
 
 def test_subplugins_route_returns_envelope() -> None:

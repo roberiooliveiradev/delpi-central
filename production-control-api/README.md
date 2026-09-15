@@ -30,6 +30,10 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | PUT | `/reports/stock-balances/email-schedule?branch=` | JWT + `reports.view` + filial (body: hour, minute, enabled) |
 | GET | `/public/machine-load/{token}?branch=01\|02&workCenter=` | público (token do cockpit) |
 | GET | `/public/machine-load/{token}/drawings/{paCode}/pdf?branch=01\|02` | público (PDF do PA na fila) |
+| GET | `/public/machine-load/{token}/models/{productCode}/glb?branch=01\|02` | público (GLB do produto da OP na fila) |
+| GET | `/product-3d-models` | JWT + `product-3d-models.manage` |
+| PUT | `/product-3d-models/{productCode}` | JWT + `product-3d-models.manage` (multipart `.glb`) |
+| DELETE | `/product-3d-models/{productCode}` | JWT + `product-3d-models.manage` |
 | GET | `/public/machine-load/{token}/performance?branch=01\|02&workCenter=&days=` | público (desempenho do posto na fila) |
 | WS | `/public/machine-load/{token}/ws?branch=01\|02` | público (token do cockpit) |
 
@@ -84,6 +88,8 @@ Diferenças em relação ao `GET /machine-load` autenticado:
 - **Status HZA síncrono** — o cockpit não faz polling, então o enrich continua no caminho da leitura.
 
 `GET /public/machine-load/{token}/drawings/{paCode}/pdf` devolve o PDF do desenho **somente** se o código do PA aparecer na fila congelada da filial. O arquivo é lido do disco pelo próprio BFF (`DrawingPdfLibraryStorage` → `FileResponse`), sem passar pela api-delpi. O cockpit do operador abre esse PDF pelo botão **Ver desenho**.
+
+`GET /public/machine-load/{token}/models/{productCode}/glb` devolve o `.glb` anexado ao **produto da OP** (`product_code`, PI ou PA) **somente** se aquele código aparece como produto de alguma operação visível na fila publicada (`public_snapshot_contains_product` — não reutiliza o gate do PA). Bytes no volume `${DELPI_DATA_HOST_DIR}/product-3d-models`; metadado em `production_control.product_3d_models`. A fila pública marca `has_3d_model` por item. Anexação autenticada: `GET/PUT/DELETE /product-3d-models` com `production-control.product-3d-models.manage`.
 
 A pasta do FILESERVER é montada read-only no container:
 

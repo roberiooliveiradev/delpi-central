@@ -34,6 +34,12 @@ class Settings:
     PC_DRAWING_PDF_LIBRARY_DIR: str = _get_env(
         "PC_DRAWING_PDF_LIBRARY_DIR", default="/drawing-pdfs"
     )
+    PC_PRODUCT_3D_MODELS_DIR: str = _get_env(
+        "PC_PRODUCT_3D_MODELS_DIR", default="/app/data/product-3d-models"
+    )
+    PC_PRODUCT_3D_MAX_BYTES: int = int(
+        _get_env("PC_PRODUCT_3D_MAX_BYTES", default=str(25 * 1024 * 1024))
+    )
 
     DELPI_API_URL: str = _get_env("DELPI_API_URL", default="http://delpi-api-delpi:8000")
     DELPI_API_TIMEOUT: float = float(_get_env("DELPI_API_TIMEOUT", default="30"))

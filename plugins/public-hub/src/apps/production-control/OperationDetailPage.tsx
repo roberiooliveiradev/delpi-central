@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { MachineLoadOperation } from "./api";
+import { buildPublicProductModelGlbUrl } from "./api";
 import {
   BrandBar,
   CopyValueButton,
@@ -11,7 +12,10 @@ import {
   formatUnit,
   resolveStatus,
   useDrawingObjectUrl,
+  VisualModeTabs,
+  type VisualMode,
 } from "./cockpitShared";
+import { ProductModelViewer } from "./ProductModelViewer";
 
 type Props = {
   token: string;
@@ -22,7 +26,7 @@ type Props = {
 };
 
 /**
- * Detalhe da operação com o desenho ao lado.
+ * Detalhe da operação com visualização ao lado: PDF do PA e, se houver, 3D do produto da OP.
  *
  * Só apresenta o que a fila publicada já traz — nenhuma consulta nova ao TOTVS.
  */
@@ -30,8 +34,28 @@ export function OperationDetailPage({ token, branch, operation, position, onBack
   const [fullscreen, setFullscreen] = useState(false);
   const status = resolveStatus(operation);
   const paCode = operation.pa_product_code?.trim() || "";
-  const displayProductCode = paCode || operation.product_code;
+  const productCode = operation.product_code?.trim() || "";
+  const has3dModel = Boolean(operation.has_3d_model && productCode);
+  const canDraw = Boolean(paCode);
+  const displayProductCode = paCode || productCode;
+  const [mode, setMode] = useState<VisualMode>(canDraw ? "drawing" : "model");
   const drawing = useDrawingObjectUrl(token, branch, paCode || null);
+  const glbUrl =
+    has3dModel && productCode ? buildPublicProductModelGlbUrl(token, branch, productCode) : null;
+
+  useEffect(() => {
+    setMode(canDraw ? "drawing" : "model");
+  }, [canDraw, productCode, paCode]);
+
+  const canFullscreen =
+    (mode === "drawing" && canDraw && drawing.status === "ready") ||
+    (mode === "model" && has3dModel);
+  const previewTitle =
+    mode === "model" && productCode
+      ? `3D ${productCode}`
+      : paCode
+        ? `Desenho ${paCode}`
+        : "Visualização";
 
   return (
     <section className="pcp-pub pcp-pub--detail">
@@ -74,7 +98,7 @@ export function OperationDetailPage({ token, branch, operation, position, onBack
               </Fact>
               <Fact label="Ferramenta">{operation.tool || "—"}</Fact>
               <Fact label="Recurso">{operation.resource || "—"}</Fact>
-              <Fact label="Produto intermediário">
+              <Fact label="Produto da OP">
                 {operation.product_code}
                 <span className="pcp-pub__fact-sub">{operation.product_description}</span>
               </Fact>
@@ -128,12 +152,18 @@ export function OperationDetailPage({ token, branch, operation, position, onBack
             </p>
           </div>
 
-          <aside className="pcp-pub__split-aside" aria-label="Desenho do produto">
+          <aside className="pcp-pub__split-aside" aria-label="Visualização">
             <div className="pcp-pub__preview-head">
-              <span className="pcp-pub__preview-title">
-                {paCode ? `Desenho ${paCode}` : "Desenho"}
-              </span>
-              {paCode && drawing.status === "ready" ? (
+              <div className="pcp-pub__preview-heading">
+                <span className="pcp-pub__preview-title">{previewTitle}</span>
+                <VisualModeTabs
+                  show={canDraw && has3dModel}
+                  mode={mode}
+                  onChange={setMode}
+                  productCode={productCode}
+                />
+              </div>
+              {canFullscreen ? (
                 <button
                   type="button"
                   className="pcp-pub__ghost pcp-pub__ghost--plain"
@@ -144,35 +174,56 @@ export function OperationDetailPage({ token, branch, operation, position, onBack
               ) : null}
             </div>
 
-            {!paCode ? (
-              <p className="pcp-pub__preview-state">
-                Esta operação não tem PA vinculado na fila, então não há desenho para exibir.
-              </p>
-            ) : null}
-            {paCode && drawing.status === "loading" ? (
-              <p className="pcp-pub__preview-state">Carregando desenho…</p>
-            ) : null}
-            {paCode && drawing.status === "error" ? (
-              <p className="pcp-pub__preview-state pcp-pub__preview-state--error">
-                {drawing.message}
-              </p>
-            ) : null}
-            {paCode && drawing.status === "ready" && drawing.objectUrl ? (
-              <iframe
-                className="pcp-pub__preview-frame"
-                title={`Desenho ${paCode}`}
-                src={drawing.objectUrl}
+            {mode === "drawing" ? (
+              <>
+                {!paCode ? (
+                  <p className="pcp-pub__preview-state">
+                    Esta operação não tem PA vinculado na fila, então não há desenho para exibir.
+                  </p>
+                ) : null}
+                {paCode && drawing.status === "loading" ? (
+                  <p className="pcp-pub__preview-state">Carregando desenho…</p>
+                ) : null}
+                {paCode && drawing.status === "error" ? (
+                  <p className="pcp-pub__preview-state pcp-pub__preview-state--error">
+                    {drawing.message}
+                  </p>
+                ) : null}
+                {paCode && drawing.status === "ready" && drawing.objectUrl ? (
+                  <iframe
+                    className="pcp-pub__preview-frame"
+                    title={`Desenho ${paCode}`}
+                    src={drawing.objectUrl}
+                  />
+                ) : null}
+              </>
+            ) : glbUrl && productCode ? (
+              <ProductModelViewer
+                className="pcp-pub__preview-model"
+                src={glbUrl}
+                alt={`Modelo 3D do produto ${productCode}`}
               />
+            ) : (
+              <p className="pcp-pub__preview-state">
+                Não há modelo 3D anexado ao produto desta operação.
+              </p>
+            )}
+            {canDraw && has3dModel ? (
+              <p className="pcp-pub__preview-hint">
+                O desenho é o PDF do PA. O 3D é o modelo do produto desta OP ({productCode}).
+              </p>
             ) : null}
           </aside>
         </div>
       </div>
 
-      {fullscreen && paCode ? (
+      {fullscreen && (canDraw || has3dModel) ? (
         <DrawingViewer
           token={token}
           branch={branch}
-          paCode={paCode}
+          paCode={paCode || null}
+          productCode={productCode || null}
+          has3dModel={has3dModel}
           onClose={() => setFullscreen(false)}
         />
       ) : null}

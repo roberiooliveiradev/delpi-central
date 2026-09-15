@@ -53,6 +53,12 @@
       "module": "production-control"
     },
     {
+      "code": "production-control.product-3d-models.manage",
+      "name": "Modelos 3D de produto",
+      "description": "Anexar, substituir e excluir o modelo 3D (.glb) do produto da ordem de produção.",
+      "module": "production-control"
+    },
+    {
       "code": "production-control.view.filial-01",
       "name": "Portal PCP — filial 01 (SC)",
       "description": "Consultar dados TOTVS da filial 01.",
@@ -129,6 +135,14 @@
       "permission": "production-control.reports.view",
       "icon": "file-spreadsheet",
       "order": 41,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/production-control/product-models",
+      "label": "Modelos 3D",
+      "permission": "production-control.product-3d-models.manage",
+      "icon": "box",
+      "order": 42,
       "showInMenu": false
     }
   ],

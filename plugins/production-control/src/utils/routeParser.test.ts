@@ -216,4 +216,13 @@ describe("buildPpcHref", () => {
       "/apps/production-control/machine-load?branch=02&ct=CT-02&startDate=2026-08-24&endDate=2026-08-28&locate=90262910",
     );
   });
+
+  it("serializes the product 3D models workspace", () => {
+    expect(buildPpcHref({ subpluginId: "product-models", branch: "01" })).toBe(
+      "/apps/production-control/product-models?branch=01",
+    );
+    const route = parsePpcPath("/apps/production-control/product-models", "?branch=02", "01");
+    expect(route.subpluginId).toBe("product-models");
+    expect(route.branch).toBe("02");
+  });
 });

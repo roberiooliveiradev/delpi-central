@@ -779,3 +779,17 @@ export type StockBalancesReportPayload = {
     total_pages: number;
   };
 };
+
+export type Product3DModel = {
+  product_code: string;
+  original_filename: string;
+  byte_size: number;
+  content_type: string;
+  uploaded_by: string | null;
+  uploaded_at: string | null;
+};
+
+export type Product3DModelListPayload = {
+  items: Product3DModel[];
+  total: number;
+};

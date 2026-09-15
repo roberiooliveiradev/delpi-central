@@ -164,6 +164,47 @@ export async function httpPut<T>(
   return response.json() as Promise<T>;
 }
 
+export async function httpPutFormData<T>(
+  url: string,
+  formData: FormData,
+  options: RequestOptions = {},
+): Promise<T> {
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: formData,
+    signal: options.signal,
+  });
+  if (!response.ok) {
+    let message = `Erro HTTP ${response.status}`;
+    try {
+      message = formatApiError(await response.json(), response.status);
+    } catch {
+      // keep default
+    }
+    throw new Error(message);
+  }
+  return response.json() as Promise<T>;
+}
+
+export async function httpDelete<T>(url: string, options: RequestOptions = {}): Promise<T> {
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: authHeaders(),
+    signal: options.signal,
+  });
+  if (!response.ok) {
+    let message = `Erro HTTP ${response.status}`;
+    try {
+      message = formatApiError(await response.json(), response.status);
+    } catch {
+      // keep default
+    }
+    throw new Error(message);
+  }
+  return response.json() as Promise<T>;
+}
+
 export function ppcApiUrl(path: string): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
   return `${PPC_API_BASE}${normalized}`;

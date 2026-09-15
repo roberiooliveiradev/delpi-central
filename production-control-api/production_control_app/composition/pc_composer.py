@@ -29,6 +29,9 @@ from production_control_app.application.services.public_delivery_map_access_serv
 from production_control_app.application.services.public_machine_load_drawing_service import (
     PublicMachineLoadDrawingService,
 )
+from production_control_app.application.services.public_machine_load_product_model_service import (
+    PublicMachineLoadProductModelService,
+)
 from production_control_app.application.services.public_work_center_performance_service import (
     PublicWorkCenterPerformanceService,
 )
@@ -52,6 +55,19 @@ from production_control_app.infrastructure.persistence.postgres_machine_load_sna
 )
 from production_control_app.infrastructure.storage.drawing_pdf_library_storage import (
     DrawingPdfLibraryStorage,
+)
+from production_control_app.infrastructure.storage.product_3d_model_storage import (
+    Product3DModelFilesystemStorage,
+)
+from production_control_app.application.services.product_3d_model_service import (
+    Product3DModelService,
+)
+from production_control_app.domain.ports.product_3d_model_repository import (
+    Product3DModelRepositoryPort,
+)
+from production_control_app.domain.ports.product_3d_model_storage import Product3DModelStoragePort
+from production_control_app.infrastructure.persistence.postgres_product_3d_model_repository import (
+    PostgresProduct3DModelRepository,
 )
 
 
@@ -175,6 +191,25 @@ def build_drawing_library_storage() -> DrawingLibraryPort:
     return DrawingPdfLibraryStorage(message=build_public_cockpit_access_service().message)
 
 
+def build_product_3d_model_repository() -> Product3DModelRepositoryPort:
+    return PostgresProduct3DModelRepository()
+
+
+def build_product_3d_model_storage() -> Product3DModelStoragePort:
+    return Product3DModelFilesystemStorage()
+
+
+def build_product_3d_model_service(
+    *,
+    models: Product3DModelRepositoryPort | None = None,
+    storage: Product3DModelStoragePort | None = None,
+) -> Product3DModelService:
+    return Product3DModelService(
+        models=models or build_product_3d_model_repository(),
+        storage=storage or build_product_3d_model_storage(),
+    )
+
+
 def build_public_machine_load_drawing_service(
     gateway: DelpiProductionGateway | None = None,
     *,
@@ -185,6 +220,19 @@ def build_public_machine_load_drawing_service(
         access=build_public_cockpit_access_service(),
         machine_load=build_machine_load_service(gateway, snapshots=snapshots),
         drawings=drawings or build_drawing_library_storage(),
+    )
+
+
+def build_public_machine_load_product_model_service(
+    gateway: DelpiProductionGateway | None = None,
+    *,
+    snapshots: MachineLoadSnapshotRepositoryPort | None = None,
+    models: Product3DModelService | None = None,
+) -> PublicMachineLoadProductModelService:
+    return PublicMachineLoadProductModelService(
+        access=build_public_cockpit_access_service(),
+        machine_load=build_machine_load_service(gateway, snapshots=snapshots),
+        models=models or build_product_3d_model_service(),
     )
 
 

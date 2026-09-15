@@ -13,6 +13,7 @@ PC_DEMAND_VIEW = "production-control.demand.view"
 PC_MATERIALS_VIEW = "production-control.materials.view"
 PC_DELIVERY_MAP_VIEW = "production-control.delivery-map.view"
 PC_REPORTS_VIEW = "production-control.reports.view"
+PC_PRODUCT_3D_MODELS_MANAGE = "production-control.product-3d-models.manage"
 PC_VIEW_FILIAL_01 = "production-control.view.filial-01"
 PC_VIEW_FILIAL_02 = "production-control.view.filial-02"
 

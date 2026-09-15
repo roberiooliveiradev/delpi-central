@@ -37,5 +37,13 @@ class DrawingNotFound(ProductionControlError):
     """PDF do desenho indisponível ou PA fora da fila publicada."""
 
 
+class Product3DModelNotFound(ProductionControlError):
+    """Modelo 3D ausente ou produto fora da fila publicada."""
+
+
+class Product3DModelInvalid(ProductionControlError):
+    """Arquivo ou código de produto inválido para o modelo 3D."""
+
+
 class PublicAccessDenied(ProductionControlError):
     """Token do link público inválido ou desativado."""

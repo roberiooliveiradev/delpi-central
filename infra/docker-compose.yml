@@ -2443,6 +2443,8 @@ services:
       API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
 
       PC_DRAWING_PDF_LIBRARY_DIR: ${PC_DRAWING_PDF_LIBRARY_DIR:-/drawing-pdfs}
+      PC_PRODUCT_3D_MODELS_DIR: ${PC_PRODUCT_3D_MODELS_DIR:-/app/data/product-3d-models}
+      PC_PRODUCT_3D_MAX_BYTES: ${PC_PRODUCT_3D_MAX_BYTES:-26214400}
 
       PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
       PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
@@ -2455,6 +2457,7 @@ services:
     volumes:
       # Share de desenhos do FILESERVER montado no host (CIFS/SMB) — somente leitura.
       - ${PC_DRAWING_PDF_HOST_PATH:-/mnt/fileserver/desenhos}:/drawing-pdfs:ro
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/product-3d-models:/app/data/product-3d-models
 
     depends_on:
       keycloak:
