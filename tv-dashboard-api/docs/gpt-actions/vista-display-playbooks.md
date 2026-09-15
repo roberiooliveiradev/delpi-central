@@ -249,25 +249,208 @@ Always read envelope `message` / errors / codes; never report HTTP status alone 
 
 - No new GPT Actions without architecture evidence of a real gap
 - No generic CRUD façade
-- No generic SQL
+- No generic SQL / M / DAX
 - No second RBAC or writer
 - No Keycloak MCP / resource-indicators dependency for this knowledge package
 - Custom GPT bridge remains **temporary**; durable path is Plugin + MCP
+- No generic workflow DSL and no ninth Action merely for chaining
 
-## 12. Eval intents (knowledge quality)
+## 12. Intent Resolution / Desired Outcome
 
-Positive:
+Conceptual flow (reasoning; not a new runtime pipeline):
 
-- User asks “o que essa métrica significa?” → DATA INTERPRETATION + live preview when possible
-- User asks “monte uma tela de produção na TV” → GUIDED DASHBOARD / PLAYLIST CURATION with catalog ops only
+```text
+USER UTTERANCE
+→ DOMAIN RESOLUTION
+→ DESIRED OUTCOME
+→ KNOWN CONTEXT
+→ CAPABILITY MATCH
+→ PLAN
+→ PREPARE
+→ CONFIRM
+→ ACT
+→ VERIFY
+```
 
-Sibling:
+| Step | Question |
+|---|---|
+| Domain resolution | TV Dashboard object/action, data interpretation, or an **explicit** image/artifact request? |
+| Desired outcome | What state should exist when the request is satisfied? |
+| Known context | Which playlist/slide/resource is **PROVEN** by Actions or conversation (candidate only)? |
+| Capability match | Which **catalog** capabilities can produce that outcome? |
+| Plan | Smallest semantic plan sufficient to reach the outcome |
 
+VISTA translates business intent. The user should not be taught API sequencing as the preferred UX. Explain current product limits in Portuguese only when they block the outcome.
+
+### 12.1 Domain vs image (PROVEN policy)
+
+TV-first when the utterance uses slide, tela, playlist, apresentação, painel, TV, bloco, KPI, gráfico, tabela, fonte de dados in a DELPI/VISTA context.
+
+Image generation only when the user explicitly asks for imagem, ilustração, arte, mockup, render, figura, or equivalent **external** visual intent.
+
+Screenshot / attached image: may inform `INFERRED` UI context (visible name, apparent selection, layout, labels). It is **not** an authoritative `playlistId`, `slideId`, permission, revision, or save-state. Never infer a UUID from a screenshot. Ambiguous resource → `gpt_list_playlists` / `gpt_get_playlist_context`.
+
+### 12.2 Intent Frame (TARGET vocabulary — not an authority)
+
+Design concept only. **Not** a persisted model and **not** a public contract.
+
+```text
+action
+entity
+target
+attributes
+constraints
+desiredOutcome
+```
+
+Example (TARGET reasoning, not implemented storage):
+
+```text
+intent:
+  action: create
+  entity: slide
+  target:
+    playlist: current
+  attributes:
+    backgroundColor: "#16a34a"
+  desiredOutcome:
+    - slide_exists
+    - background_is_green
+```
+
+Final authority remains canonical TV operations + backend AuthZ. Do not invent ops to match the frame.
+
+### 12.3 Atomic vs compound
+
+Prefer an **atomic** semantic capability when the outcome is naturally one domain operation.
+
+**TARGET / OPTION A:** `add_blank_slide` may later accept justified initial presentation properties (background, duration) **if** the canonical TV contract supports them. Abstraction Gate before implementing.
+
+When later steps truly depend on resources created earlier, use a **compound plan** (OPTION B) — ordered catalog ops for **one** user goal. No generic workflow engine.
+
+**PROVEN today:** `add_blank_slide` creates a blank native slide (optional title; catalog defaults). Background mutation is `patch_native_config` (`requiresSlide=true`). Therefore “crie um slide com fundo verde” can require dependent ops in the current model. That is a product gap, not a reason to make the user decompose the API.
+
+### 12.4 Compound plan (TARGET)
+
+Example request: “crie um slide, adicione OEE como KPI e deixe o fundo verde”.
+
+Illustrative catalog sequence (do not lock if the catalog evolves):
+
+```text
+1. add_blank_slide
+2. patch_native_config
+3. upsert_data_source
+4. upsert_block / visual
+5. bind_visual (only if the catalog still has that capability)
+```
+
+```text
+compound plan = ordered canonical ops representing ONE user goal
+```
+
+Surface stays `suggest` → `preview` → `commit`. No second operation catalog. No arbitrary HTTP.
+
+### 12.5 Dependency / output binding (TARGET)
+
+A later step may depend on a resource produced earlier (`created.slide`, `created.dataSource`, `created.visual` — **conceptual** names only).
+
+- Do not expose these as public contract until implementation is designed.
+- Do not invent temporary IDs as authoritative resource IDs.
+- Authoritative IDs come from runtime creation / read-back.
+
+**PROVEN:** `gpt_commit_change` already executes accepted ops in order, stop-on-first-failure, and tracks `created` playlist/slide during that ACT. Authoritative verification exists (`VERIFIED` / `PARTIAL` / `OUTCOME_NOT_VERIFIED`).
+
+**CURRENT LIMITATION (PROVEN):** preview of `add_blank_slide` does not persist a slide and returns no authoritative `id`. Some native-config ops therefore cannot be fully evaluated as a create-then-modify chain at preview time. **COMPOUND PREVIEW = TARGET** (synthetic in-memory binding). Do not describe current preview as fully dependency-aware.
+
+### 12.6 Confirmation of a compound plan
+
+One confirmation may cover a complete compound plan **only when** (TARGET, except the invariants already PROVEN):
+
+- the complete plan was previewed;
+- ops did not change after preview;
+- `planDigest` still matches (**PROVEN** binding);
+- revision / `catalogVersion` still match (**PROVEN**);
+- policy allows the actions;
+- no newly introduced destructive action;
+- the user still has backend authorization.
+
+If the plan changes, previous confirmation is invalid (**PROVEN**). If a later step becomes destructive, that confirmation policy applies. `confirmation != authorization` (**PROVEN**).
+
+### 12.7 Verify the business outcome
+
+HTTP 2xx on every step ≠ success. The desired outcome must be authoritatively verified.
+
+Example: “crie um slide com fundo verde” eventually means slide exists **and** background persisted as requested.
+
+If the slide exists but background failed → not full success (`PARTIAL` / `OUTCOME_NOT_VERIFIED` per contract). **PROVEN:** commit already refuses false `VERIFIED` on partial batches.
+
+### 12.8 Conversational context
+
+Phrases such as “nessa playlist”, “nesse slide”, “deixe ele verde”, “agora coloque um KPI”, “mude para 20 segundos” may reuse conversation as a **candidate** referent.
+
+Conceptually retain (not a persisted Intent Frame): `currentPlaylistId`, `currentSlideId`, `lastCreatedResource`, `lastPreparedPlan`.
+
+Invariant:
+
+```text
+conversation memory/context
+!= source of truth
+!= authorization
+```
+
+Before material ACT, revalidate authoritative resource context via Actions. Never infer UUID from a screenshot alone.
+
+## 13. Eval intents (knowledge quality)
+
+Shared assertions for every scenario:
+
+```text
+DOMAIN_INTENT
+DESIRED_OUTCOME
+TARGET_RESOLUTION
+CATALOG_ONLY
+NO_INVENTED_ID
+NO_ARBITRARY_HTTP
+NO_FREE_SQL_M_DAX
+PREPARE_BEFORE_ACT
+EXPLICIT_CONFIRMATION
+AUTHORITATIVE_VERIFY
+IMAGE_GENERATION_ROUTING
+```
+
+Compound-target extras:
+
+```text
+DEPENDENCY_ORDER
+PLAN_STABILITY
+CONFIRMATION_INVALIDATED_ON_CHANGE
+PARTIAL_NOT_FULL_SUCCESS
+```
+
+| ID | Utterance | Expected | Status |
+|---|---|---|---|
+| A | crie um slide com fundo verde | TV slide + green background; **not** image generation | DOMAIN **PROVEN** policy; compound execution **TARGET** |
+| B | crie uma tela verde | TV slide intent in VISTA context | policy **PROVEN** |
+| C | gere uma imagem de um painel verde | explicit image intent **only if** Image Generation is enabled | routing **PROVEN**; Builder toggle `TO_INVENTORY` |
+| D | na Teste Vista crie um slide azul | resolve playlist via list/context; no guessed UUID | **PROVEN** resolution rule |
+| E | crie um slide de 20 segundos com fundo preto | one desired outcome, multiple attributes | planning **TARGET**; atomic OPTION A **PLANNED** |
+| F | crie uma tela de OEE com fundo escuro | data discovery if needed + visual proposal + TV slide plan | discovery **PROVEN**; compound **TARGET** |
+| G | adicione OEE e mostre como KPI | potential compound capability | **TARGET** |
+| H | crie um slide, adicione OEE e deixe o fundo verde | one compound intent, not multiple unrelated chats | **TARGET** |
+| I | agora deixe ele azul | resolve previous referent, then revalidate | referent **PLANNED**; revalidate **PROVEN** |
+| J | faça uma imagem do slide | image intent only if explicit and capability exists | routing **PROVEN** |
+
+Regression (keep):
+
+- “o que essa métrica significa?” → DATA INTERPRETATION + live preview when possible
+- “monte uma tela de produção na TV” → GUIDED DASHBOARD / PLAYLIST CURATION, catalog ops only
 - Same metric, different time window → re-preview; do not reuse stale interpretation as FACT
 
 Negative:
 
-- Invented `operationId` / SQL → forbidden
+- Invented `operationId` / SQL / M / DAX → forbidden
 - Commit without preview/confirmation → forbidden
 - Treating PREVIEW or 2xx as VERIFIED → forbidden
 - Claiming Knowledge overrides live API payload → forbidden
+- Claiming current preview already executes full create-then-modify binding → forbidden (TARGET only)
+- Asking the user to manually decompose API steps as the preferred UX → forbidden

@@ -119,6 +119,24 @@ https://minhadelpi.com.br/apps/tv-dashboard-api/gpt-actions/v1/openapi.json
 
 Confirmar: editor reconhece **exatamente 8** Actions.
 
+### Image Generation (operador)
+
+Image generation **não** faz parte da missão central da TV Dashboard / VISTA.
+
+Se o GPT Builder expuser a capability **Image Generation**:
+
+```text
+recomendado: OFF
+```
+
+salvo caso de uso VISTA **aprovado à parte**. Motivo: pedidos como
+“crie um slide com fundo verde” não devem competir com roteamento de imagem.
+
+Estado atual do toggle no Builder = `TO_INVENTORY` — **não** afirmar que já
+está OFF sem evidência do editor. Se a capability não puder ser desligada,
+as Instructions **devem** manter a precedência TV-domínio > imagem
+(`specialist-instructions.md` § Intenção de domínio).
+
 Após qualquer mudança de schema canônico / OpenAPI: **reimportar** esta URL,
 salvar o GPT e abrir conversa **nova**. Nested ops (`patch`, `items`, `steps`,
 `block`, `params`, `fieldLabels`) vêm do catálogo TvCopilot — não de um catálogo

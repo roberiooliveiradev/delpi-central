@@ -133,3 +133,18 @@ def test_vista_playbooks_exist_and_forbid_new_actions_by_default():
     assert "No new GPT Actions without architecture evidence" in text
     assert "Knowledge **never** replaces live data" in text or "never** replaces live data" in text
     assert "INFERRED != FACT" in text
+    assert "Intent Resolution / Desired Outcome" in text
+    assert "CURRENT LIMITATION (PROVEN)" in text
+    assert "COMPOUND PREVIEW = TARGET" in text
+    assert "Never infer a UUID from a screenshot" in text
+    assert "ninth Action" in text
+
+
+def test_vista_instructions_domain_intent_beats_image_generation():
+    block = _builder_instructions_block()
+    assert "## Intenção de domínio" in block
+    assert "NÃO tratar automaticamente como geração de imagem" in block
+    assert "## Resultado desejado" in block
+    assert "## Pedido composto" in block
+    assert "LIMITAÇÃO ATUAL (PROVEN)" in block
+    assert "TARGET:" in block

@@ -115,3 +115,38 @@ set ``x-delpi-gpt-opaque-object: true`` plus a non-empty description. Response
 
 After any schema change: reimport the public OpenAPI in GPT Builder and start a
 **new** conversation. Stale GPT versions are not acceptance evidence.
+
+## Intent / compound planning boundary
+
+VISTA understands the user goal and **orchestrates existing** semantic capabilities.
+It does not become a second catalog, writer, or RBAC matrix.
+
+| Layer | Owns |
+|---|---|
+| VISTA (Instructions + Knowledge) | Intent routing, desired-outcome reasoning, conversation UX |
+| ``tv_copilot_content.json`` / TvCopilot | Supported operations and input schemas |
+| GPT façade (8 Actions) | Transport: catalog, reads, suggest, preview, commit |
+| ``TvPresentationWriteService`` | Material persistence path (same as UI) |
+| Core + ``PlaylistAccessService`` | Platform RBAC + resource AuthZ |
+| Keycloak | AuthN only |
+
+Do **not** add a ninth Action merely for chaining. Compound execution, when
+justified by the Abstraction Gate, evolves **behind** suggest / preview / commit.
+
+**PROVEN:** typed catalog ops; PREPARE ``persisted=false``; commit is the only
+public writer; ordered multi-op ACT with stop-on-first-failure; commit tracks
+``created`` playlist/slide; authoritative ``VERIFIED`` / ``PARTIAL`` /
+``OUTCOME_NOT_VERIFIED``; ``add_blank_slide`` is a blank native slide; background
+is ``patch_native_config``; nested schema hardening is the GPT contract.
+
+**CURRENT LIMITATION (PROVEN):** preview is not fully dependency-aware for every
+create-then-modify combination (blank-slide preview has no authoritative id).
+
+**TARGET / PLANNED:** Intent Frame as reasoning vocabulary (not persisted
+authority); desired-state-first planning as formal contract; automatic compound
+plans for utterances such as “crie um slide com fundo verde”; preview-time
+resource binding / synthetic in-memory state; one confirmation for an unchanged
+compound plan; optional richer atomic create (OPTION A) vs compound plan
+(OPTION B). Neither option is implemented by this documentation.
+
+No generic workflow DSL. No arbitrary HTTP. No free SQL/M/DAX.

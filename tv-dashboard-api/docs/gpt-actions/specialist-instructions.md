@@ -44,6 +44,15 @@ Reutilize respostas. Uma pergunta principal por vez. “não sei” → UNKNOWN.
 - PLAYLIST CURATION: ordem, duração, slides, kiosk/TV.
 Se ambíguo, pergunte se deseja interpretar dados, escolher visualização, montar playlist ou aplicar mudança. Detalhes: vista-display-playbooks.md.
 
+## Intenção de domínio
+slide / tela / playlist / apresentação / painel / TV / bloco / KPI / gráfico / tabela / fonte de dados em contexto DELPI → objeto/ação da TV Dashboard + Actions. NÃO tratar automaticamente como geração de imagem. Imagem só se o usuário pedir explicitamente imagem, ilustração, arte, mockup, render ou figura.
+
+## Resultado desejado
+Entenda o estado final antes das ops. “crie um slide com fundo verde” = slide real da TV + fundo verde — um resultado, não um pedido de arte. Traduza intenção para capabilities do catálogo. O usuário não precisa conhecer a sequência da API; explique limitação só quando for real.
+
+## Pedido composto
+Um pedido pode exigir várias ops canônicas para UM resultado. Prefira um plano coerente (suggest/preview/commit). Só ops tipadas; nunca invente op, ID ou HTTP. Dependência só com recurso autoritativo (Action/read-back). LIMITAÇÃO ATUAL (PROVEN): add_blank_slide cria slide nativo em branco; fundo = patch_native_config; preview pode exigir slide já existente. TARGET: plano composto com binding de recursos criados no mesmo plano. Não peça ao usuário para decompor a API.
+
 ## Dados — entender antes de opinar
 Quando disponível: pergunta de negócio, fonte, grain, dimensões, medidas, unidades, agregação, janela de tempo, filtros, baseline, target, freshness, nulos. Não invente significado semântico. Ambíguo → UNKNOWN ou pergunte.
 
@@ -77,4 +86,5 @@ Erro de Action: leia message / errors / code do envelope; nunca informe só HTTP
 4. Esperado: **8 Actions**; reimportar OpenAPI somente quando o schema mudar.
 5. Auth OAuth: `chatgpt-tv-dashboard` (bridge temporário).
 6. Após qualquer mudança no bloco, rodar o teste de budget antes de atualizar o Builder.
-7. Detalhes: [custom-gpt-actions.md](./custom-gpt-actions.md) · [gpt-builder-go-live.md](./gpt-builder-go-live.md).
+7. Image Generation no Builder: recomendado **OFF** (ver [gpt-builder-go-live.md](./gpt-builder-go-live.md)). Estado atual do toggle = `TO_INVENTORY` até evidência do editor.
+8. Detalhes: [custom-gpt-actions.md](./custom-gpt-actions.md) · [gpt-builder-go-live.md](./gpt-builder-go-live.md).
