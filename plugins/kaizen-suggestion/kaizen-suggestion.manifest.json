@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "kaizen-suggestion",
+  "name": "Cadastro de Kaizen",
+  "description": "Acesso ao formulário público de cadastro de sugestões Kaizen por unidade (SC e ES).",
+  "category": "Qualidade",
+  "icon": "sparkles",
+  "version": "1.0.0",
+  "type": "iframe",
+  "basePath": "/apps/kaizen-suggestion",
+  "entry": "https://minhadelpi.com.br/p/kaizen/sugestao/aberto",
+  "permissions": [
+    {
+      "code": "kaizen-suggestion.view.filial-sc",
+      "name": "Cadastro de Kaizen — SC",
+      "description": "Abrir o formulário de sugestão Kaizen da unidade 01 (Santa Catarina).",
+      "module": "kaizen-suggestion"
+    },
+    {
+      "code": "kaizen-suggestion.view.filial-es",
+      "name": "Cadastro de Kaizen — ES",
+      "description": "Abrir o formulário de sugestão Kaizen da unidade 02 (Espírito Santo).",
+      "module": "kaizen-suggestion"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/kaizen-suggestion/sc",
+      "label": "Cadastro de Kaizen — SC",
+      "permission": "kaizen-suggestion.view.filial-sc",
+      "icon": "sparkles",
+      "entry": "https://minhadelpi.com.br/p/kaizen/sugestao/aberto?unidade=01",
+      "order": 18,
+      "showInMenu": true,
+      "openInNewTab": true
+    },
+    {
+      "path": "/apps/kaizen-suggestion/es",
+      "label": "Cadastro de Kaizen — ES",
+      "permission": "kaizen-suggestion.view.filial-es",
+      "icon": "sparkles",
+      "entry": "https://minhadelpi.com.br/p/kaizen/sugestao/aberto?unidade=02",
+      "order": 19,
+      "showInMenu": true,
+      "openInNewTab": true
+    }
+  ],
+  "ui": {
+    "renderMode": "external"
+  }
+}
