@@ -184,8 +184,45 @@ def openapi_record_data_properties() -> dict[str, Any]:
             "description": "Unit codes for entity=department.",
         },
         # --- meeting_minute / matrix / documents ---
-        "unit_code": {"type": "string"},
-        "title": {"type": "string"},
+        "unit_code": {
+            "type": "string",
+            "description": "Filial code for entity=meeting_minute (zero-padded to 2 digits).",
+        },
+        "title": {
+            "type": "string",
+            "description": "Title for entity=meeting_minute (required on create).",
+        },
+        "meeting_type": {
+            "type": "string",
+            "description": "Meeting type for entity=meeting_minute (default ordinary).",
+        },
+        "meeting_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Required on meeting_minute create (YYYY-MM-DD).",
+        },
+        "start_time": {"type": "string"},
+        "end_time": {"type": "string"},
+        "location": {"type": "string"},
+        "responsible_user_id": {"type": "string"},
+        "responsible_name": {"type": "string"},
+        "chair_name": {"type": "string"},
+        "secretary_name": {"type": "string"},
+        "agenda_html": {"type": "string"},
+        "body_html": {"type": "string"},
+        "decisions_html": {"type": "string"},
+        "pending_html": {"type": "string"},
+        "observations_html": {"type": "string"},
+        "participants": {
+            "type": "array",
+            "items": {"type": "object", "additionalProperties": True},
+            "description": "Participants for entity=meeting_minute.",
+        },
+        "signers": {
+            "type": "array",
+            "items": {"type": "object", "additionalProperties": True},
+            "description": "Signers for entity=meeting_minute (signature capture remains UI-only).",
+        },
         "conteudo": {
             "type": "object",
             "additionalProperties": True,
@@ -236,5 +273,11 @@ REQUIRED_GPT_RECORD_WRITE_FIELDS: frozenset[str] = frozenset(
         "todas_filiais_ativas",
         "nome_processo",
         "conteudo",
+        "meeting_date",
+        "unit_code",
+        "title",
+        "codigo_filial",
+        "setor_id",
+        "filiais",
     }
 )

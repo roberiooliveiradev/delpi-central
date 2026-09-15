@@ -477,6 +477,9 @@ def test_registration_guide_exposes_entity_schemas():
     assert any("read-back" in n for n in link["notes"])
     # Document / mapeamento entities must expose write contracts (TÉO refusal regression).
     for entity in (
+        "branch",
+        "department",
+        "meeting_minute",
         "decomposition_tree",
         "instance_decomposition_scope",
         "revision_decomposition_overlay",
@@ -486,6 +489,22 @@ def test_registration_guide_exposes_entity_schemas():
         "impact_effort_matrix",
     ):
         assert entity in guide["entity_schemas"], entity
+    branch = guide["entity_schemas"]["branch"]
+    assert "codigo_filial" in branch["required"]
+    assert "nome_filial" in branch["required"]
+    dept = guide["entity_schemas"]["department"]
+    assert "setor_id" in dept["required"]
+    assert "filiais" in dept["required"]
+    minute = guide["entity_schemas"]["meeting_minute"]
+    assert "unit_code" in minute["required"]
+    assert "title" in minute["required"]
+    assert "meeting_date" in minute["required"]
+    assert any("UI-only" in n or "ui-only" in n.lower() for n in minute["notes"])
+    diagram_ov = guide["entity_schemas"]["revision_diagram_overlay"]
+    assert any("node_overrides" in n for n in diagram_ov["notes"])
+    diagram_scope = guide["entity_schemas"]["instance_diagram_scope"]
+    assert "include_descendants" not in diagram_scope["optional"]
+    assert "include_boundary_edges" in diagram_scope["optional"]
     overlay = guide["entity_schemas"]["revision_decomposition_overlay"]
     assert "revisao_id" in overlay["required"]
     assert "conteudo" in overlay["required"]

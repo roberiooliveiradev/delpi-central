@@ -538,6 +538,8 @@ Before create / update / duplicate / activate / delete (or equivalent):
 
 **Document / mapeamento:** «mapeamento por revisão» = `revision_decomposition_overlay` (see `entity_schemas`). Shared WBS = `decomposition_tree`. Do not invent entity names like `mapeamento`; do not treat free-text flow narratives as a valid `conteudo` — use `decomposition_tree_v1` / `decomposition_overlay_v1` / `flowchart_v1` shapes from the catalog.
 
+**Catalog / ata:** `filial` → `branch`; `setor` → `department`; `ata` → `meeting_minute`. Handwritten signature remains UI-only.
+
 No method playbook authorizes:
 
 - arbitrary HTTP proxying;

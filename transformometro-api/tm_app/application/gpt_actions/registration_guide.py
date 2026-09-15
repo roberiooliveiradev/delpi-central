@@ -18,8 +18,10 @@ from tm_app.core.catalogs import (
     FASE_MELHORIA,
     PRIORIDADE_MELHORIA,
     RECORRENCIAS,
+    STATUS_FILIAL,
     STATUS_INSTANCIA,
     STATUS_PROCESSO,
+    STATUS_SETOR,
     TIPO_INVESTIMENTO,
 )
 
@@ -85,7 +87,19 @@ def build_registration_guide() -> dict[str, Any]:
             ),
             "process_diagram": (
                 "Process macro flowchart (entity=process_diagram, id=processo_id). "
-                "format=flowchart_v1; Mermaid is server-derived."
+                "format=flowchart_v1; Mermaid is server-derived. Alias: diagrama / diagrama macro."
+            ),
+            "branch": (
+                "Operational unit / filial (entity=branch). Catalog admin write; "
+                "prefer reusing access_scope filiais when possible."
+            ),
+            "department": (
+                "Department / setor (entity=department) linked to one or more units. "
+                "Catalog write; prefer access_scope setores when possible."
+            ),
+            "meeting_minute": (
+                "Transforma+ meeting minute / ata (entity=meeting_minute). "
+                "Handwritten signature remains UI-only."
             ),
         },
         "write_contract_rules": {
@@ -104,8 +118,9 @@ def build_registration_guide() -> dict[str, Any]:
             "anti_pattern": (
                 "shared_resource with nome_recurso/tipo_custo/recorrencia inside data.conteudo "
                 "is invalid; those fields belong directly under data. "
-                "Also invalid: inventing entity names like 'mapeamento' — use "
-                "decomposition_tree / revision_decomposition_overlay / process_diagram."
+                "Also invalid: inventing entity names like 'mapeamento'/'diagrama'/'ata'/'filial'/'setor' — "
+                "use decomposition_tree / revision_decomposition_overlay / process_diagram / "
+                "meeting_minute / branch / department."
             ),
             "before_write": [
                 "Call gpt_get_catalog and read entity_schemas for the exact entity.",
@@ -195,6 +210,30 @@ def build_registration_guide() -> dict[str, Any]:
             },
         ],
         "entity_schemas": {
+            "branch": {
+                "required": ["codigo_filial", "nome_filial"],
+                "optional": ["status_filial"],
+                "enums": {"status_filial": list(STATUS_FILIAL)},
+                "defaults": {"status_filial": "ativo"},
+                "notes": [
+                    "Create requires unrestricted catalog admin.",
+                    "Update by filial_id: nome_filial + status_filial (codigo_filial immutable).",
+                    "Prefer gpt_get_catalog.access_scope filiais before creating a new unit.",
+                    "Alias: filial → branch.",
+                ],
+            },
+            "department": {
+                "required": ["setor_id", "nome_setor", "filiais"],
+                "optional": ["status_setor"],
+                "enums": {"status_setor": list(STATUS_SETOR)},
+                "defaults": {"status_setor": "ativo"},
+                "notes": [
+                    "Create: setor_id is the department code/id; filiais is a non-empty list of unit codes.",
+                    "Update by setor_id path: uses codigo_setor (not setor_id) + nome_setor + filiais + status_setor.",
+                    "Each filial in filiais must be an active unit.",
+                    "Alias: setor → department.",
+                ],
+            },
             "process": {
                 "required": ["nome_processo", "status_processo"],
                 "optional": [
@@ -398,6 +437,35 @@ def build_registration_guide() -> dict[str, Any]:
                     "Use real revisao_id and recurso_compartilhado_id from read-back; never invent IDs.",
                 ],
             },
+            "meeting_minute": {
+                "required": ["unit_code", "title", "meeting_date"],
+                "optional": [
+                    "meeting_type",
+                    "start_time",
+                    "end_time",
+                    "location",
+                    "responsible_user_id",
+                    "responsible_name",
+                    "chair_name",
+                    "secretary_name",
+                    "agenda_html",
+                    "body_html",
+                    "decisions_html",
+                    "pending_html",
+                    "observations_html",
+                    "participants",
+                    "signers",
+                ],
+                "enums": {},
+                "defaults": {"meeting_type": "ordinary"},
+                "notes": [
+                    "Create/update via gpt_create_record / gpt_update_record entity=meeting_minute.",
+                    "unit_code is the filial code (zero-padded to 2 digits by backend).",
+                    "Workflow send/finalize/cancel uses gpt_meeting_minute_workflow — not create/update.",
+                    "Handwritten signature and evidence uploads remain UI-only (package_hints.ui_only_persist).",
+                    "Alias: ata → meeting_minute.",
+                ],
+            },
             "decomposition_tree": {
                 "required": ["processo_id", "conteudo"],
                 "optional": [],
@@ -459,13 +527,12 @@ def build_registration_guide() -> dict[str, Any]:
                     "node_ids",
                     "inherit_all",
                     "include_boundary_edges",
-                    "include_descendants",
                 ],
                 "enums": {},
-                "defaults": {"inherit_all": True, "include_descendants": True},
+                "defaults": {"inherit_all": True, "include_boundary_edges": False},
                 "notes": [
                     "Upsert; id=instancia_id. Scope of macro diagram nodes for the instance.",
-                    "Fields under data (not conteudo).",
+                    "Fields under data (not conteudo). Unlike WBS scope, no include_descendants.",
                 ],
             },
             "revision_diagram_overlay": {
@@ -474,8 +541,11 @@ def build_registration_guide() -> dict[str, Any]:
                 "enums": {},
                 "defaults": {},
                 "notes": [
-                    "Upsert; id=revisao_id. conteudo.format=flowchart_overlay_v1.",
+                    "Upsert; id=revisao_id. conteudo.format=flowchart_overlay_v1; format_version=1.",
+                    "conteudo fields: modo, node_overrides{}, edge_overrides{}, "
+                    "removed_node_ids[], removed_edge_ids[], extra_nodes[], extra_edges[].",
                     "Per-revision diagram delta on top of the process macro flowchart.",
+                    "Requires manage access on the revision's instance/process.",
                 ],
             },
             "impact_effort_matrix": {
