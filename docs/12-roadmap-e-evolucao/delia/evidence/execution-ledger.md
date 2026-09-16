@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** **C0.S2 — Authorities / bounded contexts** (`C0.S0=APPROVED`; `C0.S1=APPROVED`; `C0.S2_AUTHORIZED=YES`; C0 remains **NOT_STARTED**; `FOUNDATION_FREEZE` **NOT APPROVED**; `DÉLIA_RUNTIME_DIFF=NONE`).
+**Next:** **ARCHITECTURE_REVIEW_C0_S2** (`C0.S0=APPROVED`; `C0.S1=APPROVED`; `C0.S2=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C0.S3_AUTHORIZED=NO`; C0 remains **NOT_STARTED**; `FOUNDATION_FREEZE` **NOT APPROVED**; `DÉLIA_RUNTIME_DIFF=NONE`).
 
 ## 1. Ledger rule
 
@@ -23,7 +23,7 @@ Estado factual de inventory usa `PROVEN | TO_INVENTORY`; planejamento usa `PLANN
 
 | Fase | Status | Próximo step | Dependência |
 |---|---|---|---|
-| C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **C0.S2 — Authorities / bounded contexts** | C0.S0=APPROVED; C0.S1=APPROVED; C0.S2_AUTHORIZED=YES |
+| C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **ARCHITECTURE_REVIEW_C0_S2** | C0.S0=APPROVED; C0.S1=APPROVED; C0.S2=CANDIDATE_FOR_ARCHITECTURE_REVIEW; C0.S3_AUTHORIZED=NO |
 | C1 Standalone Bootstrap | LOCKED | — | C0.S7 FOUNDATION_FREEZE |
 | C2 Portal + Operational Context + Commands | LOCKED | — | C1 independence gate |
 | C3 Intelligence + Capability Foundations | LOCKED | — | C1+C2 foundations |
@@ -59,6 +59,11 @@ PERSISTENCE_OWNER = DÉLIA (logical ns=delia; migrations=delia-api/migrations/; 
 C0.S0 = APPROVED
 C0.S1 = APPROVED
 C0.S2_AUTHORIZED = YES
+C0.S2 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C0.S3_AUTHORIZED = NO
+AUTHORITY_MAP = FROZEN_CANDIDATE
+BOUNDED_CONTEXT_MAP = FROZEN_CANDIDATE
+NEW_RUNTIME_ABSTRACTIONS = NONE
 FOUNDATION_FREEZE = NOT APPROVED
 DÉLIA_RUNTIME_DIFF = NONE
 AUTOMATION_HUB = NEUTRAL_SHARED_EXECUTION_BOUNDARY_TARGET + physical runtime deferred
@@ -204,6 +209,7 @@ All ACT blocked until C7                        = SUPERSEDED_BY_C5_GOVERNED_ACT_
 | 2026-09-16 | Architecture Review acceptance of C0.S0 (external decision over HEAD `41a08ad8c…`) | SUPERSEDES prior “C0.S0 candidate / C0.S1 not authorized”; no separate review SHA |
 | 2026-09-16 | C0.S1-T1 canonical persistence of product boundary / naming / physical ownership | PLAN_ONLY; C0.S1=CANDIDATE_FOR_ARCHITECTURE_REVIEW; RUNTIME_DIFF=NONE |
 | 2026-09-16 | C0.S1-T2 architecture review decision persistence | PLAN_ONLY; ACCEPT_WITH_RESIDUAL; C0.S1=APPROVED; C0.S2_AUTHORIZED=YES; no runtime |
+| 2026-09-16 | C0.S2-T1 authorities and bounded contexts canonical persistence | PLAN_ONLY; C0.S2=CANDIDATE_FOR_ARCHITECTURE_REVIEW; NEW_RUNTIME_ABSTRACTIONS=NONE; RUNTIME_DIFF=NONE |
 
 Actual `HEAD_BEFORE` for **runtime** remains uncaptured (no DÉLIA runtime). Inventory evidence SHA for C0.S0-F is `c6c9c8370d037edfc3529821b9d63e138b153436`. Documentation-only commits do not advance execution status.
 
@@ -809,10 +815,43 @@ SANDBOX: DÉLIA owns analysis semantics/policy; physical isolated execution defe
 SEMANTIC_LAYER: MODULE_IN_DELIA; Domain/metric owners retain business/data authority
 EDGE: ADAPTER_BOUNDARY; no DÉLIA-owned Edge runtime; physical owner deferred/external
 RESIDUAL_A: NON_BLOCKING_EVIDENCE_NAMING_RESIDUAL — use REVIEWED_HEAD / PERSISTENCE_HEAD / BIND_HEAD convention; no self-referential FINAL_HEAD binding loop in this event
-RESIDUAL_B: DOCUMENTATION_TERMINOLOGY_RESIDUAL — remaining semantic owner labels using Copilot in 25 are opportunistic cleanup only; no CP rename/history rewrite/gate
+RESIDUAL_B: DOCUMENTATION_TERMINOLOGY_RESIDUAL — Copilot owner labels in 25 cleaned to DÉLIA in C0.S2-T1; CopilotBridge/COPILOT_* gate IDs preserved; no CP rename/history rewrite
 NO_C0_S2_EXECUTION: TRUE
 NEXT: C0.S2 — Authorities / bounded contexts
 NOT_CLAIMED: FOUNDATION_FREEZE; C0 started; any runtime; any CP PASS; C0.S2 execution
+NOTE_SUPERSEDED_BY_6_24: current-state Next/C0.S2 execution fields above are historical after C0.S2-T1 candidate persistence; see §6.24.
+```
+
+## 6.24 C0.S2-T1 authorities and bounded contexts canonical persistence
+
+```text
+DATE: 2026-09-16
+STEP: C0.S2-T1
+NAME: authorities and bounded contexts canonical persistence
+BASE_HEAD: 8bb20e2da57d5edf6cb2caddf995631a03eab7e5
+PERSISTENCE_HEAD: <set_at_commit>
+STATUS: PLAN_ONLY
+PROGRAM: PLANNED / NOT_STARTED
+C0: NOT_STARTED
+C0.S0: APPROVED
+C0.S1: APPROVED
+C0.S2: CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C0.S2_AUTHORIZED: YES
+C0.S3_AUTHORIZED: NO
+FOUNDATION_FREEZE: NOT APPROVED
+DÉLIA_RUNTIME_DIFF: NONE
+AUTHORITY_MAP: FROZEN_CANDIDATE
+BOUNDED_CONTEXT_MAP: FROZEN_CANDIDATE
+NEW_RUNTIME_ABSTRACTIONS: NONE
+SHARED_PRIMITIVES: DEFERRED_TO_C0_S3
+TOP_LEVEL: Keycloak=identity; Core=apps/routes/effective RBAC/governance; Domain=business+final AuthZ; Portal=host/nav/context; DÉLIA=intel/Evidence/Policy/Decision/Work/orch/Outcome; Hub=technical execution; Providers=external; OT/Safety=industrial
+MATRIX_ROWS: 36 responsibilities in 17 §2.3.3
+INVARIANTS: JWT≠permission; context≠permission; Evidence≠SoT; Work≠Hub; schedule≠permission; PREPARE≠ACT; tech success≠Outcome; biometric≠AuthN/Z; Edge offline≠↑AuthZ; DÉLIA≠safety; Tower≠planner; Graph/Semantic/PI≠SoT
+TO_INVENTORY: scheduler; Hub physical; Core/Portal exact contracts; broker; OAuth secrets; Teams; media storage; biometric store; mining runtime; sandbox runtime; artifact store; predictive; twin; MCP/A2A; MLOps; Marketplace signing; Edge/MDM; OT; notifications; observability backend; PG cluster
+FILES_CHANGED_AUTHORIZED: 17 (primary), 16, 25, 50, 51, 48, 12-roadmap, README, this ledger
+DÉLIA_NEW_CODE: NONE
+NOT_CLAIMED: C0.S2 APPROVED; C0.S3_AUTHORIZED; FOUNDATION_FREEZE; any CP PASS; any runtime; shared primitive design
+NEXT: ARCHITECTURE_REVIEW_C0_S2
 ```
 
 ## 7. Canonical phase mapping
@@ -1023,4 +1062,4 @@ SAFETY_INTERLOCK_BYPASS
 
 ## 14. First execution
 
-Historical open actions C0.S0 and C0.S1 are now **APPROVED** by their architecture reviews. Current next is **C0.S2 — Authorities / bounded contexts**. This ledger persistence does **not** execute C0.S2 and does **not** approve Foundation Freeze. Runtime bootstrap remains deferred until C0.S7 Foundation Freeze.
+Historical open actions C0.S0 and C0.S1 are now **APPROVED** by their architecture reviews. C0.S2-T1 persists authorities/bounded contexts as **CANDIDATE_FOR_ARCHITECTURE_REVIEW**. Current next is **ARCHITECTURE_REVIEW_C0_S2**. This does **not** approve C0.S2, authorize C0.S3, or approve Foundation Freeze. Runtime bootstrap remains deferred until C0.S7 Foundation Freeze.

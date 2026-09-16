@@ -7,7 +7,8 @@
 **State:** [`21-data-and-state-model.md`](./21-data-and-state-model.md)  
 **Specs temáticas:** `53–66`
 
-> Este documento define **ownership e contratos alvo**. Ele não prova que um runtime, serviço, tabela, adapter ou capability já exista. Existência e estado atual devem ser classificados por evidência em `C0.S0` como `PROVEN`, `TO_INVENTORY`, `PLANNED` ou `TARGET` conforme o caso.
+> Este documento define **ownership e contratos alvo**. Ele não prova que um runtime, serviço, tabela, adapter ou capability já exista. Existência e estado atual devem ser classificados por evidência como `PROVEN`, `TO_INVENTORY`, `PLANNED` ou `TARGET` conforme o caso.  
+> **C0.S2-T1:** matriz de authorities/bounded contexts = `FROZEN_CANDIDATE` (`CANDIDATE_FOR_ARCHITECTURE_REVIEW`). Não é aceite; não autoriza C0.S3; não é `FOUNDATION_FREEZE`.
 
 ## 1. Owners canônicos
 
@@ -56,9 +57,9 @@
 | notifications | shared channel owner + DÉLIA orchestration | notification as proof of outcome |
 | audit/evals | DÉLIA observability + platform audit | CoT/secrets/raw surveillance telemetry |
 
-`Automation Hub` acima é a authority **semântica alvo para execução técnica**. `C0.S0/C0.S1` deve provar runtime existente, owner físico, contracts e gaps; falta de implementação comprovada vira `TO_INVENTORY/PLANNED`, não permissão para deslocar execução técnica para a DÉLIA.
+`Automation Hub` acima é a authority **semântica alvo para execução técnica**. Runtime físico compartilhado permanece `NOT_PROVEN` / `TO_INVENTORY` / `DEFERRED` (C0.S0-D); falta de implementação comprovada **não** autoriza deslocar execução técnica para a DÉLIA.
 
-O owner físico de timer/scheduler também é `TO_INVENTORY` até C0. A DÉLIA possuir `RecurringWorkDefinition` não significa possuir job runner/cron/lease/worker; inversamente, um scheduler existente não passa a possuir Work, Policy ou autorização.
+O owner físico de timer/scheduler permanece `TO_INVENTORY`. A DÉLIA possuir `RecurringWorkDefinition` não significa possuir job runner/cron/lease/worker; inversamente, um scheduler existente não passa a possuir Work, Policy ou autorização.
 
 ## 2. Componentes físicos alvo
 
@@ -110,6 +111,245 @@ PostgreSQL cluster placement físico = `DEFERRED` (reuse de cluster ≠ ownershi
 | DÉLIA ↔ external providers | provider + DÉLIA adapter | DÉLIA API | outbound/inbound callbacks | provider scopes ≠ Core perms | governed R/W | egress/trust | YES | TARGET |
 | DÉLIA ↔ OT / industrial | OT/safety owner | DÉLIA (adapter only) | never safety control | OT/safety independent | read/prepare bounded | safety airgap | YES | TARGET; Edge deferred |
 
+### 2.3 C0.S2 — Authorities / bounded contexts freeze candidate
+
+```text
+STATUS = FROZEN_CANDIDATE / CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C0.S0 = APPROVED
+C0.S1 = APPROVED
+C0.S2_AUTHORIZED = YES
+C0.S3_AUTHORIZED = NO
+FOUNDATION_FREEZE = NOT APPROVED
+NEW_RUNTIME_ABSTRACTIONS = NONE
+SHARED_PRIMITIVES = DEFERRED_TO_C0_S3
+DÉLIA_RUNTIME_DIFF = NONE
+```
+
+C0.S2 congela **boundaries de responsabilidade**. Não inventa schemas/ports/adapters/engines/packages/shared primitives.
+
+#### 2.3.1 Top-level authorities
+
+```text
+Keycloak          = identity / authentication / SSO
+Core              = apps + routes + effective platform RBAC + governance
+Domain APIs       = business data + business rules + final domain authorization + authoritative postconditions
+Portal            = host + navigation + published bounded context
+DÉLIA             = intelligence + Evidence coordination + Policy + Decision + Work + orchestration + Outcome coordination
+Automation Hub    = technical execution lifecycle
+External providers= external resources / provider-side authority
+OT / Safety       = machine / industrial / safety authority
+```
+
+Nenhum colocation, token, provider scope, model output, memory, scheduler, Graph, Edge cache ou projection transfere essas authorities.
+
+#### 2.3.2 Required invariants
+
+```text
+Keycloak != authorization authority
+JWT != final permission
+Core = effective platform RBAC
+Domain APIs = final business authorization
+Portal context != permission
+DÉLIA != domain source of truth
+Evidence != source of truth
+DÉLIA Work/orchestration != Automation Hub technical execution
+scheduler/timer != Work authority
+schedule != permission
+provider scope != Core/domain permission
+Personal Memory != authority
+prediction != FACT
+recommendation != authorization
+simulate != apply
+PREPARE != ACT
+technical execution success != business Outcome
+Edge offline != expanded authority
+biometric match != authentication
+biometric match != authorization
+DÉLIA != safety controller
+Control Tower != second planner
+Control Tower != permission authority
+Business Graph != source of truth
+Semantic Layer != source of truth
+Process Intelligence != process business authority
+```
+
+#### 2.3.3 Bounded context matrix (36)
+
+| # | RESPONSIBILITY | OWNER | CANONICAL SOURCE | CONSUMERS | AUTHORITY BOUNDARY | INTEGRATION | STATUS | CONTRACT_REQUIRED_LATER |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Identity / Authentication | Keycloak | corporate identity / SSO | Core / Portal / DÉLIA / Domain APIs | identity only; JWT≠final permission | OIDC/JWT inbound | PROVEN platform; DÉLIA integration PLANNED | YES |
+| 2 | Platform RBAC / Apps / Routes | Core | effective permission context + app registry | Portal / DÉLIA | no parallel RBAC in DÉLIA; `/me/apps`→`apps[].routes`; `/me/routes` NOT_CURRENT | Core HTTP | PROVEN platform; DÉLIA consumer PLANNED | YES |
+| 3 | Domain business data / rules | each Domain API / business owner | authoritative Domain API | DÉLIA + authorized clients | final domain AuthZ in Domain; no Domain DB/imports | HTTP/event/adapter | PROVEN Domains; DÉLIA consumer PLANNED | YES |
+| 4 | Portal hosting / nav / context | Portal | host + navigation + bounded published context | DÉLIA MFE | context=hint≠permission; Portal≠Work/planner/Evidence | federation/host contract | PROVEN host; DÉLIA mount PLANNED | YES |
+| 5 | Conversation / Intelligence | DÉLIA | authorized sources + DÉLIA-owned interaction state | DÉLIA surfaces / Work / reasoning | conversation≠Domain SoT | internal DÉLIA modules | TARGET | YES (internal+source) |
+| 6 | Evidence / Provenance | DÉLIA (coordination) | original authoritative source owner | analysis / Decision / Work / UX / audit | Evidence≠source authority; Evidence access≠source grant | refs + source contracts | TARGET | YES |
+| 7 | Policy / Decision | DÉLIA | Core + Domain + source facts + approved policies | Work / UX / audit | Policy≠Core RBAC≠Domain AuthZ; rec≠AuthZ; Gate≠permission grant | Decision Gate contracts | TARGET | YES |
+| 8 | Durable Work / Task / Case | DÉLIA | DÉLIA Work lifecycle | surfaces / Hub binding / Outcome | Work≠technical worker/executor state | Work lifecycle + adapters | TARGET | YES |
+| 9 | Recurring Governed Work | DÉLIA (definition/lifecycle) | DÉLIA Work + Policy | scheduler adapter / occurrence / Decision | schedule≠permission; recurrence≠executor authority | definition + occurrence correlation | TARGET | YES |
+| 10 | Physical scheduler / timer | TO_INVENTORY | technical occurrence / timer / trigger only | DÉLIA occurrence consumer | timer≠Work/Policy/permission/Decision | timer→signal only | TO_INVENTORY | YES |
+| 11 | Automation / executor integration | DÉLIA (semantic orch/binding) | semantic capability → approved execution contract | Automation Hub / executors | semantic≠UI mechanics | capability→executor contract | TARGET | YES |
+| 12 | Automation Hub technical execution | Automation Hub boundary | worker/executor/queue/technical lifecycle | DÉLIA (status/correlation) | Hub≠planner≠business AuthZ≠Work SoT; no copy of Hub tech state as DÉLIA truth | execution API/events | TARGET; physical TO_INVENTORY | YES |
+| 13 | Outcome verification | DÉLIA (coordination); truth = Domain/provider/source | authoritative postcondition | Work / audit / UX | technical success≠business Outcome | postcondition verify | TARGET | YES |
+| 14 | Business Graph | DÉLIA projection/intelligence | Domain/source owners | analysis / Decision / UX | Graph=relational projection≠master data/DW/SoT | projection refresh from owners | TARGET | YES |
+| 15 | Semantic Business Layer | DÉLIA registry/projection/orch | metric/business owner + Domain/BI data authority | query / Decision / UX | DÉLIA≠KPI formula owner by default; Semantic≠SoT | MetricDefinition contracts (later) | TARGET | YES |
+| 16 | Organizational Knowledge | DÉLIA knowledge governance | document/procedure/process owner | retrieval / Work / UX | indexing≠ownership transfer; Evidence→candidate→review→publish | Knowledge lifecycle | TARGET | YES |
+| 17 | Personal Memory | DÉLIA user-scoped personalization | approved user-scoped memory candidates | UX / ranking | PM≠Org Knowledge≠business truth≠permission | memory lifecycle | TARGET | YES |
+| 18 | Internet Research | DÉLIA orchestration | external source/site | Evidence / UX | external=untrusted; no policy/RBAC/Gate/system mutation | safe-fetch/search | TARGET | YES |
+| 19 | External connections / providers | external provider + resource owner; DÉLIA=adapter/orch | provider resources/scopes | Evidence / Work / connectors | provider scope≠Core/Domain permission; secrets out of prompt/memory/MFE/logs | OAuth/connection lifecycle | TARGET; physical TO_INVENTORY | YES |
+| 20 | Microsoft Teams | Microsoft 365; DÉLIA=adapter/orch | Teams/Graph resources | Meeting / Evidence / UX | Teams≠separate planner/product authority | M365 connector | TARGET | YES |
+| 21 | Media | capture/source owner (raw); DÉLIA=intelligence/Evidence/media processing when approved | capture/source | Evidence / Meeting / Frontline | raw media≠Knowledge by default; storage owner TO_INVENTORY | media adapters | TARGET; storage TO_INVENTORY | YES |
+| 22 | Biometric Identity | DÉLIA governed optional; corporate identity=Keycloak/Core UserRef | enrolled closed-set templates | Meeting / Frontline Evidence | match≠login≠AuthN≠AuthZ; unknown=unknown; template store TO_INVENTORY | biometric capability | TARGET | YES |
+| 23 | Human Observation | DÉLIA Evidence/governance + process owner | observable process facts only | Evidence / Process | no personality/honesty/emotion/health/worth inference; no automated employment decision | Evidence contracts | TARGET | YES |
+| 24 | Process Intelligence | DÉLIA process intelligence/projection | process/domain owners | Evidence / Decision / UX | source truth external; mining≠employee scoring/fraud by default; no separate PI service in C0.S2 | process projection | TARGET | YES |
+| 25 | Analysis Sandbox | DÉLIA analysis/policy (semantic); physical exec=isolated adapter | authorized inputs only | Artifacts / Decision PREPARE | in-process arbitrary exec FORBIDDEN; no general shell; runtime owner TO_INVENTORY | sandbox adapter | TARGET; runtime TO_INVENTORY | YES |
+| 26 | Artifact Workspace | DÉLIA artifact lifecycle/refs | DÉLIA artifacts; publish owner preserved where applicable | UX / Knowledge candidate | artifact copy≠authoritative source | artifact store/refs | TARGET | YES |
+| 27 | Predictive / Prescriptive | model/provider/business owner; DÉLIA=orch/intelligence | model + authorized inputs | Decision PREPARE / UX | prediction≠FACT; recommendation≠authorization | model adapters | TARGET | YES |
+| 28 | Operational Twin / Scenario | DÉLIA/domain scenario projection per source/model owner | live/authoritative sources + models | Decision / UX | Twin≠SoT; simulation≠production; simulate≠apply | scenario contracts | TARGET | YES |
+| 29 | MCP / A2A | approved server/agent owner; DÉLIA=adapter/orch/policy | external/internal tool/agent | Planner / Work | discovery≠approval; metadata≠authority/permission | protocol adapters | TARGET; runtime TO_INVENTORY | YES |
+| 30 | AI Control Tower | DÉLIA (MODULE_IN_DELIA) | governance/admin projection | admin UX | Tower≠second planner≠executor≠permission≠model lifecycle authority | admin/governance plane | TARGET | YES |
+| 31 | Model Lifecycle | actual model owner/provider; DÉLIA=governance/projection | model registry/evals/deploy metadata | Tower / Marketplace / runtime | router selection≠model approval; deploy metadata≠business authority; MLOps TO_INVENTORY | model governance contracts | TARGET | YES |
+| 32 | Capability Marketplace | DÉLIA governance/catalog + asset publisher/owner | package/catalog | admin / install flows | publish≠enable≠permission; install≠authorization | catalog/signing (later) | TARGET | YES |
+| 33 | Edge / Offline | external device/Edge/industrial owner; DÉLIA=adapter/package/sync/policy | device/Edge platform | Frontline / sync | offline≠broader authority; cached perm≠indefinite; DÉLIA-owned Edge runtime=NO | Edge adapters | TARGET; physical TO_INVENTORY | YES |
+| 34 | Notifications | DÉLIA (intent/Work linkage); delivery=channel/provider owner | channel/provider | users | notification sent≠Outcome verified; no DÉLIA notification platform by assumption | channel contracts | PLANNED / TARGET | YES |
+| 35 | Observability / Audit / Evals | DÉLIA (intel/Evidence/Policy/Decision/Work/Outcome telemetry); Hub=exec telemetry; Core=platform AuthZ audit; Domain=domain audit | respective owners | ops / compliance / evals | correlation≠authority transfer; no CoT/tokens/passwords/biometric templates/unbounded sensitive | telemetry backends | TARGET | YES |
+| 36 | OT / Industrial Safety | OT / Industrial / Safety authority | safety controllers/interlocks | DÉLIA (observe/explain/recommend/governed PREPARE only) | DÉLIA≠safety controller; free-form LLM/vision/voice ─X→ PLC/CNC/robot; future ACT needs separate industrial safety gate | industrial adapters | TARGET boundary; physical TO_INVENTORY | YES |
+
+#### 2.3.4 Critical cross-boundary separations
+
+```text
+Work vs Execution:
+  DÉLIA Work = semantic/business/intelligence orchestration lifecycle
+  Automation Hub = technical execution lifecycle
+  ExecutionRef in DÉLIA = correlation/projection only (not executor technical truth)
+
+Recurring Work vs Scheduler:
+  Recurring Work definition = DÉLIA
+  physical timer = external technical mechanism (TO_INVENTORY)
+  timer → signal; signal != authorization
+
+Technical Result vs Outcome:
+  technical result → authoritative postcondition → Outcome
+
+Graph vs Semantic vs Process vs Twin:
+  Business Graph = relationships
+  Semantic Layer = business meaning / metrics
+  Process Intelligence = observed process behavior
+  Operational Twin / Scenario = simulated/projected state
+  (not interchangeable; none = master data)
+
+Personal vs Organizational Knowledge:
+  Personal Memory != Organizational Knowledge
+  Conversation history != Personal Memory
+  Session context != Personal Memory
+  Candidate knowledge != published organizational knowledge
+```
+
+#### 2.3.5 Boundary integration rule
+
+Bounded contexts integram somente via:
+
+```text
+HTTP/API contract
+OR real event with explicit owner/source/schema
+OR approved provider/executor adapter
+```
+
+Proibido:
+
+```text
+internal imports across bounded contexts
+foreign database reads/writes
+shared tables as integration
+duplicated authorization
+implicit permission propagation
+frontend permission enforcement as final authority
+```
+
+#### 2.3.6 Event rule
+
+Não inventar broker. Não criar `EventEnvelope` implementation em C0.S2.
+
+Event integration é permitida quando existir evento real com: source, owner, schema, timestamp, correlation, idempotency/dedup quando necessário, retention, consumer, contract.
+
+Central event broker físico = `TO_INVENTORY` unless proven elsewhere.
+
+#### 2.3.7 Abstraction Gate (C0.S2)
+
+```text
+NEW_RUNTIME_ABSTRACTIONS = NONE
+```
+
+C0.S2 **não** cria: service, microservice, port/adapter implementation, registry, repository, engine, shared package, schema, primitive, database, queue, worker, scheduler.
+
+Physical names de C0.S1 permanecem aceitos. Shared primitives = C0.S3.
+
+### 2.4 TO_INVENTORY (explicit — do not resolve by assumption)
+
+```text
+physical scheduler/timer owner
+physical Automation Hub runtime
+DÉLIA ↔ Core exact API contract
+DÉLIA ↔ Portal exact context/host contract
+event broker/transport (if any)
+external OAuth connection lifecycle / secret owner mechanism
+Teams registration/scopes/webhooks
+media storage/capture/retention
+biometric enrollment/template store
+Process Mining runtime / event-log readiness
+Sandbox isolated runtime
+Artifact physical/object storage where needed
+predictive/model inference runtimes
+Twin/optimization runtime
+MCP/A2A concrete implementations
+model registry/MLOps platform
+Marketplace distribution/signing runtime
+Edge/MDM/offline sync
+OT actuation/safety architecture
+notification delivery contracts
+observability/eval backend
+physical Postgres placement (deferred by C0.S1)
+```
+
+### 2.5 PLANNED / TARGET (documentation ≠ runtime proof)
+
+Capabilities abaixo permanecem `TARGET`/`PLANNED` — **nenhum runtime PASS** por esta documentação:
+
+```text
+Conversation/Intelligence, Evidence, Policy/Decision, Durable Work, Recurring Work,
+Business Graph, Semantic Layer, Knowledge, Personal Memory, Internet Research,
+External Connections, Teams, Media, Biometrics, Human Observation, Process Intelligence,
+Sandbox, Artifacts, Predictive, Prescriptive, Twin, MCP/A2A, Control Tower,
+Model governance, Marketplace, Edge, Notification orchestration, DÉLIA observability/evals
+```
+
+### 2.6 Contracts required later (C0.S5 detail; anchors only)
+
+Expande §2.2. Cada linha: OWNER / CONSUMER / DIRECTION / AUTHORITY / R/W / TRUST / CONTRACT_REQUIRED_LATER=YES / STATUS.
+
+| Boundary | OWNER | CONSUMER | DIRECTION | AUTHORITY | R/W | TRUST | STATUS |
+|---|---|---|---|---|---|---|---|
+| DÉLIA ↔ Keycloak | Keycloak | DÉLIA API | AuthN inbound | identity/SSO | R identity | IdP | TARGET |
+| DÉLIA ↔ Core | Core | DÉLIA API | AuthZ/apps/routes | platform RBAC | R effective perms | Core SoT | TARGET |
+| Portal ↔ DÉLIA | Portal / DÉLIA MFE | both | host+context | Portal≠AuthZ | context/UX | host | TARGET |
+| DÉLIA ↔ Domain APIs | Domain API | DÉLIA API | HTTP/event/adapter | Domain AuthZ+data | governed R/W | Domain SoT | TARGET |
+| DÉLIA ↔ physical scheduler | scheduler owner (TBD) | DÉLIA | timer→signal | timer≠AuthZ | signal only | exec trust | TO_INVENTORY |
+| DÉLIA ↔ Automation Hub | Hub / DÉLIA orch | both | orch→exec | Hub technical | exec+status | exec trust | TARGET; physical TO_INVENTORY |
+| DÉLIA ↔ internet/safe-fetch/search | DÉLIA orch + source | DÉLIA | egress read | untrusted content | R | egress | TARGET |
+| DÉLIA ↔ providers/OAuth | provider + DÉLIA | DÉLIA | OAuth/API | scope≠Core perm | governed R/W | provider trust | TARGET; secrets TO_INVENTORY |
+| DÉLIA ↔ Microsoft 365 / Teams | M365 | DÉLIA | Graph/Teams | Teams≠planner | governed R/W | tenant | TARGET |
+| DÉLIA ↔ media/device sources | capture/source owner | DÉLIA | media ingest | raw≠Knowledge | R/process | device/consent | TARGET; storage TO_INVENTORY |
+| DÉLIA ↔ biometric capability | DÉLIA + Keycloak/Core UserRef | DÉLIA | match evidence | match≠AuthN/Z | R evidence | enrollment trust | TARGET; template TO_INVENTORY |
+| DÉLIA ↔ Process sources | process/domain owners | DÉLIA | event-log ingest | source truth external | R | source | TARGET |
+| DÉLIA ↔ Sandbox runtime | isolated runtime owner (TBD) | DÉLIA | analysis exec | no general shell | bounded exec | isolation | TO_INVENTORY |
+| DÉLIA ↔ Artifact store/publication | DÉLIA + publish owner | both | artifact lifecycle | copy≠SoT | R/W refs | storage ACL | TARGET |
+| DÉLIA ↔ model/predictive runtimes | model owner/provider | DÉLIA | inference | pred≠FACT | R/invoke | model trust | TARGET |
+| DÉLIA ↔ MCP/A2A | server/agent owner | DÉLIA | tool/agent call | discovery≠approval | governed | remote trust | TARGET; runtime TO_INVENTORY |
+| DÉLIA ↔ Marketplace asset owners | publisher + DÉLIA gov | both | catalog/install | install≠AuthZ | R/W catalog | supply chain | TARGET |
+| DÉLIA ↔ notification channels | channel/provider owner | DÉLIA | notify | sent≠Outcome | W notify | channel | PLANNED/TARGET |
+| DÉLIA ↔ Edge | device/Edge owner | DÉLIA | sync/adapter | offline≠↑AuthZ | bounded | device | TARGET; physical TO_INVENTORY |
+| DÉLIA ↔ OT/industrial | OT/safety owner | DÉLIA | observe/PREPARE only | DÉLIA≠safety ctrl | R/PREPARE | safety airgap | TARGET; physical TO_INVENTORY |
+| DÉLIA ↔ observability/audit | respective owners | ops | telemetry | corr≠authority | W telemetry | redaction | TARGET |
+
 Dentro da API da DÉLIA, bounded modules podem incluir:
 
 ```text
@@ -139,6 +379,8 @@ Observability / Evals
 
 ## 3. Shared primitive registry
 
+> **C0.S3 ownership.** Lista abaixo é registry **alvo/candidato** — **não** congelada nem implementada em C0.S2. C0.S2 congela apenas boundaries; design/decisão de primitives = C0.S3.
+
 Preferir estas foundations canônicas como contratos alvo quando suficientes:
 
 ```text
@@ -156,7 +398,7 @@ TaskRef/CaseRef
 EventEnvelope/AuditEvent
 ```
 
-A presença nesta lista **não prova implementação atual**. C0.S0 deve localizar definição, owner, consumers e evidência antes de reutilizar ou criar qualquer type.
+A presença nesta lista **não prova implementação atual**. C0.S3 decide reuse/create; C0.S0 inventory localiza definição/owner/consumers quando existentes.
 
 Candidate refs somente se C0 provar necessidade transversal:
 

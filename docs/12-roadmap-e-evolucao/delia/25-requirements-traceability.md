@@ -22,7 +22,7 @@
 
 > Esta é a única authority `CP-*`. IDs históricos não são reutilizados nem apagados; requisitos ligados à migração do Minha DELPI Chat são preservados como `OUT_OF_SCOPE_WITH_DECISION`.
 
-> DÉLIA é o nome do produto. `Copilot` / `COPILOT_*` / `minha-delpi-copilot*` neste arquivo são `LEGACY_TOKEN`/`HISTORICAL`/`SUPERSEDED` quando ainda presentes; paths/owners ativos preferem `delia-api` / `plugins/delia` / DÉLIA API|MFE (`FROZEN_ACCEPTED` C0.S1). Naming update ≠ implementation evidence. Labels semânticos residuais “Copilot” permanecem `DOCUMENTATION_TERMINOLOGY_RESIDUAL` não bloqueante.
+> DÉLIA é o nome do produto. Labels de owner em linhas `CP-*` usam **DÉLIA …** (C0.S2-T1 terminology cleanup). Tokens `COPILOT_*` (gate IDs), `CopilotBridge` (Portal bridge histórico) e `minha-delpi-copilot*` (paths SUPERSEDED/HISTORICAL) podem permanecer. Naming update ≠ implementation evidence.
 
 ## 1. Status
 
@@ -44,27 +44,27 @@ OUT_OF_SCOPE_WITH_DECISION
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
-| CP-051 | Correlação/observabilidade transversal | Copilot API/Portal/Observability | contracts/traces | PLANNED |
-| CP-055 | Prompt/tool/context injection safety | Copilot Policy | security semantics | PLANNED |
+| CP-051 | Correlação/observabilidade transversal | DÉLIA API/Portal/Observability | contracts/traces | PLANNED |
+| CP-055 | Prompt/tool/context injection safety | DÉLIA Policy | security semantics | PLANNED |
 | CP-056 | Secret redaction | todos os owners | redaction contract | PLANNED |
-| CP-057 | Idempotency semantics de writes | Domain API + Copilot orchestration | C0 contract; runtime C5 | PLANNED |
-| CP-072 | Expertise Pack versionado | Copilot API | primitive/schema | PLANNED |
-| CP-075 | Domain Playbook versionado | Copilot API/domain owners | primitive/schema | PLANNED |
-| CP-077 | Expertise não concede RBAC | Core/Copilot Policy | invariant | PLANNED |
-| CP-088 | PDF/imagem não altera policy | Copilot Multimodal/Policy | safety contract; C3 eval | PLANNED |
-| CP-091 | EntityRef cross-domain canônico | Copilot shared/domain owners | primitive | PLANNED |
+| CP-057 | Idempotency semantics de writes | Domain API + DÉLIA orchestration | C0 contract; runtime C5 | PLANNED |
+| CP-072 | Expertise Pack versionado | DÉLIA API | primitive/schema | PLANNED |
+| CP-075 | Domain Playbook versionado | DÉLIA API/domain owners | primitive/schema | PLANNED |
+| CP-077 | Expertise não concede RBAC | Core/DÉLIA Policy | invariant | PLANNED |
+| CP-088 | PDF/imagem não altera policy | DÉLIA Multimodal/Policy | safety contract; C3 eval | PLANNED |
+| CP-091 | EntityRef cross-domain canônico | DÉLIA shared/domain owners | primitive | PLANNED |
 | CP-092 | RelationshipRef com provenance | Graph/domain owners | primitive | PLANNED |
-| CP-093 | EvidenceRef transversal | Copilot API | primitive | PLANNED |
-| CP-094 | Epistemic classes canônicas | Copilot synthesis | semantics | PLANNED |
-| CP-095 | Evidence multimodal page/region | Copilot Multimodal | contract; runtime C3 | PLANNED |
-| CP-105 | Workflow persistence/checkpoint contract | Copilot Work Runtime | lifecycle contract | PLANNED |
-| CP-106 | `wait_user` semantics | Copilot Work Runtime | lifecycle contract | PLANNED |
-| CP-107 | `wait_approval` semantics | Copilot Work/Policy | lifecycle contract | PLANNED |
-| CP-108 | `wait_event` semantics | Copilot Work/Event | lifecycle contract | PLANNED |
-| CP-109 | No duplicate write after resume | Copilot Work/Executor | idempotency contract | PLANNED |
-| CP-110 | Decision Gate proporcional a risco | Copilot Policy | contract | PLANNED |
-| CP-111 | Approval workflow humano | Copilot Policy/Work | contract | PLANNED |
-| CP-123 | Provider data-policy filtering | Copilot Security | policy contract | PLANNED |
+| CP-093 | EvidenceRef transversal | DÉLIA API | primitive | PLANNED |
+| CP-094 | Epistemic classes canônicas | DÉLIA synthesis | semantics | PLANNED |
+| CP-095 | Evidence multimodal page/region | DÉLIA Multimodal | contract; runtime C3 | PLANNED |
+| CP-105 | Workflow persistence/checkpoint contract | DÉLIA Work Runtime | lifecycle contract | PLANNED |
+| CP-106 | `wait_user` semantics | DÉLIA Work Runtime | lifecycle contract | PLANNED |
+| CP-107 | `wait_approval` semantics | DÉLIA Work/Policy | lifecycle contract | PLANNED |
+| CP-108 | `wait_event` semantics | DÉLIA Work/Event | lifecycle contract | PLANNED |
+| CP-109 | No duplicate write after resume | DÉLIA Work/Executor | idempotency contract | PLANNED |
+| CP-110 | Decision Gate proporcional a risco | DÉLIA Policy | contract | PLANNED |
+| CP-111 | Approval workflow humano | DÉLIA Policy/Work | contract | PLANNED |
+| CP-123 | Provider data-policy filtering | DÉLIA Security | policy contract | PLANNED |
 | CP-130 | Clean Architecture + Ports & Adapters + DDD pragmático | Architecture | architecture freeze | PLANNED |
 | CP-131 | Layer/dependency direction canônicas | Architecture | conformance | PLANNED |
 | CP-132 | DI/Composition Root + adapters/ports | Architecture/owners | wiring conformance | PLANNED |
@@ -79,43 +79,43 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-146 | Zero dependência de runtime do Minha DELPI Chat | DÉLIA Platform | Chat-offline/scan | PLANNED |
 | CP-147 | Persistência/migration chain próprias da DÉLIA | DÉLIA API (`delia-api/migrations/`) | storage ownership | PLANNED |
 | CP-154 | Inventário Portal/Core/Gateway/APIs/MFEs antes do runtime | Architecture | C0.S0 evidence | PLANNED |
-| CP-157 | Media capture/consent/retention classes definidas antes do runtime multimodal contínuo | Copilot Security/Architecture | media/privacy foundation | PLANNED |
-| CP-158 | Shared-device identity/session isolation | Copilot/Portal/Security | device session negative tests | PLANNED |
-| CP-175 | Raw media minimization e retention class-specific | Copilot Media/Security | retention/data minimization | PLANNED |
+| CP-157 | Media capture/consent/retention classes definidas antes do runtime multimodal contínuo | DÉLIA Security/Architecture | media/privacy foundation | PLANNED |
+| CP-158 | Shared-device identity/session isolation | DÉLIA/Portal/Security | device session negative tests | PLANNED |
+| CP-175 | Raw media minimization e retention class-specific | DÉLIA Media/Security | retention/data minimization | PLANNED |
 | CP-176 | Sem reconhecimento facial open-world/indiscriminado, emotion detection como truth ou hidden surveillance por default | Security/Governance | privacy negative gate | PLANNED |
-| CP-178 | Arbitrary LLM→machine command proibido | Copilot/Industrial Safety | OT boundary gate | PLANNED |
-| CP-179 | Future OT actuation exige safety gate separado | Industrial owner/Copilot | separate architecture/risk approval | PLANNED |
-| CP-182 | Enrollment biométrico explícito, versionado, revogável e com purpose/retention definidos | Copilot Biometric/Security | enrollment lifecycle contract | PLANNED |
-| CP-183 | Biometric match nunca concede autenticação/permissão por si só | Copilot Policy/Core | permission-elevation negative | PLANNED |
-| CP-188 | Human Observation limitado a evidência observável do processo; sem inferência psicológica/sensível | Copilot Security/Governance | prohibited-inference gate | PLANNED |
-| CP-189 | Sem decisão trabalhista automática baseada em biometria/Human Observation | Governance/People owner/Copilot | employment-decision negative | PLANNED |
-| CP-190 | Biometric templates protegidos, não logados, revogáveis e com retenção própria | Copilot Biometric/Security | storage/key/retention gate | PLANNED |
+| CP-178 | Arbitrary LLM→machine command proibido | DÉLIA/Industrial Safety | OT boundary gate | PLANNED |
+| CP-179 | Future OT actuation exige safety gate separado | Industrial owner/DÉLIA | separate architecture/risk approval | PLANNED |
+| CP-182 | Enrollment biométrico explícito, versionado, revogável e com purpose/retention definidos | DÉLIA Biometric/Security | enrollment lifecycle contract | PLANNED |
+| CP-183 | Biometric match nunca concede autenticação/permissão por si só | DÉLIA Policy/Core | permission-elevation negative | PLANNED |
+| CP-188 | Human Observation limitado a evidência observável do processo; sem inferência psicológica/sensível | DÉLIA Security/Governance | prohibited-inference gate | PLANNED |
+| CP-189 | Sem decisão trabalhista automática baseada em biometria/Human Observation | Governance/People owner/DÉLIA | employment-decision negative | PLANNED |
+| CP-190 | Biometric templates protegidos, não logados, revogáveis e com retenção própria | DÉLIA Biometric/Security | storage/key/retention gate | PLANNED |
 | CP-194 | Inventário de egress, OAuth, secrets/vault, webhooks e integrações externas antes do runtime | Architecture/Security | external-access foundation | PLANNED |
-| CP-195 | Safe Web Fetch bloqueia SSRF/private/link-local/metadata e revalida redirects | Copilot Internet/Security | egress negative gate | PLANNED |
-| CP-196 | Conteúdo web/email/chat externo é untrusted e não altera system/policy/RBAC | Copilot Security | external injection gate | PLANNED |
-| CP-197 | ExternalConnection usa least privilege, consent/scope disclosure, revoke/reconnect e audit | Copilot Connectors/Security | connection lifecycle contract | PLANNED |
-| CP-198 | Access/refresh tokens e provider secrets nunca chegam ao LLM/MFE/logs e usam storage protegido | Copilot Infrastructure/Security | credential leakage negative | PLANNED |
-| CP-199 | USER_DELEGATED, ORG_MANAGED, SHARED_RESOURCE e SERVICE_CONNECTION preservam ownership/visibility distintos | Copilot Connectors/Privacy | ownership isolation gate | PLANNED |
-| CP-209 | External data possui retention/delete/cache policy por connection/source class | Copilot Privacy/State | retention gate | PLANNED |
-| CP-210 | Provider terms/scopes/limits/compliance são revalidados na implementação e rollout | Copilot Governance | provider compliance gate | PLANNED |
-| CP-211 | WhatsApp usa contratos oficiais suportados; scraping/automação de sessão pessoal é proibido por default | Copilot Connectors/Security | supported-contract gate | PLANNED |
-| CP-214 | Internet/connector/write/webhook possuem kill switches independentes de prompt/LLM | Copilot Admin/Security | emergency disable gate | PLANNED |
-| CP-223 | Teams inventory congela Entra app registration, tenant/admin owner, Graph scopes, resource-specific consent, webhooks, app distribution e meeting-artifact privacy antes do runtime | Copilot Teams/Architecture/Security | Teams foundation gate | PLANNED |
+| CP-195 | Safe Web Fetch bloqueia SSRF/private/link-local/metadata e revalida redirects | DÉLIA Internet/Security | egress negative gate | PLANNED |
+| CP-196 | Conteúdo web/email/chat externo é untrusted e não altera system/policy/RBAC | DÉLIA Security | external injection gate | PLANNED |
+| CP-197 | ExternalConnection usa least privilege, consent/scope disclosure, revoke/reconnect e audit | DÉLIA Connectors/Security | connection lifecycle contract | PLANNED |
+| CP-198 | Access/refresh tokens e provider secrets nunca chegam ao LLM/MFE/logs e usam storage protegido | DÉLIA Infrastructure/Security | credential leakage negative | PLANNED |
+| CP-199 | USER_DELEGATED, ORG_MANAGED, SHARED_RESOURCE e SERVICE_CONNECTION preservam ownership/visibility distintos | DÉLIA Connectors/Privacy | ownership isolation gate | PLANNED |
+| CP-209 | External data possui retention/delete/cache policy por connection/source class | DÉLIA Privacy/State | retention gate | PLANNED |
+| CP-210 | Provider terms/scopes/limits/compliance são revalidados na implementação e rollout | DÉLIA Governance | provider compliance gate | PLANNED |
+| CP-211 | WhatsApp usa contratos oficiais suportados; scraping/automação de sessão pessoal é proibido por default | DÉLIA Connectors/Security | supported-contract gate | PLANNED |
+| CP-214 | Internet/connector/write/webhook possuem kill switches independentes de prompt/LLM | DÉLIA Admin/Security | emergency disable gate | PLANNED |
+| CP-223 | Teams inventory congela Entra app registration, tenant/admin owner, Graph scopes, resource-specific consent, webhooks, app distribution e meeting-artifact privacy antes do runtime | DÉLIA Teams/Architecture/Security | Teams foundation gate | PLANNED |
 | CP-226 | C0 inventaria event sources/buses/webhooks/schedulers, RPA tools/licenças/bots, scripts/jobs, queues/workers, service accounts, credential owners, outcome sources e automation governance antes de runtime | Architecture/Automation/Security | automation foundation inventory | PLANNED |
 | CP-227 | DÉLIA intelligence/orchestration e Automation & Execution Hub execution permanecem separáveis; Hub não cria segundo planner/AI authority | Architecture/DÉLIA Automation | ownership/bounded-context gate | PLANNED |
-| CP-228 | Executor preference é API/integration/function antes de RPA/computer-use quando contrato autoritativo suportado existir | Copilot Automation/Architecture | executor-selection architecture gate | PLANNED |
-| CP-229 | Background/autonomous execution usa user/service identity explícita, auditável e não deriva autoridade de evento/LLM | Copilot Security/Core/Automation | background identity gate | PLANNED |
-| CP-230 | Execution contract define correlation, idempotency, pre/postconditions, timeout/retry e verified Outcome semantics antes de executors materiais | Copilot Automation/Work | execution contract gate | PLANNED |
-| CP-231 | Event source authenticity/trust, dedupe, ordering/correlation e polling fallback bounded são definidos antes de continuous operations | Copilot Events/Architecture | event foundation gate | PLANNED |
+| CP-228 | Executor preference é API/integration/function antes de RPA/computer-use quando contrato autoritativo suportado existir | DÉLIA Automation/Architecture | executor-selection architecture gate | PLANNED |
+| CP-229 | Background/autonomous execution usa user/service identity explícita, auditável e não deriva autoridade de evento/LLM | DÉLIA Security/Core/Automation | background identity gate | PLANNED |
+| CP-230 | Execution contract define correlation, idempotency, pre/postconditions, timeout/retry e verified Outcome semantics antes de executors materiais | DÉLIA Automation/Work | execution contract gate | PLANNED |
+| CP-231 | Event source authenticity/trust, dedupe, ordering/correlation e polling fallback bounded são definidos antes de continuous operations | DÉLIA Events/Architecture | event foundation gate | PLANNED |
 | CP-249 | C0 inventaria event logs, process owners, case keys, BPMN/process docs, task-mining telemetry/privacy e data quality antes de Process Intelligence runtime | DÉLIA Process Intelligence/Architecture | process-intelligence foundation inventory | PLANNED |
 | CP-256 | C0 inventaria todos os AI/automation assets, owners, risk/compliance, evals, cost telemetry, incidents e kill-switch mechanisms antes da Control Tower | DÉLIA Control Tower/Governance | AI asset governance foundation | PLANNED |
-| CP-262 | C0 inventaria MCP/A2A/tool registries, external agents, service identities, delegation credentials, protocol versions e trust boundaries | Copilot Interoperability/Security | protocol interoperability foundation | PLANNED |
-| CP-268 | C0 congela ownership/classes/retention/export/delete/user-controls para Personal Memory; memória não é Knowledge nem permission authority | Copilot Memory/Privacy | personal-memory foundation | PLANNED |
+| CP-262 | C0 inventaria MCP/A2A/tool registries, external agents, service identities, delegation credentials, protocol versions e trust boundaries | DÉLIA Interoperability/Security | protocol interoperability foundation | PLANNED |
+| CP-268 | C0 congela ownership/classes/retention/export/delete/user-controls para Personal Memory; memória não é Knowledge nem permission authority | DÉLIA Memory/Privacy | personal-memory foundation | PLANNED |
 | CP-274 | C0 inventaria business glossary, KPI formulas, BI semantic models, metric owners, grain/dimensions, freshness e definition conflicts | DÉLIA Semantic Layer/Data owners | semantic foundation inventory | PLANNED |
 | CP-280 | C0 inventaria code/data-analysis sandbox, BI/query engines, file scanning/storage e artifact-generation/versioning infrastructure e boundaries | DÉLIA Analysis/Artifacts/Security | sandbox/artifact foundation inventory | PLANNED |
-| CP-287 | C0 inventaria predictive/anomaly/optimization/simulation models, datasets, ground truth, owners e operational/digital-twin sources | Copilot Predictive/Twin/Data owners | predictive/twin foundation inventory | PLANNED |
+| CP-287 | C0 inventaria predictive/anomaly/optimization/simulation models, datasets, ground truth, owners e operational/digital-twin sources | DÉLIA Predictive/Twin/Data owners | predictive/twin foundation inventory | PLANNED |
 | CP-295 | C0 inventaria factory network, Edge platforms/devices, MDM, local inference, offline requirements, time sync, OT segmentation e cache/update owners | DÉLIA Edge/Industrial/Infrastructure | edge/offline foundation inventory | PLANNED |
-| CP-302 | C0 inventaria model providers, local ML models, registries/MLOps, datasets/evals, CI/CD, package catalogs/signing e supply-chain controls | Copilot Model Governance/Control Tower | model/marketplace foundation inventory | PLANNED |
+| CP-302 | C0 inventaria model providers, local ML models, registries/MLOps, datasets/evals, CI/CD, package catalogs/signing e supply-chain controls | DÉLIA Model Governance/Control Tower | model/marketplace foundation inventory | PLANNED |
 | CP-311 | C0 congela Recurring Governed Work: owner da definição versus owner do timer/scheduler físico, recurrence/timezone/DST, misfire/missed-run, overlap, idempotência por ocorrência, background identity/AuthZ/revoke, pause/cancel e Outcome boundaries | DÉLIA Work/Architecture/Automation/Security | recurring-work foundation contract | PLANNED |
 
 ## 3. C1 — Standalone Application Bootstrap
@@ -168,73 +168,73 @@ OUT_OF_SCOPE_WITH_DECISION
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
-| CP-026 | RAG de procedimentos/documentos | Copilot Knowledge | grounding/security | LOCKED |
-| CP-028 | Redigir e-mail/texto | Copilot capability | faithfulness | LOCKED |
-| CP-053 | Send/stream parity | Copilot API/MFE | transport parity | LOCKED |
+| CP-026 | RAG de procedimentos/documentos | DÉLIA Knowledge | grounding/security | LOCKED |
+| CP-028 | Redigir e-mail/texto | DÉLIA capability | faithfulness | LOCKED |
+| CP-053 | Send/stream parity | DÉLIA API/MFE | transport parity | LOCKED |
 | CP-071 | Uma única DÉLIA sem seleção de agente | DÉLIA API/MFE | no agent runtime | LOCKED |
-| CP-073 | Recuperação semântica de expertise | Copilot API | positive/sibling/negative | LOCKED |
-| CP-074 | Composição multi-expertise | Copilot Planner | cross-domain | LOCKED |
-| CP-078 | Multimodalidade sem agent dependency | Copilot Multimodal | attachment eval | LOCKED |
-| CP-079 | Análise de desenho com provenance/confidence | Copilot + Engineering | multimodal eval | LOCKED |
-| CP-083 | Projects/preferred expertise sem outro runtime | Copilot API | permission negative | TO_INVENTORY |
-| CP-086 | Unknown Expertise Pack sem planner patch | Copilot API | generalization | LOCKED |
-| CP-087 | Metamorphic rename de Expertise Pack | Copilot Evals | equivalence | LOCKED |
-| CP-089 | Packs referência Qualidade + Engenharia | Copilot/domain owners | pilot evals | LOCKED |
+| CP-073 | Recuperação semântica de expertise | DÉLIA API | positive/sibling/negative | LOCKED |
+| CP-074 | Composição multi-expertise | DÉLIA Planner | cross-domain | LOCKED |
+| CP-078 | Multimodalidade sem agent dependency | DÉLIA Multimodal | attachment eval | LOCKED |
+| CP-079 | Análise de desenho com provenance/confidence | DÉLIA + Engineering | multimodal eval | LOCKED |
+| CP-083 | Projects/preferred expertise sem outro runtime | DÉLIA API | permission negative | TO_INVENTORY |
+| CP-086 | Unknown Expertise Pack sem planner patch | DÉLIA API | generalization | LOCKED |
+| CP-087 | Metamorphic rename de Expertise Pack | DÉLIA Evals | equivalence | LOCKED |
+| CP-089 | Packs referência Qualidade + Engenharia | DÉLIA/domain owners | pilot evals | LOCKED |
 | CP-151 | OpenAPI ingestion + Action Catalog próprios da DÉLIA | DÉLIA API | independent catalog/importer | LOCKED |
-| CP-160 | Speech-to-text/text-to-speech baseline por ports/adapters quando priorizado | Copilot Media | voice eval/provider abstraction | LOCKED |
-| CP-161 | Voice command preserva mesma RBAC/policy/Decision semantics do texto | Copilot Policy/Planner | modality parity | LOCKED |
-| CP-162 | Camera/image Evidence com frame/region/confidence/limitations | Copilot Multimodal | visual evidence eval | LOCKED |
-| CP-163 | Short-video ingestion com time-range provenance e bounded processing | Copilot Media | video eval/budget | LOCKED |
-| CP-164 | Screen share bounded/consented sem virar DOM automation | Copilot MFE/Media/Security | screen-share safety | LOCKED |
-| CP-177 | Visual finding não vira decisão oficial de qualidade por default | Copilot/Quality Policy | epistemic/quality negative | LOCKED |
-| CP-184 | Face recognition/verification closed-set apenas para usuários enrolled e policy-approved | Copilot Biometric | positive/unknown/look-alike eval | LOCKED |
-| CP-185 | Speaker recognition/diarization separado de STT e de autorização | Copilot Biometric/Media | speaker identity eval | LOCKED |
-| CP-186 | Unknown/low-confidence permanece desconhecido ou requer confirmação; associação é corrigível | Copilot Biometric/MFE | confidence/correction gate | LOCKED |
-| CP-187 | Liveness/anti-spoof obrigatório quando a finalidade exigir confiança adicional | Copilot Biometric/Security | replay/photo/deepfake eval | LOCKED |
-| CP-200 | Internet Research usa search + safe fetch + SourceRef/EvidenceRef + freshness/provenance | Copilot Internet Research | grounded research eval | LOCKED |
-| CP-201 | Connector runtime é provider-neutral; planner não contém branches Gmail/Outlook/WhatsApp | Copilot Connectors/Planner | provider generalization | LOCKED |
-| CP-205 | Connector capabilities são semânticas/contract-driven e separadas de endpoints específicos | Copilot Capability/Connectors | capability contract gate | LOCKED |
-| CP-215 | Teams é capability family do Microsoft 365 connector; planner não depende de Graph paths nem cria runtime Teams separado | Copilot Teams/Connectors/Planner | Teams provider-neutral architecture | LOCKED |
+| CP-160 | Speech-to-text/text-to-speech baseline por ports/adapters quando priorizado | DÉLIA Media | voice eval/provider abstraction | LOCKED |
+| CP-161 | Voice command preserva mesma RBAC/policy/Decision semantics do texto | DÉLIA Policy/Planner | modality parity | LOCKED |
+| CP-162 | Camera/image Evidence com frame/region/confidence/limitations | DÉLIA Multimodal | visual evidence eval | LOCKED |
+| CP-163 | Short-video ingestion com time-range provenance e bounded processing | DÉLIA Media | video eval/budget | LOCKED |
+| CP-164 | Screen share bounded/consented sem virar DOM automation | DÉLIA MFE/Media/Security | screen-share safety | LOCKED |
+| CP-177 | Visual finding não vira decisão oficial de qualidade por default | DÉLIA/Quality Policy | epistemic/quality negative | LOCKED |
+| CP-184 | Face recognition/verification closed-set apenas para usuários enrolled e policy-approved | DÉLIA Biometric | positive/unknown/look-alike eval | LOCKED |
+| CP-185 | Speaker recognition/diarization separado de STT e de autorização | DÉLIA Biometric/Media | speaker identity eval | LOCKED |
+| CP-186 | Unknown/low-confidence permanece desconhecido ou requer confirmação; associação é corrigível | DÉLIA Biometric/MFE | confidence/correction gate | LOCKED |
+| CP-187 | Liveness/anti-spoof obrigatório quando a finalidade exigir confiança adicional | DÉLIA Biometric/Security | replay/photo/deepfake eval | LOCKED |
+| CP-200 | Internet Research usa search + safe fetch + SourceRef/EvidenceRef + freshness/provenance | DÉLIA Internet Research | grounded research eval | LOCKED |
+| CP-201 | Connector runtime é provider-neutral; planner não contém branches Gmail/Outlook/WhatsApp | DÉLIA Connectors/Planner | provider generalization | LOCKED |
+| CP-205 | Connector capabilities são semânticas/contract-driven e separadas de endpoints específicos | DÉLIA Capability/Connectors | capability contract gate | LOCKED |
+| CP-215 | Teams é capability family do Microsoft 365 connector; planner não depende de Graph paths nem cria runtime Teams separado | DÉLIA Teams/Connectors/Planner | Teams provider-neutral architecture | LOCKED |
 | CP-232 | DÉLIA suporta decision-path routing `FAST | OPERATIONAL | REASONING`; nem todo evento chama LLM | DÉLIA Intelligence/Policy | decision-path routing eval | LOCKED |
-| CP-233 | Business readiness/anomaly material usa deterministic Policy/Specification sobre fatos autoritativos; LLM não é única autoridade da decisão | Copilot Policy/Domain owners | deterministic-decision gate | LOCKED |
-| CP-250 | Process Intelligence usa EventLog/ProcessTrace contracts com case/activity/time/source/provenance e não inventa eventos ausentes | Copilot Process Intelligence | process-contract/conformance gate | LOCKED |
-| CP-257 | AI Control Tower possui AI Asset Registry/projection com owner/version/risk/data scope/eval/status/dependencies/kill-switch refs sem duplicar owner truth | Copilot Control Tower | asset-registry contract gate | LOCKED |
-| CP-263 | MCP/A2A entram por adapters/allowlists provider-neutral; discovery de server/agent nunca equivale a aprovação/permission | Copilot Interoperability/Security | tool-agent trust gate | LOCKED |
-| CP-269 | Personal Memory possui classes/provenance/version/retention e write policy; conversation não cria memória material silenciosamente | Copilot Memory/Privacy | memory lifecycle gate | LOCKED |
-| CP-275 | Semantic Business Layer possui MetricDefinition/Glossary versionados com formula/grain/dimensions/unit/owner/source/freshness/security | Copilot Semantic Layer | metric-definition contract gate | LOCKED |
-| CP-281 | Analysis Sandbox é isolado, quota-bounded, sem host/network/secret access irrestrito, e recebe dados apenas via reads autorizados | Copilot Analysis/Security | sandbox isolation gate | LOCKED |
-| CP-288 | Prediction/Prescription contracts preservam model/version/horizon/confidence/inputs/limitations e não promovem previsão a FACT | Copilot Predictive/Evidence | prediction semantics gate | LOCKED |
-| CP-296 | Edge runtime usa device/package/model/cache contracts versionados; device identity nunca substitui user identity | Copilot Edge/Architecture | edge contract gate | LOCKED |
-| CP-303 | Model Registry/projection cobre LLM/embedding/vision/speech/classifier/forecast/anomaly/optimization com owner/version/eval/risk/deployment/rollback metadata | Copilot Model Governance | model registry gate | LOCKED |
+| CP-233 | Business readiness/anomaly material usa deterministic Policy/Specification sobre fatos autoritativos; LLM não é única autoridade da decisão | DÉLIA Policy/Domain owners | deterministic-decision gate | LOCKED |
+| CP-250 | Process Intelligence usa EventLog/ProcessTrace contracts com case/activity/time/source/provenance e não inventa eventos ausentes | DÉLIA Process Intelligence | process-contract/conformance gate | LOCKED |
+| CP-257 | AI Control Tower possui AI Asset Registry/projection com owner/version/risk/data scope/eval/status/dependencies/kill-switch refs sem duplicar owner truth | DÉLIA Control Tower | asset-registry contract gate | LOCKED |
+| CP-263 | MCP/A2A entram por adapters/allowlists provider-neutral; discovery de server/agent nunca equivale a aprovação/permission | DÉLIA Interoperability/Security | tool-agent trust gate | LOCKED |
+| CP-269 | Personal Memory possui classes/provenance/version/retention e write policy; conversation não cria memória material silenciosamente | DÉLIA Memory/Privacy | memory lifecycle gate | LOCKED |
+| CP-275 | Semantic Business Layer possui MetricDefinition/Glossary versionados com formula/grain/dimensions/unit/owner/source/freshness/security | DÉLIA Semantic Layer | metric-definition contract gate | LOCKED |
+| CP-281 | Analysis Sandbox é isolado, quota-bounded, sem host/network/secret access irrestrito, e recebe dados apenas via reads autorizados | DÉLIA Analysis/Security | sandbox isolation gate | LOCKED |
+| CP-288 | Prediction/Prescription contracts preservam model/version/horizon/confidence/inputs/limitations e não promovem previsão a FACT | DÉLIA Predictive/Evidence | prediction semantics gate | LOCKED |
+| CP-296 | Edge runtime usa device/package/model/cache contracts versionados; device identity nunca substitui user identity | DÉLIA Edge/Architecture | edge contract gate | LOCKED |
+| CP-303 | Model Registry/projection cobre LLM/embedding/vision/speech/classifier/forecast/anomaly/optimization com owner/version/eval/risk/deployment/rollback metadata | DÉLIA Model Governance | model registry gate | LOCKED |
 
 ## 6. C4 — Business + External Reads + Graph + Intelligence Reads
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
-| CP-013 | Consultar Business Action | Copilot Action Runtime | read/RBAC/outcome | LOCKED |
-| CP-014 | Consultar múltiplas APIs | Copilot Planner | multi-provider | LOCKED |
-| CP-015 | Analisar/comparar dados | Copilot synthesis | grounded evidence | LOCKED |
-| CP-027 | Gerar resumo/relatório grounded | Copilot Artifact | evidence/faithfulness | LOCKED |
-| CP-029 | Recomendar próximos passos | Copilot synthesis | contextual/allowed | LOCKED |
-| CP-043 | Unknown OpenAPI provider | Copilot API | full-chain unknown | LOCKED |
-| CP-044 | Metamorphic provider/path/opId | Copilot Evals | metamorphic | LOCKED |
-| CP-058 | Business Capability Projection | Copilot API | no duplicate authority | LOCKED |
-| CP-090 | DELPI Business Graph mínimo | Copilot Graph/domain owners | permission traversal | LOCKED |
-| CP-128 | Business Graph sibling onboarding | Copilot Graph | no planner hardcode | LOCKED |
-| CP-202 | External reads suportam fontes conectadas autorizadas sem vazar dados entre usuários/conexões | Copilot Connectors/Privacy | read isolation gate | LOCKED |
-| CP-206 | Todo external read material gera SourceRef/EvidenceRef com provider/resource/scope/freshness | Copilot Evidence/Connectors | provenance gate | LOCKED |
-| CP-216 | Teams reads suportam teams/channels/chats/messages/replies e meeting metadata somente dentro dos scopes/resources autorizados | Copilot Teams/Privacy | Teams read isolation gate | LOCKED |
-| CP-219 | Transcript/recording/meeting artifact do Teams preserva SourceRef/EvidenceRef, meeting resource, provenance, permission scope, freshness/version e retention policy | Copilot Teams/Meeting/Evidence | Teams meeting provenance gate | LOCKED |
-| CP-225 | Identidade de participante resolvida pelo Teams/tenant é primária quando authoritative; biometria é somente evidência suplementar governada | Copilot Teams/Biometric/Identity | participant identity precedence gate | LOCKED |
-| CP-234 | Operational readiness/anomaly evaluation correlaciona Domain reads/Graph/Evidence e produz resultado read-only antes de qualquer side effect | Copilot Operational Intelligence/Domain owners | read-only decision evidence gate | LOCKED |
-| CP-251 | Process Mining reconstrói variants/bottlenecks/conformance somente de event logs autorizados; ausência/incompletude permanece explícita | Copilot Process Intelligence | read-only process mining eval | LOCKED |
-| CP-264 | MCP/A2A read-only tools/agents preservam tool/agent provenance, data minimization, timeout/cancellation e não recebem contexto irrestrito | Copilot Interoperability | read-only delegation gate | LOCKED |
-| CP-270 | Personalization prioriza conteúdo/formatos usando memória, mas live domain/source facts continuam authority e stale memory não os substitui | Copilot Memory/Planner | personalization authority gate | LOCKED |
-| CP-276 | Semantic Query resolve métrica governada e calcula por definição estruturada/reprodutível; LLM não inventa fórmula empresarial material | Copilot Semantic Layer/Analytics | governed metric query gate | LOCKED |
-| CP-282 | Sandbox executa análise read-only reproduzível com SourceRefs/runtime/code hash/parameters e não permite DDL/DML por connector analítico read-only | Copilot Analysis | reproducible analysis gate | LOCKED |
-| CP-289 | Predictive reads mostram model/version/horizon/freshness/calibration/limitations e degradam explicitamente em stale/OOD/unavailable | Copilot Predictive | predictive read eval | LOCKED |
-| CP-297 | Edge read-only/offline cache preserva source revision/syncedAt/freshness e sinaliza ou bloqueia conteúdo stale conforme criticidade | Copilot Edge/Frontline | offline freshness gate | LOCKED |
-| CP-304 | Uso de modelo material gera lineage suficiente para ligar prediction/result ao model/version/eval/deployment ref sem expor segredo | Copilot Model Governance/Evidence | model lineage gate | LOCKED |
+| CP-013 | Consultar Business Action | DÉLIA Action Runtime | read/RBAC/outcome | LOCKED |
+| CP-014 | Consultar múltiplas APIs | DÉLIA Planner | multi-provider | LOCKED |
+| CP-015 | Analisar/comparar dados | DÉLIA synthesis | grounded evidence | LOCKED |
+| CP-027 | Gerar resumo/relatório grounded | DÉLIA Artifact | evidence/faithfulness | LOCKED |
+| CP-029 | Recomendar próximos passos | DÉLIA synthesis | contextual/allowed | LOCKED |
+| CP-043 | Unknown OpenAPI provider | DÉLIA API | full-chain unknown | LOCKED |
+| CP-044 | Metamorphic provider/path/opId | DÉLIA Evals | metamorphic | LOCKED |
+| CP-058 | Business Capability Projection | DÉLIA API | no duplicate authority | LOCKED |
+| CP-090 | DELPI Business Graph mínimo | DÉLIA Graph/domain owners | permission traversal | LOCKED |
+| CP-128 | Business Graph sibling onboarding | DÉLIA Graph | no planner hardcode | LOCKED |
+| CP-202 | External reads suportam fontes conectadas autorizadas sem vazar dados entre usuários/conexões | DÉLIA Connectors/Privacy | read isolation gate | LOCKED |
+| CP-206 | Todo external read material gera SourceRef/EvidenceRef com provider/resource/scope/freshness | DÉLIA Evidence/Connectors | provenance gate | LOCKED |
+| CP-216 | Teams reads suportam teams/channels/chats/messages/replies e meeting metadata somente dentro dos scopes/resources autorizados | DÉLIA Teams/Privacy | Teams read isolation gate | LOCKED |
+| CP-219 | Transcript/recording/meeting artifact do Teams preserva SourceRef/EvidenceRef, meeting resource, provenance, permission scope, freshness/version e retention policy | DÉLIA Teams/Meeting/Evidence | Teams meeting provenance gate | LOCKED |
+| CP-225 | Identidade de participante resolvida pelo Teams/tenant é primária quando authoritative; biometria é somente evidência suplementar governada | DÉLIA Teams/Biometric/Identity | participant identity precedence gate | LOCKED |
+| CP-234 | Operational readiness/anomaly evaluation correlaciona Domain reads/Graph/Evidence e produz resultado read-only antes de qualquer side effect | DÉLIA Operational Intelligence/Domain owners | read-only decision evidence gate | LOCKED |
+| CP-251 | Process Mining reconstrói variants/bottlenecks/conformance somente de event logs autorizados; ausência/incompletude permanece explícita | DÉLIA Process Intelligence | read-only process mining eval | LOCKED |
+| CP-264 | MCP/A2A read-only tools/agents preservam tool/agent provenance, data minimization, timeout/cancellation e não recebem contexto irrestrito | DÉLIA Interoperability | read-only delegation gate | LOCKED |
+| CP-270 | Personalization prioriza conteúdo/formatos usando memória, mas live domain/source facts continuam authority e stale memory não os substitui | DÉLIA Memory/Planner | personalization authority gate | LOCKED |
+| CP-276 | Semantic Query resolve métrica governada e calcula por definição estruturada/reprodutível; LLM não inventa fórmula empresarial material | DÉLIA Semantic Layer/Analytics | governed metric query gate | LOCKED |
+| CP-282 | Sandbox executa análise read-only reproduzível com SourceRefs/runtime/code hash/parameters e não permite DDL/DML por connector analítico read-only | DÉLIA Analysis | reproducible analysis gate | LOCKED |
+| CP-289 | Predictive reads mostram model/version/horizon/freshness/calibration/limitations e degradam explicitamente em stale/OOD/unavailable | DÉLIA Predictive | predictive read eval | LOCKED |
+| CP-297 | Edge read-only/offline cache preserva source revision/syncedAt/freshness e sinaliza ou bloqueia conteúdo stale conforme criticidade | DÉLIA Edge/Frontline | offline freshness gate | LOCKED |
+| CP-304 | Uso de modelo material gera lineage suficiente para ligar prediction/result ao model/version/eval/deployment ref sem expor segredo | DÉLIA Model Governance/Evidence | model lineage gate | LOCKED |
 
 ## 7. C5 — Governed ACT + Durable Work + Prepared Intelligence
 
@@ -250,44 +250,44 @@ L5 AUTONOMOUS EXECUTE = C7 only, OFF by default
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
-| CP-016 | Criar registro | Domain API + Copilot executor | Decision/RBAC/outcome | LOCKED |
-| CP-017 | Editar registro | Domain API + Copilot executor | write parity | LOCKED |
-| CP-018 | Aprovar/rejeitar | Domain API/Copilot Policy | approval/safety | LOCKED |
-| CP-019 | Cancelar/arquivar | Domain API/Copilot Policy | destructive gate | LOCKED |
+| CP-016 | Criar registro | Domain API + DÉLIA executor | Decision/RBAC/outcome | LOCKED |
+| CP-017 | Editar registro | Domain API + DÉLIA executor | write parity | LOCKED |
+| CP-018 | Aprovar/rejeitar | Domain API/DÉLIA Policy | approval/safety | LOCKED |
+| CP-019 | Cancelar/arquivar | Domain API/DÉLIA Policy | destructive gate | LOCKED |
 | CP-020 | Adicionar comentário | Domain API | write parity | LOCKED |
 | CP-021 | Atribuir responsável | Domain API | permission/gate | LOCKED |
-| CP-022 | Preview de write | Copilot API/MFE | argsHash/impact | LOCKED |
-| CP-023 | Decision/confirmation UI | Copilot MFE/API | Decision Gate | LOCKED |
-| CP-024 | Revalidar após decisão | Copilot Policy/Executor | TOCTOU | LOCKED |
-| CP-030 | Plano operacional visível | Copilot API/MFE | no CoT/activity | LOCKED |
-| CP-031 | Workflow multi-app | Copilot Work Runtime | compound outcome | LOCKED |
-| CP-032 | Parallel safe reads | Copilot Work Runtime | safety | LOCKED |
-| CP-033 | Dependências entre steps | Copilot Work Runtime | DAG | LOCKED |
-| CP-034 | Partial failure truthful | Copilot Work Runtime | outcome | LOCKED |
-| CP-035 | Retry seguro | Copilot Work Runtime | idempotency | LOCKED |
-| CP-036 | Pause por decisão | Copilot Work/Decision | persistence | LOCKED |
-| CP-037 | Reload/resume | Copilot Work Persistence | no duplicate write | LOCKED |
-| CP-038 | Audit trail workflow | Copilot Observability | coverage | LOCKED |
-| CP-045 | Autonomia L0–L2 | Copilot Policy | safe reads/navigation/prepare | LOCKED |
-| CP-046 | Autonomia L3 prepare | Copilot Policy/Work | PREPARE no-side-effect semantics | LOCKED |
-| CP-047 | Autonomia L4 governed execute | Copilot Policy/Work | live AuthZ + Decision Gate + idempotency/audit + verified Outcome | LOCKED |
-| CP-054 | Simulate/admin preview de action | Copilot Admin | parity | LOCKED |
-| CP-076 | Playbook→WorkflowPlan sem endpoint hardcoded | Copilot Planner | authority separation | LOCKED |
-| CP-168 | Candidate action de voz/reunião/frontline exige transition governada antes de write | Copilot Policy/Work | Decision/idempotency | LOCKED |
-| CP-203 | External write/send/create/update é capability distinta de read e exige policy/Decision/outcome verification | Copilot External Actions | external write gate | LOCKED |
-| CP-204 | Draft/preview é separado de send; mensagem sugerida nunca é enviada implicitamente | Copilot Communication/MFE | draft-send separation | LOCKED |
-| CP-217 | Teams reply/send são capabilities governadas distintas de read/draft, com target preview, policy/Decision Gate e verified outcome | Copilot Teams/External Actions | Teams write gate | LOCKED |
-| CP-235 | Automation Capability Registry/Projection mapeia capability semântica a executor versionado sem expor clicks/seletores/provider UI ao planner | Copilot Automation/Capability | executor abstraction gate | LOCKED |
-| CP-236 | API/Function/RPA/Computer-Use executors implementam Port+Adapter substituível; RPA não é authority de business rule | Copilot Automation/Architecture | executor substitution gate | LOCKED |
-| CP-237 | AutomationExecution possui lifecycle/correlation/inputHash/attempt/idempotency/timeout/error/outcome refs e impede dupla execução após retry/resume | Copilot Automation/Work | execution lifecycle gate | LOCKED |
-| CP-238 | RPA worker/queue execution, quando priorizada, possui worker health/lease/concurrency/environment/package-version/credential isolation/audit | Copilot RPA/Infrastructure/Security | RPA execution reliability gate | LOCKED |
-| CP-239 | Sucesso técnico do executor não equivale a sucesso de negócio; ação material exige postcondition/Outcome verification quando aplicável | Copilot Automation/Domain owners | verified business outcome gate | LOCKED |
-| CP-240 | Notification/escalation deriva de estado/outcome verdadeiro e não é usada como prova de sucesso da execução | Copilot Notifications/Automation | truthful notification gate | LOCKED |
-| CP-252 | Oportunidade descoberta por Process Intelligence vira candidate/Task/PREPARE com Evidence; nunca cria RPA/automation ativa automaticamente | Copilot Process Intelligence/Automation | opportunity governance gate | LOCKED |
-| CP-265 | MCP/A2A tool/agent com write capability passa pela mesma Policy/Decision/idempotency/Outcome verification das Business/External Actions | Copilot Interoperability/Policy | delegated write gate | LOCKED |
-| CP-277 | Métrica/semantic rule usada em Decision/Write é versionada e revalidada; mudança material invalida decisão anterior quando aplicável | Copilot Semantic Layer/Decision | semantic TOCTOU gate | LOCKED |
-| CP-283 | Artifact Workspace possui artifact version/lifecycle/provenance/ACL e external share/send continua ação governada separada | Copilot Artifacts/Work | artifact lifecycle/share gate | LOCKED |
-| CP-290 | Prescriptive output gera alternatives/trade-offs/PREPARE; `recommendation != authorization` e `simulate != apply` | Copilot Prescriptive/Decision | prescriptive action separation gate | LOCKED |
+| CP-022 | Preview de write | DÉLIA API/MFE | argsHash/impact | LOCKED |
+| CP-023 | Decision/confirmation UI | DÉLIA MFE/API | Decision Gate | LOCKED |
+| CP-024 | Revalidar após decisão | DÉLIA Policy/Executor | TOCTOU | LOCKED |
+| CP-030 | Plano operacional visível | DÉLIA API/MFE | no CoT/activity | LOCKED |
+| CP-031 | Workflow multi-app | DÉLIA Work Runtime | compound outcome | LOCKED |
+| CP-032 | Parallel safe reads | DÉLIA Work Runtime | safety | LOCKED |
+| CP-033 | Dependências entre steps | DÉLIA Work Runtime | DAG | LOCKED |
+| CP-034 | Partial failure truthful | DÉLIA Work Runtime | outcome | LOCKED |
+| CP-035 | Retry seguro | DÉLIA Work Runtime | idempotency | LOCKED |
+| CP-036 | Pause por decisão | DÉLIA Work/Decision | persistence | LOCKED |
+| CP-037 | Reload/resume | DÉLIA Work Persistence | no duplicate write | LOCKED |
+| CP-038 | Audit trail workflow | DÉLIA Observability | coverage | LOCKED |
+| CP-045 | Autonomia L0–L2 | DÉLIA Policy | safe reads/navigation/prepare | LOCKED |
+| CP-046 | Autonomia L3 prepare | DÉLIA Policy/Work | PREPARE no-side-effect semantics | LOCKED |
+| CP-047 | Autonomia L4 governed execute | DÉLIA Policy/Work | live AuthZ + Decision Gate + idempotency/audit + verified Outcome | LOCKED |
+| CP-054 | Simulate/admin preview de action | DÉLIA Admin | parity | LOCKED |
+| CP-076 | Playbook→WorkflowPlan sem endpoint hardcoded | DÉLIA Planner | authority separation | LOCKED |
+| CP-168 | Candidate action de voz/reunião/frontline exige transition governada antes de write | DÉLIA Policy/Work | Decision/idempotency | LOCKED |
+| CP-203 | External write/send/create/update é capability distinta de read e exige policy/Decision/outcome verification | DÉLIA External Actions | external write gate | LOCKED |
+| CP-204 | Draft/preview é separado de send; mensagem sugerida nunca é enviada implicitamente | DÉLIA Communication/MFE | draft-send separation | LOCKED |
+| CP-217 | Teams reply/send são capabilities governadas distintas de read/draft, com target preview, policy/Decision Gate e verified outcome | DÉLIA Teams/External Actions | Teams write gate | LOCKED |
+| CP-235 | Automation Capability Registry/Projection mapeia capability semântica a executor versionado sem expor clicks/seletores/provider UI ao planner | DÉLIA Automation/Capability | executor abstraction gate | LOCKED |
+| CP-236 | API/Function/RPA/Computer-Use executors implementam Port+Adapter substituível; RPA não é authority de business rule | DÉLIA Automation/Architecture | executor substitution gate | LOCKED |
+| CP-237 | AutomationExecution possui lifecycle/correlation/inputHash/attempt/idempotency/timeout/error/outcome refs e impede dupla execução após retry/resume | DÉLIA Automation/Work | execution lifecycle gate | LOCKED |
+| CP-238 | RPA worker/queue execution, quando priorizada, possui worker health/lease/concurrency/environment/package-version/credential isolation/audit | DÉLIA RPA/Infrastructure/Security | RPA execution reliability gate | LOCKED |
+| CP-239 | Sucesso técnico do executor não equivale a sucesso de negócio; ação material exige postcondition/Outcome verification quando aplicável | DÉLIA Automation/Domain owners | verified business outcome gate | LOCKED |
+| CP-240 | Notification/escalation deriva de estado/outcome verdadeiro e não é usada como prova de sucesso da execução | DÉLIA Notifications/Automation | truthful notification gate | LOCKED |
+| CP-252 | Oportunidade descoberta por Process Intelligence vira candidate/Task/PREPARE com Evidence; nunca cria RPA/automation ativa automaticamente | DÉLIA Process Intelligence/Automation | opportunity governance gate | LOCKED |
+| CP-265 | MCP/A2A tool/agent com write capability passa pela mesma Policy/Decision/idempotency/Outcome verification das Business/External Actions | DÉLIA Interoperability/Policy | delegated write gate | LOCKED |
+| CP-277 | Métrica/semantic rule usada em Decision/Write é versionada e revalidada; mudança material invalida decisão anterior quando aplicável | DÉLIA Semantic Layer/Decision | semantic TOCTOU gate | LOCKED |
+| CP-283 | Artifact Workspace possui artifact version/lifecycle/provenance/ACL e external share/send continua ação governada separada | DÉLIA Artifacts/Work | artifact lifecycle/share gate | LOCKED |
+| CP-290 | Prescriptive output gera alternatives/trade-offs/PREPARE; `recommendation != authorization` e `simulate != apply` | DÉLIA Prescriptive/Decision | prescriptive action separation gate | LOCKED |
 | CP-312 | Usuário/owner autorizado pode criar, inspecionar/listar, pausar, retomar e cancelar Recurring Governed Work persistente com recurrence versionada, timezone IANA, start/end bounds e refs bounded para Work/capabilities/scope/targets | DÉLIA Work/API | recurring-work lifecycle gate | LOCKED |
 | CP-313 | Cada ocorrência agendada é determinística, correlacionada e idempotente; duplicate tick/retry/restart/reconciliation não duplica side effect e misfire/overlap semantics são explícitas | DÉLIA Work/Events/Automation | scheduled-occurrence reliability gate | LOCKED |
 | CP-314 | Cada ocorrência material revalida identity, live Core/domain AuthZ, current Policy/Decision, connection/provider state e source permissions; `schedule != permission` e stored intent nunca vira autorização eterna | DÉLIA Work/Policy/Core/Domain owners | scheduled live-authorization gate | LOCKED |
@@ -299,67 +299,67 @@ C6 habilita Product Work e Watch `OBSERVE|ADVISE|PREPARE` por default. `PREPARE`
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
-| CP-039 | AI-ready SDK/templates | Shared/Portal/Copilot | contracts | LOCKED |
-| CP-040 | Readiness scanner | Copilot Tooling | factual inventory | LOCKED |
-| CP-041 | Coverage dashboard | Copilot Admin/Observability | metrics | LOCKED |
-| CP-042 | Unknown app onboarding | Core/Portal/Copilot | no hardcode | LOCKED |
-| CP-060 | Admin de capabilities/coverage | Copilot Admin | admin RBAC | LOCKED |
-| CP-066 | Iframe Copilot Bridge SDK | Shared/Portal | contract/lifecycle | LOCKED |
+| CP-039 | AI-ready SDK/templates | Shared/Portal/DÉLIA | contracts | LOCKED |
+| CP-040 | Readiness scanner | DÉLIA Tooling | factual inventory | LOCKED |
+| CP-041 | Coverage dashboard | DÉLIA Admin/Observability | metrics | LOCKED |
+| CP-042 | Unknown app onboarding | Core/Portal/DÉLIA | no hardcode | LOCKED |
+| CP-060 | Admin de capabilities/coverage | DÉLIA Admin | admin RBAC | LOCKED |
+| CP-066 | Iframe DÉLIA Bridge SDK | Shared/Portal | contract/lifecycle | LOCKED |
 | CP-067 | Unknown iframe onboarding | Portal/IframeBridge | generalization | LOCKED |
-| CP-084 | Admin/observability packs/playbooks | Copilot Admin | version/eval/audit | LOCKED |
-| CP-096 | Copilot Task persistente | Copilot Work | restart/resume | LOCKED |
-| CP-097 | Copilot Case | Copilot Work/Product | lifecycle/evidence | LOCKED |
-| CP-098 | Evidence Board | Copilot Case | same EvidenceRef | LOCKED |
-| CP-099 | Interaction Room ligada a Case | Copilot + room owner | RBAC/context | TO_INVENTORY |
-| CP-100 | Copilot Inbox | Copilot Work/MFE | lifecycle | LOCKED |
-| CP-101 | Watch por condição/evento | Copilot Work/Events | dedupe/RBAC | LOCKED |
-| CP-102 | Watch OBSERVE | Copilot Work | audit | LOCKED |
-| CP-103 | Watch ADVISE | Copilot Work/AI | grounded alert | LOCKED |
-| CP-114 | Reference Knowledge lifecycle | Copilot Knowledge | owner/version/scope | LOCKED |
-| CP-115 | Decision Knowledge | Copilot Case/Knowledge | provenance/no-CoT | LOCKED |
-| CP-116 | Experience Knowledge | Copilot Case/Knowledge | governed promotion | LOCKED |
-| CP-117 | Solution Pattern lifecycle | Copilot Knowledge/Expertise | review/eval/version | LOCKED |
-| CP-118 | Governed Learning Loop | Copilot Admin | no auto-publish | LOCKED |
-| CP-119 | Expertise Studio lifecycle | Copilot Admin | draft→publish | LOCKED |
-| CP-120 | Expertise/Playbook rollback | Copilot Admin | version/eval | LOCKED |
-| CP-124 | Task Completion metric | Copilot Observability | metric validity | LOCKED |
-| CP-125 | Case resolution learning candidate | Copilot Case/Knowledge | candidate only | LOCKED |
-| CP-126 | Inbox decision→workflow resume | Copilot MFE/Work | correlation | LOCKED |
-| CP-127 | Room summary grounded em Case | Copilot/Room | evidence/RBAC | TO_INVENTORY |
-| CP-165 | Meeting Mode com lifecycle explícito de captura | Copilot MFE/API | explicit start/stop/indicators | LOCKED |
-| CP-166 | Meeting consulta dados reais com permissões do usuário | Copilot API/Domain APIs | meeting read parity | LOCKED |
-| CP-167 | Ata viva distingue transcript/resumo/decisão/action/outcome | Copilot Meeting/Artifact | semantic/evidence gate | LOCKED |
-| CP-169 | Frontline Mode no mesmo MFE/API | Copilot MFE/API | frontline surface parity | LOCKED |
-| CP-170 | Hands-free voice com fallback touch/text | Copilot Frontline | noisy/permission/accessibility tests | LOCKED |
-| CP-172 | Training assistance referencia procedimento/desenho/revisão vigente | Copilot Knowledge/Domain owners | source freshness | LOCKED |
-| CP-173 | Observação de processo gera somente Knowledge/Experience candidate | Copilot Knowledge | candidate provenance | LOCKED |
-| CP-174 | Meeting/frontline candidate exige review/eval antes de virar conhecimento publicado | Copilot Knowledge/Expertise | governed learning | LOCKED |
-| CP-181 | Meeting/Frontline accessibility e large-touch/shared-device UX | Copilot MFE | accessibility/frontline gate | LOCKED |
-| CP-191 | Meeting pode associar face/voz enrolled a participante com confidence/correção | Copilot Meeting/Biometric | participant identity gate | LOCKED |
-| CP-192 | Frontline pode usar biometria para identity assistance sem substituir sessão/RBAC | Copilot Frontline/Biometric | shared-device identity gate | LOCKED |
-| CP-193 | Human Observation analisa somente padrões operacionais observáveis com Evidence/provenance | Copilot Frontline/Knowledge | process observation gate | LOCKED |
-| CP-207 | Provider push/webhook/subscription normaliza para EventEnvelope com authenticity/dedupe/reconciliation | Copilot Connectors/Events | webhook lifecycle gate | LOCKED |
-| CP-208 | External source só vira user/org Knowledge por candidate→review/eval/publish; nunca auto-truth | Copilot Knowledge/Governance | external learning gate | LOCKED |
-| CP-212 | Personal connection data não vira shared Knowledge/Case/Room sem sharing/promotion explícito | Copilot Privacy/Knowledge | personal-data isolation gate | LOCKED |
-| CP-213 | Subscription expiry/missed events/revocation exigem renewal/reconciliation/degraded state truthful | Copilot Connectors/Work | external event reliability gate | LOCKED |
-| CP-218 | Teams change notifications de mensagens/canais/reuniões/transcrições/gravações, quando suportadas, entram por autenticidade→EventEnvelope→dedupe/reconciliation | Copilot Teams/Events | Teams event lifecycle gate | LOCKED |
-| CP-220 | Teams meeting artifacts podem alimentar ata viva, Evidence, Task, Case, Room e Watch sem transformar transcript em decisão/ação automática | Copilot Teams/Meeting/Work | Teams meeting-to-work gate | LOCKED |
+| CP-084 | Admin/observability packs/playbooks | DÉLIA Admin | version/eval/audit | LOCKED |
+| CP-096 | DÉLIA Task persistente | DÉLIA Work | restart/resume | LOCKED |
+| CP-097 | DÉLIA Case | DÉLIA Work/Product | lifecycle/evidence | LOCKED |
+| CP-098 | Evidence Board | DÉLIA Case | same EvidenceRef | LOCKED |
+| CP-099 | Interaction Room ligada a Case | DÉLIA + room owner | RBAC/context | TO_INVENTORY |
+| CP-100 | DÉLIA Inbox | DÉLIA Work/MFE | lifecycle | LOCKED |
+| CP-101 | Watch por condição/evento | DÉLIA Work/Events | dedupe/RBAC | LOCKED |
+| CP-102 | Watch OBSERVE | DÉLIA Work | audit | LOCKED |
+| CP-103 | Watch ADVISE | DÉLIA Work/AI | grounded alert | LOCKED |
+| CP-114 | Reference Knowledge lifecycle | DÉLIA Knowledge | owner/version/scope | LOCKED |
+| CP-115 | Decision Knowledge | DÉLIA Case/Knowledge | provenance/no-CoT | LOCKED |
+| CP-116 | Experience Knowledge | DÉLIA Case/Knowledge | governed promotion | LOCKED |
+| CP-117 | Solution Pattern lifecycle | DÉLIA Knowledge/Expertise | review/eval/version | LOCKED |
+| CP-118 | Governed Learning Loop | DÉLIA Admin | no auto-publish | LOCKED |
+| CP-119 | Expertise Studio lifecycle | DÉLIA Admin | draft→publish | LOCKED |
+| CP-120 | Expertise/Playbook rollback | DÉLIA Admin | version/eval | LOCKED |
+| CP-124 | Task Completion metric | DÉLIA Observability | metric validity | LOCKED |
+| CP-125 | Case resolution learning candidate | DÉLIA Case/Knowledge | candidate only | LOCKED |
+| CP-126 | Inbox decision→workflow resume | DÉLIA MFE/Work | correlation | LOCKED |
+| CP-127 | Room summary grounded em Case | DÉLIA/Room | evidence/RBAC | TO_INVENTORY |
+| CP-165 | Meeting Mode com lifecycle explícito de captura | DÉLIA MFE/API | explicit start/stop/indicators | LOCKED |
+| CP-166 | Meeting consulta dados reais com permissões do usuário | DÉLIA API/Domain APIs | meeting read parity | LOCKED |
+| CP-167 | Ata viva distingue transcript/resumo/decisão/action/outcome | DÉLIA Meeting/Artifact | semantic/evidence gate | LOCKED |
+| CP-169 | Frontline Mode no mesmo MFE/API | DÉLIA MFE/API | frontline surface parity | LOCKED |
+| CP-170 | Hands-free voice com fallback touch/text | DÉLIA Frontline | noisy/permission/accessibility tests | LOCKED |
+| CP-172 | Training assistance referencia procedimento/desenho/revisão vigente | DÉLIA Knowledge/Domain owners | source freshness | LOCKED |
+| CP-173 | Observação de processo gera somente Knowledge/Experience candidate | DÉLIA Knowledge | candidate provenance | LOCKED |
+| CP-174 | Meeting/frontline candidate exige review/eval antes de virar conhecimento publicado | DÉLIA Knowledge/Expertise | governed learning | LOCKED |
+| CP-181 | Meeting/Frontline accessibility e large-touch/shared-device UX | DÉLIA MFE | accessibility/frontline gate | LOCKED |
+| CP-191 | Meeting pode associar face/voz enrolled a participante com confidence/correção | DÉLIA Meeting/Biometric | participant identity gate | LOCKED |
+| CP-192 | Frontline pode usar biometria para identity assistance sem substituir sessão/RBAC | DÉLIA Frontline/Biometric | shared-device identity gate | LOCKED |
+| CP-193 | Human Observation analisa somente padrões operacionais observáveis com Evidence/provenance | DÉLIA Frontline/Knowledge | process observation gate | LOCKED |
+| CP-207 | Provider push/webhook/subscription normaliza para EventEnvelope com authenticity/dedupe/reconciliation | DÉLIA Connectors/Events | webhook lifecycle gate | LOCKED |
+| CP-208 | External source só vira user/org Knowledge por candidate→review/eval/publish; nunca auto-truth | DÉLIA Knowledge/Governance | external learning gate | LOCKED |
+| CP-212 | Personal connection data não vira shared Knowledge/Case/Room sem sharing/promotion explícito | DÉLIA Privacy/Knowledge | personal-data isolation gate | LOCKED |
+| CP-213 | Subscription expiry/missed events/revocation exigem renewal/reconciliation/degraded state truthful | DÉLIA Connectors/Work | external event reliability gate | LOCKED |
+| CP-218 | Teams change notifications de mensagens/canais/reuniões/transcrições/gravações, quando suportadas, entram por autenticidade→EventEnvelope→dedupe/reconciliation | DÉLIA Teams/Events | Teams event lifecycle gate | LOCKED |
+| CP-220 | Teams meeting artifacts podem alimentar ata viva, Evidence, Task, Case, Room e Watch sem transformar transcript em decisão/ação automática | DÉLIA Teams/Meeting/Work | Teams meeting-to-work gate | LOCKED |
 | CP-221 | App/tab/bot da DÉLIA no Teams, quando implementado, usa a mesma DÉLIA API, Core/RBAC, Policy, Evidence e Work runtime; nenhum `teams-copilot-api` paralelo | DÉLIA Teams/MFE/Platform | same-runtime surface gate | LOCKED |
-| CP-224 | Chat privado, canal restrito, transcript e recording do Teams preservam source ACL; não viram shared Knowledge/Case/Room sem autorização/promotion explícita | Copilot Teams/Privacy/Knowledge | Teams private-resource isolation gate | LOCKED |
-| CP-241 | Watch suporta `PREPARE` como estado/mode distinto de `ACT`, permitindo preparar ação sem side effect | Copilot Watch/Work/Policy | prepare-vs-act gate | LOCKED |
-| CP-242 | Automation Hub Admin expõe automations/executions/workers/exceptions, owner/version/executor/status/outcome/evidence sem virar segundo workflow engine | Copilot Automation Admin/MFE/API | admin ownership/observability gate | LOCKED |
-| CP-243 | Event-driven notification/escalation usa recipients/severity/dedupe/SLA/channel policy e pode combinar Minha DELPI/email/Teams/WhatsApp Business | Copilot Notifications/Watch | notification orchestration gate | LOCKED |
-| CP-244 | Manual exception/human-in-the-loop pausa e retoma o mesmo Durable Workflow; não cria processo paralelo sem correlation | Copilot Work/Inbox/Decision | HITL resume gate | LOCKED |
-| CP-253 | Process Intelligence UX expõe process map/variants/bottlenecks/conformance/automation backlog e before-after metrics com Evidence | Copilot Process Intelligence/MFE | process product gate | LOCKED |
-| CP-258 | AI Control Tower oferece inventory/ownership/risk/health/eval/cost/value/incidents/dependencies/kill-switch UX sem conceder business permission | Copilot Control Tower/Admin | control-tower governance gate | LOCKED |
-| CP-266 | MCP/A2A servers/agents possuem lifecycle `DISCOVERED→REVIEWED→APPROVED→ACTIVE→DISABLED/REVOKED` e health/usage no Control Tower | Copilot Interoperability/Control Tower | agent-tool lifecycle gate | LOCKED |
-| CP-271 | Usuário possui controles para inspecionar/corrigir/apagar/desabilitar Personal Memory e recebe briefing personalizado grounded em authorities live | Copilot Memory/MFE | user memory control gate | LOCKED |
-| CP-278 | Semantic Layer possui catalog/admin/lineage/conflict UX; mesma label com definições distintas não é fundida silenciosamente | Copilot Semantic Layer/Admin | semantic governance UX gate | LOCKED |
-| CP-284 | Artifact Workspace suporta draft/review/version/collaboration/attach/export sem sobrescrever silenciosamente edição humana | Copilot Artifacts/MFE/Work | artifact collaboration gate | LOCKED |
-| CP-291 | Operational Twin/Scenario Workspace mantém simulated state separado de production state e permite comparar alternativas com assumptions/Evidence | Copilot Twin/MFE | scenario isolation gate | LOCKED |
-| CP-298 | Frontline Edge suporta modos `ONLINE/DEGRADED/OFFLINE_READ_ONLY/SYNCING`, event buffering idempotente e device/cache admin quando priorizado | Copilot Edge/Frontline | edge offline product gate | LOCKED |
-| CP-305 | Capability Marketplace oferece lifecycle draft/review/approved/published/deprecated/revoked para packs/playbooks/Watches/automations/connectors/MCP/A2A/templates/models | Copilot Marketplace/Admin | marketplace lifecycle gate | LOCKED |
-| CP-306 | Model lifecycle monitora quality/input/calibration drift, latency, availability, cost e correction/outcome metrics conforme model type | Copilot Model Governance/Observability | model drift gate | LOCKED |
+| CP-224 | Chat privado, canal restrito, transcript e recording do Teams preservam source ACL; não viram shared Knowledge/Case/Room sem autorização/promotion explícita | DÉLIA Teams/Privacy/Knowledge | Teams private-resource isolation gate | LOCKED |
+| CP-241 | Watch suporta `PREPARE` como estado/mode distinto de `ACT`, permitindo preparar ação sem side effect | DÉLIA Watch/Work/Policy | prepare-vs-act gate | LOCKED |
+| CP-242 | Automation Hub Admin expõe automations/executions/workers/exceptions, owner/version/executor/status/outcome/evidence sem virar segundo workflow engine | DÉLIA Automation Admin/MFE/API | admin ownership/observability gate | LOCKED |
+| CP-243 | Event-driven notification/escalation usa recipients/severity/dedupe/SLA/channel policy e pode combinar Minha DELPI/email/Teams/WhatsApp Business | DÉLIA Notifications/Watch | notification orchestration gate | LOCKED |
+| CP-244 | Manual exception/human-in-the-loop pausa e retoma o mesmo Durable Workflow; não cria processo paralelo sem correlation | DÉLIA Work/Inbox/Decision | HITL resume gate | LOCKED |
+| CP-253 | Process Intelligence UX expõe process map/variants/bottlenecks/conformance/automation backlog e before-after metrics com Evidence | DÉLIA Process Intelligence/MFE | process product gate | LOCKED |
+| CP-258 | AI Control Tower oferece inventory/ownership/risk/health/eval/cost/value/incidents/dependencies/kill-switch UX sem conceder business permission | DÉLIA Control Tower/Admin | control-tower governance gate | LOCKED |
+| CP-266 | MCP/A2A servers/agents possuem lifecycle `DISCOVERED→REVIEWED→APPROVED→ACTIVE→DISABLED/REVOKED` e health/usage no Control Tower | DÉLIA Interoperability/Control Tower | agent-tool lifecycle gate | LOCKED |
+| CP-271 | Usuário possui controles para inspecionar/corrigir/apagar/desabilitar Personal Memory e recebe briefing personalizado grounded em authorities live | DÉLIA Memory/MFE | user memory control gate | LOCKED |
+| CP-278 | Semantic Layer possui catalog/admin/lineage/conflict UX; mesma label com definições distintas não é fundida silenciosamente | DÉLIA Semantic Layer/Admin | semantic governance UX gate | LOCKED |
+| CP-284 | Artifact Workspace suporta draft/review/version/collaboration/attach/export sem sobrescrever silenciosamente edição humana | DÉLIA Artifacts/MFE/Work | artifact collaboration gate | LOCKED |
+| CP-291 | Operational Twin/Scenario Workspace mantém simulated state separado de production state e permite comparar alternativas com assumptions/Evidence | DÉLIA Twin/MFE | scenario isolation gate | LOCKED |
+| CP-298 | Frontline Edge suporta modos `ONLINE/DEGRADED/OFFLINE_READ_ONLY/SYNCING`, event buffering idempotente e device/cache admin quando priorizado | DÉLIA Edge/Frontline | edge offline product gate | LOCKED |
+| CP-305 | Capability Marketplace oferece lifecycle draft/review/approved/published/deprecated/revoked para packs/playbooks/Watches/automations/connectors/MCP/A2A/templates/models | DÉLIA Marketplace/Admin | marketplace lifecycle gate | LOCKED |
+| CP-306 | Model lifecycle monitora quality/input/calibration drift, latency, availability, cost e correction/outcome metrics conforme model type | DÉLIA Model Governance/Observability | model drift gate | LOCKED |
 | CP-316 | Product UX permite inspecionar Recurring Governed Work com status, recurrence/timezone, next scheduled occurrence quando derivável, last occurrence/outcome e ações governadas pause/resume/cancel, sem transformar schedule admin em permission authority | DÉLIA Work/MFE/Admin | recurring-work product UX gate | LOCKED |
 
 ## 9. C7 — Advanced Autonomy + Advanced Intelligence + Scale/Rollout
@@ -368,39 +368,39 @@ C7 não cria o conceito de ACT. Ele habilita autonomia avançada sobre capabilit
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
-| CP-048 | Autonomia L5 limitada | Copilot Policy/Admin | allowlist/limits/kill switch | LOCKED |
-| CP-049 | Emergency stop | Copilot Admin/Policy | kill switch | LOCKED |
-| CP-050 | Rollout/cohort controls | Platform/Copilot Admin | canary/rollback | LOCKED |
-| CP-052 | TCR/First Plan Success metrics | Copilot Observability | metric validity | LOCKED |
-| CP-104 | Watch ACT | Copilot Policy/Work | autonomous trigger + autonomy/Decision | LOCKED |
-| CP-112 | What-if Simulation | Domain analytics/Copilot | reproducible model | LOCKED |
-| CP-113 | Simulate→Apply separado | Domain API/Copilot Policy | new gate | LOCKED |
-| CP-121 | Model Router | Copilot Infrastructure | quality/cost/latency | LOCKED |
-| CP-122 | Compute Policy | Copilot Policy | provider constraints | LOCKED |
-| CP-129 | Anchor reclamação→8D→Watch→ação | Cross-domain/Copilot | full integration | LOCKED |
-| CP-180 | Advanced realtime media possui budgets/backpressure/degraded mode/cost telemetry | Copilot Media/Infra | realtime reliability gate | LOCKED |
-| CP-222 | Participação Teams ao vivo com raw realtime media só entra após evidence + ADR + tenant/media/privacy/cost/reliability gates; não é requisito do conector base | Copilot Teams/Realtime/Architecture | Teams advanced realtime gate | LOCKED |
-| CP-245 | Autonomy level é resolvido por capability/context/risk/actor/limits/environment; não existe L4/L5 global irrestrito | Copilot Autonomy Policy | capability-scoped autonomy gate | LOCKED |
-| CP-246 | L5 permanece OFF por default e exige allowlist, budgets/limits, kill switch, revalidation e verified Outcome por capability | Copilot Policy/Admin/Automation | autonomous ACT gate | LOCKED |
-| CP-247 | Computer-use/UI automation é fallback avançado sandboxed/allowlisted/auditado e não substitui API/RPA determinístico sem justificativa | Copilot Automation/Security | computer-use boundary gate | LOCKED |
-| CP-248 | Anchor autonomous operation `ready-to-invoice → execute → verify → notify` funciona end-to-end sob policy sem user prompt quando capability L5 estiver explicitamente aprovada | Copilot Automation/Cross-domain | autonomous invoicing anchor gate | LOCKED |
-| CP-254 | Closed-loop process optimization nunca altera processo/policy automaticamente; autonomous ACT exige capability-scoped autonomy e before/after measurement | Copilot Process Intelligence/Automation | process closed-loop gate | LOCKED |
-| CP-259 | AI Control Tower aplica cross-runtime budgets/cohorts/kill switches/rollback e incident containment por asset/capability sem prompt authority | Copilot Control Tower/Governance | mature AI governance gate | LOCKED |
-| CP-267 | Autonomous A2A delegation exige approved agent/capability, bounded goal/context/budget, cancellation, verified result e L5 allowlist quando material | Copilot Interoperability/Autonomy | autonomous delegation gate | LOCKED |
-| CP-272 | Advanced personalization optimization não cria hidden employee score, sensitive inference ou authority; user privacy/control permanece | Copilot Memory/Privacy | personalization optimization gate | LOCKED |
-| CP-279 | Semantic federation/materialization optimization preserva owner/permission/freshness/lineage; cache nunca vira authority | Copilot Semantic Layer/Infrastructure | semantic scale gate | LOCKED |
-| CP-285 | Scaled sandbox pools mantêm isolation/quotas/reproducibility/cleanup e não se tornam general-purpose corporate shell | Copilot Analysis/Infrastructure | sandbox scale gate | LOCKED |
-| CP-286 | Advanced artifact generation/templates permanecem versioned/provenanced e publish/share continua policy-governed | Copilot Artifacts/Marketplace | artifact scale gate | LOCKED |
-| CP-292 | Operational Twin avançado preserva source/freshness e cenário isolado; twin não vira OT/domain master | Copilot Twin/Domain owners | twin authority gate | LOCKED |
-| CP-293 | Predictive/prescriptive output pode acionar ACT somente por explicit Policy/Decision/autonomy e verified Outcome; model output sozinho nunca autoriza | Copilot Predictive/Autonomy | prescriptive autonomy gate | LOCKED |
-| CP-294 | `SIMULATE != APPLY`: qualquer Apply revalida live state/permissions/policy e gera novo action/decision context | Copilot Simulation/Decision | simulate-apply TOCTOU gate | LOCKED |
-| CP-299 | Edge rollout escala por device class/cohort com signed/versioned packages/models, health e rollback | Copilot Edge/Control Tower | edge rollout gate | LOCKED |
-| CP-300 | Offline bounded actions, se existirem, exigem explicit allowlist/expiry/idempotency/reconciliation; perda de cloud nunca amplia authority | Copilot Edge/Policy | offline action gate | LOCKED |
-| CP-301 | Edge revocation/model/package update é rastreável e stale/revoked artifact deixa de ser usado no enforcement point definido | Copilot Edge/Model Governance | edge revocation gate | LOCKED |
-| CP-307 | Production model deployment possui approved environment/cohort/health/rollback/kill switch e revoked model não é selecionável | Copilot Model Governance/Control Tower | model deployment gate | LOCKED |
-| CP-308 | Marketplace publish/enable exige manifest/dependencies/permissions/data scopes/evals/compatibility e não concede RBAC/provider scope sozinho | Copilot Marketplace/Security | marketplace enable gate | LOCKED |
-| CP-309 | Executable/model/connector packages usam supply-chain controls apropriados: trusted publisher, hash/signature when applicable, dependency/license/vulnerability review e revoke path | Copilot Marketplace/Security | AI supply-chain gate | LOCKED |
-| CP-310 | Nenhum Model/Marketplace/MCP/A2A/Edge asset pode ampliar Core/domain/provider authority por instalação, prompt, metadata ou package manifest | Copilot Security/Governance | no asset permission elevation gate | LOCKED |
+| CP-048 | Autonomia L5 limitada | DÉLIA Policy/Admin | allowlist/limits/kill switch | LOCKED |
+| CP-049 | Emergency stop | DÉLIA Admin/Policy | kill switch | LOCKED |
+| CP-050 | Rollout/cohort controls | Platform/DÉLIA Admin | canary/rollback | LOCKED |
+| CP-052 | TCR/First Plan Success metrics | DÉLIA Observability | metric validity | LOCKED |
+| CP-104 | Watch ACT | DÉLIA Policy/Work | autonomous trigger + autonomy/Decision | LOCKED |
+| CP-112 | What-if Simulation | Domain analytics/DÉLIA | reproducible model | LOCKED |
+| CP-113 | Simulate→Apply separado | Domain API/DÉLIA Policy | new gate | LOCKED |
+| CP-121 | Model Router | DÉLIA Infrastructure | quality/cost/latency | LOCKED |
+| CP-122 | Compute Policy | DÉLIA Policy | provider constraints | LOCKED |
+| CP-129 | Anchor reclamação→8D→Watch→ação | Cross-domain/DÉLIA | full integration | LOCKED |
+| CP-180 | Advanced realtime media possui budgets/backpressure/degraded mode/cost telemetry | DÉLIA Media/Infra | realtime reliability gate | LOCKED |
+| CP-222 | Participação Teams ao vivo com raw realtime media só entra após evidence + ADR + tenant/media/privacy/cost/reliability gates; não é requisito do conector base | DÉLIA Teams/Realtime/Architecture | Teams advanced realtime gate | LOCKED |
+| CP-245 | Autonomy level é resolvido por capability/context/risk/actor/limits/environment; não existe L4/L5 global irrestrito | DÉLIA Autonomy Policy | capability-scoped autonomy gate | LOCKED |
+| CP-246 | L5 permanece OFF por default e exige allowlist, budgets/limits, kill switch, revalidation e verified Outcome por capability | DÉLIA Policy/Admin/Automation | autonomous ACT gate | LOCKED |
+| CP-247 | Computer-use/UI automation é fallback avançado sandboxed/allowlisted/auditado e não substitui API/RPA determinístico sem justificativa | DÉLIA Automation/Security | computer-use boundary gate | LOCKED |
+| CP-248 | Anchor autonomous operation `ready-to-invoice → execute → verify → notify` funciona end-to-end sob policy sem user prompt quando capability L5 estiver explicitamente aprovada | DÉLIA Automation/Cross-domain | autonomous invoicing anchor gate | LOCKED |
+| CP-254 | Closed-loop process optimization nunca altera processo/policy automaticamente; autonomous ACT exige capability-scoped autonomy e before/after measurement | DÉLIA Process Intelligence/Automation | process closed-loop gate | LOCKED |
+| CP-259 | AI Control Tower aplica cross-runtime budgets/cohorts/kill switches/rollback e incident containment por asset/capability sem prompt authority | DÉLIA Control Tower/Governance | mature AI governance gate | LOCKED |
+| CP-267 | Autonomous A2A delegation exige approved agent/capability, bounded goal/context/budget, cancellation, verified result e L5 allowlist quando material | DÉLIA Interoperability/Autonomy | autonomous delegation gate | LOCKED |
+| CP-272 | Advanced personalization optimization não cria hidden employee score, sensitive inference ou authority; user privacy/control permanece | DÉLIA Memory/Privacy | personalization optimization gate | LOCKED |
+| CP-279 | Semantic federation/materialization optimization preserva owner/permission/freshness/lineage; cache nunca vira authority | DÉLIA Semantic Layer/Infrastructure | semantic scale gate | LOCKED |
+| CP-285 | Scaled sandbox pools mantêm isolation/quotas/reproducibility/cleanup e não se tornam general-purpose corporate shell | DÉLIA Analysis/Infrastructure | sandbox scale gate | LOCKED |
+| CP-286 | Advanced artifact generation/templates permanecem versioned/provenanced e publish/share continua policy-governed | DÉLIA Artifacts/Marketplace | artifact scale gate | LOCKED |
+| CP-292 | Operational Twin avançado preserva source/freshness e cenário isolado; twin não vira OT/domain master | DÉLIA Twin/Domain owners | twin authority gate | LOCKED |
+| CP-293 | Predictive/prescriptive output pode acionar ACT somente por explicit Policy/Decision/autonomy e verified Outcome; model output sozinho nunca autoriza | DÉLIA Predictive/Autonomy | prescriptive autonomy gate | LOCKED |
+| CP-294 | `SIMULATE != APPLY`: qualquer Apply revalida live state/permissions/policy e gera novo action/decision context | DÉLIA Simulation/Decision | simulate-apply TOCTOU gate | LOCKED |
+| CP-299 | Edge rollout escala por device class/cohort com signed/versioned packages/models, health e rollback | DÉLIA Edge/Control Tower | edge rollout gate | LOCKED |
+| CP-300 | Offline bounded actions, se existirem, exigem explicit allowlist/expiry/idempotency/reconciliation; perda de cloud nunca amplia authority | DÉLIA Edge/Policy | offline action gate | LOCKED |
+| CP-301 | Edge revocation/model/package update é rastreável e stale/revoked artifact deixa de ser usado no enforcement point definido | DÉLIA Edge/Model Governance | edge revocation gate | LOCKED |
+| CP-307 | Production model deployment possui approved environment/cohort/health/rollback/kill switch e revoked model não é selecionável | DÉLIA Model Governance/Control Tower | model deployment gate | LOCKED |
+| CP-308 | Marketplace publish/enable exige manifest/dependencies/permissions/data scopes/evals/compatibility e não concede RBAC/provider scope sozinho | DÉLIA Marketplace/Security | marketplace enable gate | LOCKED |
+| CP-309 | Executable/model/connector packages usam supply-chain controls apropriados: trusted publisher, hash/signature when applicable, dependency/license/vulnerability review e revoke path | DÉLIA Marketplace/Security | AI supply-chain gate | LOCKED |
+| CP-310 | Nenhum Model/Marketplace/MCP/A2A/Edge asset pode ampliar Core/domain/provider authority por instalação, prompt, metadata ou package manifest | DÉLIA Security/Governance | no asset permission elevation gate | LOCKED |
 
 ## 10. Requisitos históricos do Chat — fora do escopo DÉLIA
 
@@ -598,9 +598,45 @@ Naming update ≠ CP PASS ≠ runtime evidence
 C0.S0 = APPROVED
 C0.S1 = APPROVED
 C0.S2_AUTHORIZED = YES
+C0.S2 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C0.S3_AUTHORIZED = NO
 FOUNDATION_FREEZE = NOT APPROVED
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 DÉLIA_RUNTIME_DIFF = NONE
-NEXT = C0.S2 — Authorities / bounded contexts
+NEXT = ARCHITECTURE_REVIEW_C0_S2
+```
+
+## 16. C0.S2 authorities / bounded contexts linkage
+
+Evidence anchors: `17` §§2.3–2.6; ledger §6.24; `16` C0.S2.
+
+| Theme | CP examples (status unchanged) | C0.S2 boundary note |
+|---|---|---|
+| Standalone / Chat independence | CP-141–147, CP-146 | preserved; Chat REFERENCE_ONLY |
+| Core AuthZ | CP-150 | Core effective RBAC; JWT≠final permission |
+| Domain AuthZ | CP-013+ Domain action CPs | Domain final authorization |
+| Evidence | CP-093–095, CP-206 | DÉLIA coordination; Evidence≠SoT |
+| Policy / Decision | CP-110–111, CP-233 | Policy≠Core/Domain AuthZ; PREPARE≠ACT |
+| Work / Durable | CP-105–109 | Work≠executor technical state |
+| Automation separation | CP-227–230 | Hub = technical execution |
+| Recurring Work | CP-311 | definition=DÉLIA; timer=TO_INVENTORY |
+| Process Intelligence | CP-249–251 | MODULE_IN_DELIA; source truth external |
+| Control Tower | CP-256–257 | MODULE_IN_DELIA; ≠planner/permission |
+| Personal Memory | CP-268–269 | ≠Org Knowledge≠AuthZ |
+| Semantic Layer | CP-274–275 | ≠SoT; metric owners retain formula |
+| Sandbox | CP-280–281 | no general shell; runtime TO_INVENTORY |
+| Predictive / Twin | CP-287–288 | prediction≠FACT; simulate≠apply |
+| Edge | CP-295–296 | no DÉLIA Edge runtime; offline≠↑AuthZ |
+| MCP/A2A | CP-262–263 | discovery≠approval |
+| Observability | CP-051, CP-056 | correlation≠authority transfer |
+| Safety / OT | CP-178–179 | DÉLIA≠safety controller |
+| Biometric | CP-183–184 | match≠AuthN/AuthZ |
+
+```text
+C0.S2 documentation evidence ≠ runtime implementation evidence
+No CP promoted to PASS by C0.S2-T1
+No new CP ID invented for "C0.S2"
+NEW_RUNTIME_ABSTRACTIONS = NONE
+SHARED_PRIMITIVES = deferred to C0.S3
 ```

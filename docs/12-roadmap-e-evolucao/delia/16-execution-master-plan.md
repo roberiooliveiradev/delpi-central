@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C0.S2 — Authorities / bounded contexts` (`C0.S0=APPROVED`; `C0.S1=APPROVED`; `C0.S2_AUTHORIZED=YES`; C0 permanece `NOT_STARTED`; `FOUNDATION_FREEZE=NOT APPROVED`; `DÉLIA_RUNTIME_DIFF=NONE`)  
+**Próxima etapa:** `ARCHITECTURE_REVIEW_C0_S2` (`C0.S0=APPROVED`; `C0.S1=APPROVED`; `C0.S2=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C0.S3_AUTHORIZED=NO`; C0 permanece `NOT_STARTED`; `FOUNDATION_FREEZE=NOT APPROVED`; `DÉLIA_RUNTIME_DIFF=NONE`)  
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -318,11 +318,13 @@ Congelar API/MFE/service/container/path/manifest/DB ownership, admin/callback/we
 C0.S0 = APPROVED
 C0.S1 = APPROVED
 C0.S2_AUTHORIZED = YES
+C0.S2 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C0.S3_AUTHORIZED = NO
 FOUNDATION_FREEZE = NOT APPROVED
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 DÉLIA_RUNTIME_DIFF = NONE
-NEXT = C0.S2 — Authorities / bounded contexts
+NEXT = ARCHITECTURE_REVIEW_C0_S2
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -353,6 +355,8 @@ OT safety
 ```
 
 Timer/scheduler físico é boundary de infraestrutura/execution a ser atribuído ao owner provado; não vira owner do Work da DÉLIA nem permission authority.
+
+**C0.S2-T1 (docs):** freeze candidato persistido em `17` §§2.3–2.6 + ledger §6.24. Estado: `CANDIDATE_FOR_ARCHITECTURE_REVIEW`. **Não** aceito; **não** autoriza C0.S3; **não** é `FOUNDATION_FREEZE`; `NEW_RUNTIME_ABSTRACTIONS=NONE`; `DÉLIA_RUNTIME_DIFF=NONE`. Shared primitives permanecem C0.S3.
 
 ## C0.S3 — Shared primitives
 

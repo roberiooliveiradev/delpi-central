@@ -633,9 +633,11 @@ C0 = NOT_STARTED
 C0.S0 = APPROVED
 C0.S1 = APPROVED
 C0.S2_AUTHORIZED = YES
+C0.S2 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C0.S3_AUTHORIZED = NO
 FOUNDATION_FREEZE = NOT APPROVED
 DÉLIA_RUNTIME_DIFF = NONE
-NEXT = C0.S2 — Authorities / bounded contexts
+NEXT = ARCHITECTURE_REVIEW_C0_S2
 ```
 
 Qualquer claim de runtime deve vir do ledger/evidence para o SHA/config avaliados.

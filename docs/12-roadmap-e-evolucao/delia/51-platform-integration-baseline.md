@@ -1585,14 +1585,14 @@ Inventários temáticos C0.S0-A–S estão consolidados em C0.S0-T (§46). Isso 
 C0.S0 = APPROVED
 C0.S0_READINESS (historical T) = SUPERSEDED_BY_ACCEPTED_ARCHITECTURE_REVIEW
 C0 = NOT_STARTED
-C0.S1_AUTHORIZED = YES
-C0.S1 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-NEXT = ARCHITECTURE_REVIEW_C0_S1
+C0.S1 = APPROVED
+C0.S2_AUTHORIZED = YES
+C0.S2 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C0.S3_AUTHORIZED = NO
+NEXT = ARCHITECTURE_REVIEW_C0_S2
 FOUNDATION_FREEZE = NOT ACHIEVED (C0.S7 only)
 DÉLIA_RUNTIME_DIFF = NONE
 CORE_EFFECTIVE_PERMISSIONS = ALIGNED since 633d10d2a
-REVIEW_DECISION = external architecture acceptance over canonical HEAD 41a08ad8c01da53f4400eb3afdfce422ef3392ba
-  (Git evidence of C0.S0-T2 bind ≠ architecture acceptance decision; acceptance has no separate SHA)
 ```
 
 Nenhuma capability, integração ou foundation é promovida a `PASS` apenas por esta documentação.
@@ -1605,10 +1605,12 @@ Nenhuma capability, integração ou foundation é promovida a `PASS` apenas por 
 |---|---|
 | PROGRAM | `PLANNED / NOT_STARTED` (ledger) |
 | C0 | `NOT_STARTED` |
-| C0.S0 | `APPROVED` (Architecture Review acceptance; supersedes T readiness candidate) |
-| C0.S1_AUTHORIZED | `YES` |
-| C0.S1 | `CANDIDATE_FOR_ARCHITECTURE_REVIEW` (naming freeze persisted in C0.S1-T1; not accepted) |
-| NEXT | `ARCHITECTURE_REVIEW_C0_S1` |
+| C0.S0 | `APPROVED` |
+| C0.S1 | `APPROVED` (`ARCHITECTURE_REVIEW_C0_S1`) |
+| C0.S2_AUTHORIZED | `YES` |
+| C0.S2 | `CANDIDATE_FOR_ARCHITECTURE_REVIEW` (authorities/bounded contexts freeze in C0.S2-T1; not accepted) |
+| C0.S3_AUTHORIZED | `NO` |
+| NEXT | `ARCHITECTURE_REVIEW_C0_S2` |
 | FOUNDATION_FREEZE | NOT ACHIEVED |
 | DÉLIA_RUNTIME_DIFF | `NONE` (`minha-delpi-copilot/` = HISTORICAL docs placeholder only; targets = `delia-api/` + `plugins/delia/`) |
 | Unauthorized TARGET→PROVEN promotion | NONE found |
