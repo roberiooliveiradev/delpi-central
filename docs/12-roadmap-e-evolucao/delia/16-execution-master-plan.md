@@ -312,7 +312,7 @@ Congelar API/MFE/service/container/path/manifest/DB ownership, admin/callback/we
 
 **C0.S1-T1 (histórico):** freeze candidato persistido nas authorities (`68`/`50`/`17`/`52`/`21`/`25`/ledger), então `CANDIDATE_FOR_ARCHITECTURE_REVIEW`. Esse estado foi superseded pelo review abaixo; não apagar história.
 
-**C0.S1-T2 — PERSIST_ARCHITECTURE_REVIEW_DECISION:** `ARCHITECTURE_REVIEW_C0_S1` sobre `REVIEWED_HEAD=c822f0e72495256c3459a4b36b9c37a3bba95cbb`, `VERDICT=ACCEPT_WITH_RESIDUAL`, `C0.S1=APPROVED`, `C0.S2_AUTHORIZED=YES`, `BLOCKERS=NONE`. `FOUNDATION_FREEZE=NOT_APPROVED`, `PROGRAM=PLANNED / NOT_STARTED`, `C0=NOT_STARTED`, `DÉLIA_RUNTIME_DIFF=NONE`. Residual de naming/evidence de HEAD é não bloqueante; labels semânticos “Copilot” residuais em `25` são cleanup terminológico não bloqueante. **Nenhuma execução C0.S2 ocorre nesta tarefa.**
+**C0.S1-T2 — PERSIST_ARCHITECTURE_REVIEW_DECISION:** `ARCHITECTURE_REVIEW_C0_S1` sobre `REVIEWED_HEAD=c822f0e72495256c3459a4b36b9c37a3bba95cbb`, `VERDICT=ACCEPT_WITH_RESIDUAL`, `C0.S1=APPROVED`, `C0.S2_AUTHORIZED=YES`, `BLOCKERS=NONE`. `FOUNDATION_FREEZE=NOT APPROVED`, `PROGRAM=PLANNED / NOT_STARTED`, `C0=NOT_STARTED`, `DÉLIA_RUNTIME_DIFF=NONE`. Residual de naming/evidence de HEAD é não bloqueante; labels semânticos “Copilot” residuais em `25` são cleanup terminológico não bloqueante. **Nenhuma execução C0.S2 ocorre nesta tarefa.**
 
 ```text
 C0.S0 = APPROVED
@@ -698,3 +698,5 @@ C0.S0
 → C0.S7 FOUNDATION_FREEZE
 → C1.S1
 ```
+
+Nenhuma capability temática `53–66` precede o Foundation Freeze.
