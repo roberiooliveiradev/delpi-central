@@ -16,6 +16,10 @@ import {
   type VisualMode,
 } from "./cockpitShared";
 import { ProductModelViewer } from "./ProductModelViewer";
+import {
+  usePublicOperationAppointments,
+  type PublicOperationAppointmentsState,
+} from "./usePublicOperationAppointments";
 
 type Props = {
   token: string;
@@ -29,9 +33,8 @@ type Props = {
 };
 
 /**
- * Detalhe da operação com visualização ao lado: PDF do PA e, se houver, 3D do produto da OP.
- *
- * Só apresenta o que a fila publicada já traz — nenhuma consulta nova ao TOTVS.
+ * Detalhe da operação: dados da fila à esquerda; desenho/3D à direita.
+ * «Produzida» / «Pendente» usam a soma apontada da operação (mesma fonte do modal).
  */
 export function OperationDetailPage({
   token,
@@ -45,6 +48,12 @@ export function OperationDetailPage({
 }: Props) {
   const [fullscreen, setFullscreen] = useState(false);
   const [appointmentsOpen, setAppointmentsOpen] = useState(false);
+  const appointments = usePublicOperationAppointments(
+    token,
+    branch,
+    operation.production_order,
+    operation.operation_code,
+  );
   const status = resolveStatus(operation);
   const paCode = operation.pa_product_code?.trim() || "";
   const productCode = operation.product_code?.trim() || "";
@@ -55,6 +64,11 @@ export function OperationDetailPage({
   const drawing = useDrawingObjectUrl(token, branch, paCode || null);
   const glbUrl =
     has3dModel && productCode ? buildPublicProductModelGlbUrl(token, branch, productCode) : null;
+
+  const producedQty = resolveOperationProducedQty(operation, appointments);
+  const pendingQty = resolveOperationPendingQty(operation, producedQty);
+  const appointmentCount =
+    appointments.data?.summary.appointment_count ?? operation.appointment_count ?? 0;
 
   useEffect(() => {
     setMode(canDraw ? "drawing" : "model");
@@ -152,12 +166,27 @@ export function OperationDetailPage({
                 {formatUnit(operation.unit, operation.planned_qty)}
               </Fact>
               <Fact label="Produzida">
-                {formatQty(operation.produced_qty)}{" "}
-                {formatUnit(operation.unit, operation.produced_qty)}
+                {appointments.loading ? (
+                  "…"
+                ) : producedQty == null ? (
+                  "—"
+                ) : (
+                  <>
+                    {formatQty(producedQty)} {formatUnit(operation.unit, producedQty)}
+                    <span className="pcp-pub__fact-sub">apontada nesta operação</span>
+                  </>
+                )}
               </Fact>
               <Fact label="Pendente" emphasis>
-                {formatQty(operation.pending_qty)}{" "}
-                {formatUnit(operation.unit, operation.pending_qty)}
+                {appointments.loading ? (
+                  "…"
+                ) : pendingQty == null ? (
+                  "—"
+                ) : (
+                  <>
+                    {formatQty(pendingQty)} {formatUnit(operation.unit, pendingQty)}
+                  </>
+                )}
               </Fact>
             </dl>
 
@@ -185,9 +214,7 @@ export function OperationDetailPage({
                 onClick={() => setAppointmentsOpen(true)}
               >
                 Ver apontamentos
-                {(operation.appointment_count ?? 0) > 0
-                  ? ` (${operation.appointment_count})`
-                  : ""}
+                {appointmentCount > 0 ? ` (${appointmentCount})` : ""}
               </button>
             </div>
           </div>
@@ -262,24 +289,53 @@ export function OperationDetailPage({
       ) : null}
 
       {appointmentsOpen ? (
-        <AppointmentsModal operation={operation} onClose={() => setAppointmentsOpen(false)} />
+        <AppointmentsModal
+          operation={operation}
+          appointments={appointments}
+          onClose={() => setAppointmentsOpen(false)}
+        />
       ) : null}
     </section>
   );
 }
 
+/** Soma apontada nesta operação (não C2_QUJE da OP).
+ *
+ * A API já devolve o total da operação; o histórico da janela só cobre snapshot
+ * antigo, publicado antes do campo existir. */
+function resolveOperationProducedQty(
+  operation: MachineLoadOperation,
+  appointments: PublicOperationAppointmentsState,
+): number | null {
+  const fromApi = operation.operation_produced_qty;
+  if (typeof fromApi === "number" && Number.isFinite(fromApi)) return fromApi;
+  if (appointments.loading) return null;
+  if (appointments.data) {
+    return appointments.data.summary.produced_qty ?? 0;
+  }
+  // Falha do histórico: não mascara com C2_QUJE (outra grandeza).
+  return null;
+}
+
+function resolveOperationPendingQty(
+  operation: MachineLoadOperation,
+  producedQty: number | null,
+): number | null {
+  const fromApi = operation.operation_pending_qty;
+  if (typeof fromApi === "number" && Number.isFinite(fromApi)) return fromApi;
+  if (producedQty == null || !Number.isFinite(operation.planned_qty)) return null;
+  return Math.max(0, Math.round((operation.planned_qty - producedQty) * 1000) / 1000);
+}
+
 function AppointmentsModal({
   operation,
+  appointments,
   onClose,
 }: {
   operation: MachineLoadOperation;
+  appointments: PublicOperationAppointmentsState;
   onClose: () => void;
 }) {
-  const operatorName = operation.active_operator_name?.trim() || null;
-  const appointmentCount = operation.appointment_count ?? 0;
-  const activeCount = operation.active_operator_count ?? 0;
-  const unit = formatUnit(operation.unit, operation.produced_qty);
-
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
@@ -287,6 +343,11 @@ function AppointmentsModal({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  const { data: payload, loading, error } = appointments;
+  const items = payload?.items ?? [];
+  const count = payload?.summary.appointment_count ?? operation.appointment_count ?? 0;
+  const totalQty = payload?.summary.produced_qty ?? null;
 
   return (
     <div
@@ -296,7 +357,7 @@ function AppointmentsModal({
       aria-labelledby="pcp-pub-appointments-title"
     >
       <button type="button" className="pcp-pub-modal__backdrop" aria-label="Fechar" onClick={onClose} />
-      <div className="pcp-pub-modal__panel">
+      <div className="pcp-pub-modal__panel pcp-pub-modal__panel--appointments">
         <header className="pcp-pub-modal__head">
           <h2 id="pcp-pub-appointments-title">Apontamentos</h2>
           <button type="button" className="pcp-pub__ghost pcp-pub__ghost--plain" onClick={onClose}>
@@ -305,42 +366,72 @@ function AppointmentsModal({
         </header>
 
         <dl className="pcp-pub__facts pcp-pub__facts--num">
-          <Fact label="Registrados">{appointmentCount}</Fact>
+          <Fact label="Registrados">{loading ? "…" : count}</Fact>
+          <Fact label="Total apontado">
+            {loading
+              ? "…"
+              : totalQty == null
+                ? "—"
+                : `${formatQty(totalQty)} ${formatUnit(operation.unit, totalQty)}`}
+          </Fact>
           <Fact label="Último">
             {operation.last_appointment_date
               ? formatDateTime(operation.last_appointment_date)
-              : "—"}
+              : items[0]?.produced_on
+                ? formatAppointmentWhen(items[0].produced_on, items[0].start_time)
+                : "—"}
           </Fact>
-          <Fact label="Operadores ativos">{activeCount}</Fact>
         </dl>
 
-        <h3 className="pcp-pub__detail-section">Quem apontou</h3>
-        {operatorName ? (
-          <ul className="pcp-pub-modal__operators">
-            <li className="pcp-pub-modal__operator">
-              <span className="pcp-pub-modal__operator-name">{operatorName}</span>
-              <span className="pcp-pub-modal__operator-qty">
-                {formatQty(operation.produced_qty)} {unit}
-                <span className="pcp-pub__fact-sub">produzida na OP</span>
-              </span>
-              {activeCount > 1 ? (
-                <span className="pcp-pub__fact-sub">
-                  +{activeCount - 1} operador(es) ativo(s) no coletor
-                </span>
-              ) : null}
-            </li>
-          </ul>
-        ) : appointmentCount > 0 ? (
-          <p className="pcp-pub-modal__empty">
-            Há {appointmentCount} apontamento(s) registrado(s), mas nenhum operador ativo agora.
-            Quantidade produzida: {formatQty(operation.produced_qty)} {unit}.
-          </p>
+        {loading ? (
+          <p className="pcp-pub-modal__empty">Carregando apontamentos…</p>
+        ) : error ? (
+          <p className="pcp-pub-modal__empty">{error}</p>
+        ) : items.length > 0 ? (
+          <div className="pcp-pub-modal__table-wrap">
+            <table className="pcp-pub-modal__table">
+              <thead>
+                <tr>
+                  <th scope="col">Data</th>
+                  <th scope="col">Quantidade</th>
+                  <th scope="col">Posto</th>
+                  <th scope="col">Operador</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((row, index) => {
+                  const qty = row.quantity;
+                  return (
+                    <tr key={`${row.produced_on}-${row.start_time}-${row.work_center}-${index}`}>
+                      <td>{formatAppointmentWhen(row.produced_on, row.start_time)}</td>
+                      <td className="pcp-pub__num">
+                        {qty == null
+                          ? "—"
+                          : `${formatQty(qty)} ${formatUnit(row.unit ?? operation.unit, qty)}`}
+                      </td>
+                      <td>{row.work_center?.trim() || "—"}</td>
+                      <td>{row.operator_name?.trim() || "—"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <p className="pcp-pub-modal__empty">Nenhum apontamento registrado nesta operação.</p>
         )}
       </div>
     </div>
   );
+}
+
+function formatAppointmentWhen(date: string | null, time: string | null): string {
+  const day = formatDate(date);
+  const clock = (time || "").trim().slice(0, 5);
+  if (day === "—" && !clock) return "—";
+  if (!clock) return day;
+  if (day === "—") return clock;
+  return `${day}, ${clock}`;
 }
 
 function Fact({

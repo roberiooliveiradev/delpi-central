@@ -44,3 +44,12 @@ class MachineLoadRepositoryPort(ABC):
         production_orders: list[str],
     ) -> list[dict[str, Any]]:
         ...
+
+    @abstractmethod
+    def get_operation_produced_qty(
+        self,
+        *,
+        branch: str,
+        production_orders: list[str],
+    ) -> list[dict[str, Any]]:
+        ...

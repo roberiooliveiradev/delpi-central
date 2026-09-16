@@ -24,6 +24,15 @@ from app.domain.totvs.protheus_operation_appointments import (
 )
 
 
+def _optional_float(value: Any) -> float | None:
+    if value is None or value == "":
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
 class GetProductionMachineLoadWorkCentersUseCase:
     def __init__(self, repository: MachineLoadRepositoryPort) -> None:
         self._repository = repository
@@ -94,14 +103,20 @@ class GetProductionMachineLoadAppointmentStatusUseCase:
             for row in rows
         ]
         order_codes = sorted({order for order, _operation in keys if order})
-        # O encerramento entra antes do mapeamento: é ele que derruba o
+        # Encerramento e saldo da OP entram antes do mapeamento: derrubam o
         # apontamento aberto que o operador esqueceu no coletor.
-        finished_by_order = self._finished_orders_by_code(
+        order_flags = self._order_flags_by_code(
             branch=branch, production_orders=order_codes
+        )
+        # Saldo da própria operação (SH6): o do cabeçalho não distingue bancada.
+        produced_by_operation = self._produced_by_operation(
+            branch=branch, production_orders=order_codes, keys=keys
         )
 
         mapped = MachineLoadAppointmentStatusMapper.map_rows(
-            rows, finished_by_order=finished_by_order
+            rows,
+            finished_by_order=order_flags,
+            produced_by_operation=produced_by_operation,
         )
         by_key = {
             (item["production_order"], item["operation_code"]): item for item in mapped
@@ -113,7 +128,7 @@ class GetProductionMachineLoadAppointmentStatusUseCase:
             if hit is not None:
                 result_items.append(dict(hit))
                 continue
-            finish = finished_by_order.get(order)
+            flags = order_flags.get(order) or {}
             result_items.append(
                 MachineLoadAppointmentStatusMapper.map_row(
                     {
@@ -121,8 +136,13 @@ class GetProductionMachineLoadAppointmentStatusUseCase:
                         "production_order": order,
                         "operation_code": operation,
                     },
-                    order_is_finished=finish is not None,
-                    order_finish_date=(finish or {}).get("finish_date"),
+                    order_is_finished=bool(flags.get("is_finished")),
+                    order_finish_date=flags.get("finish_date"),
+                    planned_qty=flags.get("planned_qty"),
+                    pending_qty=flags.get("pending_qty"),
+                    operation_produced_qty=produced_by_operation.get(
+                        (order, operation)
+                    ),
                 )
             )
 
@@ -137,7 +157,44 @@ class GetProductionMachineLoadAppointmentStatusUseCase:
             },
         }
 
-    def _finished_orders_by_code(
+    def _produced_by_operation(
+        self,
+        *,
+        branch: str,
+        production_orders: list[str],
+        keys: list[tuple[str, str]],
+    ) -> dict[tuple[str, str], float]:
+        """Produzido por OP+operação; operação coberta sem apontamento vale 0.
+
+        Ausência de linha na SH6 para uma OP consultada significa «nada apontado
+        nesta operação», não «saldo desconhecido» — só OP fora da consulta fica
+        sem entrada e cai no saldo do cabeçalho.
+        """
+        if not production_orders or not hasattr(
+            self._repository, "get_operation_produced_qty"
+        ):
+            return {}
+        rows = self._repository.get_operation_produced_qty(
+            branch=branch, production_orders=production_orders
+        )
+        covered = {str(order or "").strip() for order in production_orders}
+        produced: dict[tuple[str, str], float] = {
+            (order, operation): 0.0 for order, operation in keys if order in covered
+        }
+        for row in rows:
+            order = str(row.get("production_order") or "").strip()
+            operation = str(row.get("operation_code") or "").strip()
+            if not order or not operation:
+                continue
+            try:
+                produced[(order, operation)] = float(
+                    row.get("operation_produced_qty") or 0
+                )
+            except (TypeError, ValueError):
+                continue
+        return produced
+
+    def _order_flags_by_code(
         self, *, branch: str, production_orders: list[str]
     ) -> dict[str, dict[str, Any]]:
         if not production_orders or not hasattr(
@@ -153,15 +210,18 @@ class GetProductionMachineLoadAppointmentStatusUseCase:
             if not order:
                 continue
             is_finished = int(float(row.get("is_finished") or 0)) > 0
-            if not is_finished:
-                continue
             finish_raw = row.get("finish_date")
             finish_date = None
-            if finish_raw is not None and str(finish_raw).strip():
+            if is_finished and finish_raw is not None and str(finish_raw).strip():
                 text = str(finish_raw).strip()
                 if text.isdigit() and len(text) == 8:
                     finish_date = f"{text[0:4]}-{text[4:6]}-{text[6:8]}"
                 else:
                     finish_date = text[:10]
-            out[order] = {"finish_date": finish_date}
+            out[order] = {
+                "is_finished": is_finished,
+                "finish_date": finish_date,
+                "planned_qty": _optional_float(row.get("planned_qty")),
+                "pending_qty": _optional_float(row.get("pending_qty")),
+            }
         return out

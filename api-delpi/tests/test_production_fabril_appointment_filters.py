@@ -43,6 +43,21 @@ def test_build_fabril_view_filters_requires_ok_and_excludes_work_centers() -> No
         assert excluded in params
 
 
+def test_build_fabril_view_filters_can_include_excluded_work_centers() -> None:
+    """Saldo de OP (cockpit) precisa de CT-00; KPI de eficiência não."""
+    where, params = build_fabril_view_filters(
+        date_start=date(2026, 5, 1),
+        date_end=date(2026, 5, 31),
+        branch="01",
+        status_ok_only=True,
+        include_excluded_work_centers=True,
+    )
+
+    for excluded in EXCLUDED_WORK_CENTERS:
+        assert excluded not in params
+    assert "CENTRO_TRABALHO" not in where or "<> ?" not in where
+
+
 def test_build_fabril_view_filters_caps_efficiency_for_kpi() -> None:
     settings = EficienciaFabrilQuerySettings()
     where, params = build_fabril_view_filters(

@@ -20,6 +20,7 @@ import {
   formatUnit,
   isFinishedOperation,
   operationKey,
+  operationPendingQty,
   resolveStatus,
 } from "./cockpitShared";
 import { OperationDetailPage } from "./OperationDetailPage";
@@ -717,6 +718,7 @@ function ActiveNowCard({
 }) {
   const { operation, position } = entry;
   const status = resolveStatus(operation);
+  const pendingQty = operationPendingQty(operation);
   const { paCode, productCode, has3dModel, canOpenVisual, visualLabel, displayProductCode } =
     resolveVisualMeta(operation);
 
@@ -767,7 +769,7 @@ function ActiveNowCard({
           <div className="pcp-pub__now-qty" aria-label="Quantidade pendente">
             <span className="pcp-pub__now-qty-label">Quantidade pendente</span>
             <strong className="pcp-pub__now-qty-value">
-              {formatQty(operation.pending_qty)} {formatUnit(operation.unit, operation.pending_qty)}
+              {formatQty(pendingQty)} {formatUnit(operation.unit, pendingQty)}
             </strong>
           </div>
         </div>
@@ -847,6 +849,7 @@ function UpcomingRow({
 }) {
   const { operation, position } = entry;
   const status = resolveStatus(operation);
+  const pendingQty = operationPendingQty(operation);
   const { paCode, displayProductCode } = resolveVisualMeta(operation);
   const seqLabel = String(position).padStart(2, "0");
 
@@ -884,7 +887,7 @@ function UpcomingRow({
         </div>
       </td>
       <td className="pcp-pub__num">
-        {formatQty(operation.pending_qty)} {formatUnit(operation.unit, operation.pending_qty)}
+        {formatQty(pendingQty)} {formatUnit(operation.unit, pendingQty)}
       </td>
       <td className="pcp-pub__num">
         <div className="pcp-pub__queue-op-meta">

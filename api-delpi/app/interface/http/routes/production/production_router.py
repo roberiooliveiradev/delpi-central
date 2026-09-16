@@ -676,6 +676,13 @@ def get_eficiencia_fabril_appointments(
     work_center: str | None = Query(default=None),
     status_ok_only: bool = Query(default=False),
     shift: str | None = FACTORY_SHIFT_QUERY(),
+    include_excluded_work_centers: bool = Query(
+        default=False,
+        description=(
+            "Quando true, inclui CTs irregulares (ex.: CT-00) excluídos dos KPIs de eficiência. "
+            "Use para saldo/abatimento de OP."
+        ),
+    ),
 ):
     start_date, end_date = resolve_period_dates(
         start_date=start_date,
@@ -694,6 +701,7 @@ def get_eficiencia_fabril_appointments(
             work_center=work_center,
             status_ok_only=status_ok_only,
             shift=shift,
+            include_excluded_work_centers=include_excluded_work_centers,
         )
 
         return api_delpi_success(

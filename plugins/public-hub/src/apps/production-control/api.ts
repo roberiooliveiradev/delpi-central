@@ -29,7 +29,12 @@ export type MachineLoadOperation = {
   unit: string | null;
   planned_qty: number;
   produced_qty: number;
+  /** Saldo do cabeçalho da OP (C2_QUANT − C2_QUJE) — igual em todas as operações. */
   pending_qty: number;
+  /** Apontado na própria operação (SH6010); ausente em snapshot antigo. */
+  operation_produced_qty?: number | null;
+  /** Saldo da própria bancada; é ele que o operador precisa ver. */
+  operation_pending_qty?: number | null;
   pa_product_code: string | null;
   pa_product_description: string | null;
   pa_due_date: string | null;
@@ -235,6 +240,53 @@ export async function fetchPublicWorkCenterPerformance(
   const envelope = (await response.json()) as ApiEnvelope<PublicWorkCenterPerformance>;
   if (envelope.success === false || !envelope.data) {
     throw new Error(envelope.message || "Desempenho do posto indisponível.");
+  }
+  return envelope.data;
+}
+
+export type PublicOperationAppointment = {
+  produced_on: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  quantity: number | null;
+  unit: string | null;
+  work_center: string | null;
+  operator_name: string | null;
+};
+
+export type PublicOperationAppointments = {
+  branch: string;
+  production_order: string;
+  operation_code: string;
+  period: { start_date: string; end_date: string };
+  items: PublicOperationAppointment[];
+  summary: {
+    appointment_count: number;
+    produced_qty: number | null;
+  };
+};
+
+export async function fetchPublicOperationAppointments(
+  token: string,
+  branch: string,
+  productionOrder: string,
+  operationCode: string,
+): Promise<PublicOperationAppointments> {
+  const params = new URLSearchParams({
+    branch,
+    productionOrder,
+    operationCode,
+  });
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/operations/appointments?${params}`,
+    { headers: { Accept: "application/json" } },
+  );
+  if (!response.ok) {
+    throw new Error(await readError(response, "Apontamentos indisponíveis."));
+  }
+  const envelope = (await response.json()) as ApiEnvelope<PublicOperationAppointments>;
+  if (envelope.success === false || !envelope.data) {
+    throw new Error(envelope.message || "Apontamentos indisponíveis.");
   }
   return envelope.data;
 }

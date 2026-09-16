@@ -3,9 +3,29 @@ import type { ReactNode } from "react";
 import {
   buildPublicProductModelGlbUrl,
   fetchPublicDrawingPdf,
-  type MachineLoadOperation,
 } from "./api";
+import {
+  formatQty,
+  formatUnit,
+  hasExhaustedOperationBalance,
+  isFinishedOperation,
+  operationKey,
+  operationPendingQty,
+  resolveStatus,
+  type StatusView,
+} from "./cockpitStatus";
 import { ProductModelViewer } from "./ProductModelViewer";
+
+export {
+  formatQty,
+  formatUnit,
+  hasExhaustedOperationBalance,
+  isFinishedOperation,
+  operationKey,
+  operationPendingQty,
+  resolveStatus,
+};
+export type { StatusView };
 
 /** Faixa de marca fixa no topo — identidade DELPI e posto em destaque para leitura à distância. */
 export function BrandBar({
@@ -293,71 +313,6 @@ function legacyCopy(value: string): boolean {
   }
   document.body.removeChild(field);
   return ok;
-}
-
-export type StatusView = {
-  tone: "running" | "done" | "queued";
-  label: string;
-  operatorNote: string | null;
-};
-
-export function resolveStatus(operation: MachineLoadOperation): StatusView {
-  const operator = operation.active_operator_name?.trim() || null;
-  if (operation.is_in_production || operation.production_status === "in_progress") {
-    return {
-      tone: "running",
-      label: "Em produção",
-      operatorNote: operator
-        ? `Operador ${operator}${
-            operation.production_started_time ? ` · desde ${operation.production_started_time}` : ""
-          }`
-        : null,
-    };
-  }
-  if (operation.production_status === "started") {
-    return {
-      tone: "done",
-      label: "Já apontada",
-      operatorNote: operator ? `Último apontamento: ${operator}` : null,
-    };
-  }
-  return { tone: "queued", label: "Na fila", operatorNote: null };
-}
-
-/** Já apontada e não rodando — candidata a sumir no «Limpar fila» do cockpit. */
-export function isFinishedOperation(operation: MachineLoadOperation): boolean {
-  if (operation.is_in_production) return false;
-  return operation.production_status === "started";
-}
-
-/** Chave estável de uma operação na fila — usada como id de navegação e como key do React. */
-export function operationKey(operation: MachineLoadOperation): string {
-  return `${operation.production_order}::${operation.operation_code}`;
-}
-
-export function formatQty(value: number | null | undefined): string {
-  if (value === null || value === undefined || !Number.isFinite(value)) return "—";
-  return value.toLocaleString("pt-BR", {
-    minimumFractionDigits: 3,
-    maximumFractionDigits: 3,
-  });
-}
-
-/** Unidade de chão de fábrica: TOTVS envia MI (milheiro); o operador lê como peça.
- * Plural «PÇS» por padrão; singular «PÇ» só quando a quantidade é exatamente 0,001. */
-export function formatUnit(unit: string | null, quantity?: number | null): string {
-  const cleaned = (unit ?? "").trim();
-  const isPiece = !cleaned || cleaned.toUpperCase() === "MI";
-  if (!isPiece) return cleaned;
-  if (
-    quantity !== null &&
-    quantity !== undefined &&
-    Number.isFinite(quantity) &&
-    Math.abs(quantity - 0.001) < 1e-9
-  ) {
-    return "PÇ";
-  }
-  return "PÇS";
 }
 
 export function formatDate(value: string | null): string {

@@ -13,5 +13,6 @@ class GetEficienciaFabrilDashboardRequest:
     work_center: Optional[str] = None
     cost_center: Optional[str] = None
     status_ok_only: bool = True
+    include_excluded_work_centers: bool = False
     page: int = 1
     page_size: int = 50

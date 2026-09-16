@@ -509,6 +509,8 @@ export type MachineLoadOperation = {
   unit: string | null;
   planned_qty: number;
   pending_qty: number;
+  operation_produced_qty?: number | null;
+  operation_pending_qty?: number | null;
   pa_due_date: string | null;
   pa_product_code: string | null;
   production_status: ProductionStatus;
@@ -536,6 +538,8 @@ export type MachineLoadStatusFields = Pick<
   | "active_operator_count"
   | "appointment_count"
   | "last_appointment_date"
+  | "operation_produced_qty"
+  | "operation_pending_qty"
 >;
 
 /** Só as operações com apontamento; as ausentes mantêm o valor congelado. */
