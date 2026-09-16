@@ -1,5 +1,5 @@
 ---
-description: OpenAI Workspace Agents / Agent Studio — app/MCP auth por usuário, authority boundaries, memória, canais, publicação, preview e expansão governada de capabilities
+description: OpenAI Workspace Agents / Agent Studio / DAVI — app/MCP auth por usuário, authority boundaries, memória, canais, publicação, preview e expansão governada de capabilities
 alwaysApply: false
 ---
 
@@ -28,6 +28,9 @@ Workspace Agent
 Agent Studio
 ChatGPT Agent
 agente do workspace
+DAVI Agent
+DAVI capability
+ampliar capacidades do DAVI
 agent-owned account
 end-user account
 Conta do usuário final
@@ -457,7 +460,7 @@ Vendor UI/docs can change; dates and provider limitations belong in evidence/doc
 
 ## Reference implementation — DAVI
 
-Read before changing DAVI Agent behavior:
+Read before changing DAVI Agent behavior **or expanding DAVI capabilities**:
 
 - `api-delpi/docs/integrations/openai-workspace-agent-davi.md`
 - `api-delpi/docs/integrations/openai-plugin-mcp.md`
