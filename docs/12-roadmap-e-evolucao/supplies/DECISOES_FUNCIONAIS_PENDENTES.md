@@ -1,6 +1,6 @@
 # DECISOES_FUNCIONAIS_PENDENTES — Portal Suprimentos
 
-> Revisado em 2026-09-10. Este arquivo contém apenas decisões que o repositório ainda não responde. Hipótese não vira receita executável.
+> Revisado em 2026-09-16. Este arquivo contém apenas decisões que o repositório ainda não responde. Hipótese não vira receita executável.
 
 | ID | Pergunta | Impacto | Estado atual | Próxima decisão |
 |---|---|---|---|---|
@@ -31,6 +31,8 @@
 - MFE fala somente com `supplies-api`.
 - `/me/apps` (`apps[].routes`) é a superfície vigente para apps/rotas autorizadas; não criar dependência em `/me/routes`.
 - Páginas generalistas seguem linguagem visual Comercial por `@delpi/plugin-ui`, sem copiar CSS/componentes.
+- **Tabelas do Portal Comercial são referência de UX, não contrato automático para Suprimentos.** A paridade tabular será feita por capacidade comprovada, priorizando `@delpi/plugin-ui`; ordenação, colunas, preferências, densidade, paginação, responsividade, tema e teclado/foco são candidatas a padrão compartilhado, enquanto `Cards`, `Board`, alternâncias de unidade de domínio e outras funções específicas permanecem opt-in por jornada. Ver `TABLE-UX-PARITY.md`.
+- A frente de paridade de tabela é transversal e **não altera a fila page-by-page nem autoriza página futura**; o inventário `Comercial × plugin-ui × Suprimentos` deve ocorrer quando uma superfície tabular for promovida.
 - Help acompanha cada feature user-facing.
 - Uma página user-facing por vez até GATE-FEATURE fechado.
 
