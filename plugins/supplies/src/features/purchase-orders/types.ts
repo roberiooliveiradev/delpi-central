@@ -43,12 +43,29 @@ export type PurchaseOrderDetail = {
   items: PurchaseOrderDetailItem[];
 };
 
+export type PurchaseOrderListSummary = {
+  total_lines: number;
+  total_open_value: number;
+  late_lines: number;
+  on_time_lines: number;
+  no_date_lines: number;
+};
+
 export type PurchaseOrderListResponse = {
   items: PurchaseOrderListItem[];
   page: number;
   page_size: number;
   total: number;
   total_pages?: number;
+  summary?: PurchaseOrderListSummary;
+};
+
+export const EMPTY_PURCHASE_ORDER_SUMMARY: PurchaseOrderListSummary = {
+  total_lines: 0,
+  total_open_value: 0,
+  late_lines: 0,
+  on_time_lines: 0,
+  no_date_lines: 0,
 };
 
 export type PurchaseOrdersQuery = {

@@ -183,10 +183,10 @@ Matriz após execução Phase 1 (não declara paridade total):
 
 | Capability | Purchase Requests | Purchase Orders |
 |---|---|---|
-| Hero highlights / KPI | BLOCKED_BY_CONTRACT | BLOCKED_BY_CONTRACT |
+| Hero highlights / KPI | BLOCKED_BY_CONTRACT | IMPLEMENTED (`summary`) |
 | Freshness + Refresh | IMPLEMENTED | IMPLEMENTED |
-| Attention chips | NOT_APPLICABLE | IMPLEMENTED (sem counters) |
-| Chip counters | BLOCKED_BY_CONTRACT | BLOCKED_BY_CONTRACT |
+| Attention chips | NOT_APPLICABLE | IMPLEMENTED |
+| Chip counters | BLOCKED_BY_CONTRACT | IMPLEMENTED (`summary.total_lines` / `late_lines`) |
 | Concentrate / 2º chip group | PRODUCT_DECISION | PRODUCT_DECISION |
 | Filter title/icon + Mais filtros | IMPLEMENTED | IMPLEMENTED |
 | Conditional Clear | IMPLEMENTED | IMPLEMENTED |
@@ -226,7 +226,7 @@ Mesmo padrão visual/funcional nas duas jornadas tabulares (sem paridade total c
 | Mobile horizontal scroll | IMPLEMENTED | IMPLEMENTED | `delpi-ui-table-wrap` + `sp-list-table-region` |
 | Export | capability + CSV | BLOCKED_BY_CONTRACT | — |
 | Sort | BLOCKED_BY_CONTRACT | BLOCKED_BY_CONTRACT | sem contrato server-side |
-| Attention chips | N/A (domínio) | Todos/Atrasados | justificado |
+| Attention chips | N/A (domínio) | Todos(N)/Atrasados(N) via `summary` | justificado |
 | Cards/Board | OUT_OF_SCOPE | OUT_OF_SCOPE | — |
 
 Diferenças justificadas: chips Atenção e campos de filtro são semântica de domínio; export só em Solicitações (capability existente).

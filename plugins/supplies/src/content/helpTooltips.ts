@@ -99,7 +99,7 @@ export const SP_HELP = {
   purchaseRequestsEntityLink:
     "O número da SC abre o detalhe na mesma página (URL com request). Você também pode clicar na linha.",
   purchaseOrders:
-    "Pedidos de compra em aberto (saldo a receber). Não é o painel OTD de pontualidade — esse fica na analytics. Clique no PC ou na linha para abrir a ficha.",
+    "Pedidos de compra em aberto (saldo a receber). O hero mostra linhas em aberto, valor em aberto e atrasadas do mesmo recorte dos filtros (exceto o chip Atrasados). Não é o painel OTD de pontualidade — esse fica na analytics. Clique no PC ou na linha para abrir a ficha.",
   purchaseOrdersBranch:
     "Filial do recorte (ex.: Santa Catarina (01)). Só unidades liberadas na sessão; a API reforça o escopo de unidade.",
   purchaseOrdersNumber: "Filtra pelo número do pedido de compra.",
@@ -108,9 +108,9 @@ export const SP_HELP = {
   purchaseOrdersDelivery:
     "Recorte pela data prometida de entrega (em Mais filtros). O chip «Atrasados» em Atenção filtra linhas com prometida anterior a hoje.",
   purchaseOrdersAttention:
-    "Todos mostra o recorte completo dos filtros; Atrasados restringe às linhas com entrega prometida vencida. A URL guarda late_only para compartilhar ou atualizar (F5).",
+    "Todos (N) e Atrasados (N) usam o resumo do servidor no mesmo recorte de filtros; alternar o chip não muda os contadores. A URL guarda late_only para compartilhar ou atualizar (F5).",
   purchaseOrdersRefresh:
-    "Recarrega a lista com os mesmos filtros. O horário é da última consulta bem-sucedida nesta tela, não do TOTVS.",
+    "Recarrega a lista e o resumo com os mesmos filtros. O horário é da última consulta bem-sucedida nesta tela, não do TOTVS.",
   purchaseOrdersFilters:
     "Filtros aplicam automaticamente. Texto confirma após um instante ou com Enter. Mais filtros revela as datas de entrega. Limpar só aparece quando há filtro além do padrão (filial default não conta sozinha).",
   purchaseOrdersTableFontSize:

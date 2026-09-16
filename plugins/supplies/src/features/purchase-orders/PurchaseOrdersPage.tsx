@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
 
 import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
@@ -27,10 +27,15 @@ import { PurchaseOrdersListTable } from "./PurchaseOrdersListTable";
 import {
   buildUrlSearch,
   createDefaultQuery,
+  formatMoneyBr,
   parseOrderKey,
   parseQueryFromSearch,
 } from "./query";
-import type { PurchaseOrderListItem, PurchaseOrdersQuery } from "./types";
+import type {
+  PurchaseOrderListItem,
+  PurchaseOrderListSummary,
+  PurchaseOrdersQuery,
+} from "./types";
 
 type PurchaseOrdersPageProps = {
   basePath: string;
@@ -56,6 +61,18 @@ function formatUpdatedAt(value: Date): string {
   });
 }
 
+function isPurchaseOrderSummary(value: unknown): value is PurchaseOrderListSummary {
+  if (!value || typeof value !== "object") return false;
+  const row = value as Record<string, unknown>;
+  return (
+    typeof row.total_lines === "number" &&
+    typeof row.total_open_value === "number" &&
+    typeof row.late_lines === "number" &&
+    typeof row.on_time_lines === "number" &&
+    typeof row.no_date_lines === "number"
+  );
+}
+
 export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
   const session = useSuppliesSession();
   const units = session.allowedUnits;
@@ -68,6 +85,7 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [items, setItems] = useState<PurchaseOrderListItem[]>([]);
   const [total, setTotal] = useState(0);
+  const [summary, setSummary] = useState<PurchaseOrderListSummary | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
 
@@ -95,12 +113,14 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
       .then((payload) => {
         setItems(payload.items ?? []);
         setTotal(payload.total ?? 0);
+        setSummary(isPurchaseOrderSummary(payload.summary) ? payload.summary : null);
         setLastUpdatedAt(new Date());
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
         setItems([]);
         setTotal(0);
+        setSummary(null);
         const message = err instanceof Error ? err.message : C.error;
         setError(mapPurchaseOrdersFetchError(message));
       })
@@ -136,6 +156,50 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
     setQuery(createDefaultQuery(branch));
   };
 
+  const highlights = useMemo(() => {
+    const late = summary?.late_lines ?? 0;
+    return [
+      {
+        id: "open-lines",
+        label: C.heroOpenLines,
+        value:
+          summary == null ? "—" : summary.total_lines.toLocaleString("pt-BR"),
+      },
+      {
+        id: "open-value",
+        label: C.heroOpenValue,
+        value: summary == null ? "—" : formatMoneyBr(summary.total_open_value),
+      },
+      {
+        id: "late-lines",
+        label: C.heroLate,
+        value: summary == null ? "—" : late.toLocaleString("pt-BR"),
+        tone: summary != null && late > 0 ? ("warning" as const) : undefined,
+      },
+    ];
+  }, [summary]);
+
+  const attentionChips = useMemo(() => {
+    const allLabel =
+      summary == null ? C.attentionAll : C.attentionAllWithCount(summary.total_lines);
+    const lateLabel =
+      summary == null ? C.attentionLate : C.attentionLateWithCount(summary.late_lines);
+    return [
+      {
+        id: "all",
+        label: allLabel,
+        active: !query.late_only,
+        onSelect: () => patchQuery({ late_only: false, page: 1 }),
+      },
+      {
+        id: "late",
+        label: lateLabel,
+        active: query.late_only,
+        onSelect: () => patchQuery({ late_only: true, page: 1 }),
+      },
+    ];
+  }, [patchQuery, query.late_only, summary]);
+
   return (
     <div className="sp-page-stack sp-purchase-orders">
       <SuppliesPagePath
@@ -161,6 +225,7 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
         }
         description={C.description}
         aria-label={C.filtersAriaLabel}
+        highlights={highlights}
         actions={
           <div className="sp-list-hero-actions sp-purchase-orders__toolbar-actions">
             {lastUpdatedAt && !loading ? (
@@ -192,20 +257,7 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
               <SuppliesScopeChipBar
                 aria-label={C.attentionAriaLabel}
                 label={C.attentionLabel}
-                chips={[
-                  {
-                    id: "all",
-                    label: C.attentionAll,
-                    active: !query.late_only,
-                    onSelect: () => patchQuery({ late_only: false, page: 1 }),
-                  },
-                  {
-                    id: "late",
-                    label: C.attentionLate,
-                    active: query.late_only,
-                    onSelect: () => patchQuery({ late_only: true, page: 1 }),
-                  },
-                ]}
+                chips={attentionChips}
               />
             </div>
             <PurchaseOrdersFilters

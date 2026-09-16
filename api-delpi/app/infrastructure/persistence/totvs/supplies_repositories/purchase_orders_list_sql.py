@@ -12,6 +12,26 @@ from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql
 MAX_PAGE_SIZE = int(PaginationTierService.max_size("page_50_200") or 0)
 DEFAULT_PAGE_SIZE = PaginationTierService.require_int("page_50_200", None)
 
+# Canonical open_value = proportional C7_TOTAL + IPI + frete − desconto via balance_factor.
+_OPEN_VALUE_EXPRESSION = """(
+            ROUND(ISNULL(SC7.C7_TOTAL, 0) * bf.balance_factor, 2)
+            + ROUND(ISNULL(SC7.C7_VALIPI, 0) * bf.balance_factor, 2)
+            + ROUND(ISNULL(SC7.C7_VALFRE, 0) * bf.balance_factor, 2)
+            - ROUND(ISNULL(SC7.C7_VLDESC, 0) * bf.balance_factor, 2)
+        )"""
+
+_BALANCE_FACTOR_CROSS_APPLY = """
+    CROSS APPLY (
+        SELECT
+            CASE
+                WHEN ISNULL(SC7.C7_QUANT, 0) <= 0 THEN CAST(0 AS FLOAT)
+                WHEN SC7.C7_QUANT > SC7.C7_QUJE
+                THEN (SC7.C7_QUANT - SC7.C7_QUJE) * 1.0 / SC7.C7_QUANT
+                ELSE CAST(0 AS FLOAT)
+            END AS balance_factor
+    ) bf
+"""
+
 
 def _protheus_date_param(iso_date: str) -> str:
     return iso_date.replace("-", "")
@@ -72,6 +92,29 @@ def build_purchase_orders_list_count_sql(where_clause: str) -> str:
     """
 
 
+def build_purchase_orders_summary_sql(*, where_clause: str) -> str:
+    """Aggregate open PO lines for hero/chips — no pagination; caller omits late_only."""
+    return f"""
+    SELECT
+        COUNT(1) AS total_lines,
+        CAST(COALESCE(SUM{_OPEN_VALUE_EXPRESSION}, 0) AS FLOAT) AS total_open_value,
+        SUM(CASE
+            WHEN RTRIM(ISNULL(SC7.C7_DATPRF, '')) <> ''
+             AND RTRIM(SC7.C7_DATPRF) < ?
+            THEN 1 ELSE 0 END) AS late_lines,
+        SUM(CASE
+            WHEN RTRIM(ISNULL(SC7.C7_DATPRF, '')) <> ''
+             AND RTRIM(SC7.C7_DATPRF) >= ?
+            THEN 1 ELSE 0 END) AS on_time_lines,
+        SUM(CASE
+            WHEN RTRIM(ISNULL(SC7.C7_DATPRF, '')) = ''
+            THEN 1 ELSE 0 END) AS no_date_lines
+    FROM SC7010 SC7 WITH (NOLOCK)
+    {_BALANCE_FACTOR_CROSS_APPLY}
+    WHERE {where_clause}
+    """
+
+
 def _purchase_orders_select_columns(*, include_origin_and_buyer: bool) -> str:
     extra = ""
     if include_origin_and_buyer:
@@ -100,28 +143,14 @@ def _purchase_orders_select_columns(*, include_origin_and_buyer: bool) -> str:
         RTRIM(SC7.C7_LOJA) AS supplier_store,
         RTRIM(COALESCE(SA2.A2_NREDUZ, SA2.A2_NOME, '')) AS supplier_name,{extra}
         CAST(ISNULL(SC7.C7_PRECO, 0) AS FLOAT) AS unit_price,
-        CAST(
-            ROUND(ISNULL(SC7.C7_TOTAL, 0) * bf.balance_factor, 2)
-            + ROUND(ISNULL(SC7.C7_VALIPI, 0) * bf.balance_factor, 2)
-            + ROUND(ISNULL(SC7.C7_VALFRE, 0) * bf.balance_factor, 2)
-            - ROUND(ISNULL(SC7.C7_VLDESC, 0) * bf.balance_factor, 2)
-            AS FLOAT
-        ) AS open_value
+        CAST({_OPEN_VALUE_EXPRESSION} AS FLOAT) AS open_value
     """
 
 
 def _purchase_orders_from_joins() -> str:
-    return """
+    return f"""
     FROM SC7010 SC7 WITH (NOLOCK)
-    CROSS APPLY (
-        SELECT
-            CASE
-                WHEN ISNULL(SC7.C7_QUANT, 0) <= 0 THEN CAST(0 AS FLOAT)
-                WHEN SC7.C7_QUANT > SC7.C7_QUJE
-                THEN (SC7.C7_QUANT - SC7.C7_QUJE) * 1.0 / SC7.C7_QUANT
-                ELSE CAST(0 AS FLOAT)
-            END AS balance_factor
-    ) bf
+    {_BALANCE_FACTOR_CROSS_APPLY}
     LEFT JOIN SB1010 SB1 WITH (NOLOCK)
         ON SB1.B1_COD = SC7.C7_PRODUTO
        AND SB1.D_E_L_E_T_ = ''

@@ -23,6 +23,13 @@ def test_list_supplies_purchase_orders_meta(mock_build, _branch_gate) -> None:
                 "page_size": 50,
                 "total": 0,
                 "total_pages": 0,
+                "summary": {
+                    "total_lines": 0,
+                    "total_open_value": 0,
+                    "late_lines": 0,
+                    "on_time_lines": 0,
+                    "no_date_lines": 0,
+                },
             }
         )
     )
@@ -37,8 +44,20 @@ def test_list_supplies_purchase_orders_meta(mock_build, _branch_gate) -> None:
         expected_delivery_to=None,
         late_only=False,
     )
+    body = body_json(response)
     assert_envelope_meta(
-        body_json(response),
+        body,
         operation_id="list_supplies_purchase_orders",
         shape="paged_list",
+    )
+    data = body.get("data") or body
+    summary = data["summary"]
+    assert summary["total_lines"] == 0
+    assert summary["total_open_value"] == 0
+    assert summary["late_lines"] == 0
+    assert summary["on_time_lines"] == 0
+    assert summary["no_date_lines"] == 0
+    assert (
+        summary["total_lines"]
+        == summary["late_lines"] + summary["on_time_lines"] + summary["no_date_lines"]
     )

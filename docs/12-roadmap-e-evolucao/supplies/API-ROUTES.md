@@ -71,7 +71,7 @@ As rotas abaixo são **alvos de composição** e só entram em implementação q
 
 | Página / fluxo | Method | Path alvo | Capability | Fonte provável/canônica | Estado |
 |---|---|---|---|---|---|
-| Pedidos | GET | `/purchase-orders` | `supplies.operations.access` + unit | api-delpi `GET /supplies/purchase-orders` (SC7 aberto) | **IMPLEMENTADO** |
+| Pedidos | GET | `/purchase-orders` | `supplies.operations.access` + unit | api-delpi `GET /supplies/purchase-orders` (SC7 aberto + `summary`) | **IMPLEMENTADO** |
 | Detalhe pedido | GET | `/purchase-orders/{branch}/{number}` | operations + unit + resource (universo aberto SC7) | api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}` | **IMPLEMENTADO** |
 | Entregas | GET | `/deliveries/late` | operations + unit | api-delpi PO-OTD panel | PLANEJADO |
 | Estoque | GET | `/inventory/stock-value` | política a fechar na página | api-delpi stock-value | PLANEJADO |

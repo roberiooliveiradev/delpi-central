@@ -16,6 +16,7 @@ from app.infrastructure.persistence.totvs.supplies_repositories.purchase_orders_
     build_purchase_orders_list_count_sql,
     build_purchase_orders_list_filters,
     build_purchase_orders_list_sql,
+    build_purchase_orders_summary_sql,
 )
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_lines_sql import (
     build_receipts_for_orders_sql,
@@ -91,6 +92,28 @@ def _normalize_receipt_row(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def empty_purchase_orders_summary() -> dict[str, Any]:
+    return {
+        "total_lines": 0,
+        "total_open_value": 0.0,
+        "late_lines": 0,
+        "on_time_lines": 0,
+        "no_date_lines": 0,
+    }
+
+
+def _normalize_summary(row: dict[str, Any] | None) -> dict[str, Any]:
+    if not row:
+        return empty_purchase_orders_summary()
+    return {
+        "total_lines": int(row.get("total_lines") or 0),
+        "total_open_value": float(row.get("total_open_value") or 0),
+        "late_lines": int(row.get("late_lines") or 0),
+        "on_time_lines": int(row.get("on_time_lines") or 0),
+        "no_date_lines": int(row.get("no_date_lines") or 0),
+    }
+
+
 def compose_open_purchase_order(
     rows: list[dict[str, Any]],
     receipt_rows: list[dict[str, Any]],
@@ -133,22 +156,35 @@ class PurchaseOrdersListRepository(BaseRepository):
         safe_page = max(1, int(page or 1))
         safe_page_size = min(MAX_PAGE_SIZE, max(1, int(page_size or DEFAULT_PAGE_SIZE)))
         paging = paginate(safe_page, safe_page_size)
+        filter_kwargs = {
+            "branch": branch,
+            "order_number": order_number,
+            "product_code": product_code,
+            "supplier_code": supplier_code,
+            "expected_delivery_from": expected_delivery_from,
+            "expected_delivery_to": expected_delivery_to,
+            "reference": reference,
+        }
         where_clause, params = build_purchase_orders_list_filters(
-            branch=branch,
-            order_number=order_number,
-            product_code=product_code,
-            supplier_code=supplier_code,
-            expected_delivery_from=expected_delivery_from,
-            expected_delivery_to=expected_delivery_to,
             late_only=late_only,
-            reference=reference,
+            **filter_kwargs,
+        )
+        # Summary ignores pagination and late_only so chips stay stable.
+        summary_where, summary_params = build_purchase_orders_list_filters(
+            late_only=False,
+            **filter_kwargs,
         )
         count_sql = build_purchase_orders_list_count_sql(where_clause)
         list_sql = build_purchase_orders_list_sql(where_clause=where_clause)
+        summary_sql = build_purchase_orders_summary_sql(where_clause=summary_where)
         today_protheus = (reference or date.today()).strftime("%Y%m%d")
         with self as repo:
             total_row = repo.execute_one(count_sql, tuple(params))
             total = int(total_row["total"]) if total_row else 0
+            summary_row = repo.execute_one(
+                summary_sql,
+                tuple(summary_params) + (today_protheus, today_protheus),
+            )
             rows = repo.execute_query(
                 list_sql,
                 tuple(params) + (paging["offset"], paging["page_size"]),
@@ -163,6 +199,7 @@ class PurchaseOrdersListRepository(BaseRepository):
             "page_size": safe_page_size,
             "total": total,
             "total_pages": total_pages,
+            "summary": _normalize_summary(summary_row),
         }
 
     def get_open_order(

@@ -45,6 +45,15 @@ describe("PurchaseOrders feature", () => {
     expect(page).toContain("lastUpdatedAt");
     expect(page).toContain("resolveDefaultBranch");
     expect(page).toContain("PurchaseOrdersListTable");
+    expect(page).toContain("highlights=");
+    expect(page).toContain("C.heroOpenLines");
+    expect(page).toContain("C.heroOpenValue");
+    expect(page).toContain("C.heroLate");
+    expect(page).toContain("summary.total_lines");
+    expect(page).toContain("summary.late_lines");
+    expect(page).toContain("attentionAllWithCount");
+    expect(page).toContain("attentionLateWithCount");
+    expect(page).toContain("isPurchaseOrderSummary");
     expect(page).not.toContain("onApply");
     expect(page).not.toContain("applyFilters");
     expect(page).not.toContain("detailComingSoon");
@@ -65,6 +74,34 @@ describe("PurchaseOrders feature", () => {
     expect(filters).not.toContain("onApply");
     expect(filters).not.toContain("sp-list-filters__hint");
     expect(filters).not.toContain("SuppliesSegmentToggle");
+
+    const types = readFileSync(join(dir, "types.ts"), "utf8");
+    expect(types).toContain("PurchaseOrderListSummary");
+    expect(types).toContain("total_open_value");
+    expect(types).toContain("on_time_lines");
+    expect(types).toContain("no_date_lines");
+  });
+
+  it("hero e chips usam summary server-side sem derivar de items", () => {
+    const page = readFileSync(join(dir, "PurchaseOrdersPage.tsx"), "utf8");
+    expect(page).toMatch(/setSummary\(isPurchaseOrderSummary/);
+    expect(page).toContain("formatMoneyBr(summary.total_open_value)");
+    expect(page).toContain("C.attentionAllWithCount(summary.total_lines)");
+    expect(page).toContain("C.attentionLateWithCount(summary.late_lines)");
+    expect(page).not.toMatch(/summary\.total_lines\s*\?\?/);
+    expect(page).not.toMatch(/total_lines\s*\?\?\s*items/);
+    const highlightsBlock = page.match(
+      /const highlights = useMemo\(\(\) => \{[\s\S]*?\}, \[summary\]\);/,
+    )?.[0];
+    const chipsBlock = page.match(
+      /const attentionChips = useMemo\(\(\) => \{[\s\S]*?\}, \[patchQuery, query\.late_only, summary\]\);/,
+    )?.[0];
+    expect(highlightsBlock).toBeTruthy();
+    expect(chipsBlock).toBeTruthy();
+    expect(highlightsBlock).not.toMatch(/items/);
+    expect(chipsBlock).not.toMatch(/items/);
+    expect(page).not.toMatch(/reduce\(/);
+    expect(page).not.toContain("api-delpi");
   });
 
   it("toolbar usa DataTable canônico, metadata e link PC", () => {

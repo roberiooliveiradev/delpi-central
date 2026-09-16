@@ -49,6 +49,13 @@ def test_list_positive_requires_operations_and_unit(mock_resolve, mock_validate)
             "page_size": 50,
             "total": 1,
             "total_pages": 1,
+            "summary": {
+                "total_lines": 4,
+                "total_open_value": 1200.5,
+                "late_lines": 1,
+                "on_time_lines": 2,
+                "no_date_lines": 1,
+            },
         },
     }
     with patch(
@@ -64,6 +71,11 @@ def test_list_positive_requires_operations_and_unit(mock_resolve, mock_validate)
     body = response.get_json()
     assert body["total"] == 1
     assert body["items"][0]["order_number"] == "000123"
+    assert body["summary"]["total_lines"] == 4
+    assert body["summary"]["late_lines"] == 1
+    assert body["summary"]["total_open_value"] == 1200.5
+    assert body["summary"]["on_time_lines"] == 2
+    assert body["summary"]["no_date_lines"] == 1
     gateway.get.assert_called_once()
     called_params = gateway.get.call_args.kwargs["params"]
     assert called_params["branch"] == "01"
@@ -94,12 +106,96 @@ def test_list_sibling_forbidden_without_operations(mock_resolve, mock_validate):
     mock_resolve.return_value = _user(
         permissions={"supplies.unit.filial-01", "supplies.portal.access"}
     )
-    client = create_app().test_client()
-    response = client.get(
-        "/purchase-orders?branch=01",
-        headers={"Authorization": "Bearer tok"},
-    )
+    gateway = MagicMock()
+    with patch(
+        "app.interfaces.http.routes.purchase_orders_routes._GATEWAY",
+        gateway,
+    ):
+        client = create_app().test_client()
+        response = client.get(
+            "/purchase-orders?branch=01",
+            headers={"Authorization": "Bearer tok"},
+        )
     assert response.status_code == 403
+    gateway.get.assert_not_called()
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_list_summary_pass_through_does_not_recalculate(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(
+        permissions={
+            "supplies.operations.access",
+            "supplies.unit.filial-01",
+        }
+    )
+    gateway = MagicMock()
+    gateway.get.return_value = {
+        "success": True,
+        "data": {
+            "items": [{"order_number": "1"}, {"order_number": "2"}],
+            "page": 1,
+            "page_size": 50,
+            "total": 2,
+            "total_pages": 1,
+            "summary": {
+                "total_lines": 10,
+                "total_open_value": 999.0,
+                "late_lines": 3,
+                "on_time_lines": 5,
+                "no_date_lines": 2,
+            },
+        },
+    }
+    with patch(
+        "app.interfaces.http.routes.purchase_orders_routes._GATEWAY",
+        gateway,
+    ):
+        client = create_app().test_client()
+        response = client.get(
+            "/purchase-orders?branch=01",
+            headers={"Authorization": "Bearer tok"},
+        )
+    body = response.get_json()
+    assert response.status_code == 200
+    # Pass-through: counters come from upstream summary, not items.length.
+    assert body["summary"]["total_lines"] == 10
+    assert body["summary"]["late_lines"] == 3
+    assert len(body["items"]) == 2
+    assert body["summary"]["total_lines"] != len(body["items"])
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_list_maps_upstream_5xx(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(
+        permissions={
+            "supplies.operations.access",
+            "supplies.unit.filial-01",
+        }
+    )
+    gateway = MagicMock()
+    gateway.get.side_effect = DelpiApiGatewayError(
+        "api-delpi server error",
+        status_code=503,
+    )
+    with patch(
+        "app.interfaces.http.routes.purchase_orders_routes._GATEWAY",
+        gateway,
+    ):
+        client = create_app().test_client()
+        response = client.get(
+            "/purchase-orders?branch=01",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 502
+    assert response.get_json()["code"] == "bad_gateway"
 
 
 @patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")

@@ -147,7 +147,7 @@ export const USER_MANUAL_CONTENT = {
         "Início — atenção, busca, favoritos e caminhos por capability.",
         "Visão geral — cockpit de KPIs do período (não é a tela inicial).",
         "OTD — velocímetros de pontualidade e evolução; abra pelo Início, catálogo Análises ou CTA da Visão geral.",
-        "Pedidos de compra — linhas abertas (saldo a receber); Atenção (Todos/Atrasados), filtros automáticos, Atualizar; filiais como Santa Catarina (01); clique na linha para a ficha. Distinto do OTD de pontualidade.",
+        "Pedidos de compra — linhas abertas (saldo a receber); hero com linhas/valor/atrasadas; Atenção Todos(N)/Atrasados(N) do resumo do servidor; filtros automáticos, Atualizar; filiais como Santa Catarina (01); clique na linha para a ficha. Distinto do OTD de pontualidade.",
         "Solicitações de compras — lista/detalhe no escopo CC+filial; exportação CSV com permissão separada.",
         "Operações — pedidos, entregas, fornecedores, produtos, estoque e ESTSEG.",
         "Indicadores / Negociações — recorte analítico quando liberado.",
