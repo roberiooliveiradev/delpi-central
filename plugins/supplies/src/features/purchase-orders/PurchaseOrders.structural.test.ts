@@ -16,6 +16,7 @@ import {
   nextServerSort,
   parseOrderKey,
   parseQueryFromSearch,
+  PURCHASE_ORDERS_SORTABLE_COLUMNS,
 } from "./query";
 
 const dir = dirname(fileURLToPath(import.meta.url));
@@ -157,6 +158,7 @@ describe("PurchaseOrders feature", () => {
     expect(table).toContain("ExcelExportButton");
     expect(table).toContain("exportPurchaseOrders");
     expect(table).toContain("PurchaseOrdersCards");
+    expect(table).toContain("SuppliesDataCardsSortBar");
     expect(table).toContain("usePersistedViewLayout");
     expect(table).toContain("onSortChange");
     expect(table).toContain("nextServerSort");
@@ -167,6 +169,12 @@ describe("PurchaseOrders feature", () => {
     const cards = readFileSync(join(dir, "PurchaseOrdersCards.tsx"), "utf8");
     expect(cards).toContain("SuppliesDataCardsGrid");
     expect(cards).toContain("buildPurchaseOrderDetailPath");
+
+    const filters = readFileSync(join(dir, "PurchaseOrdersFilters.tsx"), "utf8");
+    expect(filters).toContain("PERIOD_PRESET_OPTIONS");
+    expect(filters).toContain("matchPeriodPreset");
+    expect(filters).toContain("C.periodLabel");
+    expect(filters).toContain("SuppliesSegmentToggle");
 
     const config = readFileSync(join(dir, "purchaseOrdersTableConfig.ts"), "utf8");
     expect(config).toContain("supplies:purchase-orders:column-prefs:v1");
@@ -264,6 +272,10 @@ describe("PurchaseOrders feature", () => {
       page: 1,
     });
     expect(nextServerSort(query, "unknown")).toBeNull();
+
+    expect(Object.keys(PURCHASE_ORDERS_SORTABLE_COLUMNS)).toHaveLength(8);
+    expect(PURCHASE_ORDERS_SORTABLE_COLUMNS.product).toBe("product_description");
+    expect(PURCHASE_ORDERS_SORTABLE_COLUMNS.delivery).toBe("expected_delivery_date");
   });
 
   it("mapeia 403 positive/sibling e preserva mensagem genérica (negative)", () => {

@@ -1,4 +1,4 @@
-import { parsePeriodPresetId, type PeriodPresetId } from "./periodPreset";
+import { parsePeriodPresetId, type PeriodPresetId } from "../../app/periodPreset";
 import {
   parseSuppliesBranchCsv,
   serializeSuppliesBranchCsv,

@@ -2,6 +2,12 @@ import { useCallback, useState } from "react";
 import { Filter } from "lucide-react";
 
 import {
+  matchPeriodPreset,
+  PERIOD_PRESET_OPTIONS,
+  resolvePeriodPreset,
+  type PeriodPresetId,
+} from "../../app/periodPreset";
+import {
   buildSuppliesUnitOptions,
   canonicalizeUiBranches,
   SUPPLIES_UNIT_FILTER_LABEL,
@@ -14,6 +20,7 @@ import {
   SuppliesFilterBarShell,
   SuppliesSectionHintLabel,
   SuppliesMultiSelectField,
+  SuppliesSegmentToggle,
   SuppliesSelectField,
   SuppliesTextField,
   spFiltersKit,
@@ -46,6 +53,7 @@ export function PurchaseRequestsFilters({
     value: stage,
     label: labelOverallStage(stage),
   }));
+  const period = matchPeriodPreset(query.date_from, query.date_to);
 
   const commitRequestNumber = useCallback(
     (value: string) => onPatch({ request_number: value, page: 1 }),
@@ -62,6 +70,13 @@ export function PurchaseRequestsFilters({
   const flushTextFilters = () => {
     requestNumber.flush();
     product.flush();
+  };
+
+  const onPeriod = (value: PeriodPresetId) => {
+    if (value === "custom") return;
+    const range = resolvePeriodPreset(value);
+    if (!range) return;
+    onPatch({ date_from: range.from, date_to: range.to, page: 1 });
   };
 
   return (
@@ -150,6 +165,20 @@ export function PurchaseRequestsFilters({
           />
           {showMore ? (
             <>
+              <div className="sp-purchase-requests__period-presets">
+                <SuppliesSectionHintLabel
+                  label={C.periodLabel}
+                  hint={SP_HELP.purchaseRequestsPeriod}
+                />
+                <SuppliesSegmentToggle
+                  ariaLabel={C.periodLabel}
+                  idPrefix="purchase-requests-period-preset"
+                  size="sm"
+                  value={period}
+                  onChange={(value) => onPeriod(value as PeriodPresetId)}
+                  options={PERIOD_PRESET_OPTIONS}
+                />
+              </div>
               <SuppliesDateField
                 label={C.dateFromLabel}
                 value={query.date_from}

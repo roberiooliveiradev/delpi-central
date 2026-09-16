@@ -36,6 +36,18 @@ describe("purchase requests persistence isolation", () => {
     expect(restoredAll.page).toBe(2);
     expect(buildUrlSearch(allScope)).not.toContain("branch=");
 
+    const stageScope = {
+      ...createDefaultQuery(),
+      sort_by: "overall_stage",
+      sort_dir: "desc" as const,
+      product_code: "MP01",
+    };
+    const restoredStage = parseQueryFromSearch(buildUrlSearch(stageScope), ["01", "02"]);
+    expect(restoredStage.sort_by).toBe("overall_stage");
+    expect(restoredStage.sort_dir).toBe("desc");
+    expect(restoredStage.product_code).toBe("MP01");
+    expect(buildUrlSearch(stageScope)).not.toContain("period=");
+
     const subset = {
       ...createDefaultQuery(),
       branches: ["01"],

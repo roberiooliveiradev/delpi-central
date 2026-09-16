@@ -58,7 +58,7 @@ Não espelhar CRUD em permission codes. Qualquer `ANY_OF`/`ALL_OF` precisa ser d
 | GET | `/analytics/overview` | `supplies.analytics.access` + unit | api-delpi + SI | **IMPLEMENTADO** |
 | GET | `/analytics/otd/series` | `supplies.analytics.access` + unit | api-delpi | **IMPLEMENTADO** |
 | GET | `/analytics/otd` | `supplies.analytics.access` + unit | api-delpi + SI | **IMPLEMENTADO** |
-| GET | `/purchase-requests` | `supplies.purchase-requests.access` + units + CC | PR-api (`?branch=` repetido, `sort_by`/`sort_dir`) | **IMPLEMENTADO_C1** |
+| GET | `/purchase-requests` | `supplies.purchase-requests.access` + units + CC | PR-api (`?branch=` repetido, `sort_by`/`sort_dir` allow-list + `overall_stage` owner-local) | **IMPLEMENTADO_C1** |
 | GET | `/purchase-requests/{branch}/{number}` | `supplies.purchase-requests.access` + unit + resource scope | PR-api | **IMPLEMENTADO_C1** |
 | GET | `/purchase-requests/export` | access + export + units + CC/view-all | PR-api `/export` → CSV default ou `format=xlsx` | **IMPLEMENTADO_C1** |
 | GET | `/purchase-orders` | `supplies.operations.access` + units | api-delpi `GET /supplies/purchase-orders` | **IMPLEMENTADO** |

@@ -1,5 +1,5 @@
 /**
- * Period presets for Overview filters (Supplies).
+ * Shared period presets for Supplies filters (Overview, PR, PO).
  * Timezone: America/Sao_Paulo.
  */
 
@@ -132,6 +132,27 @@ export function resolvePeriodPreset(
   }
 
   return null;
+}
+
+/**
+ * Returns which preset id matches the inclusive [from, to] range, or `"custom"`.
+ * Used by PR/PO filters on F5 (dates in URL; no dedicated period query param).
+ */
+export function matchPeriodPreset(
+  from: string,
+  to: string,
+  now: Date = new Date(),
+  timeZone = "America/Sao_Paulo",
+): PeriodPresetId {
+  const fromTrim = (from || "").trim();
+  const toTrim = (to || "").trim();
+  if (!fromTrim || !toTrim) return "custom";
+  for (const id of PERIOD_PRESET_IDS) {
+    if (id === "custom") continue;
+    const range = resolvePeriodPreset(id, now, timeZone);
+    if (range && range.from === fromTrim && range.to === toTrim) return id;
+  }
+  return "custom";
 }
 
 export function parsePeriodPresetId(raw: string | null | undefined): PeriodPresetId | null {

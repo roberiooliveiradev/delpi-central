@@ -105,6 +105,46 @@ def test_cost_center_scopes_are_tuple_aware() -> None:
     assert where_clause.count("C1_FILIAL") >= 2
 
 
+def test_sort_allowlist_includes_item_and_product_fields() -> None:
+    from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_lines_sql import (
+        PURCHASE_REQUESTS_SORT_FIELDS,
+        resolve_purchase_requests_order_by,
+    )
+
+    assert "request_item" in PURCHASE_REQUESTS_SORT_FIELDS
+    assert "product_code" in PURCHASE_REQUESTS_SORT_FIELDS
+    assert "product_description" in PURCHASE_REQUESTS_SORT_FIELDS
+    assert "overall_stage" not in PURCHASE_REQUESTS_SORT_FIELDS
+
+    header_item = resolve_purchase_requests_order_by(
+        sort_by="request_item", sort_dir="asc", grain="header"
+    )
+    assert "MIN(RTRIM(SC1.C1_ITEM))" in header_item
+    assert "C1_NUM" in header_item and "C1_FILIAL" in header_item
+
+    header_product = resolve_purchase_requests_order_by(
+        sort_by="product_code", sort_dir="desc", grain="header"
+    )
+    assert "MIN(RTRIM(SC1.C1_PRODUTO))" in header_product
+
+    header_desc = resolve_purchase_requests_order_by(
+        sort_by="product_description", sort_dir="asc", grain="header"
+    )
+    assert "SC1.C1_DESCRI" in header_desc
+    assert "SB1" not in header_desc
+
+    line_item = resolve_purchase_requests_order_by(
+        sort_by="request_item", sort_dir="asc", grain="line"
+    )
+    assert "RTRIM(SC1.C1_ITEM)" in line_item
+    assert "C1_FILIAL" in line_item and "C1_NUM" in line_item and "C1_ITEM" in line_item
+
+    line_desc = resolve_purchase_requests_order_by(
+        sort_by="product_description", sort_dir="desc", grain="line"
+    )
+    assert "SB1.B1_DESC" in line_desc
+
+
 def test_invalid_sort_is_rejected() -> None:
     from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_lines_sql import (
         resolve_purchase_requests_order_by,
@@ -112,6 +152,12 @@ def test_invalid_sort_is_rejected() -> None:
 
     try:
         resolve_purchase_requests_order_by(sort_by="overall_stage", grain="header")
+        raise AssertionError("expected invalid sort")
+    except ValueError as exc:
+        assert "sort_by" in str(exc)
+
+    try:
+        resolve_purchase_requests_order_by(sort_by="not_a_field", grain="line")
         raise AssertionError("expected invalid sort")
     except ValueError as exc:
         assert "sort_by" in str(exc)

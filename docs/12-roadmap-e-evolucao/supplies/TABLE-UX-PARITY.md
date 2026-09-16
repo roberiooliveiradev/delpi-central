@@ -192,12 +192,13 @@ Matriz após execução Phase 1 (não declara paridade total):
 | Conditional Clear | IMPLEMENTED | IMPLEMENTED |
 | Free search | BLOCKED_BY_CONTRACT | BLOCKED_BY_CONTRACT |
 | Human unit labels | IMPLEMENTED | IMPLEMENTED |
-| Date filters | IMPLEMENTED (Mais filtros) | IMPLEMENTED (Mais filtros) |
+| Date filters | IMPLEMENTED (Mais filtros + period presets) | IMPLEMENTED (Mais filtros + delivery presets) |
 | Table metadata `N colunas · N linhas` | IMPLEMENTED (`total`) | IMPLEMENTED (`total`) |
 | Table/Cards/Board selector | IMPLEMENTED (Tabela/Cards; Board não) | IMPLEMENTED (Tabela/Cards; Board não) |
 | Font / columns / reorder / persistence | IMPLEMENTED | IMPLEMENTED |
 | Excel/CSV export | IMPLEMENTED (XLSX + CSV legado; export capability) | IMPLEMENTED (XLSX, operations + units) |
-| Server-side sorting | IMPLEMENTED (request_number, issue_date, requester, cost_center) | IMPLEMENTED |
+| Server-side sorting | IMPLEMENTED (request_number, request_item, product_code, product_description, issue_date, requester, cost_center; overall_stage owner-local via export+paginate) | IMPLEMENTED (8 colunas) |
+| Cards sort bar | IMPLEMENTED (`SuppliesDataCardsSortBar`) | IMPLEMENTED (`SuppliesDataCardsSortBar`) |
 | Entity links (SC/PC) | IMPLEMENTED | IMPLEMENTED |
 | Avatars / inline meter / coverage | COMMERCIAL_SPECIFIC | COMMERCIAL_SPECIFIC |
 | Status badges | IMPLEMENTED (overall_stage fechado) | IMPLEMENTED |
@@ -206,9 +207,10 @@ Matriz após execução Phase 1 (não declara paridade total):
 | Pagination / keyboard / mobile table | IMPLEMENTED | IMPLEMENTED |
 
 Filtros — decisão de densidade Phase 1:
-- **PR principais:** Filial, Número SC, Produto, Situação · **Mais filtros:** Período de/até
-- **PO principais:** Filial, Número PC, Produto, Fornecedor · **Mais filtros:** Entrega de/até
+- **PR principais:** Filial, Número SC, Produto, Situação · **Mais filtros:** atalhos de Período + datas de/até
+- **PO principais:** Filial, Número PC, Produto, Fornecedor · **Mais filtros:** atalhos de Período de entrega + Entrega de/até
 - **Limpar:** não considera filial default; PR não considera período baseline (90 dias)
+- **Presets:** módulo compartilhado `app/periodPreset.ts`; F5 deriva o atalho das datas (sem param de URL)
 
 Mesmo padrão visual/funcional nas duas jornadas tabulares (sem paridade total com Comercial):
 
@@ -225,7 +227,9 @@ Mesmo padrão visual/funcional nas duas jornadas tabulares (sem paridade total c
 | DataTable canônico | IMPLEMENTED | IMPLEMENTED | `SuppliesDataTable` |
 | Mobile horizontal scroll | IMPLEMENTED | IMPLEMENTED | `delpi-ui-table-wrap` + `sp-list-table-region` |
 | Export | capability + XLSX (CSV legado) | IMPLEMENTED (XLSX) | PO: operations + units |
-| Sort | IMPLEMENTED (allow-list header-stable) | IMPLEMENTED | `sort_by`/`sort_dir` |
+| Sort | IMPLEMENTED (allow-list + overall_stage owner) | IMPLEMENTED | `sort_by`/`sort_dir` |
+| Cards sort bar | IMPLEMENTED | IMPLEMENTED | `SuppliesDataCardsSortBar` |
+| Period presets | IMPLEMENTED | IMPLEMENTED | shared `periodPreset` |
 | Attention chips | N/A (domínio) | Todos(N)/Atrasados(N) via `summary` | justificado |
 | Cards/Board | Cards IMPLEMENTED; Board PRODUCT_DECISION | Cards IMPLEMENTED; Board PRODUCT_DECISION | — |
 

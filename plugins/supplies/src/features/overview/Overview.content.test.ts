@@ -9,7 +9,7 @@ import {
   todayIso,
 } from "./overviewContent";
 import { buildOverviewQueryString } from "./overviewFilterUrl";
-import { resolvePeriodPreset, resolvePeriodKindChip } from "./periodPreset";
+import { matchPeriodPreset, resolvePeriodPreset, resolvePeriodKindChip } from "../../app/periodPreset";
 import {
   formatOperationalUnitCode,
   parseSuppliesBranchCsv,
@@ -99,6 +99,14 @@ describe("Overview period presets", () => {
 
   it("negative custom returns null", () => {
     expect(resolvePeriodPreset("custom")).toBeNull();
+  });
+
+  it("matchPeriodPreset recovers preset from dates and falls back to custom", () => {
+    const fixed = new Date("2026-09-08T15:00:00-03:00");
+    expect(matchPeriodPreset("2026-09-08", "2026-09-08", fixed)).toBe("today");
+    expect(matchPeriodPreset("2026-09-01", "2026-09-08", fixed)).toBe("this_month");
+    expect(matchPeriodPreset("2026-01-01", "2026-09-09", fixed)).toBe("custom");
+    expect(matchPeriodPreset("", "2026-09-08", fixed)).toBe("custom");
   });
 });
 

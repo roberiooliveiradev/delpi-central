@@ -795,6 +795,14 @@
   gap: 0.75rem;
 }
 
+.dashboard-supplies-portal .sp-purchase-requests__period-presets,
+.dashboard-supplies-portal .sp-purchase-orders__period-presets {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+  grid-column: 1 / -1;
+}
+
 .dashboard-supplies-portal .sp-purchase-requests__filter-actions {
   display: flex;
   flex-wrap: wrap;

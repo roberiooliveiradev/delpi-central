@@ -18,6 +18,9 @@ PURCHASE_REQUESTS_SORT_FIELDS: tuple[str, ...] = (
     "issue_date",
     "requester",
     "cost_center",
+    "request_item",
+    "product_code",
+    "product_description",
 )
 
 DEFAULT_LOOKBACK_DAYS = 90
@@ -130,6 +133,10 @@ def resolve_purchase_requests_order_by(
             "issue_date": "MIN(RTRIM(SC1.C1_EMISSAO))",
             "requester": "MIN(RTRIM(COALESCE(SC1.C1_SOLICIT, '')))",
             "cost_center": "MIN(RTRIM(ISNULL(SC1.C1_CC, '')))",
+            # Header page SQL has no SB1 join — use SC1 description only.
+            "request_item": "MIN(RTRIM(SC1.C1_ITEM))",
+            "product_code": "MIN(RTRIM(SC1.C1_PRODUTO))",
+            "product_description": "MIN(RTRIM(COALESCE(SC1.C1_DESCRI, '')))",
         }
         if not key:
             return default.strip()
@@ -140,19 +147,25 @@ def resolve_purchase_requests_order_by(
             f"{expression} {direction.upper()}, "
             "RTRIM(SC1.C1_NUM) DESC, RTRIM(SC1.C1_FILIAL) DESC"
         )
-    default = "SC1.C1_EMISSAO DESC, SC1.C1_NUM DESC, SC1.C1_ITEM ASC"
+    default = "SC1.C1_EMISSAO DESC, SC1.C1_FILIAL ASC, SC1.C1_NUM DESC, SC1.C1_ITEM ASC"
     mapping = {
         "request_number": "SC1.C1_NUM",
         "issue_date": "SC1.C1_EMISSAO",
         "requester": "RTRIM(COALESCE(SC1.C1_SOLICIT, ''))",
         "cost_center": "RTRIM(ISNULL(SC1.C1_CC, ''))",
+        "request_item": "RTRIM(SC1.C1_ITEM)",
+        "product_code": "RTRIM(SC1.C1_PRODUTO)",
+        "product_description": "RTRIM(COALESCE(SB1.B1_DESC, SC1.C1_DESCRI, ''))",
     }
     if not key:
         return default
     expression = mapping.get(key)
     if expression is None:
         raise ValueError("Invalid sort_by")
-    return f"{expression} {direction.upper()}, SC1.C1_NUM ASC, SC1.C1_ITEM ASC"
+    return (
+        f"{expression} {direction.upper()}, "
+        "SC1.C1_FILIAL ASC, SC1.C1_NUM ASC, SC1.C1_ITEM ASC"
+    )
 
 
 def build_purchase_request_lines_filters(

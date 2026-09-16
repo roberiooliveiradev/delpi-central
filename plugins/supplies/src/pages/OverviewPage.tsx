@@ -36,7 +36,7 @@ import {
   OVERVIEW_CONTENT,
 } from "../features/overview/overviewContent";
 import { buildOverviewKpiPresentation } from "../features/overview/overviewKpiPresentation";
-import { resolvePeriodKindChip } from "../features/overview/periodPreset";
+import { resolvePeriodKindChip } from "../app/periodPreset";
 import { useOverviewFilters } from "../features/overview/useOverviewFilters";
 
 type OverviewPageProps = {

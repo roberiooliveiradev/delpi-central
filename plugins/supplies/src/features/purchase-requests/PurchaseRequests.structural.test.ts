@@ -65,6 +65,10 @@ describe("PurchaseRequests feature", () => {
     expect(filters).toContain("canonicalizeUiBranches");
     expect(filters).toContain("emptyLabel=\"Todas\"");
     expect(filters).toContain("searchable");
+    expect(filters).toContain("SuppliesSegmentToggle");
+    expect(filters).toContain("PERIOD_PRESET_OPTIONS");
+    expect(filters).toContain("matchPeriodPreset");
+    expect(filters).toContain("C.periodLabel");
     expect(filters).not.toContain("searchable={unitOptions.length > 4}");
     expect(filters).not.toContain("Aplicar filtros");
   });
@@ -73,11 +77,13 @@ describe("PurchaseRequests feature", () => {
     const table = readFileSync(join(dir, "PurchaseRequestsListTable.tsx"), "utf8");
     expect(table).toContain("SuppliesDataListToolbar");
     expect(table).toContain("SuppliesDataTable");
+    expect(table).toContain("SuppliesDataCardsSortBar");
     expect(table).toContain("C.tableMeta");
     expect(table).toContain("SuppliesEntityLink");
     expect(table).toContain("buildPurchaseRequestDetailPath");
     expect(table).toContain("PurchaseRequestsCards");
     expect(table).toContain("nextServerSort");
+    expect(table).toContain("PURCHASE_REQUESTS_SORTABLE_COLUMNS");
     expect(table).not.toContain("is-selected");
     expect(table).not.toContain("buildRequestKey");
     expect(table).not.toContain("?request=");
@@ -132,9 +138,45 @@ describe("PurchaseRequests feature", () => {
     expect(sorted.branches).toEqual(["01"]);
     expect(sorted.sort_by).toBe("issue_date");
 
+    const stageSort = parseQueryFromSearch(
+      "?sort_by=overall_stage&sort_dir=desc",
+      ["01"],
+    );
+    expect(stageSort.sort_by).toBe("overall_stage");
+    expect(stageSort.sort_dir).toBe("desc");
+
+    const productSort = parseQueryFromSearch(
+      "?sort_by=product_code&sort_dir=asc",
+      ["01"],
+    );
+    expect(productSort.sort_by).toBe("product_code");
+
     expect(parseRequestKey("invalid")).toBeNull();
     expect(buildRequestKey("01", "100")).toBe("01:100");
     expect(parseQueryFromSearch("?overall_stage=not-a-stage", ["01"]).overall_stages).toEqual([]);
+  });
+
+  it("matriz de sort UI→API cobre item, produto e stage", async () => {
+    const { nextServerSort, PURCHASE_REQUESTS_SORTABLE_COLUMNS, tableSortKey } = await import(
+      "./query"
+    );
+    expect(PURCHASE_REQUESTS_SORTABLE_COLUMNS.request_item).toBe("request_item");
+    expect(PURCHASE_REQUESTS_SORTABLE_COLUMNS.product).toBe("product_code");
+    expect(PURCHASE_REQUESTS_SORTABLE_COLUMNS.stage).toBe("overall_stage");
+    expect(PURCHASE_REQUESTS_SORTABLE_COLUMNS.opened).toBe("issue_date");
+    expect(tableSortKey("overall_stage")).toBe("stage");
+    expect(tableSortKey("product_code")).toBe("product");
+    expect(nextServerSort(createDefaultQuery(), "stage")).toEqual({
+      sort_by: "overall_stage",
+      sort_dir: "asc",
+      page: 1,
+    });
+    expect(nextServerSort(createDefaultQuery(), "product")).toEqual({
+      sort_by: "product_code",
+      sort_dir: "asc",
+      page: 1,
+    });
+    expect(nextServerSort(createDefaultQuery(), "unknown")).toBeNull();
   });
 
   it("mapeia 403 positive/sibling e preserva mensagem genérica (negative)", () => {

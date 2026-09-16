@@ -8,9 +8,12 @@ import { DEFAULT_PAGE_SIZE, OVERALL_STAGE_VALUES } from "./types";
 
 export const PURCHASE_REQUESTS_SORTABLE_COLUMNS = {
   request_number: "request_number",
+  request_item: "request_item",
+  product: "product_code",
   requester: "requester",
   cost_center: "cost_center",
   opened: "issue_date",
+  stage: "overall_stage",
 } as const;
 
 export type PurchaseRequestSortableColumnKey = keyof typeof PURCHASE_REQUESTS_SORTABLE_COLUMNS;

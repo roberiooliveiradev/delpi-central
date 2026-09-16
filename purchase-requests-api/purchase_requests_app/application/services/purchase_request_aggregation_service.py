@@ -11,6 +11,41 @@ from purchase_requests_app.domain.services.purchase_request_domain_service impor
     map_approval_status,
 )
 
+# Canonical ASC order for derived overall_stage (owner-local sort).
+OVERALL_STAGE_SORT_ORDER: tuple[str, ...] = (
+    "awaiting_order",
+    "partially_ordered",
+    "ordered",
+    "awaiting_receipt",
+    "partially_received",
+    "completed",
+    "residual_closed",
+)
+
+# Fields sorted by api-delpi SQL — preserve gateway order after enrichment.
+GATEWAY_SORT_FIELDS: frozenset[str] = frozenset(
+    {
+        "request_number",
+        "issue_date",
+        "requester",
+        "cost_center",
+        "request_item",
+        "product_code",
+        "product_description",
+    }
+)
+
+LOCAL_SORT_FIELDS: frozenset[str] = frozenset({"overall_stage"})
+
+
+def normalize_list_sort_by(sort_by: str | None) -> str | None:
+    key = (sort_by or "").strip()
+    if not key:
+        return None
+    if key == "stage":
+        return "overall_stage"
+    return key
+
 
 class PurchaseRequestAggregationService:
     def filter_authorized_lines(
@@ -31,18 +66,61 @@ class PurchaseRequestAggregationService:
             )
         ]
 
-    def build_list_line_items(self, lines: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def build_list_line_items(
+        self,
+        lines: list[dict[str, Any]],
+        *,
+        sort_by: str | None = None,
+        sort_dir: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Lista operacional no grão item da SC (linha enriquecida, sem agregar cabeçalho)."""
         enriched = [self._enrich_line(line) for line in lines]
-        enriched.sort(
-            key=lambda item: (
-                item.get("request_issue_date") or "",
-                item.get("request_number") or "",
-                item.get("request_item") or "",
-            ),
-            reverse=True,
-        )
-        return enriched
+        key = normalize_list_sort_by(sort_by)
+        if not key:
+            enriched.sort(
+                key=lambda item: (
+                    item.get("request_issue_date") or "",
+                    item.get("request_number") or "",
+                    item.get("request_item") or "",
+                ),
+                reverse=True,
+            )
+            return enriched
+        if key in GATEWAY_SORT_FIELDS:
+            # Preserve api-delpi / gateway order.
+            return enriched
+        if key in LOCAL_SORT_FIELDS:
+            return self._sort_local(enriched, sort_by=key, sort_dir=sort_dir)
+        raise ValueError("Invalid sort_by")
+
+    def _sort_local(
+        self,
+        items: list[dict[str, Any]],
+        *,
+        sort_by: str,
+        sort_dir: str | None,
+    ) -> list[dict[str, Any]]:
+        direction = (sort_dir or "desc").strip().lower()
+        if direction not in {"asc", "desc"}:
+            raise ValueError("Invalid sort_dir")
+        if sort_by == "overall_stage":
+            order_index = {stage: idx for idx, stage in enumerate(OVERALL_STAGE_SORT_ORDER)}
+            unknown = len(OVERALL_STAGE_SORT_ORDER)
+
+            def stage_key(item: dict[str, Any]) -> tuple:
+                stage = str((item.get("derived") or {}).get("overall_stage") or "")
+                rank = order_index.get(stage, unknown)
+                if direction == "desc":
+                    rank = -rank
+                return (
+                    rank,
+                    str(item.get("branch") or ""),
+                    str(item.get("request_number") or ""),
+                    str(item.get("request_item") or ""),
+                )
+
+            return sorted(items, key=stage_key)
+        raise ValueError("Invalid sort_by")
 
     def aggregate_list_items(self, lines: list[dict[str, Any]]) -> list[dict[str, Any]]:
         grouped: dict[tuple[str, str], list[dict[str, Any]]] = {}

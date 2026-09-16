@@ -6,10 +6,12 @@ import {
   ExcelExportButton,
   HelpTooltip,
   SuppliesCompactPagination,
+  SuppliesDataCardsSortBar,
   SuppliesDataListToolbar,
   SuppliesDataTable,
   SuppliesEntityLink,
   SuppliesSegmentToggle,
+  SuppliesSelectField,
   SuppliesStatusBadge,
   SuppliesTableColumnVisibilityMenu,
   SuppliesTableFontSizeControls,
@@ -29,7 +31,9 @@ import {
   formatProductLabel,
   labelDeliveryStatus,
   nextServerSort,
+  PURCHASE_ORDERS_SORTABLE_COLUMNS,
   tableSortKey,
+  type PurchaseOrderSortableColumnKey,
 } from "./query";
 import { purchaseOrdersColumnHelp } from "./purchaseOrdersColumnHelp";
 import {
@@ -40,7 +44,11 @@ import {
   PURCHASE_ORDERS_VIEW_LAYOUT_STORAGE_KEY,
   type PurchaseOrderTableColumnKey,
 } from "./purchaseOrdersTableConfig";
-import type { PurchaseOrderListItem, PurchaseOrdersQuery } from "./types";
+import type {
+  PurchaseOrderListItem,
+  PurchaseOrdersQuery,
+  PurchaseOrdersSortDir,
+} from "./types";
 import { PURCHASE_ORDERS_PAGE_SIZE_OPTIONS } from "./types";
 
 type PurchaseOrdersListTableProps = {
@@ -53,6 +61,13 @@ type PurchaseOrdersListTableProps = {
   onPatchQuery: (patch: Partial<PurchaseOrdersQuery>) => void;
   onSelectRow: (item: PurchaseOrderListItem) => void;
 };
+
+const CARDS_SORT_OPTIONS = PURCHASE_ORDERS_TABLE_COLUMNS.filter(
+  (column) => column.key in PURCHASE_ORDERS_SORTABLE_COLUMNS,
+).map((column) => ({
+  value: column.key,
+  label: column.label,
+}));
 
 function statusBadgeVariant(
   status: string | null | undefined,
@@ -187,6 +202,17 @@ export function PurchaseOrdersListTable({
 
   const showCards = layout === "cards";
 
+  const cardsSortKey =
+    (tableSortKey(query.sort_by) as PurchaseOrderSortableColumnKey | null) ?? "delivery";
+  const cardsSortDir: PurchaseOrdersSortDir = query.sort_dir === "desc" ? "desc" : "asc";
+
+  const patchCardsSort = (columnKey: string, dir: PurchaseOrdersSortDir) => {
+    const sortBy =
+      PURCHASE_ORDERS_SORTABLE_COLUMNS[columnKey as PurchaseOrderSortableColumnKey];
+    if (!sortBy) return;
+    onPatchQuery({ sort_by: sortBy, sort_dir: dir, page: 1 });
+  };
+
   return (
     <>
       <SuppliesDataListToolbar
@@ -269,7 +295,45 @@ export function PurchaseOrdersListTable({
       ) : null}
 
       {showCards ? (
-        <PurchaseOrdersCards items={items} basePath={basePath} onSelectRow={onSelectRow} />
+        <>
+          <SuppliesDataCardsSortBar
+            style={tableStyle}
+            sortField={
+              <SuppliesSelectField
+                label={C.sortByLabel}
+                hint={SP_HELP.purchaseOrdersSort}
+                value={cardsSortKey}
+                options={CARDS_SORT_OPTIONS}
+                onChange={(value) => patchCardsSort(value, cardsSortDir)}
+              />
+            }
+            direction={
+              <HelpTooltip
+                content={SP_HELP.purchaseOrdersSortDirection}
+                ariaLabel="Ajuda: direção da ordenação"
+                wrap
+                placement="bottom"
+              >
+                <SuppliesSegmentToggle
+                  ariaLabel={C.sortDirectionAriaLabel}
+                  idPrefix="purchase-orders-sort-dir"
+                  size="sm"
+                  value={cardsSortDir}
+                  onChange={(dir) => {
+                    if (dir === "asc" || dir === "desc") {
+                      patchCardsSort(cardsSortKey, dir);
+                    }
+                  }}
+                  options={[
+                    { value: "asc", label: C.sortAscLabel },
+                    { value: "desc", label: C.sortDescLabel },
+                  ]}
+                />
+              </HelpTooltip>
+            }
+          />
+          <PurchaseOrdersCards items={items} basePath={basePath} onSelectRow={onSelectRow} />
+        </>
       ) : (
         <div
           className="sp-list-table-region"

@@ -8,7 +8,7 @@ import {
 } from "../../app/suppliesUi";
 import { SP_HELP } from "../../content/helpTooltips";
 import { OVERVIEW_CONTENT } from "./overviewContent";
-import { PERIOD_PRESET_OPTIONS, type PeriodPresetId } from "./periodPreset";
+import { PERIOD_PRESET_OPTIONS, type PeriodPresetId } from "../../app/periodPreset";
 import { SUPPLIES_UNIT_FIELD_LABEL } from "./suppliesBranchFilters";
 
 type OverviewFiltersProps = {

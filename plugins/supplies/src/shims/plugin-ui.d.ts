@@ -3,7 +3,7 @@
  * Runtime: Module Federation. Vitest: pluginUiTestAliases → fonte do kit.
  */
 declare module "@delpi/plugin-ui/index" {
-  import type { ComponentType, MouseEventHandler, ReactNode, RefObject } from "react";
+  import type { ComponentType, CSSProperties, MouseEventHandler, ReactNode, RefObject } from "react";
 
   export function HelpTooltip(props: {
     content: string;
@@ -603,6 +603,16 @@ declare module "@delpi/plugin-ui/index" {
     empty?: ReactNode;
     ariaLabel?: string;
     className?: string;
+  }>;
+
+  export function createDashboardDataCardsSortBar(config: {
+    prefix: string;
+  }): ComponentType<{
+    sortField?: ReactNode;
+    direction?: ReactNode;
+    children?: ReactNode;
+    className?: string;
+    style?: CSSProperties;
   }>;
 
   export function DataTable<T>(

@@ -2,6 +2,12 @@ import { useCallback, useState } from "react";
 import { Filter } from "lucide-react";
 
 import {
+  matchPeriodPreset,
+  PERIOD_PRESET_OPTIONS,
+  resolvePeriodPreset,
+  type PeriodPresetId,
+} from "../../app/periodPreset";
+import {
   buildSuppliesUnitOptions,
   canonicalizeUiBranches,
   SUPPLIES_UNIT_FILTER_LABEL,
@@ -14,6 +20,7 @@ import {
   SuppliesFilterBarShell,
   SuppliesMultiSelectField,
   SuppliesSectionHintLabel,
+  SuppliesSegmentToggle,
   SuppliesTextField,
   spFiltersKit,
 } from "../../app/suppliesUi";
@@ -39,6 +46,10 @@ export function PurchaseOrdersFilters({
   const [showMore, setShowMore] = useState(false);
   const unitOptions = buildSuppliesUnitOptions(units);
   const hasActiveFilters = hasActivePurchaseOrdersFilters(query, units);
+  const period = matchPeriodPreset(
+    query.expected_delivery_from,
+    query.expected_delivery_to,
+  );
 
   const commitOrderNumber = useCallback(
     (value: string) => onPatch({ order_number: value, page: 1 }),
@@ -61,6 +72,17 @@ export function PurchaseOrdersFilters({
     orderNumber.flush();
     product.flush();
     supplier.flush();
+  };
+
+  const onPeriod = (value: PeriodPresetId) => {
+    if (value === "custom") return;
+    const range = resolvePeriodPreset(value);
+    if (!range) return;
+    onPatch({
+      expected_delivery_from: range.from,
+      expected_delivery_to: range.to,
+      page: 1,
+    });
   };
 
   return (
@@ -140,6 +162,20 @@ export function PurchaseOrdersFilters({
           />
           {showMore ? (
             <>
+              <div className="sp-purchase-orders__period-presets">
+                <SuppliesSectionHintLabel
+                  label={C.periodLabel}
+                  hint={SP_HELP.purchaseOrdersDelivery}
+                />
+                <SuppliesSegmentToggle
+                  ariaLabel={C.periodLabel}
+                  idPrefix="purchase-orders-period-preset"
+                  size="sm"
+                  value={period}
+                  onChange={(value) => onPeriod(value as PeriodPresetId)}
+                  options={PERIOD_PRESET_OPTIONS}
+                />
+              </div>
               <SuppliesDateField
                 label={C.deliveryFromLabel}
                 value={query.expected_delivery_from}

@@ -5,7 +5,7 @@ import {
   readOverviewFiltersFromUrl,
   writeOverviewFiltersToUrl,
 } from "./overviewFilterUrl";
-import { resolvePeriodPreset, type PeriodPresetId } from "./periodPreset";
+import { resolvePeriodPreset, type PeriodPresetId } from "../../app/periodPreset";
 import {
   formatSuppliesScopeBadge,
   resolveApiBranch,

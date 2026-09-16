@@ -12,6 +12,7 @@ import {
   createDashboardHubChipRow,
   createDashboardLoadingActivityCard,
   createDashboardDataCardsGrid,
+  createDashboardDataCardsSortBar,
   createDashboardMultiSelectField,
   createDashboardPageHero,
   createDashboardPagePath,
@@ -186,6 +187,9 @@ export const SuppliesMultiSelectField = createDashboardMultiSelectField({
 
 export const SuppliesSegmentToggle = createDashboardSegmentToggle(UI_PREFIX);
 export const SuppliesDataCardsGrid = createDashboardDataCardsGrid({ prefix: UI_PREFIX });
+export const SuppliesDataCardsSortBar = createDashboardDataCardsSortBar({
+  prefix: UI_PREFIX,
+});
 export const SuppliesScopeChipBar = createDashboardScopeChipBar({ prefix: UI_PREFIX });
 export const SuppliesDataListToolbar = createDashboardDataListToolbar({ prefix: UI_PREFIX });
 export const SuppliesTableFontSizeControls = createDashboardTableFontSizeControls({

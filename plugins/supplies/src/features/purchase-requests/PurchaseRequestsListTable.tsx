@@ -6,10 +6,12 @@ import {
   HelpTooltip,
   ExcelExportButton,
   SuppliesCompactPagination,
+  SuppliesDataCardsSortBar,
   SuppliesDataListToolbar,
   SuppliesDataTable,
   SuppliesEntityLink,
   SuppliesSegmentToggle,
+  SuppliesSelectField,
   SuppliesStatusBadge,
   SuppliesTableColumnVisibilityMenu,
   SuppliesTableFontSizeControls,
@@ -27,7 +29,9 @@ import {
   formatRequestNumber,
   labelOverallStage,
   nextServerSort,
+  PURCHASE_REQUESTS_SORTABLE_COLUMNS,
   tableSortKey,
+  type PurchaseRequestSortableColumnKey,
 } from "./query";
 import { purchaseRequestsColumnHelp } from "./purchaseRequestsColumnHelp";
 import {
@@ -38,7 +42,12 @@ import {
   PURCHASE_REQUESTS_VIEW_LAYOUT_STORAGE_KEY,
   type PurchaseRequestTableColumnKey,
 } from "./purchaseRequestsTableConfig";
-import type { OverallStage, PurchaseRequestListItem, PurchaseRequestsQuery } from "./types";
+import type {
+  OverallStage,
+  PurchaseRequestListItem,
+  PurchaseRequestsQuery,
+  PurchaseRequestsSortDir,
+} from "./types";
 import { OVERALL_STAGE_VALUES } from "./types";
 
 type PurchaseRequestsListTableProps = {
@@ -52,6 +61,13 @@ type PurchaseRequestsListTableProps = {
   onPatchQuery: (patch: Partial<PurchaseRequestsQuery>) => void;
   onSelectRow: (item: PurchaseRequestListItem) => void;
 };
+
+const CARDS_SORT_OPTIONS = PURCHASE_REQUESTS_TABLE_COLUMNS.filter(
+  (column) => column.key in PURCHASE_REQUESTS_SORTABLE_COLUMNS,
+).map((column) => ({
+  value: column.key,
+  label: column.label,
+}));
 
 function stageBadgeVariant(
   stage: string | null | undefined,
@@ -124,7 +140,7 @@ export function PurchaseRequestsListTable({
           key: column.key,
           header: column.label,
           headerHint: purchaseRequestsColumnHelp(key),
-          sortable: key === "request_number" || key === "requester" || key === "cost_center" || key === "opened",
+          sortable: key in PURCHASE_REQUESTS_SORTABLE_COLUMNS,
           interactive: key === "request_number",
           rowClick: key === "request_number" ? ("stop" as const) : undefined,
           render: (row: PurchaseRequestListItem) => {
@@ -186,6 +202,18 @@ export function PurchaseRequestsListTable({
   const showCards = layout === "cards";
   const detailHref = (item: PurchaseRequestListItem) =>
     buildRequestDetailHref(basePath, item);
+
+  const cardsSortKey =
+    (tableSortKey(query.sort_by) as PurchaseRequestSortableColumnKey | null) ??
+    "opened";
+  const cardsSortDir: PurchaseRequestsSortDir = query.sort_dir === "asc" ? "asc" : "desc";
+
+  const patchCardsSort = (columnKey: string, dir: PurchaseRequestsSortDir) => {
+    const sortBy =
+      PURCHASE_REQUESTS_SORTABLE_COLUMNS[columnKey as PurchaseRequestSortableColumnKey];
+    if (!sortBy) return;
+    onPatchQuery({ sort_by: sortBy, sort_dir: dir, page: 1 });
+  };
 
   return (
     <>
@@ -264,11 +292,49 @@ export function PurchaseRequestsListTable({
       />
 
       {showCards ? (
-        <PurchaseRequestsCards
-          items={items}
-          detailHref={detailHref}
-          onSelectRow={onSelectRow}
-        />
+        <>
+          <SuppliesDataCardsSortBar
+            style={tableStyle}
+            sortField={
+              <SuppliesSelectField
+                label={C.sortByLabel}
+                hint={SP_HELP.purchaseRequestsSort}
+                value={cardsSortKey}
+                options={CARDS_SORT_OPTIONS}
+                onChange={(value) => patchCardsSort(value, cardsSortDir)}
+              />
+            }
+            direction={
+              <HelpTooltip
+                content={SP_HELP.purchaseRequestsSortDirection}
+                ariaLabel="Ajuda: direção da ordenação"
+                wrap
+                placement="bottom"
+              >
+                <SuppliesSegmentToggle
+                  ariaLabel={C.sortDirectionAriaLabel}
+                  idPrefix="purchase-requests-sort-dir"
+                  size="sm"
+                  value={cardsSortDir}
+                  onChange={(dir) => {
+                    if (dir === "asc" || dir === "desc") {
+                      patchCardsSort(cardsSortKey, dir);
+                    }
+                  }}
+                  options={[
+                    { value: "asc", label: C.sortAscLabel },
+                    { value: "desc", label: C.sortDescLabel },
+                  ]}
+                />
+              </HelpTooltip>
+            }
+          />
+          <PurchaseRequestsCards
+            items={items}
+            detailHref={detailHref}
+            onSelectRow={onSelectRow}
+          />
+        </>
       ) : (
         <div
           className="sp-list-table-region"

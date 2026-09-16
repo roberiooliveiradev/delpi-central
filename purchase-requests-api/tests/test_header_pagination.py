@@ -206,3 +206,186 @@ def test_list_filters_by_overall_stage_after_enrichment() -> None:
         overall_stages=["awaiting_order,awaiting_receipt"],
     )
     assert {item["request_number"] for item in both["items"]} == {"100", "200"}
+
+
+def _stage_line(
+    *,
+    request_number: str,
+    request_item: str,
+    stage_kind: str,
+    branch: str = "02",
+) -> dict:
+    base = _line(
+        request_number=request_number,
+        request_item=request_item,
+        cost_center="0413",
+        branch=branch,
+    )
+    if stage_kind == "awaiting_order":
+        return base
+    if stage_kind == "awaiting_receipt":
+        return {
+            **base,
+            "ordered_quantity": 1.0,
+            "purchase_orders": [
+                {
+                    "branch": branch,
+                    "order_number": f"PC{request_number}",
+                    "order_item": "0001",
+                    "ordered_quantity": 1.0,
+                    "received_quantity": 0.0,
+                    "open_quantity": 1.0,
+                }
+            ],
+        }
+    if stage_kind == "completed":
+        return {
+            **base,
+            "ordered_quantity": 1.0,
+            "purchase_orders": [
+                {
+                    "branch": branch,
+                    "order_number": f"PC{request_number}",
+                    "order_item": "0001",
+                    "ordered_quantity": 1.0,
+                    "received_quantity": 1.0,
+                    "open_quantity": 0.0,
+                }
+            ],
+        }
+    raise AssertionError(f"unknown stage_kind {stage_kind}")
+
+
+def test_overall_stage_sort_asc_is_global_before_page_cut() -> None:
+    """Positive: ASC stage order across full export set, then page slice."""
+    lines = [
+        _stage_line(request_number="300", request_item="0001", stage_kind="completed"),
+        _stage_line(request_number="100", request_item="0001", stage_kind="awaiting_order"),
+        _stage_line(request_number="200", request_item="0001", stage_kind="awaiting_receipt"),
+        _stage_line(request_number="150", request_item="0001", stage_kind="awaiting_order"),
+    ]
+    gateway = MagicMock()
+    gateway.export_lines.return_value = {"items": lines}
+    scope_repo = MagicMock()
+    scope_repo.list_active_cost_centers_for_user.return_value = [
+        {"branch": "02", "cost_center_code": "0413"}
+    ]
+    user = SimpleNamespace(
+        id="u1",
+        sub="u1",
+        is_superadmin=False,
+        permissions=["purchase-requests.access", "purchase-requests.unit.filial-02"],
+    )
+    result = ListPurchaseRequestsUseCase(gateway=gateway, scope_repository=scope_repo).execute(
+        user=user,
+        branch="02",
+        sort_by="overall_stage",
+        sort_dir="asc",
+        page=1,
+        page_size=2,
+    )
+    gateway.list_lines.assert_not_called()
+    gateway.export_lines.assert_called_once()
+    export_params = gateway.export_lines.call_args.kwargs["params"]
+    assert "sort_by" not in export_params
+    assert result["total"] == 4
+    assert result["total_pages"] == 2
+    assert [item["request_number"] for item in result["items"]] == ["100", "150"]
+    assert all(
+        (item.get("derived") or {}).get("overall_stage") == "awaiting_order"
+        for item in result["items"]
+    )
+
+
+def test_overall_stage_sort_desc_sibling_and_stage_alias() -> None:
+    """Sibling: DESC reverses stage order; alias `stage` maps to overall_stage."""
+    lines = [
+        _stage_line(request_number="100", request_item="0001", stage_kind="awaiting_order"),
+        _stage_line(request_number="200", request_item="0001", stage_kind="awaiting_receipt"),
+        _stage_line(request_number="300", request_item="0001", stage_kind="completed"),
+    ]
+    gateway = MagicMock()
+    gateway.export_lines.return_value = {"items": lines}
+    scope_repo = MagicMock()
+    scope_repo.list_active_cost_centers_for_user.return_value = [
+        {"branch": "02", "cost_center_code": "0413"}
+    ]
+    user = SimpleNamespace(
+        id="u1",
+        sub="u1",
+        is_superadmin=False,
+        permissions=["purchase-requests.access", "purchase-requests.unit.filial-02"],
+    )
+    result = ListPurchaseRequestsUseCase(gateway=gateway, scope_repository=scope_repo).execute(
+        user=user,
+        branch="02",
+        sort_by="stage",
+        sort_dir="desc",
+        page=1,
+        page_size=10,
+    )
+    stages = [(item.get("derived") or {}).get("overall_stage") for item in result["items"]]
+    assert stages == ["completed", "awaiting_receipt", "awaiting_order"]
+    assert [item["request_number"] for item in result["items"]] == ["300", "200", "100"]
+
+
+def test_invalid_sort_by_is_rejected() -> None:
+    """Negative: unknown sort_by rejected before gateway call."""
+    gateway = MagicMock()
+    scope_repo = MagicMock()
+    scope_repo.list_active_cost_centers_for_user.return_value = [
+        {"branch": "02", "cost_center_code": "0413"}
+    ]
+    user = SimpleNamespace(
+        id="u1",
+        sub="u1",
+        is_superadmin=False,
+        permissions=["purchase-requests.access", "purchase-requests.unit.filial-02"],
+    )
+    try:
+        ListPurchaseRequestsUseCase(gateway=gateway, scope_repository=scope_repo).execute(
+            user=user,
+            branch="02",
+            sort_by="not_a_real_field",
+        )
+        raise AssertionError("expected Invalid sort_by")
+    except ValueError as exc:
+        assert "sort_by" in str(exc)
+    gateway.list_lines.assert_not_called()
+    gateway.export_lines.assert_not_called()
+
+
+def test_gateway_sort_is_forwarded_and_order_preserved() -> None:
+    """SQL field sort: forward to list_lines and do not re-sort by date."""
+    lines = [
+        _line(request_number="200", request_item="0002", cost_center="0413"),
+        _line(request_number="100", request_item="0001", cost_center="0413"),
+    ]
+    gateway = MagicMock()
+    gateway.list_lines.return_value = {
+        "items": lines,
+        "page": 1,
+        "page_size": 50,
+        "total": 2,
+        "total_pages": 1,
+    }
+    scope_repo = MagicMock()
+    scope_repo.list_active_cost_centers_for_user.return_value = [
+        {"branch": "02", "cost_center_code": "0413"}
+    ]
+    user = SimpleNamespace(
+        id="u1",
+        sub="u1",
+        is_superadmin=False,
+        permissions=["purchase-requests.access", "purchase-requests.unit.filial-02"],
+    )
+    result = ListPurchaseRequestsUseCase(gateway=gateway, scope_repository=scope_repo).execute(
+        user=user,
+        branch="02",
+        sort_by="request_item",
+        sort_dir="asc",
+    )
+    params = gateway.list_lines.call_args.kwargs["params"]
+    assert params["sort_by"] == "request_item"
+    assert params["sort_dir"] == "asc"
+    assert [item["request_number"] for item in result["items"]] == ["200", "100"]

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from purchase_requests_app.application.security.purchase_requests_permissions import (
@@ -8,7 +9,10 @@ from purchase_requests_app.application.security.purchase_requests_permissions im
     has_access,
 )
 from purchase_requests_app.application.services.purchase_request_aggregation_service import (
+    GATEWAY_SORT_FIELDS,
+    LOCAL_SORT_FIELDS,
     PurchaseRequestAggregationService,
+    normalize_list_sort_by,
 )
 from purchase_requests_app.application.services.purchase_request_scope_resolver import (
     PurchaseRequestScopeResolver,
@@ -74,6 +78,38 @@ class ListPurchaseRequestsUseCase:
                 "total": 0,
                 "total_pages": 0,
             }
+        normalized_sort = normalize_list_sort_by(sort_by)
+        self._assert_sort(normalized_sort, sort_dir)
+
+        if normalized_sort == "overall_stage":
+            # overall_stage is owner-derived — never forward to api-delpi SQL.
+            params = self._gateway_params(
+                branches=codes,
+                date_from=date_from,
+                date_to=date_to,
+                request_number=request_number,
+                product_code=product_code,
+                supplier_code=supplier_code,
+                order_number=order_number,
+                requester_user_ids=requester_user_ids,
+                cost_centers=cost_center_codes,
+                scopes=scopes,
+                sort_by=None,
+                sort_dir=None,
+            )
+            payload = self._gateway.export_lines(params=params)
+            return self._assemble_owner_sorted_page(
+                payload,
+                resolution=resolution,
+                overall_stages=overall_stages,
+                overall_stage=overall_stage,
+                sort_by=normalized_sort,
+                sort_dir=sort_dir,
+                page=page,
+                page_size=page_size,
+            )
+
+        gateway_sort = normalized_sort if normalized_sort in GATEWAY_SORT_FIELDS else None
         params = self._gateway_params(
             branches=codes,
             date_from=date_from,
@@ -85,8 +121,8 @@ class ListPurchaseRequestsUseCase:
             requester_user_ids=requester_user_ids,
             cost_centers=cost_center_codes,
             scopes=scopes,
-            sort_by=sort_by,
-            sort_dir=sort_dir,
+            sort_by=gateway_sort,
+            sort_dir=sort_dir if gateway_sort else None,
             page=page,
             page_size=page_size,
         )
@@ -96,6 +132,8 @@ class ListPurchaseRequestsUseCase:
             resolution=resolution,
             overall_stages=overall_stages,
             overall_stage=overall_stage,
+            sort_by=normalized_sort,
+            sort_dir=sort_dir,
             page=page,
             page_size=page_size,
         )
@@ -131,6 +169,13 @@ class ListPurchaseRequestsUseCase:
         )
         if cost_center_codes == [] or scopes == []:
             return {"items": [], "total": 0}
+        normalized_sort = normalize_list_sort_by(sort_by)
+        self._assert_sort(normalized_sort, sort_dir)
+        gateway_sort = (
+            None
+            if normalized_sort == "overall_stage"
+            else (normalized_sort if normalized_sort in GATEWAY_SORT_FIELDS else None)
+        )
         params = self._gateway_params(
             branches=codes,
             date_from=date_from,
@@ -142,8 +187,8 @@ class ListPurchaseRequestsUseCase:
             requester_user_ids=requester_user_ids,
             cost_centers=cost_center_codes,
             scopes=scopes,
-            sort_by=sort_by,
-            sort_dir=sort_dir,
+            sort_by=gateway_sort,
+            sort_dir=sort_dir if gateway_sort else None,
         )
         payload = self._gateway.export_lines(params=params)
         assembled = self._assemble_page(
@@ -151,11 +196,22 @@ class ListPurchaseRequestsUseCase:
             resolution=resolution,
             overall_stages=overall_stages,
             overall_stage=overall_stage,
+            sort_by=normalized_sort,
+            sort_dir=sort_dir,
             page=1,
             page_size=len(payload.get("items") or []) or 1,
         )
         items = assembled["items"]
         return {"items": items, "total": len(items)}
+
+    @staticmethod
+    def _assert_sort(sort_by: str | None, sort_dir: str | None) -> None:
+        if sort_by is None:
+            return
+        if sort_by not in GATEWAY_SORT_FIELDS and sort_by not in LOCAL_SORT_FIELDS:
+            raise ValueError("Invalid sort_by")
+        if sort_dir is not None and (sort_dir or "").strip().lower() not in {"", "asc", "desc"}:
+            raise ValueError("Invalid sort_dir")
 
     def _authorized_branches(
         self,
@@ -265,6 +321,8 @@ class ListPurchaseRequestsUseCase:
         resolution,
         overall_stages: list[str] | None,
         overall_stage: str | None,
+        sort_by: str | None,
+        sort_dir: str | None,
         page: int,
         page_size: int,
     ) -> dict[str, Any]:
@@ -273,7 +331,11 @@ class ListPurchaseRequestsUseCase:
             lines,
             resolution=resolution,
         )
-        items = self._aggregation.build_list_line_items(lines)
+        items = self._aggregation.build_list_line_items(
+            lines,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
+        )
         stages = _normalize_overall_stages(overall_stages, overall_stage)
         if stages:
             allowed_stages = set(stages)
@@ -288,6 +350,50 @@ class ListPurchaseRequestsUseCase:
             "page_size": payload.get("page_size", page_size),
             "total": payload.get("total", len(items)),
             "total_pages": payload.get("total_pages", 0),
+        }
+
+    def _assemble_owner_sorted_page(
+        self,
+        payload: dict[str, Any],
+        *,
+        resolution,
+        overall_stages: list[str] | None,
+        overall_stage: str | None,
+        sort_by: str,
+        sort_dir: str | None,
+        page: int,
+        page_size: int,
+    ) -> dict[str, Any]:
+        lines = payload.get("items") or []
+        lines = self._aggregation.filter_authorized_lines(
+            lines,
+            resolution=resolution,
+        )
+        items = self._aggregation.build_list_line_items(
+            lines,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
+        )
+        stages = _normalize_overall_stages(overall_stages, overall_stage)
+        if stages:
+            allowed_stages = set(stages)
+            items = [
+                item
+                for item in items
+                if (item.get("derived") or {}).get("overall_stage") in allowed_stages
+            ]
+        total = len(items)
+        safe_page = max(1, int(page or 1))
+        safe_size = max(1, int(page_size or 50))
+        start = (safe_page - 1) * safe_size
+        page_items = items[start : start + safe_size]
+        total_pages = math.ceil(total / safe_size) if total else 0
+        return {
+            "items": page_items,
+            "page": safe_page,
+            "page_size": safe_size,
+            "total": total,
+            "total_pages": total_pages,
         }
 
 
