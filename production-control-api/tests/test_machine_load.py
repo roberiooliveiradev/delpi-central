@@ -375,6 +375,124 @@ def test_live_status_overrides_frozen_status_fields() -> None:
     assert payload["work_centers"][1]["in_production_count"] == 1
 
 
+def test_zero_pending_coerces_live_in_progress_to_started() -> None:
+    """Saldo zerado no snapshot manda sobre HZA aberta no enrich vivo."""
+    gateway = FakeGateway()
+    gateway.status_by_key[("24640401002", "03")] = {
+        "production_status": "in_progress",
+        "is_in_production": True,
+        "active_operator_name": "SILVANA ANDRADE DOS SANTOS",
+        "production_started_time": "05:12:44",
+        "active_operator_count": 1,
+        "appointment_count": 3,
+    }
+    snapshots = FakeSnapshotRepo()
+    service = _service(gateway, snapshots)
+    service.build(_user(*FULL_PERMS), branch="01", work_center="CT-02")
+
+    # Congela saldo 0 no snapshot já persistido e reaplica o enrich.
+    for item in snapshots.rows["01"]["payload_json"]["operations"]:
+        if item["production_order"] == "24640401002":
+            item["pending_qty"] = 0.0
+            item["produced_qty"] = item["planned_qty"]
+
+    # `build` não toca o TOTVS: quem consulta a HZA e alimenta o cache é `live_status`.
+    service.live_status(_user(*FULL_PERMS), branch="01")
+    payload = service.build(_user(*FULL_PERMS), branch="01", work_center="CT-02")
+    operation = payload["selected"]["items"][0]
+    assert operation["pending_qty"] == 0.0
+    assert operation["is_in_production"] is False
+    assert operation["production_status"] == "started"
+    assert operation["active_operator_name"] == "SILVANA ANDRADE DOS SANTOS"
+
+
+def test_public_build_applies_live_operation_balance_on_legacy_snapshot() -> None:
+    """Snapshot antigo sem saldo da bancada: o enrich vivo preenche o card público."""
+    gateway = FakeGateway()
+    gateway.status_by_key[("10916601005", "01")] = {
+        "production_status": "in_progress",
+        "is_in_production": True,
+        "active_operator_name": "OPERADOR TESTE",
+        "production_started_time": "14:00:00",
+        "active_operator_count": 1,
+        "appointment_count": 2,
+        "operation_produced_qty": 3.5,
+        "operation_pending_qty": 2.5,
+    }
+    snapshots = FakeSnapshotRepo()
+    snapshots.upsert(
+        branch="02",
+        start_date=date(2026, 9, 1),
+        end_date=date(2026, 9, 30),
+        payload={
+            "work_centers": [
+                {
+                    "work_center": "CT-01A",
+                    "work_center_name": "CORTE E DECAPE",
+                    "operation_count": 1,
+                    "in_production_count": 1,
+                }
+            ],
+            "operations": [
+                {
+                    "work_center": "CT-01A",
+                    "production_order": "10916601005",
+                    "operation_code": "01",
+                    "planned_qty": 6.0,
+                    "produced_qty": 0.0,
+                    "pending_qty": 6.0,
+                    "unit": "MI",
+                    "is_in_production": True,
+                    "production_status": "in_progress",
+                }
+            ],
+            "summary": {"work_center_count": 1, "operation_count": 1},
+        },
+        refreshed_by="planner-1",
+    )
+
+    payload = _service(gateway, snapshots).build_public(
+        branch="02", work_center="CT-01A"
+    )
+    operation = payload["selected"]["items"][0]
+    assert operation["pending_qty"] == 6.0
+    assert operation["operation_produced_qty"] == 3.5
+    assert operation["operation_pending_qty"] == 2.5
+    assert ("appointment_status", {"branch": "02", "count": 1}) in gateway.calls
+
+
+def test_operation_balance_coerces_live_in_progress_even_with_header_pending() -> None:
+    """Saldo da bancada zerado manda sobre o cabeçalho da OP e a HZA aberta."""
+    gateway = FakeGateway()
+    gateway.status_by_key[("24640401002", "03")] = {
+        "production_status": "in_progress",
+        "is_in_production": True,
+        "active_operator_name": "SILVANA ANDRADE DOS SANTOS",
+        "production_started_time": "05:12:44",
+        "active_operator_count": 1,
+        "appointment_count": 4,
+        "operation_produced_qty": 7.1,
+        "operation_pending_qty": 0.0,
+    }
+    snapshots = FakeSnapshotRepo()
+    service = _service(gateway, snapshots)
+    service.build(_user(*FULL_PERMS), branch="01", work_center="CT-02")
+
+    for item in snapshots.rows["01"]["payload_json"]["operations"]:
+        if item["production_order"] == "24640401002":
+            item["pending_qty"] = 6.3
+            item["planned_qty"] = 7.1
+
+    service.live_status(_user(*FULL_PERMS), branch="01")
+    payload = service.build(_user(*FULL_PERMS), branch="01", work_center="CT-02")
+    operation = payload["selected"]["items"][0]
+    assert operation["pending_qty"] == 6.3
+    assert operation["operation_pending_qty"] == 0.0
+    assert operation["operation_produced_qty"] == 7.1
+    assert operation["is_in_production"] is False
+    assert operation["production_status"] == "started"
+
+
 def test_live_status_exposes_only_status_fields() -> None:
     """A rota leve não vaza identidade do snapshot nem campos da fila."""
     gateway = FakeGateway()
@@ -400,6 +518,8 @@ def test_live_status_exposes_only_status_fields() -> None:
         "active_operator_count",
         "appointment_count",
         "last_appointment_date",
+        "operation_produced_qty",
+        "operation_pending_qty",
     }
     assert live["items"]
     for item in live["items"]:

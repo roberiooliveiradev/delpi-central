@@ -84,4 +84,28 @@ describe("applyMachineLoadLiveStatus", () => {
     const payload = makeMachineLoadPayload();
     expect(applyMachineLoadLiveStatus(payload, makeLiveStatus([]))).toBe(payload);
   });
+
+  it("aplica o saldo da própria operação sem mexer no saldo do cabeçalho", () => {
+    const payload = makeMachineLoadPayload();
+
+    const merged = applyMachineLoadLiveStatus(
+      payload,
+      makeLiveStatus([
+        {
+          production_order: "24640401010",
+          operation_code: "03",
+          production_status: "started",
+          is_in_production: false,
+          operation_produced_qty: 7.1,
+          operation_pending_qty: 0,
+        },
+      ]),
+    );
+
+    const item = merged.operations?.find((row) => row.production_order === "24640401010");
+    expect(item?.pending_qty).toBe(7.1);
+    expect(item?.operation_produced_qty).toBe(7.1);
+    expect(item?.operation_pending_qty).toBe(0);
+    expect(item?.is_in_production).toBe(false);
+  });
 });

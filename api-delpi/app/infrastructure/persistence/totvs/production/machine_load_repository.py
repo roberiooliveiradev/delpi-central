@@ -11,6 +11,7 @@ from app.domain.ports.production.machine_load_repository_port import (
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.production.machine_load_sql import (
     build_appointment_status_query,
+    build_operation_produced_qty_query,
     build_operations_count_query,
     build_operations_query,
     build_order_finish_flags_query,
@@ -101,5 +102,21 @@ class MachineLoadRepository(BaseRepository, MachineLoadRepositoryPort):
         if built is None:
             return []
         query, params = built
+        with self:
+            return self.execute_query(query, params) or []
+
+    def get_operation_produced_qty(
+        self,
+        *,
+        branch: str,
+        production_orders: list[str],
+    ) -> list[dict[str, Any]]:
+        built = build_operation_produced_qty_query(
+            branch=branch, production_orders=production_orders
+        )
+        if built is None:
+            return []
+        query, params = built
+        # Saldo da bancada acompanha o apontamento do turno: sem cache.
         with self:
             return self.execute_query(query, params) or []

@@ -23,6 +23,7 @@ def eficiencia_fabril_appointments_cache_key(
             request.employee or "",
             request.work_center or "",
             "ok1" if status_ok_only else "ok0",
+            "allct1" if request.include_excluded_work_centers else "allct0",
         ]
     )
 

@@ -14,6 +14,10 @@ Fonte confirmada em sonda no TOTVS Delpi (ago/2026):
   da OP filha diverge da mãe na maioria dos casos.
 - O que está sendo produzido **agora** vem da ``HZA010`` (apontamento de início
   no coletor), casada por filial + OP + operação.
+- O quanto **falta nesta operação** vem da ``SH6010`` (apontamento de produção),
+  não do cabeçalho: ``C2_QUJE`` só anda no apontamento que dá entrada em estoque
+  (última operação do roteiro), então ``C2_QUANT - C2_QUJE`` é saldo do PA e vem
+  repetido em todas as operações da mesma OP.
 """
 
 from __future__ import annotations
@@ -31,6 +35,10 @@ MACHINE_LOAD_PRODUCT_TABLE = "SB1010"
 MACHINE_LOAD_WORK_CENTER_TABLE = "SHB010"
 MACHINE_LOAD_ROUTING_TABLE = "SG2010"
 MACHINE_LOAD_ORDERS_VIEW = "dbo.VW_PCP_ORDENS_PRODUCAO"
+# Apontamento de produção por operação — origem do saldo da própria operação.
+MACHINE_LOAD_PRODUCTION_APPOINTMENT_TABLE = "SH6010"
+# H6_TIPO: 'P' é o apontamento de produção (o que abate a operação).
+PRODUCTION_APPOINTMENT_TYPE = "P"
 
 VALID_MACHINE_LOAD_BRANCHES = frozenset({"01", "02"})
 

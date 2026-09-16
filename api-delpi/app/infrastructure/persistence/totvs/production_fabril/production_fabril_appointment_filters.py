@@ -75,9 +75,15 @@ def build_fabril_view_filters(
     employee: str | None = None,
     status_ok_only: bool = True,
     efficiency_cap_pct: int | None = None,
+    include_excluded_work_centers: bool = False,
     column_prefix: str | None = None,
 ) -> Tuple[str, tuple]:
-    """Filtros da view `vw_Apontamentos_Eficiencia` (eficiência fabril e OEE)."""
+    """Filtros da view `vw_Apontamentos_Eficiencia` (eficiência fabril e OEE).
+
+    Por padrão exclui CTs irregulares (``CT-00``, inspeção, etc.). Passe
+    ``include_excluded_work_centers=True`` quando o consumidor precisa do saldo
+    completo da OP (ex.: histórico do cockpit), não do KPI de eficiência.
+    """
     qb = QueryBuilder()
 
     filial_col = _column("FILIAL", prefix=column_prefix)
@@ -107,14 +113,18 @@ def build_fabril_view_filters(
 
     if work_center:
         selected = parse_csv_filter_values(work_center) or []
-        allowed = [value for value in selected if value not in EXCLUDED_WORK_CENTERS]
+        allowed = (
+            selected
+            if include_excluded_work_centers
+            else [value for value in selected if value not in EXCLUDED_WORK_CENTERS]
+        )
         if not allowed:
             qb.raw("1=0")
         elif len(allowed) == 1:
             qb.eq(ct_col, allowed[0])
         else:
             qb.in_list(ct_col, allowed)
-    else:
+    elif not include_excluded_work_centers:
         for excluded in EXCLUDED_WORK_CENTERS:
             qb.raw(f"LTRIM(RTRIM({ct_col})) <> ?")
             qb._params.append(excluded)

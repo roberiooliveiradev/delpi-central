@@ -2307,6 +2307,22 @@ services:
 
     container_name: delpi-production-control-api
     restart: unless-stopped
+    # Volume bind-mounta o código; sem --reload o worker fica com _STATUS_FIELDS
+    # antigo e o cockpit público cai no saldo do cabeçalho da OP.
+    command:
+      [
+        "python",
+        "-m",
+        "uvicorn",
+        "production_control_app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--root-path",
+        "/apps/production-control-api",
+        "--reload",
+      ]
 
     env_file:
       - .env

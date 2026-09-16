@@ -8,8 +8,10 @@ from app.domain.production.machine_load_scope import (
     MACHINE_LOAD_ALLOCATION_TABLE,
     MACHINE_LOAD_ORDER_TABLE,
     MACHINE_LOAD_ORDERS_VIEW,
+    MACHINE_LOAD_PRODUCTION_APPOINTMENT_TABLE,
     MACHINE_LOAD_ROUTING_TABLE,
     MACHINE_LOAD_WORK_CENTER_TABLE,
+    PRODUCTION_APPOINTMENT_TYPE,
     SORT_VALUES,
 )
 from app.domain.totvs.protheus_operation_appointments import (
@@ -195,6 +197,7 @@ def test_operations_query_exposes_contract_columns() -> None:
         "AS product_description",
         "AS planned_qty",
         "AS pending_qty",
+        "AS operation_produced_qty",
         "AS pa_due_date",
         "AS active_appointment_count",
         "AS active_marker",
@@ -277,5 +280,40 @@ def test_order_finish_flags_query_uses_c2_datrf() -> None:
     assert built is not None
     query, params = built
     assert "C2_DATRF" in query
+    assert "AS pending_qty" in query
     assert MACHINE_LOAD_ORDER_TABLE in query
     assert params == ("01", "10846301001")
+    assert "AS planned_qty" in query
+
+
+def test_operation_produced_qty_query_aggregates_sh6_by_order_and_operation() -> None:
+    built = sql.build_operation_produced_qty_query(
+        branch="02", production_orders=["10964501004", "10964501004", ""]
+    )
+    assert built is not None
+    query, params = built
+    assert MACHINE_LOAD_PRODUCTION_APPOINTMENT_TABLE in query
+    assert f"AH.H6_TIPO = '{PRODUCTION_APPOINTMENT_TYPE}'" in query
+    assert "GROUP BY AH.H6_OP, AH.H6_OPERAC" in query
+    assert "CAST(? AS CHAR(2))" in query
+    assert "CAST(? AS CHAR(14))" in query
+    assert "LTRIM(RTRIM(AH.H6_OP))" not in query.split("WHERE", 1)[1]
+    assert params == ("02", "10964501004")
+
+
+def test_operation_produced_qty_query_empty_list_is_none() -> None:
+    assert sql.build_operation_produced_qty_query(branch="01", production_orders=[]) is None
+
+
+def test_operations_listing_joins_sh6_without_trim_on_the_key() -> None:
+    query, _ = sql.build_operations_query(**_filters(), offset=0, page_size=10)
+    assert MACHINE_LOAD_PRODUCTION_APPOINTMENT_TABLE in query
+    assert "AH.H6_OP = OA.H8_OP" in query
+    assert "AH.H6_OPERAC = OA.H8_OPER" in query
+    assert "AH.H6_TIPO = 'P'" in query
+
+
+def test_work_centers_query_skips_the_sh6_aggregate() -> None:
+    """Contadores de aba não precisam do saldo da bancada."""
+    query, _ = sql.build_work_centers_query(**_filters())
+    assert MACHINE_LOAD_PRODUCTION_APPOINTMENT_TABLE not in query

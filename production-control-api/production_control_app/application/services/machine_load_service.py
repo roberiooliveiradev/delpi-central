@@ -109,6 +109,9 @@ _STATUS_FIELDS = (
     "active_operator_count",
     "appointment_count",
     "last_appointment_date",
+    # Saldo da bancada anda a cada apontamento: não pode ficar congelado no snapshot.
+    "operation_produced_qty",
+    "operation_pending_qty",
 )
 
 # Fila completa da filial no payload apresentado. A fila é uma só: o centro de
@@ -143,6 +146,15 @@ def _unwrap_data(payload: dict[str, Any]) -> dict[str, Any]:
     if isinstance(data, dict):
         return data
     return payload if isinstance(payload, dict) else {}
+
+
+def _optional_float(value: Any) -> float | None:
+    if value is None or value == "":
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _parse_iso_date(value: str | None) -> date | None:
@@ -392,6 +404,84 @@ class MachineLoadService:
             if pa.upper() == wanted_key:
                 return True
         return False
+
+    def public_snapshot_contains_operation(
+        self,
+        *,
+        branch: str,
+        production_order: str,
+        operation_code: str,
+    ) -> bool:
+        """Confere se a OP+operação está na fila publicada — sem puxar o TOTVS."""
+        return (
+            self._public_operation_item(
+                branch=branch,
+                production_order=production_order,
+                operation_code=operation_code,
+            )
+            is not None
+        )
+
+    def public_operation_balance(
+        self,
+        *,
+        branch: str,
+        production_order: str,
+        operation_code: str,
+    ) -> dict[str, float | None] | None:
+        """Produzido/saldo da operação na fila publicada — mesma fonte do cockpit.
+
+        O detalhe e o card precisam do mesmo número: somar a janela de histórico
+        do modal daria outro total quando o apontamento é mais antigo que ela.
+        """
+        item = self._public_operation_item(
+            branch=branch,
+            production_order=production_order,
+            operation_code=operation_code,
+            enrich=True,
+        )
+        if item is None:
+            return None
+        produced = _optional_float(item.get("operation_produced_qty"))
+        if produced is None:
+            return None
+        return {
+            "operation_produced_qty": produced,
+            "operation_pending_qty": _optional_float(item.get("operation_pending_qty")),
+        }
+
+    def _public_operation_item(
+        self,
+        *,
+        branch: str,
+        production_order: str,
+        operation_code: str,
+        enrich: bool = False,
+    ) -> dict[str, Any] | None:
+        code = self._branch_access.assert_valid_branch(branch)
+        order = str(production_order or "").strip()
+        operation = str(operation_code or "").strip()
+        if not order or not operation:
+            return None
+        row = self._snapshots.get(branch=code)
+        if row is None:
+            raise SnapshotNotFound(
+                "A fila desta filial ainda não foi publicada pelo PCP."
+            )
+        payload = self._decode_payload(row)
+        operations = visible_operations(
+            self._payload_operations(payload), withdrawn_order_numbers(payload)
+        )
+        if enrich:
+            operations = self._enrich_live_status(branch=code, operations=operations)
+        order_key = order.upper()
+        operation_key = operation.lstrip("0") or "0"
+        for item in operations:
+            item_order = str(item.get("production_order") or "").strip().upper()
+            item_op = str(item.get("operation_code") or "").strip().lstrip("0") or "0"
+            if item_order == order_key and item_op == operation_key:
+                return item
+        return None
 
     def public_snapshot_contains_product(self, *, branch: str, product_code: str) -> bool:
         """Confere se o produto da OP aparece na fila congelada — sem puxar o TOTVS."""
@@ -1852,14 +1942,35 @@ class MachineLoadService:
         for item in operations:
             status = status_by_key.get(_operation_key(item))
             if not status:
-                enriched.append(item)
-                continue
-            merged = dict(item)
-            for field in _STATUS_FIELDS:
-                if field in status:
-                    merged[field] = status[field]
+                merged = dict(item)
+            else:
+                merged = dict(item)
+                for field in _STATUS_FIELDS:
+                    if field in status:
+                        merged[field] = status[field]
+            MachineLoadService._coerce_status_when_balance_exhausted(merged)
             enriched.append(merged)
         return enriched
+
+    @staticmethod
+    def _coerce_status_when_balance_exhausted(item: dict[str, Any]) -> None:
+        """Saldo zerado manda sobre HZA aberta (espelha a regra da api-delpi).
+
+        O saldo da própria operação decide; o do cabeçalho da OP só entra quando
+        o apontamento por operação não veio (snapshot antigo ou enrich sem ERP).
+        """
+        pending_val = _optional_float(item.get("operation_pending_qty"))
+        if pending_val is None:
+            pending_val = _optional_float(item.get("pending_qty"))
+        if pending_val is None or pending_val > 1e-9:
+            return
+        if not item.get("is_in_production") and item.get("production_status") != "in_progress":
+            if item.get("production_status") != "started":
+                item["production_status"] = "started"
+            return
+        item["is_in_production"] = False
+        item["production_status"] = "started"
+        item["active_operator_count"] = 0
 
     @staticmethod
     def _recompute_center_counts(

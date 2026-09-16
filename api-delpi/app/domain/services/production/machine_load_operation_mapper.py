@@ -59,21 +59,27 @@ def _as_int(value: Any) -> int:
     return int(float(value))
 
 
-def _production_status(row: dict[str, Any]) -> dict[str, Any]:
+def _production_status(
+    row: dict[str, Any], *, operation_pending_qty: float | None = None
+) -> dict[str, Any]:
     """Deriva o estado de produção da operação a partir do agregado da HZA.
 
     ``in_progress`` exige apontamento aberto e recente; ``started`` marca a
     operação que já passou pela máquina mas não está rodando agora. Em ambos
     os casos o operador vem do marcador HZA (ativo ou último do histórico).
 
-    OP encerrada no SC2 (``C2_DATRF``) sempre é ``started``, nunca ``in_progress``:
-    o histórico HZA é recortado por performance e o apontamento que fica aberto
-    porque o operador não encerrou no coletor mostraria a operação rodando para
-    sempre. Encerramento da OP manda sobre a HZA.
+    OP encerrada no SC2 (``C2_DATRF``) ou **sem saldo** nunca fica
+    ``in_progress``, mesmo com apontamento aberto e recente: o operador que não
+    encerra no coletor deixaria a fila mostrando «Em produção» para sempre.
+    O saldo que manda é o da própria operação (``operation_pending_qty``); o do
+    cabeçalho só entra quando o apontamento por operação não veio.
     """
     active_count = _as_int(row.get("active_appointment_count"))
     appointment_count = _as_int(row.get("appointment_count"))
     order_finished = bool(_as_int(row.get("order_is_finished")))
+    balance_exhausted = _balance_exhausted(
+        row, operation_pending_qty=operation_pending_qty
+    )
     finish_date = _iso_date(row.get("order_finish_date") or row.get("finish_date"))
     started_date, started_time, operator_code, operator_name = split_active_marker(
         _clean(row.get("active_marker"))
@@ -81,11 +87,16 @@ def _production_status(row: dict[str, Any]) -> dict[str, Any]:
     last_date, last_time, last_operator_code, last_operator_name = split_active_marker(
         _clean(row.get("last_marker"))
     )
-    in_production = active_count > 0 and bool(started_date) and not order_finished
+    in_production = (
+        active_count > 0
+        and bool(started_date)
+        and not order_finished
+        and not balance_exhausted
+    )
 
     if in_production:
         status = PRODUCTION_STATUS_IN_PROGRESS
-    elif appointment_count > 0 or order_finished:
+    elif appointment_count > 0 or order_finished or balance_exhausted:
         status = PRODUCTION_STATUS_STARTED
     else:
         status = PRODUCTION_STATUS_NOT_STARTED
@@ -117,6 +128,62 @@ def _production_status(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _balance_exhausted(
+    row: dict[str, Any], *, operation_pending_qty: float | None = None
+) -> bool:
+    """Saldo zerado — o da operação manda; o da OP é fallback.
+
+    O enrich vivo de apontamento **não** deve inventar saldo ``0``: ausência do
+    campo significa «saldo desconhecido», não «saldo esgotado».
+    """
+    if operation_pending_qty is not None:
+        return operation_pending_qty <= 1e-9
+    if "pending_qty" not in row:
+        return False
+    pending = row.get("pending_qty")
+    if pending is None or pending == "":
+        return False
+    try:
+        return float(pending) <= 1e-9
+    except (TypeError, ValueError):
+        return False
+
+
+def _optional_float(value: Any) -> float | None:
+    if value is None or value == "":
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _operation_balance(
+    row: dict[str, Any], *, planned_qty: float
+) -> tuple[float | None, float | None]:
+    """Produzido e saldo da **própria operação** (SH6010), não do cabeçalho.
+
+    ``C2_QUJE`` só anda no apontamento que dá entrada em estoque, então o saldo
+    do SC2 vem igual em todas as operações da OP. Aqui o saldo é
+    ``C2_QUANT − SUM(H6_QTDPROD)`` da operação, sem descontar refugo: peça
+    refugada continua faltando na bancada.
+
+    Devolve ``(None, None)`` quando o apontamento por operação não veio no row —
+    saldo desconhecido não pode virar zero. OP encerrada ou já sem saldo no
+    cabeçalho zeram a operação: operação que nunca é apontada não pode ficar
+    eternamente pendente.
+    """
+    produced = _optional_float(row.get("operation_produced_qty"))
+    if produced is None:
+        return None, None
+    produced = round(produced, 6)
+    if bool(_as_int(row.get("order_is_finished"))) or _balance_exhausted(row):
+        return produced, 0.0
+    if planned_qty <= 0:
+        return produced, None
+    return produced, round(max(planned_qty - produced, 0.0), 6)
+
+
 class MachineLoadOperationMapper:
     """Converte a operação alocada em item de API (datas ISO, códigos trimados)."""
 
@@ -129,6 +196,10 @@ class MachineLoadOperationMapper:
             round(planned - produced, 6)
             if pending is None or pending == ""
             else round(_as_float(pending), 6)
+        )
+
+        operation_produced_qty, operation_pending_qty = _operation_balance(
+            row, planned_qty=planned
         )
 
         tool = _clean(row.get("tool"))
@@ -154,13 +225,15 @@ class MachineLoadOperationMapper:
             "planned_qty": round(planned, 6),
             "produced_qty": round(produced, 6),
             "pending_qty": pending_qty,
+            "operation_produced_qty": operation_produced_qty,
+            "operation_pending_qty": operation_pending_qty,
             "pa_due_date": _iso_date(row.get("pa_due_date")),
             "due_date": _iso_date(row.get("due_date")),
             "due_date_source": _clean(row.get("due_date_source")) or None,
             "pa_production_order": _clean(row.get("pa_production_order")) or None,
             "pa_product_code": _clean(row.get("pa_product_code")) or None,
             "pa_product_description": _clean(row.get("pa_product_description")) or None,
-            **_production_status(row),
+            **_production_status(row, operation_pending_qty=operation_pending_qty),
         }
 
     @classmethod

@@ -42,6 +42,7 @@ class GetEficienciaFabrilAppointmentsUseCase:
         work_center: Optional[str] = None,
         status_ok_only: bool = False,
         shift: Optional[str] = None,
+        include_excluded_work_centers: bool = False,
     ) -> list[dict]:
         if not date_start or not str(date_start).strip():
             raise ValueError("date_start é obrigatório.")
@@ -74,6 +75,7 @@ class GetEficienciaFabrilAppointmentsUseCase:
             employee=employee.strip() if employee else None,
             work_center=work_center.strip() if work_center else None,
             status_ok_only=status_ok_only,
+            include_excluded_work_centers=include_excluded_work_centers,
             page=1,
             page_size=1,
         )

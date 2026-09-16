@@ -16,6 +16,8 @@ const STATUS_FIELDS = [
   "active_operator_count",
   "appointment_count",
   "last_appointment_date",
+  "operation_produced_qty",
+  "operation_pending_qty",
 ] as const satisfies ReadonlyArray<keyof MachineLoadOperation>;
 
 function operationKey(productionOrder: string, operationCode: string): string {

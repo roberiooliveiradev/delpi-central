@@ -267,6 +267,30 @@ class DelpiProductionGateway:
             },
         )
 
+    def fetch_production_appointments(
+        self,
+        *,
+        branch: str,
+        start_date: str,
+        end_date: str,
+        op: str,
+        page: int = 1,
+        page_size: int = 200,
+    ) -> dict[str, Any]:
+        """Linhas SH6010 da OP (inclui CT-00) — saldo/abatimento do cockpit."""
+        return self._request(
+            "GET",
+            "/production/appointments",
+            params={
+                "branch": branch,
+                "start_date": start_date,
+                "end_date": end_date,
+                "op": op,
+                "page": page,
+                "page_size": page_size,
+            },
+        )
+
     def fetch_factory_shifts(self) -> dict[str, Any]:
         """Catálogo de turnos + turno corrente — a api-delpi é dona dos horários."""
         return self._request("GET", "/production/factory-shifts")
@@ -323,6 +347,8 @@ class DelpiProductionGateway:
         end_date: str,
         work_center: str | None = None,
         shift: str | None = None,
+        op: str | None = None,
+        include_excluded_work_centers: bool = False,
     ) -> dict[str, Any]:
         return self._request(
             "GET",
@@ -333,7 +359,9 @@ class DelpiProductionGateway:
                 "end_date": end_date,
                 "work_center": work_center,
                 "shift": shift,
+                "op": op,
                 "status_ok_only": True,
+                "include_excluded_work_centers": include_excluded_work_centers,
             },
         )
 

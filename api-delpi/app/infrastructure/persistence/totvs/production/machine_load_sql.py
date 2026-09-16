@@ -1,4 +1,4 @@
-"""SQL builders — carga máquina (SH8010 + SC2010 + SB1010 + SG2010 + SHB010 + HZA010)."""
+"""SQL builders — carga máquina (SH8010 + SC2010 + SB1010 + SG2010 + SHB010 + HZA010 + SH6010)."""
 
 from __future__ import annotations
 
@@ -8,8 +8,10 @@ from app.domain.production.machine_load_scope import (
     MACHINE_LOAD_ORDER_TABLE,
     MACHINE_LOAD_ORDERS_VIEW,
     MACHINE_LOAD_PRODUCT_TABLE,
+    MACHINE_LOAD_PRODUCTION_APPOINTMENT_TABLE,
     MACHINE_LOAD_ROUTING_TABLE,
     MACHINE_LOAD_WORK_CENTER_TABLE,
+    PRODUCTION_APPOINTMENT_TYPE,
     SORT_DUE_DATE_ASC,
     SORT_DUE_DATE_DESC,
     SORT_ORDER_ASC,
@@ -119,8 +121,36 @@ def _appointment_join_sql() -> str:
     """
 
 
-def _from_clause() -> str:
+def _operation_produced_join_sql() -> str:
+    """Produzido na própria operação (SH6010), não no cabeçalho da OP.
+
+    ``C2_QUJE`` só anda no apontamento que dá entrada em estoque (última operação
+    do roteiro), então o saldo do SC2 vem igual em todas as operações da OP e não
+    responde «falta quanto nesta bancada».
+
+    A chave casa direto com a alocação: ``H6_OP``/``H6_OPERAC`` são ``CHAR`` com
+    padding, e o SQL Server ignora espaço à direita na comparação — sem
+    ``LTRIM``/``RTRIM``, que impediria o seek pelo índice de OP.
+    """
+    return f"""
+        OUTER APPLY (
+            SELECT SUM(CAST(AH.H6_QTDPROD AS FLOAT)) AS produced_qty
+            FROM {MACHINE_LOAD_PRODUCTION_APPOINTMENT_TABLE} AH WITH (NOLOCK)
+            WHERE AH.D_E_L_E_T_ = ''
+              AND AH.H6_TIPO = '{PRODUCTION_APPOINTMENT_TYPE}'
+              AND AH.H6_FILIAL = OA.H8_FILIAL
+              AND AH.H6_OP = OA.H8_OP
+              AND AH.H6_OPERAC = OA.H8_OPER
+        ) OPQ
+    """
+
+
+def _from_clause(*, with_operation_produced: bool = False) -> str:
+    """FROM comum. O agregado da SH6 só entra na listagem, que devolve saldo."""
     mother_key = mother_order_key_sql("OA.H8_OP")
+    operation_produced = (
+        _operation_produced_join_sql() if with_operation_produced else ""
+    )
     return f"""
         FROM {MACHINE_LOAD_ALLOCATION_TABLE} OA WITH (NOLOCK)
         INNER JOIN {MACHINE_LOAD_ORDER_TABLE} OP WITH (NOLOCK)
@@ -144,6 +174,7 @@ def _from_clause() -> str:
             ON PA.FILIAL = OA.H8_FILIAL
            AND PA.OP_CHAVE = {mother_key}
         {_appointment_join_sql()}
+        {operation_produced}
     """
 
 
@@ -303,6 +334,7 @@ def build_operations_query(
             CAST(OP.C2_QUANT AS DECIMAL(18, 6)) AS planned_qty,
             CAST(OP.C2_QUJE AS DECIMAL(18, 6)) AS produced_qty,
             CAST(OP.C2_QUANT - OP.C2_QUJE AS DECIMAL(18, 6)) AS pending_qty,
+            CAST(ISNULL(OPQ.produced_qty, 0) AS DECIMAL(18, 6)) AS operation_produced_qty,
             PA.DT_ENTREGA AS pa_due_date,
             {DUE_DATE_EXPR} AS due_date,
             {DUE_DATE_SOURCE_EXPR} AS due_date_source,
@@ -317,7 +349,7 @@ def build_operations_query(
             ISNULL(AP.last_marker, '') AS last_marker,
             CASE WHEN {_ORDER_FINISHED_EXPR} THEN 1 ELSE 0 END AS order_is_finished,
             NULLIF(LTRIM(RTRIM(OP.C2_DATRF)), '') AS order_finish_date
-        {_from_clause()}
+        {_from_clause(with_operation_produced=True)}
         WHERE {where_sql}
         ORDER BY {SORT_SQL[sort]}
         OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
@@ -370,17 +402,63 @@ def build_appointment_status_query(
     return query, (appointment_active_since, branch, appointment_history_since)
 
 
+# O driver manda string como NVARCHAR; sem o CAST o SQL Server converte a
+# coluna CHAR e troca o seek por scan da SH6 inteira (3,0 s → 0,1 s na sonda).
+_APPOINTMENT_BRANCH_SQL_TYPE = "CHAR(2)"
+_APPOINTMENT_ORDER_SQL_TYPE = "CHAR(14)"
+
+
+def _distinct_orders(production_orders: list[str]) -> list[str]:
+    return sorted(
+        {str(item or "").strip() for item in production_orders if str(item or "").strip()}
+    )
+
+
+def build_operation_produced_qty_query(
+    *,
+    branch: str,
+    production_orders: list[str],
+) -> tuple[str, tuple] | None:
+    """Produzido por OP+operação (SH6010) — saldo real da bancada no enrich.
+
+    Recorte pela lista de OPs do snapshot: a SH6 é grande e o seek por
+    ``H6_OP`` depende de comparar a coluna sem ``LTRIM``/``RTRIM``.
+    """
+    orders = _distinct_orders(production_orders)
+    if not orders:
+        return None
+    placeholders = ", ".join(
+        f"CAST(? AS {_APPOINTMENT_ORDER_SQL_TYPE})" for _ in orders
+    )
+    query = f"""
+        SELECT
+            LTRIM(RTRIM(AH.H6_OP)) AS production_order,
+            LTRIM(RTRIM(AH.H6_OPERAC)) AS operation_code,
+            CAST(SUM(CAST(AH.H6_QTDPROD AS FLOAT)) AS DECIMAL(18, 6))
+                AS operation_produced_qty
+        FROM {MACHINE_LOAD_PRODUCTION_APPOINTMENT_TABLE} AH WITH (NOLOCK)
+        WHERE AH.D_E_L_E_T_ = ''
+          AND AH.H6_TIPO = '{PRODUCTION_APPOINTMENT_TYPE}'
+          AND AH.H6_FILIAL = CAST(? AS {_APPOINTMENT_BRANCH_SQL_TYPE})
+          AND AH.H6_OP IN ({placeholders})
+        GROUP BY AH.H6_OP, AH.H6_OPERAC
+    """
+    return query, (branch, *orders)
+
+
 def build_order_finish_flags_query(
     *,
     branch: str,
     production_orders: list[str],
 ) -> tuple[str, tuple] | None:
-    """Flags de encerramento (C2_DATRF) para OPs do snapshot — sem varrer a HZA antiga.
+    """Encerramento (C2_DATRF), quantidade e saldo da OP para o enrich do snapshot.
 
     A janela de histórico do apontamento é curta (performance). OP já encerrada
-    no SC2 precisa aparecer como «Já apontada» mesmo sem HZA recente.
+    no SC2 precisa aparecer como «Já apontada» mesmo sem HZA recente. A
+    quantidade da ordem entra porque o saldo da operação é
+    ``C2_QUANT - produzido na operação``.
     """
-    orders = sorted({str(item or "").strip() for item in production_orders if str(item or "").strip()})
+    orders = _distinct_orders(production_orders)
     if not orders:
         return None
     placeholders = ", ".join("?" for _ in orders)
@@ -388,7 +466,9 @@ def build_order_finish_flags_query(
         SELECT
             LTRIM(RTRIM(OP.C2_OP)) AS production_order,
             CASE WHEN {_ORDER_FINISHED_EXPR} THEN 1 ELSE 0 END AS is_finished,
-            NULLIF(LTRIM(RTRIM(OP.C2_DATRF)), '') AS finish_date
+            NULLIF(LTRIM(RTRIM(OP.C2_DATRF)), '') AS finish_date,
+            CAST(OP.C2_QUANT AS DECIMAL(18, 6)) AS planned_qty,
+            CAST(OP.C2_QUANT - OP.C2_QUJE AS DECIMAL(18, 6)) AS pending_qty
         FROM {MACHINE_LOAD_ORDER_TABLE} OP WITH (NOLOCK)
         WHERE OP.D_E_L_E_T_ = ''
           AND OP.C2_FILIAL = ?

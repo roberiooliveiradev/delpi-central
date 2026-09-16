@@ -273,6 +273,9 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
                 request.status_ok_only if status_ok_only is None else status_ok_only
             ),
             efficiency_cap_pct=efficiency_cap_pct,
+            include_excluded_work_centers=bool(
+                getattr(request, "include_excluded_work_centers", False)
+            ),
             column_prefix=column_prefix,
         )
 
