@@ -208,6 +208,7 @@ class PublicWorkCenterPerformanceService:
             "available": True,
             "shift_pct": _number((shift_row or {}).get("efficiency_pct")),
             "shift_appointment_count": _integer((shift_row or {}).get("appointment_count")),
+            "shift_produced_qty": _sum_produced_qty(appointment_rows),
             "day_pct": _number((day_row or {}).get("efficiency_pct")),
             "day_appointment_count": _integer((day_row or {}).get("appointment_count")),
             "period_avg_pct": (
@@ -292,6 +293,23 @@ class PublicWorkCenterPerformanceService:
 
 def _unavailable() -> dict[str, Any]:
     return {"available": False, "message": _UNAVAILABLE_MESSAGE}
+
+
+def _sum_produced_qty(rows: list[dict[str, Any]]) -> float | None:
+    """Soma ``qtd_apontada`` de todos os apontamentos (não só o recorte da lista pública)."""
+    total = 0.0
+    found = False
+    for row in rows:
+        raw = row.get("qtd_apontada")
+        if raw is None or raw == "":
+            continue
+        try:
+            qty = float(raw)
+        except (TypeError, ValueError):
+            continue
+        found = True
+        total += qty
+    return round(total, 3) if found else None
 
 
 def _public_appointment(row: dict[str, Any]) -> dict[str, Any]:

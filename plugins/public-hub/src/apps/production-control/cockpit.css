@@ -305,8 +305,9 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 118px;
-  padding: 10px 16px;
+  min-width: 108px;
+  max-width: 168px;
+  padding: 10px 14px;
   border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 14px;
   text-align: left;
@@ -334,12 +335,13 @@
 }
 
 .pcp-pub__hero-metric-value {
-  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  font-size: clamp(1.05rem, 1.9vw, 1.45rem);
   font-weight: 800;
-  line-height: 1.05;
+  line-height: 1.1;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
   color: #ffffff;
+  word-break: break-word;
 }
 
 .pcp-pub__hero-metric--eff-good .pcp-pub__hero-metric-value {

@@ -102,7 +102,7 @@ Convenção de nome resolvida pelo storage: `{codigo}.pdf` → `{base}.pdf` → 
 
 #### Desempenho do posto
 
-`GET /public/machine-load/{token}/performance?branch=&workCenter=&days=` alimenta os chips de eficiência/paradas na barra do cockpit e o painel de gráficos. O cálculo continua na api-delpi (`/production/eficiencia-fabril/*` e `/production/unproductive-hours/*`, ambas com RBAC); aqui o `PublicWorkCenterPerformanceService` só compõe via `DelpiProductionGateway` (token S2S por `internal_service_authorization`) e recorta o que um link anônimo pode ver.
+`GET /public/machine-load/{token}/performance?branch=&workCenter=&days=` alimenta os chips de eficiência/produção/paradas na barra do cockpit e o painel de gráficos. O cálculo continua na api-delpi (`/production/eficiencia-fabril/*` e `/production/unproductive-hours/*`, ambas com RBAC); aqui o `PublicWorkCenterPerformanceService` só compõe via `DelpiProductionGateway` (token S2S por `internal_service_authorization`) e recorta o que um link anônimo pode ver. No bloco `efficiency`, `shift_produced_qty` soma `qtd_apontada` de **todos** os apontamentos do turno atual (não só o recorte de 40 da tabela pública).
 
 Guardrails, no mesmo espírito do PDF do desenho:
 
