@@ -220,7 +220,10 @@ Inventory evidence (generated, not runtime authority):
 ```text
 api-delpi/docs/integrations/evidence/davi-api-delpi-operation-inventory.json
 api-delpi/docs/integrations/evidence/davi-api-delpi-operation-inventory.md
+api-delpi/docs/integrations/evidence/davi-governed-read-coverage-005.json
 ```
+
+`DAVI-DYNAMIC-READ-005` coverage expansion decision: **`PROMOTE_ZERO_NEW_OPERATIONS`**. `DAVI_ELIGIBLE_READ` remains **1** (`search_products`). High-value product GETs stay quarantined (nested projection / branch AuthZ / data classification / external-processing) — maximum proven safe coverage, not maximum exposed surface.
 
 Stock (`get_product_stock`) remains **QUARANTINED** (`NEEDS_BRANCH_AUTHZ_EVIDENCE`) until branch AuthZ + external-processing gates are proven — prefer dynamic path over a stock-specific MCP tool once eligible.
 
