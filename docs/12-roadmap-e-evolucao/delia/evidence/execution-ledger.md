@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** **ARCHITECTURE_REVIEW_C0_S4** (`C0.S0..=C0.S3=APPROVED`; `C0.S4=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY=FROZEN_CANDIDATE`; `C0.S5_AUTHORIZED=NO`; `AUTHORITY_MAP=FROZEN_ACCEPTED`; `BOUNDED_CONTEXT_MAP=FROZEN_ACCEPTED`; `SHARED_REFERENCE_SEMANTICS=FROZEN_ACCEPTED`; C0 remains **NOT_STARTED**; `FOUNDATION_FREEZE` **NOT APPROVED**; `DÉLIA_RUNTIME_DIFF=NONE`).
+**Next:** **C0.S5 — Integration Contracts** (`C0.S0..=C0.S4=APPROVED`; `ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY=FROZEN_ACCEPTED`; `C0.S5_AUTHORIZED=YES`; `AUTHORITY_MAP=FROZEN_ACCEPTED`; `BOUNDED_CONTEXT_MAP=FROZEN_ACCEPTED`; `SHARED_REFERENCE_SEMANTICS=FROZEN_ACCEPTED`; C0 remains **NOT_STARTED**; `FOUNDATION_FREEZE` **NOT APPROVED**; `DÉLIA_RUNTIME_DIFF=NONE`).
 
 ## 1. Ledger rule
 
@@ -23,7 +23,7 @@ Estado factual de inventory usa `PROVEN | TO_INVENTORY`; planejamento usa `PLANN
 
 | Fase | Status | Próximo step | Dependência |
 |---|---|---|---|
-| C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **ARCHITECTURE_REVIEW_C0_S4** | C0.S0..=C0.S3=APPROVED; C0.S4=CANDIDATE_FOR_ARCHITECTURE_REVIEW; ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY=FROZEN_CANDIDATE; C0.S5_AUTHORIZED=NO |
+| C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **C0.S5 — Integration Contracts** | C0.S0..=C0.S4=APPROVED; ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY=FROZEN_ACCEPTED; C0.S5_AUTHORIZED=YES |
 | C1 Standalone Bootstrap | LOCKED | — | C0.S7 FOUNDATION_FREEZE |
 | C2 Portal + Operational Context + Commands | LOCKED | — | C1 independence gate |
 | C3 Intelligence + Capability Foundations | LOCKED | — | C1+C2 foundations |
@@ -60,9 +60,9 @@ C0.S0 = APPROVED
 C0.S1 = APPROVED
 C0.S2 = APPROVED
 C0.S3 = APPROVED
-C0.S4 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_CANDIDATE
-C0.S5_AUTHORIZED = NO
+C0.S4 = APPROVED
+ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_ACCEPTED
+C0.S5_AUTHORIZED = YES
 AUTHORITY_MAP = FROZEN_ACCEPTED
 BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
@@ -219,6 +219,7 @@ All ACT blocked until C7                        = SUPERSEDED_BY_C5_GOVERNED_ACT_
 | 2026-09-16 | C0.S3-T2 shared primitives canonical persistence | PLAN_ONLY; C0.S3=CANDIDATE_FOR_ARCHITECTURE_REVIEW; NEW_RUNTIME_ABSTRACTIONS=NONE; RUNTIME_DIFF=NONE |
 | 2026-09-16 | C0.S3-T3 architecture review decision persistence | PLAN_ONLY; ACCEPT_WITH_RESIDUAL; C0.S3=APPROVED; SHARED_REFERENCE_SEMANTICS=FROZEN_ACCEPTED; C0.S4_AUTHORIZED=YES; no runtime/C0.S4 execution |
 | 2026-09-16 | C0.S4-T2 architecture/persistence/privacy/safety canonical persistence | PLAN_ONLY; C0.S4=CANDIDATE_FOR_ARCHITECTURE_REVIEW; ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY=FROZEN_CANDIDATE; C0.S5_AUTHORIZED=NO; NEW_RUNTIME_ABSTRACTIONS=NONE; RUNTIME_DIFF=NONE |
+| 2026-09-16 | C0.S4-T3 architecture review decision persistence | PLAN_ONLY; ACCEPT_WITH_RESIDUAL; C0.S4=APPROVED; ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY=FROZEN_ACCEPTED; C0.S5_AUTHORIZED=YES; no runtime/C0.S5 execution |
 
 Actual `HEAD_BEFORE` for **runtime** remains uncaptured (no DÉLIA runtime). Inventory evidence SHA for C0.S0-F is `c6c9c8370d037edfc3529821b9d63e138b153436`. Documentation-only commits do not advance execution status.
 
@@ -1023,6 +1024,52 @@ NO_SERVICE: TRUE
 TRACEABILITY_GAP_REQUIRING_NEW_CP: CLOSED_NONISSUE
 NOT_CLAIMED: C0.S4 APPROVED; C0.S5_AUTHORIZED; FOUNDATION_FREEZE; any CP PASS; any runtime; physical PG/scheduler/vault selection
 NEXT: ARCHITECTURE_REVIEW_C0_S4
+NOTE_SUPERSEDED_BY_6_29: Candidate/next fields above are historical after C0.S4-T3 architecture-review persistence; see §6.29. NOTE_SUPERSEDED_BY_C0_S4_T3.
+```
+
+## 6.29 C0.S4-T3 — PERSIST_ARCHITECTURE_REVIEW_DECISION
+
+```text
+DATE: 2026-09-16
+STEP: C0.S4-T3
+NAME: PERSIST_ARCHITECTURE_REVIEW_DECISION
+STATUS: PLAN_ONLY
+REVIEW: ARCHITECTURE_REVIEW_C0_S4
+REVIEWED_HEAD: 7ac1fb930017bbabb05d8b1654941518f315c6a7
+PERSISTENCE_HEAD: <set_at_commit>
+BIND_HEAD: RECORDED_BY_FINAL_BIND_COMMIT_AND_EXECUTION_REPORT
+VERDICT: ACCEPT_WITH_RESIDUAL
+PROGRAM: PLANNED / NOT_STARTED
+C0: NOT_STARTED
+C0.S0: APPROVED
+C0.S1: APPROVED
+C0.S2: APPROVED
+C0.S3: APPROVED
+C0.S4: APPROVED
+AUTHORITY_MAP: FROZEN_ACCEPTED
+BOUNDED_CONTEXT_MAP: FROZEN_ACCEPTED
+SHARED_REFERENCE_SEMANTICS: FROZEN_ACCEPTED
+ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY: FROZEN_ACCEPTED
+C0.S5_AUTHORIZED: YES
+C0.S5_EXECUTED: NO
+FOUNDATION_FREEZE: NOT APPROVED
+DÉLIA_RUNTIME_DIFF: NONE
+NEW_RUNTIME_ABSTRACTIONS: NONE
+BLOCKERS: NONE
+EXECUTION_DRIFT: NONE
+CANONICAL_SOURCE: 21 §4A; summary 17 §3A; linkage 25 §18; 16 C0.S4
+RESIDUALS_TO_INVENTORY: physical PG; vault/KMS/key owner; scheduler; Hub runtime; media store; biometric template store; event broker; legal retention durations; Sandbox runtime/store; service/delegation implementation
+RESIDUALS_DEFER_TO_CONTRACT: SecretRef; endpoint idempotency; ExecutorRef; WorkspaceContext; typed C0.S5 contracts
+RESIDUALS_DEFER_BY_PHASE: Foundation Freeze; runtime bootstrap
+NO_C0_S5_EXECUTION: TRUE
+NO_RUNTIME: TRUE
+NO_SCHEMA: TRUE
+NO_MIGRATION: TRUE
+NO_ENDPOINT: TRUE
+NO_SERVICE: TRUE
+TRACEABILITY_GAP_REQUIRING_NEW_CP: CLOSED_NONISSUE
+NOT_CLAIMED: FOUNDATION_FREEZE; C0 started; C0.S5 executed; any CP PASS; any runtime; physical infra selection
+NEXT: C0.S5 — Integration Contracts
 ```
 
 ## 7. Canonical phase mapping
@@ -1233,4 +1280,4 @@ SAFETY_INTERLOCK_BYPASS
 
 ## 14. First execution
 
-Historical open actions C0.S0..C0.S3 are now **APPROVED** by their architecture reviews. C0.S4-T2 persists architecture/persistence/privacy/safety decisions as **CANDIDATE_FOR_ARCHITECTURE_REVIEW** (`ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY=FROZEN_CANDIDATE`). Current next is **ARCHITECTURE_REVIEW_C0_S4**. This does **not** approve C0.S4, authorize C0.S5, approve Foundation Freeze, or start C0 runtime.
+Historical open actions C0.S0..C0.S4 are now **APPROVED** by their architecture reviews. C0.S4-T3 persists `ARCHITECTURE_REVIEW_C0_S4` as `ACCEPT_WITH_RESIDUAL` with `ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY=FROZEN_ACCEPTED` and `C0.S5_AUTHORIZED=YES`. Current next is **C0.S5 — Integration Contracts**. This does **not** execute C0.S5, approve Foundation Freeze, or start C0 runtime.

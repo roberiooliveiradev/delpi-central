@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `ARCHITECTURE_REVIEW_C0_S4` (`C0.S0..=C0.S3=APPROVED`; `C0.S4=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY=FROZEN_CANDIDATE`; `C0.S5_AUTHORIZED=NO`; C0 permanece `NOT_STARTED`; `FOUNDATION_FREEZE=NOT APPROVED`; `DÉLIA_RUNTIME_DIFF=NONE`)
+**Próxima etapa:** `C0.S5 — Integration Contracts` (`C0.S0..=C0.S4=APPROVED`; `ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY=FROZEN_ACCEPTED`; `C0.S5_AUTHORIZED=YES`; C0 permanece `NOT_STARTED`; `FOUNDATION_FREEZE=NOT APPROVED`; `DÉLIA_RUNTIME_DIFF=NONE`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -319,16 +319,16 @@ C0.S0 = APPROVED
 C0.S1 = APPROVED
 C0.S2 = APPROVED
 C0.S3 = APPROVED
+C0.S4 = APPROVED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
-C0.S4 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_CANDIDATE
-C0.S5_AUTHORIZED = NO
+ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_ACCEPTED
+C0.S5_AUTHORIZED = YES
 FOUNDATION_FREEZE = NOT APPROVED
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 DÉLIA_RUNTIME_DIFF = NONE
 NEW_RUNTIME_ABSTRACTIONS = NONE
-NEXT = ARCHITECTURE_REVIEW_C0_S4
+NEXT = C0.S5 — Integration Contracts
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -408,7 +408,9 @@ Além de `49`, congelar:
 - Control Tower risk/assets/kill switches;
 - OT no-actuation default.
 
-**C0.S4-T2 (docs):** decisões persistidas em `21` §4A (+ linkage `25` §18 + ledger §6.28). Estado: `CANDIDATE_FOR_ARCHITECTURE_REVIEW` / `ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY=FROZEN_CANDIDATE`. **Não** aceito; **não** autoriza C0.S5; `NEW_RUNTIME_ABSTRACTIONS=NONE`; `DÉLIA_RUNTIME_DIFF=NONE`. Canonical source: `21` §4A.
+**C0.S4-T2 (histórico):** decisões persistidas em `21` §4A (+ linkage `25` §18 + ledger §6.28) como `CANDIDATE_FOR_ARCHITECTURE_REVIEW`. Esse estado foi superseded pelo review abaixo; não apagar história.
+
+**C0.S4-T3 — PERSIST_ARCHITECTURE_REVIEW_DECISION:** `ARCHITECTURE_REVIEW_C0_S4` sobre `REVIEWED_HEAD=7ac1fb930017bbabb05d8b1654941518f315c6a7`, `VERDICT=ACCEPT_WITH_RESIDUAL`, `C0.S4=APPROVED`, `ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY=FROZEN_ACCEPTED`, `C0.S5_AUTHORIZED=YES`, `BLOCKERS=NONE`, `EXECUTION_DRIFT=NONE`, `NEW_RUNTIME_ABSTRACTIONS=NONE`. `FOUNDATION_FREEZE=NOT APPROVED`, `PROGRAM=PLANNED / NOT_STARTED`, `C0=NOT_STARTED`, `DÉLIA_RUNTIME_DIFF=NONE`. **Nenhuma execução C0.S5 ocorre nesta tarefa.**
 
 ## C0.S5 — Integration contracts
 

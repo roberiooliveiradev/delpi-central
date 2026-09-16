@@ -599,18 +599,18 @@ C0.S0 = APPROVED
 C0.S1 = APPROVED
 C0.S2 = APPROVED
 C0.S3 = APPROVED
+C0.S4 = APPROVED
 AUTHORITY_MAP = FROZEN_ACCEPTED
 BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
-C0.S4 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_CANDIDATE
-C0.S5_AUTHORIZED = NO
+ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_ACCEPTED
+C0.S5_AUTHORIZED = YES
 FOUNDATION_FREEZE = NOT APPROVED
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 DÉLIA_RUNTIME_DIFF = NONE
 NEW_RUNTIME_ABSTRACTIONS = NONE
-NEXT = ARCHITECTURE_REVIEW_C0_S4
+NEXT = C0.S5 — Integration Contracts
 ```
 
 ## 16. C0.S2 authorities / bounded contexts linkage — accepted review
@@ -686,9 +686,10 @@ C0.S4_EXECUTED = NO
 FOUNDATION_FREEZE = NOT APPROVED
 ```
 
-## 18. C0.S4 architecture / persistence / privacy / safety linkage
+## 18. C0.S4 architecture / persistence / privacy / safety linkage — accepted review
 
-Evidence anchors: `21` §4A; ledger §6.28; `16` C0.S4.
+Evidence anchors: `21` §4A; ledger §6.28 + C0.S4-T3 review event; `16` C0.S4.
+Review: `ARCHITECTURE_REVIEW_C0_S4`; `REVIEWED_HEAD=7ac1fb930017bbabb05d8b1654941518f315c6a7`; verdict `ACCEPT_WITH_RESIDUAL`.
 
 | Theme | CP examples (status unchanged) | C0.S4 note |
 |---|---|---|
@@ -707,12 +708,16 @@ Evidence anchors: `21` §4A; ledger §6.28; `16` C0.S4.
 | OT / Safety | CP-178–179 | DÉLIA≠safety controller; OT ACTUATION blocked by default |
 
 ```text
-C0.S4 documentation evidence ≠ runtime implementation evidence
-No CP promoted to PASS by C0.S4-T2
+C0.S4 accepted documentation evidence ≠ runtime implementation evidence
+No CP promoted to PASS by C0.S4-T2/T3
 No new CP ID invented for "C0.S4"
 TRACEABILITY_GAP_REQUIRING_NEW_CP = CLOSED_NONISSUE
-C1+ CP statuses remain unchanged
+NEW_CP_CREATED = NO
+CP_RENAMED = NO
+RUNTIME_CP_PROMOTED_TO_PASS = NO
+C1_PLUS_EXECUTION_STATUS_CHANGED = NO
 NEW_RUNTIME_ABSTRACTIONS = NONE
-C0.S5_AUTHORIZED = NO
+C0.S5_AUTHORIZED = YES
+C0.S5_EXECUTED = NO
 FOUNDATION_FREEZE = NOT APPROVED
 ```
