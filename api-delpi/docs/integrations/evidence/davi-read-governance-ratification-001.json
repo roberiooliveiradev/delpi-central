@@ -1,13 +1,12 @@
 {
   "taskId": "DAVI-GOV-READ-001",
-  "artifactStatus": "PENDING_RATIFICATION",
-  "note": "Decision pack is not authority until RATIFIED by a proven owner. Does not change DAVI_ELIGIBLE_READ.",
+  "artifactStatus": "SUPERSEDED_IN_PART",
+  "supersededBy": "DAVI-READ-AUTHZ-REBASELINE-001",
+  "note": "Historical decision pack. Branch AuthZ / per-family EXT / taxonomy-absence-only decisions are SUPERSEDED. Ledger preserved for provenance.",
   "baselineHead": "9ff48fc44cf6f5d95bb3d73b96836b0c6de9721c",
   "runtime": {
-    "DAVI_ELIGIBLE_READ": 1,
-    "eligibleOperationIds": ["search_products"],
-    "mcpToolCount": 3,
-    "coverageDecision": "DAVI-DYNAMIC-READ-005:PROMOTE_ZERO_NEW_OPERATIONS"
+    "note": "Historical at GOV-001 time. Current source eligibility after rebaseline is allowlist v5.",
+    "historical_DAVI_ELIGIBLE_READ": 1
   },
   "authorities": {
     "dataClassification": {
@@ -33,10 +32,9 @@
     }
   },
   "gates": {
-    "NESTED_PROJECTION_ABSTRACTION_GATE": "FAIL",
-    "nestedRealConsumersWithOnlyNestedRemaining": 0,
-    "STOCK_AUTHZ_IMPLEMENTATION_GATE": "NOT_READY",
-    "stockAuthzReason": "No proven product-stock business+branch permission policy for get_product_stock; safety-stock filial perms are sibling-only"
+    "NESTED_PROJECTION_ABSTRACTION_GATE": "PASS_AFTER_REBASELINE",
+    "STOCK_AUTHZ_IMPLEMENTATION_GATE": "SUPERSEDED_NOT_APPLICABLE",
+    "note": "See DAVI-READ-AUTHZ-REBASELINE-001"
   },
   "queues": {
     "READY_FOR_IMPLEMENTATION": [],
@@ -80,43 +78,81 @@
     },
     "PRODUCT_DETAIL": {
       "primaryDecision": "DAVI-GOV-EXT-001",
-      "blockerStack": ["EXTERNAL_PROCESSING_SCOPE", "PROJECTION_FLAT_OR_NESTED"],
+      "blockerStack": [
+        "EXTERNAL_PROCESSING_SCOPE",
+        "PROJECTION_FLAT_OR_NESTED"
+      ],
       "inventoryPrimaryToday": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "note": "Inventory primary overstates nested; EXT scope is the real first gate"
     },
     "STRUCTURE_BOM": {
       "primaryDecision": "DAVI-GOV-EXT-002",
-      "blockerStack": ["EXTERNAL_PROCESSING", "NESTED_PROJECTION", "CLASSIFICATION_IF_SEPARATED"]
+      "blockerStack": [
+        "EXTERNAL_PROCESSING",
+        "NESTED_PROJECTION",
+        "CLASSIFICATION_IF_SEPARATED"
+      ]
     },
     "STOCK": {
-      "primaryDecisions": ["DAVI-GOV-STOCK-001", "DAVI-GOV-EXT-007"],
-      "blockerStack": ["BRANCH_AND_BUSINESS_AUTHZ_POLICY", "EXTERNAL_PROCESSING", "PROJECTION"],
+      "primaryDecisions": [
+        "DAVI-GOV-STOCK-001",
+        "DAVI-GOV-EXT-007"
+      ],
+      "blockerStack": [
+        "BRANCH_AND_BUSINESS_AUTHZ_POLICY",
+        "EXTERNAL_PROCESSING",
+        "PROJECTION"
+      ],
       "proposedMinProjectionNeedsRatification": [
         "product_code",
         "branch",
         "warehouse",
         "available_quantity"
       ],
-      "excludeByDefault": ["cost_center"]
+      "excludeByDefault": [
+        "cost_center"
+      ]
     },
     "PRODUCTION": {
       "primaryDecision": "DAVI-GOV-EXT-006",
-      "blockerStack": ["EXTERNAL_PROCESSING", "NESTED_PROJECTION", "BRANCH_FILTER_GAP"]
+      "blockerStack": [
+        "EXTERNAL_PROCESSING",
+        "NESTED_PROJECTION",
+        "BRANCH_FILTER_GAP"
+      ]
     },
     "FACTORY_STATUS": {
-      "limitedBy": ["STRUCTURE", "STOCK", "PRODUCTION"],
+      "limitedBy": [
+        "STRUCTURE",
+        "STOCK",
+        "PRODUCTION"
+      ],
       "rule": "composite_eligibility_le_most_restrictive_section"
     },
-    "SUPPLIERS": { "primaryDecision": "DAVI-GOV-EXT-003" },
-    "CUSTOMERS": { "primaryDecision": "DAVI-GOV-EXT-004" },
-    "PURCHASES": { "primaryDecision": "DAVI-GOV-EXT-005" },
+    "SUPPLIERS": {
+      "primaryDecision": "DAVI-GOV-EXT-003"
+    },
+    "CUSTOMERS": {
+      "primaryDecision": "DAVI-GOV-EXT-004"
+    },
+    "PURCHASES": {
+      "primaryDecision": "DAVI-GOV-EXT-005"
+    },
     "PRICING_COST": {
-      "primaryDecisions": ["DAVI-GOV-CLASS-001", "DAVI-GOV-EXT-010"],
+      "primaryDecisions": [
+        "DAVI-GOV-CLASS-001",
+        "DAVI-GOV-EXT-010"
+      ],
       "classification": "PENDING_OWNER_DECISION"
     },
-    "SALES": { "primaryDecision": "DAVI-GOV-EXT-008" },
+    "SALES": {
+      "primaryDecision": "DAVI-GOV-EXT-008"
+    },
     "OTHER_KPI_DASHBOARD": {
-      "primaryDecisions": ["DAVI-GOV-EXT-009", "DAVI-GOV-CLASS-003"],
+      "primaryDecisions": [
+        "DAVI-GOV-EXT-009",
+        "DAVI-GOV-CLASS-003"
+      ],
       "note": "No clearer authority than Product Detail"
     }
   },
@@ -126,107 +162,194 @@
       "scope": "get_product_detail same Product Master slice",
       "question": "Does 004A.2 authorize product_code|description|group_category via get_product_detail for DAVI/MCP?",
       "owner": null,
-      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
-      "minimumProjection": ["product_code", "description", "group_category"],
-      "status": "PENDING_RATIFICATION"
+      "options": [
+        "APPROVE_WITH_RESTRICTIONS",
+        "KEEP_QUARANTINED",
+        "APPROVE_SMALLER_PROJECTION"
+      ],
+      "minimumProjection": [
+        "product_code",
+        "description",
+        "group_category"
+      ],
+      "status": "SUPERSEDED",
+      "supersededBy": "DAVI-READ-AUTHZ-REBASELINE-001",
+      "supersessionReason": "Premise invalidated: DAVI must not invent branch/family/taxonomy gates as AuthZ"
     },
     {
       "id": "DAVI-GOV-EXT-002",
       "scope": "Product Structure/BOM",
       "question": "May BOM hierarchy be processed on DAVI external model path?",
       "owner": null,
-      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
+      "options": [
+        "APPROVE_WITH_RESTRICTIONS",
+        "KEEP_QUARANTINED",
+        "APPROVE_SMALLER_PROJECTION"
+      ],
       "minimumProjection": null,
-      "status": "PENDING_RATIFICATION"
+      "status": "SUPERSEDED",
+      "supersededBy": "DAVI-READ-AUTHZ-REBASELINE-001",
+      "supersessionReason": "Premise invalidated: DAVI must not invent branch/family/taxonomy gates as AuthZ"
     },
     {
       "id": "DAVI-GOV-EXT-003",
       "scope": "get_product_suppliers",
       "question": "Approve supplier relational data for external model?",
       "owner": null,
-      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
-      "status": "PENDING_RATIFICATION"
+      "options": [
+        "APPROVE_WITH_RESTRICTIONS",
+        "KEEP_QUARANTINED",
+        "APPROVE_SMALLER_PROJECTION"
+      ],
+      "status": "SUPERSEDED",
+      "supersededBy": "DAVI-READ-AUTHZ-REBASELINE-001",
+      "supersessionReason": "Premise invalidated: DAVI must not invent branch/family/taxonomy gates as AuthZ"
     },
     {
       "id": "DAVI-GOV-EXT-004",
       "scope": "get_product_customers",
       "question": "Approve customer relational data for external model?",
       "owner": null,
-      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
-      "status": "PENDING_RATIFICATION"
+      "options": [
+        "APPROVE_WITH_RESTRICTIONS",
+        "KEEP_QUARANTINED",
+        "APPROVE_SMALLER_PROJECTION"
+      ],
+      "status": "SUPERSEDED",
+      "supersededBy": "DAVI-READ-AUTHZ-REBASELINE-001",
+      "supersessionReason": "Premise invalidated: DAVI must not invent branch/family/taxonomy gates as AuthZ"
     },
     {
       "id": "DAVI-GOV-EXT-005",
       "scope": "get_product_purchases",
       "question": "Approve purchases list for external model (with/without prices)?",
       "owner": null,
-      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
-      "status": "PENDING_RATIFICATION"
+      "options": [
+        "APPROVE_WITH_RESTRICTIONS",
+        "KEEP_QUARANTINED",
+        "APPROVE_SMALLER_PROJECTION"
+      ],
+      "status": "SUPERSEDED",
+      "supersededBy": "DAVI-READ-AUTHZ-REBASELINE-001",
+      "supersessionReason": "Premise invalidated: DAVI must not invent branch/family/taxonomy gates as AuthZ"
     },
     {
       "id": "DAVI-GOV-EXT-006",
       "scope": "get_product_production_status",
       "question": "Approve production status summaries for external model?",
       "owner": null,
-      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
-      "status": "PENDING_RATIFICATION"
+      "options": [
+        "APPROVE_WITH_RESTRICTIONS",
+        "KEEP_QUARANTINED",
+        "APPROVE_SMALLER_PROJECTION"
+      ],
+      "status": "SUPERSEDED",
+      "supersededBy": "DAVI-READ-AUTHZ-REBASELINE-001",
+      "supersessionReason": "Premise invalidated: DAVI must not invent branch/family/taxonomy gates as AuthZ"
     },
     {
       "id": "DAVI-GOV-EXT-007",
       "scope": "get_product_stock external processing",
       "question": "Approve stock quantity fields for external model?",
       "owner": null,
-      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
-      "minimumProjection": ["product_code", "branch", "warehouse", "available_quantity"],
-      "status": "PENDING_RATIFICATION"
+      "options": [
+        "APPROVE_WITH_RESTRICTIONS",
+        "KEEP_QUARANTINED",
+        "APPROVE_SMALLER_PROJECTION"
+      ],
+      "minimumProjection": [
+        "product_code",
+        "branch",
+        "warehouse",
+        "available_quantity"
+      ],
+      "status": "SUPERSEDED",
+      "supersededBy": "DAVI-READ-AUTHZ-REBASELINE-001",
+      "supersessionReason": "Premise invalidated: DAVI must not invent branch/family/taxonomy gates as AuthZ"
     },
     {
       "id": "DAVI-GOV-EXT-008",
       "scope": "Sales / commercial OTD family",
       "question": "Approve sales READ family for DAVI external model?",
       "owner": null,
-      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
-      "status": "PENDING_RATIFICATION"
+      "options": [
+        "APPROVE_WITH_RESTRICTIONS",
+        "KEEP_QUARANTINED",
+        "APPROVE_SMALLER_PROJECTION"
+      ],
+      "status": "SUPERSEDED",
+      "supersededBy": "DAVI-READ-AUTHZ-REBASELINE-001",
+      "supersessionReason": "Premise invalidated: DAVI must not invent branch/family/taxonomy gates as AuthZ"
     },
     {
       "id": "DAVI-GOV-EXT-009",
       "scope": "Operational KPI / dashboard indicators (non-financial)",
       "question": "Approve operational KPI family for DAVI external model?",
       "owner": null,
-      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
-      "status": "PENDING_RATIFICATION"
+      "options": [
+        "APPROVE_WITH_RESTRICTIONS",
+        "KEEP_QUARANTINED",
+        "APPROVE_SMALLER_PROJECTION"
+      ],
+      "status": "SUPERSEDED",
+      "supersededBy": "DAVI-READ-AUTHZ-REBASELINE-001",
+      "supersessionReason": "Premise invalidated: DAVI must not invent branch/family/taxonomy gates as AuthZ"
     },
     {
       "id": "DAVI-GOV-EXT-010",
       "scope": "Pricing/cost external processing",
       "question": "Approve pricing/cost data for external model after classification?",
       "owner": null,
-      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
-      "status": "PENDING_RATIFICATION"
+      "options": [
+        "APPROVE_WITH_RESTRICTIONS",
+        "KEEP_QUARANTINED",
+        "APPROVE_SMALLER_PROJECTION"
+      ],
+      "status": "SUPERSEDED",
+      "supersededBy": "DAVI-READ-AUTHZ-REBASELINE-001",
+      "supersessionReason": "Premise invalidated: DAVI must not invent branch/family/taxonomy gates as AuthZ"
     },
     {
       "id": "DAVI-GOV-CLASS-001",
       "scope": "Pricing/cost classification",
       "question": "What formal classification applies to pricing/cost fields for external AI?",
       "owner": null,
-      "options": ["ASSIGN_LABEL_AND_RESTRICT", "KEEP_QUARANTINED", "NON_MONETARY_METADATA_ONLY"],
-      "status": "PENDING_RATIFICATION"
+      "options": [
+        "ASSIGN_LABEL_AND_RESTRICT",
+        "KEEP_QUARANTINED",
+        "NON_MONETARY_METADATA_ONLY"
+      ],
+      "status": "SUPERSEDED",
+      "supersededBy": "DAVI-READ-AUTHZ-REBASELINE-001",
+      "supersessionReason": "Premise invalidated: DAVI must not invent branch/family/taxonomy gates as AuthZ"
     },
     {
       "id": "DAVI-GOV-CLASS-002",
       "scope": "get_product_summary composite",
       "question": "Classify/allow composite summary after stock+pricing section decisions?",
       "owner": null,
-      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
-      "status": "PENDING_RATIFICATION"
+      "options": [
+        "APPROVE_WITH_RESTRICTIONS",
+        "KEEP_QUARANTINED",
+        "APPROVE_SMALLER_PROJECTION"
+      ],
+      "status": "SUPERSEDED",
+      "supersededBy": "DAVI-READ-AUTHZ-REBASELINE-001",
+      "supersessionReason": "Premise invalidated: DAVI must not invent branch/family/taxonomy gates as AuthZ"
     },
     {
       "id": "DAVI-GOV-CLASS-003",
       "scope": "Financial strategic indicators",
       "question": "What classification applies to financial KPI indicators for external AI?",
       "owner": null,
-      "options": ["ASSIGN_LABEL_AND_RESTRICT", "KEEP_QUARANTINED", "NON_MONETARY_METADATA_ONLY"],
-      "status": "PENDING_RATIFICATION"
+      "options": [
+        "ASSIGN_LABEL_AND_RESTRICT",
+        "KEEP_QUARANTINED",
+        "NON_MONETARY_METADATA_ONLY"
+      ],
+      "status": "SUPERSEDED",
+      "supersededBy": "DAVI-READ-AUTHZ-REBASELINE-001",
+      "supersessionReason": "Premise invalidated: DAVI must not invent branch/family/taxonomy gates as AuthZ"
     },
     {
       "id": "DAVI-GOV-STOCK-001",
@@ -239,21 +362,39 @@
         "KEEP_API_DELPI_ACCESS_ONLY_DOCUMENT_RISK",
         "KEEP_ROUTE_AND_DAVI_QUARANTINE"
       ],
-      "status": "PENDING_RATIFICATION"
+      "status": "SUPERSEDED",
+      "supersededBy": "DAVI-READ-AUTHZ-REBASELINE-001",
+      "supersessionReason": "Premise invalidated: DAVI must not invent branch/family/taxonomy gates as AuthZ"
     },
     {
       "id": "DAVI-GOV-TAX-001",
       "scope": "Platform classification taxonomy for DAVI sources",
       "question": "Adopt formal PUBLIC/INTERNAL/CONFIDENTIAL/RESTRICTED (or equivalent) for DAVI?",
       "owner": null,
-      "options": ["ADOPT_TAXONOMY", "DEFER", "KEEP_AD_HOC_INTERNAL_ONLY"],
-      "status": "PENDING_RATIFICATION"
+      "options": [
+        "ADOPT_TAXONOMY",
+        "DEFER",
+        "KEEP_AD_HOC_INTERNAL_ONLY"
+      ],
+      "status": "OPTIONAL_FUTURE_NOT_READ_GATE"
     }
   ],
   "legacyGptActions": {
     "status": "LEGACY_EVIDENCE",
-    "exposedOperationIds": ["gpt_get_catalog", "gpt_search_products"],
-    "notExposed": ["detail", "summary", "stock", "BOM", "production", "pricing", "finance", "sales"]
+    "exposedOperationIds": [
+      "gpt_get_catalog",
+      "gpt_search_products"
+    ],
+    "notExposed": [
+      "detail",
+      "summary",
+      "stock",
+      "BOM",
+      "production",
+      "pricing",
+      "finance",
+      "sales"
+    ]
   },
   "runtimeSurfaceChanged": false,
   "eligibilityChanged": false,

@@ -14,6 +14,7 @@ from pydantic import ValidationError
 
 from app.application.external_capabilities.constants import (
     PRODUCT_SEARCH_INPUT_FIELDS,
+    PRODUCT_SEARCH_MAX_PAGE_SIZE,
     PRODUCT_SEARCH_RESPONSE_FIELDS,
 )
 from app.application.external_capabilities.dynamic_information.action_index import (
@@ -38,10 +39,12 @@ from app.application.external_capabilities.dynamic_information.constants import 
     STATUS_DAVI_ELIGIBLE_READ,
     STATUS_GENERIC_SQL_FORBIDDEN,
     STATUS_NEEDS_BRANCH_AUTHZ_EVIDENCE,
-    STATUS_NEEDS_NESTED_PROJECTION_SUPPORT,
+    STATUS_NEEDS_MODEL_SAFE_PROJECTION,
+    STATUS_SEMANTICALLY_REDUNDANT,
     STATUS_WRITE_OUT_OF_SCOPE,
 )
 from app.application.external_capabilities.dynamic_information.content_loader import (
+    load_dynamic_read_budgets,
     load_external_read_allowlist,
 )
 from app.application.external_capabilities.dynamic_information.discover_service import (
@@ -79,13 +82,28 @@ from app.interface.mcp.schemas import (
 )
 
 
+_ELIGIBLE_V5_OPERATION_IDS = frozenset(
+    {
+        "search_products",
+        "get_product_stock",
+        "get_product_suppliers",
+        "get_product_customers",
+        "get_product_purchases",
+        "get_product_structure",
+        "get_product_production_status",
+    }
+)
+
+
 @pytest.fixture(autouse=True)
 def _reset_index():
     reset_action_index_for_tests()
     load_external_read_allowlist.cache_clear()
+    load_dynamic_read_budgets.cache_clear()
     yield
     reset_action_index_for_tests()
     load_external_read_allowlist.cache_clear()
+    load_dynamic_read_budgets.cache_clear()
 
 
 def _search_params(*, required_code: bool = False) -> tuple[dict[str, Any], ...]:
@@ -155,25 +173,44 @@ def _action(
     )
 
 
-def _load_governed_search_products() -> TechnicalAction:
-    root = Path(__file__).resolve().parents[1]
+def _api_root() -> Path:
+    return Path(__file__).resolve().parents[1]
+
+
+def _load_baseline_actions() -> list[TechnicalAction]:
     baseline = json.loads(
-        (root / "app/content/openapi_baseline.json").read_text(encoding="utf-8")
+        (_api_root() / "app/content/openapi_baseline.json").read_text(encoding="utf-8")
     )
-    actions = build_technical_actions_from_baseline(
+    return build_technical_actions_from_baseline(
         baseline, allowlist=load_external_read_allowlist()
     )
-    action = next(a for a in actions if a.operation_id == "search_products")
+
+
+def _load_governed_search_products() -> TechnicalAction:
+    action = next(a for a in _load_baseline_actions() if a.operation_id == "search_products")
     assert action.executable
     return action
 
 
-def test_allowlist_is_search_products_only():
+def _allowlist_entry_with_projection(operation_id: str, **fields: Any) -> dict[str, Any]:
+    return {
+        "operations": [
+            {
+                "operationId": operation_id,
+                "approvedInputFields": fields.get("inputs") or ["code"],
+                "approvedResponseFields": fields.get("responses") or ["product_code"],
+            }
+        ]
+    }
+
+
+def test_allowlist_v5_multi_ops_rebaseline():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
-    assert ids == {"search_products"}
-    assert allow.get("version") == 4
-    assert allow.get("coverageDecision", {}).get("decision") == "PROMOTE_ZERO_NEW_OPERATIONS"
+    assert ids == set(_ELIGIBLE_V5_OPERATION_IDS)
+    assert allow.get("version") == 5
+    assert allow.get("coverageDecision", {}).get("decision") == "REBASELINE_PROMOTE_SAFE_READS"
+    assert allow.get("authzPolicy") == "DAVI-READ-AUTHZ-REBASELINE-001"
     entry = next(
         op
         for op in allow["operations"]
@@ -181,15 +218,35 @@ def test_allowlist_is_search_products_only():
     )
     assert set(entry["approvedInputFields"]) == set(PRODUCT_SEARCH_INPUT_FIELDS)
     assert entry.get("semanticAliases")
+    stock = next(
+        op
+        for op in allow["operations"]
+        if isinstance(op, dict) and op.get("operationId") == "get_product_stock"
+    )
+    assert "branch" in stock["approvedInputFields"]
+    quarantine = {str(t).lower() for t in (allow.get("retrievalQuarantineTokens") or [])}
+    for owned in (
+        "estoque",
+        "stock",
+        "estrutura",
+        "bom",
+        "producao",
+        "produção",
+        "fornecedor",
+        "cliente",
+    ):
+        assert owned not in quarantine
     blocked = {
         x["operationId"]: x.get("primaryBlocker")
         for x in allow.get("explicitlyNotApproved") or []
         if isinstance(x, dict)
     }
-    assert blocked["get_product_stock"] == "NEEDS_BRANCH_AUTHZ_EVIDENCE"
-    assert blocked["get_product_detail"] == "NEEDS_NESTED_PROJECTION_SUPPORT"
-    assert blocked["get_product_summary"] == "NEEDS_DATA_CLASSIFICATION"
-    assert blocked["get_product_pricing"] == "NEEDS_DATA_CLASSIFICATION"
+    assert "get_product_stock" not in blocked
+    assert blocked["get_product_detail"] == "SEMANTICALLY_REDUNDANT"
+    assert blocked["get_product_summary"] == "NEEDS_NESTED_PROJECTION_SUPPORT"
+    assert blocked["get_product_pricing"] == "NEEDS_MODEL_SAFE_PROJECTION"
+    superseded = allow.get("supersededBlockers", {}).get("items") or []
+    assert "NEEDS_BRANCH_AUTHZ_EVIDENCE" in superseded
     not_approved = {
         (x.get("operationId") if isinstance(x, dict) else x)
         for x in (allow.get("explicitlyNotApproved") or [])
@@ -199,13 +256,18 @@ def test_allowlist_is_search_products_only():
 
 
 def test_classify_hard_blocks():
-    allow = {"search_products"}
+    search_allow = _allowlist_entry_with_projection(
+        "search_products",
+        inputs=list(PRODUCT_SEARCH_INPUT_FIELDS),
+        responses=list(PRODUCT_SEARCH_RESPONSE_FIELDS),
+    )
+    search_ids = {"search_products"}
     assert (
         classify_operation(
             method="GET",
             path="/data/sql",
             operation_id="run_sql",
-            allowlisted_operation_ids=allow,
+            allowlisted_operation_ids=search_ids,
         )
         == STATUS_GENERIC_SQL_FORBIDDEN
     )
@@ -214,7 +276,7 @@ def test_classify_hard_blocks():
             method="POST",
             path="/products",
             operation_id="create_product",
-            allowlisted_operation_ids=allow,
+            allowlisted_operation_ids=search_ids,
         )
         == STATUS_WRITE_OUT_OF_SCOPE
     )
@@ -223,16 +285,38 @@ def test_classify_hard_blocks():
             method="GET",
             path="/products/{code}/stock",
             operation_id="get_product_stock",
-            allowlisted_operation_ids=allow,
+            allowlisted_operation_ids=search_ids,
         )
-        == STATUS_NEEDS_BRANCH_AUTHZ_EVIDENCE
+        == STATUS_NEEDS_MODEL_SAFE_PROJECTION
+    )
+    stock_allow = _allowlist_entry_with_projection(
+        "get_product_stock",
+        inputs=["code", "branch", "page", "page_size"],
+        responses=[
+            "product_code",
+            "branch",
+            "warehouse",
+            "current_quantity",
+            "available_quantity",
+        ],
+    )
+    assert (
+        classify_operation(
+            method="GET",
+            path="/products/{code}/stock",
+            operation_id="get_product_stock",
+            allowlisted_operation_ids={"get_product_stock"},
+            allowlist=stock_allow,
+        )
+        == STATUS_DAVI_ELIGIBLE_READ
     )
     assert (
         classify_operation(
             method="GET",
             path="/products/search",
             operation_id="search_products",
-            allowlisted_operation_ids=allow,
+            allowlisted_operation_ids=search_ids,
+            allowlist=search_allow,
         )
         == STATUS_DAVI_ELIGIBLE_READ
     )
@@ -241,7 +325,7 @@ def test_classify_hard_blocks():
             method="GET",
             path="/products/{code}/summary",
             operation_id="get_product_summary",
-            allowlisted_operation_ids=allow,
+            allowlisted_operation_ids=search_ids,
         )
         != STATUS_DAVI_ELIGIBLE_READ
     )
@@ -250,68 +334,49 @@ def test_classify_hard_blocks():
             method="GET",
             path="/products/{code}",
             operation_id="get_product_detail",
-            allowlisted_operation_ids=allow,
+            allowlisted_operation_ids=search_ids,
             shape="product_snapshot",
         )
-        == STATUS_NEEDS_NESTED_PROJECTION_SUPPORT
+        == STATUS_SEMANTICALLY_REDUNDANT
     )
 
 
-def test_inventory_eligible_count_is_one():
-    root = Path(__file__).resolve().parents[1]
+def test_inventory_eligible_count_is_seven():
     baseline = json.loads(
-        (root / "app/content/openapi_baseline.json").read_text(encoding="utf-8")
+        (_api_root() / "app/content/openapi_baseline.json").read_text(encoding="utf-8")
     )
     actions = build_technical_actions_from_baseline(
         baseline, allowlist=load_external_read_allowlist()
     )
     assert len(actions) == int(baseline.get("operation_count") or 0)
     eligible = [a for a in actions if a.executable]
-    assert len(eligible) == 1
-    assert eligible[0].operation_id == "search_products"
-    # Coverage expansion did not invent approvals.
-    assert set(a.operation_id for a in eligible) == {"search_products"}
+    assert len(eligible) == 7
+    assert set(a.operation_id for a in eligible) == set(_ELIGIBLE_V5_OPERATION_IDS)
 
 
-def test_high_value_product_ops_remain_quarantined_from_discovery(monkeypatch):
-    actions = build_technical_actions_from_baseline(
-        json.loads(
-            (
-                Path(__file__).resolve().parents[1] / "app/content/openapi_baseline.json"
-            ).read_text(encoding="utf-8")
-        ),
-        allowlist=load_external_read_allowlist(),
-    )
+def test_owned_product_intents_discover_from_full_catalog(monkeypatch):
+    actions = _load_baseline_actions()
     set_actions_for_tests(actions)
     monkeypatch.setattr(
         "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
         lambda: "sec",
     )
-    for query in (
-        "estoque do produto 10080055",
-        "estrutura do produto 10080055",
-        "preço do produto 10080055",
-        "fornecedor do produto",
-        "cliente do produto",
-        "status de produção do produto",
-    ):
+    expectations = (
+        ("estoque do produto 10080055", "get_product_stock"),
+        ("estrutura do produto 10080055", "get_product_structure"),
+        ("fornecedor do produto", "get_product_suppliers"),
+        ("cliente do produto", "get_product_customers"),
+        ("status de produção do produto", "get_product_production_status"),
+    )
+    for query, expected_oid in expectations:
         discovered = discover_delpi_information(query=query, top_k=10, actor_id="u1")
-        assert discovered["eligible_action_count"] == 1
-        assert discovered["candidate_count"] == 0, query
+        assert discovered["eligible_action_count"] == 7, query
+        assert discovered["candidate_count"] >= 1, query
         action_ids = {c["action_id"] for c in discovered["candidates"]}
-        assert not action_ids & {
-            "get_product_stock",
-            "get_product_detail",
-            "get_product_summary",
-            "get_product_structure",
-            "get_product_pricing",
-            "get_product_suppliers",
-            "get_product_customers",
-            "get_product_factory_status",
-        }
+        assert expected_oid in action_ids, query
 
 
-def test_three_tool_invariant_and_generic_path_not_applicable_without_new_ops():
+def test_three_tool_invariant_with_v5_allowlist():
     import asyncio
     from app.interface.mcp.server import create_mcp_server
 
@@ -321,10 +386,10 @@ def test_three_tool_invariant_and_generic_path_not_applicable_without_new_ops():
         "discover_delpi_information",
         "execute_delpi_information",
     ]
-    # No newly eligible non-search op → generic catalog proof NOT_APPLICABLE.
-    assert load_allowlist_operation_ids(load_external_read_allowlist()) == {
-        "search_products"
-    }
+    # Still exactly three MCP tools; allowlist is no longer search-only.
+    assert load_allowlist_operation_ids(load_external_read_allowlist()) == set(
+        _ELIGIBLE_V5_OPERATION_IDS
+    )
 
 
 def test_discover_rejects_transport_smuggling_in_schema():
@@ -380,7 +445,7 @@ def test_discover_eligible_only_search_products(monkeypatch):
                 oid="get_product_stock",
                 path="/products/{code}/stock",
                 summary="product stock",
-                status=STATUS_NEEDS_BRANCH_AUTHZ_EVIDENCE,
+                status=STATUS_NEEDS_MODEL_SAFE_PROJECTION,
                 execution_mode=None,
                 approved_response_fields=(),
             ),
@@ -986,22 +1051,21 @@ def test_ptbr_positive_retrieval(query, monkeypatch):
 @pytest.mark.parametrize(
     "query",
     [
-        "estoque do produto 10080055",
-        "saldo disponível do produto 10080055",
         "preço do produto 10080055",
         "preco do produto 10080055",
-        "fornecedor do produto 10080055",
-        "cliente do produto",
         "qual o clima hoje",
         "escreva um e-mail",
         "qual é a hora",
         "resuma este texto",
         "financeiro",
+        "execute sql no banco",
+        "painel admin do sistema",
+        "pricing do produto",
     ],
 )
 def test_negative_retrieval_quarantine(query, monkeypatch):
-    action = _load_governed_search_products()
-    set_actions_for_tests([action])
+    actions = _load_baseline_actions()
+    set_actions_for_tests(actions)
     monkeypatch.setattr(
         "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
         lambda: "test-secret-davi",
@@ -1010,7 +1074,272 @@ def test_negative_retrieval_quarantine(query, monkeypatch):
     assert discovered["candidate_count"] == 0, (
         f"query={query!r} unexpectedly returned {discovered['candidates']}"
     )
-    assert discovered["eligible_action_count"] == 1
+    assert discovered["eligible_action_count"] == 7
+
+
+def test_stock_eligible_and_branch_is_filter_not_authz():
+    allow = load_external_read_allowlist()
+    ids = load_allowlist_operation_ids(allow)
+    assert "get_product_stock" in ids
+    status = classify_operation(
+        method="GET",
+        path="/products/{code}/stock",
+        operation_id="get_product_stock",
+        allowlisted_operation_ids=ids,
+        allowlist=allow,
+    )
+    assert status == STATUS_DAVI_ELIGIBLE_READ
+    stock = next(
+        op
+        for op in allow["operations"]
+        if isinstance(op, dict) and op.get("operationId") == "get_product_stock"
+    )
+    assert "branch" in stock["approvedInputFields"]
+    actions = _load_baseline_actions()
+    stock_action = next(a for a in actions if a.operation_id == "get_product_stock")
+    assert stock_action.executable
+    assert "branch" in stock_action.approved_input_fields
+    # Branch remains a governed query filter, not a DAVI AuthZ decision surface.
+    schema = build_argument_json_schema(stock_action)
+    assert "branch" in schema["properties"]
+    assert schema["properties"]["branch"].get("type") == "string"
+
+
+def test_nested_projection_structure_paths():
+    raw = {
+        "root": {
+            "code": "PA-1",
+            "description": "Finished",
+            "type": "PA",
+            "unit": "UN",
+            "quantity": 1,
+            "internal_cost": 99,
+            "components": [
+                {
+                    "code": "MP-1",
+                    "description": "Material",
+                    "type": "MP",
+                    "unit": "KG",
+                    "quantity": 2,
+                    "unit_price": 5,
+                    "components": [
+                        {
+                            "code": "MP-2",
+                            "description": "Sub",
+                            "type": "MP",
+                            "unit": "UN",
+                            "quantity": 3,
+                            "secret": True,
+                        }
+                    ],
+                }
+            ],
+        },
+        "page": 1,
+        "page_size": 50,
+    }
+    fields = (
+        "root.code",
+        "root.description",
+        "root.type",
+        "root.unit",
+        "root.quantity",
+        "root.components[].code",
+        "root.components[].description",
+        "root.components[].type",
+        "root.components[].unit",
+        "root.components[].quantity",
+        "root.components[].components[].code",
+        "root.components[].components[].description",
+        "root.components[].components[].type",
+        "root.components[].components[].unit",
+        "root.components[].components[].quantity",
+    )
+    projected = apply_approved_field_projection(raw, approved_fields=fields)
+    assert projected["root"]["code"] == "PA-1"
+    assert "internal_cost" not in projected["root"]
+    assert projected["root"]["components"][0]["code"] == "MP-1"
+    assert "unit_price" not in projected["root"]["components"][0]
+    assert projected["root"]["components"][0]["components"][0]["code"] == "MP-2"
+    assert "secret" not in projected["root"]["components"][0]["components"][0]
+    assert projected["page"] == 1
+
+
+def test_pagination_uses_budgets_not_product_search_max(monkeypatch):
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.argument_validator.load_dynamic_read_budgets",
+        lambda: {
+            "default_page_size": 7,
+            "max_page_size": 13,
+            "execute_max_items": 13,
+        },
+    )
+    action = _action(
+        oid="get_product_stock",
+        path="/products/{code}/stock",
+        parameters=(
+            {"name": "code", "in": "path", "required": True, "type": "string"},
+            {"name": "branch", "in": "query", "required": False, "type": "string"},
+            {"name": "page", "in": "query", "required": False, "type": "integer"},
+            {"name": "page_size", "in": "query", "required": False, "type": "integer"},
+        ),
+        approved_input_fields=("code", "branch", "page", "page_size"),
+        approved_response_fields=(
+            "product_code",
+            "branch",
+            "warehouse",
+            "current_quantity",
+            "available_quantity",
+        ),
+        execution_mode="catalog_action",
+    )
+    schema = build_argument_json_schema(action)
+    assert schema["properties"]["page_size"]["maximum"] == 13
+    assert schema["properties"]["page_size"]["default"] == 7
+    assert schema["properties"]["page_size"]["maximum"] != PRODUCT_SEARCH_MAX_PAGE_SIZE
+    ok = validate_arguments(action, {"code": "A", "page_size": 13})
+    assert ok["page_size"] == 13
+    with pytest.raises(ArgumentValidationError):
+        validate_arguments(action, {"code": "A", "page_size": 14})
+
+
+def test_backend_403_propagation(monkeypatch):
+    action = _action(
+        oid="get_product_stock",
+        path="/products/{code}/stock",
+        parameters=(
+            {"name": "code", "in": "path", "required": True, "type": "string"},
+            {"name": "branch", "in": "query", "required": False, "type": "string"},
+        ),
+        approved_input_fields=("code", "branch"),
+        approved_response_fields=(
+            "product_code",
+            "branch",
+            "warehouse",
+            "current_quantity",
+            "available_quantity",
+        ),
+        execution_mode="catalog_action",
+    )
+    set_actions_for_tests([action])
+    secret = "sec"
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.execute_service.candidate_token_secret",
+        lambda: secret,
+    )
+    token = mint_candidate_token(
+        action_id="get_product_stock", actor_id="u1", secret=secret, ttl_seconds=60
+    )
+
+    class ForbiddenExecutor:
+        def execute(self, *, action_id, validated_arguments):
+            return CatalogActionExecutionResult(outcome="forbidden")
+
+    with pytest.raises(PermissionError, match="Forbidden"):
+        execute_delpi_information(
+            candidate_token=token,
+            arguments={"code": "10080055", "branch": "02"},
+            actor_id="u1",
+            catalog_action_executor=ForbiddenExecutor(),
+        )
+
+
+def test_no_davi_local_branch_acl_residual():
+    root = (
+        _api_root()
+        / "app/application/external_capabilities/dynamic_information"
+    )
+    forbidden_markers = (
+        "DAVI_BRANCH_AUTHZ",
+        "DAVI_LOCAL_RBAC",
+        "require_branch_permission",
+        "filial_view_perm",
+        "BRANCH_VIEW_PERMS",
+        "branch_access_error",
+    )
+    for name in ("eligibility.py", "constants.py", "retrieval.py", "execute_service.py"):
+        text = (root / name).read_text(encoding="utf-8")
+        for marker in forbidden_markers:
+            assert marker not in text, f"{name} must not invent {marker}"
+    # Stock without governed projection is model-safety gated — not branch AuthZ.
+    assert (
+        classify_operation(
+            method="GET",
+            path="/products/{code}/stock",
+            operation_id="get_product_stock",
+            allowlisted_operation_ids=set(),
+        )
+        == STATUS_NEEDS_MODEL_SAFE_PROJECTION
+    )
+    assert (
+        classify_operation(
+            method="GET",
+            path="/products/{code}/stock",
+            operation_id="get_product_stock",
+            allowlisted_operation_ids=set(),
+        )
+        != STATUS_NEEDS_BRANCH_AUTHZ_EVIDENCE
+    )
+
+
+def test_multi_candidate_produto_vs_estoque(monkeypatch):
+    set_actions_for_tests(_load_baseline_actions())
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
+        lambda: "test-secret-davi",
+    )
+    product = discover_delpi_information(
+        query="buscar produtos", top_k=5, actor_id="u1"
+    )
+    assert product["candidate_count"] >= 1
+    assert product["candidates"][0]["action_id"] == "search_products"
+
+    stock = discover_delpi_information(
+        query="estoque do produto 10080055", top_k=5, actor_id="u1"
+    )
+    assert stock["candidate_count"] >= 1
+    assert stock["candidates"][0]["action_id"] == "get_product_stock"
+    action_ids = {c["action_id"] for c in stock["candidates"]}
+    assert "get_product_stock" in action_ids
+    # Distinct intents must not collapse onto the same top action.
+    assert product["candidates"][0]["action_id"] != stock["candidates"][0]["action_id"]
+
+
+def test_unwrap_api_envelope_projection():
+    envelope = {
+        "success": True,
+        "message": "ok",
+        "meta": {"operationId": "get_product_stock"},
+        "data": {
+            "items": [
+                {
+                    "product_code": "10080055",
+                    "branch": "01",
+                    "warehouse": "01",
+                    "current_quantity": 10,
+                    "available_quantity": 8,
+                    "unit_cost": 12.5,
+                    "internal_flag": True,
+                }
+            ],
+            "page": 1,
+            "page_size": 50,
+            "total": 1,
+        },
+    }
+    fields = (
+        "product_code",
+        "branch",
+        "warehouse",
+        "current_quantity",
+        "available_quantity",
+    )
+    projected = apply_approved_field_projection(envelope, approved_fields=fields)
+    assert "success" not in projected
+    assert "meta" not in projected
+    assert set(projected["items"][0].keys()) == set(fields)
+    assert projected["items"][0]["available_quantity"] == 8
+    assert "unit_cost" not in projected["items"][0]
 
 
 def test_search_products_discovery_schema_matches_approved_input(monkeypatch):

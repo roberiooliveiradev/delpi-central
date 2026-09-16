@@ -30,6 +30,7 @@ from app.application.external_capabilities.dynamic_information.execution_plan im
 from app.application.external_capabilities.dynamic_information.projection import (
     apply_approved_field_projection,
     bound_response_payload,
+    unwrap_api_payload,
 )
 from app.domain.ports.davi_catalog_action_executor_port import CatalogActionExecutorPort
 
@@ -102,9 +103,11 @@ def execute_delpi_information(
                 result.error_message or "Catalog action execution failed"
             )
         body = apply_approved_field_projection(
-            result.payload,
+            unwrap_api_payload(result.payload),
             approved_fields=action.approved_response_fields,
             list_key="items",
+            max_depth=int(budgets.get("projection_max_depth") or 8),
+            max_array_items=int(budgets.get("execute_max_items") or 50),
         )
     else:
         raise GovernedExecutionError("Unsupported execution plan")

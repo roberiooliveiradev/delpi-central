@@ -8,13 +8,22 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from app.application.external_capabilities.constants import (
-    PRODUCT_SEARCH_DEFAULT_PAGE_SIZE,
-    PRODUCT_SEARCH_MAX_PAGE_SIZE,
-)
 from app.application.external_capabilities.dynamic_information.catalog_builder import (
     TechnicalAction,
 )
+from app.application.external_capabilities.dynamic_information.content_loader import (
+    load_dynamic_read_budgets,
+)
+
+
+def _pagination_limits() -> tuple[int, int]:
+    """Return (default_page_size, max_page_size) from DAVI budgets — not Product Search."""
+    budgets = load_dynamic_read_budgets()
+    default_size = int(budgets.get("default_page_size") or 50)
+    max_size = int(budgets.get("max_page_size") or budgets.get("execute_max_items") or 50)
+    default_size = max(1, default_size)
+    max_size = max(default_size, max_size)
+    return default_size, max_size
 
 _TRANSPORT_FORBIDDEN = frozenset(
     {
@@ -90,12 +99,18 @@ def build_argument_json_schema(action: TechnicalAction) -> dict[str, Any]:
             continue
         prop = _param_schema(param)
         if name == "page_size":
+            default_size, max_size = _pagination_limits()
             prop["type"] = "integer"
             prop["minimum"] = 1
-            prop["maximum"] = int(prop.get("maximum") or PRODUCT_SEARCH_MAX_PAGE_SIZE)
-            prop["maximum"] = min(int(prop["maximum"]), PRODUCT_SEARCH_MAX_PAGE_SIZE)
+            openapi_max = prop.get("maximum")
+            if openapi_max is not None:
+                try:
+                    max_size = min(max_size, int(openapi_max))
+                except (TypeError, ValueError):
+                    pass
+            prop["maximum"] = max_size
             if "default" not in prop:
-                prop["default"] = PRODUCT_SEARCH_DEFAULT_PAGE_SIZE
+                prop["default"] = min(default_size, max_size)
         if name == "page":
             prop["type"] = "integer"
             prop["minimum"] = 1

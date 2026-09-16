@@ -38,7 +38,7 @@ discover_delpi_information
 execute_delpi_information
 ```
 
-Missão ampla ≠ elegibilidade de todas as rotas API DELPI. Dynamic allowlist v4: `DAVI_ELIGIBLE_READ = search_products` only (`DAVI-DYNAMIC-READ-005` → `PROMOTE_ZERO_NEW_OPERATIONS`). Detail/summary/stock/structure/pricing/customer/supplier remain quarantined with explicit primary blockers until independent AuthZ + classification + external-processing + model-safe projection gates pass. Governance decision packs: `docs/integrations/evidence/davi-read-governance-ratification-001.md` (`DAVI-GOV-READ-001`, `PENDING_RATIFICATION` — not runtime proof).
+Missão ampla ≠ elegibilidade de todas as rotas API DELPI. Allowlist v5 (`DAVI-READ-AUTHZ-REBASELINE-001`): `DAVI_ELIGIBLE_READ = 7` (search_products + stock + suppliers + customers + purchases + structure + production_status). AuthZ canônico: capability ≤ usuário autenticado; `branch` é filtro; backend é autoridade final. Detail permanece `SEMANTICALLY_REDUNDANT`; summary/factory/pricing aguardam projection. Policy: `docs/integrations/evidence/davi-read-authz-policy-rebaseline-001.md`.
 
 ## CURRENT PROVEN V1
 

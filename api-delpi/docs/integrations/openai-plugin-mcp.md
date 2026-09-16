@@ -82,21 +82,24 @@ Dynamic READ notes:
 Technical Action Catalog = derived from OpenAPI/baseline + governance allowlist
 Action Catalog != semantic capability authority
 MCP tools advertised to the Agent = search_products + discover_delpi_information + execute_delpi_information
-DAVI_ELIGIBLE_READ (dynamic allowlist) = search_products only (v2)
-get_product_detail / get_product_summary = NOT eligible (AuthZ/projection not independently ratified)
+DAVI_ELIGIBLE_READ (allowlist v5 / DAVI-READ-AUTHZ-REBASELINE-001) = 7
+  search_products, get_product_stock, get_product_suppliers, get_product_customers,
+  get_product_purchases, get_product_structure, get_product_production_status
+get_product_detail = SEMANTICALLY_REDUNDANT (search_products covers same slice)
+Stock branch = query filter (NOT DAVI AuthZ)
 OpenAPI whole-document is never sent per turn
 Arbitrary URL/path/method/operationId/SQL = rejected
-Stock (get_product_stock) = QUARANTINED (NEEDS_BRANCH_AUTHZ_EVIDENCE)
 Inventory evidence = docs/integrations/evidence/davi-api-delpi-operation-inventory.*
 Candidate tokens = actor-bound HMAC (DAVI_CANDIDATE_HMAC_SECRET preferred; JWT_SECRET fallback)
 Application dynamic broker = no HTTP/TestClient/Authorization header construction
 CatalogActionExecutorPort = action_id + validated_arguments only (Composition binds Authorization into Infrastructure)
 Infrastructure AsgiCatalogActionExecutor = catalog resolution + GET + Authorization + ASGI
 Dynamic search_products execution = approved external projection (product_code, description, group_category)
+Generic catalog actions = nested/flat approvedResponseFields + size bound
 bounded payload size != approved field projection
 ```
 
-> **Supersedes DAVI-DYNAMIC-READ-001 allowlist claim:** earlier evidence with `DAVI_ELIGIBLE_READ = 3` (`search_products` + `get_product_detail` + `get_product_summary`) is **obsolete**. Authority for this deploy is allowlist v2+ (`DAVI_ELIGIBLE_READ = 1`).
+> **Allowlist history:** DAVI-DYNAMIC-READ-001 briefly claimed 3 eligible ops (obsolete). DAVI-DYNAMIC-READ-002/005 reduced to 1. **Current source authority is allowlist v5** (`DAVI_ELIGIBLE_READ = 7`) after `DAVI-READ-AUTHZ-REBASELINE-001`. Live deploy of v5 = `TEST_NOT_RUN` until redeploy.
 
 ### Live runtime residuals (DAVI-DYNAMIC-READ-004)
 
@@ -105,7 +108,7 @@ After private deploy of the dynamic broker, live ChatGPT evidence proved:
 ```text
 search_products live projection = PROVEN
 dynamic discover/execute basic path = PROVEN
-stock quarantine live = PROVEN
+stock quarantine live = PROVEN (pre-rebaseline; stock eligibility LIVE after rebaseline = TEST_NOT_RUN)
 PT-BR retrieval ("produto", "buscar o produto…") = RESIDUAL FOUND → fixed in source
 candidate schema advertised sort/direction = RESIDUAL FOUND → fixed via approvedInputFields
 discover/execute MCP outputSchema missing = RESIDUAL FOUND → fixed in source
@@ -122,7 +125,7 @@ PROVIDER OUTPUT SCHEMA DISPLAY = TEST_NOT_RUN
 
 Do not treat code-level outputSchema as provider-display proof until redeploy + tools/list rediscovery.
 
-### Governed READ coverage expansion (DAVI-DYNAMIC-READ-005)
+### Governed READ coverage expansion (DAVI-DYNAMIC-READ-005) — historical
 
 ```text
 ELIGIBLE BEFORE = 1 (search_products)
@@ -131,35 +134,58 @@ NEWLY ELIGIBLE  = 0
 DECISION        = PROMOTE_ZERO_NEW_OPERATIONS
 ```
 
-No additional GET passed all gates without inventing human external-processing approval, nested projection support, branch AuthZ, or data classification. High-value product ops remain quarantined with primary blockers in `davi_external_read_allowlist.json` `explicitlyNotApproved` and generated evidence:
+Superseded for eligibility **logic** by `DAVI-READ-AUTHZ-REBASELINE-001` (see below). Artifact retained as provenance: `davi-governed-read-coverage-005.json`.
+
+### AuthZ rebaseline + governed READ expansion (DAVI-READ-AUTHZ-REBASELINE-001)
+
+```text
+CANONICAL POLICY =
+  api-delpi/docs/integrations/evidence/davi-read-authz-policy-rebaseline-001.md
+
+DAVI capability <= authenticated user capability
+DAVI_LOCAL_RBAC / DAVI_BRANCH_AUTHZ = FORBIDDEN
+branch = query filter (not DAVI AuthZ)
+backend AuthZ = final authority
+model-safe projection = mandatory
+
+ELIGIBLE BEFORE = 1
+ELIGIBLE AFTER  = 7
+NEWLY ELIGIBLE  =
+  get_product_stock
+  get_product_suppliers
+  get_product_customers
+  get_product_purchases
+  get_product_structure
+  get_product_production_status
+
+MCP tools = still exactly 3
+NESTED_PROJECTION_ABSTRACTION_GATE = PASS (structure + production_status)
+NESTED PROJECTION = implemented (generic path allowlist)
+PAGINATION = budgets.max_page_size (not Product Search constants)
+
+SOURCE = PASS
+LOCAL TESTS = PASS
+DEPLOY = TEST_NOT_RUN
+LIVE = TEST_NOT_RUN
+```
+
+Evidence:
 
 ```text
 docs/integrations/evidence/davi-api-delpi-operation-inventory.*
-docs/integrations/evidence/davi-governed-read-coverage-005.json
+docs/integrations/evidence/davi-governed-read-coverage-rebaseline-001.json
+docs/integrations/evidence/davi-read-authz-policy-rebaseline-001.md
 ```
 
+Historical GOV packs (`davi-read-governance-ratification-001.*`) marked `SUPERSEDED_IN_PART`.
+
 ```text
-NEW COVERAGE SOURCE = PASS (zero promotions, fail-closed)
+NEW COVERAGE SOURCE = PASS
 NEW COVERAGE LOCAL TESTS = PASS
-NEW COVERAGE LIVE = NOT_APPLICABLE (no new eligible surface)
-DAVI_DYNAMIC_READ_PRIVATE_RUNTIME (base motor) = remains PROVEN from prior deploy
+NEW COVERAGE LIVE = TEST_NOT_RUN
+DAVI_DYNAMIC_READ_PRIVATE_RUNTIME (base motor) = remains PROVEN at prior deploy SHA
+NEW SURFACE LIVE = TEST_NOT_RUN until redeploy of this HEAD
 ```
-
-### Governance ratification (DAVI-GOV-READ-001)
-
-```text
-PURPOSE = close governance blockers via existing authorities + explicit PENDING_OWNER_DECISION packs
-DAVI_ELIGIBLE_READ = still 1 (unchanged)
-MCP tools = still 3 (unchanged)
-ARTIFACT =
-  docs/integrations/evidence/davi-read-governance-ratification-001.md
-  docs/integrations/evidence/davi-read-governance-ratification-001.json
-STATUS = PENDING_RATIFICATION (ledger ≠ runtime allowlist)
-NESTED_PROJECTION_ABSTRACTION_GATE = FAIL (0 real consumers)
-STOCK_AUTHZ_IMPLEMENTATION_GATE = NOT_READY
-```
-
-Next: Architecture/Product ratifies exact `DAVI-GOV-*` IDs → implementation only for `RATIFIED` items.
 
 This chain is **CURRENT PROVEN V1** for the API DELPI information source. It is **not** the universal DAVI TARGET architecture (see `docs/12-roadmap-e-evolucao/davi/README.md`).
 
@@ -504,13 +530,14 @@ DEPLOY_SMOKE = PASS
 CHATGPT_OAUTH_CONNECTION = PASS
 MCP_TOOL_DISCOVERY = PASS
 TOOL_INVENTORY = search_products + discover_delpi_information + execute_delpi_information
-DAVI_ELIGIBLE_READ = 1 (search_products only; detail/summary removed in DAVI-DYNAMIC-READ-002)
+DAVI_ELIGIBLE_READ (last live deploy) = 1 — SOURCE HEAD after DAVI-READ-AUTHZ-REBASELINE-001 = 7 (LIVE = TEST_NOT_RUN)
 INPUT_SCHEMA_LIVE = PASS
 OUTPUT_SCHEMA_RUNTIME = PASS
 AUTHENTICATED_SEARCH_PRODUCTS = PASS
 LIVE_FIELD_ALLOWLIST = PASS
 DAVI_AGENT_PRIVATE_PREVIEW = PASS
 BUSINESS_AUTHZ_NEGATIVE = PENDING
+STOCK_LIVE_AFTER_REBASELINE = TEST_NOT_RUN
 SECOND_USER_IDENTITY_PROOF = PENDING
 MCP_RATE_POLICY = PENDING_OWNER_DECISION
 WIDER_PUBLICATION = BLOCKED_BY_PENDING_GATES

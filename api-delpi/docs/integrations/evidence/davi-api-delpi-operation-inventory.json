@@ -2,14 +2,21 @@
   "source": "openapi_baseline.json",
   "baseline_version": "3",
   "baseline_operation_count": 703,
-  "taskId": "DAVI-DYNAMIC-READ-005",
+  "taskId": "DAVI-READ-AUTHZ-REBASELINE-001",
   "TOTAL_OPERATIONS": 703,
   "TOTAL_GET": 506,
   "TOTAL_WRITE_VERBS": 197,
-  "DAVI_ELIGIBLE_READ": 1,
+  "DAVI_ELIGIBLE_READ": 7,
   "ELIGIBLE_BEFORE": 1,
-  "ELIGIBLE_AFTER": 1,
-  "NEWLY_ELIGIBLE": [],
+  "ELIGIBLE_AFTER": 7,
+  "NEWLY_ELIGIBLE": [
+    "get_product_customers",
+    "get_product_production_status",
+    "get_product_purchases",
+    "get_product_stock",
+    "get_product_structure",
+    "get_product_suppliers"
+  ],
   "REMOVED_ELIGIBLE": [],
   "INVENTORY_DELTA": {
     "previous_total_operations": 703,
@@ -21,95 +28,70 @@
     "note": "Delta vs previously generated inventory artifact on disk"
   },
   "COVERAGE_DECISION": {
-    "taskId": "DAVI-DYNAMIC-READ-005",
-    "decision": "PROMOTE_ZERO_NEW_OPERATIONS",
-    "reason": "No additional GET passed all gates (external-processing, classification, AuthZ/branch, model-safe flat projection) without inventing human approval."
+    "taskId": "DAVI-READ-AUTHZ-REBASELINE-001",
+    "decision": "REBASELINE_PROMOTE_SAFE_READS",
+    "reason": "Supersede branch/family/taxonomy artificial blockers; promote READs with backend AuthZ + model-safe projection."
   },
   "HIGH_VALUE_BLOCKED": [
     {
       "operationId": "get_product_detail",
-      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "reason": "product_snapshot nested under product; flat items[] projection cannot sanitize; search_products approval does not transfer; external-processing not independently ratified"
+      "primaryBlocker": "SEMANTICALLY_REDUNDANT",
+      "reason": "Same Product Master slice already served by search_products; no distinct governed fields"
     },
     {
       "operationId": "get_product_summary",
-      "primaryBlocker": "NEEDS_DATA_CLASSIFICATION",
-      "reason": "Composite product+stock+prices; pricing/cost classification unresolved; stock branch AuthZ unresolved; most-restrictive section wins"
-    },
-    {
-      "operationId": "get_product_stock",
-      "primaryBlocker": "NEEDS_BRANCH_AUTHZ_EVIDENCE",
-      "reason": "branch query is optional filter only; no proven requested-branch AuthZ"
-    },
-    {
-      "operationId": "get_product_structure",
       "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "reason": "hierarchy/BOM shape; no independent external-processing approval"
-    },
-    {
-      "operationId": "get_product_structure_exclusivity",
-      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "reason": "nested playbook/report shape; no independent external-processing approval"
-    },
-    {
-      "operationId": "get_product_production_status",
-      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "reason": "nested production report; no independent external-processing approval"
+      "reason": "Composite product+stock+prices; no approved section projection yet"
     },
     {
       "operationId": "get_product_factory_status",
       "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "reason": "composite structure/raw_material_stock/production/shipping; blocked by stock/production sections"
+      "reason": "Composite factory envelope; section projection not yet governed"
     },
     {
-      "operationId": "get_product_suppliers",
-      "primaryBlocker": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "reason": "supplier relational data; search_products approval does not transfer"
-    },
-    {
-      "operationId": "get_product_customers",
-      "primaryBlocker": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "reason": "customer relational data; search_products approval does not transfer"
+      "operationId": "get_product_structure_exclusivity",
+      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "reason": "Playbook exclusivity shape pending governed path allowlist"
     },
     {
       "operationId": "get_product_pricing",
-      "primaryBlocker": "NEEDS_DATA_CLASSIFICATION",
-      "reason": "pricing/financial high risk; no external-processing approval"
-    },
-    {
-      "operationId": "get_product_purchases",
-      "primaryBlocker": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "reason": "purchases domain; no independent DAVI external approval"
+      "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "reason": "Awaiting explicit approvedResponseFields (minimization); not blocked by taxonomy absence"
     },
     {
       "operationId": "get_product_purchase_price_history",
-      "primaryBlocker": "NEEDS_DATA_CLASSIFICATION",
-      "reason": "price history; financial classification unresolved"
+      "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "reason": "Awaiting explicit approvedResponseFields"
     },
     {
       "operationId": "get_product_raw_material_price_intelligence",
-      "primaryBlocker": "NEEDS_DATA_CLASSIFICATION",
-      "reason": "price/cost intelligence; financial classification unresolved"
+      "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "reason": "Awaiting explicit approvedResponseFields"
     },
     {
       "operationId": "get_product_cost_impact_simulation",
-      "primaryBlocker": "NEEDS_DATA_CLASSIFICATION",
-      "reason": "cost simulation; financial classification unresolved"
+      "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "reason": "Awaiting explicit approvedResponseFields"
     }
   ],
   "STATUS_COUNTS": {
     "ADMIN_OUT_OF_SCOPE": 76,
-    "DAVI_ELIGIBLE_READ": 1,
+    "DAVI_ELIGIBLE_READ": 7,
     "DESTRUCTIVE_OUT_OF_SCOPE": 16,
     "GENERIC_SQL_FORBIDDEN": 2,
-    "NEEDS_BRANCH_AUTHZ_EVIDENCE": 1,
-    "NEEDS_DATA_CLASSIFICATION": 60,
-    "NEEDS_EXTERNAL_PROCESSING_APPROVAL": 316,
-    "NEEDS_NESTED_PROJECTION_SUPPORT": 70,
+    "NEEDS_MODEL_SAFE_PROJECTION": 368,
+    "NEEDS_NESTED_PROJECTION_SUPPORT": 72,
+    "SEMANTICALLY_REDUNDANT": 1,
     "STREAM_BINARY_OUT_OF_SCOPE": 31,
     "WRITE_OUT_OF_SCOPE": 130
   },
   "ELIGIBLE_OPERATION_IDS": [
+    "get_product_customers",
+    "get_product_production_status",
+    "get_product_purchases",
+    "get_product_stock",
+    "get_product_structure",
+    "get_product_suppliers",
     "search_products"
   ],
   "MATRIX": [
@@ -874,6 +856,66 @@
       "executable": false
     },
     {
+      "operationId": "get_product_customers",
+      "method": "GET",
+      "path": "/products/{code}/customers",
+      "summary": "Clientes do product",
+      "entity": "product_customers",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_product_production_status",
+      "method": "GET",
+      "path": "/products/{code}/production-status",
+      "summary": "Product production status (PA/PI, OPs and appointments)",
+      "entity": "product_production_status",
+      "shape": "playbook_report",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_product_purchases",
+      "method": "GET",
+      "path": "/products/{code}/purchases",
+      "summary": "Product purchases",
+      "entity": "product_purchases",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_product_stock",
+      "method": "GET",
+      "path": "/products/{code}/stock",
+      "summary": "Product stock by branch and location",
+      "entity": "product_stock",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_product_structure",
+      "method": "GET",
+      "path": "/products/{code}/structure",
+      "summary": "Product structure (BOM)",
+      "entity": "product_structure",
+      "shape": "hierarchy",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_product_suppliers",
+      "method": "GET",
+      "path": "/products/{code}/suppliers",
+      "summary": "Product suppliers",
+      "entity": "product_suppliers",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
       "operationId": "search_products",
       "method": "GET",
       "path": "/products/search",
@@ -1064,623 +1106,13 @@
       "executable": false
     },
     {
-      "operationId": "get_product_stock",
-      "method": "GET",
-      "path": "/products/{code}/stock",
-      "summary": "Product stock by branch and location",
-      "entity": "product_stock",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_BRANCH_AUTHZ_EVIDENCE",
-      "executable": false
-    },
-    {
-      "operationId": "get_commercial_rol_by_branch",
-      "method": "GET",
-      "path": "/commercial/rol/by-branch",
-      "summary": "Commercial ROL breakdown by branch (01 vs 02)",
-      "entity": "commercial_rol_by_branch",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_commercial_rol_by_customer",
-      "method": "GET",
-      "path": "/commercial/rol/by-customer",
-      "summary": "Commercial ROL ranking by customer",
-      "entity": "commercial_rol_by_customer",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_commercial_rol_by_product",
-      "method": "GET",
-      "path": "/commercial/rol/by-product",
-      "summary": "Commercial ROL by product or product group",
-      "entity": "commercial_rol_by_product",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_commercial_rol_series",
-      "method": "GET",
-      "path": "/commercial/rol/series",
-      "summary": "Commercial rol series",
-      "entity": "commercial_rol_series",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_commercial_rol_summary",
-      "method": "GET",
-      "path": "/commercial/rol/summary",
-      "summary": "Commercial ROL summary (realized and goal)",
-      "entity": "commercial_rol_summary",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_direct_labor_cost_pct",
-      "method": "GET",
-      "path": "/production/direct_labor_cost_pct",
-      "summary": "Direct labor cost pct",
-      "entity": "direct_labor_cost_pct",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_financeiro_despesas_centro_custo_filtros",
-      "method": "GET",
-      "path": "/financeiro/despesas-centro-custo/filtros",
-      "summary": "Indicator — financial expenses cost center filtros",
-      "entity": "financeiro_despesas_centro_custo_filtros",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_financeiro_despesas_centro_custo_lancamentos",
-      "method": "GET",
-      "path": "/financeiro/despesas-centro-custo/lancamentos",
-      "summary": "Cost-center expenses — ledger entries",
-      "entity": "financeiro_despesas_centro_custo_lancamento",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_financeiro_despesas_centro_custo_ranking_centros",
-      "method": "GET",
-      "path": "/financeiro/despesas-centro-custo/ranking-centros",
-      "summary": "Financial expenses cost center ranking centers",
-      "entity": "financeiro_despesas_centro_custo_ranking_centros",
-      "shape": "list",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_financeiro_despesas_centro_custo_ranking_fornecedores",
-      "method": "GET",
-      "path": "/financeiro/despesas-centro-custo/ranking-fornecedores",
-      "summary": "Financial expenses cost center ranking suppliers",
-      "entity": "financeiro_despesas_centro_custo_ranking_fornecedores",
-      "shape": "list",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_financeiro_despesas_centro_custo_resumo",
-      "method": "GET",
-      "path": "/financeiro/despesas-centro-custo/resumo",
-      "summary": "Cost-center expenses — summary KPIs",
-      "entity": "financeiro_despesas_centro_custo_resumo",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_financeiro_despesas_centro_custo_serie",
-      "method": "GET",
-      "path": "/financeiro/despesas-centro-custo/serie",
-      "summary": "Financial expenses cost center series",
-      "entity": "financeiro_despesas_centro_custo_serie",
-      "shape": "list",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_financeiro_inadimplencia_clientes",
-      "method": "GET",
-      "path": "/financeiro/inadimplencia/clientes",
-      "summary": "Delinquency — customers ranking",
-      "entity": "financeiro_inadimplencia_cliente",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_financeiro_inadimplencia_faixas_atraso",
-      "method": "GET",
-      "path": "/financeiro/inadimplencia/faixas-atraso",
-      "summary": "List — financial inadimplencia faixas atraso",
-      "entity": "financeiro_inadimplencia_faixas_atraso",
-      "shape": "list",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_financeiro_inadimplencia_mensal",
-      "method": "GET",
-      "path": "/financeiro/inadimplencia/mensal",
-      "summary": "List — financial inadimplencia mensal",
-      "entity": "financeiro_inadimplencia_mensal",
-      "shape": "list",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_financeiro_inadimplencia_resumo",
-      "method": "GET",
-      "path": "/financeiro/inadimplencia/resumo",
-      "summary": "Delinquency — summary KPIs",
-      "entity": "financeiro_inadimplencia_resumo",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_financeiro_inadimplencia_titulos",
-      "method": "GET",
-      "path": "/financeiro/inadimplencia/titulos",
-      "summary": "Delinquency — titles list",
-      "entity": "financeiro_inadimplencia_titulo",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_financial_fixed_cost_pct",
-      "method": "GET",
-      "path": "/financial/fixed_cost_pct",
-      "summary": "Financial fixed cost percentage",
-      "entity": "financial_fixed_cost_pct",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_financial_purchase_freight_links",
-      "method": "GET",
-      "path": "/financial/purchase-freight/links",
-      "summary": "Purchase invoice to freight document links",
-      "entity": "financial_purchase_freight_link",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_financial_rol",
-      "method": "GET",
-      "path": "/financial/rol",
-      "summary": "Financial ROL consolidated KPI by branch",
-      "entity": "financial_rol",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_financial_rol_invoices",
-      "method": "GET",
-      "path": "/financial/rol/invoices",
-      "summary": "ROL invoices (sales and returns)",
-      "entity": "financial_rol_invoice",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_new_business_rol_pct",
-      "method": "GET",
-      "path": "/commercial/new-business-rol-pct",
-      "summary": "New business rol pct",
-      "entity": "new_business_rol_pct",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_new_business_rol_target_pct",
-      "method": "GET",
-      "path": "/commercial/new-business-rol-target-pct",
-      "summary": "Commercial new business ROL target (realized and goal)",
-      "entity": "commercial_rol_new_business_target",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_new_clients_rol_pct",
-      "method": "GET",
-      "path": "/commercial/new-clients-rol-pct",
-      "summary": "Indicator — percentage rol de clientes novos",
-      "entity": "new_clients_rol_pct",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_cost_impact_simulation",
-      "method": "GET",
-      "path": "/products/{code}/cost-impact-simulation",
-      "summary": "Finished-product cost impact simulation (BOM materials)",
-      "entity": "product_cost_impact_simulation",
-      "shape": "composite_analysis",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_pricing",
-      "method": "GET",
-      "path": "/products/{code}/pricing",
-      "summary": "Product sale pricing and commercial price tables",
-      "entity": "product_pricing",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_purchase_price_history",
-      "method": "GET",
-      "path": "/products/{code}/purchase-price-history",
-      "summary": "Product purchase price history",
-      "entity": "product_purchase_price_history",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_raw_material_price_intelligence",
-      "method": "GET",
-      "path": "/products/{code}/raw-material-price-intelligence",
-      "summary": "Product raw material price intelligence",
-      "entity": "product_raw_material_price_intelligence",
-      "shape": "composite_analysis",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_summary",
-      "method": "GET",
-      "path": "/products/{code}/summary",
-      "summary": "Light product summary (cadastro + sample stock + prices)",
-      "entity": "product",
-      "shape": "product_snapshot",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_production_cost_pct",
-      "method": "GET",
-      "path": "/production/production_cost_pct",
-      "summary": "Production cost pct",
-      "entity": "production_cost_pct",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_quality_rework_cost_pct",
-      "method": "GET",
-      "path": "/quality/rework-cost-pct",
-      "summary": "Quality rework cost / ROL",
-      "entity": "quality_rework_cost_pct",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_quality_rework_cost_pct_series",
-      "method": "GET",
-      "path": "/quality/rework-cost-pct/series",
-      "summary": "Quality rework cost / ROL series",
-      "entity": "quality_rework_cost_pct_series",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_quality_scrap_cost_pct",
-      "method": "GET",
-      "path": "/quality/scrap-cost-pct",
-      "summary": "Quality scrap cost / ROL",
-      "entity": "quality_scrap_cost_pct",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_quality_scrap_cost_pct_series",
-      "method": "GET",
-      "path": "/quality/scrap-cost-pct/series",
-      "summary": "Quality scrap cost / ROL series",
-      "entity": "quality_scrap_cost_pct_series",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_refugos_scrap_cost_pct",
-      "method": "GET",
-      "path": "/refugos/scrap_cost_pct",
-      "summary": "Scrap cost / ROL",
-      "entity": "refugos_scrap_cost_pct",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_retrabalhos_rework_cost_pct",
-      "method": "GET",
-      "path": "/retrabalhos/rework_cost_pct",
-      "summary": "Rework cost / ROL",
-      "entity": "retrabalho_rework_cost_pct",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_si_indicator_commercial_new_business_rol_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/commercial-new-business-rol/meta",
-      "summary": "% ROL de Novos Negócios — goal",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_si_indicator_commercial_new_business_rol_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/commercial-new-business-rol/realized",
-      "summary": "% ROL de Novos Negócios — actual",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_si_indicator_commercial_rol_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/commercial-rol/meta",
-      "summary": "ROL — goal",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_si_indicator_commercial_rol_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/commercial-rol/realized",
-      "summary": "ROL — actual",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_si_indicator_engineering_transforma_plus_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/engineering-transforma-plus/meta",
-      "summary": "Ganhos Financeiros do TRANSFORMA+ DELPI — goal",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_si_indicator_engineering_transforma_plus_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/engineering-transforma-plus/realized",
-      "summary": "Ganhos Financeiros do TRANSFORMA+ DELPI — actual",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_si_indicator_financial_fixed_cost_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/financial-fixed-cost/meta",
-      "summary": "% Custos Fixos / Receita Operacional — goal",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_si_indicator_financial_fixed_cost_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/financial-fixed-cost/realized",
-      "summary": "% Custos Fixos / Receita Operacional — actual",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_si_indicator_production_costs_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/production-costs/meta",
-      "summary": "Custos de Produção / ROL — goal",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_si_indicator_production_costs_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/production-costs/realized",
-      "summary": "Custos de Produção / ROL — actual",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_si_indicator_production_depreciation_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/production-depreciation/meta",
-      "summary": "Depreciação / ROL — goal",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_si_indicator_production_depreciation_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/production-depreciation/realized",
-      "summary": "Depreciação / ROL — actual",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_si_indicator_production_direct_labor_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/production-direct-labor/meta",
-      "summary": "Custo Mão de Obra Direta / ROL — goal",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_si_indicator_production_direct_labor_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/production-direct-labor/realized",
-      "summary": "Custo Mão de Obra Direta / ROL — actual",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_si_indicator_quality_kaizen_financial_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-kaizen-financial/meta",
-      "summary": "Ganhos Financeiros Kaizen/mês — goal",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_si_indicator_quality_kaizen_financial_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-kaizen-financial/realized",
-      "summary": "Ganhos Financeiros Kaizen/mês — actual",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_si_indicator_quality_rework_cost_pct_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-rework-cost-pct/meta",
-      "summary": "Custo de Retrabalho / ROL — goal",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_si_indicator_quality_rework_cost_pct_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-rework-cost-pct/realized",
-      "summary": "Custo de Retrabalho / ROL — actual",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_si_indicator_quality_scrap_cost_pct_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-scrap-cost-pct/meta",
-      "summary": "Custo de Refugo / ROL — goal",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_si_indicator_quality_scrap_cost_pct_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-scrap-cost-pct/realized",
-      "summary": "Custo de Refugo / ROL — actual",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_supplies_safety_stock_supplier_purchase_price_history",
-      "method": "GET",
-      "path": "/supplies/safety-stock/items/{code}/suppliers/{supplier_code}/purchase-price-history",
-      "summary": "Supplies safety stock supplier purchase price history",
-      "entity": "supplies_safety_stock_supplier_price_history",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "get_weg_rol_target_pct",
-      "method": "GET",
-      "path": "/commercial/weg-rol-target-pct",
-      "summary": "Commercial WEG ROL target (realized and goal)",
-      "entity": "commercial_rol_weg_target",
-      "shape": "scalar",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_cost_center",
-      "method": "GET",
-      "path": "/planejamento-orcamentario/capex/consolidation/by-cost-center",
-      "summary": "List Capex Consolidation By Cost Center",
-      "entity": "capex_consolidation",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
-      "operationId": "list_planejamento_orcamentario_org_erp_cost_centers",
-      "method": "GET",
-      "path": "/planejamento-orcamentario/org/erp-cost-centers",
-      "summary": "List Erp Cost Centers",
-      "entity": "budget_org_cost_center",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_DATA_CLASSIFICATION",
-      "executable": false
-    },
-    {
       "operationId": "get_audit_5s_audit",
       "method": "GET",
       "path": "/quality/audit-5s/audits/{audit_id}",
       "summary": "Get Audit",
       "entity": "audit_5s_audit",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1690,7 +1122,7 @@
       "summary": "Get Catalog",
       "entity": "audit_5s_catalog",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1700,7 +1132,7 @@
       "summary": "Audit 5S",
       "entity": "audit_5s_summary",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1710,7 +1142,7 @@
       "summary": "Audit 5S summary series",
       "entity": "audit_5s_summary_series",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1720,7 +1152,57 @@
       "summary": "Commercial proposal stage history",
       "entity": "commercial_proposal_history",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_commercial_rol_by_branch",
+      "method": "GET",
+      "path": "/commercial/rol/by-branch",
+      "summary": "Commercial ROL breakdown by branch (01 vs 02)",
+      "entity": "commercial_rol_by_branch",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_commercial_rol_by_customer",
+      "method": "GET",
+      "path": "/commercial/rol/by-customer",
+      "summary": "Commercial ROL ranking by customer",
+      "entity": "commercial_rol_by_customer",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_commercial_rol_by_product",
+      "method": "GET",
+      "path": "/commercial/rol/by-product",
+      "summary": "Commercial ROL by product or product group",
+      "entity": "commercial_rol_by_product",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_commercial_rol_series",
+      "method": "GET",
+      "path": "/commercial/rol/series",
+      "summary": "Commercial rol series",
+      "entity": "commercial_rol_series",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_commercial_rol_summary",
+      "method": "GET",
+      "path": "/commercial/rol/summary",
+      "summary": "Commercial ROL summary (realized and goal)",
+      "entity": "commercial_rol_summary",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1730,7 +1212,7 @@
       "summary": "Get Cultura Delpi Content",
       "entity": "cultura_delpi_content",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1740,7 +1222,7 @@
       "summary": "Get customer avatar",
       "entity": "customer_avatar",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1750,7 +1232,7 @@
       "summary": "Department IDD score",
       "entity": "dashboard_department_idd",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1760,7 +1242,17 @@
       "summary": "Depreciation pct",
       "entity": "depreciation_pct",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_direct_labor_cost_pct",
+      "method": "GET",
+      "path": "/production/direct_labor_cost_pct",
+      "summary": "Direct labor cost pct",
+      "entity": "direct_labor_cost_pct",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1770,7 +1262,7 @@
       "summary": "Factory efficiency average % by work center",
       "entity": "eficiencia_fabril_efficiency_by_work_center",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1780,7 +1272,117 @@
       "summary": "Factory efficiency daily series by work center",
       "entity": "eficiencia_fabril_efficiency_series",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_financeiro_despesas_centro_custo_filtros",
+      "method": "GET",
+      "path": "/financeiro/despesas-centro-custo/filtros",
+      "summary": "Indicator — financial expenses cost center filtros",
+      "entity": "financeiro_despesas_centro_custo_filtros",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_financeiro_despesas_centro_custo_lancamentos",
+      "method": "GET",
+      "path": "/financeiro/despesas-centro-custo/lancamentos",
+      "summary": "Cost-center expenses — ledger entries",
+      "entity": "financeiro_despesas_centro_custo_lancamento",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_financeiro_despesas_centro_custo_ranking_centros",
+      "method": "GET",
+      "path": "/financeiro/despesas-centro-custo/ranking-centros",
+      "summary": "Financial expenses cost center ranking centers",
+      "entity": "financeiro_despesas_centro_custo_ranking_centros",
+      "shape": "list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_financeiro_despesas_centro_custo_ranking_fornecedores",
+      "method": "GET",
+      "path": "/financeiro/despesas-centro-custo/ranking-fornecedores",
+      "summary": "Financial expenses cost center ranking suppliers",
+      "entity": "financeiro_despesas_centro_custo_ranking_fornecedores",
+      "shape": "list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_financeiro_despesas_centro_custo_resumo",
+      "method": "GET",
+      "path": "/financeiro/despesas-centro-custo/resumo",
+      "summary": "Cost-center expenses — summary KPIs",
+      "entity": "financeiro_despesas_centro_custo_resumo",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_financeiro_despesas_centro_custo_serie",
+      "method": "GET",
+      "path": "/financeiro/despesas-centro-custo/serie",
+      "summary": "Financial expenses cost center series",
+      "entity": "financeiro_despesas_centro_custo_serie",
+      "shape": "list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_financeiro_inadimplencia_clientes",
+      "method": "GET",
+      "path": "/financeiro/inadimplencia/clientes",
+      "summary": "Delinquency — customers ranking",
+      "entity": "financeiro_inadimplencia_cliente",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_financeiro_inadimplencia_faixas_atraso",
+      "method": "GET",
+      "path": "/financeiro/inadimplencia/faixas-atraso",
+      "summary": "List — financial inadimplencia faixas atraso",
+      "entity": "financeiro_inadimplencia_faixas_atraso",
+      "shape": "list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_financeiro_inadimplencia_mensal",
+      "method": "GET",
+      "path": "/financeiro/inadimplencia/mensal",
+      "summary": "List — financial inadimplencia mensal",
+      "entity": "financeiro_inadimplencia_mensal",
+      "shape": "list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_financeiro_inadimplencia_resumo",
+      "method": "GET",
+      "path": "/financeiro/inadimplencia/resumo",
+      "summary": "Delinquency — summary KPIs",
+      "entity": "financeiro_inadimplencia_resumo",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_financeiro_inadimplencia_titulos",
+      "method": "GET",
+      "path": "/financeiro/inadimplencia/titulos",
+      "summary": "Delinquency — titles list",
+      "entity": "financeiro_inadimplencia_titulo",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1790,7 +1392,17 @@
       "summary": "Financial EBITDA percentage",
       "entity": "financial_ebitda_pct",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_financial_fixed_cost_pct",
+      "method": "GET",
+      "path": "/financial/fixed_cost_pct",
+      "summary": "Financial fixed cost percentage",
+      "entity": "financial_fixed_cost_pct",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1800,7 +1412,37 @@
       "summary": "Financial pmr",
       "entity": "financial_pmr",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_financial_purchase_freight_links",
+      "method": "GET",
+      "path": "/financial/purchase-freight/links",
+      "summary": "Purchase invoice to freight document links",
+      "entity": "financial_purchase_freight_link",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_financial_rol",
+      "method": "GET",
+      "path": "/financial/rol",
+      "summary": "Financial ROL consolidated KPI by branch",
+      "entity": "financial_rol",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_financial_rol_invoices",
+      "method": "GET",
+      "path": "/financial/rol/invoices",
+      "summary": "ROL invoices (sales and returns)",
+      "entity": "financial_rol_invoice",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1810,7 +1452,7 @@
       "summary": "Get Guias Department",
       "entity": "guias_procedimentos_department",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1820,7 +1462,7 @@
       "summary": "Get Guias Procedure",
       "entity": "guias_procedimentos_procedure",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1830,7 +1472,7 @@
       "summary": "Root",
       "entity": "health",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1840,7 +1482,7 @@
       "summary": "Indicator — Pdis ativos",
       "entity": "hr_active_pdi_count",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1850,7 +1492,7 @@
       "summary": "Hr performance reviews completion",
       "entity": "hr_performance_reviews_completion",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1860,7 +1502,7 @@
       "summary": "Incoming inspections — history",
       "entity": "inspecoes_entrada_historico",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1870,7 +1512,7 @@
       "summary": "Incoming inspection — history detail",
       "entity": "inspecoes_entrada_historico_detalhe",
       "shape": "object",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1880,7 +1522,7 @@
       "summary": "Incoming inspections — pending",
       "entity": "inspecoes_entrada_pendentes",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1890,7 +1532,7 @@
       "summary": "Incoming inspections — pending by supplier",
       "entity": "inspecoes_entrada_pendentes_fornecedor",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1900,7 +1542,7 @@
       "summary": "Incoming inspections — rejected by tester",
       "entity": "inspecoes_entrada_rejeitadas_ensaiador",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1910,7 +1552,7 @@
       "summary": "Incoming inspections — rejected by product",
       "entity": "inspecoes_entrada_rejeitadas_produto",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1920,7 +1562,7 @@
       "summary": "Incoming inspections — summary KPIs",
       "entity": "inspecoes_entrada_resumo",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1930,7 +1572,7 @@
       "summary": "Inspections processo auditoria apontamentos",
       "entity": "inspecoes_processo_auditoria_apontamentos",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1940,7 +1582,7 @@
       "summary": "In-process inspections — history",
       "entity": "inspecoes_processo_historico",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1950,7 +1592,7 @@
       "summary": "Inspections processo history detail",
       "entity": "inspecoes_processo_historico_detalhe",
       "shape": "object",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1960,7 +1602,7 @@
       "summary": "Inspections processo por tester",
       "entity": "inspecoes_processo_por_ensaiador",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1970,7 +1612,7 @@
       "summary": "Inspections processo por operacao",
       "entity": "inspecoes_processo_por_operacao",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1980,7 +1622,7 @@
       "summary": "Inspections processo por product",
       "entity": "inspecoes_processo_por_produto",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -1990,7 +1632,7 @@
       "summary": "Inspections processo ranking ensaio",
       "entity": "inspecoes_processo_ranking_ensaio",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2000,7 +1642,7 @@
       "summary": "In-process inspections — summary KPIs",
       "entity": "inspecoes_processo_resumo",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2010,7 +1652,7 @@
       "summary": "Get invoice issuance request",
       "entity": "invoice_issuance_request",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2020,7 +1662,7 @@
       "summary": "Get Kaizen At Date",
       "entity": "kaizen_revision",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2030,7 +1672,7 @@
       "summary": "Kaizen detail (PostgreSQL)",
       "entity": "kaizen",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2040,7 +1682,7 @@
       "summary": "Kaizen record",
       "entity": "kaizen_record",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2050,7 +1692,7 @@
       "summary": "Get Kaizen Records Summary",
       "entity": "kaizen_records_summary",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2060,7 +1702,7 @@
       "summary": "Get Kaizen Revision",
       "entity": "kaizen_revision",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2070,7 +1712,7 @@
       "summary": "Get Kaizen savings vs investment series",
       "entity": "kaizen_savings_investment_series",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2080,7 +1722,7 @@
       "summary": "Get Kaizen Savings Timeline",
       "entity": "kaizen_savings_timeline",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2090,7 +1732,7 @@
       "summary": "Kaizen summary",
       "entity": "kaizen_summary",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2100,7 +1742,7 @@
       "summary": "Kaizen summary series",
       "entity": "kaizen_summary_series",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2110,7 +1752,7 @@
       "summary": "Get Request",
       "entity": "invoice_posting_request",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2120,7 +1762,7 @@
       "summary": "Lmp history events",
       "entity": "lmp_history",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2130,7 +1772,7 @@
       "summary": "Lmp history flow",
       "entity": "lmp_history_flow",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2140,7 +1782,7 @@
       "summary": "Get LMP nonconformity by id",
       "entity": "lmp_nonconformity",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2150,7 +1792,7 @@
       "summary": "LMP nonconformity days-without streak",
       "entity": "lmp_nonconformity_streak",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2160,7 +1802,7 @@
       "summary": "Lmps dashboard charts",
       "entity": "lmp_dashboard_charts",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2170,7 +1812,7 @@
       "summary": "LMPs dashboard summary",
       "entity": "lmp_dashboard_summary",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2180,7 +1822,7 @@
       "summary": "Mini applicators tool",
       "entity": "mini_applicators_ferramenta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2190,7 +1832,7 @@
       "summary": "Golpes do mini-aplicador no period",
       "entity": "mini_applicators_golpes",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2200,7 +1842,7 @@
       "summary": "Get Hub",
       "entity": "mural_access_hub",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2210,7 +1852,7 @@
       "summary": "Get Hub Qr",
       "entity": "mural_access_hub_qr",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2220,7 +1862,7 @@
       "summary": "Get Link Image",
       "entity": "mural_access_link_image",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2230,7 +1872,27 @@
       "summary": "My seller portfolio",
       "entity": "seller_portfolio",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_new_business_rol_pct",
+      "method": "GET",
+      "path": "/commercial/new-business-rol-pct",
+      "summary": "New business rol pct",
+      "entity": "new_business_rol_pct",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_new_business_rol_target_pct",
+      "method": "GET",
+      "path": "/commercial/new-business-rol-target-pct",
+      "summary": "Commercial new business ROL target (realized and goal)",
+      "entity": "commercial_rol_new_business_target",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2240,7 +1902,17 @@
       "summary": "New clients average",
       "entity": "new_clients_average",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_new_clients_rol_pct",
+      "method": "GET",
+      "path": "/commercial/new-clients-rol-pct",
+      "summary": "Indicator — percentage rol de clientes novos",
+      "entity": "new_clients_rol_pct",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2250,7 +1922,7 @@
       "summary": "Get Nonconformity Series",
       "entity": "nonconformity_series",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2260,7 +1932,7 @@
       "summary": "Days without quality nonconformity",
       "entity": "nonconformity_streak",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2270,7 +1942,7 @@
       "summary": "On-time delivery %",
       "entity": "production_otd",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2280,7 +1952,7 @@
       "summary": "Overall equipment effectiveness %",
       "entity": "overall_equipment_effectiveness",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2290,7 +1962,7 @@
       "summary": "Get Personal Report Subscription",
       "entity": "report_personal_subscription",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2300,7 +1972,7 @@
       "summary": "Get Capex Category Icon Image",
       "entity": "capex_category",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2310,7 +1982,7 @@
       "summary": "Get Capex Consolidation Summary",
       "entity": "capex_consolidation",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2320,7 +1992,7 @@
       "summary": "Get Capex Investment",
       "entity": "capex_investment",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2330,7 +2002,7 @@
       "summary": "Get Capex Plan",
       "entity": "capex_plan",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2340,7 +2012,7 @@
       "summary": "Get Capex Review",
       "entity": "capex_plan",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2350,7 +2022,7 @@
       "summary": "Get Context",
       "entity": "budget_planning_context",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2360,7 +2032,7 @@
       "summary": "Get Guidance Current",
       "entity": "budget_guidance",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2370,7 +2042,7 @@
       "summary": "Get Personnel Plan",
       "entity": "personnel_plan",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2380,7 +2052,7 @@
       "summary": "Get Personnel Review",
       "entity": "personnel_plan",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2390,7 +2062,7 @@
       "summary": "Get External Ppm Series",
       "entity": "ppm_external_series",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2400,7 +2072,7 @@
       "summary": "External PPM",
       "entity": "ppm_external_summary",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2410,7 +2082,7 @@
       "summary": "Open production orders without inspection plan",
       "entity": "process_inspection_plans_orders_without_plan",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2420,7 +2092,7 @@
       "summary": "Products with process inspection plan",
       "entity": "process_inspection_plans_products",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2430,7 +2102,7 @@
       "summary": "Products without inspection plan (open OPs)",
       "entity": "process_inspection_plans_products_without_plan",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2440,17 +2112,7 @@
       "summary": "Process inspection plans — summary KPIs",
       "entity": "process_inspection_plans_summary",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_customers",
-      "method": "GET",
-      "path": "/products/{code}/customers",
-      "summary": "Clientes do product",
-      "entity": "product_customers",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2460,7 +2122,7 @@
       "summary": "Product drawing",
       "entity": "product_drawing",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2470,7 +2132,7 @@
       "summary": "Product inbound invoice items",
       "entity": "product_inbound_invoice_items",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2480,7 +2142,7 @@
       "summary": "Product inspection",
       "entity": "product_inspection",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2490,7 +2152,7 @@
       "summary": "Product internal movements",
       "entity": "product_internal_movements",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2500,17 +2162,17 @@
       "summary": "Product outbound invoice items",
       "entity": "product_outbound_invoice_items",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
-      "operationId": "get_product_purchases",
+      "operationId": "get_product_pricing",
       "method": "GET",
-      "path": "/products/{code}/purchases",
-      "summary": "Product purchases",
-      "entity": "product_purchases",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "path": "/products/{code}/pricing",
+      "summary": "Product sale pricing and commercial price tables",
+      "entity": "product_pricing",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2520,7 +2182,7 @@
       "summary": "Faturamento do product",
       "entity": "product_billing",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2530,7 +2192,7 @@
       "summary": "Product sales open orders",
       "entity": "product_open_orders",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2540,17 +2202,17 @@
       "summary": "Product sales summary",
       "entity": "product_sales",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
-      "operationId": "get_product_suppliers",
+      "operationId": "get_production_cost_pct",
       "method": "GET",
-      "path": "/products/{code}/suppliers",
-      "summary": "Product suppliers",
-      "entity": "product_suppliers",
-      "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "path": "/production/production_cost_pct",
+      "summary": "Production cost pct",
+      "entity": "production_cost_pct",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2560,7 +2222,7 @@
       "summary": "Factory shifts catalog",
       "entity": "production_factory_shift",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2570,7 +2232,7 @@
       "summary": "Machine load operations",
       "entity": "production_machine_load_operations",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2580,7 +2242,7 @@
       "summary": "Machine load work centers",
       "entity": "production_machine_load_work_centers",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2590,7 +2252,7 @@
       "summary": "Production OEE — summary and appointments",
       "entity": "production_oee_detail",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2600,7 +2262,7 @@
       "summary": "Production OEE series",
       "entity": "production_oee_series",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2610,7 +2272,7 @@
       "summary": "Incomplete production order sets",
       "entity": "production_order_sets_incomplete",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2620,7 +2282,7 @@
       "summary": "Production OTD series",
       "entity": "production_otd_series",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2630,7 +2292,7 @@
       "summary": "Production orders items",
       "entity": "production_pcp_orders_items",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2640,7 +2302,7 @@
       "summary": "Production orders ranking",
       "entity": "production_pcp_orders_ranking",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2650,7 +2312,7 @@
       "summary": "Unproductive hours items",
       "entity": "production_unproductive_hours_item",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2660,7 +2322,7 @@
       "summary": "Unproductive hours ranking",
       "entity": "production_unproductive_hours_ranking",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2670,7 +2332,7 @@
       "summary": "Unproductive hours daily series",
       "entity": "production_unproductive_hours_series",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2680,7 +2342,7 @@
       "summary": "Get Protheus User By Email Route",
       "entity": "protheus_user_by_email_route_supplies_protheus_users_by_email_get",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2690,7 +2352,7 @@
       "summary": "Get Public Link Image",
       "entity": "mural_access_link_image",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2700,7 +2362,7 @@
       "summary": "Get Public Inspection",
       "entity": "quality_label_public_inspection",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2710,7 +2372,7 @@
       "summary": "Get Public Scheduling Availability",
       "entity": "scheduling_booking",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2720,7 +2382,7 @@
       "summary": "Get Public Scheduling Resource",
       "entity": "scheduling_resource",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2730,7 +2392,7 @@
       "summary": "Indicator — Quality action plan dashboard",
       "entity": "quality_action_plan_dashboard",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2740,7 +2402,7 @@
       "summary": "Get Label",
       "entity": "quality_label",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2750,7 +2412,7 @@
       "summary": "Get Certificate",
       "entity": "quality_label_certificate",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2760,7 +2422,7 @@
       "summary": "Get My Inspector",
       "entity": "quality_label_inspector",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2770,7 +2432,7 @@
       "summary": "Get inspector signature",
       "entity": "quality_label_inspector_signature",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2780,7 +2442,47 @@
       "summary": "Get quality label QR",
       "entity": "quality_label_qr",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_quality_rework_cost_pct",
+      "method": "GET",
+      "path": "/quality/rework-cost-pct",
+      "summary": "Quality rework cost / ROL",
+      "entity": "quality_rework_cost_pct",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_quality_rework_cost_pct_series",
+      "method": "GET",
+      "path": "/quality/rework-cost-pct/series",
+      "summary": "Quality rework cost / ROL series",
+      "entity": "quality_rework_cost_pct_series",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_quality_scrap_cost_pct",
+      "method": "GET",
+      "path": "/quality/scrap-cost-pct",
+      "summary": "Quality scrap cost / ROL",
+      "entity": "quality_scrap_cost_pct",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_quality_scrap_cost_pct_series",
+      "method": "GET",
+      "path": "/quality/scrap-cost-pct/series",
+      "summary": "Quality scrap cost / ROL series",
+      "entity": "quality_scrap_cost_pct_series",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2790,7 +2492,7 @@
       "summary": "Indicator — Refugos filtros",
       "entity": "refugos_filtros",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2800,7 +2502,7 @@
       "summary": "Indicator — Refugos health",
       "entity": "refugos_health",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2810,7 +2512,7 @@
       "summary": "Scrap loss records",
       "entity": "refugos_registros",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2820,7 +2522,17 @@
       "summary": "Scrap losses summary",
       "entity": "refugos_resumo",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_refugos_scrap_cost_pct",
+      "method": "GET",
+      "path": "/refugos/scrap_cost_pct",
+      "summary": "Scrap cost / ROL",
+      "entity": "refugos_scrap_cost_pct",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2830,7 +2542,7 @@
       "summary": "Get Report Definition",
       "entity": "report_definition",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2840,7 +2552,7 @@
       "summary": "Get Report Run",
       "entity": "report_run",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2850,7 +2562,7 @@
       "summary": "Get Report Schedule",
       "entity": "report_schedule",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2860,7 +2572,7 @@
       "summary": "Warehouse 01 stock hint (request lookups)",
       "entity": "invoice_issuance_stock_balance",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2870,7 +2582,7 @@
       "summary": "List — Retrabalho horas improdutivas colaboradores",
       "entity": "retrabalho_horas_improdutivas_colaboradores",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2880,7 +2592,7 @@
       "summary": "Rework appointment details",
       "entity": "retrabalho_horas_improdutivas_detalhe",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2890,7 +2602,7 @@
       "summary": "Indicator — Retrabalho horas improdutivas filtros",
       "entity": "retrabalho_horas_improdutivas_filtros",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2900,7 +2612,7 @@
       "summary": "Indicator — Retrabalho horas improdutivas health",
       "entity": "retrabalho_horas_improdutivas_health",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2910,7 +2622,7 @@
       "summary": "List — Retrabalho horas improdutivas mensal",
       "entity": "retrabalho_horas_improdutivas_mensal",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2920,7 +2632,7 @@
       "summary": "List — Retrabalho horas improdutivas recursos",
       "entity": "retrabalho_horas_improdutivas_recursos",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2930,7 +2642,17 @@
       "summary": "Rework hours summary",
       "entity": "retrabalho_horas_improdutivas_resumo",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_retrabalhos_rework_cost_pct",
+      "method": "GET",
+      "path": "/retrabalhos/rework_cost_pct",
+      "summary": "Rework cost / ROL",
+      "entity": "retrabalho_rework_cost_pct",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2940,7 +2662,7 @@
       "summary": "Sales conversion rate",
       "entity": "sales_conversion_rate",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2950,7 +2672,7 @@
       "summary": "Sales conversion rate series",
       "entity": "sales_conversion_rate_series",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2960,7 +2682,7 @@
       "summary": "Sales order otd",
       "entity": "sales_order_otd",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2970,7 +2692,7 @@
       "summary": "Sales order OTD by branch",
       "entity": "sales_order_otd_by_branch",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2980,7 +2702,7 @@
       "summary": "Sales order OTD by customer",
       "entity": "sales_order_otd_by_customer",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -2990,7 +2712,7 @@
       "summary": "Sales order otd panel",
       "entity": "sales_order_otd_panel",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3000,7 +2722,7 @@
       "summary": "Sales order otd series",
       "entity": "sales_order_otd_series",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3010,7 +2732,7 @@
       "summary": "Sales order OTD series by customer",
       "entity": "sales_order_otd_series_by_customer",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3020,7 +2742,7 @@
       "summary": "Sales order OTD summary (realized and goal)",
       "entity": "sales_order_otd_summary",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3030,7 +2752,7 @@
       "summary": "Get seller portfolio",
       "entity": "seller_portfolio",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3040,7 +2762,7 @@
       "summary": "Taxa de Fechamento de Negócios — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3050,7 +2772,47 @@
       "summary": "Taxa de Fechamento de Negócios — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_si_indicator_commercial_new_business_rol_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/commercial-new-business-rol/meta",
+      "summary": "% ROL de Novos Negócios — goal",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_si_indicator_commercial_new_business_rol_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/commercial-new-business-rol/realized",
+      "summary": "% ROL de Novos Negócios — actual",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_si_indicator_commercial_rol_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/commercial-rol/meta",
+      "summary": "ROL — goal",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_si_indicator_commercial_rol_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/commercial-rol/realized",
+      "summary": "ROL — actual",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3060,7 +2822,7 @@
       "summary": "OTD de Pedidos de Venda — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3070,7 +2832,7 @@
       "summary": "OTD de Pedidos de Venda — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3080,7 +2842,7 @@
       "summary": "% de Projetos Concluídos no Prazo — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3090,7 +2852,27 @@
       "summary": "% de Projetos Concluídos no Prazo — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_si_indicator_engineering_transforma_plus_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/engineering-transforma-plus/meta",
+      "summary": "Ganhos Financeiros do TRANSFORMA+ DELPI — goal",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_si_indicator_engineering_transforma_plus_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/engineering-transforma-plus/realized",
+      "summary": "Ganhos Financeiros do TRANSFORMA+ DELPI — actual",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3100,7 +2882,7 @@
       "summary": "EBITDA / Receita Operacional — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3110,7 +2892,27 @@
       "summary": "EBITDA / Receita Operacional — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_si_indicator_financial_fixed_cost_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/financial-fixed-cost/meta",
+      "summary": "% Custos Fixos / Receita Operacional — goal",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_si_indicator_financial_fixed_cost_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/financial-fixed-cost/realized",
+      "summary": "% Custos Fixos / Receita Operacional — actual",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3120,7 +2922,7 @@
       "summary": "Prazo Médio de Recebimento (PMR) — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3130,7 +2932,7 @@
       "summary": "Prazo Médio de Recebimento (PMR) — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3140,7 +2942,7 @@
       "summary": "Absenteísmo — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3150,7 +2952,7 @@
       "summary": "Absenteísmo — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3160,7 +2962,7 @@
       "summary": "Número de PDI's Ativos — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3170,7 +2972,7 @@
       "summary": "Número de PDI's Ativos — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3180,7 +2982,7 @@
       "summary": "% de Avaliações de Desempenho Concluídas — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3190,7 +2992,7 @@
       "summary": "% de Avaliações de Desempenho Concluídas — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3200,7 +3002,7 @@
       "summary": "Satisfação Interna (Clima/Engajamento) — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3210,7 +3012,7 @@
       "summary": "Satisfação Interna (Clima/Engajamento) — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3220,7 +3022,7 @@
       "summary": "Horas de Treinamento / Colaborador / mês — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3230,7 +3032,7 @@
       "summary": "Horas de Treinamento / Colaborador / mês — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3240,7 +3042,7 @@
       "summary": "Turnover (Rotatividade) — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3250,7 +3052,67 @@
       "summary": "Turnover (Rotatividade) — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_si_indicator_production_costs_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-costs/meta",
+      "summary": "Custos de Produção / ROL — goal",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_si_indicator_production_costs_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-costs/realized",
+      "summary": "Custos de Produção / ROL — actual",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_si_indicator_production_depreciation_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-depreciation/meta",
+      "summary": "Depreciação / ROL — goal",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_si_indicator_production_depreciation_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-depreciation/realized",
+      "summary": "Depreciação / ROL — actual",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_si_indicator_production_direct_labor_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-direct-labor/meta",
+      "summary": "Custo Mão de Obra Direta / ROL — goal",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_si_indicator_production_direct_labor_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-direct-labor/realized",
+      "summary": "Custo Mão de Obra Direta / ROL — actual",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3260,7 +3122,7 @@
       "summary": "OEE (Eficiência Global dos Equip.) — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3270,7 +3132,7 @@
       "summary": "OEE (Eficiência Global dos Equip.) — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3280,7 +3142,7 @@
       "summary": "OTD (Entrega no Prazo) — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3290,7 +3152,7 @@
       "summary": "OTD (Entrega no Prazo) — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3300,7 +3162,7 @@
       "summary": "Nota Auditoria 5S — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3310,7 +3172,27 @@
       "summary": "Nota Auditoria 5S — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_si_indicator_quality_kaizen_financial_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-kaizen-financial/meta",
+      "summary": "Ganhos Financeiros Kaizen/mês — goal",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_si_indicator_quality_kaizen_financial_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-kaizen-financial/realized",
+      "summary": "Ganhos Financeiros Kaizen/mês — actual",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3320,7 +3202,7 @@
       "summary": "Ideias Aprovadas para Kaizen/mês — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3330,7 +3212,7 @@
       "summary": "Ideias Aprovadas para Kaizen/mês — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3340,7 +3222,7 @@
       "summary": "PPM Externo Chicotes — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3350,7 +3232,7 @@
       "summary": "PPM Externo Chicotes — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3360,7 +3242,7 @@
       "summary": "PPM Externo — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3370,7 +3252,7 @@
       "summary": "PPM Externo Plugues — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3380,7 +3262,7 @@
       "summary": "PPM Externo Plugues — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3390,7 +3272,7 @@
       "summary": "PPM Externo — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3400,7 +3282,7 @@
       "summary": "PPM Interno Chicotes — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3410,7 +3292,7 @@
       "summary": "PPM Interno Chicotes — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3420,7 +3302,7 @@
       "summary": "PPM Interno — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3430,7 +3312,7 @@
       "summary": "PPM Interno Plugues — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3440,7 +3322,7 @@
       "summary": "PPM Interno Plugues — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3450,7 +3332,47 @@
       "summary": "PPM Interno — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_si_indicator_quality_rework_cost_pct_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-rework-cost-pct/meta",
+      "summary": "Custo de Retrabalho / ROL — goal",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_si_indicator_quality_rework_cost_pct_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-rework-cost-pct/realized",
+      "summary": "Custo de Retrabalho / ROL — actual",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_si_indicator_quality_scrap_cost_pct_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-scrap-cost-pct/meta",
+      "summary": "Custo de Refugo / ROL — goal",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_si_indicator_quality_scrap_cost_pct_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-scrap-cost-pct/realized",
+      "summary": "Custo de Refugo / ROL — actual",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3460,7 +3382,7 @@
       "summary": "CPV Consolidado (matriz e filial) — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3470,7 +3392,7 @@
       "summary": "CPV Consolidado (matriz e filial) — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3480,7 +3402,7 @@
       "summary": "Economia em Negociações de Compras — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3490,7 +3412,7 @@
       "summary": "Economia em Negociações de Compras — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3500,7 +3422,7 @@
       "summary": "OTD Consolidado de Compras — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3510,7 +3432,7 @@
       "summary": "OTD Consolidado de Compras — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3520,7 +3442,7 @@
       "summary": "Giro de Estoque — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3530,7 +3452,7 @@
       "summary": "Giro de Estoque — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3540,7 +3462,7 @@
       "summary": "Valor Total do Estoque Consolidado — goal",
       "entity": "dashboard_si_indicator_meta",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3550,7 +3472,7 @@
       "summary": "Valor Total do Estoque Consolidado — actual",
       "entity": "dashboard_si_indicator_realized",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3560,7 +3482,7 @@
       "summary": "Supplies cpv",
       "entity": "supplies_cpv",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3570,7 +3492,7 @@
       "summary": "Supplies inventory turnover",
       "entity": "supplies_inventory_turnover",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3580,7 +3502,7 @@
       "summary": "Supplies negotiation savings summary",
       "entity": "supplies_negotiation_savings",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3590,7 +3512,7 @@
       "summary": "Supplies otd",
       "entity": "supplies_otd",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3600,7 +3522,7 @@
       "summary": "Purchase order OTD (raw materials)",
       "entity": "supplies_purchase_order_otd",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3610,7 +3532,7 @@
       "summary": "Purchase order OTD panel (MP)",
       "entity": "supplies_purchase_order_otd_panel",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3620,7 +3542,7 @@
       "summary": "Purchase order OTD series (MP)",
       "entity": "supplies_purchase_order_otd_series",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3630,7 +3552,7 @@
       "summary": "Lista — Supplies purchase request line",
       "entity": "supplies_purchase_request_line",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3640,7 +3562,7 @@
       "summary": "Open purchase requests with stock, order and commitment coverage",
       "entity": "supplies_purchase_request_coverage",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3650,7 +3572,7 @@
       "summary": "Lista paginada — Itens da análise de consumo e estoque de segurança sugerido",
       "entity": "supplies_safety_stock_consumption_analysis_item",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3660,7 +3582,7 @@
       "summary": "Indicador — Resumo da análise de consumo versus estoque de segurança sugerido",
       "entity": "supplies_safety_stock_consumption_analysis_summary",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3670,7 +3592,7 @@
       "summary": "Supplies safety stock filters",
       "entity": "supplies_safety_stock_filters",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3680,7 +3602,7 @@
       "summary": "Supplies safety stock item suppliers",
       "entity": "supplies_safety_stock_supplier",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3690,7 +3612,7 @@
       "summary": "Supplies safety stock items",
       "entity": "supplies_safety_stock_item",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3700,7 +3622,7 @@
       "summary": "Supplies safety stock summary",
       "entity": "supplies_safety_stock_summary",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3710,7 +3632,7 @@
       "summary": "Stock balance items by warehouse",
       "entity": "supplies_stock_balances_item",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3720,7 +3642,7 @@
       "summary": "Stock value",
       "entity": "supplies_stock_value",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3730,7 +3652,7 @@
       "summary": "Third-party material shipments",
       "entity": "third_party_material_shipment",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3740,7 +3662,7 @@
       "summary": "Third-party materials summary",
       "entity": "third_party_material_summary",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3750,7 +3672,7 @@
       "summary": "Transforma mais summary",
       "entity": "transforma_mais_summary",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3760,7 +3682,17 @@
       "summary": "Economia bruta vs Investimento do TRANSFORMA+ DELPI",
       "entity": "transformometro_savings_investment_series",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_weg_rol_target_pct",
+      "method": "GET",
+      "path": "/commercial/weg-rol-target-pct",
+      "summary": "Commercial WEG ROL target (realized and goal)",
+      "entity": "commercial_rol_weg_target",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3770,7 +3702,7 @@
       "summary": "List Areas",
       "entity": "audit_5s_area",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3780,7 +3712,7 @@
       "summary": "List Audit Nc Attachments",
       "entity": "audit_5s_attachment",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3790,7 +3722,7 @@
       "summary": "List Audits",
       "entity": "audit_5s_audit",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3800,7 +3732,7 @@
       "summary": "List Catalog Publications",
       "entity": "audit_5s_catalog_publication",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3810,7 +3742,7 @@
       "summary": "List Criteria",
       "entity": "audit_5s_criterion",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3820,7 +3752,7 @@
       "summary": "List Nc Actions",
       "entity": "audit_5s_nc_action",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3830,7 +3762,7 @@
       "summary": "List Nc Candidates",
       "entity": "audit_5s_nc_candidate",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3840,7 +3772,7 @@
       "summary": "List Audit Nonconformities",
       "entity": "audit_5s_nonconformity",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3850,7 +3782,7 @@
       "summary": "List Audit 5S Nonconformities Board",
       "entity": "audit_5s_nonconformity",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3860,7 +3792,7 @@
       "summary": "Commercial proposals",
       "entity": "commercial_proposal",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3870,7 +3802,7 @@
       "summary": "Eficiencia fabril appointments",
       "entity": "eficiencia_fabril_appointment",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3880,7 +3812,7 @@
       "summary": "List Guias Departments",
       "entity": "guias_procedimentos_department",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3890,7 +3822,7 @@
       "summary": "List procedure media",
       "entity": "guias_procedimentos_media",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3900,7 +3832,7 @@
       "summary": "Indicator — branches de rh",
       "entity": "hr_branch",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3910,7 +3842,7 @@
       "summary": "List invoice issuance requests",
       "entity": "invoice_issuance_request",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3920,7 +3852,7 @@
       "summary": "List Kaizen Audit Log",
       "entity": "kaizen_audit_log",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3930,7 +3862,7 @@
       "summary": "List Kaizen Evidences",
       "entity": "kaizen_evidence",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3940,7 +3872,7 @@
       "summary": "List Kaizen History",
       "entity": "kaizen_history",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3950,7 +3882,7 @@
       "summary": "Kaizen records",
       "entity": "kaizen_record",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3960,7 +3892,7 @@
       "summary": "List Kaizen Revisions",
       "entity": "kaizen_revision",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3970,7 +3902,7 @@
       "summary": "List Request Purchase Orders",
       "entity": "invoice_posting_purchase_order",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3980,7 +3912,7 @@
       "summary": "List Requests",
       "entity": "invoice_posting_request",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -3990,7 +3922,7 @@
       "summary": "List LMP nonconformities",
       "entity": "lmp_nonconformity",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4000,7 +3932,7 @@
       "summary": "List LMP nonconformity change history",
       "entity": "lmp_nonconformity_history",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4010,7 +3942,7 @@
       "summary": "List LMP problem tags",
       "entity": "lmp_problem_tag",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4020,7 +3952,7 @@
       "summary": "list LMPs (ordens especiais / amostras)",
       "entity": "lmp",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4030,7 +3962,7 @@
       "summary": "Lmps dashboard items",
       "entity": "lmp_dashboard_items",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4040,7 +3972,7 @@
       "summary": "Mini applicators components",
       "entity": "mini_applicators_componente",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4050,7 +3982,7 @@
       "summary": "list ferramentas mini-aplicadores",
       "entity": "mini_applicators_ferramenta",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4060,7 +3992,7 @@
       "summary": "Mini applicators pecas",
       "entity": "mini_applicators_peca",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4070,7 +4002,7 @@
       "summary": "Mini applicators pecas reposicao",
       "entity": "mini_applicators_peca",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4080,7 +4012,7 @@
       "summary": "List Hubs",
       "entity": "mural_access_hub",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4090,7 +4022,7 @@
       "summary": "List Links",
       "entity": "mural_access_link",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4100,7 +4032,7 @@
       "summary": "List My Bookings",
       "entity": "scheduling_booking",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4110,7 +4042,7 @@
       "summary": "List Nonconformity Route",
       "entity": "nonconformity",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4120,7 +4052,7 @@
       "summary": "List Pending Bookings",
       "entity": "scheduling_booking",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4130,7 +4062,7 @@
       "summary": "List Capex Categories",
       "entity": "capex_category",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4140,7 +4072,7 @@
       "summary": "List Capex Consolidation By Area",
       "entity": "capex_consolidation",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4150,7 +4082,17 @@
       "summary": "List Capex Consolidation By Category",
       "entity": "capex_consolidation",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_capex_consolidation_by_cost_center",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/capex/consolidation/by-cost-center",
+      "summary": "List Capex Consolidation By Cost Center",
+      "entity": "capex_consolidation",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4160,7 +4102,7 @@
       "summary": "List Capex Consolidation By Month",
       "entity": "capex_consolidation",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4170,7 +4112,7 @@
       "summary": "List Capex Consolidation By Origin",
       "entity": "capex_consolidation",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4180,7 +4122,7 @@
       "summary": "List Capex Consolidation By Plan Status",
       "entity": "capex_consolidation",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4190,7 +4132,7 @@
       "summary": "List Capex Consolidation By Priority",
       "entity": "capex_consolidation",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4200,7 +4142,7 @@
       "summary": "List Capex Consolidation By Unit",
       "entity": "capex_consolidation",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4210,7 +4152,7 @@
       "summary": "List Capex Consolidation Details",
       "entity": "capex_consolidation",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4220,7 +4162,7 @@
       "summary": "List Capex Investments",
       "entity": "capex_investment",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4230,7 +4172,7 @@
       "summary": "List Capex My Responsibilities",
       "entity": "budget_responsibility",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4240,7 +4182,7 @@
       "summary": "List Capex Plan History",
       "entity": "capex_plan_history",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4250,7 +4192,7 @@
       "summary": "List Capex Plans",
       "entity": "capex_plan",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4260,7 +4202,7 @@
       "summary": "List Capex Review Queue",
       "entity": "capex_plan",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4270,7 +4212,17 @@
       "summary": "List Guidance Documents",
       "entity": "budget_support_document",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "list_planejamento_orcamentario_org_erp_cost_centers",
+      "method": "GET",
+      "path": "/planejamento-orcamentario/org/erp-cost-centers",
+      "summary": "List Erp Cost Centers",
+      "entity": "budget_org_cost_center",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4280,7 +4232,7 @@
       "summary": "List Personnel Plan History",
       "entity": "personnel_plan_history",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4290,7 +4242,7 @@
       "summary": "List Personnel Plans",
       "entity": "personnel_plan",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4300,7 +4252,7 @@
       "summary": "List Personnel Review Queue",
       "entity": "personnel_plan",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4310,7 +4262,7 @@
       "summary": "List External Ppm",
       "entity": "ppm_external",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4320,7 +4272,7 @@
       "summary": "List Internal Ppm",
       "entity": "ppm_internal",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4330,7 +4282,7 @@
       "summary": "Product drawings",
       "entity": "product_drawing_catalog",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4340,7 +4292,7 @@
       "summary": "Work centers catalog for production appointments",
       "entity": "production_appointment_work_center",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4350,7 +4302,7 @@
       "summary": "Paged list of production appointments",
       "entity": "production_appointment",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4360,7 +4312,7 @@
       "summary": "Production appointments aggregated by OP",
       "entity": "production_appointments_by_op",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4370,7 +4322,7 @@
       "summary": "Child production orders of the same family",
       "entity": "production_appointments_child_ops",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4380,7 +4332,7 @@
       "summary": "Paged list — top intermediate products for machine programs",
       "entity": "production_machine_program_intermediate",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4390,7 +4342,7 @@
       "summary": "Paged list — Proposta comercial interna (pdf/totvs)",
       "entity": "commercial_proposal_document",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4400,7 +4352,7 @@
       "summary": "List Public Menu",
       "entity": "mural_access_menu",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4410,7 +4362,7 @@
       "summary": "List Public Menu By Token",
       "entity": "mural_access_menu",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4420,7 +4372,7 @@
       "summary": "Paged list — Directory user",
       "entity": "directory_user",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4430,7 +4382,7 @@
       "summary": "Paged list — Quality action plan audit log",
       "entity": "quality_action_plan_audit_log",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4440,7 +4392,7 @@
       "summary": "Paged list — Quality action plan evidence",
       "entity": "quality_action_plan_evidence",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4450,7 +4402,7 @@
       "summary": "Paged list — Quality action plan action",
       "entity": "quality_action_plan_action",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4460,7 +4412,7 @@
       "summary": "Paged list — Quality action plan",
       "entity": "quality_action_plan",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4470,7 +4422,7 @@
       "summary": "Paged list — Quality action plan revision",
       "entity": "quality_action_plan_revision",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4480,7 +4432,7 @@
       "summary": "Paged list — Quality action plan",
       "entity": "quality_action_plan",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4490,7 +4442,7 @@
       "summary": "Paged list — Quality action plan",
       "entity": "quality_action_plan",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4500,7 +4452,7 @@
       "summary": "Paged list — Quality action plan recurrence",
       "entity": "quality_action_plan_recurrence",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4510,7 +4462,7 @@
       "summary": "List Quality Branches",
       "entity": "quality_branch",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4520,7 +4472,7 @@
       "summary": "List Audit Events",
       "entity": "quality_label_audit_event",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4530,7 +4482,7 @@
       "summary": "List Checklist Template",
       "entity": "quality_label_checklist_item",
       "shape": "object",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4540,7 +4492,7 @@
       "summary": "List Labels",
       "entity": "quality_label",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4550,7 +4502,7 @@
       "summary": "Paged list — Quality solution pattern",
       "entity": "quality_solution_pattern",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4560,7 +4512,7 @@
       "summary": "List Report Definitions",
       "entity": "report_definition",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4570,7 +4522,7 @@
       "summary": "List Report Providers",
       "entity": "report_provider",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4580,7 +4532,7 @@
       "summary": "List Report Recipients",
       "entity": "report_recipient",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4590,7 +4542,7 @@
       "summary": "List Report Runs",
       "entity": "report_run",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4600,7 +4552,7 @@
       "summary": "List Report Shortage Item Notes",
       "entity": "report_shortage_item_note",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4610,7 +4562,7 @@
       "summary": "List open sales orders for request lookups",
       "entity": "invoice_issuance_open_sales_order",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4620,7 +4572,7 @@
       "summary": "Sale orders",
       "entity": "sale_order",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4630,7 +4582,7 @@
       "summary": "List Bookings",
       "entity": "scheduling_booking",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4640,7 +4592,7 @@
       "summary": "List Resources",
       "entity": "scheduling_resource",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4650,7 +4602,7 @@
       "summary": "List seller portfolios",
       "entity": "seller_portfolio",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4660,7 +4612,7 @@
       "summary": "Lista paginada — Supplies purchase request line",
       "entity": "supplies_purchase_request_line",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4670,7 +4622,7 @@
       "summary": "Lista — Pedidos de compra recém-vinculados a solicitações de compra",
       "entity": "supplies_purchase_request_linked_order",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4680,7 +4632,7 @@
       "summary": "Lista — Recebimentos de nf de entrada recém-vinculados a pedidos e solicitações de compra",
       "entity": "supplies_purchase_request_linked_receipt",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4690,7 +4642,7 @@
       "summary": "List Supplies Purchase Request Requesters Route",
       "entity": "supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4700,7 +4652,7 @@
       "summary": "Lista paginada — Pedidos de venda em aberto",
       "entity": "open_sales_order",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4710,7 +4662,7 @@
       "summary": "list processos Transforma Mais",
       "entity": "transforma_mais_process",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4720,7 +4672,7 @@
       "summary": "Lookup quality label op",
       "entity": "quality_label_op_lookup",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4730,7 +4682,7 @@
       "summary": "Preview Management Revenue Monthly",
       "entity": "report_dataset",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4740,7 +4692,7 @@
       "summary": "Preview Safety Stock Shortage 30D",
       "entity": "report_dataset",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4750,7 +4702,7 @@
       "summary": "Search active TOTVS customers for portfolio",
       "entity": "customers",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4760,7 +4712,7 @@
       "summary": "Search Customers Route",
       "entity": "customers",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4770,7 +4722,7 @@
       "summary": "Search Suppliers",
       "entity": "invoice_posting_supplier",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4780,7 +4732,7 @@
       "summary": "Products by supplier part number",
       "entity": "product_by_supplier_part_number",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4790,7 +4742,7 @@
       "summary": "Paged list — Quality action plan evidence",
       "entity": "quality_action_plan_evidence",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4800,7 +4752,7 @@
       "summary": "Search Ops",
       "entity": "quality_label_op_suggestion",
       "shape": "object",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4810,7 +4762,7 @@
       "summary": "Search request-engine carriers",
       "entity": "invoice_issuance_carrier",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4820,7 +4772,7 @@
       "summary": "Search request-engine parties",
       "entity": "invoice_issuance_party",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4830,7 +4782,7 @@
       "summary": "Search request-engine products",
       "entity": "invoice_issuance_product",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
     {
@@ -4934,12 +4886,12 @@
       "executable": false
     },
     {
-      "operationId": "get_product_detail",
+      "operationId": "get_product_cost_impact_simulation",
       "method": "GET",
-      "path": "/products/{code}",
-      "summary": "Product cadastro / master data",
-      "entity": "product",
-      "shape": "product_snapshot",
+      "path": "/products/{code}/cost-impact-simulation",
+      "summary": "Finished-product cost impact simulation (BOM materials)",
+      "entity": "product_cost_impact_simulation",
+      "shape": "composite_analysis",
       "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "executable": false
     },
@@ -4994,22 +4946,32 @@
       "executable": false
     },
     {
-      "operationId": "get_product_production_status",
-      "method": "GET",
-      "path": "/products/{code}/production-status",
-      "summary": "Product production status (PA/PI, OPs and appointments)",
-      "entity": "product_production_status",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "executable": false
-    },
-    {
       "operationId": "get_product_purchase_budget_history",
       "method": "GET",
       "path": "/products/{code}/purchase-budget-history",
       "summary": "Product purchase budget history",
       "entity": "product_purchase_budget_history",
       "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_purchase_price_history",
+      "method": "GET",
+      "path": "/products/{code}/purchase-price-history",
+      "summary": "Product purchase price history",
+      "entity": "product_purchase_price_history",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_raw_material_price_intelligence",
+      "method": "GET",
+      "path": "/products/{code}/raw-material-price-intelligence",
+      "summary": "Product raw material price intelligence",
+      "entity": "product_raw_material_price_intelligence",
+      "shape": "composite_analysis",
       "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "executable": false
     },
@@ -5034,22 +4996,22 @@
       "executable": false
     },
     {
-      "operationId": "get_product_structure",
-      "method": "GET",
-      "path": "/products/{code}/structure",
-      "summary": "Product structure (BOM)",
-      "entity": "product_structure",
-      "shape": "hierarchy",
-      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "executable": false
-    },
-    {
       "operationId": "get_product_structure_exclusivity",
       "method": "GET",
       "path": "/products/{code}/structure/exclusivity",
       "summary": "Raw-material exclusivity in product structure",
       "entity": "product_structure_exclusivity",
       "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_summary",
+      "method": "GET",
+      "path": "/products/{code}/summary",
+      "summary": "Light product summary (cadastro + sample stock + prices)",
+      "entity": "product",
+      "shape": "product_snapshot",
       "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "executable": false
     },
@@ -5414,6 +5376,16 @@
       "executable": false
     },
     {
+      "operationId": "get_supplies_safety_stock_supplier_purchase_price_history",
+      "method": "GET",
+      "path": "/supplies/safety-stock/items/{code}/suppliers/{supplier_code}/purchase-price-history",
+      "summary": "Supplies safety stock supplier purchase price history",
+      "entity": "supplies_safety_stock_supplier_price_history",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
       "operationId": "get_supplies_stock_balances_summary",
       "method": "GET",
       "path": "/supplies/stock-balances/summary",
@@ -5531,6 +5503,16 @@
       "entity": "commercial_proposal_collaborator_summary",
       "shape": "playbook_report",
       "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_detail",
+      "method": "GET",
+      "path": "/products/{code}",
+      "summary": "Product cadastro / master data",
+      "entity": "product",
+      "shape": "product_snapshot",
+      "davi_status": "SEMANTICALLY_REDUNDANT",
       "executable": false
     },
     {

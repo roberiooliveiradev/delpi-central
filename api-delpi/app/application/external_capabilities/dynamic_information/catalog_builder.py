@@ -130,6 +130,7 @@ def build_technical_actions_from_openapi(
                 summary=summary,
                 tags=list(tags),
                 shape=str(x_delpi.get("shape") or "") or None,
+                allowlist=allowlist,
             )
             params = tuple(p for p in (op.get("parameters") or []) if isinstance(p, dict))
             mode, response_fields, input_fields, aliases = _enrich_from_allowlist(
@@ -196,6 +197,7 @@ def build_technical_actions_from_baseline(
             summary=summary,
             tags=list(tags),
             shape=str(x_delpi.get("shape") or "") or None,
+            allowlist=allowlist,
         )
         oid_s = str(oid or f"{method}:{path}")
         params = tuple(p for p in (row.get("parameters") or []) if isinstance(p, dict))

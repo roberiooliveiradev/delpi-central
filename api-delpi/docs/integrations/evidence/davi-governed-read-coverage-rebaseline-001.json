@@ -1,0 +1,97 @@
+{
+  "source": "openapi_baseline.json",
+  "baseline_version": "3",
+  "baseline_operation_count": 703,
+  "taskId": "DAVI-READ-AUTHZ-REBASELINE-001",
+  "TOTAL_OPERATIONS": 703,
+  "TOTAL_GET": 506,
+  "TOTAL_WRITE_VERBS": 197,
+  "DAVI_ELIGIBLE_READ": 7,
+  "ELIGIBLE_BEFORE": 1,
+  "ELIGIBLE_AFTER": 7,
+  "NEWLY_ELIGIBLE": [
+    "get_product_customers",
+    "get_product_production_status",
+    "get_product_purchases",
+    "get_product_stock",
+    "get_product_structure",
+    "get_product_suppliers"
+  ],
+  "REMOVED_ELIGIBLE": [],
+  "INVENTORY_DELTA": {
+    "previous_total_operations": 703,
+    "current_total_operations": 703,
+    "previous_total_get": 506,
+    "current_total_get": 506,
+    "added_operations": 0,
+    "removed_operations": 0,
+    "note": "Delta vs previously generated inventory artifact on disk"
+  },
+  "COVERAGE_DECISION": {
+    "taskId": "DAVI-READ-AUTHZ-REBASELINE-001",
+    "decision": "REBASELINE_PROMOTE_SAFE_READS",
+    "reason": "Supersede branch/family/taxonomy artificial blockers; promote READs with backend AuthZ + model-safe projection."
+  },
+  "HIGH_VALUE_BLOCKED": [
+    {
+      "operationId": "get_product_detail",
+      "primaryBlocker": "SEMANTICALLY_REDUNDANT",
+      "reason": "Same Product Master slice already served by search_products; no distinct governed fields"
+    },
+    {
+      "operationId": "get_product_summary",
+      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "reason": "Composite product+stock+prices; no approved section projection yet"
+    },
+    {
+      "operationId": "get_product_factory_status",
+      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "reason": "Composite factory envelope; section projection not yet governed"
+    },
+    {
+      "operationId": "get_product_structure_exclusivity",
+      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "reason": "Playbook exclusivity shape pending governed path allowlist"
+    },
+    {
+      "operationId": "get_product_pricing",
+      "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "reason": "Awaiting explicit approvedResponseFields (minimization); not blocked by taxonomy absence"
+    },
+    {
+      "operationId": "get_product_purchase_price_history",
+      "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "reason": "Awaiting explicit approvedResponseFields"
+    },
+    {
+      "operationId": "get_product_raw_material_price_intelligence",
+      "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "reason": "Awaiting explicit approvedResponseFields"
+    },
+    {
+      "operationId": "get_product_cost_impact_simulation",
+      "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "reason": "Awaiting explicit approvedResponseFields"
+    }
+  ],
+  "STATUS_COUNTS": {
+    "ADMIN_OUT_OF_SCOPE": 76,
+    "DAVI_ELIGIBLE_READ": 7,
+    "DESTRUCTIVE_OUT_OF_SCOPE": 16,
+    "GENERIC_SQL_FORBIDDEN": 2,
+    "NEEDS_MODEL_SAFE_PROJECTION": 368,
+    "NEEDS_NESTED_PROJECTION_SUPPORT": 72,
+    "SEMANTICALLY_REDUNDANT": 1,
+    "STREAM_BINARY_OUT_OF_SCOPE": 31,
+    "WRITE_OUT_OF_SCOPE": 130
+  },
+  "ELIGIBLE_OPERATION_IDS": [
+    "get_product_customers",
+    "get_product_production_status",
+    "get_product_purchases",
+    "get_product_stock",
+    "get_product_structure",
+    "get_product_suppliers",
+    "search_products"
+  ]
+}

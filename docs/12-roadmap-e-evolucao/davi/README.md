@@ -223,18 +223,26 @@ api-delpi/docs/integrations/evidence/davi-api-delpi-operation-inventory.md
 api-delpi/docs/integrations/evidence/davi-governed-read-coverage-005.json
 ```
 
-`DAVI-DYNAMIC-READ-005` coverage expansion decision: **`PROMOTE_ZERO_NEW_OPERATIONS`**. `DAVI_ELIGIBLE_READ` remains **1** (`search_products`). High-value product GETs stay quarantined (nested projection / branch AuthZ / data classification / external-processing) — maximum proven safe coverage, not maximum exposed surface.
+`DAVI-DYNAMIC-READ-005` historically decided **`PROMOTE_ZERO_NEW_OPERATIONS`** under the old gate model. That coverage freeze is **superseded for eligibility logic** by **`DAVI-READ-AUTHZ-REBASELINE-001`**.
 
-Governance ratification ledger (`DAVI-GOV-READ-001`, **not runtime authority** until owner `RATIFIED`):
+Canonical AuthZ policy:
 
 ```text
-api-delpi/docs/integrations/evidence/davi-read-governance-ratification-001.md
-api-delpi/docs/integrations/evidence/davi-read-governance-ratification-001.json
+api-delpi/docs/integrations/evidence/davi-read-authz-policy-rebaseline-001.md
 ```
 
-Converts vague blockers into stable `DAVI-GOV-*` decision IDs. Does **not** change eligibility. Nested Abstraction Gate = FAIL (0 consumers). Stock AuthZ Implementation Gate = NOT_READY.
+```text
+DAVI capability <= authenticated user capability
+DAVI_LOCAL_RBAC / DAVI_BRANCH_AUTHZ = FORBIDDEN
+branch = query filter (unless backend policy says otherwise)
+backend AuthZ = final authority
+```
 
-Stock (`get_product_stock`) remains **QUARANTINED** (`NEEDS_BRANCH_AUTHZ_EVIDENCE`) until branch AuthZ + external-processing gates are proven — prefer dynamic path over a stock-specific MCP tool once eligible.
+After rebaseline (source): `DAVI_ELIGIBLE_READ` expands via allowlist v5 model-safe projections (stock, suppliers, customers, purchases, structure, production_status + search_products). Nested Abstraction Gate = PASS (structure + production_status). MCP tools remain **exactly 3**.
+
+Historical governance packs (`DAVI-GOV-READ-001`) remain as provenance with `SUPERSEDED_IN_PART`.
+
+Stock (`get_product_stock`) is **eligible** when allowlisted — `branch` is a query filter, not a DAVI AuthZ boundary.
 
 Pendências de rollout amplo permanecem pendentes (second-user identity, negative business AuthZ, MCP rate policy, wider publication).
 

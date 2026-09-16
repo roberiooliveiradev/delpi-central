@@ -1,21 +1,36 @@
 # DAVI READ Governance Ratification — DAVI-GOV-READ-001
 
-> **Artifact status:** `PROPOSED` / `PENDING_RATIFICATION`  
-> **Task:** `DAVI-GOV-READ-001`  
-> **Does not prove runtime.** Does not change `DAVI_ELIGIBLE_READ`.  
-> **Does not invent approval.** Only decisions marked `RATIFIED` by a proven owner become authority.
+> **Artifact status:** `SUPERSEDED_IN_PART` by [`DAVI-READ-AUTHZ-REBASELINE-001`](./davi-read-authz-policy-rebaseline-001.md)
+> **Task:** `DAVI-GOV-READ-001` (historical ledger — preserved)
+> **Does not prove runtime.**
 
 ```text
 This ledger ≠ runtime allowlist
-RATIFIED ≠ implemented
-documentation ≠ runtime proof
+Historical PENDING_RATIFICATION packs whose sole premise was
+branch AuthZ / per-family external approval / taxonomy absence
+are SUPERSEDED by DAVI-READ-AUTHZ-REBASELINE-001.
 ```
 
 Companion machine-readable summary: [`davi-read-governance-ratification-001.json`](./davi-read-governance-ratification-001.json)
 
 ---
 
-## 0. Baseline (revalidated)
+## SUPERSESSION (DAVI-READ-AUTHZ-REBASELINE-001)
+
+| Decision ID | Status |
+|---|---|
+| `DAVI-GOV-STOCK-001` | **SUPERSEDED** — branch is query filter; DAVI must not invent filial AuthZ |
+| `DAVI-GOV-EXT-001` … `DAVI-GOV-EXT-010` | **SUPERSEDED** when sole blocker was missing per-family DAVI approval |
+| `DAVI-GOV-CLASS-001` … `DAVI-GOV-CLASS-003` | **SUPERSEDED** when sole blocker was taxonomy absence |
+| `DAVI-GOV-TAX-001` | Remains optional future taxonomy work — **not** a universal READ gate |
+
+Canonical AuthZ policy: [`davi-read-authz-policy-rebaseline-001.md`](./davi-read-authz-policy-rebaseline-001.md)
+
+Runtime eligibility after rebaseline is defined by allowlist v5 + regenerated inventory — not by this historical pack.
+
+---
+
+## 0. Baseline (historical at GOV-001)
 
 | Item | Value | State |
 |---|---|---|
@@ -86,8 +101,8 @@ HTTP GET EXISTENCE
 
 Legend for EXTERNAL / CLASSIFICATION:
 
-- `PROVEN_*` = authority exists for that exact family/slice  
-- `PENDING_OWNER_DECISION` = no authority to approve or forbid  
+- `PROVEN_*` = authority exists for that exact family/slice
+- `PENDING_OWNER_DECISION` = no authority to approve or forbid
 - `NOT_APPROVED` only when an authority **explicitly** forbids (GPT V1 “out of scope” is **LEGACY_EVIDENCE** for GPT Actions surface, not automatic DAVI forever-forbid without owner confirmation for MCP dynamic path)
 
 ### PRODUCT MASTER (search)
@@ -216,7 +231,7 @@ No non-product family found with **PROVEN** external-processing authority beside
 (empty for DAVI eligibility expansion)
 ```
 
-No operation other than `search_products` has all governance gates PROVEN.  
+No operation other than `search_products` has all governance gates PROVEN.
 Do **not** implement allowlist growth until DECISION_IDs below are `RATIFIED`.
 
 ### PENDING_OWNER_DECISION
@@ -249,7 +264,7 @@ route-by-route MCP tools
 real consumers with EXT+CLASS+AuthZ PROVEN and ONLY nested remaining = 0
 ```
 
-Therefore: do **not** recommend implementing generic nested projection now.  
+Therefore: do **not** recommend implementing generic nested projection now.
 Contract sketch deferred until gate becomes `PASS_CANDIDATE` (≥2 real consumers).
 
 Conceptual target (not approved for build):
@@ -406,17 +421,17 @@ Legacy ≠ current MCP dynamic authority. Do not promote from legacy alone. Do n
 
 ### Brief A — after EXT-001 Option A/C
 
-1. Add `get_product_detail` to allowlist with `approvedInputFields`/`approvedResponseFields` = same slice (or subset).  
-2. No new MCP tool.  
-3. Prefer generic catalog path + flat projection.  
-4. Tests: discovery aliases, quarantine neighbors, 403, field parity, 3-tool invariant.  
+1. Add `get_product_detail` to allowlist with `approvedInputFields`/`approvedResponseFields` = same slice (or subset).
+2. No new MCP tool.
+3. Prefer generic catalog path + flat projection.
+4. Tests: discovery aliases, quarantine neighbors, 403, field parity, 3-tool invariant.
 5. Do **not** enable nested fields.
 
 ### Brief B — after STOCK-001 + EXT-007
 
-1. Wire proven permission map on `get_product_stock`.  
-2. Enforce requested-branch AuthZ.  
-3. Allowlist + min projection excluding cost_center unless approved.  
+1. Wire proven permission map on `get_product_stock`.
+2. Enforce requested-branch AuthZ.
+3. Allowlist + min projection excluding cost_center unless approved.
 4. Tests: branch deny/allow, 403≠empty, top_k.
 
 ### Brief C — nested abstraction

@@ -1,26 +1,20 @@
 {
-  "version": 4,
-  "description": "Governance allowlist for DAVI dynamic READ. Not a semantic capability registry. Only operations with independent external-processing approval. search_products approval does not transfer.",
-  "externalProcessing": "APPROVED_WITH_RESTRICTIONS",
-  "dataClassification": "INTERNAL",
+  "version": 5,
+  "description": "Governance allowlist for DAVI dynamic READ after DAVI-READ-AUTHZ-REBASELINE-001. DAVI has no independent AuthZ; backend is final authority. Entries define model-safe input/output projection only — not business permissions.",
+  "authzPolicy": "DAVI-READ-AUTHZ-REBASELINE-001",
+  "externalProcessing": "BACKEND_AUTHORIZED_INTERNAL_READ_ALLOWED_UNLESS_EXPLICITLY_PROHIBITED",
+  "dataClassification": "MINIMIZATION_REQUIRED_TAXONOMY_OPTIONAL",
   "coverageDecision": {
-    "taskId": "DAVI-DYNAMIC-READ-005",
-    "decision": "PROMOTE_ZERO_NEW_OPERATIONS",
-    "reason": "No additional GET passed all gates (external-processing, classification, AuthZ/branch, model-safe flat projection) without inventing human approval."
+    "taskId": "DAVI-READ-AUTHZ-REBASELINE-001",
+    "decision": "REBASELINE_PROMOTE_SAFE_READS",
+    "reason": "Supersede branch/family/taxonomy artificial blockers; promote READs with backend AuthZ + model-safe projection."
   },
   "retrievalQuarantineTokens": [
-    "estoque",
-    "stock",
-    "saldo",
     "preco",
     "price",
     "pricing",
     "custo",
     "cost",
-    "fornecedor",
-    "supplier",
-    "cliente",
-    "customer",
     "financeiro",
     "finance",
     "payroll",
@@ -29,16 +23,15 @@
     "e-mail",
     "hora",
     "resuma",
-    "estrutura",
-    "bom",
-    "producao",
-    "produção",
-    "factory"
+    "factory",
+    "sql",
+    "admin"
   ],
+  "explicitProcessingProhibitions": [],
   "operations": [
     {
       "operationId": "search_products",
-      "reason": "Product Master V1 already approved for external MCP/GPT projection (product_code, description, group_category)",
+      "reason": "Product Master search — approved projection; ENGINEERING_LMP_ACCESS on backend",
       "executionMode": "approved_external_capability",
       "approvedInputFields": [
         "code",
@@ -71,78 +64,286 @@
         "product description",
         "product group"
       ]
+    },
+    {
+      "operationId": "get_product_stock",
+      "reason": "Stock READ; branch is query filter; API_DELPI_ACCESS backend AuthZ; flat projection",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code",
+        "branch",
+        "page",
+        "page_size"
+      ],
+      "approvedResponseFields": [
+        "product_code",
+        "branch",
+        "warehouse",
+        "current_quantity",
+        "available_quantity"
+      ],
+      "semanticAliases": [
+        "estoque",
+        "estoque do produto",
+        "saldo",
+        "saldo do produto",
+        "saldo disponivel",
+        "saldo disponível",
+        "estoque por filial",
+        "stock",
+        "product stock",
+        "stock by branch",
+        "available quantity"
+      ]
+    },
+    {
+      "operationId": "get_product_suppliers",
+      "reason": "Supplier relational READ minimized; API_DELPI_ACCESS; prices excluded from projection",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code",
+        "page",
+        "page_size"
+      ],
+      "approvedResponseFields": [
+        "product_code",
+        "supplier_code",
+        "supplier_store",
+        "supplier_name",
+        "supplier_part_number",
+        "unit",
+        "registered_lead_time_days"
+      ],
+      "semanticAliases": [
+        "fornecedor",
+        "fornecedores",
+        "fornecedor do produto",
+        "supplier",
+        "suppliers",
+        "product suppliers"
+      ]
+    },
+    {
+      "operationId": "get_product_customers",
+      "reason": "Customer relational READ minimized; API_DELPI_ACCESS; prices excluded from projection",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code",
+        "page",
+        "page_size"
+      ],
+      "approvedResponseFields": [
+        "product_code",
+        "customer_code",
+        "store",
+        "customer_name",
+        "blocked",
+        "customer_product_code",
+        "unit",
+        "total_quantity"
+      ],
+      "semanticAliases": [
+        "cliente",
+        "clientes",
+        "cliente do produto",
+        "customer",
+        "customers",
+        "product customers"
+      ]
+    },
+    {
+      "operationId": "get_product_purchases",
+      "reason": "Purchases list minimized without unit_price; API_DELPI_ACCESS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code",
+        "page",
+        "page_size"
+      ],
+      "approvedResponseFields": [
+        "order_number",
+        "branch",
+        "issue_date",
+        "supplier_code",
+        "store",
+        "supplier_name",
+        "product_code",
+        "ordered_quantity"
+      ],
+      "semanticAliases": [
+        "compras",
+        "compras do produto",
+        "pedidos de compra",
+        "purchases",
+        "product purchases",
+        "purchase orders for product"
+      ]
+    },
+    {
+      "operationId": "get_product_structure",
+      "reason": "BOM hierarchy via generic nested projection paths; API_DELPI_ACCESS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code",
+        "max_depth",
+        "page",
+        "page_size"
+      ],
+      "approvedResponseFields": [
+        "root.code",
+        "root.description",
+        "root.type",
+        "root.unit",
+        "root.quantity",
+        "root.components[].code",
+        "root.components[].description",
+        "root.components[].type",
+        "root.components[].unit",
+        "root.components[].quantity",
+        "root.components[].components[].code",
+        "root.components[].components[].description",
+        "root.components[].components[].type",
+        "root.components[].components[].unit",
+        "root.components[].components[].quantity",
+        "root.components[].components[].components[].code",
+        "root.components[].components[].components[].description",
+        "root.components[].components[].components[].type",
+        "root.components[].components[].components[].unit",
+        "root.components[].components[].components[].quantity",
+        "root.components[].components[].components[].components[].code",
+        "root.components[].components[].components[].components[].description",
+        "root.components[].components[].components[].components[].type",
+        "root.components[].components[].components[].components[].unit",
+        "root.components[].components[].components[].components[].quantity",
+        "items[].code",
+        "items[].description",
+        "items[].type",
+        "items[].unit",
+        "items[].quantity",
+        "items[].components[].code",
+        "items[].components[].description",
+        "items[].components[].type",
+        "items[].components[].unit",
+        "items[].components[].quantity",
+        "items[].components[].components[].code",
+        "items[].components[].components[].description",
+        "items[].components[].components[].type",
+        "items[].components[].components[].unit",
+        "items[].components[].components[].quantity",
+        "items[].components[].components[].components[].code",
+        "items[].components[].components[].components[].description",
+        "items[].components[].components[].components[].type",
+        "items[].components[].components[].components[].unit",
+        "items[].components[].components[].components[].quantity"
+      ],
+      "semanticAliases": [
+        "estrutura",
+        "estrutura do produto",
+        "componentes do produto",
+        "bom",
+        "bom do produto",
+        "product structure",
+        "bill of materials",
+        "product components"
+      ]
+    },
+    {
+      "operationId": "get_product_production_status",
+      "reason": "Production status minimized nested projection; branch is query filter; API_DELPI_ACCESS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code",
+        "branch",
+        "reference_date",
+        "max_depth"
+      ],
+      "approvedResponseFields": [
+        "product.product_code",
+        "product.description",
+        "product.product_type",
+        "product.unit",
+        "product.group_code",
+        "reference_date",
+        "items[].level",
+        "items[].product_code",
+        "items[].branch",
+        "items[].production_order",
+        "items[].order_number",
+        "items[].order_status",
+        "items[].order_quantity",
+        "items[].produced_quantity_sc2",
+        "items[].planned_start_date",
+        "items[].planned_end_date",
+        "items[].actual_end_date",
+        "summary.total_pa_orders",
+        "summary.total_pi_orders",
+        "summary.pa_production_started",
+        "summary.pi_production_started"
+      ],
+      "semanticAliases": [
+        "producao",
+        "produção",
+        "status de producao",
+        "status de produção",
+        "ordem de producao",
+        "ordem de produção",
+        "production status",
+        "product production status",
+        "production orders"
+      ]
     }
   ],
   "explicitlyNotApproved": [
     {
       "operationId": "get_product_detail",
-      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "reason": "product_snapshot nested under product; flat items[] projection cannot sanitize; search_products approval does not transfer; external-processing not independently ratified"
+      "primaryBlocker": "SEMANTICALLY_REDUNDANT",
+      "reason": "Same Product Master slice already served by search_products; no distinct governed fields"
     },
     {
       "operationId": "get_product_summary",
-      "primaryBlocker": "NEEDS_DATA_CLASSIFICATION",
-      "reason": "Composite product+stock+prices; pricing/cost classification unresolved; stock branch AuthZ unresolved; most-restrictive section wins"
-    },
-    {
-      "operationId": "get_product_stock",
-      "primaryBlocker": "NEEDS_BRANCH_AUTHZ_EVIDENCE",
-      "reason": "branch query is optional filter only; no proven requested-branch AuthZ"
-    },
-    {
-      "operationId": "get_product_structure",
       "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "reason": "hierarchy/BOM shape; no independent external-processing approval"
-    },
-    {
-      "operationId": "get_product_structure_exclusivity",
-      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "reason": "nested playbook/report shape; no independent external-processing approval"
-    },
-    {
-      "operationId": "get_product_production_status",
-      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "reason": "nested production report; no independent external-processing approval"
+      "reason": "Composite product+stock+prices; no approved section projection yet"
     },
     {
       "operationId": "get_product_factory_status",
       "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "reason": "composite structure/raw_material_stock/production/shipping; blocked by stock/production sections"
+      "reason": "Composite factory envelope; section projection not yet governed"
     },
     {
-      "operationId": "get_product_suppliers",
-      "primaryBlocker": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "reason": "supplier relational data; search_products approval does not transfer"
-    },
-    {
-      "operationId": "get_product_customers",
-      "primaryBlocker": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "reason": "customer relational data; search_products approval does not transfer"
+      "operationId": "get_product_structure_exclusivity",
+      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "reason": "Playbook exclusivity shape pending governed path allowlist"
     },
     {
       "operationId": "get_product_pricing",
-      "primaryBlocker": "NEEDS_DATA_CLASSIFICATION",
-      "reason": "pricing/financial high risk; no external-processing approval"
-    },
-    {
-      "operationId": "get_product_purchases",
-      "primaryBlocker": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "reason": "purchases domain; no independent DAVI external approval"
+      "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "reason": "Awaiting explicit approvedResponseFields (minimization); not blocked by taxonomy absence"
     },
     {
       "operationId": "get_product_purchase_price_history",
-      "primaryBlocker": "NEEDS_DATA_CLASSIFICATION",
-      "reason": "price history; financial classification unresolved"
+      "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "reason": "Awaiting explicit approvedResponseFields"
     },
     {
       "operationId": "get_product_raw_material_price_intelligence",
-      "primaryBlocker": "NEEDS_DATA_CLASSIFICATION",
-      "reason": "price/cost intelligence; financial classification unresolved"
+      "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "reason": "Awaiting explicit approvedResponseFields"
     },
     {
       "operationId": "get_product_cost_impact_simulation",
-      "primaryBlocker": "NEEDS_DATA_CLASSIFICATION",
-      "reason": "cost simulation; financial classification unresolved"
+      "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "reason": "Awaiting explicit approvedResponseFields"
     }
-  ]
+  ],
+  "supersededBlockers": {
+    "taskId": "DAVI-READ-AUTHZ-REBASELINE-001",
+    "items": [
+      "NEEDS_BRANCH_AUTHZ_EVIDENCE",
+      "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "NEEDS_DATA_CLASSIFICATION as universal READ gate",
+      "DAVI-GOV-STOCK-001",
+      "DAVI-GOV-EXT-* family-approval-only",
+      "DAVI-GOV-CLASS-* taxonomy-absence-only"
+    ]
+  }
 }
