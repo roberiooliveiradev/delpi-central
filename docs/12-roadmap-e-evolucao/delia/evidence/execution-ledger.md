@@ -387,7 +387,7 @@ SCOPE: Personal Memory status; session vs durable; Core/Chat prefs/profiles; iso
 EVIDENCE: 51 §32; DÉLIA PM=NOT_PROVEN; Chat ai_memory_items+session memory+learning candidates=CHAT_ONLY; Core person_profile/notification prefs/favorites/consents=PROVEN≠AI memory; semantic profile=NOT_PROVEN
 RUNTIME_DIFF: NONE
 PLATFORM_BEHAVIOR_CHANGE: NONE
-CODE/CONFIG/SCHEMA_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG_BEHAVIOR_CHANGE: NONE
 FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
 DÉLIA_NEW_CODE: NONE
 UNRESOLVED: DÉLIA PM contract; memory retention/export/consent purpose; user privacy UX parity CP-271; Semantic Layer + remaining C0.S0 inventories
@@ -410,7 +410,7 @@ SCOPE: Semantic Layer status; entities/metrics/dimensions; glossaries; Business 
 EVIDENCE: 51 §33; Semantic Layer=NOT_PROVEN; Business Graph=NOT_PROVEN; Domain KPI endpoints=DOMAIN_LOCAL; Chat vocabulary=CHAT_ONLY; UI metric catalogs≠MetricDefinition; EntityRef shared=NOT_PROVEN
 RUNTIME_DIFF: NONE
 PLATFORM_BEHAVIOR_CHANGE: NONE
-CODE/CONFIG/SCHEMA_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG_BEHAVIOR_CHANGE: NONE
 FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
 DÉLIA_NEW_CODE: NONE
 UNRESOLVED: MetricDefinition registry; EntityRef freeze; definition conflict inventory completeness; Sandbox/Artifacts + remaining C0.S0 inventories
@@ -435,7 +435,7 @@ SCOPE: execution inventory; sandbox isolation; SQL/Python/notebook; artifacts ge
 EVIDENCE: 51 §§34–35; governed sandbox=NOT_PROVEN; Domain PDF/XLSX/uploads=DOMAIN_LOCAL; Chat OCR multiprocess=PARTIAL_SANDBOX CHAT_ONLY; /data/sql=READ_ONLY Domain; object store=NOT_PROVEN; ClamAV=NOT_PROVEN
 RUNTIME_DIFF: NONE
 PLATFORM_BEHAVIOR_CHANGE: NONE
-CODE/CONFIG/SCHEMA_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG_BEHAVIOR_CHANGE: NONE
 FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
 DÉLIA_NEW_CODE: NONE
 UNRESOLVED: sandbox isolation design; Artifact Workspace; malware scan; object-store ADR; Predictive/Twin + remaining C0.S0 inventories
@@ -460,7 +460,7 @@ SCOPE: predictive ML vs deterministic KPI; Chat anomaly/recs; optimization/simul
 EVIDENCE: 51 §§36–37; Predictive Engine=NOT_PROVEN; Twin=NOT_PROVEN; Domain cost-impact/TM scenarios/stock projection=DOMAIN_LOCAL deterministic; Chat anomaly/recs=CHAT_ONLY; OR-Tools=NOT_PROVEN; AI→machine=NOT_PROVEN
 RUNTIME_DIFF: NONE
 PLATFORM_BEHAVIOR_CHANGE: NONE
-CODE/CONFIG/SCHEMA_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG_BEHAVIOR_CHANGE: NONE
 FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
 DÉLIA_NEW_CODE: NONE
 UNRESOLVED: Predictive/Twin design; ground-truth owners for TARGET families in 64; MLOps/Marketplace; Edge residual; OT/MES residual; semantic "forecast" naming drift
@@ -485,7 +485,7 @@ SCOPE: Edge runtime; offline/AuthZ; Pulse identity/OTA/commands; store-and-forwa
 EVIDENCE: 51 §§38+43; Edge agent=NOT_PROVEN; Pulse BFF+ESP=DOMAIN_LOCAL; offline AuthZ expand=NOT_PROVEN; store-and-forward=NOT_PROVEN; industrial protocols=NOT_PROVEN; AI→machine=NOT_PROVEN; device token≠business AuthZ
 RUNTIME_DIFF: NONE
 PLATFORM_BEHAVIOR_CHANGE: NONE
-CODE/CONFIG/SCHEMA_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG_BEHAVIOR_CHANGE: NONE
 FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
 DÉLIA_NEW_CODE: NONE
 UNRESOLVED: MDM/OT zoning/time sync residual; OTA on-device hash verify; MES/historian; independent interlocks CP-179; MLOps/Marketplace; privacy/operational-context inventories
@@ -509,7 +509,7 @@ SCOPE: model lifecycle/registry; FT/evals; MLOps tooling; promotion/rollback; ca
 EVIDENCE: 51 §§39–40; Model Registry=NOT_PROVEN; MLOps=NOT_PROVEN; Marketplace=NOT_PROVEN; Chat FT/R1-R11=CHAT_ONLY; Core plugin manifests+/me/apps=PLATFORM_SHARED catalog; enabled≠AuthZ; cosign/SBOM=NOT_PROVEN
 RUNTIME_DIFF: NONE
 PLATFORM_BEHAVIOR_CHANGE: NONE
-CODE/CONFIG/SCHEMA_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG_BEHAVIOR_CHANGE: NONE
 FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
 DÉLIA_NEW_CODE: NONE
 UNRESOLVED: Model Registry design; Marketplace product; SBOM/signing; privacy/operational-context inventories; MCP/A2A residual
