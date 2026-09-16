@@ -56,9 +56,9 @@ Copilot DELPI
 
 “Copilot” pode continuar aparecendo somente quando identificar token legado (`LEGACY_TOKEN`), referência histórica ou contexto explícito de migração. Não é a marca final do produto nem namespace técnico ativo pós-aceite de C0.S1.
 
-## 4. C0.S1 naming freeze candidate (PLANNED / FROZEN_CANDIDATE)
+## 4. C0.S1 naming freeze — ACCEPTED
 
-**Status:** `CANDIDATE_FOR_ARCHITECTURE_REVIEW` — **não** aceito; **não** autoriza C0.S2; **não** é `FOUNDATION_FREEZE`.
+**Status:** `APPROVED / FROZEN` pelo `ARCHITECTURE_REVIEW_C0_S1` no `REVIEWED_HEAD=c822f0e72495256c3459a4b36b9c37a3bba95cbb`. C0.S2 está autorizado; isto **não** é `FOUNDATION_FREEZE` e não prova runtime.
 
 O namespace documental canônico permanece:
 
@@ -77,7 +77,7 @@ DISPLAY_NAME = DÉLIA
 
 “Copilot” deixa de ser namespace técnico **ativo** para novos assets da DÉLIA após aceite de C0.S1. Referências `minha-delpi-copilot*` podem permanecer somente quando explicitamente `HISTORICAL` | `LEGACY_TOKEN` | `SUPERSEDED` | `REFERENCE_ONLY`.
 
-### 4.2 Final technical names (freeze candidate)
+### 4.2 Final technical names — accepted freeze
 
 ```text
 DÉLIA API repository path     = delia-api/
@@ -94,7 +94,7 @@ DÉLIA logical persistence ns  = delia
 DÉLIA migration root          = delia-api/migrations/
 ```
 
-Classification: `PLANNED / FROZEN_CANDIDATE` until architecture acceptance. Não prova runtime.
+Classification: `PLANNED / FROZEN_ACCEPTED` after architecture acceptance. Não prova runtime.
 
 ### 4.3 Rationale (convention, not evidence)
 
@@ -226,4 +226,4 @@ Novos documentos devem usar **DÉLIA** no título e no texto user-facing.
 
 Documentos antigos podem manter “Copilot” somente quando necessário para `LEGACY_TOKEN`/IDs históricos, referência histórica ou contexto explícito de migração.
 
-Durante o refinamento documental, referências residuais que usem “Copilot” como nome de produto devem ser corrigidas para **DÉLIA**. Paths/contracts ativos devem usar o freeze candidate da §4 (`delia-api` / `plugins/delia` / `/apps/delia*`) até aceite arquitetural; não criar runtime nesta etapa.
+Durante o refinamento documental, referências residuais que usem “Copilot” como nome de produto devem ser corrigidas para **DÉLIA**. Paths/contracts ativos devem usar o freeze aceito da §4 (`delia-api` / `plugins/delia` / `/apps/delia*`); não criar runtime nesta etapa.
