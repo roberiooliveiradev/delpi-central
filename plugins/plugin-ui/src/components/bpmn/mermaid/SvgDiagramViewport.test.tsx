@@ -33,4 +33,21 @@ describe("SvgDiagramViewport", () => {
     expect(screen.getByRole("button", { name: "100%" })).toBeTruthy();
     expect(container.querySelector('[data-testid="world-svg"]')).toBeTruthy();
   });
+
+  it("não usa SVG Lucide do chrome como world do diagrama", () => {
+    const { container } = render(
+      <div style={{ width: 320, height: 240 }}>
+        <SvgDiagramViewport labels={labels} worldWidth={1} worldHeight={1}>
+          <div className="delpi-ui-bpmn-mermaid">
+            <iframe title="sandbox mermaid" />
+          </div>
+        </SvgDiagramViewport>
+      </div>
+    );
+
+    const firstSvg = container.querySelector(".delpi-ui-bpmn-svg-viewport")?.querySelector("svg");
+    const worldSvg = container.querySelector(".delpi-ui-bpmn-svg-viewport__world svg");
+    expect(firstSvg?.getAttribute("viewBox")).toBe("0 0 24 24");
+    expect(worldSvg).toBeNull();
+  });
 });

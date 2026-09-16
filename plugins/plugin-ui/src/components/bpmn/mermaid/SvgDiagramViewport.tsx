@@ -91,7 +91,9 @@ export function SvgDiagramViewport({
   }, [worldWidth, worldHeight]);
 
   useLayoutEffect(() => {
-    const svg = viewportRef.current?.querySelector("svg");
+    const svg = viewportRef.current?.querySelector<SVGSVGElement>(
+      ":scope > .delpi-ui-bpmn-svg-viewport__world svg"
+    );
     if (!svg) return;
     const measured = measureSvgWorldSize(svg);
     if (measured.width <= 1 || measured.height <= 1) return;

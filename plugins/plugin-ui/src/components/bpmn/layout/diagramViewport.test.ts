@@ -210,3 +210,32 @@ describe("getDiagramFitNodes", () => {
     expect(getDiagramExportNodes(nodes).map((node) => node.id)).toEqual(["lane-1", "n1"]);
   });
 });
+
+describe("processo composto real 5b3dc7e3", () => {
+  it("usa bounds das 106 atividades (~15k px) e não das raias visuais", async () => {
+    const { PROCESS_COMPOSED_GEOMETRY, processComposedFlowNodes } = await import(
+      "./fixtures/processComposedGeometry.fixture"
+    );
+    const nodes = processComposedFlowNodes();
+    expect(nodes.filter((node) => node.type === "flowchart")).toHaveLength(
+      PROCESS_COMPOSED_GEOMETRY.activityCount
+    );
+
+    const bounds = contentBoundsFromFlowNodes(nodes);
+    expect(bounds.minX).toBe(PROCESS_COMPOSED_GEOMETRY.bounds.minX);
+    expect(bounds.minY).toBe(PROCESS_COMPOSED_GEOMETRY.bounds.minY);
+    expect(bounds.maxX).toBeGreaterThanOrEqual(PROCESS_COMPOSED_GEOMETRY.bounds.maxX);
+    expect(bounds.maxY).toBeGreaterThanOrEqual(PROCESS_COMPOSED_GEOMETRY.bounds.maxY);
+    expect(getDiagramFitNodes(nodes as never).every((node) => node.type !== "lane")).toBe(true);
+
+    const compactViewport = { width: 488, height: 280 };
+    const fullscreenViewport = { width: 1400, height: 800 };
+    const compactFit = computeFitTransform(bounds, compactViewport);
+    const fullscreenFit = computeFitTransform(bounds, fullscreenViewport);
+
+    expect(compactFit.zoom).toBe(DIAGRAM_ZOOM_MIN);
+    expect(fullscreenFit.zoom).toBeGreaterThanOrEqual(DIAGRAM_ZOOM_MIN);
+    expect(fullscreenFit.zoom).toBeLessThan(0.12);
+    expect(fullscreenFit.zoom).not.toBe(DIAGRAM_FIT_MAX_ZOOM);
+  });
+});

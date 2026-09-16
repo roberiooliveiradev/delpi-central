@@ -9,6 +9,7 @@ import {
   cleanupMermaidRenderArtifacts,
   isMermaidErrorSvg,
   sanitizeMermaidRenderId,
+  unwrapMermaidRenderSvg,
 } from "./mermaidRenderSafety";
 import { applyMermaidPreviewTheme } from "./mermaidPreviewTheme";
 import { SvgDiagramViewport } from "./SvgDiagramViewport";
@@ -86,13 +87,14 @@ export function DiagramMermaidPreview({
         try {
           const result = await mermaid.render(renderId, themedDiagram);
           if (cancelled) return;
-          if (isMermaidErrorSvg(result.svg)) {
+          const svgMarkup = unwrapMermaidRenderSvg(result.svg);
+          if (isMermaidErrorSvg(svgMarkup)) {
             setSvg("");
             setError(errorFallback);
             renderedKeyRef.current = "";
             return;
           }
-          setSvg(postProcessMermaidPreviewSvg(result.svg, isDark));
+          setSvg(postProcessMermaidPreviewSvg(svgMarkup, isDark));
           setError(null);
           renderedKeyRef.current = renderKey;
         } finally {

@@ -844,7 +844,8 @@
 .dashboard-transformometro .delpi-ui-bpmn-editor--overlay-tools .delpi-ui-bpmn-editor__canvas,
 .delpi-ui-flowchart-shell .tm-diagram-editor--overlay-tools .tm-diagram-editor__canvas,
 .dashboard-transformometro .tm-diagram-editor--overlay-tools .tm-diagram-editor__canvas{
-  height: 100%;
+  /* Altura especificada — `height: 100%` com ancestral auto colapsa o React Flow a 0px. */
+  height: min(680px, 70vh);
   min-height: min(420px, 50vh);
   max-height: none;
   overflow: hidden;

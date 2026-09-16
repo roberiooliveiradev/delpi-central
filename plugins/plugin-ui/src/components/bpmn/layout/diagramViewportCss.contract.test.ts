@@ -36,4 +36,13 @@ describe("diagram viewport CSS contract", () => {
     expect(css).not.toMatch(/min-height:\s*min\(72vh,\s*900px\)/);
     expect(css).toMatch(/workspace--modal-body\{[\s\S]*?flex:\s*1 1 0/);
   });
+
+  it("overlay-tools define altura especificada para o React Flow não colapsar a 0", () => {
+    const css = readFileSync(join(stylesRoot, "editor.css"), "utf8");
+    const overlayBlock = css.match(
+      /editor--overlay-tools \.delpi-ui-bpmn-editor__canvas,[\s\S]*?overflow:\s*hidden;/
+    );
+    expect(overlayBlock?.[0]).toMatch(/height:\s*min\(680px,\s*70vh\)/);
+    expect(overlayBlock?.[0]).not.toMatch(/height:\s*100%;/);
+  });
 });
