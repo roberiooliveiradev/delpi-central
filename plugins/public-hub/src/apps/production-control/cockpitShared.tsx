@@ -324,6 +324,12 @@ export function resolveStatus(operation: MachineLoadOperation): StatusView {
   return { tone: "queued", label: "Na fila", operatorNote: null };
 }
 
+/** Já apontada e não rodando — candidata a sumir no «Limpar fila» do cockpit. */
+export function isFinishedOperation(operation: MachineLoadOperation): boolean {
+  if (operation.is_in_production) return false;
+  return operation.production_status === "started";
+}
+
 /** Chave estável de uma operação na fila — usada como id de navegação e como key do React. */
 export function operationKey(operation: MachineLoadOperation): string {
   return `${operation.production_order}::${operation.operation_code}`;
@@ -351,6 +357,14 @@ export function formatDate(value: string | null): string {
   return `${day}/${month}/${year}`;
 }
 
+/** Data curta para eixo de gráficos (ex.: 04/09). */
+export function formatDateShort(value: string | null): string {
+  if (!value) return "—";
+  const [, month, day] = value.slice(0, 10).split("-");
+  if (!month || !day) return value;
+  return `${day}/${month}`;
+}
+
 export function formatDateTime(value: string): string {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
@@ -372,10 +386,13 @@ export function formatHours(value: number | null | undefined): string {
   return `${value.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} h`;
 }
 
-/** Mesma leitura de faixa do MFE de eficiência fabril: verde ≥95, âmbar ≥80, vermelho abaixo. */
+/** Meta de eficiência do posto (chão de fábrica). */
+export const EFFICIENCY_GOAL_PCT = 92;
+
+/** Verde ≥ meta; âmbar até ~5% abaixo; vermelho mais abaixo. */
 export function efficiencyTone(value: number | null | undefined): "good" | "warn" | "bad" | "none" {
   if (value === null || value === undefined || !Number.isFinite(value)) return "none";
-  if (value >= 95) return "good";
-  if (value >= 80) return "warn";
+  if (value >= EFFICIENCY_GOAL_PCT) return "good";
+  if (value >= EFFICIENCY_GOAL_PCT * 0.95) return "warn";
   return "bad";
 }

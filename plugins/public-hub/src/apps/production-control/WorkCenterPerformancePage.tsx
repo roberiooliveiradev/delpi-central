@@ -6,8 +6,10 @@ import { ConfigurableSeriesChart } from "@delpi/plugin-ui/index";
 import type { PublicWorkCenterPerformance } from "./api";
 import {
   BrandBar,
+  EFFICIENCY_GOAL_PCT,
   efficiencyTone,
   formatDate,
+  formatDateShort,
   formatHours,
   formatPercent,
   formatQty,
@@ -41,7 +43,7 @@ export function WorkCenterPerformancePage({
     () =>
       efficiency?.available
         ? efficiency.series.map((point) => ({
-            label: formatDate(point.date),
+            label: formatDateShort(point.date),
             value: point.efficiency_pct,
           }))
         : [],
@@ -66,7 +68,7 @@ export function WorkCenterPerformancePage({
     () =>
       downtime?.available
         ? downtime.series.map((point) => ({
-            label: formatDate(point.date),
+            label: formatDateShort(point.date),
             value: point.hours,
           }))
         : [],
@@ -138,8 +140,9 @@ export function WorkCenterPerformancePage({
 
                 <ChartCard
                   title="Eficiência por dia"
-                  subtitle="Percentual em cada dia do período — valor marcado no ponto"
-                  chartType="area"
+                  subtitle={`Percentual em cada dia — meta ${EFFICIENCY_GOAL_PCT}% (verde ao atingir)`}
+                  chartType="bar"
+                  variant="efficiency"
                   points={efficiencyPoints}
                   yAxisTitle="Eficiência (%)"
                   emptyMessage="Sem apontamentos no período."
@@ -169,6 +172,7 @@ export function WorkCenterPerformancePage({
                   title="Horas paradas por motivo"
                   subtitle="Todos os motivos apontados no período, ordenados do maior para o menor"
                   chartType="horizontal_bar"
+                  variant="reasons"
                   points={downtimeByReasonPoints}
                   yAxisTitle="Horas"
                   emptyMessage="Nenhuma parada apontada no período."
@@ -177,6 +181,7 @@ export function WorkCenterPerformancePage({
                   title="Horas paradas por dia"
                   subtitle="Total de horas paradas em cada dia"
                   chartType="bar"
+                  variant="downtime-day"
                   points={downtimeByDayPoints}
                   yAxisTitle="Horas"
                   emptyMessage="Nenhuma parada apontada no período."
@@ -278,13 +283,15 @@ function ChartCard({
   title,
   subtitle,
   chartType,
+  variant,
   points,
   yAxisTitle,
   emptyMessage,
 }: {
   title: string;
   subtitle?: string;
-  chartType: "area" | "bar" | "horizontal_bar";
+  chartType: "bar" | "horizontal_bar";
+  variant: "efficiency" | "reasons" | "downtime-day";
   points: ChartPoint[];
   yAxisTitle: string;
   emptyMessage: string;
@@ -301,11 +308,11 @@ function ChartCard({
     );
   }
 
-  const isReasons = chartType === "horizontal_bar";
-  const isTrend = chartType === "area";
+  const isReasons = variant === "reasons";
+  const isEfficiency = variant === "efficiency";
   const plotHeightPx = isReasons
     ? Math.min(720, Math.max(280, points.length * 42 + 48))
-    : isTrend
+    : isEfficiency
       ? 340
       : 300;
 
@@ -330,29 +337,35 @@ function ChartCard({
           options={{
             showTitle: false,
             showLegend: false,
-            showGrid: true,
-            showVerticalGrid: isTrend,
-            showMarkers: isTrend,
-            markerMode: "all",
-            smoothLines: isTrend,
-            areaFillGradient: isTrend,
+            showGrid: false,
+            showVerticalGrid: false,
+            showMarkers: false,
             yAxisTitle,
             xAxisTitle: "",
             showXAxisTitle: false,
             showYAxisTitle: true,
             valueFormat: "number",
             decimalPlaces: 1,
-            seriesColor: "#089bdb",
+            seriesColor: isEfficiency ? "#15803d" : "#089bdb",
             showDataLabels: true,
             dataLabels: {
               showValue: true,
               showCategoryName: false,
               position: "outsideEnd",
             },
-            // Motivos: nunca pular rótulos do eixo — o operador precisa ler todos.
-            categoryLabelOverflow: isReasons ? "wrap" : chartType === "bar" ? "truncate" : "skip",
+            categoryLabelOverflow: isReasons ? "wrap" : "truncate",
             categoryLabelRotation: chartType === "bar" ? "auto" : 0,
-            categoryPaddingPercent: isTrend ? 4 : 2,
+            categoryPaddingPercent: 2,
+            ...(isEfficiency
+              ? {
+                  showGoalLine: true,
+                  goalLineValue: EFFICIENCY_GOAL_PCT,
+                  colorScale: {
+                    mode: "by_goal" as const,
+                    polarity: "high_is_good" as const,
+                  },
+                }
+              : {}),
           }}
         />
       </div>

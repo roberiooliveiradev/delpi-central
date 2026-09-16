@@ -275,7 +275,7 @@ Link aberto para o chão de fábrica acompanhar a carga máquina do próprio pos
 | Cockpit | `/p/production-control/cockpit/aberto?branch=01` | `GET /apps/production-control-api/public/machine-load/aberto?branch=01` |
 
 - **Filial na query** (`branch=01` SC, `02` ES); ausente ou inválida cai em `01`.
-- **Seleção de posto** na primeira abertura; a escolha fica em `localStorage` por filial, com botão **Trocar posto** no cabeçalho.
+- **Seleção de posto** na primeira abertura; a escolha fica em `localStorage` por filial, com **Ações** no cabeçalho (**Trocar posto**, **Ver desempenho**, **Limpar fila**). **Limpar fila** oculta operações já apontadas e persiste por filial+posto no aparelho.
 - **Tempo real:** `WS …/ws` avisa (`machine_load_updated`) quando o PCP reordena a fila, prioriza um conjunto (`reason: priority`), retira ou devolve um conjunto à programação (`reason: withdrawal`), envia uma operação para outro centro (`reason: transfer`) ou atualiza do TOTVS; o cliente refaz a leitura HTTP. **Status de apontamento** (em produção / já apontada) vem do enrich no GET e é atualizado por **polling a cada 15s** (e ao voltar o tablet da tela bloqueada). Reconexão do socket a cada 5s.
 - **Somente leitura:** sem drag-and-drop, sem PATCH — o sequenciamento é exclusivo do PCP. A resposta pública omite `refreshed_by`, `sequence_updated_by` e a lista de conjuntos retirados.
 - **Conjunto fora da programação:** OP retirada pelo PCP não aparece na fila do posto nem nos contadores, e o **Ver desenho** do PA correspondente deixa de ser servido enquanto ela estiver fora.
