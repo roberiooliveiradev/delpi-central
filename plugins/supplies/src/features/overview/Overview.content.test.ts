@@ -25,7 +25,8 @@ describe("Overview content", () => {
     expect(temporalNatureLabel("snapshot")).toBe("Snapshot");
     expect(temporalNatureLabel("state")).toBe("Estado atual");
     expect(OVERVIEW_CONTENT.title).toBe("Visão geral");
-    expect(OVERVIEW_CONTENT.description).toMatch(/Início/i);
+    expect(OVERVIEW_CONTENT.description).toMatch(/Indicadores consolidados/i);
+    expect(OVERVIEW_CONTENT.description).toMatch(/Solicitações e Operações/i);
     expect(OVERVIEW_CONTENT.indicatorsTitle).toBe("Indicadores");
     expect(OVERVIEW_CONTENT.otdChartTitle).toMatch(/OTD/i);
     expect(OVERVIEW_CONTENT.branchLabel).toBe("Unidade");

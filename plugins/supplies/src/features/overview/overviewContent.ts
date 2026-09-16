@@ -4,7 +4,7 @@ export const OVERVIEW_CONTENT = {
   title: "Visão geral",
   eyebrow: "Portal Suprimentos",
   description:
-    "Indicadores do período no seu escopo. O Início é para ação e descoberta — não use a Visão geral como fila operacional.",
+    "Indicadores consolidados do período e das unidades selecionadas no seu escopo. Use Solicitações e Operações para tratar os itens operacionais.",
   helpAriaLabel: "Ajuda: Visão geral e natureza temporal",
   scopeBadgeAll: "Consolidado (unidades liberadas)",
   scopeBadgeBranch: (branch: string) => branch,

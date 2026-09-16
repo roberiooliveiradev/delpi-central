@@ -42,9 +42,10 @@ export const SP_HELP = {
   shell: {
     navHome: "Atenção do dia, busca e atalhos para as áreas que você pode acessar.",
     navOverview:
-      "Indicadores do período. Não é a tela inicial — o Início mostra o que precisa de ação.",
+      "Indicadores consolidados do período e das unidades selecionadas. Itens operacionais ficam em Solicitações e Operações.",
     navMyTasks: "Fila de acompanhamento atribuída a você.",
-    navPurchaseRequests: "Solicitações de compras no seu escopo de centro de custo e filial.",
+    navPurchaseRequests:
+      "Itens de solicitações de compra no período e no escopo de unidade e centro de custo.",
     navOperations: "Pedidos, entregas, fornecedores, produtos e estoques autorizados.",
     navAdmin: "Mappings, escopos e configurações do Portal.",
     navHelp: "O que é o Portal, diferença para os apps antigos e o que fazer em 403.",
@@ -72,7 +73,7 @@ export const SP_HELP = {
   otdAnalyticsPage:
     "Pontualidade de compras com velocímetros por unidade (Santa Catarina / Espírito Santo) e evolução no tempo. Diferente da Visão geral (placar de KPIs) e de Entregas (atrasos do dia).",
   purchaseRequests:
-    "Lista linhas de SC no escopo de centro de custo e unidades. Sem CC liberado e sem visão ampla, a lista fica vazia (fail-closed). Exportação Excel/CSV exige permissão separada. Clique na SC ou na linha para abrir a ficha.",
+    "Itens de solicitações de compra no período selecionado e no escopo de unidade e centro de custo. Sem CC liberado e sem visão ampla, a lista fica vazia (fail-closed). Exportação Excel/CSV exige permissão separada. Clique na SC ou na linha para abrir a ficha.",
   purchaseRequestsBranch:
     "Unidade do recorte (Santa Catarina e/ou Espírito Santo). «Todas» consulta todas as unidades liberadas na sessão. Códigos técnicos ficam só na URL e na API.",
   purchaseRequestsView:
@@ -105,9 +106,9 @@ export const SP_HELP = {
   purchaseRequestsEntityLink:
     "O número da SC abre a ficha em página própria (/purchase-requests/unidade/número). Você também pode clicar na linha ou no card.",
   purchaseRequestDetail:
-    "Ficha da solicitação de compra no escopo de centro de custo. Itens fora do seu CC não aparecem. Use Voltar para retornar à lista com os filtros anteriores.",
+    "Ficha da solicitação com dados e itens visíveis no escopo de unidade e centro de custo. Itens fora do seu CC não aparecem. Use Voltar para retornar à lista com os filtros anteriores.",
   purchaseOrders:
-    "Pedidos de compra em aberto (saldo a receber). O hero mostra linhas em aberto, valor em aberto e atrasadas do recorte das unidades e filtros selecionados (o chip Atrasados não muda os totais). Não é o painel OTD de pontualidade — esse fica na analytics. Clique no PC ou na linha para abrir a ficha.",
+    "Itens de pedidos de compra com saldo pendente de recebimento no recorte selecionado. O hero mostra linhas em aberto, valor em aberto e atrasadas (o chip Atrasados não muda os totais). Não é o painel OTD de pontualidade — esse fica na analytics. Clique no PC ou na linha para abrir a ficha.",
   purchaseOrdersBranch:
     "Unidade do recorte (Santa Catarina e/ou Espírito Santo). «Todas» consulta todas as unidades liberadas na sessão. Códigos técnicos ficam só na URL e na API.",
   purchaseOrdersNumber: "Filtra pelo número do pedido de compra.",

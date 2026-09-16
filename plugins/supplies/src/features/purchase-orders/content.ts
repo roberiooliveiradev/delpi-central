@@ -2,13 +2,13 @@ export const PURCHASE_ORDERS_CONTENT = {
   title: "Pedidos de compra",
   eyebrow: "Portal Suprimentos",
   description:
-    "Linhas de pedidos em aberto (saldo a receber). Clique na linha para abrir a ficha do pedido.",
+    "Itens de pedidos de compra com saldo pendente de recebimento no recorte selecionado. Clique no PC para abrir a ficha.",
   helpAriaLabel: "Ajuda sobre pedidos de compra",
   filtersAriaLabel: "Filtros de pedidos de compra",
   filtersTitle: "Filtros",
   listTitle: "Pedidos em aberto",
   listHint:
-    "Somente pedidos com saldo a receber. Clique no PC ou na linha para abrir itens, entregas prometidas, recebimentos e a SC de origem.",
+    "Somente itens com saldo pendente de recebimento. Clique no PC ou na linha para abrir itens, datas prometidas, recebimentos e a SC de origem.",
   tableMeta: (columns: number, rows: number) =>
     `${columns} coluna(s) · ${rows.toLocaleString("pt-BR")} linha(s)`,
   openPcLinkTitle: (number: string) => `Abrir pedido de compra ${number}`,
@@ -60,7 +60,7 @@ export const PURCHASE_ORDERS_CONTENT = {
   detailTitle: "Pedido de compra",
   detailEyebrow: "Ficha do pedido",
   detailDescription:
-    "Itens em aberto, entrega prometida, recebimentos e a solicitação de origem de cada item.",
+    "Itens em aberto, datas prometidas, recebimentos e SC de origem de cada item.",
   detailBack: "Pedidos de compra",
   detailLoading: "Carregando o pedido…",
   detailError: "Não foi possível carregar este pedido de compra.",

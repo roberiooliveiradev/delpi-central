@@ -2,7 +2,7 @@ export const PURCHASE_REQUESTS_CONTENT = {
   title: "Solicitações de compras",
   eyebrow: "Portal Suprimentos",
   description:
-    "Linhas de SC no seu escopo de centro de custo e unidade. Clique na solicitação para abrir a ficha.",
+    "Itens de solicitações de compra no período selecionado e no seu escopo de unidade e centro de custo. Clique na SC para abrir a ficha.",
   helpAriaLabel: "Ajuda sobre solicitações de compras",
   filtersAriaLabel: "Filtros de solicitações de compras",
   filtersTitle: "Filtros",
@@ -55,8 +55,8 @@ export const PURCHASE_REQUESTS_CONTENT = {
   detailTitle: "Solicitação",
   detailEyebrow: "Solicitação de compra",
   detailDescription:
-    "Cabeçalho e itens visíveis no seu escopo de centro de custo.",
-  detailHint: "Itens visíveis no seu escopo de centro de custo.",
+    "Dados da solicitação e itens visíveis no seu escopo de unidade e centro de custo.",
+  detailHint: "Itens visíveis no seu escopo de unidade e centro de custo.",
   detailBack: "Solicitações de compras",
   detailLoading: "Carregando a solicitação…",
   detailError: "Não foi possível carregar esta solicitação de compra.",
