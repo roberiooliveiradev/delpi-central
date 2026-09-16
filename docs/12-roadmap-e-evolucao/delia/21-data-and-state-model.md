@@ -48,7 +48,7 @@ Freeze aceito C0.S1 (`PLANNED / FROZEN_ACCEPTED`; `ARCHITECTURE_REVIEW_C0_S1`, `
 PERSISTENCE_OWNER = DÉLIA
 LOGICAL_NAMESPACE = delia
 MIGRATION_CHAIN = delia-api/migrations/
-PHYSICAL_PG_CLUSTER = DEFERRED
+PHYSICAL_POSTGRES_CLUSTER = DEFER_PHYSICAL_PLACEMENT / TO_INVENTORY
 ```
 
 ```text
@@ -96,6 +96,9 @@ AUTHORITY_MAP = FROZEN_ACCEPTED
 BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
 C0.S4_AUTHORIZED = YES
+C0.S4 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (see §4A)
+ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_CANDIDATE (see §4A)
+C0.S5_AUTHORIZED = NO
 NEW_RUNTIME_ABSTRACTIONS = NONE
 FOUNDATION_FREEZE = NOT APPROVED
 DÉLIA_RUNTIME_DIFF = NONE
@@ -220,6 +223,438 @@ version/revision?
 Usados transversalmente por APIs, web, connectors, Process Intelligence, analysis, predictive/twin, automation, Recurring Work, Meeting/Frontline e audit quando os contracts forem congelados.
 
 Nunca guardar credential em Source/Evidence/Outcome.
+
+## 4A. Architecture / persistence / privacy / safety — C0.S4 freeze candidate
+
+```text
+STATUS = FROZEN_CANDIDATE / CANDIDATE_FOR_ARCHITECTURE_REVIEW
+ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_CANDIDATE
+C0.S0..C0.S3 = APPROVED
+C0.S4_AUTHORIZED = YES
+C0.S4 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C0.S5_AUTHORIZED = NO
+AUTHORITY_MAP = FROZEN_ACCEPTED (unchanged)
+BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED (unchanged)
+SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED (unchanged)
+NEW_RUNTIME_ABSTRACTIONS = NONE
+FOUNDATION_FREEZE = NOT APPROVED
+PROGRAM = PLANNED / NOT_STARTED
+C0 = NOT_STARTED
+DÉLIA_RUNTIME_DIFF = NONE
+NEXT = ARCHITECTURE_REVIEW_C0_S4
+```
+
+C0.S4 congela **regras arquiteturais** de ownership de persistência, classificação, privacy, secrets/encryption, concorrência/idempotência, state machines, identidade background, segurança temporal de Recurring Work, Evidence/Outcome, Prediction/Scenario/Twin, biometric/media, conexões externas, audit/eval, Process/Task Mining, Sandbox/Artifact, Model/Marketplace/Tower, Edge/offline, OT/safety, falha/recovery e cache/projection.
+
+Não cria código, tabelas, migrations, endpoints, services, vault, scheduler, event bus, Policy engine, SecretRef shared primitive ou OT control layer. Contratos tipados detalhados = C0.S5. Foundation Freeze = C0.S7.
+
+### 4A.1 Persistence ownership
+
+DÉLIA **may** persist only:
+
+```text
+DÉLIA-owned lifecycle/state
+bounded refs
+bounded projections/caches
+Evidence/Decision/Policy/Work/Outcome coordination metadata
+user-scoped Personal Memory (when lifecycle exists)
+governed Knowledge/Artifact/Prediction/Scenario metadata when owned
+```
+
+DÉLIA **must NOT** duplicate:
+
+```text
+Domain business truth
+Core RBAC truth
+Automation Hub technical execution truth
+physical scheduler/timer/job/lease truth
+OT/safety truth
+```
+
+```text
+Reference != ownership
+Projection/cache != authority
+```
+
+### 4A.2 Physical PostgreSQL
+
+```text
+PERSISTENCE_OWNER = DÉLIA
+LOGICAL_NAMESPACE = delia
+MIGRATION_ROOT = delia-api/migrations/
+PHYSICAL_POSTGRES_CLUSTER = DEFER_PHYSICAL_PLACEMENT / TO_INVENTORY
+```
+
+Do **not** select shared schema/database/cluster without evidence for: owner, isolation, HA, backup/restore, security, networking, migration independence, rollback, capacity, blast radius, classification.
+
+### 4A.3 Data classification (architectural)
+
+Practical classes (may overlap; **most restrictive** applicable governance wins):
+
+```text
+PUBLIC_EXTERNAL
+INTERNAL_OPERATIONAL
+CONFIDENTIAL_BUSINESS
+PERSONAL_DATA
+SENSITIVE_PERSONAL_DATA
+BIOMETRIC_DATA
+AUTHENTICATION_DATA
+SECRET_CREDENTIAL
+MEDIA_RAW
+TRANSCRIPT
+DERIVED_AI_OUTPUT
+EVIDENCE
+AUDIT_SECURITY
+MODEL_ASSET
+DEVICE_EDGE_DATA
+OT_OPERATIONAL_DATA
+```
+
+For each class, freeze architectural requirements for: owner, sharing, retention owner, delete/export, logging, LLM/provider exposure, encryption, allowed storage family.
+
+Do **not** invent legal retention durations. Exact durations = `TO_INVENTORY` when not proven. Capability-specific retention labels in §28 remain complementary, not a second authority.
+
+### 4A.4 Personal vs Organizational
+
+```text
+Session context != Personal Memory
+Conversation history != Personal Memory
+Personal Memory != Organizational Knowledge
+Knowledge candidate != published Organizational Knowledge
+Artifact != Organizational Knowledge
+Web research != Organizational Knowledge
+Process observation != Organizational Knowledge
+Model output != Organizational Knowledge
+```
+
+Promotion path:
+
+```text
+Evidence → candidate → owner/review → eval → version → publish
+```
+
+Personal Memory **never** authorizes.
+
+### 4A.5 Retention / delete / export
+
+```text
+unknown duration != infinite retention
+```
+
+For DÉLIA-owned families define: `RETENTION_OWNER`, policy source, delete applicability, export applicability, legal-hold consideration, source-delete effect, derived-data invalidation.
+
+Source deletion/revocation must define effects on refs, projections, caches and future access.
+
+### 4A.6 Privacy
+
+Freeze: purpose limitation; least privilege; data minimization; user/org isolation; source ACL preservation; provider exposure governance; cross-context propagation restrictions; sharing/promotion gates.
+
+```text
+provider scope != Core/domain permission
+source access != Evidence permission escalation
+Evidence access != source authorization escalation
+external content != trusted instruction
+personal external connection != organizational connection
+```
+
+### 4A.7 Secrets / tokens
+
+Secret/token material **never** in: prompt, LLM context, Personal Memory, MFE, normal logs, Evidence, generic Artifact metadata.
+
+```text
+SecretRef = DEFER_TO_CONTRACT (do NOT create new shared primitive)
+physical vault/secret manager = TO_INVENTORY
+```
+
+Existing env/.env evidence does **not** automatically approve DÉLIA production secret design.
+
+### 4A.8 Encryption
+
+```text
+encryption in transit = required
+encryption at rest = required for durable DÉLIA state
+backup inherits classification/encryption
+biometric + secrets = stronger protected boundaries
+application plaintext config cannot own long-lived credentials/keys
+key owner = explicit
+rotation and revocation = must be possible
+KMS/vault/key owner = TO_INVENTORY
+```
+
+### 4A.9 Concurrency / idempotency
+
+```text
+material writes require idempotency
+duplicate trigger/event must not duplicate side effect
+blind retry of ambiguous material write = forbidden
+reconcile authoritative state before retry
+material stale mutation requires concurrency/version protection when applicable
+read snapshot != permission snapshot
+stored Decision/intent != permanent authorization
+exactly-once delivery must NOT be assumed
+```
+
+Endpoint-specific idempotency = C0.S5.
+
+### 4A.10 State-machine rules
+
+Require explicit state machines where lifecycle is real for: Decision, Work, Task, Case, RecurringWork, WorkOccurrence, Knowledge candidate/publish, ExternalConnection, Watch, MCP/A2A approval.
+
+`AutomationExecution` inside DÉLIA = projection/correlation only; technical lifecycle remains Automation Hub/executor authority.
+
+Do not duplicate artifact/model/marketplace lifecycle when another owner is authoritative.
+
+```text
+terminal state cannot silently reactivate
+cancel/revoke = explicit
+technical execution state != Work state
+technical completion != verified Outcome
+```
+
+Candidate sketches in §33 remain TARGET until ownership/persistence proven.
+
+### 4A.11 Background identity / AuthZ
+
+Every background operation has explicit actor: user-context | service-context | approved delegated context.
+
+Timer, scheduler, event, webhook, RPA worker and provider callback are **NOT** business actors or authorities.
+
+Material operation chain:
+
+```text
+explicit actor
+→ live Core AuthZ
+→ final Domain authorization
+→ provider/resource validation where applicable
+→ Policy/Decision
+→ idempotency
+→ audit
+→ execution
+→ authoritative Outcome verification
+```
+
+Exact service/delegation mechanism = `DEFER_TO_CONTRACT` / `TO_INVENTORY`.
+
+### 4A.12 Recurring Work temporal safety
+
+```text
+explicit IANA timezone
+explicit DST policy
+explicit misfire policy
+explicit overlap policy
+explicit retry policy
+stable occurrence identity
+pause/cancel/revoke prevents future unauthorized material occurrence
+every material occurrence revalidates authority/policy
+schedule != permission
+```
+
+Do **not** select scheduler. Physical scheduler = `TO_INVENTORY`.
+
+### 4A.13 FAST / OPERATIONAL / REASONING
+
+```text
+FAST = deterministic
+OPERATIONAL = structured context + rules + approved small model only when justified
+REASONING = complex investigation
+```
+
+Material readiness with an authoritative deterministic rule must **not** rely solely on free-form model judgment.
+
+### 4A.14 Evidence / Outcome
+
+```text
+Evidence != source of truth
+Evidence preserves provenance
+Evidence preserves source/freshness/version when material
+derived summaries link to Evidence
+technical executor success != business Outcome
+Outcome uses authoritative postcondition
+```
+
+Staleness/invalidation semantics required for: source changed; source deleted; permission revoked; projection stale; model version changed/revoked.
+
+### 4A.15 Prediction / Scenario / Twin
+
+```text
+Prediction != FACT
+recommendation != authorization
+ModelRef != Decision authority
+Scenario != production state
+Twin != source of truth
+SIMULATE != APPLY
+```
+
+Future Apply creates a **new** live action context.
+
+### 4A.16 Biometric / Human Observation
+
+```text
+closed-set enrolled only
+unknown remains unknown
+confidence/correction required
+biometric match != authentication
+biometric match != authorization
+```
+
+Separate: raw enrollment media | biometric template | identity candidate | confirmed association.
+
+```text
+biometric template = SPECIALIZED_STORE
+physical store/owner = TO_INVENTORY
+```
+
+Human Observation = observable operational facts only.
+
+Forbidden as truth: personality; honesty; emotion; health; sensitive attributes; professional-value score; automatic employment decision.
+
+### 4A.17 Media
+
+```text
+raw media != transcript != summary != Evidence != Decision != action != Outcome
+```
+
+Continuous capture requires purpose, visible state, notice/consent according to policy, ACL preservation, classification and retention. Raw media retention is **not** default. Physical media storage = `TO_INVENTORY`.
+
+### 4A.18 External Connections / OAuth
+
+Ownership classes: `USER_DELEGATED` | `ORG_MANAGED` | `SHARED_RESOURCE` | `SERVICE_CONNECTION`.
+
+Connection metadata must preserve: owner, provider, scope, status, expiry/revocation, sharing class.
+
+```text
+provider scope != DELPI authorization
+OAuth grant != permanent business authorization
+personal connection != organizational connection
+expired/revoked token != success
+read != write
+draft != send
+```
+
+### 4A.19 Audit / observability / eval
+
+Material lineage may include: trigger; actor; Evidence/source refs; Policy/Decision version; capability; metric/model/executor version refs; input/arguments hash; correlation/idempotency; technical result; verified Outcome.
+
+Never store: CoT; secret/token; biometric template; unbounded sensitive payload; raw sensitive media in generic telemetry.
+
+Eval datasets require provenance/privacy classification/version.
+
+### 4A.20 Process / Task Mining privacy
+
+```text
+Process Mining != employee surveillance
+Task Mining = disabled by default unless governance explicitly approves
+```
+
+Forbidden: secret productivity leaderboard; personality/trust scoring; fraud/intent inference from deviation alone; unrestricted continuous desktop capture; automatic disciplinary profile.
+
+### 4A.21 Sandbox / Artifact
+
+```text
+sandbox isolated
+bounded compute/time/storage
+no unrestricted host/private network
+no broad credentials
+generated code untrusted
+no arbitrary DDL/DML from read-only analysis boundary
+```
+
+Artifact: owner/version/ACL/provenance/sensitivity/retention; human edits not silently replaced; external sharing is separate governed action.
+
+No physical sandbox/store selected.
+
+### 4A.22 Model / Marketplace / Control Tower
+
+```text
+approved model only
+revoked model unavailable
+router != approval
+Marketplace requested permissions != grants
+publish != enable
+enable != authorization
+Control Tower admin != business permission
+```
+
+No runtime created.
+
+### 4A.23 Edge / Offline
+
+```text
+offline does not expand authority
+device identity != user identity
+cached permission != permanent authorization
+buffered event != ACT authorization
+user switch cleans personal state
+reconciliation idempotent
+```
+
+### 4A.24 OT / Safety
+
+```text
+DÉLIA = NOT A SAFETY CONTROLLER
+OT ACTUATION = BLOCKED_BY_DEFAULT
+```
+
+Forbidden: free-form LLM → PLC/CNC/robot/machine; voice → machine actuation without industrial gate; vision → safety override; AI-inferred OT permission; business L5 autonomy = OT autonomy; software kill switch = emergency stop.
+
+Future physical actuation requires separate industrial architecture, independent safety authority, typed commands, interlocks, fail-safe behavior, approval matrix and verified OT contract.
+
+### 4A.25 Failure / recovery / rollback
+
+```text
+partial failure = explicit
+ambiguous write = no blind retry
+rollback/revoke only when authority really supports it
+technical rollback != business rollback
+cancel != undo
+irreversible operation requires stricter Decision Gate
+```
+
+### 4A.26 Cache / projection
+
+```text
+cache != authority
+projection != authority
+staleness detectable
+freshness/version metadata where material
+invalidation owner explicit
+permission cache cannot preserve revocation
+offline cache cannot widen authority
+```
+
+### 4A.27 Abstraction Gate
+
+```text
+NEW_RUNTIME_ABSTRACTIONS = NONE
+```
+
+Do **not** create: new service; new scheduler; new vault; new event bus; new shared store; new generic Policy engine; new state engine; new SecretRef primitive; new OT control layer.
+
+### 4A.28 Deferred / inventory (non-blocking for candidate persistence)
+
+```text
+TO_INVENTORY:
+  physical PostgreSQL placement
+  physical vault/secret manager / KMS/key owner
+  physical scheduler/timer
+  physical media store
+  biometric template physical store/owner
+  exact service/delegation AuthZ mechanism
+  Automation Hub physical runtime
+  Sandbox physical runtime/store
+  event broker/transport
+
+DEFER_TO_CONTRACT (C0.S5+):
+  SecretRef contract (no new shared primitive)
+  endpoint-specific idempotency
+  WorkspaceContext transport shape
+  ExecutorRef
+  typed integration contracts
+
+DEFER_BY_PHASE:
+  Foundation Freeze (C0.S7)
+  runtime bootstrap (C1+)
+```
 
 ## 5. WorkspaceContext
 
@@ -892,7 +1327,7 @@ EDGE_CACHE/EDGE_BUFFERED_EVENT
 MEETING_ARTIFACT/FRONTLINE_RECORD
 ```
 
-Cada classe implementada precisa de purpose/access/retention/redaction/encryption/delete/export/revoke/anonymize conforme aplicável.
+Cada classe implementada precisa de purpose/access/retention/redaction/encryption/delete/export/revoke/anonymize conforme aplicável. Classes arquiteturais C0.S4 (§4A.3) prevalecem quando houver overlap; duração legal exata permanece `TO_INVENTORY` se não provada.
 
 ## 29. Cache/materialization rules
 

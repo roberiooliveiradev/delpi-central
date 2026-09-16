@@ -602,13 +602,15 @@ C0.S3 = APPROVED
 AUTHORITY_MAP = FROZEN_ACCEPTED
 BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
-C0.S4_AUTHORIZED = YES
+C0.S4 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_CANDIDATE
+C0.S5_AUTHORIZED = NO
 FOUNDATION_FREEZE = NOT APPROVED
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 DÉLIA_RUNTIME_DIFF = NONE
 NEW_RUNTIME_ABSTRACTIONS = NONE
-NEXT = C0.S4 — Architecture / persistence / privacy / safety freeze
+NEXT = ARCHITECTURE_REVIEW_C0_S4
 ```
 
 ## 16. C0.S2 authorities / bounded contexts linkage — accepted review
@@ -681,5 +683,36 @@ C1+ CP statuses remain unchanged
 NEW_RUNTIME_ABSTRACTIONS = NONE
 C0.S4_AUTHORIZED = YES
 C0.S4_EXECUTED = NO
+FOUNDATION_FREEZE = NOT APPROVED
+```
+
+## 18. C0.S4 architecture / persistence / privacy / safety linkage
+
+Evidence anchors: `21` §4A; ledger §6.28; `16` C0.S4.
+
+| Theme | CP examples (status unchanged) | C0.S4 note |
+|---|---|---|
+| Persistence ownership / no shadow SoT | CP-141–147, CP-159 | DÉLIA owns only owned lifecycle/refs/projections |
+| Privacy / retention / delete / export | CP-268–271, CP-183–184 | unknown duration ≠ infinite; no invented legal durations |
+| Secrets / encryption | CP-051, CP-056 | secret never in prompt/MFE/log/Evidence; SecretRef DEFER_TO_CONTRACT |
+| Idempotency / concurrency / background AuthZ | CP-105–109, CP-311–316 | schedule≠permission; timer≠actor |
+| Evidence / Outcome | CP-093–095, CP-206, CP-239 | Evidence≠SoT; tech success≠Outcome |
+| Prediction / Scenario / Twin | CP-287–294 | Prediction≠FACT; SIMULATE≠APPLY |
+| Biometric / media / Human Observation | CP-171, CP-183–184 | match≠AuthN/AuthZ; raw≠Evidence |
+| External connections / OAuth | CP-200+ | provider scope≠authorization |
+| Process / Task Mining privacy | CP-249–251 | ≠employee surveillance; Task Mining off by default |
+| Sandbox / Artifact | CP-280–284 | isolated; no broad credentials |
+| Model / Marketplace / Tower | CP-256–258, CP-303–310 | router≠approval; publish≠enable |
+| Edge / offline | CP-295–298 | offline≠↑authority |
+| OT / Safety | CP-178–179 | DÉLIA≠safety controller; OT ACTUATION blocked by default |
+
+```text
+C0.S4 documentation evidence ≠ runtime implementation evidence
+No CP promoted to PASS by C0.S4-T2
+No new CP ID invented for "C0.S4"
+TRACEABILITY_GAP_REQUIRING_NEW_CP = CLOSED_NONISSUE
+C1+ CP statuses remain unchanged
+NEW_RUNTIME_ABSTRACTIONS = NONE
+C0.S5_AUTHORIZED = NO
 FOUNDATION_FREEZE = NOT APPROVED
 ```

@@ -388,7 +388,7 @@ Observability / Evals
 ## 3. Shared primitive registry — C0.S3 shared/reference semantics freeze accepted
 
 > Canonical semantics: [`21-data-and-state-model.md`](./21-data-and-state-model.md) §4.
-> Status: `FROZEN_ACCEPTED` / `APPROVED` via `ARCHITECTURE_REVIEW_C0_S3` (`REVIEWED_HEAD=641ffc07284b98ffbdb5e13217ce214c4ad8ebb0`; `VERDICT=ACCEPT_WITH_RESIDUAL`). Não prova runtime. Autoriza C0.S4; **não** executa C0.S4; `FOUNDATION_FREEZE=NOT APPROVED`.
+> Status: `FROZEN_ACCEPTED` / `APPROVED` via `ARCHITECTURE_REVIEW_C0_S3` (`REVIEWED_HEAD=641ffc07284b98ffbdb5e13217ce214c4ad8ebb0`; `VERDICT=ACCEPT_WITH_RESIDUAL`). Não prova runtime. `FOUNDATION_FREEZE=NOT APPROVED`.
 
 ```text
 REVIEW = ARCHITECTURE_REVIEW_C0_S3
@@ -396,7 +396,9 @@ REVIEWED_HEAD = 641ffc07284b98ffbdb5e13217ce214c4ad8ebb0
 VERDICT = ACCEPT_WITH_RESIDUAL
 C0.S3 = APPROVED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
-C0.S4_AUTHORIZED = YES
+C0.S4 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_CANDIDATE
+C0.S5_AUTHORIZED = NO
 FOUNDATION_FREEZE = NOT APPROVED
 DÉLIA_RUNTIME_DIFF = NONE
 NEW_RUNTIME_ABSTRACTIONS = NONE
@@ -428,7 +430,26 @@ REJECTED_META:
 WorkspaceContext shape = DEFER_TO_CONTRACT (C0.S5)
 ```
 
-Do not create feature-specific duplicate Evidence/Event/Outcome/Workflow models.
+## 3A. Architecture / persistence / privacy / safety — C0.S4 freeze candidate
+
+> Canonical rules: [`21-data-and-state-model.md`](./21-data-and-state-model.md) §4A.
+> Status: `FROZEN_CANDIDATE` / `CANDIDATE_FOR_ARCHITECTURE_REVIEW`. Não prova runtime. Não autoriza C0.S5. `NEW_RUNTIME_ABSTRACTIONS=NONE`.
+
+```text
+ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_CANDIDATE
+C0.S4 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C0.S5_AUTHORIZED = NO
+PHYSICAL_POSTGRES_CLUSTER = DEFER_PHYSICAL_PLACEMENT / TO_INVENTORY
+SecretRef = DEFER_TO_CONTRACT (no new shared primitive)
+OT ACTUATION = BLOCKED_BY_DEFAULT
+DÉLIA = NOT A SAFETY CONTROLLER
+schedule != permission
+Evidence != SoT
+Prediction != FACT
+Personal Memory != Organizational Knowledge
+cache/projection != authority
+NEXT = ARCHITECTURE_REVIEW_C0_S4
+```
 
 ## 4. Core producer → consumer graph
 

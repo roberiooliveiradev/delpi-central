@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C0.S4 — Architecture / persistence / privacy / safety freeze` (`C0.S0..=C0.S3=APPROVED`; `SHARED_REFERENCE_SEMANTICS=FROZEN_ACCEPTED`; `C0.S4_AUTHORIZED=YES`; C0 permanece `NOT_STARTED`; `FOUNDATION_FREEZE=NOT APPROVED`; `DÉLIA_RUNTIME_DIFF=NONE`)
+**Próxima etapa:** `ARCHITECTURE_REVIEW_C0_S4` (`C0.S0..=C0.S3=APPROVED`; `C0.S4=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY=FROZEN_CANDIDATE`; `C0.S5_AUTHORIZED=NO`; C0 permanece `NOT_STARTED`; `FOUNDATION_FREEZE=NOT APPROVED`; `DÉLIA_RUNTIME_DIFF=NONE`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -320,13 +320,15 @@ C0.S1 = APPROVED
 C0.S2 = APPROVED
 C0.S3 = APPROVED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
-C0.S4_AUTHORIZED = YES
+C0.S4 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_CANDIDATE
+C0.S5_AUTHORIZED = NO
 FOUNDATION_FREEZE = NOT APPROVED
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 DÉLIA_RUNTIME_DIFF = NONE
 NEW_RUNTIME_ABSTRACTIONS = NONE
-NEXT = C0.S4 — Architecture / persistence / privacy / safety freeze
+NEXT = ARCHITECTURE_REVIEW_C0_S4
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -405,6 +407,8 @@ Além de `49`, congelar:
 - Edge package/device/offline authority;
 - Control Tower risk/assets/kill switches;
 - OT no-actuation default.
+
+**C0.S4-T2 (docs):** decisões persistidas em `21` §4A (+ linkage `25` §18 + ledger §6.28). Estado: `CANDIDATE_FOR_ARCHITECTURE_REVIEW` / `ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY=FROZEN_CANDIDATE`. **Não** aceito; **não** autoriza C0.S5; `NEW_RUNTIME_ABSTRACTIONS=NONE`; `DÉLIA_RUNTIME_DIFF=NONE`. Canonical source: `21` §4A.
 
 ## C0.S5 — Integration contracts
 
