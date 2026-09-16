@@ -169,7 +169,7 @@ All ACT blocked until C7                        = SUPERSEDED_BY_C5_GOVERNED_ACT_
 | 2026-09-14 | C0.S0-B platform baseline revalidation at `5deb7fc2c2f1683ebc3f7224e8f6fba99e35854d` | PLAN_ONLY; inventory/docs; CP-154 remains PLANNED; no runtime |
 | 2026-09-14 | C0.S0-C identity/Core authorization baseline at `90730043c79cbb984a42db6bbbc615c03091094b` | PLAN_ONLY; inventory/docs; no runtime; dual permission path documented |
 | 2026-09-14 | C0.S0-D automation/workers/schedulers/RPA/recurring-work baseline at `566def330798b6fefe1eda37b3eebd3e46686aba` | PLAN_ONLY; inventory/docs; no runtime; Hub not physical |
-| 2026-09-14 | C0.S0-E event/webhook/connector baseline at `aa3d93eee710c1c74fe56b9f7a45cd652d19b95de28a` (started `96d2591cd`) | PLAN_ONLY; inventory/docs; no EventBus/EventEnvelope runtime; Graph≠Teams |
+| 2026-09-14 | C0.S0-E event/webhook/connector baseline at `aa3d93eee710c1c74fe56b9f7a45cd652d19c827` (started `96d2591cd`) | PLAN_ONLY; inventory/docs; no EventBus/EventEnvelope runtime; Graph≠Teams |
 | 2026-09-14 | C0.S0-F OAuth/secrets/vault/egress baseline at `c6c9c8370d037edfc3529821b9d63e138b153436` (started `633d10d2a`) | PLAN_ONLY; inventory/docs; vault/ExternalConnection NOT_PROVEN; Chat SSRF PARTIAL |
 | 2026-09-14 | C0.S0-G media/device/biometric/frontline baseline at `79378e48184a118df060e164111d7a5963c06f34` | PLAN_ONLY; realtime A/V NOT_PROVEN; biometrics NOT_PROVEN; Pulse device+operator DOMAIN_LOCAL; Edge/OT PLC NOT_PROVEN |
 | 2026-09-14 | C0.S0-H Process Intelligence / event-log baseline at `79378e48184a118df060e164111d7a5963c06f34` | PLAN_ONLY; mining runtime NOT_PROVEN; Domain histories PARTIAL; Task Mining NOT_PROVEN; CP-249 inventory advanced not PASS |
@@ -315,7 +315,7 @@ SCOPE: media taxonomy; uploads; realtime A/V; camera/mic; transcript; Pulse devi
 EVIDENCE: 51 §§14–16, §38, §43; realtime media=NOT_PROVEN; biometrics=NOT_PROVEN; Pulse device registry=DOMAIN_LOCAL; frontline operator=PROVEN; Chat vision=CHAT_ONLY; OT PLC=NOT_PROVEN; Edge runtime=NOT_PROVEN
 RUNTIME_DIFF: NONE
 PLATFORM_BEHAVIOR_CHANGE: NONE
-CODE/CONFIG_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG/BEHAVIOR_CHANGE: NONE
 FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
 DÉLIA_NEW_CODE: NONE
 UNRESOLVED: media retention/consent class-specific; corporate STT/TTS; Edge MDM/factory net residual; OT safety PLC/interlocks; Process Intelligence + remaining C0.S0 thematic inventories
@@ -338,7 +338,7 @@ SCOPE: process evidence sources; event-log fitness; case/activity/time/grain; mi
 EVIDENCE: 51 §§26,29; Process Mining=NOT_PROVEN; Task Mining=NOT_PROVEN; Domain status/history=PARTIAL candidates; BPM engine=NOT_PROVEN; BPMN UI=DOCUMENTATION
 RUNTIME_DIFF: NONE
 PLATFORM_BEHAVIOR_CHANGE: NONE
-CODE/CONFIG_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG/BEHAVIOR_CHANGE: NONE
 FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
 DÉLIA_NEW_CODE: NONE
 UNRESOLVED: per-domain retention/completeness; shared EventLog contract; cross-service case correlation; Control Tower + remaining C0.S0 inventories
@@ -364,7 +364,7 @@ SCOPE: providers/models; routing/fallback; prompts; evals; Control Tower; regist
 EVIDENCE: 51 §30; Control Tower=NOT_PROVEN; Chat openai_compatible+ollama+admin=CHAT_ONLY; TM Kimi=DOMAIN_LOCAL; ModelRegistry=NOT_PROVEN; evals Chat PARTIAL SHA linkage
 RUNTIME_DIFF: NONE
 PLATFORM_BEHAVIOR_CHANGE: NONE
-CODE/CONFIG_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG/BEHAVIOR_CHANGE: NONE
 FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
 DÉLIA_NEW_CODE: NONE
 UNRESOLVED: platform ModelRegistry/PromptAsset; Control Tower UX; org cost budgets; DÉLIA decision-path runtime; Personal Memory + remaining C0.S0 inventories
@@ -679,7 +679,8 @@ DATE: 2026-09-16
 STEP: C0.S0-T2
 NAME: canonical persistence fix after architecture re-review
 HEAD_BEFORE: da4fb88f09c4cfc082e3cc236f10b5a9c8d26af2
-HEAD_AFTER: PENDING_CANONICAL_BINDING
+HEAD_AFTER: b54166b4bb9a8521fbf3b58a7147b926c292b4bf
+PERSISTENCE_COMMIT: b54166b4bb9a8521fbf3b58a7147b926c292b4bf
 STATUS: PLAN_ONLY
 RUNTIME_DIFF: NONE
 PROGRAM: PLANNED / NOT_STARTED
@@ -718,7 +719,7 @@ C6 → Task/Case/Room/Inbox + Recurring Work admin UX + Watch default OBSERVE/AD
 C7 → selected autonomous Watch ACT + advanced capability-scoped autonomy + Twin/Edge/Marketplace/optimization/scale
 ```
 
-C5 governed `ACT` and C7 advanced autonomous `ACT` are distinct. `PREPARE != ACT` remains invariant in every phase. Recurring Governed Work C5 is a bounded temporal trigger whose material occurrence revalidates live gates; it is not C6 Watch autonomous ACT and does not require L5.
+C5 governed `ACT` and C7 advanced autonomous `ACT` are distinct. `PREPARE != ACT` remains invariant in every phase. Recurring Governed Work C5 is a bounded temporal trigger whose material occurrence revalida live gates; it is not C6 Watch autonomous ACT and does not require L5.
 
 ## 8. Required C0.S0 automation/scheduling inventory
 
