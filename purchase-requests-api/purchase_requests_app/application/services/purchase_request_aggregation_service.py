@@ -37,6 +37,14 @@ GATEWAY_SORT_FIELDS: frozenset[str] = frozenset(
 
 LOCAL_SORT_FIELDS: frozenset[str] = frozenset({"overall_stage"})
 
+# overall_stage list sort: chunked list_lines (not export) with hard header cap.
+STAGE_SORT_MAX_HEADERS = 500
+STAGE_SORT_PAGE_SIZE = 200
+STAGE_SORT_TOO_LARGE_MESSAGE = (
+    "Ordenação por situação exige um recorte menor. "
+    "Reduza o período ou selecione uma unidade."
+)
+
 
 def normalize_list_sort_by(sort_by: str | None) -> str | None:
     key = (sort_by or "").strip()

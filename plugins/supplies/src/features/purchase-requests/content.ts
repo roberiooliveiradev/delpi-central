@@ -49,6 +49,8 @@ export const PURCHASE_REQUESTS_CONTENT = {
   noUnitsMessage:
     "Seu acesso não inclui unidades neste módulo. Peça o escopo canônico ao administrador.",
   error: "Não foi possível carregar as solicitações.",
+  stageSortTooLarge:
+    "Ordenação por situação exige um recorte menor. Reduza o período ou selecione uma unidade.",
   forbiddenUnit:
     "Você não tem permissão para esta unidade neste módulo. Escolha outra unidade liberada ou peça o acesso canônico ao administrador.",
   retry: "Tentar novamente",
@@ -80,6 +82,12 @@ export const PURCHASE_REQUESTS_CONTENT = {
 export function mapPurchaseRequestsFetchError(message: string): string {
   if (/403|forbidden/i.test(message)) {
     return PURCHASE_REQUESTS_CONTENT.forbiddenUnit;
+  }
+  if (
+    /recorte menor/i.test(message) ||
+    (/422/.test(message) && /situação|situacao|overall_stage|ordenação por situação/i.test(message))
+  ) {
+    return PURCHASE_REQUESTS_CONTENT.stageSortTooLarge;
   }
   return message || PURCHASE_REQUESTS_CONTENT.error;
 }

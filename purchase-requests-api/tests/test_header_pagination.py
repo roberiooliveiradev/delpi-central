@@ -257,7 +257,7 @@ def _stage_line(
 
 
 def test_overall_stage_sort_asc_is_global_before_page_cut() -> None:
-    """Positive: ASC stage order across full export set, then page slice."""
+    """Positive: ASC stage order across full list set, then page slice."""
     lines = [
         _stage_line(request_number="300", request_item="0001", stage_kind="completed"),
         _stage_line(request_number="100", request_item="0001", stage_kind="awaiting_order"),
@@ -265,7 +265,13 @@ def test_overall_stage_sort_asc_is_global_before_page_cut() -> None:
         _stage_line(request_number="150", request_item="0001", stage_kind="awaiting_order"),
     ]
     gateway = MagicMock()
-    gateway.export_lines.return_value = {"items": lines}
+    gateway.list_lines.return_value = {
+        "items": lines,
+        "page": 1,
+        "page_size": 200,
+        "total": 4,
+        "total_pages": 1,
+    }
     scope_repo = MagicMock()
     scope_repo.list_active_cost_centers_for_user.return_value = [
         {"branch": "02", "cost_center_code": "0413"}
@@ -284,10 +290,11 @@ def test_overall_stage_sort_asc_is_global_before_page_cut() -> None:
         page=1,
         page_size=2,
     )
-    gateway.list_lines.assert_not_called()
-    gateway.export_lines.assert_called_once()
-    export_params = gateway.export_lines.call_args.kwargs["params"]
-    assert "sort_by" not in export_params
+    gateway.export_lines.assert_not_called()
+    gateway.list_lines.assert_called()
+    list_params = gateway.list_lines.call_args.kwargs["params"]
+    assert "sort_by" not in list_params
+    assert list_params["page_size"] == "200"
     assert result["total"] == 4
     assert result["total_pages"] == 2
     assert [item["request_number"] for item in result["items"]] == ["100", "150"]
@@ -305,7 +312,13 @@ def test_overall_stage_sort_desc_sibling_and_stage_alias() -> None:
         _stage_line(request_number="300", request_item="0001", stage_kind="completed"),
     ]
     gateway = MagicMock()
-    gateway.export_lines.return_value = {"items": lines}
+    gateway.list_lines.return_value = {
+        "items": lines,
+        "page": 1,
+        "page_size": 200,
+        "total": 3,
+        "total_pages": 1,
+    }
     scope_repo = MagicMock()
     scope_repo.list_active_cost_centers_for_user.return_value = [
         {"branch": "02", "cost_center_code": "0413"}
@@ -324,9 +337,94 @@ def test_overall_stage_sort_desc_sibling_and_stage_alias() -> None:
         page=1,
         page_size=10,
     )
+    gateway.export_lines.assert_not_called()
     stages = [(item.get("derived") or {}).get("overall_stage") for item in result["items"]]
     assert stages == ["completed", "awaiting_receipt", "awaiting_order"]
     assert [item["request_number"] for item in result["items"]] == ["300", "200", "100"]
+
+
+def test_overall_stage_sort_rejects_when_headers_exceed_cap() -> None:
+    """Negative: header total above STAGE_SORT_MAX_HEADERS → 422 ValueError."""
+    gateway = MagicMock()
+    gateway.list_lines.return_value = {
+        "items": [_stage_line(request_number="1", request_item="0001", stage_kind="awaiting_order")],
+        "page": 1,
+        "page_size": 200,
+        "total": 501,
+        "total_pages": 3,
+    }
+    scope_repo = MagicMock()
+    scope_repo.list_active_cost_centers_for_user.return_value = [
+        {"branch": "02", "cost_center_code": "0413"}
+    ]
+    user = SimpleNamespace(
+        id="u1",
+        sub="u1",
+        is_superadmin=False,
+        permissions=["purchase-requests.access", "purchase-requests.unit.filial-02"],
+    )
+    try:
+        ListPurchaseRequestsUseCase(gateway=gateway, scope_repository=scope_repo).execute(
+            user=user,
+            branch="02",
+            sort_by="overall_stage",
+            sort_dir="asc",
+        )
+        raise AssertionError("expected ValueError for oversized stage sort")
+    except ValueError as exc:
+        assert "recorte menor" in str(exc)
+    gateway.list_lines.assert_called_once()
+    gateway.export_lines.assert_not_called()
+
+
+def test_overall_stage_sort_chunks_multiple_list_pages() -> None:
+    """Chunked list_lines accumulates pages under the header cap."""
+    page_one = [
+        _stage_line(request_number="100", request_item="0001", stage_kind="awaiting_order"),
+        _stage_line(request_number="200", request_item="0001", stage_kind="completed"),
+    ]
+    page_two = [
+        _stage_line(request_number="150", request_item="0001", stage_kind="awaiting_order"),
+    ]
+    gateway = MagicMock()
+    gateway.list_lines.side_effect = [
+        {
+            "items": page_one,
+            "page": 1,
+            "page_size": 200,
+            "total": 3,
+            "total_pages": 2,
+        },
+        {
+            "items": page_two,
+            "page": 2,
+            "page_size": 200,
+            "total": 3,
+            "total_pages": 2,
+        },
+    ]
+    scope_repo = MagicMock()
+    scope_repo.list_active_cost_centers_for_user.return_value = [
+        {"branch": "02", "cost_center_code": "0413"}
+    ]
+    user = SimpleNamespace(
+        id="u1",
+        sub="u1",
+        is_superadmin=False,
+        permissions=["purchase-requests.access", "purchase-requests.unit.filial-02"],
+    )
+    result = ListPurchaseRequestsUseCase(gateway=gateway, scope_repository=scope_repo).execute(
+        user=user,
+        branch="02",
+        sort_by="overall_stage",
+        sort_dir="asc",
+        page=1,
+        page_size=10,
+    )
+    assert gateway.list_lines.call_count == 2
+    gateway.export_lines.assert_not_called()
+    assert [item["request_number"] for item in result["items"]] == ["100", "150", "200"]
+    assert result["total"] == 3
 
 
 def test_invalid_sort_by_is_rejected() -> None:

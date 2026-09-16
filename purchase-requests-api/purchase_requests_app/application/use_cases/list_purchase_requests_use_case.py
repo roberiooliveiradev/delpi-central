@@ -11,6 +11,9 @@ from purchase_requests_app.application.security.purchase_requests_permissions im
 from purchase_requests_app.application.services.purchase_request_aggregation_service import (
     GATEWAY_SORT_FIELDS,
     LOCAL_SORT_FIELDS,
+    STAGE_SORT_MAX_HEADERS,
+    STAGE_SORT_PAGE_SIZE,
+    STAGE_SORT_TOO_LARGE_MESSAGE,
     PurchaseRequestAggregationService,
     normalize_list_sort_by,
 )
@@ -83,6 +86,7 @@ class ListPurchaseRequestsUseCase:
 
         if normalized_sort == "overall_stage":
             # overall_stage is owner-derived — never forward to api-delpi SQL.
+            # Chunked list_lines (capped) instead of uncapped export_lines.
             params = self._gateway_params(
                 branches=codes,
                 date_from=date_from,
@@ -97,7 +101,7 @@ class ListPurchaseRequestsUseCase:
                 sort_by=None,
                 sort_dir=None,
             )
-            payload = self._gateway.export_lines(params=params)
+            payload = self._collect_lines_for_stage_sort(params=params)
             return self._assemble_owner_sorted_page(
                 payload,
                 resolution=resolution,
@@ -313,6 +317,47 @@ class ListPurchaseRequestsUseCase:
             if cleaned:
                 params["requester_protheus_user_id"] = cleaned
         return params
+
+    def _collect_lines_for_stage_sort(
+        self,
+        *,
+        params: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Fetch all line pages via list_lines for owner-local overall_stage sort.
+
+        Caps by header ``total`` from the first page (api-delpi header grain).
+        """
+        first_params = {
+            **params,
+            "page": "1",
+            "page_size": str(STAGE_SORT_PAGE_SIZE),
+        }
+        first = self._gateway.list_lines(params=first_params)
+        try:
+            total = int(first.get("total") or 0)
+        except (TypeError, ValueError):
+            total = 0
+        if total > STAGE_SORT_MAX_HEADERS:
+            raise ValueError(STAGE_SORT_TOO_LARGE_MESSAGE)
+
+        items: list[Any] = list(first.get("items") or [])
+        try:
+            total_pages = int(first.get("total_pages") or 0)
+        except (TypeError, ValueError):
+            total_pages = 0
+        if total_pages <= 0 and total > 0:
+            total_pages = math.ceil(total / STAGE_SORT_PAGE_SIZE)
+
+        for page_num in range(2, total_pages + 1):
+            page_params = {
+                **params,
+                "page": str(page_num),
+                "page_size": str(STAGE_SORT_PAGE_SIZE),
+            }
+            payload = self._gateway.list_lines(params=page_params)
+            items.extend(payload.get("items") or [])
+
+        return {"items": items, "total": total}
 
     def _assemble_page(
         self,

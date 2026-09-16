@@ -24,7 +24,7 @@ class Settings:
         "http://delpi-purchase-requests-api:8000",
     )
     PURCHASE_REQUESTS_API_TIMEOUT_SECONDS = float(
-        os.getenv("PURCHASE_REQUESTS_API_TIMEOUT", "30")
+        os.getenv("PURCHASE_REQUESTS_API_TIMEOUT", "90")
     )
     STRATEGIC_INDICATORS_API_BASE_URL = os.getenv(
         "STRATEGIC_INDICATORS_API_BASE_URL",

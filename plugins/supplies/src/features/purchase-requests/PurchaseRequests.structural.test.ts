@@ -184,4 +184,18 @@ describe("PurchaseRequests feature", () => {
     expect(mapPurchaseRequestsFetchError("Request failed with status 403")).toMatch(/unidade/i);
     expect(mapPurchaseRequestsFetchError("timeout upstream")).toBe("timeout upstream");
   });
+
+  it("mapeia 422 de ordenação por situação para recorte menor (positive/sibling/negative)", () => {
+    expect(
+      mapPurchaseRequestsFetchError(
+        "Ordenação por situação exige um recorte menor. Reduza o período ou selecione uma unidade.",
+      ),
+    ).toMatch(/recorte menor/i);
+    expect(
+      mapPurchaseRequestsFetchError(
+        "[upstream_client_error] Ordenação por situação exige um recorte menor. Reduza o período ou selecione uma unidade.",
+      ),
+    ).toMatch(/recorte menor/i);
+    expect(mapPurchaseRequestsFetchError("timeout upstream")).toBe("timeout upstream");
+  });
 });

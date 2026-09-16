@@ -78,7 +78,7 @@ export const SP_HELP = {
   purchaseRequestsView:
     "Tabela ou Cards usam o mesmo recorte paginado. A preferência fica neste navegador e não muda dados nem permissões.",
   purchaseRequestsSort:
-    "Ordene pelo cabeçalho da tabela ou, em Cards, por «Ordenar por» + Crescente/Decrescente. Colunas: SC, item, produto, solicitante, centro de custo, abertura e situação. A URL guarda sort_by e sort_dir; F5 restaura a ordem no recorte inteiro (não só a página).",
+    "Ordene pelo cabeçalho da tabela ou, em Cards, por «Ordenar por» + Crescente/Decrescente. Colunas: SC, item, produto, solicitante, centro de custo, abertura e situação. A URL guarda sort_by e sort_dir; F5 restaura a ordem no recorte inteiro (não só a página). Situação processa o período selecionado e, se o volume for grande demais, pede um recorte menor (período ou unidade).",
   purchaseRequestsSortDirection:
     "Alterna crescente ou decrescente na mesma coluna. Vale para Cards e compartilha sort_by/sort_dir com a tabela.",
   purchaseRequestsPeriod:

@@ -197,7 +197,7 @@ Matriz após execução Phase 1 (não declara paridade total):
 | Table/Cards/Board selector | IMPLEMENTED (Tabela/Cards; Board não) | IMPLEMENTED (Tabela/Cards; Board não) |
 | Font / columns / reorder / persistence | IMPLEMENTED | IMPLEMENTED |
 | Excel/CSV export | IMPLEMENTED (XLSX + CSV legado; export capability) | IMPLEMENTED (XLSX, operations + units) |
-| Server-side sorting | IMPLEMENTED (request_number, request_item, product_code, product_description, issue_date, requester, cost_center; overall_stage owner-local via export+paginate) | IMPLEMENTED (8 colunas) |
+| Server-side sorting | IMPLEMENTED (request_number, request_item, product_code, product_description, issue_date, requester, cost_center; overall_stage owner-local via chunked list_lines + cap 500 headers) | IMPLEMENTED (8 colunas) |
 | Cards sort bar | IMPLEMENTED (`SuppliesDataCardsSortBar`) | IMPLEMENTED (`SuppliesDataCardsSortBar`) |
 | Entity links (SC/PC) | IMPLEMENTED | IMPLEMENTED |
 | Avatars / inline meter / coverage | COMMERCIAL_SPECIFIC | COMMERCIAL_SPECIFIC |
