@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `ARCHITECTURE_REVIEW_C0_S5` (`C0.S0..=C0.S4=APPROVED`; `C0.S5=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `INTEGRATION_CONTRACTS=FROZEN_CANDIDATE`; `C0.S6_AUTHORIZED=NO`; C0 permanece `NOT_STARTED`; `FOUNDATION_FREEZE=NOT APPROVED`; `DÉLIA_RUNTIME_DIFF=NONE`)
+**Próxima etapa:** `C0.S6 — RED contract/conformance/privacy/security harness` (`C0.S0..=C0.S5=APPROVED`; `INTEGRATION_CONTRACTS=FROZEN_ACCEPTED`; `C0.S6_AUTHORIZED=YES`; C0 permanece `NOT_STARTED`; `FOUNDATION_FREEZE=NOT APPROVED`; `DÉLIA_RUNTIME_DIFF=NONE`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -320,17 +320,18 @@ C0.S1 = APPROVED
 C0.S2 = APPROVED
 C0.S3 = APPROVED
 C0.S4 = APPROVED
+C0.S5 = APPROVED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
 ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_ACCEPTED
-C0.S5 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-INTEGRATION_CONTRACTS = FROZEN_CANDIDATE
-C0.S6_AUTHORIZED = NO
+INTEGRATION_CONTRACTS = FROZEN_ACCEPTED
+C0.S6_AUTHORIZED = YES
+C0.S6_EXECUTED = NO
 FOUNDATION_FREEZE = NOT APPROVED
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 DÉLIA_RUNTIME_DIFF = NONE
 NEW_RUNTIME_ABSTRACTIONS = NONE
-NEXT = ARCHITECTURE_REVIEW_C0_S5
+NEXT = C0.S6 — RED contract/conformance/privacy/security harness
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -418,7 +419,9 @@ Além de `49`, congelar:
 
 Congelar typed contracts para platform/domain/external/event/automation/**recurring-work trigger**/process/model/sandbox/edge boundaries. O contrato deve separar DÉLIA-owned recurring definition/occurrence correlation do scheduler físico. Nenhum provider SDK/tool protocol/scheduler-specific type vaza para Domain/Application canônicos.
 
-**C0.S5-T2 (docs):** contratos persistidos em `17` §22 (+ linkage `25` §19 + ledger §6.30). Estado: `CANDIDATE_FOR_ARCHITECTURE_REVIEW` / `INTEGRATION_CONTRACTS=FROZEN_CANDIDATE`. **Não** aceito; **não** autoriza C0.S6; `NEW_RUNTIME_ABSTRACTIONS=NONE`; `DÉLIA_RUNTIME_DIFF=NONE`. `ExecutorRef=CLOSED_NONISSUE`. Canonical source: `17` §22.
+**C0.S5-T2 (histórico):** contratos persistidos em `17` §22 (+ linkage `25` §19 + ledger §6.30) como `CANDIDATE_FOR_ARCHITECTURE_REVIEW`. Esse estado foi superseded pelo review abaixo; não apagar história.
+
+**C0.S5-T3 — PERSIST_ARCHITECTURE_REVIEW_DECISION:** `ARCHITECTURE_REVIEW_C0_S5` sobre `REVIEWED_HEAD=8d83383e9a9ff019132e7156d56e41643b168851`, `VERDICT=ACCEPT_WITH_RESIDUAL`, `C0.S5=APPROVED`, `INTEGRATION_CONTRACTS=FROZEN_ACCEPTED`, `C0.S6_AUTHORIZED=YES`, `BLOCKERS=NONE`, `EXECUTION_DRIFT=NONE`, `NEW_RUNTIME_ABSTRACTIONS=NONE`. Residual: `DOCUMENTATION_CONTRACT_TAXONOMY_RESIDUAL` (docs-only). `FOUNDATION_FREEZE=NOT APPROVED`, `PROGRAM=PLANNED / NOT_STARTED`, `C0=NOT_STARTED`, `DÉLIA_RUNTIME_DIFF=NONE`. **Nenhuma execução C0.S6 ocorre nesta tarefa.**
 
 ## C0.S6 — RED contract/conformance/privacy/security harness
 

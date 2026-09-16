@@ -398,9 +398,9 @@ C0.S3 = APPROVED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
 C0.S4 = APPROVED
 ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_ACCEPTED
-C0.S5 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-INTEGRATION_CONTRACTS = FROZEN_CANDIDATE
-C0.S6_AUTHORIZED = NO
+C0.S5 = APPROVED
+INTEGRATION_CONTRACTS = FROZEN_ACCEPTED
+C0.S6_AUTHORIZED = YES
 FOUNDATION_FREEZE = NOT APPROVED
 DÉLIA_RUNTIME_DIFF = NONE
 NEW_RUNTIME_ABSTRACTIONS = NONE
@@ -443,9 +443,10 @@ REVIEWED_HEAD = 7ac1fb930017bbabb05d8b1654941518f315c6a7
 VERDICT = ACCEPT_WITH_RESIDUAL
 ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_ACCEPTED
 C0.S4 = APPROVED
-C0.S5 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-INTEGRATION_CONTRACTS = FROZEN_CANDIDATE (see §22)
-C0.S6_AUTHORIZED = NO
+C0.S5 = APPROVED
+INTEGRATION_CONTRACTS = FROZEN_ACCEPTED (see §22)
+C0.S6_AUTHORIZED = YES
+C0.S6_EXECUTED = NO
 PHYSICAL_POSTGRES_CLUSTER = DEFER_PHYSICAL_PLACEMENT / TO_INVENTORY
 SecretRef = DEFER_TO_CONTRACT (no new shared primitive)
 OT ACTUATION = BLOCKED_BY_DEFAULT
@@ -457,7 +458,7 @@ Personal Memory != Organizational Knowledge
 cache/projection != authority
 NEW_RUNTIME_ABSTRACTIONS = NONE
 FOUNDATION_FREEZE = NOT APPROVED
-NEXT = ARCHITECTURE_REVIEW_C0_S5
+NEXT = C0.S6 — RED contract/conformance/privacy/security harness
 ```
 
 ## 4. Core producer → consumer graph
@@ -760,18 +761,21 @@ factual inventory
 
 No thematic capability may silently redefine frozen authorities.
 
-## 22. Integration contracts — C0.S5 freeze candidate
+## 22. Integration contracts — C0.S5 freeze accepted
 
-> Status: `FROZEN_CANDIDATE` / `CANDIDATE_FOR_ARCHITECTURE_REVIEW`. Não prova runtime. Não autoriza C0.S6. `NEW_RUNTIME_ABSTRACTIONS=NONE`. Foundation Freeze = NOT APPROVED.
+> Status: `FROZEN_ACCEPTED` / `APPROVED` via `ARCHITECTURE_REVIEW_C0_S5` (`REVIEWED_HEAD=8d83383e9a9ff019132e7156d56e41643b168851`; `VERDICT=ACCEPT_WITH_RESIDUAL`). Não prova runtime. Autoriza C0.S6; **não** executa C0.S6; `FOUNDATION_FREEZE=NOT APPROVED`.
 > Precedence: C0.S1–C0.S4 freezes are immutable input. Thematic specs cannot redefine owners/authorities.
+> Residual: `DOCUMENTATION_CONTRACT_TAXONOMY_RESIDUAL` — only `READ|ADVISE|PREPARE|ACT|VERIFY|SIGNAL` are operation characters; `SIMULATE`/`analysis`/`ingress`/`tech` are semantic/technical qualifiers (not AuthZ modes).
 
 ```text
-STATUS = FROZEN_CANDIDATE / CANDIDATE_FOR_ARCHITECTURE_REVIEW
-INTEGRATION_CONTRACTS = FROZEN_CANDIDATE
-C0.S0..C0.S4 = APPROVED
-C0.S5_AUTHORIZED = YES
-C0.S5 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-C0.S6_AUTHORIZED = NO
+STATUS = FROZEN_ACCEPTED
+REVIEW = ARCHITECTURE_REVIEW_C0_S5
+REVIEWED_HEAD = 8d83383e9a9ff019132e7156d56e41643b168851
+VERDICT = ACCEPT_WITH_RESIDUAL
+INTEGRATION_CONTRACTS = FROZEN_ACCEPTED
+C0.S0..C0.S5 = APPROVED
+C0.S6_AUTHORIZED = YES
+C0.S6_EXECUTED = NO
 AUTHORITY_MAP = FROZEN_ACCEPTED
 BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
@@ -781,12 +785,15 @@ FOUNDATION_FREEZE = NOT APPROVED
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 DÉLIA_RUNTIME_DIFF = NONE
-NEXT = ARCHITECTURE_REVIEW_C0_S5
+RESIDUAL = DOCUMENTATION_CONTRACT_TAXONOMY_RESIDUAL
+NEXT = C0.S6 — RED contract/conformance/privacy/security harness
 ```
 
 C0.S5 congela **contratos tipados de integração** (boundaries, AuthZ, READ/ADVISE/PREPARE/ACT/VERIFY, erros, idempotência, Outcome). Não cria código, OpenAPI implementada, endpoints, SDKs, scheduler, Hub, broker, migrations ou services.
 
 ### 22.0 Operation character vocabulary
+
+Canonical operation-character / authorization-mode vocabulary (**only**):
 
 ```text
 READ | ADVISE | PREPARE | ACT | VERIFY | SIGNAL
@@ -794,42 +801,55 @@ READ | ADVISE | PREPARE | ACT | VERIFY | SIGNAL
 
 ```text
 PREPARE = no side effect
-ACT = fresh execution context required; prepared intent alone does not authorize
+ACT = side-effecting operation requiring fresh execution context; prepared intent alone does not authorize
+VERIFY = authoritative postcondition/outcome verification
+SIGNAL = occurrence/event stimulus only
 PREPARE != ACT
+SIMULATE != APPLY
 ACT may not be inferred solely from HTTP verb / tool name / provider description / prompt / event / timer / scheduler / model output
+```
+
+Taxonomy residual (`DOCUMENTATION_CONTRACT_TAXONOMY_RESIDUAL` — documentation-only; no runtime enum/class):
+
+```text
+SIMULATE = semantic qualifier / behavior (not AuthZ mode); SIMULATE != APPLY
+analysis = purpose/semantic qualifier (not AuthZ mode)
+ingress = direction/purpose qualifier (not AuthZ mode)
+tech / Hub tech lifecycle = technical qualifier (not AuthZ mode)
+match = purpose qualifier for biometric READ (not AuthN/AuthZ)
 ```
 
 ### 22.1 Contract matrix
 
 | CONTRACT_ID | OWNER | CONSUMERS | CHARACTER | STATUS |
 |---|---|---|---|---|
-| DELIA.AUTHN.IDENTITY | Keycloak | DÉLIA API | READ / AuthN context | FROZEN_CANDIDATE |
-| DELIA.CORE.EFFECTIVE_ACCESS | Core | DÉLIA API | READ | FROZEN_CANDIDATE |
-| DELIA.PORTAL.HOST | Portal host + DÉLIA MFE | MFE/host | READ / UX host | FROZEN_CANDIDATE |
-| DELIA.DOMAIN.READ | Domain API (per op) | DÉLIA | READ | FROZEN_CANDIDATE |
-| DELIA.DOMAIN.ACTION | Domain API (per op) | DÉLIA | ACT (+ PREPARE path) | FROZEN_CANDIDATE |
-| DELIA.AUTOMATION.EXECUTION | Hub tech + DÉLIA orchestration | DÉLIA↔Hub | ACT/SIGNAL tech | FROZEN_CANDIDATE |
-| DELIA.SCHEDULER.OCCURRENCE | Physical scheduler (TO_INVENTORY) | DÉLIA | SIGNAL | FROZEN_CANDIDATE |
-| DELIA.EVENT.ENVELOPE | Source adapters → DÉLIA | Watch/Evidence/Work | SIGNAL | FROZEN_CANDIDATE |
-| DELIA.EXTERNAL.CONNECTION | Provider + DÉLIA connection metadata | DÉLIA | READ | FROZEN_CANDIDATE |
-| DELIA.EXTERNAL.RESOURCE | Provider | DÉLIA | READ | FROZEN_CANDIDATE |
-| DELIA.EXTERNAL.ACTION | Provider | DÉLIA | ACT (typed ops) | FROZEN_CANDIDATE |
-| DELIA.TEAMS | M365/Teams adapter under EXTERNAL | DÉLIA | READ/ACT split | TARGET / FROZEN_CANDIDATE boundary |
-| DELIA.MEDIA.INGRESS | Media owner + DÉLIA refs | DÉLIA | READ/ingress | FROZEN_CANDIDATE |
-| DELIA.BIOMETRIC.MATCH | Biometric specialized store | DÉLIA | READ/match | FROZEN_CANDIDATE |
-| DELIA.PROCESS.EVENTLOG | Process source owners | Process Intelligence | READ | FROZEN_CANDIDATE |
-| DELIA.ANALYSIS.EXECUTION | Sandbox boundary | DÉLIA analysis | READ/analysis | FROZEN_CANDIDATE |
-| DELIA.ARTIFACT | Artifact owner | DÉLIA/consumers | READ / governed ACT share | FROZEN_CANDIDATE |
-| DELIA.MODEL.INFERENCE | Model runtime (TO_INVENTORY) | DÉLIA | READ/ADVISE | FROZEN_CANDIDATE |
-| DELIA.SCENARIO.SIMULATE | Twin/scenario boundary | DÉLIA | ADVISE/SIMULATE | FROZEN_CANDIDATE |
-| DELIA.MCP.INVOCATION | MCP host (TO_INVENTORY) | DÉLIA | READ/ACT bounded | FROZEN_CANDIDATE |
-| DELIA.A2A.DELEGATION | A2A host (TO_INVENTORY) | DÉLIA | READ/ACT bounded | FROZEN_CANDIDATE |
-| DELIA.MARKETPLACE.ASSET | Marketplace metadata | Tower/consumers | READ | FROZEN_CANDIDATE |
-| DELIA.NOTIFICATION.REQUEST | Notification adapters | DÉLIA | ACT delivery | FROZEN_CANDIDATE |
-| DELIA.EDGE.SYNC | Edge device/adapters | DÉLIA | SIGNAL/sync | FROZEN_CANDIDATE |
-| DELIA.OT.OBSERVE_PREPARE | OT/industrial owners | DÉLIA | READ/ADVISE/PREPARE only | FROZEN_CANDIDATE |
-| DELIA.AUDIT.EVENT | Observability owner (TO_INVENTORY) | platform | SIGNAL/audit | FROZEN_CANDIDATE |
-| DELIA.OUTCOME.VERIFY | Domain/authoritative sources + DÉLIA | DÉLIA Work | VERIFY | FROZEN_CANDIDATE |
+| DELIA.AUTHN.IDENTITY | Keycloak | DÉLIA API | READ (AuthN context) | FROZEN_ACCEPTED |
+| DELIA.CORE.EFFECTIVE_ACCESS | Core | DÉLIA API | READ | FROZEN_ACCEPTED |
+| DELIA.PORTAL.HOST | Portal host + DÉLIA MFE | MFE/host | READ (UX host) | FROZEN_ACCEPTED |
+| DELIA.DOMAIN.READ | Domain API (per op) | DÉLIA | READ | FROZEN_ACCEPTED |
+| DELIA.DOMAIN.ACTION | Domain API (per op) | DÉLIA | ACT (+ PREPARE path) | FROZEN_ACCEPTED |
+| DELIA.AUTOMATION.EXECUTION | Hub tech + DÉLIA orchestration | DÉLIA↔Hub | ACT \| SIGNAL (tech=Hub lifecycle qualifier) | FROZEN_ACCEPTED |
+| DELIA.SCHEDULER.OCCURRENCE | Physical scheduler (TO_INVENTORY) | DÉLIA | SIGNAL | FROZEN_ACCEPTED |
+| DELIA.EVENT.ENVELOPE | Source adapters → DÉLIA | Watch/Evidence/Work | SIGNAL | FROZEN_ACCEPTED |
+| DELIA.EXTERNAL.CONNECTION | Provider + DÉLIA connection metadata | DÉLIA | READ | FROZEN_ACCEPTED |
+| DELIA.EXTERNAL.RESOURCE | Provider | DÉLIA | READ | FROZEN_ACCEPTED |
+| DELIA.EXTERNAL.ACTION | Provider | DÉLIA | ACT (typed ops) | FROZEN_ACCEPTED |
+| DELIA.TEAMS | M365/Teams adapter under EXTERNAL | DÉLIA | READ \| ACT (split ops) | TARGET / FROZEN_ACCEPTED boundary |
+| DELIA.MEDIA.INGRESS | Media owner + DÉLIA refs | DÉLIA | READ (ingress=direction/purpose) | FROZEN_ACCEPTED |
+| DELIA.BIOMETRIC.MATCH | Biometric specialized store | DÉLIA | READ (match=purpose; ≠AuthN/AuthZ) | FROZEN_ACCEPTED |
+| DELIA.PROCESS.EVENTLOG | Process source owners | Process Intelligence | READ | FROZEN_ACCEPTED |
+| DELIA.ANALYSIS.EXECUTION | Sandbox boundary | DÉLIA analysis | READ (analysis=purpose) | FROZEN_ACCEPTED |
+| DELIA.ARTIFACT | Artifact owner | DÉLIA/consumers | READ \| ACT (share=governed ACT) | FROZEN_ACCEPTED |
+| DELIA.MODEL.INFERENCE | Model runtime (TO_INVENTORY) | DÉLIA | READ \| ADVISE | FROZEN_ACCEPTED |
+| DELIA.SCENARIO.SIMULATE | Twin/scenario boundary | DÉLIA | ADVISE (SIMULATE=qualifier; ≠APPLY) | FROZEN_ACCEPTED |
+| DELIA.MCP.INVOCATION | MCP host (TO_INVENTORY) | DÉLIA | READ \| ACT (bounded) | FROZEN_ACCEPTED |
+| DELIA.A2A.DELEGATION | A2A host (TO_INVENTORY) | DÉLIA | READ \| ACT (bounded) | FROZEN_ACCEPTED |
+| DELIA.MARKETPLACE.ASSET | Marketplace metadata | Tower/consumers | READ | FROZEN_ACCEPTED |
+| DELIA.NOTIFICATION.REQUEST | Notification adapters | DÉLIA | ACT (delivery) | FROZEN_ACCEPTED |
+| DELIA.EDGE.SYNC | Edge device/adapters | DÉLIA | SIGNAL (sync=purpose) | FROZEN_ACCEPTED |
+| DELIA.OT.OBSERVE_PREPARE | OT/industrial owners | DÉLIA | READ \| ADVISE \| PREPARE (ACT forbidden) | FROZEN_ACCEPTED |
+| DELIA.AUDIT.EVENT | Observability owner (TO_INVENTORY) | platform | SIGNAL (audit=purpose) | FROZEN_ACCEPTED |
+| DELIA.OUTCOME.VERIFY | Domain/authoritative sources + DÉLIA | DÉLIA Work | VERIFY | FROZEN_ACCEPTED |
 
 ### 22.2 ExecutorRef / WorkspaceContext decisions
 
@@ -1026,7 +1046,7 @@ STATUS = FROZEN_CANDIDATE
 DELIA.TEAMS: provider-specific adapter under EXTERNAL; Teams ACL authoritative;
   meeting artifact!=Decision; webhook!=ACT; registration/scopes/subscriptions=TO_INVENTORY
 
-DELIA.MEDIA.INGRESS: MediaIngress{sourceRef, deviceRef?, sessionRef?, participantRefs[]?,
+DELIA.MEDIA.INGRESS: operation character=READ; ingress=direction/purpose; MediaIngress{sourceRef, deviceRef?, sessionRef?, participantRefs[]?,
   capturedAt, endedAt?, modality, classification, consentNoticeState?, capturePurpose,
   storageRef, retentionPolicyRef?, correlationContext}
   raw media not in generic EventEnvelope; raw!=transcript!=summary!=Evidence!=Decision!=action!=Outcome
@@ -1040,7 +1060,7 @@ DELIA.PROCESS.EVENTLOG: processRef, caseKey, activity, occurredAt, sourceRef, en
   actorRef? if justified, businessStatus?, schemaVersion, classification, sourceRevision?
   output=projection/analysis ≠ business SoT/employee truth/AuthZ; engine=TO_INVENTORY
 
-DELIA.ANALYSIS.EXECUTION: sandbox isolated; budgets/timeout/network/package policies;
+DELIA.ANALYSIS.EXECUTION: operation character=READ; analysis=purpose qualifier; sandbox isolated; budgets/timeout/network/package policies;
   no production DB credential / provider token / unrestricted host/private net / Domain mutation
   runtime=TO_INVENTORY
 
@@ -1050,7 +1070,7 @@ DELIA.ARTIFACT: artifactRef, ownerRef, version, classification, acl/policy, sour
   blob store=TO_INVENTORY
 
 DELIA.MODEL.INFERENCE: Prediction!=FACT; ModelRef!=approval; output!=permission; router!=approval
-DELIA.SCENARIO.SIMULATE: Scenario!=production; Twin!=SoT; SIMULATE!=APPLY; Apply=new live ACT context
+DELIA.SCENARIO.SIMULATE: operation character=ADVISE; SIMULATE=semantic qualifier (≠APPLY); Scenario!=production; Twin!=SoT; Apply=new live ACT context
 
 DELIA.MCP.INVOCATION / DELIA.A2A.DELEGATION: discovery!=approval; tool/agent metadata!=permission;
   never send CoT / whole conversation by default / ambient authority; runtime=TO_INVENTORY
