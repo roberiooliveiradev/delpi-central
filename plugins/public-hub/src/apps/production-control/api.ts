@@ -244,6 +244,51 @@ export async function fetchPublicWorkCenterPerformance(
   return envelope.data;
 }
 
+export type PublicDowntimeItem = {
+  reference_date: string | null;
+  production_order: string | null;
+  operation: string | null;
+  resource: string | null;
+  operator_name: string | null;
+  stop_reason: string | null;
+  stop_reason_description: string | null;
+  observation: string | null;
+  hours: number | null;
+};
+
+export type PublicWorkCenterDowntimeItems = {
+  branch: string;
+  work_center: string;
+  resources: string[];
+  period: { start_date: string; end_date: string };
+  shift: FactoryShift | null;
+  items: PublicDowntimeItem[];
+  summary: {
+    appointment_count: number;
+    total_hours: number;
+  };
+};
+
+export async function fetchPublicWorkCenterDowntimeItems(
+  token: string,
+  branch: string,
+  workCenter: string,
+): Promise<PublicWorkCenterDowntimeItems> {
+  const params = new URLSearchParams({ branch, workCenter });
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/performance/downtime-items?${params}`,
+    { headers: { Accept: "application/json" } },
+  );
+  if (!response.ok) {
+    throw new Error(await readError(response, "Paradas do turno indisponíveis."));
+  }
+  const envelope = (await response.json()) as ApiEnvelope<PublicWorkCenterDowntimeItems>;
+  if (envelope.success === false || !envelope.data) {
+    throw new Error(envelope.message || "Paradas do turno indisponíveis.");
+  }
+  return envelope.data;
+}
+
 export type PublicOperationAppointment = {
   produced_on: string | null;
   start_time: string | null;

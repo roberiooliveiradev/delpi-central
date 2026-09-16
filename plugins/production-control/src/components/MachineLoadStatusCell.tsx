@@ -3,19 +3,25 @@ import { createDashboardStatusBadge } from "@delpi/plugin-ui/index";
 import { copy } from "../content/copy";
 import type { MachineLoadOperation } from "../types";
 import {
-  isMachineLoadStarted,
+  isMachineLoadFinishedOperation,
   machineLoadStatusBadge,
+  resolveMachineLoadQueueStatus,
 } from "../utils/machineLoadStatus";
 
 const StatusBadge = createDashboardStatusBadge({ prefix: "ppc" });
 
 export function MachineLoadStatusCell({ operation }: { operation: MachineLoadOperation }) {
-  const badge = machineLoadStatusBadge(operation.production_status);
-  const running = operation.is_in_production;
-  const started = isMachineLoadStarted(operation.production_status);
-  const showOperator = (running || started) && Boolean(operation.active_operator_name);
-  const showStartedAt =
-    (running || started) && Boolean(operation.production_started_time);
+  const presentation = resolveMachineLoadQueueStatus(operation);
+  const badge = machineLoadStatusBadge(presentation);
+  const running = presentation === "in_progress";
+  const finished = isMachineLoadFinishedOperation(operation);
+  const hasHistory =
+    finished ||
+    operation.is_in_production ||
+    operation.production_status === "started" ||
+    operation.production_status === "in_progress";
+  const showOperator = hasHistory && Boolean(operation.active_operator_name);
+  const showStartedAt = hasHistory && Boolean(operation.production_started_time);
 
   return (
     <span className="ppc-load__status">
@@ -26,13 +32,17 @@ export function MachineLoadStatusCell({ operation }: { operation: MachineLoadOpe
       {showOperator ? (
         <span
           className={
-            started && !running
+            finished && !running
               ? "ppc-load__operator ppc-load__operator--started"
               : "ppc-load__operator"
           }
-          title={operation.active_operator_code ?? undefined}
+          title={
+            operation.active_operator_code
+              ? `${copy.machineLoad.status.operatorPrefix} · ${operation.active_operator_code}`
+              : copy.machineLoad.status.operatorPrefix
+          }
         >
-          {copy.machineLoad.status.operatorPrefix} · {operation.active_operator_name}
+          {operation.active_operator_name}
         </span>
       ) : null}
       {showStartedAt ? (

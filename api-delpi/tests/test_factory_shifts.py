@@ -77,6 +77,27 @@ def test_matches_factory_shift_filter_prefers_turno() -> None:
     assert matches_factory_shift_filter("10:00", shifts=())
 
 
+def test_factory_shift_hora_inicio_sql_predicate_day_and_overnight() -> None:
+    from app.domain.production.factory_shifts import (
+        factory_shift_hora_inicio_sql_predicate,
+    )
+
+    day = factory_shift_hora_inicio_sql_predicate(("1",))
+    assert day is not None
+    assert ">= '04:34'" in day
+    assert "<= '14:17'" in day
+    assert " OR " not in day
+
+    overnight = factory_shift_hora_inicio_sql_predicate(("3",))
+    assert overnight is not None
+    assert ">= '23:50'" in overnight
+    assert "<= '04:33'" in overnight
+    assert " OR " in overnight
+
+    assert factory_shift_hora_inicio_sql_predicate(()) is None
+    assert factory_shift_hora_inicio_sql_predicate(("9",)) is None
+
+
 def _at(hour: int, minute: int) -> datetime:
     return datetime(2026, 9, 14, hour, minute, tzinfo=ZoneInfo(FACTORY_TIMEZONE))
 

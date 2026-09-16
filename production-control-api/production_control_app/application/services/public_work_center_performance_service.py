@@ -122,6 +122,7 @@ class PublicWorkCenterPerformanceService:
                 resources=resources,
                 start=start,
                 today=today,
+                shift_id=(shift or {}).get("id"),
             ),
         }
         put_work_center_performance_cache(
@@ -172,6 +173,7 @@ class PublicWorkCenterPerformanceService:
                     start_date=start.isoformat(),
                     end_date=today.isoformat(),
                     work_center=work_center,
+                    shift=shift_id,
                 )
             )
             appointment_rows = _rows(
@@ -227,17 +229,20 @@ class PublicWorkCenterPerformanceService:
         resources: Iterable[str],
         start: date,
         today: date,
+        shift_id: str | None,
     ) -> dict[str, Any]:
         """Bloco degradável: se as paradas falharem, a eficiência continua respondendo."""
         # As paradas do BI são filtradas por recurso; um CT pode ter mais de um.
         resource_filter = ",".join(resources)
         try:
+            # KPI do hero: só o turno corrente (mesma regra da eficiência / HORA_INICIO).
             today_summary = _data(
                 self._gateway.fetch_unproductive_hours_summary(
                     branch=branch,
                     start_date=today.isoformat(),
                     end_date=today.isoformat(),
                     resource=resource_filter,
+                    shift=shift_id,
                 )
             ).get("summary")
             reason_rows = _rows(

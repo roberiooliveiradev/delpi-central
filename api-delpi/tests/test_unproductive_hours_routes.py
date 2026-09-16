@@ -257,6 +257,45 @@ def test_series_accepts_multiple_resources(
     assert _body(response)["data"]["items"] == []
 
 
+@patch(
+    "app.interface.http.routes.production.unproductive_hours_router"
+    ".build_get_production_unproductive_hours_items_use_case"
+)
+def test_items_forwards_shift_filter(
+    mock_builder, unproductive_hours_client: TestClient
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "periodo": {"dataInicio": "2026-09-16", "dataFim": "2026-09-16", "filial": "01"},
+        "items": [],
+        "page": 1,
+        "pageSize": 50,
+        "total": 0,
+        "totalPages": 0,
+        "sort": "date_desc",
+        "pagination": {
+            "page": 1,
+            "page_size": 50,
+            "total": 0,
+            "total_pages": 0,
+            "is_complete": True,
+        },
+    }
+    mock_builder.return_value = use_case
+
+    response = unproductive_hours_client.get(
+        "/production/unproductive-hours/items",
+        params={
+            "branch": "01",
+            "start_date": "2026-09-16",
+            "end_date": "2026-09-16",
+            "shift": "2",
+        },
+    )
+    assert response.status_code == 200
+    assert use_case.execute.call_args.args[0].shift == "2"
+
+
 def test_series_rejects_unsupported_granularity(
     unproductive_hours_client: TestClient,
 ) -> None:

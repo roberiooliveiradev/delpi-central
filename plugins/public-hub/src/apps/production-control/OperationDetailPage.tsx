@@ -348,6 +348,7 @@ function AppointmentsModal({
   const items = payload?.items ?? [];
   const count = payload?.summary.appointment_count ?? operation.appointment_count ?? 0;
   const totalQty = payload?.summary.produced_qty ?? null;
+  const lastItem = items.length > 0 ? items[items.length - 1] : null;
 
   return (
     <div
@@ -377,8 +378,8 @@ function AppointmentsModal({
           <Fact label="Último">
             {operation.last_appointment_date
               ? formatDateTime(operation.last_appointment_date)
-              : items[0]?.produced_on
-                ? formatAppointmentWhen(items[0].produced_on, items[0].start_time)
+              : lastItem?.produced_on
+                ? formatAppointmentWhen(lastItem.produced_on, lastItem.start_time)
                 : "—"}
           </Fact>
         </dl>

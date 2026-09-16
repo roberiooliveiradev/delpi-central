@@ -7,7 +7,7 @@ export const helpTooltips = {
   incompleteOrderSets:
     "Compara a estrutura do produto raiz (SG1, vigente na emissão da OP mãe) com as OPs criadas no mesmo conjunto. Falta = intermediário da estrutura sem OP. Sobra = OP de produto fora da estrutura. Matéria-prima não entra.",
   machineLoad:
-    "Fila de operações alocadas (SH8) congelada por filial e período. A fila de todos os CTs é carregada de uma vez, então trocar de aba é imediato. O status «em produção» vem da HZA e se atualiza sozinho a cada 30 s, sem recarregar a fila. «Já apontada» e o saldo da bancada olham o apontamento da própria operação — não o saldo do cabeçalho da OP, que só muda na última operação do roteiro. Use Atualizar para regenerar a programação a partir do TOTVS. O rastreio localiza o conjunto (C2_NUM) ou o produto (PA) em todos os CTs.",
+    "Fila de operações alocadas (SH8) congelada por filial e período. A fila de todos os CTs é carregada de uma vez, então trocar de aba é imediato. O status «em produção» vem da HZA e se atualiza sozinho a cada 30 s, sem recarregar a fila. «Já apontada» (linha tachada / Limpar fila) só vale quando o saldo da própria operação acabou — apontamento parcial continua na fila. O saldo do cabeçalho da OP só muda na última operação do roteiro. Use Atualizar para regenerar a programação a partir do TOTVS. O rastreio localiza o conjunto (C2_NUM) ou o produto (PA) em todos os CTs.",
   machineLoadLocate:
     "Conjunto = C2_NUM (6 primeiros dígitos da OP completa). Ex.: 10840401003 inclui todas as OPs 108404…. Produto (PA) lista os conjuntos daquele acabado.",
   branch: "Filial TOTVS usada na consulta (Santa Catarina ou Espírito Santo).",

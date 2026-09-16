@@ -35,6 +35,9 @@ from production_control_app.application.services.public_machine_load_product_mod
 from production_control_app.application.services.public_work_center_performance_service import (
     PublicWorkCenterPerformanceService,
 )
+from production_control_app.application.services.public_work_center_downtime_items_service import (
+    PublicWorkCenterDowntimeItemsService,
+)
 from production_control_app.application.services.public_operation_appointments_service import (
     PublicOperationAppointmentsService,
 )
@@ -246,6 +249,20 @@ def build_public_work_center_performance_service(
 ) -> PublicWorkCenterPerformanceService:
     resolved = gateway or DelpiProductionGateway()
     return PublicWorkCenterPerformanceService(
+        resolved,
+        access=build_public_cockpit_access_service(),
+        machine_load=build_machine_load_service(resolved, snapshots=snapshots),
+        branch_access=build_branch_access_service(),
+    )
+
+
+def build_public_work_center_downtime_items_service(
+    gateway: DelpiProductionGateway | None = None,
+    *,
+    snapshots: MachineLoadSnapshotRepositoryPort | None = None,
+) -> PublicWorkCenterDowntimeItemsService:
+    resolved = gateway or DelpiProductionGateway()
+    return PublicWorkCenterDowntimeItemsService(
         resolved,
         access=build_public_cockpit_access_service(),
         machine_load=build_machine_load_service(resolved, snapshots=snapshots),

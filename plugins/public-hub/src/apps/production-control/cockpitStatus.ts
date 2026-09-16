@@ -24,14 +24,23 @@ export function resolveStatus(operation: MachineLoadOperation): StatusView {
         : null,
     };
   }
-  if (balanceExhausted || operation.production_status === "started") {
+  // «Já apontada» / risco = só saldo da operação esgotado.
+  // production_status "started" só diz que houve apontamento (pode ser parcial).
+  if (balanceExhausted) {
     return {
       tone: "done",
       label: "Já apontada",
       operatorNote: operator ? `Último apontamento: ${operator}` : null,
     };
   }
-  return { tone: "queued", label: "Na fila", operatorNote: null };
+  return {
+    tone: "queued",
+    label: "Na fila",
+    operatorNote:
+      operator && operation.production_status === "started"
+        ? `Último apontamento: ${operator}`
+        : null,
+  };
 }
 
 /** Saldo da própria bancada; o do cabeçalho da OP só entra em snapshot antigo.
@@ -52,9 +61,7 @@ export function hasExhaustedOperationBalance(operation: MachineLoadOperation): b
 
 /** Já apontada / sem saldo — candidata a sumir no «Limpar fila» do cockpit. */
 export function isFinishedOperation(operation: MachineLoadOperation): boolean {
-  if (hasExhaustedOperationBalance(operation)) return true;
-  if (operation.is_in_production) return false;
-  return operation.production_status === "started";
+  return hasExhaustedOperationBalance(operation);
 }
 
 /** Chave estável de uma operação na fila — usada como id de navegação e como key do React. */

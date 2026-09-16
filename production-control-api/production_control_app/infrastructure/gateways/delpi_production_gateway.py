@@ -372,6 +372,7 @@ class DelpiProductionGateway:
         start_date: str,
         end_date: str,
         resource: str | None = None,
+        shift: str | None = None,
     ) -> dict[str, Any]:
         return self._request(
             "GET",
@@ -381,6 +382,34 @@ class DelpiProductionGateway:
                 "start_date": start_date,
                 "end_date": end_date,
                 "resource": resource,
+                "shift": shift,
+            },
+        )
+
+    def fetch_unproductive_hours_items(
+        self,
+        *,
+        branch: str,
+        start_date: str,
+        end_date: str,
+        resource: str | None = None,
+        shift: str | None = None,
+        page: int = 1,
+        page_size: int = 50,
+        sort: str = "date_desc",
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/production/unproductive-hours/items",
+            params={
+                "branch": branch,
+                "start_date": start_date,
+                "end_date": end_date,
+                "resource": resource,
+                "shift": shift,
+                "page": page,
+                "page_size": page_size,
+                "sort": sort,
             },
         )
 
