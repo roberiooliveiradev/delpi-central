@@ -23,7 +23,7 @@ Estado factual de inventory usa `PROVEN | TO_INVENTORY`; planejamento usa `PLANN
 
 | Fase | Status | Próximo step | Dependência |
 |---|---|---|---|
-| C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **C0.S0** | none |
+| C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **ARCHITECTURE_RE_REVIEW_C0_S0** | C0.S0 not approved |
 | C1 Standalone Bootstrap | LOCKED | — | C0.S7 FOUNDATION_FREEZE |
 | C2 Portal + Operational Context + Commands | LOCKED | — | C1 independence gate |
 | C3 Intelligence + Capability Foundations | LOCKED | — | C1+C2 foundations |
@@ -169,7 +169,7 @@ All ACT blocked until C7                        = SUPERSEDED_BY_C5_GOVERNED_ACT_
 | 2026-09-14 | C0.S0-B platform baseline revalidation at `5deb7fc2c2f1683ebc3f7224e8f6fba99e35854d` | PLAN_ONLY; inventory/docs; CP-154 remains PLANNED; no runtime |
 | 2026-09-14 | C0.S0-C identity/Core authorization baseline at `90730043c79cbb984a42db6bbbc615c03091094b` | PLAN_ONLY; inventory/docs; no runtime; dual permission path documented |
 | 2026-09-14 | C0.S0-D automation/workers/schedulers/RPA/recurring-work baseline at `566def330798b6fefe1eda37b3eebd3e46686aba` | PLAN_ONLY; inventory/docs; no runtime; Hub not physical |
-| 2026-09-14 | C0.S0-E event/webhook/connector baseline at `aa3d93eee710c1c74fe56b9f7a45cd652d19c827` (started `96d2591cd`) | PLAN_ONLY; inventory/docs; no EventBus/EventEnvelope runtime; Graph≠Teams |
+| 2026-09-14 | C0.S0-E event/webhook/connector baseline at `aa3d93eee710c1c74fe56b9f7a45cd652d19b95de28a` (started `96d2591cd`) | PLAN_ONLY; inventory/docs; no EventBus/EventEnvelope runtime; Graph≠Teams |
 | 2026-09-14 | C0.S0-F OAuth/secrets/vault/egress baseline at `c6c9c8370d037edfc3529821b9d63e138b153436` (started `633d10d2a`) | PLAN_ONLY; inventory/docs; vault/ExternalConnection NOT_PROVEN; Chat SSRF PARTIAL |
 | 2026-09-14 | C0.S0-G media/device/biometric/frontline baseline at `79378e48184a118df060e164111d7a5963c06f34` | PLAN_ONLY; realtime A/V NOT_PROVEN; biometrics NOT_PROVEN; Pulse device+operator DOMAIN_LOCAL; Edge/OT PLC NOT_PROVEN |
 | 2026-09-14 | C0.S0-H Process Intelligence / event-log baseline at `79378e48184a118df060e164111d7a5963c06f34` | PLAN_ONLY; mining runtime NOT_PROVEN; Domain histories PARTIAL; Task Mining NOT_PROVEN; CP-249 inventory advanced not PASS |
@@ -186,6 +186,7 @@ All ACT blocked until C7                        = SUPERSEDED_BY_C5_GOVERNED_ACT_
 | 2026-09-14 | C0.S0-S OT Safety / Interlocks / Approval Matrix residual at `bcf23241e058c03fae74dc24231adebdf34d297c` | PLAN_ONLY; safety PLC/e-stop NOT_PROVEN; Pulse IoT≠safety; Domain Capex four-eyes≠OT matrix; CP-178/179 inventory advanced not PASS |
 | 2026-09-14 | C0.S0-T residual consolidation / readiness at `f1cce79b871bf0b5dbd7b8d332ead53e3fb44716` | PLAN_ONLY; C0.S0_READINESS=READY_FOR_ARCHITECTURE_REVIEW; BLOCKING=NONE; RUNTIME_DIFF=NONE; not C0.S0 COMPLETE / not FOUNDATION_FREEZE |
 | 2026-09-14 | C0.S0-T canonical reconciliation after architecture review at `68ea41d9b5aac6216b5ab531f7cdccc93d64c3bc` (start `674670ce7`) | PLAN_ONLY; Core AuthZ dual-path ADR CLOSED (`633d10d2a`); /me/routes non-contract; 25 §14 linkage; CANDIDATE_FOR_ARCHITECTURE_RE_REVIEW; not C0.S0 COMPLETE |
+| 2026-09-16 | C0.S0-T2 canonical persistence fix after architecture re-review | PLAN_ONLY; current-state Next normalized; prior canonical reconciliation preserved; no runtime/phase change |
 
 Actual `HEAD_BEFORE` for **runtime** remains uncaptured (no DÉLIA runtime). Inventory evidence SHA for C0.S0-F is `c6c9c8370d037edfc3529821b9d63e138b153436`. Documentation-only commits do not advance execution status.
 
@@ -386,7 +387,7 @@ SCOPE: Personal Memory status; session vs durable; Core/Chat prefs/profiles; iso
 EVIDENCE: 51 §32; DÉLIA PM=NOT_PROVEN; Chat ai_memory_items+session memory+learning candidates=CHAT_ONLY; Core person_profile/notification prefs/favorites/consents=PROVEN≠AI memory; semantic profile=NOT_PROVEN
 RUNTIME_DIFF: NONE
 PLATFORM_BEHAVIOR_CHANGE: NONE
-CODE/CONFIG_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG/SCHEMA_BEHAVIOR_CHANGE: NONE
 FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
 DÉLIA_NEW_CODE: NONE
 UNRESOLVED: DÉLIA PM contract; memory retention/export/consent purpose; user privacy UX parity CP-271; Semantic Layer + remaining C0.S0 inventories
@@ -409,7 +410,7 @@ SCOPE: Semantic Layer status; entities/metrics/dimensions; glossaries; Business 
 EVIDENCE: 51 §33; Semantic Layer=NOT_PROVEN; Business Graph=NOT_PROVEN; Domain KPI endpoints=DOMAIN_LOCAL; Chat vocabulary=CHAT_ONLY; UI metric catalogs≠MetricDefinition; EntityRef shared=NOT_PROVEN
 RUNTIME_DIFF: NONE
 PLATFORM_BEHAVIOR_CHANGE: NONE
-CODE/CONFIG_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG/SCHEMA_BEHAVIOR_CHANGE: NONE
 FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
 DÉLIA_NEW_CODE: NONE
 UNRESOLVED: MetricDefinition registry; EntityRef freeze; definition conflict inventory completeness; Sandbox/Artifacts + remaining C0.S0 inventories
@@ -434,7 +435,7 @@ SCOPE: execution inventory; sandbox isolation; SQL/Python/notebook; artifacts ge
 EVIDENCE: 51 §§34–35; governed sandbox=NOT_PROVEN; Domain PDF/XLSX/uploads=DOMAIN_LOCAL; Chat OCR multiprocess=PARTIAL_SANDBOX CHAT_ONLY; /data/sql=READ_ONLY Domain; object store=NOT_PROVEN; ClamAV=NOT_PROVEN
 RUNTIME_DIFF: NONE
 PLATFORM_BEHAVIOR_CHANGE: NONE
-CODE/CONFIG_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG/SCHEMA_BEHAVIOR_CHANGE: NONE
 FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
 DÉLIA_NEW_CODE: NONE
 UNRESOLVED: sandbox isolation design; Artifact Workspace; malware scan; object-store ADR; Predictive/Twin + remaining C0.S0 inventories
@@ -459,7 +460,7 @@ SCOPE: predictive ML vs deterministic KPI; Chat anomaly/recs; optimization/simul
 EVIDENCE: 51 §§36–37; Predictive Engine=NOT_PROVEN; Twin=NOT_PROVEN; Domain cost-impact/TM scenarios/stock projection=DOMAIN_LOCAL deterministic; Chat anomaly/recs=CHAT_ONLY; OR-Tools=NOT_PROVEN; AI→machine=NOT_PROVEN
 RUNTIME_DIFF: NONE
 PLATFORM_BEHAVIOR_CHANGE: NONE
-CODE/CONFIG_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG/SCHEMA_BEHAVIOR_CHANGE: NONE
 FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
 DÉLIA_NEW_CODE: NONE
 UNRESOLVED: Predictive/Twin design; ground-truth owners for TARGET families in 64; MLOps/Marketplace; Edge residual; OT/MES residual; semantic "forecast" naming drift
@@ -484,7 +485,7 @@ SCOPE: Edge runtime; offline/AuthZ; Pulse identity/OTA/commands; store-and-forwa
 EVIDENCE: 51 §§38+43; Edge agent=NOT_PROVEN; Pulse BFF+ESP=DOMAIN_LOCAL; offline AuthZ expand=NOT_PROVEN; store-and-forward=NOT_PROVEN; industrial protocols=NOT_PROVEN; AI→machine=NOT_PROVEN; device token≠business AuthZ
 RUNTIME_DIFF: NONE
 PLATFORM_BEHAVIOR_CHANGE: NONE
-CODE/CONFIG_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG/SCHEMA_BEHAVIOR_CHANGE: NONE
 FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
 DÉLIA_NEW_CODE: NONE
 UNRESOLVED: MDM/OT zoning/time sync residual; OTA on-device hash verify; MES/historian; independent interlocks CP-179; MLOps/Marketplace; privacy/operational-context inventories
@@ -508,7 +509,7 @@ SCOPE: model lifecycle/registry; FT/evals; MLOps tooling; promotion/rollback; ca
 EVIDENCE: 51 §§39–40; Model Registry=NOT_PROVEN; MLOps=NOT_PROVEN; Marketplace=NOT_PROVEN; Chat FT/R1-R11=CHAT_ONLY; Core plugin manifests+/me/apps=PLATFORM_SHARED catalog; enabled≠AuthZ; cosign/SBOM=NOT_PROVEN
 RUNTIME_DIFF: NONE
 PLATFORM_BEHAVIOR_CHANGE: NONE
-CODE/CONFIG_BEHAVIOR_CHANGE: NONE
+CODE/CONFIG/SCHEMA_BEHAVIOR_CHANGE: NONE
 FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
 DÉLIA_NEW_CODE: NONE
 UNRESOLVED: Model Registry design; Marketplace product; SBOM/signing; privacy/operational-context inventories; MCP/A2A residual
@@ -669,6 +670,39 @@ FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; 25-requirements-t
 DÉLIA_NEW_CODE: NONE
 CORE_RUNTIME_CHANGE_IN_THIS_TASK: NONE
 NEXT_RECOMMENDED: ARCHITECTURE_RE_REVIEW_C0_S0 → (if accepted) C0.S1
+```
+
+## 6.21 C0.S0-T2 canonical persistence fix after architecture re-review
+
+```text
+DATE: 2026-09-16
+STEP: C0.S0-T2
+NAME: canonical persistence fix after architecture re-review
+HEAD_BEFORE: da4fb88f09c4cfc082e3cc236f10b5a9c8d26af2
+HEAD_AFTER: PENDING_CANONICAL_BINDING
+STATUS: PLAN_ONLY
+RUNTIME_DIFF: NONE
+PROGRAM: PLANNED / NOT_STARTED
+C0: NOT_STARTED
+C0.S0: NOT APPROVED
+FOUNDATION_S0_FREEZE: NOT APPROVED
+C0.S1_AUTHORIZED: NO
+CORE_EFFECTIVE_PERMISSION_DECISION: architecturally resolved at 633d10d2a0d246ae9f4a2a576d76ce935f30be01
+CORE_EFFECTIVE_PERMISSION_SEMANTICS: direct-role ∪ group-role ± user overrides; superadmin = all registered permission codes
+CORE_REQUEST_CONTEXT: authenticate() → PermissionResolver.resolve → g.current_user.permissions
+CORE_PROJECTIONS: /me + /me/apps + /me/access-profile aligned to effective permission context
+/me/routes: no current producer proven; current navigation = /me/apps → apps[].routes; old references = STALE_LEGACY_REFERENCE
+TRACEABILITY: reconciled in 25 §14 for CP-154, CP-194, CP-223, CP-226, CP-249, CP-256, CP-262, CP-268, CP-274, CP-280, CP-287, CP-295, CP-302, CP-311; inventory evidence != runtime implementation evidence; CP rows remain PLANNED
+A–T: consolidated in 51 §46
+PREVIOUS_DOCUMENTATION_PERSISTENCE_DRIFT: addressed
+RESOLVED_BY_RECONCILIATION: stale Core dual-path request-context narrative; stale /me vs /me/access-profile current-state divergence; missing canonical A–T closeout; missing final reconciliation/supersession evidence
+CARRY_FORWARD: list_user_ids_by_permission_code semantics (override-awareness not presumed); future override-cache invalidation; IamSyncService resolve→invalidate cleanup; broad Core suite health INCONCLUSIVE; domain-specific contract gaps not required for S0
+DEFERRED_BY_PHASE: physical Automation Hub runtime; Model Registry/MLOps; MCP/A2A; Marketplace; Business Graph runtime; Semantic Layer runtime; Personal Memory runtime; Workspace runtime; Sandbox/Artifact runtime; Predictive/Twin; Edge; OT actuation; Control Tower runtime
+CLOSED_NONISSUE: absence of future TARGET capabilities; absence of physical shared Automation Hub today; Chat not being DÉLIA runtime; lack of one CP per A–T subbrief
+STANDALONE_BOUNDARY: DÉLIA = standalone new application; no dependency on minha-delpi-ai-api runtime, plugins/minha-delpi-chat runtime, Chat tables, Chat agents, Chat prompts, Chat services or Chat migrations; Chat = reference/inventory only
+READINESS: CANDIDATE_FOR_ARCHITECTURE_RE_REVIEW
+NEXT: ARCHITECTURE_RE_REVIEW_C0_S0
+NOT_CLAIMED: C0.S0 complete; FOUNDATION_FREEZE approved; C0.S1 authorized; any CP PASS; any DÉLIA runtime
 ```
 
 ## 7. Canonical phase mapping
