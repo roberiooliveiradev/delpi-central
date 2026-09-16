@@ -42,7 +42,7 @@ Proibido criar shadow system of record apenas para facilitar IA.
 
 ## 2. Storage ownership
 
-Freeze candidato C0.S1 (`PLANNED / FROZEN_CANDIDATE`):
+Freeze aceito C0.S1 (`PLANNED / FROZEN_ACCEPTED`; `ARCHITECTURE_REVIEW_C0_S1`, `REVIEWED_HEAD=c822f0e72495256c3459a4b36b9c37a3bba95cbb`):
 
 ```text
 PERSISTENCE_OWNER = DÉLIA
