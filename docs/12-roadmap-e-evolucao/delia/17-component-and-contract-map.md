@@ -18,8 +18,8 @@
 | DELPI business rules/data/actions | Domain APIs/use cases | duplicar em DÉLIA/RPA/model |
 | navigation/hosting/published host context | Portal | free URL/control from LLM; host context as permission authority |
 | operational/intelligence context | DÉLIA over authorized refs/sources | second source of truth; context as authorization |
-| DÉLIA UI | MFE próprio da DÉLIA; path alvo `plugins/delia/` (`FROZEN_CANDIDATE` C0.S1) | Chat MFE as base |
-| DÉLIA runtime/persistence | API própria da DÉLIA; path alvo `delia-api/` (`FROZEN_CANDIDATE` C0.S1) | Chat API/tables/runtime authority |
+| DÉLIA UI | MFE próprio da DÉLIA; path `plugins/delia/` (`FROZEN_ACCEPTED` C0.S1) | Chat MFE as base |
+| DÉLIA runtime/persistence | API própria da DÉLIA; path `delia-api/` (`FROZEN_ACCEPTED` C0.S1) | Chat API/tables/runtime authority |
 | Business Action discovery | Domain OpenAPI + Action Catalog derivado pela DÉLIA | manual endpoint authority |
 | Evidence/Source/Outcome | DÉLIA contracts + source authority | feature-specific duplicate truth |
 | Business Graph | DÉLIA projection + domain source owners | graph as master database |
@@ -62,7 +62,7 @@ O owner físico de timer/scheduler também é `TO_INVENTORY` até C0. A DÉLIA p
 
 ## 2. Componentes físicos alvo
 
-C0.S1-T1 freeze candidato (`PLANNED / FROZEN_CANDIDATE`; autoridade de naming: `68`):
+C0.S1 freeze aceito (`PLANNED / FROZEN_ACCEPTED`; autoridade de naming: `68`; review em `c822f0e72495256c3459a4b36b9c37a3bba95cbb`):
 
 ```text
 Portal Shell
@@ -78,12 +78,12 @@ Automation Hub                # technical execution boundary TARGET; physical ru
 
 Histórico supersedido como target ativo: `plugins/minha-delpi-copilot`, `minha-delpi-copilot-api`.
 
-### 2.1 Physical ownership freeze candidate (C0.S1)
+### 2.1 Physical ownership freeze accepted (C0.S1)
 
 ```text
-delia-api standalone boundary          = APPROVED_CANDIDATE
-plugins/delia standalone boundary      = APPROVED_CANDIDATE
-own migration ownership                = APPROVED_CANDIDATE (delia-api/migrations/; ns=delia)
+delia-api standalone boundary          = APPROVED
+plugins/delia standalone boundary      = APPROVED
+own migration ownership                = APPROVED (delia-api/migrations/; ns=delia)
 separate DÉLIA admin service           = REJECTED (same API+MFE; conceptual /admin namespaces)
 separate Control Tower service         = REJECTED (MODULE_IN_DELIA)
 separate Process Intelligence service  = REJECTED (MODULE_IN_DELIA)
@@ -371,7 +371,7 @@ Recurring Work != Watch autonomous ACT
 
 A material occurrence must re-resolve current user/service identity and revalidate live Core/domain AuthZ, Policy/Decision, provider/connection and source scope before ACT.
 
-A scheduler implementation can be replaced by adapter/contract without changing Recurring Work domain semantics. C0 decides reuse versus adapter versus new implementation only after inventory and Abstraction Gate.
+A scheduler implementation can be replaced by adapter/contract without changing Recurring Work domain semantics. C0 decide reuse versus adapter versus new implementation only after inventory and Abstraction Gate.
 
 ## 13. Outcome ownership
 
