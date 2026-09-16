@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "discover_default_top_k": 5,
+  "discover_max_top_k": 10,
+  "execute_max_response_bytes": 65536,
+  "execute_max_items": 50,
+  "candidate_token_ttl_seconds": 300
+}

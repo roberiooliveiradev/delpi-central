@@ -24,13 +24,21 @@ API DELPI is the first major information source for Wave 1 — **not** the perma
 | Persona | masculina, profissional, cordial e objetiva |
 | Missão | semantic discovery, authorized retrieval, composition e explanation de informações autorizadas da DELPI — usando apenas as capabilities realmente conectadas |
 | Produto técnico consumido (V1) | DAVI / `api-delpi` Plugin/App + remote MCP |
-| Capability V1 disponível | `search_products` |
-| Estado | **draft/preview configurado e validado para desenvolvimento privado** |
+| Capability V1 disponível | `search_products` + broker `discover_delpi_information` / `execute_delpi_information` |
+| Estado | **draft/preview configurado**; dynamic broker **implemented in code** — provider tool discovery pending post-deploy |
 | Publicação ampla | **PENDING** |
 
 A persona, o nome e a aparência são UX. Não alteram identity, OAuth, RBAC, AuthZ, capability ou autoridade de negócio.
 
-Agent instructions must advertise **only actually available tools**. Missão ampla ≠ disponibilidade de tools além de `search_products` na V1.
+Agent instructions must advertise **only actually available tools**. After deploy/provider refresh, tools are:
+
+```text
+search_products
+discover_delpi_information
+execute_delpi_information
+```
+
+Missão ampla ≠ elegibilidade de todas as rotas API DELPI. Stock and most GETs remain quarantined until governance allowlist / AuthZ gates pass.
 
 ## CURRENT PROVEN V1
 

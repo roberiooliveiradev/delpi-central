@@ -71,15 +71,19 @@ def test_security_schemes_are_oauth2_without_rbac_codes() -> None:
 def test_list_tools_exposes_top_level_security_schemes() -> None:
     mcp = create_mcp_server()
     tools = asyncio.run(mcp.list_tools())
-    assert len(tools) == 1
-    tool = tools[0]
-    dumped = tool.model_dump(by_alias=True)
-    assert tool.name == MCP_TOOL_SEARCH_PRODUCTS
-    assert dumped.get("securitySchemes") == SEARCH_PRODUCTS_SECURITY_SCHEMES
-    assert tool.annotations.readOnlyHint is True
-    assert tool.annotations.destructiveHint is False
-    assert tool.annotations.openWorldHint is False
-    assert "ENGINEERING_LMP_ACCESS" not in json.dumps(dumped)
+    assert len(tools) == 3
+    assert [t.name for t in tools] == [
+        MCP_TOOL_SEARCH_PRODUCTS,
+        "discover_delpi_information",
+        "execute_delpi_information",
+    ]
+    for tool in tools:
+        dumped = tool.model_dump(by_alias=True)
+        assert dumped.get("securitySchemes") == SEARCH_PRODUCTS_SECURITY_SCHEMES
+        assert tool.annotations.readOnlyHint is True
+        assert tool.annotations.destructiveHint is False
+        assert tool.annotations.openWorldHint is False
+        assert "ENGINEERING_LMP_ACCESS" not in json.dumps(dumped)
 
 
 def test_resource_metadata_scopes_and_resource(monkeypatch) -> None:

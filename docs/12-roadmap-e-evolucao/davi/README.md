@@ -205,35 +205,24 @@ Existência futura de backend/runtime DAVI próprio permanece **`TO_INVENTORY`**
 
 ## 6. CURRENT PROVEN V1
 
-Para a superfície Workspace Agent / Plugin / MCP hoje comprovada (evidência detalhada nos docs de integração — não neste baseline):
+Para a superfície Workspace Agent / Plugin / MCP:
 
 ```text
-Workspace Agent DAVI
-→ DAVI App / Plugin
-→ END_USER_ACCOUNT
-→ remote MCP api-delpi
-→ owner-local external capability adapter
-→ canonical application use case
-→ canonical backend AuthZ
-→ authoritative DELPI source
+search_products (specialized Product Master fast path)
+discover_delpi_information + execute_delpi_information
+  (governed dynamic READ over DAVI_ELIGIBLE_READ technical actions)
 ```
 
-Preservar (não apagar / não rebaixar):
+Technical Action Catalog is **derived** from OpenAPI/baseline + `davi_external_read_allowlist.json`. It is **not** the semantic capability authority.
+
+Inventory evidence (generated, not runtime authority):
 
 ```text
-search_products
-READ
-END_USER_ACCOUNT
-mcp-api-delpi
-canonical MCP resource
-OAuth + PKCE S256
-bounded input schema
-field allowlist
-typed runtime output
-authenticated live result
-private Agent preview
-unsupported capability guard
+api-delpi/docs/integrations/evidence/davi-api-delpi-operation-inventory.json
+api-delpi/docs/integrations/evidence/davi-api-delpi-operation-inventory.md
 ```
+
+Stock (`get_product_stock`) remains **QUARANTINED** (`NEEDS_BRANCH_AUTHZ_EVIDENCE`) until branch AuthZ + external-processing gates are proven — prefer dynamic path over a stock-specific MCP tool once eligible.
 
 Pendências de rollout amplo permanecem pendentes (second-user identity, negative business AuthZ, MCP rate policy, wider publication).
 

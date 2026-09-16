@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "description": "Governance allowlist for DAVI dynamic READ over API DELPI. Not a semantic capability registry. Entries require explicit external-processing approval.",
+  "externalProcessing": "APPROVED_WITH_RESTRICTIONS",
+  "dataClassification": "INTERNAL",
+  "operations": [
+    {
+      "operationId": "search_products",
+      "reason": "Product Master V1 already approved for external MCP/GPT projection"
+    },
+    {
+      "operationId": "get_product_detail",
+      "reason": "Product Master detail READ companion to search_products; same AuthZ family"
+    },
+    {
+      "operationId": "get_product_summary",
+      "reason": "Lightweight product snapshot READ; stock nested best-effort remains secondary"
+    }
+  ]
+}

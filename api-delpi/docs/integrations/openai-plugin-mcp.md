@@ -35,6 +35,7 @@ DAVI is branding/orchestration identity — **not** an authorization authority.
 | Keycloak client | `mcp-api-delpi` |
 | MCP resource | `https://minhadelpi.com.br/apps/api-delpi/mcp` |
 | V1 business tool | `search_products` |
+| Dynamic READ broker | `discover_delpi_information` + `execute_delpi_information` (**CURRENT PROVEN in code/tests**; live provider discovery pending post-deploy) |
 
 ## Architecture status
 
@@ -68,10 +69,23 @@ ChatGPT / Codex / approved provider surface
   → Keycloak end-user identity
   → MCP Streamable HTTP /apps/api-delpi/mcp
   → interface/mcp adapter
-  → application/external_capabilities
-  → SearchProducts use case
+  → search_products (specialized fast path)
+     and/or discover_delpi_information → execute_delpi_information
+     (governed dynamic READ over allowlisted technical actions)
   → canonical backend AuthZ
   → authoritative source
+```
+
+Dynamic READ notes:
+
+```text
+Technical Action Catalog = derived from OpenAPI/baseline + governance allowlist
+Action Catalog != semantic capability authority
+MCP tools advertised to the Agent = bounded broker (+ search_products)
+OpenAPI whole-document is never sent per turn
+Arbitrary URL/path/method/operationId/SQL = rejected
+Stock (get_product_stock) = QUARANTINED (NEEDS_BRANCH_AUTHZ_EVIDENCE)
+Inventory evidence = docs/integrations/evidence/davi-api-delpi-operation-inventory.*
 ```
 
 This chain is **CURRENT PROVEN V1** for the API DELPI information source. It is **not** the universal DAVI TARGET architecture (see `docs/12-roadmap-e-evolucao/davi/README.md`).

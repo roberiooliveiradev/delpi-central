@@ -115,10 +115,14 @@ def test_product_search_service_does_not_import_composition_root() -> None:
     assert "build_search_products_use_case" not in text
 
 
-def test_mcp_server_exposes_only_search_products_with_annotations() -> None:
+def test_mcp_server_exposes_v1_and_dynamic_broker_tools_with_annotations() -> None:
     mcp = create_mcp_server()
     tools = mcp._tool_manager.list_tools()
-    assert [t.name for t in tools] == [MCP_TOOL_SEARCH_PRODUCTS]
+    assert [t.name for t in tools] == [
+        MCP_TOOL_SEARCH_PRODUCTS,
+        "discover_delpi_information",
+        "execute_delpi_information",
+    ]
     tool = tools[0]
     assert tool.title == "Search DELPI products"
     annotations = tool.annotations
@@ -166,7 +170,11 @@ def test_mcp_tool_sanitizes_generic_failure(mock_search) -> None:
 async def test_mcp_tools_list_contract_has_input_limits_and_typed_output() -> None:
     mcp = create_mcp_server()
     tools = await mcp.list_tools()
-    assert [t.name for t in tools] == [MCP_TOOL_SEARCH_PRODUCTS]
+    assert [t.name for t in tools] == [
+        MCP_TOOL_SEARCH_PRODUCTS,
+        "discover_delpi_information",
+        "execute_delpi_information",
+    ]
     tool = tools[0]
     schema = tool.inputSchema
     assert schema["type"] == "object"

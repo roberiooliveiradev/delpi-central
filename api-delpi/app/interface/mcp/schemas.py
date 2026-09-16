@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.application.external_capabilities.constants import (
@@ -61,5 +63,41 @@ def search_products_output_json_schema() -> dict:
     """Canonical MCP outputSchema matching runtime structuredContent."""
     schema = SearchProductsOutput.model_json_schema()
     schema["title"] = "search_productsOutput"
+    schema["additionalProperties"] = False
+    return schema
+
+
+class DiscoverDelpiInformationInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    query: str = Field(..., min_length=1, description="Natural-language information need")
+    top_k: int | None = Field(
+        default=None,
+        ge=1,
+        le=10,
+        description="Bounded candidate count (optional)",
+    )
+
+
+class ExecuteDelpiInformationInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    candidate_token: str = Field(..., min_length=1, description="Opaque token from discovery")
+    arguments: dict[str, Any] | None = Field(
+        default=None,
+        description="Schema-bounded arguments for the discovered candidate",
+    )
+
+
+def discover_delpi_information_input_json_schema() -> dict:
+    schema = DiscoverDelpiInformationInput.model_json_schema()
+    schema["title"] = "discover_delpi_informationArguments"
+    schema["additionalProperties"] = False
+    return schema
+
+
+def execute_delpi_information_input_json_schema() -> dict:
+    schema = ExecuteDelpiInformationInput.model_json_schema()
+    schema["title"] = "execute_delpi_informationArguments"
     schema["additionalProperties"] = False
     return schema
