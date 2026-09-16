@@ -1,4 +1,4 @@
-"""External Product Master schemas for MCP / GPT Actions contracts."""
+"""MCP transport schemas for DAVI / api-delpi tools (interface adapter boundary)."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from app.application.external_capabilities.constants import (
 
 
 class SearchProductsInput(BaseModel):
-    """Strict MCP/GPT input for Product Master search (closed schema)."""
+    """Strict MCP input for Product Master search (closed schema)."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -53,7 +53,6 @@ def search_products_input_json_schema() -> dict:
     """Canonical flat MCP inputSchema derived from SearchProductsInput."""
     schema = SearchProductsInput.model_json_schema()
     schema["title"] = "search_productsArguments"
-    # Keep allowlist explicit for model clients.
     schema["additionalProperties"] = False
     return schema
 

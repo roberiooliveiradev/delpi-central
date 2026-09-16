@@ -16,12 +16,6 @@ from app.application.external_capabilities.constants import (
     MCP_TOOL_SEARCH_PRODUCTS_TITLE,
     PRODUCT_SEARCH_DEFAULT_PAGE_SIZE,
 )
-from app.application.external_capabilities.product_search_schemas import (
-    SearchProductsInput,
-    SearchProductsOutput,
-    search_products_input_json_schema,
-    search_products_output_json_schema,
-)
 from app.application.external_capabilities.product_search_service import search_products
 from app.interface.mcp.branding import DAVI_MCP_INSTRUCTIONS
 from app.interface.mcp.oauth_contract import (
@@ -29,6 +23,12 @@ from app.interface.mcp.oauth_contract import (
     mcp_www_authenticate_meta,
 )
 from app.interface.mcp.resource_metadata import public_host_allowed_for_mcp
+from app.interface.mcp.schemas import (
+    SearchProductsInput,
+    SearchProductsOutput,
+    search_products_input_json_schema,
+    search_products_output_json_schema,
+)
 from app.utils.logger import log_error
 
 # Re-export for existing test imports that historically used server.SearchProductsInput.

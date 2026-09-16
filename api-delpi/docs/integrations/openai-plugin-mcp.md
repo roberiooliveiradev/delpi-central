@@ -259,7 +259,7 @@ No stock, pricing, supplier, customer, sales, invoices, finance, SQL, generic pr
 ## MCP tool contract (PLUGIN-006)
 
 Canonical schema owner: `SearchProductsInput` / `SearchProductsOutput` in
-`app/application/external_capabilities/product_search_schemas.py`.
+`app/interface/mcp/schemas.py` (MCP adapter boundary; Application owns constants/projection only).
 
 `tools/list` for `search_products` must advertise:
 

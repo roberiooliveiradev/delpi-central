@@ -28,7 +28,7 @@ from app.interface.mcp.resource_metadata import (
     build_oauth_protected_resource_metadata,
     www_authenticate_challenge,
 )
-from app.application.external_capabilities.product_search_schemas import (
+from app.interface.mcp.schemas import (
     SearchProductsInput,
 )
 from app.interface.mcp.server import (
