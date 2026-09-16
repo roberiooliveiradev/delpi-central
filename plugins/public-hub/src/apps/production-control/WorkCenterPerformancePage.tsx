@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { CSSProperties, ReactNode } from "react";
+import { ArrowLeft } from "lucide-react";
 // MF: import estático nomeado. lazy+dynamic do Index devolvia undefined → React #306.
 import { ConfigurableSeriesChart } from "@delpi/plugin-ui/index";
 import type { PublicWorkCenterPerformance } from "./api";
@@ -84,8 +85,14 @@ export function WorkCenterPerformancePage({
           ) : null
         }
         lead={
-          <button type="button" className="pcp-pub__back" onClick={onBack}>
-            <span aria-hidden="true">←</span> Voltar para a fila
+          <button
+            type="button"
+            className="pcp-pub__back pcp-pub__back--icon"
+            onClick={onBack}
+            aria-label="Voltar para a fila"
+            title="Voltar para a fila"
+          >
+            <ArrowLeft size={22} strokeWidth={2.4} aria-hidden="true" />
           </button>
         }
       />
@@ -99,9 +106,10 @@ export function WorkCenterPerformancePage({
         {performance ? (
           <>
             <p className="pcp-pub__notice">
-              Números do posto inteiro, sem identificação individual. Período de{" "}
+              Números do posto no turno e no período. Período de{" "}
               {formatDate(performance.period.start_date)} a{" "}
-              {formatDate(performance.period.end_date)}.
+              {formatDate(performance.period.end_date)}. Sem login do operador e
+              sem valores em R$.
             </p>
 
             <h2 className="pcp-pub__detail-section">Eficiência</h2>
@@ -184,8 +192,10 @@ export function WorkCenterPerformancePage({
                 <table className="pcp-pub__table">
                   <thead>
                     <tr>
+                      <th scope="col">PA</th>
                       <th scope="col">OP</th>
                       <th scope="col">Operação</th>
+                      <th scope="col">Operador</th>
                       <th scope="col">Quantidade</th>
                       <th scope="col">Previsto</th>
                       <th scope="col">Real</th>
@@ -195,11 +205,17 @@ export function WorkCenterPerformancePage({
                   <tbody>
                     {efficiency.appointments.map((row, index) => (
                       <tr key={`${row.production_order}::${row.operation}::${index}`}>
-                        <td>{row.production_order || "—"}</td>
+                        <td className="pcp-pub__num">
+                          <strong className="pcp-pub__product-code--pa">
+                            {row.pa_product_code?.trim() || row.product_code || "—"}
+                          </strong>
+                        </td>
+                        <td className="pcp-pub__num">{row.production_order || "—"}</td>
                         <td>
                           {row.operation}
                           {row.operation_description ? ` · ${row.operation_description}` : ""}
                         </td>
+                        <td>{row.operator_name?.trim() || "—"}</td>
                         <td className="pcp-pub__num">{formatQty(row.quantity)}</td>
                         <td className="pcp-pub__num">{formatHours(row.planned_hours)}</td>
                         <td className="pcp-pub__num">{formatHours(row.real_hours)}</td>
