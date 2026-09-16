@@ -4,7 +4,7 @@
 > **Produto:** aplicação standalone nova de Continuous Operational Intelligence  
 > **Autoridade de execução:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 > **Requirements:** `CP-001…CP-316`  
-> **Próxima etapa:** `ARCHITECTURE_REVIEW_C0_S6`
+> **Próxima etapa:** `C0.S7 — FOUNDATION_FREEZE review`
 
 Este documento mostra a evolução macro. Ordem atômica, dependências e gates vivem somente em `16`. Nada neste roadmap prova runtime implementado ou fase concluída.
 

@@ -4,7 +4,7 @@
 > **Produto:** aplicação nova e standalone de Continuous Operational Intelligence
 > **Requirements:** `CP-001…CP-316`
 > **Specs temáticas:** `53–66`
-> **Próxima etapa:** `ARCHITECTURE_REVIEW_C0_S6` (`C0.S0..=C0.S5=APPROVED`; `C0.S6=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `RED_HARNESS=FROZEN_CANDIDATE`; `C0.S7_AUTHORIZED=NO`)
+> **Próxima etapa:** `C0.S7 — FOUNDATION_FREEZE review` (`C0.S0..=C0.S6=APPROVED`; `RED_HARNESS=FROZEN_ACCEPTED`; `C0.S7_AUTHORIZED=YES`; `C0.S7_EXECUTED=NO`)
 > **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
 > **Execution state:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
 > **Naming authority:** [`68-delia-product-identity-and-naming.md`](./68-delia-product-identity-and-naming.md)
@@ -243,13 +243,14 @@ C0.S5 = APPROVED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
 ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_ACCEPTED
 INTEGRATION_CONTRACTS = FROZEN_ACCEPTED
-C0.S6 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-RED_CONTRACT_CONFORMANCE_PRIVACY_SECURITY_HARNESS = FROZEN_CANDIDATE
-C0.S7_AUTHORIZED = NO
+C0.S6 = APPROVED
+RED_CONTRACT_CONFORMANCE_PRIVACY_SECURITY_HARNESS = FROZEN_ACCEPTED
+C0.S7_AUTHORIZED = YES
+C0.S7_EXECUTED = NO
 FOUNDATION_FREEZE = NOT APPROVED
 RUNTIME_DIFF = NONE
 NEW_RUNTIME_ABSTRACTIONS = NONE
-NEXT = ARCHITECTURE_REVIEW_C0_S6
+NEXT = C0.S7 — FOUNDATION_FREEZE review
 ```
 
 A formalização de `CP-311–CP-316` é documentação/planejamento. Não altera os estados acima nem prova scheduler, email provider ou Recurring Work runtime.
