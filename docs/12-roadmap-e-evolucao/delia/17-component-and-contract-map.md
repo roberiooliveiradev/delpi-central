@@ -8,7 +8,8 @@
 **Specs temáticas:** `53–66`
 
 > Este documento define **ownership e contratos alvo**. Ele não prova que um runtime, serviço, tabela, adapter ou capability já exista. Existência e estado atual devem ser classificados por evidência como `PROVEN`, `TO_INVENTORY`, `PLANNED` ou `TARGET` conforme o caso.  
-> **C0.S2-T1:** matriz de authorities/bounded contexts = `FROZEN_CANDIDATE` (`CANDIDATE_FOR_ARCHITECTURE_REVIEW`). Não é aceite; não autoriza C0.S3; não é `FOUNDATION_FREEZE`.
+> **C0.S2-T1 (histórico):** matriz de authorities/bounded contexts foi persistida como `FROZEN_CANDIDATE` / `CANDIDATE_FOR_ARCHITECTURE_REVIEW`.  
+> **C0.S2-T2:** `ARCHITECTURE_REVIEW_C0_S2` sobre `REVIEWED_HEAD=8bae12a250f2362603211a93c65bb098b8b1e9aa`, `VERDICT=ACCEPT_WITH_RESIDUAL`; `AUTHORITY_MAP=FROZEN_ACCEPTED`; `BOUNDED_CONTEXT_MAP=FROZEN_ACCEPTED`; `C0.S2=APPROVED`; `C0.S3_AUTHORIZED=YES`; `FOUNDATION_FREEZE=NOT APPROVED`; `DÉLIA_RUNTIME_DIFF=NONE`.
 
 ## 1. Owners canônicos
 
@@ -111,18 +112,25 @@ PostgreSQL cluster placement físico = `DEFERRED` (reuse de cluster ≠ ownershi
 | DÉLIA ↔ external providers | provider + DÉLIA adapter | DÉLIA API | outbound/inbound callbacks | provider scopes ≠ Core perms | governed R/W | egress/trust | YES | TARGET |
 | DÉLIA ↔ OT / industrial | OT/safety owner | DÉLIA (adapter only) | never safety control | OT/safety independent | read/prepare bounded | safety airgap | YES | TARGET; Edge deferred |
 
-### 2.3 C0.S2 — Authorities / bounded contexts freeze candidate
+### 2.3 C0.S2 — Authorities / bounded contexts freeze accepted
 
 ```text
-STATUS = FROZEN_CANDIDATE / CANDIDATE_FOR_ARCHITECTURE_REVIEW
+STATUS = FROZEN_ACCEPTED
+REVIEW = ARCHITECTURE_REVIEW_C0_S2
+REVIEWED_HEAD = 8bae12a250f2362603211a93c65bb098b8b1e9aa
+VERDICT = ACCEPT_WITH_RESIDUAL
 C0.S0 = APPROVED
 C0.S1 = APPROVED
-C0.S2_AUTHORIZED = YES
-C0.S3_AUTHORIZED = NO
+C0.S2 = APPROVED
+AUTHORITY_MAP = FROZEN_ACCEPTED
+BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
+C0.S3_AUTHORIZED = YES
 FOUNDATION_FREEZE = NOT APPROVED
 NEW_RUNTIME_ABSTRACTIONS = NONE
 SHARED_PRIMITIVES = DEFERRED_TO_C0_S3
 DÉLIA_RUNTIME_DIFF = NONE
+BLOCKERS = NONE
+EXECUTION_DRIFT = NONE
 ```
 
 C0.S2 congela **boundaries de responsabilidade**. Não inventa schemas/ports/adapters/engines/packages/shared primitives.
