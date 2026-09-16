@@ -237,8 +237,9 @@ ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_ACCEPTED
 C0.S0..C0.S4 = APPROVED
 C0.S5 = APPROVED
 INTEGRATION_CONTRACTS = FROZEN_ACCEPTED (see 17 §22)
-C0.S6_AUTHORIZED = YES
-C0.S6_EXECUTED = NO
+C0.S6 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+RED_CONTRACT_CONFORMANCE_PRIVACY_SECURITY_HARNESS = FROZEN_CANDIDATE (see 20)
+C0.S7_AUTHORIZED = NO
 AUTHORITY_MAP = FROZEN_ACCEPTED
 BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
@@ -247,7 +248,7 @@ FOUNDATION_FREEZE = NOT APPROVED
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 DÉLIA_RUNTIME_DIFF = NONE
-NEXT = C0.S6 — RED contract/conformance/privacy/security harness
+NEXT = ARCHITECTURE_REVIEW_C0_S6
 ```
 
 C0.S4 congela **regras arquiteturais** de ownership de persistência, classificação, privacy, secrets/encryption, concorrência/idempotência, state machines, identidade background, segurança temporal de Recurring Work, Evidence/Outcome, Prediction/Scenario/Twin, biometric/media, conexões externas, audit/eval, Process/Task Mining, Sandbox/Artifact, Model/Marketplace/Tower, Edge/offline, OT/safety, falha/recovery e cache/projection.

@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C0.S6 — RED contract/conformance/privacy/security harness` (`C0.S0..=C0.S5=APPROVED`; `INTEGRATION_CONTRACTS=FROZEN_ACCEPTED`; `C0.S6_AUTHORIZED=YES`; C0 permanece `NOT_STARTED`; `FOUNDATION_FREEZE=NOT APPROVED`; `DÉLIA_RUNTIME_DIFF=NONE`)
+**Próxima etapa:** `ARCHITECTURE_REVIEW_C0_S6` (`C0.S0..=C0.S5=APPROVED`; `C0.S6=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `RED_CONTRACT_CONFORMANCE_PRIVACY_SECURITY_HARNESS=FROZEN_CANDIDATE`; `C0.S7_AUTHORIZED=NO`; C0 permanece `NOT_STARTED`; `FOUNDATION_FREEZE=NOT APPROVED`; `DÉLIA_RUNTIME_DIFF=NONE`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -324,14 +324,15 @@ C0.S5 = APPROVED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
 ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_ACCEPTED
 INTEGRATION_CONTRACTS = FROZEN_ACCEPTED
-C0.S6_AUTHORIZED = YES
-C0.S6_EXECUTED = NO
+C0.S6 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+RED_CONTRACT_CONFORMANCE_PRIVACY_SECURITY_HARNESS = FROZEN_CANDIDATE
+C0.S7_AUTHORIZED = NO
 FOUNDATION_FREEZE = NOT APPROVED
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 DÉLIA_RUNTIME_DIFF = NONE
 NEW_RUNTIME_ABSTRACTIONS = NONE
-NEXT = C0.S6 — RED contract/conformance/privacy/security harness
+NEXT = ARCHITECTURE_REVIEW_C0_S6
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -425,7 +426,9 @@ Congelar typed contracts para platform/domain/external/event/automation/**recurr
 
 ## C0.S6 — RED contract/conformance/privacy/security harness
 
-Required negatives incluem:
+**C0.S6-T2:** harness RED canônico persistido em `20` (seção C0.S6) (+ linkage `25` §20 + ledger §6.32) como `CANDIDATE_FOR_ARCHITECTURE_REVIEW`. `RED_CONTRACT_CONFORMANCE_PRIVACY_SECURITY_HARNESS=FROZEN_CANDIDATE`. `C0.S7_AUTHORIZED=NO`. Não implementa harness runtime; não aprova Foundation Freeze; não redesenha C0.S1–C0.S5. Contratos permanecem em `17` §22.
+
+Required negatives incluem (cobertura detalhada e TEST_IDs estáveis em `20`):
 
 ```text
 Chat dependency

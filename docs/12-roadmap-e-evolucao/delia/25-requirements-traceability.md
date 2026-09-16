@@ -606,14 +606,15 @@ BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
 ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_ACCEPTED
 INTEGRATION_CONTRACTS = FROZEN_ACCEPTED
-C0.S6_AUTHORIZED = YES
-C0.S6_EXECUTED = NO
+C0.S6 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+RED_CONTRACT_CONFORMANCE_PRIVACY_SECURITY_HARNESS = FROZEN_CANDIDATE
+C0.S7_AUTHORIZED = NO
 FOUNDATION_FREEZE = NOT APPROVED
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 DÉLIA_RUNTIME_DIFF = NONE
 NEW_RUNTIME_ABSTRACTIONS = NONE
-NEXT = C0.S6 — RED contract/conformance/privacy/security harness
+NEXT = ARCHITECTURE_REVIEW_C0_S6
 ```
 
 ## 16. C0.S2 authorities / bounded contexts linkage — accepted review
@@ -760,7 +761,45 @@ RUNTIME_CP_PROMOTED_TO_PASS = NO
 C1_PLUS_EXECUTION_STATUS_CHANGED = NO
 NEW_RUNTIME_ABSTRACTIONS = NONE
 C0.S6_AUTHORIZED = YES
-C0.S6_EXECUTED = NO
+C0.S6_EXECUTED = NO  # historical at C0.S5-T3; superseded by §20 C0.S6-T2 candidate persistence
 FOUNDATION_FREEZE = NOT APPROVED
 RESIDUAL = DOCUMENTATION_CONTRACT_TAXONOMY_RESIDUAL
+NOTE_SUPERSEDED_BY_C0_S6_T2: see §20 for C0.S6 candidate harness state
+```
+
+## 20. C0.S6 RED harness linkage — candidate for architecture review
+
+Evidence anchors: `20` §C0.S6; ledger §6.32; `16` C0.S6.
+Status: `C0.S6=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `RED_CONTRACT_CONFORMANCE_PRIVACY_SECURITY_HARNESS=FROZEN_CANDIDATE`.
+Contracts authority unchanged: `17` §22 (`INTEGRATION_CONTRACTS=FROZEN_ACCEPTED`; 27 families).
+
+| Theme | CP examples (status unchanged) | C0.S6 harness note |
+|---|---|---|
+| AuthN / Core / Portal | CP-150, CP-057, CP-130..140 | JWT≠permission; Portal≠AuthZ; AUTHZNEG matrix |
+| Domain READ/ACTION | CP-091, CP-093, CP-109 | PREPARE≠ACT; Domain final AuthZ; typed READ |
+| Automation / Outcome | CP-227..231, CP-239 | Hub≠Outcome; VERIFY authoritative |
+| Scheduler / Event | CP-311..316, CP-207 | schedule≠permission; event≠ACT |
+| External / Teams / OAuth | CP-194..199, CP-209, CP-214, CP-223 | provider scope≠AuthZ; webhook=SIGNAL |
+| Media / Biometric / HOBS | CP-182, CP-183, CP-188..190 | match≠AuthN/AuthZ; raw≠Evidence |
+| Process / Sandbox / Artifact | CP-249+, CP-280+ | analysis isolation; gen≠publish |
+| Model / Scenario / Marketplace | CP-287+, CP-302+ | Prediction≠FACT; SIMULATE≠APPLY; publish≠enable |
+| Edge / OT / Audit | CP-295+, CP-178..179, CP-051, CP-055, CP-056 | offline≠↑AuthZ; DÉLIA≠safety; secret/CoT FAIL |
+| MCP/A2A / Memory / Semantic | CP-262+, CP-268+, CP-274+ | discovery≠approval; privacy isolation |
+| Idempotency / Errors / Version | CP-109, CP-175, CP-176 | no exactly-once; owner semantics retained |
+
+```text
+C0.S6 documentation harness ≠ runtime implementation evidence
+No CP promoted to PASS by C0.S6-T2
+No new CP ID invented for "C0.S6" / per TEST_ID / per contract
+TRACEABILITY_GAP_REQUIRING_NEW_CP = CLOSED_NONISSUE
+NEW_CP_CREATED = NO
+CP_RENAMED = NO
+RUNTIME_CP_PROMOTED_TO_PASS = NO
+C1_PLUS_EXECUTION_STATUS_CHANGED = NO
+NEW_RUNTIME_ABSTRACTIONS = NONE
+C0.S7_AUTHORIZED = NO
+FOUNDATION_FREEZE = NOT APPROVED
+CONTRACT_FAMILY_COVERAGE = 27/27
+EXECUTION_STATUS = TEST_NOT_RUN
+NEXT = ARCHITECTURE_REVIEW_C0_S6
 ```

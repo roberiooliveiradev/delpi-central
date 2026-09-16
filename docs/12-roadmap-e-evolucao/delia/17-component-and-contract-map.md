@@ -445,8 +445,9 @@ ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_ACCEPTED
 C0.S4 = APPROVED
 C0.S5 = APPROVED
 INTEGRATION_CONTRACTS = FROZEN_ACCEPTED (see §22)
-C0.S6_AUTHORIZED = YES
-C0.S6_EXECUTED = NO
+C0.S6 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+RED_CONTRACT_CONFORMANCE_PRIVACY_SECURITY_HARNESS = FROZEN_CANDIDATE (see 20)
+C0.S7_AUTHORIZED = NO
 PHYSICAL_POSTGRES_CLUSTER = DEFER_PHYSICAL_PLACEMENT / TO_INVENTORY
 SecretRef = DEFER_TO_CONTRACT (no new shared primitive)
 OT ACTUATION = BLOCKED_BY_DEFAULT
@@ -458,7 +459,7 @@ Personal Memory != Organizational Knowledge
 cache/projection != authority
 NEW_RUNTIME_ABSTRACTIONS = NONE
 FOUNDATION_FREEZE = NOT APPROVED
-NEXT = C0.S6 — RED contract/conformance/privacy/security harness
+NEXT = ARCHITECTURE_REVIEW_C0_S6
 ```
 
 ## 4. Core producer → consumer graph
@@ -763,7 +764,7 @@ No thematic capability may silently redefine frozen authorities.
 
 ## 22. Integration contracts — C0.S5 freeze accepted
 
-> Status: `FROZEN_ACCEPTED` / `APPROVED` via `ARCHITECTURE_REVIEW_C0_S5` (`REVIEWED_HEAD=8d83383e9a9ff019132e7156d56e41643b168851`; `VERDICT=ACCEPT_WITH_RESIDUAL`). Não prova runtime. Autoriza C0.S6; **não** executa C0.S6; `FOUNDATION_FREEZE=NOT APPROVED`.
+> Status: `FROZEN_ACCEPTED` / `APPROVED` via `ARCHITECTURE_REVIEW_C0_S5` (`REVIEWED_HEAD=8d83383e9a9ff019132e7156d56e41643b168851`; `VERDICT=ACCEPT_WITH_RESIDUAL`). Não prova runtime. C0.S6 harness candidate em `20` (`FROZEN_CANDIDATE`); este §22 permanece contract authority; `FOUNDATION_FREEZE=NOT APPROVED`.
 > Precedence: C0.S1–C0.S4 freezes are immutable input. Thematic specs cannot redefine owners/authorities.
 > Residual: `DOCUMENTATION_CONTRACT_TAXONOMY_RESIDUAL` — only `READ|ADVISE|PREPARE|ACT|VERIFY|SIGNAL` are operation characters; `SIMULATE`/`analysis`/`ingress`/`tech` are semantic/technical qualifiers (not AuthZ modes).
 
@@ -775,7 +776,9 @@ VERDICT = ACCEPT_WITH_RESIDUAL
 INTEGRATION_CONTRACTS = FROZEN_ACCEPTED
 C0.S0..C0.S5 = APPROVED
 C0.S6_AUTHORIZED = YES
-C0.S6_EXECUTED = NO
+C0.S6 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+RED_CONTRACT_CONFORMANCE_PRIVACY_SECURITY_HARNESS = FROZEN_CANDIDATE (authority: 20)
+C0.S7_AUTHORIZED = NO
 AUTHORITY_MAP = FROZEN_ACCEPTED
 BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
@@ -786,7 +789,8 @@ PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 DÉLIA_RUNTIME_DIFF = NONE
 RESIDUAL = DOCUMENTATION_CONTRACT_TAXONOMY_RESIDUAL
-NEXT = C0.S6 — RED contract/conformance/privacy/security harness
+NEXT = ARCHITECTURE_REVIEW_C0_S6
+HARNESS_POINTER = 20 §C0.S6 (does not redefine contracts)
 ```
 
 C0.S5 congela **contratos tipados de integração** (boundaries, AuthZ, READ/ADVISE/PREPARE/ACT/VERIFY, erros, idempotência, Outcome). Não cria código, OpenAPI implementada, endpoints, SDKs, scheduler, Hub, broker, migrations ou services.

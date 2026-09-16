@@ -4,7 +4,7 @@
 > **Produto:** aplicação standalone nova de Continuous Operational Intelligence  
 > **Autoridade de execução:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 > **Requirements:** `CP-001…CP-316`  
-> **Próxima etapa:** `C0.S6 — RED contract/conformance/privacy/security harness`
+> **Próxima etapa:** `ARCHITECTURE_REVIEW_C0_S6`
 
 Este documento mostra a evolução macro. Ordem atômica, dependências e gates vivem somente em `16`. Nada neste roadmap prova runtime implementado ou fase concluída.
 
