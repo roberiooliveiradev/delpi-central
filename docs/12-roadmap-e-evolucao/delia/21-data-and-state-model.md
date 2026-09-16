@@ -98,7 +98,9 @@ SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
 C0.S4_AUTHORIZED = YES
 C0.S4 = APPROVED (see §4A)
 ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_ACCEPTED (see §4A)
-C0.S5_AUTHORIZED = YES
+C0.S5 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (see 17 §22)
+INTEGRATION_CONTRACTS = FROZEN_CANDIDATE
+C0.S6_AUTHORIZED = NO
 NEW_RUNTIME_ABSTRACTIONS = NONE
 FOUNDATION_FREEZE = NOT APPROVED
 DÉLIA_RUNTIME_DIFF = NONE
@@ -154,7 +156,7 @@ C0.S3 **não** decide timezone/DST/misfire/overlap/retry/background AuthZ/schedu
 | ProcessTraceRef | REFERENCE_ONLY | typed process trace needed; no universal shared lifecycle yet; no generic process master | CP-250, CP-251 |
 | MemoryItemRef | DOMAIN_LOCAL_ONLY (DÉLIA Personal Memory) | user-scoped/privacy; ≠Org Knowledge/Conversation/Workspace; no cross-boundary foundation need | CP-269–271 |
 | AnalysisRunRef | REJECT_ABSTRACTION (shared) | use CorrelationContext.analysisRunId + SourceRef/EvidenceRef + ArtifactRef | CP-281, CP-282 |
-| ExecutorRef | DEFER_TO_CONTRACT (C0.S5) | Hub/executor physical contract unresolved; AutomationExecutionRef suffices now | CP-235, CP-236, CP-238 |
+| ExecutorRef | CLOSED_NONISSUE (C0.S5) | Do not promote shared ExecutorRef; use contract-local executionOwnerRef/executorClass; AutomationExecutionRef suffices | CP-235, CP-236, CP-238 |
 | AIAssetRef | PROJECTION_ONLY; detail DEFER_BY_PHASE | Tower/Marketplace may project later; ≠permission; not global authority foundation | CP-257, CP-258, CP-305, CP-310 |
 | EdgeDeviceRef | REUSE_EXISTING → DeviceRef | do not create separate EdgeDeviceRef; device≠user≠AuthZ | CP-171, CP-296, CP-298 |
 
@@ -172,7 +174,7 @@ Forbidden unless future Abstraction Gate with real consumers proves need.
 
 #### WorkspaceContext
 
-`DEFER_TO_CONTRACT` / C0.S5 for exact shape. May reuse EntityRef/SourceRef/DeviceRef and bounded Work/Artifact refs when justified. WorkspaceContext ≠ authorization ≠ SoT ≠ JWT/secret carrier.
+`FROZEN_CANDIDATE` shape in `17` §22 (C0.S5-T2). May reuse EntityRef/SourceRef/DeviceRef and bounded Work/Artifact refs when justified. WorkspaceContext ≠ authorization ≠ SoT ≠ JWT/secret carrier. Not a runtime DTO.
 
 #### Field sketches below
 
@@ -233,8 +235,9 @@ REVIEWED_HEAD = 7ac1fb930017bbabb05d8b1654941518f315c6a7
 VERDICT = ACCEPT_WITH_RESIDUAL
 ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_ACCEPTED
 C0.S0..C0.S4 = APPROVED
-C0.S5_AUTHORIZED = YES
-C0.S5_EXECUTED = NO
+C0.S5 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+INTEGRATION_CONTRACTS = FROZEN_CANDIDATE (see 17 §22)
+C0.S6_AUTHORIZED = NO
 AUTHORITY_MAP = FROZEN_ACCEPTED
 BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
@@ -243,7 +246,7 @@ FOUNDATION_FREEZE = NOT APPROVED
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 DÉLIA_RUNTIME_DIFF = NONE
-NEXT = C0.S5 — Integration Contracts
+NEXT = ARCHITECTURE_REVIEW_C0_S5
 ```
 
 C0.S4 congela **regras arquiteturais** de ownership de persistência, classificação, privacy, secrets/encryption, concorrência/idempotência, state machines, identidade background, segurança temporal de Recurring Work, Evidence/Outcome, Prediction/Scenario/Twin, biometric/media, conexões externas, audit/eval, Process/Task Mining, Sandbox/Artifact, Model/Marketplace/Tower, Edge/offline, OT/safety, falha/recovery e cache/projection.
@@ -660,7 +663,7 @@ DEFER_BY_PHASE:
 
 ## 5. WorkspaceContext
 
-`DEFER_TO_CONTRACT` (C0.S5) para shape exato. Pode carregar app/route/EntityRefs/SourceRefs/filters/selection/dateRange/device metadata e bounded refs para Task/Case/Watch/RecurringWork/execution/artifact quando justificado.
+Shape `FROZEN_CANDIDATE` em `17` §22 (C0.S5-T2). Pode carregar app/route/EntityRefs/SourceRefs/filters/selection/dateRange/device metadata e bounded refs para Task/Case/Watch/RecurringWork/execution/artifact quando justificado.
 
 Nunca carregar como authority:
 

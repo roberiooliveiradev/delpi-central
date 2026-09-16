@@ -604,13 +604,15 @@ AUTHORITY_MAP = FROZEN_ACCEPTED
 BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
 ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_ACCEPTED
-C0.S5_AUTHORIZED = YES
+C0.S5 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+INTEGRATION_CONTRACTS = FROZEN_CANDIDATE
+C0.S6_AUTHORIZED = NO
 FOUNDATION_FREEZE = NOT APPROVED
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 DÉLIA_RUNTIME_DIFF = NONE
 NEW_RUNTIME_ABSTRACTIONS = NONE
-NEXT = C0.S5 — Integration Contracts
+NEXT = ARCHITECTURE_REVIEW_C0_S5
 ```
 
 ## 16. C0.S2 authorities / bounded contexts linkage — accepted review
@@ -667,7 +669,7 @@ Review: `ARCHITECTURE_REVIEW_C0_S3`; `REVIEWED_HEAD=641ffc07284b98ffbdb5e13217ce
 | PredictionRef | CP-288, CP-289, CP-293 | ACCEPTED; Prediction≠FACT |
 | ScenarioRef | CP-291, CP-292, CP-294 | ACCEPTED; SIMULATE≠APPLY |
 | AutomationExecutionRef | CP-235–237, CP-239 | ACCEPTED; ≠Outcome |
-| ExecutorRef | CP-235, CP-236, CP-238 | DEFER_TO_CONTRACT C0.S5 |
+| ExecutorRef | CP-235, CP-236, CP-238 | CLOSED_NONISSUE (C0.S5; no shared primitive) |
 | RecurringWorkRef | CP-312, CP-314, CP-316 | ACCEPTED; ≠scheduler |
 | WorkOccurrenceRef | CP-313, CP-315 | ACCEPTED; ≠timer tick |
 | AIAssetRef | CP-257, CP-258, CP-305, CP-310 | PROJECTION_ONLY |
@@ -719,5 +721,42 @@ C1_PLUS_EXECUTION_STATUS_CHANGED = NO
 NEW_RUNTIME_ABSTRACTIONS = NONE
 C0.S5_AUTHORIZED = YES
 C0.S5_EXECUTED = NO
+FOUNDATION_FREEZE = NOT APPROVED
+```
+
+## 19. C0.S5 integration contracts linkage
+
+Evidence anchors: `17` §22; ledger §6.30; `16` C0.S5.
+
+| Theme | CP examples (status unchanged) | C0.S5 note |
+|---|---|---|
+| Core / AuthZ | CP-150, CP-057 | Core effective RBAC; JWT≠final permission |
+| Portal host / Workspace | CP-135, CP-136, CP-138 | Portal context≠permission |
+| Entity / Evidence | CP-091, CP-093, CP-159 | Domain READ typed; Evidence≠SoT |
+| Errors / idempotency | CP-109 | semantic categories; exactly-once not assumed |
+| External / OAuth | CP-194–199, CP-209, CP-214 | provider scope≠AuthZ; DRAFT≠SEND |
+| Teams | CP-223 | adapter under EXTERNAL; webhook≠ACT |
+| Automation / Hub | CP-227–231, CP-235–239 | Work≠Hub; tech≠Outcome |
+| Recurring Work / scheduler | CP-311–316 | OccurrenceSignal; schedule≠permission |
+| Process | CP-249+ | projection≠SoT/employee truth |
+| MCP/A2A | CP-262+ | discovery≠approval |
+| Memory / privacy | CP-268+ | preserved; contracts do not authorize |
+| Semantic Layer | CP-274+ | refs only |
+| Sandbox / Artifact | CP-280+ | isolated; generation≠publication |
+| Predictive / Twin | CP-287+ | Prediction≠FACT; SIMULATE≠APPLY |
+| Edge | CP-295+ | offline≠↑AuthZ |
+| Model / Marketplace | CP-302+ | router≠approval; publish≠enable |
+
+```text
+C0.S5 documentation evidence ≠ runtime implementation evidence
+No CP promoted to PASS by C0.S5-T2
+No new CP ID invented for "C0.S5"
+TRACEABILITY_GAP_REQUIRING_NEW_CP = CLOSED_NONISSUE
+NEW_CP_CREATED = NO
+CP_RENAMED = NO
+RUNTIME_CP_PROMOTED_TO_PASS = NO
+C1_PLUS_EXECUTION_STATUS_CHANGED = NO
+NEW_RUNTIME_ABSTRACTIONS = NONE
+C0.S6_AUTHORIZED = NO
 FOUNDATION_FREEZE = NOT APPROVED
 ```

@@ -398,7 +398,9 @@ C0.S3 = APPROVED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
 C0.S4 = APPROVED
 ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_ACCEPTED
-C0.S5_AUTHORIZED = YES
+C0.S5 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+INTEGRATION_CONTRACTS = FROZEN_CANDIDATE
+C0.S6_AUTHORIZED = NO
 FOUNDATION_FREEZE = NOT APPROVED
 DÉLIA_RUNTIME_DIFF = NONE
 NEW_RUNTIME_ABSTRACTIONS = NONE
@@ -419,7 +421,7 @@ NOT_PROMOTED:
   ProcessTraceRef = REFERENCE_ONLY
   MemoryItemRef = DOMAIN_LOCAL_ONLY (Personal Memory)
   AnalysisRunRef = REJECT_ABSTRACTION (use CorrelationContext.analysisRunId + Source/Evidence/Artifact refs)
-  ExecutorRef = DEFER_TO_CONTRACT (C0.S5); AutomationExecutionRef suffices now
+  ExecutorRef = CLOSED_NONISSUE (C0.S5); contract-local executionOwnerRef/executorClass; AutomationExecutionRef suffices
   AIAssetRef = PROJECTION_ONLY + DEFER_BY_PHASE detail
   EdgeDeviceRef = REUSE DeviceRef
 
@@ -427,7 +429,7 @@ REJECTED_META:
   UniversalRef, GenericBusinessObjectRef, GenericExecutionObject,
   GenericAIObject, GenericAssetRef
 
-WorkspaceContext shape = DEFER_TO_CONTRACT (C0.S5)
+WorkspaceContext shape = FROZEN_CANDIDATE (C0.S5 §22); ≠AuthZ/SoT/JWT/secret
 ```
 
 ## 3A. Architecture / persistence / privacy / safety — C0.S4 freeze accepted
@@ -441,8 +443,9 @@ REVIEWED_HEAD = 7ac1fb930017bbabb05d8b1654941518f315c6a7
 VERDICT = ACCEPT_WITH_RESIDUAL
 ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_ACCEPTED
 C0.S4 = APPROVED
-C0.S5_AUTHORIZED = YES
-C0.S5_EXECUTED = NO
+C0.S5 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+INTEGRATION_CONTRACTS = FROZEN_CANDIDATE (see §22)
+C0.S6_AUTHORIZED = NO
 PHYSICAL_POSTGRES_CLUSTER = DEFER_PHYSICAL_PLACEMENT / TO_INVENTORY
 SecretRef = DEFER_TO_CONTRACT (no new shared primitive)
 OT ACTUATION = BLOCKED_BY_DEFAULT
@@ -454,7 +457,7 @@ Personal Memory != Organizational Knowledge
 cache/projection != authority
 NEW_RUNTIME_ABSTRACTIONS = NONE
 FOUNDATION_FREEZE = NOT APPROVED
-NEXT = C0.S5 — Integration Contracts
+NEXT = ARCHITECTURE_REVIEW_C0_S5
 ```
 
 ## 4. Core producer → consumer graph
@@ -756,3 +759,416 @@ factual inventory
 ```
 
 No thematic capability may silently redefine frozen authorities.
+
+## 22. Integration contracts — C0.S5 freeze candidate
+
+> Status: `FROZEN_CANDIDATE` / `CANDIDATE_FOR_ARCHITECTURE_REVIEW`. Não prova runtime. Não autoriza C0.S6. `NEW_RUNTIME_ABSTRACTIONS=NONE`. Foundation Freeze = NOT APPROVED.
+> Precedence: C0.S1–C0.S4 freezes are immutable input. Thematic specs cannot redefine owners/authorities.
+
+```text
+STATUS = FROZEN_CANDIDATE / CANDIDATE_FOR_ARCHITECTURE_REVIEW
+INTEGRATION_CONTRACTS = FROZEN_CANDIDATE
+C0.S0..C0.S4 = APPROVED
+C0.S5_AUTHORIZED = YES
+C0.S5 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C0.S6_AUTHORIZED = NO
+AUTHORITY_MAP = FROZEN_ACCEPTED
+BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
+SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
+ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_ACCEPTED
+NEW_RUNTIME_ABSTRACTIONS = NONE
+FOUNDATION_FREEZE = NOT APPROVED
+PROGRAM = PLANNED / NOT_STARTED
+C0 = NOT_STARTED
+DÉLIA_RUNTIME_DIFF = NONE
+NEXT = ARCHITECTURE_REVIEW_C0_S5
+```
+
+C0.S5 congela **contratos tipados de integração** (boundaries, AuthZ, READ/ADVISE/PREPARE/ACT/VERIFY, erros, idempotência, Outcome). Não cria código, OpenAPI implementada, endpoints, SDKs, scheduler, Hub, broker, migrations ou services.
+
+### 22.0 Operation character vocabulary
+
+```text
+READ | ADVISE | PREPARE | ACT | VERIFY | SIGNAL
+```
+
+```text
+PREPARE = no side effect
+ACT = fresh execution context required; prepared intent alone does not authorize
+PREPARE != ACT
+ACT may not be inferred solely from HTTP verb / tool name / provider description / prompt / event / timer / scheduler / model output
+```
+
+### 22.1 Contract matrix
+
+| CONTRACT_ID | OWNER | CONSUMERS | CHARACTER | STATUS |
+|---|---|---|---|---|
+| DELIA.AUTHN.IDENTITY | Keycloak | DÉLIA API | READ / AuthN context | FROZEN_CANDIDATE |
+| DELIA.CORE.EFFECTIVE_ACCESS | Core | DÉLIA API | READ | FROZEN_CANDIDATE |
+| DELIA.PORTAL.HOST | Portal host + DÉLIA MFE | MFE/host | READ / UX host | FROZEN_CANDIDATE |
+| DELIA.DOMAIN.READ | Domain API (per op) | DÉLIA | READ | FROZEN_CANDIDATE |
+| DELIA.DOMAIN.ACTION | Domain API (per op) | DÉLIA | ACT (+ PREPARE path) | FROZEN_CANDIDATE |
+| DELIA.AUTOMATION.EXECUTION | Hub tech + DÉLIA orchestration | DÉLIA↔Hub | ACT/SIGNAL tech | FROZEN_CANDIDATE |
+| DELIA.SCHEDULER.OCCURRENCE | Physical scheduler (TO_INVENTORY) | DÉLIA | SIGNAL | FROZEN_CANDIDATE |
+| DELIA.EVENT.ENVELOPE | Source adapters → DÉLIA | Watch/Evidence/Work | SIGNAL | FROZEN_CANDIDATE |
+| DELIA.EXTERNAL.CONNECTION | Provider + DÉLIA connection metadata | DÉLIA | READ | FROZEN_CANDIDATE |
+| DELIA.EXTERNAL.RESOURCE | Provider | DÉLIA | READ | FROZEN_CANDIDATE |
+| DELIA.EXTERNAL.ACTION | Provider | DÉLIA | ACT (typed ops) | FROZEN_CANDIDATE |
+| DELIA.TEAMS | M365/Teams adapter under EXTERNAL | DÉLIA | READ/ACT split | TARGET / FROZEN_CANDIDATE boundary |
+| DELIA.MEDIA.INGRESS | Media owner + DÉLIA refs | DÉLIA | READ/ingress | FROZEN_CANDIDATE |
+| DELIA.BIOMETRIC.MATCH | Biometric specialized store | DÉLIA | READ/match | FROZEN_CANDIDATE |
+| DELIA.PROCESS.EVENTLOG | Process source owners | Process Intelligence | READ | FROZEN_CANDIDATE |
+| DELIA.ANALYSIS.EXECUTION | Sandbox boundary | DÉLIA analysis | READ/analysis | FROZEN_CANDIDATE |
+| DELIA.ARTIFACT | Artifact owner | DÉLIA/consumers | READ / governed ACT share | FROZEN_CANDIDATE |
+| DELIA.MODEL.INFERENCE | Model runtime (TO_INVENTORY) | DÉLIA | READ/ADVISE | FROZEN_CANDIDATE |
+| DELIA.SCENARIO.SIMULATE | Twin/scenario boundary | DÉLIA | ADVISE/SIMULATE | FROZEN_CANDIDATE |
+| DELIA.MCP.INVOCATION | MCP host (TO_INVENTORY) | DÉLIA | READ/ACT bounded | FROZEN_CANDIDATE |
+| DELIA.A2A.DELEGATION | A2A host (TO_INVENTORY) | DÉLIA | READ/ACT bounded | FROZEN_CANDIDATE |
+| DELIA.MARKETPLACE.ASSET | Marketplace metadata | Tower/consumers | READ | FROZEN_CANDIDATE |
+| DELIA.NOTIFICATION.REQUEST | Notification adapters | DÉLIA | ACT delivery | FROZEN_CANDIDATE |
+| DELIA.EDGE.SYNC | Edge device/adapters | DÉLIA | SIGNAL/sync | FROZEN_CANDIDATE |
+| DELIA.OT.OBSERVE_PREPARE | OT/industrial owners | DÉLIA | READ/ADVISE/PREPARE only | FROZEN_CANDIDATE |
+| DELIA.AUDIT.EVENT | Observability owner (TO_INVENTORY) | platform | SIGNAL/audit | FROZEN_CANDIDATE |
+| DELIA.OUTCOME.VERIFY | Domain/authoritative sources + DÉLIA | DÉLIA Work | VERIFY | FROZEN_CANDIDATE |
+
+### 22.2 ExecutorRef / WorkspaceContext decisions
+
+```text
+ExecutorRef = DO NOT PROMOTE TO NEW SHARED PRIMITIVE = CLOSED_NONISSUE
+Use contract-local: executionOwnerRef, executorClass, executionContractVersion, supportedCapability, timeout/cancel
+Executor classes (semantic): DOMAIN_API | NATIVE_INTEGRATION | FUNCTION | RPA | COMPUTER_USE | HUMAN_TASK | OTHER_APPROVED
+
+WorkspaceContext = FROZEN_CANDIDATE shape (below)
+WorkspaceContext != authorization | SoT | JWT/secret carrier | Work/Decision/Evidence authority
+```
+
+### 22.3 High-risk sketches
+
+#### DELIA.AUTHN.IDENTITY
+
+```text
+OWNER = Keycloak | CONSUMER = DÉLIA API | CHARACTER = READ / AuthN
+INPUT = validated OIDC access token at interface boundary
+OUTPUT AuthenticatedPrincipal {
+  actorRef: UserRef | ServiceActorRef
+  authenticationType
+  authenticated
+  tokenExpiresAt?
+  issuerRef?
+}
+FORBIDDEN: JWT!=final permission; JWT!=Domain AuthZ; JWT!=prompt/Personal Memory;
+           biometric candidate!=authenticated principal; DeviceRef!=UserRef
+STATUS = FROZEN_CANDIDATE
+```
+
+#### DELIA.CORE.EFFECTIVE_ACCESS
+
+```text
+OWNER = Core | CONSUMER = DÉLIA API | CHARACTER = READ
+FACTUAL_ANCHORS: GET /me ; GET /me/apps ; GET /me/access-profile
+DO_NOT_RECREATE: /me/routes
+OUTPUT CoreAccessContext {
+  userRef
+  effectivePermissionCodes[]
+  isSuperadmin
+  resolvedAt
+  source = CORE
+}
+RULES: Core effective permission != JWT raw roles
+       Portal permission props != backend authorization
+       DÉLIA must not implement parallel RBAC
+       /me/apps = application/navigation availability
+       /me/access-profile = governance/introspection when needed
+       material ops fail-closed if Core AuthZ cannot be established
+ERRORS: UNAUTHENTICATED | AUTHORITY_UNAVAILABLE | AUTHORITY_CONTEXT_STALE
+STATUS = FROZEN_CANDIDATE
+```
+
+#### DELIA.PORTAL.HOST + WorkspaceContext
+
+```text
+LIFECYCLE: mount(...) | unmount(...) | updateRoute?() | updateToken?()
+PortalHostContext {
+  basePath, pathname, search, routeId?, routeLabel?, locale?, timezoneHint?, workspaceContext?
+}
+WorkspaceContext {
+  contextVersion, appId, routeId?, entityRefs[], sourceRefs[]?, deviceRef?,
+  observedAt?, locale?, timezone?
+}
+Portal permissions / isSuperadmin props = UX hints only
+FORBIDDEN: WorkspaceContext!=permission/JWT/secret/SoT;
+           Portal context!=Work/Decision/Evidence authority
+STATUS = FROZEN_CANDIDATE
+```
+
+#### DELIA.DOMAIN.READ
+
+```text
+NOT one generic endpoint — each Domain operation remains typed + owner-specific
+REQUIRED eventually: stable operationId, capabilityId, typed request/response,
+  identity context, Domain AuthZ, source revision/freshness when material,
+  classification, errors, audit/correlation, contract version
+MAY attach: EntityRef, SourceRef, freshness, revision/version, classification
+NEVER rewrite Domain truth
+FORBIDDEN: generic SQL; unrestricted proxy; foreign DB access;
+           planner hardcoding URL/path/provider mechanics
+STATUS = FROZEN_CANDIDATE
+```
+
+#### DELIA.DOMAIN.ACTION
+
+```text
+Every material write = distinct typed operation
+REQUIRED: capabilityId, contractVersion, stable operationId, actorRef,
+  target EntityRef(s), typed arguments, operationMode, workRef?, decisionRef?,
+  correlationContext, idempotencyContext, concurrencyExpectation?, expectedPostcondition
+AUTHZ_CHAIN:
+  Keycloak AuthN → live Core effective RBAC → DÉLIA Policy/Decision
+  → Domain final business AuthZ → Domain operation → authoritative Outcome verification
+Domain MAY reject after DÉLIA Policy/Decision approves
+Domain response != automatically verified Outcome
+STATUS = FROZEN_CANDIDATE
+```
+
+#### Capability / Action descriptor (projection)
+
+```text
+Capability != Operation Contract != Decision != Work != AutomationExecution != Outcome
+CapabilityProjection = PROJECTION_ONLY (C0.S3)
+Descriptor may include: capabilityId, ownerRef, contractRef, operationId, contractVersion,
+  allowedModes[], riskClass, requestSchemaRef, responseSchemaRef,
+  idempotencySemantics, concurrencySemantics, postconditionRef, status
+MUST_NOT_BECOME: permission | executor SoT | provider metadata authority
+NO GenericActionPayload
+```
+
+#### DELIA.AUTOMATION.EXECUTION
+
+```text
+DÉLIA = semantic orchestration / Work / Decision / Outcome coordination
+Hub = technical execution lifecycle
+ExecutionRequest {
+  requestId, capabilityId, contractVersion, actorRef, workRef, decisionRef?,
+  correlationContext, typedInput, inputSchemaVersion, idempotencyContext, timeoutPolicyRef?
+}
+ExecutionAccepted { executionRef: AutomationExecutionRef, acceptedAt, technicalStatus }
+ExecutionTechnicalResult {
+  executionRef, technicalStatus, resultRef?, artifactRefs[]?, error?, observedAt
+}
+Work != AutomationExecution; Hub != planner/Policy/business AuthZ
+technical SUCCEEDED != VERIFIED business Outcome
+DÉLIA must not duplicate worker/queue/lease/package/credential/tech job lifecycle
+Physical Hub runtime = TO_INVENTORY
+STATUS = FROZEN_CANDIDATE
+```
+
+#### DELIA.SCHEDULER.OCCURRENCE
+
+```text
+Physical scheduler owner = TO_INVENTORY
+OccurrenceSignal {
+  recurringWorkRef, recurringWorkVersion, scheduledFor, actualTriggeredAt,
+  schedulerTriggerRef?, correlationContext, signalVersion
+}
+LOGICAL_UNIQUENESS: RecurringWorkRef + recurringWorkVersion + scheduledFor
+  → one logical Work occurrence; occurrenceId stable
+UUID/hash algorithm = DEFER_TO_IMPLEMENTATION
+Scheduler never = Work owner | actor | permission | Policy | Decision
+After signal revalidate: definition active; not paused/cancelled/revoked;
+  actor/delegation; Core; Domain; Policy/Decision; idempotency
+STATUS = FROZEN_CANDIDATE
+```
+
+#### DELIA.EVENT.ENVELOPE
+
+```text
+EventEnvelope {
+  eventId, eventType, schemaVersion, sourceRef, occurredAt, receivedAt,
+  entityRefs[], correlationContext, classification,
+  payloadRef? | boundedPayload?, sourceSequence?
+}
+sourceSequence only if source genuinely provides one
+Auth/signature validation at adapter/trust boundary
+Event != permission | Command | Work | Decision | ACT | Outcome
+Transport = TO_INVENTORY where unproven
+STATUS = FROZEN_CANDIDATE
+```
+
+#### DELIA.EXTERNAL.CONNECTION / RESOURCE / ACTION
+
+```text
+Classes: USER_DELEGATED | ORG_MANAGED | SHARED_RESOURCE | SERVICE_CONNECTION
+Metadata: connectionId, ownerType, ownerRef, providerKey, resourceRef?,
+  grantedScopes[], status, expiresAt?, revokedAt?, lastValidatedAt?, sharingClassification
+Secret/token material NOT in semantic contract
+Ops distinct: SEARCH | READ | DRAFT | SEND | WRITE ; DRAFT != SEND
+provider scope != Core permission != Domain AuthZ
+Webhook: raw callback → authenticity → dedupe/reconcile → EventEnvelope
+Never: callback → direct ACT
+Physical vault/token store = TO_INVENTORY
+STATUS = FROZEN_CANDIDATE
+```
+
+#### DELIA.OUTCOME.VERIFY
+
+```text
+Request: workRef, executionRef?, capabilityId, targetRefs[], expectedPostconditionRef,
+  authoritativeSourceRef, correlationContext
+Response: verificationRef; status VERIFIED_SUCCESS|VERIFIED_FAILURE|PENDING|INCONCLUSIVE;
+  observedOutcomeRef?, sourceRevision?, verifiedAt, failureReason?, evidenceRefs[]
+technical result → verification input; technical result != Outcome; Notification != Outcome
+STATUS = FROZEN_CANDIDATE
+```
+
+### 22.4 Additional contract notes (matrix-primary)
+
+```text
+DELIA.TEAMS: provider-specific adapter under EXTERNAL; Teams ACL authoritative;
+  meeting artifact!=Decision; webhook!=ACT; registration/scopes/subscriptions=TO_INVENTORY
+
+DELIA.MEDIA.INGRESS: MediaIngress{sourceRef, deviceRef?, sessionRef?, participantRefs[]?,
+  capturedAt, endedAt?, modality, classification, consentNoticeState?, capturePurpose,
+  storageRef, retentionPolicyRef?, correlationContext}
+  raw media not in generic EventEnvelope; raw!=transcript!=summary!=Evidence!=Decision!=action!=Outcome
+  physical store=TO_INVENTORY
+
+DELIA.BIOMETRIC.MATCH: input refs only; output BiometricCandidate{candidateUserRef?,
+  state MATCH|UNKNOWN|AMBIGUOUS, confidence, evidenceRef, modelVersion, correctionSupported}
+  never expose template; MATCH!=AuthN/AuthZ; UNKNOWN remains UNKNOWN; template store=TO_INVENTORY
+
+DELIA.PROCESS.EVENTLOG: processRef, caseKey, activity, occurredAt, sourceRef, entityRefs[],
+  actorRef? if justified, businessStatus?, schemaVersion, classification, sourceRevision?
+  output=projection/analysis ≠ business SoT/employee truth/AuthZ; engine=TO_INVENTORY
+
+DELIA.ANALYSIS.EXECUTION: sandbox isolated; budgets/timeout/network/package policies;
+  no production DB credential / provider token / unrestricted host/private net / Domain mutation
+  runtime=TO_INVENTORY
+
+DELIA.ARTIFACT: artifactRef, ownerRef, version, classification, acl/policy, source/evidence refs,
+  contentStorageRef, createdBy/editedBy, retention, provenance
+  generation!=publication; ArtifactRef!=access grant; share/publish=separate governed ACT
+  blob store=TO_INVENTORY
+
+DELIA.MODEL.INFERENCE: Prediction!=FACT; ModelRef!=approval; output!=permission; router!=approval
+DELIA.SCENARIO.SIMULATE: Scenario!=production; Twin!=SoT; SIMULATE!=APPLY; Apply=new live ACT context
+
+DELIA.MCP.INVOCATION / DELIA.A2A.DELEGATION: discovery!=approval; tool/agent metadata!=permission;
+  never send CoT / whole conversation by default / ambient authority; runtime=TO_INVENTORY
+
+DELIA.MARKETPLACE.ASSET: requiredPermissions!=granted; publish!=enable; enable!=authorization; install!=grant
+DELIA.NOTIFICATION.REQUEST: DELIVERED!=business Outcome
+DELIA.EDGE.SYNC: offline!=wider AuthZ; DeviceRef!=UserRef; cached permission!=eternal; buffered!=ACT
+DELIA.OT.OBSERVE_PREPARE: READ|ADVISE|PREPARE only; ACT FORBIDDEN;
+  generic DÉLIA→PLC/CNC/robot ACT = FORBIDDEN
+
+DELIA.AUDIT.EVENT: material lineage allowed; never CoT/password/token/secret/biometric template/
+  raw media by default/unbounded sensitive payload; Audit!=business authority; backend=TO_INVENTORY
+```
+
+### 22.5 Cross-cutting contract rules
+
+#### Error model (semantic categories; not one universal wire DTO)
+
+```text
+UNAUTHENTICATED | FORBIDDEN_PLATFORM | FORBIDDEN_DOMAIN | POLICY_DENIED | DECISION_EXPIRED
+INVALID_REQUEST | RESOURCE_NOT_FOUND | UNSUPPORTED_CAPABILITY
+CONFLICT | STALE_STATE | IDEMPOTENCY_CONFLICT
+AUTHORITY_UNAVAILABLE | SOURCE_UNAVAILABLE | PROVIDER_REVOKED | RATE_LIMITED | TIMEOUT
+EXECUTION_REJECTED | EXECUTION_FAILED | AMBIGUOUS_RESULT
+POSTCONDITION_FAILED
+```
+
+Normalized error may retain: semanticCategory, owner, ownerErrorCode, correlationId, retryable, safeDetails?
+Do not erase Domain/provider native semantics. Raw SDK errors must not leak to UI/LLM.
+
+#### Idempotency (material writes)
+
+```text
+clientOperationId = stable across retries of same intended operation
+scope by: owner, capability, actor, target, operation context, request fingerprint, retention window
+same identity + same fingerprint → same/reconciled result where owner supports
+same identity + different fingerprint → IDEMPOTENCY_CONFLICT
+if downstream lacks native idempotency: ambiguous → authoritative reconcile → retry only if safe
+exactly-once NOT ASSUMED
+```
+
+#### Concurrency
+
+```text
+material stale-state mutation requires: expectedRevision | ETag/version | expectedState | owner equivalent
+conflict = STALE_STATE or owner-native
+recovery: re-read authoritative state → re-evaluate Policy/Decision → then decide new ACT
+Do NOT force one global HTTP mechanism
+```
+
+#### Authorization contract rule
+
+```text
+Keycloak = AuthN
+Core = effective platform RBAC
+Domain API = final business authorization
+Provider = external resource/provider authority
+DÉLIA Policy/Decision = orchestration/business-intelligence gate
+Automation Hub = technical execution acceptance
+OT/Safety = independent industrial/safety authority
+No authority is transitive
+Portal hint != backend AuthZ; Core != provider scope; provider scope != Domain;
+Decision != Domain permission; Hub acceptance != business AuthZ;
+scheduler/event != authorization
+```
+
+#### Versioning / compatibility
+
+```text
+Every frozen contract: contractId + contractVersion
+compatible: add optional field without semantic change
+breaking: remove field; change meaning; optional→required; change authority;
+  READ/PREPARE→ACT; change idempotency/postcondition semantics
+Events: schemaVersion required | OpenAPI: stable operationId required
+Breaking semantic op → new operationId or explicit major change
+Deprecation: replacement + consumer migration plan + support window
+```
+
+#### Security / privacy
+
+```text
+Each contract states where applicable: dataClassification, PII/sensitive fields,
+  source ACL, retention owner, logging/redaction, provider exposure, secret-bearing fields
+Generic contracts must not carry secret material
+If adapter needs credential reference: opaque adapter-local secure reference
+  (NOT a new global SecretRef)
+```
+
+### 22.6 Abstraction Gate
+
+```text
+REJECTED: UniversalIntegrationRequest, GenericExternalCall, GenericActionPayload,
+  GenericProviderObject, UniversalExecutionResult, UniversalAuthorizationContext,
+  UniversalBusinessResponse
+NOT_REQUIRED: new shared ExecutorRef; new shared SecretRef
+DO_NOT_CREATE: new service, event bus, scheduler, Hub runtime, provider SDK framework,
+  action gateway, policy engine, generic integration engine
+NEW_RUNTIME_ABSTRACTIONS = NONE
+```
+
+### 22.7 Residuals
+
+```text
+TO_INVENTORY:
+  physical Hub/scheduler/event broker/PG/vault-KMS;
+  per-Domain op inventory + Domain idempotency/concurrency/postcondition sources;
+  Teams registration/scopes/subscriptions; media/biometric/Sandbox/Artifact/model/Twin/
+  MCP-A2A/Marketplace/Edge/notification/observability backends;
+  service/delegation credential mechanism; legal retention durations;
+  future OT actuation architecture
+
+DEFER_TO_IMPLEMENTATION:
+  HTTP DTO class names; idempotency header name; ETag vs revision transport;
+  WorkOccurrence ID algorithm; provider SDK structures; scheduler registration;
+  Hub transport; broker topics; telemetry vendor fields
+
+DEFER_BY_PHASE:
+  Marketplace enable/install; Control Tower runtime; advanced Watch ACT;
+  Meeting/Frontline; Process Mining runtime; Twin optimization; Edge autonomy;
+  physical OT actuation; L5 autonomous workflows
+```
