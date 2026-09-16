@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
-import { Search } from "lucide-react";
+import { BarChart3, Eye, RefreshCw, Search, User } from "lucide-react";
 import {
   fetchPublicMachineLoad,
   type MachineLoadOperation,
@@ -36,6 +36,10 @@ function matchesQueueSearch(operation: MachineLoadOperation, term: string): bool
   return op.includes(term) || pa.includes(term) || product.includes(term);
 }
 
+function isRunningOperation(operation: MachineLoadOperation): boolean {
+  return resolveStatus(operation).tone === "running";
+}
+
 const LIVE_STATUS_POLL_MS = 15_000;
 const STORAGE_PREFIX = "delpi.pcp.cockpit.work-center";
 
@@ -43,6 +47,17 @@ type Props = {
   token: string;
   branch: string;
   initial: PublicMachineLoadPayload;
+};
+
+type VisualTarget = {
+  paCode: string | null;
+  productCode: string | null;
+  has3dModel: boolean;
+};
+
+type QueueEntry = {
+  operation: MachineLoadOperation;
+  position: number;
 };
 
 function storageKey(branch: string): string {
@@ -66,6 +81,17 @@ function storeWorkCenter(branch: string, workCenter: string | null): void {
   }
 }
 
+function resolveVisualMeta(operation: MachineLoadOperation) {
+  const paCode = operation.pa_product_code?.trim() || "";
+  const productCode = operation.product_code?.trim() || "";
+  const has3dModel = Boolean(operation.has_3d_model && productCode);
+  const canOpenVisual = Boolean(paCode) || has3dModel;
+  const visualLabel =
+    paCode && has3dModel ? "Ver desenho / 3D" : has3dModel ? "Ver 3D" : "Ver desenho";
+  const displayProductCode = paCode || operation.product_code;
+  return { paCode, productCode, has3dModel, canOpenVisual, visualLabel, displayProductCode };
+}
+
 export function OperatorCockpit({ token, branch, initial }: Props) {
   const [payload, setPayload] = useState<PublicMachineLoadPayload>(initial);
   const [workCenter, setWorkCenter] = useState<string | null>(() => {
@@ -76,11 +102,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date>(() => new Date());
-  const [visualTarget, setVisualTarget] = useState<{
-    paCode: string | null;
-    productCode: string | null;
-    has3dModel: boolean;
-  } | null>(null);
+  const [visualTarget, setVisualTarget] = useState<VisualTarget | null>(null);
   const [queueQuery, setQueueQuery] = useState("");
   const workCenterRef = useRef(workCenter);
   workCenterRef.current = workCenter;
@@ -159,13 +181,21 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const items =
     workCenter && payload.selected.work_center === workCenter ? payload.selected.items : [];
 
-  const filteredItems = useMemo(() => {
+  const activeEntry = useMemo<QueueEntry | null>(() => {
+    if (items.length === 0) return null;
+    const runningIndex = items.findIndex(isRunningOperation);
+    const index = runningIndex >= 0 ? runningIndex : 0;
+    return { operation: items[index]!, position: index + 1 };
+  }, [items]);
+
+  const upcomingEntries = useMemo(() => {
     const term = queueQuery.trim().toLowerCase();
-    if (!term) return items.map((operation, index) => ({ operation, position: index + 1 }));
+    const activeKey = activeEntry ? operationKey(activeEntry.operation) : null;
     return items
       .map((operation, index) => ({ operation, position: index + 1 }))
+      .filter(({ operation }) => operationKey(operation) !== activeKey)
       .filter(({ operation }) => matchesQueueSearch(operation, term));
-  }, [items, queueQuery]);
+  }, [items, queueQuery, activeEntry]);
 
   const selectedOperation = useMemo(() => {
     if (view.kind !== "operation") return null;
@@ -234,121 +264,173 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     );
   }
 
-  const running = activeCenter?.in_production_count ?? 0;
+  const centerName = activeCenter?.work_center_name || workCenter;
   const efficiency = performance.data?.efficiency;
   const downtime = performance.data?.downtime;
   const shiftPct = efficiency?.available ? efficiency.shift_pct : null;
   const shiftLabel = performance.data?.shift?.label ?? "Turno";
+  const effTone = efficiencyTone(shiftPct);
 
   return (
-    <section className="pcp-pub">
-      <BrandBar
-        eyebrow={`Fila de produção · Filial ${branch}`}
-        title={activeCenter?.work_center_name || workCenter}
-        code={workCenter}
-        stats={
-          <>
-            <span className="pcp-pub__chip">
-              {items.length} {items.length === 1 ? "operação" : "operações"}
-            </span>
-            {running ? (
-              <span className="pcp-pub__chip pcp-pub__chip--running">{running} em produção</span>
-            ) : null}
-            <button
-              type="button"
-              className={`pcp-pub__chip pcp-pub__chip--metric pcp-pub__chip--eff-${efficiencyTone(
-                shiftPct,
-              )}`}
-              onClick={openPerformance}
-              title={`Eficiência do posto no ${shiftLabel.toLowerCase()}`}
-            >
-              <span className="pcp-pub__chip-label">{shiftLabel}</span>
-              <strong>{formatPercent(shiftPct)}</strong>
-            </button>
-            <button
-              type="button"
-              className="pcp-pub__chip pcp-pub__chip--metric"
-              onClick={openPerformance}
-              title="Paradas apontadas hoje neste posto"
-            >
-              <span className="pcp-pub__chip-label">Paradas hoje</span>
-              <strong>{downtime?.available ? formatHours(downtime.today_hours) : "—"}</strong>
-            </button>
-          </>
-        }
-        actions={
-          <>
-            <span
-              className={`pcp-pub__live ${connected ? "pcp-pub__live--on" : "pcp-pub__live--off"}`}
-              title={
-                connected
-                  ? "Conectado: sequência do PCP ao vivo; status das OPs a cada 15s."
-                  : "Sem socket: status e fila atualizam a cada 15s."
-              }
-            >
-              <span className="pcp-pub__live-dot" aria-hidden="true" />
-              {connected ? "Ao vivo" : "Reconectando"}
-            </span>
-            <button type="button" className="pcp-pub__ghost" onClick={openPerformance}>
-              Ver desempenho
-            </button>
-            <button type="button" className="pcp-pub__ghost" onClick={clearWorkCenter}>
-              Trocar posto
-            </button>
-          </>
-        }
-      />
+    <section className="pcp-pub pcp-pub--queue">
+      <header className="pcp-pub__masthead">
+        <div className="pcp-pub__topbar">
+          <div className="pcp-pub__topbar-inner">
+            <div className="pcp-pub__topbar-brand">
+              <span className="pcp-pub__logo pcp-pub__logo--sm">
+                <img src="/p/logoMinhaDelpi.svg" alt="Minha DELPI" draggable={false} />
+              </span>
+              <div className="pcp-pub__topbar-titles">
+                <h1 className="pcp-pub__app-title">Minha produção</h1>
+                <span className="pcp-pub__branch-pill">Filial {branch}</span>
+              </div>
+            </div>
+            <div className="pcp-pub__topbar-actions">
+              <button type="button" className="pcp-pub__ghost pcp-pub__ghost--link" onClick={openPerformance}>
+                <BarChart3 size={18} strokeWidth={2} aria-hidden="true" />
+                Ver desempenho
+              </button>
+              <button type="button" className="pcp-pub__ghost pcp-pub__ghost--link" onClick={clearWorkCenter}>
+                <RefreshCw size={18} strokeWidth={2} aria-hidden="true" />
+                Trocar posto
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="pcp-pub__hero">
+          <div className="pcp-pub__hero-inner">
+            <div className="pcp-pub__hero-center">
+              <p className="pcp-pub__hero-label">Centro de trabalho</p>
+              <p className="pcp-pub__hero-code">{workCenter}</p>
+            </div>
+            <div className="pcp-pub__hero-process">
+              <h2 className="pcp-pub__hero-name">{centerName}</h2>
+              <p className="pcp-pub__hero-eyebrow">Fila de produção</p>
+            </div>
+            <div className="pcp-pub__hero-metrics" role="group" aria-label="Desempenho do posto">
+              <button
+                type="button"
+                className={`pcp-pub__hero-metric pcp-pub__hero-metric--eff-${effTone}`}
+                onClick={openPerformance}
+                title={`Eficiência do posto no ${shiftLabel.toLowerCase()}`}
+              >
+                <span className="pcp-pub__hero-metric-label">{shiftLabel}</span>
+                <strong className="pcp-pub__hero-metric-value">{formatPercent(shiftPct)}</strong>
+              </button>
+              <button
+                type="button"
+                className="pcp-pub__hero-metric"
+                onClick={openPerformance}
+                title="Paradas apontadas hoje neste posto"
+              >
+                <span className="pcp-pub__hero-metric-label">Paradas hoje</span>
+                <strong className="pcp-pub__hero-metric-value">
+                  {downtime?.available ? formatHours(downtime.today_hours) : "—"}
+                </strong>
+              </button>
+            </div>
+            <div className="pcp-pub__hero-aside">
+              <span
+                className={`pcp-pub__live ${connected ? "pcp-pub__live--on" : "pcp-pub__live--off"}`}
+                title={
+                  connected
+                    ? "Conectado: sequência do PCP ao vivo; status das OPs a cada 15s."
+                    : "Sem socket: status e fila atualizam a cada 15s."
+                }
+              >
+                <span className="pcp-pub__live-dot" aria-hidden="true" />
+                {connected ? "Ao vivo" : "Reconectando"}
+              </span>
+            </div>
+          </div>
+        </div>
+      </header>
 
       <div className="pcp-pub__wrap">
-        <label className="pcp-pub__search-field">
-          <Search className="pcp-pub__search-icon" size={20} strokeWidth={2} aria-hidden="true" />
-          <input
-            className="pcp-pub__search"
-            type="search"
-            value={queueQuery}
-            onChange={(event) => setQueueQuery(event.target.value)}
-            placeholder="Buscar OP ou PA…"
-            aria-label="Buscar operação por OP ou PA"
-            autoComplete="off"
-            enterKeyHint="search"
-          />
-        </label>
-
         {error ? <p className="pcp-pub__error">{error}</p> : null}
 
         {items.length === 0 ? (
           <p className="pcp-pub__empty">
             {loading ? "Carregando fila…" : "Nenhuma operação programada para este posto."}
           </p>
-        ) : filteredItems.length === 0 ? (
-          <p className="pcp-pub__empty">Nenhuma operação encontrada para “{queueQuery.trim()}”.</p>
         ) : (
           <>
-            <div className="pcp-pub__queue-head" aria-hidden="true">
-              <span className="pcp-pub__position pcp-pub__position--ghost">#</span>
-              <div className="pcp-pub__row">
-                <span>OP / Produto</span>
-                <span>Operação</span>
-                <span>Pendente</span>
-                <span>Programada</span>
-                <span>Entrega</span>
-                <span className="pcp-pub__row-end">Status</span>
-              </div>
-            </div>
+            {activeEntry ? (
+              <ActiveNowCard
+                entry={activeEntry}
+                onOpenVisual={setVisualTarget}
+                onOpenDetail={() =>
+                  openOperation(
+                    activeEntry.operation.production_order,
+                    activeEntry.operation.operation_code,
+                  )
+                }
+              />
+            ) : null}
 
-            <ol className="pcp-pub__queue">
-              {filteredItems.map(({ operation, position }) => (
-                <OperationCard
-                  key={operationKey(operation)}
-                  position={position}
-                  operation={operation}
-                  onOpenVisual={setVisualTarget}
-                  onOpenDetail={() =>
-                    openOperation(operation.production_order, operation.operation_code)
-                  }
-                />
-              ))}
-            </ol>
+            <section className="pcp-pub__upcoming" aria-labelledby="pcp-pub-upcoming-title">
+              <div className="pcp-pub__upcoming-head">
+                <div className="pcp-pub__upcoming-titles">
+                  <h3 id="pcp-pub-upcoming-title">Próximas operações</h3>
+                  <span className="pcp-pub__upcoming-count">
+                    {upcomingEntries.length} na fila
+                  </span>
+                </div>
+                <label className="pcp-pub__search-field pcp-pub__search-field--inline">
+                  <Search className="pcp-pub__search-icon" size={18} strokeWidth={2} aria-hidden="true" />
+                  <input
+                    className="pcp-pub__search"
+                    type="search"
+                    value={queueQuery}
+                    onChange={(event) => setQueueQuery(event.target.value)}
+                    placeholder="Buscar OP ou PA"
+                    aria-label="Buscar operação por OP ou PA"
+                    autoComplete="off"
+                    enterKeyHint="search"
+                  />
+                </label>
+              </div>
+
+              {upcomingEntries.length === 0 ? (
+                <p className="pcp-pub__empty pcp-pub__empty--soft">
+                  {queueQuery.trim()
+                    ? `Nenhuma operação encontrada para “${queueQuery.trim()}”.`
+                    : "Não há outras operações na fila deste posto."}
+                </p>
+              ) : (
+                <div className="pcp-pub__queue-table-wrap">
+                  <table className="pcp-pub__queue-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Seq</th>
+                        <th scope="col">OP / Produto</th>
+                        <th scope="col">Operação</th>
+                        <th scope="col">Pendente</th>
+                        <th scope="col">Programada</th>
+                        <th scope="col">Entrega</th>
+                        <th scope="col">Consulta</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {upcomingEntries.map((entry, index) => (
+                        <UpcomingRow
+                          key={operationKey(entry.operation)}
+                          entry={entry}
+                          isNext={index === 0}
+                          onOpenDetail={() =>
+                            openOperation(
+                              entry.operation.production_order,
+                              entry.operation.operation_code,
+                            )
+                          }
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
           </>
         )}
 
@@ -449,110 +531,117 @@ function WorkCenterPicker({ branch, workCenters, onSelect }: PickerProps) {
   );
 }
 
-function OperationCard({
-  position,
-  operation,
+function ActiveNowCard({
+  entry,
   onOpenVisual,
   onOpenDetail,
 }: {
-  position: number;
-  operation: MachineLoadOperation;
-  onOpenVisual: (target: {
-    paCode: string | null;
-    productCode: string | null;
-    has3dModel: boolean;
-  }) => void;
+  entry: QueueEntry;
+  onOpenVisual: (target: VisualTarget) => void;
   onOpenDetail: () => void;
 }) {
+  const { operation, position } = entry;
   const status = resolveStatus(operation);
-  const paCode = operation.pa_product_code?.trim() || "";
-  const productCode = operation.product_code?.trim() || "";
-  const has3dModel = Boolean(operation.has_3d_model && productCode);
-  const canOpenVisual = Boolean(paCode) || has3dModel;
-  const visualLabel =
-    paCode && has3dModel ? "Ver desenho / 3D" : has3dModel ? "Ver 3D" : "Ver desenho";
-  // No chão de fábrica o operador lê o PA; o intermediário fica só como fallback.
-  const displayProductCode = paCode || operation.product_code;
+  const { paCode, productCode, has3dModel, canOpenVisual, visualLabel, displayProductCode } =
+    resolveVisualMeta(operation);
 
-  // Alvo de toque grande no tablet: o card inteiro abre o detalhe, exceto sobre os botões.
-  const openFromCard = (event: MouseEvent<HTMLLIElement>) => {
+  const openFromCard = (event: MouseEvent<HTMLElement>) => {
     if ((event.target as HTMLElement).closest("button")) return;
     onOpenDetail();
   };
 
+  const scheduled =
+    operation.scheduled_start_time
+      ? `${formatDate(operation.scheduled_date)} ${operation.scheduled_start_time}`
+      : formatDate(operation.scheduled_date);
+
   return (
-    <li className={`pcp-pub__card pcp-pub__card--${status.tone}`} onClick={openFromCard}>
-      <span className="pcp-pub__position" aria-label={`Posição ${position}`}>
-        {position}
-      </span>
-
-      <div className="pcp-pub__row">
-        <div className="pcp-pub__cell pcp-pub__cell--order">
-          <span className="pcp-pub__order">
-            <span className="pcp-pub__order-label">OP</span>
-            <strong>{operation.production_order}</strong>
-            <CopyValueButton value={operation.production_order} label="Copiar OP" />
-          </span>
-          <p className="pcp-pub__product">
-            <strong className={paCode ? "pcp-pub__product-code--pa" : undefined}>
-              {displayProductCode}
-            </strong>{" "}
-            {operation.product_description}
-          </p>
-        </div>
-
-        <div className="pcp-pub__cell">
-          <span className="pcp-pub__cell-label">Operação</span>
-          <span className="pcp-pub__cell-value">
-            {operation.operation_code} · {operation.operation_description}
-          </span>
-          {operation.tool ? (
-            <span className="pcp-pub__cell-sub">Ferramenta {operation.tool}</span>
+    <section className="pcp-pub__now" aria-labelledby="pcp-pub-now-title">
+      <div className="pcp-pub__now-head">
+        <h3 id="pcp-pub-now-title">Agora nesta bancada</h3>
+        <span className={`pcp-pub__badge pcp-pub__badge--${status.tone}`}>
+          {status.tone === "running" ? (
+            <span className="pcp-pub__badge-dot" aria-hidden="true" />
           ) : null}
+          {status.label}
+        </span>
+      </div>
+
+      <article
+        className={`pcp-pub__now-card pcp-pub__now-card--${status.tone}`}
+        onClick={openFromCard}
+      >
+        <div className="pcp-pub__now-main">
+          <span className="pcp-pub__now-seq" aria-label={`Ordem ${position}`}>
+            Ordem {String(position).padStart(2, "0")}
+          </span>
+
+          <div className="pcp-pub__now-identity">
+            <div className="pcp-pub__now-order">
+              <strong>{operation.production_order}</strong>
+              <CopyValueButton value={operation.production_order} label="Copiar OP" />
+            </div>
+            <p className="pcp-pub__now-product">
+              <strong className={paCode ? "pcp-pub__product-code--pa" : undefined}>
+                {displayProductCode}
+              </strong>{" "}
+              {operation.product_description}
+            </p>
+          </div>
+
+          <div className="pcp-pub__now-qty" aria-label="Quantidade pendente">
+            <span className="pcp-pub__now-qty-label">Quantidade pendente</span>
+            <strong className="pcp-pub__now-qty-value">
+              {formatQty(operation.pending_qty)} {formatUnit(operation.unit)}
+            </strong>
+          </div>
         </div>
 
-        <div className="pcp-pub__cell">
-          <span className="pcp-pub__cell-label">Pendente</span>
-          <span className="pcp-pub__cell-value pcp-pub__num">
-            {formatQty(operation.pending_qty)} {formatUnit(operation.unit)}
-          </span>
-        </div>
+        <dl className="pcp-pub__now-facts">
+          <div>
+            <dt>Operação</dt>
+            <dd>
+              {operation.operation_code} · {operation.operation_description}
+            </dd>
+          </div>
+          <div>
+            <dt>Ferramenta</dt>
+            <dd>{operation.tool || "—"}</dd>
+          </div>
+          <div>
+            <dt>Programada</dt>
+            <dd>{scheduled}</dd>
+          </div>
+          <div>
+            <dt>Entrega</dt>
+            <dd>{formatDate(operation.pa_due_date)}</dd>
+          </div>
+        </dl>
 
-        <div className="pcp-pub__cell">
-          <span className="pcp-pub__cell-label">Programada</span>
-          <span className="pcp-pub__cell-value pcp-pub__num">
-            {formatDate(operation.scheduled_date)}
-          </span>
-          {operation.scheduled_start_time ? (
-            <span className="pcp-pub__cell-sub">{operation.scheduled_start_time}</span>
-          ) : null}
-        </div>
+        <div className="pcp-pub__now-foot">
+          <div className="pcp-pub__now-operator">
+            <span className="pcp-pub__now-operator-avatar" aria-hidden="true">
+              <User size={18} strokeWidth={2} />
+            </span>
+            <div>
+              <p className="pcp-pub__now-operator-name">
+                {operation.active_operator_name?.trim() || "Sem operador apontado"}
+              </p>
+              <p className="pcp-pub__now-operator-note">
+                {status.operatorNote ||
+                  (status.tone === "running" ? "Em produção neste posto" : "Próxima da fila")}
+              </p>
+            </div>
+          </div>
 
-        <div className="pcp-pub__cell">
-          <span className="pcp-pub__cell-label">Entrega</span>
-          <span className="pcp-pub__cell-value pcp-pub__num">
-            {formatDate(operation.pa_due_date)}
-          </span>
-        </div>
-
-        <div className="pcp-pub__cell pcp-pub__cell--status">
-          <span className={`pcp-pub__badge pcp-pub__badge--${status.tone}`}>
-            {status.tone === "running" ? (
-              <span className="pcp-pub__badge-dot" aria-hidden="true" />
-            ) : null}
-            {status.label}
-          </span>
-          {status.operatorNote ? (
-            <span className="pcp-pub__operator">{status.operatorNote}</span>
-          ) : null}
-          <span className="pcp-pub__card-actions">
-            <button type="button" className="pcp-pub__drawing" onClick={onOpenDetail}>
-              Detalhes
+          <div className="pcp-pub__now-actions">
+            <button type="button" className="pcp-pub__btn pcp-pub__btn--ghost" onClick={onOpenDetail}>
+              Detalhes da OP
             </button>
             {canOpenVisual ? (
               <button
                 type="button"
-                className="pcp-pub__drawing pcp-pub__drawing--muted"
+                className="pcp-pub__btn pcp-pub__btn--primary"
                 onClick={() =>
                   onOpenVisual({
                     paCode: paCode || null,
@@ -561,12 +650,79 @@ function OperationCard({
                   })
                 }
               >
+                <Eye size={18} strokeWidth={2} aria-hidden="true" />
                 {visualLabel}
               </button>
             ) : null}
+          </div>
+        </div>
+      </article>
+    </section>
+  );
+}
+
+function UpcomingRow({
+  entry,
+  isNext,
+  onOpenDetail,
+}: {
+  entry: QueueEntry;
+  isNext: boolean;
+  onOpenDetail: () => void;
+}) {
+  const { operation, position } = entry;
+  const status = resolveStatus(operation);
+  const { paCode, displayProductCode } = resolveVisualMeta(operation);
+  const seqLabel = String(position).padStart(2, "0");
+
+  return (
+    <tr
+      className={[
+        "pcp-pub__queue-row",
+        isNext ? "pcp-pub__queue-row--next" : "",
+        status.tone === "done" ? "pcp-pub__queue-row--done" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      <td className="pcp-pub__queue-seq">
+        <span className="pcp-pub__queue-seq-num">{seqLabel}</span>
+        {isNext ? <span className="pcp-pub__queue-seq-tag">Próxima</span> : null}
+      </td>
+      <td>
+        <div className="pcp-pub__queue-op">
+          <strong>{operation.production_order}</strong>
+          <span>
+            <span className={paCode ? "pcp-pub__product-code--pa" : undefined}>
+              {displayProductCode}
+            </span>{" "}
+            {operation.product_description}
           </span>
         </div>
-      </div>
-    </li>
+      </td>
+      <td>
+        <div className="pcp-pub__queue-op-meta">
+          <span>
+            {operation.operation_code} · {operation.operation_description}
+          </span>
+          {operation.tool ? <span>Ferramenta {operation.tool}</span> : null}
+        </div>
+      </td>
+      <td className="pcp-pub__num">
+        {formatQty(operation.pending_qty)} {formatUnit(operation.unit)}
+      </td>
+      <td className="pcp-pub__num">
+        <div className="pcp-pub__queue-op-meta">
+          <span>{formatDate(operation.scheduled_date)}</span>
+          {operation.scheduled_start_time ? <span>{operation.scheduled_start_time}</span> : null}
+        </div>
+      </td>
+      <td className="pcp-pub__num">{formatDate(operation.pa_due_date)}</td>
+      <td>
+        <button type="button" className="pcp-pub__link-btn" onClick={onOpenDetail}>
+          Detalhes
+        </button>
+      </td>
+    </tr>
   );
 }
