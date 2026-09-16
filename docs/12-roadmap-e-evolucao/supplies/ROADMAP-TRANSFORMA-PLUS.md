@@ -1,8 +1,8 @@
 # Portal Suprimentos — Roadmap Transforma+
 
-> **Papel:** visão de negócio e backlog Transforma+ para Suprimentos.  
-> **Não substitui** contratos técnicos, ADRs nem o plano executável página-a-página.  
-> **Não autoriza** implementação, cutover, migration, permission nova ou mudança de regra OTD/ESTSEG/fiscal.  
+> **Papel:** visão de negócio e backlog Transforma+ para Suprimentos.
+> **Não substitui** contratos técnicos, ADRs nem o plano executável página-a-página.
+> **Não autoriza** implementação, cutover, migration, permission nova ou mudança de regra OTD/ESTSEG/fiscal.
 > **BASE HEAD de consolidação:** `d9e2fe1a94ab3556119afc0e44a26f72bae5763a` (2026-09-16).
 
 ## 1. Como ler este documento
@@ -16,7 +16,7 @@
 | Ainda não sabemos | Lacuna explícita |
 | Existente / Parcial / Em validação | Estado no monorepo (ver matriz §7) |
 
-**Playbook solicitado** `playbook_transforma_suprimentos_controladoria.md`: **Ainda não localizado** no workspace (2026-09-16). Conteúdo abaixo usa o EXECUTION BRIEF Transforma+ + corpus canônico de `docs/12-roadmap-e-evolucao/supplies/` + inventário de código. Sem o arquivo físico, itens do brief permanecem **Proposto / Em validação**, não “Existente”.
+**Fonte Transforma+:** conteúdo adicional fornecido externamente ao processo de consolidação em **16/09/2026** (playbook / briefing do Product Owner, inclusive deltas revisados pelo GPT). Classificado como Informado/Observado, Calculado, Hipótese, Proposto ou Ainda não sabemos. **A fonte não é prova de runtime.** O arquivo `playbook_transforma_suprimentos_controladoria.md` **ainda não está persistido** no monorepo neste HEAD — gaps do playbook entram via deltas obrigatórios do REWORK BRIEF; itens continuam **Proposto / Em validação**, não “Existente”, até inventário de código.
 
 ### Autoridades técnicas (não duplicar aqui)
 
@@ -43,9 +43,19 @@
 
 ## 2. Contexto de produto
 
-O Portal Suprimentos (`supplies`) já entrega jornadas operacionais E1–E8 (Início, Overview, OTD analytics, SC C1, PC lista/detalhe). A fila nativa (Entregas, ESTSEG no portal, Fornecedores 360, Importações, etc.) continua **bloqueada** até autorização página-a-página.
+**Implementação vs gate (evidence vigente em [README.md](./README.md), HEAD revalidado):**
 
-Transforma+ acrescenta **necessidades de negócio** (qualidade da SC, contexto Vendas→Compras, pré-validação de NF, importações, inteligência de compras) que **não** estão todas no código e **não** devem ser confundidas com páginas já fechadas.
+| Faixa | Status documental |
+|---|---|
+| E1–E7 | Jornadas **implementadas / deploy documentados** conforme documentação mestra vigente |
+| E8 / WF-06 Detalhe do Pedido | **IMPLEMENTATION PRESENT / DEPLOYED** (ficha `/purchase-orders/:branch/:number`) |
+| GATE-FEATURE WF-06 | **INCONCLUSIVE** enquanto o smoke federado live não estiver comprovado — **não** confundir com `GATE-FEATURE PASS` |
+
+Formulação canônica deste roadmap: E1–E7 possuem jornadas implementadas conforme documentação vigente; E8/WF-06 possui implementação/deploy documentados, mas seu GATE-FEATURE permanece INCONCLUSIVE enquanto o smoke federado live não estiver comprovado.
+
+A fila nativa (Entregas, ESTSEG no portal, Fornecedores 360, Importações, etc.) continua **bloqueada** até autorização página-a-página.
+
+Transforma+ acrescenta **necessidades de negócio** (qualidade da SC, contexto Vendas→Compras, similaridade de materiais, pré-validação de NF, importações, inteligência de compras) que **não** estão todas no código e **não** devem ser confundidas com páginas já entregues nem com gates PASS.
 
 ---
 
@@ -118,17 +128,85 @@ Consolidar processo, fornecedor, produtos, status, valores, despesas, custo inte
 
 **Custos de importação:** mesma fonte de dados que Controladoria · visões por perfil — ver [../financeiro-controladoria/ROADMAP.md](../financeiro-controladoria/ROADMAP.md) CTL-007. Owner técnico = `TO_INVENTORY`.
 
+### 3.9 Similaridade de materiais (SUP-014)
+
+**Informado/Observado (fonte Transforma+):** em alguns casos usa-se apoio de especialista para identificar materiais similares; o tema pode exigir Engenharia.
+
+**Proposto:** sugestão assistida, claramente identificada como sugestão, com evidência técnica, dependente de validação de Engenharia ou área competente — **nenhuma substituição automática**.
+
 ---
 
-## 4. Capacidades transversais (CORE-*)
+## 4. Capacidades transversais (CORE-*) — definição canônica
 
-| ID | Tema | Estado | Nota |
-|---|---|---|---|
-| CORE-001 | Tarefas vinculadas a objetos | Proposto no Portal Suprimentos (`/my-tasks` placeholder); Existente no Comercial (outro BC) | Não copiar ownership Comercial |
-| CORE-002 | Comunicação contextual | Proposto | Preocupação com Teams / e-mail / WhatsApp / Minha DELPI — canal oficial = Ainda não sabemos |
-| CORE-003 | Governança de notificações | Parcial | Jobs SC/PC em `purchase-requests-api` → Core; canal Portal = INTEGRACOES |
-| CORE-004 | IA contextual | Proposto (doc) | [DESIGN-IA-SUPRIMENTOS.md](./DESIGN-IA-SUPRIMENTOS.md); guardrails: permissões, não inventar dados, fonte, sugestão≠decisão, sem gravação ERP sem fluxo |
-| CORE-005 | Integração/RBAC entre portais | Em validação | Boundaries; sem permission por botão |
+> Este documento é a **fonte documental transversal** de CORE-001…005.
+> Isso **não** transfere ownership técnico para Suprimentos. Controladoria referencia por link; Comercial e Core permanecem owners dos próprios bounded contexts.
+
+Cada item: problema · objetivo · estado · dependências · fonte · requisito · critérios de aceite · questões pendentes.
+
+### CORE-001 — Tarefas vinculadas a objetos
+
+| Campo | Conteúdo |
+|---|---|
+| Problema | Follow-ups dispersos fora do objeto de negócio |
+| Objetivo | Tarefas com responsável, prazo, prioridade, objeto relacionado, status e histórico |
+| Estado | Proposto no Portal Suprimentos (`/my-tasks` placeholder); Existente no Comercial (outro BC) |
+| Dependências | Modelo de objeto; RBAC; não copiar ownership Comercial |
+| Fonte | Brief Transforma+; fonte externa 16/09/2026 |
+| Requisito | Objetos candidatos: SC, pedido, fornecedor, NF, importação, fechamento, relatório, pendência |
+| Critérios de aceite | Tarefa sempre ligada a um objeto; histórico audível; sem permission por botão |
+| Questões pendentes | Owner do serviço de tasks; paridade com Comercial |
+
+### CORE-002 — Comunicação contextual
+
+| Campo | Conteúdo |
+|---|---|
+| Problema | Conversas sobre SC/PC/NF/fechamento fora de contexto |
+| Objetivo | Comunicação vinculada ao objeto |
+| Estado | Proposto |
+| Dependências | CORE-001; governança de canais |
+| Fonte | Brief Transforma+; fonte externa 16/09/2026 |
+| Requisito | Não criar novo chat genérico por default; Teams / e-mail / WhatsApp / Minha DELPI = questão de governança |
+| Critérios de aceite | Mensagem/thread referenciável ao objeto; canal oficial documentado quando definido |
+| Questões pendentes | Canal oficial; retenção; RBAC de leitura |
+
+### CORE-003 — Governança de notificações
+
+| Campo | Conteúdo |
+|---|---|
+| Problema | Eventos sem catálogo / canal oficial |
+| Objetivo | Eventos candidatos governados |
+| Estado | Parcial (jobs SC/PC em `purchase-requests-api` → Core); canal Portal = [INTEGRACOES.md](./INTEGRACOES.md) |
+| Dependências | Catálogo de eventos; preferências Core |
+| Fonte | Brief; INTEGRACOES; fonte externa 16/09/2026 |
+| Requisito | Documentar eventos candidatos; **não inferir** delivery channel oficial |
+| Critérios de aceite | Evento nomeado + payload mínimo + escopo RBAC; canal explícito só após decisão |
+| Questões pendentes | Canal oficial; migração C2 das notif SC |
+
+### CORE-004 — IA contextual com guardrails
+
+| Campo | Conteúdo |
+|---|---|
+| Problema | Pressão por automação sem governança |
+| Objetivo | Apoio contextual (consulta, resumo, exceções, estoque, similares, acompanhamento) sem virar owner de regra |
+| Estado | Proposto (doc) — [DESIGN-IA-SUPRIMENTOS.md](./DESIGN-IA-SUPRIMENTOS.md) |
+| Dependências | CORE-005; SUP-014; validação humana/técnica |
+| Fonte | Brief; DESIGN-IA; fonte externa 16/09/2026 (REWORK) |
+| Requisito | Guardrails obrigatórios: (1) respeitar permissions; (2) não inventar dados; (3) indicar fonte quando possível; (4) sugestão ≠ decisão; (5) regra fiscal/contábil/técnica exige validação oficial/humana; (6) substituição ou **similaridade de material** exige **validação técnica**; (7) nenhuma substituição automática; (8) nenhuma gravação no ERP sem fluxo autorizado |
+| Critérios de aceite | UI/API deixam claro “sugestão”; bloqueio de write ERP sem fluxo; similaridade nunca aplica sozinha |
+| Questões pendentes | Escopo de tools; avaliação R1–R11 quando material |
+
+### CORE-005 — Integração / RBAC entre portais
+
+| Campo | Conteúdo |
+|---|---|
+| Problema | Risco de authority cruzada ou permission por botão |
+| Objetivo | Integração entre portais sob Core |
+| Estado | Em validação |
+| Dependências | Core effective permissions; unit/resource scope |
+| Fonte | Brief; MATRIZ-BOUNDARIES; fonte externa 16/09/2026 |
+| Requisito | Core continua authority; capability + unit/resource scope quando aplicável; **não** permission por botão; **não** criar authority entre Suprimentos e Controladoria |
+| Critérios de aceite | Consumo via BFF/owner; fail-closed; sem bypass MFE→api-delpi |
+| Questões pendentes | Matriz de capabilities cruzadas quando houver feature compartilhada |
 
 ---
 
@@ -305,17 +383,53 @@ Cada item: problema · objetivo · estado · dependências · fonte · requisito
 | Aceite | Matriz de ownership publicada |
 | Pendências | Owner técnico |
 
+### SUP-014 — Similaridade de materiais
+
+| Campo | Conteúdo |
+|---|---|
+| Problema | Identificação de materiais similares depende de especialista em alguns casos; pode exigir Engenharia |
+| Objetivo | Sugestão assistida de similares com evidência técnica |
+| Estado | Proposto |
+| Dependências | Engenharia / área técnica competente + fonte de dados a inventariar; CORE-004 |
+| Fonte | Fonte Transforma+ externa 16/09/2026 (playbook / REWORK BRIEF) — Informado/Observado + Proposto |
+| Requisito | Sugestão identificada como sugestão; evidência técnica; validação humana/técnica obrigatória; **nenhuma substituição automática**; não implementar regra de equivalência neste roadmap |
+| Critérios de aceite | UI deixa claro “sugestão”; bloqueio de apply sem validação; sem gravação ERP automática |
+| Questões pendentes | Fonte de similaridade (estrutura, atributos, histórico); owner Engenharia; critérios de evidência |
+
+---
+
+## 5.1 Indicadores candidatos — requerem homologação
+
+> **Não** são KPIs implementados. Authority de indicadores já homologados: [KPI-FICHAS.md](./KPI-FICHAS.md).
+> Candidatos abaixo = descoberta Transforma+; **não** promover sem checklist completo.
+
+**Regra geral — promoção de KPI candidato exige:** nome; definição; unidade; fórmula/regra homologada; início/fim da medição; direção; baseline; meta; periodicidade; fonte oficial; responsável.
+
+| Candidato | Domínio | Nota |
+|---|---|---|
+| Tempo de aprovação da SC | Suprimentos | Fórmula/eventos a validar |
+| Tempo de Compras após liberação | Suprimentos | Evento final oficial a definir |
+| Retrabalho de SC | Suprimentos | Fórmula a validar |
+| Desvio preço comprado × referência | Suprimentos | Composição comparável a definir |
+| OTD | Suprimentos | **Existente** em KPI-FICHAS / Overview — universo ainda precisa homologação (P-03); não alterar lógica neste roadmap |
+| Divergência na entrada de NF | Suprimentos | Candidato |
+| Risco de estoque sem demanda | Suprimentos | Regra a definir (ligado a SUP-008) |
+| Status do fechamento | Controladoria | Ver roadmap Controladoria |
+| Pendências vencidas | Controladoria | Ver roadmap Controladoria |
+| Atividades ainda manuais | Controladoria | Fórmula a definir |
+| Correções de centro de custo | Controladoria | Ver roadmap Controladoria |
+
 ---
 
 ## 6. Ondas (sem datas)
 
 | Onda | Foco | Itens típicos |
 |---|---|---|
-| **0 — Descoberta** | Processos, regras, planilhas, ACSI, alçadas, fórmula ESTSEG, OTD, NF | SUP-012, SUP-007 fórmula, SUP-009, SUP-004 |
+| **0 — Descoberta** | Processos, regras, planilhas, ACSI, alçadas, fórmula ESTSEG, OTD, NF, similaridade | SUP-012, SUP-007 fórmula, SUP-009, SUP-004, SUP-014 |
 | **1 — Visibilidade** | Consultas, contexto, checklist, pendências, tarefas | SUP-001/002 (leitura), CORE-001, SUP-005 |
 | **2 — Padronização** | Formulários, validações, classificação, indicadores | SUP-003, SUP-009 homologado |
 | **3 — Automação** | Alertas, pré-validação, cálculos homologados | SUP-008, SUP-010, SUP-006 |
-| **4 — Inteligência** | IA contextual, similaridade, previsões com governança | CORE-004 |
+| **4 — Inteligência** | IA contextual, similaridade assistida, previsões com governança | CORE-004, SUP-014 |
 
 Roadmap ≠ autorização de implementação.
 
@@ -325,15 +439,17 @@ Roadmap ≠ autorização de implementação.
 
 | Capacidade | Estado atual | Evidência | Necessidade | Próximo passo |
 |---|---|---|---|---|
-| Portal SC/PC operacionais | Existente | `plugins/supplies`, `supplies-api`, README E6–E8 | Manter; evoluir qualidade SC | Homologar SUP-003/004 |
-| Overview + OTD KPI | Existente | KPI-FICHAS; `/analytics/otd` | Homologar OTD desejado | P-03 |
+| Portal SC/PC (E1–E7 impl.) | Existente (implementação) | `plugins/supplies`, `supplies-api`, README | Manter; evoluir qualidade SC | Homologar SUP-003/004 |
+| E8 / WF-06 detalhe PC | IMPLEMENTATION PRESENT / DEPLOYED; GATE INCONCLUSIVE | README GATE-FEATURE WF-06 | Smoke federado live | Não declarar GATE PASS |
+| Overview + OTD KPI | Existente | KPI-FICHAS; `/analytics/otd` | Homologar universo OTD | P-03 |
 | ESTSEG | Parcial | `plugins/estoque-seguranca`; placeholder Portal | Absorção + fórmula ideal | E11 + homologação |
 | Fornecedor 360 / OTD página | Proposto | Placeholder `App.tsx` | Página nativa | Contrato SA2; P-11 |
 | Importações / ACSI | Ainda não localizado / Em validação | P-05; ACSI=0 hits | Inventário | Dump Core; ACSI |
-| Contexto Vendas→Compras | Proposto | Brief | SUP-001/002 | Descoberta CRM |
+| Contexto Vendas→Compras | Proposto | Brief / fonte Transforma+ | SUP-001/002 | Descoberta CRM |
+| Similaridade de materiais | Proposto | Fonte Transforma+ 16/09 | SUP-014 | Engenharia + dados |
 | Pré-validação NF | Proposto | LNF Existente (app) | SUP-010 | Owner + regras oficiais |
 | My tasks Portal | Proposto | Placeholder | CORE-001 | Não copiar Comercial |
-| IA Suprimentos | Documentado, não localizado como runtime de agente | DESIGN-IA | CORE-004 | Guardrails |
+| IA Suprimentos | Documentado, não localizado como runtime de agente | DESIGN-IA | CORE-004 + guardrails | Validação técnica |
 
 ---
 
@@ -354,10 +470,10 @@ Distinguir sempre: consulta · preparação · pré-validação · gravação.
 
 ## 9. Questões em aberto
 
-- Identificador formação ↔ pedido; campos autorizados ao comprador  
-- Fórmula ESTSEG “ideal”; evento de descontinuação  
-- Regra final OTD; início/fim dos indicadores de tempo SC  
-- Alçadas; divergências NF; equivalência materiais; estrutura ACSI  
+- Identificador formação ↔ pedido; campos autorizados ao comprador
+- Fórmula ESTSEG “ideal”; evento de descontinuação
+- Regra final OTD; início/fim dos indicadores de tempo SC
+- Alçadas; divergências NF; equivalência materiais; estrutura ACSI
 
 ---
 
@@ -368,7 +484,7 @@ Distinguir sempre: consulta · preparação · pré-validação · gravação.
 | Prosa E1–E8 concluída vs YAML `e6-s5 pending` / `e7`/`e8` blocked | IMPLEMENTATION-PLAN + README | KNOWN DOCUMENTATION_DRIFT — registrar; não alterar histórico só para cosmético |
 | `/me/routes` vs `/me/apps` | README/instruções oficiais vs Core atual | Contrato vigente = `/me` + `/me/apps`; documentado no README supplies |
 | Cutover OTD → `/suppliers/otd` vs placeholder | CUTOVER-RUNBOOK vs código | Target documentado; código ainda não |
-| DESIGN-IA “foco SC” vs E8 fechado | DESIGN-IA status | Doc de status atrasada |
+| DESIGN-IA “foco SC” vs E8 implementado (gate INCONCLUSIVE) | DESIGN-IA status | Doc de status atrasada |
 | KPI-PO-LATE “aguarda E7” | KPI-FICHAS | Em validação pós-E7 |
 | Manifest schemaVersion 1.0.0 supplies vs “Manifesto v2” genérico nas instruções oficiais | supplies README vs doc arquiteto | Dual surface documental — não inventar manifest novo aqui |
 
@@ -376,6 +492,6 @@ Distinguir sempre: consulta · preparação · pré-validação · gravação.
 
 ## 11. Garantias
 
-- Nenhum item Proposto foi marcado como Existente sem path de código.  
-- Nenhuma fórmula ESTSEG/OTD/fiscal inventada.  
+- Nenhum item Proposto foi marcado como Existente sem path de código.
+- Nenhuma fórmula ESTSEG/OTD/fiscal inventada.
 - Este arquivo **não** autoriza implementação.

@@ -1,9 +1,9 @@
 # Financeiro / Controladoria — Roadmap Transforma+
 
-> **Papel:** consolidar necessidades Transforma+ de fechamento mensal, Contabilidade e custos.  
-> **Fonte de descoberta do brief:** EXECUTION BRIEF 2026-09-16.  
-> **Playbook** `playbook_transforma_suprimentos_controladoria.md`: **Ainda não localizado** no workspace — itens do brief = Proposto / Em validação, não Existente.  
-> **BASE HEAD:** `d9e2fe1a94ab3556119afc0e44a26f72bae5763a`.  
+> **Papel:** consolidar necessidades Transforma+ de fechamento mensal, Contabilidade e custos.
+> **Fonte de descoberta do brief:** EXECUTION BRIEF 2026-09-16.
+> **Fonte Transforma+:** conteúdo adicional fornecido externamente em **16/09/2026** (playbook / briefing PO + deltas REWORK). Classificado como Informado/Observado, Calculado, Hipótese, Proposto ou Ainda não sabemos. **Não é prova de runtime.** Arquivo `playbook_transforma_suprimentos_controladoria.md` **ainda não persistido** no monorepo.
+> **BASE HEAD consolidação:** `8bb20e2da57d5edf6cb2caddf995631a03eab7e5`.
 > Roadmap ≠ autorização de implementação.
 
 ## 1. Semântica de evidência
@@ -82,15 +82,32 @@ Evitar duplicidade com Suprimentos ([../supplies/ROADMAP-TRANSFORMA-PLUS.md](../
 
 ---
 
-## 4. Capacidades transversais
+## 4. Capacidades transversais (resumo)
 
-| ID | Tema | Estado | Nota |
+Definições completas CORE-001…005 (campos obrigatórios + guardrails de IA, inclusive **validação técnica** para similaridade de materiais):
+**[../supplies/ROADMAP-TRANSFORMA-PLUS.md](../supplies/ROADMAP-TRANSFORMA-PLUS.md) §4** — fonte documental transversal.
+Isso **não** transfere ownership técnico para Suprimentos.
+
+| ID | Tema | Estado neste domínio | Link |
 |---|---|---|---|
-| CORE-001 | Tarefas vinculadas a objetos | Proposto neste domínio | Comercial tem my-tasks (outro BC) |
-| CORE-002 | Comunicação contextual (fechamento/pendência) | Proposto | Sem chat genérico por default |
-| CORE-003 | Notificações de pendência | Proposto | Canal oficial = Ainda não sabemos |
-| CORE-004 | IA contextual | Proposto | Guardrails: permissões; não inventar; fonte; sugestão≠decisão; fiscal/contábil exige validação oficial; sem gravação ERP sem fluxo |
-| CORE-005 | RBAC entre portais | Em validação | Reusar Core; sem permission por botão |
+| CORE-001 | Tarefas vinculadas a objetos (fechamento, relatório, pendência…) | Proposto | definição §4 supplies |
+| CORE-002 | Comunicação contextual | Proposto | idem |
+| CORE-003 | Notificações (canal oficial ainda não definido) | Proposto | idem |
+| CORE-004 | IA contextual + guardrails | Proposto | idem |
+| CORE-005 | Integração/RBAC entre portais (Core authority) | Em validação | idem |
+
+---
+
+## 4.1 Indicadores candidatos — Controladoria (requerem homologação)
+
+Não são KPIs implementados. Checklist de promoção: ver regra geral em [../supplies/ROADMAP-TRANSFORMA-PLUS.md](../supplies/ROADMAP-TRANSFORMA-PLUS.md) §5.1. KPIs financeiros já existentes no Portal Financeiro P0 não são redefinidos aqui.
+
+| Candidato | Nota |
+|---|---|
+| Status do fechamento | Depende de CTL-001 |
+| Pendências vencidas | Depende de CTL-003 |
+| Atividades ainda manuais | Fórmula a definir |
+| Correções de centro de custo | Ligado a CTL-005; despesas CC Existentes ≠ este KPI |
 
 ---
 
@@ -232,10 +249,10 @@ Evitar duplicidade com Suprimentos ([../supplies/ROADMAP-TRANSFORMA-PLUS.md](../
 
 ## 9. Questões em aberto
 
-- Sequência oficial de fechamento; códigos/filtros Protheus  
-- Fontes de extratos; perfil Contabilidade  
-- Regra centro de custo; fórmula mão de obra; planilhas prioritárias  
-- APIs de gravação; sincronização; cache; eventos; notificações  
+- Sequência oficial de fechamento; códigos/filtros Protheus
+- Fontes de extratos; perfil Contabilidade
+- Regra centro de custo; fórmula mão de obra; planilhas prioritárias
+- APIs de gravação; sincronização; cache; eventos; notificações
 
 ---
 
@@ -255,7 +272,7 @@ Sem requisito contraditório: Controladoria **não** redefine OTD/ESTSEG; Suprim
 
 ## 11. Garantias
 
-- Nada marcado como implementado sem path.  
-- Nenhuma hipótese promovida a fato.  
-- Nenhuma regra fiscal/contábil/mão de obra inventada.  
+- Nada marcado como implementado sem path.
+- Nenhuma hipótese promovida a fato.
+- Nenhuma regra fiscal/contábil/mão de obra inventada.
 - Nenhum código/migration/permission alterado por este documento.
