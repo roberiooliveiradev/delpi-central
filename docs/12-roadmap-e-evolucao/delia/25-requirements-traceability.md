@@ -597,19 +597,21 @@ Review: `ARCHITECTURE_REVIEW_C0_S1`; `REVIEWED_HEAD=c822f0e72495256c3459a4b36b9c
 Naming update ≠ CP PASS ≠ runtime evidence
 C0.S0 = APPROVED
 C0.S1 = APPROVED
-C0.S2_AUTHORIZED = YES
-C0.S2 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-C0.S3_AUTHORIZED = NO
+C0.S2 = APPROVED
+AUTHORITY_MAP = FROZEN_ACCEPTED
+BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
+C0.S3_AUTHORIZED = YES
 FOUNDATION_FREEZE = NOT APPROVED
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 DÉLIA_RUNTIME_DIFF = NONE
-NEXT = ARCHITECTURE_REVIEW_C0_S2
+NEXT = C0.S3 — SHARED_PRIMITIVES / REFERENCE_DECISIONS
 ```
 
-## 16. C0.S2 authorities / bounded contexts linkage
+## 16. C0.S2 authorities / bounded contexts linkage — accepted review
 
-Evidence anchors: `17` §§2.3–2.6; ledger §6.24; `16` C0.S2.
+Evidence anchors: `17` §§2.3–2.6; ledger §6.24 + C0.S2-T2 review event; `16` C0.S2.  
+Review: `ARCHITECTURE_REVIEW_C0_S2`; `REVIEWED_HEAD=8bae12a250f2362603211a93c65bb098b8b1e9aa`; verdict `ACCEPT_WITH_RESIDUAL`.
 
 | Theme | CP examples (status unchanged) | C0.S2 boundary note |
 |---|---|---|
@@ -635,8 +637,10 @@ Evidence anchors: `17` §§2.3–2.6; ledger §6.24; `16` C0.S2.
 
 ```text
 C0.S2 documentation evidence ≠ runtime implementation evidence
-No CP promoted to PASS by C0.S2-T1
+C0.S2 accepted state ≠ runtime CP PASS
+No CP promoted to PASS by C0.S2-T1/T2
 No new CP ID invented for "C0.S2"
+C1+ CP statuses remain unchanged/LOCKED as applicable
 NEW_RUNTIME_ABSTRACTIONS = NONE
 SHARED_PRIMITIVES = deferred to C0.S3
 ```
