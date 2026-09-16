@@ -16,6 +16,9 @@ from app.application.external_capabilities.product_search_auth import (
 from app.application.external_capabilities.product_search_projection import (
     project_product_search_page,
 )
+from app.application.use_cases.product.search_products_use_case import (
+    SearchProductsUseCase,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +41,7 @@ def normalize_product_search_pagination(
 
 def search_products(
     *,
+    search_use_case: SearchProductsUseCase,
     code: str | None = None,
     description: str | None = None,
     group_code: str | None = None,
@@ -50,10 +54,10 @@ def search_products(
 
     ``customer_reference`` is never accepted. AuthZ uses ENGINEERING_LMP_ACCESS
     via ``require_product_search_access`` when ``enforce_authz`` is True.
-    """
-    # Lazy import: avoids pulling pyodbc/TOTVS at module import time (tests/CI).
-    from app.composition.product_composer import build_search_products_use_case
 
+    Composition/bootstrap owns concrete ``SearchProductsUseCase`` wiring; this
+    application function must not import the Composition Root.
+    """
     if enforce_authz:
         require_product_search_access()
 
@@ -70,7 +74,7 @@ def search_products(
         page=safe_page,
         page_size=safe_size,
     )
-    result = build_search_products_use_case().execute(dto)
+    result = search_use_case.execute(dto)
     projected = project_product_search_page(result.to_dict())
     latency_ms = int((time.perf_counter() - started) * 1000)
 

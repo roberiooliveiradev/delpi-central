@@ -55,7 +55,7 @@ DAVI is branding/orchestration identity — **not** an authorization authority.
 | Agent private preview | **PROVEN** for current operator |
 | Negative business AuthZ | **PENDING** — second user without access still required |
 | Rate limit | `MCP_RATE_POLICY = PENDING_OWNER_DECISION` |
-| Layering | `DAVI_V1_EXTERNAL_CAPABILITY_LAYERING = EXECUTION_DRIFT` (see below) |
+| Layering | `DAVI_V1_EXTERNAL_CAPABILITY_LAYERING = RESOLVED` (Application no longer imports Composition Root; use case injected at Interface/Composition) |
 
 ## CURRENT PROVEN V1 — API DELPI integration
 
@@ -83,17 +83,21 @@ MCP != domain/business/AuthZ authority
 
 The Agent and Plugin/MCP adapter do not own Product Master, identity, RBAC, persistence, or business rules.
 
-### Known layering EXECUTION_DRIFT (do not fix in documentation tasks)
+### Known layering EXECUTION_DRIFT (resolved)
 
 ```text
 application/external_capabilities/product_search_service.py
 → imports app.composition.product_composer
 → Composition Root
 
-= DAVI_V1_EXTERNAL_CAPABILITY_LAYERING = EXECUTION_DRIFT
+was DAVI_V1_EXTERNAL_CAPABILITY_LAYERING = EXECUTION_DRIFT
 ```
 
-V1 functional evidence remains valid. Co-location inside `api-delpi` is not a cross-context import, but Application → Composition Root violates the target dependency rule. Remediate in a separate bounded runtime task; do not normalize this pattern.
+**RESOLVED** in `DAVI-ARCH-RUNTIME-001`: Application `search_products` now receives an injected `SearchProductsUseCase`; Composition/Interface (`build_search_products_use_case`) owns concrete wiring. Functional V1 behavior and contracts preserved. Regression: `test_product_search_service_does_not_import_composition_root`.
+
+```text
+DAVI_V1_EXTERNAL_CAPABILITY_LAYERING = RESOLVED
+```
 
 ### GPT Actions = LEGACY_TRANSITIONAL
 

@@ -75,9 +75,8 @@ def test_search_products_input_rejects_customer_reference_and_unknown() -> None:
         SearchProductsInput.model_validate({"unknown": "nope"})
 
 
-@patch("app.composition.product_composer.build_search_products_use_case")
 @patch("app.application.external_capabilities.product_search_service.require_product_search_access")
-def test_search_products_reuses_use_case_and_authz(mock_authz, mock_build) -> None:
+def test_search_products_reuses_use_case_and_authz(mock_authz) -> None:
     product = MagicMock()
     product.to_dict.return_value = {
         "code": "A",
@@ -87,13 +86,33 @@ def test_search_products_reuses_use_case_and_authz(mock_authz, mock_build) -> No
     }
     mock_uc = MagicMock()
     mock_uc.execute.return_value = Page(items=[product], total=1, page=1, page_size=50)
-    mock_build.return_value = mock_uc
 
-    result = search_products(code="A", page=1, page_size=50, enforce_authz=True)
+    result = search_products(
+        search_use_case=mock_uc,
+        code="A",
+        page=1,
+        page_size=50,
+        enforce_authz=True,
+    )
     mock_authz.assert_called_once()
     assert result["items"][0]["product_code"] == "A"
     assert "customer_reference" not in result["items"][0]
     assert mock_uc.execute.call_args[0][0].customer_reference is None
+
+
+def test_product_search_service_does_not_import_composition_root() -> None:
+    """Regression: Application must not depend on Composition Root for search_products."""
+    from pathlib import Path
+
+    source = Path(
+        "app/application/external_capabilities/product_search_service.py"
+    )
+    # Resolve relative to api-delpi package root (tests/ sibling of app/)
+    path = Path(__file__).resolve().parents[1] / source
+    text = path.read_text(encoding="utf-8")
+    assert "app.composition" not in text
+    assert "product_composer" not in text
+    assert "build_search_products_use_case" not in text
 
 
 def test_mcp_server_exposes_only_search_products_with_annotations() -> None:

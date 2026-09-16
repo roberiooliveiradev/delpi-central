@@ -89,7 +89,7 @@ def test_project_product_search_page_preserves_pagination() -> None:
 
 
 @patch("delpi_auth.authorization.resolve_user_context")
-@patch("app.composition.product_composer.build_search_products_use_case")
+@patch("app.interface.http.routes.gpt_actions_routes.build_search_products_use_case")
 def test_gpt_search_products_caps_page_size_and_projects(mock_build, mock_user) -> None:
     mock_user.return_value = MagicMock(is_superadmin=True, permissions=[])
     product = MagicMock()

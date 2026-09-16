@@ -239,7 +239,7 @@ Pendências de rollout amplo permanecem pendentes (second-user identity, negativ
 
 No runtime V1, MCP e `application/external_capabilities` estão fisicamente no bounded context `api-delpi`. Isso prova que **não** há um bounded context DAVI separado importando internals da API DELPI.
 
-### Known EXECUTION_DRIFT (document only — do not fix here)
+### Known EXECUTION_DRIFT (resolved)
 
 ```text
 app.application.external_capabilities.product_search_service
@@ -247,16 +247,10 @@ app.application.external_capabilities.product_search_service
 ```
 
 ```text
-DAVI_V1_EXTERNAL_CAPABILITY_LAYERING = EXECUTION_DRIFT
+DAVI_V1_EXTERNAL_CAPABILITY_LAYERING = RESOLVED
 ```
 
-Significado:
-
-- evidência funcional V1 permanece válida;
-- co-location dentro de `api-delpi` **não** é import cross-context;
-- Application → Composition Root **viola** a dependency rule alvo.
-
-Remediação: tarefa bounded separada. Não generalizar este pattern.
+Remediation (`DAVI-ARCH-RUNTIME-001`): `search_products` accepts injected `SearchProductsUseCase`; Interface/Composition call `build_search_products_use_case()` and pass it in. No new DAVI backend/context. See integration evidence in `api-delpi/docs/integrations/openai-plugin-mcp.md`.
 
 ---
 
@@ -407,7 +401,7 @@ rollback/revoke existe quando aplicável?
 | OpenAPI duplicado como catálogo semântico DAVI | forbidden |
 | RBAC duplicado no Agent/MCP | forbidden |
 | GPT Actions `operationId` catalog como autoridade semântica DAVI | `LEGACY_TRANSITIONAL` — não é authority |
-| Application → Composition Root (V1 product_search_service) | `EXECUTION_DRIFT` — documentado; não normalizar |
+| Application → Composition Root (V1 product_search_service) | `RESOLVED` (`DAVI-ARCH-RUNTIME-001`) — do not reintroduce |
 | Contrariar princípios DÉLIA reutilizados sem ADR | escalate Architecture |
 
 `api-delpi/app/application/external_capabilities/catalog_service.py` descreve capabilities por `operationId` GPT Actions com `status: LEGACY_TRANSITIONAL`. Isso **não** é o catálogo semântico DAVI.
@@ -450,7 +444,7 @@ DAVI_STOCK_BUSINESS_AUTHZ and related AuthZ contracts
 formal data classification for candidate fields
 MCP_RATE_POLICY owner decision
 second-user identity + negative business AuthZ for wider publication
-Application→Composition Root remediation task
+other Application → query_cache_composer imports (separate inventory; out of DAVI-ARCH-RUNTIME-001 scope)
 ```
 
 ---

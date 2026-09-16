@@ -19,6 +19,7 @@ from app.application.gpt_actions.constants import (
 from app.application.gpt_actions.dispatch_service import GptActionsDispatchService
 from app.application.gpt_actions.openapi_builder import build_gpt_actions_openapi
 from app.application.security.api_delpi_permissions import ENGINEERING_LMP_ACCESS
+from app.composition.product_composer import build_search_products_use_case
 from app.config import settings
 from app.utils.logger import log_error
 from app.core.responses import error_response
@@ -91,6 +92,7 @@ def gpt_search_products(
 ):
     try:
         data = _dispatch.search_products(
+            search_use_case=build_search_products_use_case(),
             code=code,
             description=description,
             group_code=group_code,

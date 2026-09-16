@@ -17,6 +17,7 @@ from app.application.external_capabilities.constants import (
     PRODUCT_SEARCH_DEFAULT_PAGE_SIZE,
 )
 from app.application.external_capabilities.product_search_service import search_products
+from app.composition.product_composer import build_search_products_use_case
 from app.interface.mcp.branding import DAVI_MCP_INSTRUCTIONS
 from app.interface.mcp.oauth_contract import (
     SEARCH_PRODUCTS_SECURITY_SCHEMES,
@@ -161,7 +162,9 @@ def create_mcp_server() -> FastMCP:
             return validation_error_tool_result()
 
         try:
+            # Composition Root wires the canonical use case; Application stays free of it.
             data = search_products(
+                search_use_case=build_search_products_use_case(),
                 code=params.code,
                 description=params.description,
                 group_code=params.group_code,

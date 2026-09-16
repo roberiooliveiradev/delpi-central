@@ -6,6 +6,9 @@ from typing import Any
 
 from app.application.external_capabilities.catalog_service import build_gpt_catalog
 from app.application.external_capabilities.product_search_service import search_products
+from app.application.use_cases.product.search_products_use_case import (
+    SearchProductsUseCase,
+)
 
 
 class GptActionsDispatchService:
@@ -15,6 +18,7 @@ class GptActionsDispatchService:
     def search_products(
         self,
         *,
+        search_use_case: SearchProductsUseCase,
         code: str | None = None,
         description: str | None = None,
         group_code: str | None = None,
@@ -23,6 +27,7 @@ class GptActionsDispatchService:
     ) -> dict[str, Any]:
         # HTTP decorator already enforces ENGINEERING_LMP_ACCESS; avoid double-check noise.
         return search_products(
+            search_use_case=search_use_case,
             code=code,
             description=description,
             group_code=group_code,
