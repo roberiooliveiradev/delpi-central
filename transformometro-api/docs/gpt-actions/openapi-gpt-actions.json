@@ -3779,7 +3779,7 @@
               },
               "unit_code": {
                 "type": "string",
-                "description": "Filial code for entity=meeting_minute (zero-padded to 2 digits)."
+                "description": "Filial code for entity=meeting_minute (01|02; zero-padded to 2 digits)."
               },
               "title": {
                 "type": "string",
@@ -3787,24 +3787,35 @@
               },
               "meeting_type": {
                 "type": "string",
-                "description": "Meeting type for entity=meeting_minute (default ordinary)."
+                "enum": [
+                  "ordinary",
+                  "extraordinary",
+                  "workshop",
+                  "follow_up",
+                  "kickoff",
+                  "other"
+                ],
+                "description": "Meeting type for entity=meeting_minute (default ordinary). Must match catalog enum."
               },
               "meeting_date": {
                 "type": "string",
                 "format": "date",
-                "description": "Required on meeting_minute create (YYYY-MM-DD)."
+                "description": "Required on meeting_minute create. Format YYYY-MM-DD only (not DD/MM/AAAA)."
               },
               "start_time": {
-                "type": "string"
+                "type": "string",
+                "description": "Optional HH:MM or HH:MM:SS (not 14h30)."
               },
               "end_time": {
-                "type": "string"
+                "type": "string",
+                "description": "Optional HH:MM or HH:MM:SS (not 14h30)."
               },
               "location": {
                 "type": "string"
               },
               "responsible_user_id": {
-                "type": "string"
+                "type": "string",
+                "description": "Optional UUID. Omit or null to leave empty — never send \"\"."
               },
               "responsible_name": {
                 "type": "string"

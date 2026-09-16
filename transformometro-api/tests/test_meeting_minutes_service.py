@@ -109,6 +109,9 @@ class FakeRepo:
     def get_signer(self, signer_id):
         return next((s for s in self.signers if s["id"] == signer_id), None)
 
+    def get_latest_invite_mail_by_signer_ids(self, _signer_ids=None, **_kwargs):
+        return {}
+
 
 def test_create_send_sign_happy_path_and_invalid_finalize():
     repo = FakeRepo()
@@ -131,7 +134,11 @@ def test_create_send_sign_happy_path_and_invalid_finalize():
         ]
     )
     service.signature_storage = SimpleNamespace(save_png=lambda **_: "/tmp/signature.png")
-    user = SimpleNamespace(id="u1", is_superadmin=True, permissions=[])
+    user = SimpleNamespace(
+        id="11111111-1111-1111-1111-111111111111",
+        is_superadmin=True,
+        permissions=[],
+    )
     created = service.create(
         user,
         {
@@ -140,7 +147,7 @@ def test_create_send_sign_happy_path_and_invalid_finalize():
             "meeting_date": "2026-07-28",
             "participants": [
                 {
-                    "user_id": "u1",
+                    "user_id": "11111111-1111-1111-1111-111111111111",
                     "display_name": "Ana",
                     "must_sign": True,
                     "role_in_meeting": "chair",

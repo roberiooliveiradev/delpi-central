@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from tm_app.core.catalogs import MEETING_MINUTE_TYPES
+
 
 def openapi_record_data_properties() -> dict[str, Any]:
     """All create/update fields accepted under ``{data:{...}}`` across entities."""
@@ -202,7 +204,9 @@ def openapi_record_data_properties() -> dict[str, Any]:
         # --- meeting_minute / matrix / documents ---
         "unit_code": {
             "type": "string",
-            "description": "Filial code for entity=meeting_minute (zero-padded to 2 digits).",
+            "description": (
+                "Filial code for entity=meeting_minute (01|02; zero-padded to 2 digits)."
+            ),
         },
         "title": {
             "type": "string",
@@ -210,17 +214,35 @@ def openapi_record_data_properties() -> dict[str, Any]:
         },
         "meeting_type": {
             "type": "string",
-            "description": "Meeting type for entity=meeting_minute (default ordinary).",
+            "enum": list(MEETING_MINUTE_TYPES),
+            "description": (
+                "Meeting type for entity=meeting_minute "
+                "(default ordinary). Must match catalog enum."
+            ),
         },
         "meeting_date": {
             "type": "string",
             "format": "date",
-            "description": "Required on meeting_minute create (YYYY-MM-DD).",
+            "description": (
+                "Required on meeting_minute create. Format YYYY-MM-DD only "
+                "(not DD/MM/AAAA)."
+            ),
         },
-        "start_time": {"type": "string"},
-        "end_time": {"type": "string"},
+        "start_time": {
+            "type": "string",
+            "description": "Optional HH:MM or HH:MM:SS (not 14h30).",
+        },
+        "end_time": {
+            "type": "string",
+            "description": "Optional HH:MM or HH:MM:SS (not 14h30).",
+        },
         "location": {"type": "string"},
-        "responsible_user_id": {"type": "string"},
+        "responsible_user_id": {
+            "type": "string",
+            "description": (
+                "Optional UUID. Omit or null to leave empty — never send \"\"."
+            ),
+        },
         "responsible_name": {"type": "string"},
         "chair_name": {"type": "string"},
         "secretary_name": {"type": "string"},

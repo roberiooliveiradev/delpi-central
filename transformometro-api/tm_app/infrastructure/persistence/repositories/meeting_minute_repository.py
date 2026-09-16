@@ -5,6 +5,7 @@ from typing import Any
 
 from psycopg.types.json import Jsonb
 
+from tm_app.application.services.meeting_minute_write_fields import uuid_bind_or_none
 from tm_app.infrastructure.persistence.plugins.plugin_base_repository import PluginBaseRepository
 
 _S = "transformometro"
@@ -72,16 +73,16 @@ class MeetingMinuteRepository(PluginBaseRepository):
                         (unit_code,title,minute_number,meeting_type,meeting_date,start_time,end_time,location,
                          responsible_user_id,responsible_name,chair_name,secretary_name,status,created_by_user_id)
                         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s::uuid,%s,%s,%s,'draft',%s::uuid) RETURNING *""",
-                        (data["unit_code"],data["title"],number,data["meeting_type"],data["meeting_date"],data.get("start_time"),data.get("end_time"),data.get("location"),data.get("responsible_user_id"),data.get("responsible_name"),data.get("chair_name"),data.get("secretary_name"),data["created_by_user_id"]))
+                        (data["unit_code"],data["title"],number,data["meeting_type"],data["meeting_date"],data.get("start_time"),data.get("end_time"),data.get("location"),uuid_bind_or_none(data.get("responsible_user_id")),data.get("responsible_name"),data.get("chair_name"),data.get("secretary_name"),uuid_bind_or_none(data["created_by_user_id"])))
                     minute = dict(cur.fetchone())
                     cur.execute(f"""INSERT INTO {_S}.tm_meeting_minute_versions
                         (minute_id,unit_code,version_number,title,meeting_type,meeting_date,start_time,end_time,location,agenda_html,body_html,decisions_html,pending_html,observations_html,content_hash,change_reason,created_by_user_id)
                         VALUES (%s,%s,1,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'Criação inicial',%s::uuid) RETURNING *""",
-                        (minute["id"],data["unit_code"],data["title"],data["meeting_type"],data["meeting_date"],data.get("start_time"),data.get("end_time"),data.get("location"),data["agenda_html"],data["body_html"],data["decisions_html"],data["pending_html"],data["observations_html"],data["content_hash"],data["created_by_user_id"]))
+                        (minute["id"],data["unit_code"],data["title"],data["meeting_type"],data["meeting_date"],data.get("start_time"),data.get("end_time"),data.get("location"),data["agenda_html"],data["body_html"],data["decisions_html"],data["pending_html"],data["observations_html"],data["content_hash"],uuid_bind_or_none(data["created_by_user_id"])))
                     version = dict(cur.fetchone())
                     cur.execute(f"UPDATE {_S}.tm_meeting_minutes SET current_version_id=%s,updated_at=NOW() WHERE id=%s RETURNING *",(version["id"],minute["id"]))
                     minute = dict(cur.fetchone())
-                    self._audit(cur, minute_id=str(minute["id"]), unit_code=data["unit_code"], entity_type="meeting_minute", entity_id=str(minute["id"]), action="create", actor_user_id=data["created_by_user_id"], after=minute)
+                    self._audit(cur, minute_id=str(minute["id"]), unit_code=data["unit_code"], entity_type="meeting_minute", entity_id=str(minute["id"]), action="create", actor_user_id=uuid_bind_or_none(data["created_by_user_id"]), after=minute)
                 conn.commit()
                 return minute
             except Exception:
@@ -91,6 +92,8 @@ class MeetingMinuteRepository(PluginBaseRepository):
     def update_minute_draft(self, minute_id: str, fields: dict[str, Any], actor_user_id: str) -> dict[str, Any]:
         allowed = {"title","meeting_type","meeting_date","start_time","end_time","location","responsible_user_id","responsible_name","chair_name","secretary_name"}
         fields = {k:v for k,v in fields.items() if k in allowed}
+        if "responsible_user_id" in fields:
+            fields["responsible_user_id"] = uuid_bind_or_none(fields.get("responsible_user_id"))
         if not fields: return self.get_minute(minute_id) or (_ for _ in ()).throw(LookupError("Ata não encontrada."))
         sets = [f"{key}=%s{'::uuid' if key == 'responsible_user_id' else ''}" for key in fields]
         row = self.execute_returning_one(f"""UPDATE {_S}.tm_meeting_minutes SET {','.join(sets)},updated_at=NOW()

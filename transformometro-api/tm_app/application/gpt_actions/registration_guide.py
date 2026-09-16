@@ -16,6 +16,7 @@ from tm_app.core.catalogs import (
     BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
     CENARIO_TIPO,
     FASE_MELHORIA,
+    MEETING_MINUTE_TYPES,
     PRIORIDADE_MELHORIA,
     RECORRENCIAS,
     STATUS_FILIAL,
@@ -474,11 +475,14 @@ def build_registration_guide() -> dict[str, Any]:
                     "participants",
                     "signers",
                 ],
-                "enums": {},
+                "enums": {"meeting_type": list(MEETING_MINUTE_TYPES)},
                 "defaults": {"meeting_type": "ordinary"},
                 "notes": [
                     "Create/update via gpt_create_record / gpt_update_record entity=meeting_minute.",
-                    "unit_code is the filial code (zero-padded to 2 digits by backend).",
+                    "unit_code is the filial code (01|02; zero-padded by backend).",
+                    "meeting_date MUST be YYYY-MM-DD (not DD/MM/AAAA).",
+                    "start_time/end_time: HH:MM or HH:MM:SS (not 14h30).",
+                    "Optional UUIDs: omit or null — never send empty string \"\".",
                     "Workflow send/finalize/cancel uses gpt_meeting_minute_workflow — not create/update.",
                     "Extras (pending_signatures/audit/versions/participants/signers/resend/"
                     "create_version/generate_from_transcript): gpt_meeting_minute_manage. "

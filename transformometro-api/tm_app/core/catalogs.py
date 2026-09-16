@@ -28,6 +28,17 @@ STATUS_RECURSO = ("ativo", "inativo")
 ESCOPO_RECURSO = ("empresa", "filial", "setor")
 STATUS_APROVACAO_REVISAO = ("rascunho", "em_analise", "aprovada", "rejeitada")
 
+# Meeting minutes (Transforma+) — keep in sync with V042 CHECK on meeting_type / unit_code
+MEETING_MINUTE_TYPES = (
+    "ordinary",
+    "extraordinary",
+    "workshop",
+    "follow_up",
+    "kickoff",
+    "other",
+)
+MEETING_MINUTE_UNIT_CODES = ("01", "02")
+
 # Playbook 22 — categoria de cálculo de benefício (revisão vs. referência)
 BENEFICIO_CALCULO_CATEGORIA_DEFAULT = "automatico"
 BENEFICIO_CALCULO_CATEGORIA = (

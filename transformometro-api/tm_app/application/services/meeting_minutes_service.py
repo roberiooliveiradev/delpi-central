@@ -6,6 +6,10 @@ from typing import Any
 from tm_app.application.security import transformometro_permissions as perms
 from tm_app.application.services.content_hash_service import ContentHashService
 from tm_app.application.services.html_sanitizer import TmAtaHtmlSanitizer
+from tm_app.application.services.meeting_minute_write_fields import (
+    normalize_minute_create_fields,
+    normalize_minute_update_fields,
+)
 from tm_app.application.services.meeting_minutes_storage import PdfStorageService, SignatureStorageService
 from tm_app.application.services.tm_portal_notification_service import TmPortalNotificationService
 from tm_app.application.services.tm_meeting_minute_sign_invite_service import (
@@ -192,30 +196,21 @@ class MeetingMinutesService:
         return {"minute":minute,"version":self.repo.get_version(minute_id),"participants":self.repo.list_participants(minute_id),"signers":signers,"signatures":self.repo.list_signatures(minute_id),"versions":self.repo.list_versions(minute_id),"viewer":{"user_id":user_id or None,"is_signer":bool(signer),"has_signed":bool(signer and signer["status"]=="signed"),"can_sign_now":bool(signer and minute["status"] in {"awaiting_signatures","partially_signed"} and signer["status"] in {"pending","viewed"})}}
 
     def create(self, user: Any, payload: dict[str, Any]) -> dict[str, Any]:
-        unit = str(payload.get("unit_code") or "").zfill(2)
+        header = normalize_minute_create_fields(
+            payload, actor_user_id=self._user_id(user)
+        )
+        unit = header["unit_code"]
         self._assert(user, "manage", unit)
-        title = str(payload.get("title") or "").strip()
-        if not title:
-            raise ValueError("Informe o título da ata.")
-        if not payload.get("meeting_date"):
-            raise ValueError("Informe a data da reunião.")
         content = {
             key: TmAtaHtmlSanitizer.sanitize(payload.get(key))
             for key in ("agenda_html", "body_html", "decisions_html", "pending_html", "observations_html")
         }
-        header = {
-            **payload,
-            "unit_code": unit,
-            "meeting_type": payload.get("meeting_type") or "ordinary",
-            "title": title,
-            "created_by_user_id": self._user_id(user),
-            **content,
-        }
+        header = {**header, **content}
         header["content_hash"] = self._hash(header, content)
         minute = self.repo.create_minute(**header)
         minute_id = str(minute["id"])
         if payload.get("participants"):
-            self.repo.replace_participants(minute_id, unit, payload["participants"], self._user_id(user))
+            self.repo.replace_participants(minute_id, unit, payload["participants"], header["created_by_user_id"])
         if "signers" in payload or payload.get("participants"):
             self._sync_signers(user, minute_id, payload)
         return self.get_detail(user, minute_id)
@@ -228,22 +223,7 @@ class MeetingMinutesService:
                 if MinuteStatusTransitionService.requires_new_version_for_content_change(minute["status"])
                 else "Ata não pode ser editada no status atual."
             )
-        fields = {
-            key: payload[key]
-            for key in (
-                "title",
-                "meeting_type",
-                "meeting_date",
-                "start_time",
-                "end_time",
-                "location",
-                "responsible_user_id",
-                "responsible_name",
-                "chair_name",
-                "secretary_name",
-            )
-            if key in payload
-        }
+        fields = normalize_minute_update_fields(payload)
         if fields:
             minute = self.repo.update_minute_draft(minute_id, fields, self._user_id(user))
         keys = ("agenda_html", "body_html", "decisions_html", "pending_html", "observations_html")
