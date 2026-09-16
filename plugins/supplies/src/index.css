@@ -975,14 +975,23 @@
 }
 
 .dashboard-supplies-portal .sp-purchase-orders__table-wrap {
+  max-width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
   border: 1px solid var(--sp-border);
   border-radius: var(--sp-radius, 14px);
   background: var(--sp-surface);
 }
 
+.dashboard-supplies-portal .sp-purchase-orders__table-wrap:focus-visible {
+  outline: 2px solid var(--sp-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
+}
+
 .dashboard-supplies-portal .sp-purchase-orders__table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
 }
@@ -1001,6 +1010,7 @@
   letter-spacing: 0.03em;
   color: var(--sp-text-muted);
   background: color-mix(in srgb, var(--sp-text) 3%, transparent);
+  white-space: nowrap;
 }
 
 .dashboard-supplies-portal .sp-purchase-orders .sp-purchase-orders__table tbody tr {
@@ -1023,12 +1033,63 @@
   justify-items: start;
 }
 
+.dashboard-supplies-portal .sp-purchase-order-detail {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dashboard-supplies-portal .sp-purchase-order-detail__item-card {
+  min-width: 0;
+  max-width: 100%;
+  overflow: visible;
+}
+
+/* SectionCard titles default to inline-flex; long product labels must wrap in the ficha. */
+.dashboard-supplies-portal .sp-purchase-order-detail__item-card .sp-section-card__header > div,
+.dashboard-supplies-portal .sp-purchase-order-detail__item-card .delpi-ui-section-card__header > div {
+  min-width: 0;
+  flex: 1 1 auto;
+  max-width: 100%;
+}
+
+.dashboard-supplies-portal .sp-purchase-order-detail__item-card .sp-section-title,
+.dashboard-supplies-portal .sp-purchase-order-detail__item-card .delpi-ui-section-title,
+.dashboard-supplies-portal .sp-purchase-order-detail__item-card .delpi-ui-section-card__title {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.dashboard-supplies-portal .sp-purchase-order-detail__item-card .sp-title-with-help,
+.dashboard-supplies-portal .sp-purchase-order-detail__item-card .delpi-ui-section-card__title-with-help,
+.dashboard-supplies-portal .sp-purchase-order-detail__item-card .delpi-ui-help-tooltip--wrap,
+.dashboard-supplies-portal .sp-purchase-order-detail__item-card .delpi-ui-section-hint-label {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  flex: 1 1 auto;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .dashboard-supplies-portal .sp-purchase-order-detail__identity,
 .dashboard-supplies-portal .sp-purchase-order-detail__item-meta {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
   gap: 0.75rem;
   margin: 0;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dashboard-supplies-portal .sp-purchase-order-detail__identity > div,
+.dashboard-supplies-portal .sp-purchase-order-detail__item-meta > div {
+  min-width: 0;
 }
 
 .dashboard-supplies-portal .sp-purchase-order-detail__identity dt,
@@ -1041,6 +1102,8 @@
 .dashboard-supplies-portal .sp-purchase-order-detail__item-meta dd {
   margin: 0.15rem 0 0;
   font-weight: 600;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .dashboard-supplies-portal .sp-purchase-order-detail__receipts-title {
@@ -1058,5 +1121,21 @@
   .dashboard-supplies-portal .sp-purchase-orders__meta {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .dashboard-supplies-portal .sp-purchase-orders__table-wrap {
+    margin-inline: -0.25rem;
+  }
+
+  .dashboard-supplies-portal .sp-purchase-order-detail__identity,
+  .dashboard-supplies-portal .sp-purchase-order-detail__item-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 400px) {
+  .dashboard-supplies-portal .sp-purchase-order-detail__identity,
+  .dashboard-supplies-portal .sp-purchase-order-detail__item-meta {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

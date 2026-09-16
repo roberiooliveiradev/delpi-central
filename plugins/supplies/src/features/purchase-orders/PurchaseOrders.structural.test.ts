@@ -62,8 +62,41 @@ describe("PurchaseOrders feature", () => {
     expect(page).toContain("SP_HELP.purchaseOrderDetail");
     expect(page).toContain("SP_HELP.purchaseOrderDetailItems");
     expect(page).toContain("SP_HELP.purchaseOrderDetailReceipts");
+    expect(page).toContain("sp-purchase-order-detail__item-card");
+    expect(page).toContain("C.receiptsTableScrollRegion");
+    expect(page).toMatch(/role=\"region\"/);
     expect(page).not.toContain("api-delpi");
     expect(page).not.toContain("detailComingSoon");
+  });
+
+  it("lista e ficha usam scroll horizontal intencional na tabela", () => {
+    const list = readFileSync(join(dir, "PurchaseOrdersPage.tsx"), "utf8");
+    expect(list).toContain("sp-purchase-orders__table-wrap");
+    expect(list).toContain("C.tableScrollRegion");
+    expect(list).toMatch(/role=\"region\"/);
+    expect(list).toMatch(/tabIndex=\{0\}/);
+    expect(list).not.toContain("api-delpi");
+
+    const css = readFileSync(join(dir, "../../index.css"), "utf8");
+    expect(css).toMatch(
+      /\.sp-purchase-orders__table-wrap\s*\{[^}]*overflow-x:\s*auto/s,
+    );
+    expect(css).toMatch(
+      /\.sp-purchase-orders__table-wrap\s*\{[^}]*-webkit-overflow-scrolling:\s*touch/s,
+    );
+    expect(css).toMatch(
+      /\.sp-purchase-orders__table\s*\{[^}]*width:\s*max-content/s,
+    );
+    expect(css).toMatch(
+      /\.sp-purchase-order-detail__item-card[\s\S]*overflow-wrap:\s*anywhere/,
+    );
+    expect(css).toMatch(
+      /\.sp-purchase-order-detail__item-meta[\s\S]*minmax\(min\(100%,\s*9rem\),\s*1fr\)/,
+    );
+    expect(css).not.toMatch(/body\s*\{[^}]*overflow-x:\s*hidden/s);
+    expect(css).not.toMatch(
+      /\.dashboard-supplies-portal\s*\{[^}]*overflow-x:\s*hidden/s,
+    );
   });
 
   it("query positive + sibling + negative", () => {

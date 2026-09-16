@@ -65,6 +65,9 @@ export const PURCHASE_ORDERS_CONTENT = {
   entryDateLabel: "Entrada",
   receiptQtyLabel: "Qtd.",
   receiptValueLabel: "Valor",
+  tableScrollRegion: "Tabela de pedidos — deslize horizontalmente para ver todas as colunas",
+  receiptsTableScrollRegion:
+    "Tabela de recebimentos — deslize horizontalmente para ver todas as colunas",
 } as const;
 
 export function mapPurchaseOrdersFetchError(message: string): string {

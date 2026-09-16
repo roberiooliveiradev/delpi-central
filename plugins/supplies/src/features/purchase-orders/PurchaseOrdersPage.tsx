@@ -209,7 +209,12 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
                 </SuppliesActionButton>
               </div>
             </div>
-            <div className="sp-purchase-orders__table-wrap">
+            <div
+              className="sp-purchase-orders__table-wrap"
+              role="region"
+              aria-label={C.tableScrollRegion}
+              tabIndex={0}
+            >
               <table className="sp-purchase-orders__table">
                 <thead>
                   <tr>

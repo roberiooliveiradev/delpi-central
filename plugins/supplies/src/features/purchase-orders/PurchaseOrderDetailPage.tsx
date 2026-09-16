@@ -168,14 +168,14 @@ export function PurchaseOrderDetailPage({
             const receipts = item.receipts ?? [];
             const key = `${item.order_item ?? ""}-${item.product_code ?? ""}`;
             return (
-              <SuppliesSectionCard
-                key={key}
-                title={`${C.colItem} ${item.order_item || "—"} · ${formatProductLabel(
-                  item.product_code,
-                  item.product_description,
-                )}`}
-                hint={SP_HELP.purchaseOrderDetailItems}
-              >
+              <div key={key} className="sp-purchase-order-detail__item-card">
+                <SuppliesSectionCard
+                  title={`${C.colItem} ${item.order_item || "—"} · ${formatProductLabel(
+                    item.product_code,
+                    item.product_description,
+                  )}`}
+                  hint={SP_HELP.purchaseOrderDetailItems}
+                >
                 <dl className="sp-purchase-order-detail__item-meta">
                   <div>
                     <dt>{C.colSupplier}</dt>
@@ -239,7 +239,12 @@ export function PurchaseOrderDetailPage({
                 {receipts.length === 0 ? (
                   <SuppliesEmptyState title={C.receiptsTitle} message={C.receiptsEmpty} />
                 ) : (
-                  <div className="sp-purchase-orders__table-wrap">
+                  <div
+                    className="sp-purchase-orders__table-wrap"
+                    role="region"
+                    aria-label={C.receiptsTableScrollRegion}
+                    tabIndex={0}
+                  >
                     <table className="sp-purchase-orders__table">
                       <thead>
                         <tr>
@@ -271,6 +276,7 @@ export function PurchaseOrderDetailPage({
                   </div>
                 )}
               </SuppliesSectionCard>
+              </div>
             );
           })
         : null}
