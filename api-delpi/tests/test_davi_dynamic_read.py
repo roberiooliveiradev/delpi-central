@@ -49,6 +49,9 @@ from app.application.external_capabilities.dynamic_information.content_loader im
     load_dynamic_read_budgets,
     load_external_read_allowlist,
 )
+from app.application.external_capabilities.dynamic_information.read_only_intent_guard import (
+    clear_read_only_intent_guard_cache,
+)
 from app.application.external_capabilities.dynamic_information.discover_service import (
     discover_delpi_information,
 )
@@ -102,10 +105,12 @@ def _reset_index():
     reset_action_index_for_tests()
     load_external_read_allowlist.cache_clear()
     load_dynamic_read_budgets.cache_clear()
+    clear_read_only_intent_guard_cache()
     yield
     reset_action_index_for_tests()
     load_external_read_allowlist.cache_clear()
     load_dynamic_read_budgets.cache_clear()
+    clear_read_only_intent_guard_cache()
 
 
 def _search_params(*, required_code: bool = False) -> tuple[dict[str, Any], ...]:

@@ -10,6 +10,9 @@ from app.application.external_capabilities.dynamic_information.catalog_builder i
 from app.application.external_capabilities.dynamic_information.content_loader import (
     load_external_read_allowlist,
 )
+from app.application.external_capabilities.dynamic_information.read_only_intent_guard import (
+    has_explicit_write_intent,
+)
 from app.application.external_capabilities.dynamic_information.text_normalize import (
     normalize_text,
     tokenize,
@@ -77,6 +80,11 @@ def retrieve_eligible_actions(
     *,
     top_k: int,
 ) -> list[tuple[TechnicalAction, float]]:
+    # Explicit mutation intent is semantically outside the READ broker.
+    # This is not AuthZ — backend authorization remains authoritative.
+    if has_explicit_write_intent(query):
+        return []
+
     # Governance filter BEFORE ranking (eligible only).
     eligible = [a for a in actions if a.executable]
     scored = [(a, score_action(query, a)) for a in eligible]

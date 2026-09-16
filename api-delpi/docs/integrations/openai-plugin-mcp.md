@@ -96,6 +96,7 @@ CatalogActionExecutorPort = action_id + validated_arguments only (Composition bi
 Infrastructure AsgiCatalogActionExecutor = catalog resolution + GET + Authorization + in-process ASGI
 Composition in-process ASGI client = httpx.ASGITransport (no FastAPI TestClient lifespan re-entry)
   — TestClient(app) as context manager re-enters MCP StreamableHTTPSessionManager and breaks catalog execute live
+Explicit mutation intent (retrievalReadOnlyGuard) → zero READ candidates (semantic guard ≠ AuthZ)
 Dynamic search_products execution = approved external projection (product_code, description, group_category)
 Generic catalog actions = nested/flat approvedResponseFields + size bound
 bounded payload size != approved field projection
