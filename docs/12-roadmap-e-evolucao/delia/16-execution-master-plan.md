@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `ARCHITECTURE_REVIEW_C0_S2` (`C0.S0=APPROVED`; `C0.S1=APPROVED`; `C0.S2=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C0.S3_AUTHORIZED=NO`; C0 permanece `NOT_STARTED`; `FOUNDATION_FREEZE=NOT APPROVED`; `DÉLIA_RUNTIME_DIFF=NONE`)  
+**Próxima etapa:** `C0.S3 — SHARED_PRIMITIVES / REFERENCE_DECISIONS` (`C0.S0=APPROVED`; `C0.S1=APPROVED`; `C0.S2=APPROVED`; `C0.S3_AUTHORIZED=YES`; C0 permanece `NOT_STARTED`; `FOUNDATION_FREEZE=NOT APPROVED`; `DÉLIA_RUNTIME_DIFF=NONE`)  
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -312,19 +312,18 @@ Congelar API/MFE/service/container/path/manifest/DB ownership, admin/callback/we
 
 **C0.S1-T1 (histórico):** freeze candidato persistido nas authorities (`68`/`50`/`17`/`52`/`21`/`25`/ledger), então `CANDIDATE_FOR_ARCHITECTURE_REVIEW`. Esse estado foi superseded pelo review abaixo; não apagar história.
 
-**C0.S1-T2 — PERSIST_ARCHITECTURE_REVIEW_DECISION:** `ARCHITECTURE_REVIEW_C0_S1` sobre `REVIEWED_HEAD=c822f0e72495256c3459a4b36b9c37a3bba95cbb`, `VERDICT=ACCEPT_WITH_RESIDUAL`, `C0.S1=APPROVED`, `C0.S2_AUTHORIZED=YES`, `BLOCKERS=NONE`. `FOUNDATION_FREEZE=NOT APPROVED`, `PROGRAM=PLANNED / NOT_STARTED`, `C0=NOT_STARTED`, `DÉLIA_RUNTIME_DIFF=NONE`. Residual de naming/evidence de HEAD é não bloqueante; labels semânticos “Copilot” residuais em `25` são cleanup terminológico não bloqueante. **Nenhuma execução C0.S2 ocorre nesta tarefa.**
+**C0.S1-T2 — PERSIST_ARCHITECTURE_REVIEW_DECISION:** `ARCHITECTURE_REVIEW_C0_S1` sobre `REVIEWED_HEAD=c822f0e72495256c3459a4b36b9c37a3bba95cbb`, `VERDICT=ACCEPT_WITH_RESIDUAL`, `C0.S1=APPROVED`, `C0.S2_AUTHORIZED=YES`, `BLOCKERS=NONE`. `FOUNDATION_FREEZE=NOT_APPROVED`, `PROGRAM=PLANNED / NOT_STARTED`, `C0=NOT_STARTED`, `DÉLIA_RUNTIME_DIFF=NONE`. Residual de naming/evidence de HEAD é não bloqueante; labels semânticos “Copilot” residuais em `25` são cleanup terminológico não bloqueante. **Nenhuma execução C0.S2 ocorre nesta tarefa.**
 
 ```text
 C0.S0 = APPROVED
 C0.S1 = APPROVED
-C0.S2_AUTHORIZED = YES
-C0.S2 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-C0.S3_AUTHORIZED = NO
+C0.S2 = APPROVED
+C0.S3_AUTHORIZED = YES
 FOUNDATION_FREEZE = NOT APPROVED
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 DÉLIA_RUNTIME_DIFF = NONE
-NEXT = ARCHITECTURE_REVIEW_C0_S2
+NEXT = C0.S3 — SHARED_PRIMITIVES / REFERENCE_DECISIONS
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -356,7 +355,9 @@ OT safety
 
 Timer/scheduler físico é boundary de infraestrutura/execution a ser atribuído ao owner provado; não vira owner do Work da DÉLIA nem permission authority.
 
-**C0.S2-T1 (docs):** freeze candidato persistido em `17` §§2.3–2.6 + ledger §6.24. Estado: `CANDIDATE_FOR_ARCHITECTURE_REVIEW`. **Não** aceito; **não** autoriza C0.S3; **não** é `FOUNDATION_FREEZE`; `NEW_RUNTIME_ABSTRACTIONS=NONE`; `DÉLIA_RUNTIME_DIFF=NONE`. Shared primitives permanecem C0.S3.
+**C0.S2-T1 (histórico):** freeze candidato persistido em `17` §§2.3–2.6 + ledger §6.24, então `CANDIDATE_FOR_ARCHITECTURE_REVIEW`. Esse estado foi superseded pelo review abaixo; não apagar história.
+
+**C0.S2-T2 — PERSIST_ARCHITECTURE_REVIEW_DECISION:** `ARCHITECTURE_REVIEW_C0_S2` sobre `REVIEWED_HEAD=8bae12a250f2362603211a93c65bb098b8b1e9aa`, `VERDICT=ACCEPT_WITH_RESIDUAL`, `C0.S2=APPROVED`, `AUTHORITY_MAP=FROZEN_ACCEPTED`, `BOUNDED_CONTEXT_MAP=FROZEN_ACCEPTED`, `C0.S3_AUTHORIZED=YES`, `BLOCKERS=NONE`, `EXECUTION_DRIFT=NONE`, `NEW_RUNTIME_ABSTRACTIONS=NONE`. `FOUNDATION_FREEZE=NOT APPROVED`, `PROGRAM=PLANNED / NOT_STARTED`, `C0=NOT_STARTED`, `DÉLIA_RUNTIME_DIFF=NONE`. **Nenhum design de shared primitive e nenhuma execução C0.S3 ocorre nesta tarefa.**
 
 ## C0.S3 — Shared primitives
 
@@ -697,5 +698,3 @@ C0.S0
 → C0.S7 FOUNDATION_FREEZE
 → C1.S1
 ```
-
-Nenhuma capability temática `53–66` precede o Foundation Freeze.
