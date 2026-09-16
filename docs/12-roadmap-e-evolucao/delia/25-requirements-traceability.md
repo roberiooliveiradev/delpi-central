@@ -22,7 +22,7 @@
 
 > Esta é a única authority `CP-*`. IDs históricos não são reutilizados nem apagados; requisitos ligados à migração do Minha DELPI Chat são preservados como `OUT_OF_SCOPE_WITH_DECISION`.
 
-> DÉLIA é o nome do produto. `Copilot` / `COPILOT_*` / `minha-delpi-copilot*` neste arquivo são `LEGACY_TOKEN`/`HISTORICAL`/`SUPERSEDED` quando ainda presentes; paths/owners ativos preferem `delia-api` / `plugins/delia` / DÉLIA API|MFE (`FROZEN_CANDIDATE` C0.S1). Naming update ≠ implementation evidence.
+> DÉLIA é o nome do produto. `Copilot` / `COPILOT_*` / `minha-delpi-copilot*` neste arquivo são `LEGACY_TOKEN`/`HISTORICAL`/`SUPERSEDED` quando ainda presentes; paths/owners ativos preferem `delia-api` / `plugins/delia` / DÉLIA API|MFE (`FROZEN_ACCEPTED` C0.S1). Naming update ≠ implementation evidence. Labels semânticos residuais “Copilot” permanecem `DOCUMENTATION_TERMINOLOGY_RESIDUAL` não bloqueante.
 
 ## 1. Status
 
@@ -122,8 +122,8 @@ OUT_OF_SCOPE_WITH_DECISION
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
-| CP-141 | DÉLIA API standalone | `delia-api/` (FROZEN_CANDIDATE C0.S1; was `minha-delpi-copilot-api`) | own service/health/tests | LOCKED |
-| CP-142 | DÉLIA MFE standalone | `plugins/delia/` (FROZEN_CANDIDATE C0.S1; was `plugins/minha-delpi-copilot`) | build/federation/tests | LOCKED |
+| CP-141 | DÉLIA API standalone | `delia-api/` (FROZEN_ACCEPTED C0.S1; was `minha-delpi-copilot-api`) | own service/health/tests | LOCKED |
+| CP-142 | DÉLIA MFE standalone | `plugins/delia/` (FROZEN_ACCEPTED C0.S1; was `plugins/minha-delpi-copilot`) | build/federation/tests | LOCKED |
 | CP-143 | Manifesto próprio da DÉLIA | DÉLIA/Core (`id=delia`) | schema/registration | LOCKED |
 | CP-144 | Gateway route própria API/MFE | Gateway (`/apps/delia-api/`, `/apps/delia`) | dev/prod parity | LOCKED |
 | CP-145 | Compose/deploy próprios | Infra (`delpi-delia-api`, `delpi-delia`) | independent service/start | LOCKED |
@@ -341,7 +341,7 @@ C6 habilita Product Work e Watch `OBSERVE|ADVISE|PREPARE` por default. `PREPARE`
 | CP-207 | Provider push/webhook/subscription normaliza para EventEnvelope com authenticity/dedupe/reconciliation | Copilot Connectors/Events | webhook lifecycle gate | LOCKED |
 | CP-208 | External source só vira user/org Knowledge por candidate→review/eval/publish; nunca auto-truth | Copilot Knowledge/Governance | external learning gate | LOCKED |
 | CP-212 | Personal connection data não vira shared Knowledge/Case/Room sem sharing/promotion explícito | Copilot Privacy/Knowledge | personal-data isolation gate | LOCKED |
-| CP-213 | Subscription expiry/missed events/revocation exigem renewal/reconciliation/degraded state truthful | Copilot Connectors/Work | external event reliability | LOCKED |
+| CP-213 | Subscription expiry/missed events/revocation exigem renewal/reconciliation/degraded state truthful | Copilot Connectors/Work | external event reliability gate | LOCKED |
 | CP-218 | Teams change notifications de mensagens/canais/reuniões/transcrições/gravações, quando suportadas, entram por autenticidade→EventEnvelope→dedupe/reconciliation | Copilot Teams/Events | Teams event lifecycle gate | LOCKED |
 | CP-220 | Teams meeting artifacts podem alimentar ata viva, Evidence, Task, Case, Room e Watch sem transformar transcript em decisão/ação automática | Copilot Teams/Meeting/Work | Teams meeting-to-work gate | LOCKED |
 | CP-221 | App/tab/bot da DÉLIA no Teams, quando implementado, usa a mesma DÉLIA API, Core/RBAC, Policy, Evidence e Work runtime; nenhum `teams-copilot-api` paralelo | DÉLIA Teams/MFE/Platform | same-runtime surface gate | LOCKED |
@@ -569,11 +569,12 @@ No CP promoted to PASS by documentation alone
 
 Related non-inventory CPs (CP-178/179 OT, CP-091 EntityRef, etc.) remain PLANNED/LOCKED per their rows; inventory evidence does not satisfy runtime gates.
 
-## 15. C0.S1 naming / physical ownership linkage
+## 15. C0.S1 naming / physical ownership linkage — accepted review
 
-Evidence anchors: `68` §4; `50` §3/§21; `17` §2; `52`; `21` §2; ledger §6.22.
+Evidence anchors: `68` §4; `50` §3/§21; `17` §2; `52`; `21` §2; ledger C0.S1 review event.  
+Review: `ARCHITECTURE_REVIEW_C0_S1`; `REVIEWED_HEAD=c822f0e72495256c3459a4b36b9c37a3bba95cbb`; verdict `ACCEPT_WITH_RESIDUAL`.
 
-| CP | Naming/ownership note (C0.S1-T1) | Status unchanged |
+| CP | Naming/ownership note (C0.S1 accepted) | Status unchanged |
 |---|---|---|
 | CP-130–CP-134, CP-140 | architecture gates; no path invent | PLANNED |
 | CP-138 | owner label → Portal/DÉLIA MFE | PLANNED |
@@ -594,7 +595,12 @@ Evidence anchors: `68` §4; `50` §3/§21; `17` §2; `52`; `21` §2; ledger §6.
 
 ```text
 Naming update ≠ CP PASS ≠ runtime evidence
-C0.S1 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (not APPROVED)
-C0.S2_AUTHORIZED = NO
+C0.S0 = APPROVED
+C0.S1 = APPROVED
+C0.S2_AUTHORIZED = YES
 FOUNDATION_FREEZE = NOT APPROVED
+PROGRAM = PLANNED / NOT_STARTED
+C0 = NOT_STARTED
+DÉLIA_RUNTIME_DIFF = NONE
+NEXT = C0.S2 — Authorities / bounded contexts
 ```
