@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 from purchase_requests_app.application.services.purchase_request_aggregation_service import (
+    STAGE_SORT_MAX_HEADERS,
     PurchaseRequestAggregationService,
 )
 from purchase_requests_app.application.use_cases.list_purchase_requests_use_case import (
@@ -350,7 +351,7 @@ def test_overall_stage_sort_rejects_when_headers_exceed_cap() -> None:
         "items": [_stage_line(request_number="1", request_item="0001", stage_kind="awaiting_order")],
         "page": 1,
         "page_size": 200,
-        "total": 501,
+        "total": STAGE_SORT_MAX_HEADERS + 1,
         "total_pages": 3,
     }
     scope_repo = MagicMock()

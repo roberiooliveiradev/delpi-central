@@ -207,7 +207,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Como ordeno a lista de SC ou pedidos em Cards?",
-          a: "No modo Cards use «Ordenar por» e Crescente/Decrescente — a mesma ordenação da tabela, guardada na URL. Em Solicitações, a situação ordena o recorte inteiro antes da página e pode pedir um período ou unidade menores se o volume for grande.",
+          a: "No modo Cards use «Ordenar por» e Crescente/Decrescente — a mesma ordenação da tabela, guardada na URL. Em Solicitações, a situação ordena o recorte inteiro antes da página; acima de cerca de 10 mil SCs, pode pedir um período ou unidade menores.",
         },
         {
           q: "Por que um card da Visão geral aparece indisponível?",
