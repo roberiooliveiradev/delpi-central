@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any
 
+from app.domain.production.factory_shifts import parse_factory_shift_filter
 from app.domain.production.unproductive_hours_view_scope import (
     DEFAULT_ITEMS_SORT,
     DEFAULT_MONTHS_WINDOW,
@@ -161,12 +162,15 @@ class UnproductiveHoursQueryRequest:
     resource: str | None = None
     cost_center: str | None = None
     operator_code: str | None = None
+    shift: str | None = None
 
     def __post_init__(self) -> None:
         self.stop_reason = clean_text(self.stop_reason) or None
         self.resource = clean_text(self.resource) or None
         self.cost_center = clean_text(self.cost_center) or None
         self.operator_code = clean_text(self.operator_code) or None
+        shift_ids = parse_factory_shift_filter(self.shift)
+        self.shift = ",".join(shift_ids) if shift_ids else None
 
     def filter_kwargs(self) -> dict[str, str | None]:
         start, end = self.period.iso_range()
@@ -178,6 +182,7 @@ class UnproductiveHoursQueryRequest:
             "resource": self.resource,
             "cost_center": self.cost_center,
             "operator_code": self.operator_code,
+            "shift": self.shift,
         }
 
     def periodo_dict(self) -> dict[str, str | None]:

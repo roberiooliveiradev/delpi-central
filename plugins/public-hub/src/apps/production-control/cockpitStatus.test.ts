@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import type { MachineLoadOperation } from "./api.ts";
 import {
   hasExhaustedOperationBalance,
+  isFinishedOperation,
   operationPendingQty,
   resolveStatus,
 } from "./cockpitStatus.ts";
@@ -43,10 +44,35 @@ function operation(overrides: Partial<MachineLoadOperation> = {}): MachineLoadOp
 }
 
 describe("cockpit operation balance", () => {
-  it("P0: operação apontada por inteiro sai de Em produção mesmo com saldo na OP", () => {
-    const row = operation({ operation_produced_qty: 7.8, operation_pending_qty: 0 });
+  it("P0: apontamento parcial (0,980 de 1,100) permanece Na fila, sem risco", () => {
+    const row = operation({
+      planned_qty: 1.1,
+      operation_produced_qty: 0.98,
+      operation_pending_qty: 0.12,
+      pending_qty: 0.12,
+      is_in_production: false,
+      production_status: "started",
+      appointment_count: 1,
+      active_operator_name: "JOAO",
+    });
+    assert.equal(hasExhaustedOperationBalance(row), false);
+    assert.equal(isFinishedOperation(row), false);
+    assert.equal(resolveStatus(row).tone, "queued");
+    assert.equal(resolveStatus(row).label, "Na fila");
+    assert.match(resolveStatus(row).operatorNote ?? "", /JOAO/);
+  });
+
+  it("irmão: operação apontada por inteiro vira Já apontada mesmo com saldo no cabeçalho", () => {
+    const row = operation({
+      operation_produced_qty: 7.8,
+      operation_pending_qty: 0,
+      pending_qty: 6.3,
+      is_in_production: false,
+      production_status: "started",
+    });
     assert.equal(operationPendingQty(row), 0);
     assert.equal(hasExhaustedOperationBalance(row), true);
+    assert.equal(isFinishedOperation(row), true);
     assert.equal(resolveStatus(row).label, "Já apontada");
     assert.equal(resolveStatus(row).tone, "done");
   });
@@ -65,7 +91,7 @@ describe("cockpit operation balance", () => {
     assert.equal(resolveStatus(row).label, "Na fila");
   });
 
-  it("parcial: coletor aberto e saldo da operação > 0 permanece Em produção", () => {
+  it("parcial em coletor aberto e saldo > 0 permanece Em produção", () => {
     const row = operation({ operation_produced_qty: 3, operation_pending_qty: 4.8 });
     assert.equal(operationPendingQty(row), 4.8);
     assert.equal(resolveStatus(row).label, "Em produção");
@@ -87,5 +113,6 @@ describe("cockpit operation balance", () => {
       active_operator_name: null,
     });
     assert.equal(resolveStatus(row).label, "Na fila");
+    assert.equal(isFinishedOperation(row), false);
   });
 });

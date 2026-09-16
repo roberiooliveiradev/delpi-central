@@ -27,7 +27,9 @@ import { OperationDetailPage } from "./OperationDetailPage";
 import { usePublicMachineLoadRealtime } from "./usePublicMachineLoadRealtime";
 import { useCockpitView } from "./useCockpitView";
 import { useWorkCenterPerformance } from "./useWorkCenterPerformance";
+import { usePublicWorkCenterDowntimeItems } from "./usePublicWorkCenterDowntimeItems";
 import { WorkCenterPerformancePage } from "./WorkCenterPerformancePage";
+import type { PublicWorkCenterDowntimeItemsState } from "./usePublicWorkCenterDowntimeItems";
 import "./cockpit.css";
 
 function matchesQueueSearch(operation: MachineLoadOperation, term: string): boolean {
@@ -128,12 +130,17 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date>(() => new Date());
   const [visualTarget, setVisualTarget] = useState<VisualTarget | null>(null);
+  const [downtimeOpen, setDowntimeOpen] = useState(false);
   const [queueQuery, setQueueQuery] = useState("");
   const [hideFinished, setHideFinished] = useState(false);
   const workCenterRef = useRef(workCenter);
   workCenterRef.current = workCenter;
   const reloadGenerationRef = useRef(0);
   const { view, openQueue, openOperation, openPerformance } = useCockpitView();
+
+  useEffect(() => {
+    setDowntimeOpen(false);
+  }, [workCenter]);
 
   useEffect(() => {
     if (!workCenter) {
@@ -197,6 +204,12 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   }, [reload]);
 
   const performance = useWorkCenterPerformance(token, branch, workCenter);
+  const downtimeItems = usePublicWorkCenterDowntimeItems(
+    token,
+    branch,
+    workCenter,
+    downtimeOpen,
+  );
 
   const selectWorkCenter = (center: string) => {
     storeWorkCenter(branch, center);
@@ -396,10 +409,10 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
               <button
                 type="button"
                 className="pcp-pub__hero-metric"
-                onClick={openPerformance}
-                title="Paradas apontadas hoje neste posto"
+                onClick={() => setDowntimeOpen(true)}
+                title={`Paradas apontadas no ${shiftLabel.toLowerCase()} neste posto — clique para ver motivos`}
               >
-                <span className="pcp-pub__hero-metric-label">Paradas hoje</span>
+                <span className="pcp-pub__hero-metric-label">Paradas · turno</span>
                 <strong className="pcp-pub__hero-metric-value">
                   {downtime?.available ? formatHours(downtime.today_hours) : "—"}
                 </strong>
@@ -533,6 +546,15 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
           productCode={visualTarget.productCode}
           has3dModel={visualTarget.has3dModel}
           onClose={() => setVisualTarget(null)}
+        />
+      ) : null}
+
+      {downtimeOpen ? (
+        <DowntimeItemsModal
+          shiftLabel={shiftLabel}
+          hours={downtime?.available ? downtime.today_hours : null}
+          state={downtimeItems}
+          onClose={() => setDowntimeOpen(false)}
         />
       ) : null}
     </section>
@@ -902,5 +924,109 @@ function UpcomingRow({
         </button>
       </td>
     </tr>
+  );
+}
+
+function DowntimeItemsModal({
+  shiftLabel,
+  hours,
+  state,
+  onClose,
+}: {
+  shiftLabel: string;
+  hours: number | null;
+  state: PublicWorkCenterDowntimeItemsState;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const { data, loading, error } = state;
+  const items = data?.items ?? [];
+  const count = data?.summary.appointment_count ?? items.length;
+  const totalHours = data?.summary.total_hours ?? hours;
+
+  return (
+    <div
+      className="pcp-pub-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pcp-pub-downtime-title"
+    >
+      <button type="button" className="pcp-pub-modal__backdrop" aria-label="Fechar" onClick={onClose} />
+      <div className="pcp-pub-modal__panel pcp-pub-modal__panel--downtime">
+        <header className="pcp-pub-modal__head">
+          <h2 id="pcp-pub-downtime-title">Paradas · {shiftLabel.toLowerCase()}</h2>
+          <button type="button" className="pcp-pub__ghost pcp-pub__ghost--plain" onClick={onClose}>
+            Fechar
+          </button>
+        </header>
+
+        <p className="pcp-pub-modal__lede">Apontamentos de hoje neste posto, só no turno atual.</p>
+
+        <dl className="pcp-pub__facts pcp-pub__facts--num">
+          <div className="pcp-pub__fact">
+            <dt>Registros</dt>
+            <dd>{loading ? "…" : count}</dd>
+          </div>
+          <div className="pcp-pub__fact">
+            <dt>Total</dt>
+            <dd>{loading ? "…" : formatHours(totalHours)}</dd>
+          </div>
+        </dl>
+
+        {loading ? (
+          <p className="pcp-pub-modal__empty">Carregando paradas…</p>
+        ) : error ? (
+          <p className="pcp-pub-modal__empty">{error}</p>
+        ) : items.length > 0 ? (
+          <div className="pcp-pub-modal__table-wrap">
+            <table className="pcp-pub-modal__table">
+              <thead>
+                <tr>
+                  <th scope="col">Motivo</th>
+                  <th scope="col">Horas</th>
+                  <th scope="col">Observação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((row, index) => {
+                  const reason =
+                    row.stop_reason_description?.trim() ||
+                    row.stop_reason?.trim() ||
+                    "Sem motivo";
+                  const reasonCode = row.stop_reason?.trim();
+                  return (
+                    <tr
+                      key={`${row.reference_date}-${row.production_order}-${row.stop_reason}-${index}`}
+                    >
+                      <td>
+                        <div className="pcp-pub-modal__reason">
+                          <span className="pcp-pub-modal__reason-label">{reason}</span>
+                          {reasonCode && reasonCode !== reason ? (
+                            <span className="pcp-pub-modal__reason-code">{reasonCode}</span>
+                          ) : null}
+                        </div>
+                      </td>
+                      <td className="pcp-pub__num">{formatHours(row.hours)}</td>
+                      <td className="pcp-pub-modal__observation">
+                        {row.observation?.trim() || "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="pcp-pub-modal__empty">Nenhuma parada apontada neste turno hoje.</p>
+        )}
+      </div>
+    </div>
   );
 }

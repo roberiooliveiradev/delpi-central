@@ -70,7 +70,7 @@ def _token() -> str:
     return PublicCockpitAccessService().token()
 
 
-def test_lists_appointments_for_operation_newest_first() -> None:
+def test_lists_appointments_for_operation_oldest_first() -> None:
     gateway = FakeGateway(
         [
             {
@@ -130,15 +130,15 @@ def test_lists_appointments_for_operation_newest_first() -> None:
     assert payload["summary"]["appointment_count"] == 2
     assert payload["summary"]["produced_qty"] == 7.8
     assert [item["produced_on"] for item in payload["items"]] == [
-        "2026-09-13",
         "2026-09-10",
+        "2026-09-13",
     ]
-    assert payload["items"][0]["operator_name"] == "ANDIA GOMES GONCALVES"
-    assert payload["items"][0]["quantity"] == 5.6
-    assert payload["items"][0]["work_center"] == "CT-00"
-    assert payload["items"][0]["unit"] == "MI"
-    assert "login" not in str(payload["items"][0]).lower()
-    assert "operator_code" not in payload["items"][0]
+    assert payload["items"][1]["operator_name"] == "ANDIA GOMES GONCALVES"
+    assert payload["items"][1]["quantity"] == 5.6
+    assert payload["items"][1]["work_center"] == "CT-00"
+    assert payload["items"][1]["unit"] == "MI"
+    assert "login" not in str(payload["items"][1]).lower()
+    assert "operator_code" not in payload["items"][1]
 
 
 def test_total_comes_from_operation_balance_not_history_window() -> None:

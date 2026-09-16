@@ -28,6 +28,7 @@ class UnproductiveHoursRepository(BaseRepository, UnproductiveHoursRepositoryPor
         resource: str | None = None,
         cost_center: str | None = None,
         operator_code: str | None = None,
+        shift: str | None = None,
     ) -> dict:
         query, params = build_summary_query(
             start_date=start_date,
@@ -37,6 +38,7 @@ class UnproductiveHoursRepository(BaseRepository, UnproductiveHoursRepositoryPor
             resource=resource,
             cost_center=cost_center,
             operator_code=operator_code,
+            shift=shift,
         )
         with self:
             rows = self.execute_query(query, params)
@@ -52,6 +54,7 @@ class UnproductiveHoursRepository(BaseRepository, UnproductiveHoursRepositoryPor
         resource: str | None = None,
         cost_center: str | None = None,
         operator_code: str | None = None,
+        shift: str | None = None,
     ) -> dict | None:
         query, params = build_top_resource_query(
             start_date=start_date,
@@ -61,6 +64,7 @@ class UnproductiveHoursRepository(BaseRepository, UnproductiveHoursRepositoryPor
             resource=resource,
             cost_center=cost_center,
             operator_code=operator_code,
+            shift=shift,
         )
         with self:
             rows = self.execute_query(query, params)
@@ -76,6 +80,7 @@ class UnproductiveHoursRepository(BaseRepository, UnproductiveHoursRepositoryPor
         resource: str | None = None,
         cost_center: str | None = None,
         operator_code: str | None = None,
+        shift: str | None = None,
     ) -> dict | None:
         query, params = build_top_operator_query(
             start_date=start_date,
@@ -85,6 +90,7 @@ class UnproductiveHoursRepository(BaseRepository, UnproductiveHoursRepositoryPor
             resource=resource,
             cost_center=cost_center,
             operator_code=operator_code,
+            shift=shift,
         )
         with self:
             rows = self.execute_query(query, params)
@@ -103,6 +109,7 @@ class UnproductiveHoursRepository(BaseRepository, UnproductiveHoursRepositoryPor
         resource: str | None = None,
         cost_center: str | None = None,
         operator_code: str | None = None,
+        shift: str | None = None,
     ) -> list[dict]:
         query, params = build_ranking_query(
             start_date=start_date,
@@ -115,6 +122,7 @@ class UnproductiveHoursRepository(BaseRepository, UnproductiveHoursRepositoryPor
             resource=resource,
             cost_center=cost_center,
             operator_code=operator_code,
+            shift=shift,
         )
         with self:
             return self.execute_query(query, params)
@@ -129,6 +137,7 @@ class UnproductiveHoursRepository(BaseRepository, UnproductiveHoursRepositoryPor
         resource: str | None = None,
         cost_center: str | None = None,
         operator_code: str | None = None,
+        shift: str | None = None,
     ) -> list[dict]:
         query, params = build_series_query(
             start_date=start_date,
@@ -138,6 +147,7 @@ class UnproductiveHoursRepository(BaseRepository, UnproductiveHoursRepositoryPor
             resource=resource,
             cost_center=cost_center,
             operator_code=operator_code,
+            shift=shift,
         )
         with self:
             return self.execute_query(query, params)
@@ -152,6 +162,7 @@ class UnproductiveHoursRepository(BaseRepository, UnproductiveHoursRepositoryPor
         resource: str | None = None,
         cost_center: str | None = None,
         operator_code: str | None = None,
+        shift: str | None = None,
     ) -> int:
         query, params = build_items_count_query(
             start_date=start_date,
@@ -161,6 +172,7 @@ class UnproductiveHoursRepository(BaseRepository, UnproductiveHoursRepositoryPor
             resource=resource,
             cost_center=cost_center,
             operator_code=operator_code,
+            shift=shift,
         )
         with self:
             rows = self.execute_query(query, params)
@@ -181,6 +193,7 @@ class UnproductiveHoursRepository(BaseRepository, UnproductiveHoursRepositoryPor
         resource: str | None = None,
         cost_center: str | None = None,
         operator_code: str | None = None,
+        shift: str | None = None,
     ) -> list[dict]:
         query, params = build_items_query(
             start_date=start_date,
@@ -193,6 +206,7 @@ class UnproductiveHoursRepository(BaseRepository, UnproductiveHoursRepositoryPor
             resource=resource,
             cost_center=cost_center,
             operator_code=operator_code,
+            shift=shift,
         )
         with self:
             return self.execute_query(query, params)

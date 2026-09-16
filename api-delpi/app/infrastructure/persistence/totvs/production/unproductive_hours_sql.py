@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from app.domain.production.factory_shifts import (
+    factory_shift_hora_inicio_sql_predicate,
+    parse_factory_shift_filter,
+)
 from app.domain.production.unproductive_hours_view_scope import (
     FONTE_CUSTO_SEM_CUSTO,
     ITEMS_SORT_VALUES,
@@ -111,6 +115,7 @@ def build_base_where(
     resource: str | None = None,
     cost_center: str | None = None,
     operator_code: str | None = None,
+    shift: str | None = None,
 ) -> tuple[str, tuple]:
     branch_sql, branch_params = _branch_filter_sql(branch)
     clauses = [
@@ -140,6 +145,11 @@ def build_base_where(
     if operator_code:
         clauses.append("LTRIM(RTRIM(v.CODIGO_OPERADOR)) = ?")
         params.append(operator_code)
+
+    shift_ids = parse_factory_shift_filter(shift)
+    shift_sql = factory_shift_hora_inicio_sql_predicate(shift_ids)
+    if shift_sql:
+        clauses.append(shift_sql)
 
     return " AND ".join(clauses), tuple(params)
 
@@ -171,6 +181,7 @@ def build_summary_query(
     resource: str | None = None,
     cost_center: str | None = None,
     operator_code: str | None = None,
+    shift: str | None = None,
 ) -> tuple[str, tuple]:
     where_clause, params = build_base_where(
         start_date=start_date,
@@ -180,6 +191,7 @@ def build_summary_query(
         resource=resource,
         cost_center=cost_center,
         operator_code=operator_code,
+        shift=shift,
     )
     return (
         f"""
@@ -201,6 +213,7 @@ def build_top_resource_query(
     resource: str | None = None,
     cost_center: str | None = None,
     operator_code: str | None = None,
+    shift: str | None = None,
 ) -> tuple[str, tuple]:
     where_clause, params = build_base_where(
         start_date=start_date,
@@ -210,6 +223,7 @@ def build_top_resource_query(
         resource=resource,
         cost_center=cost_center,
         operator_code=operator_code,
+        shift=shift,
     )
     return (
         f"""
@@ -235,6 +249,7 @@ def build_top_operator_query(
     resource: str | None = None,
     cost_center: str | None = None,
     operator_code: str | None = None,
+    shift: str | None = None,
 ) -> tuple[str, tuple]:
     where_clause, params = build_base_where(
         start_date=start_date,
@@ -244,6 +259,7 @@ def build_top_operator_query(
         resource=resource,
         cost_center=cost_center,
         operator_code=operator_code,
+        shift=shift,
     )
     return (
         f"""
@@ -273,6 +289,7 @@ def build_ranking_query(
     resource: str | None = None,
     cost_center: str | None = None,
     operator_code: str | None = None,
+    shift: str | None = None,
 ) -> tuple[str, tuple]:
     if rank_by not in RANK_BY_VALUES:
         raise ValueError(f"rank_by inválido: {rank_by}")
@@ -286,6 +303,7 @@ def build_ranking_query(
         resource=resource,
         cost_center=cost_center,
         operator_code=operator_code,
+        shift=shift,
     )
     return (
         f"""
@@ -311,6 +329,7 @@ def build_series_query(
     resource: str | None = None,
     cost_center: str | None = None,
     operator_code: str | None = None,
+    shift: str | None = None,
 ) -> tuple[str, tuple]:
     where_clause, params = build_base_where(
         start_date=start_date,
@@ -320,6 +339,7 @@ def build_series_query(
         resource=resource,
         cost_center=cost_center,
         operator_code=operator_code,
+        shift=shift,
     )
     return (
         f"""
@@ -344,6 +364,7 @@ def build_items_count_query(
     resource: str | None = None,
     cost_center: str | None = None,
     operator_code: str | None = None,
+    shift: str | None = None,
 ) -> tuple[str, tuple]:
     where_clause, params = build_base_where(
         start_date=start_date,
@@ -353,6 +374,7 @@ def build_items_count_query(
         resource=resource,
         cost_center=cost_center,
         operator_code=operator_code,
+        shift=shift,
     )
     return (
         f"""
@@ -383,6 +405,7 @@ def build_items_query(
     resource: str | None = None,
     cost_center: str | None = None,
     operator_code: str | None = None,
+    shift: str | None = None,
 ) -> tuple[str, tuple]:
     where_clause, params = build_base_where(
         start_date=start_date,
@@ -392,6 +415,7 @@ def build_items_query(
         resource=resource,
         cost_center=cost_center,
         operator_code=operator_code,
+        shift=shift,
     )
     order_clause = resolve_items_order_by(sort)
     return (
