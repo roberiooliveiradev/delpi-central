@@ -8,14 +8,19 @@ from typing import Any
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import CallToolResult, TextContent, Tool as MCPTool, ToolAnnotations
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ValidationError
 
 from app.application.external_capabilities.constants import (
     EXTERNAL_INTERNAL_ERROR_MESSAGE,
     MCP_TOOL_SEARCH_PRODUCTS,
     MCP_TOOL_SEARCH_PRODUCTS_TITLE,
     PRODUCT_SEARCH_DEFAULT_PAGE_SIZE,
-    PRODUCT_SEARCH_MAX_PAGE_SIZE,
+)
+from app.application.external_capabilities.product_search_schemas import (
+    SearchProductsInput,
+    SearchProductsOutput,
+    search_products_input_json_schema,
+    search_products_output_json_schema,
 )
 from app.application.external_capabilities.product_search_service import search_products
 from app.interface.mcp.branding import DAVI_MCP_INSTRUCTIONS
@@ -26,28 +31,37 @@ from app.interface.mcp.oauth_contract import (
 from app.interface.mcp.resource_metadata import public_host_allowed_for_mcp
 from app.utils.logger import log_error
 
+# Re-export for existing test imports that historically used server.SearchProductsInput.
+__all__ = [
+    "ApiDelpiFastMCP",
+    "SearchProductsInput",
+    "SearchProductsOutput",
+    "VALIDATION_ERROR_CODE",
+    "VALIDATION_ERROR_MESSAGE",
+    "create_mcp_server",
+    "validation_error_tool_result",
+]
+
 logger = logging.getLogger(__name__)
 
+VALIDATION_ERROR_CODE = "VALIDATION_ERROR"
+VALIDATION_ERROR_MESSAGE = "Invalid search parameters."
 
-class SearchProductsInput(BaseModel):
-    """Strict input schema — unknown fields rejected; customer_reference forbidden."""
 
-    model_config = ConfigDict(extra="forbid")
-
-    code: str | None = Field(default=None, description="Product code filter")
-    description: str | None = Field(default=None, description="Description filter")
-    group_code: str | None = Field(default=None, description="Group/category filter")
-    page: int = Field(default=1, ge=1, description="Page number (>= 1)")
-    page_size: int = Field(
-        default=PRODUCT_SEARCH_DEFAULT_PAGE_SIZE,
-        ge=1,
-        le=PRODUCT_SEARCH_MAX_PAGE_SIZE,
-        description=f"Page size (1..{PRODUCT_SEARCH_MAX_PAGE_SIZE})",
+def validation_error_tool_result() -> CallToolResult:
+    """Stable external validation failure — no Pydantic/framework details."""
+    return CallToolResult(
+        content=[TextContent(type="text", text=VALIDATION_ERROR_MESSAGE)],
+        structuredContent={
+            "code": VALIDATION_ERROR_CODE,
+            "message": VALIDATION_ERROR_MESSAGE,
+        },
+        isError=True,
     )
 
 
 class ApiDelpiFastMCP(FastMCP):
-    """Promote OpenAI `securitySchemes` to the tools/list top-level field."""
+    """Promote OpenAI securitySchemes and project canonical input/output schemas."""
 
     async def list_tools(self) -> list[MCPTool]:
         tools = self._tool_manager.list_tools()
@@ -55,12 +69,17 @@ class ApiDelpiFastMCP(FastMCP):
         for info in tools:
             meta = dict(info.meta or {})
             schemes = meta.get("securitySchemes")
+            input_schema = info.parameters
+            output_schema = info.output_schema
+            if info.name == MCP_TOOL_SEARCH_PRODUCTS:
+                input_schema = search_products_input_json_schema()
+                output_schema = search_products_output_json_schema()
             payload: dict[str, Any] = {
                 "name": info.name,
                 "title": info.title,
                 "description": info.description or "",
-                "inputSchema": info.parameters,
-                "outputSchema": info.output_schema,
+                "inputSchema": input_schema,
+                "outputSchema": output_schema,
                 "annotations": info.annotations,
                 "icons": info.icons,
                 "_meta": meta or None,
@@ -69,6 +88,22 @@ class ApiDelpiFastMCP(FastMCP):
                 payload["securitySchemes"] = schemes
             listed.append(MCPTool.model_validate(payload))
         return listed
+
+    async def call_tool(self, name: str, arguments: dict[str, Any]) -> Any:
+        """Validate search_products against SearchProductsInput before FastMCP binding.
+
+        FastMCP's generated arg model ignores unknown fields and would otherwise
+        leak Pydantic messages when Field constraints are duplicated on the fn.
+        """
+        if name == MCP_TOOL_SEARCH_PRODUCTS:
+            try:
+                SearchProductsInput.model_validate(arguments or {})
+            except ValidationError as exc:
+                log_error(
+                    f"mcp search_products validation rejected error_count={exc.error_count()}"
+                )
+                return validation_error_tool_result()
+        return await super().call_tool(name, arguments)
 
 
 def create_mcp_server() -> FastMCP:
@@ -110,6 +145,7 @@ def create_mcp_server() -> FastMCP:
         page: int = 1,
         page_size: int = PRODUCT_SEARCH_DEFAULT_PAGE_SIZE,
     ) -> CallToolResult:
+        # Constraints / unknown fields are owned by SearchProductsInput (call_tool + here).
         try:
             params = SearchProductsInput(
                 code=code,
@@ -118,8 +154,11 @@ def create_mcp_server() -> FastMCP:
                 page=page,
                 page_size=page_size,
             )
-        except Exception as exc:
-            raise ValueError(f"Invalid search_products arguments: {exc}") from exc
+        except ValidationError as exc:
+            log_error(
+                f"mcp search_products validation rejected error_count={exc.error_count()}"
+            )
+            return validation_error_tool_result()
 
         try:
             data = search_products(

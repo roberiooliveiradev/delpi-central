@@ -256,6 +256,23 @@ group_category
 
 No stock, pricing, supplier, customer, sales, invoices, finance, SQL, generic proxy, writes, service account, or GPT-local RBAC are part of DAVI V1.
 
+## MCP tool contract (PLUGIN-006)
+
+Canonical schema owner: `SearchProductsInput` / `SearchProductsOutput` in
+`app/application/external_capabilities/product_search_schemas.py`.
+
+`tools/list` for `search_products` must advertise:
+
+| Surface | Contract |
+|---|---|
+| Input `page` | integer, default `1`, minimum `1` |
+| Input `page_size` | integer, default `50`, minimum `1`, maximum `50` |
+| Input shape | flat `code` / `description` / `group_code` / `page` / `page_size` — `additionalProperties: false` |
+| Output | typed page with `items[]` (`product_code`, `description`, `group_category`) + `page` / `page_size` / `total` / `total_pages` |
+| Invalid args | safe `VALIDATION_ERROR` / `Invalid search parameters.` — no Pydantic/framework leakage |
+
+No OAuth, Keycloak, audience, Origin/routing, or `ENGINEERING_LMP_ACCESS` changes in this hardening.
+
 ## Evidence ladder
 
 Do not collapse these into one `PASS`:

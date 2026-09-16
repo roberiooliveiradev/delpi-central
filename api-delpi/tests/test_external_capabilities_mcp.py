@@ -28,7 +28,14 @@ from app.interface.mcp.resource_metadata import (
     build_oauth_protected_resource_metadata,
     www_authenticate_challenge,
 )
-from app.interface.mcp.server import SearchProductsInput, create_mcp_server
+from app.application.external_capabilities.product_search_schemas import (
+    SearchProductsInput,
+)
+from app.interface.mcp.server import (
+    VALIDATION_ERROR_CODE,
+    VALIDATION_ERROR_MESSAGE,
+    create_mcp_server,
+)
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1] / "integrations" / "openai-plugin"
 
@@ -134,6 +141,105 @@ def test_mcp_tool_sanitizes_generic_failure(mock_search) -> None:
         tool.fn(page=1, page_size=10)
     assert str(exc.value) == EXTERNAL_INTERNAL_ERROR_MESSAGE
     assert "sql://" not in str(exc.value)
+
+
+@pytest.mark.asyncio
+async def test_mcp_tools_list_contract_has_input_limits_and_typed_output() -> None:
+    mcp = create_mcp_server()
+    tools = await mcp.list_tools()
+    assert [t.name for t in tools] == [MCP_TOOL_SEARCH_PRODUCTS]
+    tool = tools[0]
+    schema = tool.inputSchema
+    assert schema["type"] == "object"
+    assert schema.get("additionalProperties") is False
+    assert schema["properties"]["page"]["minimum"] == 1
+    assert schema["properties"]["page"]["default"] == 1
+    assert schema["properties"]["page_size"]["minimum"] == 1
+    assert schema["properties"]["page_size"]["maximum"] == PRODUCT_SEARCH_MAX_PAGE_SIZE
+    assert schema["properties"]["page_size"]["default"] == PRODUCT_SEARCH_MAX_PAGE_SIZE
+    assert set(schema["properties"]) == {
+        "code",
+        "description",
+        "group_code",
+        "page",
+        "page_size",
+    }
+    assert "params" not in schema["properties"]
+    assert "customer_reference" not in json.dumps(schema)
+
+    out = tool.outputSchema
+    assert out is not None
+    assert out["type"] == "object"
+    assert out.get("additionalProperties") is False
+    out_blob = json.dumps(out)
+    assert "customer_reference" not in out_blob
+    for field in PRODUCT_SEARCH_RESPONSE_FIELDS:
+        assert field in out_blob
+    for field in ("page", "page_size", "total", "total_pages", "items"):
+        assert field in out["properties"]
+
+    assert tool.securitySchemes == [
+        {"type": "oauth2", "scopes": ["openid", "profile", "email", "mcp:tools"]}
+    ]
+    assert tool.annotations is not None
+    assert tool.annotations.readOnlyHint is True
+
+
+@pytest.mark.asyncio
+@patch("app.interface.mcp.server.search_products")
+async def test_mcp_call_tool_sanitizes_validation_errors(mock_search) -> None:
+    mcp = create_mcp_server()
+    for args in (
+        {"page": 0, "page_size": 50},
+        {"page": 1, "page_size": 0},
+        {"page": 1, "page_size": 51},
+        {"page": 1, "page_size": 50, "customer_reference": "x"},
+        {"page": 1, "page_size": 50, "unknown": "y"},
+    ):
+        result = await mcp.call_tool(MCP_TOOL_SEARCH_PRODUCTS, args)
+        assert result.isError is True
+        text = " ".join(
+            block.text for block in result.content if getattr(block, "text", None)
+        )
+        assert text == VALIDATION_ERROR_MESSAGE
+        assert result.structuredContent == {
+            "code": VALIDATION_ERROR_CODE,
+            "message": VALIDATION_ERROR_MESSAGE,
+        }
+        blob = str(result)
+        assert "pydantic" not in blob.lower()
+        assert "errors.pydantic.dev" not in blob
+        assert "ValidationError" not in blob
+        assert "greater_than_equal" not in blob
+        assert "traceback" not in blob.lower()
+    mock_search.assert_not_called()
+
+
+@pytest.mark.asyncio
+@patch("app.interface.mcp.server.search_products")
+async def test_mcp_call_tool_positive_pagination(mock_search) -> None:
+    mock_search.return_value = {
+        "items": [],
+        "page": 1,
+        "page_size": 50,
+        "total": 0,
+        "total_pages": 0,
+    }
+    mcp = create_mcp_server()
+    result = await mcp.call_tool(
+        MCP_TOOL_SEARCH_PRODUCTS, {"page": 1, "page_size": 50}
+    )
+    assert result.isError is False
+    mock_search.assert_called_once()
+
+
+def test_mcp_tool_fn_returns_safe_validation_error() -> None:
+    mcp = create_mcp_server()
+    tool = mcp._tool_manager.get_tool(MCP_TOOL_SEARCH_PRODUCTS)
+    result = tool.fn(page=0, page_size=50)
+    assert result.isError is True
+    assert result.structuredContent["code"] == VALIDATION_ERROR_CODE
+    assert "pydantic" not in str(result).lower()
 
 
 def test_oauth_resource_metadata_shape(monkeypatch) -> None:
