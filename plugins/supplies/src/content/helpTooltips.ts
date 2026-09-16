@@ -95,11 +95,13 @@ export const SP_HELP = {
   purchaseRequestsRefresh:
     "Recarrega a lista com os mesmos filtros. O horário é da última consulta bem-sucedida nesta tela, não do TOTVS.",
   purchaseRequestsTableFontSize:
-    "Ajusta o tamanho da fonte da tabela neste navegador. A preferência fica salva localmente.",
+    "Ajusta o tamanho da fonte da tabela neste navegador. Vale só no modo Tabela; no modo Cards o controle não aparece. A preferência fica salva localmente e volta ao retornar à Tabela.",
   purchaseRequestsTableColumns:
-    "Escolha quais colunas exibir e arraste para reordenar. A preferência fica salva neste navegador; não altera permissões nem dados.",
+    "Escolha quais colunas exibir e arraste para reordenar na Tabela. No modo Cards o menu não aparece (composição fixa dos cards). A preferência fica salva neste navegador; não altera permissões nem dados.",
   purchaseRequestsTableMeta:
-    "Contagem de colunas visíveis nesta tabela e total de linhas do recorte filtrado (não só a página atual).",
+    "No modo Tabela: colunas visíveis e total de linhas do recorte filtrado (não só a página atual).",
+  purchaseRequestsCardsMeta:
+    "Total de linhas do recorte filtrado no modo Cards (não só a página atual). Fonte e Colunas são preferências só da Tabela.",
   purchaseRequestsColCc: "Centro de custo da linha no escopo liberado ao usuário.",
   purchaseRequestsColOpened: "Data de abertura da solicitação de compras.",
   purchaseRequestsColStage: "Situação consolidada da SC a partir do andamento dos itens.",
@@ -131,11 +133,13 @@ export const SP_HELP = {
   purchaseOrdersExcel:
     "Exporta para Excel o recorte filtrado inteiro (todas as unidades selecionadas), sem truncar na página. Exige o mesmo acesso de operações e as unidades pedidas.",
   purchaseOrdersTableFontSize:
-    "Ajusta o tamanho da fonte da tabela neste navegador. Use − / + ou restaurar o padrão. A preferência fica salva localmente.",
+    "Ajusta o tamanho da fonte da tabela neste navegador. Vale só no modo Tabela; no modo Cards o controle não aparece. Use − / + ou restaurar o padrão. A preferência fica salva localmente e volta ao retornar à Tabela.",
   purchaseOrdersTableColumns:
-    "Marque ou desmarque colunas e arraste pelo handle para reordenar. Restaurar volta ao padrão. A preferência fica salva neste navegador; não altera permissões nem dados.",
+    "Marque ou desmarque colunas e arraste pelo handle para reordenar na Tabela. No modo Cards o menu não aparece (composição fixa dos cards). Restaurar volta ao padrão. A preferência fica salva neste navegador; não altera permissões nem dados.",
   purchaseOrdersTableMeta:
-    "Contagem de colunas visíveis nesta tabela e total de linhas do recorte filtrado (não só a página atual).",
+    "No modo Tabela: colunas visíveis e total de linhas do recorte filtrado (não só a página atual).",
+  purchaseOrdersCardsMeta:
+    "Total de linhas do recorte filtrado no modo Cards (não só a página atual). Fonte e Colunas são preferências só da Tabela.",
   purchaseOrdersColOpenQty: "Quantidade ainda em aberto (saldo a receber) nesta linha.",
   purchaseOrdersColDelivery: "Data prometida de entrega do item.",
   purchaseOrdersColStatus: "Situação em relação à data prometida: atrasado, no prazo ou sem data.",

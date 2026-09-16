@@ -11,6 +11,7 @@ export const PURCHASE_REQUESTS_CONTENT = {
     "Linhas no escopo CC + unidade. Clique na SC ou na linha para abrir a ficha. Lista vazia pode significar falta de CC liberado.",
   tableMeta: (columns: number, rows: number) =>
     `${columns} coluna(s) · ${rows.toLocaleString("pt-BR")} linha(s)`,
+  cardsMeta: (rows: number) => `${rows.toLocaleString("pt-BR")} linha(s)`,
   openScLinkTitle: (number: string) => `Abrir solicitação ${number}`,
   branchLabel: "Unidade",
   dateFromLabel: "De",

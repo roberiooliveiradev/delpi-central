@@ -242,13 +242,21 @@ export function PurchaseRequestsListTable({
         }
         hint={
           <HelpTooltip
-            content={SP_HELP.purchaseRequestsTableMeta}
-            ariaLabel="Ajuda: metadados da tabela"
+            content={
+              showCards
+                ? SP_HELP.purchaseRequestsCardsMeta
+                : SP_HELP.purchaseRequestsTableMeta
+            }
+            ariaLabel={
+              showCards ? "Ajuda: metadados dos cards" : "Ajuda: metadados da tabela"
+            }
             wrap
             placement="bottom"
           >
             <span className="delpi-ui-section-hint-label">
-              {C.tableMeta(visibleColumnCount, total)}
+              {showCards
+                ? C.cardsMeta(total)
+                : C.tableMeta(visibleColumnCount, total)}
             </span>
           </HelpTooltip>
         }
@@ -270,23 +278,27 @@ export function PurchaseRequestsListTable({
                 />
               </HelpTooltip>
             ) : null}
-            <SuppliesTableFontSizeControls
-              fontSize={fontSizePrefs.fontSize}
-              canIncrease={fontSizePrefs.canIncrease}
-              canDecrease={fontSizePrefs.canDecrease}
-              isDefault={fontSizePrefs.isDefault}
-              onIncrease={fontSizePrefs.increase}
-              onDecrease={fontSizePrefs.decrease}
-              onReset={fontSizePrefs.reset}
-            />
-            <SuppliesTableColumnVisibilityMenu
-              columns={columnPrefs.orderedColumns}
-              visibility={columnPrefs.visibility}
-              onToggleColumn={columnPrefs.setColumnVisible}
-              onReset={columnPrefs.reset}
-              onReorderColumns={columnPrefs.reorderColumns}
-              labels={DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS}
-            />
+            {!showCards ? (
+              <>
+                <SuppliesTableFontSizeControls
+                  fontSize={fontSizePrefs.fontSize}
+                  canIncrease={fontSizePrefs.canIncrease}
+                  canDecrease={fontSizePrefs.canDecrease}
+                  isDefault={fontSizePrefs.isDefault}
+                  onIncrease={fontSizePrefs.increase}
+                  onDecrease={fontSizePrefs.decrease}
+                  onReset={fontSizePrefs.reset}
+                />
+                <SuppliesTableColumnVisibilityMenu
+                  columns={columnPrefs.orderedColumns}
+                  visibility={columnPrefs.visibility}
+                  onToggleColumn={columnPrefs.setColumnVisible}
+                  onReset={columnPrefs.reset}
+                  onReorderColumns={columnPrefs.reorderColumns}
+                  labels={DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS}
+                />
+              </>
+            ) : null}
           </>
         }
       />
@@ -294,7 +306,6 @@ export function PurchaseRequestsListTable({
       {showCards ? (
         <>
           <SuppliesDataCardsSortBar
-            style={tableStyle}
             sortField={
               <SuppliesSelectField
                 label={C.sortByLabel}

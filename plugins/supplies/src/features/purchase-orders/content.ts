@@ -11,6 +11,7 @@ export const PURCHASE_ORDERS_CONTENT = {
     "Somente itens com saldo pendente de recebimento. Clique no PC ou na linha para abrir itens, datas prometidas, recebimentos e a SC de origem.",
   tableMeta: (columns: number, rows: number) =>
     `${columns} coluna(s) · ${rows.toLocaleString("pt-BR")} linha(s)`,
+  cardsMeta: (rows: number) => `${rows.toLocaleString("pt-BR")} linha(s)`,
   openPcLinkTitle: (number: string) => `Abrir pedido de compra ${number}`,
   branchLabel: "Unidade",
   orderNumberLabel: "Número PC",

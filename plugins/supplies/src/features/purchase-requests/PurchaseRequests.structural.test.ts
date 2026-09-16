@@ -82,6 +82,12 @@ describe("PurchaseRequests feature", () => {
     expect(table).toContain("SuppliesDataTable");
     expect(table).toContain("SuppliesDataCardsSortBar");
     expect(table).toContain("C.tableMeta");
+    expect(table).toContain("C.cardsMeta");
+    expect(table).toContain("!showCards");
+    expect(table).toContain("SuppliesTableFontSizeControls");
+    expect(table).toContain("SuppliesTableColumnVisibilityMenu");
+    expect(table).toContain("ExcelExportButton");
+    expect(table).toContain("SuppliesCompactPagination");
     expect(table).toContain("SuppliesEntityLink");
     expect(table).toContain("buildPurchaseRequestDetailPath");
     expect(table).toContain("PurchaseRequestsCards");
@@ -94,6 +100,22 @@ describe("PurchaseRequests feature", () => {
     const config = readFileSync(join(dir, "purchaseRequestsTableConfig.ts"), "utf8");
     expect(config).toContain("supplies:purchase-requests:column-prefs:v1");
     expect(config).not.toContain("purchase-orders");
+  });
+
+  it("Cards esconde Fonte/Colunas e usa metadata sem colunas", () => {
+    const table = readFileSync(join(dir, "PurchaseRequestsListTable.tsx"), "utf8");
+    expect(table).toMatch(/showCards[\s\S]*C\.cardsMeta\(total\)/);
+    expect(table).toMatch(/!showCards[\s\S]*SuppliesTableFontSizeControls/);
+    expect(table).toMatch(/!showCards[\s\S]*SuppliesTableColumnVisibilityMenu/);
+    expect(table).toContain("canExport");
+    expect(table).toContain("SuppliesDataCardsSortBar");
+    expect(table).toContain("SuppliesCompactPagination");
+    // Font style only on table region, not on cards sort bar.
+    expect(table).not.toMatch(/SuppliesDataCardsSortBar[\s\S]{0,80}style=\{tableStyle\}/);
+
+    const content = readFileSync(join(dir, "content.ts"), "utf8");
+    expect(content).toContain("cardsMeta:");
+    expect(content).toMatch(/cardsMeta: \(rows: number\) =>/);
   });
 
   it("CSS não recria botão/filtro do kit e usa região de tabela compartilhada", () => {
