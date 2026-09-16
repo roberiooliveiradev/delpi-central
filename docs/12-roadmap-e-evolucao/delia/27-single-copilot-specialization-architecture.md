@@ -6,7 +6,7 @@
 
 ## 1. Decisão
 
-Existe **uma única DÉLIA**, implementada no novo runtime standalone da DÉLIA. O namespace técnico de API permanece temporariamente `minha-delpi-copilot-api` até C0.S1.
+Existe **uma única DÉLIA**, implementada no novo runtime standalone da DÉLIA. Path alvo da API: `delia-api` (`FROZEN_CANDIDATE` C0.S1; ver `68`).
 
 ```text
 NÃO

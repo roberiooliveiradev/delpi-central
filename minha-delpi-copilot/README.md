@@ -1,8 +1,18 @@
-# DÉLIA — placeholder técnico do namespace `minha-delpi-copilot`
+# DÉLIA — HISTORICAL technical placeholder (`minha-delpi-copilot`)
 
-Este diretório é apenas um **ponto de entrada documental temporário** da iniciativa no monorepo `delpi-central`.
+Este diretório é apenas um **ponto de entrada documental histórico** da iniciativa no monorepo `delpi-central`.
 
-Não é evidência de runtime implementado. Enquanto `C0.S1` não congelar os nomes físicos finais, `minha-delpi-copilot` permanece somente como namespace técnico temporário.
+**Classificação:** `HISTORICAL` / `SUPERSEDED` como namespace técnico ativo.
+
+Não é evidência de runtime implementado. O freeze candidato C0.S1 (`PLANNED / FROZEN_CANDIDATE`; ver `docs/.../delia/68-delia-product-identity-and-naming.md`) define:
+
+```text
+API  = delia-api/          (container delpi-delia-api; Gateway /apps/delia-api/)
+MFE  = plugins/delia/      (container delpi-delia; /apps/delia)
+APP  = delia
+```
+
+Pastas `delia-api/` e `plugins/delia/` **não** são criadas nesta etapa documental.
 
 A **DÉLIA — DELPI · Ecossistema de Ligações, Inteligência e Automação** é uma aplicação nova e standalone, com API/MFE/persistência/deploy próprios quando implementados e integrada às foundations comprovadas do Portal/Core/Gateway/Keycloak/Domain APIs.
 
@@ -60,11 +70,12 @@ Key authorities:
 - [Tests/Gates](../docs/12-roadmap-e-evolucao/delia/20-testing-and-acceptance-matrix.md)
 - [State/Persistence](../docs/12-roadmap-e-evolucao/delia/21-data-and-state-model.md)
 - [Cursor Master Prompt](../docs/12-roadmap-e-evolucao/delia/23-prompt-cursor-execucao.md)
-- [Requirements CP-001…CP-310](../docs/12-roadmap-e-evolucao/delia/25-requirements-traceability.md)
+- [Requirements CP-001…CP-316](../docs/12-roadmap-e-evolucao/delia/25-requirements-traceability.md)
 - [Architecture Patterns](../docs/12-roadmap-e-evolucao/delia/49-architecture-and-design-patterns-standard.md)
 - [Standalone Boundary](../docs/12-roadmap-e-evolucao/delia/50-standalone-copilot-application-architecture.md)
 - [Platform Baseline](../docs/12-roadmap-e-evolucao/delia/51-platform-integration-baseline.md)
 - [Bootstrap Target](../docs/12-roadmap-e-evolucao/delia/52-standalone-repository-and-bootstrap-plan.md)
+- [Product Identity / Naming](../docs/12-roadmap-e-evolucao/delia/68-delia-product-identity-and-naming.md)
 - [Index](../docs/12-roadmap-e-evolucao/delia/INDEX.md)
 - [Execution Ledger](../docs/12-roadmap-e-evolucao/delia/evidence/execution-ledger.md)
 
@@ -78,33 +89,6 @@ Core API = apps/routes/RBAC/governance
 Domain APIs = business data/rules
 Portal = host/navigation/context
 DÉLIA = intelligence/context/Evidence/Policy/Decision/Work/orchestration/outcome coordination
-Automation Hub = technical execution
-External providers = external resources
-OT/Safety = machine/industrial safety
+Automation Hub = technical execution (external boundary TARGET; not inside DÉLIA)
+Chat = REFERENCE_ONLY / INVENTORY_SOURCE
 ```
-
-And:
-
-```text
-Graph != Semantic Layer
-Personal Memory != Organizational Knowledge
-Prediction != FACT
-Recommendation != Authorization
-Simulate != Apply
-PREPARE != ACT
-Technical Success != Verified Business Outcome
-MCP/A2A Discovery != Approval
-Marketplace Install != Permission
-Edge Offline != Wider Authority
-```
-
-## Execution state
-
-```text
-PROGRAM = PLANNED / NOT_STARTED
-REQUIREMENTS = CP-001…CP-310
-NEXT_STEP = C0.S0 — factual Platform/Media/Device/Biometric/External/Automation/Intelligence-Platform/OT rebaseline
-RUNTIME_DIFF = NONE
-```
-
-C0.S0 é inventário/rebaseline factual. Nenhum runtime da DÉLIA deve ser criado antes de `C0.S7 FOUNDATION_FREEZE=PASS`.

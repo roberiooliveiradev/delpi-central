@@ -22,7 +22,7 @@
 
 > Esta é a única authority `CP-*`. IDs históricos não são reutilizados nem apagados; requisitos ligados à migração do Minha DELPI Chat são preservados como `OUT_OF_SCOPE_WITH_DECISION`.
 
-> DÉLIA é o nome do produto. `Copilot` permanece neste arquivo apenas em nomes técnicos/IDs legados ainda não renomeados em C0.S1; isso não muda o ownership semântico.
+> DÉLIA é o nome do produto. `Copilot` / `COPILOT_*` / `minha-delpi-copilot*` neste arquivo são `LEGACY_TOKEN`/`HISTORICAL`/`SUPERSEDED` quando ainda presentes; paths/owners ativos preferem `delia-api` / `plugins/delia` / DÉLIA API|MFE (`FROZEN_CANDIDATE` C0.S1). Naming update ≠ implementation evidence.
 
 ## 1. Status
 
@@ -73,11 +73,11 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-135 | Error/Result model transversal | Application/Interfaces | contract/conformance | PLANNED |
 | CP-136 | EventEnvelope + Outbox/Idempotency/Resilience rules | Platform/Work | conformance | PLANNED |
 | CP-137 | State Machine para lifecycles não triviais | Domain/Policy/Work | transition tests | PLANNED |
-| CP-138 | Frontend state ownership | Portal/Copilot MFE | frontend conformance | PLANNED |
+| CP-138 | Frontend state ownership | Portal/DÉLIA MFE | frontend conformance | PLANNED |
 | CP-139 | Adapter/ACL/Strangler para integrações legadas quando necessário | Architecture | migration gate | PLANNED |
 | CP-140 | Architecture conformance + ADR process | Architecture | conformance/ADR | PLANNED |
-| CP-146 | Zero dependência de runtime do Minha DELPI Chat | Copilot Platform | Chat-offline/scan | PLANNED |
-| CP-147 | Persistência/migration chain próprias do Copilot | Copilot API | storage ownership | PLANNED |
+| CP-146 | Zero dependência de runtime do Minha DELPI Chat | DÉLIA Platform | Chat-offline/scan | PLANNED |
+| CP-147 | Persistência/migration chain próprias da DÉLIA | DÉLIA API (`delia-api/migrations/`) | storage ownership | PLANNED |
 | CP-154 | Inventário Portal/Core/Gateway/APIs/MFEs antes do runtime | Architecture | C0.S0 evidence | PLANNED |
 | CP-157 | Media capture/consent/retention classes definidas antes do runtime multimodal contínuo | Copilot Security/Architecture | media/privacy foundation | PLANNED |
 | CP-158 | Shared-device identity/session isolation | Copilot/Portal/Security | device session negative tests | PLANNED |
@@ -102,19 +102,19 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-214 | Internet/connector/write/webhook possuem kill switches independentes de prompt/LLM | Copilot Admin/Security | emergency disable gate | PLANNED |
 | CP-223 | Teams inventory congela Entra app registration, tenant/admin owner, Graph scopes, resource-specific consent, webhooks, app distribution e meeting-artifact privacy antes do runtime | Copilot Teams/Architecture/Security | Teams foundation gate | PLANNED |
 | CP-226 | C0 inventaria event sources/buses/webhooks/schedulers, RPA tools/licenças/bots, scripts/jobs, queues/workers, service accounts, credential owners, outcome sources e automation governance antes de runtime | Architecture/Automation/Security | automation foundation inventory | PLANNED |
-| CP-227 | Copilot intelligence/orchestration e Automation & Execution Hub execution permanecem separáveis; Hub não cria segundo planner/AI authority | Architecture/Copilot Automation | ownership/bounded-context gate | PLANNED |
+| CP-227 | DÉLIA intelligence/orchestration e Automation & Execution Hub execution permanecem separáveis; Hub não cria segundo planner/AI authority | Architecture/DÉLIA Automation | ownership/bounded-context gate | PLANNED |
 | CP-228 | Executor preference é API/integration/function antes de RPA/computer-use quando contrato autoritativo suportado existir | Copilot Automation/Architecture | executor-selection architecture gate | PLANNED |
 | CP-229 | Background/autonomous execution usa user/service identity explícita, auditável e não deriva autoridade de evento/LLM | Copilot Security/Core/Automation | background identity gate | PLANNED |
 | CP-230 | Execution contract define correlation, idempotency, pre/postconditions, timeout/retry e verified Outcome semantics antes de executors materiais | Copilot Automation/Work | execution contract gate | PLANNED |
 | CP-231 | Event source authenticity/trust, dedupe, ordering/correlation e polling fallback bounded são definidos antes de continuous operations | Copilot Events/Architecture | event foundation gate | PLANNED |
-| CP-249 | C0 inventaria event logs, process owners, case keys, BPMN/process docs, task-mining telemetry/privacy e data quality antes de Process Intelligence runtime | Copilot Process Intelligence/Architecture | process-intelligence foundation inventory | PLANNED |
-| CP-256 | C0 inventaria todos os AI/automation assets, owners, risk/compliance, evals, cost telemetry, incidents e kill-switch mechanisms antes da Control Tower | Copilot Control Tower/Governance | AI asset governance foundation | PLANNED |
+| CP-249 | C0 inventaria event logs, process owners, case keys, BPMN/process docs, task-mining telemetry/privacy e data quality antes de Process Intelligence runtime | DÉLIA Process Intelligence/Architecture | process-intelligence foundation inventory | PLANNED |
+| CP-256 | C0 inventaria todos os AI/automation assets, owners, risk/compliance, evals, cost telemetry, incidents e kill-switch mechanisms antes da Control Tower | DÉLIA Control Tower/Governance | AI asset governance foundation | PLANNED |
 | CP-262 | C0 inventaria MCP/A2A/tool registries, external agents, service identities, delegation credentials, protocol versions e trust boundaries | Copilot Interoperability/Security | protocol interoperability foundation | PLANNED |
 | CP-268 | C0 congela ownership/classes/retention/export/delete/user-controls para Personal Memory; memória não é Knowledge nem permission authority | Copilot Memory/Privacy | personal-memory foundation | PLANNED |
-| CP-274 | C0 inventaria business glossary, KPI formulas, BI semantic models, metric owners, grain/dimensions, freshness e definition conflicts | Copilot Semantic Layer/Data owners | semantic foundation inventory | PLANNED |
-| CP-280 | C0 inventaria code/data-analysis sandbox, BI/query engines, file scanning/storage e artifact-generation/versioning infrastructure e boundaries | Copilot Analysis/Artifacts/Security | sandbox/artifact foundation inventory | PLANNED |
+| CP-274 | C0 inventaria business glossary, KPI formulas, BI semantic models, metric owners, grain/dimensions, freshness e definition conflicts | DÉLIA Semantic Layer/Data owners | semantic foundation inventory | PLANNED |
+| CP-280 | C0 inventaria code/data-analysis sandbox, BI/query engines, file scanning/storage e artifact-generation/versioning infrastructure e boundaries | DÉLIA Analysis/Artifacts/Security | sandbox/artifact foundation inventory | PLANNED |
 | CP-287 | C0 inventaria predictive/anomaly/optimization/simulation models, datasets, ground truth, owners e operational/digital-twin sources | Copilot Predictive/Twin/Data owners | predictive/twin foundation inventory | PLANNED |
-| CP-295 | C0 inventaria factory network, Edge platforms/devices, MDM, local inference, offline requirements, time sync, OT segmentation e cache/update owners | Copilot Edge/Industrial/Infrastructure | edge/offline foundation inventory | PLANNED |
+| CP-295 | C0 inventaria factory network, Edge platforms/devices, MDM, local inference, offline requirements, time sync, OT segmentation e cache/update owners | DÉLIA Edge/Industrial/Infrastructure | edge/offline foundation inventory | PLANNED |
 | CP-302 | C0 inventaria model providers, local ML models, registries/MLOps, datasets/evals, CI/CD, package catalogs/signing e supply-chain controls | Copilot Model Governance/Control Tower | model/marketplace foundation inventory | PLANNED |
 | CP-311 | C0 congela Recurring Governed Work: owner da definição versus owner do timer/scheduler físico, recurrence/timezone/DST, misfire/missed-run, overlap, idempotência por ocorrência, background identity/AuthZ/revoke, pause/cancel e Outcome boundaries | DÉLIA Work/Architecture/Automation/Security | recurring-work foundation contract | PLANNED |
 
@@ -122,11 +122,11 @@ OUT_OF_SCOPE_WITH_DECISION
 
 | ID | Requisito | Owner | Gate | Status |
 |---|---|---|---|---|
-| CP-141 | DÉLIA API standalone | `minha-delpi-copilot-api` | own service/health/tests | LOCKED |
-| CP-142 | DÉLIA MFE standalone | `plugins/minha-delpi-copilot` | build/federation/tests | LOCKED |
-| CP-143 | Manifesto próprio da DÉLIA | DÉLIA/Core | schema/registration | LOCKED |
-| CP-144 | Gateway route própria API/MFE | Gateway | dev/prod parity | LOCKED |
-| CP-145 | Compose/deploy próprios | Infra | independent service/start | LOCKED |
+| CP-141 | DÉLIA API standalone | `delia-api/` (FROZEN_CANDIDATE C0.S1; was `minha-delpi-copilot-api`) | own service/health/tests | LOCKED |
+| CP-142 | DÉLIA MFE standalone | `plugins/delia/` (FROZEN_CANDIDATE C0.S1; was `plugins/minha-delpi-copilot`) | build/federation/tests | LOCKED |
+| CP-143 | Manifesto próprio da DÉLIA | DÉLIA/Core (`id=delia`) | schema/registration | LOCKED |
+| CP-144 | Gateway route própria API/MFE | Gateway (`/apps/delia-api/`, `/apps/delia`) | dev/prod parity | LOCKED |
+| CP-145 | Compose/deploy próprios | Infra (`delpi-delia-api`, `delpi-delia`) | independent service/start | LOCKED |
 | CP-148 | Portal federated full-page mount | Portal/DÉLIA MFE | authorized mount/F5 | LOCKED |
 | CP-149 | Global DÉLIA panel usando o mesmo MFE/runtime | Portal/DÉLIA MFE | surface parity | LOCKED |
 | CP-150 | JWT + Core/RBAC integration | DÉLIA API/Core | auth negatives | LOCKED |
@@ -568,3 +568,33 @@ No CP promoted to PASS by documentation alone
 ```
 
 Related non-inventory CPs (CP-178/179 OT, CP-091 EntityRef, etc.) remain PLANNED/LOCKED per their rows; inventory evidence does not satisfy runtime gates.
+
+## 15. C0.S1 naming / physical ownership linkage
+
+Evidence anchors: `68` §4; `50` §3/§21; `17` §2; `52`; `21` §2; ledger §6.22.
+
+| CP | Naming/ownership note (C0.S1-T1) | Status unchanged |
+|---|---|---|
+| CP-130–CP-134, CP-140 | architecture gates; no path invent | PLANNED |
+| CP-138 | owner label → Portal/DÉLIA MFE | PLANNED |
+| CP-141 | path → `delia-api/` | LOCKED (C1) |
+| CP-142 | path → `plugins/delia/` | LOCKED (C1) |
+| CP-143 | `id=delia`; manifest source DÉLIA; registry Core | LOCKED (C1) |
+| CP-144 | `/apps/delia-api/`, `/apps/delia` | LOCKED (C1) |
+| CP-145 | containers `delpi-delia-api`, `delpi-delia` | LOCKED (C1) |
+| CP-146–CP-147 | DÉLIA platform/API ownership labels | PLANNED |
+| CP-148–CP-150, CP-152–CP-153, CP-155 | same product/runtime; Core AuthZ preserved | LOCKED (C1) |
+| CP-227 | Hub external execution boundary TARGET | PLANNED |
+| CP-249 | Process Intelligence = MODULE_IN_DELIA | PLANNED |
+| CP-256 | Control Tower = MODULE_IN_DELIA | PLANNED |
+| CP-274 | Semantic Layer = MODULE_IN_DELIA + metric owners | PLANNED |
+| CP-280 | Sandbox = DÉLIA analysis + isolated adapter deferred | PLANNED |
+| CP-295 | Edge = adapter; no DÉLIA-owned Edge runtime | PLANNED |
+| CP-311 | Work definition vs physical scheduler unchanged | PLANNED |
+
+```text
+Naming update ≠ CP PASS ≠ runtime evidence
+C0.S1 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (not APPROVED)
+C0.S2_AUTHORIZED = NO
+FOUNDATION_FREEZE = NOT APPROVED
+```

@@ -14,13 +14,13 @@ Definir a organização física esperada **antes** de criar runtime, evitando re
 
 A aplicação deve nascer preparada arquiteturalmente para Global/Workspace/Meeting/Frontline, porém C1 implementa somente o bootstrap necessário; não antecipar media/runtime/features de C3/C6.
 
-Os nomes finais são congelados em C0.S1; os paths abaixo são target recomendado e só podem mudar por evidence/ADR.
+Os nomes finais foram persistidos como freeze candidato em C0.S1-T1 (`68`); paths abaixo são `PLANNED / FROZEN_CANDIDATE` e só mudam por evidence/ADR após aceite arquitetural. Não criar pastas nesta etapa.
 
 ## 2. Estrutura macro alvo
 
 ```text
 delpi-central/
-├── minha-delpi-copilot-api/          # namespace técnico temporário
+├── delia-api/                       # FROZEN_CANDIDATE (C0.S1)
 │   ├── app/
 │   │   ├── domain/
 │   │   ├── application/
@@ -28,7 +28,7 @@ delpi-central/
 │   │   ├── infrastructure/
 │   │   ├── composition/
 │   │   └── create_app.py | main.py
-│   ├── migrations/
+│   ├── migrations/                  # own chain; logical ns = delia
 │   ├── tests/
 │   ├── docs/
 │   ├── scripts/
@@ -38,7 +38,7 @@ delpi-central/
 │   └── pytest.ini
 │
 ├── plugins/
-│   ├── minha-delpi-copilot/          # namespace técnico temporário
+│   ├── delia/                       # FROZEN_CANDIDATE (C0.S1); one product, one MFE
 │   │   ├── src/
 │   │   │   ├── ui/
 │   │   │   ├── state/
@@ -61,17 +61,23 @@ delpi-central/
 └── infra/
 ```
 
+Histórico supersedido (não criar como runtime ativo): `minha-delpi-copilot-api/`, `plugins/minha-delpi-copilot/`.
+
 Não criar source code da DÉLIA dentro de `minha-delpi-ai-api` ou `plugins/minha-delpi-chat`.
 
 Não criar por default:
 
 ```text
+delia-panel/
+delia-workspace/
+delia-meeting/
+delia-frontline/
 meeting-ai-api/
 frontline-ai-api/
 operator-agent-runtime/
 ```
 
-Meeting/Frontline são módulos/surfaces do mesmo produto, salvo gap futuro comprovado e ADR.
+Meeting/Frontline/Global/Workspace são surfaces do mesmo produto/MFE, salvo gap futuro comprovado e ADR. C1 pode escolher `./App` + `./Panel` versus mount parametrizado — não congelado em C0.S1.
 
 ## 3. Backend package rules
 
@@ -269,24 +275,24 @@ Shape conceitual, **não contrato congelado nem arquivo para registro ainda**:
 ```json
 {
   "schemaVersion": "1.0.0",
-  "id": "minha-delpi-copilot",
+  "id": "delia",
   "name": "DÉLIA",
   "type": "microfrontend",
-  "basePath": "/apps/minha-delpi-copilot",
-  "entry": "/apps/minha-delpi-copilot/assets/remoteEntry.js",
+  "basePath": "/apps/delia",
+  "entry": "/apps/delia/assets/remoteEntry.js",
   "permissions": [],
   "routes": [],
   "backend": {
     "required": true,
-    "serviceName": "minha-delpi-copilot-api",
-    "baseUrl": "/apps/minha-delpi-copilot-api",
+    "serviceName": "delia-api",
+    "baseUrl": "/apps/delia-api",
     "validateJwt": true
   },
   "ui": {"renderMode": "federated"}
 }
 ```
 
-`id`, `basePath`, backend shape e schemaVersion precisam ser revalidados contra manifesto/contrato vigente em C0.S0/C1 antes de implementação. Permission codes e rotas finais não são inventados antecipadamente.
+`id=delia`, paths e `serviceName=delia-api` são freeze candidato C0.S1. Manifest source owner = DÉLIA; app/route/RBAC registry owner = Core. Permission codes e rotas finais não são inventados em C0.S1. Navegação vigente permanece `/me/apps` → `apps[].routes` (não recriar `/me/routes`).
 
 Meeting/Frontline não exigem manifests independentes por default.
 
@@ -295,10 +301,12 @@ Meeting/Frontline não exigem manifests independentes por default.
 Conceitualmente:
 
 ```nginx
-location ^~ /apps/minha-delpi-copilot-api/ {
+location ^~ /apps/delia-api/ {
   ...
 }
 ```
+
+MFE/assets usam o padrão genérico `/apps/<app>/assets/...` → `delpi-<app>` (alvo: `/apps/delia`, container `delpi-delia`).
 
 Dev/prod precisam permanecer simétricos.
 
@@ -309,8 +317,8 @@ Streaming/SSE/WebSocket/WebRTC-related tuning só altera buffering/timeouts/prox
 Services conceituais:
 
 ```text
-minha-delpi-copilot-api
-minha-delpi-copilot
+delia-api          # container: delpi-delia-api
+delia              # container: delpi-delia
 ```
 
 Dependências mínimas candidatas, a confirmar em C0/C1:

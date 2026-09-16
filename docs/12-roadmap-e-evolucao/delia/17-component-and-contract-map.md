@@ -18,8 +18,8 @@
 | DELPI business rules/data/actions | Domain APIs/use cases | duplicar em DÉLIA/RPA/model |
 | navigation/hosting/published host context | Portal | free URL/control from LLM; host context as permission authority |
 | operational/intelligence context | DÉLIA over authorized refs/sources | second source of truth; context as authorization |
-| DÉLIA UI | MFE próprio da DÉLIA; namespace técnico temporário `plugins/minha-delpi-copilot` | Chat MFE as base |
-| DÉLIA runtime/persistence | API própria da DÉLIA; namespace técnico temporário `minha-delpi-copilot-api` | Chat API/tables/runtime authority |
+| DÉLIA UI | MFE próprio da DÉLIA; path alvo `plugins/delia/` (`FROZEN_CANDIDATE` C0.S1) | Chat MFE as base |
+| DÉLIA runtime/persistence | API própria da DÉLIA; path alvo `delia-api/` (`FROZEN_CANDIDATE` C0.S1) | Chat API/tables/runtime authority |
 | Business Action discovery | Domain OpenAPI + Action Catalog derivado pela DÉLIA | manual endpoint authority |
 | Evidence/Source/Outcome | DÉLIA contracts + source authority | feature-specific duplicate truth |
 | Business Graph | DÉLIA projection + domain source owners | graph as master database |
@@ -62,7 +62,7 @@ O owner físico de timer/scheduler também é `TO_INVENTORY` até C0. A DÉLIA p
 
 ## 2. Componentes físicos alvo
 
-Namespaces técnicos planejados permanecem temporários até C0.S1:
+C0.S1-T1 freeze candidato (`PLANNED / FROZEN_CANDIDATE`; autoridade de naming: `68`):
 
 ```text
 Portal Shell
@@ -70,11 +70,45 @@ Core API
 Keycloak
 Gateway
 plugins/plugin-ui
-plugins/minha-delpi-copilot
-minha-delpi-copilot-api
+plugins/delia                 # MFE; container delpi-delia; /apps/delia
+delia-api                     # API; container delpi-delia-api; /apps/delia-api/
 Domain APIs / external providers / OT owners
-Automation Hub
+Automation Hub                # technical execution boundary TARGET; physical runtime deferred
 ```
+
+Histórico supersedido como target ativo: `plugins/minha-delpi-copilot`, `minha-delpi-copilot-api`.
+
+### 2.1 Physical ownership freeze candidate (C0.S1)
+
+```text
+delia-api standalone boundary          = APPROVED_CANDIDATE
+plugins/delia standalone boundary      = APPROVED_CANDIDATE
+own migration ownership                = APPROVED_CANDIDATE (delia-api/migrations/; ns=delia)
+separate DÉLIA admin service           = REJECTED (same API+MFE; conceptual /admin namespaces)
+separate Control Tower service         = REJECTED (MODULE_IN_DELIA)
+separate Process Intelligence service  = REJECTED (MODULE_IN_DELIA)
+neutral shared Sandbox platform now    = REJECTED (DÉLIA analysis + isolated adapter deferred)
+DÉLIA-owned Edge runtime               = REJECTED (ADAPTER_BOUNDARY + external/device owner)
+Automation Hub inside DÉLIA            = REJECTED
+Automation Hub external exec boundary  = APPROVED_TARGET (physical runtime deferred)
+callbacks/webhooks ownership           = APPROVED_TARGET (/apps/delia-api/callbacks|webhooks/*; handlers deferred)
+
+MODULE NAME != MICROSERVICE JUSTIFICATION
+```
+
+PostgreSQL cluster placement físico = `DEFERRED` (reuse de cluster ≠ ownership lógico).
+
+### 2.2 Integration contract anchors (later C0 — no OpenAPI now)
+
+| Boundary | OWNER | CONSUMER | DIRECTION | AUTHORITY | R/W character | TRUST BOUNDARY | CONTRACT_REQUIRED_LATER | CURRENT STATUS |
+|---|---|---|---|---|---|---|---|---|
+| DÉLIA ↔ Keycloak | Keycloak | DÉLIA API | AuthN inbound | identity/SSO | read identity | corporate IdP | YES | TARGET |
+| DÉLIA ↔ Core | Core | DÉLIA API | AuthZ/apps/routes | platform RBAC/governance | read effective perms + app registry | Core SoT | YES | TARGET (semantics accepted) |
+| Portal ↔ DÉLIA MFE | Portal host / DÉLIA MFE | Portal↔MFE | host mount + published context | Portal≠AuthZ/planner | context publish / UX | host boundary | YES | TARGET |
+| DÉLIA ↔ Domain APIs | Domain API | DÉLIA API | HTTP/event/adapter | Domain business AuthZ + data | governed R/W | Domain SoT | YES | TARGET |
+| DÉLIA ↔ Automation Hub | Hub (exec) / DÉLIA (orch) | both | orchestration→execution | Hub technical lifecycle | exec commands + status | exec trust | YES | TARGET; physical deferred |
+| DÉLIA ↔ external providers | provider + DÉLIA adapter | DÉLIA API | outbound/inbound callbacks | provider scopes ≠ Core perms | governed R/W | egress/trust | YES | TARGET |
+| DÉLIA ↔ OT / industrial | OT/safety owner | DÉLIA (adapter only) | never safety control | OT/safety independent | read/prepare bounded | safety airgap | YES | TARGET; Edge deferred |
 
 Dentro da API da DÉLIA, bounded modules podem incluir:
 

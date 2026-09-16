@@ -214,7 +214,9 @@ location ^~ /core-api/     → core-api:8000
 location ^~ /apps/<name>-api/  → delpi-<name>-api (padrão BFF)
 location ~ ^/apps/([^/]+)/assets/remoteEntry.js$ → http://delpi-$1/assets/remoteEntry.js
 location ^~ /apps/minha-delpi-ai/api/ → Chat (vizinho)
-/apps/minha-delpi-copilot-api/  AUSENTE
+/apps/minha-delpi-copilot-api/  AUSENTE (HISTORICAL temporary planned; SUPERSEDED)
+/apps/delia-api/               AUSENTE (FROZEN_CANDIDATE C0.S1; not implemented)
+/apps/delia                    AUSENTE (FROZEN_CANDIDATE C0.S1; not implemented)
 Compose: keycloak, core-api, portal, gateway, minha-delpi-ai-api, minha-delpi-chat, Domain APIs
 ```
 
@@ -1580,12 +1582,17 @@ DÉLIA permanece `PLANNED / NOT_STARTED`; sua aplicação standalone, contracts 
 Inventários temáticos C0.S0-A–S estão consolidados em C0.S0-T (§46). Isso **não** marca `C0.S0 COMPLETE`, `CP PASS` nem `FOUNDATION_FREEZE`.
 
 ```text
-C0.S0_READINESS (T) = CANDIDATE_FOR_ARCHITECTURE_RE_REVIEW
+C0.S0 = APPROVED
+C0.S0_READINESS (historical T) = SUPERSEDED_BY_ACCEPTED_ARCHITECTURE_REVIEW
 C0 = NOT_STARTED
-NEXT = ARCHITECTURE_RE_REVIEW_C0_S0
+C0.S1_AUTHORIZED = YES
+C0.S1 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+NEXT = ARCHITECTURE_REVIEW_C0_S1
 FOUNDATION_FREEZE = NOT ACHIEVED (C0.S7 only)
 DÉLIA_RUNTIME_DIFF = NONE
 CORE_EFFECTIVE_PERMISSIONS = ALIGNED since 633d10d2a
+REVIEW_DECISION = external architecture acceptance over canonical HEAD 41a08ad8c01da53f4400eb3afdfce422ef3392ba
+  (Git evidence of C0.S0-T2 bind ≠ architecture acceptance decision; acceptance has no separate SHA)
 ```
 
 Nenhuma capability, integração ou foundation é promovida a `PASS` apenas por esta documentação.
@@ -1598,9 +1605,12 @@ Nenhuma capability, integração ou foundation é promovida a `PASS` apenas por 
 |---|---|
 | PROGRAM | `PLANNED / NOT_STARTED` (ledger) |
 | C0 | `NOT_STARTED` |
-| NEXT | `ARCHITECTURE_RE_REVIEW_C0_S0` |
+| C0.S0 | `APPROVED` (Architecture Review acceptance; supersedes T readiness candidate) |
+| C0.S1_AUTHORIZED | `YES` |
+| C0.S1 | `CANDIDATE_FOR_ARCHITECTURE_REVIEW` (naming freeze persisted in C0.S1-T1; not accepted) |
+| NEXT | `ARCHITECTURE_REVIEW_C0_S1` |
 | FOUNDATION_FREEZE | NOT ACHIEVED |
-| DÉLIA_RUNTIME_DIFF | `NONE` (`minha-delpi-copilot/` = docs placeholder only) |
+| DÉLIA_RUNTIME_DIFF | `NONE` (`minha-delpi-copilot/` = HISTORICAL docs placeholder only; targets = `delia-api/` + `plugins/delia/`) |
 | Unauthorized TARGET→PROVEN promotion | NONE found |
 
 ### 46.2 A–S task matrix (summary)
@@ -1715,7 +1725,8 @@ C0.S0_READINESS = CANDIDATE_FOR_ARCHITECTURE_RE_REVIEW
 
 Rationale: A–T inventory package present; Core request-context AuthZ reconciled to runtime (`633d10d2a`); `/me/routes` non-contract explicit; TARGET absences deferred; drifts NONE for dual AuthZ ADR. **Not** C0.S0 COMPLETE / FOUNDATION_FREEZE / C0.S1 unlocked.
 
-**Not claimed:** C0.S0 COMPLETE · C0 COMPLETE · FOUNDATION_FREEZE · CP PASS · C0.S1 authorized.
+**Not claimed (historical T package):** C0 COMPLETE · FOUNDATION_FREEZE · CP PASS.  
+**Superseded claim:** “C0.S1 not authorized” / “C0.S0 not approved” — replaced by Architecture Review acceptance (see §45 / ledger §6.22). C0.S1 remains **candidate**, not accepted.
 
 ### 46.8 Architecture review package
 
@@ -1728,7 +1739,7 @@ CORE_AUTHZ = RESOLVED at 633d10d2a (request context; revalidated at current cano
 /me/routes = no current producer proven; navigation via /me/apps[].routes; old refs STALE_LEGACY_REFERENCE
 BLOCKING_RESIDUALS (for re-review of docs consistency) = NONE after reconciliation
 CARRY_FORWARD / DEFERRED = §46.4 / §46.9
-next = ARCHITECTURE_RE_REVIEW_C0_S0 → (if accepted) C0.S1
+next = SUPERSEDED → ARCHITECTURE_REVIEW_C0_S1 (C0.S0 accepted; C0.S1 freeze candidate in C0.S1-T1)
 ```
 
 ### 46.9 Residual classification (post-reconciliation)
@@ -1757,4 +1768,13 @@ CLOSED_NONISSUE
 - absence of physical shared Automation Hub today
 - Chat not being DÉLIA runtime
 - lack of one CP per A–T subbrief
+```
+
+## 47. C0.S1 naming freeze — factual vs planned
+
+```text
+FACTUAL (HEAD): delia-api/ ABSENT; plugins/delia/ ABSENT; gateway routes ABSENT; Compose services ABSENT
+HISTORICAL: minha-delpi-copilot/ docs-only placeholder remains; not runtime
+PLANNED/FROZEN_CANDIDATE: delia-api + plugins/delia + /apps/delia* + delpi-delia* (see 68)
+≠ runtime proof; ≠ FOUNDATION_FREEZE; ≠ C0.S1 APPROVED
 ```

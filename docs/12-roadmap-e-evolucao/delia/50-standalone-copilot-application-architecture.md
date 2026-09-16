@@ -62,12 +62,19 @@ Copiar dívida técnica ou criar dependência transitiva do Chat é `FAIL` arqui
 
 ## 3. Owners físicos alvo
 
-Os nomes finais de API/MFE/serviços/paths devem ser confirmados em C0.S1. Até lá, os namespaces técnicos planejados permanecem temporários:
+C0.S1-T1 persiste o freeze candidato de naming/physical ownership (`PLANNED / FROZEN_CANDIDATE`; ver `68`). Aceite arquitetural ainda pendente.
 
 ```text
-/minha-delpi-copilot-api/          # backend independente; namespace técnico temporário
-/plugins/minha-delpi-copilot/      # MFE independente; namespace técnico temporário
-/docs/12-roadmap-e-evolucao/delia/ # documentação canônica atual
+/delia-api/                         # backend independente; FROZEN_CANDIDATE
+/plugins/delia/                     # MFE independente; FROZEN_CANDIDATE
+/docs/12-roadmap-e-evolucao/delia/  # documentação canônica atual
+```
+
+Histórico / supersedido como target ativo:
+
+```text
+minha-delpi-copilot-api          = SUPERSEDED temporary planned namespace
+plugins/minha-delpi-copilot      = SUPERSEDED temporary planned namespace
 ```
 
 A pasta documental `delia/` já é o path vigente no HEAD e não depende do freeze de naming técnico de API/MFE.
@@ -239,13 +246,14 @@ DÉLIA deve reutilizar/evoluir contrato genérico de host somente após contract
 
 **TARGET:** manifesto da DÉLIA registra app federado com base path próprio se a convenção vigente for confirmada.
 
-Conceitualmente, mantendo namespace técnico temporário:
+Freeze candidato C0.S1 (`PLANNED / FROZEN_CANDIDATE`):
 
 ```text
-/apps/minha-delpi-copilot
+/apps/delia
+/apps/delia/assets/remoteEntry.js
 ```
 
-O path final é congelado em C0.S1/C1.
+Histórico supersedido: `/apps/minha-delpi-copilot` (temporary planned). Aceite arquitetural ainda pendente; C1 implementa após Foundation Freeze.
 
 ### 8.2 Global DÉLIA surface
 
@@ -518,18 +526,23 @@ A aplicação terá, quando implementada, entradas próprias conforme contratos 
 - logs/metrics;
 - manifesto/registro Core.
 
-Conceitualmente, usando namespace técnico temporário:
+Freeze candidato C0.S1 (`PLANNED / FROZEN_CANDIDATE`; ver `68`):
 
 ```text
-service: minha-delpi-copilot-api
-MFE: minha-delpi-copilot
-API gateway path: /apps/minha-delpi-copilot-api/
-MFE path: /apps/minha-delpi-copilot/
+service: delia-api
+container: delpi-delia-api
+MFE: delia
+container: delpi-delia
+API gateway path: /apps/delia-api/
+MFE path: /apps/delia
+MFE remote entry: /apps/delia/assets/remoteEntry.js
 ```
+
+Histórico supersedido: `minha-delpi-copilot*` / `/apps/minha-delpi-copilot*`.
 
 Media/realtime support pode exigir tuning de Gateway/infra, mas não cria outro product boundary.
 
-Nomes/paths finais devem ser congelados antes da implementação e não inferidos por cada etapa.
+Nomes/paths acima são freeze candidato — não implementação; endpoint inventory `/v1/*`, SSE, WebSocket e callbacks detalhados ficam para passos posteriores de contrato.
 
 ## 22. Relação com Minha DELPI Chat
 
@@ -594,7 +607,7 @@ PLUGIN_UI_REUSE = PASS
 INDEPENDENT_DEPLOY_ROLLBACK = PASS
 ```
 
-Os tokens `COPILOT_*` permanecem temporariamente como identificadores técnicos legados do planejamento até C0.S1; não são nome de produto.
+Os tokens `COPILOT_*` permanecem como `LEGACY_TOKEN` de planejamento (identificadores de gate); a semântica é da DÉLIA. Labels ativos preferem `DÉLIA API` / `DÉLIA MFE`.
 
 Antes de Meeting/Frontline production scope, provar também conforme aplicável:
 
@@ -616,7 +629,13 @@ Este documento define boundary/target; não prova implementação da DÉLIA.
 
 ```text
 PROGRAM = PLANNED / NOT_STARTED
-NEXT = C0.S0
+C0 = NOT_STARTED
+C0.S0 = APPROVED
+C0.S1_AUTHORIZED = YES
+C0.S1 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+FOUNDATION_FREEZE = NOT APPROVED
+DÉLIA_RUNTIME_DIFF = NONE
+NEXT = ARCHITECTURE_REVIEW_C0_S1
 ```
 
 Qualquer claim de runtime deve vir do ledger/evidence para o SHA/config avaliados.

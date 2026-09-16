@@ -158,7 +158,8 @@ what has actually executed?    → ledger
 
 ```text
 DÉLIA = product name
-minha-delpi-copilot-* = temporary technical namespace only
+delia-api / plugins/delia / /apps/delia* = FROZEN_CANDIDATE C0.S1
+minha-delpi-copilot-* = HISTORICAL / SUPERSEDED as active target
 Chat runtime dependency = forbidden
 one execution order = 16
 one CP authority = 25

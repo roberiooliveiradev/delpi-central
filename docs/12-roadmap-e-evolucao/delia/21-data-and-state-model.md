@@ -42,12 +42,22 @@ Proibido criar shadow system of record apenas para facilitar IA.
 
 ## 2. Storage ownership
 
-Target default, sujeito a C0.S1:
+Freeze candidato C0.S1 (`PLANNED / FROZEN_CANDIDATE`):
 
 ```text
-minha-delpi-copilot-api/migrations/   # namespace técnico temporário
-→ migration chain própria somente para state realmente owned pela DÉLIA
+PERSISTENCE_OWNER = DÉLIA
+LOGICAL_NAMESPACE = delia
+MIGRATION_CHAIN = delia-api/migrations/
+PHYSICAL_PG_CLUSTER = DEFERRED
 ```
+
+```text
+delia-api/migrations/   # own chain; only DÉLIA-owned state / bounded projections/refs
+```
+
+Histórico supersedido: `minha-delpi-copilot-api/migrations/`.
+
+Proibido: Chat tables/migrations; Core tables; Domain tables; direct cross-context DB access.
 
 Serviço separado só existe com boundary/owner/consumers reais e ADR. “Hub”, “Tower”, “Twin”, “Marketplace”, “Sandbox” ou “Scheduler” não justificam microservice por nome.
 

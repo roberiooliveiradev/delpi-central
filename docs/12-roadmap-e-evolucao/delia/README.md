@@ -4,7 +4,7 @@
 > **Produto:** aplicação nova e standalone de Continuous Operational Intelligence  
 > **Requirements:** `CP-001…CP-316`  
 > **Specs temáticas:** `53–66`  
-> **Próxima etapa:** `C0.S0 — Enterprise AI/Platform Foundation Rebaseline`  
+> **Próxima etapa:** `ARCHITECTURE_REVIEW_C0_S1` (C0.S0=APPROVED; C0.S1 freeze candidato persistido)  
 > **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 > **Execution state:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)  
 > **Naming authority:** [`68-delia-product-identity-and-naming.md`](./68-delia-product-identity-and-naming.md)
@@ -16,15 +16,15 @@ A **DÉLIA não é uma expansão do Minha DELPI Chat**.
 ```text
 Minha DELPI Chat                  DÉLIA
 -------------------------------   --------------------------------
-plugins/minha-delpi-chat          plugins/minha-delpi-copilot      # namespace técnico temporário
-minha-delpi-ai-api                minha-delpi-copilot-api           # namespace técnico temporário
+plugins/minha-delpi-chat          plugins/delia                      # FROZEN_CANDIDATE C0.S1
+minha-delpi-ai-api                delia-api                          # FROZEN_CANDIDATE C0.S1
 Chat state/runtime                own state/runtime
 Chat release                      independent release
 
                  NO RUNTIME DEPENDENCY
 ```
 
-`minha-delpi-copilot-*` é namespace técnico temporário até `C0.S1`. Não é o nome do produto.
+Paths ativos alvo: `delia-api/` + `plugins/delia/` + `/apps/delia*`. Tokens `minha-delpi-copilot*` são `HISTORICAL`/`SUPERSEDED` como target ativo. Não é o nome do produto.
 
 ## 2. North Star
 
@@ -233,8 +233,13 @@ Cross-cutting views:
 
 ```text
 PROGRAM = PLANNED / NOT_STARTED
+C0 = NOT_STARTED
+C0.S0 = APPROVED
+C0.S1_AUTHORIZED = YES
+C0.S1 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+FOUNDATION_FREEZE = NOT APPROVED
 RUNTIME_DIFF = NONE
-NEXT = C0.S0
+NEXT = ARCHITECTURE_REVIEW_C0_S1
 ```
 
 A formalização de `CP-311–CP-316` é documentação/planejamento. Não altera os estados acima nem prova scheduler, email provider ou Recurring Work runtime.

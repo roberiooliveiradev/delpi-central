@@ -7,7 +7,7 @@
 **Requirements:** [`25-requirements-traceability.md`](./25-requirements-traceability.md)  
 **Specs temáticas:** `53–66`
 
-> DÉLIA é o nome do produto. Prefixos técnicos históricos como `COPILOT_*` podem permanecer apenas como identificadores temporários até `C0.S1`; não constituem identidade de produto nem prova de runtime.
+> DÉLIA é o nome do produto. Prefixos técnicos históricos como `COPILOT_*` podem permanecer apenas como `LEGACY_TOKEN` de gate; não constituem identidade de produto nem prova de runtime. Paths ativos alvo: `delia-api` / `plugins/delia` / `/apps/delia*` (`FROZEN_CANDIDATE` C0.S1).
 
 ## 1. Regra de evidence
 
@@ -167,7 +167,7 @@ NO_CHAT_DB_AUTHORITY=PASS
 INDEPENDENT_DEPLOY_ROLLBACK=PASS
 ```
 
-Os identificadores `COPILOT_*` acima são nomes técnicos temporários; C0.S1 decide eventual rename sem alterar a semântica do gate.
+Os identificadores `COPILOT_*` acima são `LEGACY_TOKEN` (semântica = DÉLIA API/MFE own runtime). Rename cosmético dos IDs de gate não é obrigatório em C0.S1.
 
 Também provar:
 

@@ -54,44 +54,71 @@ DELPI Copilot
 Copilot DELPI
 ```
 
-“Copilot” pode continuar aparecendo somente quando identificar namespace técnico temporário, referência histórica ou contexto explícito de migração. Não é a marca final do produto.
+“Copilot” pode continuar aparecendo somente quando identificar token legado (`LEGACY_TOKEN`), referência histórica ou contexto explícito de migração. Não é a marca final do produto nem namespace técnico ativo pós-aceite de C0.S1.
 
-## 4. Convenção técnica temporária
+## 4. C0.S1 naming freeze candidate (PLANNED / FROZEN_CANDIDATE)
 
-O namespace documental canônico é:
+**Status:** `CANDIDATE_FOR_ARCHITECTURE_REVIEW` — **não** aceito; **não** autoriza C0.S2; **não** é `FOUNDATION_FREEZE`.
+
+O namespace documental canônico permanece:
 
 ```text
-docs/12-roadmap-e-evolucao/delia
+docs/12-roadmap-e-evolucao/delia/
 ```
 
-Os namespaces de runtime ainda presentes no planejamento permanecem temporários até `C0 FOUNDATION_FREEZE`:
+### 4.1 Product identity
 
 ```text
-minha-delpi-copilot-api
-plugins/minha-delpi-copilot
-```
-
-Em C0.S1 devem ser avaliados os nomes técnicos finais, incluindo possibilidade de:
-
-```text
-minha-delpi-delia-api
-plugins/minha-delpi-delia
-/apps/delia
-/apps/delia/api
-```
-
-A decisão exige análise de colisão, naming conventions do monorepo, manifest IDs, Gateway paths, observabilidade, migrations e rollback.
-
-Até essa decisão:
-
-```text
-DISPLAY_NAME = DÉLIA
 PRODUCT_NAME = DÉLIA
-DOCUMENTATION_NAMESPACE = delia
-TECHNICAL_CODENAME/NAMESPACE = minha-delpi-copilot (temporary planned runtime namespace)
+PRODUCT_EXPANSION = DELPI · Ecossistema de Ligações, Inteligência e Automação
+TECHNICAL_SLUG = delia
+DISPLAY_NAME = DÉLIA
 ```
 
-A renomeação física da pasta documental já ocorreu antes do `C0 FOUNDATION_FREEZE`; isso invalidou a premissa anterior de manter `docs/.../minha-delpi-copilot` até C0. O estado canônico reflete o HEAD atual, sem antecipar rename dos namespaces técnicos de API/MFE.
+“Copilot” deixa de ser namespace técnico **ativo** para novos assets da DÉLIA após aceite de C0.S1. Referências `minha-delpi-copilot*` podem permanecer somente quando explicitamente `HISTORICAL` | `LEGACY_TOKEN` | `SUPERSEDED` | `REFERENCE_ONLY`.
+
+### 4.2 Final technical names (freeze candidate)
+
+```text
+DÉLIA API repository path     = delia-api/
+DÉLIA API service name        = delia-api
+DÉLIA API container name      = delpi-delia-api
+DÉLIA MFE repository path     = plugins/delia/
+DÉLIA MFE service name        = delia
+DÉLIA MFE container name      = delpi-delia
+Core app / manifest id        = delia
+MFE base path                 = /apps/delia
+MFE remote entry target       = /apps/delia/assets/remoteEntry.js
+API Gateway base path         = /apps/delia-api/
+DÉLIA logical persistence ns  = delia
+DÉLIA migration root          = delia-api/migrations/
+```
+
+Classification: `PLANNED / FROZEN_CANDIDATE` until architecture acceptance. Não prova runtime.
+
+### 4.3 Rationale (convention, not evidence)
+
+```text
+monorepo APIs        → <product>-api          (ex.: commercial-api)
+MFEs                 → plugins/<product>      (ex.: plugins/commercial)
+containers           → delpi-<service>        (ex.: delpi-commercial-api)
+Gateway APIs         → /apps/<service>-api/
+federated assets     → /apps/<app>/assets/remoteEntry.js
+product identity     → DÉLIA / technical slug delia
+minha-delpi-copilot* → temporary planning token (SUPERSEDED as active target)
+```
+
+Colisão revalidada em C0.S1-T1: `delia-api/` e `plugins/delia/` **ausentes** no HEAD; sem rename de sistemas não relacionados.
+
+### 4.4 Historical residual
+
+```text
+minha-delpi-copilot/            = HISTORICAL docs-only placeholder (não runtime)
+minha-delpi-copilot-api         = SUPERSEDED active target (was temporary planned)
+plugins/minha-delpi-copilot     = SUPERSEDED active target (was temporary planned)
+/apps/minha-delpi-copilot*      = SUPERSEDED active target
+COPILOT_API_OWN_RUNTIME etc.   = LEGACY_TOKEN (gate id; semantics = DÉLIA)
+```
 
 ## 5. Persona
 
@@ -197,6 +224,6 @@ Esta documentação congela a decisão de produto interna; não constitui parece
 
 Novos documentos devem usar **DÉLIA** no título e no texto user-facing.
 
-Documentos antigos podem manter “Copilot” somente quando necessário para paths/contracts técnicos temporários, referência histórica ou contexto explícito de migração.
+Documentos antigos podem manter “Copilot” somente quando necessário para `LEGACY_TOKEN`/IDs históricos, referência histórica ou contexto explícito de migração.
 
-Durante o refinamento documental, referências residuais que usem “Copilot” como nome de produto devem ser corrigidas para **DÉLIA**. Em C0.S1, após a decisão dos namespaces técnicos finais, executar a limpeza residual de paths/contracts conforme o rename aprovado.
+Durante o refinamento documental, referências residuais que usem “Copilot” como nome de produto devem ser corrigidas para **DÉLIA**. Paths/contracts ativos devem usar o freeze candidate da §4 (`delia-api` / `plugins/delia` / `/apps/delia*`) até aceite arquitetural; não criar runtime nesta etapa.

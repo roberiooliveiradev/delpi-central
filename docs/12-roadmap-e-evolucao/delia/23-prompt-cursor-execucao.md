@@ -7,8 +7,8 @@ A visão alvo é **Continuous Operational Intelligence** para escritório, reuni
 ## 1. Decisão inegociável
 
 ```text
-DÉLIA backend  = nova API própria; namespace técnico temporário minha-delpi-copilot-api até C0.S1
-DÉLIA frontend = novo MFE próprio; namespace técnico temporário plugins/minha-delpi-copilot até C0.S1
+DÉLIA backend  = nova API própria; freeze candidato delia-api (C0.S1; PLANNED/FROZEN_CANDIDATE)
+DÉLIA frontend = novo MFE próprio; freeze candidato plugins/delia (C0.S1; PLANNED/FROZEN_CANDIDATE)
 Chat backend/MFE = sistemas separados/reference-only
 ```
 

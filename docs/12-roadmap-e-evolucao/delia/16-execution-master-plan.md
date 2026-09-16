@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C0.S0`  
+**Próxima etapa:** `ARCHITECTURE_REVIEW_C0_S1` (C0.S1 freeze candidato persistido; C0.S0 = APPROVED; C0 permanece NOT_STARTED)  
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -35,7 +35,7 @@ OBRIGATÓRIO
 → integração normal com Portal/Core/Keycloak/APIs
 ```
 
-Os namespaces técnicos planejados `minha-delpi-copilot-*` permanecem temporários até a decisão de naming em C0.S1; “Copilot” não é o nome de produto.
+Freeze candidato C0.S1 (`PLANNED / FROZEN_CANDIDATE`; ver `68`): `delia-api/`, `plugins/delia/`, containers `delpi-delia-api` / `delpi-delia`, paths `/apps/delia-api/` e `/apps/delia`. Tokens `minha-delpi-copilot*` são `SUPERSEDED`/`HISTORICAL` como target ativo; “Copilot” não é o nome de produto.
 
 O Chat é apenas sistema vizinho/referência durante inventário.
 
@@ -282,7 +282,7 @@ NOT_PROVEN
 OUT_OF_SCOPE
 ```
 
-`COPILOT_IMPLEMENT_NEW` é mantido temporariamente como token técnico legado do planejamento até C0.S1; não representa o nome do produto.
+`COPILOT_IMPLEMENT_NEW` permanece como `LEGACY_TOKEN` de planejamento; não representa o nome do produto nem o path físico ativo (`delia-api` / `plugins/delia`).
 
 Nenhuma capability/fornecedor/ferramenta é considerada existente sem evidence.
 
@@ -309,6 +309,8 @@ Nenhuma capability/fornecedor/ferramenta é considerada existente sem evidence.
 ## C0.S1 — Product boundary / nomes / physical ownership
 
 Congelar API/MFE/service/container/path/manifest/DB ownership, admin/callback/webhook paths e decidir, por evidence/ADR, se Automation Hub, Control Tower, Process Intelligence, Sandbox, Semantic Layer e Edge são módulos da API da DÉLIA, neutral shared services ou adapters — **sem criar microservice por nome de feature**.
+
+**C0.S1-T1 (docs):** freeze candidato persistido nas authorities (`68`/`50`/`17`/`52`/`21`/`25`/ledger). Estado: `CANDIDATE_FOR_ARCHITECTURE_REVIEW`. **Não** aceito; **não** autoriza C0.S2; **não** é `FOUNDATION_FREEZE`; `DÉLIA_RUNTIME_DIFF=NONE`.
 
 ## C0.S2 — Authorities / bounded contexts
 

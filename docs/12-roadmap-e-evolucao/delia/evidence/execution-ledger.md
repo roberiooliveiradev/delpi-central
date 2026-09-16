@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** **C0.S0 architecture re-review** (canonical reconciliation after EXECUTION_DRIFT on stale AuthZ docs; `C0.S0_READINESS=CANDIDATE_FOR_ARCHITECTURE_RE_REVIEW`) → then **C0.S1** if accepted. C0 remains **NOT_STARTED**. C0.S1 **not** authorized.
+**Next:** **ARCHITECTURE_REVIEW_C0_S1** (C0.S1 naming/physical ownership freeze candidate persisted in C0.S1-T1; `C0.S0=APPROVED`; `C0.S1_AUTHORIZED=YES`; C0 remains **NOT_STARTED**; `FOUNDATION_FREEZE` **not** approved; `DÉLIA_RUNTIME_DIFF=NONE`).
 
 ## 1. Ledger rule
 
@@ -23,7 +23,7 @@ Estado factual de inventory usa `PROVEN | TO_INVENTORY`; planejamento usa `PLANN
 
 | Fase | Status | Próximo step | Dependência |
 |---|---|---|---|
-| C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **ARCHITECTURE_RE_REVIEW_C0_S0** | C0.S0 not approved |
+| C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **ARCHITECTURE_REVIEW_C0_S1** | C0.S0=APPROVED; C0.S1=CANDIDATE_FOR_ARCHITECTURE_REVIEW |
 | C1 Standalone Bootstrap | LOCKED | — | C0.S7 FOUNDATION_FREEZE |
 | C2 Portal + Operational Context + Commands | LOCKED | — | C1 independence gate |
 | C3 Intelligence + Capability Foundations | LOCKED | — | C1+C2 foundations |
@@ -50,9 +50,23 @@ C0.S0 factual platform/monorepo/media/device/biometric/external/automation/sched
 ```text
 PRODUCT = DÉLIA
 PRODUCT_BOUNDARY = STANDALONE_NEW_APPLICATION
-TECHNICAL_NAMESPACE = minha-delpi-copilot (TEMPORARY_UNTIL_C0_S1)
-DÉLIA_API = NEW_OWN_SERVICE_TARGET
-DÉLIA_MFE = NEW_OWN_MICROFRONTEND_TARGET
+TECHNICAL_SLUG = delia
+TECHNICAL_NAMESPACE = delia (FROZEN_CANDIDATE C0.S1; minha-delpi-copilot = SUPERSEDED as active target)
+DÉLIA_API = delia-api / delpi-delia-api / /apps/delia-api/ (FROZEN_CANDIDATE)
+DÉLIA_MFE = plugins/delia / delpi-delia / /apps/delia (FROZEN_CANDIDATE)
+APP_ID = delia
+PERSISTENCE_OWNER = DÉLIA (logical ns=delia; migrations=delia-api/migrations/; PG cluster DEFERRED)
+C0.S0 = APPROVED
+C0.S1_AUTHORIZED = YES
+C0.S1 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+FOUNDATION_FREEZE = NOT APPROVED
+DÉLIA_RUNTIME_DIFF = NONE
+AUTOMATION_HUB = NEUTRAL_SHARED_EXECUTION_BOUNDARY_TARGET + physical runtime deferred
+CONTROL_TOWER = MODULE_IN_DELIA
+PROCESS_INTELLIGENCE = MODULE_IN_DELIA
+SANDBOX = DÉLIA analysis boundary + isolated adapter/runtime deferred
+SEMANTIC_LAYER = MODULE_IN_DELIA + domain metric authority
+EDGE = ADAPTER_BOUNDARY + DEFERRED_PHYSICAL_RUNTIME
 CHAT_RUNTIME_DEPENDENCY = FORBIDDEN
 CORE_ROLE = APPS_ROUTES_RBAC_GOVERNANCE
 KEYCLOAK_ROLE = IDENTITY_SSO
@@ -187,6 +201,8 @@ All ACT blocked until C7                        = SUPERSEDED_BY_C5_GOVERNED_ACT_
 | 2026-09-14 | C0.S0-T residual consolidation / readiness at `f1cce79b871bf0b5dbd7b8d332ead53e3fb44716` | PLAN_ONLY; C0.S0_READINESS=READY_FOR_ARCHITECTURE_REVIEW; BLOCKING=NONE; RUNTIME_DIFF=NONE; not C0.S0 COMPLETE / not FOUNDATION_FREEZE |
 | 2026-09-14 | C0.S0-T canonical reconciliation after architecture review at `68ea41d9b5aac6216b5ab531f7cdccc93d64c3bc` (start `674670ce7`) | PLAN_ONLY; Core AuthZ dual-path ADR CLOSED (`633d10d2a`); /me/routes non-contract; 25 §14 linkage; CANDIDATE_FOR_ARCHITECTURE_RE_REVIEW; not C0.S0 COMPLETE |
 | 2026-09-16 | C0.S0-T2 canonical persistence fix after architecture re-review | PLAN_ONLY; current-state Next normalized; prior canonical reconciliation preserved; no runtime/phase change |
+| 2026-09-16 | Architecture Review acceptance of C0.S0 (external decision over HEAD `41a08ad8c…`) | SUPERSEDES prior “C0.S0 candidate / C0.S1 not authorized”; no separate review SHA |
+| 2026-09-16 | C0.S1-T1 canonical persistence of product boundary / naming / physical ownership | PLAN_ONLY; C0.S1=CANDIDATE_FOR_ARCHITECTURE_REVIEW; RUNTIME_DIFF=NONE |
 
 Actual `HEAD_BEFORE` for **runtime** remains uncaptured (no DÉLIA runtime). Inventory evidence SHA for C0.S0-F is `c6c9c8370d037edfc3529821b9d63e138b153436`. Documentation-only commits do not advance execution status.
 
@@ -655,6 +671,7 @@ C0: NOT_STARTED
 FOUNDATION_FREEZE: NOT ACHIEVED
 C0.S1_AUTHORIZED: NO
 DÉLIA_RUNTIME_DIFF: NONE
+NOTE_SUPERSEDED_BY_ACCEPTED_ARCHITECTURE_REVIEW: `C0.S1_AUTHORIZED: NO` / readiness candidate / Next=RE_REVIEW are historical; see §6.22
 EVIDENCE: A–T consolidated in 51 §46; AuthZ §10 reconciled; 25 §14 CP inventory linkage; this event
 CORE_AUTHZ: RESOLVED request-context effective permissions at accepted SHA 633d10d2a0d246ae9f4a2a576d76ce935f30be01
   = direct∪group ± overrides; superadmin=all codes; authenticate→PermissionResolver→g.current_user.permissions
@@ -704,6 +721,48 @@ STANDALONE_BOUNDARY: DÉLIA = standalone new application; no dependency on minha
 READINESS: CANDIDATE_FOR_ARCHITECTURE_RE_REVIEW
 NEXT: ARCHITECTURE_RE_REVIEW_C0_S0
 NOT_CLAIMED: C0.S0 complete; FOUNDATION_FREEZE approved; C0.S1 authorized; any CP PASS; any DÉLIA runtime
+NOTE_SUPERSEDED_BY_ACCEPTED_ARCHITECTURE_REVIEW: current-state claims `C0.S0: NOT APPROVED` / `C0.S1_AUTHORIZED: NO` / `NEXT: ARCHITECTURE_RE_REVIEW_C0_S0` are historical; superseded by external Architecture Review acceptance over canonical HEAD `41a08ad8c01da53f4400eb3afdfce422ef3392ba` (see §6.22). Do not delete this event.
+```
+
+## 6.22 C0.S1-T1 product boundary / naming / physical ownership canonical persistence
+
+```text
+DATE: 2026-09-16
+STEP: C0.S1-T1
+NAME: product boundary / naming / physical ownership canonical persistence
+BASE_HEAD: 41a08ad8c01da53f4400eb3afdfce422ef3392ba
+FINAL_HEAD: <set_at_commit>
+STATUS: PLAN_ONLY
+PROGRAM: PLANNED / NOT_STARTED
+C0: NOT_STARTED
+C0.S0: APPROVED
+C0.S1_AUTHORIZED: YES
+C0.S1: CANDIDATE_FOR_ARCHITECTURE_REVIEW
+FOUNDATION_FREEZE: NOT APPROVED
+DÉLIA_RUNTIME_DIFF: NONE
+REVIEW_DECISION: external architecture acceptance over canonical HEAD 41a08ad8c01da53f4400eb3afdfce422ef3392ba
+  (Git evidence of C0.S0-T2 bind ≠ architecture acceptance decision; acceptance has no separate SHA)
+SUPERSEDES_CURRENT_STATE_OF: §6.20 / §6.21 claims that C0.S0 not approved / C0.S1 not authorized / Next=ARCHITECTURE_RE_REVIEW_C0_S0
+PRODUCT_NAME: DÉLIA
+TECHNICAL_SLUG: delia
+API: delia-api (container delpi-delia-api; path /apps/delia-api/)
+MFE: plugins/delia (container delpi-delia; path /apps/delia; remoteEntry /apps/delia/assets/remoteEntry.js)
+APP_ID: delia
+PERSISTENCE_OWNER: DÉLIA (logical ns=delia; migrations=delia-api/migrations/; PG cluster DEFERRED)
+ADMIN: same DÉLIA API+MFE (no separate admin service/product); conceptual /apps/delia/admin + /apps/delia-api/admin/*
+CALLBACKS_WEBHOOKS: ownership /apps/delia-api/callbacks|webhooks/*; handlers deferred
+AUTOMATION_HUB: external execution boundary TARGET / physical runtime deferred; Hub inside DÉLIA = REJECTED
+CONTROL_TOWER: MODULE_IN_DELIA; separate microservice = REJECTED
+PROCESS_INTELLIGENCE: MODULE_IN_DELIA; separate service = REJECTED
+SANDBOX: DÉLIA analysis boundary + isolated adapter/runtime deferred; neutral shared platform now = REJECTED
+SEMANTIC_LAYER: MODULE_IN_DELIA + domain metric authority; separate service = REJECTED
+EDGE: adapter boundary + external/device physical owner; DÉLIA-owned Edge runtime = REJECTED
+STANDALONE_BOUNDARY: preserved; Chat = REFERENCE_ONLY / INVENTORY_SOURCE
+CORE_AUTHZ: preserved (633d10d2a semantics; /me/apps not /me/routes)
+FILES_CHANGED_AUTHORIZED: 68, 50, 17, 52, 21, 16, 20, 25, 51, 23, 27, 48, README, this ledger, minha-delpi-copilot/README.md
+DÉLIA_NEW_CODE: NONE
+NOT_CLAIMED: C0.S1 APPROVED; C0.S2_AUTHORIZED; FOUNDATION_FREEZE; any CP PASS; any runtime
+NEXT: ARCHITECTURE_REVIEW_C0_S1
 ```
 
 ## 7. Canonical phase mapping
@@ -913,6 +972,4 @@ SAFETY_INTERLOCK_BYPASS
 
 ## 14. First execution
 
-Open `23-prompt-cursor-execucao.md` and execute **C0.S0 only**.
-
-The first runtime after Foundation Freeze remains the standalone DÉLIA API/MFE bootstrap — **not** RPA, Event engine, Automation Hub, Recurring Work ACT, advanced autonomous ACT or thematic capability runtime.
+Historical open action was **C0.S0**. C0.S0 is now **APPROVED**. Current next is **ARCHITECTURE_REVIEW_C0_S1** after C0.S1-T1 persistence. Runtime bootstrap remains deferred until Foundation Freeze — **not** RPA, Event engine, Automation Hub, Recurring Work ACT, advanced autonomous ACT or thematic capability runtime.

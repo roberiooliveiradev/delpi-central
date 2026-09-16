@@ -173,7 +173,7 @@ Já corrigidos anteriormente: single execution authority, shared primitives, sta
 
 ### F39 — documentação confundia produto e namespace técnico
 
-Produto user-facing = **DÉLIA**. `minha-delpi-copilot-*` permanece somente como namespace técnico temporário até decisão de C0.S1. Documentação em `docs/.../delia/` já usa namespace físico DÉLIA.
+Produto user-facing = **DÉLIA**. Freeze candidato C0.S1: `delia-api` / `plugins/delia` / `/apps/delia*`. Tokens `minha-delpi-copilot*` são `HISTORICAL`/`SUPERSEDED` como target ativo. Documentação em `docs/.../delia/` já usa namespace físico DÉLIA.
 
 ### F40 — prefixos `58/59` duplicavam responsabilidades distintas
 
@@ -364,8 +364,10 @@ PROGRAM = PLANNED / NOT_STARTED
 REQUIREMENTS = CP-001…CP-316
 THEMATIC_SPECS = 53–66
 CROSS_CUTTING = 67–68
-NEXT = C0.S0
+C0.S0 = APPROVED
+C0.S1 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+NEXT = ARCHITECTURE_REVIEW_C0_S1
 RUNTIME_DIFF = NONE
 ```
 
-C0.S0 é inventário factual e inclui platform/media/biometric/external/automation/scheduling/process/AI-assets/tools-agents/memory/semantics/sandbox/predictive/twin/Edge/model-marketplace/OT boundaries. Não cria nenhum desses runtimes.
+C0.S0 inventário factual está aceito. C0.S1 naming/physical ownership está persistido como candidato (não aceito). Não cria runtimes temáticos.
