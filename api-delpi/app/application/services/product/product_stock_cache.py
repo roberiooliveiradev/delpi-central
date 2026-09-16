@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.composition.query_cache_composer import build_query_cache
+from app.domain.ports.query_cache_port import QueryCachePort
 
 
 def product_stock_cache_key(
@@ -25,12 +25,14 @@ def product_stock_cache_key(
     )
 
 
-def get_cached_product_stock(key: str) -> dict[str, Any] | None:
-    cached = build_query_cache().get(key)
+def get_cached_product_stock(cache: QueryCachePort, key: str) -> dict[str, Any] | None:
+    cached = cache.get(key)
     if isinstance(cached, dict):
         return cached
     return None
 
 
-def set_cached_product_stock(key: str, value: dict[str, Any]) -> None:
-    build_query_cache().set(key, value)
+def set_cached_product_stock(
+    cache: QueryCachePort, key: str, value: dict[str, Any]
+) -> None:
+    cache.set(key, value)
