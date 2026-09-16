@@ -2,21 +2,37 @@
 
 > **Status documental em 2026-09-16.** Esta página registra a configuração e a evidência observadas no ChatGPT Agent Studio. Configuração de provider não substitui prova de runtime, AuthZ ou publicação.
 
+## Scope / authority
+
+```text
+This document owns CURRENT Workspace Agent / Agent Studio
+configuration and observed evidence.
+
+It is not the global DAVI product architecture.
+
+General DAVI baseline:
+docs/12-roadmap-e-evolucao/davi/README.md
+```
+
+API DELPI is the first major information source for Wave 1 — **not** the permanent only source for DAVI.
+
 ## Identidade
 
 | Campo | Valor |
 |---|---|
 | Nome | **DAVI — Especialista em Dados e Informações DELPI** |
 | Persona | masculina, profissional, cordial e objetiva |
-| Missão | consultar e explicar informações autorizadas da DELPI usando as capabilities conectadas |
-| Produto técnico consumido | DAVI / `api-delpi` Plugin/App + remote MCP |
-| Capability V1 | `search_products` |
+| Missão | semantic discovery, authorized retrieval, composition e explanation de informações autorizadas da DELPI — usando apenas as capabilities realmente conectadas |
+| Produto técnico consumido (V1) | DAVI / `api-delpi` Plugin/App + remote MCP |
+| Capability V1 disponível | `search_products` |
 | Estado | **draft/preview configurado e validado para desenvolvimento privado** |
 | Publicação ampla | **PENDING** |
 
 A persona, o nome e a aparência são UX. Não alteram identity, OAuth, RBAC, AuthZ, capability ou autoridade de negócio.
 
-## Arquitetura
+Agent instructions must advertise **only actually available tools**. Missão ampla ≠ disponibilidade de tools além de `search_products` na V1.
+
+## CURRENT PROVEN V1
 
 ```text
 Workspace Agent DAVI
@@ -31,13 +47,15 @@ Workspace Agent DAVI
   → authoritative DELPI source
 ```
 
+This chain is **CURRENT PROVEN V1** (API DELPI integration). It is not the universal DAVI TARGET architecture.
+
 Separação obrigatória:
 
 ```text
 Agent = instructions + reasoning + orchestration + UX
-Plugin/App + MCP = governed external capability transport
+Plugin/App + MCP = governed external capability transport (not business authority)
 Keycloak = identity / OAuth
-API DELPI = business authorization + use case + authoritative data
+API DELPI (Wave 1) = business authorization + use case + authoritative data for this source
 ```
 
 O Agent **não** é source of truth, RBAC, permission engine, Product Master owner ou writer.
@@ -404,6 +422,7 @@ DAVI_AGENT_WIDER_PUBLICATION = BLOCKED_BY_PENDING_GATES
 
 ## Related documentation
 
+- [DAVI product/architecture baseline](../../../docs/12-roadmap-e-evolucao/davi/README.md)
 - [OpenAI Plugin + MCP](./openai-plugin-mcp.md)
 - [Keycloak MCP client runbook](./keycloak-mcp-client-runbook.md)
 - [OAuth/MCP evidence](./keycloak-mcp-oauth-evidence.md)

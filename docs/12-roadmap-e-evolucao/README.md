@@ -26,6 +26,12 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | [minha-delpi-chat/homologacao-vllm-producao.md](./minha-delpi-chat/homologacao-vllm-producao.md) | vLLM produção |
 | [minha-delpi-chat/gpu-l4-retomada-homologacao.md](./minha-delpi-chat/gpu-l4-retomada-homologacao.md) | Plano retomada GPU L4 + modelos (jun/2026) |
 
+### DAVI — Especialista em Dados e Informações DELPI
+
+| Arquivo | Conteúdo |
+|---|---|
+| [davi/README.md](./davi/README.md) | Product/architecture baseline, capability/source model, CURRENT PROVEN vs TARGET e authority boundaries |
+
 ### Apontamento de Produção
 
 | Arquivo | Conteúdo |

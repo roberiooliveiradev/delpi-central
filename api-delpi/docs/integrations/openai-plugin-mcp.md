@@ -2,6 +2,20 @@
 
 > **Documentation does not prove runtime.** Runtime/provider evidence is recorded separately and must be revalidated after material code, provider or configuration changes.
 
+## Scope / authority
+
+```text
+This document owns the CURRENT API DELPI + OpenAI/MCP integration
+contract/evidence.
+
+It is not the global DAVI product architecture.
+
+General DAVI product/architecture baseline:
+docs/12-roadmap-e-evolucao/davi/README.md
+```
+
+API DELPI is the **first major information source / domain contract family** for DAVI Wave 1 — not DAVI architecture itself.
+
 ## Specialist identity (user-facing)
 
 | Field | Value |
@@ -26,9 +40,10 @@ DAVI is branding/orchestration identity — **not** an authorization authority.
 
 | Item | Value |
 |---|---|
-| Strategic target | OpenAI Plugin/App → remote MCP → semantic capability → existing use case |
+| Classification | **CURRENT PROVEN V1 — API DELPI integration** (not universal DAVI TARGET) |
+| Strategic target (platform) | OpenAI Plugin/App → remote MCP → semantic capability → existing use case |
 | Workspace Agent consumer | DAVI Agent Studio draft/preview uses the same DAVI app/MCP with end-user authentication |
-| Legacy | `/gpt-actions/v1` = `LEGACY_TRANSITIONAL`; do not expand by default |
+| Legacy | `/gpt-actions/v1` = `LEGACY_TRANSITIONAL`; do not expand by default; GPT Actions `operationId` catalog is **not** the DAVI semantic capability authority |
 | V1 business tool | `search_products` (read-only Product Master) |
 | MCP auth model | Transport requires OAuth |
 | Resource audience | JWT `aud` must include exact MCP resource **and** `delpi-central` |
@@ -40,8 +55,9 @@ DAVI is branding/orchestration identity — **not** an authorization authority.
 | Agent private preview | **PROVEN** for current operator |
 | Negative business AuthZ | **PENDING** — second user without access still required |
 | Rate limit | `MCP_RATE_POLICY = PENDING_OWNER_DECISION` |
+| Layering | `DAVI_V1_EXTERNAL_CAPABILITY_LAYERING = EXECUTION_DRIFT` (see below) |
 
-## Architecture
+## CURRENT PROVEN V1 — API DELPI integration
 
 ```text
 Workspace Agent DAVI (optional consumer layer)
@@ -58,7 +74,30 @@ ChatGPT / Codex / approved provider surface
   → authoritative source
 ```
 
+This chain is **CURRENT PROVEN V1** for the API DELPI information source. It is **not** the universal DAVI TARGET architecture (see `docs/12-roadmap-e-evolucao/davi/README.md`).
+
+```text
+MCP = interface/protocol/adapter
+MCP != domain/business/AuthZ authority
+```
+
 The Agent and Plugin/MCP adapter do not own Product Master, identity, RBAC, persistence, or business rules.
+
+### Known layering EXECUTION_DRIFT (do not fix in documentation tasks)
+
+```text
+application/external_capabilities/product_search_service.py
+→ imports app.composition.product_composer
+→ Composition Root
+
+= DAVI_V1_EXTERNAL_CAPABILITY_LAYERING = EXECUTION_DRIFT
+```
+
+V1 functional evidence remains valid. Co-location inside `api-delpi` is not a cross-context import, but Application → Composition Root violates the target dependency rule. Remediate in a separate bounded runtime task; do not normalize this pattern.
+
+### GPT Actions = LEGACY_TRANSITIONAL
+
+`/gpt-actions/v1` and `application/external_capabilities/catalog_service.py` (operationId-based “capabilities”) remain **`LEGACY_TRANSITIONAL`**. That operationId catalog is **not** the DAVI semantic capability authority.
 
 ## MCP resource — exact canonical value
 
