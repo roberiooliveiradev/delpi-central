@@ -13,6 +13,7 @@ import {
   formatHours,
   formatPercent,
   formatQty,
+  formatUnit,
 } from "./cockpitShared";
 
 type ChartPoint = { label: string; value: number | null };
@@ -123,6 +124,18 @@ export function WorkCenterPerformancePage({
                     value={formatPercent(efficiency.shift_pct)}
                     tone={efficiencyTone(efficiency.shift_pct)}
                     note={`${efficiency.shift_appointment_count ?? 0} apontamento(s)`}
+                  />
+                  <Kpi
+                    label="Produzido no turno"
+                    value={
+                      efficiency.shift_produced_qty == null
+                        ? "—"
+                        : `${formatQty(efficiency.shift_produced_qty)} ${formatUnit(
+                            null,
+                            efficiency.shift_produced_qty,
+                          )}`
+                    }
+                    note="Soma dos apontamentos do turno"
                   />
                   <Kpi
                     label="Hoje"

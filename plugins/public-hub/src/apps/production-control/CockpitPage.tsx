@@ -324,6 +324,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const efficiency = performance.data?.efficiency;
   const downtime = performance.data?.downtime;
   const shiftPct = efficiency?.available ? efficiency.shift_pct : null;
+  const shiftProducedQty = efficiency?.available ? efficiency.shift_produced_qty : null;
   const shiftLabel = performance.data?.shift?.label ?? "Turno";
   const effTone = efficiencyTone(shiftPct);
 
@@ -377,6 +378,19 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
               >
                 <span className="pcp-pub__hero-metric-label">{shiftLabel}</span>
                 <strong className="pcp-pub__hero-metric-value">{formatPercent(shiftPct)}</strong>
+              </button>
+              <button
+                type="button"
+                className="pcp-pub__hero-metric"
+                onClick={openPerformance}
+                title={`Peças produzidas no ${shiftLabel.toLowerCase()}`}
+              >
+                <span className="pcp-pub__hero-metric-label">Produzido · turno</span>
+                <strong className="pcp-pub__hero-metric-value">
+                  {shiftProducedQty == null
+                    ? "—"
+                    : `${formatQty(shiftProducedQty)} ${formatUnit(null, shiftProducedQty)}`}
+                </strong>
               </button>
               <button
                 type="button"
@@ -753,7 +767,7 @@ function ActiveNowCard({
           <div className="pcp-pub__now-qty" aria-label="Quantidade pendente">
             <span className="pcp-pub__now-qty-label">Quantidade pendente</span>
             <strong className="pcp-pub__now-qty-value">
-              {formatQty(operation.pending_qty)} {formatUnit(operation.unit)}
+              {formatQty(operation.pending_qty)} {formatUnit(operation.unit, operation.pending_qty)}
             </strong>
           </div>
         </div>
@@ -870,7 +884,7 @@ function UpcomingRow({
         </div>
       </td>
       <td className="pcp-pub__num">
-        {formatQty(operation.pending_qty)} {formatUnit(operation.unit)}
+        {formatQty(operation.pending_qty)} {formatUnit(operation.unit, operation.pending_qty)}
       </td>
       <td className="pcp-pub__num">
         <div className="pcp-pub__queue-op-meta">

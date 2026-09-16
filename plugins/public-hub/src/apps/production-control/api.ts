@@ -186,6 +186,8 @@ export type PerformanceBlock<T> = ({ available: true } & T) | { available: false
 export type WorkCenterEfficiency = {
   shift_pct: number | null;
   shift_appointment_count: number | null;
+  /** Soma de ``qtd_apontada`` dos apontamentos do turno atual (dia + shift). */
+  shift_produced_qty: number | null;
   day_pct: number | null;
   day_appointment_count: number | null;
   period_avg_pct: number | null;

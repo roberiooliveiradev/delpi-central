@@ -148,13 +148,16 @@ export function OperationDetailPage({
             <h3 className="pcp-pub__detail-section">Quantidades</h3>
             <dl className="pcp-pub__facts pcp-pub__facts--num">
               <Fact label="Planejada">
-                {formatQty(operation.planned_qty)} {formatUnit(operation.unit)}
+                {formatQty(operation.planned_qty)}{" "}
+                {formatUnit(operation.unit, operation.planned_qty)}
               </Fact>
               <Fact label="Produzida">
-                {formatQty(operation.produced_qty)} {formatUnit(operation.unit)}
+                {formatQty(operation.produced_qty)}{" "}
+                {formatUnit(operation.unit, operation.produced_qty)}
               </Fact>
               <Fact label="Pendente" emphasis>
-                {formatQty(operation.pending_qty)} {formatUnit(operation.unit)}
+                {formatQty(operation.pending_qty)}{" "}
+                {formatUnit(operation.unit, operation.pending_qty)}
               </Fact>
             </dl>
 
@@ -275,7 +278,7 @@ function AppointmentsModal({
   const operatorName = operation.active_operator_name?.trim() || null;
   const appointmentCount = operation.appointment_count ?? 0;
   const activeCount = operation.active_operator_count ?? 0;
-  const unit = formatUnit(operation.unit);
+  const unit = formatUnit(operation.unit, operation.produced_qty);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {

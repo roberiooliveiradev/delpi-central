@@ -156,29 +156,35 @@ class FakeDelpiGateway:
         self.calls.append(("appointments", kwargs))
         if self.fail_efficiency:
             raise DelpiGatewayError("api-delpi fora do ar.")
-        return {
-            "success": True,
-            "data": [
-                {
-                    "op": "24696001001",
-                    "operacao": "06",
-                    "descricao_operacao": "INSPECAO",
-                    "produto": "50320064",
-                    "produto_acabado": "90264260",
-                    "cod_operador": "000123",
-                    "login_operador": "jsilva",
-                    "nome_operador": "JOAO DA SILVA",
-                    "qtd_apontada": 120.0,
-                    "tempo_real_horas": 1.25,
-                    "tempo_previsto_horas": 1.0,
-                    "eficiencia_percentual": 80.0,
-                    "valor_mod_hora": 32.5,
-                    "resultado_mod": -8.12,
-                    "hora_inicio": "15:00",
-                    "hora_final": "16:15",
-                }
-            ],
+        shift_row = {
+            "op": "24696001001",
+            "operacao": "06",
+            "descricao_operacao": "INSPECAO",
+            "produto": "50320064",
+            "produto_acabado": "90264260",
+            "cod_operador": "000123",
+            "login_operador": "jsilva",
+            "nome_operador": "JOAO DA SILVA",
+            "qtd_apontada": 120.0,
+            "tempo_real_horas": 1.25,
+            "tempo_previsto_horas": 1.0,
+            "eficiencia_percentual": 80.0,
+            "valor_mod_hora": 32.5,
+            "resultado_mod": -8.12,
+            "hora_inicio": "15:00",
+            "hora_final": "16:15",
         }
+        if kwargs.get("shift"):
+            return {"success": True, "data": [shift_row]}
+        # Dia inteiro: turno atual + apontamento de outro turno.
+        other_shift_row = {
+            **shift_row,
+            "op": "24696001002",
+            "qtd_apontada": 230.0,
+            "hora_inicio": "08:00",
+            "hora_final": "09:30",
+        }
+        return {"success": True, "data": [shift_row, other_shift_row]}
 
     def fetch_unproductive_hours_summary(self, **kwargs: Any) -> dict[str, Any]:
         self.calls.append(("downtime_summary", kwargs))
@@ -319,12 +325,17 @@ def test_positive_case_composes_shift_efficiency_and_downtime() -> None:
     assert efficiency["available"] is True
     assert efficiency["shift_pct"] == 92.5
     assert efficiency["shift_appointment_count"] == 4
+    assert efficiency["shift_produced_qty"] == 120.0
     assert efficiency["day_pct"] == 88.0
+    assert "day_produced_qty" not in efficiency
     assert efficiency["period_avg_pct"] == 85.0
     assert [point["date"] for point in efficiency["series"]] == [
         "2026-09-13",
         "2026-09-14",
     ]
+    appointment_calls = [kwargs for name, kwargs in gateway.calls if name == "appointments"]
+    assert appointment_calls
+    assert all(call.get("shift") == "2" for call in appointment_calls)
 
     downtime = payload["downtime"]
     assert downtime["available"] is True

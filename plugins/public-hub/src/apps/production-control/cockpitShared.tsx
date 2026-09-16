@@ -343,11 +343,21 @@ export function formatQty(value: number | null | undefined): string {
   });
 }
 
-/** Unidade de chão de fábrica: TOTVS envia MI (milheiro); o operador lê como peça. */
-export function formatUnit(unit: string | null): string {
+/** Unidade de chão de fábrica: TOTVS envia MI (milheiro); o operador lê como peça.
+ * Plural «PÇS» por padrão; singular «PÇ» só quando a quantidade é exatamente 0,001. */
+export function formatUnit(unit: string | null, quantity?: number | null): string {
   const cleaned = (unit ?? "").trim();
-  if (!cleaned || cleaned.toUpperCase() === "MI") return "PÇ";
-  return cleaned;
+  const isPiece = !cleaned || cleaned.toUpperCase() === "MI";
+  if (!isPiece) return cleaned;
+  if (
+    quantity !== null &&
+    quantity !== undefined &&
+    Number.isFinite(quantity) &&
+    Math.abs(quantity - 0.001) < 1e-9
+  ) {
+    return "PÇ";
+  }
+  return "PÇS";
 }
 
 export function formatDate(value: string | null): string {
