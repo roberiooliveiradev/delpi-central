@@ -15,7 +15,7 @@ from tests.support.route_contract_smoke import assert_envelope_meta, body_json
 _ROUTER = "app.interface.http.routes.supplies.purchase_requests_router"
 
 
-@patch(f"{_ROUTER}.purchase_requests_branch_access_error", return_value=None)
+@patch(f"{_ROUTER}.purchase_requests_branches_access_error", return_value=None)
 @patch(f"{_ROUTER}.build_list_supplies_purchase_request_lines_use_case")
 def test_list_supplies_purchase_request_lines_meta(mock_build, _branch_gate) -> None:
     mock_build.return_value = MagicMock(
@@ -30,7 +30,7 @@ def test_list_supplies_purchase_request_lines_meta(mock_build, _branch_gate) -> 
         )
     )
     response = list_supplies_purchase_request_lines_route(
-        branch="02",
+        branch=["02"],
         date_from=None,
         date_to=None,
         cost_centers=None,

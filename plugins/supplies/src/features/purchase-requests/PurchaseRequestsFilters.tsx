@@ -9,6 +9,7 @@ import {
   SuppliesDateField,
   SuppliesFilterBarShell,
   SuppliesSectionHintLabel,
+  SuppliesMultiSelectField,
   SuppliesSelectField,
   SuppliesTextField,
   spFiltersKit,
@@ -101,13 +102,13 @@ export function PurchaseRequestsFilters({
         }
       >
         <FiltersRow variant="extended">
-          <SuppliesSelectField
+          <SuppliesMultiSelectField
             label={C.branchLabel}
             hint={SP_HELP.purchaseRequestsBranch}
-            value={query.branch}
-            onChange={(value) => onPatch({ branch: value, page: 1, request: "" })}
+            selectedValues={query.branches}
+            onChange={(values) => onPatch({ branches: values, page: 1, request: "" })}
             options={unitOptions}
-            allowEmpty={false}
+            emptyLabel="Todas"
             searchable={unitOptions.length > 4}
           />
           <SuppliesTextField

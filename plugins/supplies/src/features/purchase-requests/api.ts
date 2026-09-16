@@ -38,9 +38,8 @@ export async function downloadPurchaseRequestsExport(
   query: PurchaseRequestsQuery,
   signal?: AbortSignal,
 ): Promise<void> {
-  const params = buildListSearchParams(query);
-  params.delete("page");
-  params.delete("page_size");
+  const params = buildListSearchParams(query, { includePagination: false });
+  params.set("format", "xlsx");
   const blob = await httpGetBlob(
     suppliesApiUrl(`/purchase-requests/export?${params.toString()}`),
     { signal },
@@ -48,7 +47,7 @@ export async function downloadPurchaseRequestsExport(
   const objectUrl = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = objectUrl;
-  anchor.download = `purchase-requests-${query.branch || "export"}.csv`;
+  anchor.download = "purchase-requests.xlsx";
   anchor.click();
   URL.revokeObjectURL(objectUrl);
 }

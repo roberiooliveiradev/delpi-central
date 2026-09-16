@@ -26,9 +26,18 @@ from app.composition.supplies_composer import (
 from app.core.exceptions import DatabaseConnectionError
 from app.core.responses import error_response
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
-from app.interface.http.query_param_enums import BRANCH_QUERY_REQUIRED
+from app.interface.http.query_param_enums import (
+    BRANCH_CODES_QUERY,
+    BRANCH_QUERY_REQUIRED,
+    SORT_DIR_QUERY_OPTIONAL,
+)
+from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_lines_sql import (
+    PURCHASE_REQUESTS_SORT_FIELDS,
+    normalize_purchase_request_branches,
+)
 from app.interface.http.routes.supplies.purchase_requests_branch_access import (
     branch_access_error as purchase_requests_branch_access_error,
+    branches_access_error as purchase_requests_branches_access_error,
 )
 from app.interface.http.routes.supplies.safety_stock_branch_access import (
     branch_access_error,
@@ -90,37 +99,86 @@ def get_purchase_requests_open_coverage_route(
     ),
 )
 @require_any_permission(PURCHASE_REQUESTS_READ_PERMISSIONS)
+def _lines_kwargs(
+    *,
+    branch: list[str],
+    date_from: str | None,
+    date_to: str | None,
+    cost_centers: list[str] | None,
+    cost_center_scopes: list[str] | None,
+    request_number: str | None,
+    requester_protheus_user_id: list[str] | None,
+    product_code: str | None,
+    supplier_code: str | None,
+    order_number: str | None,
+    sort_by: str | None,
+    sort_dir: str | None,
+) -> dict:
+    branches = normalize_purchase_request_branches(branches=branch)
+    return {
+        "branches": branches,
+        "date_from": date_from,
+        "date_to": date_to,
+        "cost_centers": cost_centers,
+        "cost_center_scopes": cost_center_scopes,
+        "request_number": request_number,
+        "requester_protheus_user_ids": requester_protheus_user_id,
+        "product_code": product_code,
+        "supplier_code": supplier_code,
+        "order_number": order_number,
+        "sort_by": sort_by,
+        "sort_dir": sort_dir,
+    }
+
+
 def list_supplies_purchase_request_lines_route(
-    branch: str = BRANCH_QUERY_REQUIRED(),
+    branch: list[str] = BRANCH_CODES_QUERY(),
     date_from: str | None = Query(None, alias="date_from"),
     date_to: str | None = Query(None, alias="date_to"),
     cost_centers: Annotated[list[str] | None, Query()] = None,
+    cc_scope: Annotated[list[str] | None, Query()] = None,
     request_number: str | None = Query(None),
     requester_protheus_user_id: Annotated[list[str] | None, Query()] = None,
     product_code: str | None = Query(None),
     supplier_code: str | None = Query(None),
     order_number: str | None = Query(None),
+    sort_by: str | None = Query(
+        None,
+        description="Allow-listed header-stable sort field.",
+        enum=list(PURCHASE_REQUESTS_SORT_FIELDS),
+    ),
+    sort_dir: str | None = SORT_DIR_QUERY_OPTIONAL(),
     page: int = Query(1, ge=1),
     page_size: int = PAGE_SIZE_QUERY("page_50_200"),
 ):
-    branch_error = purchase_requests_branch_access_error(branch)
+    try:
+        kwargs = _lines_kwargs(
+            branch=branch,
+            date_from=date_from,
+            date_to=date_to,
+            cost_centers=cost_centers,
+            cost_center_scopes=cc_scope,
+            request_number=request_number,
+            requester_protheus_user_id=requester_protheus_user_id,
+            product_code=product_code,
+            supplier_code=supplier_code,
+            order_number=order_number,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=422)
+
+    branch_error = purchase_requests_branches_access_error(kwargs["branches"])
     if branch_error:
         return branch_error
 
     try:
         use_case = build_list_supplies_purchase_request_lines_use_case()
         result = use_case.execute(
-            branch=branch,
-            date_from=date_from,
-            date_to=date_to,
-            cost_centers=cost_centers,
-            request_number=request_number,
-            requester_protheus_user_ids=requester_protheus_user_id,
-            product_code=product_code,
-            supplier_code=supplier_code,
-            order_number=order_number,
             page=page,
             page_size=page_size,
+            **kwargs,
         )
         return api_delpi_success(
             result,
@@ -144,29 +202,109 @@ def list_supplies_purchase_request_lines_route(
         )
 
 
-@router.get("/requesters")
+@router.get(
+    "/lines/export",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "export_supplies_purchase_request_lines",
+        path="/supplies/purchase-requests/lines/export",
+    ),
+)
 @require_any_permission(PURCHASE_REQUESTS_READ_PERMISSIONS)
-def list_supplies_purchase_request_requesters_route(
-    branch: str = BRANCH_QUERY_REQUIRED(),
+def export_supplies_purchase_request_lines_route(
+    branch: list[str] = BRANCH_CODES_QUERY(),
     date_from: str | None = Query(None, alias="date_from"),
     date_to: str | None = Query(None, alias="date_to"),
     cost_centers: Annotated[list[str] | None, Query()] = None,
+    cc_scope: Annotated[list[str] | None, Query()] = None,
+    request_number: str | None = Query(None),
+    requester_protheus_user_id: Annotated[list[str] | None, Query()] = None,
+    product_code: str | None = Query(None),
+    supplier_code: str | None = Query(None),
+    order_number: str | None = Query(None),
+    sort_by: str | None = Query(
+        None,
+        description="Allow-listed sort field for the export dataset.",
+        enum=list(PURCHASE_REQUESTS_SORT_FIELDS),
+    ),
+    sort_dir: str | None = SORT_DIR_QUERY_OPTIONAL(),
+):
+    try:
+        kwargs = _lines_kwargs(
+            branch=branch,
+            date_from=date_from,
+            date_to=date_to,
+            cost_centers=cost_centers,
+            cost_center_scopes=cc_scope,
+            request_number=request_number,
+            requester_protheus_user_id=requester_protheus_user_id,
+            product_code=product_code,
+            supplier_code=supplier_code,
+            order_number=order_number,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=422)
+
+    branch_error = purchase_requests_branches_access_error(kwargs["branches"])
+    if branch_error:
+        return branch_error
+
+    try:
+        use_case = build_list_supplies_purchase_request_lines_use_case()
+        result = use_case.export(**kwargs)
+        return api_delpi_success(
+            result,
+            operation_id="export_supplies_purchase_request_lines",
+            message="Dataset de solicitações de compra exportado com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação ao exportar linhas de SC: {exc}")
+        return error_response(str(exc), status_code=422)
+    except DatabaseConnectionError as exc:
+        log_error(f"Banco indisponível ao exportar linhas de SC: {exc}")
+        return error_response(
+            "Não foi possível consultar o TOTVS para exportar as solicitações de compra.",
+            status_code=503,
+        )
+    except Exception as exc:
+        log_error(f"Erro ao exportar linhas de solicitações de compra: {exc}")
+        return error_response(
+            "Erro interno ao exportar linhas de solicitações de compra.",
+            status_code=500,
+        )
+
+
+@router.get("/requesters")
+@require_any_permission(PURCHASE_REQUESTS_READ_PERMISSIONS)
+def list_supplies_purchase_request_requesters_route(
+    branch: list[str] = BRANCH_CODES_QUERY(),
+    date_from: str | None = Query(None, alias="date_from"),
+    date_to: str | None = Query(None, alias="date_to"),
+    cost_centers: Annotated[list[str] | None, Query()] = None,
+    cc_scope: Annotated[list[str] | None, Query()] = None,
     request_number: str | None = Query(None),
     product_code: str | None = Query(None),
     supplier_code: str | None = Query(None),
     order_number: str | None = Query(None),
 ):
-    branch_error = purchase_requests_branch_access_error(branch)
+    try:
+        branches = normalize_purchase_request_branches(branches=branch)
+    except ValueError as exc:
+        return error_response(str(exc), status_code=422)
+
+    branch_error = purchase_requests_branches_access_error(branches)
     if branch_error:
         return branch_error
 
     try:
         use_case = build_list_supplies_purchase_request_requesters_use_case()
         result = use_case.execute(
-            branch=branch,
+            branches=branches,
             date_from=date_from,
             date_to=date_to,
             cost_centers=cost_centers,
+            cost_center_scopes=cc_scope,
             request_number=request_number,
             product_code=product_code,
             supplier_code=supplier_code,

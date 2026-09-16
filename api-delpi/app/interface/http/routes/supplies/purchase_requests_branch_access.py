@@ -26,3 +26,11 @@ def list_viewable_branches() -> list[str]:
 
 def branch_access_error(branch: str | None):
     return _GATE.branch_access_error(branch)
+
+
+def branches_access_error(branches: list[str] | None):
+    for code in branches or []:
+        error = branch_access_error(code)
+        if error:
+            return error
+    return None

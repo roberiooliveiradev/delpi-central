@@ -1076,9 +1076,55 @@
 }
 
 @media (max-width: 375px) {
-  .dashboard-supplies-portal .sp-purchase-orders__cards {
+  .dashboard-supplies-portal .sp-purchase-orders__cards,
+  .dashboard-supplies-portal .sp-purchase-requests__cards {
     grid-template-columns: 1fr;
   }
+}
+
+.dashboard-supplies-portal .sp-purchase-requests__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16.5rem), 1fr));
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.dashboard-supplies-portal .sp-purchase-requests__card {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--sp-border);
+  border-radius: var(--sp-radius, 14px);
+  background: var(--sp-surface);
+  overflow-wrap: anywhere;
+}
+
+.dashboard-supplies-portal .sp-purchase-requests__card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.dashboard-supplies-portal .sp-purchase-requests__card-product {
+  margin: 0;
+}
+
+.dashboard-supplies-portal .sp-purchase-requests__card-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem 0.75rem;
+  margin: 0;
+}
+
+.dashboard-supplies-portal .sp-purchase-requests__card-meta dt {
+  font-size: 0.75rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-purchase-requests__card-meta dd {
+  margin: 0.1rem 0 0;
 }
 
 .dashboard-supplies-portal .sp-purchase-order-detail {

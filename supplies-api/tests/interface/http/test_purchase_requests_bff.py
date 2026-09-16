@@ -117,3 +117,73 @@ def test_detail_positive(mock_resolve, mock_validate):
         )
     assert response.status_code == 200
     assert response.get_json()["header"]["request_number"] == "100"
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_list_multi_unit_positive(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(
+        permissions={
+            "supplies.purchase-requests.access",
+            "supplies.unit.filial-01",
+            "supplies.unit.filial-02",
+        }
+    )
+    gateway = MagicMock()
+    gateway.list_purchase_requests.return_value = {
+        "success": True,
+        "data": {"items": [], "total": 0},
+    }
+    with patch(
+        "app.interfaces.http.routes.purchase_requests_routes._GATEWAY",
+        gateway,
+    ):
+        client = create_app().test_client()
+        response = client.get(
+            "/purchase-requests?branch=01&branch=02",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 200
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_list_multi_unit_sibling_mixed_scope_forbidden(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(
+        permissions={
+            "supplies.purchase-requests.access",
+            "supplies.unit.filial-01",
+        }
+    )
+    client = create_app().test_client()
+    response = client.get(
+        "/purchase-requests?branch=01&branch=02",
+        headers={"Authorization": "Bearer tok"},
+    )
+    assert response.status_code == 403
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_list_empty_unit_selection_fail_closed(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(
+        permissions={
+            "supplies.purchase-requests.access",
+            "supplies.unit.filial-01",
+        }
+    )
+    client = create_app().test_client()
+    response = client.get(
+        "/purchase-requests",
+        headers={"Authorization": "Bearer tok"},
+    )
+    assert response.status_code == 403

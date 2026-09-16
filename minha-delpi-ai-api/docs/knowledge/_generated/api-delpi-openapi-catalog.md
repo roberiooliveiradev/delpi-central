@@ -1,6 +1,6 @@
 # Catálogo OpenAPI — api-delpi (gerado automaticamente)
 
-**Provider:** `api-delpi` · **Rotas:** 708 · **Gerado em:** 2026-09-16 11:59 UTC
+**Provider:** `api-delpi` · **Rotas:** 709 · **Gerado em:** 2026-09-16 12:09 UTC
 
 > Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
 
@@ -892,12 +892,13 @@
 | `GET` | `/supplies/stock-balances/items` | `get_supplies_stock_balances_items` | Stock balance items by warehouse |
 | `GET` | `/supplies/stock-balances/summary` | `get_supplies_stock_balances_summary` | Stock balances by warehouse |
 
-## Suprimentos — Solicitações de compra (6)
+## Suprimentos — Solicitações de compra (7)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
-| `GET` | `/supplies/purchase-requests/lines` | `list_supplies_purchase_request_lines` | Lista paginada — Supplies purchase request line |
-| `GET` | `/supplies/purchase-requests/lines/{branch}/{request_number}` | `get_supplies_purchase_request_lines` | Lista — Supplies purchase request line |
+| `GET` | `/supplies/purchase-requests/lines` | `list_supplies_purchase_request_lines` | Lista paginada — Linhas de solicitações de compra (sc1) |
+| `GET` | `/supplies/purchase-requests/lines/export` | `export_supplies_purchase_request_lines` | Exportação — Exportação de linhas de solicitações de compra (sc1) |
+| `GET` | `/supplies/purchase-requests/lines/{branch}/{request_number}` | `get_supplies_purchase_request_lines` | Lista — Linhas de solicitações de compra (sc1) |
 | `GET` | `/supplies/purchase-requests/open-coverage` | `get_supplies_purchase_requests_open_coverage` | Open purchase requests with stock, order and commitment coverage |
 | `GET` | `/supplies/purchase-requests/recent-linked-orders` | `list_supplies_purchase_request_recent_linked_orders` | Lista — Pedidos de compra recém-vinculados a solicitações de compra |
 | `GET` | `/supplies/purchase-requests/recent-linked-receipts` | `list_supplies_purchase_request_recent_linked_receipts` | Lista — Recebimentos de nf de entrada recém-vinculados a pedidos e solicitações de compra |

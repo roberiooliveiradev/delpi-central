@@ -12,7 +12,12 @@ from app.infrastructure.gateways.purchase_requests_gateway import (
     PurchaseRequestsGateway,
     PurchaseRequestsGatewayError,
 )
-from app.interfaces.http.auth_decorators import require_permission, require_unit
+from app.infrastructure.export.purchase_requests_xlsx import (
+    EXPORT_FILENAME as XLSX_FILENAME,
+    XLSX_MIME,
+    build_purchase_requests_xlsx,
+)
+from app.interfaces.http.auth_decorators import require_permission, require_unit, require_units
 
 purchase_requests_bp = Blueprint("purchase_requests", __name__)
 
@@ -61,7 +66,7 @@ def _unwrap_data(payload: Any) -> Any:
 
 @purchase_requests_bp.get("/purchase-requests")
 @require_permission("supplies.purchase-requests.access")
-@require_unit("branch")
+@require_units("branch")
 def list_portal_purchase_requests():
     """operationId: list_portal_purchase_requests — C1 gateway; CC fail-closed in PR-api."""
     try:
@@ -76,7 +81,7 @@ def list_portal_purchase_requests():
 
 @purchase_requests_bp.get("/purchase-requests/requesters")
 @require_permission("supplies.purchase-requests.access")
-@require_unit("branch")
+@require_units("branch")
 def list_portal_purchase_request_requesters():
     """operationId: list_portal_purchase_request_requesters"""
     try:
@@ -92,44 +97,48 @@ def list_portal_purchase_request_requesters():
 @purchase_requests_bp.get("/purchase-requests/export")
 @require_permission("supplies.purchase-requests.access")
 @require_permission("supplies.purchase-requests.export")
-@require_unit("branch")
+@require_units("branch")
 def export_portal_purchase_requests():
-    """operationId: export_portal_purchase_requests — CSV via list hop (CC in PR-api)."""
-    branch = (request.args.get("branch") or "").strip()
-    if not branch:
+    """operationId: export_portal_purchase_requests — CSV default, XLSX via format=."""
+    branches = [item.strip() for item in request.args.getlist("branch") if item.strip()]
+    if not branches:
         raise AuthorizationError("Forbidden")
 
-    max_pages = 20
-    page_size = min(int(request.args.get("page_size") or 200), 200)
-    base_pairs: list[tuple[str, str]] = []
+    export_format = (request.args.get("format") or "csv").strip().lower()
+    if export_format not in {"csv", "xlsx"}:
+        return jsonify({"detail": "Unsupported export format", "code": "unprocessable"}), 422
+
+    pairs: list[tuple[str, str]] = []
     for key in request.args.keys():
         if key in {"page", "page_size", "format"}:
             continue
         for value in request.args.getlist(key):
-            base_pairs.append((key, value))
+            pairs.append((key, value))
 
-    rows: list[dict[str, Any]] = []
     try:
-        for page in range(1, max_pages + 1):
-            pairs = list(base_pairs)
-            pairs.append(("page", str(page)))
-            pairs.append(("page_size", str(page_size)))
-            payload = _GATEWAY.list_purchase_requests(
-                access_token=_access_token(),
-                query_string=urlencode(pairs, doseq=True),
-            )
-            data = _unwrap_data(payload)
-            items = data.get("items") if isinstance(data, dict) else None
-            if not isinstance(items, list) or not items:
-                break
-            for item in items:
-                if isinstance(item, dict):
-                    rows.append(item)
-            total = int(data.get("total") or 0) if isinstance(data, dict) else 0
-            if page * page_size >= total:
-                break
+        payload = _GATEWAY.export_purchase_requests(
+            access_token=_access_token(),
+            query_string=urlencode(pairs, doseq=True),
+        )
     except PurchaseRequestsGatewayError as exc:
         return _gateway_error_response(exc)
+
+    data = _unwrap_data(payload)
+    rows = data.get("items") if isinstance(data, dict) else []
+    if not isinstance(rows, list):
+        rows = []
+
+    if export_format == "xlsx":
+        body = build_purchase_requests_xlsx([item for item in rows if isinstance(item, dict)])
+        return Response(
+            body,
+            status=200,
+            mimetype=XLSX_MIME,
+            headers={
+                "Content-Disposition": f'attachment; filename="{XLSX_FILENAME}"',
+                "Cache-Control": "no-store",
+            },
+        )
 
     buffer = io.StringIO()
     writer = csv.writer(buffer)
@@ -147,14 +156,17 @@ def export_portal_purchase_requests():
             "approval_status",
         ]
     )
+    fallback_branch = branches[0]
     for item in rows:
+        if not isinstance(item, dict):
+            continue
         requester = item.get("requester") if isinstance(item.get("requester"), dict) else {}
         cost_center = item.get("cost_center") if isinstance(item.get("cost_center"), dict) else {}
         approval = item.get("approval") if isinstance(item.get("approval"), dict) else {}
         derived = item.get("derived") if isinstance(item.get("derived"), dict) else {}
         writer.writerow(
             [
-                item.get("branch") or branch,
+                item.get("branch") or fallback_branch,
                 item.get("request_number") or "",
                 item.get("request_item") or "",
                 item.get("product_code") or "",
@@ -167,7 +179,7 @@ def export_portal_purchase_requests():
             ]
         )
 
-    filename = f"purchase-requests-{branch}.csv"
+    filename = "purchase-requests.csv"
     return Response(
         buffer.getvalue(),
         status=200,

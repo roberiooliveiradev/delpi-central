@@ -91,6 +91,20 @@ class PurchaseRequestsGateway:
             query_string=query_string,
         )
 
+    def export_purchase_requests(
+        self,
+        *,
+        access_token: str,
+        params: dict[str, Any] | list[tuple[str, Any]] | None = None,
+        query_string: str | None = None,
+    ) -> Any:
+        return self.get(
+            "purchase-requests/export",
+            access_token=access_token,
+            params=params,
+            query_string=query_string,
+        )
+
     def list_requesters(
         self,
         *,

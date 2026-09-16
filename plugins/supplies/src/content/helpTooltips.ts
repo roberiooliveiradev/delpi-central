@@ -72,9 +72,13 @@ export const SP_HELP = {
   otdAnalyticsPage:
     "Pontualidade de compras com velocímetros por unidade (Santa Catarina / Espírito Santo) e evolução no tempo. Diferente da Visão geral (placar de KPIs) e de Entregas (atrasos do dia).",
   purchaseRequests:
-    "Lista linhas de SC no escopo de centro de custo e filial. Sem CC liberado e sem visão ampla, a lista fica vazia (fail-closed). Exportação CSV exige permissão separada. Clique na SC ou na linha para abrir o detalhe.",
+    "Lista linhas de SC no escopo de centro de custo e unidades. Sem CC liberado e sem visão ampla, a lista fica vazia (fail-closed). Exportação Excel/CSV exige permissão separada. Clique na SC ou na linha para abrir o detalhe.",
   purchaseRequestsBranch:
-    "Filial do recorte (ex.: Santa Catarina (01)). Só unidades liberadas na sessão; a API reforça o escopo.",
+    "Unidades do recorte (Santa Catarina e/ou Espírito Santo). «Todas» envia as unidades liberadas na sessão. Códigos técnicos ficam só na URL e na API.",
+  purchaseRequestsView:
+    "Tabela ou Cards usam o mesmo recorte paginado. A preferência fica neste navegador e não muda dados nem permissões.",
+  purchaseRequestsSort:
+    "Clique no cabeçalho para ordenar o recorte no servidor (número, abertura, solicitante ou centro de custo). A URL guarda sort_by e sort_dir; F5 restaura a ordem.",
   purchaseRequestsPeriod:
     "Período de abertura da SC (em Mais filtros). Compartilhável pela URL (F5 restaura o recorte).",
   purchaseRequestsNumber: "Filtra pelo número da solicitação de compras.",
@@ -82,9 +86,9 @@ export const SP_HELP = {
   purchaseRequestsStage:
     "Situação consolidada da SC (aguardando pedido, parcial, concluída etc.).",
   purchaseRequestsExport:
-    "Exportação CSV do recorte filtrado. Exige permissão de exportação além do acesso à lista.",
+    "Exporta para Excel o recorte filtrado inteiro (todas as unidades selecionadas), sem truncar na página. Exige permissão de exportação além do acesso à lista. CSV permanece disponível como formato legado.",
   purchaseRequestsFilters:
-    "Filtros aplicam automaticamente. Texto confirma após um instante ou com Enter. Mais filtros revela o período. Limpar só aparece quando há filtro além do padrão (filial e período baseline não contam sozinhos).",
+    "Filtros aplicam automaticamente. Texto confirma após um instante ou com Enter. Mais filtros revela o período. Limpar só aparece quando há filtro além do padrão (todas as unidades liberadas e período baseline não contam sozinhos).",
   purchaseRequestsRefresh:
     "Recarrega a lista com os mesmos filtros. O horário é da última consulta bem-sucedida nesta tela, não do TOTVS.",
   purchaseRequestsTableFontSize:

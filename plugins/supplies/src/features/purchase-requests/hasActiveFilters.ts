@@ -8,7 +8,7 @@ import type { PurchaseRequestsQuery } from "./types";
  * Page/page_size/request (inline detail) are navigation, not filters.
  */
 export function hasActivePurchaseRequestsFilters(query: PurchaseRequestsQuery): boolean {
-  const defaults = createDefaultQuery(query.branch || "");
+  const defaults = createDefaultQuery(query.branches);
   const periodChanged =
     query.date_from.trim() !== defaults.date_from ||
     query.date_to.trim() !== defaults.date_to;

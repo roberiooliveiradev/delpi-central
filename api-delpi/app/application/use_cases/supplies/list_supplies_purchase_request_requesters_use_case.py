@@ -12,10 +12,12 @@ class ListSuppliesPurchaseRequestRequestersUseCase:
     def execute(
         self,
         *,
-        branch: str,
+        branch: str | None = None,
+        branches: list[str] | None = None,
         date_from: str | None = None,
         date_to: str | None = None,
         cost_centers: list[str] | None = None,
+        cost_center_scopes: list[str] | None = None,
         request_number: str | None = None,
         product_code: str | None = None,
         supplier_code: str | None = None,
@@ -23,9 +25,11 @@ class ListSuppliesPurchaseRequestRequestersUseCase:
     ) -> dict:
         items = self._repository.list_requesters(
             branch=branch,
+            branches=branches,
             date_from=date_from,
             date_to=date_to,
             cost_centers=cost_centers,
+            cost_center_scopes=cost_center_scopes,
             request_number=request_number,
             product_code=product_code,
             supplier_code=supplier_code,

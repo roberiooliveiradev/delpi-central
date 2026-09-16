@@ -141,3 +141,50 @@ def test_security_case_view_all_does_not_filter_by_scope_rows() -> None:
     )
     _, kwargs = gateway.list_lines.call_args
     assert "cost_centers" not in (kwargs.get("params") or {})
+
+
+def test_security_case_multi_unit_sibling_rejects_unauthorized_branch() -> None:
+    use_case = ListPurchaseRequestsUseCase(
+        gateway=MagicMock(),
+        scope_repository=MagicMock(),
+    )
+    with pytest.raises(PermissionError):
+        use_case.execute(
+            user=_user(["purchase-requests.access", "purchase-requests.unit.filial-01"]),
+            branches=["01", "02"],
+        )
+
+
+def test_security_case_multi_unit_keeps_cc_tuple_scope() -> None:
+    gateway = MagicMock()
+    gateway.list_lines.return_value = {
+        "items": [],
+        "page": 1,
+        "page_size": 50,
+        "total": 0,
+        "total_pages": 0,
+    }
+    scope_repo = MagicMock()
+    scope_repo.list_active_cost_centers_for_user.return_value = [
+        {"branch": "01", "cost_center_code": "0413"},
+        {"branch": "02", "cost_center_code": "0520"},
+    ]
+    use_case = ListPurchaseRequestsUseCase(
+        gateway=gateway,
+        scope_repository=scope_repo,
+    )
+    use_case.execute(
+        user=_user(
+            [
+                "purchase-requests.access",
+                "purchase-requests.unit.filial-01",
+                "purchase-requests.unit.filial-02",
+            ]
+        ),
+        branches=["01", "02"],
+    )
+    _, kwargs = gateway.list_lines.call_args
+    params = kwargs.get("params") or {}
+    assert params["branch"] == ["01", "02"]
+    assert set(params["cc_scope"]) == {"01:0413", "02:0520"}
+    assert "cost_centers" not in params

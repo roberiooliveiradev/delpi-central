@@ -17,7 +17,7 @@ class PurchaseRequestAggregationService:
         self,
         lines: list[dict[str, Any]],
         *,
-        branch: str,
+        branch: str | None = None,
         resolution: ScopeResolution,
     ) -> list[dict[str, Any]]:
         if resolution.view_all:
@@ -25,7 +25,10 @@ class PurchaseRequestAggregationService:
         return [
             line
             for line in lines
-            if resolution.allows(branch, line.get("cost_center_code"))
+            if resolution.allows(
+                str(line.get("branch") or branch or ""),
+                line.get("cost_center_code"),
+            )
         ]
 
     def build_list_line_items(self, lines: list[dict[str, Any]]) -> list[dict[str, Any]]:

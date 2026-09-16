@@ -87,6 +87,36 @@ def test_headers_page_groups_and_orders_by_issue_date() -> None:
     assert "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY" in sql
 
 
+def test_multi_unit_uses_parameterized_in_clause() -> None:
+    where_clause, params = build_purchase_request_lines_filters(branches=["01", "02"])
+    assert "C1_FILIAL" in where_clause
+    assert "IN" in where_clause
+    assert params[:2] == ["01", "02"]
+
+
+def test_cost_center_scopes_are_tuple_aware() -> None:
+    where_clause, params = build_purchase_request_lines_filters(
+        branches=["01", "02"],
+        cost_center_scopes=["01:0413", "02:0520"],
+    )
+    assert "C1_CC" in where_clause
+    assert "01" in params and "0413" in params
+    assert "02" in params and "0520" in params
+    assert where_clause.count("C1_FILIAL") >= 2
+
+
+def test_invalid_sort_is_rejected() -> None:
+    from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_lines_sql import (
+        resolve_purchase_requests_order_by,
+    )
+
+    try:
+        resolve_purchase_requests_order_by(sort_by="overall_stage", grain="header")
+        raise AssertionError("expected invalid sort")
+    except ValueError as exc:
+        assert "sort_by" in str(exc)
+
+
 def test_lines_for_request_numbers_scopes_in_clause() -> None:
     where_clause, params = build_purchase_request_lines_filters(branch="02")
     sql, extra = build_purchase_request_lines_for_request_numbers_sql(

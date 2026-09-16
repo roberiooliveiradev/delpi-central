@@ -4,6 +4,7 @@ from typing import Any
 
 from purchase_requests_app.application.security.purchase_requests_permissions import (
     assert_branch_access,
+    assert_branches_access,
     has_access,
 )
 from purchase_requests_app.application.services.purchase_request_aggregation_service import (
@@ -38,7 +39,8 @@ class ListPurchaseRequestsUseCase:
         self,
         *,
         user,
-        branch: str,
+        branch: str | None = None,
+        branches: list[str] | None = None,
         date_from: str | None = None,
         date_to: str | None = None,
         request_number: str | None = None,
@@ -50,29 +52,21 @@ class ListPurchaseRequestsUseCase:
         order_number: str | None = None,
         overall_stage: str | None = None,
         overall_stages: list[str] | None = None,
+        sort_by: str | None = None,
+        sort_dir: str | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> dict[str, Any]:
         if not has_access(user):
             raise PermissionError("Sem permissão para acessar solicitações de compra.")
-        assert_branch_access(user, branch)
-        scope_rows = self._scope_repository.list_active_cost_centers_for_user(
-            str(getattr(user, "id", "") or getattr(user, "sub", ""))
-        )
-        resolution = self._scope_resolver.resolve(
+        codes = self._authorized_branches(user, branch=branch, branches=branches)
+        resolution, cost_center_codes, scopes = self._resolve_scopes(
             user=user,
-            branch=branch,
-            explicit_cost_center=cost_center,
-            explicit_cost_centers=cost_centers,
-            scope_rows=scope_rows,
+            branches=codes,
+            cost_center=cost_center,
+            cost_centers=cost_centers,
         )
-        effective_ccs = self._scope_resolver.effective_cost_centers(
-            resolution,
-            branch=branch,
-            explicit_cost_center=cost_center,
-            explicit_cost_centers=cost_centers,
-        )
-        if effective_ccs == []:
+        if cost_center_codes == [] or scopes == []:
             return {
                 "items": [],
                 "page": page,
@@ -80,28 +74,203 @@ class ListPurchaseRequestsUseCase:
                 "total": 0,
                 "total_pages": 0,
             }
+        params = self._gateway_params(
+            branches=codes,
+            date_from=date_from,
+            date_to=date_to,
+            request_number=request_number,
+            product_code=product_code,
+            supplier_code=supplier_code,
+            order_number=order_number,
+            requester_user_ids=requester_user_ids,
+            cost_centers=cost_center_codes,
+            scopes=scopes,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
+            page=page,
+            page_size=page_size,
+        )
+        payload = self._gateway.list_lines(params=params)
+        return self._assemble_page(
+            payload,
+            resolution=resolution,
+            overall_stages=overall_stages,
+            overall_stage=overall_stage,
+            page=page,
+            page_size=page_size,
+        )
+
+    def export(
+        self,
+        *,
+        user,
+        branch: str | None = None,
+        branches: list[str] | None = None,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        request_number: str | None = None,
+        requester_user_ids: list[str] | None = None,
+        cost_center: str | None = None,
+        cost_centers: list[str] | None = None,
+        product_code: str | None = None,
+        supplier_code: str | None = None,
+        order_number: str | None = None,
+        overall_stage: str | None = None,
+        overall_stages: list[str] | None = None,
+        sort_by: str | None = None,
+        sort_dir: str | None = None,
+    ) -> dict[str, Any]:
+        if not has_access(user):
+            raise PermissionError("Sem permissão para acessar solicitações de compra.")
+        codes = self._authorized_branches(user, branch=branch, branches=branches)
+        resolution, cost_center_codes, scopes = self._resolve_scopes(
+            user=user,
+            branches=codes,
+            cost_center=cost_center,
+            cost_centers=cost_centers,
+        )
+        if cost_center_codes == [] or scopes == []:
+            return {"items": [], "total": 0}
+        params = self._gateway_params(
+            branches=codes,
+            date_from=date_from,
+            date_to=date_to,
+            request_number=request_number,
+            product_code=product_code,
+            supplier_code=supplier_code,
+            order_number=order_number,
+            requester_user_ids=requester_user_ids,
+            cost_centers=cost_center_codes,
+            scopes=scopes,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
+        )
+        payload = self._gateway.export_lines(params=params)
+        assembled = self._assemble_page(
+            payload,
+            resolution=resolution,
+            overall_stages=overall_stages,
+            overall_stage=overall_stage,
+            page=1,
+            page_size=len(payload.get("items") or []) or 1,
+        )
+        items = assembled["items"]
+        return {"items": items, "total": len(items)}
+
+    def _authorized_branches(
+        self,
+        user,
+        *,
+        branch: str | None,
+        branches: list[str] | None,
+    ) -> list[str]:
+        if branches:
+            return assert_branches_access(user, branches)
+        if branch:
+            assert_branch_access(user, branch)
+            return [branch]
+        raise PermissionError("Sem permissão para acessar dados da filial.")
+
+    def _resolve_scopes(
+        self,
+        *,
+        user,
+        branches: list[str],
+        cost_center: str | None,
+        cost_centers: list[str] | None,
+    ):
+        scope_rows = self._scope_repository.list_active_cost_centers_for_user(
+            str(getattr(user, "id", "") or getattr(user, "sub", ""))
+        )
+        if len(branches) == 1:
+            resolution = self._scope_resolver.resolve(
+                user=user,
+                branch=branches[0],
+                explicit_cost_center=cost_center,
+                explicit_cost_centers=cost_centers,
+                scope_rows=scope_rows,
+            )
+            effective = self._scope_resolver.effective_cost_centers(
+                resolution,
+                branch=branches[0],
+                explicit_cost_center=cost_center,
+                explicit_cost_centers=cost_centers,
+            )
+            if effective == []:
+                return resolution, [], None
+            return resolution, effective, None
+        resolution = self._scope_resolver.resolve_for_branches(
+            user=user,
+            branches=branches,
+            explicit_cost_center=cost_center,
+            explicit_cost_centers=cost_centers,
+            scope_rows=scope_rows,
+        )
+        scopes = self._scope_resolver.effective_cost_center_scopes(
+            resolution,
+            branches=branches,
+            explicit_cost_center=cost_center,
+            explicit_cost_centers=cost_centers,
+        )
+        return resolution, None, scopes
+
+    def _gateway_params(
+        self,
+        *,
+        branches: list[str],
+        date_from: str | None,
+        date_to: str | None,
+        request_number: str | None,
+        product_code: str | None,
+        supplier_code: str | None,
+        order_number: str | None,
+        requester_user_ids: list[str] | None,
+        cost_centers: list[str] | None,
+        scopes: list[str] | None,
+        sort_by: str | None,
+        sort_dir: str | None,
+        page: int | None = None,
+        page_size: int | None = None,
+    ) -> dict[str, Any]:
         params: dict[str, Any] = {
-            "branch": branch,
+            "branch": branches,
             "date_from": date_from,
             "date_to": date_to,
             "request_number": request_number,
             "product_code": product_code,
             "supplier_code": supplier_code,
             "order_number": order_number,
-            "page": str(page),
-            "page_size": str(page_size),
         }
-        if effective_ccs is not None:
-            params["cost_centers"] = effective_ccs
+        if sort_by:
+            params["sort_by"] = sort_by
+            params["sort_dir"] = sort_dir or "desc"
+        if page is not None:
+            params["page"] = str(page)
+        if page_size is not None:
+            params["page_size"] = str(page_size)
+        if scopes is not None:
+            params["cc_scope"] = scopes
+        elif cost_centers is not None:
+            params["cost_centers"] = cost_centers
         if requester_user_ids:
             cleaned = [item.strip() for item in requester_user_ids if item and item.strip()]
             if cleaned:
                 params["requester_protheus_user_id"] = cleaned
-        payload = self._gateway.list_lines(params=params)
+        return params
+
+    def _assemble_page(
+        self,
+        payload: dict[str, Any],
+        *,
+        resolution,
+        overall_stages: list[str] | None,
+        overall_stage: str | None,
+        page: int,
+        page_size: int,
+    ) -> dict[str, Any]:
         lines = payload.get("items") or []
         lines = self._aggregation.filter_authorized_lines(
             lines,
-            branch=branch,
             resolution=resolution,
         )
         items = self._aggregation.build_list_line_items(lines)
@@ -117,7 +286,7 @@ class ListPurchaseRequestsUseCase:
             "items": items,
             "page": payload.get("page", page),
             "page_size": payload.get("page_size", page_size),
-            "total": payload.get("total", len(lines)),
+            "total": payload.get("total", len(items)),
             "total_pages": payload.get("total_pages", 0),
         }
 

@@ -194,10 +194,10 @@ Matriz após execução Phase 1 (não declara paridade total):
 | Human unit labels | IMPLEMENTED | IMPLEMENTED |
 | Date filters | IMPLEMENTED (Mais filtros) | IMPLEMENTED (Mais filtros) |
 | Table metadata `N colunas · N linhas` | IMPLEMENTED (`total`) | IMPLEMENTED (`total`) |
-| Table/Cards/Board selector | PRODUCT_DECISION | PRODUCT_DECISION |
+| Table/Cards/Board selector | IMPLEMENTED (Tabela/Cards; Board não) | IMPLEMENTED (Tabela/Cards; Board não) |
 | Font / columns / reorder / persistence | IMPLEMENTED | IMPLEMENTED |
-| Excel/CSV export | IMPLEMENTED (CSV + capability) | IMPLEMENTED (XLSX, operations + units) |
-| Server-side sorting | BLOCKED_BY_CONTRACT | IMPLEMENTED |
+| Excel/CSV export | IMPLEMENTED (XLSX + CSV legado; export capability) | IMPLEMENTED (XLSX, operations + units) |
+| Server-side sorting | IMPLEMENTED (request_number, issue_date, requester, cost_center) | IMPLEMENTED |
 | Entity links (SC/PC) | IMPLEMENTED | IMPLEMENTED |
 | Avatars / inline meter / coverage | COMMERCIAL_SPECIFIC | COMMERCIAL_SPECIFIC |
 | Status badges | IMPLEMENTED (overall_stage fechado) | IMPLEMENTED |
@@ -224,15 +224,21 @@ Mesmo padrão visual/funcional nas duas jornadas tabulares (sem paridade total c
 | CompactPagination | IMPLEMENTED | IMPLEMENTED | plugin-ui |
 | DataTable canônico | IMPLEMENTED | IMPLEMENTED | `SuppliesDataTable` |
 | Mobile horizontal scroll | IMPLEMENTED | IMPLEMENTED | `delpi-ui-table-wrap` + `sp-list-table-region` |
-| Export | capability + CSV | IMPLEMENTED (XLSX) | PO: operations + units |
-| Sort | BLOCKED_BY_CONTRACT | IMPLEMENTED | `sort_by`/`sort_dir` |
+| Export | capability + XLSX (CSV legado) | IMPLEMENTED (XLSX) | PO: operations + units |
+| Sort | IMPLEMENTED (allow-list header-stable) | IMPLEMENTED | `sort_by`/`sort_dir` |
 | Attention chips | N/A (domínio) | Todos(N)/Atrasados(N) via `summary` | justificado |
-| Cards/Board | OUT_OF_SCOPE | OUT_OF_SCOPE | — |
+| Cards/Board | Cards IMPLEMENTED; Board PRODUCT_DECISION | Cards IMPLEMENTED; Board PRODUCT_DECISION | — |
 
 Diferenças justificadas: chips Atenção e campos de filtro são semântica de domínio; export de SC permanece com capability própria; export de PO reutiliza operations + units.
 
 ## Board readiness (PO)
 
 `delivery_status` no payload é estável: `late | on_time | no_date`. A UI poderia declarar lanes sobre a página/dataset atual.
+
+**BOARD_READY_FOR_PRODUCT_DECISION** — não implementado nesta execução.
+
+## Board readiness (PR)
+
+`overall_stage` no payload é derivado e filtrado após enriquecimento. Lanes estáveis existem no contrato de estágio, mas o grão da paginação é o cabeçalho da SC.
 
 **BOARD_READY_FOR_PRODUCT_DECISION** — não implementado nesta execução.

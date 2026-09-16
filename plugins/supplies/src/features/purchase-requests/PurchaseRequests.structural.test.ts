@@ -53,6 +53,7 @@ describe("PurchaseRequests feature", () => {
     expect(filters).toContain("SuppliesClearFiltersButton");
     expect(filters).toContain("hasActivePurchaseRequestsFilters");
     expect(filters).toContain("buildSuppliesUnitOptions");
+    expect(filters).toContain("SuppliesMultiSelectField");
     expect(filters).toContain("useCommittedTextFilter");
     expect(filters).toContain("SP_HELP.purchaseRequestsFilters");
     expect(filters).not.toContain("Aplicar filtros");
@@ -68,7 +69,9 @@ describe("PurchaseRequests feature", () => {
     expect(table).toContain("SuppliesEntityLink");
     expect(table).toContain("SuppliesStatusBadge");
     expect(table).toContain("canExport");
-    expect(table).toContain("onExport");
+    expect(table).toContain("ExcelExportButton");
+    expect(table).toContain("PurchaseRequestsCards");
+    expect(table).toContain("nextServerSort");
     expect(table).toContain("sp-list-table-region");
 
     const config = readFileSync(join(dir, "purchaseRequestsTableConfig.ts"), "utf8");
@@ -86,16 +89,16 @@ describe("PurchaseRequests feature", () => {
   });
 
   it("query positive + sibling + negative", () => {
-    const query = createDefaultQuery("01");
+    const query = createDefaultQuery(["01"]);
     query.request_number = "100";
     query.overall_stages = ["awaiting_order"];
     const params = buildListSearchParams(query);
-    expect(params.get("branch")).toBe("01");
+    expect(params.getAll("branch")).toEqual(["01"]);
     expect(params.get("request_number")).toBe("100");
     expect(params.getAll("overall_stage")).toEqual(["awaiting_order"]);
 
-    const sibling = parseQueryFromSearch("?branch=02&request=02:200", "01");
-    expect(sibling.branch).toBe("02");
+    const sibling = parseQueryFromSearch("?branch=02&request=02:200", ["01"]);
+    expect(sibling.branches).toEqual(["02"]);
     expect(parseRequestKey(sibling.request)).toEqual({
       branch: "02",
       requestNumber: "200",
@@ -103,9 +106,14 @@ describe("PurchaseRequests feature", () => {
     expect(buildUrlSearch(sibling)).toContain("branch=02");
     expect(buildUrlSearch(sibling)).toContain("request=02%3A200");
 
+    const multi = parseQueryFromSearch("?branch=01&branch=02&sort_by=issue_date&sort_dir=asc", ["01"]);
+    expect(multi.branches).toEqual(["01", "02"]);
+    expect(multi.sort_by).toBe("issue_date");
+    expect(multi.sort_dir).toBe("asc");
+
     expect(parseRequestKey("invalid")).toBeNull();
     expect(buildRequestKey("01", "100")).toBe("01:100");
-    expect(parseQueryFromSearch("?overall_stage=not-a-stage", "01").overall_stages).toEqual([]);
+    expect(parseQueryFromSearch("?overall_stage=not-a-stage", ["01"]).overall_stages).toEqual([]);
   });
 
   it("mapeia 403 positive/sibling e preserva mensagem genérica (negative)", () => {

@@ -40,7 +40,7 @@ def test_export_positive_with_export_capability(mock_resolve, mock_validate):
         }
     )
     gateway = MagicMock()
-    gateway.list_purchase_requests.return_value = {
+    gateway.export_purchase_requests.return_value = {
         "success": True,
         "data": {
             "items": [
@@ -74,6 +74,40 @@ def test_export_positive_with_export_capability(mock_resolve, mock_validate):
     body = response.get_data(as_text=True)
     assert "request_number" in body
     assert "100" in body
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_export_xlsx_positive(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(
+        permissions={
+            "supplies.purchase-requests.access",
+            "supplies.purchase-requests.export",
+            "supplies.unit.filial-01",
+            "supplies.unit.filial-02",
+        }
+    )
+    gateway = MagicMock()
+    gateway.export_purchase_requests.return_value = {
+        "success": True,
+        "data": {"items": [{"request_number": "100", "branch": "01"}], "total": 1},
+    }
+    with patch(
+        "app.interfaces.http.routes.purchase_requests_routes._GATEWAY",
+        gateway,
+    ):
+        client = create_app().test_client()
+        response = client.get(
+            "/purchase-requests/export?branch=01&branch=02&format=xlsx",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 200
+    assert "spreadsheetml" in (response.mimetype or "")
+    assert "purchase-requests.xlsx" in (response.headers.get("Content-Disposition") or "")
+    gateway.export_purchase_requests.assert_called_once()
 
 
 @patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")

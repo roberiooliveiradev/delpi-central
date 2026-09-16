@@ -14,8 +14,9 @@ from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request
     build_purchase_orders_for_lines_sql,
     build_purchase_request_headers_count_sql,
     build_purchase_request_headers_page_sql,
+    build_purchase_request_lines_export_sql,
     build_purchase_request_lines_filters,
-    build_purchase_request_lines_for_request_numbers_sql,
+    build_purchase_request_lines_for_request_keys_sql,
     build_purchase_request_lines_list_sql,
     build_purchase_request_requesters_sql,
     build_receipts_for_orders_sql,
@@ -113,18 +114,51 @@ def _normalize_receipt_row(row: dict[str, Any]) -> dict[str, Any]:
 
 
 class PurchaseRequestLinesRepository(BaseRepository):
-    def list_lines(
+    def _filter_kwargs(
         self,
         *,
-        branch: str,
+        branch: str | None = None,
+        branches: list[str] | None = None,
         date_from: str | None = None,
         date_to: str | None = None,
         cost_centers: list[str] | None = None,
+        cost_center_scopes: list[str] | None = None,
         request_number: str | None = None,
         requester_protheus_user_ids: list[str] | None = None,
         product_code: str | None = None,
         supplier_code: str | None = None,
         order_number: str | None = None,
+    ) -> dict[str, Any]:
+        return {
+            "branch": branch,
+            "branches": branches,
+            "date_from": date_from,
+            "date_to": date_to,
+            "cost_centers": cost_centers,
+            "cost_center_scopes": cost_center_scopes,
+            "request_number": request_number,
+            "requester_protheus_user_ids": requester_protheus_user_ids,
+            "product_code": product_code,
+            "supplier_code": supplier_code,
+            "order_number": order_number,
+        }
+
+    def list_lines(
+        self,
+        *,
+        branch: str | None = None,
+        branches: list[str] | None = None,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        cost_centers: list[str] | None = None,
+        cost_center_scopes: list[str] | None = None,
+        request_number: str | None = None,
+        requester_protheus_user_ids: list[str] | None = None,
+        product_code: str | None = None,
+        supplier_code: str | None = None,
+        order_number: str | None = None,
+        sort_by: str | None = None,
+        sort_dir: str | None = None,
         page: int = 1,
         page_size: int = DEFAULT_PAGE_SIZE,
     ) -> dict[str, Any]:
@@ -132,18 +166,26 @@ class PurchaseRequestLinesRepository(BaseRepository):
         safe_page_size = min(MAX_PAGE_SIZE, max(1, int(page_size or DEFAULT_PAGE_SIZE)))
         paging = paginate(safe_page, safe_page_size)
         where_clause, params = build_purchase_request_lines_filters(
-            branch=branch,
-            date_from=date_from,
-            date_to=date_to,
-            cost_centers=cost_centers,
-            request_number=request_number,
-            requester_protheus_user_ids=requester_protheus_user_ids,
-            product_code=product_code,
-            supplier_code=supplier_code,
-            order_number=order_number,
+            **self._filter_kwargs(
+                branch=branch,
+                branches=branches,
+                date_from=date_from,
+                date_to=date_to,
+                cost_centers=cost_centers,
+                cost_center_scopes=cost_center_scopes,
+                request_number=request_number,
+                requester_protheus_user_ids=requester_protheus_user_ids,
+                product_code=product_code,
+                supplier_code=supplier_code,
+                order_number=order_number,
+            )
         )
         count_sql = build_purchase_request_headers_count_sql(where_clause)
-        headers_sql = build_purchase_request_headers_page_sql(where_clause=where_clause)
+        headers_sql = build_purchase_request_headers_page_sql(
+            where_clause=where_clause,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
+        )
         with self as repo:
             total_row = repo.execute_one(count_sql, tuple(params))
             total = int(total_row["total"]) if total_row else 0
@@ -151,15 +193,21 @@ class PurchaseRequestLinesRepository(BaseRepository):
                 headers_sql,
                 tuple(params) + (paging["offset"], paging["page_size"]),
             )
-            request_numbers = [
-                str(row.get("request_number") or "").strip()
+            request_keys = [
+                (
+                    str(row.get("branch") or "").strip(),
+                    str(row.get("request_number") or "").strip(),
+                )
                 for row in header_rows
-                if str(row.get("request_number") or "").strip()
+                if str(row.get("branch") or "").strip()
+                and str(row.get("request_number") or "").strip()
             ]
-            if request_numbers:
-                lines_sql, lines_extra_params = build_purchase_request_lines_for_request_numbers_sql(
+            if request_keys:
+                lines_sql, lines_extra_params = build_purchase_request_lines_for_request_keys_sql(
                     where_clause=where_clause,
-                    request_numbers=request_numbers,
+                    request_keys=request_keys,
+                    sort_by=sort_by,
+                    sort_dir=sort_dir,
                 )
                 rows = repo.execute_query(lines_sql, tuple(params) + tuple(lines_extra_params))
             else:
@@ -175,13 +223,58 @@ class PurchaseRequestLinesRepository(BaseRepository):
             "total_pages": total_pages,
         }
 
-    def list_requesters(
+    def export_lines(
         self,
         *,
-        branch: str,
+        branch: str | None = None,
+        branches: list[str] | None = None,
         date_from: str | None = None,
         date_to: str | None = None,
         cost_centers: list[str] | None = None,
+        cost_center_scopes: list[str] | None = None,
+        request_number: str | None = None,
+        requester_protheus_user_ids: list[str] | None = None,
+        product_code: str | None = None,
+        supplier_code: str | None = None,
+        order_number: str | None = None,
+        sort_by: str | None = None,
+        sort_dir: str | None = None,
+    ) -> dict[str, Any]:
+        where_clause, params = build_purchase_request_lines_filters(
+            **self._filter_kwargs(
+                branch=branch,
+                branches=branches,
+                date_from=date_from,
+                date_to=date_to,
+                cost_centers=cost_centers,
+                cost_center_scopes=cost_center_scopes,
+                request_number=request_number,
+                requester_protheus_user_ids=requester_protheus_user_ids,
+                product_code=product_code,
+                supplier_code=supplier_code,
+                order_number=order_number,
+            )
+        )
+        sql = build_purchase_request_lines_export_sql(
+            where_clause=where_clause,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
+        )
+        with self as repo:
+            rows = repo.execute_query(sql, tuple(params))
+        lines = [_normalize_line_row(row) for row in rows]
+        self._attach_orders_and_receipts(lines)
+        return {"items": lines, "total": len(lines)}
+
+    def list_requesters(
+        self,
+        *,
+        branch: str | None = None,
+        branches: list[str] | None = None,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        cost_centers: list[str] | None = None,
+        cost_center_scopes: list[str] | None = None,
         request_number: str | None = None,
         product_code: str | None = None,
         supplier_code: str | None = None,
@@ -189,9 +282,11 @@ class PurchaseRequestLinesRepository(BaseRepository):
     ) -> list[dict[str, Any]]:
         where_clause, params = build_purchase_request_lines_filters(
             branch=branch,
+            branches=branches,
             date_from=date_from,
             date_to=date_to,
             cost_centers=cost_centers,
+            cost_center_scopes=cost_center_scopes,
             request_number=request_number,
             product_code=product_code,
             supplier_code=supplier_code,

@@ -46,9 +46,40 @@ def _current_user():
     return user
 
 
+def _list_kwargs(
+    *,
+    branch: list[str],
+    date_from: str | None,
+    date_to: str | None,
+    request_number: str | None,
+    requester_user_id: list[str] | None,
+    cost_center: list[str] | None,
+    product_code: str | None,
+    supplier_code: str | None,
+    order_number: str | None,
+    overall_stage: list[str] | None,
+    sort_by: str | None,
+    sort_dir: str | None,
+) -> dict:
+    return {
+        "branches": branch,
+        "date_from": date_from,
+        "date_to": date_to,
+        "request_number": request_number,
+        "requester_user_ids": requester_user_id,
+        "cost_centers": cost_center,
+        "product_code": product_code,
+        "supplier_code": supplier_code,
+        "order_number": order_number,
+        "overall_stages": overall_stage,
+        "sort_by": sort_by,
+        "sort_dir": sort_dir,
+    }
+
+
 @router.get("")
 def list_purchase_requests(
-    branch: str = Query(...),
+    branch: list[str] = Query(...),
     date_from: str | None = Query(None),
     date_to: str | None = Query(None),
     request_number: str | None = Query(None),
@@ -58,6 +89,8 @@ def list_purchase_requests(
     supplier_code: str | None = Query(None),
     order_number: str | None = Query(None),
     overall_stage: list[str] | None = Query(None),
+    sort_by: str | None = Query(None),
+    sort_dir: str | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     user=Depends(_current_user),
@@ -65,29 +98,78 @@ def list_purchase_requests(
     try:
         result = ListPurchaseRequestsUseCase().execute(
             user=user,
-            branch=branch,
-            date_from=date_from,
-            date_to=date_to,
-            request_number=request_number,
-            requester_user_ids=requester_user_id,
-            cost_centers=cost_center,
-            product_code=product_code,
-            supplier_code=supplier_code,
-            order_number=order_number,
-            overall_stages=overall_stage,
             page=page,
             page_size=page_size,
+            **_list_kwargs(
+                branch=branch,
+                date_from=date_from,
+                date_to=date_to,
+                request_number=request_number,
+                requester_user_id=requester_user_id,
+                cost_center=cost_center,
+                product_code=product_code,
+                supplier_code=supplier_code,
+                order_number=order_number,
+                overall_stage=overall_stage,
+                sort_by=sort_by,
+                sort_dir=sort_dir,
+            ),
         )
         return ok(result, message="Solicitações de compra listadas com sucesso.")
     except PermissionError as exc:
         return fail(str(exc), 403)
+    except ValueError as exc:
+        return fail(str(exc), 422)
     except Exception:
         return fail("Erro interno ao listar solicitações de compra.", 500)
 
 
+@router.get("/export")
+def export_purchase_requests(
+    branch: list[str] = Query(...),
+    date_from: str | None = Query(None),
+    date_to: str | None = Query(None),
+    request_number: str | None = Query(None),
+    requester_user_id: list[str] | None = Query(None),
+    cost_center: list[str] | None = Query(None),
+    product_code: str | None = Query(None),
+    supplier_code: str | None = Query(None),
+    order_number: str | None = Query(None),
+    overall_stage: list[str] | None = Query(None),
+    sort_by: str | None = Query(None),
+    sort_dir: str | None = Query(None),
+    user=Depends(_current_user),
+):
+    try:
+        result = ListPurchaseRequestsUseCase().export(
+            user=user,
+            **_list_kwargs(
+                branch=branch,
+                date_from=date_from,
+                date_to=date_to,
+                request_number=request_number,
+                requester_user_id=requester_user_id,
+                cost_center=cost_center,
+                product_code=product_code,
+                supplier_code=supplier_code,
+                order_number=order_number,
+                overall_stage=overall_stage,
+                sort_by=sort_by,
+                sort_dir=sort_dir,
+            ),
+        )
+        return ok(result, message="Dataset de solicitações de compra exportado com sucesso.")
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    except ValueError as exc:
+        return fail(str(exc), 422)
+    except Exception:
+        return fail("Erro interno ao exportar solicitações de compra.", 500)
+
+
 @router.get("/requesters")
 def list_purchase_request_requesters(
-    branch: str = Query(...),
+    branch: list[str] = Query(...),
     date_from: str | None = Query(None),
     date_to: str | None = Query(None),
     request_number: str | None = Query(None),
@@ -100,7 +182,7 @@ def list_purchase_request_requesters(
     try:
         result = ListPurchaseRequestRequestersUseCase().execute(
             user=user,
-            branch=branch,
+            branches=branch,
             date_from=date_from,
             date_to=date_to,
             request_number=request_number,

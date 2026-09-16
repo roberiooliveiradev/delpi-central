@@ -1,5 +1,18 @@
-import type { OverallStage, PurchaseRequestsQuery } from "./types";
+import {
+  normalizeSuppliesUnitCode,
+  resolveRequestedBranches,
+} from "../../app/suppliesUnits";
+import type { OverallStage, PurchaseRequestsQuery, PurchaseRequestsSortDir } from "./types";
 import { DEFAULT_PAGE_SIZE, OVERALL_STAGE_VALUES } from "./types";
+
+export const PURCHASE_REQUESTS_SORTABLE_COLUMNS = {
+  request_number: "request_number",
+  requester: "requester",
+  cost_center: "cost_center",
+  opened: "issue_date",
+} as const;
+
+export type PurchaseRequestSortableColumnKey = keyof typeof PURCHASE_REQUESTS_SORTABLE_COLUMNS;
 
 const LOOKBACK_DAYS = 90;
 
@@ -19,24 +32,32 @@ export function defaultPeriod(): { date_from: string; date_to: string } {
   return { date_from: formatIsoDate(start), date_to: formatIsoDate(end) };
 }
 
-export function createDefaultQuery(branch: string): PurchaseRequestsQuery {
+export function createDefaultQuery(branches: readonly string[]): PurchaseRequestsQuery {
   const period = defaultPeriod();
   return {
-    branch,
+    branches: [...branches],
     date_from: period.date_from,
     date_to: period.date_to,
     request_number: "",
     product_code: "",
     overall_stages: [],
+    sort_by: "",
+    sort_dir: "desc",
     page: 1,
     page_size: DEFAULT_PAGE_SIZE,
     request: "",
   };
 }
 
-export function buildListSearchParams(query: PurchaseRequestsQuery): URLSearchParams {
+export function buildListSearchParams(
+  query: PurchaseRequestsQuery,
+  options?: { includePagination?: boolean },
+): URLSearchParams {
   const params = new URLSearchParams();
-  if (query.branch) params.set("branch", query.branch.trim());
+  for (const branch of query.branches) {
+    const code = normalizeSuppliesUnitCode(branch);
+    if (code) params.append("branch", code);
+  }
   if (query.date_from.trim()) params.set("date_from", query.date_from.trim());
   if (query.date_to.trim()) params.set("date_to", query.date_to.trim());
   if (query.request_number.trim()) params.set("request_number", query.request_number.trim());
@@ -44,8 +65,14 @@ export function buildListSearchParams(query: PurchaseRequestsQuery): URLSearchPa
   for (const stage of query.overall_stages) {
     params.append("overall_stage", stage);
   }
-  params.set("page", String(query.page));
-  params.set("page_size", String(query.page_size));
+  if (query.sort_by.trim()) {
+    params.set("sort_by", query.sort_by.trim());
+    params.set("sort_dir", query.sort_dir === "asc" ? "asc" : "desc");
+  }
+  if (options?.includePagination !== false) {
+    params.set("page", String(query.page));
+    params.set("page_size", String(query.page_size));
+  }
   return params;
 }
 
@@ -71,24 +98,71 @@ function readInt(params: URLSearchParams, key: string, fallback: number): number
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-export function parseQueryFromSearch(search: string, fallbackBranch: string): PurchaseRequestsQuery {
+function readSortDir(raw: string): PurchaseRequestsSortDir {
+  return raw.toLowerCase() === "asc" ? "asc" : "desc";
+}
+
+export function parseQueryFromSearch(
+  search: string,
+  fallbackBranches: readonly string[],
+): PurchaseRequestsQuery {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
-  const defaults = createDefaultQuery(fallbackBranch);
+  const defaults = createDefaultQuery(fallbackBranches);
   const allowed = new Set<string>(OVERALL_STAGE_VALUES);
   const stages = params
     .getAll("overall_stage")
     .map((item) => item.trim())
     .filter((item): item is OverallStage => allowed.has(item));
+  const fromUrl = params
+    .getAll("branch")
+    .map((value) => normalizeSuppliesUnitCode(value))
+    .filter(Boolean);
   return {
-    branch: readParam(params, "branch") || defaults.branch,
+    branches: fromUrl.length ? fromUrl : defaults.branches,
     date_from: readParam(params, "date_from") || defaults.date_from,
     date_to: readParam(params, "date_to") || defaults.date_to,
     request_number: readParam(params, "request_number"),
     product_code: readParam(params, "product_code"),
     overall_stages: stages,
+    sort_by: readParam(params, "sort_by"),
+    sort_dir: readSortDir(readParam(params, "sort_dir")),
     page: readInt(params, "page", 1),
     page_size: readInt(params, "page_size", DEFAULT_PAGE_SIZE),
     request: readParam(params, "request"),
+  };
+}
+
+export function nextServerSort(
+  current: PurchaseRequestsQuery,
+  columnKey: string,
+): Pick<PurchaseRequestsQuery, "sort_by" | "sort_dir" | "page"> | null {
+  const sortBy =
+    PURCHASE_REQUESTS_SORTABLE_COLUMNS[columnKey as PurchaseRequestSortableColumnKey];
+  if (!sortBy) return null;
+  if (current.sort_by === sortBy) {
+    return {
+      sort_by: sortBy,
+      sort_dir: current.sort_dir === "asc" ? "desc" : "asc",
+      page: 1,
+    };
+  }
+  return { sort_by: sortBy, sort_dir: "asc", page: 1 };
+}
+
+export function tableSortKey(sortBy: string): string | null {
+  const entry = Object.entries(PURCHASE_REQUESTS_SORTABLE_COLUMNS).find(
+    ([, field]) => field === sortBy,
+  );
+  return entry?.[0] ?? null;
+}
+
+export function authorizeQueryBranches(
+  query: PurchaseRequestsQuery,
+  allowedUnits: readonly string[],
+): PurchaseRequestsQuery {
+  return {
+    ...query,
+    branches: resolveRequestedBranches(query.branches, allowedUnits),
   };
 }
 

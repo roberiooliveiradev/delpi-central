@@ -20,6 +20,9 @@ export const PURCHASE_REQUESTS_COLUMN_STORAGE_KEY =
 export const PURCHASE_REQUESTS_TABLE_FONT_SIZE_STORAGE_KEY =
   "supplies:purchase-requests:table-font-size:v1";
 
+export const PURCHASE_REQUESTS_VIEW_LAYOUT_STORAGE_KEY =
+  "supplies:purchase-requests:view-layout:v1";
+
 export const PURCHASE_REQUESTS_TABLE_COLUMNS: readonly PurchaseRequestTableColumnDef[] = [
   { key: "request_number", label: C.colSc },
   { key: "request_item", label: C.colItem },

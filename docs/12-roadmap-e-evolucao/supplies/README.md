@@ -130,7 +130,7 @@ selecionar página em foco
 
 **OTD analytics (WF-OTD-A):** `/analytics/otd`; gauges por unidade + série; mesmos filtros do Overview; Help sincronizado.
 
-**Solicitações de compras (WF-04):** BFF C1 `/purchase-requests*`; PageHero + FilterBar kit + SectionCard; URL/F5 dos filtros e detalhe; AuthZ access/export/unit/CC fail-closed; estados loading/empty/error/403/404; Help + FAQ; testes MFE estruturais + BFF/security. Smoke federado: `INCONCLUSIVE` neste ambiente.
+**Solicitações de compras (WF-04):** BFF C1 `/purchase-requests*` via `purchase-requests-api` (CC fail-closed; multi-unidade `?branch=` repetido; `sort_by`/`sort_dir`; export sem fan-out paginado). MFE: MultiSelect de unidades (nome sem código), Tabela/Cards, sort server-side, Excel (`format=xlsx`, CSV legado), colunas/fonte persistidos. AuthZ access/export/unit/CC. Smoke federado: `INCONCLUSIVE` neste ambiente.
 
 **Pedidos de compra (WF-05):** MFE → `supplies-api` → `api-delpi` `GET /supplies/purchase-orders` (SC7 aberto, multi-unidade, `sort_by`/`sort_dir`, `summary`); BFF `GET /purchase-orders` + `GET /purchase-orders/export` (XLSX; operations + units). MFE: MultiSelect de unidades (nome sem código), Tabela/Cards, sort server-side, Excel, colunas/fonte persistidos. Clique na linha abre a ficha E8. Distinto do painel OTD. Smoke federado: `INCONCLUSIVE`.
 

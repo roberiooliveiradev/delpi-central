@@ -82,6 +82,73 @@ class PurchaseRequestScopeResolver:
             return codes
         return allowed_codes
 
+    def resolve_for_branches(
+        self,
+        *,
+        user,
+        branches: list[str],
+        explicit_cost_center: str | None = None,
+        explicit_cost_centers: list[str] | None = None,
+        scope_rows: list[dict] | None = None,
+    ) -> ScopeResolution:
+        view_all = has_view_all(user)
+        if view_all:
+            resolution = ScopeResolution(view_all=True, allowed_cost_centers=frozenset())
+        else:
+            allowed = self._union_active_scopes(scope_rows or [])
+            branch_set = set(branches)
+            resolution = ScopeResolution(
+                view_all=False,
+                allowed_cost_centers=frozenset(
+                    item for item in allowed if item.branch in branch_set
+                ),
+            )
+        explicit = normalize_cost_center_codes(
+            explicit_cost_center=explicit_cost_center,
+            explicit_cost_centers=explicit_cost_centers,
+        )
+        if explicit and not resolution.view_all:
+            allowed_any = {
+                item.cost_center_code
+                for item in resolution.allowed_cost_centers
+                if item.cost_center_code in set(explicit)
+            }
+            if not allowed_any:
+                raise PermissionError(
+                    f"Sem permissão para consultar o centro de custo {explicit[0]}."
+                )
+        return resolution
+
+    def effective_cost_center_scopes(
+        self,
+        resolution: ScopeResolution,
+        *,
+        branches: list[str],
+        explicit_cost_center: str | None = None,
+        explicit_cost_centers: list[str] | None = None,
+    ) -> list[str] | None:
+        """None = view-all without explicit CC. [] = fail-closed empty. Else `branch:code`."""
+        explicit = normalize_cost_center_codes(
+            explicit_cost_center=explicit_cost_center,
+            explicit_cost_centers=explicit_cost_centers,
+        )
+        if resolution.view_all:
+            if not explicit:
+                return None
+            return [f"{branch}:{code}" for branch in branches for code in explicit]
+        scopes: list[str] = []
+        for branch in branches:
+            allowed_codes = set(resolution.cost_center_codes_for_branch(branch))
+            selected = explicit or sorted(allowed_codes)
+            for code in selected:
+                if code in allowed_codes:
+                    scopes.append(f"{branch}:{code}")
+        if explicit and not scopes:
+            raise PermissionError(
+                f"Sem permissão para consultar o centro de custo {explicit[0]}."
+            )
+        return scopes
+
     @staticmethod
     def _union_active_scopes(rows: list[dict]) -> set[CostCenterScope]:
         result: set[CostCenterScope] = set()

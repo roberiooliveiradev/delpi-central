@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from app.domain.services.pagination_tier_service import PaginationTierService
+from app.domain.totvs.protheus_branches import normalize_branch_code
 
 from datetime import date, timedelta
 from typing import Iterable
@@ -10,6 +11,13 @@ from typing import Iterable
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql import (
     branch_filter_and,
+)
+
+PURCHASE_REQUESTS_SORT_FIELDS: tuple[str, ...] = (
+    "request_number",
+    "issue_date",
+    "requester",
+    "cost_center",
 )
 
 DEFAULT_LOOKBACK_DAYS = 90
@@ -33,12 +41,128 @@ def _protheus_date_param(iso_date: str) -> str:
     return iso_date.replace("-", "")
 
 
+def normalize_purchase_request_branches(
+    *,
+    branch: str | None = None,
+    branches: list[str] | None = None,
+) -> list[str]:
+    raw: list[str] = []
+    if isinstance(branches, str):
+        raw = [branches]
+    elif branches:
+        raw = list(branches)
+    if not raw and branch:
+        raw = [branch]
+    codes: list[str] = []
+    seen: set[str] = set()
+    for item in raw:
+        code = normalize_branch_code(str(item or "").strip())
+        if code in seen:
+            continue
+        seen.add(code)
+        codes.append(code)
+    if not codes:
+        raise ValueError("at least one branch is required")
+    return codes
+
+
+def parse_cost_center_scopes(raw: Iterable[str] | None) -> list[tuple[str, str]]:
+    scopes: list[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for item in raw or []:
+        text = str(item or "").strip()
+        if ":" not in text:
+            raise ValueError("Invalid cc_scope")
+        branch_raw, code = text.split(":", 1)
+        branch = normalize_branch_code(branch_raw.strip())
+        cost_center = code.strip()
+        if not cost_center:
+            raise ValueError("Invalid cc_scope")
+        key = (branch, cost_center)
+        if key in seen:
+            continue
+        seen.add(key)
+        scopes.append(key)
+    return scopes
+
+
+def _branch_in_sql(codes: list[str]) -> tuple[str, list[str]]:
+    if len(codes) == 1:
+        return "RTRIM(SC1.C1_FILIAL) = ?", codes
+    placeholders = ", ".join("?" * len(codes))
+    return f"RTRIM(SC1.C1_FILIAL) IN ({placeholders})", codes
+
+
+def _cost_center_scope_sql(scopes: list[tuple[str, str]]) -> tuple[str, list]:
+    grouped: dict[str, list[str]] = {}
+    for branch, code in scopes:
+        grouped.setdefault(branch, []).append(code)
+    clauses: list[str] = []
+    params: list = []
+    for branch, codes in grouped.items():
+        placeholders = ", ".join("?" * len(codes))
+        clauses.append(
+            f"(RTRIM(SC1.C1_FILIAL) = ? AND RTRIM(SC1.C1_CC) IN ({placeholders}))"
+        )
+        params.append(branch)
+        params.extend(codes)
+    return "(" + " OR ".join(clauses) + ")", params
+
+
+def resolve_purchase_requests_order_by(
+    *,
+    sort_by: str | None = None,
+    sort_dir: str | None = None,
+    grain: str = "header",
+) -> str:
+    key = (sort_by or "").strip()
+    direction = (sort_dir or "desc").strip().lower()
+    if direction not in {"asc", "desc"}:
+        raise ValueError("Invalid sort_dir")
+    if grain == "header":
+        default = """
+        MIN(RTRIM(SC1.C1_EMISSAO)) DESC,
+        RTRIM(SC1.C1_NUM) DESC,
+        RTRIM(SC1.C1_FILIAL) DESC
+        """
+        mapping = {
+            "request_number": "RTRIM(SC1.C1_NUM)",
+            "issue_date": "MIN(RTRIM(SC1.C1_EMISSAO))",
+            "requester": "MIN(RTRIM(COALESCE(SC1.C1_SOLICIT, '')))",
+            "cost_center": "MIN(RTRIM(ISNULL(SC1.C1_CC, '')))",
+        }
+        if not key:
+            return default.strip()
+        expression = mapping.get(key)
+        if expression is None:
+            raise ValueError("Invalid sort_by")
+        return (
+            f"{expression} {direction.upper()}, "
+            "RTRIM(SC1.C1_NUM) DESC, RTRIM(SC1.C1_FILIAL) DESC"
+        )
+    default = "SC1.C1_EMISSAO DESC, SC1.C1_NUM DESC, SC1.C1_ITEM ASC"
+    mapping = {
+        "request_number": "SC1.C1_NUM",
+        "issue_date": "SC1.C1_EMISSAO",
+        "requester": "RTRIM(COALESCE(SC1.C1_SOLICIT, ''))",
+        "cost_center": "RTRIM(ISNULL(SC1.C1_CC, ''))",
+    }
+    if not key:
+        return default
+    expression = mapping.get(key)
+    if expression is None:
+        raise ValueError("Invalid sort_by")
+    return f"{expression} {direction.upper()}, SC1.C1_NUM ASC, SC1.C1_ITEM ASC"
+
+
 def build_purchase_request_lines_filters(
     *,
-    branch: str,
+    branch: str | None = None,
+    branches: list[str] | None = None,
     date_from: str | None = None,
     date_to: str | None = None,
     cost_centers: Iterable[str] | None = None,
+    cost_center_scopes: Iterable[str] | None = None,
     request_number: str | None = None,
     requester_protheus_user_ids: Iterable[str] | None = None,
     product_code: str | None = None,
@@ -47,7 +171,12 @@ def build_purchase_request_lines_filters(
 ) -> tuple[str, list]:
     start_iso, end_iso = default_date_range(date_from=date_from, date_to=date_to)
     qb = QueryBuilder()
-    branch_clause, branch_params = branch_filter_and("RTRIM(SC1.C1_FILIAL)", branch)
+    codes = normalize_purchase_request_branches(branch=branch, branches=branches)
+    if len(codes) == 1 and not cost_center_scopes:
+        branch_clause, branch_params = branch_filter_and("RTRIM(SC1.C1_FILIAL)", codes[0])
+    else:
+        branch_clause, branch_params = _branch_in_sql(codes)
+        branch_clause = f"AND {branch_clause}"
     filters = ["SC1.D_E_L_E_T_ = ''"]
     params: list = list(branch_params)
     if branch_clause:
@@ -68,8 +197,13 @@ def build_purchase_request_lines_filters(
     if product_code:
         filters.append("RTRIM(SC1.C1_PRODUTO) = ?")
         params.append(product_code.strip())
+    scopes = parse_cost_center_scopes(cost_center_scopes)
     centers = [str(code).strip() for code in (cost_centers or []) if str(code).strip()]
-    if centers:
+    if scopes:
+        cc_clause, cc_params = _cost_center_scope_sql(scopes)
+        filters.append(cc_clause)
+        params.extend(cc_params)
+    elif centers:
         placeholders = ", ".join("?" for _ in centers)
         filters.append(f"RTRIM(SC1.C1_CC) IN ({placeholders})")
         params.extend(centers)
@@ -130,7 +264,14 @@ def build_purchase_request_headers_count_sql(where_clause: str) -> str:
 def build_purchase_request_headers_page_sql(
     *,
     where_clause: str,
+    sort_by: str | None = None,
+    sort_dir: str | None = None,
 ) -> str:
+    order_by = resolve_purchase_requests_order_by(
+        sort_by=sort_by,
+        sort_dir=sort_dir,
+        grain="header",
+    )
     return f"""
     SELECT
         RTRIM(SC1.C1_FILIAL) AS branch,
@@ -140,9 +281,7 @@ def build_purchase_request_headers_page_sql(
     WHERE {where_clause}
     GROUP BY RTRIM(SC1.C1_FILIAL), RTRIM(SC1.C1_NUM)
     ORDER BY
-        MIN(RTRIM(SC1.C1_EMISSAO)) DESC,
-        RTRIM(SC1.C1_NUM) DESC,
-        RTRIM(SC1.C1_FILIAL) DESC
+        {order_by}
     OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
     """
 
@@ -201,18 +340,73 @@ def build_purchase_request_lines_for_request_numbers_sql(
     *,
     where_clause: str,
     request_numbers: list[str],
+    sort_by: str | None = None,
+    sort_dir: str | None = None,
 ) -> tuple[str, list]:
     if not request_numbers:
         return _purchase_request_line_select_sql("1 = 0"), []
     placeholders = ", ".join("?" for _ in request_numbers)
     scoped_where = f"{where_clause} AND RTRIM(SC1.C1_NUM) IN ({placeholders})"
+    order_by = resolve_purchase_requests_order_by(
+        sort_by=sort_by,
+        sort_dir=sort_dir,
+        grain="line",
+    )
     sql = (
         _purchase_request_line_select_sql(scoped_where)
-        + """
-    ORDER BY SC1.C1_EMISSAO DESC, SC1.C1_NUM DESC, SC1.C1_ITEM ASC
+        + f"""
+    ORDER BY {order_by}
     """
     )
     return sql, list(request_numbers)
+
+
+def build_purchase_request_lines_for_request_keys_sql(
+    *,
+    where_clause: str,
+    request_keys: list[tuple[str, str]],
+    sort_by: str | None = None,
+    sort_dir: str | None = None,
+) -> tuple[str, list]:
+    if not request_keys:
+        return _purchase_request_line_select_sql("1 = 0"), []
+    clauses: list[str] = []
+    extra: list = []
+    for branch, request_number in request_keys:
+        clauses.append("(RTRIM(SC1.C1_FILIAL) = ? AND RTRIM(SC1.C1_NUM) = ?)")
+        extra.extend([branch, request_number])
+    scoped_where = f"{where_clause} AND ({' OR '.join(clauses)})"
+    order_by = resolve_purchase_requests_order_by(
+        sort_by=sort_by,
+        sort_dir=sort_dir,
+        grain="line",
+    )
+    sql = (
+        _purchase_request_line_select_sql(scoped_where)
+        + f"""
+    ORDER BY {order_by}
+    """
+    )
+    return sql, extra
+
+
+def build_purchase_request_lines_export_sql(
+    *,
+    where_clause: str,
+    sort_by: str | None = None,
+    sort_dir: str | None = None,
+) -> str:
+    order_by = resolve_purchase_requests_order_by(
+        sort_by=sort_by,
+        sort_dir=sort_dir,
+        grain="line",
+    )
+    return (
+        _purchase_request_line_select_sql(where_clause)
+        + f"""
+    ORDER BY {order_by}
+    """
+    )
 
 
 def build_purchase_request_lines_list_sql(
@@ -220,11 +414,18 @@ def build_purchase_request_lines_list_sql(
     where_clause: str,
     offset: int,
     page_size: int,
+    sort_by: str | None = None,
+    sort_dir: str | None = None,
 ) -> str:
+    order_by = resolve_purchase_requests_order_by(
+        sort_by=sort_by,
+        sort_dir=sort_dir,
+        grain="line",
+    )
     return (
         _purchase_request_line_select_sql(where_clause)
-        + """
-    ORDER BY SC1.C1_EMISSAO DESC, SC1.C1_NUM DESC, SC1.C1_ITEM ASC
+        + f"""
+    ORDER BY {order_by}
     OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
     """
     )

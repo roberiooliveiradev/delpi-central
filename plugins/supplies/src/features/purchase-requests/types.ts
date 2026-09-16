@@ -72,13 +72,17 @@ export type PurchaseRequestDetail = {
   timeline?: Array<{ type: string; date?: string | null; label?: string | null }>;
 };
 
+export type PurchaseRequestsSortDir = "asc" | "desc";
+
 export type PurchaseRequestsQuery = {
-  branch: string;
+  branches: string[];
   date_from: string;
   date_to: string;
   request_number: string;
   product_code: string;
   overall_stages: OverallStage[];
+  sort_by: string;
+  sort_dir: PurchaseRequestsSortDir;
   page: number;
   page_size: number;
   request: string;

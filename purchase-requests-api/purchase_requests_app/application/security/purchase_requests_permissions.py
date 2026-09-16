@@ -74,3 +74,27 @@ def has_branch_access(user, branch: str) -> bool:
 def assert_branch_access(user, branch: str) -> None:
     if not has_branch_access(user, branch):
         raise PermissionError(f"Sem permissão para acessar dados da filial {branch}.")
+
+
+def normalize_branches(values: list[str] | None, *, fallback: str | None = None) -> list[str]:
+    raw = list(values or [])
+    if not raw and fallback:
+        raw = [fallback]
+    codes: list[str] = []
+    seen: set[str] = set()
+    for item in raw:
+        code = normalize_branch(item)
+        if not code or code in seen:
+            continue
+        seen.add(code)
+        codes.append(code)
+    return codes
+
+
+def assert_branches_access(user, branches: list[str]) -> list[str]:
+    codes = normalize_branches(branches)
+    if not codes:
+        raise PermissionError("Sem permissão para acessar dados da filial.")
+    for code in codes:
+        assert_branch_access(user, code)
+    return codes

@@ -1,23 +1,25 @@
-import { Download } from "lucide-react";
-import { useMemo, type CSSProperties, type ReactNode } from "react";
+import { useMemo, type CSSProperties } from "react";
 
 import { buildPluginPath } from "../../app/pluginRoutes";
 import {
   DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS,
   HelpTooltip,
-  SuppliesActionButton,
+  ExcelExportButton,
   SuppliesCompactPagination,
   SuppliesDataListToolbar,
   SuppliesDataTable,
   SuppliesEntityLink,
+  SuppliesSegmentToggle,
   SuppliesStatusBadge,
   SuppliesTableColumnVisibilityMenu,
   SuppliesTableFontSizeControls,
+  usePersistedViewLayout,
   useTableColumnVisibility,
   useTableFontSize,
   type DataTableColumn,
 } from "../../app/suppliesUi";
 import { SP_HELP } from "../../content/helpTooltips";
+import { PurchaseRequestsCards } from "./PurchaseRequestsCards";
 import { PURCHASE_REQUESTS_CONTENT as C } from "./content";
 import {
   buildRequestKey,
@@ -26,6 +28,8 @@ import {
   formatProductLabel,
   formatRequestNumber,
   labelOverallStage,
+  nextServerSort,
+  tableSortKey,
 } from "./query";
 import { purchaseRequestsColumnHelp } from "./purchaseRequestsColumnHelp";
 import {
@@ -33,6 +37,7 @@ import {
   PURCHASE_REQUESTS_TABLE_COLUMNS,
   PURCHASE_REQUESTS_TABLE_EMPTY_FALLBACK_KEYS,
   PURCHASE_REQUESTS_TABLE_FONT_SIZE_STORAGE_KEY,
+  PURCHASE_REQUESTS_VIEW_LAYOUT_STORAGE_KEY,
   type PurchaseRequestTableColumnKey,
 } from "./purchaseRequestsTableConfig";
 import type { OverallStage, PurchaseRequestListItem, PurchaseRequestsQuery } from "./types";
@@ -97,6 +102,10 @@ export function PurchaseRequestsListTable({
   onPatchQuery,
   onSelectRow,
 }: PurchaseRequestsListTableProps) {
+  const { layout, setLayout } = usePersistedViewLayout({
+    storageKey: PURCHASE_REQUESTS_VIEW_LAYOUT_STORAGE_KEY,
+  });
+
   const columnPrefs = useTableColumnVisibility({
     storageKey: PURCHASE_REQUESTS_COLUMN_STORAGE_KEY,
     columns: PURCHASE_REQUESTS_TABLE_COLUMNS,
@@ -122,7 +131,7 @@ export function PurchaseRequestsListTable({
           key: column.key,
           header: column.label,
           headerHint: purchaseRequestsColumnHelp(key),
-          sortable: false,
+          sortable: key === "request_number" || key === "requester" || key === "cost_center" || key === "opened",
           interactive: key === "request_number",
           rowClick: key === "request_number" ? ("stop" as const) : undefined,
           render: (row: PurchaseRequestListItem) => {
@@ -181,43 +190,35 @@ export function PurchaseRequestsListTable({
     [fontSizePrefs.fontSize],
   );
 
-  const toolbarActions: ReactNode = (
-    <>
-      {canExport ? (
-        <SuppliesActionButton
-          type="button"
-          variant="ghost"
-          title={C.exportTitle}
-          onClick={onExport}
-          disabled={loading}
-        >
-          <Download size={16} strokeWidth={1.75} aria-hidden="true" />{" "}
-          {C.exportLabel}
-        </SuppliesActionButton>
-      ) : null}
-      <SuppliesTableFontSizeControls
-        fontSize={fontSizePrefs.fontSize}
-        canIncrease={fontSizePrefs.canIncrease}
-        canDecrease={fontSizePrefs.canDecrease}
-        isDefault={fontSizePrefs.isDefault}
-        onIncrease={fontSizePrefs.increase}
-        onDecrease={fontSizePrefs.decrease}
-        onReset={fontSizePrefs.reset}
-      />
-      <SuppliesTableColumnVisibilityMenu
-        columns={columnPrefs.orderedColumns}
-        visibility={columnPrefs.visibility}
-        onToggleColumn={columnPrefs.setColumnVisible}
-        onReset={columnPrefs.reset}
-        onReorderColumns={columnPrefs.reorderColumns}
-        labels={DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS}
-      />
-    </>
-  );
+  const showCards = layout === "cards";
+  const detailHref = (item: PurchaseRequestListItem) =>
+    buildRequestDetailHref(basePath, query, item);
 
   return (
     <>
       <SuppliesDataListToolbar
+        leading={
+          <HelpTooltip
+            content={SP_HELP.purchaseRequestsView}
+            ariaLabel="Ajuda: modo Tabela ou Cards"
+            wrap
+            placement="bottom"
+          >
+            <SuppliesSegmentToggle
+              ariaLabel={C.viewAriaLabel}
+              idPrefix="purchase-requests-layout"
+              size="sm"
+              value={showCards ? "cards" : "table"}
+              onChange={(value) => {
+                if (value === "table" || value === "cards") setLayout(value);
+              }}
+              options={[
+                { value: "table", label: C.viewTable },
+                { value: "cards", label: C.viewCards },
+              ]}
+            />
+          </HelpTooltip>
+        }
         hint={
           <HelpTooltip
             content={SP_HELP.purchaseRequestsTableMeta}
@@ -230,35 +231,87 @@ export function PurchaseRequestsListTable({
             </span>
           </HelpTooltip>
         }
-        actions={toolbarActions}
+        actions={
+          <>
+            {canExport ? (
+              <HelpTooltip
+                content={SP_HELP.purchaseRequestsExport}
+                ariaLabel="Ajuda: exportar Excel"
+                wrap
+                placement="bottom"
+              >
+                <ExcelExportButton
+                  density="toolbar"
+                  onExport={onExport}
+                  disabled={loading || total === 0}
+                  label={C.exportLabel}
+                  exportingLabel={C.excelExporting}
+                />
+              </HelpTooltip>
+            ) : null}
+            <SuppliesTableFontSizeControls
+              fontSize={fontSizePrefs.fontSize}
+              canIncrease={fontSizePrefs.canIncrease}
+              canDecrease={fontSizePrefs.canDecrease}
+              isDefault={fontSizePrefs.isDefault}
+              onIncrease={fontSizePrefs.increase}
+              onDecrease={fontSizePrefs.decrease}
+              onReset={fontSizePrefs.reset}
+            />
+            <SuppliesTableColumnVisibilityMenu
+              columns={columnPrefs.orderedColumns}
+              visibility={columnPrefs.visibility}
+              onToggleColumn={columnPrefs.setColumnVisible}
+              onReset={columnPrefs.reset}
+              onReorderColumns={columnPrefs.reorderColumns}
+              labels={DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS}
+            />
+          </>
+        }
       />
 
-      <div
-        className="sp-list-table-region"
-        role="region"
-        aria-label={C.tableScrollRegion}
-        tabIndex={0}
-        style={tableStyle}
-      >
-        <SuppliesDataTable
-          layout="section"
-          columns={columns}
-          rows={items}
-          rowKey={(row) =>
-            `${row.branch}-${row.request_number}-${row.request_item ?? ""}`
-          }
-          onRowClick={onSelectRow}
-          getRowClassName={(row) =>
-            query.request === buildRequestKey(row.branch, row.request_number)
-              ? "is-selected"
-              : undefined
-          }
-          getRowProps={(row) => ({
-            "aria-label": `${C.detailTitle} ${formatRequestNumber(row.request_number)}`,
-          })}
-          loading={loading}
+      {showCards ? (
+        <PurchaseRequestsCards
+          items={items}
+          detailHref={detailHref}
+          onSelectRow={onSelectRow}
         />
-      </div>
+      ) : (
+        <div
+          className="sp-list-table-region"
+          role="region"
+          aria-label={C.tableScrollRegion}
+          tabIndex={0}
+          style={tableStyle}
+        >
+          <SuppliesDataTable
+            layout="section"
+            columns={columns}
+            rows={items}
+            rowKey={(row) =>
+              `${row.branch}-${row.request_number}-${row.request_item ?? ""}`
+            }
+            onRowClick={onSelectRow}
+            getRowClassName={(row) =>
+              query.request === buildRequestKey(row.branch, row.request_number)
+                ? "is-selected"
+                : undefined
+            }
+            getRowProps={(row) => ({
+              "aria-label": `${C.detailTitle} ${formatRequestNumber(row.request_number)}`,
+            })}
+            loading={loading}
+            sortKey={tableSortKey(query.sort_by)}
+            sortDirection={query.sort_dir}
+            onSortChange={(columnKey) => {
+              const next = nextServerSort(query, columnKey);
+              if (next) onPatchQuery(next);
+            }}
+            enableColumnReorder
+            onColumnOrderChange={columnPrefs.applyVisibleOrder}
+          />
+        </div>
+      )}
 
       <SuppliesCompactPagination
         page={query.page}
