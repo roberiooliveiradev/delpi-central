@@ -151,3 +151,24 @@ Cards/Board/unidades de domínio = opt-in por jornada
 fila de páginas = inalterada
 implementação = somente após promoção/autorização da página correspondente
 ```
+
+---
+
+## 9. Purchase Orders (WF-05/WF-06) — inventário executado
+
+Evidência no HEAD após conclusão UX da lista + ficha (sem promover paridade total com Comercial):
+
+| Capability | Comercial | plugin-ui | Supplies (PO) | Backend necessário? | Decisão |
+|---|---|---|---|---|---|
+| DataTable canônico | sim | sim | HTML + toolbar kit | não | **RESIDUAL** — tabela própria; toolbar/prefs via kit |
+| sort server-side | sim | sim | — | sim (`sort`/`order_by` ausente em GET `/purchase-orders`) | **BLOCKED_BY_CONTRACT** |
+| column visibility | sim | sim | sim (`useTableColumnVisibility`) | não | **IMPLEMENTED** |
+| column reorder | sim | sim (`TableColumnVisibilityMenu`) | sim | não | **IMPLEMENTED** |
+| persisted preferences | sim | localStorage kit | chaves `supplies:purchase-orders:*` | não | **IMPLEMENTED** |
+| font size | sim | sim | sim | não | **IMPLEMENTED** |
+| pagination | sim | `createCompactPagination` | sim | não (page/page_size/total na URL) | **IMPLEMENTED** |
+| Excel export | sim | sim | — | sim (sem rota/capability PO) | **BLOCKED_BY_CONTRACT** |
+| table/cards/board | sim | sim | — | — | **OUT_OF_SCOPE** |
+| mobile overflow | sim | — | sim (region + scroll) | não | **IMPLEMENTED** (preservado) |
+| attention chips | sim | `ScopeChipBar` | Atenção Todos/Atrasados | não (`late_only`) | **IMPLEMENTED** |
+| refresh + freshness | sim | — | Atualizar + horário local | não | **IMPLEMENTED** |

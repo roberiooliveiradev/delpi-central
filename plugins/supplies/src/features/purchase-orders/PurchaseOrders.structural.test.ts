@@ -46,10 +46,31 @@ describe("PurchaseOrders feature", () => {
     expect(page).not.toContain('type="date"');
 
     const filters = readFileSync(join(dir, "PurchaseOrdersFilters.tsx"), "utf8");
-    expect(filters).toContain("SuppliesFilterBarShell");
     expect(filters).toContain("SuppliesDateField");
     expect(filters).toContain("SuppliesSelectField");
     expect(filters).toContain("SP_HELP.purchaseOrdersBranch");
+    expect(filters).not.toContain("SuppliesSegmentToggle");
+
+    expect(page).toContain("SuppliesScopeChipBar");
+    expect(page).toContain("attentionLate");
+    expect(page).toContain("late_only: false");
+    expect(page).toContain("late_only: true");
+    expect(page).toContain("lastUpdatedAt");
+    expect(page).toContain("PurchaseOrdersListTable");
+    expect(page).not.toContain("SuppliesSegmentToggle");
+  });
+
+  it("toolbar usa primitivos plugin-ui e chaves de storage Suprimentos", () => {
+    const table = readFileSync(join(dir, "PurchaseOrdersListTable.tsx"), "utf8");
+    expect(table).toContain("SuppliesDataListToolbar");
+    expect(table).toContain("SuppliesTableFontSizeControls");
+    expect(table).toContain("SuppliesTableColumnVisibilityMenu");
+    expect(table).toContain("SuppliesCompactPagination");
+    const config = readFileSync(join(dir, "purchaseOrdersTableConfig.ts"), "utf8");
+    expect(config).toContain("supplies:purchase-orders:column-prefs:v1");
+    expect(config).toContain("supplies:purchase-orders:table-font-size:v1");
+    expect(table).toMatch(/role=\"region\"/);
+    expect(table).toMatch(/tabIndex=\{0\}/);
   });
 
   it("ficha cobre loading, 403, 404, retry e receipts vazios", () => {
@@ -70,12 +91,15 @@ describe("PurchaseOrders feature", () => {
   });
 
   it("lista e ficha usam scroll horizontal intencional na tabela", () => {
-    const list = readFileSync(join(dir, "PurchaseOrdersPage.tsx"), "utf8");
+    const list = readFileSync(join(dir, "PurchaseOrdersListTable.tsx"), "utf8");
     expect(list).toContain("sp-purchase-orders__table-wrap");
     expect(list).toContain("C.tableScrollRegion");
     expect(list).toMatch(/role=\"region\"/);
     expect(list).toMatch(/tabIndex=\{0\}/);
-    expect(list).not.toContain("api-delpi");
+
+    const page = readFileSync(join(dir, "PurchaseOrdersPage.tsx"), "utf8");
+    expect(page).toContain("PurchaseOrdersListTable");
+    expect(page).not.toContain("api-delpi");
 
     const css = readFileSync(join(dir, "../../index.css"), "utf8");
     expect(css).toMatch(

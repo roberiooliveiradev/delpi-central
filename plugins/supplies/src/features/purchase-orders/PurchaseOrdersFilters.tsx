@@ -1,9 +1,7 @@
 import {
   SuppliesActionButton,
   SuppliesDateField,
-  SuppliesFilterBarShell,
   SuppliesSelectField,
-  SuppliesSegmentToggle,
   SuppliesTextField,
   spFiltersKit,
 } from "../../app/suppliesUi";
@@ -37,29 +35,6 @@ export function PurchaseOrdersFilters({
         onApply();
       }}
     >
-      <SuppliesFilterBarShell
-        embedded
-        ariaLabel={C.filtersAriaLabel}
-        leading={
-          <div>
-            <SuppliesSegmentToggle
-              ariaLabel={C.lateOnlyLabel}
-              idPrefix="po-late-only"
-              size="sm"
-              value={query.late_only ? "late" : "all"}
-              onChange={(value) =>
-                onPatch({ late_only: value === "late", page: 1 })
-              }
-              options={[
-                { value: "all", label: C.lateOnlyNo },
-                { value: "late", label: C.lateOnlyYes },
-              ]}
-            />
-          </div>
-        }
-      >
-        {null}
-      </SuppliesFilterBarShell>
       <FiltersRow variant="extended">
         <SuppliesSelectField
           label={C.branchLabel}

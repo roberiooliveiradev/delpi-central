@@ -957,6 +957,32 @@
   align-items: center;
 }
 
+.dashboard-supplies-portal .sp-purchase-orders__chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px 28px;
+  min-width: 0;
+  margin-bottom: 12px;
+}
+
+.dashboard-supplies-portal .sp-purchase-orders__toolbar-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-supplies-portal .sp-purchase-orders__freshness {
+  font-size: 0.75rem;
+  color: var(--sp-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-supplies-portal .sp-purchase-orders .delpi-ui-data-list-toolbar {
+  margin-bottom: 0.75rem;
+}
+
 .dashboard-supplies-portal .sp-purchase-orders__meta {
   display: flex;
   flex-wrap: wrap;

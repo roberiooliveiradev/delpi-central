@@ -147,7 +147,7 @@ export const USER_MANUAL_CONTENT = {
         "Início — atenção, busca, favoritos e caminhos por capability.",
         "Visão geral — cockpit de KPIs do período (não é a tela inicial).",
         "OTD — velocímetros de pontualidade e evolução; abra pelo Início, catálogo Análises ou CTA da Visão geral.",
-        "Pedidos de compra — linhas abertas (saldo a receber); clique para a ficha com itens, recebimentos e SC origem. Distinto do OTD de pontualidade.",
+        "Pedidos de compra — linhas abertas (saldo a receber); use Atenção (Todos/Atrasados), filtros e Atualizar na lista; clique na linha para a ficha com itens, recebimentos e SC origem. Distinto do OTD de pontualidade.",
         "Solicitações de compras — lista/detalhe no escopo CC+filial; exportação CSV com permissão separada.",
         "Operações — pedidos, entregas, fornecedores, produtos, estoque e ESTSEG.",
         "Indicadores / Negociações — recorte analítico quando liberado.",

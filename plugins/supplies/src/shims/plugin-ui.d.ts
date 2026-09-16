@@ -440,6 +440,92 @@ declare module "@delpi/plugin-ui/index" {
     className?: string;
   }>;
 
+  export function createDashboardScopeChipBar(config: {
+    prefix: string;
+  }): ComponentType<{
+    chips: Array<{
+      id: string;
+      label: ReactNode;
+      active?: boolean;
+      onSelect?: () => void;
+    }>;
+    label?: ReactNode;
+    className?: string;
+    "aria-label"?: string;
+  }>;
+
+  export function createCompactPagination(config: {
+    prefix: string;
+    layout?: string;
+    labels: Record<string, unknown>;
+  }): ComponentType<{
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages?: number;
+    pageSizeOptions?: readonly number[];
+    onPageChange: (page: number) => void;
+    onPageSizeChange?: (pageSize: number) => void;
+    disabled?: boolean;
+  }>;
+
+  export function createDashboardDataListToolbar(config: {
+    prefix: string;
+  }): ComponentType<{
+    actions?: ReactNode;
+    leading?: ReactNode;
+    hint?: ReactNode;
+  }>;
+
+  export function createDashboardTableFontSizeControls(config: {
+    prefix: string;
+  }): ComponentType<{
+    fontSize: number;
+    canIncrease: boolean;
+    canDecrease: boolean;
+    isDefault: boolean;
+    onIncrease: () => void;
+    onDecrease: () => void;
+    onReset: () => void;
+  }>;
+
+  export function useTableFontSize(options: {
+    storageKey: string;
+    enabled?: boolean;
+  }): {
+    fontSize: number;
+    increase: () => void;
+    decrease: () => void;
+    reset: () => void;
+    canIncrease: boolean;
+    canDecrease: boolean;
+    isDefault: boolean;
+  };
+
+  export function useTableColumnVisibility(options: {
+    storageKey: string;
+    columns: ReadonlyArray<{ key: string; label: string }>;
+    emptyFallbackKeys?: readonly string[];
+  }): {
+    visibility: Record<string, boolean>;
+    orderedColumns: ReadonlyArray<{ key: string; label: string }>;
+    visibleKeys: string[];
+    setColumnVisible: (key: string, visible: boolean) => void;
+    reorderColumns: (fromKey: string, toKey: string) => void;
+    reset: () => void;
+  };
+
+  export const DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS: Record<string, unknown>;
+
+  export function TableColumnVisibilityMenu(props: {
+    columns: ReadonlyArray<{ key: string; label: string }>;
+    visibility: Record<string, boolean>;
+    onToggleColumn: (key: string, visible: boolean) => void;
+    onReset: () => void;
+    onReorderColumns?: (fromKey: string, toKey: string) => void;
+    labels: Record<string, unknown>;
+  }): ReactNode;
+
   export function createDashboardSegmentToggle(prefix: string): ComponentType<{
     ariaLabel?: string;
     idPrefix?: string;

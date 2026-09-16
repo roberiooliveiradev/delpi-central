@@ -17,11 +17,15 @@ import {
   createDashboardRouteChip,
   createDashboardSectionCard,
   createDashboardSectionRouteCard,
+  createCompactPagination,
+  createDashboardDataListToolbar,
+  createDashboardScopeChipBar,
   createDashboardSegmentToggle,
   createDashboardSelectField,
   createDashboardStateBanner,
   createDashboardStatusBadge,
   createDashboardTabularExportButtons,
+  createDashboardTableFontSizeControls,
   createDashboardTextField,
   createDashboardTitleWithHelp,
   createDashboardTopBar,
@@ -29,6 +33,10 @@ import {
   createDashboardViewTransition,
   createFilterBarShell,
   createInitialsAvatar,
+  DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS,
+  TableColumnVisibilityMenu,
+  useTableColumnVisibility,
+  useTableFontSize,
   catalogSearchBarBemClasses,
   dateFieldBemClasses,
   emptyStateCardBemClasses,
@@ -167,7 +175,39 @@ export const SuppliesMultiSelectField = createDashboardMultiSelectField({
 });
 
 export const SuppliesSegmentToggle = createDashboardSegmentToggle(UI_PREFIX);
+export const SuppliesScopeChipBar = createDashboardScopeChipBar({ prefix: UI_PREFIX });
+export const SuppliesDataListToolbar = createDashboardDataListToolbar({ prefix: UI_PREFIX });
+export const SuppliesTableFontSizeControls = createDashboardTableFontSizeControls({
+  prefix: UI_PREFIX,
+});
+export const SuppliesTableColumnVisibilityMenu = TableColumnVisibilityMenu;
+export const SuppliesCompactPagination = createCompactPagination({
+  prefix: UI_PREFIX,
+  layout: "flat",
+  labels: {
+    info: ({
+      page,
+      totalPages,
+      total,
+    }: {
+      page: number;
+      totalPages: number;
+      total: number;
+      pageSize: number;
+    }) => `${total.toLocaleString("pt-BR")} linha(s) · Página ${page} de ${totalPages}`,
+    pageSizeLabel: "Linhas por página",
+    previous: "Anterior",
+    next: "Próxima",
+    navigationAriaLabel: "Paginação de pedidos de compra",
+  },
+});
 export const SuppliesSectionHintLabel = SectionHintLabel;
+
+export {
+  DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS,
+  useTableColumnVisibility,
+  useTableFontSize,
+};
 
 export const SuppliesTitleWithHelp = createDashboardTitleWithHelp({
   classNames: titleWithHelpBemClasses(UI_PREFIX),

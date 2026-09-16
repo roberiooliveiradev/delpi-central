@@ -91,7 +91,15 @@ export const SP_HELP = {
   purchaseOrdersProduct: "Filtra por código de produto/MP da linha.",
   purchaseOrdersSupplier: "Filtra pelo código do fornecedor (A2).",
   purchaseOrdersDelivery:
-    "Recorte pela data prometida de entrega. «Somente atrasados» usa a data prometida anterior a hoje.",
+    "Recorte pela data prometida de entrega (de/até). O chip «Atrasados» em Atenção filtra linhas com prometida anterior a hoje.",
+  purchaseOrdersAttention:
+    "Todos mostra o recorte completo dos filtros; Atrasados restringe às linhas com entrega prometida vencida. A URL guarda late_only para compartilhar ou atualizar (F5).",
+  purchaseOrdersRefresh:
+    "Recarrega a lista com os mesmos filtros. O horário é da última consulta bem-sucedida nesta tela, não do TOTVS.",
+  purchaseOrdersTableFontSize:
+    "Ajusta o tamanho da fonte da tabela neste navegador. A preferência fica salva localmente.",
+  purchaseOrdersTableColumns:
+    "Escolha quais colunas exibir e arraste para reordenar. A preferência fica salva neste navegador; não altera permissões nem dados.",
   purchaseOrderDetail:
     "Ficha somente leitura do pedido em aberto: itens, data prometida, recebimentos e a SC de origem de cada item. Copie o endereço da página para compartilhar; atualizar restaura a mesma ficha. Pedidos encerrados não aparecem.",
   purchaseOrderDetailItems:
