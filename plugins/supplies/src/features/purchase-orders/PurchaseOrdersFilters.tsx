@@ -2,12 +2,6 @@ import { useCallback } from "react";
 import { Filter } from "lucide-react";
 
 import {
-  matchPeriodPreset,
-  PERIOD_PRESET_OPTIONS,
-  resolvePeriodPreset,
-  type PeriodPresetId,
-} from "../../app/periodPreset";
-import {
   buildSuppliesUnitOptions,
   canonicalizeUiBranches,
   SUPPLIES_UNIT_FILTER_LABEL,
@@ -26,6 +20,12 @@ import {
 import { SP_HELP } from "../../content/helpTooltips";
 import { PURCHASE_ORDERS_CONTENT as C } from "./content";
 import { hasActivePurchaseOrdersFilters } from "./hasActiveFilters";
+import {
+  matchPurchaseOrdersPeriod,
+  PURCHASE_ORDERS_PERIOD_OPTIONS,
+  resolvePurchaseOrdersPeriod,
+  type PurchaseOrdersPeriodId,
+} from "./purchaseOrdersPeriod";
 import type { PurchaseOrdersQuery } from "./types";
 
 type PurchaseOrdersFiltersProps = {
@@ -44,7 +44,7 @@ export function PurchaseOrdersFilters({
   const { FiltersRow } = spFiltersKit;
   const unitOptions = buildSuppliesUnitOptions(units);
   const hasActiveFilters = hasActivePurchaseOrdersFilters(query, units);
-  const period = matchPeriodPreset(
+  const period = matchPurchaseOrdersPeriod(
     query.expected_delivery_from,
     query.expected_delivery_to,
   );
@@ -72,13 +72,21 @@ export function PurchaseOrdersFilters({
     supplier.flush();
   };
 
-  const onPeriod = (value: PeriodPresetId) => {
+  const onPeriod = (value: PurchaseOrdersPeriodId) => {
     if (value === "custom") return;
-    const range = resolvePeriodPreset(value);
-    if (!range) return;
+    const resolved = resolvePurchaseOrdersPeriod(value);
+    if (resolved === "unbounded") {
+      onPatch({
+        expected_delivery_from: "",
+        expected_delivery_to: "",
+        page: 1,
+      });
+      return;
+    }
+    if (!resolved) return;
     onPatch({
-      expected_delivery_from: range.from,
-      expected_delivery_to: range.to,
+      expected_delivery_from: resolved.from,
+      expected_delivery_to: resolved.to,
       page: 1,
     });
   };
@@ -126,8 +134,8 @@ export function PurchaseOrdersFilters({
                 idPrefix="purchase-orders-period-preset"
                 size="sm"
                 value={period}
-                onChange={(value) => onPeriod(value as PeriodPresetId)}
-                options={PERIOD_PRESET_OPTIONS}
+                onChange={(value) => onPeriod(value as PurchaseOrdersPeriodId)}
+                options={PURCHASE_ORDERS_PERIOD_OPTIONS}
               />
             </div>
           </div>

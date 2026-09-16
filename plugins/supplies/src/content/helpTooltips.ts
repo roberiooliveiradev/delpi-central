@@ -115,7 +115,7 @@ export const SP_HELP = {
   purchaseOrdersProduct: "Filtra por código de produto/MP da linha.",
   purchaseOrdersSupplier: "Filtra pelo código do fornecedor (A2).",
   purchaseOrdersDelivery:
-    "Período de entrega prometida — mesmos atalhos da Visão geral (Hoje, Esta semana…). Editar datas manualmente vira Personalizado. Sem datas = sem filtro de entrega (Personalizado). O chip «Atrasados» em Atenção filtra linhas com prometida anterior a hoje. F5 deriva o atalho das datas na URL (sem param de preset).",
+    "Período de entrega prometida. «Sem filtro» = nenhuma restrição de data prometida (todos os PCs abertos do recorte). Atalhos (Hoje, Esta semana…) preenchem De/Até. Personalizado = intervalo manual que não coincide com um atalho. O chip «Atrasados» em Atenção filtra linhas com prometida anterior a hoje. F5 deriva o atalho das datas na URL (sem param de preset).",
   purchaseOrdersAttention:
     "Todos (N) e Atrasados (N) usam o resumo do servidor no mesmo recorte de filtros; alternar o chip não muda os contadores. A URL guarda late_only para compartilhar ou atualizar (F5).",
   purchaseOrdersRefresh:

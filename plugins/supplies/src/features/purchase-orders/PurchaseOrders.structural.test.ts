@@ -173,10 +173,12 @@ describe("PurchaseOrders feature", () => {
     expect(cards).toContain("buildPurchaseOrderDetailPath");
 
     const filters = readFileSync(join(dir, "PurchaseOrdersFilters.tsx"), "utf8");
-    expect(filters).toContain("PERIOD_PRESET_OPTIONS");
-    expect(filters).toContain("matchPeriodPreset");
+    expect(filters).toContain("PURCHASE_ORDERS_PERIOD_OPTIONS");
+    expect(filters).toContain("matchPurchaseOrdersPeriod");
     expect(filters).toContain("C.periodLabel");
     expect(filters).toContain("SuppliesSegmentToggle");
+    expect(filters).not.toContain("PERIOD_PRESET_OPTIONS");
+    expect(filters).not.toContain("matchPeriodPreset(");
 
     const config = readFileSync(join(dir, "purchaseOrdersTableConfig.ts"), "utf8");
     expect(config).toContain("supplies:purchase-orders:column-prefs:v1");
