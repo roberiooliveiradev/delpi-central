@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { Filter } from "lucide-react";
 
 import {
@@ -14,7 +14,6 @@ import {
 } from "../../app/suppliesUnits";
 import { useCommittedTextFilter } from "../../app/useCommittedTextFilter";
 import {
-  SuppliesActionButton,
   SuppliesClearFiltersButton,
   SuppliesDateField,
   SuppliesFilterBarShell,
@@ -46,7 +45,6 @@ export function PurchaseRequestsFilters({
   onClear,
 }: PurchaseRequestsFiltersProps) {
   const { FiltersRow } = spFiltersKit;
-  const [showMore, setShowMore] = useState(false);
   const unitOptions = buildSuppliesUnitOptions(units);
   const hasActiveFilters = hasActivePurchaseRequestsFilters(query);
   const stageOptions = OVERALL_STAGE_VALUES.map((stage) => ({
@@ -91,110 +89,102 @@ export function PurchaseRequestsFilters({
         embedded
         ariaLabel={C.filtersAriaLabel}
         leading={
-          <div className="sp-filter-bar__header">
-            <div className="sp-filter-bar__title">
-              <Filter size={18} aria-hidden="true" />
-              <h2>
-                <SuppliesSectionHintLabel
-                  label={C.filtersTitle}
-                  hint={SP_HELP.purchaseRequestsFilters}
-                />
-              </h2>
-            </div>
-            <div className="sp-filter-bar__header-actions">
-              <SuppliesActionButton
-                type="button"
-                variant="ghost"
-                onClick={() => setShowMore((value) => !value)}
-              >
-                {showMore ? C.lessFilters : C.moreFilters}
-              </SuppliesActionButton>
+          <div className="sp-filter-bar__period-block">
+            <div className="sp-filter-bar__header">
+              <div className="sp-filter-bar__title">
+                <Filter size={18} aria-hidden="true" />
+                <h2>
+                  <SuppliesSectionHintLabel
+                    label={C.filtersTitle}
+                    hint={SP_HELP.purchaseRequestsFilters}
+                  />
+                </h2>
+              </div>
               {hasActiveFilters ? (
-                <SuppliesClearFiltersButton
-                  density="compact"
-                  label={C.clearFilters}
-                  onClick={onClear}
-                />
+                <div className="sp-filter-bar__header-actions">
+                  <SuppliesClearFiltersButton
+                    density="compact"
+                    label={C.clearFilters}
+                    onClick={onClear}
+                  />
+                </div>
               ) : null}
+            </div>
+            <div className="sp-purchase-requests__period-presets">
+              <SuppliesSectionHintLabel
+                label={C.periodLabel}
+                hint={SP_HELP.purchaseRequestsPeriod}
+              />
+              <SuppliesSegmentToggle
+                ariaLabel={C.periodLabel}
+                idPrefix="purchase-requests-period-preset"
+                size="sm"
+                value={period}
+                onChange={(value) => onPeriod(value as PeriodPresetId)}
+                options={PERIOD_PRESET_OPTIONS}
+              />
             </div>
           </div>
         }
       >
-        <FiltersRow variant="extended">
-          <SuppliesMultiSelectField
-            label={SUPPLIES_UNIT_FILTER_LABEL}
-            hint={SP_HELP.purchaseRequestsBranch}
-            selectedValues={query.branches}
-            onChange={(values) =>
-              onPatch({
-                branches: canonicalizeUiBranches(values, units),
-                page: 1,
-              })
-            }
-            options={unitOptions}
-            emptyLabel="Todas"
-            searchable
-          />
-          <SuppliesTextField
-            label={C.requestNumberLabel}
-            value={requestNumber.draft}
-            onChange={requestNumber.setDraft}
-            hint={SP_HELP.purchaseRequestsNumber}
-          />
-          <SuppliesTextField
-            label={C.productLabel}
-            value={product.draft}
-            onChange={product.setDraft}
-            hint={SP_HELP.purchaseRequestsProduct}
-          />
-          <SuppliesSelectField
-            label={C.stageLabel}
-            hint={SP_HELP.purchaseRequestsStage}
-            value={query.overall_stages[0] ?? ""}
-            onChange={(value) => {
-              const stage = value as OverallStage | "";
-              onPatch({
-                overall_stages: stage ? [stage] : [],
-                page: 1,
-              });
-            }}
-            options={stageOptions}
-            allowEmpty
-            emptyLabel={C.stageAll}
-            searchable={false}
-          />
-          {showMore ? (
-            <>
-              <div className="sp-purchase-requests__period-presets">
-                <SuppliesSectionHintLabel
-                  label={C.periodLabel}
-                  hint={SP_HELP.purchaseRequestsPeriod}
-                />
-                <SuppliesSegmentToggle
-                  ariaLabel={C.periodLabel}
-                  idPrefix="purchase-requests-period-preset"
-                  size="sm"
-                  value={period}
-                  onChange={(value) => onPeriod(value as PeriodPresetId)}
-                  options={PERIOD_PRESET_OPTIONS}
-                />
-              </div>
-              <SuppliesDateField
-                label={C.dateFromLabel}
-                value={query.date_from}
-                onChange={(value) => onPatch({ date_from: value, page: 1 })}
-                hint={SP_HELP.purchaseRequestsPeriod}
-              />
-              <SuppliesDateField
-                label={C.dateToLabel}
-                value={query.date_to}
-                onChange={(value) => onPatch({ date_to: value, page: 1 })}
-                hint={SP_HELP.purchaseRequestsPeriod}
-              />
-            </>
-          ) : null}
-        </FiltersRow>
+        {null}
       </SuppliesFilterBarShell>
+      <FiltersRow variant="extended">
+        <SuppliesDateField
+          label={C.dateFromLabel}
+          value={query.date_from}
+          onChange={(value) => onPatch({ date_from: value, page: 1 })}
+          hint={SP_HELP.purchaseRequestsPeriod}
+        />
+        <SuppliesDateField
+          label={C.dateToLabel}
+          value={query.date_to}
+          onChange={(value) => onPatch({ date_to: value, page: 1 })}
+          hint={SP_HELP.purchaseRequestsPeriod}
+        />
+        <SuppliesMultiSelectField
+          label={SUPPLIES_UNIT_FILTER_LABEL}
+          hint={SP_HELP.purchaseRequestsBranch}
+          selectedValues={query.branches}
+          onChange={(values) =>
+            onPatch({
+              branches: canonicalizeUiBranches(values, units),
+              page: 1,
+            })
+          }
+          options={unitOptions}
+          emptyLabel="Todas"
+          searchable
+        />
+        <SuppliesTextField
+          label={C.requestNumberLabel}
+          value={requestNumber.draft}
+          onChange={requestNumber.setDraft}
+          hint={SP_HELP.purchaseRequestsNumber}
+        />
+        <SuppliesTextField
+          label={C.productLabel}
+          value={product.draft}
+          onChange={product.setDraft}
+          hint={SP_HELP.purchaseRequestsProduct}
+        />
+        <SuppliesSelectField
+          label={C.stageLabel}
+          hint={SP_HELP.purchaseRequestsStage}
+          value={query.overall_stages[0] ?? ""}
+          onChange={(value) => {
+            const stage = value as OverallStage | "";
+            onPatch({
+              overall_stages: stage ? [stage] : [],
+              page: 1,
+            });
+          }}
+          options={stageOptions}
+          allowEmpty
+          emptyLabel={C.stageAll}
+          searchable={false}
+        />
+      </FiltersRow>
     </form>
   );
 }

@@ -69,6 +69,9 @@ describe("PurchaseRequests feature", () => {
     expect(filters).toContain("PERIOD_PRESET_OPTIONS");
     expect(filters).toContain("matchPeriodPreset");
     expect(filters).toContain("C.periodLabel");
+    expect(filters).toContain("sp-filter-bar__period-block");
+    expect(filters).not.toContain("C.moreFilters");
+    expect(filters).not.toContain("showMore");
     expect(filters).not.toContain("searchable={unitOptions.length > 4}");
     expect(filters).not.toContain("Aplicar filtros");
   });

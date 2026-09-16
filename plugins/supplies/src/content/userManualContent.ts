@@ -203,7 +203,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Como compartilho o recorte da lista de SC?",
-          a: "A URL da lista guarda unidade, período (date_from/date_to), situação, produto e ordenação (sort_by/sort_dir). Sem branch na URL significa Todas as unidades liberadas. Em Mais filtros, os atalhos de período preenchem as datas; editar datas vira Personalizado. F5 restaura o mesmo estado e deriva o atalho das datas.",
+          a: "A URL da lista guarda unidade, período (date_from/date_to), situação, produto e ordenação (sort_by/sort_dir). Sem branch na URL significa Todas as unidades liberadas. Os atalhos de período (iguais à Visão geral) preenchem as datas; editar datas vira Personalizado. O padrão é Este mês. F5 restaura o mesmo estado e deriva o atalho das datas.",
         },
         {
           q: "Como ordeno a lista de SC ou pedidos em Cards?",

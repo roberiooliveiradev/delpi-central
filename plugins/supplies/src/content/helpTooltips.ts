@@ -82,7 +82,7 @@ export const SP_HELP = {
   purchaseRequestsSortDirection:
     "Alterna crescente ou decrescente na mesma coluna. Vale para Cards e compartilha sort_by/sort_dir com a tabela.",
   purchaseRequestsPeriod:
-    "Período de abertura da SC (em Mais filtros). Use os atalhos (Hoje, Esta semana…) ou as datas; editar datas manualmente vira Personalizado. Compartilhável pela URL via date_from/date_to (F5 restaura o recorte; o atalho é derivado das datas).",
+    "Período de abertura da SC — mesmos atalhos da Visão geral (Hoje, Esta semana, Este mês…). Editar datas manualmente vira Personalizado. Compartilhável pela URL via date_from/date_to (F5 restaura o recorte; o atalho é derivado das datas). O padrão é Este mês.",
   purchaseRequestsNumber: "Filtra pelo número da solicitação de compras.",
   purchaseRequestsProduct: "Filtra por código ou trecho de produto/MP da linha.",
   purchaseRequestsStage:
@@ -90,7 +90,7 @@ export const SP_HELP = {
   purchaseRequestsExport:
     "Exporta para Excel o recorte filtrado inteiro (todas as unidades selecionadas), sem truncar na página. Exige permissão de exportação além do acesso à lista. CSV permanece disponível como formato legado.",
   purchaseRequestsFilters:
-    "Filtros aplicam automaticamente. Texto confirma após um instante ou com Enter. Mais filtros revela o período e os atalhos. Limpar só aparece quando há filtro além do padrão (todas as unidades liberadas e período baseline não contam sozinhos).",
+    "Filtros aplicam automaticamente. Texto confirma após um instante ou com Enter. Atalhos de período ficam sempre visíveis (como na Visão geral). Limpar só aparece quando há filtro além do padrão (todas as unidades liberadas e período Este mês não contam sozinhos).",
   purchaseRequestsRefresh:
     "Recarrega a lista com os mesmos filtros. O horário é da última consulta bem-sucedida nesta tela, não do TOTVS.",
   purchaseRequestsTableFontSize:
@@ -114,13 +114,13 @@ export const SP_HELP = {
   purchaseOrdersProduct: "Filtra por código de produto/MP da linha.",
   purchaseOrdersSupplier: "Filtra pelo código do fornecedor (A2).",
   purchaseOrdersDelivery:
-    "Período de entrega prometida (em Mais filtros). Use os atalhos (Hoje, Esta semana…) ou as datas; editar datas manualmente vira Personalizado. O chip «Atrasados» em Atenção filtra linhas com prometida anterior a hoje. F5 deriva o atalho das datas na URL (sem param de preset).",
+    "Período de entrega prometida — mesmos atalhos da Visão geral (Hoje, Esta semana…). Editar datas manualmente vira Personalizado. Sem datas = sem filtro de entrega (Personalizado). O chip «Atrasados» em Atenção filtra linhas com prometida anterior a hoje. F5 deriva o atalho das datas na URL (sem param de preset).",
   purchaseOrdersAttention:
     "Todos (N) e Atrasados (N) usam o resumo do servidor no mesmo recorte de filtros; alternar o chip não muda os contadores. A URL guarda late_only para compartilhar ou atualizar (F5).",
   purchaseOrdersRefresh:
     "Recarrega a lista e o resumo com os mesmos filtros. O horário é da última consulta bem-sucedida nesta tela, não do TOTVS.",
   purchaseOrdersFilters:
-    "Filtros aplicam automaticamente. Texto confirma após um instante ou com Enter. Mais filtros revela o período de entrega e os atalhos. Limpar só aparece quando há filtro além do padrão (todas as unidades liberadas não contam sozinhas).",
+    "Filtros aplicam automaticamente. Texto confirma após um instante ou com Enter. Atalhos de período de entrega ficam sempre visíveis (como na Visão geral). Limpar só aparece quando há filtro além do padrão (todas as unidades liberadas não contam sozinhas).",
   purchaseOrdersView:
     "Tabela ou Cards usam o mesmo recorte paginado. A preferência fica neste navegador e não muda dados nem permissões.",
   purchaseOrdersSort:

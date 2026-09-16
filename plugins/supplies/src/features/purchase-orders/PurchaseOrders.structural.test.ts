@@ -96,8 +96,10 @@ describe("PurchaseOrders feature", () => {
     const filters = readFileSync(join(dir, "PurchaseOrdersFilters.tsx"), "utf8");
     expect(filters).toContain("SuppliesFilterBarShell");
     expect(filters).toContain("sp-filter-bar__header");
-    expect(filters).toContain("C.moreFilters");
-    expect(filters).toContain("C.lessFilters");
+    expect(filters).toContain("sp-filter-bar__period-block");
+    expect(filters).not.toContain("C.moreFilters");
+    expect(filters).not.toContain("C.lessFilters");
+    expect(filters).not.toContain("showMore");
     expect(filters).toContain("SuppliesClearFiltersButton");
     expect(filters).toContain("hasActivePurchaseOrdersFilters");
     expect(filters).toContain("buildSuppliesUnitOptions");

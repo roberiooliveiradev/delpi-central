@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { Filter } from "lucide-react";
 
 import {
@@ -14,7 +14,6 @@ import {
 } from "../../app/suppliesUnits";
 import { useCommittedTextFilter } from "../../app/useCommittedTextFilter";
 import {
-  SuppliesActionButton,
   SuppliesClearFiltersButton,
   SuppliesDateField,
   SuppliesFilterBarShell,
@@ -43,7 +42,6 @@ export function PurchaseOrdersFilters({
   onClear,
 }: PurchaseOrdersFiltersProps) {
   const { FiltersRow } = spFiltersKit;
-  const [showMore, setShowMore] = useState(false);
   const unitOptions = buildSuppliesUnitOptions(units);
   const hasActiveFilters = hasActivePurchaseOrdersFilters(query, units);
   const period = matchPeriodPreset(
@@ -97,101 +95,93 @@ export function PurchaseOrdersFilters({
         embedded
         ariaLabel={C.filtersAriaLabel}
         leading={
-          <div className="sp-filter-bar__header">
-            <div className="sp-filter-bar__title">
-              <Filter size={18} aria-hidden="true" />
-              <h2>
-                <SuppliesSectionHintLabel
-                  label={C.filtersTitle}
-                  hint={SP_HELP.purchaseOrdersFilters}
-                />
-              </h2>
-            </div>
-            <div className="sp-filter-bar__header-actions">
-              <SuppliesActionButton
-                type="button"
-                variant="ghost"
-                onClick={() => setShowMore((value) => !value)}
-              >
-                {showMore ? C.lessFilters : C.moreFilters}
-              </SuppliesActionButton>
+          <div className="sp-filter-bar__period-block">
+            <div className="sp-filter-bar__header">
+              <div className="sp-filter-bar__title">
+                <Filter size={18} aria-hidden="true" />
+                <h2>
+                  <SuppliesSectionHintLabel
+                    label={C.filtersTitle}
+                    hint={SP_HELP.purchaseOrdersFilters}
+                  />
+                </h2>
+              </div>
               {hasActiveFilters ? (
-                <SuppliesClearFiltersButton
-                  density="compact"
-                  label={C.clearFilters}
-                  onClick={onClear}
-                />
+                <div className="sp-filter-bar__header-actions">
+                  <SuppliesClearFiltersButton
+                    density="compact"
+                    label={C.clearFilters}
+                    onClick={onClear}
+                  />
+                </div>
               ) : null}
+            </div>
+            <div className="sp-purchase-orders__period-presets">
+              <SuppliesSectionHintLabel
+                label={C.periodLabel}
+                hint={SP_HELP.purchaseOrdersDelivery}
+              />
+              <SuppliesSegmentToggle
+                ariaLabel={C.periodLabel}
+                idPrefix="purchase-orders-period-preset"
+                size="sm"
+                value={period}
+                onChange={(value) => onPeriod(value as PeriodPresetId)}
+                options={PERIOD_PRESET_OPTIONS}
+              />
             </div>
           </div>
         }
       >
-        <FiltersRow variant="extended">
-          <SuppliesMultiSelectField
-            className="sp-purchase-orders__unit-filter"
-            label={SUPPLIES_UNIT_FILTER_LABEL}
-            hint={SP_HELP.purchaseOrdersBranch}
-            selectedValues={query.branches}
-            onChange={(values) =>
-              onPatch({
-                branches: canonicalizeUiBranches(values, units),
-                page: 1,
-              })
-            }
-            options={unitOptions}
-            emptyLabel="Todas"
-            searchable
-          />
-          <SuppliesTextField
-            label={C.orderNumberLabel}
-            value={orderNumber.draft}
-            onChange={orderNumber.setDraft}
-            hint={SP_HELP.purchaseOrdersNumber}
-          />
-          <SuppliesTextField
-            label={C.productLabel}
-            value={product.draft}
-            onChange={product.setDraft}
-            hint={SP_HELP.purchaseOrdersProduct}
-          />
-          <SuppliesTextField
-            label={C.supplierLabel}
-            value={supplier.draft}
-            onChange={supplier.setDraft}
-            hint={SP_HELP.purchaseOrdersSupplier}
-          />
-          {showMore ? (
-            <>
-              <div className="sp-purchase-orders__period-presets">
-                <SuppliesSectionHintLabel
-                  label={C.periodLabel}
-                  hint={SP_HELP.purchaseOrdersDelivery}
-                />
-                <SuppliesSegmentToggle
-                  ariaLabel={C.periodLabel}
-                  idPrefix="purchase-orders-period-preset"
-                  size="sm"
-                  value={period}
-                  onChange={(value) => onPeriod(value as PeriodPresetId)}
-                  options={PERIOD_PRESET_OPTIONS}
-                />
-              </div>
-              <SuppliesDateField
-                label={C.deliveryFromLabel}
-                value={query.expected_delivery_from}
-                onChange={(value) => onPatch({ expected_delivery_from: value, page: 1 })}
-                hint={SP_HELP.purchaseOrdersDelivery}
-              />
-              <SuppliesDateField
-                label={C.deliveryToLabel}
-                value={query.expected_delivery_to}
-                onChange={(value) => onPatch({ expected_delivery_to: value, page: 1 })}
-                hint={SP_HELP.purchaseOrdersDelivery}
-              />
-            </>
-          ) : null}
-        </FiltersRow>
+        {null}
       </SuppliesFilterBarShell>
+      <FiltersRow variant="extended">
+        <SuppliesDateField
+          label={C.deliveryFromLabel}
+          value={query.expected_delivery_from}
+          onChange={(value) => onPatch({ expected_delivery_from: value, page: 1 })}
+          hint={SP_HELP.purchaseOrdersDelivery}
+        />
+        <SuppliesDateField
+          label={C.deliveryToLabel}
+          value={query.expected_delivery_to}
+          onChange={(value) => onPatch({ expected_delivery_to: value, page: 1 })}
+          hint={SP_HELP.purchaseOrdersDelivery}
+        />
+        <SuppliesMultiSelectField
+          className="sp-purchase-orders__unit-filter"
+          label={SUPPLIES_UNIT_FILTER_LABEL}
+          hint={SP_HELP.purchaseOrdersBranch}
+          selectedValues={query.branches}
+          onChange={(values) =>
+            onPatch({
+              branches: canonicalizeUiBranches(values, units),
+              page: 1,
+            })
+          }
+          options={unitOptions}
+          emptyLabel="Todas"
+          searchable
+        />
+        <SuppliesTextField
+          label={C.orderNumberLabel}
+          value={orderNumber.draft}
+          onChange={orderNumber.setDraft}
+          hint={SP_HELP.purchaseOrdersNumber}
+        />
+        <SuppliesTextField
+          label={C.productLabel}
+          value={product.draft}
+          onChange={product.setDraft}
+          hint={SP_HELP.purchaseOrdersProduct}
+        />
+        <SuppliesTextField
+          label={C.supplierLabel}
+          value={supplier.draft}
+          onChange={supplier.setDraft}
+          hint={SP_HELP.purchaseOrdersSupplier}
+        />
+      </FiltersRow>
     </form>
   );
 }

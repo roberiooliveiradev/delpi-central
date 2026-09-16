@@ -4,7 +4,7 @@ import type { PurchaseRequestsQuery } from "./types";
 /**
  * Active filters for Clear visibility.
  * Default authorized branch is NOT active by itself.
- * Default rolling period (date_from/date_to) is baseline, not active.
+ * Default period «Este mês» (date_from/date_to) is baseline, not active.
  * Page/page_size/request (inline detail) are navigation, not filters.
  */
 export function hasActivePurchaseRequestsFilters(query: PurchaseRequestsQuery): boolean {

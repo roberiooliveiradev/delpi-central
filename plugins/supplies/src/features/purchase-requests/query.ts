@@ -1,3 +1,4 @@
+import { resolvePeriodPreset } from "../../app/periodPreset";
 import {
   canonicalizeUiBranches,
   normalizeSuppliesUnitCode,
@@ -18,22 +19,13 @@ export const PURCHASE_REQUESTS_SORTABLE_COLUMNS = {
 
 export type PurchaseRequestSortableColumnKey = keyof typeof PURCHASE_REQUESTS_SORTABLE_COLUMNS;
 
-const LOOKBACK_DAYS = 90;
-
-function pad2(value: number): string {
-  return String(value).padStart(2, "0");
-}
-
-function formatIsoDate(date: Date): string {
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
-}
-
+/** Same default chip as Overview («Este mês»). */
 export function defaultPeriod(): { date_from: string; date_to: string } {
-  const end = new Date();
-  end.setHours(0, 0, 0, 0);
-  const start = new Date(end);
-  start.setDate(start.getDate() - LOOKBACK_DAYS);
-  return { date_from: formatIsoDate(start), date_to: formatIsoDate(end) };
+  const range = resolvePeriodPreset("this_month");
+  if (!range) {
+    throw new Error("resolvePeriodPreset(this_month) must resolve");
+  }
+  return { date_from: range.from, date_to: range.to };
 }
 
 /** UI default: empty branches = «Todas» (API expands via authorizeQueryBranches). */
