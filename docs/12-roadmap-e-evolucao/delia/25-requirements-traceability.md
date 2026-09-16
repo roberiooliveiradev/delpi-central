@@ -541,7 +541,7 @@ Todas as faixas temáticas são subordinadas à ordem de `16`. Nenhuma spec tem�
 
 ## 14. C0.S0 inventory evidence linkage (reconciled)
 
-Evidence anchors: `51` §§10/31/38–46 + `evidence/execution-ledger.md` §§6.1–6.20.  
+Evidence anchors: `51` §§10/31/38–46 + `evidence/execution-ledger.md` §§6.1–6.21.  
 Status vocabulary: inventory **EVIDENCED** ≠ CP **PASS** ≠ C0.S0 COMPLETE.
 
 | CP | Exact gate (inventory) | C0.S0 evidence | Inventory status | CP row status |
@@ -562,7 +562,7 @@ Status vocabulary: inventory **EVIDENCED** ≠ CP **PASS** ≠ C0.S0 COMPLETE.
 | CP-311 | Recurring Work owner vs timer freeze | D | EVIDENCED PARTIAL (definition TARGET; physical scheduler TO_INVENTORY) | PLANNED |
 
 ```text
-TRACEABILITY_GAP: no dedicated C0.S0-A…T CP IDs (tasks map via thematic CPs above)
+CLOSED_NONISSUE: no dedicated C0.S0-A…T CP IDs are required; tasks map via thematic CPs above
 C0.S0 inventory coverage ≠ 100% CP PASS
 No CP promoted to PASS by documentation alone
 ```
