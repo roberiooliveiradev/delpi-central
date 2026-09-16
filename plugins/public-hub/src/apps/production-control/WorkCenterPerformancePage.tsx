@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 // MF: import estático nomeado. lazy+dynamic do Index devolvia undefined → React #306.
 import { ConfigurableSeriesChart } from "@delpi/plugin-ui/index";
 import type { PublicWorkCenterPerformance } from "./api";
@@ -11,6 +11,8 @@ import {
   formatPercent,
   formatQty,
 } from "./cockpitShared";
+
+type ChartPoint = { label: string; value: number | null };
 
 type Props = {
   branch: string;
@@ -45,16 +47,19 @@ export function WorkCenterPerformancePage({
     [efficiency],
   );
 
-  const downtimeByReasonPoints = useMemo(
-    () =>
-      downtime?.available
-        ? downtime.by_reason.map((row) => ({
-            label: row.stop_reason_description || row.stop_reason || "—",
-            value: row.hours,
-          }))
-        : [],
-    [downtime],
-  );
+  const downtimeByReasonPoints = useMemo(() => {
+    if (!downtime?.available) return [];
+    return [...downtime.by_reason]
+      .sort((a, b) => (b.hours ?? 0) - (a.hours ?? 0))
+      .map((row) => {
+        const reason = row.stop_reason_description?.trim() || row.stop_reason?.trim() || "Sem motivo";
+        const count = row.appointment_count ?? 0;
+        return {
+          label: count > 0 ? `${reason} · ${count}×` : reason,
+          value: row.hours,
+        };
+      });
+  }, [downtime]);
 
   const downtimeByDayPoints = useMemo(
     () =>
@@ -125,7 +130,8 @@ export function WorkCenterPerformancePage({
 
                 <ChartCard
                   title="Eficiência por dia"
-                  chartType="line"
+                  subtitle="Percentual em cada dia do período — valor marcado no ponto"
+                  chartType="area"
                   points={efficiencyPoints}
                   yAxisTitle="Eficiência (%)"
                   emptyMessage="Sem apontamentos no período."
@@ -153,6 +159,7 @@ export function WorkCenterPerformancePage({
 
                 <ChartCard
                   title="Horas paradas por motivo"
+                  subtitle="Todos os motivos apontados no período, ordenados do maior para o menor"
                   chartType="horizontal_bar"
                   points={downtimeByReasonPoints}
                   yAxisTitle="Horas"
@@ -160,6 +167,7 @@ export function WorkCenterPerformancePage({
                 />
                 <ChartCard
                   title="Horas paradas por dia"
+                  subtitle="Total de horas paradas em cada dia"
                   chartType="bar"
                   points={downtimeByDayPoints}
                   yAxisTitle="Horas"
@@ -252,29 +260,53 @@ function Kpi({
 
 function ChartCard({
   title,
+  subtitle,
   chartType,
   points,
   yAxisTitle,
   emptyMessage,
 }: {
   title: string;
-  chartType: "line" | "bar" | "horizontal_bar";
-  points: Array<{ label: string; value: number | null }>;
+  subtitle?: string;
+  chartType: "area" | "bar" | "horizontal_bar";
+  points: ChartPoint[];
   yAxisTitle: string;
   emptyMessage: string;
 }): ReactNode {
   if (points.length === 0) {
     return (
       <figure className="pcp-pub__chart">
-        <figcaption>{title}</figcaption>
+        <figcaption>
+          <span className="pcp-pub__chart-title">{title}</span>
+          {subtitle ? <span className="pcp-pub__chart-subtitle">{subtitle}</span> : null}
+        </figcaption>
         <p className="pcp-pub__empty pcp-pub__empty--soft">{emptyMessage}</p>
       </figure>
     );
   }
+
+  const isReasons = chartType === "horizontal_bar";
+  const isTrend = chartType === "area";
+  const plotHeightPx = isReasons
+    ? Math.min(720, Math.max(280, points.length * 42 + 48))
+    : isTrend
+      ? 340
+      : 300;
+
+  const plotStyle = {
+    "--delpi-ui-series-chart-plot-height": `${plotHeightPx}px`,
+  } as CSSProperties;
+
   return (
-    <figure className="pcp-pub__chart">
-      <figcaption>{title}</figcaption>
-      <div className="delpi-ui-series-chart-plot pcp-pub__chart-plot">
+    <figure className={`pcp-pub__chart ${isReasons ? "pcp-pub__chart--reasons" : ""}`}>
+      <figcaption>
+        <span className="pcp-pub__chart-title">{title}</span>
+        {subtitle ? <span className="pcp-pub__chart-subtitle">{subtitle}</span> : null}
+      </figcaption>
+      <div
+        className={`delpi-ui-series-chart-plot pcp-pub__chart-plot pcp-pub__chart-plot--${chartType}`}
+        style={plotStyle}
+      >
         <ConfigurableSeriesChart
           chartType={chartType}
           points={points}
@@ -282,11 +314,29 @@ function ChartCard({
           options={{
             showTitle: false,
             showLegend: false,
+            showGrid: true,
+            showVerticalGrid: isTrend,
+            showMarkers: isTrend,
+            markerMode: "all",
+            smoothLines: isTrend,
+            areaFillGradient: isTrend,
             yAxisTitle,
             xAxisTitle: "",
             showXAxisTitle: false,
+            showYAxisTitle: true,
             valueFormat: "number",
             decimalPlaces: 1,
+            seriesColor: "#089bdb",
+            showDataLabels: true,
+            dataLabels: {
+              showValue: true,
+              showCategoryName: false,
+              position: "outsideEnd",
+            },
+            // Motivos: nunca pular rótulos do eixo — o operador precisa ler todos.
+            categoryLabelOverflow: isReasons ? "wrap" : chartType === "bar" ? "truncate" : "skip",
+            categoryLabelRotation: chartType === "bar" ? "auto" : 0,
+            categoryPaddingPercent: isTrend ? 4 : 2,
           }}
         />
       </div>

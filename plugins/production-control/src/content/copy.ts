@@ -102,7 +102,7 @@ export const copy = {
     dragHandle: "Reordenar",
     operatorLink: "Link do operador",
     operatorLinkHint:
-      "Copia o link público do cockpit desta filial para o operador acompanhar a fila em tempo real.",
+      "Copia o link público do cockpit desta filial para o operador acompanhar a fila em tempo real (card da operação atual e próximas na tabela).",
     operatorLinkCopied: "Link copiado!",
     operatorLinkError: "Não foi possível copiar o link.",
     periodLabel: "Entrega do PA",
