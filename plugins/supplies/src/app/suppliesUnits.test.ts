@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildSuppliesUnitOptions,
+  canonicalizeUiBranches,
   formatSuppliesUnitName,
   formatSuppliesUnitLabel,
   normalizeSuppliesUnitCode,
   resolveDefaultBranch,
   resolveRequestedBranches,
+  SUPPLIES_UNIT_FILTER_LABEL,
 } from "./suppliesUnits";
 
 describe("suppliesUnits", () => {
@@ -15,6 +17,7 @@ describe("suppliesUnits", () => {
     expect(formatSuppliesUnitName("02")).toBe("Espírito Santo");
     expect(formatSuppliesUnitLabel("01")).toBe("Santa Catarina");
     expect(formatSuppliesUnitLabel("02")).toBe("Espírito Santo");
+    expect(SUPPLIES_UNIT_FILTER_LABEL).toBe("Unidade");
   });
 
   it("falls back safely for unknown codes", () => {
@@ -51,10 +54,19 @@ describe("suppliesUnits", () => {
     expect(resolveDefaultBranch([], "01")).toBe("");
   });
 
-  it("expands empty selection to all authorized units", () => {
+  it("expands empty selection to all authorized units for API", () => {
     expect(resolveRequestedBranches([], ["01", "02"])).toEqual(["01", "02"]);
     expect(resolveRequestedBranches(["02"], ["01", "02"])).toEqual(["02"]);
     expect(resolveRequestedBranches(["02"], ["01"])).toEqual(["01"]);
     expect(resolveRequestedBranches(["99"], ["01", "02"])).toEqual(["01", "02"]);
+  });
+
+  it("canonicalizes UI branches to Todas when full authorized scope is selected", () => {
+    expect(canonicalizeUiBranches([], ["01", "02"])).toEqual([]);
+    expect(canonicalizeUiBranches(["01", "02"], ["01", "02"])).toEqual([]);
+    expect(canonicalizeUiBranches(["01"], ["01", "02"])).toEqual(["01"]);
+    expect(canonicalizeUiBranches(["02"], ["01", "02"])).toEqual(["02"]);
+    expect(canonicalizeUiBranches(["01", "99"], ["01", "02"])).toEqual(["01"]);
+    expect(canonicalizeUiBranches(["99"], ["01", "02"])).toEqual([]);
   });
 });

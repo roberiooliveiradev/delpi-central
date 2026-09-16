@@ -7,6 +7,7 @@ export type PluginView =
   | "analytics_otd"
   | "my_tasks"
   | "purchase_requests"
+  | "purchase_request_detail"
   | "purchase_orders"
   | "purchase_order_detail"
   | "deliveries"
@@ -36,7 +37,7 @@ export type PluginNavigationTarget = Exclude<PluginView, "forbidden" | "not_foun
 /** Views navegáveis pelo shell/hub (perfil usa buildUserProfileHref). */
 export type PluginRoutableView = Exclude<
   PluginNavigationTarget,
-  "user_profile" | "purchase_order_detail"
+  "user_profile" | "purchase_order_detail" | "purchase_request_detail"
 >;
 
 export type ResolvedPluginRoute = {
@@ -46,6 +47,7 @@ export type ResolvedPluginRoute = {
   userId?: string;
   branch?: string;
   orderNumber?: string;
+  requestNumber?: string;
 };
 
 export function normalizePathname(pathname: string): string {
@@ -121,6 +123,16 @@ export function resolvePluginRoute(
       userId: decodeURIComponent(userMatch[1]),
     };
   }
+  const prMatch = /^purchase-requests\/([^/]+)\/([^/]+)$/.exec(relativePath);
+  if (prMatch?.[1] && prMatch[2]) {
+    return {
+      view: "purchase_request_detail",
+      pathname: path,
+      relativePath,
+      branch: decodeURIComponent(prMatch[1]),
+      requestNumber: decodeURIComponent(prMatch[2]),
+    };
+  }
   const poMatch = /^purchase-orders\/([^/]+)\/([^/]+)$/.exec(relativePath);
   if (poMatch?.[1] && poMatch[2]) {
     return {
@@ -149,6 +161,15 @@ export function buildUserProfileHref(
   const normalizedSearch = search.startsWith("?") ? search : `?${search}`;
   if (normalizedSearch === "?") return path;
   return `${path}${normalizedSearch}`;
+}
+
+export function buildPurchaseRequestDetailPath(
+  branch: string,
+  requestNumber: string,
+  basePath?: string,
+): string {
+  const base = normalizeBasePath(basePath);
+  return `${base}/purchase-requests/${encodeURIComponent(branch)}/${encodeURIComponent(requestNumber)}`;
 }
 
 export function buildPurchaseOrderDetailPath(
@@ -186,6 +207,7 @@ export function resolveActiveNavId(view: PluginView): PluginNavId | null {
     case "my_tasks":
       return "my_tasks";
     case "purchase_requests":
+    case "purchase_request_detail":
       return "purchase_requests";
     case "purchase_orders":
     case "purchase_order_detail":

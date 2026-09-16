@@ -67,3 +67,32 @@ export function resolveRequestedBranches(
   if (picked.length === 0) return [...allowed];
   return [...new Set(picked)];
 }
+
+/**
+ * UI MultiSelect state: empty = «Todas».
+ * Selecting every authorized unit canonicalizes back to [].
+ * Unauthorized codes are dropped (never shown as selected).
+ */
+export function canonicalizeUiBranches(
+  selected: readonly string[],
+  allowedUnits: readonly string[],
+): string[] {
+  const allowed = allowedUnits.map((unit) => normalizeSuppliesUnitCode(unit)).filter(Boolean);
+  const allowedSet = new Set(allowed);
+  const picked = [
+    ...new Set(
+      selected
+        .map((unit) => normalizeSuppliesUnitCode(unit))
+        .filter((code) => allowedSet.has(code)),
+    ),
+  ];
+  if (picked.length === 0) return [];
+  if (picked.length === allowed.length && allowed.every((code) => picked.includes(code))) {
+    return [];
+  }
+  return picked;
+}
+
+/** Field label shared by Overview / Solicitações / Operações filters. */
+export const SUPPLIES_UNIT_FILTER_LABEL = "Unidade";
+

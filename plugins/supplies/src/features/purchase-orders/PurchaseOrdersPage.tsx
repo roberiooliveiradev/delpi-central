@@ -3,7 +3,7 @@ import { RefreshCw } from "lucide-react";
 
 import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
 import { buildPluginPath, buildPurchaseOrderDetailPath } from "../../app/pluginRoutes";
-import { resolveDefaultBranch, resolveRequestedBranches } from "../../app/suppliesUnits";
+import { canonicalizeUiBranches } from "../../app/suppliesUnits";
 import { useSuppliesSession } from "../../app/SuppliesSessionContext";
 import {
   SuppliesActionButton,
@@ -74,16 +74,17 @@ function isPurchaseOrderSummary(value: unknown): value is PurchaseOrderListSumma
   );
 }
 
+function sameBranches(left: readonly string[], right: readonly string[]): boolean {
+  if (left.length !== right.length) return false;
+  return left.every((code, index) => code === right[index]);
+}
+
 export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
   const session = useSuppliesSession();
   const units = session.allowedUnits;
-  const defaultBranch = resolveDefaultBranch(units, session.preferences?.defaultBranch);
 
   const [query, setQuery] = useState<PurchaseOrdersQuery>(() =>
-    parseQueryFromSearch(
-      readBrowserSearch(),
-      units.length ? units : defaultBranch ? [defaultBranch] : [],
-    ),
+    parseQueryFromSearch(readBrowserSearch(), units),
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -95,25 +96,19 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
 
   useEffect(() => {
     if (!units.length) return;
-    const authorized = resolveRequestedBranches(query.branches, units);
-    const same =
-      authorized.length === query.branches.length &&
-      authorized.every((code) => query.branches.includes(code));
-    if (!same) {
-      setQuery((current) => ({
-        ...current,
-        branches: authorized,
-        page: 1,
-      }));
-    }
-  }, [query.branches, units]);
+    setQuery((current) => {
+      const nextBranches = canonicalizeUiBranches(current.branches, units);
+      if (sameBranches(nextBranches, current.branches)) return current;
+      return { ...current, branches: nextBranches };
+    });
+  }, [units]);
 
   useEffect(() => {
     replaceBrowserSearch(buildUrlSearch(query));
   }, [query]);
 
   useEffect(() => {
-    if (!query.branches.length) return;
+    if (!units.length) return;
     const controller = new AbortController();
     setLoading(true);
     setError(null);
@@ -148,6 +143,7 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
   }, [basePath, query.order]);
 
   const homeHref = buildPluginPath("home", basePath);
+  const exportQuery = authorizeQueryBranches(query, units);
 
   const patchQuery = useCallback((patch: Partial<PurchaseOrdersQuery>) => {
     setQuery((current) => ({ ...current, ...patch }));
@@ -160,7 +156,7 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
   };
 
   const onClear = () => {
-    setQuery(createDefaultQuery(units.length ? units : defaultBranch ? [defaultBranch] : []));
+    setQuery(createDefaultQuery());
   };
 
   const highlights = useMemo(() => {
@@ -298,6 +294,7 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
             <PurchaseOrdersListTable
               items={items}
               query={query}
+              exportQuery={exportQuery}
               total={total}
               loading={loading}
               basePath={basePath}

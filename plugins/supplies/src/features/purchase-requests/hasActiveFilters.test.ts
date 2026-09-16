@@ -4,26 +4,32 @@ import { hasActivePurchaseRequestsFilters } from "./hasActiveFilters";
 import { createDefaultQuery } from "./query";
 
 describe("hasActivePurchaseRequestsFilters", () => {
-  it("ignores default branch and baseline period", () => {
-    expect(hasActivePurchaseRequestsFilters(createDefaultQuery(["01"]))).toBe(false);
+  it("ignores Todas and baseline period", () => {
+    expect(hasActivePurchaseRequestsFilters(createDefaultQuery())).toBe(false);
+    expect(
+      hasActivePurchaseRequestsFilters({
+        ...createDefaultQuery(),
+        branches: ["01", "02"],
+      }),
+    ).toBe(false);
   });
 
   it("detects text, stage and custom period", () => {
     expect(
       hasActivePurchaseRequestsFilters({
-        ...createDefaultQuery(["01"]),
+        ...createDefaultQuery(),
         request_number: "SC1",
       }),
     ).toBe(true);
     expect(
       hasActivePurchaseRequestsFilters({
-        ...createDefaultQuery(["01"]),
+        ...createDefaultQuery(),
         overall_stages: ["awaiting_order"],
       }),
     ).toBe(true);
     expect(
       hasActivePurchaseRequestsFilters({
-        ...createDefaultQuery(["01"]),
+        ...createDefaultQuery(),
         date_from: "2020-01-01",
       }),
     ).toBe(true);

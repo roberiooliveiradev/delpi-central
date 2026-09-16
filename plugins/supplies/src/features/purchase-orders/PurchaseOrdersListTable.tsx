@@ -46,6 +46,7 @@ import { PURCHASE_ORDERS_PAGE_SIZE_OPTIONS } from "./types";
 type PurchaseOrdersListTableProps = {
   items: PurchaseOrderListItem[];
   query: PurchaseOrdersQuery;
+  exportQuery: PurchaseOrdersQuery;
   total: number;
   loading: boolean;
   basePath: string;
@@ -64,6 +65,7 @@ function statusBadgeVariant(
 export function PurchaseOrdersListTable({
   items,
   query,
+  exportQuery,
   total,
   loading,
   basePath,
@@ -174,7 +176,7 @@ export function PurchaseOrdersListTable({
     setExportError(null);
     setExporting(true);
     try {
-      const blob = await exportPurchaseOrders(query);
+      const blob = await exportPurchaseOrders(exportQuery);
       downloadBlob(blob, "purchase-orders.xlsx");
     } catch (err: unknown) {
       setExportError(err instanceof Error ? err.message : C.excelError);

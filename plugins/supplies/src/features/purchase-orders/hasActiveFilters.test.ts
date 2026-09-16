@@ -4,34 +4,38 @@ import { hasActivePurchaseOrdersFilters } from "./hasActiveFilters";
 import { createDefaultQuery } from "./query";
 
 describe("hasActivePurchaseOrdersFilters", () => {
-  it("ignores all authorized units alone", () => {
-    expect(hasActivePurchaseOrdersFilters(createDefaultQuery(["01", "02"]), ["01", "02"])).toBe(
-      false,
-    );
+  it("ignores Todas and full authorized scope alone", () => {
+    expect(hasActivePurchaseOrdersFilters(createDefaultQuery(), ["01", "02"])).toBe(false);
+    expect(
+      hasActivePurchaseOrdersFilters(
+        { ...createDefaultQuery(), branches: ["01", "02"] },
+        ["01", "02"],
+      ),
+    ).toBe(false);
   });
 
   it("detects subset of units, text, dates and late_only", () => {
     expect(
       hasActivePurchaseOrdersFilters(
-        { ...createDefaultQuery(["01"]), branches: ["01"] },
+        { ...createDefaultQuery(), branches: ["01"] },
         ["01", "02"],
       ),
     ).toBe(true);
     expect(
       hasActivePurchaseOrdersFilters({
-        ...createDefaultQuery(["01"]),
+        ...createDefaultQuery(),
         order_number: "100",
       }),
     ).toBe(true);
     expect(
       hasActivePurchaseOrdersFilters({
-        ...createDefaultQuery(["01"]),
+        ...createDefaultQuery(),
         late_only: true,
       }),
     ).toBe(true);
     expect(
       hasActivePurchaseOrdersFilters({
-        ...createDefaultQuery(["01"]),
+        ...createDefaultQuery(),
         expected_delivery_from: "2026-01-01",
       }),
     ).toBe(true);

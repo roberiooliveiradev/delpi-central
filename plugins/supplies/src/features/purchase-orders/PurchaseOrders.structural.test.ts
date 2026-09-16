@@ -74,7 +74,8 @@ describe("PurchaseOrders feature", () => {
     expect(page).toContain("buildPurchaseOrderDetailPath");
     expect(page).toContain("SuppliesScopeChipBar");
     expect(page).toContain("lastUpdatedAt");
-    expect(page).toContain("resolveDefaultBranch");
+    expect(page).toContain("canonicalizeUiBranches");
+    expect(page).toContain("exportQuery");
     expect(page).toContain("PurchaseOrdersListTable");
     expect(page).toContain("highlights=");
     expect(page).toContain("C.heroOpenLines");
@@ -100,6 +101,9 @@ describe("PurchaseOrders feature", () => {
     expect(filters).toContain("hasActivePurchaseOrdersFilters");
     expect(filters).toContain("buildSuppliesUnitOptions");
     expect(filters).toContain("SuppliesMultiSelectField");
+    expect(filters).toContain("SUPPLIES_UNIT_FILTER_LABEL");
+    expect(filters).toContain("canonicalizeUiBranches");
+    expect(filters).not.toContain("searchable={unitOptions.length > 4}");
     expect(filters).toContain("useCommittedTextFilter");
     expect(filters).toContain("SP_HELP.purchaseOrdersFilters");
     expect(filters).not.toContain("Santa Catarina (01)");
@@ -213,28 +217,26 @@ describe("PurchaseOrders feature", () => {
     );
   });
 
-  it("query positive + sibling + negative", () => {
-    const query = createDefaultQuery(["01"]);
-    query.order_number = "000123";
-    query.late_only = true;
+  it("query Todas vs API effective + sibling + negative", () => {
+    const defaults = createDefaultQuery();
+    expect(defaults.branches).toEqual([]);
+    const query = { ...defaults, branches: ["01"], order_number: "000123", late_only: true };
     const params = buildListSearchParams(query);
     expect(params.getAll("branch")).toEqual(["01"]);
     expect(params.get("order_number")).toBe("000123");
     expect(params.get("late_only")).toBe("true");
 
-    const multi = createDefaultQuery(["01", "02"]);
-    multi.sort_by = "open_value";
-    multi.sort_dir = "desc";
+    const multi = { ...defaults, branches: ["01", "02"], sort_by: "open_value", sort_dir: "desc" as const };
     const multiParams = buildListSearchParams(multi);
     expect(multiParams.getAll("branch")).toEqual(["01", "02"]);
     expect(multiParams.get("sort_by")).toBe("open_value");
     expect(multiParams.get("sort_dir")).toBe("desc");
 
     const sibling = parseQueryFromSearch(
-      "?branch=02&branch=01&order=02:200&late_only=true&sort_by=supplier_name&sort_dir=asc",
-      ["01"],
+      "?branch=02&order=02:200&late_only=true&sort_by=supplier_name&sort_dir=asc",
+      ["01", "02"],
     );
-    expect(sibling.branches).toEqual(["02", "01"]);
+    expect(sibling.branches).toEqual(["02"]);
     expect(sibling.late_only).toBe(true);
     expect(sibling.sort_by).toBe("supplier_name");
     expect(parseOrderKey(sibling.order)).toEqual({
@@ -242,11 +244,14 @@ describe("PurchaseOrders feature", () => {
       orderNumber: "200",
     });
     expect(buildUrlSearch(sibling)).toContain("branch=02");
-    expect(buildUrlSearch(sibling)).toContain("branch=01");
+    expect(buildUrlSearch(sibling)).not.toContain("branch=01");
+
+    const both = parseQueryFromSearch("?branch=01&branch=02", ["01", "02"]);
+    expect(both.branches).toEqual([]);
 
     expect(parseOrderKey("invalid")).toBeNull();
     expect(buildOrderKey("01", "100")).toBe("01:100");
-    expect(authorizeQueryBranches(createDefaultQuery([]), ["01", "02"]).branches).toEqual([
+    expect(authorizeQueryBranches(createDefaultQuery(), ["01", "02"]).branches).toEqual([
       "01",
       "02",
     ]);

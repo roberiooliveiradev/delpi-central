@@ -1,4 +1,5 @@
 import {
+  canonicalizeUiBranches,
   normalizeSuppliesUnitCode,
   resolveRequestedBranches,
 } from "../../app/suppliesUnits";
@@ -18,9 +19,12 @@ export const PURCHASE_ORDERS_SORTABLE_COLUMNS = {
 
 export type PurchaseOrderSortableColumnKey = keyof typeof PURCHASE_ORDERS_SORTABLE_COLUMNS;
 
-export function createDefaultQuery(branches: readonly string[]): PurchaseOrdersQuery {
+/** UI default: empty branches = «Todas» (API expands via authorizeQueryBranches). */
+export function createDefaultQuery(
+  _branches: readonly string[] = [],
+): PurchaseOrdersQuery {
   return {
-    branches: [...branches],
+    branches: [],
     order_number: "",
     product_code: "",
     supplier_code: "",
@@ -93,17 +97,21 @@ function readSortDir(raw: string): PurchaseOrdersSortDir {
 
 export function parseQueryFromSearch(
   search: string,
-  fallbackBranches: readonly string[],
+  allowedUnits: readonly string[] = [],
 ): PurchaseOrdersQuery {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
-  const defaults = createDefaultQuery(fallbackBranches);
   const lateRaw = readParam(params, "late_only").toLowerCase();
   const fromUrl = params
     .getAll("branch")
     .map((value) => normalizeSuppliesUnitCode(value))
     .filter(Boolean);
   return {
-    branches: fromUrl.length ? fromUrl : defaults.branches,
+    branches:
+      fromUrl.length === 0
+        ? []
+        : allowedUnits.length
+          ? canonicalizeUiBranches(fromUrl, allowedUnits)
+          : [...new Set(fromUrl)],
     order_number: readParam(params, "order_number"),
     product_code: readParam(params, "product_code"),
     supplier_code: readParam(params, "supplier_code"),

@@ -72,9 +72,9 @@ export const SP_HELP = {
   otdAnalyticsPage:
     "Pontualidade de compras com velocímetros por unidade (Santa Catarina / Espírito Santo) e evolução no tempo. Diferente da Visão geral (placar de KPIs) e de Entregas (atrasos do dia).",
   purchaseRequests:
-    "Lista linhas de SC no escopo de centro de custo e unidades. Sem CC liberado e sem visão ampla, a lista fica vazia (fail-closed). Exportação Excel/CSV exige permissão separada. Clique na SC ou na linha para abrir o detalhe.",
+    "Lista linhas de SC no escopo de centro de custo e unidades. Sem CC liberado e sem visão ampla, a lista fica vazia (fail-closed). Exportação Excel/CSV exige permissão separada. Clique na SC ou na linha para abrir a ficha.",
   purchaseRequestsBranch:
-    "Unidades do recorte (Santa Catarina e/ou Espírito Santo). «Todas» envia as unidades liberadas na sessão. Códigos técnicos ficam só na URL e na API.",
+    "Unidade do recorte (Santa Catarina e/ou Espírito Santo). «Todas» consulta todas as unidades liberadas na sessão. Códigos técnicos ficam só na URL e na API.",
   purchaseRequestsView:
     "Tabela ou Cards usam o mesmo recorte paginado. A preferência fica neste navegador e não muda dados nem permissões.",
   purchaseRequestsSort:
@@ -101,11 +101,13 @@ export const SP_HELP = {
   purchaseRequestsColOpened: "Data de abertura da solicitação de compras.",
   purchaseRequestsColStage: "Situação consolidada da SC a partir do andamento dos itens.",
   purchaseRequestsEntityLink:
-    "O número da SC abre o detalhe na mesma página (URL com request). Você também pode clicar na linha.",
+    "O número da SC abre a ficha em página própria (/purchase-requests/unidade/número). Você também pode clicar na linha ou no card.",
+  purchaseRequestDetail:
+    "Ficha da solicitação de compra no escopo de centro de custo. Itens fora do seu CC não aparecem. Use Voltar para retornar à lista com os filtros anteriores.",
   purchaseOrders:
     "Pedidos de compra em aberto (saldo a receber). O hero mostra linhas em aberto, valor em aberto e atrasadas do recorte das unidades e filtros selecionados (o chip Atrasados não muda os totais). Não é o painel OTD de pontualidade — esse fica na analytics. Clique no PC ou na linha para abrir a ficha.",
   purchaseOrdersBranch:
-    "Unidades do recorte (Santa Catarina e/ou Espírito Santo). «Todas» envia as unidades liberadas na sessão. Códigos técnicos ficam só na URL e na API.",
+    "Unidade do recorte (Santa Catarina e/ou Espírito Santo). «Todas» consulta todas as unidades liberadas na sessão. Códigos técnicos ficam só na URL e na API.",
   purchaseOrdersNumber: "Filtra pelo número do pedido de compra.",
   purchaseOrdersProduct: "Filtra por código de produto/MP da linha.",
   purchaseOrdersSupplier: "Filtra pelo código do fornecedor (A2).",

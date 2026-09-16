@@ -1127,7 +1127,8 @@
   margin: 0.1rem 0 0;
 }
 
-.dashboard-supplies-portal .sp-purchase-order-detail {
+.dashboard-supplies-portal .sp-purchase-order-detail,
+.dashboard-supplies-portal .sp-purchase-request-detail {
   min-width: 0;
   max-width: 100%;
 }
@@ -1172,7 +1173,8 @@
 }
 
 .dashboard-supplies-portal .sp-purchase-order-detail__identity,
-.dashboard-supplies-portal .sp-purchase-order-detail__item-meta {
+.dashboard-supplies-portal .sp-purchase-order-detail__item-meta,
+.dashboard-supplies-portal .sp-purchase-request-detail__identity {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
   gap: 0.75rem;
@@ -1182,18 +1184,21 @@
 }
 
 .dashboard-supplies-portal .sp-purchase-order-detail__identity > div,
-.dashboard-supplies-portal .sp-purchase-order-detail__item-meta > div {
+.dashboard-supplies-portal .sp-purchase-order-detail__item-meta > div,
+.dashboard-supplies-portal .sp-purchase-request-detail__identity > div {
   min-width: 0;
 }
 
 .dashboard-supplies-portal .sp-purchase-order-detail__identity dt,
-.dashboard-supplies-portal .sp-purchase-order-detail__item-meta dt {
+.dashboard-supplies-portal .sp-purchase-order-detail__item-meta dt,
+.dashboard-supplies-portal .sp-purchase-request-detail__identity dt {
   font-size: 0.75rem;
   color: var(--sp-text-muted);
 }
 
 .dashboard-supplies-portal .sp-purchase-order-detail__identity dd,
-.dashboard-supplies-portal .sp-purchase-order-detail__item-meta dd {
+.dashboard-supplies-portal .sp-purchase-order-detail__item-meta dd,
+.dashboard-supplies-portal .sp-purchase-request-detail__identity dd {
   margin: 0.15rem 0 0;
   font-weight: 600;
   overflow-wrap: anywhere;
@@ -1205,7 +1210,8 @@
   font-size: 0.95rem;
 }
 
-.dashboard-supplies-portal .sp-purchase-order-detail__error {
+.dashboard-supplies-portal .sp-purchase-order-detail__error,
+.dashboard-supplies-portal .sp-purchase-request-detail__error {
   display: grid;
   gap: 0.65rem;
   justify-items: start;
@@ -1213,14 +1219,16 @@
 
 @media (max-width: 720px) {
   .dashboard-supplies-portal .sp-purchase-order-detail__identity,
-  .dashboard-supplies-portal .sp-purchase-order-detail__item-meta {
+  .dashboard-supplies-portal .sp-purchase-order-detail__item-meta,
+  .dashboard-supplies-portal .sp-purchase-request-detail__identity {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 400px) {
   .dashboard-supplies-portal .sp-purchase-order-detail__identity,
-  .dashboard-supplies-portal .sp-purchase-order-detail__item-meta {
+  .dashboard-supplies-portal .sp-purchase-order-detail__item-meta,
+  .dashboard-supplies-portal .sp-purchase-request-detail__identity {
     grid-template-columns: minmax(0, 1fr);
   }
 }

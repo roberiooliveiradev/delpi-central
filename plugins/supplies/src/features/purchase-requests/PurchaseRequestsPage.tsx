@@ -1,13 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 
-import { navigatePluginView } from "../../app/pluginNavigation";
-import { buildPluginPath } from "../../app/pluginRoutes";
+import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
 import {
-  formatSuppliesUnitLabel,
-  resolveDefaultBranch,
-  resolveRequestedBranches,
-} from "../../app/suppliesUnits";
+  buildPluginPath,
+  buildPurchaseRequestDetailPath,
+} from "../../app/pluginRoutes";
+import { canonicalizeUiBranches } from "../../app/suppliesUnits";
 import { useSuppliesSession } from "../../app/SuppliesSessionContext";
 import {
   SuppliesActionButton,
@@ -22,7 +21,6 @@ import {
 import { SP_HELP } from "../../content/helpTooltips";
 import {
   downloadPurchaseRequestsExport,
-  getPurchaseRequest,
   listPurchaseRequests,
 } from "./api";
 import {
@@ -33,17 +31,12 @@ import { PurchaseRequestsFilters } from "./PurchaseRequestsFilters";
 import { PurchaseRequestsListTable } from "./PurchaseRequestsListTable";
 import {
   authorizeQueryBranches,
-  buildRequestKey,
   buildUrlSearch,
   createDefaultQuery,
-  formatDatePtBr,
-  formatProductLabel,
-  formatRequestNumber,
-  labelOverallStage,
   parseQueryFromSearch,
   parseRequestKey,
 } from "./query";
-import type { PurchaseRequestDetail, PurchaseRequestListItem, PurchaseRequestsQuery } from "./types";
+import type { PurchaseRequestListItem, PurchaseRequestsQuery } from "./types";
 
 type PurchaseRequestsPageProps = {
   basePath: string;
@@ -69,17 +62,18 @@ function formatUpdatedAt(value: Date): string {
   });
 }
 
+function sameBranches(left: readonly string[], right: readonly string[]): boolean {
+  if (left.length !== right.length) return false;
+  return left.every((code, index) => code === right[index]);
+}
+
 export function PurchaseRequestsPage({ basePath }: PurchaseRequestsPageProps) {
   const session = useSuppliesSession();
   const units = session.allowedUnits;
-  const defaultBranch = resolveDefaultBranch(units, session.preferences?.defaultBranch);
   const canExport = session.capabilities.export;
 
   const [query, setQuery] = useState<PurchaseRequestsQuery>(() =>
-    parseQueryFromSearch(
-      readBrowserSearch(),
-      units.length ? units : defaultBranch ? [defaultBranch] : [],
-    ),
+    parseQueryFromSearch(readBrowserSearch(), units),
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -88,32 +82,30 @@ export function PurchaseRequestsPage({ basePath }: PurchaseRequestsPageProps) {
   const [reloadKey, setReloadKey] = useState(0);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
 
-  const [detail, setDetail] = useState<PurchaseRequestDetail | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const [detailError, setDetailError] = useState<string | null>(null);
-  const [detailNotFound, setDetailNotFound] = useState(false);
-
   useEffect(() => {
     if (!units.length) return;
-    const authorized = resolveRequestedBranches(query.branches, units);
-    const same =
-      authorized.length === query.branches.length &&
-      authorized.every((code) => query.branches.includes(code));
-    if (!same) {
-      setQuery((current) => ({
-        ...current,
-        branches: authorized,
-        page: 1,
-      }));
-    }
-  }, [query.branches, units]);
+    setQuery((current) => {
+      const nextBranches = canonicalizeUiBranches(current.branches, units);
+      if (sameBranches(nextBranches, current.branches)) return current;
+      return { ...current, branches: nextBranches };
+    });
+  }, [units]);
+
+  useEffect(() => {
+    const legacy = parseRequestKey(query.request);
+    if (!legacy) return;
+    navigatePluginPath(
+      buildPurchaseRequestDetailPath(legacy.branch, legacy.requestNumber, basePath),
+      { replace: true },
+    );
+  }, [basePath, query.request]);
 
   useEffect(() => {
     replaceBrowserSearch(buildUrlSearch(query));
   }, [query]);
 
   useEffect(() => {
-    if (!query.branches.length) return;
+    if (!units.length) return;
     const controller = new AbortController();
     setLoading(true);
     setError(null);
@@ -134,48 +126,9 @@ export function PurchaseRequestsPage({ basePath }: PurchaseRequestsPageProps) {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [query, reloadKey]);
-
-  const detailTarget = useMemo(() => parseRequestKey(query.request), [query.request]);
-
-  useEffect(() => {
-    if (!detailTarget) {
-      setDetail(null);
-      setDetailError(null);
-      setDetailNotFound(false);
-      setDetailLoading(false);
-      return;
-    }
-    const controller = new AbortController();
-    setDetailLoading(true);
-    setDetailError(null);
-    setDetailNotFound(false);
-    getPurchaseRequest(
-      detailTarget.branch,
-      detailTarget.requestNumber,
-      { date_from: query.date_from, date_to: query.date_to },
-      controller.signal,
-    )
-      .then((payload) => setDetail(payload))
-      .catch((err: unknown) => {
-        if (controller.signal.aborted) return;
-        setDetail(null);
-        const message = err instanceof Error ? err.message : C.detailError;
-        if (/404|não encontrada|not found/i.test(message)) {
-          setDetailNotFound(true);
-          setDetailError(null);
-        } else {
-          setDetailError(mapPurchaseRequestsFetchError(message));
-        }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setDetailLoading(false);
-      });
-    return () => controller.abort();
-  }, [detailTarget, query.date_from, query.date_to, reloadKey]);
+  }, [query, reloadKey, units]);
 
   const homeHref = buildPluginPath("home", basePath);
-  const detailOpen = Boolean(detailTarget);
 
   const patchQuery = useCallback((patch: Partial<PurchaseRequestsQuery>) => {
     setQuery((current) => ({ ...current, ...patch }));
@@ -184,26 +137,24 @@ export function PurchaseRequestsPage({ basePath }: PurchaseRequestsPageProps) {
   const reload = () => setReloadKey((value) => value + 1);
 
   const onClear = () => {
-    setQuery(createDefaultQuery(units.length ? units : defaultBranch ? [defaultBranch] : []));
+    setQuery(createDefaultQuery());
   };
 
   const onSelectRow = (item: PurchaseRequestListItem) => {
-    patchQuery({
-      request: buildRequestKey(item.branch, item.request_number),
-    });
+    navigatePluginPath(
+      buildPurchaseRequestDetailPath(item.branch, item.request_number, basePath),
+    );
   };
 
   const onExport = () => {
     if (!canExport) return;
-    void downloadPurchaseRequestsExport(query).catch((err: unknown) => {
-      const message = err instanceof Error ? err.message : C.error;
-      setError(mapPurchaseRequestsFetchError(message));
-    });
+    void downloadPurchaseRequestsExport(authorizeQueryBranches(query, units)).catch(
+      (err: unknown) => {
+        const message = err instanceof Error ? err.message : C.error;
+        setError(mapPurchaseRequestsFetchError(message));
+      },
+    );
   };
-
-  const detailTitle = detail?.header
-    ? formatRequestNumber(detail.header.request_number)
-    : C.detailTitle;
 
   return (
     <div className="sp-page-stack sp-purchase-requests">
@@ -294,78 +245,6 @@ export function PurchaseRequestsPage({ basePath }: PurchaseRequestsPageProps) {
               onPatchQuery={patchQuery}
               onSelectRow={onSelectRow}
             />
-          ) : null}
-        </SuppliesSectionCard>
-      ) : null}
-
-      {detailOpen ? (
-        <SuppliesSectionCard
-          title={detailTitle}
-          hint={C.detailHint}
-          actions={
-            <SuppliesActionButton
-              type="button"
-              variant="ghost"
-              onClick={() => patchQuery({ request: "" })}
-            >
-              {C.detailClose}
-            </SuppliesActionButton>
-          }
-        >
-          {detailLoading ? (
-            <SuppliesLoadingCard title={C.detailLoading} variant="panel" />
-          ) : null}
-          {!detailLoading && (detailError || detailNotFound) ? (
-            <div className="sp-purchase-requests__error">
-              <SuppliesStateBanner variant="error">
-                {detailNotFound ? C.detailNotFound : detailError}
-              </SuppliesStateBanner>
-              <SuppliesActionButton
-                type="button"
-                variant="primary"
-                onClick={() => setReloadKey((value) => value + 1)}
-              >
-                {C.detailRetry}
-              </SuppliesActionButton>
-            </div>
-          ) : null}
-          {!detailLoading && detail ? (
-            <div className="sp-purchase-requests__detail-body">
-              <dl>
-                <div>
-                  <dt>Filial</dt>
-                  <dd>{formatSuppliesUnitLabel(detail.header.branch)}</dd>
-                </div>
-                <div>
-                  <dt>Solicitante</dt>
-                  <dd>{detail.header.requester?.name || detail.header.requester?.code || "—"}</dd>
-                </div>
-                <div>
-                  <dt>Abertura</dt>
-                  <dd>{formatDatePtBr(detail.header.issue_date)}</dd>
-                </div>
-                <div>
-                  <dt>Situação</dt>
-                  <dd>{labelOverallStage(detail.header.overall_stage)}</dd>
-                </div>
-                <div>
-                  <dt>Itens</dt>
-                  <dd>{detail.header.visible_items_count ?? detail.lines.length}</dd>
-                </div>
-              </dl>
-              <ul className="sp-purchase-requests__detail-lines">
-                {detail.lines.map((line, index) => (
-                  <li key={`${line.request_item ?? index}-${line.product_code ?? index}`}>
-                    <strong>{line.request_item || "—"}</strong>{" "}
-                    {formatProductLabel(line.product_code, line.product_description)}
-                    <span>
-                      {labelOverallStage(line.derived?.overall_stage)} · CC{" "}
-                      {line.cost_center_code || "—"}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
           ) : null}
         </SuppliesSectionCard>
       ) : null}

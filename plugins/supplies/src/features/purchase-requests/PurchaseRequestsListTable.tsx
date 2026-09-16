@@ -1,6 +1,6 @@
 import { useMemo, type CSSProperties } from "react";
 
-import { buildPluginPath } from "../../app/pluginRoutes";
+import { buildPurchaseRequestDetailPath } from "../../app/pluginRoutes";
 import {
   DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS,
   HelpTooltip,
@@ -22,8 +22,6 @@ import { SP_HELP } from "../../content/helpTooltips";
 import { PurchaseRequestsCards } from "./PurchaseRequestsCards";
 import { PURCHASE_REQUESTS_CONTENT as C } from "./content";
 import {
-  buildRequestKey,
-  buildUrlSearch,
   formatDatePtBr,
   formatProductLabel,
   formatRequestNumber,
@@ -81,14 +79,9 @@ function isKnownStage(stage: string | null | undefined): stage is OverallStage {
 
 function buildRequestDetailHref(
   basePath: string,
-  query: PurchaseRequestsQuery,
   item: PurchaseRequestListItem,
 ): string {
-  const next: PurchaseRequestsQuery = {
-    ...query,
-    request: buildRequestKey(item.branch, item.request_number),
-  };
-  return `${buildPluginPath("purchase_requests", basePath)}${buildUrlSearch(next)}`;
+  return buildPurchaseRequestDetailPath(item.branch, item.request_number, basePath);
 }
 
 export function PurchaseRequestsListTable({
@@ -138,7 +131,7 @@ export function PurchaseRequestsListTable({
             switch (key) {
               case "request_number": {
                 const label = formatRequestNumber(row.request_number);
-                const href = buildRequestDetailHref(basePath, query, row);
+                const href = buildRequestDetailHref(basePath, row);
                 return (
                   <SuppliesEntityLink
                     href={href}
@@ -177,7 +170,7 @@ export function PurchaseRequestsListTable({
           },
         };
       });
-  }, [basePath, columnPrefs.visibleKeys, onSelectRow, query]);
+  }, [basePath, columnPrefs.visibleKeys, onSelectRow]);
 
   const totalPages = Math.max(1, Math.ceil(total / query.page_size) || 1);
   const visibleColumnCount = columns.length;
@@ -192,7 +185,7 @@ export function PurchaseRequestsListTable({
 
   const showCards = layout === "cards";
   const detailHref = (item: PurchaseRequestListItem) =>
-    buildRequestDetailHref(basePath, query, item);
+    buildRequestDetailHref(basePath, item);
 
   return (
     <>
@@ -292,11 +285,6 @@ export function PurchaseRequestsListTable({
               `${row.branch}-${row.request_number}-${row.request_item ?? ""}`
             }
             onRowClick={onSelectRow}
-            getRowClassName={(row) =>
-              query.request === buildRequestKey(row.branch, row.request_number)
-                ? "is-selected"
-                : undefined
-            }
             getRowProps={(row) => ({
               "aria-label": `${C.detailTitle} ${formatRequestNumber(row.request_number)}`,
             })}

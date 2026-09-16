@@ -11,6 +11,7 @@ export function requiredCapabilityForView(
     case "indicators":
       return "analytics";
     case "purchase_requests":
+    case "purchase_request_detail":
       return "purchaseRequests";
     case "purchase_orders":
     case "purchase_order_detail":

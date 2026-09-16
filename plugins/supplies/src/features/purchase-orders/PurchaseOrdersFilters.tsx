@@ -1,7 +1,11 @@
 import { useCallback, useState } from "react";
 import { Filter } from "lucide-react";
 
-import { buildSuppliesUnitOptions } from "../../app/suppliesUnits";
+import {
+  buildSuppliesUnitOptions,
+  canonicalizeUiBranches,
+  SUPPLIES_UNIT_FILTER_LABEL,
+} from "../../app/suppliesUnits";
 import { useCommittedTextFilter } from "../../app/useCommittedTextFilter";
 import {
   SuppliesActionButton,
@@ -103,13 +107,18 @@ export function PurchaseOrdersFilters({
         <FiltersRow variant="extended">
           <SuppliesMultiSelectField
             className="sp-purchase-orders__unit-filter"
-            label={C.branchLabel}
+            label={SUPPLIES_UNIT_FILTER_LABEL}
             hint={SP_HELP.purchaseOrdersBranch}
             selectedValues={query.branches}
-            onChange={(values) => onPatch({ branches: values, page: 1, order: "" })}
+            onChange={(values) =>
+              onPatch({
+                branches: canonicalizeUiBranches(values, units),
+                page: 1,
+              })
+            }
             options={unitOptions}
             emptyLabel="Todas"
-            searchable={unitOptions.length > 4}
+            searchable
           />
           <SuppliesTextField
             label={C.orderNumberLabel}

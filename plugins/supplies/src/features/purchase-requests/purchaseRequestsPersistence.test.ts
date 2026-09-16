@@ -22,17 +22,31 @@ describe("purchase requests persistence isolation", () => {
     expect(PURCHASE_REQUESTS_VIEW_LAYOUT_STORAGE_KEY).not.toContain("purchase-orders");
   });
 
-  it("restores multi-unit and sort from URL after F5", () => {
-    const query = {
-      ...createDefaultQuery(["01", "02"]),
+  it("restores Todas and subset unit filters from URL after F5", () => {
+    const allScope = {
+      ...createDefaultQuery(),
       sort_by: "issue_date",
       sort_dir: "asc" as const,
       page: 2,
     };
-    const restored = parseQueryFromSearch(buildUrlSearch(query), ["01"]);
-    expect(restored.branches).toEqual(["01", "02"]);
-    expect(restored.sort_by).toBe("issue_date");
-    expect(restored.sort_dir).toBe("asc");
-    expect(restored.page).toBe(2);
+    const restoredAll = parseQueryFromSearch(buildUrlSearch(allScope), ["01", "02"]);
+    expect(restoredAll.branches).toEqual([]);
+    expect(restoredAll.sort_by).toBe("issue_date");
+    expect(restoredAll.sort_dir).toBe("asc");
+    expect(restoredAll.page).toBe(2);
+    expect(buildUrlSearch(allScope)).not.toContain("branch=");
+
+    const subset = {
+      ...createDefaultQuery(),
+      branches: ["01"],
+      page: 2,
+    };
+    const restoredSubset = parseQueryFromSearch(buildUrlSearch(subset), ["01", "02"]);
+    expect(restoredSubset.branches).toEqual(["01"]);
+    expect(restoredSubset.page).toBe(2);
+
+    const bothInUrl = parseQueryFromSearch("?branch=01&branch=02&page=3", ["01", "02"]);
+    expect(bothInUrl.branches).toEqual([]);
+    expect(bothInUrl.page).toBe(3);
   });
 });

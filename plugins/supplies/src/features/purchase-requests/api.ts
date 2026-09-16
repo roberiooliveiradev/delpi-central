@@ -20,12 +20,14 @@ export async function listPurchaseRequests(
 export async function getPurchaseRequest(
   branch: string,
   requestNumber: string,
-  filters: Pick<PurchaseRequestsQuery, "date_from" | "date_to">,
+  filters?: Partial<Pick<PurchaseRequestsQuery, "date_from" | "date_to">>,
   signal?: AbortSignal,
 ): Promise<PurchaseRequestDetail> {
   const params = new URLSearchParams();
-  if (filters.date_from.trim()) params.set("date_from", filters.date_from.trim());
-  if (filters.date_to.trim()) params.set("date_to", filters.date_to.trim());
+  const dateFrom = filters?.date_from?.trim() ?? "";
+  const dateTo = filters?.date_to?.trim() ?? "";
+  if (dateFrom) params.set("date_from", dateFrom);
+  if (dateTo) params.set("date_to", dateTo);
   const qs = params.toString();
   const path = `/purchase-requests/${encodeURIComponent(branch)}/${encodeURIComponent(requestNumber)}`;
   return httpGet<PurchaseRequestDetail>(

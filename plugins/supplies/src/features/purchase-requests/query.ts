@@ -1,4 +1,5 @@
 import {
+  canonicalizeUiBranches,
   normalizeSuppliesUnitCode,
   resolveRequestedBranches,
 } from "../../app/suppliesUnits";
@@ -32,10 +33,13 @@ export function defaultPeriod(): { date_from: string; date_to: string } {
   return { date_from: formatIsoDate(start), date_to: formatIsoDate(end) };
 }
 
-export function createDefaultQuery(branches: readonly string[]): PurchaseRequestsQuery {
+/** UI default: empty branches = «Todas» (API expands via authorizeQueryBranches). */
+export function createDefaultQuery(
+  _branches: readonly string[] = [],
+): PurchaseRequestsQuery {
   const period = defaultPeriod();
   return {
-    branches: [...branches],
+    branches: [],
     date_from: period.date_from,
     date_to: period.date_to,
     request_number: "",
@@ -104,10 +108,10 @@ function readSortDir(raw: string): PurchaseRequestsSortDir {
 
 export function parseQueryFromSearch(
   search: string,
-  fallbackBranches: readonly string[],
+  allowedUnits: readonly string[] = [],
 ): PurchaseRequestsQuery {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
-  const defaults = createDefaultQuery(fallbackBranches);
+  const defaults = createDefaultQuery();
   const allowed = new Set<string>(OVERALL_STAGE_VALUES);
   const stages = params
     .getAll("overall_stage")
@@ -118,7 +122,12 @@ export function parseQueryFromSearch(
     .map((value) => normalizeSuppliesUnitCode(value))
     .filter(Boolean);
   return {
-    branches: fromUrl.length ? fromUrl : defaults.branches,
+    branches:
+      fromUrl.length === 0
+        ? []
+        : allowedUnits.length
+          ? canonicalizeUiBranches(fromUrl, allowedUnits)
+          : [...new Set(fromUrl)],
     date_from: readParam(params, "date_from") || defaults.date_from,
     date_to: readParam(params, "date_to") || defaults.date_to,
     request_number: readParam(params, "request_number"),

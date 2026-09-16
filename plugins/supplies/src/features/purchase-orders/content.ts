@@ -14,7 +14,7 @@ export const PURCHASE_ORDERS_CONTENT = {
   tableMeta: (columns: number, rows: number) =>
     `${columns} coluna(s) · ${rows.toLocaleString("pt-BR")} linha(s)`,
   openPcLinkTitle: (number: string) => `Abrir pedido de compra ${number}`,
-  branchLabel: "Filial",
+  branchLabel: "Unidade",
   orderNumberLabel: "Número PC",
   productLabel: "Produto",
   supplierLabel: "Fornecedor",

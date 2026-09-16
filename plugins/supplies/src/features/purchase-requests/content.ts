@@ -2,7 +2,7 @@ export const PURCHASE_REQUESTS_CONTENT = {
   title: "Solicitações de compras",
   eyebrow: "Portal Suprimentos",
   description:
-    "Linhas de SC no seu escopo de centro de custo e filial. O detalhe abre no painel abaixo da lista.",
+    "Linhas de SC no seu escopo de centro de custo e unidade. Clique na solicitação para abrir a ficha.",
   helpAriaLabel: "Ajuda sobre solicitações de compras",
   filtersAriaLabel: "Filtros de solicitações de compras",
   filtersTitle: "Filtros",
@@ -10,11 +10,11 @@ export const PURCHASE_REQUESTS_CONTENT = {
   lessFilters: "Menos filtros",
   listTitle: "Lista de solicitações",
   listHint:
-    "Linhas no escopo CC + filial. Clique na SC ou na linha para abrir o detalhe. Lista vazia pode significar falta de CC liberado.",
+    "Linhas no escopo CC + unidade. Clique na SC ou na linha para abrir a ficha. Lista vazia pode significar falta de CC liberado.",
   tableMeta: (columns: number, rows: number) =>
     `${columns} coluna(s) · ${rows.toLocaleString("pt-BR")} linha(s)`,
   openScLinkTitle: (number: string) => `Abrir solicitação ${number}`,
-  branchLabel: "Filial",
+  branchLabel: "Unidade",
   dateFromLabel: "Período de",
   dateToLabel: "Período até",
   requestNumberLabel: "Número SC",
@@ -40,20 +40,27 @@ export const PURCHASE_REQUESTS_CONTENT = {
   emptyTitle: "Nenhuma solicitação neste recorte",
   emptyMessage:
     "Ajuste filtros ou período. Sem centros de custo liberados, a lista fica vazia (fail-closed).",
-  noUnitsTitle: "Nenhuma filial liberada",
+  noUnitsTitle: "Nenhuma unidade liberada",
   noUnitsMessage:
     "Seu acesso não inclui unidades neste módulo. Peça o escopo canônico ao administrador.",
   error: "Não foi possível carregar as solicitações.",
   forbiddenUnit:
-    "Você não tem permissão para esta filial neste módulo. Escolha outra unidade liberada ou peça o acesso canônico ao administrador.",
+    "Você não tem permissão para esta unidade neste módulo. Escolha outra unidade liberada ou peça o acesso canônico ao administrador.",
   retry: "Tentar novamente",
-  detailTitle: "Detalhe da SC",
-  detailHint: "Cabeçalho e itens visíveis no seu escopo de centro de custo.",
-  detailLoading: "Carregando detalhe…",
-  detailError: "Não foi possível carregar o detalhe.",
+  detailTitle: "Solicitação",
+  detailEyebrow: "Solicitação de compra",
+  detailDescription:
+    "Cabeçalho e itens visíveis no seu escopo de centro de custo.",
+  detailHint: "Itens visíveis no seu escopo de centro de custo.",
+  detailBack: "Solicitações de compras",
+  detailLoading: "Carregando a solicitação…",
+  detailError: "Não foi possível carregar esta solicitação de compra.",
   detailNotFound: "Solicitação não encontrada no seu escopo.",
-  detailClose: "Fechar",
+  detailForbidden:
+    "Você não tem permissão para esta unidade neste módulo. Peça o acesso canônico ao administrador.",
   detailRetry: "Tentar novamente",
+  itemsTitle: "Itens",
+  itemsEmpty: "Esta solicitação não retornou itens visíveis no seu escopo.",
   colSc: "SC",
   colItem: "Item",
   colProduct: "Produto",
@@ -70,4 +77,20 @@ export function mapPurchaseRequestsFetchError(message: string): string {
     return PURCHASE_REQUESTS_CONTENT.forbiddenUnit;
   }
   return message || PURCHASE_REQUESTS_CONTENT.error;
+}
+
+export function classifyPurchaseRequestDetailError(message: string): {
+  kind: "forbidden" | "not_found" | "error";
+  text: string;
+} {
+  if (/403|forbidden/i.test(message)) {
+    return { kind: "forbidden", text: PURCHASE_REQUESTS_CONTENT.detailForbidden };
+  }
+  if (/404|não encontrada|not found/i.test(message)) {
+    return { kind: "not_found", text: PURCHASE_REQUESTS_CONTENT.detailNotFound };
+  }
+  return {
+    kind: "error",
+    text: message || PURCHASE_REQUESTS_CONTENT.detailError,
+  };
 }

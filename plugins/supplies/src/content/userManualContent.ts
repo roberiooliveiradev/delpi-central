@@ -96,10 +96,15 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Abrir solicitações de compras (SC)",
           where: "Solicitações de compras",
-          how: "Lista e detalhe no escopo de CC/filial; filtros automáticos; URL guarda filtros (F5); exportação CSV se tiver permissão",
+          how: "Lista no escopo de CC/unidade; filtros automáticos; clique na SC para a ficha; URL guarda filtros (F5); exportação Excel se tiver permissão",
         },
         {
-          want: "Alterar filial padrão ou densidade das tabelas",
+          want: "Ver o detalhe de uma solicitação",
+          where: "Solicitações de compras",
+          how: "Abra a SC; cabeçalho e itens no escopo de CC. Copie o endereço da ficha; F5 a restaura; voltar retorna à lista com os filtros",
+        },
+        {
+          want: "Alterar unidade padrão ou densidade das tabelas",
           where: "Perfil (avatar na TopBar)",
           how: "Só no próprio perfil; administradores podem ler outros usuários, sem editar prefs",
         },
@@ -147,12 +152,12 @@ export const USER_MANUAL_CONTENT = {
         "Início — atenção, busca, favoritos e caminhos por capability.",
         "Visão geral — cockpit de KPIs do período (não é a tela inicial).",
         "OTD — velocímetros de pontualidade e evolução; abra pelo Início, catálogo Análises ou CTA da Visão geral.",
-        "Pedidos de compra — linhas abertas (saldo a receber); hero com linhas/valor/atrasadas; Atenção Todos(N)/Atrasados(N) do resumo do servidor; filtros automáticos, Atualizar; filiais como Santa Catarina (01); clique na linha para a ficha. Distinto do OTD de pontualidade.",
-        "Solicitações de compras — lista/detalhe no escopo CC+filial; exportação CSV com permissão separada.",
+        "Pedidos de compra — linhas abertas (saldo a receber); hero com linhas/valor/atrasadas; Atenção Todos(N)/Atrasados(N) do resumo do servidor; filtros automáticos, Atualizar; Unidade como Santa Catarina / Espírito Santo; clique na linha para a ficha. Distinto do OTD de pontualidade.",
+        "Solicitações de compras — lista no escopo CC+unidade; clique na SC para a ficha em página própria; exportação Excel com permissão separada.",
         "Operações — pedidos, entregas, fornecedores, produtos, estoque e ESTSEG.",
         "Indicadores / Negociações — recorte analítico quando liberado.",
         "Administração — mappings e configurações.",
-        "Perfil — avatar na TopBar (foto da Core); preferências do Portal (filial padrão e densidade); foto/cargo/contatos no /profile do host.",
+        "Perfil — avatar na TopBar (foto da Core); preferências do Portal (unidade padrão e densidade); foto/cargo/contatos no /profile do host.",
         "Ajuda — este manual, FAQ e glossário.",
       ],
     },
@@ -193,8 +198,12 @@ export const USER_MANUAL_CONTENT = {
           a: "Na lista Pedidos de compra, clique na linha. Copie o endereço da ficha para compartilhar; atualizar (F5) reabre o mesmo pedido. Voltar retorna à lista. Só pedidos em aberto aparecem — encerrados e residual não.",
         },
         {
+          q: "Como abro e compartilho o detalhe de uma SC?",
+          a: "Na lista Solicitações de compras, clique na SC, na linha ou no card. A ficha tem endereço próprio; F5 a restaura. Voltar retorna à lista com os filtros. Links antigos com ?request=unidade:número redirecionam para a ficha.",
+        },
+        {
           q: "Como compartilho o recorte da lista de SC?",
-          a: "A URL guarda filial, período, filtros e a SC aberta no detalhe. Copie o link com o recorte ativo; F5 restaura o mesmo estado.",
+          a: "A URL da lista guarda unidade, período e filtros. Sem branch na URL significa Todas as unidades liberadas. Copie o link com o recorte ativo; F5 restaura o mesmo estado.",
         },
         {
           q: "Por que um card da Visão geral aparece indisponível?",

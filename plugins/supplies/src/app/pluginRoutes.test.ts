@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { canAccessView } from "./routeAccess";
-import { buildPluginPath, buildPurchaseOrderDetailPath, resolvePluginRoute } from "./pluginRoutes";
+import {
+  buildPluginPath,
+  buildPurchaseOrderDetailPath,
+  buildPurchaseRequestDetailPath,
+  resolveActiveNavId,
+  resolvePluginRoute,
+} from "./pluginRoutes";
 
 const portalOnly = {
   portal: true,
@@ -28,9 +34,30 @@ describe("pluginRoutes", () => {
     expect(buildPluginPath("analytics_otd")).toBe("/apps/supplies/analytics/otd");
   });
 
+  it("resolves purchase request detail direct URL and encoded segments", () => {
+    const detail = resolvePluginRoute("/apps/supplies/purchase-requests/01/177416");
+    expect(detail.view).toBe("purchase_request_detail");
+    expect(detail.branch).toBe("01");
+    expect(detail.requestNumber).toBe("177416");
+    expect(buildPurchaseRequestDetailPath("01", "177416")).toBe(
+      "/apps/supplies/purchase-requests/01/177416",
+    );
+
+    const encoded = resolvePluginRoute(
+      "/apps/supplies/purchase-requests/01/177%20416",
+    );
+    expect(encoded.view).toBe("purchase_request_detail");
+    expect(encoded.branch).toBe("01");
+    expect(encoded.requestNumber).toBe("177 416");
+
+    expect(resolveActiveNavId("purchase_request_detail")).toBe("purchase_requests");
+    expect(resolveActiveNavId("purchase_requests")).toBe("purchase_requests");
+  });
+
   it("returns not_found for unknown paths", () => {
     expect(resolvePluginRoute("/apps/supplies/imports").view).toBe("not_found");
     expect(resolvePluginRoute("/apps/supplies/purchase-orders/01").view).toBe("not_found");
+    expect(resolvePluginRoute("/apps/supplies/purchase-requests/01").view).toBe("not_found");
   });
 });
 
@@ -45,6 +72,13 @@ describe("routeAccess", () => {
     expect(canAccessView("purchase_order_detail", portalOnly)).toBe(false);
     expect(
       canAccessView("purchase_order_detail", { ...portalOnly, operations: true }),
+    ).toBe(true);
+  });
+
+  it("reusa purchaseRequests para ficha de SC", () => {
+    expect(canAccessView("purchase_request_detail", portalOnly)).toBe(false);
+    expect(
+      canAccessView("purchase_request_detail", { ...portalOnly, purchaseRequests: true }),
     ).toBe(true);
   });
 });
