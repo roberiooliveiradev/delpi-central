@@ -36,12 +36,15 @@ def build_where_clause(
     warehouse: str | None,
     only_positive: bool,
 ) -> tuple[str, list[Any]]:
+    from app.domain.totvs.protheus_branches import optional_concrete_branch
+
     clauses = ["SB2.D_E_L_E_T_ = ''"]
     params: list[Any] = []
 
-    if branch:
+    concrete_branch = optional_concrete_branch(branch)
+    if concrete_branch:
         clauses.append("LTRIM(RTRIM(SB2.B2_FILIAL)) = ?")
-        params.append(branch.strip())
+        params.append(concrete_branch)
 
     if warehouse:
         clauses.append("LTRIM(RTRIM(SB2.B2_LOCAL)) = ?")

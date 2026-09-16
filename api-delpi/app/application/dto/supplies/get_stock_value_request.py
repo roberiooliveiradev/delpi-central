@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
+from app.domain.totvs.protheus_branches import optional_concrete_branch
 
 STOCK_METHOD_AUTO = "auto"
 
@@ -18,3 +19,7 @@ class GetStockValueRequest:
     @property
     def uses_historical_estimation(self) -> bool:
         return bool(self.start_date or self.end_date)
+
+
+    def __post_init__(self) -> None:
+        self.branch = optional_concrete_branch(self.branch)

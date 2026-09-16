@@ -179,8 +179,11 @@ def _from_clause(*, with_operation_produced: bool = False) -> str:
 
 
 def _branch_filter_sql(branch: str | None) -> tuple[str, list[str]]:
-    if branch:
-        return "OA.H8_FILIAL = ?", [branch]
+    from app.domain.totvs.protheus_branches import optional_concrete_branch
+
+    concrete = optional_concrete_branch(branch)
+    if concrete:
+        return "OA.H8_FILIAL = ?", [concrete]
     ordered = sorted(VALID_MACHINE_LOAD_BRANCHES)
     placeholders = ", ".join("?" for _ in ordered)
     return f"OA.H8_FILIAL IN ({placeholders})", list(ordered)

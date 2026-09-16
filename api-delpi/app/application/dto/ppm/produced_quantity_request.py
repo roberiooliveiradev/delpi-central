@@ -31,3 +31,8 @@ class ProducedQuantityRequest:
             raise ValueError("date_end é obrigatório.")
 
         self.products = normalized
+        self.date_start = str(self.date_start).strip()
+        self.date_end = str(self.date_end).strip()
+        from app.domain.totvs.protheus_branches import optional_concrete_branch
+
+        self.branch = optional_concrete_branch(self.branch)

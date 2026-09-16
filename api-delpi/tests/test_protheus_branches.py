@@ -12,6 +12,7 @@ from app.domain.totvs.protheus_branches import (
     is_all_branches,
     normalize_branch_code,
     normalize_branch_scope,
+    optional_concrete_branch,
 )
 
 
@@ -84,3 +85,27 @@ def test_is_all_branches() -> None:
     assert is_all_branches("all") is True
     assert is_all_branches("Todas") is True
     assert is_all_branches("01") is False
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        (None, None),
+        ("", None),
+        ("  ", None),
+        ("all", None),
+        ("All", None),
+        ("todas", None),
+        ("Todos", None),
+        ("01", "01"),
+        ("02", "02"),
+    ],
+)
+def test_optional_concrete_branch(raw: str | None, expected: str | None) -> None:
+    assert optional_concrete_branch(raw) == expected
+
+
+@pytest.mark.parametrize("raw", ["03", "1", "everyone", "ALLL", "*"])
+def test_optional_concrete_branch_rejects_invalid(raw: str) -> None:
+    with pytest.raises(ValueError, match="branch inválida"):
+        optional_concrete_branch(raw)

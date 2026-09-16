@@ -107,9 +107,11 @@ class UnproductiveHoursPeriod:
         start_date: str | None = None,
         end_date: str | None = None,
     ) -> UnproductiveHoursPeriod:
-        normalized_branch = str(branch or "").strip() or None
+        from app.domain.totvs.protheus_branches import optional_concrete_branch
+
+        normalized_branch = optional_concrete_branch(branch)
         if normalized_branch is not None and normalized_branch not in VALID_UNPRODUCTIVE_HOURS_BRANCHES:
-            raise ValueError('branch inválida. Use "01" ou "02".')
+            raise ValueError('branch inválida. Use "all", "01" ou "02".')
 
         parsed_start = _parse_iso_date(start_date)
         parsed_end = _parse_iso_date(end_date)

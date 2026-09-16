@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import re
 
-from fastapi import Path, Query
+from fastapi import Depends, Path, Query
 
 from app.domain.totvs.protheus_branches import (
     BRANCH_CODE_VALUES,
     BRANCH_SCOPE_VALUES,
+    optional_concrete_branch,
 )
 
 def _enum_pattern(values: tuple[str, ...]) -> str:
@@ -345,27 +346,52 @@ def ORDER_NUMBER_PATH():
         max_length=20,
         description="Purchase order number (SC7.C7_NUM).",
     )
-def BRANCH_QUERY_OPTIONAL():
-    """Escopo all|01|02 — vazio/omitido = all (sem filtro de filial)."""
-    return Query(
-    None,
-    description=(
-        "Branch scope: all (no branch filter), 01 or 02. "
-        "Empty defaults to all when consolidated access is allowed."
+
+
+def _normalize_optional_branch_scope(
+    branch: str | None = Query(
+        None,
+        description=(
+            "Branch scope: all (no branch filter), 01 or 02. "
+            "Empty defaults to all when consolidated access is allowed."
+        ),
+        pattern=_enum_pattern(BRANCH_SCOPE_VALUES),
+        enum=list(BRANCH_SCOPE_VALUES),
     ),
-    pattern=_enum_pattern(BRANCH_SCOPE_VALUES),
-    enum=list(BRANCH_SCOPE_VALUES),
-)
+) -> str | None:
+    """Wire ``all``/omitido → ``None`` (consolidado); ``01``/``02`` → concreto.
+
+    Category A routes inject this via ``Depends`` so every HTTP/ASGI caller
+    (including DAVI in-process) receives semantic optional-concrete branch
+    before use case / repository / cache — never ``B*_FILIAL = 'all'``.
+    """
+    return optional_concrete_branch(branch)
+
+
+def _normalize_required_branch_scope(
+    branch: str = Query(
+        ...,
+        description="Branch scope: all (no branch filter), 01 or 02.",
+        pattern=_enum_pattern(BRANCH_SCOPE_VALUES),
+        enum=list(BRANCH_SCOPE_VALUES),
+    ),
+) -> str | None:
+    """Category B: param obrigatório; ``all`` ainda significa consolidado."""
+    return optional_concrete_branch(branch)
+
+
+def BRANCH_QUERY_OPTIONAL():
+    """Escopo all|01|02 — vazio/omitido/all = consolidado (sem filtro de filial)."""
+    return Depends(_normalize_optional_branch_scope)
+
+
 def BRANCH_SCOPE_QUERY_OPTIONAL():
     return BRANCH_QUERY_OPTIONAL()
+
+
 def BRANCH_SCOPE_QUERY_REQUIRED():
     """Escopo obrigatório incluindo all (listagens que exigem o param)."""
-    return Query(
-    ...,
-    description="Branch scope: all (no branch filter), 01 or 02.",
-    pattern=_enum_pattern(BRANCH_SCOPE_VALUES),
-    enum=list(BRANCH_SCOPE_VALUES),
-)
+    return Depends(_normalize_required_branch_scope)
 def SI_DEPARTMENT_ID_QUERY_REQUIRED():
     return Query(
         ...,

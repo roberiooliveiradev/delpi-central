@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from app.domain.totvs.protheus_branches import optional_concrete_branch
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
-
-VALID_BRANCHES = frozenset({"01", "02"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,22 +28,8 @@ class PeriodFilterRequest:
         return cls(
             start_date=normalized_start,
             end_date=normalized_end,
-            branch=cls._normalize_branch(branch),
+            branch=optional_concrete_branch(branch),
         )
-
-    @staticmethod
-    def _normalize_branch(branch: str | None) -> str | None:
-        if branch is None:
-            return None
-
-        normalized = str(branch).strip()
-        if not normalized:
-            return None
-
-        if normalized not in VALID_BRANCHES:
-            raise ValueError("branch inválida. Use 01 ou 02.")
-
-        return normalized
 
     def resolve_protheus_period(self) -> tuple[str, str]:
         qb = QueryBuilder()

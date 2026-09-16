@@ -8,6 +8,7 @@ from app.application.services.product.product_stock_cache import (
 )
 from app.domain.ports.product.product_stock_repository_port import ProductStockRepositoryPort
 from app.domain.ports.query_cache_port import QueryCachePort
+from app.domain.totvs.protheus_branches import optional_concrete_branch
 
 
 class ListProductStockUseCase:
@@ -21,11 +22,13 @@ class ListProductStockUseCase:
         self.cache = cache
 
     def execute(self, dto: ListProductStockRequest):
+        # Wire scope all|omit → None before cache key and repository filter.
+        concrete_branch = optional_concrete_branch(dto.branch)
         cache_key = product_stock_cache_key(
             code=dto.code,
             page=dto.page,
             page_size=dto.page_size,
-            branch=dto.branch,
+            branch=concrete_branch,
             location=dto.location,
         )
         cached = get_cached_product_stock(self.cache, cache_key)
@@ -37,7 +40,7 @@ class ListProductStockUseCase:
             code=dto.code,
             page=dto.page,
             page_size=dto.page_size,
-            branch=dto.branch,
+            branch=concrete_branch,
             location=dto.location,
         )
         payload = page.to_dict()

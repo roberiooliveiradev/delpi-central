@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
 
+from app.domain.totvs.protheus_branches import optional_concrete_branch
+
 
 @dataclass
 class GetRolByCustomerRequest:
@@ -23,12 +25,11 @@ class GetRolByCustomerRequest:
     page_size: Optional[int] = None
 
     def validate(self) -> None:
+        self.branch = optional_concrete_branch(self.branch)
         if not self.start_date or not self.end_date:
             raise ValueError("start_date e end_date são obrigatórios.")
         if int(self.limit) < 1 or int(self.limit) > 500:
             raise ValueError("limit deve estar entre 1 e 500.")
-        if self.branch is not None and str(self.branch).strip() not in {"01", "02"}:
-            raise ValueError("branch deve ser 01, 02 ou omitido (consolidado).")
         if int(self.page) < 1:
             raise ValueError("page deve ser >= 1.")
         if self.page_size is not None and (

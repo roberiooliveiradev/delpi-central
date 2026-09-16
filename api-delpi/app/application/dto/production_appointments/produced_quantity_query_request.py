@@ -8,6 +8,7 @@ from app.domain.production.production_appointments.production_appointments_scope
     DEFAULT_PRODUCED_PRODUCT_TYPES,
     VALID_BRANCHES,
 )
+from app.domain.totvs.protheus_branches import optional_concrete_branch
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,12 +37,12 @@ class ProducedQuantityQueryRequest:
         if not (date_end and str(date_end).strip()):
             raise ValueError("date_end é obrigatório.")
 
-        normalized_branch = str(branch).strip() if branch else None
+        normalized_branch = optional_concrete_branch(branch)
         if require_branch:
             if not normalized_branch or normalized_branch not in VALID_BRANCHES:
-                raise ValueError('branch inválida. Use "01" (SC) ou "02" (ES).')
+                raise ValueError('branch inválida. Use "all", "01" (SC) ou "02" (ES).')
         elif normalized_branch and normalized_branch not in VALID_BRANCHES:
-            raise ValueError('branch inválida. Use "01" (SC) ou "02" (ES).')
+            raise ValueError('branch inválida. Use "all", "01" (SC) ou "02" (ES).')
 
         normalized_products: list[str] = []
         seen: set[str] = set()

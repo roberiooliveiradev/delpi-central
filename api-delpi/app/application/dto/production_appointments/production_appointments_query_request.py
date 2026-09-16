@@ -16,6 +16,7 @@ from app.domain.services.production.production_appointments_list_search_service 
 from app.domain.services.production.protheus_date_range_service import (
     ProtheusDateRangeService,
 )
+from app.domain.totvs.protheus_branches import optional_concrete_branch
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,12 +52,12 @@ class ProductionAppointmentsQueryRequest:
         page_size: int | None = None,
         require_branch: bool = True,
     ) -> ProductionAppointmentsQueryRequest:
-        normalized_branch = str(branch or "").strip() or None
+        normalized_branch = optional_concrete_branch(branch)
         if normalized_branch is None:
             if require_branch:
                 raise ValueError("branch é obrigatória.")
         elif normalized_branch not in VALID_BRANCHES:
-            raise ValueError('branch inválida. Use "01" (SC) ou "02" (ES).')
+            raise ValueError('branch inválida. Use "all", "01" (SC) ou "02" (ES).')
 
         resolved_group = (group_by or "day").strip().lower()
         if resolved_group not in SERIES_GROUP_BY_OPTIONS:

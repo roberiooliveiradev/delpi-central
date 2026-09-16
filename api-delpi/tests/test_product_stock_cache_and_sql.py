@@ -8,24 +8,27 @@ from app.application.use_cases.product.list_product_stock_use_case import (
     ListProductStockUseCase,
 )
 from app.domain.entities.product.stock import Stock
+from app.domain.totvs.protheus_branches import optional_concrete_branch
 
 
 class _FakeStockRepo:
     def __init__(self):
         self.calls = 0
+        self.last_branch = object()
 
     def list_stock(self, **kwargs):
         self.calls += 1
+        self.last_branch = kwargs.get("branch")
         return Page(
             items=[
                 Stock(
-                    product_code="10090016",
+                    product_code="10080001",
                     branch="01",
                     warehouse="01",
-                    current_quantity=0,
+                    current_quantity=623000,
                     committed_quantity=0,
                     reserved_quantity=0,
-                    available_quantity=0,
+                    available_quantity=623000,
                     physical_location=None,
                     default_warehouse=None,
                     cost_center=None,
@@ -78,7 +81,7 @@ def test_list_product_stock_use_case_caches_payload() -> None:
     assert repo.calls == 1
     assert first == second
     assert first["total"] == 1
-    assert first["items"][0]["product_code"] == "10090016"
+    assert first["items"][0]["product_code"] == "10080001"
     expected_key = stock_cache.product_stock_cache_key(
         code="10090016",
         page=1,
@@ -120,6 +123,49 @@ def test_list_product_stock_cache_hit_skips_repository() -> None:
 
     assert repo.calls == 0
     assert result is cached_payload
+
+
+def test_list_product_stock_branch_all_equals_omitted_for_cache_and_repo() -> None:
+    repo = _FakeStockRepo()
+    cache = _FakeCache()
+    use_case = ListProductStockUseCase(repository=repo, cache=cache)
+
+    omitted = use_case.execute(
+        ListProductStockRequest(code="10080001", page=1, page_size=50, branch=None)
+    )
+    assert repo.calls == 1
+    assert repo.last_branch is None
+
+    all_scope = use_case.execute(
+        ListProductStockRequest(code="10080001", page=1, page_size=50, branch="all")
+    )
+    assert repo.calls == 1  # cache hit — same semantic key as omitted
+    assert omitted == all_scope
+
+    key_omitted = stock_cache.product_stock_cache_key(
+        code="10080001", page=1, page_size=50, branch=None, location=None
+    )
+    key_all_literal = stock_cache.product_stock_cache_key(
+        code="10080001", page=1, page_size=50, branch="all", location=None
+    )
+    assert key_omitted in cache.store
+    assert key_all_literal not in cache.store
+
+
+def test_list_product_stock_concrete_branches_reach_repository() -> None:
+    repo = _FakeStockRepo()
+    cache = _FakeCache()
+    use_case = ListProductStockUseCase(repository=repo, cache=cache)
+
+    use_case.execute(
+        ListProductStockRequest(code="10080001", page=1, page_size=50, branch="01")
+    )
+    assert repo.last_branch == "01"
+
+    use_case.execute(
+        ListProductStockRequest(code="10080001", page=1, page_size=50, branch="02")
+    )
+    assert repo.last_branch == "02"
 
 
 def test_product_stock_cache_helpers_use_injected_port() -> None:
@@ -203,3 +249,39 @@ def test_product_stock_repository_sql_uses_nolock_and_window_count():
     assert page.total == 1
     assert len(page.items) == 1
     assert not hasattr(page.items[0], "_total_count")
+    assert "all" not in captured["data_params"]
+    assert "B2_FILIAL = ?" not in captured["data_sql"]
+
+
+def test_product_stock_repository_never_binds_literal_all_as_filial():
+    from app.infrastructure.persistence.totvs.product_repositories.product_stock_repository import (
+        ProductStockRepository,
+    )
+
+    captured: dict = {}
+
+    class _Ctx:
+        def execute_query(self, sql, params):
+            captured["sql"] = sql
+            captured["params"] = params
+            return []
+
+        def execute_one(self, sql, params):
+            return {"total": 0}
+
+    class _Repo(ProductStockRepository):
+        def __enter__(self):
+            return _Ctx()
+
+        def __exit__(self, *args):
+            return False
+
+    _Repo().list_stock(
+        code="10080001",
+        page=1,
+        page_size=50,
+        branch=optional_concrete_branch("all"),
+        location=None,
+    )
+    assert "all" not in captured["params"]
+    assert "B2_FILIAL = ?" not in captured["sql"]

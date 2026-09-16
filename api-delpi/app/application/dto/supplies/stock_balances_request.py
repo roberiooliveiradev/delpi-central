@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from app.domain.totvs.protheus_branches import optional_concrete_branch
+
 
 @dataclass
 class StockBalancesQueryRequest:
@@ -12,8 +14,7 @@ class StockBalancesQueryRequest:
     only_positive: bool = True
 
     def __post_init__(self) -> None:
-        if self.branch is not None:
-            self.branch = str(self.branch).strip() or None
+        self.branch = optional_concrete_branch(self.branch)
         if self.warehouse is not None:
             self.warehouse = str(self.warehouse).strip() or None
 

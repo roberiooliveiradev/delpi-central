@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from app.domain.totvs.protheus_branches import optional_concrete_branch
+
 
 @dataclass(frozen=True, slots=True)
 class ReturnedQuantityQueryRequest:
@@ -36,6 +38,6 @@ class ReturnedQuantityQueryRequest:
             type=normalized_type,
             date_start=str(date_start).strip(),
             date_end=str(date_end).strip(),
-            branch=str(branch).strip() if branch else None,
+            branch=optional_concrete_branch(branch),
             product_prefix=prefix or None,
         )

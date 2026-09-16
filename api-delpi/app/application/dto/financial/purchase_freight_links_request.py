@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from app.domain.totvs.protheus_branches import optional_concrete_branch
 from dataclasses import dataclass
 from typing import Optional
 
@@ -19,3 +20,7 @@ class PurchaseFreightLinksRequest:
     supplier: Optional[str] = None
     invoice_document: Optional[str] = None
     freight_document: Optional[str] = None
+
+
+    def __post_init__(self) -> None:
+        self.branch = optional_concrete_branch(self.branch)

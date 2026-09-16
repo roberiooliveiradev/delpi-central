@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
+from app.domain.totvs.protheus_branches import optional_concrete_branch
 
 @dataclass
 class GetRolRequest:
@@ -13,3 +14,7 @@ class GetRolRequest:
     customer_names: Optional[list[str]] = None
     exclude_customer_codes: Optional[list[str]] = None
     exclude_customer_names: Optional[list[str]] = None
+
+
+    def __post_init__(self) -> None:
+        self.branch = optional_concrete_branch(self.branch)

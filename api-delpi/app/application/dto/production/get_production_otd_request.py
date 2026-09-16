@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
+from app.domain.totvs.protheus_branches import optional_concrete_branch
 
 @dataclass
 class GetProductionOtdRequest:
@@ -12,3 +13,7 @@ class GetProductionOtdRequest:
     page_size: int = 20
     sort_by: Optional[str] = None
     sort_dir: str = "asc"
+
+
+    def __post_init__(self) -> None:
+        self.branch = optional_concrete_branch(self.branch)

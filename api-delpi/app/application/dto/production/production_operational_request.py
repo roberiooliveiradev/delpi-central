@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from app.domain.totvs.protheus_branches import optional_concrete_branch
+
 
 @dataclass(slots=True)
 class ProductionOperationalRequest:
@@ -14,3 +16,6 @@ class ProductionOperationalRequest:
     item_code: str | None = None
     product_group: str | None = None
     legacy: bool = False
+
+    def __post_init__(self) -> None:
+        self.branch = optional_concrete_branch(self.branch)
