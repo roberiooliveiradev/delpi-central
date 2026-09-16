@@ -2,18 +2,7 @@
 
 from __future__ import annotations
 
-from contextlib import contextmanager
-from typing import Any, Iterator
-
-
-@contextmanager
-def open_api_delpi_asgi_client() -> Iterator[Any]:
-    """Yield a TestClient bound to the api-delpi FastAPI app (Composition Root only)."""
-    from fastapi.testclient import TestClient
-    from app.main import app
-
-    with TestClient(app) as client:
-        yield client
+from typing import Any
 
 
 def refresh_davi_action_index_from_live_openapi() -> int:
@@ -54,6 +43,10 @@ def execute_delpi_information_wired(
     from app.infrastructure.davi.asgi_catalog_action_executor import (
         AsgiCatalogActionExecutor,
     )
+    from app.infrastructure.davi.in_process_asgi_client import (
+        open_in_process_asgi_client,
+    )
+    from app.main import app
 
     class _RequestBoundCatalogActionExecutor:
         def execute(
@@ -64,7 +57,7 @@ def execute_delpi_information_wired(
         ) -> CatalogActionExecutionResult:
             if not authorization:
                 return CatalogActionExecutionResult(outcome="unauthorized")
-            with open_api_delpi_asgi_client() as client:
+            with open_in_process_asgi_client(app) as client:
                 return AsgiCatalogActionExecutor(
                     client, authorization=authorization
                 ).execute(

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 from urllib.parse import quote
 
@@ -11,6 +12,8 @@ from app.application.external_capabilities.dynamic_information.action_index impo
 from app.domain.ports.davi_catalog_action_executor_port import (
     CatalogActionExecutionResult,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _fill_path(path_template: str, arguments: dict[str, Any]) -> tuple[str, dict[str, Any]]:
@@ -71,12 +74,34 @@ class AsgiCatalogActionExecutor:
             )
 
         headers = {"Authorization": self._authorization}
-        response = self._client.get(path, params=query, headers=headers)
+        try:
+            response = self._client.get(path, params=query, headers=headers)
+        except Exception as exc:
+            logger.exception(
+                "davi_catalog_asgi_invoke_failed action_id=%s stage=asgi_get "
+                "exception_class=%s",
+                action_id,
+                type(exc).__name__,
+            )
+            return CatalogActionExecutionResult(
+                outcome="error",
+                error_message=f"Catalog ASGI invoke failed: {type(exc).__name__}",
+            )
+
         status = int(getattr(response, "status_code", 500))
         try:
             body = response.json()
         except Exception:
             body = getattr(response, "text", None)
+
+        if status >= 400:
+            logger.warning(
+                "davi_catalog_upstream_status action_id=%s stage=upstream "
+                "status=%s path_template=%s",
+                action_id,
+                status,
+                action.path,
+            )
 
         if status == 401:
             return CatalogActionExecutionResult(outcome="unauthorized", payload=body)
