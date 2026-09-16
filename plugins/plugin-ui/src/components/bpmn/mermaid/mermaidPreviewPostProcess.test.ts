@@ -53,4 +53,13 @@ describe("postProcessMermaidPreviewSvg", () => {
     expect(processed).toContain('preserveAspectRatio="xMinYMin meet"');
     expect(processed).not.toMatch(/<svg[^>]*width="100%"/);
   });
+
+  it("recupera geometria de SVG com width percentual e max-width no style", () => {
+    const svg = `<svg width="100%" height="100%" style="max-width: 4800px; height: 1600px"><rect fill="#ffffff" width="4800" height="1600"/></svg>`;
+    const processed = postProcessMermaidPreviewSvg(svg, false);
+
+    expect(processed).toContain('width="4800"');
+    expect(processed).toContain('height="1600"');
+    expect(processed).not.toMatch(/<svg[^>]*width="100%"/);
+  });
 });

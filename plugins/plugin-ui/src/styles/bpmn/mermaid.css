@@ -115,7 +115,9 @@
 .dashboard-transformometro .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__mermaid-preview,
 .delpi-ui-flowchart-shell .tm-diagram-editor--fill .tm-diagram-editor__mermaid-preview,
 .dashboard-transformometro .tm-diagram-editor--fill .tm-diagram-editor__mermaid-preview{
-  min-height: min(40vh, 480px);
+  min-height: 0;
+  flex: 1 1 0;
+  height: 100%;
 }
 
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__mermaid-panel--chrome .delpi-ui-bpmn-editor__mermaid-preview,
@@ -141,7 +143,7 @@
 .dashboard-transformometro .delpi-ui-bpmn-svg-viewport{
   position: relative;
   overflow: hidden;
-  flex: 1;
+  flex: 1 1 0;
   min-height: 220px;
   height: 100%;
   touch-action: none;
@@ -149,6 +151,11 @@
   border: 1px solid var(--ds-card-border);
   border-radius: var(--ds-radius-md);
   background: var(--delpi-ui-bpmn-canvas-bg);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-svg-viewport,
+.dashboard-transformometro .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-svg-viewport{
+  min-height: 0;
 }
 
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-svg-viewport:active,
@@ -200,6 +207,12 @@
   background: var(--delpi-ui-bpmn-canvas-bg) !important;
 }
 
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-svg-viewport__world .delpi-ui-bpmn-mermaid,
+.dashboard-transformometro .delpi-ui-bpmn-svg-viewport__world .delpi-ui-bpmn-mermaid{
+  width: 100%;
+  height: 100%;
+}
+
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid svg,
 .dashboard-transformometro .delpi-ui-bpmn-mermaid svg,
 .delpi-ui-flowchart-shell .tm-diagram-mermaid svg,
@@ -207,8 +220,8 @@
   display: block;
   flex: 0 0 auto;
   max-width: none;
-  width: auto;
-  height: auto;
+  width: 100%;
+  height: 100%;
   margin: 0;
 }
 

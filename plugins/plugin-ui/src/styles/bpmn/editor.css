@@ -8,8 +8,10 @@
 
 .delpi-ui-diagram-modal .delpi-ui-diagram-modal__body .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__canvas,
 .delpi-ui-diagram-modal .delpi-ui-diagram-modal__body .tm-diagram-editor--fill .tm-diagram-editor__canvas{
-  flex: 1 1 auto;
-  min-height: 280px;
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  max-height: none;
 }
 
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--overlay-tools,
@@ -883,9 +885,10 @@
 .dashboard-transformometro .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__canvas,
 .delpi-ui-flowchart-shell .tm-diagram-editor--fill .tm-diagram-editor__canvas,
 .dashboard-transformometro .tm-diagram-editor--fill .tm-diagram-editor__canvas{
-  flex: 1 1 auto;
-  height: auto;
-  min-height: min(420px, 50vh);
+  flex: 1 1 0;
+  align-self: stretch;
+  height: 100%;
+  min-height: 0;
   max-height: none;
 }
 

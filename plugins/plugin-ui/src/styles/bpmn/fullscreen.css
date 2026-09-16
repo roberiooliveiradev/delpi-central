@@ -348,11 +348,18 @@
 .dashboard-transformometro .tm-diagram-workspace--modal-body{
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-height: 0;
   min-width: 0;
   height: 100%;
   gap: 8px;
+}
+
+.delpi-ui-diagram-modal .delpi-ui-diagram-modal__body .delpi-ui-bpmn-workspace--modal-body,
+.delpi-ui-diagram-modal .delpi-ui-diagram-modal__body .delpi-ui-bpmn-editor--fill{
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
 }
 
 /* ModalShell — tela cheia do diagrama (host-fill / page) */.delpi-ui-diagram-modal.delpi-ui-modal--host-fill,
@@ -384,5 +391,7 @@
 .dashboard-transformometro .delpi-ui-bpmn-workspace--fullscreen .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__canvas,
 .delpi-ui-flowchart-shell .tm-diagram-workspace--fullscreen .tm-diagram-editor--fill .tm-diagram-editor__canvas,
 .dashboard-transformometro .tm-diagram-workspace--fullscreen .tm-diagram-editor--fill .tm-diagram-editor__canvas{
-  min-height: min(72vh, 900px);
+  min-height: 0;
+  height: 100%;
+  max-height: none;
 }

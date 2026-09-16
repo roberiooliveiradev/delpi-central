@@ -223,8 +223,9 @@ export function postProcessMermaidPreviewSvg(svg: string, isDark: boolean): stri
   if (!trimmed) return trimmed;
 
   const canvas = isDark ? DARK_CANVAS : LIGHT_CANVAS;
-  let output = injectSvgClass(
-    trimmed,
+  let output = lockSvgIntrinsicSize(trimmed);
+  output = injectSvgClass(
+    output,
     isDark ? "tm-mermaid-svg tm-mermaid-svg--dark" : "tm-mermaid-svg tm-mermaid-svg--light"
   );
   output = setSvgCanvasStyle(output, canvas, isDark);

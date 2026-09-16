@@ -1,6 +1,6 @@
 import {
   useCallback,
-  useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -13,7 +13,9 @@ import {
   clampDiagramZoom,
   computeFitTransform,
   computeResetTransform,
+  type DiagramContentBounds,
   type DiagramViewportTransform,
+  measureSvgWorldSize,
   panViewport,
   zoomViewportAt,
 } from "../layout/diagramViewport";
@@ -28,6 +30,15 @@ type Props = {
 
 const EMPTY_TRANSFORM: DiagramViewportTransform = { x: 0, y: 0, zoom: 1 };
 
+function boundsFromWorld(width: number, height: number): DiagramContentBounds {
+  return {
+    minX: 0,
+    minY: 0,
+    maxX: Math.max(1, width),
+    maxY: Math.max(1, height),
+  };
+}
+
 export function SvgDiagramViewport({
   labels,
   worldWidth,
@@ -39,17 +50,17 @@ export function SvgDiagramViewport({
   const intentRef = useRef<"fit" | "user">("fit");
   const transformRef = useRef<DiagramViewportTransform>(EMPTY_TRANSFORM);
   const dragRef = useRef<{ pointerId: number; lastX: number; lastY: number } | null>(null);
+  const worldRef = useRef({ width: Math.max(1, worldWidth), height: Math.max(1, worldHeight) });
   const [transform, setTransform] = useState<DiagramViewportTransform>(EMPTY_TRANSFORM);
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+  const [measuredWorld, setMeasuredWorld] = useState({
+    width: Math.max(1, worldWidth),
+    height: Math.max(1, worldHeight),
+  });
 
   transformRef.current = transform;
-
-  const worldBounds = {
-    minX: 0,
-    minY: 0,
-    maxX: Math.max(1, worldWidth),
-    maxY: Math.max(1, worldHeight),
-  };
+  worldRef.current = measuredWorld;
+  const worldBounds = boundsFromWorld(measuredWorld.width, measuredWorld.height);
 
   const applyTransform = useCallback((next: DiagramViewportTransform, intent: "fit" | "user") => {
     intentRef.current = intent;
@@ -60,9 +71,11 @@ export function SvgDiagramViewport({
   const fitToView = useCallback(
     (size = viewportSize) => {
       if (size.width < 8 || size.height < 8) return;
-      applyTransform(computeFitTransform(worldBounds, size), "fit");
+      const bounds = boundsFromWorld(worldRef.current.width, worldRef.current.height);
+      if (bounds.maxX <= 1 && bounds.maxY <= 1) return;
+      applyTransform(computeFitTransform(bounds, size), "fit");
     },
-    [applyTransform, viewportSize, worldBounds.maxX, worldBounds.maxY]
+    [applyTransform, viewportSize]
   );
 
   const resetView = useCallback(() => {
@@ -70,27 +83,47 @@ export function SvgDiagramViewport({
     applyTransform(computeResetTransform(worldBounds, viewportSize), "user");
   }, [applyTransform, viewportSize, worldBounds.maxX, worldBounds.maxY]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    const next = { width: Math.max(1, worldWidth), height: Math.max(1, worldHeight) };
+    worldRef.current = next;
+    setMeasuredWorld(next);
+    intentRef.current = "fit";
+  }, [worldWidth, worldHeight]);
+
+  useLayoutEffect(() => {
+    const svg = viewportRef.current?.querySelector("svg");
+    if (!svg) return;
+    const measured = measureSvgWorldSize(svg);
+    if (measured.width <= 1 || measured.height <= 1) return;
+    worldRef.current = measured;
+    setMeasuredWorld((current) =>
+      current.width === measured.width && current.height === measured.height ? current : measured
+    );
+    intentRef.current = "fit";
+  }, [children, worldWidth, worldHeight]);
+
+  useLayoutEffect(() => {
     const element = viewportRef.current;
     if (!element) return;
 
-    const measure = () => {
+    const measureViewport = () => {
       const rect = element.getBoundingClientRect();
       const next = { width: rect.width, height: rect.height };
       setViewportSize(next);
-      if (intentRef.current === "fit") {
-        applyTransform(computeFitTransform(worldBounds, next), "fit");
-      }
+      if (intentRef.current !== "fit" || next.width < 8 || next.height < 8) return;
+      const bounds = boundsFromWorld(worldRef.current.width, worldRef.current.height);
+      if (bounds.maxX <= 1 && bounds.maxY <= 1) return;
+      applyTransform(computeFitTransform(bounds, next), "fit");
     };
 
-    measure();
+    measureViewport();
     if (typeof ResizeObserver === "undefined") {
       return;
     }
-    const observer = new ResizeObserver(measure);
+    const observer = new ResizeObserver(measureViewport);
     observer.observe(element);
     return () => observer.disconnect();
-  }, [applyTransform, worldBounds.maxX, worldBounds.maxY]);
+  }, [applyTransform, measuredWorld.height, measuredWorld.width]);
 
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
