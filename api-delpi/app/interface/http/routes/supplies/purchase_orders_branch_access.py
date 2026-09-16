@@ -27,3 +27,12 @@ def list_viewable_branches() -> list[str]:
 
 def branch_access_error(branch: str | None):
     return _GATE.branch_access_error(branch)
+
+
+def branches_access_error(branches: list[str] | None):
+    """Fail-closed: every requested branch must be allowed. Empty is 422 at the route."""
+    for code in branches or []:
+        error = branch_access_error(code)
+        if error:
+            return error
+    return None

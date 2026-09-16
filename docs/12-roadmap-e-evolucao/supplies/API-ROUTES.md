@@ -1,7 +1,10 @@
 # API-ROUTES — supplies-api e reuso api-delpi
 
-> **Revisado em 2026-09-10 contra o código atual.**  
+> **Revisado em 2026-09-16 contra o código atual.**  
 > Arquitetura: `MFE → supplies-api → api-delpi | purchase-requests-api | strategic-indicators-api | Core`.
+>
+> O MFE **não** chama `api-delpi` nem `purchase-requests-api`. Downstreams:
+> `supplies-api → api-delpi` (pedidos) e `supplies-api → purchase-requests-api` (solicitações).
 
 Envelope alvo: `{ success, message, data, meta }`.  
 AuthN: JWT Keycloak.  
@@ -58,6 +61,9 @@ Não espelhar CRUD em permission codes. Qualquer `ANY_OF`/`ALL_OF` precisa ser d
 | GET | `/purchase-requests` | `supplies.purchase-requests.access` + unit + CC | PR-api | **IMPLEMENTADO_C1** |
 | GET | `/purchase-requests/{branch}/{number}` | `supplies.purchase-requests.access` + unit + resource scope | PR-api | **IMPLEMENTADO_C1** |
 | GET | `/purchase-requests/export` | access + export + unit + CC/view-all | PR-api list hop | **IMPLEMENTADO_C1** |
+| GET | `/purchase-orders` | `supplies.operations.access` + units | api-delpi `GET /supplies/purchase-orders` | **IMPLEMENTADO** |
+| GET | `/purchase-orders/{branch}/{number}` | operations + unit | api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}` | **IMPLEMENTADO** |
+| GET | `/purchase-orders/export` | operations + units | api-delpi `GET /supplies/purchase-orders/export` → XLSX no BFF | **IMPLEMENTADO** |
 | GET | `/users/{id}/profile` | self portal; terceiro admin | Core + prefs | **IMPLEMENTADO** |
 | PATCH | `/users/{id}/profile` | self only + portal | PG prefs | **IMPLEMENTADO** |
 

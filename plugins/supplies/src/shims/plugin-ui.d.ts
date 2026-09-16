@@ -512,6 +512,7 @@ declare module "@delpi/plugin-ui/index" {
     visibleKeys: string[];
     setColumnVisible: (key: string, visible: boolean) => void;
     reorderColumns: (fromKey: string, toKey: string) => void;
+    applyVisibleOrder: (visibleKeysInOrder: string[]) => void;
     reset: () => void;
   };
 
@@ -567,7 +568,42 @@ declare module "@delpi/plugin-ui/index" {
     getRowClassName?: (row: T, index: number) => string | undefined;
     getRowProps?: (row: T, index: number) => Record<string, unknown> | undefined;
     layout?: "section" | "embedded" | "scroll";
+    sortKey?: string | null;
+    sortDirection?: "asc" | "desc";
+    onSortChange?: (columnKey: string) => void;
+    enableColumnReorder?: boolean;
+    onColumnOrderChange?: (columnKeys: string[]) => void;
   };
+
+  export function ExcelExportButton(props: {
+    disabled?: boolean;
+    exporting?: boolean;
+    onExport: () => void | Promise<void>;
+    className?: string;
+    buttonClassName?: string;
+    label?: string;
+    exportingLabel?: string;
+    density?: "default" | "toolbar";
+  }): ReactNode;
+
+  export function usePersistedViewLayout(options: {
+    storageKey: string;
+    defaultMode?: "table" | "cards" | "board";
+    mobileMaxWidthPx?: number;
+    enabled?: boolean;
+  }): {
+    layout: "table" | "cards" | "board";
+    setLayout: (layout: "table" | "cards" | "board") => void;
+  };
+
+  export function createDashboardDataCardsGrid(config: {
+    prefix: string;
+  }): ComponentType<{
+    children?: ReactNode;
+    empty?: ReactNode;
+    ariaLabel?: string;
+    className?: string;
+  }>;
 
   export function DataTable<T>(
     props: DashboardDataTableProps<T> & {

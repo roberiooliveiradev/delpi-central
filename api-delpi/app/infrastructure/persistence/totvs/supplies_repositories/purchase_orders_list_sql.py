@@ -5,12 +5,29 @@ from __future__ import annotations
 from datetime import date
 
 from app.domain.services.pagination_tier_service import PaginationTierService
-from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql import (
-    branch_filter_and,
-)
+from app.domain.totvs.protheus_branches import normalize_branch_code
 
 MAX_PAGE_SIZE = int(PaginationTierService.max_size("page_50_200") or 0)
 DEFAULT_PAGE_SIZE = PaginationTierService.require_int("page_50_200", None)
+
+PURCHASE_ORDERS_SORT_FIELDS: tuple[str, ...] = (
+    "order_number",
+    "order_item",
+    "product_code",
+    "product_description",
+    "supplier_name",
+    "open_quantity",
+    "expected_delivery_date",
+    "delivery_status",
+    "open_value",
+)
+
+_DEFAULT_ORDER_BY = """
+        CASE WHEN RTRIM(SC7.C7_DATPRF) = '' THEN 1 ELSE 0 END,
+        SC7.C7_DATPRF ASC,
+        SC7.C7_NUM ASC,
+        SC7.C7_ITEM ASC
+"""
 
 # Canonical open_value = proportional C7_TOTAL + IPI + frete − desconto via balance_factor.
 _OPEN_VALUE_EXPRESSION = """(
@@ -32,6 +49,34 @@ _BALANCE_FACTOR_CROSS_APPLY = """
     ) bf
 """
 
+_OPEN_QUANTITY_EXPRESSION = """(
+            CASE
+                WHEN SC7.C7_QUANT > SC7.C7_QUJE
+                THEN SC7.C7_QUANT - SC7.C7_QUJE
+                ELSE 0
+            END
+        )"""
+
+_DELIVERY_STATUS_SORT_EXPRESSION = """(
+            CASE
+                WHEN RTRIM(ISNULL(SC7.C7_DATPRF, '')) = '' THEN 2
+                WHEN RTRIM(SC7.C7_DATPRF) < CONVERT(char(8), GETDATE(), 112) THEN 0
+                ELSE 1
+            END
+        )"""
+
+_PURCHASE_ORDERS_SORT_EXPRESSIONS: dict[str, str] = {
+    "order_number": "SC7.C7_NUM",
+    "order_item": "SC7.C7_ITEM",
+    "product_code": "SC7.C7_PRODUTO",
+    "product_description": "RTRIM(COALESCE(SB1.B1_DESC, SC7.C7_DESCRI, ''))",
+    "supplier_name": "RTRIM(COALESCE(SA2.A2_NREDUZ, SA2.A2_NOME, ''))",
+    "open_quantity": _OPEN_QUANTITY_EXPRESSION,
+    "expected_delivery_date": "SC7.C7_DATPRF",
+    "delivery_status": _DELIVERY_STATUS_SORT_EXPRESSION,
+    "open_value": _OPEN_VALUE_EXPRESSION,
+}
+
 
 def _protheus_date_param(iso_date: str) -> str:
     return iso_date.replace("-", "")
@@ -41,9 +86,87 @@ def _today_protheus(*, reference: date | None = None) -> str:
     return (reference or date.today()).strftime("%Y%m%d")
 
 
+def normalize_purchase_order_branches(
+    *,
+    branch: str | None = None,
+    branches: list[str] | None = None,
+) -> list[str]:
+    """Fail-closed unit scope: at least one concrete 01|02 code, de-duplicated."""
+    raw = list(branches or [])
+    if not raw and branch:
+        raw = [branch]
+    codes: list[str] = []
+    seen: set[str] = set()
+    for item in raw:
+        code = normalize_branch_code(str(item or "").strip())
+        if code in seen:
+            continue
+        seen.add(code)
+        codes.append(code)
+    if not codes:
+        raise ValueError("at least one branch is required")
+    return codes
+
+
+def _branch_scope_sql(codes: list[str]) -> tuple[str, list[str]]:
+    if len(codes) == 1:
+        return "RTRIM(SC7.C7_FILIAL) = ?", codes
+    placeholders = ", ".join("?" * len(codes))
+    return f"RTRIM(SC7.C7_FILIAL) IN ({placeholders})", codes
+
+
+def resolve_purchase_orders_order_by(
+    *,
+    sort_by: str | None = None,
+    sort_dir: str | None = None,
+) -> str:
+    """Allow-listed ORDER BY. Default remains promised date / order / item."""
+    key = (sort_by or "").strip()
+    if not key:
+        return _DEFAULT_ORDER_BY.strip()
+    expression = _PURCHASE_ORDERS_SORT_EXPRESSIONS.get(key)
+    if expression is None:
+        raise ValueError("Invalid sort_by")
+    direction = (sort_dir or "asc").strip().lower()
+    if direction not in {"asc", "desc"}:
+        raise ValueError("Invalid sort_dir")
+    return f"{expression} {direction.upper()}, SC7.C7_NUM ASC, SC7.C7_ITEM ASC"
+
+
+def count_sql_placeholders(sql: str) -> int:
+    return sql.count("?")
+
+
+def split_sql_placeholder_counts(sql: str) -> tuple[int, int]:
+    """Count `?` before and after the first WHERE (textual bind order)."""
+    marker = "WHERE"
+    upper = sql.upper()
+    index = upper.find(marker)
+    if index < 0:
+        return count_sql_placeholders(sql), 0
+    return sql[:index].count("?"), sql[index:].count("?")
+
+
+def bind_purchase_orders_summary_params(
+    summary_sql: str,
+    where_params: list,
+    *,
+    today_protheus: str,
+) -> tuple:
+    """SELECT bucket dates bind before WHERE placeholders."""
+    select_placeholders, where_placeholders = split_sql_placeholder_counts(summary_sql)
+    if where_placeholders != len(where_params):
+        raise ValueError(
+            "summary SQL WHERE placeholders do not match filter params "
+            f"({where_placeholders} != {len(where_params)})"
+        )
+    return (today_protheus,) * select_placeholders + tuple(where_params)
+
+
 def build_purchase_orders_list_filters(
     *,
-    branch: str,
+    branch: str | None = None,
+    branches: list[str] | None = None,
     order_number: str | None = None,
     product_code: str | None = None,
     supplier_code: str | None = None,
@@ -53,15 +176,15 @@ def build_purchase_orders_list_filters(
     reference: date | None = None,
 ) -> tuple[str, list]:
     """Open SC7 lines: D_E_L_E_T_='', residual <> 'S', C7_QUANT > C7_QUJE."""
-    branch_clause, branch_params = branch_filter_and("RTRIM(SC7.C7_FILIAL)", branch)
+    codes = normalize_purchase_order_branches(branch=branch, branches=branches)
+    branch_clause, branch_params = _branch_scope_sql(codes)
     filters = [
         "SC7.D_E_L_E_T_ = ''",
         "ISNULL(SC7.C7_RESIDUO, '') <> 'S'",
         "SC7.C7_QUANT > SC7.C7_QUJE",
+        branch_clause,
     ]
     params: list = list(branch_params)
-    if branch_clause:
-        filters.append(branch_clause.strip().removeprefix("AND ").strip())
     if order_number:
         filters.append("RTRIM(SC7.C7_NUM) = ?")
         params.append(order_number.strip())
@@ -161,19 +284,38 @@ def _purchase_orders_from_joins() -> str:
     """
 
 
-def build_purchase_orders_list_sql(*, where_clause: str) -> str:
+def build_purchase_orders_list_sql(
+    *,
+    where_clause: str,
+    order_by: str | None = None,
+) -> str:
     """Paged open PO lines with open_value formula aligned to open_purchase_orders_sql."""
+    resolved_order = (order_by or _DEFAULT_ORDER_BY).strip()
     return f"""
     SELECT
         {_purchase_orders_select_columns(include_origin_and_buyer=False)}
     {_purchase_orders_from_joins()}
     WHERE {where_clause}
     ORDER BY
-        CASE WHEN RTRIM(SC7.C7_DATPRF) = '' THEN 1 ELSE 0 END,
-        SC7.C7_DATPRF ASC,
-        SC7.C7_NUM ASC,
-        SC7.C7_ITEM ASC
+        {resolved_order}
     OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+    """
+
+
+def build_purchase_orders_export_sql(
+    *,
+    where_clause: str,
+    order_by: str | None = None,
+) -> str:
+    """Unpaged open PO lines for Excel — same scope/sort as list, no OFFSET."""
+    resolved_order = (order_by or _DEFAULT_ORDER_BY).strip()
+    return f"""
+    SELECT
+        {_purchase_orders_select_columns(include_origin_and_buyer=False)}
+    {_purchase_orders_from_joins()}
+    WHERE {where_clause}
+    ORDER BY
+        {resolved_order}
     """
 
 

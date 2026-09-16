@@ -318,6 +318,16 @@ def BRANCH_QUERY_REQUIRED():
     pattern=_enum_pattern(BRANCH_CODE_VALUES),
     enum=list(BRANCH_CODE_VALUES),
 )
+def BRANCH_CODES_QUERY():
+    """One or more concrete 01|02 codes — repeat ?branch=01&branch=02."""
+    return Query(
+        ...,
+        description=(
+            "One or more Protheus branch codes (01 or 02). "
+            "Repeat the query param: ?branch=01&branch=02."
+        ),
+        min_length=1,
+    )
 def BRANCH_PATH():
     """Path param — filial concreta 01|02 (chave composta)."""
     return Path(

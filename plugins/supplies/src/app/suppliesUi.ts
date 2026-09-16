@@ -11,6 +11,7 @@ import {
   createDashboardFiltersKit,
   createDashboardHubChipRow,
   createDashboardLoadingActivityCard,
+  createDashboardDataCardsGrid,
   createDashboardMultiSelectField,
   createDashboardPageHero,
   createDashboardPagePath,
@@ -37,7 +38,9 @@ import {
   ClearFiltersButton,
   DataTable,
   DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS,
+  ExcelExportButton,
   TableColumnVisibilityMenu,
+  usePersistedViewLayout,
   useTableColumnVisibility,
   useTableFontSize,
   catalogSearchBarBemClasses,
@@ -182,6 +185,7 @@ export const SuppliesMultiSelectField = createDashboardMultiSelectField({
 });
 
 export const SuppliesSegmentToggle = createDashboardSegmentToggle(UI_PREFIX);
+export const SuppliesDataCardsGrid = createDashboardDataCardsGrid({ prefix: UI_PREFIX });
 export const SuppliesScopeChipBar = createDashboardScopeChipBar({ prefix: UI_PREFIX });
 export const SuppliesDataListToolbar = createDashboardDataListToolbar({ prefix: UI_PREFIX });
 export const SuppliesTableFontSizeControls = createDashboardTableFontSizeControls({
@@ -229,6 +233,8 @@ export const SuppliesSectionHintLabel = SectionHintLabel;
 
 export {
   DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS,
+  ExcelExportButton,
+  usePersistedViewLayout,
   useTableColumnVisibility,
   useTableFontSize,
 };

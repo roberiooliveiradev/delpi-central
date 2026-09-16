@@ -68,17 +68,22 @@ export const EMPTY_PURCHASE_ORDER_SUMMARY: PurchaseOrderListSummary = {
   no_date_lines: 0,
 };
 
+export type PurchaseOrdersSortDir = "asc" | "desc";
+
 export type PurchaseOrdersQuery = {
-  branch: string;
+  branches: string[];
   order_number: string;
   product_code: string;
   supplier_code: string;
   expected_delivery_from: string;
   expected_delivery_to: string;
   late_only: boolean;
+  sort_by: string;
+  sort_dir: PurchaseOrdersSortDir;
   page: number;
   page_size: number;
   order: string;
 };
 
 export const DEFAULT_PAGE_SIZE = 50;
+export const PURCHASE_ORDERS_PAGE_SIZE_OPTIONS = [50, 100, 200] as const;

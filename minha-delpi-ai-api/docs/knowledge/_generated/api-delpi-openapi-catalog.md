@@ -1,6 +1,6 @@
 # Catálogo OpenAPI — api-delpi (gerado automaticamente)
 
-**Provider:** `api-delpi` · **Rotas:** 706 · **Gerado em:** 2026-09-15 19:48 UTC
+**Provider:** `api-delpi` · **Rotas:** 708 · **Gerado em:** 2026-09-16 11:59 UTC
 
 > Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
 
@@ -877,11 +877,13 @@
 | `GET` | `/supplies/third-party-materials/shipments/{shipment_recno}` | `get_supplies_third_party_materials_shipment` | Third-party material shipment detail |
 | `GET` | `/supplies/third-party-materials/summary` | `get_supplies_third_party_materials_summary` | Third-party materials summary |
 
-## Suprimentos — Pedidos de compra (1)
+## Suprimentos — Pedidos de compra (3)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
 | `GET` | `/supplies/purchase-orders` | `list_supplies_purchase_orders` | Lista paginada — Linhas de pedidos de compra em aberto (sc7) |
+| `GET` | `/supplies/purchase-orders/export` | `export_supplies_purchase_orders` | Exportação — Exportação de linhas de pedidos de compra em aberto (sc7) |
+| `GET` | `/supplies/purchase-orders/{branch}/{order_number}` | `get_supplies_purchase_order` | Open purchase order detail |
 
 ## Suprimentos — Saldos de estoque (2)
 

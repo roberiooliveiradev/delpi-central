@@ -131,6 +131,9 @@ _ENTITY_LABELS: dict[str, str] = {
     "supplies_purchase_order_line": (
         "linhas de pedidos de compra em aberto (SC7)"
     ),
+    "supplies_purchase_order_line_export": (
+        "exportação de linhas de pedidos de compra em aberto (SC7)"
+    ),
     "supplies_purchase_order": (
         "ficha de pedido de compra em aberto (SC7) com recebimentos SD1"
     ),
@@ -160,6 +163,7 @@ _SHAPE_SUMMARY_PREFIX: dict[str, str] = {
     "composite_analysis": "Análise consolidada",
     "playbook_report": "Relatório operacional",
     "list": "Lista",
+    "document_export": "Exportação",
 }
 
 

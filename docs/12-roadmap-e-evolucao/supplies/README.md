@@ -132,7 +132,7 @@ selecionar página em foco
 
 **Solicitações de compras (WF-04):** BFF C1 `/purchase-requests*`; PageHero + FilterBar kit + SectionCard; URL/F5 dos filtros e detalhe; AuthZ access/export/unit/CC fail-closed; estados loading/empty/error/403/404; Help + FAQ; testes MFE estruturais + BFF/security. Smoke federado: `INCONCLUSIVE` neste ambiente.
 
-**Pedidos de compra (WF-05):** api-delpi `GET /supplies/purchase-orders` (SC7 aberto); BFF `GET /purchase-orders` (operations + unit); MFE kit-first com filtros/URL/F5. Clique na linha abre a ficha E8. Distinto do painel OTD. Smoke federado: `INCONCLUSIVE`.
+**Pedidos de compra (WF-05):** MFE → `supplies-api` → `api-delpi` `GET /supplies/purchase-orders` (SC7 aberto, multi-unidade, `sort_by`/`sort_dir`, `summary`); BFF `GET /purchase-orders` + `GET /purchase-orders/export` (XLSX; operations + units). MFE: MultiSelect de unidades (nome sem código), Tabela/Cards, sort server-side, Excel, colunas/fonte persistidos. Clique na linha abre a ficha E8. Distinto do painel OTD. Smoke federado: `INCONCLUSIVE`.
 
 **Detalhe do pedido (WF-06):** api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}`; BFF `GET /purchase-orders/<branch>/<number>` (operations + unit); MFE `/purchase-orders/:branch/:number` read-only (itens, entrega prometida, receipts, SC origem). Smoke federado: `INCONCLUSIVE`.
 

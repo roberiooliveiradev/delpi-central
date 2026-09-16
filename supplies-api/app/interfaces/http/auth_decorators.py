@@ -58,3 +58,23 @@ def require_unit(branch_arg: str = "branch"):
         return wrapper
 
     return decorator
+
+
+def require_units(branch_arg: str = "branch"):
+    """Fail-closed collection AuthZ: every requested unit must be allowed."""
+
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            user = getattr(g, "current_user", None)
+            if not user:
+                raise AuthenticationError("Unauthorized")
+
+            values = [str(item).strip() for item in request.args.getlist(branch_arg)]
+            values = [item for item in values if item]
+            AuthorizationService().require_units(user, values)
+            return fn(*args, **kwargs)
+
+        return wrapper
+
+    return decorator

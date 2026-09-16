@@ -1,28 +1,35 @@
-import { useMemo, type CSSProperties } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 
 import { buildPurchaseOrderDetailPath } from "../../app/pluginRoutes";
 import {
   DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS,
+  ExcelExportButton,
   HelpTooltip,
   SuppliesCompactPagination,
   SuppliesDataListToolbar,
   SuppliesDataTable,
   SuppliesEntityLink,
+  SuppliesSegmentToggle,
   SuppliesStatusBadge,
   SuppliesTableColumnVisibilityMenu,
   SuppliesTableFontSizeControls,
   spDataTableClassNames,
+  usePersistedViewLayout,
   useTableColumnVisibility,
   useTableFontSize,
   type DataTableColumn,
 } from "../../app/suppliesUi";
 import { SP_HELP } from "../../content/helpTooltips";
+import { PurchaseOrdersCards } from "./PurchaseOrdersCards";
+import { downloadBlob, exportPurchaseOrders } from "./api";
 import { PURCHASE_ORDERS_CONTENT as C } from "./content";
 import {
   formatDatePtBr,
   formatMoneyBr,
   formatProductLabel,
   labelDeliveryStatus,
+  nextServerSort,
+  tableSortKey,
 } from "./query";
 import { purchaseOrdersColumnHelp } from "./purchaseOrdersColumnHelp";
 import {
@@ -30,9 +37,11 @@ import {
   PURCHASE_ORDERS_TABLE_COLUMNS,
   PURCHASE_ORDERS_TABLE_EMPTY_FALLBACK_KEYS,
   PURCHASE_ORDERS_TABLE_FONT_SIZE_STORAGE_KEY,
+  PURCHASE_ORDERS_VIEW_LAYOUT_STORAGE_KEY,
   type PurchaseOrderTableColumnKey,
 } from "./purchaseOrdersTableConfig";
 import type { PurchaseOrderListItem, PurchaseOrdersQuery } from "./types";
+import { PURCHASE_ORDERS_PAGE_SIZE_OPTIONS } from "./types";
 
 type PurchaseOrdersListTableProps = {
   items: PurchaseOrderListItem[];
@@ -61,6 +70,12 @@ export function PurchaseOrdersListTable({
   onPatchQuery,
   onSelectRow,
 }: PurchaseOrdersListTableProps) {
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const { layout, setLayout } = usePersistedViewLayout({
+    storageKey: PURCHASE_ORDERS_VIEW_LAYOUT_STORAGE_KEY,
+  });
+
   const columnPrefs = useTableColumnVisibility({
     storageKey: PURCHASE_ORDERS_COLUMN_STORAGE_KEY,
     columns: PURCHASE_ORDERS_TABLE_COLUMNS,
@@ -93,7 +108,7 @@ export function PurchaseOrdersListTable({
           key: column.key,
           header: column.label,
           headerHint: purchaseOrdersColumnHelp(key),
-          sortable: false,
+          sortable: true,
           ...numeric,
           interactive: key === "order_number",
           rowClick: key === "order_number" ? ("stop" as const) : undefined,
@@ -155,9 +170,46 @@ export function PurchaseOrdersListTable({
     [fontSizePrefs.fontSize],
   );
 
+  const onExport = async () => {
+    setExportError(null);
+    setExporting(true);
+    try {
+      const blob = await exportPurchaseOrders(query);
+      downloadBlob(blob, "purchase-orders.xlsx");
+    } catch (err: unknown) {
+      setExportError(err instanceof Error ? err.message : C.excelError);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const showCards = layout === "cards";
+
   return (
     <>
       <SuppliesDataListToolbar
+        leading={
+          <HelpTooltip
+            content={SP_HELP.purchaseOrdersView}
+            ariaLabel="Ajuda: modo Tabela ou Cards"
+            wrap
+            placement="bottom"
+          >
+            <SuppliesSegmentToggle
+              ariaLabel={C.viewAriaLabel}
+              idPrefix="purchase-orders-layout"
+              size="sm"
+              value={showCards ? "cards" : "table"}
+              onChange={(value) => {
+                if (value === "table" || value === "cards") setLayout(value);
+              }}
+              options={[
+                { value: "table", label: C.viewTable },
+                { value: "cards", label: C.viewCards },
+              ]}
+            />
+          </HelpTooltip>
+        }
         hint={
           <HelpTooltip
             content={SP_HELP.purchaseOrdersTableMeta}
@@ -172,6 +224,21 @@ export function PurchaseOrdersListTable({
         }
         actions={
           <>
+            <HelpTooltip
+              content={SP_HELP.purchaseOrdersExcel}
+              ariaLabel="Ajuda: exportar Excel"
+              wrap
+              placement="bottom"
+            >
+              <ExcelExportButton
+                density="toolbar"
+                onExport={() => void onExport()}
+                disabled={loading || total === 0}
+                exporting={exporting}
+                label={C.excelLabel}
+                exportingLabel={C.excelExporting}
+              />
+            </HelpTooltip>
             <SuppliesTableFontSizeControls
               fontSize={fontSizePrefs.fontSize}
               canIncrease={fontSizePrefs.canIncrease}
@@ -193,27 +260,45 @@ export function PurchaseOrdersListTable({
         }
       />
 
-      <div
-        className="sp-list-table-region"
-        role="region"
-        aria-label={C.tableScrollRegion}
-        tabIndex={0}
-        style={tableStyle}
-      >
-        <SuppliesDataTable
-          layout="section"
-          columns={columns}
-          rows={items}
-          rowKey={(row) =>
-            `${row.branch}-${row.order_number}-${row.order_item ?? ""}`
-          }
-          onRowClick={onSelectRow}
-          getRowProps={(row) => ({
-            "aria-label": `${C.detailTitle} ${row.order_number}`,
-          })}
-          loading={loading}
-        />
-      </div>
+      {exportError ? (
+        <p className="sp-purchase-orders__export-error" role="alert">
+          {exportError}
+        </p>
+      ) : null}
+
+      {showCards ? (
+        <PurchaseOrdersCards items={items} basePath={basePath} onSelectRow={onSelectRow} />
+      ) : (
+        <div
+          className="sp-list-table-region"
+          role="region"
+          aria-label={C.tableScrollRegion}
+          tabIndex={0}
+          style={tableStyle}
+        >
+          <SuppliesDataTable
+            layout="section"
+            columns={columns}
+            rows={items}
+            rowKey={(row) =>
+              `${row.branch}-${row.order_number}-${row.order_item ?? ""}`
+            }
+            onRowClick={onSelectRow}
+            getRowProps={(row) => ({
+              "aria-label": `${C.detailTitle} ${row.order_number}`,
+            })}
+            loading={loading}
+            sortKey={tableSortKey(query.sort_by)}
+            sortDirection={query.sort_dir}
+            onSortChange={(columnKey) => {
+              const next = nextServerSort(query, columnKey);
+              if (next) onPatchQuery(next);
+            }}
+            enableColumnReorder
+            onColumnOrderChange={columnPrefs.applyVisibleOrder}
+          />
+        </div>
+      )}
 
       <SuppliesCompactPagination
         page={query.page}
@@ -221,7 +306,7 @@ export function PurchaseOrdersListTable({
         total={total}
         totalPages={totalPages}
         disabled={loading}
-        pageSizeOptions={[25, 50, 100]}
+        pageSizeOptions={[...PURCHASE_ORDERS_PAGE_SIZE_OPTIONS]}
         onPageChange={(page) => onPatchQuery({ page })}
         onPageSizeChange={(pageSize) => onPatchQuery({ page_size: pageSize, page: 1 })}
       />

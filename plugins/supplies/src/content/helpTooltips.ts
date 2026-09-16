@@ -99,9 +99,9 @@ export const SP_HELP = {
   purchaseRequestsEntityLink:
     "O número da SC abre o detalhe na mesma página (URL com request). Você também pode clicar na linha.",
   purchaseOrders:
-    "Pedidos de compra em aberto (saldo a receber). O hero mostra linhas em aberto, valor em aberto e atrasadas do mesmo recorte dos filtros (exceto o chip Atrasados). Não é o painel OTD de pontualidade — esse fica na analytics. Clique no PC ou na linha para abrir a ficha.",
+    "Pedidos de compra em aberto (saldo a receber). O hero mostra linhas em aberto, valor em aberto e atrasadas do recorte das unidades e filtros selecionados (o chip Atrasados não muda os totais). Não é o painel OTD de pontualidade — esse fica na analytics. Clique no PC ou na linha para abrir a ficha.",
   purchaseOrdersBranch:
-    "Filial do recorte (ex.: Santa Catarina (01)). Só unidades liberadas na sessão; a API reforça o escopo de unidade.",
+    "Unidades do recorte (Santa Catarina e/ou Espírito Santo). «Todas» envia as unidades liberadas na sessão. Códigos técnicos ficam só na URL e na API.",
   purchaseOrdersNumber: "Filtra pelo número do pedido de compra.",
   purchaseOrdersProduct: "Filtra por código de produto/MP da linha.",
   purchaseOrdersSupplier: "Filtra pelo código do fornecedor (A2).",
@@ -112,11 +112,17 @@ export const SP_HELP = {
   purchaseOrdersRefresh:
     "Recarrega a lista e o resumo com os mesmos filtros. O horário é da última consulta bem-sucedida nesta tela, não do TOTVS.",
   purchaseOrdersFilters:
-    "Filtros aplicam automaticamente. Texto confirma após um instante ou com Enter. Mais filtros revela as datas de entrega. Limpar só aparece quando há filtro além do padrão (filial default não conta sozinha).",
+    "Filtros aplicam automaticamente. Texto confirma após um instante ou com Enter. Mais filtros revela as datas de entrega. Limpar só aparece quando há filtro além do padrão (todas as unidades liberadas não contam sozinhas).",
+  purchaseOrdersView:
+    "Tabela ou Cards usam o mesmo recorte paginado. A preferência fica neste navegador e não muda dados nem permissões.",
+  purchaseOrdersSort:
+    "Clique no cabeçalho para ordenar o recorte inteiro no servidor. A URL guarda sort_by e sort_dir; F5 restaura a ordem. Não ordena só a página atual.",
+  purchaseOrdersExcel:
+    "Exporta para Excel o recorte filtrado inteiro (todas as unidades selecionadas), sem truncar na página. Exige o mesmo acesso de operações e as unidades pedidas.",
   purchaseOrdersTableFontSize:
-    "Ajusta o tamanho da fonte da tabela neste navegador. A preferência fica salva localmente.",
+    "Ajusta o tamanho da fonte da tabela neste navegador. Use − / + ou restaurar o padrão. A preferência fica salva localmente.",
   purchaseOrdersTableColumns:
-    "Escolha quais colunas exibir e arraste para reordenar. A preferência fica salva neste navegador; não altera permissões nem dados.",
+    "Marque ou desmarque colunas e arraste pelo handle para reordenar. Restaurar volta ao padrão. A preferência fica salva neste navegador; não altera permissões nem dados.",
   purchaseOrdersTableMeta:
     "Contagem de colunas visíveis nesta tabela e total de linhas do recorte filtrado (não só a página atual).",
   purchaseOrdersColOpenQty: "Quantidade ainda em aberto (saldo a receber) nesta linha.",

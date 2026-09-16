@@ -12,11 +12,14 @@ from app.infrastructure.persistence.totvs.pagination import paginate
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_orders_list_sql import (
     DEFAULT_PAGE_SIZE,
     MAX_PAGE_SIZE,
+    bind_purchase_orders_summary_params,
     build_purchase_order_detail_sql,
+    build_purchase_orders_export_sql,
     build_purchase_orders_list_count_sql,
     build_purchase_orders_list_filters,
     build_purchase_orders_list_sql,
     build_purchase_orders_summary_sql,
+    resolve_purchase_orders_order_by,
 )
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_lines_sql import (
     build_receipts_for_orders_sql,
@@ -139,25 +142,21 @@ def compose_open_purchase_order(
 
 
 class PurchaseOrdersListRepository(BaseRepository):
-    def list_open_lines(
+    def _filter_kwargs(
         self,
         *,
-        branch: str,
+        branch: str | None = None,
+        branches: list[str] | None = None,
         order_number: str | None = None,
         product_code: str | None = None,
         supplier_code: str | None = None,
         expected_delivery_from: str | None = None,
         expected_delivery_to: str | None = None,
-        late_only: bool = False,
-        page: int = 1,
-        page_size: int = DEFAULT_PAGE_SIZE,
         reference: date | None = None,
     ) -> dict[str, Any]:
-        safe_page = max(1, int(page or 1))
-        safe_page_size = min(MAX_PAGE_SIZE, max(1, int(page_size or DEFAULT_PAGE_SIZE)))
-        paging = paginate(safe_page, safe_page_size)
-        filter_kwargs = {
+        return {
             "branch": branch,
+            "branches": branches,
             "order_number": order_number,
             "product_code": product_code,
             "supplier_code": supplier_code,
@@ -165,26 +164,64 @@ class PurchaseOrdersListRepository(BaseRepository):
             "expected_delivery_to": expected_delivery_to,
             "reference": reference,
         }
+
+    def list_open_lines(
+        self,
+        *,
+        branch: str | None = None,
+        branches: list[str] | None = None,
+        order_number: str | None = None,
+        product_code: str | None = None,
+        supplier_code: str | None = None,
+        expected_delivery_from: str | None = None,
+        expected_delivery_to: str | None = None,
+        late_only: bool = False,
+        sort_by: str | None = None,
+        sort_dir: str | None = None,
+        page: int = 1,
+        page_size: int = DEFAULT_PAGE_SIZE,
+        reference: date | None = None,
+    ) -> dict[str, Any]:
+        safe_page = max(1, int(page or 1))
+        safe_page_size = min(MAX_PAGE_SIZE, max(1, int(page_size or DEFAULT_PAGE_SIZE)))
+        paging = paginate(safe_page, safe_page_size)
+        filter_kwargs = self._filter_kwargs(
+            branch=branch,
+            branches=branches,
+            order_number=order_number,
+            product_code=product_code,
+            supplier_code=supplier_code,
+            expected_delivery_from=expected_delivery_from,
+            expected_delivery_to=expected_delivery_to,
+            reference=reference,
+        )
         where_clause, params = build_purchase_orders_list_filters(
             late_only=late_only,
             **filter_kwargs,
         )
         # Summary ignores pagination and late_only so chips stay stable.
+        # Unit scope (branches) is never ignored.
         summary_where, summary_params = build_purchase_orders_list_filters(
             late_only=False,
             **filter_kwargs,
         )
+        order_by = resolve_purchase_orders_order_by(sort_by=sort_by, sort_dir=sort_dir)
         count_sql = build_purchase_orders_list_count_sql(where_clause)
-        list_sql = build_purchase_orders_list_sql(where_clause=where_clause)
+        list_sql = build_purchase_orders_list_sql(
+            where_clause=where_clause,
+            order_by=order_by,
+        )
         summary_sql = build_purchase_orders_summary_sql(where_clause=summary_where)
         today_protheus = (reference or date.today()).strftime("%Y%m%d")
+        summary_bind = bind_purchase_orders_summary_params(
+            summary_sql,
+            summary_params,
+            today_protheus=today_protheus,
+        )
         with self as repo:
             total_row = repo.execute_one(count_sql, tuple(params))
             total = int(total_row["total"]) if total_row else 0
-            summary_row = repo.execute_one(
-                summary_sql,
-                tuple(summary_params) + (today_protheus, today_protheus),
-            )
+            summary_row = repo.execute_one(summary_sql, summary_bind)
             rows = repo.execute_query(
                 list_sql,
                 tuple(params) + (paging["offset"], paging["page_size"]),
@@ -200,6 +237,49 @@ class PurchaseOrdersListRepository(BaseRepository):
             "total": total,
             "total_pages": total_pages,
             "summary": _normalize_summary(summary_row),
+        }
+
+    def export_open_lines(
+        self,
+        *,
+        branch: str | None = None,
+        branches: list[str] | None = None,
+        order_number: str | None = None,
+        product_code: str | None = None,
+        supplier_code: str | None = None,
+        expected_delivery_from: str | None = None,
+        expected_delivery_to: str | None = None,
+        late_only: bool = False,
+        sort_by: str | None = None,
+        sort_dir: str | None = None,
+        reference: date | None = None,
+    ) -> dict[str, Any]:
+        filter_kwargs = self._filter_kwargs(
+            branch=branch,
+            branches=branches,
+            order_number=order_number,
+            product_code=product_code,
+            supplier_code=supplier_code,
+            expected_delivery_from=expected_delivery_from,
+            expected_delivery_to=expected_delivery_to,
+            reference=reference,
+        )
+        where_clause, params = build_purchase_orders_list_filters(
+            late_only=late_only,
+            **filter_kwargs,
+        )
+        order_by = resolve_purchase_orders_order_by(sort_by=sort_by, sort_dir=sort_dir)
+        export_sql = build_purchase_orders_export_sql(
+            where_clause=where_clause,
+            order_by=order_by,
+        )
+        today_protheus = (reference or date.today()).strftime("%Y%m%d")
+        with self as repo:
+            rows = repo.execute_query(export_sql, tuple(params))
+        items = [_normalize_row(row, today_protheus=today_protheus) for row in rows]
+        return {
+            "items": items,
+            "total": len(items),
         }
 
     def get_open_order(

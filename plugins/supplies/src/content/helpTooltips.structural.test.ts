@@ -39,6 +39,11 @@ describe("helpTooltips", () => {
     expect(SP_HELP.purchaseOrdersBranch.length).toBeGreaterThan(20);
     expect(SP_HELP.purchaseOrdersDelivery.length).toBeGreaterThan(20);
     expect(SP_HELP.purchaseOrdersFilters.length).toBeGreaterThan(20);
+    expect(SP_HELP.purchaseOrdersView.length).toBeGreaterThan(20);
+    expect(SP_HELP.purchaseOrdersSort.length).toBeGreaterThan(20);
+    expect(SP_HELP.purchaseOrdersExcel.length).toBeGreaterThan(20);
+    expect(SP_HELP.purchaseOrdersTableFontSize.length).toBeGreaterThan(20);
+    expect(SP_HELP.purchaseOrdersTableColumns.length).toBeGreaterThan(20);
     expect(SP_HELP.purchaseRequestsFilters.length).toBeGreaterThan(20);
     expect(SP_HELP.purchaseRequestsRefresh.length).toBeGreaterThan(20);
     expect(SP_HELP.purchaseOrdersColOpenQty.length).toBeGreaterThan(10);

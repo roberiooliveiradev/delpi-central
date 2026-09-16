@@ -4,8 +4,8 @@ const UNIT_NAMES: Record<string, string> = {
 };
 
 /** Normalize TOTVS unit codes used by URL/API (never human labels). */
-function normalizeUnitCode(code: string | null | undefined): string {
-  const trimmed = (code ?? "").trim();
+export function normalizeSuppliesUnitCode(code: string | null | undefined): string {
+  const trimmed = String(code ?? "").trim();
   if (!trimmed) return "";
   if (trimmed === "01" || trimmed === "02") return trimmed;
   const lower = trimmed.toLowerCase();
@@ -15,25 +15,28 @@ function normalizeUnitCode(code: string | null | undefined): string {
 }
 
 /**
- * Human-readable unit label for filters/detail UI.
- * API/URL continue to use the TOTVS code (`01` / `02`).
+ * Human unit name for filters/detail UI.
+ * Codes stay in URL, payload and backend only.
  */
-export function formatSuppliesUnitLabel(code: string | null | undefined): string {
-  const normalized = normalizeUnitCode(code);
+export function formatSuppliesUnitName(code: string | null | undefined): string {
+  const normalized = normalizeSuppliesUnitCode(code);
   if (!normalized) return "—";
-  const name = UNIT_NAMES[normalized];
-  if (!name) return `Filial ${normalized}`;
-  return `${name} (${normalized})`;
+  return UNIT_NAMES[normalized] || `Filial ${normalized}`;
+}
+
+/** @deprecated Prefer formatSuppliesUnitName — kept as presentation alias. */
+export function formatSuppliesUnitLabel(code: string | null | undefined): string {
+  return formatSuppliesUnitName(code);
 }
 
 /** Select options from session.allowedUnits only (never invent unauthorized units). */
 export function buildSuppliesUnitOptions(allowedUnits: readonly string[]) {
   return allowedUnits
-    .map((unit) => normalizeUnitCode(unit))
+    .map((unit) => normalizeSuppliesUnitCode(unit))
     .filter(Boolean)
     .map((value) => ({
       value,
-      label: formatSuppliesUnitLabel(value),
+      label: formatSuppliesUnitName(value),
     }));
 }
 
@@ -45,8 +48,22 @@ export function resolveDefaultBranch(
   allowedUnits: readonly string[],
   preferred?: string | null,
 ): string {
-  const allowed = allowedUnits.map((unit) => normalizeUnitCode(unit)).filter(Boolean);
-  const pref = normalizeUnitCode(preferred);
+  const allowed = allowedUnits.map((unit) => normalizeSuppliesUnitCode(unit)).filter(Boolean);
+  const pref = normalizeSuppliesUnitCode(preferred);
   if (pref && allowed.includes(pref)) return pref;
   return allowed[0] ?? "";
+}
+
+/** Empty selection means every authorized unit (UI «Todas»). */
+export function resolveRequestedBranches(
+  selected: readonly string[],
+  allowedUnits: readonly string[],
+): string[] {
+  const allowed = allowedUnits.map((unit) => normalizeSuppliesUnitCode(unit)).filter(Boolean);
+  const allowedSet = new Set(allowed);
+  const picked = selected
+    .map((unit) => normalizeSuppliesUnitCode(unit))
+    .filter((code) => allowedSet.has(code));
+  if (picked.length === 0) return [...allowed];
+  return [...new Set(picked)];
 }

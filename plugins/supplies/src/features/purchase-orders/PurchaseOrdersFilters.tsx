@@ -8,8 +8,8 @@ import {
   SuppliesClearFiltersButton,
   SuppliesDateField,
   SuppliesFilterBarShell,
+  SuppliesMultiSelectField,
   SuppliesSectionHintLabel,
-  SuppliesSelectField,
   SuppliesTextField,
   spFiltersKit,
 } from "../../app/suppliesUi";
@@ -34,7 +34,7 @@ export function PurchaseOrdersFilters({
   const { FiltersRow } = spFiltersKit;
   const [showMore, setShowMore] = useState(false);
   const unitOptions = buildSuppliesUnitOptions(units);
-  const hasActiveFilters = hasActivePurchaseOrdersFilters(query);
+  const hasActiveFilters = hasActivePurchaseOrdersFilters(query, units);
 
   const commitOrderNumber = useCallback(
     (value: string) => onPatch({ order_number: value, page: 1 }),
@@ -101,13 +101,14 @@ export function PurchaseOrdersFilters({
         }
       >
         <FiltersRow variant="extended">
-          <SuppliesSelectField
+          <SuppliesMultiSelectField
+            className="sp-purchase-orders__unit-filter"
             label={C.branchLabel}
             hint={SP_HELP.purchaseOrdersBranch}
-            value={query.branch}
-            onChange={(value) => onPatch({ branch: value, page: 1, order: "" })}
+            selectedValues={query.branches}
+            onChange={(values) => onPatch({ branches: values, page: 1, order: "" })}
             options={unitOptions}
-            allowEmpty={false}
+            emptyLabel="Todas"
             searchable={unitOptions.length > 4}
           />
           <SuppliesTextField

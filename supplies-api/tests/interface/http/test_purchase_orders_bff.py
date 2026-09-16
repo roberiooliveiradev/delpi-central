@@ -78,7 +78,7 @@ def test_list_positive_requires_operations_and_unit(mock_resolve, mock_validate)
     assert body["summary"]["no_date_lines"] == 1
     gateway.get.assert_called_once()
     called_params = gateway.get.call_args.kwargs["params"]
-    assert called_params["branch"] == "01"
+    assert called_params["branch"] == ["01"]
     assert called_params["late_only"] == "true"
 
 
@@ -457,3 +457,209 @@ def test_detail_core_unavailable_returns_503(mock_resolve, mock_validate):
         headers={"Authorization": "Bearer tok"},
     )
     assert response.status_code == 503
+
+
+_OPS_BOTH_UNITS = {
+    "supplies.operations.access",
+    "supplies.unit.filial-01",
+    "supplies.unit.filial-02",
+}
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_list_multi_unit_positive(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions=_OPS_BOTH_UNITS)
+    gateway = MagicMock()
+    gateway.get.return_value = {
+        "success": True,
+        "data": {
+            "items": [],
+            "page": 1,
+            "page_size": 50,
+            "total": 2,
+            "summary": {
+                "total_lines": 2,
+                "total_open_value": 10,
+                "late_lines": 0,
+                "on_time_lines": 2,
+                "no_date_lines": 0,
+            },
+        },
+    }
+    with patch(
+        "app.interfaces.http.routes.purchase_orders_routes._GATEWAY",
+        gateway,
+    ):
+        client = create_app().test_client()
+        response = client.get(
+            "/purchase-orders?branch=01&branch=02&sort_by=open_value&sort_dir=desc",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 200
+    called_params = gateway.get.call_args.kwargs["params"]
+    assert called_params["branch"] == ["01", "02"]
+    assert called_params["sort_by"] == "open_value"
+    assert called_params["sort_dir"] == "desc"
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_list_multi_unit_sibling_mixed_scope_forbidden(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions=_OPS_UNIT_01)
+    gateway = MagicMock()
+    with patch(
+        "app.interfaces.http.routes.purchase_orders_routes._GATEWAY",
+        gateway,
+    ):
+        client = create_app().test_client()
+        response = client.get(
+            "/purchase-orders?branch=01&branch=02",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 403
+    gateway.get.assert_not_called()
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_list_multi_unit_negative_other_unit_forbidden(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions=_OPS_UNIT_01)
+    gateway = MagicMock()
+    with patch(
+        "app.interfaces.http.routes.purchase_orders_routes._GATEWAY",
+        gateway,
+    ):
+        client = create_app().test_client()
+        response = client.get(
+            "/purchase-orders?branch=02",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 403
+    gateway.get.assert_not_called()
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_list_empty_unit_selection_fail_closed(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions=_OPS_BOTH_UNITS)
+    gateway = MagicMock()
+    with patch(
+        "app.interfaces.http.routes.purchase_orders_routes._GATEWAY",
+        gateway,
+    ):
+        client = create_app().test_client()
+        response = client.get(
+            "/purchase-orders",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 403
+    gateway.get.assert_not_called()
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_export_xlsx_positive(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions=_OPS_BOTH_UNITS)
+    gateway = MagicMock()
+    gateway.get.return_value = {
+        "success": True,
+        "data": {
+            "items": [
+                {
+                    "branch": "01",
+                    "order_number": "000123",
+                    "order_item": "0001",
+                    "product_code": "P1",
+                    "product_description": "Item",
+                    "supplier_name": "Fornecedor",
+                    "open_quantity": 2,
+                    "expected_delivery_date": "2026-09-16",
+                    "delivery_status": "on_time",
+                    "open_value": 10.5,
+                }
+            ]
+            * 3,
+            "total": 3,
+        },
+    }
+    with patch(
+        "app.interfaces.http.routes.purchase_orders_routes._GATEWAY",
+        gateway,
+    ):
+        client = create_app().test_client()
+        response = client.get(
+            "/purchase-orders/export?branch=01&branch=02&late_only=true",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 200
+    assert (
+        response.mimetype
+        == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    assert "purchase-orders.xlsx" in response.headers.get("Content-Disposition", "")
+    assert response.data[:2] == b"PK"
+    called_params = gateway.get.call_args.kwargs["params"]
+    assert called_params["branch"] == ["01", "02"]
+    assert called_params["late_only"] == "true"
+    assert "page" not in called_params
+    assert "page_size" not in called_params
+    assert gateway.get.call_args.args[0] == "/supplies/purchase-orders/export"
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_export_empty_dataset_still_xlsx(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions=_OPS_UNIT_01)
+    gateway = MagicMock()
+    gateway.get.return_value = {"success": True, "data": {"items": [], "total": 0}}
+    with patch(
+        "app.interfaces.http.routes.purchase_orders_routes._GATEWAY",
+        gateway,
+    ):
+        client = create_app().test_client()
+        response = client.get(
+            "/purchase-orders/export?branch=01",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 200
+    assert response.data[:2] == b"PK"
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_export_negative_forbidden_without_unit(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions={"supplies.operations.access"})
+    gateway = MagicMock()
+    with patch(
+        "app.interfaces.http.routes.purchase_orders_routes._GATEWAY",
+        gateway,
+    ):
+        client = create_app().test_client()
+        response = client.get(
+            "/purchase-orders/export?branch=01",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 403
+    gateway.get.assert_not_called()

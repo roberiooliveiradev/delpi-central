@@ -21,6 +21,9 @@ export const PURCHASE_ORDERS_COLUMN_STORAGE_KEY =
 export const PURCHASE_ORDERS_TABLE_FONT_SIZE_STORAGE_KEY =
   "supplies:purchase-orders:table-font-size:v1";
 
+export const PURCHASE_ORDERS_VIEW_LAYOUT_STORAGE_KEY =
+  "supplies:purchase-orders:view-layout:v1";
+
 export const PURCHASE_ORDERS_TABLE_COLUMNS: readonly PurchaseOrderTableColumnDef[] = [
   { key: "order_number", label: C.colPc },
   { key: "order_item", label: C.colItem },

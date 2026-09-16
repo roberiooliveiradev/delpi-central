@@ -56,3 +56,10 @@ class AuthorizationService:
         allowed = self.allowed_units(user)
         if branch not in allowed:
             raise AuthorizationError("Forbidden")
+
+    def require_units(self, user: EffectiveUser, branches: list[str]) -> None:
+        cleaned = [str(item or "").strip() for item in branches if str(item or "").strip()]
+        if not cleaned:
+            raise AuthorizationError("Forbidden")
+        for branch in cleaned:
+            self.require_unit(user, branch)

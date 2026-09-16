@@ -161,19 +161,19 @@ Evidência no HEAD após conclusão UX da lista + ficha (sem promover paridade t
 | Capability | Comercial | plugin-ui | Supplies (PO) | Backend necessário? | Decisão |
 |---|---|---|---|---|---|
 | DataTable canônico | sim | sim | `SuppliesDataTable` | não | **IMPLEMENTED** |
-| sort server-side | sim | sim | — | sim (`sort`/`order_by` ausente em GET `/purchase-orders`) | **BLOCKED_BY_CONTRACT** |
+| sort server-side | sim | sim | `sort_by`/`sort_dir` allow-list | sim | **IMPLEMENTED** |
 | column visibility | sim | sim | sim (`useTableColumnVisibility`) | não | **IMPLEMENTED** |
 | column reorder | sim | sim (`TableColumnVisibilityMenu`) | sim | não | **IMPLEMENTED** |
 | persisted preferences | sim | localStorage kit | chaves `supplies:purchase-orders:*` | não | **IMPLEMENTED** |
 | font size | sim | sim | sim | não | **IMPLEMENTED** |
 | pagination | sim | `createCompactPagination` | sim | não (page/page_size/total na URL) | **IMPLEMENTED** |
-| Excel export | sim | sim | — | sim (sem rota/capability PO) | **BLOCKED_BY_CONTRACT** |
-| table/cards/board | sim | sim | — | — | **OUT_OF_SCOPE** |
+| Excel export | sim | sim | `GET /purchase-orders/export` (XLSX, operations + units) | sim | **IMPLEMENTED** |
+| table/cards/board | sim | sim | Tabela + Cards; Board não implementado | — | **IMPLEMENTED** (table/cards) · Board = PRODUCT_DECISION |
 | mobile overflow | sim | — | sim (region + scroll) | não | **IMPLEMENTED** (preservado) |
 | attention chips | sim | `ScopeChipBar` | Atenção Todos/Atrasados | não (`late_only`) | **IMPLEMENTED** |
 | refresh + freshness | sim | — | Atualizar + horário local | não | **IMPLEMENTED** |
 | auto-apply filters | — | — | selects/dates immediate; text debounce 350ms | não | **IMPLEMENTED** |
-| human unit labels | — | names kit | `formatSuppliesUnitLabel` → `Santa Catarina (01)` | não | **IMPLEMENTED** |
+| human unit labels | — | names kit | `formatSuppliesUnitName` → `Santa Catarina` (código só na URL/API) | não | **IMPLEMENTED** |
 
 ---
 
@@ -196,8 +196,8 @@ Matriz após execução Phase 1 (não declara paridade total):
 | Table metadata `N colunas · N linhas` | IMPLEMENTED (`total`) | IMPLEMENTED (`total`) |
 | Table/Cards/Board selector | PRODUCT_DECISION | PRODUCT_DECISION |
 | Font / columns / reorder / persistence | IMPLEMENTED | IMPLEMENTED |
-| Excel/CSV export | IMPLEMENTED (CSV + capability) | BLOCKED_BY_CONTRACT |
-| Server-side sorting | BLOCKED_BY_CONTRACT | BLOCKED_BY_CONTRACT |
+| Excel/CSV export | IMPLEMENTED (CSV + capability) | IMPLEMENTED (XLSX, operations + units) |
+| Server-side sorting | BLOCKED_BY_CONTRACT | IMPLEMENTED |
 | Entity links (SC/PC) | IMPLEMENTED | IMPLEMENTED |
 | Avatars / inline meter / coverage | COMMERCIAL_SPECIFIC | COMMERCIAL_SPECIFIC |
 | Status badges | IMPLEMENTED (overall_stage fechado) | IMPLEMENTED |
@@ -217,16 +217,22 @@ Mesmo padrão visual/funcional nas duas jornadas tabulares (sem paridade total c
 | PageHero + freshness + Atualizar | IMPLEMENTED | IMPLEMENTED | hero actions |
 | Auto-apply filters (sem Aplicar) | IMPLEMENTED | IMPLEMENTED | `useCommittedTextFilter` 350ms |
 | Clear → defaults + fetch | IMPLEMENTED | IMPLEMENTED | page filters |
-| Unit labels `Nome (código)` | IMPLEMENTED | IMPLEMENTED | `formatSuppliesUnitLabel` / `buildSuppliesUnitOptions` |
+| Unit labels `Nome` (sem código) | IMPLEMENTED | IMPLEMENTED | `formatSuppliesUnitName` / `buildSuppliesUnitOptions` |
 | DataListToolbar | IMPLEMENTED | IMPLEMENTED | plugin-ui |
 | Font size | IMPLEMENTED | IMPLEMENTED | keys `supplies:purchase-requests:*` / `supplies:purchase-orders:*` |
 | Columns + reorder | IMPLEMENTED | IMPLEMENTED | `useTableColumnVisibility` |
 | CompactPagination | IMPLEMENTED | IMPLEMENTED | plugin-ui |
 | DataTable canônico | IMPLEMENTED | IMPLEMENTED | `SuppliesDataTable` |
 | Mobile horizontal scroll | IMPLEMENTED | IMPLEMENTED | `delpi-ui-table-wrap` + `sp-list-table-region` |
-| Export | capability + CSV | BLOCKED_BY_CONTRACT | — |
-| Sort | BLOCKED_BY_CONTRACT | BLOCKED_BY_CONTRACT | sem contrato server-side |
+| Export | capability + CSV | IMPLEMENTED (XLSX) | PO: operations + units |
+| Sort | BLOCKED_BY_CONTRACT | IMPLEMENTED | `sort_by`/`sort_dir` |
 | Attention chips | N/A (domínio) | Todos(N)/Atrasados(N) via `summary` | justificado |
 | Cards/Board | OUT_OF_SCOPE | OUT_OF_SCOPE | — |
 
-Diferenças justificadas: chips Atenção e campos de filtro são semântica de domínio; export só em Solicitações (capability existente).
+Diferenças justificadas: chips Atenção e campos de filtro são semântica de domínio; export de SC permanece com capability própria; export de PO reutiliza operations + units.
+
+## Board readiness (PO)
+
+`delivery_status` no payload é estável: `late | on_time | no_date`. A UI poderia declarar lanes sobre a página/dataset atual.
+
+**BOARD_READY_FOR_PRODUCT_DECISION** — não implementado nesta execução.

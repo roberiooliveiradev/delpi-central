@@ -2,11 +2,16 @@ from __future__ import annotations
 
 from typing import Any
 
-from flask import Blueprint, g, jsonify, request
+from flask import Blueprint, Response, g, jsonify, request
 
+from app.infrastructure.export.purchase_orders_xlsx import (
+    EXPORT_FILENAME,
+    XLSX_MIME,
+    build_purchase_orders_xlsx,
+)
 from app.infrastructure.gateways.delpi_api_gateway import DelpiApiGateway, DelpiApiGatewayError
 from app.infrastructure.gateways.delpi_envelope import unwrap_delpi_envelope
-from app.interfaces.http.auth_decorators import require_permission, require_unit
+from app.interfaces.http.auth_decorators import require_permission, require_unit, require_units
 
 purchase_orders_bp = Blueprint("purchase_orders", __name__)
 
@@ -35,18 +40,27 @@ def _bool_query(name: str) -> bool:
     return raw in {"1", "true", "yes", "on"}
 
 
-def _list_params() -> dict[str, Any]:
+def _requested_branches() -> list[str]:
+    return [str(item).strip() for item in request.args.getlist("branch") if str(item).strip()]
+
+
+def _list_params(*, include_pagination: bool = True) -> dict[str, Any]:
     params: dict[str, Any] = {}
-    for key in (
-        "branch",
-        "page",
-        "page_size",
+    branches = _requested_branches()
+    if branches:
+        params["branch"] = branches
+    scalar_keys = (
         "order_number",
         "product_code",
         "supplier_code",
         "expected_delivery_from",
         "expected_delivery_to",
-    ):
+        "sort_by",
+        "sort_dir",
+    )
+    if include_pagination:
+        scalar_keys = (*scalar_keys, "page", "page_size")
+    for key in scalar_keys:
         value = (request.args.get(key) or "").strip()
         if value:
             params[key] = value
@@ -57,7 +71,7 @@ def _list_params() -> dict[str, Any]:
 
 @purchase_orders_bp.get("/purchase-orders")
 @require_permission("supplies.operations.access")
-@require_unit("branch")
+@require_units("branch")
 def list_portal_purchase_orders():
     """operationId: list_portal_purchase_orders — open SC7 lines via api-delpi."""
     try:
@@ -70,6 +84,34 @@ def list_portal_purchase_orders():
         return _gateway_error_response(exc)
     data = unwrap_delpi_envelope(payload)
     return jsonify(data if isinstance(data, dict) else {"items": [], "total": 0}), 200
+
+
+@purchase_orders_bp.get("/purchase-orders/export")
+@require_permission("supplies.operations.access")
+@require_units("branch")
+def export_portal_purchase_orders():
+    """operationId: export_portal_purchase_orders — XLSX of the filtered open SC7 set."""
+    try:
+        payload = _GATEWAY.get(
+            "/supplies/purchase-orders/export",
+            access_token=_access_token(),
+            params=_list_params(include_pagination=False),
+        )
+    except DelpiApiGatewayError as exc:
+        return _gateway_error_response(exc)
+    data = unwrap_delpi_envelope(payload)
+    items = data.get("items") if isinstance(data, dict) else []
+    if not isinstance(items, list):
+        items = []
+    body = build_purchase_orders_xlsx(items)
+    return Response(
+        body,
+        status=200,
+        mimetype=XLSX_MIME,
+        headers={
+            "Content-Disposition": f'attachment; filename="{EXPORT_FILENAME}"',
+        },
+    )
 
 
 @purchase_orders_bp.get("/purchase-orders/<branch>/<number>")
