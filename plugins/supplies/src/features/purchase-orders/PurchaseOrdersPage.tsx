@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
-import { navigatePluginView } from "../../app/pluginNavigation";
-import { buildPluginPath } from "../../app/pluginRoutes";
+import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
+import { buildPluginPath, buildPurchaseOrderDetailPath } from "../../app/pluginRoutes";
 import { useSuppliesSession } from "../../app/SuppliesSessionContext";
 import {
   SuppliesActionButton,
@@ -22,7 +22,6 @@ import {
 } from "./content";
 import { PurchaseOrdersFilters } from "./PurchaseOrdersFilters";
 import {
-  buildOrderKey,
   buildUrlSearch,
   createDefaultQuery,
   formatDatePtBr,
@@ -106,16 +105,14 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
     return () => controller.abort();
   }, [query, reloadKey]);
 
-  const selected = useMemo(() => parseOrderKey(query.order), [query.order]);
-  const selectedItem = useMemo(() => {
-    if (!selected) return null;
-    return (
-      items.find(
-        (item) =>
-          item.branch === selected.branch && item.order_number === selected.orderNumber,
-      ) ?? null
+  useEffect(() => {
+    const selected = parseOrderKey(query.order);
+    if (!selected) return;
+    navigatePluginPath(
+      buildPurchaseOrderDetailPath(selected.branch, selected.orderNumber, basePath),
+      { replace: true },
     );
-  }, [items, selected]);
+  }, [basePath, query.order]);
 
   const totalPages = Math.max(1, Math.ceil(total / query.page_size) || 1);
   const homeHref = buildPluginPath("home", basePath);
@@ -125,9 +122,7 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
   };
 
   const onSelectRow = (item: PurchaseOrderListItem) => {
-    patchQuery({
-      order: buildOrderKey(item.branch, item.order_number),
-    });
+    navigatePluginPath(buildPurchaseOrderDetailPath(item.branch, item.order_number, basePath));
   };
 
   return (
@@ -231,12 +226,9 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
                 <tbody>
                   {items.map((item) => {
                     const key = `${item.branch}-${item.order_number}-${item.order_item ?? ""}`;
-                    const isSelected =
-                      query.order === buildOrderKey(item.branch, item.order_number);
                     return (
                       <tr
                         key={key}
-                        className={isSelected ? "is-selected" : undefined}
                         onClick={() => onSelectRow(item)}
                         onKeyDown={(event) => {
                           if (event.key === "Enter" || event.key === " ") {
@@ -245,7 +237,8 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
                           }
                         }}
                         tabIndex={0}
-                        role="button"
+                        role="link"
+                        aria-label={`${C.detailTitle} ${item.order_number}`}
                       >
                         <td>{item.order_number || "—"}</td>
                         <td>{item.order_item || "—"}</td>
@@ -271,68 +264,6 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
           </>
         ) : null}
       </SuppliesSectionCard>
-
-      {selected ? (
-        <SuppliesSectionCard
-          title={
-            selectedItem
-              ? `${C.detailTitle} ${selectedItem.order_number}`
-              : C.detailTitle
-          }
-          hint={C.detailHint}
-          actions={
-            <SuppliesActionButton
-              type="button"
-              variant="ghost"
-              onClick={() => patchQuery({ order: "" })}
-            >
-              {C.detailClose}
-            </SuppliesActionButton>
-          }
-        >
-          <SuppliesStateBanner>{C.detailComingSoon}</SuppliesStateBanner>
-          {selectedItem ? (
-            <div className="sp-purchase-orders__detail-body">
-              <dl>
-                <div>
-                  <dt>Filial</dt>
-                  <dd>{selectedItem.branch}</dd>
-                </div>
-                <div>
-                  <dt>Produto</dt>
-                  <dd>
-                    {formatProductLabel(
-                      selectedItem.product_code,
-                      selectedItem.product_description,
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Fornecedor</dt>
-                  <dd>{selectedItem.supplier_name || selectedItem.supplier_code || "—"}</dd>
-                </div>
-                <div>
-                  <dt>Prometida</dt>
-                  <dd>{formatDatePtBr(selectedItem.expected_delivery_date)}</dd>
-                </div>
-                <div>
-                  <dt>Situação</dt>
-                  <dd>{labelDeliveryStatus(selectedItem.delivery_status)}</dd>
-                </div>
-                <div>
-                  <dt>Valor aberto</dt>
-                  <dd>{formatMoneyBr(selectedItem.open_value)}</dd>
-                </div>
-              </dl>
-            </div>
-          ) : (
-            <p>
-              Pedido {selected.branch}:{selected.orderNumber} marcado na URL — não está na
-              página atual.
-            </p>
-          )}
-        </SuppliesSectionCard>
-      ) : null}
     </div>
   );
 }

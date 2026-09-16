@@ -44,7 +44,9 @@ Atualizar manifesto já registrado: `PUT $BASE_URL/core-api/admin/apps/supplies/
 | Página | Notas |
 |---|---|
 | **Início** | DoD fechado — hub + `GET /home/attention` + Favoritos TopBar (localStorage P0) |
-| Visão geral | Próximo foco — revalidar DoD |
+| Visão geral | DoD fechado |
+| Pedidos | `/purchase-orders` |
+| Detalhe pedido | `/purchase-orders/:branch/:number` |
 | SC | E6 C1 |
 | Perfil | `/users/:userId` |
 | Ajuda | `/help` |

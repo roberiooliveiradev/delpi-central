@@ -256,6 +256,8 @@ Doc conjuntos incompletos: [production-order-sets-incomplete.md](./production-or
 | GET | `/supplies/purchase-order-otd` | OTD de pedidos de compra **só MP** (KPI). Ver [supplies-purchase-order-otd.md](./supplies-purchase-order-otd.md). |
 | GET | `/supplies/purchase-order-otd/series` | Série temporal OTD PC MP por filial. |
 | GET | `/supplies/purchase-order-otd/panel` | Painel OTD PC MP — resumo + linhas paginadas. |
+| GET | `/supplies/purchase-orders` | Worklist paginada de linhas de pedidos de compra em aberto (SC7). |
+| GET | `/supplies/purchase-orders/{branch}/{order_number}` | Ficha de um pedido em aberto: itens, entrega prometida, SC origem e recebimentos SD1. |
 | GET | `/supplies/safety-stock/filters` | Filtros do painel de estoque de segurança. |
 | GET | `/supplies/safety-stock/summary` | Resumo / KPIs de estoque de segurança. |
 | GET | `/supplies/safety-stock/items` | Lista paginada de MPs vs ESTSEG. |

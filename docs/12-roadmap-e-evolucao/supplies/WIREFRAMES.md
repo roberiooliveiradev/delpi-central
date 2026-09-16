@@ -199,7 +199,7 @@ SectionCard "OTD no tempo"
 | Capability | `supplies.operations.access` |
 | Unit | sim |
 | Fonte | api-delpi `GET /supplies/purchase-orders` (SC7 aberto) via supplies-api |
-| Ações | marcar pedido na URL; detalhe completo = WF-06 |
+| Ações | abrir ficha `/purchase-orders/:branch/:number` |
 | Estado | **GATE-FEATURE PASS** (2026-09-11); smoke federado `INCONCLUSIVE` |
 | DoD | kit-first, estados, Help, filtros/URL/F5, testes P/S/N |
 
@@ -210,7 +210,10 @@ SectionCard "OTD no tempo"
 | Rota | `/purchase-orders/:branch/:number` |
 | Capability | `supplies.operations.access` |
 | Resource | pedido deve pertencer ao recorte autorizado |
-| Conteúdo | itens, prometida, recebimentos, SC origem |
+| Fonte | api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}` via supplies-api |
+| Ações | ficha read-only; voltar à lista |
+| Estado | **implementado E8** (2026-09-16); smoke federado `INCONCLUSIVE` até prova live |
+| DoD | kit-first, estados, Help, deep link/F5/back, testes P/S/N |
 
 ### WF-07 — Entregas / Atrasos
 

@@ -2,12 +2,12 @@ export const PURCHASE_ORDERS_CONTENT = {
   title: "Pedidos de compra",
   eyebrow: "Portal Suprimentos",
   description:
-    "Linhas de pedidos em aberto no TOTVS (saldo a receber). O detalhe completo entra na próxima etapa do portal.",
+    "Linhas de pedidos em aberto (saldo a receber). Clique na linha para abrir a ficha do pedido.",
   helpAriaLabel: "Ajuda sobre pedidos de compra",
   filtersAriaLabel: "Filtros de pedidos de compra",
   listTitle: "Pedidos em aberto",
   listHint:
-    "Saldo C7_QUANT > C7_QUJE, sem residual. Clique na linha para marcar o pedido na URL; o detalhe completo virá na próxima entrega.",
+    "Somente pedidos com saldo a receber. Clique na linha para abrir itens, entregas prometidas, recebimentos e a SC de origem.",
   branchLabel: "Filial",
   orderNumberLabel: "Número PC",
   productLabel: "Produto",
@@ -26,10 +26,6 @@ export const PURCHASE_ORDERS_CONTENT = {
   forbiddenUnit:
     "Você não tem permissão para esta filial neste módulo. Escolha outra unidade liberada ou peça o acesso canônico ao administrador.",
   retry: "Tentar novamente",
-  detailTitle: "Pedido selecionado",
-  detailHint: "Resumo da linha selecionada. O detalhe completo (itens, recebimentos, SC origem) entra na etapa seguinte.",
-  detailClose: "Fechar",
-  detailComingSoon: "Detalhe completo em breve",
   colPc: "PC",
   colItem: "Item",
   colProduct: "Produto",
@@ -42,6 +38,33 @@ export const PURCHASE_ORDERS_CONTENT = {
   prevPage: "Anterior",
   nextPage: "Próxima",
   totalLabel: (total: number) => `${total} linha(s)`,
+  detailTitle: "Pedido de compra",
+  detailEyebrow: "Ficha do pedido",
+  detailDescription:
+    "Itens em aberto, entrega prometida, recebimentos e a solicitação de origem de cada item.",
+  detailBack: "Pedidos de compra",
+  detailLoading: "Carregando o pedido…",
+  detailError: "Não foi possível carregar este pedido de compra.",
+  detailNotFound:
+    "Pedido não encontrado ou fora do universo em aberto. Encerrados e residual não aparecem nesta ficha.",
+  detailForbidden:
+    "Você não tem permissão para esta filial neste módulo. Peça o acesso canônico ao administrador.",
+  itemsTitle: "Itens",
+  itemsHint: "Fornecedor, datas e quantidades são por item. Um pedido pode ter mais de um fornecedor.",
+  itemsEmpty: "Este pedido não retornou itens visíveis.",
+  receiptsTitle: "Recebimentos",
+  receiptsEmpty: "Nenhum recebimento registrado neste item.",
+  sourceRequestLabel: "SC origem",
+  buyerLabel: "Comprador",
+  issueDateLabel: "Emissão",
+  orderedQtyLabel: "Pedido",
+  deliveredQtyLabel: "Entregue",
+  unitPriceLabel: "Preço unit.",
+  invoiceLabel: "NF",
+  invoiceDateLabel: "Emissão NF",
+  entryDateLabel: "Entrada",
+  receiptQtyLabel: "Qtd.",
+  receiptValueLabel: "Valor",
 } as const;
 
 export function mapPurchaseOrdersFetchError(message: string): string {
@@ -49,4 +72,18 @@ export function mapPurchaseOrdersFetchError(message: string): string {
     return PURCHASE_ORDERS_CONTENT.forbiddenUnit;
   }
   return message || PURCHASE_ORDERS_CONTENT.error;
+}
+
+export type PurchaseOrderDetailErrorKind = "forbidden" | "not_found" | "error";
+
+export function classifyPurchaseOrderDetailError(
+  message: string,
+): { kind: PurchaseOrderDetailErrorKind; text: string } {
+  if (/403|forbidden/i.test(message)) {
+    return { kind: "forbidden", text: PURCHASE_ORDERS_CONTENT.detailForbidden };
+  }
+  if (/404|not found|not_found|não encontrado/i.test(message)) {
+    return { kind: "not_found", text: PURCHASE_ORDERS_CONTENT.detailNotFound };
+  }
+  return { kind: "error", text: message || PURCHASE_ORDERS_CONTENT.detailError };
 }

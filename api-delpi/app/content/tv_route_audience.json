@@ -4442,6 +4442,23 @@
         }
       }
     },
+    "get_supplies_purchase_order": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "Open purchase order detail",
+          "description": "Read-only ficha of one open purchase order (branch + number) with item-level supplier, expected delivery, source purchase request and nested receipts.",
+          "whenToUse": "Inspect a specific open purchase order and its receipts. Closed or residual orders are not returned.",
+          "label": "Purchase order detail"
+        },
+        "pt-BR": {
+          "summary": "Detalhe de pedido de compra em aberto",
+          "description": "Ficha somente leitura de um pedido de compra em aberto (filial + número), com fornecedor, entrega prometida, SC origem e recebimentos por item.",
+          "whenToUse": "Consultar um pedido em aberto e seus recebimentos. Pedidos encerrados ou residual não retornam.",
+          "label": "Detalhe do pedido de compra"
+        }
+      }
+    },
     "get_supplies_safety_stock_items": {
       "category": "supplies",
       "locale": {

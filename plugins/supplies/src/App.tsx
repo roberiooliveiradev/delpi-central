@@ -17,6 +17,7 @@ import { OverviewPage } from "./pages/OverviewPage";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { UserManualPage } from "./features/help/UserManualPage";
 import { OtdAnalyticsPage } from "./features/analytics/OtdAnalyticsPage";
+import { PurchaseOrderDetailPage } from "./features/purchase-orders/PurchaseOrderDetailPage";
 import { PurchaseOrdersPage } from "./features/purchase-orders/PurchaseOrdersPage";
 import { PurchaseRequestsPage } from "./features/purchase-requests/PurchaseRequestsPage";
 import { UserProfilePage } from "./features/users/UserProfilePage";
@@ -104,7 +105,7 @@ function AppRoutes({
     );
   }
 
-  const { view, userId } = route;
+  const { view, userId, branch, orderNumber } = route;
 
   if (view === "not_found") {
     return (
@@ -149,6 +150,14 @@ function AppRoutes({
     content = <PurchaseRequestsPage basePath={basePath} />;
   } else if (view === "purchase_orders") {
     content = <PurchaseOrdersPage basePath={basePath} />;
+  } else if (view === "purchase_order_detail") {
+    content = (
+      <PurchaseOrderDetailPage
+        basePath={basePath}
+        branch={branch || ""}
+        orderNumber={orderNumber || ""}
+      />
+    );
   } else {
     const placeholder = PLACEHOLDER[view];
     content = placeholder ? (

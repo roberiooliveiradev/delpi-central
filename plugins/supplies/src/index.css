@@ -1003,33 +1003,52 @@
   background: color-mix(in srgb, var(--sp-text) 3%, transparent);
 }
 
-.dashboard-supplies-portal .sp-purchase-orders__table tbody tr {
+.dashboard-supplies-portal .sp-purchase-orders .sp-purchase-orders__table tbody tr {
   cursor: pointer;
 }
 
-.dashboard-supplies-portal .sp-purchase-orders__table tbody tr:hover,
-.dashboard-supplies-portal .sp-purchase-orders__table tbody tr.is-selected {
+.dashboard-supplies-portal .sp-purchase-orders .sp-purchase-orders__table tbody tr:hover,
+.dashboard-supplies-portal .sp-purchase-orders .sp-purchase-orders__table tbody tr:focus-visible {
   background: color-mix(in srgb, var(--sp-accent) 8%, transparent);
 }
 
-.dashboard-supplies-portal .sp-purchase-orders__detail-body dl {
+.dashboard-supplies-portal .sp-purchase-orders .sp-purchase-orders__table tbody tr:focus-visible {
+  outline: 2px solid var(--sp-accent, var(--primary, #089bdb));
+  outline-offset: -2px;
+}
+
+.dashboard-supplies-portal .sp-purchase-orders__error {
+  display: grid;
+  gap: 0.65rem;
+  justify-items: start;
+}
+
+.dashboard-supplies-portal .sp-purchase-order-detail__identity,
+.dashboard-supplies-portal .sp-purchase-order-detail__item-meta {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
   gap: 0.75rem;
-  margin: 0.85rem 0 0;
+  margin: 0;
 }
 
-.dashboard-supplies-portal .sp-purchase-orders__detail-body dt {
+.dashboard-supplies-portal .sp-purchase-order-detail__identity dt,
+.dashboard-supplies-portal .sp-purchase-order-detail__item-meta dt {
   font-size: 0.75rem;
   color: var(--sp-text-muted);
 }
 
-.dashboard-supplies-portal .sp-purchase-orders__detail-body dd {
+.dashboard-supplies-portal .sp-purchase-order-detail__identity dd,
+.dashboard-supplies-portal .sp-purchase-order-detail__item-meta dd {
   margin: 0.15rem 0 0;
   font-weight: 600;
 }
 
-.dashboard-supplies-portal .sp-purchase-orders__error {
+.dashboard-supplies-portal .sp-purchase-order-detail__receipts-title {
+  margin: 1.1rem 0 0.55rem;
+  font-size: 0.95rem;
+}
+
+.dashboard-supplies-portal .sp-purchase-order-detail__error {
   display: grid;
   gap: 0.65rem;
   justify-items: start;

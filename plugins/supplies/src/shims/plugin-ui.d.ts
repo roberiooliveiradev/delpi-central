@@ -397,7 +397,23 @@ declare module "@delpi/plugin-ui/index" {
     allowEmpty?: boolean;
     emptyLabel?: string;
     hint?: string;
+    searchable?: boolean;
+    disabled?: boolean;
   }>;
+
+  export function createDashboardTextField(config: {
+    classNames: Record<string, string>;
+  }): ComponentType<{
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    hint?: string;
+    placeholder?: string;
+    type?: string;
+    disabled?: boolean;
+  }>;
+
+  export function textFieldBemClasses(prefix: string): Record<string, string>;
 
   export function createDashboardDateField(config: {
     classNames: Record<string, string>;

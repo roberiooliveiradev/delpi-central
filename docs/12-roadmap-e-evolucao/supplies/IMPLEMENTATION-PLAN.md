@@ -1,9 +1,9 @@
 # IMPLEMENTATION-PLAN — Portal Suprimentos
 
-> **Status (2026-09-11):** plano executável revisado segundo `evidence-driven-execution.mdc`, `plan-construction.mdc` e `plan-execution.mdc`.  
-> **Entregue:** E1–E7 (incluindo E7 / GATE-FEATURE WF-05 lista).  
-> **Em foco:** nenhuma página — aguardando autorização explícita do Product Owner para E8 WF-06.  
-> **Próxima página candidata:** E8 WF-06 Detalhe do Pedido, bloqueada até autorização explícita do Product Owner.  
+> **Status (2026-09-16):** plano executável revisado segundo `evidence-driven-execution.mdc`, `plan-construction.mdc` e `plan-execution.mdc`.  
+> **Entregue:** E1–E8 (incluindo E8 / WF-06 detalhe do pedido).  
+> **Em foco:** nenhuma página — E9 / WF-07 Entregas **não autorizada**.  
+> **Próxima página candidata:** E9 WF-07 Entregas, bloqueada até autorização explícita do Product Owner.  
 > **Modo:** uma página user-facing por vez; etapas futuras abaixo são fila/grafo, não autorização de execução.
 
 Referências: [README](./README.md), ADR-001..ADR-007, [WIREFRAMES](./WIREFRAMES.md), [API-ROUTES](./API-ROUTES.md), [DECISOES_FUNCIONAIS_PENDENTES](./DECISOES_FUNCIONAIS_PENDENTES.md), [HOMOLOGACAO-PARIDADE](./HOMOLOGACAO-PARIDADE.md).
@@ -47,7 +47,7 @@ Invariantes:
 | RQ-05 | Overview/OTD com KPIs e metas SI canônicas | ATENDIDO — E5 |
 | RQ-06 | SC C1 funcional + DoD da página | ATENDIDO — E6.S1–S5 |
 | RQ-07 | Pedidos de Compra (lista) | ATENDIDO — E7 |
-| RQ-08 | Detalhe do Pedido | BLOQUEADO pela fila — E8 |
+| RQ-08 | Detalhe do Pedido | ATENDIDO — E8 (YAML do ledger abaixo permanece `blocked` — KNOWN DOCUMENTATION_DRIFT) |
 | RQ-09 | Entregas/Atrasos | BLOQUEADO pela fila — E9 |
 | RQ-10 | Estoque | BLOQUEADO pela fila — E10 |
 | RQ-11 | ESTSEG | BLOQUEADO pela fila — E11 |
@@ -202,6 +202,8 @@ As etapas abaixo estão **BLOCKED_BY_QUEUE**. Antes de executar qualquer uma, su
 **Teste:** api-delpi `pytest tests/test_purchase_orders_list_*.py` · supplies-api `pytest tests/interface/http/test_purchase_orders_bff.py` · MFE `npm test -- --run src/features/purchase-orders`.
 
 ## E8 — WF-06 Detalhe do Pedido
+
+**Executado 2026-09-16** (autorização PO 2026-09-15). Producer api-delpi + BFF + MFE ficha read-only. O YAML de status abaixo **não** foi normalizado neste entregável (`e8-purchase-order-detail: blocked` permanece) — **KNOWN DOCUMENTATION_DRIFT**.
 
 Pré-condição: autorização explícita PO (E7 já PASS). Contrato de detalhe + resource scope + itens/prometida/recebimentos/SC origem + follow-up apenas se recurso/capability permitirem. Fechar GATE-FEATURE próprio.
 

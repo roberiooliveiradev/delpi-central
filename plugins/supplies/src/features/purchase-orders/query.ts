@@ -119,3 +119,8 @@ export function formatMoneyBr(value: number | null | undefined): string {
     maximumFractionDigits: 2,
   });
 }
+
+export function formatQuantity(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(value)) return "—";
+  return value.toLocaleString("pt-BR", { maximumFractionDigits: 3 });
+}

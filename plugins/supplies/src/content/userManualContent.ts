@@ -86,7 +86,12 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Abrir pedidos de compra (PC)",
           where: "Pedidos de compra",
-          how: "Lista linhas abertas no TOTVS; URL guarda filtros; detalhe completo na próxima etapa",
+          how: "Lista linhas abertas; clique na linha para a ficha. A URL da lista guarda filtros (F5)",
+        },
+        {
+          want: "Ver o detalhe de um pedido",
+          where: "Pedidos de compra",
+          how: "Abra a linha; itens, entrega prometida, recebimentos e SC origem. Copie o endereço da ficha; F5 a restaura; voltar retorna à lista. Só pedidos em aberto",
         },
         {
           want: "Abrir solicitações de compras (SC)",
@@ -142,7 +147,7 @@ export const USER_MANUAL_CONTENT = {
         "Início — atenção, busca, favoritos e caminhos por capability.",
         "Visão geral — cockpit de KPIs do período (não é a tela inicial).",
         "OTD — velocímetros de pontualidade e evolução; abra pelo Início, catálogo Análises ou CTA da Visão geral.",
-        "Pedidos de compra — linhas abertas (saldo a receber); distinto do OTD de pontualidade.",
+        "Pedidos de compra — linhas abertas (saldo a receber); clique para a ficha com itens, recebimentos e SC origem. Distinto do OTD de pontualidade.",
         "Solicitações de compras — lista/detalhe no escopo CC+filial; exportação CSV com permissão separada.",
         "Operações — pedidos, entregas, fornecedores, produtos, estoque e ESTSEG.",
         "Indicadores / Negociações — recorte analítico quando liberado.",
@@ -182,6 +187,10 @@ export const USER_MANUAL_CONTENT = {
         {
           q: "Por que não vejo Exportar CSV?",
           a: "A exportação exige a permissão de exportação além do acesso às solicitações. Ter só a lista não libera o download.",
+        },
+        {
+          q: "Como abro e compartilho o detalhe de um pedido de compra?",
+          a: "Na lista Pedidos de compra, clique na linha. Copie o endereço da ficha para compartilhar; atualizar (F5) reabre o mesmo pedido. Voltar retorna à lista. Só pedidos em aberto aparecem — encerrados e residual não.",
         },
         {
           q: "Como compartilho o recorte da lista de SC?",

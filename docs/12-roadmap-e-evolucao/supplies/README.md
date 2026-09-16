@@ -1,11 +1,11 @@
 # Portal Suprimentos — documentação mestra
 
-> **Status (2026-09-11):** implementação incremental em andamento · **E1–E7 concluídas** · **WF-05 GATE-FEATURE PASS** (smoke federado `INCONCLUSIVE` neste ambiente)  
+> **Status (2026-09-16):** implementação incremental em andamento · **E1–E8 concluídas** · **WF-06 GATE-FEATURE** sujeito a smoke federado `INCONCLUSIVE` neste ambiente  
 > **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)**  
 > **Modo de entrega:** **uma página por vez até DoD** — a próxima página só pode ser promovida a foco após fechamento da atual  
-> **Página em foco:** **nenhuma** — aguardando autorização explícita do Product Owner para promover **Detalhe do pedido (WF-06)**  
-> **Últimas páginas fechadas:** **Início (WF-01)**, **Visão geral (WF-02/WF-02R)**, **OTD analytics (WF-OTD-A)**, **Solicitações de compras (WF-04)** e **Pedidos de compra (WF-05)**  
-> **Próxima página candidata:** **Detalhe do pedido (WF-06)**, somente com autorização explícita do Product Owner  
+> **Página em foco:** **nenhuma** — E8 / WF-06 Detalhe do Pedido entregue; E9 / WF-07 Entregas **não autorizada**  
+> **Últimas páginas fechadas:** **Início (WF-01)**, **Visão geral (WF-02/WF-02R)**, **OTD analytics (WF-OTD-A)**, **Solicitações de compras (WF-04)**, **Pedidos de compra (WF-05)** e **Detalhe do pedido (WF-06)**  
+> **Próxima página candidata:** **Entregas / atrasos (WF-07)**, somente com autorização explícita do Product Owner  
 > **Id técnico:** `supplies` · **basePath:** `/apps/supplies` · **API:** `supplies-api` · gateway `/apps/supplies-api/` · **CSS root:** `.dashboard-supplies-portal`
 
 O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de Suprimentos na Minha DELPI. Ele substitui progressivamente experiências fragmentadas por jornadas coesas, preservando bounded contexts, RBAC central, paridade mensurável e rollback.
@@ -34,7 +34,8 @@ A documentação desta pasta deve obedecer à hierarquia vigente das regras `.cu
 | **E4 — Home + Ajuda + perfil** | **concluída** — `/home/attention`, Manual/Quero→onde/FAQ/glossário, perfil `/users/:userId`, preferências e avatar Core |
 | **E5 — Overview + OTD analytics** | **concluída** — WF-02/WF-02R + WF-OTD-A; tríade de meta SI, filtros/URL, charts e gauges |
 | **E6 — SC C1 + GATE-FEATURE WF-04** | **concluída 2026-09-11** — BFF C1, lista/detalhe/export, kit-first, Help, testes; smoke federado `INCONCLUSIVE` |
-| **E7 — Pedidos lista + GATE-FEATURE WF-05** | **concluída 2026-09-11** — api-delpi SC7 aberto, BFF operations+unit, MFE kit-first; detalhe fora (E8) |
+| **E7 — Pedidos lista + GATE-FEATURE WF-05** | **concluída 2026-09-11** — api-delpi SC7 aberto, BFF operations+unit, MFE kit-first |
+| **E8 — Detalhe do Pedido + GATE-FEATURE WF-06** | **concluída 2026-09-16** — ficha `/purchase-orders/:branch/:number`; smoke federado `INCONCLUSIVE` |
 | RBAC alvo | revisado; menor catálogo suficiente (ADR-007) |
 | Authz Core-first | **GATE-AUTHZ PASS** — fail-closed na fronteira; permissions efetivas do Core, não claims JWT |
 | BIs externos | dump **local** 0/6 documentado; dump Core **produção** obrigatório antes do cutover |
@@ -54,6 +55,7 @@ A documentação desta pasta deve obedecer à hierarquia vigente das regras `.cu
 | **GATE-MFE** | **PASS nas páginas fechadas**; revalidar por página nova |
 | **GATE-FEATURE WF-04** | **PASS** — smoke federado `INCONCLUSIVE` (não inferido) |
 | **GATE-FEATURE WF-05** | **PASS** — smoke federado `INCONCLUSIVE` (não inferido) |
+| **GATE-FEATURE WF-06** | **INCONCLUSIVE** até smoke federado live; testes de contrato/BFF/MFE executados |
 | **GATE-C2** | futuro; não autorizado enquanto prerequisites não forem provados |
 | **GATE-PARITY** | futuro; evidência quantitativa obrigatória |
 | **GATE-CUTOVER** | futuro; nenhum legado/BI pode permanecer `LEGADO_A_VALIDAR` |
@@ -86,8 +88,8 @@ selecionar página em foco
 | — | OTD analytics | `/analytics/otd` | **FECHADA (DoD)** · satélite WF-OTD-A |
 | **3** | **Solicitações de compras** | `/purchase-requests` | **FECHADA (DoD)** · WF-04 |
 | 4 | Pedidos de compra | `/purchase-orders` | **FECHADA (DoD)** · WF-05 |
-| 5 | Detalhe do pedido | `/purchase-orders/:branch/:number` | bloqueada até WF-05 fechar + autorização PO |
-| 6 | Entregas / atrasos | `/deliveries` | bloqueada até WF-06 fechar |
+| 5 | Detalhe do pedido | `/purchase-orders/:branch/:number` | **FECHADA (DoD)** · WF-06 |
+| 6 | Entregas / atrasos | `/deliveries` | bloqueada até autorização PO (WF-07) |
 | 7 | Controle de estoques | `/inventory` | fila |
 | 8 | Estoque de segurança | `/safety-stock` | fila |
 | 9 | Análise de consumo | `/safety-stock/consumption-analysis` | fila |
@@ -130,7 +132,9 @@ selecionar página em foco
 
 **Solicitações de compras (WF-04):** BFF C1 `/purchase-requests*`; PageHero + FilterBar kit + SectionCard; URL/F5 dos filtros e detalhe; AuthZ access/export/unit/CC fail-closed; estados loading/empty/error/403/404; Help + FAQ; testes MFE estruturais + BFF/security. Smoke federado: `INCONCLUSIVE` neste ambiente.
 
-**Pedidos de compra (WF-05):** api-delpi `GET /supplies/purchase-orders` (SC7 aberto); BFF `GET /purchase-orders` (operations + unit); MFE kit-first com filtros/URL/F5; seleção de linha marca URL (detalhe completo = E8). Distinto do painel OTD. Smoke federado: `INCONCLUSIVE`.
+**Pedidos de compra (WF-05):** api-delpi `GET /supplies/purchase-orders` (SC7 aberto); BFF `GET /purchase-orders` (operations + unit); MFE kit-first com filtros/URL/F5. Clique na linha abre a ficha E8. Distinto do painel OTD. Smoke federado: `INCONCLUSIVE`.
+
+**Detalhe do pedido (WF-06):** api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}`; BFF `GET /purchase-orders/<branch>/<number>` (operations + unit); MFE `/purchase-orders/:branch/:number` read-only (itens, entrega prometida, receipts, SC origem). Smoke federado: `INCONCLUSIVE`.
 
 A manutenção transversal de UI (por exemplo, help embutido no próprio label e loading canônico do `plugin-ui`) pode corrigir componentes compartilhados, mas não reabre uma página fechada salvo regressão material do seu DoD.
 
@@ -216,6 +220,8 @@ Invariantes:
 
 ## 7. Próximo passo operacional
 
-**Único próximo passo autorizado pelo roadmap:** Product Owner autorizar a promoção de **WF-06 Detalhe do pedido**. Sem essa autorização, a fila permanece bloqueada.
+**Único próximo passo autorizado pelo roadmap:** Product Owner autorizar a promoção de **WF-07 Entregas / atrasos**. Sem essa autorização, a fila permanece bloqueada.
+
+O ledger YAML de `IMPLEMENTATION-PLAN.md` ainda lista `e6-s5 pending` / `e7 blocked` enquanto a prosa E1–E8 está concluída — **KNOWN DOCUMENTATION_DRIFT**; não foi normalizado neste entregável.
 
 Dump Core de produção dos BIs externos não bloqueia a fila de páginas; bloqueia decisões de paridade/depreciação/redirect e o `GATE-CUTOVER`.

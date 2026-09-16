@@ -131,6 +131,9 @@ _ENTITY_LABELS: dict[str, str] = {
     "supplies_purchase_order_line": (
         "linhas de pedidos de compra em aberto (SC7)"
     ),
+    "supplies_purchase_order": (
+        "ficha de pedido de compra em aberto (SC7) com recebimentos SD1"
+    ),
     "supplies_purchase_request_coverage": (
         "solicitações de compra em aberto de MP com cobertura de saldo, pedidos e empenhos"
     ),

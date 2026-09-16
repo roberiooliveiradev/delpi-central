@@ -13,6 +13,7 @@ export function requiredCapabilityForView(
     case "purchase_requests":
       return "purchaseRequests";
     case "purchase_orders":
+    case "purchase_order_detail":
     case "deliveries":
     case "suppliers":
     case "products":

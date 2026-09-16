@@ -2478,6 +2478,18 @@
         }
       }
     },
+    "order_number": {
+      "locale": {
+        "en": {
+          "label": "Purchase order number",
+          "description": "Purchase order number (SC7.C7_NUM)."
+        },
+        "pt-BR": {
+          "label": "Número do pedido de compra",
+          "description": "Número do pedido de compra (SC7.C7_NUM)."
+        }
+      }
+    },
     "party_type": {
       "locale": {
         "en": {

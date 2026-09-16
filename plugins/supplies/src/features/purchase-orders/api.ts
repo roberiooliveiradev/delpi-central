@@ -1,5 +1,9 @@
 import { httpGet, suppliesApiUrl } from "../../api/httpClient";
-import type { PurchaseOrderListResponse, PurchaseOrdersQuery } from "./types";
+import type {
+  PurchaseOrderDetail,
+  PurchaseOrderListResponse,
+  PurchaseOrdersQuery,
+} from "./types";
 import { buildListSearchParams } from "./query";
 
 export async function listPurchaseOrders(
@@ -11,4 +15,13 @@ export async function listPurchaseOrders(
     suppliesApiUrl(`/purchase-orders?${qs}`),
     { signal },
   );
+}
+
+export async function getPurchaseOrder(
+  branch: string,
+  orderNumber: string,
+  signal?: AbortSignal,
+): Promise<PurchaseOrderDetail> {
+  const path = `/purchase-orders/${encodeURIComponent(branch)}/${encodeURIComponent(orderNumber)}`;
+  return httpGet<PurchaseOrderDetail>(suppliesApiUrl(path), { signal });
 }

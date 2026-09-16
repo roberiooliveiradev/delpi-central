@@ -7,12 +7,19 @@ from fastapi import APIRouter, Query
 from delpi_auth.authorization import require_any_permission
 
 from app.application.security.api_delpi_permissions import KPI_SUPPLIES_ACCESS
-from app.composition.supplies_composer import build_list_supplies_purchase_orders_use_case
+from app.composition.supplies_composer import (
+    build_get_supplies_purchase_order_use_case,
+    build_list_supplies_purchase_orders_use_case,
+)
 from app.core.exceptions import DatabaseConnectionError
-from app.core.responses import error_response
+from app.core.responses import error_response, not_found_response
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 from app.interface.http.pagination_query import PAGE_SIZE_QUERY
-from app.interface.http.query_param_enums import BRANCH_QUERY_REQUIRED
+from app.interface.http.query_param_enums import (
+    BRANCH_PATH,
+    BRANCH_QUERY_REQUIRED,
+    ORDER_NUMBER_PATH,
+)
 from app.interface.http.routes.supplies.purchase_orders_branch_access import (
     branch_access_error,
 )
@@ -79,5 +86,48 @@ def list_supplies_purchase_orders_route(
         log_error(f"Erro ao listar pedidos de compra em aberto: {exc}")
         return error_response(
             "Erro interno ao listar pedidos de compra em aberto.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/{branch}/{order_number}",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_supplies_purchase_order",
+        path="/supplies/purchase-orders/{branch}/{order_number}",
+    ),
+)
+@require_any_permission(KPI_SUPPLIES_ACCESS)
+def get_supplies_purchase_order(
+    branch: str = BRANCH_PATH(),
+    order_number: str = ORDER_NUMBER_PATH(),
+):
+    branch_error = branch_access_error(branch)
+    if branch_error:
+        return branch_error
+
+    try:
+        use_case = build_get_supplies_purchase_order_use_case()
+        result = use_case.execute(branch=branch, order_number=order_number)
+        if result is None:
+            return not_found_response("Pedido de compra não encontrado.")
+        return api_delpi_success(
+            result,
+            operation_id="get_supplies_purchase_order",
+            message="Pedido de compra em aberto carregado com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação ao carregar pedido de compra: {exc}")
+        return error_response(str(exc), status_code=422)
+    except DatabaseConnectionError as exc:
+        log_error(f"Banco indisponível ao carregar pedido de compra: {exc}")
+        return error_response(
+            "Não foi possível consultar o TOTVS para o pedido de compra.",
+            status_code=503,
+        )
+    except Exception as exc:
+        log_error(f"Erro ao carregar pedido de compra: {exc}")
+        return error_response(
+            "Erro interno ao carregar o pedido de compra.",
             status_code=500,
         )

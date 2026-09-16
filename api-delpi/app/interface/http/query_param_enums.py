@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from fastapi import Query
+from fastapi import Path, Query
 
 from app.domain.totvs.protheus_branches import (
     BRANCH_CODE_VALUES,
@@ -318,6 +318,23 @@ def BRANCH_QUERY_REQUIRED():
     pattern=_enum_pattern(BRANCH_CODE_VALUES),
     enum=list(BRANCH_CODE_VALUES),
 )
+def BRANCH_PATH():
+    """Path param — filial concreta 01|02 (chave composta)."""
+    return Path(
+        ...,
+        description="Protheus branch code (01 or 02).",
+        pattern=_enum_pattern(BRANCH_CODE_VALUES),
+        min_length=2,
+        max_length=2,
+    )
+def ORDER_NUMBER_PATH():
+    """Path param — número do pedido de compra (SC7.C7_NUM)."""
+    return Path(
+        ...,
+        min_length=1,
+        max_length=20,
+        description="Purchase order number (SC7.C7_NUM).",
+    )
 def BRANCH_QUERY_OPTIONAL():
     """Escopo all|01|02 — vazio/omitido = all (sem filtro de filial)."""
     return Query(

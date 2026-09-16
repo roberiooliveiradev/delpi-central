@@ -19,6 +19,30 @@ export type PurchaseOrderListItem = {
   delivery_status?: DeliveryStatus | string | null;
 };
 
+export type PurchaseOrderReceipt = {
+  invoice_number?: string | null;
+  invoice_series?: string | null;
+  invoice_item?: string | null;
+  quantity?: number | null;
+  unit_price?: number | null;
+  total_value?: number | null;
+  invoice_issue_date?: string | null;
+  entry_date?: string | null;
+};
+
+export type PurchaseOrderDetailItem = PurchaseOrderListItem & {
+  buyer_code?: string | null;
+  source_request_number?: string | null;
+  source_request_item?: string | null;
+  receipts?: PurchaseOrderReceipt[];
+};
+
+export type PurchaseOrderDetail = {
+  branch: string;
+  order_number: string;
+  items: PurchaseOrderDetailItem[];
+};
+
 export type PurchaseOrderListResponse = {
   items: PurchaseOrderListItem[];
   page: number;

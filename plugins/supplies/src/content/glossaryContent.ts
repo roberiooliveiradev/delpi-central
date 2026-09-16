@@ -24,7 +24,8 @@ export const GLOSSARY_CONTENT: readonly GlossaryEntry[] = [
   },
   {
     term: "PC",
-    meaning: "Pedido de compra — documento com fornecedor após a SC.",
+    meaning:
+      "Pedido de compra — documento com fornecedor após a SC. A ficha mostra itens, entrega prometida, recebimentos e a SC de origem de cada item.",
   },
   {
     term: "CPV",

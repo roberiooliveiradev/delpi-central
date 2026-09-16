@@ -38,6 +38,9 @@ describe("helpTooltips", () => {
     expect(SP_HELP.purchaseOrders.length).toBeGreaterThan(20);
     expect(SP_HELP.purchaseOrdersBranch.length).toBeGreaterThan(20);
     expect(SP_HELP.purchaseOrdersDelivery.length).toBeGreaterThan(20);
+    expect(SP_HELP.purchaseOrderDetail.length).toBeGreaterThan(20);
+    expect(SP_HELP.purchaseOrderDetailItems.length).toBeGreaterThan(20);
+    expect(SP_HELP.purchaseOrderDetailReceipts.length).toBeGreaterThan(20);
     expect(SP_HELP.forbiddenUnit.length).toBeGreaterThan(20);
     expect(SP_HELP.userProfile.length).toBeGreaterThan(20);
     expect(SP_HELP.userProfilePrefs.length).toBeGreaterThan(20);

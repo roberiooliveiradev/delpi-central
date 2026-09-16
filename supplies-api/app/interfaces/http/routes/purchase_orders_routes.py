@@ -70,3 +70,25 @@ def list_portal_purchase_orders():
         return _gateway_error_response(exc)
     data = unwrap_delpi_envelope(payload)
     return jsonify(data if isinstance(data, dict) else {"items": [], "total": 0}), 200
+
+
+@purchase_orders_bp.get("/purchase-orders/<branch>/<number>")
+@require_permission("supplies.operations.access")
+@require_unit("branch")
+def get_portal_purchase_order(branch: str, number: str):
+    """operationId: get_portal_purchase_order — open SC7 ficha via api-delpi."""
+    normalized_branch = (branch or "").strip()
+    normalized_number = (number or "").strip()
+    if not normalized_branch or not normalized_number:
+        return jsonify({"detail": "Invalid purchase order identity", "code": "unprocessable"}), 422
+    try:
+        payload = _GATEWAY.get(
+            f"/supplies/purchase-orders/{normalized_branch}/{normalized_number}",
+            access_token=_access_token(),
+        )
+    except DelpiApiGatewayError as exc:
+        return _gateway_error_response(exc)
+    data = unwrap_delpi_envelope(payload)
+    if not isinstance(data, dict):
+        return jsonify({"detail": "Not Found", "code": "not_found"}), 404
+    return jsonify(data), 200

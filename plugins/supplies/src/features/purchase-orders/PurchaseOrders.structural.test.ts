@@ -3,7 +3,10 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { mapPurchaseOrdersFetchError } from "./content";
+import {
+  classifyPurchaseOrderDetailError,
+  mapPurchaseOrdersFetchError,
+} from "./content";
 import {
   buildListSearchParams,
   buildOrderKey,
@@ -16,16 +19,19 @@ import {
 const dir = dirname(fileURLToPath(import.meta.url));
 
 describe("PurchaseOrders feature", () => {
-  it("App liga a página real em vez do placeholder", () => {
+  it("App liga lista e ficha real em vez do placeholder", () => {
     const app = readFileSync(join(dir, "../../App.tsx"), "utf8");
     expect(app).toMatch(/PurchaseOrdersPage/);
+    expect(app).toMatch(/PurchaseOrderDetailPage/);
     expect(app).not.toMatch(/purchase_orders: \{\s*title: "Pedidos de compra"/);
   });
 
   it("cliente fala só com supplies-api", () => {
     const api = readFileSync(join(dir, "api.ts"), "utf8");
     expect(api).toMatch(/suppliesApiUrl\(`\/purchase-orders/);
+    expect(api).toMatch(/getPurchaseOrder/);
     expect(api).not.toMatch(/api-delpi/);
+    expect(api).not.toMatch(/apiDelpiUrl/);
   });
 
   it("usa PageHero, FilterBar kit e SectionCard", () => {
@@ -34,6 +40,8 @@ describe("PurchaseOrders feature", () => {
     expect(page).toContain("PurchaseOrdersFilters");
     expect(page).toContain("SuppliesSectionCard");
     expect(page).toContain("mapPurchaseOrdersFetchError");
+    expect(page).toContain("buildPurchaseOrderDetailPath");
+    expect(page).not.toContain("detailComingSoon");
     expect(page).not.toContain("<select");
     expect(page).not.toContain('type="date"');
 
@@ -42,6 +50,20 @@ describe("PurchaseOrders feature", () => {
     expect(filters).toContain("SuppliesDateField");
     expect(filters).toContain("SuppliesSelectField");
     expect(filters).toContain("SP_HELP.purchaseOrdersBranch");
+  });
+
+  it("ficha cobre loading, 403, 404, retry e receipts vazios", () => {
+    const page = readFileSync(join(dir, "PurchaseOrderDetailPage.tsx"), "utf8");
+    expect(page).toContain("SuppliesLoadingCard");
+    expect(page).toContain("classifyPurchaseOrderDetailError");
+    expect(page).toContain("C.retry");
+    expect(page).toContain("errorKind === \"forbidden\"");
+    expect(page).toContain("C.receiptsEmpty");
+    expect(page).toContain("SP_HELP.purchaseOrderDetail");
+    expect(page).toContain("SP_HELP.purchaseOrderDetailItems");
+    expect(page).toContain("SP_HELP.purchaseOrderDetailReceipts");
+    expect(page).not.toContain("api-delpi");
+    expect(page).not.toContain("detailComingSoon");
   });
 
   it("query positive + sibling + negative", () => {
@@ -70,5 +92,11 @@ describe("PurchaseOrders feature", () => {
     expect(mapPurchaseOrdersFetchError("403 Forbidden")).toMatch(/filial/i);
     expect(mapPurchaseOrdersFetchError("Request failed with status 403")).toMatch(/filial/i);
     expect(mapPurchaseOrdersFetchError("timeout upstream")).toBe("timeout upstream");
+  });
+
+  it("classifica erro da ficha 403/404/genérico", () => {
+    expect(classifyPurchaseOrderDetailError("[forbidden] Forbidden").kind).toBe("forbidden");
+    expect(classifyPurchaseOrderDetailError("[not_found] Not Found").kind).toBe("not_found");
+    expect(classifyPurchaseOrderDetailError("timeout upstream").kind).toBe("error");
   });
 });

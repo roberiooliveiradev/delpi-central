@@ -84,7 +84,7 @@ export const SP_HELP = {
   purchaseRequestsExport:
     "Exportação CSV do recorte filtrado. Exige permissão de exportação além do acesso à lista.",
   purchaseOrders:
-    "Pedidos de compra em aberto no TOTVS (saldo a receber). Não é o painel OTD de pontualidade — esse fica na analytics. Detalhe completo entra na próxima etapa.",
+    "Pedidos de compra em aberto (saldo a receber). Não é o painel OTD de pontualidade — esse fica na analytics. Clique na linha para abrir a ficha do pedido.",
   purchaseOrdersBranch:
     "Filial do recorte. Só unidades liberadas na sessão; a API reforça o escopo de unidade.",
   purchaseOrdersNumber: "Filtra pelo número do pedido de compra.",
@@ -92,6 +92,12 @@ export const SP_HELP = {
   purchaseOrdersSupplier: "Filtra pelo código do fornecedor (A2).",
   purchaseOrdersDelivery:
     "Recorte pela data prometida de entrega. «Somente atrasados» usa a data prometida anterior a hoje.",
+  purchaseOrderDetail:
+    "Ficha somente leitura do pedido em aberto: itens, data prometida, recebimentos e a SC de origem de cada item. Copie o endereço da página para compartilhar; atualizar restaura a mesma ficha. Pedidos encerrados não aparecem.",
+  purchaseOrderDetailItems:
+    "Cada item traz fornecedor, quantidades, entrega prometida e a solicitação de origem. Um mesmo pedido pode ter itens de solicitações e fornecedores diferentes.",
+  purchaseOrderDetailReceipts:
+    "Recebimentos do item, com nota, quantidade, datas de emissão e entrada. Se a lista estiver vazia, ainda não há documento de entrada para aquela linha.",
   userProfile:
     "Perfil do Portal Suprimentos: identidade Minha DELPI (foto, cargo e contatos da Core, só leitura), atalhos por capability e preferências (filial padrão e densidade). Edite foto/cargo/contatos em /profile do Portal host.",
   userProfilePrefs:

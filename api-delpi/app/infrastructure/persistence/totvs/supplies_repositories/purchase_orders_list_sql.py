@@ -72,10 +72,14 @@ def build_purchase_orders_list_count_sql(where_clause: str) -> str:
     """
 
 
-def build_purchase_orders_list_sql(*, where_clause: str) -> str:
-    """Paged open PO lines with open_value formula aligned to open_purchase_orders_sql."""
+def _purchase_orders_select_columns(*, include_origin_and_buyer: bool) -> str:
+    extra = ""
+    if include_origin_and_buyer:
+        extra = """
+        RTRIM(ISNULL(SC7.C7_COMPRA, '')) AS buyer_code,
+        NULLIF(RTRIM(ISNULL(SC7.C7_NUMSC, '')), '') AS source_request_number,
+        NULLIF(RTRIM(ISNULL(SC7.C7_ITEMSC, '')), '') AS source_request_item,"""
     return f"""
-    SELECT
         RTRIM(SC7.C7_FILIAL) AS branch,
         RTRIM(SC7.C7_NUM) AS order_number,
         RTRIM(SC7.C7_ITEM) AS order_item,
@@ -94,7 +98,7 @@ def build_purchase_orders_list_sql(*, where_clause: str) -> str:
         RTRIM(SC7.C7_DATPRF) AS expected_delivery_date,
         RTRIM(SC7.C7_FORNECE) AS supplier_code,
         RTRIM(SC7.C7_LOJA) AS supplier_store,
-        RTRIM(COALESCE(SA2.A2_NREDUZ, SA2.A2_NOME, '')) AS supplier_name,
+        RTRIM(COALESCE(SA2.A2_NREDUZ, SA2.A2_NOME, '')) AS supplier_name,{extra}
         CAST(ISNULL(SC7.C7_PRECO, 0) AS FLOAT) AS unit_price,
         CAST(
             ROUND(ISNULL(SC7.C7_TOTAL, 0) * bf.balance_factor, 2)
@@ -103,6 +107,11 @@ def build_purchase_orders_list_sql(*, where_clause: str) -> str:
             - ROUND(ISNULL(SC7.C7_VLDESC, 0) * bf.balance_factor, 2)
             AS FLOAT
         ) AS open_value
+    """
+
+
+def _purchase_orders_from_joins() -> str:
+    return """
     FROM SC7010 SC7 WITH (NOLOCK)
     CROSS APPLY (
         SELECT
@@ -120,6 +129,15 @@ def build_purchase_orders_list_sql(*, where_clause: str) -> str:
         ON SA2.A2_COD = SC7.C7_FORNECE
        AND SA2.A2_LOJA = SC7.C7_LOJA
        AND SA2.D_E_L_E_T_ = ''
+    """
+
+
+def build_purchase_orders_list_sql(*, where_clause: str) -> str:
+    """Paged open PO lines with open_value formula aligned to open_purchase_orders_sql."""
+    return f"""
+    SELECT
+        {_purchase_orders_select_columns(include_origin_and_buyer=False)}
+    {_purchase_orders_from_joins()}
     WHERE {where_clause}
     ORDER BY
         CASE WHEN RTRIM(SC7.C7_DATPRF) = '' THEN 1 ELSE 0 END,
@@ -127,4 +145,15 @@ def build_purchase_orders_list_sql(*, where_clause: str) -> str:
         SC7.C7_NUM ASC,
         SC7.C7_ITEM ASC
     OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+    """
+
+
+def build_purchase_order_detail_sql(*, where_clause: str) -> str:
+    """Open PO lines for one (branch, order_number) aggregate — no pagination."""
+    return f"""
+    SELECT
+        {_purchase_orders_select_columns(include_origin_and_buyer=True)}
+    {_purchase_orders_from_joins()}
+    WHERE {where_clause}
+    ORDER BY SC7.C7_ITEM ASC
     """

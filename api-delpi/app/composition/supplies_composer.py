@@ -56,6 +56,9 @@ from app.application.use_cases.supplies.get_purchase_requests_open_coverage_use_
 from app.application.use_cases.supplies.get_supplies_purchase_request_lines_use_case import (
     GetSuppliesPurchaseRequestLinesUseCase,
 )
+from app.application.use_cases.supplies.get_supplies_purchase_order_use_case import (
+    GetSuppliesPurchaseOrderUseCase,
+)
 from app.application.use_cases.supplies.list_supplies_purchase_orders_use_case import (
     ListSuppliesPurchaseOrdersUseCase,
 )
@@ -224,6 +227,12 @@ def build_get_purchase_requests_open_coverage_use_case() -> (
 
 def build_list_supplies_purchase_orders_use_case() -> ListSuppliesPurchaseOrdersUseCase:
     return ListSuppliesPurchaseOrdersUseCase(
+        repository=PurchaseOrdersListRepository(),
+    )
+
+
+def build_get_supplies_purchase_order_use_case() -> GetSuppliesPurchaseOrderUseCase:
+    return GetSuppliesPurchaseOrderUseCase(
         repository=PurchaseOrdersListRepository(),
     )
 

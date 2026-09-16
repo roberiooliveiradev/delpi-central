@@ -281,6 +281,8 @@ O cockpit público do PCP não chama estas rotas direto: quem compõe é o `prod
 | GET | `/supplies/purchase-order-otd` | A |
 | GET | `/supplies/purchase-order-otd/series` | A |
 | GET | `/supplies/purchase-order-otd/panel` | A |
+| GET | `/supplies/purchase-orders` | A |
+| GET | `/supplies/purchase-orders/{branch}/{order_number}` | A |
 | GET | `/supplies/stock-value` | A |
 | GET | `/supplies/inventory-turnover` | A |
 | GET | `/supplies/negotiation-savings/summary` | A |
