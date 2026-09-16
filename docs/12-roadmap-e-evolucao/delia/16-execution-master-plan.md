@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `ARCHITECTURE_REVIEW_C0_S1` (C0.S1 freeze candidato persistido; C0.S0 = APPROVED; C0 permanece NOT_STARTED)  
+**Próxima etapa:** `C0.S2 — Authorities / bounded contexts` (`C0.S0=APPROVED`; `C0.S1=APPROVED`; `C0.S2_AUTHORIZED=YES`; C0 permanece `NOT_STARTED`; `FOUNDATION_FREEZE=NOT APPROVED`; `DÉLIA_RUNTIME_DIFF=NONE`)  
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -35,7 +35,7 @@ OBRIGATÓRIO
 → integração normal com Portal/Core/Keycloak/APIs
 ```
 
-Freeze candidato C0.S1 (`PLANNED / FROZEN_CANDIDATE`; ver `68`): `delia-api/`, `plugins/delia/`, containers `delpi-delia-api` / `delpi-delia`, paths `/apps/delia-api/` e `/apps/delia`. Tokens `minha-delpi-copilot*` são `SUPERSEDED`/`HISTORICAL` como target ativo; “Copilot” não é o nome de produto.
+Freeze C0.S1 aceito (`PLANNED / FROZEN_ACCEPTED`; `ARCHITECTURE_REVIEW_C0_S1`, `REVIEWED_HEAD=c822f0e72495256c3459a4b36b9c37a3bba95cbb`; ver `68`): `delia-api/`, `plugins/delia/`, containers `delpi-delia-api` / `delpi-delia`, paths `/apps/delia-api/` e `/apps/delia`. Tokens `minha-delpi-copilot*` são `SUPERSEDED`/`HISTORICAL` como target ativo; “Copilot” não é o nome de produto.
 
 O Chat é apenas sistema vizinho/referência durante inventário.
 
@@ -310,7 +310,20 @@ Nenhuma capability/fornecedor/ferramenta é considerada existente sem evidence.
 
 Congelar API/MFE/service/container/path/manifest/DB ownership, admin/callback/webhook paths e decidir, por evidence/ADR, se Automation Hub, Control Tower, Process Intelligence, Sandbox, Semantic Layer e Edge são módulos da API da DÉLIA, neutral shared services ou adapters — **sem criar microservice por nome de feature**.
 
-**C0.S1-T1 (docs):** freeze candidato persistido nas authorities (`68`/`50`/`17`/`52`/`21`/`25`/ledger). Estado: `CANDIDATE_FOR_ARCHITECTURE_REVIEW`. **Não** aceito; **não** autoriza C0.S2; **não** é `FOUNDATION_FREEZE`; `DÉLIA_RUNTIME_DIFF=NONE`.
+**C0.S1-T1 (histórico):** freeze candidato persistido nas authorities (`68`/`50`/`17`/`52`/`21`/`25`/ledger), então `CANDIDATE_FOR_ARCHITECTURE_REVIEW`. Esse estado foi superseded pelo review abaixo; não apagar história.
+
+**C0.S1-T2 — PERSIST_ARCHITECTURE_REVIEW_DECISION:** `ARCHITECTURE_REVIEW_C0_S1` sobre `REVIEWED_HEAD=c822f0e72495256c3459a4b36b9c37a3bba95cbb`, `VERDICT=ACCEPT_WITH_RESIDUAL`, `C0.S1=APPROVED`, `C0.S2_AUTHORIZED=YES`, `BLOCKERS=NONE`. `FOUNDATION_FREEZE=NOT APPROVED`, `PROGRAM=PLANNED / NOT_STARTED`, `C0=NOT_STARTED`, `DÉLIA_RUNTIME_DIFF=NONE`. Residual de naming/evidence de HEAD é não bloqueante; labels semânticos “Copilot” residuais em `25` são cleanup terminológico não bloqueante. **Nenhuma execução C0.S2 ocorre nesta tarefa.**
+
+```text
+C0.S0 = APPROVED
+C0.S1 = APPROVED
+C0.S2_AUTHORIZED = YES
+FOUNDATION_FREEZE = NOT APPROVED
+PROGRAM = PLANNED / NOT_STARTED
+C0 = NOT_STARTED
+DÉLIA_RUNTIME_DIFF = NONE
+NEXT = C0.S2 — Authorities / bounded contexts
+```
 
 ## C0.S2 — Authorities / bounded contexts
 
