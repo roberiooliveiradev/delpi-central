@@ -1587,12 +1587,13 @@ C0.S0_READINESS (historical T) = SUPERSEDED_BY_ACCEPTED_ARCHITECTURE_REVIEW
 C0 = NOT_STARTED
 C0.S1 = APPROVED
 C0.S2 = APPROVED
-C0.S3_AUTHORIZED = YES
-C0.S3 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-C0.S4_AUTHORIZED = NO
-NEXT = ARCHITECTURE_REVIEW_C0_S3
+C0.S3 = APPROVED
+SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
+C0.S4_AUTHORIZED = YES
+NEXT = C0.S4 — Architecture / persistence / privacy / safety freeze
 FOUNDATION_FREEZE = NOT ACHIEVED (C0.S7 only)
 DÉLIA_RUNTIME_DIFF = NONE
+NEW_RUNTIME_ABSTRACTIONS = NONE
 CORE_EFFECTIVE_PERMISSIONS = ALIGNED since 633d10d2a
 ```
 
@@ -1610,9 +1611,9 @@ Nenhuma capability, integração ou foundation é promovida a `PASS` apenas por 
 | C0.S1 | `APPROVED` |
 | C0.S2 | `APPROVED` (`ARCHITECTURE_REVIEW_C0_S2`) |
 | C0.S3_AUTHORIZED | `YES` |
-| C0.S3 | `CANDIDATE_FOR_ARCHITECTURE_REVIEW` (shared primitives freeze in C0.S3-T2; not accepted) |
-| C0.S4_AUTHORIZED | `NO` |
-| NEXT | `ARCHITECTURE_REVIEW_C0_S3` |
+| C0.S3 | `APPROVED` (`ARCHITECTURE_REVIEW_C0_S3`; `SHARED_REFERENCE_SEMANTICS=FROZEN_ACCEPTED`; ACCEPT_WITH_RESIDUAL) |
+| C0.S4_AUTHORIZED | `YES` (authorized; not executed) |
+| NEXT | `C0.S4 — Architecture / persistence / privacy / safety freeze` |
 | FOUNDATION_FREEZE | NOT ACHIEVED |
 | DÉLIA_RUNTIME_DIFF | `NONE` (`minha-delpi-copilot/` = HISTORICAL docs placeholder only; targets = `delia-api/` + `plugins/delia/`) |
 | Unauthorized TARGET→PROVEN promotion | NONE found |

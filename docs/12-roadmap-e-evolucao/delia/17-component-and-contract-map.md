@@ -385,12 +385,22 @@ Observability / Evals
 
 **Module name does not imply microservice.** C0 decide physical split only from real ownership/consumers/scale/isolation needs. Um module de integração com automação ou scheduling não transforma a DÉLIA em owner da execução técnica do Automation Hub/scheduler.
 
-## 3. Shared primitive registry — C0.S3 freeze candidate
+## 3. Shared primitive registry — C0.S3 shared/reference semantics freeze accepted
 
 > Canonical semantics: [`21-data-and-state-model.md`](./21-data-and-state-model.md) §4.
-> Status: `FROZEN_CANDIDATE` / `CANDIDATE_FOR_ARCHITECTURE_REVIEW`. Não prova runtime. Não autoriza C0.S4.
+> Status: `FROZEN_ACCEPTED` / `APPROVED` via `ARCHITECTURE_REVIEW_C0_S3` (`REVIEWED_HEAD=641ffc07284b98ffbdb5e13217ce214c4ad8ebb0`; `VERDICT=ACCEPT_WITH_RESIDUAL`). Não prova runtime. Autoriza C0.S4; **não** executa C0.S4; `FOUNDATION_FREEZE=NOT APPROVED`.
 
 ```text
+REVIEW = ARCHITECTURE_REVIEW_C0_S3
+REVIEWED_HEAD = 641ffc07284b98ffbdb5e13217ce214c4ad8ebb0
+VERDICT = ACCEPT_WITH_RESIDUAL
+C0.S3 = APPROVED
+SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
+C0.S4_AUTHORIZED = YES
+FOUNDATION_FREEZE = NOT APPROVED
+DÉLIA_RUNTIME_DIFF = NONE
+NEW_RUNTIME_ABSTRACTIONS = NONE
+
 REUSED_EXISTING:
   CorrelationContext, EntityRef, UserRef, ServiceActorRef, DeviceRef,
   SourceRef, EvidenceRef, OutcomeRef, EventEnvelope
@@ -416,7 +426,6 @@ REJECTED_META:
   GenericAIObject, GenericAssetRef
 
 WorkspaceContext shape = DEFER_TO_CONTRACT (C0.S5)
-NEW_RUNTIME_ABSTRACTIONS = NONE
 ```
 
 Do not create feature-specific duplicate Evidence/Event/Outcome/Workflow models.

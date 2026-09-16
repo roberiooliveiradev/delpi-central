@@ -598,16 +598,17 @@ Naming update ≠ CP PASS ≠ runtime evidence
 C0.S0 = APPROVED
 C0.S1 = APPROVED
 C0.S2 = APPROVED
+C0.S3 = APPROVED
 AUTHORITY_MAP = FROZEN_ACCEPTED
 BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
-C0.S3_AUTHORIZED = YES
-C0.S3 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-C0.S4_AUTHORIZED = NO
+SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
+C0.S4_AUTHORIZED = YES
 FOUNDATION_FREEZE = NOT APPROVED
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 DÉLIA_RUNTIME_DIFF = NONE
-NEXT = ARCHITECTURE_REVIEW_C0_S3
+NEW_RUNTIME_ABSTRACTIONS = NONE
+NEXT = C0.S4 — Architecture / persistence / privacy / safety freeze
 ```
 
 ## 16. C0.S2 authorities / bounded contexts linkage — accepted review
@@ -646,9 +647,10 @@ C1+ CP statuses remain unchanged/LOCKED as applicable
 NEW_RUNTIME_ABSTRACTIONS = NONE
 ```
 
-## 17. C0.S3 shared primitives linkage
+## 17. C0.S3 shared primitives linkage — accepted review
 
-Evidence anchors: `21` §4; `17` §3; ledger §6.26; `16` C0.S3.
+Evidence anchors: `21` §4; `17` §3; ledger §6.26 + C0.S3-T3 review event; `16` C0.S3.
+Review: `ARCHITECTURE_REVIEW_C0_S3`; `REVIEWED_HEAD=641ffc07284b98ffbdb5e13217ce214c4ad8ebb0`; verdict `ACCEPT_WITH_RESIDUAL`.
 
 | Primitive / decision | CP linkage | Status note |
 |---|---|---|
@@ -672,10 +674,12 @@ Evidence anchors: `21` §4; `17` §3; ledger §6.26; `16` C0.S3.
 | AnalysisRunRef | CP-281, CP-282 | REJECT_ABSTRACTION (shared) |
 
 ```text
-C0.S3 documentation evidence ≠ runtime implementation evidence
-No CP promoted to PASS by C0.S3-T2
+C0.S3 accepted documentation evidence ≠ runtime implementation evidence
+No CP promoted to PASS by C0.S3-T2/T3
 No new CP ID invented for "C0.S3"
 C1+ CP statuses remain unchanged
 NEW_RUNTIME_ABSTRACTIONS = NONE
-C0.S4_AUTHORIZED = NO
+C0.S4_AUTHORIZED = YES
+C0.S4_EXECUTED = NO
+FOUNDATION_FREEZE = NOT APPROVED
 ```

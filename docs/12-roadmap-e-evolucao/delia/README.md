@@ -4,7 +4,7 @@
 > **Produto:** aplicação nova e standalone de Continuous Operational Intelligence
 > **Requirements:** `CP-001…CP-316`
 > **Specs temáticas:** `53–66`
-> **Próxima etapa:** `ARCHITECTURE_REVIEW_C0_S3` (`C0.S0..=C0.S2=APPROVED`; `C0.S3` freeze candidato)
+> **Próxima etapa:** `C0.S4 — Architecture / persistence / privacy / safety freeze` (`C0.S0..=C0.S3=APPROVED`; `SHARED_REFERENCE_SEMANTICS=FROZEN_ACCEPTED`; `C0.S4_AUTHORIZED=YES`)
 > **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
 > **Execution state:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
 > **Naming authority:** [`68-delia-product-identity-and-naming.md`](./68-delia-product-identity-and-naming.md)
@@ -237,12 +237,13 @@ C0 = NOT_STARTED
 C0.S0 = APPROVED
 C0.S1 = APPROVED
 C0.S2 = APPROVED
-C0.S3_AUTHORIZED = YES
-C0.S3 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-C0.S4_AUTHORIZED = NO
+C0.S3 = APPROVED
+SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
+C0.S4_AUTHORIZED = YES
 FOUNDATION_FREEZE = NOT APPROVED
 RUNTIME_DIFF = NONE
-NEXT = ARCHITECTURE_REVIEW_C0_S3
+NEW_RUNTIME_ABSTRACTIONS = NONE
+NEXT = C0.S4 — Architecture / persistence / privacy / safety freeze
 ```
 
 A formalização de `CP-311–CP-316` é documentação/planejamento. Não altera os estados acima nem prova scheduler, email provider ou Recurring Work runtime.

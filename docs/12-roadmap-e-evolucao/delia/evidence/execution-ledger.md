@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** **ARCHITECTURE_REVIEW_C0_S3** (`C0.S0..=C0.S2=APPROVED`; `AUTHORITY_MAP=FROZEN_ACCEPTED`; `BOUNDED_CONTEXT_MAP=FROZEN_ACCEPTED`; `C0.S3=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C0.S4_AUTHORIZED=NO`; C0 remains **NOT_STARTED**; `FOUNDATION_FREEZE` **NOT APPROVED**; `DÉLIA_RUNTIME_DIFF=NONE`).
+**Next:** **C0.S4 — Architecture / persistence / privacy / safety freeze** (`C0.S0..=C0.S3=APPROVED`; `AUTHORITY_MAP=FROZEN_ACCEPTED`; `BOUNDED_CONTEXT_MAP=FROZEN_ACCEPTED`; `SHARED_REFERENCE_SEMANTICS=FROZEN_ACCEPTED`; `C0.S4_AUTHORIZED=YES`; C0 remains **NOT_STARTED**; `FOUNDATION_FREEZE` **NOT APPROVED**; `DÉLIA_RUNTIME_DIFF=NONE`).
 
 ## 1. Ledger rule
 
@@ -23,7 +23,7 @@ Estado factual de inventory usa `PROVEN | TO_INVENTORY`; planejamento usa `PLANN
 
 | Fase | Status | Próximo step | Dependência |
 |---|---|---|---|
-| C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **ARCHITECTURE_REVIEW_C0_S3** | C0.S0..=C0.S2=APPROVED; C0.S3=CANDIDATE_FOR_ARCHITECTURE_REVIEW; C0.S4_AUTHORIZED=NO |
+| C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **C0.S4 — Architecture / persistence / privacy / safety freeze** | C0.S0..=C0.S3=APPROVED; SHARED_REFERENCE_SEMANTICS=FROZEN_ACCEPTED; C0.S4_AUTHORIZED=YES |
 | C1 Standalone Bootstrap | LOCKED | — | C0.S7 FOUNDATION_FREEZE |
 | C2 Portal + Operational Context + Commands | LOCKED | — | C1 independence gate |
 | C3 Intelligence + Capability Foundations | LOCKED | — | C1+C2 foundations |
@@ -59,14 +59,15 @@ PERSISTENCE_OWNER = DÉLIA (logical ns=delia; migrations=delia-api/migrations/; 
 C0.S0 = APPROVED
 C0.S1 = APPROVED
 C0.S2 = APPROVED
-C0.S3_AUTHORIZED = YES
-C0.S3 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-C0.S4_AUTHORIZED = NO
+C0.S3 = APPROVED
+C0.S4_AUTHORIZED = YES
 AUTHORITY_MAP = FROZEN_ACCEPTED
 BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
-SHARED_PRIMITIVES_MAP = FROZEN_CANDIDATE
+SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
 NEW_RUNTIME_ABSTRACTIONS = NONE
 FOUNDATION_FREEZE = NOT APPROVED
+PROGRAM = PLANNED / NOT_STARTED
+C0 = NOT_STARTED
 DÉLIA_RUNTIME_DIFF = NONE
 AUTOMATION_HUB = NEUTRAL_SHARED_EXECUTION_BOUNDARY_TARGET + physical runtime deferred
 CONTROL_TOWER = MODULE_IN_DELIA
@@ -214,6 +215,7 @@ All ACT blocked until C7                        = SUPERSEDED_BY_C5_GOVERNED_ACT_
 | 2026-09-16 | C0.S2-T1 authorities and bounded contexts canonical persistence | PLAN_ONLY; C0.S2=CANDIDATE_FOR_ARCHITECTURE_REVIEW; NEW_RUNTIME_ABSTRACTIONS=NONE; RUNTIME_DIFF=NONE |
 | 2026-09-16 | C0.S2-T2 architecture review decision persistence | PLAN_ONLY; ACCEPT_WITH_RESIDUAL; C0.S2=APPROVED; C0.S3_AUTHORIZED=YES; no runtime/shared-primitives design |
 | 2026-09-16 | C0.S3-T2 shared primitives canonical persistence | PLAN_ONLY; C0.S3=CANDIDATE_FOR_ARCHITECTURE_REVIEW; NEW_RUNTIME_ABSTRACTIONS=NONE; RUNTIME_DIFF=NONE |
+| 2026-09-16 | C0.S3-T3 architecture review decision persistence | PLAN_ONLY; ACCEPT_WITH_RESIDUAL; C0.S3=APPROVED; SHARED_REFERENCE_SEMANTICS=FROZEN_ACCEPTED; C0.S4_AUTHORIZED=YES; no runtime/C0.S4 execution |
 
 Actual `HEAD_BEFORE` for **runtime** remains uncaptured (no DÉLIA runtime). Inventory evidence SHA for C0.S0-F is `c6c9c8370d037edfc3529821b9d63e138b153436`. Documentation-only commits do not advance execution status.
 
@@ -929,6 +931,54 @@ FILES_CHANGED_AUTHORIZED: 21, 17, 25, 16, 50, 51, 48, 12-roadmap, README, this l
 DÉLIA_NEW_CODE: NONE
 NOT_CLAIMED: C0.S3 APPROVED; C0.S4_AUTHORIZED; FOUNDATION_FREEZE; any CP PASS; any runtime; schema/migration/endpoint
 NEXT: ARCHITECTURE_REVIEW_C0_S3
+NOTE_SUPERSEDED_BY_6_27: Candidate/next fields above are historical after C0.S3-T3 architecture-review persistence; see §6.27.
+```
+
+## 6.27 C0.S3-T3 — PERSIST_ARCHITECTURE_REVIEW_DECISION
+
+```text
+DATE: 2026-09-16
+STEP: C0.S3-T3
+NAME: PERSIST_ARCHITECTURE_REVIEW_DECISION
+STATUS: PLAN_ONLY
+REVIEW: ARCHITECTURE_REVIEW_C0_S3
+REVIEWED_HEAD: 641ffc07284b98ffbdb5e13217ce214c4ad8ebb0
+PERSISTENCE_HEAD: (set by bind commit after material docs commit)
+BIND_HEAD: (set by bind commit if used)
+C0.S3_PERSISTENCE_HEAD_KNOWN: 86af8163be89346be1aac464b31ad3d73fbbd4a5
+C0.S3_BIND_HEAD_KNOWN: f0042d1e634aeff0e1142f0906dad396b604dc48
+VERDICT: ACCEPT_WITH_RESIDUAL
+PROGRAM: PLANNED / NOT_STARTED
+C0: NOT_STARTED
+C0.S0: APPROVED
+C0.S1: APPROVED
+C0.S2: APPROVED
+C0.S3: APPROVED
+AUTHORITY_MAP: FROZEN_ACCEPTED
+BOUNDED_CONTEXT_MAP: FROZEN_ACCEPTED
+SHARED_REFERENCE_SEMANTICS: FROZEN_ACCEPTED
+C0.S4_AUTHORIZED: YES
+C0.S4_EXECUTED: NO
+FOUNDATION_FREEZE: NOT APPROVED
+DÉLIA_RUNTIME_DIFF: NONE
+NEW_RUNTIME_ABSTRACTIONS: NONE
+BLOCKERS: NONE
+EXECUTION_DRIFT: NONE
+REUSED_EXISTING: CorrelationContext, EntityRef, UserRef, ServiceActorRef, DeviceRef, SourceRef, EvidenceRef, OutcomeRef, EventEnvelope
+CapabilityProjection: PROJECTION_ONLY
+ACCEPTED_SHARED: MetricDefinitionRef, ArtifactRef, PredictionRef, ScenarioRef, AutomationExecutionRef, RecurringWorkRef, WorkOccurrenceRef, ModelRef
+NOT_PROMOTED: ProcessTraceRef=REFERENCE_ONLY; MemoryItemRef=DOMAIN_LOCAL_ONLY; AnalysisRunRef=REJECT_ABSTRACTION; ExecutorRef=DEFER_TO_CONTRACT C0.S5; AIAssetRef=PROJECTION_ONLY/DEFER_BY_PHASE; EdgeDeviceRef=REUSE DeviceRef; WorkspaceContext=DEFER_TO_CONTRACT C0.S5
+REJECTED_META: UniversalRef, GenericBusinessObjectRef, GenericExecutionObject, GenericAIObject, GenericAssetRef
+NO_C0_S4_EXECUTION: TRUE
+NO_RUNTIME: TRUE
+NO_SCHEMA: TRUE
+NO_MIGRATION: TRUE
+NO_ENDPOINT: TRUE
+NO_SERVICE: TRUE
+CANONICAL_SOURCE: 21 §4; summary 17 §3; linkage 25 §17; 16 C0.S3
+TRACEABILITY: no new CP; no CP PASS promotion; C1+ statuses unchanged
+NEXT: C0.S4 — Architecture / persistence / privacy / safety freeze
+NOT_CLAIMED: FOUNDATION_FREEZE; C0 started; runtime; schema; lifecycle contracts; ExecutorRef acceptance; WorkspaceContext transport; any CP PASS
 ```
 
 ## 7. Canonical phase mapping
@@ -1139,4 +1189,4 @@ SAFETY_INTERLOCK_BYPASS
 
 ## 14. First execution
 
-Historical open actions C0.S0, C0.S1 and C0.S2 are now **APPROVED** by their architecture reviews. C0.S3-T2 persists shared-primitive decisions as **CANDIDATE_FOR_ARCHITECTURE_REVIEW**. Current next is **ARCHITECTURE_REVIEW_C0_S3**. This does **not** approve C0.S3, authorize C0.S4, approve Foundation Freeze, or start C0 runtime.
+Historical open actions C0.S0..C0.S3 are now **APPROVED** by their architecture reviews. C0.S3-T3 persists `ARCHITECTURE_REVIEW_C0_S3` as `ACCEPT_WITH_RESIDUAL` with `SHARED_REFERENCE_SEMANTICS=FROZEN_ACCEPTED` and `C0.S4_AUTHORIZED=YES`. Current next is **C0.S4 — Architecture / persistence / privacy / safety freeze**. This does **not** execute C0.S4, approve Foundation Freeze, or start C0 runtime.

@@ -367,10 +367,12 @@ CROSS_CUTTING = 67–68
 C0.S0 = APPROVED
 C0.S1 = APPROVED
 C0.S2 = APPROVED
-C0.S3 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-C0.S4_AUTHORIZED = NO
-NEXT = ARCHITECTURE_REVIEW_C0_S3
+C0.S3 = APPROVED
+SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
+C0.S4_AUTHORIZED = YES
+FOUNDATION_FREEZE = NOT APPROVED
+NEXT = C0.S4 — Architecture / persistence / privacy / safety freeze
 RUNTIME_DIFF = NONE
 ```
 
-C0.S0–C0.S2 estão aceitos. C0.S3 shared primitives está persistido como candidato (não aceito). Não cria runtimes temáticos.
+C0.S0–C0.S3 estão aceitos. C0.S3 shared/reference semantics = `FROZEN_ACCEPTED` (`ACCEPT_WITH_RESIDUAL`). Autoriza C0.S4; não executa C0.S4; não cria runtimes temáticos.

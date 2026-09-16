@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `ARCHITECTURE_REVIEW_C0_S3` (`C0.S0..=C0.S2=APPROVED`; `C0.S3=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C0.S4_AUTHORIZED=NO`; C0 permanece `NOT_STARTED`; `FOUNDATION_FREEZE=NOT APPROVED`; `DÉLIA_RUNTIME_DIFF=NONE`)
+**Próxima etapa:** `C0.S4 — Architecture / persistence / privacy / safety freeze` (`C0.S0..=C0.S3=APPROVED`; `SHARED_REFERENCE_SEMANTICS=FROZEN_ACCEPTED`; `C0.S4_AUTHORIZED=YES`; C0 permanece `NOT_STARTED`; `FOUNDATION_FREEZE=NOT APPROVED`; `DÉLIA_RUNTIME_DIFF=NONE`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -318,14 +318,15 @@ Congelar API/MFE/service/container/path/manifest/DB ownership, admin/callback/we
 C0.S0 = APPROVED
 C0.S1 = APPROVED
 C0.S2 = APPROVED
-C0.S3_AUTHORIZED = YES
-C0.S3 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-C0.S4_AUTHORIZED = NO
+C0.S3 = APPROVED
+SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
+C0.S4_AUTHORIZED = YES
 FOUNDATION_FREEZE = NOT APPROVED
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 DÉLIA_RUNTIME_DIFF = NONE
-NEXT = ARCHITECTURE_REVIEW_C0_S3
+NEW_RUNTIME_ABSTRACTIONS = NONE
+NEXT = C0.S4 — Architecture / persistence / privacy / safety freeze
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -365,7 +366,9 @@ Timer/scheduler físico é boundary de infraestrutura/execution a ser atribuído
 
 Decidir/reutilizar foundations antes de types específicos.
 
-**C0.S3-T2 (docs):** decisões persistidas em `21` §4 + `17` §3 + `25` §17 + ledger §6.26. Estado: `CANDIDATE_FOR_ARCHITECTURE_REVIEW`. **Não** aceito; **não** autoriza C0.S4; `NEW_RUNTIME_ABSTRACTIONS=NONE`; `DÉLIA_RUNTIME_DIFF=NONE`.
+**C0.S3-T2 (histórico):** decisões persistidas em `21` §4 + `17` §3 + `25` §17 + ledger §6.26 como `CANDIDATE_FOR_ARCHITECTURE_REVIEW`. Esse estado foi superseded pelo review abaixo; não apagar história.
+
+**C0.S3-T3 — PERSIST_ARCHITECTURE_REVIEW_DECISION:** `ARCHITECTURE_REVIEW_C0_S3` sobre `REVIEWED_HEAD=641ffc07284b98ffbdb5e13217ce214c4ad8ebb0`, `VERDICT=ACCEPT_WITH_RESIDUAL`, `C0.S3=APPROVED`, `SHARED_REFERENCE_SEMANTICS=FROZEN_ACCEPTED`, `AUTHORITY_MAP=FROZEN_ACCEPTED`, `BOUNDED_CONTEXT_MAP=FROZEN_ACCEPTED`, `C0.S4_AUTHORIZED=YES`, `BLOCKERS=NONE`, `EXECUTION_DRIFT=NONE`, `NEW_RUNTIME_ABSTRACTIONS=NONE`. `FOUNDATION_FREEZE=NOT APPROVED`, `PROGRAM=PLANNED / NOT_STARTED`, `C0=NOT_STARTED`, `DÉLIA_RUNTIME_DIFF=NONE`. **Nenhuma execução C0.S4 ocorre nesta tarefa.**
 
 ```text
 REUSED: CorrelationContext, EntityRef, UserRef, ServiceActorRef, DeviceRef,
@@ -377,6 +380,7 @@ NOT_PROMOTED: ProcessTraceRef=REFERENCE_ONLY; MemoryItemRef=DOMAIN_LOCAL_ONLY;
               AnalysisRunRef=REJECT; ExecutorRef=DEFER_C0_S5; AIAssetRef=PROJECTION_ONLY;
               EdgeDeviceRef=REUSE DeviceRef
 REJECTED_META: UniversalRef / Generic*Ref catalogs
+WorkspaceContext = DEFER_TO_CONTRACT C0.S5
 ```
 
 Timezone/DST/misfire/overlap/retry/background AuthZ/scheduler implementation **não** são C0.S3 — permanecem C0.S4/C0.S5.

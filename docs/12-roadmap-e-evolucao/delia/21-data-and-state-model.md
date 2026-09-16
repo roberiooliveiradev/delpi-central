@@ -84,20 +84,24 @@ Congelar:
 - state-machine transitions;
 - data classes novas somente se shared primitives existentes forem insuficientes.
 
-## 4. Shared foundations — C0.S3 freeze candidate
+## 4. Shared foundations — C0.S3 shared/reference semantics freeze accepted
 
 ```text
-STATUS = FROZEN_CANDIDATE / CANDIDATE_FOR_ARCHITECTURE_REVIEW
-C0.S0..C0.S2 = APPROVED
-C0.S3_AUTHORIZED = YES
-C0.S4_AUTHORIZED = NO
-AUTHORITY_MAP = FROZEN_ACCEPTED (unchanged)
-BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED (unchanged)
+STATUS = FROZEN_ACCEPTED
+REVIEW = ARCHITECTURE_REVIEW_C0_S3
+REVIEWED_HEAD = 641ffc07284b98ffbdb5e13217ce214c4ad8ebb0
+VERDICT = ACCEPT_WITH_RESIDUAL
+C0.S0..C0.S3 = APPROVED
+AUTHORITY_MAP = FROZEN_ACCEPTED
+BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
+SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
+C0.S4_AUTHORIZED = YES
 NEW_RUNTIME_ABSTRACTIONS = NONE
 FOUNDATION_FREEZE = NOT APPROVED
+DÉLIA_RUNTIME_DIFF = NONE
 ```
 
-C0.S3 congela **semântica de referência compartilhada**. Não cria código, classes, tabelas, migrations, endpoints ou services. Field sketches abaixo permanecem `TARGET` de contrato (C0.S5), não schema implementado.
+C0.S3 congela **semântica de referência compartilhada**. Não cria código, classes, tabelas, migrations, endpoints ou services. Field sketches abaixo permanecem `TARGET` de contrato (C0.S5), não schema implementado. C0.S3 **não** decide timezone/DST/misfire/overlap/retry/background AuthZ/scheduler implementation.
 
 ### 4.0 Decision summary
 
