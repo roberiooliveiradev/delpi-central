@@ -4,13 +4,13 @@ import { getDiagramExportNodes, getDiagramFitNodes } from "../layout/diagramView
 import { applyMermaidPreviewTheme } from "./mermaidPreviewTheme";
 
 describe("diagramViewFit", () => {
-  it("ignora faixas no enquadramento", () => {
+  it("inclui faixas e nós no enquadramento", () => {
     const nodes = [
       { id: "lane-1", type: "lane", position: { x: 0, y: 0 }, data: {} },
       { id: "n1", type: "flowchart", position: { x: 220, y: 80 }, data: {} },
     ];
 
-    expect(getDiagramFitNodes(nodes)).toEqual([nodes[1]]);
+    expect(getDiagramFitNodes(nodes)).toEqual(nodes);
   });
 
   it("inclui faixas no enquadramento da exportação PNG", () => {

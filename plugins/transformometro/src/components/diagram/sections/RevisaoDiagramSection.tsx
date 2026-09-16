@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Download, ImagePlus } from "lucide-react";
 
 import type { AppProps } from "../../../App";
+import { TRANSFORMOMETRO_FLOWCHART_EDITOR_LABELS } from "../../../content/flowchartEditorLabels";
 import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { uploadRevisaoEvidence } from "../../../data/api/transformometroEvidenceApi";
 import {
@@ -259,7 +260,12 @@ export function RevisaoDiagramSection({
           }}
         >
           <summary>Preview Mermaid (mesclado)</summary>
-          {mermaidPreviewOpen ? <DiagramMermaidPreview code={liveMermaid} /> : null}
+          {mermaidPreviewOpen ? (
+            <DiagramMermaidPreview
+              code={liveMermaid}
+              viewportLabels={TRANSFORMOMETRO_FLOWCHART_EDITOR_LABELS}
+            />
+          ) : null}
         </details>
       ) : null}
 

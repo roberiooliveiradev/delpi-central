@@ -72,6 +72,8 @@ export type FlowchartEditorLabels = {
   zoomOutHint: string;
   zoomFit: string;
   zoomFitHint: string;
+  zoomReset: string;
+  zoomResetHint: string;
   mermaidRefreshFromDrawing: string;
   mermaidStarterTemplate: string;
   mermaidApplyToDrawing: string;

@@ -47,6 +47,7 @@ export type BpmnNodeData = {
   nodeType: FlowchartNodeType;
   highlight?: string;
   manual?: boolean;
+  laneId?: string;
   readOnly?: boolean;
   inScope?: boolean;
   scopeSelectable?: boolean;

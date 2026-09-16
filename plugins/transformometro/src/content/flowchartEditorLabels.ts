@@ -103,6 +103,8 @@ export const TRANSFORMOMETRO_FLOWCHART_EDITOR_LABELS: FlowchartEditorLabels = {
   zoomOutHint: D.zoomOut,
   zoomFit: "Ajustar",
   zoomFitHint: D.zoomFit,
+  zoomReset: "100%",
+  zoomResetHint: D.zoomReset,
   mermaidRefreshFromDrawing: "Atualizar do desenho",
   mermaidStarterTemplate: "Modelo inicial",
   mermaidApplyToDrawing: "Aplicar ao desenho",

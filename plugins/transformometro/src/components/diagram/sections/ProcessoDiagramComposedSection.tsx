@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { AppProps } from "../../../App";
 import { FieldLabel, NativeTextControl, DiagramMermaidPreview, DiagramFullscreenFrame } from "@delpi/plugin-ui/index";
+import { TRANSFORMOMETRO_FLOWCHART_EDITOR_LABELS } from "../../../content/flowchartEditorLabels";
 import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { fetchProcessoDiagramaComposed } from "../../../data/api/transformometroDiagramApi";
 import type { ComposedProcessoDiagram } from "../../../types/diagram";
@@ -145,7 +146,10 @@ export function ProcessoDiagramComposedSection({
           {composed?.mermaid ? (
             <details className="delpi-ui-bpmn-section__preview" open={false}>
               <summary>Preview Mermaid (composto)</summary>
-              <DiagramMermaidPreview code={composed.mermaid} />
+              <DiagramMermaidPreview
+                code={composed.mermaid}
+                viewportLabels={TRANSFORMOMETRO_FLOWCHART_EDITOR_LABELS}
+              />
             </details>
           ) : null}
         </DiagramFullscreenFrame>

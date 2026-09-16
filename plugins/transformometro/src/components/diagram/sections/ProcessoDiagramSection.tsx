@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { Download, FileCode2, ShieldCheck, Upload } from "lucide-react";
 
 import type { AppProps } from "../../../App";
+import { TRANSFORMOMETRO_FLOWCHART_EDITOR_LABELS } from "../../../content/flowchartEditorLabels";
 import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import {
   fetchProcessoDiagramBpmnXml,
@@ -335,7 +336,12 @@ export function ProcessoDiagramSection({
           }}
         >
           <summary>Preview Mermaid</summary>
-          {mermaidPreviewOpen ? <DiagramMermaidPreview code={liveMermaid} /> : null}
+          {mermaidPreviewOpen ? (
+            <DiagramMermaidPreview
+              code={liveMermaid}
+              viewportLabels={TRANSFORMOMETRO_FLOWCHART_EDITOR_LABELS}
+            />
+          ) : null}
         </details>
       ) : null}
 

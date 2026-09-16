@@ -16,5 +16,13 @@ describe("flowchart chrome actions contract", () => {
     expect(toolbar).toMatch(/mermaidControls/);
     expect(toolbar).toMatch(/mermaidRefreshFromDrawing/);
     expect(mermaid).toMatch(/showToolbar\?:/);
+    expect(mermaid).toMatch(/viewportLabels=\{labels\}/);
+    expect(editor).not.toMatch(/style=\{\{\s*height:\s*canvasHeight/);
+    expect(editor).toMatch(/zoomOnScroll/);
+    expect(editor).toMatch(/zoomOnPinch/);
+    expect(editor).toMatch(/preventScrolling/);
+    expect(editor).toMatch(/DIAGRAM_USER_ZOOM_EXTENT/);
+    expect(editor).toMatch(/viewportIntentRef/);
+    expect(editor).toMatch(/onViewportIntent/);
   });
 });

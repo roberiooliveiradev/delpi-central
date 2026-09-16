@@ -90,10 +90,10 @@ export function FlowchartMermaidPanel({
 
       <DiagramMermaidPreview
         code={draft}
-        className="delpi-ui-bpmn-editor__mermaid-preview"
         isDark={isDark}
         renderingLabel={labels.mermaidRendering}
         errorFallback={labels.mermaidRenderError}
+        viewportLabels={labels}
       />
     </div>
   );

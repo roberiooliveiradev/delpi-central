@@ -108,7 +108,7 @@
 .dashboard-transformometro .tm-diagram-editor__mermaid-preview{
   flex: 1;
   min-height: 220px;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__mermaid-preview,
@@ -128,13 +128,61 @@
 .delpi-ui-flowchart-shell .tm-diagram-mermaid,
 .dashboard-transformometro .tm-diagram-mermaid{
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-start;
-  overflow: auto;
-  padding: 12px;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-svg-viewport,
+.dashboard-transformometro .delpi-ui-bpmn-svg-viewport{
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+  min-height: 220px;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
   border: 1px solid var(--ds-card-border);
   border-radius: var(--ds-radius-md);
   background: var(--delpi-ui-bpmn-canvas-bg);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-svg-viewport:active,
+.dashboard-transformometro .delpi-ui-bpmn-svg-viewport:active{
+  cursor: grabbing;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-svg-viewport__world,
+.dashboard-transformometro .delpi-ui-bpmn-svg-viewport__world{
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-svg-viewport__chrome,
+.dashboard-transformometro .delpi-ui-bpmn-svg-viewport__chrome{
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 2;
+  display: flex;
+  pointer-events: auto;
+  padding: 4px 6px;
+  border: 1px solid var(--ds-card-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ds-card-bg, var(--surface, #fff)) 92%, transparent);
+  box-shadow: 0 1px 4px color-mix(in srgb, #000 12%, transparent);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-svg-viewport__chrome .delpi-ui-bpmn-editor__statusbar-zoom,
+.dashboard-transformometro .delpi-ui-bpmn-svg-viewport__chrome .delpi-ui-bpmn-editor__statusbar-zoom{
+  margin-left: 0;
 }
 
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid--dark,
@@ -158,9 +206,10 @@
 .dashboard-transformometro .tm-diagram-mermaid svg{
   display: block;
   flex: 0 0 auto;
-  max-width: 100%;
+  max-width: none;
+  width: auto;
   height: auto;
-  margin: 0 auto;
+  margin: 0;
 }
 
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid--dark svg,
@@ -253,4 +302,9 @@
 .dashboard-transformometro .tm-diagram-mermaid--error{
   font-size: var(--ds-font-sm);
   color: var(--ds-text-muted);
+  padding: 12px;
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-md);
+  overflow: auto;
+  min-height: 120px;
 }

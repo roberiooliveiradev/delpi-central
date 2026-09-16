@@ -227,6 +227,38 @@ describe("mermaidToFlowchart", () => {
     expect(exported).toContain('dec_6wp6qxi -->|"Não"| proc_apf5m3k');
     expect(exported).toContain('dec_cxqw47f -->|"Não"| proc_d9hbj0a');
   });
+
+  it("não descarta nós, lanes nem edges do flowchart_v1 na renderização derivada", () => {
+    const flowchart = {
+      format: "flowchart_v1" as const,
+      format_version: 1 as const,
+      lanes: [{ id: "lane_a", label: "Comercial", height: 168 }],
+      nodes: Array.from({ length: 12 }, (_, index) => ({
+        id: `n_${index}`,
+        type: index === 0 ? ("start" as const) : index === 11 ? ("end" as const) : ("process" as const),
+        label: `Passo ${index}`,
+        position: { x: 180 + index * 420, y: 48 },
+        lane_id: "lane_a" as const,
+        disabled: index === 3,
+        meta: { manual: true, note: `keep-${index}` },
+      })),
+      edges: Array.from({ length: 11 }, (_, index) => ({
+        id: `e_${index}`,
+        from: `n_${index}`,
+        to: `n_${index + 1}`,
+        label: index === 2 ? "sim" : null,
+      })),
+    };
+
+    const mermaid = flowchartToMermaid(flowchart);
+    for (const node of flowchart.nodes) {
+      expect(mermaid).toContain(node.id);
+      expect(mermaid).toContain(node.label);
+    }
+    expect(mermaid).toContain("subgraph");
+    expect(mermaid).toContain("n_2 -->");
+    expect(mermaid.match(/-->/g)?.length).toBe(flowchart.edges.length);
+  });
 });
 
 describe("bpmnMermaidMapping", () => {

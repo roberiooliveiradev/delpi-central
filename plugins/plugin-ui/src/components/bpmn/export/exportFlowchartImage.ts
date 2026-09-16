@@ -1,6 +1,10 @@
 import { getNodesBounds, getViewportForBounds, type Node as FlowNode } from "@xyflow/react";
 
-import { LANE_CANVAS_WIDTH } from "../layout/diagramSwimlanes";
+import {
+  LANE_VERTICAL_PADDING,
+  NODE_ESTIMATED_HEIGHT,
+  requiredSwimlaneCanvasWidth,
+} from "../layout/diagramSwimlanes";
 import { getDiagramExportNodes } from "../layout/diagramViewFit";
 
 const EXPORT_PADDING = 0.12;
@@ -260,24 +264,44 @@ function downloadDataUrl(dataUrl: string, filename: string) {
 
 function injectExportSwimlaneBackdrop(viewport: HTMLElement, nodes: FlowNode[]): () => void {
   const laneNodes = nodes.filter((node) => node.type === "lane");
+  const activityNodes = nodes.filter((node) => node.type !== "lane");
   if (!laneNodes.length) {
     return () => undefined;
   }
+
+  const canvasWidth = requiredSwimlaneCanvasWidth(
+    activityNodes.map((node) => ({
+      position: node.position,
+      type: (node.data as { nodeType?: string } | undefined)?.nodeType,
+    }))
+  );
 
   const container = document.createElement("div");
   container.className = "delpi-ui-bpmn-export-swimlane-backdrop";
   container.setAttribute("aria-hidden", "true");
 
-  for (const lane of laneNodes) {
-    const data = lane.data as { height?: number; toneClass?: string };
+  for (const [index, lane] of laneNodes.entries()) {
+    const data = lane.data as { height?: number; toneClass?: string; laneId?: string };
+    const persistedHeight = data.height ?? 168;
+    const nextTop = laneNodes[index + 1]?.position.y;
+    let maxBottom = lane.position.y + persistedHeight;
+    for (const node of activityNodes) {
+      const nodeData = node.data as { laneId?: string } | undefined;
+      const belongsById = Boolean(data.laneId) && nodeData?.laneId === data.laneId;
+      const belongsByY =
+        node.position.y >= lane.position.y && (nextTop == null || node.position.y < nextTop);
+      if (!belongsById && !belongsByY) continue;
+      maxBottom = Math.max(maxBottom, node.position.y + NODE_ESTIMATED_HEIGHT);
+    }
+    const height = Math.max(persistedHeight, maxBottom - lane.position.y + LANE_VERTICAL_PADDING);
     const band = document.createElement("div");
     band.className = ["delpi-ui-bpmn-swimlane-backdrop__band", data.toneClass ?? ""]
       .filter(Boolean)
       .join(" ");
     band.style.top = `${lane.position.y}px`;
     band.style.left = "0";
-    band.style.width = `${LANE_CANVAS_WIDTH}px`;
-    band.style.height = `${data.height ?? 168}px`;
+    band.style.width = `${canvasWidth}px`;
+    band.style.height = `${height}px`;
     container.appendChild(band);
   }
 

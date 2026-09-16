@@ -40,7 +40,6 @@ import { bpmnEditorBem, flowchartEditorShellClassName } from "../shell/diagramSh
 import type { FlowchartEditorLabels } from "../model/flowchartEditorLabels";
 import {
   autoLayoutFlowchart,
-  canvasHeightForLanes,
   defaultNodePosition,
   fitLaneHeightsToContent,
   laneIndexFromDragY,
@@ -53,6 +52,7 @@ import {
   reorderLanes,
   resolveNodeLaneId,
   snapNodeToLane,
+  visualLaneHeight,
   withNormalizedLanes,
 } from "../layout/diagramSwimlanes";
 import { diagramLaneToneClass } from "../layout/diagramLaneColors";
@@ -96,6 +96,7 @@ import {
 } from "../layout/diagramHostVisibility";
 import {
   DIAGRAM_FIT_VIEW_OPTIONS,
+  DIAGRAM_USER_ZOOM_EXTENT,
   getDiagramFitNodes,
 } from "../layout/diagramViewFit";
 
@@ -153,8 +154,6 @@ const edgeTypes = {
 const LANE_NODE_PREFIX = "__lane__";
 const DUPLICATE_OFFSET = 48;
 const NUDGE_STEP = 8;
-const DEFAULT_CANVAS_HEIGHT = 680;
-const STAGE_MIN_HEIGHT = 680;
 const DIAGRAM_MULTI_SELECT_KEYS = ["Control", "Meta"] as const;
 
 type SelectionClipboard = {
@@ -207,7 +206,7 @@ function isLaneNodeId(id: string): boolean {
 }
 
 function buildLaneNodes(
-  lanes: ReturnType<typeof normalizeLanes>,
+  value: FlowchartV1,
   options?: {
     readOnly?: boolean;
     activeLaneId?: string;
@@ -215,31 +214,35 @@ function buildLaneNodes(
     onSelectLane?: (laneId: string) => void;
   }
 ): LaneNode[] {
-  return lanes.map((lane, laneIndex) => ({
-    id: `${LANE_NODE_PREFIX}${lane.id}`,
-    type: "lane",
-    position: { x: 0, y: laneTopOffset(lanes, lane.id) },
-    style: { width: LANE_HEADER_WIDTH },
-    width: LANE_HEADER_WIDTH,
-    data: {
-      label: lane.label,
-      height: lane.height ?? 168,
-      laneId: lane.id,
-      toneClass: diagramLaneToneClass(laneIndex),
-      readOnly: options?.readOnly ?? true,
-      onRename: options?.onRenameLane,
-      onSelect: options?.onSelectLane,
-    },
-    draggable: !(options?.readOnly ?? true),
-    dragHandle: ".delpi-ui-bpmn-lane__header--draggable",
-    selectable: !(options?.readOnly ?? true),
-    connectable: false,
-    focusable: !(options?.readOnly ?? true),
-    selected:
-      !(options?.readOnly ?? true) && options?.activeLaneId === lane.id,
-    deletable: false,
-    zIndex: -1,
-  }));
+  const lanes = normalizeLanes(value.lanes);
+  return lanes.map((lane, laneIndex) => {
+    const height = visualLaneHeight(value.nodes, lanes, lane.id);
+    return {
+      id: `${LANE_NODE_PREFIX}${lane.id}`,
+      type: "lane",
+      position: { x: 0, y: laneTopOffset(lanes, lane.id) },
+      style: { width: LANE_HEADER_WIDTH, height },
+      width: LANE_HEADER_WIDTH,
+      height,
+      data: {
+        label: lane.label,
+        height,
+        laneId: lane.id,
+        toneClass: diagramLaneToneClass(laneIndex),
+        readOnly: options?.readOnly ?? true,
+        onRename: options?.onRenameLane,
+        onSelect: options?.onSelectLane,
+      },
+      draggable: !(options?.readOnly ?? true),
+      dragHandle: ".delpi-ui-bpmn-lane__header--draggable",
+      selectable: !(options?.readOnly ?? true),
+      connectable: false,
+      focusable: !(options?.readOnly ?? true),
+      selected: !(options?.readOnly ?? true) && options?.activeLaneId === lane.id,
+      deletable: false,
+      zIndex: -1,
+    };
+  });
 }
 
 function buildFlowchartEdge(
@@ -293,6 +296,7 @@ function toReactFlow(
       nodeType: node.type,
       highlight: node.highlight,
       manual: node.meta?.manual ?? node.type === "process",
+      laneId: node.lane_id,
     },
     zIndex: 1,
   }));
@@ -301,7 +305,7 @@ function toReactFlow(
   const edges: Edge[] = value.edges.map((edge) => buildFlowchartEdge(edge, nodeById));
 
   return {
-    nodes: [...buildLaneNodes(lanes, laneOptions), ...activityNodes],
+    nodes: [...buildLaneNodes(value, laneOptions), ...activityNodes],
     edges,
   };
 }
@@ -312,29 +316,33 @@ function fromReactFlow(
   base: FlowchartV1
 ): FlowchartV1 {
   const lanes = normalizeLanes(base.lanes);
+  const originalById = new Map(base.nodes.map((node) => [node.id, node]));
   const activityNodes: FlowchartNode[] = nodes
     .filter((node) => node.type !== "lane")
     .map((node) => {
       const data = node.data as BpmnNodeData;
+      const original = originalById.get(node.id);
+      const laneId = lanes.length
+        ? resolveNodeLaneId(
+            {
+              id: node.id,
+              type: data.nodeType,
+              label: data.label,
+              position: node.position,
+              lane_id: data.laneId ?? original?.lane_id,
+            },
+            lanes
+          ) ?? lanes[0]?.id
+        : undefined;
       return {
+        ...original,
         id: node.id,
         type: data.nodeType,
         label: data.label,
         position: node.position,
-        lane_id: lanes.length
-          ? resolveNodeLaneId(
-              {
-                id: node.id,
-                type: data.nodeType,
-                label: data.label,
-                position: node.position,
-                lane_id: undefined,
-              },
-              lanes
-            ) ?? lanes[0]?.id
-          : undefined,
-        highlight: data.highlight as FlowchartNode["highlight"],
-        meta: isManualTaskType(data.nodeType) ? { manual: data.manual !== false } : undefined,
+        lane_id: laneId,
+        highlight: (data.highlight as FlowchartNode["highlight"]) ?? original?.highlight,
+        meta: original?.meta ?? (isManualTaskType(data.nodeType) ? { manual: data.manual !== false } : undefined),
       };
     });
 
@@ -493,13 +501,19 @@ function FlowchartEditorInner({
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const canvasInitialFitRef = useRef(false);
   const lastFitSignatureRef = useRef("");
+  const viewportIntentRef = useRef<"fit" | "user">("fit");
+  const programmaticFitRef = useRef(false);
   const layout = useDiagramEditorLayout();
   const { fitView, getNodes, getEdges } = useReactFlow();
 
   const fitDiagramToContent = useCallback(() => {
     const fitNodes = getDiagramFitNodes(getNodes());
     if (!fitNodes.length) return;
-    void fitView({ ...DIAGRAM_FIT_VIEW_OPTIONS, nodes: fitNodes });
+    programmaticFitRef.current = true;
+    viewportIntentRef.current = "fit";
+    void fitView({ ...DIAGRAM_FIT_VIEW_OPTIONS, nodes: fitNodes }).finally(() => {
+      programmaticFitRef.current = false;
+    });
   }, [fitView, getNodes]);
 
   useImperativeHandle(
@@ -521,10 +535,6 @@ function FlowchartEditorInner({
       },
     }),
     [activeTab, getNodes, labels]
-  );
-  const canvasHeight = Math.max(
-    canvasHeightForLanes(lanes, lanes.length ? 380 : DEFAULT_CANVAS_HEIGHT),
-    STAGE_MIN_HEIGHT
   );
   const hasNodeSelection = selectedNodeIds.length > 0;
   const canDeleteActiveLane = Boolean(lanes.length && activeLaneId);
@@ -661,7 +671,15 @@ function FlowchartEditorInner({
 
     tryInitialFit();
 
-    const resizeObserver = new ResizeObserver(() => tryInitialFit());
+    const resizeObserver = new ResizeObserver(() => {
+      if (viewportIntentRef.current === "fit") {
+        window.requestAnimationFrame(() => {
+          fitDiagramToContent();
+        });
+        return;
+      }
+      tryInitialFit();
+    });
     resizeObserver.observe(element);
 
     const intersectionObserver = new IntersectionObserver(
@@ -935,7 +953,11 @@ function FlowchartEditorInner({
           ),
           { snapY: "clamp" }
         );
-        return { ...item, position: snapped.position };
+        return {
+          ...item,
+          position: snapped.position,
+          data: { ...itemData, laneId: snapped.lane_id },
+        };
       };
 
       const nextNodes = nodes.map((item) =>
@@ -986,6 +1008,7 @@ function FlowchartEditorInner({
           label: paletteLabel,
           nodeType: type,
           manual: isManualTaskType(type),
+          laneId,
         } satisfies BpmnNodeData,
       },
     ];
@@ -1347,7 +1370,6 @@ function FlowchartEditorInner({
           ...(lanes.length ? ["__canvas--swimlanes"] : []),
           ...(readOnly ? ["__canvas--readonly"] : []),
         )}
-        style={{ height: canvasHeight }}
       >
         <ReactFlow
           nodes={nodes}
@@ -1361,11 +1383,19 @@ function FlowchartEditorInner({
             labelBgStyle: { fillOpacity: 0.92 },
           }}
           onInit={(instance) => {
+            viewportIntentRef.current = "fit";
             window.requestAnimationFrame(() => {
               const fitNodes = getDiagramFitNodes(instance.getNodes());
               if (!fitNodes.length) return;
-              void instance.fitView({ ...DIAGRAM_FIT_VIEW_OPTIONS, nodes: fitNodes });
+              programmaticFitRef.current = true;
+              void instance.fitView({ ...DIAGRAM_FIT_VIEW_OPTIONS, nodes: fitNodes }).finally(() => {
+                programmaticFitRef.current = false;
+              });
             });
+          }}
+          onMove={(event) => {
+            if (programmaticFitRef.current || !event) return;
+            viewportIntentRef.current = "user";
           }}
           onNodesChange={readOnly ? undefined : onNodesChange}
           onEdgesChange={readOnly ? undefined : onEdgesChange}
@@ -1380,8 +1410,13 @@ function FlowchartEditorInner({
           selectionKeyCode={null}
           multiSelectionKeyCode={readOnly ? null : [...DIAGRAM_MULTI_SELECT_KEYS]}
           panOnDrag={readOnly || !nodesInteractive ? true : [1, 2]}
-          minZoom={0.08}
-          maxZoom={3}
+          panOnScroll={false}
+          zoomOnScroll
+          zoomOnPinch
+          zoomOnDoubleClick
+          preventScrolling
+          minZoom={DIAGRAM_USER_ZOOM_EXTENT.minZoom}
+          maxZoom={DIAGRAM_USER_ZOOM_EXTENT.maxZoom}
           connectionRadius={36}
           nodesDraggable={!readOnly && nodesInteractive}
           nodesConnectable={!readOnly && nodesInteractive}
@@ -1406,6 +1441,9 @@ function FlowchartEditorInner({
           isSelectionActionDisabled={isSelectionActionDisabled}
           onSelectionPointerDownCapture={(event) => {
             event.preventDefault();
+          }}
+          onViewportIntent={(intent) => {
+            viewportIntentRef.current = intent;
           }}
         />
       </div>
@@ -1467,7 +1505,7 @@ function FlowchartEditorInner({
         .join(" ")}
     >
       {useFullChrome ? (
-        <div className={bpmnEditorBem("__stage")} style={{ minHeight: canvasHeight }}>
+        <div className={bpmnEditorBem("__stage")}>
           <FlowchartEditorToolbar
             labels={labels}
             toolbarTab={toolbarTab}
@@ -1494,7 +1532,7 @@ function FlowchartEditorInner({
           </FlowchartEditorToolbar>
         </div>
       ) : useLiteChrome ? (
-        <div className={bpmnEditorBem("__stage")} style={{ minHeight: canvasHeight }}>
+        <div className={bpmnEditorBem("__stage")}>
           <EditorChrome
             density="compact"
             aria-label={labels.toolbarAriaLabel}
@@ -1583,7 +1621,7 @@ function FlowchartEditorInner({
           </EditorChrome>
         </div>
       ) : (
-        <div className={bpmnEditorBem("__stage")} style={{ minHeight: canvasHeight }}>
+        <div className={bpmnEditorBem("__stage")}>
           {showPreviewTab ? (
             <div className="delpi-ui-bpmn-editor__view-tabs delpi-ui-bpmn-editor__view-tabs--overlay" role="tablist">
               <TabHintCell

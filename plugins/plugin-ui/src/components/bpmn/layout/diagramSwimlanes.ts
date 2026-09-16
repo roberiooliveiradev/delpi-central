@@ -1,11 +1,16 @@
 import type { FlowchartLane, FlowchartNode, FlowchartV1 } from "../model/diagram";
+import { estimateNodeSize } from "./diagramConnectionHandles";
 
 export const LANE_HEADER_WIDTH = 132;
 export const DEFAULT_LANE_HEIGHT = 168;
 export const LANE_MIN_HEIGHT = 128;
 export const LANE_VERTICAL_PADDING = 28;
+export const LANE_HORIZONTAL_PADDING = 64;
 export const NODE_ESTIMATED_HEIGHT = 104;
-export const LANE_CANVAS_WIDTH = 2400;
+export const NODE_ESTIMATED_WIDTH = 200;
+export const LANE_MIN_CANVAS_WIDTH = 720;
+/** Espelha `MAX_LANE_HEIGHT` de `flowchart_v1.py`. Não persistir acima disso. */
+export const PERSISTED_MAX_LANE_HEIGHT = 400;
 export const AUTO_LAYOUT_HORIZONTAL_GAP = 220;
 export const AUTO_LAYOUT_VERTICAL_GAP = 32;
 export const AUTO_LAYOUT_START_X = LANE_HEADER_WIDTH + 48;
@@ -37,6 +42,34 @@ export function requiredLaneHeight(
   return Math.max(minHeight, maxBottom - laneTop + LANE_VERTICAL_PADDING);
 }
 
+export function nodeRightEdge(node: { position: { x: number; y?: number }; type?: string }): number {
+  const size = estimateNodeSize(node.type);
+  return node.position.x + Math.max(NODE_ESTIMATED_WIDTH, size.width);
+}
+
+export function requiredSwimlaneCanvasWidth(
+  nodes: Array<{ position: { x: number; y?: number }; type?: string }>,
+  minWidth = LANE_MIN_CANVAS_WIDTH
+): number {
+  let maxRight = LANE_HEADER_WIDTH + LANE_HORIZONTAL_PADDING;
+  for (const node of nodes) {
+    maxRight = Math.max(maxRight, nodeRightEdge(node) + LANE_HORIZONTAL_PADDING);
+  }
+  return Math.max(minWidth, maxRight);
+}
+
+export function visualLaneHeight(
+  nodes: FlowchartNode[],
+  lanes: FlowchartLane[],
+  laneId: string
+): number {
+  const top = laneTopOffset(lanes, laneId);
+  const lane = lanes.find((item) => item.id === laneId);
+  const persisted = lane?.height ?? DEFAULT_LANE_HEIGHT;
+  const laneNodes = nodes.filter((node) => resolveNodeLaneId(node, lanes) === laneId);
+  return Math.max(persisted, requiredLaneHeight(laneNodes, top));
+}
+
 export function fitLaneHeightsToContent(flowchart: FlowchartV1): FlowchartV1 {
   const lanes = normalizeLanes(flowchart.lanes);
   if (!lanes.length) {
@@ -46,7 +79,7 @@ export function fitLaneHeightsToContent(flowchart: FlowchartV1): FlowchartV1 {
   const oldTops = lanes.map((_, index) => laneTopOffset(lanes, lanes[index].id));
   const newHeights = lanes.map((lane, index) => {
     const laneNodes = flowchart.nodes.filter((node) => node.lane_id === lane.id);
-    return requiredLaneHeight(laneNodes, oldTops[index]);
+    return Math.min(PERSISTED_MAX_LANE_HEIGHT, requiredLaneHeight(laneNodes, oldTops[index]));
   });
 
   const updatedLanes = lanes.map((lane, index) => ({
@@ -143,7 +176,7 @@ export function resolveNodeLaneId(node: FlowchartNode, lanes: FlowchartLane[]): 
     }
     offset += height;
   }
-  return lanes[0]?.id;
+  return lanes[lanes.length - 1]?.id;
 }
 
 export function snapNodeToLane(

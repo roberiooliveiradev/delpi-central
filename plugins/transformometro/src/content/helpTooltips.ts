@@ -386,7 +386,7 @@ export const TM_HELP_TOOLTIPS = {
   },
   diagramEditor: {
     usoGeral:
-      "Adicione nós pela paleta (entram na faixa ativa). Selecione vários elementos arrastando na área de desenho para desenhar a caixa de seleção, ou Ctrl+clique para acrescentar à seleção. Use os ícones empilhados no canto inferior direito (excluir, copiar, colar, duplicar, tipo de conexão). Copiar grava na memória do editor; Colar insere a cópia com deslocamento (Ctrl+V). Duplicar copia e cola de uma vez. Atalhos: Ctrl+Z desfazer, Ctrl+Y ou Ctrl+Shift+Z refazer, Ctrl+C copiar, Ctrl+V colar, Ctrl+D duplicar, Delete excluir. Setas ← ↑ → ↓ reposicionam a seleção em passos finos. Duplo clique no texto do nó, faixa ou rótulo da seta para editar inline (Enter confirma, Esc cancela). Use Layout automático para reorganizar o fluxo. Na barra inferior: grade, zoom e «Ajustar».",
+      "Adicione nós pela paleta (entram na faixa ativa). Selecione vários elementos arrastando na área de desenho para desenhar a caixa de seleção, ou Ctrl+clique para acrescentar à seleção. Use os ícones empilhados no canto inferior direito (excluir, copiar, colar, duplicar, tipo de conexão). Copiar grava na memória do editor; Colar insere a cópia com deslocamento (Ctrl+V). Duplicar copia e cola de uma vez. Atalhos: Ctrl+Z desfazer, Ctrl+Y ou Ctrl+Shift+Z refazer, Ctrl+C copiar, Ctrl+V colar, Ctrl+D duplicar, Delete excluir. Setas ← ↑ → ↓ reposicionam a seleção em passos finos. Duplo clique no texto do nó, faixa ou rótulo da seta para editar inline (Enter confirma, Esc cancela). Use Layout automático para reorganizar o fluxo. Processos grandes ficam numa janela de visualização: pan, zoom da roda do mouse, «Ajustar» (enquadra o conteúdo) e «100%». A página não cresce com o tamanho do grafo. Na barra inferior: grade, zoom, Ajustar e 100%.",
     toolbarElementsTab:
       "Paleta BPMN: eventos, desvios, tarefas, atividades, artefatos, eventos de borda e faixas (swimlanes).",
     toolbarModelsTab:
@@ -412,7 +412,8 @@ export const TM_HELP_TOOLTIPS = {
       "Permite ou bloqueia arrastar e conectar nós no canvas (equivalente ao cadeado dos controles do React Flow).",
     zoomIn: "Aproxima a visualização do diagrama.",
     zoomOut: "Afasta a visualização do diagrama.",
-    zoomFit: "Ajusta o zoom para caber todo o diagrama na área visível.",
+    zoomFit: "Enquadra o diagrama inteiro na área visível, usando os limites reais dos nós, faixas e conexões.",
+    zoomReset: "Restaura o zoom para 100%. Não altera o diagrama salvo — só a visualização.",
     nodes: {
       start: "Evento de início do fluxo (círculo). Todo diagrama deve ter ao menos um início.",
       process: "Atividade ou tarefa manual/automática (retângulo). Representa trabalho executado no processo.",
@@ -438,9 +439,10 @@ export const TM_HELP_TOOLTIPS = {
       "Duplo clique no nome da faixa na área de desenho para editar inline (Enter confirma, Esc cancela), como nos demais nós.",
     laneRemove:
       "Remove a faixa ativa. Com mais de uma faixa, os nós são realocados na restante; removendo a última, o diagrama volta ao desenho simples (sem faixas).",
-    canvasTab: "Editor visual interativo — arraste, conecte e edite o diagrama.",
+    canvasTab:
+      "Editor visual interativo — arraste, conecte e edite o diagrama. Use pan, zoom, Ajustar e 100% para navegar processos grandes sem esticar a página.",
     mermaidTab:
-      "Edite o código Mermaid ou visualize o diagrama renderizado. Use «Aplicar ao desenho» para converter em editor visual, ou «Atualizar do desenho» para sincronizar com o desenho atual.",
+      "Visualização derivada do desenho (flowchart_v1 continua sendo a fonte). O SVG grande fica numa janela com pan/zoom/Ajustar/100% — a página não cresce com o diagrama. Use «Aplicar ao desenho» para converter em editor visual, ou «Atualizar do desenho» para sincronizar.",
     fullscreen:
       "Abre o diagrama no modal do kit (área do plugin, sem cobrir a sidebar). Pressione Esc ou use «Sair da tela cheia» para voltar.",
     selectionDelete:

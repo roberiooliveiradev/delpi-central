@@ -1,6 +1,8 @@
 import { useEffect, useId, useRef, useState } from "react";
 
 import { useDelpiDarkMode } from "../hooks/useDelpiDarkMode";
+import type { DiagramViewportControlLabels } from "../editor/DiagramViewportControls";
+import { parseSvgWorldSize } from "../layout/diagramViewport";
 import { buildMermaidPreviewConfig } from "./mermaidPreviewConfig";
 import { postProcessMermaidPreviewSvg } from "./mermaidPreviewPostProcess";
 import {
@@ -9,6 +11,7 @@ import {
   sanitizeMermaidRenderId,
 } from "./mermaidRenderSafety";
 import { applyMermaidPreviewTheme } from "./mermaidPreviewTheme";
+import { SvgDiagramViewport } from "./SvgDiagramViewport";
 
 type DiagramMermaidPreviewProps = {
   code: string;
@@ -16,6 +19,7 @@ type DiagramMermaidPreviewProps = {
   isDark?: boolean;
   renderingLabel?: string;
   errorFallback?: string;
+  viewportLabels?: DiagramViewportControlLabels;
 };
 
 type MermaidRenderer = {
@@ -41,6 +45,7 @@ export function DiagramMermaidPreview({
   isDark: isDarkProp,
   renderingLabel = "…",
   errorFallback = "Render error.",
+  viewportLabels,
 }: DiagramMermaidPreviewProps) {
   const reactId = sanitizeMermaidRenderId(useId());
   const isDarkFromHook = useDelpiDarkMode();
@@ -141,17 +146,34 @@ export function DiagramMermaidPreview({
     );
   }
 
-  return (
+  const preview = (
     <div
       className={[
         "delpi-ui-bpmn-mermaid",
         themeClass,
         rendering ? "delpi-ui-bpmn-mermaid--rendering" : "",
+        viewportLabels ? "delpi-ui-bpmn-mermaid--viewport-world" : "",
         className,
       ]
         .filter(Boolean)
         .join(" ")}
       dangerouslySetInnerHTML={{ __html: svg }}
     />
+  );
+
+  if (!viewportLabels) {
+    return preview;
+  }
+
+  const world = parseSvgWorldSize(svg);
+  return (
+    <SvgDiagramViewport
+      labels={viewportLabels}
+      worldWidth={world.width}
+      worldHeight={world.height}
+      className="delpi-ui-bpmn-editor__mermaid-preview"
+    >
+      {preview}
+    </SvgDiagramViewport>
   );
 }

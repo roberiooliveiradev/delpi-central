@@ -4,12 +4,15 @@ import { applySwimlaneBpmnTemplate, createLaneId, createNodeId, type FlowchartV1
 import {
   autoLayoutFlowchart,
   fitLaneHeightsToContent,
+  PERSISTED_MAX_LANE_HEIGHT,
   laneIndexFromDragY,
   nextPaletteNodePosition,
   normalizeLanes,
   removeLane,
   reorderLanes,
   requiredLaneHeight,
+  requiredSwimlaneCanvasWidth,
+  visualLaneHeight,
 } from "./diagramSwimlanes";
 
 describe("autoLayoutFlowchart", () => {
@@ -148,13 +151,83 @@ describe("fitLaneHeightsToContent", () => {
     const nodeBAfter = fitted.nodes.find((node) => node.id === nodeB);
 
     expect(laneAHeight).toBeGreaterThan(168);
+    expect(laneAHeight).toBeLessThanOrEqual(PERSISTED_MAX_LANE_HEIGHT);
     expect(nodeBAfter?.position.y).toBeGreaterThan(190);
+  });
+
+  it("não persiste altura acima do teto canônico; a visual continua cobrindo o overflow", () => {
+    const laneA = createLaneId();
+    const flowchart: FlowchartV1 = {
+      format: "flowchart_v1",
+      format_version: 1,
+      lanes: [{ id: laneA, label: "Comercial", height: 168, order: 0 }],
+      nodes: [
+        {
+          id: createNodeId("far"),
+          type: "process",
+          label: "Longe",
+          position: { x: 220, y: 620 },
+          lane_id: laneA,
+        },
+      ],
+      edges: [],
+    };
+
+    const fitted = fitLaneHeightsToContent(flowchart);
+    expect(fitted.lanes?.[0]?.height).toBe(PERSISTED_MAX_LANE_HEIGHT);
+    expect(
+      visualLaneHeight(fitted.nodes, normalizeLanes(fitted.lanes), laneA)
+    ).toBeGreaterThan(620);
   });
 });
 
 describe("requiredLaneHeight", () => {
   it("respeita padding mínimo mesmo sem nós", () => {
     expect(requiredLaneHeight([], 0)).toBe(168);
+  });
+});
+
+describe("requiredSwimlaneCanvasWidth", () => {
+  it("expande a faixa para cobrir nós distantes na horizontal", () => {
+    const width = requiredSwimlaneCanvasWidth([
+      { position: { x: 180, y: 40 }, type: "start" },
+      { position: { x: 5200, y: 48 }, type: "process" },
+    ]);
+
+    expect(width).toBeGreaterThan(5200);
+    expect(width).toBeGreaterThan(2400);
+  });
+
+  it("mantém largura mínima para processo pequeno", () => {
+    const width = requiredSwimlaneCanvasWidth([
+      { position: { x: 180, y: 40 }, type: "start" },
+    ]);
+    expect(width).toBeGreaterThanOrEqual(720);
+    expect(width).toBeLessThan(1200);
+  });
+});
+
+describe("visualLaneHeight", () => {
+  it("acompanha nós distantes na vertical sem cortar conteúdo", () => {
+    const laneA = createLaneId();
+    const flowchart: FlowchartV1 = {
+      format: "flowchart_v1",
+      format_version: 1,
+      lanes: [{ id: laneA, label: "Comercial", height: 168, order: 0 }],
+      nodes: [
+        {
+          id: createNodeId("a"),
+          type: "process",
+          label: "Longe",
+          position: { x: 220, y: 620 },
+          lane_id: laneA,
+        },
+      ],
+      edges: [],
+    };
+
+    const height = visualLaneHeight(flowchart.nodes, normalizeLanes(flowchart.lanes), laneA);
+    expect(height).toBeGreaterThan(620);
   });
 });
 

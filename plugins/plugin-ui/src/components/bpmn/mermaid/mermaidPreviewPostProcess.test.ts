@@ -43,4 +43,14 @@ describe("postProcessMermaidPreviewSvg", () => {
     expect(processed).toContain('fill="#111827"');
     expect(processed).not.toContain("#ffff");
   });
+
+  it("trava width/height intrínsecos do viewBox para o viewport", () => {
+    const svg = `<svg width="100%" height="100%" viewBox="0 0 6400 2200"><rect fill="#ffffff" width="6400" height="2200"/></svg>`;
+    const processed = postProcessMermaidPreviewSvg(svg, false);
+
+    expect(processed).toContain('width="6400"');
+    expect(processed).toContain('height="2200"');
+    expect(processed).toContain('preserveAspectRatio="xMinYMin meet"');
+    expect(processed).not.toMatch(/<svg[^>]*width="100%"/);
+  });
 });

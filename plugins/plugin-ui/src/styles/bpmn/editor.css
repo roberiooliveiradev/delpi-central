@@ -279,7 +279,7 @@
 .delpi-ui-flowchart-shell .tm-diagram-editor__stage,
 .dashboard-transformometro .tm-diagram-editor__stage{
   position: relative;
-  min-height: 680px;
+  min-height: 0;
   border-radius: var(--ds-radius-md);
 }
 
@@ -843,9 +843,9 @@
 .delpi-ui-flowchart-shell .tm-diagram-editor--overlay-tools .tm-diagram-editor__canvas,
 .dashboard-transformometro .tm-diagram-editor--overlay-tools .tm-diagram-editor__canvas{
   height: 100%;
-  min-height: 680px;
-  border: 1px solid var(--ds-card-border);
-  border-radius: var(--ds-radius-md);
+  min-height: min(420px, 50vh);
+  max-height: none;
+  overflow: hidden;
 }
 
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-editor,
@@ -884,7 +884,9 @@
 .delpi-ui-flowchart-shell .tm-diagram-editor--fill .tm-diagram-editor__canvas,
 .dashboard-transformometro .tm-diagram-editor--fill .tm-diagram-editor__canvas{
   flex: 1 1 auto;
-  min-height: min(620px, 58vh);
+  height: auto;
+  min-height: min(420px, 50vh);
+  max-height: none;
 }
 
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-workspace--embedded .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__canvas,
@@ -1077,8 +1079,9 @@
 .dashboard-transformometro .delpi-ui-bpmn-editor__canvas,
 .delpi-ui-flowchart-shell .tm-diagram-editor__canvas,
 .dashboard-transformometro .tm-diagram-editor__canvas{
-  height: 680px;
-  min-height: 680px;
+  height: min(680px, 70vh);
+  min-height: 360px;
+  max-height: min(780px, 78vh);
   border: 1px solid var(--ds-card-border);
   border-radius: var(--ds-radius-md);
   overflow: hidden;

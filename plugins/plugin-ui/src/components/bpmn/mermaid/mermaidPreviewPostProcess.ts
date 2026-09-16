@@ -1,3 +1,5 @@
+import { parseSvgWorldSize } from "../layout/diagramViewport";
+
 const LIGHT_CANVAS = "#f8fafc";
 const DARK_CANVAS = "#111827";
 const DARK_CLUSTER_FILL = "#1e293b";
@@ -231,6 +233,23 @@ export function postProcessMermaidPreviewSvg(svg: string, isDark: boolean): stri
   output = insertCanvasBackgroundRect(output, canvas);
   output = normalizeLightRectFills(output, canvas, isDark);
   output = appendStyleBlock(output, buildThemeCss(isDark, canvas));
+  output = lockSvgIntrinsicSize(output);
 
   return output;
+}
+
+function lockSvgIntrinsicSize(svg: string): string {
+  const size = parseSvgWorldSize(svg);
+  if (size.width <= 1 && size.height <= 1) {
+    return svg;
+  }
+
+  return svg.replace(/<svg\b([^>]*)>/i, (_match, attrs: string) => {
+    let next = String(attrs)
+      .replace(/\swidth\s*=\s*["'][^"']*["']/i, "")
+      .replace(/\sheight\s*=\s*["'][^"']*["']/i, "")
+      .replace(/\spreserveAspectRatio\s*=\s*["'][^"']*["']/i, "");
+    next += ` width="${size.width}" height="${size.height}" preserveAspectRatio="xMinYMin meet"`;
+    return `<svg${next}>`;
+  });
 }
