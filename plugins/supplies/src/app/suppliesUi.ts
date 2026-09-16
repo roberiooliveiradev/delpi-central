@@ -33,11 +33,13 @@ import {
   createDashboardViewTransition,
   createFilterBarShell,
   createInitialsAvatar,
+  DataTable,
   DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS,
   TableColumnVisibilityMenu,
   useTableColumnVisibility,
   useTableFontSize,
   catalogSearchBarBemClasses,
+  dataTableBemClasses,
   dateFieldBemClasses,
   emptyStateCardBemClasses,
   sectionCardPacBemClasses,
@@ -47,6 +49,7 @@ import {
   textFieldBemClasses,
   titleWithHelpBemClasses,
   useChartGranularitySelection,
+  type DashboardDataTableProps,
   type SpeedometerGaugeProps,
 } from "@delpi/plugin-ui/index";
 import { createElement, type ComponentProps } from "react";
@@ -198,9 +201,26 @@ export const SuppliesCompactPagination = createCompactPagination({
     pageSizeLabel: "Linhas por página",
     previous: "Anterior",
     next: "Próxima",
-    navigationAriaLabel: "Paginação de pedidos de compra",
+    navigationAriaLabel: "Paginação da lista",
   },
 });
+
+export const spDataTableClassNames = dataTableBemClasses(UI_PREFIX);
+export const spDataTableLabels = {
+  emptyMessage: "Sem linhas para exibir.",
+  loadingMessage: "Carregando…",
+  sortByAriaLabel: (header: string) => `Ordenar por ${header}`,
+  headerHelpAriaLabel: (header: string) => `Ajuda: ${header}`,
+};
+
+export function SuppliesDataTable<T>(props: DashboardDataTableProps<T>) {
+  return createElement(DataTable<T>, {
+    classNames: spDataTableClassNames,
+    labels: spDataTableLabels,
+    ...props,
+  });
+}
+
 export const SuppliesSectionHintLabel = SectionHintLabel;
 
 export {
@@ -208,6 +228,8 @@ export {
   useTableColumnVisibility,
   useTableFontSize,
 };
+
+export type { DataTableColumn } from "@delpi/plugin-ui/index";
 
 export const SuppliesTitleWithHelp = createDashboardTitleWithHelp({
   classNames: titleWithHelpBemClasses(UI_PREFIX),

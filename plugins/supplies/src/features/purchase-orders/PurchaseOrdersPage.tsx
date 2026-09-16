@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 
 import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
 import { buildPluginPath, buildPurchaseOrderDetailPath } from "../../app/pluginRoutes";
+import { resolveDefaultBranch } from "../../app/suppliesUnits";
 import { useSuppliesSession } from "../../app/SuppliesSessionContext";
 import {
   SuppliesActionButton,
@@ -58,10 +59,10 @@ function formatUpdatedAt(value: Date): string {
 export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
   const session = useSuppliesSession();
   const units = session.allowedUnits;
-  const defaultBranch = session.preferences?.defaultBranch || units[0] || "01";
+  const defaultBranch = resolveDefaultBranch(units, session.preferences?.defaultBranch);
 
   const [query, setQuery] = useState<PurchaseOrdersQuery>(() =>
-    parseQueryFromSearch(readBrowserSearch(), defaultBranch),
+    parseQueryFromSearch(readBrowserSearch(), defaultBranch || units[0] || ""),
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,8 +72,13 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
 
   useEffect(() => {
-    if (!units.includes(query.branch) && units.length > 0) {
-      setQuery((current) => ({ ...current, branch: defaultBranch, page: 1 }));
+    if (!units.length) return;
+    if (!units.includes(query.branch)) {
+      setQuery((current) => ({
+        ...current,
+        branch: defaultBranch || units[0],
+        page: 1,
+      }));
     }
   }, [defaultBranch, query.branch, units]);
 
@@ -115,14 +121,19 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
 
   const homeHref = buildPluginPath("home", basePath);
 
-  const patchQuery = (patch: Partial<PurchaseOrdersQuery>) => {
+  const patchQuery = useCallback((patch: Partial<PurchaseOrdersQuery>) => {
     setQuery((current) => ({ ...current, ...patch }));
-  };
+  }, []);
 
   const reload = () => setReloadKey((value) => value + 1);
 
   const onSelectRow = (item: PurchaseOrderListItem) => {
     navigatePluginPath(buildPurchaseOrderDetailPath(item.branch, item.order_number, basePath));
+  };
+
+  const onClear = () => {
+    const branch = defaultBranch || query.branch;
+    setQuery(createDefaultQuery(branch));
   };
 
   return (
@@ -151,10 +162,10 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
         description={C.description}
         aria-label={C.filtersAriaLabel}
         actions={
-          <div className="sp-purchase-orders__toolbar-actions">
+          <div className="sp-list-hero-actions sp-purchase-orders__toolbar-actions">
             {lastUpdatedAt && !loading ? (
               <span
-                className="sp-purchase-orders__freshness"
+                className="sp-list-freshness sp-purchase-orders__freshness"
                 title={SP_HELP.purchaseOrdersRefresh}
               >
                 {C.updatedAtLabel(formatUpdatedAt(lastUpdatedAt))}
@@ -164,7 +175,7 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
               type="button"
               variant="ghost"
               onClick={reload}
-              disabled={loading}
+              disabled={loading || !units.length}
               title={SP_HELP.purchaseOrdersRefresh}
             >
               <RefreshCw size={16} aria-hidden="true" />
@@ -173,36 +184,38 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
           </div>
         }
       >
-        <div className="sp-purchase-orders__chip-row">
-          <SuppliesScopeChipBar
-            aria-label={C.attentionAriaLabel}
-            label={C.attentionLabel}
-            chips={[
-              {
-                id: "all",
-                label: C.attentionAll,
-                active: !query.late_only,
-                onSelect: () => patchQuery({ late_only: false, page: 1 }),
-              },
-              {
-                id: "late",
-                label: C.attentionLate,
-                active: query.late_only,
-                onSelect: () => patchQuery({ late_only: true, page: 1 }),
-              },
-            ]}
-          />
-        </div>
-        <PurchaseOrdersFilters
-          query={query}
-          units={units}
-          onPatch={patchQuery}
-          onApply={() => {
-            patchQuery({ page: 1 });
-            reload();
-          }}
-          onClear={() => setQuery(createDefaultQuery(query.branch || defaultBranch))}
-        />
+        {!units.length ? (
+          <SuppliesEmptyState title={C.noUnitsTitle} message={C.noUnitsMessage} />
+        ) : (
+          <>
+            <div className="sp-purchase-orders__chip-row">
+              <SuppliesScopeChipBar
+                aria-label={C.attentionAriaLabel}
+                label={C.attentionLabel}
+                chips={[
+                  {
+                    id: "all",
+                    label: C.attentionAll,
+                    active: !query.late_only,
+                    onSelect: () => patchQuery({ late_only: false, page: 1 }),
+                  },
+                  {
+                    id: "late",
+                    label: C.attentionLate,
+                    active: query.late_only,
+                    onSelect: () => patchQuery({ late_only: true, page: 1 }),
+                  },
+                ]}
+              />
+            </div>
+            <PurchaseOrdersFilters
+              query={query}
+              units={units}
+              onPatch={patchQuery}
+              onClear={onClear}
+            />
+          </>
+        )}
       </SuppliesPageHero>
 
       {error ? (
@@ -214,24 +227,26 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
         </div>
       ) : null}
 
-      <SuppliesSectionCard title={C.listTitle} hint={C.listHint}>
-        {loading ? <SuppliesLoadingCard title={C.loading} variant="panel" /> : null}
+      {units.length ? (
+        <SuppliesSectionCard title={C.listTitle} hint={C.listHint}>
+          {loading ? <SuppliesLoadingCard title={C.loading} variant="panel" /> : null}
 
-        {!loading && !error && items.length === 0 ? (
-          <SuppliesEmptyState title={C.emptyTitle} message={C.emptyMessage} />
-        ) : null}
+          {!loading && !error && items.length === 0 ? (
+            <SuppliesEmptyState title={C.emptyTitle} message={C.emptyMessage} />
+          ) : null}
 
-        {!loading && !error && items.length > 0 ? (
-          <PurchaseOrdersListTable
-            items={items}
-            query={query}
-            total={total}
-            loading={loading}
-            onPatchQuery={patchQuery}
-            onSelectRow={onSelectRow}
-          />
-        ) : null}
-      </SuppliesSectionCard>
+          {!loading && !error && items.length > 0 ? (
+            <PurchaseOrdersListTable
+              items={items}
+              query={query}
+              total={total}
+              loading={loading}
+              onPatchQuery={patchQuery}
+              onSelectRow={onSelectRow}
+            />
+          ) : null}
+        </SuppliesSectionCard>
+      ) : null}
     </div>
   );
 }

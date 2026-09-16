@@ -160,7 +160,7 @@ Evidência no HEAD após conclusão UX da lista + ficha (sem promover paridade t
 
 | Capability | Comercial | plugin-ui | Supplies (PO) | Backend necessário? | Decisão |
 |---|---|---|---|---|---|
-| DataTable canônico | sim | sim | HTML + toolbar kit | não | **RESIDUAL** — tabela própria; toolbar/prefs via kit |
+| DataTable canônico | sim | sim | `SuppliesDataTable` | não | **IMPLEMENTED** |
 | sort server-side | sim | sim | — | sim (`sort`/`order_by` ausente em GET `/purchase-orders`) | **BLOCKED_BY_CONTRACT** |
 | column visibility | sim | sim | sim (`useTableColumnVisibility`) | não | **IMPLEMENTED** |
 | column reorder | sim | sim (`TableColumnVisibilityMenu`) | sim | não | **IMPLEMENTED** |
@@ -172,3 +172,30 @@ Evidência no HEAD após conclusão UX da lista + ficha (sem promover paridade t
 | mobile overflow | sim | — | sim (region + scroll) | não | **IMPLEMENTED** (preservado) |
 | attention chips | sim | `ScopeChipBar` | Atenção Todos/Atrasados | não (`late_only`) | **IMPLEMENTED** |
 | refresh + freshness | sim | — | Atualizar + horário local | não | **IMPLEMENTED** |
+| auto-apply filters | — | — | selects/dates immediate; text debounce 350ms | não | **IMPLEMENTED** |
+| human unit labels | — | names kit | `formatSuppliesUnitLabel` → `Santa Catarina (01)` | não | **IMPLEMENTED** |
+
+---
+
+## 10. Solicitações + Operações — padronização transversal (executada)
+
+Mesmo padrão visual/funcional nas duas jornadas tabulares (sem paridade total com Comercial):
+
+| Capability | Solicitações | Operações | Shared |
+|---|---|---|---|
+| PageHero + freshness + Atualizar | IMPLEMENTED | IMPLEMENTED | hero actions |
+| Auto-apply filters (sem Aplicar) | IMPLEMENTED | IMPLEMENTED | `useCommittedTextFilter` 350ms |
+| Clear → defaults + fetch | IMPLEMENTED | IMPLEMENTED | page filters |
+| Unit labels `Nome (código)` | IMPLEMENTED | IMPLEMENTED | `formatSuppliesUnitLabel` / `buildSuppliesUnitOptions` |
+| DataListToolbar | IMPLEMENTED | IMPLEMENTED | plugin-ui |
+| Font size | IMPLEMENTED | IMPLEMENTED | keys `supplies:purchase-requests:*` / `supplies:purchase-orders:*` |
+| Columns + reorder | IMPLEMENTED | IMPLEMENTED | `useTableColumnVisibility` |
+| CompactPagination | IMPLEMENTED | IMPLEMENTED | plugin-ui |
+| DataTable canônico | IMPLEMENTED | IMPLEMENTED | `SuppliesDataTable` |
+| Mobile horizontal scroll | IMPLEMENTED | IMPLEMENTED | `delpi-ui-table-wrap` + `sp-list-table-region` |
+| Export | capability + CSV | BLOCKED_BY_CONTRACT | — |
+| Sort | BLOCKED_BY_CONTRACT | BLOCKED_BY_CONTRACT | sem contrato server-side |
+| Attention chips | N/A (domínio) | Todos/Atrasados | justificado |
+| Cards/Board | OUT_OF_SCOPE | OUT_OF_SCOPE | — |
+
+Diferenças justificadas: chips Atenção e campos de filtro são semântica de domínio; export só em Solicitações (capability existente).

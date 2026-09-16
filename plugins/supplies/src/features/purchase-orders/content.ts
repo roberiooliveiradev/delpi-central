@@ -20,11 +20,13 @@ export const PURCHASE_ORDERS_CONTENT = {
   attentionLate: "Atrasados",
   refreshAction: "Atualizar",
   updatedAtLabel: (time: string) => `Atualizado às ${time}`,
-  applyFilters: "Aplicar filtros",
   clearFilters: "Limpar",
   loading: "Carregando pedidos…",
   emptyTitle: "Nenhum pedido aberto neste recorte",
   emptyMessage: "Ajuste filtros ou filial. Pedidos encerrados ou residual não aparecem nesta lista.",
+  noUnitsTitle: "Nenhuma filial liberada",
+  noUnitsMessage:
+    "Seu acesso não inclui unidades neste módulo. Peça o escopo canônico ao administrador.",
   error: "Não foi possível carregar os pedidos de compra.",
   forbiddenUnit:
     "Você não tem permissão para esta filial neste módulo. Escolha outra unidade liberada ou peça o acesso canônico ao administrador.",

@@ -1,3 +1,7 @@
+import { useCallback } from "react";
+
+import { buildSuppliesUnitOptions } from "../../app/suppliesUnits";
+import { useCommittedTextFilter } from "../../app/useCommittedTextFilter";
 import {
   SuppliesActionButton,
   SuppliesDateField,
@@ -16,7 +20,6 @@ type PurchaseRequestsFiltersProps = {
   query: PurchaseRequestsQuery;
   units: readonly string[];
   onPatch: (patch: Partial<PurchaseRequestsQuery>) => void;
-  onApply: () => void;
   onClear: () => void;
 };
 
@@ -24,22 +27,38 @@ export function PurchaseRequestsFilters({
   query,
   units,
   onPatch,
-  onApply,
   onClear,
 }: PurchaseRequestsFiltersProps) {
   const { FiltersRow } = spFiltersKit;
-  const unitOptions = units.map((unit) => ({ value: unit, label: unit }));
+  const unitOptions = buildSuppliesUnitOptions(units);
   const stageOptions = OVERALL_STAGE_VALUES.map((stage) => ({
     value: stage,
     label: labelOverallStage(stage),
   }));
 
+  const commitRequestNumber = useCallback(
+    (value: string) => onPatch({ request_number: value, page: 1 }),
+    [onPatch],
+  );
+  const commitProduct = useCallback(
+    (value: string) => onPatch({ product_code: value, page: 1 }),
+    [onPatch],
+  );
+
+  const requestNumber = useCommittedTextFilter(query.request_number, commitRequestNumber);
+  const product = useCommittedTextFilter(query.product_code, commitProduct);
+
+  const flushTextFilters = () => {
+    requestNumber.flush();
+    product.flush();
+  };
+
   return (
     <form
-      className="sp-purchase-requests__filters"
+      className="sp-list-filters sp-purchase-requests__filters"
       onSubmit={(event) => {
         event.preventDefault();
-        onApply();
+        flushTextFilters();
       }}
     >
       <SuppliesFilterBarShell embedded ariaLabel={C.filtersAriaLabel}>
@@ -67,14 +86,14 @@ export function PurchaseRequestsFilters({
           />
           <SuppliesTextField
             label={C.requestNumberLabel}
-            value={query.request_number}
-            onChange={(value) => onPatch({ request_number: value, page: 1 })}
+            value={requestNumber.draft}
+            onChange={requestNumber.setDraft}
             hint={SP_HELP.purchaseRequestsNumber}
           />
           <SuppliesTextField
             label={C.productLabel}
-            value={query.product_code}
-            onChange={(value) => onPatch({ product_code: value, page: 1 })}
+            value={product.draft}
+            onChange={product.setDraft}
             hint={SP_HELP.purchaseRequestsProduct}
           />
           <SuppliesSelectField
@@ -95,10 +114,8 @@ export function PurchaseRequestsFilters({
           />
         </FiltersRow>
       </SuppliesFilterBarShell>
-      <div className="sp-purchase-requests__filter-actions">
-        <SuppliesActionButton type="submit" variant="primary">
-          {C.applyFilters}
-        </SuppliesActionButton>
+      <div className="sp-list-filters__actions sp-purchase-requests__filter-actions">
+        <p className="sp-list-filters__hint">{SP_HELP.purchaseRequestsFiltersAuto}</p>
         <SuppliesActionButton type="button" variant="ghost" onClick={onClear}>
           {C.clearFilters}
         </SuppliesActionButton>

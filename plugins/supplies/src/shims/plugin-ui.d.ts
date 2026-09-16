@@ -526,6 +526,34 @@ declare module "@delpi/plugin-ui/index" {
     labels: Record<string, unknown>;
   }): ReactNode;
 
+  export type DataTableColumn<T> = {
+    key: string;
+    header: string;
+    render: (row: T) => ReactNode;
+    sortable?: boolean;
+  };
+
+  export type DashboardDataTableProps<T> = {
+    columns: Array<DataTableColumn<T>>;
+    rows: T[];
+    rowKey: (row: T, index: number) => string;
+    emptyMessage?: string;
+    loading?: boolean;
+    onRowClick?: (row: T) => void;
+    getRowClassName?: (row: T, index: number) => string | undefined;
+    getRowProps?: (row: T, index: number) => Record<string, unknown> | undefined;
+    layout?: "section" | "embedded" | "scroll";
+  };
+
+  export function DataTable<T>(
+    props: DashboardDataTableProps<T> & {
+      classNames: Record<string, string>;
+      labels: Record<string, unknown>;
+    },
+  ): ReactNode;
+
+  export function dataTableBemClasses(prefix: string): Record<string, string>;
+
   export function createDashboardSegmentToggle(prefix: string): ComponentType<{
     ariaLabel?: string;
     idPrefix?: string;

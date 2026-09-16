@@ -72,9 +72,9 @@ export const SP_HELP = {
   otdAnalyticsPage:
     "Pontualidade de compras com velocímetros por unidade (Santa Catarina / Espírito Santo) e evolução no tempo. Diferente da Visão geral (placar de KPIs) e de Entregas (atrasos do dia).",
   purchaseRequests:
-    "Lista linhas de SC no escopo de centro de custo e filial. Sem CC liberado e sem visão ampla, a lista fica vazia (fail-closed). Exportação CSV exige permissão separada.",
+    "Lista linhas de SC no escopo de centro de custo e filial. Sem CC liberado e sem visão ampla, a lista fica vazia (fail-closed). Exportação CSV exige permissão separada. Filtros aplicam automaticamente.",
   purchaseRequestsBranch:
-    "Filial do recorte. Só unidades liberadas na sessão aparecem; a API reforça o escopo de unidade.",
+    "Filial do recorte (ex.: Santa Catarina (01)). Só unidades liberadas na sessão; a API reforça o escopo.",
   purchaseRequestsPeriod:
     "Período de abertura da SC. Compartilhável pela URL (F5 restaura o recorte).",
   purchaseRequestsNumber: "Filtra pelo número da solicitação de compras.",
@@ -83,10 +83,18 @@ export const SP_HELP = {
     "Situação consolidada da SC (aguardando pedido, parcial, concluída etc.).",
   purchaseRequestsExport:
     "Exportação CSV do recorte filtrado. Exige permissão de exportação além do acesso à lista.",
+  purchaseRequestsFiltersAuto:
+    "Os filtros aplicam sozinhos. Campos de texto aguardam um instante enquanto você digita; Enter confirma na hora. Limpar restaura o padrão da página.",
+  purchaseRequestsRefresh:
+    "Recarrega a lista com os mesmos filtros. O horário é da última consulta bem-sucedida nesta tela, não do TOTVS.",
+  purchaseRequestsTableFontSize:
+    "Ajusta o tamanho da fonte da tabela neste navegador. A preferência fica salva localmente.",
+  purchaseRequestsTableColumns:
+    "Escolha quais colunas exibir e arraste para reordenar. A preferência fica salva neste navegador; não altera permissões nem dados.",
   purchaseOrders:
-    "Pedidos de compra em aberto (saldo a receber). Não é o painel OTD de pontualidade — esse fica na analytics. Clique na linha para abrir a ficha do pedido.",
+    "Pedidos de compra em aberto (saldo a receber). Não é o painel OTD de pontualidade — esse fica na analytics. Clique na linha para abrir a ficha do pedido. Filtros aplicam automaticamente.",
   purchaseOrdersBranch:
-    "Filial do recorte. Só unidades liberadas na sessão; a API reforça o escopo de unidade.",
+    "Filial do recorte (ex.: Santa Catarina (01)). Só unidades liberadas na sessão; a API reforça o escopo de unidade.",
   purchaseOrdersNumber: "Filtra pelo número do pedido de compra.",
   purchaseOrdersProduct: "Filtra por código de produto/MP da linha.",
   purchaseOrdersSupplier: "Filtra pelo código do fornecedor (A2).",
@@ -96,6 +104,8 @@ export const SP_HELP = {
     "Todos mostra o recorte completo dos filtros; Atrasados restringe às linhas com entrega prometida vencida. A URL guarda late_only para compartilhar ou atualizar (F5).",
   purchaseOrdersRefresh:
     "Recarrega a lista com os mesmos filtros. O horário é da última consulta bem-sucedida nesta tela, não do TOTVS.",
+  purchaseOrdersFiltersAuto:
+    "Os filtros aplicam sozinhos. Campos de texto aguardam um instante enquanto você digita; Enter confirma na hora. Limpar restaura o padrão da página.",
   purchaseOrdersTableFontSize:
     "Ajusta o tamanho da fonte da tabela neste navegador. A preferência fica salva localmente.",
   purchaseOrdersTableColumns:

@@ -4,11 +4,13 @@ import {
   DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS,
   SuppliesCompactPagination,
   SuppliesDataListToolbar,
+  SuppliesDataTable,
   SuppliesStatusBadge,
   SuppliesTableColumnVisibilityMenu,
   SuppliesTableFontSizeControls,
   useTableColumnVisibility,
   useTableFontSize,
+  type DataTableColumn,
 } from "../../app/suppliesUi";
 import { PURCHASE_ORDERS_CONTENT as C } from "./content";
 import {
@@ -89,7 +91,7 @@ export function PurchaseOrdersListTable({
     storageKey: PURCHASE_ORDERS_TABLE_FONT_SIZE_STORAGE_KEY,
   });
 
-  const visibleColumns = useMemo(() => {
+  const columns = useMemo((): DataTableColumn<PurchaseOrderListItem>[] => {
     const byKey = new Map(
       PURCHASE_ORDERS_TABLE_COLUMNS.map((column) => [column.key, column]),
     );
@@ -97,15 +99,23 @@ export function PurchaseOrdersListTable({
       .map((key) => byKey.get(key as PurchaseOrderTableColumnKey))
       .filter((column): column is (typeof PURCHASE_ORDERS_TABLE_COLUMNS)[number] =>
         Boolean(column),
-      );
+      )
+      .map((column) => ({
+        key: column.key,
+        header: column.label,
+        sortable: false,
+        render: (row: PurchaseOrderListItem) =>
+          renderCell(row, column.key as PurchaseOrderTableColumnKey),
+      }));
   }, [columnPrefs.visibleKeys]);
 
   const totalPages = Math.max(1, Math.ceil(total / query.page_size) || 1);
 
   const tableStyle = useMemo(
-    (): CSSProperties => ({
-      fontSize: `${fontSizePrefs.fontSize}px`,
-    }),
+    (): CSSProperties =>
+      ({
+        "--delpi-ui-table-font-size": `${fontSizePrefs.fontSize}px`,
+      }) as CSSProperties,
     [fontSizePrefs.fontSize],
   );
 
@@ -136,48 +146,26 @@ export function PurchaseOrdersListTable({
       />
 
       <div
-        className="sp-purchase-orders__table-wrap"
+        className="sp-list-table-region"
         role="region"
         aria-label={C.tableScrollRegion}
         tabIndex={0}
+        style={tableStyle}
       >
-        <table className="sp-purchase-orders__table" style={tableStyle}>
-          <thead>
-            <tr>
-              {visibleColumns.map((column) => (
-                <th key={column.key} scope="col">
-                  {column.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => {
-              const key = `${item.branch}-${item.order_number}-${item.order_item ?? ""}`;
-              return (
-                <tr
-                  key={key}
-                  onClick={() => onSelectRow(item)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      onSelectRow(item);
-                    }
-                  }}
-                  tabIndex={0}
-                  role="link"
-                  aria-label={`${C.detailTitle} ${item.order_number}`}
-                >
-                  {visibleColumns.map((column) => (
-                    <td key={column.key}>
-                      {renderCell(item, column.key as PurchaseOrderTableColumnKey)}
-                    </td>
-                  ))}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <SuppliesDataTable
+          layout="section"
+          columns={columns}
+          rows={items}
+          rowKey={(row) =>
+            `${row.branch}-${row.order_number}-${row.order_item ?? ""}`
+          }
+          onRowClick={onSelectRow}
+          getRowProps={(row) => ({
+            "aria-label": `${C.detailTitle} ${row.order_number}`,
+            role: "link",
+          })}
+          loading={loading}
+        />
       </div>
 
       <SuppliesCompactPagination

@@ -86,7 +86,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Abrir pedidos de compra (PC)",
           where: "Pedidos de compra",
-          how: "Lista linhas abertas; clique na linha para a ficha. A URL da lista guarda filtros (F5)",
+          how: "Lista linhas abertas; filtros aplicam sozinhos; clique na linha para a ficha. A URL da lista guarda filtros (F5)",
         },
         {
           want: "Ver o detalhe de um pedido",
@@ -96,7 +96,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Abrir solicitações de compras (SC)",
           where: "Solicitações de compras",
-          how: "Lista e detalhe no escopo de CC/filial; URL guarda filtros (F5); exportação CSV se tiver permissão",
+          how: "Lista e detalhe no escopo de CC/filial; filtros automáticos; URL guarda filtros (F5); exportação CSV se tiver permissão",
         },
         {
           want: "Alterar filial padrão ou densidade das tabelas",
@@ -147,7 +147,7 @@ export const USER_MANUAL_CONTENT = {
         "Início — atenção, busca, favoritos e caminhos por capability.",
         "Visão geral — cockpit de KPIs do período (não é a tela inicial).",
         "OTD — velocímetros de pontualidade e evolução; abra pelo Início, catálogo Análises ou CTA da Visão geral.",
-        "Pedidos de compra — linhas abertas (saldo a receber); use Atenção (Todos/Atrasados), filtros e Atualizar na lista; clique na linha para a ficha com itens, recebimentos e SC origem. Distinto do OTD de pontualidade.",
+        "Pedidos de compra — linhas abertas (saldo a receber); Atenção (Todos/Atrasados), filtros automáticos, Atualizar; filiais como Santa Catarina (01); clique na linha para a ficha. Distinto do OTD de pontualidade.",
         "Solicitações de compras — lista/detalhe no escopo CC+filial; exportação CSV com permissão separada.",
         "Operações — pedidos, entregas, fornecedores, produtos, estoque e ESTSEG.",
         "Indicadores / Negociações — recorte analítico quando liberado.",

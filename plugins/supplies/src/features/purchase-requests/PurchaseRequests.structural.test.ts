@@ -26,34 +26,58 @@ describe("PurchaseRequests feature", () => {
     const api = readFileSync(join(dir, "api.ts"), "utf8");
     expect(api).toMatch(/suppliesApiUrl\(`\/purchase-requests/);
     expect(api).not.toMatch(/purchase-requests-api/);
+    expect(api).not.toMatch(/api-delpi/);
   });
 
-  it("usa PageHero, FilterBar kit e SectionCard", () => {
+  it("usa PageHero, auto-filtros, refresh e SectionCard", () => {
     const page = readFileSync(join(dir, "PurchaseRequestsPage.tsx"), "utf8");
     expect(page).toContain("SuppliesPageHero");
     expect(page).toContain("PurchaseRequestsFilters");
     expect(page).toContain("SuppliesSectionCard");
     expect(page).toContain("SuppliesSectionHintLabel");
-    expect(page).toContain("SuppliesActionButton");
-    expect(page).toContain("mapPurchaseRequestsFetchError");
+    expect(page).toContain("lastUpdatedAt");
+    expect(page).toContain("resolveDefaultBranch");
+    expect(page).toContain("PurchaseRequestsListTable");
+    expect(page).toContain("formatSuppliesUnitLabel");
+    expect(page).not.toContain("onApply");
+    expect(page).not.toContain("applyFilters");
     expect(page).not.toContain("sp-purchase-requests__hero");
-    expect(page).not.toContain("sp-purchase-requests__btn");
     expect(page).not.toContain("<select");
     expect(page).not.toContain('type="date"');
 
     const filters = readFileSync(join(dir, "PurchaseRequestsFilters.tsx"), "utf8");
     expect(filters).toContain("SuppliesFilterBarShell");
     expect(filters).toContain("SuppliesDateField");
-    expect(filters).toContain("SuppliesSelectField");
-    expect(filters).toContain("SuppliesTextField");
+    expect(filters).toContain("buildSuppliesUnitOptions");
+    expect(filters).toContain("useCommittedTextFilter");
     expect(filters).toContain("SP_HELP.purchaseRequestsBranch");
+    expect(filters).not.toContain("Aplicar filtros");
+    expect(filters).not.toContain("onApply");
   });
 
-  it("CSS não recria botão/filtro do kit", () => {
+  it("toolbar canônica com export gated por capability", () => {
+    const table = readFileSync(join(dir, "PurchaseRequestsListTable.tsx"), "utf8");
+    expect(table).toContain("SuppliesDataListToolbar");
+    expect(table).toContain("SuppliesDataTable");
+    expect(table).toContain("SuppliesTableFontSizeControls");
+    expect(table).toContain("SuppliesTableColumnVisibilityMenu");
+    expect(table).toContain("SuppliesCompactPagination");
+    expect(table).toContain("canExport");
+    expect(table).toContain("onExport");
+    expect(table).toContain("sp-list-table-region");
+
+    const config = readFileSync(join(dir, "purchaseRequestsTableConfig.ts"), "utf8");
+    expect(config).toContain("supplies:purchase-requests:column-prefs:v1");
+    expect(config).toContain("supplies:purchase-requests:table-font-size:v1");
+    expect(config).not.toContain("purchase-orders");
+  });
+
+  it("CSS não recria botão/filtro do kit e usa região de tabela compartilhada", () => {
     const css = readFileSync(join(dir, "../../index.css"), "utf8");
     expect(css).not.toMatch(/sp-purchase-requests__btn\b/);
     expect(css).not.toMatch(/sp-purchase-requests__hero\b/);
-    expect(css).toMatch(/sp-purchase-requests__table\b/);
+    expect(css).toMatch(/sp-list-table-region/);
+    expect(css).toMatch(/sp-list-filters/);
   });
 
   it("query positive + sibling + negative", () => {

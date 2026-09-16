@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { navigatePluginView } from "../../app/pluginNavigation";
 import { buildPluginPath } from "../../app/pluginRoutes";
+import { formatSuppliesUnitLabel } from "../../app/suppliesUnits";
 import {
   SuppliesActionButton,
   SuppliesEmptyState,
@@ -125,7 +126,7 @@ export function PurchaseOrderDetailPage({
         <dl className="sp-purchase-order-detail__identity">
           <div>
             <dt>Filial</dt>
-            <dd>{detail?.branch || branch}</dd>
+            <dd>{formatSuppliesUnitLabel(detail?.branch || branch)}</dd>
           </div>
           <div>
             <dt>Pedido</dt>

@@ -34,43 +34,51 @@ describe("PurchaseOrders feature", () => {
     expect(api).not.toMatch(/apiDelpiUrl/);
   });
 
-  it("usa PageHero, FilterBar kit e SectionCard", () => {
+  it("usa PageHero, auto-filtros, refresh e SectionCard", () => {
     const page = readFileSync(join(dir, "PurchaseOrdersPage.tsx"), "utf8");
     expect(page).toContain("SuppliesPageHero");
     expect(page).toContain("PurchaseOrdersFilters");
     expect(page).toContain("SuppliesSectionCard");
     expect(page).toContain("mapPurchaseOrdersFetchError");
     expect(page).toContain("buildPurchaseOrderDetailPath");
+    expect(page).toContain("SuppliesScopeChipBar");
+    expect(page).toContain("lastUpdatedAt");
+    expect(page).toContain("resolveDefaultBranch");
+    expect(page).toContain("PurchaseOrdersListTable");
+    expect(page).not.toContain("onApply");
+    expect(page).not.toContain("applyFilters");
     expect(page).not.toContain("detailComingSoon");
     expect(page).not.toContain("<select");
     expect(page).not.toContain('type="date"');
 
     const filters = readFileSync(join(dir, "PurchaseOrdersFilters.tsx"), "utf8");
+    expect(filters).toContain("SuppliesFilterBarShell");
     expect(filters).toContain("SuppliesDateField");
-    expect(filters).toContain("SuppliesSelectField");
+    expect(filters).toContain("buildSuppliesUnitOptions");
+    expect(filters).toContain("useCommittedTextFilter");
     expect(filters).toContain("SP_HELP.purchaseOrdersBranch");
+    expect(filters).not.toContain("Aplicar filtros");
+    expect(filters).not.toContain("onApply");
     expect(filters).not.toContain("SuppliesSegmentToggle");
-
-    expect(page).toContain("SuppliesScopeChipBar");
-    expect(page).toContain("attentionLate");
-    expect(page).toContain("late_only: false");
-    expect(page).toContain("late_only: true");
-    expect(page).toContain("lastUpdatedAt");
-    expect(page).toContain("PurchaseOrdersListTable");
-    expect(page).not.toContain("SuppliesSegmentToggle");
   });
 
-  it("toolbar usa primitivos plugin-ui e chaves de storage Suprimentos", () => {
+  it("toolbar usa DataTable canônico e storage isolado", () => {
     const table = readFileSync(join(dir, "PurchaseOrdersListTable.tsx"), "utf8");
     expect(table).toContain("SuppliesDataListToolbar");
+    expect(table).toContain("SuppliesDataTable");
     expect(table).toContain("SuppliesTableFontSizeControls");
     expect(table).toContain("SuppliesTableColumnVisibilityMenu");
     expect(table).toContain("SuppliesCompactPagination");
+    expect(table).toContain("sp-list-table-region");
+    expect(table).toMatch(/role=\"region\"/);
+    expect(table).toMatch(/tabIndex=\{0\}/);
+    expect(table).not.toContain("Excel");
+    expect(table).not.toMatch(/\bonExport\b/);
+    expect(table).not.toMatch(/downloadPurchaseOrdersExport/);
+
     const config = readFileSync(join(dir, "purchaseOrdersTableConfig.ts"), "utf8");
     expect(config).toContain("supplies:purchase-orders:column-prefs:v1");
     expect(config).toContain("supplies:purchase-orders:table-font-size:v1");
-    expect(table).toMatch(/role=\"region\"/);
-    expect(table).toMatch(/tabIndex=\{0\}/);
   });
 
   it("ficha cobre loading, 403, 404, retry e receipts vazios", () => {
@@ -80,9 +88,8 @@ describe("PurchaseOrders feature", () => {
     expect(page).toContain("C.retry");
     expect(page).toContain("errorKind === \"forbidden\"");
     expect(page).toContain("C.receiptsEmpty");
+    expect(page).toContain("formatSuppliesUnitLabel");
     expect(page).toContain("SP_HELP.purchaseOrderDetail");
-    expect(page).toContain("SP_HELP.purchaseOrderDetailItems");
-    expect(page).toContain("SP_HELP.purchaseOrderDetailReceipts");
     expect(page).toContain("sp-purchase-order-detail__item-card");
     expect(page).toContain("C.receiptsTableScrollRegion");
     expect(page).toMatch(/role=\"region\"/);
@@ -92,25 +99,17 @@ describe("PurchaseOrders feature", () => {
 
   it("lista e ficha usam scroll horizontal intencional na tabela", () => {
     const list = readFileSync(join(dir, "PurchaseOrdersListTable.tsx"), "utf8");
-    expect(list).toContain("sp-purchase-orders__table-wrap");
+    expect(list).toContain("sp-list-table-region");
     expect(list).toContain("C.tableScrollRegion");
-    expect(list).toMatch(/role=\"region\"/);
-    expect(list).toMatch(/tabIndex=\{0\}/);
+    expect(list).toContain("SuppliesDataTable");
+    expect(list).toMatch(/layout=\"section\"/);
 
     const page = readFileSync(join(dir, "PurchaseOrdersPage.tsx"), "utf8");
     expect(page).toContain("PurchaseOrdersListTable");
     expect(page).not.toContain("api-delpi");
 
     const css = readFileSync(join(dir, "../../index.css"), "utf8");
-    expect(css).toMatch(
-      /\.sp-purchase-orders__table-wrap\s*\{[^}]*overflow-x:\s*auto/s,
-    );
-    expect(css).toMatch(
-      /\.sp-purchase-orders__table-wrap\s*\{[^}]*-webkit-overflow-scrolling:\s*touch/s,
-    );
-    expect(css).toMatch(
-      /\.sp-purchase-orders__table\s*\{[^}]*width:\s*max-content/s,
-    );
+    expect(css).toMatch(/\.sp-list-table-region/);
     expect(css).toMatch(
       /\.sp-purchase-order-detail__item-card[\s\S]*overflow-wrap:\s*anywhere/,
     );
