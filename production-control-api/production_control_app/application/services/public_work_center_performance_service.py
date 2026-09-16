@@ -295,12 +295,16 @@ def _unavailable() -> dict[str, Any]:
 
 
 def _public_appointment(row: dict[str, Any]) -> dict[str, Any]:
-    """Recorte anônimo: sem nome, código ou login do operador e sem valores em R$."""
+    """Recorte do chão: nome do operador ok; sem login/código e sem valores em R$."""
+    pa_code = _text(row.get("produto_acabado") or row.get("produtoAcabado"))
+    product_code = _text(row.get("produto"))
     return {
         "production_order": _text(row.get("op")),
         "operation": _text(row.get("operacao")),
         "operation_description": _text(row.get("descricao_operacao")),
-        "product_code": _text(row.get("produto")),
+        "pa_product_code": pa_code or None,
+        "product_code": product_code,
+        "operator_name": _text(row.get("nome_operador") or row.get("nomeOperador")) or None,
         "quantity": _number(row.get("qtd_apontada")),
         "real_hours": _number(row.get("tempo_real_horas")),
         "planned_hours": _number(row.get("tempo_previsto_horas")),

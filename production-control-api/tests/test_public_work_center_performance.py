@@ -164,6 +164,7 @@ class FakeDelpiGateway:
                     "operacao": "06",
                     "descricao_operacao": "INSPECAO",
                     "produto": "50320064",
+                    "produto_acabado": "90264260",
                     "cod_operador": "000123",
                     "login_operador": "jsilva",
                     "nome_operador": "JOAO DA SILVA",
@@ -369,7 +370,7 @@ def test_sibling_work_center_and_branch_are_scoped_independently() -> None:
     assert all(kwargs["work_center"] == "CT-70" for kwargs in efficiency_calls)
 
 
-def test_response_hides_operator_identity_and_currency_values() -> None:
+def test_response_hides_operator_credentials_and_currency_values() -> None:
     payload = _service(FakeDelpiGateway()).build(
         token=_token(), branch="01", work_center="CT-12"
     )
@@ -377,11 +378,15 @@ def test_response_hides_operator_identity_and_currency_values() -> None:
     appointment = payload["efficiency"]["appointments"][0]
     assert appointment["production_order"] == "24696001001"
     assert appointment["efficiency_pct"] == 80.0
+    assert appointment["pa_product_code"] == "90264260"
+    assert appointment["operator_name"] == "JOAO DA SILVA"
     assert set(appointment) == {
         "production_order",
         "operation",
         "operation_description",
+        "pa_product_code",
         "product_code",
+        "operator_name",
         "quantity",
         "real_hours",
         "planned_hours",
@@ -391,8 +396,9 @@ def test_response_hides_operator_identity_and_currency_values() -> None:
     }
 
     serialized = repr(payload)
-    for leaked in ("JOAO DA SILVA", "jsilva", "000123", "valor_mod", "total_cost", "totalCusto"):
+    for leaked in ("jsilva", "000123", "valor_mod", "total_cost", "totalCusto"):
         assert leaked not in serialized
+    assert "JOAO DA SILVA" in serialized
 
 
 def test_downtime_failure_still_answers_efficiency() -> None:

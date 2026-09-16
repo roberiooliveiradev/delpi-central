@@ -108,7 +108,7 @@ Guardrails, no mesmo espírito do PDF do desenho:
 
 - o `workCenter` precisa estar na fila publicada da filial — CT fora do snapshot responde `400`;
 - `days` é clampado entre 7 e 30 (default 14), para o link aberto não escolher quanto histórico o TOTVS varre;
-- a resposta sai **sem** `operator_name`, `operator_code`/`login` e **sem** qualquer valor em R$ (`total_cost`, `valor_mod_hora`, `resultado_mod`). O único nome na tela continua sendo o `active_operator_name` que a fila já mostrava.
+- a resposta traz o **nome** do operador do apontamento (como a fila já mostra `active_operator_name`), mas **sem** `operator_code`/`login` e **sem** qualquer valor em R$ (`total_cost`, `valor_mod_hora`, `resultado_mod`); também inclui `pa_product_code` (`produto_acabado`).
 
 As paradas do BI são filtradas por `RECURSO` (`H8_RECURSO`), que **não** é o código do CT. A ponte é o próprio snapshot: `public_snapshot_work_center_resources` devolve os recursos das operações daquele centro e o serviço manda a lista separada por vírgula; centro sem recurso cadastrado cai no próprio código.
 

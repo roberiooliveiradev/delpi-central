@@ -156,7 +156,9 @@ export type WorkCenterAppointment = {
   production_order: string;
   operation: string;
   operation_description: string;
+  pa_product_code: string | null;
   product_code: string;
+  operator_name: string | null;
   quantity: number | null;
   real_hours: number | null;
   planned_hours: number | null;
