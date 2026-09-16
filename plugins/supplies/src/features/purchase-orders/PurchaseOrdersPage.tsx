@@ -241,6 +241,7 @@ export function PurchaseOrdersPage({ basePath }: PurchaseOrdersPageProps) {
               query={query}
               total={total}
               loading={loading}
+              basePath={basePath}
               onPatchQuery={patchQuery}
               onSelectRow={onSelectRow}
             />

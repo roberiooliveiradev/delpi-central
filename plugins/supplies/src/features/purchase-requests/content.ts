@@ -5,9 +5,15 @@ export const PURCHASE_REQUESTS_CONTENT = {
     "Linhas de SC no seu escopo de centro de custo e filial. O detalhe abre no painel abaixo da lista.",
   helpAriaLabel: "Ajuda sobre solicitações de compras",
   filtersAriaLabel: "Filtros de solicitações de compras",
+  filtersTitle: "Filtros",
+  moreFilters: "Mais filtros",
+  lessFilters: "Menos filtros",
   listTitle: "Lista de solicitações",
   listHint:
-    "Linhas no escopo CC + filial. Clique em uma linha para abrir o detalhe. Lista vazia pode significar falta de CC liberado.",
+    "Linhas no escopo CC + filial. Clique na SC ou na linha para abrir o detalhe. Lista vazia pode significar falta de CC liberado.",
+  tableMeta: (columns: number, rows: number) =>
+    `${columns} coluna(s) · ${rows.toLocaleString("pt-BR")} linha(s)`,
+  openScLinkTitle: (number: string) => `Abrir solicitação ${number}`,
   branchLabel: "Filial",
   dateFromLabel: "Período de",
   dateToLabel: "Período até",

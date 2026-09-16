@@ -278,6 +278,7 @@ export function PurchaseRequestsPage({ basePath }: PurchaseRequestsPageProps) {
               total={total}
               loading={loading}
               canExport={canExport}
+              basePath={basePath}
               onExport={onExport}
               onPatchQuery={patchQuery}
               onSelectRow={onSelectRow}

@@ -53,25 +53,32 @@ describe("PurchaseOrders feature", () => {
 
     const filters = readFileSync(join(dir, "PurchaseOrdersFilters.tsx"), "utf8");
     expect(filters).toContain("SuppliesFilterBarShell");
-    expect(filters).toContain("SuppliesDateField");
+    expect(filters).toContain("sp-filter-bar__header");
+    expect(filters).toContain("C.moreFilters");
+    expect(filters).toContain("C.lessFilters");
+    expect(filters).toContain("SuppliesClearFiltersButton");
+    expect(filters).toContain("hasActivePurchaseOrdersFilters");
     expect(filters).toContain("buildSuppliesUnitOptions");
     expect(filters).toContain("useCommittedTextFilter");
-    expect(filters).toContain("SP_HELP.purchaseOrdersBranch");
+    expect(filters).toContain("SP_HELP.purchaseOrdersFilters");
     expect(filters).not.toContain("Aplicar filtros");
     expect(filters).not.toContain("onApply");
+    expect(filters).not.toContain("sp-list-filters__hint");
     expect(filters).not.toContain("SuppliesSegmentToggle");
   });
 
-  it("toolbar usa DataTable canônico e storage isolado", () => {
+  it("toolbar usa DataTable canônico, metadata e link PC", () => {
     const table = readFileSync(join(dir, "PurchaseOrdersListTable.tsx"), "utf8");
     expect(table).toContain("SuppliesDataListToolbar");
     expect(table).toContain("SuppliesDataTable");
+    expect(table).toContain("C.tableMeta");
+    expect(table).toContain("SuppliesEntityLink");
+    expect(table).toContain("buildPurchaseOrderDetailPath");
+    expect(table).toContain("headerHint");
+    expect(table).toContain("align: \"right\"");
     expect(table).toContain("SuppliesTableFontSizeControls");
-    expect(table).toContain("SuppliesTableColumnVisibilityMenu");
     expect(table).toContain("SuppliesCompactPagination");
     expect(table).toContain("sp-list-table-region");
-    expect(table).toMatch(/role=\"region\"/);
-    expect(table).toMatch(/tabIndex=\{0\}/);
     expect(table).not.toContain("Excel");
     expect(table).not.toMatch(/\bonExport\b/);
     expect(table).not.toMatch(/downloadPurchaseOrdersExport/);

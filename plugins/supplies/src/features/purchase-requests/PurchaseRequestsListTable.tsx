@@ -1,26 +1,33 @@
 import { Download } from "lucide-react";
 import { useMemo, type CSSProperties, type ReactNode } from "react";
 
+import { buildPluginPath } from "../../app/pluginRoutes";
 import {
   DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS,
+  HelpTooltip,
   SuppliesActionButton,
   SuppliesCompactPagination,
   SuppliesDataListToolbar,
   SuppliesDataTable,
+  SuppliesEntityLink,
+  SuppliesStatusBadge,
   SuppliesTableColumnVisibilityMenu,
   SuppliesTableFontSizeControls,
   useTableColumnVisibility,
   useTableFontSize,
   type DataTableColumn,
 } from "../../app/suppliesUi";
+import { SP_HELP } from "../../content/helpTooltips";
 import { PURCHASE_REQUESTS_CONTENT as C } from "./content";
 import {
   buildRequestKey,
+  buildUrlSearch,
   formatDatePtBr,
   formatProductLabel,
   formatRequestNumber,
   labelOverallStage,
 } from "./query";
+import { purchaseRequestsColumnHelp } from "./purchaseRequestsColumnHelp";
 import {
   PURCHASE_REQUESTS_COLUMN_STORAGE_KEY,
   PURCHASE_REQUESTS_TABLE_COLUMNS,
@@ -28,7 +35,8 @@ import {
   PURCHASE_REQUESTS_TABLE_FONT_SIZE_STORAGE_KEY,
   type PurchaseRequestTableColumnKey,
 } from "./purchaseRequestsTableConfig";
-import type { PurchaseRequestListItem, PurchaseRequestsQuery } from "./types";
+import type { OverallStage, PurchaseRequestListItem, PurchaseRequestsQuery } from "./types";
+import { OVERALL_STAGE_VALUES } from "./types";
 
 type PurchaseRequestsListTableProps = {
   items: PurchaseRequestListItem[];
@@ -36,30 +44,46 @@ type PurchaseRequestsListTableProps = {
   total: number;
   loading: boolean;
   canExport: boolean;
+  basePath: string;
   onExport: () => void;
   onPatchQuery: (patch: Partial<PurchaseRequestsQuery>) => void;
   onSelectRow: (item: PurchaseRequestListItem) => void;
 };
 
-function renderCell(item: PurchaseRequestListItem, key: PurchaseRequestTableColumnKey) {
-  switch (key) {
-    case "request_number":
-      return formatRequestNumber(item.request_number);
-    case "request_item":
-      return item.request_item || "—";
-    case "product":
-      return formatProductLabel(item.product_code, item.product_description);
-    case "requester":
-      return item.requester?.name || item.requester?.code || "—";
-    case "cost_center":
-      return item.cost_center?.code || item.cost_center_code || "—";
-    case "opened":
-      return formatDatePtBr(item.request_issue_date);
-    case "stage":
-      return labelOverallStage(item.derived?.overall_stage);
+function stageBadgeVariant(
+  stage: string | null | undefined,
+): "neutral" | "info" | "success" | "warning" | "danger" {
+  switch (stage) {
+    case "awaiting_order":
+    case "awaiting_receipt":
+      return "warning";
+    case "partially_ordered":
+    case "ordered":
+    case "partially_received":
+      return "info";
+    case "completed":
+      return "success";
+    case "residual_closed":
+      return "neutral";
     default:
-      return "—";
+      return "neutral";
   }
+}
+
+function isKnownStage(stage: string | null | undefined): stage is OverallStage {
+  return Boolean(stage && (OVERALL_STAGE_VALUES as readonly string[]).includes(stage));
+}
+
+function buildRequestDetailHref(
+  basePath: string,
+  query: PurchaseRequestsQuery,
+  item: PurchaseRequestListItem,
+): string {
+  const next: PurchaseRequestsQuery = {
+    ...query,
+    request: buildRequestKey(item.branch, item.request_number),
+  };
+  return `${buildPluginPath("purchase_requests", basePath)}${buildUrlSearch(next)}`;
 }
 
 export function PurchaseRequestsListTable({
@@ -68,6 +92,7 @@ export function PurchaseRequestsListTable({
   total,
   loading,
   canExport,
+  basePath,
   onExport,
   onPatchQuery,
   onSelectRow,
@@ -91,16 +116,62 @@ export function PurchaseRequestsListTable({
       .filter((column): column is (typeof PURCHASE_REQUESTS_TABLE_COLUMNS)[number] =>
         Boolean(column),
       )
-      .map((column) => ({
-        key: column.key,
-        header: column.label,
-        sortable: false,
-        render: (row: PurchaseRequestListItem) =>
-          renderCell(row, column.key as PurchaseRequestTableColumnKey),
-      }));
-  }, [columnPrefs.visibleKeys]);
+      .map((column) => {
+        const key = column.key as PurchaseRequestTableColumnKey;
+        return {
+          key: column.key,
+          header: column.label,
+          headerHint: purchaseRequestsColumnHelp(key),
+          sortable: false,
+          interactive: key === "request_number",
+          rowClick: key === "request_number" ? ("stop" as const) : undefined,
+          render: (row: PurchaseRequestListItem) => {
+            switch (key) {
+              case "request_number": {
+                const label = formatRequestNumber(row.request_number);
+                const href = buildRequestDetailHref(basePath, query, row);
+                return (
+                  <SuppliesEntityLink
+                    href={href}
+                    title={C.openScLinkTitle(label)}
+                    className="sp-entity-link"
+                    onNavigate={() => onSelectRow(row)}
+                  >
+                    {label}
+                  </SuppliesEntityLink>
+                );
+              }
+              case "request_item":
+                return row.request_item || "—";
+              case "product":
+                return formatProductLabel(row.product_code, row.product_description);
+              case "requester":
+                return row.requester?.name || row.requester?.code || "—";
+              case "cost_center":
+                return row.cost_center?.code || row.cost_center_code || "—";
+              case "opened":
+                return formatDatePtBr(row.request_issue_date);
+              case "stage": {
+                const stage = row.derived?.overall_stage;
+                const label = labelOverallStage(stage);
+                if (!isKnownStage(stage)) return label;
+                return (
+                  <SuppliesStatusBadge
+                    label={label}
+                    variant={stageBadgeVariant(stage)}
+                  />
+                );
+              }
+              default:
+                return "—";
+            }
+          },
+        };
+      });
+  }, [basePath, columnPrefs.visibleKeys, onSelectRow, query]);
 
   const totalPages = Math.max(1, Math.ceil(total / query.page_size) || 1);
+  const visibleColumnCount = columns.length;
 
   const tableStyle = useMemo(
     (): CSSProperties =>
@@ -146,7 +217,21 @@ export function PurchaseRequestsListTable({
 
   return (
     <>
-      <SuppliesDataListToolbar actions={toolbarActions} />
+      <SuppliesDataListToolbar
+        hint={
+          <HelpTooltip
+            content={SP_HELP.purchaseRequestsTableMeta}
+            ariaLabel="Ajuda: metadados da tabela"
+            wrap
+            placement="bottom"
+          >
+            <span className="delpi-ui-section-hint-label">
+              {C.tableMeta(visibleColumnCount, total)}
+            </span>
+          </HelpTooltip>
+        }
+        actions={toolbarActions}
+      />
 
       <div
         className="sp-list-table-region"
@@ -170,7 +255,6 @@ export function PurchaseRequestsListTable({
           }
           getRowProps={(row) => ({
             "aria-label": `${C.detailTitle} ${formatRequestNumber(row.request_number)}`,
-            role: "button",
           })}
           loading={loading}
         />

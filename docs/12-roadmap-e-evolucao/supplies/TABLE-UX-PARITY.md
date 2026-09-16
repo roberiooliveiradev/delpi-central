@@ -177,7 +177,38 @@ Evidência no HEAD após conclusão UX da lista + ficha (sem promover paridade t
 
 ---
 
-## 10. Solicitações + Operações — padronização transversal (executada)
+## 11. COMMERCIAL CAPABILITY PARITY — Phase 1 (Solicitações + Operações)
+
+Matriz após execução Phase 1 (não declara paridade total):
+
+| Capability | Purchase Requests | Purchase Orders |
+|---|---|---|
+| Hero highlights / KPI | BLOCKED_BY_CONTRACT | BLOCKED_BY_CONTRACT |
+| Freshness + Refresh | IMPLEMENTED | IMPLEMENTED |
+| Attention chips | NOT_APPLICABLE | IMPLEMENTED (sem counters) |
+| Chip counters | BLOCKED_BY_CONTRACT | BLOCKED_BY_CONTRACT |
+| Concentrate / 2º chip group | PRODUCT_DECISION | PRODUCT_DECISION |
+| Filter title/icon + Mais filtros | IMPLEMENTED | IMPLEMENTED |
+| Conditional Clear | IMPLEMENTED | IMPLEMENTED |
+| Free search | BLOCKED_BY_CONTRACT | BLOCKED_BY_CONTRACT |
+| Human unit labels | IMPLEMENTED | IMPLEMENTED |
+| Date filters | IMPLEMENTED (Mais filtros) | IMPLEMENTED (Mais filtros) |
+| Table metadata `N colunas · N linhas` | IMPLEMENTED (`total`) | IMPLEMENTED (`total`) |
+| Table/Cards/Board selector | PRODUCT_DECISION | PRODUCT_DECISION |
+| Font / columns / reorder / persistence | IMPLEMENTED | IMPLEMENTED |
+| Excel/CSV export | IMPLEMENTED (CSV + capability) | BLOCKED_BY_CONTRACT |
+| Server-side sorting | BLOCKED_BY_CONTRACT | BLOCKED_BY_CONTRACT |
+| Entity links (SC/PC) | IMPLEMENTED | IMPLEMENTED |
+| Avatars / inline meter / coverage | COMMERCIAL_SPECIFIC | COMMERCIAL_SPECIFIC |
+| Status badges | IMPLEMENTED (overall_stage fechado) | IMPLEMENTED |
+| Overdue days column | BLOCKED_BY_CONTRACT | BLOCKED_BY_CONTRACT |
+| Deep-link / URL / F5 | IMPLEMENTED | IMPLEMENTED |
+| Pagination / keyboard / mobile table | IMPLEMENTED | IMPLEMENTED |
+
+Filtros — decisão de densidade Phase 1:
+- **PR principais:** Filial, Número SC, Produto, Situação · **Mais filtros:** Período de/até
+- **PO principais:** Filial, Número PC, Produto, Fornecedor · **Mais filtros:** Entrega de/até
+- **Limpar:** não considera filial default; PR não considera período baseline (90 dias)
 
 Mesmo padrão visual/funcional nas duas jornadas tabulares (sem paridade total com Comercial):
 

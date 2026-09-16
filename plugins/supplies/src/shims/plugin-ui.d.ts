@@ -526,11 +526,35 @@ declare module "@delpi/plugin-ui/index" {
     labels: Record<string, unknown>;
   }): ReactNode;
 
+  export function ClearFiltersButton(props: {
+    onClick: () => void;
+    label?: string;
+    disabled?: boolean;
+    density?: "default" | "compact";
+    className?: string;
+    "aria-label"?: string;
+  }): ReactNode;
+
+  export function createDashboardInlineNavLink(prefix: string): ComponentType<{
+    href: string;
+    title: string;
+    children?: ReactNode;
+    className?: string;
+    "aria-label"?: string;
+    stopPropagation?: boolean;
+    onNavigate?: (event: unknown) => void;
+  }>;
+
   export type DataTableColumn<T> = {
     key: string;
     header: string;
+    headerHint?: string;
     render: (row: T) => ReactNode;
     sortable?: boolean;
+    align?: "left" | "right" | "center";
+    className?: string;
+    interactive?: boolean;
+    rowClick?: "stop" | "propagate";
   };
 
   export type DashboardDataTableProps<T> = {

@@ -72,44 +72,59 @@ export const SP_HELP = {
   otdAnalyticsPage:
     "Pontualidade de compras com velocímetros por unidade (Santa Catarina / Espírito Santo) e evolução no tempo. Diferente da Visão geral (placar de KPIs) e de Entregas (atrasos do dia).",
   purchaseRequests:
-    "Lista linhas de SC no escopo de centro de custo e filial. Sem CC liberado e sem visão ampla, a lista fica vazia (fail-closed). Exportação CSV exige permissão separada. Filtros aplicam automaticamente.",
+    "Lista linhas de SC no escopo de centro de custo e filial. Sem CC liberado e sem visão ampla, a lista fica vazia (fail-closed). Exportação CSV exige permissão separada. Clique na SC ou na linha para abrir o detalhe.",
   purchaseRequestsBranch:
     "Filial do recorte (ex.: Santa Catarina (01)). Só unidades liberadas na sessão; a API reforça o escopo.",
   purchaseRequestsPeriod:
-    "Período de abertura da SC. Compartilhável pela URL (F5 restaura o recorte).",
+    "Período de abertura da SC (em Mais filtros). Compartilhável pela URL (F5 restaura o recorte).",
   purchaseRequestsNumber: "Filtra pelo número da solicitação de compras.",
   purchaseRequestsProduct: "Filtra por código ou trecho de produto/MP da linha.",
   purchaseRequestsStage:
     "Situação consolidada da SC (aguardando pedido, parcial, concluída etc.).",
   purchaseRequestsExport:
     "Exportação CSV do recorte filtrado. Exige permissão de exportação além do acesso à lista.",
-  purchaseRequestsFiltersAuto:
-    "Os filtros aplicam sozinhos. Campos de texto aguardam um instante enquanto você digita; Enter confirma na hora. Limpar restaura o padrão da página.",
+  purchaseRequestsFilters:
+    "Filtros aplicam automaticamente. Texto confirma após um instante ou com Enter. Mais filtros revela o período. Limpar só aparece quando há filtro além do padrão (filial e período baseline não contam sozinhos).",
   purchaseRequestsRefresh:
     "Recarrega a lista com os mesmos filtros. O horário é da última consulta bem-sucedida nesta tela, não do TOTVS.",
   purchaseRequestsTableFontSize:
     "Ajusta o tamanho da fonte da tabela neste navegador. A preferência fica salva localmente.",
   purchaseRequestsTableColumns:
     "Escolha quais colunas exibir e arraste para reordenar. A preferência fica salva neste navegador; não altera permissões nem dados.",
+  purchaseRequestsTableMeta:
+    "Contagem de colunas visíveis nesta tabela e total de linhas do recorte filtrado (não só a página atual).",
+  purchaseRequestsColCc: "Centro de custo da linha no escopo liberado ao usuário.",
+  purchaseRequestsColOpened: "Data de abertura da solicitação de compras.",
+  purchaseRequestsColStage: "Situação consolidada da SC a partir do andamento dos itens.",
+  purchaseRequestsEntityLink:
+    "O número da SC abre o detalhe na mesma página (URL com request). Você também pode clicar na linha.",
   purchaseOrders:
-    "Pedidos de compra em aberto (saldo a receber). Não é o painel OTD de pontualidade — esse fica na analytics. Clique na linha para abrir a ficha do pedido. Filtros aplicam automaticamente.",
+    "Pedidos de compra em aberto (saldo a receber). Não é o painel OTD de pontualidade — esse fica na analytics. Clique no PC ou na linha para abrir a ficha.",
   purchaseOrdersBranch:
     "Filial do recorte (ex.: Santa Catarina (01)). Só unidades liberadas na sessão; a API reforça o escopo de unidade.",
   purchaseOrdersNumber: "Filtra pelo número do pedido de compra.",
   purchaseOrdersProduct: "Filtra por código de produto/MP da linha.",
   purchaseOrdersSupplier: "Filtra pelo código do fornecedor (A2).",
   purchaseOrdersDelivery:
-    "Recorte pela data prometida de entrega (de/até). O chip «Atrasados» em Atenção filtra linhas com prometida anterior a hoje.",
+    "Recorte pela data prometida de entrega (em Mais filtros). O chip «Atrasados» em Atenção filtra linhas com prometida anterior a hoje.",
   purchaseOrdersAttention:
     "Todos mostra o recorte completo dos filtros; Atrasados restringe às linhas com entrega prometida vencida. A URL guarda late_only para compartilhar ou atualizar (F5).",
   purchaseOrdersRefresh:
     "Recarrega a lista com os mesmos filtros. O horário é da última consulta bem-sucedida nesta tela, não do TOTVS.",
-  purchaseOrdersFiltersAuto:
-    "Os filtros aplicam sozinhos. Campos de texto aguardam um instante enquanto você digita; Enter confirma na hora. Limpar restaura o padrão da página.",
+  purchaseOrdersFilters:
+    "Filtros aplicam automaticamente. Texto confirma após um instante ou com Enter. Mais filtros revela as datas de entrega. Limpar só aparece quando há filtro além do padrão (filial default não conta sozinha).",
   purchaseOrdersTableFontSize:
     "Ajusta o tamanho da fonte da tabela neste navegador. A preferência fica salva localmente.",
   purchaseOrdersTableColumns:
     "Escolha quais colunas exibir e arraste para reordenar. A preferência fica salva neste navegador; não altera permissões nem dados.",
+  purchaseOrdersTableMeta:
+    "Contagem de colunas visíveis nesta tabela e total de linhas do recorte filtrado (não só a página atual).",
+  purchaseOrdersColOpenQty: "Quantidade ainda em aberto (saldo a receber) nesta linha.",
+  purchaseOrdersColDelivery: "Data prometida de entrega do item.",
+  purchaseOrdersColStatus: "Situação em relação à data prometida: atrasado, no prazo ou sem data.",
+  purchaseOrdersColOpenValue: "Valor em aberto da linha (saldo × preço).",
+  purchaseOrdersEntityLink:
+    "O número do PC abre a ficha do pedido. Você também pode clicar na linha.",
   purchaseOrderDetail:
     "Ficha somente leitura do pedido em aberto: itens, data prometida, recebimentos e a SC de origem de cada item. Copie o endereço da página para compartilhar; atualizar restaura a mesma ficha. Pedidos encerrados não aparecem.",
   purchaseOrderDetailItems:

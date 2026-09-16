@@ -33,6 +33,8 @@ import {
   createDashboardViewTransition,
   createFilterBarShell,
   createInitialsAvatar,
+  createDashboardInlineNavLink,
+  ClearFiltersButton,
   DataTable,
   DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS,
   TableColumnVisibilityMenu,
@@ -108,7 +110,9 @@ export const SuppliesHubChipRow = createDashboardHubChipRow({ prefix: UI_PREFIX 
 export const SuppliesRouteChip = createDashboardRouteChip({ prefix: UI_PREFIX });
 export const SuppliesStatusBadge = createDashboardStatusBadge({ prefix: UI_PREFIX });
 export const SuppliesActionButton = ActionButton;
+export const SuppliesClearFiltersButton = ClearFiltersButton;
 export const SuppliesAvatar = createInitialsAvatar(UI_PREFIX);
+export const SuppliesEntityLink = createDashboardInlineNavLink(UI_PREFIX);
 
 export const SuppliesLoadingCard = createDashboardLoadingActivityCard({
   prefix: UI_PREFIX,

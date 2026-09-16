@@ -47,21 +47,26 @@ describe("PurchaseRequests feature", () => {
 
     const filters = readFileSync(join(dir, "PurchaseRequestsFilters.tsx"), "utf8");
     expect(filters).toContain("SuppliesFilterBarShell");
-    expect(filters).toContain("SuppliesDateField");
+    expect(filters).toContain("sp-filter-bar__header");
+    expect(filters).toContain("C.moreFilters");
+    expect(filters).toContain("C.lessFilters");
+    expect(filters).toContain("SuppliesClearFiltersButton");
+    expect(filters).toContain("hasActivePurchaseRequestsFilters");
     expect(filters).toContain("buildSuppliesUnitOptions");
     expect(filters).toContain("useCommittedTextFilter");
-    expect(filters).toContain("SP_HELP.purchaseRequestsBranch");
+    expect(filters).toContain("SP_HELP.purchaseRequestsFilters");
     expect(filters).not.toContain("Aplicar filtros");
     expect(filters).not.toContain("onApply");
+    expect(filters).not.toContain("sp-list-filters__hint");
   });
 
-  it("toolbar canônica com export gated por capability", () => {
+  it("toolbar canônica com export gated, metadata e link SC", () => {
     const table = readFileSync(join(dir, "PurchaseRequestsListTable.tsx"), "utf8");
     expect(table).toContain("SuppliesDataListToolbar");
     expect(table).toContain("SuppliesDataTable");
-    expect(table).toContain("SuppliesTableFontSizeControls");
-    expect(table).toContain("SuppliesTableColumnVisibilityMenu");
-    expect(table).toContain("SuppliesCompactPagination");
+    expect(table).toContain("C.tableMeta");
+    expect(table).toContain("SuppliesEntityLink");
+    expect(table).toContain("SuppliesStatusBadge");
     expect(table).toContain("canExport");
     expect(table).toContain("onExport");
     expect(table).toContain("sp-list-table-region");

@@ -709,20 +709,47 @@
   gap: 0.75rem;
 }
 
-.dashboard-supplies-portal .sp-list-filters__actions {
+.dashboard-supplies-portal .sp-filter-bar__header {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-bottom: 8px;
 }
 
-.dashboard-supplies-portal .sp-list-filters__hint {
+.dashboard-supplies-portal .sp-filter-bar__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dashboard-supplies-portal .sp-filter-bar__title h2 {
   margin: 0;
-  flex: 1 1 12rem;
-  font-size: 0.8125rem;
-  color: var(--sp-text-muted);
-  line-height: 1.35;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.dashboard-supplies-portal .sp-filter-bar__header-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-supplies-portal .sp-entity-link {
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  color: var(--sp-accent, var(--primary, #089bdb));
+}
+
+.dashboard-supplies-portal .sp-entity-link:focus-visible {
+  outline: 2px solid var(--sp-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .dashboard-supplies-portal .sp-list-hero-actions {

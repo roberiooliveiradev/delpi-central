@@ -5,9 +5,15 @@ export const PURCHASE_ORDERS_CONTENT = {
     "Linhas de pedidos em aberto (saldo a receber). Clique na linha para abrir a ficha do pedido.",
   helpAriaLabel: "Ajuda sobre pedidos de compra",
   filtersAriaLabel: "Filtros de pedidos de compra",
+  filtersTitle: "Filtros",
+  moreFilters: "Mais filtros",
+  lessFilters: "Menos filtros",
   listTitle: "Pedidos em aberto",
   listHint:
-    "Somente pedidos com saldo a receber. Clique na linha para abrir itens, entregas prometidas, recebimentos e a SC de origem.",
+    "Somente pedidos com saldo a receber. Clique no PC ou na linha para abrir itens, entregas prometidas, recebimentos e a SC de origem.",
+  tableMeta: (columns: number, rows: number) =>
+    `${columns} coluna(s) · ${rows.toLocaleString("pt-BR")} linha(s)`,
+  openPcLinkTitle: (number: string) => `Abrir pedido de compra ${number}`,
   branchLabel: "Filial",
   orderNumberLabel: "Número PC",
   productLabel: "Produto",
