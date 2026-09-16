@@ -1,0 +1,443 @@
+---
+description: Integrações OpenAI Plugin/App + remote MCP — contrato OAuth/OIDC, resource binding, tool discovery, runtime routing, Origin security e evidência de go-live
+alwaysApply: false
+---
+
+# OpenAI Plugin/App + remote MCP
+
+Owner primário transversal: `platform-api-contracts-integration.mdc`.
+
+Cross-references obrigatórias quando aplicáveis:
+
+- `platform-security-identity-authorization.mdc`
+- `platform-architecture-boundaries.mdc`
+- `platform-quality-testing.mdc`
+- `platform-delivery-runtime-operations.mdc`
+- `ai-external-tools-security.mdc`
+- `custom-gpt-actions-integration.mdc` para bridges GPT Actions legadas e migração
+
+Esta regra especializa integrações externas duráveis via **OpenAI Plugin/App + remote MCP**. Não cria autoridade de domínio, identidade ou autorização.
+
+## Quando carregar
+
+Carregar quando a tarefa envolver qualquer um destes termos/surfaces:
+
+```text
+OpenAI Plugin
+ChatGPT App
+remote MCP
+MCP Streamable HTTP
+mcp:tools
+oauth-protected-resource
+resource_metadata
+mcp/www_authenticate
+FastMCP
+ChatGPT Developer Mode
+custom plugin
+connector OAuth
+```
+
+## Posição arquitetural
+
+Preferir, para integração externa durável quando suportada:
+
+```text
+provider UI / specialist
+→ Plugin/App
+→ remote MCP
+→ owner-local semantic capability
+→ existing application/domain use case
+→ canonical AuthZ
+→ authoritative source
+```
+
+GPT Actions/OpenAPI podem permanecer como bridge legada onde já existem, mas não devem ser expandidos automaticamente quando o target aprovado for Plugin/MCP.
+
+O MCP adapter:
+
+- não é source of truth;
+- não cria segundo RBAC;
+- não cria segundo catálogo de domínio se já existir catálogo/capability canônico;
+- não reimplementa regra de negócio;
+- não acessa banco alheio para contornar use case;
+- não autoriza por metadata de tool, scope OAuth, prompt ou frontend.
+
+## Abstraction Gate
+
+Antes de criar nova camada MCP, provar:
+
+```text
+consumer real
+owner real
+capability real
+contrato real
+reuse do application/domain path
+redução de coupling
+benefício sobre bridge/HTTP existente
+```
+
+Não criar MCP genérico “para expor a API inteira”.
+
+## Superfície semântica
+
+Tools devem representar capabilities semânticas pequenas e governadas.
+
+Proibido por default:
+
+- tool SQL genérica;
+- proxy HTTP genérico;
+- arbitrary path/method;
+- CRUD integral mecânico;
+- field selector genérico que burle allowlist;
+- expansão automática de todos os endpoints internos;
+- service account como substituto de identidade do usuário quando user parity é requisito.
+
+## OAuth / OIDC — separação obrigatória
+
+Separar quatro conceitos:
+
+```text
+identity scopes
+audience/resource binding
+business authorization
+provider callback/client registration
+```
+
+Nunca tratar um como equivalente ao outro.
+
+### Identity scopes
+
+Somente scopes realmente requeridos pelo resource server devem ser exigidos no JWT `scope`.
+
+Não exigir string de client scope interno do Keycloak no JWT só porque ela existe na configuração do client.
+
+Regra aprendida/provada no DAVI:
+
+```text
+audience-delpi
+= client scope interno / audience mapper
+→ postcondition: aud contém delpi-central
+→ NÃO precisa aparecer no JWT scope
+```
+
+O resource server valida a **postcondition** de segurança, não o nome interno do mapper.
+
+### Resource audience
+
+Quando o MCP exige binding ao resource, validar membership exata no token:
+
+```text
+aud contains canonical MCP resource URL
+```
+
+Não substituir por prefix match, host-only match ou trailing-slash normalization silenciosa.
+
+A URL canônica anunciada em metadata, provider config, mapper e runtime validation deve ser a mesma.
+
+### Business AuthZ
+
+OAuth scopes/audiences não são RBAC de negócio.
+
+Fluxo:
+
+```text
+OAuth authenticates / binds resource
+→ backend reconstructs user context
+→ canonical business permission/resource rule decides access
+```
+
+Nunca copiar nomes de permission interna para tool `securitySchemes`, prompt ou provider scope salvo se houver um contrato OAuth real que explicitamente possua essa semântica.
+
+## Keycloak predefined client
+
+Quando DCR/CIMD não estiverem provados/suportados, usar client predefinido dedicado.
+
+Guardrails:
+
+```text
+Authorization Code
+PKCE S256
+Direct Access Grants OFF
+Service Accounts OFF
+Implicit OFF
+secret only in operator/provider configuration
+```
+
+Não reutilizar client público do Portal ou client de outro produto/especialista.
+
+## Callback / redirect URI
+
+**Nunca hardcodar callback histórico do provider em regra global.**
+
+Procedimento obrigatório:
+
+```text
+provider UI atual
+→ copiar callback/return URL exata
+→ configurar exact match no Keycloak
+→ remover wildcard de bootstrap
+```
+
+No fluxo ChatGPT custom Plugin atual observado para DAVI, a UI gerou callback com padrão:
+
+```text
+https://chatgpt.com/connector/oauth/<connector-id>
+```
+
+O `<connector-id>` é configuração operacional, não constante de arquitetura.
+
+Não assumir que callbacks antigos como `connector_platform_oauth_redirect` continuam válidos.
+
+## Protected Resource Metadata
+
+O MCP OAuth resource server deve expor metadata compatível com o provider atual.
+
+Separar:
+
+```text
+Authorization Server metadata
+vs
+OAuth Protected Resource metadata
+```
+
+A protected-resource metadata deve apontar para:
+
+- resource canônico;
+- authorization server correto;
+- scopes realmente requeridos pelo MCP resource server.
+
+Não anunciar client scopes internos do Keycloak como se fossem scopes obrigatórios do MCP quando não aparecem no JWT `scope`.
+
+## WWW-Authenticate / MCP auth challenge
+
+401 deve retornar challenge OAuth seguro e compatível com o provider, incluindo protected-resource metadata conforme contrato atual.
+
+Forbidden de negócio (403) não deve ser mascarado como necessidade de novo login OAuth.
+
+Não vazar:
+
+- permission codes internos desnecessários;
+- token;
+- secret;
+- stack;
+- SQL;
+- host interno.
+
+## MCP routing — trailing slash
+
+Não alterar a URL pública canônica só para satisfazer detalhe de framework.
+
+Problema já provado em FastAPI/Starlette + FastMCP:
+
+```text
+Mount("/mcp")
++ streamable_http_path="/"
+→ POST /mcp pode gerar 307 para /mcp/
+```
+
+Se o provider usa a URL canônica sem slash, corrigir internamente sem HTTP redirect quando necessário.
+
+Gate de regressão:
+
+```text
+POST <canonical-mcp-url>
+→ no 307
+→ no 308
+```
+
+A URL anunciada continua sem rewrite cosmético.
+
+## Origin / DNS-rebinding protection
+
+**CORS != MCP transport-security Origin validation.**
+
+FastAPI CORS pode aceitar ChatGPT e o FastMCP ainda rejeitar a chamada com `403 Invalid Origin`.
+
+Para provider browser/connector, validar separadamente:
+
+```text
+API CORS
+MCP transport DNS-rebinding allowed_hosts
+MCP transport allowed_origins
+```
+
+Não desligar DNS-rebinding protection para “fazer funcionar”. Adicionar somente hosts/origins comprovadamente necessários.
+
+Gate de regressão recomendado:
+
+```text
+Origin: <provider-origin-aprovado>
+POST <canonical-mcp-url>
+sem Bearer
+→ 401 OAuth challenge
+→ não 403 Invalid Origin
+```
+
+## Tool discovery
+
+Tool registrada em código ≠ tool disponível no provider.
+
+Separar evidência:
+
+```text
+server registration
+MCP initialize
+tools/list
+provider UI discovery
+authenticated tool invocation
+```
+
+Se a UI mostra “nenhuma ação/tool”, não concluir automaticamente que a tool não está registrada. Investigar handshake/routing/auth/origin primeiro.
+
+Tool inventory externo deve ser exatamente o aprovado. Tool extra = contract drift.
+
+## Diagnóstico de falha pós-OAuth
+
+Quando o provider volta do callback e mostra erro genérico, não alterar Keycloak por tentativa.
+
+Ordem de diagnóstico:
+
+```text
+1. protected-resource metadata
+2. exact callback atual
+3. token exchange evidence
+4. canonical /mcp status
+5. trailing-slash redirect
+6. provider Origin / DNS-rebinding
+7. JWT issuer/signature/exp/nbf
+8. platform audience
+9. MCP resource audience
+10. JWT scopes
+11. MCP initialize
+12. tools/list
+13. business AuthZ
+14. business result projection
+```
+
+Cada etapa recebe `PASS | FAIL | INCONCLUSIVE | TEST_NOT_RUN`.
+
+Não declarar root cause sem evidência reproduzível ou log autoritativo.
+
+## Runtime evidence / deploy
+
+Código em `main` não prova produção.
+
+Antes de go-live registrar:
+
+```text
+SOURCE_SHA
+DEPLOYED_SHA (se observável)
+container/image recreated
+health
+public metadata
+/mcp status
+provider reconnect
+MCP initialize/tools discovery
+authenticated business tool call
+```
+
+Se a imagem não bakeia SHA, declarar a limitação e usar evidência substituta (checkout do host + image build/recreate + fingerprint de runtime), sem fingir precisão.
+
+## Secrets / logging
+
+Nunca registrar em prompt, docs, issue, report ou logs comuns:
+
+- client secret;
+- access token;
+- refresh token;
+- authorization code;
+- authenticated cookies;
+- Keycloak admin credential.
+
+Observabilidade segura pode registrar:
+
+```text
+tool
+actor id quando permitido
+status
+latency
+page/page_size
+result_count
+correlation id
+```
+
+Evitar query textual completa e response payload completo quando a política não exigir.
+
+## Read-only V1 / field minimization
+
+Quando a capability externa for read-only:
+
+- `readOnlyHint=true` pode descrever semântica, mas não autoriza;
+- projection explícita e fail-closed;
+- campos novos do DTO interno não passam automaticamente;
+- paginação bounded;
+- sem autonomous unlimited fan-out.
+
+Provider tool annotation ≠ AuthZ.
+
+## Go-live evidence ladder
+
+Não colapsar em “implemented”:
+
+```text
+SOURCE IMPLEMENTATION
+LOCAL TEST
+PUBLIC HTTP
+OAUTH DISCOVERY
+OAUTH USER CONNECTION
+MCP INITIALIZE
+TOOLS/LIST
+PROVIDER TOOL DISCOVERY
+AUTHENTICATED TOOL CALL
+BUSINESS AUTHZ NEGATIVE
+PRODUCTION
+```
+
+Um nível não prova o próximo.
+
+## Caso de referência aprovado — DAVI / API DELPI
+
+Referência de mecanismo, não autoridade universal:
+
+- docs: `api-delpi/docs/integrations/openai-plugin-mcp.md`
+- Keycloak runbook: `api-delpi/docs/integrations/keycloak-mcp-client-runbook.md`
+- evidence: `api-delpi/docs/integrations/keycloak-mcp-oauth-evidence.md`
+- fix de routing/Origin: commit `55ea8994e56565ae6f08468c2a6005db348f939f`
+
+O que generalizar:
+
+```text
+exact provider callback
+resource audience binding
+scope vs audience separation
+canonical business AuthZ
+no redirect on MCP canonical URL
+MCP Origin allowlist separate from CORS
+provider reconnect after deploy/auth change
+layered evidence
+```
+
+O que NÃO generalizar:
+
+- nome `DAVI`;
+- client id `mcp-api-delpi`;
+- Product Master permission;
+- tool `search_products`;
+- field allowlist específica;
+- MCP resource URL específica;
+- callback connector id específico.
+
+## Anti-padrões
+
+- Expor API inteira como tools.
+- Duplicar RBAC em OAuth scopes.
+- Tratar tool metadata como autorização.
+- Reutilizar client público do Portal.
+- Service account para user-parity.
+- Mudar callback/secret/scope por tentativa sem identificar camada falha.
+- Resolver 307 mudando URL pública sem analisar contrato de resource/audience.
+- Desligar DNS-rebinding protection.
+- Confundir CORS com FastMCP Origin protection.
+- Declarar OAuth PASS porque login abriu.
+- Declarar tool PASS porque está registrada em código.
+- Declarar produção PASS sem provider reconnect + tool discovery + authenticated smoke.
