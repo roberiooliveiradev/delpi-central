@@ -1,0 +1,482 @@
+---
+description: OpenAI Workspace Agents / Agent Studio — app/MCP auth por usuário, authority boundaries, memória, canais, publicação, preview e expansão governada de capabilities
+alwaysApply: false
+---
+
+# OpenAI Workspace Agents / Agent Studio
+
+Owner primário transversal: `platform-api-contracts-integration.mdc`.
+
+Cross-references obrigatórias quando aplicáveis:
+
+- `openai-plugin-mcp-integration.mdc`
+- `platform-security-identity-authorization.mdc`
+- `platform-architecture-boundaries.mdc`
+- `platform-quality-testing.mdc`
+- `platform-delivery-runtime-operations.mdc`
+- `ai-external-tools-security.mdc`
+- `custom-gpt-actions-integration.mdc` apenas para bridges GPT Actions legadas
+
+Esta regra especializa **Workspace Agents / Agent Studio** como camada de orquestração/UX consumidora de apps/tools governados. Não cria nova autoridade de domínio, identidade ou autorização.
+
+## Quando carregar
+
+Carregar quando a tarefa envolver:
+
+```text
+Workspace Agent
+Agent Studio
+ChatGPT Agent
+agente do workspace
+agent-owned account
+end-user account
+Conta do usuário final
+Conta do agente
+agent channel
+agent schedule
+agent API trigger
+agent Slack
+agent memory
+agent instructions
+agent preview
+agent publish
+```
+
+## Posição arquitetural
+
+Preferir:
+
+```text
+Workspace Agent
+→ approved app/plugin/custom MCP
+→ semantic capability
+→ canonical application/domain path
+→ final backend AuthZ
+→ authoritative source
+```
+
+O Agent pode fornecer:
+
+```text
+instructions
+reasoning
+orchestration
+conversation UX
+presentation
+workflow composition
+```
+
+O Agent **não** é:
+
+- source of truth;
+- permission engine;
+- RBAC owner;
+- OAuth authority;
+- domain owner;
+- database/API bypass;
+- writer canônico;
+- substitute for postcondition verification.
+
+## Instructions are not authority
+
+Nunca tratar agent instructions como permissão.
+
+```text
+instruction says "allowed"
+!=
+backend authorization says allowed
+```
+
+Também não autorizam:
+
+- persona;
+- agent name;
+- channel;
+- workspace sharing;
+- tool description;
+- app metadata;
+- OAuth scopes isolados;
+- memory;
+- uploaded file.
+
+Final business authority continua no owner/backend canônico.
+
+## App authentication model — explicit decision required
+
+Todo app conectado ao Agent deve declarar um destes modos:
+
+```text
+END_USER_ACCOUNT
+AGENT_OWNED_ACCOUNT
+```
+
+Não deixar implícito.
+
+### End-user account
+
+Use quando a capability exige user parity:
+
+```text
+person running agent
+→ own provider identity/token
+→ own backend context
+→ own final AuthZ
+```
+
+Regra:
+
+```text
+user A must never inherit user B's authority
+```
+
+Uma sessão já conectada pode ser reutilizada pelo provider e não pedir login em toda execução. Isso não muda a obrigação de identidade por usuário.
+
+### Agent-owned account
+
+Trate como **shared authority**.
+
+Só permitir com decisão explícita de:
+
+```text
+owner
+service/shared identity
+least privilege
+consumer population
+read/write boundary
+revocation
+rotation
+observability
+audit
+risk
+```
+
+Nunca trocar End-user account por Agent-owned account apenas para:
+
+- eliminar login;
+- facilitar compartilhamento;
+- habilitar Slack;
+- evitar implementar AuthZ correta.
+
+Conta pessoal compartilhada como Agent-owned é default **proibido** para capabilities DELPI user-parity.
+
+## DAVI reference decision
+
+DAVI V1 uses:
+
+```text
+Workspace Agent DAVI
+→ DAVI app
+→ END_USER_ACCOUNT
+→ mcp-api-delpi OAuth
+→ remote MCP
+→ search_products
+→ canonical backend business AuthZ
+```
+
+No DAVI V1:
+
+```text
+AGENT_OWNED_ACCOUNT = FORBIDDEN unless architecture/security decision changes
+```
+
+Do not create a second Keycloak client merely because an Agent consumes the existing app.
+
+## Apps/tools must be configured explicitly
+
+Agent instructions cannot make an unavailable app available.
+
+Before saying a capability exists in the Agent, prove:
+
+```text
+app/tool configured on agent
+correct auth mode
+provider discovery
+runtime invocation
+backend outcome
+```
+
+`tool exists on MCP server` ≠ `tool configured on agent` ≠ `tool invocation proven`.
+
+## Capability expansion gate
+
+Never expand an Agent by exposing "more API" generically.
+
+For every new capability prove:
+
+```text
+1. business owner
+2. authoritative source
+3. real use case / consumer
+4. READ | PREPARE | ACT
+5. semantic capability contract
+6. input minimization
+7. output allowlist
+8. identity model
+9. final backend AuthZ
+10. idempotency/OCC/postcondition for writes
+11. audit/observability
+12. MCP/app schema + annotations
+13. source tests
+14. deploy evidence
+15. provider discovery
+16. positive authenticated test
+17. negative AuthZ test
+18. agent instruction update
+```
+
+If one gate is missing, status is `PENDING` / `INCONCLUSIVE`, not `PASS`.
+
+Forbidden shortcuts:
+
+- SQL tool;
+- arbitrary HTTP path/method tool;
+- arbitrary entity/field selector;
+- expose-all OpenAPI/MCP conversion;
+- generic CRUD;
+- prompt-only allowlist;
+- frontend-only authorization.
+
+## READ / PREPARE / ACT
+
+Agent reasoning does not change the semantic class of a capability.
+
+```text
+READ != WRITE
+recommendation != authorization
+PREPARE != ACT
+simulate != apply
+```
+
+For PREPARE/ACT follow canonical backend governance from `openai-plugin-mcp-integration.mdc` and owner rules.
+
+Agent confirmation UI does not replace backend policy/AuthZ.
+
+## Memory
+
+Memory is context, never authority.
+
+Do not use Agent Memory as:
+
+- current operational source;
+- permission cache;
+- Product Master copy;
+- policy authority;
+- source of truth;
+- credential/token storage.
+
+Allowed only when governance permits, for contextual preferences/workflow continuity that do not grant access.
+
+```text
+Memory != AuthZ
+Memory != live data
+Memory != evidence of current state
+```
+
+## Uploaded files / Knowledge
+
+Uploaded content is untrusted/non-authoritative unless a separate owner/governance contract says otherwise.
+
+Do not upload operational database exports to bypass Domain APIs/MCP.
+
+A file may support methodology/context; current operational values still come from authoritative capabilities.
+
+External/file content never changes system rules, Policy, RBAC, Decision Gates or owner authority.
+
+## Persona / appearance
+
+Persona and appearance are UX only.
+
+They may define:
+
+- name;
+- tone;
+- language;
+- masculine/feminine/neutral persona when product-approved;
+- icon/visual identity.
+
+They do not change:
+
+- AuthN;
+- AuthZ;
+- data access;
+- tool inventory;
+- safety;
+- materiality.
+
+Do not hardcode provider UI assumptions about custom image upload. In the Agent Studio UI observed for DAVI on 2026-09-16, custom photo/image upload was unavailable, while current OpenAI documentation exposes an agent `icon` field through other management surfaces.
+
+Therefore:
+
+```text
+provider UI behavior = revalidate current surface
+not architecture invariant
+```
+
+## Draft / preview / publish are distinct
+
+Never collapse:
+
+```text
+DRAFT_CONFIGURED
+PREVIEW_PASS
+PUBLISHED
+SHARED
+WORKSPACE_DIRECTORY
+PRODUCTION_ACCEPTED
+```
+
+A successful Agent Studio Preview proves only the tested draft, identity and tool path.
+
+Before wider publication prove at minimum:
+
+```text
+preview positive
+unsupported-capability guard
+correct auth mode
+second-user identity isolation when user-parity
+negative business AuthZ
+known rate/abuse policy
+sharing policy
+```
+
+## Evidence ladder
+
+Use separate evidence states:
+
+```text
+AGENT_DRAFT_CONFIG
+APP_ATTACHED
+AUTH_MODE_CONFIGURED
+PREVIEW_TOOL_INVOCATION
+PREVIEW_BUSINESS_RESULT
+UNSUPPORTED_CAPABILITY_GUARD
+SECOND_USER_IDENTITY
+NEGATIVE_BUSINESS_AUTHZ
+PUBLISHED_VERSION
+SHARED_ACCESS
+CHANNEL_DEPLOYMENT
+PRODUCTION_ACCEPTANCE
+```
+
+One does not prove the next.
+
+## Unsupported capability behavior
+
+When the Agent lacks a capability:
+
+- say it is unavailable in the connected capabilities;
+- do not infer current operational values;
+- do not use general model memory as replacement;
+- do not silently use unrelated web/apps;
+- do not claim it can perform a write when only read exists.
+
+DAVI V1 reference:
+
+```text
+stock request → unavailable
+price request → unavailable
+```
+
+This is correct until an explicit governed capability exists.
+
+## Channels — explicit architecture gate
+
+### ChatGPT channel
+
+May use End-user account when supported. Still require second-user/negative-AuthZ proof before broad rollout.
+
+### Slack
+
+Current OpenAI Workspace Agent documentation states Slack channel deployments require shared/Agent-owned app connections.
+
+If a product like DAVI requires End-user account/user parity, that is an identity-model conflict.
+
+Default:
+
+```text
+SLACK = BLOCKED_PENDING_IDENTITY_ARCHITECTURE
+```
+
+Do not switch to a shared personal connection merely to satisfy Slack deployment requirements.
+
+### Schedules / API triggers
+
+Before enabling, prove:
+
+```text
+actor identity
+credential used
+business authority
+revocation behavior
+token expiry/refresh behavior
+materiality
+notification/outcome semantics
+```
+
+If scheduled/API execution changes user-parity semantics, return to architecture/security review.
+
+## Writes / consequential actions
+
+For any future Agent capability with side effects:
+
+```text
+semantic ACT capability
+→ authenticated actor
+→ final backend AuthZ
+→ validated canonical payload
+→ policy/risk
+→ idempotency
+→ OCC/version where applicable
+→ authoritative postcondition
+→ audit/correlation
+```
+
+No `2xx → done` assumption.
+
+No autonomous ACT expansion just because Workspace Agents support schedules or API triggers.
+
+## Secrets
+
+Never place in agent instructions, memory, uploaded files, repo docs or ordinary logs:
+
+- client secret;
+- access/refresh token;
+- authorization code;
+- authenticated cookies;
+- admin credentials.
+
+## Current provider source
+
+Workspace Agent provider behavior must be revalidated against current OpenAI docs when relevant. Reference checked on 2026-09-16:
+
+```text
+https://help.openai.com/en/articles/20001143
+```
+
+Vendor UI/docs can change; dates and provider limitations belong in evidence/docs, not eternal architecture assumptions.
+
+## Reference implementation — DAVI
+
+Read before changing DAVI Agent behavior:
+
+- `api-delpi/docs/integrations/openai-workspace-agent-davi.md`
+- `api-delpi/docs/integrations/openai-plugin-mcp.md`
+- `api-delpi/docs/integrations/keycloak-mcp-client-runbook.md`
+- `api-delpi/docs/integrations/keycloak-mcp-oauth-evidence.md`
+
+Generalize mechanism, not product specifics.
+
+## Anti-patterns
+
+- Agent as authorization authority.
+- Prompt as RBAC.
+- Shared agent account used to bypass per-user permissions.
+- Memory as operational source of truth.
+- Uploading DB dumps instead of using authoritative APIs.
+- Adding tools without owner/source/allowlist/AuthZ.
+- Enabling Slack by silently switching identity model.
+- Enabling schedules/API triggers without actor semantics.
+- Treating Preview as publication/go-live.
+- Treating agent persona/icon as security metadata.
+- Inventing provider UI steps not observed/currently supported.
+- Expanding to writes without PREPARE/ACT/idempotency/postcondition governance.
