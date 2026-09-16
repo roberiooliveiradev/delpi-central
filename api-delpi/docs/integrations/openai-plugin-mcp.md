@@ -81,12 +81,20 @@ Dynamic READ notes:
 ```text
 Technical Action Catalog = derived from OpenAPI/baseline + governance allowlist
 Action Catalog != semantic capability authority
-MCP tools advertised to the Agent = bounded broker (+ search_products)
+MCP tools advertised to the Agent = search_products + discover_delpi_information + execute_delpi_information
+DAVI_ELIGIBLE_READ (dynamic allowlist) = search_products only (v2)
+get_product_detail / get_product_summary = NOT eligible (AuthZ/projection not independently ratified)
 OpenAPI whole-document is never sent per turn
 Arbitrary URL/path/method/operationId/SQL = rejected
 Stock (get_product_stock) = QUARANTINED (NEEDS_BRANCH_AUTHZ_EVIDENCE)
 Inventory evidence = docs/integrations/evidence/davi-api-delpi-operation-inventory.*
+Candidate tokens = actor-bound HMAC (DAVI_CANDIDATE_HMAC_SECRET preferred; JWT_SECRET fallback)
+Application dynamic broker = no HTTP/TestClient/Authorization header construction
+Dynamic search_products execution = approved external projection (product_code, description, group_category)
+bounded payload size != approved field projection
 ```
+
+> **Supersedes DAVI-DYNAMIC-READ-001 allowlist claim:** earlier evidence with `DAVI_ELIGIBLE_READ = 3` (`search_products` + `get_product_detail` + `get_product_summary`) is **obsolete**. Authority for this deploy is allowlist v2 + regenerated inventory (`DAVI_ELIGIBLE_READ = 1`).
 
 This chain is **CURRENT PROVEN V1** for the API DELPI information source. It is **not** the universal DAVI TARGET architecture (see `docs/12-roadmap-e-evolucao/davi/README.md`).
 
@@ -430,7 +438,8 @@ Current operator/provider evidence (2026-09-16):
 DEPLOY_SMOKE = PASS
 CHATGPT_OAUTH_CONNECTION = PASS
 MCP_TOOL_DISCOVERY = PASS
-TOOL_INVENTORY = search_products only
+TOOL_INVENTORY = search_products + discover_delpi_information + execute_delpi_information
+DAVI_ELIGIBLE_READ = 1 (search_products only; detail/summary removed in DAVI-DYNAMIC-READ-002)
 INPUT_SCHEMA_LIVE = PASS
 OUTPUT_SCHEMA_RUNTIME = PASS
 AUTHENTICATED_SEARCH_PRODUCTS = PASS

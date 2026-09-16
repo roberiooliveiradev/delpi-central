@@ -1,9 +1,48 @@
-"""Bound model-safe projection for dynamic READ results."""
+"""Bound model-safe projection for dynamic READ results.
+
+IMPORTANT:
+  ``bound_response_payload`` only enforces size/item budgets.
+  Size bounding ≠ field-level authorization / approved projection.
+
+An operation may enter the DAVI allowlist only when its canonical HTTP response
+is itself approved for external processing OR an approved explicit projection
+exists (see ``apply_approved_field_projection`` / allowlist approvedResponseFields).
+"""
 
 from __future__ import annotations
 
 import json
 from typing import Any
+
+
+def apply_approved_field_projection(
+    data: Any,
+    *,
+    approved_fields: tuple[str, ...] | list[str] | None,
+    list_key: str = "items",
+) -> Any:
+    """Keep only approved fields on list items when an allowlist is configured.
+
+    If ``approved_fields`` is empty/None, returns data unchanged (caller must not
+    treat size bounding as field authorization — those ops must not be allowlisted
+    without an independent projection decision).
+    """
+    if not approved_fields:
+        return data
+    allowed = set(approved_fields)
+    if not isinstance(data, dict):
+        return data
+    out = dict(data)
+    items = out.get(list_key)
+    if isinstance(items, list):
+        projected_items: list[Any] = []
+        for item in items:
+            if isinstance(item, dict):
+                projected_items.append({k: item.get(k) for k in approved_fields if k in allowed})
+            else:
+                projected_items.append(item)
+        out[list_key] = projected_items
+    return out
 
 
 def bound_response_payload(
@@ -12,7 +51,11 @@ def bound_response_payload(
     max_bytes: int,
     max_items: int,
 ) -> dict[str, Any]:
-    """Return a bounded envelope; never raises on serialization issues."""
+    """Return a size-bounded envelope.
+
+    Does NOT authorize fields. Use ``apply_approved_field_projection`` first when
+    the operation has an approved field allowlist.
+    """
     truncated = False
     payload = data
 
@@ -40,7 +83,6 @@ def bound_response_payload(
         }
 
     if len(raw) > max_bytes:
-        # Prefer truncating items again if present; else omit body.
         if isinstance(payload, dict) and isinstance(payload.get("items"), list):
             keep = max(1, max_items // 2)
             while keep >= 1:

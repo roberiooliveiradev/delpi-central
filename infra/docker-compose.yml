@@ -1330,6 +1330,9 @@ services:
       PORT: ${API_DELPI_PORT}
       ENV: ${API_DELPI_ENV}
       JWT_SECRET: ${API_DELPI_JWT_SECRET}
+      # Preferred dedicated HMAC for DAVI opaque candidate tokens.
+      # When empty, api-delpi falls back to JWT_SECRET (compatibility only).
+      DAVI_CANDIDATE_HMAC_SECRET: ${DAVI_CANDIDATE_HMAC_SECRET:-}
 
       KEYCLOAK_REALM: ${KEYCLOAK_REALM}
       KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}

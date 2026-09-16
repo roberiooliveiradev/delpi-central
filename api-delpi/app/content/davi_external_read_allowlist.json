@@ -1,20 +1,28 @@
 {
-  "version": 1,
-  "description": "Governance allowlist for DAVI dynamic READ over API DELPI. Not a semantic capability registry. Entries require explicit external-processing approval.",
+  "version": 2,
+  "description": "Governance allowlist for DAVI dynamic READ. Not a semantic capability registry. Only operations with independent external-processing approval.",
   "externalProcessing": "APPROVED_WITH_RESTRICTIONS",
   "dataClassification": "INTERNAL",
   "operations": [
     {
       "operationId": "search_products",
-      "reason": "Product Master V1 already approved for external MCP/GPT projection"
-    },
+      "reason": "Product Master V1 already approved for external MCP/GPT projection (product_code, description, group_category)",
+      "approvedResponseFields": ["product_code", "description", "group_category"],
+      "executionMode": "approved_external_capability"
+    }
+  ],
+  "explicitlyNotApproved": [
     {
       "operationId": "get_product_detail",
-      "reason": "Product Master detail READ companion to search_products; same AuthZ family"
+      "reason": "AuthZ/external projection not independently ratified; search_products approval does not transfer"
     },
     {
       "operationId": "get_product_summary",
-      "reason": "Lightweight product snapshot READ; stock nested best-effort remains secondary"
+      "reason": "Returns product+stock+prices; stock branch AuthZ unresolved; pricing external-processing not proven"
+    },
+    {
+      "operationId": "get_product_stock",
+      "reason": "NEEDS_BRANCH_AUTHZ_EVIDENCE"
     }
   ]
 }

@@ -33,11 +33,14 @@ def mint_candidate_token(
 ) -> str:
     if not secret:
         raise CandidateTokenError("Candidate token secret is not configured")
+    actor = (actor_id or "").strip()
+    if not actor:
+        raise CandidateTokenError("actor_id is required")
     ts = int(now if now is not None else time.time())
     payload = {
         "v": 1,
         "action_id": action_id,
-        "actor_id": actor_id or "",
+        "actor_id": actor,
         "iat": ts,
         "exp": ts + max(1, int(ttl_seconds)),
     }
@@ -57,6 +60,9 @@ def parse_candidate_token(
 ) -> dict[str, Any]:
     if not secret:
         raise CandidateTokenError("Candidate token secret is not configured")
+    expected_actor = (expected_actor_id or "").strip()
+    if not expected_actor:
+        raise CandidateTokenError("actor_id is required")
     if not token or "." not in token:
         raise CandidateTokenError("Malformed candidate token")
     body, sig = token.rsplit(".", 1)
@@ -75,9 +81,10 @@ def parse_candidate_token(
     ts = int(now if now is not None else time.time())
     if exp < ts:
         raise CandidateTokenError("Candidate token expired")
-    token_actor = str(payload.get("actor_id") or "")
-    expected_actor = expected_actor_id or ""
-    if token_actor and expected_actor and token_actor != expected_actor:
+    token_actor = str(payload.get("actor_id") or "").strip()
+    if not token_actor:
+        raise CandidateTokenError("Candidate token missing actor_id")
+    if token_actor != expected_actor:
         raise CandidateTokenError("Candidate token actor mismatch")
     action_id = str(payload.get("action_id") or "").strip()
     if not action_id:

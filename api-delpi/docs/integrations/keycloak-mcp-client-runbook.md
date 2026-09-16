@@ -163,7 +163,19 @@ Extra legitimate audiences such as `account` are acceptable. Membership of both 
 6. Copy the ChatGPT-generated return URL into Keycloak.
 7. Save Keycloak client.
 8. Create or **Reconnect** the ChatGPT Plugin.
-9. After successful OAuth, ChatGPT must show the connected account and list the MCP tool `search_products`.
+9. After successful OAuth, ChatGPT must show the connected account and list the MCP tools:
+   `search_products`, `discover_delpi_information`, `execute_delpi_information`.
+
+## api-delpi env — DAVI candidate HMAC (DAVI-DYNAMIC-READ-002)
+
+Opaque discovery→execute candidate tokens are HMAC-signed.
+
+| Variable | Required? | Notes |
+|---|---|---|
+| `DAVI_CANDIDATE_HMAC_SECRET` | **Preferred for production** | Dedicated secret; never log |
+| `API_DELPI_JWT_SECRET` / `JWT_SECRET` | Compatibility fallback | Used only when dedicated secret is empty |
+
+Deploy operators should set `DAVI_CANDIDATE_HMAC_SECRET` in the api-delpi environment (compose already wires `${DAVI_CANDIDATE_HMAC_SECRET:-}`). Do not commit secret values. Rotating the dedicated secret invalidates outstanding candidate tokens (TTL is short).
 
 ## Proof after configuration
 

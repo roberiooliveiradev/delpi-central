@@ -26,7 +26,7 @@ from app.application.external_capabilities.dynamic_information.candidate_token i
 from app.application.external_capabilities.dynamic_information.discover_service import (
     discover_delpi_information,
 )
-from app.application.external_capabilities.dynamic_information.governed_http_executor import (
+from app.application.external_capabilities.dynamic_information.errors import (
     GovernedExecutionError,
 )
 from app.application.external_capabilities.product_search_service import search_products

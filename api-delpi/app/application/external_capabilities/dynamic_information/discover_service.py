@@ -7,7 +7,11 @@ from typing import Any
 from app.application.external_capabilities.dynamic_information.action_index import (
     get_technical_actions,
 )
+from app.application.external_capabilities.dynamic_information.argument_validator import (
+    build_argument_json_schema,
+)
 from app.application.external_capabilities.dynamic_information.candidate_token import (
+    CandidateTokenError,
     mint_candidate_token,
 )
 from app.application.external_capabilities.dynamic_information.content_loader import (
@@ -27,6 +31,8 @@ def discover_delpi_information(
 ) -> dict[str, Any]:
     if not (query or "").strip():
         raise ValueError("query is required")
+    if not (actor_id or "").strip():
+        raise CandidateTokenError("actor_id is required")
 
     budgets = load_dynamic_read_budgets()
     default_k = int(budgets.get("discover_default_top_k") or 5)
@@ -41,33 +47,8 @@ def discover_delpi_information(
 
     candidates: list[dict[str, Any]] = []
     for action, score in ranked:
-        required = [
-            p.get("name")
-            for p in action.parameters
-            if isinstance(p, dict) and p.get("required") and p.get("name")
-        ]
-        # Path params always required even when OpenAPI parameters omitted (baseline).
-        for segment in action.path.split("/"):
-            if segment.startswith("{") and segment.endswith("}"):
-                name = segment[1:-1]
-                if name not in required:
-                    required.append(name)
-
-        arg_schema: dict[str, Any] = {
-            "type": "object",
-            "additionalProperties": False,
-            "properties": {},
-            "required": required,
-        }
-        for name in required:
-            arg_schema["properties"][name] = {"type": "string"}
-        for p in action.parameters:
-            if not isinstance(p, dict):
-                continue
-            name = p.get("name")
-            if not name or name in arg_schema["properties"]:
-                continue
-            arg_schema["properties"][name] = {"type": "string"}
+        arg_schema = build_argument_json_schema(action)
+        required = list(arg_schema.get("required") or [])
 
         token = mint_candidate_token(
             action_id=action.action_id,
@@ -87,8 +68,9 @@ def discover_delpi_information(
                 "required_arguments": required,
                 "argument_schema": arg_schema,
                 "pagination_hints": {
-                    "supports_page": "page" in arg_schema["properties"],
-                    "supports_page_size": "page_size" in arg_schema["properties"],
+                    "supports_page": "page" in (arg_schema.get("properties") or {}),
+                    "supports_page_size": "page_size"
+                    in (arg_schema.get("properties") or {}),
                 },
                 "retrieval_score": round(float(score), 4),
                 # Technical ids for observability only — not for free selection.

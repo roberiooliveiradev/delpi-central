@@ -23,10 +23,17 @@ def load_dynamic_read_budgets() -> dict[str, Any]:
 
 
 def candidate_token_secret() -> str:
+    """Resolve HMAC secret for candidate tokens.
+
+    Precedence:
+      1. ``DAVI_CANDIDATE_HMAC_SECRET`` (dedicated, preferred for production)
+      2. ``JWT_SECRET`` (compatibility fallback only)
+
+    Never log the returned value.
+    """
     from app.config import settings
 
-    # Prefer dedicated secret when present; fall back to JWT_SECRET for HMAC integrity.
-    dedicated = getattr(settings, "DAVI_CANDIDATE_HMAC_SECRET", None)
+    dedicated = (settings.DAVI_CANDIDATE_HMAC_SECRET or "").strip()
     if dedicated:
-        return str(dedicated)
+        return dedicated
     return str(settings.JWT_SECRET or "")

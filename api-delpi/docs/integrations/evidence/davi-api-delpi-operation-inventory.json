@@ -5,21 +5,19 @@
   "TOTAL_OPERATIONS": 703,
   "TOTAL_GET": 506,
   "TOTAL_WRITE_VERBS": 197,
-  "DAVI_ELIGIBLE_READ": 3,
+  "DAVI_ELIGIBLE_READ": 1,
   "STATUS_COUNTS": {
     "ADMIN_OUT_OF_SCOPE": 76,
-    "DAVI_ELIGIBLE_READ": 3,
+    "DAVI_ELIGIBLE_READ": 1,
     "DESTRUCTIVE_OUT_OF_SCOPE": 16,
     "GENERIC_SQL_FORBIDDEN": 2,
     "NEEDS_BRANCH_AUTHZ_EVIDENCE": 1,
-    "NEEDS_DATA_CLASSIFICATION": 59,
-    "NEEDS_EXTERNAL_PROCESSING_APPROVAL": 385,
+    "NEEDS_DATA_CLASSIFICATION": 60,
+    "NEEDS_EXTERNAL_PROCESSING_APPROVAL": 386,
     "STREAM_BINARY_OUT_OF_SCOPE": 31,
     "WRITE_OUT_OF_SCOPE": 130
   },
   "ELIGIBLE_OPERATION_IDS": [
-    "get_product_detail",
-    "get_product_summary",
     "search_products"
   ],
   "MATRIX": [
@@ -784,26 +782,6 @@
       "executable": false
     },
     {
-      "operationId": "get_product_detail",
-      "method": "GET",
-      "path": "/products/{code}",
-      "summary": "Product cadastro / master data",
-      "entity": "product",
-      "shape": "product_snapshot",
-      "davi_status": "DAVI_ELIGIBLE_READ",
-      "executable": true
-    },
-    {
-      "operationId": "get_product_summary",
-      "method": "GET",
-      "path": "/products/{code}/summary",
-      "summary": "Light product summary (cadastro + sample stock + prices)",
-      "entity": "product",
-      "shape": "product_snapshot",
-      "davi_status": "DAVI_ELIGIBLE_READ",
-      "executable": true
-    },
-    {
       "operationId": "search_products",
       "method": "GET",
       "path": "/products/search",
@@ -1280,6 +1258,16 @@
       "summary": "Product raw material price intelligence",
       "entity": "product_raw_material_price_intelligence",
       "shape": "composite_analysis",
+      "davi_status": "NEEDS_DATA_CLASSIFICATION",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_summary",
+      "method": "GET",
+      "path": "/products/{code}/summary",
+      "summary": "Light product summary (cadastro + sample stock + prices)",
+      "entity": "product",
+      "shape": "product_snapshot",
       "davi_status": "NEEDS_DATA_CLASSIFICATION",
       "executable": false
     },
@@ -2470,6 +2458,16 @@
       "summary": "Clientes do product",
       "entity": "product_customers",
       "shape": "paged_list",
+      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_detail",
+      "method": "GET",
+      "path": "/products/{code}",
+      "summary": "Product cadastro / master data",
+      "entity": "product",
+      "shape": "product_snapshot",
       "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
       "executable": false
     },
