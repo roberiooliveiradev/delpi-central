@@ -1385,10 +1385,10 @@ Workspace != Work / Memory / Knowledge / Sandbox
 | Source | Publishes | Authority class |
 |---|---|---|
 | Keycloak JWT | `sub`, claims | IDENTITY |
-| Core `GET /me` | user + permissions (roles∪groups, **no overrides**) | PLATFORM identity + AuthZ **input** |
-| Core `GET /me/apps` | apps + routes filtered | NAVIGATION (≠ Domain AuthZ) |
-| Core `GET /me/access-profile` | PermissionResolver + overrides | AuthZ projection — **ALIGNED** with `/me` request context since `633d10d2a` |
-| Core `GET /me/routes` | **absent** producer | STALE docs/test/Chat get_routes |
+| Core `GET /me` | user + **effective permissions** (direct-role ∪ group-role ± user overrides; superadmin = all registered codes) | PLATFORM identity + AuthZ **input** |
+| Core `GET /me/apps` | apps + routes filtered by effective request-context permissions | NAVIGATION (≠ Domain AuthZ) |
+| Core `GET /me/access-profile` | effective `PermissionResolver` projection | AuthZ projection — **ALIGNED** with `/me` request context since `633d10d2a` |
+| Core `GET /me/routes` | **no current producer proven** | `STALE_LEGACY_REFERENCE`; current navigation = `/me/apps → apps[].routes` |
 | Portal AppHost props | `getAccessToken`, apps/routes, permissions flags — **no global branch** | DISPLAY/NAVIGATION/IDENTITY |
 | Domain URL/query (filial-01/02, `branch=`, Pulse `entity=`) | selected resource/branch | DOMAIN_REFERENCE CONTEXT |
 | Domain AuthZ gates | `BranchAccessGate`, `FilialAccessScope`, Pulse `assert_branch_access` | AUTHORIZATION (server) |
@@ -1582,7 +1582,7 @@ Inventários temáticos C0.S0-A–S estão consolidados em C0.S0-T (§46). Isso 
 ```text
 C0.S0_READINESS (T) = CANDIDATE_FOR_ARCHITECTURE_RE_REVIEW
 C0 = NOT_STARTED
-NEXT after review acceptance = C0.S1 (per 16)
+NEXT = ARCHITECTURE_RE_REVIEW_C0_S0
 FOUNDATION_FREEZE = NOT ACHIEVED (C0.S7 only)
 DÉLIA_RUNTIME_DIFF = NONE
 CORE_EFFECTIVE_PERMISSIONS = ALIGNED since 633d10d2a
@@ -1598,7 +1598,7 @@ Nenhuma capability, integração ou foundation é promovida a `PASS` apenas por 
 |---|---|
 | PROGRAM | `PLANNED / NOT_STARTED` (ledger) |
 | C0 | `NOT_STARTED` |
-| NEXT | `C0.S0` until architecture review accepts inventory |
+| NEXT | `ARCHITECTURE_RE_REVIEW_C0_S0` |
 | FOUNDATION_FREEZE | NOT ACHIEVED |
 | DÉLIA_RUNTIME_DIFF | `NONE` (`minha-delpi-copilot/` = docs placeholder only) |
 | Unauthorized TARGET→PROVEN promotion | NONE found |
@@ -1639,11 +1639,11 @@ Nenhuma capability, integração ou foundation é promovida a `PASS` apenas por 
 | AUTOMATION_BOUNDARY_DRIFT | **NONE** |
 | MODEL_GOVERNANCE_DRIFT | **NONE** |
 | INTEROPERABILITY_DRIFT | **NONE** |
-| DOCUMENTATION_DRIFT | `/me/routes` STALE; TRACEABILITY_GAP no C0.S0-X CP ids |
+| DOCUMENTATION_DRIFT | **NONE current-state**; `/me/routes` old refs = `STALE_LEGACY_REFERENCE`; one-CP-per-A–T = `CLOSED_NONISSUE` |
 
 ### 46.4 Blocking vs deferred residuals
 
-**BLOCKING_RESIDUALS (for C0.S0 architecture review) = NONE**
+**BLOCKING_RESIDUALS (for C0.S0 architecture re-review) = NONE**
 
 TARGET runtime absences are **DEFERRED_BY_PHASE** (`16`: C0.S0 = inventory; ownership freeze in C0.S1–S7).
 
@@ -1651,7 +1651,7 @@ TARGET runtime absences are **DEFERRED_BY_PHASE** (`16`: C0.S0 = inventory; owne
 |---|---|---|---|
 | Effective permission dual-path (`authenticate` vs Resolver) | C | **RESOLVED** at `633d10d2a` — CLOSED_AS_NON_ISSUE for S0 ADR | request context aligned |
 | `list_user_ids_by_permission_code` / override-cache / IamSync / Core suite | C | CARRY_FORWARD | not dual-path; keep explicit |
-| `/me/routes` stale refs | B | DOCUMENTATION_DRIFT / STALE_TEST / LEGACY_REFERENCE | cleanup anytime; **do not recreate** |
+| `/me/routes` stale refs | B | STALE_LEGACY_REFERENCE | cleanup anytime; **do not recreate** |
 | Automation Hub physical owner | D | DEFERRED_BY_PHASE | C0.S1 ADR |
 | EventEnvelope / broker | E | DEFERRED_BY_PHASE | C0.S3–S5 |
 | Vault / ExternalConnection / platform safe-fetch | F | DEFERRED_BY_PHASE | before external writes |
@@ -1666,7 +1666,7 @@ TARGET runtime absences are **DEFERRED_BY_PHASE** (`16`: C0.S0 = inventory; owne
 | MCP/A2A adapters | R | DEFERRED_BY_PHASE | C3+ |
 | OT safety PLC / industrial matrix | S | DEFERRED + invariant frozen | before industrial ACT |
 | Domain APIs beyond samples | B/C | EVIDENCE_GAP NON_BLOCKING | expand as needed |
-| Missing C0.S0-X CP rows / C0.S0-A ledger event | A–S | TRACEABILITY/EVIDENCE_GAP NON_BLOCKING | thematic CPs + B cover |
+| One CP per A–T subbrief | A–T | CLOSED_AS_NON_ISSUE | thematic CPs + inventory linkage cover S0 |
 
 ### 46.5 Owner / SoT matrix (consolidation)
 
@@ -1706,8 +1706,8 @@ Drop premature: Chat Action Catalog as MCP; Pulse `AdminEntityRef` as platform E
 | platform integration | PASS | Portal/Core/Gateway/auth inventoried |
 | standalone boundary | PASS | Chat≠DÉLIA; copilot docs-only |
 | testability | PENDING | mostly TEST_NOT_RUN; inventory-first per 16 |
-| traceability | PENDING | thematic CPs mapped; NON_BLOCKING |
-| documentation consistency | PASS | 51↔ledger at T; `/me/routes` documented |
+| traceability | PASS | 25 §14 links thematic CPs to S0 inventory; CP rows remain PLANNED |
+| documentation consistency | PASS | current Core AuthZ and `/me/routes` semantics reconciled; historical stale evidence explicitly superseded |
 
 ```text
 C0.S0_READINESS = CANDIDATE_FOR_ARCHITECTURE_RE_REVIEW
@@ -1720,24 +1720,25 @@ Rationale: A–T inventory package present; Core request-context AuthZ reconcile
 ### 46.8 Architecture review package
 
 ```text
-HEAD = 68ea41d9b5aac6216b5ab531f7cdccc93d64c3bc
+canonical_reconciliation_base = 68ea41d9b5aac6216b5ab531f7cdccc93d64c3bc
 authorities = 16, 17, 20, 21, 25, 50, 51, 52, ledger, thematic 53–66 as cited
 owner matrix = §46.5
 SoT matrix = §46.5
-CORE_AUTHZ = RESOLVED at 633d10d2a (request context; revalidated at FINAL HEAD)
-/me/routes = not current contract
-BLOCKING_RESIDUALS (for re-review of docs consistency) = NONE after this reconciliation
+CORE_AUTHZ = RESOLVED at 633d10d2a (request context; revalidated at current canonical branch)
+/me/routes = no current producer proven; navigation via /me/apps[].routes; old refs STALE_LEGACY_REFERENCE
+BLOCKING_RESIDUALS (for re-review of docs consistency) = NONE after reconciliation
 CARRY_FORWARD / DEFERRED = §46.4 / §46.9
-next after acceptance = C0.S1 product boundary / names / physical ownership
+next = ARCHITECTURE_RE_REVIEW_C0_S0 → (if accepted) C0.S1
 ```
 
 ### 46.9 Residual classification (post-reconciliation)
 
 ```text
-MUST_RESOLVE_BEFORE_C0_S1 (docs consistency — addressed here)
-- 51/ledger/25 AuthZ + closeout consistency
-- stale Core dual-path text
-- stale /me/routes as current contract (classified STALE_*)
+RESOLVED_BY_RECONCILIATION
+- stale Core dual-path request-context narrative
+- stale /me vs /me/access-profile current-state divergence
+- missing canonical A–T closeout
+- missing final reconciliation/supersession evidence
 
 CARRY_FORWARD
 - list_user_ids_by_permission_code (no overrides)
@@ -1751,9 +1752,9 @@ DEFERRED_BY_PHASE
 - Business Graph / Semantic Layer / Personal Memory / Workspace
 - Sandbox / Artifact / Predictive / Twin / Edge / OT / Control Tower
 
-CLOSED_AS_NON_ISSUE FOR S0
+CLOSED_NONISSUE
 - absence of future TARGET runtime
-- absence of physical Automation Hub today
+- absence of physical shared Automation Hub today
 - Chat not being DÉLIA runtime
-- dual /me vs Resolver ADR (runtime aligned)
+- lack of one CP per A–T subbrief
 ```
