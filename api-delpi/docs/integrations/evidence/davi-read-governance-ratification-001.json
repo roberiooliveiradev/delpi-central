@@ -1,0 +1,261 @@
+{
+  "taskId": "DAVI-GOV-READ-001",
+  "artifactStatus": "PENDING_RATIFICATION",
+  "note": "Decision pack is not authority until RATIFIED by a proven owner. Does not change DAVI_ELIGIBLE_READ.",
+  "baselineHead": "9ff48fc44cf6f5d95bb3d73b96836b0c6de9721c",
+  "runtime": {
+    "DAVI_ELIGIBLE_READ": 1,
+    "eligibleOperationIds": ["search_products"],
+    "mcpToolCount": 3,
+    "coverageDecision": "DAVI-DYNAMIC-READ-005:PROMOTE_ZERO_NEW_OPERATIONS"
+  },
+  "authorities": {
+    "dataClassification": {
+      "status": "PARTIAL",
+      "evidence": [
+        "api-delpi/app/content/davi_external_read_allowlist.json dataClassification=INTERNAL for search slice only",
+        "No PUBLIC/CONFIDENTIAL/RESTRICTED/MODEL_* taxonomy found"
+      ]
+    },
+    "externalProcessing": {
+      "status": "PARTIAL",
+      "evidence": [
+        "API-DELPI-GPT-004A.2 APPROVED_WITH_RESTRICTIONS for Product Master search fields product_code|description|group_category",
+        "GPT Actions V1 out of scope: stock, BOM, production, pricing, finance, sales (LEGACY_EVIDENCE)",
+        "No corporate OpenAI/MCP cloud processing policy beyond Product Master slice"
+      ]
+    },
+    "privacyLgpd": {
+      "status": "PARTIAL",
+      "evidence": [
+        "docs/13-auditoria-lgpd ROPA references on-prem Ollama; OpenAI/MCP/DAVI cloud NOT_FOUND"
+      ]
+    }
+  },
+  "gates": {
+    "NESTED_PROJECTION_ABSTRACTION_GATE": "FAIL",
+    "nestedRealConsumersWithOnlyNestedRemaining": 0,
+    "STOCK_AUTHZ_IMPLEMENTATION_GATE": "NOT_READY",
+    "stockAuthzReason": "No proven product-stock business+branch permission policy for get_product_stock; safety-stock filial perms are sibling-only"
+  },
+  "queues": {
+    "READY_FOR_IMPLEMENTATION": [],
+    "PENDING_OWNER_DECISION": [
+      "DAVI-GOV-EXT-001",
+      "DAVI-GOV-EXT-002",
+      "DAVI-GOV-EXT-003",
+      "DAVI-GOV-EXT-004",
+      "DAVI-GOV-EXT-005",
+      "DAVI-GOV-EXT-006",
+      "DAVI-GOV-EXT-007",
+      "DAVI-GOV-EXT-008",
+      "DAVI-GOV-EXT-009",
+      "DAVI-GOV-EXT-010",
+      "DAVI-GOV-CLASS-001",
+      "DAVI-GOV-CLASS-002",
+      "DAVI-GOV-CLASS-003",
+      "DAVI-GOV-STOCK-001",
+      "DAVI-GOV-TAX-001"
+    ],
+    "NEEDS_TECHNICAL_CAPABILITY": [
+      "nested_projection_after_PASS_CANDIDATE",
+      "stock_branch_authz_wiring_after_STOCK-001",
+      "flat_detail_allowlist_after_EXT-001"
+    ],
+    "OUT_OF_SCOPE": [
+      "STREAM_BINARY",
+      "GENERIC_SQL",
+      "WRITE",
+      "ADMIN",
+      "DESTRUCTIVE",
+      "new_MCP_tools"
+    ]
+  },
+  "families": {
+    "PRODUCT_MASTER_SEARCH": {
+      "externalProcessing": "APPROVED_WITH_RESTRICTIONS",
+      "classification": "INTERNAL",
+      "authz": "ENGINEERING_LMP_ACCESS",
+      "state": "CURRENT_PROVEN_V1"
+    },
+    "PRODUCT_DETAIL": {
+      "primaryDecision": "DAVI-GOV-EXT-001",
+      "blockerStack": ["EXTERNAL_PROCESSING_SCOPE", "PROJECTION_FLAT_OR_NESTED"],
+      "inventoryPrimaryToday": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "note": "Inventory primary overstates nested; EXT scope is the real first gate"
+    },
+    "STRUCTURE_BOM": {
+      "primaryDecision": "DAVI-GOV-EXT-002",
+      "blockerStack": ["EXTERNAL_PROCESSING", "NESTED_PROJECTION", "CLASSIFICATION_IF_SEPARATED"]
+    },
+    "STOCK": {
+      "primaryDecisions": ["DAVI-GOV-STOCK-001", "DAVI-GOV-EXT-007"],
+      "blockerStack": ["BRANCH_AND_BUSINESS_AUTHZ_POLICY", "EXTERNAL_PROCESSING", "PROJECTION"],
+      "proposedMinProjectionNeedsRatification": [
+        "product_code",
+        "branch",
+        "warehouse",
+        "available_quantity"
+      ],
+      "excludeByDefault": ["cost_center"]
+    },
+    "PRODUCTION": {
+      "primaryDecision": "DAVI-GOV-EXT-006",
+      "blockerStack": ["EXTERNAL_PROCESSING", "NESTED_PROJECTION", "BRANCH_FILTER_GAP"]
+    },
+    "FACTORY_STATUS": {
+      "limitedBy": ["STRUCTURE", "STOCK", "PRODUCTION"],
+      "rule": "composite_eligibility_le_most_restrictive_section"
+    },
+    "SUPPLIERS": { "primaryDecision": "DAVI-GOV-EXT-003" },
+    "CUSTOMERS": { "primaryDecision": "DAVI-GOV-EXT-004" },
+    "PURCHASES": { "primaryDecision": "DAVI-GOV-EXT-005" },
+    "PRICING_COST": {
+      "primaryDecisions": ["DAVI-GOV-CLASS-001", "DAVI-GOV-EXT-010"],
+      "classification": "PENDING_OWNER_DECISION"
+    },
+    "SALES": { "primaryDecision": "DAVI-GOV-EXT-008" },
+    "OTHER_KPI_DASHBOARD": {
+      "primaryDecisions": ["DAVI-GOV-EXT-009", "DAVI-GOV-CLASS-003"],
+      "note": "No clearer authority than Product Detail"
+    }
+  },
+  "decisions": [
+    {
+      "id": "DAVI-GOV-EXT-001",
+      "scope": "get_product_detail same Product Master slice",
+      "question": "Does 004A.2 authorize product_code|description|group_category via get_product_detail for DAVI/MCP?",
+      "owner": null,
+      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
+      "minimumProjection": ["product_code", "description", "group_category"],
+      "status": "PENDING_RATIFICATION"
+    },
+    {
+      "id": "DAVI-GOV-EXT-002",
+      "scope": "Product Structure/BOM",
+      "question": "May BOM hierarchy be processed on DAVI external model path?",
+      "owner": null,
+      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
+      "minimumProjection": null,
+      "status": "PENDING_RATIFICATION"
+    },
+    {
+      "id": "DAVI-GOV-EXT-003",
+      "scope": "get_product_suppliers",
+      "question": "Approve supplier relational data for external model?",
+      "owner": null,
+      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
+      "status": "PENDING_RATIFICATION"
+    },
+    {
+      "id": "DAVI-GOV-EXT-004",
+      "scope": "get_product_customers",
+      "question": "Approve customer relational data for external model?",
+      "owner": null,
+      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
+      "status": "PENDING_RATIFICATION"
+    },
+    {
+      "id": "DAVI-GOV-EXT-005",
+      "scope": "get_product_purchases",
+      "question": "Approve purchases list for external model (with/without prices)?",
+      "owner": null,
+      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
+      "status": "PENDING_RATIFICATION"
+    },
+    {
+      "id": "DAVI-GOV-EXT-006",
+      "scope": "get_product_production_status",
+      "question": "Approve production status summaries for external model?",
+      "owner": null,
+      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
+      "status": "PENDING_RATIFICATION"
+    },
+    {
+      "id": "DAVI-GOV-EXT-007",
+      "scope": "get_product_stock external processing",
+      "question": "Approve stock quantity fields for external model?",
+      "owner": null,
+      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
+      "minimumProjection": ["product_code", "branch", "warehouse", "available_quantity"],
+      "status": "PENDING_RATIFICATION"
+    },
+    {
+      "id": "DAVI-GOV-EXT-008",
+      "scope": "Sales / commercial OTD family",
+      "question": "Approve sales READ family for DAVI external model?",
+      "owner": null,
+      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
+      "status": "PENDING_RATIFICATION"
+    },
+    {
+      "id": "DAVI-GOV-EXT-009",
+      "scope": "Operational KPI / dashboard indicators (non-financial)",
+      "question": "Approve operational KPI family for DAVI external model?",
+      "owner": null,
+      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
+      "status": "PENDING_RATIFICATION"
+    },
+    {
+      "id": "DAVI-GOV-EXT-010",
+      "scope": "Pricing/cost external processing",
+      "question": "Approve pricing/cost data for external model after classification?",
+      "owner": null,
+      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
+      "status": "PENDING_RATIFICATION"
+    },
+    {
+      "id": "DAVI-GOV-CLASS-001",
+      "scope": "Pricing/cost classification",
+      "question": "What formal classification applies to pricing/cost fields for external AI?",
+      "owner": null,
+      "options": ["ASSIGN_LABEL_AND_RESTRICT", "KEEP_QUARANTINED", "NON_MONETARY_METADATA_ONLY"],
+      "status": "PENDING_RATIFICATION"
+    },
+    {
+      "id": "DAVI-GOV-CLASS-002",
+      "scope": "get_product_summary composite",
+      "question": "Classify/allow composite summary after stock+pricing section decisions?",
+      "owner": null,
+      "options": ["APPROVE_WITH_RESTRICTIONS", "KEEP_QUARANTINED", "APPROVE_SMALLER_PROJECTION"],
+      "status": "PENDING_RATIFICATION"
+    },
+    {
+      "id": "DAVI-GOV-CLASS-003",
+      "scope": "Financial strategic indicators",
+      "question": "What classification applies to financial KPI indicators for external AI?",
+      "owner": null,
+      "options": ["ASSIGN_LABEL_AND_RESTRICT", "KEEP_QUARANTINED", "NON_MONETARY_METADATA_ONLY"],
+      "status": "PENDING_RATIFICATION"
+    },
+    {
+      "id": "DAVI-GOV-STOCK-001",
+      "scope": "get_product_stock business+branch AuthZ policy",
+      "question": "Which permission codes authorize stock read and requested branch 01/02?",
+      "owner": null,
+      "options": [
+        "DEFINE_NEW_PRODUCT_STOCK_FILIAL_PERMS",
+        "REUSE_EXISTING_NAMED_FAMILY_WITH_CODES",
+        "KEEP_API_DELPI_ACCESS_ONLY_DOCUMENT_RISK",
+        "KEEP_ROUTE_AND_DAVI_QUARANTINE"
+      ],
+      "status": "PENDING_RATIFICATION"
+    },
+    {
+      "id": "DAVI-GOV-TAX-001",
+      "scope": "Platform classification taxonomy for DAVI sources",
+      "question": "Adopt formal PUBLIC/INTERNAL/CONFIDENTIAL/RESTRICTED (or equivalent) for DAVI?",
+      "owner": null,
+      "options": ["ADOPT_TAXONOMY", "DEFER", "KEEP_AD_HOC_INTERNAL_ONLY"],
+      "status": "PENDING_RATIFICATION"
+    }
+  ],
+  "legacyGptActions": {
+    "status": "LEGACY_EVIDENCE",
+    "exposedOperationIds": ["gpt_get_catalog", "gpt_search_products"],
+    "notExposed": ["detail", "summary", "stock", "BOM", "production", "pricing", "finance", "sales"]
+  },
+  "runtimeSurfaceChanged": false,
+  "eligibilityChanged": false,
+  "mcpToolCountChanged": false
+}

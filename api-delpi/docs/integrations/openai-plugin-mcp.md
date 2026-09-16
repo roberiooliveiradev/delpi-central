@@ -145,6 +145,21 @@ NEW COVERAGE LIVE = NOT_APPLICABLE (no new eligible surface)
 DAVI_DYNAMIC_READ_PRIVATE_RUNTIME (base motor) = remains PROVEN from prior deploy
 ```
 
+### Governance ratification (DAVI-GOV-READ-001)
+
+```text
+PURPOSE = close governance blockers via existing authorities + explicit PENDING_OWNER_DECISION packs
+DAVI_ELIGIBLE_READ = still 1 (unchanged)
+MCP tools = still 3 (unchanged)
+ARTIFACT =
+  docs/integrations/evidence/davi-read-governance-ratification-001.md
+  docs/integrations/evidence/davi-read-governance-ratification-001.json
+STATUS = PENDING_RATIFICATION (ledger ≠ runtime allowlist)
+NESTED_PROJECTION_ABSTRACTION_GATE = FAIL (0 real consumers)
+STOCK_AUTHZ_IMPLEMENTATION_GATE = NOT_READY
+```
+
+Next: Architecture/Product ratifies exact `DAVI-GOV-*` IDs → implementation only for `RATIFIED` items.
 
 This chain is **CURRENT PROVEN V1** for the API DELPI information source. It is **not** the universal DAVI TARGET architecture (see `docs/12-roadmap-e-evolucao/davi/README.md`).
 

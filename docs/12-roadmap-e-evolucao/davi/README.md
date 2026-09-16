@@ -225,6 +225,15 @@ api-delpi/docs/integrations/evidence/davi-governed-read-coverage-005.json
 
 `DAVI-DYNAMIC-READ-005` coverage expansion decision: **`PROMOTE_ZERO_NEW_OPERATIONS`**. `DAVI_ELIGIBLE_READ` remains **1** (`search_products`). High-value product GETs stay quarantined (nested projection / branch AuthZ / data classification / external-processing) — maximum proven safe coverage, not maximum exposed surface.
 
+Governance ratification ledger (`DAVI-GOV-READ-001`, **not runtime authority** until owner `RATIFIED`):
+
+```text
+api-delpi/docs/integrations/evidence/davi-read-governance-ratification-001.md
+api-delpi/docs/integrations/evidence/davi-read-governance-ratification-001.json
+```
+
+Converts vague blockers into stable `DAVI-GOV-*` decision IDs. Does **not** change eligibility. Nested Abstraction Gate = FAIL (0 consumers). Stock AuthZ Implementation Gate = NOT_READY.
+
 Stock (`get_product_stock`) remains **QUARANTINED** (`NEEDS_BRANCH_AUTHZ_EVIDENCE`) until branch AuthZ + external-processing gates are proven — prefer dynamic path over a stock-specific MCP tool once eligible.
 
 Pendências de rollout amplo permanecem pendentes (second-user identity, negative business AuthZ, MCP rate policy, wider publication).
