@@ -79,6 +79,48 @@ class DiscoverDelpiInformationInput(BaseModel):
     )
 
 
+class DiscoverCandidateSemanticHints(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    entity: str | None = None
+    shape: str | None = None
+    tags: list[str] = Field(default_factory=list)
+
+
+class DiscoverCandidatePaginationHints(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    supports_page: bool
+    supports_page_size: bool
+
+
+class DiscoverDelpiInformationCandidate(BaseModel):
+    """One opaque, actor-bound discovery candidate."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    candidate_token: str
+    description: str
+    semantic_hints: DiscoverCandidateSemanticHints
+    required_arguments: list[str]
+    argument_schema: dict[str, Any]
+    pagination_hints: DiscoverCandidatePaginationHints
+    retrieval_score: float
+    action_id: str
+
+
+class DiscoverDelpiInformationOutput(BaseModel):
+    """Runtime envelope for discover_delpi_information structuredContent."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    query: str
+    top_k: int
+    candidate_count: int
+    eligible_action_count: int
+    candidates: list[DiscoverDelpiInformationCandidate]
+
+
 class ExecuteDelpiInformationInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -89,6 +131,26 @@ class ExecuteDelpiInformationInput(BaseModel):
     )
 
 
+class ExecuteDelpiInformationOutput(BaseModel):
+    """Runtime envelope for execute_delpi_information structuredContent.
+
+    ``data`` is capability-dependent (approved projection / bounded payload).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    action_id: str
+    status: str
+    entity: str | None = None
+    shape: str | None = None
+    projection: str
+    data: Any = None
+    truncated: bool
+    is_complete: bool
+    response_bytes: int | None = None
+    error: str | None = None
+
+
 def discover_delpi_information_input_json_schema() -> dict:
     schema = DiscoverDelpiInformationInput.model_json_schema()
     schema["title"] = "discover_delpi_informationArguments"
@@ -96,8 +158,22 @@ def discover_delpi_information_input_json_schema() -> dict:
     return schema
 
 
+def discover_delpi_information_output_json_schema() -> dict:
+    schema = DiscoverDelpiInformationOutput.model_json_schema()
+    schema["title"] = "discover_delpi_informationOutput"
+    schema["additionalProperties"] = False
+    return schema
+
+
 def execute_delpi_information_input_json_schema() -> dict:
     schema = ExecuteDelpiInformationInput.model_json_schema()
     schema["title"] = "execute_delpi_informationArguments"
+    schema["additionalProperties"] = False
+    return schema
+
+
+def execute_delpi_information_output_json_schema() -> dict:
+    schema = ExecuteDelpiInformationOutput.model_json_schema()
+    schema["title"] = "execute_delpi_informationOutput"
     schema["additionalProperties"] = False
     return schema

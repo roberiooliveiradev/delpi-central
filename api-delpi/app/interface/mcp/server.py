@@ -44,7 +44,9 @@ from app.interface.mcp.schemas import (
     SearchProductsInput,
     SearchProductsOutput,
     discover_delpi_information_input_json_schema,
+    discover_delpi_information_output_json_schema,
     execute_delpi_information_input_json_schema,
+    execute_delpi_information_output_json_schema,
     search_products_input_json_schema,
     search_products_output_json_schema,
 )
@@ -132,8 +134,10 @@ class ApiDelpiFastMCP(FastMCP):
                 output_schema = search_products_output_json_schema()
             elif info.name == MCP_TOOL_DISCOVER_DELPI_INFORMATION:
                 input_schema = discover_delpi_information_input_json_schema()
+                output_schema = discover_delpi_information_output_json_schema()
             elif info.name == MCP_TOOL_EXECUTE_DELPI_INFORMATION:
                 input_schema = execute_delpi_information_input_json_schema()
+                output_schema = execute_delpi_information_output_json_schema()
             payload: dict[str, Any] = {
                 "name": info.name,
                 "title": info.title,

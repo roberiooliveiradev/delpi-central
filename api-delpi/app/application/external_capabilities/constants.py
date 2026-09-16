@@ -13,6 +13,15 @@ PRODUCT_SEARCH_FIELD_MAP: dict[str, str] = {
 }
 PRODUCT_SEARCH_RESPONSE_FIELDS: tuple[str, ...] = tuple(PRODUCT_SEARCH_FIELD_MAP.keys())
 
+# External DAVI/MCP input surface for Product Master search (must match allowlist approvedInputFields).
+PRODUCT_SEARCH_INPUT_FIELDS: tuple[str, ...] = (
+    "code",
+    "description",
+    "group_code",
+    "page",
+    "page_size",
+)
+
 # customer_reference and every other Product DTO field remain DENY_BY_DEFAULT.
 PRODUCT_SEARCH_DENIED_QUERY_PARAMS: frozenset[str] = frozenset({"customer_reference"})
 

@@ -12,7 +12,10 @@ from unittest.mock import MagicMock, call
 import pytest
 from pydantic import ValidationError
 
-from app.application.external_capabilities.constants import PRODUCT_SEARCH_RESPONSE_FIELDS
+from app.application.external_capabilities.constants import (
+    PRODUCT_SEARCH_INPUT_FIELDS,
+    PRODUCT_SEARCH_RESPONSE_FIELDS,
+)
 from app.application.external_capabilities.dynamic_information.action_index import (
     reset_action_index_for_tests,
     set_actions_for_tests,
@@ -119,30 +122,63 @@ def _action(
     parameters: tuple | None = None,
     execution_mode: str | None = "approved_external_capability",
     approved_response_fields: tuple[str, ...] = PRODUCT_SEARCH_RESPONSE_FIELDS,
+    approved_input_fields: tuple[str, ...] | None = None,
+    semantic_aliases: tuple[str, ...] = (),
 ) -> TechnicalAction:
+    summary_text = summary or oid.replace("_", " ")
+    aliases = semantic_aliases
+    if approved_input_fields is None:
+        input_fields = (
+            PRODUCT_SEARCH_INPUT_FIELDS if oid == "search_products" else ()
+        )
+    else:
+        input_fields = approved_input_fields
+    searchable = f"{oid} {summary_text} {path} products {' '.join(aliases)}".lower()
     return TechnicalAction(
         action_id=oid,
         operation_id=oid,
         method=method,
         path=path,
-        summary=summary or oid.replace("_", " "),
+        summary=summary_text,
         description="",
         tags=("products",),
         davi_status=status,
         entity="product",
         shape="paged_list",
         parameters=parameters if parameters is not None else _search_params(),
-        searchable_text=f"{oid} {summary} {path} products".lower(),
+        searchable_text=searchable,
         execution_mode=execution_mode,
         approved_response_fields=approved_response_fields,
+        approved_input_fields=input_fields,
+        semantic_aliases=aliases,
     )
+
+
+def _load_governed_search_products() -> TechnicalAction:
+    root = Path(__file__).resolve().parents[1]
+    baseline = json.loads(
+        (root / "app/content/openapi_baseline.json").read_text(encoding="utf-8")
+    )
+    actions = build_technical_actions_from_baseline(
+        baseline, allowlist=load_external_read_allowlist()
+    )
+    action = next(a for a in actions if a.operation_id == "search_products")
+    assert action.executable
+    return action
 
 
 def test_allowlist_is_search_products_only():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
     assert ids == {"search_products"}
-    assert allow.get("version") == 2
+    assert allow.get("version") == 3
+    entry = next(
+        op
+        for op in allow["operations"]
+        if isinstance(op, dict) and op.get("operationId") == "search_products"
+    )
+    assert set(entry["approvedInputFields"]) == set(PRODUCT_SEARCH_INPUT_FIELDS)
+    assert entry.get("semanticAliases")
     not_approved = {
         (x.get("operationId") if isinstance(x, dict) else x)
         for x in (allow.get("explicitlyNotApproved") or [])
@@ -844,3 +880,320 @@ def test_domain_and_application_have_zero_http_transport_dependency():
 
 def test_catalog_action_executor_port_is_protocol_compatible():
     assert hasattr(CatalogActionExecutorPort, "execute")
+
+
+# --- DAVI-DYNAMIC-READ-004: PT-BR retrieval + schema fidelity + outputSchema ---
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "produto",
+        "produtos",
+        "buscar produto",
+        "buscar o produto 10080055 pelo código",
+        "Buscar o produto 10080055 pelo codigo",
+        "qual a descrição do produto 10080055",
+        "qual a descricao do produto 10080055",
+        "qual o grupo do produto 10080055",
+        "search products",
+        "PRODUTO",
+        "  produto!!  ",
+    ],
+)
+def test_ptbr_positive_retrieval(query, monkeypatch):
+    action = _load_governed_search_products()
+    set_actions_for_tests([action])
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
+        lambda: "test-secret-davi",
+    )
+    discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
+    assert discovered["candidate_count"] >= 1, (
+        f"query={query!r} candidate_count={discovered['candidate_count']}"
+    )
+    assert discovered["candidates"][0]["action_id"] == "search_products"
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "estoque do produto 10080055",
+        "saldo disponível do produto 10080055",
+        "preço do produto 10080055",
+        "preco do produto 10080055",
+        "fornecedor do produto 10080055",
+        "cliente do produto",
+        "qual o clima hoje",
+        "escreva um e-mail",
+        "qual é a hora",
+        "resuma este texto",
+        "financeiro",
+    ],
+)
+def test_negative_retrieval_quarantine(query, monkeypatch):
+    action = _load_governed_search_products()
+    set_actions_for_tests([action])
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
+        lambda: "test-secret-davi",
+    )
+    discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
+    assert discovered["candidate_count"] == 0, (
+        f"query={query!r} unexpectedly returned {discovered['candidates']}"
+    )
+    assert discovered["eligible_action_count"] == 1
+
+
+def test_search_products_discovery_schema_matches_approved_input(monkeypatch):
+    action = _load_governed_search_products()
+    set_actions_for_tests([action])
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
+        lambda: "test-secret-davi",
+    )
+    discovered = discover_delpi_information(query="produto", top_k=3, actor_id="u1")
+    schema = discovered["candidates"][0]["argument_schema"]
+    assert set(schema["properties"].keys()) == set(PRODUCT_SEARCH_INPUT_FIELDS)
+    assert schema["additionalProperties"] is False
+    for forbidden in ("sort", "direction", "customer_reference"):
+        assert forbidden not in schema["properties"]
+    # Same schema used by execution validation.
+    assert build_argument_json_schema(action)["properties"].keys() == schema[
+        "properties"
+    ].keys()
+
+
+def test_unknown_and_unapproved_arguments_denied():
+    action = _load_governed_search_products()
+    for bad in (
+        {"url": "https://evil"},
+        {"sort": "code"},
+        {"direction": "desc"},
+        {"customer_reference": "x"},
+        {"unknown": "y"},
+    ):
+        with pytest.raises(ArgumentValidationError):
+            validate_arguments(action, bad)
+
+
+def test_execution_parity_passes_pagination_to_runner(monkeypatch):
+    action = _load_governed_search_products()
+    set_actions_for_tests([action])
+    secret = "sec"
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.execute_service.candidate_token_secret",
+        lambda: secret,
+    )
+    token = mint_candidate_token(
+        action_id="search_products", actor_id="u1", secret=secret, ttl_seconds=60
+    )
+    captured: dict[str, Any] = {}
+
+    def runner(**kwargs):
+        captured.update(kwargs)
+        return {
+            "items": [
+                {
+                    "product_code": "10080055",
+                    "description": "TERM",
+                    "group_category": "1008",
+                    "cost": 1,
+                }
+            ],
+            "page": kwargs.get("page"),
+            "page_size": kwargs.get("page_size"),
+            "total": 1,
+            "total_pages": 1,
+        }
+
+    result = execute_delpi_information(
+        candidate_token=token,
+        arguments={
+            "code": "10080055",
+            "description": "TERM",
+            "group_code": "1008",
+            "page": 2,
+            "page_size": 10,
+        },
+        actor_id="u1",
+        search_products_runner=runner,
+    )
+    assert captured["code"] == "10080055"
+    assert captured["description"] == "TERM"
+    assert captured["group_code"] == "1008"
+    assert captured["page"] == 2
+    assert captured["page_size"] == 10
+    assert result["projection"] == "approved_fields"
+    assert set(result["data"]["items"][0].keys()) == set(PRODUCT_SEARCH_RESPONSE_FIELDS)
+
+
+def test_live_like_ptbr_discover_execute_flow(monkeypatch):
+    action = _load_governed_search_products()
+    set_actions_for_tests([action])
+    secret = "test-secret-davi"
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
+        lambda: secret,
+    )
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.execute_service.candidate_token_secret",
+        lambda: secret,
+    )
+    discovered = discover_delpi_information(
+        query="Buscar o produto 10080055 pelo código",
+        top_k=5,
+        actor_id="u1",
+    )
+    assert discovered["candidate_count"] == 1
+    assert discovered["candidates"][0]["action_id"] == "search_products"
+    token = discovered["candidates"][0]["candidate_token"]
+
+    def runner(**kwargs):
+        assert kwargs["code"] == "10080055"
+        return {
+            "items": [
+                {
+                    "product_code": "10080055",
+                    "description": "TERM. FASTON",
+                    "group_category": "1008",
+                    "internal": True,
+                }
+            ],
+            "page": 1,
+            "page_size": 50,
+            "total": 1,
+            "total_pages": 1,
+        }
+
+    result = execute_delpi_information(
+        candidate_token=token,
+        arguments={"code": "10080055"},
+        actor_id="u1",
+        search_products_runner=runner,
+    )
+    assert result["status"] == "ok"
+    assert result["projection"] == "approved_fields"
+    assert len(result["data"]["items"]) == 1
+    assert set(result["data"]["items"][0].keys()) == set(PRODUCT_SEARCH_RESPONSE_FIELDS)
+
+
+def test_synthetic_semantic_alias_generalization(monkeypatch):
+    synthetic = _action(
+        oid="demo_widget_lookup",
+        path="/widgets/{widget_code}",
+        parameters=(
+            {"name": "widget_code", "in": "path", "required": True, "type": "string"},
+        ),
+        execution_mode="catalog_action",
+        approved_response_fields=("title",),
+        approved_input_fields=("widget_code",),
+        semantic_aliases=("consultar widget", "buscar widget"),
+        summary="demo widget lookup",
+    )
+    set_actions_for_tests([synthetic])
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
+        lambda: "sec",
+    )
+    discovered = discover_delpi_information(
+        query="consultar widget", top_k=3, actor_id="u1"
+    )
+    assert discovered["candidate_count"] == 1
+    assert discovered["candidates"][0]["action_id"] == "demo_widget_lookup"
+    assert "demo_widget_lookup" not in load_allowlist_operation_ids(
+        load_external_read_allowlist()
+    )
+
+
+def test_mcp_output_schemas_present_for_all_three_tools():
+    import asyncio
+    from app.interface.mcp.server import create_mcp_server
+    from app.interface.mcp.schemas import (
+        DiscoverDelpiInformationOutput,
+        ExecuteDelpiInformationOutput,
+        SearchProductsOutput,
+        discover_delpi_information_output_json_schema,
+        execute_delpi_information_output_json_schema,
+        search_products_output_json_schema,
+    )
+
+    mcp = create_mcp_server()
+    tools = asyncio.run(mcp.list_tools())
+    assert len(tools) == 3
+    by_name = {t.name: t for t in tools}
+    assert by_name["search_products"].outputSchema == search_products_output_json_schema()
+    assert (
+        by_name["discover_delpi_information"].outputSchema
+        == discover_delpi_information_output_json_schema()
+    )
+    assert (
+        by_name["execute_delpi_information"].outputSchema
+        == execute_delpi_information_output_json_schema()
+    )
+
+    # Runtime envelopes validate against output models.
+    DiscoverDelpiInformationOutput.model_validate(
+        {
+            "query": "produto",
+            "top_k": 5,
+            "candidate_count": 1,
+            "eligible_action_count": 1,
+            "candidates": [
+                {
+                    "candidate_token": "x.y",
+                    "description": "Search products",
+                    "semantic_hints": {"entity": "product", "shape": "paged_list", "tags": []},
+                    "required_arguments": [],
+                    "argument_schema": {"type": "object", "properties": {}},
+                    "pagination_hints": {
+                        "supports_page": True,
+                        "supports_page_size": True,
+                    },
+                    "retrieval_score": 0.8,
+                    "action_id": "search_products",
+                }
+            ],
+        }
+    )
+    ExecuteDelpiInformationOutput.model_validate(
+        {
+            "action_id": "search_products",
+            "status": "ok",
+            "entity": "product",
+            "shape": "paged_list",
+            "projection": "approved_fields",
+            "data": {"items": []},
+            "truncated": False,
+            "is_complete": True,
+            "response_bytes": 12,
+        }
+    )
+    SearchProductsOutput.model_validate(
+        {
+            "items": [
+                {
+                    "product_code": "A",
+                    "description": "d",
+                    "group_category": "g",
+                }
+            ],
+            "page": 1,
+            "page_size": 50,
+            "total": 1,
+            "total_pages": 1,
+        }
+    )
+
+
+def test_no_hardcoded_portuguese_phrase_to_operation_id_map():
+    root = (
+        Path(__file__).resolve().parents[1]
+        / "app/application/external_capabilities/dynamic_information"
+    )
+    for path in root.glob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        assert '"produto": "search_products"' not in text
+        assert "'produto': 'search_products'" not in text
+        assert "if \"produto\" in query" not in text
+        assert "if 'produto' in query" not in text

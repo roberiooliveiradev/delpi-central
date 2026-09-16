@@ -1,6 +1,5 @@
-"""Validate execution arguments against TechnicalAction OpenAPI parameters.
+"""Validate execution arguments against TechnicalAction OpenAPI ∩ DAVI approved inputs.
 
-Minimal OpenAPI-parameter validator (no external schema engine dependency).
 Discovery and execution share ``build_argument_json_schema`` as the single contract.
 """
 
@@ -10,7 +9,7 @@ import re
 from typing import Any
 
 from app.application.external_capabilities.constants import (
-    PRODUCT_SEARCH_DENIED_QUERY_PARAMS,
+    PRODUCT_SEARCH_DEFAULT_PAGE_SIZE,
     PRODUCT_SEARCH_MAX_PAGE_SIZE,
 )
 from app.application.external_capabilities.dynamic_information.catalog_builder import (
@@ -57,14 +56,24 @@ def _param_schema(param: dict[str, Any]) -> dict[str, Any]:
     return schema
 
 
+def _approved_input_allowset(action: TechnicalAction) -> set[str] | None:
+    """When governance declares approvedInputFields, discovery/execution honor only those."""
+    if action.approved_input_fields:
+        return set(action.approved_input_fields)
+    return None
+
+
 def build_argument_json_schema(action: TechnicalAction) -> dict[str, Any]:
-    """JSON Schema-shaped object used by discovery AND execution (single contract)."""
+    """JSON Schema used by discovery AND execution (single external contract)."""
     properties: dict[str, Any] = {}
     required: list[str] = []
+    approved = _approved_input_allowset(action)
 
     for segment in action.path.split("/"):
         if segment.startswith("{") and segment.endswith("}"):
             name = segment[1:-1]
+            if approved is not None and name not in approved:
+                continue
             properties[name] = {"type": "string"}
             required.append(name)
 
@@ -74,24 +83,24 @@ def build_argument_json_schema(action: TechnicalAction) -> dict[str, Any]:
         name = param.get("name")
         if not name or not isinstance(name, str):
             continue
-        if (
-            action.operation_id == "search_products"
-            and name in PRODUCT_SEARCH_DENIED_QUERY_PARAMS
-        ):
+        if approved is not None and name not in approved:
             continue
         location = (param.get("in") or "query").lower()
         if location not in {"path", "query"}:
             continue
         prop = _param_schema(param)
-        if action.operation_id == "search_products" and name == "page_size":
+        if name == "page_size":
             prop["type"] = "integer"
             prop["minimum"] = 1
-            prop["maximum"] = PRODUCT_SEARCH_MAX_PAGE_SIZE
+            prop["maximum"] = int(prop.get("maximum") or PRODUCT_SEARCH_MAX_PAGE_SIZE)
+            prop["maximum"] = min(int(prop["maximum"]), PRODUCT_SEARCH_MAX_PAGE_SIZE)
             if "default" not in prop:
-                prop["default"] = PRODUCT_SEARCH_MAX_PAGE_SIZE
-        if action.operation_id == "search_products" and name == "page":
+                prop["default"] = PRODUCT_SEARCH_DEFAULT_PAGE_SIZE
+        if name == "page":
             prop["type"] = "integer"
             prop["minimum"] = 1
+            if "default" not in prop:
+                prop["default"] = 1
         properties[name] = prop
         if param.get("required") and name not in required:
             required.append(name)
@@ -143,7 +152,6 @@ def _coerce_value(name: str, value: Any, prop: dict[str, Any]) -> Any:
         if isinstance(value, str) and value.strip().lower() in {"true", "false"}:
             return value.strip().lower() == "true"
         raise ArgumentValidationError(f"{name}: must be boolean")
-    # string (default)
     if not isinstance(value, str):
         raise ArgumentValidationError(f"{name}: must be string")
     if "enum" in prop and value not in prop["enum"]:
@@ -185,4 +193,3 @@ def validate_arguments(
             continue
         cleaned[key] = _coerce_value(key, value, properties[key])
     return cleaned
-

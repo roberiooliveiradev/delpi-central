@@ -96,7 +96,31 @@ Dynamic search_products execution = approved external projection (product_code, 
 bounded payload size != approved field projection
 ```
 
-> **Supersedes DAVI-DYNAMIC-READ-001 allowlist claim:** earlier evidence with `DAVI_ELIGIBLE_READ = 3` (`search_products` + `get_product_detail` + `get_product_summary`) is **obsolete**. Authority for this deploy is allowlist v2 + regenerated inventory (`DAVI_ELIGIBLE_READ = 1`).
+> **Supersedes DAVI-DYNAMIC-READ-001 allowlist claim:** earlier evidence with `DAVI_ELIGIBLE_READ = 3` (`search_products` + `get_product_detail` + `get_product_summary`) is **obsolete**. Authority for this deploy is allowlist v2+ (`DAVI_ELIGIBLE_READ = 1`).
+
+### Live runtime residuals (DAVI-DYNAMIC-READ-004)
+
+After private deploy of the dynamic broker, live ChatGPT evidence proved:
+
+```text
+search_products live projection = PROVEN
+dynamic discover/execute basic path = PROVEN
+stock quarantine live = PROVEN
+PT-BR retrieval ("produto", "buscar o produto…") = RESIDUAL FOUND → fixed in source
+candidate schema advertised sort/direction = RESIDUAL FOUND → fixed via approvedInputFields
+discover/execute MCP outputSchema missing = RESIDUAL FOUND → fixed in source
+```
+
+Status after this commit:
+
+```text
+SOURCE = PASS
+LOCAL TEST = PASS
+LIVE AFTER NEW SHA = TEST_NOT_RUN
+PROVIDER OUTPUT SCHEMA DISPLAY = TEST_NOT_RUN
+```
+
+Do not treat code-level outputSchema as provider-display proof until redeploy + tools/list rediscovery.
 
 This chain is **CURRENT PROVEN V1** for the API DELPI information source. It is **not** the universal DAVI TARGET architecture (see `docs/12-roadmap-e-evolucao/davi/README.md`).
 

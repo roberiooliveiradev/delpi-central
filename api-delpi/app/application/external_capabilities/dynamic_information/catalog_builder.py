@@ -30,6 +30,8 @@ class TechnicalAction:
     searchable_text: str = ""
     execution_mode: str | None = None
     approved_response_fields: tuple[str, ...] = field(default_factory=tuple)
+    approved_input_fields: tuple[str, ...] = field(default_factory=tuple)
+    semantic_aliases: tuple[str, ...] = field(default_factory=tuple)
 
     @property
     def executable(self) -> bool:
@@ -44,6 +46,14 @@ def _param_names(parameters: list[dict[str, Any]] | None) -> list[str]:
     return names
 
 
+def _param_descriptions(parameters: list[dict[str, Any]] | None) -> list[str]:
+    texts: list[str] = []
+    for p in parameters or []:
+        if isinstance(p, dict) and p.get("description"):
+            texts.append(str(p["description"]))
+    return texts
+
+
 def _allowlist_entry(allowlist: dict[str, Any], operation_id: str) -> dict[str, Any]:
     for item in allowlist.get("operations") or []:
         if isinstance(item, dict) and (item.get("operationId") or "").strip() == operation_id:
@@ -54,12 +64,41 @@ def _allowlist_entry(allowlist: dict[str, Any], operation_id: str) -> dict[str, 
 def _enrich_from_allowlist(
     allowlist: dict[str, Any],
     operation_id: str,
-) -> tuple[str | None, tuple[str, ...]]:
+) -> tuple[str | None, tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
     entry = _allowlist_entry(allowlist, operation_id)
     mode = entry.get("executionMode")
-    fields = entry.get("approvedResponseFields") or []
-    approved = tuple(str(f) for f in fields if f)
-    return (str(mode) if mode else None, approved)
+    response_fields = tuple(str(f) for f in (entry.get("approvedResponseFields") or []) if f)
+    input_fields = tuple(str(f) for f in (entry.get("approvedInputFields") or []) if f)
+    aliases = tuple(str(a) for a in (entry.get("semanticAliases") or []) if a)
+    return (str(mode) if mode else None, response_fields, input_fields, aliases)
+
+
+def _build_searchable_text(
+    *,
+    oid: str,
+    summary: str,
+    description: str,
+    path: str,
+    tags: tuple[str, ...],
+    params: tuple[dict[str, Any], ...],
+    entity: Any,
+    shape: Any,
+    aliases: tuple[str, ...],
+) -> str:
+    return " ".join(
+        [
+            oid,
+            summary,
+            description,
+            path,
+            " ".join(tags),
+            " ".join(_param_names(list(params))),
+            " ".join(_param_descriptions(list(params))),
+            str(entity or ""),
+            str(shape or ""),
+            " ".join(aliases),
+        ]
+    ).lower()
 
 
 def build_technical_actions_from_openapi(
@@ -92,18 +131,9 @@ def build_technical_actions_from_openapi(
                 tags=list(tags),
             )
             params = tuple(p for p in (op.get("parameters") or []) if isinstance(p, dict))
-            mode, approved_fields = _enrich_from_allowlist(allowlist, str(oid))
-            searchable = " ".join(
-                [
-                    str(oid),
-                    summary,
-                    description,
-                    path,
-                    " ".join(tags),
-                    " ".join(_param_names(list(params))),
-                    str(x_delpi.get("entity") or ""),
-                ]
-            ).lower()
+            mode, response_fields, input_fields, aliases = _enrich_from_allowlist(
+                allowlist, str(oid)
+            )
             actions.append(
                 TechnicalAction(
                     action_id=str(oid),
@@ -117,9 +147,21 @@ def build_technical_actions_from_openapi(
                     entity=x_delpi.get("entity"),
                     shape=x_delpi.get("shape"),
                     parameters=params,
-                    searchable_text=searchable,
+                    searchable_text=_build_searchable_text(
+                        oid=str(oid),
+                        summary=summary,
+                        description=description,
+                        path=path,
+                        tags=tags,
+                        params=params,
+                        entity=x_delpi.get("entity"),
+                        shape=x_delpi.get("shape"),
+                        aliases=aliases,
+                    ),
                     execution_mode=mode,
-                    approved_response_fields=approved_fields,
+                    approved_response_fields=response_fields,
+                    approved_input_fields=input_fields,
+                    semantic_aliases=aliases,
                 )
             )
     return actions
@@ -155,18 +197,7 @@ def build_technical_actions_from_baseline(
         )
         oid_s = str(oid or f"{method}:{path}")
         params = tuple(p for p in (row.get("parameters") or []) if isinstance(p, dict))
-        mode, approved_fields = _enrich_from_allowlist(allowlist, oid_s)
-        searchable = " ".join(
-            [
-                oid_s,
-                summary,
-                description,
-                path,
-                " ".join(tags),
-                " ".join(_param_names(list(params))),
-                str(x_delpi.get("entity") or ""),
-            ]
-        ).lower()
+        mode, response_fields, input_fields, aliases = _enrich_from_allowlist(allowlist, oid_s)
         actions.append(
             TechnicalAction(
                 action_id=oid_s,
@@ -180,9 +211,21 @@ def build_technical_actions_from_baseline(
                 entity=x_delpi.get("entity"),
                 shape=x_delpi.get("shape"),
                 parameters=params,
-                searchable_text=searchable,
+                searchable_text=_build_searchable_text(
+                    oid=oid_s,
+                    summary=summary,
+                    description=description,
+                    path=path,
+                    tags=tags,
+                    params=params,
+                    entity=x_delpi.get("entity"),
+                    shape=x_delpi.get("shape"),
+                    aliases=aliases,
+                ),
                 execution_mode=mode,
-                approved_response_fields=approved_fields,
+                approved_response_fields=response_fields,
+                approved_input_fields=input_fields,
+                semantic_aliases=aliases,
             )
         )
     return actions

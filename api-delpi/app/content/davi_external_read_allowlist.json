@@ -1,14 +1,66 @@
 {
-  "version": 2,
+  "version": 3,
   "description": "Governance allowlist for DAVI dynamic READ. Not a semantic capability registry. Only operations with independent external-processing approval.",
   "externalProcessing": "APPROVED_WITH_RESTRICTIONS",
   "dataClassification": "INTERNAL",
+  "retrievalQuarantineTokens": [
+    "estoque",
+    "stock",
+    "saldo",
+    "preco",
+    "price",
+    "pricing",
+    "custo",
+    "cost",
+    "fornecedor",
+    "supplier",
+    "cliente",
+    "customer",
+    "financeiro",
+    "finance",
+    "payroll",
+    "clima",
+    "email",
+    "e-mail",
+    "hora",
+    "resuma"
+  ],
   "operations": [
     {
       "operationId": "search_products",
       "reason": "Product Master V1 already approved for external MCP/GPT projection (product_code, description, group_category)",
-      "approvedResponseFields": ["product_code", "description", "group_category"],
-      "executionMode": "approved_external_capability"
+      "executionMode": "approved_external_capability",
+      "approvedInputFields": [
+        "code",
+        "description",
+        "group_code",
+        "page",
+        "page_size"
+      ],
+      "approvedResponseFields": [
+        "product_code",
+        "description",
+        "group_category"
+      ],
+      "semanticAliases": [
+        "produto",
+        "produtos",
+        "buscar produto",
+        "buscar produtos",
+        "consultar produto",
+        "consultar produtos",
+        "codigo do produto",
+        "código do produto",
+        "descricao do produto",
+        "descrição do produto",
+        "grupo do produto",
+        "categoria do produto",
+        "search products",
+        "product search",
+        "product code",
+        "product description",
+        "product group"
+      ]
     }
   ],
   "explicitlyNotApproved": [
