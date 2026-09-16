@@ -179,6 +179,18 @@ docs/integrations/evidence/davi-read-authz-policy-rebaseline-001.md
 
 Historical GOV packs (`davi-read-governance-ratification-001.*`) marked `SUPERSEDED_IN_PART`.
 
+### Genericity / projection hardening (DAVI-READ-AUTHZ-REBASELINE-002)
+
+```text
+No AuthZ policy change
+Eligible set unchanged = 7
+MCP tools unchanged = 3
+Removed operationId semantic registries from eligibility.py
+Nested requirement = structural shape metadata
+SEMANTICALLY_REDUNDANT = coverageDisposition governance metadata
+Flat/nested projection = strict fail-closed (construct-from-scratch)
+```
+
 ```text
 NEW COVERAGE SOURCE = PASS
 NEW COVERAGE LOCAL TESTS = PASS

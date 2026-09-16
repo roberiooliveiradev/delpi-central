@@ -296,45 +296,57 @@
   "explicitlyNotApproved": [
     {
       "operationId": "get_product_detail",
+      "coverageDisposition": "SEMANTICALLY_REDUNDANT",
       "primaryBlocker": "SEMANTICALLY_REDUNDANT",
       "reason": "Same Product Master slice already served by search_products; no distinct governed fields"
     },
     {
       "operationId": "get_product_summary",
+      "coverageDisposition": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "reason": "Composite product+stock+prices; no approved section projection yet"
     },
     {
       "operationId": "get_product_factory_status",
+      "coverageDisposition": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "reason": "Composite factory envelope; section projection not yet governed"
     },
     {
       "operationId": "get_product_structure_exclusivity",
+      "coverageDisposition": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "reason": "Playbook exclusivity shape pending governed path allowlist"
     },
     {
       "operationId": "get_product_pricing",
+      "coverageDisposition": "NEEDS_MODEL_SAFE_PROJECTION",
       "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
       "reason": "Awaiting explicit approvedResponseFields (minimization); not blocked by taxonomy absence"
     },
     {
       "operationId": "get_product_purchase_price_history",
+      "coverageDisposition": "NEEDS_MODEL_SAFE_PROJECTION",
       "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
       "reason": "Awaiting explicit approvedResponseFields"
     },
     {
       "operationId": "get_product_raw_material_price_intelligence",
+      "coverageDisposition": "NEEDS_MODEL_SAFE_PROJECTION",
       "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
       "reason": "Awaiting explicit approvedResponseFields"
     },
     {
       "operationId": "get_product_cost_impact_simulation",
+      "coverageDisposition": "NEEDS_MODEL_SAFE_PROJECTION",
       "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
       "reason": "Awaiting explicit approvedResponseFields"
     }
   ],
+  "hardening": {
+    "taskId": "DAVI-READ-AUTHZ-REBASELINE-002",
+    "note": "No AuthZ policy change. No eligible set change. Projection/genericity hardening only. coverageDisposition drives SEMANTICALLY_REDUNDANT / nested blockers without broker operationId semantics."
+  },
   "supersededBlockers": {
     "taskId": "DAVI-READ-AUTHZ-REBASELINE-001",
     "items": [

@@ -7,16 +7,9 @@
   "TOTAL_GET": 506,
   "TOTAL_WRITE_VERBS": 197,
   "DAVI_ELIGIBLE_READ": 7,
-  "ELIGIBLE_BEFORE": 1,
+  "ELIGIBLE_BEFORE": 7,
   "ELIGIBLE_AFTER": 7,
-  "NEWLY_ELIGIBLE": [
-    "get_product_customers",
-    "get_product_production_status",
-    "get_product_purchases",
-    "get_product_stock",
-    "get_product_structure",
-    "get_product_suppliers"
-  ],
+  "NEWLY_ELIGIBLE": [],
   "REMOVED_ELIGIBLE": [],
   "INVENTORY_DELTA": {
     "previous_total_operations": 703,
@@ -79,8 +72,8 @@
     "DAVI_ELIGIBLE_READ": 7,
     "DESTRUCTIVE_OUT_OF_SCOPE": 16,
     "GENERIC_SQL_FORBIDDEN": 2,
-    "NEEDS_MODEL_SAFE_PROJECTION": 368,
-    "NEEDS_NESTED_PROJECTION_SUPPORT": 72,
+    "NEEDS_MODEL_SAFE_PROJECTION": 372,
+    "NEEDS_NESTED_PROJECTION_SUPPORT": 68,
     "SEMANTICALLY_REDUNDANT": 1,
     "STREAM_BINARY_OUT_OF_SCOPE": 31,
     "WRITE_OUT_OF_SCOPE": 130

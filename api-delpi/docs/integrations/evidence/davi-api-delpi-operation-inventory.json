@@ -7,16 +7,9 @@
   "TOTAL_GET": 506,
   "TOTAL_WRITE_VERBS": 197,
   "DAVI_ELIGIBLE_READ": 7,
-  "ELIGIBLE_BEFORE": 1,
+  "ELIGIBLE_BEFORE": 7,
   "ELIGIBLE_AFTER": 7,
-  "NEWLY_ELIGIBLE": [
-    "get_product_customers",
-    "get_product_production_status",
-    "get_product_purchases",
-    "get_product_stock",
-    "get_product_structure",
-    "get_product_suppliers"
-  ],
+  "NEWLY_ELIGIBLE": [],
   "REMOVED_ELIGIBLE": [],
   "INVENTORY_DELTA": {
     "previous_total_operations": 703,
@@ -79,8 +72,8 @@
     "DAVI_ELIGIBLE_READ": 7,
     "DESTRUCTIVE_OUT_OF_SCOPE": 16,
     "GENERIC_SQL_FORBIDDEN": 2,
-    "NEEDS_MODEL_SAFE_PROJECTION": 368,
-    "NEEDS_NESTED_PROJECTION_SUPPORT": 72,
+    "NEEDS_MODEL_SAFE_PROJECTION": 372,
+    "NEEDS_NESTED_PROJECTION_SUPPORT": 68,
     "SEMANTICALLY_REDUNDANT": 1,
     "STREAM_BINARY_OUT_OF_SCOPE": 31,
     "WRITE_OUT_OF_SCOPE": 130
@@ -2116,12 +2109,32 @@
       "executable": false
     },
     {
+      "operationId": "get_product_cost_impact_simulation",
+      "method": "GET",
+      "path": "/products/{code}/cost-impact-simulation",
+      "summary": "Finished-product cost impact simulation (BOM materials)",
+      "entity": "product_cost_impact_simulation",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
       "operationId": "get_product_drawing",
       "method": "GET",
       "path": "/products/{code}/drawing",
       "summary": "Product drawing",
       "entity": "product_drawing",
       "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_guide",
+      "method": "GET",
+      "path": "/products/{code}/guide",
+      "summary": "Product guide",
+      "entity": "product_guide",
+      "shape": "paged_list",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
@@ -2172,6 +2185,26 @@
       "summary": "Product sale pricing and commercial price tables",
       "entity": "product_pricing",
       "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_purchase_price_history",
+      "method": "GET",
+      "path": "/products/{code}/purchase-price-history",
+      "summary": "Product purchase price history",
+      "entity": "product_purchase_price_history",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_raw_material_price_intelligence",
+      "method": "GET",
+      "path": "/products/{code}/raw-material-price-intelligence",
+      "summary": "Product raw material price intelligence",
+      "entity": "product_raw_material_price_intelligence",
+      "shape": "composite_analysis",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
@@ -4886,16 +4919,6 @@
       "executable": false
     },
     {
-      "operationId": "get_product_cost_impact_simulation",
-      "method": "GET",
-      "path": "/products/{code}/cost-impact-simulation",
-      "summary": "Finished-product cost impact simulation (BOM materials)",
-      "entity": "product_cost_impact_simulation",
-      "shape": "composite_analysis",
-      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "executable": false
-    },
-    {
       "operationId": "get_product_directives",
       "method": "GET",
       "path": "/products/directives/{identifier}",
@@ -4912,16 +4935,6 @@
       "summary": "Product factory status (integrated shop-floor view)",
       "entity": "product_factory_status",
       "shape": "composite_analysis",
-      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_guide",
-      "method": "GET",
-      "path": "/products/{code}/guide",
-      "summary": "Product guide",
-      "entity": "product_guide",
-      "shape": "paged_list",
       "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "executable": false
     },
@@ -4952,26 +4965,6 @@
       "summary": "Product purchase budget history",
       "entity": "product_purchase_budget_history",
       "shape": "playbook_report",
-      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_purchase_price_history",
-      "method": "GET",
-      "path": "/products/{code}/purchase-price-history",
-      "summary": "Product purchase price history",
-      "entity": "product_purchase_price_history",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_raw_material_price_intelligence",
-      "method": "GET",
-      "path": "/products/{code}/raw-material-price-intelligence",
-      "summary": "Product raw material price intelligence",
-      "entity": "product_raw_material_price_intelligence",
-      "shape": "composite_analysis",
       "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "executable": false
     },

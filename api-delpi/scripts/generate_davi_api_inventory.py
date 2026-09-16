@@ -66,7 +66,7 @@ def main() -> int:
         "source": "openapi_baseline.json",
         "baseline_version": baseline.get("version"),
         "baseline_operation_count": baseline.get("operation_count"),
-        "taskId": "DAVI-READ-AUTHZ-REBASELINE-001",
+        "taskId": "DAVI-READ-AUTHZ-REBASELINE-002",
         "TOTAL_OPERATIONS": len(actions),
         "TOTAL_GET": methods.get("GET", 0),
         "TOTAL_WRITE_VERBS": sum(

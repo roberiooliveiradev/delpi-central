@@ -4,8 +4,9 @@ Canonical AuthZ policy (DAVI-READ-AUTHZ-REBASELINE-001):
   DAVI capability <= authenticated user capability
   DAVI has no independent business / branch / object AuthZ.
   Query filters (branch, code, …) ≠ DAVI authorization boundaries.
-  Backend-authorized internal READ may be processed unless explicitly prohibited.
-  Model-safe projection / minimization remains mandatory for eligibility.
+
+Eligibility is driven by trusted OpenAPI shape + governance metadata.
+operationId is a technical lookup key only — never semantic authority.
 """
 
 from __future__ import annotations
@@ -41,7 +42,7 @@ _BINARY_MARKERS = (
 _ADMIN_MARKERS = ("/admin", "/system", "/internal/", "gpt-actions")
 _SQL_MARKERS = ("/data/sql", "/sql", "execute_sql", "raw_sql")
 
-# Nested / hierarchy shapes that cannot be sanitized by flat items[] field lists.
+# Structural shapes that require nested path projection metadata.
 _NESTED_SHAPES = frozenset(
     {
         "product_snapshot",
@@ -52,23 +53,14 @@ _NESTED_SHAPES = frozenset(
     }
 )
 
-# Known nested ops; still need path-based approvedResponseFields to become eligible.
-_NESTED_PROJECTION_CANDIDATES = frozenset(
+_DISPOSITION_STATUSES = frozenset(
     {
-        "get_product_detail",
-        "get_product_structure",
-        "get_product_structure_exclusivity",
-        "get_product_production_status",
-        "get_product_factory_status",
-        "get_product_playbook",
-        "get_product_guide",
-        "get_product_summary",
+        STATUS_SEMANTICALLY_REDUNDANT,
+        STATUS_NEEDS_NESTED_PROJECTION_SUPPORT,
+        STATUS_NEEDS_MODEL_SAFE_PROJECTION,
+        STATUS_EXPLICIT_PROCESSING_PROHIBITION,
     }
 )
-
-# Same Product Master slice already covered by search_products — do not expand coverage
-# with a redundant detail action unless governance adds distinct fields.
-_SEMANTICALLY_REDUNDANT = frozenset({"get_product_detail"})
 
 
 def _explicit_prohibition_ids(allowlist: dict[str, Any] | None) -> set[str]:
@@ -85,34 +77,53 @@ def _explicit_prohibition_ids(allowlist: dict[str, Any] | None) -> set[str]:
     return ids
 
 
-def _allowlist_has_safe_projection(allowlist: dict[str, Any] | None, operation_id: str) -> bool:
+def _allowlist_operation_entry(
+    allowlist: dict[str, Any] | None, operation_id: str
+) -> dict[str, Any] | None:
     if not allowlist or not operation_id:
-        return False
+        return None
     for item in allowlist.get("operations") or []:
+        if isinstance(item, dict) and (item.get("operationId") or "").strip() == operation_id:
+            return item
+    return None
+
+
+def _coverage_disposition(
+    allowlist: dict[str, Any] | None, operation_id: str
+) -> str | None:
+    """Trusted governance disposition for an operationId (lookup key only)."""
+    if not allowlist or not operation_id:
+        return None
+    entry = _allowlist_operation_entry(allowlist, operation_id)
+    if entry:
+        disp = (entry.get("coverageDisposition") or "").strip()
+        if disp in _DISPOSITION_STATUSES:
+            return disp
+    for item in allowlist.get("explicitlyNotApproved") or []:
         if not isinstance(item, dict):
             continue
         if (item.get("operationId") or "").strip() != operation_id:
             continue
-        fields = item.get("approvedResponseFields") or []
-        inputs = item.get("approvedInputFields") or []
-        return bool(fields) and bool(inputs)
-    return False
+        disp = (
+            item.get("coverageDisposition") or item.get("primaryBlocker") or ""
+        ).strip()
+        if disp in _DISPOSITION_STATUSES:
+            return disp
+    return None
 
 
-def _uses_nested_paths(allowlist: dict[str, Any] | None, operation_id: str) -> bool:
-    if not allowlist:
-        return False
-    for item in allowlist.get("operations") or []:
-        if not isinstance(item, dict):
-            continue
-        if (item.get("operationId") or "").strip() != operation_id:
-            continue
-        for field in item.get("approvedResponseFields") or []:
-            text = str(field)
-            if "." in text or "[]" in text:
-                return True
-        return False
-    return False
+def _field_list(entry: dict[str, Any] | None, key: str) -> list[str]:
+    if not entry:
+        return []
+    return [str(f) for f in (entry.get(key) or []) if f]
+
+
+def _uses_nested_path_syntax(fields: list[str]) -> bool:
+    return any(("." in f) or ("[]" in f) for f in fields)
+
+
+def _shape_requires_nested(shape: str | None) -> bool:
+    return (shape or "").strip().lower() in _NESTED_SHAPES
 
 
 def classify_operation(
@@ -126,11 +137,18 @@ def classify_operation(
     shape: str | None = None,
     allowlist: dict[str, Any] | None = None,
 ) -> str:
-    """Return exactly one classification status (fail-closed)."""
+    """Return exactly one classification status (fail-closed).
+
+    Order:
+      hard technical exclusions
+      → explicit processing prohibition
+      → governance disposition
+      → structural shape + projection validation
+      → DAVI_ELIGIBLE_READ
+    """
     method_u = (method or "").upper()
     path_l = (path or "").lower()
     oid = (operation_id or "").strip()
-    shape_l = (shape or "").strip().lower()
     _ = tags
     _ = summary
 
@@ -157,30 +175,39 @@ def classify_operation(
     if method_u != "GET":
         return STATUS_NOT_RELEVANT
 
-    prohibited = _explicit_prohibition_ids(allowlist)
-    if oid and oid in prohibited:
+    if oid and oid in _explicit_prohibition_ids(allowlist):
         return STATUS_EXPLICIT_PROCESSING_PROHIBITION
 
-    # Governance allowlist with model-safe projection = eligible.
-    if oid and oid in allowlisted_operation_ids and _allowlist_has_safe_projection(
-        allowlist, oid
-    ):
-        return STATUS_DAVI_ELIGIBLE_READ
-
-    if oid in _SEMANTICALLY_REDUNDANT:
+    disposition = _coverage_disposition(allowlist, oid) if oid else None
+    if disposition == STATUS_EXPLICIT_PROCESSING_PROHIBITION:
+        return STATUS_EXPLICIT_PROCESSING_PROHIBITION
+    if disposition == STATUS_SEMANTICALLY_REDUNDANT:
         return STATUS_SEMANTICALLY_REDUNDANT
 
-    needs_nested = oid in _NESTED_PROJECTION_CANDIDATES or shape_l in _NESTED_SHAPES
-    if needs_nested:
-        # Nested ops become eligible only via path-based approvedResponseFields.
-        if oid and oid in allowlisted_operation_ids and _uses_nested_paths(allowlist, oid):
+    needs_nested = _shape_requires_nested(shape)
+    entry = _allowlist_operation_entry(allowlist, oid) if oid else None
+    inputs = _field_list(entry, "approvedInputFields")
+    outputs = _field_list(entry, "approvedResponseFields")
+    on_allowlist = bool(oid and oid in allowlisted_operation_ids and entry is not None)
+
+    if on_allowlist:
+        if not inputs or not outputs:
+            if needs_nested:
+                return STATUS_NEEDS_NESTED_PROJECTION_SUPPORT
+            return STATUS_NEEDS_MODEL_SAFE_PROJECTION
+        if needs_nested:
+            if not _uses_nested_path_syntax(outputs):
+                return STATUS_NEEDS_NESTED_PROJECTION_SUPPORT
             return STATUS_DAVI_ELIGIBLE_READ
+        return STATUS_DAVI_ELIGIBLE_READ
+
+    # Not allowlisted / no governed projection entry.
+    if disposition == STATUS_NEEDS_NESTED_PROJECTION_SUPPORT:
         return STATUS_NEEDS_NESTED_PROJECTION_SUPPORT
-
-    # Flat GETs without governed projection metadata.
-    if not oid:
+    if disposition == STATUS_NEEDS_MODEL_SAFE_PROJECTION:
         return STATUS_NEEDS_MODEL_SAFE_PROJECTION
-
+    if needs_nested:
+        return STATUS_NEEDS_NESTED_PROJECTION_SUPPORT
     return STATUS_NEEDS_MODEL_SAFE_PROJECTION
 
 

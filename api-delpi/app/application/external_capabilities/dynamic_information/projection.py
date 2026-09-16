@@ -2,7 +2,10 @@
 
 Size bounding ≠ field-level authorization.
 Field projection is fail-closed from trusted governance metadata only.
-Supports flat ``items[]`` keys and dotted/``[]`` nested paths.
+
+Rule: DROP EVERYTHING → copy only approved fields (+ minimal technical pagination meta).
+Never copy the original payload and prune.
+IF IN DOUBT → DROP (never raw fallback).
 """
 
 from __future__ import annotations
@@ -11,9 +14,14 @@ import json
 import re
 from typing import Any
 
-_PATH_SEG = re.compile(r"([^.\[]+)(\[\])?")
-_ENVELOPE_KEYS = frozenset({"success", "message", "error", "meta", "data"})
-_PAGINATION_META = frozenset(
+# Strict path: identifiers + optional [] segments, joined by dots. No wildcards.
+_VALID_PATH = re.compile(
+    r"^[A-Za-z_][A-Za-z0-9_]*(\[\])?(\.[A-Za-z_][A-Za-z0-9_]*(\[\])?)*$"
+)
+_PATH_SEG = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)(\[\])?")
+
+# Minimal technical pagination / bound flags — not business data.
+_TECHNICAL_META = frozenset(
     {
         "page",
         "page_size",
@@ -21,10 +29,6 @@ _PAGINATION_META = frozenset(
         "total_pages",
         "is_complete",
         "truncated",
-        "bom_validity",
-        "reference_date",
-        "start_date",
-        "date_end_exclusive",
     }
 )
 
@@ -42,32 +46,33 @@ def _uses_path_syntax(fields: tuple[str, ...] | list[str]) -> bool:
     return any(("." in f) or ("[]" in f) for f in fields)
 
 
-def _parse_path(path: str) -> list[tuple[str, bool]]:
-    """Return list of (key, is_array) segments."""
+def _parse_path(path: str) -> list[tuple[str, bool]] | None:
+    """Return list of (key, is_array) segments, or None if path is malformed."""
+    text = (path or "").strip()
+    if not text or not _VALID_PATH.fullmatch(text):
+        return None
     segments: list[tuple[str, bool]] = []
     pos = 0
-    text = path.strip()
     while pos < len(text):
         if text[pos] == ".":
             pos += 1
             continue
         match = _PATH_SEG.match(text, pos)
         if not match:
-            break
-        key, arr = match.group(1), match.group(2) == "[]"
-        segments.append((key, arr))
+            return None
+        segments.append((match.group(1), match.group(2) == "[]"))
         pos = match.end()
-    return segments
+    return segments or None
 
 
 def _build_allow_tree(paths: list[str]) -> dict[str, Any]:
-    """Tree: key → {"array": bool, "children": tree|None, "leaf": bool}."""
+    """Tree: key → {"array": bool, "children": tree, "leaf": bool}."""
     root: dict[str, Any] = {}
     for path in paths:
-        node = root
         segs = _parse_path(path)
         if not segs:
             continue
+        node = root
         for idx, (key, is_array) in enumerate(segs):
             leaf = idx == len(segs) - 1
             entry = node.setdefault(key, {"array": is_array, "children": {}, "leaf": False})
@@ -115,7 +120,8 @@ def _project_with_tree(
                         projected_list.append(projected)
                 out[key] = projected_list
             elif spec.get("leaf"):
-                out[key] = child[:max_array]
+                # Leaf array without child schema: drop (cannot validate item shape).
+                continue
             continue
         if children:
             projected = _project_with_tree(
@@ -132,6 +138,12 @@ def _project_with_tree(
     return out
 
 
+def _copy_technical_meta(source: dict[str, Any], target: dict[str, Any]) -> None:
+    for meta_key in _TECHNICAL_META:
+        if meta_key in source and meta_key not in target:
+            target[meta_key] = source[meta_key]
+
+
 def apply_approved_field_projection(
     data: Any,
     *,
@@ -140,17 +152,23 @@ def apply_approved_field_projection(
     max_depth: int = 8,
     max_array_items: int = 50,
 ) -> Any:
-    """Keep only approved fields. Fail-closed for unknown keys/objects."""
+    """Build a new payload with only approved fields. Never preserve originals."""
     if not approved_fields:
-        return data
+        return {}
 
     payload = unwrap_api_payload(data)
     fields = [str(f) for f in approved_fields if f]
+    if not fields:
+        return {}
 
     if _uses_path_syntax(fields):
+        if not isinstance(payload, dict):
+            return {}
         tree = _build_allow_tree(fields)
+        if not tree:
+            return {}
         projected = _project_with_tree(
-            payload if isinstance(payload, dict) else {},
+            payload,
             tree,
             depth=0,
             max_depth=max_depth,
@@ -158,32 +176,37 @@ def apply_approved_field_projection(
         )
         if not isinstance(projected, dict):
             return {}
-        # Preserve harmless pagination/meta scalars when present and not already projected.
-        if isinstance(payload, dict):
-            for meta_key in _PAGINATION_META:
-                if meta_key in payload and meta_key not in projected:
-                    projected[meta_key] = payload[meta_key]
+        _copy_technical_meta(payload, projected)
         return projected
 
-    allowed = set(fields)
+    # Flat mode — construct from scratch.
+    if isinstance(payload, list):
+        out_list: list[Any] = []
+        for item in payload[:max_array_items]:
+            if not isinstance(item, dict):
+                continue
+            out_list.append({k: item[k] for k in fields if k in item})
+        return out_list
+
     if not isinstance(payload, dict):
-        return payload
-    out = dict(payload)
-    items = out.get(list_key)
+        return {}
+
+    out: dict[str, Any] = {}
+    items = payload.get(list_key)
     if isinstance(items, list):
         projected_items: list[Any] = []
-        for item in items:
+        for item in items[:max_array_items]:
             if isinstance(item, dict):
-                projected_items.append({k: item.get(k) for k in fields if k in allowed})
-            else:
-                projected_items.append(item)
+                projected_items.append({k: item[k] for k in fields if k in item})
         out[list_key] = projected_items
-        # Drop non-approved sibling object bags when projecting flat list payloads.
-        for key in list(out.keys()):
-            if key == list_key or key in _PAGINATION_META:
-                continue
-            if key in _ENVELOPE_KEYS:
-                out.pop(key, None)
+        _copy_technical_meta(payload, out)
+        return out
+
+    # Flat root object.
+    for key in fields:
+        if key in payload:
+            out[key] = payload[key]
+    _copy_technical_meta(payload, out)
     return out
 
 
@@ -209,6 +232,9 @@ def bound_response_payload(
             payload = dict(payload)
             payload.setdefault("is_complete", True)
             payload.setdefault("truncated", False)
+    elif isinstance(payload, list) and len(payload) > max_items:
+        payload = payload[:max_items]
+        truncated = True
 
     try:
         raw = json.dumps(payload, default=str, ensure_ascii=False).encode("utf-8")

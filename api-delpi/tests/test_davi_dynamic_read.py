@@ -37,9 +37,11 @@ from app.application.external_capabilities.dynamic_information.catalog_builder i
 )
 from app.application.external_capabilities.dynamic_information.constants import (
     STATUS_DAVI_ELIGIBLE_READ,
+    STATUS_EXPLICIT_PROCESSING_PROHIBITION,
     STATUS_GENERIC_SQL_FORBIDDEN,
     STATUS_NEEDS_BRANCH_AUTHZ_EVIDENCE,
     STATUS_NEEDS_MODEL_SAFE_PROJECTION,
+    STATUS_NEEDS_NESTED_PROJECTION_SUPPORT,
     STATUS_SEMANTICALLY_REDUNDANT,
     STATUS_WRITE_OUT_OF_SCOPE,
 )
@@ -326,9 +328,19 @@ def test_classify_hard_blocks():
             path="/products/{code}/summary",
             operation_id="get_product_summary",
             allowlisted_operation_ids=search_ids,
+            shape="product_snapshot",
         )
-        != STATUS_DAVI_ELIGIBLE_READ
+        == STATUS_NEEDS_NESTED_PROJECTION_SUPPORT
     )
+    detail_disposition = {
+        "operations": [],
+        "explicitlyNotApproved": [
+            {
+                "operationId": "get_product_detail",
+                "coverageDisposition": "SEMANTICALLY_REDUNDANT",
+            }
+        ],
+    }
     assert (
         classify_operation(
             method="GET",
@@ -336,8 +348,20 @@ def test_classify_hard_blocks():
             operation_id="get_product_detail",
             allowlisted_operation_ids=search_ids,
             shape="product_snapshot",
+            allowlist=detail_disposition,
         )
         == STATUS_SEMANTICALLY_REDUNDANT
+    )
+    # Without disposition metadata, nested shape alone is structural — not name-based.
+    assert (
+        classify_operation(
+            method="GET",
+            path="/products/{code}",
+            operation_id="completely_unseen_detail_name",
+            allowlisted_operation_ids=set(),
+            shape="product_snapshot",
+        )
+        == STATUS_NEEDS_NESTED_PROJECTION_SUPPORT
     )
 
 
@@ -909,7 +933,12 @@ def test_bounded_payload_is_not_field_authorization():
     projected = apply_approved_field_projection(
         fat, approved_fields=PRODUCT_SEARCH_RESPONSE_FIELDS
     )
-    assert set(projected["items"][0].keys()) == set(PRODUCT_SEARCH_RESPONSE_FIELDS)
+    assert "secret_cost" not in projected["items"][0]
+    assert set(projected["items"][0].keys()) <= set(PRODUCT_SEARCH_RESPONSE_FIELDS)
+    assert projected["items"][0]["product_code"] == "A"
+    assert projected["items"][0]["description"] == "d"
+    # Missing approved keys are omitted (fail-closed construct-from-scratch).
+    assert "group_category" not in projected["items"][0]
 
 
 def test_hmac_dedicated_secret_precedence(monkeypatch):
@@ -1594,3 +1623,277 @@ def test_no_hardcoded_portuguese_phrase_to_operation_id_map():
         assert "'produto': 'search_products'" not in text
         assert "if \"produto\" in query" not in text
         assert "if 'produto' in query" not in text
+
+
+# --- DAVI-READ-AUTHZ-REBASELINE-002: genericity + fail-closed projection ---
+
+
+def test_no_operation_id_semantic_registry_in_broker():
+    root = (
+        Path(__file__).resolve().parents[1]
+        / "app/application/external_capabilities/dynamic_information"
+    )
+    eligibility = (root / "eligibility.py").read_text(encoding="utf-8")
+    for marker in (
+        "_NESTED_PROJECTION_CANDIDATES",
+        "_SEMANTICALLY_REDUNDANT =",
+        'frozenset({"get_product_detail"',
+        '"get_product_structure"',
+        '"get_product_stock"',
+    ):
+        assert marker not in eligibility, f"eligibility must not hardcode {marker}"
+    projection = (root / "projection.py").read_text(encoding="utf-8")
+    assert "get_product_" not in projection
+
+
+def test_metadata_disposition_semantically_redundant_independent_of_name():
+    allowlist = {
+        "operations": [],
+        "explicitlyNotApproved": [
+            {
+                "operationId": "arbitrary_redundant_capability_xyz",
+                "coverageDisposition": "SEMANTICALLY_REDUNDANT",
+            }
+        ],
+    }
+    assert (
+        classify_operation(
+            method="GET",
+            path="/anything/{code}",
+            operation_id="arbitrary_redundant_capability_xyz",
+            allowlisted_operation_ids=set(),
+            shape="paged_list",
+            allowlist=allowlist,
+        )
+        == STATUS_SEMANTICALLY_REDUNDANT
+    )
+
+
+def test_explicit_processing_prohibition_before_eligibility():
+    allowlist = {
+        "operations": [
+            {
+                "operationId": "forbidden_but_projected",
+                "approvedInputFields": ["code"],
+                "approvedResponseFields": ["code"],
+            }
+        ],
+        "explicitProcessingProhibitions": [{"operationId": "forbidden_but_projected"}],
+    }
+    assert (
+        classify_operation(
+            method="GET",
+            path="/x/{code}",
+            operation_id="forbidden_but_projected",
+            allowlisted_operation_ids={"forbidden_but_projected"},
+            shape="paged_list",
+            allowlist=allowlist,
+        )
+        == STATUS_EXPLICIT_PROCESSING_PROHIBITION
+    )
+
+
+def test_nested_shape_with_flat_fields_not_eligible():
+    allowlist = {
+        "operations": [
+            {
+                "operationId": "synthetic_nested_flat_fields",
+                "approvedInputFields": ["code"],
+                "approvedResponseFields": ["code", "description"],
+            }
+        ],
+    }
+    assert (
+        classify_operation(
+            method="GET",
+            path="/synthetic/{code}",
+            operation_id="synthetic_nested_flat_fields",
+            allowlisted_operation_ids={"synthetic_nested_flat_fields"},
+            shape="hierarchy",
+            allowlist=allowlist,
+        )
+        == STATUS_NEEDS_NESTED_PROJECTION_SUPPORT
+    )
+
+
+def test_nested_shape_with_valid_paths_eligible():
+    allowlist = {
+        "operations": [
+            {
+                "operationId": "synthetic_nested_ok",
+                "approvedInputFields": ["code"],
+                "approvedResponseFields": ["root.code", "root.components[].code"],
+            }
+        ],
+    }
+    assert (
+        classify_operation(
+            method="GET",
+            path="/synthetic/{code}",
+            operation_id="synthetic_nested_ok",
+            allowlisted_operation_ids={"synthetic_nested_ok"},
+            shape="hierarchy",
+            allowlist=allowlist,
+        )
+        == STATUS_DAVI_ELIGIBLE_READ
+    )
+
+
+def test_synthetic_unseen_operation_metadata_only_eligible():
+    oid = "completely_unseen_read_name"
+    allowlist = {
+        "operations": [
+            {
+                "operationId": oid,
+                "executionMode": "catalog_action",
+                "approvedInputFields": ["code", "page", "page_size"],
+                "approvedResponseFields": ["product_code", "description"],
+                "semanticAliases": ["unseen capability alias"],
+            }
+        ],
+    }
+    assert (
+        classify_operation(
+            method="GET",
+            path="/unseen/{code}",
+            operation_id=oid,
+            allowlisted_operation_ids={oid},
+            shape="paged_list",
+            allowlist=allowlist,
+        )
+        == STATUS_DAVI_ELIGIBLE_READ
+    )
+    action = _action(
+        oid=oid,
+        path="/unseen/{code}",
+        parameters=(
+            {"name": "code", "in": "path", "required": True, "type": "string"},
+            {"name": "page", "in": "query", "type": "integer"},
+            {"name": "page_size", "in": "query", "type": "integer"},
+        ),
+        approved_input_fields=("code", "page", "page_size"),
+        approved_response_fields=("product_code", "description"),
+        execution_mode="catalog_action",
+        semantic_aliases=("unseen capability alias",),
+    )
+    plan = build_execution_plan(action, {"code": "X", "page": 1, "page_size": 10})
+    assert isinstance(plan, CatalogActionPlan)
+    projected = apply_approved_field_projection(
+        {
+            "items": [
+                {
+                    "product_code": "X",
+                    "description": "ok",
+                    "secret_cost": 1,
+                    "internal_flag": True,
+                }
+            ],
+            "page": 1,
+            "internal_summary": {"total_cost": 9},
+        },
+        approved_fields=("product_code", "description"),
+    )
+    assert set(projected.keys()) == {"items", "page"}
+    assert set(projected["items"][0].keys()) == {"product_code", "description"}
+    assert "internal_summary" not in projected
+
+
+def test_flat_projection_drops_root_siblings_and_item_extras():
+    projected = apply_approved_field_projection(
+        {
+            "items": [
+                {
+                    "product_code": "A",
+                    "description": "Produto",
+                    "unit_cost": 99,
+                    "internal_flag": True,
+                }
+            ],
+            "page": 1,
+            "page_size": 50,
+            "total": 1,
+            "total_pages": 1,
+            "internal_summary": {"total_cost": 999},
+            "bom_validity": {"ok": True},
+            "reference_date": "20260101",
+        },
+        approved_fields=("product_code", "description"),
+    )
+    assert set(projected.keys()) == {
+        "items",
+        "page",
+        "page_size",
+        "total",
+        "total_pages",
+    }
+    assert set(projected["items"][0].keys()) == {"product_code", "description"}
+    assert "internal_summary" not in projected
+    assert "bom_validity" not in projected
+    assert "reference_date" not in projected
+
+
+def test_flat_root_object_fail_closed():
+    projected = apply_approved_field_projection(
+        {"product_code": "A", "description": "X", "secret_cost": 99},
+        approved_fields=("product_code", "description"),
+    )
+    assert projected == {"product_code": "A", "description": "X"}
+
+
+def test_top_level_list_fail_closed():
+    projected = apply_approved_field_projection(
+        [
+            {"name": "A", "secret": 1},
+            {"name": "B", "secret": 2},
+            {"name": "C", "secret": 3},
+        ],
+        approved_fields=("name",),
+        max_array_items=2,
+    )
+    assert projected == [{"name": "A"}, {"name": "B"}]
+
+
+def test_scalar_and_empty_projection_fail_closed():
+    assert apply_approved_field_projection("raw", approved_fields=("a",)) == {}
+    assert apply_approved_field_projection(42, approved_fields=("a",)) == {}
+    assert apply_approved_field_projection({"a": 1}, approved_fields=None) == {}
+    assert apply_approved_field_projection({"a": 1}, approved_fields=()) == {}
+
+
+def test_malformed_projection_paths_fail_closed():
+    raw = {"root": {"code": "A", "secret": 1}}
+    for bad in ("root..secret", "root[", "[]", "*", "root.*", "root.components[].*"):
+        projected = apply_approved_field_projection(raw, approved_fields=(bad,))
+        assert projected == {} or "secret" not in json.dumps(projected)
+
+
+def test_nested_unknown_fields_dropped_and_bounds():
+    deep = {"code": "L0", "secret": 1, "components": []}
+    node = deep
+    for i in range(1, 12):
+        child = {"code": f"L{i}", "secret": i, "components": []}
+        node["components"].append(child)
+        node = child
+    fields = (
+        "root.code",
+        "root.components[].code",
+        "root.components[].components[].code",
+        "root.components[].components[].components[].code",
+    )
+    projected = apply_approved_field_projection(
+        {"root": deep},
+        approved_fields=fields,
+        max_depth=2,
+        max_array_items=1,
+    )
+    assert projected["root"]["code"] == "L0"
+    assert "secret" not in projected["root"]
+    assert len(projected["root"]["components"]) == 1
+    assert "secret" not in projected["root"]["components"][0]
+
+
+def test_eligible_count_unchanged_at_seven():
+    actions = _load_baseline_actions()
+    eligible = sorted(a.operation_id for a in actions if a.executable)
+    assert eligible == sorted(_ELIGIBLE_V5_OPERATION_IDS)
+    assert len(eligible) == 7
