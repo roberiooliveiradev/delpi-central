@@ -39,24 +39,41 @@ def _search_products_runner(**kwargs: Any) -> dict[str, Any]:
     )
 
 
-def execute_delpi_information_wired(**kwargs: Any) -> dict[str, Any]:
-    """Wire approved Product Master path + lazy catalog-fixed GET adapter."""
+def execute_delpi_information_wired(
+    *,
+    authorization: str | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Bind per-request Authorization into infrastructure; Application never sees it."""
     from app.application.external_capabilities.dynamic_information.execute_service import (
         execute_delpi_information,
     )
-    from app.infrastructure.davi.asgi_catalog_fixed_get_adapter import (
-        AsgiCatalogFixedGetAdapter,
+    from app.domain.ports.davi_catalog_action_executor_port import (
+        CatalogActionExecutionResult,
+    )
+    from app.infrastructure.davi.asgi_catalog_action_executor import (
+        AsgiCatalogActionExecutor,
     )
 
-    class _LazyCatalogGetPort:
-        def execute(self, request, *, authorization: str):
+    class _RequestBoundCatalogActionExecutor:
+        def execute(
+            self,
+            *,
+            action_id: str,
+            validated_arguments: dict[str, Any],
+        ) -> CatalogActionExecutionResult:
+            if not authorization:
+                return CatalogActionExecutionResult(outcome="unauthorized")
             with open_api_delpi_asgi_client() as client:
-                return AsgiCatalogFixedGetAdapter(client).execute(
-                    request, authorization=authorization
+                return AsgiCatalogActionExecutor(
+                    client, authorization=authorization
+                ).execute(
+                    action_id=action_id,
+                    validated_arguments=validated_arguments,
                 )
 
     return execute_delpi_information(
-        catalog_get_port=_LazyCatalogGetPort(),
+        catalog_action_executor=_RequestBoundCatalogActionExecutor(),
         search_products_runner=_search_products_runner,
         **kwargs,
     )

@@ -1,7 +1,6 @@
-"""Compatibility shim — HTTP execution moved to Infrastructure adapter.
+"""Compatibility shim — HTTP execution lives in Infrastructure only.
 
-Application must not import HTTP clients. Prefer:
-  ``execution_plan.build_execution_plan`` + ``CatalogFixedGetPort``.
+Prefer ``CatalogActionExecutorPort`` + ``AsgiCatalogActionExecutor``.
 """
 
 from __future__ import annotations

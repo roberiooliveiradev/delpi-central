@@ -90,6 +90,8 @@ Stock (get_product_stock) = QUARANTINED (NEEDS_BRANCH_AUTHZ_EVIDENCE)
 Inventory evidence = docs/integrations/evidence/davi-api-delpi-operation-inventory.*
 Candidate tokens = actor-bound HMAC (DAVI_CANDIDATE_HMAC_SECRET preferred; JWT_SECRET fallback)
 Application dynamic broker = no HTTP/TestClient/Authorization header construction
+CatalogActionExecutorPort = action_id + validated_arguments only (Composition binds Authorization into Infrastructure)
+Infrastructure AsgiCatalogActionExecutor = catalog resolution + GET + Authorization + ASGI
 Dynamic search_products execution = approved external projection (product_code, description, group_category)
 bounded payload size != approved field projection
 ```

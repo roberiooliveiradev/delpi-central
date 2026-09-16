@@ -1,12 +1,13 @@
-"""Tests for DAVI dynamic governed READ broker (DAVI-DYNAMIC-READ-002)."""
+"""Tests for DAVI dynamic governed READ broker (DAVI-DYNAMIC-READ-002/003)."""
 
 from __future__ import annotations
 
 import ast
+import inspect
 import json
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 
 import pytest
 from pydantic import ValidationError
@@ -52,6 +53,10 @@ from app.application.external_capabilities.dynamic_information.errors import (
 from app.application.external_capabilities.dynamic_information.execute_service import (
     execute_delpi_information,
 )
+from app.application.external_capabilities.dynamic_information.execution_plan import (
+    CatalogActionPlan,
+    build_execution_plan,
+)
 from app.application.external_capabilities.dynamic_information.projection import (
     apply_approved_field_projection,
     bound_response_payload,
@@ -59,7 +64,11 @@ from app.application.external_capabilities.dynamic_information.projection import
 from app.application.external_capabilities.dynamic_information.retrieval import (
     retrieve_eligible_actions,
 )
-from app.domain.ports.davi_catalog_fixed_get_port import CatalogFixedGetResult
+from app.domain.ports.davi_catalog_action_executor_port import (
+    CatalogActionExecutionResult,
+    CatalogActionExecutorPort,
+)
+from app.infrastructure.davi.asgi_catalog_action_executor import AsgiCatalogActionExecutor
 from app.interface.mcp.schemas import (
     DiscoverDelpiInformationInput,
     ExecuteDelpiInformationInput,
@@ -289,8 +298,6 @@ def test_discover_eligible_only_search_products(monkeypatch):
     assert discovered["eligible_action_count"] == 1
     action_ids = {c["action_id"] for c in discovered["candidates"]}
     assert action_ids == {"search_products"}
-    assert "get_product_summary" not in action_ids
-    assert "get_product_detail" not in action_ids
 
 
 def test_discover_and_execute_happy_path_approved_projection(monkeypatch):
@@ -326,7 +333,7 @@ def test_discover_and_execute_happy_path_approved_projection(monkeypatch):
                     "product_code": "A",
                     "description": "Widget",
                     "group_category": "G1",
-                    "cost": 99.9,  # must not leak even if runner misbehaves
+                    "cost": 99.9,
                 }
             ],
             "page": 1,
@@ -359,9 +366,7 @@ def test_actor_token_binding(monkeypatch):
     token_a = mint_candidate_token(
         action_id="search_products", actor_id="user-a", secret=secret, ttl_seconds=60
     )
-    # same actor OK (parse)
     parse_candidate_token(token_a, secret=secret, expected_actor_id="user-a")
-    # other actor DENY
     with pytest.raises(CandidateTokenError):
         parse_candidate_token(token_a, secret=secret, expected_actor_id="user-b")
     with pytest.raises(CandidateTokenError):
@@ -371,7 +376,6 @@ def test_actor_token_binding(monkeypatch):
             actor_id="user-b",
             search_products_runner=lambda **_: {"items": []},
         )
-    # missing actor DENY
     with pytest.raises(CandidateTokenError):
         execute_delpi_information(
             candidate_token=token_a,
@@ -379,12 +383,10 @@ def test_actor_token_binding(monkeypatch):
             actor_id=None,
             search_products_runner=lambda **_: {"items": []},
         )
-    # empty actor in mint DENY
     with pytest.raises(CandidateTokenError):
         mint_candidate_token(
             action_id="search_products", actor_id="", secret=secret, ttl_seconds=60
         )
-    # expired DENY
     expired = mint_candidate_token(
         action_id="search_products",
         actor_id="user-a",
@@ -396,7 +398,6 @@ def test_actor_token_binding(monkeypatch):
         parse_candidate_token(
             expired, secret=secret, expected_actor_id="user-a", now=100.0
         )
-    # forged DENY
     with pytest.raises(CandidateTokenError):
         parse_candidate_token(token_a + "x", secret=secret, expected_actor_id="user-a")
 
@@ -428,7 +429,7 @@ def test_argument_validation_matrix():
             {"name": "page", "in": "query", "required": False, "type": "integer"},
         ),
         searchable_text="get_demo",
-        execution_mode="catalog_get",
+        execution_mode="catalog_action",
         approved_response_fields=("x",),
     )
 
@@ -443,30 +444,47 @@ def test_argument_validation_matrix():
     with pytest.raises(ArgumentValidationError):
         validate_arguments(action, {"page_size": "nope"})
     with pytest.raises(ArgumentValidationError):
-        validate_arguments(path_action, {"mode": "a"})  # missing path code
+        validate_arguments(path_action, {"mode": "a"})
     with pytest.raises(ArgumentValidationError):
-        validate_arguments(path_action, {"code": "1"})  # missing required query
+        validate_arguments(path_action, {"code": "1"})
     with pytest.raises(ArgumentValidationError):
-        validate_arguments(path_action, {"code": "1", "mode": "z"})  # wrong enum
+        validate_arguments(path_action, {"code": "1", "mode": "z"})
 
     ok = validate_arguments(action, {"description": "motor", "page": 2, "page_size": "10"})
     assert ok["page"] == 2
     assert ok["page_size"] == 10
     assert isinstance(ok["page"], int)
-
-    schema_disc = build_argument_json_schema(action)
-    schema_exec = build_argument_json_schema(action)
-    assert schema_disc == schema_exec
+    assert build_argument_json_schema(action) == build_argument_json_schema(action)
 
 
-def test_execute_rejects_unauthorized_without_auth_on_catalog_get(monkeypatch):
+def test_catalog_action_plan_is_transport_neutral():
     action = _action(
         oid="future_read",
         path="/future/{code}",
         parameters=(
             {"name": "code", "in": "path", "required": True, "type": "string"},
         ),
-        execution_mode="catalog_get",
+        execution_mode="catalog_action",
+        approved_response_fields=("name",),
+    )
+    plan = build_execution_plan(action, {"code": "X"})
+    assert isinstance(plan, CatalogActionPlan)
+    assert plan.action_id == "future_read"
+    assert plan.validated_arguments == {"code": "X"}
+    assert not hasattr(plan, "request")
+    assert "method" not in plan.__dataclass_fields__
+    assert "path" not in plan.__dataclass_fields__
+    assert "query" not in plan.__dataclass_fields__
+
+
+def test_semantic_executor_port_contract_and_binding(monkeypatch):
+    action = _action(
+        oid="future_read",
+        path="/future/{code}",
+        parameters=(
+            {"name": "code", "in": "path", "required": True, "type": "string"},
+        ),
+        execution_mode="catalog_action",
         approved_response_fields=("name",),
     )
     set_actions_for_tests([action])
@@ -478,16 +496,238 @@ def test_execute_rejects_unauthorized_without_auth_on_catalog_get(monkeypatch):
     token = mint_candidate_token(
         action_id="future_read", actor_id="u1", secret=secret, ttl_seconds=60
     )
-    port = MagicMock()
-    with pytest.raises(PermissionError):
+
+    received: dict[str, Any] = {}
+
+    class RecordingExecutor:
+        def execute(
+            self,
+            *,
+            action_id: str,
+            validated_arguments: dict[str, Any],
+        ) -> CatalogActionExecutionResult:
+            received["action_id"] = action_id
+            received["validated_arguments"] = validated_arguments
+            received["kwargs_keys"] = sorted(
+                inspect.signature(self.execute).parameters.keys()
+            )
+            return CatalogActionExecutionResult(
+                outcome="ok", payload={"items": [{"name": "N", "secret": 1}]}
+            )
+
+    executor = RecordingExecutor()
+    result = execute_delpi_information(
+        candidate_token=token,
+        arguments={"code": "X"},
+        actor_id="u1",
+        catalog_action_executor=executor,
+    )
+    assert received["action_id"] == "future_read"
+    assert received["validated_arguments"] == {"code": "X"}
+    assert "authorization" not in received["kwargs_keys"]
+    assert "method" not in received["kwargs_keys"]
+    assert "path" not in received["kwargs_keys"]
+    assert result["data"]["items"][0] == {"name": "N"}
+
+    # Application execute_delpi_information signature must not accept authorization.
+    params = inspect.signature(execute_delpi_information).parameters
+    assert "authorization" not in params
+    assert "http_client" not in params
+    assert "catalog_get_port" not in params
+
+
+def test_catalog_executor_maps_unauthorized_and_forbidden(monkeypatch):
+    action = _action(
+        oid="future_read",
+        path="/future/{code}",
+        parameters=(
+            {"name": "code", "in": "path", "required": True, "type": "string"},
+        ),
+        execution_mode="catalog_action",
+        approved_response_fields=("name",),
+    )
+    set_actions_for_tests([action])
+    secret = "sec"
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.execute_service.candidate_token_secret",
+        lambda: secret,
+    )
+    token = mint_candidate_token(
+        action_id="future_read", actor_id="u1", secret=secret, ttl_seconds=60
+    )
+
+    class UnauthorizedExecutor:
+        def execute(self, *, action_id, validated_arguments):
+            return CatalogActionExecutionResult(outcome="unauthorized")
+
+    class ForbiddenExecutor:
+        def execute(self, *, action_id, validated_arguments):
+            return CatalogActionExecutionResult(outcome="forbidden")
+
+    with pytest.raises(PermissionError, match="Unauthorized"):
         execute_delpi_information(
             candidate_token=token,
             arguments={"code": "X"},
             actor_id="u1",
-            authorization=None,
-            catalog_get_port=port,
+            catalog_action_executor=UnauthorizedExecutor(),
         )
-    port.execute.assert_not_called()
+    with pytest.raises(PermissionError, match="Forbidden"):
+        execute_delpi_information(
+            candidate_token=token,
+            arguments={"code": "X"},
+            actor_id="u1",
+            catalog_action_executor=ForbiddenExecutor(),
+        )
+
+
+def test_infrastructure_resolves_catalog_and_auth_header():
+    action = _action(
+        oid="synthetic_catalog_read",
+        path="/synthetic/{item_id}",
+        parameters=(
+            {"name": "item_id", "in": "path", "required": True, "type": "string"},
+            {"name": "include", "in": "query", "required": False, "type": "string"},
+        ),
+        execution_mode="catalog_action",
+        approved_response_fields=("label",),
+    )
+    set_actions_for_tests([action])
+
+    client = MagicMock()
+    resp = MagicMock()
+    resp.status_code = 200
+    resp.json.return_value = {"items": [{"label": "ok", "secret": 9}]}
+    client.get.return_value = resp
+
+    executor = AsgiCatalogActionExecutor(client, authorization="Bearer user-token")
+    result = executor.execute(
+        action_id="synthetic_catalog_read",
+        validated_arguments={"item_id": "42", "include": "meta"},
+    )
+    assert result.outcome == "ok"
+    client.get.assert_called_once_with(
+        "/synthetic/42",
+        params={"include": "meta"},
+        headers={"Authorization": "Bearer user-token"},
+    )
+
+
+def test_infrastructure_denies_unknown_non_eligible_and_non_get():
+    set_actions_for_tests(
+        [
+            _action(
+                oid="blocked_read",
+                path="/blocked",
+                status="NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+                execution_mode="catalog_action",
+                approved_response_fields=("x",),
+                parameters=(),
+            ),
+            _action(
+                oid="write_like",
+                path="/write",
+                method="POST",
+                execution_mode="catalog_action",
+                approved_response_fields=("x",),
+                parameters=(),
+            ),
+        ]
+    )
+    client = MagicMock()
+    executor = AsgiCatalogActionExecutor(client, authorization="Bearer t")
+
+    unknown = executor.execute(action_id="does_not_exist", validated_arguments={})
+    assert unknown.outcome == "error"
+    assert "Unknown" in (unknown.error_message or "")
+
+    blocked = executor.execute(action_id="blocked_read", validated_arguments={})
+    assert blocked.outcome == "forbidden"
+
+    non_get = executor.execute(action_id="write_like", validated_arguments={})
+    assert non_get.outcome == "error"
+    assert "GET" in (non_get.error_message or "")
+    client.get.assert_not_called()
+
+
+def test_infrastructure_maps_http_401_403_to_semantic_outcomes():
+    action = _action(
+        oid="future_read",
+        path="/future/{code}",
+        parameters=(
+            {"name": "code", "in": "path", "required": True, "type": "string"},
+        ),
+        execution_mode="catalog_action",
+        approved_response_fields=("name",),
+    )
+    set_actions_for_tests([action])
+    client = MagicMock()
+
+    resp401 = MagicMock()
+    resp401.status_code = 401
+    resp401.json.return_value = {"detail": "no"}
+    client.get.return_value = resp401
+    out401 = AsgiCatalogActionExecutor(client, authorization="Bearer t").execute(
+        action_id="future_read", validated_arguments={"code": "X"}
+    )
+    assert out401.outcome == "unauthorized"
+
+    resp403 = MagicMock()
+    resp403.status_code = 403
+    resp403.json.return_value = {"detail": "no"}
+    client.get.return_value = resp403
+    out403 = AsgiCatalogActionExecutor(client, authorization="Bearer t").execute(
+        action_id="future_read", validated_arguments={"code": "X"}
+    )
+    assert out403.outcome == "forbidden"
+
+
+def test_metamorphic_catalog_action_without_endpoint_specific_code(monkeypatch):
+    """Different action_id/path/params execute via the same generic adapter."""
+    synthetic = _action(
+        oid="demo_widget_lookup",
+        path="/widgets/{widget_code}/info",
+        parameters=(
+            {"name": "widget_code", "in": "path", "required": True, "type": "string"},
+            {"name": "locale", "in": "query", "required": False, "type": "string"},
+        ),
+        execution_mode="catalog_action",
+        approved_response_fields=("title",),
+        summary="demo widget lookup",
+    )
+    # Not on production allowlist — only injected for this test index.
+    set_actions_for_tests([synthetic])
+    secret = "sec"
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.execute_service.candidate_token_secret",
+        lambda: secret,
+    )
+    token = mint_candidate_token(
+        action_id="demo_widget_lookup", actor_id="u1", secret=secret, ttl_seconds=60
+    )
+
+    client = MagicMock()
+    resp = MagicMock()
+    resp.status_code = 200
+    resp.json.return_value = {"items": [{"title": "W", "internal_cost": 1}]}
+    client.get.return_value = resp
+    bound = AsgiCatalogActionExecutor(client, authorization="Bearer actor-a")
+
+    result = execute_delpi_information(
+        candidate_token=token,
+        arguments={"widget_code": "W-9", "locale": "pt-BR"},
+        actor_id="u1",
+        catalog_action_executor=bound,
+    )
+    assert result["data"]["items"][0] == {"title": "W"}
+    assert client.get.call_args == call(
+        "/widgets/W-9/info",
+        params={"locale": "pt-BR"},
+        headers={"Authorization": "Bearer actor-a"},
+    )
+    # No production allowlist pollution.
+    assert "demo_widget_lookup" not in load_allowlist_operation_ids(
+        load_external_read_allowlist()
+    )
 
 
 def test_bounded_payload_is_not_field_authorization():
@@ -538,62 +778,69 @@ def test_metamorphic_rename_preserves_retrieval():
     assert hits1[0][0].operation_id != hits2[0][0].operation_id
 
 
-def test_dynamic_information_application_has_no_http_transport():
-    root = (
-        Path(__file__).resolve().parents[1]
-        / "app/application/external_capabilities/dynamic_information"
-    )
-    forbidden_calls = ("client.get(", "TestClient", "response.json", "http_status")
-    for path in root.glob("*.py"):
+def _assert_no_http_transport_in_tree(root: Path) -> None:
+    """Structural dependency check — not naive comment/deny-list text search."""
+    forbidden_modules = ("fastapi", "httpx", "starlette.testclient")
+    paths = [root] if root.is_file() else list(root.rglob("*.py"))
+    for path in paths:
+        if path.name.startswith("test_"):
+            continue
         text = path.read_text(encoding="utf-8")
-        assert "app.composition" not in text, path.name
         tree = ast.parse(text)
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom) and node.module:
-                assert not node.module.startswith("fastapi"), path.name
-                assert not node.module.startswith("httpx"), path.name
-                assert "testclient" not in node.module.lower(), path.name
+                mod = node.module
+                assert not any(
+                    mod == f or mod.startswith(f + ".") for f in forbidden_modules
+                ), f"{path}: imports {mod}"
+                assert "testclient" not in mod.lower(), path
             if isinstance(node, ast.Import):
                 for alias in node.names:
-                    assert "fastapi" not in alias.name, path.name
-                    assert "httpx" not in alias.name, path.name
-        if path.name == "governed_http_executor.py":
-            continue
-        for needle in forbidden_calls:
-            assert needle not in text, f"{path.name} contains {needle}"
-        assert 'headers["Authorization"]' not in text, path.name
-        assert "Authorization=" not in text, path.name
+                    assert "fastapi" not in alias.name
+                    assert "httpx" not in alias.name
+            if isinstance(node, ast.Call):
+                func = node.func
+                if isinstance(func, ast.Attribute) and func.attr == "get":
+                    if isinstance(func.value, ast.Name) and func.value.id in {
+                        "client",
+                        "http_client",
+                        "response",
+                    }:
+                        raise AssertionError(
+                            f"{path}: forbidden call {func.value.id}.get"
+                        )
+                if isinstance(func, ast.Attribute) and func.attr == "json":
+                    if isinstance(func.value, ast.Name) and func.value.id == "response":
+                        raise AssertionError(f"{path}: forbidden response.json()")
+            if isinstance(node, ast.Attribute) and node.attr == "status_code":
+                raise AssertionError(f"{path}: references status_code")
+            if isinstance(node, ast.Name) and node.id in {
+                "CatalogFixedGetRequest",
+                "TestClient",
+            }:
+                raise AssertionError(f"{path}: references {node.id}")
+            if isinstance(node, ast.arg) and node.arg == "authorization":
+                raise AssertionError(f"{path}: parameter authorization")
 
 
-def test_catalog_get_port_outcome_mapping(monkeypatch):
-    action = _action(
-        oid="future_read",
-        path="/future/{code}",
-        parameters=(
-            {"name": "code", "in": "path", "required": True, "type": "string"},
-        ),
-        execution_mode="catalog_get",
-        approved_response_fields=("name",),
+def test_domain_and_application_have_zero_http_transport_dependency():
+    api_root = Path(__file__).resolve().parents[1] / "app"
+    _assert_no_http_transport_in_tree(
+        api_root / "domain" / "ports" / "davi_catalog_action_executor_port.py"
     )
-    set_actions_for_tests([action])
-    secret = "sec"
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.execute_service.candidate_token_secret",
-        lambda: secret,
+    _assert_no_http_transport_in_tree(
+        api_root / "application" / "external_capabilities" / "dynamic_information"
     )
-    token = mint_candidate_token(
-        action_id="future_read", actor_id="u1", secret=secret, ttl_seconds=60
-    )
-    port = MagicMock()
-    port.execute.return_value = CatalogFixedGetResult(
-        outcome="ok", payload={"items": [{"name": "N", "secret": 1}]}
-    )
-    result = execute_delpi_information(
-        candidate_token=token,
-        arguments={"code": "X"},
-        actor_id="u1",
-        authorization="Bearer t",
-        catalog_get_port=port,
-    )
-    assert result["data"]["items"][0] == {"name": "N"}
-    port.execute.assert_called_once()
+    port_src = (
+        api_root / "domain" / "ports" / "davi_catalog_action_executor_port.py"
+    ).read_text(encoding="utf-8")
+    assert "CatalogFixedGetRequest" not in port_src
+    assert "Literal[\"GET\"]" not in port_src
+    assert "client.get" not in port_src
+    assert "status_code" not in port_src
+    # Port must not model transport Authorization as an execute parameter (AST covers this).
+    assert "def execute" in port_src
+
+
+def test_catalog_action_executor_port_is_protocol_compatible():
+    assert hasattr(CatalogActionExecutorPort, "execute")

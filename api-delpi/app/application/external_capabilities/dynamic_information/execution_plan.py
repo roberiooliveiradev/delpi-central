@@ -1,4 +1,4 @@
-"""Application-side execution planning (no HTTP transport)."""
+"""Application-side execution planning (transport-neutral)."""
 
 from __future__ import annotations
 
@@ -7,24 +7,19 @@ from typing import Any, Literal
 
 from app.application.external_capabilities.dynamic_information.argument_validator import (
     ArgumentValidationError,
-    split_path_and_query,
     validate_arguments,
 )
 from app.application.external_capabilities.dynamic_information.catalog_builder import (
     TechnicalAction,
 )
-from app.application.external_capabilities.dynamic_information.errors import (
-    GovernedExecutionError,
-)
-from app.domain.ports.davi_catalog_fixed_get_port import CatalogFixedGetRequest
 
 EXECUTION_MODE_APPROVED_EXTERNAL = "approved_external_capability"
-EXECUTION_MODE_CATALOG_GET = "catalog_get"
+EXECUTION_MODE_CATALOG_ACTION = "catalog_action"
 
 
 @dataclass(frozen=True)
 class ApprovedCapabilityPlan:
-    """Execute via approved Application external capability (not raw HTTP)."""
+    """Execute via approved Application external capability (not catalog transport)."""
 
     kind: Literal["approved_external_capability"]
     action_id: str
@@ -33,26 +28,23 @@ class ApprovedCapabilityPlan:
 
 
 @dataclass(frozen=True)
-class CatalogGetPlan:
-    """Execute via catalog-fixed GET port (future eligible actions)."""
+class CatalogActionPlan:
+    """Execute via bound CatalogActionExecutorPort (action_id + validated args only)."""
 
-    kind: Literal["catalog_get"]
+    kind: Literal["catalog_action"]
     action_id: str
-    request: CatalogFixedGetRequest
+    validated_arguments: dict[str, Any]
 
 
-ExecutionPlan = ApprovedCapabilityPlan | CatalogGetPlan
+ExecutionPlan = ApprovedCapabilityPlan | CatalogActionPlan
 
 
 def build_execution_plan(
     action: TechnicalAction,
     arguments: dict[str, Any] | None,
 ) -> ExecutionPlan:
-    if action.method != "GET":
-        raise GovernedExecutionError("Only GET actions are executable in V1")
-
     validated = validate_arguments(action, arguments)
-    mode = (action.execution_mode or "").strip() or EXECUTION_MODE_CATALOG_GET
+    mode = (action.execution_mode or "").strip() or EXECUTION_MODE_CATALOG_ACTION
 
     if (
         action.operation_id == "search_products"
@@ -69,14 +61,8 @@ def build_execution_plan(
             arguments=validated,
         )
 
-    path, query = split_path_and_query(action, validated)
-    return CatalogGetPlan(
-        kind="catalog_get",
+    return CatalogActionPlan(
+        kind="catalog_action",
         action_id=action.action_id,
-        request=CatalogFixedGetRequest(
-            action_id=action.action_id,
-            method="GET",
-            path=path,
-            query=query,
-        ),
+        validated_arguments=validated,
     )

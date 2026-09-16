@@ -186,23 +186,3 @@ def validate_arguments(
         cleaned[key] = _coerce_value(key, value, properties[key])
     return cleaned
 
-
-def split_path_and_query(
-    action: TechnicalAction,
-    arguments: dict[str, Any],
-) -> tuple[str, dict[str, Any]]:
-    """Fill path template and return remaining query arguments."""
-    from urllib.parse import quote
-
-    remaining = dict(arguments)
-    parts: list[str] = []
-    for segment in action.path.split("/"):
-        if segment.startswith("{") and segment.endswith("}"):
-            name = segment[1:-1]
-            if name not in remaining:
-                raise ArgumentValidationError(f"Missing path parameter: {name}")
-            value = remaining.pop(name)
-            parts.append(quote(str(value), safe=""))
-        else:
-            parts.append(segment)
-    return "/".join(parts), remaining

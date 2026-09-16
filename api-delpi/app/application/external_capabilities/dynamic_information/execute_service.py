@@ -1,4 +1,4 @@
-"""Execute DELPI information — catalog-fixed plan + approved projection (no HTTP)."""
+"""Execute DELPI information — catalog plan + approved projection (no HTTP)."""
 
 from __future__ import annotations
 
@@ -24,14 +24,14 @@ from app.application.external_capabilities.dynamic_information.errors import (
 )
 from app.application.external_capabilities.dynamic_information.execution_plan import (
     ApprovedCapabilityPlan,
-    CatalogGetPlan,
+    CatalogActionPlan,
     build_execution_plan,
 )
 from app.application.external_capabilities.dynamic_information.projection import (
     apply_approved_field_projection,
     bound_response_payload,
 )
-from app.domain.ports.davi_catalog_fixed_get_port import CatalogFixedGetPort
+from app.domain.ports.davi_catalog_action_executor_port import CatalogActionExecutorPort
 
 SearchProductsRunner = Callable[..., dict[str, Any]]
 
@@ -41,11 +41,10 @@ def execute_delpi_information(
     candidate_token: str,
     arguments: dict[str, Any] | None = None,
     actor_id: str | None = None,
-    authorization: str | None = None,
-    catalog_get_port: CatalogFixedGetPort | None = None,
+    catalog_action_executor: CatalogActionExecutorPort | None = None,
     search_products_runner: SearchProductsRunner | None = None,
 ) -> dict[str, Any]:
-    """Governed execute. Application never sees HTTP clients or status codes."""
+    """Governed execute. Application never sees HTTP, headers, or status codes."""
     if not candidate_token:
         raise CandidateTokenError("candidate_token is required")
     if not (actor_id or "").strip():
@@ -81,26 +80,26 @@ def execute_delpi_information(
             enforce_authz=True,
             tool_name="execute_delpi_information",
         )
-        # Runner already returns approved projection; enforce field allowlist again.
         body = apply_approved_field_projection(
             body,
             approved_fields=action.approved_response_fields
             or ("product_code", "description", "group_category"),
             list_key="items",
         )
-    elif isinstance(plan, CatalogGetPlan):
-        if catalog_get_port is None:
-            raise GovernedExecutionError("Catalog GET port is not configured")
-        if not authorization:
-            raise PermissionError("Unauthorized")
-        result = catalog_get_port.execute(plan.request, authorization=authorization)
+    elif isinstance(plan, CatalogActionPlan):
+        if catalog_action_executor is None:
+            raise GovernedExecutionError("Catalog action executor is not configured")
+        result = catalog_action_executor.execute(
+            action_id=plan.action_id,
+            validated_arguments=plan.validated_arguments,
+        )
         if result.outcome == "unauthorized":
             raise PermissionError("Unauthorized")
         if result.outcome == "forbidden":
             raise PermissionError("Forbidden")
         if result.outcome != "ok":
             raise GovernedExecutionError(
-                result.error_message or "Catalog GET execution failed"
+                result.error_message or "Catalog action execution failed"
             )
         body = apply_approved_field_projection(
             result.payload,
@@ -115,7 +114,6 @@ def execute_delpi_information(
         max_bytes=int(budgets.get("execute_max_response_bytes") or 65536),
         max_items=int(budgets.get("execute_max_items") or 50),
     )
-    # Size bounding ≠ field authorization. Field allowlist applied above when configured.
     return {
         "action_id": action.action_id,
         "status": "ok",
