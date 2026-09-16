@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
-import { BarChart3, Eye, RefreshCw, Search, User } from "lucide-react";
+import { BarChart3, Eye, ListFilter, MoreVertical, RefreshCw, Search, User } from "lucide-react";
 import {
   fetchPublicMachineLoad,
   type MachineLoadOperation,
@@ -18,6 +18,7 @@ import {
   formatPercent,
   formatQty,
   formatUnit,
+  isFinishedOperation,
   operationKey,
   resolveStatus,
 } from "./cockpitShared";
@@ -42,6 +43,7 @@ function isRunningOperation(operation: MachineLoadOperation): boolean {
 
 const LIVE_STATUS_POLL_MS = 15_000;
 const STORAGE_PREFIX = "delpi.pcp.cockpit.work-center";
+const HIDE_FINISHED_PREFIX = "delpi.pcp.cockpit.hide-finished";
 
 type Props = {
   token: string;
@@ -64,6 +66,10 @@ function storageKey(branch: string): string {
   return `${STORAGE_PREFIX}.${branch}`;
 }
 
+function hideFinishedStorageKey(branch: string, workCenter: string): string {
+  return `${HIDE_FINISHED_PREFIX}.${branch}.${workCenter}`;
+}
+
 function readStoredWorkCenter(branch: string): string | null {
   try {
     return window.localStorage.getItem(storageKey(branch));
@@ -78,6 +84,24 @@ function storeWorkCenter(branch: string, workCenter: string | null): void {
     else window.localStorage.removeItem(storageKey(branch));
   } catch {
     /* modo privado sem storage: a escolha vale só para esta sessão */
+  }
+}
+
+function readHideFinished(branch: string, workCenter: string): boolean {
+  try {
+    return window.localStorage.getItem(hideFinishedStorageKey(branch, workCenter)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function storeHideFinished(branch: string, workCenter: string, hide: boolean): void {
+  try {
+    const key = hideFinishedStorageKey(branch, workCenter);
+    if (hide) window.localStorage.setItem(key, "1");
+    else window.localStorage.removeItem(key);
+  } catch {
+    /* modo privado: só vale na sessão */
   }
 }
 
@@ -104,10 +128,19 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const [updatedAt, setUpdatedAt] = useState<Date>(() => new Date());
   const [visualTarget, setVisualTarget] = useState<VisualTarget | null>(null);
   const [queueQuery, setQueueQuery] = useState("");
+  const [hideFinished, setHideFinished] = useState(false);
   const workCenterRef = useRef(workCenter);
   workCenterRef.current = workCenter;
   const reloadGenerationRef = useRef(0);
   const { view, openQueue, openOperation, openPerformance } = useCockpitView();
+
+  useEffect(() => {
+    if (!workCenter) {
+      setHideFinished(false);
+      return;
+    }
+    setHideFinished(readHideFinished(branch, workCenter));
+  }, [branch, workCenter]);
 
   const reload = useCallback(
     async (center: string | null, options?: { quiet?: boolean }) => {
@@ -177,25 +210,48 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     openQueue();
   };
 
+  const toggleHideFinished = () => {
+    if (!workCenter) return;
+    setHideFinished((current) => {
+      const next = !current;
+      storeHideFinished(branch, workCenter, next);
+      return next;
+    });
+  };
+
   const activeCenter = payload.work_centers.find((item) => item.work_center === workCenter);
   const items =
     workCenter && payload.selected.work_center === workCenter ? payload.selected.items : [];
 
+  const finishedCount = useMemo(
+    () => items.filter(isFinishedOperation).length,
+    [items],
+  );
+
+  const visibleItems = useMemo(
+    () => (hideFinished ? items.filter((operation) => !isFinishedOperation(operation)) : items),
+    [items, hideFinished],
+  );
+
   const activeEntry = useMemo<QueueEntry | null>(() => {
-    if (items.length === 0) return null;
-    const runningIndex = items.findIndex(isRunningOperation);
-    const index = runningIndex >= 0 ? runningIndex : 0;
-    return { operation: items[index]!, position: index + 1 };
-  }, [items]);
+    if (visibleItems.length === 0) return null;
+    const runningIndex = visibleItems.findIndex(isRunningOperation);
+    const operation = visibleItems[runningIndex >= 0 ? runningIndex : 0]!;
+    const position = items.findIndex((item) => operationKey(item) === operationKey(operation)) + 1;
+    return { operation, position: Math.max(1, position) };
+  }, [visibleItems, items]);
 
   const upcomingEntries = useMemo(() => {
     const term = queueQuery.trim().toLowerCase();
     const activeKey = activeEntry ? operationKey(activeEntry.operation) : null;
-    return items
-      .map((operation, index) => ({ operation, position: index + 1 }))
+    return visibleItems
+      .map((operation) => {
+        const position = items.findIndex((item) => operationKey(item) === operationKey(operation)) + 1;
+        return { operation, position: Math.max(1, position) };
+      })
       .filter(({ operation }) => operationKey(operation) !== activeKey)
       .filter(({ operation }) => matchesQueueSearch(operation, term));
-  }, [items, queueQuery, activeEntry]);
+  }, [visibleItems, items, queueQuery, activeEntry]);
 
   const selectedOperation = useMemo(() => {
     if (view.kind !== "operation") return null;
@@ -286,14 +342,18 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
               </div>
             </div>
             <div className="pcp-pub__topbar-actions">
-              <button type="button" className="pcp-pub__ghost pcp-pub__ghost--link" onClick={openPerformance}>
-                <BarChart3 size={18} strokeWidth={2} aria-hidden="true" />
-                Ver desempenho
-              </button>
-              <button type="button" className="pcp-pub__ghost pcp-pub__ghost--link" onClick={clearWorkCenter}>
-                <RefreshCw size={18} strokeWidth={2} aria-hidden="true" />
-                Trocar posto
-              </button>
+              {hideFinished ? (
+                <span className="pcp-pub__topbar-chip" title="Ordens já apontadas ocultas neste posto">
+                  Fila limpa
+                </span>
+              ) : null}
+              <CockpitActionsMenu
+                hideFinished={hideFinished}
+                finishedCount={finishedCount}
+                onOpenPerformance={openPerformance}
+                onClearWorkCenter={clearWorkCenter}
+                onToggleHideFinished={toggleHideFinished}
+              />
             </div>
           </div>
         </div>
@@ -353,6 +413,11 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
         {items.length === 0 ? (
           <p className="pcp-pub__empty">
             {loading ? "Carregando fila…" : "Nenhuma operação programada para este posto."}
+          </p>
+        ) : visibleItems.length === 0 ? (
+          <p className="pcp-pub__empty">
+            Todas as operações deste posto já foram apontadas. Use Ações → Mostrar apontadas para
+            vê-las de novo.
           </p>
         ) : (
           <>
@@ -464,6 +529,102 @@ type PickerProps = {
   workCenters: MachineLoadWorkCenter[];
   onSelect: (workCenter: string) => void;
 };
+
+function CockpitActionsMenu({
+  hideFinished,
+  finishedCount,
+  onOpenPerformance,
+  onClearWorkCenter,
+  onToggleHideFinished,
+}: {
+  hideFinished: boolean;
+  finishedCount: number;
+  onOpenPerformance: () => void;
+  onClearWorkCenter: () => void;
+  onToggleHideFinished: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const run = (action: () => void) => {
+    setOpen(false);
+    action();
+  };
+
+  return (
+    <div className="pcp-pub__actions-menu" ref={rootRef}>
+      <button
+        type="button"
+        className={`pcp-pub__actions-trigger ${open ? "is-open" : ""}`}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="Ações da fila"
+        title="Ações"
+        onClick={() => setOpen((value) => !value)}
+      >
+        <MoreVertical size={20} strokeWidth={2.2} aria-hidden="true" />
+      </button>
+      {open ? (
+        <div className="pcp-pub__actions-panel" role="menu" aria-label="Ações da fila">
+          <button
+            type="button"
+            role="menuitem"
+            className="pcp-pub__actions-item"
+            onClick={() => run(onOpenPerformance)}
+          >
+            <BarChart3 size={18} strokeWidth={2} aria-hidden="true" />
+            Ver desempenho
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="pcp-pub__actions-item"
+            onClick={() => run(onClearWorkCenter)}
+          >
+            <RefreshCw size={18} strokeWidth={2} aria-hidden="true" />
+            Trocar posto
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className={`pcp-pub__actions-item ${hideFinished ? "is-active" : ""}`}
+            onClick={() => run(onToggleHideFinished)}
+            title={
+              hideFinished
+                ? "Volta a exibir as operações já apontadas nesta fila."
+                : "Esconde as operações já apontadas. A preferência fica salva neste aparelho."
+            }
+          >
+            <ListFilter size={18} strokeWidth={2} aria-hidden="true" />
+            {hideFinished
+              ? finishedCount > 0
+                ? `Mostrar apontadas (${finishedCount})`
+                : "Mostrar apontadas"
+              : finishedCount > 0
+                ? `Limpar fila (${finishedCount})`
+                : "Limpar fila"}
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 function WorkCenterPicker({ branch, workCenters, onSelect }: PickerProps) {
   const [query, setQuery] = useState("");
