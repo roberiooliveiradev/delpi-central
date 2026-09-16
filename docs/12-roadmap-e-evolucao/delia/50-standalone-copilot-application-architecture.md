@@ -62,11 +62,11 @@ Copiar dívida técnica ou criar dependência transitiva do Chat é `FAIL` arqui
 
 ## 3. Owners físicos alvo
 
-C0.S1-T1 persiste o freeze candidato de naming/physical ownership (`PLANNED / FROZEN_CANDIDATE`; ver `68`). Aceite arquitetural ainda pendente.
+C0.S1 naming/physical ownership freeze foi aceito pelo `ARCHITECTURE_REVIEW_C0_S1` (`PLANNED / FROZEN_ACCEPTED`; `REVIEWED_HEAD=c822f0e72495256c3459a4b36b9c37a3bba95cbb`; ver `68`).
 
 ```text
-/delia-api/                         # backend independente; FROZEN_CANDIDATE
-/plugins/delia/                     # MFE independente; FROZEN_CANDIDATE
+/delia-api/                         # backend independente; FROZEN_ACCEPTED
+/plugins/delia/                     # MFE independente; FROZEN_ACCEPTED
 /docs/12-roadmap-e-evolucao/delia/  # documentação canônica atual
 ```
 
@@ -246,14 +246,14 @@ DÉLIA deve reutilizar/evoluir contrato genérico de host somente após contract
 
 **TARGET:** manifesto da DÉLIA registra app federado com base path próprio se a convenção vigente for confirmada.
 
-Freeze candidato C0.S1 (`PLANNED / FROZEN_CANDIDATE`):
+Freeze aceito C0.S1 (`PLANNED / FROZEN_ACCEPTED`):
 
 ```text
 /apps/delia
 /apps/delia/assets/remoteEntry.js
 ```
 
-Histórico supersedido: `/apps/minha-delpi-copilot` (temporary planned). Aceite arquitetural ainda pendente; C1 implementa após Foundation Freeze.
+Histórico supersedido: `/apps/minha-delpi-copilot` (temporary planned). C1 implementa somente após Foundation Freeze.
 
 ### 8.2 Global DÉLIA surface
 
@@ -526,7 +526,7 @@ A aplicação terá, quando implementada, entradas próprias conforme contratos 
 - logs/metrics;
 - manifesto/registro Core.
 
-Freeze candidato C0.S1 (`PLANNED / FROZEN_CANDIDATE`; ver `68`):
+Freeze aceito C0.S1 (`PLANNED / FROZEN_ACCEPTED`; ver `68`):
 
 ```text
 service: delia-api
@@ -542,7 +542,7 @@ Histórico supersedido: `minha-delpi-copilot*` / `/apps/minha-delpi-copilot*`.
 
 Media/realtime support pode exigir tuning de Gateway/infra, mas não cria outro product boundary.
 
-Nomes/paths acima são freeze candidato — não implementação; endpoint inventory `/v1/*`, SSE, WebSocket e callbacks detalhados ficam para passos posteriores de contrato.
+Nomes/paths acima são freeze aceito — não implementação; endpoint inventory `/v1/*`, SSE, WebSocket e callbacks detalhados ficam para passos posteriores de contrato.
 
 ## 22. Relação com Minha DELPI Chat
 
@@ -631,11 +631,11 @@ Este documento define boundary/target; não prova implementação da DÉLIA.
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 C0.S0 = APPROVED
-C0.S1_AUTHORIZED = YES
-C0.S1 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C0.S1 = APPROVED
+C0.S2_AUTHORIZED = YES
 FOUNDATION_FREEZE = NOT APPROVED
 DÉLIA_RUNTIME_DIFF = NONE
-NEXT = ARCHITECTURE_REVIEW_C0_S1
+NEXT = C0.S2 — Authorities / bounded contexts
 ```
 
 Qualquer claim de runtime deve vir do ledger/evidence para o SHA/config avaliados.
