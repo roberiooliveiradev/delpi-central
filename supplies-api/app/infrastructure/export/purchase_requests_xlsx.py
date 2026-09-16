@@ -3,8 +3,6 @@ from __future__ import annotations
 from io import BytesIO
 from typing import Any
 
-from openpyxl import Workbook
-
 XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 EXPORT_FILENAME = "purchase-requests.xlsx"
 
@@ -41,6 +39,8 @@ def _cell(item: dict[str, Any], key: str) -> Any:
 
 
 def build_purchase_requests_xlsx(items: list[dict[str, Any]]) -> bytes:
+    from openpyxl import Workbook
+
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = "Solicitacoes"

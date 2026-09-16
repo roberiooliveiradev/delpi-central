@@ -91,14 +91,6 @@ def get_purchase_requests_open_coverage_route(
         )
 
 
-@router.get(
-    "/lines",
-    **OpenApiAgentMetadataBuilder.from_contract(
-        "list_supplies_purchase_request_lines",
-        path="/supplies/purchase-requests/lines",
-    ),
-)
-@require_any_permission(PURCHASE_REQUESTS_READ_PERMISSIONS)
 def _lines_kwargs(
     *,
     branch: list[str],
@@ -131,6 +123,14 @@ def _lines_kwargs(
     }
 
 
+@router.get(
+    "/lines",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_supplies_purchase_request_lines",
+        path="/supplies/purchase-requests/lines",
+    ),
+)
+@require_any_permission(PURCHASE_REQUESTS_READ_PERMISSIONS)
 def list_supplies_purchase_request_lines_route(
     branch: list[str] = BRANCH_CODES_QUERY(),
     date_from: str | None = Query(None, alias="date_from"),

@@ -3,8 +3,6 @@ from __future__ import annotations
 from io import BytesIO
 from typing import Any
 
-from openpyxl import Workbook
-
 XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 EXPORT_FILENAME = "purchase-orders.xlsx"
 
@@ -23,6 +21,8 @@ _COLUMNS: tuple[tuple[str, str], ...] = (
 
 
 def build_purchase_orders_xlsx(items: list[dict[str, Any]]) -> bytes:
+    from openpyxl import Workbook
+
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = "Pedidos"
