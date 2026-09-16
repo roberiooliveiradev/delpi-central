@@ -7,20 +7,42 @@ from app.application.models.page import Page
 from app.infrastructure.persistence.totvs.pagination import paginate
 
 
+# Canonical product-customer dataset for this endpoint:
+# SA7 product↔customer link that has an active SA1 customer master and
+# an active SB1 product master. Count and items MUST use the same domain.
+_CUSTOMER_DATASET_FROM = """
+            FROM SA7010 SA7
+
+            INNER JOIN SA1010 SA1
+                ON SA1.A1_COD = SA7.A7_CLIENTE
+                AND SA1.A1_LOJA = SA7.A7_LOJA
+                AND SA1.D_E_L_E_T_ = ''
+
+            INNER JOIN SB1010 SB1
+                ON SB1.B1_COD = SA7.A7_PRODUTO
+                AND SB1.D_E_L_E_T_ = ''
+"""
+
+_CUSTOMER_DATASET_WHERE = """
+            WHERE
+                SA7.D_E_L_E_T_ = ''
+                AND SA7.A7_PRODUTO = ?
+"""
+
+
 class ProductCustomersRepository(BaseRepository, ProductCustomersRepositoryPort):
 
     def list_customers(self, code: str, page: int, page_size: int) -> Page[Customer]:
 
         paging = paginate(page, page_size)
 
-        count_sql = """
+        count_sql = f"""
             SELECT COUNT(*) AS total
-            FROM SA7010
-            WHERE D_E_L_E_T_ = ''
-            AND A7_PRODUTO = ?
+            {_CUSTOMER_DATASET_FROM}
+            {_CUSTOMER_DATASET_WHERE}
         """
 
-        sql = """
+        sql = f"""
             WITH last_sale AS (
                 SELECT
                     SD2.D2_COD          AS product_code,
@@ -58,27 +80,16 @@ class ProductCustomersRepository(BaseRepository, ProductCustomersRepositoryPort)
                 LS.last_sale_date,
                 LS.total_quantity
 
-            FROM SA7010 SA7
-
-            INNER JOIN SA1010 SA1
-                ON SA1.A1_COD = SA7.A7_CLIENTE
-                AND SA1.A1_LOJA = SA7.A7_LOJA
-                AND SA1.D_E_L_E_T_ = ''
-
-            INNER JOIN SB1010 SB1
-                ON SB1.B1_COD = SA7.A7_PRODUTO
-                AND SB1.D_E_L_E_T_ = ''
+            {_CUSTOMER_DATASET_FROM}
 
             LEFT JOIN last_sale LS
                 ON LS.product_code = SA7.A7_PRODUTO
                 AND LS.customer_code = SA7.A7_CLIENTE
                 AND LS.store = SA7.A7_LOJA
 
-            WHERE
-                SA7.D_E_L_E_T_ = ''
-                AND SA7.A7_PRODUTO = ?
+            {_CUSTOMER_DATASET_WHERE}
 
-            ORDER BY SA1.A1_NOME
+            ORDER BY SA1.A1_NOME, SA1.A1_COD, SA1.A1_LOJA
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """
 

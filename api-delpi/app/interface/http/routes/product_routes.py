@@ -1141,7 +1141,6 @@ def customers(
         )
 
         use_case = build_list_customers_use_case()
-        print(use_case)
         result = use_case.execute(dto)
 
         return product_success(
