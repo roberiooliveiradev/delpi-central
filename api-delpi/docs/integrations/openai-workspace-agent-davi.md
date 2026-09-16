@@ -38,7 +38,7 @@ discover_delpi_information
 execute_delpi_information
 ```
 
-Missão ampla ≠ elegibilidade de todas as rotas API DELPI. Dynamic allowlist v2: `DAVI_ELIGIBLE_READ = search_products` only. `get_product_detail` / `get_product_summary` / stock / pricing remain quarantined until independent AuthZ + external-processing gates pass.
+Missão ampla ≠ elegibilidade de todas as rotas API DELPI. Dynamic allowlist v4: `DAVI_ELIGIBLE_READ = search_products` only (`DAVI-DYNAMIC-READ-005` → `PROMOTE_ZERO_NEW_OPERATIONS`). Detail/summary/stock/structure/pricing/customer/supplier remain quarantined with explicit primary blockers until independent AuthZ + classification + external-processing + model-safe projection gates pass.
 
 ## CURRENT PROVEN V1
 

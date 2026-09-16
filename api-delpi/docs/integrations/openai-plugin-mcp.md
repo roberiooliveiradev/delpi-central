@@ -122,6 +122,30 @@ PROVIDER OUTPUT SCHEMA DISPLAY = TEST_NOT_RUN
 
 Do not treat code-level outputSchema as provider-display proof until redeploy + tools/list rediscovery.
 
+### Governed READ coverage expansion (DAVI-DYNAMIC-READ-005)
+
+```text
+ELIGIBLE BEFORE = 1 (search_products)
+ELIGIBLE AFTER  = 1 (search_products)
+NEWLY ELIGIBLE  = 0
+DECISION        = PROMOTE_ZERO_NEW_OPERATIONS
+```
+
+No additional GET passed all gates without inventing human external-processing approval, nested projection support, branch AuthZ, or data classification. High-value product ops remain quarantined with primary blockers in `davi_external_read_allowlist.json` `explicitlyNotApproved` and generated evidence:
+
+```text
+docs/integrations/evidence/davi-api-delpi-operation-inventory.*
+docs/integrations/evidence/davi-governed-read-coverage-005.json
+```
+
+```text
+NEW COVERAGE SOURCE = PASS (zero promotions, fail-closed)
+NEW COVERAGE LOCAL TESTS = PASS
+NEW COVERAGE LIVE = NOT_APPLICABLE (no new eligible surface)
+DAVI_DYNAMIC_READ_PRIVATE_RUNTIME (base motor) = remains PROVEN from prior deploy
+```
+
+
 This chain is **CURRENT PROVEN V1** for the API DELPI information source. It is **not** the universal DAVI TARGET architecture (see `docs/12-roadmap-e-evolucao/davi/README.md`).
 
 ```text

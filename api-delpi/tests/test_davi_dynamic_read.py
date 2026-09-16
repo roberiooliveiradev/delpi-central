@@ -38,6 +38,7 @@ from app.application.external_capabilities.dynamic_information.constants import 
     STATUS_DAVI_ELIGIBLE_READ,
     STATUS_GENERIC_SQL_FORBIDDEN,
     STATUS_NEEDS_BRANCH_AUTHZ_EVIDENCE,
+    STATUS_NEEDS_NESTED_PROJECTION_SUPPORT,
     STATUS_WRITE_OUT_OF_SCOPE,
 )
 from app.application.external_capabilities.dynamic_information.content_loader import (
@@ -171,7 +172,8 @@ def test_allowlist_is_search_products_only():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
     assert ids == {"search_products"}
-    assert allow.get("version") == 3
+    assert allow.get("version") == 4
+    assert allow.get("coverageDecision", {}).get("decision") == "PROMOTE_ZERO_NEW_OPERATIONS"
     entry = next(
         op
         for op in allow["operations"]
@@ -179,6 +181,15 @@ def test_allowlist_is_search_products_only():
     )
     assert set(entry["approvedInputFields"]) == set(PRODUCT_SEARCH_INPUT_FIELDS)
     assert entry.get("semanticAliases")
+    blocked = {
+        x["operationId"]: x.get("primaryBlocker")
+        for x in allow.get("explicitlyNotApproved") or []
+        if isinstance(x, dict)
+    }
+    assert blocked["get_product_stock"] == "NEEDS_BRANCH_AUTHZ_EVIDENCE"
+    assert blocked["get_product_detail"] == "NEEDS_NESTED_PROJECTION_SUPPORT"
+    assert blocked["get_product_summary"] == "NEEDS_DATA_CLASSIFICATION"
+    assert blocked["get_product_pricing"] == "NEEDS_DATA_CLASSIFICATION"
     not_approved = {
         (x.get("operationId") if isinstance(x, dict) else x)
         for x in (allow.get("explicitlyNotApproved") or [])
@@ -240,8 +251,9 @@ def test_classify_hard_blocks():
             path="/products/{code}",
             operation_id="get_product_detail",
             allowlisted_operation_ids=allow,
+            shape="product_snapshot",
         )
-        != STATUS_DAVI_ELIGIBLE_READ
+        == STATUS_NEEDS_NESTED_PROJECTION_SUPPORT
     )
 
 
@@ -257,6 +269,62 @@ def test_inventory_eligible_count_is_one():
     eligible = [a for a in actions if a.executable]
     assert len(eligible) == 1
     assert eligible[0].operation_id == "search_products"
+    # Coverage expansion did not invent approvals.
+    assert set(a.operation_id for a in eligible) == {"search_products"}
+
+
+def test_high_value_product_ops_remain_quarantined_from_discovery(monkeypatch):
+    actions = build_technical_actions_from_baseline(
+        json.loads(
+            (
+                Path(__file__).resolve().parents[1] / "app/content/openapi_baseline.json"
+            ).read_text(encoding="utf-8")
+        ),
+        allowlist=load_external_read_allowlist(),
+    )
+    set_actions_for_tests(actions)
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
+        lambda: "sec",
+    )
+    for query in (
+        "estoque do produto 10080055",
+        "estrutura do produto 10080055",
+        "preço do produto 10080055",
+        "fornecedor do produto",
+        "cliente do produto",
+        "status de produção do produto",
+    ):
+        discovered = discover_delpi_information(query=query, top_k=10, actor_id="u1")
+        assert discovered["eligible_action_count"] == 1
+        assert discovered["candidate_count"] == 0, query
+        action_ids = {c["action_id"] for c in discovered["candidates"]}
+        assert not action_ids & {
+            "get_product_stock",
+            "get_product_detail",
+            "get_product_summary",
+            "get_product_structure",
+            "get_product_pricing",
+            "get_product_suppliers",
+            "get_product_customers",
+            "get_product_factory_status",
+        }
+
+
+def test_three_tool_invariant_and_generic_path_not_applicable_without_new_ops():
+    import asyncio
+    from app.interface.mcp.server import create_mcp_server
+
+    tools = asyncio.run(create_mcp_server().list_tools())
+    assert [t.name for t in tools] == [
+        "search_products",
+        "discover_delpi_information",
+        "execute_delpi_information",
+    ]
+    # No newly eligible non-search op → generic catalog proof NOT_APPLICABLE.
+    assert load_allowlist_operation_ids(load_external_read_allowlist()) == {
+        "search_products"
+    }
 
 
 def test_discover_rejects_transport_smuggling_in_schema():

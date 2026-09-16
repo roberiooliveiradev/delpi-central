@@ -2,10 +2,101 @@
   "source": "openapi_baseline.json",
   "baseline_version": "3",
   "baseline_operation_count": 703,
+  "taskId": "DAVI-DYNAMIC-READ-005",
   "TOTAL_OPERATIONS": 703,
   "TOTAL_GET": 506,
   "TOTAL_WRITE_VERBS": 197,
   "DAVI_ELIGIBLE_READ": 1,
+  "ELIGIBLE_BEFORE": 1,
+  "ELIGIBLE_AFTER": 1,
+  "NEWLY_ELIGIBLE": [],
+  "REMOVED_ELIGIBLE": [],
+  "INVENTORY_DELTA": {
+    "previous_total_operations": 703,
+    "current_total_operations": 703,
+    "previous_total_get": 506,
+    "current_total_get": 506,
+    "added_operations": 0,
+    "removed_operations": 0,
+    "note": "Delta vs previously generated inventory artifact on disk"
+  },
+  "COVERAGE_DECISION": {
+    "taskId": "DAVI-DYNAMIC-READ-005",
+    "decision": "PROMOTE_ZERO_NEW_OPERATIONS",
+    "reason": "No additional GET passed all gates (external-processing, classification, AuthZ/branch, model-safe flat projection) without inventing human approval."
+  },
+  "HIGH_VALUE_BLOCKED": [
+    {
+      "operationId": "get_product_detail",
+      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "reason": "product_snapshot nested under product; flat items[] projection cannot sanitize; search_products approval does not transfer; external-processing not independently ratified"
+    },
+    {
+      "operationId": "get_product_summary",
+      "primaryBlocker": "NEEDS_DATA_CLASSIFICATION",
+      "reason": "Composite product+stock+prices; pricing/cost classification unresolved; stock branch AuthZ unresolved; most-restrictive section wins"
+    },
+    {
+      "operationId": "get_product_stock",
+      "primaryBlocker": "NEEDS_BRANCH_AUTHZ_EVIDENCE",
+      "reason": "branch query is optional filter only; no proven requested-branch AuthZ"
+    },
+    {
+      "operationId": "get_product_structure",
+      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "reason": "hierarchy/BOM shape; no independent external-processing approval"
+    },
+    {
+      "operationId": "get_product_structure_exclusivity",
+      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "reason": "nested playbook/report shape; no independent external-processing approval"
+    },
+    {
+      "operationId": "get_product_production_status",
+      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "reason": "nested production report; no independent external-processing approval"
+    },
+    {
+      "operationId": "get_product_factory_status",
+      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "reason": "composite structure/raw_material_stock/production/shipping; blocked by stock/production sections"
+    },
+    {
+      "operationId": "get_product_suppliers",
+      "primaryBlocker": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "reason": "supplier relational data; search_products approval does not transfer"
+    },
+    {
+      "operationId": "get_product_customers",
+      "primaryBlocker": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "reason": "customer relational data; search_products approval does not transfer"
+    },
+    {
+      "operationId": "get_product_pricing",
+      "primaryBlocker": "NEEDS_DATA_CLASSIFICATION",
+      "reason": "pricing/financial high risk; no external-processing approval"
+    },
+    {
+      "operationId": "get_product_purchases",
+      "primaryBlocker": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "reason": "purchases domain; no independent DAVI external approval"
+    },
+    {
+      "operationId": "get_product_purchase_price_history",
+      "primaryBlocker": "NEEDS_DATA_CLASSIFICATION",
+      "reason": "price history; financial classification unresolved"
+    },
+    {
+      "operationId": "get_product_raw_material_price_intelligence",
+      "primaryBlocker": "NEEDS_DATA_CLASSIFICATION",
+      "reason": "price/cost intelligence; financial classification unresolved"
+    },
+    {
+      "operationId": "get_product_cost_impact_simulation",
+      "primaryBlocker": "NEEDS_DATA_CLASSIFICATION",
+      "reason": "cost simulation; financial classification unresolved"
+    }
+  ],
   "STATUS_COUNTS": {
     "ADMIN_OUT_OF_SCOPE": 76,
     "DAVI_ELIGIBLE_READ": 1,
@@ -13,7 +104,8 @@
     "GENERIC_SQL_FORBIDDEN": 2,
     "NEEDS_BRANCH_AUTHZ_EVIDENCE": 1,
     "NEEDS_DATA_CLASSIFICATION": 60,
-    "NEEDS_EXTERNAL_PROCESSING_APPROVAL": 386,
+    "NEEDS_EXTERNAL_PROCESSING_APPROVAL": 316,
+    "NEEDS_NESTED_PROJECTION_SUPPORT": 70,
     "STREAM_BINARY_OUT_OF_SCOPE": 31,
     "WRITE_OUT_OF_SCOPE": 130
   },
@@ -1582,16 +1674,6 @@
       "executable": false
     },
     {
-      "operationId": "get_audit_5s_analytics_dashboard",
-      "method": "GET",
-      "path": "/quality/audit-5s/analytics/dashboard",
-      "summary": "Get Audit 5S Dashboard",
-      "entity": "audit_5s_analytics",
-      "shape": "composite_analysis",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
       "operationId": "get_audit_5s_audit",
       "method": "GET",
       "path": "/quality/audit-5s/audits/{audit_id}",
@@ -1628,16 +1710,6 @@
       "summary": "Audit 5S summary series",
       "entity": "audit_5s_summary_series",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_commercial_proposal",
-      "method": "GET",
-      "path": "/commercial/proposals/{proposal_number}",
-      "summary": "Commercial proposal detail (sales order)",
-      "entity": "commercial_proposal",
-      "shape": "product_snapshot",
       "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
       "executable": false
     },
@@ -1682,42 +1754,12 @@
       "executable": false
     },
     {
-      "operationId": "get_dashboard_department_indicators",
-      "method": "GET",
-      "path": "/dashboard/department-indicators",
-      "summary": "Department IDD with indicators (goals and realized)",
-      "entity": "dashboard_department_indicators",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_dashboard_departments_indicators",
-      "method": "GET",
-      "path": "/dashboard/departments-indicators",
-      "summary": "All departments with IDD, goals and realized per indicator",
-      "entity": "dashboard_departments_indicators",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
       "operationId": "get_depreciation_pct",
       "method": "GET",
       "path": "/production/depreciation_pct",
       "summary": "Depreciation pct",
       "entity": "depreciation_pct",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_eficiencia_fabril_dashboard",
-      "method": "GET",
-      "path": "/production/eficiencia-fabril/dashboard",
-      "summary": "Eficiencia fabril dashboard",
-      "entity": "eficiencia_fabril_dashboard",
-      "shape": "composite_analysis",
       "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
       "executable": false
     },
@@ -1808,16 +1850,6 @@
       "summary": "Hr performance reviews completion",
       "entity": "hr_performance_reviews_completion",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_hr_snapshot",
-      "method": "GET",
-      "path": "/hr/snapshot",
-      "summary": "Hr snapshot",
-      "entity": "hr_snapshot",
-      "shape": "composite_analysis",
       "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
       "executable": false
     },
@@ -2078,16 +2110,6 @@
       "summary": "Get Request",
       "entity": "invoice_posting_request",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_lmp_by_sale_number",
-      "method": "GET",
-      "path": "/engineering/lmps/{sale_number}",
-      "summary": "Lmp by sale number",
-      "entity": "lmp",
-      "shape": "product_snapshot",
       "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
       "executable": false
     },
@@ -2392,16 +2414,6 @@
       "executable": false
     },
     {
-      "operationId": "get_process_inspection_plans_product",
-      "method": "GET",
-      "path": "/process-inspection-plans/products/{code}",
-      "summary": "Process inspection plan detail by product",
-      "entity": "process_inspection_plans_product",
-      "shape": "composite_analysis",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
       "operationId": "get_process_inspection_plans_products",
       "method": "GET",
       "path": "/process-inspection-plans/products",
@@ -2432,26 +2444,6 @@
       "executable": false
     },
     {
-      "operationId": "get_produced_quantity",
-      "method": "GET",
-      "path": "/quality/produced-quantity",
-      "summary": "Get Produced Quantity",
-      "entity": "produced_quantity",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_analyser",
-      "method": "GET",
-      "path": "/products/{code}/analyser",
-      "summary": "Full product analyser / integrated view",
-      "entity": "product_analyser",
-      "shape": "composite_analysis",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
       "operationId": "get_product_customers",
       "method": "GET",
       "path": "/products/{code}/customers",
@@ -2462,52 +2454,12 @@
       "executable": false
     },
     {
-      "operationId": "get_product_detail",
-      "method": "GET",
-      "path": "/products/{code}",
-      "summary": "Product cadastro / master data",
-      "entity": "product",
-      "shape": "product_snapshot",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_directives",
-      "method": "GET",
-      "path": "/products/directives/{identifier}",
-      "summary": "Product directives",
-      "entity": "product_directives",
-      "shape": "composite_analysis",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
       "operationId": "get_product_drawing",
       "method": "GET",
       "path": "/products/{code}/drawing",
       "summary": "Product drawing",
       "entity": "product_drawing",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_factory_status",
-      "method": "GET",
-      "path": "/products/{code}/factory-status",
-      "summary": "Product factory status (integrated shop-floor view)",
-      "entity": "product_factory_status",
-      "shape": "composite_analysis",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_guide",
-      "method": "GET",
-      "path": "/products/{code}/guide",
-      "summary": "Product guide",
-      "entity": "product_guide",
-      "shape": "paged_list",
       "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
       "executable": false
     },
@@ -2542,16 +2494,6 @@
       "executable": false
     },
     {
-      "operationId": "get_product_last_purchase",
-      "method": "GET",
-      "path": "/products/{code}/last-purchase",
-      "summary": "Product last purchase",
-      "entity": "product_last_purchase",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
       "operationId": "get_product_outbound_invoice_items",
       "method": "GET",
       "path": "/products/{code}/outbound-invoice-items",
@@ -2562,52 +2504,12 @@
       "executable": false
     },
     {
-      "operationId": "get_product_parents",
-      "method": "GET",
-      "path": "/products/{code}/parents",
-      "summary": "Product parents",
-      "entity": "product_parents",
-      "shape": "hierarchy",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_production_status",
-      "method": "GET",
-      "path": "/products/{code}/production-status",
-      "summary": "Product production status (PA/PI, OPs and appointments)",
-      "entity": "product_production_status",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_purchase_budget_history",
-      "method": "GET",
-      "path": "/products/{code}/purchase-budget-history",
-      "summary": "Product purchase budget history",
-      "entity": "product_purchase_budget_history",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
       "operationId": "get_product_purchases",
       "method": "GET",
       "path": "/products/{code}/purchases",
       "summary": "Product purchases",
       "entity": "product_purchases",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_raw_material_set_shortages",
-      "method": "GET",
-      "path": "/products/{code}/raw-material-set-shortages",
-      "summary": "Raw-material shortages in the finished-product order set",
-      "entity": "product_raw_material_set_shortages",
-      "shape": "composite_analysis",
       "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
       "executable": false
     },
@@ -2642,36 +2544,6 @@
       "executable": false
     },
     {
-      "operationId": "get_product_shipping_status",
-      "method": "GET",
-      "path": "/products/{code}/shipping-status",
-      "summary": "Product shipping status",
-      "entity": "product_shipping_status",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_structure",
-      "method": "GET",
-      "path": "/products/{code}/structure",
-      "summary": "Product structure (BOM)",
-      "entity": "product_structure",
-      "shape": "hierarchy",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_structure_exclusivity",
-      "method": "GET",
-      "path": "/products/{code}/structure/exclusivity",
-      "summary": "Raw-material exclusivity in product structure",
-      "entity": "product_structure_exclusivity",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
       "operationId": "get_product_suppliers",
       "method": "GET",
       "path": "/products/{code}/suppliers",
@@ -2682,122 +2554,12 @@
       "executable": false
     },
     {
-      "operationId": "get_production_allocation_gaps",
-      "method": "GET",
-      "path": "/production/allocation-gaps",
-      "summary": "Production allocation gaps",
-      "entity": "production_allocation_gaps",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_production_appointments_finished_ops_series",
-      "method": "GET",
-      "path": "/production/appointments/finished-ops/series",
-      "summary": "Finished production orders count by period",
-      "entity": "production_appointments_finished_ops_series",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_production_appointments_produced_totals",
-      "method": "GET",
-      "path": "/production/appointments/produced-totals",
-      "summary": "Produced quantity totals (final inspection + mother OP)",
-      "entity": "production_appointments_produced_totals",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_production_appointments_series",
-      "method": "GET",
-      "path": "/production/appointments/series",
-      "summary": "Production appointments time series",
-      "entity": "production_appointments_series",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_production_appointments_summary",
-      "method": "GET",
-      "path": "/production/appointments/summary",
-      "summary": "Production appointments summary",
-      "entity": "production_appointments_summary",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_production_consumption_by_item",
-      "method": "GET",
-      "path": "/production/consumption/by-item/{code}",
-      "summary": "Production consumption by item",
-      "entity": "production_consumption_by_item",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_production_consumption_top_items",
-      "method": "GET",
-      "path": "/production/consumption/top-items",
-      "summary": "Itens mais consumidos na production",
-      "entity": "production_consumption_top_items",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_production_consumption_top_items_by_work_center",
-      "method": "GET",
-      "path": "/production/consumption/top-items-by-work-center",
-      "summary": "Production consumption top items by work center",
-      "entity": "production_consumption_top_items_by_work_center",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_production_consumption_top_items_validated",
-      "method": "GET",
-      "path": "/production/consumption/top-items-validated",
-      "summary": "Production consumption top items validated",
-      "entity": "production_consumption_top_items_validated",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
       "operationId": "get_production_factory_shifts",
       "method": "GET",
       "path": "/production/factory-shifts",
       "summary": "Factory shifts catalog",
       "entity": "production_factory_shift",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_production_losses_records",
-      "method": "GET",
-      "path": "/production/losses/records",
-      "summary": "Production losses records",
-      "entity": "production_losses_records",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_production_losses_top_materials",
-      "method": "GET",
-      "path": "/production/losses/top-materials",
-      "summary": "Production losses top materials",
-      "entity": "production_losses_top_materials",
-      "shape": "playbook_report",
       "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
       "executable": false
     },
@@ -2832,16 +2594,6 @@
       "executable": false
     },
     {
-      "operationId": "get_production_oee_appointment_by_id",
-      "method": "GET",
-      "path": "/production/oee/appointments/{appointment_id}",
-      "summary": "Production oee appointment by id",
-      "entity": "production_oee_appointment",
-      "shape": "composite_analysis",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
       "operationId": "get_production_oee_series",
       "method": "GET",
       "path": "/production/oee/series",
@@ -2852,62 +2604,12 @@
       "executable": false
     },
     {
-      "operationId": "get_production_order_by_op",
-      "method": "GET",
-      "path": "/production/orders/by-op/{production_order}",
-      "summary": "Production order by op",
-      "entity": "production_order_detail",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
       "operationId": "get_production_order_sets_incomplete",
       "method": "GET",
       "path": "/production/production-order-sets/incomplete",
       "summary": "Incomplete production order sets",
       "entity": "production_order_sets_incomplete",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_production_orders_finished",
-      "method": "GET",
-      "path": "/production/orders/finished",
-      "summary": "Production orders finished",
-      "entity": "production_orders_finished",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_production_orders_finished_without_consumption",
-      "method": "GET",
-      "path": "/production/orders/finished-without-consumption",
-      "summary": "Production orders finished without consumption",
-      "entity": "production_orders_finished_without_consumption",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_production_orders_open",
-      "method": "GET",
-      "path": "/production/orders/open",
-      "summary": "Production orders open",
-      "entity": "production_orders_open",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_production_otd",
-      "method": "GET",
-      "path": "/production/otd",
-      "summary": "Production otd",
-      "entity": "production_otd_detail",
-      "shape": "playbook_report",
       "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
       "executable": false
     },
@@ -2942,36 +2644,6 @@
       "executable": false
     },
     {
-      "operationId": "get_production_pcp_orders_summary",
-      "method": "GET",
-      "path": "/production/pcp-orders/summary",
-      "summary": "Production orders summary",
-      "entity": "production_pcp_orders_summary",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_production_planned_vs_real_time",
-      "method": "GET",
-      "path": "/production/planned-vs-real-time",
-      "summary": "Production planned vs real time",
-      "entity": "production_planned_vs_real_time",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_production_schedule_today",
-      "method": "GET",
-      "path": "/production/schedule/today",
-      "summary": "product programados para produzir na data",
-      "entity": "production_schedule_today",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
       "operationId": "get_production_unproductive_hours_items",
       "method": "GET",
       "path": "/production/unproductive-hours/items",
@@ -2998,46 +2670,6 @@
       "summary": "Unproductive hours daily series",
       "entity": "production_unproductive_hours_series",
       "shape": "list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_production_unproductive_hours_summary",
-      "method": "GET",
-      "path": "/production/unproductive-hours/summary",
-      "summary": "Unproductive hours summary",
-      "entity": "production_unproductive_hours_summary",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_production_work_center_average_planned_time",
-      "method": "GET",
-      "path": "/production/work-centers/average-planned-time",
-      "summary": "Production work center average planned time",
-      "entity": "production_work_center_average_planned_time",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_production_work_center_order_summary",
-      "method": "GET",
-      "path": "/production/work-centers/order-summary",
-      "summary": "Production work center order summary",
-      "entity": "production_work_center_order_summary",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_proposta_comercial",
-      "method": "GET",
-      "path": "/propostas-comerciais/{proposta_interna}",
-      "summary": "Proposta comercial",
-      "entity": "commercial_proposal_document",
-      "shape": "composite_analysis",
       "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
       "executable": false
     },
@@ -3088,66 +2720,6 @@
       "summary": "Get Public Scheduling Resource",
       "entity": "scheduling_resource",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_purchases_top_products",
-      "method": "GET",
-      "path": "/purchases/top-products",
-      "summary": "product mais comprados no period",
-      "entity": "purchases_top_products",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_quality_action_plan_detail",
-      "method": "GET",
-      "path": "/quality/action-plans/{plan_id}",
-      "summary": "Quality action plan detail",
-      "entity": "quality_action_plan",
-      "shape": "composite_analysis",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_quality_action_plan_evidence_content",
-      "method": "GET",
-      "path": "/quality/action-plans/{plan_id}/evidences/{evidence_id}/content",
-      "summary": "Quality action plan evidence content",
-      "entity": "quality_action_plan_evidence",
-      "shape": "composite_analysis",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_quality_action_plan_knowledge_graph",
-      "method": "GET",
-      "path": "/quality/action-plans/intelligence/knowledge-graph",
-      "summary": "Quality action plan knowledge graph",
-      "entity": "quality_action_plan_knowledge_graph",
-      "shape": "composite_analysis",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_quality_action_plan_revision",
-      "method": "GET",
-      "path": "/quality/action-plans/{plan_id}/revisions/{revision_number}",
-      "summary": "Quality action plan revision",
-      "entity": "quality_action_plan_revision",
-      "shape": "composite_analysis",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_quality_action_plan_similar_cases",
-      "method": "GET",
-      "path": "/quality/action-plans/{plan_id}/similar-cases",
-      "summary": "Quality action plan similar cases",
-      "entity": "quality_action_plan_similar_cases",
-      "shape": "composite_analysis",
       "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
       "executable": false
     },
@@ -3212,16 +2784,6 @@
       "executable": false
     },
     {
-      "operationId": "get_quality_returned_totals",
-      "method": "GET",
-      "path": "/quality/returned-totals",
-      "summary": "Returned quantity totals (NC QI2_QTDDEV)",
-      "entity": "quality_returned_totals",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
       "operationId": "get_refugos_filtros",
       "method": "GET",
       "path": "/refugos/filtros",
@@ -3242,16 +2804,6 @@
       "executable": false
     },
     {
-      "operationId": "get_refugos_rankings",
-      "method": "GET",
-      "path": "/refugos/rankings",
-      "summary": "Scrap rankings",
-      "entity": "refugos_rankings",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
       "operationId": "get_refugos_registros",
       "method": "GET",
       "path": "/refugos/registros",
@@ -3268,16 +2820,6 @@
       "summary": "Scrap losses summary",
       "entity": "refugos_resumo",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_refugos_serie",
-      "method": "GET",
-      "path": "/refugos/serie",
-      "summary": "Refugos series",
-      "entity": "refugos_serie",
-      "shape": "playbook_report",
       "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
       "executable": false
     },
@@ -3438,16 +2980,6 @@
       "summary": "Sales order OTD by customer",
       "entity": "sales_order_otd_by_customer",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_sales_order_otd_line_detail",
-      "method": "GET",
-      "path": "/commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}",
-      "summary": "Sales order otd line detail",
-      "entity": "sales_order_otd_line",
-      "shape": "playbook_report",
       "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
       "executable": false
     },
@@ -4112,16 +3644,6 @@
       "executable": false
     },
     {
-      "operationId": "get_supplies_safety_stock_consumption_analysis_item_details",
-      "method": "GET",
-      "path": "/supplies/safety-stock/consumption-analysis/items/{code}",
-      "summary": "Análise consolidada — Detalhe da análise de consumo com série mensal e memória de cálculo",
-      "entity": "supplies_safety_stock_consumption_analysis_detail",
-      "shape": "composite_analysis",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
       "operationId": "get_supplies_safety_stock_consumption_analysis_items",
       "method": "GET",
       "path": "/supplies/safety-stock/consumption-analysis/items",
@@ -4148,16 +3670,6 @@
       "summary": "Supplies safety stock filters",
       "entity": "supplies_safety_stock_filters",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_supplies_safety_stock_item_details",
-      "method": "GET",
-      "path": "/supplies/safety-stock/items/{code}/details",
-      "summary": "Supplies safety stock item details",
-      "entity": "supplies_safety_stock_detail",
-      "shape": "composite_analysis",
       "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
       "executable": false
     },
@@ -4202,32 +3714,12 @@
       "executable": false
     },
     {
-      "operationId": "get_supplies_stock_balances_summary",
-      "method": "GET",
-      "path": "/supplies/stock-balances/summary",
-      "summary": "Stock balances by warehouse",
-      "entity": "supplies_stock_balances_summary",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
       "operationId": "get_supplies_stock_value",
       "method": "GET",
       "path": "/supplies/stock-value",
       "summary": "Stock value",
       "entity": "supplies_stock_value",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_supplies_third_party_materials_shipment",
-      "method": "GET",
-      "path": "/supplies/third-party-materials/shipments/{shipment_recno}",
-      "summary": "Third-party material shipment detail",
-      "entity": "third_party_material_shipment",
-      "shape": "playbook_report",
       "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
       "executable": false
     },
@@ -4248,16 +3740,6 @@
       "summary": "Third-party materials summary",
       "entity": "third_party_material_summary",
       "shape": "scalar",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "get_totvs_outbound_invoice",
-      "method": "GET",
-      "path": "/pedidos-venda-abertos/totvs-outbound-invoices/{branch}/{invoice_number}/{invoice_series}",
-      "summary": "TOTVS outbound invoice by key",
-      "entity": "customer_outbound_invoice",
-      "shape": "playbook_report",
       "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
       "executable": false
     },
@@ -4372,16 +3854,6 @@
       "executable": false
     },
     {
-      "operationId": "list_cliente_notas_fiscais_saida",
-      "method": "GET",
-      "path": "/pedidos-venda-abertos/clientes/{codigo}/{loja}/notas-fiscais",
-      "summary": "Customer outbound invoices by code and store",
-      "entity": "customer_outbound_invoice",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
       "operationId": "list_commercial_proposals",
       "method": "GET",
       "path": "/commercial/proposals",
@@ -4398,16 +3870,6 @@
       "summary": "Eficiencia fabril appointments",
       "entity": "eficiencia_fabril_appointment",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "list_exclusive_raw_materials_catalog",
-      "method": "GET",
-      "path": "/products/exclusive-raw-materials/catalog",
-      "summary": "Exclusive raw materials catalog",
-      "entity": "exclusive_raw_materials_catalog",
-      "shape": "playbook_report",
       "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
       "executable": false
     },
@@ -4562,16 +4024,6 @@
       "executable": false
     },
     {
-      "operationId": "list_lmps_dashboard",
-      "method": "GET",
-      "path": "/engineering/lmps/dashboard",
-      "summary": "LMPs dashboard",
-      "entity": "lmp_dashboard",
-      "shape": "composite_analysis",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
       "operationId": "list_lmps_dashboard_items",
       "method": "GET",
       "path": "/engineering/lmps/dashboard/items",
@@ -4658,26 +4110,6 @@
       "summary": "List Nonconformity Route",
       "entity": "nonconformity",
       "shape": "paged_list",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "list_ops_abertas_pedidos_venda",
-      "method": "GET",
-      "path": "/pedidos-venda-abertos/ops-abertas",
-      "summary": "Production orders open orders sales",
-      "entity": "open_production_order",
-      "shape": "composite_analysis",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "list_pedidos_venda_abertos",
-      "method": "GET",
-      "path": "/pedidos-venda-abertos/",
-      "summary": "Orders sales abertos",
-      "entity": "open_sales_order",
-      "shape": "composite_analysis",
       "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
       "executable": false
     },
@@ -5262,36 +4694,6 @@
       "executable": false
     },
     {
-      "operationId": "list_totvs_open_orders",
-      "method": "GET",
-      "path": "/pedidos-venda-abertos/totvs-open-orders",
-      "summary": "TOTVS open sales orders (no portfolio membership)",
-      "entity": "open_sales_order",
-      "shape": "composite_analysis",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "list_totvs_open_orders_by_customer",
-      "method": "GET",
-      "path": "/pedidos-venda-abertos/totvs-open-orders/{customer_code}/{customer_store}",
-      "summary": "TOTVS open sales orders by customer",
-      "entity": "open_sales_order",
-      "shape": "composite_analysis",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
-      "operationId": "list_totvs_outbound_invoices",
-      "method": "GET",
-      "path": "/pedidos-venda-abertos/totvs-outbound-invoices/{customer_code}/{customer_store}",
-      "summary": "TOTVS outbound invoices (no portfolio membership)",
-      "entity": "customer_outbound_invoice",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
-      "executable": false
-    },
-    {
       "operationId": "list_totvs_recently_closed_orders",
       "method": "GET",
       "path": "/pedidos-venda-abertos/totvs-recently-closed-orders",
@@ -5432,13 +4834,703 @@
       "executable": false
     },
     {
+      "operationId": "get_audit_5s_analytics_dashboard",
+      "method": "GET",
+      "path": "/quality/audit-5s/analytics/dashboard",
+      "summary": "Get Audit 5S Dashboard",
+      "entity": "audit_5s_analytics",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_commercial_proposal",
+      "method": "GET",
+      "path": "/commercial/proposals/{proposal_number}",
+      "summary": "Commercial proposal detail (sales order)",
+      "entity": "commercial_proposal",
+      "shape": "product_snapshot",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_dashboard_department_indicators",
+      "method": "GET",
+      "path": "/dashboard/department-indicators",
+      "summary": "Department IDD with indicators (goals and realized)",
+      "entity": "dashboard_department_indicators",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_dashboard_departments_indicators",
+      "method": "GET",
+      "path": "/dashboard/departments-indicators",
+      "summary": "All departments with IDD, goals and realized per indicator",
+      "entity": "dashboard_departments_indicators",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_eficiencia_fabril_dashboard",
+      "method": "GET",
+      "path": "/production/eficiencia-fabril/dashboard",
+      "summary": "Eficiencia fabril dashboard",
+      "entity": "eficiencia_fabril_dashboard",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_hr_snapshot",
+      "method": "GET",
+      "path": "/hr/snapshot",
+      "summary": "Hr snapshot",
+      "entity": "hr_snapshot",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_lmp_by_sale_number",
+      "method": "GET",
+      "path": "/engineering/lmps/{sale_number}",
+      "summary": "Lmp by sale number",
+      "entity": "lmp",
+      "shape": "product_snapshot",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_process_inspection_plans_product",
+      "method": "GET",
+      "path": "/process-inspection-plans/products/{code}",
+      "summary": "Process inspection plan detail by product",
+      "entity": "process_inspection_plans_product",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_produced_quantity",
+      "method": "GET",
+      "path": "/quality/produced-quantity",
+      "summary": "Get Produced Quantity",
+      "entity": "produced_quantity",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_analyser",
+      "method": "GET",
+      "path": "/products/{code}/analyser",
+      "summary": "Full product analyser / integrated view",
+      "entity": "product_analyser",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_detail",
+      "method": "GET",
+      "path": "/products/{code}",
+      "summary": "Product cadastro / master data",
+      "entity": "product",
+      "shape": "product_snapshot",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_directives",
+      "method": "GET",
+      "path": "/products/directives/{identifier}",
+      "summary": "Product directives",
+      "entity": "product_directives",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_factory_status",
+      "method": "GET",
+      "path": "/products/{code}/factory-status",
+      "summary": "Product factory status (integrated shop-floor view)",
+      "entity": "product_factory_status",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_guide",
+      "method": "GET",
+      "path": "/products/{code}/guide",
+      "summary": "Product guide",
+      "entity": "product_guide",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_last_purchase",
+      "method": "GET",
+      "path": "/products/{code}/last-purchase",
+      "summary": "Product last purchase",
+      "entity": "product_last_purchase",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_parents",
+      "method": "GET",
+      "path": "/products/{code}/parents",
+      "summary": "Product parents",
+      "entity": "product_parents",
+      "shape": "hierarchy",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_production_status",
+      "method": "GET",
+      "path": "/products/{code}/production-status",
+      "summary": "Product production status (PA/PI, OPs and appointments)",
+      "entity": "product_production_status",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_purchase_budget_history",
+      "method": "GET",
+      "path": "/products/{code}/purchase-budget-history",
+      "summary": "Product purchase budget history",
+      "entity": "product_purchase_budget_history",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_raw_material_set_shortages",
+      "method": "GET",
+      "path": "/products/{code}/raw-material-set-shortages",
+      "summary": "Raw-material shortages in the finished-product order set",
+      "entity": "product_raw_material_set_shortages",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_shipping_status",
+      "method": "GET",
+      "path": "/products/{code}/shipping-status",
+      "summary": "Product shipping status",
+      "entity": "product_shipping_status",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_structure",
+      "method": "GET",
+      "path": "/products/{code}/structure",
+      "summary": "Product structure (BOM)",
+      "entity": "product_structure",
+      "shape": "hierarchy",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_structure_exclusivity",
+      "method": "GET",
+      "path": "/products/{code}/structure/exclusivity",
+      "summary": "Raw-material exclusivity in product structure",
+      "entity": "product_structure_exclusivity",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_allocation_gaps",
+      "method": "GET",
+      "path": "/production/allocation-gaps",
+      "summary": "Production allocation gaps",
+      "entity": "production_allocation_gaps",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_appointments_finished_ops_series",
+      "method": "GET",
+      "path": "/production/appointments/finished-ops/series",
+      "summary": "Finished production orders count by period",
+      "entity": "production_appointments_finished_ops_series",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_appointments_produced_totals",
+      "method": "GET",
+      "path": "/production/appointments/produced-totals",
+      "summary": "Produced quantity totals (final inspection + mother OP)",
+      "entity": "production_appointments_produced_totals",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_appointments_series",
+      "method": "GET",
+      "path": "/production/appointments/series",
+      "summary": "Production appointments time series",
+      "entity": "production_appointments_series",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_appointments_summary",
+      "method": "GET",
+      "path": "/production/appointments/summary",
+      "summary": "Production appointments summary",
+      "entity": "production_appointments_summary",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_consumption_by_item",
+      "method": "GET",
+      "path": "/production/consumption/by-item/{code}",
+      "summary": "Production consumption by item",
+      "entity": "production_consumption_by_item",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_consumption_top_items",
+      "method": "GET",
+      "path": "/production/consumption/top-items",
+      "summary": "Itens mais consumidos na production",
+      "entity": "production_consumption_top_items",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_consumption_top_items_by_work_center",
+      "method": "GET",
+      "path": "/production/consumption/top-items-by-work-center",
+      "summary": "Production consumption top items by work center",
+      "entity": "production_consumption_top_items_by_work_center",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_consumption_top_items_validated",
+      "method": "GET",
+      "path": "/production/consumption/top-items-validated",
+      "summary": "Production consumption top items validated",
+      "entity": "production_consumption_top_items_validated",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_losses_records",
+      "method": "GET",
+      "path": "/production/losses/records",
+      "summary": "Production losses records",
+      "entity": "production_losses_records",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_losses_top_materials",
+      "method": "GET",
+      "path": "/production/losses/top-materials",
+      "summary": "Production losses top materials",
+      "entity": "production_losses_top_materials",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_oee_appointment_by_id",
+      "method": "GET",
+      "path": "/production/oee/appointments/{appointment_id}",
+      "summary": "Production oee appointment by id",
+      "entity": "production_oee_appointment",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_order_by_op",
+      "method": "GET",
+      "path": "/production/orders/by-op/{production_order}",
+      "summary": "Production order by op",
+      "entity": "production_order_detail",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_orders_finished",
+      "method": "GET",
+      "path": "/production/orders/finished",
+      "summary": "Production orders finished",
+      "entity": "production_orders_finished",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_orders_finished_without_consumption",
+      "method": "GET",
+      "path": "/production/orders/finished-without-consumption",
+      "summary": "Production orders finished without consumption",
+      "entity": "production_orders_finished_without_consumption",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_orders_open",
+      "method": "GET",
+      "path": "/production/orders/open",
+      "summary": "Production orders open",
+      "entity": "production_orders_open",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_otd",
+      "method": "GET",
+      "path": "/production/otd",
+      "summary": "Production otd",
+      "entity": "production_otd_detail",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_pcp_orders_summary",
+      "method": "GET",
+      "path": "/production/pcp-orders/summary",
+      "summary": "Production orders summary",
+      "entity": "production_pcp_orders_summary",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_planned_vs_real_time",
+      "method": "GET",
+      "path": "/production/planned-vs-real-time",
+      "summary": "Production planned vs real time",
+      "entity": "production_planned_vs_real_time",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_schedule_today",
+      "method": "GET",
+      "path": "/production/schedule/today",
+      "summary": "product programados para produzir na data",
+      "entity": "production_schedule_today",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_unproductive_hours_summary",
+      "method": "GET",
+      "path": "/production/unproductive-hours/summary",
+      "summary": "Unproductive hours summary",
+      "entity": "production_unproductive_hours_summary",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_work_center_average_planned_time",
+      "method": "GET",
+      "path": "/production/work-centers/average-planned-time",
+      "summary": "Production work center average planned time",
+      "entity": "production_work_center_average_planned_time",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_production_work_center_order_summary",
+      "method": "GET",
+      "path": "/production/work-centers/order-summary",
+      "summary": "Production work center order summary",
+      "entity": "production_work_center_order_summary",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_proposta_comercial",
+      "method": "GET",
+      "path": "/propostas-comerciais/{proposta_interna}",
+      "summary": "Proposta comercial",
+      "entity": "commercial_proposal_document",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_purchases_top_products",
+      "method": "GET",
+      "path": "/purchases/top-products",
+      "summary": "product mais comprados no period",
+      "entity": "purchases_top_products",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_quality_action_plan_detail",
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}",
+      "summary": "Quality action plan detail",
+      "entity": "quality_action_plan",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_quality_action_plan_evidence_content",
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/evidences/{evidence_id}/content",
+      "summary": "Quality action plan evidence content",
+      "entity": "quality_action_plan_evidence",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_quality_action_plan_knowledge_graph",
+      "method": "GET",
+      "path": "/quality/action-plans/intelligence/knowledge-graph",
+      "summary": "Quality action plan knowledge graph",
+      "entity": "quality_action_plan_knowledge_graph",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_quality_action_plan_revision",
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/revisions/{revision_number}",
+      "summary": "Quality action plan revision",
+      "entity": "quality_action_plan_revision",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_quality_action_plan_similar_cases",
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/similar-cases",
+      "summary": "Quality action plan similar cases",
+      "entity": "quality_action_plan_similar_cases",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_quality_returned_totals",
+      "method": "GET",
+      "path": "/quality/returned-totals",
+      "summary": "Returned quantity totals (NC QI2_QTDDEV)",
+      "entity": "quality_returned_totals",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_refugos_rankings",
+      "method": "GET",
+      "path": "/refugos/rankings",
+      "summary": "Scrap rankings",
+      "entity": "refugos_rankings",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_refugos_serie",
+      "method": "GET",
+      "path": "/refugos/serie",
+      "summary": "Refugos series",
+      "entity": "refugos_serie",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_sales_order_otd_line_detail",
+      "method": "GET",
+      "path": "/commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}",
+      "summary": "Sales order otd line detail",
+      "entity": "sales_order_otd_line",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_supplies_safety_stock_consumption_analysis_item_details",
+      "method": "GET",
+      "path": "/supplies/safety-stock/consumption-analysis/items/{code}",
+      "summary": "Análise consolidada — Detalhe da análise de consumo com série mensal e memória de cálculo",
+      "entity": "supplies_safety_stock_consumption_analysis_detail",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_supplies_safety_stock_item_details",
+      "method": "GET",
+      "path": "/supplies/safety-stock/items/{code}/details",
+      "summary": "Supplies safety stock item details",
+      "entity": "supplies_safety_stock_detail",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_supplies_stock_balances_summary",
+      "method": "GET",
+      "path": "/supplies/stock-balances/summary",
+      "summary": "Stock balances by warehouse",
+      "entity": "supplies_stock_balances_summary",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_supplies_third_party_materials_shipment",
+      "method": "GET",
+      "path": "/supplies/third-party-materials/shipments/{shipment_recno}",
+      "summary": "Third-party material shipment detail",
+      "entity": "third_party_material_shipment",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_totvs_outbound_invoice",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-outbound-invoices/{branch}/{invoice_number}/{invoice_series}",
+      "summary": "TOTVS outbound invoice by key",
+      "entity": "customer_outbound_invoice",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "list_cliente_notas_fiscais_saida",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/clientes/{codigo}/{loja}/notas-fiscais",
+      "summary": "Customer outbound invoices by code and store",
+      "entity": "customer_outbound_invoice",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "list_exclusive_raw_materials_catalog",
+      "method": "GET",
+      "path": "/products/exclusive-raw-materials/catalog",
+      "summary": "Exclusive raw materials catalog",
+      "entity": "exclusive_raw_materials_catalog",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "list_lmps_dashboard",
+      "method": "GET",
+      "path": "/engineering/lmps/dashboard",
+      "summary": "LMPs dashboard",
+      "entity": "lmp_dashboard",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "list_ops_abertas_pedidos_venda",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/ops-abertas",
+      "summary": "Production orders open orders sales",
+      "entity": "open_production_order",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "list_pedidos_venda_abertos",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/",
+      "summary": "Orders sales abertos",
+      "entity": "open_sales_order",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "list_totvs_open_orders",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-open-orders",
+      "summary": "TOTVS open sales orders (no portfolio membership)",
+      "entity": "open_sales_order",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "list_totvs_open_orders_by_customer",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-open-orders/{customer_code}/{customer_store}",
+      "summary": "TOTVS open sales orders by customer",
+      "entity": "open_sales_order",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "list_totvs_outbound_invoices",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/totvs-outbound-invoices/{customer_code}/{customer_store}",
+      "summary": "TOTVS outbound invoices (no portfolio membership)",
+      "entity": "customer_outbound_invoice",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
       "operationId": "summarize_commercial_proposals_by_collaborator",
       "method": "GET",
       "path": "/commercial/proposals/collaborator-summary",
       "summary": "Commercial proposal counts by collaborator",
       "entity": "commercial_proposal_collaborator_summary",
       "shape": "playbook_report",
-      "davi_status": "NEEDS_EXTERNAL_PROCESSING_APPROVAL",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "executable": false
     },
     {

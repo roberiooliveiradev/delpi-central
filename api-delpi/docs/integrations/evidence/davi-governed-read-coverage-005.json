@@ -1,79 +1,31 @@
 {
-  "version": 4,
-  "description": "Governance allowlist for DAVI dynamic READ. Not a semantic capability registry. Only operations with independent external-processing approval. search_products approval does not transfer.",
-  "externalProcessing": "APPROVED_WITH_RESTRICTIONS",
-  "dataClassification": "INTERNAL",
-  "coverageDecision": {
+  "source": "openapi_baseline.json",
+  "baseline_version": "3",
+  "baseline_operation_count": 703,
+  "taskId": "DAVI-DYNAMIC-READ-005",
+  "TOTAL_OPERATIONS": 703,
+  "TOTAL_GET": 506,
+  "TOTAL_WRITE_VERBS": 197,
+  "DAVI_ELIGIBLE_READ": 1,
+  "ELIGIBLE_BEFORE": 1,
+  "ELIGIBLE_AFTER": 1,
+  "NEWLY_ELIGIBLE": [],
+  "REMOVED_ELIGIBLE": [],
+  "INVENTORY_DELTA": {
+    "previous_total_operations": 703,
+    "current_total_operations": 703,
+    "previous_total_get": 506,
+    "current_total_get": 506,
+    "added_operations": 0,
+    "removed_operations": 0,
+    "note": "Delta vs previously generated inventory artifact on disk"
+  },
+  "COVERAGE_DECISION": {
     "taskId": "DAVI-DYNAMIC-READ-005",
     "decision": "PROMOTE_ZERO_NEW_OPERATIONS",
     "reason": "No additional GET passed all gates (external-processing, classification, AuthZ/branch, model-safe flat projection) without inventing human approval."
   },
-  "retrievalQuarantineTokens": [
-    "estoque",
-    "stock",
-    "saldo",
-    "preco",
-    "price",
-    "pricing",
-    "custo",
-    "cost",
-    "fornecedor",
-    "supplier",
-    "cliente",
-    "customer",
-    "financeiro",
-    "finance",
-    "payroll",
-    "clima",
-    "email",
-    "e-mail",
-    "hora",
-    "resuma",
-    "estrutura",
-    "bom",
-    "producao",
-    "produção",
-    "factory"
-  ],
-  "operations": [
-    {
-      "operationId": "search_products",
-      "reason": "Product Master V1 already approved for external MCP/GPT projection (product_code, description, group_category)",
-      "executionMode": "approved_external_capability",
-      "approvedInputFields": [
-        "code",
-        "description",
-        "group_code",
-        "page",
-        "page_size"
-      ],
-      "approvedResponseFields": [
-        "product_code",
-        "description",
-        "group_category"
-      ],
-      "semanticAliases": [
-        "produto",
-        "produtos",
-        "buscar produto",
-        "buscar produtos",
-        "consultar produto",
-        "consultar produtos",
-        "codigo do produto",
-        "código do produto",
-        "descricao do produto",
-        "descrição do produto",
-        "grupo do produto",
-        "categoria do produto",
-        "search products",
-        "product search",
-        "product code",
-        "product description",
-        "product group"
-      ]
-    }
-  ],
-  "explicitlyNotApproved": [
+  "HIGH_VALUE_BLOCKED": [
     {
       "operationId": "get_product_detail",
       "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
@@ -144,5 +96,20 @@
       "primaryBlocker": "NEEDS_DATA_CLASSIFICATION",
       "reason": "cost simulation; financial classification unresolved"
     }
+  ],
+  "STATUS_COUNTS": {
+    "ADMIN_OUT_OF_SCOPE": 76,
+    "DAVI_ELIGIBLE_READ": 1,
+    "DESTRUCTIVE_OUT_OF_SCOPE": 16,
+    "GENERIC_SQL_FORBIDDEN": 2,
+    "NEEDS_BRANCH_AUTHZ_EVIDENCE": 1,
+    "NEEDS_DATA_CLASSIFICATION": 60,
+    "NEEDS_EXTERNAL_PROCESSING_APPROVAL": 316,
+    "NEEDS_NESTED_PROJECTION_SUPPORT": 70,
+    "STREAM_BINARY_OUT_OF_SCOPE": 31,
+    "WRITE_OUT_OF_SCOPE": 130
+  },
+  "ELIGIBLE_OPERATION_IDS": [
+    "search_products"
   ]
 }

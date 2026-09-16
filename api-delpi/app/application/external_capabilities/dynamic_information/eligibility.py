@@ -14,6 +14,7 @@ from app.application.external_capabilities.dynamic_information.constants import 
     STATUS_NEEDS_DATA_CLASSIFICATION,
     STATUS_NEEDS_EXTERNAL_PROCESSING_APPROVAL,
     STATUS_NEEDS_EXTERNAL_PROJECTION,
+    STATUS_NEEDS_NESTED_PROJECTION_SUPPORT,
     STATUS_NOT_RELEVANT,
     STATUS_STREAM_BINARY_OUT_OF_SCOPE,
     STATUS_WRITE_OUT_OF_SCOPE,
@@ -42,8 +43,34 @@ _SENSITIVE_MARKERS = (
 )
 _ADMIN_MARKERS = ("/admin", "/system", "/internal/", "gpt-actions")
 _SQL_MARKERS = ("/data/sql", "/sql", "execute_sql", "raw_sql")
+
 # Stock lacks independent branch AuthZ on the current route (optional filter only).
 _BRANCH_AUTHZ_PENDING = frozenset({"get_product_stock"})
+
+# Flat items[] field projection cannot sanitize these shapes/composites today.
+# Primary technical blocker when external-processing is also missing.
+_NESTED_PROJECTION_PENDING = frozenset(
+    {
+        "get_product_detail",
+        "get_product_structure",
+        "get_product_structure_exclusivity",
+        "get_product_production_status",
+        "get_product_factory_status",
+        "get_product_playbook",
+        "get_product_guide",
+    }
+)
+
+# Nested/composite shapes from x-delpi (when operationId not in the set above).
+_NESTED_SHAPES = frozenset(
+    {
+        "product_snapshot",
+        "hierarchy",
+        "playbook_report",
+        "composite_analysis",
+        "nested_object",
+    }
+)
 
 
 def classify_operation(
@@ -54,12 +81,14 @@ def classify_operation(
     allowlisted_operation_ids: set[str],
     summary: str = "",
     tags: list[str] | None = None,
+    shape: str | None = None,
 ) -> str:
     """Return exactly one classification status (fail-closed)."""
     method_u = (method or "").upper()
     path_l = (path or "").lower()
     oid = (operation_id or "").strip()
     blob = f"{path_l} {oid.lower()} {(summary or '').lower()}"
+    shape_l = (shape or "").strip().lower()
 
     if path_l.startswith("/mcp") or oid.startswith("mcp_"):
         return STATUS_NOT_RELEVANT
@@ -79,7 +108,6 @@ def classify_operation(
         return STATUS_DESTRUCTIVE_OUT_OF_SCOPE
 
     if method_u in {"POST", "PUT", "PATCH"}:
-        # Verb alone is not proof of write; without side-effect evidence → write OOS.
         return STATUS_WRITE_OUT_OF_SCOPE
 
     if method_u != "GET":
@@ -95,13 +123,16 @@ def classify_operation(
     if any(m in blob for m in _SENSITIVE_MARKERS):
         return STATUS_NEEDS_DATA_CLASSIFICATION
 
+    if oid in _NESTED_PROJECTION_PENDING or shape_l in _NESTED_SHAPES:
+        return STATUS_NEEDS_NESTED_PROJECTION_SUPPORT
+
     # GET without explicit external-processing approval stays quarantined.
     # Presence of x-delpi entity/shape alone does not approve external projection.
     tags = tags or []
     if not oid:
         return STATUS_NEEDS_EXTERNAL_PROJECTION
 
-    _ = tags  # reserved for future governance tags
+    _ = tags
     return STATUS_NEEDS_EXTERNAL_PROCESSING_APPROVAL
 
 
