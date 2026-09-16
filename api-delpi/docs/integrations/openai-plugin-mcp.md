@@ -50,8 +50,8 @@ DAVI is branding/orchestration identity — **not** an authorization authority.
 | Resource audience | JWT `aud` must include exact MCP resource **and** `delpi-central` |
 | Keycloak client | `mcp-api-delpi` — predefined/user-defined OAuth client |
 | ChatGPT connection | **PROVEN** |
-| Tool discovery | **PROVEN** — ChatGPT UI lists exactly `search_products` |
-| Live business invocation | **PROVEN** — authenticated searches returned approved Product Master projection |
+| Tool discovery | **PROVEN** for `search_products`; dynamic broker tools **implemented** — ChatGPT UI re-discovery **PENDING** post-deploy |
+| Live business invocation | **PROVEN** for `search_products`; dynamic execute **PROVEN in tests** — live smoke **PENDING** post-deploy |
 | MCP hardened contract | **PROVEN in runtime/provider** — bounded input schema + safe validation; typed output proven in runtime |
 | Agent private preview | **PROVEN** for current operator |
 | Negative business AuthZ | **PENDING** — second user without access still required |
