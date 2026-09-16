@@ -366,10 +366,11 @@ THEMATIC_SPECS = 53–66
 CROSS_CUTTING = 67–68
 C0.S0 = APPROVED
 C0.S1 = APPROVED
-C0.S2 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-C0.S3_AUTHORIZED = NO
-NEXT = ARCHITECTURE_REVIEW_C0_S2
+C0.S2 = APPROVED
+C0.S3 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C0.S4_AUTHORIZED = NO
+NEXT = ARCHITECTURE_REVIEW_C0_S3
 RUNTIME_DIFF = NONE
 ```
 
-C0.S0 e C0.S1 estão aceitos. C0.S2 authorities/bounded contexts está persistido como candidato (não aceito). Não cria runtimes temáticos.
+C0.S0–C0.S2 estão aceitos. C0.S3 shared primitives está persistido como candidato (não aceito). Não cria runtimes temáticos.

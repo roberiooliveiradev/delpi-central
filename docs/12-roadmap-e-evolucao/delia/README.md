@@ -1,12 +1,12 @@
 # DÉLIA — DELPI · Ecossistema de Ligações, Inteligência e Automação
 
-> **Status:** `PLANNED / NOT_STARTED`  
-> **Produto:** aplicação nova e standalone de Continuous Operational Intelligence  
-> **Requirements:** `CP-001…CP-316`  
-> **Specs temáticas:** `53–66`  
-> **Próxima etapa:** `ARCHITECTURE_REVIEW_C0_S2` (`C0.S0=APPROVED`; `C0.S1=APPROVED`; `C0.S2` freeze candidato)  
-> **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-> **Execution state:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)  
+> **Status:** `PLANNED / NOT_STARTED`
+> **Produto:** aplicação nova e standalone de Continuous Operational Intelligence
+> **Requirements:** `CP-001…CP-316`
+> **Specs temáticas:** `53–66`
+> **Próxima etapa:** `ARCHITECTURE_REVIEW_C0_S3` (`C0.S0..=C0.S2=APPROVED`; `C0.S3` freeze candidato)
+> **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
+> **Execution state:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
 > **Naming authority:** [`68-delia-product-identity-and-naming.md`](./68-delia-product-identity-and-naming.md)
 
 ## 1. Decisão fundamental
@@ -236,12 +236,13 @@ PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 C0.S0 = APPROVED
 C0.S1 = APPROVED
-C0.S2_AUTHORIZED = YES
-C0.S2 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-C0.S3_AUTHORIZED = NO
+C0.S2 = APPROVED
+C0.S3_AUTHORIZED = YES
+C0.S3 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C0.S4_AUTHORIZED = NO
 FOUNDATION_FREEZE = NOT APPROVED
 RUNTIME_DIFF = NONE
-NEXT = ARCHITECTURE_REVIEW_C0_S2
+NEXT = ARCHITECTURE_REVIEW_C0_S3
 ```
 
 A formalização de `CP-311–CP-316` é documentação/planejamento. Não altera os estados acima nem prova scheduler, email provider ou Recurring Work runtime.

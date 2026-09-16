@@ -601,11 +601,13 @@ C0.S2 = APPROVED
 AUTHORITY_MAP = FROZEN_ACCEPTED
 BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
 C0.S3_AUTHORIZED = YES
+C0.S3 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C0.S4_AUTHORIZED = NO
 FOUNDATION_FREEZE = NOT APPROVED
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 DÉLIA_RUNTIME_DIFF = NONE
-NEXT = C0.S3 — SHARED_PRIMITIVES / REFERENCE_DECISIONS
+NEXT = ARCHITECTURE_REVIEW_C0_S3
 ```
 
 ## 16. C0.S2 authorities / bounded contexts linkage — accepted review
@@ -642,5 +644,38 @@ No CP promoted to PASS by C0.S2-T1/T2
 No new CP ID invented for "C0.S2"
 C1+ CP statuses remain unchanged/LOCKED as applicable
 NEW_RUNTIME_ABSTRACTIONS = NONE
-SHARED_PRIMITIVES = deferred to C0.S3
+```
+
+## 17. C0.S3 shared primitives linkage
+
+Evidence anchors: `21` §4; `17` §3; ledger §6.26; `16` C0.S3.
+
+| Primitive / decision | CP linkage | Status note |
+|---|---|---|
+| EntityRef | CP-159 | REUSE; ≠AuthZ |
+| SourceRef / EvidenceRef | CP-098, CP-200, CP-206, CP-219 | REUSE; Evidence≠SoT |
+| EventEnvelope | CP-207, CP-218 | REUSE; ≠permission/command |
+| CapabilityProjection | CP-058, CP-205, CP-235 | PROJECTION_ONLY |
+| ProcessTraceRef | CP-250, CP-251 | REFERENCE_ONLY |
+| MetricDefinitionRef | CP-275, CP-276, CP-277 | ACCEPTED shared |
+| MemoryItemRef | CP-269, CP-270, CP-271 | DOMAIN_LOCAL_ONLY |
+| ArtifactRef | CP-283, CP-284 | ACCEPTED shared |
+| PredictionRef | CP-288, CP-289, CP-293 | ACCEPTED; Prediction≠FACT |
+| ScenarioRef | CP-291, CP-292, CP-294 | ACCEPTED; SIMULATE≠APPLY |
+| AutomationExecutionRef | CP-235–237, CP-239 | ACCEPTED; ≠Outcome |
+| ExecutorRef | CP-235, CP-236, CP-238 | DEFER_TO_CONTRACT C0.S5 |
+| RecurringWorkRef | CP-312, CP-314, CP-316 | ACCEPTED; ≠scheduler |
+| WorkOccurrenceRef | CP-313, CP-315 | ACCEPTED; ≠timer tick |
+| AIAssetRef | CP-257, CP-258, CP-305, CP-310 | PROJECTION_ONLY |
+| ModelRef | CP-288, CP-303, CP-304, CP-307 | ACCEPTED shared |
+| DeviceRef (Edge) | CP-171, CP-296, CP-298 | REUSE; EdgeDeviceRef rejected |
+| AnalysisRunRef | CP-281, CP-282 | REJECT_ABSTRACTION (shared) |
+
+```text
+C0.S3 documentation evidence ≠ runtime implementation evidence
+No CP promoted to PASS by C0.S3-T2
+No new CP ID invented for "C0.S3"
+C1+ CP statuses remain unchanged
+NEW_RUNTIME_ABSTRACTIONS = NONE
+C0.S4_AUTHORIZED = NO
 ```

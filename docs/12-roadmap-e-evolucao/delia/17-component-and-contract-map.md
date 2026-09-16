@@ -1,14 +1,14 @@
 # DÉLIA — Mapa de Componentes, Contratos e Ownership
 
-**Status:** arquitetura canônica de ownership  
-**Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
-**Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
-**Patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)  
-**State:** [`21-data-and-state-model.md`](./21-data-and-state-model.md)  
+**Status:** arquitetura canônica de ownership
+**Ordem:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
+**Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)
+**Patterns:** [`49-architecture-and-design-patterns-standard.md`](./49-architecture-and-design-patterns-standard.md)
+**State:** [`21-data-and-state-model.md`](./21-data-and-state-model.md)
 **Specs temáticas:** `53–66`
 
-> Este documento define **ownership e contratos alvo**. Ele não prova que um runtime, serviço, tabela, adapter ou capability já exista. Existência e estado atual devem ser classificados por evidência como `PROVEN`, `TO_INVENTORY`, `PLANNED` ou `TARGET` conforme o caso.  
-> **C0.S2-T1 (histórico):** matriz de authorities/bounded contexts foi persistida como `FROZEN_CANDIDATE` / `CANDIDATE_FOR_ARCHITECTURE_REVIEW`.  
+> Este documento define **ownership e contratos alvo**. Ele não prova que um runtime, serviço, tabela, adapter ou capability já exista. Existência e estado atual devem ser classificados por evidência como `PROVEN`, `TO_INVENTORY`, `PLANNED` ou `TARGET` conforme o caso.
+> **C0.S2-T1 (histórico):** matriz de authorities/bounded contexts foi persistida como `FROZEN_CANDIDATE` / `CANDIDATE_FOR_ARCHITECTURE_REVIEW`.
 > **C0.S2-T2:** `ARCHITECTURE_REVIEW_C0_S2` sobre `REVIEWED_HEAD=8bae12a250f2362603211a93c65bb098b8b1e9aa`, `VERDICT=ACCEPT_WITH_RESIDUAL`; `AUTHORITY_MAP=FROZEN_ACCEPTED`; `BOUNDED_CONTEXT_MAP=FROZEN_ACCEPTED`; `C0.S2=APPROVED`; `C0.S3_AUTHORIZED=YES`; `FOUNDATION_FREEZE=NOT APPROVED`; `DÉLIA_RUNTIME_DIFF=NONE`.
 
 ## 1. Owners canônicos
@@ -385,46 +385,38 @@ Observability / Evals
 
 **Module name does not imply microservice.** C0 decide physical split only from real ownership/consumers/scale/isolation needs. Um module de integração com automação ou scheduling não transforma a DÉLIA em owner da execução técnica do Automation Hub/scheduler.
 
-## 3. Shared primitive registry
+## 3. Shared primitive registry — C0.S3 freeze candidate
 
-> **C0.S3 ownership.** Lista abaixo é registry **alvo/candidato** — **não** congelada nem implementada em C0.S2. C0.S2 congela apenas boundaries; design/decisão de primitives = C0.S3.
-
-Preferir estas foundations canônicas como contratos alvo quando suficientes:
-
-```text
-CorrelationContext
-EntityRef
-RelationshipRef
-SourceRef
-EvidenceRef
-OutcomeRef
-WorkspaceContext
-CapabilityProjection
-DecisionGateRequest/Decision
-WorkflowPlan/WorkflowStep
-TaskRef/CaseRef
-EventEnvelope/AuditEvent
-```
-
-A presença nesta lista **não prova implementação atual**. C0.S3 decide reuse/create; C0.S0 inventory localiza definição/owner/consumers quando existentes.
-
-Candidate refs somente se C0 provar necessidade transversal:
+> Canonical semantics: [`21-data-and-state-model.md`](./21-data-and-state-model.md) §4.
+> Status: `FROZEN_CANDIDATE` / `CANDIDATE_FOR_ARCHITECTURE_REVIEW`. Não prova runtime. Não autoriza C0.S4.
 
 ```text
-MediaRef
-Biometric refs
-ExternalConnectionRef
-AutomationExecutionRef / ExecutorRef
-RecurringWorkRef / WorkOccurrenceRef
-ProcessTraceRef
-MetricDefinitionRef
-MemoryItemRef
-AnalysisRunRef
-ArtifactRef
-PredictionRef
-ScenarioRef
-AIAssetRef / ModelRef
-EdgeDeviceRef
+REUSED_EXISTING:
+  CorrelationContext, EntityRef, UserRef, ServiceActorRef, DeviceRef,
+  SourceRef, EvidenceRef, OutcomeRef, EventEnvelope
+  (+ RelationshipRef, TaskRef/CaseRef, DecisionGate*, Workflow*, AuditEvent when already justified)
+
+CapabilityProjection = PROJECTION_ONLY
+  (≠ permission / business / executor-registry / provider-metadata / Hub SoT)
+
+ACCEPTED_SHARED (refs only; no code/tables):
+  MetricDefinitionRef, ArtifactRef, PredictionRef, ScenarioRef,
+  AutomationExecutionRef, RecurringWorkRef, WorkOccurrenceRef, ModelRef
+
+NOT_PROMOTED:
+  ProcessTraceRef = REFERENCE_ONLY
+  MemoryItemRef = DOMAIN_LOCAL_ONLY (Personal Memory)
+  AnalysisRunRef = REJECT_ABSTRACTION (use CorrelationContext.analysisRunId + Source/Evidence/Artifact refs)
+  ExecutorRef = DEFER_TO_CONTRACT (C0.S5); AutomationExecutionRef suffices now
+  AIAssetRef = PROJECTION_ONLY + DEFER_BY_PHASE detail
+  EdgeDeviceRef = REUSE DeviceRef
+
+REJECTED_META:
+  UniversalRef, GenericBusinessObjectRef, GenericExecutionObject,
+  GenericAIObject, GenericAssetRef
+
+WorkspaceContext shape = DEFER_TO_CONTRACT (C0.S5)
+NEW_RUNTIME_ABSTRACTIONS = NONE
 ```
 
 Do not create feature-specific duplicate Evidence/Event/Outcome/Workflow models.

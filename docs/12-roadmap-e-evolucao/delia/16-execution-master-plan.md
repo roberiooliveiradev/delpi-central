@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C0.S3 — SHARED_PRIMITIVES / REFERENCE_DECISIONS` (`C0.S0=APPROVED`; `C0.S1=APPROVED`; `C0.S2=APPROVED`; `C0.S3_AUTHORIZED=YES`; C0 permanece `NOT_STARTED`; `FOUNDATION_FREEZE=NOT APPROVED`; `DÉLIA_RUNTIME_DIFF=NONE`)  
+**Próxima etapa:** `ARCHITECTURE_REVIEW_C0_S3` (`C0.S0..=C0.S2=APPROVED`; `C0.S3=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C0.S4_AUTHORIZED=NO`; C0 permanece `NOT_STARTED`; `FOUNDATION_FREEZE=NOT APPROVED`; `DÉLIA_RUNTIME_DIFF=NONE`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -319,11 +319,13 @@ C0.S0 = APPROVED
 C0.S1 = APPROVED
 C0.S2 = APPROVED
 C0.S3_AUTHORIZED = YES
+C0.S3 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C0.S4_AUTHORIZED = NO
 FOUNDATION_FREEZE = NOT APPROVED
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
 DÉLIA_RUNTIME_DIFF = NONE
-NEXT = C0.S3 — SHARED_PRIMITIVES / REFERENCE_DECISIONS
+NEXT = ARCHITECTURE_REVIEW_C0_S3
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -361,26 +363,23 @@ Timer/scheduler físico é boundary de infraestrutura/execution a ser atribuído
 
 ## C0.S3 — Shared primitives
 
-Decidir/reutilizar foundations antes de types específicos. Candidates novos só se C0 provar necessidade:
+Decidir/reutilizar foundations antes de types específicos.
+
+**C0.S3-T2 (docs):** decisões persistidas em `21` §4 + `17` §3 + `25` §17 + ledger §6.26. Estado: `CANDIDATE_FOR_ARCHITECTURE_REVIEW`. **Não** aceito; **não** autoriza C0.S4; `NEW_RUNTIME_ABSTRACTIONS=NONE`; `DÉLIA_RUNTIME_DIFF=NONE`.
 
 ```text
-ProcessTraceRef?
-MetricDefinitionRef?
-MemoryItemRef?
-AnalysisRunRef?
-ArtifactRef?
-PredictionRef?
-ScenarioRef?
-AutomationExecutionRef?
-ExecutorRef?
-RecurringWorkRef?
-WorkOccurrenceRef?
-AIAssetRef?
-ModelRef?
-EdgeDeviceRef?
+REUSED: CorrelationContext, EntityRef, UserRef, ServiceActorRef, DeviceRef,
+        SourceRef, EvidenceRef, OutcomeRef, EventEnvelope
+CapabilityProjection = PROJECTION_ONLY
+ACCEPTED_SHARED: MetricDefinitionRef, ArtifactRef, PredictionRef, ScenarioRef,
+                 AutomationExecutionRef, RecurringWorkRef, WorkOccurrenceRef, ModelRef
+NOT_PROMOTED: ProcessTraceRef=REFERENCE_ONLY; MemoryItemRef=DOMAIN_LOCAL_ONLY;
+              AnalysisRunRef=REJECT; ExecutorRef=DEFER_C0_S5; AIAssetRef=PROJECTION_ONLY;
+              EdgeDeviceRef=REUSE DeviceRef
+REJECTED_META: UniversalRef / Generic*Ref catalogs
 ```
 
-Preferir `EntityRef/SourceRef/EvidenceRef/OutcomeRef/EventEnvelope/CapabilityProjection` quando suficientes.
+Timezone/DST/misfire/overlap/retry/background AuthZ/scheduler implementation **não** são C0.S3 — permanecem C0.S4/C0.S5.
 
 ## C0.S4 — Architecture / persistence / privacy / safety freeze
 

@@ -84,9 +84,92 @@ Congelar:
 - state-machine transitions;
 - data classes novas somente se shared primitives existentes forem insuficientes.
 
-## 4. Shared foundations
+## 4. Shared foundations — C0.S3 freeze candidate
 
-Todos os tipos abaixo são `TARGET/CANDIDATE` até C0 provar necessidade e ownership.
+```text
+STATUS = FROZEN_CANDIDATE / CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C0.S0..C0.S2 = APPROVED
+C0.S3_AUTHORIZED = YES
+C0.S4_AUTHORIZED = NO
+AUTHORITY_MAP = FROZEN_ACCEPTED (unchanged)
+BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED (unchanged)
+NEW_RUNTIME_ABSTRACTIONS = NONE
+FOUNDATION_FREEZE = NOT APPROVED
+```
+
+C0.S3 congela **semântica de referência compartilhada**. Não cria código, classes, tabelas, migrations, endpoints ou services. Field sketches abaixo permanecem `TARGET` de contrato (C0.S5), não schema implementado.
+
+### 4.0 Decision summary
+
+#### REUSED_EXISTING_PRIMITIVES
+
+| Primitive | Semantics | Must NOT become |
+|---|---|---|
+| CorrelationContext | correlation only | authority |
+| EntityRef | typed ref to business object | authorization / business authority |
+| UserRef | identity reference | permission snapshot |
+| ServiceActorRef | explicit service/background actor identity | permission grant |
+| DeviceRef | device identity | user identity / authorization |
+| SourceRef | source/origin reference | source authority itself / source access |
+| EvidenceRef | Evidence reference | SoT / authorization |
+| OutcomeRef | verified business-outcome reference | technical executor success |
+| EventEnvelope | normalized event envelope | permission / command / proof of EventBus |
+
+Also reuse when already justified by prior authorities: `RelationshipRef`, `TaskRef`/`CaseRef`, `DecisionGateRequest/Decision`, `WorkflowPlan/WorkflowStep`, `AuditEvent` — sem promover meta-abstrações novas.
+
+#### CapabilityProjection = PROJECTION_ONLY
+
+Authorized semantic projection for DÉLIA capability discovery/planning.
+
+Must NOT become: permission authority · business authority · technical executor registry authority · provider/tool metadata authority · Automation Hub technical SoT.
+
+Technical resolution remains with canonical source / adapter / executor owner.
+
+#### ACCEPTED_SHARED_PRIMITIVES (architectural refs only)
+
+| Primitive | Min semantic identity | Core rules | Primary CPs |
+|---|---|---|---|
+| MetricDefinitionRef | metricId, version (+ namespace/scope?, ownerRef?) | ≠ metric/business authority; ≠ data access permission; formula stays with governed owner | CP-275, CP-276, CP-277 |
+| ArtifactRef | artifactId, version (+ artifactType?, ownerRef?) | ≠ publication approval; ≠ automatic SoT; ≠ ACL grant; URL/path ≠ semantic authority | CP-283, CP-284 |
+| PredictionRef | prediction id + ModelRef/version + subject EntityRef(s) + target + horizon + freshness | Prediction≠FACT; ≠permission; ≠autonomous ACT | CP-288, CP-289, CP-293 |
+| ScenarioRef | isolated scenario/branch id | Scenario≠production; Twin≠SoT; SIMULATE≠APPLY; never authorizes production mutation | CP-291, CP-292, CP-294 |
+| AutomationExecutionRef | executionId, executionOwnerRef (+ capabilityRef?, externalExecutionRef?) | Work≠AutomationExecution; ≠business Outcome; SUCCEEDED≠verified success; no duplicate Hub tech truth | CP-235–237, CP-239 |
+| RecurringWorkRef | recurringWorkId, version | ≠scheduler job; schedule≠permission; stored intent≠permanent AuthZ; scheduler owner separate | CP-312, CP-314, CP-316 |
+| WorkOccurrenceRef | occurrenceId, recurringWorkRef, scheduledFor | ≠timer tick; ≠scheduler job; ≠permission; trigger≠Outcome | CP-313, CP-315 |
+| ModelRef | modelId, version, ownerRef (+ providerRef?, family?) | ≠model approval; ≠permission; ≠Decision authority; router≠approval | CP-288, CP-303, CP-304, CP-307 |
+
+C0.S3 **não** decide timezone/DST/misfire/overlap/retry/background AuthZ/scheduler implementation (C0.S4/C0.S5).
+
+#### NOT PROMOTED
+
+| Item | Classification | Reason |
+|---|---|---|
+| ProcessTraceRef | REFERENCE_ONLY | typed process trace needed; no universal shared lifecycle yet; no generic process master | CP-250, CP-251 |
+| MemoryItemRef | DOMAIN_LOCAL_ONLY (DÉLIA Personal Memory) | user-scoped/privacy; ≠Org Knowledge/Conversation/Workspace; no cross-boundary foundation need | CP-269–271 |
+| AnalysisRunRef | REJECT_ABSTRACTION (shared) | use CorrelationContext.analysisRunId + SourceRef/EvidenceRef + ArtifactRef | CP-281, CP-282 |
+| ExecutorRef | DEFER_TO_CONTRACT (C0.S5) | Hub/executor physical contract unresolved; AutomationExecutionRef suffices now | CP-235, CP-236, CP-238 |
+| AIAssetRef | PROJECTION_ONLY; detail DEFER_BY_PHASE | Tower/Marketplace may project later; ≠permission; not global authority foundation | CP-257, CP-258, CP-305, CP-310 |
+| EdgeDeviceRef | REUSE_EXISTING → DeviceRef | do not create separate EdgeDeviceRef; device≠user≠AuthZ | CP-171, CP-296, CP-298 |
+
+#### REJECTED generic meta-abstractions
+
+```text
+UniversalRef
+GenericBusinessObjectRef
+GenericExecutionObject
+GenericAIObject
+GenericAssetRef
+```
+
+Forbidden unless future Abstraction Gate with real consumers proves need.
+
+#### WorkspaceContext
+
+`DEFER_TO_CONTRACT` / C0.S5 for exact shape. May reuse EntityRef/SourceRef/DeviceRef and bounded Work/Artifact refs when justified. WorkspaceContext ≠ authorization ≠ SoT ≠ JWT/secret carrier.
+
+#### Field sketches below
+
+Subsections 4.x seguintes são sketches `TARGET` de conteúdo — **não** implementação e **não** promoção de candidates rejeitados acima.
 
 ### CorrelationContext
 
@@ -136,7 +219,7 @@ Nunca guardar credential em Source/Evidence/Outcome.
 
 ## 5. WorkspaceContext
 
-Pode carregar app/route/EntityRefs/SourceRefs/filters/selection/dateRange/device metadata e bounded refs para Task/Case/Watch/RecurringWork/execution/artifact.
+`DEFER_TO_CONTRACT` (C0.S5) para shape exato. Pode carregar app/route/EntityRefs/SourceRefs/filters/selection/dateRange/device metadata e bounded refs para Task/Case/Watch/RecurringWork/execution/artifact quando justificado.
 
 Nunca carregar como authority:
 
@@ -197,6 +280,8 @@ DÉLIA-owned quando implementado. Turn pode referenciar WorkspaceContext snapsho
 Recurring Work não depende de conversation state viva para disparar; conversation pode apenas originar/editar uma definição por use case autorizado.
 
 ## 9. Personal Memory — owned state candidate
+
+`MemoryItem` / `MemoryItemRef` = **DOMAIN_LOCAL_ONLY** (C0.S3) sob Personal Memory. Não é shared/universal primitive. Memory ≠ Organizational Knowledge ≠ business authority ≠ permission.
 
 Personal Memory é separada de conversation e Organizational Knowledge.
 
@@ -521,7 +606,7 @@ outcome/status?
 correlationRef?
 ```
 
-Candidate `ProcessTraceRef` somente se necessário:
+Candidate `ProcessTraceRef` = **REFERENCE_ONLY** (C0.S3): tipagem local de Process Intelligence quando necessária; **não** é shared/universal primitive nem process master object.
 
 ```text
 traceRef
@@ -667,7 +752,7 @@ No hidden CoT/conversation dump.
 
 ## 24. AI Control Tower / AI Asset Registry state
 
-Candidate `AIAssetRef` projection:
+Candidate `AIAssetRef` projection = **PROJECTION_ONLY** (C0.S3); detalhe de contrato = `DEFER_BY_PHASE`. AIAsset ≠ permission. Não é foundation global de autoridade.
 
 ```text
 assetId
@@ -737,7 +822,9 @@ Declared permissions/scopes are requirements, not grants.
 
 ## 27. Edge / Offline state
 
-Candidate `EdgeDeviceRef`:
+**C0.S3:** `EdgeDeviceRef` = REJECT as separate shared primitive → **REUSE `DeviceRef`**.
+
+Device/Edge platform metadata (quando necessário) estende DeviceRef / domain-local device projection — não cria segundo tipo compartilhado:
 
 ```text
 deviceRef
