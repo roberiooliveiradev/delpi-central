@@ -3,9 +3,9 @@
 > **Specialist brand:** DAVI — Especialista em Dados e Informações DELPI  
 > **Technical client id remains:** `mcp-api-delpi` (do not rename to `mcp-davi`)
 
-> **KEYCLOAK_CONFIG = APPLIED_EVALUATE_PROVEN** (PLUGIN-004A live Evaluate on Keycloak 26.0.7).  
-> ChatGPT connector end-to-end remains a separate go-live proof.  
-> Vendor: [Keycloak MCP AuthZ Server](https://www.keycloak.org/securing-apps/mcp-authz-server) — Keycloak does **not** natively process RFC 8707 `resource` → `aud` on 26.0.7; use scope + Audience mapper workaround.
+> **KEYCLOAK_CONFIG = APPLIED_EVALUATE_PROVEN** on Keycloak 26.0.7.  
+> ChatGPT OAuth connection and MCP tool discovery were subsequently proven after PLUGIN-005 deployment.  
+> Vendor note: Keycloak 26.0.7 does not natively provide the required RFC8707-style `resource` → token audience binding used here; the platform uses client scope + Audience mapper.
 
 ## Goal
 
@@ -22,84 +22,214 @@ delpi-central
 https://minhadelpi.com.br/apps/api-delpi/mcp
 ```
 
-JWT ``scope`` claim (proven Evaluate output):
+JWT `scope` claim:
 
 ```text
 openid email profile mcp:tools
 ```
 
-Note: Keycloak client scope ``audience-delpi`` remains **Default** on the client and is what causes ``aud`` to include ``delpi-central``. It typically does **not** appear in the JWT ``scope`` string and must **not** be required by the MCP resource server as a scope claim.
+Keycloak client scope `audience-delpi` remains **Default** and causes `aud` to include `delpi-central`. It does not need to appear in the JWT `scope` string and the MCP resource server must not require it as a scope claim.
 
-Exact string match for the MCP URL — **no** trailing slash.
+The MCP resource URL uses an exact string match with **no trailing slash**.
 
 ## Client
 
 | Field | Value |
 |---|---|
 | Client ID | `mcp-api-delpi` |
-| Mode | `PREDEFINED` |
+| Mode | `PREDEFINED` / user-defined OAuth client in ChatGPT |
 | Do not reuse | `delpi-central`, Portal public clients, `chatgpt-*` GPT Actions bridges, `mcp-tv-dashboard` |
 | Capability type | OpenID Connect |
-| Access type | Confidential (Client Id and Secret) — matches ChatGPT predefined connector |
+| Access type | Confidential (`Client Id and Secret`) |
+| Token endpoint auth | `client_secret_post` in the successful ChatGPT connector configuration |
 | Standard Flow | ON |
 | Direct Access Grants | **OFF** |
 | Service Accounts | **OFF** |
 | Implicit | OFF |
 | PKCE | S256 required |
-| Valid redirect URIs | `https://chatgpt.com/connector_platform_oauth_redirect` (proven ChatGPT connector redirect; not GPT Actions `/aip/g-.../oauth/callback`) |
-| Web origins | as required by ChatGPT connector |
+| Web origins | leave empty unless an explicit Keycloak/browser requirement is proven; MCP transport Origin allowlist is a separate control |
+
+## Redirect URI — use the provider-generated current value
+
+Do **not** hardcode historical callback URLs.
+
+The successful ChatGPT custom-plugin flow generated a connector-specific return URL with the pattern:
+
+```text
+https://chatgpt.com/connector/oauth/<connector-id>
+```
+
+Operational procedure:
+
+1. ChatGPT → custom Plugin/App → OAuth → **Configurações avançadas de OAuth**.
+2. Select **Cliente OAuth definido pelo usuário**.
+3. Copy the exact **URL de retorno** shown by ChatGPT.
+4. Keycloak → Clients → `mcp-api-delpi` → Settings → `Valid redirect URIs`.
+5. Replace bootstrap/historical callbacks with the exact current provider-generated URL.
+6. Save.
+
+Rules:
+
+- exact URI only in production;
+- no `https://chatgpt.com/*` wildcard after bootstrap;
+- do not assume `https://chatgpt.com/connector_platform_oauth_redirect` is current;
+- do not use GPT Actions callbacks such as `/aip/g-.../oauth/callback`;
+- recreating the connector may generate a new callback, so re-read the provider UI.
+
+The exact connector id is provider configuration and must not be committed.
 
 ## Client scope `mcp:tools`
 
-1. Create Client Scope `mcp:tools` (Optional).
+1. Create Client Scope `mcp:tools`.
 2. Protocol: `openid-connect`.
 3. Mapper → **Audience**:
    - Name: `mcp-api-delpi-resource-audience`
    - Included Custom Audience: `https://minhadelpi.com.br/apps/api-delpi/mcp` (**exact**)
    - Add to access token: ON
-4. Assign scope `mcp:tools` to client `mcp-api-delpi` (Optional or Default — prefer **Default** so ChatGPT always receives the binding when using this client).
+4. Assign `mcp:tools` to client `mcp-api-delpi` as **Default** for the current DAVI configuration.
+
+This scope has two externally relevant postconditions:
+
+```text
+JWT scope contains mcp:tools
+JWT aud contains https://minhadelpi.com.br/apps/api-delpi/mcp
+```
+
+Do not treat `mcp:tools` as business authorization.
 
 ## Keep existing `audience-delpi`
 
-Do **not** remove or replace `audience-delpi`.  
-It continues to map `aud` → `delpi-central` for shared api-delpi JWT validation.
+Do **not** remove or replace `audience-delpi`.
 
-Assign `audience-delpi` (Default) on `mcp-api-delpi` as for other platform clients.
+It maps:
 
-It is an **internal Keycloak audience client scope**, not a required MCP JWT `scope` claim.
+```text
+audience-delpi client scope
+→ aud contains delpi-central
+```
+
+It is an internal Keycloak audience mechanism, not a required MCP JWT `scope` claim.
 
 ## Default client scopes on `mcp-api-delpi`
 
+The proven effective configuration contains:
+
 ```text
-openid (basic)
 profile
 email
-audience-delpi   # aud → delpi-central (may be absent from JWT scope string)
-mcp:tools        # aud → MCP resource URL (appears in JWT scope)
+audience-delpi   # aud → delpi-central; may be absent from JWT scope string
+mcp:tools        # aud → exact MCP resource; appears in JWT scope
 ```
+
+OIDC requests `openid` through the authorization flow.
+
+## Evaluate proof
+
+Keycloak Admin Console → Clients → `mcp-api-delpi` → Client scopes → Evaluate produced a token with:
+
+```text
+aud includes:
+  - delpi-central
+  - https://minhadelpi.com.br/apps/api-delpi/mcp
+  - account
+
+scope:
+  - openid
+  - email
+  - profile
+  - mcp:tools
+```
+
+Extra legitimate audiences such as `account` are acceptable. Membership of both required audiences is what matters.
+
+## ChatGPT registration procedure that succeeded
+
+1. Enable ChatGPT Developer Mode.
+2. Create custom Plugin/App.
+3. Server URL:
+
+   ```text
+   https://minhadelpi.com.br/apps/api-delpi/mcp
+   ```
+
+4. Authentication: OAuth.
+5. Advanced OAuth:
+   - method: **Cliente OAuth definido pelo usuário**;
+   - client id: `mcp-api-delpi`;
+   - client secret: copied directly from Keycloak into ChatGPT, never into repo/chat/docs/log;
+   - token endpoint auth: `client_secret_post`;
+   - scopes: `openid`, `profile`, `email`, `mcp:tools`;
+   - resource: exact MCP URL.
+6. Copy the ChatGPT-generated return URL into Keycloak.
+7. Save Keycloak client.
+8. Create or **Reconnect** the ChatGPT Plugin.
+9. After successful OAuth, ChatGPT must show the connected account and list the MCP tool `search_products`.
 
 ## Proof after configuration
 
-1. Authorization Code + PKCE as a real DELPI user (no password grant / client_credentials).
-2. Decode access token (claims only — never paste secrets):
+### Positive OAuth/resource proof
 
-```json
-{
-  "iss": "https://minhadelpi.com.br/auth/realms/delpi",
-  "aud": ["delpi-central", "https://minhadelpi.com.br/apps/api-delpi/mcp", "account"],
-  "scope": "openid email profile mcp:tools"
-}
+Authorization Code + PKCE as a real DELPI user must produce a token whose claims satisfy:
+
+```text
+iss = https://minhadelpi.com.br/auth/realms/delpi
+aud includes delpi-central
+aud includes https://minhadelpi.com.br/apps/api-delpi/mcp
+scope includes openid profile email mcp:tools
 ```
 
-(`aud` may be string or array — membership is what matters. Extra audiences such as `account` are fine.)
+Never paste the raw JWT, refresh token, authorization code, cookies, or client secret into reports.
 
-3. Positive: `Authorization: Bearer <token>` against `/apps/api-delpi/mcp` is not rejected for audience/scope.
-4. Negative: token with only `aud=delpi-central` (no MCP URL) → `401` on `/mcp`.
+### Negative resource-binding proof
+
+A token with only:
+
+```text
+aud = delpi-central
+```
+
+and no exact MCP audience must be rejected on `/apps/api-delpi/mcp`.
+
+### Business AuthZ proof
+
+OAuth success does not prove Product Master authorization. `search_products` must still pass the canonical backend business authorization for the authenticated DELPI user.
+
+## MCP routing / Origin operational prerequisites
+
+Keycloak can be perfectly configured while ChatGPT still fails after OAuth. Before changing Keycloak again, verify the MCP runtime:
+
+```text
+POST /apps/api-delpi/mcp
+→ no 307/308 redirect
+
+Origin: https://chatgpt.com
+→ not 403 Invalid Origin
+```
+
+FastAPI CORS and FastMCP DNS-rebinding Origin validation are separate controls.
+
+If the provider returns after OAuth with a generic connection error, inspect token exchange and MCP initialize/tools-list evidence before changing scopes, redirect, secret, or PKCE.
 
 ## Discovery note
 
-After creating `mcp:tools`, it will **not** automatically appear in realm `scopes_supported` until Keycloak lists it; api-delpi advertises it in protected-resource metadata regardless.
+Realm `scopes_supported` and MCP protected-resource `scopes_supported` are distinct surfaces.
+
+Keycloak may advertise internal scopes such as `audience-delpi`; the MCP protected resource advertises only the scopes the resource server requires in JWT `scope`:
+
+```text
+openid profile email mcp:tools
+```
+
+## Legacy specialists
+
+Do not mechanically copy the DAVI `mcp:tools` scope to TÉO/VISTA legacy GPT Actions clients. DAVI requires MCP-resource audience binding because it is a remote MCP resource; legacy GPT Actions bridges have a different external contract.
 
 ## Secrets
 
-Never commit client secret, admin password, or tokens.
+Never commit or paste:
+
+- client secret;
+- Keycloak admin credentials;
+- access/refresh tokens;
+- authorization codes;
+- authenticated cookies.
