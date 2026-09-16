@@ -424,7 +424,7 @@ rollback/revoke existe quando aplicável?
 | Este arquivo (`docs/12-roadmap-e-evolucao/davi/README.md`) | baseline de produto/arquitetura DAVI no GitHub |
 | `DAVI — Diretrizes Gerais, Chats e Handoffs` (Project ChatGPT) | coordenação GPT ↔ Cursor ↔ GitHub; pode viver fora do repo |
 | [`../../../api-delpi/docs/integrations/openai-plugin-mcp.md`](../../../api-delpi/docs/integrations/openai-plugin-mcp.md) | CURRENT API DELPI + OpenAI/MCP contract/evidence |
-| [`../../../api-delpi/docs/integrations/openai-workspace-agent-davi.md`](../../../api-delpi/docs/integrations/openai-workspace-agent-davi.md) | CURRENT Workspace Agent / Agent Studio config/evidence |
+| [`../../../api-delpi/docs/integrations/openai-workspace-agent-davi.md`](../../../api-delpi/docs/integrations/openai-workspace-agent-davi.md) | CURRENT Workspace Agent / Agent Studio; **Agent Instructions = stable behavior only**; capability inventory = governed dynamic discovery (not enumerated in the prompt) |
 | [`../../../api-delpi/docs/integrations/keycloak-mcp-client-runbook.md`](../../../api-delpi/docs/integrations/keycloak-mcp-client-runbook.md) | Keycloak client / OAuth runbook |
 | [`../../../api-delpi/docs/integrations/keycloak-mcp-oauth-evidence.md`](../../../api-delpi/docs/integrations/keycloak-mcp-oauth-evidence.md) | OAuth/MCP evidence ledger |
 | `.cursor/rules/*` materiais | authorities transversais da plataforma (não duplicar aqui) |
