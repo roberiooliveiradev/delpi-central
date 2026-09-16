@@ -14,13 +14,13 @@ Definir a organização física esperada **antes** de criar runtime, evitando re
 
 A aplicação deve nascer preparada arquiteturalmente para Global/Workspace/Meeting/Frontline, porém C1 implementa somente o bootstrap necessário; não antecipar media/runtime/features de C3/C6.
 
-Os nomes finais foram persistidos como freeze candidato em C0.S1-T1 (`68`); paths abaixo são `PLANNED / FROZEN_CANDIDATE` e só mudam por evidence/ADR após aceite arquitetural. Não criar pastas nesta etapa.
+Os nomes finais foram aceitos pelo `ARCHITECTURE_REVIEW_C0_S1` (`REVIEWED_HEAD=c822f0e72495256c3459a4b36b9c37a3bba95cbb`; authority `68`); paths abaixo são `PLANNED / FROZEN_ACCEPTED` e só mudam por evidence/ADR futuro. Não criar pastas nesta etapa.
 
 ## 2. Estrutura macro alvo
 
 ```text
 delpi-central/
-├── delia-api/                       # FROZEN_CANDIDATE (C0.S1)
+├── delia-api/                       # FROZEN_ACCEPTED (C0.S1)
 │   ├── app/
 │   │   ├── domain/
 │   │   ├── application/
@@ -38,7 +38,7 @@ delpi-central/
 │   └── pytest.ini
 │
 ├── plugins/
-│   ├── delia/                       # FROZEN_CANDIDATE (C0.S1); one product, one MFE
+│   ├── delia/                       # FROZEN_ACCEPTED (C0.S1); one product, one MFE
 │   │   ├── src/
 │   │   │   ├── ui/
 │   │   │   ├── state/
@@ -292,7 +292,7 @@ Shape conceitual, **não contrato congelado nem arquivo para registro ainda**:
 }
 ```
 
-`id=delia`, paths e `serviceName=delia-api` são freeze candidato C0.S1. Manifest source owner = DÉLIA; app/route/RBAC registry owner = Core. Permission codes e rotas finais não são inventados em C0.S1. Navegação vigente permanece `/me/apps` → `apps[].routes` (não recriar `/me/routes`).
+`id=delia`, paths e `serviceName=delia-api` são freeze aceito C0.S1. Manifest source owner = DÉLIA; app/route/RBAC registry owner = Core. Permission codes e rotas finais não são inventados em C0.S1. Navegação vigente permanece `/me/apps` → `apps[].routes` (não recriar `/me/routes`).
 
 Meeting/Frontline não exigem manifests independentes por default.
 
