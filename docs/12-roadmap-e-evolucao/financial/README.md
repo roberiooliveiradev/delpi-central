@@ -1,7 +1,10 @@
 # Portal Financeiro — spec e absorção dos plugins legados
 
-> **Status:** P0 entregue (`plugins/financial` + `financial-api`)  
+> **Status:** P0 entregue (`plugins/financial` + `financial-api`)
+>
 > **Fora do P0:** orçamento, contas a pagar / fluxo de caixa, desativação dos plugins legados
+>
+> **Transforma+ / Controladoria (fechamento, Contabilidade, custos):** ver [../financeiro-controladoria/README.md](../financeiro-controladoria/README.md) — pasta distinta; não substitui este P0
 
 ## Resultado
 

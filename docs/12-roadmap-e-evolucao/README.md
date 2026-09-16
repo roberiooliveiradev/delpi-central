@@ -16,6 +16,27 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | [roadmap.md](./roadmap.md) | Fases de evolução |
 | [PLAYBOOK-reorganizar-apis-pasta-apis.md](./PLAYBOOK-reorganizar-apis-pasta-apis.md) | Melhoria futura: mover APIs de domínio para `apis/` (exceto `core-api` e `api-delpi`) |
 
+### Portal Suprimentos
+
+| Arquivo | Conteúdo |
+|---|---|
+| [supplies/README.md](./supplies/README.md) | Documentação mestra — status E1–E8, fila, gates, boundaries |
+| [supplies/ROADMAP-TRANSFORMA-PLUS.md](./supplies/ROADMAP-TRANSFORMA-PLUS.md) | **Transforma+** — visão de negócio, backlog SUP-*, ondas (não autoriza implementação) |
+| [supplies/IMPLEMENTATION-PLAN.md](./supplies/IMPLEMENTATION-PLAN.md) | Plano executável página-a-página |
+| [supplies/API-ROUTES.md](./supplies/API-ROUTES.md) | Contratos BFF |
+| [estoque-seguranca/README.md](./estoque-seguranca/README.md) | ESTSEG (plugin próprio; absorção no Portal = fila) |
+| [solicitacoes-compras/](./solicitacoes-compras/) | Histórico contrato SC (owner atual: purchase-requests-api / C1) |
+
+### Portal Financeiro / Controladoria
+
+| Arquivo | Conteúdo |
+|---|---|
+| [financial/README.md](./financial/README.md) | Portal Financeiro P0 (billing, inadimplência, CC, frete) |
+| [financeiro-controladoria/README.md](./financeiro-controladoria/README.md) | Índice Transforma+ Controladoria |
+| [financeiro-controladoria/ROADMAP.md](./financeiro-controladoria/ROADMAP.md) | **Transforma+** — fechamento, Contabilidade, CTL-* (não autoriza implementação) |
+| [planejamento-orcamentario/](./planejamento-orcamentario/) | Orçamento (app próprio; fora do P0 Financial) |
+| [lancamento-notas-fiscais/README.md](./lancamento-notas-fiscais/README.md) | Lançamento de NF (app próprio) |
+
 ### Minha DELPI Chat
 
 | Arquivo | Conteúdo |

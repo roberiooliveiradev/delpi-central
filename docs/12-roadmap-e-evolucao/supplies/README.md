@@ -203,6 +203,8 @@ Invariantes:
 | [HOMOLOGACAO-PARIDADE.md](./HOMOLOGACAO-PARIDADE.md) | paridade mensurável |
 | [CUTOVER-RUNBOOK.md](./CUTOVER-RUNBOOK.md) | target-first, redirect-last |
 | [DECISOES_FUNCIONAIS_PENDENTES.md](./DECISOES_FUNCIONAIS_PENDENTES.md) | somente decisões realmente não respondidas |
+| [ROADMAP-TRANSFORMA-PLUS.md](./ROADMAP-TRANSFORMA-PLUS.md) | **Visão de negócio Transforma+** (SUP-*, ondas, integrações) — descoberta/backlog; **não** duplica contratos técnicos nem autoriza implementação |
+| [../financeiro-controladoria/ROADMAP.md](../financeiro-controladoria/ROADMAP.md) | Irmão Controladoria (custos de importação compartilhados) |
 
 ### ADRs
 
