@@ -315,7 +315,7 @@ SCOPE: media taxonomy; uploads; realtime A/V; camera/mic; transcript; Pulse devi
 EVIDENCE: 51 §§14–16, §38, §43; realtime media=NOT_PROVEN; biometrics=NOT_PROVEN; Pulse device registry=DOMAIN_LOCAL; frontline operator=PROVEN; Chat vision=CHAT_ONLY; OT PLC=NOT_PROVEN; Edge runtime=NOT_PROVEN
 RUNTIME_DIFF: NONE
 PLATFORM_BEHAVIOR_CHANGE: NONE
-CODE/CONFIG/BEHAVIOR_CHANGE: NONE
+CODE/CONFIG_BEHAVIOR_CHANGE: NONE
 FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
 DÉLIA_NEW_CODE: NONE
 UNRESOLVED: media retention/consent class-specific; corporate STT/TTS; Edge MDM/factory net residual; OT safety PLC/interlocks; Process Intelligence + remaining C0.S0 thematic inventories
@@ -338,7 +338,7 @@ SCOPE: process evidence sources; event-log fitness; case/activity/time/grain; mi
 EVIDENCE: 51 §§26,29; Process Mining=NOT_PROVEN; Task Mining=NOT_PROVEN; Domain status/history=PARTIAL candidates; BPM engine=NOT_PROVEN; BPMN UI=DOCUMENTATION
 RUNTIME_DIFF: NONE
 PLATFORM_BEHAVIOR_CHANGE: NONE
-CODE/CONFIG/BEHAVIOR_CHANGE: NONE
+CODE/CONFIG_BEHAVIOR_CHANGE: NONE
 FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
 DÉLIA_NEW_CODE: NONE
 UNRESOLVED: per-domain retention/completeness; shared EventLog contract; cross-service case correlation; Control Tower + remaining C0.S0 inventories
@@ -364,7 +364,7 @@ SCOPE: providers/models; routing/fallback; prompts; evals; Control Tower; regist
 EVIDENCE: 51 §30; Control Tower=NOT_PROVEN; Chat openai_compatible+ollama+admin=CHAT_ONLY; TM Kimi=DOMAIN_LOCAL; ModelRegistry=NOT_PROVEN; evals Chat PARTIAL SHA linkage
 RUNTIME_DIFF: NONE
 PLATFORM_BEHAVIOR_CHANGE: NONE
-CODE/CONFIG/BEHAVIOR_CHANGE: NONE
+CODE/CONFIG_BEHAVIOR_CHANGE: NONE
 FILES_CHANGED_AUTHORIZED: 51-platform-integration-baseline.md; this ledger
 DÉLIA_NEW_CODE: NONE
 UNRESOLVED: platform ModelRegistry/PromptAsset; Control Tower UX; org cost budgets; DÉLIA decision-path runtime; Personal Memory + remaining C0.S0 inventories
@@ -719,7 +719,7 @@ C6 → Task/Case/Room/Inbox + Recurring Work admin UX + Watch default OBSERVE/AD
 C7 → selected autonomous Watch ACT + advanced capability-scoped autonomy + Twin/Edge/Marketplace/optimization/scale
 ```
 
-C5 governed `ACT` and C7 advanced autonomous `ACT` are distinct. `PREPARE != ACT` remains invariant in every phase. Recurring Governed Work C5 is a bounded temporal trigger whose material occurrence revalida live gates; it is not C6 Watch autonomous ACT and does not require L5.
+C5 governed `ACT` and C7 advanced autonomous `ACT` are distinct. `PREPARE != ACT` remains invariant in every phase. Recurring Governed Work C5 is a bounded temporal trigger whose material occurrence revalidates live gates; it is not C6 Watch autonomous ACT and does not require L5.
 
 ## 8. Required C0.S0 automation/scheduling inventory
 
