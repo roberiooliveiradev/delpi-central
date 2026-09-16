@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** **ARCHITECTURE_REVIEW_C0_S2** (`C0.S0=APPROVED`; `C0.S1=APPROVED`; `C0.S2=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C0.S3_AUTHORIZED=NO`; C0 remains **NOT_STARTED**; `FOUNDATION_FREEZE` **NOT APPROVED**; `DÉLIA_RUNTIME_DIFF=NONE`).
+**Next:** **C0.S3 — SHARED_PRIMITIVES / REFERENCE_DECISIONS** (`C0.S0=APPROVED`; `C0.S1=APPROVED`; `C0.S2=APPROVED`; `AUTHORITY_MAP=FROZEN_ACCEPTED`; `BOUNDED_CONTEXT_MAP=FROZEN_ACCEPTED`; `C0.S3_AUTHORIZED=YES`; C0 remains **NOT_STARTED**; `FOUNDATION_FREEZE` **NOT APPROVED**; `DÉLIA_RUNTIME_DIFF=NONE`).
 
 ## 1. Ledger rule
 
@@ -23,7 +23,7 @@ Estado factual de inventory usa `PROVEN | TO_INVENTORY`; planejamento usa `PLANN
 
 | Fase | Status | Próximo step | Dependência |
 |---|---|---|---|
-| C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **ARCHITECTURE_REVIEW_C0_S2** | C0.S0=APPROVED; C0.S1=APPROVED; C0.S2=CANDIDATE_FOR_ARCHITECTURE_REVIEW; C0.S3_AUTHORIZED=NO |
+| C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **C0.S3 — SHARED_PRIMITIVES / REFERENCE_DECISIONS** | C0.S0=APPROVED; C0.S1=APPROVED; C0.S2=APPROVED; C0.S3_AUTHORIZED=YES |
 | C1 Standalone Bootstrap | LOCKED | — | C0.S7 FOUNDATION_FREEZE |
 | C2 Portal + Operational Context + Commands | LOCKED | — | C1 independence gate |
 | C3 Intelligence + Capability Foundations | LOCKED | — | C1+C2 foundations |
@@ -58,11 +58,10 @@ APP_ID = delia
 PERSISTENCE_OWNER = DÉLIA (logical ns=delia; migrations=delia-api/migrations/; PG cluster DEFERRED)
 C0.S0 = APPROVED
 C0.S1 = APPROVED
-C0.S2_AUTHORIZED = YES
-C0.S2 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-C0.S3_AUTHORIZED = NO
-AUTHORITY_MAP = FROZEN_CANDIDATE
-BOUNDED_CONTEXT_MAP = FROZEN_CANDIDATE
+C0.S2 = APPROVED
+C0.S3_AUTHORIZED = YES
+AUTHORITY_MAP = FROZEN_ACCEPTED
+BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
 NEW_RUNTIME_ABSTRACTIONS = NONE
 FOUNDATION_FREEZE = NOT APPROVED
 DÉLIA_RUNTIME_DIFF = NONE
@@ -210,6 +209,7 @@ All ACT blocked until C7                        = SUPERSEDED_BY_C5_GOVERNED_ACT_
 | 2026-09-16 | C0.S1-T1 canonical persistence of product boundary / naming / physical ownership | PLAN_ONLY; C0.S1=CANDIDATE_FOR_ARCHITECTURE_REVIEW; RUNTIME_DIFF=NONE |
 | 2026-09-16 | C0.S1-T2 architecture review decision persistence | PLAN_ONLY; ACCEPT_WITH_RESIDUAL; C0.S1=APPROVED; C0.S2_AUTHORIZED=YES; no runtime |
 | 2026-09-16 | C0.S2-T1 authorities and bounded contexts canonical persistence | PLAN_ONLY; C0.S2=CANDIDATE_FOR_ARCHITECTURE_REVIEW; NEW_RUNTIME_ABSTRACTIONS=NONE; RUNTIME_DIFF=NONE |
+| 2026-09-16 | C0.S2-T2 architecture review decision persistence | PLAN_ONLY; ACCEPT_WITH_RESIDUAL; C0.S2=APPROVED; C0.S3_AUTHORIZED=YES; no runtime/shared-primitives design |
 
 Actual `HEAD_BEFORE` for **runtime** remains uncaptured (no DÉLIA runtime). Inventory evidence SHA for C0.S0-F is `c6c9c8370d037edfc3529821b9d63e138b153436`. Documentation-only commits do not advance execution status.
 
@@ -852,6 +852,43 @@ FILES_CHANGED_AUTHORIZED: 17 (primary), 16, 25, 50, 51, 48, 12-roadmap, README, 
 DÉLIA_NEW_CODE: NONE
 NOT_CLAIMED: C0.S2 APPROVED; C0.S3_AUTHORIZED; FOUNDATION_FREEZE; any CP PASS; any runtime; shared primitive design
 NEXT: ARCHITECTURE_REVIEW_C0_S2
+NOTE_SUPERSEDED_BY_6_25: candidate/current-state fields above are historical after accepted ARCHITECTURE_REVIEW_C0_S2; see §6.25.
+```
+
+## 6.25 C0.S2-T2 architecture review decision persistence
+
+```text
+DATE: 2026-09-16
+STEP: C0.S2-T2
+NAME: PERSIST_ARCHITECTURE_REVIEW_DECISION
+REVIEW: ARCHITECTURE_REVIEW_C0_S2
+REVIEWED_HEAD: 8bae12a250f2362603211a93c65bb098b8b1e9aa
+PERSISTENCE_HEAD: CANONICAL_MATERIAL_COMMIT_FOR_THIS_EVENT
+BIND_HEAD: RECORDED_BY_FINAL_BIND_COMMIT_AND_EXECUTION_REPORT
+VERDICT: ACCEPT_WITH_RESIDUAL
+STATUS: PLAN_ONLY
+PROGRAM: PLANNED / NOT_STARTED
+C0: NOT_STARTED
+C0.S0: APPROVED
+C0.S1: APPROVED
+C0.S2: APPROVED
+AUTHORITY_MAP: FROZEN_ACCEPTED
+BOUNDED_CONTEXT_MAP: FROZEN_ACCEPTED
+C0.S3_AUTHORIZED: YES
+FOUNDATION_FREEZE: NOT APPROVED
+DÉLIA_RUNTIME_DIFF: NONE
+BLOCKERS: NONE
+EXECUTION_DRIFT: NONE
+NEW_RUNTIME_ABSTRACTIONS: NONE
+TOP_LEVEL_AUTHORITIES: Keycloak=identity/authentication/SSO; Core=apps/routes/effective platform RBAC/governance; Domain APIs=business data/rules/final domain authorization/authoritative postconditions; Portal=host/navigation/published bounded context; DÉLIA=intelligence/Evidence coordination/Policy/Decision/Work/orchestration/Outcome coordination; Automation Hub=technical execution lifecycle; External providers=external resource/provider-side authority; OT/Safety=industrial/machine/safety authority
+BOUNDED_CONTEXT_MAP_SOURCE: 17 §2.3.3 (36 rows) accepted without redesign
+CROSS_BOUNDARY: Work≠Hub execution; scheduler/timer≠Work authority; schedule≠permission; technical success≠business Outcome; Graph/Semantic/Process/Twin remain distinct non-SoT projections; Personal Memory≠Organizational Knowledge
+TRACEABILITY: 25 §16 accepted linkage; no new CP; no CP PASS promotion; C1+ statuses unchanged
+TO_INVENTORY: physical scheduler/timer; physical Automation Hub runtime; exact DÉLIA↔Core contract; exact DÉLIA↔Portal context contract; event broker/transport; provider OAuth/secrets lifecycle; Teams registration/scopes/webhooks; media storage/capture/retention; biometric template/enrollment storage; Process Mining engine/readiness; Sandbox runtime; Artifact physical store; predictive/model runtimes; Twin/optimization runtime; MCP/A2A concrete runtime; Model Registry/MLOps; Marketplace distribution/signing; Edge/MDM/offline runtime; OT actuation/safety architecture; notification delivery contracts; observability/eval backend; physical PostgreSQL placement
+SHARED_PRIMITIVES: DEFERRED_TO_C0_S3; NOT_DESIGNED_IN_THIS_TASK
+NO_C0_S3_EXECUTION: TRUE
+NEXT: C0.S3 — SHARED_PRIMITIVES / REFERENCE_DECISIONS
+NOT_CLAIMED: FOUNDATION_FREEZE; C0 started; runtime implementation; any CP PASS; shared primitive design
 ```
 
 ## 7. Canonical phase mapping
@@ -1062,4 +1099,4 @@ SAFETY_INTERLOCK_BYPASS
 
 ## 14. First execution
 
-Historical open actions C0.S0 and C0.S1 are now **APPROVED** by their architecture reviews. C0.S2-T1 persists authorities/bounded contexts as **CANDIDATE_FOR_ARCHITECTURE_REVIEW**. Current next is **ARCHITECTURE_REVIEW_C0_S2**. This does **not** approve C0.S2, authorize C0.S3, or approve Foundation Freeze. Runtime bootstrap remains deferred until C0.S7 Foundation Freeze.
+Historical open actions C0.S0, C0.S1 and C0.S2 are now **APPROVED** by their architecture reviews. Current next is **C0.S3 — SHARED_PRIMITIVES / REFERENCE_DECISIONS**, authorized but not executed by C0.S2-T2. This does **not** approve Foundation Freeze or start C0 runtime. Runtime bootstrap remains deferred until C0.S7 Foundation Freeze.
