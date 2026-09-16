@@ -137,23 +137,24 @@ export function WorkCenterPerformancePage({
                     }
                     note="Soma dos apontamentos do turno"
                   />
-                  <Kpi
-                    label="Hoje"
-                    value={formatPercent(efficiency.day_pct)}
-                    tone={efficiencyTone(efficiency.day_pct)}
-                    note={`${efficiency.day_appointment_count ?? 0} apontamento(s)`}
-                  />
+                  {downtime?.available ? (
+                    <Kpi
+                      label="Horas de paradas hoje"
+                      value={formatHours(downtime.today_hours)}
+                      note={`${downtime.today_appointment_count ?? 0} apontamento(s)`}
+                    />
+                  ) : null}
                   <Kpi
                     label="Média do período"
                     value={formatPercent(efficiency.period_avg_pct)}
                     tone={efficiencyTone(efficiency.period_avg_pct)}
-                    note={`${performance.days} dias`}
+                    note={`${performance.days} dias · só o turno atual`}
                   />
                 </div>
 
                 <ChartCard
                   title="Eficiência por dia"
-                  subtitle={`Percentual em cada dia — meta ${EFFICIENCY_GOAL_PCT}% (verde ao atingir)`}
+                  subtitle={`Só o turno atual em cada dia — meta ${EFFICIENCY_GOAL_PCT}% (verde ao atingir)`}
                   chartType="bar"
                   variant="efficiency"
                   points={efficiencyPoints}
@@ -169,11 +170,6 @@ export function WorkCenterPerformancePage({
             {downtime?.available ? (
               <>
                 <div className="pcp-pub__kpis">
-                  <Kpi
-                    label="Horas paradas hoje"
-                    value={formatHours(downtime.today_hours)}
-                    note={`${downtime.today_appointment_count ?? 0} apontamento(s)`}
-                  />
                   <Kpi
                     label="Horas no período"
                     value={formatHours(downtime.period_hours)}

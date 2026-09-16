@@ -18,6 +18,7 @@ class UnproductiveHoursRepositoryPort(ABC):
         resource: str | None = None,
         cost_center: str | None = None,
         operator_code: str | None = None,
+        shift: str | None = None,
     ) -> dict[str, Any]:
         ...
 
@@ -32,6 +33,7 @@ class UnproductiveHoursRepositoryPort(ABC):
         resource: str | None = None,
         cost_center: str | None = None,
         operator_code: str | None = None,
+        shift: str | None = None,
     ) -> dict[str, Any] | None:
         ...
 
@@ -46,6 +48,7 @@ class UnproductiveHoursRepositoryPort(ABC):
         resource: str | None = None,
         cost_center: str | None = None,
         operator_code: str | None = None,
+        shift: str | None = None,
     ) -> dict[str, Any] | None:
         ...
 
@@ -63,6 +66,7 @@ class UnproductiveHoursRepositoryPort(ABC):
         resource: str | None = None,
         cost_center: str | None = None,
         operator_code: str | None = None,
+        shift: str | None = None,
     ) -> list[dict[str, Any]]:
         ...
 
@@ -77,6 +81,7 @@ class UnproductiveHoursRepositoryPort(ABC):
         resource: str | None = None,
         cost_center: str | None = None,
         operator_code: str | None = None,
+        shift: str | None = None,
     ) -> list[dict[str, Any]]:
         ...
 
@@ -91,6 +96,7 @@ class UnproductiveHoursRepositoryPort(ABC):
         resource: str | None = None,
         cost_center: str | None = None,
         operator_code: str | None = None,
+        shift: str | None = None,
     ) -> int:
         ...
 
@@ -108,5 +114,6 @@ class UnproductiveHoursRepositoryPort(ABC):
         resource: str | None = None,
         cost_center: str | None = None,
         operator_code: str | None = None,
+        shift: str | None = None,
     ) -> list[dict[str, Any]]:
         ...

@@ -49,6 +49,7 @@ from app.interface.http.period_query_params import (
 )
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
+    FACTORY_SHIFT_QUERY,
     GRANULARITY_QUERY_DAY_ONLY,
 )
 from app.interface.http.route_response_helpers import api_delpi_success
@@ -182,6 +183,7 @@ def get_production_unproductive_hours_summary(
         description="Operator code filter.",
         pattern=_CODE_PATTERN,
     ),
+    shift: str | None = FACTORY_SHIFT_QUERY(),
 ):
     try:
         period = _build_period(
@@ -197,6 +199,7 @@ def get_production_unproductive_hours_summary(
             resource=resource,
             cost_center=cost_center,
             operator_code=operator_code,
+            shift=shift,
         )
         result = build_get_production_unproductive_hours_summary_use_case().execute(
             request
@@ -266,6 +269,7 @@ def get_production_unproductive_hours_items(
         enum=list(ITEMS_SORT_VALUES),
         pattern="^(" + "|".join(ITEMS_SORT_VALUES) + ")$",
     ),
+    shift: str | None = FACTORY_SHIFT_QUERY(),
 ):
     try:
         period = _build_period(
@@ -281,6 +285,7 @@ def get_production_unproductive_hours_items(
             resource=resource,
             cost_center=cost_center,
             operator_code=operator_code,
+            shift=shift,
             page=page,
             page_size=page_size,
             sort=sort,

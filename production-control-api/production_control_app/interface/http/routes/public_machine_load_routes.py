@@ -15,6 +15,7 @@ from production_control_app.composition.pc_composer import (
     build_public_machine_load_drawing_service,
     build_public_machine_load_product_model_service,
     build_public_operation_appointments_service,
+    build_public_work_center_downtime_items_service,
     build_public_work_center_performance_service,
 )
 from production_control_app.core.responses import fail, ok
@@ -93,6 +94,28 @@ def get_public_machine_load_performance(
             branch=branch,
             work_center=work_center,
             days=days,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _handle_public_errors(exc)
+    return ok(data)
+
+
+@router.get("/{token}/performance/downtime-items")
+def get_public_machine_load_downtime_items(
+    token: str,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    work_center: str = Query(
+        ...,
+        alias="workCenter",
+        description="Centro de trabalho do operador, obrigatoriamente na fila publicada",
+    ),
+):
+    """Paradas de hoje no turno atual do posto — motivo e observação, sem R$."""
+    try:
+        data = build_public_work_center_downtime_items_service().list_for_work_center(
+            token=token,
+            branch=branch,
+            work_center=work_center,
         )
     except Exception as exc:  # noqa: BLE001
         return _handle_public_errors(exc)

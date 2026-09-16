@@ -154,15 +154,6 @@ export function MachineLoadPage({
   const workCenters = data?.work_centers ?? [];
   const withdrawnEntries = data?.withdrawn?.items ?? [];
   const missingDueDates = data?.summary.missing_due_date_count ?? 0;
-  // O horizonte da fila é o que foi puxado do TOTVS, não o recorte da tela.
-  const periodHint = useMemo(() => {
-    const pulledEnd = period?.pulled_end ?? period?.end_date;
-    if (!pulledEnd) return null;
-    const pulledStart = period?.pulled_start;
-    return pulledStart
-      ? copy.machineLoad.periodHint(formatIsoDate(pulledStart), formatIsoDate(pulledEnd))
-      : copy.machineLoad.periodHintOpenStart(formatIsoDate(pulledEnd));
-  }, [period?.pulled_start, period?.pulled_end, period?.end_date]);
 
   // Antes do paint: trocar de centro não pode exibir a fila do centro anterior
   // nem passar por «nenhuma operação alocada» num frame intermediário.
@@ -639,6 +630,11 @@ export function MachineLoadPage({
         render: (row: MachineLoadOperation) => <MachineLoadStatusCell operation={row} />,
       },
       {
+        key: "pa_product_code",
+        header: copy.machineLoad.columns.paCode,
+        render: (row: MachineLoadOperation) => row.pa_product_code || "—",
+      },
+      {
         key: "schedule",
         header: copy.machineLoad.columns.schedule,
         render: (row: MachineLoadOperation) => (
@@ -691,11 +687,6 @@ export function MachineLoadPage({
         key: "operation",
         header: copy.machineLoad.columns.operation,
         render: (row: MachineLoadOperation) => row.operation_description || "—",
-      },
-      {
-        key: "pa_product_code",
-        header: copy.machineLoad.columns.paCode,
-        render: (row: MachineLoadOperation) => row.pa_product_code || "—",
       },
       {
         key: "pa_due_date",
@@ -801,60 +792,61 @@ export function MachineLoadPage({
         refreshBusy={refreshing}
       />
 
-      <form
-        className="ppc-period"
-        onSubmit={(event) => {
-          event.preventDefault();
-          goTo({ startDate: draftStart || null, endDate: draftEnd || null });
-        }}
-      >
-        <span className="ppc-period__label">{copy.machineLoad.periodLabel}</span>
-        <label className="ppc-period__field">
-          <span>{copy.machineLoad.periodFrom}</span>
-          <input
-            type="date"
-            value={draftStart}
-            onChange={(event) => setDraftStart(event.target.value)}
-          />
-        </label>
-        <label className="ppc-period__field">
-          <span>{copy.machineLoad.periodTo}</span>
-          <input
-            type="date"
-            value={draftEnd}
-            onChange={(event) => setDraftEnd(event.target.value)}
-          />
-        </label>
-        <button type="submit" className="ppc-period__apply">
-          {copy.machineLoad.periodApply}
-        </button>
-        {startDate || endDate ? (
-          <button
-            type="button"
-            className="ppc-period__reset"
-            onClick={() => goTo({ startDate: null, endDate: null })}
-          >
-            {copy.machineLoad.periodReset}
+      <div className="ppc-filters">
+        <form
+          className="ppc-period"
+          onSubmit={(event) => {
+            event.preventDefault();
+            goTo({ startDate: draftStart || null, endDate: draftEnd || null });
+          }}
+        >
+          <span className="ppc-period__label">{copy.machineLoad.periodLabel}</span>
+          <label className="ppc-period__field">
+            <span>{copy.machineLoad.periodFrom}</span>
+            <input
+              type="date"
+              value={draftStart}
+              onChange={(event) => setDraftStart(event.target.value)}
+            />
+          </label>
+          <label className="ppc-period__field">
+            <span>{copy.machineLoad.periodTo}</span>
+            <input
+              type="date"
+              value={draftEnd}
+              onChange={(event) => setDraftEnd(event.target.value)}
+            />
+          </label>
+          <button type="submit" className="ppc-period__apply">
+            {copy.machineLoad.periodApply}
           </button>
-        ) : null}
-        {periodHint ? <span className="ppc-period__hint">{periodHint}</span> : null}
-        {missingDueDates > 0 ? (
-          <span className="ppc-period__warning" role="status">
-            {copy.machineLoad.periodMissingDueDate(missingDueDates)}
-          </span>
-        ) : null}
-      </form>
+          {startDate || endDate ? (
+            <button
+              type="button"
+              className="ppc-period__reset"
+              onClick={() => goTo({ startDate: null, endDate: null })}
+            >
+              {copy.machineLoad.periodReset}
+            </button>
+          ) : null}
+          {missingDueDates > 0 ? (
+            <span className="ppc-period__warning" role="status">
+              {copy.machineLoad.periodMissingDueDate(missingDueDates)}
+            </span>
+          ) : null}
+        </form>
 
-      <MachineLoadLocatePanel
-        draftQuery={locateDraft}
-        onDraftQueryChange={setLocateDraft}
-        onSearch={runLocate}
-        onClear={clearLocate}
-        loading={locateLoading}
-        error={locateError}
-        result={locateResult}
-        onGoToStop={goToStop}
-      />
+        <MachineLoadLocatePanel
+          draftQuery={locateDraft}
+          onDraftQueryChange={setLocateDraft}
+          onSearch={runLocate}
+          onClear={clearLocate}
+          loading={locateLoading}
+          error={locateError}
+          result={locateResult}
+          onGoToStop={goToStop}
+        />
+      </div>
 
       <div className="ppc-period ppc-period--meta">
         <OperatorCockpitLinkButton branch={branch} />
@@ -908,10 +900,6 @@ export function MachineLoadPage({
         ) : null}
         {data ? (
           <span className="ppc-period__summary">
-            {copy.machineLoad.summary(
-              data.summary.work_center_count,
-              data.summary.operation_count,
-            )}
             {data.summary.in_production_count ? (
               <span className="ppc-period__running">
                 <span className="ppc-load__pulse" aria-hidden="true" />

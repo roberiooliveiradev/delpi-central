@@ -38,6 +38,19 @@ def test_summary_optional_stop_reason_filter() -> None:
     assert params == ("2025-07-01", "2026-07-01", "01", "02", "OT")
 
 
+def test_summary_shift_filter_uses_hora_inicio_window() -> None:
+    query, params = sql.build_summary_query(
+        start_date="2026-09-16",
+        end_date="2026-09-16",
+        branch="02",
+        shift="2",
+    )
+    assert "HORA_INICIO" in query
+    assert ">= '14:18'" in query
+    assert "<= '23:49'" in query
+    assert params == ("2026-09-16", "2026-09-16", "02")
+
+
 def test_items_query_uses_descricao_motivo_from_view() -> None:
     query, params = sql.build_items_query(
         start_date="2025-07-01",

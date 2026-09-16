@@ -1780,7 +1780,8 @@
   inset: 0;
   border: 0;
   padding: 0;
-  background: rgba(3, 40, 70, 0.45);
+  /* Scrim neutro: o “vidro” do painel é que desfoca o fundo (sheet iOS). */
+  background: rgba(15, 35, 55, 0.22);
   cursor: pointer;
 }
 
@@ -1791,14 +1792,95 @@
   max-height: min(80vh, 640px);
   overflow: auto;
   padding: 18px 20px 22px;
-  border: 1px solid var(--pcp-border);
-  border-radius: 16px;
-  background: var(--pcp-surface, #ffffff);
-  box-shadow: 0 18px 48px rgba(3, 40, 70, 0.28);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  /* Sheet iOS: branco translúcido, sem tingir de azul da marca. */
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 12px 40px rgba(3, 40, 70, 0.18),
+    0 1px 0 rgba(255, 255, 255, 0.85) inset;
+  -webkit-backdrop-filter: saturate(200%) blur(40px);
+  backdrop-filter: saturate(200%) blur(40px);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .pcp-pub-modal__panel {
+    background: rgba(255, 255, 255, 0.96);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .pcp-pub-modal__backdrop {
+    background: rgba(3, 40, 70, 0.45);
+  }
+
+  .pcp-pub-modal__panel {
+    background: var(--pcp-surface, #ffffff);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+:root[data-theme="dark"] .pcp-pub-modal__backdrop {
+  background: rgba(0, 8, 18, 0.42);
+}
+
+:root[data-theme="dark"] .pcp-pub-modal__panel {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(18, 36, 52, 0.72);
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.5),
+    0 1px 0 rgba(255, 255, 255, 0.12) inset;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .pcp-pub-modal__backdrop {
+    background: rgba(0, 8, 18, 0.42);
+  }
+
+  :root:not([data-theme="light"]) .pcp-pub-modal__panel {
+    border-color: rgba(255, 255, 255, 0.16);
+    background: rgba(18, 36, 52, 0.72);
+    box-shadow:
+      0 18px 48px rgba(0, 0, 0, 0.5),
+      0 1px 0 rgba(255, 255, 255, 0.12) inset;
+  }
 }
 
 .pcp-pub-modal__panel--appointments {
   width: min(640px, 100%);
+}
+
+.pcp-pub-modal__panel--downtime {
+  width: min(720px, 100%);
+}
+
+.pcp-pub-modal__lede {
+  margin: 0 0 10px;
+  font-size: 0.88rem;
+  color: var(--pcp-muted);
+}
+
+.pcp-pub-modal__reason {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pcp-pub-modal__reason-label {
+  font-weight: 600;
+  color: var(--pcp-title);
+}
+
+.pcp-pub-modal__reason-code {
+  font-size: 0.78rem;
+  color: var(--pcp-muted);
+}
+
+.pcp-pub-modal__observation {
+  max-width: 28ch;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .pcp-pub-modal__head {
@@ -1818,8 +1900,9 @@
 .pcp-pub-modal__table-wrap {
   margin-top: 14px;
   overflow: auto;
-  border: 1px solid var(--pcp-border);
+  border: 1px solid rgba(228, 231, 236, 0.7);
   border-radius: 12px;
+  background: rgba(255, 255, 255, 0.35);
 }
 
 .pcp-pub-modal__table {
@@ -1832,7 +1915,7 @@
 .pcp-pub-modal__table td {
   padding: 10px 12px;
   text-align: left;
-  border-bottom: 1px solid var(--pcp-border);
+  border-bottom: 1px solid color-mix(in srgb, var(--pcp-border) 80%, transparent);
   vertical-align: top;
 }
 
@@ -1842,7 +1925,7 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--pcp-muted, #5a738a);
-  background: color-mix(in srgb, var(--pcp-accent, #0c6fb0) 6%, transparent);
+  background: color-mix(in srgb, var(--pcp-accent, #0c6fb0) 10%, transparent);
 }
 
 .pcp-pub-modal__table tbody tr:last-child td {

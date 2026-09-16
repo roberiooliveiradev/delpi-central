@@ -185,3 +185,37 @@ def matches_factory_shift_filter(
     if item_shift is None:
         return False
     return item_shift in selected
+
+
+def factory_shift_hora_inicio_sql_predicate(
+    shift_ids: Iterable[str],
+    *,
+    column_expr: str = "LEFT(LTRIM(RTRIM(v.HORA_INICIO)) + N':00', 5)",
+) -> str | None:
+    """Predicado SQL: ``HORA_INICIO`` cai em algum turno pedido (1|2|3).
+
+    Os horários vêm da tabela canônica ``FACTORY_SHIFTS`` — não são input do
+    usuário. Ids inválidos são ignorados; lista vazia devolve ``None``.
+    """
+    parts: list[str] = []
+    seen: set[str] = set()
+    for raw in shift_ids:
+        shift_id = str(raw or "").strip()
+        if not shift_id or shift_id in seen:
+            continue
+        shift = _SHIFT_BY_ID.get(shift_id)
+        if shift is None:
+            continue
+        seen.add(shift_id)
+        start = shift.start
+        end = shift.end
+        if shift.start_minutes <= shift.end_minutes:
+            parts.append(f"({column_expr} >= '{start}' AND {column_expr} <= '{end}')")
+        else:
+            # 3º turno atravessa meia-noite.
+            parts.append(f"({column_expr} >= '{start}' OR {column_expr} <= '{end}')")
+    if not parts:
+        return None
+    if len(parts) == 1:
+        return parts[0]
+    return "(" + " OR ".join(parts) + ")"

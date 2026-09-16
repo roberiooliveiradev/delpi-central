@@ -105,8 +105,10 @@ class PublicOperationAppointmentsService:
             if _norm_operation(_text(row.get("operation") or row.get("operacao")))
             == wanted_op
         ]
-        items.sort(key=_sort_key, reverse=True)
-        items = items[:ITEM_LIMIT]
+        items.sort(key=_sort_key)
+        # Mantém a janela mais recente; a tabela sobe do mais antigo ao mais novo.
+        if len(items) > ITEM_LIMIT:
+            items = items[-ITEM_LIMIT:]
 
         quantities = [item["quantity"] for item in items if item["quantity"] is not None]
         window_produced = round(sum(quantities), 3) if quantities else None

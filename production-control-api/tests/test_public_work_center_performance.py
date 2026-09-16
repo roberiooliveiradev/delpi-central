@@ -190,12 +190,15 @@ class FakeDelpiGateway:
         self.calls.append(("downtime_summary", kwargs))
         if self.fail_downtime:
             raise DelpiGatewayError("api-delpi fora do ar.")
+        # Sem turno: dia inteiro. Com turno: só a fatia do turno corrente.
+        hours = 0.6 if kwargs.get("shift") else 1.75
+        count = 1 if kwargs.get("shift") else 3
         return {
             "success": True,
             "data": {
                 "summary": {
-                    "total_appointments": 3,
-                    "total_hours": 1.75,
+                    "total_appointments": count,
+                    "total_hours": hours,
                     "total_cost": 140.0,
                 }
             },
@@ -336,15 +339,21 @@ def test_positive_case_composes_shift_efficiency_and_downtime() -> None:
     appointment_calls = [kwargs for name, kwargs in gateway.calls if name == "appointments"]
     assert appointment_calls
     assert all(call.get("shift") == "2" for call in appointment_calls)
+    series_calls = [kwargs for name, kwargs in gateway.calls if name == "efficiency_series"]
+    assert series_calls
+    assert all(call.get("shift") == "2" for call in series_calls)
 
     downtime = payload["downtime"]
     assert downtime["available"] is True
-    assert downtime["today_hours"] == 1.75
-    assert downtime["today_appointment_count"] == 3
+    assert downtime["today_hours"] == 0.6
+    assert downtime["today_appointment_count"] == 1
     assert downtime["period_hours"] == 3.75
     assert downtime["period_appointment_count"] == 5
     assert downtime["by_reason"][0]["stop_reason"] == "MT"
     assert downtime["by_reason"][0]["hours"] == 4.5
+    summary_calls = [kwargs for name, kwargs in gateway.calls if name == "downtime_summary"]
+    assert summary_calls
+    assert all(call.get("shift") == "2" for call in summary_calls)
 
 
 def test_downtime_is_filtered_by_the_work_center_resources_not_the_ct_code() -> None:
@@ -430,7 +439,7 @@ def test_efficiency_failure_still_answers_downtime() -> None:
 
     assert payload["efficiency"]["available"] is False
     assert payload["downtime"]["available"] is True
-    assert payload["downtime"]["today_hours"] == 1.75
+    assert payload["downtime"]["today_hours"] == 0.6
 
 
 def test_shift_without_appointments_reports_empty_not_a_false_zero() -> None:
