@@ -497,11 +497,30 @@ describe("production-pulse kit contracts", () => {
       /\.pp-hero-brand-btn[\s\S]*--pp-hero-brand-btn-border[\s\S]*--pp-hero-brand-fg[\s\S]*--pp-hero-brand-btn-bg/,
     );
     expect(css).toMatch(/\.pp-hero-icon-btn/);
+    expect(css).toMatch(/\.pp-hero-icon-btn--warning/);
+    expect(css).toMatch(/\.pp-hero-icon-btn--danger/);
     expect(heroBtn).toMatch(/pp-hero-brand-btn/);
     expect(heroBtn).toMatch(/pp-hero-icon-btn/);
     expect(heroBtn).toMatch(/PpHintAction/);
     expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/PpHeroIconButton/);
+    expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/tone="warning"/);
+    expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/tone="danger"/);
     expect(css).not.toMatch(/\.delpi-ui-/);
+  });
+
+  it("PpDetailDialog wide trava largura estável no host (não shrink-to-fit)", () => {
+    const css = readRelative("index.css");
+    const ui = readRelative("app/productionPulseUi.tsx");
+    expect(ui).toMatch(/PpDetailDialog[\s\S]*variant:\s*"wide"/);
+    expect(css).toMatch(
+      /\.pp-modal\.pp-modal--wide[\s\S]*min-width:\s*min\(1100px,\s*calc\(100%\s*-\s*24px\)\)/,
+    );
+    expect(css).toMatch(
+      /\.pp-modal\.pp-modal--page[\s\S]*min-width:\s*min\(1180px,\s*calc\(100%\s*-\s*24px\)\)/,
+    );
+    expect(css).toMatch(
+      /@media\s*\(max-width:\s*768px\)[\s\S]*\.pp-modal\.pp-modal--wide[\s\S]*min-width:\s*0/,
+    );
   });
 
   it("heroes do operador usam ícone + help (Trocar posto / Painel admin)", () => {

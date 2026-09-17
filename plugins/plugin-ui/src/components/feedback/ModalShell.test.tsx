@@ -290,6 +290,18 @@ describe("ModalShell", () => {
     host.remove();
   });
 
+  it("dialog contido wide/page trava largura no host (não shrink-to-fit)", () => {
+    expect(modalShellCss).toMatch(
+      /\.delpi-ui-modal-overlay--contained\.delpi-ui-modal-overlay--contained-dialog\s*>\s*\.delpi-ui-modal--wide\s*\{[^}]*min-width:\s*min\(1100px,\s*100%\)/s,
+    );
+    expect(modalShellCss).toMatch(
+      /\.delpi-ui-modal-overlay--contained\.delpi-ui-modal-overlay--contained-dialog\s*>\s*\.delpi-ui-modal--page\s*\{[^}]*min-width:\s*min\(1180px,\s*100%\)/s,
+    );
+    expect(modalShellCss).toMatch(
+      /\.delpi-ui-modal-overlay--contained\.delpi-ui-modal-overlay--contained-dialog[\s\S]*?\.delpi-ui-modal--page\s*\{[^}]*flex-shrink:\s*0/s,
+    );
+  });
+
   it("não fecha ao clicar no overlay por default — só no botão Fechar", () => {
     const onClose = vi.fn();
     render(

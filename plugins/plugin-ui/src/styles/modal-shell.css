@@ -123,6 +123,46 @@
   justify-content: center;
 }
 
+/*
+ * Dialog contido: caixa estável no host (não shrink-to-fit quando o conteúdo
+ * das abas/tabelas muda). Percentuais referem-se à área do overlay do MFE,
+ * não a 100vw (que incluiria a sidebar do portal).
+ * Dimensionamento só em --wide/--page — não no base `.delpi-ui-modal`
+ * (ver modal.css + ModalShell.test).
+ */
+.delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
+  > .delpi-ui-modal--wide,
+.delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
+  > .delpi-ui-modal--page {
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
+  > .delpi-ui-modal--wide {
+  width: min(1100px, 100%);
+  max-width: min(1100px, 100%);
+  min-width: min(1100px, 100%);
+}
+
+.delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
+  > .delpi-ui-modal--page {
+  width: min(1180px, 100%);
+  max-width: min(1180px, 100%);
+  min-width: min(1180px, 100%);
+}
+
+@media (max-width: 768px) {
+  .delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
+    > .delpi-ui-modal--wide,
+  .delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
+    > .delpi-ui-modal--page {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+
 :root[data-theme="light"] .delpi-ui-modal-overlay--contained,
 [data-theme="light"] .delpi-ui-modal-overlay--contained {
   background: color-mix(in srgb, #0f172a 26%, transparent);

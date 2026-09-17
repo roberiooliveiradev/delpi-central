@@ -307,6 +307,7 @@ export function FirmwareDetailPage({
         <PpHeroIconButton
           hint={PP_HELP.ota.archiveFirmware}
           ariaLabel="Arquivar"
+          tone="warning"
           disabled={busy}
           onClick={() => setArchiveOpen(true)}
         >

@@ -170,6 +170,7 @@ export function DriverDetailPage({
         <PpHeroIconButton
           hint={PP_HELP.drivers.archive}
           ariaLabel="Arquivar"
+          tone="warning"
           disabled={busy}
           onClick={handleArchive}
         >

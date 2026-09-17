@@ -295,6 +295,7 @@ export function DeviceDetailPage({
                   <PpHeroIconButton
                     hint={PP_HELP.detail.deactivate}
                     ariaLabel="Desativar"
+                    tone="warning"
                     onClick={() => setDeactivateOpen(true)}
                   >
                     <PowerOff size={16} aria-hidden />
