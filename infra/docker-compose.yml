@@ -995,6 +995,22 @@ services:
     networks:
       - delpi-network
 
+  delia:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: delia/Dockerfile
+
+    container_name: delpi-delia
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   cipa:
     depends_on:
       - plugin-ui
@@ -1720,6 +1736,60 @@ services:
         condition: service_started
       api-delpi:
         condition: service_healthy
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - delpi-network
+
+  delia-api:
+    build:
+      context: ..
+      dockerfile: delia-api/Dockerfile.prod
+
+    container_name: delpi-delia-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      SERVICE_NAME: delia-api
+      SERVICE_VERSION: ${DELIA_SERVICE_VERSION:-0.0.1}
+      DELIA_ENV: production
+      DELIA_DEBUG: "false"
+      DELIA_API_HOST: 0.0.0.0
+      DELIA_API_PORT: "8000"
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      KEYCLOAK_URL: ${KEYCLOAK_URL:-http://keycloak:8080/auth}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+
+      CORE_API_URL: ${CORE_API_URL:-http://core-api:8000}
+      DELPI_AUTH_CORE_API_URL: ${DELPI_AUTH_CORE_API_URL:-http://core-api:8000}
+      DELIA_CORE_TIMEOUT_SECONDS: ${DELIA_CORE_TIMEOUT_SECONDS:-5.0}
+
+    depends_on:
+      keycloak:
+        condition: service_started
+      core-api:
+        condition: service_started
 
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]

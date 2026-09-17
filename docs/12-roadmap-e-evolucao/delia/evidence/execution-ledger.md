@@ -1703,6 +1703,93 @@ EXECUTION_DRIFT: NONE
 NEXT: C1-T5 — GATEWAY_AND_COMPOSE_PUBLICATION_FOUNDATION (do not start automatically)
 ```
 
+## 6.42 C1-T5 — GATEWAY_AND_COMPOSE_PUBLICATION_FOUNDATION
+
+```text
+DATE: 2026-09-17
+STEP: C1-T5
+NAME: GATEWAY_AND_COMPOSE_PUBLICATION_FOUNDATION
+STATUS: RUNTIME
+BASE_HEAD: fa16b7572c714841d0db9374f193fd1b44954dbb
+ACCEPTED_T4D1_HEAD: 4765d65a6bd38dfc95ad681bae8bc345434f5a82
+POST_T4D1_COMMITS: OUTSIDE_TASK (feat(davi) fa16b7572 — no DÉLIA Gateway/Compose drift)
+WORKING_TREE_PRESERVED: minha-delpi-ai-api OpenAPI catalog + shared/delpi_auth.egg-info (OUTSIDE_TASK)
+PROGRAM: PLANNED / NOT_STARTED
+C0: NOT_STARTED
+C0.S0..C0.S7: APPROVED
+FOUNDATION_FREEZE: APPROVED
+C1_AUTHORIZED: YES
+C1_STARTED: YES
+C1_EXECUTED: NO / NOT_COMPLETE
+
+MFE_IMAGE: plugins/delia/Dockerfile → service delia / container delpi-delia
+API_IMAGE_DEV: delia-api/Dockerfile.dev → python -m app.main
+API_IMAGE_PROD: delia-api/Dockerfile.prod → gunicorn app.main:app
+SHARED_DELPI_AUTH: pip install -e /shared[flask] (proven inside container)
+GATEWAY_MFE: generic /apps/([^/]+)/assets/ → delpi-$1 (covers /apps/delia/)
+GATEWAY_API: /apps/delia-api/ rewrite → delia-api:8000 / (prefix stripped)
+REMOTEENTRY_CACHE: no-store (platform federation convention)
+COMPOSE_DEV: profile plugins; delia depends_on plugin-ui; delia-api depends_on keycloak+core-api; volumes for hot reload
+COMPOSE_PROD: same public paths/service identities; Dockerfile.prod; logging json-file; no host bind mounts
+INTENTIONAL_DEV_PROD_DIFFS: Dockerfile.dev vs .prod; volume mounts; restart/health start_period; limit_req/X-Forwarded headers in prod nginx
+
+CONFIG_VALIDATION:
+  docker compose -f infra/docker-compose.dev.yml config → PASS
+  docker compose -f infra/docker-compose.yml config → PASS
+  docker exec delpi-gateway nginx -t → PASS
+
+BUILD_EVIDENCE:
+  MFE docker build → PASS
+  API Dockerfile.dev build → PASS
+  API Dockerfile.prod build → PASS
+  npm test 16 passed; npm run build; verify:federation OK
+  pytest delia-api → PASS
+
+RUNTIME_SMOKE (local gateway :80):
+  GET /apps/delia/assets/remoteEntry.js → 200 (maps ./App)
+  GET /apps/delia/assets/App-*.js → 200
+  GET /apps/delia-api/health → 200 {"service":"delia-api","status":"available","version":"0.0.1"}
+  GET /apps/plugin-ui/assets/remoteEntry.js → 200
+  shared/delpi_auth import inside container → PASS
+
+SHUTDOWN_EVIDENCE:
+  Dockerfile.dev SIGTERM → delia_api_stopped logged → PASS
+  Dockerfile.prod gunicorn → SIGTERM handled by gunicorn master; delia_api_stopped not emitted (WSGI ownership) → classified intentional process difference
+
+ROLLBACK_INDEPENDENCE_SMOKE:
+  stop/start delpi-delia + delpi-delia-api while Chat/AI containers remained running → PASS structural independence
+  CHAT_RUNTIME_DEPENDENCY: NONE
+
+CORE_REGISTRATION: NOT_PERFORMED
+RBAC_ASSIGNMENT: NOT_PERFORMED
+PORTAL_LIVE_MOUNT: PENDING
+FEDERATION_PUBLICATION: PASS
+OWN_GATEWAY_ROUTE: PASS
+OWN_COMPOSE_SERVICE: PASS
+DEV_PROD_ROUTE_PARITY: PASS
+OWN_MIGRATION_CHAIN: PENDING
+ROLLBACK_INDEPENDENT: PASS (stop/restart independence from Chat proven; full production rollback drill not claimed)
+API_FOLDER_INDEPENDENT: PASS
+MFE_FOLDER_INDEPENDENT: PASS
+OWN_MANIFEST: PASS
+JWT_VALIDATION: PASS
+CORE_CONTEXT: PASS
+FEDERATED_MOUNT: PASS
+PLUGIN_UI: PASS
+RESPONSIVE_ACCESSIBILITY_BASELINE: PASS
+MEDIA_CAPTURE_NOT_AUTO_STARTED: PASS
+NO_CHAT_RUNTIME_DEPENDENCY: PASS
+HEALTH: PASS
+TYPESCRIPT_ISOLATED: INCONCLUSIVE (unchanged residual)
+RUNTIME_READINESS: NOT_PROVEN
+PRODUCTION_READINESS: NOT_PROVEN
+ABSTRACTION_GATE: PASS (no gateway/compose generators)
+FORBIDDEN_SECRET: NONE
+EXECUTION_DRIFT: NONE
+ARCHITECTURE_DECISION_REQUIRED: NONE
+NEXT: C1 — Core live registration / RBAC assignment / Portal live discovery (bounded; do not start automatically)
+```
+
 ## 7. Canonical phase mapping
 
 ```text
@@ -1911,4 +1998,4 @@ SAFETY_INTERLOCK_BYPASS
 
 ## 14. First execution
 
-Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1 created the standalone `delia-api/` Flask skeleton and `/health` liveness. C1-T1R1 closed real-process HTTP smoke and shutdown visibility (`delia_api_stopped`). `C1_STARTED=YES`. `C1_EXECUTED=NO`. C1-T2 added JWT validation + Core `/me` effective access (JWT≠permissions; fail-closed). C1-T2R1 removed production `GET /access-context` and preserved JWT/Core contract evidence via test-only probe (§6.38). C1-T3 bootstrapped standalone federated MFE `plugins/delia/` (§6.39). C1-T4 added `delpi.manifest.json` publication contract (§6.40). C1-T4D1 Product Master APPROVED `delia.access` as bootstrap/platform-access permission (§6.41); Core live registration and RBAC assignment remain PENDING. Current next after T4D1 review is C1-T5 Gateway/Compose publication. `C0=NOT_STARTED`. Runtime/production readiness remain `NOT_PROVEN`.
+Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1 created the standalone `delia-api/` Flask skeleton and `/health` liveness. C1-T1R1 closed real-process HTTP smoke and shutdown visibility (`delia_api_stopped`). `C1_STARTED=YES`. `C1_EXECUTED=NO`. C1-T2 added JWT validation + Core `/me` effective access (JWT≠permissions; fail-closed). C1-T2R1 removed production `GET /access-context` and preserved JWT/Core contract evidence via test-only probe (§6.38). C1-T3 bootstrapped standalone federated MFE `plugins/delia/` (§6.39). C1-T4 added `delpi.manifest.json` publication contract (§6.40). C1-T4D1 Product Master APPROVED `delia.access` as bootstrap/platform-access permission (§6.41). C1-T5 published Gateway/Compose services `delpi-delia` + `delpi-delia-api` with `/apps/delia/` + `/apps/delia-api/` (§6.42); Core live registration and RBAC assignment remain PENDING. `C0=NOT_STARTED`. Runtime/production readiness remain `NOT_PROVEN`.

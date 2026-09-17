@@ -1,0 +1,26 @@
+# delia-api — DEV
+# Process entry preserves C1-T1R1 shutdown visibility (python -m app.main).
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+
+WORKDIR /app
+
+COPY delia-api/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+COPY shared /shared
+RUN pip install --no-cache-dir -e "/shared[flask]"
+
+COPY delia-api /app
+
+ENV SERVICE_NAME=delia-api
+ENV DELIA_DEBUG=false
+ENV DELIA_API_HOST=0.0.0.0
+ENV DELIA_API_PORT=8000
+
+EXPOSE 8000
+
+CMD ["python", "-m", "app.main"]

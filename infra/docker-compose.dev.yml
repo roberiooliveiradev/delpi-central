@@ -980,6 +980,22 @@ services:
     networks:
       - delpi-network
 
+  delia:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: delia/Dockerfile
+      target: production
+
+    container_name: delpi-delia
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   cipa:
     <<: *plugin-ui-federated
     build:
@@ -1687,6 +1703,57 @@ services:
       timeout: 5s
       retries: 6
       start_period: 30s
+
+    networks:
+      - delpi-network
+
+  delia-api:
+    <<: *plugin-profile
+    build:
+      context: ..
+      dockerfile: delia-api/Dockerfile.dev
+
+    container_name: delpi-delia-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      SERVICE_NAME: delia-api
+      SERVICE_VERSION: ${DELIA_SERVICE_VERSION:-0.0.1}
+      DELIA_ENV: ${DELIA_ENV:-development}
+      DELIA_DEBUG: "false"
+      DELIA_API_HOST: 0.0.0.0
+      DELIA_API_PORT: "8000"
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      KEYCLOAK_URL: ${KEYCLOAK_URL:-http://keycloak:8080/auth}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+
+      CORE_API_URL: ${CORE_API_URL:-http://core-api:8000}
+      DELPI_AUTH_CORE_API_URL: ${DELPI_AUTH_CORE_API_URL:-http://core-api:8000}
+      DELIA_CORE_TIMEOUT_SECONDS: ${DELIA_CORE_TIMEOUT_SECONDS:-5.0}
+
+    volumes:
+      - ../delia-api:/app
+      - ../shared:/shared
+
+    depends_on:
+      - keycloak
+      - core-api
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
 
     networks:
       - delpi-network
