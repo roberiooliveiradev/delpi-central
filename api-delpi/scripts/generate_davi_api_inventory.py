@@ -83,7 +83,7 @@ def main() -> int:
         "source": "openapi_baseline.json",
         "baseline_version": baseline.get("version"),
         "baseline_operation_count": baseline.get("operation_count"),
-        "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-001",
+        "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-002",
         "TOTAL_OPERATIONS": len(actions),
         "TOTAL_GET": methods.get("GET", 0),
         "TOTAL_WRITE_VERBS": sum(
@@ -174,7 +174,7 @@ def main() -> int:
         "\n".join(md_lines), encoding="utf-8"
     )
 
-    coverage_path = out_dir / "davi-governed-read-coverage-wave-001.json"
+    coverage_path = out_dir / "davi-governed-read-coverage-wave-002.json"
     coverage = {k: report[k] for k in report if k != "MATRIX"}
     coverage_path.write_text(
         json.dumps(coverage, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"

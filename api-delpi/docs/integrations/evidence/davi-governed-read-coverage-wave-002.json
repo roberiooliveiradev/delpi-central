@@ -1,0 +1,84 @@
+{
+  "source": "openapi_baseline.json",
+  "baseline_version": "3",
+  "baseline_operation_count": 703,
+  "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-002",
+  "TOTAL_OPERATIONS": 703,
+  "TOTAL_GET": 506,
+  "TOTAL_WRITE_VERBS": 197,
+  "DAVI_ELIGIBLE_READ": 13,
+  "ELIGIBLE_BEFORE": 10,
+  "ELIGIBLE_AFTER": 13,
+  "NEWLY_ELIGIBLE": [
+    "get_product_last_purchase",
+    "get_product_pricing",
+    "get_product_purchase_price_history"
+  ],
+  "REMOVED_ELIGIBLE": [],
+  "INVENTORY_DELTA": {
+    "previous_total_operations": 703,
+    "current_total_operations": 703,
+    "previous_total_get": 506,
+    "current_total_get": 506,
+    "added_operations": 0,
+    "removed_operations": 0,
+    "note": "Delta vs last committed inventory artifact (HEAD)"
+  },
+  "COVERAGE_DECISION": {
+    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-002",
+    "decision": "PROMOTE_PRODUCT_ECONOMIC_READ_WAVE_2",
+    "reason": "Promote get_product_pricing, get_product_purchase_price_history and get_product_last_purchase as governed READ capabilities behind the existing three MCP broker tools. Eligible READ 10→13. Cost impact simulation remains PREPARE/DEFER_FROM_READ_WAVE and is not executable. AuthZ policy unchanged (DAVI-READ-AUTHZ-REBASELINE-001). Global economic quarantine tokens remain; ownership is via precise semantic aliases only. Purchase-history dateRange uses generic missing-bound policy aligned with canonical resolve_history_date_range.",
+    "previousDecision": {
+      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-001",
+      "decision": "PROMOTE_OPERATIONAL_PRODUCT_INTELLIGENCE_WAVE_1"
+    }
+  },
+  "HIGH_VALUE_BLOCKED": [
+    {
+      "operationId": "get_product_detail",
+      "primaryBlocker": "SEMANTICALLY_REDUNDANT",
+      "reason": "Same Product Master slice already served by search_products; no distinct governed fields"
+    },
+    {
+      "operationId": "get_product_summary",
+      "primaryBlocker": "DEFER",
+      "reason": "Composite product snapshot remains deferred; not a Wave 2 READ capability"
+    },
+    {
+      "operationId": "get_product_raw_material_price_intelligence",
+      "primaryBlocker": "DEFER",
+      "reason": "Unbounded budget scan / composite overlap / no bounded summaries-only backend contract"
+    },
+    {
+      "operationId": "get_product_cost_impact_simulation",
+      "primaryBlocker": "PREPARE",
+      "reason": "Compute-only simulation is PREPARE, not READ. HTTP GET does not imply semantic READ. Not executable through the READ broker."
+    }
+  ],
+  "STATUS_COUNTS": {
+    "ADMIN_OUT_OF_SCOPE": 76,
+    "DAVI_ELIGIBLE_READ": 13,
+    "DESTRUCTIVE_OUT_OF_SCOPE": 16,
+    "GENERIC_SQL_FORBIDDEN": 2,
+    "NEEDS_MODEL_SAFE_PROJECTION": 368,
+    "NEEDS_NESTED_PROJECTION_SUPPORT": 66,
+    "SEMANTICALLY_REDUNDANT": 1,
+    "STREAM_BINARY_OUT_OF_SCOPE": 31,
+    "WRITE_OUT_OF_SCOPE": 130
+  },
+  "ELIGIBLE_OPERATION_IDS": [
+    "get_product_customers",
+    "get_product_factory_status",
+    "get_product_last_purchase",
+    "get_product_pricing",
+    "get_product_production_status",
+    "get_product_purchase_price_history",
+    "get_product_purchases",
+    "get_product_shipping_status",
+    "get_product_stock",
+    "get_product_structure",
+    "get_product_structure_exclusivity",
+    "get_product_suppliers",
+    "search_products"
+  ]
+}

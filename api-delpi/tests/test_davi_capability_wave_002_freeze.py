@@ -21,9 +21,6 @@ from app.application.external_capabilities.dynamic_information.catalog_builder i
 from app.application.external_capabilities.dynamic_information.content_loader import (
     load_external_read_allowlist,
 )
-from app.application.external_capabilities.dynamic_information.eligibility import (
-    load_allowlist_operation_ids,
-)
 from app.application.external_capabilities.dynamic_information.projection import (
     apply_approved_field_projection,
 )
@@ -96,23 +93,21 @@ def _committed_inventory() -> dict[str, Any]:
     )
 
 
-def test_current_eligible_remains_ten() -> None:
-    actions = _actions()
-    eligible = {a.operation_id for a in actions if a.executable}
-    assert eligible == set(CURRENT_ELIGIBLE)
-    assert len(eligible) == 10
-    assert load_allowlist_operation_ids(load_external_read_allowlist()) == set(
-        CURRENT_ELIGIBLE
-    )
+def test_freeze_records_pre_implementation_eligible_baseline() -> None:
+    freeze = _committed_freeze()
+    assert freeze["current_eligible"] == 10
+    assert freeze["expected_eligible_after_implementation"] == 13
     allow = load_external_read_allowlist()
-    assert allow.get("version") == 6
     blocked = {
         item.get("operationId")
         for item in allow.get("explicitlyNotApproved") or []
         if isinstance(item, dict)
     }
-    assert "get_product_last_purchase" not in blocked
     assert "get_product_cost_impact_simulation" in blocked
+    assert allow.get("version") == 7
+    eligible = {a.operation_id for a in _actions() if a.executable}
+    assert len(eligible) == 13
+    assert set(CURRENT_ELIGIBLE) <= eligible
 
 
 def test_mcp_tools_remain_three() -> None:
@@ -125,7 +120,7 @@ def test_mcp_tools_remain_three() -> None:
     ] == MCP_TOOLS
 
 
-def test_wave2_operations_are_not_executable() -> None:
+def test_deferred_wave2_operations_are_not_executable() -> None:
     eligible = {a.operation_id for a in _actions() if a.executable}
     allow = load_external_read_allowlist()
     blocked = {
@@ -133,16 +128,20 @@ def test_wave2_operations_are_not_executable() -> None:
         for item in allow.get("explicitlyNotApproved") or []
         if isinstance(item, dict)
     }
-    for oid in _WAVE2_OPS:
-        assert oid not in eligible
     for oid in (
-        "get_product_pricing",
-        "get_product_purchase_price_history",
         "get_product_raw_material_price_intelligence",
         "get_product_cost_impact_simulation",
         "get_product_summary",
     ):
+        assert oid not in eligible
         assert oid in blocked
+    for oid in (
+        "get_product_pricing",
+        "get_product_purchase_price_history",
+        "get_product_last_purchase",
+    ):
+        assert oid in eligible
+        assert oid not in blocked
 
 
 def test_economic_quarantine_tokens_unchanged() -> None:
@@ -150,7 +149,7 @@ def test_economic_quarantine_tokens_unchanged() -> None:
     tokens = allow.get("retrievalQuarantineTokens") or []
     for token in ECONOMIC_QUARANTINE_TOKENS:
         assert token in tokens
-    assert allow.get("version") == 6
+    assert allow.get("version") == 7
 
 
 def test_agent_instructions_omit_economic_capability_enumeration() -> None:
@@ -448,9 +447,9 @@ def test_no_new_allowlist_or_mcp_surface() -> None:
         for item in allow.get("operations") or []
         if isinstance(item, dict)
     }
-    assert "get_product_pricing" not in op_ids
-    assert "get_product_purchase_price_history" not in op_ids
+    assert "get_product_pricing" in op_ids
+    assert "get_product_purchase_price_history" in op_ids
+    assert "get_product_last_purchase" in op_ids
     assert "get_product_cost_impact_simulation" not in op_ids
-    assert "get_product_last_purchase" not in op_ids
     mcp = (_API_ROOT / "app/interface/mcp/server.py").read_text(encoding="utf-8")
     assert mcp.count("@mcp.tool(") == 3

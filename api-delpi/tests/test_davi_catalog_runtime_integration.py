@@ -57,6 +57,9 @@ _CATALOG_ACTIONS = (
     "get_product_purchases",
     "get_product_structure",
     "get_product_production_status",
+    "get_product_pricing",
+    "get_product_purchase_price_history",
+    "get_product_last_purchase",
 )
 
 
@@ -118,6 +121,116 @@ def _structure_payload() -> dict[str, Any]:
             ],
         },
         "items": [],
+    }
+
+
+def _pricing_payload() -> dict[str, Any]:
+    return {
+        "product": {"code": "10080055", "description": "PA", "unit": "UN"},
+        "prices": [
+            {
+                "table_code": "001",
+                "table_description": "Padrao",
+                "sale_price": 12.5,
+                "currency": "1",
+                "lot_quantity": 1.0,
+                "valid_from": "20260101",
+                "active": "S",
+                "max_price": 99.0,
+                "discount_value": 1.5,
+                "discount_percent": 10.0,
+                "state": "SP",
+                "operation_type": "V",
+                "internal_debug": True,
+            }
+        ],
+        "standard_cost": 0.5,
+    }
+
+
+def _history_payload() -> dict[str, Any]:
+    return {
+        "product": {
+            "product_code": "10080055",
+            "description": "MP",
+            "product_type": "MP",
+            "unit": "KG",
+            "registered_last_purchase_price": 0.5,
+            "standard_cost": 0.02,
+        },
+        "start_date": "20250917",
+        "date_end_exclusive": "20260918",
+        "branch": "all",
+        "items": [
+            {
+                "issue_date": "20260901",
+                "invoice_number": "000200",
+                "supplier_code": "S2",
+                "supplier_name": "Beta",
+                "quantity": 5,
+                "unit_price": 0.20,
+                "total_value": 1.0,
+                "icms_rate": 12.0,
+                "previous_unit_price": 0.10,
+                "variation_percent": 100.0,
+                "entry_date": "20260902",
+                "invoice_series": "1",
+                "supplier_store": "01",
+                "icms_value": 0.12,
+                "purchase_order": "PC9",
+                "supplier_tax_id": "12345678000199",
+            },
+            {
+                "issue_date": "20260801",
+                "invoice_number": "000100",
+                "supplier_code": "S1",
+                "supplier_name": "Alfa",
+                "quantity": 2,
+                "unit_price": 0.10,
+                "total_value": 0.2,
+                "icms_rate": 12.0,
+                "previous_unit_price": None,
+                "variation_percent": None,
+            },
+        ],
+        "summary": {
+            "total_purchases": 2,
+            "min_unit_price": 0.10,
+            "max_unit_price": 0.20,
+            "avg_unit_price": 0.15,
+            "last_variation_percent": 100.0,
+        },
+    }
+
+
+def _last_purchase_payload() -> dict[str, Any]:
+    return {
+        "product": {
+            "product_code": "10080055",
+            "description": "MP",
+            "product_type": "MP",
+            "unit": "KG",
+            "standard_cost": 0.02,
+        },
+        "last_purchase": {
+            "branch": "01",
+            "invoice_number": "000123",
+            "issue_date": "20200407",
+            "supplier_code": "000002",
+            "supplier_name": "TE",
+            "quantity": 10,
+            "unit_price": 0.089,
+            "total_value": 0.89,
+            "icms_rate": 12.0,
+            "purchase_order": "PC1",
+            "supplier_tax_id": "12345678000199",
+            "supplier_state": "SP",
+            "supplier_part_number": "PN",
+            "invoice_series": "1",
+            "entry_date": "20200408",
+            "supplier_store": "01",
+            "icms_value": 0.1,
+        },
     }
 
 
@@ -237,6 +350,15 @@ def _auth_and_domain_fakes(*, allowed: bool = True) -> Iterator[None]:
     production_uc = MagicMock()
     production_uc.execute.return_value = _production_payload()
 
+    pricing_uc = MagicMock()
+    pricing_uc.execute.return_value = _pricing_payload()
+
+    history_uc = MagicMock()
+    history_uc.execute.return_value = _history_payload()
+
+    last_purchase_uc = MagicMock()
+    last_purchase_uc.execute.return_value = _last_purchase_payload()
+
     search_uc = MagicMock()
 
     class _SearchPage:
@@ -311,6 +433,27 @@ def _auth_and_domain_fakes(*, allowed: bool = True) -> Iterator[None]:
                 product_routes,
                 "build_get_product_production_status_use_case",
                 return_value=production_uc,
+            )
+        )
+        stack.enter_context(
+            patch.object(
+                product_routes,
+                "build_get_product_pricing",
+                return_value=pricing_uc,
+            )
+        )
+        stack.enter_context(
+            patch.object(
+                product_routes,
+                "build_get_product_purchase_price_history_use_case",
+                return_value=history_uc,
+            )
+        )
+        stack.enter_context(
+            patch.object(
+                product_routes,
+                "build_get_product_last_purchase_use_case",
+                return_value=last_purchase_uc,
             )
         )
         stack.enter_context(
@@ -543,7 +686,88 @@ def test_mcp_still_exposes_exactly_three_tools():
     }
 
 
-def test_eligible_set_is_ten():
+def test_wave2_pricing_history_last_purchase_wired_projection(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
+    monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
+    monkeypatch.setenv(
+        "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
+    )
+    with _auth_and_domain_fakes(allowed=True):
+        pricing = _execute("get_product_pricing", {"code": "10080055"})
+        history = _execute(
+            "get_product_purchase_price_history", {"code": "10080055"}
+        )
+        last = _execute("get_product_last_purchase", {"code": "10080055"})
+    dumped_p = json.dumps(pricing.get("data") or {}, default=str)
+    assert pricing["status"] == "ok"
+    assert pricing["data"]["prices"][0]["sale_price"] == 12.5
+    assert pricing["data"]["prices"][0]["currency"] == "1"
+    for sibling in (
+        "max_price",
+        "discount_value",
+        "discount_percent",
+        "state",
+        "operation_type",
+        "standard_cost",
+        "internal_debug",
+    ):
+        assert sibling not in dumped_p
+
+    dumped_h = json.dumps(history.get("data") or {}, default=str)
+    assert history["status"] == "ok"
+    items = history["data"]["items"]
+    assert [row["invoice_number"] for row in items] == ["000200", "000100"]
+    assert history["data"]["summary"]["total_purchases"] == 2
+    for sibling in (
+        "registered_last_purchase_price",
+        "standard_cost",
+        "entry_date",
+        "invoice_series",
+        "supplier_store",
+        "icms_value",
+        "purchase_order",
+        "supplier_tax_id",
+        "12345678000199",
+    ):
+        assert sibling not in dumped_h
+
+    dumped_l = json.dumps(last.get("data") or {}, default=str)
+    assert last["status"] == "ok"
+    assert last["data"]["last_purchase"]["invoice_number"] == "000123"
+    assert last["data"]["last_purchase"]["unit_price"] == 0.089
+    for sibling in (
+        "supplier_tax_id",
+        "12345678000199",
+        "supplier_state",
+        "supplier_part_number",
+        "invoice_series",
+        "entry_date",
+        "supplier_store",
+        "icms_value",
+        "standard_cost",
+    ):
+        assert sibling not in dumped_l
+
+
+def test_wave2_backend_403_maps_to_forbidden(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
+    monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
+    monkeypatch.setenv(
+        "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
+    )
+    with _auth_and_domain_fakes(allowed=False):
+        for action_id in (
+            "get_product_pricing",
+            "get_product_purchase_price_history",
+            "get_product_last_purchase",
+        ):
+            with pytest.raises(PermissionError, match="Forbidden"):
+                _execute(action_id, {"code": "10080055"})
+
+
+def test_eligible_set_is_thirteen():
     ids = load_allowlist_operation_ids(load_external_read_allowlist())
     assert ids == {
         "search_products",
@@ -556,6 +780,9 @@ def test_eligible_set_is_ten():
         "get_product_factory_status",
         "get_product_structure_exclusivity",
         "get_product_shipping_status",
+        "get_product_pricing",
+        "get_product_purchase_price_history",
+        "get_product_last_purchase",
     }
 
 

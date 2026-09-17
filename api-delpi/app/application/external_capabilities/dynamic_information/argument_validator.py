@@ -8,7 +8,7 @@ never from operationId-specific executor branches.
 from __future__ import annotations
 
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any, Mapping
 
 from app.application.external_capabilities.dynamic_information.catalog_builder import (
@@ -120,6 +120,15 @@ def _apply_argument_limits_to_schema(
             prop["default"] = spec["default"]
 
 
+def _constraint_today() -> date:
+    """Clock seam for governed date-range tests. Production uses the local date."""
+    return date.today()
+
+
+_ABSENT_END_TODAY = "today"
+_ABSENT_START_EFFECTIVE_END_MINUS_WINDOW = "effectiveEndMinusDefaultWindow"
+
+
 def _parse_constraint_date(name: str, value: Any) -> date:
     if isinstance(value, date) and not isinstance(value, datetime):
         return value
@@ -147,6 +156,15 @@ def _validate_date_range(
     end_field = str(spec.get("endField") or "").strip()
     max_days = _as_int(spec.get("maxDays"))
     fallback_field = str(spec.get("fallbackStartField") or "").strip() or None
+    default_window = _as_int(spec.get("defaultWindowDays"))
+    absent_end = str(spec.get("absentEnd") or "").strip()
+    absent_start = str(spec.get("absentStart") or "").strip()
+    uses_effective_window = (
+        absent_end == _ABSENT_END_TODAY
+        and absent_start == _ABSENT_START_EFFECTIVE_END_MINUS_WINDOW
+        and default_window is not None
+        and default_window >= 0
+    )
     if not start_field or not end_field or max_days is None:
         return
     if max_days < 0:
@@ -154,24 +172,36 @@ def _validate_date_range(
 
     start_raw = cleaned.get(start_field)
     end_raw = cleaned.get(end_field)
-    if start_raw is None and end_raw is None:
+    if start_raw is None and end_raw is None and not uses_effective_window:
         return
 
-    today = date.today()
-    fallback_raw = cleaned.get(fallback_field) if fallback_field else None
-    if start_raw is not None:
-        start = _parse_constraint_date(start_field, start_raw)
-    elif fallback_raw is not None:
-        start = _parse_constraint_date(fallback_field, fallback_raw)
+    today = _constraint_today()
+    if uses_effective_window:
+        end = (
+            _parse_constraint_date(end_field, end_raw)
+            if end_raw is not None
+            else today
+        )
+        start = (
+            _parse_constraint_date(start_field, start_raw)
+            if start_raw is not None
+            else end - timedelta(days=default_window)
+        )
     else:
-        start = today
+        fallback_raw = cleaned.get(fallback_field) if fallback_field else None
+        if start_raw is not None:
+            start = _parse_constraint_date(start_field, start_raw)
+        elif fallback_raw is not None:
+            start = _parse_constraint_date(fallback_field, fallback_raw)
+        else:
+            start = today
 
-    if end_raw is not None:
-        end = _parse_constraint_date(end_field, end_raw)
-    elif start_raw is not None:
-        end = start
-    else:
-        end = today
+        if end_raw is not None:
+            end = _parse_constraint_date(end_field, end_raw)
+        elif start_raw is not None:
+            end = start
+        else:
+            end = today
 
     if end < start:
         raise ArgumentValidationError(f"{end_field}: must not be before {start_field}")

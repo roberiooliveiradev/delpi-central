@@ -119,10 +119,10 @@ class _PayloadExecutor:
         return CatalogActionExecutionResult(outcome="ok", payload=self.payload)
 
 
-def test_wave1_eligible_count_and_no_fourth_capability():
+def test_wave1_eligible_set_remains_and_wave2_added():
     eligible = sorted(a.operation_id for a in _actions() if a.executable)
-    assert len(eligible) == 10
-    assert set(eligible) == set(_CURRENT_SEVEN) | set(_WAVE1)
+    assert set(_CURRENT_SEVEN) | set(_WAVE1) <= set(eligible)
+    assert len(eligible) == 13
     allow = load_external_read_allowlist()
     blocked = {
         item.get("operationId")
@@ -131,13 +131,18 @@ def test_wave1_eligible_count_and_no_fourth_capability():
     }
     for oid in (
         "get_product_summary",
-        "get_product_pricing",
-        "get_product_purchase_price_history",
         "get_product_raw_material_price_intelligence",
         "get_product_cost_impact_simulation",
     ):
         assert oid not in set(eligible)
         assert oid in blocked
+    for oid in (
+        "get_product_pricing",
+        "get_product_purchase_price_history",
+        "get_product_last_purchase",
+    ):
+        assert oid in set(eligible)
+        assert oid not in blocked
 
 
 def test_wave1_mcp_tools_remain_three():
@@ -179,7 +184,7 @@ def test_wave1_and_current_retrieval(query, expected, monkeypatch):
         lambda: "sec",
     )
     discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
-    assert discovered["eligible_action_count"] == 10, query
+    assert discovered["eligible_action_count"] == 13, query
     assert discovered["candidate_count"] >= 1, query
     assert discovered["candidates"][0]["action_id"] == expected, query
 
@@ -213,7 +218,6 @@ def test_wave1_sibling_disambiguation(query, expected, forbidden, monkeypatch):
 @pytest.mark.parametrize(
     "query",
     [
-        "preço do produto 10080001",
         "custo do produto",
         "resuma o produto 10080001",
         "execute sql no banco",

@@ -28,6 +28,34 @@ def _quarantine_tokens() -> set[str]:
     return tokens
 
 
+def _owned_quarantine_tokens_via_aliases(
+    query: str,
+    action: TechnicalAction,
+    quarantine: set[str],
+) -> set[str]:
+    """Quarantine ownership comes from precise semantic aliases, not token bags.
+
+    A bare quarantined token in summary/description/operationId/searchable_text
+    does not grant ownership. Multiword aliases that actually appear in the
+    query may own the quarantined tokens they contain.
+    """
+    owned: set[str] = set()
+    norm_query = normalize_text(query)
+    for alias in action.semantic_aliases:
+        alias_n = normalize_text(alias)
+        alias_tokens = tokenize(alias)
+        if not alias_n or not alias_tokens:
+            continue
+        quarantined_in_alias = alias_tokens & quarantine
+        if not quarantined_in_alias:
+            continue
+        if len(alias_tokens) < 2:
+            continue
+        if alias_n in norm_query:
+            owned |= quarantined_in_alias
+    return owned
+
+
 def _query_has_foreign_quarantine(query: str, action: TechnicalAction) -> bool:
     """True when query expresses a quarantined intent the action does not own."""
     q_tokens = tokenize(query)
@@ -35,9 +63,8 @@ def _query_has_foreign_quarantine(query: str, action: TechnicalAction) -> bool:
     foreign = q_tokens & quarantine
     if not foreign:
         return False
-    action_tokens = tokenize(action.searchable_text)
-    # Suppress only markers the action itself does not advertise.
-    return bool(foreign - action_tokens)
+    owned = _owned_quarantine_tokens_via_aliases(query, action, quarantine)
+    return bool(foreign - owned)
 
 
 def score_action(query: str, action: TechnicalAction) -> float:
@@ -66,12 +93,14 @@ def score_action(query: str, action: TechnicalAction) -> float:
         partial = sum(1 for t in q_tokens if t in text)
         if partial == 0:
             return 0.0
-        return float(partial) / float(len(q_tokens)) * 0.5
+        return min(0.84, float(partial) / float(len(q_tokens)) * 0.5)
 
-    base = float(len(overlap)) / float(len(q_tokens)) if overlap else 0.0
+    overlap_score = float(len(overlap)) / float(len(q_tokens)) if overlap else 0.0
     if phrase_hits:
-        base = max(base, min(1.0, 0.55 + 0.15 * phrase_hits))
-    return min(1.0, base)
+        # Precise alias containment outranks token-bag overlap so short
+        # distinctive phrases win ties (e.g. "mp exclusiva" vs BOM "mp").
+        return min(1.0, 0.86 + 0.04 * min(phrase_hits, 3))
+    return min(0.84, overlap_score)
 
 
 def retrieve_eligible_actions(

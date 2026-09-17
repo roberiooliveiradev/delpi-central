@@ -82,16 +82,19 @@ Dynamic READ notes:
 Technical Action Catalog = derived from OpenAPI/baseline + governance allowlist
 Action Catalog != semantic capability authority
 MCP tools advertised to the Agent = search_products + discover_delpi_information + execute_delpi_information
-DAVI_ELIGIBLE_READ (allowlist v6 / DAVI-CAPABILITY-EXPANSION-WAVE-001) = 10
+DAVI_ELIGIBLE_READ (allowlist v7 / DAVI-CAPABILITY-EXPANSION-WAVE-002) = 13
   search_products, get_product_stock, get_product_suppliers, get_product_customers,
   get_product_purchases, get_product_structure, get_product_production_status,
-  get_product_factory_status, get_product_structure_exclusivity, get_product_shipping_status
+  get_product_factory_status, get_product_structure_exclusivity, get_product_shipping_status,
+  get_product_pricing, get_product_purchase_price_history, get_product_last_purchase
 get_product_detail = SEMANTICALLY_REDUNDANT (search_products covers same slice)
+get_product_cost_impact_simulation = PREPARE / DEFER_FROM_READ_WAVE (not READ-broker executable)
 Stock branch = query filter (NOT DAVI AuthZ)
 OpenAPI whole-document is never sent per turn
 Arbitrary URL/path/method/operationId/SQL = rejected
 Inventory evidence = docs/integrations/evidence/davi-api-delpi-operation-inventory.*
-Current Wave 1 coverage = docs/integrations/evidence/davi-governed-read-coverage-wave-001.json
+Current Wave 2 coverage = docs/integrations/evidence/davi-governed-read-coverage-wave-002.json
+Historical Wave 1 coverage = docs/integrations/evidence/davi-governed-read-coverage-wave-001.json
 Historical rebaseline coverage = docs/integrations/evidence/davi-governed-read-coverage-rebaseline-001.json
 Candidate tokens = actor-bound HMAC (DAVI_CANDIDATE_HMAC_SECRET preferred; JWT_SECRET fallback)
 Application dynamic broker = no HTTP/TestClient/Authorization header construction
@@ -105,7 +108,7 @@ Generic catalog actions = nested/flat approvedResponseFields + size bound
 bounded payload size != approved field projection
 ```
 
-> **Allowlist history:** DAVI-DYNAMIC-READ-001 briefly claimed 3 eligible ops (obsolete). DAVI-DYNAMIC-READ-002/005 reduced to 1. DAVI-READ-AUTHZ-REBASELINE-001 promoted allowlist v5 (`DAVI_ELIGIBLE_READ = 7`). **Current source authority is allowlist v6** (`DAVI_ELIGIBLE_READ = 10`) after `DAVI-CAPABILITY-EXPANSION-WAVE-001`. Live deploy of v6 = `TEST_NOT_RUN` until redeploy.
+> **Allowlist history:** DAVI-DYNAMIC-READ-001 briefly claimed 3 eligible ops (obsolete). DAVI-DYNAMIC-READ-002/005 reduced to 1. DAVI-READ-AUTHZ-REBASELINE-001 promoted allowlist v5 (`DAVI_ELIGIBLE_READ = 7`). DAVI-CAPABILITY-EXPANSION-WAVE-001 promoted allowlist v6 (`DAVI_ELIGIBLE_READ = 10`). **Current source authority is allowlist v7** (`DAVI_ELIGIBLE_READ = 13`) after `DAVI-CAPABILITY-EXPANSION-WAVE-002`. Live deploy of v7 = `TEST_NOT_RUN` until redeploy.
 
 ### Live runtime residuals (DAVI-DYNAMIC-READ-004)
 
@@ -548,7 +551,7 @@ DEPLOY_SMOKE = PASS
 CHATGPT_OAUTH_CONNECTION = PASS
 MCP_TOOL_DISCOVERY = PASS
 TOOL_INVENTORY = search_products + discover_delpi_information + execute_delpi_information
-DAVI_ELIGIBLE_READ (last live deploy) = 1 — SOURCE HEAD after DAVI-CAPABILITY-EXPANSION-WAVE-001 = 10 (LIVE = TEST_NOT_RUN)
+DAVI_ELIGIBLE_READ (last live deploy) = 1 — SOURCE HEAD after DAVI-CAPABILITY-EXPANSION-WAVE-002 = 13 (LIVE = TEST_NOT_RUN; Wave 1 source 10 remains historical)
 INPUT_SCHEMA_LIVE = PASS
 OUTPUT_SCHEMA_RUNTIME = PASS
 AUTHENTICATED_SEARCH_PRODUCTS = PASS

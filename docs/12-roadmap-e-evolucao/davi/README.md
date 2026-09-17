@@ -238,7 +238,9 @@ branch = query filter (unless backend policy says otherwise)
 backend AuthZ = final authority
 ```
 
-After Wave 1 (source): `DAVI_ELIGIBLE_READ` = 10 via allowlist v6 governed READ promotion (`product.factory.status`, `product.structure.exclusivity`, `product.shipping.status` plus the previous seven). Nested Abstraction Gate remains PASS. MCP tools remain **exactly 3**. Agent Instructions unchanged.
+After Wave 2 (source): `DAVI_ELIGIBLE_READ` = 13 via allowlist v7 governed READ promotion (`product.commercial.pricing`, `product.purchase.price_history`, `product.purchase.last_valid` plus the previous ten). Nested Abstraction Gate remains PASS. MCP tools remain **exactly 3**. Agent Instructions unchanged. `product.cost.impact_simulation` remains PREPARE / `DEFER_FROM_READ_WAVE` and is not executable through the READ broker.
+
+Wave 1 (historical source): `DAVI_ELIGIBLE_READ` = 10 via allowlist v6 (`product.factory.status`, `product.structure.exclusivity`, `product.shipping.status` plus the previous seven).
 
 Historical governance packs (`DAVI-GOV-READ-001`) remain as provenance with `SUPERSEDED_IN_PART`.
 

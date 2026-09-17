@@ -2,17 +2,17 @@
   "source": "openapi_baseline.json",
   "baseline_version": "3",
   "baseline_operation_count": 703,
-  "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-001",
+  "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-002",
   "TOTAL_OPERATIONS": 703,
   "TOTAL_GET": 506,
   "TOTAL_WRITE_VERBS": 197,
-  "DAVI_ELIGIBLE_READ": 10,
-  "ELIGIBLE_BEFORE": 7,
-  "ELIGIBLE_AFTER": 10,
+  "DAVI_ELIGIBLE_READ": 13,
+  "ELIGIBLE_BEFORE": 10,
+  "ELIGIBLE_AFTER": 13,
   "NEWLY_ELIGIBLE": [
-    "get_product_factory_status",
-    "get_product_shipping_status",
-    "get_product_structure_exclusivity"
+    "get_product_last_purchase",
+    "get_product_pricing",
+    "get_product_purchase_price_history"
   ],
   "REMOVED_ELIGIBLE": [],
   "INVENTORY_DELTA": {
@@ -25,12 +25,12 @@
     "note": "Delta vs last committed inventory artifact (HEAD)"
   },
   "COVERAGE_DECISION": {
-    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-001",
-    "decision": "PROMOTE_OPERATIONAL_PRODUCT_INTELLIGENCE_WAVE_1",
-    "reason": "Promote get_product_factory_status, get_product_structure_exclusivity and get_product_shipping_status as governed READ capabilities behind the existing three MCP broker tools. AuthZ policy unchanged (DAVI-READ-AUTHZ-REBASELINE-001).",
+    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-002",
+    "decision": "PROMOTE_PRODUCT_ECONOMIC_READ_WAVE_2",
+    "reason": "Promote get_product_pricing, get_product_purchase_price_history and get_product_last_purchase as governed READ capabilities behind the existing three MCP broker tools. Eligible READ 10→13. Cost impact simulation remains PREPARE/DEFER_FROM_READ_WAVE and is not executable. AuthZ policy unchanged (DAVI-READ-AUTHZ-REBASELINE-001). Global economic quarantine tokens remain; ownership is via precise semantic aliases only. Purchase-history dateRange uses generic missing-bound policy aligned with canonical resolve_history_date_range.",
     "previousDecision": {
-      "taskId": "DAVI-READ-AUTHZ-REBASELINE-001",
-      "decision": "REBASELINE_PROMOTE_SAFE_READS"
+      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-001",
+      "decision": "PROMOTE_OPERATIONAL_PRODUCT_INTELLIGENCE_WAVE_1"
     }
   },
   "HIGH_VALUE_BLOCKED": [
@@ -41,37 +41,27 @@
     },
     {
       "operationId": "get_product_summary",
-      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "reason": "Composite product+stock+prices; no approved section projection yet"
-    },
-    {
-      "operationId": "get_product_pricing",
-      "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
-      "reason": "Awaiting explicit approvedResponseFields (minimization); not blocked by taxonomy absence"
-    },
-    {
-      "operationId": "get_product_purchase_price_history",
-      "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
-      "reason": "Awaiting explicit approvedResponseFields"
+      "primaryBlocker": "DEFER",
+      "reason": "Composite product snapshot remains deferred; not a Wave 2 READ capability"
     },
     {
       "operationId": "get_product_raw_material_price_intelligence",
-      "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
-      "reason": "Awaiting explicit approvedResponseFields"
+      "primaryBlocker": "DEFER",
+      "reason": "Unbounded budget scan / composite overlap / no bounded summaries-only backend contract"
     },
     {
       "operationId": "get_product_cost_impact_simulation",
-      "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
-      "reason": "Awaiting explicit approvedResponseFields"
+      "primaryBlocker": "PREPARE",
+      "reason": "Compute-only simulation is PREPARE, not READ. HTTP GET does not imply semantic READ. Not executable through the READ broker."
     }
   ],
   "STATUS_COUNTS": {
     "ADMIN_OUT_OF_SCOPE": 76,
-    "DAVI_ELIGIBLE_READ": 10,
+    "DAVI_ELIGIBLE_READ": 13,
     "DESTRUCTIVE_OUT_OF_SCOPE": 16,
     "GENERIC_SQL_FORBIDDEN": 2,
-    "NEEDS_MODEL_SAFE_PROJECTION": 372,
-    "NEEDS_NESTED_PROJECTION_SUPPORT": 65,
+    "NEEDS_MODEL_SAFE_PROJECTION": 368,
+    "NEEDS_NESTED_PROJECTION_SUPPORT": 66,
     "SEMANTICALLY_REDUNDANT": 1,
     "STREAM_BINARY_OUT_OF_SCOPE": 31,
     "WRITE_OUT_OF_SCOPE": 130
@@ -79,7 +69,10 @@
   "ELIGIBLE_OPERATION_IDS": [
     "get_product_customers",
     "get_product_factory_status",
+    "get_product_last_purchase",
+    "get_product_pricing",
     "get_product_production_status",
+    "get_product_purchase_price_history",
     "get_product_purchases",
     "get_product_shipping_status",
     "get_product_stock",
@@ -870,11 +863,41 @@
       "executable": true
     },
     {
+      "operationId": "get_product_last_purchase",
+      "method": "GET",
+      "path": "/products/{code}/last-purchase",
+      "summary": "Product last purchase",
+      "entity": "product_last_purchase",
+      "shape": "playbook_report",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_product_pricing",
+      "method": "GET",
+      "path": "/products/{code}/pricing",
+      "summary": "Product sale pricing and commercial price tables",
+      "entity": "product_pricing",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
       "operationId": "get_product_production_status",
       "method": "GET",
       "path": "/products/{code}/production-status",
       "summary": "Product production status (PA/PI, OPs and appointments)",
       "entity": "product_production_status",
+      "shape": "playbook_report",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_product_purchase_price_history",
+      "method": "GET",
+      "path": "/products/{code}/purchase-price-history",
+      "summary": "Product purchase price history",
+      "entity": "product_purchase_price_history",
       "shape": "playbook_report",
       "davi_status": "DAVI_ELIGIBLE_READ",
       "executable": true
@@ -2140,16 +2163,6 @@
       "executable": false
     },
     {
-      "operationId": "get_product_cost_impact_simulation",
-      "method": "GET",
-      "path": "/products/{code}/cost-impact-simulation",
-      "summary": "Finished-product cost impact simulation (BOM materials)",
-      "entity": "product_cost_impact_simulation",
-      "shape": "composite_analysis",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
       "operationId": "get_product_drawing",
       "method": "GET",
       "path": "/products/{code}/drawing",
@@ -2206,36 +2219,6 @@
       "summary": "Product outbound invoice items",
       "entity": "product_outbound_invoice_items",
       "shape": "paged_list",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_pricing",
-      "method": "GET",
-      "path": "/products/{code}/pricing",
-      "summary": "Product sale pricing and commercial price tables",
-      "entity": "product_pricing",
-      "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_purchase_price_history",
-      "method": "GET",
-      "path": "/products/{code}/purchase-price-history",
-      "summary": "Product purchase price history",
-      "entity": "product_purchase_price_history",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_raw_material_price_intelligence",
-      "method": "GET",
-      "path": "/products/{code}/raw-material-price-intelligence",
-      "summary": "Product raw material price intelligence",
-      "entity": "product_raw_material_price_intelligence",
-      "shape": "composite_analysis",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
@@ -4950,22 +4933,22 @@
       "executable": false
     },
     {
+      "operationId": "get_product_cost_impact_simulation",
+      "method": "GET",
+      "path": "/products/{code}/cost-impact-simulation",
+      "summary": "Finished-product cost impact simulation (BOM materials)",
+      "entity": "product_cost_impact_simulation",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
       "operationId": "get_product_directives",
       "method": "GET",
       "path": "/products/directives/{identifier}",
       "summary": "Product directives",
       "entity": "product_directives",
       "shape": "composite_analysis",
-      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_last_purchase",
-      "method": "GET",
-      "path": "/products/{code}/last-purchase",
-      "summary": "Product last purchase",
-      "entity": "product_last_purchase",
-      "shape": "playbook_report",
       "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "executable": false
     },
@@ -4986,6 +4969,16 @@
       "summary": "Product purchase budget history",
       "entity": "product_purchase_budget_history",
       "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_product_raw_material_price_intelligence",
+      "method": "GET",
+      "path": "/products/{code}/raw-material-price-intelligence",
+      "summary": "Product raw material price intelligence",
+      "entity": "product_raw_material_price_intelligence",
+      "shape": "composite_analysis",
       "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "executable": false
     },

@@ -1234,7 +1234,10 @@ def validate_against_source(caps: list[dict[str, Any]] | None = None) -> dict[st
             if authz.get("authzEvidence") != "PROVEN":
                 issues.append(f"{oid}: API_DELPI_ACCESS decorator not proven on handler {authz}")
             if oid in eligible_ids:
-                issues.append(f"{oid}: unexpectedly already allowlisted")
+                if cap.get("status") in {"DEFER", "DEFER_FROM_READ_WAVE"}:
+                    issues.append(f"{oid}: deferred capability unexpectedly allowlisted")
+                elif cap.get("status") != "FROZEN_FOR_IMPLEMENTATION":
+                    issues.append(f"{oid}: unexpectedly already allowlisted")
             proofs.append(
                 {
                     "operationId": oid,

@@ -1,0 +1,29 @@
+{
+  "artifact_class": "EVIDENCE_NOT_RUNTIME_AUTHORITY",
+  "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-002",
+  "allowlistVersion": 7,
+  "eligibleBefore": 10,
+  "eligibleAfter": 13,
+  "mcpTools": 3,
+  "agentInstructions": "UNCHANGED",
+  "promotedOperationIds": [
+    "get_product_pricing",
+    "get_product_purchase_price_history",
+    "get_product_last_purchase"
+  ],
+  "blockedOperationIds": [
+    "get_product_cost_impact_simulation",
+    "get_product_raw_material_price_intelligence",
+    "get_product_summary"
+  ],
+  "costImpactClassification": "PREPARE / DEFER_FROM_READ_WAVE",
+  "quarantineOwnership": "precise semantic aliases",
+  "dateRangePolicy": {
+    "absentEnd": "today",
+    "absentStart": "effectiveEndMinusDefaultWindow",
+    "defaultWindowDays": 365,
+    "maxDays": 365
+  },
+  "deploy": "TEST_NOT_RUN",
+  "live": "TEST_NOT_RUN"
+}

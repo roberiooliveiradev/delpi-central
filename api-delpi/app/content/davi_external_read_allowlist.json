@@ -1,16 +1,16 @@
 {
-  "version": 6,
+  "version": 7,
   "description": "Governance allowlist for DAVI dynamic READ. DAVI has no independent AuthZ; backend is final authority. Entries define model-safe input/output projection and governed argument constraints only — not business permissions.",
   "authzPolicy": "DAVI-READ-AUTHZ-REBASELINE-001",
   "externalProcessing": "BACKEND_AUTHORIZED_INTERNAL_READ_ALLOWED_UNLESS_EXPLICITLY_PROHIBITED",
   "dataClassification": "MINIMIZATION_REQUIRED_TAXONOMY_OPTIONAL",
   "coverageDecision": {
-    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-001",
-    "decision": "PROMOTE_OPERATIONAL_PRODUCT_INTELLIGENCE_WAVE_1",
-    "reason": "Promote get_product_factory_status, get_product_structure_exclusivity and get_product_shipping_status as governed READ capabilities behind the existing three MCP broker tools. AuthZ policy unchanged (DAVI-READ-AUTHZ-REBASELINE-001).",
+    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-002",
+    "decision": "PROMOTE_PRODUCT_ECONOMIC_READ_WAVE_2",
+    "reason": "Promote get_product_pricing, get_product_purchase_price_history and get_product_last_purchase as governed READ capabilities behind the existing three MCP broker tools. Eligible READ 10→13. Cost impact simulation remains PREPARE/DEFER_FROM_READ_WAVE and is not executable. AuthZ policy unchanged (DAVI-READ-AUTHZ-REBASELINE-001). Global economic quarantine tokens remain; ownership is via precise semantic aliases only. Purchase-history dateRange uses generic missing-bound policy aligned with canonical resolve_history_date_range.",
     "previousDecision": {
-      "taskId": "DAVI-READ-AUTHZ-REBASELINE-001",
-      "decision": "REBASELINE_PROMOTE_SAFE_READS"
+      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-001",
+      "decision": "PROMOTE_OPERATIONAL_PRODUCT_INTELLIGENCE_WAVE_1"
     }
   },
   "retrievalQuarantineTokens": [
@@ -59,6 +59,9 @@
       "cancele",
       "aprovar",
       "aprove",
+      "aplicar",
+      "aplique",
+      "apply",
       "delete",
       "edit",
       "create",
@@ -529,6 +532,129 @@
           "maxDays": 31
         }
       }
+    },
+    {
+      "operationId": "get_product_pricing",
+      "reason": "Registered commercial DA1 price-table rows; not current-effective price; API_DELPI_ACCESS; nested projection",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code"
+      ],
+      "approvedResponseFields": [
+        "product.code",
+        "product.description",
+        "product.unit",
+        "prices[].table_code",
+        "prices[].table_description",
+        "prices[].sale_price",
+        "prices[].currency",
+        "prices[].lot_quantity",
+        "prices[].valid_from",
+        "prices[].active"
+      ],
+      "semanticAliases": [
+        "preço do produto",
+        "preço comercial",
+        "tabela de preço",
+        "preço de venda",
+        "product sale price",
+        "commercial price table",
+        "product pricing"
+      ]
+    },
+    {
+      "operationId": "get_product_purchase_price_history",
+      "reason": "Bounded latest-N inbound-NF purchase-price series; full-period completeness NOT_PROVEN; API_DELPI_ACCESS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code",
+        "branch",
+        "start_date",
+        "end_date",
+        "history_limit"
+      ],
+      "approvedResponseFields": [
+        "product.product_code",
+        "product.description",
+        "product.product_type",
+        "product.unit",
+        "start_date",
+        "date_end_exclusive",
+        "branch",
+        "items[].issue_date",
+        "items[].invoice_number",
+        "items[].supplier_code",
+        "items[].supplier_name",
+        "items[].quantity",
+        "items[].unit_price",
+        "items[].total_value",
+        "items[].icms_rate",
+        "items[].previous_unit_price",
+        "items[].variation_percent",
+        "summary.total_purchases",
+        "summary.min_unit_price",
+        "summary.max_unit_price",
+        "summary.avg_unit_price",
+        "summary.last_variation_percent"
+      ],
+      "semanticAliases": [
+        "histórico de preço de compra",
+        "evolução de preço de compra",
+        "preço de compra da matéria-prima",
+        "purchase price history",
+        "buying price history",
+        "raw material purchase price history"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "maxDays": 365,
+          "defaultWindowDays": 365,
+          "absentEnd": "today",
+          "absentStart": "effectiveEndMinusDefaultWindow"
+        },
+        "argumentLimits": {
+          "history_limit": {
+            "minimum": 1,
+            "maximum": 50,
+            "default": 24
+          }
+        }
+      }
+    },
+    {
+      "operationId": "get_product_last_purchase",
+      "reason": "Latest valid inbound NF snapshot without date window; drop supplier_tax_id; API_DELPI_ACCESS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "product.product_code",
+        "product.description",
+        "product.product_type",
+        "product.unit",
+        "last_purchase.branch",
+        "last_purchase.invoice_number",
+        "last_purchase.issue_date",
+        "last_purchase.supplier_code",
+        "last_purchase.supplier_name",
+        "last_purchase.quantity",
+        "last_purchase.unit_price",
+        "last_purchase.total_value",
+        "last_purchase.icms_rate",
+        "last_purchase.purchase_order"
+      ],
+      "semanticAliases": [
+        "último preço de compra",
+        "última compra da matéria-prima",
+        "última NF de compra",
+        "last purchase price",
+        "last valid purchase",
+        "latest inbound invoice price"
+      ]
     }
   ],
   "explicitlyNotApproved": [
@@ -540,38 +666,26 @@
     },
     {
       "operationId": "get_product_summary",
-      "coverageDisposition": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "reason": "Composite product+stock+prices; no approved section projection yet"
-    },
-    {
-      "operationId": "get_product_pricing",
-      "coverageDisposition": "NEEDS_MODEL_SAFE_PROJECTION",
-      "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
-      "reason": "Awaiting explicit approvedResponseFields (minimization); not blocked by taxonomy absence"
-    },
-    {
-      "operationId": "get_product_purchase_price_history",
-      "coverageDisposition": "NEEDS_MODEL_SAFE_PROJECTION",
-      "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
-      "reason": "Awaiting explicit approvedResponseFields"
+      "coverageDisposition": "DEFER",
+      "primaryBlocker": "DEFER",
+      "reason": "Composite product snapshot remains deferred; not a Wave 2 READ capability"
     },
     {
       "operationId": "get_product_raw_material_price_intelligence",
-      "coverageDisposition": "NEEDS_MODEL_SAFE_PROJECTION",
-      "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
-      "reason": "Awaiting explicit approvedResponseFields"
+      "coverageDisposition": "DEFER",
+      "primaryBlocker": "DEFER",
+      "reason": "Unbounded budget scan / composite overlap / no bounded summaries-only backend contract"
     },
     {
       "operationId": "get_product_cost_impact_simulation",
-      "coverageDisposition": "NEEDS_MODEL_SAFE_PROJECTION",
-      "primaryBlocker": "NEEDS_MODEL_SAFE_PROJECTION",
-      "reason": "Awaiting explicit approvedResponseFields"
+      "coverageDisposition": "DEFER_FROM_READ_WAVE",
+      "primaryBlocker": "PREPARE",
+      "reason": "Compute-only simulation is PREPARE, not READ. HTTP GET does not imply semantic READ. Not executable through the READ broker."
     }
   ],
   "hardening": {
-    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-001",
-    "note": "No AuthZ policy change. Eligible READ set 7→10 via allowlist metadata. MCP tools remain 3. argumentConstraints are generic dateRange/argumentLimits, not per-operation executor logic. Global factory quarantine token is preserved; factory-status aliases own the token."
+    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-002",
+    "note": "No AuthZ policy change. Eligible READ set 10→13 via allowlist metadata (get_product_pricing, get_product_purchase_price_history, get_product_last_purchase). MCP tools remain 3. Backend AuthZ unchanged. Global economic quarantine tokens (preco/price/pricing/custo/cost) preserved; quarantine ownership is generic phrase/alias matching, not searchable_text token bags. Purchase-history effective date-range bound is generic dateRange missing-bound metadata aligned with canonical resolve_history_date_range. Cost simulation remains PREPARE/DEFER_FROM_READ_WAVE and is not promoted."
   },
   "supersededBlockers": {
     "taskId": "DAVI-READ-AUTHZ-REBASELINE-001",
