@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import secrets
 from typing import Any
 from uuid import UUID
 
@@ -33,6 +34,7 @@ from production_pulse_app.domain.services.device_validation_service import (
     validate_poll_interval_ms,
 )
 from production_pulse_app.infrastructure.content.device_validation_content_service import (
+    device_api_token_max_length,
     poll_interval_default,
 )
 from production_pulse_app.application.services.device_binding_service import DeviceBindingService
@@ -90,6 +92,49 @@ class DeviceService:
                 self._payload_get(payload, "api_token", "apiToken")
             )
         return fields
+
+    @staticmethod
+    def _generate_device_api_token() -> str:
+        """Cryptographic device token within validation max length."""
+        maximum = max(16, int(device_api_token_max_length()))
+        # 32 bytes → ~43 urlsafe chars; trim to schema limit.
+        return secrets.token_urlsafe(32)[:maximum]
+
+    @staticmethod
+    def _token_is_set(value: Any) -> bool:
+        return bool(str(value or "").strip())
+
+    def _ensure_token_on_create(
+        self, payload: dict[str, Any], config_fields: dict[str, Any]
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Guarantee device_api_token on create; mutate payload for configure push."""
+        token = config_fields.get("device_api_token")
+        if self._token_is_set(token):
+            return payload, config_fields
+        generated = self._generate_device_api_token()
+        next_fields = dict(config_fields)
+        next_fields["device_api_token"] = generated
+        next_payload = dict(payload)
+        next_payload["apiToken"] = generated
+        return next_payload, next_fields
+
+    def _ensure_token_when_missing(
+        self,
+        payload: dict[str, Any],
+        config_fields: dict[str, Any],
+        *,
+        existing_token: Any,
+    ) -> tuple[dict[str, Any], Any]:
+        """On edit: generate only when cadastro has no token and body omitted a new one."""
+        if "device_api_token" in config_fields:
+            # Explicit write (set or clear) — do not auto-generate over clear.
+            return payload, config_fields.get("device_api_token")
+        if self._token_is_set(existing_token):
+            return payload, existing_token
+        generated = self._generate_device_api_token()
+        next_payload = dict(payload)
+        next_payload["apiToken"] = generated
+        return next_payload, generated
 
     def _with_config_push(
         self,
@@ -197,6 +242,7 @@ class DeviceService:
             else payload.get("firmwareSource")
         )
         config_fields = self._resolve_device_config_fields(payload)
+        payload, config_fields = self._ensure_token_on_create(payload, config_fields)
         row = self._repository.create(
             branch=branch,
             name=name,
@@ -265,10 +311,10 @@ class DeviceService:
             if "debounce_ms" in config_fields
             else existing.get("debounce_ms")
         )
-        device_api_token = (
-            config_fields["device_api_token"]
-            if "device_api_token" in config_fields
-            else existing.get("device_api_token")
+        payload, device_api_token = self._ensure_token_when_missing(
+            payload,
+            config_fields,
+            existing_token=existing.get("device_api_token"),
         )
         row = self._repository.replace(
             device_id,
@@ -332,7 +378,24 @@ class DeviceService:
                 if "firmware_source" in payload
                 else payload.get("firmwareSource")
             )
-        updates.update(self._resolve_device_config_fields(payload))
+        config_fields = self._resolve_device_config_fields(payload)
+        existing = self._repository.get_by_id(device_id)
+        if existing is None:
+            raise DeviceNotFoundError(str(device_id))
+        payload, ensured_token = self._ensure_token_when_missing(
+            payload,
+            config_fields,
+            existing_token=existing.get("device_api_token"),
+        )
+        for key in ("wifi_ssid", "debounce_ms"):
+            if key in config_fields:
+                updates[key] = config_fields[key]
+        if "device_api_token" in config_fields:
+            updates["device_api_token"] = config_fields["device_api_token"]
+        elif not self._token_is_set(existing.get("device_api_token")) and self._token_is_set(
+            ensured_token
+        ):
+            updates["device_api_token"] = ensured_token
         if "driver_key" in payload or "driverKey" in payload:
             driver = resolve_driver(payload.get("driver_key") or payload.get("driverKey", ""))
             updates["driver_key"] = driver.driver_key
@@ -343,9 +406,6 @@ class DeviceService:
             updates["poll_interval_ms"] = validate_poll_interval_ms(
                 float(payload.get("poll_interval_ms") or payload.get("pollIntervalMs"))
             )
-        existing = self._repository.get_by_id(device_id)
-        if existing is None:
-            raise DeviceNotFoundError(str(device_id))
         row = self._repository.patch(device_id, updates=updates, actor_sub=actor_sub)
         result = self._with_config_push(
             row,

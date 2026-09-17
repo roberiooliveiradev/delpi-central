@@ -87,6 +87,21 @@ def request_changes_chip_config(
         if new_branch != old_branch:
             return True
 
+    # Hardware identity / target host change → re-provision chip (incl. token).
+    if _payload_has(request_payload, "controller_code", "controllerCode"):
+        new_code = _norm_str(
+            _payload_get(request_payload, "controller_code", "controllerCode")
+        )
+        old_code = _norm_str(device_row.get("controller_code"))
+        if new_code != old_code:
+            return True
+
+    if _payload_has(request_payload, "ip_address", "ipAddress"):
+        new_ip = _norm_str(_payload_get(request_payload, "ip_address", "ipAddress"))
+        old_ip = _norm_str(device_row.get("ip_address"))
+        if new_ip != old_ip:
+            return True
+
     return False
 
 
@@ -121,7 +136,7 @@ class DeviceConfigPushService:
     ) -> dict[str, Any]:
         baseline = previous_row if previous_row is not None else device_row
         chip_changed = request_changes_chip_config(baseline, request_payload)
-        # Poll/name/enabled/IP-only (and unchanged wifi/debounce echoes) stay in Postgres.
+        # Poll/name/enabled-only (and unchanged wifi/debounce echoes) stay in Postgres.
         if not chip_changed and not force_ota_provision:
             return {
                 "status": "skipped",
@@ -144,16 +159,18 @@ class DeviceConfigPushService:
                 else request_payload.get("apiToken"),
             }
         )
-        # Also push persisted mirror fields when password omitted but ssid/debounce/token stored
+        # Also push persisted mirror fields when password omitted but ssid/debounce stored
         if "ssid" not in configure_body and device_row.get("wifi_ssid"):
             if "wifiSsid" in request_payload or "wifi_ssid" in request_payload:
                 configure_body["ssid"] = str(device_row["wifi_ssid"])
         if "debounceMs" not in configure_body and device_row.get("debounce_ms") is not None:
             if "debounceMs" in request_payload or "debounce_ms" in request_payload:
                 configure_body["debounceMs"] = int(device_row["debounce_ms"])
-        if "apiToken" not in configure_body and device_row.get("device_api_token"):
-            if "apiToken" in request_payload or "api_token" in request_payload:
-                configure_body["apiToken"] = str(device_row["device_api_token"])
+        # Re-provision / create: always send persisted cadastro token when pushing.
+        if "apiToken" not in configure_body:
+            persisted_token = resolve_device_api_token(device_row)
+            if persisted_token:
+                configure_body["apiToken"] = persisted_token
 
         # OTA provision on create, or whenever chip config actually changes.
         if force_ota_provision or chip_changed:

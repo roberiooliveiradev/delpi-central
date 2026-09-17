@@ -148,3 +148,64 @@ def test_create_device_persists_wifi_and_token_mirror(client, unique_ip):
     body = fetched.json()["data"]
     assert body["apiTokenSet"] is True
     assert "apiToken" not in body
+
+
+def test_create_device_auto_generates_token_when_omitted(client, unique_ip):
+    created = client.post(
+        "/devices",
+        json={
+            "name": "ESP auto token",
+            "branch": "01",
+            "ipAddress": unique_ip,
+            "driverKey": "esp8266_counter_v1",
+        },
+    )
+    assert created.status_code == 201
+    data = created.json()["data"]
+    assert data["apiTokenSet"] is True
+    assert "apiToken" not in data
+
+    fetched = client.get(f"/devices/{data['id']}")
+    assert fetched.json()["data"]["apiTokenSet"] is True
+    assert "apiToken" not in fetched.json()["data"]
+
+
+def test_replace_does_not_regenerate_existing_token(client, unique_ip, monkeypatch):
+    created = client.post(
+        "/devices",
+        json={
+            "name": "ESP keep token",
+            "branch": "01",
+            "ipAddress": unique_ip,
+            "driverKey": "esp8266_counter_v1",
+            "apiToken": "keep-me-token",
+        },
+    )
+    assert created.status_code == 201
+    device_id = created.json()["data"]["id"]
+
+    from production_pulse_app.application.services.device_service import DeviceService
+
+    calls: list[str] = []
+    original = DeviceService._generate_device_api_token
+
+    def _spy(self):
+        calls.append("generated")
+        return original(self)
+
+    monkeypatch.setattr(DeviceService, "_generate_device_api_token", _spy)
+
+    replaced = client.put(
+        f"/devices/{device_id}",
+        json={
+            "name": "ESP keep token",
+            "branch": "01",
+            "ipAddress": unique_ip,
+            "driverKey": "esp8266_counter_v1",
+            "pollIntervalMs": 500,
+        },
+    )
+    assert replaced.status_code == 200
+    assert replaced.json()["data"]["apiTokenSet"] is True
+    assert "apiToken" not in replaced.json()["data"]
+    assert calls == []

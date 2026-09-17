@@ -1,3 +1,5 @@
+import { useMemo, useState } from "react";
+
 import {
   PpActionButton,
   PpFormGrid,
@@ -21,12 +23,19 @@ import {
 import { getPpSectionIntro } from "../content/sectionIntros";
 import type { DeviceFormValues, DriverCatalogItem } from "../types/form";
 import { branchLabel, resolveBranchOptions } from "../constants/branches";
+import {
+  canCopyDeviceApiToken,
+  generateDeviceApiToken,
+  resolveDeviceApiTokenFieldStatus,
+} from "../utils/deviceApiToken";
 
 type DeviceFormProps = {
   device: DeviceFormValues;
   drivers: DriverCatalogItem[];
   allowedBranches: string[];
   readOnlyBranch?: boolean;
+  /** Loaded controller/IP for edit — detects hardware re-provision. */
+  identityBaseline?: { controllerCode: string; ipAddress: string } | null;
   errors?: Partial<Record<keyof DeviceFormValues, string>>;
   onChange: (patch: Partial<DeviceFormValues>) => void;
   onTestConnection?: () => void;
@@ -41,11 +50,21 @@ function driverPreview(driver: DriverCatalogItem | undefined): string {
     .join(" · ");
 }
 
-function generateDeviceApiToken(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID().replace(/-/g, "");
-  }
-  return `tok${Date.now().toString(16)}${Math.random().toString(16).slice(2, 10)}`;
+function tokenStatusLabel(
+  status: ReturnType<typeof resolveDeviceApiTokenFieldStatus>,
+): string {
+  if (status === "configured") return PP_HELP.form.apiTokenStatusConfigured;
+  if (status === "missing") return PP_HELP.form.apiTokenStatusMissing;
+  return PP_HELP.form.apiTokenStatusPendingSave;
+}
+
+function tokenFieldHint(
+  status: ReturnType<typeof resolveDeviceApiTokenFieldStatus>,
+): string {
+  if (status === "configured") return PP_HELP.form.apiTokenSetHint;
+  if (status === "missing") return PP_HELP.form.apiTokenMissingHint;
+  if (status === "pending_save") return PP_HELP.form.apiTokenPendingSaveHint;
+  return PP_HELP.form.apiToken;
 }
 
 export function DeviceForm({
@@ -53,6 +72,7 @@ export function DeviceForm({
   drivers,
   allowedBranches,
   readOnlyBranch,
+  identityBaseline,
   errors,
   onChange,
   onTestConnection,
@@ -60,6 +80,41 @@ export function DeviceForm({
 }: DeviceFormProps) {
   const branchOptions = resolveBranchOptions(allowedBranches);
   const selectedDriver = drivers.find((item) => item.key === device.driverKey);
+  const [tokenVisible, setTokenVisible] = useState(false);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
+
+  const tokenStatus = resolveDeviceApiTokenFieldStatus({
+    apiToken: device.apiToken,
+    apiTokenSet: device.apiTokenSet,
+  });
+  const canCopy = canCopyDeviceApiToken(device.apiToken);
+
+  const identityDirty = useMemo(() => {
+    if (!identityBaseline) return false;
+    const codeChanged =
+      device.controllerCode.trim() !== identityBaseline.controllerCode.trim();
+    const ipChanged = device.ipAddress.trim() !== identityBaseline.ipAddress.trim();
+    return codeChanged || ipChanged;
+  }, [device.controllerCode, device.ipAddress, identityBaseline]);
+
+  const tokenPlaceholder =
+    tokenStatus === "configured"
+      ? "•••••••• (configurado — deixe em branco para manter)"
+      : tokenStatus === "missing"
+        ? "Será gerado automaticamente ao salvar"
+        : "Novo token — copie antes de salvar";
+
+  const onCopyToken = async () => {
+    if (!canCopy) return;
+    try {
+      await navigator.clipboard.writeText(device.apiToken.trim());
+      setCopyState("copied");
+      window.setTimeout(() => setCopyState("idle"), 1600);
+    } catch {
+      setCopyState("failed");
+      window.setTimeout(() => setCopyState("idle"), 1600);
+    }
+  };
 
   return (
     <div className="pp-device-form">
@@ -107,7 +162,9 @@ export function DeviceForm({
                 disabled={testingConnection || !device.ipAddress.trim()}
                 onClick={onTestConnection}
               >
-                {testingConnection ? PP_HELP.form.testConnectionLoading : PP_HELP.form.testConnectionAction}
+                {testingConnection
+                  ? PP_HELP.form.testConnectionLoading
+                  : PP_HELP.form.testConnectionAction}
               </PpActionButton>
             ) : null
           }
@@ -161,27 +218,51 @@ export function DeviceForm({
 
         <PpNativeInlineTextField
           id="pp-device-api-token"
-          label="Token do dispositivo"
-          hint={
-            device.apiTokenSet && !device.apiToken.trim()
-              ? PP_HELP.form.apiTokenSetHint
-              : PP_HELP.form.apiToken
-          }
+          label={`Token do dispositivo · ${tokenStatusLabel(tokenStatus)}`}
+          hint={tokenFieldHint(tokenStatus)}
           span
           className="pp-form-grid__span-full"
-          type="password"
+          type={tokenVisible ? "text" : "password"}
           value={device.apiToken}
-          placeholder="Deixe em branco para manter"
+          placeholder={tokenPlaceholder}
           onChange={(value) => onChange({ apiToken: value })}
-          afterControl={ppFieldError(errors?.apiToken)}
+          afterControl={
+            <>
+              {ppFieldError(errors?.apiToken)}
+              {tokenStatus === "missing" ? ppFieldHint(PP_HELP.form.apiTokenMissingHint) : null}
+              {identityDirty ? ppFieldHint(PP_HELP.form.apiTokenIdentityDirtyHint) : null}
+              {!canCopy ? ppFieldHint(PP_HELP.form.apiTokenCopyDisabledHint) : null}
+            </>
+          }
           trailing={
-            <PpActionButton
-              variant="ghost"
-              type="button"
-              onClick={() => onChange({ apiToken: generateDeviceApiToken() })}
-            >
-              {PP_HELP.form.generateApiTokenAction}
-            </PpActionButton>
+            <>
+              <PpActionButton
+                variant="ghost"
+                type="button"
+                onClick={() => setTokenVisible((v) => !v)}
+              >
+                {tokenVisible
+                  ? PP_HELP.form.apiTokenHideAction
+                  : PP_HELP.form.apiTokenShowAction}
+              </PpActionButton>
+              <PpActionButton
+                variant="ghost"
+                type="button"
+                disabled={!canCopy}
+                onClick={() => void onCopyToken()}
+              >
+                {copyState === "copied"
+                  ? PP_HELP.form.apiTokenCopyDone
+                  : PP_HELP.form.apiTokenCopyAction}
+              </PpActionButton>
+              <PpActionButton
+                variant="ghost"
+                type="button"
+                onClick={() => onChange({ apiToken: generateDeviceApiToken() })}
+              >
+                {PP_HELP.form.generateApiTokenAction}
+              </PpActionButton>
+            </>
           }
         />
 

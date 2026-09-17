@@ -90,14 +90,30 @@ export const PP_HELP = {
     debounceMs:
       "Tempo de debounce dos botões no ESP (ms). Em branco no cadastro = default do firmware.",
     apiToken:
-      "Segredo compartilhado plataforma↔chip (header X-Device-Token). Em branco no formulário = mantém o token já gravado no cadastro (não apaga e não reenvia). Só gera/envia ao chip se você preencher ou usar «Gerar token» e salvar.",
+      "Segredo compartilhado plataforma↔chip (header X-Device-Token). Na criação o token é gerado automaticamente se você não preencher. Em branco na edição = mantém o já gravado (não apaga). O valor salvo nunca é reexibido — use «Gerar token» para um novo e copie antes de salvar.",
     apiTokenSetHint:
-      "Já existe token neste cadastro. Deixe em branco para manter (updates só de poll/nome não falam com o chip). Para realinhar o IoT, gere um novo token e salve.",
+      "Token configurado neste cadastro. Deixe em branco para manter. Atualizações só de poll/nome não falam com o chip. Para realinhar o IoT (ou copiar um valor), gere um novo token e salve.",
+    apiTokenMissingHint:
+      "Nenhum token neste cadastro. Ao salvar, a API gera um automaticamente e tenta enviá-lo ao chip.",
+    apiTokenPendingSaveHint:
+      "Novo token na sessão — ainda não salvo. Use mostrar/copiar agora; após salvar o campo limpa e o status fica «Configurado».",
+    apiTokenStatusConfigured: "Configurado",
+    apiTokenStatusMissing: "Ausente",
+    apiTokenStatusPendingSave: "Novo (não salvo)",
+    apiTokenShowAction: "Mostrar",
+    apiTokenHideAction: "Ocultar",
+    apiTokenCopyAction: "Copiar",
+    apiTokenCopyDone: "Copiado",
+    apiTokenCopyDisabledHint: "Gere um novo token para poder copiar (o valor salvo não é revelado).",
+    apiTokenIdentityDirtyHint:
+      "Código do controlador ou IP alterados — ao salvar, o token do cadastro será reenviado ao chip (re-provision). Gere um novo só se quiser rotacionar o segredo.",
     generateApiTokenAction: "Gerar token",
     deviceConfigPushFailed:
       "Cadastro salvo, mas não foi possível enviar a configuração ao dispositivo. Verifique IP, energia e token.",
     deviceConfigPushFailedUnauthorized:
-      "Cadastro salvo, mas o chip rejeitou o token. Gere um novo token e salve, ou informe o token já gravado no IoT. Em troca de hardware isso é esperado até realinhar o token.",
+      "Cadastro salvo, mas o chip rejeitou o token. Gere um novo token e salve, ou informe o token já gravado no IoT. Em troca de hardware isso é esperado até o Pulse reenviar o token do cadastro.",
+    deviceConfigPushFailedMissingToken:
+      "Cadastro salvo, mas faltava token no cadastro enquanto o chip exige autenticação. Salve de novo — a API gera o token automaticamente.",
     deviceConfigPushOk: "Configuração enviada ao dispositivo.",
     deviceConfigPushSkipped: "Cadastro salvo. Nenhuma configuração de chip para enviar.",
     deviceConfigPushSkippedPulseOnly:

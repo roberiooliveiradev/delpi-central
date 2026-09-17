@@ -97,6 +97,48 @@ def test_push_skips_pulse_only_poll_update(monkeypatch):
     assert driver.calls == 0
 
 
+def test_request_changes_chip_config_detects_controller_code_change():
+    row = _device(controller_code="ESP-OLD")
+    assert request_changes_chip_config(row, {"controllerCode": "ESP-NEW"}) is True
+    assert request_changes_chip_config(row, {"controllerCode": "ESP-OLD"}) is False
+
+
+def test_request_changes_chip_config_detects_ip_change():
+    row = _device(ip_address="192.168.20.2")
+    assert request_changes_chip_config(row, {"ipAddress": "192.168.20.9"}) is True
+    assert request_changes_chip_config(row, {"ipAddress": "192.168.20.2"}) is False
+
+
+def test_push_on_controller_code_change_includes_persisted_token(monkeypatch):
+    driver = _FakeDriver()
+    service = DeviceConfigPushService()
+    monkeypatch.setattr(service, "_registry", _FakeRegistry(driver))
+    monkeypatch.setattr(
+        "production_pulse_app.application.services.device_config_push_service.settings.PP_DEVICE_OTA_BASE_URL",
+        "http://192.168.1.10/apps/production-pulse-api",
+    )
+
+    previous = _device(controller_code="ESP-OLD", device_api_token="cadastro-tok")
+    result = service.push_after_save(
+        _device(controller_code="ESP-NEW", device_api_token="cadastro-tok"),
+        request_payload={
+            "name": "ESP8266-001",
+            "branch": "01",
+            "controllerCode": "ESP-NEW",
+            "wifiSsid": "Delpi-Desenvolvimento",
+            "debounceMs": 100,
+            "pollIntervalMs": 300,
+        },
+        force_ota_provision=False,
+        previous_row=previous,
+    )
+
+    assert result["status"] == "ok"
+    assert driver.calls == 1
+    assert driver.last_payload is not None
+    assert driver.last_payload.get("apiToken") == "cadastro-tok"
+
+
 def test_push_skips_replace_echo_without_force_ota(monkeypatch):
     """MFE edit uses PUT replace with full form echo — must not force chip push."""
     driver = _FakeDriver()
@@ -107,7 +149,7 @@ def test_push_skips_replace_echo_without_force_ota(monkeypatch):
         "http://192.168.1.10/apps/production-pulse-api",
     )
 
-    previous = _device()
+    previous = _device(controller_code="ESP-00B7942B")
     result = service.push_after_save(
         previous,
         request_payload={

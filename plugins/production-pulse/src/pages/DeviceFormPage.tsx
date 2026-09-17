@@ -28,6 +28,7 @@ import {
 import type { ProductionPulsePermissionFlags } from "../constants/permissions";
 import { PP_HELP } from "../content/helpTooltips";
 import { resolveDeviceActionMessage, resolveProbeErrorMessage } from "../utils/apiErrors";
+import { ensureDeviceApiTokenForCreate } from "../utils/deviceApiToken";
 import type { BindingFormValues, DeviceFormValues, ProbeResult } from "../types/form";
 import {
   DEFAULT_BINDING_VALUES,
@@ -98,6 +99,10 @@ export function DeviceFormPage({
   const [errors, setErrors] = useState<DeviceFormErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [configPushBanner, setConfigPushBanner] = useState<string | null>(null);
+  const [identityBaseline, setIdentityBaseline] = useState<{
+    controllerCode: string;
+    ipAddress: string;
+  } | null>(null);
 
   const [testLoading, setTestLoading] = useState(false);
   const [testResult, setTestResult] = useState<ProbeResult | null>(null);
@@ -128,6 +133,10 @@ export function DeviceFormPage({
           driverKey: row.driverKey,
           pollIntervalMs: row.pollIntervalMs,
           enabled: row.enabled,
+        });
+        setIdentityBaseline({
+          controllerCode: row.controllerCode ?? "",
+          ipAddress: row.ipAddress,
         });
         setBinding(bindingFromApi(row.binding));
       })
@@ -217,10 +226,18 @@ export function DeviceFormPage({
     setFormError(null);
     setConfigPushBanner(null);
     try {
+      const deviceToSave: DeviceFormValues =
+        mode === "create"
+          ? {
+              ...device,
+              apiToken: ensureDeviceApiTokenForCreate(device.apiToken),
+            }
+          : device;
+
       const saved =
         mode === "edit" && deviceId
-          ? await replaceDevice(deviceId, device)
-          : await createDevice(device);
+          ? await replaceDevice(deviceId, deviceToSave)
+          : await createDevice(deviceToSave);
 
       // Create: always persist operational binding (default Avulso/standalone).
       // Edit: only upsert when the user provided binding input — do not convert legacy unbound.
@@ -234,9 +251,11 @@ export function DeviceFormPage({
           push.errorCode === "unauthorized" || push.errorCode === "missing_token";
         setConfigPushBanner(
           push.message ??
-            (unauthorized
-              ? PP_HELP.form.deviceConfigPushFailedUnauthorized
-              : PP_HELP.form.deviceConfigPushFailed),
+            (push.errorCode === "missing_token"
+              ? PP_HELP.form.deviceConfigPushFailedMissingToken
+              : unauthorized
+                ? PP_HELP.form.deviceConfigPushFailedUnauthorized
+                : PP_HELP.form.deviceConfigPushFailed),
         );
         setDevice((prev) => ({
           ...prev,
@@ -247,6 +266,10 @@ export function DeviceFormPage({
           debounceMs:
             saved.debounceMs != null ? String(saved.debounceMs) : prev.debounceMs,
         }));
+        setIdentityBaseline({
+          controllerCode: saved.controllerCode ?? deviceToSave.controllerCode,
+          ipAddress: saved.ipAddress ?? deviceToSave.ipAddress,
+        });
         if (mode === "create") {
           navigateProductionPulse(productionPulseDeviceEditPath(saved.id));
         }
@@ -379,6 +402,7 @@ export function DeviceFormPage({
             drivers={drivers}
             allowedBranches={permissions.allowedBranches}
             readOnlyBranch={mode === "edit"}
+            identityBaseline={identityBaseline}
             errors={errors}
             onChange={(patch) => setDevice((current) => ({ ...current, ...patch }))}
             onTestConnection={() => void runTestConnection()}
