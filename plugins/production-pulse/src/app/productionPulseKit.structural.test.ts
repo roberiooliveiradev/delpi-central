@@ -451,12 +451,15 @@ describe("production-pulse kit contracts", () => {
   });
 
   it("botões do hero usam PpHintAction/PpHeroIconButton + PP_HELP (sem ação órfã)", () => {
-    const heroWithHintAction = ["pages/PanelPage.tsx", "pages/FirmwareLinksPage.tsx"];
+    const heroWithHintAction = [
+      "pages/PanelPage.tsx",
+      "pages/FirmwareLinksPage.tsx",
+      "components/operator/OperatorBrandBar.tsx",
+    ];
     const heroWithIconButton = [
       "pages/FirmwareDetailPage.tsx",
       "pages/DeviceDetailPage.tsx",
       "pages/DriverDetailPage.tsx",
-      "components/operator/OperatorBrandBar.tsx",
     ];
     const heroViaChangePlacement = [
       "components/operator/CounterPadSurface.tsx",
@@ -520,7 +523,7 @@ describe("production-pulse kit contracts", () => {
     expect(css).not.toMatch(/\.delpi-ui-/);
   });
 
-  it("PpDetailDialog wide trava largura estável no host (não shrink-to-fit)", () => {
+  it("PpDetailDialog wide trava largura e altura estáveis no host (não shrink-to-fit)", () => {
     const css = readRelative("index.css");
     const ui = readRelative("app/productionPulseUi.tsx");
     expect(ui).toMatch(/PpDetailDialog[\s\S]*variant:\s*"wide"/);
@@ -528,20 +531,29 @@ describe("production-pulse kit contracts", () => {
       /\.pp-modal\.pp-modal--wide[\s\S]*min-width:\s*min\(1100px,\s*calc\(100%\s*-\s*24px\)\)/,
     );
     expect(css).toMatch(
+      /\.pp-modal\.pp-modal--wide[\s\S]*min-height:\s*min\(92dvh,\s*960px\)/,
+    );
+    expect(css).toMatch(
       /\.pp-modal\.pp-modal--page[\s\S]*min-width:\s*min\(1180px,\s*calc\(100%\s*-\s*24px\)\)/,
+    );
+    expect(css).toMatch(
+      /\.pp-modal\.pp-modal--page[\s\S]*min-height:\s*min\(94dvh,\s*1040px\)/,
     );
     expect(css).toMatch(
       /@media\s*\(max-width:\s*768px\)[\s\S]*\.pp-modal\.pp-modal--wide[\s\S]*min-width:\s*0/,
     );
   });
 
-  it("heroes do operador usam ícone + help (Trocar posto / Painel admin)", () => {
+  it("heroes do operador usam ícone + texto + help (Trocar posto / Painel admin)", () => {
     const brandBar = readRelative("components/operator/OperatorBrandBar.tsx");
-    expect(brandBar).toMatch(/PpHeroIconButton/);
+    expect(brandBar).toMatch(/PpHintAction/);
+    expect(brandBar).toMatch(/PpActionButton/);
     expect(brandBar).toMatch(/OperatorChangePlacementButton/);
     expect(brandBar).toMatch(/LayoutDashboard/);
     expect(brandBar).toMatch(/MapPinned/);
-    expect(brandBar).not.toMatch(/Painel admin<\/PpActionButton>/);
+    expect(brandBar).toMatch(/Trocar posto/);
+    expect(brandBar).toMatch(/Painel admin/);
+    expect(brandBar).not.toMatch(/PpHeroIconButton/);
     expect(readRelative("pages/operator/OperatorDevicePicker.tsx")).toMatch(
       /OperatorChangePlacementButton/,
     );

@@ -1486,28 +1486,41 @@
  * Detail/workbench host-contained: caixa estável desde o open (não shrink-to-fit
  * ao trocar abas/tabelas). Especificidade > default 560px do kit.
  * Percentual = área do overlay do MFE (não 100vw / sidebar do portal).
+ * Altura fixa: o conteúdo rola no body; o espaçamento externo (overlay) não muda.
  */
 .dashboard-production-pulse .pp-modal.pp-modal--wide {
   width: min(1100px, calc(100% - 24px));
   max-width: min(1100px, calc(100% - 24px));
   min-width: min(1100px, calc(100% - 24px));
+  height: min(92dvh, 960px);
   max-height: min(92dvh, 960px);
+  min-height: min(92dvh, 960px);
   flex-shrink: 0;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .dashboard-production-pulse .pp-modal.pp-modal--page {
   width: min(1180px, calc(100% - 24px));
   max-width: min(1180px, calc(100% - 24px));
   min-width: min(1180px, calc(100% - 24px));
+  height: min(94dvh, 1040px);
   max-height: min(94dvh, 1040px);
+  min-height: min(94dvh, 1040px);
   flex-shrink: 0;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .dashboard-production-pulse .pp-modal--wide .pp-modal__body,
 .dashboard-production-pulse .pp-modal--page .pp-modal__body {
+  flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
   overflow: auto;
 }
 
@@ -1517,7 +1530,9 @@
     width: 100%;
     max-width: 100%;
     min-width: 0;
+    height: 100dvh;
     max-height: 100dvh;
+    min-height: 0;
   }
 }
 
@@ -1771,6 +1786,12 @@
   min-height: var(--pp-operator-touch-min);
   padding-inline: clamp(12px, 3vw, 18px);
   font-size: clamp(0.8125rem, 2.2vw, 0.9375rem);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  min-width: 0;
+  height: auto;
 }
 
 .dashboard-production-pulse--operator .pp-segment-toggle__btn {

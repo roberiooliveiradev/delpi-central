@@ -143,6 +143,12 @@
   width: min(1100px, 100%);
   max-width: min(1100px, 100%);
   min-width: min(1100px, 100%);
+  height: min(92dvh, 960px);
+  max-height: min(92dvh, 960px);
+  min-height: min(92dvh, 960px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
@@ -150,6 +156,29 @@
   width: min(1180px, 100%);
   max-width: min(1180px, 100%);
   min-width: min(1180px, 100%);
+  height: min(94dvh, 1040px);
+  max-height: min(94dvh, 1040px);
+  min-height: min(94dvh, 1040px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
+  > .delpi-ui-modal--wide
+  > .delpi-ui-modal__body,
+.delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
+  > .delpi-ui-modal--wide
+  > [class$="-modal__body"],
+.delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
+  > .delpi-ui-modal--page
+  > .delpi-ui-modal__body,
+.delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog
+  > .delpi-ui-modal--page
+  > [class$="-modal__body"] {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
 }
 
 @media (max-width: 768px) {
@@ -160,6 +189,9 @@
     width: 100%;
     max-width: 100%;
     min-width: 0;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
   }
 }
 
