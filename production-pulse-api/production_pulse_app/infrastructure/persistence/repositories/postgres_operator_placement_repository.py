@@ -20,6 +20,7 @@ _DEVICE_BINDING_COLUMNS = """
     d.last_poll_attempt_at,
     d.last_metrics,
     d.last_error,
+    d.led_state,
     b.anchor_type,
     b.placement_label,
     b.placement_key

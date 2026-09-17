@@ -61,6 +61,7 @@ def parse_controller_identity(body: Any) -> dict[str, Any]:
         "freeHeap",
         "rssi",
         "wifiConnected",
+        "ledState",
     ):
         if key in body and body.get(key) is not None:
             payload[key] = body.get(key)

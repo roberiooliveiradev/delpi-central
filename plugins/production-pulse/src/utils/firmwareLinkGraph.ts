@@ -18,6 +18,7 @@ export type FirmwareLinkGraphNode = {
   availableVersion?: string | null;
   ipAddress?: string | null;
   status?: string | null;
+  ledState?: string | null;
   counter?: number | null;
   counterDay?: number | null;
   counterShift?: number | null;
@@ -289,6 +290,7 @@ export function buildFirmwareLinkGraph(input: {
       installedFirmwareVersion: installed,
       availableVersion: available,
       status: device.status,
+      ledState: device.ledState ?? null,
       counter: Number.isFinite(counter) ? counter : null,
       counterDay,
       counterShift,

@@ -160,6 +160,15 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/PpHeroIconButton/);
     expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/liveConnectivityIssue/);
     expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/DetailStatusBanner/);
+    expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/DeviceStatusBadge/);
+    expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/ledState=\{/);
+    expect(readRelative("components/DeviceStatusBadge.tsx")).toMatch(/preferLedVisualForConnectivity|DeviceLedBadge/);
+    expect(readRelative("components/DeviceLedBadge.tsx")).toMatch(/PP_HELP\.detail\.ledState/);
+    expect(readRelative("components/detail/DeviceChipHealthCard.tsx")).toMatch(/chipHealthLed|ledState/);
+    expect(readRelative("utils/deviceLedVisual.ts")).toMatch(/wifi_ok_never_contacted/);
+    expect(readRelative("content/helpTooltips.ts")).toMatch(/ledState:/);
+    expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/ledState/);
+    expect(readRelative("components/operator/CounterPadSurface.tsx")).toMatch(/ledState=\{device\.ledState\}/);
     expect(readRelative("hooks/useDeviceDetail.ts")).toMatch(/liveConnectivityIssue/);
     expect(readRelative("hooks/useDeviceDetail.ts")).toMatch(/isDeviceConnectivityError/);
     expect(readRelative("content/helpTooltips.ts")).toMatch(/liveOfflineTitle/);

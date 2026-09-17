@@ -144,7 +144,7 @@ export function CounterPadSurface({
           <p className="pp-counter-pad__value">{metricValue}</p>
           {unit ? <p className="pp-counter-pad__unit">{unit}</p> : null}
           <p className="pp-counter-pad__label">{metricDisplayLabel(device)}</p>
-          <DeviceStatusBadge status={device.status} />
+          <DeviceStatusBadge status={device.status} ledState={device.ledState} />
         </div>
 
         <div className="pp-counter-pad__controls">

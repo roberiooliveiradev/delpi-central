@@ -16,6 +16,7 @@ import { PpCancelButton, PpSaveButton } from "./form/FormActionButtons";
 import type { DeviceListItem } from "../types/device";
 import type { AdminEntityRef } from "../utils/adminHubUiState";
 import { AdminSidePanel } from "./AdminSidePanel";
+import { DeviceStatusBadge } from "./DeviceStatusBadge";
 import { OtaStatusIndicator } from "./ota/OtaStatusIndicator";
 
 type MiniInspectorPanelProps = {
@@ -50,7 +51,9 @@ export function MiniInspectorPanel({
         <div className="pp-mini-inspector">
           <dl className="pp-mini-inspector__dl">
             <dt>Status</dt>
-            <dd>{device.status}</dd>
+            <dd>
+              <DeviceStatusBadge status={device.status} ledState={device.ledState} withHint={false} />
+            </dd>
             <dt>Versão instalada</dt>
             <dd>{device.installedFirmwareVersion ?? "—"}</dd>
             <dt>Versão disponível</dt>

@@ -66,6 +66,7 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
             lastSeenAt: live.recordedAt,
             status: live.status as DeviceListItem["status"],
             online: live.online,
+            ledState: live.ledState ?? current.ledState,
           }
         : current,
     );
@@ -144,6 +145,7 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
         freeHeap: current?.freeHeap ?? polled.freeHeap,
         rssi: current?.rssi ?? polled.rssi,
         wifiConnected: current?.wifiConnected ?? polled.wifiConnected,
+        ledState: current?.ledState ?? polled.ledState,
       }));
       setDevice((current) =>
         current
@@ -153,6 +155,7 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
               lastSeenAt: polled.recordedAt,
               status: polled.status as DeviceListItem["status"],
               online: polled.online,
+              ledState: polled.ledState ?? current.ledState,
             }
           : current,
       );

@@ -279,7 +279,10 @@ export function DeviceDetailPage({
         badge={embedded ? undefined : ppShellIcon}
         actions={
           <div className="pp-detail-hero-actions">
-            <DeviceStatusBadge status={device.status} />
+            <DeviceStatusBadge
+              status={device.status}
+              ledState={liveSnapshot?.ledState ?? device.ledState}
+            />
             {permissions.canManageDevices ? (
               <>
                 <PpHeroIconButton

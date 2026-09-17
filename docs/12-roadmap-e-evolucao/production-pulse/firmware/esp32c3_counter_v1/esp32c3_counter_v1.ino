@@ -124,6 +124,9 @@ enum RgbVisualState {
   RGB_OTA_IN_PROGRESS = 5
 };
 
+RgbVisualState resolveRgbVisualState();
+String ledStateJsonValue();
+
 // =============================================================================
 // Helpers
 // =============================================================================
@@ -965,6 +968,7 @@ void enviarStatus() {
     "\"freeHeap\":" + String(ESP.getFreeHeap()) + ","
     "\"rssi\":" + String(wifiOk ? WiFi.RSSI() : 0) + ","
     "\"wifiConnected\":" + String(wifiOk ? "true" : "false") + ","
+    "\"ledState\":\"" + ledStateJsonValue() + "\","
     "\"input1\":" + String(input1RawLevel) + ","
     "\"input2\":" + String(input2RawLevel) +
     "}";
@@ -1166,6 +1170,28 @@ RgbVisualState resolveRgbVisualState() {
     return RGB_WIFI_OK_BACKEND_STALE;  // solid blue until first contact
   }
   return RGB_WIFI_OK_BACKEND_STALE;    // blink blue when expired (pattern differs below)
+}
+
+String ledStateJsonValue() {
+  RgbVisualState state = resolveRgbVisualState();
+  switch (state) {
+    case RGB_AUTH_ERROR:
+      return String("auth_error");
+    case RGB_OTA_IN_PROGRESS:
+      return String("ota_in_progress");
+    case RGB_CONNECTING:
+      return String("connecting");
+    case RGB_OFFLINE:
+      return String("offline");
+    case RGB_BACKEND_OK:
+      return String("backend_ok");
+    case RGB_WIFI_OK_BACKEND_STALE:
+      if (lastBackendContactMs == 0) {
+        return String("wifi_ok_never_contacted");
+      }
+      return String("wifi_ok_stale");
+  }
+  return String("offline");
 }
 
 void updateRgbState() {

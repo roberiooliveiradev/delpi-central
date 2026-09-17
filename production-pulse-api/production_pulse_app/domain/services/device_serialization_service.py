@@ -42,6 +42,7 @@ def device_row_to_api(
         "nextPollAt": row.get("next_poll_at"),
         "lastMetrics": public_metrics(row.get("last_metrics") or {}),
         "lastError": row.get("last_error"),
+        "ledState": row.get("led_state"),
         "createdAt": row.get("created_at"),
         "updatedAt": row.get("updated_at"),
         "createdBy": row.get("created_by"),

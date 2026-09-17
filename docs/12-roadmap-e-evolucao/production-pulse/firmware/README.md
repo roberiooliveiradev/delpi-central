@@ -13,17 +13,17 @@ O tema V1/V2 **não** altera as cores operacionais do LED RGB. Espelho HTML (`VE
 
 Hardware: LED **cátodo comum**, HIGH liga o canal (resistores ~220 Ω). Owner único: `resolveRgbVisualState` + `updateRgbState`.
 
-| Estado | Significado | Cor | Padrão | Timing |
-|--------|-------------|-----|--------|--------|
-| Boot / Wi‑Fi offline | Sem associação Wi‑Fi | **Vermelho** | Sólido | — |
-| Connecting / backoff | Tentando conectar ou reconectar | **Vermelho** | Pisca | ~500 ms |
-| Wi‑Fi OK, sem Pulse auth | Wi‑Fi ok; ainda **não** houve contato autenticado com a API | **Azul** | Sólido | — |
-| Pulse healthy | Contato autenticado recente (`X-Device-Token` válido ou OTA HTTP autenticado) | **Verde** | Sólido | freshness &lt; 120 s |
-| Pulse stale | Wi‑Fi ok; freshness expirou | **Azul** | Pisca | ~500 ms |
-| OTA em andamento | Check / download / apply | **Amarelo** (R+G) | Pisca | ~350 ms |
-| Falha auth ou OTA apply | 401 de token **ou** falha ao aplicar binário OTA | **Vermelho** | Pisca rápido | ~100 ms por ~5 s |
+| Estado | Significado | Cor | Padrão | Timing | `ledState` (API) |
+|--------|-------------|-----|--------|--------|------------------|
+| Boot / Wi‑Fi offline | Sem associação Wi‑Fi | **Vermelho** | Sólido | — | `offline` |
+| Connecting / backoff | Tentando conectar ou reconectar | **Vermelho** | Pisca | ~500 ms | `connecting` |
+| Wi‑Fi OK, sem Pulse auth | Wi‑Fi ok; ainda **não** houve contato autenticado com a API | **Azul** | Sólido | — | `wifi_ok_never_contacted` |
+| Pulse healthy | Contato autenticado recente (`X-Device-Token` válido ou OTA HTTP autenticado) | **Verde** | Sólido | freshness &lt; 120 s | `backend_ok` |
+| Pulse stale | Wi‑Fi ok; freshness expirou | **Azul** | Pisca | ~500 ms | `wifi_ok_stale` |
+| OTA em andamento | Check / download / apply | **Amarelo** (R+G) | Pisca | ~350 ms | `ota_in_progress` |
+| Falha auth ou OTA apply | 401 de token **ou** falha ao aplicar binário OTA | **Vermelho** | Pisca rápido | ~100 ms por ~5 s | `auth_error` |
 
-Prioridade: falha auth/OTA → OTA em andamento → connecting/offline → freshness.
+`GET /api/status` (autenticado) exporta `ledState` com os códigos acima. ESP8266 (sem RGB) emite um subconjunto aproximado (`connecting` / `backend_ok` / `ota_in_progress` / `auth_error`).
 
 ### O que **não** deixa o LED verde
 

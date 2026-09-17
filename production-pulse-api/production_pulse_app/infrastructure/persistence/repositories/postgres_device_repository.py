@@ -26,7 +26,7 @@ _DEVICE_COLUMNS = """
     poll_interval_ms, last_seen_at, last_poll_attempt_at, next_poll_at,
     last_metrics, last_error, created_at, updated_at, created_by, updated_by,
     firmware_key, installed_firmware_version, target_firmware_version, firmware_reported_at,
-    last_ota_check_at
+    last_ota_check_at, led_state
 """
 
 _DEVICE_LIST_COLUMNS = """
@@ -37,7 +37,7 @@ _DEVICE_LIST_COLUMNS = """
     poll_interval_ms, last_seen_at, last_poll_attempt_at, next_poll_at,
     last_metrics, last_error, created_at, updated_at, created_by, updated_by,
     firmware_key, installed_firmware_version, target_firmware_version, firmware_reported_at,
-    last_ota_check_at
+    last_ota_check_at, led_state
 """
 
 
@@ -462,6 +462,7 @@ class PostgresDeviceRepository:
         *,
         metrics: dict[str, Any],
         installed_firmware_version: str | None = None,
+        led_state: str | None = None,
     ) -> dict[str, Any]:
         sets = [
             "last_seen_at = NOW()",
@@ -475,6 +476,9 @@ class PostgresDeviceRepository:
             sets.append("installed_firmware_version = %s")
             sets.append("firmware_reported_at = NOW()")
             params.append(installed_firmware_version)
+        if led_state is not None:
+            sets.append("led_state = %s")
+            params.append(led_state)
         params.append(device_id)
         with plugins_connection() as conn:
             with conn.cursor() as cur:

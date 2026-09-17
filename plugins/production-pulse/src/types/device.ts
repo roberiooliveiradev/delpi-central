@@ -65,6 +65,8 @@ export type DeviceListItem = {
   lastSeenAt: string | null;
   lastMetrics: Record<string, number | string>;
   lastError: string | null;
+  /** Last chip LED operational state from /api/status (when polled). */
+  ledState?: string | null;
   status: DeviceStatus;
   online: boolean;
   graceSeconds: number;

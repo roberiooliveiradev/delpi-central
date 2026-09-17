@@ -1,6 +1,7 @@
 import { PpSectionCard } from "../../app/productionPulseUi";
 import { PP_HELP } from "../../content/helpTooltips";
 import type { DeviceChipHealth } from "../../types/detail";
+import { resolveLedVisual } from "../../utils/deviceLedVisual";
 
 type DeviceChipHealthCardProps = {
   health: DeviceChipHealth | null | undefined;
@@ -26,7 +27,8 @@ export function hasChipHealth(health: DeviceChipHealth | null | undefined): bool
     health.uptimeMs != null ||
     health.freeHeap != null ||
     health.rssi != null ||
-    health.wifiConnected != null
+    health.wifiConnected != null ||
+    health.ledState != null
   );
 }
 
@@ -42,6 +44,7 @@ export function DeviceChipHealthCard({ health }: DeviceChipHealthCardProps) {
       : health.wifiConnected
         ? PP_HELP.detail.chipHealthWifiOnline
         : PP_HELP.detail.chipHealthWifiOffline;
+  const ledVisual = resolveLedVisual(health?.ledState);
 
   return (
     <PpSectionCard title={PP_HELP.detail.chipHealthTitle} hint={PP_HELP.detail.chipHealth}>
@@ -86,6 +89,19 @@ export function DeviceChipHealthCard({ health }: DeviceChipHealthCardProps) {
           <div className="pp-chip-health__row">
             <dt>{PP_HELP.detail.chipHealthWifi}</dt>
             <dd>{wifiLabel}</dd>
+          </div>
+        ) : null}
+        {ledVisual ? (
+          <div className="pp-chip-health__row">
+            <dt>{PP_HELP.detail.chipHealthLed}</dt>
+            <dd>
+              <span
+                className={`pp-device-led pp-device-led--inline ${ledVisual.colorClass} pp-led-pattern--${ledVisual.pattern}`}
+              >
+                <span className="pp-device-led__dot" aria-hidden="true" />
+                {ledVisual.label}
+              </span>
+            </dd>
           </div>
         ) : null}
       </dl>

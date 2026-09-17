@@ -66,7 +66,7 @@ export function DeviceTable({
       header: "Status",
       render: (row) => (
         <span title={formatRelativeTime(row.lastSeenAt)}>
-          <DeviceStatusBadge status={row.status} />
+          <DeviceStatusBadge status={row.status} ledState={row.ledState} />
         </span>
       ),
     },

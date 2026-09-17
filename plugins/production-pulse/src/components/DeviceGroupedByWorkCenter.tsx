@@ -95,7 +95,7 @@ function GroupedRow({
         {device.name}
       </button>
       <span className="pp-tabular-nums">{formatPrimaryMetric(device)}</span>
-      <DeviceStatusBadge status={device.status} />
+      <DeviceStatusBadge status={device.status} ledState={device.ledState} />
       <button
         type="button"
         className="pp-row-action"

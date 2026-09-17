@@ -54,7 +54,10 @@ def test_poll_and_persist_syncs_firmware_version_from_status_identity(monkeypatc
     monkeypatch.setattr(
         service,
         "_chip_health_from_driver",
-        lambda _device: {"firmwareVersion": "esp8266_counter_v1.3.1"},
+        lambda _device: {
+            "firmwareVersion": "esp8266_counter_v1.3.1",
+            "ledState": "backend_ok",
+        },
     )
     monkeypatch.setattr(service, "_capabilities", lambda *_a, **_k: {})
     monkeypatch.setattr(
@@ -88,3 +91,4 @@ def test_poll_and_persist_syncs_firmware_version_from_status_identity(monkeypatc
 
     kwargs = devices.record_poll_success.call_args.kwargs
     assert kwargs["installed_firmware_version"] == "esp8266_counter_v1.3.1"
+    assert kwargs["led_state"] == "backend_ok"

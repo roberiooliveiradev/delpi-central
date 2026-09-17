@@ -81,6 +81,20 @@ enum LedState {
   LED_AUTH_ERROR = 2
 };
 
+String ledStateJsonValue() {
+  if (authErrorLatched) {
+    return String("auth_error");
+  }
+  if (otaInProgress) {
+    return String("ota_in_progress");
+  }
+  if (WiFi.status() == WL_CONNECTED) {
+    // ESP8266 has no RGB freshness machine — Wi-Fi up ≈ Pulse-reachable proxy.
+    return String("backend_ok");
+  }
+  return String("connecting");
+}
+
 String montarCodigoControlador() {
   char buf[24];
   snprintf(buf, sizeof(buf), "ESP-%08X", ESP.getChipId());
@@ -697,7 +711,8 @@ void enviarStatus() {
     "\"uptimeMs\":" + String(millis()) + ","
     "\"freeHeap\":" + String(ESP.getFreeHeap()) + ","
     "\"rssi\":" + String(wifiOk ? WiFi.RSSI() : 0) + ","
-    "\"wifiConnected\":" + String(wifiOk ? "true" : "false") +
+    "\"wifiConnected\":" + String(wifiOk ? "true" : "false") + ","
+    "\"ledState\":\"" + ledStateJsonValue() + "\""
     "}";
   server.send(200, "application/json", json);
 }

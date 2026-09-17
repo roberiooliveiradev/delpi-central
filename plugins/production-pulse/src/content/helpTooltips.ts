@@ -207,7 +207,7 @@ export const PP_HELP = {
     liveCacheLabel: "Última leitura em cache",
     actionFailedTitle: "Ação não concluída",
     chipHealth:
-      "Telemetria do chip via GET /api/status (versão, uptime, RSSI, heap). Atualiza ao usar «Atualizar agora».",
+      "Telemetria do chip via GET /api/status (versão, uptime, RSSI, heap, LED). Atualiza ao usar «Atualizar agora».",
     chipHealthTitle: "Saúde do chip",
     chipHealthPreviousVersion: "Versão que rodava no chip antes do último OTA bem-sucedido.",
     chipHealthLastOtaTarget: "Versão autorizada pelo Pulse na última atualização OTA aplicada no chip.",
@@ -218,6 +218,11 @@ export const PP_HELP = {
     chipHealthWifi: "Wi-Fi",
     chipHealthWifiOnline: "Conectado",
     chipHealthWifiOffline: "Desconectado",
+    chipHealthLed: "LED / estado operacional",
+    ledState:
+      "Cor e padrão do LED RGB do chip (Wi‑Fi, Pulse autenticado, OTA, auth). Não é o Online/Offline do Pulse na lista.",
+    devicePulseStatus:
+      "Conectividade vista pelo Pulse (último poll). Quando o chip reporta LED, a UI mostra o estado operacional do LED em vez de só Online.",
     bindingCard:
       "Objeto operacional onde o sensor está instalado. CT TOTVS aparece aqui quando vinculado.",
     chartDelta:

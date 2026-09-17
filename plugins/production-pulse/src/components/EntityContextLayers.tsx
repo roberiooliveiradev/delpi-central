@@ -34,6 +34,7 @@ import { OtaTargetProgress } from "./ota/OtaTargetProgress";
 import { PP_HELP } from "../content/helpTooltips";
 import { formatFamilyOutdatedSummary, resolveFirmwareLagInfo } from "../utils/firmwareLagLabel";
 import type { DeviceListItem } from "../types/device";
+import { preferLedVisualForConnectivity } from "../utils/deviceLedVisual";
 import type { AdminEntityRef } from "../utils/adminHubUiState";
 import { firmwareSiblingsForFamily } from "../utils/firmwareCatalogGrouping";
 import {
@@ -53,6 +54,8 @@ const POPOVER_SURFACE = "delpi-ui-popover-surface";
 const MAX_SUMMARY_VERSIONS = 8;
 
 function deviceStatusLabel(device: DeviceListItem): string {
+  const led = preferLedVisualForConnectivity(device.status, device.ledState);
+  if (led) return `● ${led.label}`;
   if (device.status === "online") return "● Online";
   if (device.status === "offline") return "● Offline";
   if (!device.enabled) return "● Inativo";

@@ -26,6 +26,7 @@ from production_pulse_app.domain.errors import DeviceDriverError
 from production_pulse_app.domain.services.device_connectivity_status_service import (
     resolve_connectivity_status,
 )
+from production_pulse_app.domain.services.device_led_state import normalize_led_state
 from production_pulse_app.domain.services.device_monotonic_counter_continuity_service import (
     COUNTER_OFFSET_KEY,
     COUNTER_RAW_KEY,
@@ -328,10 +329,12 @@ class DevicePollService:
             if raw_fw is not None:
                 text_fw = str(raw_fw).strip()
                 installed_version = text_fw or None
+        led_state = normalize_led_state(chip_health.get("ledState"))
         device = self._devices.record_poll_success(
             device_id,
             metrics=canonical,
             installed_firmware_version=installed_version,
+            led_state=led_state,
         )
         if installed_version:
             self._firmware_jobs.reconcile_device_installed_version(
@@ -585,7 +588,7 @@ class DevicePollService:
         if not isinstance(identity, dict):
             return {}
         health: dict[str, Any] = {}
-        for key in ("firmwareVersion", "previousFirmwareVersion", "lastOtaTargetVersion", "uptimeMs", "freeHeap", "rssi", "wifiConnected"):
+        for key in ("firmwareVersion", "previousFirmwareVersion", "lastOtaTargetVersion", "uptimeMs", "freeHeap", "rssi", "wifiConnected", "ledState"):
             if key in identity and identity.get(key) is not None:
                 health[key] = identity[key]
         return health

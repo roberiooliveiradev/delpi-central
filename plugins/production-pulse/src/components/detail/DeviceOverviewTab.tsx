@@ -88,6 +88,7 @@ export function DeviceOverviewTab({
                 freeHeap: liveSnapshot.freeHeap,
                 rssi: liveSnapshot.rssi,
                 wifiConnected: liveSnapshot.wifiConnected,
+                ledState: liveSnapshot.ledState,
               }
             : null
         }

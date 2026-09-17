@@ -54,6 +54,7 @@ export type LivePollResult = {
   freeHeap?: number;
   rssi?: number;
   wifiConnected?: boolean;
+  ledState?: string;
 };
 
 export type DeviceChipHealth = Pick<
@@ -65,4 +66,5 @@ export type DeviceChipHealth = Pick<
   | "freeHeap"
   | "rssi"
   | "wifiConnected"
+  | "ledState"
 >;

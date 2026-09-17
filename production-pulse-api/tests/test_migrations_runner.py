@@ -103,3 +103,15 @@ def test_v016_esp32_counter_v1_driver_is_present_and_parseable():
     assert "http_counter" in text
     assert "ota_wake" not in text
     assert len(_checksum(text)) == 64
+
+
+def test_v018_device_led_state_is_present_and_parseable():
+    migrations = _discover_migrations()
+    by_version = {m.version: m for m in migrations}
+    assert 18 in by_version
+    assert by_version[18].name == "device_led_state"
+    path = _migrations_dir() / "V018__device_led_state.sql"
+    text = path.read_text(encoding="utf-8")
+    assert "led_state" in text
+    assert "ADD COLUMN" in text
+    assert len(_checksum(text)) == 64

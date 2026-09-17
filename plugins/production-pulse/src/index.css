@@ -305,6 +305,23 @@
   color: var(--pp-hero-brand-fg-muted);
 }
 
+/* LED RGB operational colors stay fixed on brand hero (not Pulse connectivity palette). */
+.dashboard-production-pulse .pp-page-hero__actions .pp-led--red {
+  color: #e53935;
+}
+
+.dashboard-production-pulse .pp-page-hero__actions .pp-led--blue {
+  color: #1e88e5;
+}
+
+.dashboard-production-pulse .pp-page-hero__actions .pp-led--green {
+  color: #43a047;
+}
+
+.dashboard-production-pulse .pp-page-hero__actions .pp-led--yellow {
+  color: #f9a825;
+}
+
 .dashboard-production-pulse .pp-page-hero__actions .pp-segment-toggle {
   border-color: var(--pp-hero-brand-btn-border);
   background: var(--pp-hero-brand-btn-bg);
@@ -516,6 +533,63 @@
 
 .pp-device-status--disabled {
   color: var(--pp-danger);
+}
+
+.pp-device-led {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--pp-font-sm);
+}
+
+.pp-device-led--inline {
+  font-size: inherit;
+}
+
+.pp-device-led__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.pp-led--red {
+  color: #e53935;
+}
+
+.pp-led--blue {
+  color: #1e88e5;
+}
+
+.pp-led--green {
+  color: #43a047;
+}
+
+.pp-led--yellow {
+  color: #f9a825;
+}
+
+.pp-led-pattern--blink_slow .pp-device-led__dot {
+  animation: pp-led-blink 1.2s ease-in-out infinite;
+}
+
+.pp-led-pattern--blink_fast .pp-device-led__dot {
+  animation: pp-led-blink 0.35s ease-in-out infinite;
+}
+
+.pp-led-pattern--blink_ota .pp-device-led__dot {
+  animation: pp-led-blink 0.7s steps(1, end) infinite;
+}
+
+@keyframes pp-led-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
 }
 
 .pp-tabular-nums {
@@ -2928,6 +3002,34 @@
 
 .pp-node-status--disabled {
   background: var(--pp-text-muted);
+}
+
+.pp-node-status.pp-led--red {
+  background: #e53935;
+}
+
+.pp-node-status.pp-led--blue {
+  background: #1e88e5;
+}
+
+.pp-node-status.pp-led--green {
+  background: #43a047;
+}
+
+.pp-node-status.pp-led--yellow {
+  background: #f9a825;
+}
+
+.pp-node-status.pp-led-pattern--blink_slow {
+  animation: pp-led-blink 1.2s ease-in-out infinite;
+}
+
+.pp-node-status.pp-led-pattern--blink_fast {
+  animation: pp-led-blink 0.35s ease-in-out infinite;
+}
+
+.pp-node-status.pp-led-pattern--blink_ota {
+  animation: pp-led-blink 0.7s steps(1, end) infinite;
 }
 
 .pp-map-node__metric-strong {

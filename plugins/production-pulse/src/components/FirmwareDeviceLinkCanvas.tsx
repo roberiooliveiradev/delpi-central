@@ -28,6 +28,7 @@ import { PpOtaProgressBar, PpStateBox } from "../app/productionPulseUi";
 import { OtaStatusIndicator } from "./ota/OtaStatusIndicator";
 import { PP_HELP } from "../content/helpTooltips";
 import type { DeviceListItem } from "../types/device";
+import { preferLedVisualForConnectivity } from "../utils/deviceLedVisual";
 import {
   formatFamilyOutdatedSummary,
   isFirmwareBehind,
@@ -84,6 +85,7 @@ type DeviceNodeData = {
   filterDimmed?: boolean;
   connectionState?: ConnectionCandidateState;
   status?: string | null;
+  ledState?: string | null;
   counter?: number | null;
   counterDay?: number | null;
   counterShift?: number | null;
@@ -96,14 +98,20 @@ type DeviceNodeData = {
   onCandidateClick?: (payload: { deviceId: string; nodeId: string }) => void;
 };
 
-function statusDotClass(status: string | null | undefined): string {
+function statusDotClass(status: string | null | undefined, ledState?: string | null): string {
+  const led = preferLedVisualForConnectivity(status, ledState);
+  if (led) {
+    return `pp-node-status ${led.colorClass} pp-led-pattern--${led.pattern}`;
+  }
   if (status === "online") return "pp-node-status pp-node-status--online";
   if (status === "offline") return "pp-node-status pp-node-status--offline";
   if (status === "disabled") return "pp-node-status pp-node-status--disabled";
   return "pp-node-status";
 }
 
-function statusLabel(status: string | null | undefined): string {
+function statusLabel(status: string | null | undefined, ledState?: string | null): string {
+  const led = preferLedVisualForConnectivity(status, ledState);
+  if (led) return led.label;
   if (status === "online") return "Online";
   if (status === "offline") return "Offline";
   if (status === "disabled") return "Inativo";
@@ -285,8 +293,8 @@ function DeviceNodeView({ id, data }: NodeProps<Node<DeviceNodeData>>) {
         </button>
       </div>
       <div className="pp-map-node__status-row">
-        <span className={statusDotClass(data.status)} aria-hidden="true" />
-        <span>{statusLabel(data.status)}</span>
+        <span className={statusDotClass(data.status, data.ledState)} aria-hidden="true" />
+        <span>{statusLabel(data.status, data.ledState)}</span>
         {data.counter != null ? (
           <span className="pp-map-node__metric-strong">{data.counter}</span>
         ) : null}
@@ -577,6 +585,7 @@ function FirmwareDeviceLinkCanvasInner({
             filterDimmed: n.dimmed,
             connectionState,
             status: n.status,
+            ledState: n.ledState,
             counter: n.counter,
             counterDay: n.counterDay,
             counterShift: n.counterShift,

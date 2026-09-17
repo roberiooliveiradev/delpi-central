@@ -41,7 +41,7 @@ export function DeviceCard({ device, polling = false, onOpen, onPoll }: DeviceCa
       status={
         <>
           {standalone ? <AnchorTypeBadge anchorType="standalone" /> : null}
-          <DeviceStatusBadge status={device.status} />
+          <DeviceStatusBadge status={device.status} ledState={device.ledState} />
         </>
       }
       fields={[

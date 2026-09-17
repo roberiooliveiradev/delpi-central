@@ -23,7 +23,14 @@ def _mock_transport(handler) -> httpx.Client:
 def test_c3_read_uses_same_counter_path():
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.url.path == "/api/contador"
-        return httpx.Response(200, json={"contador": 42})
+        return httpx.Response(
+            200,
+            json={
+                "contador": 42,
+                "controllerCode": "ESP32C3-AABBCCDDEEFF",
+                "mac": "AA:BB:CC:DD:EE:FF",
+            },
+        )
 
     driver = Esp32c3CounterDriver(client=_mock_transport(handler), timeout_seconds=1.0)
     reading = driver.read(_DEVICE)
@@ -69,6 +76,59 @@ def test_c3_status_accepts_additive_input_fields():
     assert reading.meta["mac"] == "AA:BB:CC:DD:EE:FF"
     # Additive fields must not break parsing; they are ignored until a consumer needs them.
     assert "input1" not in reading.meta
+
+
+def test_c3_status_whitelists_led_state():
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/api/status":
+            return httpx.Response(
+                200,
+                json={
+                    "controllerCode": "ESP32C3-AABBCCDDEEFF",
+                    "mac": "AA:BB:CC:DD:EE:FF",
+                    "wifiConnected": True,
+                    "ledState": "backend_ok",
+                },
+            )
+        return httpx.Response(404)
+
+    driver = Esp32c3CounterDriver(client=_mock_transport(handler), timeout_seconds=1.0)
+    meta = driver._fetch_identity(_DEVICE)
+    assert meta["ledState"] == "backend_ok"
+
+
+def test_c3_status_whitelists_led_state_sibling_never_contacted():
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/api/status":
+            return httpx.Response(
+                200,
+                json={
+                    "controllerCode": "ESP32C3-AABBCCDDEEFF",
+                    "ledState": "wifi_ok_never_contacted",
+                },
+            )
+        return httpx.Response(404)
+
+    driver = Esp32c3CounterDriver(client=_mock_transport(handler), timeout_seconds=1.0)
+    meta = driver._fetch_identity(_DEVICE)
+    assert meta["ledState"] == "wifi_ok_never_contacted"
+
+
+def test_c3_status_omits_led_state_when_absent():
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/api/status":
+            return httpx.Response(
+                200,
+                json={
+                    "controllerCode": "ESP32C3-AABBCCDDEEFF",
+                    "wifiConnected": True,
+                },
+            )
+        return httpx.Response(404)
+
+    driver = Esp32c3CounterDriver(client=_mock_transport(handler), timeout_seconds=1.0)
+    meta = driver._fetch_identity(_DEVICE)
+    assert "ledState" not in meta
 
 
 def test_c3_and_esp8266_share_capabilities():
