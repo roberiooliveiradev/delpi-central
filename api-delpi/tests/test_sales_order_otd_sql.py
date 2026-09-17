@@ -145,21 +145,21 @@ def test_build_sales_order_otd_sql_classifies_invoiced_and_open_lines() -> None:
 
     assert "linhas_elegiveis" in sql
     assert "C6_DATFAT <= C6_ENTREG" in sql
-    assert "COALESCE(?, CONVERT(VARCHAR(8), GETDATE(), 112)) >= C6_ENTREG" in sql
-    assert params == ("20260708", "20260708", "20260708")
+    assert "CONVERT(VARCHAR(8), GETDATE(), 112) > C6_ENTREG" in sql
+    assert params == ()
 
 
-def test_open_line_on_promised_day_is_classified_late_not_on_time() -> None:
-    """Regressão: aberto com C6_ENTREG == ref deve ser atraso (não 100% no dia)."""
+def test_open_line_late_only_after_promised_day_ends() -> None:
+    """Aberto: atraso só com hoje > prometida (não no próprio dia)."""
     sql, _ = build_sales_order_otd_sql(
         where_clause="1=1",
-        reference_end_date="2026-09-16",
+        reference_end_date="2026-09-17",
     )
-    assert "COALESCE(?, CONVERT(VARCHAR(8), GETDATE(), 112)) >= C6_ENTREG" in sql
-    assert "COALESCE(?, CONVERT(VARCHAR(8), GETDATE(), 112)) > C6_ENTREG" not in sql
+    assert "CONVERT(VARCHAR(8), GETDATE(), 112) > C6_ENTREG" in sql
+    assert ">=" not in sql.split("GETDATE()")[1].split("END")[0]
 
 
-def test_list_cte_marks_open_overdue_on_promised_day() -> None:
+def test_list_cte_uses_calendar_today_for_open_lateness() -> None:
     where_clause, _ = build_sales_order_otd_filters(
         branch="02",
         start_date="2026-09-16",
@@ -171,7 +171,8 @@ def test_list_cte_marks_open_overdue_on_promised_day() -> None:
         request=GetSalesOrderOtdPanelRequest(page=1, page_size=20),
         reference_end_date="2026-09-16",
     )
-    assert "COALESCE(?, CONVERT(VARCHAR(8), GETDATE(), 112)) >= C6.C6_ENTREG" in list_sql
+    assert "CONVERT(VARCHAR(8), GETDATE(), 112) > C6.C6_ENTREG" in list_sql
+    assert "COALESCE(?, CONVERT(VARCHAR(8), GETDATE(), 112))" not in list_sql
 
 
 def test_build_sales_order_otd_lines_count_supports_status_filter() -> None:
@@ -193,7 +194,7 @@ def test_compose_sales_order_otd_lines_params_reference_before_where() -> None:
         page_size=20,
     )
 
-    assert params == ("20260708", "20260708", "20260708", "02", "20260701", "20260708", 0, 20)
+    assert params == ("02", "20260701", "20260708", 0, 20)
 
 
 def test_build_sales_order_otd_line_detail_where_applies_period_and_identity() -> None:
@@ -266,9 +267,8 @@ def test_compose_sales_order_otd_lines_params_includes_search() -> None:
         offset=0,
         page_size=20,
     )
-    assert params[:3] == ("20260708", "20260708", "20260708")
-    assert params[3] == "02"
-    assert params[4:10] == ("%WEG%",) * 6
+    assert params[0] == "02"
+    assert params[1:7] == ("%WEG%",) * 6
     assert params[-2:] == (0, 20)
 
 

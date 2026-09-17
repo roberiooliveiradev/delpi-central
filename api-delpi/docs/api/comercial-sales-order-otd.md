@@ -74,11 +74,9 @@ Entram linhas que atendem **todos** os critérios:
 | Situação | Regra |
 |----------|-------|
 | **Faturada** (`C6_DATFAT` preenchida) | **No prazo** se `C6_DATFAT <= C6_ENTREG`; **atrasada** se `C6_DATFAT > C6_ENTREG`. |
-| **Não faturada** | **No prazo** só se a data de referência for **anterior** à prometida (`ref < C6_ENTREG`); **atrasada** se `ref >= C6_ENTREG` (inclui o próprio dia prometido sem faturamento). |
+| **Não faturada** | **No prazo** enquanto `GETDATE() <= C6_ENTREG` (ainda no dia prometido ou antes); **atrasada** só quando `GETDATE() > C6_ENTREG` (a partir do dia seguinte ao prometido). |
 
-**Data de referência** para linhas não faturadas: `end_date` da requisição; se omitida, `GETDATE()` (data corrente no SQL Server).
-
-Assim, na série diária (bucket `start=end=dia da promessa`), uma linha aberta no dia prometido já reduz o OTD em vez de permanecer artificialmente em 100%.
+**Data de referência** para linhas não faturadas: calendário do SQL Server (`GETDATE()`), **não** o `end_date` do filtro/bucket. Assim o próprio dia prometido não conta atraso (o dia ainda não terminou), e na série histórica o atraso aparece depois que o dia passou se a linha continuar aberta.
 
 ## Resposta (`data`)
 
@@ -124,7 +122,8 @@ Metas do Indicadores Estratégicos: `source_key` = `commercial_sales_order_otd`.
 
 | Data | Alteração |
 |------|-----------|
-| 2026-09-17 | Aberto sem fatura: atraso quando `ref >= C6_ENTREG` (antes era `>`); corrige OTD 100% no dia prometido (ex.: pedido 002635/01 filial 02). |
+| 2026-09-17 | Aberto sem fatura: atraso só com `GETDATE() > C6_ENTREG` (não no próprio dia prometido); referência de aberto = calendário, não `end_date` do bucket. |
+| 2026-09-17 | (superado) Tentativa com `ref >= C6_ENTREG` — revertida: dia prometido ainda não é atraso. |
 | 2026-08-28 | Hub `GET /commercial/sales-order-otd/summary` (`get_sales_order_otd_summary`): realizado + meta SI para TV. |
 | 2026-08-28 | Painel/detalhe/insights: campo `unit` (`C6_UM` / fallback `B1_UM`); agregações com `mixed_units` quando UM não homogênea. |
 | 2026-08-13 | Panel: `customer_store` (loja) nas linhas e reincidência agrupada por código+loja. |
