@@ -1,7 +1,9 @@
-"""Bridge MCP tools → existing GPT Actions application services.
+"""Bridge MCP tools → governed writes + existing GPT Actions services.
 
 Rebuilds a Starlette Request from delpi_auth context so AuthZ helpers that
 read ``request.state.user`` keep working without duplicating RBAC.
+
+Material writes: PREPARE → opaque proposal_handle → ACT (no model-trusted mutation).
 """
 
 from __future__ import annotations
@@ -18,6 +20,15 @@ from delpi_auth.request_context import (
     get_current_user,
     get_request_authorization,
 )
+from tm_app.application.governed_writes.errors import (
+    OUTCOME_VERIFICATION_FAILED,
+    GovernedWriteError,
+)
+from tm_app.application.governed_writes.orchestrator import (
+    MEETING_MANAGE_NON_ACT,
+    MEETING_MANAGE_READ_ACTIONS,
+    GovernedWriteOrchestrator,
+)
 from tm_app.application.gpt_actions.dispatch_service import (
     GptActionsDispatchService,
     GptActionsError,
@@ -33,14 +44,36 @@ from tm_app.application.gpt_actions.user_context_service import (
 from tm_app.infrastructure.gateways.core_person_profile_gateway import (
     CorePersonProfileGateway,
 )
+from tm_app.interface.mcp.constants import (
+    ACT_TOOL_CAPABILITY,
+    PREPARE_TOOL_CAPABILITY,
+)
 from tm_app.interface.mcp.oauth_contract import mcp_www_authenticate_meta
 
 logger = logging.getLogger(__name__)
 
 _dispatch = GptActionsDispatchService()
 _packages = GuidedImprovementPackageService(_dispatch)
+_orchestrator = GovernedWriteOrchestrator(_dispatch, _packages)
 _process_context = ProcessContextService()
 _user_context = UserContextService(person_profile_reader=CorePersonProfileGateway())
+
+_ERROR_KIND_BY_CODE = {
+    "unauthenticated": "unauthenticated",
+    "forbidden": "forbidden",
+    "validation": "validation",
+    "not_found": "not_found",
+    "conflict": "conflict",
+    "business_rule": "business_rule",
+    "proposal_required": "proposal_required",
+    "proposal_not_found": "proposal_not_found",
+    "proposal_expired": "proposal_expired",
+    "proposal_stale": "proposal_stale",
+    "proposal_mismatch": "proposal_mismatch",
+    "proposal_actor_mismatch": "proposal_actor_mismatch",
+    "outcome_verification_failed": "outcome_verification_failed",
+    "internal": "internal",
+}
 
 
 def build_mcp_request() -> Request:
@@ -84,11 +117,18 @@ def _error_result(
     *,
     status_code: int = 400,
     data: dict | None = None,
+    error_code: str | None = None,
 ) -> CallToolResult:
+    err_data = dict(data or {})
+    if error_code:
+        err_data.setdefault("error_code", error_code)
+        err_data.setdefault("error_kind", _ERROR_KIND_BY_CODE.get(error_code, error_code))
+    elif "error_kind" not in err_data:
+        err_data["error_kind"] = "client"
     payload = {
         "success": False,
         "message": message,
-        "data": data or {"error_kind": "client"},
+        "data": err_data,
         "status_code": status_code,
     }
     text = json.dumps(payload, ensure_ascii=False, default=str)
@@ -109,28 +149,91 @@ def handle_tool_error(exc: Exception) -> CallToolResult:
     if isinstance(exc, PermissionError):
         msg = str(exc) or "Unauthorized"
         if msg == "Unauthorized":
-            return _error_result("Authentication required.", status_code=401)
-        return _error_result("Forbidden", status_code=403, data={"error_kind": "authz"})
+            return _error_result(
+                "Authentication required.",
+                status_code=401,
+                error_code="unauthenticated",
+            )
+        return _error_result(
+            "Forbidden", status_code=403, error_code="forbidden", data={"error_kind": "authz"}
+        )
+    if isinstance(exc, GovernedWriteError):
+        return _error_result(
+            exc.message,
+            status_code=exc.status_code,
+            data=dict(exc.data or {}),
+            error_code=exc.code,
+        )
     if isinstance(exc, GptActionsError):
+        code = "validation"
+        if exc.status_code == 401:
+            code = "unauthenticated"
+        elif exc.status_code == 403:
+            code = "forbidden"
+        elif exc.status_code == 404:
+            code = "not_found"
+        elif exc.status_code == 409:
+            code = "conflict"
         return _error_result(
             exc.message,
             status_code=exc.status_code,
             data=dict(exc.data or {}) or {"error_kind": "client"},
+            error_code=code,
         )
     if isinstance(exc, (ValueError, LookupError)) and not isinstance(exc, KeyError):
-        return _error_result(str(exc), status_code=400, data={"error_kind": "validation"})
+        return _error_result(
+            str(exc), status_code=400, error_code="validation", data={"error_kind": "validation"}
+        )
     if isinstance(exc, JSONResponse):
-        # Should not happen; _raise_http_err converts these.
-        return _error_result("Acesso negado.", status_code=403, data={"error_kind": "authz"})
+        return _error_result(
+            "Acesso negado.", status_code=403, error_code="forbidden", data={"error_kind": "authz"}
+        )
     logger.exception("teo_mcp_tool_unhandled")
     return _error_result(
         "Erro interno do servidor.",
         status_code=500,
+        error_code="internal",
         data={"error_kind": "internal", "error_type": type(exc).__name__},
     )
 
 
-# --- tool implementations -------------------------------------------------
+def _prepare(capability: str, args: dict[str, Any]) -> CallToolResult:
+    try:
+        request = build_mcp_request()
+        data = _orchestrator.prepare(request, capability=capability, args=args)
+        if not data.get("act_allowed", True):
+            return _ok_result(
+                data,
+                "Proposal prepared but not ready for ACT (see validation_result).",
+            )
+        return _ok_result(
+            data,
+            "Governed proposal prepared. Confirm with the matching act_* tool using proposal_handle.",
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+def _act(capability: str, proposal_handle: str | None) -> CallToolResult:
+    try:
+        request = build_mcp_request()
+        data = _orchestrator.act(
+            request, capability=capability, proposal_handle=proposal_handle
+        )
+        if not data.get("verified"):
+            # Must never present unverified write as success.
+            return _error_result(
+                "Write may have occurred but outcome was not verified.",
+                status_code=409,
+                error_code=OUTCOME_VERIFICATION_FAILED,
+                data={"capability": capability, "result": data},
+            )
+        return _ok_result(data, "Write verified against authoritative read-back.")
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+# --- READ tools -----------------------------------------------------------
 
 
 def tool_get_my_context() -> CallToolResult:
@@ -249,169 +352,6 @@ def tool_get_record(entity: str, id: str) -> CallToolResult:
         return handle_tool_error(exc)
 
 
-def tool_create_record(entity: str, data: dict | None = None) -> CallToolResult:
-    try:
-        request = build_mcp_request()
-        result, message, _status = _dispatch.create_record(
-            request, entity, {"data": data or {}}
-        )
-        return _ok_result(result, message)
-    except Exception as exc:
-        return handle_tool_error(exc)
-
-
-def tool_update_record(entity: str, id: str, data: dict | None = None) -> CallToolResult:
-    try:
-        request = build_mcp_request()
-        result, message = _dispatch.update_record(
-            request, entity, id, {"data": data or {}}
-        )
-        return _ok_result(result, message)
-    except Exception as exc:
-        return handle_tool_error(exc)
-
-
-def tool_delete_record(entity: str, id: str) -> CallToolResult:
-    try:
-        request = build_mcp_request()
-        result, message = _dispatch.delete_record(request, entity, id)
-        return _ok_result(result, message)
-    except Exception as exc:
-        return handle_tool_error(exc)
-
-
-def tool_duplicate_record(
-    entity: str, id: str, data: dict | None = None
-) -> CallToolResult:
-    try:
-        request = build_mcp_request()
-        result, message, _status = _dispatch.duplicate_record(
-            request, entity, id, {"data": data or {}} if data else None
-        )
-        return _ok_result(result, message)
-    except Exception as exc:
-        return handle_tool_error(exc)
-
-
-def tool_activate_revision(id: str) -> CallToolResult:
-    try:
-        request = build_mcp_request()
-        return _ok_result(
-            _dispatch.activate_revision(request, id),
-            "Revisão ativada.",
-        )
-    except Exception as exc:
-        return handle_tool_error(exc)
-
-
-def tool_recalculate_dashboard(
-    revisao_id: str | None = None,
-    processo_id: str | None = None,
-    competencia_inicio: str | None = None,
-    competencia_fim: str | None = None,
-) -> CallToolResult:
-    try:
-        request = build_mcp_request()
-        result = _dispatch.recalculate_dashboard(
-            request,
-            revisao_id=revisao_id,
-            processo_id=processo_id,
-            competencia_inicio=competencia_inicio,
-            competencia_fim=competencia_fim,
-        )
-        mode = result.get("mode")
-        message = (
-            "Cache do dashboard atualizado (incremental)."
-            if mode == "incremental"
-            else "Cache do dashboard atualizado (completo)."
-        )
-        return _ok_result(result, message)
-    except Exception as exc:
-        return handle_tool_error(exc)
-
-
-def tool_meeting_minute_workflow(
-    id: str, action: str, reason: str | None = None
-) -> CallToolResult:
-    try:
-        request = build_mcp_request()
-        return _ok_result(
-            _dispatch.meeting_minute_workflow(
-                request, id, action=action, reason=reason
-            ),
-            "Workflow de ata executado.",
-        )
-    except Exception as exc:
-        return handle_tool_error(exc)
-
-
-def tool_validate_improvement_package(
-    process: dict | None = None,
-    instance: dict | None = None,
-    baseline: dict | None = None,
-    scenario: dict | None = None,
-) -> CallToolResult:
-    try:
-        request = build_mcp_request()
-        data = _packages.validate(
-            request,
-            {
-                "process": process or {},
-                "instance": instance or {},
-                "baseline": baseline,
-                "scenario": scenario,
-            },
-        )
-        message = (
-            "Pacote pronto para commit."
-            if data.get("ready")
-            else "Pacote incompleto — veja missing."
-        )
-        return _ok_result(data, message)
-    except Exception as exc:
-        return handle_tool_error(exc)
-
-
-def tool_commit_improvement_package(
-    process: dict | None = None,
-    instance: dict | None = None,
-    baseline: dict | None = None,
-    scenario: dict | None = None,
-    dry_run: bool = False,
-    activate_scenario: bool = False,
-    recalculate: bool = False,
-) -> CallToolResult:
-    try:
-        request = build_mcp_request()
-        body = {
-            "process": process or {},
-            "instance": instance or {},
-            "baseline": baseline,
-            "scenario": scenario,
-            "dry_run": dry_run,
-            "activate_scenario": activate_scenario,
-            "recalculate": recalculate,
-        }
-        data = _packages.commit(request, body)
-        if dry_run:
-            message = (
-                "Pacote pronto para commit."
-                if data.get("ready")
-                else "Pacote incompleto — veja missing."
-            )
-        else:
-            message = "Pacote de melhoria gravado."
-        return _ok_result(data, message)
-    except GptActionsError as exc:
-        if exc.status_code == 404:
-            data = dict(exc.data or {})
-            data.setdefault("not_found", True)
-            return _error_result(exc.message, status_code=400, data=data)
-        return handle_tool_error(exc)
-    except Exception as exc:
-        return handle_tool_error(exc)
-
-
 def tool_list_evidence(scope: str, parent_id: str) -> CallToolResult:
     try:
         request = build_mcp_request()
@@ -419,32 +359,6 @@ def tool_list_evidence(scope: str, parent_id: str) -> CallToolResult:
             _dispatch.list_evidence(request, scope=scope, parent_id=parent_id),
             "Evidências listadas.",
         )
-    except Exception as exc:
-        return handle_tool_error(exc)
-
-
-def tool_manage_evidence(
-    scope: str,
-    operation: str,
-    parent_id: str,
-    evidence_id: str | None = None,
-    url_externa: str | None = None,
-    descricao: str | None = None,
-    confirm_delete: bool = False,
-) -> CallToolResult:
-    try:
-        request = build_mcp_request()
-        data = _dispatch.manage_evidence(
-            request,
-            scope=scope,
-            operation=operation,
-            parent_id=parent_id,
-            evidence_id=evidence_id,
-            url_externa=url_externa,
-            descricao=descricao,
-            confirm_delete=confirm_delete,
-        )
-        return _ok_result(data, "Evidência atualizada.")
     except Exception as exc:
         return handle_tool_error(exc)
 
@@ -464,43 +378,310 @@ def tool_get_process_timeline(
         return handle_tool_error(exc)
 
 
-def tool_adjust_shared_resource_cost(
-    recurso_compartilhado_id: str,
-    valor_mensal: float,
-    vigente_desde: str,
-    observacoes: str | None = None,
+def tool_meeting_minute_read(
+    action: str,
+    minute_id: str | None = None,
+    data: dict | None = None,
 ) -> CallToolResult:
+    """READ-only meeting-minute manage actions (no PREPARE/ACT)."""
     try:
+        action_norm = str(action or "").strip()
+        if action_norm not in MEETING_MANAGE_READ_ACTIONS:
+            return _error_result(
+                f"Action '{action_norm}' is not a READ meeting-minute action. "
+                "Use prepare_meeting_minute_manage / act_meeting_minute_manage, "
+                "or generate_from_transcript.",
+                status_code=400,
+                error_code="validation",
+            )
         request = build_mcp_request()
         return _ok_result(
-            _dispatch.adjust_shared_resource_cost(
+            _dispatch.manage_meeting_minute(
                 request,
-                recurso_compartilhado_id=recurso_compartilhado_id,
-                valor_mensal=valor_mensal,
-                vigente_desde=vigente_desde,
-                observacoes=observacoes,
+                action=action_norm,
+                minute_id=minute_id,
+                payload=data or {},
             ),
-            "Reajuste de custo registrado.",
+            "Meeting minute read.",
         )
     except Exception as exc:
         return handle_tool_error(exc)
 
 
-def tool_meeting_minute_manage(
-    action: str,
+def tool_generate_from_transcript(
     minute_id: str | None = None,
     data: dict | None = None,
 ) -> CallToolResult:
+    """Analysis-only: generate draft from transcript without persistence ACT."""
     try:
         request = build_mcp_request()
         return _ok_result(
             _dispatch.manage_meeting_minute(
                 request,
-                action=action,
+                action="generate_from_transcript",
                 minute_id=minute_id,
                 payload=data or {},
             ),
-            "Operação de ata executada.",
+            "Transcript analysis (no persistence).",
         )
     except Exception as exc:
         return handle_tool_error(exc)
+
+
+# --- PREPARE tools --------------------------------------------------------
+
+
+def tool_prepare_create_record(entity: str, data: dict | None = None) -> CallToolResult:
+    return _prepare("create_record", {"entity": entity, "data": data or {}})
+
+
+def tool_prepare_update_record(
+    entity: str, id: str, data: dict | None = None
+) -> CallToolResult:
+    return _prepare("update_record", {"entity": entity, "id": id, "data": data or {}})
+
+
+def tool_prepare_delete_record(entity: str, id: str) -> CallToolResult:
+    return _prepare("delete_record", {"entity": entity, "id": id})
+
+
+def tool_prepare_duplicate_record(
+    entity: str, id: str, data: dict | None = None
+) -> CallToolResult:
+    return _prepare(
+        "duplicate_record",
+        {"entity": entity, "id": id, "data": data or {}},
+    )
+
+
+def tool_prepare_activate_revision(id: str) -> CallToolResult:
+    return _prepare("activate_revision", {"id": id})
+
+
+def tool_prepare_recalculate_dashboard(
+    revisao_id: str | None = None,
+    processo_id: str | None = None,
+    competencia_inicio: str | None = None,
+    competencia_fim: str | None = None,
+) -> CallToolResult:
+    return _prepare(
+        "recalculate_dashboard",
+        {
+            "revisao_id": revisao_id,
+            "processo_id": processo_id,
+            "competencia_inicio": competencia_inicio,
+            "competencia_fim": competencia_fim,
+        },
+    )
+
+
+def tool_prepare_meeting_minute_workflow(
+    id: str, action: str, reason: str | None = None
+) -> CallToolResult:
+    return _prepare(
+        "meeting_minute_workflow",
+        {"id": id, "action": action, "reason": reason},
+    )
+
+
+def tool_prepare_improvement_package(
+    process: dict | None = None,
+    instance: dict | None = None,
+    baseline: dict | None = None,
+    scenario: dict | None = None,
+    activate_scenario: bool = False,
+    recalculate: bool = False,
+) -> CallToolResult:
+    return _prepare(
+        "commit_improvement_package",
+        {
+            "process": process or {},
+            "instance": instance or {},
+            "baseline": baseline,
+            "scenario": scenario,
+            "activate_scenario": activate_scenario,
+            "recalculate": recalculate,
+        },
+    )
+
+
+def tool_prepare_manage_evidence(
+    scope: str,
+    operation: str,
+    parent_id: str,
+    evidence_id: str | None = None,
+    url_externa: str | None = None,
+    descricao: str | None = None,
+    confirm_delete: bool = False,
+) -> CallToolResult:
+    return _prepare(
+        "manage_evidence",
+        {
+            "scope": scope,
+            "operation": operation,
+            "parent_id": parent_id,
+            "evidence_id": evidence_id,
+            "url_externa": url_externa,
+            "descricao": descricao,
+            "confirm_delete": confirm_delete,
+        },
+    )
+
+
+def tool_prepare_adjust_shared_resource_cost(
+    recurso_compartilhado_id: str,
+    valor_mensal: float,
+    vigente_desde: str,
+    observacoes: str | None = None,
+) -> CallToolResult:
+    return _prepare(
+        "adjust_shared_resource_cost",
+        {
+            "recurso_compartilhado_id": recurso_compartilhado_id,
+            "valor_mensal": valor_mensal,
+            "vigente_desde": vigente_desde,
+            "observacoes": observacoes,
+        },
+    )
+
+
+def tool_prepare_meeting_minute_manage(
+    action: str,
+    minute_id: str | None = None,
+    data: dict | None = None,
+) -> CallToolResult:
+    action_norm = str(action or "").strip()
+    if action_norm in MEETING_MANAGE_NON_ACT:
+        return _error_result(
+            f"Action '{action_norm}' is not an ACT write. "
+            "Use meeting_minute_read or generate_from_transcript.",
+            status_code=400,
+            error_code="validation",
+        )
+    return _prepare(
+        "meeting_minute_manage",
+        {"action": action_norm, "minute_id": minute_id, "data": data or {}},
+    )
+
+
+# --- ACT tools (proposal_handle only) -------------------------------------
+
+
+def tool_act_create_record(proposal_handle: str) -> CallToolResult:
+    return _act(ACT_TOOL_CAPABILITY["act_create_record"], proposal_handle)
+
+
+def tool_act_update_record(proposal_handle: str) -> CallToolResult:
+    return _act(ACT_TOOL_CAPABILITY["act_update_record"], proposal_handle)
+
+
+def tool_act_delete_record(proposal_handle: str) -> CallToolResult:
+    return _act(ACT_TOOL_CAPABILITY["act_delete_record"], proposal_handle)
+
+
+def tool_act_duplicate_record(proposal_handle: str) -> CallToolResult:
+    return _act(ACT_TOOL_CAPABILITY["act_duplicate_record"], proposal_handle)
+
+
+def tool_act_activate_revision(proposal_handle: str) -> CallToolResult:
+    return _act(ACT_TOOL_CAPABILITY["act_activate_revision"], proposal_handle)
+
+
+def tool_act_recalculate_dashboard(proposal_handle: str) -> CallToolResult:
+    return _act(ACT_TOOL_CAPABILITY["act_recalculate_dashboard"], proposal_handle)
+
+
+def tool_act_meeting_minute_workflow(proposal_handle: str) -> CallToolResult:
+    return _act(ACT_TOOL_CAPABILITY["act_meeting_minute_workflow"], proposal_handle)
+
+
+def tool_act_commit_improvement_package(proposal_handle: str) -> CallToolResult:
+    return _act(ACT_TOOL_CAPABILITY["act_commit_improvement_package"], proposal_handle)
+
+
+def tool_act_manage_evidence(proposal_handle: str) -> CallToolResult:
+    return _act(ACT_TOOL_CAPABILITY["act_manage_evidence"], proposal_handle)
+
+
+def tool_act_adjust_shared_resource_cost(proposal_handle: str) -> CallToolResult:
+    return _act(ACT_TOOL_CAPABILITY["act_adjust_shared_resource_cost"], proposal_handle)
+
+
+def tool_act_meeting_minute_manage(proposal_handle: str) -> CallToolResult:
+    return _act(ACT_TOOL_CAPABILITY["act_meeting_minute_manage"], proposal_handle)
+
+
+# Back-compat aliases used by older smoke tests (map to prepare/act semantics).
+def tool_validate_improvement_package(
+    process: dict | None = None,
+    instance: dict | None = None,
+    baseline: dict | None = None,
+    scenario: dict | None = None,
+) -> CallToolResult:
+    return tool_prepare_improvement_package(
+        process=process,
+        instance=instance,
+        baseline=baseline,
+        scenario=scenario,
+    )
+
+
+def tool_commit_improvement_package(
+    proposal_handle: str | None = None,
+    process: dict | None = None,
+    instance: dict | None = None,
+    baseline: dict | None = None,
+    scenario: dict | None = None,
+    dry_run: bool = False,
+    activate_scenario: bool = False,
+    recalculate: bool = False,
+) -> CallToolResult:
+    """ACT requires proposal_handle. dry_run without handle re-prepares only."""
+    if proposal_handle:
+        return tool_act_commit_improvement_package(proposal_handle)
+    if dry_run:
+        return tool_prepare_improvement_package(
+            process=process,
+            instance=instance,
+            baseline=baseline,
+            scenario=scenario,
+            activate_scenario=activate_scenario,
+            recalculate=recalculate,
+        )
+    return _error_result(
+        "proposal_handle is required for commit ACT. "
+        "Call prepare_improvement_package first.",
+        status_code=400,
+        error_code="proposal_required",
+    )
+
+
+def tool_manage_evidence(
+    scope: str,
+    operation: str,
+    parent_id: str,
+    evidence_id: str | None = None,
+    url_externa: str | None = None,
+    descricao: str | None = None,
+    confirm_delete: bool = False,
+    proposal_handle: str | None = None,
+) -> CallToolResult:
+    if proposal_handle:
+        return tool_act_manage_evidence(proposal_handle)
+    return tool_prepare_manage_evidence(
+        scope=scope,
+        operation=operation,
+        parent_id=parent_id,
+        evidence_id=evidence_id,
+        url_externa=url_externa,
+        descricao=descricao,
+        confirm_delete=confirm_delete,
+    )
+
+
+__all__ = [
+    "ACT_TOOL_CAPABILITY",
+    "PREPARE_TOOL_CAPABILITY",
+    "build_mcp_request",
+    "handle_tool_error",
+]

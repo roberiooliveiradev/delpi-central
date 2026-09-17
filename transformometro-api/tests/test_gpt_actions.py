@@ -434,6 +434,13 @@ def test_gpt_create_measurement_sibling(tm_client):
             "tm_app.application.gpt_actions.dispatch_service.MedicaoRepository"
         ) as repo_cls,
         patch(
+            "tm_app.application.gpt_actions.dispatch_service.RevisaoRepository"
+        ) as revisao_cls,
+        patch(
+            "tm_app.application.gpt_actions.dispatch_service.check_processo_manage_access",
+            return_value=None,
+        ),
+        patch(
             "tm_app.application.gpt_actions.dispatch_service.AuditRepository"
         ),
         patch(
@@ -444,6 +451,11 @@ def test_gpt_create_measurement_sibling(tm_client):
         ),
     ):
         repo_cls.return_value.upsert.return_value = medicao
+        revisao_cls.return_value.get.return_value = {
+            "revisao_id": medicao["revisao_id"],
+            "processo_id": "p1",
+            "instancia_id": "",
+        }
         response = tm_client.post(
             "/transformometro/gpt-actions/v1/records/measurement",
             json={

@@ -132,6 +132,11 @@ from tm_app.application.services.process_write_service import (
     ProcessWriteService,
     RevisionActivationService,
 )
+from tm_app.application.security.transformometro_permissions import (
+    GLOBAL_MANAGE_PERMISSIONS,
+    TRANSFORMOMETRO_DASHBOARD_RECALCULATE,
+    TRANSFORMOMETRO_REVISIONS_MANAGE,
+)
 from tm_app.interface.http.branch_access_http import (
     check_dashboard_filial_access,
     check_instancia_manage_access,
@@ -717,6 +722,14 @@ class GptActionsDispatchService:
                 BENEFICIO_CALCULO_CATEGORIA,
                 "beneficio_calculo_categoria",
             )
+            instancia_id = str(body.instancia_id or "").strip()
+            processo_id = str(body.processo_id or "").strip()
+            if instancia_id:
+                self._raise_http_err(check_instancia_manage_access(request, instancia_id))
+            elif processo_id:
+                self._raise_http_err(check_processo_manage_access(request, processo_id))
+            else:
+                raise GptActionsError("data.processo_id or data.instancia_id is required.", 400)
             row = RevisaoRepository().create(body.model_dump())
             rid = str(row["revisao_id"])
             self._audit(request, "revisao", rid, "create", body.model_dump())
@@ -725,6 +738,7 @@ class GptActionsDispatchService:
 
         if entity == GptEntity.MEASUREMENT:
             body = MedicaoBody.model_validate(data)
+            self._require_revisao_manage_access(request, str(body.revisao_id))
             row = MedicaoRepository().upsert(body.model_dump())
             mid = str(row["medicao_id"])
             self._audit(request, "medicao", mid, "upsert", body.model_dump())
@@ -737,6 +751,7 @@ class GptActionsDispatchService:
             assert_in(body.recorrencia, RECORRENCIAS, "recorrencia")
             if body.categoria_investimento:
                 assert_in(body.categoria_investimento, CATEGORIAS, "categoria_investimento")
+            self._require_revisao_manage_access(request, str(body.revisao_id))
             row = InvestimentoRepository().create(body.model_dump())
             iid = str(row["investimento_id"])
             self._audit(request, "investimento", iid, "create", body.model_dump())
@@ -746,6 +761,7 @@ class GptActionsDispatchService:
         if entity == GptEntity.SHARED_RESOURCE:
             body = RecursoBody.model_validate(data)
             self._validate_recurso(body)
+            self._raise_http_err(require_unrestricted_catalog_admin(request))
             row = RecursoRepository().create(body.model_dump())
             rid = str(row["recurso_compartilhado_id"])
             self._audit(request, "recurso", rid, "create", body.model_dump())
@@ -758,6 +774,7 @@ class GptActionsDispatchService:
                 raise GptActionsError("data.recurso_compartilhado_id is required.", 400)
             if not RecursoRepository().get(recurso_id):
                 raise GptActionsError("Recurso não encontrado.", 404)
+            self._raise_http_err(require_unrestricted_catalog_admin(request))
             body = RecursoCustoBody.model_validate(
                 {
                     k: v
@@ -781,6 +798,7 @@ class GptActionsDispatchService:
 
         if entity == GptEntity.RESOURCE_LINK:
             body = VinculoBody.model_validate(data)
+            self._require_revisao_manage_access(request, str(body.revisao_id))
             row = VinculoRepository().create(body.model_dump())
             vid = str(row["vinculo_id"])
             self._audit(request, "vinculo", vid, "create", body.model_dump())
@@ -850,6 +868,7 @@ class GptActionsDispatchService:
             return self._update_instancia(request, rid, data)
 
         if entity == GptEntity.REVISION:
+            self._require_revisao_manage_access(request, rid)
             existing = RevisaoRepository().get(rid)
             if not existing:
                 raise GptActionsError("Revisão não encontrada.", 404)
@@ -886,6 +905,7 @@ class GptActionsDispatchService:
 
         if entity == GptEntity.MEASUREMENT:
             body = MedicaoBody.model_validate({**data, "revisao_id": data.get("revisao_id") or rid})
+            self._require_revisao_manage_access(request, str(body.revisao_id))
             row = MedicaoRepository().upsert(body.model_dump())
             mid = str(row["medicao_id"])
             self._audit(request, "medicao", mid, "upsert", body.model_dump())
@@ -896,6 +916,7 @@ class GptActionsDispatchService:
             existing = InvestimentoRepository().get(rid)
             if not existing:
                 raise GptActionsError("Investimento não encontrado.", 404)
+            self._require_revisao_manage_access(request, str(existing.get("revisao_id") or ""))
             merged = self._merge_named_update_payload(
                 existing,
                 data,
@@ -935,6 +956,7 @@ class GptActionsDispatchService:
             existing = RecursoRepository().get(rid)
             if not existing:
                 raise GptActionsError("Recurso não encontrado.", 404)
+            self._raise_http_err(require_unrestricted_catalog_admin(request))
             merged = self._merge_named_update_payload(
                 existing,
                 data,
@@ -1073,7 +1095,7 @@ class GptActionsDispatchService:
             return {"id": rid}, "Setor removido."
 
         if entity == GptEntity.PROCESS:
-            self._raise_http_err(check_processo_view_access(request, rid))
+            self._raise_http_err(check_processo_manage_access(request, rid))
             if not ProcessoRepository().soft_delete(rid):
                 raise GptActionsError("Processo não encontrado.", 404)
             self._audit(request, "processo", rid, "delete", {})
@@ -1081,7 +1103,7 @@ class GptActionsDispatchService:
             return {"id": rid}, "Processo removido."
 
         if entity == GptEntity.INSTANCE:
-            self._raise_http_err(check_instancia_view_access(request, rid))
+            self._raise_http_err(check_instancia_manage_access(request, rid))
             row = ProcessoInstanciaRepository().get(rid)
             if not row:
                 raise GptActionsError("Instância não encontrada.", 404)
@@ -1094,6 +1116,7 @@ class GptActionsDispatchService:
             return {"id": rid}, "Melhoria removida."
 
         if entity == GptEntity.REVISION:
+            self._require_revisao_manage_access(request, rid)
             row = RevisaoRepository().get(rid)
             if not row:
                 raise GptActionsError("Revisão não encontrada.", 404)
@@ -1107,6 +1130,7 @@ class GptActionsDispatchService:
             row = InvestimentoRepository().get(rid)
             if not row:
                 raise GptActionsError("Investimento não encontrado.", 404)
+            self._require_revisao_manage_access(request, str(row.get("revisao_id") or ""))
             if not InvestimentoRepository().soft_delete(rid):
                 raise GptActionsError("Investimento não encontrado.", 404)
             self._audit(request, "investimento", rid, "delete", {})
@@ -1115,6 +1139,7 @@ class GptActionsDispatchService:
             return {"id": rid}, "Investimento removido."
 
         if entity == GptEntity.SHARED_RESOURCE:
+            self._raise_http_err(require_unrestricted_catalog_admin(request))
             if not RecursoRepository().soft_delete(rid):
                 raise GptActionsError("Recurso não encontrado.", 404)
             self._audit(request, "recurso", rid, "delete", {})
@@ -1122,6 +1147,7 @@ class GptActionsDispatchService:
             return {"id": rid}, "Recurso removido."
 
         if entity == GptEntity.RESOURCE_COST:
+            self._raise_http_err(require_unrestricted_catalog_admin(request))
             if not RecursoCustoRepository().soft_delete(rid):
                 raise GptActionsError("Custo de recurso não encontrado.", 404)
             self._audit(request, "recurso_custo", rid, "delete", {})
@@ -1132,6 +1158,7 @@ class GptActionsDispatchService:
             row = VinculoRepository().get(rid)
             if not row:
                 raise GptActionsError("Vínculo não encontrado.", 404)
+            self._require_revisao_manage_access(request, str(row.get("revisao_id") or ""))
             if not VinculoRepository().soft_delete(rid):
                 raise GptActionsError("Vínculo não encontrado.", 404)
             self._audit(request, "vinculo", rid, "delete", {})
@@ -1163,6 +1190,7 @@ class GptActionsDispatchService:
         rid = str(record_id)
 
         if entity == GptEntity.PROCESS:
+            self._raise_http_err(check_processo_manage_access(request, rid))
             body = ProcessoDuplicateBody.model_validate(data or {})
             try:
                 result = ProcessoDuplicateService().duplicate(
@@ -1177,6 +1205,7 @@ class GptActionsDispatchService:
 
         if entity == GptEntity.INSTANCE:
             body = InstanciaDuplicateBody.model_validate(data)
+            self._raise_http_err(check_instancia_manage_access(request, rid))
             self._raise_http_err(check_manage_filial_access(request, body.filial_id))
             try:
                 result = InstanciaDuplicateService().duplicate(
@@ -1200,6 +1229,7 @@ class GptActionsDispatchService:
             )
 
         if entity == GptEntity.REVISION:
+            self._require_revisao_manage_access(request, rid)
             body = RevisaoDuplicateBody.model_validate(data or {})
             try:
                 result = RevisaoDuplicateService().duplicate(
@@ -1217,6 +1247,7 @@ class GptActionsDispatchService:
         raise GptActionsError(f"Duplicate not implemented for {entity.value}.", 400)
 
     def activate_revision(self, request: Request, revisao_id: str) -> dict[str, Any]:
+        self._require_revisao_manage_access(request, str(revisao_id))
         row = RevisionActivationService().activate(str(revisao_id))
         if not row:
             raise GptActionsError("Revisão não encontrada.", 404)
@@ -1245,6 +1276,7 @@ class GptActionsDispatchService:
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
     ) -> dict[str, Any]:
+        self._require_dashboard_recalculate_access(request)
         result = DashboardRecalcService().recalculate(
             revisao_id=revisao_id,
             processo_id=processo_id,
@@ -1404,7 +1436,7 @@ class GptActionsDispatchService:
         self, request: Request, processo_id: str, data: dict
     ) -> tuple[dict[str, Any], str]:
         body = ProcessoUpdateBody.model_validate(data)
-        self._raise_http_err(check_processo_view_access(request, processo_id))
+        self._raise_http_err(check_processo_manage_access(request, processo_id))
         self._raise_http_err(self._validate_processo_escopo_access(request, body))
         try:
             row = ProcessWriteService().update(
@@ -1467,7 +1499,7 @@ class GptActionsDispatchService:
     def _update_instancia(
         self, request: Request, instancia_id: str, data: dict
     ) -> tuple[dict[str, Any], str]:
-        self._raise_http_err(check_instancia_view_access(request, instancia_id))
+        self._raise_http_err(check_instancia_manage_access(request, instancia_id))
         existing = ProcessoInstanciaRepository().get(instancia_id)
         if not existing:
             raise GptActionsError("Instância não encontrada.", 404)
@@ -1575,6 +1607,35 @@ class GptActionsDispatchService:
         processo_id = str(revisao.get("processo_id") or "").strip()
         if processo_id:
             self._raise_http_err(check_processo_manage_access(request, processo_id))
+            return
+        from delpi_auth.authz_core import has_permission
+
+        user = getattr(request.state, "user", None)
+        if user and (
+            getattr(user, "is_superadmin", False)
+            or has_permission(user, TRANSFORMOMETRO_REVISIONS_MANAGE)
+        ):
+            return
+        raise GptActionsError("Sem permissão para gerenciar esta revisão.", 403)
+
+    def _require_dashboard_recalculate_access(self, request: Request) -> None:
+        """Canonical AuthZ for dashboard recalculate (GPT Actions + MCP)."""
+        from delpi_auth.authz_core import has_permission
+
+        user = getattr(request.state, "user", None)
+        if user is None:
+            raise GptActionsError("Usuário não autenticado.", 401)
+        if getattr(user, "is_superadmin", False):
+            return
+        if has_permission(user, TRANSFORMOMETRO_DASHBOARD_RECALCULATE):
+            return
+        for code in (TRANSFORMOMETRO_REVISIONS_MANAGE, *GLOBAL_MANAGE_PERMISSIONS):
+            if has_permission(user, code):
+                return
+        raise GptActionsError(
+            "Sem permissão transformometro.dashboard.recalculate (ou manage equivalente).",
+            403,
+        )
 
     def _verify_document_postcondition(
         self,

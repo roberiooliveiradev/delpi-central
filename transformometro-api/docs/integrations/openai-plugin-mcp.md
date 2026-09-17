@@ -37,19 +37,22 @@ Workspace Agent / ChatGPT Plugin (TÉO)
 ## Surface policy
 
 ```text
-TEO_MCP_SURFACE = FULL_CRUD
+TEO_MCP_SURFACE = FULL_CRUD_GOVERNED
 READ + PREPARE + ACT = REQUIRED
 DAVI_READ_ONLY_COPY = FORBIDDEN
 ```
 
-20 MCP tools map 1:1 to GPT Actions operationIds (parity). See `tm_app/interface/mcp/constants.py`.
+MCP tools may be 1 GPT operationId → N semantic tools (PREPARE/ACT split).
+Parity gate: every GPT Actions operationId covered; MISSING=0. See
+`docs/integrations/teo-mcp-capability-parity.md` and `tm_app/interface/mcp/constants.py`.
 
-Write governance (unchanged domain rules):
+Write governance (MCP):
 
-- `get_catalog` / `registration_guide` before writes
-- `validate_improvement_package` (PREPARE) before `commit_improvement_package` (ACT)
-- Honor `confirm_delete`, `confirm_vigencia_change`, `confirm_resend`
-- Audit + read-back where already implemented
+- Material writes: `prepare_*` → opaque `proposal_handle` → matching `act_*` (handle only)
+- `prepare_improvement_package` binds the exact package; `act_commit_improvement_package` executes that proposal
+- Incomplete packages: `ready=false` / `act_allowed=false` → NO WRITE
+- Honor `confirm_delete`, `confirm_vigencia_change`, `confirm_resend` (proposal does not replace validators)
+- ACT success (`isError=false`) requires authoritative read-back / verified postcondition
 - MCP tool metadata / OAuth scopes ≠ RBAC
 
 ## Bridge

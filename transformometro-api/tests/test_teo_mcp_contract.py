@@ -14,6 +14,7 @@ from tm_app.application.gpt_actions.openapi_builder import GPT_ACTIONS_OPERATION
 from tm_app.interface.mcp.constants import (
     CANONICAL_MCP_RESOURCE_URL,
     GPT_ACTIONS_LIFECYCLE,
+    GPT_TO_MCP_TOOLS,
     MCP_PREDEFINED_CLIENT_ID,
     MCP_TOOL_NAMES,
     TEO_MCP_SURFACE,
@@ -55,7 +56,7 @@ def _request(path: str, headers: dict | None = None) -> Request:
 
 
 def test_contract_freeze_full_crud() -> None:
-    assert TEO_MCP_SURFACE == "FULL_CRUD"
+    assert TEO_MCP_SURFACE == "FULL_CRUD_GOVERNED"
     assert MCP_PREDEFINED_CLIENT_ID == "mcp-transformometro"
     assert CANONICAL_MCP_RESOURCE_URL.endswith("/apps/transformometro-api/mcp")
     assert GPT_ACTIONS_LIFECYCLE == "LEGACY_TRANSITIONAL_BRIDGE"
@@ -66,15 +67,27 @@ def test_contract_freeze_full_crud() -> None:
 
 
 def test_tool_parity_with_gpt_actions_operation_ids() -> None:
-    assert len(MCP_TOOL_NAMES) == 20
-    assert set(TOOL_TO_GPT_OPERATION.values()) == set(GPT_ACTIONS_OPERATION_IDS)
+    # Every current GPT operationId maps to >=1 MCP tool; no unmapped / missing.
+    assert set(GPT_TO_MCP_TOOLS.keys()) == set(GPT_ACTIONS_OPERATION_IDS)
+    covered = set()
+    for gpt_op, tools in GPT_TO_MCP_TOOLS.items():
+        assert tools, f"empty MCP mapping for {gpt_op}"
+        for tool in tools:
+            assert tool in TOOL_CLASS
+            assert TOOL_TO_GPT_OPERATION[tool] == gpt_op
+            covered.add(gpt_op)
+    assert covered == set(GPT_ACTIONS_OPERATION_IDS)
     assert set(TOOL_CLASS) == set(MCP_TOOL_NAMES)
-    assert TOOL_CLASS["validate_improvement_package"] == "PREPARE"
-    assert TOOL_CLASS["create_record"] == "ACT"
+    assert set(TOOL_TO_GPT_OPERATION.keys()) == set(MCP_TOOL_NAMES)
+    assert TOOL_CLASS["prepare_improvement_package"] == "PREPARE"
+    assert TOOL_CLASS["act_create_record"] == "ACT"
     assert TOOL_CLASS["get_catalog"] == "READ"
-    # FULL CRUD must include writes
+    assert TOOL_CLASS["generate_from_transcript"] == "ANALYSIS"
     assert any(TOOL_CLASS[n] == "ACT" for n in MCP_TOOL_NAMES)
     assert any(TOOL_CLASS[n] == "PREPARE" for n in MCP_TOOL_NAMES)
+    # Gate: no capability loss after PREPARE/ACT split
+    assert len(GPT_ACTIONS_OPERATION_IDS) == len(GPT_TO_MCP_TOOLS)
+    assert len(MCP_TOOL_NAMES) >= len(GPT_ACTIONS_OPERATION_IDS)
 
 
 def test_security_schemes_have_no_rbac_codes() -> None:
@@ -84,14 +97,30 @@ def test_security_schemes_have_no_rbac_codes() -> None:
     assert "mcp:tools" in blob
 
 
-def test_list_tools_exposes_twenty_full_crud_tools() -> None:
+def test_list_tools_exposes_governed_full_crud_tools() -> None:
     mcp = create_mcp_server()
     tools = asyncio.run(mcp.list_tools())
     names = [t.name for t in tools]
-    assert len(names) == 20
     assert set(names) == set(MCP_TOOL_NAMES)
+    assert "prepare_create_record" in names
+    assert "act_create_record" in names
+    assert "prepare_improvement_package" in names
+    assert "act_commit_improvement_package" in names
     for tool in tools:
         assert tool.securitySchemes == TEO_MCP_SECURITY_SCHEMES  # type: ignore[attr-defined]
+        ann = tool.annotations
+        if tool.name.startswith("act_") and tool.name in {
+            "act_delete_record",
+            "act_activate_revision",
+            "act_manage_evidence",
+            "act_commit_improvement_package",
+            "act_meeting_minute_workflow",
+            "act_meeting_minute_manage",
+        }:
+            assert ann is not None and ann.destructiveHint is True
+        if TOOL_CLASS[tool.name] in {"READ", "ANALYSIS"}:
+            assert ann is not None and ann.readOnlyHint is True
+
 
 
 def test_audience_and_scope_helpers() -> None:
@@ -205,7 +234,9 @@ async def test_oauth_metadata_is_public() -> None:
 def test_manage_evidence_requires_confirm_delete_flag_in_description() -> None:
     mcp = create_mcp_server()
     tools = {t.name: t for t in asyncio.run(mcp.list_tools())}
-    desc = tools["manage_evidence"].description or ""
+    desc = tools["prepare_manage_evidence"].description or ""
     assert "confirm_delete" in desc
-    commit = tools["commit_improvement_package"].description or ""
-    assert "validate_improvement_package" in commit
+    commit = tools["act_commit_improvement_package"].description or ""
+    assert "proposal_handle" in commit
+    prepare_pkg = tools["prepare_improvement_package"].description or ""
+    assert "act_commit_improvement_package" in prepare_pkg
