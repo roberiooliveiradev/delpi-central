@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { DataTable, runTabularExport } from "@delpi/plugin-ui/index";
 
-import { getCommercialRolByProduct } from "../../../api/analyticsApi";
+import {
+  getCommercialRolByProduct,
+  PORTFOLIO_MEMBERSHIP_SCOPE_MODE,
+} from "../../../api/analyticsApi";
 import {
   CommercialClearFiltersButton,
   CommercialDataListToolbar,
@@ -23,7 +26,11 @@ import {
   appendBillingNatureContext,
   type PortfolioBillingAmountNature,
 } from "../../../content/billingNature";
-import type { PortfolioBillingMetric } from "../../../content/billingMetric";
+import {
+  includesQuantityMetric,
+  includesValueMetric,
+  type PortfolioBillingMetric,
+} from "../../../content/billingMetric";
 import type { CommercialRolByProductItem } from "../../../types/analytics";
 import { formatCurrency, formatQuantity } from "../../../utils/format";
 import {
@@ -104,7 +111,7 @@ export function PortfolioBillingByProductTable({
     columnsStorageKey: PORTFOLIO_BY_PRODUCT_COLUMNS_STORAGE_KEY,
     fontSizeStorageKey: PORTFOLIO_BY_PRODUCT_FONT_STORAGE_KEY,
     columns: PORTFOLIO_BY_PRODUCT_COLUMN_CATALOG,
-    emptyFallbackKeys: ["label", "share"],
+    emptyFallbackKeys: ["label", "share", "qtyTotal"],
   });
   const queryEnabled =
     active && !filters.periodError && Boolean(filters.startDate && filters.endDate);
@@ -121,6 +128,7 @@ export function PortfolioBillingByProductTable({
         group_by: "product",
         limit: 500,
         nature: billingNature,
+        scope_mode: PORTFOLIO_MEMBERSHIP_SCOPE_MODE,
       },
       controller.signal,
     )
@@ -181,6 +189,7 @@ export function PortfolioBillingByProductTable({
         group_by: groupBy,
         limit: 500,
         nature: billingNature,
+        scope_mode: PORTFOLIO_MEMBERSHIP_SCOPE_MODE,
       },
       controller.signal,
     )
@@ -231,8 +240,8 @@ export function PortfolioBillingByProductTable({
     [items, billingNature, billingMetric, marketMode, groupBy],
   );
 
-  const formatAmount = (value: number) =>
-    billingMetric === "quantity" ? formatQuantity(value) : formatCurrency(value);
+  const showValue = includesValueMetric(billingMetric);
+  const showQuantity = includesQuantityMetric(billingMetric);
 
   const columns = useMemo((): DataTableColumn<PortfolioBillingByProductRow>[] => {
     const base: DataTableColumn<PortfolioBillingByProductRow>[] = [
@@ -244,52 +253,44 @@ export function PortfolioBillingByProductTable({
         sortable: true,
       },
     ];
-    if (marketMode === "all") {
-      base.push(
-        {
-          key: "domestic",
-          header: CUSTOMER_BILLING_CONTENT.colDomestic,
-          render: (row) => formatAmount(row.domestic),
-          sortValue: (row) => row.domestic,
-          sortable: true,
-          align: "right",
-        },
-        {
-          key: "export",
-          header: CUSTOMER_BILLING_CONTENT.colExport,
-          render: (row) => formatAmount(row.export),
-          sortValue: (row) => row.export,
-          sortable: true,
-          align: "right",
-        },
-        {
+    if (showValue) {
+      if (marketMode === "all") {
+        base.push(
+          {
+            key: "domestic",
+            header: CUSTOMER_BILLING_CONTENT.colDomestic,
+            render: (row) => formatCurrency(row.domestic),
+            sortValue: (row) => row.domestic,
+            sortable: true,
+            align: "right",
+          },
+          {
+            key: "export",
+            header: CUSTOMER_BILLING_CONTENT.colExport,
+            render: (row) => formatCurrency(row.export),
+            sortValue: (row) => row.export,
+            sortable: true,
+            align: "right",
+          },
+          {
+            key: "total",
+            header: CUSTOMER_BILLING_CONTENT.colTotal,
+            render: (row) => formatCurrency(row.total),
+            sortValue: (row) => row.total,
+            sortable: true,
+            align: "right",
+          },
+        );
+      } else {
+        base.push({
           key: "total",
-          header: CUSTOMER_BILLING_CONTENT.colTotal,
-          render: (row) => formatAmount(row.total),
+          header: CUSTOMER_BILLING_CONTENT.colValue,
+          render: (row) => formatCurrency(row.total),
           sortValue: (row) => row.total,
           sortable: true,
           align: "right",
-        },
-      );
-    } else {
-      base.push({
-        key: "total",
-        header: CUSTOMER_BILLING_CONTENT.colValue,
-        render: (row) => formatAmount(row.total),
-        sortValue: (row) => row.total,
-        sortable: true,
-        align: "right",
-      });
-    }
-    if (billingMetric === "quantity") {
-      base.push({
-        key: "unit",
-        header: "UM",
-        render: (row) => (row.mixedUnits ? "mistas" : row.unit?.trim() || "—"),
-        sortValue: (row) => row.unit || "",
-        sortable: true,
-      });
-    } else {
+        });
+      }
       base.push({
         key: "share",
         header: CUSTOMER_BILLING_CONTENT.colShare,
@@ -299,19 +300,88 @@ export function PortfolioBillingByProductTable({
         align: "right",
       });
     }
+    if (showQuantity) {
+      if (marketMode === "all") {
+        base.push(
+          {
+            key: "qtyDomestic",
+            header: CUSTOMER_BILLING_CONTENT.colDomesticQty,
+            render: (row) => formatQuantity(row.qtyDomestic),
+            sortValue: (row) => row.qtyDomestic,
+            sortable: true,
+            align: "right",
+          },
+          {
+            key: "qtyExport",
+            header: CUSTOMER_BILLING_CONTENT.colExportQty,
+            render: (row) => formatQuantity(row.qtyExport),
+            sortValue: (row) => row.qtyExport,
+            sortable: true,
+            align: "right",
+          },
+          {
+            key: "qtyTotal",
+            header: CUSTOMER_BILLING_CONTENT.colTotalQty,
+            render: (row) => formatQuantity(row.qtyTotal),
+            sortValue: (row) => row.qtyTotal,
+            sortable: true,
+            align: "right",
+          },
+        );
+      } else {
+        base.push({
+          key: "qtyTotal",
+          header: CUSTOMER_BILLING_CONTENT.colValueQty,
+          render: (row) => formatQuantity(row.qtyTotal),
+          sortValue: (row) => row.qtyTotal,
+          sortable: true,
+          align: "right",
+        });
+      }
+      if (!showValue) {
+        base.push({
+          key: "share",
+          header: CUSTOMER_BILLING_CONTENT.colShare,
+          render: (row) => formatSharePct(row.sharePct),
+          sortValue: (row) => row.sharePct ?? -1,
+          sortable: true,
+          align: "right",
+        });
+      }
+      base.push({
+        key: "unit",
+        header: CUSTOMER_BILLING_CONTENT.colUnit,
+        render: (row) => (row.mixedUnits ? "mistas" : row.unit?.trim() || "—"),
+        sortValue: (row) => row.unit || "",
+        sortable: true,
+      });
+    }
     return base;
-  }, [billingMetric, marketMode]);
+  }, [marketMode, showQuantity, showValue]);
 
   const visibleColumns = useMemo(() => {
+    const hidden = new Set<string>();
+    if (marketMode !== "all") {
+      hidden.add("domestic");
+      hidden.add("export");
+      hidden.add("qtyDomestic");
+      hidden.add("qtyExport");
+    }
+    if (!showValue) {
+      hidden.add("domestic");
+      hidden.add("export");
+      hidden.add("total");
+    }
+    if (!showQuantity) {
+      hidden.add("qtyDomestic");
+      hidden.add("qtyExport");
+      hidden.add("qtyTotal");
+      hidden.add("unit");
+    }
     return filterColumns(withColumnHelp(columns, PORTFOLIO_BY_PRODUCT_COLUMN_HELP)).filter(
-      (column) => {
-        if (marketMode !== "all" && (column.key === "domestic" || column.key === "export")) {
-          return false;
-        }
-        return true;
-      },
+      (column) => !hidden.has(column.key),
     );
-  }, [columns, filterColumns, marketMode]);
+  }, [columns, filterColumns, marketMode, showQuantity, showValue]);
 
   const periodLabel = billingSeriesPresetLabel(filters.preset);
   const mixTitleBase =
@@ -321,7 +391,9 @@ export function PortfolioBillingByProductTable({
   const title =
     billingMetric === "quantity"
       ? `${mixTitleBase} (qtd) — ${periodLabel}`
-      : appendBillingNatureContext(`${mixTitleBase} — ${periodLabel}`, billingNature);
+      : billingMetric === "both"
+        ? appendBillingNatureContext(`${mixTitleBase} (R$ + qtd) — ${periodLabel}`, billingNature)
+        : appendBillingNatureContext(`${mixTitleBase} — ${periodLabel}`, billingNature);
   const hasFilters =
     filters.selectedProductCodes.length > 0 ||
     filters.selectedProductGroups.length > 0 ||
@@ -330,20 +402,34 @@ export function PortfolioBillingByProductTable({
   const showCountries =
     marketMode !== "domestic" && countries.length > 0 && rows.length > 0;
 
-  const exportColumns =
-    marketMode === "all"
+  const exportColumns = [
+    { key: "label", label: CUSTOMER_BILLING_CONTENT.colProduct },
+    ...(showValue && marketMode === "all"
       ? [
-          { key: "label", label: CUSTOMER_BILLING_CONTENT.colProduct },
           { key: "domestic", label: CUSTOMER_BILLING_CONTENT.colDomestic },
           { key: "export", label: CUSTOMER_BILLING_CONTENT.colExport },
           { key: "total", label: CUSTOMER_BILLING_CONTENT.colTotal },
-          { key: "sharePct", label: CUSTOMER_BILLING_CONTENT.colShare },
         ]
-      : [
-          { key: "label", label: CUSTOMER_BILLING_CONTENT.colProduct },
-          { key: "total", label: CUSTOMER_BILLING_CONTENT.colValue },
-          { key: "sharePct", label: CUSTOMER_BILLING_CONTENT.colShare },
-        ];
+      : []),
+    ...(showValue && marketMode !== "all"
+      ? [{ key: "total", label: CUSTOMER_BILLING_CONTENT.colValue }]
+      : []),
+    ...(showValue ? [{ key: "sharePct", label: CUSTOMER_BILLING_CONTENT.colShare }] : []),
+    ...(showQuantity && marketMode === "all"
+      ? [
+          { key: "qtyDomestic", label: CUSTOMER_BILLING_CONTENT.colDomesticQty },
+          { key: "qtyExport", label: CUSTOMER_BILLING_CONTENT.colExportQty },
+          { key: "qtyTotal", label: CUSTOMER_BILLING_CONTENT.colTotalQty },
+        ]
+      : []),
+    ...(showQuantity && marketMode !== "all"
+      ? [{ key: "qtyTotal", label: CUSTOMER_BILLING_CONTENT.colValueQty }]
+      : []),
+    ...(!showValue && showQuantity
+      ? [{ key: "sharePct", label: CUSTOMER_BILLING_CONTENT.colShare }]
+      : []),
+    ...(showQuantity ? [{ key: "unit", label: CUSTOMER_BILLING_CONTENT.colUnit }] : []),
+  ];
 
   return (
     <CommercialSectionCard
@@ -390,10 +476,14 @@ export function PortfolioBillingByProductTable({
                     columns: exportColumns,
                     rows: rows.map((row) => ({
                       label: row.label,
-                      domestic: formatAmount(row.domestic),
-                      export: formatAmount(row.export),
-                      total: formatAmount(row.total),
+                      domestic: formatCurrency(row.domestic),
+                      export: formatCurrency(row.export),
+                      total: formatCurrency(row.total),
                       sharePct: formatSharePct(row.sharePct),
+                      qtyDomestic: formatQuantity(row.qtyDomestic),
+                      qtyExport: formatQuantity(row.qtyExport),
+                      qtyTotal: formatQuantity(row.qtyTotal),
+                      unit: row.mixedUnits ? "mistas" : row.unit?.trim() || "—",
                     })),
                   },
                 });

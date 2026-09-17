@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { DataTable, runTabularExport } from "@delpi/plugin-ui/index";
 
-import { getCommercialRolByCustomer } from "../../../api/analyticsApi";
+import {
+  getCommercialRolByCustomer,
+  PORTFOLIO_MEMBERSHIP_SCOPE_MODE,
+} from "../../../api/analyticsApi";
 import {
   CommercialClearFiltersButton,
   CommercialDataListToolbar,
@@ -137,6 +140,7 @@ export function PortfolioBillingAbcTable({
         limit: 500,
         include_others: false,
         nature: billingNature,
+        scope_mode: PORTFOLIO_MEMBERSHIP_SCOPE_MODE,
       },
       controller.signal,
     )

@@ -1,5 +1,9 @@
 import type { PortfolioBillingAmountNature } from "../../../content/billingNature";
-import type { PortfolioBillingMetric } from "../../../content/billingMetric";
+import {
+  includesQuantityMetric,
+  includesValueMetric,
+  type PortfolioBillingMetric,
+} from "../../../content/billingMetric";
 import type { CommercialRolByProductItem } from "../../../types/analytics";
 
 export type PortfolioBillingByProductRow = {
@@ -8,11 +12,29 @@ export type PortfolioBillingByProductRow = {
   domestic: number;
   export: number;
   total: number;
+  qtyDomestic: number;
+  qtyExport: number;
+  qtyTotal: number;
   sharePct: number | null;
   unit?: string | null;
   mixedUnits?: boolean;
   isTotal?: boolean;
 };
+
+function marketSplit(
+  domestic: number,
+  exportValue: number,
+  total: number,
+  market: "domestic" | "export" | "all",
+): { domestic: number; export: number; total: number } {
+  if (market === "domestic") {
+    return { domestic, export: 0, total: domestic };
+  }
+  if (market === "export") {
+    return { domestic: 0, export: exportValue, total: exportValue };
+  }
+  return { domestic, export: exportValue, total };
+}
 
 export function amountFromRolItem(
   item: CommercialRolByProductItem,
@@ -24,13 +46,7 @@ export function amountFromRolItem(
     const domestic = Number(item.domestic_qty ?? 0);
     const exportValue = Number(item.export_qty ?? 0);
     const total = Number(item.qty ?? domestic + exportValue);
-    if (market === "domestic") {
-      return { domestic, export: 0, total: domestic };
-    }
-    if (market === "export") {
-      return { domestic: 0, export: exportValue, total: exportValue };
-    }
-    return { domestic, export: exportValue, total };
+    return marketSplit(domestic, exportValue, total, market);
   }
   const domestic =
     nature === "gross"
@@ -44,13 +60,17 @@ export function amountFromRolItem(
     nature === "gross"
       ? Number(item.gross_revenue ?? domestic + exportValue)
       : Number(item.rol ?? domestic + exportValue);
-  if (market === "domestic") {
-    return { domestic, export: 0, total: domestic };
-  }
-  if (market === "export") {
-    return { domestic: 0, export: exportValue, total: exportValue };
-  }
-  return { domestic, export: exportValue, total };
+  return marketSplit(domestic, exportValue, total, market);
+}
+
+function quantityFromRolItem(
+  item: CommercialRolByProductItem,
+  market: "domestic" | "export" | "all",
+): { domestic: number; export: number; total: number } {
+  const domestic = Number(item.domestic_qty ?? 0);
+  const exportValue = Number(item.export_qty ?? 0);
+  const total = Number(item.qty ?? domestic + exportValue);
+  return marketSplit(domestic, exportValue, total, market);
 }
 
 export function mapRolByProductRows(
@@ -63,8 +83,10 @@ export function mapRolByProductRows(
   },
 ): PortfolioBillingByProductRow[] {
   const { nature, market, groupBy, metric = "value" } = options;
+  const showValue = includesValueMetric(metric);
   const rows: PortfolioBillingByProductRow[] = items.map((item, index) => {
-    const amounts = amountFromRolItem(item, nature, market, metric);
+    const amounts = amountFromRolItem(item, nature, market, "value");
+    const qty = quantityFromRolItem(item, market);
     const label =
       groupBy === "product_group"
         ? `${item.product_group || "—"} · ${item.product_name || item.product_group || "—"}`
@@ -75,7 +97,10 @@ export function mapRolByProductRows(
       domestic: amounts.domestic,
       export: amounts.export,
       total: amounts.total,
-      sharePct: metric === "quantity" ? null : (item.share_pct ?? null),
+      qtyDomestic: qty.domestic,
+      qtyExport: qty.export,
+      qtyTotal: qty.total,
+      sharePct: showValue ? (item.share_pct ?? null) : null,
       unit: item.unit ?? null,
       mixedUnits: Boolean(item.mixed_units),
     };
@@ -84,17 +109,36 @@ export function mapRolByProductRows(
   const sumDomestic = rows.reduce((acc, row) => acc + row.domestic, 0);
   const sumExport = rows.reduce((acc, row) => acc + row.export, 0);
   const sumTotal = rows.reduce((acc, row) => acc + row.total, 0);
+  const sumQtyDomestic = rows.reduce((acc, row) => acc + row.qtyDomestic, 0);
+  const sumQtyExport = rows.reduce((acc, row) => acc + row.qtyExport, 0);
+  const sumQtyTotal = rows.reduce((acc, row) => acc + row.qtyTotal, 0);
   const mixedUnits = rows.some((row) => row.mixedUnits);
   const units = new Set(
     rows.map((row) => (row.unit || "").trim()).filter(Boolean),
   );
+  if (!showValue) {
+    const qtyBase = sumQtyTotal;
+    for (const row of rows) {
+      row.sharePct =
+        qtyBase > 0 ? Math.round((row.qtyTotal * 1000) / qtyBase) / 10 : null;
+    }
+  }
   rows.push({
     id: "__total__",
     label: "Total",
     domestic: sumDomestic,
     export: sumExport,
     total: sumTotal,
-    sharePct: metric === "quantity" ? null : sumTotal > 0 ? 100 : null,
+    qtyDomestic: sumQtyDomestic,
+    qtyExport: sumQtyExport,
+    qtyTotal: sumQtyTotal,
+    sharePct: showValue
+      ? sumTotal > 0
+        ? 100
+        : null
+      : sumQtyTotal > 0
+        ? 100
+        : null,
     unit: mixedUnits || units.size !== 1 ? null : [...units][0] ?? null,
     mixedUnits: mixedUnits || units.size > 1,
     isTotal: true,

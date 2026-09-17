@@ -13,6 +13,8 @@ import {
   mergeSeriesWithPriorYear,
   shiftPeriodRangeByYears,
 } from "../../analytics/utils/periodShift";
+import type { PortfolioBillingMetric } from "../../../content/billingMetric";
+import { apiBillingMetric } from "../../../content/billingMetric";
 import type { CustomerSummary } from "../types/customerSummary";
 
 export type BillingSeriesCustomerOption = {
@@ -26,6 +28,7 @@ export type BillingSeriesChartPoint = CustomerBillingSeriesPoint & {
   value_prior?: number | null;
   value_prior_2?: number | null;
   value_prior_3?: number | null;
+  quantity?: number | null;
 };
 
 export type UseCustomerBillingSeriesResult = {
@@ -37,6 +40,7 @@ export type UseCustomerBillingSeriesResult = {
   loading: boolean;
   error: string | null;
   totalValue: number;
+  totalQuantity: number;
   coverage: { covered: number; total: number; failedBatches: number };
   reload: () => void;
 };
@@ -80,7 +84,7 @@ export type UseCustomerBillingSeriesOptions = {
   /** Overlays −1a…−3a (0–3). Preferir sobre comparePriorYear. */
   compareYears?: CompareYearsCount;
   nature?: "gross" | "net";
-  metric?: "value" | "quantity";
+  metric?: PortfolioBillingMetric;
   productCodes?: string[];
   productGroups?: string[];
   market?: "domestic" | "export";
@@ -160,13 +164,16 @@ export function useCustomerBillingSeries(
     setLoading(true);
     setError(null);
 
+    const apiMetric = apiBillingMetric(metric ?? "value");
+    const includeQuantityOverlay = metric === "both";
+
     const currentQuery = {
       months: startDate && endDate ? undefined : 12,
       startDate,
       endDate,
       granularity,
       nature,
-      metric,
+      metric: apiMetric,
       productCodes,
       productGroups,
       market,
@@ -186,16 +193,22 @@ export function useCustomerBillingSeries(
         endDate: range.end_date,
         granularity,
         nature,
-        metric,
+        metric: apiMetric,
         productCodes,
         productGroups,
         market,
         signal: controller.signal,
       });
     });
+    const quantityPromise = includeQuantityOverlay
+      ? fetchCustomerBillingSeries(pairs, {
+          ...currentQuery,
+          metric: "quantity",
+        })
+      : Promise.resolve(null);
 
-    void Promise.all([currentPromise, ...priorPromises])
-      .then(([currentPayload, ...priorPayloads]) => {
+    void Promise.all([currentPromise, quantityPromise, ...priorPromises])
+      .then(([currentPayload, quantityPayload, ...priorPayloads]) => {
         if (cancelled) return;
         let next: BillingSeriesChartPoint[] = currentPayload.points ?? [];
         priorPayloads.forEach((priorPayload, index) => {
@@ -206,6 +219,27 @@ export function useCustomerBillingSeries(
             [key]: p?.value ?? null,
           }));
         });
+        if (quantityPayload?.points) {
+          const qtyByMonth = new Map(
+            quantityPayload.points.map((point) => [
+              point.month,
+              Number(point.value) || 0,
+            ]),
+          );
+          const seen = new Set(next.map((point) => point.month));
+          next = next.map((point) => ({
+            ...point,
+            quantity: qtyByMonth.get(point.month) ?? 0,
+          }));
+          for (const point of quantityPayload.points) {
+            if (seen.has(point.month)) continue;
+            next.push({ ...point, value: 0, quantity: Number(point.value) || 0 });
+          }
+          next.sort((a, b) => {
+            const byDate = a.date_start.localeCompare(b.date_start);
+            return byDate || a.month.localeCompare(b.month);
+          });
+        }
         setPoints(next);
         setCoverage(currentPayload.coverage);
         setError(currentPayload.partialError);
@@ -247,6 +281,10 @@ export function useCustomerBillingSeries(
     () => displayedPoints.reduce((sum, point) => sum + (Number(point.value) || 0), 0),
     [displayedPoints],
   );
+  const totalQuantity = useMemo(
+    () => displayedPoints.reduce((sum, point) => sum + (Number(point.quantity) || 0), 0),
+    [displayedPoints],
+  );
 
   return {
     selectedKeys: effectiveSelectedKeys,
@@ -256,6 +294,7 @@ export function useCustomerBillingSeries(
     loading: enabled && fingerprint ? loading : false,
     error: enabled && fingerprint ? error : null,
     totalValue,
+    totalQuantity,
     coverage:
       enabled && fingerprint ? coverage : { covered: 0, total: 0, failedBatches: 0 },
     reload,

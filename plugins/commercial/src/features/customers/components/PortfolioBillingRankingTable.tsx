@@ -5,7 +5,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { runTabularExport } from "@delpi/plugin-ui/index";
 
-import { getPortfolioBillingRanking } from "../../../api/analyticsApi";
+import {
+  getPortfolioBillingRanking,
+  PORTFOLIO_MEMBERSHIP_SCOPE_MODE,
+} from "../../../api/analyticsApi";
 import {
   CommercialAvatar,
   CommercialCompareSparkline,
@@ -124,6 +127,7 @@ export function PortfolioBillingRankingTable({
         limit,
         order,
         nature: billingNature,
+        scope_mode: PORTFOLIO_MEMBERSHIP_SCOPE_MODE,
       },
       controller.signal,
     )

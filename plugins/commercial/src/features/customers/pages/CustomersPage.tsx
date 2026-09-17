@@ -30,10 +30,7 @@ import {
   isPortfolioBillingNatureToggleAvailable,
   type PortfolioBillingAmountNature,
 } from "../../../content/billingNature";
-import {
-  BILLING_METRIC_CONTENT,
-  type PortfolioBillingMetric,
-} from "../../../content/billingMetric";
+import { BILLING_METRIC_CONTENT } from "../../../content/billingMetric";
 import { CustomerBillingSeriesChart } from "../components/CustomerBillingSeriesChart";
 import { PortfolioBillingFiltersBar } from "../components/PortfolioBillingFiltersBar";
 import { PortfolioBillingByProductTable } from "../components/PortfolioBillingByProductTable";
@@ -536,8 +533,8 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                 value={billingMetric}
                 widthMode="content"
                 onChange={(value) => {
-                  if (value === "value" || value === "quantity") {
-                    setBillingMetric(value as PortfolioBillingMetric);
+                  if (value === "value" || value === "quantity" || value === "both") {
+                    setBillingMetric(value);
                   }
                 }}
                 options={[
@@ -548,6 +545,10 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                   {
                     value: "quantity",
                     label: BILLING_METRIC_CONTENT.quantity.shortLabel,
+                  },
+                  {
+                    value: "both",
+                    label: BILLING_METRIC_CONTENT.both.shortLabel,
                   },
                 ]}
               />

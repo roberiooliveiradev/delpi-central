@@ -350,6 +350,7 @@ export function CustomerAccountBillingChart({
                       payload: buildBillingSeriesExportPayload(chartData, {
                         title: chartTitle,
                         compareYears: comparePriorYear ? 1 : 0,
+                        metric: billingMetric,
                       }),
                     });
                   }}

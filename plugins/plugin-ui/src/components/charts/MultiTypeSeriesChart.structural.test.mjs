@@ -42,4 +42,11 @@ describe("MultiTypeSeriesChart (fonte)", () => {
     assert.match(src, /key=\{seriesOrderKey\}/);
     assert.match(src, /itemSorter=\{null\}/);
   });
+
+  it("expõe eixo Y secundário e linha para séries overlay", () => {
+    assert.match(src, /formatYSecondary\?:/);
+    assert.match(src, /axis\?: "primary" \| "secondary"/);
+    assert.match(src, /plotAs\?: "bar" \| "line"/);
+    assert.match(src, /yAxisId="right"/);
+  });
 });

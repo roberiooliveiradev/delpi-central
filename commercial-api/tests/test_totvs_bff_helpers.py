@@ -12,7 +12,7 @@ from commercial_app.interface.http.routes.totvs_bff_helpers import (
 )
 
 
-def _dummy_request():
+def _dummy_request(query_string: bytes = b""):
     from starlette.requests import Request
 
     scope = {
@@ -23,7 +23,7 @@ def _dummy_request():
         "scheme": "http",
         "path": "/",
         "raw_path": b"/",
-        "query_string": b"",
+        "query_string": query_string,
         "headers": [],
         "client": ("testclient", 50000),
         "server": ("testserver", 80),
@@ -157,3 +157,38 @@ def test_merge_account_code_ignores_selected_codes():
         selected_customer_codes="999",
     )
     assert params == {"search": "000001", "customer_codes": "000001"}
+
+
+def test_resolve_analytics_membership_mode_is_not_global(monkeypatch):
+    import commercial_app.interface.http.routes.totvs_bff_helpers as helpers
+
+    def fake_minha(request, *, seller_id=None, portfolio_id=None):
+        return CommercialCustomerScope(
+            unrestricted=False,
+            allowed_customers=frozenset({("100", "01")}),
+        )
+
+    monkeypatch.setattr(helpers, "resolve_minha_carteira_portfolio_scope", fake_minha)
+    scope = helpers.resolve_analytics_portfolio_scope(
+        _dummy_request(),
+        scope_mode="membership",
+    )
+    assert scope.unrestricted is False
+    assert scope.allowed_customers == frozenset({("100", "01")})
+
+
+def test_resolve_analytics_membership_from_query_string(monkeypatch):
+    import commercial_app.interface.http.routes.totvs_bff_helpers as helpers
+
+    def fake_minha(request, *, seller_id=None, portfolio_id=None):
+        return CommercialCustomerScope(
+            unrestricted=False,
+            allowed_customers=frozenset({("200", "01")}),
+        )
+
+    monkeypatch.setattr(helpers, "resolve_minha_carteira_portfolio_scope", fake_minha)
+    scope = helpers.resolve_analytics_portfolio_scope(
+        _dummy_request(b"scope_mode=membership"),
+    )
+    assert scope.unrestricted is False
+    assert scope.allowed_customers == frozenset({("200", "01")})

@@ -220,3 +220,35 @@ def test_open_orders_keeps_membership_filter() -> None:
     assert not scope.unrestricted
     assert scope.allows("100", "01")
     assert not scope.allows("999", "01")
+
+
+def test_constrain_unrestricted_unions_active_portfolios() -> None:
+    repo = MagicMock()
+    repo.list_portfolios.return_value = [
+        _portfolio(
+            id="p1",
+            customers=(SellerCustomerAssignment("100", "01", "A"),),
+        ),
+        _portfolio(
+            id="p2",
+            customers=(SellerCustomerAssignment("300", "02", "C"),),
+        ),
+    ]
+    service = ResolveCommercialCustomerScopeService(repo)
+    scope = service.constrain_unrestricted_to_active_portfolios()
+    assert not scope.unrestricted
+    assert scope.allows("100", "01")
+    assert scope.allows("300", "02")
+    assert not scope.allows("999", "01")
+    repo.list_portfolios.assert_called_once_with(active_only=True)
+
+
+def test_constrain_unrestricted_without_portfolios_is_empty() -> None:
+    repo = MagicMock()
+    repo.list_portfolios.return_value = []
+    service = ResolveCommercialCustomerScopeService(repo)
+    scope = service.constrain_unrestricted_to_active_portfolios()
+    assert not scope.unrestricted
+    assert scope.empty_portfolio is True
+    assert scope.allowed_customers == frozenset()
+    assert not scope.allows("100", "01")

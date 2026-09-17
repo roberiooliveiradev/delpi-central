@@ -250,7 +250,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Como vejo o histórico em quantidade (não em R$)?",
-          a: "Minha Carteira → Faturamento, Conta → Histórico (filtros) ou Conta → Evolução de compras: use o toggle Métrica R$ | Qtd. A série passa a usar quantidade fornecida (D2_QUANT). UMs mistas aparecem sem conversão automática.",
+          a: "Minha Carteira → Faturamento: use o toggle Métrica R$ | Qtd | Ambos. Ambos mostra R$ e quantidade no gráfico (eixos separados) e nas colunas do mix. Conta → Histórico e Evolução de compras permanecem R$ | Qtd. A quantidade é a fornecida (D2_QUANT); UMs mistas aparecem sem conversão automática.",
         },
         {
           q: "A linha de tendência distorce no mês corrente?",

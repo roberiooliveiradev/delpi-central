@@ -1,10 +1,12 @@
-/** Métrica da série/mix de faturamento — value (R$) ou quantity (qtd fornecida). */
+/** Métrica da série/mix de faturamento — value (R$), quantity (qtd) ou both. */
 
 import { formatCurrency, formatQuantity } from "../utils/format";
 
-export type PortfolioBillingMetric = "value" | "quantity";
+export type PortfolioBillingMetric = "value" | "quantity" | "both";
 
 export const DEFAULT_PORTFOLIO_BILLING_METRIC: PortfolioBillingMetric = "value";
+
+export const PORTFOLIO_BILLING_METRICS = ["value", "quantity", "both"] as const;
 
 export const BILLING_METRIC_CONTENT = {
   value: {
@@ -17,13 +19,34 @@ export const BILLING_METRIC_CONTENT = {
     label: "Quantidade",
     hint: "Série e mix em quantidade fornecida (D2_QUANT; líquido desconta devoluções). UMs mistas não são convertidas.",
   },
+  both: {
+    shortLabel: "Ambos",
+    label: "Valor e quantidade",
+    hint: "Mostra R$ e quantidade no gráfico (eixos separados) e nas colunas do mix.",
+  },
 } as const;
 
 export function normalizePortfolioBillingMetric(
   value: string | null | undefined,
 ): PortfolioBillingMetric {
   const raw = (value || "").trim().toLowerCase();
-  return raw === "quantity" ? "quantity" : DEFAULT_PORTFOLIO_BILLING_METRIC;
+  if (raw === "quantity" || raw === "both") return raw;
+  return DEFAULT_PORTFOLIO_BILLING_METRIC;
+}
+
+export function includesValueMetric(metric: PortfolioBillingMetric): boolean {
+  return metric === "value" || metric === "both";
+}
+
+export function includesQuantityMetric(metric: PortfolioBillingMetric): boolean {
+  return metric === "quantity" || metric === "both";
+}
+
+/** Métrica enviada à API de série (value | quantity). */
+export function apiBillingMetric(
+  metric: PortfolioBillingMetric,
+): "value" | "quantity" {
+  return metric === "quantity" ? "quantity" : "value";
 }
 
 export function billingMetricShortLabel(metric: PortfolioBillingMetric): string {

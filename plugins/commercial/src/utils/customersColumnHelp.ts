@@ -148,6 +148,10 @@ export const PORTFOLIO_BY_PRODUCT_COLUMN_HELP: Record<string, string> = {
   export: CM_HELP.customers.byProductColumns.export,
   total: CM_HELP.customers.byProductColumns.total,
   share: CM_HELP.customers.byProductColumns.share,
+  qtyDomestic: CM_HELP.customers.byProductColumns.qtyDomestic,
+  qtyExport: CM_HELP.customers.byProductColumns.qtyExport,
+  qtyTotal: CM_HELP.customers.byProductColumns.qtyTotal,
+  unit: CM_HELP.customers.byProductColumns.unit,
 };
 
 export const PORTFOLIO_ABC_COLUMN_HELP: Record<string, string> = {

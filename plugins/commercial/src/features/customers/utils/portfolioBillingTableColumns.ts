@@ -11,6 +11,10 @@ export const PORTFOLIO_BY_PRODUCT_COLUMN_CATALOG: readonly PortfolioBillingColum
   { key: "export", label: CUSTOMER_BILLING_CONTENT.colExport },
   { key: "total", label: CUSTOMER_BILLING_CONTENT.colTotal },
   { key: "share", label: CUSTOMER_BILLING_CONTENT.colShare },
+  { key: "qtyDomestic", label: CUSTOMER_BILLING_CONTENT.colDomesticQty },
+  { key: "qtyExport", label: CUSTOMER_BILLING_CONTENT.colExportQty },
+  { key: "qtyTotal", label: CUSTOMER_BILLING_CONTENT.colTotalQty },
+  { key: "unit", label: CUSTOMER_BILLING_CONTENT.colUnit },
 ] as const;
 
 export const PORTFOLIO_ABC_COLUMN_CATALOG: readonly PortfolioBillingColumnItem[] = [
@@ -31,7 +35,7 @@ export const PORTFOLIO_RANKING_COLUMN_CATALOG: readonly PortfolioBillingColumnIt
 ] as const;
 
 export const PORTFOLIO_BY_PRODUCT_COLUMNS_STORAGE_KEY =
-  "commercial:portfolio-billing-by-product:table-columns:v1";
+  "commercial:portfolio-billing-by-product:table-columns:v2";
 export const PORTFOLIO_BY_PRODUCT_FONT_STORAGE_KEY =
   "commercial:portfolio-billing-by-product:table-font-size:v1";
 

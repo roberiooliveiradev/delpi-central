@@ -45,7 +45,7 @@ describe("user manual page", () => {
     assert.match(catalog, /applies:/);
     assert.match(catalog, /Minha Carteira → ABC/);
     assert.match(catalog, /agregação SC\+ES pelo SI/);
-    assert.match(catalog, /Métrica R\$ \/ Qtd/);
+    assert.match(catalog, /Métrica R\$ \/ Qtd \/ Ambos/);
     assert.match(catalog, /Milheiro \/ Peças/);
     const page = readSrc("features/help/UserManualPage.tsx");
     assert.match(page, /USER_MANUAL_CONTENT/);

@@ -14,6 +14,7 @@ describe("usePortfolioBillingShare", () => {
     assert.match(source, /export function formatSharePct/);
     assert.match(source, /export function usePortfolioBillingShare/);
     assert.match(source, /getPortfolioBillingShare/);
+    assert.match(source, /PORTFOLIO_MEMBERSHIP_SCOPE_MODE/);
   });
 
   it("card reexporta helpers e consome o hook", () => {

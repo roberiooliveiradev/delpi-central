@@ -3,7 +3,10 @@
  */
 import { useEffect, useState } from "react";
 
-import { getPortfolioBillingShare } from "../../../api/analyticsApi";
+import {
+  getPortfolioBillingShare,
+  PORTFOLIO_MEMBERSHIP_SCOPE_MODE,
+} from "../../../api/analyticsApi";
 import { usePortfolioScope } from "../../../app/usePortfolioScope";
 import type { PortfolioBillingShareData } from "../../../types/analytics";
 import { formatCurrency } from "../../../utils/format";
@@ -72,6 +75,7 @@ export function usePortfolioBillingShare(
         branch: branch || undefined,
         seller_id: sellerId?.trim() || undefined,
         nature: nature || undefined,
+        scope_mode: PORTFOLIO_MEMBERSHIP_SCOPE_MODE,
       },
       controller.signal,
     )

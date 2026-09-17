@@ -315,9 +315,9 @@ export const USER_MANUAL_TERM_CATALOG: readonly UserManualTermGroup[] = [
         applies: "ROL na Visão geral · Natureza na Minha Carteira",
       },
       {
-        term: "Métrica R$ / Qtd",
+        term: "Métrica R$ / Qtd / Ambos",
         meaning:
-          "No Faturamento da Minha Carteira: R$ = valor (bruto/líquido); Qtd = quantidade fornecida na série e no mix. UMs mistas não são convertidas automaticamente.",
+          "No Faturamento da Minha Carteira: R$ = valor (bruto/líquido); Qtd = quantidade fornecida; Ambos = R$ e quantidade juntos no gráfico e no mix. UMs mistas não são convertidas automaticamente.",
         applies: "Minha Carteira → Faturamento",
       },
       {

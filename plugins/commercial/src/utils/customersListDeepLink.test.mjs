@@ -114,6 +114,30 @@ describe("customersListDeepLink", () => {
     );
   });
 
+  it("persiste billingMetric=both e quantity; inválido vira value", () => {
+    assert.equal(
+      parseCustomersListDeepLink("?billingMetric=both&panel=billing", TEAM_ACCESS)
+        .billingMetric,
+      "both",
+    );
+    assert.equal(
+      parseCustomersListDeepLink("?billingMetric=quantity&panel=billing", TEAM_ACCESS)
+        .billingMetric,
+      "quantity",
+    );
+    assert.equal(
+      parseCustomersListDeepLink("?billingMetric=weird", TEAM_ACCESS).billingMetric,
+      "value",
+    );
+    assert.equal(
+      buildCustomersListSearch(
+        { panel: "billing", billingMetric: "both" },
+        TEAM_ACCESS,
+      ),
+      "?panel=billing&billingMetric=both",
+    );
+  });
+
   it("mapeia focus=growth legado para tendência de alta", () => {
     assert.deepEqual(
       parseCustomersListDeepLink("?focus=growth", TEAM_ACCESS),

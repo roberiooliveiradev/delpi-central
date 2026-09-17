@@ -58,17 +58,52 @@ def resolve_portfolio_scope(
     )
 
 
-def resolve_analytics_portfolio_scope(
+ANALYTICS_SCOPE_MODE_MEMBERSHIP = "membership"
+
+
+def resolve_minha_carteira_portfolio_scope(
     request: Request,
     *,
     seller_id: str | None = None,
     portfolio_id: str | None = None,
 ) -> CommercialCustomerScope:
+    """Minha carteira: nunca consolidado TOTVS.
+
+    Vendedor: membership JWT. Manage/team sem filtro: união das carteiras ativas.
+    Com seller_id/portfolio_id: mesmas regras de ``resolve_portfolio_scope``.
+    """
+    scope = resolve_portfolio_scope(
+        request, seller_id=seller_id, portfolio_id=portfolio_id
+    )
+    if not (scope.unrestricted and scope.allowed_customers is None):
+        return scope
+    from commercial_app.composition.commercial_composer import (
+        build_resolve_commercial_customer_scope_service,
+    )
+
+    return (
+        build_resolve_commercial_customer_scope_service().constrain_unrestricted_to_active_portfolios()
+    )
+
+
+def resolve_analytics_portfolio_scope(
+    request: Request,
+    *,
+    seller_id: str | None = None,
+    portfolio_id: str | None = None,
+    scope_mode: str | None = None,
+) -> CommercialCustomerScope:
     """
     Analytics / Visão geral:
     - sem seller_id/portfolio_id → «Não filtrar» (TOTVS global, sem membership);
     - com ids → escopo das carteiras selecionadas (union / membership).
+    - ``scope_mode=membership`` → Minha carteira (nunca TOTVS global).
     """
+    mode = (scope_mode or request.query_params.get("scope_mode") or "").strip().lower()
+    if mode == ANALYTICS_SCOPE_MODE_MEMBERSHIP:
+        return resolve_minha_carteira_portfolio_scope(
+            request, seller_id=seller_id, portfolio_id=portfolio_id
+        )
     portfolio_ids = parse_portfolio_id_csv(portfolio_id, seller_id)
     if not portfolio_ids:
         return CommercialCustomerScope(

@@ -178,6 +178,22 @@ class ResolveCommercialCustomerScopeService:
             portfolio_id=None,
         )
 
+    def constrain_unrestricted_to_active_portfolios(self) -> CommercialCustomerScope:
+        """Minha carteira / manage sem filtro: união das carteiras ativas, nunca TOTVS global."""
+        portfolios = self._repository.list_portfolios(active_only=True)
+        if not portfolios:
+            return CommercialCustomerScope(
+                unrestricted=False,
+                allowed_customers=frozenset(),
+                empty_portfolio=True,
+                message=SellerPortfolioMessagesContentService.error(
+                    "emptyPortfolioCustomers"
+                ),
+            )
+        return self._union_portfolio_scopes(
+            [self._scope_from_portfolio(item) for item in portfolios]
+        )
+
     def _scope_from_owned_portfolio_id(
         self, *, user_id: str, portfolio_id: str
     ) -> CommercialCustomerScope:

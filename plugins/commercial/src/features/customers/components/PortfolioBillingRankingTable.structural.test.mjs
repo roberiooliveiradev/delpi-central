@@ -30,6 +30,7 @@ describe("PortfolioBillingRankingTable", () => {
     assert.match(source, /CommercialTableColumnVisibilityMenu/);
     assert.match(source, /enableColumnReorder/);
     assert.match(source, /filters: PortfolioBillingRankingFilters/);
+    assert.match(source, /PORTFOLIO_MEMBERSHIP_SCOPE_MODE/);
     assert.doesNotMatch(source, /customers-ranking-period/);
     assert.doesNotMatch(source, /CommercialSelectField/);
     assert.doesNotMatch(source, /apiDelpiUrl|API_DELPI|\/apps\/api-delpi/);
@@ -66,6 +67,8 @@ describe("PortfolioBillingRankingTable", () => {
     assert.match(page, /active=\{panel === "abc"\}/);
     assert.match(page, /active=\{panel === "ranking"\}/);
     assert.match(page, /billingNature=\{billingNature\}/);
+    assert.match(page, /customers-billing-metric/);
+    assert.match(page, /value: "both"/);
     assert.match(page, /filters=\{rankingFilters\}/);
   });
 });

@@ -36,6 +36,8 @@ import {
   billingMetricShortLabel,
   formatChartMetricValue,
   formatMetricTotal,
+  includesQuantityMetric,
+  includesValueMetric,
   type PortfolioBillingMetric,
 } from "../../../content/billingMetric";
 import {
@@ -57,6 +59,7 @@ const CHART_HEIGHT = 320;
 
 /** Accent do Portal — acompanha tema claro/escuro. */
 const SERIES_COLOR = "var(--cm-accent)";
+const QUANTITY_SERIES_COLOR = "var(--chart-2, #38bdf8)";
 const PRIOR_SERIES_COLOR = "var(--chart-3, #94a3b8)";
 const PRIOR_2_COLOR = "var(--chart-4, #64748b)";
 const PRIOR_3_COLOR = "var(--chart-5, #475569)";
@@ -172,6 +175,7 @@ export function CustomerBillingSeriesChart({
     loading,
     error,
     totalValue,
+    totalQuantity,
     coverage,
     reload,
   } = useCustomerBillingSeries(customers, {
@@ -189,6 +193,9 @@ export function CustomerBillingSeriesChart({
     onSelectedKeysChange: filters.setSelectedCustomerKeys,
   });
 
+  const showValue = includesValueMetric(billingMetric);
+  const showQuantity = includesQuantityMetric(billingMetric);
+
   const chartData = useMemo(
     () =>
       points.map((point) => ({
@@ -200,6 +207,7 @@ export function CustomerBillingSeriesChart({
           point.value_prior_2 == null ? null : Number(point.value_prior_2) || 0,
         faturamento_prior_3:
           point.value_prior_3 == null ? null : Number(point.value_prior_3) || 0,
+        quantidade: Number(point.quantity) || 0,
         _bucketFraction: resolveCalendarBucketFraction(
           point.date_start,
           point.date_end,
@@ -209,33 +217,48 @@ export function CustomerBillingSeriesChart({
   );
 
   const baseBars = useMemo((): MultiTypeSeriesSpec[] => {
-    const seriesName =
-      billingMetric === "quantity"
-        ? "Quantidade fornecida"
-        : appendBillingNatureContext("Faturamento", billingNature);
-    const list: MultiTypeSeriesSpec[] = [
-      {
+    const valueName = appendBillingNatureContext("Faturamento", billingNature);
+    const list: MultiTypeSeriesSpec[] = [];
+    if (showValue) {
+      list.push({
         dataKey: "faturamento",
-        name: seriesName,
+        name: valueName,
         fill: SERIES_COLOR,
         trendSource: true,
-      },
-    ];
-    if (compareYears >= 1) {
+      });
+    }
+    if (showQuantity && billingMetric === "quantity") {
+      list.push({
+        dataKey: "faturamento",
+        name: "Quantidade fornecida",
+        fill: SERIES_COLOR,
+        trendSource: true,
+      });
+    }
+    if (showQuantity && billingMetric === "both") {
+      list.push({
+        dataKey: "quantidade",
+        name: "Quantidade fornecida",
+        fill: QUANTITY_SERIES_COLOR,
+        axis: "secondary",
+        plotAs: "line",
+      });
+    }
+    if (showValue && compareYears >= 1) {
       list.push({
         dataKey: "faturamento_prior",
         name: "Ano ant.",
         fill: PRIOR_SERIES_COLOR,
       });
     }
-    if (compareYears >= 2) {
+    if (showValue && compareYears >= 2) {
       list.push({
         dataKey: "faturamento_prior_2",
         name: "−2 anos",
         fill: PRIOR_2_COLOR,
       });
     }
-    if (compareYears >= 3) {
+    if (showValue && compareYears >= 3) {
       list.push({
         dataKey: "faturamento_prior_3",
         name: "−3 anos",
@@ -243,7 +266,7 @@ export function CustomerBillingSeriesChart({
       });
     }
     return list;
-  }, [billingMetric, billingNature, compareYears]);
+  }, [billingMetric, billingNature, compareYears, showQuantity, showValue]);
 
   const bars = useMemo(
     () => applySeriesFillPreferences(baseBars, preferences.seriesFills),
@@ -253,6 +276,7 @@ export function CustomerBillingSeriesChart({
   const hasValues = chartData.some(
     (point) =>
       point.faturamento > 0 ||
+      point.quantidade > 0 ||
       (yoyActive &&
         ((point.faturamento_prior != null && point.faturamento_prior > 0) ||
           (point.faturamento_prior_2 != null && point.faturamento_prior_2 > 0) ||
@@ -268,10 +292,17 @@ export function CustomerBillingSeriesChart({
   const chartTitle =
     billingMetric === "quantity"
       ? `Quantidade fornecida — ${periodLabel}`
-      : appendBillingNatureContext(`Faturamento — ${periodLabel}`, billingNature);
+      : billingMetric === "both"
+        ? appendBillingNatureContext(`Faturamento e quantidade — ${periodLabel}`, billingNature)
+        : appendBillingNatureContext(`Faturamento — ${periodLabel}`, billingNature);
   const isAllCustomers = filters.selectedCustomerKeys.length === 0;
-  const formatValue = (value: number) => formatChartMetricValue(value, billingMetric);
-  const totalLabel = formatMetricTotal(totalValue, billingMetric);
+  const formatValue = (value: number) =>
+    formatChartMetricValue(value, billingMetric === "quantity" ? "quantity" : "value");
+  const formatQuantityAxis = (value: number) => formatChartMetricValue(value, "quantity");
+  const totalLabel =
+    billingMetric === "both"
+      ? `${formatMetricTotal(totalValue, "value")} · ${formatMetricTotal(totalQuantity, "quantity")}`
+      : formatMetricTotal(totalValue, billingMetric === "quantity" ? "quantity" : "value");
 
   return (
     <div className="cm-billing-series-chart">
@@ -283,7 +314,7 @@ export function CustomerBillingSeriesChart({
             ? "Atualizando série…"
             : hasValues
               ? `Total no período · ${filterLabel}: ${totalLabel} · ${metricLabel}${
-                  billingMetric === "value" ? ` · ${natureLabel}` : ""
+                  showValue ? ` · ${natureLabel}` : ""
                 }`
               : undefined
         }
@@ -384,6 +415,7 @@ export function CustomerBillingSeriesChart({
                     payload: buildBillingSeriesExportPayload(chartData, {
                       title: chartTitle,
                       compareYears,
+                      metric: billingMetric,
                     }),
                   });
                 }}
@@ -398,9 +430,12 @@ export function CustomerBillingSeriesChart({
               height={CHART_HEIGHT}
               showTrend={showTrend}
               incompleteBucketMode={incompleteBucketMode}
-              showLegend={yoyActive || showTrend}
+              showLegend={yoyActive || showTrend || billingMetric === "both"}
               trendSeriesName={CUSTOMER_BILLING_CONTENT.trendLineSeriesName}
               formatY={formatValue}
+              formatYSecondary={
+                billingMetric === "both" ? formatQuantityAxis : undefined
+              }
               formatTooltipValue={formatValue}
             />
           </ChartViewShell>

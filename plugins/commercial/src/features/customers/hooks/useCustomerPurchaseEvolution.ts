@@ -5,6 +5,7 @@ import {
   type CustomerBillingSeriesPoint,
 } from "../../../api/customerBillingSeriesApi";
 import type { PortfolioBillingMetric } from "../../../content/billingMetric";
+import { apiBillingMetric } from "../../../content/billingMetric";
 
 export type PurchaseEvolutionPoint = {
   periodo: string;
@@ -68,7 +69,7 @@ export function useCustomerPurchaseEvolution(
 
     void fetchCustomerBillingSeries(
       [{ customer_code: identity.code, customer_store: identity.store }],
-      { months: fetchMonths, metric, signal: controller.signal },
+      { months: fetchMonths, metric: apiBillingMetric(metric), signal: controller.signal },
     )
       .then((payload) => {
         if (cancelled) return;

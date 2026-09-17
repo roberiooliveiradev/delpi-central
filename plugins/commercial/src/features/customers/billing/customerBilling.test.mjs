@@ -195,6 +195,7 @@ describe("CustomerDetailPage billing (fonte)", () => {
     assert.doesNotMatch(filters, /hintPlacement="tooltip"/);
     assert.match(chart, /metric:\s*billingMetric/);
     assert.match(chart, /Quantidade fornecida/);
+    assert.doesNotMatch(filters, /value: "both"/);
   });
 
   it("painel Conta Histórico expõe YoY nas Opções do gráfico", () => {

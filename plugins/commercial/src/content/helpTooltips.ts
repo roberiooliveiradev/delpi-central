@@ -308,11 +308,11 @@ export const CM_HELP = {
     rankingLimit:
       "Quantidade máxima de linhas no ranking (10, 15, 20 ou 50).",
     billingSeries:
-      "Soma do faturamento no período (bruto de nota ou líquido ROL). Os filtros do hero (cliente, família, produto e mercado) também restringem este gráfico — com produto/família/mercado o bruto usa valor de linha (D2_TOTAL), alinhado ao mix. Em Cores, altere a cor de cada série; «Restaurar padrão» limpa a escolha neste navegador.",
+      "Soma do faturamento no período (bruto de nota ou líquido ROL). Com Métrica Ambos, colunas em R$ e linha de quantidade no eixo direito. Os filtros do hero (cliente, família, produto e mercado) também restringem este gráfico — com produto/família/mercado o bruto usa valor de linha (D2_TOTAL), alinhado ao mix. Em Cores, altere a cor de cada série; «Restaurar padrão» limpa a escolha neste navegador.",
     billingNature:
       "Bruto = valor de nota fiscal na série e Fat.12m (ranking/share usam receita bruta do envelope). Líquido = mesma fórmula ROL da Visão geral (impostos e devoluções). Aplica a Fat.12m, tendência, gráfico, mix, ABC, ranking e share.",
     billingMetric:
-      "R$ = valor (bruto ou líquido conforme Natureza). Qtd = quantidade fornecida no período (série, mix por produto, Histórico da Conta e Evolução de compras). UMs mistas não são convertidas automaticamente.",
+      "R$ = valor (bruto ou líquido conforme Natureza). Qtd = quantidade fornecida (D2_QUANT). Ambos = R$ e quantidade juntos no gráfico (eixos separados) e nas colunas do mix. Na Conta, o toggle permanece R$ | Qtd. UMs mistas não são convertidas automaticamente.",
     quantityDisplayMode:
       "Milheiro mantém a UM da nota (ex.: MI). Peças converte só UM=MI (1 MI = 1000 PC) — só apresentação, sem mudar a API.",
     billingSeriesPeriod:
@@ -330,9 +330,9 @@ export const CM_HELP = {
     billingFilterProduct:
       "Código de produto (D2_COD). Filtra o mix e o ABC. Vazio = todos os produtos do recorte.",
     billingFilterMarket:
-      "Mercado interno (CFOP 5/6) ou externo/exportação (CFOP 7). Vazio = ambos. Com um mercado só, a tabela de produto mostra uma coluna de valor.",
+      "Mercado interno (CFOP 5/6) ou externo/exportação (CFOP 7). Vazio = ambos. Com um mercado só, a tabela de produto mostra a coluna de valor (e a de quantidade, se a métrica incluir Qtd).",
     billingByProduct:
-      "Receita operacional (bruto ou líquido conforme a Natureza) agregada por produto ou família, com split interno/externo quando o mercado não está filtrado. Personalize colunas e exporte.",
+      "Receita operacional (bruto ou líquido conforme a Natureza) agregada por produto ou família, com split interno/externo quando o mercado não está filtrado. Métrica Ambos mostra colunas de R$ e de quantidade. Personalize colunas e exporte.",
     billingByProductColumns:
       "Escolha a ordem e as colunas do mix de produto. A preferência fica salva neste navegador.",
     billingAbc:
@@ -346,7 +346,11 @@ export const CM_HELP = {
       domestic: "Receita operacional de mercado interno (CFOP 5/6) no período.",
       export: "Receita operacional de exportação (CFOP 7) no período.",
       total: "Soma interno + externo (ou o valor do mercado filtrado).",
-      share: "Participação percentual da linha no total do recorte.",
+      share: "Participação percentual da linha no total do recorte (em R$ quando a métrica inclui valor; em qtd só no modo Qtd).",
+      qtyDomestic: "Quantidade fornecida no mercado interno (CFOP 5/6) no período.",
+      qtyExport: "Quantidade fornecida na exportação (CFOP 7) no período.",
+      qtyTotal: "Quantidade fornecida no recorte (interno + externo, ou o mercado filtrado).",
+      unit: "Unidade de medida da nota. «mistas» indica UMs diferentes na linha ou no total.",
     },
     abcColumns: {
       customer: "Cliente da carteira com avatar e link para a Conta 360.",

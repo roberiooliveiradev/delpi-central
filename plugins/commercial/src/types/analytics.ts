@@ -34,6 +34,11 @@ export type AnalyticsFilterParams = {
   product_groups?: string;
   /** domestic | export */
   market?: "domestic" | "export";
+  /**
+   * Minha carteira: BFF aplica membership (nunca consolidado TOTVS).
+   * Omitido = analytics/Visão geral («Não filtrar»).
+   */
+  scope_mode?: "membership";
 };
 
 export type RolTargetData = DashboardGoalFields & {

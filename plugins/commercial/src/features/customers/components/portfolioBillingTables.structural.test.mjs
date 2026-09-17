@@ -80,4 +80,50 @@ describe("Portfolio billing tables — estrutural", () => {
     assert.doesNotMatch(filterBar, /ActionButton variant="ghost" onClick=\{onReset\}/);
     assert.doesNotMatch(filterBar, /RotateCcw/);
   });
+
+  it("mix/ABC/ranking usam membership da carteira, não o consolidado TOTVS", () => {
+    const byProduct = readFileSync(
+      join(here, "PortfolioBillingByProductTable.tsx"),
+      "utf8",
+    );
+    const abc = readFileSync(join(here, "PortfolioBillingAbcTable.tsx"), "utf8");
+    const ranking = readFileSync(
+      join(here, "PortfolioBillingRankingTable.tsx"),
+      "utf8",
+    );
+    const share = readFileSync(
+      join(here, "../hooks/usePortfolioBillingShare.ts"),
+      "utf8",
+    );
+    const dashboard = readFileSync(
+      join(here, "../../analytics/hooks/useAnalyticsDashboard.ts"),
+      "utf8",
+    );
+    assert.match(byProduct, /PORTFOLIO_MEMBERSHIP_SCOPE_MODE/);
+    assert.match(abc, /PORTFOLIO_MEMBERSHIP_SCOPE_MODE/);
+    assert.match(ranking, /PORTFOLIO_MEMBERSHIP_SCOPE_MODE/);
+    assert.match(share, /PORTFOLIO_MEMBERSHIP_SCOPE_MODE/);
+    assert.doesNotMatch(dashboard, /PORTFOLIO_MEMBERSHIP_SCOPE_MODE/);
+  });
+
+  it("mix mostra colunas de quantidade quando a métrica inclui qtd", () => {
+    const byProduct = readFileSync(
+      join(here, "PortfolioBillingByProductTable.tsx"),
+      "utf8",
+    );
+    assert.match(byProduct, /includesQuantityMetric/);
+    assert.match(byProduct, /colDomesticQty/);
+    assert.match(byProduct, /billingMetric === "both"/);
+  });
+
+  it("gráfico Faturamento plota R$ e quantidade no modo ambos", () => {
+    const chart = readFileSync(
+      join(here, "CustomerBillingSeriesChart.tsx"),
+      "utf8",
+    );
+    assert.match(chart, /billingMetric === "both"/);
+    assert.match(chart, /axis: "secondary"/);
+    assert.match(chart, /formatYSecondary/);
+    assert.match(chart, /QUANTITY_SERIES_COLOR/);
+  });
 });

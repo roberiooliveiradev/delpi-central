@@ -30,6 +30,10 @@ export type MultiTypeSeriesSpec = {
   fill: string;
   /** OLS trend source (column/line/area only). */
   trendSource?: boolean;
+  /** Eixo Y direito para escalas independentes (ex.: R$ vs quantidade). */
+  axis?: "primary" | "secondary";
+  /** No gráfico de colunas, série secundária pode ser linha. */
+  plotAs?: "bar" | "line";
 };
 
 export type MultiTypeSeriesChartProps = {
@@ -48,6 +52,7 @@ export type MultiTypeSeriesChartProps = {
   bucketFractionKey?: string;
   trendSeriesName?: string;
   formatY?: (value: number) => string;
+  formatYSecondary?: (value: number) => string;
   formatTooltipValue?: (value: number) => string;
   showLegend?: boolean;
   /**
@@ -121,6 +126,7 @@ export function MultiTypeSeriesChart({
   bucketFractionKey = "_bucketFraction",
   trendSeriesName = "Tendência",
   formatY = defaultFormatY,
+  formatYSecondary,
   formatTooltipValue,
   showLegend = true,
   showValueLabels = false,
@@ -165,11 +171,28 @@ export function MultiTypeSeriesChart({
   ]);
 
   const tooltipValue = formatTooltipValue ?? formatY;
+  const secondaryFormat = formatYSecondary ?? formatY;
+  const seriesByKey = useMemo(
+    () => new Map(series.map((entry) => [entry.dataKey, entry])),
+    [series],
+  );
+  const hasSecondaryAxis = series.some((entry) => entry.axis === "secondary");
+  const dualAxisMargin = hasSecondaryAxis
+    ? { right: Math.max(margin.right ?? 0, 56) }
+    : {};
 
-  const formatTooltip = (value: unknown, name: unknown): [string, string] => [
-    value == null || Number.isNaN(Number(value)) ? "—" : tooltipValue(Number(value)),
-    String(name ?? ""),
-  ];
+  const formatTooltip = (value: unknown, name: unknown, item: unknown): [string, string] => {
+    const dataKey =
+      item && typeof item === "object" && "dataKey" in item
+        ? String((item as { dataKey?: unknown }).dataKey ?? "")
+        : "";
+    const spec = seriesByKey.get(dataKey);
+    const format = spec?.axis === "secondary" ? secondaryFormat : tooltipValue;
+    return [
+      value == null || Number.isNaN(Number(value)) ? "—" : format(Number(value)),
+      String(name ?? ""),
+    ];
+  };
 
   const handleBarCategoryClick = (bar: unknown) => {
     if (!onCategoryClick) return;
@@ -184,6 +207,7 @@ export function MultiTypeSeriesChart({
       ? trendSources.map((source) => (
           <Line
             key={`_trend_${source.dataKey}`}
+            yAxisId={hasSecondaryAxis ? "left" : undefined}
             type="linear"
             dataKey={`_trend_${source.dataKey}`}
             name={
@@ -301,10 +325,12 @@ export function MultiTypeSeriesChart({
   }
 
   if (chartType === "line") {
-    const lineMargin =
-      showValueLabels && series.length
+    const lineMargin = {
+      ...(showValueLabels && series.length
         ? { ...margin, top: Math.max(margin.top ?? 0, 28) }
-        : margin;
+        : margin),
+      ...dualAxisMargin,
+    };
     const pointLabels = (show: boolean) => barValueLabels(show, formatY, "top");
 
     return (
@@ -317,10 +343,20 @@ export function MultiTypeSeriesChart({
             interval="preserveStartEnd"
           />
           <YAxis
+            yAxisId={hasSecondaryAxis ? "left" : undefined}
             width={88}
             tick={{ fontSize: 12 }}
             tickFormatter={(value) => formatY(Number(value))}
           />
+          {hasSecondaryAxis ? (
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              width={72}
+              tick={{ fontSize: 12 }}
+              tickFormatter={(value) => secondaryFormat(Number(value))}
+            />
+          ) : null}
           <Tooltip
             formatter={formatTooltip}
             labelFormatter={(label) => String(label)}
@@ -330,6 +366,13 @@ export function MultiTypeSeriesChart({
           {series.map((entry) => (
             <Line
               key={entry.dataKey}
+              yAxisId={
+                hasSecondaryAxis
+                  ? entry.axis === "secondary"
+                    ? "right"
+                    : "left"
+                  : undefined
+              }
               type="monotone"
               dataKey={entry.dataKey}
               name={entry.name}
@@ -350,7 +393,7 @@ export function MultiTypeSeriesChart({
   if (chartType === "area") {
     return (
       <StableResponsiveContainer key={seriesOrderKey} width="100%" height={height}>
-        <ComposedChart data={chartData} margin={margin}>
+        <ComposedChart data={chartData} margin={{ ...margin, ...dualAxisMargin }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis
             dataKey={categoryKey}
@@ -359,30 +402,65 @@ export function MultiTypeSeriesChart({
             tickLine={false}
           />
           <YAxis
+            yAxisId={hasSecondaryAxis ? "left" : undefined}
             width={88}
             tick={{ fontSize: 12 }}
             tickFormatter={(value) => formatY(Number(value))}
             tickLine={false}
             axisLine={false}
           />
+          {hasSecondaryAxis ? (
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              width={72}
+              tick={{ fontSize: 12 }}
+              tickFormatter={(value) => secondaryFormat(Number(value))}
+              tickLine={false}
+              axisLine={false}
+            />
+          ) : null}
           <Tooltip
             formatter={formatTooltip}
             labelFormatter={(label) => String(label)}
           />
           {/* null: ordem do array `series` (default Recharts ordena por label e desalinha das barras) */}
           {showLegend ? <Legend itemSorter={null} /> : null}
-          {series.map((entry) => (
-            <Area
-              key={entry.dataKey}
-              type="monotone"
-              dataKey={entry.dataKey}
-              name={entry.name}
-              stroke={entry.fill}
-              fill={entry.fill}
-              fillOpacity={0.25}
-              strokeWidth={2}
-            />
-          ))}
+          {series.map((entry) => {
+            const axisId = hasSecondaryAxis
+              ? entry.axis === "secondary"
+                ? "right"
+                : "left"
+              : undefined;
+            if (entry.plotAs === "line" || entry.axis === "secondary") {
+              return (
+                <Line
+                  key={entry.dataKey}
+                  yAxisId={axisId}
+                  type="monotone"
+                  dataKey={entry.dataKey}
+                  name={entry.name}
+                  stroke={entry.fill}
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                  connectNulls
+                />
+              );
+            }
+            return (
+              <Area
+                key={entry.dataKey}
+                yAxisId={axisId}
+                type="monotone"
+                dataKey={entry.dataKey}
+                name={entry.name}
+                stroke={entry.fill}
+                fill={entry.fill}
+                fillOpacity={0.25}
+                strokeWidth={2}
+              />
+            );
+          })}
           {trendLines}
         </ComposedChart>
       </StableResponsiveContainer>
@@ -391,10 +469,13 @@ export function MultiTypeSeriesChart({
 
   // column | bar | stacked_bar
   const stackId = chartType === "stacked_bar" ? "stack" : undefined;
-  const plotMargin =
-    showValueLabels && !stackId
-      ? { ...margin, top: Math.max(margin.top ?? 0, 28) }
-      : margin;
+  const plotMargin = {
+    ...margin,
+    ...dualAxisMargin,
+    ...(showValueLabels && !stackId
+      ? { top: Math.max(margin.top ?? 0, 28) }
+      : {}),
+  };
 
   return (
     <StableResponsiveContainer key={seriesOrderKey} width="100%" height={height}>
@@ -407,12 +488,24 @@ export function MultiTypeSeriesChart({
           tickLine={false}
         />
         <YAxis
+          yAxisId="left"
           width={88}
           tick={{ fontSize: 12 }}
           tickFormatter={(value) => formatY(Number(value))}
           tickLine={false}
           axisLine={false}
         />
+        {hasSecondaryAxis ? (
+          <YAxis
+            yAxisId="right"
+            orientation="right"
+            width={72}
+            tick={{ fontSize: 12 }}
+            tickFormatter={(value) => secondaryFormat(Number(value))}
+            tickLine={false}
+            axisLine={false}
+          />
+        ) : null}
         <Tooltip
             formatter={formatTooltip}
             labelFormatter={(label) => String(label)}
@@ -420,11 +513,29 @@ export function MultiTypeSeriesChart({
         {/* null: ordem do array `series` (default Recharts ordena por label e desalinha das barras) */}
           {showLegend ? <Legend itemSorter={null} /> : null}
         {series.map((entry, index) => {
+          const axisId = entry.axis === "secondary" ? "right" : "left";
+          const asLine = entry.plotAs === "line" || entry.axis === "secondary";
+          if (asLine) {
+            return (
+              <Line
+                key={entry.dataKey}
+                yAxisId={axisId}
+                type="monotone"
+                dataKey={entry.dataKey}
+                name={entry.name}
+                stroke={entry.fill}
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                connectNulls
+              />
+            );
+          }
           const labelThisBar =
             showValueLabels && (!stackId || index === series.length - 1);
           return (
             <Bar
               key={entry.dataKey}
+              yAxisId={axisId}
               dataKey={entry.dataKey}
               name={entry.name}
               fill={entry.fill}

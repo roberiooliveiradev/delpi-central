@@ -26,6 +26,9 @@ import { commercialApiUrl, httpGet } from "./httpClient";
 /** BFF commercial-api — membership/seller_id no servidor; TOTVS via gateway. */
 const ANALYTICS_PATH = "/analytics";
 
+/** Minha carteira: BFF restringe ao membership, não ao consolidado TOTVS. */
+export const PORTFOLIO_MEMBERSHIP_SCOPE_MODE = "membership" as const;
+
 function buildQuery(
   params: AnalyticsFilterParams & {
     granularity?: ChartGranularity;
@@ -71,6 +74,9 @@ function buildQuery(
   }
   if (params.market === "domestic" || params.market === "export") {
     searchParams.set("market", params.market);
+  }
+  if (params.scope_mode === PORTFOLIO_MEMBERSHIP_SCOPE_MODE) {
+    searchParams.set("scope_mode", PORTFOLIO_MEMBERSHIP_SCOPE_MODE);
   }
   const query = searchParams.toString();
   return query ? `?${query}` : "";
@@ -232,6 +238,9 @@ export function getCommercialRolByCustomer(
   }
   if (params.market === "domestic" || params.market === "export") {
     searchParams.set("market", params.market);
+  }
+  if (params.scope_mode === PORTFOLIO_MEMBERSHIP_SCOPE_MODE) {
+    searchParams.set("scope_mode", PORTFOLIO_MEMBERSHIP_SCOPE_MODE);
   }
   if (params.limit != null) searchParams.set("limit", String(params.limit));
   if (params.include_others != null) {
