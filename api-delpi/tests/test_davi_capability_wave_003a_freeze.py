@@ -69,14 +69,15 @@ def _actions() -> list[TechnicalAction]:
     )
 
 
-def test_runtime_eligible_remains_thirteen() -> None:
+def test_runtime_eligible_is_fifteen_after_wave3a() -> None:
     allow = load_external_read_allowlist()
-    assert allow.get("version") == 7
+    assert allow.get("version") == 8
     eligible = {a.operation_id for a in _actions() if a.executable}
-    assert len(eligible) == 13
+    assert len(eligible) == 15
     assert set(CURRENT_ELIGIBLE) <= eligible
-    for op in WAVE3A_OPS:
-        assert op not in eligible
+    for op in ("get_product_guide", "get_product_parents"):
+        assert op in eligible
+    assert "get_product_raw_material_set_shortages" not in eligible
 
 
 def test_mcp_tools_remain_three() -> None:
@@ -89,10 +90,13 @@ def test_mcp_tools_remain_three() -> None:
     ] == MCP_TOOLS
 
 
-def test_allowlist_operations_unchanged_from_wave2_set() -> None:
+def test_allowlist_contains_wave3a_ops_plus_prior_thirteen() -> None:
     allow = load_external_read_allowlist()
     ids = [o["operationId"] for o in allow["operations"]]
-    assert ids == CURRENT_ELIGIBLE
+    assert set(CURRENT_ELIGIBLE) <= set(ids)
+    assert "get_product_guide" in ids
+    assert "get_product_parents" in ids
+    assert len(ids) == 15
 
 
 def test_wave3a_ops_exist_in_openapi_and_are_get() -> None:
@@ -107,7 +111,7 @@ def test_wave3a_ops_exist_in_openapi_and_are_get() -> None:
 def test_source_validation_passes() -> None:
     result = validate_source()
     assert result["ok"] is True
-    assert result["eligibleCount"] == 13
+    assert result["eligibleCount"] == 15
     assert all(result["openapiPresent"].values())
     assert all(result["authz"].values())
 
@@ -256,18 +260,16 @@ def test_where_used_aliases_avoid_bare_structure_tokens() -> None:
     assert "RECURSIVE" in where["directOrRecursive"]
 
 
-def test_no_wave3a_operation_became_executable() -> None:
+def test_wave3a_operations_are_executable_and_shortages_not() -> None:
     allow = load_external_read_allowlist()
-    blocked = {
-        item.get("operationId")
-        for item in allow.get("explicitlyNotApproved") or []
-        if isinstance(item, dict)
-    }
-    # Wave 3A ops are simply absent from allowlist operations (not necessarily blocked list)
     eligible = {a.operation_id for a in _actions() if a.executable}
-    for op in WAVE3A_OPS:
-        assert op not in eligible
-        assert op not in {o["operationId"] for o in allow["operations"]}
+    for op in ("get_product_guide", "get_product_parents"):
+        assert op in eligible
+        assert op in {o["operationId"] for o in allow["operations"]}
+    assert "get_product_raw_material_set_shortages" not in eligible
+    assert "get_product_raw_material_set_shortages" not in {
+        o["operationId"] for o in allow["operations"]
+    }
 
 
 def test_historical_wave_artifacts_untouched_by_presence() -> None:
@@ -275,13 +277,15 @@ def test_historical_wave_artifacts_untouched_by_presence() -> None:
         assert (_API_ROOT / rel).exists()
 
 
-def test_freeze_does_not_require_runtime_file_edits() -> None:
-    """Sanity: runtime hashes readable; freeze task must not have changed them in-test."""
-    before = {rel: _sha256(_API_ROOT / rel) for rel in _RUNTIME_FILES}
+def test_freeze_artifact_hashes_stable_under_load() -> None:
+    """Sanity: loading freeze/inventory helpers does not mutate freeze artifacts."""
+    freeze_rel = "docs/integrations/evidence/davi-capability-wave-003a-freeze.json"
+    inv_rel = "docs/integrations/evidence/davi-capability-wave-003a-inventory.json"
+    before = {rel: _sha256(_API_ROOT / rel) for rel in (freeze_rel, inv_rel)}
     _ = load_freeze()
     _ = load_inventory()
     _ = validate_source()
-    after = {rel: _sha256(_API_ROOT / rel) for rel in _RUNTIME_FILES}
+    after = {rel: _sha256(_API_ROOT / rel) for rel in (freeze_rel, inv_rel)}
     assert before == after
 
 

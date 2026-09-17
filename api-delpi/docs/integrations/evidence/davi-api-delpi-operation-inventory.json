@@ -2,17 +2,16 @@
   "source": "openapi_baseline.json",
   "baseline_version": "3",
   "baseline_operation_count": 703,
-  "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-002",
+  "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-003A",
   "TOTAL_OPERATIONS": 703,
   "TOTAL_GET": 506,
   "TOTAL_WRITE_VERBS": 197,
-  "DAVI_ELIGIBLE_READ": 13,
-  "ELIGIBLE_BEFORE": 10,
-  "ELIGIBLE_AFTER": 13,
+  "DAVI_ELIGIBLE_READ": 15,
+  "ELIGIBLE_BEFORE": 13,
+  "ELIGIBLE_AFTER": 15,
   "NEWLY_ELIGIBLE": [
-    "get_product_last_purchase",
-    "get_product_pricing",
-    "get_product_purchase_price_history"
+    "get_product_guide",
+    "get_product_parents"
   ],
   "REMOVED_ELIGIBLE": [],
   "INVENTORY_DELTA": {
@@ -25,12 +24,12 @@
     "note": "Delta vs last committed inventory artifact (HEAD)"
   },
   "COVERAGE_DECISION": {
-    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-002",
-    "decision": "PROMOTE_PRODUCT_ECONOMIC_READ_WAVE_2",
-    "reason": "Promote get_product_pricing, get_product_purchase_price_history and get_product_last_purchase as governed READ capabilities behind the existing three MCP broker tools. Eligible READ 10→13. Cost impact simulation remains PREPARE/DEFER_FROM_READ_WAVE and is not executable. AuthZ policy unchanged (DAVI-READ-AUTHZ-REBASELINE-001). Global economic quarantine tokens remain; ownership is via precise semantic aliases only. Purchase-history dateRange uses generic missing-bound policy aligned with canonical resolve_history_date_range.",
+    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-003A",
+    "decision": "PROMOTE_PRODUCT_ENGINEERING_READ_WAVE_3A",
+    "reason": "Promote get_product_guide and get_product_parents as governed READ capabilities behind the existing three MCP broker tools. Eligible READ 13→15. Routing max_depth governed to 8; where-used max_depth governed to 4 (equals model-visible parents[] depth). get_product_raw_material_set_shortages remains DEFER (unbounded OP×MP×ledger). AuthZ policy unchanged (DAVI-READ-AUTHZ-REBASELINE-001). MCP tools remain 3. Agent Instructions unchanged.",
     "previousDecision": {
-      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-001",
-      "decision": "PROMOTE_OPERATIONAL_PRODUCT_INTELLIGENCE_WAVE_1"
+      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-002",
+      "decision": "PROMOTE_PRODUCT_ECONOMIC_READ_WAVE_2"
     }
   },
   "HIGH_VALUE_BLOCKED": [
@@ -57,11 +56,11 @@
   ],
   "STATUS_COUNTS": {
     "ADMIN_OUT_OF_SCOPE": 76,
-    "DAVI_ELIGIBLE_READ": 13,
+    "DAVI_ELIGIBLE_READ": 15,
     "DESTRUCTIVE_OUT_OF_SCOPE": 16,
     "GENERIC_SQL_FORBIDDEN": 2,
-    "NEEDS_MODEL_SAFE_PROJECTION": 368,
-    "NEEDS_NESTED_PROJECTION_SUPPORT": 66,
+    "NEEDS_MODEL_SAFE_PROJECTION": 367,
+    "NEEDS_NESTED_PROJECTION_SUPPORT": 65,
     "SEMANTICALLY_REDUNDANT": 1,
     "STREAM_BINARY_OUT_OF_SCOPE": 31,
     "WRITE_OUT_OF_SCOPE": 130
@@ -69,7 +68,9 @@
   "ELIGIBLE_OPERATION_IDS": [
     "get_product_customers",
     "get_product_factory_status",
+    "get_product_guide",
     "get_product_last_purchase",
+    "get_product_parents",
     "get_product_pricing",
     "get_product_production_status",
     "get_product_purchase_price_history",
@@ -863,12 +864,32 @@
       "executable": true
     },
     {
+      "operationId": "get_product_guide",
+      "method": "GET",
+      "path": "/products/{code}/guide",
+      "summary": "Product guide",
+      "entity": "product_guide",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
       "operationId": "get_product_last_purchase",
       "method": "GET",
       "path": "/products/{code}/last-purchase",
       "summary": "Product last purchase",
       "entity": "product_last_purchase",
       "shape": "playbook_report",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_product_parents",
+      "method": "GET",
+      "path": "/products/{code}/parents",
+      "summary": "Product parents",
+      "entity": "product_parents",
+      "shape": "hierarchy",
       "davi_status": "DAVI_ELIGIBLE_READ",
       "executable": true
     },
@@ -2169,16 +2190,6 @@
       "summary": "Product drawing",
       "entity": "product_drawing",
       "shape": "scalar",
-      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_guide",
-      "method": "GET",
-      "path": "/products/{code}/guide",
-      "summary": "Product guide",
-      "entity": "product_guide",
-      "shape": "paged_list",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
@@ -4949,16 +4960,6 @@
       "summary": "Product directives",
       "entity": "product_directives",
       "shape": "composite_analysis",
-      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_parents",
-      "method": "GET",
-      "path": "/products/{code}/parents",
-      "summary": "Product parents",
-      "entity": "product_parents",
-      "shape": "hierarchy",
       "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "executable": false
     },

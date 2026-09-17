@@ -60,6 +60,8 @@ _CATALOG_ACTIONS = (
     "get_product_pricing",
     "get_product_purchase_price_history",
     "get_product_last_purchase",
+    "get_product_guide",
+    "get_product_parents",
 )
 
 
@@ -234,6 +236,123 @@ def _last_purchase_payload() -> dict[str, Any]:
     }
 
 
+def _guide_payload() -> dict[str, Any]:
+    return {
+        "items": [
+            {
+                "branch": "01",
+                "route_code": "R1",
+                "product_code": "90261805",
+                "operation_code": "10",
+                "operation_description": "Corte",
+                "resource_code": "RES1",
+                "work_center": "CT01",
+                "setup_hours": 0.5,
+                "standard_time_hours_piece": 0.1,
+                "standard_time_minutes_piece": 6.0,
+                "operation_type": "P",
+                "component_code": "MP1",
+                "component_description": "Chapa",
+                "component_sequence": 1,
+                "bom_level": 0,
+                "standard_time_hour_mil": 100,
+                "mandatory_operation": True,
+                "mandatory_sequence": True,
+                "mandatory_report": False,
+                "internal_debug": True,
+            },
+            {
+                "branch": "01",
+                "route_code": "R1",
+                "product_code": "90261805",
+                "operation_code": "20",
+                "operation_description": "Solda",
+                "resource_code": "RES2",
+                "work_center": "CT02",
+                "setup_hours": 0.2,
+                "standard_time_hours_piece": 0.2,
+                "standard_time_minutes_piece": 12.0,
+                "operation_type": "P",
+                "component_code": None,
+                "component_description": None,
+                "component_sequence": None,
+                "bom_level": 0,
+            },
+        ],
+        "page": 1,
+        "page_size": 50,
+        "total": 2,
+        "total_pages": 1,
+    }
+
+
+def _parents_payload() -> dict[str, Any]:
+    return {
+        "root": {
+            "code": "10080055",
+            "description": "MP",
+            "type": "MP",
+            "unit": "KG",
+            "quantity": 1.0,
+            "internal_debug": True,
+        },
+        "items": [
+            {
+                "code": "L1",
+                "description": "PA1",
+                "type": "PA",
+                "unit": "UN",
+                "quantity": 3.0,
+                "raw_sql": "SELECT",
+                "record_id": 1,
+                "secret": "x",
+                "parents": [
+                    {
+                        "code": "L2",
+                        "description": "PI2",
+                        "type": "PI",
+                        "unit": "UN",
+                        "quantity": 2.0,
+                        "parents": [
+                            {
+                                "code": "L3",
+                                "description": "PA3",
+                                "type": "PA",
+                                "unit": "UN",
+                                "quantity": 1.0,
+                                "parents": [
+                                    {
+                                        "code": "L4",
+                                        "description": "PA4",
+                                        "type": "PA",
+                                        "unit": "UN",
+                                        "quantity": 1.0,
+                                        "parents": [
+                                            {
+                                                "code": "L5",
+                                                "description": "hidden",
+                                                "type": "PA",
+                                                "unit": "UN",
+                                                "quantity": 1.0,
+                                                "parents": [],
+                                                "legacy": True,
+                                            }
+                                        ],
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            }
+        ],
+        "page": 1,
+        "page_size": 50,
+        "total": 1,
+        "total_pages": 1,
+    }
+
+
 def _production_payload() -> dict[str, Any]:
     return {
         "product": {
@@ -282,7 +401,7 @@ def _seed_eligible_actions():
 
 
 @contextmanager
-def _auth_and_domain_fakes(*, allowed: bool = True) -> Iterator[None]:
+def _auth_and_domain_fakes(*, allowed: bool = True) -> Iterator[dict[str, Any]]:
     user = MagicMock()
     user.id = _ACTOR
     user.email = "davi-runtime@example.com"
@@ -358,6 +477,12 @@ def _auth_and_domain_fakes(*, allowed: bool = True) -> Iterator[None]:
 
     last_purchase_uc = MagicMock()
     last_purchase_uc.execute.return_value = _last_purchase_payload()
+
+    guide_uc = MagicMock()
+    guide_uc.execute.return_value = _guide_payload()
+
+    parents_uc = MagicMock()
+    parents_uc.execute.return_value = _parents_payload()
 
     search_uc = MagicMock()
 
@@ -457,6 +582,20 @@ def _auth_and_domain_fakes(*, allowed: bool = True) -> Iterator[None]:
             )
         )
         stack.enter_context(
+            patch.object(
+                product_routes,
+                "build_list_product_guide_use_case",
+                return_value=guide_uc,
+            )
+        )
+        stack.enter_context(
+            patch.object(
+                product_routes,
+                "build_list_parents_use_case",
+                return_value=parents_uc,
+            )
+        )
+        stack.enter_context(
             patch(
                 "app.composition.product_composer.build_search_products_use_case",
                 return_value=search_uc,
@@ -510,7 +649,7 @@ def _auth_and_domain_fakes(*, allowed: bool = True) -> Iterator[None]:
                 lambda: None,
             )
         )
-        yield
+        yield {"guide_uc": guide_uc, "parents_uc": parents_uc}
 
 
 def _mint(action_id: str) -> str:
@@ -767,7 +906,66 @@ def test_wave2_backend_403_maps_to_forbidden(monkeypatch: pytest.MonkeyPatch):
                 _execute(action_id, {"code": "10080055"})
 
 
-def test_eligible_set_is_thirteen():
+def test_wave3a_guide_and_parents_wired_projection_and_defaults(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
+    monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
+    monkeypatch.setenv(
+        "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
+    )
+    with _auth_and_domain_fakes(allowed=True) as fakes:
+        guide = _execute("get_product_guide", {"code": "90261805"})
+        parents = _execute("get_product_parents", {"code": "10080055"})
+        guide_dto = fakes["guide_uc"].execute.call_args.args[0]
+        parents_dto = fakes["parents_uc"].execute.call_args.args[0]
+
+    assert guide["status"] == "ok"
+    dumped_g = json.dumps(guide.get("data") or {}, default=str)
+    assert guide["data"]["items"][0]["operation_code"] == "10"
+    assert guide["data"]["items"][0]["work_center"] == "CT01"
+    assert guide["data"]["items"][0]["standard_time_hours_piece"] == 0.1
+    for sibling in (
+        "standard_time_hour_mil",
+        "mandatory_operation",
+        "mandatory_sequence",
+        "mandatory_report",
+        "internal_debug",
+    ):
+        assert sibling not in dumped_g
+    assert guide_dto.page == 1
+    assert guide_dto.page_size == 50
+    assert guide_dto.max_depth == 8
+
+    assert parents["status"] == "ok"
+    dumped_p = json.dumps(parents.get("data") or {}, default=str)
+    assert parents["data"]["root"]["code"] == "10080055"
+    assert parents["data"]["items"][0]["code"] == "L1"
+    assert (
+        parents["data"]["items"][0]["parents"][0]["parents"][0]["parents"][0]["code"]
+        == "L4"
+    )
+    assert "L5" not in dumped_p
+    for sibling in ("raw_sql", "record_id", "internal_debug", "legacy", "secret"):
+        assert sibling not in dumped_p
+    assert parents_dto.page == 1
+    assert parents_dto.page_size == 50
+    assert parents_dto.max_depth == 4
+
+
+def test_wave3a_backend_403_maps_to_forbidden(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
+    monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
+    monkeypatch.setenv(
+        "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
+    )
+    with _auth_and_domain_fakes(allowed=False):
+        for action_id in ("get_product_guide", "get_product_parents"):
+            with pytest.raises(PermissionError, match="Forbidden"):
+                _execute(action_id, {"code": "10080055"})
+
+
+def test_eligible_set_is_fifteen():
     ids = load_allowlist_operation_ids(load_external_read_allowlist())
     assert ids == {
         "search_products",
@@ -783,6 +981,8 @@ def test_eligible_set_is_thirteen():
         "get_product_pricing",
         "get_product_purchase_price_history",
         "get_product_last_purchase",
+        "get_product_guide",
+        "get_product_parents",
     }
 
 

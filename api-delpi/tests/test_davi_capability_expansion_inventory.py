@@ -44,7 +44,10 @@ _ELIGIBLE = {
     "get_product_pricing",
     "get_product_purchase_price_history",
     "get_product_last_purchase",
+    "get_product_guide",
+    "get_product_parents",
 }
+
 
 _HISTORICAL = (
     "docs/integrations/evidence/davi-api-delpi-operation-inventory.json",
@@ -58,7 +61,7 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def test_current_eligible_set_is_thirteen() -> None:
+def test_current_eligible_set_is_fifteen() -> None:
     actions = build_actions()
     eligible = {a.operation_id for a in actions if a.executable}
     assert len(actions) == 703
@@ -110,9 +113,9 @@ def test_inventory_covers_all_gets_and_freezes_wave1(tmp_path: Path) -> None:
         assert cap["projection_mode"] == "nested"
         assert cap["negative_authz_test_required"] == "YES"
 
-    assert doc["wave_1_freeze"]["current_eligible"] == 13
+    assert doc["wave_1_freeze"]["current_eligible"] == 15
     assert doc["wave_1_freeze"]["new_capabilities"] == 3
-    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 16
+    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 18
     assert doc["wave_1_freeze"]["expected_mcp_tools_after_implementation"] == 3
     assert doc["wave_1_freeze"]["agent_instruction_change"] == "NO"
 

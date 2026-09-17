@@ -1,0 +1,50 @@
+{
+  "artifact_class": "EVIDENCE_NOT_RUNTIME_AUTHORITY",
+  "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-003A",
+  "freezeAuthority": "davi-capability-wave-003a-freeze.json",
+  "correctionTaskId": "DAVI-CAPABILITY-EXPANSION-WAVE-003A-FREEZE-CORRECTION-001",
+  "correctionSha": "2e6600ae7e3a3b9f3e966fbc5f0cbfc17caa8be7",
+  "allowlistVersion": 8,
+  "eligibleBefore": 13,
+  "eligibleAfter": 15,
+  "mcpTools": 3,
+  "agentInstructions": "UNCHANGED",
+  "promotedOperationIds": [
+    "get_product_guide",
+    "get_product_parents"
+  ],
+  "deferredOperationIds": [
+    "get_product_raw_material_set_shortages"
+  ],
+  "routing": {
+    "operationId": "get_product_guide",
+    "maxDepth": 8,
+    "defaultMaxDepth": 8,
+    "defaultPage": 1,
+    "defaultPageSize": 50,
+    "maxPageSize": 50,
+    "branch": "optional all|01|02 query filter",
+    "approvedResponseFieldCount": 15,
+    "derivedFields": {
+      "standard_time_hours_piece": "CANONICAL_BACKEND_CALCULATION based on G2_TEMPAD",
+      "standard_time_minutes_piece": "CANONICAL_BACKEND_CALCULATION based on canonical source conversion"
+    }
+  },
+  "whereUsed": {
+    "operationId": "get_product_parents",
+    "maxDepth": 4,
+    "defaultMaxDepth": 4,
+    "modelVisibleNestingLevels": 4,
+    "defaultPage": 1,
+    "defaultPageSize": 50,
+    "maxPageSize": 50,
+    "branch": "NOT_EXPOSED",
+    "approvedResponseFieldCount": 25,
+    "depthInvariant": "requested DAVI depth <= model-visible approved depth"
+  },
+  "shortages": "DEFER",
+  "deploy": "TEST_NOT_RUN",
+  "live": "TEST_NOT_RUN",
+  "agentPreview": "TEST_NOT_RUN",
+  "secondUserNegativeAuthz": "TEST_NOT_RUN"
+}

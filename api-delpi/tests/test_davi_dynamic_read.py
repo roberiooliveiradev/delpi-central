@@ -112,8 +112,17 @@ _WAVE2_OPERATION_IDS = frozenset(
         "get_product_last_purchase",
     }
 )
+_WAVE3A_OPERATION_IDS = frozenset(
+    {
+        "get_product_guide",
+        "get_product_parents",
+    }
+)
 _ELIGIBLE_OPERATION_IDS = (
-    _ELIGIBLE_V5_OPERATION_IDS | _WAVE1_OPERATION_IDS | _WAVE2_OPERATION_IDS
+    _ELIGIBLE_V5_OPERATION_IDS
+    | _WAVE1_OPERATION_IDS
+    | _WAVE2_OPERATION_IDS
+    | _WAVE3A_OPERATION_IDS
 )
 
 
@@ -234,9 +243,9 @@ def test_allowlist_v5_multi_ops_rebaseline():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
     assert ids == set(_ELIGIBLE_OPERATION_IDS)
-    assert allow.get("version") == 7
+    assert allow.get("version") == 8
     assert allow.get("coverageDecision", {}).get("decision") == (
-        "PROMOTE_PRODUCT_ECONOMIC_READ_WAVE_2"
+        "PROMOTE_PRODUCT_ENGINEERING_READ_WAVE_3A"
     )
     assert allow.get("authzPolicy") == "DAVI-READ-AUTHZ-REBASELINE-001"
     entry = next(
@@ -409,7 +418,7 @@ def test_inventory_eligible_count_is_thirteen():
     )
     assert len(actions) == int(baseline.get("operation_count") or 0)
     eligible = [a for a in actions if a.executable]
-    assert len(eligible) == 13
+    assert len(eligible) == 15
     assert set(a.operation_id for a in eligible) == set(_ELIGIBLE_OPERATION_IDS)
 
 
@@ -429,7 +438,7 @@ def test_owned_product_intents_discover_from_full_catalog(monkeypatch):
     )
     for query, expected_oid in expectations:
         discovered = discover_delpi_information(query=query, top_k=10, actor_id="u1")
-        assert discovered["eligible_action_count"] == 13, query
+        assert discovered["eligible_action_count"] == 15, query
         assert discovered["candidate_count"] >= 1, query
         action_ids = {c["action_id"] for c in discovered["candidates"]}
         assert expected_oid in action_ids, query
@@ -1141,7 +1150,7 @@ def test_negative_retrieval_quarantine(query, monkeypatch):
     assert discovered["candidate_count"] == 0, (
         f"query={query!r} unexpectedly returned {discovered['candidates']}"
     )
-    assert discovered["eligible_action_count"] == 13
+    assert discovered["eligible_action_count"] == 15
 
 
 def test_stock_eligible_and_branch_is_filter_not_authz():
@@ -1934,4 +1943,4 @@ def test_eligible_count_is_thirteen():
     actions = _load_baseline_actions()
     eligible = sorted(a.operation_id for a in actions if a.executable)
     assert eligible == sorted(_ELIGIBLE_OPERATION_IDS)
-    assert len(eligible) == 13
+    assert len(eligible) == 15

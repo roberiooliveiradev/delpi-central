@@ -104,9 +104,9 @@ def test_freeze_records_pre_implementation_eligible_baseline() -> None:
         if isinstance(item, dict)
     }
     assert "get_product_cost_impact_simulation" in blocked
-    assert allow.get("version") == 7
+    assert allow.get("version") == 8
     eligible = {a.operation_id for a in _actions() if a.executable}
-    assert len(eligible) == 13
+    assert len(eligible) == 15
     assert set(CURRENT_ELIGIBLE) <= eligible
 
 
@@ -149,7 +149,7 @@ def test_economic_quarantine_tokens_unchanged() -> None:
     tokens = allow.get("retrievalQuarantineTokens") or []
     for token in ECONOMIC_QUARANTINE_TOKENS:
         assert token in tokens
-    assert allow.get("version") == 7
+    assert allow.get("version") == 8
 
 
 def test_agent_instructions_omit_economic_capability_enumeration() -> None:

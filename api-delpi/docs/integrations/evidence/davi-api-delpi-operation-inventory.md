@@ -2,24 +2,24 @@
 
 > Evidence artifact. Not runtime authority. Not semantic capability catalog.
 
-- Task: `DAVI-CAPABILITY-EXPANSION-WAVE-002`
+- Task: `DAVI-CAPABILITY-EXPANSION-WAVE-003A`
 - Source: `openapi_baseline.json` version `3`
 - TOTAL OPERATIONS: **703**
 - TOTAL GET: **506**
 - WRITE VERBS (POST/PUT/PATCH/DELETE): **197**
-- DAVI_ELIGIBLE_READ (before→after): **10 → 13**
-- NEWLY ELIGIBLE: **3**
+- DAVI_ELIGIBLE_READ (before→after): **13 → 15**
+- NEWLY ELIGIBLE: **2**
 
 ## Coverage decision
 
 ```json
 {
-  "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-002",
-  "decision": "PROMOTE_PRODUCT_ECONOMIC_READ_WAVE_2",
-  "reason": "Promote get_product_pricing, get_product_purchase_price_history and get_product_last_purchase as governed READ capabilities behind the existing three MCP broker tools. Eligible READ 10→13. Cost impact simulation remains PREPARE/DEFER_FROM_READ_WAVE and is not executable. AuthZ policy unchanged (DAVI-READ-AUTHZ-REBASELINE-001). Global economic quarantine tokens remain; ownership is via precise semantic aliases only. Purchase-history dateRange uses generic missing-bound policy aligned with canonical resolve_history_date_range.",
+  "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-003A",
+  "decision": "PROMOTE_PRODUCT_ENGINEERING_READ_WAVE_3A",
+  "reason": "Promote get_product_guide and get_product_parents as governed READ capabilities behind the existing three MCP broker tools. Eligible READ 13→15. Routing max_depth governed to 8; where-used max_depth governed to 4 (equals model-visible parents[] depth). get_product_raw_material_set_shortages remains DEFER (unbounded OP×MP×ledger). AuthZ policy unchanged (DAVI-READ-AUTHZ-REBASELINE-001). MCP tools remain 3. Agent Instructions unchanged.",
   "previousDecision": {
-    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-001",
-    "decision": "PROMOTE_OPERATIONAL_PRODUCT_INTELLIGENCE_WAVE_1"
+    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-002",
+    "decision": "PROMOTE_PRODUCT_ECONOMIC_READ_WAVE_2"
   }
 }
 ```
@@ -43,11 +43,11 @@
 | Status | Count |
 |---|---:|
 | `ADMIN_OUT_OF_SCOPE` | 76 |
-| `DAVI_ELIGIBLE_READ` | 13 |
+| `DAVI_ELIGIBLE_READ` | 15 |
 | `DESTRUCTIVE_OUT_OF_SCOPE` | 16 |
 | `GENERIC_SQL_FORBIDDEN` | 2 |
-| `NEEDS_MODEL_SAFE_PROJECTION` | 368 |
-| `NEEDS_NESTED_PROJECTION_SUPPORT` | 66 |
+| `NEEDS_MODEL_SAFE_PROJECTION` | 367 |
+| `NEEDS_NESTED_PROJECTION_SUPPORT` | 65 |
 | `SEMANTICALLY_REDUNDANT` | 1 |
 | `STREAM_BINARY_OUT_OF_SCOPE` | 31 |
 | `WRITE_OUT_OF_SCOPE` | 130 |
@@ -56,7 +56,9 @@
 
 - `get_product_customers`
 - `get_product_factory_status`
+- `get_product_guide`
 - `get_product_last_purchase`
+- `get_product_parents`
 - `get_product_pricing`
 - `get_product_production_status`
 - `get_product_purchase_price_history`
