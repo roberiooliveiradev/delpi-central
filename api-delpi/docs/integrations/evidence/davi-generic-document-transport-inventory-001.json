@@ -1,0 +1,187 @@
+{
+  "taskId": "DAVI-GENERIC-DOCUMENT-TRANSPORT-INVENTORY-001",
+  "artifactClass": "EVIDENCE_NOT_RUNTIME_AUTHORITY",
+  "sourceHead": "da6e1cbbc57601732d4e8d3fc8968cd5b5fdece4",
+  "bootstrapMainExternal": "7f90a3adc4aef73b6aae9751eb1c3d63d1e1752e",
+  "providerEvidenceDate": "2026-09-17",
+  "currentMcpToolCount": 3,
+  "currentEligibleReadCount": 17,
+  "currentAllowlistVersion": 9,
+  "currentDrawingRoutes": [
+    "GET /products/drawings",
+    "GET /products/{code}/drawing",
+    "GET /products/{code}/drawing/pdf"
+  ],
+  "documentTransportCurrentState": "PENDING",
+  "pdfInJsonBroker": "ABSENT",
+  "getProductDrawingPdfAllowlist": "explicitlyNotApproved",
+  "mcpServer": {
+    "framework": "FastMCP",
+    "sdkPackage": "mcp",
+    "sdkVersionInstalled": "1.30.0",
+    "sdkConstraint": "mcp>=1.28,<2",
+    "transport": "streamable_http",
+    "statelessHttp": true,
+    "jsonResponse": true,
+    "tools": [
+      "search_products",
+      "discover_delpi_information",
+      "execute_delpi_information"
+    ],
+    "resourcesRegistered": 0,
+    "resourceTemplatesRegistered": 0,
+    "toolResultContentTypesInUse": ["TextContent", "structuredContent"],
+    "sdkSupports": {
+      "FastMCP.resource": true,
+      "BlobResourceContents": true,
+      "EmbeddedResource": true,
+      "ResourceLink": true,
+      "ImageContent": true
+    }
+  },
+  "providerCapabilities": {
+    "mcpSpecBinaryResources": "PROVEN",
+    "mcpSpecBinaryEncoding": "base64_blob_in_resources_read",
+    "openaiAppsUiResources": "PROVEN_DOCUMENTED",
+    "openaiRemoteMcpOauthPdfModelVisibility": "TO_INVENTORY",
+    "openaiVectorStoreTextFetchExamples": "PROVEN_DOCUMENTED",
+    "sources": [
+      "https://modelcontextprotocol.io/docs/concepts/resources",
+      "https://developers.openai.com/api/docs/mcp",
+      "https://developers.openai.com/apps-sdk/mcp-apps-in-chatgpt",
+      "https://developers.openai.com/plugins/build/chatgpt-ui"
+    ],
+    "providerLiveSpike": "TEST_NOT_RUN",
+    "evidenceQuality": "OFFICIAL_DOCS_PARTIAL_PLUS_REPO_SOURCE"
+  },
+  "apiDelpiPdf": {
+    "operationId": "get_product_drawing_pdf",
+    "authz": "API_DELPI_ACCESS",
+    "response": "FileResponse",
+    "mediaType": "application/pdf",
+    "contentDisposition": "inline",
+    "notFound": 404,
+    "sourceUnavailable": 503,
+    "owner": "api-delpi",
+    "authoritativeStorage": "FILESERVER",
+    "pathLeak": "ABSENT_BY_CONTRACT"
+  },
+  "candidatePatterns": {
+    "A_mcp_resource": {
+      "status": "TO_INVENTORY",
+      "providerSupport": "TO_INVENTORY",
+      "sdkSupport": "PROVEN",
+      "currentServerSupport": "ABSENT",
+      "endUserIdentity": "COMPATIBLE_IF_USER_TOKEN",
+      "modelPdfVisibility": "TO_INVENTORY",
+      "changesRequired": ["NEW_MCP_RESOURCE", "ARCHITECTURE_ESCALATION"]
+    },
+    "B_tool_resource_reference": {
+      "status": "TO_INVENTORY",
+      "providerSupport": "TO_INVENTORY",
+      "sdkSupport": "PROVEN",
+      "currentServerSupport": "ABSENT",
+      "endUserIdentity": "COMPATIBLE_IF_USER_TOKEN",
+      "modelPdfVisibility": "TO_INVENTORY",
+      "changesRequired": ["POSSIBLE_TOOL_OR_CONTENT_CHANGE", "ARCHITECTURE_ESCALATION_IF_NEW_TOOL"]
+    },
+    "C_provider_file_handoff": {
+      "status": "TO_INVENTORY",
+      "providerSupport": "TO_INVENTORY",
+      "sdkSupport": "TO_INVENTORY",
+      "currentServerSupport": "ABSENT",
+      "endUserIdentity": "TO_INVENTORY",
+      "modelPdfVisibility": "TO_INVENTORY",
+      "changesRequired": ["PROVIDER_SPECIFIC", "ARCHITECTURE_ESCALATION"]
+    },
+    "D_new_document_tool": {
+      "status": "TARGET",
+      "providerSupport": "TO_INVENTORY",
+      "sdkSupport": "PROVEN",
+      "currentServerSupport": "ABSENT",
+      "endUserIdentity": "COMPATIBLE_IF_USER_TOKEN",
+      "modelPdfVisibility": "TO_INVENTORY",
+      "changesRequired": ["NEW_TOOL_3_TO_4", "ARCHITECTURE_ESCALATION"]
+    },
+    "E_opaque_authorized_reference": {
+      "status": "TARGET",
+      "providerSupport": "TO_INVENTORY",
+      "sdkSupport": "TO_INVENTORY",
+      "currentServerSupport": "ABSENT",
+      "endUserIdentity": "REQUIRES_SUBJECT_BINDING",
+      "modelPdfVisibility": "TO_INVENTORY",
+      "changesRequired": ["REFERENCE_ISSUER", "ARCHITECTURE_ESCALATION"],
+      "risks": ["replay", "cross_user_reuse", "ssrf_if_url_like"]
+    },
+    "F_inconclusive_or_unsupported": {
+      "status": "SELECTED",
+      "reason": "ChatGPT remote MCP application/pdf model visibility under OAuth not proven from official docs; no safe live spike"
+    }
+  },
+  "securityFindings": [
+    {"id": "no_pdf_in_json_broker", "status": "PROVEN_ABSENT"},
+    {"id": "no_davi_service_token", "status": "REQUIRED"},
+    {"id": "no_arbitrary_url_path", "status": "REQUIRED"},
+    {"id": "http_route_path_validation", "status": "PROVEN"},
+    {"id": "mcp_spec_blob_base64_not_json_broker", "status": "DISTINGUISHED"},
+    {"id": "reference_replay_cross_user", "status": "TO_INVENTORY"},
+    {"id": "malicious_oversized_pdf", "status": "TO_INVENTORY"}
+  ],
+  "identityFindings": {
+    "endUserAccountRequired": true,
+    "serviceAccountForDavi": "FORBIDDEN",
+    "pcpS2sIsNotDaviTemplate": true,
+    "backendAuthzFinal": true,
+    "oauthChangeRequiredDefault": false,
+    "audienceChangeRequiredDefault": false
+  },
+  "documentBudgetEvidence": {
+    "localLibraryFileCount": 0,
+    "localLibraryStatus": "EMPTY_OR_UNMOUNTED_IN_THIS_ENV",
+    "liveScannedFilesExternal": 4796,
+    "exampleSizesBytes": {
+      "90261805.pdf": 35930,
+      "90262957.pdf": 199268
+    },
+    "sizeDistribution": "TO_INVENTORY",
+    "pageDistribution": "TO_INVENTORY",
+    "recommendedSingleDocBound": "NOT_FROZEN",
+    "recommendedBatchBound": "NOT_FROZEN",
+    "evidenceQuality": "PARTIAL_LIVE_EXAMPLES_PLUS_EMPTY_LOCAL_MOUNT"
+  },
+  "drawingAnalysisWorkflow": {
+    "skillPath": "minha-delpi-ai-api/app/domain/prompt_policies/drawing-analysis-delpi-skill.md",
+    "reuse": "PARTIAL",
+    "chatgptSkillPackaging": "TO_INVENTORY",
+    "pdfInputToday": "USER_ATTACHMENT_IN_MINHA_DELPI_AI"
+  },
+  "semanticCapabilities": {
+    "product.drawing.document": {
+      "status": "PENDING",
+      "class": "READ_DOCUMENT",
+      "proposedBoundary": "api-delpi governed document transport (provider primitive TBD)"
+    },
+    "product.drawing.analysis": {
+      "status": "PENDING",
+      "class": "DERIVED_ANALYSIS"
+    },
+    "product.drawing.compare": {
+      "status": "TARGET",
+      "class": "DERIVED_ANALYSIS"
+    },
+    "product.drawing.batch_analysis": {
+      "status": "TARGET",
+      "class": "ORCHESTRATION"
+    }
+  },
+  "selectedOutcome": "F",
+  "preferredPattern": "NOT_FROZEN",
+  "architectureEscalationRequired": true,
+  "newToolRequired": "UNKNOWN",
+  "newMcpResourceRequired": "UNKNOWN",
+  "oauthChangeRequired": false,
+  "agentChangeRequired": false,
+  "implementationAuthorized": false,
+  "runtimeChanged": false,
+  "verdict": "PASS_WITH_RESIDUAL"
+}
