@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C1 — STANDALONE APPLICATION BOOTSTRAP` (`C0.S0..=C0.S7=APPROVED`; `FOUNDATION_FREEZE=APPROVED`; `C1_AUTHORIZED=YES`; `C1_STARTED=NO`; `C1_EXECUTED=NO`; C0 permanece `NOT_STARTED`; `RUNTIME_READINESS=NOT_PROVEN`; `PRODUCTION_READINESS=NOT_PROVEN`; `DÉLIA_RUNTIME_DIFF=NONE`)
+**Próxima etapa:** `C1-T2 — JWT + CORE EFFECTIVE ACCESS INTEGRATION` (`C0.S0..=C0.S7=APPROVED`; `FOUNDATION_FREEZE=APPROVED`; `C1_AUTHORIZED=YES`; `C1_STARTED=YES`; `C1_EXECUTED=NO`; C0 permanece `NOT_STARTED`; `RUNTIME_READINESS=NOT_PROVEN`; `PRODUCTION_READINESS=NOT_PROVEN`; `DÉLIA_RUNTIME_DIFF=delia-api skeleton`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -329,7 +329,7 @@ INTEGRATION_CONTRACTS = FROZEN_ACCEPTED
 RED_CONTRACT_CONFORMANCE_PRIVACY_SECURITY_HARNESS = FROZEN_ACCEPTED
 FOUNDATION_FREEZE = APPROVED
 C1_AUTHORIZED = YES
-C1_STARTED = NO
+C1_STARTED = YES
 C1_EXECUTED = NO
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
@@ -337,9 +337,9 @@ RUNTIME_READINESS = NOT_PROVEN
 PRODUCTION_READINESS = NOT_PROVEN
 NEW_BEHAVIORAL_TESTS = TEST_NOT_RUN
 FUTURE_C1_C7_GREEN_EVIDENCE_REQUIRED = YES
-DÉLIA_RUNTIME_DIFF = NONE
+DÉLIA_RUNTIME_DIFF = delia-api skeleton + /health
 NEW_RUNTIME_ABSTRACTIONS = NONE
-NEXT = C1 — STANDALONE APPLICATION BOOTSTRAP
+NEXT = C1-T2 — JWT + CORE EFFECTIVE ACCESS INTEGRATION
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -526,6 +526,8 @@ FOUNDATION_FREEZE = APPROVED does NOT mean:
 ---
 
 # C1 — Standalone Application Bootstrap
+
+**C1-T1 — STANDALONE_API_SKELETON_HEALTH_TEST_FOUNDATION:** physical `delia-api/` Flask skeleton, `/health` liveness, config/logging mínimos e test foundation. `C1_STARTED=YES`. `C1_EXECUTED=NO`. JWT/Core/MFE/manifest/Gateway/Compose **não** entram nesta tarefa.
 
 - own Flask API skeleton/layers/config/logging/health/tests;
 - JWT/Core integration;

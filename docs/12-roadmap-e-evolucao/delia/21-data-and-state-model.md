@@ -243,7 +243,7 @@ RED_CONTRACT_CONFORMANCE_PRIVACY_SECURITY_HARNESS = FROZEN_ACCEPTED (see 20)
 C0.S7 = APPROVED
 FOUNDATION_FREEZE = APPROVED
 C1_AUTHORIZED = YES
-C1_STARTED = NO
+C1_STARTED = YES
 C1_EXECUTED = NO
 AUTHORITY_MAP = FROZEN_ACCEPTED
 BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
@@ -255,8 +255,8 @@ RUNTIME_READINESS = NOT_PROVEN
 PRODUCTION_READINESS = NOT_PROVEN
 NEW_BEHAVIORAL_TESTS = TEST_NOT_RUN
 FUTURE_C1_C7_GREEN_EVIDENCE_REQUIRED = YES
-DÉLIA_RUNTIME_DIFF = NONE
-NEXT = C1 — STANDALONE APPLICATION BOOTSTRAP
+DÉLIA_RUNTIME_DIFF = delia-api skeleton + /health
+NEXT = C1-T2 — JWT + CORE EFFECTIVE ACCESS INTEGRATION
 ```
 
 C0.S4 congela **regras arquiteturais** de ownership de persistência, classificação, privacy, secrets/encryption, concorrência/idempotência, state machines, identidade background, segurança temporal de Recurring Work, Evidence/Outcome, Prediction/Scenario/Twin, biometric/media, conexões externas, audit/eval, Process/Task Mining, Sandbox/Artifact, Model/Marketplace/Tower, Edge/offline, OT/safety, falha/recovery e cache/projection.

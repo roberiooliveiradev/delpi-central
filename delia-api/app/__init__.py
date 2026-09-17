@@ -1,0 +1,1 @@
+"""DÉLIA standalone API package."""
