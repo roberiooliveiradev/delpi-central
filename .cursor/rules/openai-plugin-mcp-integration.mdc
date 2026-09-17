@@ -134,6 +134,30 @@ Não substituir por prefix match, host-only match ou trailing-slash normalizatio
 
 A URL canônica anunciada em metadata, provider config, mapper e runtime validation deve ser a mesma.
 
+### Shared scope `mcp:tools` ≠ resource binding
+
+`mcp:tools` é scope **compartilhado e genérico** entre MCPs autorizados (DAVI, TÉO, futuros).
+
+```text
+shared scope mcp:tools
+≠
+resource audience binding
+≠
+autorização de negócio
+```
+
+**Proibido:** Audience mapper de URL de resource específico dentro do client scope compartilhado `mcp:tools`.
+
+Cada client `mcp-<domain>` deve carregar seu resource audience em mapper/client scope **dedicado**.
+
+Incidente PROVEN (2026-09-17): mapper `…/api-delpi/mcp` dentro de `mcp:tools` vazou audience do DAVI para tokens do TÉO. Correção: mover mapper para configuração dedicada do client.
+
+```text
+MCP RESOURCE ISOLATION = REQUIRED
+```
+
+Runbook transversal: `docs/10-guias-operacionais/mcp-chatgpt-plugin-onboarding-runbook.md`.
+
 ### Business AuthZ
 
 OAuth scopes/audiences não são RBAC de negócio.
@@ -403,13 +427,18 @@ Referência de mecanismo, não autoridade universal:
 - Keycloak runbook: `api-delpi/docs/integrations/keycloak-mcp-client-runbook.md`
 - evidence: `api-delpi/docs/integrations/keycloak-mcp-oauth-evidence.md`
 - fix de routing/Origin: commit `55ea8994e56565ae6f08468c2a6005db348f939f`
+- shared onboarding: `docs/10-guias-operacionais/mcp-chatgpt-plugin-onboarding-runbook.md`
+- sibling TÉO: `transformometro-api/docs/integrations/openai-plugin-mcp.md`
 
 O que generalizar:
 
 ```text
 exact provider callback
-resource audience binding
+dedicated resource audience binding (not inside shared mcp:tools)
+shared generic scope mcp:tools
 scope vs audience separation
+MCP resource isolation across clients
+ENVIRONMENT PROVENANCE GATE (local ≠ prod)
 canonical business AuthZ
 no redirect on MCP canonical URL
 MCP Origin allowlist separate from CORS
@@ -419,13 +448,14 @@ layered evidence
 
 O que NÃO generalizar:
 
-- nome `DAVI`;
-- client id `mcp-api-delpi`;
+- nome `DAVI` / `TÉO`;
+- client id `mcp-api-delpi` / `mcp-transformometro`;
 - Product Master permission;
-- tool `search_products`;
+- tool `search_products` / Transformômetro entity set;
 - field allowlist específica;
 - MCP resource URL específica;
-- callback connector id específico.
+- callback connector id específico;
+- tool count numérico (ex.: 32 tools TÉO ≠ 20 GPT Actions).
 
 ## Anti-padrões
 

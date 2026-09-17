@@ -1,6 +1,9 @@
 # TÉO / Transformômetro — OpenAI Plugin + MCP
 
-> Documentation does not prove runtime. Live OAuth/Plugin evidence must be revalidated after deploy + Keycloak apply.
+> Documentation does not prove runtime. Evidence below is classified; revalidate after material deploy/auth changes.
+
+Shared onboarding (novos MCPs):
+[`docs/10-guias-operacionais/mcp-chatgpt-plugin-onboarding-runbook.md`](../../../docs/10-guias-operacionais/mcp-chatgpt-plugin-onboarding-runbook.md)
 
 ## Specialist identity
 
@@ -8,7 +11,18 @@
 |---|---|
 | Short name | **TÉO** |
 | Full name | TÉO — Especialista em Transformação Digital |
+| Plugin display name | `TÉO — Transformômetro` |
 | Mission | Transformação / eficiência / otimização de processos no Transformômetro |
+| Role | Conversational specialist = **governed MCP consumer** |
+
+```text
+TÉO capability ≤ authenticated user capability
+ChatGPT confirmation ≠ authorization
+MCP ≠ Domain API
+MCP ≠ RBAC
+MCP ≠ generic proxy
+AuthZ final = backend / domínio Transformômetro
+```
 
 Branding ≠ authorization.
 
@@ -18,18 +32,20 @@ Branding ≠ authorization.
 |---|---|
 | Plugin / MCP server name | `transformometro` |
 | Keycloak client | `mcp-transformometro` |
-| MCP resource | `https://minhadelpi.com.br/apps/transformometro-api/mcp` |
+| MCP endpoint / resource | `https://minhadelpi.com.br/apps/transformometro-api/mcp` |
+| Protected Resource Metadata | `https://minhadelpi.com.br/apps/transformometro-api/.well-known/oauth-protected-resource` |
+| OIDC issuer | `https://minhadelpi.com.br/auth/realms/delpi` |
 | Manifest | `integrations/openai-plugin/mcp.json` |
 
 ## Architecture
 
 ```text
 Workspace Agent / ChatGPT Plugin (TÉO)
-  → OAuth Authorization Code + PKCE
+  → OAuth Authorization Code + PKCE (user-defined client)
   → Keycloak end-user identity (mcp-transformometro)
   → MCP Streamable HTTP /apps/transformometro-api/mcp
   → interface/mcp adapter
-  → existing gpt_actions / application services (FULL CRUD)
+  → application services + governed writes (FULL_CRUD_GOVERNED)
   → canonical AuthZ (capability ≤ user)
   → Postgres transformometro
 ```
@@ -42,41 +58,149 @@ READ + PREPARE + ACT = REQUIRED
 DAVI_READ_ONLY_COPY = FORBIDDEN
 ```
 
-MCP tools may be 1 GPT operationId → N semantic tools (PREPARE/ACT split).
-Parity gate: every GPT Actions operationId covered; MISSING=0. See
-`docs/integrations/teo-mcp-capability-parity.md` and `tm_app/interface/mcp/constants.py`.
+### Capability vs tools
 
-Write governance (MCP):
+```text
+20 GPT Actions capabilities
+≠
+20 MCP tools
+```
 
-- Material writes: `prepare_*` → opaque `proposal_handle` → matching `act_*` (handle only)
-- `prepare_improvement_package` binds the exact package; `act_commit_improvement_package` executes that proposal
-- Incomplete packages: `ready=false` / `act_allowed=false` → NO WRITE
-- Honor `confirm_delete`, `confirm_vigencia_change`, `confirm_resend` (proposal does not replace validators)
-- ACT success (`isError=false`) requires authoritative read-back / verified postcondition
-- MCP tool metadata / OAuth scopes ≠ RBAC
+No MCP atual, 1 capability GPT pode decompor-se em READ / PREPARE / ACT.
+
+| Métrica | Valor | Classificação |
+|---|---|---|
+| Capability coverage | 20/20 | PROVEN (código + matriz) |
+| MCP tools registered | 32 | PROVEN (runtime + ChatGPT 32/32) |
+| Composição | 9 READ + 1 ANALYSIS + 11 PREPARE + 11 ACT | PROVEN |
+| Unbound ACT | 0 | PROVEN |
+| ACT input | somente `proposal_handle` | PROVEN (código) |
+
+`32 ≠ 20` **não** é regression. Ver `teo-mcp-capability-parity.md`.
+
+## Write governance (MCP)
+
+```text
+PREPARE → proposal_handle
+ACT → proposal_handle only
+```
+
+Proposal (server-side) contém: actor binding, exact change, state fingerprint, expiration, expected postcondition.
+
+ACT: revalida AuthZ + fingerprint → executa exact change → authoritative read-back → verifica outcome.
+
+Se read-back falhar:
+
+```text
+OUTCOME_VERIFICATION_FAILED
+```
+
+| Item | Estado |
+|---|---|
+| Proposal store | in-process, TTL ≈ 15 min |
+| Replicas (prod) | 1 |
+| `CURRENT SINGLE-REPLICA OPERATION` | **ACCEPTED_WITH_RESIDUAL** |
+| Shared proposal store (Redis etc.) | **TARGET** se escala horizontal |
+
+Incomplete packages: `ready=false` / `act_allowed=false` → NO WRITE.
+Honor `confirm_*`. MCP metadata / OAuth scopes ≠ RBAC.
+
+## Shared OAuth vs isolated resource
+
+Mesma regra transversal que DAVI:
+
+| Camada | Valor |
+|---|---|
+| Shared scope | `mcp:tools` (genérico; **não** carrega audience de um MCP) |
+| Transversal aud | `delpi-central` via `audience-delpi` |
+| Dedicated aud TÉO | `https://minhadelpi.com.br/apps/transformometro-api/mcp` |
+| Dedicated aud DAVI | `https://minhadelpi.com.br/apps/api-delpi/mcp` |
+
+```text
+shared scope ≠ resource binding
+MCP RESOURCE ISOLATION = PROVEN / PASS (2026-09-17)
+```
+
+Detalhes Keycloak: [keycloak-mcp-client-runbook.md](./keycloak-mcp-client-runbook.md).
+
+## Auth model
+
+- Transport exige OAuth antes de tools/list
+- JWT `azp` = `mcp-transformometro`
+- JWT `aud` inclui `delpi-central` **e** resource TÉO; **não** resource DAVI
+- JWT `scope` inclui `openid profile email mcp:tools` (+ `offline_access` quando solicitado pelo Plugin)
+- Service tokens / client credentials simulando usuário = proibidos em `/mcp`
 
 ## Bridge
 
 | Surface | Client | Lifecycle |
 |---|---|---|
-| GPT Actions | `chatgpt-transformometro` | LEGACY_TRANSITIONAL_BRIDGE |
-| MCP Plugin/Agent | `mcp-transformometro` | TARGET |
+| GPT Actions | `chatgpt-transformometro` | **LEGACY_TRANSITIONAL_BRIDGE** (20 operationIds; ainda operacionais) |
+| MCP Plugin | `mcp-transformometro` | **CURRENT** para agents |
 
-Do not expand GPT Actions as the durable target. Deprecate only after live MCP CRUD parity + smoke.
+Não remover GPT Actions nesta fase. Critério futuro de depreciação:
 
-## Auth model
+```text
+MCP runtime acceptance suficiente
++ capability parity comprovada
++ writes governados aceitos
++ período de transição definido
+```
 
-- Transport requires OAuth before tools/list
-- JWT `aud` must include `delpi-central` **and** exact MCP resource URL
-- JWT `scope` must include `openid profile email mcp:tools`
-- Service tokens forbidden on `/mcp`
+## Production evidence (2026-09-17) — ENVIRONMENT PROVENANCE = SSH `srv-api`
+
+Primeira verificação usou stack **local** → falsos ABSENT (client, scope, import). **INVALIDATED_BY_WRONG_ENVIRONMENT.**
+
+Verificação corrigida (produção):
+
+| Check | Status |
+|---|---|
+| Código com governança `b4454fea…` no runtime | PASS |
+| `mcp==1.30.0` no Python 3.11 do uvicorn | PASS |
+| `import mcp` | PASS |
+| FastMCP carregado | PASS |
+| Endpoint MCP | PASS |
+| Protected-resource metadata | PASS |
+| Keycloak PROD (`mcp-transformometro`, scopes) | PASS |
+| GPT Actions 20 operationIds | PASS (ainda disponíveis) |
+| MCP tools registradas | 32 |
+| Replicas | 1 |
+
+## ChatGPT Plugin acceptance (PROVEN)
+
+| Check | Status |
+|---|---|
+| Plugin criado (`TÉO — Transformômetro`) | PASS |
+| OAuth user connection | PASS |
+| Tools discovery | 32/32 PASS |
+| `get_my_context` | PASS |
+| `get_catalog` | PASS |
+| `search_records` (entity=process, q=Transforma → PROC-0001 ativo; diagram_node_count=115; decomposition_node_count=64) | PASS |
+| Authenticated tool execution | PASS |
+| READ domain data | PASS |
+| PREPARE via ChatGPT | **TEST_NOT_RUN** |
+| ACT via ChatGPT | **TEST_NOT_RUN** |
+| WRITE BUSINESS OUTCOME | **TEST_NOT_RUN** |
+
+Não promover PREPARE/ACT/outcome por esta evidência.
+
+## Residuals
+
+| Gap | Status |
+|---|---|
+| PREPARE acceptance real via ChatGPT | TEST_NOT_RUN |
+| ACT acceptance real via ChatGPT | TEST_NOT_RUN |
+| WRITE BUSINESS OUTCOME | TEST_NOT_RUN |
+| Refresh-token lifecycle prolongado | só promover a PROVEN com evidência runtime adequada |
+| Horizontal scaling + in-process proposals | TARGET |
 
 ## Ops
 
-1. Deploy `transformometro-api` with `mcp` dependency.
-2. Apply Keycloak per [keycloak-mcp-client-runbook.md](./keycloak-mcp-client-runbook.md).
-3. Register Plugin URL = MCP resource.
-4. Smoke READ + AuthZ negative + one governed ACT.
+1. Deploy `transformometro-api` com dependency `mcp` no mesmo Python do runtime.
+2. Keycloak per [keycloak-mcp-client-runbook.md](./keycloak-mcp-client-runbook.md) (audience dedicada; shared `mcp:tools` limpo).
+3. Registrar Plugin com client governado + redirect URI copiada do ChatGPT.
+4. Smoke: READ live (feito) → PREPARE → ACT com autorização explícita.
+5. Checklist: [teo-mcp-plugin-agent-smoke.md](./teo-mcp-plugin-agent-smoke.md).
 
 ## Code ownership
 
@@ -85,5 +209,6 @@ Do not expand GPT Actions as the durable target. Deprecate only after live MCP C
 | OAuth contract | `tm_app/interface/mcp/oauth_contract.py` |
 | FastMCP server | `tm_app/interface/mcp/server.py` |
 | Tool bridge | `tm_app/interface/mcp/tool_bridge.py` |
+| Governed writes | `tm_app/application/governed_writes/` |
 | Auth middleware | `tm_app/middleware/auth_middleware.py` |
 | Mount | `tm_app/main.py` → `/mcp` |

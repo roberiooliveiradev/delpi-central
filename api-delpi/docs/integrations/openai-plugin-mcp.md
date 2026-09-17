@@ -315,7 +315,17 @@ openid profile email mcp:tools
 | Kind | Scopes |
 |---|---|
 | Identity | `openid`, `profile`, `email` |
-| MCP resource-binding | `mcp:tools` |
+| Shared MCP transport scope | `mcp:tools` (**generic**; shared with TÉO and future MCPs) |
+
+```text
+mcp:tools
+≠
+DAVI semantic ownership
+≠
+MCP resource audience binding
+≠
+business authorization
+```
 
 ### Keycloak client scope — internal audience mechanism
 
@@ -333,26 +343,38 @@ openid email profile mcp:tools
 
 Do not modify Keycloak merely to make an internal client-scope name appear in JWT `scope`. Validate the security postcondition instead.
 
-### MCP resource binding
+### MCP resource binding (dedicated — not inside shared `mcp:tools`)
 
-For the proven Keycloak 26.0.7 configuration, the platform uses:
+Shared OAuth mechanics + **isolated** resource audience:
+
+| Layer | Value |
+|---|---|
+| Shared scope | `mcp:tools` |
+| Transversal aud | `delpi-central` |
+| Dedicated DAVI aud | `https://minhadelpi.com.br/apps/api-delpi/mcp` |
+| Sibling TÉO aud (must NOT appear on DAVI tokens) | `https://minhadelpi.com.br/apps/transformometro-api/mcp` |
+
+**CURRENT (PROVEN isolation 2026-09-17):** Audience mapper for `…/api-delpi/mcp` lives on the **dedicated** `mcp-api-delpi` client (or dedicated client scope of that client). It must **not** be nested inside the shared client scope `mcp:tools`.
+
+**STALE (do not reintroduce):** placing `mcp-api-delpi-resource-audience` inside shared `mcp:tools` leaked DAVI audience into TÉO tokens.
+
+Therefore the token used by DAVI must contain:
 
 ```text
-client scope: mcp:tools
-→ Audience mapper
-→ Included Custom Audience:
-   https://minhadelpi.com.br/apps/api-delpi/mcp
-→ Add to access token: ON
-```
-
-Therefore the token used by DAVI must contain both audiences:
-
-```text
-delpi-central
-https://minhadelpi.com.br/apps/api-delpi/mcp
+azp = mcp-api-delpi
+aud includes delpi-central
+aud includes https://minhadelpi.com.br/apps/api-delpi/mcp
+aud does NOT include https://minhadelpi.com.br/apps/transformometro-api/mcp
 ```
 
 Extra legitimate audiences, such as `account`, do not invalidate the token.
+
+```text
+MCP RESOURCE ISOLATION = PROVEN / PASS
+KEYCLOAK SCOPE DESCRIPTION CLEANUP = TO_INVENTORY
+```
+
+(Admin description text of `mcp:tools` may still read as DAVI-only; functional binding is dedicated. See Keycloak runbook.)
 
 ### Business authorization is separate
 
@@ -431,13 +453,19 @@ The exact connector id is operational/provider configuration and is intentionall
 9. After deployment or auth/metadata changes, use **Reconnect** when needed and refresh Plugin actions.
 10. Acceptance evidence: ChatGPT shows the connection as connected and lists exactly the expected tool `search_products`.
 
-## Why DAVI needs `mcp:tools` while TÉO/VISTA legacy bridges did not
+## Why remote MCP needs `mcp:tools` (and dedicated audience)
 
-DAVI is a remote MCP resource. Its token must be bound to the MCP resource URL in addition to the shared DELPI platform audience.
+Remote MCP resources (DAVI, TÉO, futuros) require:
 
-TÉO/VISTA historical GPT Actions bridges use their own HTTP/OpenAPI action contract and OAuth shape; they do not automatically inherit the DAVI MCP resource-binding scope.
+1. shared generic JWT scope `mcp:tools`;
+2. dedicated resource audience for **that** MCP URL;
+3. platform audience `delpi-central`.
 
-Do not mechanically add `mcp:tools` or the DAVI resource audience to legacy GPT Actions clients. Reuse the **principle** (end-user OAuth + backend AuthZ), not product-specific token bindings.
+TÉO MCP (`mcp-transformometro`) uses the **same** shared scope and the **same** isolation rule with its own resource URL. See `transformometro-api/docs/integrations/openai-plugin-mcp.md`.
+
+Legacy GPT Actions bridges (`chatgpt-*`) use a different HTTP/OpenAPI contract. Do **not** mechanically add `mcp:tools` or an MCP resource audience to those clients. Reuse the **principle** (end-user OAuth + backend AuthZ), not a single product’s token shape.
+
+Shared onboarding: `docs/10-guias-operacionais/mcp-chatgpt-plugin-onboarding-runbook.md`.
 
 ## Product Master V1 boundary
 

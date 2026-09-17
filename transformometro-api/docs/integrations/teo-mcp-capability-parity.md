@@ -3,11 +3,29 @@
 Gate:
 
 ```text
-CURRENT_CAPABILITIES = N
-MCP_COVERED = N
+CURRENT_CAPABILITIES = 20
+MCP_COVERED = 20
+MCP_TOOLS = 32
 MISSING = 0
 UNMAPPED = 0
 REGRESSED = 0
+```
+
+```text
+20 GPT Actions capabilities
+≠
+20 MCP tools
+```
+
+One GPT capability may map to READ + PREPARE + ACT semantic tools.
+`32 ≠ 20` is **not** a regression when capability coverage is 20/20.
+
+Composition (PROVEN registration):
+
+```text
+9 READ + 1 ANALYSIS + 11 PREPARE + 11 ACT = 32
+ACT tools accept only proposal_handle
+unbound ACT = 0
 ```
 
 Source of truth: `tm_app/interface/mcp/constants.py` (`GPT_TO_MCP_TOOLS`).
@@ -49,8 +67,29 @@ Source of truth: `tm_app/interface/mcp/constants.py` (`GPT_TO_MCP_TOOLS`).
 ## Proposal mechanism
 
 - Opaque HMAC `proposal_handle` (server-side store)
-- Actor binding + capability binding + state fingerprint
-- TTL default 15m; consumed after successful ACT (replay → stale/not found)
+- Actor binding + capability binding + state fingerprint + expiration + expected postcondition
+- TTL default ≈ 15m; consumed after successful ACT (replay → stale/not found)
 - ACT accepts **only** `proposal_handle` (exact prepared change)
+- ACT revalidates AuthZ + fingerprint → exact change → authoritative read-back
+- Failed read-back → `OUTCOME_VERIFICATION_FAILED`
 
-GPT Actions HTTP façade remains unbound by proposal handles (LEGACY_TRANSITIONAL_BRIDGE) but shares AuthZ/services with MCP ACT execution.
+| Runtime | Status |
+|---|---|
+| Proposal store | in-process |
+| Prod replicas | 1 |
+| Single-replica operation | **ACCEPTED_WITH_RESIDUAL** |
+| Shared store for horizontal scale | **TARGET** (not implemented) |
+
+GPT Actions HTTP façade remains unbound by proposal handles (**LEGACY_TRANSITIONAL_BRIDGE**, 20 operationIds still live) but shares AuthZ/services with MCP ACT execution.
+
+## Live ChatGPT acceptance (2026-09-17)
+
+| Layer | Status |
+|---|---|
+| Capability coverage (matrix) | 20/20 |
+| Provider tool discovery | 32/32 PASS |
+| READ (`get_my_context`, `get_catalog`, `search_records`) | PASS |
+| PREPARE via ChatGPT | **TEST_NOT_RUN** |
+| ACT / WRITE BUSINESS OUTCOME | **TEST_NOT_RUN** |
+
+Do not promote PREPARE/ACT to PROVEN from code-only or READ-only smoke.

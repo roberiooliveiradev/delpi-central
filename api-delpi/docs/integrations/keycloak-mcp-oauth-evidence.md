@@ -45,8 +45,9 @@ mcp:tools
 
 | Claim | Status | Notes |
 |---|---|---|
-| Keycloak 26.0.7 directly binds the OAuth `resource` parameter to token `aud` for this integration | **DISPROVEN / not used** | Platform uses client scope + Audience mapper |
-| `mcp:tools` client scope + Audience mapper binds the MCP resource audience | **PROVEN** | Applied to `mcp-api-delpi` |
+| Keycloak 26.0.7 directly binds the OAuth `resource` parameter to token `aud` for this integration | **DISPROVEN / not used** | Platform uses Audience mapper + shared scope |
+| MCP resource audience bound via **dedicated** mapper on `mcp-api-delpi` (not nested in shared `mcp:tools`) | **PROVEN** (isolation revalidated 2026-09-17) | Shared `mcp:tools` = generic scope string only |
+| Historical pattern: Audience mapper inside shared client scope `mcp:tools` | **STALE / corrected** | Caused cross-MCP `aud` leakage to TÉO; mapper moved to dedicated client config |
 | `audience-delpi` provides `aud=delpi-central` | **PROVEN** | Existing platform audience mechanism |
 | `audience-delpi` must appear in JWT `scope` | **DISPROVEN** | Evaluate token omitted it; resource server does not require it |
 | Workspace Agent End-user account means per-user app authentication | **PROVEN vendor contract + configured** | current Agent Studio setting for DAVI |
