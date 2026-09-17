@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ClipboardList } from "lucide-react";
 import type { MachineLoadOperation } from "./api";
 import { buildPublicProductModelGlbUrl } from "./api";
 import {
@@ -194,10 +194,6 @@ export function OperationDetailPage({
               ) : null}
             </div>
 
-            {status.operatorNote ? (
-              <p className="pcp-pub__detail-operator">{status.operatorNote}</p>
-            ) : null}
-
             <dl className="pcp-pub__facts">
               <Fact label="Operação">
                 {operation.operation_code} · {operation.operation_description}
@@ -206,7 +202,7 @@ export function OperationDetailPage({
             </dl>
 
             <h3 className="pcp-pub__detail-section">Quantidades</h3>
-            <dl className="pcp-pub__facts pcp-pub__facts--num">
+            <dl className="pcp-pub__facts pcp-pub__facts--num pcp-pub__facts--qty">
               <Fact label="Planejada">
                 {formatQty(operation.planned_qty)}{" "}
                 {formatUnit(operation.unit, operation.planned_qty)}
@@ -219,15 +215,11 @@ export function OperationDetailPage({
                     : `${formatQty(producedQty)} ${formatUnit(operation.unit, producedQty)}`}
               </Fact>
               <Fact label="Pendente" emphasis>
-                {appointments.loading ? (
-                  "…"
-                ) : pendingQty == null ? (
-                  "—"
-                ) : (
-                  <>
-                    {formatQty(pendingQty)} {formatUnit(operation.unit, pendingQty)}
-                  </>
-                )}
+                {appointments.loading
+                  ? "…"
+                  : pendingQty == null
+                    ? "—"
+                    : `${formatQty(pendingQty)} ${formatUnit(operation.unit, pendingQty)}`}
               </Fact>
             </dl>
 
@@ -251,11 +243,23 @@ export function OperationDetailPage({
             <div className="pcp-pub__detail-actions">
               <button
                 type="button"
-                className="pcp-pub__drawing"
+                className="pcp-pub__icon-btn"
                 onClick={() => setAppointmentsOpen(true)}
+                aria-label={
+                  appointmentCount > 0
+                    ? `Ver apontamentos (${appointmentCount})`
+                    : "Ver apontamentos"
+                }
+                title={
+                  appointmentCount > 0
+                    ? `Ver apontamentos (${appointmentCount})`
+                    : "Ver apontamentos"
+                }
               >
-                Ver apontamentos
-                {appointmentCount > 0 ? ` (${appointmentCount})` : ""}
+                <ClipboardList size={20} strokeWidth={2.2} aria-hidden="true" />
+                {appointmentCount > 0 ? (
+                  <span className="pcp-pub__icon-btn-badge">{appointmentCount}</span>
+                ) : null}
               </button>
             </div>
           </div>
