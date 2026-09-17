@@ -19,11 +19,11 @@ Arquivo: [`delpi.manifest.json`](./delpi.manifest.json)
 
 - `id=delia`, `basePath=/apps/delia`, `entry=/apps/delia/assets/remoteEntry.js`
 - `ui.renderMode=federated`
-- `delia.access` = metadata de visibilidade exigida pelo schema Core (`permissions`/`routes` minItems=1)
+- `delia.access` = Product Master APPROVED (C1-T4D1) bootstrap/platform-access permission (shell + `/apps/delia` visibility only; ≠ business/Domain/ACT AuthZ)
 - `backend.serviceName=delia-api`, `baseUrl=/apps/delia-api`
 - Portal default `exposedModule=./App` (campo não existe no schema)
 
-Registro Core (ops, não C1-T4 automático):
+Registro Core e atribuição RBAC (ops; **não** feitos em C1-T4/T4D1):
 
 ```bash
 TOKEN=... bash scripts/register-manifest.sh

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Ops helper — does NOT run during C1-T4. Core registration remains PENDING until
-# product accepts bootstrap visibility code delia.access and Gateway/Compose exist.
+# Ops helper — does NOT run during C1-T4/T4D1.
+# Product Master APPROVED delia.access (C1-T4D1). Core live registration remains
+# PENDING until Gateway/Compose publication (C1-T5+) and ops RBAC assignment.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MANIFEST="${MANIFEST:-$SCRIPT_DIR/../delpi.manifest.json}"
 BASE_URL="${BASE_URL:-http://localhost}"

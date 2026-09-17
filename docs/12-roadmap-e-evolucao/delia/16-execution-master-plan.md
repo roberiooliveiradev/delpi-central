@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C1 — next bounded bootstrap after C1-T4 review (Gateway/Compose)` (`C0.S0..=C0.S7=APPROVED`; `FOUNDATION_FREEZE=APPROVED`; `C1_AUTHORIZED=YES`; `C1_STARTED=YES`; `C1_EXECUTED=NO`; OWN_MANIFEST evidence in ledger §6.40; C0 permanece `NOT_STARTED`; `RUNTIME_READINESS=NOT_PROVEN`)
+**Próxima etapa:** `C1-T5 — GATEWAY_AND_COMPOSE_PUBLICATION_FOUNDATION` (após review C1-T4D1) (`C0.S0..=C0.S7=APPROVED`; `FOUNDATION_FREEZE=APPROVED`; `C1_AUTHORIZED=YES`; `C1_STARTED=YES`; `C1_EXECUTED=NO`; `delia.access=APPROVED` §6.41; C0 permanece `NOT_STARTED`; `RUNTIME_READINESS=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -344,8 +344,12 @@ CORE_CONTEXT = PASS (contract/adapter; live Core TEST_NOT_RUN)
 MFE_FOLDER_INDEPENDENT = PASS
 FEDERATED_MOUNT = PASS
 PLUGIN_UI = PASS
-OWN_MANIFEST = PASS (C1-T4; Core live registration PENDING)
-NEXT = C1 — next bounded bootstrap after C1-T4 review (Gateway/Compose)
+OWN_MANIFEST = PASS (C1-T4/T4D1)
+BOOTSTRAP_VISIBILITY_PERMISSION = delia.access
+BOOTSTRAP_VISIBILITY_PERMISSION_DECISION = APPROVED
+CORE_REGISTRATION = PENDING
+ARCHITECTURE_DECISION_REQUIRED = NONE
+NEXT = C1-T5 — GATEWAY_AND_COMPOSE_PUBLICATION_FOUNDATION
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -544,6 +548,8 @@ FOUNDATION_FREEZE = APPROVED does NOT mean:
 **C1-T3 — STANDALONE_FEDERATED_MFE_FOUNDATION:** physical `plugins/delia/` federated MFE; `./App` expose; plugin-ui remote; mount/unmount; a11y/responsive baseline; no Chat/media auto-start. Manifest/Gateway/Compose deferred. `C1_EXECUTED=NO`.
 
 **C1-T4 — MANIFEST_AND_PUBLICATION_CONTRACT:** `plugins/delia/delpi.manifest.json`; Core schema/validator; registration path proven; Core live register deferred. Gateway/Compose deferred. `C1_EXECUTED=NO`.
+
+**C1-T4D1 — PERSIST_DELIA_ACCESS_PRODUCT_MASTER_DECISION:** Product Master APPROVED `delia.access` as bootstrap/platform-access permission (visibility/shell/root route only; ≠ business/Domain/ACT AuthZ). Core register + RBAC assignment still PENDING. `C1_EXECUTED=NO`.
 
 - own Flask API skeleton/layers/config/logging/health/tests;
 - JWT/Core integration;

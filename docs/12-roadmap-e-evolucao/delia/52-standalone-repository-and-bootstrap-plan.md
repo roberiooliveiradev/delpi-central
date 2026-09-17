@@ -280,8 +280,8 @@ Shape conceitual, **não contrato congelado nem arquivo para registro ainda**:
   "type": "microfrontend",
   "basePath": "/apps/delia",
   "entry": "/apps/delia/assets/remoteEntry.js",
-  "permissions": [],
-  "routes": [],
+  "permissions": [{"code": "delia.access", "module": "delia"}],
+  "routes": [{"path": "/apps/delia", "permission": "delia.access"}],
   "backend": {
     "required": true,
     "serviceName": "delia-api",
@@ -292,7 +292,9 @@ Shape conceitual, **não contrato congelado nem arquivo para registro ainda**:
 }
 ```
 
-`id=delia`, paths e `serviceName=delia-api` são freeze aceito C0.S1. Manifest source owner = DÉLIA; app/route/RBAC registry owner = Core. Permission codes e rotas finais não são inventados em C0.S1. Navegação vigente permanece `/me/apps` → `apps[].routes` (não recriar `/me/routes`).
+`id=delia`, paths e `serviceName=delia-api` são freeze aceito C0.S1. Manifest source owner = DÉLIA; app/route/RBAC registry owner = Core. Navegação vigente permanece `/me/apps` → `apps[].routes` (não recriar `/me/routes`).
+
+**C1-T4D1 Product Master decision (APPROVED):** `delia.access` é a permission canônica de bootstrap/platform-access da DÉLIA — visibilidade do app, filtragem Core `/me/apps`, navegação Portal e acesso ao shell/rota raiz `/apps/delia`. **Não** autoriza Domain API, Evidence, Decision, Work, PREPARE, ACT, provider/tool, side effects externos ou OT. Códigos de capability de negócio (`delia.work.*`, `delia.decision.*`, etc.) permanecem não inventados. Core live registration e atribuição RBAC continuam PENDING até a etapa de publicação.
 
 Meeting/Frontline não exigem manifests independentes por default.
 

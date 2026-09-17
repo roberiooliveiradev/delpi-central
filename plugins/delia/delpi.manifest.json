@@ -12,7 +12,7 @@
     {
       "code": "delia.access",
       "name": "Acessar DÉLIA",
-      "description": "Visibilidade/navegação do shell DÉLIA no portal. Metadata de app — não autoriza operações de negócio nem Domain AuthZ.",
+      "description": "Acesso de visibilidade ao shell DÉLIA e rota raiz /apps/delia (Product Master APPROVED C1-T4D1). Metadata de aplicação/plataforma — não autoriza Domain AuthZ, Evidence, Decision, Work, PREPARE, ACT, provider/tool ou OT.",
       "module": "delia"
     }
   ],
@@ -38,6 +38,6 @@
   "metadata": {
     "owner": "DELPI",
     "product": "DÉLIA",
-    "c1Note": "delia.access is bootstrap visibility metadata required by Core manifest schema (minItems=1). Business permission taxonomy remains deferred. Core registration not performed in C1-T4."
+    "c1Note": "Product Master APPROVED (C1-T4D1): delia.access is the canonical bootstrap/platform-access permission for DÉLIA shell visibility and root route /apps/delia. It does not authorize Domain/Evidence/Decision/Work/PREPARE/ACT/provider/OT operations. Owner=Core RBAC registry. Core live registration and RBAC assignment remain PENDING."
   }
 }

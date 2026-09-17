@@ -906,6 +906,9 @@ STATUS = FROZEN_CANDIDATE
 ```text
 OWNER = Core | CONSUMER = DÉLIA API | CHARACTER = READ
 FACTUAL_ANCHORS: GET /me ; GET /me/apps ; GET /me/access-profile
+BOOTSTRAP_APP_PERMISSION (C1-T4D1 APPROVED): delia.access
+  = Core-owned platform/app visibility for DÉLIA shell + /apps/delia
+  ≠ Domain AuthZ | Evidence | Decision | Work | PREPARE | ACT | provider | OT
 DO_NOT_RECREATE: /me/routes
 OUTPUT CoreAccessContext {
   userRef
