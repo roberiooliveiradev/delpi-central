@@ -113,6 +113,9 @@ Generic catalog actions = nested/flat approvedResponseFields + size bound
 bounded payload size != approved field projection
 is_complete / truncated = dataset completeness for model-visible response
   (source pagination total/total_pages + DAVI max_items/max_bytes; never page-local optimism)
+  ABSENT pagination keys → legacy complete when under cap
+  PRESENT but untrustworthy/insufficient pagination → is_complete=false truncated=false (UNKNOWN)
+  PROVEN multi-page / DAVI bounds → is_complete=false truncated=true (PARTIAL)
   — see evidence davi-pagination-completeness-hardening-001.*
 ```
 

@@ -69,3 +69,42 @@ No `operationId` / path / entity / capability branching.
 | DEPLOY | TEST_NOT_RUN |
 | LIVE | TEST_NOT_RUN |
 | AGENT PREVIEW | TEST_NOT_RUN |
+
+---
+
+## Architecture Acceptance residual + correction
+
+**CORRECTION_TASK_ID:** `DAVI-DYNAMIC-READ-PAGINATION-COMPLETENESS-CORRECTION-001`
+
+### What 001 proved
+
+| Case | Covered |
+|---|---|
+| Multi-page → PARTIAL (`false`/`true`) | YES |
+| Single-page / empty → COMPLETE | YES |
+| Malformed + DAVI item slice → PARTIAL | YES |
+| Malformed under cap (no DAVI slice) → UNKNOWN (`false`/`false`) | **NO** |
+
+Prior evidence claim “MALFORMED META = PASS” only covered malformed **with** DAVI truncation. It did **not** prove malformed/insufficient metadata under cap.
+
+### Residual
+
+`source_pagination_proves_partial` collapsed ABSENT and UNKNOWN into `None`, and `derive_response_completeness` defaulted `is_complete=True`, so present-but-untrustworthy metadata under cap incorrectly stayed COMPLETE.
+
+### Correction
+
+Internal states via `classify_source_pagination`:
+
+```text
+ABSENT | COMPLETE | PARTIAL | UNKNOWN
+```
+
+Public mapping:
+
+| State | is_complete | truncated |
+|---|---|---|
+| COMPLETE / ABSENT (legacy) | true | false |
+| PARTIAL | false | true |
+| UNKNOWN | false | false |
+
+Eligible / allowlist / MCP / Agent unchanged.

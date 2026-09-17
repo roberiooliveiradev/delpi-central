@@ -224,6 +224,15 @@ def apply_approved_field_projection(
     return out
 
 
+_PAGINATION_KEYS = ("page", "page_size", "total", "total_pages")
+
+# Internal pagination completeness states (not a public response field).
+_PAGINATION_ABSENT = "absent"
+_PAGINATION_COMPLETE = "complete"
+_PAGINATION_PARTIAL = "partial"
+_PAGINATION_UNKNOWN = "unknown"
+
+
 def _as_non_negative_int(value: Any) -> int | None:
     """Parse pagination scalars; reject bools and negatives as untrustworthy."""
     if isinstance(value, bool):
@@ -236,71 +245,96 @@ def _as_non_negative_int(value: Any) -> int | None:
     return None
 
 
-def source_pagination_proves_partial(payload: dict[str, Any]) -> bool | None:
-    """Interpret canonical page/page_size/total/total_pages for dataset completeness.
+def classify_source_pagination(payload: dict[str, Any]) -> str:
+    """Classify canonical page/page_size/total/total_pages for dataset completeness.
 
-    Returns:
-      True  — metadata proves the payload is only a partial dataset
-      False — metadata proves the payload covers the full query scope
-      None  — pagination metadata absent, untrustworthy, or insufficient
+    Returns one of:
+      absent   — no pagination keys present
+      complete — metadata proves full query-scope coverage
+      partial  — metadata proves the payload is only a subset
+      unknown  — pagination keys present but untrustworthy/insufficient
     """
-    has_pagination_keys = any(
-        key in payload for key in ("page", "page_size", "total", "total_pages")
-    )
-    if not has_pagination_keys:
-        return None
+    present = [key for key in _PAGINATION_KEYS if key in payload]
+    if not present:
+        return _PAGINATION_ABSENT
 
-    raw_page = payload.get("page") if "page" in payload else None
-    raw_page_size = payload.get("page_size") if "page_size" in payload else None
-    raw_total = payload.get("total") if "total" in payload else None
-    raw_total_pages = payload.get("total_pages") if "total_pages" in payload else None
+    parsed: dict[str, int | None] = {}
+    for key in _PAGINATION_KEYS:
+        if key not in payload:
+            parsed[key] = None
+            continue
+        value = _as_non_negative_int(payload.get(key))
+        if value is None:
+            return _PAGINATION_UNKNOWN
+        if key in ("page", "page_size") and value < 1:
+            return _PAGINATION_UNKNOWN
+        parsed[key] = value
 
-    # Malformed present values → do not invent completeness.
-    if "page" in payload:
-        page = _as_non_negative_int(raw_page)
-        if page is None or page < 1:
-            return None
-    else:
-        page = None
-    if "page_size" in payload:
-        page_size = _as_non_negative_int(raw_page_size)
-        if page_size is None:
-            return None
-    else:
-        page_size = None
-    if "total" in payload:
-        total = _as_non_negative_int(raw_total)
-        if total is None:
-            return None
-    else:
-        total = None
-    if "total_pages" in payload:
-        total_pages = _as_non_negative_int(raw_total_pages)
-        if total_pages is None:
-            return None
-    else:
-        total_pages = None
+    page = parsed["page"]
+    page_size = parsed["page_size"]
+    total = parsed["total"]
+    total_pages = parsed["total_pages"]
 
     items = payload.get("items")
     visible = len(items) if isinstance(items, list) else None
 
-    # Multi-page datasets are always partial for a single returned page —
-    # including the last page (page == total_pages).
-    if total_pages is not None and total_pages > 1:
-        return True
-    if total is not None and visible is not None and total > visible:
-        return True
+    # Internally contradictory combinations cannot prove completeness.
+    if page is not None and total_pages is not None:
+        if total_pages >= 1 and page > total_pages:
+            return _PAGINATION_UNKNOWN
+        if total_pages == 0 and page > 1:
+            return _PAGINATION_UNKNOWN
+    if total is not None and total_pages is not None:
+        if total_pages == 0 and total > 0:
+            return _PAGINATION_UNKNOWN
+        if total_pages > 1 and total == 0:
+            return _PAGINATION_UNKNOWN
+    if total is not None and visible is not None and total < visible:
+        return _PAGINATION_UNKNOWN
+    if (
+        total is not None
+        and visible is not None
+        and total_pages is not None
+        and total_pages > 1
+        and total == visible
+    ):
+        # Claims multi-page scope but this page already holds the full total.
+        return _PAGINATION_UNKNOWN
 
-    # Empty or single-page scopes that fit the visible rows.
+    # Proven partiality — including last page of a multi-page dataset.
+    if total_pages is not None and total_pages > 1:
+        return _PAGINATION_PARTIAL
+    if total is not None and visible is not None and total > visible:
+        return _PAGINATION_PARTIAL
+
+    # Proven completeness: empty or single-page scopes that fit visible rows.
     if total is not None and visible is not None and total <= visible:
         if total_pages is None or total_pages <= 1:
-            return False
+            return _PAGINATION_COMPLETE
     if total_pages is not None and total_pages <= 1:
-        if total is None or visible is None or total <= visible:
-            return False
+        if total is not None and (visible is None or total <= visible):
+            return _PAGINATION_COMPLETE
+        if total is None and visible is not None:
+            # total_pages alone without total is insufficient proof.
+            return _PAGINATION_UNKNOWN
 
-    # page/page_size alone without total/total_pages cannot prove completeness.
-    _ = (page, page_size)
+    # page/page_size (and other insufficient combinations) present but unproven.
+    _ = page_size
+    return _PAGINATION_UNKNOWN
+
+
+def source_pagination_proves_partial(payload: dict[str, Any]) -> bool | None:
+    """Backward-compatible view of :func:`classify_source_pagination`.
+
+    True/False only for proven partial/complete. Absent and unknown both map to
+    None — callers that need the absent/unknown distinction must use
+    ``classify_source_pagination``.
+    """
+    state = classify_source_pagination(payload)
+    if state == _PAGINATION_PARTIAL:
+        return True
+    if state == _PAGINATION_COMPLETE:
+        return False
     return None
 
 
@@ -312,37 +346,34 @@ def derive_response_completeness(
 ) -> tuple[bool, bool]:
     """Derive (is_complete, truncated) for the model-visible broker response.
 
-    is_complete = model-visible payload contains the full result set for the
-    current canonical query scope.
-    truncated = model-visible payload is only a bounded/partial subset.
+    Public boolean mapping of internal pagination states:
+      COMPLETE → (True, False)
+      PARTIAL  → (False, True)
+      UNKNOWN  → (False, False)
+      ABSENT   → legacy default (True, False) unless other signals apply
 
-    Precedence is monotonic/conservative: proven incompleteness never becomes
-    complete later. Source ``is_complete=false`` / ``truncated=true`` are sticky.
-    Source optimistic True may be overridden by pagination or DAVI bounding.
+    Precedence (monotonic):
+      DAVI bound partial > source explicit partial > pagination PARTIAL
+      > pagination UNKNOWN > pagination COMPLETE / legacy absent
     """
-    is_complete = True
-    truncated = False
+    pagination_state = _PAGINATION_ABSENT
+    source_explicit_partial = False
 
     if isinstance(payload, dict):
-        if payload.get("truncated") is True:
-            truncated = True
-            is_complete = False
-        if payload.get("is_complete") is False:
-            is_complete = False
-            truncated = True
-
-        pagination_partial = source_pagination_proves_partial(payload)
-        if pagination_partial is True:
-            is_complete = False
-            truncated = True
+        if payload.get("truncated") is True or payload.get("is_complete") is False:
+            source_explicit_partial = True
+        pagination_state = classify_source_pagination(payload)
 
     if davi_item_truncated or davi_byte_truncated:
-        is_complete = False
-        truncated = True
-
-    if truncated:
-        is_complete = False
-    return is_complete, truncated
+        return False, True
+    if source_explicit_partial:
+        return False, True
+    if pagination_state == _PAGINATION_PARTIAL:
+        return False, True
+    if pagination_state == _PAGINATION_UNKNOWN:
+        return False, False
+    # ABSENT (legacy) or COMPLETE
+    return True, False
 
 
 def bound_response_payload(

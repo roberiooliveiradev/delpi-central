@@ -1,6 +1,7 @@
 {
   "artifact_class": "EVIDENCE_NOT_RUNTIME_AUTHORITY",
   "taskId": "DAVI-DYNAMIC-READ-PAGINATION-COMPLETENESS-001",
+  "correctionTaskId": "DAVI-DYNAMIC-READ-PAGINATION-COMPLETENESS-CORRECTION-001",
   "classification": "GENERIC_BROKER_RESPONSE_COMPLETENESS_BUG",
   "owner": "api-delpi/app/application/external_capabilities/dynamic_information/projection.py",
   "eligibleUnchanged": 15,
@@ -18,7 +19,16 @@
     "expected": {"is_complete": false, "truncated": true}
   },
   "rootCause": "bound_response_payload defaulted is_complete=true when len(items)<=max_items, ignoring total/total_pages",
-  "fix": "derive_response_completeness + source_pagination_proves_partial (generic, monotonic)",
+  "fix": "classify_source_pagination + derive_response_completeness (generic, monotonic)",
+  "architectureAcceptanceResidual": {
+    "missedCase": "pagination metadata present but untrustworthy/insufficient under DAVI cap returned is_complete=true truncated=false",
+    "why001TestMissedIt": "malformed meta test only asserted false/true when DAVI sliced items; under-cap unknown path untested",
+    "correction": {
+      "internalStates": ["absent", "complete", "partial", "unknown"],
+      "publicUnknown": {"is_complete": false, "truncated": false},
+      "legacyAbsentItemsOnly": {"is_complete": true, "truncated": false}
+    }
+  },
   "deploy": "TEST_NOT_RUN",
   "live": "TEST_NOT_RUN"
 }
