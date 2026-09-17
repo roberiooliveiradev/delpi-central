@@ -22,11 +22,13 @@ from production_control_app.core.responses import fail, ok
 from production_control_app.domain.errors import (
     DelpiGatewayError,
     DrawingNotFound,
+    DrawingSourceUnavailable,
     InvalidBranch,
     Product3DModelNotFound,
     PublicAccessDenied,
     SnapshotNotFound,
 )
+from production_control_app.interface.http.drawing_response import drawing_pdf_response
 
 router = APIRouter(prefix="/public/machine-load", tags=["Public machine load"])
 
@@ -40,6 +42,8 @@ def _handle_public_errors(exc: Exception):
         return fail(str(exc), 404)
     if isinstance(exc, DrawingNotFound):
         return fail(str(exc), 404)
+    if isinstance(exc, DrawingSourceUnavailable):
+        return fail(str(exc), 503)
     if isinstance(exc, Product3DModelNotFound):
         return fail(str(exc), 404)
     if isinstance(exc, ValueError):
@@ -165,13 +169,7 @@ def get_public_machine_load_drawing_pdf(
         )
     except Exception as exc:  # noqa: BLE001
         return _handle_public_errors(exc)
-    return FileResponse(
-        drawing.path,
-        media_type=drawing.media_type or "application/pdf",
-        filename=drawing.filename,
-        content_disposition_type="inline",
-        headers={"Cache-Control": "no-store"},
-    )
+    return drawing_pdf_response(drawing)
 
 
 @router.get("/{token}/models/{product_code}/glb")

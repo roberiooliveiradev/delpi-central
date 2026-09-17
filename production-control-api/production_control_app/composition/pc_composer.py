@@ -52,15 +52,15 @@ from production_control_app.domain.ports.machine_load_snapshot_repository import
     MachineLoadSnapshotRepositoryPort,
 )
 from production_control_app.domain.services.branch_access_service import BranchAccessService
+from production_control_app.infrastructure.gateways.api_delpi_drawing_library_client import (
+    ApiDelpiDrawingLibraryClient,
+)
 from production_control_app.infrastructure.gateways.delpi_production_gateway import DelpiProductionGateway
 from production_control_app.infrastructure.persistence.postgres_delivery_map_snapshot_repository import (
     PostgresDeliveryMapSnapshotRepository,
 )
 from production_control_app.infrastructure.persistence.postgres_machine_load_snapshot_repository import (
     PostgresMachineLoadSnapshotRepository,
-)
-from production_control_app.infrastructure.storage.drawing_pdf_library_storage import (
-    DrawingPdfLibraryStorage,
 )
 from production_control_app.infrastructure.storage.product_3d_model_storage import (
     Product3DModelFilesystemStorage,
@@ -194,7 +194,8 @@ def build_machine_load_service(
 
 
 def build_drawing_library_storage() -> DrawingLibraryPort:
-    return DrawingPdfLibraryStorage(message=build_public_cockpit_access_service().message)
+    """Canonical product drawing access is owned by api-delpi (not local FILESERVER)."""
+    return ApiDelpiDrawingLibraryClient()
 
 
 def build_product_3d_model_repository() -> Product3DModelRepositoryPort:

@@ -31,9 +31,6 @@ class Settings:
     VITE_KC_URL: str | None = _get_env("VITE_KC_URL")
     PUBLIC_BASE_URL: str | None = _get_env("PUBLIC_BASE_URL")
 
-    PC_DRAWING_PDF_LIBRARY_DIR: str = _get_env(
-        "PC_DRAWING_PDF_LIBRARY_DIR", default="/drawing-pdfs"
-    )
     PC_PRODUCT_3D_MODELS_DIR: str = _get_env(
         "PC_PRODUCT_3D_MODELS_DIR", default="/app/data/product-3d-models"
     )

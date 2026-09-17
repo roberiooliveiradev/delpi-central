@@ -34,7 +34,11 @@ class SnapshotNotFound(ProductionControlError):
 
 
 class DrawingNotFound(ProductionControlError):
-    """PDF do desenho indisponível ou PA fora da fila publicada."""
+    """PDF do desenho ausente para o PA (fonte acessível, documento não encontrado)."""
+
+
+class DrawingSourceUnavailable(ProductionControlError):
+    """Fonte canônica de desenhos (api-delpi / biblioteca) indisponível."""
 
 
 class Product3DModelNotFound(ProductionControlError):

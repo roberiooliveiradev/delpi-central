@@ -37,11 +37,11 @@ Recrie o serviço após alterar o path:
 docker compose -f infra/docker-compose.dev.yml up -d --force-recreate api-delpi
 ```
 
-Em produção (`infra/docker-compose.yml`), a api-delpi monta o **mesmo** host path do cockpit PCP:
+Em produção (`infra/docker-compose.yml`), a api-delpi é o **único** serviço que monta o FILESERVER de desenhos:
 
 | Variável (host) | Container | Default prod |
 |-----------------|-----------|--------------|
-| `PC_DRAWING_PDF_HOST_PATH` | `/drawing-pdfs` (api-delpi e production-control-api) | `/mnt/fileserver/desenhos` |
+| `DRAWING_PDF_FILESERVER_HOST_PATH` (fallback: `PC_DRAWING_PDF_HOST_PATH`) | `/drawing-pdfs` (somente api-delpi) | `/mnt/fileserver/desenhos` |
 | `DRAWING_PDF_LIBRARY_DIR` | path interno api-delpi | `/drawing-pdfs` |
 
 Sem o mount: `GET /products/drawings` → `summary.library_available=false`; `GET .../drawing` e `.../drawing/pdf` → **HTTP 503** (fonte indisponível), não 404 de produto sem desenho.
@@ -58,7 +58,7 @@ A pasta `minha-delpi-ai-api/desenhos/` permanece para testes locais/OCR offline 
 
 Permissão: `api-delpi.access` (`API_DELPI_ACCESS`).
 
-O cockpit público do operador (`public-hub` → `production-control-api`) monta a **mesma pasta FILESERVER** e serve o PDF após validar o PA na fila publicada. A api-delpi usa a mesma autoridade de arquivos com AuthZ `API_DELPI_ACCESS` (sem fila PCP). Resolução de arquivo é técnica (server-resolved), não “revisão oficial aprovada”.
+O cockpit público do operador (`public-hub` → `production-control-api`) valida o PA na fila publicada e **consome** `GET /products/{code}/drawing/pdf` da api-delpi (S2S / JWT). A api-delpi aplica AuthZ `API_DELPI_ACCESS` e resolve o arquivo no FILESERVER. Resolução de arquivo é técnica (server-resolved), não “revisão oficial aprovada”.
 
 ### Falhas de fonte vs produto sem desenho
 

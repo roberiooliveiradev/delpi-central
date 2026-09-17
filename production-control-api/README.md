@@ -88,18 +88,16 @@ Diferenças em relação ao `GET /machine-load` autenticado:
 - **Sem a fila dos outros centros** — o bloco `operations` é removido; a tela mostra um centro por vez.
 - **Status HZA síncrono** — o cockpit não faz polling, então o enrich continua no caminho da leitura.
 
-`GET /public/machine-load/{token}/drawings/{paCode}/pdf` devolve o PDF do desenho **somente** se o código do PA aparecer na fila congelada da filial. O arquivo é lido do disco pelo próprio BFF (`DrawingPdfLibraryStorage` → `FileResponse`), sem passar pela api-delpi. O cockpit do operador abre esse PDF pelo botão **Ver desenho**.
-
-`GET /public/machine-load/{token}/models/{productCode}/glb` devolve o `.glb` anexado ao **produto da OP** (`product_code`, PI ou PA) **somente** se aquele código aparece como produto de alguma operação visível na fila publicada (`public_snapshot_contains_product` — não reutiliza o gate do PA). Bytes no volume `${DELPI_DATA_HOST_DIR}/product-3d-models`; metadado em `production_control.product_3d_models`. A fila pública marca `has_3d_model` por item. Anexação autenticada: `GET/PUT/DELETE /product-3d-models` com `production-control.product-3d-models.manage`.
-
-A pasta do FILESERVER é montada read-only no container:
+`GET /public/machine-load/{token}/drawings/{paCode}/pdf` devolve o PDF do desenho **somente** se o código do PA aparecer na fila congelada da filial. O BFF consulta a **api-delpi** (`GET /products/{code}/drawing/pdf`) via `ApiDelpiDrawingLibraryClient` (JWT do usuário quando houver, senão token S2S interno) e reenvia `application/pdf` inline. O cockpit do operador abre esse PDF pelo botão **Ver desenho**. O FILESERVER fica montado **apenas** no container `api-delpi` (`DRAWING_PDF_*`).
 
 | Variável | Default | Papel |
 |---|---|---|
-| `PC_DRAWING_PDF_LIBRARY_DIR` | `/drawing-pdfs` | Caminho dentro do container |
-| `PC_DRAWING_PDF_HOST_PATH` | dev `/mnt/x/DESENHOS DELPI EM PDF` · prod `/mnt/fileserver/desenhos` | Bind no host (`infra/docker-compose*.yml`) |
+| `DELPI_API_URL` | `http://delpi-api-delpi:8000` | Base URL da api-delpi |
+| `API_DELPI_INTERNAL_SERVICE_TOKEN` | (secret) | Auth S2S quando não há JWT de usuário (cockpit público) |
 
-Convenção de nome resolvida pelo storage: `{codigo}.pdf` → `{base}.pdf` → `{base}_R{NN}.pdf` (maior revisão) → `{base}-{N}.pdf`. Pasta ausente ou vazia gera mensagem própria (`publicCockpit.messages` em `content/machine_load.json`), diferente de "desenho não encontrado".
+Fonte canônica e resolução de arquivo: ver `api-delpi/docs/api/14-desenhos-pdf.md`. Pasta ausente/indisponível na api-delpi vira **503** (`DrawingSourceUnavailable`); desenho ausente vira **404** (`DrawingNotFound`).
+
+`GET /public/machine-load/{token}/models/{productCode}/glb` devolve o `.glb` anexado ao **produto da OP** (`product_code`, PI ou PA) **somente** se aquele código aparece como produto de alguma operação visível na fila publicada (`public_snapshot_contains_product` — não reutiliza o gate do PA). Bytes no volume `${DELPI_DATA_HOST_DIR}/product-3d-models`; metadado em `production_control.product_3d_models`. A fila pública marca `has_3d_model` por item. Anexação autenticada: `GET/PUT/DELETE /product-3d-models` com `production-control.product-3d-models.manage`.
 
 #### Desempenho do posto
 

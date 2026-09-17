@@ -6,7 +6,7 @@ from production_control_app.application.services.public_delivery_map_access_serv
     PublicDeliveryMapAccessService,
 )
 from production_control_app.core.security import PC_DELIVERY_MAP_VIEW, can
-from production_control_app.domain.errors import DrawingNotFound
+from production_control_app.domain.errors import DrawingNotFound, DrawingSourceUnavailable
 from production_control_app.domain.ports.drawing_library import DrawingLibraryPort
 from production_control_app.domain.product_drawing_pdf import DrawingFile
 from production_control_app.domain.services.branch_access_service import BranchAccessService
@@ -79,6 +79,8 @@ class DeliveryMapDrawingService:
             raise DrawingNotFound(not_in_snapshot)
         try:
             return self._drawings.resolve_pdf(wanted)
+        except DrawingSourceUnavailable:
+            raise
         except DrawingNotFound as exc:
             detail = str(exc).strip()
             fallback = delivery_map_message(

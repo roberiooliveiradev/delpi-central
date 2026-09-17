@@ -2414,7 +2414,6 @@ services:
       DELPI_API_CALLER_APP: production-control-api
       API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
 
-      PC_DRAWING_PDF_LIBRARY_DIR: ${PC_DRAWING_PDF_LIBRARY_DIR:-/drawing-pdfs}
       PC_PRODUCT_3D_MODELS_DIR: ${PC_PRODUCT_3D_MODELS_DIR:-/app/data/product-3d-models}
       PC_PRODUCT_3D_MAX_BYTES: ${PC_PRODUCT_3D_MAX_BYTES:-26214400}
 
@@ -2429,8 +2428,7 @@ services:
     volumes:
       - ../production-control-api:/app
       - ../shared:/shared
-      # Desenhos PDF do FILESERVER montados no host (WSL: /mnt/x) — somente leitura.
-      - ${PC_DRAWING_PDF_HOST_PATH:-/mnt/x/DESENHOS DELPI EM PDF}:/drawing-pdfs:ro
+      # Product drawings: owned by api-delpi (DRAWING_PDF_*). PCP consumes via HTTP.
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/product-3d-models:/app/data/product-3d-models
 
     depends_on:

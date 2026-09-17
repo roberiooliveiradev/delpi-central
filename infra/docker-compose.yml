@@ -1420,7 +1420,7 @@ services:
       QUALITY_LABELS_QR_DIR: ${QUALITY_LABELS_QR_DIR:-/app/data/quality-labels/qr}
       QUALITY_LABELS_SIGNATURE_DIR: ${QUALITY_LABELS_SIGNATURE_DIR:-/app/data/quality-labels/signatures}
       QUALITY_LABELS_CERTIFICATE_DIR: ${QUALITY_LABELS_CERTIFICATE_DIR:-/app/data/quality-labels/certificates}
-      # Mesma biblioteca FILESERVER do cockpit PCP (production-control-api).
+      # Mesma biblioteca FILESERVER — owner canônico api-delpi (consumers: PCP, futuro DAVI).
       DRAWING_PDF_LIBRARY_DIR: ${DRAWING_PDF_LIBRARY_DIR:-/drawing-pdfs}
 
       # Microsoft Graph — Canal de Denúncia
@@ -1462,8 +1462,9 @@ services:
       - transformometro-api
 
     volumes:
-      # FILESERVER de desenhos PDF — mesmo host path do production-control-api (PCP proven).
-      - ${PC_DRAWING_PDF_HOST_PATH:-/mnt/fileserver/desenhos}:/drawing-pdfs:ro
+      # Canonical FILESERVER drawing library (api-delpi owner). Host path env may still be
+      # PC_DRAWING_PDF_HOST_PATH on older prod hosts; prefer DRAWING_PDF_FILESERVER_HOST_PATH.
+      - ${DRAWING_PDF_FILESERVER_HOST_PATH:-${PC_DRAWING_PDF_HOST_PATH:-/mnt/fileserver/desenhos}}:/drawing-pdfs:ro
       # Evidências PAC e anexos Auditoria 5S — persistir fora do container (sobrevive a deploy)
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/pac-evidences:/app/data/pac-evidences
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/invoice-issuance:/app/data/invoice-issuance
@@ -2519,7 +2520,6 @@ services:
       DELPI_API_CALLER_APP: production-control-api
       API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
 
-      PC_DRAWING_PDF_LIBRARY_DIR: ${PC_DRAWING_PDF_LIBRARY_DIR:-/drawing-pdfs}
       PC_PRODUCT_3D_MODELS_DIR: ${PC_PRODUCT_3D_MODELS_DIR:-/app/data/product-3d-models}
       PC_PRODUCT_3D_MAX_BYTES: ${PC_PRODUCT_3D_MAX_BYTES:-26214400}
 
@@ -2532,8 +2532,7 @@ services:
       PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
 
     volumes:
-      # Share de desenhos do FILESERVER montado no host (CIFS/SMB) — somente leitura.
-      - ${PC_DRAWING_PDF_HOST_PATH:-/mnt/fileserver/desenhos}:/drawing-pdfs:ro
+      # Product drawings: owned by api-delpi (DRAWING_PDF_*). PCP consumes via HTTP.
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/product-3d-models:/app/data/product-3d-models
 
     depends_on:

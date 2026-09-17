@@ -4,7 +4,7 @@ from production_control_app.application.services.machine_load_service import Mac
 from production_control_app.application.services.public_cockpit_access_service import (
     PublicCockpitAccessService,
 )
-from production_control_app.domain.errors import DrawingNotFound
+from production_control_app.domain.errors import DrawingNotFound, DrawingSourceUnavailable
 from production_control_app.domain.ports.drawing_library import DrawingLibraryPort
 from production_control_app.domain.product_drawing_pdf import DrawingFile
 
@@ -42,6 +42,8 @@ class PublicMachineLoadDrawingService:
             )
         try:
             return self._drawings.resolve_pdf(wanted)
+        except DrawingSourceUnavailable:
+            raise
         except DrawingNotFound as exc:
             detail = str(exc).strip()
             fallback = self._access.message(

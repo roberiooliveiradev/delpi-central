@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Query
-from fastapi.responses import FileResponse
 
 from production_control_app.composition.pc_composer import (
     build_delivery_map_drawing_service,
@@ -11,7 +10,14 @@ from production_control_app.composition.pc_composer import (
     build_public_delivery_map_access_service,
 )
 from production_control_app.core.responses import fail, ok
-from production_control_app.domain.errors import DelpiGatewayError, DrawingNotFound, InvalidBranch, SnapshotNotFound
+from production_control_app.domain.errors import (
+    DelpiGatewayError,
+    DrawingNotFound,
+    DrawingSourceUnavailable,
+    InvalidBranch,
+    SnapshotNotFound,
+)
+from production_control_app.interface.http.drawing_response import drawing_pdf_response
 
 router = APIRouter(prefix="/public/delivery-map", tags=["Public delivery map"])
 
@@ -25,6 +31,8 @@ def _handle_public_errors(exc: Exception):
         return fail(str(exc), 404)
     if isinstance(exc, DrawingNotFound):
         return fail(str(exc), 404)
+    if isinstance(exc, DrawingSourceUnavailable):
+        return fail(str(exc), 503)
     if isinstance(exc, ValueError):
         return fail(str(exc), 422)
     if isinstance(exc, DelpiGatewayError):
@@ -64,13 +72,7 @@ def get_public_delivery_map_drawing_pdf(
         )
     except Exception as exc:  # noqa: BLE001
         return _handle_public_errors(exc)
-    return FileResponse(
-        drawing.path,
-        media_type=drawing.media_type or "application/pdf",
-        filename=drawing.filename,
-        content_disposition_type="inline",
-        headers={"Cache-Control": "no-store"},
-    )
+    return drawing_pdf_response(drawing)
 
 
 @router.get("/{token}/progress")

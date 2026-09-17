@@ -407,27 +407,28 @@ Guia completo: `minha-delpi-ai-api/docs/operations/vision-container-setup.md`.
 
 ---
 
-## Biblioteca PDF de desenhos (FILESERVER dev)
+## Biblioteca PDF de desenhos (FILESERVER)
 
-O `api-delpi` em dev lê PDFs do **FILESERVER** (`X:\DESENHOS DELPI EM PDF`), não da pasta gitignored `minha-delpi-ai-api/desenhos/`. O cockpit do operador (`public-hub`) **não** passa mais pela `api-delpi`: o `production-control-api` monta a mesma pasta e serve o PDF direto do disco.
+O **api-delpi** é o owner canônico do acesso governado aos PDFs do FILESERVER (`X:\DESENHOS DELPI EM PDF` em dev). Consumers (Portal PCP / Cockpit, futuro DAVI) obtêm o PDF via:
+
+`GET /products/{code}/drawing` (metadata) e `GET /products/{code}/drawing/pdf`.
+
+O `production-control-api` **não** monta mais a pasta de desenhos: o BFF chama a api-delpi (`ApiDelpiDrawingLibraryClient`) e reenvia o PDF ao cockpit público após o gate de fila/snapshot.
 
 | Variável | Onde | Default dev |
 |----------|------|-------------|
 | `DRAWING_PDF_FILESERVER_HOST_PATH` | `infra/.env` / `.env.local` | `/mnt/x/DESENHOS DELPI EM PDF` |
 | `DRAWING_PDF_LIBRARY_DIR` | container api-delpi | `/drawing-pdfs` |
-| `PC_DRAWING_PDF_HOST_PATH` | `infra/.env` / `.env.local` | `/mnt/x/DESENHOS DELPI EM PDF` |
-| `PC_DRAWING_PDF_LIBRARY_DIR` | container production-control-api | `/drawing-pdfs` |
 
-**Produção (`srv-api`):** o share do FILESERVER precisa estar montado no host (CIFS/SMB) e `PC_DRAWING_PDF_HOST_PATH` apontando para ele (default `/mnt/fileserver/desenhos`); o compose entrega o bind `:ro` para **`production-control-api` e `api-delpi`** (mesma autoridade de pasta). Sem o mount:
+**Produção (`srv-api`):** o share do FILESERVER precisa estar montado no host (CIFS/SMB). O compose monta o bind `:ro` **somente** em `api-delpi`. Alias legado de host path: `PC_DRAWING_PDF_HOST_PATH` (ainda aceito como fallback). Sem o mount:
 
-- cockpit PCP: mensagem explícita de pasta ausente/vazia (não "desenho não encontrado");
-- api-delpi: catálogo com `library_available=false`; metadata/PDF retornam **503 SOURCE_UNAVAILABLE** (não 404 de produto sem desenho).
+- api-delpi: catálogo com `library_available=false`; metadata/PDF retornam **503 SOURCE_UNAVAILABLE** (não 404 de produto sem desenho);
+- cockpit PCP: propaga 503 via BFF (`DrawingSourceUnavailable`).
 
 | Variável | Onde | Default prod |
 |----------|------|--------------|
-| `PC_DRAWING_PDF_HOST_PATH` | `infra/.env` | `/mnt/fileserver/desenhos` |
+| `DRAWING_PDF_FILESERVER_HOST_PATH` (ou `PC_DRAWING_PDF_HOST_PATH`) | `infra/.env` | `/mnt/fileserver/desenhos` |
 | `DRAWING_PDF_LIBRARY_DIR` | container api-delpi | `/drawing-pdfs` |
-| `PC_DRAWING_PDF_LIBRARY_DIR` | container production-control-api | `/drawing-pdfs` |
 
 **Montar X: no WSL** (se `/mnt/x` estiver vazio **ou** a pasta `DESENHOS DELPI EM PDF` existir mas sem PDFs — stub sem o drive `X:`):
 
@@ -445,10 +446,8 @@ DRAWING_PDF_FILESERVER_HOST_PATH=/mnt/x/DESENHOS DELPI EM PDF
 docker compose -f infra/docker-compose.dev.yml up -d --force-recreate api-delpi
 docker exec delpi-api-delpi ls /drawing-pdfs | wc -l
 
-# Cockpit do operador (mesma pasta, mount próprio do plugin)
-PC_DRAWING_PDF_HOST_PATH=/mnt/x/DESENHOS DELPI EM PDF
+# Cockpit: recreate production-control-api (HTTP consumer; sem mount de desenhos)
 docker compose -f infra/docker-compose.dev.yml up -d --force-recreate production-control-api
-docker exec delpi-production-control-api ls /drawing-pdfs | wc -l
 ```
 
 Catálogo: `GET /apps/api-delpi/products/drawings?page_size=5` (via gateway).

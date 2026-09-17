@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Body, Query, Request
-from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from production_control_app.composition.pc_composer import (
@@ -13,10 +12,12 @@ from production_control_app.domain.errors import (
     BranchAccessDenied,
     DelpiGatewayError,
     DrawingNotFound,
+    DrawingSourceUnavailable,
     InvalidBranch,
     SnapshotNotFound,
 )
 from production_control_app.interface.http.auth_http import resolve_user
+from production_control_app.interface.http.drawing_response import drawing_pdf_response
 
 router = APIRouter(tags=["Delivery map"])
 
@@ -42,6 +43,8 @@ def _handle_errors(exc: Exception):
         return fail(str(exc), 404)
     if isinstance(exc, DrawingNotFound):
         return fail(str(exc), 404)
+    if isinstance(exc, DrawingSourceUnavailable):
+        return fail(str(exc), 503)
     if isinstance(exc, DelpiGatewayError):
         return fail(str(exc), 502)
     raise exc
@@ -138,10 +141,4 @@ def get_delivery_map_drawing_pdf(
         )
     except Exception as exc:
         return _handle_errors(exc)
-    return FileResponse(
-        drawing.path,
-        media_type=drawing.media_type or "application/pdf",
-        filename=drawing.filename,
-        content_disposition_type="inline",
-        headers={"Cache-Control": "no-store"},
-    )
+    return drawing_pdf_response(drawing)
