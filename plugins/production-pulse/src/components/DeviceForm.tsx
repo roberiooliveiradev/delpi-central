@@ -1,12 +1,13 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Check, Clipboard, Eye, EyeOff, KeyRound } from "lucide-react";
 
 import {
   PpActionButton,
   PpFormGrid,
+  PpHintAction,
   PpNativeInlineTextField,
   PpNativeSelectField,
   PpNativeSwitchField,
-  PpNativeTextAreaField,
   PpNativeTextField,
   ppFieldError,
   ppFieldHint,
@@ -25,6 +26,7 @@ import type { DeviceFormValues, DriverCatalogItem } from "../types/form";
 import { branchLabel, resolveBranchOptions } from "../constants/branches";
 import {
   canCopyDeviceApiToken,
+  canRevealDeviceApiToken,
   generateDeviceApiToken,
   resolveDeviceApiTokenFieldStatus,
 } from "../utils/deviceApiToken";
@@ -87,7 +89,14 @@ export function DeviceForm({
     apiToken: device.apiToken,
     apiTokenSet: device.apiTokenSet,
   });
+  const canReveal = canRevealDeviceApiToken(device.apiToken);
   const canCopy = canCopyDeviceApiToken(device.apiToken);
+
+  useEffect(() => {
+    if (!canReveal) {
+      setTokenVisible(false);
+    }
+  }, [canReveal]);
 
   const identityDirty = useMemo(() => {
     if (!identityBaseline) return false;
@@ -114,6 +123,11 @@ export function DeviceForm({
       setCopyState("failed");
       window.setTimeout(() => setCopyState("idle"), 1600);
     }
+  };
+
+  const onGenerateToken = () => {
+    onChange({ apiToken: generateDeviceApiToken() });
+    setTokenVisible(true);
   };
 
   return (
@@ -236,32 +250,70 @@ export function DeviceForm({
           }
           trailing={
             <>
-              <PpActionButton
-                variant="ghost"
-                type="button"
-                onClick={() => setTokenVisible((v) => !v)}
+              <PpHintAction
+                hint={PP_HELP.form.apiTokenShowHelp}
+                ariaLabel="Ajuda: Mostrar token"
               >
-                {tokenVisible
-                  ? PP_HELP.form.apiTokenHideAction
-                  : PP_HELP.form.apiTokenShowAction}
-              </PpActionButton>
-              <PpActionButton
-                variant="ghost"
-                type="button"
-                disabled={!canCopy}
-                onClick={() => void onCopyToken()}
+                <PpActionButton
+                  variant="ghost"
+                  type="button"
+                  disabled={!canReveal}
+                  aria-label={
+                    tokenVisible
+                      ? PP_HELP.form.apiTokenHideAction
+                      : PP_HELP.form.apiTokenShowAction
+                  }
+                  onClick={() => setTokenVisible((v) => !v)}
+                >
+                  {tokenVisible ? (
+                    <EyeOff size={16} aria-hidden />
+                  ) : (
+                    <Eye size={16} aria-hidden />
+                  )}
+                  {tokenVisible
+                    ? PP_HELP.form.apiTokenHideAction
+                    : PP_HELP.form.apiTokenShowAction}
+                </PpActionButton>
+              </PpHintAction>
+              <PpHintAction
+                hint={PP_HELP.form.apiTokenCopyHelp}
+                ariaLabel="Ajuda: Copiar token"
               >
-                {copyState === "copied"
-                  ? PP_HELP.form.apiTokenCopyDone
-                  : PP_HELP.form.apiTokenCopyAction}
-              </PpActionButton>
-              <PpActionButton
-                variant="ghost"
-                type="button"
-                onClick={() => onChange({ apiToken: generateDeviceApiToken() })}
+                <PpActionButton
+                  variant="ghost"
+                  type="button"
+                  disabled={!canCopy}
+                  aria-label={
+                    copyState === "copied"
+                      ? PP_HELP.form.apiTokenCopyDone
+                      : PP_HELP.form.apiTokenCopyAction
+                  }
+                  onClick={() => void onCopyToken()}
+                >
+                  {copyState === "copied" ? (
+                    <Check size={16} aria-hidden />
+                  ) : (
+                    <Clipboard size={16} aria-hidden />
+                  )}
+                  {copyState === "copied"
+                    ? PP_HELP.form.apiTokenCopyDone
+                    : PP_HELP.form.apiTokenCopyAction}
+                </PpActionButton>
+              </PpHintAction>
+              <PpHintAction
+                hint={PP_HELP.form.apiTokenGenerateHelp}
+                ariaLabel="Ajuda: Gerar token"
               >
-                {PP_HELP.form.generateApiTokenAction}
-              </PpActionButton>
+                <PpActionButton
+                  variant="ghost"
+                  type="button"
+                  aria-label={PP_HELP.form.generateApiTokenAction}
+                  onClick={onGenerateToken}
+                >
+                  <KeyRound size={16} aria-hidden />
+                  {PP_HELP.form.generateApiTokenAction}
+                </PpActionButton>
+              </PpHintAction>
             </>
           }
         />

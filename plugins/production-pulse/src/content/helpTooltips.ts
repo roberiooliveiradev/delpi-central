@@ -104,7 +104,14 @@ export const PP_HELP = {
     apiTokenHideAction: "Ocultar",
     apiTokenCopyAction: "Copiar",
     apiTokenCopyDone: "Copiado",
-    apiTokenCopyDisabledHint: "Gere um novo token para poder copiar (o valor salvo não é revelado).",
+    apiTokenShowHelp:
+      "Revela o valor digitado ou gerado nesta sessão. O token já salvo no cadastro nunca é reexibido — use «Gerar token» se precisar ver/copiar um segredo.",
+    apiTokenCopyHelp:
+      "Copia o valor da sessão para a área de transferência. Desabilitado sem valor em sessão (o token persistido não volta no GET).",
+    apiTokenGenerateHelp:
+      "Gera um novo segredo nesta sessão. Copie antes de salvar — após salvar o campo limpa e o status fica «Configurado».",
+    apiTokenCopyDisabledHint:
+      "Gere um novo token para poder mostrar ou copiar (o valor salvo não é revelado).",
     apiTokenIdentityDirtyHint:
       "Código do controlador ou IP alterados — ao salvar, o token do cadastro será reenviado ao chip (re-provision). Gere um novo só se quiser rotacionar o segredo.",
     generateApiTokenAction: "Gerar token",

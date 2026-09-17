@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { PP_HELP } from "../content/helpTooltips";
 import {
   canCopyDeviceApiToken,
+  canRevealDeviceApiToken,
   ensureDeviceApiTokenForCreate,
   generateDeviceApiToken,
   resolveDeviceApiTokenFieldStatus,
@@ -36,13 +38,21 @@ describe("deviceApiToken", () => {
     ).toBe("pending_save");
   });
 
-  it("negative: copy disabled without session value", () => {
+  it("negative: reveal/copy disabled without session value", () => {
+    expect(canRevealDeviceApiToken("")).toBe(false);
+    expect(canRevealDeviceApiToken("   ")).toBe(false);
     expect(canCopyDeviceApiToken("")).toBe(false);
     expect(canCopyDeviceApiToken("   ")).toBe(false);
   });
 
-  it("positive: copy enabled with session value", () => {
+  it("positive: reveal/copy enabled with session value", () => {
+    expect(canRevealDeviceApiToken("secret")).toBe(true);
     expect(canCopyDeviceApiToken("secret")).toBe(true);
+  });
+
+  it("sibling: canReveal matches canCopy", () => {
+    expect(canRevealDeviceApiToken("x")).toBe(canCopyDeviceApiToken("x"));
+    expect(canRevealDeviceApiToken("")).toBe(canCopyDeviceApiToken(""));
   });
 
   it("generateDeviceApiToken returns non-empty opaque string", () => {
@@ -51,5 +61,12 @@ describe("deviceApiToken", () => {
     expect(a.length).toBeGreaterThan(8);
     expect(b.length).toBeGreaterThan(8);
     expect(a).not.toBe(b);
+  });
+
+  it("help keys for token action buttons exist", () => {
+    expect(PP_HELP.form.apiTokenShowHelp.length).toBeGreaterThan(10);
+    expect(PP_HELP.form.apiTokenCopyHelp.length).toBeGreaterThan(10);
+    expect(PP_HELP.form.apiTokenGenerateHelp.length).toBeGreaterThan(10);
+    expect(PP_HELP.form.apiTokenCopyDisabledHint).toMatch(/mostrar|copiar/i);
   });
 });

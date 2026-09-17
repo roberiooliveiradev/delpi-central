@@ -22,8 +22,13 @@ export function resolveDeviceApiTokenFieldStatus(input: {
   return "missing";
 }
 
-export function canCopyDeviceApiToken(apiToken: string): boolean {
+/** Session value only — persisted token is never returned by GET. */
+export function canRevealDeviceApiToken(apiToken: string): boolean {
   return Boolean(apiToken.trim());
+}
+
+export function canCopyDeviceApiToken(apiToken: string): boolean {
+  return canRevealDeviceApiToken(apiToken);
 }
 
 export function ensureDeviceApiTokenForCreate(apiToken: string): string {
