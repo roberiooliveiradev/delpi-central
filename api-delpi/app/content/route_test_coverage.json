@@ -3671,6 +3671,15 @@
       "status": "covered"
     },
     {
+      "operationId": "list_production_order_operation_materials",
+      "method": "GET",
+      "path": "/production/orders/{production_order}/operations/{operation}/materials",
+      "module": "production",
+      "entity": "production_order_operation_materials",
+      "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
       "operationId": "get_production_orders_finished",
       "method": "GET",
       "path": "/production/orders/finished",

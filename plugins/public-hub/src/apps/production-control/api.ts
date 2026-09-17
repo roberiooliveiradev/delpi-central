@@ -336,6 +336,61 @@ export async function fetchPublicOperationAppointments(
   return envelope.data;
 }
 
+export type PublicOperationMaterial = {
+  product_code: string;
+  description: string;
+  unit: string;
+  original_qty: number;
+  open_qty: number;
+  consumed_qty: number;
+  commitment_count: number;
+};
+
+export type PublicOperationMaterials = {
+  branch: string;
+  production_order: string;
+  operation_code: string;
+  items: PublicOperationMaterial[];
+  summary: {
+    material_count: number;
+    commitment_count: number;
+  };
+};
+
+export function buildPublicOperationMaterialsUrl(
+  token: string,
+  branch: string,
+  productionOrder: string,
+  operationCode: string,
+): string {
+  const params = new URLSearchParams({
+    branch,
+    productionOrder,
+    operationCode,
+  });
+  return `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/operations/materials?${params}`;
+}
+
+export async function fetchPublicOperationMaterials(
+  token: string,
+  branch: string,
+  productionOrder: string,
+  operationCode: string,
+): Promise<PublicOperationMaterials> {
+  const response = await fetch(
+    buildPublicOperationMaterialsUrl(token, branch, productionOrder, operationCode),
+    { headers: { Accept: "application/json" } },
+  );
+  if (!response.ok) {
+    throw new Error(await readError(response, "Materiais da operação indisponíveis."));
+  }
+  const envelope = (await response.json()) as ApiEnvelope<PublicOperationMaterials>;
+  if (envelope.success === false || !envelope.data) {
+    throw new Error(envelope.message || "Materiais da operação indisponíveis.");
+  }
+  return envelope.data;
+}
+
 export type DeliveryMapRow = {
   production_order: string;
   product_code: string;

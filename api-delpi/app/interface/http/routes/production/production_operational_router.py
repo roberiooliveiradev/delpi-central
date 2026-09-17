@@ -9,6 +9,7 @@ from app.interface.http.pagination_query import (
 
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
+    BRANCH_QUERY_REQUIRED,
     CONSUMPTION_TOP_ITEMS_GROUP_BY_QUERY,
     LOSS_TYPE_QUERY,
     PRODUCT_TYPE_QUERY,
@@ -21,6 +22,9 @@ from app.application.dto.production.get_production_order_by_op_request import (
 )
 from app.application.dto.production.list_machine_program_top_intermediates_request import (
     ListMachineProgramTopIntermediatesRequest,
+)
+from app.application.dto.production.list_production_order_operation_materials_request import (
+    ListProductionOrderOperationMaterialsRequest,
 )
 from app.application.dto.production.production_operational_request import (
     ProductionOperationalRequest,
@@ -43,6 +47,7 @@ from app.composition.production_operational_composer import (
     build_get_production_work_center_average_planned_time_use_case,
     build_get_production_work_center_order_summary_use_case,
     build_list_production_machine_program_top_intermediates_use_case,
+    build_list_production_order_operation_materials_use_case,
 )
 from app.core.responses import error_response, not_found_response
 from app.domain.services.production.production_consumption_top_items_group_by_service import (
@@ -58,6 +63,7 @@ from app.interface.http.openapi_agent_metadata import (
     PRODUCTION_LOSSES_TOP_MATERIALS,
     PRODUCTION_MACHINE_PROGRAM_TOP_INTERMEDIATES,
     PRODUCTION_ORDER_BY_OP,
+    PRODUCTION_ORDER_OPERATION_MATERIALS,
     PRODUCTION_ORDERS_FINISHED,
     PRODUCTION_ORDERS_FINISHED_WITHOUT_CONSUMPTION,
     PRODUCTION_ORDERS_OPEN,
@@ -116,6 +122,40 @@ def get_production_order_by_op(
         log_error(f"Erro em orders/by-op: {exc}")
         return error_response(
             "Erro interno ao buscar detalhe da ordem de produção.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/orders/{production_order}/operations/{operation}/materials",
+    **PRODUCTION_ORDER_OPERATION_MATERIALS,
+)
+@require_permission(API_DELPI_ACCESS)
+def list_production_order_operation_materials(
+    production_order: str,
+    operation: str,
+    branch: str = BRANCH_QUERY_REQUIRED(),
+):
+    try:
+        result = build_list_production_order_operation_materials_use_case().execute(
+            ListProductionOrderOperationMaterialsRequest(
+                production_order=production_order,
+                operation=operation,
+                branch=branch,
+            )
+        )
+        return api_delpi_success(
+            result,
+            operation_id=PRODUCTION_ORDER_OPERATION_MATERIALS["operation_id"],
+            message="Materiais da operação carregados com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação em orders/operations/materials: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro em orders/operations/materials: {exc}")
+        return error_response(
+            "Erro interno ao buscar materiais da operação.",
             status_code=500,
         )
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { ArrowLeft, ClipboardList } from "lucide-react";
+import { ArrowLeft, ClipboardList, Package } from "lucide-react";
 import type { MachineLoadOperation } from "./api";
 import { buildPublicProductModelGlbUrl } from "./api";
 import {
@@ -22,6 +22,10 @@ import {
   usePublicOperationAppointments,
   type PublicOperationAppointmentsState,
 } from "./usePublicOperationAppointments";
+import {
+  usePublicOperationMaterials,
+  type PublicOperationMaterialsState,
+} from "./usePublicOperationMaterials";
 
 type Props = {
   token: string;
@@ -68,11 +72,19 @@ export function OperationDetailPage({
 }: Props) {
   const [fullscreen, setFullscreen] = useState(false);
   const [appointmentsOpen, setAppointmentsOpen] = useState(false);
+  const [materialsOpen, setMaterialsOpen] = useState(false);
   const appointments = usePublicOperationAppointments(
     token,
     branch,
     operation.production_order,
     operation.operation_code,
+  );
+  const materials = usePublicOperationMaterials(
+    token,
+    branch,
+    operation.production_order,
+    operation.operation_code,
+    materialsOpen,
   );
   const status = resolveStatus(operation);
   const paCode = operation.pa_product_code?.trim() || "";
@@ -261,6 +273,15 @@ export function OperationDetailPage({
                   <span className="pcp-pub__icon-btn-badge">{appointmentCount}</span>
                 ) : null}
               </button>
+              <button
+                type="button"
+                className="pcp-pub__icon-btn"
+                onClick={() => setMaterialsOpen(true)}
+                aria-label="Materiais da operação"
+                title="Materiais da operação"
+              >
+                <Package size={20} strokeWidth={2.2} aria-hidden="true" />
+              </button>
             </div>
           </div>
 
@@ -338,6 +359,13 @@ export function OperationDetailPage({
           operation={operation}
           appointments={appointments}
           onClose={() => setAppointmentsOpen(false)}
+        />
+      ) : null}
+
+      {materialsOpen ? (
+        <MaterialsModal
+          materials={materials}
+          onClose={() => setMaterialsOpen(false)}
         />
       ) : null}
     </section>
@@ -465,6 +493,81 @@ function AppointmentsModal({
           </div>
         ) : (
           <p className="pcp-pub-modal__empty">Nenhum apontamento registrado nesta operação.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MaterialsModal({
+  materials,
+  onClose,
+}: {
+  materials: PublicOperationMaterialsState;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const { data: payload, loading, error } = materials;
+  const items = payload?.items ?? [];
+
+  return (
+    <div
+      className="pcp-pub-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pcp-pub-materials-title"
+    >
+      <button type="button" className="pcp-pub-modal__backdrop" aria-label="Fechar" onClick={onClose} />
+      <div className="pcp-pub-modal__panel pcp-pub-modal__panel--materials">
+        <header className="pcp-pub-modal__head">
+          <h2 id="pcp-pub-materials-title">Materiais da operação</h2>
+          <button type="button" className="pcp-pub__ghost pcp-pub__ghost--plain" onClick={onClose}>
+            Fechar
+          </button>
+        </header>
+
+        {loading ? (
+          <p className="pcp-pub-modal__empty">Carregando materiais…</p>
+        ) : error ? (
+          <p className="pcp-pub-modal__empty">{error}</p>
+        ) : items.length > 0 ? (
+          <div className="pcp-pub-modal__table-wrap">
+            <table className="pcp-pub-modal__table">
+              <thead>
+                <tr>
+                  <th scope="col">Código</th>
+                  <th scope="col">Descrição</th>
+                  <th scope="col">UM</th>
+                  <th scope="col">Original</th>
+                  <th scope="col">Saldo</th>
+                  <th scope="col">Consumido</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((row) => (
+                  <tr key={row.product_code}>
+                    <td>{row.product_code || "—"}</td>
+                    <td>{row.description?.trim() || "—"}</td>
+                    <td>{row.unit?.trim() || "—"}</td>
+                    <td className="pcp-pub__num">{formatQty(row.original_qty)}</td>
+                    <td className="pcp-pub__num">{formatQty(row.open_qty)}</td>
+                    <td className="pcp-pub__num">{formatQty(row.consumed_qty)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="pcp-pub-modal__empty">
+            Esta operação não possui materiais vinculados.
+          </p>
         )}
       </div>
     </div>

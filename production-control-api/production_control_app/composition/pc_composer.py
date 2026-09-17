@@ -32,14 +32,17 @@ from production_control_app.application.services.public_machine_load_drawing_ser
 from production_control_app.application.services.public_machine_load_product_model_service import (
     PublicMachineLoadProductModelService,
 )
+from production_control_app.application.services.public_operation_appointments_service import (
+    PublicOperationAppointmentsService,
+)
+from production_control_app.application.services.public_operation_materials_service import (
+    PublicOperationMaterialsService,
+)
 from production_control_app.application.services.public_work_center_performance_service import (
     PublicWorkCenterPerformanceService,
 )
 from production_control_app.application.services.public_work_center_downtime_items_service import (
     PublicWorkCenterDowntimeItemsService,
-)
-from production_control_app.application.services.public_operation_appointments_service import (
-    PublicOperationAppointmentsService,
 )
 from production_control_app.application.services.reports_service import ReportsService
 from production_control_app.application.services.subplugin_catalog_service import SubpluginCatalogService
@@ -278,6 +281,20 @@ def build_public_operation_appointments_service(
 ) -> PublicOperationAppointmentsService:
     resolved = gateway or DelpiProductionGateway()
     return PublicOperationAppointmentsService(
+        resolved,
+        access=build_public_cockpit_access_service(),
+        machine_load=build_machine_load_service(resolved, snapshots=snapshots),
+        branch_access=build_branch_access_service(),
+    )
+
+
+def build_public_operation_materials_service(
+    gateway: DelpiProductionGateway | None = None,
+    *,
+    snapshots: MachineLoadSnapshotRepositoryPort | None = None,
+) -> PublicOperationMaterialsService:
+    resolved = gateway or DelpiProductionGateway()
+    return PublicOperationMaterialsService(
         resolved,
         access=build_public_cockpit_access_service(),
         machine_load=build_machine_load_service(resolved, snapshots=snapshots),

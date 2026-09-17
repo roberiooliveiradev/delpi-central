@@ -3334,6 +3334,21 @@
       },
       "category": "production"
     },
+    "list_production_order_operation_materials": {
+      "locale": {
+        "en": {
+          "summary": "Operation materials from SD4",
+          "description": "Active SD4 commitments for one production order and operation, aggregated by component. No SG1 fallback.",
+          "label": "Operation materials"
+        },
+        "pt-BR": {
+          "label": "Materiais da operação (SD4)",
+          "summary": "Materiais SD4 da OP+operação",
+          "description": "Empenhos ativos SD4 filtrados por D4_OP e D4_OPERAC, agregados por componente. Sem fallback SG1."
+        }
+      },
+      "category": "production"
+    },
     "get_production_orders_finished": {
       "locale": {
         "en": {

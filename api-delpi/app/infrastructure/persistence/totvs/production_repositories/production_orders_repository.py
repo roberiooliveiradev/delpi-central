@@ -1,6 +1,9 @@
 from app.domain.ports.production.production_orders_repository_port import (
     ProductionOrdersRepositoryPort,
 )
+from app.domain.services.production.consumption_real_quantity_service import (
+    ConsumptionRealQuantityService,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.production_repositories.production_otd_sql_filters import (
     sc2_otd_days_diff_select_sql,
@@ -588,6 +591,50 @@ class ProductionOrdersRepository(
             LINKED.C2_SEQUEN ASC,
             LINKED.C2_OP ASC
         """
+
+    def fetch_operation_materials(
+        self,
+        *,
+        production_order: str,
+        operation: str,
+        branch: str,
+    ) -> list[dict]:
+        """Materiais SD4 ativos da OP+operação — sem SG1; agrega empenhos do mesmo componente."""
+        consumption_expr = ConsumptionRealQuantityService.SQL_EXPRESSION.replace(
+            "D4.", "RE."
+        )
+        sql = f"""
+        SELECT
+            RTRIM(LTRIM(RE.D4_FILIAL)) AS branch,
+            RTRIM(LTRIM(RE.D4_OP)) AS production_order,
+            RTRIM(LTRIM(RE.D4_OPERAC)) AS operation,
+            RTRIM(LTRIM(RE.D4_COD)) AS product_code,
+            RTRIM(LTRIM(P.B1_DESC)) AS description,
+            RTRIM(LTRIM(P.B1_UM)) AS unit,
+            CAST(SUM(RE.D4_QTDEORI) AS FLOAT) AS original_qty,
+            CAST(SUM(RE.D4_QUANT) AS FLOAT) AS open_qty,
+            CAST(SUM({consumption_expr}) AS FLOAT) AS consumed_qty,
+            COUNT(*) AS commitment_count
+        FROM SD4010 RE WITH (NOLOCK)
+        INNER JOIN SB1010 P WITH (NOLOCK)
+            ON P.B1_COD = RE.D4_COD
+           AND P.D_E_L_E_T_ = ''
+        WHERE RE.D_E_L_E_T_ = ''
+          AND RTRIM(LTRIM(RE.D4_OP)) = ?
+          AND RTRIM(LTRIM(RE.D4_OPERAC)) = ?
+          AND RE.D4_FILIAL = ?
+        GROUP BY
+            RE.D4_FILIAL,
+            RE.D4_OP,
+            RE.D4_OPERAC,
+            RE.D4_COD,
+            P.B1_DESC,
+            P.B1_UM
+        ORDER BY RE.D4_COD ASC
+        """
+        params = (production_order, operation, branch)
+        with self as repo:
+            return repo.execute_query(sql, params)
 
     @staticmethod
     def _planned_time_filters(
