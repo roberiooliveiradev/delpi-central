@@ -279,64 +279,68 @@ export function DeviceDetailPage({
         badge={embedded ? undefined : ppShellIcon}
         actions={
           <div className="pp-detail-hero-actions">
-            <DeviceStatusBadge
-              status={device.status}
-              ledState={liveSnapshot?.ledState ?? device.ledState}
-            />
-            {permissions.canManageDevices ? (
-              <>
-                <PpHeroIconButton
-                  hint={PP_HELP.detail.editDevice}
-                  ariaLabel="Editar"
-                  onClick={() =>
-                    navigateProductionPulse(productionPulseDeviceEditPath(deviceId))
-                  }
-                >
-                  <Pencil size={16} aria-hidden />
-                </PpHeroIconButton>
-                {device.enabled ? (
-                  <PpHeroIconButton
-                    hint={PP_HELP.detail.deactivate}
-                    ariaLabel="Desativar"
-                    tone="warning"
-                    onClick={() => setDeactivateOpen(true)}
-                  >
-                    <PowerOff size={16} aria-hidden />
-                  </PpHeroIconButton>
-                ) : null}
-                <PpHeroIconButton
-                  hint={PP_HELP.hub.menuPermanentDeleteDevice}
-                  ariaLabel="Excluir permanentemente"
-                  tone="danger"
-                  onClick={() => void openLocalPermanentDelete()}
-                >
-                  <Trash2 size={16} aria-hidden />
-                </PpHeroIconButton>
-              </>
-            ) : null}
-            <PpHeroIconButton
-              hint={PP_HELP.detail.pollNow}
-              ariaLabel={
-                refreshing ? PP_HELP.detail.pollNowLoading : PP_HELP.detail.pollNowAction
-              }
-              disabled={refreshing}
-              onClick={() => void pollNow()}
-            >
-              <RefreshCw
-                size={16}
-                aria-hidden
-                className={refreshing ? "pp-spin" : undefined}
+            <div className="pp-detail-hero-actions__status">
+              <DeviceStatusBadge
+                status={device.status}
+                ledState={liveSnapshot?.ledState ?? device.ledState}
               />
-            </PpHeroIconButton>
-            {embedded && onClose ? (
+            </div>
+            <div className="pp-detail-hero-actions__toolbar">
+              {permissions.canManageDevices ? (
+                <>
+                  <PpHeroIconButton
+                    hint={PP_HELP.detail.editDevice}
+                    ariaLabel="Editar"
+                    onClick={() =>
+                      navigateProductionPulse(productionPulseDeviceEditPath(deviceId))
+                    }
+                  >
+                    <Pencil size={16} aria-hidden />
+                  </PpHeroIconButton>
+                  {device.enabled ? (
+                    <PpHeroIconButton
+                      hint={PP_HELP.detail.deactivate}
+                      ariaLabel="Desativar"
+                      tone="warning"
+                      onClick={() => setDeactivateOpen(true)}
+                    >
+                      <PowerOff size={16} aria-hidden />
+                    </PpHeroIconButton>
+                  ) : null}
+                  <PpHeroIconButton
+                    hint={PP_HELP.hub.menuPermanentDeleteDevice}
+                    ariaLabel="Excluir permanentemente"
+                    tone="danger"
+                    onClick={() => void openLocalPermanentDelete()}
+                  >
+                    <Trash2 size={16} aria-hidden />
+                  </PpHeroIconButton>
+                </>
+              ) : null}
               <PpHeroIconButton
-                hint={PP_HELP.detail.closeDetail}
-                ariaLabel="Fechar"
-                onClick={onClose}
+                hint={PP_HELP.detail.pollNow}
+                ariaLabel={
+                  refreshing ? PP_HELP.detail.pollNowLoading : PP_HELP.detail.pollNowAction
+                }
+                disabled={refreshing}
+                onClick={() => void pollNow()}
               >
-                <X size={16} aria-hidden />
+                <RefreshCw
+                  size={16}
+                  aria-hidden
+                  className={refreshing ? "pp-spin" : undefined}
+                />
               </PpHeroIconButton>
-            ) : null}
+              {embedded && onClose ? (
+                <PpHeroIconButton
+                  hint={PP_HELP.detail.closeDetail}
+                  ariaLabel="Fechar"
+                  onClick={onClose}
+                >
+                  <X size={16} aria-hidden />
+                </PpHeroIconButton>
+              ) : null}
+            </div>
           </div>
         }
       />

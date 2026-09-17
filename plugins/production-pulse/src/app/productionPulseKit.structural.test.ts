@@ -157,6 +157,10 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("pages/DriverDetailPage.tsx")).toMatch(/DetailLightCard/);
     expect(readRelative("pages/DriverDetailPage.tsx")).toMatch(/DetailCommandChips/);
     expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/pp-detail-hero-actions/);
+    expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/pp-detail-hero-actions__toolbar/);
+    expect(readRelative("pages/FirmwareDetailPage.tsx")).toMatch(/pp-detail-hero-actions__toolbar/);
+    expect(readRelative("pages/DriverDetailPage.tsx")).toMatch(/pp-detail-hero-actions__toolbar/);
+    expect(readRelative("index.css")).toMatch(/pp-detail-hero-actions__toolbar/);
     expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/PpHeroIconButton/);
     expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/liveConnectivityIssue/);
     expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/DetailStatusBanner/);

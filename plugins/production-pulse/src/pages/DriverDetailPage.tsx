@@ -146,59 +146,61 @@ export function DriverDetailPage({
 
   const heroActions = item ? (
     <div className="pp-detail-hero-actions">
-      {statusBadge}
-      {canManage && !isArchived ? (
-        <PpHeroIconButton
-          hint={PP_HELP.drivers.editMetadata}
-          ariaLabel="Editar metadados"
-          onClick={() => setEditing(true)}
-        >
-          <Pencil size={16} aria-hidden />
-        </PpHeroIconButton>
-      ) : null}
-      {canManage && isArchived ? (
-        <PpHeroIconButton
-          hint={PP_HELP.drivers.unarchive}
-          ariaLabel="Reativar"
-          disabled={busy}
-          onClick={() => void handleUnarchive()}
-        >
-          <RotateCcw size={16} aria-hidden />
-        </PpHeroIconButton>
-      ) : null}
-      {canManage && !isArchived ? (
-        <PpHeroIconButton
-          hint={PP_HELP.drivers.archive}
-          ariaLabel="Arquivar"
-          tone="warning"
-          disabled={busy}
-          onClick={handleArchive}
-        >
-          <Archive size={16} aria-hidden />
-        </PpHeroIconButton>
-      ) : null}
-      {canManage && onRequestPermanentDelete ? (
-        <PpHeroIconButton
-          hint={PP_HELP.hub.menuPermanentDeleteDriver}
-          ariaLabel="Excluir permanentemente"
-          tone="danger"
-          disabled={busy}
-          onClick={() =>
-            onRequestPermanentDelete(item.key, item.labelPt || item.key)
-          }
-        >
-          <Trash2 size={16} aria-hidden />
-        </PpHeroIconButton>
-      ) : null}
-      {embedded ? (
-        <PpHeroIconButton
-          hint={PP_HELP.detail.closeDetail}
-          ariaLabel="Fechar"
-          onClick={goBack}
-        >
-          <X size={16} aria-hidden />
-        </PpHeroIconButton>
-      ) : null}
+      <div className="pp-detail-hero-actions__status">{statusBadge}</div>
+      <div className="pp-detail-hero-actions__toolbar">
+        {canManage && !isArchived ? (
+          <PpHeroIconButton
+            hint={PP_HELP.drivers.editMetadata}
+            ariaLabel="Editar metadados"
+            onClick={() => setEditing(true)}
+          >
+            <Pencil size={16} aria-hidden />
+          </PpHeroIconButton>
+        ) : null}
+        {canManage && isArchived ? (
+          <PpHeroIconButton
+            hint={PP_HELP.drivers.unarchive}
+            ariaLabel="Reativar"
+            disabled={busy}
+            onClick={() => void handleUnarchive()}
+          >
+            <RotateCcw size={16} aria-hidden />
+          </PpHeroIconButton>
+        ) : null}
+        {canManage && !isArchived ? (
+          <PpHeroIconButton
+            hint={PP_HELP.drivers.archive}
+            ariaLabel="Arquivar"
+            tone="warning"
+            disabled={busy}
+            onClick={handleArchive}
+          >
+            <Archive size={16} aria-hidden />
+          </PpHeroIconButton>
+        ) : null}
+        {canManage && onRequestPermanentDelete ? (
+          <PpHeroIconButton
+            hint={PP_HELP.hub.menuPermanentDeleteDriver}
+            ariaLabel="Excluir permanentemente"
+            tone="danger"
+            disabled={busy}
+            onClick={() =>
+              onRequestPermanentDelete(item.key, item.labelPt || item.key)
+            }
+          >
+            <Trash2 size={16} aria-hidden />
+          </PpHeroIconButton>
+        ) : null}
+        {embedded ? (
+          <PpHeroIconButton
+            hint={PP_HELP.detail.closeDetail}
+            ariaLabel="Fechar"
+            onClick={goBack}
+          >
+            <X size={16} aria-hidden />
+          </PpHeroIconButton>
+        ) : null}
+      </div>
     </div>
   ) : null;
 

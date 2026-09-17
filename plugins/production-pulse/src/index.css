@@ -1015,15 +1015,41 @@
 }
 
 @media (max-width: 768px) {
+  /*
+   * Narrow: título em linha própria; status + toolbar abaixo em faixas que
+   * se reorganizam (toolbar em wrap horizontal — sem coluna de ícones).
+   */
+  .pp-device-detail .pp-page-hero__headline,
+  .pp-firmware-detail .pp-page-hero__headline,
+  .pp-form-page--embedded .pp-page-hero__headline {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .pp-device-detail .pp-page-hero__actions,
+  .pp-firmware-detail .pp-page-hero__actions,
+  .pp-form-page--embedded .pp-page-hero__actions {
+    margin-left: 0;
+    width: 100%;
+  }
+
   .pp-detail-hero-actions,
   .pp-device-detail__hero-actions {
     flex-direction: column;
     align-items: stretch;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .pp-detail-hero-actions__toolbar {
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .pp-detail-hero-actions .pp-hero-brand-btn:not(.pp-hero-icon-btn),
   .pp-device-detail__hero-actions .pp-hero-brand-btn:not(.pp-hero-icon-btn) {
-    width: 100%;
+    width: auto;
     justify-content: center;
   }
 
@@ -1057,6 +1083,21 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+}
+
+.pp-detail-hero-actions__status {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.pp-detail-hero-actions__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .pp-detail-section-title {

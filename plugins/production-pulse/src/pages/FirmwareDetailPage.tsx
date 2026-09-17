@@ -281,76 +281,80 @@ export function FirmwareDetailPage({
 
   const heroActions = item ? (
     <div className="pp-detail-hero-actions">
-      <span className={firmwareLifecycleBadgeClass(item.lifecycle)}>
-        {firmwareLifecycleLabel(item.lifecycle)}
-      </span>
-      {canEditMeta ? (
-        <PpHeroIconButton
-          hint={PP_HELP.ota.editMetadata}
-          ariaLabel="Editar metadados"
-          onClick={() => setEditMetaOpen(true)}
-        >
-          <Pencil size={16} aria-hidden />
-        </PpHeroIconButton>
-      ) : null}
-      {canPublish ? (
-        <PpHeroIconButton
-          hint={PP_HELP.ota.publishVersion}
-          ariaLabel="Publicar versão"
-          disabled={busy}
-          onClick={() => setPublishOpen(true)}
-        >
-          <Upload size={16} aria-hidden />
-        </PpHeroIconButton>
-      ) : null}
-      {canArchive ? (
-        <PpHeroIconButton
-          hint={PP_HELP.ota.archiveFirmware}
-          ariaLabel="Arquivar"
-          tone="warning"
-          disabled={busy}
-          onClick={() => setArchiveOpen(true)}
-        >
-          <Archive size={16} aria-hidden />
-        </PpHeroIconButton>
-      ) : null}
-      {canManage ? (
-        <PpHeroIconButton
-          hint={PP_HELP.hub.menuPermanentDeleteFirmware}
-          ariaLabel="Excluir permanentemente"
-          tone="danger"
-          disabled={busy}
-          onClick={() => void openLocalPermanentDelete()}
-        >
-          <Trash2 size={16} aria-hidden />
-        </PpHeroIconButton>
-      ) : null}
-      {!embedded ? (
-        <PpHeroIconButton
-          hint={PP_HELP.otaLinks.afterPublish}
-          ariaLabel="Voltar ao mapa"
-          onClick={() => {
-            if (onDone) {
-              onDone();
-              return;
-            }
-            navigateProductionPulse(
-              productionPulseFirmwareLinksPath({ firmwareKey: item.firmwareKey, branch: "01" }),
-            );
-          }}
-        >
-          <Map size={16} aria-hidden />
-        </PpHeroIconButton>
-      ) : null}
-      {embedded && onCancel ? (
-        <PpHeroIconButton
-          hint={PP_HELP.detail.closeDetail}
-          ariaLabel="Fechar"
-          onClick={onCancel}
-        >
-          <X size={16} aria-hidden />
-        </PpHeroIconButton>
-      ) : null}
+      <div className="pp-detail-hero-actions__status">
+        <span className={firmwareLifecycleBadgeClass(item.lifecycle)}>
+          {firmwareLifecycleLabel(item.lifecycle)}
+        </span>
+      </div>
+      <div className="pp-detail-hero-actions__toolbar">
+        {canEditMeta ? (
+          <PpHeroIconButton
+            hint={PP_HELP.ota.editMetadata}
+            ariaLabel="Editar metadados"
+            onClick={() => setEditMetaOpen(true)}
+          >
+            <Pencil size={16} aria-hidden />
+          </PpHeroIconButton>
+        ) : null}
+        {canPublish ? (
+          <PpHeroIconButton
+            hint={PP_HELP.ota.publishVersion}
+            ariaLabel="Publicar versão"
+            disabled={busy}
+            onClick={() => setPublishOpen(true)}
+          >
+            <Upload size={16} aria-hidden />
+          </PpHeroIconButton>
+        ) : null}
+        {canArchive ? (
+          <PpHeroIconButton
+            hint={PP_HELP.ota.archiveFirmware}
+            ariaLabel="Arquivar"
+            tone="warning"
+            disabled={busy}
+            onClick={() => setArchiveOpen(true)}
+          >
+            <Archive size={16} aria-hidden />
+          </PpHeroIconButton>
+        ) : null}
+        {canManage ? (
+          <PpHeroIconButton
+            hint={PP_HELP.hub.menuPermanentDeleteFirmware}
+            ariaLabel="Excluir permanentemente"
+            tone="danger"
+            disabled={busy}
+            onClick={() => void openLocalPermanentDelete()}
+          >
+            <Trash2 size={16} aria-hidden />
+          </PpHeroIconButton>
+        ) : null}
+        {!embedded ? (
+          <PpHeroIconButton
+            hint={PP_HELP.otaLinks.afterPublish}
+            ariaLabel="Voltar ao mapa"
+            onClick={() => {
+              if (onDone) {
+                onDone();
+                return;
+              }
+              navigateProductionPulse(
+                productionPulseFirmwareLinksPath({ firmwareKey: item.firmwareKey, branch: "01" }),
+              );
+            }}
+          >
+            <Map size={16} aria-hidden />
+          </PpHeroIconButton>
+        ) : null}
+        {embedded && onCancel ? (
+          <PpHeroIconButton
+            hint={PP_HELP.detail.closeDetail}
+            ariaLabel="Fechar"
+            onClick={onCancel}
+          >
+            <X size={16} aria-hidden />
+          </PpHeroIconButton>
+        ) : null}
+      </div>
     </div>
   ) : null;
 
