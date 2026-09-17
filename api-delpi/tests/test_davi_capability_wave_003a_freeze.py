@@ -163,8 +163,42 @@ def test_frozen_capabilities_have_complete_contracts() -> None:
             == "SUPPORTED_BY_CURRENT_GENERIC_PROJECTOR"
         )
         limits = cap["argumentConstraints"]["argumentLimits"]
-        assert limits["max_depth"]["maximum"] == 8
         assert limits["page_size"]["maximum"] == 50
+        if cap["capabilityId"] == "product.routing.guide":
+            assert limits["max_depth"]["maximum"] == 8
+            assert limits["max_depth"]["default"] == 8
+        elif cap["capabilityId"] == "product.where_used":
+            assert limits["max_depth"]["minimum"] == 1
+            assert limits["max_depth"]["maximum"] == 4
+            assert limits["max_depth"]["default"] == 4
+            assert cap["limits"]["maxDepth"] == 4
+            assert cap["limits"]["modelVisibleNestingLevels"] == 4
+
+
+def test_where_used_requested_depth_equals_model_visible_depth() -> None:
+    where = next(
+        c for c in candidate_records() if c["capabilityId"] == "product.where_used"
+    )
+    md = where["argumentConstraints"]["argumentLimits"]["max_depth"]
+    assert md["maximum"] == where["limits"]["modelVisibleNestingLevels"] == 4
+    assert md["default"] == 4
+    assert md["maximum"] <= where["limits"]["modelVisibleNestingLevels"]
+    blob = f"{where['completeness']} {where['limits']['note']}".lower()
+    assert "max_depth is 4" in blob or "maximum depth (4)" in blob
+    assert "may be 8" not in blob
+    assert "hidden level" in blob or "requested depth" in blob
+    # no stale 8-vs-4 contract
+    assert "while max_depth may be 8" not in where.get("openGaps", [])
+
+
+def test_routing_max_depth_remains_eight() -> None:
+    routing = next(
+        c for c in candidate_records() if c["capabilityId"] == "product.routing.guide"
+    )
+    md = routing["argumentConstraints"]["argumentLimits"]["max_depth"]
+    assert md["maximum"] == 8
+    assert md["default"] == 8
+    assert routing["limits"]["maxDepth"] == 8
 
 
 def test_shortages_cannot_freeze_without_computation_bound() -> None:
@@ -184,12 +218,19 @@ def test_shortages_cannot_freeze_without_computation_bound() -> None:
 
 
 def test_guide_and_parents_default_max_depth_risk_documented() -> None:
+    """Backend UC still defaults to 999; DAVI freeze must document governed caps."""
     assert guide_uc_default_max_depth() == 999
     assert parents_uc_default_max_depth() == 999
-    for cap in frozen_records():
-        note = json.dumps(cap["limits"], ensure_ascii=False).lower()
-        assert "999" in note or "max_depth" in note
-        assert cap["argumentConstraints"]["argumentLimits"]["max_depth"]["default"] == 8
+    routing = next(
+        c for c in candidate_records() if c["capabilityId"] == "product.routing.guide"
+    )
+    where = next(
+        c for c in candidate_records() if c["capabilityId"] == "product.where_used"
+    )
+    assert "999" in json.dumps(routing["limits"], ensure_ascii=False)
+    assert "999" in json.dumps(where["limits"], ensure_ascii=False)
+    assert routing["argumentConstraints"]["argumentLimits"]["max_depth"]["default"] == 8
+    assert where["argumentConstraints"]["argumentLimits"]["max_depth"]["default"] == 4
 
 
 def test_routing_aliases_do_not_collide_with_structure_tokens() -> None:

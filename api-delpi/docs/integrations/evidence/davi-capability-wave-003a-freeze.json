@@ -5,7 +5,7 @@
   "architectureDecision": "ACCEPT_WITH_RESIDUAL",
   "status": "FROZEN_FOR_IMPLEMENTATION",
   "theme": "Product Engineering / Planning",
-  "generated_at": "2026-09-17T11:40:19.147097+00:00",
+  "generated_at": "2026-09-17T11:48:49.806268+00:00",
   "source_head": "37baceb7ba20329d9ed412fc1019182317a59191",
   "origin_main": "37baceb7ba20329d9ed412fc1019182317a59191",
   "sourceFreezeSha": "37baceb7ba20329d9ed412fc1019182317a59191",
@@ -237,7 +237,7 @@
       ],
       "inputMinimization": {
         "code": "APPROVED_REQUIRED",
-        "max_depth": "APPROVED_OPTIONAL — MUST default/cap <=8 (UC defaults to 999 if omitted)",
+        "max_depth": "APPROVED_OPTIONAL — MUST default/cap to <=4 so DAVI requested depth equals model-visible approved parents[] depth (UC still defaults to 999 if omitted)",
         "page": "APPROVED_OPTIONAL — MUST default to 1",
         "page_size": "APPROVED_OPTIONAL — MUST default/cap <=50",
         "branch": "NOT_EXPOSED — operation has no branch parameter"
@@ -246,8 +246,8 @@
         "argumentLimits": {
           "max_depth": {
             "minimum": 1,
-            "maximum": 8,
-            "default": 8
+            "maximum": 4,
+            "default": 4
           },
           "page": {
             "minimum": 1,
@@ -299,15 +299,15 @@
       "branchSemantics": "NONE — operation does not accept branch",
       "pagination": "Paginates only direct parents of the queried code (root.parents). Each returned direct parent may still carry nested ancestors up to max_depth. total = len(direct parents). Full mode if page/page_size omitted — DAVI must force pagination.",
       "limits": {
-        "maxDepth": 8,
+        "maxDepth": 4,
         "maxPageSize": 50,
         "maxModelVisibleItems": 50,
         "modelVisibleNestingLevels": 4,
         "executeMaxResponseBytes": 65536,
-        "note": "approvedResponseFields enumerate explicit parents nesting to 4 levels (same pattern as structure components). Deeper nodes fail-closed in projection. Backend recursion still capped at max_depth<=8. Backend UC defaults to max_depth=999 if omitted — DAVI argumentLimits must force <=8."
+        "note": "DAVI governed max_depth equals model-visible approvedResponseFields parents[] nesting (4). Requested depth <= model-visible depth — no hidden level 5..8 computation through DAVI. Canonical Product API/use case still defaults to 999 if max_depth omitted; future DAVI implementation MUST inject argumentLimits max_depth=4 before execute. This is DAVI input-minimization / execution-bound, not backend AuthZ and not a Product API change."
       },
       "timeSemantics": "BOM validity = today. No historical effective-date window parameter.",
-      "completeness": "NOT a claim of all products that ever used the component. Complete for current-valid reverse BOM within max_depth after page slice on direct parents. Model-visible nesting limited to 4 explicit path levels. truncated if more direct parents than page_size.",
+      "completeness": "Current-valid reverse BOM only (SG1 validity filter for today). Recursive up to the requested DAVI max_depth. DAVI max_depth is 4 (minimum 1, default 4, maximum 4). Pagination applies to direct parents of the queried code. Nested ancestors are model-visible up to the same governed maximum depth (4). Do not claim historical completeness. Do not claim all products that ever used the component. truncated applies to direct-parent page slice, not to hidden projection depth.",
       "derivedFields": [],
       "provenance": "Preserve canonical operation/use case, product code, branch filter when used, max_depth, page/page_size/total/total_pages, truncated/is_complete. Do not expose SQL, hosts, tokens, repository internals, or route mechanics.",
       "semanticAliasesPtBr": [
@@ -355,9 +355,22 @@
       "openGaps": [
         "SECOND_USER_NEGATIVE_AUTHZ = TEST_NOT_RUN",
         "No dedicated api-delpi unit/route test for parents beyond OpenAPI metadata",
-        "Model-visible nesting capped at 4 explicit path levels while max_depth may be 8",
         "Business owner remains TO_INVENTORY"
-      ]
+      ],
+      "architectureCorrection": {
+        "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-003A-FREEZE-CORRECTION-001",
+        "before": {
+          "max_depth_maximum": 8,
+          "max_depth_default": 8,
+          "modelVisibleNestingLevels": 4
+        },
+        "after": {
+          "max_depth_maximum": 4,
+          "max_depth_default": 4,
+          "modelVisibleNestingLevels": 4
+        },
+        "rationale": "DAVI requested depth must be <= model-visible approvedResponseFields depth. Generic projector copies only explicit paths; deeper backend recursion would compute ancestors that DAVI does not expose."
+      }
     }
   ],
   "deferred": [
@@ -502,5 +515,16 @@
     "mcp": "UNCHANGED_AT_3",
     "agent": "UNCHANGED",
     "apiDomain": "UNCHANGED"
+  },
+  "correctionTaskId": "DAVI-CAPABILITY-EXPANSION-WAVE-003A-FREEZE-CORRECTION-001",
+  "correction": {
+    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-003A-FREEZE-CORRECTION-001",
+    "whereUsedMaxDepthBefore": 8,
+    "whereUsedModelVisibleDepthBefore": 4,
+    "whereUsedMaxDepthAfter": 4,
+    "whereUsedDefaultDepthAfter": 4,
+    "whereUsedModelVisibleDepthAfter": 4,
+    "routingMaxDepthUnchanged": 8,
+    "shortagesUnchanged": "DEFER"
   }
 }
