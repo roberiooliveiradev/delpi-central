@@ -1,0 +1,506 @@
+{
+  "artifact_class": "EVIDENCE_NOT_RUNTIME_AUTHORITY",
+  "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-003A-FREEZE",
+  "implementationTaskId": "DAVI-CAPABILITY-EXPANSION-WAVE-003A",
+  "architectureDecision": "ACCEPT_WITH_RESIDUAL",
+  "status": "FROZEN_FOR_IMPLEMENTATION",
+  "theme": "Product Engineering / Planning",
+  "generated_at": "2026-09-17T11:40:19.147097+00:00",
+  "source_head": "37baceb7ba20329d9ed412fc1019182317a59191",
+  "origin_main": "37baceb7ba20329d9ed412fc1019182317a59191",
+  "sourceFreezeSha": "37baceb7ba20329d9ed412fc1019182317a59191",
+  "implementation": "NOT_STARTED",
+  "deploy": "NOT_REQUIRED",
+  "live": "UNCHANGED_FROM_CURRENT_BASELINE",
+  "current_eligible": 13,
+  "new_capabilities": 2,
+  "wave3a_read_additions": 2,
+  "expected_eligible_after_implementation": 15,
+  "expected_mcp_tools_after_implementation": 3,
+  "agent_instruction_change": "NO",
+  "capability_ids": [
+    "product.routing.guide",
+    "product.where_used"
+  ],
+  "deferred_capability_ids": [
+    "product.raw_material.set_shortages"
+  ],
+  "capabilities": [
+    {
+      "capabilityId": "product.routing.guide",
+      "businessName": {
+        "ptBr": "Roteiro de produção do produto",
+        "en": "Product production routing guide"
+      },
+      "businessNeed": "Consultar a sequência operacional / roteiro (SG2) do produto e de componentes da BOM vigente até max_depth: operações, centros de trabalho, tempos padrão e componentes de operação. Não é status de OP, carga de máquina nem progresso de produção.",
+      "status": "FROZEN_FOR_IMPLEMENTATION",
+      "technicalOperations": [
+        "get_product_guide"
+      ],
+      "canonicalOperations": [
+        "get_product_guide"
+      ],
+      "primaryOperation": "get_product_guide",
+      "canonicalUseCases": [
+        "ListProductGuideUseCase"
+      ],
+      "readPrepareAct": "READ",
+      "technicalOwner": "api-delpi Product bounded context",
+      "businessOwner": "TO_INVENTORY — no canonical named business owner (Engenharia/PCP) proven in source",
+      "sourceOfTruth": "GET /products/{code}/guide → ListProductGuideUseCase → ProductGuideRepository: SG1010 recursive BOM (current validity via ProductBomValidityFilterService) + SG2010 route operations (G2_OPERAC/G2_DESCRI/G2_CTRAB/G2_SETUP/G2_TEMPAD/…) + SGF010 operation components + SB1010 descriptions; D_E_L_E_T_=''",
+      "authoritativeSource": "Protheus SG2010 (+ SG1010 BOM scope, SGF010, SB1010)",
+      "identity": "END_USER_ACCOUNT",
+      "backendAuthz": "PROVEN: @require_permission(API_DELPI_ACCESS) on guide() in product_routes.py",
+      "approvedInputFields": [
+        "code",
+        "branch",
+        "page",
+        "page_size",
+        "max_depth"
+      ],
+      "requiredInputFields": [
+        "code"
+      ],
+      "optionalInputFields": [
+        "branch",
+        "page",
+        "page_size",
+        "max_depth"
+      ],
+      "inputMinimization": {
+        "code": "APPROVED_REQUIRED",
+        "branch": "APPROVED_OPTIONAL — wire all|01|02; filter only; NOT AuthZ",
+        "page": "APPROVED_OPTIONAL — implementation MUST default to 1 (avoid full dump)",
+        "page_size": "APPROVED_OPTIONAL — implementation MUST default/cap to <=50",
+        "max_depth": "APPROVED_OPTIONAL — implementation MUST default/cap to <=8 (backend UC defaults to 999 if omitted)",
+        "legacy": "NOT_EXPOSED",
+        "debug": "NOT_EXPOSED",
+        "sort": "NOT_EXPOSED"
+      },
+      "argumentConstraints": {
+        "argumentLimits": {
+          "max_depth": {
+            "minimum": 1,
+            "maximum": 8,
+            "default": 8
+          },
+          "page": {
+            "minimum": 1,
+            "default": 1
+          },
+          "page_size": {
+            "minimum": 1,
+            "maximum": 50,
+            "default": 50
+          }
+        }
+      },
+      "approvedResponseFields": [
+        "items[].branch",
+        "items[].route_code",
+        "items[].product_code",
+        "items[].operation_code",
+        "items[].operation_description",
+        "items[].resource_code",
+        "items[].work_center",
+        "items[].setup_hours",
+        "items[].standard_time_hours_piece",
+        "items[].standard_time_minutes_piece",
+        "items[].operation_type",
+        "items[].component_code",
+        "items[].component_description",
+        "items[].component_sequence",
+        "items[].bom_level"
+      ],
+      "droppedFields": [
+        "items[].standard_time_hour_mil",
+        "items[].mandatory_operation",
+        "items[].mandatory_sequence",
+        "items[].mandatory_report"
+      ],
+      "droppedFieldReasons": "standard_time_hour_mil is raw Protheus millesimal; mandatory_* flags are process-enforcement internals not required to answer routing/sequence questions.",
+      "responseShape": "paged_list",
+      "shape": "paged_list",
+      "projectionMode": "flat",
+      "projectionFeasibility": "SUPPORTED_BY_CURRENT_GENERIC_PROJECTOR",
+      "perOperationProjectorRequired": false,
+      "branchSemantics": "OPTIONAL QUERY FILTER via BRANCH_QUERY_OPTIONAL. all/omit → consolidated (no G2_FILIAL predicate). 01|02 → concrete. FILTER != AUTHORIZATION.",
+      "pagination": "Canonical UC: if page or page_size omitted → full in-memory dump after recursive fetch. DAVI must always supply page+page_size (<=50). total/total_pages from Page.",
+      "limits": {
+        "maxDepth": 8,
+        "maxPageSize": 50,
+        "maxModelVisibleItems": 50,
+        "executeMaxResponseBytes": 65536,
+        "note": "Backend still expands BOM+SG2 up to max_depth before slicing; max_depth<=8 is the primary computational bound (same class as get_product_structure). Backend UC defaults to max_depth=999 if omitted — DAVI argumentLimits must force <=8."
+      },
+      "timeSemantics": "BOM validity = today (G1_INI/G1_FIM). Routing rows are current non-deleted SG2.",
+      "validitySemantics": "SG1 current-validity filter for today; SG2/SGF D_E_L_E_T_=''",
+      "completeness": "Complete for operations returned for product+BOM components within max_depth after DAVI page slice. truncated=true if total>page_size. Do NOT claim entire historical routing catalog. Do NOT claim current OP execution.",
+      "derivedFields": [
+        {
+          "field": "items[].standard_time_hours_piece",
+          "provenance": "CANONICAL_BACKEND_CALCULATION — G2_TEMPAD/1000.0 in repository SQL"
+        },
+        {
+          "field": "items[].standard_time_minutes_piece",
+          "provenance": "CANONICAL_BACKEND_CALCULATION — (G2_TEMPAD/1000.0)*60 in repository SQL"
+        }
+      ],
+      "provenance": "Preserve canonical operation/use case, product code, branch filter when used, max_depth, page/page_size/total/total_pages, truncated/is_complete. Do not expose SQL, hosts, tokens, repository internals, or route mechanics.",
+      "semanticAliasesPtBr": [
+        "roteiro do produto",
+        "roteiro de produção",
+        "operações do produto",
+        "sequência de operações",
+        "centros de trabalho do produto"
+      ],
+      "semanticAliasesEn": [
+        "product routing",
+        "production routing",
+        "operation sequence",
+        "product operations"
+      ],
+      "privacyRisk": "LOW",
+      "privacy": "Operational routing times are process data, not payroll/finance. Keep minimized.",
+      "runtimeRisk": {
+        "databaseQueryCost": "MEDIUM",
+        "responseVolume": "MEDIUM",
+        "recursiveBehavior": "YES",
+        "fanOut": "MEDIUM",
+        "projectionComplexity": "LOW",
+        "privacyRisk": "LOW",
+        "businessValue": "HIGH",
+        "overall": "MEDIUM"
+      },
+      "risk": {
+        "databaseQueryCost": "MEDIUM",
+        "responseVolume": "MEDIUM",
+        "nesting": "LOW",
+        "recursiveBom": "YES",
+        "overall": "MEDIUM"
+      },
+      "observability": "Log action_id, actor when policy allows, status, latency, result_count, branch when used, max_depth, truncated/is_complete, correlation id. Never log Authorization, OAuth tokens, candidate token, secrets, SQL, or full payloads.",
+      "negativeAuthzPlan": "Local/backend: authenticated caller without API_DELPI_ACCESS must receive backend 403. For shortages (if ever promoted), also deny missing PRODUCTION_CONTROL branch view when BranchAccessGate applies. Live SECOND_USER_NEGATIVE_AUTHZ remains TEST_NOT_RUN. DAVI_LOCAL_RBAC/ROLE/BRANCH/OBJECT AuthZ forbidden.",
+      "liveAcceptancePlan": "After implementation+deploy: discover 'roteiro do produto {code}' → get_product_guide; execute with code of a known PA with SG2 rows; assert non-empty items with operation_code/work_center; branch=01 sibling; invalid branch rejected; unauthenticated 401; write-intent 'altere o roteiro' returns 0 candidates.",
+      "quarantineDeltaRequired": [],
+      "collisions": [
+        "estrutura do produto → product.structure.bom (existing)",
+        "status de produção → product.production.status (existing)",
+        "status fabril → product.factory.status (existing)",
+        "roteiro do produto → product.routing.guide (this)"
+      ],
+      "semanticDistinction": "Routing = canonical SG2 process sequence for product/BOM codes. Not production.status (open OPs), not factory.status (composite), not machine_load (scheduled capacity).",
+      "openGaps": [
+        "SECOND_USER_NEGATIVE_AUTHZ = TEST_NOT_RUN",
+        "No dedicated api-delpi route smoke for /guide beyond OpenAPI metadata coverage",
+        "Business owner (Engenharia/PCP) remains TO_INVENTORY"
+      ]
+    },
+    {
+      "capabilityId": "product.where_used",
+      "businessName": {
+        "ptBr": "Onde o produto é usado (BOM reversa)",
+        "en": "Product where-used (reverse BOM)"
+      },
+      "businessNeed": "Identificar produtos pai que consomem o código informado via explosão reversa da BOM vigente (SG1), recursiva até max_depth. Responde onde a MP/componente é usada. Não altera estrutura e não lista BOM filha.",
+      "status": "FROZEN_FOR_IMPLEMENTATION",
+      "technicalOperations": [
+        "get_product_parents"
+      ],
+      "canonicalOperations": [
+        "get_product_parents"
+      ],
+      "primaryOperation": "get_product_parents",
+      "canonicalUseCases": [
+        "ListProductParentsUseCase"
+      ],
+      "readPrepareAct": "READ",
+      "technicalOwner": "api-delpi Product bounded context",
+      "businessOwner": "TO_INVENTORY — no canonical named business owner proven in source",
+      "sourceOfTruth": "GET /products/{code}/parents → ListProductParentsUseCase → ParentsTreeBuilder → ProductParentsRepository: SG1010 recursive reverse (G1_COMP→G1_COD) with today validity filter + SB1010 parent/child descriptions; D_E_L_E_T_=''",
+      "authoritativeSource": "Protheus SG1010 reverse + SB1010",
+      "identity": "END_USER_ACCOUNT",
+      "backendAuthz": "PROVEN: @require_permission(API_DELPI_ACCESS) on parents() in product_routes.py",
+      "approvedInputFields": [
+        "code",
+        "max_depth",
+        "page",
+        "page_size"
+      ],
+      "requiredInputFields": [
+        "code"
+      ],
+      "optionalInputFields": [
+        "max_depth",
+        "page",
+        "page_size"
+      ],
+      "inputMinimization": {
+        "code": "APPROVED_REQUIRED",
+        "max_depth": "APPROVED_OPTIONAL — MUST default/cap <=8 (UC defaults to 999 if omitted)",
+        "page": "APPROVED_OPTIONAL — MUST default to 1",
+        "page_size": "APPROVED_OPTIONAL — MUST default/cap <=50",
+        "branch": "NOT_EXPOSED — operation has no branch parameter"
+      },
+      "argumentConstraints": {
+        "argumentLimits": {
+          "max_depth": {
+            "minimum": 1,
+            "maximum": 8,
+            "default": 8
+          },
+          "page": {
+            "minimum": 1,
+            "default": 1
+          },
+          "page_size": {
+            "minimum": 1,
+            "maximum": 50,
+            "default": 50
+          }
+        }
+      },
+      "approvedResponseFields": [
+        "root.code",
+        "root.description",
+        "root.type",
+        "root.unit",
+        "root.quantity",
+        "items[].code",
+        "items[].description",
+        "items[].type",
+        "items[].unit",
+        "items[].quantity",
+        "items[].parents[].code",
+        "items[].parents[].description",
+        "items[].parents[].type",
+        "items[].parents[].unit",
+        "items[].parents[].quantity",
+        "items[].parents[].parents[].code",
+        "items[].parents[].parents[].description",
+        "items[].parents[].parents[].type",
+        "items[].parents[].parents[].unit",
+        "items[].parents[].parents[].quantity",
+        "items[].parents[].parents[].parents[].code",
+        "items[].parents[].parents[].parents[].description",
+        "items[].parents[].parents[].parents[].type",
+        "items[].parents[].parents[].parents[].unit",
+        "items[].parents[].parents[].parents[].quantity"
+      ],
+      "droppedFields": [],
+      "droppedFieldReasons": "No sensitive fields present; keep catalog identity + quantity relationship only.",
+      "responseShape": "hierarchy",
+      "shape": "hierarchy",
+      "projectionMode": "nested",
+      "projectionFeasibility": "SUPPORTED_BY_CURRENT_GENERIC_PROJECTOR",
+      "perOperationProjectorRequired": false,
+      "directOrRecursive": "RECURSIVE — CTE recursive_parents up to max_depth; tree nested via parents[]",
+      "validitySemantics": "CURRENT VALID PARENTS only — ProductBomValidityFilterService.validity_filter_sql_for_today on SG1. Not historical deleted/outdated structures.",
+      "branchSemantics": "NONE — operation does not accept branch",
+      "pagination": "Paginates only direct parents of the queried code (root.parents). Each returned direct parent may still carry nested ancestors up to max_depth. total = len(direct parents). Full mode if page/page_size omitted — DAVI must force pagination.",
+      "limits": {
+        "maxDepth": 8,
+        "maxPageSize": 50,
+        "maxModelVisibleItems": 50,
+        "modelVisibleNestingLevels": 4,
+        "executeMaxResponseBytes": 65536,
+        "note": "approvedResponseFields enumerate explicit parents nesting to 4 levels (same pattern as structure components). Deeper nodes fail-closed in projection. Backend recursion still capped at max_depth<=8. Backend UC defaults to max_depth=999 if omitted — DAVI argumentLimits must force <=8."
+      },
+      "timeSemantics": "BOM validity = today. No historical effective-date window parameter.",
+      "completeness": "NOT a claim of all products that ever used the component. Complete for current-valid reverse BOM within max_depth after page slice on direct parents. Model-visible nesting limited to 4 explicit path levels. truncated if more direct parents than page_size.",
+      "derivedFields": [],
+      "provenance": "Preserve canonical operation/use case, product code, branch filter when used, max_depth, page/page_size/total/total_pages, truncated/is_complete. Do not expose SQL, hosts, tokens, repository internals, or route mechanics.",
+      "semanticAliasesPtBr": [
+        "onde o produto é usado",
+        "onde a MP é usada",
+        "produtos pai",
+        "produtos que usam este componente",
+        "PAs que usam esta matéria-prima",
+        "BOM reversa"
+      ],
+      "semanticAliasesEn": [
+        "where used",
+        "parent products",
+        "reverse BOM",
+        "products using component"
+      ],
+      "privacyRisk": "LOW",
+      "privacy": "Catalog structure relationships only.",
+      "runtimeRisk": {
+        "databaseQueryCost": "MEDIUM",
+        "responseVolume": "MEDIUM",
+        "recursiveBehavior": "YES",
+        "fanOut": "MEDIUM",
+        "projectionComplexity": "MEDIUM",
+        "privacyRisk": "LOW",
+        "businessValue": "HIGH",
+        "overall": "MEDIUM"
+      },
+      "risk": {
+        "databaseQueryCost": "MEDIUM",
+        "responseVolume": "MEDIUM",
+        "nesting": "MEDIUM",
+        "recursiveBom": "YES",
+        "overall": "MEDIUM"
+      },
+      "observability": "Log action_id, actor when policy allows, status, latency, result_count, branch when used, max_depth, truncated/is_complete, correlation id. Never log Authorization, OAuth tokens, candidate token, secrets, SQL, or full payloads.",
+      "negativeAuthzPlan": "Local/backend: authenticated caller without API_DELPI_ACCESS must receive backend 403. For shortages (if ever promoted), also deny missing PRODUCTION_CONTROL branch view when BranchAccessGate applies. Live SECOND_USER_NEGATIVE_AUTHZ remains TEST_NOT_RUN. DAVI_LOCAL_RBAC/ROLE/BRANCH/OBJECT AuthZ forbidden.",
+      "liveAcceptancePlan": "discover 'onde o {mp} é usado' → get_product_parents; execute with a real MP that has current-valid parents; assert root/items with parent code; collision: 'estrutura do produto' must remain get_product_structure; write-intent 'altere a estrutura' → 0 candidates.",
+      "quarantineDeltaRequired": [],
+      "collisions": [
+        "estrutura / bom → product.structure.bom (existing) — do NOT use bare 'estrutura' or 'bom' as where-used aliases",
+        "matéria-prima exclusiva → product.structure.exclusivity (existing)",
+        "onde o produto é usado → product.where_used (this)"
+      ],
+      "openGaps": [
+        "SECOND_USER_NEGATIVE_AUTHZ = TEST_NOT_RUN",
+        "No dedicated api-delpi unit/route test for parents beyond OpenAPI metadata",
+        "Model-visible nesting capped at 4 explicit path levels while max_depth may be 8",
+        "Business owner remains TO_INVENTORY"
+      ]
+    }
+  ],
+  "deferred": [
+    {
+      "capabilityId": "product.raw_material.set_shortages",
+      "businessName": {
+        "ptBr": "Ruptura de MP no conjunto de OPs do PA",
+        "en": "Raw-material shortages in finished-product order set"
+      },
+      "businessNeed": "Analisar se matérias-primas da BOM vigente do PA projetam saldo negativo no extrato (estoque + PCs − empenhos) para OPs mãe abertas do PA na filial concreta.",
+      "status": "DEFER",
+      "technicalOperations": [
+        "get_product_raw_material_set_shortages"
+      ],
+      "canonicalOperations": [
+        "get_product_raw_material_set_shortages"
+      ],
+      "primaryOperation": "get_product_raw_material_set_shortages",
+      "canonicalUseCases": [
+        "GetProductRawMaterialSetShortagesUseCase"
+      ],
+      "readPrepareAct": "READ",
+      "technicalOwner": "api-delpi Product bounded context",
+      "businessOwner": "TO_INVENTORY",
+      "sourceOfTruth": "GET /products/{code}/raw-material-set-shortages → GetProductRawMaterialSetShortagesUseCase → ProductRawMaterialSetShortageRepository (BOM MP recursive SG1, open mother SC2, SB2 stock 01/98/99, SC7 POs, SD4 commitments) → build_raw_material_set_shortages reusing safety_stock_stock_projection_service chronological ledger",
+      "authoritativeSource": "Protheus SG1/SB1/SB2/SC2/SC7/SD4 + canonical projection service",
+      "identity": "END_USER_ACCOUNT",
+      "backendAuthz": "PROVEN: @require_permission(API_DELPI_ACCESS) PLUS BranchAccessGate via raw_material_set_shortage_branch_error (PRODUCTION_CONTROL_BRANCH_VIEW_PERMS / PRODUCTION_CONTROL_ACCESS). Branch is policy-aware backend AuthZ + filter — not DAVI AuthZ.",
+      "shortageDefinition": "PROVEN: for each mother open OP of the PA, a material is shortage when the chronological ledger has an ORIGIN_COMMITMENT event for that finished_production_order with running_balance + TOLERANCE < 0. Set status aggregates MP statuses (shortage | no_commitment | ok). This is projected available-stock trajectory (stock + eligible POs − commitments), NOT physical-only and NOT one-unit BOM check.",
+      "branchSemantics": "REQUIRED concrete 01|02 (BRANCH_QUERY_REQUIRED). all NOT supported. FILTER + backend BranchAccessGate. Do NOT compose 01+02 in DAVI.",
+      "approvedInputFields": [],
+      "requiredInputFields": [],
+      "optionalInputFields": [],
+      "approvedResponseFields": [],
+      "argumentConstraints": {},
+      "responseShape": "composite_analysis",
+      "shape": "composite_analysis",
+      "projectionMode": "nested",
+      "projectionFeasibility": "SUPPORTED_BY_CURRENT_GENERIC_PROJECTOR",
+      "perOperationProjectorRequired": false,
+      "backendComputationBound": "NOT_PROVEN_UNBOUNDED_RELATIVE",
+      "maxDepth": "route default 8, le=20 — BOM bound exists BUT OP×MP×ledger fan-out is unbounded by page",
+      "pagination": "NONE — full composite materials[].ledger + sets[] always returned",
+      "limits": {
+        "maxDepth": 8,
+        "maxOrders": "NONE_CANONICAL",
+        "maxItems": "NONE_CANONICAL",
+        "maxLedgerEvents": "NONE_CANONICAL",
+        "note": "DAVI execute_max_items/bytes only truncate after full backend build. Projection is NOT sufficient mitigation for unbounded OP×MP×ledger work."
+      },
+      "recursion": "YES — SG1 BOM to max_depth (MP only)",
+      "fanOut": "HIGH — materials × mother_orders × ledger events",
+      "runtimeRisk": {
+        "databaseQueryCost": "HIGH",
+        "responseVolume": "HIGH",
+        "recursiveBehavior": "YES",
+        "fanOut": "HIGH",
+        "projectionComplexity": "HIGH",
+        "privacyRisk": "MEDIUM",
+        "businessValue": "HIGH",
+        "overall": "HIGH"
+      },
+      "volumeRisk": "HIGH",
+      "provenance": "Would require allowlisted summary + bounded shortage rows only; ledger dump not model-safe. Not frozen — no approvedResponseFields.",
+      "derivedFields": [
+        {
+          "field": "sets[].status / materials shortage flags",
+          "provenance": "CANONICAL_BACKEND_CLASSIFICATION via build_raw_material_set_shortages"
+        },
+        {
+          "field": "ledger running_balance / first_shortage_date",
+          "provenance": "CANONICAL_BACKEND_CALCULATION via safety_stock_stock_projection_service"
+        }
+      ],
+      "semanticAliasesPtBr": [],
+      "semanticAliasesEn": [],
+      "observability": "Log action_id, actor when policy allows, status, latency, result_count, branch when used, max_depth, truncated/is_complete, correlation id. Never log Authorization, OAuth tokens, candidate token, secrets, SQL, or full payloads.",
+      "negativeAuthzPlan": "Local/backend: authenticated caller without API_DELPI_ACCESS must receive backend 403. For shortages (if ever promoted), also deny missing PRODUCTION_CONTROL branch view when BranchAccessGate applies. Live SECOND_USER_NEGATIVE_AUTHZ remains TEST_NOT_RUN. DAVI_LOCAL_RBAC/ROLE/BRANCH/OBJECT AuthZ forbidden.",
+      "liveAcceptancePlan": "Blocked until backend offers bounded contract (max OPs and/or omit ledger / summary-only mode). Then require real PA+branch with at least one shortage row — empty 2xx alone insufficient.",
+      "deferReason": "Backend computation and payload are HIGH risk without enforceable bounds on open mother orders, material ledger size, or a summary-only response mode. Pagination absent. DAVI projection cannot reduce SQL/fan-out cost. Require canonical Product/domain evolution before reconsideration: e.g. maxOrders, summary-only flag, or server-side TOP on ledger.",
+      "openGaps": [
+        "No maxOrders / maxLedgerEvents in canonical API",
+        "No pagination on sets/materials/ledger",
+        "SECOND_USER_NEGATIVE_AUTHZ = TEST_NOT_RUN",
+        "Positive live shortage case not inventoried in this freeze"
+      ],
+      "quarantineDeltaRequired": []
+    }
+  ],
+  "retrievalPlan": {
+    "routingOwnerIntents": [
+      "roteiro do produto",
+      "roteiro de produção",
+      "operações do produto",
+      "sequência de operações",
+      "centros de trabalho do produto",
+      "product routing",
+      "production routing",
+      "operation sequence",
+      "product operations"
+    ],
+    "whereUsedOwnerIntents": [
+      "onde o produto é usado",
+      "onde a MP é usada",
+      "produtos pai",
+      "produtos que usam este componente",
+      "PAs que usam esta matéria-prima",
+      "BOM reversa",
+      "where used",
+      "parent products",
+      "reverse BOM",
+      "products using component"
+    ],
+    "shortagesOwnerIntents": "NONE — deferred",
+    "existingStructureRegression": [
+      "estrutura do produto",
+      "bom do produto",
+      "product structure"
+    ],
+    "existingProductionRegression": [
+      "status de produção",
+      "production status"
+    ],
+    "existingFactoryRegression": [
+      "status fabril",
+      "factory status"
+    ],
+    "quarantineDelta": "NONE — no new global quarantine tokens proposed"
+  },
+  "authz": {
+    "endUserAccount": "REQUIRED",
+    "backendAuthz": "REQUIRED_FINAL",
+    "daviLocalAuthz": "ABSENT",
+    "secondUserNegativeAuthz": "TEST_NOT_RUN"
+  },
+  "runtimeImpactOfFreeze": {
+    "allowlist": "UNCHANGED",
+    "eligibility": "UNCHANGED_AT_13",
+    "retrieval": "UNCHANGED",
+    "projection": "UNCHANGED",
+    "executor": "UNCHANGED",
+    "mcp": "UNCHANGED_AT_3",
+    "agent": "UNCHANGED",
+    "apiDomain": "UNCHANGED"
+  }
+}
