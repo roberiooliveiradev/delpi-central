@@ -70,12 +70,14 @@ C0.S7 = APPROVED
 FOUNDATION_FREEZE = APPROVED
 C1_AUTHORIZED = YES
 C1_STARTED = YES
-C1_EXECUTED = YES (C1-T6D1; all applicable Bootstrap Done gates PASS or NOT_APPLICABLE_AT_C1)
+C1_EXECUTED = YES
+C1_BOOTSTRAP_ACCEPTANCE = ACCEPT_WITH_RESIDUAL (C1-FINAL §6.45)
+C1_BOOTSTRAP_RUNTIME_READINESS = PROVEN (bootstrap scope)
 JWT_VALIDATION = PASS (C1-T2/T2R1 evidence; see §6.37–§6.38)
 CORE_CONTEXT = PASS (contract/adapter; live Core TEST_NOT_RUN; see §6.38)
 CORE_CONTEXT_IMPLEMENTATION = PASS
 CORE_CONTEXT_CONTRACT_TESTS = PASS
-CORE_CONTEXT_LIVE_NETWORK = TEST_NOT_RUN
+CORE_CONTEXT_LIVE_NETWORK = TEST_NOT_RUN (NON_BLOCKING residual; C1-FINAL)
 MFE_FOLDER_INDEPENDENT = PASS (C1-T3; see §6.39)
 FEDERATED_MOUNT = PASS (C1-T3 build+lifecycle; Portal live mount PASS C1-T6)
 PLUGIN_UI = PASS (C1-T3 runtime remote)
@@ -91,8 +93,9 @@ SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
 NEW_RUNTIME_ABSTRACTIONS = NONE
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
-RUNTIME_READINESS = PROVEN (C1 bootstrap scope; C1-T6D1)
+RUNTIME_READINESS = PROVEN (C1 bootstrap scope; C1-FINAL)
 PRODUCTION_READINESS = NOT_PROVEN
+C2_AUTHORIZED = YES
 NEW_BEHAVIORAL_TESTS = TEST_NOT_RUN
 FUTURE_C1_C7_GREEN_EVIDENCE_REQUIRED = YES
 DÉLIA_RUNTIME_DIFF = delia-api + plugins/delia + Gateway/Compose publication + Core registration
@@ -1961,6 +1964,112 @@ ARCHITECTURE_DECISION_REQUIRED: NONE
 NEXT: C1-FINAL — STANDALONE_BOOTSTRAP_ACCEPTANCE_REVIEW (do not start C2/C3 automatically)
 ```
 
+## 6.45 C1-FINAL — STANDALONE_BOOTSTRAP_ACCEPTANCE_REVIEW
+
+```text
+DATE: 2026-09-17
+STEP: C1-FINAL
+NAME: STANDALONE_BOOTSTRAP_ACCEPTANCE_REVIEW
+STATUS: PLAN_ONLY / FINAL_ACCEPTANCE_REVIEW
+REVIEWED_HEAD: 0e14f1582be251a2762b482b4375205d3cf808e9
+BASE_HEAD: 0e14f1582be251a2762b482b4375205d3cf808e9
+POST_T6D1_COMMITS: NONE (HEAD == T6D1)
+WORKING_TREE_PRESERVED: OpenAPI catalog + plugin-ui chart prefs + delpi_auth.egg-info (OUTSIDE_TASK)
+RUNTIME_CODE_CHANGE: NONE
+VERDICT: ACCEPT_WITH_RESIDUAL
+
+C1_EVIDENCE_CHAIN:
+  T1 8ffd4d38d / T1R1 0333d48a3 — API skeleton + health + smoke + shutdown — ACCEPT
+  T2 da8382ef7 / T2R1 7726980b3 — JWT + Core adapter + probe removed — ACCEPT
+  T3 39639a31f — federated MFE + plugin-ui + a11y — ACCEPT_WITH_RESIDUAL (TYPESCRIPT_ISOLATED)
+  T4 0554e67b2 / T4D1 4765d65a6 — manifest + delia.access APPROVED — ACCEPT
+  T5 7f22166a4 (+ 9fff7186e scripts) — Gateway/Compose/parity/rollback — ACCEPT
+  T6 385103927 — Core register + ± RBAC + /me/apps + Portal discovery/mount — ACCEPT
+  T6D1 0e14f1582 — OWN_MIGRATION_CHAIN=NOT_APPLICABLE_AT_C1 — ACCEPT
+
+STALE_EVIDENCE_ASSESSMENT: NONE
+  No commits after REVIEWED_HEAD touching delia-api/plugins/delia/gateway/compose/Core RBAC/Portal AppHost.
+  Freshness reruns on REVIEWED_HEAD: API pytest PASS; MFE 16 tests + build + federation OK;
+  ManifestValidator is_valid=True; compose config dev/prod PASS; nginx -t PASS;
+  remoteEntry 200 + ./App; plugin-ui remote 200; /apps/delia-api/health 200;
+  Core admin still has delia v0.0.1; route delia.access; me/apps includes delia for superadmin.
+
+C1_FORMAL_GATES (revalidated):
+  API_FOLDER_INDEPENDENT=PASS
+  MFE_FOLDER_INDEPENDENT=PASS
+  OWN_MIGRATION_CHAIN=NOT_APPLICABLE_AT_C1
+  OWN_MANIFEST=PASS
+  OWN_GATEWAY_ROUTE=PASS
+  OWN_COMPOSE_SERVICE=PASS
+  JWT_VALIDATION=PASS
+  CORE_CONTEXT=PASS
+  FEDERATED_MOUNT=PASS
+  PLUGIN_UI=PASS
+  RESPONSIVE_ACCESSIBILITY_BASELINE=PASS
+  MEDIA_CAPTURE_NOT_AUTO_STARTED=PASS
+  NO_CHAT_RUNTIME_DEPENDENCY=PASS
+  DEV_PROD_ROUTE_PARITY=PASS
+  HEALTH=PASS
+  ROLLBACK_INDEPENDENT=PASS
+
+C1_INTEGRATION_EVIDENCE (revalidated):
+  CORE_REGISTRATION=PASS
+  DELIA_ACCESS_EFFECTIVE_RBAC=PASS (T6 positive+negative; not re-mutated in FINAL)
+  ME_APPS_POSITIVE=PASS
+  ME_APPS_NEGATIVE=PASS
+  PORTAL_DISCOVERY=PASS
+  PORTAL_LIVE_MOUNT=PASS
+  FEDERATION_PUBLICATION=PASS
+  API_HEALTH_REGRESSION=PASS
+
+SECURITY_C1=PASS
+  JWT server-side; JWT≠permissions; no production access-context;
+  Core RBAC owner; delia.access visibility-only; Portal no hardcode;
+  no DÉLIA PermissionResolver; no committed secrets; Gateway routing-only; Chat deps NONE
+
+BOUNDARY_REVIEW=PASS
+  Keycloak=identity; Core=RBAC; Portal=host; DÉLIA=standalone shell/API; Chat=reference only
+ABSTRACTION_GATE_C1=PASS
+PARALLEL_AUTHORITY=NONE
+CHAT_RUNTIME_DEPENDENCY=NONE
+BUSINESS_AUTHORITY_FROM_DELIA_ACCESS=NONE
+PORTAL_PARALLEL_REGISTRY=NONE
+FORBIDDEN_SECRET=NONE
+EMPTY_MIGRATION_SCAFFOLDING=NO
+DÉLIA_OWNED_PERSISTED_STATE=NONE
+
+TYPESCRIPT_ISOLATED=INCONCLUSIVE
+  classification=NON_BLOCKING_RESIDUAL
+  blocking=NO (not a Bootstrap Done gate; T3 ACCEPT_WITH_RESIDUAL preserved)
+
+CORE_CONTEXT_LIVE_NETWORK=TEST_NOT_RUN
+  reason=outcome B: formal gate is CORE_CONTEXT=PASS via contract/adapter + unit/contract tests;
+  T6 proved live Core governance (/register,/me,/me/apps,±RBAC) but not a dedicated live
+  smoke of the delia-api→Core /me adapter path under JWT.
+  blocking=NO
+
+REQUIREMENTS_TRACEABILITY (C1-applicable CP-141..155 + CP-147):
+  APPLICABLE ≈ CP-141,142,143,144,145,148,149,150,152,153,155 (+146 independence)
+  IMPLEMENTED = those LOCKED C1 items with runtime evidence
+  NOT_APPLICABLE = CP-147 migration at C1 (NOT_APPLICABLE_AT_C1)
+  PARTIAL = NONE blocking
+  BLOCKED = NONE
+  DISCOVERED_REQUIREMENT = NONE
+
+C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL
+C1_EXECUTED=YES
+C1_BOOTSTRAP_RUNTIME_READINESS=PROVEN
+RUNTIME_READINESS=PROVEN
+  SCOPE=C1 standalone bootstrap only
+PRODUCTION_READINESS=NOT_PROVEN
+C2_AUTHORIZED=YES
+  reason=16 phase order C1→C2 after Bootstrap Done; C0 freeze already APPROVED; no extra ADR required
+
+EXECUTION_DRIFT=NONE
+ARCHITECTURE_DECISION_REQUIRED=NONE
+NEXT=C2 — PORTAL_CONTEXT_AND_PLATFORM_COMMANDS (do not start automatically)
+```
+
 ## 7. Canonical phase mapping
 
 ```text
@@ -2169,4 +2278,4 @@ SAFETY_INTERLOCK_BYPASS
 
 ## 14. First execution
 
-Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1 created the standalone `delia-api/` Flask skeleton and `/health` liveness. C1-T1R1 closed real-process HTTP smoke and shutdown visibility (`delia_api_stopped`). `C1_STARTED=YES`. C1-T2 added JWT validation + Core `/me` effective access (JWT≠permissions; fail-closed). C1-T2R1 removed production `GET /access-context` and preserved JWT/Core contract evidence via test-only probe (§6.38). C1-T3 bootstrapped standalone federated MFE `plugins/delia/` (§6.39). C1-T4 added `delpi.manifest.json` publication contract (§6.40). C1-T4D1 Product Master APPROVED `delia.access` as bootstrap/platform-access permission (§6.41). C1-T5 published Gateway/Compose services `delpi-delia` + `delpi-delia-api` with `/apps/delia/` + `/apps/delia-api/` (§6.42). C1-T6 registered DÉLIA in Core, proved positive/negative `delia.access` → `/me/apps`, Portal discovery path without hardcode, and live mount evidence (§6.43). C1-T6D1 Product Master set `OWN_MIGRATION_CHAIN=NOT_APPLICABLE_AT_C1` and aligned `52`§4+§17 (§6.44). `C1_EXECUTED=YES`. `RUNTIME_READINESS=PROVEN` (bootstrap scope). `PRODUCTION_READINESS=NOT_PROVEN`. `C0=NOT_STARTED`. Next bounded review: `C1-FINAL`.
+Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1..T6D1 completed standalone bootstrap. **C1-FINAL** (`§6.45`) accepted bootstrap with non-blocking residuals (`TYPESCRIPT_ISOLATED`, `CORE_CONTEXT_LIVE_NETWORK`). `C1_EXECUTED=YES`. `C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`. `C1_BOOTSTRAP_RUNTIME_READINESS=PROVEN` (bootstrap scope). `PRODUCTION_READINESS=NOT_PROVEN`. `C2_AUTHORIZED=YES`. `C0=NOT_STARTED`. Next bounded phase: **C2 — Portal Context + Platform Commands** (do not start automatically).
