@@ -57,14 +57,26 @@ export async function fetchAllSafetyStockItemsForExport(
   params: SafetyStockQueryParams,
   options: { signal?: AbortSignal } = {},
 ): Promise<SafetyStockItem[]> {
-  const pageSize = MAX_PAGE_SIZE;
+  const requestedPageSize = MAX_PAGE_SIZE;
   let page = 1;
   const items: SafetyStockItem[] = [];
 
   while (true) {
-    const response = await fetchSafetyStockItems(params, page, pageSize, options);
+    const response = await fetchSafetyStockItems(
+      params,
+      page,
+      requestedPageSize,
+      options,
+    );
     items.push(...response.items);
-    if (items.length >= response.total || response.items.length < pageSize) {
+    // Usa o page_size efetivo da API — se o client pediu 200 e a API devolveu 50,
+    // não pode encerrar a paginação na primeira página.
+    const effectivePageSize = response.page_size || requestedPageSize;
+    if (
+      items.length >= response.total ||
+      response.items.length === 0 ||
+      response.items.length < effectivePageSize
+    ) {
       break;
     }
     page += 1;

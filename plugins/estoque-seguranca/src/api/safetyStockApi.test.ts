@@ -113,7 +113,8 @@ describe("safetyStockApi", () => {
     const url = String(spy.mock.calls[0]?.[0]);
     expect(url).toContain("branch=02");
     expect(url).toContain("page=2");
-    expect(url).toContain("pageSize=25");
+    expect(url).toContain("page_size=25");
+    expect(url).not.toContain("pageSize=");
     expect(url).toContain("sortBy=primary_stock");
     expect(url).toContain("sortDirection=desc");
     expect(url).toContain("includeBlocked=true");
@@ -224,7 +225,8 @@ describe("safetyStockApi", () => {
     const itemsUrl = String(spy.mock.calls[1]?.[0]);
     expect(itemsUrl).toContain("/consumption-analysis/items?");
     expect(itemsUrl).toContain("page=2");
-    expect(itemsUrl).toContain("pageSize=25");
+    expect(itemsUrl).toContain("page_size=25");
+    expect(itemsUrl).not.toContain("pageSize=");
     expect(itemsUrl).toContain("sortBy=suggested_safety_stock");
 
     spy.mockResolvedValue({
