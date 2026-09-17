@@ -205,6 +205,14 @@ Plano: [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-de
 | Atualizar docs que citam Sheets como fonte ativa | README, ESPECIFICACAO (nota histórica) | ✅ parcial |
 | (Opcional) Link do TransformaPage → plugin transformometro | UX — painel read-only pode permanecer | Pendente |
 
+## Evolução de produto — Portal Transformômetro (planejado)
+
+Experiência de **portal interno** (shell persistente, Home operacional, IA de navegação, TÉO contextual) no mesmo app `transformometro`, espelhando o padrão Comercial/Supplies **sem** nova autoridade arquitetural.
+
+Plano canônico: [PLAYBOOK-PORTAL-TRANSFORMA.md](./PLAYBOOK-PORTAL-TRANSFORMA.md) · status: PLANNED (Fase 0 contract freeze).
+
+Não duplica as fases de domínio acima; complementa a jornada UX/produto.
+
 ## Próximo passo imediato
 
 1. **Deploy produção** com runbook em [status-atual.md](./status-atual.md) e [OPERATIONS.md](./OPERATIONS.md) (incl. V026–V028 na 1ª subida pós-pull)
@@ -213,3 +221,4 @@ Plano: [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-de
 4. Validar smoke pós-deploy: diagrama macro → escopo melhoria → overlay revisão → mapeamento WBS → export PNG/CSV
 5. Aplicar migrations **V034** e **V035** em ambientes que ainda não subiram
 6. **Limpeza Fase 6** — apagar código Sheets morto na api-delpi
+7. **Portal Transformômetro** — executar Fase 0/1 do [PLAYBOOK-PORTAL-TRANSFORMA.md](./PLAYBOOK-PORTAL-TRANSFORMA.md) quando priorizado (05 Frontend)
