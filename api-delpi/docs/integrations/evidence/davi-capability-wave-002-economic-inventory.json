@@ -2,10 +2,13 @@
   "metadata": {
     "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-002-FREEZE",
     "artifact_class": "EVIDENCE_NOT_RUNTIME_AUTHORITY",
-    "generated_at": "2026-09-17T05:49:24.678004+00:00",
-    "source_head": "6e10029bcc281c4e0c3575448a1414a157cc3c44",
-    "origin_main": "6e10029bcc281c4e0c3575448a1414a157cc3c44",
+    "generated_at": "2026-09-17T06:04:23.149416+00:00",
+    "source_head": "b5de5122f13bb921f6e6a48a0fad2d559e97eb80",
+    "origin_main": "b5de5122f13bb921f6e6a48a0fad2d559e97eb80",
     "wave1_historical_freeze": "docs/integrations/evidence/davi-capability-wave-001-freeze.json",
+    "correctionTaskId": "DAVI-CAPABILITY-EXPANSION-WAVE-002-FREEZE-CORRECTION-001",
+    "architectureDecision": "ACCEPT_WITH_RESIDUAL",
+    "sourceFreezeSha": "b5de5122f13bb921f6e6a48a0fad2d559e97eb80",
     "implementation": "NOT_STARTED",
     "deploy": "NOT_REQUIRED",
     "live": "UNCHANGED_FROM_CURRENT_BASELINE"
@@ -77,10 +80,10 @@
     {
       "capabilityId": "product.commercial.pricing",
       "businessName": {
-        "ptBr": "Preço comercial atual do produto",
-        "en": "Current commercial product pricing"
+        "ptBr": "Tabelas e preços comerciais do produto",
+        "en": "Commercial product price tables"
       },
-      "businessNeed": "Authorized current/commercial sale pricing for one product: which price tables apply and the table sale_price, without dumping discounts, max price, tax internals or purchase-cost concepts.",
+      "businessNeed": "Consultar as tabelas comerciais registradas para um produto, incluindo preço de venda, moeda armazenada, lote, vigência e indicador de ativo, sem afirmar que todas as linhas representam o preço atual. Not purchase cost and not a mega-financial dump.",
       "status": "FROZEN_FOR_IMPLEMENTATION",
       "canonicalOperations": [
         "get_product_pricing"
@@ -123,7 +126,7 @@
         "prices[].state",
         "prices[].operation_type"
       ],
-      "droppedFieldReasons": "max_price/discounts are commercial-strategy internals; state/operation_type are extra commercial-condition dimensions not required for current table sale price.",
+      "droppedFieldReasons": "max_price/discounts are commercial-strategy internals; state/operation_type are extra commercial-condition dimensions not required for registered table sale price.",
       "shape": "scalar OpenAPI shape wrapping nested product+prices payload",
       "projectionMode": "nested",
       "projectionFeasibility": "SUPPORTED_BY_CURRENT_GENERIC_PROJECTOR",
@@ -135,12 +138,12 @@
         "executeMaxResponseBytes": 65536,
         "note": "Backend returns all DA1 rows for the product; DAVI generic array slice caps at 50."
       },
-      "timeSemantics": "prices[].valid_from is DA1_DATVIG as stored. No start_date/end_date filter exists. Capability is current table rows, not a historical commercial-price series.",
+      "timeSemantics": "prices[].valid_from is DA1_DATVIG as stored. prices[].active is DA1_ATIVO as stored. No start_date/end_date filter exists. The route does not prove that returned rows are only currently active/effective. DAVI may report the row active flag, valid_from and registered sale_price; it must not claim sale_price is the current effective price.",
       "monetarySemantics": "sale_price is DA1_PRCVEN table unit sale price. Tax inclusion/exclusion and gross/net meaning are NOT proven in source — do not freeze a net/gross claim. lot_quantity (DA1_QTDLOT) is the lot basis for that row.",
       "currencySemantics": "currency is DA1_MOEDA as stored (Protheus currency code). ISO 4217 mapping to BRL is NOT proven in source; do not assume BRL. Keep the raw field.",
       "unitSemantics": "product.unit is SB1 B1_UM catalog unit. sale_price is per catalog unit on the price-table row, interpreted with prices[].lot_quantity.",
       "derivedFields": [],
-      "completeness": "Complete for returned DA1 rows of that product after DAVI array cap. truncated=true if more than 50 tables. Do not imply complete market pricing.",
+      "completeness": "Complete for the DA1 rows returned in this payload after DAVI array cap. truncated=true if more than 50 tables. Do not imply complete market pricing and do not imply every row is the current effective price.",
       "provenance": "Preserve canonical operation/use case, product code, reference/start/end dates or date_end_exclusive, branch filter when used, truncated/is_complete, and currency/unit fields that are approved. Do not expose SQL, hosts, tokens, repository internals, or route mechanics.",
       "semanticAliasesPtBr": [
         "preço do produto",
@@ -214,7 +217,7 @@
         "ptBr": "Histórico de preço de compra da matéria-prima",
         "en": "Raw-material purchase price history"
       },
-      "businessNeed": "Authorized bounded series of inbound-NF unit purchase prices for one product, with consecutive variation — not purchase-order listings and not commercial sale tables.",
+      "businessNeed": "Bounded recent purchase-price series for one product within a resolved date window, limited to the latest N canonical inbound-NF occurrences, with consecutive variation on the returned set — not purchase-order listings, not commercial sale tables, and not a complete-period history.",
       "status": "FROZEN_FOR_IMPLEMENTATION",
       "canonicalOperations": [
         "get_product_purchase_price_history"
@@ -317,7 +320,7 @@
         "daviMaxDateRangeDays": 365,
         "rationale": "Backend default 24/365 already matches the business grain of recent price evolution. DAVI tightens only the item cap 200→50 to the global execute_max_items budget. Do not silently clamp dates."
       },
-      "timeSemantics": "Canonical HTTP filters are start_date and end_date. If omitted, backend sets start=today-365d and exclusive end=today+1 (resolve_history_date_range). Date basis is D1_EMISSAO (issue). date_start/date_end are legacy NOT_EXPOSED. Returned start_date / date_end_exclusive are provenance of the actual window.",
+      "timeSemantics": "Canonical HTTP filters are start_date and end_date. If omitted, backend sets start=today-365d and exclusive end=today+1 (resolve_history_date_range). Default date_basis is issue (D1_EMISSAO). Proven ordering in fetch_purchase_price_history: D1_EMISSAO DESC, D1_DTDIGIT DESC, R_E_C_N_O_ DESC (latest-first). date_start/date_end are legacy NOT_EXPOSED. Returned start_date / date_end_exclusive are provenance of the resolved window, not proof that every matching NF in that window was returned.",
       "monetarySemantics": "items[].unit_price is SD1 D1_VUNIT NF unit price; total_value is D1_TOTAL; icms_rate is D1_PICM. Gross/net of ICMS is not fully defined in source — expose unit_price + icms_rate together. summary min/max/avg and variation_percent are backend calculations over the returned items only.",
       "currencySemantics": "No D1_MOEDA/currency field exists on the NF history payload. Currency is UNPROVEN; do not assume BRL. Do not invent a currency field.",
       "unitSemantics": "product.unit is B1_UM. quantity is D1_QUANT in that catalog unit. unit_price is per that unit; total_value is the NF line total.",
@@ -337,10 +340,13 @@
           "field": "summary.*",
           "class": "CANONICAL_BACKEND_CALCULATION",
           "owner": "product_raw_material_price_service.summarize_price_history",
-          "completenessAssumption": "Aggregates the returned (already limited) items, not the full NF universe."
+          "completenessAssumption": "Aggregates the returned TOP N items only. Does not prove total matching NFs in the whole requested period."
         }
       ],
-      "completeness": "Complete only for valid inbound NFs in the resolved date window up to history_limit. truncated=true when returned items hit the DAVI cap or backend TOP limit. summary.total_purchases is len(returned items), not all-time supplier history. Do not imply complete market or complete supplier history.",
+      "completeness": "dataset_scope = bounded latest-N occurrences within the resolved date window. Default N=24, DAVI max N=50, requested window max 365 days. history_limit bounds the dataset returned by the canonical backend TOP N. summary fields describe that returned bounded dataset only. summary.total_purchases does NOT prove total matching NFs in the whole period. Backend does not expose total, has_more, or a next cursor. full_period_completeness = NOT_PROVEN. DAVI is_complete/truncated describe DAVI projection/transport completeness only. is_complete=true MUST NOT be interpreted as 'there are no more matching purchases in the requested period'. truncated=true only when DAVI projection sliced the already-returned payload (e.g. execute_max_items), not when the backend TOP N quietly omitted older matching records.",
+      "datasetScope": "bounded latest-N occurrences within the resolved date window",
+      "fullPeriodCompleteness": "NOT_PROVEN",
+      "provenOrdering": "D1_EMISSAO DESC, D1_DTDIGIT DESC, R_E_C_N_O_ DESC (default date_basis=issue)",
       "provenance": "Preserve canonical operation/use case, product code, reference/start/end dates or date_end_exclusive, branch filter when used, truncated/is_complete, and currency/unit fields that are approved. Do not expose SQL, hosts, tokens, repository internals, or route mechanics.",
       "semanticAliasesPtBr": [
         "histórico de preço de compra",
@@ -516,14 +522,14 @@
         "en": "Finished-product cost impact simulation"
       },
       "businessNeed": "Authorized compute-only ranking of raw materials that most impact the material cost of one finished product (PA), optionally applying a percent adjustment. Result is not an approved price, persisted cost, purchasing authorization, accounting entry or business approval.",
-      "status": "FROZEN_FOR_IMPLEMENTATION",
+      "status": "DEFER_FROM_READ_WAVE",
       "canonicalOperations": [
         "get_product_cost_impact_simulation"
       ],
       "canonicalUseCases": [
         "GetProductCostImpactSimulationUseCase"
       ],
-      "readPrepareAct": "READ",
+      "readPrepareAct": "PREPARE",
       "technicalOwner": "api-delpi Product bounded context",
       "businessOwner": "TO_INVENTORY — no canonical named business owner proven in source; do not invent Comercial, Suprimentos, Controladoria or Financeiro",
       "sourceOfTruth": "GET /products/{code}/cost-impact-simulation → GetProductCostImpactSimulationUseCase → ProductCostImpactRepository (SB1010 header B1_CUSTD/B1_UCALSTD + recursive SG1010 BOM MP aggregation OPTION MAXRECURSION 0) → build_cost_impact_simulation (in-memory only). Unit basis: ProductCostImpactUnitService + product_cost_impact_units.json (MI = 1000 pieces). PA-only (rejects non-PA).",
@@ -703,13 +709,13 @@
       "quarantineDeltaRequired": [
         {
           "token": "custo",
-          "action": "KEEP_GLOBAL_AND_OWN_VIA_ALIASES",
-          "rationale": "Do not remove global `custo` quarantine. Future implementation must add precise multiword aliases (impacto no custo / simulação de custo) so the promoted action owns the token; unrelated economic actions remain quarantined."
+          "action": "KEEP_GLOBAL",
+          "rationale": "Cost simulation is PREPARE / DEFER_FROM_READ_WAVE. Do not own `custo` in the READ broker. Keep the global token; a future PREPARE track may own precise aliases later."
         },
         {
           "token": "cost",
-          "action": "KEEP_GLOBAL_AND_OWN_VIA_ALIASES",
-          "rationale": "Do not remove global `cost` quarantine. Future implementation must add precise multiword aliases (cost impact simulation) so the promoted action owns the token; unrelated economic actions remain quarantined."
+          "action": "KEEP_GLOBAL",
+          "rationale": "Cost simulation is PREPARE / DEFER_FROM_READ_WAVE. Do not own `cost` in the READ broker."
         }
       ],
       "openGaps": [
@@ -731,14 +737,19 @@
       "httpRoute": "GET /products/{code}/cost-impact-simulation",
       "routeHandler": "get_cost_impact_simulation",
       "candidateClass": "PRIMARY",
+      "readWavePromotion": "NO",
+      "deferReason": "HTTP GET compute-only simulation is PREPARE, not READ, under the canonical DAVI capability model (preview/draft/simulação sem persistir). Architecture Acceptance reclassified it out of Wave 2 READ. Analysis of source, AuthZ, projection, monetary/unit/currency gaps and simulation boundary remains valid for a future PREPARE track. Do not create PREPARE runtime, MCP tools or Agent Instruction changes in Wave 2.",
+      "futureTrack": "DAVI-PREPARE-GOVERNED-SIMULATION (not opened here)",
       "simulationBoundary": {
         "computeOnly": true,
         "sideEffects": "NONE_PROVEN",
+        "httpGetDoesNotImplyRead": true,
         "notApprovedPrice": true,
         "notPersistedProductCost": true,
         "notPurchasingAuthorization": true,
         "notAccountingEntry": true,
         "notBusinessApproval": true,
+        "notAct": true,
         "writeSemantics": "FORBIDDEN"
       }
     },
@@ -955,7 +966,7 @@
         "get_product_last_purchase",
         "get_product_purchase_price_history"
       ],
-      "decision": "DISTINCT snapshot vs windowed series. last_purchase has no date filter (latest valid NF ever); history defaults to 365 days + history_limit."
+      "decision": "DISTINCT snapshot vs bounded latest-N windowed series. last_purchase has no date filter (latest valid NF ever); history is TOP N inside a date window and does not prove full-period completeness."
     },
     {
       "group": "RG-PRODUCT-INTELLIGENCE-COMPOSITE",
@@ -966,6 +977,14 @@
         "get_product_purchase_budget_history"
       ],
       "decision": "DEFER intelligence: composite dump + unbounded budget_history scan."
+    },
+    {
+      "group": "RG-PRODUCT-COST-SIMULATION-PREPARE",
+      "operations": [
+        "get_product_cost_impact_simulation"
+      ],
+      "semantic_capability": "product.cost.impact_simulation",
+      "decision": "HTTP GET != semantic READ. Compute-only simulation with adjustment_percent and simulated_*/projected_* fields is PREPARE. Defer from Wave 2 READ."
     },
     {
       "group": "RG-PRODUCT-SUMMARY-AFTER-PRICING",
@@ -1028,8 +1047,8 @@
       },
       {
         "intent": "impacto no custo / simular impacto de custo",
-        "owner": "product.cost.impact_simulation",
-        "not": "commercial pricing / purchase history"
+        "owner": "NONE_THIS_READ_WAVE (PREPARE / DEFER_FROM_READ_WAVE; remain globally quarantined)",
+        "not": "do not own custo/cost aliases in the READ broker"
       },
       {
         "intent": "preço / custo / produto (bare tokens)",

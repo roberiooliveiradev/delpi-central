@@ -30,6 +30,8 @@ def main() -> int:
         "taskId": inventory["metadata"]["taskId"],
         "source_head": source_head,
         "origin_main": origin_main,
+        "correctionTaskId": inventory["metadata"].get("correctionTaskId"),
+        "architectureDecision": freeze.get("architectureDecision"),
         "current_eligible": freeze["current_eligible"],
         "frozen_count": freeze["new_capabilities"],
         "expected_eligible_after_implementation": freeze[

@@ -1,0 +1,33 @@
+{
+  "artifact_class": "EVIDENCE_NOT_RUNTIME_AUTHORITY",
+  "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-002-FREEZE-CORRECTION-001",
+  "sourceFreezeSha": "b5de5122f13bb921f6e6a48a0fad2d559e97eb80",
+  "architectureDecision": "ACCEPT_WITH_RESIDUAL",
+  "correctedFreezeAuthority": "docs/integrations/evidence/davi-capability-wave-002-freeze.json",
+  "corrections": [
+    {
+      "capabilityId": "product.cost.impact_simulation",
+      "before": "READ / FROZEN_FOR_IMPLEMENTATION",
+      "after": "PREPARE / DEFER_FROM_READ_WAVE"
+    },
+    {
+      "capabilityId": "product.commercial.pricing",
+      "before": "Current commercial product pricing / Preço comercial atual",
+      "after": "Commercial product price tables / Tabelas e preços comerciais do produto"
+    },
+    {
+      "capabilityId": "product.purchase.price_history",
+      "before": "implied complete-period history via truncated/is_complete",
+      "after": "bounded latest-N; full_period_completeness = NOT_PROVEN"
+    }
+  ],
+  "wave2ReadSet": [
+    "product.commercial.pricing",
+    "product.purchase.price_history",
+    "product.purchase.last_valid"
+  ],
+  "expectedEligibleAfterImplementation": 13,
+  "mcpTools": 3,
+  "generated_at": "2026-09-17T06:04:23.149416+00:00",
+  "source_head": "b5de5122f13bb921f6e6a48a0fad2d559e97eb80"
+}

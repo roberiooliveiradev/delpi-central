@@ -12,7 +12,11 @@ from pathlib import Path
 from typing import Any
 
 TASK_ID = "DAVI-CAPABILITY-EXPANSION-WAVE-002-FREEZE"
+CORRECTION_TASK_ID = "DAVI-CAPABILITY-EXPANSION-WAVE-002-FREEZE-CORRECTION-001"
 IMPLEMENTATION_TASK_ID = "DAVI-CAPABILITY-EXPANSION-WAVE-002"
+SOURCE_FREEZE_SHA = "b5de5122f13bb921f6e6a48a0fad2d559e97eb80"
+ACCEPTANCE_STEM = "davi-capability-wave-002-architecture-acceptance"
+DEFERRED_STATUSES = frozenset({"DEFER", "DEFER_FROM_READ_WAVE"})
 INVENTORY_STEM = "davi-capability-wave-002-economic-inventory"
 FREEZE_STEM = "davi-capability-wave-002-freeze"
 ARTIFACT_CLASS = "EVIDENCE_NOT_RUNTIME_AUTHORITY"
@@ -262,13 +266,14 @@ def candidate_records() -> list[dict[str, Any]]:
         _record(
             capabilityId="product.commercial.pricing",
             businessName={
-                "ptBr": "Preço comercial atual do produto",
-                "en": "Current commercial product pricing",
+                "ptBr": "Tabelas e preços comerciais do produto",
+                "en": "Commercial product price tables",
             },
             businessNeed=(
-                "Authorized current/commercial sale pricing for one product: which price "
-                "tables apply and the table sale_price, without dumping discounts, max "
-                "price, tax internals or purchase-cost concepts."
+                "Consultar as tabelas comerciais registradas para um produto, incluindo "
+                "preço de venda, moeda armazenada, lote, vigência e indicador de ativo, "
+                "sem afirmar que todas as linhas representam o preço atual. Not purchase "
+                "cost and not a mega-financial dump."
             ),
             status="FROZEN_FOR_IMPLEMENTATION",
             canonicalOperations=["get_product_pricing"],
@@ -300,7 +305,7 @@ def candidate_records() -> list[dict[str, Any]]:
             ],
             droppedFieldReasons=(
                 "max_price/discounts are commercial-strategy internals; state/operation_type "
-                "are extra commercial-condition dimensions not required for current table sale price."
+                "are extra commercial-condition dimensions not required for registered table sale price."
             ),
             shape="scalar OpenAPI shape wrapping nested product+prices payload",
             projectionMode="nested",
@@ -314,8 +319,10 @@ def candidate_records() -> list[dict[str, Any]]:
                 "note": "Backend returns all DA1 rows for the product; DAVI generic array slice caps at 50.",
             },
             timeSemantics=(
-                "prices[].valid_from is DA1_DATVIG as stored. No start_date/end_date filter exists. "
-                "Capability is current table rows, not a historical commercial-price series."
+                "prices[].valid_from is DA1_DATVIG as stored. prices[].active is DA1_ATIVO as stored. "
+                "No start_date/end_date filter exists. The route does not prove that returned rows "
+                "are only currently active/effective. DAVI may report the row active flag, valid_from "
+                "and registered sale_price; it must not claim sale_price is the current effective price."
             ),
             monetarySemantics=(
                 "sale_price is DA1_PRCVEN table unit sale price. Tax inclusion/exclusion and "
@@ -332,8 +339,9 @@ def candidate_records() -> list[dict[str, Any]]:
             ),
             derivedFields=[],
             completeness=(
-                "Complete for returned DA1 rows of that product after DAVI array cap. "
-                "truncated=true if more than 50 tables. Do not imply complete market pricing."
+                "Complete for the DA1 rows returned in this payload after DAVI array cap. "
+                "truncated=true if more than 50 tables. Do not imply complete market pricing "
+                "and do not imply every row is the current effective price."
             ),
             provenance=_PROVENANCE,
             semanticAliasesPtBr=[
@@ -401,9 +409,10 @@ def candidate_records() -> list[dict[str, Any]]:
                 "en": "Raw-material purchase price history",
             },
             businessNeed=(
-                "Authorized bounded series of inbound-NF unit purchase prices for one "
-                "product, with consecutive variation — not purchase-order listings and "
-                "not commercial sale tables."
+                "Bounded recent purchase-price series for one product within a resolved "
+                "date window, limited to the latest N canonical inbound-NF occurrences, "
+                "with consecutive variation on the returned set — not purchase-order "
+                "listings, not commercial sale tables, and not a complete-period history."
             ),
             status="FROZEN_FOR_IMPLEMENTATION",
             canonicalOperations=["get_product_purchase_price_history"],
@@ -480,8 +489,11 @@ def candidate_records() -> list[dict[str, Any]]:
             timeSemantics=(
                 "Canonical HTTP filters are start_date and end_date. If omitted, backend "
                 "sets start=today-365d and exclusive end=today+1 (resolve_history_date_range). "
-                "Date basis is D1_EMISSAO (issue). date_start/date_end are legacy NOT_EXPOSED. "
-                "Returned start_date / date_end_exclusive are provenance of the actual window."
+                "Default date_basis is issue (D1_EMISSAO). Proven ordering in "
+                "fetch_purchase_price_history: D1_EMISSAO DESC, D1_DTDIGIT DESC, R_E_C_N_O_ DESC "
+                "(latest-first). date_start/date_end are legacy NOT_EXPOSED. Returned "
+                "start_date / date_end_exclusive are provenance of the resolved window, not "
+                "proof that every matching NF in that window was returned."
             ),
             monetarySemantics=(
                 "items[].unit_price is SD1 D1_VUNIT NF unit price; total_value is D1_TOTAL; "
@@ -513,15 +525,29 @@ def candidate_records() -> list[dict[str, Any]]:
                     "field": "summary.*",
                     "class": "CANONICAL_BACKEND_CALCULATION",
                     "owner": "product_raw_material_price_service.summarize_price_history",
-                    "completenessAssumption": "Aggregates the returned (already limited) items, not the full NF universe.",
+                    "completenessAssumption": (
+                        "Aggregates the returned TOP N items only. Does not prove total matching "
+                        "NFs in the whole requested period."
+                    ),
                 },
             ],
             completeness=(
-                "Complete only for valid inbound NFs in the resolved date window up to "
-                "history_limit. truncated=true when returned items hit the DAVI cap or "
-                "backend TOP limit. summary.total_purchases is len(returned items), not "
-                "all-time supplier history. Do not imply complete market or complete supplier history."
+                "dataset_scope = bounded latest-N occurrences within the resolved date window. "
+                "Default N=24, DAVI max N=50, requested window max 365 days. "
+                "history_limit bounds the dataset returned by the canonical backend TOP N. "
+                "summary fields describe that returned bounded dataset only. "
+                "summary.total_purchases does NOT prove total matching NFs in the whole period. "
+                "Backend does not expose total, has_more, or a next cursor. "
+                "full_period_completeness = NOT_PROVEN. "
+                "DAVI is_complete/truncated describe DAVI projection/transport completeness only. "
+                "is_complete=true MUST NOT be interpreted as 'there are no more matching purchases "
+                "in the requested period'. truncated=true only when DAVI projection sliced the "
+                "already-returned payload (e.g. execute_max_items), not when the backend TOP N "
+                "quietly omitted older matching records."
             ),
+            datasetScope="bounded latest-N occurrences within the resolved date window",
+            fullPeriodCompleteness="NOT_PROVEN",
+            provenOrdering="D1_EMISSAO DESC, D1_DTDIGIT DESC, R_E_C_N_O_ DESC (default date_basis=issue)",
             provenance=_PROVENANCE,
             semanticAliasesPtBr=[
                 "histórico de preço de compra",
@@ -699,10 +725,10 @@ def candidate_records() -> list[dict[str, Any]]:
                 "adjustment. Result is not an approved price, persisted cost, purchasing "
                 "authorization, accounting entry or business approval."
             ),
-            status="FROZEN_FOR_IMPLEMENTATION",
+            status="DEFER_FROM_READ_WAVE",
             canonicalOperations=["get_product_cost_impact_simulation"],
             canonicalUseCases=["GetProductCostImpactSimulationUseCase"],
-            readPrepareAct="READ",
+            readPrepareAct="PREPARE",
             technicalOwner=technical_owner,
             businessOwner=business_owner,
             sourceOfTruth=(
@@ -840,8 +866,23 @@ def candidate_records() -> list[dict[str, Any]]:
             observability=_SAFE_OBS,
             negativeAuthzPlan=_NEG_AUTHZ,
             quarantineDeltaRequired=[
-                _keep_global("custo", "impacto no custo / simulação de custo"),
-                _keep_global("cost", "cost impact simulation"),
+                {
+                    "token": "custo",
+                    "action": "KEEP_GLOBAL",
+                    "rationale": (
+                        "Cost simulation is PREPARE / DEFER_FROM_READ_WAVE. Do not own `custo` "
+                        "in the READ broker. Keep the global token; a future PREPARE track may "
+                        "own precise aliases later."
+                    ),
+                },
+                {
+                    "token": "cost",
+                    "action": "KEEP_GLOBAL",
+                    "rationale": (
+                        "Cost simulation is PREPARE / DEFER_FROM_READ_WAVE. Do not own `cost` "
+                        "in the READ broker."
+                    ),
+                },
             ],
             openGaps=[
                 "Currency of B1_CUSTD/B1_UPRC is UNPROVEN",
@@ -862,14 +903,26 @@ def candidate_records() -> list[dict[str, Any]]:
             httpRoute="GET /products/{code}/cost-impact-simulation",
             routeHandler="get_cost_impact_simulation",
             candidateClass="PRIMARY",
+            readWavePromotion="NO",
+            deferReason=(
+                "HTTP GET compute-only simulation is PREPARE, not READ, under the canonical "
+                "DAVI capability model (preview/draft/simulação sem persistir). Architecture "
+                "Acceptance reclassified it out of Wave 2 READ. Analysis of source, AuthZ, "
+                "projection, monetary/unit/currency gaps and simulation boundary remains valid "
+                "for a future PREPARE track. Do not create PREPARE runtime, MCP tools or Agent "
+                "Instruction changes in Wave 2."
+            ),
+            futureTrack="DAVI-PREPARE-GOVERNED-SIMULATION (not opened here)",
             simulationBoundary={
                 "computeOnly": True,
                 "sideEffects": "NONE_PROVEN",
+                "httpGetDoesNotImplyRead": True,
                 "notApprovedPrice": True,
                 "notPersistedProductCost": True,
                 "notPurchasingAuthorization": True,
                 "notAccountingEntry": True,
                 "notBusinessApproval": True,
+                "notAct": True,
                 "writeSemantics": "FORBIDDEN",
             },
         ),
@@ -1237,8 +1290,8 @@ def retrieval_collision_plan() -> list[dict[str, str]]:
         },
         {
             "intent": "impacto no custo / simular impacto de custo",
-            "owner": "product.cost.impact_simulation",
-            "not": "commercial pricing / purchase history",
+            "owner": "NONE_THIS_READ_WAVE (PREPARE / DEFER_FROM_READ_WAVE; remain globally quarantined)",
+            "not": "do not own custo/cost aliases in the READ broker",
         },
         {
             "intent": "preço / custo / produto (bare tokens)",
@@ -1266,6 +1319,9 @@ def build_documents(*, source_head: str, origin_main: str) -> tuple[dict[str, An
             "source_head": source_head,
             "origin_main": origin_main,
             "wave1_historical_freeze": "docs/integrations/evidence/davi-capability-wave-001-freeze.json",
+            "correctionTaskId": CORRECTION_TASK_ID,
+            "architectureDecision": "ACCEPT_WITH_RESIDUAL",
+            "sourceFreezeSha": SOURCE_FREEZE_SHA,
             "implementation": "NOT_STARTED",
             "deploy": "NOT_REQUIRED",
             "live": "UNCHANGED_FROM_CURRENT_BASELINE",
@@ -1328,8 +1384,9 @@ def build_documents(*, source_head: str, origin_main: str) -> tuple[dict[str, An
                 "group": "RG-PRODUCT-LAST-PURCHASE-VS-HISTORY",
                 "operations": ["get_product_last_purchase", "get_product_purchase_price_history"],
                 "decision": (
-                    "DISTINCT snapshot vs windowed series. last_purchase has no date filter "
-                    "(latest valid NF ever); history defaults to 365 days + history_limit."
+                    "DISTINCT snapshot vs bounded latest-N windowed series. last_purchase has "
+                    "no date filter (latest valid NF ever); history is TOP N inside a date "
+                    "window and does not prove full-period completeness."
                 ),
             },
             {
@@ -1341,6 +1398,15 @@ def build_documents(*, source_head: str, origin_main: str) -> tuple[dict[str, An
                     "get_product_purchase_budget_history",
                 ],
                 "decision": "DEFER intelligence: composite dump + unbounded budget_history scan.",
+            },
+            {
+                "group": "RG-PRODUCT-COST-SIMULATION-PREPARE",
+                "operations": ["get_product_cost_impact_simulation"],
+                "semantic_capability": "product.cost.impact_simulation",
+                "decision": (
+                    "HTTP GET != semantic READ. Compute-only simulation with adjustment_percent "
+                    "and simulated_*/projected_* fields is PREPARE. Defer from Wave 2 READ."
+                ),
             },
             {
                 "group": "RG-PRODUCT-SUMMARY-AFTER-PRICING",
@@ -1380,6 +1446,9 @@ def build_documents(*, source_head: str, origin_main: str) -> tuple[dict[str, An
     freeze = {
         "artifact_class": ARTIFACT_CLASS,
         "taskId": TASK_ID,
+        "correctionTaskId": CORRECTION_TASK_ID,
+        "architectureDecision": "ACCEPT_WITH_RESIDUAL",
+        "sourceFreezeSha": SOURCE_FREEZE_SHA,
         "implementationTaskId": IMPLEMENTATION_TASK_ID,
         "generated_at": inventory["metadata"]["generated_at"],
         "source_head": source_head,
@@ -1391,20 +1460,28 @@ def build_documents(*, source_head: str, origin_main: str) -> tuple[dict[str, An
         "live": "UNCHANGED_FROM_CURRENT_BASELINE",
         "current_eligible": 10,
         "new_capabilities": len(frozen),
-        "expected_eligible_after_implementation": 10 + len(frozen),
+        "wave2_read_additions": 3,
+        "expected_eligible_after_implementation": 13,
         "expected_mcp_tools_after_implementation": 3,
         "agent_instruction_change": "NO",
         "capability_ids": [c["capabilityId"] for c in frozen],
-        "deferred_capability_ids": [c["capabilityId"] for c in caps if c["status"] == "DEFER"],
+        "deferred_capability_ids": [
+            c["capabilityId"] for c in caps if c["status"] in DEFERRED_STATUSES
+        ],
         "capabilities": frozen,
         "all_candidates": [
-            {"capabilityId": c["capabilityId"], "status": c["status"]} for c in caps
+            {
+                "capabilityId": c["capabilityId"],
+                "status": c["status"],
+                "readPrepareAct": c["readPrepareAct"],
+            }
+            for c in caps
         ],
         "primary_decisions": {
             "product.commercial.pricing": "FROZEN_FOR_IMPLEMENTATION",
             "product.purchase.price_history": "FROZEN_FOR_IMPLEMENTATION",
             "product.raw_material.price_intelligence": "DEFER",
-            "product.cost.impact_simulation": "FROZEN_FOR_IMPLEMENTATION",
+            "product.cost.impact_simulation": "PREPARE / DEFER_FROM_READ_WAVE",
         },
         "secondary_decisions": {
             "get_product_last_purchase": "FROZEN_FOR_IMPLEMENTATION as product.purchase.last_valid",
@@ -1416,6 +1493,9 @@ def build_documents(*, source_head: str, origin_main: str) -> tuple[dict[str, An
         "implementationHandoff": {
             "taskId": IMPLEMENTATION_TASK_ID,
             "capabilitiesToImplement": [c["capabilityId"] for c in frozen],
+            "canonicalOperationsToImplement": [
+                c["canonicalOperations"][0] for c in frozen
+            ],
             "allowlistDelta": [
                 {
                     "operationId": c["canonicalOperations"][0],
@@ -1428,7 +1508,18 @@ def build_documents(*, source_head: str, origin_main: str) -> tuple[dict[str, An
                 }
                 for c in frozen
             ],
-            "expectedEligibleCount": 10 + len(frozen),
+            "removeFromExplicitlyNotApproved": [
+                "get_product_pricing",
+                "get_product_purchase_price_history",
+            ],
+            "keepBlockedInExplicitlyNotApproved": [
+                "get_product_cost_impact_simulation",
+                "get_product_raw_material_price_intelligence",
+                "get_product_summary",
+            ],
+            "lastPurchaseCurrentlyInExplicitlyNotApproved": False,
+            "doNotImplement": ["get_product_cost_impact_simulation"],
+            "expectedEligibleCount": 13,
             "mcpToolCount": 3,
             "agentInstructionChange": "NO",
             "doNotImplementNow": True,
@@ -1525,12 +1616,14 @@ def render_freeze_md(freeze: dict[str, Any]) -> str:
         "> **Normative for the next implementation task.** Evidence/governance only. Does not change runtime.",
         "",
         f"- Task: `{freeze['taskId']}`",
+        f"- Architecture correction: `{freeze.get('correctionTaskId')}` — `{freeze.get('architectureDecision')}`",
+        f"- Source freeze SHA: `{freeze.get('sourceFreezeSha')}`",
         f"- Future implementation task: `{freeze['implementationTaskId']}` (DO NOT implement here)",
         f"- Source HEAD: `{freeze['source_head']}`",
         f"- Freeze status: `{freeze['status']}`",
         f"- Theme: {freeze['theme']}",
         f"- Current eligible: **{freeze['current_eligible']}**",
-        f"- New Wave 2 capabilities: **{freeze['new_capabilities']}**",
+        f"- Wave 2 READ additions: **{freeze.get('wave2_read_additions', freeze['new_capabilities'])}**",
         f"- Expected eligible after implementation: **{freeze['expected_eligible_after_implementation']}**",
         f"- Expected MCP tools after implementation: **{freeze['expected_mcp_tools_after_implementation']}**",
         f"- Agent instructions change: **{freeze['agent_instruction_change']}**",
@@ -1548,6 +1641,8 @@ def render_freeze_md(freeze: dict[str, Any]) -> str:
         "OAuth scope != business permission",
         "price/cost classification != independent DAVI permission",
         "simulation != ACT, recommendation != authorization, calculation != persistence",
+        "HTTP GET != semantic READ",
+        "PREPARE = preview/draft/simulação sem persistir — not Wave 2 READ",
         "MCP tools remain search_products + discover_delpi_information + execute_delpi_information",
         "```",
         "",
@@ -1563,6 +1658,10 @@ def render_freeze_md(freeze: dict[str, Any]) -> str:
         [
             "",
             "`get_product_summary` remains **DEFER**. Pricing freeze does not create a mega-summary.",
+            "",
+            "`product.cost.impact_simulation` is **PREPARE / DEFER_FROM_READ_WAVE**. HTTP GET compute-only "
+            "simulation is not Wave 2 READ. Do not add it to the READ allowlist. A future PREPARE track "
+            "may reuse the preserved source/projection analysis.",
             "",
             "Wave 1 operational capabilities are not reopened.",
             "",
@@ -1615,7 +1714,7 @@ def render_freeze_md(freeze: dict[str, Any]) -> str:
                 f"- **RISK:** {cap['risk']}",
                 f"- **OBSERVABILITY:** {cap['observability']}",
                 f"- **TEST PLAN:** unit projection fail-closed siblings; discover aliases positive+collision; "
-                "execute bounded payload; sibling non-match (venda vs compra vs última NF vs simulação); "
+                "execute bounded payload; sibling non-match (venda vs compra vs última NF); "
                 "negative AuthZ 403 without API_DELPI_ACCESS.",
                 "- **LIVE ACCEPTANCE:** Agent Preview discover→candidate→execute for a real product code; "
                 "verify allowlisted fields only; verify no new MCP tools; verify Wave 1 ten still work.",
@@ -1638,23 +1737,61 @@ def render_freeze_md(freeze: dict[str, Any]) -> str:
     )
     for cid in freeze["capability_ids"]:
         lines.append(f"- `{cid}`")
+    handoff = freeze.get("implementationHandoff") or {}
     lines.extend(
         [
             "",
+            "Canonical operations: `get_product_pricing`, `get_product_purchase_price_history`, `get_product_last_purchase`.",
+            "",
+            "Do **not** implement `get_product_cost_impact_simulation` in Wave 2 READ.",
+            "",
             "Allowlist delta: add `operations[]` entries only (catalog_action + nested projection + aliases + generic argumentConstraints).",
-            "Remove those operationIds from `explicitlyNotApproved` when promoting.",
-            "Do not remove global economic quarantine tokens; own via aliases.",
+            "Future removals from `explicitlyNotApproved`: `get_product_pricing`, `get_product_purchase_price_history`.",
+            "`get_product_last_purchase` is not currently in `explicitlyNotApproved` (nested-shape blocked only).",
+            "Keep blocked: `get_product_cost_impact_simulation`, `get_product_raw_material_price_intelligence`, `get_product_summary`.",
+            "Do not remove global economic quarantine tokens; READ capabilities own via precise aliases. Cost tokens stay global-only.",
             "",
             f"Expected eligible after implementation: **{freeze['expected_eligible_after_implementation']}**.",
             "Expected MCP tools: **3**.",
             "Agent instruction change: **NO**.",
             "",
-            "Must not change in this freeze task (already true): MCP server tool surface, Agent Instructions, "
+            "Must not change in this freeze/correction task (already true): MCP server tool surface, Agent Instructions, "
             "eligibility classifier semantics, executor genericity, API routes, use cases, repositories.",
             "",
         ]
     )
+    _ = handoff
     return "\n".join(lines) + "\n"
+
+
+def render_acceptance_md(freeze: dict[str, Any]) -> str:
+    return "\n".join(
+        [
+            "# DAVI Wave 2 Architecture Acceptance",
+            "",
+            f"- Task: `{CORRECTION_TASK_ID}`",
+            f"- Source freeze SHA: `{SOURCE_FREEZE_SHA}`",
+            f"- Decision: `{freeze.get('architectureDecision')}`",
+            f"- Corrected freeze HEAD (generation): `{freeze.get('source_head')}`",
+            "",
+            "## Corrections",
+            "",
+            "1. `product.cost.impact_simulation`: READ / FROZEN_FOR_IMPLEMENTATION → **PREPARE / DEFER_FROM_READ_WAVE**.",
+            "2. `product.commercial.pricing`: remove currentness claim → registered commercial price tables.",
+            "3. `product.purchase.price_history`: bounded latest-N; `full_period_completeness = NOT_PROVEN`.",
+            "",
+            "## Wave 2 READ set",
+            "",
+            "- `product.commercial.pricing`",
+            "- `product.purchase.price_history`",
+            "- `product.purchase.last_valid`",
+            "",
+            "Count: **3**. Expected eligible after implementation: **13**. MCP tools: **3**. Agent Instructions: **UNCHANGED**.",
+            "",
+            "Canonical freeze authority after this correction remains `davi-capability-wave-002-freeze.json`.",
+            "",
+        ]
+    ) + "\n"
 
 
 def write_artifacts(
@@ -1665,11 +1802,42 @@ def write_artifacts(
 ) -> dict[str, Path]:
     target = out_dir or (api_root() / "docs/integrations/evidence")
     target.mkdir(parents=True, exist_ok=True)
+    acceptance = {
+        "artifact_class": ARTIFACT_CLASS,
+        "taskId": CORRECTION_TASK_ID,
+        "sourceFreezeSha": SOURCE_FREEZE_SHA,
+        "architectureDecision": "ACCEPT_WITH_RESIDUAL",
+        "correctedFreezeAuthority": f"docs/integrations/evidence/{FREEZE_STEM}.json",
+        "corrections": [
+            {
+                "capabilityId": "product.cost.impact_simulation",
+                "before": "READ / FROZEN_FOR_IMPLEMENTATION",
+                "after": "PREPARE / DEFER_FROM_READ_WAVE",
+            },
+            {
+                "capabilityId": "product.commercial.pricing",
+                "before": "Current commercial product pricing / Preço comercial atual",
+                "after": "Commercial product price tables / Tabelas e preços comerciais do produto",
+            },
+            {
+                "capabilityId": "product.purchase.price_history",
+                "before": "implied complete-period history via truncated/is_complete",
+                "after": "bounded latest-N; full_period_completeness = NOT_PROVEN",
+            },
+        ],
+        "wave2ReadSet": freeze["capability_ids"],
+        "expectedEligibleAfterImplementation": freeze["expected_eligible_after_implementation"],
+        "mcpTools": 3,
+        "generated_at": freeze.get("generated_at"),
+        "source_head": freeze.get("source_head"),
+    }
     paths = {
         "inventory_json": target / f"{INVENTORY_STEM}.json",
         "inventory_md": target / f"{INVENTORY_STEM}.md",
         "freeze_json": target / f"{FREEZE_STEM}.json",
         "freeze_md": target / f"{FREEZE_STEM}.md",
+        "acceptance_json": target / f"{ACCEPTANCE_STEM}.json",
+        "acceptance_md": target / f"{ACCEPTANCE_STEM}.md",
     }
     paths["inventory_json"].write_text(
         json.dumps(inventory, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
@@ -1679,4 +1847,8 @@ def write_artifacts(
         json.dumps(freeze, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
     paths["freeze_md"].write_text(render_freeze_md(freeze), encoding="utf-8")
+    paths["acceptance_json"].write_text(
+        json.dumps(acceptance, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
+    paths["acceptance_md"].write_text(render_acceptance_md(freeze), encoding="utf-8")
     return paths

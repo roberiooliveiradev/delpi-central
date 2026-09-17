@@ -104,6 +104,15 @@ def test_current_eligible_remains_ten() -> None:
     assert load_allowlist_operation_ids(load_external_read_allowlist()) == set(
         CURRENT_ELIGIBLE
     )
+    allow = load_external_read_allowlist()
+    assert allow.get("version") == 6
+    blocked = {
+        item.get("operationId")
+        for item in allow.get("explicitlyNotApproved") or []
+        if isinstance(item, dict)
+    }
+    assert "get_product_last_purchase" not in blocked
+    assert "get_product_cost_impact_simulation" in blocked
 
 
 def test_mcp_tools_remain_three() -> None:
@@ -174,9 +183,9 @@ def test_freeze_records_are_complete_and_wildcard_free() -> None:
     assert [c["capabilityId"] for c in frozen] == [
         "product.commercial.pricing",
         "product.purchase.price_history",
-        "product.cost.impact_simulation",
         "product.purchase.last_valid",
     ]
+    assert len(frozen) == 3
     for cap in frozen:
         for key in REQUIRED_FREEZE_FIELDS:
             assert key in cap and cap[key] not in (None, ""), key
@@ -195,13 +204,59 @@ def test_freeze_records_are_complete_and_wildcard_free() -> None:
         assert "produto" not in cap["semanticAliasesPtBr"]
 
 
+def test_cost_simulation_is_prepare_deferred_from_read_wave() -> None:
+    by_id = {c["capabilityId"]: c for c in candidate_records()}
+    sim = by_id["product.cost.impact_simulation"]
+    assert sim["readPrepareAct"] == "PREPARE"
+    assert sim["status"] == "DEFER_FROM_READ_WAVE"
+    assert sim["readWavePromotion"] == "NO"
+    assert sim["simulationBoundary"]["computeOnly"] is True
+    assert sim["simulationBoundary"]["sideEffects"] == "NONE_PROVEN"
+    assert sim["canonicalOperations"] == ["get_product_cost_impact_simulation"]
+    frozen_ids = {c["capabilityId"] for c in frozen_records()}
+    assert "product.cost.impact_simulation" not in frozen_ids
+
+
+def test_pricing_does_not_claim_currentness() -> None:
+    pricing = next(
+        c
+        for c in candidate_records()
+        if c["capabilityId"] == "product.commercial.pricing"
+    )
+    name = f"{pricing['businessName']['ptBr']} {pricing['businessName']['en']}"
+    need = pricing["businessNeed"]
+    blob = f"{name} {need} {pricing['timeSemantics']}".lower()
+    assert "atual" not in pricing["businessName"]["ptBr"].lower()
+    assert "current" not in pricing["businessName"]["en"].lower()
+    assert "current/commercial" not in need.lower()
+    assert "current effective" in blob or "não afirmar" in need.lower() or "sem afirmar" in need.lower()
+
+
+def test_purchase_history_full_period_completeness_not_proven() -> None:
+    history = next(
+        c
+        for c in candidate_records()
+        if c["capabilityId"] == "product.purchase.price_history"
+    )
+    assert history["fullPeriodCompleteness"] == "NOT_PROVEN"
+    assert "bounded latest-n" in history["datasetScope"].lower()
+    assert "NOT_PROVEN" in history["completeness"]
+    assert "must not be interpreted" in history["completeness"].lower()
+    assert "complete purchase history for the requested period" not in history["completeness"].lower()
+
+
 def test_deferred_candidates_have_reasons() -> None:
     by_id = {c["capabilityId"]: c for c in candidate_records()}
     assert by_id["product.raw_material.price_intelligence"]["status"] == "DEFER"
     assert by_id["product.snapshot.summary"]["status"] == "DEFER"
+    assert by_id["product.cost.impact_simulation"]["status"] == "DEFER_FROM_READ_WAVE"
     assert by_id["product.raw_material.price_intelligence"]["deferReason"]
     assert by_id["product.snapshot.summary"]["deferReason"]
+    assert by_id["product.cost.impact_simulation"]["deferReason"]
     assert by_id["product.raw_material.price_intelligence"]["approvedResponseFields"] == []
+    last = by_id["product.purchase.last_valid"]
+    assert last["status"] == "FROZEN_FOR_IMPLEMENTATION"
+    assert last["canonicalOperations"] == ["get_product_last_purchase"]
 
 
 def test_generator_validates_source_and_writes_only_wave2_artifacts(tmp_path: Path) -> None:
@@ -234,13 +289,46 @@ def test_committed_freeze_agrees_with_markdown_and_inventory() -> None:
     assert freeze["expected_mcp_tools_after_implementation"] == 3
     assert freeze["agent_instruction_change"] == "NO"
     assert freeze["implementation"] == "NOT_STARTED"
-    assert freeze["new_capabilities"] == 4
-    assert freeze["expected_eligible_after_implementation"] == 14
+    assert freeze["new_capabilities"] == 3
+    assert freeze["wave2_read_additions"] == 3
+    assert freeze["expected_eligible_after_implementation"] == 13
+    assert freeze["implementationHandoff"]["expectedEligibleCount"] == 13
+    assert freeze["implementationHandoff"]["canonicalOperationsToImplement"] == [
+        "get_product_pricing",
+        "get_product_purchase_price_history",
+        "get_product_last_purchase",
+    ]
+    assert "get_product_cost_impact_simulation" not in freeze[
+        "implementationHandoff"
+    ]["canonicalOperationsToImplement"]
+    assert freeze["implementationHandoff"]["doNotImplement"] == [
+        "get_product_cost_impact_simulation"
+    ]
+    assert freeze["primary_decisions"]["product.cost.impact_simulation"] == (
+        "PREPARE / DEFER_FROM_READ_WAVE"
+    )
+    pricing = next(
+        c
+        for c in inventory["candidates"]
+        if c["capabilityId"] == "product.commercial.pricing"
+    )
+    assert "atual" not in pricing["businessName"]["ptBr"].lower()
+    assert "current" not in pricing["businessName"]["en"].lower()
+    history = next(
+        c
+        for c in inventory["candidates"]
+        if c["capabilityId"] == "product.purchase.price_history"
+    )
+    assert history["fullPeriodCompleteness"] == "NOT_PROVEN"
     for cid in freeze["capability_ids"]:
         assert f"`{cid}`" in freeze_md
         assert cid in inventory_md
     assert freeze["primary_decisions"]["product.raw_material.price_intelligence"] == "DEFER"
     assert "DEFER" in freeze_md
+    assert "PREPARE" in freeze_md
+    assert "13" in freeze_md
+    assert "Current commercial product pricing" not in freeze_md
+    assert "Preço comercial atual do produto" not in freeze_md
     inv_status = {c["capabilityId"]: c["status"] for c in inventory["candidates"]}
     freeze_status = {c["capabilityId"]: c["status"] for c in freeze["capabilities"]}
     for cid, status in freeze_status.items():

@@ -1,38 +1,42 @@
 {
   "artifact_class": "EVIDENCE_NOT_RUNTIME_AUTHORITY",
   "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-002-FREEZE",
+  "correctionTaskId": "DAVI-CAPABILITY-EXPANSION-WAVE-002-FREEZE-CORRECTION-001",
+  "architectureDecision": "ACCEPT_WITH_RESIDUAL",
+  "sourceFreezeSha": "b5de5122f13bb921f6e6a48a0fad2d559e97eb80",
   "implementationTaskId": "DAVI-CAPABILITY-EXPANSION-WAVE-002",
-  "generated_at": "2026-09-17T05:49:24.678004+00:00",
-  "source_head": "6e10029bcc281c4e0c3575448a1414a157cc3c44",
-  "origin_main": "6e10029bcc281c4e0c3575448a1414a157cc3c44",
+  "generated_at": "2026-09-17T06:04:23.149416+00:00",
+  "source_head": "b5de5122f13bb921f6e6a48a0fad2d559e97eb80",
+  "origin_main": "b5de5122f13bb921f6e6a48a0fad2d559e97eb80",
   "status": "FROZEN_FOR_IMPLEMENTATION",
   "theme": "Product Economic Intelligence",
   "implementation": "NOT_STARTED",
   "deploy": "NOT_REQUIRED",
   "live": "UNCHANGED_FROM_CURRENT_BASELINE",
   "current_eligible": 10,
-  "new_capabilities": 4,
-  "expected_eligible_after_implementation": 14,
+  "new_capabilities": 3,
+  "wave2_read_additions": 3,
+  "expected_eligible_after_implementation": 13,
   "expected_mcp_tools_after_implementation": 3,
   "agent_instruction_change": "NO",
   "capability_ids": [
     "product.commercial.pricing",
     "product.purchase.price_history",
-    "product.cost.impact_simulation",
     "product.purchase.last_valid"
   ],
   "deferred_capability_ids": [
     "product.raw_material.price_intelligence",
+    "product.cost.impact_simulation",
     "product.snapshot.summary"
   ],
   "capabilities": [
     {
       "capabilityId": "product.commercial.pricing",
       "businessName": {
-        "ptBr": "Preço comercial atual do produto",
-        "en": "Current commercial product pricing"
+        "ptBr": "Tabelas e preços comerciais do produto",
+        "en": "Commercial product price tables"
       },
-      "businessNeed": "Authorized current/commercial sale pricing for one product: which price tables apply and the table sale_price, without dumping discounts, max price, tax internals or purchase-cost concepts.",
+      "businessNeed": "Consultar as tabelas comerciais registradas para um produto, incluindo preço de venda, moeda armazenada, lote, vigência e indicador de ativo, sem afirmar que todas as linhas representam o preço atual. Not purchase cost and not a mega-financial dump.",
       "status": "FROZEN_FOR_IMPLEMENTATION",
       "canonicalOperations": [
         "get_product_pricing"
@@ -75,7 +79,7 @@
         "prices[].state",
         "prices[].operation_type"
       ],
-      "droppedFieldReasons": "max_price/discounts are commercial-strategy internals; state/operation_type are extra commercial-condition dimensions not required for current table sale price.",
+      "droppedFieldReasons": "max_price/discounts are commercial-strategy internals; state/operation_type are extra commercial-condition dimensions not required for registered table sale price.",
       "shape": "scalar OpenAPI shape wrapping nested product+prices payload",
       "projectionMode": "nested",
       "projectionFeasibility": "SUPPORTED_BY_CURRENT_GENERIC_PROJECTOR",
@@ -87,12 +91,12 @@
         "executeMaxResponseBytes": 65536,
         "note": "Backend returns all DA1 rows for the product; DAVI generic array slice caps at 50."
       },
-      "timeSemantics": "prices[].valid_from is DA1_DATVIG as stored. No start_date/end_date filter exists. Capability is current table rows, not a historical commercial-price series.",
+      "timeSemantics": "prices[].valid_from is DA1_DATVIG as stored. prices[].active is DA1_ATIVO as stored. No start_date/end_date filter exists. The route does not prove that returned rows are only currently active/effective. DAVI may report the row active flag, valid_from and registered sale_price; it must not claim sale_price is the current effective price.",
       "monetarySemantics": "sale_price is DA1_PRCVEN table unit sale price. Tax inclusion/exclusion and gross/net meaning are NOT proven in source — do not freeze a net/gross claim. lot_quantity (DA1_QTDLOT) is the lot basis for that row.",
       "currencySemantics": "currency is DA1_MOEDA as stored (Protheus currency code). ISO 4217 mapping to BRL is NOT proven in source; do not assume BRL. Keep the raw field.",
       "unitSemantics": "product.unit is SB1 B1_UM catalog unit. sale_price is per catalog unit on the price-table row, interpreted with prices[].lot_quantity.",
       "derivedFields": [],
-      "completeness": "Complete for returned DA1 rows of that product after DAVI array cap. truncated=true if more than 50 tables. Do not imply complete market pricing.",
+      "completeness": "Complete for the DA1 rows returned in this payload after DAVI array cap. truncated=true if more than 50 tables. Do not imply complete market pricing and do not imply every row is the current effective price.",
       "provenance": "Preserve canonical operation/use case, product code, reference/start/end dates or date_end_exclusive, branch filter when used, truncated/is_complete, and currency/unit fields that are approved. Do not expose SQL, hosts, tokens, repository internals, or route mechanics.",
       "semanticAliasesPtBr": [
         "preço do produto",
@@ -166,7 +170,7 @@
         "ptBr": "Histórico de preço de compra da matéria-prima",
         "en": "Raw-material purchase price history"
       },
-      "businessNeed": "Authorized bounded series of inbound-NF unit purchase prices for one product, with consecutive variation — not purchase-order listings and not commercial sale tables.",
+      "businessNeed": "Bounded recent purchase-price series for one product within a resolved date window, limited to the latest N canonical inbound-NF occurrences, with consecutive variation on the returned set — not purchase-order listings, not commercial sale tables, and not a complete-period history.",
       "status": "FROZEN_FOR_IMPLEMENTATION",
       "canonicalOperations": [
         "get_product_purchase_price_history"
@@ -269,7 +273,7 @@
         "daviMaxDateRangeDays": 365,
         "rationale": "Backend default 24/365 already matches the business grain of recent price evolution. DAVI tightens only the item cap 200→50 to the global execute_max_items budget. Do not silently clamp dates."
       },
-      "timeSemantics": "Canonical HTTP filters are start_date and end_date. If omitted, backend sets start=today-365d and exclusive end=today+1 (resolve_history_date_range). Date basis is D1_EMISSAO (issue). date_start/date_end are legacy NOT_EXPOSED. Returned start_date / date_end_exclusive are provenance of the actual window.",
+      "timeSemantics": "Canonical HTTP filters are start_date and end_date. If omitted, backend sets start=today-365d and exclusive end=today+1 (resolve_history_date_range). Default date_basis is issue (D1_EMISSAO). Proven ordering in fetch_purchase_price_history: D1_EMISSAO DESC, D1_DTDIGIT DESC, R_E_C_N_O_ DESC (latest-first). date_start/date_end are legacy NOT_EXPOSED. Returned start_date / date_end_exclusive are provenance of the resolved window, not proof that every matching NF in that window was returned.",
       "monetarySemantics": "items[].unit_price is SD1 D1_VUNIT NF unit price; total_value is D1_TOTAL; icms_rate is D1_PICM. Gross/net of ICMS is not fully defined in source — expose unit_price + icms_rate together. summary min/max/avg and variation_percent are backend calculations over the returned items only.",
       "currencySemantics": "No D1_MOEDA/currency field exists on the NF history payload. Currency is UNPROVEN; do not assume BRL. Do not invent a currency field.",
       "unitSemantics": "product.unit is B1_UM. quantity is D1_QUANT in that catalog unit. unit_price is per that unit; total_value is the NF line total.",
@@ -289,10 +293,13 @@
           "field": "summary.*",
           "class": "CANONICAL_BACKEND_CALCULATION",
           "owner": "product_raw_material_price_service.summarize_price_history",
-          "completenessAssumption": "Aggregates the returned (already limited) items, not the full NF universe."
+          "completenessAssumption": "Aggregates the returned TOP N items only. Does not prove total matching NFs in the whole requested period."
         }
       ],
-      "completeness": "Complete only for valid inbound NFs in the resolved date window up to history_limit. truncated=true when returned items hit the DAVI cap or backend TOP limit. summary.total_purchases is len(returned items), not all-time supplier history. Do not imply complete market or complete supplier history.",
+      "completeness": "dataset_scope = bounded latest-N occurrences within the resolved date window. Default N=24, DAVI max N=50, requested window max 365 days. history_limit bounds the dataset returned by the canonical backend TOP N. summary fields describe that returned bounded dataset only. summary.total_purchases does NOT prove total matching NFs in the whole period. Backend does not expose total, has_more, or a next cursor. full_period_completeness = NOT_PROVEN. DAVI is_complete/truncated describe DAVI projection/transport completeness only. is_complete=true MUST NOT be interpreted as 'there are no more matching purchases in the requested period'. truncated=true only when DAVI projection sliced the already-returned payload (e.g. execute_max_items), not when the backend TOP N quietly omitted older matching records.",
+      "datasetScope": "bounded latest-N occurrences within the resolved date window",
+      "fullPeriodCompleteness": "NOT_PROVEN",
+      "provenOrdering": "D1_EMISSAO DESC, D1_DTDIGIT DESC, R_E_C_N_O_ DESC (default date_basis=issue)",
       "provenance": "Preserve canonical operation/use case, product code, reference/start/end dates or date_end_exclusive, branch filter when used, truncated/is_complete, and currency/unit fields that are approved. Do not expose SQL, hosts, tokens, repository internals, or route mechanics.",
       "semanticAliasesPtBr": [
         "histórico de preço de compra",
@@ -353,239 +360,6 @@
         "get_product_pricing is DA1 commercial sale tables",
         "get_product_last_purchase is unbounded TOP 1 latest valid NF"
       ]
-    },
-    {
-      "capabilityId": "product.cost.impact_simulation",
-      "businessName": {
-        "ptBr": "Simulação de impacto de custo do PA",
-        "en": "Finished-product cost impact simulation"
-      },
-      "businessNeed": "Authorized compute-only ranking of raw materials that most impact the material cost of one finished product (PA), optionally applying a percent adjustment. Result is not an approved price, persisted cost, purchasing authorization, accounting entry or business approval.",
-      "status": "FROZEN_FOR_IMPLEMENTATION",
-      "canonicalOperations": [
-        "get_product_cost_impact_simulation"
-      ],
-      "canonicalUseCases": [
-        "GetProductCostImpactSimulationUseCase"
-      ],
-      "readPrepareAct": "READ",
-      "technicalOwner": "api-delpi Product bounded context",
-      "businessOwner": "TO_INVENTORY — no canonical named business owner proven in source; do not invent Comercial, Suprimentos, Controladoria or Financeiro",
-      "sourceOfTruth": "GET /products/{code}/cost-impact-simulation → GetProductCostImpactSimulationUseCase → ProductCostImpactRepository (SB1010 header B1_CUSTD/B1_UCALSTD + recursive SG1010 BOM MP aggregation OPTION MAXRECURSION 0) → build_cost_impact_simulation (in-memory only). Unit basis: ProductCostImpactUnitService + product_cost_impact_units.json (MI = 1000 pieces). PA-only (rejects non-PA).",
-      "identity": "END_USER_ACCOUNT",
-      "backendAuthz": "PROVEN: @require_permission(API_DELPI_ACCESS) on get_cost_impact_simulation",
-      "approvedInputFields": [
-        "code",
-        "max_depth",
-        "price_source",
-        "adjustment_percent",
-        "top_n"
-      ],
-      "requiredInputFields": [
-        "code"
-      ],
-      "optionalInputFields": [
-        "max_depth",
-        "price_source",
-        "adjustment_percent",
-        "top_n"
-      ],
-      "inputMinimization": {
-        "code": "APPROVED_REQUIRED",
-        "max_depth": "APPROVED_OPTIONAL",
-        "price_source": "APPROVED_OPTIONAL",
-        "adjustment_percent": "APPROVED_OPTIONAL",
-        "top_n": "APPROVED_OPTIONAL"
-      },
-      "approvedResponseFields": [
-        "product.product_code",
-        "product.description",
-        "product.product_type",
-        "product.unit",
-        "product.group_code",
-        "product.standard_cost",
-        "product.standard_cost_date",
-        "pa_reference.reference_quantity",
-        "pa_reference.reference_unit",
-        "pa_reference.bom_quantity_factor",
-        "cost_basis.reference_quantity",
-        "cost_basis.reference_unit",
-        "cost_basis.standard_cost_unit",
-        "cost_basis.material_cost_unit",
-        "cost_basis.pa_standard_cost_basis",
-        "cost_basis.material_cost_basis",
-        "cost_basis.catalog_unit",
-        "cost_basis.catalog_pieces_per_unit",
-        "cost_basis.catalog_quantity_per_reference",
-        "cost_basis.pa_standard_cost_per_piece",
-        "cost_basis.total_material_cost_per_piece",
-        "price_source",
-        "adjustment_percent",
-        "materials.items[].rank",
-        "materials.items[].raw_material_code",
-        "materials.items[].raw_material_description",
-        "materials.items[].unit",
-        "materials.items[].quantity_per_pa",
-        "materials.items[].unit_cost",
-        "materials.items[].extended_cost",
-        "materials.items[].impact_on_material_cost_percent",
-        "materials.items[].impact_on_pa_cost_percent",
-        "materials.items[].simulated_unit_cost",
-        "materials.items[].simulated_extended_cost",
-        "materials.items[].simulated_impact_on_pa_cost_percent",
-        "materials.items[].cost_delta",
-        "materials.total",
-        "materials.returned",
-        "summary.total_raw_materials",
-        "summary.returned_materials",
-        "summary.total_material_cost",
-        "summary.simulated_total_material_cost",
-        "summary.projected_cost_delta",
-        "summary.top_material_impact_percent",
-        "summary.pa_standard_cost",
-        "summary.pa_cost_comparable",
-        "summary.material_to_pa_cost_ratio",
-        "simulation.adjustment_percent",
-        "simulation.projected_total_material_cost",
-        "simulation.projected_cost_delta",
-        "simulation.projected_pa_cost_delta_percent"
-      ],
-      "droppedFields": [
-        "materials.items[].path",
-        "materials.items[].group_code",
-        "product.last_purchase_price",
-        "product.last_purchase_date",
-        "product.pa_reference"
-      ],
-      "shape": "composite_analysis",
-      "projectionMode": "nested",
-      "projectionFeasibility": "SUPPORTED_BY_CURRENT_GENERIC_PROJECTOR",
-      "perOperationProjectorRequired": false,
-      "argumentConstraints": {
-        "argumentLimits": {
-          "max_depth": {
-            "minimum": 1,
-            "maximum": 8,
-            "default": 8
-          },
-          "top_n": {
-            "minimum": 1,
-            "maximum": 50,
-            "default": 50
-          },
-          "adjustment_percent": {
-            "minimum": -100,
-            "maximum": 1000,
-            "default": 0
-          }
-        }
-      },
-      "pagination": "none — top_n ranking slice, not page/page_size",
-      "limits": {
-        "backendDefaultMaxDepth": 50,
-        "backendMaxDepthQuery": 100,
-        "daviMaxDepth": 8,
-        "backendTopNMax": 200,
-        "daviTopNMax": 50,
-        "adjustmentPercentBackend": {
-          "minimum": -100,
-          "maximum": 1000
-        },
-        "priceSourceEnum": [
-          "standard_cost",
-          "last_purchase"
-        ]
-      },
-      "timeSemantics": "No start_date/end_date. BOM validity is ProductBomValidityFilterService for today. product.standard_cost_date is B1_UCALSTD cadastro date. Simulation is a point-in-time compute against current BOM + current costs.",
-      "monetarySemantics": "unit_cost is CANONICAL_BACKEND_CALCULATION from price_source (B1_CUSTD standard_cost or B1_UPRC last_purchase, with fallback). extended_cost = quantity_per_pa * unit_cost. simulated_* apply adjustment_percent multiplier. Impact percents are backend calculations. simulation result != approved price / persisted product cost / purchasing authorization / accounting entry / business approval. GET compute-only: no INSERT/UPDATE/DELETE in use case, service or repository.",
-      "currencySemantics": "B1_CUSTD/B1_UPRC have no currency field in this payload. Currency UNPROVEN; do not assume BRL. Do not invent a currency field.",
-      "unitSemantics": "quantity_per_pa is normalized via ProductPaBomReferenceService for 1 PA. cost_basis documents MI vs piece: parentUnits.MI catalogPiecesPerUnit=1000. materials.items[].unit is the MP catalog unit. Do not expose amount without these unit fields.",
-      "derivedFields": [
-        {
-          "field": "unit_cost / simulated_* / extended_cost / cost_delta / impact percents",
-          "class": "CANONICAL_BACKEND_CALCULATION",
-          "owner": "product_cost_impact_service.build_cost_impact_simulation"
-        },
-        {
-          "field": "summary.pa_cost_comparable / material_to_pa_cost_ratio",
-          "class": "CANONICAL_BACKEND_CALCULATION",
-          "owner": "ProductCostImpactUnitService.resolve_comparability",
-          "assumptions": "comparable only if ratio in [0.05, 5.0]"
-        },
-        {
-          "field": "cost_basis.*",
-          "class": "CANONICAL_BACKEND_CALCULATION",
-          "owner": "ProductCostImpactUnitService.build_cost_basis",
-          "config": "app/content/product_cost_impact_units.json"
-        }
-      ],
-      "completeness": "Ranking is complete for MP components found in the bounded BOM explosion (max_depth). materials.total is all ranked MPs; materials.returned is the top_n slice. truncated when returned < total. Not a complete cost accounting analysis and not a complete market simulation.",
-      "provenance": "Preserve canonical operation/use case, product code, reference/start/end dates or date_end_exclusive, branch filter when used, truncated/is_complete, and currency/unit fields that are approved. Do not expose SQL, hosts, tokens, repository internals, or route mechanics.",
-      "semanticAliasesPtBr": [
-        "impacto no custo",
-        "simulação de custo",
-        "simular impacto de custo",
-        "matérias-primas que mais impactam o custo"
-      ],
-      "semanticAliasesEn": [
-        "cost impact simulation",
-        "simulate cost impact",
-        "raw materials cost impact"
-      ],
-      "privacy": "Internal cost/margin-adjacent ranking. Minimize to ranking + simulation totals. Drop BOM path. No customer/supplier PII in this payload.",
-      "risk": {
-        "databaseQueryCost": "HIGH",
-        "responseVolume": "MEDIUM",
-        "nesting": "MEDIUM",
-        "historicalScan": "LOW",
-        "recursiveBom": "HIGH",
-        "downstreamUseCases": "LOW",
-        "timeoutRisk": "HIGH",
-        "overall": "HIGH"
-      },
-      "observability": "Log action_id, actor identifier when policy allows, status, latency, result_count, date window when applicable, truncated, correlation id. Never log Authorization, OAuth tokens, candidate token, raw monetary payload, full supplier/customer records, or secrets.",
-      "negativeAuthzPlan": "Local/backend: authenticated caller without API_DELPI_ACCESS must receive backend 403. Live second-user negative AuthZ remains TEST_NOT_RUN unless genuine new evidence exists. DAVI_LOCAL_RBAC/ROLE/BRANCH/OBJECT AuthZ forbidden.",
-      "quarantineDeltaRequired": [
-        {
-          "token": "custo",
-          "action": "KEEP_GLOBAL_AND_OWN_VIA_ALIASES",
-          "rationale": "Do not remove global `custo` quarantine. Future implementation must add precise multiword aliases (impacto no custo / simulação de custo) so the promoted action owns the token; unrelated economic actions remain quarantined."
-        },
-        {
-          "token": "cost",
-          "action": "KEEP_GLOBAL_AND_OWN_VIA_ALIASES",
-          "rationale": "Do not remove global `cost` quarantine. Future implementation must add precise multiword aliases (cost impact simulation) so the promoted action owns the token; unrelated economic actions remain quarantined."
-        }
-      ],
-      "openGaps": [
-        "Currency of B1_CUSTD/B1_UPRC is UNPROVEN",
-        "SECOND_USER_NEGATIVE_AUTHZ = TEST_NOT_RUN",
-        "Recursive BOM with MAXRECURSION 0 remains HIGH cost even with DAVI max_depth=8"
-      ],
-      "failClosedInjectedSiblings": [
-        "internal_debug",
-        "raw_sql",
-        "legacy",
-        "secret",
-        "unexpected",
-        "path",
-        "sale_price",
-        "supplier_tax_id",
-        "customer_reference"
-      ],
-      "httpRoute": "GET /products/{code}/cost-impact-simulation",
-      "routeHandler": "get_cost_impact_simulation",
-      "candidateClass": "PRIMARY",
-      "simulationBoundary": {
-        "computeOnly": true,
-        "sideEffects": "NONE_PROVEN",
-        "notApprovedPrice": true,
-        "notPersistedProductCost": true,
-        "notPurchasingAuthorization": true,
-        "notAccountingEntry": true,
-        "notBusinessApproval": true,
-        "writeSemantics": "FORBIDDEN"
-      }
     },
     {
       "capabilityId": "product.purchase.last_valid",
@@ -723,34 +497,40 @@
   "all_candidates": [
     {
       "capabilityId": "product.commercial.pricing",
-      "status": "FROZEN_FOR_IMPLEMENTATION"
+      "status": "FROZEN_FOR_IMPLEMENTATION",
+      "readPrepareAct": "READ"
     },
     {
       "capabilityId": "product.purchase.price_history",
-      "status": "FROZEN_FOR_IMPLEMENTATION"
+      "status": "FROZEN_FOR_IMPLEMENTATION",
+      "readPrepareAct": "READ"
     },
     {
       "capabilityId": "product.raw_material.price_intelligence",
-      "status": "DEFER"
+      "status": "DEFER",
+      "readPrepareAct": "READ"
     },
     {
       "capabilityId": "product.cost.impact_simulation",
-      "status": "FROZEN_FOR_IMPLEMENTATION"
+      "status": "DEFER_FROM_READ_WAVE",
+      "readPrepareAct": "PREPARE"
     },
     {
       "capabilityId": "product.purchase.last_valid",
-      "status": "FROZEN_FOR_IMPLEMENTATION"
+      "status": "FROZEN_FOR_IMPLEMENTATION",
+      "readPrepareAct": "READ"
     },
     {
       "capabilityId": "product.snapshot.summary",
-      "status": "DEFER"
+      "status": "DEFER",
+      "readPrepareAct": "READ"
     }
   ],
   "primary_decisions": {
     "product.commercial.pricing": "FROZEN_FOR_IMPLEMENTATION",
     "product.purchase.price_history": "FROZEN_FOR_IMPLEMENTATION",
     "product.raw_material.price_intelligence": "DEFER",
-    "product.cost.impact_simulation": "FROZEN_FOR_IMPLEMENTATION"
+    "product.cost.impact_simulation": "PREPARE / DEFER_FROM_READ_WAVE"
   },
   "secondary_decisions": {
     "get_product_last_purchase": "FROZEN_FOR_IMPLEMENTATION as product.purchase.last_valid",
@@ -806,8 +586,8 @@
       },
       {
         "intent": "impacto no custo / simular impacto de custo",
-        "owner": "product.cost.impact_simulation",
-        "not": "commercial pricing / purchase history"
+        "owner": "NONE_THIS_READ_WAVE (PREPARE / DEFER_FROM_READ_WAVE; remain globally quarantined)",
+        "not": "do not own custo/cost aliases in the READ broker"
       },
       {
         "intent": "preço / custo / produto (bare tokens)",
@@ -836,8 +616,12 @@
     "capabilitiesToImplement": [
       "product.commercial.pricing",
       "product.purchase.price_history",
-      "product.cost.impact_simulation",
       "product.purchase.last_valid"
+    ],
+    "canonicalOperationsToImplement": [
+      "get_product_pricing",
+      "get_product_purchase_price_history",
+      "get_product_last_purchase"
     ],
     "allowlistDelta": [
       {
@@ -929,99 +713,6 @@
         }
       },
       {
-        "operationId": "get_product_cost_impact_simulation",
-        "capabilityId": "product.cost.impact_simulation",
-        "executionMode": "catalog_action",
-        "approvedInputFields": [
-          "code",
-          "max_depth",
-          "price_source",
-          "adjustment_percent",
-          "top_n"
-        ],
-        "approvedResponseFields": [
-          "product.product_code",
-          "product.description",
-          "product.product_type",
-          "product.unit",
-          "product.group_code",
-          "product.standard_cost",
-          "product.standard_cost_date",
-          "pa_reference.reference_quantity",
-          "pa_reference.reference_unit",
-          "pa_reference.bom_quantity_factor",
-          "cost_basis.reference_quantity",
-          "cost_basis.reference_unit",
-          "cost_basis.standard_cost_unit",
-          "cost_basis.material_cost_unit",
-          "cost_basis.pa_standard_cost_basis",
-          "cost_basis.material_cost_basis",
-          "cost_basis.catalog_unit",
-          "cost_basis.catalog_pieces_per_unit",
-          "cost_basis.catalog_quantity_per_reference",
-          "cost_basis.pa_standard_cost_per_piece",
-          "cost_basis.total_material_cost_per_piece",
-          "price_source",
-          "adjustment_percent",
-          "materials.items[].rank",
-          "materials.items[].raw_material_code",
-          "materials.items[].raw_material_description",
-          "materials.items[].unit",
-          "materials.items[].quantity_per_pa",
-          "materials.items[].unit_cost",
-          "materials.items[].extended_cost",
-          "materials.items[].impact_on_material_cost_percent",
-          "materials.items[].impact_on_pa_cost_percent",
-          "materials.items[].simulated_unit_cost",
-          "materials.items[].simulated_extended_cost",
-          "materials.items[].simulated_impact_on_pa_cost_percent",
-          "materials.items[].cost_delta",
-          "materials.total",
-          "materials.returned",
-          "summary.total_raw_materials",
-          "summary.returned_materials",
-          "summary.total_material_cost",
-          "summary.simulated_total_material_cost",
-          "summary.projected_cost_delta",
-          "summary.top_material_impact_percent",
-          "summary.pa_standard_cost",
-          "summary.pa_cost_comparable",
-          "summary.material_to_pa_cost_ratio",
-          "simulation.adjustment_percent",
-          "simulation.projected_total_material_cost",
-          "simulation.projected_cost_delta",
-          "simulation.projected_pa_cost_delta_percent"
-        ],
-        "semanticAliases": [
-          "impacto no custo",
-          "simulação de custo",
-          "simular impacto de custo",
-          "matérias-primas que mais impactam o custo",
-          "cost impact simulation",
-          "simulate cost impact",
-          "raw materials cost impact"
-        ],
-        "argumentConstraints": {
-          "argumentLimits": {
-            "max_depth": {
-              "minimum": 1,
-              "maximum": 8,
-              "default": 8
-            },
-            "top_n": {
-              "minimum": 1,
-              "maximum": 50,
-              "default": 50
-            },
-            "adjustment_percent": {
-              "minimum": -100,
-              "maximum": 1000,
-              "default": 0
-            }
-          }
-        }
-      },
-      {
         "operationId": "get_product_last_purchase",
         "capabilityId": "product.purchase.last_valid",
         "executionMode": "catalog_action",
@@ -1056,7 +747,20 @@
         "argumentConstraints": {}
       }
     ],
-    "expectedEligibleCount": 14,
+    "removeFromExplicitlyNotApproved": [
+      "get_product_pricing",
+      "get_product_purchase_price_history"
+    ],
+    "keepBlockedInExplicitlyNotApproved": [
+      "get_product_cost_impact_simulation",
+      "get_product_raw_material_price_intelligence",
+      "get_product_summary"
+    ],
+    "lastPurchaseCurrentlyInExplicitlyNotApproved": false,
+    "doNotImplement": [
+      "get_product_cost_impact_simulation"
+    ],
+    "expectedEligibleCount": 13,
     "mcpToolCount": 3,
     "agentInstructionChange": "NO",
     "doNotImplementNow": true
