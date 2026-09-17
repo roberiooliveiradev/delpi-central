@@ -23,7 +23,7 @@ export const BILLING_METRIC_CONTENT = {
   both: {
     shortLabel: "Ambos",
     label: "Valor e quantidade",
-    hint: "Mostra R$ no eixo Y esquerdo e quantidade (com UM) no eixo Y direito, e as duas métricas nas colunas do mix.",
+    hint: "Mostra R$ no eixo Y esquerdo e quantidade (com UM) no eixo Y direito, no mesmo tipo de gráfico (colunas/linhas/área). Ano anterior também compara a quantidade. As duas métricas entram nas colunas do mix.",
   },
 } as const;
 

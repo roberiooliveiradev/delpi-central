@@ -44,6 +44,37 @@ describe("buildBillingSeriesExportPayload", () => {
     expect(String(payload.rows[0]?.quantidade)).toMatch(/12,500/);
   });
 
+  it("Ambos + ano anterior exporta quantidade do período comparado", () => {
+    const payload = buildBillingSeriesExportPayload(
+      [
+        {
+          periodo: "Fev. de 26",
+          faturamento: 151000,
+          quantidade: 554.47,
+          faturamento_prior: 100000,
+          quantidade_prior: 400,
+        },
+      ],
+      { title: "Ambos", metric: "both", compareYears: 1, unit: "MI" },
+    );
+    expect(payload.columns.map((column) => column.key)).toEqual([
+      "periodo",
+      "faturamento",
+      "quantidade",
+      "prior1",
+      "qtyPrior1",
+    ]);
+    expect(String(payload.rows[0]?.qtyPrior1)).toBe("400,000 MI");
+  });
+
+  it("value + ano anterior não cria coluna de quantidade prior", () => {
+    const payload = buildBillingSeriesExportPayload(points, {
+      title: "Fat",
+      compareYears: 1,
+    });
+    expect(payload.columns.map((column) => column.key)).not.toContain("qtyPrior1");
+  });
+
   it("anexa a UM nas células de quantidade", () => {
     const payload = buildBillingSeriesExportPayload(points, {
       title: "Qtd",

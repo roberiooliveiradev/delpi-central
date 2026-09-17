@@ -251,8 +251,7 @@ export function MultiTypeSeriesChart({
     if (!hasSecondaryAxis) return forceLeft ? "left" : undefined;
     return isSecondaryYSeries(entry, secondaryDataKeys) ? "right" : "left";
   };
-  const asOverlayLine = (entry: MultiTypeSeriesSpec) =>
-    entry.plotAs === "line" || isSecondaryYSeries(entry, secondaryDataKeys);
+  const asOverlayLine = (entry: MultiTypeSeriesSpec) => entry.plotAs === "line";
 
   const handleBarCategoryClick = (bar: unknown) => {
     if (!onCategoryClick) return;

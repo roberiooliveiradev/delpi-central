@@ -2,20 +2,20 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   fetchCustomerBillingSeries,
-  type CustomerBillingSeriesPoint,
 } from "../../../api/customerBillingSeriesApi";
 import {
   compareYearOffsets,
   type CompareYearsCount,
   clampCompareYears,
 } from "../../analytics/utils/compareYears";
-import {
-  mergeSeriesWithPriorYear,
-  shiftPeriodRangeByYears,
-} from "../../analytics/utils/periodShift";
+import { shiftPeriodRangeByYears } from "../../analytics/utils/periodShift";
 import type { PortfolioBillingMetric } from "../../../content/billingMetric";
 import { apiBillingMetric } from "../../../content/billingMetric";
 import type { CustomerSummary } from "../types/customerSummary";
+import {
+  mergeBillingSeriesOverlays,
+  type BillingSeriesOverlayPoint,
+} from "../utils/mergeBillingSeriesOverlays";
 
 export type BillingSeriesCustomerOption = {
   key: string;
@@ -24,12 +24,7 @@ export type BillingSeriesCustomerOption = {
   nome: string;
 };
 
-export type BillingSeriesChartPoint = CustomerBillingSeriesPoint & {
-  value_prior?: number | null;
-  value_prior_2?: number | null;
-  value_prior_3?: number | null;
-  quantity?: number | null;
-};
+export type BillingSeriesChartPoint = BillingSeriesOverlayPoint;
 
 export type UseCustomerBillingSeriesResult = {
   /** Chaves selecionadas; vazio = toda a carteira. */
@@ -94,8 +89,6 @@ export type UseCustomerBillingSeriesOptions = {
   selectedKeys?: string[];
   onSelectedKeysChange?: (keys: string[]) => void;
 };
-
-const PRIOR_VALUE_KEYS = ["value_prior", "value_prior_2", "value_prior_3"] as const;
 
 export function useCustomerBillingSeries(
   customers: CustomerSummary[] | undefined,
@@ -185,65 +178,71 @@ export function useCustomerBillingSeries(
     } as const;
 
     const offsets = compareYearOffsets(compareYears);
-    const currentPromise = fetchCustomerBillingSeries(pairs, currentQuery);
-    const priorPromises = offsets.map((years) => {
-      if (!startDate || !endDate) return Promise.resolve(null);
-      const range = shiftPeriodRangeByYears(
-        { start_date: startDate, end_date: endDate },
-        years,
-      );
-      return fetchCustomerBillingSeries(pairs, {
-        startDate: range.start_date,
-        endDate: range.end_date,
+    const fetchMetric = (
+      seriesMetric: "value" | "quantity",
+      range?: { startDate: string; endDate: string },
+    ) =>
+      fetchCustomerBillingSeries(pairs, {
+        months: range || (startDate && endDate) ? undefined : currentQuery.months,
+        startDate: range?.startDate ?? startDate,
+        endDate: range?.endDate ?? endDate,
         granularity,
         nature,
-        metric: apiMetric,
+        metric: seriesMetric,
         productCodes,
         productGroups,
         market,
         signal: controller.signal,
       });
+
+    const currentPromise = fetchCustomerBillingSeries(pairs, currentQuery);
+    const priorValuePromises = offsets.map((years) => {
+      if (!startDate || !endDate) return Promise.resolve(null);
+      const range = shiftPeriodRangeByYears(
+        { start_date: startDate, end_date: endDate },
+        years,
+      );
+      return fetchMetric(apiMetric, {
+        startDate: range.start_date,
+        endDate: range.end_date,
+      });
     });
     const quantityPromise = includeQuantityOverlay
-      ? fetchCustomerBillingSeries(pairs, {
-          ...currentQuery,
-          metric: "quantity",
-        })
+      ? fetchMetric("quantity")
       : Promise.resolve(null);
-
-    void Promise.all([currentPromise, quantityPromise, ...priorPromises])
-      .then(([currentPayload, quantityPayload, ...priorPayloads]) => {
-        if (cancelled) return;
-        let next: BillingSeriesChartPoint[] = currentPayload.points ?? [];
-        priorPayloads.forEach((priorPayload, index) => {
-          const key = PRIOR_VALUE_KEYS[index];
-          if (!key) return;
-          const prior = priorPayload?.points ?? [];
-          next = mergeSeriesWithPriorYear(next, prior, (p) => ({
-            [key]: p?.value ?? null,
-          }));
-        });
-        if (quantityPayload?.points) {
-          const qtyByMonth = new Map(
-            quantityPayload.points.map((point) => [
-              point.month,
-              Number(point.value) || 0,
-            ]),
+    const priorQuantityPromises = includeQuantityOverlay
+      ? offsets.map((years) => {
+          if (!startDate || !endDate) return Promise.resolve(null);
+          const range = shiftPeriodRangeByYears(
+            { start_date: startDate, end_date: endDate },
+            years,
           );
-          const seen = new Set(next.map((point) => point.month));
-          next = next.map((point) => ({
-            ...point,
-            quantity: qtyByMonth.get(point.month) ?? 0,
-          }));
-          for (const point of quantityPayload.points) {
-            if (seen.has(point.month)) continue;
-            next.push({ ...point, value: 0, quantity: Number(point.value) || 0 });
-          }
-          next.sort((a, b) => {
-            const byDate = a.date_start.localeCompare(b.date_start);
-            return byDate || a.month.localeCompare(b.month);
+          return fetchMetric("quantity", {
+            startDate: range.start_date,
+            endDate: range.end_date,
           });
-        }
+        })
+      : [];
+
+    void Promise.all([
+      currentPromise,
+      quantityPromise,
+      ...priorValuePromises,
+      ...priorQuantityPromises,
+    ]).then(([currentPayload, quantityPayload, ...rest]) => {
+        if (cancelled) return;
+        const priorValuePayloads = rest.slice(0, offsets.length);
+        const priorQuantityPayloads = includeQuantityOverlay
+          ? rest.slice(offsets.length, offsets.length * 2)
+          : [];
+        const next = mergeBillingSeriesOverlays({
+          current: currentPayload.points ?? [],
+          quantityPoints: quantityPayload?.points,
+          priorValueSeries: priorValuePayloads.map((payload) => payload?.points ?? []),
+          priorQuantitySeries: priorQuantityPayloads.map(
+            (payload) => payload?.points ?? [],
+          ),
+        });
         setPoints(next);
         setCoverage(currentPayload.coverage);
         setError(currentPayload.partialError);

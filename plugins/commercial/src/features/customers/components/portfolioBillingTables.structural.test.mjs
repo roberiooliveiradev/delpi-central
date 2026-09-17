@@ -128,5 +128,7 @@ describe("Portfolio billing tables — estrutural", () => {
     assert.match(chart, /QUANTITY_SERIES_COLOR/);
     assert.match(chart, /quantitySeriesName/);
     assert.match(chart, /quantityUnit/);
+    assert.match(chart, /quantidade_prior/);
+    assert.doesNotMatch(chart, /plotAs: "line"/);
   });
 });

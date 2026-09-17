@@ -550,9 +550,9 @@ describe("CustomersPage estrutural", () => {
     assert.doesNotMatch(chart, /cm-nav-row/);
     assert.match(chart, /startDate: range\.startDate/);
     assert.match(seriesHook, /compareYears|comparePriorYear/);
-    assert.match(seriesHook, /compareYearOffsets|value_prior_2/);
+    assert.match(seriesHook, /compareYearOffsets|value_prior_2|quantity_prior/);
     assert.match(seriesHook, /shiftPeriodRangeByYears/);
-    assert.match(seriesHook, /mergeSeriesWithPriorYear/);
+    assert.match(seriesHook, /mergeBillingSeriesOverlays/);
     assert.match(seriesHook, /selectedKeys/);
     assert.match(seriesHook, /if \(!selectedKeys\.length\)/);
     assert.match(seriesHook, /if \(!enabled \|\| !fingerprint\) return/);

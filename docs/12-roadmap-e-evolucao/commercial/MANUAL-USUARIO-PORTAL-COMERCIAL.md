@@ -156,7 +156,7 @@ Sim. Realizado e meta agregam Santa Catarina + Espírito Santo pelo método dos 
 Não. São conceitos diferentes: ROL é faturamento no período; carteira aberta é snapshot do que ainda está em aberto **agora**.
 
 **Como vejo o histórico em quantidade (não em R$)?**  
-**Minha Carteira → Faturamento**: toggle **Métrica R$ | Qtd | Ambos**. **Ambos** mostra dois eixos Y (R$ à esquerda, quantidade à direita) e as duas métricas nas colunas do mix, com a UM da nota. **Conta → Histórico** e **Evolução de compras** permanecem **R$ | Qtd**. A quantidade é a fornecida (`D2_QUANT`); UMs diferentes no recorte aparecem como **mistas**, sem conversão automática.
+**Minha Carteira → Faturamento**: toggle **Métrica R$ | Qtd | Ambos**. **Ambos** mostra dois eixos Y (R$ à esquerda, quantidade à direita) no tipo de gráfico escolhido (colunas, linhas ou área) e as duas métricas nas colunas do mix, com a UM da nota. **Ano anterior** também compara a quantidade. **Conta → Histórico** e **Evolução de compras** permanecem **R$ | Qtd**. A quantidade é a fornecida (`D2_QUANT`); UMs diferentes no recorte aparecem como **mistas**, sem conversão automática.
 
 **A linha de tendência distorce no mês corrente?**  
 Por padrão a tendência **exclui** o bucket incompleto. Nos overlays do gráfico, «Ponderar período parcial» inclui o valor escalado pelo % do período já decorrido.

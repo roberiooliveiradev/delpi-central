@@ -250,7 +250,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Como vejo o histórico em quantidade (não em R$)?",
-          a: "Minha Carteira → Faturamento: use o toggle Métrica R$ | Qtd | Ambos. Ambos mostra dois eixos Y (R$ à esquerda, quantidade à direita) e as duas métricas nas colunas do mix, com a UM da nota. Conta → Histórico e Evolução de compras permanecem R$ | Qtd. A quantidade é a fornecida (D2_QUANT); UMs mistas aparecem como «mistas», sem conversão automática.",
+          a: "Minha Carteira → Faturamento: use o toggle Métrica R$ | Qtd | Ambos. Ambos mostra dois eixos Y (R$ à esquerda, quantidade à direita) no tipo de gráfico escolhido (colunas, linhas ou área) e as duas métricas nas colunas do mix, com a UM da nota. Ano anterior também compara a quantidade. Conta → Histórico e Evolução de compras permanecem R$ | Qtd. A quantidade é a fornecida (D2_QUANT); UMs mistas aparecem como «mistas», sem conversão automática.",
         },
         {
           q: "A linha de tendência distorce no mês corrente?",

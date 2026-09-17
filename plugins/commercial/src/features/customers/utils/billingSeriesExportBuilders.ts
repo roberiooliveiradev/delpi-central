@@ -14,6 +14,9 @@ type BillingSeriesExportPoint = {
   faturamento_prior?: number | null;
   faturamento_prior_2?: number | null;
   faturamento_prior_3?: number | null;
+  quantidade_prior?: number | null;
+  quantidade_prior_2?: number | null;
+  quantidade_prior_3?: number | null;
 };
 
 function formatPrimaryAmount(
@@ -58,8 +61,17 @@ export function buildBillingSeriesExportPayload(
     { key: "faturamento", label: primaryLabel },
     ...(showQuantityOverlay ? [{ key: "quantidade", label: "Quantidade" }] : []),
     ...(years >= 1 ? [{ key: "prior1", label: "Ano ant." }] : []),
+    ...(showQuantityOverlay && years >= 1
+      ? [{ key: "qtyPrior1", label: "Qtd ano ant." }]
+      : []),
     ...(years >= 2 ? [{ key: "prior2", label: "−2 anos" }] : []),
+    ...(showQuantityOverlay && years >= 2
+      ? [{ key: "qtyPrior2", label: "Qtd −2 anos" }]
+      : []),
     ...(years >= 3 ? [{ key: "prior3", label: "−3 anos" }] : []),
+    ...(showQuantityOverlay && years >= 3
+      ? [{ key: "qtyPrior3", label: "Qtd −3 anos" }]
+      : []),
   ];
   return {
     title: options.title,
@@ -81,6 +93,14 @@ export function buildBillingSeriesExportPayload(
             prior1: formatOptionalPrimary(point.faturamento_prior, metric, unit, mixed),
           }
         : {}),
+      ...(showQuantityOverlay && years >= 1
+        ? {
+            qtyPrior1:
+              point.quantidade_prior == null
+                ? "—"
+                : formatQuantityWithUnit(Number(point.quantidade_prior) || 0, unit, mixed),
+          }
+        : {}),
       ...(years >= 2
         ? {
             prior2: formatOptionalPrimary(
@@ -91,6 +111,18 @@ export function buildBillingSeriesExportPayload(
             ),
           }
         : {}),
+      ...(showQuantityOverlay && years >= 2
+        ? {
+            qtyPrior2:
+              point.quantidade_prior_2 == null
+                ? "—"
+                : formatQuantityWithUnit(
+                    Number(point.quantidade_prior_2) || 0,
+                    unit,
+                    mixed,
+                  ),
+          }
+        : {}),
       ...(years >= 3
         ? {
             prior3: formatOptionalPrimary(
@@ -99,6 +131,18 @@ export function buildBillingSeriesExportPayload(
               unit,
               mixed,
             ),
+          }
+        : {}),
+      ...(showQuantityOverlay && years >= 3
+        ? {
+            qtyPrior3:
+              point.quantidade_prior_3 == null
+                ? "—"
+                : formatQuantityWithUnit(
+                    Number(point.quantidade_prior_3) || 0,
+                    unit,
+                    mixed,
+                  ),
           }
         : {}),
     })),

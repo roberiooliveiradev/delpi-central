@@ -62,6 +62,9 @@ const CHART_HEIGHT = 320;
 const SERIES_COLOR = "var(--cm-accent)";
 /** Distinta de `--chart-2` (tom do primary no Portal) para não parecer a mesma coluna. */
 const QUANTITY_SERIES_COLOR = "var(--cm-chart-quantity, #ea580c)";
+const QUANTITY_PRIOR_COLOR = "var(--cm-chart-quantity-prior, #fdba74)";
+const QUANTITY_PRIOR_2_COLOR = "var(--cm-chart-quantity-prior-2, #fed7aa)";
+const QUANTITY_PRIOR_3_COLOR = "var(--cm-chart-quantity-prior-3, #ffedd5)";
 const PRIOR_SERIES_COLOR = "var(--chart-3, #94a3b8)";
 const PRIOR_2_COLOR = "var(--chart-4, #64748b)";
 const PRIOR_3_COLOR = "var(--chart-5, #475569)";
@@ -212,6 +215,12 @@ export function CustomerBillingSeriesChart({
         faturamento_prior_3:
           point.value_prior_3 == null ? null : Number(point.value_prior_3) || 0,
         quantidade: Number(point.quantity) || 0,
+        quantidade_prior:
+          point.quantity_prior == null ? null : Number(point.quantity_prior) || 0,
+        quantidade_prior_2:
+          point.quantity_prior_2 == null ? null : Number(point.quantity_prior_2) || 0,
+        quantidade_prior_3:
+          point.quantity_prior_3 == null ? null : Number(point.quantity_prior_3) || 0,
         _bucketFraction: resolveCalendarBucketFraction(
           point.date_start,
           point.date_end,
@@ -247,7 +256,6 @@ export function CustomerBillingSeriesChart({
         name: quantityLabel,
         fill: QUANTITY_SERIES_COLOR,
         axis: "secondary",
-        plotAs: "line",
       });
     }
     if (showValue && compareYears >= 1) {
@@ -257,6 +265,14 @@ export function CustomerBillingSeriesChart({
         fill: PRIOR_SERIES_COLOR,
       });
     }
+    if (showQuantity && billingMetric === "both" && compareYears >= 1) {
+      list.push({
+        dataKey: "quantidade_prior",
+        name: "Qtd ano ant.",
+        fill: QUANTITY_PRIOR_COLOR,
+        axis: "secondary",
+      });
+    }
     if (showValue && compareYears >= 2) {
       list.push({
         dataKey: "faturamento_prior_2",
@@ -264,11 +280,27 @@ export function CustomerBillingSeriesChart({
         fill: PRIOR_2_COLOR,
       });
     }
+    if (showQuantity && billingMetric === "both" && compareYears >= 2) {
+      list.push({
+        dataKey: "quantidade_prior_2",
+        name: "Qtd −2 anos",
+        fill: QUANTITY_PRIOR_2_COLOR,
+        axis: "secondary",
+      });
+    }
     if (showValue && compareYears >= 3) {
       list.push({
         dataKey: "faturamento_prior_3",
         name: "−3 anos",
         fill: PRIOR_3_COLOR,
+      });
+    }
+    if (showQuantity && billingMetric === "both" && compareYears >= 3) {
+      list.push({
+        dataKey: "quantidade_prior_3",
+        name: "Qtd −3 anos",
+        fill: QUANTITY_PRIOR_3_COLOR,
+        axis: "secondary",
       });
     }
     return list;
@@ -286,7 +318,10 @@ export function CustomerBillingSeriesChart({
       (yoyActive &&
         ((point.faturamento_prior != null && point.faturamento_prior > 0) ||
           (point.faturamento_prior_2 != null && point.faturamento_prior_2 > 0) ||
-          (point.faturamento_prior_3 != null && point.faturamento_prior_3 > 0))),
+          (point.faturamento_prior_3 != null && point.faturamento_prior_3 > 0) ||
+          (point.quantidade_prior != null && point.quantidade_prior > 0) ||
+          (point.quantidade_prior_2 != null && point.quantidade_prior_2 > 0) ||
+          (point.quantidade_prior_3 != null && point.quantidade_prior_3 > 0))),
   );
   const filterLabel = billingFilterLabel(
     filters.selectedCustomerKeys,
@@ -454,7 +489,16 @@ export function CustomerBillingSeriesChart({
               formatYSecondary={
                 billingMetric === "both" ? formatQuantityAxis : undefined
               }
-              secondaryDataKeys={billingMetric === "both" ? ["quantidade"] : undefined}
+              secondaryDataKeys={
+                billingMetric === "both"
+                  ? [
+                      "quantidade",
+                      ...(compareYears >= 1 ? ["quantidade_prior"] : []),
+                      ...(compareYears >= 2 ? ["quantidade_prior_2"] : []),
+                      ...(compareYears >= 3 ? ["quantidade_prior_3"] : []),
+                    ]
+                  : undefined
+              }
               formatTooltipValue={
                 billingMetric === "both" ? undefined : formatValue
               }

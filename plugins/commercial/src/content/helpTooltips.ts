@@ -308,7 +308,7 @@ export const CM_HELP = {
     rankingLimit:
       "Quantidade máxima de linhas no ranking (10, 15, 20 ou 50).",
     billingSeries:
-      "Soma do faturamento no período (bruto de nota ou líquido ROL). Com Métrica Qtd ou Ambos, a quantidade aparece com a UM da nota (eixo, total e tooltip); UMs diferentes no recorte mostram «mistas». Com Ambos, o gráfico usa dois eixos Y: colunas em R$ à esquerda e linha de quantidade à direita. Os filtros do hero (cliente, família, produto e mercado) também restringem este gráfico — com produto/família/mercado o bruto usa valor de linha (D2_TOTAL), alinhado ao mix. Em Cores, altere a cor de cada série; «Restaurar padrão» limpa a escolha neste navegador.",
+      "Soma do faturamento no período (bruto de nota ou líquido ROL). Com Métrica Qtd ou Ambos, a quantidade aparece com a UM da nota (eixo, total e tooltip); UMs diferentes no recorte mostram «mistas». Com Ambos, há dois eixos Y (R$ à esquerda, quantidade à direita) e o tipo do gráfico (colunas, linhas ou área) vale para as duas métricas. Ano anterior também sobrepõe a quantidade. Os filtros do hero (cliente, família, produto e mercado) também restringem este gráfico — com produto/família/mercado o bruto usa valor de linha (D2_TOTAL), alinhado ao mix. Em Cores, altere a cor de cada série; «Restaurar padrão» limpa a escolha neste navegador.",
     billingNature:
       "Bruto = valor de nota fiscal na série e Fat.12m (ranking/share usam receita bruta do envelope). Líquido = mesma fórmula ROL da Visão geral (impostos e devoluções). Aplica a Fat.12m, tendência, gráfico, mix, ABC, ranking e share.",
     billingMetric:
@@ -320,7 +320,7 @@ export const CM_HELP = {
     billingSeriesGrain:
       "Agrupamento da série. Dia e semana ficam indisponíveis quando o período é longo demais para aquele recorte.",
     billingSeriesYoy:
-      "Compara o mesmo período filtrado deslocado −1…−3 anos em colunas agrupadas. Alinhamento por bucket em qualquer granularidade permitida.",
+      "Compara o mesmo período filtrado deslocado −1…−3 anos em séries agrupadas. Em Ambos, o overlay inclui faturamento e quantidade. Alinhamento por bucket em qualquer granularidade permitida.",
     billingTrendIncomplete:
       "Por padrão a tendência exclui o bucket incompleto (ex.: mês corrente). Ative «Ponderar período parcial» para incluir o valor escalado pelo % do período já decorrido.",
     billingFilterCustomer:

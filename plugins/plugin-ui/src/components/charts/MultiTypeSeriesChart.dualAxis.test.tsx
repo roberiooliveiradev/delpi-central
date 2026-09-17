@@ -42,7 +42,6 @@ describe("MultiTypeSeriesChart dual Y", () => {
             name: "Quantidade fornecida",
             fill: "#ea580c",
             axis: "secondary",
-            plotAs: "line",
           },
         ]}
       />,
@@ -55,6 +54,10 @@ describe("MultiTypeSeriesChart dual Y", () => {
     await waitFor(() => {
       expect(container.querySelectorAll(".recharts-yAxis").length).toBe(2);
     });
+    await waitFor(() => {
+      expect(container.querySelectorAll(".recharts-bar").length).toBe(2);
+    });
+    expect(container.querySelector(".recharts-line")).toBeFalsy();
   });
 
   it("sibling: secondaryDataKeys sozinho ainda abre o eixo direito", async () => {
@@ -77,6 +80,36 @@ describe("MultiTypeSeriesChart dual Y", () => {
         container.querySelector(".delpi-ui-multi-type-series-chart--dual-y"),
       ).toBeTruthy();
     });
+    await waitFor(() => {
+      expect(container.querySelectorAll(".recharts-bar").length).toBe(2);
+    });
+  });
+
+  it("sibling: plotAs line na série secundária continua linha", async () => {
+    stubChartHostSize();
+    const { container } = render(
+      <MultiTypeSeriesChart
+        data={POINTS}
+        categoryKey="periodo"
+        chartType="column"
+        height={320}
+        secondaryDataKeys={["quantidade"]}
+        series={[
+          { dataKey: "faturamento", name: "Faturamento", fill: "#089bdb" },
+          {
+            dataKey: "quantidade",
+            name: "Quantidade fornecida",
+            fill: "#ea580c",
+            axis: "secondary",
+            plotAs: "line",
+          },
+        ]}
+      />,
+    );
+    await waitFor(() => {
+      expect(container.querySelector(".recharts-line")).toBeTruthy();
+    });
+    expect(container.querySelectorAll(".recharts-bar").length).toBe(1);
   });
 
   it("negative: uma série em R$ não marca dual-y", async () => {
