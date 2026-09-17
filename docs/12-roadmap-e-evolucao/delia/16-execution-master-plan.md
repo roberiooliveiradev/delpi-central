@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** decisão bounded `OWN_MIGRATION_CHAIN` (PENDING vs NOT_APPLICABLE_AT_C1) após review C1-T6 (`C0.S0..=C0.S7=APPROVED`; `FOUNDATION_FREEZE=APPROVED`; `C1_AUTHORIZED=YES`; `C1_STARTED=YES`; `C1_EXECUTED=NO`; Core registration + RBAC ± `/me/apps` + Portal discovery §6.43; C0 permanece `NOT_STARTED`; `RUNTIME_READINESS=NOT_PROVEN`)
+**Próxima etapa:** `C1-FINAL — STANDALONE_BOOTSTRAP_ACCEPTANCE_REVIEW` (`C0.S0..=C0.S7=APPROVED`; `FOUNDATION_FREEZE=APPROVED`; `C1_AUTHORIZED=YES`; `C1_STARTED=YES`; `OWN_MIGRATION_CHAIN=NOT_APPLICABLE_AT_C1` §C1-T6D1 / `52`§4+§17; gates C1 aplicáveis PASS; C0 permanece `NOT_STARTED`; `PRODUCTION_READINESS=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -351,9 +351,13 @@ CORE_REGISTRATION = PASS (C1-T6)
 DELIA_ACCESS_EFFECTIVE_RBAC = PASS (C1-T6 positive+negative)
 ME_APPS_DISCOVERY = PASS (C1-T6)
 PORTAL_LIVE_MOUNT = PASS (C1-T6)
-OWN_MIGRATION_CHAIN = PENDING
-ARCHITECTURE_DECISION_REQUIRED = OWN_MIGRATION_CHAIN vs Bootstrap Done (52§4 vs 52§17)
-NEXT = bounded OWN_MIGRATION_CHAIN decision (do not start automatically)
+OWN_MIGRATION_CHAIN = NOT_APPLICABLE_AT_C1 (C1-T6D1 Product Master; no DÉLIA-owned persisted state)
+ARCHITECTURE_DECISION_REQUIRED = NONE (migration applicability resolved)
+C1_EXECUTED = YES (all applicable Bootstrap Done gates PASS or NOT_APPLICABLE_AT_C1; see C1-T6D1)
+RUNTIME_READINESS = PROVEN (C1 bootstrap scope only)
+PRODUCTION_READINESS = NOT_PROVEN
+TYPESCRIPT_ISOLATED = INCONCLUSIVE (accepted residual; not a Bootstrap Done gate)
+NEXT = C1-FINAL — STANDALONE_BOOTSTRAP_ACCEPTANCE_REVIEW (do not start C2/C3 automatically)
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -558,6 +562,8 @@ FOUNDATION_FREEZE = APPROVED does NOT mean:
 **C1-T5 — GATEWAY_AND_COMPOSE_PUBLICATION_FOUNDATION:** `delpi-delia` + `delpi-delia-api` Compose/Gateway publication; `/apps/delia` + `/apps/delia-api`; Chat-independent. `C1_EXECUTED=NO`.
 
 **C1-T6 — CORE_REGISTRATION_RBAC_AND_PORTAL_DISCOVERY_VERIFICATION:** Core register + positive/negative `delia.access` → `/me/apps` + Portal discovery without hardcode + live mount evidence. `OWN_MIGRATION_CHAIN` still PENDING (`ARCHITECTURE_DECISION_REQUIRED` vs Bootstrap Done). `C1_EXECUTED=NO`.
+
+**C1-T6D1 — RESOLVE_OWN_MIGRATION_CHAIN_APPLICABILITY_AT_C1:** Product Master `OWN_MIGRATION_CHAIN=NOT_APPLICABLE_AT_C1` (no DÉLIA-owned persisted state). `52`§4+§17 aligned. Empty migration scaffolding forbidden. Future first owned persistence → REQUIRED→PASS. `C1_EXECUTED=YES`. `RUNTIME_READINESS=PROVEN` (bootstrap scope). `PRODUCTION_READINESS=NOT_PROVEN`. Next: `C1-FINAL` review only.
 
 - own Flask API skeleton/layers/config/logging/health/tests;
 - JWT/Core integration;

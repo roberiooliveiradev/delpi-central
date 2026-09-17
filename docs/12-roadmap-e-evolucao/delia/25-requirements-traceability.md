@@ -77,7 +77,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-139 | Adapter/ACL/Strangler para integrações legadas quando necessário | Architecture | migration gate | PLANNED |
 | CP-140 | Architecture conformance + ADR process | Architecture | conformance/ADR | PLANNED |
 | CP-146 | Zero dependência de runtime do Minha DELPI Chat | DÉLIA Platform | Chat-offline/scan | PLANNED |
-| CP-147 | Persistência/migration chain próprias da DÉLIA | DÉLIA API (`delia-api/migrations/`) | storage ownership | PLANNED |
+| CP-147 | Persistência/migration chain próprias da DÉLIA | DÉLIA API (`delia-api/migrations/` when owned state exists) | storage ownership | PLANNED — **NOT_APPLICABLE_AT_C1** (C1-T6D1: no DÉLIA-owned persisted state; REQUIRED on first owned persistence) |
 | CP-154 | Inventário Portal/Core/Gateway/APIs/MFEs antes do runtime | Architecture | C0.S0 evidence | PLANNED |
 | CP-157 | Media capture/consent/retention classes definidas antes do runtime multimodal contínuo | DÉLIA Security/Architecture | media/privacy foundation | PLANNED |
 | CP-158 | Shared-device identity/session isolation | DÉLIA/Portal/Security | device session negative tests | PLANNED |
@@ -583,7 +583,7 @@ Review: `ARCHITECTURE_REVIEW_C0_S1`; `REVIEWED_HEAD=c822f0e72495256c3459a4b36b9c
 | CP-143 | `id=delia`; manifest source DÉLIA; registry Core | LOCKED (C1) |
 | CP-144 | `/apps/delia-api/`, `/apps/delia` | LOCKED (C1) |
 | CP-145 | containers `delpi-delia-api`, `delpi-delia` | LOCKED (C1) |
-| CP-146–CP-147 | DÉLIA platform/API ownership labels | PLANNED |
+| CP-146–CP-147 | DÉLIA platform/API ownership labels; CP-147 migration chain **NOT_APPLICABLE_AT_C1** until first DÉLIA-owned persisted state (C1-T6D1) | PLANNED / N/A@C1 |
 | CP-148–CP-150, CP-152–CP-153, CP-155 | same product/runtime; Core AuthZ preserved | LOCKED (C1) |
 | CP-227 | Hub external execution boundary TARGET | PLANNED |
 | CP-249 | Process Intelligence = MODULE_IN_DELIA | PLANNED |

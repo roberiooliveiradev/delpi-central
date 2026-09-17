@@ -47,12 +47,14 @@ Freeze aceito C0.S1 (`PLANNED / FROZEN_ACCEPTED`; `ARCHITECTURE_REVIEW_C0_S1`, `
 ```text
 PERSISTENCE_OWNER = DÉLIA
 LOGICAL_NAMESPACE = delia
-MIGRATION_CHAIN = delia-api/migrations/
+MIGRATION_CHAIN = delia-api/migrations/   # CONDITIONAL — only when DÉLIA-owned persisted state exists
 PHYSICAL_POSTGRES_CLUSTER = DEFER_PHYSICAL_PLACEMENT / TO_INVENTORY
 ```
 
+C1-T6D1 Product Master: `OWN_MIGRATION_CHAIN = NOT_APPLICABLE_AT_C1` (no DÉLIA-owned persisted state introduced in C1). Empty scaffolding forbidden. First owned persistence task → REQUIRED → PASS with evidence (`52`§4).
+
 ```text
-delia-api/migrations/   # own chain; only DÉLIA-owned state / bounded projections/refs
+delia-api/migrations/   # own chain when applicable; only DÉLIA-owned state / bounded projections/refs
 ```
 
 Histórico supersedido: `minha-delpi-copilot-api/migrations/`.

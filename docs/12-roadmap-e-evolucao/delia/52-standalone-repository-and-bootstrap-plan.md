@@ -28,7 +28,7 @@ delpi-central/
 │   │   ├── infrastructure/
 │   │   ├── composition/
 │   │   └── create_app.py | main.py
-│   ├── migrations/                  # own chain; logical ns = delia
+│   ├── migrations/                  # CONDITIONAL: only when DÉLIA-owned persisted state exists (see §4)
 │   ├── tests/
 │   ├── docs/
 │   ├── scripts/
@@ -163,13 +163,68 @@ Provider/media/automation SDKs são construídos aqui/infrastructure, nunca dent
 
 ## 4. Banco e migrations
 
-A DÉLIA terá migration chain própria **somente para state/lifecycles que C0/C1 provar que são owned**.
+A DÉLIA terá migration chain própria **somente para state/lifecycles que C0/C1 (ou fase posterior) provar que são owned**.
 
-Regra:
+### OWN_MIGRATION_CHAIN — applicability
+
+```text
+OWN_MIGRATION_CHAIN applicability:
+- NOT_APPLICABLE while no persisted DÉLIA-owned state exists
+- REQUIRED once persisted DÉLIA-owned state is introduced
+```
+
+C1 Product Master decision (`C1-T6D1`):
+
+```text
+OWN_MIGRATION_CHAIN = NOT_APPLICABLE_AT_C1
+Reason: C1 introduces no DÉLIA-owned persisted state.
+```
+
+`NOT_APPLICABLE_AT_C1` means:
+
+- no DÉLIA-owned durable business/state model was introduced in C1;
+- no legitimate schema/table owned by DÉLIA exists yet;
+- no migration chain should be created only to satisfy a checklist;
+- empty migration scaffolding is **forbidden**;
+- Chat migrations must not be reused;
+- Core/domain/provider schemas must not be treated as DÉLIA ownership.
+
+It does **not** mean DÉLIA never needs migrations, that persistence is forbidden later, that DÉLIA may write foreign schemas without ownership, or that future state can bypass migration requirements.
+
+### Future trigger (mandatory)
+
+The **first** bounded task that introduces persisted state owned by DÉLIA MUST make `OWN_MIGRATION_CHAIN` applicable and **REQUIRED**, transitioning:
+
+```text
+NOT_APPLICABLE_AT_C1
+→ REQUIRED
+→ PASS only after implementation + evidence
+```
+
+That task cannot be accepted unless it proves, as applicable:
+
+- owner = DÉLIA;
+- persisted state need is real;
+- canonical state/lifecycle is identified;
+- logical namespace/schema ownership is defined;
+- migration root is `delia-api/migrations/` unless a later canonical ADR supersedes it;
+- migration chain is independent from Chat;
+- migration changes only DÉLIA-owned schema/tables;
+- forward migration test exists;
+- rollback/down migration or rollback strategy is evidenced where supported;
+- compatibility impact is classified;
+- startup/deploy behavior with migrations is defined;
+- observability/failure behavior is defined;
+- no direct writes to foreign-owned DB tables;
+- no empty placeholder migrations.
+
+Evidence, not documentation existence alone, is required for `PASS`.
+
+### Ownership rule (unchanged)
 
 ```text
 DÉLIA migration
-→ altera somente schema/tabelas sob ownership DÉLIA
+→ alters only schema/tables under DÉLIA ownership
 ```
 
 Não editar migrations do Chat para atender DÉLIA.
@@ -178,7 +233,7 @@ Se um cluster PostgreSQL compartilhado for reutilizado fisicamente, manter separ
 
 Raw audio/video não vira tabela/blob persistido por default; media storage e metadata só entram após C0/C3 provar need/policy.
 
-C0 congela boundaries antes de migrations.
+C0 congela boundaries antes de migrations. Empty scaffolding to “fechar gate” viola Abstraction Gate e esta seção.
 
 ## 5. Frontend package rules
 
@@ -446,7 +501,7 @@ Este documento não cria ordem paralela.
 ```text
 API_FOLDER_INDEPENDENT = PASS
 MFE_FOLDER_INDEPENDENT = PASS
-OWN_MIGRATION_CHAIN = PASS
+OWN_MIGRATION_CHAIN = PASS | NOT_APPLICABLE_AT_C1
 OWN_MANIFEST = PASS
 OWN_GATEWAY_ROUTE = PASS
 OWN_COMPOSE_SERVICE = PASS
@@ -462,6 +517,30 @@ HEALTH = PASS
 ROLLBACK_INDEPENDENT = PASS
 ```
 
-Nenhum item vira `PASS` por existência documental ou skeleton isolado. É necessária evidência válida para SHA/config, wiring real e teste aplicável.
+### OWN_MIGRATION_CHAIN acceptance semantics
+
+```text
+PASS:
+  C1 introduced persisted DÉLIA-owned state and the independent migration chain
+  was implemented and proven with evidence.
+
+NOT_APPLICABLE_AT_C1:
+  C1 introduced no persisted DÉLIA-owned state, so creating migrations would
+  violate the persistence ownership rule (§4) and the Abstraction Gate.
+```
+
+`NOT_APPLICABLE_AT_C1` is **not** a waiver for future persisted state.
+
+The first bounded task introducing DÉLIA-owned persistence MUST transition:
+
+```text
+NOT_APPLICABLE_AT_C1
+→ REQUIRED
+→ PASS only after implementation/evidence
+```
+
+Product Master C1-T6D1 decision: `OWN_MIGRATION_CHAIN = NOT_APPLICABLE_AT_C1` (no DÉLIA-owned persisted state in C1).
+
+Nenhum item vira `PASS` por existência documental ou skeleton isolado. É necessária evidência válida para SHA/config, wiring real e teste aplicável. `NOT_APPLICABLE_AT_C1` exige rationale + ausência comprovada de estado owned persistido (não checklist vazio).
 
 Somente então liberar C2/C3 conforme `16`.

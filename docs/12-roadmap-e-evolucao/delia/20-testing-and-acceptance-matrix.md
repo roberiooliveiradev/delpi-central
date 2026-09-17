@@ -1061,6 +1061,8 @@ Também provar:
 - nenhum Recurring Governed Work material é executado antes dos gates C5;
 - secrets/credentials ausentes no browser.
 
+`OWN_MIGRATION_CHAIN` segue `52`§4+§17: `PASS | NOT_APPLICABLE_AT_C1`. Em C1, Product Master (`C1-T6D1`) fixou `NOT_APPLICABLE_AT_C1` porque não há estado persistido owned pela DÉLIA; scaffolding vazio é proibido. O primeiro task com estado owned torna a chain **REQUIRED**.
+
 ## 4. Gate C2 — Portal Context + Commands
 
 - WorkspaceContext bounded/sanitized;

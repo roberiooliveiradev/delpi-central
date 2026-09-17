@@ -70,29 +70,32 @@ C0.S7 = APPROVED
 FOUNDATION_FREEZE = APPROVED
 C1_AUTHORIZED = YES
 C1_STARTED = YES
-C1_EXECUTED = NO
+C1_EXECUTED = YES (C1-T6D1; all applicable Bootstrap Done gates PASS or NOT_APPLICABLE_AT_C1)
 JWT_VALIDATION = PASS (C1-T2/T2R1 evidence; see §6.37–§6.38)
 CORE_CONTEXT = PASS (contract/adapter; live Core TEST_NOT_RUN; see §6.38)
 CORE_CONTEXT_IMPLEMENTATION = PASS
 CORE_CONTEXT_CONTRACT_TESTS = PASS
 CORE_CONTEXT_LIVE_NETWORK = TEST_NOT_RUN
 MFE_FOLDER_INDEPENDENT = PASS (C1-T3; see §6.39)
-FEDERATED_MOUNT = PASS (C1-T3 build+lifecycle; Portal registration PENDING)
+FEDERATED_MOUNT = PASS (C1-T3 build+lifecycle; Portal live mount PASS C1-T6)
 PLUGIN_UI = PASS (C1-T3 runtime remote)
 RESPONSIVE_ACCESSIBILITY_BASELINE = PASS (C1-T3 shell evidence)
 MEDIA_CAPTURE_NOT_AUTO_STARTED = PASS (C1-T3 residual+tests)
-OWN_MANIFEST = PASS (C1-T4/T4D1; see §6.40–§6.41; delia.access APPROVED; Core live registration PENDING)
+OWN_MANIFEST = PASS (C1-T4/T4D1; Core registration PASS C1-T6)
+OWN_MIGRATION_CHAIN = NOT_APPLICABLE_AT_C1 (C1-T6D1; no DÉLIA-owned persisted state)
+OWN_GATEWAY_ROUTE = PASS (C1-T5)
+OWN_COMPOSE_SERVICE = PASS (C1-T5)
 AUTHORITY_MAP = FROZEN_ACCEPTED
 BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
 NEW_RUNTIME_ABSTRACTIONS = NONE
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
-RUNTIME_READINESS = NOT_PROVEN
+RUNTIME_READINESS = PROVEN (C1 bootstrap scope; C1-T6D1)
 PRODUCTION_READINESS = NOT_PROVEN
 NEW_BEHAVIORAL_TESTS = TEST_NOT_RUN
 FUTURE_C1_C7_GREEN_EVIDENCE_REQUIRED = YES
-DÉLIA_RUNTIME_DIFF = delia-api skeleton + /health
+DÉLIA_RUNTIME_DIFF = delia-api + plugins/delia + Gateway/Compose publication + Core registration
 AUTOMATION_HUB = NEUTRAL_SHARED_EXECUTION_BOUNDARY_TARGET + physical runtime deferred
 CONTROL_TOWER = MODULE_IN_DELIA
 PROCESS_INTELLIGENCE = MODULE_IN_DELIA
@@ -1884,6 +1887,80 @@ ARCHITECTURE_DECISION_REQUIRED: OWN_MIGRATION_CHAIN vs Bootstrap Done (see above
 NEXT: bounded decision on OWN_MIGRATION_CHAIN (PENDING vs NOT_APPLICABLE_AT_C1) — do not start automatically
 ```
 
+## 6.44 C1-T6D1 — OWN_MIGRATION_CHAIN_APPLICABILITY_DECISION
+
+```text
+DATE: 2026-09-17
+STEP: C1-T6D1
+NAME: RESOLVE_OWN_MIGRATION_CHAIN_APPLICABILITY_AT_C1
+STATUS: PLAN_ONLY / ARCHITECTURE_DECISION_PERSISTENCE
+BASE_HEAD: 3193c398c9553e66e5bd7484cea6d0c8d7dc6495
+ACCEPTED_T6_HEAD: 38510392727e75769be464bd835864a111160c41
+POST_T6_COMMITS: OUTSIDE_TASK (davi / product-drawing / pcp public-hub) — no DÉLIA persistence drift
+WORKING_TREE_PRESERVED: OpenAPI catalog + delpi_auth.egg-info (OUTSIDE_TASK)
+RUNTIME_CHANGE: NONE
+EMPTY_MIGRATION_SCAFFOLDING: FORBIDDEN / CREATED=NO
+CONTRACT_CLASSIFICATION: ARCHITECTURE / ACCEPTANCE SEMANTICS CLARIFICATION (no API/RBAC/data/DB runtime contract change)
+
+PRODUCT_MASTER_DECISION:
+  OWN_MIGRATION_CHAIN = NOT_APPLICABLE_AT_C1
+REASON:
+  C1 introduced no DÉLIA-owned persisted state.
+FUTURE_TRIGGER:
+  first DÉLIA-owned persisted state
+  → OWN_MIGRATION_CHAIN becomes REQUIRED
+  → PASS only after implementation + evidence
+  (migration root delia-api/migrations/ unless later ADR supersedes)
+
+DÉLIA_OWNED_PERSISTED_STATE_AT_C1 = NONE
+  inventory: delia-api/app (no SQLAlchemy/alembic/psycopg/repo persistence);
+  requirements.txt (Flask/gunicorn/jose only);
+  no delia-api/migrations/;
+  plugins/delia (no DB);
+  compose delia/delia-api (Keycloak+Core env only; no PLUGINS_DB);
+  health forbids database keys in liveness payload (TEST_ONLY / DOCUMENTATION_ONLY matches only)
+
+CANONICAL_RESOLUTION:
+  52§4 applicability: NOT_APPLICABLE while no owned state; REQUIRED when owned state introduced
+  52§17 Bootstrap Done: OWN_MIGRATION_CHAIN = PASS | NOT_APPLICABLE_AT_C1
+  CONTRADICTORY_BOOTSTRAP_GATE = NONE (after this decision)
+
+C1_FORMAL_GATES:
+  API_FOLDER_INDEPENDENT=PASS
+  MFE_FOLDER_INDEPENDENT=PASS
+  OWN_MIGRATION_CHAIN=NOT_APPLICABLE_AT_C1
+  OWN_MANIFEST=PASS
+  OWN_GATEWAY_ROUTE=PASS
+  OWN_COMPOSE_SERVICE=PASS
+  JWT_VALIDATION=PASS
+  CORE_CONTEXT=PASS
+  FEDERATED_MOUNT=PASS
+  PLUGIN_UI=PASS
+  RESPONSIVE_ACCESSIBILITY_BASELINE=PASS
+  MEDIA_CAPTURE_NOT_AUTO_STARTED=PASS
+  NO_CHAT_RUNTIME_DEPENDENCY=PASS
+  DEV_PROD_ROUTE_PARITY=PASS
+  HEALTH=PASS
+  ROLLBACK_INDEPENDENT=PASS
+
+C1_INTEGRATION_EVIDENCE (unchanged from §6.43):
+  CORE_REGISTRATION=PASS
+  DELIA_ACCESS_EFFECTIVE_RBAC=PASS
+  ME_APPS_POSITIVE=PASS
+  ME_APPS_NEGATIVE=PASS
+  PORTAL_DISCOVERY=PASS
+  PORTAL_LIVE_MOUNT=PASS
+
+TYPESCRIPT_ISOLATED: INCONCLUSIVE (accepted residual; not listed in Bootstrap Done gates; does not block C1_EXECUTED)
+C1_EXECUTED: YES
+RUNTIME_READINESS: PROVEN (C1 bootstrap scope — standalone API/MFE/Gateway/Compose/Core discovery/federation; not full product)
+PRODUCTION_READINESS: NOT_PROVEN
+ABSTRACTION_GATE: PASS (no persistence need → no migration framework/DB adapter)
+EXECUTION_DRIFT: NONE
+ARCHITECTURE_DECISION_REQUIRED: NONE
+NEXT: C1-FINAL — STANDALONE_BOOTSTRAP_ACCEPTANCE_REVIEW (do not start C2/C3 automatically)
+```
+
 ## 7. Canonical phase mapping
 
 ```text
@@ -2092,4 +2169,4 @@ SAFETY_INTERLOCK_BYPASS
 
 ## 14. First execution
 
-Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1 created the standalone `delia-api/` Flask skeleton and `/health` liveness. C1-T1R1 closed real-process HTTP smoke and shutdown visibility (`delia_api_stopped`). `C1_STARTED=YES`. `C1_EXECUTED=NO`. C1-T2 added JWT validation + Core `/me` effective access (JWT≠permissions; fail-closed). C1-T2R1 removed production `GET /access-context` and preserved JWT/Core contract evidence via test-only probe (§6.38). C1-T3 bootstrapped standalone federated MFE `plugins/delia/` (§6.39). C1-T4 added `delpi.manifest.json` publication contract (§6.40). C1-T4D1 Product Master APPROVED `delia.access` as bootstrap/platform-access permission (§6.41). C1-T5 published Gateway/Compose services `delpi-delia` + `delpi-delia-api` with `/apps/delia/` + `/apps/delia-api/` (§6.42). C1-T6 registered DÉLIA in Core, proved positive/negative `delia.access` → `/me/apps`, Portal discovery path without hardcode, and live mount evidence (§6.43). `OWN_MIGRATION_CHAIN` remains PENDING with `ARCHITECTURE_DECISION_REQUIRED` against Bootstrap Done. `C0=NOT_STARTED`. Runtime/production readiness remain `NOT_PROVEN`.
+Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1 created the standalone `delia-api/` Flask skeleton and `/health` liveness. C1-T1R1 closed real-process HTTP smoke and shutdown visibility (`delia_api_stopped`). `C1_STARTED=YES`. C1-T2 added JWT validation + Core `/me` effective access (JWT≠permissions; fail-closed). C1-T2R1 removed production `GET /access-context` and preserved JWT/Core contract evidence via test-only probe (§6.38). C1-T3 bootstrapped standalone federated MFE `plugins/delia/` (§6.39). C1-T4 added `delpi.manifest.json` publication contract (§6.40). C1-T4D1 Product Master APPROVED `delia.access` as bootstrap/platform-access permission (§6.41). C1-T5 published Gateway/Compose services `delpi-delia` + `delpi-delia-api` with `/apps/delia/` + `/apps/delia-api/` (§6.42). C1-T6 registered DÉLIA in Core, proved positive/negative `delia.access` → `/me/apps`, Portal discovery path without hardcode, and live mount evidence (§6.43). C1-T6D1 Product Master set `OWN_MIGRATION_CHAIN=NOT_APPLICABLE_AT_C1` and aligned `52`§4+§17 (§6.44). `C1_EXECUTED=YES`. `RUNTIME_READINESS=PROVEN` (bootstrap scope). `PRODUCTION_READINESS=NOT_PROVEN`. `C0=NOT_STARTED`. Next bounded review: `C1-FINAL`.
