@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "delia",
+  "name": "DÉLIA",
+  "description": "Shell standalone de inteligência operacional da DÉLIA (fundação C1). Capacidades de negócio entram em tarefas posteriores.",
+  "icon": "radar",
+  "version": "0.0.1",
+  "type": "microfrontend",
+  "basePath": "/apps/delia",
+  "entry": "/apps/delia/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "delia.access",
+      "name": "Acessar DÉLIA",
+      "description": "Visibilidade/navegação do shell DÉLIA no portal. Metadata de app — não autoriza operações de negócio nem Domain AuthZ.",
+      "module": "delia"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/delia",
+      "label": "DÉLIA",
+      "permission": "delia.access",
+      "icon": "radar",
+      "order": 35,
+      "showInMenu": true
+    }
+  ],
+  "backend": {
+    "required": true,
+    "serviceName": "delia-api",
+    "baseUrl": "/apps/delia-api",
+    "validateJwt": true
+  },
+  "ui": {
+    "renderMode": "federated"
+  },
+  "metadata": {
+    "owner": "DELPI",
+    "product": "DÉLIA",
+    "c1Note": "delia.access is bootstrap visibility metadata required by Core manifest schema (minItems=1). Business permission taxonomy remains deferred. Core registration not performed in C1-T4."
+  }
+}

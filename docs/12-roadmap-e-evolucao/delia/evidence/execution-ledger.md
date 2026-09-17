@@ -81,6 +81,7 @@ FEDERATED_MOUNT = PASS (C1-T3 build+lifecycle; Portal registration PENDING)
 PLUGIN_UI = PASS (C1-T3 runtime remote)
 RESPONSIVE_ACCESSIBILITY_BASELINE = PASS (C1-T3 shell evidence)
 MEDIA_CAPTURE_NOT_AUTO_STARTED = PASS (C1-T3 residual+tests)
+OWN_MANIFEST = PASS (C1-T4; see §6.40; Core live registration PENDING)
 AUTHORITY_MAP = FROZEN_ACCEPTED
 BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
@@ -251,6 +252,7 @@ All ACT blocked until C7                        = SUPERSEDED_BY_C5_GOVERNED_ACT_
 | 2026-09-17 | C1-T2 JWT + Core effective access integration | RUNTIME; shared jwt_validator; Core GET /me; JWT≠permissions; fail-closed; C1_EXECUTED=NO |
 | 2026-09-17 | C1-T2R1 remove production access-context probe | RUNTIME; drop GET /access-context; preserve JWT/Core contract tests via test-only probe; C1_EXECUTED=NO |
 | 2026-09-17 | C1-T3 standalone federated MFE foundation | RUNTIME; plugins/delia; MF ./App; plugin-ui remote; mount/unmount; a11y/responsive baseline; no Chat/media; C1_EXECUTED=NO |
+| 2026-09-17 | C1-T4 manifest and publication contract | RUNTIME; plugins/delia/delpi.manifest.json; Core schema valid; Core register NOT_PERFORMED; C1_EXECUTED=NO |
 
 Actual `HEAD_BEFORE` for **runtime** remains uncaptured (no DÉLIA runtime). Inventory evidence SHA for C0.S0-F is `c6c9c8370d037edfc3529821b9d63e138b153436`. Documentation-only commits do not advance execution status.
 
@@ -1598,6 +1600,48 @@ EXECUTION_DRIFT: NONE
 NEXT: C1 — next bounded bootstrap after C1-T3 review (manifest/Gateway/Compose publication)
 ```
 
+## 6.40 C1-T4 — MANIFEST_AND_PUBLICATION_CONTRACT
+
+```text
+DATE: 2026-09-17
+STEP: C1-T4
+NAME: MANIFEST_AND_PUBLICATION_CONTRACT
+STATUS: RUNTIME
+BASE_HEAD: f696839a4175393f59b72565eaed0c68839ecd94
+ACCEPTED_T3_HEAD: 39639a31f5b61e26cecd1ceeb41641bda724c2b5
+POST_T3_COMMITS: OUTSIDE_TASK (davi pagination fail-safe; no DÉLIA MFE/manifest drift)
+PROGRAM: PLANNED / NOT_STARTED
+C0: NOT_STARTED
+C0.S0..C0.S7: APPROVED
+FOUNDATION_FREEZE: APPROVED
+C1_AUTHORIZED: YES
+C1_STARTED: YES
+C1_EXECUTED: NO / NOT_COMPLETE
+OWN_MANIFEST: PASS (plugins/delia/delpi.manifest.json; ManifestValidator OK)
+CORE_REGISTRATION: NOT_PERFORMED / PENDING (await product accept of delia.access + Gateway/Compose)
+PORTAL_REGISTRY_CHANGE: NONE
+MANIFEST_PATH: plugins/delia/delpi.manifest.json
+SCHEMA: core-api/app/infrastructure/plugins/schemas/delpi.manifest.schema.json
+VALIDATOR: ManifestValidator
+REGISTRATION_PATH: scripts/register-manifest.sh → POST /core-api/admin/apps/register → RegisterPluginUseCase → apps/app_manifests/permissions/app_routes → GET /me/apps → Portal
+BOOTSTRAP_VISIBILITY_PERMISSION: delia.access (schema minItems=1; platform {id}.access convention; not business AuthZ)
+ROOT_ROUTE: /apps/delia (only; no business routes)
+BACKEND: serviceName=delia-api baseUrl=/apps/delia-api validateJwt=true
+EXPOSED_MODULE_FIELD: ABSENT (Portal defaults ./App)
+OWN_GATEWAY_ROUTE: PENDING
+OWN_COMPOSE_SERVICE: PENDING
+OWN_MIGRATION_CHAIN: PENDING
+DEV_PROD_ROUTE_PARITY: PENDING
+ROLLBACK_INDEPENDENT: PENDING
+TYPESCRIPT_ISOLATED: INCONCLUSIVE (residual C1-T3 unchanged)
+RUNTIME_READINESS: NOT_PROVEN
+PRODUCTION_READINESS: NOT_PROVEN
+CHAT_RUNTIME_DEPENDENCY: NONE
+EXECUTION_DRIFT: NONE
+ARCHITECTURE_DECISION_REQUIRED: Confirm delia.access before live Core registration (C0 left final codes unfrozen; schema forbids empty permissions)
+NEXT: C1 — Gateway/Compose publication after C1-T4 review
+```
+
 ## 7. Canonical phase mapping
 
 ```text
@@ -1806,4 +1850,4 @@ SAFETY_INTERLOCK_BYPASS
 
 ## 14. First execution
 
-Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1 created the standalone `delia-api/` Flask skeleton and `/health` liveness. C1-T1R1 closed real-process HTTP smoke and shutdown visibility (`delia_api_stopped`). `C1_STARTED=YES`. `C1_EXECUTED=NO`. C1-T2 added JWT validation + Core `/me` effective access (JWT≠permissions; fail-closed). C1-T2R1 removed production `GET /access-context` and preserved JWT/Core contract evidence via test-only probe (§6.38). C1-T3 bootstrapped standalone federated MFE `plugins/delia/` (§6.39). Current next after T3 review is publication/integration (manifest/Gateway/Compose). `C0=NOT_STARTED`. Runtime/production readiness remain `NOT_PROVEN`.
+Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1 created the standalone `delia-api/` Flask skeleton and `/health` liveness. C1-T1R1 closed real-process HTTP smoke and shutdown visibility (`delia_api_stopped`). `C1_STARTED=YES`. `C1_EXECUTED=NO`. C1-T2 added JWT validation + Core `/me` effective access (JWT≠permissions; fail-closed). C1-T2R1 removed production `GET /access-context` and preserved JWT/Core contract evidence via test-only probe (§6.38). C1-T3 bootstrapped standalone federated MFE `plugins/delia/` (§6.39). C1-T4 added `delpi.manifest.json` publication contract (§6.40); Core live registration PENDING. Current next after T4 review is Gateway/Compose publication. `C0=NOT_STARTED`. Runtime/production readiness remain `NOT_PROVEN`.
