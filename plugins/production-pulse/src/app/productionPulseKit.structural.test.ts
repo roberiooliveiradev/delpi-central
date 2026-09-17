@@ -189,6 +189,11 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("components/operator/OperatorPlacementCard.tsx")).toMatch(/withHint=\{false\}/);
     expect(readRelative("hooks/useDeviceDetail.ts")).toMatch(/liveConnectivityIssue/);
     expect(readRelative("hooks/useDeviceDetail.ts")).toMatch(/isDeviceConnectivityError/);
+    expect(readRelative("hooks/useDeviceDetail.ts")).toMatch(/markDeviceDisconnected/);
+    expect(readRelative("hooks/useDeviceDetail.ts")).toMatch(/onDeviceDisconnected/);
+    expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(
+      /FitViewWhenGraphIdentityChanges/,
+    );
     expect(readRelative("content/helpTooltips.ts")).toMatch(/liveOfflineTitle/);
     expect(readRelative("pages/FirmwareJobsPage.tsx")).toMatch(/productionPulseFirmwareLinksPath/);
     expect(readRelative("pages/FirmwareJobsPage.tsx")).toMatch(/Redirecionando/);

@@ -13,6 +13,7 @@ import {
   isDeviceConnectivityError,
   resolveDeviceActionError,
 } from "../utils/apiErrors";
+import { markDeviceDisconnected } from "../utils/markDeviceDisconnected";
 import { requireCommandSuccess } from "../utils/requireCommandSuccess";
 import { useDeviceLiveRefresh } from "./useDeviceLiveRefresh";
 
@@ -24,9 +25,15 @@ export type LiveConnectivityIssue = {
 type UseDeviceDetailOptions = {
   deviceId: string;
   enabled: boolean;
+  /** Notifica o hub para manter o nó no mapa como desconectado. */
+  onDeviceDisconnected?: (deviceId: string) => void;
 };
 
-export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
+export function useDeviceDetail({
+  deviceId,
+  enabled,
+  onDeviceDisconnected,
+}: UseDeviceDetailOptions) {
   const [device, setDevice] = useState<DeviceListItem | null>(null);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
@@ -73,17 +80,25 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
     );
   }, []);
 
-  const recordLiveConnectivityFailure = useCallback((err: unknown) => {
-    if (!isDeviceConnectivityError(err)) return;
-    const message =
-      err instanceof ProductionPulseRequestError
-        ? err.message
-        : "Não foi possível falar com o dispositivo.";
-    setLiveConnectivityIssue({
-      code: err instanceof ProductionPulseRequestError ? err.code : undefined,
-      message,
-    });
-  }, []);
+  const recordLiveConnectivityFailure = useCallback(
+    (err: unknown) => {
+      if (!isDeviceConnectivityError(err)) return;
+      const message =
+        err instanceof ProductionPulseRequestError
+          ? err.message
+          : "Não foi possível falar com o dispositivo.";
+      setLiveConnectivityIssue({
+        code: err instanceof ProductionPulseRequestError ? err.code : undefined,
+        message,
+      });
+      setDevice((current) => {
+        if (!current) return current;
+        return markDeviceDisconnected(current);
+      });
+      onDeviceDisconnected?.(deviceId);
+    },
+    [deviceId, onDeviceDisconnected],
+  );
 
   const quietLiveRefresh = useCallback(async () => {
     if (!enabled) return;

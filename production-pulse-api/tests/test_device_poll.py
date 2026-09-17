@@ -302,7 +302,12 @@ def test_manual_poll_device_unreachable_returns_422(client, unique_ip, monkeypat
 
 
 def test_live_device_unreachable_returns_422(client, unique_ip, monkeypatch):
+    from uuid import UUID
+
     from production_pulse_app.domain.errors import DeviceDriverError
+    from production_pulse_app.infrastructure.persistence.repositories.postgres_device_repository import (
+        PostgresDeviceRepository,
+    )
 
     def fake_read(_self, _device):
         raise DeviceDriverError("network_error", technical_detail="HTTP request failed.")
@@ -314,10 +319,28 @@ def test_live_device_unreachable_returns_422(client, unique_ip, monkeypatch):
 
     device = _create_device(client, unique_ip)
     _bind_equipment(client, device["id"])
+    # Online within grace until live probe fails and records last_error.
+    PostgresDeviceRepository().record_poll_success(
+        UUID(device["id"]),
+        metrics={"counter": 1},
+    )
+
+    before = client.get(f"/devices/{device['id']}")
+    assert before.status_code == 200
+    assert before.json()["data"]["status"] == "online"
 
     response = client.get(f"/devices/{device['id']}/live")
     assert response.status_code == 422
-    assert response.json()["error"]["code"] == "network_error"
+    body = response.json()
+    assert body["error"]["code"] == "network_error"
+    details = body["error"].get("details") or {}
+    assert details.get("status") == "offline"
+    assert details.get("online") is False
+
+    detail = client.get(f"/devices/{device['id']}")
+    assert detail.status_code == 200
+    assert detail.json()["data"]["status"] == "offline"
+    assert detail.json()["data"]["online"] is False
 
 
 def test_readings_sample_interval_covers_full_range(client, unique_ip):

@@ -141,6 +141,7 @@ class DevicePollService:
         try:
             reading = self._read_from_driver(device)
         except DeviceDriverError as exc:
+            device = self._devices.record_poll_failure(device_id, error_message=exc.code)
             connectivity = resolve_connectivity_status(device, has_binding=has_binding)
             raise DevicePollFailedError(
                 exc.code,

@@ -71,3 +71,32 @@ def test_status_offline_outside_grace_window():
     result = resolve_connectivity_status(device, has_binding=True, now=now)
     assert result["status"] == "offline"
     assert result["online"] is False
+
+
+def test_status_offline_when_last_probe_failed_within_grace():
+    """Falha de live/poll recente marca offline mesmo com last_seen dentro da graça."""
+    now = datetime.now(timezone.utc)
+    device = _device(
+        poll_interval_ms=30_000,
+        last_seen_at=now - timedelta(seconds=5),
+        last_poll_attempt_at=now - timedelta(seconds=1),
+        last_error="network_error",
+    )
+    result = resolve_connectivity_status(device, has_binding=True, now=now)
+    assert result["status"] == "offline"
+    assert result["online"] is False
+    assert result.get("probeFailed") is True
+
+
+def test_status_online_when_success_cleared_error_after_failure():
+    """Negativo: last_error stale anterior ao last_seen não derruba online."""
+    now = datetime.now(timezone.utc)
+    device = _device(
+        poll_interval_ms=30_000,
+        last_seen_at=now - timedelta(seconds=5),
+        last_poll_attempt_at=now - timedelta(seconds=60),
+        last_error="network_error",
+    )
+    result = resolve_connectivity_status(device, has_binding=True, now=now)
+    assert result["status"] == "online"
+    assert result["online"] is True

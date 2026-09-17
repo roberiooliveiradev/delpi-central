@@ -60,6 +60,8 @@ type DeviceDetailPageProps = {
   }) => void;
   /** Hub coordinates PermanentDeleteDialog; when omitted, detail owns the flow. */
   onRequestPermanentDelete?: (deviceId: string, label: string) => void;
+  /** Hub: keep map node as offline when live/poll probe fails. */
+  onDeviceDisconnected?: (deviceId: string) => void;
 };
 
 export function DeviceDetailPage({
@@ -73,6 +75,7 @@ export function DeviceDetailPage({
   suppressLocalOtaPoll,
   onOperationalNotice,
   onRequestPermanentDelete,
+  onDeviceDisconnected,
 }: DeviceDetailPageProps) {
   const [localTab, setLocalTab] = useState<DeviceDetailTab>(tabProp);
   const tab = embedded ? localTab : tabProp;
@@ -115,6 +118,7 @@ export function DeviceDetailPage({
   } = useDeviceDetail({
     deviceId,
     enabled: permissions.canViewDevices,
+    onDeviceDisconnected,
   });
 
   const panelBackPath = useMemo(() => {

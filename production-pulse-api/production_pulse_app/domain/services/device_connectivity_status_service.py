@@ -71,6 +71,18 @@ def resolve_connectivity_status(
     if last_seen is None:
         return {"status": "offline", "online": False, "graceSeconds": grace_seconds, "graceMs": grace_ms}
 
+    # Probe falhou depois do último sucesso → desconectado imediatamente (não esperar grace).
+    last_error = device.get("last_error")
+    last_attempt = device.get("last_poll_attempt_at")
+    if last_error and last_attempt is not None and _as_utc(last_attempt) >= _as_utc(last_seen):
+        return {
+            "status": "offline",
+            "online": False,
+            "graceSeconds": grace_seconds,
+            "graceMs": grace_ms,
+            "probeFailed": True,
+        }
+
     elapsed_ms = (current - _as_utc(last_seen)).total_seconds() * 1000.0
     online = elapsed_ms <= grace_ms
     return {

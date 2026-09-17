@@ -103,6 +103,7 @@ import { FirmwareCreatePage } from "../pages/FirmwareCreatePage";
 import { FirmwareDetailPage } from "../pages/FirmwareDetailPage";
 import type { DeviceListItem } from "../types/device";
 import type { DeviceDetailTab } from "../types/detail";
+import { markDeviceDisconnected } from "../utils/markDeviceDisconnected";
 import {
   formatAdminEntity,
   hubFocusToPanel,
@@ -1928,6 +1929,11 @@ export function FirmwareLinksPage({
               }
             }}
             onClose={closeLayers}
+            onDeviceDisconnected={(id) => {
+              setDevices((prev) =>
+                prev.map((row) => (row.id === id ? markDeviceDisconnected(row) : row)),
+              );
+            }}
             onRequestPermanentDelete={(id, label) => {
               void openPermanentDelete({
                 kind: "device",

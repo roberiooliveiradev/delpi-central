@@ -1,3 +1,5 @@
+import { Ban, Check, Cpu, FileCode, Link2, MoreHorizontal } from "lucide-react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Background,
   BackgroundVariant,
@@ -11,6 +13,7 @@ import {
   ReactFlowProvider,
   applyEdgeChanges,
   applyNodeChanges,
+  useReactFlow,
   type Connection,
   type Edge,
   type EdgeChange,
@@ -20,8 +23,6 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useDelpiDarkMode } from "@delpi/plugin-ui/index";
-import { Ban, Check, Cpu, FileCode, Link2, MoreHorizontal } from "lucide-react";
-import { memo, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { putDeviceFirmwareLink, type FirmwareUpdateTarget } from "../api/productionPulseApi";
 import { PpOtaProgressBar, PpStateBox } from "../app/productionPulseUi";
@@ -50,6 +51,29 @@ import {
 
 /** Show MiniMap only when the graph is large enough to need overview. */
 export const ADMIN_HUB_MINIMAP_NODE_THRESHOLD = 8;
+
+const FIT_VIEW_PADDING = { top: 0.1, right: 0.24, bottom: 0.16, left: 0.08 } as const;
+
+/**
+ * Soft branch/data swaps keep the React Flow viewport; recentrar quando a
+ * identidade dos nós muda (senão o IoT “some” fora da câmera).
+ */
+function FitViewWhenGraphIdentityChanges({ identityKey }: { identityKey: string }) {
+  const { fitView } = useReactFlow();
+  const prevKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const prev = prevKeyRef.current;
+    prevKeyRef.current = identityKey;
+    if (prev === null || prev === identityKey || !identityKey) return;
+    const timer = window.setTimeout(() => {
+      void fitView({ padding: FIT_VIEW_PADDING, duration: 220 });
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [fitView, identityKey]);
+
+  return null;
+}
 
 export type CanvasEntitySelection =
   | { type: "device"; id: string; nodeId: string }
@@ -454,6 +478,15 @@ function FirmwareDeviceLinkCanvasInner({
   const miniMapVisible =
     showMiniMap ?? graph.nodes.length >= ADMIN_HUB_MINIMAP_NODE_THRESHOLD;
 
+  const graphIdentityKey = useMemo(
+    () =>
+      graph.nodes
+        .map((node) => node.id)
+        .sort()
+        .join("|"),
+    [graph.nodes],
+  );
+
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [busy, setBusy] = useState(false);
@@ -801,7 +834,7 @@ function FirmwareDeviceLinkCanvasInner({
           edgesReconnectable={false}
           fitView
           fitViewOptions={{
-            padding: { top: 0.1, right: 0.24, bottom: 0.16, left: 0.08 },
+            padding: FIT_VIEW_PADDING,
           }}
           minZoom={0.35}
           maxZoom={1.75}
@@ -815,6 +848,7 @@ function FirmwareDeviceLinkCanvasInner({
           proOptions={{ hideAttribution: true }}
           aria-label="Canvas de vínculos entre firmwares e dispositivos IoT"
         >
+          <FitViewWhenGraphIdentityChanges identityKey={graphIdentityKey} />
           <Background
             variant={BackgroundVariant.Dots}
             gap={18}
