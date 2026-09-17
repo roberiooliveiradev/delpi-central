@@ -5,17 +5,23 @@ from typing import Any
 from production_pulse_app.application.services.device_config_push_service import (
     DeviceConfigPushService,
     request_changes_chip_config,
+    resolve_configure_auth_device,
 )
 from production_pulse_app.domain.models.device_reading import CommandResult
+from production_pulse_app.infrastructure.drivers.device_http_support import (
+    resolve_device_api_token,
+)
 
 
 class _FakeDriver:
     def __init__(self) -> None:
         self.last_payload: dict[str, Any] | None = None
+        self.last_device: dict[str, Any] | None = None
         self.calls = 0
 
     def execute(self, device: dict[str, Any], command: str, payload: dict[str, Any] | None = None):
         self.calls += 1
+        self.last_device = dict(device)
         self.last_payload = dict(payload or {})
         return CommandResult(success=True, response_payload={"ok": True})
 
@@ -223,6 +229,28 @@ def test_push_after_create_force_includes_ota_fields(monkeypatch):
     assert driver.last_payload["otaCheckIntervalMs"] == 60000
 
 
+def test_resolve_configure_auth_uses_previous_token_on_rotation():
+    previous = _device(device_api_token="old-secret")
+    current = _device(device_api_token="new-secret")
+    auth = resolve_configure_auth_device(current, previous)
+    assert resolve_device_api_token(auth) == "old-secret"
+
+
+def test_resolve_configure_auth_clears_header_on_first_provision():
+    previous = _device(device_api_token=None)
+    current = _device(device_api_token="brand-new")
+    auth = resolve_configure_auth_device(current, previous)
+    assert resolve_device_api_token(auth) is None
+
+
+def test_resolve_configure_auth_keeps_token_when_unchanged():
+    previous = _device(device_api_token="same")
+    current = _device(device_api_token="same")
+    auth = resolve_configure_auth_device(current, previous)
+    assert resolve_device_api_token(auth) == "same"
+    assert auth is current
+
+
 def test_push_on_token_change_hits_chip(monkeypatch):
     driver = _FakeDriver()
     service = DeviceConfigPushService()
@@ -249,6 +277,49 @@ def test_push_on_token_change_hits_chip(monkeypatch):
     assert driver.calls == 1
     assert driver.last_payload is not None
     assert driver.last_payload.get("apiToken") == "new-secret"
+    # Positive: auth header uses previous chip token, body carries the new secret.
+    assert resolve_device_api_token(driver.last_device or {}) == "old"
+
+
+def test_push_first_provision_auth_without_header(monkeypatch):
+    driver = _FakeDriver()
+    service = DeviceConfigPushService()
+    monkeypatch.setattr(service, "_registry", _FakeRegistry(driver))
+    monkeypatch.setattr(
+        "production_pulse_app.application.services.device_config_push_service.settings.PP_DEVICE_OTA_BASE_URL",
+        "http://192.168.1.10/apps/production-pulse-api",
+    )
+
+    previous = _device(device_api_token=None, wifi_ssid=None)
+    result = service.push_after_save(
+        _device(device_api_token="first-tok"),
+        request_payload={"apiToken": "first-tok", "wifiSsid": "Plant"},
+        previous_row=previous,
+    )
+
+    assert result["status"] == "ok"
+    assert driver.last_payload.get("apiToken") == "first-tok"
+    assert resolve_device_api_token(driver.last_device or {}) is None
+
+
+def test_push_ssid_change_without_token_rotation_keeps_current_auth(monkeypatch):
+    driver = _FakeDriver()
+    service = DeviceConfigPushService()
+    monkeypatch.setattr(service, "_registry", _FakeRegistry(driver))
+    monkeypatch.setattr(
+        "production_pulse_app.application.services.device_config_push_service.settings.PP_DEVICE_OTA_BASE_URL",
+        "http://192.168.1.10/apps/production-pulse-api",
+    )
+
+    previous = _device(device_api_token="same-tok", wifi_ssid="Old")
+    result = service.push_after_save(
+        _device(device_api_token="same-tok", wifi_ssid="New"),
+        request_payload={"wifiSsid": "New"},
+        previous_row=previous,
+    )
+
+    assert result["status"] == "ok"
+    assert resolve_device_api_token(driver.last_device or {}) == "same-tok"
 
 
 class _UnauthorizedDriver:

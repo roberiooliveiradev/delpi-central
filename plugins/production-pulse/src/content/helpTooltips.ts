@@ -104,12 +104,13 @@ export const PP_HELP = {
     apiTokenHideAction: "Ocultar",
     apiTokenCopyAction: "Copiar",
     apiTokenCopyDone: "Copiado",
+    apiTokenCopyFailed: "Falha ao copiar",
     apiTokenShowHelp:
       "Revela o valor digitado ou gerado nesta sessão. O token já salvo no cadastro nunca é reexibido — use «Gerar token» se precisar ver/copiar um segredo.",
     apiTokenCopyHelp:
-      "Copia o valor da sessão para a área de transferência. Desabilitado sem valor em sessão (o token persistido não volta no GET).",
+      "Copia o valor da sessão para a área de transferência. Copie antes de salvar (após salvar com sucesso o campo limpa). Se o envio ao chip falhar, o valor permanece para você copiar.",
     apiTokenGenerateHelp:
-      "Gera um novo segredo nesta sessão. Copie antes de salvar — após salvar o campo limpa e o status fica «Configurado».",
+      "Gera um novo segredo nesta sessão. Copie antes de salvar — a API autentica no chip com o token anterior e envia o novo no corpo. Após salvar com sucesso o campo limpa e o status fica «Configurado».",
     apiTokenCopyDisabledHint:
       "Gere um novo token para poder mostrar ou copiar (o valor salvo não é revelado).",
     apiTokenIdentityDirtyHint:
@@ -118,7 +119,7 @@ export const PP_HELP = {
     deviceConfigPushFailed:
       "Cadastro salvo, mas não foi possível enviar a configuração ao dispositivo. Verifique IP, energia e token.",
     deviceConfigPushFailedUnauthorized:
-      "Cadastro salvo, mas o chip rejeitou o token. Gere um novo token e salve, ou informe o token já gravado no IoT. Em troca de hardware isso é esperado até o Pulse reenviar o token do cadastro.",
+      "Cadastro salvo, mas o chip rejeitou a autenticação. Se o token do cadastro já divergiu do IoT, informe no campo o token atual do chip (ou use factory reset) e salve de novo.",
     deviceConfigPushFailedMissingToken:
       "Cadastro salvo, mas faltava token no cadastro enquanto o chip exige autenticação. Salve de novo — a API gera o token automaticamente.",
     deviceConfigPushOk: "Configuração enviada ao dispositivo.",

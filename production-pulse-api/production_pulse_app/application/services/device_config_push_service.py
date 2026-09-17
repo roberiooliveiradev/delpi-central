@@ -120,6 +120,38 @@ def resolve_device_ota_base_url() -> str:
     return root.rstrip("/") if root else ""
 
 
+def resolve_configure_auth_device(
+    device_row: dict[str, Any],
+    previous_row: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Chip auth for POST /api/config must use the token the device still has.
+
+    Firmware requireDeviceToken: empty chip token → open; otherwise header must match
+    the *current* chip secret. After Postgres already stores a rotated token, auth
+    with the new value yields 401. Prefer previous_row token when it differs.
+    """
+    if previous_row is None:
+        return device_row
+
+    previous_token = resolve_device_api_token(previous_row)
+    current_token = resolve_device_api_token(device_row)
+
+    if previous_token and current_token and previous_token != current_token:
+        auth_device = dict(device_row)
+        auth_device["device_api_token"] = previous_token
+        auth_device.pop("apiToken", None)
+        return auth_device
+
+    if previous_token is None and current_token:
+        # First provision into cadastro: chip typically has no token yet → no header.
+        auth_device = dict(device_row)
+        auth_device["device_api_token"] = None
+        auth_device.pop("apiToken", None)
+        return auth_device
+
+    return device_row
+
+
 class DeviceConfigPushService:
     """Best-effort POST /api/config after save when chip config actually changes (or create)."""
 
@@ -205,7 +237,8 @@ class DeviceConfigPushService:
                 "message": device_config_push_message("failed"),
             }
 
-        result = driver.execute(device_row, "configure", payload=configure_body)
+        auth_device = resolve_configure_auth_device(device_row, previous_row)
+        result = driver.execute(auth_device, "configure", payload=configure_body)
         if result.success:
             return {
                 "status": "ok",
@@ -242,5 +275,6 @@ class DeviceConfigPushService:
 __all__ = [
     "DeviceConfigPushService",
     "request_changes_chip_config",
+    "resolve_configure_auth_device",
     "resolve_device_ota_base_url",
 ]

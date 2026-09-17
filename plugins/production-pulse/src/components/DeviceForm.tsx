@@ -115,13 +115,27 @@ export function DeviceForm({
 
   const onCopyToken = async () => {
     if (!canCopy) return;
+    const value = device.apiToken.trim();
     try {
-      await navigator.clipboard.writeText(device.apiToken.trim());
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        const area = document.createElement("textarea");
+        area.value = value;
+        area.setAttribute("readonly", "");
+        area.style.position = "fixed";
+        area.style.left = "-9999px";
+        document.body.appendChild(area);
+        area.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(area);
+        if (!ok) throw new Error("copy_failed");
+      }
       setCopyState("copied");
       window.setTimeout(() => setCopyState("idle"), 1600);
     } catch {
       setCopyState("failed");
-      window.setTimeout(() => setCopyState("idle"), 1600);
+      window.setTimeout(() => setCopyState("idle"), 2200);
     }
   };
 
@@ -286,7 +300,9 @@ export function DeviceForm({
                   aria-label={
                     copyState === "copied"
                       ? PP_HELP.form.apiTokenCopyDone
-                      : PP_HELP.form.apiTokenCopyAction
+                      : copyState === "failed"
+                        ? PP_HELP.form.apiTokenCopyFailed
+                        : PP_HELP.form.apiTokenCopyAction
                   }
                   onClick={() => void onCopyToken()}
                 >
@@ -297,7 +313,9 @@ export function DeviceForm({
                   )}
                   {copyState === "copied"
                     ? PP_HELP.form.apiTokenCopyDone
-                    : PP_HELP.form.apiTokenCopyAction}
+                    : copyState === "failed"
+                      ? PP_HELP.form.apiTokenCopyFailed
+                      : PP_HELP.form.apiTokenCopyAction}
                 </PpActionButton>
               </PpHintAction>
               <PpHintAction

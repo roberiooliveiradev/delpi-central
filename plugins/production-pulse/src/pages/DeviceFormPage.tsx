@@ -260,7 +260,9 @@ export function DeviceFormPage({
         setDevice((prev) => ({
           ...prev,
           wifiPassword: "",
-          apiToken: "",
+          // Keep session token after failed chip push so Mostrar/Copiar still work
+          // (cadastro may already store it; GET never returns plaintext).
+          apiToken: deviceToSave.apiToken.trim(),
           apiTokenSet: Boolean(saved.apiTokenSet),
           wifiSsid: saved.wifiSsid ?? prev.wifiSsid,
           debounceMs:

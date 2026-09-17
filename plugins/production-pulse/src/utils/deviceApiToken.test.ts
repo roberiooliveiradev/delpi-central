@@ -67,6 +67,7 @@ describe("deviceApiToken", () => {
     expect(PP_HELP.form.apiTokenShowHelp.length).toBeGreaterThan(10);
     expect(PP_HELP.form.apiTokenCopyHelp.length).toBeGreaterThan(10);
     expect(PP_HELP.form.apiTokenGenerateHelp.length).toBeGreaterThan(10);
+    expect(PP_HELP.form.apiTokenCopyFailed.length).toBeGreaterThan(3);
     expect(PP_HELP.form.apiTokenCopyDisabledHint).toMatch(/mostrar|copiar/i);
   });
 });
