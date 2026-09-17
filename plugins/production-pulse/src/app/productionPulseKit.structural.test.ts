@@ -467,6 +467,10 @@ describe("production-pulse kit contracts", () => {
     expect(css).toMatch(/\.pp-hub-map-chrome\b/);
     expect(css).toMatch(/\.pp-hub-map-chrome--collapsed/);
     expect(css).toMatch(/\.pp-map-overlay-panel--right/);
+    expect(css).toMatch(
+      /\.pp-firmware-link-canvas:has\(\.pp-hub-map-chrome:not\(\.pp-hub-map-chrome--collapsed\)\)[\s\S]*\.react-flow__panel\.bottom/,
+    );
+    expect(css).toMatch(/max-height:\s*min\(calc\(100dvh - 5\.5rem\)/);
     expect(css).not.toMatch(/\.pp-map-overlay-panel--left/);
     expect(css).not.toMatch(/pp-map-overlay-btn-label/);
     expect(css).not.toMatch(/pp-map-overlay-actions/);
@@ -562,6 +566,24 @@ describe("production-pulse kit contracts", () => {
     expect(css).toMatch(/\.pp-hero-icon-btn/);
     expect(css).toMatch(/\.pp-hero-icon-btn--warning/);
     expect(css).toMatch(/\.pp-hero-icon-btn--danger/);
+    expect(css).toMatch(
+      /\.pp-hero-icon-btn--warning[\s\S]*color:\s*#ffffff/,
+    );
+    expect(css).toMatch(
+      /\.dashboard-production-pulse\s+\.pp-metric-hero__actions\s+button\.pp-metric-hero__btn--warning/,
+    );
+    expect(css).toMatch(
+      /\.dashboard-production-pulse\s+\.pp-metric-hero__actions\s+button\.pp-metric-hero__btn--danger/,
+    );
+    expect(css).toMatch(
+      /\.pp-counter-pad__pad\s+button\.pp-counter-pad__btn--warn/,
+    );
+    expect(css).toMatch(
+      /\.pp-gauge-readout__tile--warn\s+\.pp-gauge-readout__value\s*\{[^}]*color:\s*var\(--pp-warning\)/s,
+    );
+    expect(css).toMatch(
+      /\.pp-gauge-readout__tile--danger\s+\.pp-gauge-readout__value\s*\{[^}]*color:\s*var\(--pp-danger\)/s,
+    );
     expect(heroBtn).toMatch(/pp-hero-brand-btn/);
     expect(heroBtn).toMatch(/pp-hero-icon-btn/);
     expect(heroBtn).toMatch(/PpHintAction/);

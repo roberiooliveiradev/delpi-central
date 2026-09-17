@@ -243,37 +243,37 @@
   box-shadow: none;
 }
 
-/* Risk tones on brand hero — win over neutral brand chrome */
+/* Risk tones on brand hero — white icon on saturated fill (contrast on light + dark). */
 .dashboard-production-pulse .pp-hero-icon-btn--warning.pp-hero-brand-btn,
 .dashboard-production-pulse .pp-page-hero__actions .pp-hero-icon-btn--warning,
 .dashboard-production-pulse .pp-detail-hero-actions .pp-hero-icon-btn--warning {
-  color: #fde68a;
-  border-color: color-mix(in srgb, #f59e0b 60%, rgba(255, 255, 255, 0.35));
-  background: color-mix(in srgb, #f59e0b 22%, transparent);
+  color: #ffffff;
+  border-color: #fbbf24;
+  background: color-mix(in srgb, #b45309 82%, transparent);
 }
 
 .dashboard-production-pulse .pp-hero-icon-btn--warning.pp-hero-brand-btn:hover:not(:disabled),
 .dashboard-production-pulse .pp-page-hero__actions .pp-hero-icon-btn--warning:hover:not(:disabled),
 .dashboard-production-pulse .pp-detail-hero-actions .pp-hero-icon-btn--warning:hover:not(:disabled) {
-  color: #fffbeb;
+  color: #ffffff;
   border-color: #fcd34d;
-  background: color-mix(in srgb, #f59e0b 38%, transparent);
+  background: color-mix(in srgb, #b45309 94%, transparent);
 }
 
 .dashboard-production-pulse .pp-hero-icon-btn--danger.pp-hero-brand-btn,
 .dashboard-production-pulse .pp-page-hero__actions .pp-hero-icon-btn--danger,
 .dashboard-production-pulse .pp-detail-hero-actions .pp-hero-icon-btn--danger {
-  color: #fecaca;
-  border-color: color-mix(in srgb, #ef4444 65%, rgba(255, 255, 255, 0.35));
-  background: color-mix(in srgb, #ef4444 24%, transparent);
+  color: #ffffff;
+  border-color: #fca5a5;
+  background: color-mix(in srgb, #b42318 82%, transparent);
 }
 
 .dashboard-production-pulse .pp-hero-icon-btn--danger.pp-hero-brand-btn:hover:not(:disabled),
 .dashboard-production-pulse .pp-page-hero__actions .pp-hero-icon-btn--danger:hover:not(:disabled),
 .dashboard-production-pulse .pp-detail-hero-actions .pp-hero-icon-btn--danger:hover:not(:disabled) {
-  color: #fff;
-  border-color: #fca5a5;
-  background: color-mix(in srgb, #ef4444 42%, transparent);
+  color: #ffffff;
+  border-color: #fecaca;
+  background: color-mix(in srgb, #b42318 94%, transparent);
 }
 
 .dashboard-production-pulse .pp-hero-icon-btn--warning:focus-visible,
@@ -1435,56 +1435,96 @@
   gap: 0.4rem;
 }
 
-.pp-metric-hero__btn--accent {
-  border-color: color-mix(in srgb, var(--pp-accent) 45%, var(--pp-border));
-  color: color-mix(in srgb, var(--pp-accent) 78%, var(--pp-text));
+/* Spec acima do kit ActionButton — tons legíveis no modo claro e escuro. */
+.dashboard-production-pulse .pp-metric-hero__actions button.pp-metric-hero__btn--accent {
+  border-color: color-mix(in srgb, var(--pp-accent) 50%, var(--pp-border));
+  color: var(--pp-accent);
+  background: color-mix(in srgb, var(--pp-accent) 8%, var(--pp-surface));
 }
 
-.pp-metric-hero__btn--accent:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--pp-accent) 65%, var(--pp-border));
+.dashboard-production-pulse
+  .pp-metric-hero__actions
+  button.pp-metric-hero__btn--accent:hover:not(:disabled) {
+  border-color: var(--pp-accent);
+  background: color-mix(in srgb, var(--pp-accent) 14%, var(--pp-surface));
+  color: var(--pp-accent);
+}
+
+.dashboard-production-pulse .pp-metric-hero__actions button.pp-metric-hero__btn--info {
+  border-color: color-mix(in srgb, #0284c7 48%, var(--pp-border));
+  color: #0369a1;
+  background: color-mix(in srgb, #0ea5e9 8%, var(--pp-surface));
+}
+
+.dashboard-production-pulse
+  .pp-metric-hero__actions
+  button.pp-metric-hero__btn--info:hover:not(:disabled) {
+  border-color: #0284c7;
+  background: color-mix(in srgb, #0ea5e9 14%, var(--pp-surface));
+  color: #0369a1;
+}
+
+.dashboard-production-pulse .pp-metric-hero__actions button.pp-metric-hero__btn--warning {
+  border-color: color-mix(in srgb, var(--pp-warning) 52%, var(--pp-border));
+  color: var(--pp-warning);
+  background: color-mix(in srgb, var(--pp-warning) 8%, var(--pp-surface));
+}
+
+.dashboard-production-pulse
+  .pp-metric-hero__actions
+  button.pp-metric-hero__btn--warning:hover:not(:disabled) {
+  border-color: var(--pp-warning);
+  background: color-mix(in srgb, var(--pp-warning) 14%, var(--pp-surface));
+  color: var(--pp-warning);
+}
+
+.dashboard-production-pulse .pp-metric-hero__actions button.pp-metric-hero__btn--danger {
+  border-color: color-mix(in srgb, var(--pp-danger) 52%, var(--pp-border));
+  color: var(--pp-danger);
+  background: color-mix(in srgb, var(--pp-danger) 8%, var(--pp-surface));
+}
+
+.dashboard-production-pulse
+  .pp-metric-hero__actions
+  button.pp-metric-hero__btn--danger:hover:not(:disabled) {
+  border-color: var(--pp-danger);
+  background: color-mix(in srgb, var(--pp-danger) 14%, var(--pp-surface));
+  color: var(--pp-danger);
+}
+
+:root[data-theme="dark"]
+  .dashboard-production-pulse
+  .pp-metric-hero__actions
+  button.pp-metric-hero__btn--accent {
+  color: color-mix(in srgb, var(--pp-accent) 75%, white);
   background: color-mix(in srgb, var(--pp-accent) 12%, transparent);
 }
 
-.pp-metric-hero__btn--info {
-  border-color: color-mix(in srgb, #0ea5e9 45%, var(--pp-border));
-  color: color-mix(in srgb, #0284c7 75%, var(--pp-text));
-}
-
-.pp-metric-hero__btn--info:hover:not(:disabled) {
-  border-color: color-mix(in srgb, #0ea5e9 65%, var(--pp-border));
+:root[data-theme="dark"]
+  .dashboard-production-pulse
+  .pp-metric-hero__actions
+  button.pp-metric-hero__btn--info {
+  color: #38bdf8;
+  border-color: color-mix(in srgb, #38bdf8 48%, var(--pp-border));
   background: color-mix(in srgb, #0ea5e9 12%, transparent);
 }
 
-:root[data-theme="dark"] .pp-metric-hero__btn--info {
-  color: color-mix(in srgb, #38bdf8 72%, white);
-}
-
-.pp-metric-hero__btn--warning {
+:root[data-theme="dark"]
+  .dashboard-production-pulse
+  .pp-metric-hero__actions
+  button.pp-metric-hero__btn--warning {
+  color: color-mix(in srgb, var(--pp-warning) 55%, white);
   border-color: color-mix(in srgb, var(--pp-warning) 55%, var(--pp-border));
-  color: color-mix(in srgb, var(--pp-warning) 82%, var(--pp-text));
+  background: color-mix(in srgb, var(--pp-warning) 12%, transparent);
 }
 
-.pp-metric-hero__btn--warning:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--pp-warning) 75%, var(--pp-border));
-  background: color-mix(in srgb, var(--pp-warning) 14%, transparent);
-}
-
-:root[data-theme="dark"] .pp-metric-hero__btn--warning {
-  color: color-mix(in srgb, var(--pp-warning) 70%, white);
-}
-
-.pp-metric-hero__btn--danger {
+:root[data-theme="dark"]
+  .dashboard-production-pulse
+  .pp-metric-hero__actions
+  button.pp-metric-hero__btn--danger {
+  color: color-mix(in srgb, var(--pp-danger) 55%, white);
   border-color: color-mix(in srgb, var(--pp-danger) 55%, var(--pp-border));
-  color: color-mix(in srgb, var(--pp-danger) 82%, var(--pp-text));
-}
-
-.pp-metric-hero__btn--danger:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--pp-danger) 75%, var(--pp-border));
-  background: color-mix(in srgb, var(--pp-danger) 14%, transparent);
-}
-
-:root[data-theme="dark"] .pp-metric-hero__btn--danger {
-  color: color-mix(in srgb, var(--pp-danger) 70%, white);
+  background: color-mix(in srgb, var(--pp-danger) 12%, transparent);
 }
 
 .pp-detail-dl {
@@ -2350,13 +2390,27 @@
   box-shadow: 0 8px 20px color-mix(in srgb, var(--pp-accent) 28%, transparent);
 }
 
-.dashboard-production-pulse--operator .pp-counter-pad__btn--warn {
+/* Limpar (warn): vence ActionButton do kit no modo claro. */
+.dashboard-production-pulse--operator .pp-counter-pad__pad button.pp-counter-pad__btn--warn {
   border-color: color-mix(in srgb, var(--pp-warning) 55%, var(--pp-border));
-  color: color-mix(in srgb, var(--pp-warning) 82%, var(--pp-text));
+  color: var(--pp-warning);
+  background: color-mix(in srgb, var(--pp-warning) 8%, var(--pp-surface));
 }
 
-:root[data-theme="dark"] .dashboard-production-pulse--operator .pp-counter-pad__btn--warn {
-  color: color-mix(in srgb, var(--pp-warning) 70%, white);
+.dashboard-production-pulse--operator
+  .pp-counter-pad__pad
+  button.pp-counter-pad__btn--warn:hover:not(:disabled) {
+  border-color: var(--pp-warning);
+  color: var(--pp-warning);
+  background: color-mix(in srgb, var(--pp-warning) 14%, var(--pp-surface));
+}
+
+:root[data-theme="dark"]
+  .dashboard-production-pulse--operator
+  .pp-counter-pad__pad
+  button.pp-counter-pad__btn--warn {
+  color: color-mix(in srgb, var(--pp-warning) 55%, white);
+  background: color-mix(in srgb, var(--pp-warning) 12%, transparent);
 }
 
 .dashboard-production-pulse--operator .pp-counter-pad__sync-btn {
@@ -2470,13 +2524,22 @@
   background: var(--pp-surface);
 }
 
+.pp-gauge-readout__value {
+  margin: 0;
+  font-size: var(--pp-operator-gauge-value);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--pp-text);
+  line-height: 1.05;
+}
+
 .pp-gauge-readout__tile--warn {
   border-color: color-mix(in srgb, var(--pp-warning) 45%, var(--pp-border));
   background: color-mix(in srgb, var(--pp-warning) 8%, var(--pp-surface));
 }
 
 .pp-gauge-readout__tile--warn .pp-gauge-readout__value {
-  color: color-mix(in srgb, var(--pp-warning) 82%, var(--pp-text));
+  color: var(--pp-warning);
 }
 
 .pp-gauge-readout__tile--danger {
@@ -2485,24 +2548,15 @@
 }
 
 .pp-gauge-readout__tile--danger .pp-gauge-readout__value {
-  color: color-mix(in srgb, var(--pp-danger) 82%, var(--pp-text));
+  color: var(--pp-danger);
 }
 
 :root[data-theme="dark"] .pp-gauge-readout__tile--warn .pp-gauge-readout__value {
-  color: color-mix(in srgb, var(--pp-warning) 70%, white);
+  color: color-mix(in srgb, var(--pp-warning) 55%, white);
 }
 
 :root[data-theme="dark"] .pp-gauge-readout__tile--danger .pp-gauge-readout__value {
-  color: color-mix(in srgb, var(--pp-danger) 70%, white);
-}
-
-.pp-gauge-readout__value {
-  margin: 0;
-  font-size: var(--pp-operator-gauge-value);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--pp-text);
-  line-height: 1.05;
+  color: color-mix(in srgb, var(--pp-danger) 55%, white);
 }
 
 .pp-gauge-readout__unit,
@@ -3419,11 +3473,23 @@
   }
 
   .pp-map-overlay-panel--right {
-    max-width: min(20rem, calc(100vw - 1.5rem)) !important;
+    max-width: min(22rem, calc(100vw - 1.25rem)) !important;
+    z-index: 6;
   }
 
+  /*
+   * Chrome expandido no estreito: ocupa a coluna direita e esconde o piso
+   * (barra de status + Controls) que colidia com busca/filtros.
+   */
   .pp-hub-map-chrome:not(.pp-hub-map-chrome--collapsed) {
-    max-height: min(70vh, 32rem);
+    max-height: min(calc(100dvh - 5.5rem), 34rem);
+    width: min(22rem, calc(100vw - 1.25rem));
+  }
+
+  .pp-firmware-link-canvas:has(.pp-hub-map-chrome:not(.pp-hub-map-chrome--collapsed))
+    .react-flow__panel.bottom {
+    visibility: hidden;
+    pointer-events: none;
   }
 
   .pp-hub-map-chrome__nav-item,
