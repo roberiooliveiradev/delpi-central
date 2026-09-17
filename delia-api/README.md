@@ -1,8 +1,13 @@
-# DÉLIA API — bootstrap C1-T1
+# DÉLIA API — bootstrap C1
 
 Standalone Flask API da DÉLIA. Este diretório é a pasta canônica `delia-api/`.
 
-C1-T1 cobre somente skeleton + `/health` + config + logging mínimo + testes. Não inclui JWT, Core, MFE, Gateway, Compose, migrations de negócio nem runtime de IA.
+## Escopo atual
+
+- C1-T1 / C1-T1R1: skeleton + `/health` + logging + smoke de processo
+- C1-T2: JWT fail-closed (shared `delpi_auth.jwt_validator`) + Core `GET /me` effective access
+
+Não inclui: MFE, Gateway, Compose, migrations de negócio, RBAC local da DÉLIA, Domain AuthZ, LLM.
 
 ## Run local
 
@@ -11,24 +16,28 @@ cd delia-api
 python -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.txt
-cp env.example .env   # opcional; defaults já são seguros
+pip install -e ../shared
+cp env.example .env   # configurar KEYCLOAK_* e CORE_API_URL
 python -m pytest
 python -m app.main
 ```
 
-Health: `GET http://127.0.0.1:8000/health`
+Health (público, sem JWT/Core): `GET http://127.0.0.1:8000/health`
 
-Logs de processo (liveness operacional):
+Probe técnico autenticado (não é API de negócio):
+
+```text
+GET /access-context
+Authorization: Bearer <user-access-token>
+```
+
+Resposta usa permissões efetivas do Core — nunca `token.permissions`.
+
+Logs de processo:
 
 ```text
 delia_api_started service=delia-api version=... env=...
 delia_api_stopped service=delia-api version=... env=...
 ```
 
-Smoke de processo real (TCP/HTTP, não `test_client`):
-
-```bash
-python -m pytest tests/test_runtime_smoke.py -q
-```
-
-`DELIA_DEBUG` permanece `false` por default. Não commitar secrets.
+`DELIA_DEBUG` permanece `false` por default. Não logar/`persistir` Bearer tokens. Não commitar secrets.

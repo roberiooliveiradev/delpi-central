@@ -11,7 +11,7 @@ def _env_flag(name: str, default: bool = False) -> bool:
 
 
 class Settings:
-    """Minimum process settings. No secrets, JWT, Core, or provider endpoints."""
+    """Process settings. JWT secrets are not stored here — only public config refs."""
 
     def __init__(self) -> None:
         self.service_name = os.getenv("SERVICE_NAME", "delia-api")
@@ -21,6 +21,17 @@ class Settings:
         self.debug = _env_flag("DELIA_DEBUG", default=False)
         self.host = os.getenv("DELIA_API_HOST", "0.0.0.0")
         self.port = int(os.getenv("DELIA_API_PORT", "8000"))
+        # Core effective-access transport (same conventions as delpi_auth FastAPI middleware).
+        self.core_api_url = (
+            os.getenv("DELPI_AUTH_CORE_API_URL")
+            or os.getenv("CORE_API_URL")
+            or ""
+        ).strip()
+        self.core_timeout_seconds = float(
+            os.getenv("DELIA_CORE_TIMEOUT_SECONDS")
+            or os.getenv("DELPI_AUTH_RBAC_TIMEOUT_SECONDS")
+            or "5.0"
+        )
 
     @classmethod
     def for_testing(cls) -> "Settings":

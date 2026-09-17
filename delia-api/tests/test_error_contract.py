@@ -1,11 +1,37 @@
-def test_unknown_route_does_not_leak_environment(client, monkeypatch):
+from app.application.platform_access import PlatformAccessContext
+from app.create_app import create_app
+
+
+def test_unknown_route_without_auth_fails_closed():
+    response = create_app(testing=True).test_client().get("/not-a-real-route")
+    assert response.status_code == 401
+    assert response.get_json()["code"] == "unauthenticated"
+
+
+def test_unknown_route_authenticated_does_not_leak_environment(monkeypatch):
     monkeypatch.setenv("SECRET_TOKEN", "must-not-appear")
-    response = client.get("/not-a-real-route")
+
+    class FakeProvider:
+        def resolve(self, bearer_token: str) -> PlatformAccessContext:
+            return PlatformAccessContext(
+                user_id="u1",
+                name="N",
+                email="u@example.com",
+                effective_permissions=("p1",),
+            )
+
+    app = create_app(testing=True, platform_access_provider=FakeProvider())
+    response = app.test_client().get(
+        "/not-a-real-route",
+        headers={"Authorization": "Bearer test-token"},
+    )
     assert response.status_code == 404
     body = response.get_json()
     assert body["code"] == "not_found"
-    assert "must-not-appear" not in response.get_data(as_text=True)
-    assert "SECRET_TOKEN" not in response.get_data(as_text=True)
+    text = response.get_data(as_text=True)
+    assert "must-not-appear" not in text
+    assert "SECRET_TOKEN" not in text
+    assert "test-token" not in text
 
 
 def test_health_does_not_echo_headers(client):

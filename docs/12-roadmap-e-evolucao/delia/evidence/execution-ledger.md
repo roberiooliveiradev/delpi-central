@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** **C1-T2 — JWT + CORE EFFECTIVE ACCESS INTEGRATION** (`C0.S0..=C0.S7=APPROVED`; `FOUNDATION_FREEZE=APPROVED`; `C1_AUTHORIZED=YES`; `C1_STARTED=YES`; `C1_EXECUTED=NO`; `DÉLIA_RUNTIME_DIFF=delia-api skeleton + /health`; C0 remains **NOT_STARTED**; `RUNTIME_READINESS=NOT_PROVEN`; `PRODUCTION_READINESS=NOT_PROVEN`).
+**Next:** **C1-T3 — next bounded C1 bootstrap step (pending T2 review)** (`C0.S0..=C0.S7=APPROVED`; `FOUNDATION_FREEZE=APPROVED`; `C1_AUTHORIZED=YES`; `C1_STARTED=YES`; `C1_EXECUTED=NO`; `DÉLIA_RUNTIME_DIFF=delia-api skeleton + /health + JWT/Core access context`; C0 remains **NOT_STARTED**; `RUNTIME_READINESS=NOT_PROVEN`; `PRODUCTION_READINESS=NOT_PROVEN`).
 
 ## 1. Ledger rule
 
@@ -23,8 +23,8 @@ Estado factual de inventory usa `PROVEN | TO_INVENTORY`; planejamento usa `PLANN
 
 | Fase | Status | Próximo step | Dependência |
 |---|---|---|---|
-| C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **C1-T2 — JWT + CORE EFFECTIVE ACCESS INTEGRATION** | C0.S0..=C0.S7=APPROVED; FOUNDATION_FREEZE=APPROVED; C1_AUTHORIZED=YES; C1_STARTED=YES |
-| C1 Standalone Bootstrap | IN_PROGRESS | C1-T2 — JWT + CORE EFFECTIVE ACCESS INTEGRATION | C1-T1 delia-api skeleton+/health done; C1_EXECUTED=NO |
+| C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **C1 bootstrap continues (T2 review → next C1 step)** | C0.S0..=C0.S7=APPROVED; FOUNDATION_FREEZE=APPROVED; C1_AUTHORIZED=YES; C1_STARTED=YES |
+| C1 Standalone Bootstrap | IN_PROGRESS | C1-T3 (pending T2 review) | C1-T1/T1R1/T2 JWT+Core context done; C1_EXECUTED=NO |
 | C2 Portal + Operational Context + Commands | LOCKED | — | C1 independence gate |
 | C3 Intelligence + Capability Foundations | LOCKED | — | C1+C2 foundations |
 | C4 Governed Reads + Graph/Semantics/Analysis/Predictive Discovery | LOCKED | — | C3 foundations |
@@ -71,6 +71,8 @@ FOUNDATION_FREEZE = APPROVED
 C1_AUTHORIZED = YES
 C1_STARTED = YES
 C1_EXECUTED = NO
+JWT_VALIDATION = PASS (C1-T2 evidence; see §6.37)
+CORE_CONTEXT = PASS (contract/adapter; live Core TEST_NOT_RUN)
 AUTHORITY_MAP = FROZEN_ACCEPTED
 BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
@@ -238,6 +240,7 @@ All ACT blocked until C7                        = SUPERSEDED_BY_C5_GOVERNED_ACT_
 | 2026-09-17 | C0.S7-T2 Foundation Freeze review decision persistence | PLAN_ONLY; APPROVE_WITH_NON_BLOCKING_RESIDUALS; C0.S7=APPROVED; FOUNDATION_FREEZE=APPROVED; C1_AUTHORIZED=YES; C1_STARTED=NO; TEST_NOT_RUN; no C1 implementation |
 | 2026-09-17 | C1-T1 standalone API skeleton + health + test foundation | RUNTIME; delia-api/ Flask; /health liveness; Chat independence; C1_STARTED=YES; C1_EXECUTED=NO |
 | 2026-09-17 | C1-T1R1 runtime smoke + shutdown visibility | RUNTIME; real-process HTTP /health; delia_api_stopped; Chat independence; C1_EXECUTED=NO |
+| 2026-09-17 | C1-T2 JWT + Core effective access integration | RUNTIME; shared jwt_validator; Core GET /me; JWT≠permissions; fail-closed; C1_EXECUTED=NO |
 
 Actual `HEAD_BEFORE` for **runtime** remains uncaptured (no DÉLIA runtime). Inventory evidence SHA for C0.S0-F is `c6c9c8370d037edfc3529821b9d63e138b153436`. Documentation-only commits do not advance execution status.
 
@@ -1462,6 +1465,46 @@ RUNTIME_CP_PROMOTED_TO_PASS: NO
 NEXT: C1-T2 — JWT + CORE EFFECTIVE ACCESS INTEGRATION (blocked until C1-T1R1 architecture review)
 ```
 
+## 6.37 C1-T2 — JWT_CORE_EFFECTIVE_ACCESS_INTEGRATION
+
+```text
+DATE: 2026-09-17
+STEP: C1-T2
+NAME: JWT_CORE_EFFECTIVE_ACCESS_INTEGRATION
+STATUS: RUNTIME
+BASE_HEAD: 2e6600ae7e3a3b9f3e966fbc5f0cbfc17caa8be7
+ACCEPTED_T1R1_HEAD: 0333d48a3d18e929b63ce30e77850465668f82e7
+POST_T1R1_COMMITS: OUTSIDE_TASK (estoque/public-hub/davi docs waves; no DÉLIA auth/C1 drift)
+PROGRAM: PLANNED / NOT_STARTED
+C0: NOT_STARTED
+C0.S0..C0.S7: APPROVED
+FOUNDATION_FREEZE: APPROVED
+C1_AUTHORIZED: YES
+C1_STARTED: YES
+C1_EXECUTED: NO / NOT_COMPLETE
+API_FOLDER_INDEPENDENT: PASS
+HEALTH: PASS (public; independent of JWT/Core)
+NO_CHAT_RUNTIME_DEPENDENCY: PASS
+STARTUP_LOGGING: PASS
+SHUTDOWN_VISIBILITY: PASS
+JWT_VALIDATION: PASS (shared delpi_auth.jwt_validator; RS256; issuer/audience/exp; fail-closed config; local JWKS fixture)
+CORE_CONTEXT: PASS (contract/adapter: Core GET /me consumed; JWT permissions ignored; Core failure fail-closed; live Core = TEST_NOT_RUN)
+JWT_PERMISSION_AUTHORITY: NONE
+SHARED_FLASK_AUTH_USED: NO (DEAD_CODE_CANDIDATE; trusts JWT permissions)
+MFE/GATEWAY/COMPOSE/MIGRATIONS: PENDING
+RUNTIME_READINESS: NOT_PROVEN
+PRODUCTION_READINESS: NOT_PROVEN
+DÉLIA_RUNTIME_DIFF: JWT+Core platform access adapter + /access-context probe + auth middleware
+NEW_RUNTIME_ABSTRACTIONS: PlatformAccessPort + CorePlatformAccessAdapter + PlatformAccessContext (justified boundary)
+CHAT_RUNTIME_DEPENDENCY: NONE
+BLOCKERS: NONE
+EXECUTION_DRIFT: NONE
+TESTS: delia-api pytest green (platform access + health + smoke regression)
+NO_SERVICE_ACCOUNT: TRUE
+TOKEN_LOGGING: NONE
+NEXT: C1 — next bounded bootstrap after C1-T2 review (MFE/manifest/Gateway/Compose)
+```
+
 ## 7. Canonical phase mapping
 
 ```text
@@ -1670,4 +1713,4 @@ SAFETY_INTERLOCK_BYPASS
 
 ## 14. First execution
 
-Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1 created the standalone `delia-api/` Flask skeleton and `/health` liveness. C1-T1R1 closed real-process HTTP smoke and shutdown visibility (`delia_api_stopped`). `C1_STARTED=YES`. `C1_EXECUTED=NO`. Current next after T1R1 review is **C1-T2 — JWT + CORE EFFECTIVE ACCESS INTEGRATION**. JWT/Core/MFE/Gateway/Compose remain pending. `C0=NOT_STARTED`. Runtime/production readiness remain `NOT_PROVEN`.
+Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1 created the standalone `delia-api/` Flask skeleton and `/health` liveness. C1-T1R1 closed real-process HTTP smoke and shutdown visibility (`delia_api_stopped`). `C1_STARTED=YES`. `C1_EXECUTED=NO`. C1-T2 added JWT validation + Core `/me` effective access (JWT≠permissions; fail-closed). Current next after T2 review is the next bounded C1 bootstrap step. MFE/Gateway/Compose/migrations remain pending (JWT/Core context evidence in §6.37). `C0=NOT_STARTED`. Runtime/production readiness remain `NOT_PROVEN`.

@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C1-T2 — JWT + CORE EFFECTIVE ACCESS INTEGRATION` (`C0.S0..=C0.S7=APPROVED`; `FOUNDATION_FREEZE=APPROVED`; `C1_AUTHORIZED=YES`; `C1_STARTED=YES`; `C1_EXECUTED=NO`; C0 permanece `NOT_STARTED`; `RUNTIME_READINESS=NOT_PROVEN`; `PRODUCTION_READINESS=NOT_PROVEN`; `DÉLIA_RUNTIME_DIFF=delia-api skeleton`)
+**Próxima etapa:** `C1 — next bounded bootstrap after C1-T2 review (MFE/manifest/Gateway/Compose)` (`C0.S0..=C0.S7=APPROVED`; `FOUNDATION_FREEZE=APPROVED`; `C1_AUTHORIZED=YES`; `C1_STARTED=YES`; `C1_EXECUTED=NO`; `JWT_VALIDATION/CORE_CONTEXT` evidence in ledger §6.37; C0 permanece `NOT_STARTED`; `RUNTIME_READINESS=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -337,9 +337,11 @@ RUNTIME_READINESS = NOT_PROVEN
 PRODUCTION_READINESS = NOT_PROVEN
 NEW_BEHAVIORAL_TESTS = TEST_NOT_RUN
 FUTURE_C1_C7_GREEN_EVIDENCE_REQUIRED = YES
-DÉLIA_RUNTIME_DIFF = delia-api skeleton + /health
-NEW_RUNTIME_ABSTRACTIONS = NONE
-NEXT = C1-T2 — JWT + CORE EFFECTIVE ACCESS INTEGRATION
+DÉLIA_RUNTIME_DIFF = delia-api skeleton + /health + JWT/Core access context
+NEW_RUNTIME_ABSTRACTIONS = PlatformAccessPort / CorePlatformAccessAdapter / PlatformAccessContext
+JWT_VALIDATION = PASS (C1-T2 evidence)
+CORE_CONTEXT = PASS (contract/adapter; live Core TEST_NOT_RUN)
+NEXT = C1 — next bounded bootstrap after C1-T2 review (MFE/manifest/Gateway/Compose)
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -530,6 +532,8 @@ FOUNDATION_FREEZE = APPROVED does NOT mean:
 **C1-T1 — STANDALONE_API_SKELETON_HEALTH_TEST_FOUNDATION:** physical `delia-api/` Flask skeleton, `/health` liveness, config/logging mínimos e test foundation. `C1_STARTED=YES`. `C1_EXECUTED=NO`. JWT/Core/MFE/manifest/Gateway/Compose **não** entram nesta tarefa.
 
 **C1-T1R1 — RUNTIME_SMOKE_AND_SHUTDOWN_VISIBILITY:** real-process TCP/HTTP `GET /health` smoke + `delia_api_stopped` shutdown visibility. Não redesenha skeleton/health contract. `C1_EXECUTED=NO`. C1-T2 permanece bloqueado até review de T1R1.
+
+**C1-T2 — JWT_CORE_EFFECTIVE_ACCESS_INTEGRATION:** shared `jwt_validator` + Core `GET /me` effective access; JWT≠permission authority; fail-closed; probe `GET /access-context`. `C1_EXECUTED=NO`. MFE/Gateway/Compose deferred.
 
 - own Flask API skeleton/layers/config/logging/health/tests;
 - JWT/Core integration;
