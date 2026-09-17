@@ -744,6 +744,13 @@
   width: 100%;
 }
 
+.pp-field__icon-actions {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 4px;
+}
+
 .pp-field--switch {
   flex-direction: row;
   align-items: center;
@@ -817,12 +824,17 @@
   }
 
   .pp-field__inline-controls {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr auto;
+    align-items: center;
   }
 
   .pp-test-connection-btn {
-    width: 100%;
-    justify-content: center;
+    width: auto;
+    justify-self: end;
+  }
+
+  .pp-field__icon-actions {
+    justify-self: end;
   }
 
   .pp-field--switch {

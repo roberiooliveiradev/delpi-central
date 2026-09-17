@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
-import { Check, Clipboard, Eye, EyeOff, KeyRound } from "lucide-react";
+import {
+  Check,
+  Clipboard,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Loader2,
+  Wifi,
+} from "lucide-react";
 
 import {
-  PpActionButton,
   PpFormGrid,
   PpHintAction,
+  PpIconButton,
   PpNativeInlineTextField,
   PpNativeSelectField,
   PpNativeSwitchField,
@@ -184,16 +192,31 @@ export function DeviceForm({
           afterControl={ppFieldError(errors?.ipAddress)}
           trailing={
             onTestConnection ? (
-              <PpActionButton
-                variant="ghost"
-                className="pp-test-connection-btn"
-                disabled={testingConnection || !device.ipAddress.trim()}
-                onClick={onTestConnection}
+              <PpHintAction
+                hint={
+                  testingConnection
+                    ? PP_HELP.form.testConnectionLoading
+                    : PP_HELP.form.testConnection
+                }
+                ariaLabel="Ajuda: Testar conexão"
               >
-                {testingConnection
-                  ? PP_HELP.form.testConnectionLoading
-                  : PP_HELP.form.testConnectionAction}
-              </PpActionButton>
+                <PpIconButton
+                  className="pp-test-connection-btn"
+                  disabled={testingConnection || !device.ipAddress.trim()}
+                  aria-label={
+                    testingConnection
+                      ? PP_HELP.form.testConnectionLoading
+                      : PP_HELP.form.testConnectionAction
+                  }
+                  onClick={onTestConnection}
+                >
+                  {testingConnection ? (
+                    <Loader2 size={16} aria-hidden className="pp-spin" />
+                  ) : (
+                    <Wifi size={16} aria-hidden />
+                  )}
+                </PpIconButton>
+              </PpHintAction>
             ) : null
           }
         />
@@ -263,14 +286,12 @@ export function DeviceForm({
             </>
           }
           trailing={
-            <>
+            <div className="pp-field__icon-actions" role="group" aria-label="Ações do token">
               <PpHintAction
                 hint={PP_HELP.form.apiTokenShowHelp}
                 ariaLabel="Ajuda: Mostrar token"
               >
-                <PpActionButton
-                  variant="ghost"
-                  type="button"
+                <PpIconButton
                   disabled={!canReveal}
                   aria-label={
                     tokenVisible
@@ -284,18 +305,13 @@ export function DeviceForm({
                   ) : (
                     <Eye size={16} aria-hidden />
                   )}
-                  {tokenVisible
-                    ? PP_HELP.form.apiTokenHideAction
-                    : PP_HELP.form.apiTokenShowAction}
-                </PpActionButton>
+                </PpIconButton>
               </PpHintAction>
               <PpHintAction
                 hint={PP_HELP.form.apiTokenCopyHelp}
                 ariaLabel="Ajuda: Copiar token"
               >
-                <PpActionButton
-                  variant="ghost"
-                  type="button"
+                <PpIconButton
                   disabled={!canCopy}
                   aria-label={
                     copyState === "copied"
@@ -311,28 +327,20 @@ export function DeviceForm({
                   ) : (
                     <Clipboard size={16} aria-hidden />
                   )}
-                  {copyState === "copied"
-                    ? PP_HELP.form.apiTokenCopyDone
-                    : copyState === "failed"
-                      ? PP_HELP.form.apiTokenCopyFailed
-                      : PP_HELP.form.apiTokenCopyAction}
-                </PpActionButton>
+                </PpIconButton>
               </PpHintAction>
               <PpHintAction
                 hint={PP_HELP.form.apiTokenGenerateHelp}
                 ariaLabel="Ajuda: Gerar token"
               >
-                <PpActionButton
-                  variant="ghost"
-                  type="button"
+                <PpIconButton
                   aria-label={PP_HELP.form.generateApiTokenAction}
                   onClick={onGenerateToken}
                 >
                   <KeyRound size={16} aria-hidden />
-                  {PP_HELP.form.generateApiTokenAction}
-                </PpActionButton>
+                </PpIconButton>
               </PpHintAction>
-            </>
+            </div>
           }
         />
 
