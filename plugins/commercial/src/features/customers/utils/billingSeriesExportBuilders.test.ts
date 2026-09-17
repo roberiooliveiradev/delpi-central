@@ -43,4 +43,19 @@ describe("buildBillingSeriesExportPayload", () => {
     expect(String(payload.rows[0]?.faturamento)).toMatch(/R\$/);
     expect(String(payload.rows[0]?.quantidade)).toMatch(/12,500/);
   });
+
+  it("anexa a UM nas células de quantidade", () => {
+    const payload = buildBillingSeriesExportPayload(points, {
+      title: "Qtd",
+      metric: "quantity",
+      unit: "MI",
+    });
+    expect(String(payload.rows[0]?.faturamento)).toBe("1.000,000 MI");
+    const both = buildBillingSeriesExportPayload(points, {
+      title: "Ambos",
+      metric: "both",
+      unit: "PC",
+    });
+    expect(String(both.rows[0]?.quantidade)).toBe("12,500 PC");
+  });
 });

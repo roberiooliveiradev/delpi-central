@@ -41,6 +41,8 @@ export type UseCustomerBillingSeriesResult = {
   error: string | null;
   totalValue: number;
   totalQuantity: number;
+  quantityUnit: string | null;
+  quantityMixedUnits: boolean;
   coverage: { covered: number; total: number; failedBatches: number };
   reload: () => void;
 };
@@ -122,6 +124,8 @@ export function useCustomerBillingSeries(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [coverage, setCoverage] = useState({ covered: 0, total: 0, failedBatches: 0 });
+  const [quantityUnit, setQuantityUnit] = useState<string | null>(null);
+  const [quantityMixedUnits, setQuantityMixedUnits] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const reload = useCallback(() => setReloadKey((value) => value + 1), []);
 
@@ -243,6 +247,14 @@ export function useCustomerBillingSeries(
         setPoints(next);
         setCoverage(currentPayload.coverage);
         setError(currentPayload.partialError);
+        const quantityMeta = includeQuantityOverlay
+          ? quantityPayload
+          : apiMetric === "quantity"
+            ? currentPayload
+            : null;
+        const nextUnit = (quantityMeta?.unit || "").trim();
+        setQuantityUnit(nextUnit || null);
+        setQuantityMixedUnits(Boolean(quantityMeta?.mixed_units));
       })
       .catch((err: unknown) => {
         if (cancelled || controller.signal.aborted) return;
@@ -295,6 +307,8 @@ export function useCustomerBillingSeries(
     error: enabled && fingerprint ? error : null,
     totalValue,
     totalQuantity,
+    quantityUnit: enabled && fingerprint ? quantityUnit : null,
+    quantityMixedUnits: enabled && fingerprint ? quantityMixedUnits : false,
     coverage:
       enabled && fingerprint ? coverage : { covered: 0, total: 0, failedBatches: 0 },
     reload,

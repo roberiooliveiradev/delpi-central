@@ -308,11 +308,11 @@ export const CM_HELP = {
     rankingLimit:
       "Quantidade máxima de linhas no ranking (10, 15, 20 ou 50).",
     billingSeries:
-      "Soma do faturamento no período (bruto de nota ou líquido ROL). Com Métrica Ambos, colunas em R$ e linha de quantidade no eixo direito. Os filtros do hero (cliente, família, produto e mercado) também restringem este gráfico — com produto/família/mercado o bruto usa valor de linha (D2_TOTAL), alinhado ao mix. Em Cores, altere a cor de cada série; «Restaurar padrão» limpa a escolha neste navegador.",
+      "Soma do faturamento no período (bruto de nota ou líquido ROL). Com Métrica Qtd ou Ambos, a quantidade aparece com a UM da nota (eixo, total e tooltip); UMs diferentes no recorte mostram «mistas». Com Ambos, colunas em R$ e linha de quantidade no eixo direito. Os filtros do hero (cliente, família, produto e mercado) também restringem este gráfico — com produto/família/mercado o bruto usa valor de linha (D2_TOTAL), alinhado ao mix. Em Cores, altere a cor de cada série; «Restaurar padrão» limpa a escolha neste navegador.",
     billingNature:
       "Bruto = valor de nota fiscal na série e Fat.12m (ranking/share usam receita bruta do envelope). Líquido = mesma fórmula ROL da Visão geral (impostos e devoluções). Aplica a Fat.12m, tendência, gráfico, mix, ABC, ranking e share.",
     billingMetric:
-      "R$ = valor (bruto ou líquido conforme Natureza). Qtd = quantidade fornecida (D2_QUANT). Ambos = R$ e quantidade juntos no gráfico (eixos separados) e nas colunas do mix. Na Conta, o toggle permanece R$ | Qtd. UMs mistas não são convertidas automaticamente.",
+      "R$ = valor (bruto ou líquido conforme Natureza). Qtd = quantidade fornecida (D2_QUANT) com a UM da nota (ex.: MI, PC). Ambos = R$ e quantidade juntos no gráfico (eixos separados) e nas colunas do mix. Recorte com UMs diferentes mostra «mistas» e não converte. Na Conta, o toggle permanece R$ | Qtd.",
     quantityDisplayMode:
       "Milheiro mantém a UM da nota (ex.: MI). Peças converte só UM=MI (1 MI = 1000 PC) — só apresentação, sem mudar a API.",
     billingSeriesPeriod:
@@ -347,9 +347,9 @@ export const CM_HELP = {
       export: "Receita operacional de exportação (CFOP 7) no período.",
       total: "Soma interno + externo (ou o valor do mercado filtrado).",
       share: "Participação percentual da linha no total do recorte (em R$ quando a métrica inclui valor; em qtd só no modo Qtd).",
-      qtyDomestic: "Quantidade fornecida no mercado interno (CFOP 5/6) no período.",
-      qtyExport: "Quantidade fornecida na exportação (CFOP 7) no período.",
-      qtyTotal: "Quantidade fornecida no recorte (interno + externo, ou o mercado filtrado).",
+      qtyDomestic: "Quantidade fornecida no mercado interno (CFOP 5/6) no período, com a UM da linha.",
+      qtyExport: "Quantidade fornecida na exportação (CFOP 7) no período, com a UM da linha.",
+      qtyTotal: "Quantidade fornecida no recorte (interno + externo, ou o mercado filtrado), com a UM da linha.",
       unit: "Unidade de medida da nota. «mistas» indica UMs diferentes na linha ou no total.",
     },
     abcColumns: {
@@ -470,7 +470,7 @@ export const CM_HELP = {
     billingSeriesCustomer:
       "Filtra a série de faturamento da carteira a um ou mais clientes (código+loja).",
     billingSeriesAccount:
-      "Evolução do faturamento ou da quantidade fornecida deste cliente no período dos filtros (Métrica R$ | Qtd). Em Opções do gráfico, «Comparar ano anterior» coloca as colunas do ano anterior lado a lado com o período atual. Em Cores, escolha a cor de cada série; «Restaurar padrão» remove a personalização.",
+      "Evolução do faturamento ou da quantidade fornecida deste cliente no período dos filtros (Métrica R$ | Qtd). A quantidade inclui a UM da nota; UMs diferentes no período mostram «mistas». Em Opções do gráfico, «Comparar ano anterior» coloca as colunas do ano anterior lado a lado com o período atual. Em Cores, escolha a cor de cada série; «Restaurar padrão» remove a personalização.",
     billingSeriesTrend:
       "Sobreposição da regressão linear sobre a série atual (não substitui o comparativo YoY).",
     billingSeriesDateStart: "Início do intervalo personalizado da série de faturamento.",

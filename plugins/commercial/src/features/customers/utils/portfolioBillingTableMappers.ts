@@ -1,5 +1,6 @@
 import type { PortfolioBillingAmountNature } from "../../../content/billingNature";
 import {
+  formatQuantityWithUnit,
   includesQuantityMetric,
   includesValueMetric,
   type PortfolioBillingMetric,
@@ -149,6 +150,13 @@ export function mapRolByProductRows(
 export function formatSharePct(value: number | null | undefined): string {
   if (value == null || !Number.isFinite(value)) return "—";
   return `${value.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} %`;
+}
+
+export function formatRolQuantity(
+  value: number,
+  row: Pick<PortfolioBillingByProductRow, "unit" | "mixedUnits">,
+): string {
+  return formatQuantityWithUnit(value, row.mixedUnits ? null : row.unit);
 }
 
 export function formatCnpj(raw: string | null | undefined): string {

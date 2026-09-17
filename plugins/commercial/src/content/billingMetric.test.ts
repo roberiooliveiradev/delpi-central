@@ -5,9 +5,11 @@ import {
   DEFAULT_PORTFOLIO_BILLING_METRIC,
   apiBillingMetric,
   billingMetricShortLabel,
+  formatQuantityWithUnit,
   includesQuantityMetric,
   includesValueMetric,
   normalizePortfolioBillingMetric,
+  quantitySeriesName,
 } from "./billingMetric";
 
 describe("billingMetric", () => {
@@ -28,5 +30,14 @@ describe("billingMetric", () => {
     expect(apiBillingMetric("both")).toBe("value");
     expect(apiBillingMetric("quantity")).toBe("quantity");
     expect(billingMetricShortLabel("both")).toBe(BILLING_METRIC_CONTENT.both.shortLabel);
+  });
+
+  it("formata quantidade com UM e marca recorte misto", () => {
+    expect(formatQuantityWithUnit(12.5, "MI")).toBe("12,500 MI");
+    expect(formatQuantityWithUnit(12.5, "PC")).toBe("12,500 PC");
+    expect(formatQuantityWithUnit(12.5, null)).toBe("12,500");
+    expect(formatQuantityWithUnit(12.5, "MI", true)).toBe("12,500 mistas");
+    expect(quantitySeriesName("MI")).toBe("Quantidade fornecida (MI)");
+    expect(quantitySeriesName(null, true)).toBe("Quantidade fornecida (mistas)");
   });
 });

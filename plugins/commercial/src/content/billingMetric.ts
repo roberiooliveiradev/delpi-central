@@ -1,5 +1,6 @@
 /** Métrica da série/mix de faturamento — value (R$), quantity (qtd) ou both. */
 
+import { formatDisplayQuantity } from "../utils/displayQuantity";
 import { formatCurrency, formatQuantity } from "../utils/format";
 
 export type PortfolioBillingMetric = "value" | "quantity" | "both";
@@ -17,12 +18,12 @@ export const BILLING_METRIC_CONTENT = {
   quantity: {
     shortLabel: "Qtd",
     label: "Quantidade",
-    hint: "Série e mix em quantidade fornecida (D2_QUANT; líquido desconta devoluções). UMs mistas não são convertidas.",
+    hint: "Série e mix em quantidade fornecida (D2_QUANT; líquido desconta devoluções), com a UM da nota. UMs mistas não são convertidas.",
   },
   both: {
     shortLabel: "Ambos",
     label: "Valor e quantidade",
-    hint: "Mostra R$ e quantidade no gráfico (eixos separados) e nas colunas do mix.",
+    hint: "Mostra R$ e quantidade (com UM) no gráfico (eixos separados) e nas colunas do mix.",
   },
 } as const;
 
@@ -53,14 +54,44 @@ export function billingMetricShortLabel(metric: PortfolioBillingMetric): string 
   return BILLING_METRIC_CONTENT[metric].shortLabel;
 }
 
-/** Eixo/tooltip de charts: R$ abreviado ou quantidade com 3 casas. */
+/** UM homogênea da nota, ou «mistas» quando o recorte mistura UMs. */
+export function billingQuantityUnitLabel(
+  unit?: string | null,
+  mixed?: boolean,
+): string | null {
+  if (mixed) return "mistas";
+  const um = (unit || "").trim();
+  return um || null;
+}
+
+/** Quantidade com UM da nota (catálogo; sem conversão MI→PC). */
+export function formatQuantityWithUnit(
+  value: number,
+  unit?: string | null,
+  mixed?: boolean,
+): string {
+  if (!Number.isFinite(value)) return "—";
+  if (mixed) return `${formatQuantity(value)} mistas`;
+  return formatDisplayQuantity(value, unit);
+}
+
+export function quantitySeriesName(
+  unit?: string | null,
+  mixed?: boolean,
+): string {
+  const label = billingQuantityUnitLabel(unit, mixed);
+  return label ? `Quantidade fornecida (${label})` : "Quantidade fornecida";
+}
+
+/** Eixo/tooltip de charts: R$ abreviado ou quantidade com 3 casas e UM. */
 export function formatChartMetricValue(
   value: number,
   metric: PortfolioBillingMetric,
+  unit?: string | null,
 ): string {
   if (!Number.isFinite(value)) return "—";
   if (metric === "quantity") {
-    return formatQuantity(value);
+    return formatQuantityWithUnit(value, unit);
   }
   const abs = Math.abs(value);
   if (abs >= 1_000_000) {
@@ -79,7 +110,9 @@ export function formatChartMetricValue(
 export function formatMetricTotal(
   value: number,
   metric: PortfolioBillingMetric,
+  unit?: string | null,
+  mixed?: boolean,
 ): string {
-  if (metric === "quantity") return formatQuantity(value);
+  if (metric === "quantity") return formatQuantityWithUnit(value, unit, mixed);
   return formatCurrency(value);
 }

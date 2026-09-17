@@ -1,10 +1,11 @@
 import type { TableExportPayload } from "@delpi/plugin-ui/index";
 
 import {
+  formatQuantityWithUnit,
   includesQuantityMetric,
   type PortfolioBillingMetric,
 } from "../../../content/billingMetric";
-import { formatCurrency, formatQuantity } from "../../../utils/format";
+import { formatCurrency } from "../../../utils/format";
 
 type BillingSeriesExportPoint = {
   periodo: string;
@@ -18,16 +19,22 @@ type BillingSeriesExportPoint = {
 function formatPrimaryAmount(
   value: number,
   metric: PortfolioBillingMetric,
+  unit?: string | null,
+  mixed?: boolean,
 ): string {
-  return metric === "quantity" ? formatQuantity(value) : formatCurrency(value);
+  return metric === "quantity"
+    ? formatQuantityWithUnit(value, unit, mixed)
+    : formatCurrency(value);
 }
 
 function formatOptionalPrimary(
   value: number | null | undefined,
   metric: PortfolioBillingMetric,
+  unit?: string | null,
+  mixed?: boolean,
 ): string {
   if (value == null) return "—";
-  return formatPrimaryAmount(value, metric);
+  return formatPrimaryAmount(value, metric, unit, mixed);
 }
 
 export function buildBillingSeriesExportPayload(
@@ -36,10 +43,14 @@ export function buildBillingSeriesExportPayload(
     title: string;
     compareYears?: number;
     metric?: PortfolioBillingMetric;
+    unit?: string | null;
+    mixedUnits?: boolean;
   } = { title: "Faturamento" },
 ): TableExportPayload {
   const years = options.compareYears ?? 0;
   const metric = options.metric ?? "value";
+  const unit = options.unit;
+  const mixed = Boolean(options.mixedUnits);
   const showQuantityOverlay = includesQuantityMetric(metric) && metric === "both";
   const primaryLabel = metric === "quantity" ? "Quantidade" : "Faturamento";
   const columns = [
@@ -55,23 +66,39 @@ export function buildBillingSeriesExportPayload(
     columns,
     rows: points.map((point) => ({
       periodo: point.periodo,
-      faturamento: formatPrimaryAmount(point.faturamento, metric),
+      faturamento: formatPrimaryAmount(point.faturamento, metric, unit, mixed),
       ...(showQuantityOverlay
-        ? { quantidade: formatQuantity(Number(point.quantidade) || 0) }
+        ? {
+            quantidade: formatQuantityWithUnit(
+              Number(point.quantidade) || 0,
+              unit,
+              mixed,
+            ),
+          }
         : {}),
       ...(years >= 1
         ? {
-            prior1: formatOptionalPrimary(point.faturamento_prior, metric),
+            prior1: formatOptionalPrimary(point.faturamento_prior, metric, unit, mixed),
           }
         : {}),
       ...(years >= 2
         ? {
-            prior2: formatOptionalPrimary(point.faturamento_prior_2, metric),
+            prior2: formatOptionalPrimary(
+              point.faturamento_prior_2,
+              metric,
+              unit,
+              mixed,
+            ),
           }
         : {}),
       ...(years >= 3
         ? {
-            prior3: formatOptionalPrimary(point.faturamento_prior_3, metric),
+            prior3: formatOptionalPrimary(
+              point.faturamento_prior_3,
+              metric,
+              unit,
+              mixed,
+            ),
           }
         : {}),
     })),

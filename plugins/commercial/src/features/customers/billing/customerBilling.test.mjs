@@ -194,7 +194,7 @@ describe("CustomerDetailPage billing (fonte)", () => {
     assert.match(filters, /customer-billing-metric/);
     assert.doesNotMatch(filters, /hintPlacement="tooltip"/);
     assert.match(chart, /metric:\s*billingMetric/);
-    assert.match(chart, /Quantidade fornecida/);
+    assert.match(chart, /quantitySeriesName/);
     assert.doesNotMatch(filters, /value: "both"/);
   });
 

@@ -36,6 +36,7 @@ import {
   billingMetricShortLabel,
   formatChartMetricValue,
   formatMetricTotal,
+  quantitySeriesName,
   includesQuantityMetric,
   includesValueMetric,
   type PortfolioBillingMetric,
@@ -176,6 +177,8 @@ export function CustomerBillingSeriesChart({
     error,
     totalValue,
     totalQuantity,
+    quantityUnit,
+    quantityMixedUnits,
     coverage,
     reload,
   } = useCustomerBillingSeries(customers, {
@@ -216,6 +219,8 @@ export function CustomerBillingSeriesChart({
     [points],
   );
 
+  const quantityLabel = quantitySeriesName(quantityUnit, quantityMixedUnits);
+  const quantityAxisUnit = quantityMixedUnits ? null : quantityUnit;
   const baseBars = useMemo((): MultiTypeSeriesSpec[] => {
     const valueName = appendBillingNatureContext("Faturamento", billingNature);
     const list: MultiTypeSeriesSpec[] = [];
@@ -230,7 +235,7 @@ export function CustomerBillingSeriesChart({
     if (showQuantity && billingMetric === "quantity") {
       list.push({
         dataKey: "faturamento",
-        name: "Quantidade fornecida",
+        name: quantityLabel,
         fill: SERIES_COLOR,
         trendSource: true,
       });
@@ -238,7 +243,7 @@ export function CustomerBillingSeriesChart({
     if (showQuantity && billingMetric === "both") {
       list.push({
         dataKey: "quantidade",
-        name: "Quantidade fornecida",
+        name: quantityLabel,
         fill: QUANTITY_SERIES_COLOR,
         axis: "secondary",
         plotAs: "line",
@@ -266,7 +271,7 @@ export function CustomerBillingSeriesChart({
       });
     }
     return list;
-  }, [billingMetric, billingNature, compareYears, showQuantity, showValue]);
+  }, [billingMetric, billingNature, compareYears, quantityLabel, showQuantity, showValue]);
 
   const bars = useMemo(
     () => applySeriesFillPreferences(baseBars, preferences.seriesFills),
@@ -291,18 +296,28 @@ export function CustomerBillingSeriesChart({
   const metricLabel = billingMetricShortLabel(billingMetric);
   const chartTitle =
     billingMetric === "quantity"
-      ? `Quantidade fornecida — ${periodLabel}`
+      ? `${quantityLabel} — ${periodLabel}`
       : billingMetric === "both"
         ? appendBillingNatureContext(`Faturamento e quantidade — ${periodLabel}`, billingNature)
         : appendBillingNatureContext(`Faturamento — ${periodLabel}`, billingNature);
   const isAllCustomers = filters.selectedCustomerKeys.length === 0;
   const formatValue = (value: number) =>
-    formatChartMetricValue(value, billingMetric === "quantity" ? "quantity" : "value");
-  const formatQuantityAxis = (value: number) => formatChartMetricValue(value, "quantity");
+    formatChartMetricValue(
+      value,
+      billingMetric === "quantity" ? "quantity" : "value",
+      billingMetric === "quantity" ? quantityAxisUnit : undefined,
+    );
+  const formatQuantityAxis = (value: number) =>
+    formatChartMetricValue(value, "quantity", quantityAxisUnit);
   const totalLabel =
     billingMetric === "both"
-      ? `${formatMetricTotal(totalValue, "value")} · ${formatMetricTotal(totalQuantity, "quantity")}`
-      : formatMetricTotal(totalValue, billingMetric === "quantity" ? "quantity" : "value");
+      ? `${formatMetricTotal(totalValue, "value")} · ${formatMetricTotal(totalQuantity, "quantity", quantityUnit, quantityMixedUnits)}`
+      : formatMetricTotal(
+          totalValue,
+          billingMetric === "quantity" ? "quantity" : "value",
+          billingMetric === "quantity" ? quantityUnit : undefined,
+          billingMetric === "quantity" ? quantityMixedUnits : undefined,
+        );
 
   return (
     <div className="cm-billing-series-chart">
@@ -416,6 +431,8 @@ export function CustomerBillingSeriesChart({
                       title: chartTitle,
                       compareYears,
                       metric: billingMetric,
+                      unit: quantityUnit,
+                      mixedUnits: quantityMixedUnits,
                     }),
                   });
                 }}

@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import {
   formatCityState,
   formatCnpj,
+  formatRolQuantity,
   formatSharePct,
   mapRolByProductRows,
 } from "./portfolioBillingTableMappers.ts";
@@ -121,5 +122,16 @@ describe("portfolioBillingTableMappers", () => {
     assert.equal(rows[0].qtyTotal, 10);
     assert.equal(rows[0].sharePct, 50);
     assert.equal(rows[1].qtyTotal, 10);
+  });
+
+  it("formata quantidade com UM da linha e omite UM quando mista", () => {
+    assert.equal(
+      formatRolQuantity(12.5, { unit: "MI", mixedUnits: false }),
+      "12,500 MI",
+    );
+    assert.equal(
+      formatRolQuantity(12.5, { unit: "MI", mixedUnits: true }),
+      "12,500",
+    );
   });
 });

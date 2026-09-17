@@ -28,11 +28,11 @@ import {
   billingMetricShortLabel,
   formatChartMetricValue,
   formatMetricTotal,
+  quantitySeriesName,
   type PortfolioBillingMetric,
 } from "../../../../content/billingMetric";
 import { CUSTOMER_BILLING_CONTENT } from "../../../../content/customerBillingContent";
 import { CM_HELP } from "../../../../content/helpTooltips";
-import { formatCurrency, formatQuantity } from "../../../../utils/format";
 import { resolveCalendarBucketFraction } from "../../../../utils/linearTrendSeries";
 import { buildBillingSeriesExportPayload } from "../../utils/billingSeriesExportBuilders";
 import { useCustomerBillingSeries } from "../../hooks/useCustomerBillingSeries";
@@ -163,7 +163,7 @@ export function CustomerAccountBillingChart({
     ? granularity
     : (allowedGrains[0] ?? "month");
 
-  const { points, loading, error, totalValue, coverage, reload } =
+  const { points, loading, error, totalValue, quantityUnit, quantityMixedUnits, coverage, reload } =
     useCustomerBillingSeries(customers, {
       enabled: queryEnabled,
       startDate,
@@ -188,8 +188,11 @@ export function CustomerAccountBillingChart({
     [points],
   );
 
+  const quantityAxisUnit = quantityMixedUnits ? null : quantityUnit;
   const seriesName =
-    billingMetric === "quantity" ? "Quantidade fornecida" : "Faturamento";
+    billingMetric === "quantity"
+      ? quantitySeriesName(quantityUnit, quantityMixedUnits)
+      : "Faturamento";
   const baseBars = useMemo((): MultiTypeSeriesSpec[] => {
     const list: MultiTypeSeriesSpec[] = [
       {
@@ -224,13 +227,21 @@ export function CustomerAccountBillingChart({
 
   const chartTitle =
     billingMetric === "quantity"
-      ? "Quantidade fornecida no período"
+      ? `${quantitySeriesName(quantityUnit, quantityMixedUnits)} no período`
       : "Faturamento no período";
   const metricLabel = billingMetricShortLabel(billingMetric);
-  const totalLabel = formatMetricTotal(totalValue, billingMetric);
-  const formatAxis = (value: number) => formatChartMetricValue(value, billingMetric);
-  const formatTip =
-    billingMetric === "quantity" ? formatQuantity : formatCurrency;
+  const totalLabel = formatMetricTotal(
+    totalValue,
+    billingMetric,
+    billingMetric === "quantity" ? quantityUnit : undefined,
+    billingMetric === "quantity" ? quantityMixedUnits : undefined,
+  );
+  const formatAxis = (value: number) =>
+    formatChartMetricValue(
+      value,
+      billingMetric,
+      billingMetric === "quantity" ? quantityAxisUnit : undefined,
+    );
   const emptyMessage =
     billingMetric === "quantity"
       ? "Sem quantidade fornecida registrada neste período para o cliente."
@@ -351,6 +362,8 @@ export function CustomerAccountBillingChart({
                         title: chartTitle,
                         compareYears: comparePriorYear ? 1 : 0,
                         metric: billingMetric,
+                        unit: quantityUnit,
+                        mixedUnits: quantityMixedUnits,
                       }),
                     });
                   }}
@@ -368,7 +381,7 @@ export function CustomerAccountBillingChart({
                 showLegend={comparePriorYear || showTrend}
                 trendSeriesName={CUSTOMER_BILLING_CONTENT.trendLineSeriesName}
                 formatY={formatAxis}
-                formatTooltipValue={formatTip}
+                formatTooltipValue={formatAxis}
               />
             </ChartViewShell>
           </>

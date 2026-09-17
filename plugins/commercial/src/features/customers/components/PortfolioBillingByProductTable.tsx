@@ -32,7 +32,7 @@ import {
   type PortfolioBillingMetric,
 } from "../../../content/billingMetric";
 import type { CommercialRolByProductItem } from "../../../types/analytics";
-import { formatCurrency, formatQuantity } from "../../../utils/format";
+import { formatCurrency } from "../../../utils/format";
 import {
   PORTFOLIO_BY_PRODUCT_COLUMN_HELP,
   withColumnHelp,
@@ -46,6 +46,7 @@ import {
   PORTFOLIO_BY_PRODUCT_FONT_STORAGE_KEY,
 } from "../utils/portfolioBillingTableColumns";
 import {
+  formatRolQuantity,
   formatSharePct,
   mapRolByProductRows,
   type PortfolioBillingByProductRow,
@@ -306,7 +307,7 @@ export function PortfolioBillingByProductTable({
           {
             key: "qtyDomestic",
             header: CUSTOMER_BILLING_CONTENT.colDomesticQty,
-            render: (row) => formatQuantity(row.qtyDomestic),
+            render: (row) => formatRolQuantity(row.qtyDomestic, row),
             sortValue: (row) => row.qtyDomestic,
             sortable: true,
             align: "right",
@@ -314,7 +315,7 @@ export function PortfolioBillingByProductTable({
           {
             key: "qtyExport",
             header: CUSTOMER_BILLING_CONTENT.colExportQty,
-            render: (row) => formatQuantity(row.qtyExport),
+            render: (row) => formatRolQuantity(row.qtyExport, row),
             sortValue: (row) => row.qtyExport,
             sortable: true,
             align: "right",
@@ -322,7 +323,7 @@ export function PortfolioBillingByProductTable({
           {
             key: "qtyTotal",
             header: CUSTOMER_BILLING_CONTENT.colTotalQty,
-            render: (row) => formatQuantity(row.qtyTotal),
+            render: (row) => formatRolQuantity(row.qtyTotal, row),
             sortValue: (row) => row.qtyTotal,
             sortable: true,
             align: "right",
@@ -332,7 +333,7 @@ export function PortfolioBillingByProductTable({
         base.push({
           key: "qtyTotal",
           header: CUSTOMER_BILLING_CONTENT.colValueQty,
-          render: (row) => formatQuantity(row.qtyTotal),
+          render: (row) => formatRolQuantity(row.qtyTotal, row),
           sortValue: (row) => row.qtyTotal,
           sortable: true,
           align: "right",
@@ -480,9 +481,9 @@ export function PortfolioBillingByProductTable({
                       export: formatCurrency(row.export),
                       total: formatCurrency(row.total),
                       sharePct: formatSharePct(row.sharePct),
-                      qtyDomestic: formatQuantity(row.qtyDomestic),
-                      qtyExport: formatQuantity(row.qtyExport),
-                      qtyTotal: formatQuantity(row.qtyTotal),
+                      qtyDomestic: formatRolQuantity(row.qtyDomestic, row),
+                      qtyExport: formatRolQuantity(row.qtyExport, row),
+                      qtyTotal: formatRolQuantity(row.qtyTotal, row),
                       unit: row.mixedUnits ? "mistas" : row.unit?.trim() || "—",
                     })),
                   },
