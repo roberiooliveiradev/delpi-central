@@ -11,17 +11,16 @@ import {
   BrandBar,
   CopyValueButton,
   DrawingViewer,
-  efficiencyTone,
   formatDate,
   formatDateTime,
   formatHours,
-  formatPercent,
   formatQty,
   formatUnit,
   isFinishedOperation,
   operationKey,
   operationPendingQty,
   resolveStatus,
+  WorkCenterShiftMetrics,
 } from "./cockpitShared";
 import { OperationDetailPage } from "./OperationDetailPage";
 import { usePublicMachineLoadRealtime } from "./usePublicMachineLoadRealtime";
@@ -294,6 +293,34 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     );
   }
 
+  const centerName = activeCenter?.work_center_name || workCenter;
+  const efficiency = performance.data?.efficiency;
+  const downtime = performance.data?.downtime;
+  const shiftPct = efficiency?.available ? efficiency.shift_pct : null;
+  const shiftProducedQty = efficiency?.available ? efficiency.shift_produced_qty : null;
+  const shiftLabel = performance.data?.shift?.label ?? "Turno";
+  const downtimeHours = downtime?.available ? downtime.today_hours : null;
+  const downtimeAvailable = Boolean(downtime?.available);
+  const shiftMetrics = (
+    <WorkCenterShiftMetrics
+      shiftLabel={shiftLabel}
+      shiftPct={shiftPct}
+      shiftProducedQty={shiftProducedQty}
+      downtimeHours={downtimeHours}
+      downtimeAvailable={downtimeAvailable}
+      onOpenPerformance={openPerformance}
+      onOpenDowntime={() => setDowntimeOpen(true)}
+    />
+  );
+  const downtimeModal = downtimeOpen ? (
+    <DowntimeItemsModal
+      shiftLabel={shiftLabel}
+      hours={downtimeHours}
+      state={downtimeItems}
+      onClose={() => setDowntimeOpen(false)}
+    />
+  ) : null;
+
   if (view.kind === "performance") {
     return (
       <WorkCenterPerformancePage
@@ -314,33 +341,37 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     const next = index < items.length - 1 ? items[index + 1] : null;
 
     return (
-      <OperationDetailPage
-        key={operationKey(selectedOperation.operation)}
-        token={token}
-        branch={branch}
-        operation={selectedOperation.operation}
-        position={selectedOperation.position}
-        queueSize={items.length}
-        onBack={openQueue}
-        onPrevious={
-          previous
-            ? () => openOperation(previous.production_order, previous.operation_code)
-            : undefined
-        }
-        onNext={
-          next ? () => openOperation(next.production_order, next.operation_code) : undefined
-        }
-      />
+      <>
+        <OperationDetailPage
+          key={operationKey(selectedOperation.operation)}
+          token={token}
+          branch={branch}
+          operation={selectedOperation.operation}
+          position={selectedOperation.position}
+          queueSize={items.length}
+          workCenter={workCenter}
+          workCenterName={centerName}
+          shiftLabel={shiftLabel}
+          shiftPct={shiftPct}
+          shiftProducedQty={shiftProducedQty}
+          downtimeHours={downtimeHours}
+          downtimeAvailable={downtimeAvailable}
+          onOpenPerformance={openPerformance}
+          onOpenDowntime={() => setDowntimeOpen(true)}
+          onBack={openQueue}
+          onPrevious={
+            previous
+              ? () => openOperation(previous.production_order, previous.operation_code)
+              : undefined
+          }
+          onNext={
+            next ? () => openOperation(next.production_order, next.operation_code) : undefined
+          }
+        />
+        {downtimeModal}
+      </>
     );
   }
-
-  const centerName = activeCenter?.work_center_name || workCenter;
-  const efficiency = performance.data?.efficiency;
-  const downtime = performance.data?.downtime;
-  const shiftPct = efficiency?.available ? efficiency.shift_pct : null;
-  const shiftProducedQty = efficiency?.available ? efficiency.shift_produced_qty : null;
-  const shiftLabel = performance.data?.shift?.label ?? "Turno";
-  const effTone = efficiencyTone(shiftPct);
 
   return (
     <section className="pcp-pub pcp-pub--queue">
@@ -383,41 +414,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
               <h2 className="pcp-pub__hero-name">{centerName}</h2>
               <p className="pcp-pub__hero-eyebrow">Fila de produção</p>
             </div>
-            <div className="pcp-pub__hero-metrics" role="group" aria-label="Desempenho do posto">
-              <button
-                type="button"
-                className={`pcp-pub__hero-metric pcp-pub__hero-metric--eff-${effTone}`}
-                onClick={openPerformance}
-                title={`Eficiência do posto no ${shiftLabel.toLowerCase()}`}
-              >
-                <span className="pcp-pub__hero-metric-label">{shiftLabel}</span>
-                <strong className="pcp-pub__hero-metric-value">{formatPercent(shiftPct)}</strong>
-              </button>
-              <button
-                type="button"
-                className="pcp-pub__hero-metric"
-                onClick={openPerformance}
-                title={`Peças produzidas no ${shiftLabel.toLowerCase()}`}
-              >
-                <span className="pcp-pub__hero-metric-label">Produzido · turno</span>
-                <strong className="pcp-pub__hero-metric-value">
-                  {shiftProducedQty == null
-                    ? "—"
-                    : `${formatQty(shiftProducedQty)} ${formatUnit(null, shiftProducedQty)}`}
-                </strong>
-              </button>
-              <button
-                type="button"
-                className="pcp-pub__hero-metric"
-                onClick={() => setDowntimeOpen(true)}
-                title={`Paradas apontadas no ${shiftLabel.toLowerCase()} neste posto — clique para ver motivos`}
-              >
-                <span className="pcp-pub__hero-metric-label">Paradas · turno</span>
-                <strong className="pcp-pub__hero-metric-value">
-                  {downtime?.available ? formatHours(downtime.today_hours) : "—"}
-                </strong>
-              </button>
-            </div>
+            {shiftMetrics}
             <div className="pcp-pub__hero-aside">
               <span
                 className={`pcp-pub__live ${connected ? "pcp-pub__live--on" : "pcp-pub__live--off"}`}
@@ -496,7 +493,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
                   <table className="pcp-pub__queue-table">
                     <thead>
                       <tr>
-                        <th scope="col">Seq</th>
+                        <th scope="col">PA</th>
                         <th scope="col">OP / Produto</th>
                         <th scope="col">Operação</th>
                         <th scope="col">Pendente</th>
@@ -549,14 +546,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
         />
       ) : null}
 
-      {downtimeOpen ? (
-        <DowntimeItemsModal
-          shiftLabel={shiftLabel}
-          hours={downtime?.available ? downtime.today_hours : null}
-          state={downtimeItems}
-          onClose={() => setDowntimeOpen(false)}
-        />
-      ) : null}
+      {downtimeModal}
     </section>
   );
 }
@@ -738,7 +728,7 @@ function ActiveNowCard({
   onOpenVisual: (target: VisualTarget) => void;
   onOpenDetail: () => void;
 }) {
-  const { operation, position } = entry;
+  const { operation } = entry;
   const status = resolveStatus(operation);
   const pendingQty = operationPendingQty(operation);
   const { paCode, productCode, has3dModel, canOpenVisual, visualLabel, displayProductCode } =
@@ -771,10 +761,6 @@ function ActiveNowCard({
         onClick={openFromCard}
       >
         <div className="pcp-pub__now-main">
-          <span className="pcp-pub__now-seq" aria-label={`Ordem ${position}`}>
-            Ordem {String(position).padStart(2, "0")}
-          </span>
-
           <div className="pcp-pub__now-identity">
             <div className="pcp-pub__now-order">
               <strong>{operation.production_order}</strong>
@@ -869,11 +855,10 @@ function UpcomingRow({
   isNext: boolean;
   onOpenDetail: () => void;
 }) {
-  const { operation, position } = entry;
+  const { operation } = entry;
   const status = resolveStatus(operation);
   const pendingQty = operationPendingQty(operation);
   const { paCode, displayProductCode } = resolveVisualMeta(operation);
-  const seqLabel = String(position).padStart(2, "0");
 
   return (
     <tr
@@ -886,18 +871,21 @@ function UpcomingRow({
         .join(" ")}
     >
       <td className="pcp-pub__queue-seq">
-        <span className="pcp-pub__queue-seq-num">{seqLabel}</span>
+        <span
+          className={
+            paCode
+              ? "pcp-pub__queue-seq-pa pcp-pub__product-code--pa"
+              : "pcp-pub__queue-seq-pa"
+          }
+        >
+          {displayProductCode || "—"}
+        </span>
         {isNext ? <span className="pcp-pub__queue-seq-tag">Próxima</span> : null}
       </td>
       <td>
         <div className="pcp-pub__queue-op">
           <strong>{operation.production_order}</strong>
-          <span>
-            <span className={paCode ? "pcp-pub__product-code--pa" : undefined}>
-              {displayProductCode}
-            </span>{" "}
-            {operation.product_description}
-          </span>
+          <span>{operation.product_description}</span>
         </div>
       </td>
       <td>

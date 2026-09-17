@@ -36,6 +36,7 @@ export function BrandBar({
   actions,
   lead,
   titleExtra,
+  metrics,
 }: {
   eyebrow?: string;
   title: string;
@@ -44,6 +45,7 @@ export function BrandBar({
   actions?: ReactNode;
   lead?: ReactNode;
   titleExtra?: ReactNode;
+  metrics?: ReactNode;
 }) {
   return (
     <header className="pcp-pub__brandbar">
@@ -64,9 +66,70 @@ export function BrandBar({
             {stats ? <div className="pcp-pub__stats">{stats}</div> : null}
           </div>
         </div>
+        {metrics ? <div className="pcp-pub__brandbar-metrics">{metrics}</div> : null}
         {actions ? <div className="pcp-pub__actions">{actions}</div> : null}
       </div>
     </header>
+  );
+}
+
+/** Cards de eficiência / produzido / paradas do posto no turno — fila e detalhe. */
+export function WorkCenterShiftMetrics({
+  shiftLabel,
+  shiftPct,
+  shiftProducedQty,
+  downtimeHours,
+  downtimeAvailable,
+  onOpenPerformance,
+  onOpenDowntime,
+}: {
+  shiftLabel: string;
+  shiftPct: number | null;
+  shiftProducedQty: number | null;
+  downtimeHours: number | null;
+  downtimeAvailable: boolean;
+  onOpenPerformance: () => void;
+  onOpenDowntime: () => void;
+}) {
+  const effTone = efficiencyTone(shiftPct);
+  const shiftLabelLower = shiftLabel.toLowerCase();
+
+  return (
+    <div className="pcp-pub__hero-metrics" role="group" aria-label="Desempenho do posto">
+      <button
+        type="button"
+        className={`pcp-pub__hero-metric pcp-pub__hero-metric--eff-${effTone}`}
+        onClick={onOpenPerformance}
+        title={`Eficiência do posto no ${shiftLabelLower}`}
+      >
+        <span className="pcp-pub__hero-metric-label">{shiftLabel}</span>
+        <strong className="pcp-pub__hero-metric-value">{formatPercent(shiftPct)}</strong>
+      </button>
+      <button
+        type="button"
+        className="pcp-pub__hero-metric"
+        onClick={onOpenPerformance}
+        title={`Peças produzidas no ${shiftLabelLower}`}
+      >
+        <span className="pcp-pub__hero-metric-label">Produzido · turno</span>
+        <strong className="pcp-pub__hero-metric-value">
+          {shiftProducedQty == null
+            ? "—"
+            : `${formatQty(shiftProducedQty)} ${formatUnit(null, shiftProducedQty)}`}
+        </strong>
+      </button>
+      <button
+        type="button"
+        className="pcp-pub__hero-metric"
+        onClick={onOpenDowntime}
+        title={`Paradas apontadas no ${shiftLabelLower} neste posto — clique para ver motivos`}
+      >
+        <span className="pcp-pub__hero-metric-label">Paradas · turno</span>
+        <strong className="pcp-pub__hero-metric-value">
+          {downtimeAvailable ? formatHours(downtimeHours) : "—"}
+        </strong>
+      </button>
+    </div>
   );
 }
 
