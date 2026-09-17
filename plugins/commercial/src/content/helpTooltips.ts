@@ -628,8 +628,8 @@ export const CM_HELP = {
     filterCustomer:
       "Um ou mais clientes do recorte (carteira selecionada ou, sem carteira, clientes das carteiras ativas). Vazio = todos os clientes daquele recorte. Com carteira, só entram códigos da membership.",
     otdPage:
-      "Pontualidade comercial das linhas: faturadas comparam DatFat com a data prometida; abertas sem fatura contam atraso a partir do dia prometido.",
-    otdKpi: "OTD %, linhas no prazo e atrasadas no período (faturadas e abertas vencidas/no dia prometido).",
+      "Pontualidade comercial das linhas: faturadas comparam DatFat com a data prometida; abertas sem fatura só contam atraso a partir do dia seguinte ao prometido.",
+    otdKpi: "OTD %, linhas no prazo e atrasadas no período (faturadas e abertas já vencidas após o dia prometido).",
     otdKpiLatePct: "Percentual de linhas atrasadas sobre o total elegível no período.",
     otdKpiLateDays:
       "Distribuição dos dias de atraso (média, P50 e P90) apenas nas linhas classificadas como atrasadas.",
