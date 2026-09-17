@@ -25,6 +25,17 @@ describe("ProductionPulseRealtime wiring", () => {
     );
   });
 
+  it("FirmwareLinksPage atualiza golpes no mapa no ritmo live do operador", () => {
+    const page = readFileSync(join(dir, "../pages/FirmwareLinksPage.tsx"), "utf8");
+    expect(page).toContain("softReloadDevices");
+    expect(page).toContain("useDeviceLiveRefresh");
+    expect(page).toContain("resolveHubDevicesLiveRefreshIntervalMs");
+    expect(page).toMatch(/softReloadDevices[\s\S]*?fetchDevices/);
+    expect(page).not.toMatch(
+      /const softReloadDevices[\s\S]*?fetchFirmwares/,
+    );
+  });
+
   it("FirmwareLinksPage troca de filial mantém canvas (soft refresh)", () => {
     const page = readFileSync(join(dir, "../pages/FirmwareLinksPage.tsx"), "utf8");
     const css = readFileSync(join(dir, "../index.css"), "utf8");

@@ -73,6 +73,7 @@ import { OtaStatusIndicator } from "../components/ota/OtaStatusIndicator";
 import { OtaJobListItem } from "../components/ota/OtaJobListItem";
 import { OtaTargetProgress } from "../components/ota/OtaTargetProgress";
 import { useProductionPulseOtaMonitor } from "../hooks/useProductionPulseOtaMonitor";
+import { useDeviceLiveRefresh } from "../hooks/useDeviceLiveRefresh";
 import { useViewportBucket } from "../hooks/useViewportBucket";
 import {
   useProductionPulseHubSync,
@@ -104,6 +105,7 @@ import { FirmwareDetailPage } from "../pages/FirmwareDetailPage";
 import type { DeviceListItem } from "../types/device";
 import type { DeviceDetailTab } from "../types/detail";
 import { markDeviceDisconnected } from "../utils/markDeviceDisconnected";
+import { resolveHubDevicesLiveRefreshIntervalMs } from "../utils/resolveHubDevicesLiveRefreshIntervalMs";
 import {
   formatAdminEntity,
   hubFocusToPanel,
@@ -472,6 +474,37 @@ export function FirmwareLinksPage({
       // Soft reload: ignore transient errors; hard refresh / next event retries.
     }
   }, [branch]);
+
+  /** Live golpes/métricas no mapa — só devices (+ summary), ritmo do operador. */
+  const softReloadDevices = useCallback(async () => {
+    try {
+      const [devs, summary] = await Promise.all([
+        fetchDevices({ branch }),
+        fetchFirmwareUpdateSummary(branch).catch(() => null),
+      ]);
+      setDevices(devs);
+      if (summary) setUpdateSummary(summary);
+    } catch {
+      // Quiet live tick.
+    }
+  }, [branch]);
+
+  const hubDevicesLiveIntervalMs = useMemo(
+    () => resolveHubDevicesLiveRefreshIntervalMs(devices),
+    [devices],
+  );
+
+  useDeviceLiveRefresh({
+    enabled: devices.length > 0,
+    pollIntervalMs: hubDevicesLiveIntervalMs,
+    onTick: async () => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+        return;
+      }
+      if (linkMode || canvasDragging) return;
+      await softReloadDevices();
+    },
+  });
 
   const reloadJobs = useCallback(
     async (opts?: { soft?: boolean }) => {
