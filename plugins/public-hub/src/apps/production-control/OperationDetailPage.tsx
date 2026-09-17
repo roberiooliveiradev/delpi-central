@@ -14,6 +14,7 @@ import {
   resolveStatus,
   useDrawingObjectUrl,
   VisualModeTabs,
+  WorkCenterShiftMetrics,
   type VisualMode,
 } from "./cockpitShared";
 import { ProductModelViewer } from "./ProductModelViewer";
@@ -28,6 +29,15 @@ type Props = {
   operation: MachineLoadOperation;
   position: number;
   queueSize: number;
+  workCenter: string;
+  workCenterName: string;
+  shiftLabel: string;
+  shiftPct: number | null;
+  shiftProducedQty: number | null;
+  downtimeHours: number | null;
+  downtimeAvailable: boolean;
+  onOpenPerformance: () => void;
+  onOpenDowntime: () => void;
   onBack: () => void;
   onPrevious?: () => void;
   onNext?: () => void;
@@ -43,6 +53,15 @@ export function OperationDetailPage({
   operation,
   position,
   queueSize,
+  workCenter,
+  workCenterName,
+  shiftLabel,
+  shiftPct,
+  shiftProducedQty,
+  downtimeHours,
+  downtimeAvailable,
+  onOpenPerformance,
+  onOpenDowntime,
   onBack,
   onPrevious,
   onNext,
@@ -82,7 +101,9 @@ export function OperationDetailPage({
   return (
     <section className="pcp-pub pcp-pub--detail">
       <BrandBar
+        eyebrow={workCenterName || "Centro de trabalho"}
         title={`OP ${operation.production_order}`}
+        code={workCenter}
         titleExtra={
           <CopyValueButton value={operation.production_order} label="Copiar OP" />
         }
@@ -93,6 +114,17 @@ export function OperationDetailPage({
             ) : null}
             {status.label}
           </span>
+        }
+        metrics={
+          <WorkCenterShiftMetrics
+            shiftLabel={shiftLabel}
+            shiftPct={shiftPct}
+            shiftProducedQty={shiftProducedQty}
+            downtimeHours={downtimeHours}
+            downtimeAvailable={downtimeAvailable}
+            onOpenPerformance={onOpenPerformance}
+            onOpenDowntime={onOpenDowntime}
+          />
         }
         lead={
           <button
@@ -150,6 +182,18 @@ export function OperationDetailPage({
               </span>
             </h2>
 
+            <div className="pcp-pub__detail-op-product" aria-label="Produto da OP">
+              <span className="pcp-pub__detail-op-product-label">Produto da OP</span>
+              <strong className="pcp-pub__detail-op-product-code">
+                {operation.product_code || "—"}
+              </strong>
+              {operation.product_description?.trim() ? (
+                <span className="pcp-pub__detail-op-product-desc">
+                  {operation.product_description}
+                </span>
+              ) : null}
+            </div>
+
             {status.operatorNote ? (
               <p className="pcp-pub__detail-operator">{status.operatorNote}</p>
             ) : null}
@@ -159,11 +203,6 @@ export function OperationDetailPage({
                 {operation.operation_code} · {operation.operation_description}
               </Fact>
               <Fact label="Ferramenta">{operation.tool || "—"}</Fact>
-              <Fact label="Recurso">{operation.resource || "—"}</Fact>
-              <Fact label="Produto da OP" wide>
-                {operation.product_code}
-                <span className="pcp-pub__fact-sub">{operation.product_description}</span>
-              </Fact>
             </dl>
 
             <h3 className="pcp-pub__detail-section">Quantidades</h3>
@@ -173,16 +212,11 @@ export function OperationDetailPage({
                 {formatUnit(operation.unit, operation.planned_qty)}
               </Fact>
               <Fact label="Produzida">
-                {appointments.loading ? (
-                  "…"
-                ) : producedQty == null ? (
-                  "—"
-                ) : (
-                  <>
-                    {formatQty(producedQty)} {formatUnit(operation.unit, producedQty)}
-                    <span className="pcp-pub__fact-sub">apontada nesta operação</span>
-                  </>
-                )}
+                {appointments.loading
+                  ? "…"
+                  : producedQty == null
+                    ? "—"
+                    : `${formatQty(producedQty)} ${formatUnit(operation.unit, producedQty)}`}
               </Fact>
               <Fact label="Pendente" emphasis>
                 {appointments.loading ? (
@@ -446,19 +480,13 @@ function Fact({
   label,
   children,
   emphasis,
-  wide,
 }: {
   label: string;
   children: ReactNode;
   emphasis?: boolean;
-  wide?: boolean;
 }) {
   return (
-    <div
-      className={`pcp-pub__fact${emphasis ? " pcp-pub__fact--emphasis" : ""}${
-        wide ? " pcp-pub__fact--wide" : ""
-      }`}
-    >
+    <div className={`pcp-pub__fact${emphasis ? " pcp-pub__fact--emphasis" : ""}`}>
       <dt>{label}</dt>
       <dd>{children}</dd>
     </div>
