@@ -1,3 +1,5 @@
+import { Factory, Radio, RefreshCw, RotateCcw } from "lucide-react";
+
 import type { DeviceListItem } from "../../types/device";
 import type { LivePollResult } from "../../types/detail";
 import type { LiveConnectivityIssue } from "../../hooks/useDeviceDetail";
@@ -50,6 +52,12 @@ export function DeviceMetricHero({
   const showConnectivityWarning = Boolean(liveConnectivityIssue) || deviceOffline;
   const warningMessage =
     liveConnectivityIssue?.message || PP_HELP.detail.liveOfflineFallback;
+  const refreshLabel = refreshing
+    ? PP_HELP.detail.pollNowLoading
+    : PP_HELP.detail.refreshLiveAction;
+  const pollLabel = refreshing
+    ? PP_HELP.detail.pollNowLoading
+    : PP_HELP.detail.pollNowAction;
 
   return (
     <PpSectionCard title="Métricas ao vivo" hint={PP_HELP.detail.liveMetrics}>
@@ -75,27 +83,66 @@ export function DeviceMetricHero({
           · Poll: {device.pollIntervalMs} ms · {driverLabel(device.driverKey)}
         </p>
         <div className="pp-metric-hero__actions">
-          <PpActionButton variant="ghost" onClick={onRefreshLive} disabled={refreshing}>
-            {refreshing ? "Atualizando…" : "Atualizar"}
-          </PpActionButton>
-          <PpActionButton variant="ghost" onClick={onPollNow} disabled={refreshing}>
-            Poll agora
-          </PpActionButton>
-          {supportsReset && canCommand ? (
+          <PpHintAction
+            hint={PP_HELP.detail.refreshLive}
+            ariaLabel={`Ajuda: ${PP_HELP.detail.refreshLiveAction}`}
+          >
             <PpActionButton
               variant="ghost"
-              onClick={onReset}
-              disabled={refreshing || !device.online}
+              className="pp-metric-hero__btn pp-metric-hero__btn--accent"
+              onClick={onRefreshLive}
+              disabled={refreshing}
             >
-              Reset contador
+              <RefreshCw
+                size={16}
+                aria-hidden
+                className={refreshing ? "pp-spin" : undefined}
+              />
+              {refreshLabel}
             </PpActionButton>
+          </PpHintAction>
+          <PpHintAction
+            hint={PP_HELP.detail.pollNow}
+            ariaLabel={`Ajuda: ${PP_HELP.detail.pollNowAction}`}
+          >
+            <PpActionButton
+              variant="ghost"
+              className="pp-metric-hero__btn pp-metric-hero__btn--info"
+              onClick={onPollNow}
+              disabled={refreshing}
+            >
+              <Radio size={16} aria-hidden />
+              {pollLabel}
+            </PpActionButton>
+          </PpHintAction>
+          {supportsReset && canCommand ? (
+            <PpHintAction
+              hint={PP_HELP.detail.resetCounter}
+              ariaLabel={`Ajuda: ${PP_HELP.detail.resetCounterAction}`}
+            >
+              <PpActionButton
+                variant="ghost"
+                className="pp-metric-hero__btn pp-metric-hero__btn--warning"
+                onClick={onReset}
+                disabled={refreshing || !device.online}
+              >
+                <RotateCcw size={16} aria-hidden />
+                {PP_HELP.detail.resetCounterAction}
+              </PpActionButton>
+            </PpHintAction>
           ) : null}
           {supportsFactoryReset && canCommand && onFactoryReset ? (
             <PpHintAction
               hint={PP_HELP.detail.factoryReset}
               ariaLabel={`Ajuda: ${PP_HELP.detail.factoryResetAction}`}
             >
-              <PpActionButton variant="ghost" onClick={onFactoryReset} disabled={refreshing}>
+              <PpActionButton
+                variant="ghost"
+                className="pp-metric-hero__btn pp-metric-hero__btn--danger"
+                onClick={onFactoryReset}
+                disabled={refreshing}
+              >
+                <Factory size={16} aria-hidden />
                 {PP_HELP.detail.factoryResetAction}
               </PpActionButton>
             </PpHintAction>

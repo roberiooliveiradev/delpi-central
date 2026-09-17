@@ -246,6 +246,28 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("components/detail/DeviceMetricHero.tsx")).not.toMatch(
       /title=\{PP_HELP\.detail\.factoryReset\}/,
     );
+    expect(readRelative("components/detail/DeviceMetricHero.tsx")).toMatch(
+      /PP_HELP\.detail\.refreshLive/,
+    );
+    expect(readRelative("components/detail/DeviceMetricHero.tsx")).toMatch(
+      /PP_HELP\.detail\.pollNow/,
+    );
+    expect(readRelative("components/detail/DeviceMetricHero.tsx")).toMatch(
+      /PP_HELP\.detail\.resetCounter/,
+    );
+    expect(readRelative("components/detail/DeviceMetricHero.tsx")).toMatch(
+      /pp-metric-hero__btn--warning/,
+    );
+    expect(readRelative("components/detail/DeviceMetricHero.tsx")).toMatch(
+      /pp-metric-hero__btn--danger/,
+    );
+    expect(readRelative("components/detail/DeviceMetricHero.tsx")).toMatch(
+      /\bRefreshCw\b|\bRadio\b|\bRotateCcw\b|\bFactory\b/,
+    );
+    expect(readRelative("content/helpTooltips.ts")).toMatch(/refreshLive:/);
+    expect(readRelative("content/helpTooltips.ts")).toMatch(/resetCounterAction:/);
+    expect(readRelative("index.css")).toMatch(/\.pp-metric-hero__btn--warning/);
+    expect(readRelative("index.css")).toMatch(/\.pp-metric-hero__btn--danger/);
     expect(readRelative("utils/firmwareLinkGraph.ts")).toMatch(/compatibleDriverKeys/);
     expect(readRelative("utils/firmwareLinkGraph.ts")).toMatch(/isFirmwareDeviceCompatible/);
     expect(readRelative("utils/firmwareLinkGraph.ts")).not.toMatch(/"inherited"|kind: "inherited"/);

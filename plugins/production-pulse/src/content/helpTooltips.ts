@@ -235,6 +235,9 @@ export const PP_HELP = {
       "Histórico paginado de polls e comandos gravados no banco (resolução raw). Raw antigo pode ser purgado pela retenção; o gráfico longo usa rollups.",
     commandsTable:
       "Quem executou cada comando, quando e se o hardware respondeu com sucesso.",
+    refreshLive:
+      "Recarrega a telemetria ao vivo do chip (GET status/métricas) sem gravar um novo poll no histórico.",
+    refreshLiveAction: "Atualizar",
     pollNow: "Força leitura imediata e grava no histórico.",
     pollNowAction: "Atualizar agora",
     pollNowLoading: "Atualizando…",
@@ -242,6 +245,7 @@ export const PP_HELP = {
     closeDetail: "Fecha este detalhe e volta à lista ou ao mapa.",
     resetCounter:
       "Zera o contador no ESP. Use com cuidado — ação registrada em auditoria.",
+    resetCounterAction: "Reset contador",
     factoryReset:
       "Restaura Wi-Fi/token/debounce no chip (EEPROM) e reinicia. Histórico no banco não é apagado.",
     factoryResetAction: "Factory reset",
