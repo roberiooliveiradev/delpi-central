@@ -10,6 +10,7 @@ from production_pulse_app.application.services.device_driver_registry_service im
 from production_pulse_app.domain.services.device_connectivity_status_service import (
     resolve_connectivity_status,
 )
+from production_pulse_app.domain.services.device_led_state import normalize_led_state
 from production_pulse_app.domain.services.device_monotonic_counter_continuity_service import (
     public_metrics,
 )
@@ -77,14 +78,20 @@ class OperatorPlacementService:
             online_count = 0
             by_role: Counter[str] = Counter()
             primary_preview: dict[str, Any] | None = None
+            sample_online: dict[str, Any] | None = None
+            sample_any: dict[str, Any] | None = None
 
             for row in device_rows:
                 role_key = str(row.get("role_key") or "")
                 if role_key:
                     by_role[role_key] += 1
                 connectivity = resolve_connectivity_status(row, has_binding=True)
+                if sample_any is None:
+                    sample_any = row
                 if connectivity.get("online"):
                     online_count += 1
+                    if sample_online is None:
+                        sample_online = row
                 if primary_preview is None:
                     metrics = public_metrics(row.get("last_metrics") or {})
                     if isinstance(metrics, dict) and metrics:
@@ -93,6 +100,11 @@ class OperatorPlacementService:
                             "key": metric_key,
                             "value": metrics.get(metric_key),
                         }
+
+            sample = sample_online or sample_any or first
+            sample_connectivity = resolve_connectivity_status(sample, has_binding=True)
+            primary_status = str(sample_connectivity.get("status") or "offline")
+            primary_led_state = normalize_led_state(sample.get("led_state"))
 
             items.append(
                 {
@@ -104,6 +116,8 @@ class OperatorPlacementService:
                     "onlineCount": online_count,
                     "byRole": dict(by_role),
                     "primaryMetricPreview": primary_preview,
+                    "primaryStatus": primary_status,
+                    "primaryLedState": primary_led_state,
                 }
             )
 

@@ -169,6 +169,9 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("content/helpTooltips.ts")).toMatch(/ledState:/);
     expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/ledState/);
     expect(readRelative("components/operator/CounterPadSurface.tsx")).toMatch(/ledState=\{device\.ledState\}/);
+    expect(readRelative("components/operator/OperatorPlacementCard.tsx")).toMatch(/DeviceStatusBadge/);
+    expect(readRelative("components/operator/OperatorPlacementCard.tsx")).toMatch(/primaryLedState/);
+    expect(readRelative("components/operator/OperatorPlacementCard.tsx")).toMatch(/withHint=\{false\}/);
     expect(readRelative("hooks/useDeviceDetail.ts")).toMatch(/liveConnectivityIssue/);
     expect(readRelative("hooks/useDeviceDetail.ts")).toMatch(/isDeviceConnectivityError/);
     expect(readRelative("content/helpTooltips.ts")).toMatch(/liveOfflineTitle/);

@@ -16,7 +16,7 @@ export function OperatorDevicePickCard({ device, onSelect }: OperatorDevicePickC
       <span className="pp-operator-pick-card__badge">{operatorRoleBadgeLabel(device.roleKey)}</span>
       <strong className="pp-operator-pick-card__name">{device.name}</strong>
       <div className="pp-operator-pick-card__footer">
-        <DeviceStatusBadge status={device.status} ledState={device.ledState} />
+        <DeviceStatusBadge status={device.status} ledState={device.ledState} withHint={false} />
         <span className="pp-operator-pick-card__metric">{operatorDevicePreview(device)}</span>
       </div>
     </button>

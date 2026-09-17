@@ -116,7 +116,7 @@ export function GaugeReadoutSurface({
         </div>
 
         <div className="pp-gauge-readout__footer">
-          <DeviceStatusBadge status={device.status} ledState={device.ledState} />
+          <DeviceStatusBadge status={device.status} ledState={device.ledState} withHint={false} />
           <PpActionButton
             variant="ghost"
             className="pp-gauge-readout__sync-btn"

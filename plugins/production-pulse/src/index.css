@@ -1983,6 +1983,41 @@
   height: var(--pp-operator-status-dot);
 }
 
+.dashboard-production-pulse--operator .pp-device-led {
+  font-size: var(--pp-operator-status-font);
+  gap: clamp(4px, 1.2vw, 6px);
+}
+
+.dashboard-production-pulse--operator .pp-device-led__dot {
+  width: var(--pp-operator-status-dot);
+  height: var(--pp-operator-status-dot);
+}
+
+.pp-counter-pad__stage .pp-device-status,
+.pp-counter-pad__stage .pp-device-led {
+  margin-top: clamp(4px, 1vh, 8px);
+  font-size: clamp(0.95rem, 2.8vw, 1.125rem);
+  font-weight: 600;
+}
+
+.pp-counter-pad__stage .pp-device-status__dot,
+.pp-counter-pad__stage .pp-device-led__dot {
+  width: clamp(10px, 2.4vw, 12px);
+  height: clamp(10px, 2.4vw, 12px);
+}
+
+.pp-operator-hub-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.pp-operator-hub-card__status-extra {
+  font-size: var(--pp-font-xs);
+  color: var(--pp-text-muted);
+}
+
 .pp-operator-offline-banner {
   padding: var(--pp-operator-banner-padding);
   border-radius: clamp(10px, 2vw, 14px);

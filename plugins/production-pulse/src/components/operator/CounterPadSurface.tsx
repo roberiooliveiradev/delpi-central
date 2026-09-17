@@ -60,13 +60,14 @@ export function CounterPadSurface({
 
   const applyMetrics = (metrics?: Record<string, number | string>) => {
     if (!metrics) return;
-    setDevice((current) => ({
-      ...current,
-      lastMetrics: metrics,
-      lastSeenAt: new Date().toISOString(),
-      online: true,
-      status: "online",
-    }));
+      setDevice((current) => ({
+        ...current,
+        lastMetrics: metrics,
+        lastSeenAt: new Date().toISOString(),
+        online: true,
+        status: "online",
+        ledState: current.ledState,
+      }));
   };
 
   const runCommand = async (commandKey: string) => {
@@ -144,7 +145,7 @@ export function CounterPadSurface({
           <p className="pp-counter-pad__value">{metricValue}</p>
           {unit ? <p className="pp-counter-pad__unit">{unit}</p> : null}
           <p className="pp-counter-pad__label">{metricDisplayLabel(device)}</p>
-          <DeviceStatusBadge status={device.status} ledState={device.ledState} />
+          <DeviceStatusBadge status={device.status} ledState={device.ledState} withHint={false} />
         </div>
 
         <div className="pp-counter-pad__controls">

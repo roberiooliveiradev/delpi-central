@@ -21,6 +21,8 @@ describe("operatorDisplay", () => {
         onlineCount: 2,
         byRole: { pulse_counter: 1, process_gauge: 2 },
         primaryMetricPreview: null,
+        primaryStatus: "online",
+        primaryLedState: "backend_ok",
       } satisfies OperatorPlacement),
     ).toBe("1 cont · 2 sens · 2 online");
   });

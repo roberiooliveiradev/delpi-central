@@ -14,6 +14,10 @@ export type OperatorPlacement = {
     key: string;
     value: number | string;
   } | null;
+  /** Connectivity sample for hub card badge (prefer online device). */
+  primaryStatus?: DeviceListItem["status"];
+  /** LED sample from the same device when available. */
+  primaryLedState?: string | null;
 };
 
 export type OperatorDeviceItem = DeviceListItem & {
