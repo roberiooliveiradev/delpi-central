@@ -805,7 +805,13 @@ function FirmwareDeviceLinkCanvasInner({
           }}
           minZoom={0.35}
           maxZoom={1.75}
+          panOnDrag
           panOnScroll
+          zoomOnPinch
+          zoomOnDoubleClick={false}
+          preventScrolling
+          selectionOnDrag={false}
+          nodeDragThreshold={8}
           proOptions={{ hideAttribution: true }}
           aria-label="Canvas de vínculos entre firmwares e dispositivos IoT"
         >

@@ -452,6 +452,11 @@ describe("production-pulse kit contracts", () => {
     expect(canvas).not.toMatch(/Sem nós/);
     expect(canvas).not.toMatch(/variant="empty"/);
     expect(canvas).toMatch(/<ReactFlow/);
+    expect(canvas).toMatch(/panOnDrag/);
+    expect(canvas).toMatch(/zoomOnPinch/);
+    expect(canvas).toMatch(/preventScrolling/);
+    expect(css).toMatch(/\.pp-firmware-link-canvas[\s\S]*touch-action:\s*none/);
+    expect(css).toMatch(/\.react-flow__panel\s*>\s*\*\s*\{[^}]*pointer-events:\s*auto/s);
   });
 
   it("botões do hero usam PpHintAction/PpHeroIconButton + PP_HELP (sem ação órfã)", () => {
