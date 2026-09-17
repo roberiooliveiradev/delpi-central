@@ -529,6 +529,8 @@ FOUNDATION_FREEZE = APPROVED does NOT mean:
 
 **C1-T1 — STANDALONE_API_SKELETON_HEALTH_TEST_FOUNDATION:** physical `delia-api/` Flask skeleton, `/health` liveness, config/logging mínimos e test foundation. `C1_STARTED=YES`. `C1_EXECUTED=NO`. JWT/Core/MFE/manifest/Gateway/Compose **não** entram nesta tarefa.
 
+**C1-T1R1 — RUNTIME_SMOKE_AND_SHUTDOWN_VISIBILITY:** real-process TCP/HTTP `GET /health` smoke + `delia_api_stopped` shutdown visibility. Não redesenha skeleton/health contract. `C1_EXECUTED=NO`. C1-T2 permanece bloqueado até review de T1R1.
+
 - own Flask API skeleton/layers/config/logging/health/tests;
 - JWT/Core integration;
 - own federated React/Vite MFE with plugin-ui/mount/unmount/accessibility;

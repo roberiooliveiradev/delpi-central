@@ -237,6 +237,7 @@ All ACT blocked until C7                        = SUPERSEDED_BY_C5_GOVERNED_ACT_
 | 2026-09-16 | C0.S6-T3 architecture review decision persistence | PLAN_ONLY; ACCEPT_WITH_RESIDUAL; C0.S6=APPROVED; RED_HARNESS=FROZEN_ACCEPTED; C0.S7_AUTHORIZED=YES; TEST_NOT_RUN; no runtime/C0.S7 |
 | 2026-09-17 | C0.S7-T2 Foundation Freeze review decision persistence | PLAN_ONLY; APPROVE_WITH_NON_BLOCKING_RESIDUALS; C0.S7=APPROVED; FOUNDATION_FREEZE=APPROVED; C1_AUTHORIZED=YES; C1_STARTED=NO; TEST_NOT_RUN; no C1 implementation |
 | 2026-09-17 | C1-T1 standalone API skeleton + health + test foundation | RUNTIME; delia-api/ Flask; /health liveness; Chat independence; C1_STARTED=YES; C1_EXECUTED=NO |
+| 2026-09-17 | C1-T1R1 runtime smoke + shutdown visibility | RUNTIME; real-process HTTP /health; delia_api_stopped; Chat independence; C1_EXECUTED=NO |
 
 Actual `HEAD_BEFORE` for **runtime** remains uncaptured (no DÉLIA runtime). Inventory evidence SHA for C0.S0-F is `c6c9c8370d037edfc3529821b9d63e138b153436`. Documentation-only commits do not advance execution status.
 
@@ -1410,6 +1411,55 @@ NO_COMPOSE: TRUE
 NO_BUSINESS_MIGRATIONS: TRUE
 TESTS: delia-api pytest 12 passed
 NEXT: C1-T2 — JWT + CORE EFFECTIVE ACCESS INTEGRATION
+NOTE_SUPERSEDED_BY_6_36: HEALTH/startup evidence refined by C1-T1R1 real-process smoke + shutdown visibility; see §6.36. C1-T2 remains blocked until T1R1 review.
+```
+
+## 6.36 C1-T1R1 — RUNTIME_SMOKE_AND_SHUTDOWN_VISIBILITY
+
+```text
+DATE: 2026-09-17
+STEP: C1-T1R1
+NAME: RUNTIME_SMOKE_AND_SHUTDOWN_VISIBILITY
+STATUS: RUNTIME
+BASE_HEAD: 8ffd4d38d9842190930c3ab090cfbf647880dd01
+ACCEPTED_C1_T1_HEAD: 8ffd4d38d9842190930c3ab090cfbf647880dd01
+POST_BASE_COMMITS: NONE
+PROGRAM: PLANNED / NOT_STARTED
+C0: NOT_STARTED
+C0.S0..C0.S7: APPROVED
+FOUNDATION_FREEZE: APPROVED
+C1_AUTHORIZED: YES
+C1_STARTED: YES
+C1_EXECUTED: NO / NOT_COMPLETE
+API_FOLDER_INDEPENDENT: PASS
+HEALTH: PASS (real-process TCP/HTTP GET /health; not test_client-only)
+NO_CHAT_RUNTIME_DEPENDENCY: PASS
+STARTUP_LOGGING: PASS (delia_api_started)
+SHUTDOWN_VISIBILITY: PASS (delia_api_stopped on SIGTERM/normal exit)
+JWT_VALIDATION: PENDING
+CORE_CONTEXT: PENDING
+MFE_FOLDER_INDEPENDENT: PENDING
+OWN_MANIFEST: PENDING
+OWN_GATEWAY_ROUTE: PENDING
+OWN_COMPOSE_SERVICE: PENDING
+DEV_PROD_ROUTE_PARITY: PENDING
+ROLLBACK_INDEPENDENT: PENDING
+RUNTIME_READINESS: NOT_PROVEN
+PRODUCTION_READINESS: NOT_PROVEN
+DÉLIA_RUNTIME_DIFF: delia-api entrypoint shutdown visibility + runtime smoke tests
+NEW_RUNTIME_ABSTRACTIONS: NONE
+CHAT_RUNTIME_DEPENDENCY: NONE
+BLOCKERS: NONE
+EXECUTION_DRIFT: NONE
+ABSTRACTION_GATE: PASS (local signal/atexit in app.main; no LifecycleManager)
+SMOKE: python -m app.main; dynamic port; urllib GET /health → 200 {"status":"available","service":"delia-api","version":"0.0.1"}; SIGTERM → delia_api_stopped
+TESTS: delia-api pytest suite green including tests/test_runtime_smoke.py
+NO_JWT: TRUE
+NO_CORE: TRUE
+NO_DB: TRUE
+NO_DOCKER_REQUIRED: TRUE
+RUNTIME_CP_PROMOTED_TO_PASS: NO
+NEXT: C1-T2 — JWT + CORE EFFECTIVE ACCESS INTEGRATION (blocked until C1-T1R1 architecture review)
 ```
 
 ## 7. Canonical phase mapping
@@ -1620,4 +1670,4 @@ SAFETY_INTERLOCK_BYPASS
 
 ## 14. First execution
 
-Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1 created the standalone `delia-api/` Flask skeleton and `/health` liveness. `C1_STARTED=YES`. `C1_EXECUTED=NO`. Current next is **C1-T2 — JWT + CORE EFFECTIVE ACCESS INTEGRATION**. JWT/Core/MFE/Gateway/Compose remain pending. `C0=NOT_STARTED`. Runtime/production readiness remain `NOT_PROVEN`.
+Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1 created the standalone `delia-api/` Flask skeleton and `/health` liveness. C1-T1R1 closed real-process HTTP smoke and shutdown visibility (`delia_api_stopped`). `C1_STARTED=YES`. `C1_EXECUTED=NO`. Current next after T1R1 review is **C1-T2 — JWT + CORE EFFECTIVE ACCESS INTEGRATION**. JWT/Core/MFE/Gateway/Compose remain pending. `C0=NOT_STARTED`. Runtime/production readiness remain `NOT_PROVEN`.

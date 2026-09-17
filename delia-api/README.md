@@ -18,4 +18,17 @@ python -m app.main
 
 Health: `GET http://127.0.0.1:8000/health`
 
+Logs de processo (liveness operacional):
+
+```text
+delia_api_started service=delia-api version=... env=...
+delia_api_stopped service=delia-api version=... env=...
+```
+
+Smoke de processo real (TCP/HTTP, não `test_client`):
+
+```bash
+python -m pytest tests/test_runtime_smoke.py -q
+```
+
 `DELIA_DEBUG` permanece `false` por default. Não commitar secrets.
