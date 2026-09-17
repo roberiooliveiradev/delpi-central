@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C1 — next bounded bootstrap after C1-T2R1 review (MFE/manifest/Gateway/Compose)` (`C0.S0..=C0.S7=APPROVED`; `FOUNDATION_FREEZE=APPROVED`; `C1_AUTHORIZED=YES`; `C1_STARTED=YES`; `C1_EXECUTED=NO`; `JWT_VALIDATION/CORE_CONTEXT` evidence in ledger §6.37–§6.38; C0 permanece `NOT_STARTED`; `RUNTIME_READINESS=NOT_PROVEN`)
+**Próxima etapa:** `C1 — next bounded bootstrap after C1-T3 review (manifest/Gateway/Compose)` (`C0.S0..=C0.S7=APPROVED`; `FOUNDATION_FREEZE=APPROVED`; `C1_AUTHORIZED=YES`; `C1_STARTED=YES`; `C1_EXECUTED=NO`; MFE evidence in ledger §6.39; C0 permanece `NOT_STARTED`; `RUNTIME_READINESS=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -337,12 +337,14 @@ RUNTIME_READINESS = NOT_PROVEN
 PRODUCTION_READINESS = NOT_PROVEN
 NEW_BEHAVIORAL_TESTS = TEST_NOT_RUN
 FUTURE_C1_C7_GREEN_EVIDENCE_REQUIRED = YES
-DÉLIA_RUNTIME_DIFF = delia-api skeleton + /health + JWT/Core access context (no production access-context probe)
+DÉLIA_RUNTIME_DIFF = delia-api + plugins/delia federated MFE foundation
 NEW_RUNTIME_ABSTRACTIONS = PlatformAccessPort / CorePlatformAccessAdapter / PlatformAccessContext
-JWT_VALIDATION = PASS (C1-T2/T2R1 evidence)
+JWT_VALIDATION = PASS
 CORE_CONTEXT = PASS (contract/adapter; live Core TEST_NOT_RUN)
-CORE_CONTEXT_LIVE_NETWORK = TEST_NOT_RUN
-NEXT = C1 — next bounded bootstrap after C1-T2R1 review (MFE/manifest/Gateway/Compose)
+MFE_FOLDER_INDEPENDENT = PASS (C1-T3)
+FEDERATED_MOUNT = PASS (C1-T3; Portal registration PENDING)
+PLUGIN_UI = PASS
+NEXT = C1 — next bounded bootstrap after C1-T3 review (manifest/Gateway/Compose)
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -537,6 +539,8 @@ FOUNDATION_FREEZE = APPROVED does NOT mean:
 **C1-T2 — JWT_CORE_EFFECTIVE_ACCESS_INTEGRATION:** shared `jwt_validator` + Core `GET /me` effective access; JWT≠permission authority; fail-closed. `C1_EXECUTED=NO`. MFE/Gateway/Compose deferred.
 
 **C1-T2R1 — REMOVE_PRODUCTION_ACCESS_CONTEXT_PROBE:** remove production `GET /access-context`; preserve JWT/Core contract tests via test-only probe. Architecture T2 preserved. `C1_EXECUTED=NO`.
+
+**C1-T3 — STANDALONE_FEDERATED_MFE_FOUNDATION:** physical `plugins/delia/` federated MFE; `./App` expose; plugin-ui remote; mount/unmount; a11y/responsive baseline; no Chat/media auto-start. Manifest/Gateway/Compose deferred. `C1_EXECUTED=NO`.
 
 - own Flask API skeleton/layers/config/logging/health/tests;
 - JWT/Core integration;

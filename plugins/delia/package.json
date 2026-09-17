@@ -1,0 +1,33 @@
+{
+  "name": "delia",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.app.json --pretty false",
+    "test": "vitest run",
+    "ci": "npm run test && npm run build && npm run verify:federation",
+    "preview": "vite preview",
+    "verify:federation": "node ../vite/verify-federation-react-patch.mjs dist/assets"
+  },
+  "dependencies": {
+    "@originjs/vite-plugin-federation": "^1.4.1",
+    "lucide-react": "^0.576.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "jsdom": "^29.1.1",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.1",
+    "vitest": "^3.2.4"
+  }
+}

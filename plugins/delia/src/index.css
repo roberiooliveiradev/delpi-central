@@ -1,0 +1,54 @@
+.dashboard-delia {
+  --delia-accent: var(--primary, #089bdb);
+  --delia-surface: var(--surface, #ffffff);
+  --delia-text: var(--text, #111111);
+  --delia-text-muted: var(--text-muted, rgba(17, 17, 17, 0.68));
+  --delia-border: var(--border, #e5e7eb);
+  --delia-card-padding: 20px;
+  --delia-section-gap: 20px;
+  --delpi-ui-accent: var(--delia-accent);
+  --delpi-ui-surface: var(--delia-surface);
+  --delpi-ui-text: var(--delia-text);
+  --delpi-ui-border: var(--delia-border);
+  --delpi-ui-muted: var(--delia-text-muted);
+  --delpi-ui-card-padding: var(--delia-card-padding);
+  --delpi-ui-section-gap: var(--delia-section-gap);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+:root[data-theme="dark"] .dashboard-delia {
+  --delia-surface: var(--surface, #1b2030);
+  --delia-text: rgba(255, 255, 255, 0.9);
+  --delia-text-muted: rgba(255, 255, 255, 0.68);
+  --delia-border: rgba(255, 255, 255, 0.12);
+}
+
+.dashboard-delia.dashboard-page {
+  background-color: var(--app-canvas, var(--bg, #f5f7fa));
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--delia-accent) 6%, var(--app-canvas, var(--bg, #f5f7fa))),
+    var(--app-canvas, var(--bg, #f5f7fa)) 240px
+  );
+}
+
+.dashboard-delia .delia-page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--delia-section-gap);
+  padding: clamp(16px, 3vw, 24px);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.dashboard-delia .delia-host-meta {
+  margin: 0;
+  color: var(--delia-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
