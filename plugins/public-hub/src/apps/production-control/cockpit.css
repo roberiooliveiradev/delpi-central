@@ -1789,13 +1789,6 @@
   word-break: break-word;
 }
 
-.pcp-pub__detail-operator {
-  margin: 6px 0 0;
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--pcp-running);
-}
-
 .pcp-pub__detail-section {
   margin: 22px 0 0;
   font-size: 0.72rem;
@@ -1839,8 +1832,44 @@
   color: var(--pcp-title);
 }
 
+.pcp-pub__facts--qty {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  align-items: stretch;
+}
+
+.pcp-pub__facts--qty .pcp-pub__fact {
+  padding: 10px 10px 12px;
+  border: 1px solid var(--pcp-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--pcp-surface) 88%, var(--pcp-accent) 4%);
+}
+
+.pcp-pub__facts--qty .pcp-pub__fact dd {
+  margin-top: 4px;
+  font-size: clamp(0.95rem, 1.8vw, 1.1rem);
+  line-height: 1.15;
+  word-break: break-word;
+}
+
+.pcp-pub__facts--qty .pcp-pub__fact--emphasis {
+  border-color: color-mix(in srgb, var(--pcp-accent) 42%, var(--pcp-border));
+  background: color-mix(in srgb, var(--pcp-accent) 12%, var(--pcp-surface));
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--pcp-accent) 18%, transparent);
+}
+
+.pcp-pub__facts--qty .pcp-pub__fact--emphasis dt {
+  color: var(--pcp-accent);
+}
+
 .pcp-pub__fact--emphasis dd {
   font-size: 1.25rem;
+  color: var(--pcp-accent);
+}
+
+.pcp-pub__facts--qty .pcp-pub__fact--emphasis dd {
+  font-size: clamp(1.15rem, 2.4vw, 1.4rem);
+  font-weight: 800;
   color: var(--pcp-accent);
 }
 
@@ -1852,6 +1881,45 @@
 
 .pcp-pub__detail-actions {
   margin: 18px 0 0;
+}
+
+.pcp-pub__icon-btn {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--pcp-accent) 45%, transparent);
+  border-radius: 12px;
+  color: var(--pcp-accent);
+  background: color-mix(in srgb, var(--pcp-accent) 10%, transparent);
+  cursor: pointer;
+}
+
+.pcp-pub__icon-btn:hover,
+.pcp-pub__icon-btn:focus-visible {
+  border-color: var(--pcp-accent);
+  background: color-mix(in srgb, var(--pcp-accent) 18%, transparent);
+  outline: none;
+}
+
+.pcp-pub__icon-btn-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 20px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+  background: var(--pcp-accent);
+  box-shadow: 0 1px 4px rgba(3, 40, 70, 0.25);
 }
 
 .pcp-pub-modal {
