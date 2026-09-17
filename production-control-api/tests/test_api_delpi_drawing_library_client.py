@@ -66,7 +66,7 @@ def test_404_is_drawing_not_found(monkeypatch: pytest.MonkeyPatch) -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(
             404,
-            json={"message": "Desenho não encontrado para este PA."},
+            json={"message": "Desenho não encontrado para este produto."},
             request=request,
         )
 

@@ -18,7 +18,7 @@
   "drawingMessages": {
     "paCodeRequired": "Informe o código do PA.",
     "paNotInMap": "Este PA não está no mapa de entrega congelado desta filial.",
-    "drawingNotFound": "Desenho não encontrado para este PA."
+    "drawingNotFound": "Desenho não encontrado para este produto."
   },
   "publicDeliveryMap": {
     "token": "aberto",

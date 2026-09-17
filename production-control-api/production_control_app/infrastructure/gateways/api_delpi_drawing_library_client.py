@@ -59,7 +59,7 @@ class ApiDelpiDrawingLibraryClient(DrawingLibraryPort):
             ) from exc
 
         if response.status_code == 404:
-            raise DrawingNotFound("Desenho não encontrado para este PA.")
+            raise DrawingNotFound("Desenho não encontrado para este produto.")
         if response.status_code == 503:
             detail = self._message_from_body(response) or (
                 "Biblioteca de desenhos indisponível: pasta não montada no servidor."

@@ -139,7 +139,7 @@ export async function fetchPublicDrawingPdf(
     headers: { Accept: "application/pdf" },
   });
   if (!response.ok) {
-    throw new Error(await readError(response, "Desenho não encontrado para este PA."));
+    throw new Error(await readError(response, "Desenho não encontrado para este produto."));
   }
   return response.blob();
 }
@@ -496,7 +496,7 @@ export async function fetchPublicDeliveryMapDrawingPdf(
     headers: { Accept: "application/pdf" },
   });
   if (!response.ok) {
-    throw new Error(await readError(response, "Desenho não encontrado para este PA."));
+    throw new Error(await readError(response, "Desenho não encontrado para este produto."));
   }
   return response.blob();
 }

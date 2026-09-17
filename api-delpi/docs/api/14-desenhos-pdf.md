@@ -58,7 +58,7 @@ A pasta `minha-delpi-ai-api/desenhos/` permanece para testes locais/OCR offline 
 
 Permissão: `api-delpi.access` (`API_DELPI_ACCESS`).
 
-O cockpit público do operador (`public-hub` → `production-control-api`) valida o PA na fila publicada e **consome** `GET /products/{code}/drawing/pdf` da api-delpi (S2S / JWT). A api-delpi aplica AuthZ `API_DELPI_ACCESS` e resolve o arquivo no FILESERVER. Resolução de arquivo é técnica (server-resolved), não “revisão oficial aprovada”.
+O cockpit público do operador (`public-hub` → `production-control-api`) valida o código na fila publicada e **consome** `GET /products/{code}/drawing/pdf` da api-delpi (S2S / JWT). A api-delpi aplica AuthZ `API_DELPI_ACCESS` e resolve o arquivo no FILESERVER. Resolução de arquivo é técnica (server-resolved), não “revisão oficial aprovada”.
 
 ### Falhas de fonte vs produto sem desenho
 

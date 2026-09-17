@@ -85,6 +85,6 @@ class DeliveryMapDrawingService:
             detail = str(exc).strip()
             fallback = delivery_map_message(
                 "drawingNotFound",
-                "Desenho não encontrado para este PA.",
+                "Desenho não encontrado para este produto.",
             )
             raise DrawingNotFound(detail or fallback) from None

@@ -31,7 +31,7 @@ export function DeliveryMapPublicDrawingViewer({ token, branch, paCode, onClose 
       .catch((err: unknown) => {
         if (!active) return;
         setStatus("error");
-        setMessage(err instanceof Error ? err.message : "Desenho não encontrado para este PA.");
+        setMessage(err instanceof Error ? err.message : "Desenho não encontrado para este produto.");
       });
 
     return () => {

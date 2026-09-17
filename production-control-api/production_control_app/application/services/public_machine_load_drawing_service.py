@@ -48,6 +48,6 @@ class PublicMachineLoadDrawingService:
             detail = str(exc).strip()
             fallback = self._access.message(
                 "drawingNotFound",
-                "Desenho não encontrado para este PA.",
+                "Desenho não encontrado para este produto.",
             )
             raise DrawingNotFound(detail or fallback) from None

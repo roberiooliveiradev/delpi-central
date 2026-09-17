@@ -163,7 +163,7 @@ export function useDrawingObjectUrl(token: string, branch: string, paCode: strin
       .catch((err: unknown) => {
         if (!active) return;
         setStatus("error");
-        setMessage(err instanceof Error ? err.message : "Desenho não encontrado para este PA.");
+        setMessage(err instanceof Error ? err.message : "Desenho não encontrado para este produto.");
       });
 
     return () => {
