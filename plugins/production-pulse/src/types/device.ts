@@ -56,6 +56,8 @@ export type DeviceListItem = {
   wifiSsid?: string | null;
   debounceMs?: number | null;
   apiTokenSet?: boolean;
+  /** Present on GET/create/replace detail for managers — never on list. */
+  apiToken?: string | null;
   driverKey: string;
   roleKey: string;
   enabled: boolean;

@@ -144,7 +144,7 @@ class DeviceService:
         force_ota_provision: bool = False,
         previous_row: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        api_payload = json_safe(device_row_to_api(row))
+        api_payload = json_safe(device_row_to_api(row, include_api_token=True))
         api_payload["deviceConfigPush"] = self._config_push.push_after_save(
             row,
             request_payload=payload,
@@ -156,11 +156,18 @@ class DeviceService:
     def _capabilities_for(self, driver_key: str) -> dict[str, Any]:
         return self._driver_registry.build_capabilities(driver_key)
 
-    def _enrich_connectivity(self, row: dict[str, Any], *, has_binding: bool) -> dict[str, Any]:
+    def _enrich_connectivity(
+        self,
+        row: dict[str, Any],
+        *,
+        has_binding: bool,
+        include_api_token: bool = False,
+    ) -> dict[str, Any]:
         payload = json_safe(
             device_row_to_api(
                 row,
                 capabilities=self._capabilities_for(row["driver_key"]),
+                include_api_token=include_api_token,
             )
         )
         connectivity = resolve_connectivity_status(row, has_binding=has_binding)
@@ -208,7 +215,9 @@ class DeviceService:
         if row is None:
             raise DeviceNotFoundError(str(device_id))
         has_binding = self._binding_repository.get_active(device_id) is not None
-        payload = self._enrich_connectivity(row, has_binding=has_binding)
+        payload = self._enrich_connectivity(
+            row, has_binding=has_binding, include_api_token=True
+        )
         payload["binding"] = self._binding_service.get_active_binding(device_id)
         return payload
 

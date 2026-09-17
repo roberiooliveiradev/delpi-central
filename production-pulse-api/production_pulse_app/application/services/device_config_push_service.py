@@ -58,11 +58,16 @@ def request_changes_chip_config(
     if not isinstance(request_payload, dict) or not request_payload:
         return False
 
-    # Write-only secrets: present + non-empty means operator set a new value.
+    # Write-only secrets: present + non-empty means operator set a new value —
+    # but echo of the same persisted token must not force a chip push.
     if _payload_has(request_payload, "api_token", "apiToken"):
         token = _payload_get(request_payload, "api_token", "apiToken")
         if token is not None and str(token).strip():
-            return True
+            new_token = str(token).strip()
+            old_token = _norm_str(device_row.get("device_api_token"))
+            if old_token != new_token:
+                return True
+            # Same token echoed from GET — not a rotation.
 
     if _payload_has(request_payload, "wifi_password", "wifiPassword"):
         password = _payload_get(request_payload, "wifi_password", "wifiPassword")

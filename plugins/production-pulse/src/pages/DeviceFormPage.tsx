@@ -103,6 +103,7 @@ export function DeviceFormPage({
     controllerCode: string;
     ipAddress: string;
   } | null>(null);
+  const [tokenBaseline, setTokenBaseline] = useState("");
 
   const [testLoading, setTestLoading] = useState(false);
   const [testResult, setTestResult] = useState<ProbeResult | null>(null);
@@ -128,12 +129,13 @@ export function DeviceFormPage({
           wifiSsid: row.wifiSsid ?? "",
           wifiPassword: "",
           debounceMs: row.debounceMs != null ? String(row.debounceMs) : "",
-          apiToken: "",
+          apiToken: typeof row.apiToken === "string" ? row.apiToken : "",
           apiTokenSet: Boolean(row.apiTokenSet),
           driverKey: row.driverKey,
           pollIntervalMs: row.pollIntervalMs,
           enabled: row.enabled,
         });
+        setTokenBaseline(typeof row.apiToken === "string" ? row.apiToken.trim() : "");
         setIdentityBaseline({
           controllerCode: row.controllerCode ?? "",
           ipAddress: row.ipAddress,
@@ -260,14 +262,19 @@ export function DeviceFormPage({
         setDevice((prev) => ({
           ...prev,
           wifiPassword: "",
-          // Keep session token after failed chip push so Mostrar/Copiar still work
-          // (cadastro may already store it; GET never returns plaintext).
-          apiToken: deviceToSave.apiToken.trim(),
+          apiToken:
+            typeof saved.apiToken === "string" && saved.apiToken.trim()
+              ? saved.apiToken.trim()
+              : deviceToSave.apiToken.trim(),
           apiTokenSet: Boolean(saved.apiTokenSet),
           wifiSsid: saved.wifiSsid ?? prev.wifiSsid,
           debounceMs:
             saved.debounceMs != null ? String(saved.debounceMs) : prev.debounceMs,
         }));
+        setTokenBaseline(
+          (typeof saved.apiToken === "string" && saved.apiToken.trim()) ||
+            deviceToSave.apiToken.trim(),
+        );
         setIdentityBaseline({
           controllerCode: saved.controllerCode ?? deviceToSave.controllerCode,
           ipAddress: saved.ipAddress ?? deviceToSave.ipAddress,
@@ -405,6 +412,7 @@ export function DeviceFormPage({
             allowedBranches={permissions.allowedBranches}
             readOnlyBranch={mode === "edit"}
             identityBaseline={identityBaseline}
+            tokenBaseline={tokenBaseline}
             errors={errors}
             onChange={(patch) => setDevice((current) => ({ ...current, ...patch }))}
             onTestConnection={() => void runTestConnection()}

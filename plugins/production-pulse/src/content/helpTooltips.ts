@@ -90,13 +90,13 @@ export const PP_HELP = {
     debounceMs:
       "Tempo de debounce dos botões no ESP (ms). Em branco no cadastro = default do firmware.",
     apiToken:
-      "Segredo compartilhado plataforma↔chip (header X-Device-Token). Na criação o token é gerado automaticamente se você não preencher. Em branco na edição = mantém o já gravado (não apaga). O valor salvo nunca é reexibido — use «Gerar token» para um novo e copie antes de salvar.",
+      "Segredo compartilhado plataforma↔chip (header X-Device-Token). Na criação o token é gerado automaticamente se você não preencher. No detalhe do device o valor gravado volta ao campo (mascarado) e pode ser mostrado/copiado. Em branco na edição = mantém o já gravado.",
     apiTokenSetHint:
-      "Token configurado neste cadastro. Deixe em branco para manter. Atualizações só de poll/nome não falam com o chip. Para realinhar o IoT (ou copiar um valor), gere um novo token e salve.",
+      "Token configurado neste cadastro. Use mostrar/copiar no valor do campo. Gere um novo só para rotacionar o segredo no chip.",
     apiTokenMissingHint:
       "Nenhum token neste cadastro. Ao salvar, a API gera um automaticamente e tenta enviá-lo ao chip.",
     apiTokenPendingSaveHint:
-      "Novo token na sessão — ainda não salvo. Use mostrar/copiar agora; após salvar o campo limpa e o status fica «Configurado».",
+      "Novo token na sessão — ainda não salvo (ou diferente do gravado). Após salvar com sucesso, o valor permanece no campo como «Configurado».",
     apiTokenStatusConfigured: "Configurado",
     apiTokenStatusMissing: "Ausente",
     apiTokenStatusPendingSave: "Novo (não salvo)",
@@ -106,13 +106,13 @@ export const PP_HELP = {
     apiTokenCopyDone: "Copiado",
     apiTokenCopyFailed: "Falha ao copiar",
     apiTokenShowHelp:
-      "Revela o valor digitado ou gerado nesta sessão. O token já salvo no cadastro nunca é reexibido — use «Gerar token» se precisar ver/copiar um segredo.",
+      "Mostra ou oculta o token no campo. O valor gravado no cadastro é carregado no detalhe do device.",
     apiTokenCopyHelp:
-      "Copia o valor da sessão para a área de transferência. Copie antes de salvar (após salvar com sucesso o campo limpa). Se o envio ao chip falhar, o valor permanece para você copiar.",
+      "Copia o token do campo para a área de transferência.",
     apiTokenGenerateHelp:
-      "Gera um novo segredo nesta sessão. Copie antes de salvar — a API autentica no chip com o token anterior e envia o novo no corpo. Após salvar com sucesso o campo limpa e o status fica «Configurado».",
+      "Gera um novo segredo no campo. Ao salvar, a API autentica no chip com o token anterior e envia o novo no corpo.",
     apiTokenCopyDisabledHint:
-      "Gere um novo token para poder mostrar ou copiar (o valor salvo não é revelado).",
+      "Não há valor no campo para mostrar ou copiar.",
     apiTokenIdentityDirtyHint:
       "Código do controlador ou IP alterados — ao salvar, o token do cadastro será reenviado ao chip (re-provision). Gere um novo só se quiser rotacionar o segredo.",
     generateApiTokenAction: "Gerar token",

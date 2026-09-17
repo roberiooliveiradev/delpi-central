@@ -46,6 +46,8 @@ type DeviceFormProps = {
   readOnlyBranch?: boolean;
   /** Loaded controller/IP for edit — detects hardware re-provision. */
   identityBaseline?: { controllerCode: string; ipAddress: string } | null;
+  /** Token returned by GET/create — distinguishes Configurado vs Novo. */
+  tokenBaseline?: string;
   errors?: Partial<Record<keyof DeviceFormValues, string>>;
   onChange: (patch: Partial<DeviceFormValues>) => void;
   onTestConnection?: () => void;
@@ -83,6 +85,7 @@ export function DeviceForm({
   allowedBranches,
   readOnlyBranch,
   identityBaseline,
+  tokenBaseline = "",
   errors,
   onChange,
   onTestConnection,
@@ -96,6 +99,7 @@ export function DeviceForm({
   const tokenStatus = resolveDeviceApiTokenFieldStatus({
     apiToken: device.apiToken,
     apiTokenSet: device.apiTokenSet,
+    baselineToken: tokenBaseline,
   });
   const canReveal = canRevealDeviceApiToken(device.apiToken);
   const canCopy = canCopyDeviceApiToken(device.apiToken);
@@ -115,11 +119,13 @@ export function DeviceForm({
   }, [device.controllerCode, device.ipAddress, identityBaseline]);
 
   const tokenPlaceholder =
-    tokenStatus === "configured"
+    tokenStatus === "configured" && !device.apiToken.trim()
       ? "•••••••• (configurado — deixe em branco para manter)"
       : tokenStatus === "missing"
         ? "Será gerado automaticamente ao salvar"
-        : "Novo token — copie antes de salvar";
+        : tokenStatus === "pending_save"
+          ? "Novo token — ainda não salvo"
+          : "";
 
   const onCopyToken = async () => {
     if (!canCopy) return;
@@ -282,7 +288,9 @@ export function DeviceForm({
               {ppFieldError(errors?.apiToken)}
               {tokenStatus === "missing" ? ppFieldHint(PP_HELP.form.apiTokenMissingHint) : null}
               {identityDirty ? ppFieldHint(PP_HELP.form.apiTokenIdentityDirtyHint) : null}
-              {!canCopy ? ppFieldHint(PP_HELP.form.apiTokenCopyDisabledHint) : null}
+              {!canCopy && tokenStatus === "configured"
+                ? ppFieldHint(PP_HELP.form.apiTokenCopyDisabledHint)
+                : null}
             </>
           }
           trailing={

@@ -140,14 +140,21 @@ def test_create_device_persists_wifi_and_token_mirror(client, unique_ip):
     assert data["wifiSsid"] == "PlantNet"
     assert data["debounceMs"] == 120
     assert data["apiTokenSet"] is True
-    assert "apiToken" not in data
+    assert data["apiToken"] == "tok-abc"
     assert "wifiPassword" not in data
     assert data["deviceConfigPush"]["status"] in {"ok", "skipped", "failed"}
 
     fetched = client.get(f"/devices/{data['id']}")
     body = fetched.json()["data"]
     assert body["apiTokenSet"] is True
-    assert "apiToken" not in body
+    assert body["apiToken"] == "tok-abc"
+    assert "wifiPassword" not in body
+
+    listed = client.get("/devices", params={"branch": "01"})
+    assert listed.status_code == 200
+    item = next(row for row in listed.json()["data"]["items"] if row["id"] == data["id"])
+    assert item["apiTokenSet"] is True
+    assert "apiToken" not in item
 
 
 def test_create_device_auto_generates_token_when_omitted(client, unique_ip):
@@ -163,11 +170,11 @@ def test_create_device_auto_generates_token_when_omitted(client, unique_ip):
     assert created.status_code == 201
     data = created.json()["data"]
     assert data["apiTokenSet"] is True
-    assert "apiToken" not in data
+    assert isinstance(data.get("apiToken"), str) and len(data["apiToken"]) > 8
 
     fetched = client.get(f"/devices/{data['id']}")
     assert fetched.json()["data"]["apiTokenSet"] is True
-    assert "apiToken" not in fetched.json()["data"]
+    assert fetched.json()["data"]["apiToken"] == data["apiToken"]
 
 
 def test_replace_does_not_regenerate_existing_token(client, unique_ip, monkeypatch):
@@ -207,5 +214,5 @@ def test_replace_does_not_regenerate_existing_token(client, unique_ip, monkeypat
     )
     assert replaced.status_code == 200
     assert replaced.json()["data"]["apiTokenSet"] is True
-    assert "apiToken" not in replaced.json()["data"]
+    assert replaced.json()["data"]["apiToken"] == "keep-me-token"
     assert calls == []

@@ -1,4 +1,4 @@
-/** Client-side device API token helpers (session UX only — API remains canonical). */
+/** Device API token field helpers (cadastro may return plaintext on GET detail). */
 
 export type DeviceApiTokenFieldStatus = "configured" | "missing" | "pending_save";
 
@@ -12,17 +12,20 @@ export function generateDeviceApiToken(): string {
 export function resolveDeviceApiTokenFieldStatus(input: {
   apiToken: string;
   apiTokenSet: boolean;
+  /** Token loaded from GET/create response — unchanged value stays «Configurado». */
+  baselineToken?: string;
 }): DeviceApiTokenFieldStatus {
-  if (input.apiToken.trim()) {
+  const current = input.apiToken.trim();
+  const baseline = (input.baselineToken ?? "").trim();
+  if (current && current !== baseline) {
     return "pending_save";
   }
-  if (input.apiTokenSet) {
+  if (input.apiTokenSet || Boolean(baseline)) {
     return "configured";
   }
   return "missing";
 }
 
-/** Session value only — persisted token is never returned by GET. */
 export function canRevealDeviceApiToken(apiToken: string): boolean {
   return Boolean(apiToken.trim());
 }

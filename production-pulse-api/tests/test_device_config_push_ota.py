@@ -70,9 +70,15 @@ def test_request_changes_chip_config_detects_ssid_change():
 
 
 def test_request_changes_chip_config_detects_new_token():
-    row = _device()
+    row = _device(device_api_token="old")
     assert request_changes_chip_config(row, {"apiToken": "new-secret"}) is True
     assert request_changes_chip_config(row, {"apiToken": ""}) is False
+
+
+def test_request_changes_chip_config_ignores_echoed_same_token():
+    row = _device(device_api_token="same-secret")
+    assert request_changes_chip_config(row, {"apiToken": "same-secret"}) is False
+    assert request_changes_chip_config(row, {"apiToken": "same-secret", "pollIntervalMs": 300}) is False
 
 
 def test_push_skips_pulse_only_poll_update(monkeypatch):

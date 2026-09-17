@@ -12,7 +12,11 @@ def device_row_to_api(
     row: dict[str, Any],
     *,
     capabilities: dict[str, Any] | None = None,
+    include_api_token: bool = False,
 ) -> dict[str, Any]:
+    token_raw = str(row.get("device_api_token") or "").strip()
+    # List queries mask presence as "1" — never treat that as a readable secret.
+    token_readable = token_raw if token_raw and token_raw != "1" else ""
     payload = {
         "id": str(row["id"]),
         "branch": row["branch"],
@@ -22,7 +26,7 @@ def device_row_to_api(
         "firmwareSource": row.get("firmware_source"),
         "wifiSsid": row.get("wifi_ssid"),
         "debounceMs": row.get("debounce_ms"),
-        "apiTokenSet": bool(str(row.get("device_api_token") or "").strip()),
+        "apiTokenSet": bool(token_raw),
         "driverKey": row["driver_key"],
         "roleKey": row["role_key"],
         "firmwareKey": row.get("firmware_key") or row["driver_key"],
@@ -43,6 +47,8 @@ def device_row_to_api(
         "createdBy": row.get("created_by"),
         "updatedBy": row.get("updated_by"),
     }
+    if include_api_token and token_readable:
+        payload["apiToken"] = token_readable
     if capabilities is not None:
         payload["capabilities"] = capabilities
     return payload

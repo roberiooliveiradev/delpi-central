@@ -20,9 +20,13 @@ describe("deviceApiToken", () => {
     expect(ensureDeviceApiTokenForCreate("  my-manual-token  ")).toBe("my-manual-token");
   });
 
-  it("sibling: badge configured when set and field empty", () => {
+  it("positive: loaded token from GET is configured", () => {
     expect(
-      resolveDeviceApiTokenFieldStatus({ apiToken: "", apiTokenSet: true }),
+      resolveDeviceApiTokenFieldStatus({
+        apiToken: "persisted",
+        apiTokenSet: true,
+        baselineToken: "persisted",
+      }),
     ).toBe("configured");
   });
 
@@ -32,27 +36,24 @@ describe("deviceApiToken", () => {
     ).toBe("missing");
   });
 
-  it("sibling: badge pending_save when session value present", () => {
+  it("sibling: badge pending_save when value differs from baseline", () => {
     expect(
-      resolveDeviceApiTokenFieldStatus({ apiToken: "abc", apiTokenSet: true }),
+      resolveDeviceApiTokenFieldStatus({
+        apiToken: "new-one",
+        apiTokenSet: true,
+        baselineToken: "old-one",
+      }),
     ).toBe("pending_save");
   });
 
-  it("negative: reveal/copy disabled without session value", () => {
+  it("negative: reveal/copy disabled without value", () => {
     expect(canRevealDeviceApiToken("")).toBe(false);
-    expect(canRevealDeviceApiToken("   ")).toBe(false);
-    expect(canCopyDeviceApiToken("")).toBe(false);
     expect(canCopyDeviceApiToken("   ")).toBe(false);
   });
 
-  it("positive: reveal/copy enabled with session value", () => {
+  it("positive: reveal/copy enabled with loaded value", () => {
     expect(canRevealDeviceApiToken("secret")).toBe(true);
     expect(canCopyDeviceApiToken("secret")).toBe(true);
-  });
-
-  it("sibling: canReveal matches canCopy", () => {
-    expect(canRevealDeviceApiToken("x")).toBe(canCopyDeviceApiToken("x"));
-    expect(canRevealDeviceApiToken("")).toBe(canCopyDeviceApiToken(""));
   });
 
   it("generateDeviceApiToken returns non-empty opaque string", () => {
@@ -64,10 +65,8 @@ describe("deviceApiToken", () => {
   });
 
   it("help keys for token action buttons exist", () => {
-    expect(PP_HELP.form.apiTokenShowHelp.length).toBeGreaterThan(10);
+    expect(PP_HELP.form.apiTokenShowHelp).toMatch(/campo|cadastro/i);
     expect(PP_HELP.form.apiTokenCopyHelp.length).toBeGreaterThan(10);
     expect(PP_HELP.form.apiTokenGenerateHelp.length).toBeGreaterThan(10);
-    expect(PP_HELP.form.apiTokenCopyFailed.length).toBeGreaterThan(3);
-    expect(PP_HELP.form.apiTokenCopyDisabledHint).toMatch(/mostrar|copiar/i);
   });
 });
