@@ -2743,22 +2743,24 @@
 }
 
 .pp-map-overlay-panel {
+  /* % do container React Flow — nunca 100vw (corta o chrome no MFE). */
   margin: 0.75rem !important;
-  max-width: min(22rem, 42vw);
+  max-width: min(22rem, calc(100% - 0.5rem));
 }
 
 .pp-map-overlay-panel--right {
-  max-width: min(20rem, calc(100vw - 1.5rem)) !important;
+  max-width: min(20rem, calc(100% - 1rem)) !important;
 }
 
 .pp-hub-map-chrome {
   display: flex;
   flex-direction: column;
   gap: 0;
-  width: min(20rem, calc(100vw - 1.5rem));
+  width: min(20rem, 100%);
+  max-width: 100%;
   max-height: min(72vh, 36rem);
   border-radius: 12px;
-  background: color-mix(in srgb, var(--pp-surface) 94%, transparent);
+  background: var(--pp-surface);
   border: 1px solid var(--pp-border);
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
   overflow: hidden;
@@ -3472,18 +3474,44 @@
     font-size: var(--pp-font-xs);
   }
 
+  .pp-map-overlay-panel {
+    margin: 0.5rem !important;
+  }
+
   .pp-map-overlay-panel--right {
-    max-width: min(22rem, calc(100vw - 1.25rem)) !important;
+    max-width: calc(100% - 1rem) !important;
     z-index: 6;
   }
 
   /*
-   * Chrome expandido no estreito: ocupa a coluna direita e esconde o piso
-   * (barra de status + Controls) que colidia com busca/filtros.
+   * Chrome expandido: ancora left+right no container do mapa (não usa 100vw).
+   * Evita corte à esquerda e mapa vazando sob o painel.
    */
+  .pp-firmware-link-canvas
+    .react-flow__panel.top.right:has(.pp-hub-map-chrome:not(.pp-hub-map-chrome--collapsed)) {
+    left: 0.5rem;
+    right: 0.5rem;
+    width: auto;
+    max-width: none !important;
+    margin: 0.5rem !important;
+  }
+
   .pp-hub-map-chrome:not(.pp-hub-map-chrome--collapsed) {
+    width: 100%;
+    max-width: 100%;
     max-height: min(calc(100dvh - 5.5rem), 34rem);
-    width: min(22rem, calc(100vw - 1.25rem));
+    background: var(--pp-surface);
+  }
+
+  .pp-hub-map-chrome__body,
+  .pp-hub-map-chrome__filters,
+  .pp-hub-map-chrome__create,
+  .pp-hub-map-chrome__create-anchor {
+    min-width: 0;
+  }
+
+  .pp-hub-map-chrome__create-btn {
+    max-width: 100%;
   }
 
   .pp-firmware-link-canvas:has(.pp-hub-map-chrome:not(.pp-hub-map-chrome--collapsed))

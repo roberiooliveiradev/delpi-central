@@ -470,6 +470,11 @@ describe("production-pulse kit contracts", () => {
     expect(css).toMatch(
       /\.pp-firmware-link-canvas:has\(\.pp-hub-map-chrome:not\(\.pp-hub-map-chrome--collapsed\)\)[\s\S]*\.react-flow__panel\.bottom/,
     );
+    expect(css).toMatch(
+      /\.react-flow__panel\.top\.right:has\(\.pp-hub-map-chrome:not\(\.pp-hub-map-chrome--collapsed\)\)/,
+    );
+    expect(css).toMatch(/max-width:\s*min\(22rem,\s*calc\(100% - 0\.5rem\)\)/);
+    expect(css).not.toMatch(/max-width:\s*min\(22rem,\s*42vw\)/);
     expect(css).toMatch(/max-height:\s*min\(calc\(100dvh - 5\.5rem\)/);
     expect(css).not.toMatch(/\.pp-map-overlay-panel--left/);
     expect(css).not.toMatch(/pp-map-overlay-btn-label/);
