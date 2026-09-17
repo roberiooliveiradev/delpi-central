@@ -65,7 +65,7 @@ export async function fetchAllConsumptionAnalysisItemsForExport(
   params: ConsumptionAnalysisQueryParams,
   options: { signal?: AbortSignal } = {},
 ): Promise<ConsumptionAnalysisItem[]> {
-  const pageSize = MAX_PAGE_SIZE;
+  const requestedPageSize = MAX_PAGE_SIZE;
   let page = 1;
   const items: ConsumptionAnalysisItem[] = [];
 
@@ -73,11 +73,16 @@ export async function fetchAllConsumptionAnalysisItemsForExport(
     const response = await fetchConsumptionAnalysisItems(
       params,
       page,
-      pageSize,
+      requestedPageSize,
       options,
     );
     items.push(...response.items);
-    if (items.length >= response.total || response.items.length < pageSize) {
+    const effectivePageSize = response.page_size || requestedPageSize;
+    if (
+      items.length >= response.total ||
+      response.items.length === 0 ||
+      response.items.length < effectivePageSize
+    ) {
       break;
     }
     page += 1;

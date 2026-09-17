@@ -78,7 +78,8 @@ export async function fetchSafetyStockItems(
     `/items${queryString({
       ...sharedQuery(params),
       page,
-      pageSize,
+      // api-delpi espera snake_case; pageSize camelCase é ignorado e cai no default 50.
+      page_size: pageSize,
       sortBy: params.sortBy,
       sortDirection: params.sortDirection,
     })}`,
@@ -183,7 +184,7 @@ export async function fetchConsumptionAnalysisItems(
     `/consumption-analysis/items${queryString({
       ...analysisSharedQuery(params),
       page,
-      pageSize,
+      page_size: pageSize,
       sortBy: params.sortBy,
       sortDirection: params.sortDirection,
     })}`,
