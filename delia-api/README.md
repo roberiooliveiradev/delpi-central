@@ -5,7 +5,7 @@ Standalone Flask API da DÉLIA. Este diretório é a pasta canônica `delia-api/
 ## Escopo atual
 
 - C1-T1 / C1-T1R1: skeleton + `/health` + logging + smoke de processo
-- C1-T2: JWT fail-closed (shared `delpi_auth.jwt_validator`) + Core `GET /me` effective access
+- C1-T2 / C1-T2R1: JWT fail-closed (shared `delpi_auth.jwt_validator`) + Core `GET /me` effective access (sem probe técnico de produção)
 
 Não inclui: MFE, Gateway, Compose, migrations de negócio, RBAC local da DÉLIA, Domain AuthZ, LLM.
 
@@ -24,14 +24,7 @@ python -m app.main
 
 Health (público, sem JWT/Core): `GET http://127.0.0.1:8000/health`
 
-Probe técnico autenticado (não é API de negócio):
-
-```text
-GET /access-context
-Authorization: Bearer <user-access-token>
-```
-
-Resposta usa permissões efetivas do Core — nunca `token.permissions`.
+Rotas de negócio autenticadas ainda não existem. Evidência JWT/Core fica nos testes (rota só de teste no harness).
 
 Logs de processo:
 

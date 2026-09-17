@@ -16,6 +16,10 @@ from tests.support.jwt_factory import (
     mint_token,
     public_jwk,
 )
+from tests.support.test_access_probe import (
+    TEST_PLATFORM_ACCESS_PATH,
+    register_test_platform_access_probe,
+)
 
 
 @pytest.fixture()
@@ -215,7 +219,13 @@ def test_core_malformed_payload_fails_closed(private_pem):
         adapter.resolve(token)
 
 
-def test_access_context_route_uses_core_not_jwt(private_pem):
+def _app_with_test_probe(*, platform_access_provider):
+    app = create_app(testing=True, platform_access_provider=platform_access_provider)
+    register_test_platform_access_probe(app)
+    return app
+
+
+def test_middleware_establishes_core_backed_context_not_jwt(private_pem):
     class FakeProvider:
         def resolve(self, bearer_token: str) -> PlatformAccessContext:
             assert bearer_token
@@ -229,44 +239,66 @@ def test_access_context_route_uses_core_not_jwt(private_pem):
                 is_superadmin=False,
             )
 
-    app = create_app(testing=True, platform_access_provider=FakeProvider())
+    app = _app_with_test_probe(platform_access_provider=FakeProvider())
     token = mint_token(
         private_pem,
         claims={"permissions": ["fake.jwt.permission"]},
     )
-    client = app.test_client()
-    response = client.get(
-        "/access-context",
+    response = app.test_client().get(
+        TEST_PLATFORM_ACCESS_PATH,
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 200
     body = response.get_json()
     assert body["effective_permissions"] == ["real.core.permission"]
     assert "fake.jwt.permission" not in body["effective_permissions"]
+    assert body["roles"] == ["core-role"]
+    assert body["groups"] == ["core-group"]
+    assert body["is_superadmin"] is False
+    assert body["source"] == "CORE"
+    assert "email" not in body
+    assert "name" not in body
     assert "access_token" not in body
-    assert "Authorization" not in response.headers.get("WWW-Authenticate", "")
+
+
+def test_production_app_has_no_access_context_route():
+    app = create_app(testing=True, platform_access_provider=None)
+    rules = {rule.rule for rule in app.url_map.iter_rules()}
+    assert "/health" in rules
+    assert "/access-context" not in rules
+    assert TEST_PLATFORM_ACCESS_PATH not in rules
 
 
 def test_missing_authorization_rejected():
-    app = create_app(
-        testing=True,
+    app = _app_with_test_probe(
         platform_access_provider=SimpleNamespace(resolve=lambda *_: None),
     )
-    response = app.test_client().get("/access-context")
+    response = app.test_client().get(TEST_PLATFORM_ACCESS_PATH)
     assert response.status_code == 401
     assert response.get_json()["code"] == "unauthenticated"
 
 
 def test_malformed_bearer_rejected():
-    app = create_app(
-        testing=True,
+    app = _app_with_test_probe(
         platform_access_provider=SimpleNamespace(resolve=lambda *_: None),
     )
     response = app.test_client().get(
-        "/access-context",
+        TEST_PLATFORM_ACCESS_PATH,
         headers={"Authorization": "Token abc"},
     )
     assert response.status_code == 401
+
+
+def test_empty_bearer_rejected():
+    app = _app_with_test_probe(
+        platform_access_provider=SimpleNamespace(resolve=lambda *_: None),
+    )
+    response = app.test_client().get(
+        TEST_PLATFORM_ACCESS_PATH,
+        headers={"Authorization": "Bearer "},
+    )
+    assert response.status_code == 401
+    assert response.get_json()["code"] == "unauthenticated"
 
 
 def test_health_remains_public_without_token():
@@ -287,9 +319,9 @@ def test_health_independent_of_core_provider():
 
 
 def test_provider_absent_fail_closed_on_protected_route():
-    app = create_app(testing=True, platform_access_provider=None)
+    app = _app_with_test_probe(platform_access_provider=None)
     response = app.test_client().get(
-        "/access-context",
+        TEST_PLATFORM_ACCESS_PATH,
         headers={"Authorization": "Bearer not-validated-here"},
     )
     assert response.status_code == 503

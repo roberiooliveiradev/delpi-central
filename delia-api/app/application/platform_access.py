@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Mapping, Sequence
+from dataclasses import dataclass
+from typing import Mapping, Sequence
 
 
 @dataclass(frozen=True)
@@ -21,20 +21,8 @@ class PlatformAccessContext:
     is_superadmin: bool = False
     source: str = "CORE"
 
-    def to_public_dict(self) -> dict[str, Any]:
-        return {
-            "user_id": self.user_id,
-            "name": self.name,
-            "email": self.email,
-            "roles": list(self.roles),
-            "groups": list(self.groups),
-            "effective_permissions": list(self.effective_permissions),
-            "is_superadmin": self.is_superadmin,
-            "source": self.source,
-        }
 
-
-def platform_access_from_core_me(payload: Mapping[str, Any]) -> PlatformAccessContext:
+def platform_access_from_core_me(payload: Mapping[str, object]) -> PlatformAccessContext:
     """Build context from Core GET /me. Ignores any JWT-local permission claims."""
     user_id = str(payload.get("id") or "").strip()
     email = str(payload.get("email") or "").strip()

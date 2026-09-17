@@ -71,8 +71,11 @@ FOUNDATION_FREEZE = APPROVED
 C1_AUTHORIZED = YES
 C1_STARTED = YES
 C1_EXECUTED = NO
-JWT_VALIDATION = PASS (C1-T2 evidence; see §6.37)
-CORE_CONTEXT = PASS (contract/adapter; live Core TEST_NOT_RUN)
+JWT_VALIDATION = PASS (C1-T2/T2R1 evidence; see §6.37–§6.38)
+CORE_CONTEXT = PASS (contract/adapter; live Core TEST_NOT_RUN; see §6.38)
+CORE_CONTEXT_IMPLEMENTATION = PASS
+CORE_CONTEXT_CONTRACT_TESTS = PASS
+CORE_CONTEXT_LIVE_NETWORK = TEST_NOT_RUN
 AUTHORITY_MAP = FROZEN_ACCEPTED
 BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
@@ -241,6 +244,7 @@ All ACT blocked until C7                        = SUPERSEDED_BY_C5_GOVERNED_ACT_
 | 2026-09-17 | C1-T1 standalone API skeleton + health + test foundation | RUNTIME; delia-api/ Flask; /health liveness; Chat independence; C1_STARTED=YES; C1_EXECUTED=NO |
 | 2026-09-17 | C1-T1R1 runtime smoke + shutdown visibility | RUNTIME; real-process HTTP /health; delia_api_stopped; Chat independence; C1_EXECUTED=NO |
 | 2026-09-17 | C1-T2 JWT + Core effective access integration | RUNTIME; shared jwt_validator; Core GET /me; JWT≠permissions; fail-closed; C1_EXECUTED=NO |
+| 2026-09-17 | C1-T2R1 remove production access-context probe | RUNTIME; drop GET /access-context; preserve JWT/Core contract tests via test-only probe; C1_EXECUTED=NO |
 
 Actual `HEAD_BEFORE` for **runtime** remains uncaptured (no DÉLIA runtime). Inventory evidence SHA for C0.S0-F is `c6c9c8370d037edfc3529821b9d63e138b153436`. Documentation-only commits do not advance execution status.
 
@@ -1502,7 +1506,46 @@ EXECUTION_DRIFT: NONE
 TESTS: delia-api pytest green (platform access + health + smoke regression)
 NO_SERVICE_ACCOUNT: TRUE
 TOKEN_LOGGING: NONE
-NEXT: C1 — next bounded bootstrap after C1-T2 review (MFE/manifest/Gateway/Compose)
+NEXT: C1-T2R1 — remove production /access-context probe (see §6.38)
+NOTE_SUPERSEDED_BY_6_38: production /access-context removed; contract tests moved to test-only probe
+```
+
+## 6.38 C1-T2R1 — REMOVE_PRODUCTION_ACCESS_CONTEXT_PROBE_AND_PRESERVE_CONTRACT_TESTS
+
+```text
+DATE: 2026-09-17
+STEP: C1-T2R1
+NAME: REMOVE_PRODUCTION_ACCESS_CONTEXT_PROBE_AND_PRESERVE_CONTRACT_TESTS
+STATUS: RUNTIME
+BASE_HEAD: 431cc99db94f94c3e978947bde572d259075c69e
+ACCEPTED_C1_T2_HEAD: da8382ef73cf8d8d55c0881e9537e428914a72a0
+POST_T2_COMMITS: OUTSIDE_TASK (api-delpi OTD comercial; davi product engineering read wave; no DÉLIA auth drift)
+PROGRAM: PLANNED / NOT_STARTED
+C0: NOT_STARTED
+C0.S0..C0.S7: APPROVED
+FOUNDATION_FREEZE: APPROVED
+C1_AUTHORIZED: YES
+C1_STARTED: YES
+C1_EXECUTED: NO / NOT_COMPLETE
+API_FOLDER_INDEPENDENT: PASS
+HEALTH: PASS
+NO_CHAT_RUNTIME_DEPENDENCY: PASS
+JWT_VALIDATION: PASS
+CORE_CONTEXT_IMPLEMENTATION: PASS
+CORE_CONTEXT_CONTRACT_TESTS: PASS
+CORE_CONTEXT_LIVE_NETWORK: TEST_NOT_RUN
+CORE_CONTEXT: PASS (bounded contract/adapter scope only)
+ACCESS_CONTEXT_PRODUCTION_ROUTE: ABSENT
+TO_PUBLIC_DICT: REMOVED (only consumer was production probe)
+TEST_ONLY_PROBE: tests/support/test_access_probe.py (/__test__/platform-access; not in production composition)
+JWT_PERMISSION_AUTHORITY: NONE
+RUNTIME_READINESS: NOT_PROVEN
+PRODUCTION_READINESS: NOT_PROVEN
+DÉLIA_RUNTIME_DIFF: removed production /access-context; JWT+Core middleware/adapters preserved
+NEW_RUNTIME_ABSTRACTIONS: NONE (removed dead to_public_dict)
+CHAT_RUNTIME_DEPENDENCY: NONE
+EXECUTION_DRIFT: NONE
+NEXT: C1 — next bounded bootstrap after C1-T2R1 review (MFE/manifest/Gateway/Compose)
 ```
 
 ## 7. Canonical phase mapping
@@ -1713,4 +1756,4 @@ SAFETY_INTERLOCK_BYPASS
 
 ## 14. First execution
 
-Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1 created the standalone `delia-api/` Flask skeleton and `/health` liveness. C1-T1R1 closed real-process HTTP smoke and shutdown visibility (`delia_api_stopped`). `C1_STARTED=YES`. `C1_EXECUTED=NO`. C1-T2 added JWT validation + Core `/me` effective access (JWT≠permissions; fail-closed). Current next after T2 review is the next bounded C1 bootstrap step. MFE/Gateway/Compose/migrations remain pending (JWT/Core context evidence in §6.37). `C0=NOT_STARTED`. Runtime/production readiness remain `NOT_PROVEN`.
+Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1 created the standalone `delia-api/` Flask skeleton and `/health` liveness. C1-T1R1 closed real-process HTTP smoke and shutdown visibility (`delia_api_stopped`). `C1_STARTED=YES`. `C1_EXECUTED=NO`. C1-T2 added JWT validation + Core `/me` effective access (JWT≠permissions; fail-closed). C1-T2R1 removed production `GET /access-context` and preserved JWT/Core contract evidence via test-only probe (§6.38). Current next after T2R1 review is the next bounded C1 bootstrap step (MFE/manifest/Gateway/Compose). `C0=NOT_STARTED`. Runtime/production readiness remain `NOT_PROVEN`.

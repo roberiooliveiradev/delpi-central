@@ -6,7 +6,6 @@ from flask import Flask
 from app.infrastructure.auth.core_platform_access import CorePlatformAccessAdapter
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.logging import configure_logging
-from app.interfaces.http.access_context_routes import access_context_bp
 from app.interfaces.http.auth_middleware import register_auth_middleware
 from app.interfaces.http.error_handlers import register_error_handlers
 from app.interfaces.http.health_routes import health_bp
@@ -47,7 +46,6 @@ def create_application(
     register_request_logging(app, logger)
     register_auth_middleware(app, logger=logger)
     app.register_blueprint(health_bp)
-    app.register_blueprint(access_context_bp)
 
     logger.info(
         "delia_api_started service=%s version=%s env=%s",
