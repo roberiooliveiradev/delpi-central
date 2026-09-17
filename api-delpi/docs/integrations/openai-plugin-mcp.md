@@ -111,6 +111,9 @@ Explicit mutation intent (retrievalReadOnlyGuard) → zero READ candidates (sema
 Dynamic search_products execution = approved external projection (product_code, description, group_category)
 Generic catalog actions = nested/flat approvedResponseFields + size bound
 bounded payload size != approved field projection
+is_complete / truncated = dataset completeness for model-visible response
+  (source pagination total/total_pages + DAVI max_items/max_bytes; never page-local optimism)
+  — see evidence davi-pagination-completeness-hardening-001.*
 ```
 
 > **Allowlist history:** DAVI-DYNAMIC-READ-001 briefly claimed 3 eligible ops (obsolete). DAVI-DYNAMIC-READ-002/005 reduced to 1. DAVI-READ-AUTHZ-REBASELINE-001 promoted allowlist v5 (`DAVI_ELIGIBLE_READ = 7`). DAVI-CAPABILITY-EXPANSION-WAVE-001 promoted allowlist v6 (`DAVI_ELIGIBLE_READ = 10`). DAVI-CAPABILITY-EXPANSION-WAVE-002 promoted allowlist v7 (`DAVI_ELIGIBLE_READ = 13`). **Current source authority is allowlist v8** (`DAVI_ELIGIBLE_READ = 15`) after `DAVI-CAPABILITY-EXPANSION-WAVE-003A`. Live deploy of v8 = `TEST_NOT_RUN` until redeploy.

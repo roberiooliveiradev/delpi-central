@@ -1,0 +1,24 @@
+{
+  "artifact_class": "EVIDENCE_NOT_RUNTIME_AUTHORITY",
+  "taskId": "DAVI-DYNAMIC-READ-PAGINATION-COMPLETENESS-001",
+  "classification": "GENERIC_BROKER_RESPONSE_COMPLETENESS_BUG",
+  "owner": "api-delpi/app/application/external_capabilities/dynamic_information/projection.py",
+  "eligibleUnchanged": 15,
+  "allowlistVersionUnchanged": 8,
+  "mcpToolsUnchanged": 3,
+  "agentInstructions": "UNCHANGED",
+  "capabilitySet": "UNCHANGED",
+  "liveBug": {
+    "operationObserved": "get_product_parents",
+    "page": 1,
+    "page_size": 50,
+    "total": 123,
+    "total_pages": 3,
+    "observed": {"is_complete": true, "truncated": false},
+    "expected": {"is_complete": false, "truncated": true}
+  },
+  "rootCause": "bound_response_payload defaulted is_complete=true when len(items)<=max_items, ignoring total/total_pages",
+  "fix": "derive_response_completeness + source_pagination_proves_partial (generic, monotonic)",
+  "deploy": "TEST_NOT_RUN",
+  "live": "TEST_NOT_RUN"
+}

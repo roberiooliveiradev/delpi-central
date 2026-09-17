@@ -649,7 +649,11 @@ def _auth_and_domain_fakes(*, allowed: bool = True) -> Iterator[dict[str, Any]]:
                 lambda: None,
             )
         )
-        yield {"guide_uc": guide_uc, "parents_uc": parents_uc}
+        yield {
+            "guide_uc": guide_uc,
+            "parents_uc": parents_uc,
+            "stock_uc": stock_uc,
+        }
 
 
 def _mint(action_id: str) -> str:
@@ -963,6 +967,100 @@ def test_wave3a_backend_403_maps_to_forbidden(monkeypatch: pytest.MonkeyPatch):
         for action_id in ("get_product_guide", "get_product_parents"):
             with pytest.raises(PermissionError, match="Forbidden"):
                 _execute(action_id, {"code": "10080055"})
+
+
+def test_pagination_completeness_where_used_multipage(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Live bug regression: multipage parents must not claim dataset completeness."""
+    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
+    monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
+    monkeypatch.setenv(
+        "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
+    )
+    with _auth_and_domain_fakes(allowed=True) as fakes:
+        fakes["parents_uc"].execute.return_value = {
+            "root": {
+                "code": "10080055",
+                "description": "MP",
+                "type": "MP",
+                "unit": "KG",
+                "quantity": 1.0,
+            },
+            "items": [
+                {
+                    "code": f"P{i:03d}",
+                    "description": f"Parent {i}",
+                    "type": "PA",
+                    "unit": "UN",
+                    "quantity": 1.0,
+                    "parents": [],
+                }
+                for i in range(50)
+            ],
+            "page": 1,
+            "page_size": 50,
+            "total": 123,
+            "total_pages": 3,
+        }
+        result = _execute("get_product_parents", {"code": "10080055"})
+    assert result["status"] == "ok"
+    assert result["is_complete"] is False
+    assert result["truncated"] is True
+    assert result["data"]["is_complete"] is False
+    assert result["data"]["truncated"] is True
+    assert result["data"]["total"] == 123
+    assert result["data"]["total_pages"] == 3
+    assert len(result["data"]["items"]) == 50
+
+
+def test_pagination_completeness_stock_sibling_multi_and_single(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Sibling paginated capability proves transversal fix (not where-used-only)."""
+    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
+    monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
+    monkeypatch.setenv(
+        "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
+    )
+    with _auth_and_domain_fakes(allowed=True) as fakes:
+        fakes["stock_uc"].execute.return_value = {
+            "items": [
+                {
+                    "product_code": "10080055",
+                    "branch": "01",
+                    "warehouse": f"{i:02d}",
+                    "current_quantity": float(i),
+                    "available_quantity": float(i),
+                }
+                for i in range(50)
+            ],
+            "page": 1,
+            "page_size": 50,
+            "total": 120,
+            "total_pages": 3,
+        }
+        multi = _execute("get_product_stock", {"code": "10080055"})
+        fakes["stock_uc"].execute.return_value = {
+            "items": [
+                {
+                    "product_code": "10080055",
+                    "branch": "01",
+                    "warehouse": "01",
+                    "current_quantity": 10.0,
+                    "available_quantity": 8.0,
+                }
+            ],
+            "page": 1,
+            "page_size": 50,
+            "total": 1,
+            "total_pages": 1,
+        }
+        single = _execute("get_product_stock", {"code": "10080055"})
+    assert multi["is_complete"] is False
+    assert multi["truncated"] is True
+    assert single["is_complete"] is True
+    assert single["truncated"] is False
 
 
 def test_eligible_set_is_fifteen():

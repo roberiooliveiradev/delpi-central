@@ -224,6 +224,127 @@ def apply_approved_field_projection(
     return out
 
 
+def _as_non_negative_int(value: Any) -> int | None:
+    """Parse pagination scalars; reject bools and negatives as untrustworthy."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value if value >= 0 else None
+    if isinstance(value, float) and value.is_integer():
+        as_int = int(value)
+        return as_int if as_int >= 0 else None
+    return None
+
+
+def source_pagination_proves_partial(payload: dict[str, Any]) -> bool | None:
+    """Interpret canonical page/page_size/total/total_pages for dataset completeness.
+
+    Returns:
+      True  — metadata proves the payload is only a partial dataset
+      False — metadata proves the payload covers the full query scope
+      None  — pagination metadata absent, untrustworthy, or insufficient
+    """
+    has_pagination_keys = any(
+        key in payload for key in ("page", "page_size", "total", "total_pages")
+    )
+    if not has_pagination_keys:
+        return None
+
+    raw_page = payload.get("page") if "page" in payload else None
+    raw_page_size = payload.get("page_size") if "page_size" in payload else None
+    raw_total = payload.get("total") if "total" in payload else None
+    raw_total_pages = payload.get("total_pages") if "total_pages" in payload else None
+
+    # Malformed present values → do not invent completeness.
+    if "page" in payload:
+        page = _as_non_negative_int(raw_page)
+        if page is None or page < 1:
+            return None
+    else:
+        page = None
+    if "page_size" in payload:
+        page_size = _as_non_negative_int(raw_page_size)
+        if page_size is None:
+            return None
+    else:
+        page_size = None
+    if "total" in payload:
+        total = _as_non_negative_int(raw_total)
+        if total is None:
+            return None
+    else:
+        total = None
+    if "total_pages" in payload:
+        total_pages = _as_non_negative_int(raw_total_pages)
+        if total_pages is None:
+            return None
+    else:
+        total_pages = None
+
+    items = payload.get("items")
+    visible = len(items) if isinstance(items, list) else None
+
+    # Multi-page datasets are always partial for a single returned page —
+    # including the last page (page == total_pages).
+    if total_pages is not None and total_pages > 1:
+        return True
+    if total is not None and visible is not None and total > visible:
+        return True
+
+    # Empty or single-page scopes that fit the visible rows.
+    if total is not None and visible is not None and total <= visible:
+        if total_pages is None or total_pages <= 1:
+            return False
+    if total_pages is not None and total_pages <= 1:
+        if total is None or visible is None or total <= visible:
+            return False
+
+    # page/page_size alone without total/total_pages cannot prove completeness.
+    _ = (page, page_size)
+    return None
+
+
+def derive_response_completeness(
+    payload: Any,
+    *,
+    davi_item_truncated: bool = False,
+    davi_byte_truncated: bool = False,
+) -> tuple[bool, bool]:
+    """Derive (is_complete, truncated) for the model-visible broker response.
+
+    is_complete = model-visible payload contains the full result set for the
+    current canonical query scope.
+    truncated = model-visible payload is only a bounded/partial subset.
+
+    Precedence is monotonic/conservative: proven incompleteness never becomes
+    complete later. Source ``is_complete=false`` / ``truncated=true`` are sticky.
+    Source optimistic True may be overridden by pagination or DAVI bounding.
+    """
+    is_complete = True
+    truncated = False
+
+    if isinstance(payload, dict):
+        if payload.get("truncated") is True:
+            truncated = True
+            is_complete = False
+        if payload.get("is_complete") is False:
+            is_complete = False
+            truncated = True
+
+        pagination_partial = source_pagination_proves_partial(payload)
+        if pagination_partial is True:
+            is_complete = False
+            truncated = True
+
+    if davi_item_truncated or davi_byte_truncated:
+        is_complete = False
+        truncated = True
+
+    if truncated:
+        is_complete = False
+    return is_complete, truncated
+
+
 def bound_response_payload(
     data: Any,
     *,
@@ -231,29 +352,20 @@ def bound_response_payload(
     max_items: int,
 ) -> dict[str, Any]:
     """Return a size-bounded envelope (does not authorize fields)."""
-    truncated = False
-    payload = data
+    davi_item_truncated = False
+    payload: Any = data
 
     if isinstance(payload, dict):
         items = payload.get("items")
         if isinstance(items, list) and len(items) > max_items:
             payload = dict(payload)
             payload["items"] = items[:max_items]
-            payload["is_complete"] = False
-            payload["truncated"] = True
-            truncated = True
+            davi_item_truncated = True
         elif isinstance(items, list):
             payload = dict(payload)
-            payload.setdefault("is_complete", True)
-            payload.setdefault("truncated", False)
-        if payload.get("truncated") is True:
-            truncated = True
-            payload = dict(payload)
-            payload["is_complete"] = False
-            payload["truncated"] = True
     elif isinstance(payload, list) and len(payload) > max_items:
         payload = payload[:max_items]
-        truncated = True
+        davi_item_truncated = True
 
     try:
         raw = json.dumps(payload, default=str, ensure_ascii=False).encode("utf-8")
@@ -271,14 +383,19 @@ def bound_response_payload(
             while keep >= 1:
                 slim = dict(payload)
                 slim["items"] = payload["items"][:keep]
-                slim["truncated"] = True
-                slim["is_complete"] = False
+                is_complete, truncated = derive_response_completeness(
+                    slim,
+                    davi_item_truncated=True,
+                    davi_byte_truncated=True,
+                )
+                slim["is_complete"] = is_complete
+                slim["truncated"] = truncated
                 raw2 = json.dumps(slim, default=str, ensure_ascii=False).encode("utf-8")
                 if len(raw2) <= max_bytes:
                     return {
                         "data": slim,
-                        "truncated": True,
-                        "is_complete": False,
+                        "truncated": truncated,
+                        "is_complete": is_complete,
                         "response_bytes": len(raw2),
                     }
                 keep //= 2
@@ -290,9 +407,27 @@ def bound_response_payload(
             "response_bytes": len(raw),
         }
 
+    is_complete, truncated = derive_response_completeness(
+        payload if isinstance(payload, dict) else {},
+        davi_item_truncated=davi_item_truncated,
+        davi_byte_truncated=False,
+    )
+    if isinstance(payload, list) and davi_item_truncated:
+        is_complete, truncated = False, True
+    if isinstance(payload, dict) and (
+        isinstance(payload.get("items"), list)
+        or "is_complete" in payload
+        or "truncated" in payload
+        or truncated
+        or not is_complete
+    ):
+        payload = dict(payload)
+        payload["is_complete"] = is_complete
+        payload["truncated"] = truncated
+
     return {
         "data": payload,
         "truncated": truncated,
-        "is_complete": not truncated,
+        "is_complete": is_complete,
         "response_bytes": len(raw),
     }
