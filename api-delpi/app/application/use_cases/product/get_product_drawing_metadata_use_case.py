@@ -4,6 +4,7 @@ from app.application.dto.product.get_product_drawing_request import GetProductDr
 from app.application.services.drawings.drawing_pdf_library_storage import (
     DrawingPdfLibraryStorage,
     DrawingPdfLibraryStorageError,
+    DrawingPdfLibraryUnavailableError,
 )
 
 
@@ -14,6 +15,8 @@ class GetProductDrawingMetadataUseCase:
     def execute(self, dto: GetProductDrawingRequest) -> dict:
         try:
             match = self.storage.find_drawing(dto.code)
+        except DrawingPdfLibraryUnavailableError:
+            raise
         except DrawingPdfLibraryStorageError as exc:
             return {
                 "found": False,

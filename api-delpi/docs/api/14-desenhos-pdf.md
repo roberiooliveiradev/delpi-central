@@ -37,15 +37,16 @@ Recrie o serviço após alterar o path:
 docker compose -f infra/docker-compose.dev.yml up -d --force-recreate api-delpi
 ```
 
-A pasta `minha-delpi-ai-api/desenhos/` permanece para testes locais/OCR offline (gitignored), mas **não** é mais o mount padrão do compose dev.
+Em produção (`infra/docker-compose.yml`), a api-delpi monta o **mesmo** host path do cockpit PCP:
 
-Em produção, monte o compartilhamento do FILESERVER no path do container ou ajuste `DRAWING_PDF_LIBRARY_DIR`.
+| Variável (host) | Container | Default prod |
+|-----------------|-----------|--------------|
+| `PC_DRAWING_PDF_HOST_PATH` | `/drawing-pdfs` (api-delpi e production-control-api) | `/mnt/fileserver/desenhos` |
+| `DRAWING_PDF_LIBRARY_DIR` | path interno api-delpi | `/drawing-pdfs` |
 
-Exemplo WSL (quando `/mnt/x` estiver disponível):
+Sem o mount: `GET /products/drawings` → `summary.library_available=false`; `GET .../drawing` e `.../drawing/pdf` → **HTTP 503** (fonte indisponível), não 404 de produto sem desenho.
 
-```bash
-export DRAWING_PDF_LIBRARY_DIR="/mnt/x/DESENHOS DELPI EM PDF"
-```
+A pasta `minha-delpi-ai-api/desenhos/` permanece para testes locais/OCR offline (gitignored), mas **não** é o mount padrão do compose.
 
 ## Rotas
 
@@ -57,7 +58,15 @@ export DRAWING_PDF_LIBRARY_DIR="/mnt/x/DESENHOS DELPI EM PDF"
 
 Permissão: `api-delpi.access` (`API_DELPI_ACCESS`).
 
-O cockpit público do operador (`public-hub` → `production-control-api`) **não** consome estas rotas: o BFF do PCP monta a mesma pasta do FILESERVER e serve o PDF direto do disco após validar o PA na fila publicada. Esta biblioteca segue dedicada ao chat e às consultas de produto na api-delpi.
+O cockpit público do operador (`public-hub` → `production-control-api`) monta a **mesma pasta FILESERVER** e serve o PDF após validar o PA na fila publicada. A api-delpi usa a mesma autoridade de arquivos com AuthZ `API_DELPI_ACCESS` (sem fila PCP). Resolução de arquivo é técnica (server-resolved), não “revisão oficial aprovada”.
+
+### Falhas de fonte vs produto sem desenho
+
+| Condição | Catálogo | Metadata | PDF |
+|----------|----------|----------|-----|
+| Pasta não montada / vazia / ilegível | `library_available=false` | **503** | **503** |
+| Produto sem PDF na biblioteca | itens vazios (filtro) | **404** | **404** |
+| Código inválido / traversal | **422** | **422** | **422** / **404** |
 
 ### Catálogo — filtros (`GET /products/drawings`)
 

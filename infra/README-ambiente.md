@@ -418,7 +418,16 @@ O `api-delpi` em dev lê PDFs do **FILESERVER** (`X:\DESENHOS DELPI EM PDF`), n�
 | `PC_DRAWING_PDF_HOST_PATH` | `infra/.env` / `.env.local` | `/mnt/x/DESENHOS DELPI EM PDF` |
 | `PC_DRAWING_PDF_LIBRARY_DIR` | container production-control-api | `/drawing-pdfs` |
 
-**Produção (`srv-api`):** o share do FILESERVER precisa estar montado no host (CIFS/SMB) e `PC_DRAWING_PDF_HOST_PATH` apontando para ele (default `/mnt/fileserver/desenhos`); o compose entrega o bind `:ro` para o `production-control-api`. Sem o mount o cockpit mostra mensagem explícita de pasta ausente/vazia, não "desenho não encontrado".
+**Produção (`srv-api`):** o share do FILESERVER precisa estar montado no host (CIFS/SMB) e `PC_DRAWING_PDF_HOST_PATH` apontando para ele (default `/mnt/fileserver/desenhos`); o compose entrega o bind `:ro` para **`production-control-api` e `api-delpi`** (mesma autoridade de pasta). Sem o mount:
+
+- cockpit PCP: mensagem explícita de pasta ausente/vazia (não "desenho não encontrado");
+- api-delpi: catálogo com `library_available=false`; metadata/PDF retornam **503 SOURCE_UNAVAILABLE** (não 404 de produto sem desenho).
+
+| Variável | Onde | Default prod |
+|----------|------|--------------|
+| `PC_DRAWING_PDF_HOST_PATH` | `infra/.env` | `/mnt/fileserver/desenhos` |
+| `DRAWING_PDF_LIBRARY_DIR` | container api-delpi | `/drawing-pdfs` |
+| `PC_DRAWING_PDF_LIBRARY_DIR` | container production-control-api | `/drawing-pdfs` |
 
 **Montar X: no WSL** (se `/mnt/x` estiver vazio **ou** a pasta `DESENHOS DELPI EM PDF` existir mas sem PDFs — stub sem o drive `X:`):
 

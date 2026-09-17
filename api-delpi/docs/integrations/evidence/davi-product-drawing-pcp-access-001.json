@@ -1,0 +1,48 @@
+{
+  "artifact_class": "EVIDENCE_NOT_RUNTIME_AUTHORITY",
+  "taskId": "DAVI-PRODUCT-DRAWING-PCP-ACCESS-001",
+  "outcome": "A_INFRA_ONLY",
+  "verdict": "PASS_WITH_RESIDUAL",
+  "sourceHead": "8851c81290719270c064d26fcc153766669191d5",
+  "bootstrapMainObserved": "9fff7186eb20f7d7b5be59ee5c99f90df6a27aa6",
+  "decision": {
+    "outcome": "A_INFRA_ONLY",
+    "rationale": "PCP and api-delpi share the same FILESERVER filesystem authority; prod compose only mounted it on production-control-api.",
+    "routeCreated": false,
+    "canonicalPdfRoute": "GET /products/{code}/drawing/pdf"
+  },
+  "pcpFlow": {
+    "frontend": "plugins/public-hub/.../OperationDetailPage.tsx + cockpitShared.tsx",
+    "client": "plugins/public-hub/.../api.ts fetchPublicDrawingPdf",
+    "route": "GET /public/machine-load/{token}/drawings/{pa_code}/pdf",
+    "useCase": "PublicMachineLoadDrawingService",
+    "adapter": "DrawingPdfLibraryStorage",
+    "source": "PC_DRAWING_PDF_LIBRARY_DIR filesystem mount",
+    "hostPathEnv": "PC_DRAWING_PDF_HOST_PATH",
+    "authz": "public token + PA in published queue",
+    "response": "FileResponse application/pdf"
+  },
+  "apiDelpiBefore": {
+    "storage": "DrawingPdfLibraryStorage",
+    "configDefault": "/app/data/drawing-pdfs",
+    "prodMount": "ABSENT",
+    "liveFailure": "library_available=false scanned_files=0"
+  },
+  "apiDelpiAfter": {
+    "prodEnv": "DRAWING_PDF_LIBRARY_DIR=/drawing-pdfs",
+    "prodMount": "${PC_DRAWING_PDF_HOST_PATH:-/mnt/fileserver/desenhos}:/drawing-pdfs:ro",
+    "sourceUnavailableHttp": 503,
+    "notFoundHttp": 404
+  },
+  "sameAuthority": true,
+  "sameResolutionSemantics": true,
+  "daviStateUnchanged": {
+    "allowlistVersion": 9,
+    "eligibleRead": 17,
+    "mcpTools": 3,
+    "pdfInJsonBroker": "ABSENT"
+  },
+  "deploy": "TEST_NOT_RUN",
+  "live": "TEST_NOT_RUN",
+  "generatedAt": "2026-09-17T19:39:32.538379+00:00"
+}

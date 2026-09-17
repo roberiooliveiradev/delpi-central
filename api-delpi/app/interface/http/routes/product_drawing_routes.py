@@ -20,6 +20,7 @@ from app.application.dto.product.list_product_drawings_request import (
 from app.application.security.api_delpi_permissions import API_DELPI_ACCESS
 from app.application.services.drawings.drawing_pdf_library_storage import (
     DrawingPdfLibraryStorageError,
+    DrawingPdfLibraryUnavailableError,
 )
 from app.composition.product_drawing_composer import (
     build_get_product_drawing_metadata_use_case,
@@ -37,6 +38,11 @@ from app.interface.http.routes.product_response_helpers import product_success
 from app.utils.logger import log_error
 
 router = APIRouter()
+
+
+def _drawing_source_unavailable_response(message: str):
+    """Infra/mount failure — must not look like «product has no drawing»."""
+    return error_response(message, status_code=503)
 
 
 def _parse_optional_datetime(value: str | None) -> datetime | None:
@@ -161,6 +167,8 @@ def get_product_drawing_metadata(code: str):
             code=code,
             message="Metadados do desenho PDF carregados com sucesso.",
         )
+    except DrawingPdfLibraryUnavailableError as exc:
+        return _drawing_source_unavailable_response(str(exc))
     except DrawingPdfLibraryStorageError as exc:
         return error_response(str(exc), status_code=422)
     except Exception as exc:
@@ -184,6 +192,8 @@ def get_product_drawing_pdf(code: str):
             filename=filename,
             content_disposition_type="inline",
         )
+    except DrawingPdfLibraryUnavailableError as exc:
+        return _drawing_source_unavailable_response(str(exc))
     except DrawingPdfLibraryStorageError as exc:
         return not_found_response(str(exc))
     except Exception as exc:

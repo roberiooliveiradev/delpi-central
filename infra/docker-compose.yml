@@ -1420,6 +1420,8 @@ services:
       QUALITY_LABELS_QR_DIR: ${QUALITY_LABELS_QR_DIR:-/app/data/quality-labels/qr}
       QUALITY_LABELS_SIGNATURE_DIR: ${QUALITY_LABELS_SIGNATURE_DIR:-/app/data/quality-labels/signatures}
       QUALITY_LABELS_CERTIFICATE_DIR: ${QUALITY_LABELS_CERTIFICATE_DIR:-/app/data/quality-labels/certificates}
+      # Mesma biblioteca FILESERVER do cockpit PCP (production-control-api).
+      DRAWING_PDF_LIBRARY_DIR: ${DRAWING_PDF_LIBRARY_DIR:-/drawing-pdfs}
 
       # Microsoft Graph — Canal de Denúncia
       GRAPH_TENANT_ID: ${GRAPH_TENANT_ID:-}
@@ -1460,6 +1462,8 @@ services:
       - transformometro-api
 
     volumes:
+      # FILESERVER de desenhos PDF — mesmo host path do production-control-api (PCP proven).
+      - ${PC_DRAWING_PDF_HOST_PATH:-/mnt/fileserver/desenhos}:/drawing-pdfs:ro
       # Evidências PAC e anexos Auditoria 5S — persistir fora do container (sobrevive a deploy)
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/pac-evidences:/app/data/pac-evidences
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/invoice-issuance:/app/data/invoice-issuance

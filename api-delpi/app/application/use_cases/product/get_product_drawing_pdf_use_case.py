@@ -6,6 +6,7 @@ from app.application.dto.product.get_product_drawing_request import GetProductDr
 from app.application.services.drawings.drawing_pdf_library_storage import (
     DrawingPdfLibraryStorage,
     DrawingPdfLibraryStorageError,
+    DrawingPdfLibraryUnavailableError,
 )
 
 
@@ -16,6 +17,8 @@ class GetProductDrawingPdfUseCase:
     def execute(self, dto: GetProductDrawingRequest) -> tuple[Path, str]:
         try:
             path = self.storage.resolve_pdf_path(dto.code)
+        except DrawingPdfLibraryUnavailableError:
+            raise
         except DrawingPdfLibraryStorageError as exc:
             raise DrawingPdfLibraryStorageError(str(exc)) from exc
         return path, path.name

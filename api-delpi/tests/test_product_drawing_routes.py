@@ -7,6 +7,7 @@ import pytest
 from app.application.services.drawings.drawing_pdf_library_storage import (
     DrawingPdfLibraryStorage,
     DrawingPdfLibraryStorageError,
+    DrawingPdfLibraryUnavailableError,
     DrawingPdfMatch,
 )
 from app.interface.http.routes.product_drawing_routes import (
@@ -88,6 +89,36 @@ def test_get_product_drawing_pdf_not_found(mock_build_use_case) -> None:
 
     response = get_product_drawing_pdf("99999999")
     assert response.status_code == 404
+
+
+@patch("app.interface.http.routes.product_drawing_routes.build_get_product_drawing_pdf_use_case")
+def test_get_product_drawing_pdf_source_unavailable(mock_build_use_case) -> None:
+    use_case = MagicMock()
+    use_case.execute.side_effect = DrawingPdfLibraryUnavailableError(
+        "Biblioteca de desenhos indisponível: pasta não montada no servidor."
+    )
+    mock_build_use_case.return_value = use_case
+
+    response = get_product_drawing_pdf("90262957")
+    assert response.status_code == 503
+    body = json.loads(response.body.decode())
+    assert "indisponível" in body["message"].lower()
+    assert "não encontrado" not in body["message"].lower()
+
+
+@patch("app.interface.http.routes.product_drawing_routes.build_get_product_drawing_metadata_use_case")
+def test_get_product_drawing_metadata_source_unavailable(mock_build_use_case) -> None:
+    use_case = MagicMock()
+    use_case.execute.side_effect = DrawingPdfLibraryUnavailableError(
+        "A pasta de desenhos no servidor está vazia. "
+        "Monte o FILESERVER no host e recrie a api-delpi."
+    )
+    mock_build_use_case.return_value = use_case
+
+    response = get_product_drawing_metadata("90262957")
+    assert response.status_code == 503
+    body = json.loads(response.body.decode())
+    assert "vazia" in body["message"].lower()
 
 
 @patch("app.interface.http.routes.product_drawing_routes.build_list_product_drawings_use_case")

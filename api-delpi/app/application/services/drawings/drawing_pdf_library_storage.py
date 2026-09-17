@@ -23,6 +23,10 @@ class DrawingPdfLibraryStorageError(ValueError):
     pass
 
 
+class DrawingPdfLibraryUnavailableError(DrawingPdfLibraryStorageError):
+    """Document source missing/empty/unreadable — not the same as product without a drawing."""
+
+
 @dataclass(frozen=True, slots=True)
 class DrawingPdfMatch:
     product_code: str
@@ -87,8 +91,9 @@ class DrawingPdfLibraryStorage:
 
     def find_drawing(self, product_code: str) -> DrawingPdfMatch | None:
         normalized = self.normalize_product_code(product_code)
-        if not self.base_dir.is_dir():
-            return None
+        unavailable = self._library_unavailability_reason()
+        if unavailable:
+            raise DrawingPdfLibraryUnavailableError(unavailable)
 
         exact = self.base_dir / f"{normalized}.pdf"
         if exact.is_file():
@@ -115,7 +120,7 @@ class DrawingPdfLibraryStorage:
     def resolve_pdf_path(self, product_code: str) -> Path:
         unavailable = self._library_unavailability_reason()
         if unavailable:
-            raise DrawingPdfLibraryStorageError(unavailable)
+            raise DrawingPdfLibraryUnavailableError(unavailable)
 
         match = self.find_drawing(product_code)
         if match is None:
@@ -172,7 +177,8 @@ class DrawingPdfLibraryStorage:
         filename_filter = str(filename or "").strip().upper() or None
         revision_filter = self._normalize_revision_filter(revision)
 
-        library_available = self.base_dir.is_dir()
+        library_unavailable = self._library_unavailability_reason()
+        library_available = library_unavailable is None
         entries = self._scan_catalog_entries() if library_available else []
         filtered = [
             entry
@@ -395,6 +401,11 @@ class DrawingPdfLibraryStorage:
         except OSError:
             return "Biblioteca de desenhos indisponível: não foi possível ler a pasta."
         return None
+
+    def assert_library_available(self) -> None:
+        reason = self._library_unavailability_reason()
+        if reason:
+            raise DrawingPdfLibraryUnavailableError(reason)
 
     def _stem_matches_request(self, stem: str, requested_code: str, numeric_prefix: str) -> bool:
         if stem == requested_code:

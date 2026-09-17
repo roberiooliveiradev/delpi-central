@@ -7,6 +7,7 @@ import pytest
 from app.application.services.drawings.drawing_pdf_library_storage import (
     DrawingPdfLibraryStorage,
     DrawingPdfLibraryStorageError,
+    DrawingPdfLibraryUnavailableError,
 )
 
 
@@ -122,8 +123,42 @@ def test_resolve_pdf_path_empty_library_is_explicit(tmp_path: Path) -> None:
     empty = tmp_path / "empty-share"
     empty.mkdir()
     storage = DrawingPdfLibraryStorage(empty)
-    with pytest.raises(DrawingPdfLibraryStorageError, match="vazia"):
+    with pytest.raises(DrawingPdfLibraryUnavailableError, match="vazia"):
         storage.resolve_pdf_path("90262910")
+
+
+def test_find_drawing_missing_library_is_source_unavailable(tmp_path: Path) -> None:
+    storage = DrawingPdfLibraryStorage(tmp_path / "missing-share")
+    with pytest.raises(DrawingPdfLibraryUnavailableError, match="não montada"):
+        storage.find_drawing("90262957")
+
+
+def test_list_catalog_empty_dir_marks_library_unavailable(tmp_path: Path) -> None:
+    empty = tmp_path / "empty-share"
+    empty.mkdir()
+    storage = DrawingPdfLibraryStorage(empty)
+    result = storage.list_catalog(page=1, page_size=50)
+    assert result["summary"]["library_available"] is False
+    assert result["summary"]["scanned_files"] == 0
+
+
+def test_pcp_parity_same_filename_resolution(tmp_path: Path) -> None:
+    """Same file-server naming convention as production-control-api DrawingPdfLibraryStorage."""
+    library = tmp_path / "share"
+    library.mkdir()
+    (library / "90262957.pdf").write_bytes(b"%PDF-1.4 pcp-parity")
+    (library / "90261040_R01.pdf").write_bytes(b"%PDF-1.4 r1")
+    (library / "90261040_R02.pdf").write_bytes(b"%PDF-1.4 r2")
+    storage = DrawingPdfLibraryStorage(library)
+
+    exact = storage.find_drawing("90262957")
+    assert exact is not None
+    assert exact.filename == "90262957.pdf"
+    assert exact.size_bytes == len(b"%PDF-1.4 pcp-parity")
+
+    rev = storage.find_drawing("90261040")
+    assert rev is not None
+    assert rev.filename == "90261040_R02.pdf"
 
 
 def test_list_catalog_empty_library(tmp_path: Path) -> None:
