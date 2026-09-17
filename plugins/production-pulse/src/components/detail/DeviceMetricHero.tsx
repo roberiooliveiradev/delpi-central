@@ -58,6 +58,7 @@ export function DeviceMetricHero({
   const pollLabel = refreshing
     ? PP_HELP.detail.pollNowLoading
     : PP_HELP.detail.pollNowAction;
+  const commandsDisabled = refreshing || deviceOffline;
 
   return (
     <PpSectionCard title="Métricas ao vivo" hint={PP_HELP.detail.liveMetrics}>
@@ -124,7 +125,7 @@ export function DeviceMetricHero({
                 variant="ghost"
                 className="pp-metric-hero__btn pp-metric-hero__btn--warning"
                 onClick={onReset}
-                disabled={refreshing || !device.online}
+                disabled={commandsDisabled}
               >
                 <RotateCcw size={16} aria-hidden />
                 {PP_HELP.detail.resetCounterAction}
@@ -140,7 +141,7 @@ export function DeviceMetricHero({
                 variant="ghost"
                 className="pp-metric-hero__btn pp-metric-hero__btn--danger"
                 onClick={onFactoryReset}
-                disabled={refreshing}
+                disabled={commandsDisabled}
               >
                 <Factory size={16} aria-hidden />
                 {PP_HELP.detail.factoryResetAction}

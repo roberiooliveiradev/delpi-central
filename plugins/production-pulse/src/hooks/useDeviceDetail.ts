@@ -13,6 +13,7 @@ import {
   isDeviceConnectivityError,
   resolveDeviceActionError,
 } from "../utils/apiErrors";
+import { requireCommandSuccess } from "../utils/requireCommandSuccess";
 import { useDeviceLiveRefresh } from "./useDeviceLiveRefresh";
 
 export type LiveConnectivityIssue = {
@@ -175,7 +176,8 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
   };
 
   const resetCounter = async () => {
-    await executeDeviceCommand(deviceId, "reset");
+    const result = await executeDeviceCommand(deviceId, "reset");
+    requireCommandSuccess(result, "Falha ao zerar contador.");
     setCommandsRefreshToken((value) => value + 1);
     setHistoryRefreshToken((value) => value + 1);
     await pollNow();
@@ -183,7 +185,8 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
   };
 
   const factoryReset = async () => {
-    await executeDeviceCommand(deviceId, "factory_reset");
+    const result = await executeDeviceCommand(deviceId, "factory_reset");
+    requireCommandSuccess(result, "Falha no factory reset.");
     setCommandsRefreshToken((value) => value + 1);
     await reloadDevice();
   };

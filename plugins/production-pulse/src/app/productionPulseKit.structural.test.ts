@@ -264,6 +264,23 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("components/detail/DeviceMetricHero.tsx")).toMatch(
       /\bRefreshCw\b|\bRadio\b|\bRotateCcw\b|\bFactory\b/,
     );
+    expect(readRelative("components/detail/DeviceMetricHero.tsx")).toMatch(
+      /commandsDisabled/,
+    );
+    expect(readRelative("hooks/useDeviceDetail.ts")).toMatch(/requireCommandSuccess/);
+    expect(readRelative("utils/requireCommandSuccess.ts")).toMatch(/success/);
+    expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(
+      /onRefreshLive=\{\(\) => void refreshLive\(\)\}/,
+    );
+    expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(
+      /onPollNow=\{\(\) => void pollNow\(\)\}/,
+    );
+    expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(
+      /onReset=\{\(\) => setResetOpen\(true\)\}/,
+    );
+    expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(
+      /onFactoryReset=\{\(\) => setFactoryOpen\(true\)\}/,
+    );
     expect(readRelative("content/helpTooltips.ts")).toMatch(/refreshLive:/);
     expect(readRelative("content/helpTooltips.ts")).toMatch(/resetCounterAction:/);
     expect(readRelative("index.css")).toMatch(/\.pp-metric-hero__btn--warning/);
