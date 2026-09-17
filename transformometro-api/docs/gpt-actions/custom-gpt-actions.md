@@ -1,5 +1,7 @@
 # Transformômetro — Custom GPT (OpenAI Actions) · persona TÉO
 
+> **Lifecycle:** `LEGACY_TRANSITIONAL_BRIDGE` — Custom GPT Actions permanece enquanto o Custom GPT atual funcionar.  
+> **Target Plugin/Agent:** MCP FULL CRUD — ver [`../integrations/openai-plugin-mcp.md`](../integrations/openai-plugin-mcp.md) (client `mcp-transformometro`).  
 > **Padrão transversal:** [padrao-custom-gpt-actions-oauth.md](../../../docs/11-padroes-de-desenvolvimento/padrao-custom-gpt-actions-oauth.md)  
 > Este arquivo é a **instância** Transformômetro (paths, client, operations). Para Action Plans e outros produtos, seguir o padrão geral e espelhar esta estrutura.  
 > **Persona user-facing:** [TÉO — Especialista em Transformação Digital](./specialist-instructions.md) (produto = Transformômetro; TÉO ≠ novo serviço/bounded context).

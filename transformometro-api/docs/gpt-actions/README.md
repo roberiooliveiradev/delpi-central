@@ -9,4 +9,6 @@
 
 Persona = **TÉO**. Produto = **Transformômetro**.
 
+**Lifecycle:** LEGACY_TRANSITIONAL_BRIDGE. Target Plugin/Agent = MCP FULL CRUD em [`../integrations/openai-plugin-mcp.md`](../integrations/openai-plugin-mcp.md).
+
 Padrão transversal: [`padrao-custom-gpt-actions-oauth.md`](../../../docs/11-padroes-de-desenvolvimento/padrao-custom-gpt-actions-oauth.md).

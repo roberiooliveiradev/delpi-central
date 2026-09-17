@@ -37,6 +37,12 @@ from tm_app.application.services.transformometro_realtime_hub import (
     transformometro_realtime_hub,
 )
 from tm_app.interface.http.routes.realtime_routes import router as realtime_router
+from tm_app.interface.mcp import (
+    combine_lifespan,
+    mcp_http_app,
+    mcp_metadata_router,
+    mcp_mount_path_middleware,
+)
 from tm_app.startup.run_migrations_on_startup import run_migrations_on_startup
 
 logging.basicConfig(
@@ -106,7 +112,7 @@ app = FastAPI(
     description="API do Transformômetro — melhorias de processo e ROI.",
     version="0.1.0",
     root_path=settings.TM_API_ROOT_PATH,
-    lifespan=lifespan,
+    lifespan=combine_lifespan(lifespan, mcp_http_app),
 )
 
 
@@ -130,6 +136,8 @@ async def unhandled_exception_handler(_request: Request, exc: Exception):
 app.middleware("http")(gpt_actions_error_envelope_middleware)
 app.middleware("http")(jwt_middleware)
 app.middleware("http")(path_alias_middleware)
+# Last registered http middleware runs first: rewrite /mcp → /mcp/ before Mount 307.
+app.middleware("http")(mcp_mount_path_middleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
     CORSMiddleware,
@@ -145,6 +153,7 @@ def health():
     return {"status": "online", "service": "transformometro-api"}
 
 
+app.include_router(mcp_metadata_router)
 app.include_router(transformometro_router)
 app.include_router(gpt_actions_router)
 app.include_router(meeting_minutes_router, prefix="/transformometro/meeting-minutes")
@@ -162,3 +171,5 @@ app.include_router(diagram_router)
 app.include_router(decomposition_router)
 app.include_router(collaboration_router)
 app.include_router(realtime_router)
+# Streamable HTTP MCP (external path: /apps/transformometro-api/mcp). Auth via jwt_middleware.
+app.mount("/mcp", mcp_http_app)
