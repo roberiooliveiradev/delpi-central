@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C0.S7 — FOUNDATION_FREEZE review` (`C0.S0..=C0.S6=APPROVED`; `RED_CONTRACT_CONFORMANCE_PRIVACY_SECURITY_HARNESS=FROZEN_ACCEPTED`; `C0.S7_AUTHORIZED=YES`; `C0.S7_EXECUTED=NO`; C0 permanece `NOT_STARTED`; `FOUNDATION_FREEZE=NOT APPROVED`; `DÉLIA_RUNTIME_DIFF=NONE`)
+**Próxima etapa:** `C1 — STANDALONE APPLICATION BOOTSTRAP` (`C0.S0..=C0.S7=APPROVED`; `FOUNDATION_FREEZE=APPROVED`; `C1_AUTHORIZED=YES`; `C1_STARTED=NO`; `C1_EXECUTED=NO`; C0 permanece `NOT_STARTED`; `RUNTIME_READINESS=NOT_PROVEN`; `PRODUCTION_READINESS=NOT_PROVEN`; `DÉLIA_RUNTIME_DIFF=NONE`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -322,18 +322,24 @@ C0.S3 = APPROVED
 C0.S4 = APPROVED
 C0.S5 = APPROVED
 C0.S6 = APPROVED
+C0.S7 = APPROVED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
 ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_ACCEPTED
 INTEGRATION_CONTRACTS = FROZEN_ACCEPTED
 RED_CONTRACT_CONFORMANCE_PRIVACY_SECURITY_HARNESS = FROZEN_ACCEPTED
-C0.S7_AUTHORIZED = YES
-C0.S7_EXECUTED = NO
-FOUNDATION_FREEZE = NOT APPROVED
+FOUNDATION_FREEZE = APPROVED
+C1_AUTHORIZED = YES
+C1_STARTED = NO
+C1_EXECUTED = NO
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
+RUNTIME_READINESS = NOT_PROVEN
+PRODUCTION_READINESS = NOT_PROVEN
+NEW_BEHAVIORAL_TESTS = TEST_NOT_RUN
+FUTURE_C1_C7_GREEN_EVIDENCE_REQUIRED = YES
 DÉLIA_RUNTIME_DIFF = NONE
 NEW_RUNTIME_ABSTRACTIONS = NONE
-NEXT = C0.S7 — FOUNDATION_FREEZE review
+NEXT = C1 — STANDALONE APPLICATION BOOTSTRAP
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -429,7 +435,7 @@ Congelar typed contracts para platform/domain/external/event/automation/**recurr
 
 **C0.S6-T2 (histórico):** harness RED canônico persistido em `20` (seção C0.S6) (+ linkage `25` §20 + ledger §6.32) como `CANDIDATE_FOR_ARCHITECTURE_REVIEW`. Esse estado foi superseded pelo review abaixo; não apagar história.
 
-**C0.S6-T3 — PERSIST_ARCHITECTURE_REVIEW_DECISION:** `ARCHITECTURE_REVIEW_C0_S6` sobre `REVIEWED_HEAD=331e92d8fa3f0f3fff3926a58b983b7d05701c3e`, `VERDICT=ACCEPT_WITH_RESIDUAL`, `C0.S6=APPROVED`, `RED_CONTRACT_CONFORMANCE_PRIVACY_SECURITY_HARNESS=FROZEN_ACCEPTED`, `C0.S7_AUTHORIZED=YES`, `BLOCKERS=NONE`, `EXECUTION_DRIFT=NONE`, `NEW_RUNTIME_ABSTRACTIONS=NONE`. Evidence: `CONTRACT_FAMILY_COVERAGE=27/27`; `TEST_ID_COUNT=250`; `TEST_ID_UNIQUENESS=PASS` (STATIC_DOCUMENTATION_VALIDATION_ONLY); `AUTHZNEG-001..012 COMPLETE`; `FFB-001..018 PRESENT`. Residuals: runtime absence / external-owner / fixture binding / TO_INVENTORY (não bloqueantes para aceite do harness). `FOUNDATION_FREEZE=NOT APPROVED`, `PROGRAM=PLANNED / NOT_STARTED`, `C0=NOT_STARTED`, `DÉLIA_RUNTIME_DIFF=NONE`. New behavioral tests remain `TEST_NOT_RUN`. **Nenhuma execução C0.S7 / FOUNDATION_FREEZE ocorre nesta tarefa.**
+**C0.S6-T3 — PERSIST_ARCHITECTURE_REVIEW_DECISION:** `ARCHITECTURE_REVIEW_C0_S6` sobre `REVIEWED_HEAD=331e92d8fa3f0f3fff3926a58b983b7d05701c3e`, `VERDICT=ACCEPT_WITH_RESIDUAL`, `C0.S6=APPROVED`, `RED_CONTRACT_CONFORMANCE_PRIVACY_SECURITY_HARNESS=FROZEN_ACCEPTED`, `C0.S7_AUTHORIZED=YES`, `BLOCKERS=NONE`, `EXECUTION_DRIFT=NONE`, `NEW_RUNTIME_ABSTRACTIONS=NONE`. Evidence: `CONTRACT_FAMILY_COVERAGE=27/27`; `TEST_ID_COUNT=250`; `TEST_ID_UNIQUENESS=PASS` (STATIC_DOCUMENTATION_VALIDATION_ONLY); `AUTHZNEG-001..012 COMPLETE`; `FFB-001..018 PRESENT`. Residuals: runtime absence / external-owner / fixture binding / TO_INVENTORY (não bloqueantes para aceite do harness). `FOUNDATION_FREEZE=NOT APPROVED`, `PROGRAM=PLANNED / NOT_STARTED`, `C0=NOT_STARTED`, `DÉLIA_RUNTIME_DIFF=NONE`. New behavioral tests remain `TEST_NOT_RUN`. **Nenhuma execução C0.S7 / FOUNDATION_FREEZE ocorre nesta tarefa.** Historical T3 current-state (`FOUNDATION_FREEZE=NOT APPROVED`; next=C0.S7) is superseded by C0.S7-T2.
 
 Required negatives incluem (cobertura detalhada e TEST_IDs estáveis em `20`):
 
@@ -492,6 +498,29 @@ OT_SAFETY_BOUNDARY
 CONFORMANCE_HARNESS
 CHAT_RUNTIME_DEPENDENCY=0
 FOUNDATION_DUPLICATION=0 material
+```
+
+**C0.S7-T2 — PERSIST_FOUNDATION_FREEZE_REVIEW_DECISION:** `FOUNDATION_FREEZE_REVIEW` sobre `REVIEWED_HEAD=6e10029bcc281c4e0c3575448a1414a157cc3c44`, `VERDICT=APPROVE_WITH_NON_BLOCKING_RESIDUALS`, `C0.S7=APPROVED`, `FOUNDATION_FREEZE=APPROVED`, `C1_AUTHORIZED=YES`, `C1_STARTED=NO`, `C1_EXECUTED=NO`, `BLOCKERS=NONE`, `EXECUTION_DRIFT=NONE`, `NEW_RUNTIME_ABSTRACTIONS=NONE`. Post-review commits `b5de5122f` and `0f55fd19b` = `OUTSIDE_TASK` (DAVI economic-wave freeze/correction; no DÉLIA authority/contract/harness change). `PROGRAM=PLANNED / NOT_STARTED`. `C0=NOT_STARTED` because this document does not define `COMPLETED` as an accepted phase-state token. `RUNTIME_READINESS=NOT_PROVEN`, `PRODUCTION_READINESS=NOT_PROVEN`, `NEW_BEHAVIORAL_TESTS=TEST_NOT_RUN`, `FUTURE_C1_C7_GREEN_EVIDENCE_REQUIRED=YES`, `DÉLIA_RUNTIME_DIFF=NONE`. Residuals remain `NON_BLOCKING_IMPLEMENTATION_RESIDUAL`. **Nenhuma implementação C1 ocorre nesta tarefa.**
+
+```text
+FOUNDATION_FREEZE = APPROVED means only:
+  product/topology baseline frozen
+  authority ownership frozen
+  bounded contexts frozen
+  shared reference semantics frozen
+  persistence/privacy/safety architecture frozen
+  integration contracts frozen
+  RED acceptance harness frozen
+  foundation acceptance gates defined
+  architecture is sufficiently testable
+  implementation may begin against frozen constraints
+
+FOUNDATION_FREEZE = APPROVED does NOT mean:
+  DÉLIA runtime exists or works
+  security/privacy/integration runtime PASS
+  future C1–C7 behavior PASS
+  all external systems exist
+  production or operational readiness
 ```
 
 ---

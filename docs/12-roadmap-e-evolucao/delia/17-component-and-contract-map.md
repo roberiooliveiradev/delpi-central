@@ -9,7 +9,7 @@
 
 > Este documento define **ownership e contratos alvo**. Ele não prova que um runtime, serviço, tabela, adapter ou capability já exista. Existência e estado atual devem ser classificados por evidência como `PROVEN`, `TO_INVENTORY`, `PLANNED` ou `TARGET` conforme o caso.
 > **C0.S2-T1 (histórico):** matriz de authorities/bounded contexts foi persistida como `FROZEN_CANDIDATE` / `CANDIDATE_FOR_ARCHITECTURE_REVIEW`.
-> **C0.S2-T2:** `ARCHITECTURE_REVIEW_C0_S2` sobre `REVIEWED_HEAD=8bae12a250f2362603211a93c65bb098b8b1e9aa`, `VERDICT=ACCEPT_WITH_RESIDUAL`; `AUTHORITY_MAP=FROZEN_ACCEPTED`; `BOUNDED_CONTEXT_MAP=FROZEN_ACCEPTED`; `C0.S2=APPROVED`; `C0.S3_AUTHORIZED=YES`; `FOUNDATION_FREEZE=NOT APPROVED`; `DÉLIA_RUNTIME_DIFF=NONE`.
+> **C0.S2-T2:** `ARCHITECTURE_REVIEW_C0_S2` sobre `REVIEWED_HEAD=8bae12a250f2362603211a93c65bb098b8b1e9aa`, `VERDICT=ACCEPT_WITH_RESIDUAL`; `AUTHORITY_MAP=FROZEN_ACCEPTED`; `BOUNDED_CONTEXT_MAP=FROZEN_ACCEPTED`; `C0.S2=APPROVED`; `C0.S3_AUTHORIZED=YES`; `FOUNDATION_FREEZE=NOT APPROVED` (review-time field; current freeze `APPROVED` via C0.S7-T2); `DÉLIA_RUNTIME_DIFF=NONE`.
 
 ## 1. Owners canônicos
 
@@ -131,6 +131,7 @@ SHARED_PRIMITIVES = DEFERRED_TO_C0_S3
 DÉLIA_RUNTIME_DIFF = NONE
 BLOCKERS = NONE
 EXECUTION_DRIFT = NONE
+NOTE_SUPERSEDED_BY_C0_S7_T2: FOUNDATION_FREEZE current-state is APPROVED; this block records C0.S2 review-time fields only
 ```
 
 C0.S2 congela **boundaries de responsabilidade**. Não inventa schemas/ports/adapters/engines/packages/shared primitives.
@@ -388,7 +389,7 @@ Observability / Evals
 ## 3. Shared primitive registry — C0.S3 shared/reference semantics freeze accepted
 
 > Canonical semantics: [`21-data-and-state-model.md`](./21-data-and-state-model.md) §4.
-> Status: `FROZEN_ACCEPTED` / `APPROVED` via `ARCHITECTURE_REVIEW_C0_S3` (`REVIEWED_HEAD=641ffc07284b98ffbdb5e13217ce214c4ad8ebb0`; `VERDICT=ACCEPT_WITH_RESIDUAL`). Não prova runtime. `FOUNDATION_FREEZE=NOT APPROVED`.
+> Status: `FROZEN_ACCEPTED` / `APPROVED` via `ARCHITECTURE_REVIEW_C0_S3` (`REVIEWED_HEAD=641ffc07284b98ffbdb5e13217ce214c4ad8ebb0`; `VERDICT=ACCEPT_WITH_RESIDUAL`). Não prova runtime. `FOUNDATION_FREEZE=NOT APPROVED` below is the C0.S3 review-time field; current freeze is `APPROVED` via C0.S7-T2.
 
 ```text
 REVIEW = ARCHITECTURE_REVIEW_C0_S3
@@ -404,6 +405,7 @@ C0.S6_AUTHORIZED = YES
 FOUNDATION_FREEZE = NOT APPROVED
 DÉLIA_RUNTIME_DIFF = NONE
 NEW_RUNTIME_ABSTRACTIONS = NONE
+NOTE_SUPERSEDED_BY_C0_S7_T2: FOUNDATION_FREEZE current-state is APPROVED; this block records C0.S3 review-time fields only
 
 REUSED_EXISTING:
   CorrelationContext, EntityRef, UserRef, ServiceActorRef, DeviceRef,
@@ -435,7 +437,7 @@ WorkspaceContext shape = FROZEN_CANDIDATE (C0.S5 §22); ≠AuthZ/SoT/JWT/secret
 ## 3A. Architecture / persistence / privacy / safety — C0.S4 freeze accepted
 
 > Canonical rules: [`21-data-and-state-model.md`](./21-data-and-state-model.md) §4A.
-> Status: `FROZEN_ACCEPTED` / `APPROVED` via `ARCHITECTURE_REVIEW_C0_S4` (`REVIEWED_HEAD=7ac1fb930017bbabb05d8b1654941518f315c6a7`; `VERDICT=ACCEPT_WITH_RESIDUAL`). Não prova runtime. Autoriza C0.S5; **não** executa C0.S5; `FOUNDATION_FREEZE=NOT APPROVED`.
+> Status: `FROZEN_ACCEPTED` / `APPROVED` via `ARCHITECTURE_REVIEW_C0_S4` (`REVIEWED_HEAD=7ac1fb930017bbabb05d8b1654941518f315c6a7`; `VERDICT=ACCEPT_WITH_RESIDUAL`). Não prova runtime. Autoriza C0.S5; **não** executa C0.S5. Current program freeze: `FOUNDATION_FREEZE=APPROVED` via C0.S7-T2; C1 authorized but not started.
 
 ```text
 REVIEW = ARCHITECTURE_REVIEW_C0_S4
@@ -447,8 +449,11 @@ C0.S5 = APPROVED
 INTEGRATION_CONTRACTS = FROZEN_ACCEPTED (see §22)
 C0.S6 = APPROVED
 RED_CONTRACT_CONFORMANCE_PRIVACY_SECURITY_HARNESS = FROZEN_ACCEPTED (see 20)
-C0.S7_AUTHORIZED = YES
-C0.S7_EXECUTED = NO
+C0.S7 = APPROVED
+FOUNDATION_FREEZE = APPROVED
+C1_AUTHORIZED = YES
+C1_STARTED = NO
+C1_EXECUTED = NO
 PHYSICAL_POSTGRES_CLUSTER = DEFER_PHYSICAL_PLACEMENT / TO_INVENTORY
 SecretRef = DEFER_TO_CONTRACT (no new shared primitive)
 OT ACTUATION = BLOCKED_BY_DEFAULT
@@ -459,8 +464,11 @@ Prediction != FACT
 Personal Memory != Organizational Knowledge
 cache/projection != authority
 NEW_RUNTIME_ABSTRACTIONS = NONE
-FOUNDATION_FREEZE = NOT APPROVED
-NEXT = C0.S7 — FOUNDATION_FREEZE review
+RUNTIME_READINESS = NOT_PROVEN
+PRODUCTION_READINESS = NOT_PROVEN
+NEW_BEHAVIORAL_TESTS = TEST_NOT_RUN
+FUTURE_C1_C7_GREEN_EVIDENCE_REQUIRED = YES
+NEXT = C1 — STANDALONE APPLICATION BOOTSTRAP
 ```
 
 ## 4. Core producer → consumer graph
@@ -765,7 +773,7 @@ No thematic capability may silently redefine frozen authorities.
 
 ## 22. Integration contracts — C0.S5 freeze accepted
 
-> Status: `FROZEN_ACCEPTED` / `APPROVED` via `ARCHITECTURE_REVIEW_C0_S5` (`REVIEWED_HEAD=8d83383e9a9ff019132e7156d56e41643b168851`; `VERDICT=ACCEPT_WITH_RESIDUAL`). Não prova runtime. C0.S6 harness accepted em `20` (`FROZEN_ACCEPTED` via `ARCHITECTURE_REVIEW_C0_S6`); este §22 permanece contract authority; `FOUNDATION_FREEZE=NOT APPROVED`.
+> Status: `FROZEN_ACCEPTED` / `APPROVED` via `ARCHITECTURE_REVIEW_C0_S5` (`REVIEWED_HEAD=8d83383e9a9ff019132e7156d56e41643b168851`; `VERDICT=ACCEPT_WITH_RESIDUAL`). Não prova runtime. C0.S6 harness accepted em `20` (`FROZEN_ACCEPTED` via `ARCHITECTURE_REVIEW_C0_S6`); este §22 permanece contract authority. Current program freeze: `FOUNDATION_FREEZE=APPROVED` via C0.S7-T2; C1 authorized but not started.
 > Precedence: C0.S1–C0.S4 freezes are immutable input. Thematic specs cannot redefine owners/authorities.
 > Residual: `DOCUMENTATION_CONTRACT_TAXONOMY_RESIDUAL` — only `READ|ADVISE|PREPARE|ACT|VERIFY|SIGNAL` are operation characters; `SIMULATE`/`analysis`/`ingress`/`tech` are semantic/technical qualifiers (not AuthZ modes).
 
@@ -779,19 +787,25 @@ C0.S0..C0.S5 = APPROVED
 C0.S6_AUTHORIZED = YES
 C0.S6 = APPROVED
 RED_CONTRACT_CONFORMANCE_PRIVACY_SECURITY_HARNESS = FROZEN_ACCEPTED (authority: 20)
-C0.S7_AUTHORIZED = YES
-C0.S7_EXECUTED = NO
+C0.S7 = APPROVED
+FOUNDATION_FREEZE = APPROVED
+C1_AUTHORIZED = YES
+C1_STARTED = NO
+C1_EXECUTED = NO
 AUTHORITY_MAP = FROZEN_ACCEPTED
 BOUNDED_CONTEXT_MAP = FROZEN_ACCEPTED
 SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
 ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_ACCEPTED
 NEW_RUNTIME_ABSTRACTIONS = NONE
-FOUNDATION_FREEZE = NOT APPROVED
 PROGRAM = PLANNED / NOT_STARTED
 C0 = NOT_STARTED
+RUNTIME_READINESS = NOT_PROVEN
+PRODUCTION_READINESS = NOT_PROVEN
+NEW_BEHAVIORAL_TESTS = TEST_NOT_RUN
+FUTURE_C1_C7_GREEN_EVIDENCE_REQUIRED = YES
 DÉLIA_RUNTIME_DIFF = NONE
 RESIDUAL = DOCUMENTATION_CONTRACT_TAXONOMY_RESIDUAL
-NEXT = C0.S7 — FOUNDATION_FREEZE review
+NEXT = C1 — STANDALONE APPLICATION BOOTSTRAP
 HARNESS_POINTER = 20 §C0.S6 (does not redefine contracts)
 ```
 

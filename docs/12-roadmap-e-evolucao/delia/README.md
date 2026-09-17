@@ -4,7 +4,7 @@
 > **Produto:** aplicação nova e standalone de Continuous Operational Intelligence
 > **Requirements:** `CP-001…CP-316`
 > **Specs temáticas:** `53–66`
-> **Próxima etapa:** `C0.S7 — FOUNDATION_FREEZE review` (`C0.S0..=C0.S6=APPROVED`; `RED_HARNESS=FROZEN_ACCEPTED`; `C0.S7_AUTHORIZED=YES`; `C0.S7_EXECUTED=NO`)
+> **Próxima etapa:** `C1 — STANDALONE APPLICATION BOOTSTRAP` (`C0.S0..=C0.S7=APPROVED`; `FOUNDATION_FREEZE=APPROVED`; `C1_AUTHORIZED=YES`; `C1_STARTED=NO`; `C1_EXECUTED=NO`)
 > **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)
 > **Execution state:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
 > **Naming authority:** [`68-delia-product-identity-and-naming.md`](./68-delia-product-identity-and-naming.md)
@@ -244,13 +244,19 @@ SHARED_REFERENCE_SEMANTICS = FROZEN_ACCEPTED
 ARCHITECTURE_PERSISTENCE_PRIVACY_SAFETY = FROZEN_ACCEPTED
 INTEGRATION_CONTRACTS = FROZEN_ACCEPTED
 C0.S6 = APPROVED
+C0.S7 = APPROVED
 RED_CONTRACT_CONFORMANCE_PRIVACY_SECURITY_HARNESS = FROZEN_ACCEPTED
-C0.S7_AUTHORIZED = YES
-C0.S7_EXECUTED = NO
-FOUNDATION_FREEZE = NOT APPROVED
+FOUNDATION_FREEZE = APPROVED
+C1_AUTHORIZED = YES
+C1_STARTED = NO
+C1_EXECUTED = NO
+RUNTIME_READINESS = NOT_PROVEN
+PRODUCTION_READINESS = NOT_PROVEN
+NEW_BEHAVIORAL_TESTS = TEST_NOT_RUN
+FUTURE_C1_C7_GREEN_EVIDENCE_REQUIRED = YES
 RUNTIME_DIFF = NONE
 NEW_RUNTIME_ABSTRACTIONS = NONE
-NEXT = C0.S7 — FOUNDATION_FREEZE review
+NEXT = C1 — STANDALONE APPLICATION BOOTSTRAP
 ```
 
 A formalização de `CP-311–CP-316` é documentação/planejamento. Não altera os estados acima nem prova scheduler, email provider ou Recurring Work runtime.
