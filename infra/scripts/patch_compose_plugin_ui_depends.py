@@ -40,6 +40,7 @@ FEDERATED_PLUGINS = {
     "commercial",
     "supplies",
     "cultura-delpi",
+    "delia",
     "central-agendamento",
     "quality-labels",
     "tv-dashboard",

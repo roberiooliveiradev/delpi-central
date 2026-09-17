@@ -147,6 +147,7 @@ FASE_MFE=(
   purchase-requests
   my-requests
   cultura-delpi
+  delia
   codigo-etica
   guias-procedimentos
   central-agendamento
@@ -168,6 +169,7 @@ FASE_API=(
   requests-api
   commercial-api
   supplies-api
+  delia-api
   cipa-api
   comite-etica-conduta-api
   customer-experience-api
