@@ -317,7 +317,7 @@ export const USER_MANUAL_TERM_CATALOG: readonly UserManualTermGroup[] = [
       {
         term: "Métrica R$ / Qtd / Ambos",
         meaning:
-          "No Faturamento da Minha Carteira: R$ = valor (bruto/líquido); Qtd = quantidade fornecida com a UM da nota; Ambos = R$ no eixo Y esquerdo e quantidade no eixo Y direito, no tipo de gráfico escolhido, e as duas métricas no mix. Ano anterior também compara a quantidade. UMs mistas não são convertidas automaticamente.",
+          "No Faturamento da Minha Carteira: R$ = valor (bruto/líquido); Qtd = quantidade fornecida com a UM da nota; Ambos = R$ no eixo Y esquerdo e quantidade no eixo Y direito, no tipo de gráfico escolhido, e as duas métricas no mix. Ano anterior também compara a quantidade. UMs diferentes omitem a UM no gráfico (não convertem); no mix a coluna UM mostra «mistas».",
         applies: "Minha Carteira → Faturamento",
       },
       {

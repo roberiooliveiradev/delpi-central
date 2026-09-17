@@ -260,13 +260,15 @@ export function MultiTypeSeriesChart({
     if (category != null) onCategoryClick(String(category));
   };
 
+  const columnLike =
+    chartType === "column" || chartType === "bar" || chartType === "stacked_bar";
   const trendLines =
     showTrend &&
     (chartType === "column" || chartType === "line" || chartType === "area")
       ? trendSources.map((source) => (
           <Line
             key={`_trend_${source.dataKey}`}
-            yAxisId={hasSecondaryAxis ? "left" : undefined}
+            yAxisId={seriesAxisId(source, columnLike)}
             type="linear"
             dataKey={`_trend_${source.dataKey}`}
             name={

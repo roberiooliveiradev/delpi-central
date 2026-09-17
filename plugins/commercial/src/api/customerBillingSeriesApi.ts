@@ -103,7 +103,7 @@ export async function fetchCustomerBillingSeries(
   for (const batch of execution.batches) {
     if (!batch.value) continue;
     if (batch.value.mixed_units) mixedUnits = true;
-    const unit = (batch.value.unit || "").trim();
+    const unit = (batch.value.unit || "").trim().toUpperCase();
     if (unit) units.add(unit);
     const reportedCount = Number(batch.value.customer_count);
     covered += Number.isFinite(reportedCount)

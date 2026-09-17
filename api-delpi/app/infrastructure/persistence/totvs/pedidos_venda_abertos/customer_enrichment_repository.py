@@ -19,6 +19,7 @@ from app.infrastructure.persistence.totvs.pedidos_venda_abertos.customer_billing
     normalize_billing_metric,
     normalize_billing_nature,
     normalize_billing_series_recorte,
+    normalize_billing_unit,
 )
 
 
@@ -190,7 +191,7 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
             CustomerBillingMonthRow(
                 year_month=_trim(row.get("year_month")),
                 billed_value=_to_float(row.get("billed_value")),
-                unit=_trim(row.get("unit")) or None,
+                unit=normalize_billing_unit(_trim(row.get("unit"))) or None,
                 mixed_units=bool(int(row.get("mixed_units") or 0)),
             )
             for row in rows

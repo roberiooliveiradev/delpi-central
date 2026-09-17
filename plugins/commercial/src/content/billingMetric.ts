@@ -54,13 +54,13 @@ export function billingMetricShortLabel(metric: PortfolioBillingMetric): string 
   return BILLING_METRIC_CONTENT[metric].shortLabel;
 }
 
-/** UM homogênea da nota, ou «mistas» quando o recorte mistura UMs. */
+/** UM homogênea da nota. Recorte misto não usa «mistas» como se fosse UM. */
 export function billingQuantityUnitLabel(
   unit?: string | null,
   mixed?: boolean,
 ): string | null {
-  if (mixed) return "mistas";
-  const um = (unit || "").trim();
+  if (mixed) return null;
+  const um = (unit || "").trim().toUpperCase();
   return um || null;
 }
 
@@ -71,7 +71,7 @@ export function formatQuantityWithUnit(
   mixed?: boolean,
 ): string {
   if (!Number.isFinite(value)) return "—";
-  if (mixed) return `${formatQuantity(value)} mistas`;
+  if (mixed) return formatQuantity(value);
   return formatDisplayQuantity(value, unit);
 }
 

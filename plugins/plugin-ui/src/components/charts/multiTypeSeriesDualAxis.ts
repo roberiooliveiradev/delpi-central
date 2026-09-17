@@ -36,9 +36,17 @@ function readDataKey(value: unknown): string {
   return "";
 }
 
+const TREND_FIELD_PREFIX = "_trend_";
+
+function sourceKeyFromTrendField(dataKey: string): string {
+  if (!dataKey.startsWith(TREND_FIELD_PREFIX)) return "";
+  return dataKey.slice(TREND_FIELD_PREFIX.length);
+}
+
 /**
  * Recharts 2/3: o 3º argumento do formatter pode omitir `dataKey`.
  * Resolve a série por dataKey (item ou payload) e, se faltar, pelo nome da legenda.
+ * Campos `_trend_*` herdam a série-fonte (eixo e formato).
  */
 export function resolveTooltipSeries<T extends DualAxisSeriesHint>(
   series: ReadonlyArray<T>,
@@ -54,7 +62,12 @@ export function resolveTooltipSeries<T extends DualAxisSeriesHint>(
       : null;
   const dataKey = readDataKey(record?.dataKey) || readDataKey(nested?.dataKey);
   if (dataKey && seriesByKey.has(dataKey)) return seriesByKey.get(dataKey);
+  const trendSourceKey = sourceKeyFromTrendField(dataKey);
+  if (trendSourceKey && seriesByKey.has(trendSourceKey)) {
+    return seriesByKey.get(trendSourceKey);
+  }
   const label = String(name ?? "");
   if (label && seriesByName.has(label)) return seriesByName.get(label);
-  return undefined;
+  const namedSource = series.find((entry) => label.endsWith(`(${entry.name})`));
+  return namedSource;
 }

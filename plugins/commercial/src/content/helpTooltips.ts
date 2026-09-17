@@ -308,11 +308,11 @@ export const CM_HELP = {
     rankingLimit:
       "Quantidade máxima de linhas no ranking (10, 15, 20 ou 50).",
     billingSeries:
-      "Soma do faturamento no período (bruto de nota ou líquido ROL). Com Métrica Qtd ou Ambos, a quantidade aparece com a UM da nota (eixo, total e tooltip); UMs diferentes no recorte mostram «mistas». Com Ambos, há dois eixos Y (R$ à esquerda, quantidade à direita) e o tipo do gráfico (colunas, linhas ou área) vale para as duas métricas. Ano anterior também sobrepõe a quantidade. Os filtros do hero (cliente, família, produto e mercado) também restringem este gráfico — com produto/família/mercado o bruto usa valor de linha (D2_TOTAL), alinhado ao mix. Em Cores, altere a cor de cada série; «Restaurar padrão» limpa a escolha neste navegador.",
+      "Soma do faturamento no período (bruto de nota ou líquido ROL). Com Métrica Qtd ou Ambos, a quantidade aparece com a UM da nota (eixo, total e tooltip); UMs diferentes no recorte omitem a UM no gráfico (não convertem). Com Ambos, há dois eixos Y (R$ à esquerda, quantidade à direita) e o tipo do gráfico (colunas, linhas ou área) vale para as duas métricas. Ano anterior também sobrepõe a quantidade. Os filtros do hero (cliente, família, produto e mercado) também restringem este gráfico — com produto/família/mercado o bruto usa valor de linha (D2_TOTAL), alinhado ao mix. Em Cores, altere a cor de cada série; «Restaurar padrão» limpa a escolha neste navegador.",
     billingNature:
       "Bruto = valor de nota fiscal na série e Fat.12m (ranking/share usam receita bruta do envelope). Líquido = mesma fórmula ROL da Visão geral (impostos e devoluções). Aplica a Fat.12m, tendência, gráfico, mix, ABC, ranking e share.",
     billingMetric:
-      "R$ = valor (bruto ou líquido conforme Natureza). Qtd = quantidade fornecida (D2_QUANT) com a UM da nota (ex.: MI, PC). Ambos = R$ no eixo Y esquerdo e quantidade no eixo Y direito, além das colunas do mix. Recorte com UMs diferentes mostra «mistas» e não converte. Na Conta, o toggle permanece R$ | Qtd.",
+      "R$ = valor (bruto ou líquido conforme Natureza). Qtd = quantidade fornecida (D2_QUANT) com a UM da nota (ex.: MI, PC). Ambos = R$ no eixo Y esquerdo e quantidade no eixo Y direito, além das colunas do mix. Recorte com UMs diferentes omite a UM no gráfico e não converte; no mix a coluna UM mostra «mistas». Na Conta, o toggle permanece R$ | Qtd.",
     quantityDisplayMode:
       "Milheiro mantém a UM da nota (ex.: MI). Peças converte só UM=MI (1 MI = 1000 PC) — só apresentação, sem mudar a API.",
     billingSeriesPeriod:
@@ -470,9 +470,9 @@ export const CM_HELP = {
     billingSeriesCustomer:
       "Filtra a série de faturamento da carteira a um ou mais clientes (código+loja).",
     billingSeriesAccount:
-      "Evolução do faturamento ou da quantidade fornecida deste cliente no período dos filtros (Métrica R$ | Qtd). A quantidade inclui a UM da nota; UMs diferentes no período mostram «mistas». Em Opções do gráfico, «Comparar ano anterior» coloca as colunas do ano anterior lado a lado com o período atual. Em Cores, escolha a cor de cada série; «Restaurar padrão» remove a personalização.",
+      "Evolução do faturamento ou da quantidade fornecida deste cliente no período dos filtros (Métrica R$ | Qtd). A quantidade inclui a UM da nota; UMs diferentes no período omitem a UM (não usam «mistas» como unidade). Em Opções do gráfico, «Comparar ano anterior» coloca as colunas do ano anterior lado a lado com o período atual. Em Cores, escolha a cor de cada série; «Restaurar padrão» remove a personalização.",
     billingSeriesTrend:
-      "Sobreposição da regressão linear sobre a série atual (não substitui o comparativo YoY).",
+      "Uma regressão linear por série do período atual, na cor e no eixo dessa série. Em Ambos, há tendência de faturamento (eixo R$) e de quantidade (eixo direito). Não cobre as séries de ano anterior.",
     billingSeriesDateStart: "Início do intervalo personalizado da série de faturamento.",
     billingSeriesDateEnd: "Fim do intervalo personalizado da série de faturamento.",
     purchaseEvolutionPeriod:

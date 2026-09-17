@@ -24,6 +24,7 @@ from app.infrastructure.persistence.totvs.pedidos_venda_abertos.customer_billing
     SUPPORTED_BILLING_NATURES,
     normalize_billing_metric,
     normalize_billing_nature,
+    normalize_billing_unit,
 )
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
@@ -206,11 +207,11 @@ class ListCustomerBillingSeriesUseCase:
                 )
                 if row.mixed_units:
                     mixed_units = True
-                unit = (row.unit or "").strip()
+                unit = normalize_billing_unit(row.unit)
                 if unit:
                     units.add(unit)
 
-        if mixed_units or len(units) > 1:
+        if len(units) > 1:
             series_unit = None
             mixed_units = True
         else:

@@ -104,4 +104,57 @@ describe("APIs em lotes de clientes", () => {
     assert.deepEqual(result.points.map((point) => point.value), [151, 302]);
     assert.match(result.partialError ?? "", /151 de 201/);
   });
+
+  it("faturamento colapsa UM com caixa/espaços e não marca misto", async () => {
+    let calls = 0;
+    globalThis.fetch = async () => {
+      calls += 1;
+      const unit = calls === 1 ? "mi" : "MI  ";
+      return jsonResponse({
+        success: true,
+        data: {
+          months: 12,
+          customer_count: 1,
+          unit,
+          mixed_units: false,
+          points: [{
+            month: "2026-01",
+            label: "Jan/26",
+            value: 1,
+            date_start: "2026-01-01",
+            date_end: "2026-01-31",
+          }],
+        },
+      });
+    };
+    const result = await fetchCustomerBillingSeries(customers(201), { metric: "quantity" });
+    assert.equal(result.mixed_units, false);
+    assert.equal(result.unit, "MI");
+  });
+
+  it("faturamento marca misto quando lotes têm UMs distintas", async () => {
+    let calls = 0;
+    globalThis.fetch = async () => {
+      calls += 1;
+      return jsonResponse({
+        success: true,
+        data: {
+          months: 12,
+          customer_count: 1,
+          unit: calls === 1 ? "MI" : "PC",
+          mixed_units: false,
+          points: [{
+            month: "2026-01",
+            label: "Jan/26",
+            value: 1,
+            date_start: "2026-01-01",
+            date_end: "2026-01-31",
+          }],
+        },
+      });
+    };
+    const result = await fetchCustomerBillingSeries(customers(201), { metric: "quantity" });
+    assert.equal(result.mixed_units, true);
+    assert.equal(result.unit, null);
+  });
 });

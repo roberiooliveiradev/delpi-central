@@ -112,6 +112,40 @@ describe("MultiTypeSeriesChart dual Y", () => {
     expect(container.querySelectorAll(".recharts-bar").length).toBe(1);
   });
 
+  it("positive: tendência gera uma linha por série atual, inclusive no eixo direito", async () => {
+    stubChartHostSize();
+    const { container } = render(
+      <MultiTypeSeriesChart
+        data={POINTS}
+        categoryKey="periodo"
+        chartType="column"
+        height={320}
+        showTrend
+        secondaryDataKeys={["quantidade"]}
+        series={[
+          {
+            dataKey: "faturamento",
+            name: "Faturamento",
+            fill: "#089bdb",
+            trendSource: true,
+          },
+          {
+            dataKey: "quantidade",
+            name: "Quantidade fornecida",
+            fill: "#ea580c",
+            axis: "secondary",
+            trendSource: true,
+          },
+        ]}
+      />,
+    );
+    await waitFor(() => {
+      expect(container.querySelectorAll(".recharts-line").length).toBe(2);
+    });
+    expect(container.textContent).toMatch(/Tendência \(Faturamento\)/);
+    expect(container.textContent).toMatch(/Tendência \(Quantidade fornecida\)/);
+  });
+
   it("negative: uma série em R$ não marca dual-y", async () => {
     stubChartHostSize();
     const { container } = render(

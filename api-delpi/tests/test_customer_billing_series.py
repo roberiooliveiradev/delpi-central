@@ -20,6 +20,7 @@ from app.domain.services.pedidos_venda_abertos.billing_series_service import (
 from app.infrastructure.persistence.totvs.pedidos_venda_abertos.customer_billing_series_sql import (
     billing_series_period_expr,
     build_customer_billing_series_sql,
+    normalize_billing_unit,
 )
 
 
@@ -218,6 +219,8 @@ def test_billing_series_sql_quantity_uses_line_qty_not_note_value() -> None:
     assert "D2_QUANT" in sql
     assert "F2_VALBRUT" not in sql
     assert "mixed_units" in sql
+    assert "NULLIF(UPPER(LTRIM(RTRIM(D2.D2_UM))), '')" in sql
+    assert "COUNT(DISTINCT" in sql
 
 
 def test_billing_series_sql_quantity_net_subtracts_return_qty() -> None:
@@ -229,6 +232,7 @@ def test_billing_series_sql_quantity_net_subtracts_return_qty() -> None:
     )
     assert "D2_QUANT" in sql
     assert "D1_QUANT" in sql
+    assert "UPPER(LTRIM(RTRIM(D1.D1_UM)))" in sql
     assert "devolucoes" in sql.lower()
 
 
@@ -259,3 +263,58 @@ def test_list_customer_billing_series_passes_metric_and_mixed_units() -> None:
     payload = result.to_dict()
     assert payload["supportedMetrics"] == ["value", "quantity"]
     assert payload["mixed_units"] is True
+
+
+def test_list_customer_billing_series_collapses_unit_case() -> None:
+    repo = MagicMock()
+    repo.fetch_billing_monthly_series.return_value = [
+        CustomerBillingMonthRow("202607", 12.5, unit="mi", mixed_units=False),
+        CustomerBillingMonthRow("202608", 3.0, unit="MI", mixed_units=False),
+    ]
+    use_case = ListCustomerBillingSeriesUseCase(repo)
+    with patch(
+        "app.application.use_cases.pedidos_venda_abertos.list_customer_billing_series_use_case.date"
+    ) as mock_date:
+        mock_date.today.return_value = date(2026, 8, 15)
+        mock_date.side_effect = lambda *args, **kwargs: date(*args, **kwargs)
+        result = use_case.execute(
+            ListCustomerBillingSeriesRequest(
+                customers=[("100", "01")],
+                months=2,
+                metric="quantity",
+                nature="gross",
+            )
+        )
+    assert result.mixed_units is False
+    assert result.unit == "MI"
+
+
+def test_normalize_billing_unit_collapses_padding_and_case() -> None:
+    assert normalize_billing_unit(" mi ") == "MI"
+    assert normalize_billing_unit("MI") == "MI"
+    assert normalize_billing_unit("") == ""
+    assert normalize_billing_unit(None) == ""
+
+
+def test_list_customer_billing_series_collapses_unit_padding() -> None:
+    repo = MagicMock()
+    repo.fetch_billing_monthly_series.return_value = [
+        CustomerBillingMonthRow("202607", 12.5, unit="MI  ", mixed_units=False),
+        CustomerBillingMonthRow("202608", 3.0, unit="mi", mixed_units=False),
+    ]
+    use_case = ListCustomerBillingSeriesUseCase(repo)
+    with patch(
+        "app.application.use_cases.pedidos_venda_abertos.list_customer_billing_series_use_case.date"
+    ) as mock_date:
+        mock_date.today.return_value = date(2026, 8, 15)
+        mock_date.side_effect = lambda *args, **kwargs: date(*args, **kwargs)
+        result = use_case.execute(
+            ListCustomerBillingSeriesRequest(
+                customers=[("100", "01")],
+                months=2,
+                metric="quantity",
+                nature="gross",
+            )
+        )
+    assert result.mixed_units is False
+    assert result.unit == "MI"

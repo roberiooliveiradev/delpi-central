@@ -59,5 +59,13 @@ describe("multiTypeSeriesDualAxis", () => {
     expect(resolveTooltipSeries(series, QUANTITY.name, {})?.dataKey).toBe("quantidade");
     expect(resolveTooltipSeries(series, VALUE.name, null)?.dataKey).toBe("faturamento");
     expect(resolveTooltipSeries(series, "série desconhecida", null)).toBeUndefined();
+    expect(
+      resolveTooltipSeries(series, "Tendência (Quantidade fornecida)", {
+        dataKey: "_trend_quantidade",
+      })?.dataKey,
+    ).toBe("quantidade");
+    expect(
+      resolveTooltipSeries(series, "Tendência (Quantidade fornecida)", {})?.dataKey,
+    ).toBe("quantidade");
   });
 });

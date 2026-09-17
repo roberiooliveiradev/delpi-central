@@ -18,25 +18,24 @@ SUPPORTED_BILLING_METRICS = list(BILLING_METRICS)
 
 _QTY_SALE_SUM = "SUM(CONVERT(FLOAT, ISNULL(D2.D2_QUANT, 0)))"
 _QTY_RETURN_SUM = "SUM(CONVERT(FLOAT, ISNULL(D1.D1_QUANT, 0)))"
-_UNIT_AGG_SALE = """
+
+
+def _um_expr(column: str) -> str:
+    """UM Protheus CHAR → valor comparável (trim + maiúsculas; vazio vira NULL)."""
+    return f"NULLIF(UPPER(LTRIM(RTRIM({column}))), '')"
+
+
+_UNIT_AGG_SALE = f"""
+                MAX({_um_expr("D2.D2_UM")}) AS unit,
                 CASE
-                    WHEN COUNT(DISTINCT NULLIF(RTRIM(D2.D2_UM), '')) = 1
-                    THEN MAX(NULLIF(RTRIM(D2.D2_UM), ''))
-                    ELSE NULL
-                END AS unit,
-                CASE
-                    WHEN COUNT(DISTINCT NULLIF(RTRIM(D2.D2_UM), '')) > 1 THEN 1
+                    WHEN COUNT(DISTINCT {_um_expr("D2.D2_UM")}) > 1 THEN 1
                     ELSE 0
                 END AS mixed_units
 """
-_UNIT_AGG_RETURN = """
+_UNIT_AGG_RETURN = f"""
+                MAX({_um_expr("D1.D1_UM")}) AS unit,
                 CASE
-                    WHEN COUNT(DISTINCT NULLIF(RTRIM(D1.D1_UM), '')) = 1
-                    THEN MAX(NULLIF(RTRIM(D1.D1_UM), ''))
-                    ELSE NULL
-                END AS unit,
-                CASE
-                    WHEN COUNT(DISTINCT NULLIF(RTRIM(D1.D1_UM), '')) > 1 THEN 1
+                    WHEN COUNT(DISTINCT {_um_expr("D1.D1_UM")}) > 1 THEN 1
                     ELSE 0
                 END AS mixed_units
 """
@@ -81,6 +80,11 @@ def normalize_billing_metric(value: str | None) -> str:
     if metric not in BILLING_METRICS:
         raise ValueError("metric inválida. Use value ou quantity.")
     return metric
+
+
+def normalize_billing_unit(value: str | None) -> str:
+    """UM de nota comparável: trim + maiúsculas."""
+    return (value or "").strip().upper()
 
 
 def normalize_billing_series_recorte(

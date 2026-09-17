@@ -256,6 +256,7 @@ export function CustomerBillingSeriesChart({
         name: quantityLabel,
         fill: QUANTITY_SERIES_COLOR,
         axis: "secondary",
+        trendSource: true,
       });
     }
     if (showValue && compareYears >= 1) {

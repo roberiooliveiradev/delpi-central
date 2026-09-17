@@ -36,8 +36,10 @@ describe("billingMetric", () => {
     expect(formatQuantityWithUnit(12.5, "MI")).toBe("12,500 MI");
     expect(formatQuantityWithUnit(12.5, "PC")).toBe("12,500 PC");
     expect(formatQuantityWithUnit(12.5, null)).toBe("12,500");
-    expect(formatQuantityWithUnit(12.5, "MI", true)).toBe("12,500 mistas");
+    expect(formatQuantityWithUnit(12.5, "MI", true)).toBe("12,500");
     expect(quantitySeriesName("MI")).toBe("Quantidade fornecida (MI)");
-    expect(quantitySeriesName(null, true)).toBe("Quantidade fornecida (mistas)");
+    expect(quantitySeriesName(null, true)).toBe("Quantidade fornecida");
+    expect(quantitySeriesName("MI", true)).toBe("Quantidade fornecida");
+    expect(quantitySeriesName("mi")).toBe("Quantidade fornecida (MI)");
   });
 });
