@@ -145,8 +145,33 @@ def test_build_sales_order_otd_sql_classifies_invoiced_and_open_lines() -> None:
 
     assert "linhas_elegiveis" in sql
     assert "C6_DATFAT <= C6_ENTREG" in sql
-    assert "COALESCE(?, CONVERT(VARCHAR(8), GETDATE(), 112)) > C6_ENTREG" in sql
+    assert "COALESCE(?, CONVERT(VARCHAR(8), GETDATE(), 112)) >= C6_ENTREG" in sql
     assert params == ("20260708", "20260708", "20260708")
+
+
+def test_open_line_on_promised_day_is_classified_late_not_on_time() -> None:
+    """Regressão: aberto com C6_ENTREG == ref deve ser atraso (não 100% no dia)."""
+    sql, _ = build_sales_order_otd_sql(
+        where_clause="1=1",
+        reference_end_date="2026-09-16",
+    )
+    assert "COALESCE(?, CONVERT(VARCHAR(8), GETDATE(), 112)) >= C6_ENTREG" in sql
+    assert "COALESCE(?, CONVERT(VARCHAR(8), GETDATE(), 112)) > C6_ENTREG" not in sql
+
+
+def test_list_cte_marks_open_overdue_on_promised_day() -> None:
+    where_clause, _ = build_sales_order_otd_filters(
+        branch="02",
+        start_date="2026-09-16",
+        end_date="2026-09-16",
+        customer_segment=None,
+    )
+    list_sql, _ = build_sales_order_otd_lines_list_sql(
+        where_clause=where_clause,
+        request=GetSalesOrderOtdPanelRequest(page=1, page_size=20),
+        reference_end_date="2026-09-16",
+    )
+    assert "COALESCE(?, CONVERT(VARCHAR(8), GETDATE(), 112)) >= C6.C6_ENTREG" in list_sql
 
 
 def test_build_sales_order_otd_lines_count_supports_status_filter() -> None:

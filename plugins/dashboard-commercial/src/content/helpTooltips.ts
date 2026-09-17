@@ -50,8 +50,10 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
   },
   otd: {
     kpiOtd: "OTD de pedidos de venda no período filtrado (data prometida C6_ENTREG).",
-    kpiOnTime: "Linhas atendidas no prazo — faturadas com C6_DATFAT ≤ C6_ENTREG ou abertas ainda dentro do prazo.",
-    kpiLate: "Linhas atrasadas — faturadas após o prazo ou abertas com prazo vencido.",
+    kpiOnTime:
+      "Linhas no prazo — faturadas até a data prometida, ou ainda abertas com data prometida futura.",
+    kpiLate:
+      "Linhas atrasadas — faturadas após a prometida, ou abertas no dia prometido/já vencido sem faturamento.",
     chartEvolution: "Evolução do OTD por unidade. Clique em um ponto para ajustar o período.",
     filters: {
       status: "Filtra a tabela por linhas no prazo ou atrasadas.",
