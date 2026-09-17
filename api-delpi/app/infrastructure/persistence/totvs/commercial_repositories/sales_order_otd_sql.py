@@ -7,11 +7,14 @@ from app.application.dto.commercial.get_sales_order_otd_panel_request import (
 )
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
+# Aberto sem fatura: no prazo só enquanto a data de referência é *anterior* à prometida.
+# No dia prometido (ref >= C6_ENTREG) já conta atraso — evita OTD 100% em buckets
+# diários/série quando a linha ainda não foi faturada (ex.: 002635/01 filial 02).
 _SALES_ORDER_OTD_ON_TIME_CASE = """
     CASE
         WHEN RTRIM(ISNULL(CAST(C6_DATFAT AS VARCHAR(20)), '')) <> ''
             THEN CASE WHEN C6_DATFAT <= C6_ENTREG THEN 1 ELSE 0 END
-        WHEN COALESCE(?, CONVERT(VARCHAR(8), GETDATE(), 112)) > C6_ENTREG THEN 0
+        WHEN COALESCE(?, CONVERT(VARCHAR(8), GETDATE(), 112)) >= C6_ENTREG THEN 0
         ELSE 1
     END
 """

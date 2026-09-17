@@ -74,9 +74,11 @@ Entram linhas que atendem **todos** os critérios:
 | Situação | Regra |
 |----------|-------|
 | **Faturada** (`C6_DATFAT` preenchida) | **No prazo** se `C6_DATFAT <= C6_ENTREG`; **atrasada** se `C6_DATFAT > C6_ENTREG`. |
-| **Não faturada** | **No prazo** se a data de referência `<= C6_ENTREG`; **atrasada** se a data de referência `> C6_ENTREG`. |
+| **Não faturada** | **No prazo** só se a data de referência for **anterior** à prometida (`ref < C6_ENTREG`); **atrasada** se `ref >= C6_ENTREG` (inclui o próprio dia prometido sem faturamento). |
 
 **Data de referência** para linhas não faturadas: `end_date` da requisição; se omitida, `GETDATE()` (data corrente no SQL Server).
+
+Assim, na série diária (bucket `start=end=dia da promessa`), uma linha aberta no dia prometido já reduz o OTD em vez de permanecer artificialmente em 100%.
 
 ## Resposta (`data`)
 
@@ -122,6 +124,7 @@ Metas do Indicadores Estratégicos: `source_key` = `commercial_sales_order_otd`.
 
 | Data | Alteração |
 |------|-----------|
+| 2026-09-17 | Aberto sem fatura: atraso quando `ref >= C6_ENTREG` (antes era `>`); corrige OTD 100% no dia prometido (ex.: pedido 002635/01 filial 02). |
 | 2026-08-28 | Hub `GET /commercial/sales-order-otd/summary` (`get_sales_order_otd_summary`): realizado + meta SI para TV. |
 | 2026-08-28 | Painel/detalhe/insights: campo `unit` (`C6_UM` / fallback `B1_UM`); agregações com `mixed_units` quando UM não homogênea. |
 | 2026-08-13 | Panel: `customer_store` (loja) nas linhas e reincidência agrupada por código+loja. |
