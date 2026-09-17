@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { ArrowLeft } from "lucide-react";
 import type { MachineLoadOperation } from "./api";
 import { buildPublicProductModelGlbUrl } from "./api";
 import {
@@ -94,8 +95,14 @@ export function OperationDetailPage({
           </span>
         }
         lead={
-          <button type="button" className="pcp-pub__back" onClick={onBack}>
-            <span aria-hidden="true">←</span> Voltar para a fila
+          <button
+            type="button"
+            className="pcp-pub__back pcp-pub__back--icon"
+            onClick={onBack}
+            aria-label="Voltar para a fila"
+            title="Voltar para a fila"
+          >
+            <ArrowLeft size={22} strokeWidth={2.4} aria-hidden="true" />
           </button>
         }
         actions={
