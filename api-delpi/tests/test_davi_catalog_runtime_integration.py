@@ -543,7 +543,7 @@ def test_mcp_still_exposes_exactly_three_tools():
     }
 
 
-def test_eligible_set_remains_seven():
+def test_eligible_set_is_ten():
     ids = load_allowlist_operation_ids(load_external_read_allowlist())
     assert ids == {
         "search_products",
@@ -553,6 +553,9 @@ def test_eligible_set_remains_seven():
         "get_product_purchases",
         "get_product_structure",
         "get_product_production_status",
+        "get_product_factory_status",
+        "get_product_structure_exclusivity",
+        "get_product_shipping_status",
     }
 
 

@@ -98,6 +98,14 @@ _ELIGIBLE_V5_OPERATION_IDS = frozenset(
         "get_product_production_status",
     }
 )
+_WAVE1_OPERATION_IDS = frozenset(
+    {
+        "get_product_factory_status",
+        "get_product_structure_exclusivity",
+        "get_product_shipping_status",
+    }
+)
+_ELIGIBLE_OPERATION_IDS = _ELIGIBLE_V5_OPERATION_IDS | _WAVE1_OPERATION_IDS
 
 
 @pytest.fixture(autouse=True)
@@ -150,6 +158,7 @@ def _action(
     approved_response_fields: tuple[str, ...] = PRODUCT_SEARCH_RESPONSE_FIELDS,
     approved_input_fields: tuple[str, ...] | None = None,
     semantic_aliases: tuple[str, ...] = (),
+    argument_constraints: dict[str, Any] | None = None,
 ) -> TechnicalAction:
     summary_text = summary or oid.replace("_", " ")
     aliases = semantic_aliases
@@ -177,6 +186,7 @@ def _action(
         approved_response_fields=approved_response_fields,
         approved_input_fields=input_fields,
         semantic_aliases=aliases,
+        argument_constraints=argument_constraints or {},
     )
 
 
@@ -214,9 +224,11 @@ def _allowlist_entry_with_projection(operation_id: str, **fields: Any) -> dict[s
 def test_allowlist_v5_multi_ops_rebaseline():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
-    assert ids == set(_ELIGIBLE_V5_OPERATION_IDS)
-    assert allow.get("version") == 5
-    assert allow.get("coverageDecision", {}).get("decision") == "REBASELINE_PROMOTE_SAFE_READS"
+    assert ids == set(_ELIGIBLE_OPERATION_IDS)
+    assert allow.get("version") == 6
+    assert allow.get("coverageDecision", {}).get("decision") == (
+        "PROMOTE_OPERATIONAL_PRODUCT_INTELLIGENCE_WAVE_1"
+    )
     assert allow.get("authzPolicy") == "DAVI-READ-AUTHZ-REBASELINE-001"
     entry = next(
         op
@@ -260,6 +272,10 @@ def test_allowlist_v5_multi_ops_rebaseline():
     }
     assert "get_product_summary" in not_approved
     assert "get_product_detail" in not_approved
+    assert "get_product_factory_status" not in not_approved
+    assert "get_product_structure_exclusivity" not in not_approved
+    assert "get_product_shipping_status" not in not_approved
+    assert "factory" in quarantine
 
 
 def test_classify_hard_blocks():
@@ -370,7 +386,7 @@ def test_classify_hard_blocks():
     )
 
 
-def test_inventory_eligible_count_is_seven():
+def test_inventory_eligible_count_is_ten():
     baseline = json.loads(
         (_api_root() / "app/content/openapi_baseline.json").read_text(encoding="utf-8")
     )
@@ -379,8 +395,8 @@ def test_inventory_eligible_count_is_seven():
     )
     assert len(actions) == int(baseline.get("operation_count") or 0)
     eligible = [a for a in actions if a.executable]
-    assert len(eligible) == 7
-    assert set(a.operation_id for a in eligible) == set(_ELIGIBLE_V5_OPERATION_IDS)
+    assert len(eligible) == 10
+    assert set(a.operation_id for a in eligible) == set(_ELIGIBLE_OPERATION_IDS)
 
 
 def test_owned_product_intents_discover_from_full_catalog(monkeypatch):
@@ -399,7 +415,7 @@ def test_owned_product_intents_discover_from_full_catalog(monkeypatch):
     )
     for query, expected_oid in expectations:
         discovered = discover_delpi_information(query=query, top_k=10, actor_id="u1")
-        assert discovered["eligible_action_count"] == 7, query
+        assert discovered["eligible_action_count"] == 10, query
         assert discovered["candidate_count"] >= 1, query
         action_ids = {c["action_id"] for c in discovered["candidates"]}
         assert expected_oid in action_ids, query
@@ -417,7 +433,7 @@ def test_three_tool_invariant_with_v5_allowlist():
     ]
     # Still exactly three MCP tools; allowlist is no longer search-only.
     assert load_allowlist_operation_ids(load_external_read_allowlist()) == set(
-        _ELIGIBLE_V5_OPERATION_IDS
+        _ELIGIBLE_OPERATION_IDS
     )
 
 
@@ -1108,7 +1124,7 @@ def test_negative_retrieval_quarantine(query, monkeypatch):
     assert discovered["candidate_count"] == 0, (
         f"query={query!r} unexpectedly returned {discovered['candidates']}"
     )
-    assert discovered["eligible_action_count"] == 7
+    assert discovered["eligible_action_count"] == 10
 
 
 def test_stock_eligible_and_branch_is_filter_not_authz():
@@ -1897,8 +1913,8 @@ def test_nested_unknown_fields_dropped_and_bounds():
     assert "secret" not in projected["root"]["components"][0]
 
 
-def test_eligible_count_unchanged_at_seven():
+def test_eligible_count_is_ten():
     actions = _load_baseline_actions()
     eligible = sorted(a.operation_id for a in actions if a.executable)
-    assert eligible == sorted(_ELIGIBLE_V5_OPERATION_IDS)
-    assert len(eligible) == 7
+    assert eligible == sorted(_ELIGIBLE_OPERATION_IDS)
+    assert len(eligible) == 10

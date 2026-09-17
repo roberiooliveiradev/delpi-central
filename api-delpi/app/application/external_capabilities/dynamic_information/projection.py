@@ -91,6 +91,7 @@ def _project_with_tree(
     depth: int,
     max_depth: int,
     max_array: int,
+    truncated_flag: list[bool],
 ) -> Any:
     if depth > max_depth:
         return None
@@ -106,6 +107,8 @@ def _project_with_tree(
         if is_array:
             if not isinstance(child, list):
                 continue
+            if len(child) > max_array:
+                truncated_flag[0] = True
             if children:
                 projected_list = []
                 for item in child[:max_array]:
@@ -115,6 +118,7 @@ def _project_with_tree(
                         depth=depth + 1,
                         max_depth=max_depth,
                         max_array=max_array,
+                        truncated_flag=truncated_flag,
                     )
                     if projected is not None:
                         projected_list.append(projected)
@@ -130,6 +134,7 @@ def _project_with_tree(
                 depth=depth + 1,
                 max_depth=max_depth,
                 max_array=max_array,
+                truncated_flag=truncated_flag,
             )
             if projected is not None:
                 out[key] = projected
@@ -167,16 +172,21 @@ def apply_approved_field_projection(
         tree = _build_allow_tree(fields)
         if not tree:
             return {}
+        truncated_flag = [False]
         projected = _project_with_tree(
             payload,
             tree,
             depth=0,
             max_depth=max_depth,
             max_array=max_array_items,
+            truncated_flag=truncated_flag,
         )
         if not isinstance(projected, dict):
             return {}
         _copy_technical_meta(payload, projected)
+        if truncated_flag[0]:
+            projected["truncated"] = True
+            projected["is_complete"] = False
         return projected
 
     # Flat mode — construct from scratch.
@@ -195,11 +205,15 @@ def apply_approved_field_projection(
     items = payload.get(list_key)
     if isinstance(items, list):
         projected_items: list[Any] = []
+        truncated = len(items) > max_array_items
         for item in items[:max_array_items]:
             if isinstance(item, dict):
                 projected_items.append({k: item[k] for k in fields if k in item})
         out[list_key] = projected_items
         _copy_technical_meta(payload, out)
+        if truncated:
+            out["truncated"] = True
+            out["is_complete"] = False
         return out
 
     # Flat root object.
@@ -232,6 +246,11 @@ def bound_response_payload(
             payload = dict(payload)
             payload.setdefault("is_complete", True)
             payload.setdefault("truncated", False)
+        if payload.get("truncated") is True:
+            truncated = True
+            payload = dict(payload)
+            payload["is_complete"] = False
+            payload["truncated"] = True
     elif isinstance(payload, list) and len(payload) > max_items:
         payload = payload[:max_items]
         truncated = True

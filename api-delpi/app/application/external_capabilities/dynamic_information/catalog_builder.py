@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from types import MappingProxyType
+from typing import Any, Mapping
 
 from app.application.external_capabilities.dynamic_information.eligibility import (
     classify_operation,
@@ -32,6 +33,7 @@ class TechnicalAction:
     approved_response_fields: tuple[str, ...] = field(default_factory=tuple)
     approved_input_fields: tuple[str, ...] = field(default_factory=tuple)
     semantic_aliases: tuple[str, ...] = field(default_factory=tuple)
+    argument_constraints: Mapping[str, Any] = field(default_factory=dict)
 
     @property
     def executable(self) -> bool:
@@ -64,13 +66,19 @@ def _allowlist_entry(allowlist: dict[str, Any], operation_id: str) -> dict[str, 
 def _enrich_from_allowlist(
     allowlist: dict[str, Any],
     operation_id: str,
-) -> tuple[str | None, tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
+) -> tuple[str | None, tuple[str, ...], tuple[str, ...], tuple[str, ...], Mapping[str, Any]]:
     entry = _allowlist_entry(allowlist, operation_id)
     mode = entry.get("executionMode")
     response_fields = tuple(str(f) for f in (entry.get("approvedResponseFields") or []) if f)
     input_fields = tuple(str(f) for f in (entry.get("approvedInputFields") or []) if f)
     aliases = tuple(str(a) for a in (entry.get("semanticAliases") or []) if a)
-    return (str(mode) if mode else None, response_fields, input_fields, aliases)
+    raw_constraints = entry.get("argumentConstraints")
+    constraints: Mapping[str, Any] = (
+        MappingProxyType(dict(raw_constraints))
+        if isinstance(raw_constraints, dict)
+        else MappingProxyType({})
+    )
+    return (str(mode) if mode else None, response_fields, input_fields, aliases, constraints)
 
 
 def _build_searchable_text(
@@ -133,7 +141,7 @@ def build_technical_actions_from_openapi(
                 allowlist=allowlist,
             )
             params = tuple(p for p in (op.get("parameters") or []) if isinstance(p, dict))
-            mode, response_fields, input_fields, aliases = _enrich_from_allowlist(
+            mode, response_fields, input_fields, aliases, constraints = _enrich_from_allowlist(
                 allowlist, str(oid)
             )
             actions.append(
@@ -164,6 +172,7 @@ def build_technical_actions_from_openapi(
                     approved_response_fields=response_fields,
                     approved_input_fields=input_fields,
                     semantic_aliases=aliases,
+                    argument_constraints=constraints,
                 )
             )
     return actions
@@ -201,7 +210,9 @@ def build_technical_actions_from_baseline(
         )
         oid_s = str(oid or f"{method}:{path}")
         params = tuple(p for p in (row.get("parameters") or []) if isinstance(p, dict))
-        mode, response_fields, input_fields, aliases = _enrich_from_allowlist(allowlist, oid_s)
+        mode, response_fields, input_fields, aliases, constraints = _enrich_from_allowlist(
+            allowlist, oid_s
+        )
         actions.append(
             TechnicalAction(
                 action_id=oid_s,
@@ -230,6 +241,7 @@ def build_technical_actions_from_baseline(
                 approved_response_fields=response_fields,
                 approved_input_fields=input_fields,
                 semantic_aliases=aliases,
+                argument_constraints=constraints,
             )
         )
     return actions

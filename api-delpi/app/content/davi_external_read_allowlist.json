@@ -1,13 +1,17 @@
 {
-  "version": 5,
-  "description": "Governance allowlist for DAVI dynamic READ after DAVI-READ-AUTHZ-REBASELINE-001. DAVI has no independent AuthZ; backend is final authority. Entries define model-safe input/output projection only — not business permissions.",
+  "version": 6,
+  "description": "Governance allowlist for DAVI dynamic READ. DAVI has no independent AuthZ; backend is final authority. Entries define model-safe input/output projection and governed argument constraints only — not business permissions.",
   "authzPolicy": "DAVI-READ-AUTHZ-REBASELINE-001",
   "externalProcessing": "BACKEND_AUTHORIZED_INTERNAL_READ_ALLOWED_UNLESS_EXPLICITLY_PROHIBITED",
   "dataClassification": "MINIMIZATION_REQUIRED_TAXONOMY_OPTIONAL",
   "coverageDecision": {
-    "taskId": "DAVI-READ-AUTHZ-REBASELINE-001",
-    "decision": "REBASELINE_PROMOTE_SAFE_READS",
-    "reason": "Supersede branch/family/taxonomy artificial blockers; promote READs with backend AuthZ + model-safe projection."
+    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-001",
+    "decision": "PROMOTE_OPERATIONAL_PRODUCT_INTELLIGENCE_WAVE_1",
+    "reason": "Promote get_product_factory_status, get_product_structure_exclusivity and get_product_shipping_status as governed READ capabilities behind the existing three MCP broker tools. AuthZ policy unchanged (DAVI-READ-AUTHZ-REBASELINE-001).",
+    "previousDecision": {
+      "taskId": "DAVI-READ-AUTHZ-REBASELINE-001",
+      "decision": "REBASELINE_PROMOTE_SAFE_READS"
+    }
   },
   "retrievalQuarantineTokens": [
     "preco",
@@ -349,6 +353,182 @@
         "product production status",
         "production orders"
       ]
+    },
+    {
+      "operationId": "get_product_factory_status",
+      "reason": "Classified factory snapshot + summaries; API_DELPI_ACCESS; nested projection omit item arrays",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code",
+        "branch",
+        "reference_date",
+        "start_date",
+        "end_date",
+        "max_depth"
+      ],
+      "approvedResponseFields": [
+        "product.product_code",
+        "product.description",
+        "product.product_type",
+        "product.unit",
+        "product.group_code",
+        "reference_date",
+        "start_date",
+        "factory_status",
+        "indicators.total_intermediates",
+        "indicators.total_raw_materials",
+        "indicators.total_exclusive_raw_materials",
+        "indicators.total_raw_materials_without_stock_for_one_pa",
+        "indicators.max_pa_producible_from_stock",
+        "indicators.limiting_raw_material_code",
+        "indicators.total_pa_orders",
+        "indicators.total_pi_orders",
+        "indicators.total_pa_reported_quantity",
+        "indicators.total_pi_reported_quantity",
+        "indicators.total_pa_shipped_quantity",
+        "indicators.total_inspection_loss_quantity",
+        "structure.summary.total_components",
+        "structure.summary.total_intermediates",
+        "structure.summary.total_raw_materials",
+        "structure.summary.total_exclusive_raw_materials",
+        "raw_material_stock.summary.total_raw_materials",
+        "raw_material_stock.summary.total_without_stock_for_one_pa",
+        "raw_material_stock.summary.max_pa_producible_from_stock",
+        "raw_material_stock.summary.limiting_raw_material_code",
+        "production.summary.total_pa_orders",
+        "production.summary.total_pi_orders",
+        "production.summary.pa_production_started",
+        "production.summary.pi_production_started",
+        "shipping.summary.total_shipped_quantity",
+        "shipping.summary.total_inspection_loss_quantity",
+        "shipping.summary.total_reports"
+      ],
+      "semanticAliases": [
+        "status fabril",
+        "situação fabril",
+        "status na fábrica",
+        "visão fabril do produto",
+        "situação do produto na fábrica",
+        "factory status",
+        "factory situation",
+        "product factory status",
+        "shop-floor status"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "fallbackStartField": "reference_date",
+          "maxDays": 31
+        },
+        "argumentLimits": {
+          "max_depth": {
+            "minimum": 1,
+            "maximum": 8,
+            "default": 8
+          }
+        }
+      }
+    },
+    {
+      "operationId": "get_product_structure_exclusivity",
+      "reason": "Leveled BOM exclusivity of raw materials; API_DELPI_ACCESS; nested projection",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code",
+        "max_depth"
+      ],
+      "approvedResponseFields": [
+        "product.product_code",
+        "product.description",
+        "product.product_type",
+        "product.unit",
+        "items[].level",
+        "items[].parent_code",
+        "items[].parent_description",
+        "items[].component_code",
+        "items[].component_description",
+        "items[].component_type",
+        "items[].component_unit",
+        "items[].quantity_per",
+        "items[].accumulated_quantity",
+        "items[].exclusive_raw_material",
+        "items[].total_valid_finished_products_using_mp",
+        "summary.total_components",
+        "summary.total_intermediates",
+        "summary.total_raw_materials",
+        "summary.total_exclusive_raw_materials"
+      ],
+      "semanticAliases": [
+        "exclusividade",
+        "matéria-prima exclusiva",
+        "mp exclusiva",
+        "mps exclusivas",
+        "mp exclusivas",
+        "quais mps são exclusivas",
+        "componentes exclusivos",
+        "exclusividade de mp",
+        "exclusive raw material",
+        "bom exclusivity",
+        "exclusive components"
+      ],
+      "argumentConstraints": {
+        "argumentLimits": {
+          "max_depth": {
+            "minimum": 1,
+            "maximum": 8,
+            "default": 8
+          }
+        }
+      }
+    },
+    {
+      "operationId": "get_product_shipping_status",
+      "reason": "Shipping / final-inspection status for one product in a bounded window; API_DELPI_ACCESS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code",
+        "branch",
+        "reference_date",
+        "start_date",
+        "end_date"
+      ],
+      "approvedResponseFields": [
+        "product.product_code",
+        "product.description",
+        "product.product_type",
+        "product.unit",
+        "start_date",
+        "items[].branch",
+        "items[].product_code",
+        "items[].production_order",
+        "items[].work_center",
+        "items[].shipped_quantity",
+        "items[].inspection_loss_quantity",
+        "items[].total_reports",
+        "summary.total_shipped_quantity",
+        "summary.total_inspection_loss_quantity",
+        "summary.total_reports"
+      ],
+      "semanticAliases": [
+        "expedição",
+        "status de expedição",
+        "liberado para expedição",
+        "inspeção final do pa",
+        "quantidade expedida",
+        "shipping status",
+        "final inspection",
+        "released to ship",
+        "shipped quantity"
+      ],
+      "argumentConstraints": {
+        "dateRange": {
+          "startField": "start_date",
+          "endField": "end_date",
+          "fallbackStartField": "reference_date",
+          "maxDays": 31
+        }
+      }
     }
   ],
   "explicitlyNotApproved": [
@@ -363,18 +543,6 @@
       "coverageDisposition": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "reason": "Composite product+stock+prices; no approved section projection yet"
-    },
-    {
-      "operationId": "get_product_factory_status",
-      "coverageDisposition": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "reason": "Composite factory envelope; section projection not yet governed"
-    },
-    {
-      "operationId": "get_product_structure_exclusivity",
-      "coverageDisposition": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "reason": "Playbook exclusivity shape pending governed path allowlist"
     },
     {
       "operationId": "get_product_pricing",
@@ -402,8 +570,8 @@
     }
   ],
   "hardening": {
-    "taskId": "DAVI-READ-AUTHZ-REBASELINE-002",
-    "note": "No AuthZ policy change. No eligible set change. Projection/genericity hardening only. coverageDisposition drives SEMANTICALLY_REDUNDANT / nested blockers without broker operationId semantics."
+    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-001",
+    "note": "No AuthZ policy change. Eligible READ set 7→10 via allowlist metadata. MCP tools remain 3. argumentConstraints are generic dateRange/argumentLimits, not per-operation executor logic. Global factory quarantine token is preserved; factory-status aliases own the token."
   },
   "supersededBlockers": {
     "taskId": "DAVI-READ-AUTHZ-REBASELINE-001",

@@ -1,12 +1,15 @@
 """Validate execution arguments against TechnicalAction OpenAPI ∩ DAVI approved inputs.
 
 Discovery and execution share ``build_argument_json_schema`` as the single contract.
+Governed numeric/date constraints come from allowlist argumentConstraints metadata,
+never from operationId-specific executor branches.
 """
 
 from __future__ import annotations
 
 import re
-from typing import Any
+from datetime import date, datetime
+from typing import Any, Mapping
 
 from app.application.external_capabilities.dynamic_information.catalog_builder import (
     TechnicalAction,
@@ -72,6 +75,127 @@ def _approved_input_allowset(action: TechnicalAction) -> set[str] | None:
     return None
 
 
+def _argument_constraints(action: TechnicalAction) -> Mapping[str, Any]:
+    raw = getattr(action, "argument_constraints", None) or {}
+    return raw if isinstance(raw, Mapping) else {}
+
+
+def _as_int(value: Any) -> int | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    if isinstance(value, str) and re.fullmatch(r"-?\d+", value.strip()):
+        return int(value.strip())
+    return None
+
+
+def _argument_limits(constraints: Mapping[str, Any]) -> dict[str, Any]:
+    raw = constraints.get("argumentLimits") or {}
+    return raw if isinstance(raw, dict) else {}
+
+
+def _apply_argument_limits_to_schema(
+    properties: dict[str, Any],
+    constraints: Mapping[str, Any],
+) -> None:
+    """Tighten OpenAPI numeric bounds with governed DAVI limits (fail-closed, no clamp)."""
+    for name, spec in _argument_limits(constraints).items():
+        if name not in properties or not isinstance(spec, dict):
+            continue
+        prop = properties[name]
+        for bound_key in ("minimum", "maximum"):
+            governed = _as_int(spec.get(bound_key))
+            if governed is None:
+                continue
+            existing = prop.get(bound_key)
+            existing_i = _as_int(existing)
+            if bound_key == "maximum":
+                prop[bound_key] = min(existing_i, governed) if existing_i is not None else governed
+            else:
+                prop[bound_key] = max(existing_i, governed) if existing_i is not None else governed
+        if "default" in spec:
+            prop["default"] = spec["default"]
+
+
+def _parse_constraint_date(name: str, value: Any) -> date:
+    if isinstance(value, date) and not isinstance(value, datetime):
+        return value
+    if isinstance(value, datetime):
+        return value.date()
+    if not isinstance(value, str):
+        raise ArgumentValidationError(f"{name}: must be a date (YYYY-MM-DD)")
+    text = value.strip()
+    for fmt in ("%Y-%m-%d", "%Y%m%d"):
+        try:
+            return datetime.strptime(text, fmt).date()
+        except ValueError:
+            continue
+    raise ArgumentValidationError(f"{name}: must be a date (YYYY-MM-DD)")
+
+
+def _validate_date_range(
+    cleaned: dict[str, Any],
+    constraints: Mapping[str, Any],
+) -> None:
+    spec = constraints.get("dateRange")
+    if not isinstance(spec, dict):
+        return
+    start_field = str(spec.get("startField") or "").strip()
+    end_field = str(spec.get("endField") or "").strip()
+    max_days = _as_int(spec.get("maxDays"))
+    fallback_field = str(spec.get("fallbackStartField") or "").strip() or None
+    if not start_field or not end_field or max_days is None:
+        return
+    if max_days < 0:
+        raise ArgumentValidationError("dateRange.maxDays must be >= 0")
+
+    start_raw = cleaned.get(start_field)
+    end_raw = cleaned.get(end_field)
+    if start_raw is None and end_raw is None:
+        return
+
+    today = date.today()
+    fallback_raw = cleaned.get(fallback_field) if fallback_field else None
+    if start_raw is not None:
+        start = _parse_constraint_date(start_field, start_raw)
+    elif fallback_raw is not None:
+        start = _parse_constraint_date(fallback_field, fallback_raw)
+    else:
+        start = today
+
+    if end_raw is not None:
+        end = _parse_constraint_date(end_field, end_raw)
+    elif start_raw is not None:
+        end = start
+    else:
+        end = today
+
+    if end < start:
+        raise ArgumentValidationError(f"{end_field}: must not be before {start_field}")
+    if (end - start).days > max_days:
+        raise ArgumentValidationError(
+            f"Date interval between {start_field} and {end_field} exceeds {max_days} days"
+        )
+
+
+def _apply_governed_defaults(
+    raw: dict[str, Any],
+    properties: dict[str, Any],
+    constraints: Mapping[str, Any],
+) -> None:
+    """Inject only governed argumentLimits defaults — never OpenAPI-wide defaults."""
+    for name, spec in _argument_limits(constraints).items():
+        if name not in properties or not isinstance(spec, dict):
+            continue
+        if name in raw and raw[name] is not None:
+            continue
+        if "default" in spec:
+            raw[name] = spec["default"]
+
+
 def build_argument_json_schema(action: TechnicalAction) -> dict[str, Any]:
     """JSON Schema used by discovery AND execution (single external contract)."""
     properties: dict[str, Any] = {}
@@ -119,6 +243,8 @@ def build_argument_json_schema(action: TechnicalAction) -> dict[str, Any]:
         properties[name] = prop
         if param.get("required") and name not in required:
             required.append(name)
+
+    _apply_argument_limits_to_schema(properties, _argument_constraints(action))
 
     return {
         "type": "object",
@@ -193,10 +319,13 @@ def validate_arguments(
     schema = build_argument_json_schema(action)
     properties: dict[str, Any] = schema["properties"]
     required: list[str] = list(schema.get("required") or [])
+    constraints = _argument_constraints(action)
 
     unknown = [k for k in raw if k not in properties]
     if unknown:
         raise ArgumentValidationError(f"Unknown argument(s): {', '.join(sorted(unknown))}")
+
+    _apply_governed_defaults(raw, properties, constraints)
 
     for name in required:
         if name not in raw or raw[name] is None:
@@ -207,4 +336,5 @@ def validate_arguments(
         if value is None:
             continue
         cleaned[key] = _coerce_value(key, value, properties[key])
+    _validate_date_range(cleaned, constraints)
     return cleaned

@@ -2,14 +2,18 @@
   "source": "openapi_baseline.json",
   "baseline_version": "3",
   "baseline_operation_count": 703,
-  "taskId": "DAVI-READ-AUTHZ-REBASELINE-001",
+  "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-001",
   "TOTAL_OPERATIONS": 703,
   "TOTAL_GET": 506,
   "TOTAL_WRITE_VERBS": 197,
-  "DAVI_ELIGIBLE_READ": 7,
+  "DAVI_ELIGIBLE_READ": 10,
   "ELIGIBLE_BEFORE": 7,
-  "ELIGIBLE_AFTER": 7,
-  "NEWLY_ELIGIBLE": [],
+  "ELIGIBLE_AFTER": 10,
+  "NEWLY_ELIGIBLE": [
+    "get_product_factory_status",
+    "get_product_shipping_status",
+    "get_product_structure_exclusivity"
+  ],
   "REMOVED_ELIGIBLE": [],
   "INVENTORY_DELTA": {
     "previous_total_operations": 703,
@@ -18,12 +22,16 @@
     "current_total_get": 506,
     "added_operations": 0,
     "removed_operations": 0,
-    "note": "Delta vs previously generated inventory artifact on disk"
+    "note": "Delta vs last committed inventory artifact (HEAD)"
   },
   "COVERAGE_DECISION": {
-    "taskId": "DAVI-READ-AUTHZ-REBASELINE-001",
-    "decision": "REBASELINE_PROMOTE_SAFE_READS",
-    "reason": "Supersede branch/family/taxonomy artificial blockers; promote READs with backend AuthZ + model-safe projection."
+    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-001",
+    "decision": "PROMOTE_OPERATIONAL_PRODUCT_INTELLIGENCE_WAVE_1",
+    "reason": "Promote get_product_factory_status, get_product_structure_exclusivity and get_product_shipping_status as governed READ capabilities behind the existing three MCP broker tools. AuthZ policy unchanged (DAVI-READ-AUTHZ-REBASELINE-001).",
+    "previousDecision": {
+      "taskId": "DAVI-READ-AUTHZ-REBASELINE-001",
+      "decision": "REBASELINE_PROMOTE_SAFE_READS"
+    }
   },
   "HIGH_VALUE_BLOCKED": [
     {
@@ -35,16 +43,6 @@
       "operationId": "get_product_summary",
       "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "reason": "Composite product+stock+prices; no approved section projection yet"
-    },
-    {
-      "operationId": "get_product_factory_status",
-      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "reason": "Composite factory envelope; section projection not yet governed"
-    },
-    {
-      "operationId": "get_product_structure_exclusivity",
-      "primaryBlocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "reason": "Playbook exclusivity shape pending governed path allowlist"
     },
     {
       "operationId": "get_product_pricing",
@@ -69,21 +67,24 @@
   ],
   "STATUS_COUNTS": {
     "ADMIN_OUT_OF_SCOPE": 76,
-    "DAVI_ELIGIBLE_READ": 7,
+    "DAVI_ELIGIBLE_READ": 10,
     "DESTRUCTIVE_OUT_OF_SCOPE": 16,
     "GENERIC_SQL_FORBIDDEN": 2,
     "NEEDS_MODEL_SAFE_PROJECTION": 372,
-    "NEEDS_NESTED_PROJECTION_SUPPORT": 68,
+    "NEEDS_NESTED_PROJECTION_SUPPORT": 65,
     "SEMANTICALLY_REDUNDANT": 1,
     "STREAM_BINARY_OUT_OF_SCOPE": 31,
     "WRITE_OUT_OF_SCOPE": 130
   },
   "ELIGIBLE_OPERATION_IDS": [
     "get_product_customers",
+    "get_product_factory_status",
     "get_product_production_status",
     "get_product_purchases",
+    "get_product_shipping_status",
     "get_product_stock",
     "get_product_structure",
+    "get_product_structure_exclusivity",
     "get_product_suppliers",
     "search_products"
   ],
@@ -859,6 +860,16 @@
       "executable": true
     },
     {
+      "operationId": "get_product_factory_status",
+      "method": "GET",
+      "path": "/products/{code}/factory-status",
+      "summary": "Product factory status (integrated shop-floor view)",
+      "entity": "product_factory_status",
+      "shape": "composite_analysis",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
       "operationId": "get_product_production_status",
       "method": "GET",
       "path": "/products/{code}/production-status",
@@ -879,6 +890,16 @@
       "executable": true
     },
     {
+      "operationId": "get_product_shipping_status",
+      "method": "GET",
+      "path": "/products/{code}/shipping-status",
+      "summary": "Product shipping status",
+      "entity": "product_shipping_status",
+      "shape": "playbook_report",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
       "operationId": "get_product_stock",
       "method": "GET",
       "path": "/products/{code}/stock",
@@ -895,6 +916,16 @@
       "summary": "Product structure (BOM)",
       "entity": "product_structure",
       "shape": "hierarchy",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_product_structure_exclusivity",
+      "method": "GET",
+      "path": "/products/{code}/structure/exclusivity",
+      "summary": "Raw-material exclusivity in product structure",
+      "entity": "product_structure_exclusivity",
+      "shape": "playbook_report",
       "davi_status": "DAVI_ELIGIBLE_READ",
       "executable": true
     },
@@ -4929,16 +4960,6 @@
       "executable": false
     },
     {
-      "operationId": "get_product_factory_status",
-      "method": "GET",
-      "path": "/products/{code}/factory-status",
-      "summary": "Product factory status (integrated shop-floor view)",
-      "entity": "product_factory_status",
-      "shape": "composite_analysis",
-      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "executable": false
-    },
-    {
       "operationId": "get_product_last_purchase",
       "method": "GET",
       "path": "/products/{code}/last-purchase",
@@ -4975,26 +4996,6 @@
       "summary": "Raw-material shortages in the finished-product order set",
       "entity": "product_raw_material_set_shortages",
       "shape": "composite_analysis",
-      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_shipping_status",
-      "method": "GET",
-      "path": "/products/{code}/shipping-status",
-      "summary": "Product shipping status",
-      "entity": "product_shipping_status",
-      "shape": "playbook_report",
-      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
-      "executable": false
-    },
-    {
-      "operationId": "get_product_structure_exclusivity",
-      "method": "GET",
-      "path": "/products/{code}/structure/exclusivity",
-      "summary": "Raw-material exclusivity in product structure",
-      "entity": "product_structure_exclusivity",
-      "shape": "playbook_report",
       "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "executable": false
     },

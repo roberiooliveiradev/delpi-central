@@ -48,6 +48,10 @@ def test_canonical_agent_instructions_omit_dynamic_inventory() -> None:
     assert "get_product_purchases" not in block
     assert "get_product_structure" not in block
     assert "get_product_production_status" not in block
+    assert "get_product_factory_status" not in block
+    assert "get_product_structure_exclusivity" not in block
+    assert "get_product_shipping_status" not in block
+    assert "eligible_read = 10" not in block
     # No hardcoded global field allowlist.
     assert "product_code" not in block
     assert "group_category" not in block

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from collections import Counter
 from pathlib import Path
@@ -22,6 +23,20 @@ from app.application.external_capabilities.dynamic_information.eligibility impor
 )
 
 
+def _committed_json(rel_from_repo: str) -> dict:
+    """Last committed artifact — used so re-runs keep the Wave delta vs HEAD."""
+    try:
+        raw = subprocess.check_output(
+            ["git", "show", f"HEAD:{rel_from_repo}"],
+            cwd=ROOT.parent,
+            text=True,
+            stderr=subprocess.DEVNULL,
+        )
+        return json.loads(raw)
+    except (subprocess.CalledProcessError, json.JSONDecodeError, OSError):
+        return {}
+
+
 def main() -> int:
     load_external_read_allowlist.cache_clear()
     baseline = json.loads(
@@ -36,8 +51,10 @@ def main() -> int:
     out_dir = ROOT / "docs/integrations/evidence"
     out_dir.mkdir(parents=True, exist_ok=True)
     json_path = out_dir / "davi-api-delpi-operation-inventory.json"
-    previous = {}
-    if json_path.exists():
+    previous = _committed_json(
+        "api-delpi/docs/integrations/evidence/davi-api-delpi-operation-inventory.json"
+    )
+    if not previous and json_path.exists():
         try:
             previous = json.loads(json_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
@@ -66,7 +83,7 @@ def main() -> int:
         "source": "openapi_baseline.json",
         "baseline_version": baseline.get("version"),
         "baseline_operation_count": baseline.get("operation_count"),
-        "taskId": "DAVI-READ-AUTHZ-REBASELINE-002",
+        "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-001",
         "TOTAL_OPERATIONS": len(actions),
         "TOTAL_GET": methods.get("GET", 0),
         "TOTAL_WRITE_VERBS": sum(
@@ -84,7 +101,7 @@ def main() -> int:
             "current_total_get": methods.get("GET", 0),
             "added_operations": max(0, len(actions) - prev_total) if prev_total else 0,
             "removed_operations": max(0, prev_total - len(actions)) if prev_total else 0,
-            "note": "Delta vs previously generated inventory artifact on disk",
+            "note": "Delta vs last committed inventory artifact (HEAD)",
         },
         "COVERAGE_DECISION": allowlist.get("coverageDecision"),
         "HIGH_VALUE_BLOCKED": high_value,
@@ -157,7 +174,7 @@ def main() -> int:
         "\n".join(md_lines), encoding="utf-8"
     )
 
-    coverage_path = out_dir / "davi-governed-read-coverage-rebaseline-001.json"
+    coverage_path = out_dir / "davi-governed-read-coverage-wave-001.json"
     coverage = {k: report[k] for k in report if k != "MATRIX"}
     coverage_path.write_text(
         json.dumps(coverage, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"

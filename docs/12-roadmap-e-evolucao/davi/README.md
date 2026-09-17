@@ -238,7 +238,7 @@ branch = query filter (unless backend policy says otherwise)
 backend AuthZ = final authority
 ```
 
-After rebaseline (source): `DAVI_ELIGIBLE_READ` expands via allowlist v5 model-safe projections (stock, suppliers, customers, purchases, structure, production_status + search_products). Nested Abstraction Gate = PASS (structure + production_status). MCP tools remain **exactly 3**.
+After Wave 1 (source): `DAVI_ELIGIBLE_READ` = 10 via allowlist v6 governed READ promotion (`product.factory.status`, `product.structure.exclusivity`, `product.shipping.status` plus the previous seven). Nested Abstraction Gate remains PASS. MCP tools remain **exactly 3**. Agent Instructions unchanged.
 
 Historical governance packs (`DAVI-GOV-READ-001`) remain as provenance with `SUPERSEDED_IN_PART`.
 
