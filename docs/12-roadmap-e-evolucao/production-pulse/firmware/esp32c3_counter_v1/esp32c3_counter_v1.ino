@@ -17,7 +17,8 @@ static const char* DEFAULT_WIFI_SSID = "YOUR_SSID";
 static const char* DEFAULT_WIFI_PASSWORD = "YOUR_PASSWORD";
 static const unsigned long DEFAULT_DEBOUNCE_MS = 100;
 static const char* FIRMWARE_VERSION = "esp32c3_counter_v1.1.0.0";
-// OTA pair identity: V1 green / V2 red (HTML accent + BACKEND_OK RGB).
+// OTA pair identity: V1 green / V2 red — HTML/UI accent ONLY.
+// Operational RGB signals are theme-independent (see LED signal table near updateRgbState).
 static const bool VERSION_THEME_IS_RED = false;
 static const uint16_t EEPROM_SIZE = 512;
 static const uint32_t CONFIG_MAGIC = 0x50504331;  // "PPC1" — distinct from ESP8266 PPS\x02
@@ -146,6 +147,12 @@ void noteBackendContact() {
   lastBackendContactMs = millis();
 }
 
+/** Auth failure or OTA apply failure → fast blink red for AUTH_ERROR_HOLD_MS. */
+void latchSignalFailure() {
+  authErrorLatched = true;
+  authErrorUntilMs = millis() + AUTH_ERROR_HOLD_MS;
+}
+
 void enviarCors() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -174,16 +181,14 @@ bool requireDeviceToken() {
     return true;
   }
   if (!server.hasHeader("X-Device-Token")) {
-    authErrorLatched = true;
-    authErrorUntilMs = millis() + AUTH_ERROR_HOLD_MS;
+    latchSignalFailure();
     enviarCors();
     server.send(401, "application/json", "{\"error\":\"unauthorized\"}");
     return false;
   }
   String got = server.header("X-Device-Token");
   if (got != String(cfg.apiToken)) {
-    authErrorLatched = true;
-    authErrorUntilMs = millis() + AUTH_ERROR_HOLD_MS;
+    latchSignalFailure();
     enviarCors();
     server.send(401, "application/json", "{\"error\":\"unauthorized\"}");
     return false;
@@ -734,6 +739,7 @@ bool applyOtaBinary(const String& artifactUrl, const String& targetId, const Str
   httpEnableRedirects(http);
   if (!http.begin(client, artifactUrl)) {
     reportTerminalWithRetry(targetId, "failed", "http_begin_failed", "");
+    latchSignalFailure();
     return false;
   }
   http.addHeader("X-Device-Token", String(cfg.apiToken));
@@ -741,24 +747,28 @@ bool applyOtaBinary(const String& artifactUrl, const String& targetId, const Str
   if (code != HTTP_CODE_OK) {
     http.end();
     reportTerminalWithRetry(targetId, "failed", "download_http_" + String(code), "");
+    latchSignalFailure();
     return false;
   }
   int contentLength = http.getSize();
   if (contentLength <= 0) {
     http.end();
     reportTerminalWithRetry(targetId, "failed", "missing_content_length", "");
+    latchSignalFailure();
     return false;
   }
   WiFiClient* stream = http.getStreamPtr();
   if (stream == nullptr) {
     http.end();
     reportTerminalWithRetry(targetId, "failed", "download_stream_null", "");
+    latchSignalFailure();
     return false;
   }
 
   if (!Update.begin((size_t)contentLength)) {
     http.end();
     reportTerminalWithRetry(targetId, "failed", "update_begin_failed", "");
+    latchSignalFailure();
     return false;
   }
 
@@ -788,7 +798,8 @@ bool applyOtaBinary(const String& artifactUrl, const String& targetId, const Str
       http.end();
       Update.end(false);
       reportTerminalWithRetry(targetId, "failed", "update_write_failed", "", (int)written, contentLength, -1);
-      return false;
+      latchSignalFailure();
+    return false;
     }
     written += w;
     yield();
@@ -813,12 +824,14 @@ bool applyOtaBinary(const String& artifactUrl, const String& targetId, const Str
   if (written != (size_t)contentLength) {
     Update.end(false);
     reportTerminalWithRetry(targetId, "failed", "download_incomplete", "", (int)written, contentLength, -1);
+    latchSignalFailure();
     return false;
   }
 
   reportOtaStatus(targetId, "applying", "", "", contentLength, contentLength, 100);
   if (!Update.end(true) || !Update.isFinished()) {
     reportTerminalWithRetry(targetId, "failed", "update_end_failed", "");
+    latchSignalFailure();
     return false;
   }
   // ACK best-effort; restart regardless so we never loop on report failure.
@@ -885,6 +898,7 @@ void maybeCheckOta() {
   if (token.length() == 0) {
     reportOtaStatus(targetId, "failed", "missing_artifact_token", "");
     otaInProgress = false;
+    latchSignalFailure();
     return;
   }
 
@@ -1093,6 +1107,24 @@ void aplicarFactoryReset() {
 }
 
 // =============================================================================
+// RGB LED signals (theme-independent — VERSION_THEME_IS_RED affects HTML only)
+// Common-cathode: HIGH = channel on.
+//
+// | Signal                         | Color        | Pattern              |
+// |--------------------------------|--------------|----------------------|
+// | Boot / Wi-Fi offline           | Red          | Solid                |
+// | Connecting / reconnect backoff | Red          | Blink ~500 ms        |
+// | Wi-Fi OK, no Pulse auth yet    | Blue         | Solid                |
+// | Pulse auth fresh (< 2 min)     | Green        | Solid                |
+// | Wi-Fi OK, Pulse freshness gone | Blue         | Blink ~500 ms        |
+// | OTA check/download/apply       | Yellow (R+G) | Blink ~350 ms        |
+// | Auth 401 or OTA apply failure  | Red          | Blink ~100 ms (5 s)  |
+//
+// Green requires authenticated contact (valid X-Device-Token on device API, or
+// successful authenticated OTA HTTP to Pulse) — public /api/contador alone does
+// not turn green.
+// =============================================================================
+// =============================================================================
 // RGB (single owner of GPIO4/5/6 writes)
 // =============================================================================
 
@@ -1164,12 +1196,9 @@ void updateRgbState() {
       r = true;
       break;
     case RGB_BACKEND_OK:
+      // Theme-independent: healthy Pulse contact is always solid green.
       solid = true;
-      if (VERSION_THEME_IS_RED) {
-        r = true;  // V2 brand = red (auth error uses fast blink red)
-      } else {
-        g = true;  // V1 brand = green
-      }
+      g = true;
       break;
     case RGB_WIFI_OK_BACKEND_STALE:
       if (lastBackendContactMs == 0) {

@@ -9,7 +9,7 @@ Família isolada do ESP8266. Contrato HTTP `/api/*` compatível; identidade pelo
 | Família / driver | `esp32c3_counter_v1` |
 | `FIRMWARE_VERSION` | `esp32c3_counter_v1.1.0.0` |
 | Catálogo OTA | versão `1.0.0` |
-| Tema | **Verde** (UI + LED RGB `BACKEND_OK`) |
+| Tema UI `/` | **Verde** (`VERSION_THEME_IS_RED = false`) — não muda LED operacional |
 | Board | **ESP32C3 Dev Module** · core Espressif **3.3.11** |
 | Partition | **Minimal SPIFFS** (dual OTA) |
 | Par OTA | [`../esp32c3_counter_v2/`](../esp32c3_counter_v2/) (vermelho · `2.0.0`) |
@@ -34,8 +34,10 @@ SSID `YOUR_SSID` / password `YOUR_PASSWORD`; `apiToken` vazio até `POST /api/co
 
 `ESP32C3-` + MAC hex; Serial: `MAC WIFI STA - ENVIAR PARA TI: …`
 
-## Backend freshness
+## LED RGB e backend freshness
 
-`BACKEND_FRESHNESS_MS` = 120000. Contato autenticado recente → LED de marca (verde no V1).
+`BACKEND_FRESHNESS_MS` = 120000. Contato autenticado recente → **verde sólido** (V1 e V2).
+
+Tabela completa de sinais (vermelho/azul/verde/amarelo × sólido/pisca): [../README.md](../README.md#sinais-do-led-rgb-esp32--esp32-c3).
 
 Índice: [../README.md](../README.md). Detalhe histórico: pastas `esp32c3-super-mini/` no roadmap.

@@ -8,7 +8,8 @@ Segundo binário da família `esp32_counter_v1` para lab OTA.
 | Família / driver | `esp32_counter_v1` |
 | `FIRMWARE_VERSION` | `esp32_counter_v1.2.0.0` |
 | Catálogo OTA | versão `2.0.0` |
-| Tema | **Vermelho** (UI `/` + LED RGB sólido em `BACKEND_OK`; erro de auth continua piscando rápido) |
-| Par | [`../esp32_counter_v1/`](../esp32_counter_v1/) (verde · `1.0.0`) |
+| Tema UI `/` | **Vermelho** (`VERSION_THEME_IS_RED = true`) — não muda LED operacional |
+| Par | [`../esp32_counter_v1/`](../esp32_counter_v1/) (UI verde · `1.0.0`) |
 
-Contrato HTTP e pinos iguais ao V1. Índice: [../README.md](../README.md).
+Contrato HTTP e pinos iguais ao V1. LED RGB: mesma tabela operacional do V1 ([../README.md](../README.md#sinais-do-led-rgb-esp32--esp32-c3)). Healthy Pulse = **verde sólido** também no V2.
+
