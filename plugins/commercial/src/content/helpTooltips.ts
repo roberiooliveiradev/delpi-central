@@ -308,11 +308,11 @@ export const CM_HELP = {
     rankingLimit:
       "Quantidade máxima de linhas no ranking (10, 15, 20 ou 50).",
     billingSeries:
-      "Soma do faturamento no período (bruto de nota ou líquido ROL). Com Métrica Qtd ou Ambos, a quantidade aparece com a UM da nota (eixo, total e tooltip); UMs diferentes no recorte mostram «mistas». Com Ambos, colunas em R$ e linha de quantidade no eixo direito. Os filtros do hero (cliente, família, produto e mercado) também restringem este gráfico — com produto/família/mercado o bruto usa valor de linha (D2_TOTAL), alinhado ao mix. Em Cores, altere a cor de cada série; «Restaurar padrão» limpa a escolha neste navegador.",
+      "Soma do faturamento no período (bruto de nota ou líquido ROL). Com Métrica Qtd ou Ambos, a quantidade aparece com a UM da nota (eixo, total e tooltip); UMs diferentes no recorte mostram «mistas». Com Ambos, o gráfico usa dois eixos Y: colunas em R$ à esquerda e linha de quantidade à direita. Os filtros do hero (cliente, família, produto e mercado) também restringem este gráfico — com produto/família/mercado o bruto usa valor de linha (D2_TOTAL), alinhado ao mix. Em Cores, altere a cor de cada série; «Restaurar padrão» limpa a escolha neste navegador.",
     billingNature:
       "Bruto = valor de nota fiscal na série e Fat.12m (ranking/share usam receita bruta do envelope). Líquido = mesma fórmula ROL da Visão geral (impostos e devoluções). Aplica a Fat.12m, tendência, gráfico, mix, ABC, ranking e share.",
     billingMetric:
-      "R$ = valor (bruto ou líquido conforme Natureza). Qtd = quantidade fornecida (D2_QUANT) com a UM da nota (ex.: MI, PC). Ambos = R$ e quantidade juntos no gráfico (eixos separados) e nas colunas do mix. Recorte com UMs diferentes mostra «mistas» e não converte. Na Conta, o toggle permanece R$ | Qtd.",
+      "R$ = valor (bruto ou líquido conforme Natureza). Qtd = quantidade fornecida (D2_QUANT) com a UM da nota (ex.: MI, PC). Ambos = R$ no eixo Y esquerdo e quantidade no eixo Y direito, além das colunas do mix. Recorte com UMs diferentes mostra «mistas» e não converte. Na Conta, o toggle permanece R$ | Qtd.",
     quantityDisplayMode:
       "Milheiro mantém a UM da nota (ex.: MI). Peças converte só UM=MI (1 MI = 1000 PC) — só apresentação, sem mudar a API.",
     billingSeriesPeriod:

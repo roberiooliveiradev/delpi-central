@@ -45,8 +45,11 @@ describe("MultiTypeSeriesChart (fonte)", () => {
 
   it("expõe eixo Y secundário e linha para séries overlay", () => {
     assert.match(src, /formatYSecondary\?:/);
+    assert.match(src, /secondaryDataKeys\?:/);
     assert.match(src, /axis\?: "primary" \| "secondary"/);
     assert.match(src, /plotAs\?: "bar" \| "line"/);
     assert.match(src, /yAxisId="right"/);
+    assert.match(src, /delpi-ui-multi-type-series-chart--dual-y/);
+    assert.match(src, /overflow: "visible"/);
   });
 });

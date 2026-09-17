@@ -45,6 +45,30 @@ describe("applySeriesFillPreferences", () => {
     expect(next[2].fill).toBe("var(--chart-3)");
   });
 
+  it("preserva axis e plotAs ao aplicar cor", () => {
+    const dual: MultiTypeSeriesSpec[] = [
+      {
+        dataKey: "faturamento",
+        name: "Faturamento",
+        fill: "var(--chart-1)",
+      },
+      {
+        dataKey: "quantidade",
+        name: "Quantidade",
+        fill: "var(--chart-2)",
+        axis: "secondary",
+        plotAs: "line",
+      },
+    ];
+    const next = applySeriesFillPreferences(dual, { quantidade: "#ea580c" });
+    expect(next[1]).toMatchObject({
+      dataKey: "quantidade",
+      fill: "#ea580c",
+      axis: "secondary",
+      plotAs: "line",
+    });
+  });
+
   it("ignora override vazio e não muta o array original", () => {
     const original = BASE.map((entry) => ({ ...entry }));
     const next = applySeriesFillPreferences(original, {

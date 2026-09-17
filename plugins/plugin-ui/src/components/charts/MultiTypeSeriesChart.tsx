@@ -22,6 +22,13 @@ import {
   withLinearTrendField,
   type IncompleteBucketMode,
 } from "../../utils/linearTrendSeries";
+import {
+  DUAL_Y_AXIS_RIGHT_WIDTH,
+  dualYAxisMargin,
+  hasSecondaryYAxis,
+  isSecondaryYSeries,
+  resolveTooltipSeries,
+} from "./multiTypeSeriesDualAxis";
 import { StableResponsiveContainer } from "./StableResponsiveContainer";
 
 export type MultiTypeSeriesSpec = {
@@ -54,6 +61,11 @@ export type MultiTypeSeriesChartProps = {
   formatY?: (value: number) => string;
   formatYSecondary?: (value: number) => string;
   formatTooltipValue?: (value: number) => string;
+  /**
+   * dataKeys no eixo Y direito — independente de `series[].axis`, para o host
+   * não perder o dual-axis se um mapper copiar só dataKey/name/fill.
+   */
+  secondaryDataKeys?: ReadonlyArray<string>;
   showLegend?: boolean;
   /**
    * Rótulo de valor nas barras/colunas (acima da coluna, à direita da barra) e nos pontos de linha.
@@ -112,6 +124,43 @@ function barValueLabels(
   );
 }
 
+function DualCartesianYAxes({
+  hasSecondaryAxis,
+  formatY,
+  secondaryFormat,
+  hideChrome,
+  forceLeftId,
+}: {
+  hasSecondaryAxis: boolean;
+  formatY: (value: number) => string;
+  secondaryFormat: (value: number) => string;
+  hideChrome?: boolean;
+  forceLeftId?: boolean;
+}) {
+  const leftId = hasSecondaryAxis || forceLeftId ? "left" : undefined;
+  return (
+    <>
+      <YAxis
+        yAxisId={leftId}
+        width={88}
+        tick={{ fontSize: 12 }}
+        tickFormatter={(value) => formatY(Number(value))}
+        tickLine={hideChrome ? false : undefined}
+        axisLine={hideChrome ? false : undefined}
+      />
+      {hasSecondaryAxis ? (
+        <YAxis
+          yAxisId="right"
+          orientation="right"
+          width={DUAL_Y_AXIS_RIGHT_WIDTH}
+          tick={{ fontSize: 12 }}
+          tickFormatter={(value) => secondaryFormat(Number(value))}
+        />
+      ) : null}
+    </>
+  );
+}
+
 /**
  * Recharts multi-type series plot (column / line / area / pie / bar / horizontal / stacked).
  */
@@ -128,6 +177,7 @@ export function MultiTypeSeriesChart({
   formatY = defaultFormatY,
   formatYSecondary,
   formatTooltipValue,
+  secondaryDataKeys,
   showLegend = true,
   showValueLabels = false,
   onCategoryClick,
@@ -145,8 +195,9 @@ export function MultiTypeSeriesChart({
    * Dia→Mês YoY: `produced` fica à esquerda e o ano anterior à direita).
    */
   const seriesOrderKey = useMemo(
-    () => series.map((entry) => entry.dataKey).join("|"),
-    [series],
+    () =>
+      `${series.map((entry) => entry.dataKey).join("|")}:${hasSecondaryYAxis(series, secondaryDataKeys) ? "dual" : "single"}`,
+    [secondaryDataKeys, series],
   );
 
   const chartData = useMemo(() => {
@@ -172,27 +223,36 @@ export function MultiTypeSeriesChart({
 
   const tooltipValue = formatTooltipValue ?? formatY;
   const secondaryFormat = formatYSecondary ?? formatY;
-  const seriesByKey = useMemo(
-    () => new Map(series.map((entry) => [entry.dataKey, entry])),
-    [series],
-  );
-  const hasSecondaryAxis = series.some((entry) => entry.axis === "secondary");
-  const dualAxisMargin = hasSecondaryAxis
-    ? { right: Math.max(margin.right ?? 0, 56) }
-    : {};
+  const hasSecondaryAxis = hasSecondaryYAxis(series, secondaryDataKeys);
+  const dualAxisMargin = dualYAxisMargin(hasSecondaryAxis, margin.right);
+  const plotHostProps = {
+    className: [
+      "delpi-ui-multi-type-series-chart",
+      hasSecondaryAxis ? "delpi-ui-multi-type-series-chart--dual-y" : "",
+    ]
+      .filter(Boolean)
+      .join(" "),
+    style: hasSecondaryAxis ? ({ overflow: "visible" } as const) : undefined,
+  };
 
   const formatTooltip = (value: unknown, name: unknown, item: unknown): [string, string] => {
-    const dataKey =
-      item && typeof item === "object" && "dataKey" in item
-        ? String((item as { dataKey?: unknown }).dataKey ?? "")
-        : "";
-    const spec = seriesByKey.get(dataKey);
-    const format = spec?.axis === "secondary" ? secondaryFormat : tooltipValue;
+    const spec = resolveTooltipSeries(series, name, item);
+    const format =
+      spec && isSecondaryYSeries(spec, secondaryDataKeys)
+        ? secondaryFormat
+        : tooltipValue;
     return [
       value == null || Number.isNaN(Number(value)) ? "—" : format(Number(value)),
       String(name ?? ""),
     ];
   };
+
+  const seriesAxisId = (entry: MultiTypeSeriesSpec, forceLeft: boolean) => {
+    if (!hasSecondaryAxis) return forceLeft ? "left" : undefined;
+    return isSecondaryYSeries(entry, secondaryDataKeys) ? "right" : "left";
+  };
+  const asOverlayLine = (entry: MultiTypeSeriesSpec) =>
+    entry.plotAs === "line" || isSecondaryYSeries(entry, secondaryDataKeys);
 
   const handleBarCategoryClick = (bar: unknown) => {
     if (!onCategoryClick) return;
@@ -334,7 +394,7 @@ export function MultiTypeSeriesChart({
     const pointLabels = (show: boolean) => barValueLabels(show, formatY, "top");
 
     return (
-      <StableResponsiveContainer key={seriesOrderKey} width="100%" height={height}>
+      <StableResponsiveContainer key={seriesOrderKey} width="100%" height={height} {...plotHostProps}>
         <LineChart data={chartData} margin={lineMargin}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
@@ -342,21 +402,11 @@ export function MultiTypeSeriesChart({
             tick={{ fontSize: 11 }}
             interval="preserveStartEnd"
           />
-          <YAxis
-            yAxisId={hasSecondaryAxis ? "left" : undefined}
-            width={88}
-            tick={{ fontSize: 12 }}
-            tickFormatter={(value) => formatY(Number(value))}
+          <DualCartesianYAxes
+            hasSecondaryAxis={hasSecondaryAxis}
+            formatY={formatY}
+            secondaryFormat={secondaryFormat}
           />
-          {hasSecondaryAxis ? (
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              width={72}
-              tick={{ fontSize: 12 }}
-              tickFormatter={(value) => secondaryFormat(Number(value))}
-            />
-          ) : null}
           <Tooltip
             formatter={formatTooltip}
             labelFormatter={(label) => String(label)}
@@ -366,13 +416,7 @@ export function MultiTypeSeriesChart({
           {series.map((entry) => (
             <Line
               key={entry.dataKey}
-              yAxisId={
-                hasSecondaryAxis
-                  ? entry.axis === "secondary"
-                    ? "right"
-                    : "left"
-                  : undefined
-              }
+              yAxisId={seriesAxisId(entry, false)}
               type="monotone"
               dataKey={entry.dataKey}
               name={entry.name}
@@ -380,6 +424,8 @@ export function MultiTypeSeriesChart({
               strokeWidth={2}
               dot={{ r: 3 }}
               connectNulls
+              legendType="line"
+              isAnimationActive={false}
             >
               {pointLabels(showValueLabels)}
             </Line>
@@ -392,7 +438,7 @@ export function MultiTypeSeriesChart({
 
   if (chartType === "area") {
     return (
-      <StableResponsiveContainer key={seriesOrderKey} width="100%" height={height}>
+      <StableResponsiveContainer key={seriesOrderKey} width="100%" height={height} {...plotHostProps}>
         <ComposedChart data={chartData} margin={{ ...margin, ...dualAxisMargin }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis
@@ -401,25 +447,12 @@ export function MultiTypeSeriesChart({
             interval="preserveStartEnd"
             tickLine={false}
           />
-          <YAxis
-            yAxisId={hasSecondaryAxis ? "left" : undefined}
-            width={88}
-            tick={{ fontSize: 12 }}
-            tickFormatter={(value) => formatY(Number(value))}
-            tickLine={false}
-            axisLine={false}
+          <DualCartesianYAxes
+            hasSecondaryAxis={hasSecondaryAxis}
+            formatY={formatY}
+            secondaryFormat={secondaryFormat}
+            hideChrome
           />
-          {hasSecondaryAxis ? (
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              width={72}
-              tick={{ fontSize: 12 }}
-              tickFormatter={(value) => secondaryFormat(Number(value))}
-              tickLine={false}
-              axisLine={false}
-            />
-          ) : null}
           <Tooltip
             formatter={formatTooltip}
             labelFormatter={(label) => String(label)}
@@ -427,12 +460,8 @@ export function MultiTypeSeriesChart({
           {/* null: ordem do array `series` (default Recharts ordena por label e desalinha das barras) */}
           {showLegend ? <Legend itemSorter={null} /> : null}
           {series.map((entry) => {
-            const axisId = hasSecondaryAxis
-              ? entry.axis === "secondary"
-                ? "right"
-                : "left"
-              : undefined;
-            if (entry.plotAs === "line" || entry.axis === "secondary") {
+            const axisId = seriesAxisId(entry, false);
+            if (asOverlayLine(entry)) {
               return (
                 <Line
                   key={entry.dataKey}
@@ -444,6 +473,8 @@ export function MultiTypeSeriesChart({
                   strokeWidth={2}
                   dot={{ r: 3 }}
                   connectNulls
+                  legendType="line"
+                  isAnimationActive={false}
                 />
               );
             }
@@ -478,7 +509,7 @@ export function MultiTypeSeriesChart({
   };
 
   return (
-    <StableResponsiveContainer key={seriesOrderKey} width="100%" height={height}>
+    <StableResponsiveContainer key={seriesOrderKey} width="100%" height={height} {...plotHostProps}>
       <ComposedChart data={chartData} margin={plotMargin}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} />
         <XAxis
@@ -487,25 +518,13 @@ export function MultiTypeSeriesChart({
           interval="preserveStartEnd"
           tickLine={false}
         />
-        <YAxis
-          yAxisId="left"
-          width={88}
-          tick={{ fontSize: 12 }}
-          tickFormatter={(value) => formatY(Number(value))}
-          tickLine={false}
-          axisLine={false}
+        <DualCartesianYAxes
+          hasSecondaryAxis={hasSecondaryAxis}
+          formatY={formatY}
+          secondaryFormat={secondaryFormat}
+          hideChrome
+          forceLeftId
         />
-        {hasSecondaryAxis ? (
-          <YAxis
-            yAxisId="right"
-            orientation="right"
-            width={72}
-            tick={{ fontSize: 12 }}
-            tickFormatter={(value) => secondaryFormat(Number(value))}
-            tickLine={false}
-            axisLine={false}
-          />
-        ) : null}
         <Tooltip
             formatter={formatTooltip}
             labelFormatter={(label) => String(label)}
@@ -513,8 +532,8 @@ export function MultiTypeSeriesChart({
         {/* null: ordem do array `series` (default Recharts ordena por label e desalinha das barras) */}
           {showLegend ? <Legend itemSorter={null} /> : null}
         {series.map((entry, index) => {
-          const axisId = entry.axis === "secondary" ? "right" : "left";
-          const asLine = entry.plotAs === "line" || entry.axis === "secondary";
+          const axisId = seriesAxisId(entry, true);
+          const asLine = asOverlayLine(entry);
           if (asLine) {
             return (
               <Line
@@ -527,6 +546,8 @@ export function MultiTypeSeriesChart({
                 strokeWidth={2}
                 dot={{ r: 3 }}
                 connectNulls
+                legendType="line"
+                isAnimationActive={false}
               />
             );
           }

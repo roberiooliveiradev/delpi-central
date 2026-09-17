@@ -60,7 +60,8 @@ const CHART_HEIGHT = 320;
 
 /** Accent do Portal — acompanha tema claro/escuro. */
 const SERIES_COLOR = "var(--cm-accent)";
-const QUANTITY_SERIES_COLOR = "var(--chart-2, #38bdf8)";
+/** Distinta de `--chart-2` (tom do primary no Portal) para não parecer a mesma coluna. */
+const QUANTITY_SERIES_COLOR = "var(--cm-chart-quantity, #ea580c)";
 const PRIOR_SERIES_COLOR = "var(--chart-3, #94a3b8)";
 const PRIOR_2_COLOR = "var(--chart-4, #64748b)";
 const PRIOR_3_COLOR = "var(--chart-5, #475569)";
@@ -453,7 +454,10 @@ export function CustomerBillingSeriesChart({
               formatYSecondary={
                 billingMetric === "both" ? formatQuantityAxis : undefined
               }
-              formatTooltipValue={formatValue}
+              secondaryDataKeys={billingMetric === "both" ? ["quantidade"] : undefined}
+              formatTooltipValue={
+                billingMetric === "both" ? undefined : formatValue
+              }
             />
           </ChartViewShell>
         </>
