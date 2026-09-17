@@ -1790,6 +1790,100 @@ ARCHITECTURE_DECISION_REQUIRED: NONE
 NEXT: C1 — Core live registration / RBAC assignment / Portal live discovery (bounded; do not start automatically)
 ```
 
+## 6.43 C1-T6 — CORE_REGISTRATION_RBAC_AND_PORTAL_DISCOVERY_VERIFICATION
+
+```text
+DATE: 2026-09-17
+STEP: C1-T6
+NAME: CORE_REGISTRATION_RBAC_AND_PORTAL_DISCOVERY_VERIFICATION
+STATUS: RUNTIME / GOVERNANCE
+BASE_HEAD: 138577bb80cad389ae417e6ca33a3bc7ba95ab27
+ACCEPTED_T5_INFRA_HEAD: 7f22166a449c3bc9d3dcd267a9f30cbeb45e6553
+POST_T5_COMMITS: OUTSIDE_TASK (commercial/public-hub/mcp/etc.) + MATERIAL residual 9fff7186e sequential up scripts
+WORKING_TREE_PRESERVED: many OUTSIDE_TASK commercial/drawing/plugin-ui edits (not staged)
+PROGRAM: PLANNED / NOT_STARTED
+C0: NOT_STARTED
+C0.S0..C0.S7: APPROVED
+FOUNDATION_FREEZE: APPROVED
+C1_AUTHORIZED: YES
+C1_STARTED: YES
+C1_EXECUTED: NO / NOT_COMPLETE
+
+MANIFEST_VALIDATOR: PASS (is_valid=True; id=delia; permission=delia.access; route=/apps/delia; entry=/apps/delia/assets/remoteEntry.js; backend=/apps/delia-api; renderMode=federated)
+REGISTRATION_PRESTATE: ABSENT (local Core admin apps)
+CORE_REGISTRATION: PASS
+  ACTION: POST /core-api/admin/apps/register (canonical RegisterPluginUseCase + ManifestValidator)
+  RESULT: HTTP 201 {"ok": true}
+  POSTCONDITIONS:
+    app delia active version=0.0.1 base_path=/apps/delia
+    permission delia.access exists
+    route /apps/delia permission_code=delia.access
+    manifest entry=/apps/delia/assets/remoteEntry.js ui.renderMode=federated backend.baseUrl=/apps/delia-api
+
+RBAC_TEST_STRATEGY:
+  temporary Core role c1-t6-delia-access-probe + permission delia.access
+  SUBJECT_A / SUBJECT_B = dedicated Keycloak users provisioned into Core on first /me (non-superadmin)
+  assignment via POST /admin/rbac/users/{id}/roles/{roleId}
+  evidence via GET /me + GET /me/apps (subject JWTs) — not Portal UI hiding
+
+POSITIVE_SUBJECT (SUBJECT_A):
+  superadmin=NO
+  delia.access=PRESENT
+  /me/apps DELIA=PRESENT
+  projected: basePath=/apps/delia entryUrl=/apps/delia/assets/remoteEntry.js renderMode=federated route permission=delia.access
+
+NEGATIVE_SUBJECT (SUBJECT_B):
+  superadmin=NO
+  delia.access=ABSENT
+  /me/apps DELIA=ABSENT (app_count=0)
+
+RBAC_NEGATIVE_CASE: PASS
+TEST_ASSIGNMENT_CLEANUP: PERFORMED
+  removed role from SUBJECT_A; deleted probe role; disabled KC probe users
+  AFTER_CLEANUP SUBJECT_A: delia.access ABSENT; DELIA_APP ABSENT
+  PERSISTENT_ASSIGNMENT: none left for probe subjects
+  NOTE: superadmin continues to see delia via PermissionResolver all-permissions (not used as positive/negative subject)
+  production Product Master visual mount remains separate operational surface
+
+PORTAL_PARALLEL_REGISTRY: NONE (portal/src has zero matches for delia|/apps/delia|DÉLIA)
+PORTAL_DISCOVERY_CHAIN:
+  CoreApi.getApps → GET /core-api/me/apps (portal/src/data/coreApi.ts)
+  → AuthContext setApps (portal/src/state/AuthContext.tsx)
+  → App.tsx federatedAppHosts filter renderMode=federated
+  → AppHost (portal/src/ui/AppHost.tsx)
+  → resolveFederationEntry(app.entryUrl) (appHostEntry.ts)
+  → loadFederatedContainer(entryUrl) import remoteEntry
+  → container.get(exposedModule ?? "./App") → mount()
+PORTAL_LIVE_MOUNT: PASS
+  evidence: Product Master visual live mount https://minhadelpi.com.br/apps/delia (PORTAL_LIVE_MOUNT_VISUAL_EVIDENCE=AVAILABLE)
+  + Core /me/apps positive contract + remoteEntry 200 + ./App map + no Portal hardcode
+FEDERATION_NETWORK: remoteEntry 200; plugin-ui remoteEntry 200; exposed ./App mapped
+API_HEALTH_REGRESSION: GET /apps/delia-api/health → 200
+BUSINESS_AUTHORITY_FROM_DELIA_ACCESS: NONE (only manifest/docs/ledger; no Evidence/Decision/Work/PREPARE/ACT interpretation in runtime code)
+
+C1_INTEGRATION_EVIDENCE:
+  CORE_REGISTRATION=PASS
+  DELIA_ACCESS_EFFECTIVE_RBAC=PASS
+  ME_APPS_POSITIVE=PASS
+  ME_APPS_NEGATIVE=PASS
+  PORTAL_DISCOVERY=PASS
+  PORTAL_LIVE_MOUNT=PASS
+
+OWN_MIGRATION_CHAIN: PENDING
+MIGRATION_CHAIN_ASSESSMENT: ARCHITECTURE_DECISION_REQUIRED
+  reason: 52§4 allows DÉLIA migrations only when owned persisted state is proven (none at C1);
+  52§17 Definition of Bootstrap Done still lists OWN_MIGRATION_CHAIN=PASS.
+  Empty migration scaffolding forbidden. Cannot declare NOT_APPLICABLE_AT_C1 without Product Master amendment of Bootstrap Done.
+  Therefore C1_EXECUTED remains NO / NOT_COMPLETE.
+
+TYPESCRIPT_ISOLATED: INCONCLUSIVE (unchanged)
+RUNTIME_READINESS: NOT_PROVEN
+PRODUCTION_READINESS: NOT_PROVEN
+EXECUTION_DRIFT: NONE
+ARCHITECTURE_DECISION_REQUIRED: OWN_MIGRATION_CHAIN vs Bootstrap Done (see above)
+NEXT: bounded decision on OWN_MIGRATION_CHAIN (PENDING vs NOT_APPLICABLE_AT_C1) — do not start automatically
+```
+
 ## 7. Canonical phase mapping
 
 ```text
@@ -1998,4 +2092,4 @@ SAFETY_INTERLOCK_BYPASS
 
 ## 14. First execution
 
-Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1 created the standalone `delia-api/` Flask skeleton and `/health` liveness. C1-T1R1 closed real-process HTTP smoke and shutdown visibility (`delia_api_stopped`). `C1_STARTED=YES`. `C1_EXECUTED=NO`. C1-T2 added JWT validation + Core `/me` effective access (JWT≠permissions; fail-closed). C1-T2R1 removed production `GET /access-context` and preserved JWT/Core contract evidence via test-only probe (§6.38). C1-T3 bootstrapped standalone federated MFE `plugins/delia/` (§6.39). C1-T4 added `delpi.manifest.json` publication contract (§6.40). C1-T4D1 Product Master APPROVED `delia.access` as bootstrap/platform-access permission (§6.41). C1-T5 published Gateway/Compose services `delpi-delia` + `delpi-delia-api` with `/apps/delia/` + `/apps/delia-api/` (§6.42); Core live registration and RBAC assignment remain PENDING. `C0=NOT_STARTED`. Runtime/production readiness remain `NOT_PROVEN`.
+Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1 created the standalone `delia-api/` Flask skeleton and `/health` liveness. C1-T1R1 closed real-process HTTP smoke and shutdown visibility (`delia_api_stopped`). `C1_STARTED=YES`. `C1_EXECUTED=NO`. C1-T2 added JWT validation + Core `/me` effective access (JWT≠permissions; fail-closed). C1-T2R1 removed production `GET /access-context` and preserved JWT/Core contract evidence via test-only probe (§6.38). C1-T3 bootstrapped standalone federated MFE `plugins/delia/` (§6.39). C1-T4 added `delpi.manifest.json` publication contract (§6.40). C1-T4D1 Product Master APPROVED `delia.access` as bootstrap/platform-access permission (§6.41). C1-T5 published Gateway/Compose services `delpi-delia` + `delpi-delia-api` with `/apps/delia/` + `/apps/delia-api/` (§6.42). C1-T6 registered DÉLIA in Core, proved positive/negative `delia.access` → `/me/apps`, Portal discovery path without hardcode, and live mount evidence (§6.43). `OWN_MIGRATION_CHAIN` remains PENDING with `ARCHITECTURE_DECISION_REQUIRED` against Bootstrap Done. `C0=NOT_STARTED`. Runtime/production readiness remain `NOT_PROVEN`.
