@@ -238,7 +238,9 @@ branch = query filter (unless backend policy says otherwise)
 backend AuthZ = final authority
 ```
 
-After Wave 3A (source): `DAVI_ELIGIBLE_READ` = 15 via allowlist v8 governed READ promotion (`product.routing.guide` → `get_product_guide` with max_depth≤8; `product.where_used` → `get_product_parents` with max_depth≤4 matching model-visible parents[] depth) plus the previous thirteen. Nested Abstraction Gate remains PASS. MCP tools remain **exactly 3**. Agent Instructions unchanged. `product.raw_material.set_shortages` remains DEFER (unbounded OP×MP×ledger) and is not executable. Deploy/live = `TEST_NOT_RUN`.
+After Wave Drawing JSON foundation (source `DAVI-PRODUCT-DRAWING-CAPABILITY-001`): `DAVI_ELIGIBLE_READ` = 17 via allowlist v9 (`product.drawing.catalog` → `list_product_drawings` with required `code`; `product.drawing.metadata` → `get_product_drawing`) plus the previous fifteen. `product.drawing.document` / analysis / compare / batch remain PENDING (generic document transport not proven; no PDF/base64 via `execute_delpi_information`). `get_product_analyser` is NOT promoted for drawing. MCP tools remain **exactly 3**. Agent Instructions unchanged. Deploy/live = `TEST_NOT_RUN`.
+
+After Wave 3A (historical source): `DAVI_ELIGIBLE_READ` = 15 via allowlist v8 governed READ promotion (`product.routing.guide` → `get_product_guide` with max_depth≤8; `product.where_used` → `get_product_parents` with max_depth≤4 matching model-visible parents[] depth) plus the previous thirteen. Nested Abstraction Gate remains PASS. MCP tools remain **exactly 3**. Agent Instructions unchanged. `product.raw_material.set_shortages` remains DEFER (unbounded OP×MP×ledger) and is not executable. Deploy/live = `TEST_NOT_RUN`.
 
 Wave 2 (historical source): `DAVI_ELIGIBLE_READ` = 13 via allowlist v7 governed READ promotion (`product.commercial.pricing`, `product.purchase.price_history`, `product.purchase.last_valid` plus the previous ten). `product.cost.impact_simulation` remains PREPARE / `DEFER_FROM_READ_WAVE`.
 

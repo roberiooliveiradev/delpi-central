@@ -1,0 +1,102 @@
+{
+  "source": "openapi_baseline.json",
+  "baseline_version": "3",
+  "baseline_operation_count": 703,
+  "taskId": "DAVI-PRODUCT-DRAWING-CAPABILITY-001",
+  "TOTAL_OPERATIONS": 703,
+  "TOTAL_GET": 506,
+  "TOTAL_WRITE_VERBS": 197,
+  "DAVI_ELIGIBLE_READ": 17,
+  "ELIGIBLE_BEFORE": 15,
+  "ELIGIBLE_AFTER": 17,
+  "NEWLY_ELIGIBLE": [
+    "get_product_drawing",
+    "list_product_drawings"
+  ],
+  "REMOVED_ELIGIBLE": [],
+  "INVENTORY_DELTA": {
+    "previous_total_operations": 703,
+    "current_total_operations": 703,
+    "previous_total_get": 506,
+    "current_total_get": 506,
+    "added_operations": 0,
+    "removed_operations": 0,
+    "note": "Delta vs last committed inventory artifact (HEAD)"
+  },
+  "COVERAGE_DECISION": {
+    "taskId": "DAVI-PRODUCT-DRAWING-CAPABILITY-001",
+    "decision": "PROMOTE_PRODUCT_DRAWING_JSON_READ_FOUNDATION",
+    "reason": "Promote list_product_drawings and get_product_drawing as governed JSON READ capabilities (catalog + metadata). Eligible READ 15→17. Catalog requires product code (requireArguments) to avoid unbounded file-server scan via DAVI. get_product_drawing_pdf remains DEFER pending generic document transport (no PDF/base64 via execute_delpi_information). get_product_analyser not promoted for drawing analysis. AuthZ unchanged (API_DELPI_ACCESS). MCP tools remain 3. Agent Instructions unchanged.",
+    "previousDecision": {
+      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-003A",
+      "decision": "PROMOTE_PRODUCT_ENGINEERING_READ_WAVE_3A"
+    }
+  },
+  "HIGH_VALUE_BLOCKED": [
+    {
+      "operationId": "get_product_detail",
+      "primaryBlocker": "SEMANTICALLY_REDUNDANT",
+      "reason": "Same Product Master slice already served by search_products; no distinct governed fields"
+    },
+    {
+      "operationId": "get_product_summary",
+      "primaryBlocker": "DEFER",
+      "reason": "Composite product snapshot remains deferred; not a Wave 2 READ capability"
+    },
+    {
+      "operationId": "get_product_raw_material_price_intelligence",
+      "primaryBlocker": "DEFER",
+      "reason": "Unbounded budget scan / composite overlap / no bounded summaries-only backend contract"
+    },
+    {
+      "operationId": "get_product_cost_impact_simulation",
+      "primaryBlocker": "PREPARE",
+      "reason": "Compute-only simulation is PREPARE, not READ. HTTP GET does not imply semantic READ. Not executable through the READ broker."
+    },
+    {
+      "operationId": "get_product_drawing_pdf",
+      "primaryBlocker": "NEEDS_GENERIC_DOCUMENT_BOUNDARY",
+      "reason": "Binary PDF document transport is not a JSON READ projection. Must not embed pdf_base64 in execute_delpi_information. Requires generic authorized document boundary (ARCHITECTURE_ESCALATION if new MCP tool/resource). AuthZ remains API_DELPI_ACCESS on the HTTP route."
+    },
+    {
+      "operationId": "get_product_analyser",
+      "primaryBlocker": "PRODUCT_ANALYSER_DIRECT_PROMOTION_NOT_REQUIRED",
+      "reason": "ProductAnalyserUseCase composes product/structure/guide/inspection JSON — it does not perform visual drawing analysis. Drawing analysis must reuse AI API workflow procedure + governed individual READs + document transport, not promote this composite."
+    },
+    {
+      "operationId": "get_product_inspection",
+      "primaryBlocker": "DEFER",
+      "reason": "Drawing analysis inspection cross-check deferred (DRAWING_ANALYSIS_INSPECTION_CROSSCHECK=DEFERRED). Not required for JSON drawing catalog/metadata foundation."
+    }
+  ],
+  "STATUS_COUNTS": {
+    "ADMIN_OUT_OF_SCOPE": 76,
+    "DAVI_ELIGIBLE_READ": 17,
+    "DESTRUCTIVE_OUT_OF_SCOPE": 16,
+    "GENERIC_SQL_FORBIDDEN": 2,
+    "NEEDS_MODEL_SAFE_PROJECTION": 365,
+    "NEEDS_NESTED_PROJECTION_SUPPORT": 65,
+    "SEMANTICALLY_REDUNDANT": 1,
+    "STREAM_BINARY_OUT_OF_SCOPE": 31,
+    "WRITE_OUT_OF_SCOPE": 130
+  },
+  "ELIGIBLE_OPERATION_IDS": [
+    "get_product_customers",
+    "get_product_drawing",
+    "get_product_factory_status",
+    "get_product_guide",
+    "get_product_last_purchase",
+    "get_product_parents",
+    "get_product_pricing",
+    "get_product_production_status",
+    "get_product_purchase_price_history",
+    "get_product_purchases",
+    "get_product_shipping_status",
+    "get_product_stock",
+    "get_product_structure",
+    "get_product_structure_exclusivity",
+    "get_product_suppliers",
+    "list_product_drawings",
+    "search_products"
+  ]
+}

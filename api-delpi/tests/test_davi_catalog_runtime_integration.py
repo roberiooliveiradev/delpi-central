@@ -37,6 +37,7 @@ from app.application.external_capabilities.dynamic_information.errors import (
 from app.composition.davi_dynamic_read_composer import execute_delpi_information_wired
 from app.interface.mcp.server import create_mcp_server
 import app.interface.http.routes.product_routes as product_routes
+import app.interface.http.routes.product_drawing_routes as product_drawing_routes
 
 _BASELINE = (
     Path(__file__).resolve().parents[1] / "app" / "content" / "openapi_baseline.json"
@@ -62,6 +63,8 @@ _CATALOG_ACTIONS = (
     "get_product_last_purchase",
     "get_product_guide",
     "get_product_parents",
+    "list_product_drawings",
+    "get_product_drawing",
 )
 
 
@@ -353,6 +356,50 @@ def _parents_payload() -> dict[str, Any]:
     }
 
 
+def _drawing_catalog_payload() -> dict[str, Any]:
+    return {
+        "items": [
+            {
+                "product_code": "10080055",
+                "filename": "10080055.pdf",
+                "file_kind": "exact",
+                "revision": None,
+                "variant_suffix": None,
+                "size_bytes": 42,
+                "modified_at": "2026-01-01T00:00:00+00:00",
+                "media_type": "application/pdf",
+                "drawing_metadata_path": "/products/10080055/drawing",
+                "drawing_pdf_path": "/products/10080055/drawing/pdf",
+            }
+        ],
+        "page": 1,
+        "page_size": 50,
+        "total": 1,
+        "total_pages": 1,
+        "summary": {
+            "library_available": True,
+            "library_dir": "/secret/drawing-pdfs",
+            "scanned_files": 1,
+            "matched_files": 1,
+            "filters_applied": {"code": "10080055"},
+        },
+    }
+
+
+def _drawing_metadata_payload() -> dict[str, Any]:
+    return {
+        "found": True,
+        "product_code": "10080055",
+        "filename": "10080055.pdf",
+        "revision": None,
+        "variant_suffix": None,
+        "size_bytes": 42,
+        "modified_at": "2026-01-01T00:00:00+00:00",
+        "media_type": "application/pdf",
+        "path": "/secret/drawing-pdfs/10080055.pdf",
+    }
+
+
 def _production_payload() -> dict[str, Any]:
     return {
         "product": {
@@ -484,6 +531,12 @@ def _auth_and_domain_fakes(*, allowed: bool = True) -> Iterator[dict[str, Any]]:
     parents_uc = MagicMock()
     parents_uc.execute.return_value = _parents_payload()
 
+    drawings_list_uc = MagicMock()
+    drawings_list_uc.execute.return_value = _drawing_catalog_payload()
+
+    drawing_meta_uc = MagicMock()
+    drawing_meta_uc.execute.return_value = _drawing_metadata_payload()
+
     search_uc = MagicMock()
 
     class _SearchPage:
@@ -596,6 +649,20 @@ def _auth_and_domain_fakes(*, allowed: bool = True) -> Iterator[dict[str, Any]]:
             )
         )
         stack.enter_context(
+            patch.object(
+                product_drawing_routes,
+                "build_list_product_drawings_use_case",
+                return_value=drawings_list_uc,
+            )
+        )
+        stack.enter_context(
+            patch.object(
+                product_drawing_routes,
+                "build_get_product_drawing_metadata_use_case",
+                return_value=drawing_meta_uc,
+            )
+        )
+        stack.enter_context(
             patch(
                 "app.composition.product_composer.build_search_products_use_case",
                 return_value=search_uc,
@@ -653,6 +720,8 @@ def _auth_and_domain_fakes(*, allowed: bool = True) -> Iterator[dict[str, Any]]:
             "guide_uc": guide_uc,
             "parents_uc": parents_uc,
             "stock_uc": stock_uc,
+            "drawings_list_uc": drawings_list_uc,
+            "drawing_meta_uc": drawing_meta_uc,
         }
 
 
@@ -1063,7 +1132,7 @@ def test_pagination_completeness_stock_sibling_multi_and_single(
     assert single["truncated"] is False
 
 
-def test_eligible_set_is_fifteen():
+def test_eligible_set_is_seventeen():
     ids = load_allowlist_operation_ids(load_external_read_allowlist())
     assert ids == {
         "search_products",
@@ -1081,7 +1150,54 @@ def test_eligible_set_is_fifteen():
         "get_product_last_purchase",
         "get_product_guide",
         "get_product_parents",
+        "list_product_drawings",
+        "get_product_drawing",
     }
+
+
+def test_drawing_catalog_and_metadata_wired_projection(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
+    monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
+    monkeypatch.setenv(
+        "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
+    )
+    with _auth_and_domain_fakes(allowed=True) as fakes:
+        catalog = _execute("list_product_drawings", {"code": "10080055"})
+        meta = _execute("get_product_drawing", {"code": "10080055"})
+        catalog_dto = fakes["drawings_list_uc"].execute.call_args.args[0]
+
+    assert catalog["status"] == "ok"
+    dumped_c = json.dumps(catalog.get("data") or {}, default=str)
+    assert catalog["data"]["items"][0]["product_code"] == "10080055"
+    assert catalog["data"]["items"][0]["filename"] == "10080055.pdf"
+    assert catalog["data"]["summary"]["library_available"] is True
+    assert "library_dir" not in dumped_c
+    assert "drawing_metadata_path" not in dumped_c
+    assert "drawing_pdf_path" not in dumped_c
+    assert "/secret" not in dumped_c
+    assert catalog_dto.page == 1
+    assert catalog_dto.page_size == 50
+
+    assert meta["status"] == "ok"
+    dumped_m = json.dumps(meta.get("data") or {}, default=str)
+    assert meta["data"]["found"] is True
+    assert meta["data"]["filename"] == "10080055.pdf"
+    assert "path" not in dumped_m
+    assert "/secret" not in dumped_m
+
+
+def test_drawing_backend_403_maps_to_forbidden(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
+    monkeypatch.setenv("KEYCLOAK_AUDIENCE", "delpi-central")
+    monkeypatch.setenv(
+        "KEYCLOAK_ISSUER", "https://minhadelpi.com.br/auth/realms/delpi"
+    )
+    with _auth_and_domain_fakes(allowed=False):
+        for action_id in ("list_product_drawings", "get_product_drawing"):
+            with pytest.raises(PermissionError, match="Forbidden"):
+                _execute(action_id, {"code": "10080055"})
 
 
 def test_unknown_argument_still_rejected(monkeypatch: pytest.MonkeyPatch):

@@ -69,15 +69,17 @@ def _actions() -> list[TechnicalAction]:
     )
 
 
-def test_runtime_eligible_is_fifteen_after_wave3a() -> None:
+def test_runtime_eligible_after_wave3a_and_drawing() -> None:
     allow = load_external_read_allowlist()
-    assert allow.get("version") == 8
+    assert allow.get("version") == 9
     eligible = {a.operation_id for a in _actions() if a.executable}
-    assert len(eligible) == 15
+    assert len(eligible) == 17
     assert set(CURRENT_ELIGIBLE) <= eligible
     for op in ("get_product_guide", "get_product_parents"):
         assert op in eligible
     assert "get_product_raw_material_set_shortages" not in eligible
+    assert "list_product_drawings" in eligible
+    assert "get_product_drawing" in eligible
 
 
 def test_mcp_tools_remain_three() -> None:
@@ -90,13 +92,15 @@ def test_mcp_tools_remain_three() -> None:
     ] == MCP_TOOLS
 
 
-def test_allowlist_contains_wave3a_ops_plus_prior_thirteen() -> None:
+def test_allowlist_contains_wave3a_ops_plus_prior_and_drawing() -> None:
     allow = load_external_read_allowlist()
     ids = [o["operationId"] for o in allow["operations"]]
     assert set(CURRENT_ELIGIBLE) <= set(ids)
     assert "get_product_guide" in ids
     assert "get_product_parents" in ids
-    assert len(ids) == 15
+    assert "list_product_drawings" in ids
+    assert "get_product_drawing" in ids
+    assert len(ids) == 17
 
 
 def test_wave3a_ops_exist_in_openapi_and_are_get() -> None:
@@ -111,7 +115,7 @@ def test_wave3a_ops_exist_in_openapi_and_are_get() -> None:
 def test_source_validation_passes() -> None:
     result = validate_source()
     assert result["ok"] is True
-    assert result["eligibleCount"] == 15
+    assert result["eligibleCount"] == 17
     assert all(result["openapiPresent"].values())
     assert all(result["authz"].values())
 

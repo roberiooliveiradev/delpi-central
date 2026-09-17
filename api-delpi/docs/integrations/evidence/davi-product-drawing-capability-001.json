@@ -1,0 +1,324 @@
+{
+  "artifact_class": "EVIDENCE_NOT_RUNTIME_AUTHORITY",
+  "taskId": "DAVI-PRODUCT-DRAWING-CAPABILITY-001",
+  "outcome": "B",
+  "verdict": "PASS_WITH_RESIDUAL",
+  "sourceHeadAtEvidence": "4765d65a6bd38dfc95ad681bae8bc345434f5a82",
+  "bootstrapMain": "4765d65a6bd38dfc95ad681bae8bc345434f5a82",
+  "allowlistVersionBefore": 8,
+  "allowlistVersionAfter": 9,
+  "eligibleBefore": 15,
+  "eligibleAfter": 17,
+  "mcpTools": 3,
+  "agentInstructions": "UNCHANGED",
+  "productAnalyserDirectPromotion": "NOT_REQUIRED",
+  "chatgptSkillPackaging": "TO_INVENTORY",
+  "currentDrawingResolution": "TO_INVENTORY",
+  "aiApiDrawingWorkflow": "PROVEN",
+  "documentTransport": "PENDING",
+  "architectureEscalationRequired": "YES_FOR_DOCUMENT_TRANSPORT_IF_NEW_MCP_TOOL_OR_RESOURCE",
+  "deploy": "TEST_NOT_RUN",
+  "live": "TEST_NOT_RUN",
+  "agentPreview": "TEST_NOT_RUN",
+  "promotedOperationIds": [
+    "list_product_drawings",
+    "get_product_drawing"
+  ],
+  "deferredOperationIds": [
+    "get_product_drawing_pdf",
+    "get_product_inspection"
+  ],
+  "notRequiredOperationIds": [
+    "get_product_analyser"
+  ],
+  "aiApiWorkflow": {
+    "repository": "delpi-central/minha-delpi-ai-api",
+    "skillPath": "app/domain/prompt_policies/drawing-analysis-delpi-skill.md",
+    "validationContent": "app/content/pt-BR/assistant/drawing_validation.json",
+    "rulesContent": "app/content/pt-BR/assistant/drawing_validation_rules.json",
+    "normativeDocs": [
+      "docs/knowledge/domains/agents/minha-delpi-chat/drawing-requirements-delpi.md",
+      "docs/knowledge/domains/agents/minha-delpi-chat/drawing-validation-rules-delpi.md",
+      "docs/knowledge/domains/agents/minha-delpi-chat/drawing-rules-delpi.md"
+    ],
+    "statusesObserved": [
+      "OK",
+      "Pendente",
+      "Erro",
+      "Erro crítico"
+    ],
+    "reuseDecision": "REUSE_PROCEDURE_AND_STATUSES_WHEN_DOCUMENT_TRANSPORT_EXISTS; DO_NOT_PROMOTE_get_product_analyser; DO_NOT_COPY_FULL_PROMPT_INTO_AGENT"
+  },
+  "drawingApi": {
+    "catalogRoute": "GET /products/drawings",
+    "metadataRoute": "GET /products/{code}/drawing",
+    "pdfRoute": "GET /products/{code}/drawing/pdf",
+    "authz": "API_DELPI_ACCESS",
+    "owner": "api-delpi product_drawing_routes + DrawingPdfLibraryStorage",
+    "fileSource": "DRAWING_PDF_LIBRARY_DIR file server",
+    "pathSafety": "PROVEN_NORMALIZE_REJECT_TRAVERSAL_BASE_DIR_RESOLVE",
+    "rawPathExposureInHttpCatalog": "library_dir and drawing_*_path present in backend DTO; DROPPED by DAVI projection"
+  },
+  "capabilities": [
+    {
+      "id": "product.drawing.catalog",
+      "business_need": "Locate/list drawing assets for a product code via API DELPI",
+      "owner": "api-delpi ListProductDrawingsUseCase",
+      "authoritative_source": "DrawingPdfLibraryStorage catalog scan",
+      "class": "READ",
+      "semantic_contract": "Bounded catalog filtered by required product code",
+      "inputs": [
+        "code",
+        "code_exact",
+        "revision",
+        "file_kind",
+        "has_variant",
+        "has_revision",
+        "page",
+        "page_size"
+      ],
+      "outputs": [
+        "items[] safe fields",
+        "summary.library_available",
+        "summary.scanned_files",
+        "summary.matched_files",
+        "pagination meta"
+      ],
+      "output_allowlist": [
+        "items[].product_code",
+        "items[].filename",
+        "items[].file_kind",
+        "items[].revision",
+        "items[].variant_suffix",
+        "items[].size_bytes",
+        "items[].modified_at",
+        "items[].media_type",
+        "summary.library_available",
+        "summary.scanned_files",
+        "summary.matched_files"
+      ],
+      "identity": "product_code + filename",
+      "backend_authz": "API_DELPI_ACCESS",
+      "privacy_risk": "Drawing filenames/revisions may be proprietary — minimization applied",
+      "execution_bounds": "page_size<=50 via DAVI; backend max 500",
+      "model_bounds": "execute_max_items/bytes budgets",
+      "observability": "action_id + retrieval_score; no path logging required",
+      "tests": "test_davi_product_drawing_capability.py + catalog runtime",
+      "source_status": "PROVEN",
+      "deploy_status": "TEST_NOT_RUN",
+      "live_status": "TEST_NOT_RUN",
+      "blockers": [],
+      "action": "PROMOTED list_product_drawings"
+    },
+    {
+      "id": "product.drawing.metadata",
+      "business_need": "Resolve safe metadata for server-selected drawing of a product",
+      "owner": "api-delpi GetProductDrawingMetadataUseCase",
+      "authoritative_source": "DrawingPdfLibraryStorage.find_drawing",
+      "class": "READ",
+      "semantic_contract": "Server-resolved drawing metadata; not proven official/approved revision",
+      "inputs": [
+        "code"
+      ],
+      "outputs": [
+        "found",
+        "product_code",
+        "filename",
+        "revision",
+        "variant_suffix",
+        "size_bytes",
+        "modified_at",
+        "media_type"
+      ],
+      "output_allowlist": [
+        "found",
+        "product_code",
+        "filename",
+        "revision",
+        "variant_suffix",
+        "size_bytes",
+        "modified_at",
+        "media_type"
+      ],
+      "identity": "product_code + filename",
+      "backend_authz": "API_DELPI_ACCESS",
+      "privacy_risk": "Low JSON metadata",
+      "execution_bounds": "single product",
+      "model_bounds": "projection allowlist",
+      "observability": "action_id",
+      "tests": "test_davi_product_drawing_capability.py + catalog runtime",
+      "source_status": "PROVEN",
+      "deploy_status": "TEST_NOT_RUN",
+      "live_status": "TEST_NOT_RUN",
+      "blockers": [
+        "CURRENT_DRAWING_RESOLUTION official/approved semantics TO_INVENTORY"
+      ],
+      "action": "PROMOTED get_product_drawing"
+    },
+    {
+      "id": "product.drawing.document",
+      "business_need": "Obtain authorized PDF bytes for analysis",
+      "owner": "api-delpi GetProductDrawingPdfUseCase (HTTP)",
+      "authoritative_source": "file server via API DELPI",
+      "class": "READ_DOCUMENT",
+      "semantic_contract": "Authorized PDF document — not JSON projection",
+      "inputs": [
+        "code"
+      ],
+      "outputs": [
+        "application/pdf stream"
+      ],
+      "output_allowlist": [],
+      "identity": "product_code + filename from metadata",
+      "backend_authz": "API_DELPI_ACCESS",
+      "privacy_risk": "HIGH — proprietary drawings",
+      "execution_bounds": "TO_INVENTORY document size/page/time",
+      "model_bounds": "TO_INVENTORY provider document limits",
+      "observability": "no PDF/body logging",
+      "tests": "HTTP route tests exist; DAVI transport tests PENDING",
+      "source_status": "PROVEN_HTTP_ROUTE",
+      "deploy_status": "TEST_NOT_RUN",
+      "live_status": "TEST_NOT_RUN",
+      "blockers": [
+        "GENERIC_DOCUMENT_TRANSPORT_UNPROVEN",
+        "NO_MCP_BINARY_RESOURCE",
+        "MUST_NOT_BASE64_IN_EXECUTE_JSON"
+      ],
+      "transport": "PENDING"
+    },
+    {
+      "id": "product.drawing.analysis",
+      "business_need": "Analyze one technical drawing with API cross-check",
+      "owner": "DAVI orchestration + AI API drawing-analysis-delpi procedure",
+      "authoritative_source": "minha-delpi-ai-api skill/workflow (procedure only)",
+      "class": "DERIVED_ANALYSIS",
+      "semantic_contract": "Automated analysis != engineering approval",
+      "inputs": [
+        "document + optional product code + governed Product READs"
+      ],
+      "outputs": [
+        "checklist statuses OK/Pendente/Erro/Erro critico when AI API model reused"
+      ],
+      "output_allowlist": [
+        "TARGET until analysis runtime"
+      ],
+      "identity": "document provenance + product_code",
+      "backend_authz": "END_USER via API DELPI capabilities",
+      "privacy_risk": "HIGH",
+      "execution_bounds": "TARGET",
+      "model_bounds": "TARGET",
+      "observability": "TARGET",
+      "tests": "orchestration PENDING",
+      "source_status": "WORKFLOW_PROVEN_TRANSPORT_PENDING",
+      "deploy_status": "TEST_NOT_RUN",
+      "live_status": "TEST_NOT_RUN",
+      "blockers": [
+        "DOCUMENT_TRANSPORT",
+        "CHATGPT_SKILL_PACKAGING_TO_INVENTORY"
+      ]
+    },
+    {
+      "id": "product.drawing.compare",
+      "business_need": "Compare attached PDF vs server-resolved drawing",
+      "owner": "DAVI orchestration",
+      "authoritative_source": "attached UNTRUSTED + server via API DELPI",
+      "class": "DERIVED_ANALYSIS",
+      "semantic_contract": "Independent analysis then compare with provenance",
+      "inputs": [
+        "attached_pdf",
+        "product_code"
+      ],
+      "outputs": [
+        "divergences with source provenance"
+      ],
+      "output_allowlist": [
+        "TARGET"
+      ],
+      "identity": "attached vs server filenames",
+      "backend_authz": "END_USER",
+      "privacy_risk": "HIGH",
+      "execution_bounds": "TARGET",
+      "model_bounds": "TARGET",
+      "observability": "TARGET",
+      "tests": "PENDING",
+      "source_status": "TARGET",
+      "deploy_status": "TEST_NOT_RUN",
+      "live_status": "TEST_NOT_RUN",
+      "blockers": [
+        "DOCUMENT_TRANSPORT",
+        "ANALYSIS_V1"
+      ]
+    },
+    {
+      "id": "product.drawing.batch_analysis",
+      "business_need": "Bounded multi-drawing analysis via structure fan-out",
+      "owner": "DAVI orchestration",
+      "authoritative_source": "get_product_structure + per-code metadata/document",
+      "class": "ORCHESTRATION",
+      "semantic_contract": "Bounded fan-out; per-document status; no global catalog sweep",
+      "inputs": [
+        "root product code",
+        "structure depth bound",
+        "document budget"
+      ],
+      "outputs": [
+        "consolidated report"
+      ],
+      "output_allowlist": [
+        "TARGET"
+      ],
+      "identity": "per product_code",
+      "backend_authz": "END_USER",
+      "privacy_risk": "HIGH",
+      "execution_bounds": "TARGET document budgets (not JSON max_items)",
+      "model_bounds": "TARGET",
+      "observability": "TARGET",
+      "tests": "PENDING",
+      "source_status": "TARGET",
+      "deploy_status": "TEST_NOT_RUN",
+      "live_status": "TEST_NOT_RUN",
+      "blockers": [
+        "DOCUMENT_TRANSPORT",
+        "ANALYSIS_V1",
+        "DOCUMENT_BUDGETS_TO_INVENTORY"
+      ]
+    },
+    {
+      "id": "product.quality.inspection",
+      "business_need": "Cross-check drawing against inspection plans",
+      "owner": "api-delpi product inspection use case",
+      "authoritative_source": "Protheus QP*",
+      "class": "READ",
+      "semantic_contract": "Inspection facts for analysis cross-check",
+      "inputs": [
+        "TO_INVENTORY"
+      ],
+      "outputs": [
+        "TO_INVENTORY"
+      ],
+      "output_allowlist": [
+        "TO_INVENTORY"
+      ],
+      "identity": "product_code",
+      "backend_authz": "API_DELPI_ACCESS (expected)",
+      "privacy_risk": "MEDIUM",
+      "execution_bounds": "TO_INVENTORY",
+      "model_bounds": "TO_INVENTORY",
+      "observability": "TO_INVENTORY",
+      "tests": "not in this task",
+      "source_status": "TO_INVENTORY",
+      "deploy_status": "TEST_NOT_RUN",
+      "live_status": "TEST_NOT_RUN",
+      "blockers": [
+        "FULL_CAPABILITY_GATE_NOT_COMPLETED"
+      ],
+      "decision": "DEFER"
+    }
+  ],
+  "generatedAt": "2026-09-17T17:46:49.427514+00:00",
+  "bootstrapMainObservedAtTaskStart": "68a868ccb68ec211f4b7e390b64dd61dcdc4ad42",
+  "baseHead": "4765d65a6bd38dfc95ad681bae8bc345434f5a82",
+  "originMain": "4765d65a6bd38dfc95ad681bae8bc345434f5a82",
+  "mainAdvancedDuringTask": true,
+  "mainAdvancementNote": "origin/main advanced 68a868ccb→4765d65a6 (production-pulse + teo-mcp + delia docs). DAVI drawing assumptions revalidated; no EXECUTION_DRIFT on drawing routes/AuthZ/allowlist model."
+}

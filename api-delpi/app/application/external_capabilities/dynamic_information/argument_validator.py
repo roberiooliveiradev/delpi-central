@@ -97,6 +97,24 @@ def _argument_limits(constraints: Mapping[str, Any]) -> dict[str, Any]:
     return raw if isinstance(raw, dict) else {}
 
 
+def _require_arguments(constraints: Mapping[str, Any]) -> list[str]:
+    """Allowlist-governed extra required args (beyond OpenAPI required flags).
+
+    Generic governance only — never operationId-specific branching. Authors must
+    also list each name in approvedInputFields so the property exists.
+    """
+    raw = constraints.get("requireArguments") or []
+    if not isinstance(raw, list):
+        return []
+    out: list[str] = []
+    for item in raw:
+        if isinstance(item, str) and item.strip():
+            name = item.strip()
+            if name not in out:
+                out.append(name)
+    return out
+
+
 def _apply_argument_limits_to_schema(
     properties: dict[str, Any],
     constraints: Mapping[str, Any],
@@ -118,6 +136,18 @@ def _apply_argument_limits_to_schema(
                 prop[bound_key] = max(existing_i, governed) if existing_i is not None else governed
         if "default" in spec:
             prop["default"] = spec["default"]
+
+
+def _apply_require_arguments_to_schema(
+    properties: dict[str, Any],
+    required: list[str],
+    constraints: Mapping[str, Any],
+) -> None:
+    for name in _require_arguments(constraints):
+        if name not in properties:
+            continue
+        if name not in required:
+            required.append(name)
 
 
 def _constraint_today() -> date:
@@ -274,7 +304,9 @@ def build_argument_json_schema(action: TechnicalAction) -> dict[str, Any]:
         if param.get("required") and name not in required:
             required.append(name)
 
-    _apply_argument_limits_to_schema(properties, _argument_constraints(action))
+    constraints = _argument_constraints(action)
+    _apply_argument_limits_to_schema(properties, constraints)
+    _apply_require_arguments_to_schema(properties, required, constraints)
 
     return {
         "type": "object",

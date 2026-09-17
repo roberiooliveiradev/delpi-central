@@ -122,7 +122,7 @@ class _PayloadExecutor:
 def test_wave1_eligible_set_remains_and_wave2_added():
     eligible = sorted(a.operation_id for a in _actions() if a.executable)
     assert set(_CURRENT_SEVEN) | set(_WAVE1) <= set(eligible)
-    assert len(eligible) == 15
+    assert len(eligible) == 17
     allow = load_external_read_allowlist()
     blocked = {
         item.get("operationId")
@@ -184,7 +184,7 @@ def test_wave1_and_current_retrieval(query, expected, monkeypatch):
         lambda: "sec",
     )
     discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
-    assert discovered["eligible_action_count"] == 15, query
+    assert discovered["eligible_action_count"] == 17, query
     assert discovered["candidate_count"] >= 1, query
     assert discovered["candidates"][0]["action_id"] == expected, query
 

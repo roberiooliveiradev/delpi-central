@@ -122,12 +122,13 @@ class _PayloadExecutor:
         return CatalogActionExecutionResult(outcome="ok", payload=self.payload)
 
 
-def test_wave3a_eligible_count_exactly_fifteen():
+def test_wave3a_eligible_count_includes_wave3a_ops():
     eligible = sorted(a.operation_id for a in _actions() if a.executable)
-    assert len(eligible) == 15
-    assert set(eligible) == set(_CURRENT_THIRTEEN) | set(_WAVE3A)
+    assert len(eligible) == 17
+    assert set(_CURRENT_THIRTEEN) | set(_WAVE3A) <= set(eligible)
+    assert {"list_product_drawings", "get_product_drawing"} <= set(eligible)
     allow = load_external_read_allowlist()
-    assert allow.get("version") == 8
+    assert allow.get("version") == 9
     assert "get_product_raw_material_set_shortages" not in set(eligible)
     blocked = {
         item.get("operationId")
@@ -137,6 +138,8 @@ def test_wave3a_eligible_count_exactly_fifteen():
     assert "get_product_cost_impact_simulation" in blocked
     assert "get_product_guide" not in blocked
     assert "get_product_parents" not in blocked
+    assert "get_product_drawing_pdf" in blocked
+    assert "get_product_analyser" in blocked
 
 
 def test_wave3a_mcp_tools_remain_three():
@@ -184,7 +187,7 @@ def test_wave3a_and_current_thirteen_retrieval(query, expected, monkeypatch):
         lambda: "sec",
     )
     discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
-    assert discovered["eligible_action_count"] == 15, query
+    assert discovered["eligible_action_count"] == 17, query
     assert discovered["candidate_count"] >= 1, query
     assert discovered["candidates"][0]["action_id"] == expected, (
         query,

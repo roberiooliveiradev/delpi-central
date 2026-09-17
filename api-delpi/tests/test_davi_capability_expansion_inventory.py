@@ -46,6 +46,8 @@ _ELIGIBLE = {
     "get_product_last_purchase",
     "get_product_guide",
     "get_product_parents",
+    "list_product_drawings",
+    "get_product_drawing",
 }
 
 
@@ -61,12 +63,13 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def test_current_eligible_set_is_fifteen() -> None:
+def test_current_eligible_set_is_seventeen() -> None:
     actions = build_actions()
     eligible = {a.operation_id for a in actions if a.executable}
     assert len(actions) == 703
     assert sum(1 for a in actions if a.method == "GET") == 506
     assert eligible == _ELIGIBLE
+    assert len(eligible) == 17
 
 
 def test_mcp_tools_remain_three() -> None:
@@ -113,9 +116,9 @@ def test_inventory_covers_all_gets_and_freezes_wave1(tmp_path: Path) -> None:
         assert cap["projection_mode"] == "nested"
         assert cap["negative_authz_test_required"] == "YES"
 
-    assert doc["wave_1_freeze"]["current_eligible"] == 15
+    assert doc["wave_1_freeze"]["current_eligible"] == 17
     assert doc["wave_1_freeze"]["new_capabilities"] == 3
-    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 18
+    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 20
     assert doc["wave_1_freeze"]["expected_mcp_tools_after_implementation"] == 3
     assert doc["wave_1_freeze"]["agent_instruction_change"] == "NO"
 

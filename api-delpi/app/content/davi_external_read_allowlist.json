@@ -1,16 +1,16 @@
 {
-  "version": 8,
+  "version": 9,
   "description": "Governance allowlist for DAVI dynamic READ. DAVI has no independent AuthZ; backend is final authority. Entries define model-safe input/output projection and governed argument constraints only — not business permissions.",
   "authzPolicy": "DAVI-READ-AUTHZ-REBASELINE-001",
   "externalProcessing": "BACKEND_AUTHORIZED_INTERNAL_READ_ALLOWED_UNLESS_EXPLICITLY_PROHIBITED",
   "dataClassification": "MINIMIZATION_REQUIRED_TAXONOMY_OPTIONAL",
   "coverageDecision": {
-    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-003A",
-    "decision": "PROMOTE_PRODUCT_ENGINEERING_READ_WAVE_3A",
-    "reason": "Promote get_product_guide and get_product_parents as governed READ capabilities behind the existing three MCP broker tools. Eligible READ 13→15. Routing max_depth governed to 8; where-used max_depth governed to 4 (equals model-visible parents[] depth). get_product_raw_material_set_shortages remains DEFER (unbounded OP×MP×ledger). AuthZ policy unchanged (DAVI-READ-AUTHZ-REBASELINE-001). MCP tools remain 3. Agent Instructions unchanged.",
+    "taskId": "DAVI-PRODUCT-DRAWING-CAPABILITY-001",
+    "decision": "PROMOTE_PRODUCT_DRAWING_JSON_READ_FOUNDATION",
+    "reason": "Promote list_product_drawings and get_product_drawing as governed JSON READ capabilities (catalog + metadata). Eligible READ 15→17. Catalog requires product code (requireArguments) to avoid unbounded file-server scan via DAVI. get_product_drawing_pdf remains DEFER pending generic document transport (no PDF/base64 via execute_delpi_information). get_product_analyser not promoted for drawing analysis. AuthZ unchanged (API_DELPI_ACCESS). MCP tools remain 3. Agent Instructions unchanged.",
     "previousDecision": {
-      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-002",
-      "decision": "PROMOTE_PRODUCT_ECONOMIC_READ_WAVE_2"
+      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-003A",
+      "decision": "PROMOTE_PRODUCT_ENGINEERING_READ_WAVE_3A"
     }
   },
   "retrievalQuarantineTokens": [
@@ -55,6 +55,8 @@
       "registre",
       "salvar",
       "salve",
+      "gravar",
+      "grave",
       "cancelar",
       "cancele",
       "aprovar",
@@ -73,6 +75,14 @@
       "reserve",
       "reprogramar",
       "reprograme",
+      "liberar",
+      "libere",
+      "publicar",
+      "publique",
+      "substituir",
+      "substitua",
+      "renomear",
+      "renomeie",
       "apply",
       "delete",
       "edit",
@@ -84,7 +94,11 @@
       "change",
       "fix",
       "reserve",
-      "reschedule"
+      "reschedule",
+      "release",
+      "publish",
+      "replace",
+      "rename"
     ],
     "writeIntentPhrases": [
       "update the",
@@ -798,6 +812,93 @@
           }
         }
       }
+    },
+    {
+      "operationId": "list_product_drawings",
+      "reason": "Bounded product drawing catalog from file-server library via API DELPI; requireArguments=[code] prevents unrestricted library scan through DAVI; drop library_dir and drawing_*_path; API_DELPI_ACCESS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code",
+        "code_exact",
+        "revision",
+        "file_kind",
+        "has_variant",
+        "has_revision",
+        "page",
+        "page_size"
+      ],
+      "approvedResponseFields": [
+        "items[].product_code",
+        "items[].filename",
+        "items[].file_kind",
+        "items[].revision",
+        "items[].variant_suffix",
+        "items[].size_bytes",
+        "items[].modified_at",
+        "items[].media_type",
+        "summary.library_available",
+        "summary.scanned_files",
+        "summary.matched_files"
+      ],
+      "semanticAliases": [
+        "desenho do produto",
+        "desenho técnico",
+        "PDF do desenho",
+        "revisão do desenho",
+        "desenho no servidor",
+        "desenho do file server",
+        "listar desenhos do produto",
+        "arquivo de desenho",
+        "product drawing",
+        "technical drawing",
+        "drawing PDF",
+        "drawing revision",
+        "server drawing",
+        "product drawing file",
+        "list product drawings"
+      ],
+      "argumentConstraints": {
+        "requireArguments": [
+          "code"
+        ],
+        "argumentLimits": {
+          "page": {
+            "minimum": 1,
+            "default": 1
+          },
+          "page_size": {
+            "minimum": 1,
+            "maximum": 50,
+            "default": 50
+          }
+        }
+      }
+    },
+    {
+      "operationId": "get_product_drawing",
+      "reason": "Safe server-resolved drawing metadata for one product code; no filesystem path; selection algorithm is file-server resolver not proven engineering approval; API_DELPI_ACCESS",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code"
+      ],
+      "approvedResponseFields": [
+        "found",
+        "product_code",
+        "filename",
+        "revision",
+        "variant_suffix",
+        "size_bytes",
+        "modified_at",
+        "media_type"
+      ],
+      "semanticAliases": [
+        "metadados do desenho",
+        "metadata do desenho do produto",
+        "arquivo PDF do desenho",
+        "drawing metadata",
+        "product drawing metadata",
+        "server-resolved drawing"
+      ]
     }
   ],
   "explicitlyNotApproved": [
@@ -824,11 +925,29 @@
       "coverageDisposition": "DEFER_FROM_READ_WAVE",
       "primaryBlocker": "PREPARE",
       "reason": "Compute-only simulation is PREPARE, not READ. HTTP GET does not imply semantic READ. Not executable through the READ broker."
+    },
+    {
+      "operationId": "get_product_drawing_pdf",
+      "coverageDisposition": "DEFER",
+      "primaryBlocker": "NEEDS_GENERIC_DOCUMENT_BOUNDARY",
+      "reason": "Binary PDF document transport is not a JSON READ projection. Must not embed pdf_base64 in execute_delpi_information. Requires generic authorized document boundary (ARCHITECTURE_ESCALATION if new MCP tool/resource). AuthZ remains API_DELPI_ACCESS on the HTTP route."
+    },
+    {
+      "operationId": "get_product_analyser",
+      "coverageDisposition": "NOT_REQUIRED",
+      "primaryBlocker": "PRODUCT_ANALYSER_DIRECT_PROMOTION_NOT_REQUIRED",
+      "reason": "ProductAnalyserUseCase composes product/structure/guide/inspection JSON — it does not perform visual drawing analysis. Drawing analysis must reuse AI API workflow procedure + governed individual READs + document transport, not promote this composite."
+    },
+    {
+      "operationId": "get_product_inspection",
+      "coverageDisposition": "DEFER",
+      "primaryBlocker": "DEFER",
+      "reason": "Drawing analysis inspection cross-check deferred (DRAWING_ANALYSIS_INSPECTION_CROSSCHECK=DEFERRED). Not required for JSON drawing catalog/metadata foundation."
     }
   ],
   "hardening": {
-    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-003A",
-    "note": "No AuthZ policy change. Eligible READ set 13→15 via allowlist metadata (get_product_guide, get_product_parents). MCP tools remain 3. Backend AuthZ unchanged. Routing max_depth default/max=8 with page/page_size defaults to prevent full dump. Where-used max_depth default/max=4 equals model-visible parents[] depth (requested depth <= model-visible depth). get_product_raw_material_set_shortages remains DEFER (not allowlisted). Wave 2 economic quarantine tokens preserved."
+    "taskId": "DAVI-PRODUCT-DRAWING-CAPABILITY-001",
+    "note": "No AuthZ policy change. Eligible READ set 15→17 via allowlist metadata (list_product_drawings, get_product_drawing). Catalog requireArguments=[code] blocks unbounded library listing through DAVI. Model-visible projection drops summary.library_dir and drawing_*_path. get_product_drawing_pdf DEFER (document transport). get_product_analyser NOT_REQUIRED for drawing. MCP tools remain 3. Agent Instructions unchanged. Wave 3A guide/parents + Wave 2 economic quarantine tokens preserved."
   },
   "supersededBlockers": {
     "taskId": "DAVI-READ-AUTHZ-REBASELINE-001",
