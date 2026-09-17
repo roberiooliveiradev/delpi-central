@@ -242,6 +242,8 @@ After Wave Drawing JSON foundation (source `DAVI-PRODUCT-DRAWING-CAPABILITY-001`
 
 Document transport inventory (`DAVI-GENERIC-DOCUMENT-TRANSPORT-INVENTORY-001`): **OUTCOME F / PREFERRED_PATTERN=NOT_FROZEN** — MCP spec+SDK support binary resources, but ChatGPT remote-MCP `application/pdf` model visibility under end-user OAuth is **TO_INVENTORY**; no runtime change; implementation **not** authorized. Evidence: `api-delpi/docs/integrations/evidence/davi-generic-document-transport-inventory-001.md`.
 
+Provider spike harness (`DAVI-DOCUMENT-TRANSPORT-PROVIDER-SPIKE-001`): local MCP resource/link/embedded proofs **PASS** behind `DAVI_DOCUMENT_TRANSPORT_SPIKE_ENABLED` (default OFF). **PROVIDER_LIVE_SPIKE=BLOCKED_NO_NONPROD_REMOTE** — no isolated remote MCP for ChatGPT LEVEL 5; OUTCOME remains **F**; `MODEL_PDF_VISIBILITY=NOT_PROVEN`. Evidence: `api-delpi/docs/integrations/evidence/davi-document-transport-provider-spike-001.md`.
+
 After Wave 3A (historical source): `DAVI_ELIGIBLE_READ` = 15 via allowlist v8 governed READ promotion (`product.routing.guide` → `get_product_guide` with max_depth≤8; `product.where_used` → `get_product_parents` with max_depth≤4 matching model-visible parents[] depth) plus the previous thirteen. Nested Abstraction Gate remains PASS. MCP tools remain **exactly 3**. Agent Instructions unchanged. `product.raw_material.set_shortages` remains DEFER (unbounded OP×MP×ledger) and is not executable. Deploy/live = `TEST_NOT_RUN`.
 
 Wave 2 (historical source): `DAVI_ELIGIBLE_READ` = 13 via allowlist v7 governed READ promotion (`product.commercial.pricing`, `product.purchase.price_history`, `product.purchase.last_valid` plus the previous ten). `product.cost.impact_simulation` remains PREPARE / `DEFER_FROM_READ_WAVE`.

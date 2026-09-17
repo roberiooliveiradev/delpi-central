@@ -1,0 +1,77 @@
+{
+  "taskId": "DAVI-DOCUMENT-TRANSPORT-PROVIDER-SPIKE-001",
+  "artifactClass": "EVIDENCE_NOT_RUNTIME_AUTHORITY",
+  "sourceHead": "70393ccefdbbcb5d9f0e677dd6b95baba3cee9ed",
+  "inventoryAncestor": "3193c398c9553e66e5bd7484cea6d0c8d7dc6495",
+  "providerTestDate": "2026-09-17",
+  "mcpSdkVersion": "1.30.0",
+  "productionToolCountBefore": 3,
+  "productionToolCountAfter": 3,
+  "productionResourceCountBefore": 0,
+  "productionResourceCountAfter": 0,
+  "nonprodEnvironment": "ABSENT",
+  "nonprodRemoteMcp": "ABSENT",
+  "spikeFlag": "DAVI_DOCUMENT_TRANSPORT_SPIKE_ENABLED",
+  "spikeFlagDefault": false,
+  "spikeModeEnv": "DAVI_DOCUMENT_TRANSPORT_SPIKE_MODE",
+  "patternsAttempted": {
+    "A_mcp_resource": {
+      "localProtocol": "PASS",
+      "remoteProvider": "TEST_NOT_RUN",
+      "modelText": "TEST_NOT_RUN",
+      "modelVisual": "TEST_NOT_RUN",
+      "result": "LOCAL_ONLY"
+    },
+    "B_resource_link": {
+      "localProtocol": "PASS",
+      "remoteProvider": "TEST_NOT_RUN",
+      "modelText": "TEST_NOT_RUN",
+      "modelVisual": "TEST_NOT_RUN",
+      "result": "LOCAL_ONLY"
+    },
+    "C_embedded_resource": {
+      "localProtocol": "PASS",
+      "remoteProvider": "TEST_NOT_RUN",
+      "modelText": "TEST_NOT_RUN",
+      "modelVisual": "TEST_NOT_RUN",
+      "result": "LOCAL_ONLY"
+    },
+    "D_experimental_tool": {
+      "used": true,
+      "gated": true,
+      "remoteProvider": "TEST_NOT_RUN",
+      "result": "LOCAL_ONLY"
+    }
+  },
+  "resourceDiscovery": "TEST_NOT_RUN",
+  "resourceRead": "LOCAL_PASS",
+  "providerAcceptance": "TEST_NOT_RUN",
+  "modelTextVisibility": "NOT_PROVEN",
+  "modelVisualVisibility": "NOT_PROVEN",
+  "probeLeakCheck": "PASS",
+  "oauthUserFlow": "TEST_NOT_RUN",
+  "serviceTokenUsed": false,
+  "preferredPatternCandidate": "NOT_FROZEN",
+  "selectedOutcome": "F",
+  "providerLiveSpike": "BLOCKED_NO_NONPROD_REMOTE",
+  "newMcpResourceRequired": "UNKNOWN",
+  "newToolRequired": "UNKNOWN",
+  "oauthChangeRequired": false,
+  "agentChangeRequired": false,
+  "implementationAuthorized": false,
+  "productionChanged": false,
+  "runtimeChanged": false,
+  "levels": {
+    "1_sdk_payload": "PASS",
+    "2_remote_mcp": "TEST_NOT_RUN",
+    "3_provider_acceptance": "TEST_NOT_RUN",
+    "4_model_receives_document": "TEST_NOT_RUN",
+    "5_hidden_content_extraction": "TEST_NOT_RUN"
+  },
+  "gaps": [
+    "No non-production remote MCP endpoint for ChatGPT OAuth connector testing",
+    "ChatGPT application/pdf model visibility via remote MCP still TO_INVENTORY",
+    "LEVEL 5 blind model test not executed"
+  ],
+  "verdict": "PASS_WITH_RESIDUAL"
+}

@@ -33,6 +33,10 @@ from app.application.external_capabilities.product_search_service import search_
 from app.composition.davi_dynamic_read_composer import execute_delpi_information_wired
 from app.composition.product_composer import build_search_products_use_case
 from app.interface.mcp.branding import DAVI_MCP_INSTRUCTIONS
+from app.interface.mcp.document_transport_spike import (
+    document_transport_spike_enabled,
+    register_document_transport_spike,
+)
 from app.interface.mcp.oauth_contract import (
     SEARCH_PRODUCTS_SECURITY_SCHEMES,
     mcp_www_authenticate_meta,
@@ -340,5 +344,12 @@ def create_mcp_server() -> FastMCP:
         except Exception as exc:
             log_error(f"mcp execute_delpi_information failed: {exc}")
             raise RuntimeError(EXTERNAL_INTERNAL_ERROR_MESSAGE) from exc
+
+    if document_transport_spike_enabled():
+        logger.warning(
+            "DAVI document transport spike ENABLED — experimental MCP surface active; "
+            "not a production document capability"
+        )
+        register_document_transport_spike(mcp)
 
     return mcp

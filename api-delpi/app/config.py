@@ -31,6 +31,15 @@ class Settings:
     # Compatibility fallback (when empty): JWT_SECRET — see content_loader.candidate_token_secret.
     # Never log either value. Deploy: set DAVI_CANDIDATE_HMAC_SECRET in private/operator env.
     DAVI_CANDIDATE_HMAC_SECRET: str = _get_env("DAVI_CANDIDATE_HMAC_SECRET", default="")
+    # Isolated provider spike for MCP document transport. Default OFF. Never enable in prod compose.
+    DAVI_DOCUMENT_TRANSPORT_SPIKE_ENABLED: bool = (
+        _get_env("DAVI_DOCUMENT_TRANSPORT_SPIKE_ENABLED", default="false").lower()
+        in ("true", "1", "yes", "on")
+    )
+    # Spike tool return mode when enabled: resource_link | embedded
+    DAVI_DOCUMENT_TRANSPORT_SPIKE_MODE: str = _get_env(
+        "DAVI_DOCUMENT_TRANSPORT_SPIKE_MODE", default="resource_link"
+    )
     API_ENV: str = _get_env("API_DELPI_ENV", default="development")
     LOG_LEVEL: str = _get_env("LOG_LEVEL", default="INFO")
 
