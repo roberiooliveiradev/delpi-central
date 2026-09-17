@@ -6,7 +6,6 @@ import {
   type FirmwareDriverCatalogItem,
 } from "../api/productionPulseApi";
 import {
-  PpActionButton,
   PpFirmwareArtifactField,
   PpFirmwareSourceField,
   PpFormActions,
@@ -18,6 +17,7 @@ import {
   PpStateBox,
   ppShellIcon,
 } from "../app/productionPulseUi";
+import { PpCancelButton, PpSaveButton } from "../components/form/FormActionButtons";
 import { ProductionPulsePagePath } from "../components/ProductionPulsePagePath";
 import type { ProductionPulsePermissionFlags } from "../constants/permissions";
 import {
@@ -323,23 +323,27 @@ export function FirmwareCreatePage({
 
       <div className="pp-form-footer">
         <PpFormActions>
-          <PpActionButton variant="ghost" onClick={goToHub} disabled={submitting}>
-            Cancelar
-          </PpActionButton>
-          <PpActionButton
+          <PpCancelButton
+            onClick={goToHub}
+            disabled={submitting}
+            hint={PP_HELP.firmwareCreate.cancel}
+          />
+          <PpSaveButton
             variant="ghost"
             disabled={submitting || !version.trim()}
+            busy={submitting}
+            label="Salvar rascunho"
+            hint={PP_HELP.firmwareCreate.saveDraft}
             onClick={() => void submitVersion(false)}
-          >
-            {submitting ? "Salvando…" : "Salvar rascunho"}
-          </PpActionButton>
-          <PpActionButton
-            variant="primary"
+          />
+          <PpSaveButton
             disabled={submitting || !version.trim() || !binFile}
+            busy={submitting}
+            label="Publicar"
+            busyLabel="Publicando…"
+            hint={PP_HELP.firmwareCreate.publish}
             onClick={() => void submitVersion(true)}
-          >
-            {submitting ? "Publicando…" : "Publicar"}
-          </PpActionButton>
+          />
         </PpFormActions>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { CalendarClock, FileCode } from "lucide-react";
 
 import type { FirmwareUpdateJob, FirmwareUpdateTarget } from "../../api/productionPulseApi";
 import { PpActionButton, PpOtaProgressBar } from "../../app/productionPulseUi";
+import { PpCancelButton } from "../form/FormActionButtons";
 import { PP_HELP } from "../../content/helpTooltips";
 import { formatRelativeTime } from "../../utils/deviceDisplay";
 import { resolveFirmwareChangeDirection } from "../../utils/firmwareVersionDirection";
@@ -103,9 +104,10 @@ export function OtaJobListItem({
           {PP_HELP.hub.jobDetails}
         </PpActionButton>
         {canCancel && onCancel ? (
-          <PpActionButton variant="ghost" onClick={onCancel}>
-            Cancelar
-          </PpActionButton>
+          <PpCancelButton
+            hint={PP_HELP.ota.cancelJob}
+            onClick={onCancel}
+          />
         ) : null}
       </div>
     </article>

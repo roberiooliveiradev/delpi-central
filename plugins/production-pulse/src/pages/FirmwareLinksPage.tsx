@@ -37,6 +37,7 @@ import {
   EntitySummaryPopover,
 } from "../components/EntityContextLayers";
 import { PermanentDeleteDialog } from "../components/PermanentDeleteDialog";
+import { PpCancelButton } from "../components/form/FormActionButtons";
 import { parseOpenFirmwareVersionAction } from "../utils/openFirmwareVersionAction";
 import {
   FirmwareDeviceLinkCanvas,
@@ -1931,9 +1932,7 @@ export function FirmwareLinksPage({
           onChange={setScheduledAt}
         />
         <div className="pp-inline-actions">
-          <PpActionButton variant="ghost" onClick={closeLayers}>
-            Cancelar
-          </PpActionButton>
+          <PpCancelButton onClick={closeLayers} />
           <PpActionButton
             disabled={!scheduledAt || !scheduleContext}
             onClick={() => {
@@ -1993,9 +1992,7 @@ export function FirmwareLinksPage({
           />
         ) : null}
         <div className="pp-inline-actions">
-          <PpActionButton variant="ghost" onClick={() => setVersionSwitch(null)}>
-            Cancelar
-          </PpActionButton>
+          <PpCancelButton onClick={() => setVersionSwitch(null)} />
         </div>
       </PpHostContainedDialog>
 

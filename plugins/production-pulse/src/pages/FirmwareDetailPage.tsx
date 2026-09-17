@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Code2, FileCode, Package } from "lucide-react";
+import { Archive, Code2, FileCode, Map, Package, Pencil, Trash2, Upload, X } from "lucide-react";
 
 import {
   archiveFirmware,
@@ -17,7 +17,6 @@ import {
   PpActionButton,
   PpFirmwareArtifactField,
   PpFirmwareSourceField,
-  PpHintAction,
   PpHostContainedDialog,
   PpNativeSelectField,
   PpNativeTextAreaField,
@@ -26,6 +25,8 @@ import {
   PpStateBox,
   ppShellIcon,
 } from "../app/productionPulseUi";
+import { PpCancelButton, PpSaveButton } from "../components/form/FormActionButtons";
+import { PpHeroIconButton } from "../components/form/HeroIconButton";
 import { DetailFactList } from "../components/detail/DetailFactList";
 import { DetailLightCard } from "../components/detail/DetailLightCard";
 import { PermanentDeleteDialog } from "../components/PermanentDeleteDialog";
@@ -284,77 +285,70 @@ export function FirmwareDetailPage({
         {firmwareLifecycleLabel(item.lifecycle)}
       </span>
       {canEditMeta ? (
-        <PpHintAction hint={PP_HELP.ota.editMetadata} ariaLabel="Ajuda: Editar metadados">
-          <PpActionButton
-            variant="ghost"
-            className="pp-hero-brand-btn"
-            onClick={() => setEditMetaOpen(true)}
-          >
-            Editar metadados
-          </PpActionButton>
-        </PpHintAction>
+        <PpHeroIconButton
+          hint={PP_HELP.ota.editMetadata}
+          ariaLabel="Editar metadados"
+          onClick={() => setEditMetaOpen(true)}
+        >
+          <Pencil size={16} aria-hidden />
+        </PpHeroIconButton>
       ) : null}
       {canPublish ? (
-        <PpHintAction hint={PP_HELP.ota.publishVersion} ariaLabel="Ajuda: Publicar">
-          <PpActionButton
-            className="pp-hero-brand-btn"
-            onClick={() => setPublishOpen(true)}
-            disabled={busy}
-          >
-            Publicar versão
-          </PpActionButton>
-        </PpHintAction>
+        <PpHeroIconButton
+          hint={PP_HELP.ota.publishVersion}
+          ariaLabel="Publicar versão"
+          disabled={busy}
+          onClick={() => setPublishOpen(true)}
+        >
+          <Upload size={16} aria-hidden />
+        </PpHeroIconButton>
       ) : null}
       {canArchive ? (
-        <PpHintAction hint={PP_HELP.ota.archiveFirmware} ariaLabel="Ajuda: Arquivar">
-          <PpActionButton
-            variant="ghost"
-            className="pp-hero-brand-btn"
-            onClick={() => setArchiveOpen(true)}
-            disabled={busy}
-          >
-            Arquivar
-          </PpActionButton>
-        </PpHintAction>
+        <PpHeroIconButton
+          hint={PP_HELP.ota.archiveFirmware}
+          ariaLabel="Arquivar"
+          disabled={busy}
+          onClick={() => setArchiveOpen(true)}
+        >
+          <Archive size={16} aria-hidden />
+        </PpHeroIconButton>
       ) : null}
       {canManage ? (
-        <PpHintAction
+        <PpHeroIconButton
           hint={PP_HELP.hub.menuPermanentDeleteFirmware}
-          ariaLabel="Ajuda: Excluir permanentemente"
+          ariaLabel="Excluir permanentemente"
+          tone="danger"
+          disabled={busy}
+          onClick={() => void openLocalPermanentDelete()}
         >
-          <PpActionButton
-            variant="ghost"
-            className="pp-hero-brand-btn"
-            disabled={busy}
-            onClick={() => void openLocalPermanentDelete()}
-          >
-            Excluir permanentemente…
-          </PpActionButton>
-        </PpHintAction>
+          <Trash2 size={16} aria-hidden />
+        </PpHeroIconButton>
       ) : null}
       {!embedded ? (
-        <PpHintAction hint={PP_HELP.otaLinks.afterPublish} ariaLabel="Ajuda: Admin mapa">
-          <PpActionButton
-            variant="ghost"
-            className="pp-hero-brand-btn"
-            onClick={() => {
-              if (onDone) {
-                onDone();
-                return;
-              }
-              navigateProductionPulse(
-                productionPulseFirmwareLinksPath({ firmwareKey: item.firmwareKey, branch: "01" }),
-              );
-            }}
-          >
-            Voltar ao mapa
-          </PpActionButton>
-        </PpHintAction>
+        <PpHeroIconButton
+          hint={PP_HELP.otaLinks.afterPublish}
+          ariaLabel="Voltar ao mapa"
+          onClick={() => {
+            if (onDone) {
+              onDone();
+              return;
+            }
+            navigateProductionPulse(
+              productionPulseFirmwareLinksPath({ firmwareKey: item.firmwareKey, branch: "01" }),
+            );
+          }}
+        >
+          <Map size={16} aria-hidden />
+        </PpHeroIconButton>
       ) : null}
       {embedded && onCancel ? (
-        <PpActionButton variant="ghost" className="pp-hero-brand-btn" onClick={onCancel}>
-          Fechar
-        </PpActionButton>
+        <PpHeroIconButton
+          hint={PP_HELP.detail.closeDetail}
+          ariaLabel="Fechar"
+          onClick={onCancel}
+        >
+          <X size={16} aria-hidden />
+        </PpHeroIconButton>
       ) : null}
     </div>
   ) : null;
@@ -467,9 +461,12 @@ export function FirmwareDetailPage({
                 rows={16}
                 onReadError={() => setActionError(PP_HELP.ota.sourceFileReadFailed)}
               />
-              <PpActionButton onClick={() => void saveSource()} disabled={busy}>
-                {busy ? "Salvando…" : "Salvar sketch"}
-              </PpActionButton>
+              <PpSaveButton
+                variant="default"
+                label="Salvar sketch"
+                busy={busy}
+                onClick={() => void saveSource()}
+              />
             </div>
           ) : item.hasSource && item.sourceText ? (
             <pre className="pp-firmware-source" tabIndex={0}>
@@ -541,12 +538,12 @@ export function FirmwareDetailPage({
             span
           />
           <div className="pp-inline-actions">
-            <PpActionButton variant="ghost" onClick={() => setEditMetaOpen(false)} disabled={busy}>
-              Cancelar
-            </PpActionButton>
-            <PpActionButton onClick={() => void confirmEditMeta()} disabled={busy}>
-              {busy ? "Salvando…" : "Salvar"}
-            </PpActionButton>
+            <PpCancelButton onClick={() => setEditMetaOpen(false)} disabled={busy} />
+            <PpSaveButton
+              variant="default"
+              busy={busy}
+              onClick={() => void confirmEditMeta()}
+            />
           </div>
         </div>
       </PpHostContainedDialog>
@@ -554,21 +551,22 @@ export function FirmwareDetailPage({
       <PpHostContainedDialog open={publishOpen} title={PP_HELP.ota.publishConfirmTitle} onClose={() => setPublishOpen(false)}>
         <p>{PP_HELP.ota.publishConfirmBody}</p>
         <div className="pp-inline-actions">
-          <PpActionButton variant="ghost" onClick={() => setPublishOpen(false)} disabled={busy}>
-            Cancelar
-          </PpActionButton>
-          <PpActionButton onClick={() => void confirmPublish()} disabled={busy}>
-            {busy ? "Publicando…" : "Publicar"}
-          </PpActionButton>
+          <PpCancelButton onClick={() => setPublishOpen(false)} disabled={busy} />
+          <PpSaveButton
+            variant="default"
+            label="Publicar"
+            busyLabel="Publicando…"
+            busy={busy}
+            hint={PP_HELP.ota.publishVersion}
+            onClick={() => void confirmPublish()}
+          />
         </div>
       </PpHostContainedDialog>
 
       <PpHostContainedDialog open={archiveOpen} title={PP_HELP.ota.archiveConfirmTitle} onClose={() => setArchiveOpen(false)}>
         <p>{PP_HELP.ota.archiveConfirmBody}</p>
         <div className="pp-inline-actions">
-          <PpActionButton variant="ghost" onClick={() => setArchiveOpen(false)} disabled={busy}>
-            Cancelar
-          </PpActionButton>
+          <PpCancelButton onClick={() => setArchiveOpen(false)} disabled={busy} />
           <PpActionButton onClick={() => void confirmArchive()} disabled={busy}>
             {busy ? "Arquivando…" : "Arquivar"}
           </PpActionButton>

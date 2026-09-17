@@ -12,6 +12,7 @@ import {
   PpNativeTextField,
   PpStateBox,
 } from "../app/productionPulseUi";
+import { PpCancelButton, PpSaveButton } from "./form/FormActionButtons";
 import type { DeviceListItem } from "../types/device";
 import type { AdminEntityRef } from "../utils/adminHubUiState";
 import { AdminSidePanel } from "./AdminSidePanel";
@@ -168,12 +169,13 @@ export function RenameDeviceDialog({
       <PpNativeTextField id="rename-iot" label="Nome" value={name} onChange={setName} />
       {error ? <PpStateBox variant="error" title="Erro" message={error} /> : null}
       <div className="pp-inline-actions">
-        <PpActionButton variant="ghost" onClick={onClose}>
-          Cancelar
-        </PpActionButton>
-        <PpActionButton disabled={busy || !name.trim()} onClick={() => void save()}>
-          Salvar
-        </PpActionButton>
+        <PpCancelButton onClick={onClose} />
+        <PpSaveButton
+          variant="default"
+          disabled={busy || !name.trim()}
+          busy={busy}
+          onClick={() => void save()}
+        />
       </div>
     </PpHostContainedDialog>
   );

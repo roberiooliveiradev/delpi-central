@@ -7,6 +7,7 @@ import {
   PpHostContainedDialog,
   PpNativeTextField,
 } from "../app/productionPulseUi";
+import { PpCancelButton } from "./form/FormActionButtons";
 import { PP_HELP } from "../content/helpTooltips";
 
 export type PermanentDeleteDialogProps = {
@@ -209,9 +210,7 @@ export function PermanentDeleteDialog({
         )}
 
         <div className="pp-inline-actions">
-          <PpActionButton variant="ghost" onClick={onCancel} disabled={confirmBusy}>
-            Cancelar
-          </PpActionButton>
+          <PpCancelButton onClick={onCancel} disabled={confirmBusy} />
           {canDelete ? (
             <PpActionButton
               className="pp-permanent-delete__confirm"

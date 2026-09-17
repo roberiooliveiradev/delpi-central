@@ -8,11 +8,11 @@ import {
   type HardwareAssignment,
 } from "../../api/productionPulseApi";
 import {
-  PpActionButton,
   PpNativeSelectField,
   PpNativeTextAreaField,
   PpStateBox,
 } from "../../app/productionPulseUi";
+import { PpSaveButton } from "../form/FormActionButtons";
 import { PP_HELP } from "../../content/helpTooltips";
 import { formatDateTime } from "../../utils/detailDisplay";
 import { resolveProductionPulseError } from "../../utils/apiErrors";
@@ -172,9 +172,12 @@ function AssignmentMetaForm({
       />
       {error ? <PpStateBox variant="error" title="Não foi possível salvar" message={error} /> : null}
       <div className="pp-hardware-meta-form__actions">
-        <PpActionButton onClick={() => void handleSave()} disabled={saving}>
-          {saving ? "Salvando…" : "Salvar motivo"}
-        </PpActionButton>
+        <PpSaveButton
+          variant="default"
+          label="Salvar motivo"
+          busy={saving}
+          onClick={() => void handleSave()}
+        />
       </div>
     </div>
   );

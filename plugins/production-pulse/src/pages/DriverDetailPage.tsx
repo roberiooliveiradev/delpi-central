@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Activity, CircuitBoard, Terminal } from "lucide-react";
+import { Activity, Archive, CircuitBoard, Pencil, RotateCcw, Terminal, Trash2, X } from "lucide-react";
 
 import {
   archiveDriver,
@@ -8,12 +8,11 @@ import {
   type DriverListItem,
 } from "../api/productionPulseApi";
 import {
-  PpActionButton,
-  PpHintAction,
   PpPageHero,
   PpStateBox,
   ppShellIcon,
 } from "../app/productionPulseUi";
+import { PpHeroIconButton } from "../components/form/HeroIconButton";
 import { DetailCommandChips } from "../components/detail/DetailCommandChips";
 import { DetailFactList } from "../components/detail/DetailFactList";
 import { DetailLightCard } from "../components/detail/DetailLightCard";
@@ -149,59 +148,55 @@ export function DriverDetailPage({
     <div className="pp-detail-hero-actions">
       {statusBadge}
       {canManage && !isArchived ? (
-        <PpActionButton
-          variant="ghost"
-          className="pp-hero-brand-btn"
+        <PpHeroIconButton
+          hint={PP_HELP.drivers.editMetadata}
+          ariaLabel="Editar metadados"
           onClick={() => setEditing(true)}
         >
-          Editar metadados
-        </PpActionButton>
+          <Pencil size={16} aria-hidden />
+        </PpHeroIconButton>
       ) : null}
       {canManage && isArchived ? (
-        <PpHintAction hint={PP_HELP.drivers.unarchive} ariaLabel="Ajuda: Reativar">
-          <PpActionButton
-            variant="ghost"
-            className="pp-hero-brand-btn"
-            disabled={busy}
-            onClick={() => void handleUnarchive()}
-          >
-            Reativar
-          </PpActionButton>
-        </PpHintAction>
+        <PpHeroIconButton
+          hint={PP_HELP.drivers.unarchive}
+          ariaLabel="Reativar"
+          disabled={busy}
+          onClick={() => void handleUnarchive()}
+        >
+          <RotateCcw size={16} aria-hidden />
+        </PpHeroIconButton>
       ) : null}
       {canManage && !isArchived ? (
-        <PpHintAction hint={PP_HELP.drivers.archive} ariaLabel="Ajuda: Arquivar">
-          <PpActionButton
-            variant="ghost"
-            className="pp-hero-brand-btn"
-            disabled={busy}
-            onClick={handleArchive}
-          >
-            Arquivar
-          </PpActionButton>
-        </PpHintAction>
+        <PpHeroIconButton
+          hint={PP_HELP.drivers.archive}
+          ariaLabel="Arquivar"
+          disabled={busy}
+          onClick={handleArchive}
+        >
+          <Archive size={16} aria-hidden />
+        </PpHeroIconButton>
       ) : null}
       {canManage && onRequestPermanentDelete ? (
-        <PpHintAction
+        <PpHeroIconButton
           hint={PP_HELP.hub.menuPermanentDeleteDriver}
-          ariaLabel="Ajuda: Excluir permanentemente"
+          ariaLabel="Excluir permanentemente"
+          tone="danger"
+          disabled={busy}
+          onClick={() =>
+            onRequestPermanentDelete(item.key, item.labelPt || item.key)
+          }
         >
-          <PpActionButton
-            variant="ghost"
-            className="pp-hero-brand-btn"
-            disabled={busy}
-            onClick={() =>
-              onRequestPermanentDelete(item.key, item.labelPt || item.key)
-            }
-          >
-            Excluir permanentemente…
-          </PpActionButton>
-        </PpHintAction>
+          <Trash2 size={16} aria-hidden />
+        </PpHeroIconButton>
       ) : null}
       {embedded ? (
-        <PpActionButton variant="ghost" className="pp-hero-brand-btn" onClick={goBack}>
-          Fechar
-        </PpActionButton>
+        <PpHeroIconButton
+          hint={PP_HELP.detail.closeDetail}
+          ariaLabel="Fechar"
+          onClick={goBack}
+        >
+          <X size={16} aria-hidden />
+        </PpHeroIconButton>
       ) : null}
     </div>
   ) : null;

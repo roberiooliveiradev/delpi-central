@@ -148,15 +148,16 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("pages/FirmwareDetailPage.tsx")).toMatch(/embedded/);
     expect(readRelative("pages/FirmwareDetailPage.tsx")).toMatch(/PpPageHero/);
     expect(readRelative("pages/FirmwareDetailPage.tsx")).toMatch(/pp-detail-hero-actions/);
-    expect(readRelative("pages/FirmwareDetailPage.tsx")).toMatch(/pp-hero-brand-btn/);
+    expect(readRelative("pages/FirmwareDetailPage.tsx")).toMatch(/PpHeroIconButton/);
     expect(readRelative("pages/FirmwareDetailPage.tsx")).toMatch(/DetailLightCard/);
     expect(readRelative("pages/FirmwareDetailPage.tsx")).not.toMatch(/pp-embedded-fw-actions/);
     expect(readRelative("pages/DriverDetailPage.tsx")).toMatch(/PpPageHero/);
     expect(readRelative("pages/DriverDetailPage.tsx")).toMatch(/pp-detail-hero-actions/);
-    expect(readRelative("pages/DriverDetailPage.tsx")).toMatch(/pp-hero-brand-btn/);
+    expect(readRelative("pages/DriverDetailPage.tsx")).toMatch(/PpHeroIconButton/);
     expect(readRelative("pages/DriverDetailPage.tsx")).toMatch(/DetailLightCard/);
     expect(readRelative("pages/DriverDetailPage.tsx")).toMatch(/DetailCommandChips/);
     expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/pp-detail-hero-actions/);
+    expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/PpHeroIconButton/);
     expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/liveConnectivityIssue/);
     expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/DetailStatusBanner/);
     expect(readRelative("hooks/useDeviceDetail.ts")).toMatch(/liveConnectivityIssue/);
@@ -437,18 +438,21 @@ describe("production-pulse kit contracts", () => {
     expect(canvas).toMatch(/<ReactFlow/);
   });
 
-  it("botões do hero usam PpHintAction + PP_HELP (sem ação órfã)", () => {
-    const heroPages = [
-      "pages/PanelPage.tsx",
-      "pages/FirmwareLinksPage.tsx",
+  it("botões do hero usam PpHintAction/PpHeroIconButton + PP_HELP (sem ação órfã)", () => {
+    const heroWithHintAction = ["pages/PanelPage.tsx", "pages/FirmwareLinksPage.tsx"];
+    const heroWithIconButton = [
       "pages/FirmwareDetailPage.tsx",
       "pages/DeviceDetailPage.tsx",
+      "pages/DriverDetailPage.tsx",
       "components/operator/OperatorBrandBar.tsx",
+    ];
+    const heroViaChangePlacement = [
       "components/operator/CounterPadSurface.tsx",
       "components/operator/GaugeReadoutSurface.tsx",
       "pages/operator/OperatorDevicePicker.tsx",
     ];
-    for (const rel of heroPages) {
+
+    for (const rel of heroWithHintAction) {
       const source = readRelative(rel);
       expect(source, rel).toMatch(/PpHintAction/);
       expect(source, rel).toMatch(/hint=\{PP_HELP\./);
@@ -459,19 +463,63 @@ describe("production-pulse kit contracts", () => {
         expect(block, rel).not.toMatch(/\btitle=\{/);
       }
     }
+
+    for (const rel of heroWithIconButton) {
+      const source = readRelative(rel);
+      expect(source, rel).toMatch(/PpHeroIconButton/);
+      expect(source, rel).toMatch(/hint=\{PP_HELP\./);
+      const iconBlocks = source.match(/<PpHeroIconButton\b[\s\S]*?<\/PpHeroIconButton>/g) ?? [];
+      expect(iconBlocks.length, rel).toBeGreaterThan(0);
+      for (const block of iconBlocks) {
+        expect(block, rel).not.toMatch(/\btitle=\{/);
+      }
+    }
+
+    for (const rel of heroViaChangePlacement) {
+      expect(readRelative(rel), rel).toMatch(/OperatorChangePlacementButton/);
+    }
+
+    const heroBtn = readRelative("components/form/HeroIconButton.tsx");
+    expect(heroBtn).toMatch(/PpHintAction/);
+    expect(heroBtn).not.toMatch(/\btitle=\{/);
+
     expect(readRelative("content/helpTooltips.ts")).toMatch(/openLinks:/);
     expect(readRelative("content/helpTooltips.ts")).toMatch(/editDevice:/);
+    expect(readRelative("content/helpTooltips.ts")).toMatch(/editMetadata:/);
+    expect(readRelative("content/helpTooltips.ts")).toMatch(/closeDetail:/);
     expect(readRelative("app/productionPulseUi.tsx")).toMatch(/PpHintAction = HintAction/);
   });
 
   it("botões do hero usam classe de domínio pp-hero-brand-btn com tokens de marca", () => {
     const css = readRelative("index.css");
-    const detail = readRelative("pages/DeviceDetailPage.tsx");
+    const heroBtn = readRelative("components/form/HeroIconButton.tsx");
     expect(css).toMatch(
       /\.pp-hero-brand-btn[\s\S]*--pp-hero-brand-btn-border[\s\S]*--pp-hero-brand-fg[\s\S]*--pp-hero-brand-btn-bg/,
     );
-    expect(detail).toMatch(/pp-hero-brand-btn/);
+    expect(css).toMatch(/\.pp-hero-icon-btn/);
+    expect(heroBtn).toMatch(/pp-hero-brand-btn/);
+    expect(heroBtn).toMatch(/pp-hero-icon-btn/);
+    expect(heroBtn).toMatch(/PpHintAction/);
+    expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/PpHeroIconButton/);
     expect(css).not.toMatch(/\.delpi-ui-/);
+  });
+
+  it("heroes do operador usam ícone + help (Trocar posto / Painel admin)", () => {
+    const brandBar = readRelative("components/operator/OperatorBrandBar.tsx");
+    expect(brandBar).toMatch(/PpHeroIconButton/);
+    expect(brandBar).toMatch(/OperatorChangePlacementButton/);
+    expect(brandBar).toMatch(/LayoutDashboard/);
+    expect(brandBar).toMatch(/MapPinned/);
+    expect(brandBar).not.toMatch(/Painel admin<\/PpActionButton>/);
+    expect(readRelative("pages/operator/OperatorDevicePicker.tsx")).toMatch(
+      /OperatorChangePlacementButton/,
+    );
+    expect(readRelative("components/operator/CounterPadSurface.tsx")).toMatch(
+      /OperatorChangePlacementButton/,
+    );
+    expect(readRelative("components/operator/GaugeReadoutSurface.tsx")).toMatch(
+      /OperatorChangePlacementButton/,
+    );
   });
 
   it("FilterInputField declara type explícito no painel", () => {

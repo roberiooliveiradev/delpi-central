@@ -234,6 +234,7 @@ export const PP_HELP = {
     pollNowAction: "Atualizar agora",
     pollNowLoading: "Atualizando…",
     editDevice: "Abre o formulário para alterar IP, driver, Wi‑Fi, token e amarração.",
+    closeDetail: "Fecha este detalhe e volta à lista ou ao mapa.",
     resetCounter:
       "Zera o contador no ESP. Use com cuidado — ação registrada em auditoria.",
     factoryReset:
@@ -298,6 +299,7 @@ export const PP_HELP = {
       "A versão deixa de ser elegível para novos disparos OTA. O histórico e jobs antigos permanecem.",
     cancelConfirmTitle: "Cancelar esta atualização OTA?",
     cancelConfirmBody: "Targets ainda não concluídos deixam de baixar o artefato.",
+    cancelJob: "Interrompe a atualização OTA para targets ainda não concluídos.",
     jobsHero: "Dispare atualização agora ou agende. O ESP baixa quando autorizado.",
     jobCreate: "Escolha o firmware, o disparo (agora/agendar) e o escopo (filial ou device).",
     jobFirmware: "Versão publicada (não arquivada) que será enviada aos IoTs elegíveis.",
@@ -629,6 +631,7 @@ export const PP_HELP = {
     commands: "Selecione os comandos do protocolo ou digite separados por vírgula.",
     archive: "Arquiva o tipo de driver — some do catálogo ativo.",
     unarchive: "Reativa um tipo de driver arquivado no catálogo.",
+    editMetadata: "Edita rótulos, métricas, comandos e superfície do operador.",
     statusActive: "Ativo",
     statusArchived: "Arquivado",
     createSuccess: "Tipo de driver cadastrado.",

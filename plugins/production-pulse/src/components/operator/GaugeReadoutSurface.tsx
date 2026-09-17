@@ -1,9 +1,9 @@
 import { useState } from "react";
 
 import { fetchOperatorDevice } from "../../api/productionPulseApi";
-import { PpActionButton, PpHintAction } from "../../app/productionPulseUi";
+import { PpActionButton } from "../../app/productionPulseUi";
 import { DeviceStatusBadge } from "../DeviceStatusBadge";
-import { OperatorBrandBar } from "./OperatorBrandBar";
+import { OperatorBrandBar, OperatorChangePlacementButton } from "./OperatorBrandBar";
 import type { OperatorDeviceItem } from "../../types/operator";
 import { resolveDeviceActionMessage } from "../../utils/apiErrors";
 import { PP_HELP } from "../../content/helpTooltips";
@@ -67,17 +67,7 @@ export function GaugeReadoutSurface({
         branch={branch}
         title={resolveOperatorHeaderTitle(device, placementLabel)}
         subtitle={`${device.name} · ${formatRelativeTime(device.lastSeenAt)}`}
-        trailing={
-          <PpHintAction hint={PP_HELP.operator.changePlacement} ariaLabel="Ajuda: Trocar posto">
-            <PpActionButton
-              variant="ghost"
-              className="pp-operator-hero-btn"
-              onClick={goBack}
-            >
-              Trocar posto
-            </PpActionButton>
-          </PpHintAction>
-        }
+        trailing={<OperatorChangePlacementButton onClick={goBack} />}
       />
 
       {!device.online ? (

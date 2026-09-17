@@ -17,6 +17,7 @@ import {
   PpStateBox,
   ppShellIcon,
 } from "../app/productionPulseUi";
+import { PpCancelButton, PpSaveButton } from "../components/form/FormActionButtons";
 import { ProductionPulsePagePath } from "../components/ProductionPulsePagePath";
 import { DeviceBindingSection } from "../components/DeviceBindingSection";
 import { DeviceForm } from "../components/DeviceForm";
@@ -433,12 +434,8 @@ export function DeviceFormPage({
 
       <div className={`pp-form-footer${isCompact ? " pp-form-footer--sticky" : ""}`}>
         <PpFormActions>
-          <PpActionButton variant="ghost" onClick={goBack} disabled={saving}>
-            Cancelar
-          </PpActionButton>
-          <PpActionButton variant="primary" onClick={() => void onSave()} disabled={saving}>
-            {saving ? "Salvando…" : "Salvar"}
-          </PpActionButton>
+          <PpCancelButton onClick={goBack} disabled={saving} />
+          <PpSaveButton onClick={() => void onSave()} busy={saving} />
         </PpFormActions>
       </div>
     </div>

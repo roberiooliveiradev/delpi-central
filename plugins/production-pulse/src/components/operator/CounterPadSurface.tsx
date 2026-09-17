@@ -2,10 +2,10 @@ import { useState } from "react";
 import { Eraser, Minus, Plus } from "lucide-react";
 
 import { executeOperatorCommand, fetchOperatorDevice } from "../../api/productionPulseApi";
-import { PpActionButton, PpHintAction } from "../../app/productionPulseUi";
+import { PpActionButton } from "../../app/productionPulseUi";
 import { OperatorClearCounterModal } from "../modals/OperatorClearCounterModal";
 import { DeviceStatusBadge } from "../DeviceStatusBadge";
-import { OperatorBrandBar } from "./OperatorBrandBar";
+import { OperatorBrandBar, OperatorChangePlacementButton } from "./OperatorBrandBar";
 import type { OperatorDeviceItem } from "../../types/operator";
 import { PP_HELP } from "../../content/helpTooltips";
 import { useDeviceLiveRefresh } from "../../hooks/useDeviceLiveRefresh";
@@ -125,15 +125,9 @@ export function CounterPadSurface({
         title={resolveOperatorHeaderTitle(device, placementLabel)}
         subtitle={statusLine}
         trailing={
-          <PpHintAction hint={PP_HELP.operator.changePlacement} ariaLabel="Ajuda: Trocar posto">
-            <PpActionButton
-              variant="ghost"
-              className="pp-operator-hero-btn"
-              onClick={() => navigateOperatorPlacementHub(branch)}
-            >
-              Trocar posto
-            </PpActionButton>
-          </PpHintAction>
+          <OperatorChangePlacementButton
+            onClick={() => navigateOperatorPlacementHub(branch)}
+          />
         }
       />
 

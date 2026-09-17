@@ -207,6 +207,24 @@
   opacity: 1;
 }
 
+/* Hero icon-only actions: square chrome, same brand tokens */
+.dashboard-production-pulse .pp-page-hero__actions .pp-hero-icon-btn,
+.dashboard-production-pulse .pp-detail-hero-actions .pp-hero-icon-btn,
+.dashboard-production-pulse .pp-device-detail__hero-actions .pp-hero-icon-btn,
+.dashboard-production-pulse .pp-hero-icon-btn {
+  box-sizing: border-box;
+  width: var(--pp-operator-touch-min, 44px);
+  min-width: var(--pp-operator-touch-min, 44px);
+  height: var(--pp-operator-touch-min, 44px);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border-width: 1px;
+  border-style: solid;
+}
+
 .dashboard-production-pulse .pp-page-hero__actions .pp-hero-brand-btn:hover:not(:disabled),
 .dashboard-production-pulse .pp-hero-brand-btn:hover:not(:disabled),
 .dashboard-production-pulse .pp-operator-hero-btn:hover:not(:disabled),
@@ -891,10 +909,16 @@
     align-items: stretch;
   }
 
-  .pp-detail-hero-actions .pp-hero-brand-btn,
-  .pp-device-detail__hero-actions .pp-hero-brand-btn {
+  .pp-detail-hero-actions .pp-hero-brand-btn:not(.pp-hero-icon-btn),
+  .pp-device-detail__hero-actions .pp-hero-brand-btn:not(.pp-hero-icon-btn) {
     width: 100%;
     justify-content: center;
+  }
+
+  .pp-detail-hero-actions .pp-hero-icon-btn,
+  .pp-device-detail__hero-actions .pp-hero-icon-btn {
+    width: var(--pp-operator-touch-min, 44px);
+    min-width: var(--pp-operator-touch-min, 44px);
   }
 
   .pp-device-detail .pp-underline-nav {

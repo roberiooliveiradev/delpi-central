@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Pencil, PowerOff, RefreshCw, Trash2, X } from "lucide-react";
 
 import type { DeletionImpact, FirmwareUpdateTarget } from "../api/productionPulseApi";
 import {
@@ -8,7 +9,6 @@ import {
 } from "../api/productionPulseApi";
 import {
   PpActionButton,
-  PpHintAction,
   PpHostContainedDialog,
   PpPageHero,
   PpStateBox,
@@ -17,6 +17,8 @@ import {
 } from "../app/productionPulseUi";
 import { ProductionPulsePagePath } from "../components/ProductionPulsePagePath";
 import { PermanentDeleteDialog } from "../components/PermanentDeleteDialog";
+import { PpCancelButton } from "../components/form/FormActionButtons";
+import { PpHeroIconButton } from "../components/form/HeroIconButton";
 import { DeviceCommandsTab } from "../components/detail/DeviceCommandsTab";
 import { DeviceFirmwareTab } from "../components/detail/DeviceFirmwareTab";
 import { DeviceHardwareTab } from "../components/detail/DeviceHardwareTab";
@@ -280,54 +282,56 @@ export function DeviceDetailPage({
             <DeviceStatusBadge status={device.status} />
             {permissions.canManageDevices ? (
               <>
-                <PpHintAction hint={PP_HELP.detail.editDevice} ariaLabel="Ajuda: Editar">
-                  <PpActionButton
-                    variant="ghost"
-                    className="pp-hero-brand-btn"
-                    onClick={() => navigateProductionPulse(productionPulseDeviceEditPath(deviceId))}
-                  >
-                    Editar
-                  </PpActionButton>
-                </PpHintAction>
-                {device.enabled ? (
-                  <PpHintAction hint={PP_HELP.detail.deactivate} ariaLabel="Ajuda: Desativar">
-                    <PpActionButton
-                      variant="ghost"
-                      className="pp-hero-brand-btn"
-                      onClick={() => setDeactivateOpen(true)}
-                    >
-                      Desativar
-                    </PpActionButton>
-                  </PpHintAction>
-                ) : null}
-                <PpHintAction
-                  hint={PP_HELP.hub.menuPermanentDeleteDevice}
-                  ariaLabel="Ajuda: Excluir permanentemente"
+                <PpHeroIconButton
+                  hint={PP_HELP.detail.editDevice}
+                  ariaLabel="Editar"
+                  onClick={() =>
+                    navigateProductionPulse(productionPulseDeviceEditPath(deviceId))
+                  }
                 >
-                  <PpActionButton
-                    variant="ghost"
-                    className="pp-hero-brand-btn"
-                    onClick={() => void openLocalPermanentDelete()}
+                  <Pencil size={16} aria-hidden />
+                </PpHeroIconButton>
+                {device.enabled ? (
+                  <PpHeroIconButton
+                    hint={PP_HELP.detail.deactivate}
+                    ariaLabel="Desativar"
+                    onClick={() => setDeactivateOpen(true)}
                   >
-                    Excluir permanentemente…
-                  </PpActionButton>
-                </PpHintAction>
+                    <PowerOff size={16} aria-hidden />
+                  </PpHeroIconButton>
+                ) : null}
+                <PpHeroIconButton
+                  hint={PP_HELP.hub.menuPermanentDeleteDevice}
+                  ariaLabel="Excluir permanentemente"
+                  tone="danger"
+                  onClick={() => void openLocalPermanentDelete()}
+                >
+                  <Trash2 size={16} aria-hidden />
+                </PpHeroIconButton>
               </>
             ) : null}
-            <PpHintAction hint={PP_HELP.detail.pollNow} ariaLabel="Ajuda: Atualizar agora">
-              <PpActionButton
-                variant="ghost"
-                className="pp-hero-brand-btn"
-                onClick={() => void pollNow()}
-                disabled={refreshing}
-              >
-                {refreshing ? PP_HELP.detail.pollNowLoading : PP_HELP.detail.pollNowAction}
-              </PpActionButton>
-            </PpHintAction>
+            <PpHeroIconButton
+              hint={PP_HELP.detail.pollNow}
+              ariaLabel={
+                refreshing ? PP_HELP.detail.pollNowLoading : PP_HELP.detail.pollNowAction
+              }
+              disabled={refreshing}
+              onClick={() => void pollNow()}
+            >
+              <RefreshCw
+                size={16}
+                aria-hidden
+                className={refreshing ? "pp-spin" : undefined}
+              />
+            </PpHeroIconButton>
             {embedded && onClose ? (
-              <PpActionButton variant="ghost" className="pp-hero-brand-btn" onClick={onClose}>
-                Fechar
-              </PpActionButton>
+              <PpHeroIconButton
+                hint={PP_HELP.detail.closeDetail}
+                ariaLabel="Fechar"
+                onClick={onClose}
+              >
+                <X size={16} aria-hidden />
+              </PpHeroIconButton>
             ) : null}
           </div>
         }
@@ -429,9 +433,7 @@ export function DeviceDetailPage({
         <p>{PP_HELP.modals.deactivateBody}</p>
         {deactivateError ? <PpStateBox variant="error" title="Desativação" message={deactivateError} /> : null}
         <div className="pp-inline-actions">
-          <PpActionButton variant="ghost" onClick={() => setDeactivateOpen(false)} disabled={deactivateLoading}>
-            Cancelar
-          </PpActionButton>
+          <PpCancelButton onClick={() => setDeactivateOpen(false)} disabled={deactivateLoading} />
           <PpActionButton onClick={() => void handleDeactivate()} disabled={deactivateLoading}>
             {deactivateLoading ? "Desativando…" : "Desativar dispositivo"}
           </PpActionButton>

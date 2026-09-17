@@ -19,6 +19,7 @@ import {
   PpStateBox,
   ppShellIcon,
 } from "../app/productionPulseUi";
+import { PpCancelButton, PpSaveButton } from "../components/form/FormActionButtons";
 import { ProductionPulsePagePath } from "../components/ProductionPulsePagePath";
 import type { ProductionPulsePermissionFlags } from "../constants/permissions";
 import {
@@ -522,18 +523,15 @@ export function DriverFormPage({
 
       <div className="pp-form-footer">
         <PpFormActions>
-          <PpActionButton variant="ghost" onClick={goBack} disabled={submitting}>
-            Cancelar
-          </PpActionButton>
-          <PpActionButton
-            variant="primary"
+          <PpCancelButton onClick={goBack} disabled={submitting} />
+          <PpSaveButton
             disabled={
               submitting || !labelPt.trim() || (isCreate && !driverKey.trim())
             }
+            busy={submitting}
+            label={isCreate ? "Cadastrar" : "Salvar"}
             onClick={() => void submit()}
-          >
-            {submitting ? "Salvando…" : isCreate ? "Cadastrar" : "Salvar"}
-          </PpActionButton>
+          />
         </PpFormActions>
       </div>
     </div>
