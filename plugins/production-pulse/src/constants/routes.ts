@@ -33,6 +33,8 @@ export type AdminHubQuery = {
    * @deprecated Prefer `modal`. Still accepted on parse; builders should emit `modal`.
    */
   drawer?: string;
+  /** Device-detail tab when `modal=device-detail` (omit/overview = default). */
+  tab?: DeviceDetailTab;
 };
 
 export function parseDeviceDetailTab(value: string | null | undefined): DeviceDetailTab {
@@ -87,6 +89,8 @@ export type ProductionPulseRoute =
       modal?: string;
       /** @deprecated Prefer `modal`. Legacy query still parsed. */
       drawer?: string;
+      /** Device-detail tab when modal opens device detail. */
+      tab?: DeviceDetailTab;
     }
   | { kind: "operatorHub"; branch: string; anchorType: OperatorAnchorFilter; search: string }
   | { kind: "operatorPicker"; placementKey: string; branch: string }
@@ -132,6 +136,7 @@ export function parseProductionPulseRoute(pathname: string, search = ""): Produc
   }
 
   if (normalized === `${PRODUCTION_PULSE_BASE_PATH}/firmware-links`) {
+    const tabRaw = query.get("tab");
     return {
       kind: "firmwareLinks",
       branch: query.get("branch") ?? "01",
@@ -141,6 +146,10 @@ export function parseProductionPulseRoute(pathname: string, search = ""): Produc
       panel: query.get("panel") ?? undefined,
       modal: query.get("modal") ?? undefined,
       drawer: query.get("drawer") ?? undefined,
+      tab:
+        tabRaw != null && tabRaw !== ""
+          ? parseDeviceDetailTab(tabRaw)
+          : undefined,
     };
   }
 
@@ -261,6 +270,9 @@ export function productionPulseFirmwareLinksPath(opts?: AdminHubQuery): string {
   } else if (opts?.drawer?.trim()) {
     // Back-compat emit only when caller still passes drawer without modal.
     params.set("modal", opts.drawer.trim() === "firmware-edit" ? "firmware-detail" : opts.drawer.trim());
+  }
+  if (opts?.tab && opts.tab !== "overview") {
+    params.set("tab", opts.tab);
   }
   return `${PRODUCTION_PULSE_BASE_PATH}/firmware-links?${params}`;
 }

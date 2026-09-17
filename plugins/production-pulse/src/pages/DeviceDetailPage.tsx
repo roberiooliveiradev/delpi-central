@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pencil, PowerOff, RefreshCw, Trash2, X } from "lucide-react";
 
 import type { DeletionImpact, FirmwareUpdateTarget } from "../api/productionPulseApi";
@@ -76,6 +76,11 @@ export function DeviceDetailPage({
 }: DeviceDetailPageProps) {
   const [localTab, setLocalTab] = useState<DeviceDetailTab>(tabProp);
   const tab = embedded ? localTab : tabProp;
+
+  useEffect(() => {
+    if (!embedded) return;
+    setLocalTab(tabProp);
+  }, [embedded, tabProp, deviceId]);
 
   const [resetOpen, setResetOpen] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
@@ -378,6 +383,7 @@ export function DeviceDetailPage({
           onPollNow={() => void pollNow()}
           onReset={() => setResetOpen(true)}
           onFactoryReset={() => setFactoryOpen(true)}
+          onOpenHistory={() => setTab("history")}
         />
       ) : null}
 

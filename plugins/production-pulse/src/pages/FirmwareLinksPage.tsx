@@ -102,6 +102,7 @@ import { DriverFormPage } from "../pages/DriverFormPage";
 import { FirmwareCreatePage } from "../pages/FirmwareCreatePage";
 import { FirmwareDetailPage } from "../pages/FirmwareDetailPage";
 import type { DeviceListItem } from "../types/device";
+import type { DeviceDetailTab } from "../types/detail";
 import {
   formatAdminEntity,
   hubFocusToPanel,
@@ -156,6 +157,8 @@ type FirmwareLinksPageProps = {
   modalParam?: string;
   /** @deprecated Prefer `modalParam`. Legacy `drawer=` still resolved. */
   drawerParam?: string;
+  /** Initial device-detail tab from `tab=` (deep link / legacy redirect). */
+  detailTab?: DeviceDetailTab;
   permissions: ProductionPulsePermissionFlags;
 };
 
@@ -170,6 +173,7 @@ export function FirmwareLinksPage({
   panelParam,
   modalParam,
   drawerParam,
+  detailTab = "overview",
   permissions,
 }: FirmwareLinksPageProps) {
   const canManage = permissions.canManageDevices;
@@ -191,6 +195,8 @@ export function FirmwareLinksPage({
   const [targets, setTargets] = useState<FirmwareUpdateTarget[]>([]);
   const [detailJobId, setDetailJobId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [canvasHydrated, setCanvasHydrated] = useState(false);
+  const [canvasRefreshing, setCanvasRefreshing] = useState(false);
   const [jobsLoading, setJobsLoading] = useState(false);
   const [driversLoading, setDriversLoading] = useState(false);
   const [structuralError, setStructuralError] = useState<string | null>(null);
@@ -202,6 +208,7 @@ export function FirmwareLinksPage({
   const [canvasDragging, setCanvasDragging] = useState(false);
   const [otaRefreshSignal, setOtaRefreshSignal] = useState(0);
   const pendingSoftReloadRef = useRef(false);
+  const canvasHydratedRef = useRef(false);
   const { connected: realtimeConnected } = useProductionPulseRealtime();
   const [pendingReplaceLink, setPendingReplaceLink] = useState<{
     deviceId: string;
@@ -422,7 +429,12 @@ export function FirmwareLinksPage({
 
   const reloadGraph = useCallback(async () => {
     dispatch({ type: "graphReloading" });
-    setLoading(true);
+    const soft = canvasHydratedRef.current;
+    if (soft) {
+      setCanvasRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     setStructuralError(null);
     try {
       const [catalog, devs, summary] = await Promise.all([
@@ -433,12 +445,15 @@ export function FirmwareLinksPage({
       setFirmwares(catalog);
       setDevices(devs);
       setUpdateSummary(summary);
+      canvasHydratedRef.current = true;
+      setCanvasHydrated(true);
     } catch (err) {
       setStructuralError(
         err instanceof Error ? err.message : "Falha ao carregar o Admin.",
       );
     } finally {
       setLoading(false);
+      setCanvasRefreshing(false);
     }
   }, [branch, dispatch]);
 
@@ -1453,7 +1468,7 @@ export function FirmwareLinksPage({
         branch,
         branchOptions,
         onBranchChange: changeBranch,
-        refreshing: loading,
+        refreshing: loading || canvasRefreshing,
         onRefresh: () => {
           void reloadGraph();
           void reloadJobs({ soft: true });
@@ -1493,7 +1508,7 @@ export function FirmwareLinksPage({
         linkModeActive: Boolean(linkMode),
         awaitingCount: otaMonitor.awaitingCount,
         downloadingCount: otaMonitor.downloadingCount,
-        loading,
+        loading: loading || canvasRefreshing,
       }}
     />
   );
@@ -1587,8 +1602,15 @@ export function FirmwareLinksPage({
         </div>
       ) : null}
 
-      <div className="pp-admin-viewport">
-        {loading ? (
+      <div
+        className={[
+          "pp-admin-viewport",
+          canvasRefreshing ? "pp-admin-viewport--refreshing" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        {!canvasHydrated && loading ? (
           <PpStateBox variant="loading" title="Carregando mapa Admin…" />
         ) : (
           <FirmwareDeviceLinkCanvas
@@ -1888,7 +1910,7 @@ export function FirmwareLinksPage({
         {ui.selectedEntity?.type === "device" ? (
           <DeviceDetailPage
             deviceId={ui.selectedEntity.id}
-            tab="overview"
+            tab={detailTab}
             search={`?branch=${encodeURIComponent(branch)}`}
             permissions={permissions}
             embedded

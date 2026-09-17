@@ -87,9 +87,20 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("pages/FirmwareLinksPage.tsx")).not.toMatch(/productionPulseFirmwaresPath/);
   });
 
+  it("App monta ViewTransition com key estável por tela (Admin↔Operador)", () => {
+    const app = readRelative("App.tsx");
+    expect(app).toMatch(/PpViewTransition/);
+    expect(app).toMatch(/resolvePulseContentTransitionKey/);
+    expect(app).toMatch(/transitionKey=\{contentTransitionKey\}/);
+    expect(readRelative("app/productionPulseUi.tsx")).toMatch(
+      /createDashboardViewTransition/,
+    );
+    expect(readRelative("index.css")).toMatch(/\.pp-view-transition--page/);
+  });
+
   it("operador permanece fora do ProductionPulseShell (freeze)", () => {
     const app = readRelative("App.tsx");
-    expect(app).toMatch(/isOperatorRoute \? \(\s*adminContent\s*\)/);
+    expect(app).toMatch(/isOperatorRoute \? \(\s*transitionedContent\s*\)/);
     expect(readRelative("pages/operator/OperatorPage.tsx")).not.toMatch(/ProductionPulseShell/);
     expect(readRelative("pages/operator/OperatorPage.tsx")).not.toMatch(/PpTopBar/);
   });
@@ -865,6 +876,13 @@ describe("production-pulse kit contracts", () => {
     }
 
     expect(readRelative("components/detail/DeviceOverviewTab.tsx")).toMatch(/PpReadingsAreaChart/);
+    expect(readRelative("components/detail/DeviceOverviewTab.tsx")).toMatch(/onOpenHistory/);
+    expect(readRelative("components/detail/DeviceOverviewTab.tsx")).not.toMatch(
+      /productionPulseDeviceDetailPath/,
+    );
+    expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(
+      /onOpenHistory=\{\(\) => setTab\("history"\)\}/,
+    );
     expect(readRelative("components/detail/DeviceHistoryTab.tsx")).toMatch(/PpReadingsAreaChart/);
     expect(readRelative("components/detail/DeviceHistoryTab.tsx")).toMatch(/PpChartCard/);
     expect(readRelative("components/detail/DeviceHistoryTab.tsx")).toMatch(

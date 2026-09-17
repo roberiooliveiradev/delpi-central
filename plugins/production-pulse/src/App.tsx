@@ -13,9 +13,10 @@ import { ProductionPulseShell } from "./components/ProductionPulseShell";
 import { FirmwaresPage } from "./pages/FirmwaresPage";
 import { FirmwareLinksPage } from "./pages/FirmwareLinksPage";
 import { OperatorPage } from "./pages/operator/OperatorPage";
-import { PpPageHero, PpStateBox, ppShellIcon } from "./app/productionPulseUi";
+import { PpPageHero, PpStateBox, PpViewTransition, ppShellIcon } from "./app/productionPulseUi";
 import { navigateProductionPulse } from "./utils/navigation";
 import { formatAdminEntity } from "./utils/adminHubUiState";
+import { resolvePulseContentTransitionKey } from "./utils/resolvePulseContentTransitionKey";
 import { ProductionPulseRealtimeProvider } from "./realtime/ProductionPulseRealtimeProvider";
 
 export type AppProps = {
@@ -71,6 +72,7 @@ export default function App({
                   branch: "01",
                   entity: formatAdminEntity({ type: "device", id: route.deviceId }) ?? undefined,
                   modal: "device-detail",
+                  tab: route.tab,
                 })
               : route.kind === "firmwareNew"
                 ? productionPulseFirmwareLinksPath({
@@ -131,8 +133,9 @@ export default function App({
     route.kind === "operatorDevice";
   const isOperatorFillRoute = route.kind === "operatorDevice";
   const isAdminHub = route.kind === "firmwareLinks" || route.kind === "firmwares";
+  const contentTransitionKey = resolvePulseContentTransitionKey(route);
 
-  const adminContent =
+  const pageContent =
     route.kind === "firmwares" ? (
       <FirmwaresPage />
     ) : route.kind === "firmwareLinks" ? (
@@ -144,11 +147,18 @@ export default function App({
         panelParam={route.panel}
         drawerParam={route.drawer}
         modalParam={route.modal}
+        detailTab={route.tab}
         permissions={permissionFlags}
       />
     ) : isOperatorRoute ? (
       <OperatorPage route={route} permissions={permissionFlags} />
     ) : null;
+
+  const transitionedContent = (
+    <PpViewTransition transitionKey={contentTransitionKey} tone="page">
+      {pageContent}
+    </PpViewTransition>
+  );
 
   return (
     <ProductionPulseRealtimeProvider getAccessToken={getAccessToken} enabled>
@@ -165,14 +175,14 @@ export default function App({
         data-pp-viewport-short={shortViewport && isOperatorRoute ? "true" : undefined}
       >
         {isOperatorRoute ? (
-          adminContent
+          transitionedContent
         ) : (
           <ProductionPulseShell
             route={route}
             permissions={permissionFlags}
             fillContent={isAdminHub}
           >
-            {adminContent}
+            {transitionedContent}
           </ProductionPulseShell>
         )}
       </div>

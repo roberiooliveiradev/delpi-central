@@ -6,8 +6,6 @@ import type { LiveConnectivityIssue } from "../../hooks/useDeviceDetail";
 import type { DeviceListItem } from "../../types/device";
 import type { DeviceReading, LivePollResult } from "../../types/detail";
 import { PP_HELP } from "../../content/helpTooltips";
-import { productionPulseDeviceDetailPath } from "../../constants/routes";
-import { navigateProductionPulse } from "../../utils/navigation";
 import { isoHoursAgo, primaryMetricKey, readingsToChartPoints } from "../../utils/detailDisplay";
 import { DeviceBindingCard } from "./DeviceBindingCard";
 import { DeviceChipHealthCard } from "./DeviceChipHealthCard";
@@ -23,6 +21,8 @@ type DeviceOverviewTabProps = {
   onPollNow: () => void;
   onReset: () => void;
   onFactoryReset?: () => void;
+  /** Abre a aba Histórico no detalhe (embedded: local; standalone: rota). */
+  onOpenHistory: () => void;
 };
 
 export function DeviceOverviewTab({
@@ -35,6 +35,7 @@ export function DeviceOverviewTab({
   onPollNow,
   onReset,
   onFactoryReset,
+  onOpenHistory,
 }: DeviceOverviewTabProps) {
   const [miniReadings, setMiniReadings] = useState<DeviceReading[]>([]);
   const metricKey = primaryMetricKey(
@@ -97,12 +98,7 @@ export function DeviceOverviewTab({
       <PpSectionCard title="Mini histórico (24h)" hint={PP_HELP.detail.chartDelta}>
         <PpReadingsAreaChart points={deltaPoints} height={240} variant="mini" />
         <div className="pp-detail-overview__link-row">
-          <PpActionButton
-            variant="ghost"
-            onClick={() =>
-              navigateProductionPulse(productionPulseDeviceDetailPath(device.id, "history"))
-            }
-          >
+          <PpActionButton variant="ghost" onClick={onOpenHistory}>
             Ver histórico completo →
           </PpActionButton>
         </div>

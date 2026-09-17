@@ -25,6 +25,7 @@ import {
   createDashboardSegmentToggle,
   createDashboardUnderlineNav,
   createDashboardJourneyProgressBar,
+  createDashboardViewTransition,
   createSimpleKpiCard,
   createStateBoxPanel,
   FieldLabel,
@@ -162,6 +163,7 @@ export const PpPagePath = createDashboardPagePath({
   portalScopeClassName: PP_PORTAL_SCOPE,
 });
 export const PpTopBar = createDashboardTopBar({ prefix: PREFIX });
+export const PpViewTransition = createDashboardViewTransition({ prefix: PREFIX });
 export const PpFieldLabel = FieldLabel;
 export const PpSimpleKpiCard = createSimpleKpiCard(PREFIX, { withBody: true, withSubtitle: true });
 export const PpSegmentToggle = createDashboardSegmentToggle(PREFIX);

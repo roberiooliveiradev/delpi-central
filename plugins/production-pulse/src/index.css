@@ -110,6 +110,16 @@
   overflow: hidden;
 }
 
+/* ViewTransition preenche o shell/operator fill (mesmo padrão commercial). */
+.dashboard-production-pulse.dashboard-page--fill .pp-view-transition--page,
+.dashboard-production-pulse .pp-shell--admin-fill .pp-view-transition--page {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .dashboard-production-pulse .pp-firmware-family-group + .pp-firmware-family-group {
   margin-top: var(--pp-section-gap);
 }
@@ -2722,6 +2732,12 @@
   overscroll-behavior: none;
 }
 
+.pp-admin-viewport--refreshing > .pp-firmware-link-canvas-wrap {
+  opacity: 0.72;
+  pointer-events: none;
+  transition: opacity 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .pp-admin-viewport > .pp-firmware-link-canvas-wrap,
 .pp-admin-viewport > .pp-state-box {
   flex: 1;
@@ -3332,6 +3348,10 @@
     box-shadow:
       0 4px 14px rgba(15, 23, 42, 0.08),
       0 0 0 3px color-mix(in srgb, var(--pp-accent) 20%, transparent);
+  }
+
+  .pp-admin-viewport--refreshing > .pp-firmware-link-canvas-wrap {
+    transition: none;
   }
 }
 

@@ -4,6 +4,7 @@ import {
   parseProductionPulseRoute,
   productionPulseDeviceDetailPath,
   productionPulseDeviceNewPath,
+  productionPulseFirmwareLinksPath,
   productionPulseOperatorDevicePath,
   productionPulseOperatorPath,
   productionPulseOperatorPlacementPath,
@@ -157,6 +158,29 @@ describe("parseProductionPulseRoute", () => {
     expect(productionPulseDeviceDetailPath("abc-123", "hardware")).toBe(
       "/apps/production-pulse/devices/abc-123?tab=hardware",
     );
+  });
+
+  it("preserva tab no hub path do device-detail (irmão deep-link)", () => {
+    expect(
+      productionPulseFirmwareLinksPath({
+        branch: "01",
+        entity: "device:abc-123",
+        modal: "device-detail",
+        tab: "history",
+      }),
+    ).toBe(
+      "/apps/production-pulse/firmware-links?branch=01&entity=device%3Aabc-123&modal=device-detail&tab=history",
+    );
+    expect(
+      parseProductionPulseRoute(
+        "/apps/production-pulse/firmware-links",
+        "?branch=01&entity=device:abc-123&modal=device-detail&tab=history",
+      ),
+    ).toMatchObject({
+      kind: "firmwareLinks",
+      modal: "device-detail",
+      tab: "history",
+    });
   });
 
   it("builds operator paths", () => {
