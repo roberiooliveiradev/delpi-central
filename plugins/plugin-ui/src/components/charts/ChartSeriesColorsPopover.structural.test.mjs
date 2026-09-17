@@ -13,10 +13,15 @@ describe("ChartSeriesColorsPopover (fonte)", () => {
   it("reutiliza ColorPickerPopoverTrigger e exporta no barrel", () => {
     assert.match(src, /ColorPickerPopoverTrigger/);
     assert.match(src, /AnchoredPanelPortal/);
+    assert.match(src, /NativeSelectControl/);
+    assert.match(src, /onVisibleChange/);
+    assert.match(src, /onTrendChange/);
     assert.match(src, /onReset/);
     assert.match(src, /variant="fill"/);
     assert.match(src, /showNoFill=\{false\}/);
     assert.match(indexSrc, /ChartSeriesColorsPopover/);
     assert.match(indexSrc, /applySeriesFillPreferences/);
+    assert.match(indexSrc, /applySeriesViewPreferences/);
+    assert.match(indexSrc, /buildChartSeriesConfigItems/);
   });
 });

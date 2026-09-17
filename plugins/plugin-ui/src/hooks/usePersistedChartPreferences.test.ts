@@ -142,4 +142,28 @@ describe("usePersistedChartPreferences", () => {
     });
     expect(result.current.preferences.seriesFills).toBeUndefined();
   });
+
+  it("persiste hiddenSeries e seriesTrend por dataKey", () => {
+    const { result } = renderHook(() =>
+      usePersistedChartPreferences({
+        storageKey: "demo:chart",
+        defaults: { chartType: "column", showTrend: false },
+      }),
+    );
+    act(() => {
+      result.current.setPreferences({
+        hiddenSeries: { quantidade: true, faturamento: false },
+        seriesTrend: { faturamento: true, quantidade: false },
+        seriesTrendStyles: { faturamento: { dash: "solid", width: 4 } },
+      });
+    });
+    expect(result.current.preferences.hiddenSeries).toEqual({ quantidade: true });
+    expect(result.current.preferences.seriesTrend).toEqual({
+      faturamento: true,
+      quantidade: false,
+    });
+    expect(result.current.preferences.seriesTrendStyles).toEqual({
+      faturamento: { dash: "solid", width: 4 },
+    });
+  });
 });

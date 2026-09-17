@@ -40,7 +40,7 @@ Teste estrutural: `plugins/commercial/src/features/analytics/chartExcelCoverage.
 | Preferências | `usePersistedChartPreferences` (`seriesFills` por `dataKey`) |
 | Type switcher | `ChartTypeSegmentToggle` (ícone + popover `ChartTypeCatalogPanel` filtrado por família) |
 | Overlay options | `ChartOverlayOptionsPopover` + `buildCompareYearsOverlayOptions` (YoY / tendência) |
-| Series colors | `ChartSeriesColorsPopover` (host fino sobre `ColorPickerPopover`) + `applySeriesFillPreferences` |
+| Series config | `ChartSeriesColorsPopover` (inspector por `dataKey`: cor, visibilidade, tendência) + `applySeriesViewPreferences` |
 | Plot | `MultiTypeSeriesChart` |
-| Shell | `ChartViewShell` — **mesma linha:** Agrupamento · Opções · Cores · Tipo · export |
+| Shell | `ChartViewShell` — **mesma linha:** Agrupamento · Opções · Séries · Tipo · export |
 | Checkbox compacto | `NativeCheckboxControl` `hintPlacement: "tooltip"` (help no **label**, sem ícone `?`) |

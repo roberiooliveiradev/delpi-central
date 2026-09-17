@@ -322,10 +322,21 @@ export {
   ChartSeriesColorsPopover,
   type ChartSeriesColorItem,
   type ChartSeriesColorsPopoverProps,
+  type ChartSeriesConfigLabels,
 } from "./ChartSeriesColorsPopover";
 
 export {
   applySeriesFillPreferences,
+  applySeriesViewPreferences,
+  buildChartSeriesConfigItems,
+  omitRecordKey,
+  patchSeriesTrendStyle,
+  resetSeriesViewPreferences,
+  resolveEffectiveShowTrend,
+  resolveSeriesTrendEnabled,
+  seriesViewHasOverrides,
+  type ChartSeriesConfigItem,
+  type SeriesTrendDash,
 } from "./seriesFillPreferences";
 
 export {

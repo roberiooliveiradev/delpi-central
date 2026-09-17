@@ -7,8 +7,14 @@ import {
   EmptyState,
   MultiTypeSeriesChart,
   TIME_MULTI_SERIES_TYPES,
-  applySeriesFillPreferences,
+  applySeriesViewPreferences,
+  buildChartSeriesConfigItems,
+  omitRecordKey,
+  patchSeriesTrendStyle,
+  resetSeriesViewPreferences,
+  resolveEffectiveShowTrend,
   runTabularExport,
+  seriesViewHasOverrides,
   usePersistedChartPreferences,
   type ChartOverlayOption,
   type MultiTypeSeriesSpec,
@@ -109,45 +115,6 @@ export function CustomerAccountBillingChart({
       : "exclude";
   const chartType = preferences.chartType ?? "column";
 
-  const overlayOptions = useMemo((): ChartOverlayOption[] => {
-    return [
-      {
-        id: "yoy",
-        label: ANALYTICS_CONTENT.overview.comparePriorYear,
-        checked: comparePriorYear,
-        onChange: onComparePriorYearChange,
-        hint: CM_HELP.customerDetail.billingSeriesAccount,
-        hintAriaLabel: "Ajuda: comparar ano anterior",
-      },
-      {
-        id: "trend",
-        label: CUSTOMER_BILLING_CONTENT.showTrendLine,
-        checked: showTrend,
-        onChange: (checked) => setPreferences({ showTrend: checked }),
-        hint: CM_HELP.customerDetail.billingSeriesTrend,
-        hintAriaLabel: "Ajuda: linha de tendência",
-      },
-      {
-        id: "trend-weight",
-        label: "Ponderar período parcial",
-        checked: incompleteBucketMode === "weightByFraction",
-        onChange: (checked) =>
-          setPreferences({
-            incompleteBucketMode: checked ? "weightByFraction" : "exclude",
-          }),
-        hint: CM_HELP.customers.billingTrendIncomplete,
-        hintAriaLabel: "Ajuda: tendência em período parcial",
-        disabled: !showTrend,
-      },
-    ];
-  }, [
-    comparePriorYear,
-    incompleteBucketMode,
-    onComparePriorYearChange,
-    setPreferences,
-    showTrend,
-  ]);
-
   const customers = useMemo(
     () => [accountAsSeriesCustomer(codigo, loja)],
     [codigo, loja],
@@ -212,9 +179,58 @@ export function CustomerAccountBillingChart({
     return list;
   }, [comparePriorYear, seriesName]);
 
+  const anyTrend = resolveEffectiveShowTrend(
+    baseBars,
+    showTrend,
+    preferences.seriesTrend,
+  );
+  const overlayOptions = useMemo((): ChartOverlayOption[] => {
+    return [
+      {
+        id: "yoy",
+        label: ANALYTICS_CONTENT.overview.comparePriorYear,
+        checked: comparePriorYear,
+        onChange: onComparePriorYearChange,
+        hint: CM_HELP.customerDetail.billingSeriesAccount,
+        hintAriaLabel: "Ajuda: comparar ano anterior",
+      },
+      {
+        id: "trend",
+        label: CUSTOMER_BILLING_CONTENT.showTrendLine,
+        checked: anyTrend,
+        onChange: (checked) =>
+          setPreferences({ showTrend: checked, seriesTrend: undefined }),
+        hint: CM_HELP.customerDetail.billingSeriesTrend,
+        hintAriaLabel: "Ajuda: linha de tendência",
+      },
+      {
+        id: "trend-weight",
+        label: "Ponderar período parcial",
+        checked: incompleteBucketMode === "weightByFraction",
+        onChange: (checked) =>
+          setPreferences({
+            incompleteBucketMode: checked ? "weightByFraction" : "exclude",
+          }),
+        hint: CM_HELP.customers.billingTrendIncomplete,
+        hintAriaLabel: "Ajuda: tendência em período parcial",
+        disabled: !anyTrend,
+      },
+    ];
+  }, [
+    anyTrend,
+    comparePriorYear,
+    incompleteBucketMode,
+    onComparePriorYearChange,
+    setPreferences,
+  ]);
+
   const bars = useMemo(
-    () => applySeriesFillPreferences(baseBars, preferences.seriesFills),
-    [baseBars, preferences.seriesFills],
+    () => applySeriesViewPreferences(baseBars, preferences),
+    [baseBars, preferences],
+  );
+  const seriesConfigItems = useMemo(
+    () => buildChartSeriesConfigItems(baseBars, preferences),
+    [baseBars, preferences],
   );
 
   const hasValues = chartData.some(
@@ -323,20 +339,49 @@ export function CustomerAccountBillingChart({
                 <ChartSeriesColorsPopover
                   idPrefix="account-billing-colors"
                   portalScopeClassName="dashboard-commercial"
-                  series={bars}
+                  series={seriesConfigItems}
                   values={preferences.seriesFills}
+                  hasOverrides={seriesViewHasOverrides(preferences)}
                   summaryLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsEmpty}
                   panelTitle={ANALYTICS_CONTENT.overview.chartSeriesColorsPanelTitle}
                   triggerAriaLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsTriggerAria}
                   resetLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsReset}
+                  resetSeriesLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsResetSeries}
                   onChange={(dataKey, color) =>
                     setPreferences((prev) => ({
                       ...prev,
                       seriesFills: { ...(prev.seriesFills ?? {}), [dataKey]: color },
                     }))
                   }
+                  onVisibleChange={(dataKey, visible) =>
+                    setPreferences((prev) => ({
+                      ...prev,
+                      hiddenSeries: visible
+                        ? omitRecordKey(prev.hiddenSeries, dataKey)
+                        : { ...(prev.hiddenSeries ?? {}), [dataKey]: true },
+                    }))
+                  }
+                  onTrendChange={(dataKey, enabled) =>
+                    setPreferences((prev) => ({
+                      ...prev,
+                      seriesTrend: { ...(prev.seriesTrend ?? {}), [dataKey]: enabled },
+                    }))
+                  }
+                  onTrendStyleChange={(dataKey, style) =>
+                    setPreferences((prev) => ({
+                      ...prev,
+                      seriesTrendStyles: patchSeriesTrendStyle(
+                        prev.seriesTrendStyles,
+                        dataKey,
+                        style,
+                      ),
+                    }))
+                  }
+                  onResetSeries={(dataKey) =>
+                    setPreferences((prev) => resetSeriesViewPreferences(prev, dataKey))
+                  }
                   onReset={() =>
-                    setPreferences((prev) => ({ ...prev, seriesFills: undefined }))
+                    setPreferences((prev) => resetSeriesViewPreferences(prev))
                   }
                 />
               }
@@ -376,9 +421,9 @@ export function CustomerAccountBillingChart({
                 series={bars}
                 chartType={chartType}
                 height={CHART_HEIGHT}
-                showTrend={showTrend}
+                showTrend={bars.some((entry) => entry.trendSource)}
                 incompleteBucketMode={incompleteBucketMode}
-                showLegend={comparePriorYear || showTrend}
+                showLegend={comparePriorYear || anyTrend}
                 trendSeriesName={CUSTOMER_BILLING_CONTENT.trendLineSeriesName}
                 formatY={formatAxis}
                 formatTooltipValue={formatAxis}

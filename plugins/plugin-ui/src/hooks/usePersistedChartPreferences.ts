@@ -10,6 +10,12 @@ export type PersistedChartType =
   | "horizontal_bar"
   | "stacked_bar";
 
+export type SeriesTrendStyle = {
+  color?: string;
+  dash?: "solid" | "dashed";
+  width?: number;
+};
+
 export type PersistedChartPreferences = {
   chartType?: PersistedChartType;
   comparePriorYear?: boolean;
@@ -23,6 +29,15 @@ export type PersistedChartPreferences = {
    * Empty / omitted → chart uses the host default fills.
    */
   seriesFills?: Record<string, string>;
+  /** dataKey → true hides the series without dropping source rows. */
+  hiddenSeries?: Record<string, boolean>;
+  /**
+   * Per-series OLS trend override keyed by `dataKey`.
+   * Absent key inherits `showTrend` for eligible (`trendSource`) series.
+   */
+  seriesTrend?: Record<string, boolean>;
+  /** Optional trend stroke/dash/width overrides keyed by `dataKey`. */
+  seriesTrendStyles?: Record<string, SeriesTrendStyle>;
 };
 
 export type UsePersistedChartPreferencesOptions = {
@@ -62,6 +77,61 @@ export function sanitizeSeriesFills(
     const fill = rawFill.trim();
     if (!fill) continue;
     out[key] = fill;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+export function sanitizeBooleanOverrideMap(
+  value: unknown,
+): Record<string, boolean> | undefined {
+  if (value == null) return undefined;
+  if (typeof value !== "object" || Array.isArray(value)) return undefined;
+  const out: Record<string, boolean> = {};
+  for (const [rawKey, rawValue] of Object.entries(value as Record<string, unknown>)) {
+    const key = typeof rawKey === "string" ? rawKey.trim() : "";
+    if (!key || typeof rawValue !== "boolean") continue;
+    out[key] = rawValue;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+export function sanitizeHiddenSeries(
+  value: unknown,
+): Record<string, boolean> | undefined {
+  const mapped = sanitizeBooleanOverrideMap(value);
+  if (!mapped) return undefined;
+  const out: Record<string, boolean> = {};
+  for (const [key, hidden] of Object.entries(mapped)) {
+    if (hidden) out[key] = true;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+export function sanitizeSeriesTrendStyles(
+  value: unknown,
+): Record<string, SeriesTrendStyle> | undefined {
+  if (value == null) return undefined;
+  if (typeof value !== "object" || Array.isArray(value)) return undefined;
+  const out: Record<string, SeriesTrendStyle> = {};
+  for (const [rawKey, rawStyle] of Object.entries(value as Record<string, unknown>)) {
+    const key = typeof rawKey === "string" ? rawKey.trim() : "";
+    if (!key || !rawStyle || typeof rawStyle !== "object" || Array.isArray(rawStyle)) {
+      continue;
+    }
+    const style = rawStyle as Record<string, unknown>;
+    const next: SeriesTrendStyle = {};
+    if (typeof style.color === "string" && style.color.trim()) {
+      next.color = style.color.trim();
+    }
+    if (style.dash === "solid" || style.dash === "dashed") {
+      next.dash = style.dash;
+    }
+    if (typeof style.width === "number" && Number.isFinite(style.width)) {
+      next.width = Math.min(8, Math.max(1, Math.round(style.width)));
+    }
+    if (next.color || next.dash || next.width != null) {
+      out[key] = next;
+    }
   }
   return Object.keys(out).length > 0 ? out : undefined;
 }
@@ -110,6 +180,21 @@ function mergePreferences(
     merged.seriesFills = sanitizeSeriesFills(stored.seriesFills);
   } else {
     merged.seriesFills = sanitizeSeriesFills(defaults.seriesFills);
+  }
+  if (stored != null && "hiddenSeries" in stored) {
+    merged.hiddenSeries = sanitizeHiddenSeries(stored.hiddenSeries);
+  } else {
+    merged.hiddenSeries = sanitizeHiddenSeries(defaults.hiddenSeries);
+  }
+  if (stored != null && "seriesTrend" in stored) {
+    merged.seriesTrend = sanitizeBooleanOverrideMap(stored.seriesTrend);
+  } else {
+    merged.seriesTrend = sanitizeBooleanOverrideMap(defaults.seriesTrend);
+  }
+  if (stored != null && "seriesTrendStyles" in stored) {
+    merged.seriesTrendStyles = sanitizeSeriesTrendStyles(stored.seriesTrendStyles);
+  } else {
+    merged.seriesTrendStyles = sanitizeSeriesTrendStyles(defaults.seriesTrendStyles);
   }
   return merged;
 }

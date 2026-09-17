@@ -34,6 +34,7 @@ describe("user manual page", () => {
       /agregam Santa Catarina \+ Espírito Santo pelo método|agregação SC\+ES pelo SI/,
     );
     assert.match(content, /Como vejo o histórico em quantidade/);
+    assert.match(content, /use Séries para escolher a série/);
     assert.match(content, /Ponderar período parcial|exclui o bucket incompleto/);
     assert.match(content, /Milheiro \| Peças|1 MI = 1000 PC/);
     assert.match(content, /data de colocação do pedido|Backlog CRM|ficam para o CRM/);

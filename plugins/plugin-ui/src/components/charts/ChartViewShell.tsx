@@ -24,7 +24,7 @@ export type ChartViewShellProps = {
   /** Label above overlays (empty string hides). */
   overlaysLabel?: string;
   /**
-   * Series color picker host (ChartSeriesColorsPopover) — after overlays,
+   * Series inspector host (ChartSeriesColorsPopover) — after overlays,
    * before chart type.
    */
   seriesColors?: ReactNode;

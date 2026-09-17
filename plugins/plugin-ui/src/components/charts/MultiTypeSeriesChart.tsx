@@ -41,6 +41,12 @@ export type MultiTypeSeriesSpec = {
   axis?: "primary" | "secondary";
   /** No gráfico de colunas, série secundária pode ser linha. */
   plotAs?: "bar" | "line";
+  /** Override da cor da tendência (default: `fill`). */
+  trendStroke?: string;
+  /** Default: tracejado. */
+  trendLineStyle?: "solid" | "dashed";
+  /** Default: 3. */
+  trendStrokeWidth?: number;
 };
 
 export type MultiTypeSeriesChartProps = {
@@ -276,9 +282,11 @@ export function MultiTypeSeriesChart({
                 ? `${trendSeriesName} (${source.name})`
                 : trendSeriesName
             }
-            stroke={source.fill}
-            strokeWidth={TREND_STROKE_WIDTH}
-            strokeDasharray={TREND_DASH}
+            stroke={source.trendStroke?.trim() || source.fill}
+            strokeWidth={source.trendStrokeWidth ?? TREND_STROKE_WIDTH}
+            strokeDasharray={
+              source.trendLineStyle === "solid" ? undefined : TREND_DASH
+            }
             strokeLinecap="round"
             strokeOpacity={1}
             dot={false}

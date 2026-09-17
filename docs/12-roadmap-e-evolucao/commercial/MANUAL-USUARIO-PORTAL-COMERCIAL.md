@@ -162,7 +162,7 @@ Não. São conceitos diferentes: ROL é faturamento no período; carteira aberta
 Por padrão a tendência **exclui** o bucket incompleto. Nos overlays do gráfico, «Ponderar período parcial» inclui o valor escalado pelo % do período já decorrido.
 
 **Posso mudar as cores das séries do gráfico?**  
-Sim. Nos gráficos com toolbar (**Visão geral**, **Minha Carteira**, **Conta**), use **Cores** para escolher a cor de cada série. A escolha fica neste navegador; **Restaurar padrão** volta às cores originais.
+Sim. Nos gráficos com toolbar (**Visão geral**, **Minha Carteira**, **Conta**), use **Séries** para escolher a série, alterar cor, ocultar ou ativar tendência linear. A escolha fica neste navegador; **Restaurar padrão** volta aos defaults da série selecionada.
 
 **Como comparo com o ano passado?**  
 Na Visão geral / gráficos, use a opção de **comparar ano anterior** (quando disponível no gráfico).

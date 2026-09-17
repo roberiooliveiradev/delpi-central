@@ -42,6 +42,38 @@ describe("resolveCalendarBucketFraction", () => {
   });
 });
 
+describe("buildLinearTrendValues", () => {
+  it("é determinístico em série normal", () => {
+    const values = [10, 20, 30, 40];
+    const first = buildLinearTrendValues(values);
+    const second = buildLinearTrendValues(values);
+    expect(first).toEqual(second);
+    expect(first[0]).toBeCloseTo(10, 6);
+    expect(first[3]).toBeCloseTo(40, 6);
+  });
+
+  it("ignora null/undefined/NaN no ajuste", () => {
+    const trend = buildLinearTrendValues([0, null, 20, Number.NaN, 40]);
+    expect(trend[0]).toBeCloseTo(0, 5);
+    expect(trend[2]).toBeCloseTo(20, 5);
+    expect(trend[4]).toBeCloseTo(40, 5);
+    expect(trend).toHaveLength(5);
+  });
+
+  it("retorna nulls com um único ponto válido ou nenhum", () => {
+    expect(buildLinearTrendValues([10])).toEqual([null]);
+    expect(buildLinearTrendValues([null, undefined])).toEqual([null, null]);
+    expect(buildLinearTrendValues([])).toEqual([]);
+  });
+
+  it("aceita valores negativos", () => {
+    const trend = buildLinearTrendValues([-10, 0, 10]);
+    expect(trend[0]).toBeCloseTo(-10, 6);
+    expect(trend[1]).toBeCloseTo(0, 6);
+    expect(trend[2]).toBeCloseTo(10, 6);
+  });
+});
+
 describe("withLinearTrendField", () => {
   it("reads fractionKey from rows", () => {
     const rows = [

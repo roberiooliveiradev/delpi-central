@@ -218,7 +218,7 @@ describe("CustomerDetailPage billing (fonte)", () => {
     assert.match(chart, /onComparePriorYearChange/);
     assert.match(chart, /ChartOverlayOptionsPopover/);
     assert.match(chart, /ChartSeriesColorsPopover/);
-    assert.match(chart, /applySeriesFillPreferences/);
+    assert.match(chart, /applySeriesViewPreferences/);
     assert.match(chart, /MultiTypeSeriesChart|ChartViewShell/);
     assert.doesNotMatch(chart, /AreaChart/);
   });

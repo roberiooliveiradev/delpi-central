@@ -496,8 +496,10 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  min-width: 240px;
-  max-width: min(340px, calc(100vw - 24px));
+  min-width: 260px;
+  max-width: min(360px, calc(100vw - 24px));
+  max-height: min(70vh, 560px);
+  overflow: auto;
   padding: 12px;
   border: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));
   border-radius: 12px;
@@ -510,16 +512,6 @@
   margin: 0;
   font-size: 13px;
   font-weight: 600;
-}
-
-.delpi-ui-chart-series-colors__list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  min-width: 0;
 }
 
 .delpi-ui-chart-series-colors__row {
@@ -565,6 +557,34 @@
   opacity: 0.45;
   cursor: not-allowed;
   text-decoration: none;
+}
+
+.delpi-ui-chart-series-colors__section {
+  margin: 4px 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--delpi-ui-muted, var(--muted, #64748b));
+}
+
+.delpi-ui-chart-series-colors__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.delpi-ui-chart-series-colors__field-label {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.delpi-ui-chart-series-colors__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
 }
 
 :root[data-theme="dark"] .delpi-ui-chart-series-colors__panel {

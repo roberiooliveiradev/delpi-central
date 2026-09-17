@@ -7,9 +7,15 @@ import {
   EmptyState,
   MultiTypeSeriesChart,
   TIME_MULTI_SERIES_TYPES,
-  applySeriesFillPreferences,
+  applySeriesViewPreferences,
+  buildChartSeriesConfigItems,
   buildCompareYearsOverlayOptions,
+  omitRecordKey,
+  patchSeriesTrendStyle,
+  resetSeriesViewPreferences,
+  resolveEffectiveShowTrend,
   runTabularExport,
+  seriesViewHasOverrides,
   usePersistedChartPreferences,
   type ChartOverlayOption,
   type MultiTypeSeriesSpec,
@@ -116,49 +122,6 @@ export function CustomerBillingSeriesChart({
       ? "weightByFraction"
       : "exclude";
   const chartType = preferences.chartType ?? "column";
-
-  const overlayOptions = useMemo((): ChartOverlayOption[] => {
-    const compare = buildCompareYearsOverlayOptions({
-      compareYears,
-      onCompareYearsChange: (value) => setPreferences({ compareYears: value }),
-      labels: {
-        priorYear: ANALYTICS_CONTENT.overview.comparePriorYear,
-        plus2: ANALYTICS_CONTENT.overview.compareYearsPlus2,
-        plus3: ANALYTICS_CONTENT.overview.compareYearsPlus3,
-        priorYearSummary: ANALYTICS_CONTENT.overview.compareYearsDepth1,
-        plus2Summary: ANALYTICS_CONTENT.overview.compareYearsDepth2,
-        plus3Summary: ANALYTICS_CONTENT.overview.compareYearsDepth3,
-        priorYearHint: CM_HELP.customers.billingSeriesYoy,
-        plus2Hint: "Sobrepõe também o período deslocado −2 anos.",
-        plus3Hint: "Sobrepõe também o período deslocado −3 anos.",
-      },
-    });
-    return [
-      ...compare,
-      {
-        id: "trend",
-        label: CUSTOMER_BILLING_CONTENT.showTrendLine,
-        summaryLabel: CUSTOMER_BILLING_CONTENT.showTrendLine,
-        checked: showTrend,
-        onChange: (checked) => setPreferences({ showTrend: checked }),
-        hint: CM_HELP.customerDetail.billingSeriesTrend,
-        hintAriaLabel: "Ajuda: linha de tendência",
-      },
-      {
-        id: "trend-weight",
-        label: "Ponderar período parcial",
-        summaryLabel: "Tendência ponderada",
-        hint: CM_HELP.customers.billingTrendIncomplete,
-        hintAriaLabel: "Ajuda: tendência em período parcial",
-        checked: incompleteBucketMode === "weightByFraction",
-        onChange: (checked) =>
-          setPreferences({
-            incompleteBucketMode: checked ? "weightByFraction" : "exclude",
-          }),
-        disabled: !showTrend,
-      },
-    ];
-  }, [compareYears, incompleteBucketMode, setPreferences, showTrend]);
 
   const queryEnabled = active && !filters.periodError;
   const allowedGrains = allowedBillingSeriesGranularities(
@@ -307,9 +270,62 @@ export function CustomerBillingSeriesChart({
     return list;
   }, [billingMetric, billingNature, compareYears, quantityLabel, showQuantity, showValue]);
 
+  const anyTrend = resolveEffectiveShowTrend(
+    baseBars,
+    showTrend,
+    preferences.seriesTrend,
+  );
+  const overlayOptions = useMemo((): ChartOverlayOption[] => {
+    const compare = buildCompareYearsOverlayOptions({
+      compareYears,
+      onCompareYearsChange: (value) => setPreferences({ compareYears: value }),
+      labels: {
+        priorYear: ANALYTICS_CONTENT.overview.comparePriorYear,
+        plus2: ANALYTICS_CONTENT.overview.compareYearsPlus2,
+        plus3: ANALYTICS_CONTENT.overview.compareYearsPlus3,
+        priorYearSummary: ANALYTICS_CONTENT.overview.compareYearsDepth1,
+        plus2Summary: ANALYTICS_CONTENT.overview.compareYearsDepth2,
+        plus3Summary: ANALYTICS_CONTENT.overview.compareYearsDepth3,
+        priorYearHint: CM_HELP.customers.billingSeriesYoy,
+        plus2Hint: "Sobrepõe também o período deslocado −2 anos.",
+        plus3Hint: "Sobrepõe também o período deslocado −3 anos.",
+      },
+    });
+    return [
+      ...compare,
+      {
+        id: "trend",
+        label: CUSTOMER_BILLING_CONTENT.showTrendLine,
+        summaryLabel: CUSTOMER_BILLING_CONTENT.showTrendLine,
+        checked: anyTrend,
+        onChange: (checked) =>
+          setPreferences({ showTrend: checked, seriesTrend: undefined }),
+        hint: CM_HELP.customerDetail.billingSeriesTrend,
+        hintAriaLabel: "Ajuda: linha de tendência",
+      },
+      {
+        id: "trend-weight",
+        label: "Ponderar período parcial",
+        summaryLabel: "Tendência ponderada",
+        hint: CM_HELP.customers.billingTrendIncomplete,
+        hintAriaLabel: "Ajuda: tendência em período parcial",
+        checked: incompleteBucketMode === "weightByFraction",
+        onChange: (checked) =>
+          setPreferences({
+            incompleteBucketMode: checked ? "weightByFraction" : "exclude",
+          }),
+        disabled: !anyTrend,
+      },
+    ];
+  }, [anyTrend, compareYears, incompleteBucketMode, setPreferences]);
+
   const bars = useMemo(
-    () => applySeriesFillPreferences(baseBars, preferences.seriesFills),
-    [baseBars, preferences.seriesFills],
+    () => applySeriesViewPreferences(baseBars, preferences),
+    [baseBars, preferences],
+  );
+  const seriesConfigItems = useMemo(
+    () => buildChartSeriesConfigItems(baseBars, preferences),
+    [baseBars, preferences],
   );
 
   const hasValues = chartData.some(
@@ -429,20 +445,49 @@ export function CustomerBillingSeriesChart({
               <ChartSeriesColorsPopover
                 idPrefix="customers-billing-colors"
                 portalScopeClassName="dashboard-commercial"
-                series={bars}
+                series={seriesConfigItems}
                 values={preferences.seriesFills}
+                hasOverrides={seriesViewHasOverrides(preferences)}
                 summaryLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsEmpty}
                 panelTitle={ANALYTICS_CONTENT.overview.chartSeriesColorsPanelTitle}
                 triggerAriaLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsTriggerAria}
                 resetLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsReset}
+                resetSeriesLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsResetSeries}
                 onChange={(dataKey, color) =>
                   setPreferences((prev) => ({
                     ...prev,
                     seriesFills: { ...(prev.seriesFills ?? {}), [dataKey]: color },
                   }))
                 }
+                onVisibleChange={(dataKey, visible) =>
+                  setPreferences((prev) => ({
+                    ...prev,
+                    hiddenSeries: visible
+                      ? omitRecordKey(prev.hiddenSeries, dataKey)
+                      : { ...(prev.hiddenSeries ?? {}), [dataKey]: true },
+                  }))
+                }
+                onTrendChange={(dataKey, enabled) =>
+                  setPreferences((prev) => ({
+                    ...prev,
+                    seriesTrend: { ...(prev.seriesTrend ?? {}), [dataKey]: enabled },
+                  }))
+                }
+                onTrendStyleChange={(dataKey, style) =>
+                  setPreferences((prev) => ({
+                    ...prev,
+                    seriesTrendStyles: patchSeriesTrendStyle(
+                      prev.seriesTrendStyles,
+                      dataKey,
+                      style,
+                    ),
+                  }))
+                }
+                onResetSeries={(dataKey) =>
+                  setPreferences((prev) => resetSeriesViewPreferences(prev, dataKey))
+                }
                 onReset={() =>
-                  setPreferences((prev) => ({ ...prev, seriesFills: undefined }))
+                  setPreferences((prev) => resetSeriesViewPreferences(prev))
                 }
               />
             }
@@ -482,9 +527,9 @@ export function CustomerBillingSeriesChart({
               series={bars}
               chartType={chartType}
               height={CHART_HEIGHT}
-              showTrend={showTrend}
+              showTrend={bars.some((entry) => entry.trendSource)}
               incompleteBucketMode={incompleteBucketMode}
-              showLegend={yoyActive || showTrend || billingMetric === "both"}
+              showLegend={yoyActive || anyTrend || billingMetric === "both"}
               trendSeriesName={CUSTOMER_BILLING_CONTENT.trendLineSeriesName}
               formatY={formatValue}
               formatYSecondary={

@@ -258,7 +258,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Posso mudar as cores das séries do gráfico?",
-          a: "Sim. Nos gráficos com toolbar (Visão geral, Minha Carteira, Conta), use Cores para escolher a cor de cada série. A escolha fica neste navegador; «Restaurar padrão» volta às cores originais.",
+          a: "Sim. Nos gráficos com toolbar (Visão geral, Minha Carteira, Conta), use Séries para escolher a série, alterar cor, ocultar ou ativar tendência linear. A escolha fica neste navegador; «Restaurar padrão» volta aos defaults da série selecionada.",
         },
         {
           q: "Cadê o GR / telão de vendas?",

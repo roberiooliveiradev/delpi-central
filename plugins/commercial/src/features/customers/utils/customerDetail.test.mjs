@@ -489,6 +489,13 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(page, /fetchPolicy\.activities/);
     assert.match(overview, /useCustomerPurchaseEvolution/);
     assert.match(overview, /CustomerPurchaseEvolutionChart/);
+    const purchaseChart = readSrc(
+      "features/customers/components/CustomerPurchaseEvolutionChart.tsx",
+    );
+    assert.match(purchaseChart, /applySeriesViewPreferences/);
+    assert.match(purchaseChart, /onVisibleChange/);
+    assert.match(purchaseChart, /onTrendChange/);
+    assert.match(purchaseChart, /ChartOverlayOptionsPopover/);
     assert.match(overview, /windowMonths/);
     assert.match(overview, /billingMetric/);
     assert.match(overview, /metric:\s*billingMetric/);

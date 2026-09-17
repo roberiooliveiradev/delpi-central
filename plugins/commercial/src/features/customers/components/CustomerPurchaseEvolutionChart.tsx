@@ -9,8 +9,14 @@ import {
   EmptyState,
   MultiTypeSeriesChart,
   PERIOD_COMPARE_TYPES,
-  applySeriesFillPreferences,
+  applySeriesViewPreferences,
+  buildChartSeriesConfigItems,
+  omitRecordKey,
+  patchSeriesTrendStyle,
+  resetSeriesViewPreferences,
+  resolveEffectiveShowTrend,
   runTabularExport,
+  seriesViewHasOverrides,
   usePersistedChartPreferences,
   type ChartOverlayOption,
   type MultiTypeSeriesSpec,
@@ -84,19 +90,6 @@ export function CustomerPurchaseEvolutionChart({
   const showTrend = Boolean(preferences.showTrend);
   const chartType = preferences.chartType ?? "column";
 
-  const overlayOptions = useMemo((): ChartOverlayOption[] => {
-    return [
-      {
-        id: "trend",
-        label: CUSTOMER_BILLING_CONTENT.showTrendLine,
-        checked: showTrend,
-        onChange: (checked) => setPreferences({ showTrend: checked }),
-        hint: CM_HELP.customerDetail.billingSeriesTrend,
-        hintAriaLabel: "Ajuda: linha de tendência",
-      },
-    ];
-  }, [setPreferences, showTrend]);
-
   const hasValues = useMemo(
     () => points.some((p) => p.atual > 0 || p.anterior > 0),
     [points],
@@ -140,9 +133,32 @@ export function CustomerPurchaseEvolutionChart({
     [billingMetric, totals.atual, totals.anterior],
   );
 
+  const anyTrend = resolveEffectiveShowTrend(
+    baseBars,
+    showTrend,
+    preferences.seriesTrend,
+  );
+  const overlayOptions = useMemo((): ChartOverlayOption[] => {
+    return [
+      {
+        id: "trend",
+        label: CUSTOMER_BILLING_CONTENT.showTrendLine,
+        checked: anyTrend,
+        onChange: (checked) =>
+          setPreferences({ showTrend: checked, seriesTrend: undefined }),
+        hint: CM_HELP.customerDetail.billingSeriesTrend,
+        hintAriaLabel: "Ajuda: linha de tendência",
+      },
+    ];
+  }, [anyTrend, setPreferences]);
+
   const bars = useMemo(
-    () => applySeriesFillPreferences(baseBars, preferences.seriesFills),
-    [baseBars, preferences.seriesFills],
+    () => applySeriesViewPreferences(baseBars, preferences),
+    [baseBars, preferences],
+  );
+  const seriesConfigItems = useMemo(
+    () => buildChartSeriesConfigItems(baseBars, preferences),
+    [baseBars, preferences],
   );
 
   const emptyMessage =
@@ -266,20 +282,49 @@ export function CustomerPurchaseEvolutionChart({
             <ChartSeriesColorsPopover
               idPrefix="purchase-evolution-colors"
               portalScopeClassName="dashboard-commercial"
-              series={bars}
+              series={seriesConfigItems}
               values={preferences.seriesFills}
+              hasOverrides={seriesViewHasOverrides(preferences)}
               summaryLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsEmpty}
               panelTitle={ANALYTICS_CONTENT.overview.chartSeriesColorsPanelTitle}
               triggerAriaLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsTriggerAria}
               resetLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsReset}
+              resetSeriesLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsResetSeries}
               onChange={(dataKey, color) =>
                 setPreferences((prev) => ({
                   ...prev,
                   seriesFills: { ...(prev.seriesFills ?? {}), [dataKey]: color },
                 }))
               }
+              onVisibleChange={(dataKey, visible) =>
+                setPreferences((prev) => ({
+                  ...prev,
+                  hiddenSeries: visible
+                    ? omitRecordKey(prev.hiddenSeries, dataKey)
+                    : { ...(prev.hiddenSeries ?? {}), [dataKey]: true },
+                }))
+              }
+              onTrendChange={(dataKey, enabled) =>
+                setPreferences((prev) => ({
+                  ...prev,
+                  seriesTrend: { ...(prev.seriesTrend ?? {}), [dataKey]: enabled },
+                }))
+              }
+              onTrendStyleChange={(dataKey, style) =>
+                setPreferences((prev) => ({
+                  ...prev,
+                  seriesTrendStyles: patchSeriesTrendStyle(
+                    prev.seriesTrendStyles,
+                    dataKey,
+                    style,
+                  ),
+                }))
+              }
+              onResetSeries={(dataKey) =>
+                setPreferences((prev) => resetSeriesViewPreferences(prev, dataKey))
+              }
               onReset={() =>
-                setPreferences((prev) => ({ ...prev, seriesFills: undefined }))
+                setPreferences((prev) => resetSeriesViewPreferences(prev))
               }
             />
           }
@@ -290,7 +335,7 @@ export function CustomerPurchaseEvolutionChart({
             series={bars}
             chartType={chartType}
             height={CHART_HEIGHT}
-            showTrend={showTrend}
+            showTrend={bars.some((entry) => entry.trendSource)}
             trendSeriesName={CUSTOMER_BILLING_CONTENT.trendLineSeriesName}
             formatY={formatAxis}
             formatTooltipValue={formatTip}
