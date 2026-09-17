@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { buildPublicDrawingPdfUrl, buildPublicProductModelGlbUrl } from "./api.ts";
+import {
+  buildPublicDrawingPdfUrl,
+  buildPublicOperationMaterialsUrl,
+  buildPublicProductModelGlbUrl,
+} from "./api.ts";
 
 describe("public cockpit asset URLs", () => {
   it("builds the PA drawing PDF URL", () => {
@@ -21,6 +25,13 @@ describe("public cockpit asset URLs", () => {
     assert.equal(
       buildPublicProductModelGlbUrl("aberto", "02", "PI/01"),
       "/apps/production-control-api/public/machine-load/aberto/models/PI%2F01/glb?branch=02",
+    );
+  });
+
+  it("builds the operation materials URL with OP and operation filters", () => {
+    assert.equal(
+      buildPublicOperationMaterialsUrl("aberto", "01", "10964501004", "01"),
+      "/apps/production-control-api/public/machine-load/aberto/operations/materials?branch=01&productionOrder=10964501004&operationCode=01",
     );
   });
 });

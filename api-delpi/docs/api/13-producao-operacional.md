@@ -56,6 +56,8 @@ Rotas REST que encapsulam SQL validado de produção, consumo, perdas, OPs e ran
 |--------|------|-------------|-------------|
 | GET | `/production/schedule/today` | `get_production_schedule_today` | Produtos programados para a data (PCP) |
 | GET | `/production/orders/open` | `get_production_orders_open` | OPs em aberto na data |
+| GET | `/production/orders/by-op/{production_order}` | `get_production_order_by_op` | Detalhe da OP (SC2) |
+| GET | `/production/orders/{production_order}/operations/{operation}/materials` | `list_production_order_operation_materials` | Materiais SD4 da OP+operação (sem SG1) |
 | GET | `/production/orders/finished` | `get_production_orders_finished` | OPs finalizadas na data |
 | GET | `/production/orders/finished-without-consumption` | `get_production_orders_finished_without_consumption` | OPs finalizadas sem baixa de MP |
 | GET | `/production/work-centers/order-summary` | `get_production_work_center_order_summary` | Contagem de OPs por CT |

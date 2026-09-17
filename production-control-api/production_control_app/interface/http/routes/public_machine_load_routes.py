@@ -15,6 +15,7 @@ from production_control_app.composition.pc_composer import (
     build_public_machine_load_drawing_service,
     build_public_machine_load_product_model_service,
     build_public_operation_appointments_service,
+    build_public_operation_materials_service,
     build_public_work_center_downtime_items_service,
     build_public_work_center_performance_service,
 )
@@ -140,6 +141,34 @@ def get_public_machine_load_operation_appointments(
     """Histórico de apontamentos da OP+operação — data, quantidade e nome do operador."""
     try:
         data = build_public_operation_appointments_service().list_for_operation(
+            token=token,
+            branch=branch,
+            production_order=production_order,
+            operation_code=operation_code,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _handle_public_errors(exc)
+    return ok(data)
+
+
+@router.get("/{token}/operations/materials")
+def get_public_machine_load_operation_materials(
+    token: str,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    production_order: str = Query(
+        ...,
+        alias="productionOrder",
+        description="OP da fila publicada",
+    ),
+    operation_code: str = Query(
+        ...,
+        alias="operationCode",
+        description="Código da operação na fila publicada",
+    ),
+):
+    """Materiais SD4 da OP+operação — código, descrição, UM, original, saldo e consumido."""
+    try:
+        data = build_public_operation_materials_service().list_for_operation(
             token=token,
             branch=branch,
             production_order=production_order,

@@ -71,3 +71,11 @@ class ProductionOrdersRepositoryPort(Protocol):
         sort_by: str | None = None,
         sort_dir: str = "asc",
     ) -> list[dict]: ...
+
+    def fetch_operation_materials(
+        self,
+        *,
+        production_order: str,
+        operation: str,
+        branch: str,
+    ) -> list[dict]: ...

@@ -894,6 +894,17 @@ PRODUCTION_ORDER_BY_OP = agent_route(
     operation_id="get_production_order_by_op",
 )
 
+PRODUCTION_ORDER_OPERATION_MATERIALS = agent_route(
+    summary="Materiais SD4 da OP+operação",
+    description=(
+        "Lista empenhos ativos (SD4010, D_E_L_E_T_ vazio) filtrados por D4_OP e D4_OPERAC "
+        "na filial informada. Agrega múltiplos empenhos do mesmo componente. "
+        "Campos: código, descrição, UM, quantidade original (D4_QTDEORI), saldo (D4_QUANT) "
+        "e consumido (QTDEORI−QUANT). Sem fallback SG1 — lista vazia se a operação não tiver vínculo."
+    ),
+    operation_id="list_production_order_operation_materials",
+)
+
 PRODUCTION_ORDERS_FINISHED = agent_route(
     summary="OPs finalizadas na data",
     description=(

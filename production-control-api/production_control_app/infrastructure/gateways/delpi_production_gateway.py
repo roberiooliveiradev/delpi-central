@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -289,6 +290,22 @@ class DelpiProductionGateway:
                 "page": page,
                 "page_size": page_size,
             },
+        )
+
+    def fetch_production_order_operation_materials(
+        self,
+        *,
+        branch: str,
+        production_order: str,
+        operation: str,
+    ) -> dict[str, Any]:
+        """Empenhos SD4 ativos da OP+operação — sem SG1."""
+        order = str(production_order or "").strip()
+        oper = str(operation or "").strip()
+        return self._request(
+            "GET",
+            f"/production/orders/{quote(order, safe='')}/operations/{quote(oper, safe='')}/materials",
+            params={"branch": branch},
         )
 
     def fetch_factory_shifts(self) -> dict[str, Any]:

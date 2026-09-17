@@ -36,6 +36,7 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | DELETE | `/product-3d-models/{productCode}` | JWT + `product-3d-models.manage` |
 | GET | `/public/machine-load/{token}/performance?branch=01\|02&workCenter=&days=` | público (desempenho do posto na fila) |
 | GET | `/public/machine-load/{token}/operations/appointments?branch=&productionOrder=&operationCode=` | público (histórico de apontamentos da OP+operação na fila) |
+| GET | `/public/machine-load/{token}/operations/materials?branch=&productionOrder=&operationCode=` | público (materiais SD4 da OP+operação na fila) |
 | WS | `/public/machine-load/{token}/ws?branch=01\|02` | público (token do cockpit) |
 
 Envelope `{ success, message, data }`.
@@ -106,6 +107,8 @@ Convenção de nome resolvida pelo storage: `{codigo}.pdf` → `{base}.pdf` → 
 `GET /public/machine-load/{token}/performance?branch=&workCenter=&days=` alimenta os chips de eficiência/produção/paradas na barra do cockpit e o painel de gráficos. O cálculo continua na api-delpi (`/production/eficiencia-fabril/*` e `/production/unproductive-hours/*`, ambas com RBAC); aqui o `PublicWorkCenterPerformanceService` só compõe via `DelpiProductionGateway` (token S2S por `internal_service_authorization`) e recorta o que um link anônimo pode ver. No bloco `efficiency`, `shift_produced_qty` soma `qtd_apontada` de **todos** os apontamentos do turno atual (não só o recorte de 40 da tabela pública).
 
 `GET /public/machine-load/{token}/operations/appointments?branch=&productionOrder=&operationCode=` alimenta o modal de apontamentos do detalhe: linhas com data, quantidade, posto e nome do operador (sem login/código/R$), só se a OP+operação estiver na fila publicada. Fonte: ``SH6010`` via `list_production_appointments` (inclui CT-00 — a view de eficiência fabril exclui CT-00 na SQL e **não** serve para saldo). Recorte estrito por **OP + operação** (`H6_OP` + `H6_OPERAC`). Escala MI alinhada à fila. Janela: últimos 120 dias.
+
+`GET /public/machine-load/{token}/operations/materials?branch=&productionOrder=&operationCode=` alimenta o modal **Materiais da operação**: código, descrição, UM, quantidade original (`D4_QTDEORI`), saldo (`D4_QUANT`) e consumido, só se a OP+operação estiver na fila publicada. Fonte: ``SD4010`` via `list_production_order_operation_materials` — filtro obrigatório `D4_OP` + `D4_OPERAC` + filial; múltiplos empenhos do mesmo componente são agregados; **sem** fallback SG1. Lista vazia = operação sem vínculo de material.
 
 Guardrails, no mesmo espírito do PDF do desenho:
 

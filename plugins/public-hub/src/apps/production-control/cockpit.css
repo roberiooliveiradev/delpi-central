@@ -1881,6 +1881,10 @@
 
 .pcp-pub__detail-actions {
   margin: 18px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
 }
 
 .pcp-pub__icon-btn {
@@ -1936,8 +1940,10 @@
   inset: 0;
   border: 0;
   padding: 0;
-  /* Scrim neutro: o “vidro” do painel é que desfoca o fundo (sheet iOS). */
-  background: rgba(15, 35, 55, 0.22);
+  /* Scrim + blur: fundo da página fica mais desfocado ao abrir qualquer modal. */
+  background: rgba(15, 35, 55, 0.42);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
   cursor: pointer;
 }
 
@@ -1967,7 +1973,9 @@
 
 @media (prefers-reduced-transparency: reduce) {
   .pcp-pub-modal__backdrop {
-    background: rgba(3, 40, 70, 0.45);
+    background: rgba(3, 40, 70, 0.55);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 
   .pcp-pub-modal__panel {
@@ -1978,7 +1986,7 @@
 }
 
 :root[data-theme="dark"] .pcp-pub-modal__backdrop {
-  background: rgba(0, 8, 18, 0.42);
+  background: rgba(0, 8, 18, 0.58);
 }
 
 :root[data-theme="dark"] .pcp-pub-modal__panel {
@@ -1991,7 +1999,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .pcp-pub-modal__backdrop {
-    background: rgba(0, 8, 18, 0.42);
+    background: rgba(0, 8, 18, 0.58);
   }
 
   :root:not([data-theme="light"]) .pcp-pub-modal__panel {
@@ -2004,7 +2012,11 @@
 }
 
 .pcp-pub-modal__panel--appointments {
-  width: min(640px, 100%);
+  width: min(720px, 100%);
+}
+
+.pcp-pub-modal__panel--materials {
+  width: min(920px, 100%);
 }
 
 .pcp-pub-modal__panel--downtime {
