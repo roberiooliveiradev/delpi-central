@@ -21,6 +21,10 @@ describe("ChartSeriesColorsPopover (fonte)", () => {
     assert.match(src, /variant="fill"/);
     assert.match(src, /showNoFill=\{false\}/);
     assert.match(src, /delpi-ui-chart-series-colors__readonly/);
+    assert.match(src, /delpi-ui-chart-series-colors__block/);
+    assert.match(src, /delpi-ui-chart-series-colors__pair/);
+    assert.match(src, /SectionHintLabel/);
+    assert.match(src, /ChartSeriesConfigHints/);
     assert.doesNotMatch(src, /NativeSelectControl/);
     assert.doesNotMatch(src, /<select/);
     assert.match(indexSrc, /ChartSeriesColorsPopover/);

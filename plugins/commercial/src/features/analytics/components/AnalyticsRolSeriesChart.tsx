@@ -31,7 +31,7 @@ import {
 import { buildOverviewRolSeriesPayload } from "../../overview/overviewExportBuilders";
 import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
 import { CUSTOMER_BILLING_CONTENT } from "../../../content/customerBillingContent";
-import { CM_HELP } from "../../../content/helpTooltips";
+import { CM_CHART_SERIES_HINTS, CM_HELP } from "../../../content/helpTooltips";
 import type {
   AnalyticsFilterParams,
   CommercialRolSeriesPoint,
@@ -343,6 +343,7 @@ export function AnalyticsRolSeriesChart({
                     : { ...(prev.hiddenSeries ?? {}), [dataKey]: true },
                 }))
               }
+              hints={CM_CHART_SERIES_HINTS}
               onTrendChange={(dataKey, enabled) =>
                 setPreferences((prev) => ({
                   ...prev,

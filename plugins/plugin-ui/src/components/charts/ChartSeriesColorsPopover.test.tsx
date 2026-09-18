@@ -326,4 +326,55 @@ describe("ChartSeriesColorsPopover", () => {
     fireEvent.click(screen.getByRole("button", { name: "Restaurar padrão" }));
     expect(onResetSeries).toHaveBeenCalledWith("quantidade");
   });
+
+  it("separa seções com blocos e coloca Estilo e Espessura lado a lado", () => {
+    renderInspector({
+      onTrendChange: () => undefined,
+      onTrendStyleChange: () => undefined,
+      series: SERIES.map((entry) =>
+        entry.dataKey === "faturamento"
+          ? { ...entry, trendEnabled: true }
+          : entry,
+      ),
+    });
+    openInspector();
+    expect(
+      document.querySelectorAll(".delpi-ui-chart-series-colors__block").length,
+    ).toBeGreaterThanOrEqual(3);
+    expect(document.querySelector(".delpi-ui-chart-series-colors__pair")).toBeTruthy();
+  });
+
+  it("mostra ajuda nas seções quando o host passa hints", () => {
+    renderInspector({
+      onVisibleChange: () => undefined,
+      onTrendChange: () => undefined,
+      hints: {
+        series: "Escolha qual série editar nesta lista.",
+        appearance: "Cor e visibilidade só desta série.",
+        trend: "Regressão linear só da série escolhida.",
+      },
+    });
+    openInspector();
+    fireEvent.mouseEnter(screen.getByText("Série"));
+    expect(
+      screen.getByRole("tooltip", { hidden: true }).textContent,
+    ).toContain("série editar");
+    expect(
+      document.querySelectorAll(".delpi-ui-chart-series-colors__hint").length,
+    ).toBeGreaterThan(1);
+  });
+
+  it("COLOR_ONLY não monta ajuda de tendência mesmo com hint", () => {
+    renderInspector({
+      hints: {
+        series: "Escolha qual série editar nesta lista.",
+        trend: "Não deve aparecer nesta superfície COLOR_ONLY.",
+      },
+    });
+    openInspector();
+    expect(screen.queryByText("Linha de tendência")).toBeNull();
+    expect(
+      screen.queryByText("Não deve aparecer nesta superfície COLOR_ONLY."),
+    ).toBeNull();
+  });
 });

@@ -25,7 +25,7 @@ import {
 } from "../../../app/commercialUi";
 import { buildOverviewClosingRateSeriesPayload } from "../../overview/overviewExportBuilders";
 import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
-import { CM_HELP } from "../../../content/helpTooltips";
+import { CM_CHART_SERIES_HINTS, CM_HELP } from "../../../content/helpTooltips";
 import type {
   AnalyticsFilterParams,
   SalesConversionRateSeriesPoint,
@@ -320,6 +320,7 @@ export function AnalyticsClosingRateSeriesChart({
               panelTitle={ANALYTICS_CONTENT.overview.chartSeriesColorsPanelTitle}
               triggerAriaLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsTriggerAria}
               resetLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsReset}
+              hints={CM_CHART_SERIES_HINTS}
               onChange={(dataKey, color) =>
                 setPreferences((prev) => ({
                   ...prev,

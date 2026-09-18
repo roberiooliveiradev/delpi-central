@@ -31,6 +31,9 @@ describe("helpTooltips", () => {
     expect(SP_HELP.overviewGoalTriad.length).toBeGreaterThan(20);
     expect(SP_HELP.overviewOtdChart.length).toBeGreaterThan(20);
     expect(SP_HELP.overviewCompareChart.length).toBeGreaterThan(20);
+    expect(SP_HELP.overviewChartSeriesPicker.length).toBeGreaterThan(20);
+    expect(SP_HELP.overviewChartSeriesAppearance.length).toBeGreaterThan(20);
+    expect(SP_HELP.overviewChartSeriesColor.length).toBeGreaterThan(20);
     expect(SP_HELP.overviewFiltersBranch.length).toBeGreaterThan(20);
     expect(SP_HELP.otdAnalyticsPage.length).toBeGreaterThan(20);
     expect(SP_HELP.purchaseRequests.length).toBeGreaterThan(20);

@@ -3,6 +3,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { FormSelectControl } from "../forms/FormSelectControl";
 import { NativeCheckboxControl } from "../forms/NativeCheckboxControl";
+import { SectionHintLabel } from "../help/SectionHintLabel";
 import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
 import { ColorPickerPopoverTrigger } from "../shape/ColorPickerPopover";
 import { AUTOMATIC_TEXT_COLOR, isAutomaticTextColor } from "../shape/colorUtils";
@@ -46,6 +47,17 @@ export type ChartSeriesConfigLabels = {
   trendWeightIncompleteLabel?: string;
 };
 
+/** Host-owned help copy (plugin `helpTooltips`). Kit never hardcodes product help. */
+export type ChartSeriesConfigHints = {
+  series?: string;
+  appearance?: string;
+  color?: string;
+  visible?: string;
+  trend?: string;
+  trendColor?: string;
+  incompleteBucket?: string;
+};
+
 export type ChartSeriesColorsPopoverProps = {
   series: readonly ChartSeriesColorItem[];
   /** Persisted fill overrides keyed by dataKey (may be empty). */
@@ -58,6 +70,7 @@ export type ChartSeriesColorsPopoverProps = {
   onIncompleteBucketWeightChange?: (weighted: boolean) => void;
   incompleteBucketWeightHint?: string;
   incompleteBucketWeightHintAriaLabel?: string;
+  hints?: ChartSeriesConfigHints;
   onResetSeries?: (dataKey: string) => void;
   onReset?: () => void;
   hasOverrides?: boolean;
@@ -94,6 +107,27 @@ const DEFAULT_LABELS = {
   trendWeightIncompleteLabel: "Ponderar período parcial",
 } as const;
 
+function InspectorHintLabel({
+  label,
+  hint,
+  className,
+}: {
+  label: string;
+  hint?: string;
+  className?: string;
+}) {
+  const classes = [
+    className,
+    hint?.trim() ? "delpi-ui-chart-series-colors__hint" : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  if (!hint?.trim()) {
+    return <span className={classes}>{label}</span>;
+  }
+  return <SectionHintLabel label={label} hint={hint} className={classes} />;
+}
+
 /**
  * Inspector of one chart series (color, visibility, OLS trend and partial-period weight).
  * Use inside ChartViewShell.seriesColors. Color-only hosts omit optional callbacks.
@@ -109,6 +143,7 @@ export function ChartSeriesColorsPopover({
   onIncompleteBucketWeightChange,
   incompleteBucketWeightHint,
   incompleteBucketWeightHintAriaLabel = "Ajuda: tendência em período parcial",
+  hints,
   onResetSeries,
   onReset,
   hasOverrides,
@@ -167,6 +202,7 @@ export function ChartSeriesColorsPopover({
 
   const trendAutomatic = isAutomaticTextColor(selected?.trendColor);
   const selectClassName = "delpi-ui-select--compact";
+  const incompleteHint = hints?.incompleteBucket ?? incompleteBucketWeightHint;
 
   const persistTrendColor = (dataKey: string, color: string) => {
     onTrendStyleChange?.(dataKey, {
@@ -218,79 +254,109 @@ export function ChartSeriesColorsPopover({
           <p className="delpi-ui-chart-series-colors__panel-title">{panelTitle}</p>
           {selected ? (
             <>
-              <label className="delpi-ui-chart-series-colors__field">
-                <span className="delpi-ui-chart-series-colors__field-label">
-                  {copy.seriesLabel}
-                </span>
-                <FormSelectControl
-                  id={`${idPrefix}-series`}
-                  ariaLabel={copy.seriesLabel}
-                  value={selected.dataKey}
-                  onChange={setSelectedKey}
-                  allowEmpty={false}
-                  searchable={false}
-                  portalScopeClassName={portalScopeClassName}
-                  className={selectClassName}
-                  options={series.map((entry) => ({
-                    value: entry.dataKey,
-                    label: entry.name,
-                  }))}
-                />
-              </label>
-              <p className="delpi-ui-chart-series-colors__section">{copy.appearanceLabel}</p>
-              <div className="delpi-ui-chart-series-colors__row">
-                <span className="delpi-ui-chart-series-colors__row-name">{copy.colorLabel}</span>
-                <ColorPickerPopoverTrigger
-                  variant="fill"
-                  showNoFill={false}
-                  value={fillValue}
-                  onChange={(color) => onChange(selected.dataKey, color)}
-                  triggerLabel={copy.colorLabel}
-                  triggerAriaLabel={`Cor da série ${selected.name}`}
-                  triggerClassName="delpi-ui-chart-series-colors__picker"
-                />
+              <div className="delpi-ui-chart-series-colors__block">
+                <label className="delpi-ui-chart-series-colors__field">
+                  <InspectorHintLabel
+                    label={copy.seriesLabel}
+                    hint={hints?.series}
+                    className="delpi-ui-chart-series-colors__field-label"
+                  />
+                  <FormSelectControl
+                    id={`${idPrefix}-series`}
+                    ariaLabel={copy.seriesLabel}
+                    value={selected.dataKey}
+                    onChange={setSelectedKey}
+                    allowEmpty={false}
+                    searchable={false}
+                    portalScopeClassName={portalScopeClassName}
+                    className={selectClassName}
+                    options={series.map((entry) => ({
+                      value: entry.dataKey,
+                      label: entry.name,
+                    }))}
+                  />
+                </label>
               </div>
-              {onVisibleChange ? (
-                <NativeCheckboxControl
-                  id={`${idPrefix}-visible`}
-                  checked={selected.visible !== false}
-                  disabled={selected.visible !== false && visibleCount <= 1}
-                  onChange={(checked) => onVisibleChange(selected.dataKey, checked)}
-                  label={copy.visibleLabel}
+              <div className="delpi-ui-chart-series-colors__block">
+                <InspectorHintLabel
+                  label={copy.appearanceLabel}
+                  hint={hints?.appearance}
+                  className="delpi-ui-chart-series-colors__section"
                 />
-              ) : null}
+                <div className="delpi-ui-chart-series-colors__row">
+                  <InspectorHintLabel
+                    label={copy.colorLabel}
+                    hint={hints?.color}
+                    className="delpi-ui-chart-series-colors__row-name"
+                  />
+                  <ColorPickerPopoverTrigger
+                    variant="fill"
+                    showNoFill={false}
+                    value={fillValue}
+                    onChange={(color) => onChange(selected.dataKey, color)}
+                    triggerLabel={copy.colorLabel}
+                    triggerAriaLabel={`Cor da série ${selected.name}`}
+                    triggerClassName="delpi-ui-chart-series-colors__picker"
+                  />
+                </div>
+                {onVisibleChange ? (
+                  <NativeCheckboxControl
+                    id={`${idPrefix}-visible`}
+                    checked={selected.visible !== false}
+                    disabled={selected.visible !== false && visibleCount <= 1}
+                    onChange={(checked) => onVisibleChange(selected.dataKey, checked)}
+                    label={copy.visibleLabel}
+                    hint={hints?.visible}
+                    hintPlacement={hints?.visible ? "tooltip" : "inline"}
+                    hintAriaLabel="Ajuda: visibilidade da série"
+                  />
+                ) : null}
+              </div>
               {selected.trendCapable !== false && onTrendChange ? (
-                <>
-                  <p className="delpi-ui-chart-series-colors__section">
-                    {copy.trendSectionLabel}
-                  </p>
+                <div className="delpi-ui-chart-series-colors__block">
+                  <div className="delpi-ui-chart-series-colors__section-row">
+                    <InspectorHintLabel
+                      label={copy.trendSectionLabel}
+                      hint={hints?.trend}
+                      className="delpi-ui-chart-series-colors__section"
+                    />
+                    {selected.trendEnabled ? (
+                      <span
+                        className="delpi-ui-chart-series-colors__readonly"
+                        title={copy.trendTypeLabel}
+                      >
+                        {copy.trendTypeLinearLabel}
+                      </span>
+                    ) : null}
+                  </div>
                   <NativeCheckboxControl
                     id={`${idPrefix}-trend`}
                     checked={Boolean(selected.trendEnabled)}
                     onChange={(checked) => onTrendChange(selected.dataKey, checked)}
                     label={copy.trendEnableLabel}
+                    hint={hints?.trend}
+                    hintPlacement={hints?.trend ? "tooltip" : "inline"}
+                    hintAriaLabel="Ajuda: linha de tendência"
                   />
                   {selected.trendEnabled ? (
-                    <>
+                    <div className="delpi-ui-chart-series-colors__trend-options">
                       <div className="delpi-ui-chart-series-colors__row">
-                        <span className="delpi-ui-chart-series-colors__row-name">
-                          {copy.trendTypeLabel}
-                        </span>
-                        <span className="delpi-ui-chart-series-colors__readonly">
-                          {copy.trendTypeLinearLabel}
-                        </span>
-                      </div>
-                      <div className="delpi-ui-chart-series-colors__row">
-                        <span className="delpi-ui-chart-series-colors__row-name">
-                          {copy.trendColorLabel}
-                        </span>
+                        <InspectorHintLabel
+                          label={copy.trendColorLabel}
+                          hint={hints?.trendColor}
+                          className="delpi-ui-chart-series-colors__row-name"
+                        />
                         <ColorPickerPopoverTrigger
                           variant="fill"
                           showNoFill={false}
                           showAutomatic
                           automaticLabel={copy.trendColorAutoLabel}
                           automaticPreview={fillValue}
-                          value={trendAutomatic ? AUTOMATIC_TEXT_COLOR : selected.trendColor ?? ""}
+                          value={
+                            trendAutomatic
+                              ? AUTOMATIC_TEXT_COLOR
+                              : selected.trendColor ?? ""
+                          }
                           onChange={(color) => persistTrendColor(selected.dataKey, color)}
                           onAutomatic={() => persistTrendColor(selected.dataKey, "")}
                           triggerLabel={
@@ -303,7 +369,7 @@ export function ChartSeriesColorsPopover({
                         />
                       </div>
                       {onTrendStyleChange ? (
-                        <>
+                        <div className="delpi-ui-chart-series-colors__pair">
                           <label className="delpi-ui-chart-series-colors__field">
                             <span className="delpi-ui-chart-series-colors__field-label">
                               {copy.trendDashLabel}
@@ -351,7 +417,7 @@ export function ChartSeriesColorsPopover({
                               ]}
                             />
                           </label>
-                        </>
+                        </div>
                       ) : null}
                       {onIncompleteBucketWeightChange ? (
                         <NativeCheckboxControl
@@ -360,40 +426,40 @@ export function ChartSeriesColorsPopover({
                           disabled={selected.trendApplyIncompleteBucket === false}
                           onChange={onIncompleteBucketWeightChange}
                           label={copy.trendWeightIncompleteLabel}
-                          hint={incompleteBucketWeightHint}
-                          hintPlacement={
-                            incompleteBucketWeightHint ? "tooltip" : "inline"
-                          }
+                          hint={incompleteHint}
+                          hintPlacement={incompleteHint ? "tooltip" : "inline"}
                           hintAriaLabel={incompleteBucketWeightHintAriaLabel}
                         />
                       ) : null}
-                    </>
+                    </div>
                   ) : null}
-                </>
+                </div>
               ) : null}
             </>
           ) : null}
-          <div className="delpi-ui-chart-series-colors__actions">
-            {onResetSeries && selected ? (
-              <button
-                type="button"
-                className="delpi-ui-chart-series-colors__reset"
-                onClick={() => onResetSeries(selected.dataKey)}
-              >
-                {resetSeriesLabel}
-              </button>
-            ) : null}
-            {onReset ? (
-              <button
-                type="button"
-                className="delpi-ui-chart-series-colors__reset"
-                disabled={!dirty}
-                onClick={() => onReset()}
-              >
-                {resetLabel}
-              </button>
-            ) : null}
-          </div>
+          {onResetSeries || onReset ? (
+            <div className="delpi-ui-chart-series-colors__actions delpi-ui-chart-series-colors__block">
+              {onResetSeries && selected ? (
+                <button
+                  type="button"
+                  className="delpi-ui-chart-series-colors__reset"
+                  onClick={() => onResetSeries(selected.dataKey)}
+                >
+                  {resetSeriesLabel}
+                </button>
+              ) : null}
+              {onReset ? (
+                <button
+                  type="button"
+                  className="delpi-ui-chart-series-colors__reset"
+                  disabled={!dirty}
+                  onClick={() => onReset()}
+                >
+                  {resetLabel}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </AnchoredPanelPortal>
     </div>

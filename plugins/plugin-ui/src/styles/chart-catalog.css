@@ -495,12 +495,12 @@
 .delpi-ui-chart-series-colors__panel {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
   min-width: 248px;
   max-width: min(340px, calc(100vw - 24px));
   max-height: min(64vh, 480px);
   overflow: auto;
-  padding: 10px 12px;
+  padding: 10px 12px 8px;
   border: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));
   border-radius: 12px;
   background: var(--delpi-ui-surface, var(--surface, #fff));
@@ -510,8 +510,65 @@
 
 .delpi-ui-chart-series-colors__panel-title {
   margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid color-mix(
+    in srgb,
+    var(--delpi-ui-border, var(--border, #e5e7eb)) 70%,
+    transparent
+  );
   font-size: 13px;
   font-weight: 600;
+}
+
+.delpi-ui-chart-series-colors__block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 0 8px;
+}
+
+.delpi-ui-chart-series-colors__field > .delpi-ui-help-tooltip--wrap,
+.delpi-ui-chart-series-colors__block > .delpi-ui-help-tooltip--wrap {
+  align-self: flex-start;
+}
+
+.delpi-ui-chart-series-colors__block + .delpi-ui-chart-series-colors__block {
+  border-top: 1px solid color-mix(
+    in srgb,
+    var(--delpi-ui-border, var(--border, #e5e7eb)) 70%,
+    transparent
+  );
+}
+
+.delpi-ui-chart-series-colors__section-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.delpi-ui-chart-series-colors__section-row > .delpi-ui-help-tooltip--wrap {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.delpi-ui-chart-series-colors__pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.delpi-ui-chart-series-colors__trend-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.delpi-ui-chart-series-colors__hint {
+  cursor: help;
+  text-decoration: underline dotted color-mix(in srgb, currentColor 48%, transparent);
+  text-underline-offset: 2px;
 }
 
 .delpi-ui-chart-series-colors__row {
@@ -567,7 +624,7 @@
 }
 
 .delpi-ui-chart-series-colors__section {
-  margin: 2px 0 0;
+  margin: 0;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -596,6 +653,7 @@
   flex-wrap: wrap;
   gap: 8px 16px;
   align-items: center;
+  padding-bottom: 2px;
 }
 
 :root[data-theme="dark"] .delpi-ui-chart-series-colors__panel {

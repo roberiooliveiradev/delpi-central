@@ -31,7 +31,7 @@ import {
 } from "../../../app/commercialUi";
 import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
 import { CUSTOMER_BILLING_CONTENT } from "../../../content/customerBillingContent";
-import { CM_HELP } from "../../../content/helpTooltips";
+import { CM_CHART_SERIES_HINTS, CM_HELP } from "../../../content/helpTooltips";
 import {
   appendBillingNatureContext,
   billingNatureShortLabel,
@@ -446,6 +446,7 @@ export function CustomerBillingSeriesChart({
                     seriesTrend: { ...(prev.seriesTrend ?? {}), [dataKey]: enabled },
                   }))
                 }
+                hints={CM_CHART_SERIES_HINTS}
                 incompleteBucketWeighted={
                   incompleteBucketMode === "weightByFraction"
                 }
@@ -454,8 +455,6 @@ export function CustomerBillingSeriesChart({
                     incompleteBucketMode: weighted ? "weightByFraction" : "exclude",
                   })
                 }
-                incompleteBucketWeightHint={CM_HELP.customers.billingTrendIncomplete}
-                incompleteBucketWeightHintAriaLabel="Ajuda: tendência em período parcial"
                 onTrendStyleChange={(dataKey, style) =>
                   setPreferences((prev) => ({
                     ...prev,

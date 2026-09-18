@@ -258,7 +258,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Posso mudar as cores das séries do gráfico?",
-          a: "Sim. Nos gráficos com toolbar (Visão geral, Minha Carteira, Conta), use Séries para escolher a série, alterar cor, ocultar ou ativar tendência linear — inclusive Ano ant. e demais comparativos. A tendência «Automática» acompanha a cor da série. «Ponderar período parcial» fica nas opções da tendência. A escolha fica neste navegador; «Restaurar padrão» volta aos defaults da série selecionada. Opções guarda a comparação de anos.",
+          a: "Sim. Nos gráficos com toolbar (Visão geral, Minha Carteira, Conta), use Séries para escolher a série, alterar cor, ocultar ou ativar tendência linear — inclusive Ano ant. e demais comparativos. Passe o mouse nos títulos das seções (Aparência, Linha de tendência) e nos campos com sublinhado pontilhado para ver a ajuda. A tendência «Automática» acompanha a cor da série. «Ponderar período parcial» fica nas opções da tendência. A escolha fica neste navegador; «Restaurar padrão» volta aos defaults da série selecionada. Opções guarda a comparação de anos.",
         },
         {
           q: "Cadê o GR / telão de vendas?",

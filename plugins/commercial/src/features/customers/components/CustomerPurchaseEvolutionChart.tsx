@@ -34,7 +34,7 @@ import {
   type PortfolioBillingMetric,
 } from "../../../content/billingMetric";
 import { CUSTOMER_BILLING_CONTENT } from "../../../content/customerBillingContent";
-import { CM_HELP } from "../../../content/helpTooltips";
+import { CM_CHART_SERIES_HINTS, CM_HELP } from "../../../content/helpTooltips";
 import { formatCurrency, formatQuantity } from "../../../utils/format";
 import { buildPurchaseEvolutionExportPayload } from "../utils/billingSeriesExportBuilders";
 import type {
@@ -270,6 +270,7 @@ export function CustomerPurchaseEvolutionChart({
                     : { ...(prev.hiddenSeries ?? {}), [dataKey]: true },
                 }))
               }
+              hints={CM_CHART_SERIES_HINTS}
               onTrendChange={(dataKey, enabled) =>
                 setPreferences((prev) => ({
                   ...prev,

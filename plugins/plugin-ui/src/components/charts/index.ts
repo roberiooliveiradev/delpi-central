@@ -321,6 +321,7 @@ export {
   ChartSeriesColorsPopover,
   type ChartSeriesColorItem,
   type ChartSeriesColorsPopoverProps,
+  type ChartSeriesConfigHints,
   type ChartSeriesConfigLabels,
 } from "./ChartSeriesColorsPopover";
 

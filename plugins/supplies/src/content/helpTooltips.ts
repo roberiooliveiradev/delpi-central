@@ -70,6 +70,12 @@ export const SP_HELP = {
     "Série de OTD de pedidos de compra com ChartViewShell completo (granularidade, tipo, YoY, cores e exportação). Usa o mesmo filtro de unidade e período da Visão geral. Abra OTD para ver os velocímetros.",
   overviewCompareChart:
     "Barras valor × meta só para KPIs de intervalo que já vieram no overview — com tipo, cores e exportação; não inventa série CPV/Savings.",
+  overviewChartSeriesPicker:
+    "Escolha qual série deste gráfico editar — incluindo comparativos quando o overlay de ano anterior estiver ativo.",
+  overviewChartSeriesAppearance:
+    "Cor só da série escolhida. «Restaurar todas» limpa as cores personalizadas deste gráfico neste navegador.",
+  overviewChartSeriesColor:
+    "Cor desta série no gráfico. Aplica somente à série selecionada.",
   otdAnalyticsPage:
     "Pontualidade de compras com velocímetros por unidade (Santa Catarina / Espírito Santo) e evolução no tempo. Diferente da Visão geral (placar de KPIs) e de Entregas (atrasos do dia).",
   purchaseRequests:
@@ -158,4 +164,11 @@ export const SP_HELP = {
     "Filial padrão e densidade de tabelas valem só neste Portal. Só você edita o próprio perfil; administradores podem ler outros usuários.",
   forbiddenUnit:
     "Você não tem permissão para esta filial ou para este módulo. Peça o acesso canônico do Portal ao administrador — aliases antigos sozinhos não abrem o app.",
+} as const;
+
+/** Hints do inspector Séries (COLOR_ONLY nos gráficos da Visão geral). */
+export const SP_CHART_SERIES_HINTS = {
+  series: SP_HELP.overviewChartSeriesPicker,
+  appearance: SP_HELP.overviewChartSeriesAppearance,
+  color: SP_HELP.overviewChartSeriesColor,
 } as const;

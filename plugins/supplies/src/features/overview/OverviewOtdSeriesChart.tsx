@@ -24,7 +24,7 @@ import {
   SP_PORTAL_SCOPE,
   useChartGranularitySelection,
 } from "../../app/suppliesUi";
-import { SP_HELP } from "../../content/helpTooltips";
+import { SP_CHART_SERIES_HINTS, SP_HELP } from "../../content/helpTooltips";
 import { mapOverviewFetchError, OVERVIEW_CONTENT } from "./overviewContent";
 import { mergeSeriesWithPriorYear, shiftPeriodRangeByYears } from "./periodShift";
 import type { OverviewApiParams } from "./useOverviewFilters";
@@ -249,6 +249,7 @@ export function OverviewOtdSeriesChart({
               panelTitle={OVERVIEW_CONTENT.chartSeriesColorsPanelTitle}
               triggerAriaLabel={OVERVIEW_CONTENT.chartSeriesColorsTriggerAria}
               resetLabel={OVERVIEW_CONTENT.chartSeriesColorsReset}
+              hints={SP_CHART_SERIES_HINTS}
               onChange={(dataKey: string, color: string) =>
                 setPreferences((prev) => ({
                   ...prev,

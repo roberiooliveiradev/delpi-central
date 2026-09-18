@@ -37,7 +37,7 @@ import {
   type PortfolioBillingMetric,
 } from "../../../../content/billingMetric";
 import { CUSTOMER_BILLING_CONTENT } from "../../../../content/customerBillingContent";
-import { CM_HELP } from "../../../../content/helpTooltips";
+import { CM_CHART_SERIES_HINTS, CM_HELP } from "../../../../content/helpTooltips";
 import { resolveCalendarBucketFraction } from "../../../../utils/linearTrendSeries";
 import { buildBillingSeriesExportPayload } from "../../utils/billingSeriesExportBuilders";
 import { useCustomerBillingSeries } from "../../hooks/useCustomerBillingSeries";
@@ -333,6 +333,7 @@ export function CustomerAccountBillingChart({
                       seriesTrend: { ...(prev.seriesTrend ?? {}), [dataKey]: enabled },
                     }))
                   }
+                  hints={CM_CHART_SERIES_HINTS}
                   incompleteBucketWeighted={
                     incompleteBucketMode === "weightByFraction"
                   }
@@ -343,8 +344,6 @@ export function CustomerAccountBillingChart({
                         : "exclude",
                     })
                   }
-                  incompleteBucketWeightHint={CM_HELP.customers.billingTrendIncomplete}
-                  incompleteBucketWeightHintAriaLabel="Ajuda: tendência em período parcial"
                   onTrendStyleChange={(dataKey, style) =>
                     setPreferences((prev) => ({
                       ...prev,

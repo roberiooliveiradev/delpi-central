@@ -17,7 +17,7 @@ import {
   SuppliesTabularExportButtons,
   SP_PORTAL_SCOPE,
 } from "../../app/suppliesUi";
-import { SP_HELP } from "../../content/helpTooltips";
+import { SP_CHART_SERIES_HINTS, SP_HELP } from "../../content/helpTooltips";
 import { OVERVIEW_CONTENT } from "./overviewContent";
 
 type OverviewCompareChartProps = {
@@ -112,6 +112,7 @@ export function OverviewCompareChart({
               panelTitle={OVERVIEW_CONTENT.chartSeriesColorsPanelTitle}
               triggerAriaLabel={OVERVIEW_CONTENT.chartSeriesColorsTriggerAria}
               resetLabel={OVERVIEW_CONTENT.chartSeriesColorsReset}
+              hints={SP_CHART_SERIES_HINTS}
               onChange={(dataKey: string, color: string) =>
                 setPreferences((prev) => ({
                   ...prev,

@@ -162,7 +162,7 @@ Não. São conceitos diferentes: ROL é faturamento no período; carteira aberta
 Por padrão a tendência **exclui** o bucket incompleto. Em **Séries**, com a tendência ativa, «Ponderar período parcial» inclui o valor do período atual escalado pelo % já decorrido — não altera as séries de anos anteriores.
 
 **Posso mudar as cores das séries do gráfico?**  
-Sim. Nos gráficos com toolbar (**Visão geral**, **Minha Carteira**, **Conta**), use **Séries** para escolher a série, alterar cor, ocultar ou ativar tendência linear — inclusive **Ano ant.** e demais comparativos. A tendência **Automática** acompanha a cor da série. «Ponderar período parcial» fica nas opções da tendência. A escolha fica neste navegador; **Restaurar padrão** volta aos defaults da série selecionada. **Opções** guarda a comparação de anos.
+Sim. Nos gráficos com toolbar (**Visão geral**, **Minha Carteira**, **Conta**), use **Séries** para escolher a série, alterar cor, ocultar ou ativar tendência linear — inclusive **Ano ant.** e demais comparativos. Passe o mouse nos títulos das seções (**Aparência**, **Linha de tendência**) e nos campos com sublinhado pontilhado para ver a ajuda. A tendência **Automática** acompanha a cor da série. «Ponderar período parcial» fica nas opções da tendência. A escolha fica neste navegador; **Restaurar padrão** volta aos defaults da série selecionada. **Opções** guarda a comparação de anos.
 
 **Como comparo com o ano passado?**  
 Na Visão geral / gráficos, use a opção de **comparar ano anterior** (quando disponível no gráfico).

@@ -736,6 +736,18 @@ export const CM_HELP = {
     filters:
       "Datas, competência, atalho de período (hoje…últimos 12 meses), unidade, segmento, cliente(s) e carteira (quando permitido) aplicados aos painéis de período. O KPI «Carteira em aberto» é snapshot agora e ignora o período.",
     kpis: "Indicadores do período: ROL vs meta SI (natureza líquido; consolidado = realizado+meta SC+ES pelo SI), conversão, OTD% e novos negócios. «Carteira em aberto» é valor aberto de pedido (snapshot) — não some com ROL e não é programação do PCP. Bruto só com contrato BFF.",
+    chartSeriesPicker:
+      "Escolha qual série editar. A lista inclui a métrica atual e comparativos (Ano ant., −2/−3 anos e quantidades), quando o gráfico tiver esses overlays.",
+    chartSeriesAppearance:
+      "Cor e visibilidade só da série escolhida. Ocultar tira a série do gráfico, mas ela continua na lista para reativar.",
+    chartSeriesColor:
+      "Cor desta série no gráfico. Aplica somente à série selecionada — as outras séries não mudam.",
+    chartSeriesVisible:
+      "Desligar oculta a série no gráfico. Pelo menos uma série precisa permanecer visível.",
+    chartSeriesTrend:
+      "Regressão linear só desta série. O default é desligada. Com Ativar, defina cor (Automática = cor da série), estilo, espessura e ponderação do período parcial.",
+    chartSeriesTrendColor:
+      "Automática usa a mesma cor da série (a cor real pintada, inclusive tokens do tema). Uma cor explícita fica só na linha de tendência.",
     rolSeries:
       "Evolução do ROL no período. Com «Unidade (indicadores)» em Todas, compara Santa Catarina e Espírito Santo; com uma unidade selecionada, mostra só essa série. Em Séries, configure cor, visibilidade e tendência linear de cada série (incluindo comparativos de ano anterior); «Restaurar padrão» volta aos defaults da série. A tendência não aparece em Opções.",
     rolSeriesYoy:
@@ -824,6 +836,17 @@ export const CM_HELP = {
       prazo: "Prazo de entrega do item em dias, quando informado.",
     },
   },
+} as const;
+
+/** Hints do inspector Séries — uma fonte, todos os gráficos ChartViewShell. */
+export const CM_CHART_SERIES_HINTS = {
+  series: CM_HELP.overview.chartSeriesPicker,
+  appearance: CM_HELP.overview.chartSeriesAppearance,
+  color: CM_HELP.overview.chartSeriesColor,
+  visible: CM_HELP.overview.chartSeriesVisible,
+  trend: CM_HELP.overview.chartSeriesTrend,
+  trendColor: CM_HELP.overview.chartSeriesTrendColor,
+  incompleteBucket: CM_HELP.customers.billingTrendIncomplete,
 } as const;
 
 /** Alias estável usado na coluna Tendência da carteira. */

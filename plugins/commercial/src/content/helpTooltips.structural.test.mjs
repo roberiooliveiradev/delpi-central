@@ -48,6 +48,12 @@ describe("CM_HELP matriz (C16)", () => {
       "overview.page",
       "overview.filters",
       "overview.kpis",
+      "overview.chartSeriesPicker",
+      "overview.chartSeriesAppearance",
+      "overview.chartSeriesColor",
+      "overview.chartSeriesVisible",
+      "overview.chartSeriesTrend",
+      "overview.chartSeriesTrendColor",
       "overview.rolSeries",
       "overview.rolSeriesYoy",
       "overview.closingRateSeries",
@@ -154,5 +160,19 @@ describe("CM_HELP matriz (C16)", () => {
     assert.match(source, /≠ PCP|Em aberto \(agora\)/);
     assert.match(helps, /openPortfolio:[\s\S]*PCP/);
     assert.match(helps, /openPortfolio:[\s\S]*não deve ser somada ao ROL|não some com ROL/i);
+  });
+
+  it("inspector de séries consome CM_CHART_SERIES_HINTS", () => {
+    const files = [
+      "features/customers/components/CustomerBillingSeriesChart.tsx",
+      "features/customers/billing/components/CustomerAccountBillingChart.tsx",
+      "features/customers/components/CustomerPurchaseEvolutionChart.tsx",
+      "features/analytics/components/AnalyticsRolSeriesChart.tsx",
+      "features/analytics/components/AnalyticsClosingRateSeriesChart.tsx",
+    ];
+    for (const file of files) {
+      const source = readFileSync(join(src, file), "utf8");
+      assert.match(source, /CM_CHART_SERIES_HINTS/, file);
+    }
   });
 });
