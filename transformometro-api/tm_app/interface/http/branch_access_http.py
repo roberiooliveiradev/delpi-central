@@ -63,24 +63,6 @@ def require_transformometro_view_access(request: Request) -> JSONResponse | None
     return None
 
 
-def require_unrestricted_catalog_admin(request: Request) -> JSONResponse | None:
-    """Configurações ficam em Administração. Só transformometro.manage."""
-    try:
-        _policy().require_manage(_user(request))
-    except AuthorizationDenied as exc:
-        return _as_response(exc)
-    return None
-
-
-def require_shared_resources_manage(request: Request) -> JSONResponse | None:
-    """Catálogo de recursos compartilhados é settings, portanto manage."""
-    try:
-        _policy().require_manage(_user(request))
-    except AuthorizationDenied as exc:
-        return _as_response(exc)
-    return None
-
-
 def resolve_filial_codigo(filial_ref: str | None) -> str | None:
     if not filial_ref:
         return None

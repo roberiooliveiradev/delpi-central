@@ -31,10 +31,10 @@ _snapshot = DashboardSnapshotReadService()
 _authz = TransformometroAuthorizationPolicy()
 
 
-def _require_dashboard_recalculate(request: Request):
+def _require_access(request: Request):
     user = getattr(request.state, "user", None)
     try:
-        _authz.require_dashboard_recalculate(user)
+        _authz.require_access(user)
     except AuthorizationDenied as exc:
         return fail(str(exc), exc.status_code)
     return None
@@ -66,7 +66,7 @@ def recalcular_dashboard(
     competencia_fim: str | None = None,
 ):
     """Opcional: atualiza cache em `dashboard_calculos`. As rotas GET já calculam em tempo real."""
-    if denied := _require_dashboard_recalculate(request):
+    if denied := _require_access(request):
         return denied
     try:
         result = DashboardRecalcService().recalculate(

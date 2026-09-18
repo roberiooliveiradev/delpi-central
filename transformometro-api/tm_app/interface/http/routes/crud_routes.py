@@ -115,8 +115,7 @@ from tm_app.interface.http.branch_access_http import (
     check_processo_view_access,
     check_view_filial_access,
     filter_rows_for_access,
-    require_shared_resources_manage,
-    require_unrestricted_catalog_admin,
+    require_transformometro_view_access,
 )
 
 router = APIRouter(prefix="/transformometro", tags=["Transformômetro CRUD"])
@@ -1180,7 +1179,7 @@ def get_filial(filial_id: str, request: Request):
 @router.post("/filiais",
     operation_id="create_filial")
 def create_filial(body: FilialBody, request: Request):
-    if err := require_unrestricted_catalog_admin(request):
+    if err := require_transformometro_view_access(request):
         return err
     try:
         _validate_filial_body(body, is_create=True)
@@ -1199,7 +1198,7 @@ def create_filial(body: FilialBody, request: Request):
 @router.put("/filiais/{filial_id}",
     operation_id="update_filial")
 def update_filial(filial_id: str, body: FilialUpdateBody, request: Request):
-    if err := require_unrestricted_catalog_admin(request):
+    if err := require_transformometro_view_access(request):
         return err
     try:
         _validate_filial_body(body, is_create=False)
@@ -1220,7 +1219,7 @@ def update_filial(filial_id: str, body: FilialUpdateBody, request: Request):
 @router.delete("/filiais/{filial_id}",
     operation_id="delete_filial")
 def delete_filial(filial_id: str, request: Request):
-    if err := require_unrestricted_catalog_admin(request):
+    if err := require_transformometro_view_access(request):
         return err
     existing = FilialRepository().get(filial_id)
     if not existing:
@@ -1420,7 +1419,7 @@ def create_recurso_custo(recurso_id: str, body: RecursoCustoBody, request: Reque
 @router.post("/recursos-compartilhados/{recurso_id}/custos/reajuste",
     operation_id="reajuste_recurso_custo")
 def reajuste_recurso_custo(recurso_id: str, body: RecursoCustoReajusteBody, request: Request):
-    if err := require_shared_resources_manage(request):
+    if err := require_transformometro_view_access(request):
         return err
     if not RecursoRepository().get(recurso_id):
         return fail("Recurso não encontrado.", 404)

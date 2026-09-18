@@ -143,7 +143,6 @@ from tm_app.interface.http.branch_access_http import (
     check_view_filial_access,
     filter_rows_for_access,
     require_transformometro_view_access,
-    require_unrestricted_catalog_admin,
 )
 from tm_app.interface.http.schemas.crud_schemas import (
     FilialBody,
@@ -687,7 +686,7 @@ class GptActionsDispatchService:
         data = self._data(payload)
 
         if entity == GptEntity.BRANCH:
-            self._raise_http_err(require_unrestricted_catalog_admin(request))
+            self._raise_http_err(require_transformometro_view_access(request))
             body = FilialBody.model_validate(data)
             assert_in(body.status_filial, STATUS_FILIAL, "status_filial")
             row = FilialRepository().create(body.model_dump())
@@ -764,7 +763,7 @@ class GptActionsDispatchService:
         if entity == GptEntity.SHARED_RESOURCE:
             body = RecursoBody.model_validate(data)
             self._validate_recurso(body)
-            self._raise_http_err(require_unrestricted_catalog_admin(request))
+            self._raise_http_err(require_transformometro_view_access(request))
             row = RecursoRepository().create(body.model_dump())
             rid = str(row["recurso_compartilhado_id"])
             self._audit(request, "recurso", rid, "create", body.model_dump())
@@ -777,7 +776,7 @@ class GptActionsDispatchService:
                 raise GptActionsError("data.recurso_compartilhado_id is required.", 400)
             if not RecursoRepository().get(recurso_id):
                 raise GptActionsError("Recurso não encontrado.", 404)
-            self._raise_http_err(require_unrestricted_catalog_admin(request))
+            self._raise_http_err(require_transformometro_view_access(request))
             body = RecursoCustoBody.model_validate(
                 {
                     k: v
@@ -844,7 +843,7 @@ class GptActionsDispatchService:
         rid = str(record_id)
 
         if entity == GptEntity.BRANCH:
-            self._raise_http_err(require_unrestricted_catalog_admin(request))
+            self._raise_http_err(require_transformometro_view_access(request))
             body = FilialUpdateBody.model_validate(data)
             assert_in(body.status_filial, STATUS_FILIAL, "status_filial")
             row = FilialRepository().update(rid, body.model_dump())
@@ -959,7 +958,7 @@ class GptActionsDispatchService:
             existing = RecursoRepository().get(rid)
             if not existing:
                 raise GptActionsError("Recurso não encontrado.", 404)
-            self._raise_http_err(require_unrestricted_catalog_admin(request))
+            self._raise_http_err(require_transformometro_view_access(request))
             merged = self._merge_named_update_payload(
                 existing,
                 data,
@@ -1085,7 +1084,7 @@ class GptActionsDispatchService:
         rid = str(record_id)
 
         if entity == GptEntity.BRANCH:
-            self._raise_http_err(require_unrestricted_catalog_admin(request))
+            self._raise_http_err(require_transformometro_view_access(request))
             if not FilialRepository().soft_delete(rid):
                 raise GptActionsError("Unidade não encontrada.", 404)
             self._audit(request, "filial", rid, "delete", {})
@@ -1142,7 +1141,7 @@ class GptActionsDispatchService:
             return {"id": rid}, "Investimento removido."
 
         if entity == GptEntity.SHARED_RESOURCE:
-            self._raise_http_err(require_unrestricted_catalog_admin(request))
+            self._raise_http_err(require_transformometro_view_access(request))
             if not RecursoRepository().soft_delete(rid):
                 raise GptActionsError("Recurso não encontrado.", 404)
             self._audit(request, "recurso", rid, "delete", {})
@@ -1150,7 +1149,7 @@ class GptActionsDispatchService:
             return {"id": rid}, "Recurso removido."
 
         if entity == GptEntity.RESOURCE_COST:
-            self._raise_http_err(require_unrestricted_catalog_admin(request))
+            self._raise_http_err(require_transformometro_view_access(request))
             if not RecursoCustoRepository().soft_delete(rid):
                 raise GptActionsError("Custo de recurso não encontrado.", 404)
             self._audit(request, "recurso_custo", rid, "delete", {})
@@ -1279,7 +1278,7 @@ class GptActionsDispatchService:
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
     ) -> dict[str, Any]:
-        self._require_dashboard_recalculate_access(request)
+        self._require_access(request)
         result = DashboardRecalcService().recalculate(
             revisao_id=revisao_id,
             processo_id=processo_id,
@@ -1622,7 +1621,7 @@ class GptActionsDispatchService:
         except AuthorizationDenied as exc:
             raise GptActionsError(str(exc), exc.status_code) from exc
 
-    def _require_dashboard_recalculate_access(self, request: Request) -> None:
+    def _require_access(self, request: Request) -> None:
         """Adapter: MCP e GPT Actions usam a mesma policy do HTTP."""
         from tm_app.application.security.authorization_policy import (
             AuthorizationDenied,
@@ -1631,7 +1630,7 @@ class GptActionsDispatchService:
 
         user = getattr(request.state, "user", None)
         try:
-            TransformometroAuthorizationPolicy().require_dashboard_recalculate(user)
+            TransformometroAuthorizationPolicy().require_access(user)
         except AuthorizationDenied as exc:
             raise GptActionsError(str(exc), exc.status_code) from exc
 

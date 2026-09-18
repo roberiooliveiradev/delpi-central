@@ -1,9 +1,7 @@
-"""Política de autorização do Transformômetro.
+"""Checagem dos dois códigos já resolvidos pela Core.
 
-HTTP, MCP e GPT Actions chamam estes métodos. Não decidem sozinhos.
-Só `transformometro.access` e `transformometro.manage`. Código legado não autoriza.
+Não resolve papel, grupo nem assignment. Não cria hierarquia:
 `manage` não implica `access`. Filial não entra aqui.
-O recálculo interno depois de escrita ou importação não passa por aqui.
 """
 
 from __future__ import annotations
@@ -13,8 +11,8 @@ from typing import Any
 from delpi_auth.authz_core import has_permission
 
 from tm_app.application.security.transformometro_permissions import (
-    TRANSFORMOMETRO_ACCESS,
-    TRANSFORMOMETRO_MANAGE,
+    ACCESS_PERMISSION,
+    MANAGE_PERMISSION,
 )
 
 
@@ -30,15 +28,14 @@ class TransformometroAuthorizationPolicy:
             return False
         if getattr(user, "is_superadmin", False):
             return True
-        return has_permission(user, TRANSFORMOMETRO_ACCESS)
+        return has_permission(user, ACCESS_PERMISSION)
 
     def has_manage(self, user: Any | None) -> bool:
-        """Não herda access."""
         if user is None:
             return False
         if getattr(user, "is_superadmin", False):
             return True
-        return has_permission(user, TRANSFORMOMETRO_MANAGE)
+        return has_permission(user, MANAGE_PERMISSION)
 
     def require_access(self, user: Any | None) -> None:
         self._require_user(user)
@@ -51,18 +48,6 @@ class TransformometroAuthorizationPolicy:
         if self.has_manage(user):
             return
         raise AuthorizationDenied("Sem permissão transformometro.manage.")
-
-    def require_data_transfer(self, user: Any | None) -> None:
-        """Backup do cadastro é uso normal do produto, não gestão de acessos."""
-        self.require_access(user)
-
-    def require_dashboard_recalculate(self, user: Any | None) -> None:
-        """Botão da Visão geral. Reconstrói cache derivado. Não administra o portal."""
-        self.require_access(user)
-
-    def require_shared_resources(self, user: Any | None) -> None:
-        """Uso do recurso no processo. O catálogo de settings usa require_manage."""
-        self.require_access(user)
 
     @staticmethod
     def _require_user(user: Any | None) -> None:

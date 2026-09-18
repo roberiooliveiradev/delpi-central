@@ -25,10 +25,10 @@ router = APIRouter(prefix="/transformometro/data", tags=["Transformômetro — b
 _authz = TransformometroAuthorizationPolicy()
 
 
-def _require_data_transfer(request: Request) -> JSONResponse | None:
+def _require_access(request: Request) -> JSONResponse | None:
     user = getattr(request.state, "user", None)
     try:
-        _authz.require_data_transfer(user)
+        _authz.require_access(user)
     except AuthorizationDenied as exc:
         return fail(str(exc), exc.status_code)
     return None
@@ -37,7 +37,7 @@ def _require_data_transfer(request: Request) -> JSONResponse | None:
 @router.get("/export",
     operation_id="export_json")
 def export_json(request: Request):
-    if denied := _require_data_transfer(request):
+    if denied := _require_access(request):
         return denied
     bundle = JsonBackupService().export_bundle()
     filename = f"transformometro-backup-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}.json"
@@ -52,7 +52,7 @@ def export_json(request: Request):
 @router.get("/export/package",
     operation_id="export_package")
 def export_package(request: Request):
-    if denied := _require_data_transfer(request):
+    if denied := _require_access(request):
         return denied
     try:
         payload = TransformometroBackupPackageService().export_package()
@@ -83,7 +83,7 @@ async def import_package_preview(
     mode: JsonImportMode = Form(default="merge"),
     import_format: str = Form(default="auto"),
 ):
-    if denied := _require_data_transfer(request):
+    if denied := _require_access(request):
         return denied
     try:
         raw = await _read_upload_file(file)
@@ -106,7 +106,7 @@ async def import_package_apply(
     import_format: str = Form(default="auto"),
 ):
     user_id, user_email, user_name = actor_from_request(request)
-    if denied := _require_data_transfer(request):
+    if denied := _require_access(request):
         return denied
     try:
         raw = await _read_upload_file(file)
@@ -146,7 +146,7 @@ async def import_package_apply(
 @router.post("/import/preview",
     operation_id="import_preview")
 def import_preview(body: JsonImportBody, request: Request):
-    if denied := _require_data_transfer(request):
+    if denied := _require_access(request):
         return denied
     result = JsonBackupService().preview(body.data, body.mode, body.import_format)
     if not result.get("valid"):
@@ -158,7 +158,7 @@ def import_preview(body: JsonImportBody, request: Request):
     operation_id="import_apply")
 def import_apply(body: JsonImportBody, request: Request):
     user_id, user_email, user_name = actor_from_request(request)
-    if denied := _require_data_transfer(request):
+    if denied := _require_access(request):
         return denied
     try:
         result = JsonBackupService().apply(body.data, body.mode, body.import_format)

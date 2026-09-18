@@ -192,7 +192,6 @@ class GovernedWriteOrchestrator:
         from tm_app.application.gpt_actions.entities import parse_entity
         from tm_app.interface.http.branch_access_http import (
             require_transformometro_view_access,
-            require_unrestricted_catalog_admin,
         )
 
         parsed = parse_entity(entity)
@@ -204,7 +203,7 @@ class GovernedWriteOrchestrator:
                 status_code=403,
             )
         if entity in {"branch", "shared_resource", "resource_cost"}:
-            err = require_unrestricted_catalog_admin(request)
+            err = require_transformometro_view_access(request)
             if err is not None:
                 raise GovernedWriteError(
                     "Sem permissão de catálogo admin para esta entidade.",
@@ -326,7 +325,7 @@ class GovernedWriteOrchestrator:
         }
 
     def _prep_recalculate(self, request: Request, args: dict[str, Any]) -> dict[str, Any]:
-        self._dispatch._require_dashboard_recalculate_access(request)
+        self._dispatch._require_access(request)
         exact = {
             "revisao_id": args.get("revisao_id"),
             "processo_id": args.get("processo_id"),
