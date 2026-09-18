@@ -25,7 +25,7 @@ class PurchaseRequestsGatewayError(RuntimeError):
 
 
 class PurchaseRequestsGateway:
-    """HTTP client for purchase-requests-api (C1). CC fail-closed stays in PR-api."""
+    """HTTP client for purchase-requests-api. Portal access is global accompaniment."""
 
     OPEN_STAGES = (
         "awaiting_order",

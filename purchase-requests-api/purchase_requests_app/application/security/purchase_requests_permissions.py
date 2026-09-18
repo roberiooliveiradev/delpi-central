@@ -59,6 +59,8 @@ def has_any_module_admin_permission(user) -> bool:
 def has_view_all(user) -> bool:
     if getattr(user, "is_superadmin", False):
         return True
+    if has_permission(user, SUPPLIES_ACCESS):
+        return True
     return has_permission(user, VIEW_ALL_PERMISSION)
 
 

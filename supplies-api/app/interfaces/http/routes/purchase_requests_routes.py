@@ -72,7 +72,7 @@ def _unwrap_data(payload: Any) -> Any:
 @require_policy(can_use_purchase_requests)
 @require_units("branch")
 def list_portal_purchase_requests():
-    """operationId: list_portal_purchase_requests — C1 gateway; CC fail-closed in PR-api."""
+    """operationId: list_portal_purchase_requests — BFF; supplies.access vê o recorte global."""
     try:
         payload = _GATEWAY.list_purchase_requests(
             access_token=_access_token(),

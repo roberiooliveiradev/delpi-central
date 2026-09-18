@@ -2,13 +2,13 @@ export const PURCHASE_REQUESTS_CONTENT = {
   title: "Solicitações de compras",
   eyebrow: "Portal Suprimentos",
   description:
-    "Itens de solicitações de compra no período selecionado e no seu escopo de unidade e centro de custo. Clique na SC para abrir a ficha.",
+    "Acompanhamento global das solicitações no período. A unidade é filtro, não permissão. Clique na SC para abrir a ficha.",
   helpAriaLabel: "Ajuda sobre solicitações de compras",
   filtersAriaLabel: "Filtros de solicitações de compras",
   filtersTitle: "Filtros",
   listTitle: "Lista de solicitações",
   listHint:
-    "Linhas no escopo CC + unidade. Clique na SC ou na linha para abrir a ficha. Lista vazia pode significar falta de CC liberado.",
+    "Clique na SC ou na linha para abrir a ficha. Lista vazia significa ausência de item no período ou nos filtros.",
   tableMeta: (columns: number, rows: number) =>
     `${columns} coluna(s) · ${rows.toLocaleString("pt-BR")} linha(s)`,
   cardsMeta: (rows: number) => `${rows.toLocaleString("pt-BR")} linha(s)`,
@@ -29,7 +29,7 @@ export const PURCHASE_REQUESTS_CONTENT = {
   refreshAction: "Atualizar",
   updatedAtLabel: (time: string) => `Atualizado às ${time}`,
   exportLabel: "Excel",
-  exportTitle: "Baixa o recorte filtrado em Excel (exige permissão de exportação)",
+  exportTitle: "Baixa o recorte filtrado em Excel",
   excelExporting: "Gerando Excel…",
   excelError: "Não foi possível exportar o Excel.",
   viewAriaLabel: "Modo de visualização",
@@ -43,7 +43,7 @@ export const PURCHASE_REQUESTS_CONTENT = {
   loading: "Carregando solicitações…",
   emptyTitle: "Nenhuma solicitação neste recorte",
   emptyMessage:
-    "Ajuste filtros ou período. Sem centros de custo liberados, a lista fica vazia (fail-closed).",
+    "Ajuste filtros ou período. Nesta tela o uso normal do Portal acompanha as solicitações das duas unidades.",
   noUnitsTitle: "Nenhuma unidade liberada",
   noUnitsMessage:
     "Seu acesso não inclui unidades neste módulo. Peça o escopo canônico ao administrador.",
@@ -56,8 +56,8 @@ export const PURCHASE_REQUESTS_CONTENT = {
   detailTitle: "Solicitação",
   detailEyebrow: "Solicitação de compra",
   detailDescription:
-    "Dados da solicitação e itens visíveis no seu escopo de unidade e centro de custo.",
-  detailHint: "Itens visíveis no seu escopo de unidade e centro de custo.",
+    "Dados da solicitação e de todos os itens. A unidade é o recorte do filtro.",
+  detailHint: "Itens da solicitação no recorte escolhido.",
   detailBack: "Solicitações de compras",
   detailLoading: "Carregando a solicitação…",
   detailError: "Não foi possível carregar esta solicitação de compra.",

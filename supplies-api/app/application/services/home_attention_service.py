@@ -20,7 +20,7 @@ ATTENTION_CARD_DEFS: tuple[dict[str, str], ...] = (
         "id": "purchase_requests",
         "viewId": "purchase_requests",
         "title": "Solicitações de compras",
-        "description": "SCs no seu escopo de centro de custo e filial.",
+        "description": "Acompanhamento global das solicitações no período.",
         "requiredCap": "access",
     },
     {

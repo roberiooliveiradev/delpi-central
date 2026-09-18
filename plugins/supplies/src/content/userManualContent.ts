@@ -153,7 +153,7 @@ export const USER_MANUAL_CONTENT = {
         "Visão geral — indicadores consolidados do período e das unidades selecionadas; itens operacionais em Solicitações e Operações.",
         "OTD — velocímetros de pontualidade e evolução; abra pelo Início, catálogo Análises ou CTA da Visão geral.",
         "Pedidos de compra — itens com saldo pendente de recebimento no recorte; hero com linhas/valor/atrasadas; Atenção Todos(N)/Atrasados(N) do resumo do servidor; filtros automáticos, Atualizar; Unidade como Santa Catarina / Espírito Santo; clique no PC para a ficha. Distinto do OTD de pontualidade.",
-        "Solicitações de compras — itens no período e no escopo de centro de custo; clique na SC para a ficha em página própria; exportação Excel faz parte do uso normal.",
+        "Solicitações de compras — acompanhamento global no período; clique na SC para a ficha; exportação Excel faz parte do uso normal.",
         "Operações — pedidos, entregas, fornecedores, produtos, estoque e ESTSEG.",
         "Indicadores / Negociações — recorte analítico quando liberado.",
         "Administração — mappings e configurações.",
@@ -187,7 +187,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Por que a lista de SC vem vazia?",
-          a: "Sem centros de custo liberados, a lista de solicitações fica vazia. Peça o escopo de centro de custo ao administrador. Não existe permissão separada de visão ampla.",
+          a: "Nesta tela o uso normal do Portal acompanha as solicitações das duas unidades. O recorte de centro de custo vale só no módulo próprio de Solicitações, não no Portal Suprimentos.",
         },
         {
           q: "Por que não vejo Exportar CSV?",
