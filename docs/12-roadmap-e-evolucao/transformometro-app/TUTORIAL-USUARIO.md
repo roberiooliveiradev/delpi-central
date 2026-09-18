@@ -1,7 +1,7 @@
 # Tutorial de uso — Transformômetro
 
 **Público:** gestores, analistas de processo e usuários operacionais  
-**Última atualização:** set/2026. Configurações deixou de ser área principal: o caminho é **Administração → Configurações**. O restante deste guia (cadastro, diagrama, revisão) continua válido.  
+**Última atualização:** set/2026. A navegação do dia a dia está no manual do portal: barra superior → **Ajuda** (`/apps/transformometro/help`). Este arquivo continua o guia de modelagem (cadastro, diagrama, revisão). Configurações deixou de ser área principal: o caminho é **Administração → Configurações**.  
 **Acesso:** Minha Delpi → menu **Transformômetro** (`/apps/transformometro`)
 
 Este guia explica **como cadastrar corretamente**, **como usar diagramas** (macro → escopo → revisão) e **como tirar proveito das demais funcionalidades** do app.

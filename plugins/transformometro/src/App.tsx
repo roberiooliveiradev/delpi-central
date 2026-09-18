@@ -9,6 +9,7 @@ import {
 import { FloatingNoticeProvider } from "./components/ui/FloatingNoticeProvider";
 import { DashboardPage } from "./ui/pages/DashboardPage";
 import { PortalHomePage } from "./ui/pages/PortalHomePage";
+import { HelpPage } from "./ui/pages/HelpPage";
 import { AdministrationPage } from "./ui/pages/AdministrationPage";
 import {
   SettingsWorkspacePage,
@@ -52,6 +53,8 @@ function AppRoutes({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
 
   if (route.view === "home") {
     page = <PortalHomePage pathname={pathname} onNavigate={onNavigate} />;
+  } else if (route.view === "help") {
+    page = <HelpPage pathname={pathname} onNavigate={onNavigate} />;
   } else if (route.view === "administration") {
     page = <AdministrationPage pathname={pathname} onNavigate={onNavigate} />;
   } else if (route.view === "dashboard") {

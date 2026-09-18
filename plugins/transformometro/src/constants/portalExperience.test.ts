@@ -15,9 +15,11 @@ import {
   PROCESS_LIST_SUBTITLE,
   buildProcessListQuery,
   filterPortalCatalog,
+  isPortalSearchShortcut,
   processListPlaceholder,
   resolvePortalTopBarId,
 } from "./portalExperience";
+import { USER_MANUAL_CONTENT } from "../content/userManualContent";
 
 describe("Portal Transforma+ navigation", () => {
   it("mantém o produto e a saudação sem nome inventado", () => {
@@ -31,9 +33,10 @@ describe("Portal Transforma+ navigation", () => {
       "Visão geral",
       "Meus processos",
       "Administração",
+      "Ajuda",
     ]);
     const labels = PORTAL_TOPBAR_ITEMS.map((item) => item.label).join(" ");
-    expect(labels).not.toMatch(/Atas|Configurações|Exportar|Sala|Tarefas|Ajuda/);
+    expect(labels).not.toMatch(/Atas|Configurações|Exportar|Sala|Tarefas|Favoritos/);
   });
 
   it("não coloca Configurações como área principal", () => {
@@ -49,11 +52,10 @@ describe("Portal Transforma+ navigation", () => {
     expect(visible).toContain("Exportar / Importar");
   });
 
-  it("não promove sala, tarefas, ajuda, favoritos ou usuário a funcional", () => {
+  it("não promove sala, tarefas, favoritos ou usuário a funcional", () => {
     expect(DEFERRED_NAV_ITEMS.map((item) => item.label)).toEqual([
       "Sala de interação",
       "Minhas tarefas",
-      "Ajuda",
       "Favoritos",
       "Usuário",
     ]);
@@ -62,6 +64,7 @@ describe("Portal Transforma+ navigation", () => {
     for (const item of DEFERRED_NAV_ITEMS) {
       expect(topIds).not.toContain(item.id);
     }
+    expect(topIds).toContain("help");
   });
 
   it("preserva deep links fora da TopBar", () => {
@@ -73,6 +76,8 @@ describe("Portal Transforma+ navigation", () => {
     expect(parseTransformometroPath(TRANSFORMOMETRO_ROUTES.meetingMinutes).view).toBe("atas");
     expect(parseTransformometroPath(TRANSFORMOMETRO_ROUTES.settingsUnits).view).toBe("configuracoes");
     expect(parseTransformometroPath(TRANSFORMOMETRO_ROUTES.data).view).toBe("dados");
+    expect(parseTransformometroPath(TRANSFORMOMETRO_ROUTES.help).view).toBe("help");
+    expect(parseTransformometroPath("/apps/transformometro/ajuda").view).toBe("help");
   });
 
   it("marca Administração nas rotas administrativas e não na home", () => {
@@ -82,12 +87,35 @@ describe("Portal Transforma+ navigation", () => {
     expect(resolvePortalTopBarId(TRANSFORMOMETRO_ROUTES.settingsUnits)).toBe("administration");
     expect(resolvePortalTopBarId(TRANSFORMOMETRO_ROUTES.data)).toBe("");
     expect(resolvePortalTopBarId(TRANSFORMOMETRO_ROUTES.meetingMinutes)).toBe("");
+    expect(resolvePortalTopBarId(TRANSFORMOMETRO_ROUTES.help)).toBe("help");
   });
 
   it("busca só funcionalidades, não entidades", () => {
     expect(filterPortalCatalog("atas").map((item) => item.label)).toContain("Atas");
+    expect(filterPortalCatalog("visão geral").map((item) => item.path)).toContain(
+      TRANSFORMOMETRO_ROUTES.dashboard,
+    );
+    expect(filterPortalCatalog("meus processos").map((item) => item.path)).toContain(
+      TRANSFORMOMETRO_ROUTES.processes,
+    );
+    expect(filterPortalCatalog("exportar").map((item) => item.path)).toContain(
+      TRANSFORMOMETRO_ROUTES.data,
+    );
+    expect(filterPortalCatalog("manual").map((item) => item.path)).toContain(TRANSFORMOMETRO_ROUTES.help);
     expect(filterPortalCatalog("sala")).toEqual([]);
     expect(filterPortalCatalog("").some((item) => item.id === "interaction")).toBe(false);
+    expect(filterPortalCatalog("administração", { includeAdministration: false })).toEqual([]);
+    expect(filterPortalCatalog("unidades", { includeAdministration: false })).toEqual([]);
+    expect(filterPortalCatalog("unidades", { includeAdministration: true }).map((item) => item.path)).toContain(
+      TRANSFORMOMETRO_ROUTES.settingsUnits,
+    );
+    expect(filterPortalCatalog("ajuda", { includeAdministration: false }).map((item) => item.path)).toContain(
+      TRANSFORMOMETRO_ROUTES.help,
+    );
+    expect(isPortalSearchShortcut({ key: "k", ctrlKey: true, metaKey: false })).toBe(true);
+    expect(isPortalSearchShortcut({ key: "K", ctrlKey: false, metaKey: true })).toBe(true);
+    expect(isPortalSearchShortcut({ key: "k", ctrlKey: false, metaKey: false })).toBe(false);
+    expect(isPortalSearchShortcut({ key: "Escape", ctrlKey: true, metaKey: false })).toBe(false);
   });
 
   it("lista processos pelo contrato atual", () => {
@@ -125,16 +153,45 @@ describe("Portal Transforma+ navigation", () => {
     });
     expect(PORTAL_PAGE_COPY.administration.title).toBe("Administração");
     expect(PORTAL_PAGE_COPY.settings.title).toBe("Configurações");
+    expect(PORTAL_PAGE_COPY.help).toMatchObject({
+      eyebrow: "AJUDA",
+      title: "Manual do usuário",
+    });
     expect(PORTAL_LAUNCHER_GROUPS.map((group) => group.title)).toEqual([
       "Gestão",
       "Processos",
       "Registros",
       "Administração",
+      "Ajuda",
     ]);
   });
 
   it("abre o workspace existente sem seções alvo", () => {
     expect(parseTransformometroPath(buildProcessoPath("proc-1")).view).toBe("processo");
     expect(PROCESSO_WORKSPACE_SECTIONS.map((section) => section.id)).not.toContain("sipoc");
+  });
+
+  it("o manual cobre o portal e não cita capability inexistente", () => {
+    const titles = USER_MANUAL_CONTENT.sections.map((section) => section.title);
+    expect(titles).toEqual(
+      expect.arrayContaining([
+        "Visão geral",
+        "Meus processos",
+        "Atas",
+        "Exportar / Importar",
+        "Administração",
+        "Configurações",
+      ]),
+    );
+    const text = JSON.stringify(USER_MANUAL_CONTENT);
+    expect(text).not.toMatch(/Sala de interação|Minhas tarefas|Keycloak|MCP|GPT Actions/);
+    for (const section of USER_MANUAL_CONTENT.sections) {
+      for (const link of section.links ?? []) {
+        const view = parseTransformometroPath(link.path).view;
+        expect(["home", "help", "dashboard", "processos", "atas", "dados", "administration", "configuracoes"]).toContain(
+          view,
+        );
+      }
+    }
   });
 });

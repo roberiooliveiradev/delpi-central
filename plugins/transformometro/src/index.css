@@ -1707,6 +1707,13 @@
   flex-direction: column;
   gap: 14px;
   min-width: 0;
+}.dashboard-transformometro .tm-help-toc{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }.dashboard-transformometro .tm-home-sections-grid{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

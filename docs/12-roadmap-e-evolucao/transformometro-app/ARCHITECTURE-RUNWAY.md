@@ -303,7 +303,7 @@ Pirâmide: unitário de domínio e application quando houver regra nova; reposit
 
 **Portal shell + Meus processos em leitura + workspace que já existe.**
 
-Pacote: [WAVE-1-IMPLEMENTATION-PACKET.md](./WAVE-1-IMPLEMENTATION-PACKET.md). Desenho: [PORTAL-TRANSFORMA-BLUEPRINT.md](./PORTAL-TRANSFORMA-BLUEPRINT.md). Status: **IMPLEMENTED_NOT_RUNTIME_PROVEN**. A IA da TopBar foi revista: itens sem capability ficam TARGET oculto (sala, tarefas, ajuda, favoritos, usuário). Configurações não é item da TopBar nem card do Início; fica em Administração. As outras waves continuam sem pacote.
+Pacote: [WAVE-1-IMPLEMENTATION-PACKET.md](./WAVE-1-IMPLEMENTATION-PACKET.md). Desenho: [PORTAL-TRANSFORMA-BLUEPRINT.md](./PORTAL-TRANSFORMA-BLUEPRINT.md). Status: **IMPLEMENTED_NOT_RUNTIME_PROVEN**. Sala, tarefas, favoritos e usuário continuam TARGET oculto. Ajuda é página do manual, ainda sem aceite visual. Configurações não é item da TopBar nem card do Início; fica em Administração. As outras waves continuam sem pacote.
 
 ## 16. Drift
 

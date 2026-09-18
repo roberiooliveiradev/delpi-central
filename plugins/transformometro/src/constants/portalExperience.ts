@@ -47,6 +47,11 @@ export const PORTAL_PAGE_COPY = {
     title: "Configurações",
     description: "Gerencie unidades, departamentos e demais cadastros administrativos.",
   },
+  help: {
+    eyebrow: "AJUDA",
+    title: "Manual do usuário",
+    description: "Como navegar e usar o Portal Transforma+.",
+  },
 } as const;
 
 export const PROCESS_LIST_EMPTY_MESSAGE =
@@ -80,12 +85,13 @@ export const PORTAL_TOPBAR_ITEMS = [
   { id: "overview", label: "Visão geral", path: TRANSFORMOMETRO_ROUTES.dashboard },
   { id: "processes", label: "Meus processos", path: TRANSFORMOMETRO_ROUTES.processes },
   { id: "administration", label: "Administração", path: TRANSFORMOMETRO_ROUTES.administration },
+  { id: "help", label: "Ajuda", path: TRANSFORMOMETRO_ROUTES.help },
 ] as const;
 
 /**
- * Posição congelada na IA, sem implementação nesta remediação.
- * Sala e tarefas pertencem a outros contextos. Favoritos de launcher não têm contrato transversal.
- * Ajuda in-app ainda é tooltip, não manual.
+ * Posição congelada na IA, sem implementação.
+ * Sala e tarefas pertencem a outros contextos.
+ * Favoritos de rota não têm contrato transversal: Core guarda app favorito, Comercial guarda o próprio.
  */
 export const DEFERRED_NAV_ITEMS: readonly DeferredNavItem[] = [
   {
@@ -103,18 +109,12 @@ export const DEFERRED_NAV_ITEMS: readonly DeferredNavItem[] = [
     reason: "Não há task store compartilhado. Pendências de ata não são essa capability.",
   },
   {
-    id: "help",
-    label: "Ajuda",
-    placement: "topbar",
-    status: "TO_INVENTORY",
-    reason: "Não há manual canônico carregado pelo MFE. Tooltips não são a página Ajuda.",
-  },
-  {
     id: "favorites",
     label: "Favoritos",
     placement: "utility",
     status: "TO_INVENTORY",
-    reason: "Core guarda apps favoritos do portal, não atalhos deste launcher. O contrato /me/home-favorites é do Comercial.",
+    reason:
+      "Não há contrato público de favorito de rota. Core guarda apps favoritos do portal. /me/home-favorites é do commercial-api. Supplies usa localStorage próprio.",
   },
   {
     id: "user",
@@ -186,6 +186,19 @@ export const PORTAL_LAUNCHER_GROUPS: readonly {
         label: "Administração",
         path: TRANSFORMOMETRO_ROUTES.administration,
         description: "Configurações administrativas do portal.",
+      },
+    ],
+  },
+  {
+    id: "help",
+    title: "Ajuda",
+    description: "Manual do Portal Transforma+.",
+    links: [
+      {
+        id: "user-manual",
+        label: "Manual do usuário",
+        path: TRANSFORMOMETRO_ROUTES.help,
+        description: PORTAL_PAGE_COPY.help.description,
       },
     ],
   },
@@ -271,8 +284,22 @@ export function filterPortalCatalog(
   );
 }
 
+export function isPortalSearchShortcut(event: {
+  key: string;
+  metaKey: boolean;
+  ctrlKey: boolean;
+}): boolean {
+  return (event.key === "k" || event.key === "K") && (event.metaKey || event.ctrlKey);
+}
+
 export function resolvePortalTopBarId(currentPath?: string): string {
   if (!currentPath || currentPath === TRANSFORMOMETRO_ROUTES.home) return "home";
+  if (
+    currentPath === TRANSFORMOMETRO_ROUTES.help ||
+    currentPath.endsWith("/ajuda")
+  ) {
+    return "help";
+  }
   if (
     currentPath === TRANSFORMOMETRO_ROUTES.dashboard ||
     currentPath.endsWith("/dashboard")

@@ -27,7 +27,8 @@ export type TransformometroView =
   | "ataNew"
   | "ataSign"
   | "atasPending"
-  | "minhaAssinatura";
+  | "minhaAssinatura"
+  | "help";
 
 export type ParsedTransformometroRoute = {
   view: TransformometroView;
@@ -61,6 +62,7 @@ export function canonicalizeTransformometroPath(pathname: string): string {
   path = path.replace(/^\/apps\/transformometro\/dados$/, TRANSFORMOMETRO_ROUTES.data);
   path = path.replace(/^\/apps\/transformometro\/atas(?=\/|$)/, "/apps/transformometro/meeting-minutes");
   path = path.replace(/^\/apps\/transformometro\/processos(?=\/|$)/, "/apps/transformometro/processes");
+  path = path.replace(/^\/apps\/transformometro\/ajuda$/, TRANSFORMOMETRO_ROUTES.help);
   path = path.replace(/^\/apps\/transformometro\/configuracoes(?=\/|$)/, "/apps/transformometro/settings");
   path = path.replace(/^\/apps\/transformometro\/cadastros(?=\/|$)/, "/apps/transformometro/settings");
   path = path.replace(/^\/apps\/transformometro\/filiais(?=\/|$)/, "/apps/transformometro/settings/units");
@@ -218,6 +220,10 @@ export function parseTransformometroPath(pathname: string): ParsedTransformometr
 
   if (path === TRANSFORMOMETRO_ROUTES.home) {
     return { view: "home" };
+  }
+
+  if (path === TRANSFORMOMETRO_ROUTES.help) {
+    return { view: "help" };
   }
 
   if (path === TRANSFORMOMETRO_ROUTES.administration) {

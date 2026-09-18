@@ -6,9 +6,9 @@
 
 ## Navegação — IA congelada
 
-TopBar funcional: Início, Visão geral, Meus processos, Administração. Busca da TopBar indexa só caminhos do portal (`CommandPalette`), não entidades.
+TopBar funcional: Início, Visão geral, Meus processos, Administração, Ajuda. Busca da TopBar usa `CommandPalette` e `TopBarSearchTrigger` de `@delpi/plugin-ui` e indexa só caminhos do portal, não entidades. Favoritos continuam fora: não há contrato público de favorito de rota.
 
-Target oculto, não PROVEN: Sala de interação, Minhas tarefas, Ajuda. Utility oculta: Favoritos e Usuário. Não há contrato transversal; o favorito `/me/home-favorites` continua do Comercial.
+Target oculto, não PROVEN: Sala de interação, Minhas tarefas. Utility oculta: Favoritos e Usuário. Favoritos de rota não têm owner transversal. Core guarda app favorito (`/me/apps/favorites`). O Comercial persiste em `commercial-api` `/me/home-favorites`. Supplies usa localStorage próprio. Ajuda é página `/apps/transformometro/help`, conteúdo em `userManualContent.ts`, permission herdada do prefixo `transformometro.access`.
 
 Launcher do Início: Operação, Gestão, Registros, Administração. Configurações não é card nem item da TopBar. Fica em Administração → Configurações. Exportar/Importar fica em Registros e exige `transformometro.access`. Administração exige `transformometro.manage`. Sem Keycloak novo e sem terceira permission.
 
@@ -47,7 +47,7 @@ Backend: FastAPI, repositórios `PluginBaseRepository` com psycopg (não SQLAlch
 
 Kit em `@delpi/plugin-ui`. O MFE compõe `TopBar`, `PageHero`, `NavigationCard`, `SectionCard`, `KpiCard`, `FiltersRow` e `CommandPalette` pelo shell atual. Não importa internals do Comercial e não cria `PluginShell`.
 
-Decisão vigente: `TransformometroShell` + `PageHeader`. Sala, tarefas, ajuda e favoritos continuam `TO_INVENTORY`.
+Decisão vigente: `TransformometroShell` + `PageHeader`. Sala, tarefas, favoritos e usuário continuam `TO_INVENTORY`. Ajuda é a página do manual.
 
 ## 4. Informação — Wave 1
 
@@ -61,7 +61,7 @@ Administração     container. Exige manage.
 Exportar/Importar fluxo atual, com confirmação de replace. Fica em Registros.
 ```
 
-Fora da nav: Sala, Tarefas, Portfólio, Diagnóstico, definição de KPI, plano, arquitetura corporativa, Ajuda como página.
+Fora da nav: Sala, Tarefas, Portfólio, Diagnóstico, definição de KPI, plano, arquitetura corporativa, Favoritos. Ajuda é item da TopBar e página do manual.
 
 ## 5. Wireframes Wave 1
 
@@ -228,7 +228,9 @@ Não são UI ativa. Owner de plano, portfólio, tarefas e sala continua TO_INVEN
 | Meus processos = todos os processos de quem tem access. Unidade não filtra | SUPERSEDED_BY_BUSINESS_DECISION | A linha anterior «escopo autorizado» não vale |
 | Sem backend/MCP/Action/migration/permissão nova | FROZEN | Sim |
 | 403 ≠ vazio | FROZEN | Sim |
-| TopBar / CommandPalette / Ajuda página | DEFERRED | Não |
+| TopBar / CommandPalette | PROVEN no código; aceite visual pendente | Não |
+| Ajuda página | IMPLEMENTED_AWAITING_VISUAL_ACCEPTANCE | Não |
+| Favoritos de rota | TO_INVENTORY — sem contrato público | Sim, se copiar o Comercial |
 | Paginação, filtros extras de filial na lista | DEFERRED | Não |
 | KPI, plano, portfólio, sala, tarefas, arquitetura | TO_INVENTORY | Não nesta wave |
 | Nome no hero | TO_INVENTORY | Não. Omitir se não houver fonte |

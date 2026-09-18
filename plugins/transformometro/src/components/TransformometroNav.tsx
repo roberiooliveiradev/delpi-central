@@ -12,6 +12,7 @@ import {
 import {
   PORTAL_TOPBAR_ITEMS,
   filterPortalCatalog,
+  isPortalSearchShortcut,
   resolvePortalTopBarId,
 } from "../constants/portalExperience";
 import { useCanManagePortal } from "../state/portalChrome";
@@ -44,7 +45,7 @@ export function PortalTopBar({ currentPath, onNavigate }: PortalTopBarProps) {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      const chord = (event.key === "k" || event.key === "K") && (event.metaKey || event.ctrlKey);
+      const chord = isPortalSearchShortcut(event);
       if (!chord) return;
       if (isEditableTarget(event.target) && !paletteOpen) return;
       event.preventDefault();

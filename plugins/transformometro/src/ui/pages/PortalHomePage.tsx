@@ -1,4 +1,4 @@
-import { BarChart3, FileText, List, Settings } from "lucide-react";
+import { BarChart3, BookOpen, FileText, List, Settings } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import {
   CatalogSearchBar,
@@ -31,6 +31,7 @@ const GROUP_ICONS: Record<string, ReactNode> = {
   processes: <List size={20} strokeWidth={1.75} aria-hidden="true" />,
   records: <FileText size={20} strokeWidth={1.75} aria-hidden="true" />,
   administration: <Settings size={20} strokeWidth={1.75} aria-hidden="true" />,
+  help: <BookOpen size={20} strokeWidth={1.75} aria-hidden="true" />,
 };
 
 type PortalHomePageProps = Pick<AppProps, "pathname"> & {
