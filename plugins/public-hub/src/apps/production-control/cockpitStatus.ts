@@ -64,6 +64,25 @@ export function isFinishedOperation(operation: MachineLoadOperation): boolean {
   return hasExhaustedOperationBalance(operation);
 }
 
+/**
+ * Vizinha na fila com saldo ainda a produzir.
+ * Usada no avançar/voltar do detalhe — operações sem saldo não entram no caminho do operador.
+ */
+export function findAdjacentOpenOperation(
+  items: readonly MachineLoadOperation[],
+  fromIndex: number,
+  direction: -1 | 1,
+): MachineLoadOperation | null {
+  if (fromIndex < 0 || fromIndex >= items.length) return null;
+  let i = fromIndex + direction;
+  while (i >= 0 && i < items.length) {
+    const candidate = items[i]!;
+    if (!isFinishedOperation(candidate)) return candidate;
+    i += direction;
+  }
+  return null;
+}
+
 /** Chave estável de uma operação na fila — usada como id de navegação e como key do React. */
 export function operationKey(operation: MachineLoadOperation): string {
   return `${operation.production_order}::${operation.operation_code}`;

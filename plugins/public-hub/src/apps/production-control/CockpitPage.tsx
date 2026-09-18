@@ -16,6 +16,7 @@ import {
   formatHours,
   formatQty,
   formatUnit,
+  findAdjacentOpenOperation,
   isFinishedOperation,
   operationKey,
   operationPendingQty,
@@ -241,9 +242,14 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     [items],
   );
 
+  const openItems = useMemo(
+    () => items.filter((operation) => !isFinishedOperation(operation)),
+    [items],
+  );
+
   const visibleItems = useMemo(
-    () => (hideFinished ? items.filter((operation) => !isFinishedOperation(operation)) : items),
-    [items, hideFinished],
+    () => (hideFinished ? openItems : items),
+    [items, openItems, hideFinished],
   );
 
   const activeEntry = useMemo<QueueEntry | null>(() => {
@@ -337,8 +343,14 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
 
   if (view.kind === "operation" && selectedOperation) {
     const index = selectedOperation.position - 1;
-    const previous = index > 0 ? items[index - 1] : null;
-    const next = index < items.length - 1 ? items[index + 1] : null;
+    const previous = findAdjacentOpenOperation(items, index, -1);
+    const next = findAdjacentOpenOperation(items, index, 1);
+    const openIndex = openItems.findIndex(
+      (item) => operationKey(item) === operationKey(selectedOperation.operation),
+    );
+    // Contador do detalhe: só operações com saldo (o caminho do operador).
+    const navPosition = openIndex >= 0 ? openIndex + 1 : selectedOperation.position;
+    const navQueueSize = openItems.length > 0 ? openItems.length : items.length;
 
     return (
       <>
@@ -347,8 +359,8 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
           token={token}
           branch={branch}
           operation={selectedOperation.operation}
-          position={selectedOperation.position}
-          queueSize={items.length}
+          position={navPosition}
+          queueSize={navQueueSize}
           workCenter={workCenter}
           workCenterName={centerName}
           shiftLabel={shiftLabel}

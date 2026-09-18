@@ -7,6 +7,7 @@ import {
 import {
   formatQty,
   formatUnit,
+  findAdjacentOpenOperation,
   hasExhaustedOperationBalance,
   isFinishedOperation,
   operationKey,
@@ -19,6 +20,7 @@ import { ProductModelViewer } from "./ProductModelViewer";
 export {
   formatQty,
   formatUnit,
+  findAdjacentOpenOperation,
   hasExhaustedOperationBalance,
   isFinishedOperation,
   operationKey,
