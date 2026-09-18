@@ -455,7 +455,7 @@ O que NÃO generalizar:
 - field allowlist específica;
 - MCP resource URL específica;
 - callback connector id específico;
-- tool count numérico (ex.: 32 tools TÉO ≠ 20 GPT Actions).
+- contagem numérica de superfície (MCP tool count ≠ GPT Action operation count; capability parity ≠ surface count parity).
 
 ## Anti-padrões
 
