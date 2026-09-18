@@ -303,7 +303,7 @@ Pirâmide: unitário de domínio e application quando houver regra nova; reposit
 
 **Portal shell + Meus processos em leitura + workspace que já existe.**
 
-Pacote: [WAVE-1-IMPLEMENTATION-PACKET.md](./WAVE-1-IMPLEMENTATION-PACKET.md). Status do pacote: **READY_FOR_ARCH_REVIEW**. Implementação: **NOT AUTHORIZED**. As outras waves continuam sem pacote.
+Pacote: [WAVE-1-IMPLEMENTATION-PACKET.md](./WAVE-1-IMPLEMENTATION-PACKET.md). Desenho: [PORTAL-TRANSFORMA-BLUEPRINT.md](./PORTAL-TRANSFORMA-BLUEPRINT.md). Status do pacote: **READY_FOR_ARCH_REVIEW**. Status do desenho: **READY_FOR_IMPLEMENTATION_REVIEW**. Implementação: **NOT AUTHORIZED**. As outras waves continuam sem pacote.
 
 ## 16. Drift
 
