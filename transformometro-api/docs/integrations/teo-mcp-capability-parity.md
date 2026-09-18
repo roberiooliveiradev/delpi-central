@@ -3,27 +3,29 @@
 Gate:
 
 ```text
-CURRENT_CAPABILITIES = 20
+CURRENT_CAPABILITIES (GPT Actions) = 20
 MCP_COVERED = 20
-MCP_TOOLS = 32
+MCP_NATIVE = get_methodology_guide (READ guidance; not a GPT Action)
+MCP_TOOLS = 33
 MISSING = 0
-UNMAPPED = 0
+UNMAPPED GPT = 0
 REGRESSED = 0
 ```
 
 ```text
 20 GPT Actions capabilities
 ≠
-20 MCP tools
+33 MCP tools
 ```
 
 One GPT capability may map to READ + PREPARE + ACT semantic tools.
-`32 ≠ 20` is **not** a regression when capability coverage is 20/20.
+`get_methodology_guide` is MCP-native guidance. It is not capability loss and not a new GPT Action.
 
-Composition (PROVEN registration):
+Composition:
 
 ```text
-9 READ + 1 ANALYSIS + 11 PREPARE + 11 ACT = 32
+10 READ + 1 ANALYSIS + 11 PREPARE + 11 ACT = 33
+READ includes get_methodology_guide
 ACT tools accept only proposal_handle
 unbound ACT = 0
 ```
@@ -34,6 +36,7 @@ Source of truth: `tm_app/interface/mcp/constants.py` (`GPT_TO_MCP_TOOLS`).
 |---|---|---|---|---|---|
 | `gpt_get_my_context` | READ | `get_my_context` | AuthN | N/A | OK |
 | `gpt_get_catalog` | READ | `get_catalog` | view | N/A | OK |
+| MCP-native (no GPT Action) | READ guidance | `get_methodology_guide` | view (same gate; guide is not AuthZ) | N/A — no write | OK |
 | `gpt_get_process_context` | READ | `get_process_context` | view/process | N/A | OK |
 | `gpt_analyze` | READ | `analyze` | dashboard view | N/A | OK |
 | `gpt_search_records` | READ | `search_records` | capability+view | N/A | OK |
@@ -87,7 +90,7 @@ GPT Actions HTTP façade remains unbound by proposal handles (**LEGACY_TRANSITIO
 | Layer | Status |
 |---|---|
 | Capability coverage (matrix) | 20/20 |
-| Provider tool discovery | 32/32 PASS |
+| Provider tool discovery | 32/32 PASS on 2026-09-17; expected after this change = **33**. ChatGPT refresh of the published app = **TEST_NOT_RUN** |
 | READ (`get_my_context`, `get_catalog`, `search_records`) | PASS |
 | PREPARE via ChatGPT | **TEST_NOT_RUN** |
 | ACT / WRITE BUSINESS OUTCOME | **TEST_NOT_RUN** |

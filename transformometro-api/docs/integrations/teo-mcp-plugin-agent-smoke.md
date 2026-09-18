@@ -22,7 +22,7 @@
 | 1 | GET `.../apps/transformometro-api/.well-known/oauth-protected-resource` | 200, resource URL exact | PASS |
 | 2 | POST MCP without Bearer | 401 + WWW-Authenticate | PASS (prod) |
 | 3 | ChatGPT Plugin connect OAuth `mcp-transformometro` | Sign-in succeeds (user-defined client) | PASS |
-| 4 | tools/list / ChatGPT discovery | **32** tools (9 READ + 1 ANALYSIS + 11 PREPARE + 11 ACT); unbound ACT = 0 | PASS 32/32 |
+| 4 | tools/list / ChatGPT discovery | **33** tools (10 READ including `get_methodology_guide` + 1 ANALYSIS + 11 PREPARE + 11 ACT); unbound ACT = 0 | code 33; live rediscovery **TEST_NOT_RUN** (published app) |
 | 5 | `get_my_context` | authenticated user context | PASS |
 | 6 | `get_catalog` | registration_guide present | PASS |
 | 7 | `search_records` (domain READ) | canonical data (ex.: process Transforma → PROC-0001) | PASS |
@@ -45,7 +45,8 @@ PYTHONPATH=.:../shared pytest tests/test_teo_mcp_contract.py tests/test_teo_mcp_
 | Contract / write-governance tests | PASS (local) |
 | Keycloak production apply | **PROVEN** |
 | ChatGPT Plugin create + OAuth | **PASS** |
-| Tools discovery 32/32 | **PASS** |
+| Tools discovery 32/32 (2026-09-17) | **HISTORICAL PASS** |
+| Tools discovery 33/33 including `get_methodology_guide` | **TEST_NOT_RUN** until published-app refresh |
 | READ live (`get_my_context` / `get_catalog` / `search_records`) | **PASS** |
 | PREPARE via ChatGPT | **TEST_NOT_RUN** |
 | ACT / WRITE BUSINESS OUTCOME via ChatGPT | **TEST_NOT_RUN** |

@@ -98,6 +98,25 @@ def create_mcp_server() -> FastMCP:
         return bridge.tool_get_catalog()
 
     @mcp.tool(
+        name="get_methodology_guide",
+        title="Get methodology guide",
+        description=(
+            "READ-only TÉO process-methodology playbooks. "
+            "Optional method (macroprocess, key_process, end_to_end, sipoc, lean, "
+            "ishikawa, five_whys, ctp, tdr, kpi, swot, as_is, to_be) and/or task "
+            "(discover, map, diagnose, redesign, measure, prioritize, interview). "
+            "Guidance is not authorization, not domain truth, and does not write."
+        ),
+        annotations=_annotations("get_methodology_guide", "Get methodology guide"),
+        meta=meta,
+    )
+    def get_methodology_guide(
+        method: str | None = None,
+        task: str | None = None,
+    ) -> CallToolResult:
+        return bridge.tool_get_methodology_guide(method=method, task=task)
+
+    @mcp.tool(
         name="get_process_context",
         title="Get process context",
         description="Aggregated read-only process intelligence context.",

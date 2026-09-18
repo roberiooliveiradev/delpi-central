@@ -70,13 +70,27 @@ No MCP atual, 1 capability GPT pode decompor-se em READ / PREPARE / ACT.
 
 | Métrica | Valor | Classificação |
 |---|---|---|
-| Capability coverage | 20/20 | PROVEN (código + matriz) |
-| MCP tools registered | 32 | PROVEN (runtime + ChatGPT 32/32) |
-| Composição | 9 READ + 1 ANALYSIS + 11 PREPARE + 11 ACT | PROVEN |
+| Capability coverage | 20/20 GPT Actions | PROVEN (código + matriz) |
+| MCP-native methodology | `get_methodology_guide` | CURRENT (não é GPT Action) |
+| MCP tools registered | **33** (10 READ + 1 ANALYSIS + 11 PREPARE + 11 ACT) | código; ChatGPT 33/33 = TEST_NOT_RUN até refresh do app publicado |
 | Unbound ACT | 0 | PROVEN |
 | ACT input | somente `proposal_handle` | PROVEN (código) |
 
-`32 ≠ 20` **não** é regression. Ver `teo-mcp-capability-parity.md`.
+`33 ≠ 20` **não** é regression. 20 capabilities GPT continuam no bridge legado. A 33ª tool é metodologia READ, não uma Action nova. Ver `teo-mcp-capability-parity.md`.
+
+## Methodology guide
+
+```text
+Agent Instructions = coordenação
+MCP get_methodology_guide = conhecimento metodológico reutilizável
+Transformômetro domain = dados e regras finais
+```
+
+A tool é READ-only. Método não autoriza, não persiste e não transforma hipótese em fato. SIPOC, Ishikawa, SWOT e os demais playbooks **não** viram entidades. Diagramas continuam em `get_catalog.diagram_catalog` (`flowchart_v1` canônico; Mermaid derivado).
+
+Fonte editorial: `docs/gpt-actions/teo-method-playbooks.md`. Projeção de runtime: `tm_app/application/methodology/guide.py`.
+
+App ChatGPT Business já publicado: schemas das 32 tools anteriores não mudam. A 33ª tool só aparece depois de refresh/republicação se a plataforma não reescanear sozinha. Isso está **TEST_NOT_RUN**. Não republicar automaticamente.
 
 ## Write governance (MCP)
 
@@ -163,8 +177,9 @@ Verificação corrigida (produção):
 | Protected-resource metadata | PASS |
 | Keycloak PROD (`mcp-transformometro`, scopes) | PASS |
 | GPT Actions 20 operationIds | PASS (ainda disponíveis) |
-| MCP tools registradas | 32 |
-| Replicas | 1 |
+| MCP tools registradas (2026-09-17) | 32 | HISTORICAL |
+| MCP tools no código após methodology guide | 33 | CURRENT (live rediscovery TEST_NOT_RUN) |
+| Replicas | 1 | PASS |
 
 ## ChatGPT Plugin acceptance (PROVEN)
 
@@ -172,7 +187,7 @@ Verificação corrigida (produção):
 |---|---|
 | Plugin criado (`TÉO — Transformômetro`) | PASS |
 | OAuth user connection | PASS |
-| Tools discovery | 32/32 PASS |
+| Tools discovery | 32/32 PASS em 2026-09-17; código atual = **33** (`get_methodology_guide`). Rediscovery no app publicado = **TEST_NOT_RUN** |
 | `get_my_context` | PASS |
 | `get_catalog` | PASS |
 | `search_records` (entity=process, q=Transforma → PROC-0001 ativo; diagram_node_count=115; decomposition_node_count=64) | PASS |

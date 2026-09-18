@@ -41,6 +41,10 @@ from tm_app.application.gpt_actions.user_context_service import (
     AuthenticatedUserContext,
     UserContextService,
 )
+from tm_app.application.methodology.guide import query_methodology_guide
+from tm_app.interface.http.branch_access_http import (
+    require_transformometro_view_access,
+)
 from tm_app.infrastructure.gateways.core_person_profile_gateway import (
     CorePersonProfileGateway,
 )
@@ -254,6 +258,30 @@ def tool_get_my_context() -> CallToolResult:
             )
         )
         return _ok_result(data, "Contexto pessoal do usuário autenticado.")
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+def tool_get_methodology_guide(
+    method: str | None = None,
+    task: str | None = None,
+) -> CallToolResult:
+    """READ-only methodology. Same view gate as other Transformômetro reads.
+
+    The playbook does not grant extra data and does not authorize writes.
+    """
+    try:
+        request = build_mcp_request()
+        denied = require_transformometro_view_access(request)
+        if denied is not None:
+            return _error_result(
+                "Acesso negado.",
+                status_code=403,
+                error_code="forbidden",
+                data={"error_kind": "authz"},
+            )
+        data = query_methodology_guide(method=method, task=task)
+        return _ok_result(data, "Guia metodológico do TÉO (não é fato nem autorização).")
     except Exception as exc:
         return handle_tool_error(exc)
 

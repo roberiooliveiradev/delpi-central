@@ -2,7 +2,13 @@
 
 > Status: methodology / reasoning playbooks. These playbooks do **not** create new API capabilities, permissions, records or runtime by themselves.
 >
+> **Runtime projection (MCP):** `tm_app/application/methodology/guide.py`, exposed by the READ tool `get_methodology_guide`. That module is the playbook the ChatGPT Plugin / Project can call. Do not paste a second full copy into Agent Instructions.
+>
+> **This markdown** remains the editorial source. If a rule changes, update the markdown and the runtime projection together.
+>
 > TÉO remains governed by authenticated-user parity, backend AuthZ, canonical validators and PREPARE → CONFIRM → WRITE → VERIFY for any persistence.
+>
+> Agent Instructions coordinate behavior. The MCP guide supplies reusable method knowledge. Transformômetro domain data and rules remain the source of truth.
 
 ## 1. Purpose
 

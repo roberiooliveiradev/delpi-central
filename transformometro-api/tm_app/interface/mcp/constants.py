@@ -69,10 +69,14 @@ TOOL_TO_GPT_OPERATION: dict[str, str] = {
     for tool in tools
 }
 
+# MCP-native capabilities. Not GPT Actions. Do not add a legacy Action for these.
+MCP_NATIVE_TOOLS: frozenset[str] = frozenset({"get_methodology_guide"})
+
 # READ | PREPARE | ACT | ANALYSIS (non-persist)
 TOOL_CLASS: dict[str, str] = {
     "get_my_context": "READ",
     "get_catalog": "READ",
+    "get_methodology_guide": "READ",
     "get_process_context": "READ",
     "analyze": "READ",
     "search_records": "READ",

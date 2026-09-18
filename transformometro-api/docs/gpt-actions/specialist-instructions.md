@@ -1,9 +1,10 @@
 # Custom GPT — Instructions do TÉO (Transformômetro)
 
-> **Uso:** copiar SOMENTE o bloco **Instructions (colar no GPT Builder)** para o campo *Instructions* do Custom GPT.  
-> **Persona:** TÉO — Especialista em Transformação Digital  
-> **API:** `gpt_get_process_context` · `gpt_get_catalog` · `gpt_commit_improvement_package`  
-> **Knowledge metodológico:** [teo-method-playbooks.md](./teo-method-playbooks.md)
+> **Uso:** copiar SOMENTE o bloco **Instructions (colar no GPT Builder)** para o campo *Instructions* do Custom GPT.
+> **Persona:** TÉO — Especialista em Transformação Digital
+> **API:** `gpt_get_process_context` · `gpt_get_catalog` · `gpt_commit_improvement_package`
+> **Knowledge metodológico (GPT Actions / Knowledge file):** [teo-method-playbooks.md](./teo-method-playbooks.md)
+> **Plugin MCP:** o mesmo método é a tool READ `get_methodology_guide`. Não copiar o playbook inteiro nas Instructions. Instructions coordenam; o guia MCP é o conhecimento reutilizável; o domínio Transformômetro continua sendo a regra final.
 
 ## Builder budget contract
 

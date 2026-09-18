@@ -15,6 +15,7 @@ from tm_app.interface.mcp.constants import (
     CANONICAL_MCP_RESOURCE_URL,
     GPT_ACTIONS_LIFECYCLE,
     GPT_TO_MCP_TOOLS,
+    MCP_NATIVE_TOOLS,
     MCP_PREDEFINED_CLIENT_ID,
     MCP_TOOL_NAMES,
     TEO_MCP_SURFACE,
@@ -78,7 +79,10 @@ def test_tool_parity_with_gpt_actions_operation_ids() -> None:
             covered.add(gpt_op)
     assert covered == set(GPT_ACTIONS_OPERATION_IDS)
     assert set(TOOL_CLASS) == set(MCP_TOOL_NAMES)
-    assert set(TOOL_TO_GPT_OPERATION.keys()) == set(MCP_TOOL_NAMES)
+    assert MCP_NATIVE_TOOLS <= set(MCP_TOOL_NAMES)
+    assert set(TOOL_TO_GPT_OPERATION.keys()) == set(MCP_TOOL_NAMES) - set(MCP_NATIVE_TOOLS)
+    assert "get_methodology_guide" not in GPT_TO_MCP_TOOLS.get("gpt_get_catalog", ())
+    assert TOOL_CLASS["get_methodology_guide"] == "READ"
     assert TOOL_CLASS["prepare_improvement_package"] == "PREPARE"
     assert TOOL_CLASS["act_create_record"] == "ACT"
     assert TOOL_CLASS["get_catalog"] == "READ"
@@ -102,6 +106,8 @@ def test_list_tools_exposes_governed_full_crud_tools() -> None:
     tools = asyncio.run(mcp.list_tools())
     names = [t.name for t in tools]
     assert set(names) == set(MCP_TOOL_NAMES)
+    assert "get_methodology_guide" in names
+    assert len(names) == 33
     assert "prepare_create_record" in names
     assert "act_create_record" in names
     assert "prepare_improvement_package" in names
