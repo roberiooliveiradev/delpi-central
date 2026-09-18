@@ -4,7 +4,7 @@
   "name": "Portal Transforma+",
   "description": "Experiência do Portal Transforma+ sobre o domínio Transformômetro — processos, indicadores, atas e configurações.",
   "icon": "gauge",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "type": "microfrontend",
   "basePath": "/apps/transformometro",
   "entry": "/apps/transformometro/assets/remoteEntry.js",
@@ -18,19 +18,19 @@
     {
       "code": "transformometro.manage",
       "name": "Administrar Portal Transforma+",
-      "description": "Permite acessar as funcionalidades administrativas do Portal Transforma+, como gestão de equipe, grupos, acessos e outras capacidades administrativas.",
+      "description": "Permite acessar as funcionalidades administrativas do Portal Transforma+, como gestão de equipe, grupos e acessos.",
       "module": "transformometro"
     }
   ],
   "routes": [
     {
       "path": "/apps/transformometro",
-      "label": "Início",
+      "label": "Portal Transforma+",
       "permission": "transformometro.access",
       "icon": "home",
       "entry": null,
       "order": 10,
-      "showInMenu": false
+      "showInMenu": true
     },
     {
       "path": "/apps/transformometro/dashboard",
@@ -53,7 +53,7 @@
     {
       "path": "/apps/transformometro/settings",
       "label": "Configurações",
-      "permission": "transformometro.manage",
+      "permission": "transformometro.access",
       "icon": "folder-tree",
       "entry": null,
       "order": 23,
@@ -62,7 +62,7 @@
     {
       "path": "/apps/transformometro/settings/units",
       "label": "Unidades",
-      "permission": "transformometro.manage",
+      "permission": "transformometro.access",
       "icon": "folder-tree",
       "entry": null,
       "order": 24,
@@ -71,7 +71,7 @@
     {
       "path": "/apps/transformometro/settings/departments",
       "label": "Departamentos",
-      "permission": "transformometro.manage",
+      "permission": "transformometro.access",
       "icon": "folder-tree",
       "entry": null,
       "order": 25,
@@ -80,7 +80,7 @@
     {
       "path": "/apps/transformometro/settings/shared-resources",
       "label": "Recursos compartilhados",
-      "permission": "transformometro.manage",
+      "permission": "transformometro.access",
       "icon": "folder-tree",
       "entry": null,
       "order": 26,

@@ -17,7 +17,7 @@ export function FederatedAppRouteGuard({
 }: FederatedAppRouteGuardProps) {
   const location = useLocation();
   const permission = resolveManifestRoutePermission(
-    app.routes,
+    app.authorizationRoutes ?? app.routes,
     location.pathname,
     fallbackPermission,
   );

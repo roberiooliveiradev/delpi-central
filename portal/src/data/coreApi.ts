@@ -65,6 +65,7 @@ export interface AppItem {
   renderMode?: AppRenderMode;
 
   routes?: RouteItem[];
+  authorizationRoutes?: RouteItem[];
 }
 
 export interface DashboardResponse {
