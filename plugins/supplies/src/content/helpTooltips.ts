@@ -22,7 +22,7 @@ const HOME_HELP = {
   heroOverview:
     "Atalho para a Visão geral (KPIs do período). Só aparece liberado se você tiver acesso analítico.",
   scopeBadge:
-    "Filiais liberadas na sessão. Sem filial no escopo, módulos TOTVS podem vir vazios ou bloqueados.",
+    "Filiais do recorte. Quem tem uso normal consulta Santa Catarina e Espírito Santo; a escolha é filtro, não permissão.",
   sections: {
     attention:
       "Entrada do Portal e fila pessoal (Minhas tarefas) — ação do dia, sem misturar com o painel de KPIs.",
@@ -79,7 +79,7 @@ export const SP_HELP = {
   otdAnalyticsPage:
     "Pontualidade de compras com velocímetros por unidade (Santa Catarina / Espírito Santo) e evolução no tempo. Diferente da Visão geral (placar de KPIs) e de Entregas (atrasos do dia).",
   purchaseRequests:
-    "Itens de solicitações de compra no período selecionado e no escopo de unidade e centro de custo. Sem CC liberado e sem visão ampla, a lista fica vazia (fail-closed). Exportação Excel/CSV exige permissão separada. Clique na SC ou na linha para abrir a ficha.",
+    "Itens de solicitações de compra no período selecionado e no escopo de centro de custo. Sem CC liberado, a lista fica vazia. Quem tem uso normal do Portal exporta Excel/CSV. Clique na SC ou na linha para abrir a ficha.",
   purchaseRequestsBranch:
     "Unidade do recorte (Santa Catarina e/ou Espírito Santo). «Todas» consulta todas as unidades liberadas na sessão. Códigos técnicos ficam só na URL e na API.",
   purchaseRequestsView:
@@ -95,7 +95,7 @@ export const SP_HELP = {
   purchaseRequestsStage:
     "Situação consolidada da SC (aguardando pedido, parcial, concluída etc.).",
   purchaseRequestsExport:
-    "Exporta para Excel o recorte filtrado inteiro (todas as unidades selecionadas), sem truncar na página. Exige permissão de exportação além do acesso à lista. CSV permanece disponível como formato legado.",
+    "Exporta para Excel o recorte filtrado inteiro, sem truncar na página. Faz parte do uso normal do Portal. CSV permanece disponível como formato legado.",
   purchaseRequestsFilters:
     "Filtros aplicam automaticamente. Texto confirma após um instante ou com Enter. Atalhos de período ficam sempre visíveis (como na Visão geral). Limpar só aparece quando há filtro além do padrão (todas as unidades liberadas e período Este mês não contam sozinhos).",
   purchaseRequestsRefresh:
@@ -137,7 +137,7 @@ export const SP_HELP = {
   purchaseOrdersSortDirection:
     "Alterna crescente ou decrescente na mesma coluna. Vale para Cards e compartilha sort_by/sort_dir com a tabela.",
   purchaseOrdersExcel:
-    "Exporta para Excel o recorte filtrado inteiro (todas as unidades selecionadas), sem truncar na página. Exige o mesmo acesso de operações e as unidades pedidas.",
+    "Exporta para Excel o recorte filtrado inteiro, sem truncar na página. Exige o uso normal do Portal.",
   purchaseOrdersTableFontSize:
     "Ajusta o tamanho da fonte da tabela neste navegador. Vale só no modo Tabela; no modo Cards o controle não aparece. Use − / + ou restaurar o padrão. A preferência fica salva localmente e volta ao retornar à Tabela.",
   purchaseOrdersTableColumns:
@@ -163,7 +163,7 @@ export const SP_HELP = {
   userProfilePrefs:
     "Filial padrão e densidade de tabelas valem só neste Portal. Só você edita o próprio perfil; administradores podem ler outros usuários.",
   forbiddenUnit:
-    "Você não tem permissão para esta filial ou para este módulo. Peça o acesso canônico do Portal ao administrador — aliases antigos sozinhos não abrem o app.",
+    "Você não tem permissão para este módulo. Peça o uso normal do Portal ao administrador — aliases antigos não abrem o app.",
 } as const;
 
 /** Hints do inspector Séries (COLOR_ONLY nos gráficos da Visão geral). */

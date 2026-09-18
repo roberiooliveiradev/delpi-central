@@ -23,9 +23,9 @@ def test_canonical_access_opens_normal_surfaces_not_admin():
     caps = flags["capabilities"]
     assert caps["access"] is True
     assert caps["manage"] is False
-    assert caps["viewAll"] is False
+    assert "viewAll" not in caps
     assert "portal" not in caps
-    assert flags["allowedUnits"] == ["01"]
+    assert flags["allowedUnits"] == ["01", "02"]
     assert can_use_analytics(_user("supplies.access")) is True
     assert can_use_operations(_user("supplies.access")) is True
     assert can_export_purchase_requests(_user("supplies.access")) is True

@@ -86,9 +86,9 @@ def test_list_positive_requires_operations_and_unit(mock_resolve, mock_validate)
 @patch(
     "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
 )
-def test_list_negative_forbidden_without_unit(mock_resolve, mock_validate):
+def test_list_negative_forbidden_without_access(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
-    mock_resolve.return_value = _user(permissions={"supplies.access"})
+    mock_resolve.return_value = _user(permissions={"supplies.unit.filial-01"})
     client = create_app().test_client()
     response = client.get(
         "/purchase-orders?branch=01",
@@ -315,7 +315,7 @@ def test_detail_negative_cross_unit_forbidden(mock_resolve, mock_validate):
     ):
         client = create_app().test_client()
         response = client.get(
-            "/purchase-orders/02/000123",
+            "/purchase-orders/99/000123",
             headers={"Authorization": "Bearer tok"},
         )
     assert response.status_code == 403
@@ -512,7 +512,7 @@ def test_list_multi_unit_positive(mock_resolve, mock_validate):
 )
 def test_list_multi_unit_sibling_mixed_scope_forbidden(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
-    mock_resolve.return_value = _user(permissions=_OPS_UNIT_01)
+    mock_resolve.return_value = _user(permissions={"supplies.unit.filial-01"})
     gateway = MagicMock()
     with patch(
         "app.interfaces.http.routes.purchase_orders_routes._GATEWAY",
@@ -541,7 +541,7 @@ def test_list_multi_unit_negative_other_unit_forbidden(mock_resolve, mock_valida
     ):
         client = create_app().test_client()
         response = client.get(
-            "/purchase-orders?branch=02",
+            "/purchase-orders?branch=99",
             headers={"Authorization": "Bearer tok"},
         )
     assert response.status_code == 403
@@ -648,9 +648,9 @@ def test_export_empty_dataset_still_xlsx(mock_resolve, mock_validate):
 @patch(
     "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
 )
-def test_export_negative_forbidden_without_unit(mock_resolve, mock_validate):
+def test_export_negative_forbidden_without_access(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
-    mock_resolve.return_value = _user(permissions={"supplies.access"})
+    mock_resolve.return_value = _user(permissions={"supplies.unit.filial-01"})
     gateway = MagicMock()
     with patch(
         "app.interfaces.http.routes.purchase_orders_routes._GATEWAY",

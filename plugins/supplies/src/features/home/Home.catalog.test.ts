@@ -10,13 +10,11 @@ import { toHubCapabilities } from "./homeCatalog";
 const NO_ACCESS = toHubCapabilities({
   access: false,
   manage: false,
-  viewAll: false,
 });
 
 const WITH_ACCESS = toHubCapabilities({
   access: true,
   manage: false,
-  viewAll: false,
 });
 
 describe("Home catalog", () => {
@@ -40,7 +38,6 @@ describe("Home catalog", () => {
     const caps = toHubCapabilities({
       access: true,
       manage: false,
-      viewAll: false,
     });
     const sections = resolveHubSections(caps);
     const ids = sections.flatMap((section) => section.routes.map((route) => route.id));

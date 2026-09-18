@@ -28,19 +28,16 @@ def _patches(user):
     )
 
 
-def test_canonical_access_is_not_global_branch():
-    user = SimpleNamespace(
-        is_superadmin=False,
-        permissions=["supplies.access", "supplies.unit.filial-01"],
-    )
+def test_canonical_access_opens_both_branches():
+    user = SimpleNamespace(is_superadmin=False, permissions=["supplies.access"])
     contexts = _patches(user)
     with contexts[0], contexts[1], contexts[2], contexts[3]:
         assert branch_view_allowed("01") is True
-        assert branch_view_allowed("02") is False
+        assert branch_view_allowed("02") is True
 
 
-def test_access_without_unit_denied():
-    user = SimpleNamespace(is_superadmin=False, permissions=["supplies.access"])
+def test_unit_code_alone_does_not_open_branch():
+    user = SimpleNamespace(is_superadmin=False, permissions=["supplies.unit.filial-01"])
     contexts = _patches(user)
     with contexts[0], contexts[1], contexts[2], contexts[3]:
         assert branch_view_allowed("01") is False

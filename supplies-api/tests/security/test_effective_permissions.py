@@ -141,8 +141,9 @@ def test_unit_authorization_positive_and_negative():
         }
     )
     service.require_unit(user, "01")
+    service.require_unit(user, "02")
     with pytest.raises(Exception):
-        service.require_unit(user, "02")
+        service.require_unit(user, "99")
 
 
 def test_sibling_unit_codes_do_not_grant_portal_units():
@@ -165,13 +166,13 @@ def test_unit_route_filial_cruzada(mock_resolve, mock_validate, client):
     )
 
     denied = client.get(
-        "/_test/unit?branch=02",
+        "/_test/unit?branch=99",
         headers={"Authorization": "Bearer good-token"},
     )
     assert denied.status_code == 403
 
     allowed = client.get(
-        "/_test/unit?branch=01",
+        "/_test/unit?branch=02",
         headers={"Authorization": "Bearer good-token"},
     )
     assert allowed.status_code == 200

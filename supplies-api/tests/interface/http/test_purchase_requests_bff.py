@@ -61,9 +61,9 @@ def test_list_positive_requires_access_and_unit(mock_resolve, mock_validate):
 @patch(
     "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
 )
-def test_list_negative_forbidden_without_unit(mock_resolve, mock_validate):
+def test_list_negative_forbidden_without_access(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
-    mock_resolve.return_value = _user(permissions={"supplies.access"})
+    mock_resolve.return_value = _user(permissions={"supplies.unit.filial-01"})
     client = create_app().test_client()
     response = client.get(
         "/purchase-requests?branch=01",
@@ -155,12 +155,7 @@ def test_list_multi_unit_positive(mock_resolve, mock_validate):
 )
 def test_list_multi_unit_sibling_mixed_scope_forbidden(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
-    mock_resolve.return_value = _user(
-        permissions={
-            "supplies.access",
-            "supplies.unit.filial-01",
-        }
-    )
+    mock_resolve.return_value = _user(permissions={"supplies.unit.filial-01"})
     client = create_app().test_client()
     response = client.get(
         "/purchase-requests?branch=01&branch=02",

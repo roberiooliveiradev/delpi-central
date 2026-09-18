@@ -19,7 +19,6 @@ export type SuppliesSessionState = {
 const EMPTY_CAPS: SuppliesCapabilityFlags = {
   access: false,
   manage: false,
-  viewAll: false,
 };
 
 const SessionContext = createContext<SuppliesSessionState | null>(null);

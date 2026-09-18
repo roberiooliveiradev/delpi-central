@@ -20,12 +20,12 @@ def _user(*, units: set[str] | None = None) -> EffectiveUser:
     )
 
 
-def test_patch_rejects_branch_outside_allowed_units():
+def test_patch_rejects_unknown_branch():
     repo = MagicMock()
     repo.get.return_value = None
     service = PreferencesService(repository=repo)
     with pytest.raises(AuthorizationError):
-        service.patch(_user(units={"01"}), {"defaultBranch": "02"})
+        service.patch(_user(), {"defaultBranch": "99"})
 
 
 def test_patch_accepts_allowed_branch():

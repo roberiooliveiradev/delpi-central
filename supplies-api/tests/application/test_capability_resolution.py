@@ -32,7 +32,7 @@ def test_access_and_unit_are_orthogonal():
     result = CapabilityResolutionService().resolve(user)
     assert result["capabilities"]["access"] is True
     assert result["capabilities"]["manage"] is False
-    assert result["allowedUnits"] == ["02"]
+    assert result["allowedUnits"] == ["01", "02"]
 
 
 def test_superadmin_gets_all_flags():
@@ -44,5 +44,5 @@ def test_superadmin_gets_all_flags():
         is_superadmin=True,
     )
     result = CapabilityResolutionService().resolve(user)
-    assert result["capabilities"] == {"access": True, "manage": True, "viewAll": True}
+    assert result["capabilities"] == {"access": True, "manage": True}
     assert result["allowedUnits"] == ["01", "02"]

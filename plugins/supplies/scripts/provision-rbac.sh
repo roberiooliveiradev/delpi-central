@@ -45,16 +45,16 @@ grant() {
   done
 }
 
-ANALISTA_ID="$(ensure_role "Portal Suprimentos - Analista" "uso normal + unidades 01 e 02")"
-grant "$ANALISTA_ID" supplies.access supplies.unit.filial-01 supplies.unit.filial-02
+ANALISTA_ID="$(ensure_role "Portal Suprimentos - Analista" "uso normal do Portal")"
+grant "$ANALISTA_ID" supplies.access
 
-COMPRADOR_SC_ID="$(ensure_role "Portal Suprimentos - Comprador SC" "uso normal + unidade 01")"
-grant "$COMPRADOR_SC_ID" supplies.access supplies.unit.filial-01
+COMPRADOR_SC_ID="$(ensure_role "Portal Suprimentos - Comprador SC" "uso normal do Portal")"
+grant "$COMPRADOR_SC_ID" supplies.access
 
-SOLICITANTE_SC_ID="$(ensure_role "Portal Suprimentos - Solicitante SC" "uso normal + unidade 01")"
-grant "$SOLICITANTE_SC_ID" supplies.access supplies.unit.filial-01
+SOLICITANTE_SC_ID="$(ensure_role "Portal Suprimentos - Solicitante SC" "uso normal do Portal")"
+grant "$SOLICITANTE_SC_ID" supplies.access
 
-ADMIN_ID="$(ensure_role "Portal Suprimentos - Admin" "administração; não implica uso normal nem todas as unidades")"
-grant "$ADMIN_ID" supplies.manage supplies.unit.filial-01 supplies.unit.filial-02
+ADMIN_ID="$(ensure_role "Portal Suprimentos - Admin" "administração; não implica uso normal")"
+grant "$ADMIN_ID" supplies.manage
 
 echo "[OK] Papéis finais provisionados." >&2

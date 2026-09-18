@@ -1,10 +1,9 @@
 from __future__ import annotations
 
+from app.application.security.supplies_permissions import OPERATIONAL_UNITS, has_canonical_access
 from app.domain.entities import EffectiveUser
 from app.domain.exceptions import AuthorizationError, CoreApiUnavailableError
 from app.infrastructure.gateways.core_api_http_gateway import CoreApiHttpGateway
-
-UNIT_PREFIX = "supplies.unit.filial-"
 
 
 class AuthorizationService:
@@ -33,20 +32,15 @@ class AuthorizationService:
         raise AuthorizationError("Forbidden")
 
     def allowed_units(self, user: EffectiveUser) -> list[str]:
-        if user.is_superadmin:
-            return ["01", "02"]
-
-        units: set[str] = set()
-        for code in user.permissions:
-            if code.startswith(UNIT_PREFIX):
-                units.add(code.removeprefix(UNIT_PREFIX))
-        return sorted(units)
+        """Operational branches for data filters. Not a permission grant."""
+        if user.is_superadmin or has_canonical_access(user):
+            return list(OPERATIONAL_UNITS)
+        return []
 
     def require_unit(self, user: EffectiveUser, branch: str) -> None:
         if user.is_superadmin:
             return
-        allowed = self.allowed_units(user)
-        if branch not in allowed:
+        if branch not in self.allowed_units(user):
             raise AuthorizationError("Forbidden")
 
     def require_units(self, user: EffectiveUser, branches: list[str]) -> None:

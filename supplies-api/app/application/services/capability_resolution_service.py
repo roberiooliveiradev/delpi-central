@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from app.application.security.supplies_permissions import (
-    can_view_all_purchase_requests,
     has_canonical_access,
     has_canonical_manage,
 )
@@ -14,14 +13,10 @@ class CapabilityResolutionService:
         self.authorization = authorization or AuthorizationService()
 
     def resolve(self, user: EffectiveUser) -> dict:
-        if user.is_superadmin:
-            flags = {"access": True, "manage": True, "viewAll": True}
-        else:
-            flags = {
-                "access": has_canonical_access(user),
-                "manage": has_canonical_manage(user),
-                "viewAll": can_view_all_purchase_requests(user),
-            }
+        flags = {
+            "access": user.is_superadmin or has_canonical_access(user),
+            "manage": user.is_superadmin or has_canonical_manage(user),
+        }
         return {
             "userId": user.id,
             "capabilities": flags,

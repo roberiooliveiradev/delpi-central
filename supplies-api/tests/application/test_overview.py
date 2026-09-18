@@ -147,12 +147,7 @@ def test_overview_unit_cross_forbidden():
     )
     try:
         service.compose(
-            _user(
-                permissions={
-                    "supplies.access",
-                    "supplies.unit.filial-01",
-                }
-            ),
+            _user(permissions={"supplies.manage"}),
             branch="02",
         )
         assert False, "expected AuthorizationError"
@@ -166,7 +161,7 @@ def test_overview_unit_cross_forbidden():
 )
 def test_http_overview_forbidden_without_analytics(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
-    mock_resolve.return_value = _user(permissions={"supplies.access"})
+    mock_resolve.return_value = _user(permissions={"supplies.manage"})
     client = create_app().test_client()
     response = client.get(
         "/analytics/overview",

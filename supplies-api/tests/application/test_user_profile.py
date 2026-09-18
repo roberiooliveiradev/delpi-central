@@ -107,7 +107,7 @@ def test_patch_self_rejects_branch_outside_units():
         service.patch(
             _user(permissions={"supplies.access", "supplies.unit.filial-01"}),
             SELF_ID,
-            {"preferences": {"defaultBranch": "02"}},
+            {"preferences": {"defaultBranch": "99"}},
         )
 
 

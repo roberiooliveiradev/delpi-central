@@ -43,14 +43,12 @@ describe("Overview content", () => {
       canAccessView("overview", {
         access: false,
         manage: false,
-        viewAll: false,
       }),
     ).toBe(false);
     expect(
       canAccessView("overview", {
         access: true,
         manage: false,
-        viewAll: false,
       }),
     ).toBe(true);
   });

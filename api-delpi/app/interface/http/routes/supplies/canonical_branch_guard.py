@@ -1,8 +1,8 @@
-"""Fail-closed unit scope for canonical supplies.access on KPI routes.
+"""Branch shape check for supplies.access on KPI routes.
 
+Supplies is not multi-unit: supplies.access may read 01 and 02.
 Legacy api-delpi.access and dashboard-supplies.view stay global.
-supplies.access requires supplies.unit.filial-*.
-supplies.manage is not a branch bypass.
+supplies.manage is not a read grant.
 """
 
 from __future__ import annotations
@@ -18,17 +18,13 @@ from app.application.security.api_delpi_permissions import (
     SUPPLIES_ACCESS,
 )
 
-_UNITS = {
-    "01": "supplies.unit.filial-01",
-    "02": "supplies.unit.filial-02",
-}
+_UNITS = frozenset({"01", "02"})
 _SURFACE = (SUPPLIES_ACCESS,)
 _LEGACY_GLOBAL = (API_DELPI_ACCESS, DASHBOARD_SUPPLIES_VIEW)
 
 
 def _allowed(user, branch: str) -> bool:
-    unit = _UNITS.get(branch)
-    if not unit or not has_permission(user, unit):
+    if branch not in _UNITS:
         return False
     return any(has_permission(user, code) for code in _SURFACE)
 

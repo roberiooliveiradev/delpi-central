@@ -72,7 +72,7 @@ describe("httpClient", () => {
           new Response(
             JSON.stringify({
               userId: "user-1",
-              capabilities: { access: true, manage: false, viewAll: false },
+              capabilities: { access: true, manage: false },
               allowedUnits: ["01"],
               aliasesDoNotGrantAppAccess: true,
             }),

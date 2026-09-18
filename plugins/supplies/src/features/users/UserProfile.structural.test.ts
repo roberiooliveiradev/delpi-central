@@ -34,7 +34,6 @@ describe("UserProfile", () => {
     const caps = {
       access: true,
       manage: false,
-      viewAll: false,
     };
     expect(canAccessUserProfile(selfId, { userId: selfId, capabilities: caps })).toBe(true);
     expect(canAccessUserProfile("other", { userId: selfId, capabilities: caps })).toBe(false);

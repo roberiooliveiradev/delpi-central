@@ -144,7 +144,7 @@ def test_export_sibling_forbidden_wrong_unit(mock_resolve, mock_validate):
     )
     client = create_app().test_client()
     response = client.get(
-        "/purchase-requests/export?branch=02",
+        "/purchase-requests/export?branch=99",
         headers={"Authorization": "Bearer tok"},
     )
     assert response.status_code == 403

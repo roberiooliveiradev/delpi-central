@@ -17,14 +17,12 @@ describe("OTD analytics page", () => {
       canAccessView("analytics_otd", {
         access: false,
         manage: false,
-        viewAll: false,
       }),
     ).toBe(false);
     expect(
       canAccessView("analytics_otd", {
         access: true,
         manage: false,
-        viewAll: false,
       }),
     ).toBe(true);
   });

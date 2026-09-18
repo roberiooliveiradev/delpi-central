@@ -3,7 +3,6 @@ import { httpGet, suppliesApiUrl } from "./httpClient";
 export type SuppliesCapabilityFlags = {
   access: boolean;
   manage: boolean;
-  viewAll: boolean;
 };
 
 export type SuppliesCapabilitiesResponse = {

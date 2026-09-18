@@ -6,8 +6,7 @@ from app.domain.entities import EffectiveUser
 
 SUPPLIES_ACCESS = "supplies.access"
 SUPPLIES_MANAGE = "supplies.manage"
-SUPPLIES_VIEW_ALL = "supplies.purchase-requests.view-all"
-UNIT_PREFIX = "supplies.unit.filial-"
+OPERATIONAL_UNITS = ("01", "02")
 
 
 def _has(user: EffectiveUser, code: str) -> bool:
@@ -44,10 +43,6 @@ def can_use_purchase_requests(user: EffectiveUser) -> bool:
 
 def can_administer(user: EffectiveUser) -> bool:
     return has_canonical_manage(user)
-
-
-def can_view_all_purchase_requests(user: EffectiveUser) -> bool:
-    return _has(user, SUPPLIES_VIEW_ALL)
 
 
 def can_export_purchase_requests(user: EffectiveUser) -> bool:

@@ -47,7 +47,7 @@ export const USER_MANUAL_CONTENT = {
     {
       term: "Filial no escopo",
       meaning:
-        "Dados TOTVS respeitam as filiais liberadas para você (01 Santa Catarina, 02 Espírito Santo). Pedir outra filial não abre módulo sem capability.",
+        "Dados TOTVS das duas unidades operacionais. A filial na tela é filtro. Sem uso normal do Portal o módulo não abre.",
     },
     {
       term: "Perfil do Portal vs perfil Minha DELPI",
@@ -56,7 +56,7 @@ export const USER_MANUAL_CONTENT = {
     },
   ],
   scopeNote:
-    "Sem permissão (403): você não tem acesso a esta filial ou a este módulo. Peça o acesso canônico do Portal — aliases antigos sozinhos não abrem o app.",
+    "Sem permissão (403): você não tem uso normal deste módulo. Aliases antigos não abrem o app.",
   sections: [
     {
       id: "want",
@@ -153,7 +153,7 @@ export const USER_MANUAL_CONTENT = {
         "Visão geral — indicadores consolidados do período e das unidades selecionadas; itens operacionais em Solicitações e Operações.",
         "OTD — velocímetros de pontualidade e evolução; abra pelo Início, catálogo Análises ou CTA da Visão geral.",
         "Pedidos de compra — itens com saldo pendente de recebimento no recorte; hero com linhas/valor/atrasadas; Atenção Todos(N)/Atrasados(N) do resumo do servidor; filtros automáticos, Atualizar; Unidade como Santa Catarina / Espírito Santo; clique no PC para a ficha. Distinto do OTD de pontualidade.",
-        "Solicitações de compras — itens no período e no escopo unidade+CC; clique na SC para a ficha em página própria; exportação Excel com permissão separada.",
+        "Solicitações de compras — itens no período e no escopo de centro de custo; clique na SC para a ficha em página própria; exportação Excel faz parte do uso normal.",
         "Operações — pedidos, entregas, fornecedores, produtos, estoque e ESTSEG.",
         "Indicadores / Negociações — recorte analítico quando liberado.",
         "Administração — mappings e configurações.",
@@ -187,7 +187,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Por que a lista de SC vem vazia?",
-          a: "Sem centros de custo liberados e sem visão ampla, o Portal mantém fail-closed (zero registros). Peça escopo de CC ou a capability de visão ampla ao administrador.",
+          a: "Sem centros de custo liberados, a lista de solicitações fica vazia. Peça o escopo de centro de custo ao administrador. Não existe permissão separada de visão ampla.",
         },
         {
           q: "Por que não vejo Exportar CSV?",
@@ -227,7 +227,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Por que recebi 403?",
-          a: "Falta capability do módulo ou filial no seu escopo. Peça o acesso canônico do Portal ao administrador.",
+          a: "Falta o uso normal do módulo. Peça esse acesso ao administrador. A filial da tela é filtro, não permissão.",
         },
         {
           q: "Onde altero a filial padrão ou a densidade das tabelas?",

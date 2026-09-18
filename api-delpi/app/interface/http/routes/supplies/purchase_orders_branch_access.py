@@ -21,17 +21,13 @@ _GATE = BranchAccessGate(
     extra_global_view_perms=(API_DELPI_ACCESS,),
 )
 
-_SUPPLIES_UNITS = {
-    "01": "supplies.unit.filial-01",
-    "02": "supplies.unit.filial-02",
-}
+_OPERATIONAL_UNITS = frozenset({"01", "02"})
 _SURFACE = (SUPPLIES_ACCESS,)
 
 
 def _canonical_unit_allowed(branch: str) -> bool:
     user = get_current_user()
-    unit = _SUPPLIES_UNITS.get(branch)
-    if user is None or not unit or not has_permission(user, unit):
+    if user is None or branch not in _OPERATIONAL_UNITS:
         return False
     return any(has_permission(user, code) for code in _SURFACE)
 

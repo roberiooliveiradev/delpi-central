@@ -93,7 +93,7 @@ def test_otd_series_sibling_consolidated_averages_filials():
 def test_otd_series_unit_cross_forbidden():
     try:
         OtdSeriesService(delpi_reads=MagicMock()).compose(
-            _user(permissions={"supplies.access", "supplies.unit.filial-01"}),
+            _user(permissions={"supplies.manage"}),
             branch="02",
         )
         assert False, "expected AuthorizationError"
@@ -118,7 +118,7 @@ def test_otd_series_partial_when_delpi_down():
 )
 def test_http_otd_series_forbidden_without_analytics(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
-    mock_resolve.return_value = _user(permissions={"supplies.access"})
+    mock_resolve.return_value = _user(permissions={"supplies.manage"})
     client = create_app().test_client()
     response = client.get(
         "/analytics/otd/series",

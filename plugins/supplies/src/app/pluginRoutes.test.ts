@@ -12,7 +12,6 @@ import {
 const noAccess = {
   access: false,
   manage: false,
-  viewAll: false,
 };
 
 describe("pluginRoutes", () => {
