@@ -4,6 +4,10 @@ from fastapi import APIRouter, HTTPException, Query
 
 from delpi_auth.authorization import require_any_permission
 
+from app.interface.http.supplies_bff_service_access import (
+    require_any_permission_or_supplies_bff,
+)
+
 from app.application.security.api_delpi_permissions import (
     DASHBOARD_COMMERCIAL_VIEW,
     DASHBOARD_ENGINEERING_VIEW,
@@ -130,7 +134,10 @@ def get_dashboard_department_idd(
 
 
 @router.get("/department-indicators", **DASHBOARD_DEPARTMENT_INDICATORS)
-@require_any_permission(DASHBOARD_IDD_ACCESS)
+@require_any_permission_or_supplies_bff(
+    DASHBOARD_IDD_ACCESS,
+    supplies_department_only=True,
+)
 def get_dashboard_department_indicators(
     department_id: str = SI_DEPARTMENT_ID_QUERY_REQUIRED(),
     competence: str | None = Query(

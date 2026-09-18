@@ -52,3 +52,7 @@ def get_operation_id() -> str | None:
 
 def get_caller_app() -> str | None:
     return _caller_app.get()
+
+
+def get_request() -> Request | None:
+    return _request.get()

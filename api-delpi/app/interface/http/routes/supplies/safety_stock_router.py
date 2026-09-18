@@ -5,7 +5,9 @@ from typing import Optional
 from fastapi import APIRouter
 from app.interface.http.pagination_query import PAGE_SIZE_QUERY
 
-from delpi_auth.authorization import require_any_permission
+from app.interface.http.supplies_bff_service_access import (
+    require_any_permission_or_supplies_bff,
+)
 
 from app.application.dto.supplies.safety_stock_request import peer_branch_for
 from app.application.security.api_delpi_permissions import SAFETY_STOCK_READ_PERMISSIONS
@@ -81,7 +83,7 @@ router = APIRouter(
         path="/supplies/safety-stock/filters",
     ),
 )
-@require_any_permission(SAFETY_STOCK_READ_PERMISSIONS)
+@require_any_permission_or_supplies_bff(SAFETY_STOCK_READ_PERMISSIONS)
 def get_safety_stock_filters_route(
     branch: str | None = BRANCH_QUERY(),
     include_blocked: bool = INCLUDE_BLOCKED_QUERY(),
@@ -124,7 +126,7 @@ def get_safety_stock_filters_route(
         path="/supplies/safety-stock/summary",
     ),
 )
-@require_any_permission(SAFETY_STOCK_READ_PERMISSIONS)
+@require_any_permission_or_supplies_bff(SAFETY_STOCK_READ_PERMISSIONS)
 def get_safety_stock_summary_route(
     branch: str | None = BRANCH_QUERY(),
     include_blocked: bool = INCLUDE_BLOCKED_QUERY(),
@@ -168,7 +170,7 @@ def get_safety_stock_summary_route(
         path="/supplies/safety-stock/items",
     ),
 )
-@require_any_permission(SAFETY_STOCK_READ_PERMISSIONS)
+@require_any_permission_or_supplies_bff(SAFETY_STOCK_READ_PERMISSIONS)
 def get_safety_stock_items_route(
     branch: str | None = BRANCH_QUERY(),
     page: int = PAGE_QUERY(),
@@ -220,7 +222,7 @@ def get_safety_stock_items_route(
         path="/supplies/safety-stock/items/{code}/details",
     ),
 )
-@require_any_permission(SAFETY_STOCK_READ_PERMISSIONS)
+@require_any_permission_or_supplies_bff(SAFETY_STOCK_READ_PERMISSIONS)
 def get_safety_stock_item_details_route(
     code: str,
     branch: str | None = BRANCH_QUERY(),
@@ -277,7 +279,7 @@ def get_safety_stock_item_details_route(
         path="/supplies/safety-stock/items/{code}/suppliers",
     ),
 )
-@require_any_permission(SAFETY_STOCK_READ_PERMISSIONS)
+@require_any_permission_or_supplies_bff(SAFETY_STOCK_READ_PERMISSIONS)
 def get_safety_stock_item_suppliers_route(
     code: str,
     branch: str | None = BRANCH_QUERY(),
@@ -325,7 +327,7 @@ def get_safety_stock_item_suppliers_route(
         path="/supplies/safety-stock/consumption-analysis/summary",
     ),
 )
-@require_any_permission(SAFETY_STOCK_READ_PERMISSIONS)
+@require_any_permission_or_supplies_bff(SAFETY_STOCK_READ_PERMISSIONS)
 def get_safety_stock_consumption_analysis_summary_route(
     branch: str | None = BRANCH_QUERY(),
     include_blocked: bool = INCLUDE_BLOCKED_QUERY(),
@@ -367,7 +369,7 @@ def get_safety_stock_consumption_analysis_summary_route(
         path="/supplies/safety-stock/consumption-analysis/items",
     ),
 )
-@require_any_permission(SAFETY_STOCK_READ_PERMISSIONS)
+@require_any_permission_or_supplies_bff(SAFETY_STOCK_READ_PERMISSIONS)
 def get_safety_stock_consumption_analysis_items_route(
     branch: str | None = BRANCH_QUERY(),
     page: int = PAGE_QUERY(),
@@ -417,7 +419,7 @@ def get_safety_stock_consumption_analysis_items_route(
         path="/supplies/safety-stock/consumption-analysis/items/{code}",
     ),
 )
-@require_any_permission(SAFETY_STOCK_READ_PERMISSIONS)
+@require_any_permission_or_supplies_bff(SAFETY_STOCK_READ_PERMISSIONS)
 def get_safety_stock_consumption_analysis_item_details_route(
     code: str,
     branch: str | None = BRANCH_QUERY(),
@@ -475,7 +477,7 @@ def get_safety_stock_consumption_analysis_item_details_route(
         ),
     ),
 )
-@require_any_permission(SAFETY_STOCK_READ_PERMISSIONS)
+@require_any_permission_or_supplies_bff(SAFETY_STOCK_READ_PERMISSIONS)
 def get_safety_stock_supplier_purchase_price_history_route(
     code: str,
     supplier_code: str,

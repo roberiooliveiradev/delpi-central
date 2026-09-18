@@ -5,6 +5,7 @@ from typing import Any
 from urllib.parse import urljoin
 
 import requests
+from delpi_auth.service_token import apply_internal_service_headers
 
 from app.infrastructure.config.settings import Settings
 
@@ -64,6 +65,7 @@ class DelpiApiGateway:
             "Authorization": f"Bearer {access_token}",
             "X-Delpi-Caller-App": self.caller_app,
         }
+        apply_internal_service_headers(headers)
         try:
             from flask import g, has_request_context
 

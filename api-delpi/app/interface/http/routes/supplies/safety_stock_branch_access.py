@@ -8,6 +8,7 @@ from app.application.security.api_delpi_permissions import (
 )
 from app.domain.totvs.protheus_branches import PROTHEUS_BRANCH_CODES
 from app.interface.http.branch_access_gate import BranchAccessGate
+from app.interface.http.supplies_bff_service_access import is_trusted_supplies_bff_call
 
 _GATE = BranchAccessGate(
     global_view_perm=SAFETY_STOCK_ACCESS,
@@ -25,4 +26,6 @@ def list_viewable_branches() -> list[str]:
 
 
 def branch_access_error(branch: str | None):
+    if is_trusted_supplies_bff_call():
+        return None
     return _GATE.branch_access_error(branch)
