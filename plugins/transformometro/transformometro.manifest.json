@@ -4,7 +4,7 @@
   "name": "Portal Transforma+",
   "description": "Experiência do Portal Transforma+ sobre o domínio Transformômetro — processos, indicadores, atas e configurações.",
   "icon": "gauge",
-  "version": "0.5.0",
+  "version": "0.5.2",
   "type": "microfrontend",
   "basePath": "/apps/transformometro",
   "entry": "/apps/transformometro/assets/remoteEntry.js",
@@ -20,139 +20,22 @@
       "name": "Administrar Portal Transforma+",
       "description": "Permite acessar as funcionalidades administrativas do Portal Transforma+, como gestão de equipe, grupos, acessos e outras capacidades administrativas.",
       "module": "transformometro"
-    },
-    {
-      "code": "transformometro.view",
-      "name": "Acessar Transformômetro",
-      "description": "Permite abrir o dashboard e listagens do Transformômetro.",
-      "module": "transformometro"
-    },
-    {
-      "code": "transformometro.processes.manage",
-      "name": "Gerenciar processos",
-      "description": "Permite criar e editar processos.",
-      "module": "transformometro"
-    },
-    {
-      "code": "transformometro.revisions.manage",
-      "name": "Gerenciar revisões",
-      "description": "Permite criar revisões e ativar cenários.",
-      "module": "transformometro"
-    },
-    {
-      "code": "transformometro.measurements.manage",
-      "name": "Gerenciar medições",
-      "description": "Permite cadastrar medição operacional por revisão.",
-      "module": "transformometro"
-    },
-    {
-      "code": "transformometro.investments.manage",
-      "name": "Gerenciar investimentos",
-      "description": "Permite cadastrar investimentos por revisão.",
-      "module": "transformometro"
-    },
-    {
-      "code": "transformometro.shared-resources.manage",
-      "name": "Gerenciar recursos compartilhados",
-      "description": "Permite cadastrar recursos e vínculos por revisão.",
-      "module": "transformometro"
-    },
-    {
-      "code": "transformometro.dashboard.recalculate",
-      "name": "Recalcular dashboard",
-      "description": "Permite disparar o recálculo mensal derivado.",
-      "module": "transformometro"
-    },
-    {
-      "code": "transformometro.view.consolidated",
-      "name": "Visão consolidada do dashboard",
-      "description": "Permite consultar o dashboard sem filtro de filial (visão consolidada).",
-      "module": "transformometro"
-    },
-    {
-      "code": "transformometro.branch.filial-01",
-      "name": "Escopo Filial 01",
-      "description": "Segrega o acesso à filial 01. Combinar com capacidades (view/manage/sign/features).",
-      "module": "transformometro"
-    },
-    {
-      "code": "transformometro.branch.filial-02",
-      "name": "Escopo Filial 02",
-      "description": "Segrega o acesso à filial 02. Combinar com capacidades (view/manage/sign/features).",
-      "module": "transformometro"
-    },
-    {
-      "code": "transformometro.view.filial-01",
-      "name": "Visualizar Transformômetro — Filial 01 (legado)",
-      "description": "Alias legado de escopo: equivale a transformometro.branch.filial-01 para leitura.",
-      "module": "transformometro"
-    },
-    {
-      "code": "transformometro.view.filial-02",
-      "name": "Visualizar Transformômetro — Filial 02 (legado)",
-      "description": "Alias legado de escopo: equivale a transformometro.branch.filial-02 para leitura.",
-      "module": "transformometro"
-    },
-    {
-      "code": "transformometro.manage.filial-01",
-      "name": "Gerenciar Transformômetro — Filial 01 (legado)",
-      "description": "Alias legado: escopo filial 01 + manage naquela filial. Preferir branch.filial-01 + *.manage.",
-      "module": "transformometro"
-    },
-    {
-      "code": "transformometro.manage.filial-02",
-      "name": "Gerenciar Transformômetro — Filial 02 (legado)",
-      "description": "Alias legado: escopo filial 02 + manage naquela filial. Preferir branch.filial-02 + *.manage.",
-      "module": "transformometro"
-    },
-    {
-      "code": "transformometro.data.transfer",
-      "name": "Exportar e importar JSON",
-      "description": "Permite backup e restauração do cadastro via JSON.",
-      "module": "transformometro"
-    },
-    {
-      "code": "transformometro.meeting-minutes.view",
-      "name": "Consultar atas Transforma+",
-      "description": "Permite listar e visualizar atas de reunião do Transforma+ e gerenciar a assinatura pessoal.",
-      "module": "transformometro"
-    },
-    {
-      "code": "transformometro.meeting-minutes.manage",
-      "name": "Gerenciar atas Transforma+",
-      "description": "Permite criar, editar, enviar e finalizar atas de reunião.",
-      "module": "transformometro"
-    },
-    {
-      "code": "transformometro.meeting-minutes.sign",
-      "name": "Assinar atas Transforma+",
-      "description": "Permite assinar ou recusar atas autenticadas.",
-      "module": "transformometro"
-    },
-    {
-      "code": "transformometro.atas.view",
-      "name": "Consultar atas Transforma+ (legado)",
-      "description": "Alias legado de transformometro.meeting-minutes.view.",
-      "module": "transformometro"
-    },
-    {
-      "code": "transformometro.atas.manage",
-      "name": "Gerenciar atas Transforma+ (legado)",
-      "description": "Alias legado de transformometro.meeting-minutes.manage.",
-      "module": "transformometro"
-    },
-    {
-      "code": "transformometro.atas.sign",
-      "name": "Assinar atas Transforma+ (legado)",
-      "description": "Alias legado de transformometro.meeting-minutes.sign.",
-      "module": "transformometro"
     }
   ],
   "routes": [
     {
+      "path": "/apps/transformometro",
+      "label": "Início",
+      "permission": "transformometro.access",
+      "icon": "home",
+      "entry": null,
+      "order": 10,
+      "showInMenu": false
+    },
+    {
       "path": "/apps/transformometro/dashboard",
       "label": "Visão geral",
-      "permission": "transformometro.view",
+      "permission": "transformometro.access",
       "icon": "layout-dashboard",
       "entry": null,
       "order": 20,
@@ -161,55 +44,82 @@
     {
       "path": "/apps/transformometro/processes",
       "label": "Meus processos",
-      "permission": "transformometro.processes.manage",
+      "permission": "transformometro.access",
       "icon": "list",
       "entry": null,
       "order": 22,
       "showInMenu": false
     },
     {
-      "path": "/apps/transformometro/settings/units",
+      "path": "/apps/transformometro/settings",
       "label": "Configurações",
-      "permission": "transformometro.processes.manage",
+      "permission": "transformometro.access",
       "icon": "folder-tree",
       "entry": null,
       "order": 23,
       "showInMenu": false
     },
     {
-      "path": "/apps/transformometro/meeting-minutes",
-      "label": "Atas",
-      "permission": "transformometro.meeting-minutes.view",
-      "icon": "file-text",
+      "path": "/apps/transformometro/settings/units",
+      "label": "Unidades",
+      "permission": "transformometro.access",
+      "icon": "folder-tree",
       "entry": null,
       "order": 24,
       "showInMenu": false
     },
     {
-      "path": "/apps/transformometro/my-signature",
-      "label": "Minha assinatura",
-      "permission": "transformometro.meeting-minutes.view",
-      "icon": "pen-line",
+      "path": "/apps/transformometro/settings/departments",
+      "label": "Departamentos",
+      "permission": "transformometro.access",
+      "icon": "folder-tree",
       "entry": null,
       "order": 25,
       "showInMenu": false
     },
     {
-      "path": "/apps/transformometro/data",
-      "label": "Exportar/Importar",
-      "permission": "transformometro.data.transfer",
-      "icon": "arrow-down-up",
+      "path": "/apps/transformometro/settings/shared-resources",
+      "label": "Recursos compartilhados",
+      "permission": "transformometro.access",
+      "icon": "folder-tree",
       "entry": null,
       "order": 26,
       "showInMenu": false
     },
     {
+      "path": "/apps/transformometro/meeting-minutes",
+      "label": "Atas",
+      "permission": "transformometro.access",
+      "icon": "file-text",
+      "entry": null,
+      "order": 30,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/transformometro/my-signature",
+      "label": "Minha assinatura",
+      "permission": "transformometro.access",
+      "icon": "pen-line",
+      "entry": null,
+      "order": 31,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/transformometro/data",
+      "label": "Exportar/Importar",
+      "permission": "transformometro.access",
+      "icon": "arrow-down-up",
+      "entry": null,
+      "order": 32,
+      "showInMenu": false
+    },
+    {
       "path": "/apps/transformometro/administration",
       "label": "Administração",
-      "permission": "transformometro.view",
+      "permission": "transformometro.manage",
       "icon": "settings",
       "entry": null,
-      "order": 27,
+      "order": 40,
       "showInMenu": false
     }
   ],
