@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { MachineLoadOperation } from "./api.ts";
 import {
+  findAdjacentOpenOperation,
   hasExhaustedOperationBalance,
   isFinishedOperation,
   operationPendingQty,
@@ -114,5 +115,80 @@ describe("cockpit operation balance", () => {
     });
     assert.equal(resolveStatus(row).label, "Na fila");
     assert.equal(isFinishedOperation(row), false);
+  });
+});
+
+describe("findAdjacentOpenOperation", () => {
+  it("P0: avançar pula operação sem saldo e cai na próxima com pendência", () => {
+    const queue = [
+      operation({
+        production_order: "A",
+        operation_code: "01",
+        operation_pending_qty: 0.06,
+      }),
+      operation({
+        production_order: "B",
+        operation_code: "01",
+        operation_pending_qty: 0,
+        pending_qty: 0,
+        is_in_production: false,
+        production_status: "started",
+      }),
+      operation({
+        production_order: "C",
+        operation_code: "01",
+        operation_pending_qty: 1.2,
+        is_in_production: false,
+        production_status: "not_started",
+      }),
+    ];
+    const next = findAdjacentOpenOperation(queue, 0, 1);
+    assert.equal(next?.production_order, "C");
+  });
+
+  it("irmão: voltar também pula operações já apontadas", () => {
+    const queue = [
+      operation({
+        production_order: "A",
+        operation_code: "01",
+        operation_pending_qty: 2,
+        is_in_production: false,
+        production_status: "not_started",
+      }),
+      operation({
+        production_order: "B",
+        operation_code: "01",
+        operation_pending_qty: 0,
+        pending_qty: 0,
+        is_in_production: false,
+        production_status: "started",
+      }),
+      operation({
+        production_order: "C",
+        operation_code: "01",
+        operation_pending_qty: 0.5,
+      }),
+    ];
+    const previous = findAdjacentOpenOperation(queue, 2, -1);
+    assert.equal(previous?.production_order, "A");
+  });
+
+  it("negativo: no fim da fila aberta não inventa próxima", () => {
+    const queue = [
+      operation({
+        production_order: "A",
+        operation_code: "01",
+        operation_pending_qty: 1,
+      }),
+      operation({
+        production_order: "B",
+        operation_code: "01",
+        operation_pending_qty: 0,
+        pending_qty: 0,
+        is_in_production: false,
+        production_status: "started",
+      }),
+    ];
+    assert.equal(findAdjacentOpenOperation(queue, 0, 1), null);
   });
 });
