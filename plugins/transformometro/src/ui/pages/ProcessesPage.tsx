@@ -14,7 +14,7 @@ import {
   type OptionsData,
   type Processo,
 } from "../../data/api/transformometroApi";
-import { PROCESS_LIST_EMPTY_MESSAGE, PROCESS_LIST_SUBTITLE, buildProcessListQuery, processListPlaceholder } from "../../constants/portalExperience";
+import { PROCESS_LIST_EMPTY_MESSAGE, PORTAL_PAGE_COPY, buildProcessListQuery, processListPlaceholder } from "../../constants/portalExperience";
 import { describeHttpErrorTitle } from "../../utils/apiErrorMessage";
 import { TransformometroHttpError } from "../../data/api/transformometroHttp";
 import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
@@ -181,9 +181,9 @@ export function ProcessesPage({
   return (
     <TransformometroShell>
       <PageHeader
-        eyebrow="Processos"
-        title="Meus processos"
-        subtitle={PROCESS_LIST_SUBTITLE}
+        eyebrow={PORTAL_PAGE_COPY.processes.eyebrow}
+        title={PORTAL_PAGE_COPY.processes.title}
+        subtitle={PORTAL_PAGE_COPY.processes.description}
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.processos}
         onNavigate={onNavigate}
         onRefresh={() => void load()}

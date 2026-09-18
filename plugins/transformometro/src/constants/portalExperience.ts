@@ -1,6 +1,5 @@
 import { TRANSFORMOMETRO_ROUTES } from "./routes";
 import { describeHttpError } from "../utils/apiErrorMessage";
-import { TM_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 /** Nome de produto na UI. O bounded context técnico continua Transformômetro. */
 export const PORTAL_PRODUCT_NAME = "Portal Transforma+";
@@ -8,9 +7,47 @@ export const PORTAL_PRODUCT_NAME = "Portal Transforma+";
 export const PORTAL_WELCOME = "Bem-vindo ao Portal Transforma+";
 
 export const PORTAL_HOME_DESCRIPTION =
-  "Acompanhe processos, melhorias e resultados da transformação digital.";
+  "Acompanhe processos, melhorias e resultados da transformação.";
 
-export const PROCESS_LIST_SUBTITLE = TM_HELP_TOOLTIPS.processos.listaEscopo;
+export const PROCESS_LIST_SUBTITLE = "Processos disponíveis no Portal Transforma+.";
+
+export const PORTAL_PAGE_COPY = {
+  home: {
+    eyebrow: PORTAL_PRODUCT_NAME,
+    title: PORTAL_WELCOME,
+    description: PORTAL_HOME_DESCRIPTION,
+  },
+  overview: {
+    eyebrow: PORTAL_PRODUCT_NAME,
+    title: "Visão geral",
+    description: "Indicadores e resultados do programa de transformação.",
+  },
+  processes: {
+    eyebrow: "PROCESSOS",
+    title: "Meus processos",
+    description: PROCESS_LIST_SUBTITLE,
+  },
+  meetingMinutes: {
+    eyebrow: "REGISTROS",
+    title: "Atas",
+    description: "Reuniões, registros e assinaturas do Transforma+.",
+  },
+  data: {
+    eyebrow: "DADOS",
+    title: "Exportar / Importar",
+    description: "Backup, transferência e restauração dos dados do Portal Transforma+.",
+  },
+  administration: {
+    eyebrow: PORTAL_PRODUCT_NAME,
+    title: "Administração",
+    description: "Gerencie configurações e recursos administrativos do Portal Transforma+.",
+  },
+  settings: {
+    eyebrow: PORTAL_PRODUCT_NAME,
+    title: "Configurações",
+    description: "Gerencie unidades, departamentos e demais cadastros administrativos.",
+  },
+} as const;
 
 export const PROCESS_LIST_EMPTY_MESSAGE =
   "Nenhum processo. Use Novo processo para cadastrar.";
@@ -94,18 +131,6 @@ export const PORTAL_LAUNCHER_GROUPS: readonly {
   links: readonly { id: string; label: string; path: string; description: string }[];
 }[] = [
   {
-    id: "operation",
-    title: "Operação",
-    links: [
-      {
-        id: "processes",
-        label: "Meus processos",
-        path: TRANSFORMOMETRO_ROUTES.processes,
-        description: "Processos disponíveis no seu escopo de acesso.",
-      },
-    ],
-  },
-  {
     id: "management",
     title: "Gestão",
     links: [
@@ -114,6 +139,18 @@ export const PORTAL_LAUNCHER_GROUPS: readonly {
         label: "Visão geral",
         path: TRANSFORMOMETRO_ROUTES.dashboard,
         description: "Indicadores e resultados do programa de transformação.",
+      },
+    ],
+  },
+  {
+    id: "processes",
+    title: "Processos",
+    links: [
+      {
+        id: "processes",
+        label: "Meus processos",
+        path: TRANSFORMOMETRO_ROUTES.processes,
+        description: PROCESS_LIST_SUBTITLE,
       },
     ],
   },
@@ -129,9 +166,9 @@ export const PORTAL_LAUNCHER_GROUPS: readonly {
       },
       {
         id: "data",
-        label: "Exportar/Importar",
+        label: "Exportar / Importar",
         path: TRANSFORMOMETRO_ROUTES.data,
-        description: "Backup, prévia e confirmação de importação.",
+        description: PORTAL_PAGE_COPY.data.description,
       },
     ],
   },

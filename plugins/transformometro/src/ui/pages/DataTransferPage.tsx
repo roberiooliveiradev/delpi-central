@@ -10,6 +10,7 @@ import { TransformometroShell } from "../../components/TransformometroShell";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { useFloatingNotice } from "../../components/ui/FloatingNoticeProvider";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { PORTAL_PAGE_COPY } from "../../constants/portalExperience";
 import {
   applyJsonImport,
   applyPackageImport,
@@ -235,9 +236,9 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
   return (
     <TransformometroShell>
       <PageHeader
-        eyebrow="Administração"
-        title="Exportar/Importar"
-        subtitle="Backup completo em pacote (.tmbackup.zip) com cadastro, diagramas, mapeamento, arquivos do processo e evidências."
+        eyebrow={PORTAL_PAGE_COPY.data.eyebrow}
+        title={PORTAL_PAGE_COPY.data.title}
+        subtitle={PORTAL_PAGE_COPY.data.description}
         currentPath={pathname}
         onNavigate={onNavigate}
       />

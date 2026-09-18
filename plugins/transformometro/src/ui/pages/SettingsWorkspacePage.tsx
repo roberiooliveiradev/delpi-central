@@ -6,7 +6,7 @@ import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { CATALOG_CREATE } from "../../constants/catalogRoutes";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
-import { PORTAL_PRODUCT_NAME } from "../../constants/portalExperience";
+import { PORTAL_PAGE_COPY } from "../../constants/portalExperience";
 import {
   buildFilialPath,
   buildRecursoPath,
@@ -206,9 +206,9 @@ export function SettingsWorkspacePage({ getAccessToken, route, pathname, onNavig
   return (
     <TransformometroShell>
       <PageHeader
-        eyebrow={PORTAL_PRODUCT_NAME}
-        title="Configurações"
-        subtitle="Gerencie unidades, departamentos e demais cadastros administrativos."
+        eyebrow={PORTAL_PAGE_COPY.settings.eyebrow}
+        title={PORTAL_PAGE_COPY.settings.title}
+        subtitle={PORTAL_PAGE_COPY.settings.description}
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.configuracoesUnidades}
         onNavigate={onNavigate}
       />

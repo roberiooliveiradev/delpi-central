@@ -8,6 +8,7 @@ import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { SelectField } from "../../components/ui/SelectField";
 import { buildAtaPath, TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
+import { PORTAL_PAGE_COPY } from "../../constants/portalExperience";
 import { listAtas, type AtaListItem } from "../../data/api/transformometroMeetingMinutesApi";
 import { ATA_STATUS_LABELS } from "../meeting-minutes/meetingMinuteLabels";
 import {
@@ -77,9 +78,9 @@ export function MeetingMinutesPage({ getAccessToken, pathname, onNavigate }: Pro
   return (
     <TransformometroShell>
       <PageHeader
-        eyebrow="Registros"
-        title="Atas"
-        subtitle="Reuniões, pendências, assinaturas e registros."
+        eyebrow={PORTAL_PAGE_COPY.meetingMinutes.eyebrow}
+        title={PORTAL_PAGE_COPY.meetingMinutes.title}
+        subtitle={PORTAL_PAGE_COPY.meetingMinutes.description}
         currentPath={pathname}
         onNavigate={onNavigate}
         onRefresh={() => void load()}

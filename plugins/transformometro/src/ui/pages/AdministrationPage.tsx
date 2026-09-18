@@ -1,16 +1,23 @@
-import { SectionCard, sectionCardPacBemClasses } from "@delpi/plugin-ui/index";
+import { Building2, FolderTree, Share2 } from "lucide-react";
+import { NavigationCard, SectionCard, navigationCardBemClasses, sectionCardPacBemClasses } from "@delpi/plugin-ui/index";
 
 import type { AppProps } from "../../App";
 import { PageHeader } from "../../components/PageHeader";
-import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import { TransformometroShell } from "../../components/TransformometroShell";
-import { PORTAL_ADMIN_LINKS, PORTAL_PRODUCT_NAME } from "../../constants/portalExperience";
+import { PORTAL_ADMIN_LINKS, PORTAL_PAGE_COPY } from "../../constants/portalExperience";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 
 const SECTION = sectionCardPacBemClasses("ds");
+const NAV_CARD = navigationCardBemClasses("ds");
 const SECTION_LABELS = {
   titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
 };
+
+const SETTINGS_ICONS = {
+  units: Building2,
+  departments: FolderTree,
+  resources: Share2,
+} as const;
 
 type AdministrationPageProps = Pick<AppProps, "pathname"> & {
   onNavigate: (path: string) => void;
@@ -22,23 +29,30 @@ export function AdministrationPage({ pathname, onNavigate }: AdministrationPageP
   return (
     <TransformometroShell>
       <PageHeader
-        eyebrow={PORTAL_PRODUCT_NAME}
-        title="Administração"
-        subtitle="Gerencie configurações e recursos administrativos do Portal Transforma+."
+        eyebrow={PORTAL_PAGE_COPY.administration.eyebrow}
+        title={PORTAL_PAGE_COPY.administration.title}
+        subtitle={PORTAL_PAGE_COPY.administration.description}
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.administration}
         onNavigate={onNavigate}
       />
       <div className="tm-portal-catalog">
         <SectionCard classNames={SECTION} labels={SECTION_LABELS} title="Configurações">
-          <ul className="tm-portal-catalog__links">
-            {settings.map((link) => (
-              <li key={link.id}>
-                <button type="button" className={DS_GHOST_BTN} onClick={() => onNavigate(link.path)}>
-                  {link.label}
-                </button>
-              </li>
-            ))}
-          </ul>
+          <div className="tm-portal-nav-grid">
+            {settings.map((link) => {
+              const Icon = SETTINGS_ICONS[link.id as keyof typeof SETTINGS_ICONS];
+              return (
+                <NavigationCard
+                  key={link.id}
+                  classNames={NAV_CARD}
+                  orientation="horizontal"
+                  title={link.label}
+                  description={link.description}
+                  icon={Icon ? <Icon size={18} aria-hidden="true" /> : undefined}
+                  onClick={() => onNavigate(link.path)}
+                />
+              );
+            })}
+          </div>
         </SectionCard>
       </div>
     </TransformometroShell>

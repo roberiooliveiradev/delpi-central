@@ -7,6 +7,7 @@ import { PROCESSO_WORKSPACE_SECTIONS } from "../ui/processes/processWorkspaceNav
 import {
   DEFERRED_NAV_ITEMS,
   PORTAL_LAUNCHER_GROUPS,
+  PORTAL_PAGE_COPY,
   PORTAL_PRODUCT_NAME,
   PORTAL_TOPBAR_ITEMS,
   PORTAL_WELCOME,
@@ -40,12 +41,12 @@ describe("Portal Transforma+ navigation", () => {
     const links = PORTAL_LAUNCHER_GROUPS.flatMap((group) => group.links.map((link) => link.label));
     expect(links).not.toContain("Configurações");
     expect(links).toEqual(
-      expect.arrayContaining(["Atas", "Exportar/Importar", "Meus processos", "Visão geral", "Administração"]),
+      expect.arrayContaining(["Atas", "Exportar / Importar", "Meus processos", "Visão geral", "Administração"]),
     );
     const visible = filterPortalCatalog("", { includeAdministration: false }).map((item) => item.label);
     expect(visible).not.toContain("Configurações");
     expect(visible).not.toContain("Administração");
-    expect(visible).toContain("Exportar/Importar");
+    expect(visible).toContain("Exportar / Importar");
   });
 
   it("não promove sala, tarefas, ajuda, favoritos ou usuário a funcional", () => {
@@ -90,7 +91,7 @@ describe("Portal Transforma+ navigation", () => {
   });
 
   it("lista processos pelo contrato atual", () => {
-    expect(PROCESS_LIST_SUBTITLE).toBe("Processos disponíveis no seu escopo de acesso.");
+    expect(PROCESS_LIST_SUBTITLE).toBe("Processos disponíveis no Portal Transforma+.");
     expect(buildProcessListQuery("  compras ", "ativo")).toEqual({ q: "compras", status: "ativo" });
     expect(buildProcessListQuery("abc", "ativo")).not.toHaveProperty("filial_id");
   });
@@ -100,6 +101,36 @@ describe("Portal Transforma+ navigation", () => {
     expect(forbidden).not.toBe(PROCESS_LIST_EMPTY_MESSAGE);
     expect(forbidden.toLowerCase()).not.toContain("nenhum processo");
     expect(processListPlaceholder(500, "Serviço indisponível")).toBe("Serviço indisponível");
+  });
+
+  it("usa o PageHero das páginas principais", () => {
+    expect(PORTAL_PAGE_COPY.home).toMatchObject({
+      eyebrow: "Portal Transforma+",
+      title: "Bem-vindo ao Portal Transforma+",
+      description: "Acompanhe processos, melhorias e resultados da transformação.",
+    });
+    expect(PORTAL_PAGE_COPY.overview.title).toBe("Visão geral");
+    expect(PORTAL_PAGE_COPY.processes).toMatchObject({
+      eyebrow: "PROCESSOS",
+      title: "Meus processos",
+      description: "Processos disponíveis no Portal Transforma+.",
+    });
+    expect(PORTAL_PAGE_COPY.meetingMinutes).toMatchObject({
+      eyebrow: "REGISTROS",
+      title: "Atas",
+    });
+    expect(PORTAL_PAGE_COPY.data).toMatchObject({
+      eyebrow: "DADOS",
+      title: "Exportar / Importar",
+    });
+    expect(PORTAL_PAGE_COPY.administration.title).toBe("Administração");
+    expect(PORTAL_PAGE_COPY.settings.title).toBe("Configurações");
+    expect(PORTAL_LAUNCHER_GROUPS.map((group) => group.title)).toEqual([
+      "Gestão",
+      "Processos",
+      "Registros",
+      "Administração",
+    ]);
   });
 
   it("abre o workspace existente sem seções alvo", () => {

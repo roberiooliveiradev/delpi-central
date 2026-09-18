@@ -21,6 +21,7 @@ import {
 } from "@delpi/plugin-ui/index";
 import { MultiSelectField } from "../../components/MultiSelectField";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { PORTAL_PAGE_COPY } from "../../constants/portalExperience";
 import { ChartCard } from "../../components/ChartCard";
 import { KpiCard } from "../../components/KpiCard";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
@@ -533,8 +534,9 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     return (
       <TransformometroShell>
         <PageHeader
-          title="Visão geral"
-          subtitle="Indicadores e resultados do programa de transformação."
+          eyebrow={PORTAL_PAGE_COPY.overview.eyebrow}
+          title={PORTAL_PAGE_COPY.overview.title}
+          subtitle={PORTAL_PAGE_COPY.overview.description}
           currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.dashboard}
           onNavigate={onNavigate}
         />
@@ -560,8 +562,9 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   return (
     <TransformometroShell>
       <PageHeader
-        title="Visão geral"
-        subtitle="Indicadores e resultados do programa de transformação."
+        eyebrow={PORTAL_PAGE_COPY.overview.eyebrow}
+        title={PORTAL_PAGE_COPY.overview.title}
+        subtitle={PORTAL_PAGE_COPY.overview.description}
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.dashboard}
         onNavigate={onNavigate}
         onRefresh={() => void handleRefresh()}
@@ -626,7 +629,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
                 };
               })
             }
-            emptyLabel="Selecione…"
+            emptyLabel={viewMode === "consolidated" ? "Todas" : "Selecione…"}
             disabled={viewMode === "consolidated"}
             searchable
           />

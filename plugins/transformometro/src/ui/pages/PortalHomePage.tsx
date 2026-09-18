@@ -1,23 +1,34 @@
+import { ArrowDownUp, FileText, LayoutDashboard, List, Settings } from "lucide-react";
 import { useMemo, useState } from "react";
-import { FieldLabel, NativeTextControl, SectionCard, sectionCardPacBemClasses } from "@delpi/plugin-ui/index";
+import {
+  FieldLabel,
+  NativeTextControl,
+  NavigationCard,
+  SectionCard,
+  navigationCardBemClasses,
+  sectionCardPacBemClasses,
+} from "@delpi/plugin-ui/index";
 
 import type { AppProps } from "../../App";
 import { PageHeader } from "../../components/PageHeader";
-import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import { TransformometroShell } from "../../components/TransformometroShell";
-import {
-  PORTAL_HOME_DESCRIPTION,
-  PORTAL_LAUNCHER_GROUPS,
-  PORTAL_PRODUCT_NAME,
-  PORTAL_WELCOME,
-} from "../../constants/portalExperience";
+import { PORTAL_LAUNCHER_GROUPS, PORTAL_PAGE_COPY } from "../../constants/portalExperience";
 import { useCanManagePortal } from "../../state/portalChrome";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 
 const SECTION = sectionCardPacBemClasses("ds");
+const NAV_CARD = navigationCardBemClasses("ds");
 const SECTION_LABELS = {
   titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
 };
+
+const LINK_ICONS = {
+  overview: LayoutDashboard,
+  processes: List,
+  "meeting-minutes": FileText,
+  data: ArrowDownUp,
+  administration: Settings,
+} as const;
 
 type PortalHomePageProps = Pick<AppProps, "pathname"> & {
   onNavigate: (path: string) => void;
@@ -44,9 +55,9 @@ export function PortalHomePage({ pathname, onNavigate }: PortalHomePageProps) {
   return (
     <TransformometroShell>
       <PageHeader
-        eyebrow={PORTAL_PRODUCT_NAME}
-        title={PORTAL_WELCOME}
-        subtitle={PORTAL_HOME_DESCRIPTION}
+        eyebrow={PORTAL_PAGE_COPY.home.eyebrow}
+        title={PORTAL_PAGE_COPY.home.title}
+        subtitle={PORTAL_PAGE_COPY.home.description}
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.home}
         onNavigate={onNavigate}
       />
@@ -69,19 +80,22 @@ export function PortalHomePage({ pathname, onNavigate }: PortalHomePageProps) {
               labels={SECTION_LABELS}
               title={group.title}
             >
-              <ul className="tm-portal-catalog__links">
-                {group.links.map((link) => (
-                  <li key={link.id}>
-                    <button
-                      type="button"
-                      className={DS_GHOST_BTN}
+              <div className="tm-portal-nav-grid">
+                {group.links.map((link) => {
+                  const Icon = LINK_ICONS[link.id as keyof typeof LINK_ICONS];
+                  return (
+                    <NavigationCard
+                      key={link.id}
+                      classNames={NAV_CARD}
+                      orientation="horizontal"
+                      title={link.label}
+                      description={link.description}
+                      icon={Icon ? <Icon size={18} aria-hidden="true" /> : undefined}
                       onClick={() => onNavigate(link.path)}
-                    >
-                      {link.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+                    />
+                  );
+                })}
+              </div>
             </SectionCard>
           ))}
         </div>

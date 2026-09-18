@@ -80,7 +80,7 @@ export const TM_HELP_TOOLTIPS = {
   },
   dashboard: {
     view:
-      "Alterna o recorte: Consolidado (todas as unidades ativas), Unidade ou Departamento. Instâncias multi-unidade contam uma fatia de economia (bruta, líquida, horas) por unidade do recorte — no Consolidado, × unidades ativas; na Unidade/Departamento, × unidades selecionadas. Investimento não multiplica. O Custom GPT usa as mesmas permissões desta tela para analisar e cadastrar.",
+      "Filtro analítico do gráfico: Consolidado (todas as unidades), Unidade ou Departamento. Instâncias multi-unidade contam uma fatia de economia por unidade do recorte. Investimento não multiplica.",
     chatgptAssistente:
       "O Custom GPT do Transformômetro analisa e cadastra com a mesma conta e permissões desta tela. Assinatura manuscrita e uploads ficam só na Minha DELPI.",
     competencia:
@@ -88,7 +88,7 @@ export const TM_HELP_TOOLTIPS = {
     dateStart: "Início do período analisado (competência mensal). Filtra economias, custos e horas.",
     dateEnd: "Fim do período analisado. O recorte considera as competências entre a data inicial e a final.",
     unidade:
-      "Restringe a análise a uma ou mais unidades operacionais. Habilitado nas visões Unidade e Departamento.",
+      "Filtro analítico. Recorta o gráfico a uma ou mais unidades nas visões Unidade e Departamento.",
     setor:
       "Restringe a análise a um ou mais departamentos das unidades selecionadas. Disponível apenas na visão Departamento.",
     alerts:
@@ -139,7 +139,7 @@ export const TM_HELP_TOOLTIPS = {
     filtroUnidade: "Filtra o catálogo para exibir apenas departamentos vinculados à unidade escolhida.",
   },
   processos: {
-    listaEscopo: "Processos disponíveis no seu escopo de acesso.",
+    listaEscopo: "Processos disponíveis no Portal Transforma+.",
     codigo:
       "Código de negócio do processo (ex.: PROC-XXXX). Editável; o identificador técnico imutável é o ID do processo.",
     nome: "Nome do processo-mestre monitorado no Transformômetro.",

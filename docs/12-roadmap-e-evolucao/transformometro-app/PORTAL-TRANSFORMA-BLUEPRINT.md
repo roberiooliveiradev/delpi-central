@@ -45,9 +45,9 @@ Backend: FastAPI, repositórios `PluginBaseRepository` com psycopg (não SQLAlch
 | Configurações | MFE TM | Administração → `settingsWorkspaceNav.ts` — unidades, departamentos, recursos |
 | Exportar | MFE TM | `DataTransferPage` |
 
-Kit em `@delpi/plugin-ui`, confirmado no índice: `TopBar`, `PageHero`, `NavigationCard`, `KpiCard`, `SectionCard`, `EmptyState`, `FiltersRow`, `CommandPalette`, `FieldLabel`, `NativeTextControl`, `HelpTooltip`. O MFE **já** usa `KpiCard` (wrapper local), `FieldLabel`, `HelpTooltip`. **Não** importa `TopBar`, `PageHero`, `NavigationCard` nem `EmptyState` hoje.
+Kit em `@delpi/plugin-ui`. O MFE compõe `TopBar`, `PageHero`, `NavigationCard`, `SectionCard`, `KpiCard`, `FiltersRow` e `CommandPalette` pelo shell atual. Não importa internals do Comercial e não cria `PluginShell`.
 
-Decisão congelada de chrome: a Wave 1 **não troca** o host para `TopBar` nem copia o `PluginShell` do Comercial. O host continua `TransformometroShell` + `PageHeader`. Cards de atalho podem usar `NavigationCard`. `CommandPalette` fica de fora.
+Decisão vigente: `TransformometroShell` + `PageHeader`. Sala, tarefas, ajuda e favoritos continuam `TO_INVENTORY`.
 
 ## 4. Informação — Wave 1
 
