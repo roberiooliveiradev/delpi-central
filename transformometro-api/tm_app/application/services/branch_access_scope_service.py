@@ -45,12 +45,10 @@ class FilialAccessScope:
 
 
 class FilialAccessScopeService:
-    """Resolve e aplica RBAC por filial (server-side).
+    """Legado. Não participa da autorização.
 
-    Escopo canônico: `transformometro.branch.filial-*`.
-    Legado: `view.filial-*` / `manage.filial-*` também contribuem ao escopo.
-    Sem esses códigos, usuário autenticado não vê unidade. Superadmin é irrestrito.
-    `user is None` é negado. CLI de backup não usa este serviço.
+    O portal não segrega por unidade. Este helper não deve ser chamado
+    no caminho de request. Permanece só enquanto testes antigos o cobrem.
     """
 
     def resolve(self, user: Any | None) -> FilialAccessScope:

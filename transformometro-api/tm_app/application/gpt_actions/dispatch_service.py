@@ -117,7 +117,6 @@ from tm_app.infrastructure.persistence.repositories.shared_resource_repository i
     RecursoRepository,
     VinculoRepository,
 )
-from tm_app.application.services.branch_access_scope_service import FilialAccessScopeService
 from tm_app.application.services.dashboard_recalc_hook_service import DashboardRecalcHookService
 from tm_app.application.services.decomposition_write_service import (
     DecompositionWriteError,
@@ -133,10 +132,8 @@ from tm_app.application.services.process_write_service import (
     ProcessWriteService,
     RevisionActivationService,
 )
-from tm_app.application.security.transformometro_permissions import (
-    TRANSFORMOMETRO_REVISIONS_MANAGE,
-)
 from tm_app.interface.http.branch_access_http import (
+    PORTAL_FILTER_META,
     check_dashboard_filial_access,
     check_instancia_manage_access,
     check_instancia_view_access,
@@ -147,7 +144,6 @@ from tm_app.interface.http.branch_access_http import (
     filter_rows_for_access,
     require_transformometro_view_access,
     require_unrestricted_catalog_admin,
-    resolve_access_scope,
 )
 from tm_app.interface.http.schemas.crud_schemas import (
     FilialBody,
@@ -295,26 +291,16 @@ class GptActionsDispatchService:
 
     def get_catalog(self, request: Request) -> dict[str, Any]:
         self._raise_http_err(require_transformometro_view_access(request))
-        scope = resolve_access_scope(request)
         try:
             filiais = FilialRepository().list_for_options() or []
         except Exception:
             filiais = [{"id": k, "label": v} for k, v in FILIAIS.items()]
-        filiais = FilialAccessScopeService().filter_filiais_options(filiais, scope)
         try:
             setores = SetorRepository().list_for_options()
         except Exception:
             setores = []
-        if not scope.is_unrestricted:
-            allowed = scope.allowed_codigos
-            setores = [
-                item
-                for item in setores
-                if not item.get("filiais")
-                or any(str(code) in allowed for code in item.get("filiais") or [])
-            ]
         payload = options_payload(setores, filiais)
-        payload["access_scope"] = scope.meta()
+        payload["access_scope"] = dict(PORTAL_FILTER_META)
         payload["entities"] = [e.value for e in GptEntity]
         payload["registration_guide"] = build_registration_guide()
         # Canonical flowchart_v1 node/edge catalog (same builder as GET /diagrama/catalogo).
@@ -1625,15 +1611,16 @@ class GptActionsDispatchService:
         if processo_id:
             self._raise_http_err(check_processo_manage_access(request, processo_id))
             return
-        from delpi_auth.authz_core import has_permission
+        from tm_app.application.security.authorization_policy import (
+            AuthorizationDenied,
+            TransformometroAuthorizationPolicy,
+        )
 
         user = getattr(request.state, "user", None)
-        if user and (
-            getattr(user, "is_superadmin", False)
-            or has_permission(user, TRANSFORMOMETRO_REVISIONS_MANAGE)
-        ):
-            return
-        raise GptActionsError("Sem permissão para gerenciar esta revisão.", 403)
+        try:
+            TransformometroAuthorizationPolicy().require_access(user)
+        except AuthorizationDenied as exc:
+            raise GptActionsError(str(exc), exc.status_code) from exc
 
     def _require_dashboard_recalculate_access(self, request: Request) -> None:
         """Adapter: MCP e GPT Actions usam a mesma policy do HTTP."""

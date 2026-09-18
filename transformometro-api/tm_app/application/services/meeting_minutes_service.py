@@ -22,7 +22,9 @@ from tm_app.application.services.sign_invite_mail_presentation_service import (
 from tm_app.application.services.sign_invite_mail_engagement_service import (
     SignInviteMailEngagementService,
 )
-from tm_app.application.services.branch_access_scope_service import FilialAccessScopeService
+from tm_app.application.security.authorization_policy import (
+    TransformometroAuthorizationPolicy,
+)
 from tm_app.domain.services.minute_status_transition_service import MinuteStatusTransitionError, MinuteStatusTransitionService
 from tm_app.infrastructure.pdf.minute_pdf_renderer import MinutePdfRenderer
 from tm_app.infrastructure.persistence.repositories.meeting_minute_repository import MeetingMinuteRepository
@@ -49,7 +51,8 @@ class MeetingMinutesService:
         self.sign_pending_mail = sign_pending_mail or TmSignPendingMailService()
         self.mail_engagement = SignInviteMailEngagementService(self.repo)
         self.signature_storage, self.pdf_storage = SignatureStorageService(), PdfStorageService()
-        self.pdf_renderer, self.scope_service = MinutePdfRenderer(), FilialAccessScopeService()
+        self.pdf_renderer = MinutePdfRenderer()
+        self._authz = TransformometroAuthorizationPolicy()
 
     @staticmethod
     def _user_id(user: Any) -> str:
@@ -86,27 +89,25 @@ class MeetingMinutesService:
         return any(code in permissions for code in codes)
 
     def _assert(self, user: Any, action: str, unit_code: str) -> None:
-        permissions = self._permissions(user)
+        del unit_code
+        if user is None:
+            raise PermissionError("Usuário não autenticado.")
         if getattr(user, "is_superadmin", False):
             return
         if action == "view":
-            # Leitura: view, manage ou sign (sign-only precisa de detalhe/imagem no fluxo de assinar).
-            if not any(code in permissions for code in perms.MEETING_MINUTES_READ_PERMISSIONS):
-                raise PermissionError("Sem permissão para esta operação de atas.")
+            allowed = self._authz.has_access(user) or self._has_any_permission(
+                user, *perms.MEETING_MINUTES_READ_PERMISSIONS
+            )
+        elif action == "manage":
+            allowed = self._authz.has_access(user) or self._has_any_permission(
+                user, *perms.MEETING_MINUTES_MANAGE_PERMISSIONS
+            )
         else:
-            required = {
-                "manage": perms.MEETING_MINUTES_MANAGE_PERMISSIONS,
-                "sign": perms.MEETING_MINUTES_SIGN_PERMISSIONS,
-            }[action]
-            if not any(code in permissions for code in required):
-                raise PermissionError("Sem permissão para esta operação de atas.")
-        scope = self.scope_service.resolve(user)
-        if action == "view":
-            allowed = self.scope_service.can_view_filial(scope, unit_code)
-        else:
-            allowed = self.scope_service.can_manage_filial(scope, unit_code, user=user) if action == "manage" else self.scope_service.can_view_filial(scope, unit_code)
+            allowed = self._authz.has_access(user) or self._has_any_permission(
+                user, *perms.MEETING_MINUTES_SIGN_PERMISSIONS
+            )
         if not allowed:
-            raise PermissionError("Sem permissão para acessar esta unidade.")
+            raise PermissionError("Sem permissão para esta operação de atas.")
 
     def _load(self, user: Any, action: str, minute_id: str) -> dict[str, Any]:
         minute = self.repo.get_minute(minute_id)
@@ -123,17 +124,19 @@ class MeetingMinutesService:
     def list_minutes(self, user: Any, filters: dict[str, Any]) -> dict[str, Any]:
         pending_for_me = bool(filters.get("pending_for_me"))
         if pending_for_me:
-            if not self._has_any_permission(user, *perms.MEETING_MINUTES_READ_PERMISSIONS):
+            if not (
+                self._authz.has_access(user)
+                or self._has_any_permission(user, *perms.MEETING_MINUTES_READ_PERMISSIONS)
+            ):
                 raise PermissionError("Sem permissão para consultar atas.")
-        elif not self._has_any_permission(user, *perms.MEETING_MINUTES_LIST_PERMISSIONS):
+        elif not (
+            self._authz.has_access(user)
+            or self._has_any_permission(user, *perms.MEETING_MINUTES_LIST_PERMISSIONS)
+        ):
             raise PermissionError("Sem permissão para consultar atas.")
-        scope = self.scope_service.resolve(user)
-        units = ["01", "02"] if scope.is_unrestricted else sorted(scope.allowed_codigos)
+        units = None
         if filters.get("unit_code"):
-            self._assert(user, "view", str(filters["unit_code"]))
             units = [str(filters["unit_code"]).zfill(2)]
-        if not units:
-            return {"items": [], "total": 0}
         rows, total = self.repo.list_minutes(
             unit_codes=units,
             status=filters.get("status"),

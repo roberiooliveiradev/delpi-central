@@ -24,11 +24,14 @@ class MeetingMinuteRepository(PluginBaseRepository):
              Jsonb(json.loads(json.dumps(after, default=str))) if after is not None else None),
         )
 
-    def list_minutes(self, *, unit_codes: list[str], status: str | None = None,
+    def list_minutes(self, *, unit_codes: list[str] | None = None, status: str | None = None,
                      meeting_type: str | None = None, q: str | None = None,
                      pending_for_user_id: str | None = None, date_from: str | None = None,
                      date_to: str | None = None, limit: int = 50, offset: int = 0) -> tuple[list[dict[str, Any]], int]:
-        clauses, params = ["m.deleted_at IS NULL", "m.unit_code = ANY(%s)"], [unit_codes]
+        clauses, params = ["m.deleted_at IS NULL"], []
+        if unit_codes is not None:
+            clauses.append("m.unit_code = ANY(%s)")
+            params.append(unit_codes)
         for column, value in (
             ("m.status =", status),
             ("m.meeting_type =", meeting_type),

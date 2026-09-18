@@ -1,3 +1,12 @@
+"""Gates HTTP do Transformômetro.
+
+Filial não autoriza. Quem tem access vê todas as unidades.
+O filtro analítico da Visão geral continua em DashboardViewScopeService.
+O dicionário access_scope devolvido ao portal é só forma do filtro:
+mode unrestricted significa que o seletor pode mostrar Todas.
+Não é escopo de autorização.
+"""
+
 from __future__ import annotations
 
 import re
@@ -7,49 +16,68 @@ from uuid import UUID
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
-from delpi_auth.authz_core import has_permission
-
-from tm_app.application.security.transformometro_permissions import (
-    GLOBAL_MANAGE_PERMISSIONS,
-    TRANSFORMOMETRO_SHARED_RESOURCES_MANAGE,
-    TRANSFORMOMETRO_VIEW_CONSOLIDATED,
+from tm_app.application.security.authorization_policy import (
+    AuthorizationDenied,
+    TransformometroAuthorizationPolicy,
 )
 from tm_app.application.services.dashboard_view_scope_service import (
-    DashboardView,
     DashboardViewScopeService,
-)
-from tm_app.application.services.branch_access_scope_service import (
-    FilialAccessScope,
-    FilialAccessScopeService,
 )
 from tm_app.core.responses import fail
 from tm_app.infrastructure.persistence.repositories.branch_repository import FilialRepository
-from tm_app.infrastructure.persistence.repositories.process_instance_repository import (
-    ProcessoInstanciaRepository,
-)
 
 _UUID_PATTERN = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
     re.IGNORECASE,
 )
 
-_scope_service = FilialAccessScopeService()
 _view_scope = DashboardViewScopeService()
 
+# Forma antiga do seletor. Não lista unidades autorizadas.
+PORTAL_FILTER_META: dict[str, Any] = {
+    "mode": "unrestricted",
+    "allowed_filiais": [],
+    "can_view_consolidated": True,
+    "scoped_manage": False,
+}
 
-def resolve_access_scope(request: Request) -> FilialAccessScope:
-    user = getattr(request.state, "user", None)
-    return _scope_service.resolve(user)
+
+def _policy() -> TransformometroAuthorizationPolicy:
+    return TransformometroAuthorizationPolicy()
 
 
-def reject_unauthenticated_scope(scope: FilialAccessScope) -> JSONResponse | None:
-    if scope.is_denied:
-        return access_denied("Usuário não autenticado.")
+def _user(request: Request) -> Any | None:
+    return getattr(request.state, "user", None)
+
+
+def _as_response(exc: AuthorizationDenied) -> JSONResponse:
+    return fail(str(exc), exc.status_code)
+
+
+def require_transformometro_view_access(request: Request) -> JSONResponse | None:
+    """Uso normal do portal: access ou código legado de uso, nunca filial."""
+    try:
+        _policy().require_access(_user(request))
+    except AuthorizationDenied as exc:
+        return _as_response(exc)
     return None
 
 
-def access_denied(message: str = "Sem permissão para acessar esta unidade.") -> JSONResponse:
-    return fail(message, 403)
+def require_unrestricted_catalog_admin(request: Request) -> JSONResponse | None:
+    """Cadastro de filiais e departamentos. Só manage. Uso normal não administra."""
+    try:
+        _policy().require_manage(_user(request))
+    except AuthorizationDenied as exc:
+        return _as_response(exc)
+    return None
+
+
+def require_shared_resources_manage(request: Request) -> JSONResponse | None:
+    try:
+        _policy().require_shared_resources(_user(request))
+    except AuthorizationDenied as exc:
+        return _as_response(exc)
+    return None
 
 
 def resolve_filial_codigo(filial_ref: str | None) -> str | None:
@@ -77,28 +105,13 @@ def check_dashboard_filial_access(
     filial_id: str | None,
     setor_id: str | None,
 ) -> JSONResponse | None:
-    scope = resolve_access_scope(request)
-    if denied := reject_unauthenticated_scope(scope):
+    """Access abre Todas, 01, 02 e futuras. Filial só valida o parâmetro da consulta."""
+    if denied := require_transformometro_view_access(request):
         return denied
     try:
-        dashboard_scope = _view_scope.resolve(
-            view=view,
-            filial_id=filial_id,
-            setor_id=setor_id,
-        )
+        _view_scope.resolve(view=view, filial_id=filial_id, setor_id=setor_id)
     except ValueError as exc:
         return fail(str(exc), 400)
-
-    if dashboard_scope.view == DashboardView.CONSOLIDATED:
-        if not _scope_service.can_view_consolidated(scope):
-            return access_denied("Sem permissão para visão consolidada.")
-        return None
-
-    # Multi-seleção: o usuário precisa ter acesso a TODAS as unidades escolhidas.
-    for filial_ref in sorted(dashboard_scope.filial_ids):
-        codigo = resolve_filial_codigo(filial_ref)
-        if not _scope_service.can_view_filial(scope, codigo):
-            return access_denied()
     return None
 
 
@@ -106,14 +119,10 @@ def check_view_filial_access(
     request: Request,
     filial_ref: str | None,
 ) -> JSONResponse | None:
-    scope = resolve_access_scope(request)
-    if denied := reject_unauthenticated_scope(scope):
+    if denied := require_transformometro_view_access(request):
         return denied
-    codigo = resolve_filial_codigo(filial_ref)
-    if not codigo:
+    if not resolve_filial_codigo(filial_ref):
         return fail("Unidade inválida.", 400)
-    if not _scope_service.can_view_filial(scope, codigo):
-        return access_denied()
     return None
 
 
@@ -121,86 +130,32 @@ def check_manage_filial_access(
     request: Request,
     filial_ref: str | None,
 ) -> JSONResponse | None:
-    scope = resolve_access_scope(request)
-    if denied := reject_unauthenticated_scope(scope):
+    """Escrita normal do ciclo. Unidade do registro não autoriza nem esconde."""
+    if denied := require_transformometro_view_access(request):
         return denied
-    user = getattr(request.state, "user", None)
-    codigo = resolve_filial_codigo(filial_ref)
-    if not codigo:
+    if filial_ref and not resolve_filial_codigo(filial_ref):
         return fail("Unidade inválida.", 400)
-    if not _scope_service.can_manage_filial(scope, codigo, user=user):
-        return access_denied("Sem permissão para gerenciar dados nesta unidade.")
     return None
 
 
 def check_processo_view_access(request: Request, processo_id: str) -> JSONResponse | None:
-    scope = resolve_access_scope(request)
-    if denied := reject_unauthenticated_scope(scope):
-        return denied
-    if scope.is_unrestricted:
-        return None
-    instancias = ProcessoInstanciaRepository().list_by_processo(processo_id)
-    if not instancias:
-        return None
-    if any(
-        _scope_service.can_view_filial(scope, row.get("codigo_filial"))
-        for row in instancias
-    ):
-        return None
-    return access_denied()
+    del processo_id
+    return require_transformometro_view_access(request)
 
 
 def check_processo_manage_access(request: Request, processo_id: str) -> JSONResponse | None:
-    """Write gate: view is not sufficient — require manage on a related branch."""
-    scope = resolve_access_scope(request)
-    if denied := reject_unauthenticated_scope(scope):
-        return denied
-    if scope.is_unrestricted:
-        return None
-    user = getattr(request.state, "user", None)
-    instancias = ProcessoInstanciaRepository().list_by_processo(processo_id)
-    if not instancias:
-        return None
-    if any(
-        _scope_service.can_manage_filial(scope, row.get("codigo_filial"), user=user)
-        for row in instancias
-    ):
-        return None
-    return access_denied("Sem permissão para gerenciar dados nesta unidade.")
+    del processo_id
+    return require_transformometro_view_access(request)
 
 
 def check_instancia_view_access(request: Request, instancia_id: str) -> JSONResponse | None:
-    row = ProcessoInstanciaRepository().get(instancia_id)
-    if not row:
-        return None
-    scope = resolve_access_scope(request)
-    if denied := reject_unauthenticated_scope(scope):
-        return denied
-    if row.get("todas_filiais_ativas"):
-        if scope.is_unrestricted or _scope_service.can_view_consolidated(scope):
-            return None
-        return access_denied()
-    if _scope_service.can_view_filial(scope, row.get("codigo_filial")):
-        return None
-    return access_denied()
+    del instancia_id
+    return require_transformometro_view_access(request)
 
 
 def check_instancia_manage_access(request: Request, instancia_id: str) -> JSONResponse | None:
-    """Write gate for instance-scoped documents (diagram/WBS scope)."""
-    row = ProcessoInstanciaRepository().get(instancia_id)
-    if not row:
-        return None
-    scope = resolve_access_scope(request)
-    if denied := reject_unauthenticated_scope(scope):
-        return denied
-    user = getattr(request.state, "user", None)
-    if row.get("todas_filiais_ativas"):
-        if scope.is_unrestricted:
-            return None
-        return access_denied("Sem permissão para gerenciar dados nesta unidade.")
-    if _scope_service.can_manage_filial(scope, row.get("codigo_filial"), user=user):
-        return None
-    return access_denied("Sem permissão para gerenciar dados nesta unidade.")
+    del instancia_id
+    return require_transformometro_view_access(request)
 
 
 def filter_rows_for_access(
@@ -210,60 +165,7 @@ def filter_rows_for_access(
     codigo_key: str = "filial_id",
     alt_codigo_key: str | None = "codigo_filial",
 ) -> list[dict[str, Any]]:
-    scope = resolve_access_scope(request)
-    if scope.is_denied:
+    del codigo_key, alt_codigo_key
+    if not _policy().has_access(_user(request)):
         return []
-    return _scope_service.filter_rows_by_filial(
-        rows,
-        scope,
-        codigo_key=codigo_key,
-        alt_codigo_key=alt_codigo_key,
-    )
-
-
-def require_unrestricted_catalog_admin(request: Request) -> JSONResponse | None:
-    scope = resolve_access_scope(request)
-    if denied := reject_unauthenticated_scope(scope):
-        return denied
-    if scope.is_unrestricted:
-        return None
-    return access_denied("Operação restrita a perfis globais do Transformômetro.")
-
-
-def require_shared_resources_manage(request: Request) -> JSONResponse | None:
-    """Canonical write gate for shared-resource catalog / cost adjustment.
-
-    Permission: ``transformometro.shared-resources.manage`` (superadmin bypass).
-    JWT authentication alone is not sufficient.
-    """
-    user = getattr(request.state, "user", None)
-    if user is None:
-        return access_denied("Usuário não autenticado.")
-    if getattr(user, "is_superadmin", False):
-        return None
-    if has_permission(user, TRANSFORMOMETRO_SHARED_RESOURCES_MANAGE):
-        return None
-    return access_denied(
-        "Sem permissão transformometro.shared-resources.manage."
-    )
-
-
-def require_transformometro_view_access(request: Request) -> JSONResponse | None:
-    """Require transformometro.view or an equivalent branch/manage capability."""
-    user = getattr(request.state, "user", None)
-    if user is None:
-        return access_denied("Usuário não autenticado.")
-    if getattr(user, "is_superadmin", False):
-        return None
-    if _scope_service.user_has_legacy_view(user):
-        return None
-    if _scope_service.user_has_branch_view_permissions(user):
-        return None
-    permissions = list(getattr(user, "permissions", []) or [])
-    if TRANSFORMOMETRO_VIEW_CONSOLIDATED in permissions:
-        return None
-    if any(perm in permissions for perm in GLOBAL_MANAGE_PERMISSIONS):
-        return None
-    return access_denied(
-        "Sem permissão transformometro.view (ou equivalente de filial/capacidade)."
-    )
+    return list(rows)
