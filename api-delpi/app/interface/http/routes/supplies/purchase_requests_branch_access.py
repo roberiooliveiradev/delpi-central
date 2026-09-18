@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from delpi_auth.authz_core import has_permission
+from delpi_auth.request_context import get_current_user
+
 from app.application.security.api_delpi_permissions import (
     PURCHASE_REQUESTS_ACCESS,
     PURCHASE_REQUESTS_BRANCH_VIEW_PERMS,
@@ -15,9 +18,25 @@ _GATE = BranchAccessGate(
     resource_label="solicitações de compra",
 )
 
+_SUPPLIES_UNITS = {
+    "01": "supplies.unit.filial-01",
+    "02": "supplies.unit.filial-02",
+}
+_SURFACE = ("supplies.access", "supplies.purchase-requests.access")
+
+
+def _canonical_unit_allowed(branch: str) -> bool:
+    user = get_current_user()
+    unit = _SUPPLIES_UNITS.get(branch)
+    if user is None or not unit or not has_permission(user, unit):
+        return False
+    return any(has_permission(user, code) for code in _SURFACE)
+
 
 def branch_view_allowed(branch: str) -> bool:
-    return _GATE.branch_view_allowed(branch)
+    if _GATE.branch_view_allowed(branch):
+        return True
+    return _canonical_unit_allowed(branch)
 
 
 def list_viewable_branches() -> list[str]:

@@ -1,6 +1,9 @@
 import { httpGet, suppliesApiUrl } from "./httpClient";
 
 export type SuppliesCapabilityFlags = {
+  access?: boolean;
+  manage?: boolean;
+  shell?: boolean;
   portal: boolean;
   purchaseRequests: boolean;
   operations: boolean;

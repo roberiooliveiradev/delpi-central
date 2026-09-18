@@ -11,7 +11,8 @@ from app.infrastructure.export.purchase_orders_xlsx import (
 )
 from app.infrastructure.gateways.delpi_api_gateway import DelpiApiGateway, DelpiApiGatewayError
 from app.infrastructure.gateways.delpi_envelope import unwrap_delpi_envelope
-from app.interfaces.http.auth_decorators import require_permission, require_unit, require_units
+from app.application.security.supplies_permissions import can_use_operations
+from app.interfaces.http.auth_decorators import require_policy, require_unit, require_units
 
 purchase_orders_bp = Blueprint("purchase_orders", __name__)
 
@@ -70,7 +71,7 @@ def _list_params(*, include_pagination: bool = True) -> dict[str, Any]:
 
 
 @purchase_orders_bp.get("/purchase-orders")
-@require_permission("supplies.operations.access")
+@require_policy(can_use_operations)
 @require_units("branch")
 def list_portal_purchase_orders():
     """operationId: list_portal_purchase_orders — open SC7 lines via api-delpi."""
@@ -87,7 +88,7 @@ def list_portal_purchase_orders():
 
 
 @purchase_orders_bp.get("/purchase-orders/export")
-@require_permission("supplies.operations.access")
+@require_policy(can_use_operations)
 @require_units("branch")
 def export_portal_purchase_orders():
     """operationId: export_portal_purchase_orders — XLSX of the filtered open SC7 set."""
@@ -115,7 +116,7 @@ def export_portal_purchase_orders():
 
 
 @purchase_orders_bp.get("/purchase-orders/<branch>/<number>")
-@require_permission("supplies.operations.access")
+@require_policy(can_use_operations)
 @require_unit("branch")
 def get_portal_purchase_order(branch: str, number: str):
     """operationId: get_portal_purchase_order — open SC7 ficha via api-delpi."""

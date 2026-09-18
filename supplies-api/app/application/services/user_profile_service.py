@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from app.application.security.supplies_permissions import can_administer, can_enter_shell
 from app.application.services.authorization_service import AuthorizationService
 from app.application.services.capability_resolution_service import (
     CapabilityResolutionService,
@@ -38,15 +39,18 @@ class UserProfileService:
         if not target:
             raise AuthorizationError("Forbidden")
         if actor.id == target:
-            self.authorization.require_permission(actor, "supplies.portal.access")
+            if not can_enter_shell(actor):
+                raise AuthorizationError("Forbidden")
             return
-        self.authorization.require_permission(actor, "supplies.administration.manage")
+        if not can_administer(actor):
+            raise AuthorizationError("Forbidden")
 
     def _assert_can_edit(self, actor: EffectiveUser, target_user_id: str) -> None:
         target = (target_user_id or "").strip()
         if not target or actor.id != target:
             raise AuthorizationError("Forbidden")
-        self.authorization.require_permission(actor, "supplies.portal.access")
+        if not can_enter_shell(actor):
+            raise AuthorizationError("Forbidden")
 
     def _identity_for(
         self,

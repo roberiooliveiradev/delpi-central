@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 from app.interface.http.pagination_query import (
     DETAILS_LIMIT_QUERY,
     LIMIT_QUERY,
@@ -73,7 +73,15 @@ from app.interface.http.kpi_field_labels import (
 )
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 
-router = APIRouter(prefix="/supplies", tags=["Suprimentos"])
+from app.interface.http.routes.supplies.canonical_branch_guard import (
+    enforce_canonical_supplies_branch,
+)
+
+router = APIRouter(
+    prefix="/supplies",
+    tags=["Suprimentos"],
+    dependencies=[Depends(enforce_canonical_supplies_branch)],
+)
 
 
 @router.get("/cpv", **SUPPLIES_CPV)

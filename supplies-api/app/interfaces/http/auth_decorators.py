@@ -21,6 +21,24 @@ def require_auth():
     return decorator
 
 
+def require_policy(allowed):
+    """Server-side policy. ``allowed`` receives the Core effective user."""
+
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            user = getattr(g, "current_user", None)
+            if not user:
+                raise AuthenticationError("Unauthorized")
+            if not allowed(user):
+                raise AuthorizationError("Forbidden")
+            return fn(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
 def require_permission(permission: str):
     def decorator(fn):
         @wraps(fn)

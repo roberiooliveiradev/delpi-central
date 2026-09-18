@@ -7,6 +7,10 @@ from delpi_auth.authz_core import has_permission
 UNIT_CODES = ("01", "02")
 
 ACCESS_PERMISSION = "purchase-requests.access"
+SUPPLIES_ACCESS = "supplies.access"
+SUPPLIES_MANAGE = "supplies.manage"
+SUPPLIES_PR_ACCESS = "supplies.purchase-requests.access"
+SUPPLIES_VIEW_ALL = "supplies.purchase-requests.view-all"
 ADMIN_PERMISSION = "purchase-requests.admin"
 VIEW_ALL_PERMISSION = "purchase-requests.view-all"
 EXPORT_PERMISSION = "purchase-requests.export"
@@ -16,6 +20,10 @@ USERS_MANAGE_PERMISSION = "users.manage"
 UNIT_PERMISSIONS: dict[str, str] = {
     "01": "purchase-requests.unit.filial-01",
     "02": "purchase-requests.unit.filial-02",
+}
+SUPPLIES_UNIT_PERMISSIONS: dict[str, str] = {
+    "01": "supplies.unit.filial-01",
+    "02": "supplies.unit.filial-02",
 }
 
 
@@ -28,6 +36,8 @@ def normalize_branch(value: str | None) -> str | None:
 
 def has_access(user) -> bool:
     if getattr(user, "is_superadmin", False):
+        return True
+    if has_permission(user, SUPPLIES_ACCESS) or has_permission(user, SUPPLIES_PR_ACCESS):
         return True
     return has_permission(user, ACCESS_PERMISSION) or has_permission(user, ADMIN_PERMISSION)
 
@@ -55,7 +65,7 @@ def has_any_module_admin_permission(user) -> bool:
 def has_view_all(user) -> bool:
     if getattr(user, "is_superadmin", False):
         return True
-    return has_permission(user, VIEW_ALL_PERMISSION)
+    return has_permission(user, VIEW_ALL_PERMISSION) or has_permission(user, SUPPLIES_VIEW_ALL)
 
 
 def has_branch_access(user, branch: str) -> bool:
@@ -64,6 +74,10 @@ def has_branch_access(user, branch: str) -> bool:
         return False
     if getattr(user, "is_superadmin", False):
         return True
+    if has_permission(user, SUPPLIES_ACCESS) or has_permission(user, SUPPLIES_PR_ACCESS):
+        return has_permission(user, SUPPLIES_UNIT_PERMISSIONS[code]) or has_permission(
+            user, UNIT_PERMISSIONS[code]
+        )
     if has_permission(user, ADMIN_PERMISSION):
         return True
     if has_permission(user, ACCESS_PERMISSION):

@@ -4,11 +4,23 @@
   "name": "Portal Suprimentos",
   "description": "Hub operacional e analítico de Suprimentos.",
   "icon": "package-icon",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "microfrontend",
   "basePath": "/apps/supplies",
   "entry": "/apps/supplies/assets/remoteEntry.js",
   "permissions": [
+    {
+      "code": "supplies.access",
+      "name": "Usar Portal Suprimentos",
+      "description": "Uso normal do produto, sujeito a unidade, escopo e regra de negócio. Não inclui administração.",
+      "module": "supplies"
+    },
+    {
+      "code": "supplies.manage",
+      "name": "Administrar Portal Suprimentos",
+      "description": "Equipe, acessos, mappings, scopes e settings. Não concede uso normal nem todas as unidades.",
+      "module": "supplies"
+    },
     {
       "code": "supplies.portal.access",
       "name": "Acessar Portal Suprimentos",

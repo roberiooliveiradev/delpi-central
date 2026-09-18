@@ -37,12 +37,33 @@ export function canAccessUserProfile(
   targetUserId: string,
   session: { userId: string | null; capabilities: SuppliesCapabilityFlags },
 ): boolean {
-  if (!session.capabilities.portal) return false;
+  if (!session.capabilities.portal && !session.capabilities.access && !session.capabilities.manage) {
+    return false;
+  }
   if (session.userId && session.userId === targetUserId) return true;
   return Boolean(session.capabilities.administration);
 }
 
+export function hasShellAdmission(capabilities: SuppliesCapabilityFlags): boolean {
+  return Boolean(
+    capabilities.access ||
+      capabilities.manage ||
+      capabilities.shell ||
+      capabilities.portal ||
+      capabilities.analytics ||
+      capabilities.operations ||
+      capabilities.purchaseRequests ||
+      capabilities.administration,
+  );
+}
+
 export function canAccessView(view: PluginView, capabilities: SuppliesCapabilityFlags): boolean {
+  if (view === "administration") {
+    return Boolean(capabilities.manage || capabilities.administration);
+  }
+  if (capabilities.access) {
+    return true;
+  }
   const required = requiredCapabilityForView(view);
   if (required === "none") return true;
   return Boolean(capabilities[required]);

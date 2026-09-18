@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { getCapabilities, type SuppliesCapabilityFlags } from "../api/capabilities";
+import { hasShellAdmission } from "./routeAccess";
 import { getPreferences, type SuppliesPreferences } from "../api/preferences";
 
 export type SuppliesSessionState = {
@@ -16,6 +17,9 @@ export type SuppliesSessionState = {
 };
 
 const EMPTY_CAPS: SuppliesCapabilityFlags = {
+  access: false,
+  manage: false,
+  shell: false,
   portal: false,
   purchaseRequests: false,
   operations: false,
@@ -48,7 +52,7 @@ export function SuppliesSessionProvider({ children }: { children: ReactNode }) {
     setState({
       loading: false,
       error: null,
-      forbidden: !caps.capabilities.portal,
+      forbidden: !hasShellAdmission(caps.capabilities),
       userId: caps.userId || null,
       displayName: null,
       capabilities: caps.capabilities,

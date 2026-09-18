@@ -3,13 +3,14 @@ from flask import Blueprint, g, jsonify, request
 from app.application.services.otd_aggregate_service import OtdAggregateService
 from app.application.services.otd_series_service import OtdSeriesService
 from app.application.services.overview_composition_service import OverviewCompositionService
-from app.interfaces.http.auth_decorators import require_permission
+from app.application.security.supplies_permissions import can_use_analytics
+from app.interfaces.http.auth_decorators import require_policy
 
 analytics_bp = Blueprint("analytics", __name__)
 
 
 @analytics_bp.get("/analytics/overview")
-@require_permission("supplies.analytics.access")
+@require_policy(can_use_analytics)
 def get_analytics_overview():
     """operationId: get_supplies_overview"""
     branch = (request.args.get("branch") or "").strip() or None
@@ -27,7 +28,7 @@ def get_analytics_overview():
 
 
 @analytics_bp.get("/analytics/otd/series")
-@require_permission("supplies.analytics.access")
+@require_policy(can_use_analytics)
 def get_analytics_otd_series():
     """operationId: get_supplies_otd_series"""
     branch = (request.args.get("branch") or "").strip() or None
@@ -47,7 +48,7 @@ def get_analytics_otd_series():
 
 
 @analytics_bp.get("/analytics/otd")
-@require_permission("supplies.analytics.access")
+@require_policy(can_use_analytics)
 def get_analytics_otd():
     """operationId: get_portal_otd"""
     branch = (request.args.get("branch") or "").strip() or None

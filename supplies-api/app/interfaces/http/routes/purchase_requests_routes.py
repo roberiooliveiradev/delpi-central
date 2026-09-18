@@ -17,7 +17,11 @@ from app.infrastructure.export.purchase_requests_xlsx import (
     XLSX_MIME,
     build_purchase_requests_xlsx,
 )
-from app.interfaces.http.auth_decorators import require_permission, require_unit, require_units
+from app.application.security.supplies_permissions import (
+    can_export_purchase_requests,
+    can_use_purchase_requests,
+)
+from app.interfaces.http.auth_decorators import require_policy, require_unit, require_units
 
 purchase_requests_bp = Blueprint("purchase_requests", __name__)
 
@@ -65,7 +69,7 @@ def _unwrap_data(payload: Any) -> Any:
 
 
 @purchase_requests_bp.get("/purchase-requests")
-@require_permission("supplies.purchase-requests.access")
+@require_policy(can_use_purchase_requests)
 @require_units("branch")
 def list_portal_purchase_requests():
     """operationId: list_portal_purchase_requests — C1 gateway; CC fail-closed in PR-api."""
@@ -80,7 +84,7 @@ def list_portal_purchase_requests():
 
 
 @purchase_requests_bp.get("/purchase-requests/requesters")
-@require_permission("supplies.purchase-requests.access")
+@require_policy(can_use_purchase_requests)
 @require_units("branch")
 def list_portal_purchase_request_requesters():
     """operationId: list_portal_purchase_request_requesters"""
@@ -95,8 +99,7 @@ def list_portal_purchase_request_requesters():
 
 
 @purchase_requests_bp.get("/purchase-requests/export")
-@require_permission("supplies.purchase-requests.access")
-@require_permission("supplies.purchase-requests.export")
+@require_policy(can_export_purchase_requests)
 @require_units("branch")
 def export_portal_purchase_requests():
     """operationId: export_portal_purchase_requests — CSV default, XLSX via format=."""
@@ -192,7 +195,7 @@ def export_portal_purchase_requests():
 
 
 @purchase_requests_bp.get("/purchase-requests/<branch>/<request_number>")
-@require_permission("supplies.purchase-requests.access")
+@require_policy(can_use_purchase_requests)
 @require_unit("branch")
 def get_portal_purchase_request(branch: str, request_number: str):
     """operationId: get_portal_purchase_request"""

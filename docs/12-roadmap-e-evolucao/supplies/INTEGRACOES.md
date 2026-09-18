@@ -9,6 +9,7 @@ MFE supplies
       X-Request-Id
         → supplies-api
             → Core /me (effective permissions)
+            → Core /me/apps (apps[].routes; não depender de /me/routes)
             → api-delpi
             → purchase-requests-api (C1)
             → strategic-indicators-api

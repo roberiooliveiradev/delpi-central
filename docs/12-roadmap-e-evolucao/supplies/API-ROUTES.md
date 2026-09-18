@@ -8,7 +8,8 @@
 
 Envelope alvo: `{ success, message, data, meta }`.  
 AuthN: JWT Keycloak.  
-AuthZ: permissions efetivas resolvidas pelo Core API; não usar lista de permissions dos claims JWT como fonte final.
+AuthZ: permissions efetivas resolvidas pelo Core API; não usar lista de permissions dos claims JWT como fonte final.  
+Target RBAC ([ADR-008](./adr/ADR-008-access-manage-rbac.md)): rotas normais exigem `supplies.access` (ou o código legado da mesma superfície); administração exige `supplies.manage` (ou `supplies.administration.manage`). Dado TOTVS continua exigindo `supplies.unit.filial-*`.
 
 Status documental:
 

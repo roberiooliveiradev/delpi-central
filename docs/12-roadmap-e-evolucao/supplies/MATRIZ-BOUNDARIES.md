@@ -5,8 +5,8 @@ Princípio: **dado compartilhado ≠ ownership**. Consumo por HTTP/deep link; se
 | Capacidade | Owner | Fonte | Portal consome como | Não deve fazer |
 |---|---|---|---|---|
 | Identidade SSO | Keycloak | JWT | validação AuthN | confiar em permission claims como AuthZ final |
-| Effective permissions, users, apps, routes, favoritos | **Core API** | Postgres Core + Keycloak context | `/me`, `/me/apps`, `/me/routes` | colocar regra de Suprimentos na Core |
-| Catálogo de permissions do app | Core + manifest `supplies` | RBAC | MFE para UX + supplies-api para segurança | autorizar só no frontend |
+| Effective permissions, users, apps, routes, favoritos | **Core API** | Postgres Core + Keycloak context | `/me`, `/me/apps` (`apps[].routes`) | colocar regra de Suprimentos na Core; depender de `/me/routes` |
+| Catálogo de permissions do app | Core + manifest `supplies` | RBAC | `supplies.access` / `supplies.manage` + units + view-all; códigos antigos em compatibilidade (ADR-008) | autorizar só no frontend |
 | Units do Portal | Core effective permissions + catálogo `supplies.unit.*` | RBAC | supplies-api deriva `allowedUnits` | ler units de claims JWT como fonte final |
 | SQL Protheus SC1/SC7/SA2/SA5/SB1/SB2/SBZ/SD1/SD3/SD4 | **api-delpi** | TOTVS | gateway HTTP | espelhar TOTVS no PG do Portal |
 | CPV/OTD/ESTSEG/giro e interpretações ERP | **api-delpi** | SQL + domínio TOTVS | BFF | reimplementar fórmula no MFE/BFF |

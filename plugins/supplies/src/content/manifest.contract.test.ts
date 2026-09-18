@@ -9,6 +9,7 @@ describe("supplies.manifest", () => {
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
     schemaVersion: string;
     id: string;
+    version: string;
     permissions: Array<{ code: string }>;
     routes: Array<{ path: string; permission: string; showInMenu: boolean }>;
     ui?: { renderMode?: string };
@@ -22,7 +23,12 @@ describe("supplies.manifest", () => {
 
   it("does not invent CRUD permission codes", () => {
     const codes = manifest.permissions.map((item) => item.code);
+    expect(codes).toContain("supplies.access");
+    expect(codes).toContain("supplies.manage");
     expect(codes).toContain("supplies.portal.access");
+    expect(codes).toContain("supplies.purchase-requests.export");
+    expect(codes).toContain("supplies.purchase-requests.view-all");
+    expect(manifest.version).toBe("0.2.0");
     expect(codes.some((code) => /\.(view|write|create|delete)$/.test(code))).toBe(false);
   });
 

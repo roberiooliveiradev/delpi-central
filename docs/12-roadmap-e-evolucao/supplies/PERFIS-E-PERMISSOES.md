@@ -2,7 +2,12 @@
 
 > Papéis Minha DELPI **agrupam** permissions; o MFE não autoriza por nome de cargo.  
 > **Unidades:** eixo próprio — [ADR-006](./adr/ADR-006-unit-permissions.md).  
-> **Minimização:** não espelhar CRUD em permissions — [ADR-007](./adr/ADR-007-permission-minimization.md).
+> **Minimização histórica:** [ADR-007](./adr/ADR-007-permission-minimization.md).  
+> **Target vigente:** [ADR-008](./adr/ADR-008-access-manage-rbac.md).
+
+## Target vigente
+
+`supplies.access` é o uso normal. `supplies.manage` é administração e não implica access, todas as unidades nem view-all. Unidades e `supplies.purchase-requests.view-all` permanecem eixos separados. Códigos `portal` / `purchase-requests` / `operations` / `analytics` / `administration.manage` estão em compatibilidade por superfície até a fase CONTRACT. `supplies.purchase-requests.export` não foi absorvido: o inventário runtime do Core desta execução não comprovou ausência de segregação.
 
 ---
 

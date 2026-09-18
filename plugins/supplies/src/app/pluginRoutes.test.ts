@@ -75,10 +75,13 @@ describe("routeAccess", () => {
     ).toBe(true);
   });
 
-  it("reusa purchaseRequests para ficha de SC", () => {
-    expect(canAccessView("purchase_request_detail", portalOnly)).toBe(false);
-    expect(
-      canAccessView("purchase_request_detail", { ...portalOnly, purchaseRequests: true }),
-    ).toBe(true);
+  it("canonical access abre uso normal e manage-only só administração", () => {
+    const accessOnly = { ...portalOnly, access: true };
+    expect(canAccessView("purchase_orders", accessOnly)).toBe(true);
+    expect(canAccessView("administration", accessOnly)).toBe(false);
+    const manageOnly = { ...portalOnly, portal: false, manage: true, administration: true };
+    expect(canAccessView("administration", manageOnly)).toBe(true);
+    expect(canAccessView("overview", manageOnly)).toBe(false);
+    expect(canAccessView("purchase_orders", manageOnly)).toBe(false);
   });
 });

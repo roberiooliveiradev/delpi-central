@@ -1,13 +1,14 @@
 from flask import Blueprint, g, jsonify, request
 
 from app.application.services.user_profile_service import UserProfileService
-from app.interfaces.http.auth_decorators import require_permission
+from app.application.security.supplies_permissions import can_administer, can_enter_shell
+from app.interfaces.http.auth_decorators import require_policy
 
 users_bp = Blueprint("users", __name__)
 
 
 @users_bp.get("/users/<user_id>/profile")
-@require_permission("supplies.portal.access")
+@require_policy(can_enter_shell)
 def get_supplies_user_profile(user_id: str):
     """operationId: get_supplies_user_profile — AuthZ fino self|admin no service."""
     service = UserProfileService()
@@ -15,7 +16,7 @@ def get_supplies_user_profile(user_id: str):
 
 
 @users_bp.patch("/users/<user_id>/profile")
-@require_permission("supplies.portal.access")
+@require_policy(can_enter_shell)
 def patch_supplies_user_profile(user_id: str):
     """operationId: patch_supplies_user_profile — self only."""
     payload = request.get_json(silent=True) or {}
