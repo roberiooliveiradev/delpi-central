@@ -12,20 +12,15 @@ from tm_app.application.security.authorization_policy import (
     TransformometroAuthorizationPolicy,
 )
 from tm_app.application.security.transformometro_permissions import (
-    LEGACY_SCOPE_CODES_THAT_DO_NOT_GRANT_ACCESS,
-    TRANSFORMOMETRO_ACCESS,
-    TRANSFORMOMETRO_DATA_TRANSFER,
-    TRANSFORMOMETRO_MANAGE,
-    TRANSFORMOMETRO_VIEW,
+    ACCESS_PERMISSION,
+    MANAGE_PERMISSION,
 )
 from tm_app.application.services.meeting_minutes_service import MeetingMinutesService
 from tm_app.interface.http.branch_access_http import (
     check_dashboard_filial_access,
     check_processo_view_access,
     filter_rows_for_access,
-    require_shared_resources_manage,
     require_transformometro_view_access,
-    require_unrestricted_catalog_admin,
 )
 
 
@@ -65,35 +60,40 @@ def test_no_access_is_denied_and_access_is_allowed():
     assert missing.value.status_code == 401
     with pytest.raises(AuthorizationDenied):
         policy.require_access(_user(permissions=[]))
-    policy.require_access(_user(permissions=[TRANSFORMOMETRO_ACCESS]))
+    policy.require_access(_user(permissions=[ACCESS_PERMISSION]))
     with pytest.raises(AuthorizationDenied):
-        policy.require_access(_user(permissions=[TRANSFORMOMETRO_VIEW]))
+        policy.require_access(_user(permissions=["transformometro.view"]))
 
 
-def test_branch_and_consolidated_do_not_grant_access():
+def test_removed_codes_do_not_grant_access():
     policy = TransformometroAuthorizationPolicy()
-    for code in LEGACY_SCOPE_CODES_THAT_DO_NOT_GRANT_ACCESS:
+    for code in (
+        "transformometro.view",
+        "transformometro.view.consolidated",
+        "transformometro.branch.filial-01",
+        "transformometro.view.filial-01",
+        "transformometro.manage.filial-02",
+        "transformometro.data.transfer",
+        "transformometro.processes.manage",
+        "transformometro.meeting-minutes.sign",
+        "transformometro.atas.manage",
+    ):
         assert policy.has_access(_user(permissions=[code])) is False
-    assert "transformometro.view.consolidated" in LEGACY_SCOPE_CODES_THAT_DO_NOT_GRANT_ACCESS
-    assert policy.has_access(_user(permissions=[TRANSFORMOMETRO_DATA_TRANSFER])) is False
+        assert policy.has_manage(_user(permissions=[code])) is False
 
 
 def test_manage_does_not_imply_access():
     policy = TransformometroAuthorizationPolicy()
-    admin = _user(permissions=[TRANSFORMOMETRO_MANAGE])
+    admin = _user(permissions=[MANAGE_PERMISSION])
     assert policy.has_manage(admin) is True
     assert policy.has_access(admin) is False
     with pytest.raises(AuthorizationDenied):
         policy.require_access(admin)
     policy.require_manage(admin)
-    with pytest.raises(AuthorizationDenied):
-        policy.require_data_transfer(admin)
-    with pytest.raises(AuthorizationDenied):
-        policy.require_dashboard_recalculate(admin)
 
 
 def test_access_sees_both_filiais_and_dashboard_filters():
-    user = _user(permissions=[TRANSFORMOMETRO_ACCESS])
+    user = _user(permissions=[ACCESS_PERMISSION])
     request = _request(user)
     rows = [
         {"id": "p1", "codigo_filial": "01"},
@@ -116,25 +116,20 @@ def test_access_sees_both_filiais_and_dashboard_filters():
 
 def test_access_uses_the_product_and_does_not_administer():
     policy = TransformometroAuthorizationPolicy()
-    user = _user(permissions=[TRANSFORMOMETRO_ACCESS])
+    user = _user(permissions=[ACCESS_PERMISSION])
     request = _request(user)
-    policy.require_data_transfer(user)
-    policy.require_dashboard_recalculate(user)
-    policy.require_shared_resources(user)
-    assert require_unrestricted_catalog_admin(request) is not None
-    assert require_shared_resources_manage(request) is not None
+    policy.require_access(user)
+    assert require_transformometro_view_access(request) is None
     with pytest.raises(AuthorizationDenied):
         policy.require_manage(user)
 
-    admin = _request(_user(permissions=[TRANSFORMOMETRO_MANAGE]))
-    assert require_unrestricted_catalog_admin(admin) is None
-    assert require_shared_resources_manage(admin) is None
+    admin = _request(_user(permissions=[MANAGE_PERMISSION]))
+    assert require_transformometro_view_access(admin) is not None
 
 
-def test_legacy_codes_do_not_open_portal_or_settings():
-    view = _request(_user(permissions=[TRANSFORMOMETRO_VIEW]))
+def test_legacy_codes_do_not_open_the_portal():
+    view = _request(_user(permissions=["transformometro.view"]))
     assert require_transformometro_view_access(view) is not None
-    assert require_unrestricted_catalog_admin(view) is not None
     assert require_transformometro_view_access(
         _request(_user(permissions=["transformometro.branch.filial-01"]))
     ) is not None
@@ -181,12 +176,12 @@ class _MinuteRepo:
 
 
 def test_access_reads_minute_of_any_unit_and_sign_follows_domain():
-    reader = _user(id="reader", permissions=[TRANSFORMOMETRO_ACCESS])
+    reader = _user(id="reader", permissions=[ACCESS_PERMISSION])
     service = MeetingMinutesService(_MinuteRepo(status="awaiting_signatures", signer_id="signer"))
     loaded = service._load(reader, "view", "m1")
     assert loaded["unit_code"] == "02"
 
-    signer = _user(id="signer", permissions=[TRANSFORMOMETRO_ACCESS])
+    signer = _user(id="signer", permissions=[ACCESS_PERMISSION])
     signing = MeetingMinutesService(_MinuteRepo(status="awaiting_signatures", signer_id="signer"))
     signing.signature_storage = SimpleNamespace(save_png=lambda **_: "sig.png")
     signing.repo.register_signature = lambda **_: {

@@ -54,20 +54,20 @@ def _request(user) -> Request:
 def test_data_transfer_denies_missing_user_and_allows_normal_use():
     policy = TransformometroAuthorizationPolicy()
     with pytest.raises(AuthorizationDenied) as missing:
-        policy.require_data_transfer(None)
+        policy.require_access(None)
     assert missing.value.status_code == 401
 
     with pytest.raises(AuthorizationDenied):
-        policy.require_data_transfer(_user(permissions=[]))
+        policy.require_access(_user(permissions=[]))
 
-    policy.require_data_transfer(_user(permissions=["transformometro.access"]))
-    policy.require_data_transfer(_user(is_superadmin=True))
+    policy.require_access(_user(permissions=["transformometro.access"]))
+    policy.require_access(_user(is_superadmin=True))
     with pytest.raises(AuthorizationDenied):
-        policy.require_data_transfer(_user(permissions=["transformometro.view"]))
+        policy.require_access(_user(permissions=["transformometro.view"]))
     with pytest.raises(AuthorizationDenied):
-        policy.require_data_transfer(_user(permissions=["transformometro.data.transfer"]))
+        policy.require_access(_user(permissions=["transformometro.data.transfer"]))
     with pytest.raises(AuthorizationDenied):
-        policy.require_data_transfer(_user(permissions=["transformometro.manage"]))
+        policy.require_access(_user(permissions=["transformometro.manage"]))
 
 
 def test_export_route_uses_data_transfer_gate():
@@ -98,23 +98,23 @@ def test_dashboard_recalculate_policy_parity():
     sibling = _user(permissions=["transformometro.access"])
 
     with pytest.raises(AuthorizationDenied):
-        policy.require_dashboard_recalculate(None)
+        policy.require_access(None)
     with pytest.raises(AuthorizationDenied):
-        policy.require_dashboard_recalculate(nobody)
+        policy.require_access(nobody)
     with pytest.raises(AuthorizationDenied):
-        policy.require_dashboard_recalculate(_user(permissions=["transformometro.view"]))
+        policy.require_access(_user(permissions=["transformometro.view"]))
     with pytest.raises(AuthorizationDenied):
-        policy.require_dashboard_recalculate(_user(permissions=["transformometro.dashboard.recalculate"]))
+        policy.require_access(_user(permissions=["transformometro.dashboard.recalculate"]))
     with pytest.raises(AuthorizationDenied):
-        policy.require_dashboard_recalculate(_user(permissions=["transformometro.processes.manage"]))
-    policy.require_dashboard_recalculate(sibling)
+        policy.require_access(_user(permissions=["transformometro.processes.manage"]))
+    policy.require_access(sibling)
 
     http_denied = recalcular_dashboard(_request(nobody))
     assert http_denied.status_code == 403
 
     dispatch = GptActionsDispatchService()
     with pytest.raises(GptActionsError) as gpt:
-        dispatch._require_dashboard_recalculate_access(_request(nobody))
+        dispatch._require_access(_request(nobody))
     assert gpt.value.status_code == 403
     assert "transformometro.access" in str(gpt.value)
 

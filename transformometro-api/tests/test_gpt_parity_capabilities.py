@@ -273,7 +273,7 @@ def test_adjust_shared_resource_cost_uses_registrar_reajuste():
     }
     with (
         patch(
-            "tm_app.application.gpt_actions.parity_capabilities_service.require_shared_resources_manage",
+            "tm_app.application.gpt_actions.parity_capabilities_service.require_transformometro_view_access",
             return_value=None,
         ),
         patch(
@@ -311,7 +311,7 @@ def test_adjust_shared_resource_cost_denied_without_manage_zero_mutation():
     denied.status_code = 403
     with (
         patch(
-            "tm_app.application.gpt_actions.parity_capabilities_service.require_shared_resources_manage",
+            "tm_app.application.gpt_actions.parity_capabilities_service.require_transformometro_view_access",
             return_value=denied,
         ),
         patch(
@@ -329,8 +329,8 @@ def test_adjust_shared_resource_cost_denied_without_manage_zero_mutation():
     custo_repo.return_value.registrar_reajuste.assert_not_called()
 
 
-def test_adjust_shared_resource_cost_without_manage_denied():
-    """Reajuste do catálogo é settings. Sem manage não altera."""
+def test_adjust_shared_resource_cost_without_access_denied():
+    """Reajuste do catálogo é uso normal. Sem access não altera."""
     from types import SimpleNamespace
 
     from tm_app.application.gpt_actions.parity_capabilities_service import (
@@ -358,7 +358,7 @@ def test_adjust_shared_resource_cost_without_manage_denied():
                 vigente_desde="2026-10-01",
             )
     assert exc.value.status_code == 403
-    assert "transformometro.manage" in exc.value.message
+    assert "transformometro.access" in exc.value.message
     custo_repo.return_value.registrar_reajuste.assert_not_called()
 
 
@@ -367,7 +367,7 @@ def test_adjust_shared_resource_cost_invalid_resource_no_mutation():
     request = _request()
     with (
         patch(
-            "tm_app.application.gpt_actions.parity_capabilities_service.require_shared_resources_manage",
+            "tm_app.application.gpt_actions.parity_capabilities_service.require_transformometro_view_access",
             return_value=None,
         ),
         patch(

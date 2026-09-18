@@ -79,6 +79,39 @@ def test_list_user_apps_allow_override_permission_grants_route():
     assert result[0]["routes"][0]["path"] == "/allow"
 
 
+def test_list_user_apps_exposes_denied_routes_for_the_guard():
+    access = _route(
+        permission_code="transformometro.access",
+        path="/apps/transformometro",
+        show_in_menu=True,
+        order=10,
+    )
+    manage = _route(
+        permission_code="transformometro.manage",
+        path="/apps/transformometro/administration",
+        show_in_menu=False,
+        order=40,
+    )
+    app = SimpleNamespace(
+        id="transformometro",
+        name="Portal Transforma+",
+        base_path="/apps/transformometro",
+        icon="icon",
+        type="microfrontend",
+        entry_url=None,
+        render_mode="federated",
+        routes=[access, manage],
+    )
+
+    result = ListUserAppsUseCase(FakeAppQuery([app])).execute(
+        permissions=["transformometro.access"],
+        is_superadmin=False,
+    )
+
+    assert [route["path"] for route in result[0]["routes"]] == ["/apps/transformometro"]
+    assert result[0]["authorizationRoutes"][1]["permission"] == "transformometro.manage"
+
+
 def test_list_user_apps_deny_override_permission_blocks_route():
     route = _route(permission_code="permission.b", path="/deny")
     app = SimpleNamespace(

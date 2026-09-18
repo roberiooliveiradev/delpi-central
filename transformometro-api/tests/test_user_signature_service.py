@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from tm_app.application.security import transformometro_permissions as perms
+from tm_app.application.security.transformometro_permissions import ACCESS_PERMISSION
 from tm_app.application.services.user_signature_service import UserSignatureService
 
 
@@ -37,7 +37,7 @@ def _service() -> UserSignatureService:
 
 def test_profile_allows_access() -> None:
     service = _service()
-    user = _user(permissions=[perms.TRANSFORMOMETRO_ACCESS])
+    user = _user(permissions=[ACCESS_PERMISSION])
     assert service.get_me(user)["user_id"] == "u1"
     assert service.update_display_name(user, "Ana Silva")["display_name"] == "Ana Silva"
     assert service.save_image(user, b"\x89PNG\r\n")["has_signature"] is True
@@ -46,12 +46,12 @@ def test_profile_allows_access() -> None:
 @pytest.mark.parametrize(
     "permission",
     [
-        perms.TRANSFORMOMETRO_ATAS_VIEW,
-        perms.TRANSFORMOMETRO_ATAS_MANAGE,
-        perms.TRANSFORMOMETRO_ATAS_SIGN,
-        perms.TRANSFORMOMETRO_MEETING_MINUTES_VIEW,
-        perms.TRANSFORMOMETRO_MEETING_MINUTES_MANAGE,
-        perms.TRANSFORMOMETRO_MEETING_MINUTES_SIGN,
+    "transformometro.atas.view",
+    "transformometro.atas.manage",
+    "transformometro.atas.sign",
+    "transformometro.meeting-minutes.view",
+    "transformometro.meeting-minutes.manage",
+    "transformometro.meeting-minutes.sign",
     ],
 )
 def test_profile_denies_legacy_atas_permission(permission: str) -> None:

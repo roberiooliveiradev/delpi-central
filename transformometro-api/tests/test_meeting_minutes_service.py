@@ -197,9 +197,7 @@ def test_content_hash_is_stable():
     assert len(first) == 64
 
 
-def test_sign_only_can_pending_detail_and_signature_image(tmp_path):
-    from tm_app.application.security import transformometro_permissions as perms
-
+def test_legacy_sign_code_cannot_open_minutes(tmp_path):
     repo = FakeRepo()
     repo.minute = {
         "id": "m1",
@@ -221,26 +219,20 @@ def test_sign_only_can_pending_detail_and_signature_image(tmp_path):
     repo.list_minutes = lambda **_: ([{"id": "m1"}], 1)
 
     service = MeetingMinutesService(repo)
-    service.signature_storage = SimpleNamespace(read=lambda path: Path(path).read_bytes())
     signer = SimpleNamespace(
         id="signer-1",
         is_superadmin=False,
-        permissions=[perms.TRANSFORMOMETRO_ATAS_SIGN],
+        permissions=["transformometro.atas.sign"],
     )
-
-    pending = service.pending_signatures(signer)
-    assert pending["total"] == 1
-    detail = service.get_detail(signer, "m1")
-    assert detail["viewer"]["is_signer"] is True
-    assert service.signature_image(signer, "m1", "sig1").startswith(b"\x89PNG")
-
-    with pytest.raises(PermissionError, match="consultar atas"):
+    with pytest.raises(PermissionError, match="Sem permissão"):
+        service.pending_signatures(signer)
+    with pytest.raises(PermissionError, match="Sem permissão"):
+        service.get_detail(signer, "m1")
+    with pytest.raises(PermissionError, match="Sem permissão"):
         service.list_minutes(signer, {"limit": 10, "offset": 0})
 
 
-def test_sign_only_cannot_manage():
-    from tm_app.application.security import transformometro_permissions as perms
-
+def test_legacy_sign_code_cannot_manage():
     repo = FakeRepo()
     repo.minute = {
         "id": "m1",
@@ -254,7 +246,7 @@ def test_sign_only_cannot_manage():
     signer = SimpleNamespace(
         id="signer-1",
         is_superadmin=False,
-        permissions=[perms.TRANSFORMOMETRO_ATAS_SIGN],
+        permissions=["transformometro.atas.sign"],
     )
     with pytest.raises(PermissionError, match="Sem permissão"):
         service.send_for_signature(signer, "m1")
