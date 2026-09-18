@@ -22,7 +22,7 @@ Superfície compacta para o **ChatGPT Custom GPT** (TÉO) analisar, cadastrar e 
 | Contexto pessoal (read-only) | `tm_app/application/gpt_actions/user_context_service.py` + `person_profile_reader_port.py` |
 | Adapter Core PersonProfile | `tm_app/infrastructure/gateways/core_person_profile_gateway.py` (`GET /me/person-profile`, Bearer do usuário) |
 | Instructions do especialista | [`specialist-instructions.md`](./specialist-instructions.md) (persona **TÉO**) |
-| Method playbooks (Knowledge) | [`teo-method-playbooks.md`](./teo-method-playbooks.md) — metodologia conversacional; **não** cria Action/AuthZ/persistência |
+| Method playbooks (Knowledge) | [`teo-method-playbooks.md`](./teo-method-playbooks.md) — editorial. Runtime: `query_methodology_guide`. Action: `gpt_get_methodology_guide`. |
 | Rotas | `tm_app/interface/http/routes/gpt_actions_routes.py` |
 
 Regenerar o JSON versionado:
@@ -32,12 +32,13 @@ cd transformometro-api
 PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 ```
 
-## Operations (20 no schema importado)
+## Operations (21 no schema importado)
 
 | operationId | Método / path |
 |-------------|----------------|
 | `gpt_get_my_context` | `GET .../me` (contexto pessoal mínimo — **não** autorização) |
 | `gpt_get_catalog` | `GET .../catalog` (inclui `registration_guide`, `diagram_catalog` canônico BPMN/flowchart_v1, enums `fase_melhoria` / `prioridade_melhoria`) |
+| `gpt_get_methodology_guide` | `GET .../methodology-guide?method=&task=` (READ-only; mesma fonte do MCP; não é fato nem escrita) |
 | `gpt_get_process_context` | `GET .../process-context?process_id=&instance_id=&revision_id=` (projeção efêmera read-only) |
 | `gpt_analyze` | `GET .../analysis?view=meta\|summary\|processes\|instances\|rows` |
 | `gpt_search_records` | `GET .../records/{entity}` (`instance_id` para revisões de uma melhoria) |
@@ -161,11 +162,11 @@ Checklist operacional: [`gpt-builder-go-live.md`](./gpt-builder-go-live.md).
 
 1. Create GPT → Actions → Import from URL  
    `https://<host>/apps/transformometro-api/transformometro/gpt-actions/v1/openapi.json`  
-   ou cole o conteúdo de `docs/gpt-actions/openapi-gpt-actions.json` (esperar **14** actions).
+   ou cole o conteúdo de `docs/gpt-actions/openapi-gpt-actions.json` (esperar **21** actions importáveis).
 2. Authentication → OAuth (valores da tabela acima).
 3. Colar o bloco Instructions de [`specialist-instructions.md`](./specialist-instructions.md) (**REPLACE INSTRUCTIONS**).
 4. Adicionar [`teo-method-playbooks.md`](./teo-method-playbooks.md) como Knowledge do GPT (metodologia; não authority de dados).
-5. OpenAPI: reimportar **somente** se o schema publicado mudou (default esperado: **14** actions).
+5. OpenAPI: reimportar porque o schema passou a incluir `gpt_get_methodology_guide`. O número **14** actions é HISTORICAL.
 
 Fluxo guiado preferido: `gpt_get_catalog` → ler `registration_guide.package_hints` → entrevista → `gpt_validate_improvement_package` (`ready=true`) → confirmar → `gpt_commit_improvement_package`.
 

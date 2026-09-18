@@ -180,6 +180,23 @@ def gpt_get_catalog(request: Request):
 
 
 @router.get(
+    "/methodology-guide",
+    operation_id="gpt_get_methodology_guide",
+    summary="Read-only process methodology playbooks",
+)
+def gpt_get_methodology_guide(
+    request: Request,
+    method: str | None = Query(default=None, description="Optional methodology method id"),
+    task: str | None = Query(default=None, description="Optional methodology task id"),
+):
+    try:
+        data = _dispatch.get_methodology_guide(request, method=method, task=task)
+        return ok(data, "Guia metodológico do TÉO (não é fato nem autorização).")
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.get(
     "/process-context",
     operation_id="gpt_get_process_context",
     summary="Aggregated read-only process intelligence context",

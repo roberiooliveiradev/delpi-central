@@ -20,7 +20,12 @@ from tm_app.application.methodology.guide import (
     list_method_ids,
     query_methodology_guide,
 )
-from tm_app.interface.mcp.constants import MCP_NATIVE_TOOLS, MCP_TOOL_NAMES, TOOL_CLASS
+from tm_app.interface.mcp.constants import (
+    GPT_TO_MCP_TOOLS,
+    MCP_NATIVE_TOOLS,
+    MCP_TOOL_NAMES,
+    TOOL_CLASS,
+)
 from tm_app.interface.mcp.server import create_mcp_server
 from tm_app.interface.mcp.tool_bridge import tool_get_methodology_guide
 
@@ -58,7 +63,8 @@ _EXPECTED_METHODS = {
 
 def test_method_catalog_matches_canonical_playbook_projection() -> None:
     assert set(list_method_ids()) == _EXPECTED_METHODS
-    assert "get_methodology_guide" in MCP_NATIVE_TOOLS
+    assert MCP_NATIVE_TOOLS == frozenset()
+    assert GPT_TO_MCP_TOOLS["gpt_get_methodology_guide"] == ("get_methodology_guide",)
     assert TOOL_CLASS["get_methodology_guide"] == "READ"
     assert len(MCP_TOOL_NAMES) == 33
 
@@ -150,7 +156,7 @@ def test_bridge_forbidden_does_not_return_playbook() -> None:
     auth_token = set_request_authorization("Bearer test")
     try:
         with patch(
-            "tm_app.interface.mcp.tool_bridge.require_transformometro_view_access",
+            "tm_app.application.gpt_actions.dispatch_service.require_transformometro_view_access",
             return_value=JSONResponse({"message": "denied"}, status_code=403),
         ):
             result = tool_get_methodology_guide(method="lean")
@@ -167,7 +173,7 @@ def test_bridge_returns_sipoc_without_write_fields() -> None:
     auth_token = set_request_authorization("Bearer test")
     try:
         with patch(
-            "tm_app.interface.mcp.tool_bridge.require_transformometro_view_access",
+            "tm_app.application.gpt_actions.dispatch_service.require_transformometro_view_access",
             return_value=None,
         ):
             result = tool_get_methodology_guide(method="sipoc")

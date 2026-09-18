@@ -54,7 +54,7 @@ https://<host-publico>/apps/transformometro-api/transformometro/gpt-actions/v1/o
 
 Alternativa: colar `docs/gpt-actions/openapi-gpt-actions.json`.
 
-Esperado: **20** operations (`gpt_get_my_context`, `gpt_get_process_context`, `gpt_analyze`, `gpt_get_catalog`, `gpt_validate_improvement_package`, `gpt_commit_improvement_package`, `gpt_list_evidence`, `gpt_manage_evidence`, `gpt_get_process_timeline`, `gpt_adjust_shared_resource_cost`, `gpt_meeting_minute_manage`, …). O GET `openapi.json` não aparece como Action.
+Esperado: **21** operations importáveis, incluindo `gpt_get_methodology_guide` (`gpt_get_my_context`, `gpt_get_process_context`, `gpt_analyze`, `gpt_get_catalog`, `gpt_validate_improvement_package`, `gpt_commit_improvement_package`, `gpt_list_evidence`, `gpt_manage_evidence`, `gpt_get_process_timeline`, `gpt_adjust_shared_resource_cost`, `gpt_meeting_minute_manage`, …). O GET `openapi.json` (`gpt_get_openapi_schema`) não aparece como Action. O inventário de 20 operations em 2026-09-17 é HISTORICAL.
 
 O ChatGPT **rejeita** `servers.url` relativo (`/apps/transformometro-api`). Se aparecer «Não foi possível encontrar uma URL válida em `servers`», altere no editor para:
 

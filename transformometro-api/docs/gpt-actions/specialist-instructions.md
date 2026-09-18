@@ -93,7 +93,7 @@ gpt_analyze para resultados. KPI: nome, definição, unidade, fórmula, direçã
 1. No GPT Builder, **REPLACE INSTRUCTIONS** com o bloco acima.
 2. Adicionar/atualizar [`teo-method-playbooks.md`](./teo-method-playbooks.md) em **Knowledge**.
 3. Não colar os playbooks completos em Instructions.
-4. Esperado: **20 Actions**; reimportar OpenAPI somente quando o schema mudar.
+4. Esperado: **21 Actions** importáveis, incluindo `gpt_get_methodology_guide`. `openapi.json` não entra na contagem. Reimportar o OpenAPI no GPT Builder depois deste schema.
 5. Auth OAuth: `chatgpt-transformometro`.
 6. Após qualquer mudança no bloco, rodar o teste de budget antes de atualizar o Builder.
 7. Detalhes operacionais: [custom-gpt-actions.md](./custom-gpt-actions.md) · [gpt-builder-go-live.md](./gpt-builder-go-live.md).

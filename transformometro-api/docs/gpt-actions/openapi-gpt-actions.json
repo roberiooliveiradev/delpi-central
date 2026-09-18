@@ -263,6 +263,173 @@
         }
       }
     },
+    "/transformometro/gpt-actions/v1/methodology-guide": {
+      "get": {
+        "operationId": "gpt_get_methodology_guide",
+        "summary": "Read-only process methodology playbooks",
+        "description": "READ-only guidance. Not a fact, not authorization, and not a write. Optional method and task. Same source as MCP get_methodology_guide.",
+        "tags": [
+          "Transformômetro GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "x-openai-isConsequential": false,
+        "parameters": [
+          {
+            "name": "method",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "macroprocess",
+                "key_process",
+                "end_to_end",
+                "sipoc",
+                "lean",
+                "ishikawa",
+                "five_whys",
+                "ctp",
+                "tdr",
+                "kpi",
+                "swot",
+                "as_is",
+                "to_be"
+              ]
+            },
+            "description": "Optional method id: macroprocess, key_process, end_to_end, sipoc, lean, ishikawa, five_whys, ctp, tdr, kpi, swot, as_is, to_be. Omit to receive the router."
+          },
+          {
+            "name": "task",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "discover",
+                "map",
+                "diagnose",
+                "redesign",
+                "measure",
+                "prioritize",
+                "interview"
+              ]
+            },
+            "description": "Optional task: discover, map, diagnose, redesign, measure, prioritize, interview. Selects the smallest recommended methods."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Methodology guide payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or domain error. Body is ApiEnvelope with success=false; read message + data.errors (do not show only HTTP 400).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Campos obrigatórios ausentes: nome_recurso, tipo_custo, recorrencia",
+                  "data": {
+                    "error_count": 3,
+                    "errors": [
+                      {
+                        "field": "nome_recurso",
+                        "reason": "Field required"
+                      },
+                      {
+                        "field": "tipo_custo",
+                        "reason": "Field required"
+                      },
+                      {
+                        "field": "recorrencia",
+                        "reason": "Field required"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid Bearer. ApiEnvelope message explains AuthN; read message (not only HTTP 401).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Unauthorized",
+                  "data": {
+                    "error_kind": "authn"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking permission. Read message + data.error_kind.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Acesso negado.",
+                  "data": {
+                    "error_kind": "authz"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request body/query schema invalid. Read message + data.errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Persistence/infrastructure failure. Read message + data.error_kind=persistence.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/transformometro/gpt-actions/v1/process-context": {
       "get": {
         "operationId": "gpt_get_process_context",

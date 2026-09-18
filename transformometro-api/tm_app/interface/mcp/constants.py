@@ -29,6 +29,7 @@ TEO_MCP_SURFACE = "FULL_CRUD_GOVERNED"
 GPT_TO_MCP_TOOLS: dict[str, tuple[str, ...]] = {
     "gpt_get_my_context": ("get_my_context",),
     "gpt_get_catalog": ("get_catalog",),
+    "gpt_get_methodology_guide": ("get_methodology_guide",),
     "gpt_get_process_context": ("get_process_context",),
     "gpt_analyze": ("analyze",),
     "gpt_search_records": ("search_records",),
@@ -69,8 +70,8 @@ TOOL_TO_GPT_OPERATION: dict[str, str] = {
     for tool in tools
 }
 
-# MCP-native capabilities. Not GPT Actions. Do not add a legacy Action for these.
-MCP_NATIVE_TOOLS: frozenset[str] = frozenset({"get_methodology_guide"})
+# MCP tools with no GPT Action. Methodology is on both surfaces.
+MCP_NATIVE_TOOLS: frozenset[str] = frozenset()
 
 # READ | PREPARE | ACT | ANALYSIS (non-persist)
 TOOL_CLASS: dict[str, str] = {

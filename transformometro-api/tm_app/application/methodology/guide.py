@@ -589,6 +589,10 @@ def list_method_ids() -> tuple[str, ...]:
     return tuple(_METHODS)
 
 
+def list_task_ids() -> tuple[str, ...]:
+    return tuple(_TASKS)
+
+
 def query_methodology_guide(
     *,
     method: str | None = None,

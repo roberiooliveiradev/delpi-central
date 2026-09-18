@@ -2,7 +2,7 @@
 
 > Status: methodology / reasoning playbooks. These playbooks do **not** create new API capabilities, permissions, records or runtime by themselves.
 >
-> **Runtime projection (MCP):** `tm_app/application/methodology/guide.py`, exposed by the READ tool `get_methodology_guide`. That module is the playbook the ChatGPT Plugin / Project can call. Do not paste a second full copy into Agent Instructions.
+> **Runtime projection:** `tm_app/application/methodology/guide.py`, exposed by MCP `get_methodology_guide` and GPT Action `gpt_get_methodology_guide`. Both adapters call `query_methodology_guide`. Do not keep a second method list.
 >
 > **This markdown** remains the editorial source. If a rule changes, update the markdown and the runtime projection together.
 >

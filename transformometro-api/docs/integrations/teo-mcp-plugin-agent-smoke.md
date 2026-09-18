@@ -50,6 +50,6 @@ PYTHONPATH=.:../shared pytest tests/test_teo_mcp_contract.py tests/test_teo_mcp_
 | READ live (`get_my_context` / `get_catalog` / `search_records`) | **PASS** |
 | PREPARE via ChatGPT | **TEST_NOT_RUN** |
 | ACT / WRITE BUSINESS OUTCOME via ChatGPT | **TEST_NOT_RUN** |
-| GPT Actions legacy bridge (20 ops) | **LEGACY_TRANSITIONAL_BRIDGE** — still up |
+| GPT Actions legacy bridge | **LEGACY_TRANSITIONAL_BRIDGE** — 21 importable ops after methodology; 20 on 2026-09-17 is HISTORICAL |
 | Agent Studio live | PENDING |
 | Proposal store horizontal scale | TARGET (single replica ACCEPTED_WITH_RESIDUAL) |

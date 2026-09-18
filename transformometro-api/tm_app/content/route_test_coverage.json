@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-14",
-  "baselineOperationCount": 163,
-  "operationCount": 163,
-  "coveredCount": 163,
+  "generatedAt": "2026-09-18",
+  "baselineOperationCount": 173,
+  "operationCount": 173,
+  "coveredCount": 173,
   "gapCount": 0,
   "exemptCount": 0,
   "byModule": {
@@ -32,8 +32,8 @@
       "exempt": 0
     },
     "gpt_actions": {
-      "total": 12,
-      "covered": 12,
+      "total": 22,
+      "covered": 22,
       "gap": 0,
       "exempt": 0
     },
@@ -925,6 +925,48 @@
       "status": "covered"
     },
     {
+      "operationId": "gpt_list_evidence",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/evidence",
+      "module": "gpt_actions",
+      "status": "covered"
+    },
+    {
+      "operationId": "gpt_manage_evidence",
+      "method": "POST",
+      "path": "/transformometro/gpt-actions/v1/evidence/manage",
+      "module": "gpt_actions",
+      "status": "covered"
+    },
+    {
+      "operationId": "gpt_commit_improvement_package",
+      "method": "POST",
+      "path": "/transformometro/gpt-actions/v1/improvement-packages",
+      "module": "gpt_actions",
+      "status": "covered"
+    },
+    {
+      "operationId": "gpt_validate_improvement_package",
+      "method": "POST",
+      "path": "/transformometro/gpt-actions/v1/improvement-packages/validate",
+      "module": "gpt_actions",
+      "status": "covered"
+    },
+    {
+      "operationId": "gpt_get_my_context",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/me",
+      "module": "gpt_actions",
+      "status": "covered"
+    },
+    {
+      "operationId": "gpt_meeting_minute_manage",
+      "method": "POST",
+      "path": "/transformometro/gpt-actions/v1/meeting-minutes/manage",
+      "module": "gpt_actions",
+      "status": "covered"
+    },
+    {
       "operationId": "gpt_meeting_minute_workflow",
       "method": "POST",
       "path": "/transformometro/gpt-actions/v1/meeting-minutes/{id}/workflow",
@@ -932,9 +974,30 @@
       "status": "covered"
     },
     {
+      "operationId": "gpt_get_methodology_guide",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/methodology-guide",
+      "module": "gpt_actions",
+      "status": "covered"
+    },
+    {
       "operationId": "gpt_get_openapi_schema",
       "method": "GET",
       "path": "/transformometro/gpt-actions/v1/openapi.json",
+      "module": "gpt_actions",
+      "status": "covered"
+    },
+    {
+      "operationId": "gpt_get_process_context",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/process-context",
+      "module": "gpt_actions",
+      "status": "covered"
+    },
+    {
+      "operationId": "gpt_get_process_timeline",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/processes/{processo_id}/timeline",
       "module": "gpt_actions",
       "status": "covered"
     },
@@ -984,6 +1047,13 @@
       "operationId": "gpt_activate_revision",
       "method": "POST",
       "path": "/transformometro/gpt-actions/v1/revisions/{id}/activate",
+      "module": "gpt_actions",
+      "status": "covered"
+    },
+    {
+      "operationId": "gpt_adjust_shared_resource_cost",
+      "method": "POST",
+      "path": "/transformometro/gpt-actions/v1/shared-resources/adjust-cost",
       "module": "gpt_actions",
       "status": "covered"
     },

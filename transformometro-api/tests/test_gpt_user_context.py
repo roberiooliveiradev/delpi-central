@@ -97,7 +97,7 @@ def test_application_user_context_has_no_infrastructure_or_framework_imports():
 def test_openapi_includes_gpt_get_my_context():
     doc = build_gpt_actions_openapi()
     assert "gpt_get_my_context" in GPT_ACTIONS_OPERATION_IDS
-    assert count_operations(doc) == 20
+    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 21
     op = doc["paths"]["/transformometro/gpt-actions/v1/me"]["get"]
     assert op["operationId"] == "gpt_get_my_context"
     assert op["x-openai-isConsequential"] is False
@@ -231,8 +231,8 @@ def test_no_service_account_token_used():
         assert "X-Delpi-Service-Token" not in headers
 
 
-def test_existing_nineteen_operation_ids_unchanged():
-    before = {
+def test_existing_operation_ids_preserved_and_methodology_added():
+    previous = {
         "gpt_get_catalog",
         "gpt_analyze",
         "gpt_search_records",
@@ -254,5 +254,6 @@ def test_existing_nineteen_operation_ids_unchanged():
         "gpt_meeting_minute_manage",
         "gpt_get_my_context",
     }
-    assert set(GPT_ACTIONS_OPERATION_IDS) == before
-    assert len(GPT_ACTIONS_OPERATION_IDS) == 20
+    assert previous <= set(GPT_ACTIONS_OPERATION_IDS)
+    assert "gpt_get_methodology_guide" in GPT_ACTIONS_OPERATION_IDS
+    assert len(GPT_ACTIONS_OPERATION_IDS) == 21

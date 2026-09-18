@@ -11,6 +11,7 @@ from tm_app.application.gpt_actions.entities import (
     GptEntity,
     GptMeetingMinuteWorkflow,
 )
+from tm_app.application.methodology.guide import list_method_ids, list_task_ids
 from tm_app.application.gpt_actions.improvement_package_contract import (
     NESTING_RULES,
     openapi_investment_properties,
@@ -48,6 +49,7 @@ def resolve_gpt_actions_server_url(
 GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
     "gpt_get_my_context",
     "gpt_get_catalog",
+    "gpt_get_methodology_guide",
     "gpt_analyze",
     "gpt_search_records",
     "gpt_get_record",
@@ -441,6 +443,47 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "security": [{"BearerAuth": []}],
                 "responses": {
                     "200": _ok_response("Catalog payload"),
+                    **_error_responses(),
+                },
+            }
+        },
+        f"{GPT_ACTIONS_BASE_PATH}/methodology-guide": {
+            "get": {
+                "operationId": "gpt_get_methodology_guide",
+                "summary": "Read-only process methodology playbooks",
+                "description": (
+                    "READ-only guidance. Not a fact, not authorization, and not a write. "
+                    "Optional method and task. Same source as MCP get_methodology_guide."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "x-openai-isConsequential": False,
+                "parameters": [
+                    {
+                        "name": "method",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "string", "enum": list(list_method_ids())},
+                        "description": (
+                            "Optional method id: "
+                            + ", ".join(list_method_ids())
+                            + ". Omit to receive the router."
+                        ),
+                    },
+                    {
+                        "name": "task",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "string", "enum": list(list_task_ids())},
+                        "description": (
+                            "Optional task: "
+                            + ", ".join(list_task_ids())
+                            + ". Selects the smallest recommended methods."
+                        ),
+                    },
+                ],
+                "responses": {
+                    "200": _ok_response("Methodology guide payload"),
                     **_error_responses(),
                 },
             }

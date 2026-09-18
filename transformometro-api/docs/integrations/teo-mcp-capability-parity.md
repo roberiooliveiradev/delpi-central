@@ -3,9 +3,9 @@
 Gate:
 
 ```text
-CURRENT_CAPABILITIES (GPT Actions) = 20
-MCP_COVERED = 20
-MCP_NATIVE = get_methodology_guide (READ guidance; not a GPT Action)
+CURRENT_CAPABILITIES (GPT Actions importable) = 21
+MCP_COVERED = 21
+MCP_NATIVE = none
 MCP_TOOLS = 33
 MISSING = 0
 UNMAPPED GPT = 0
@@ -13,13 +13,14 @@ REGRESSED = 0
 ```
 
 ```text
-20 GPT Actions capabilities
+21 GPT Actions capabilities
 ≠
 33 MCP tools
 ```
 
 One GPT capability may map to READ + PREPARE + ACT semantic tools.
-`get_methodology_guide` is MCP-native guidance. It is not capability loss and not a new GPT Action.
+`gpt_get_methodology_guide` and `get_methodology_guide` share `query_methodology_guide`.
+`21 ≠ 33` is not a regression.
 
 Composition:
 
@@ -28,6 +29,8 @@ Composition:
 READ includes get_methodology_guide
 ACT tools accept only proposal_handle
 unbound ACT = 0
+GPT importable operations = 21
+meta route gpt_get_openapi_schema is not importable
 ```
 
 Source of truth: `tm_app/interface/mcp/constants.py` (`GPT_TO_MCP_TOOLS`).
@@ -36,7 +39,7 @@ Source of truth: `tm_app/interface/mcp/constants.py` (`GPT_TO_MCP_TOOLS`).
 |---|---|---|---|---|---|
 | `gpt_get_my_context` | READ | `get_my_context` | AuthN | N/A | OK |
 | `gpt_get_catalog` | READ | `get_catalog` | view | N/A | OK |
-| MCP-native (no GPT Action) | READ guidance | `get_methodology_guide` | view (same gate; guide is not AuthZ) | N/A — no write | OK |
+| `gpt_get_methodology_guide` | READ guidance | `get_methodology_guide` | view (guide is not AuthZ) | N/A — no write | OK |
 | `gpt_get_process_context` | READ | `get_process_context` | view/process | N/A | OK |
 | `gpt_analyze` | READ | `analyze` | dashboard view | N/A | OK |
 | `gpt_search_records` | READ | `search_records` | capability+view | N/A | OK |
@@ -83,7 +86,7 @@ Source of truth: `tm_app/interface/mcp/constants.py` (`GPT_TO_MCP_TOOLS`).
 | Single-replica operation | **ACCEPTED_WITH_RESIDUAL** |
 | Shared store for horizontal scale | **TARGET** (not implemented) |
 
-GPT Actions HTTP façade remains unbound by proposal handles (**LEGACY_TRANSITIONAL_BRIDGE**, 20 operationIds still live) but shares AuthZ/services with MCP ACT execution.
+GPT Actions HTTP façade remains unbound by proposal handles (**LEGACY_TRANSITIONAL_BRIDGE**, 21 importable operationIds) but shares AuthZ/services with MCP ACT execution. Methodology uses the same `query_methodology_guide` on both surfaces.
 
 ## Live ChatGPT acceptance (2026-09-17)
 

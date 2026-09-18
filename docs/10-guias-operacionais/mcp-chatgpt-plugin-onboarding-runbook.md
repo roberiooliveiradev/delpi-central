@@ -269,7 +269,7 @@ Registrar missing / unexpected / unbound ACT.
 
 In-process `list_tools` **não** substitui discovery do provider.
 
-Nota TÉO: 20 GPT Actions capabilities → **33** MCP tools (READ/PREPARE/ACT + `get_methodology_guide`). `33 ≠ 20` **não** é regression se coverage GPT = 20/20. O acceptance de 2026-09-17 viu 32 tools; a 33ª é metodologia READ posterior.
+Nota TÉO: 21 GPT Actions importáveis → **33** MCP tools. `33 ≠ 21` **não** é regression. Metodologia está nas duas superfícies. O acceptance de 2026-09-17 viu 20 Actions e 32 tools.
 
 ---
 

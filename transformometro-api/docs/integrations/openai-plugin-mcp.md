@@ -61,36 +61,38 @@ DAVI_READ_ONLY_COPY = FORBIDDEN
 ### Capability vs tools
 
 ```text
-20 GPT Actions capabilities
+21 GPT Actions capabilities
 ≠
-20 MCP tools
+33 MCP tools
 ```
 
 No MCP atual, 1 capability GPT pode decompor-se em READ / PREPARE / ACT.
 
 | Métrica | Valor | Classificação |
 |---|---|---|
-| Capability coverage | 20/20 GPT Actions | PROVEN (código + matriz) |
-| MCP-native methodology | `get_methodology_guide` | CURRENT (não é GPT Action) |
-| MCP tools registered | **33** (10 READ + 1 ANALYSIS + 11 PREPARE + 11 ACT) | código; ChatGPT 33/33 = TEST_NOT_RUN até refresh do app publicado |
+| GPT Actions importable | **21**, incluindo `gpt_get_methodology_guide` | CURRENT no código |
+| GPT Actions em 2026-09-17 | 20 | HISTORICAL |
+| MCP tools registered | **33** (10 READ + 1 ANALYSIS + 11 PREPARE + 11 ACT) | código; ChatGPT 33/33 = TEST_NOT_RUN |
 | Unbound ACT | 0 | PROVEN |
 | ACT input | somente `proposal_handle` | PROVEN (código) |
 
-`33 ≠ 20` **não** é regression. 20 capabilities GPT continuam no bridge legado. A 33ª tool é metodologia READ, não uma Action nova. Ver `teo-mcp-capability-parity.md`.
+`33 ≠ 21` **não** é regression. A metodologia existe nas duas superfícies pela mesma fonte. Writes MCP continuam PREPARE/ACT. Ver `teo-mcp-capability-parity.md`.
 
 ## Methodology guide
 
 ```text
 Agent Instructions = coordenação
-MCP get_methodology_guide = conhecimento metodológico reutilizável
+query_methodology_guide = fonte única
+MCP get_methodology_guide = adapter
+GPT gpt_get_methodology_guide = adapter legado
 Transformômetro domain = dados e regras finais
 ```
 
-A tool é READ-only. Método não autoriza, não persiste e não transforma hipótese em fato. SIPOC, Ishikawa, SWOT e os demais playbooks **não** viram entidades. Diagramas continuam em `get_catalog.diagram_catalog` (`flowchart_v1` canônico; Mermaid derivado).
+A capability é READ-only. Método não autoriza, não persiste e não transforma hipótese em fato. SIPOC, Ishikawa, SWOT e os demais playbooks **não** viram entidades. Diagramas continuam em `get_catalog.diagram_catalog` (`flowchart_v1` canônico; Mermaid derivado).
 
-Fonte editorial: `docs/gpt-actions/teo-method-playbooks.md`. Projeção de runtime: `tm_app/application/methodology/guide.py`.
+Fonte editorial: `docs/gpt-actions/teo-method-playbooks.md`. Runtime: `tm_app/application/methodology/guide.py`.
 
-App ChatGPT Business já publicado: schemas das 32 tools anteriores não mudam. A 33ª tool só aparece depois de refresh/republicação se a plataforma não reescanear sozinha. Isso está **TEST_NOT_RUN**. Não republicar automaticamente.
+GPT Builder: reimportar o OpenAPI depois do deploy. O app MCP publicado não muda de schema nesta Action.
 
 ## Write governance (MCP)
 
@@ -149,7 +151,7 @@ Detalhes Keycloak: [keycloak-mcp-client-runbook.md](./keycloak-mcp-client-runboo
 
 | Surface | Client | Lifecycle |
 |---|---|---|
-| GPT Actions | `chatgpt-transformometro` | **LEGACY_TRANSITIONAL_BRIDGE** (20 operationIds; ainda operacionais) |
+| GPT Actions | `chatgpt-transformometro` | **LEGACY_TRANSITIONAL_BRIDGE** (21 importable operationIds; `gpt_get_openapi_schema` continua meta) |
 | MCP Plugin | `mcp-transformometro` | **CURRENT** para agents |
 
 Não remover GPT Actions nesta fase. Critério futuro de depreciação:
@@ -176,9 +178,10 @@ Verificação corrigida (produção):
 | Endpoint MCP | PASS |
 | Protected-resource metadata | PASS |
 | Keycloak PROD (`mcp-transformometro`, scopes) | PASS |
-| GPT Actions 20 operationIds | PASS (ainda disponíveis) |
-| MCP tools registradas (2026-09-17) | 32 | HISTORICAL |
-| MCP tools no código após methodology guide | 33 | CURRENT (live rediscovery TEST_NOT_RUN) |
+| GPT Actions importable em 2026-09-17 | 20 (HISTORICAL) |
+| GPT Actions importable no código | 21 |
+| MCP tools em 2026-09-17 | 32 (HISTORICAL) |
+| MCP tools no código | 33 |
 | Replicas | 1 | PASS |
 
 ## ChatGPT Plugin acceptance (PROVEN)

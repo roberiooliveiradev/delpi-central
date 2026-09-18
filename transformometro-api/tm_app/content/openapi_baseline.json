@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-15",
-  "operation_count": 172,
+  "generatedAt": "2026-09-18",
+  "operation_count": 173,
   "operations": [
     {
       "operationId": "post_liberar",
@@ -781,6 +781,12 @@
       "operationId": "gpt_meeting_minute_workflow",
       "method": "POST",
       "path": "/transformometro/gpt-actions/v1/meeting-minutes/{id}/workflow",
+      "module": "gpt_actions"
+    },
+    {
+      "operationId": "gpt_get_methodology_guide",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/methodology-guide",
       "module": "gpt_actions"
     },
     {

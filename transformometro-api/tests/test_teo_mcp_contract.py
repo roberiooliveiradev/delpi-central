@@ -82,6 +82,7 @@ def test_tool_parity_with_gpt_actions_operation_ids() -> None:
     assert MCP_NATIVE_TOOLS <= set(MCP_TOOL_NAMES)
     assert set(TOOL_TO_GPT_OPERATION.keys()) == set(MCP_TOOL_NAMES) - set(MCP_NATIVE_TOOLS)
     assert "get_methodology_guide" not in GPT_TO_MCP_TOOLS.get("gpt_get_catalog", ())
+    assert GPT_TO_MCP_TOOLS["gpt_get_methodology_guide"] == ("get_methodology_guide",)
     assert TOOL_CLASS["get_methodology_guide"] == "READ"
     assert TOOL_CLASS["prepare_improvement_package"] == "PREPARE"
     assert TOOL_CLASS["act_create_record"] == "ACT"

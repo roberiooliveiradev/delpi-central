@@ -16,6 +16,7 @@ from tm_app.application.gpt_actions.entities import (
     parse_entity,
 )
 from tm_app.application.gpt_actions.registration_guide import build_registration_guide
+from tm_app.application.methodology.guide import query_methodology_guide
 from tm_app.application.services.dashboard_recalc_service import DashboardRecalcService
 from tm_app.application.services.dashboard_snapshot_read_service import (
     DashboardSnapshotReadService,
@@ -330,6 +331,24 @@ class GptActionsDispatchService:
             payload.setdefault("familias_processo", [])
             payload.setdefault("agrupadores_ferramenta", [])
         return payload
+
+    def get_methodology_guide(
+        self,
+        request: Request,
+        *,
+        method: str | None = None,
+        task: str | None = None,
+    ) -> dict[str, Any]:
+        """READ-only methodology. Same view gate and source as MCP."""
+        self._raise_http_err(require_transformometro_view_access(request))
+        try:
+            return query_methodology_guide(method=method, task=task)
+        except ValueError as exc:
+            raise GptActionsError(
+                str(exc),
+                400,
+                {"error_kind": "validation"},
+            ) from exc
 
     def _resolve_setor_codigo(self, setor_ref: str | None) -> str | None:
         """Normalize GPT `setor_id` (UUID or codigo_setor) to business code.
