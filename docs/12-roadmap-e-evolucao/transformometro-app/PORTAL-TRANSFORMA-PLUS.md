@@ -26,7 +26,7 @@ cargo != authorization
 menu oculto != AuthZ
 ```
 
-AuthZ: a Core API decide permissão. Desenho em [AUTHZ-FINAL-DESIGN.md](./AUTHZ-FINAL-DESIGN.md). Não é runtime.
+AuthZ: quem tem acesso vê todos os processos. Filial não autoriza. Desenho em [AUTHZ-FINAL-DESIGN.md](./AUTHZ-FINAL-DESIGN.md). Não é runtime.
 
 ```text
 Portal Transforma+
@@ -137,7 +137,7 @@ Cards candidatos:
 | Resultados / ganhos medidos (economia líquida e bruta, horas, investimento, ROI) | PROVEN como campos de `DashboardResumo` | Não inventar outro cálculo |
 | Revisões vencendo ou vencidas | PROVEN como `DashboardVencimentos` | Não chamar isso de «ação atrasada» |
 | Alertas de economia acumulada | PROVEN como `DashboardAlertas` | Não é «processo que precisa de atenção» genérico |
-| Processos sob acompanhamento | TO_INVENTORY | Não há relação usuário↔processo além do escopo que o backend já autoriza |
+| Processos sob acompanhamento | TO_INVENTORY | Não há relação usuário↔processo além de `access`. Unidade não filtra a lista |
 | Melhorias em andamento | TO_INVENTORY | «Em andamento» não tem fase canônica única neste inventário |
 | Tarefas pendentes | TO_INVENTORY | Não há task store do TM |
 | Ações atrasadas | TARGET | Plano de ação ainda não existe |

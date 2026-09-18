@@ -1,6 +1,6 @@
 # Portal Transforma+ — simplificação de AuthZ multiunidade
 
-> Inventário do estado anterior ao desenho final. A autoridade de permissão é a Core API. Decisões fechadas e o vínculo de unidade estão em [AUTHZ-FINAL-DESIGN.md](./AUTHZ-FINAL-DESIGN.md). Trechos abaixo que ainda tratam sign, data transfer ou escopo como decisão aberta estão superados.
+> Inventário histórico do modelo de 21 códigos. A matriz OLD → NEW vigente, sem escopo de unidade, está em [AUTHZ-FINAL-DESIGN.md](./AUTHZ-FINAL-DESIGN.md). O que este arquivo ainda diz sobre branch como fonte de escopo está superado.
 > **AUTHZ_MIGRATION = NOT_READY.**
 > Base do inventário: `769b2a0a161af54c36eb58bd31a0d7033de412ab`.
 > Hardening: ver §10.

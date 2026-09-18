@@ -33,8 +33,8 @@ Documentação de arquitetura e plano de entrega do **Transformômetro** como pr
 | **[ARCHITECTURE-RUNWAY.md](./ARCHITECTURE-RUNWAY.md)** | **Ordem de implementação** — decisões caras, waves, DoR/DoD e pacote. Única fonte de sequência. Não autoriza código. |
 | **[WAVE-1-IMPLEMENTATION-PACKET.md](./WAVE-1-IMPLEMENTATION-PACKET.md)** | Pacote da Wave 1. IMPLEMENTED_NOT_RUNTIME_PROVEN. Browser smoke ainda TEST_NOT_RUN. |
 | **[AUTHZ-SIMPLIFICATION.md](./AUTHZ-SIMPLIFICATION.md)** | Inventário de permissões e alvo multiunidade. AUTHZ_MIGRATION = NOT_READY. Não autoriza código. |
-| **[AUTHZ-FINAL-DESIGN.md](./AUTHZ-FINAL-DESIGN.md)** | Desenho final. Core autoriza. Unidade é objeto do Portal. READY_FOR_ARCH_REVIEW. |
-| **[CORE-APP-UNIT-SCOPE-PACKET.md](./CORE-APP-UNIT-SCOPE-PACKET.md)** | Pacote da fase 1 no Core. Não autoriza código. |
+| **[AUTHZ-FINAL-DESIGN.md](./AUTHZ-FINAL-DESIGN.md)** | Autorização final: só `access` e `manage`. Filial não autoriza. |
+| **[CORE-APP-UNIT-SCOPE-PACKET.md](./CORE-APP-UNIT-SCOPE-PACKET.md)** | Cancelado. Unit scope não será implementado. |
 | **[PLAYBOOK-PORTAL-TRANSFORMA.md](./PLAYBOOK-PORTAL-TRANSFORMA.md)** | Inventário de portal (2026-09-17). A sequência vigente está no runway, não nas fases 0–6 deste playbook. |
 | [ESPECIFICACAO.md](./ESPECIFICACAO.md) | Especificação funcional (planilha + Apps Script) |
 | [OPERATIONS.md](./OPERATIONS.md) | Runbook operacional e deploy Playbook 18 |

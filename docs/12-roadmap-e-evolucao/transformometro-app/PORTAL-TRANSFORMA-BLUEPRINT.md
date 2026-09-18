@@ -192,7 +192,7 @@ Vitest no MFE (nav, parser, lista, 403). Pytest na API só se alguém tocar hand
 
 ## 11. Segurança
 
-O MFE não decide quem vê o processo. Cargo não filtra. Segredo não vai para o bundle. A Core API decide permissão e escopo. O Transformômetro decide se a operação de domínio é válida. O inventário e o alvo estão em [AUTHZ-FINAL-DESIGN.md](./AUTHZ-FINAL-DESIGN.md) e não são runtime.
+O MFE não decide quem vê o processo. Quem tem acesso ao portal vê os processos de todas as unidades. Filial filtra a Visão geral e não autoriza. A Core API decide `access` e `manage`. Desenho em [AUTHZ-FINAL-DESIGN.md](./AUTHZ-FINAL-DESIGN.md). Não é runtime.
 
 ## 12. Alvo futuro — wireframes baixos
 
@@ -223,7 +223,7 @@ Não são UI ativa. Owner de plano, portfólio, tarefas e sala continua TO_INVEN
 | Host = `TransformometroShell` + `PageHeader` | FROZEN | Sim, se alguém trocar o shell |
 | Nav da §4 | FROZEN | Sim |
 | Paths atuais | FROZEN | Sim |
-| Meus processos = escopo autorizado | FROZEN | Sim |
+| Meus processos = todos os processos de quem tem access. Unidade não filtra | SUPERSEDED_BY_BUSINESS_DECISION | A linha anterior «escopo autorizado» não vale |
 | Sem backend/MCP/Action/migration/permissão nova | FROZEN | Sim |
 | 403 ≠ vazio | FROZEN | Sim |
 | TopBar / CommandPalette / Ajuda página | DEFERRED | Não |

@@ -1,206 +1,141 @@
-# Portal Transforma+ — desenho final de autorização
+# Portal Transforma+ — autorização final
 
-> **Status:** desenho para revisão. Não é runtime.  
-> **AUTHZ_FINAL_DESIGN = READY_FOR_ARCH_REVIEW.**  
-> **IMPLEMENTATION = NOT AUTHORIZED.**  
-> Base: `5c975e2916802a59639693b5b789266affd828d1`.  
-> Inventário anterior: [AUTHZ-SIMPLIFICATION.md](./AUTHZ-SIMPLIFICATION.md). As decisões de negócio daquele arquivo que ainda estavam abertas ficam fechadas aqui.
+> **Status:** desenho corrigido. Não é runtime.
+> **IMPLEMENTATION = NOT AUTHORIZED.**
+> **AUTHZ_MIGRATION = READY_FOR_IMPLEMENTATION_REVIEW.**
+> A fase de assignment continua bloqueada até a matriz humana ser aprovada.
 
-Keycloak autentica. A Core API é a autoridade de permissão e do vínculo de escopo. O Transformômetro não concede permissão. Ele é dono dos objetos e pode negar uma operação já autorizada pelo Core quando a regra de negócio falha. Não pode liberar o que o Core negou. Frontend, TÉO, MCP e GPT Actions não autorizam.
+## EXECUTION_DRIFT
 
-## 1. Permissions funcionais finais
+Premissa anterior, em `680b24a62` e `ce458acf2`: principal → aplicação → unidades autorizadas.
 
-Somente:
+**Invalidada.** O Portal Transforma+ é multiunidade e não segrega autorização por unidade. Quem tem acesso vê todos os processos. Unidade é objeto e filtro analítico, não escopo de permissão.
 
-- `transformometro.access` — uso normal dentro do escopo autorizado.
+O pacote [CORE-APP-UNIT-SCOPE-PACKET.md](./CORE-APP-UNIT-SCOPE-PACKET.md) está **CANCELLED_BY_BUSINESS_DECISION**. O ADR anterior fica superado: [`adr-core-authorization-portal-units.md`](../../../transformometro-api/docs/architecture/adr-core-authorization-portal-units.md).
+
+## Autoridade
+
+Keycloak autentica. A Core API decide `transformometro.access` e `transformometro.manage`. O Transformômetro não concede permissão. Ele valida a operação de domínio e pode negar o que o Core autorizou. Não pode liberar o que o Core negou.
+
+Filial não entra nessa decisão. `transformometro.filiais` continua só no Transformômetro. O Core não cadastra, não referencia, não audita e não projeta unidade. `GET /me` não ganha campo de unidade.
+
+Frontend, TÉO, MCP e GPT Actions não autorizam. Não há tool nem Action nova.
+
+`manage` não implica `access`. O `PermissionResolver` não tem hierarquia. Quem administra recebe os dois códigos.
+
+## Permissions finais
+
+Só estas:
+
+- `transformometro.access` — uso normal do portal, em todas as unidades.
 - `transformometro.manage` — administração e configuração do produto.
 
-`manage` não é escrita irrestrita de processo, não é escopo de todas as unidades e não é superadmin.
+Saem, no alvo: processo, revisão, medição, investimento, recurso, ata, assinatura, recálculo, transferência, filial e consolidado.
 
-## 2. Unidade do Portal e quem guarda o acesso
+Sem `access`, nega. Com `access`, o produto inteiro, inclusive processos de qualquer unidade. Código `branch.*` não participa. Não se restaura «sem filial → vê tudo» como regra de escopo. A capability é que abre o produto.
 
-A unidade, também chamada filial, é objeto do Portal Transforma+. Dono: Transformômetro. Tabela `transformometro.filiais`, com `filial_id` e `codigo_filial`. Instância, setor, ata e dashboard apontam para esse objeto. O Core não cadastra, não renomeia e não generaliza unidade para outros apps. Não nasce catálogo organizacional no Core.
+## Filial
 
-O que falta não é o objeto. Falta registrar, fora da permission, quais objetos unidade daquele portal um principal pode usar.
+Objeto de domínio. Na Visão geral, o filtro Todas / 01 / 02 / futuras muda a consulta. Não muda quem pode ver. O catálogo do filtro vem de `filiais`. Sem chamada de autorização ao Core.
 
-CONFIRMADO: `PermissionResolver` une permissões de papéis diretos e de papéis dos grupos. Override em `user_permissions` acrescenta se `granted` ou retira se não. Não há implicação `manage` ⇒ `access`. Quem administra recebe os dois códigos, explícitos.
+Consolidado é Todas. `view.consolidated` sai. Não é capability.
 
-O escopo segue a mesma herança, sem virar permission. Uma linha de escopo por papel, grupo ou usuário, para a aplicação `transformometro`. Vários papéis ou grupos: união. Qualquer `all` na união resulta em `all`. Override direto do usuário substitui a união. Não soma com ela. Sem nenhuma linha, o modo é ausência, não `all`. Na janela de migração, ausência ainda lê os códigos `branch.*`. Linha presente, inclusive `none`, corta o legado. Não há união entre escopo novo e filial antiga.
+## Domínio
 
-O identificador opaco é `codigo_filial`. O Core não guarda nome, status nem FK. `SET ["01","02"]` não é `all`: a unidade `03` futura entra só em `all`.
+Processos: `access` lista todos. «Meus processos» é o nome da área, não a lista das unidades do usuário. Cargo, perfil e departamento não filtram.
 
-**ARCHITECTURE_GAP:** ainda não existe tabela desse vínculo. O objeto unidade não é gap.
+Mestre: `access` mais a regra de negócio. Não há interseção de unidades nem exigência de escrever só se todas as unidades ligadas estiverem no escopo.
 
-O vínculo fica no banco do Core, uma linha por sujeito e aplicação. Sujeito é papel, grupo ou usuário, no mesmo desenho de `role_permissions` / `group_roles` / `user_permissions`. Aplicação é o id do manifesto, `transformometro`. Modo: `none`, `units` ou `all`. Em `units`, só a lista de `codigo_filial`. Sem nome, sem status, sem FK, sem SQL no schema `transformometro`, sem import de `tm_app`.
+Sem instância: `access` lê. Escrita normal é `access` mais a regra de negócio. Não há fallback de filial.
 
-Resolução efetiva, igual à das permissions, com uma diferença no override:
+Instância, revisão, medição e investimento continuam ligados à unidade como contexto do dado. Isso não autoriza nem esconde.
 
-1. se o usuário tem linha direta para o app, ela substitui o resto;
-2. senão, união das linhas dos papéis do usuário e dos papéis dos grupos;
-3. na união, `all` absorve `units`;
-4. nenhuma linha no caminho resolvido significa ausência.
+Ata: `access`. Assinar exige ser signatário, estado assinável e ainda não ter assinado. A unidade da ata não limita a permissão.
 
-Ausência no estado final é `none`. Durante a fase 3, ausência ainda usa `branch.*`. Linha `none` não cai no legado.
+Exportar/importar, recálculo pedido pelo usuário, recursos compartilhados, filiais, departamentos e configurações: `manage`. Preview, validação, confirmação de replace e read-back permanecem. O hook interno de recálculo depois de uma escrita não é esse comando.
 
-Código que o Transformômetro não acha em `filiais` ativas é ignorado e registrado como referência obsoleta. Não abre outras unidades. Não derruba as unidades válidas da mesma lista. `99` ao lado de `01` autoriza `01` e nada mais.
+`manage` sem `access` não abre a raiz do portal. Rotas de administração exigem `manage`. Os dois códigos são explícitos.
 
-Auditoria reusa `audit_logs`: ator, principal, aplicação, escopo anterior, escopo novo. Sem payload de filial.
+## O que o código faz hoje
 
-O resolver de permissão não chama o Transformômetro. A tela administrativa, no futuro, lista unidades pelo contrato já existente `list_filiais`, que hoje filtra pelo escopo de quem chama. Atribuir unidade que o administrador não possui continua gap de jornada, não de hot path.
+`FilialAccessScopeService` está no caminho de autorização. Consumidores: `branch_access_http` (`check_*`, `filter_rows_for_access`, `require_unrestricted_catalog_admin`), `crud_routes`, `dashboard_routes`, `meeting_minutes_service`, `transformometro_routes` (`/options`), `dispatch_service`, `process_context_service`, `orchestrator`. Testes em `test_branch_access_scope_service.py`.
 
-## 3. Contrato para as APIs de domínio
-
-Pergunta que o contrato responde: quais unidades do Portal Transforma+ este principal pode usar?
-
-`GET /me` já é a projeção que `load_user_rbac` consome. Estender essa projeção, não criar um segundo canal. Para o app `transformometro`, o modo e, quando for conjunto, os códigos das unidades do portal. O payload não leva o objeto filial. O Transformômetro carrega `filiais` e descarta código que não existe. Nomes de campo não estão congelados.
-
-Dono da projeção: Core. Dono do objeto: Transformômetro. Consumidor: `shared/delpi_auth` e o interpreter do portal. Frescor: o mesmo cache de `/me` (`DELPI_AUTH_RBAC_CACHE_TTL_SECONDS`, default 60s). Se o Core falhar, o middleware já zera permissions. Escopo ausente nessa falha é nenhuma unidade, não todas.
-
-## 4. Processo, instância, revisão, medição
-
-O playbook de modelagem diz que o processo-mestre guarda identidade e não carrega filial operacional, e que a instância é filial × setor, com revisão e cálculo presos à instância. O schema também tem `processos.todas_filiais_ativas` e `processo_filiais`. Isso é overlay atual de listagem, não uma segunda permission.
-
-Regra final:
-
-- Mestre: identidade compartilhada. Leitura com `access` se alguma instância, ou o overlay `processo_filiais`, cruza o escopo. `todas_filiais_ativas` no mestre torna o mestre visível para quem tem ao menos uma unidade, sem abrir as outras unidades.
-- Escrita do mestre: `access` somente se todas as unidades ligadas ao processo estão dentro do escopo, ou se o escopo é `all`. Usuário de uma unidade não altera mestre compartilhado com outra.
-- Processo sem instância: leitura e escrita da identidade exigem `access` e não abrem dado de unidade. Atribuir a primeira unidade exige `access` e essa unidade no escopo. Ausência de instância não é acesso irrestrito.
-- Instância, revisão, medição e investimento: a unidade vem da instância. Fora do escopo, nega. Instância `todas_filiais_ativas` só é escrita com `all`. Leitura projeta só as unidades autorizadas. Unidade `deletado` ou `status_filial` diferente de `ativo` não autoriza, mesmo se o código ainda estiver no vínculo. O Core não apaga o código por isso.
-
-## 5. Visão consolidada
-
-Não existe `view.consolidated` no alvo. Consolidado é a agregação do escopo autorizado.
-
-- escopo `01` → consolidado de `01`;
-- escopo `01` e `02` → os dois;
-- escopo `all` → todas as unidades do catálogo do Portal Transforma+, inclusive as futuras.
-
-## 6. Semântica congelada
-
-| Operação | Regra |
-|---|---|
-| Uso normal, atas, processos, revisões, medições, investimentos | `access` + escopo + regra do recurso |
-| Administração, configurações, recursos compartilhados, recálculo pedido pelo usuário, exportar/importar | `manage` + escopo |
-| Assinar ata | `access` + é signatário + unidade da ata no escopo + estado assinável + ainda não assinou |
-| Sem capability | nega |
-| Sem escopo | nenhum dado de unidade |
-| Unidade desconhecida | nega |
-| `manage` sem unidade | não abre unidade |
-| Menu, perfil, cargo | não autorizam |
-
-Import/replace que apaga cadastro fora do escopo é negado. Replace do catálogo inteiro só com escopo `all`. O CLI de operador continua fora dessa policy.
-
-## 7. Papéis de produção
-
-O papel `Transforma Mais` tem os 21 códigos, as duas filiais, 4 usuários e o grupo `Supervisor Engenharia`. Não mapear esse papel inteiro para `access` + `manage`.
-
-Matriz obrigatória, uma linha por atribuição, preenchida por decisão humana. Cargo não preenche a linha.
-
-| Principal ou grupo | access | manage | Modo | Unidades | Aprovador | Status |
-|---|---|---|---|---|---|---|
-| 4 usuários do papel Transforma Mais | — | — | — | — | — | UNCLASSIFIED |
-| grupo Supervisor Engenharia | — | — | — | — | — | UNCLASSIFIED |
-
-Sem essa matriz, a fase de migração de assignment não começa.
-
-## 8. Modelo transitório
-
-Não é o modelo final. Só a janela de rollout, se a fase 2 ainda não consumir o agregado do Core:
-
-- `transformometro.access`
-- `transformometro.manage`
-- `transformometro.branch.filial-01`
-- `transformometro.branch.filial-02`
-- `transformometro.view.consolidated`
-
-`branch.*` nessa janela continua sendo a representação temporária do escopo. Some na fase 11.
-
-## 9. Remoção
-
-Cada código sai só quando o substituto está atribuído, o escopo novo está provado e o teste negativo passou. Busca residual no repositório é condição de saída, não o texto do manifesto.
-
-| Código atual | Alvo | Compatibilidade temporária | Sai quando |
+| Superfície | Hoje | Alvo | Migrar |
 |---|---|---|---|
-| `view` | `access` | dual-read | assignments migrados |
-| `processes.manage`, `revisions.manage`, `measurements.manage`, `investments.manage` | `access` + domínio | dual-read | writes do domínio no novo gate |
-| `meeting-minutes.view` | `access` + escopo | dual-read | lista e detalhe no novo gate |
-| `meeting-minutes.manage` | `access` + regra do recurso | dual-read | edição de ata no novo gate |
-| `meeting-minutes.sign` | `access` + signatário + estado | dual-read | teste de não-signatário |
-| `atas.*` | alias dos três acima | sim, até os canônicos saírem | nenhum consumidor nas tuplas |
-| `shared-resources.manage` | `manage` | dual-read | catálogo no gate de manage |
-| `dashboard.recalculate` | `manage` | dual-read | HTTP, MCP e GPT na mesma policy |
-| `data.transfer` | `manage` + escopo | dual-read | backup não escreve fora do escopo |
-| `view.consolidated` | projeção do escopo | só no transitório | fase 11 |
-| `branch.filial-*` | agregado do Core | só no transitório | fase 2 provada |
-| `view.filial-*`, `manage.filial-*` | alias de branch | sim | fase 11, depois dos canônicos de filial |
+| Lista de processos | filtra pela filial do papel | `access` vê todos | sim |
+| Dashboard | `check_dashboard_filial_access` | filtro analítico, sem negar unidade | sim |
+| Atas | `can_view_filial` / `can_manage_filial` | `access`; assinar pela regra do signatário | sim |
+| `/options` | esconde filial fora do papel | catálogo para o filtro, com `access` | sim |
+| Writes de instância | `check_manage_filial_access` | `access` + regra de domínio | sim |
+| Catálogo de filial | `require_unrestricted_catalog_admin` | `manage` | sim |
+| GPT/MCP | os mesmos helpers | o mesmo contexto do HTTP | sim |
 
-Alvo residual no manifesto: só `access` e `manage`.
+O serviço sai da autorização. Se sobrar helper só de filtro de consulta, não pode se chamar de autorização. Não apagar no mesmo diff da fundação se ainda houver caller.
 
-## 10. Manifesto proposto
+## OLD → NEW
+
+| Atual | Alvo |
+|---|---|
+| `view` | `access` |
+| `processes.manage`, `revisions.manage`, `measurements.manage`, `investments.manage` | `access` + regra de domínio |
+| `meeting-minutes.view`, `meeting-minutes.manage` | `access` + regra de domínio |
+| `meeting-minutes.sign` | `access` + signatário e estado |
+| `atas.*` | sai com os canônicos de ata |
+| `shared-resources.manage`, `dashboard.recalculate`, `data.transfer` | `manage` |
+| `view.consolidated` | sai; é o filtro Todas |
+| `branch.filial-*`, `view.filial-*`, `manage.filial-*` | sai |
+
+## Manifesto proposto
 
 Não aplicar.
 
-```json
-{
-  "permissions": [
-    {
-      "code": "transformometro.access",
-      "name": "Acessar Portal Transforma+",
-      "description": "Uso normal do Portal Transforma+ dentro do escopo autorizado."
-    },
-    {
-      "code": "transformometro.manage",
-      "name": "Administrar Portal Transforma+",
-      "description": "Administração e configuração do produto. Não concede unidade nem escrita irrestrita de processo."
-    }
-  ],
-  "routes": [
-    { "path": "/apps/transformometro", "label": "Portal Transforma+", "permission": "transformometro.access", "showInMenu": true },
-    { "path": "/apps/transformometro/dashboard", "label": "Visão geral", "permission": "transformometro.access", "showInMenu": false },
-    { "path": "/apps/transformometro/processes", "label": "Meus processos", "permission": "transformometro.access", "showInMenu": false },
-    { "path": "/apps/transformometro/meeting-minutes", "label": "Atas", "permission": "transformometro.access", "showInMenu": false },
-    { "path": "/apps/transformometro/my-signature", "label": "Minha assinatura", "permission": "transformometro.access", "showInMenu": false },
-    { "path": "/apps/transformometro/administration", "label": "Administração", "permission": "transformometro.manage", "showInMenu": false },
-    { "path": "/apps/transformometro/settings/units", "label": "Configurações", "permission": "transformometro.manage", "showInMenu": false },
-    { "path": "/apps/transformometro/data", "label": "Exportar/Importar", "permission": "transformometro.manage", "showInMenu": false }
-  ]
-}
-```
+Raiz `/apps/transformometro`, label Portal Transforma+, `access`, `showInMenu: true`. Visão geral, Meus processos, atas, minha assinatura e, quando existirem, sala, tarefas e ajuda: `access`. Administração, configurações e exportar/importar: `manage`.
 
-Ajuda, Sala de interação e Minhas tarefas, quando existirem, usam `access`. A TopBar não cria permission. Itens atuais da barra: Início, Visão geral, Meus processos, Administração. Sala, tarefas e Ajuda continuam fora da barra até existirem.
+A TopBar não cria permission e não muda com a filial. Uso normal: `access`. Administração: `manage`.
 
-## 11. MCP e GPT Actions
+## Papéis
 
-Nenhuma tool nova, nenhuma Action nova, nenhum aumento de OpenAPI. Os checks internos passam a chamar a mesma policy: `access` ou `manage`, mais escopo, mais regra do recurso. Recálculo e backup usam `manage`. Leitura e escrita de domínio usam `access`. Assinatura não consulta `meeting-minutes.sign`.
+Produção, inventário anterior: papel Transforma Mais, 21 códigos, 4 usuários, grupo Supervisor Engenharia, zero grant direto. Não reconsultar neste passe. Não inferir `manage` pelo nome.
 
-## 12. Fases
+| Principal ou grupo | access | manage | Aprovador | Status |
+|---|---|---|---|---|
+| 4 usuários do papel Transforma Mais | — | — | — | UNCLASSIFIED |
+| grupo Supervisor Engenharia | — | — | — | UNCLASSIFIED |
 
-Pacote da fase 1: [CORE-APP-UNIT-SCOPE-PACKET.md](./CORE-APP-UNIT-SCOPE-PACKET.md). ADR: [`adr-core-authorization-portal-units.md`](../../../transformometro-api/docs/architecture/adr-core-authorization-portal-units.md).
+## Transição
 
-0. Este desenho. Sem código.
-1. Persistência do vínculo no Core e contrato da projeção. Sem remover permission.
-2. Projeção no `GET /me`, no mesmo cache já existente. Sem chamada ao Transformômetro no resolver.
-3. Transformômetro consome o vínculo. Se houver linha, só ela vale. Se não houver, valem os `branch.*` atuais. Nunca união. Nunca ausência vira `all`.
-4. Manifesto ganha `access` e `manage` sem apagar os 21.
-5. Policies entendem os códigos novos. Quem tem `manage` também precisa de `access` no assignment, porque o resolver não implica.
-6. Matriz humana aprovada. Quatro usuários e o grupo continuam UNCLASSIFIED até lá.
-7. Migrar assignments. Não apagar os antigos antes do aceite.
-8. Rotas do portal.
-9. MCP e Actions, mesmos contratos.
-10. Negativo entre unidades.
-11. Aliases.
-12. Permissions granulares.
-13. `branch.*` e `view.consolidated`.
-14. Busca residual e aceite de runtime.
+Janela curta. Sem dual-read de unidade.
 
-Não juntar a fase 1 com a remoção do legado. Rollback de cada fase não transforma `none` em `all`.
+`access` efetivo se houver `access` ou um código legado de uso: `view`, `meeting-minutes.view`, `atas.view`, `meeting-minutes.sign`, `atas.sign`, `meeting-minutes.manage`, `atas.manage`, `processes.manage`, `revisions.manage`, `measurements.manage`, `investments.manage`, `view.consolidated`, `branch.*`, `view.filial.*`, `manage.filial.*`.
 
-## 13. Matriz de teste
+`manage` efetivo se houver `manage` ou `shared-resources.manage` ou `dashboard.recalculate` ou `data.transfer`.
 
-Core: sem linha; `set` 01; `set` 02; `set` 01 e 02; `all`; código desconhecido; unidade removida; escopo vindo de papel; de grupo; override direto que substitui; vários papéis em união; revogação; sem access; access; manage; access e manage.
+Ausência dos dois lados nega. A janela fecha na fase 12. Não fica OR eterno.
 
-Portal: access com 01, com 02, com as duas, com nenhuma; manage com nenhuma, com 01, com `all`; sem access; mestre; processo sem instância; instância; revisão; medição; investimento; ver, editar e assinar ata; dashboard; consolidado; transferência; recálculo; configuração. HTTP, MCP e Actions com o mesmo resultado. Botão visível não substitui a API. Cargo não abre unidade.
+## Fases
 
-## 14. Gaps
+1. Manifesto ganha `access` e `manage` e mantém os 21.
+2. Backend entende os códigos novos com o mapa acima.
+3. Tira filial do caminho de autorização.
+4. Filial permanece filtro da Visão geral e dimensão do dado.
+5. Matriz humana aprovada.
+6. Migra papéis, grupos e usuários. Não apaga os códigos antigos antes do aceite.
+7. Rotas do portal.
+8. MCP e Actions no mesmo contexto. Sem contrato novo.
+9. Aceite: um usuário `access` vê processo da 01 e da 02, filtra a visão geral nas duas e no consolidado, e toma 403 na administração.
+10. Aliases `atas.*` e `view/manage.filial.*`.
+11. Permissions granulares.
+12. `branch.*` e `view.consolidated`.
+13. Busca residual.
 
-Nomes de coluna e de campo do `/me` saem na implementação, seguindo o padrão do Core, não neste texto. `list_filiais` filtra pelo escopo de quem chama. Não serve, sozinho, para um administrador atribuir unidade que ele mesmo não tem. Isso fica para um contrato de leitura futuro, não para o resolver. Homologação não foi inventariada. A matriz humana está vazia.
+Rollback de cada fase não reabre «sem capability → vê tudo». Reverter a fase 3 devolve o filtro antigo de filial, que é regressão conhecida e temporária, não o alvo.
+
+## Testes
+
+Sem access, 403. Com access, todos os processos, filtro 01, filtro 02, consolidado, administração negada, transferência negada, recálculo de usuário negado. `manage` sem `access` não abre a raiz. `access` + `manage` abre administração. Não-signatário não assina. Estado inválido não assina. Menu e cargo não autorizam. MCP e HTTP iguais.
+
+Não testar «unidade A não vê B». Esse requisito não existe.
+
+## Gaps
+
+A matriz continua vazia. A fase 6 não começa sem ela. Homologação não foi reconsultada. O nome do helper que sobrar para filtro de dashboard ainda não foi escolhido. Isso não bloqueia a revisão do desenho.
