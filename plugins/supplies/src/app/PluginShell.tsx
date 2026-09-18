@@ -140,20 +140,20 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
 
   const caps = session.capabilities;
   const items = resolveShellNavItems({
-    analytics: caps.analytics,
-    purchaseRequests: caps.purchaseRequests,
-    operations: caps.operations,
-    administration: caps.administration,
+    analytics: caps.access,
+    purchaseRequests: caps.access,
+    operations: caps.access,
+    administration: caps.manage,
   });
 
   const catalogCaps = useMemo(
     () => ({
-      analytics: caps.analytics,
-      purchaseRequests: caps.purchaseRequests,
-      operations: caps.operations,
-      administration: caps.administration,
+      analytics: caps.access,
+      purchaseRequests: caps.access,
+      operations: caps.access,
+      administration: caps.manage,
     }),
-    [caps.administration, caps.analytics, caps.operations, caps.purchaseRequests],
+    [caps.access, caps.manage],
   );
 
   const paletteSections = useMemo(() => resolveHubSections(catalogCaps), [catalogCaps]);
@@ -225,7 +225,7 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
           hint={SP_HELP.home.heroOverview}
         />
       ),
-      value: caps.analytics
+      value: caps.access
         ? heroCopy.highlights.overviewCta
         : heroCopy.highlights.overviewLocked,
     },
@@ -296,7 +296,7 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
               }
               highlights={heroHighlights}
               actions={
-                caps.analytics ? (
+                caps.access ? (
                   <SuppliesActionButton
                     variant="primary"
                     onClick={() => navigatePluginView("overview", { basePath })}

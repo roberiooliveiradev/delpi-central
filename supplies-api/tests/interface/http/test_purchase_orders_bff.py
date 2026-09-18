@@ -36,7 +36,7 @@ def test_list_positive_requires_operations_and_unit(mock_resolve, mock_validate)
     mock_validate.return_value = _identity()
     mock_resolve.return_value = _user(
         permissions={
-            "supplies.operations.access",
+            "supplies.access",
             "supplies.unit.filial-01",
         }
     )
@@ -88,7 +88,7 @@ def test_list_positive_requires_operations_and_unit(mock_resolve, mock_validate)
 )
 def test_list_negative_forbidden_without_unit(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
-    mock_resolve.return_value = _user(permissions={"supplies.operations.access"})
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
     client = create_app().test_client()
     response = client.get(
         "/purchase-orders?branch=01",
@@ -104,7 +104,7 @@ def test_list_negative_forbidden_without_unit(mock_resolve, mock_validate):
 def test_list_sibling_forbidden_without_operations(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
     mock_resolve.return_value = _user(
-        permissions={"supplies.unit.filial-01", "supplies.portal.access"}
+        permissions={"supplies.unit.filial-01", "supplies.manage"}
     )
     gateway = MagicMock()
     with patch(
@@ -128,7 +128,7 @@ def test_list_summary_pass_through_does_not_recalculate(mock_resolve, mock_valid
     mock_validate.return_value = _identity()
     mock_resolve.return_value = _user(
         permissions={
-            "supplies.operations.access",
+            "supplies.access",
             "supplies.unit.filial-01",
         }
     )
@@ -176,7 +176,7 @@ def test_list_maps_upstream_5xx(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
     mock_resolve.return_value = _user(
         permissions={
-            "supplies.operations.access",
+            "supplies.access",
             "supplies.unit.filial-01",
         }
     )
@@ -206,7 +206,7 @@ def test_list_maps_upstream_forbidden(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
     mock_resolve.return_value = _user(
         permissions={
-            "supplies.operations.access",
+            "supplies.access",
             "supplies.unit.filial-01",
         }
     )
@@ -229,7 +229,7 @@ def test_list_maps_upstream_forbidden(mock_resolve, mock_validate):
 
 
 _OPS_UNIT_01 = {
-    "supplies.operations.access",
+    "supplies.access",
     "supplies.unit.filial-01",
 }
 
@@ -285,7 +285,7 @@ def test_detail_positive_item_level_supplier(mock_resolve, mock_validate):
 def test_detail_negative_forbidden_without_operations(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
     mock_resolve.return_value = _user(
-        permissions={"supplies.unit.filial-01", "supplies.portal.access"}
+        permissions={"supplies.unit.filial-01", "supplies.manage"}
     )
     gateway = MagicMock()
     with patch(
@@ -460,7 +460,7 @@ def test_detail_core_unavailable_returns_503(mock_resolve, mock_validate):
 
 
 _OPS_BOTH_UNITS = {
-    "supplies.operations.access",
+    "supplies.access",
     "supplies.unit.filial-01",
     "supplies.unit.filial-02",
 }
@@ -650,7 +650,7 @@ def test_export_empty_dataset_still_xlsx(mock_resolve, mock_validate):
 )
 def test_export_negative_forbidden_without_unit(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
-    mock_resolve.return_value = _user(permissions={"supplies.operations.access"})
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
     gateway = MagicMock()
     with patch(
         "app.interfaces.http.routes.purchase_orders_routes._GATEWAY",

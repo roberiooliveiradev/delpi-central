@@ -35,7 +35,7 @@ def test_otd_aggregate_positive_single_branch():
     si.goals_by_kpi.return_value = {"KPI-OTD": 98.0}
 
     result = OtdAggregateService(delpi_reads=reads, strategic_indicators=si).compose(
-        _user(permissions={"supplies.analytics.access", "supplies.unit.filial-01"}),
+        _user(permissions={"supplies.access", "supplies.unit.filial-01"}),
         branch="01",
         start_date="2026-09-01",
         end_date="2026-09-30",
@@ -59,7 +59,7 @@ def test_otd_aggregate_sibling_consolidated_averages():
     result = OtdAggregateService(delpi_reads=reads, strategic_indicators=si).compose(
         _user(
             permissions={
-                "supplies.analytics.access",
+                "supplies.access",
                 "supplies.unit.filial-01",
                 "supplies.unit.filial-02",
             }
@@ -77,7 +77,7 @@ def test_otd_aggregate_unit_cross_forbidden():
             delpi_reads=MagicMock(),
             strategic_indicators=MagicMock(),
         ).compose(
-            _user(permissions={"supplies.analytics.access", "supplies.unit.filial-01"}),
+            _user(permissions={"supplies.access", "supplies.unit.filial-01"}),
             branch="02",
         )
         assert False, "expected AuthorizationError"
@@ -91,7 +91,7 @@ def test_otd_aggregate_partial_when_delpi_down():
     si = MagicMock()
     si.goals_by_kpi.return_value = {"KPI-OTD": 98.0}
     result = OtdAggregateService(delpi_reads=reads, strategic_indicators=si).compose(
-        _user(permissions={"supplies.analytics.access", "supplies.unit.filial-01"}),
+        _user(permissions={"supplies.access", "supplies.unit.filial-01"}),
         branch="01",
     )
     assert result["otdPct"] is None
@@ -104,7 +104,7 @@ def test_otd_aggregate_partial_when_delpi_down():
 )
 def test_http_otd_forbidden_without_analytics(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
-    mock_resolve.return_value = _user(permissions={"supplies.portal.access"})
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
     client = create_app().test_client()
     response = client.get(
         "/analytics/otd",
@@ -120,7 +120,7 @@ def test_http_otd_forbidden_without_analytics(mock_resolve, mock_validate):
 def test_http_otd_positive(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
     mock_resolve.return_value = _user(
-        permissions={"supplies.analytics.access", "supplies.unit.filial-01"}
+        permissions={"supplies.access", "supplies.unit.filial-01"}
     )
     reads = MagicMock()
     reads.get_otd.return_value = {"otd_percentage": 91.0}

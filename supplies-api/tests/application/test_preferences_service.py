@@ -8,7 +8,7 @@ from app.domain.exceptions import AuthorizationError
 
 
 def _user(*, units: set[str] | None = None) -> EffectiveUser:
-    permissions = {"supplies.portal.access"}
+    permissions = {"supplies.access"}
     if units:
         permissions |= {f"supplies.unit.filial-{unit}" for unit in units}
     return EffectiveUser(

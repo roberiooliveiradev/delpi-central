@@ -8,6 +8,7 @@ from delpi_auth.request_context import get_current_user
 from app.application.security.api_delpi_permissions import (
     API_DELPI_ACCESS,
     DASHBOARD_SUPPLIES_VIEW,
+    SUPPLIES_ACCESS,
 )
 from app.domain.totvs.protheus_branches import PROTHEUS_BRANCH_CODES
 from app.interface.http.branch_access_gate import BranchAccessGate
@@ -23,7 +24,7 @@ _SUPPLIES_UNITS = {
     "01": "supplies.unit.filial-01",
     "02": "supplies.unit.filial-02",
 }
-_SURFACE = ("supplies.access", "supplies.operations.access")
+_SURFACE = (SUPPLIES_ACCESS,)
 
 
 def _canonical_unit_allowed(branch: str) -> bool:

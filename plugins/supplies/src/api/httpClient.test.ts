@@ -72,7 +72,7 @@ describe("httpClient", () => {
           new Response(
             JSON.stringify({
               userId: "user-1",
-              capabilities: { portal: true, analytics: false },
+              capabilities: { access: true, manage: false, viewAll: false },
               allowedUnits: ["01"],
               aliasesDoNotGrantAppAccess: true,
             }),
@@ -84,6 +84,6 @@ describe("httpClient", () => {
     const result = await getCapabilities();
     expect(result.userId).toBe("user-1");
     expect(result.allowedUnits).toEqual(["01"]);
-    expect(result.capabilities.portal).toBe(true);
+    expect(result.capabilities.access).toBe(true);
   });
 });

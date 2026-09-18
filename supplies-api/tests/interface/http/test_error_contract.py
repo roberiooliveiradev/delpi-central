@@ -19,7 +19,7 @@ def test_not_found_envelope_after_auth(client):
             id="22222222-2222-2222-2222-222222222222",
             email="a@delpi.com.br",
             name=None,
-            permissions={"supplies.portal.access"},
+            permissions={"supplies.access"},
         ),
     ):
         response = client.get(
@@ -34,7 +34,7 @@ def test_not_found_envelope_after_auth(client):
 
 def test_forbidden_envelope_has_code(app):
     @app.get("/_test/forbidden-envelope")
-    @require_permission("supplies.portal.access")
+    @require_permission("supplies.access")
     def secure():
         return jsonify({"ok": True}), 200
 

@@ -70,7 +70,7 @@ function sameBranches(left: readonly string[], right: readonly string[]): boolea
 export function PurchaseRequestsPage({ basePath }: PurchaseRequestsPageProps) {
   const session = useSuppliesSession();
   const units = session.allowedUnits;
-  const canExport = session.capabilities.export;
+  const canExport = session.capabilities.access;
 
   const [query, setQuery] = useState<PurchaseRequestsQuery>(() =>
     parseQueryFromSearch(readBrowserSearch(), units),

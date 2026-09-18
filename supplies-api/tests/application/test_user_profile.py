@@ -53,7 +53,7 @@ def test_get_self_positive():
     result = service.get(
         _user(
             permissions={
-                "supplies.portal.access",
+                "supplies.access",
                 "supplies.unit.filial-01",
             }
         ),
@@ -70,7 +70,7 @@ def test_get_other_negative_without_admin():
     service = UserProfileService()
     with pytest.raises(AuthorizationError):
         service.get(
-            _user(permissions={"supplies.portal.access", "supplies.unit.filial-01"}),
+            _user(permissions={"supplies.access", "supplies.unit.filial-01"}),
             OTHER_ID,
         )
 
@@ -86,8 +86,8 @@ def test_get_other_sibling_admin_ok():
     result = service.get(
         _user(
             permissions={
-                "supplies.portal.access",
-                "supplies.administration.manage",
+                "supplies.access",
+                "supplies.manage",
             }
         ),
         OTHER_ID,
@@ -105,7 +105,7 @@ def test_patch_self_rejects_branch_outside_units():
     service = UserProfileService(preferences=PreferencesService(repository=repo))
     with pytest.raises(AuthorizationError):
         service.patch(
-            _user(permissions={"supplies.portal.access", "supplies.unit.filial-01"}),
+            _user(permissions={"supplies.access", "supplies.unit.filial-01"}),
             SELF_ID,
             {"preferences": {"defaultBranch": "02"}},
         )
@@ -117,8 +117,8 @@ def test_patch_other_forbidden():
         service.patch(
             _user(
                 permissions={
-                    "supplies.portal.access",
-                    "supplies.administration.manage",
+                    "supplies.access",
+                    "supplies.manage",
                 }
             ),
             OTHER_ID,
@@ -133,7 +133,7 @@ def test_patch_other_forbidden():
 def test_http_get_self(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
     mock_resolve.return_value = _user(
-        permissions={"supplies.portal.access", "supplies.unit.filial-01"}
+        permissions={"supplies.access", "supplies.unit.filial-01"}
     )
     with patch(
         "app.interfaces.http.routes.users_routes.UserProfileService"
@@ -163,7 +163,7 @@ def test_http_get_self(mock_resolve, mock_validate):
 )
 def test_http_get_other_forbidden(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
-    mock_resolve.return_value = _user(permissions={"supplies.portal.access"})
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
     with patch(
         "app.interfaces.http.routes.users_routes.UserProfileService"
     ) as service_cls:

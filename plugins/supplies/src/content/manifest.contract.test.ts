@@ -23,12 +23,14 @@ describe("supplies.manifest", () => {
 
   it("does not invent CRUD permission codes", () => {
     const codes = manifest.permissions.map((item) => item.code);
-    expect(codes).toContain("supplies.access");
-    expect(codes).toContain("supplies.manage");
-    expect(codes).toContain("supplies.portal.access");
-    expect(codes).toContain("supplies.purchase-requests.export");
-    expect(codes).toContain("supplies.purchase-requests.view-all");
-    expect(manifest.version).toBe("0.2.0");
+    expect(codes).toEqual([
+      "supplies.access",
+      "supplies.manage",
+      "supplies.purchase-requests.view-all",
+      "supplies.unit.filial-01",
+      "supplies.unit.filial-02",
+    ]);
+    expect(manifest.version).toBe("0.3.0");
     expect(codes.some((code) => /\.(view|write|create|delete)$/.test(code))).toBe(false);
   });
 
@@ -39,5 +41,13 @@ describe("supplies.manifest", () => {
     expect(paths).not.toContain("/apps/supplies/imports");
     expect(paths).not.toContain("/apps/supplies/approvals");
     expect(manifest.routes.filter((route) => route.showInMenu)).toHaveLength(1);
+    expect(
+      manifest.routes
+        .filter((route) => route.path !== "/apps/supplies/administration")
+        .every((route) => route.permission === "supplies.access"),
+    ).toBe(true);
+    expect(
+      manifest.routes.find((route) => route.path === "/apps/supplies/administration")?.permission,
+    ).toBe("supplies.manage");
   });
 });

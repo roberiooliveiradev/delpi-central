@@ -54,7 +54,7 @@ Atualizar manifesto já registrado: `PUT $BASE_URL/core-api/admin/apps/supplies/
 
 ```bash
 export TOKEN="$(bash infra/scripts/get-dev-token.sh)"
-bash plugins/supplies/scripts/provision-rbac-coexistence.sh
+bash plugins/supplies/scripts/provision-rbac.sh
 ```
 
 Cria papéis `Portal Suprimentos - Analista|Comprador SC|Solicitante SC|Admin` com capabilities canônicas. **Não** remove permissions legadas. Atribuição a usuários reais é passo Admin separado.

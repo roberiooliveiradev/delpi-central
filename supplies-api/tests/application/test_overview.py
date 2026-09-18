@@ -64,7 +64,7 @@ def test_overview_positive_seven_kpis():
     result = service.compose(
         _user(
             permissions={
-                "supplies.analytics.access",
+                "supplies.access",
                 "supplies.unit.filial-01",
             }
         ),
@@ -121,7 +121,7 @@ def test_overview_sibling_consolidated_two_units():
     ).compose(
         _user(
             permissions={
-                "supplies.analytics.access",
+                "supplies.access",
                 "supplies.unit.filial-01",
                 "supplies.unit.filial-02",
             }
@@ -149,7 +149,7 @@ def test_overview_unit_cross_forbidden():
         service.compose(
             _user(
                 permissions={
-                    "supplies.analytics.access",
+                    "supplies.access",
                     "supplies.unit.filial-01",
                 }
             ),
@@ -166,7 +166,7 @@ def test_overview_unit_cross_forbidden():
 )
 def test_http_overview_forbidden_without_analytics(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
-    mock_resolve.return_value = _user(permissions={"supplies.portal.access"})
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
     client = create_app().test_client()
     response = client.get(
         "/analytics/overview",
@@ -183,7 +183,7 @@ def test_http_overview_positive(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
     mock_resolve.return_value = _user(
         permissions={
-            "supplies.analytics.access",
+            "supplies.access",
             "supplies.unit.filial-01",
         }
     )

@@ -19,12 +19,12 @@ def app():
     application.config["TESTING"] = True
 
     @application.get("/_test/secure")
-    @require_permission("supplies.portal.access")
+    @require_permission("supplies.access")
     def secure():
         return jsonify({"ok": True}), 200
 
     @application.get("/_test/unit")
-    @require_permission("supplies.operations.access")
+    @require_permission("supplies.access")
     @require_unit("branch")
     def unit_secure():
         return jsonify({"ok": True}), 200
@@ -74,7 +74,7 @@ def test_missing_bearer_returns_401(client):
 )
 def test_permission_granted(mock_resolve, mock_validate, client):
     mock_validate.return_value = _identity()
-    mock_resolve.return_value = _user(permissions={"supplies.portal.access"})
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
 
     response = client.get(
         "/_test/secure",
@@ -90,7 +90,7 @@ def test_permission_granted(mock_resolve, mock_validate, client):
 )
 def test_permission_denied(mock_resolve, mock_validate, client):
     mock_validate.return_value = _identity()
-    mock_resolve.return_value = _user(permissions={"supplies.analytics.access"})
+    mock_resolve.return_value = _user(permissions={"supplies.manage"})
 
     response = client.get(
         "/_test/secure",
@@ -136,7 +136,7 @@ def test_unit_authorization_positive_and_negative():
     service = AuthorizationService(core_gateway=MagicMock())
     user = _user(
         permissions={
-            "supplies.operations.access",
+            "supplies.access",
             "supplies.unit.filial-01",
         }
     )
@@ -145,10 +145,10 @@ def test_unit_authorization_positive_and_negative():
         service.require_unit(user, "02")
 
 
-def test_legacy_unit_aliases():
+def test_sibling_unit_codes_do_not_grant_portal_units():
     service = AuthorizationService(core_gateway=MagicMock())
     user = _user(permissions={"estoque-seguranca.view.filial-es"})
-    assert service.allowed_units(user) == ["02"]
+    assert service.allowed_units(user) == []
 
 
 @patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
@@ -159,7 +159,7 @@ def test_unit_route_filial_cruzada(mock_resolve, mock_validate, client):
     mock_validate.return_value = _identity()
     mock_resolve.return_value = _user(
         permissions={
-            "supplies.operations.access",
+            "supplies.access",
             "supplies.unit.filial-01",
         }
     )

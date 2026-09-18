@@ -1,7 +1,7 @@
 """Fail-closed unit scope for canonical supplies.access on KPI routes.
 
 Legacy api-delpi.access and dashboard-supplies.view stay global.
-supplies.access / supplies.analytics.access require supplies.unit.filial-*.
+supplies.access requires supplies.unit.filial-*.
 supplies.manage is not a branch bypass.
 """
 
@@ -15,13 +15,14 @@ from delpi_auth.request_context import get_current_user
 from app.application.security.api_delpi_permissions import (
     API_DELPI_ACCESS,
     DASHBOARD_SUPPLIES_VIEW,
+    SUPPLIES_ACCESS,
 )
 
 _UNITS = {
     "01": "supplies.unit.filial-01",
     "02": "supplies.unit.filial-02",
 }
-_SURFACE = ("supplies.access", "supplies.analytics.access")
+_SURFACE = (SUPPLIES_ACCESS,)
 _LEGACY_GLOBAL = (API_DELPI_ACCESS, DASHBOARD_SUPPLIES_VIEW)
 
 

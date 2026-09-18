@@ -3,11 +3,11 @@
 > Papéis Minha DELPI **agrupam** permissions; o MFE não autoriza por nome de cargo.  
 > **Unidades:** eixo próprio — [ADR-006](./adr/ADR-006-unit-permissions.md).  
 > **Minimização histórica:** [ADR-007](./adr/ADR-007-permission-minimization.md).  
-> **Target vigente:** [ADR-008](./adr/ADR-008-access-manage-rbac.md).
+> **Target vigente:** [ADR-008](./adr/ADR-008-access-manage-rbac.md). Contrato ativo: `supplies.access`, `supplies.manage`, `supplies.purchase-requests.view-all`, `supplies.unit.filial-*`. Códigos funcionais antigos não autorizam o Portal.
 
 ## Target vigente
 
-`supplies.access` é o uso normal. `supplies.manage` é administração e não implica access, todas as unidades nem view-all. Unidades e `supplies.purchase-requests.view-all` permanecem eixos separados. Códigos `portal` / `purchase-requests` / `operations` / `analytics` / `administration.manage` estão em compatibilidade por superfície até a fase CONTRACT. `supplies.purchase-requests.export` não foi absorvido: o inventário runtime do Core desta execução não comprovou ausência de segregação.
+`supplies.access` é o uso normal, inclusive exportação. `supplies.manage` é administração e não implica access, todas as unidades nem view-all. Unidades e `supplies.purchase-requests.view-all` permanecem eixos separados. Os códigos funcionais antigos saíram do catálogo ativo. Export não tem permission própria: o inventário do Core local não tinha role, group nem override nesse código.
 
 ---
 
@@ -190,7 +190,7 @@ Se uma capability existente + unidade + ownership preservar a segurança, a nova
 
 Comprador ES no Core continua **HIPOTESE_A_VALIDAR** operacionalmente; para o catálogo de permissions, P-02 está **fechado como não bloqueante do desenho** (sem code novo).
 
-Script: `plugins/supplies/scripts/provision-rbac-coexistence.sh`.
+Script: `plugins/supplies/scripts/provision-rbac.sh`.
 
 ---
 

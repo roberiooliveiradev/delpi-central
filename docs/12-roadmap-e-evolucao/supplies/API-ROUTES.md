@@ -9,7 +9,7 @@
 Envelope alvo: `{ success, message, data, meta }`.  
 AuthN: JWT Keycloak.  
 AuthZ: permissions efetivas resolvidas pelo Core API; não usar lista de permissions dos claims JWT como fonte final.  
-Target RBAC ([ADR-008](./adr/ADR-008-access-manage-rbac.md)): rotas normais exigem `supplies.access` (ou o código legado da mesma superfície); administração exige `supplies.manage` (ou `supplies.administration.manage`). Dado TOTVS continua exigindo `supplies.unit.filial-*`.
+Target RBAC ([ADR-008](./adr/ADR-008-access-manage-rbac.md)): rotas normais exigem `supplies.access`; administração exige `supplies.manage`. Dado TOTVS continua exigindo `supplies.unit.filial-*`.
 
 Status documental:
 
@@ -33,13 +33,9 @@ AND business rule
 
 Capabilities canônicas:
 
-- `supplies.portal.access`
-- `supplies.purchase-requests.access`
-- `supplies.operations.access`
-- `supplies.analytics.access`
-- `supplies.administration.manage`
+- `supplies.access`
+- `supplies.manage`
 - `supplies.purchase-requests.view-all`
-- `supplies.purchase-requests.export`
 - `supplies.unit.filial-{TOTVS}`
 
 Não espelhar CRUD em permission codes. Qualquer `ANY_OF`/`ALL_OF` precisa ser decisão formal do contrato antes da implementação.
@@ -52,19 +48,19 @@ Não espelhar CRUD em permission codes. Qualquer `ANY_OF`/`ALL_OF` precisa ser d
 |---|---|---|---|---|
 | GET | `/health` | público | local | **IMPLEMENTADO** |
 | GET | `/ready` | público | local + dependências | **IMPLEMENTADO** |
-| GET | `/me/capabilities` | `supplies.portal.access` | Core + catálogo de units | **IMPLEMENTADO** |
-| GET | `/me/preferences` | `supplies.portal.access` | PG supplies | **IMPLEMENTADO** |
-| PATCH | `/me/preferences` | `supplies.portal.access`; `default_branch ∈ allowedUnits` | PG supplies | **IMPLEMENTADO** |
-| GET | `/home/attention` | `supplies.portal.access` | composição autorizada | **IMPLEMENTADO** |
-| GET | `/analytics/overview` | `supplies.analytics.access` + unit | api-delpi + SI | **IMPLEMENTADO** |
-| GET | `/analytics/otd/series` | `supplies.analytics.access` + unit | api-delpi | **IMPLEMENTADO** |
-| GET | `/analytics/otd` | `supplies.analytics.access` + unit | api-delpi + SI | **IMPLEMENTADO** |
-| GET | `/purchase-requests` | `supplies.purchase-requests.access` + units + CC | PR-api (`?branch=` repetido, `sort_by`/`sort_dir` allow-list + `overall_stage` owner-local) | **IMPLEMENTADO_C1** |
-| GET | `/purchase-requests/{branch}/{number}` | `supplies.purchase-requests.access` + unit + resource scope | PR-api | **IMPLEMENTADO_C1** |
-| GET | `/purchase-requests/export` | access + export + units + CC/view-all | PR-api `/export` → CSV default ou `format=xlsx` | **IMPLEMENTADO_C1** |
-| GET | `/purchase-orders` | `supplies.operations.access` + units | api-delpi `GET /supplies/purchase-orders` | **IMPLEMENTADO** |
+| GET | `/me/capabilities` | `supplies.access` | Core + catálogo de units | **IMPLEMENTADO** |
+| GET | `/me/preferences` | `supplies.access` | PG supplies | **IMPLEMENTADO** |
+| PATCH | `/me/preferences` | `supplies.access`; `default_branch ∈ allowedUnits` | PG supplies | **IMPLEMENTADO** |
+| GET | `/home/attention` | `supplies.access` | composição autorizada | **IMPLEMENTADO** |
+| GET | `/analytics/overview` | `supplies.access` + unit | api-delpi + SI | **IMPLEMENTADO** |
+| GET | `/analytics/otd/series` | `supplies.access` + unit | api-delpi | **IMPLEMENTADO** |
+| GET | `/analytics/otd` | `supplies.access` + unit | api-delpi + SI | **IMPLEMENTADO** |
+| GET | `/purchase-requests` | `supplies.access` + units + CC | PR-api (`?branch=` repetido, `sort_by`/`sort_dir` allow-list + `overall_stage` owner-local) | **IMPLEMENTADO_C1** |
+| GET | `/purchase-requests/{branch}/{number}` | `supplies.access` + unit + resource scope | PR-api | **IMPLEMENTADO_C1** |
+| GET | `/purchase-requests/export` | `supplies.access` + units + CC/view-all | PR-api `/export` → CSV default ou `format=xlsx` | **IMPLEMENTADO_C1** |
+| GET | `/purchase-orders` | `supplies.access` + units | api-delpi `GET /supplies/purchase-orders` | **IMPLEMENTADO** |
 | GET | `/purchase-orders/{branch}/{number}` | operations + unit | api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}` | **IMPLEMENTADO** |
-| GET | `/purchase-orders/export` | operations + units | api-delpi `GET /supplies/purchase-orders/export` → XLSX no BFF | **IMPLEMENTADO** |
+| GET | `/purchase-orders/export` | `supplies.access` + units | api-delpi `GET /supplies/purchase-orders/export` → XLSX no BFF | **IMPLEMENTADO** |
 | GET | `/users/{id}/profile` | self portal; terceiro admin | Core + prefs | **IMPLEMENTADO** |
 | PATCH | `/users/{id}/profile` | self only + portal | PG prefs | **IMPLEMENTADO** |
 
@@ -78,7 +74,7 @@ As rotas abaixo são **alvos de composição** e só entram em implementação q
 
 | Página / fluxo | Method | Path alvo | Capability | Fonte provável/canônica | Estado |
 |---|---|---|---|---|---|
-| Pedidos | GET | `/purchase-orders` | `supplies.operations.access` + unit | api-delpi `GET /supplies/purchase-orders` (SC7 aberto + `summary`) | **IMPLEMENTADO** |
+| Pedidos | GET | `/purchase-orders` | `supplies.access` + unit | api-delpi `GET /supplies/purchase-orders` (SC7 aberto + `summary`) | **IMPLEMENTADO** |
 | Detalhe pedido | GET | `/purchase-orders/{branch}/{number}` | operations + unit + resource (universo aberto SC7) | api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}` | **IMPLEMENTADO** |
 | Entregas | GET | `/deliveries/late` | operations + unit | api-delpi PO-OTD panel | PLANEJADO |
 | Estoque | GET | `/inventory/stock-value` | política a fechar na página | api-delpi stock-value | PLANEJADO |

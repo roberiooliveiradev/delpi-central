@@ -16,7 +16,7 @@ def _user() -> EffectiveUser:
         email="analyst@delpi.com.br",
         name="Analyst",
         permissions={
-            "supplies.analytics.access",
+            "supplies.access",
             "supplies.unit.filial-01",
         },
         access_token="token",

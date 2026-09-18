@@ -111,7 +111,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
         onSelect: () => navigatePluginView("home", { basePath }),
       },
     ];
-    if (caps.analytics) {
+    if (caps.access) {
       items.push({
         id: "overview",
         label: C.shortcutOverview,
@@ -119,7 +119,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
         onSelect: () => navigatePluginView("overview", { basePath }),
       });
     }
-    if (caps.purchaseRequests) {
+    if (caps.access) {
       items.push({
         id: "purchase_requests",
         label: C.shortcutSc,

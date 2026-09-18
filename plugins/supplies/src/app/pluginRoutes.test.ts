@@ -9,14 +9,10 @@ import {
   resolvePluginRoute,
 } from "./pluginRoutes";
 
-const portalOnly = {
-  portal: true,
-  purchaseRequests: false,
-  operations: false,
-  analytics: false,
-  administration: false,
+const noAccess = {
+  access: false,
+  manage: false,
   viewAll: false,
-  export: false,
 };
 
 describe("pluginRoutes", () => {
@@ -63,23 +59,21 @@ describe("pluginRoutes", () => {
 
 describe("routeAccess", () => {
   it("allows home and blocks overview without analytics", () => {
-    expect(canAccessView("home", portalOnly)).toBe(true);
-    expect(canAccessView("overview", portalOnly)).toBe(false);
+    expect(canAccessView("home", noAccess)).toBe(false);
+    expect(canAccessView("overview", noAccess)).toBe(false);
   });
 
   it("exige operations para lista e ficha de pedidos", () => {
-    expect(canAccessView("purchase_orders", portalOnly)).toBe(false);
-    expect(canAccessView("purchase_order_detail", portalOnly)).toBe(false);
-    expect(
-      canAccessView("purchase_order_detail", { ...portalOnly, operations: true }),
-    ).toBe(true);
+    expect(canAccessView("purchase_orders", noAccess)).toBe(false);
+    expect(canAccessView("purchase_order_detail", noAccess)).toBe(false);
+    expect(canAccessView("purchase_order_detail", { ...noAccess, access: true })).toBe(true);
   });
 
   it("canonical access abre uso normal e manage-only só administração", () => {
-    const accessOnly = { ...portalOnly, access: true };
+    const accessOnly = { ...noAccess, access: true };
     expect(canAccessView("purchase_orders", accessOnly)).toBe(true);
     expect(canAccessView("administration", accessOnly)).toBe(false);
-    const manageOnly = { ...portalOnly, portal: false, manage: true, administration: true };
+    const manageOnly = { ...noAccess, manage: true };
     expect(canAccessView("administration", manageOnly)).toBe(true);
     expect(canAccessView("overview", manageOnly)).toBe(false);
     expect(canAccessView("purchase_orders", manageOnly)).toBe(false);

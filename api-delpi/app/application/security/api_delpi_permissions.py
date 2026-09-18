@@ -14,6 +14,7 @@ DASHBOARD_FINANCIAL_VIEW = "dashboard-financial.view"
 DASHBOARD_COMMERCIAL_VIEW = "dashboard-commercial.view"
 DASHBOARD_PRODUCTION_VIEW = "dashboard-production.view"
 DASHBOARD_SUPPLIES_VIEW = "dashboard-supplies.view"
+SUPPLIES_ACCESS = "supplies.access"
 DASHBOARD_QUALITY_VIEW = "dashboard-quality.view"
 DASHBOARD_HR_VIEW = "dashboard-hr.view"
 DASHBOARD_ENGINEERING_VIEW = "dashboard-engineering.view"
@@ -220,9 +221,7 @@ KPI_PRODUCTION_ACCESS = [API_DELPI_ACCESS, DASHBOARD_PRODUCTION_VIEW]
 KPI_SUPPLIES_ACCESS = [
     API_DELPI_ACCESS,
     DASHBOARD_SUPPLIES_VIEW,
-    "supplies.access",
-    "supplies.operations.access",
-    "supplies.analytics.access",
+    SUPPLIES_ACCESS,
 ]
 KPI_QUALITY_ACCESS = [API_DELPI_QUALITY_ACCESS, DASHBOARD_QUALITY_VIEW]
 KPI_HR_ACCESS = [API_DELPI_ACCESS, DASHBOARD_HR_VIEW]
@@ -478,8 +477,7 @@ PURCHASE_REQUESTS_READ_PERMISSIONS = [
     PURCHASE_REQUESTS_ACCESS,
     PURCHASE_REQUESTS_VIEW_FILIAL_SC,
     PURCHASE_REQUESTS_VIEW_FILIAL_ES,
-    "supplies.access",
-    "supplies.purchase-requests.access",
+    SUPPLIES_ACCESS,
 ]
 
 PURCHASE_REQUESTS_BRANCH_VIEW_PERMS = {

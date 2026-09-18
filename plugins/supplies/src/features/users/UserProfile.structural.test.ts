@@ -32,20 +32,16 @@ describe("UserProfile", () => {
   it("acesso self ok · outro sem admin negado · admin ok", () => {
     const selfId = "self-1";
     const caps = {
-      portal: true,
-      purchaseRequests: false,
-      operations: false,
-      analytics: false,
-      administration: false,
+      access: true,
+      manage: false,
       viewAll: false,
-      export: false,
     };
     expect(canAccessUserProfile(selfId, { userId: selfId, capabilities: caps })).toBe(true);
     expect(canAccessUserProfile("other", { userId: selfId, capabilities: caps })).toBe(false);
     expect(
       canAccessUserProfile("other", {
         userId: selfId,
-        capabilities: { ...caps, administration: true },
+        capabilities: { ...caps, manage: true },
       }),
     ).toBe(true);
   });

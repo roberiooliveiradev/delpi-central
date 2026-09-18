@@ -19,14 +19,7 @@ export type SuppliesSessionState = {
 const EMPTY_CAPS: SuppliesCapabilityFlags = {
   access: false,
   manage: false,
-  shell: false,
-  portal: false,
-  purchaseRequests: false,
-  operations: false,
-  analytics: false,
-  administration: false,
   viewAll: false,
-  export: false,
 };
 
 const SessionContext = createContext<SuppliesSessionState | null>(null);

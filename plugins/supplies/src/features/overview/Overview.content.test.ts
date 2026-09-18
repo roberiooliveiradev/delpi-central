@@ -38,27 +38,19 @@ describe("Overview content", () => {
     expect(todayIso(fixed)).toBe("2026-09-08");
   });
 
-  it("requires analytics capability for overview view", () => {
+  it("requires access for overview view", () => {
     expect(
       canAccessView("overview", {
-        portal: true,
-        purchaseRequests: false,
-        operations: false,
-        analytics: false,
-        administration: false,
+        access: false,
+        manage: false,
         viewAll: false,
-        export: false,
       }),
     ).toBe(false);
     expect(
       canAccessView("overview", {
-        portal: true,
-        purchaseRequests: false,
-        operations: false,
-        analytics: true,
-        administration: false,
+        access: true,
+        manage: false,
         viewAll: false,
-        export: false,
       }),
     ).toBe(true);
   });

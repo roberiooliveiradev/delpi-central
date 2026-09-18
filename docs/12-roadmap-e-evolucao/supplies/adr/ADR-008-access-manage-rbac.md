@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |-------|-------|
-| Status | Aceito (decisão PO, Chat 01 — Architecture / Coordination) |
+| Status | Contrato ativo (Core local 0.3.0 após registro final) |
 | Contexto | Catálogo funcional fragmentado de ADR-007 não é o target de uso do produto |
 | Relacionados | ADR-006, ADR-007, PERFIS-E-PERMISSOES.md |
 
@@ -19,7 +19,7 @@ Eixos preservados (ADR-006 e ADR-007, não reescritos):
 
 `supplies.purchase-requests.export` permanece no catálogo até o inventário runtime do Core provar ausência de segregação material. Target arquitetural, se essa prova existir: exportação normal coberta por `supplies.access`.
 
-Códigos fragmentados (`supplies.portal.access`, `supplies.purchase-requests.access`, `supplies.operations.access`, `supplies.analytics.access`, `supplies.administration.manage`) ficam `DEPRECATED_COMPATIBILITY`. Compatibilidade é por superfície. Um fragmento antigo não vira alias global de `supplies.access`.
+Códigos fragmentados foram removidos do catálogo ativo depois da migração dos grants no Core local. Não há alias. ADR-007 permanece o registro histórico.
 
 Estratégia: EXPAND → MIGRATE → VERIFY → CONTRACT. Remoção dos códigos antigos só com zero consumer e zero grant residual. E9 usa `supplies.access` AND unit scope AND regra de negócio. Não cria permission de entregas.
 

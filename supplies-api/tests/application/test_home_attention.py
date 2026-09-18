@@ -27,32 +27,21 @@ def _identity() -> AuthenticatedIdentity:
     )
 
 
-def test_compose_portal_and_operations_includes_ops_cards():
-    user = _user(
-        permissions={
-            "supplies.portal.access",
-            "supplies.operations.access",
-        }
-    )
+def test_compose_access_includes_normal_cards_not_admin():
+    user = _user(permissions={"supplies.access"})
     result = HomeAttentionService().compose(user)
     ids = [card["id"] for card in result["cards"]]
     assert "my_tasks" in ids
     assert "purchase_orders" in ids
-    assert "deliveries" in ids
-    assert "safety_stock" in ids
-    assert "overview" not in ids
-    assert "purchase_requests" not in ids
-    assert all(card["count"] is None for card in result["cards"])
-    assert all(card["status"] == "available" for card in result["cards"])
-    assert result["partialFailures"] == []
+    assert "purchase_requests" in ids
+    assert "overview" in ids
+    assert "administration" not in ids
 
 
-def test_compose_portal_only_omits_domain_cards():
+def test_compose_old_portal_code_omits_cards():
     user = _user(permissions={"supplies.portal.access"})
     result = HomeAttentionService().compose(user)
-    ids = [card["id"] for card in result["cards"]]
-    assert ids == ["my_tasks"]
-    assert result["partialFailures"] == []
+    assert result["cards"] == []
 
 
 def test_compose_superadmin_gets_all_cards():
@@ -77,10 +66,7 @@ def test_compose_superadmin_gets_all_cards():
 def test_http_home_attention_positive(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
     mock_resolve.return_value = _user(
-        permissions={
-            "supplies.portal.access",
-            "supplies.operations.access",
-        }
+        permissions={"supplies.access"},
     )
     client = create_app().test_client()
     response = client.get(
@@ -98,7 +84,7 @@ def test_http_home_attention_positive(mock_resolve, mock_validate):
 @patch(
     "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
 )
-def test_http_home_attention_sibling_portal_only(mock_resolve, mock_validate):
+def test_http_home_attention_old_code_forbidden(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
     mock_resolve.return_value = _user(permissions={"supplies.portal.access"})
     client = create_app().test_client()
@@ -106,9 +92,7 @@ def test_http_home_attention_sibling_portal_only(mock_resolve, mock_validate):
         "/home/attention",
         headers={"Authorization": "Bearer good-token"},
     )
-    assert response.status_code == 200
-    ids = [card["id"] for card in response.get_json()["cards"]]
-    assert ids == ["my_tasks"]
+    assert response.status_code == 403
 
 
 @patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")

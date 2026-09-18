@@ -5,12 +5,6 @@ from app.domain.exceptions import AuthorizationError, CoreApiUnavailableError
 from app.infrastructure.gateways.core_api_http_gateway import CoreApiHttpGateway
 
 UNIT_PREFIX = "supplies.unit.filial-"
-LEGACY_UNIT_ALIASES = {
-    "purchase-requests.unit.filial-01": "01",
-    "purchase-requests.unit.filial-02": "02",
-    "estoque-seguranca.view.filial-sc": "01",
-    "estoque-seguranca.view.filial-es": "02",
-}
 
 
 class AuthorizationService:
@@ -46,8 +40,6 @@ class AuthorizationService:
         for code in user.permissions:
             if code.startswith(UNIT_PREFIX):
                 units.add(code.removeprefix(UNIT_PREFIX))
-            elif code in LEGACY_UNIT_ALIASES:
-                units.add(LEGACY_UNIT_ALIASES[code])
         return sorted(units)
 
     def require_unit(self, user: EffectiveUser, branch: str) -> None:

@@ -18,7 +18,7 @@ def _user(permissions: set[str]) -> EffectiveUser:
 
 def test_require_unit_allows_authorized_branch():
     service = AuthorizationService(core_gateway=MagicMock())
-    user = _user({"supplies.unit.filial-01", "supplies.operations.access"})
+    user = _user({"supplies.unit.filial-01", "supplies.access"})
     service.require_unit(user, "01")
 
 
@@ -37,7 +37,7 @@ def test_allowed_units_from_canonical_and_legacy():
             "purchase-requests.unit.filial-02",
         }
     )
-    assert service.allowed_units(user) == ["01", "02"]
+    assert service.allowed_units(user) == ["01"]
 
 
 def test_require_units_positive_all_allowed():

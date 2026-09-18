@@ -1,23 +1,15 @@
 import { httpGet, suppliesApiUrl } from "./httpClient";
 
 export type SuppliesCapabilityFlags = {
-  access?: boolean;
-  manage?: boolean;
-  shell?: boolean;
-  portal: boolean;
-  purchaseRequests: boolean;
-  operations: boolean;
-  analytics: boolean;
-  administration: boolean;
+  access: boolean;
+  manage: boolean;
   viewAll: boolean;
-  export: boolean;
 };
 
 export type SuppliesCapabilitiesResponse = {
   userId: string;
   capabilities: SuppliesCapabilityFlags;
   allowedUnits: string[];
-  aliasesDoNotGrantAppAccess: boolean;
 };
 
 export function getCapabilities(signal?: AbortSignal): Promise<SuppliesCapabilitiesResponse> {

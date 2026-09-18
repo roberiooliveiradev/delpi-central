@@ -48,7 +48,7 @@ def test_otd_series_positive_single_branch():
         ],
     }
     result = OtdSeriesService(delpi_reads=reads).compose(
-        _user(permissions={"supplies.analytics.access", "supplies.unit.filial-01"}),
+        _user(permissions={"supplies.access", "supplies.unit.filial-01"}),
         branch="01",
         start_date="2026-08-01",
         end_date="2026-09-30",
@@ -77,7 +77,7 @@ def test_otd_series_sibling_consolidated_averages_filials():
     result = OtdSeriesService(delpi_reads=reads).compose(
         _user(
             permissions={
-                "supplies.analytics.access",
+                "supplies.access",
                 "supplies.unit.filial-01",
                 "supplies.unit.filial-02",
             }
@@ -93,7 +93,7 @@ def test_otd_series_sibling_consolidated_averages_filials():
 def test_otd_series_unit_cross_forbidden():
     try:
         OtdSeriesService(delpi_reads=MagicMock()).compose(
-            _user(permissions={"supplies.analytics.access", "supplies.unit.filial-01"}),
+            _user(permissions={"supplies.access", "supplies.unit.filial-01"}),
             branch="02",
         )
         assert False, "expected AuthorizationError"
@@ -105,7 +105,7 @@ def test_otd_series_partial_when_delpi_down():
     reads = MagicMock()
     reads.get_purchase_order_otd_series.side_effect = DelpiApiGatewayError("timeout")
     result = OtdSeriesService(delpi_reads=reads).compose(
-        _user(permissions={"supplies.analytics.access", "supplies.unit.filial-01"}),
+        _user(permissions={"supplies.access", "supplies.unit.filial-01"}),
         branch="01",
     )
     assert result["points"] == []
@@ -118,7 +118,7 @@ def test_otd_series_partial_when_delpi_down():
 )
 def test_http_otd_series_forbidden_without_analytics(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
-    mock_resolve.return_value = _user(permissions={"supplies.portal.access"})
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
     client = create_app().test_client()
     response = client.get(
         "/analytics/otd/series",
@@ -134,7 +134,7 @@ def test_http_otd_series_forbidden_without_analytics(mock_resolve, mock_validate
 def test_http_otd_series_positive(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
     mock_resolve.return_value = _user(
-        permissions={"supplies.analytics.access", "supplies.unit.filial-01"}
+        permissions={"supplies.access", "supplies.unit.filial-01"}
     )
     reads = MagicMock()
     reads.get_purchase_order_otd_series.return_value = {

@@ -34,8 +34,8 @@ def test_export_positive_with_export_capability(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
     mock_resolve.return_value = _user(
         permissions={
-            "supplies.purchase-requests.access",
-            "supplies.purchase-requests.export",
+            "supplies.access",
+            "supplies.access",
             "supplies.unit.filial-01",
         }
     )
@@ -84,8 +84,8 @@ def test_export_xlsx_positive(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
     mock_resolve.return_value = _user(
         permissions={
-            "supplies.purchase-requests.access",
-            "supplies.purchase-requests.export",
+            "supplies.access",
+            "supplies.access",
             "supplies.unit.filial-01",
             "supplies.unit.filial-02",
         }
@@ -114,11 +114,10 @@ def test_export_xlsx_positive(mock_resolve, mock_validate):
 @patch(
     "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
 )
-def test_export_negative_without_export_capability(mock_resolve, mock_validate):
+def test_export_negative_without_access(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
     mock_resolve.return_value = _user(
         permissions={
-            "supplies.purchase-requests.access",
             "supplies.unit.filial-01",
         }
     )
@@ -138,8 +137,8 @@ def test_export_sibling_forbidden_wrong_unit(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
     mock_resolve.return_value = _user(
         permissions={
-            "supplies.purchase-requests.access",
-            "supplies.purchase-requests.export",
+            "supplies.access",
+            "supplies.access",
             "supplies.unit.filial-01",
         }
     )

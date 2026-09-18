@@ -15,24 +15,16 @@ describe("OTD analytics page", () => {
     expect(buildPluginPath("analytics_otd")).toBe("/apps/supplies/analytics/otd");
     expect(
       canAccessView("analytics_otd", {
-        portal: true,
-        purchaseRequests: false,
-        operations: false,
-        analytics: false,
-        administration: false,
+        access: false,
+        manage: false,
         viewAll: false,
-        export: false,
       }),
     ).toBe(false);
     expect(
       canAccessView("analytics_otd", {
-        portal: true,
-        purchaseRequests: false,
-        operations: false,
-        analytics: true,
-        administration: false,
+        access: true,
+        manage: false,
         viewAll: false,
-        export: false,
       }),
     ).toBe(true);
   });
