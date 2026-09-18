@@ -1,6 +1,7 @@
 # Portal Transforma+ — experiência de produto
 
 > **Status:** TARGET de experiência. **IMPLEMENTATION = NOT AUTHORIZED.**  
+> **Sequência:** [ARCHITECTURE-RUNWAY.md](./ARCHITECTURE-RUNWAY.md). As fases A–I abaixo não ordenam implementação.
 > **ADR:** [`adr-portal-transforma-plus.md`](../../../transformometro-api/docs/architecture/adr-portal-transforma-plus.md)  
 > **Domínio:** [CICLO-INTELIGENCIA-DE-PROCESSO.md](./CICLO-INTELIGENCIA-DE-PROCESSO.md)  
 > **Inventário anterior do shell:** [PLAYBOOK-PORTAL-TRANSFORMA.md](./PLAYBOOK-PORTAL-TRANSFORMA.md) (BASE `841637c3e`, 2026-09-17). Este arquivo é o adendo de produto de 2026-09-18, no HEAD `95097815d` mais o inventário abaixo. Não substitui o nome técnico Transformômetro.
@@ -248,7 +249,7 @@ Não criar `get_my_processes`, `get_transforma_home`, `get_portal_overview`, `ge
 
 ## 15. Fases A–I
 
-Não autorizadas. Não substituem PI-0–PI-7 do ciclo de domínio. Aceite de cada fase: positive no fluxo da fase, sibling na peça já existente que não pode quebrar (deep link de processo, 403), negative (cargo não abre lista; Comercial não é importado).
+Histórico de agrupamento de UX. **Não são a ordem vigente.** A ordem está em [ARCHITECTURE-RUNWAY.md](./ARCHITECTURE-RUNWAY.md). Nenhuma fase está autorizada.
 
 | Fase | Conteúdo | Aceite mínimo | Depende de |
 |---|---|---|---|

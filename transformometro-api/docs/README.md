@@ -42,5 +42,6 @@ PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 - Tutorial de usuário, OPERATIONS e playbooks de produto → `docs/12-roadmap-e-evolucao/transformometro-app/`
 - Ciclo de inteligência (TARGET, sem implementação) → [CICLO-INTELIGENCIA-DE-PROCESSO.md](../../docs/12-roadmap-e-evolucao/transformometro-app/CICLO-INTELIGENCIA-DE-PROCESSO.md)
 - Experiência Portal Transforma+ (TARGET, sem rename técnico) → [PORTAL-TRANSFORMA-PLUS.md](../../docs/12-roadmap-e-evolucao/transformometro-app/PORTAL-TRANSFORMA-PLUS.md)
+- Ordem de implementação (não autoriza código) → [ARCHITECTURE-RUNWAY.md](../../docs/12-roadmap-e-evolucao/transformometro-app/ARCHITECTURE-RUNWAY.md)
 - Docs do MFE → `plugins/transformometro/docs/`
 - Status histórico de sprints (PB18–21) → [`archive/playbooks/`](./archive/playbooks/)

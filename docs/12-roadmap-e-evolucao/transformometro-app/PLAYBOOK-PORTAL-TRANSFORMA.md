@@ -678,6 +678,8 @@ Não inventar pipeline de métricas nesta fase documental.
 
 ## 28. Roadmap executivo
 
+**Histórico (2026-09-17).** Não usar esta tabela para ordenar o Portal Transforma+. Sequência vigente: [ARCHITECTURE-RUNWAY.md](./ARCHITECTURE-RUNWAY.md).
+
 | Fase | Objetivo | Owner | Dependências | Contract impact | Status |
 |---|---|---|---|---|---|
 | 0 | Freeze inventário | 08 + 05 | Este doc | NONE | **PLANNED** |

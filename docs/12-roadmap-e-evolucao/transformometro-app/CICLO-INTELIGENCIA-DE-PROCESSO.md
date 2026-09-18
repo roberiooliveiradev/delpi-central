@@ -292,7 +292,7 @@ Cada fase, quando for executada, precisa de: owner Transformômetro; pré-requis
 | PI-6 | Aprendizado, resultado verificado, completude | Timeline atual | Estender timeline, não tool nova | Event sourcing desnecessário |
 | PI-7 | Arquitetura corporativa | Processo individual estável | Fora do CRUD do mestre até o contrato | Reusar `decomposition_tree` da empresa inteira |
 
-A experiência **Portal Transforma+** não cria fases PI novas. O adendo [PORTAL-TRANSFORMA-PLUS.md](./PORTAL-TRANSFORMA-PLUS.md) usa fases A–I de shell/UX. Elas consomem as fases PI; não as substituem e não autorizam implementação.
+A experiência **Portal Transforma+** não cria fases PI novas. O adendo [PORTAL-TRANSFORMA-PLUS.md](./PORTAL-TRANSFORMA-PLUS.md) guarda UX. A ordem de implementação está só em [ARCHITECTURE-RUNWAY.md](./ARCHITECTURE-RUNWAY.md). As fases PI e A–I não são calendário.
 
 ## 11. Busca residual
 
