@@ -21,7 +21,7 @@ Documentação de arquitetura e plano de entrega do **Transformômetro** como pr
 | [adr-diagramas-processo.md](../../../transformometro-api/docs/architecture/adr-diagramas-processo.md) | ADR diagramas — decisões e endpoints |
 | [playbook-18-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-18-implementation-status.md) | Status técnico S1–S12 + MFE §9 (API) |
 | [regras-de-calculo.md](../../../transformometro-api/docs/domain/regras-de-calculo.md) | Fórmulas oficiais + escopo de recurso e visões |
-| [status-atual.md](./status-atual.md) | Snapshot do que está em produção / deploy |
+| [status-atual.md](./status-atual.md) | Snapshot jul/2026. Não cobre Portal Transforma+ nem contagens atuais de MCP/Actions |
 | [ATAS-TRANSFORMA-MAIS.md](./ATAS-TRANSFORMA-MAIS.md) | Atas Transforma+ — fluxo, RBAC, status (incl. Kimi) |
 | [meeting-minutes.md (MFE)](../../../plugins/transformometro/docs/meeting-minutes.md) | UI das atas no plugin |
 | [kimi.md (API)](../../../transformometro-api/docs/meeting-minutes/kimi.md) | Endpoints + configuração OpenRouter/Kimi |

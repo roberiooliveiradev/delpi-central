@@ -284,11 +284,11 @@ Pirâmide: unitário de domínio e application quando houver regra nova; reposit
 
 ## 15. Primeira fatia recomendada
 
-Confirmar depois de aceitar este arquivo. Não está autorizada.
-
 **Portal shell + Meus processos em leitura + workspace que já existe.**
 
-Motivo: não pede migration, não pede sala, tarefa nem portfólio, reusa dashboard, lista e workspace, e prova o boundary D3/D4 (kit, sem path novo, sem import do Comercial). Blast radius: MFE e, no máximo, rótulos. Backend fica estável.
+Classificação desta revisão: **READY_FOR_ARCH_REVIEW**. Implementação: **NOT_READY_FOR_IMPLEMENTATION**. O pacote da §14 não está preenchido. Este arquivo não autoriza código.
+
+Motivo da recomendação: não pede migration, não pede sala, tarefa nem portfólio, reusa dashboard, lista e workspace, e prova o boundary D3/D4. Blast radius: MFE e, no máximo, rótulos. Backend fica estável.
 
 Fora dessa fatia: qualquer seção TARGET da §7, qualquer tool, qualquer favorito, qualquer rename.
 
@@ -298,10 +298,17 @@ Fora dessa fatia: qualquer seção TARGET da §7, qualquer tool, qualquer favori
 |---|---|
 | Três sequências (PI, fases A–I, playbook 0–6) | CONFLICT de calendário, resolvido: este arquivo manda na ordem. Conteúdo permanece no dono |
 | «Portal Transformômetro» no playbook | HISTORICAL como nome de experiência |
-| `status-atual` / ESPECIFICACAO jul/2026 | STALE frente a MCP e portal |
+| `status-atual` / ESPECIFICACAO jul/2026 | STALE como fotografia do produto inteiro. Regras de cálculo daquele arquivo não foram reauditadas aqui |
 | Sala, favoritos, pedidos | CURRENT no Comercial, não no TM |
-| `search_records`, `prepare_`, `act_`, `analyze`, `get_process_context` | CURRENT de adapter |
+| `search_records`, `prepare_`, `act_`, `analyze`, `get_process_context` | CURRENT de adapter. `analyze` está em `TOOL_CLASS` como READ. O único ANALYSIS é `generate_from_transcript` |
 | Finding, SIPOC entidade, plano de ação TM | TARGET ou TO_INVENTORY, não CURRENT |
+| Contagem MCP/Actions | PROVEN no código em `TOOL_CLASS` (33) e `GPT_ACTIONS_OPERATION_IDS` (21). Meta `gpt_get_openapi_schema` fora. 20 Actions e 32 tools = HISTORICAL (2026-09-17). 14 Actions = HISTORICAL mais antigo |
+| `gpt-builder-go-live.md` linhas que ainda diziam «20 actions» como critério atual | DOC_DRIFT corrigido neste passe. O reimport no Builder continua TEST_NOT_RUN |
+| `.cursor/rules/openai-plugin-mcp-integration.mdc` exemplo «32 tools ≠ 20 Actions» | CURSOR_RULE_DRIFT só no exemplo numérico, sob «não generalizar contagem». A regra não foi editada. O invariante (contagem ≠ paridade) continua válido; o número vigente no código é 33 ≠ 21 |
+| `ProcessContextService` importa `Request` FastAPI e repositórios | CODE_DRIFT de camada. Documentado. Código não foi alterado para esconder |
+| «editor Mermaid bidirecional» em `status-atual.md` | TO_INVENTORY. `flowchart_v1` segue canônico; Mermaid tem export e parser no kit. Este passe não reprovou ida e volta |
+
+Esta seção é o ledger de gap/drift da evolução Portal Transforma+ / TÉO. Não abrir outro ledger para o mesmo assunto.
 
 ## 17. Riscos
 

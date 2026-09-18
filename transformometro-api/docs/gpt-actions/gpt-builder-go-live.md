@@ -96,7 +96,7 @@ Resumo operacional:
 - Evidência: links/metadados via `gpt_list_evidence` / `gpt_manage_evidence`; upload/download binário permanece UI-only / BLOCKED_BY_PLATFORM.
 - Assinatura manuscrita PNG/PDF/magic-link público: UI-only / NOT_EXPOSED_BY_DESIGN.
 - Timeline de processo, reajuste canônico de custo e extras de ata: Actions semânticas dedicadas (não proxy genérico).
-- REIMPORT OpenAPI somente se schema mudar; esperado estável: **20 actions**.
+- REIMPORT OpenAPI quando o schema mudar. No código, o contrato importável tem **21** operationIds (`GPT_ACTIONS_OPERATION_IDS`). **20** é HISTORICAL (2026-09-17). Este checklist não prova que o Builder já foi reimportado.
 - `gpt_get_my_context` = contexto pessoal (nome/cargo), não permissões.
 
 ## 4. Fechar redirects com o GPT ID real
@@ -113,7 +113,7 @@ https://chat.openai.com/aip/g-YOUR-GPT-ID/oauth/callback
 - Name = **TÉO — Especialista em Transformação Digital**
 - Instructions aceitas sem erro de 8.000 caracteres
 - `teo-method-playbooks.md` presente em Knowledge
-- GPT lista as **20** actions
+- GPT lista as **21** Actions do contrato no código, depois de reimport manual. O critério antigo de **20** é HISTORICAL. Reimport no Builder = TEST_NOT_RUN neste documento
 - OAuth pede **Sign in**
 - `gpt_analyze` / `gpt_get_catalog` / `gpt_get_process_context` respondem sem erro de token/redirect
 - `gpt_get_catalog` devolve `registration_guide`

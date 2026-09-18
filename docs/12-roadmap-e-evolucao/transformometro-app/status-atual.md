@@ -1,5 +1,7 @@
 # Status atual — Transformômetro
 
+> **Snapshot jul/2026.** Não é a fonte da evolução do Portal Transforma+ nem das contagens de TÉO. Sequência: [ARCHITECTURE-RUNWAY.md](./ARCHITECTURE-RUNWAY.md). No código, MCP tem 33 tools e GPT Actions tem 21 operationIds importáveis; 20/32 são históricos. A frase «editor Mermaid bidirecional» abaixo não foi revalidada (TO_INVENTORY): o diagrama canônico continua `flowchart_v1`.
+
 Atualizado: **jul/2026** (workspace Processos + Configurações; subpastas de revisão; duplicar revisão; matriz V038; V035 referência de comparação; editor Mermaid bidirecional; Playbook 20; UI SelectField + modal)
 
 > **Regra jul/2026 — referência de comparação (`revisao_referencia_id`, V035).** Revisões não-baseline indicam **contra qual revisão** calcular economia e diffs (diagrama/WBS). A **baseline** não precisa de referência. Se `revisao_referencia_id` estiver vazio (legado), o motor usa a **baseline da instância** (`_pick_reference_review` → fallback `_pick_baseline_review`). Migration V035 faz backfill das revisões existentes apontando para a baseline da mesma melhoria.
