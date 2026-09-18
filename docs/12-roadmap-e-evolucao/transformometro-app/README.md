@@ -28,6 +28,7 @@ Documentação de arquitetura e plano de entrega do **Transformômetro** como pr
 | [gpt-actions/](../../../transformometro-api/docs/gpt-actions/) | Custom GPT OpenAI (Actions + especialista) |
 | [docs API (índice)](../../../transformometro-api/docs/README.md) | Índice da documentação da transformometro-api |
 | [ROADMAP.md](./ROADMAP.md) | Fases de entrega e Playbook 18 |
+| **[CICLO-INTELIGENCIA-DE-PROCESSO.md](./CICLO-INTELIGENCIA-DE-PROCESSO.md)** | **Alvo de produto** — ciclo mapeamento → diagnóstico → TO-BE → medição → aprendizado. Não é runtime. |
 | **[PLAYBOOK-PORTAL-TRANSFORMA.md](./PLAYBOOK-PORTAL-TRANSFORMA.md)** | **Portal Transformômetro** — experiência de portal (shell, Home, IA, TÉO, fases 0–6); contrato de evolução (sem implementação nesta entrega) |
 | [ESPECIFICACAO.md](./ESPECIFICACAO.md) | Especificação funcional (planilha + Apps Script) |
 | [OPERATIONS.md](./OPERATIONS.md) | Runbook operacional e deploy Playbook 18 |

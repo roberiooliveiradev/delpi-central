@@ -22,7 +22,7 @@ Superfície compacta para o **ChatGPT Custom GPT** (TÉO) analisar, cadastrar e 
 | Contexto pessoal (read-only) | `tm_app/application/gpt_actions/user_context_service.py` + `person_profile_reader_port.py` |
 | Adapter Core PersonProfile | `tm_app/infrastructure/gateways/core_person_profile_gateway.py` (`GET /me/person-profile`, Bearer do usuário) |
 | Instructions do especialista | [`specialist-instructions.md`](./specialist-instructions.md) (persona **TÉO**) |
-| Method playbooks (Knowledge) | [`teo-method-playbooks.md`](./teo-method-playbooks.md) — editorial. Runtime: `query_methodology_guide`. Action: `gpt_get_methodology_guide`. |
+| Method playbooks (Knowledge) | [`teo-method-playbooks.md`](./teo-method-playbooks.md) — editorial. Runtime: `query_methodology_guide`. Action: `gpt_get_methodology_guide`. Métodos não são entidades. Destino de negócio: [ciclo de inteligência](../../../docs/12-roadmap-e-evolucao/transformometro-app/CICLO-INTELIGENCIA-DE-PROCESSO.md) (TARGET, sem implementação). |
 | Rotas | `tm_app/interface/http/routes/gpt_actions_routes.py` |
 
 Regenerar o JSON versionado:

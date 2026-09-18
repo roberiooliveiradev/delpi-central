@@ -88,7 +88,7 @@ GPT gpt_get_methodology_guide = adapter legado
 Transformômetro domain = dados e regras finais
 ```
 
-A capability é READ-only. Método não autoriza, não persiste e não transforma hipótese em fato. SIPOC, Ishikawa, SWOT e os demais playbooks **não** viram entidades. Diagramas continuam em `get_catalog.diagram_catalog` (`flowchart_v1` canônico; Mermaid derivado).
+A capability é READ-only. Método não autoriza, não persiste e não transforma hipótese em fato. SIPOC, Ishikawa, SWOT e os demais playbooks **não** viram entidades. O destino de negócio desses métodos, ainda sem implementação, está em [CICLO-INTELIGENCIA-DE-PROCESSO.md](../../../docs/12-roadmap-e-evolucao/transformometro-app/CICLO-INTELIGENCIA-DE-PROCESSO.md). Diagramas continuam em `get_catalog.diagram_catalog` (`flowchart_v1` canônico; Mermaid derivado).
 
 Fonte editorial: `docs/gpt-actions/teo-method-playbooks.md`. Runtime: `tm_app/application/methodology/guide.py`.
 

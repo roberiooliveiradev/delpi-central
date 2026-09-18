@@ -205,6 +205,12 @@ Plano: [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-de
 | Atualizar docs que citam Sheets como fonte ativa | README, ESPECIFICACAO (nota histórica) | ✅ parcial |
 | (Opcional) Link do TransformaPage → plugin transformometro | UX — painel read-only pode permanecer | Pendente |
 
+## Evolução de produto — ciclo de inteligência de processo (TARGET, não implementado)
+
+O ciclo processo → evidência → diagnóstico → redesenho → registro → medição → aprendizado está documentado, **sem autorização de implementação**, em [CICLO-INTELIGENCIA-DE-PROCESSO.md](./CICLO-INTELIGENCIA-DE-PROCESSO.md).
+
+As fases PI-0 a PI-7 desse documento **não substituem** as Fases 0–6 históricas deste roadmap. ADR: [adr-ciclo-inteligencia-processo.md](../../../transformometro-api/docs/architecture/adr-ciclo-inteligencia-processo.md).
+
 ## Evolução de produto — Portal Transformômetro (planejado)
 
 Experiência de **portal interno** (shell persistente, Home operacional, IA de navegação, TÉO contextual) no mesmo app `transformometro`, espelhando o padrão Comercial/Supplies **sem** nova autoridade arquitetural.

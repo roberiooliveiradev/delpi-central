@@ -81,6 +81,8 @@ erDiagram
 
 **Regra:** filial/setor **não** ficam em `processos` (V015). Toda revisão pertence a uma **instância**.
 
+O alvo de produto que liga mapeamento, diagnóstico, TO-BE e aprendizado **não está neste diagrama**. Ele é TARGET e está em [CICLO-INTELIGENCIA-DE-PROCESSO.md](./CICLO-INTELIGENCIA-DE-PROCESSO.md). Não tratar SIPOC, Lean, Ishikawa ou SWOT como entidades deste modelo.
+
 ### Diagramas (Playbook 19)
 
 ```text

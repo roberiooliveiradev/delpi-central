@@ -554,6 +554,8 @@ Status: [`playbook-20-implementation-status.md`](../../../transformometro-api/do
 - LLM gerando árvore a partir de texto livre
 - Substituir diagrama macro por árvore — **coexistem**
 
+SIPOC fora deste playbook não rejeita a capability de interfaces. O alvo, ainda sem implementação, está em [CICLO-INTELIGENCIA-DE-PROCESSO.md](./CICLO-INTELIGENCIA-DE-PROCESSO.md). O rótulo de UI «Macroprocesso» para o mestre também não é a arquitetura corporativa daquele documento.
+
 ---
 
 ## 13. Referências

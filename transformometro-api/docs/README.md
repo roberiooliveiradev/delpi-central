@@ -7,7 +7,7 @@
 | Pasta | Conteúdo |
 |-------|----------|
 | [`operations/`](./operations/) | Deploy, desenvolvimento local, backup JSON |
-| [`architecture/`](./architecture/) | Contratos de integração, ADRs, realtime |
+| [`architecture/`](./architecture/) | Contratos, ADRs e realtime. Alvo não implementado: [adr-ciclo-inteligencia-processo.md](./architecture/adr-ciclo-inteligencia-processo.md) |
 | [`domain/`](./domain/) | Regras de cálculo e categorias de benefício |
 | [`schemas/`](./schemas/) | JSON Schemas canônicos (flowchart, WBS, matriz) |
 | [`gpt-actions/`](./gpt-actions/) | Custom GPT OpenAI · persona **TÉO** (OAuth, OpenAPI, instructions) — **LEGACY_TRANSITIONAL_BRIDGE** |
@@ -40,5 +40,6 @@ PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 ## O que não fica aqui
 
 - Tutorial de usuário, OPERATIONS e playbooks de produto → `docs/12-roadmap-e-evolucao/transformometro-app/`
+- Ciclo de inteligência (TARGET, sem implementação) → [CICLO-INTELIGENCIA-DE-PROCESSO.md](../../docs/12-roadmap-e-evolucao/transformometro-app/CICLO-INTELIGENCIA-DE-PROCESSO.md)
 - Docs do MFE → `plugins/transformometro/docs/`
 - Status histórico de sprints (PB18–21) → [`archive/playbooks/`](./archive/playbooks/)

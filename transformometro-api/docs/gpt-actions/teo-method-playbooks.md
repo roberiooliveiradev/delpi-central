@@ -4,6 +4,8 @@
 >
 > **Runtime projection:** `tm_app/application/methodology/guide.py`, exposed by MCP `get_methodology_guide` and GPT Action `gpt_get_methodology_guide`. Both adapters call `query_methodology_guide`. Do not keep a second method list.
 >
+> These playbooks stay guidance. They do not create SIPOC, Lean, Ishikawa, KPI or SWOT entities. Business outcomes and the target lifecycle are documented in [`CICLO-INTELIGENCIA-DE-PROCESSO.md`](../../../docs/12-roadmap-e-evolucao/transformometro-app/CICLO-INTELIGENCIA-DE-PROCESSO.md). That document is not runtime.
+>
 > **This markdown** remains the editorial source. If a rule changes, update the markdown and the runtime projection together.
 >
 > TÉO remains governed by authenticated-user parity, backend AuthZ, canonical validators and PREPARE → CONFIRM → WRITE → VERIFY for any persistence.
