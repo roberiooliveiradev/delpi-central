@@ -3,6 +3,7 @@
 > **Status:** CONTRACT FREEZE / DOCUMENTAÇÃO (sem implementação nesta entrega)  
 > **BASE HEAD inventário:** `841637c3e95d18b8bd4b5667b2743ca8a9fc8248` (`main`)  
 > **Data do inventário:** 2026-09-17  
+> **Adendo de produto (2026-09-18):** a experiência passa a se chamar **Portal Transforma+**. O bounded context continua Transformômetro. Decisão e inventário de reuso: [PORTAL-TRANSFORMA-PLUS.md](./PORTAL-TRANSFORMA-PLUS.md). Este playbook não foi reescrito; onde ele diz «Portal Transformômetro», leia experiência de produto, não rename técnico.
 > **Tipo:** playbook técnico + produto + contrato de evolução  
 > **Owner documental:** Transformômetro (produto) · handoffs por fase
 

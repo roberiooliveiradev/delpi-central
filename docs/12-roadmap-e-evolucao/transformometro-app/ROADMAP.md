@@ -209,7 +209,7 @@ Plano: [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-de
 
 O ciclo processo → evidência → diagnóstico → redesenho → registro → medição → aprendizado está documentado, **sem autorização de implementação**, em [CICLO-INTELIGENCIA-DE-PROCESSO.md](./CICLO-INTELIGENCIA-DE-PROCESSO.md).
 
-As fases PI-0 a PI-7 desse documento **não substituem** as Fases 0–6 históricas deste roadmap. ADR: [adr-ciclo-inteligencia-processo.md](../../../transformometro-api/docs/architecture/adr-ciclo-inteligencia-processo.md).
+As fases PI-0 a PI-7 desse documento **não substituem** as Fases 0–6 históricas deste roadmap. A experiência Portal Transforma+ (fases A–I, também sem implementação) está em [PORTAL-TRANSFORMA-PLUS.md](./PORTAL-TRANSFORMA-PLUS.md). ADRs: [ciclo](../../../transformometro-api/docs/architecture/adr-ciclo-inteligencia-processo.md) · [portal](../../../transformometro-api/docs/architecture/adr-portal-transforma-plus.md).
 
 ## Evolução de produto — Portal Transformômetro (planejado)
 

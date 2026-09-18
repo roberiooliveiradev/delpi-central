@@ -196,6 +196,19 @@ Abstraction Gate aplicado como recomendação, não como schema.
 | Arquitetura corporativa | Ausente | TM | — | Agregado à parte | Não a árvore do mestre | Sim, fase tardia | sem rota até o contrato | sem Action até o contrato | Fora da ficha do processo | TARGET |
 | Completude | Ausente | TM | — | Present/missing/partial/n/a | Leituras atuais | Projeção | seção de contexto, não tool nova | não | Visão geral | TARGET |
 | Metodologia | PROVEN guidance | TÉO | `guide.py` | Continua lente | Sim | Não | `get_methodology_guide` | `gpt_get_methodology_guide` | não vira menu por método | PROVEN |
+| Portal shell | Nav atual PROVEN | MFE TM | `TransformometroNav` | Portal Transforma+ | Kit `plugin-ui`, não internals do Comercial | Não | nenhuma tool de tela | nenhuma Action de tela | shell | TARGET |
+| Início | Dashboard é a home | TM dashboard | `DashboardResumo` e alertas/vencimentos | Home operacional | Leituras existentes | Projeção | não `get_transforma_home` | não | Início | PARTIAL |
+| Visão geral do programa | Dashboard PROVEN | TM | resumo, evolução, processos | Overview com filtros cujo cálculo exista | Dashboard | Não | `analyze` / dashboard | não `get_portal_overview` | Visão geral | PARTIAL |
+| Sala de interação | Ausente no TM | Comercial | `commercial-api` interaction rooms | Só se surgir owner transversal | Não copiar | TO_INVENTORY | não | não | Sala | TO_INVENTORY |
+| Minhas tarefas | Pendência de ata PROVEN | TM atas; Comercial tem worklist própria | `pending-signatures` | Projeção de obrigações | Não task store paralelo | TO_INVENTORY | não `get_my_tasks` | não | Tarefas | PARTIAL |
+| Meus processos | Lista de processos PROVEN | TM | workspace de processos | Lista no escopo autorizado | search/list existente | Não | `search_records` | genérico | Meus processos | PARTIAL |
+| Portfólio | Ausente | — | — | Read model, não agregado | Abstraction Gate | Não por default | não `get_my_portfolio` | não | Portfólio | TARGET |
+| Administração | Catálogos PROVEN | TM | unidades, departamentos, recursos | Só domínio TM | Telas atuais | Não | catálogo existente | genérico | Administração | PARTIAL |
+| Ajuda | Tooltips PROVEN | TM | `helpTooltips` | Manual do portal | Padrão de manual, não texto do Comercial | Conteúdo próprio | guia de método já existe | `gpt_get_methodology_guide` | Ajuda | PARTIAL |
+| Busca | Ausente no TM | `plugin-ui` tem `CommandPalette` | Comercial busca caminhos, não entidades TM | Busca autorizada | Palette compartilhada | TO_INVENTORY no backend | não search novo sem inventário | não | Busca | TO_INVENTORY |
+| Favoritos | Ausente no TM | Comercial | `GET/PUT /me/home-favorites` | Reusar só se extraído | Não duplicar | TO_INVENTORY | não | não | Favoritos | TO_INVENTORY |
+| Perfil | JWT/Keycloak | Keycloak / Core | token | Exibir identidade | Avatar do kit | Não | não | não | Perfil | PARTIAL |
+| Workspace do processo | Seções PROVEN | TM | `processWorkspaceNav.ts` | IA do ciclo, mesmos dados | Sim | Não | `get_process_context` | genérico | Processo | PARTIAL |
 
 ## 8. Informação / UX alvo
 
@@ -225,6 +238,14 @@ PROCESSO
 ```
 
 A navegação PROVEN permanece até um passe de UI aprovado.
+
+O invólucro dessa ficha, quando a experiência de produto for implementada, é o **Portal Transforma+**, não um segundo domínio. Inventário do Comercial, shell, reuso e fases A–I: [PORTAL-TRANSFORMA-PLUS.md](./PORTAL-TRANSFORMA-PLUS.md). ADR: [adr-portal-transforma-plus.md](../../../transformometro-api/docs/architecture/adr-portal-transforma-plus.md).
+
+| Peça | Estado neste HEAD |
+|---|---|
+| Portal shell, Início operacional, portfólio | TARGET |
+| Dashboard, lista de processos, workspace, catálogos, tooltips, vencimentos, resumo financeiro | PROVEN como peças; PARTIAL como portal |
+| Sala de interação, favoritos de página, busca de entidades | TO_INVENTORY (hoje são do Comercial ou inexistentes) |
 
 ## 9. Orçamento de rota e de tool
 
@@ -270,6 +291,8 @@ Cada fase, quando for executada, precisa de: owner Transformômetro; pré-requis
 | PI-5 | Plano de ação só se o inventário continuar vazio | PI-2 | Genérico na melhoria/revisão | Importar o módulo de Qualidade |
 | PI-6 | Aprendizado, resultado verificado, completude | Timeline atual | Estender timeline, não tool nova | Event sourcing desnecessário |
 | PI-7 | Arquitetura corporativa | Processo individual estável | Fora do CRUD do mestre até o contrato | Reusar `decomposition_tree` da empresa inteira |
+
+A experiência **Portal Transforma+** não cria fases PI novas. O adendo [PORTAL-TRANSFORMA-PLUS.md](./PORTAL-TRANSFORMA-PLUS.md) usa fases A–I de shell/UX. Elas consomem as fases PI; não as substituem e não autorizam implementação.
 
 ## 11. Busca residual
 

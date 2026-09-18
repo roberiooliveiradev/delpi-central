@@ -8,7 +8,7 @@ O **Transformômetro** registra melhorias de processos (baseline vs melhoria/aut
 
 > Quanto a melhoria economizou, quanto custou implantar/manter e em quanto tempo o investimento se paga?
 
-O ciclo completo de inteligência (interfaces, diagnóstico, TO-BE explícito, plano de ação, aprendizado) **não está implementado**. O alvo está em [CICLO-INTELIGENCIA-DE-PROCESSO.md](./CICLO-INTELIGENCIA-DE-PROCESSO.md).
+O ciclo completo de inteligência (interfaces, diagnóstico, TO-BE explícito, plano de ação, aprendizado) **não está implementado**. O alvo está em [CICLO-INTELIGENCIA-DE-PROCESSO.md](./CICLO-INTELIGENCIA-DE-PROCESSO.md). A experiência de uso alvo chama-se **Portal Transforma+** ([PORTAL-TRANSFORMA-PLUS.md](./PORTAL-TRANSFORMA-PLUS.md)); o domínio e as URLs continuam Transformômetro.
 
 Origem histórica: **Google Sheets + Apps Script**. Hoje a aplicação web na **Minha Delpi** já está entregue no monorepo:
 
