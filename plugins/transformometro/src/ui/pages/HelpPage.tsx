@@ -6,7 +6,8 @@ import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { PORTAL_PAGE_COPY } from "../../constants/portalExperience";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
-import { USER_MANUAL_CONTENT } from "../../content/userManualContent";
+import { USER_MANUAL_CONTENT, visibleManualLinks } from "../../content/userManualContent";
+import { useCanManagePortal } from "../../state/portalChrome";
 
 const SECTION = sectionCardPacBemClasses("ds");
 const SECTION_LABELS = {
@@ -24,6 +25,7 @@ function scrollToSection(id: string) {
 export function HelpPage({ pathname, onNavigate }: HelpPageProps) {
   const copy = PORTAL_PAGE_COPY.help;
   const manual = USER_MANUAL_CONTENT;
+  const canManage = useCanManagePortal();
 
   return (
     <TransformometroShell>
@@ -54,9 +56,9 @@ export function HelpPage({ pathname, onNavigate }: HelpPageProps) {
               {section.paragraphs.map((paragraph) => (
                 <p key={paragraph}>{paragraph}</p>
               ))}
-              {section.links && section.links.length > 0 ? (
+              {visibleManualLinks(section.links, canManage).length > 0 ? (
                 <ul className="tm-help-toc">
-                  {section.links.map((link) => (
+                  {visibleManualLinks(section.links, canManage).map((link) => (
                     <li key={link.path}>
                       <button type="button" className={DS_GHOST_BTN} onClick={() => onNavigate(link.path)}>
                         {link.label}

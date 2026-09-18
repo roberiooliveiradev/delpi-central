@@ -48,9 +48,9 @@ export const PORTAL_PAGE_COPY = {
     description: "Gerencie unidades, departamentos e demais cadastros administrativos.",
   },
   help: {
-    eyebrow: "AJUDA",
-    title: "Manual do usuário",
-    description: "Como navegar e usar o Portal Transforma+.",
+    eyebrow: PORTAL_PRODUCT_NAME,
+    title: "Ajuda",
+    description: "Consulte orientações para navegar e utilizar o Portal Transforma+.",
   },
 } as const;
 
@@ -282,6 +282,17 @@ export function filterPortalCatalog(
   return items.filter((item) =>
     `${item.label} ${item.group} ${item.description}`.toLowerCase().includes(needle),
   );
+}
+
+export function visiblePortalTopBarItems(canManage: boolean) {
+  return PORTAL_TOPBAR_ITEMS.filter((item) => canManage || item.id !== "administration");
+}
+
+export function visiblePortalLauncherGroups(canManage: boolean) {
+  return PORTAL_LAUNCHER_GROUPS.map((group) => ({
+    ...group,
+    links: group.links.filter((link) => canManage || link.id !== "administration"),
+  })).filter((group) => group.links.length > 0);
 }
 
 export function isPortalSearchShortcut(event: {

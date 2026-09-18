@@ -8,6 +8,7 @@ import { TRANSFORMOMETRO_ROUTES } from "../constants/routes";
 export type UserManualLink = {
   label: string;
   path: string;
+  requiresManage?: boolean;
 };
 
 export type UserManualSection = {
@@ -16,6 +17,13 @@ export type UserManualSection = {
   paragraphs: readonly string[];
   links?: readonly UserManualLink[];
 };
+
+export function visibleManualLinks(
+  links: readonly UserManualLink[] | undefined,
+  canManage: boolean,
+): UserManualLink[] {
+  return (links ?? []).filter((link) => canManage || link.requiresManage !== true);
+}
 
 export const USER_MANUAL_CONTENT = {
   tocTitle: "Neste manual",
@@ -80,11 +88,17 @@ export const USER_MANUAL_CONTENT = {
       id: "administration",
       title: "Administração",
       paragraphs: [
-        "Administração é a área de quem administra o portal.",
+        "A área Administração fica disponível para usuários responsáveis pela administração do Portal.",
         "Quem só usa o portal no dia a dia não vê essa área na barra nem na busca.",
         "Configurações fica dentro de Administração. Não é uma área da barra superior.",
       ],
-      links: [{ label: "Abrir Administração", path: TRANSFORMOMETRO_ROUTES.administration }],
+      links: [
+        {
+          label: "Abrir Administração",
+          path: TRANSFORMOMETRO_ROUTES.administration,
+          requiresManage: true,
+        },
+      ],
     },
     {
       id: "settings",
@@ -95,9 +109,13 @@ export const USER_MANUAL_CONTENT = {
         "Recursos compartilhados são licenças e ferramentas do catálogo. Criar ou alterar o catálogo é administração. Ligar um recurso a uma revisão faz parte do uso normal do processo.",
       ],
       links: [
-        { label: "Unidades", path: TRANSFORMOMETRO_ROUTES.settingsUnits },
-        { label: "Departamentos", path: TRANSFORMOMETRO_ROUTES.settingsDepartments },
-        { label: "Recursos compartilhados", path: TRANSFORMOMETRO_ROUTES.settingsSharedResources },
+        { label: "Unidades", path: TRANSFORMOMETRO_ROUTES.settingsUnits, requiresManage: true },
+        { label: "Departamentos", path: TRANSFORMOMETRO_ROUTES.settingsDepartments, requiresManage: true },
+        {
+          label: "Recursos compartilhados",
+          path: TRANSFORMOMETRO_ROUTES.settingsSharedResources,
+          requiresManage: true,
+        },
       ],
     },
     {

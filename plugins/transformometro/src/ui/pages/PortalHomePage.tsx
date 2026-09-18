@@ -14,7 +14,7 @@ import {
 import type { AppProps } from "../../App";
 import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
-import { PORTAL_LAUNCHER_GROUPS, PORTAL_PAGE_COPY, filterPortalCatalog } from "../../constants/portalExperience";
+import { PORTAL_PAGE_COPY, filterPortalCatalog, visiblePortalLauncherGroups } from "../../constants/portalExperience";
 import { useCanManagePortal } from "../../state/portalChrome";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 
@@ -44,16 +44,15 @@ export function PortalHomePage({ pathname, onNavigate }: PortalHomePageProps) {
   const canManage = useCanManagePortal();
   const groups = useMemo(
     () =>
-      PORTAL_LAUNCHER_GROUPS.map((group) => ({
+      visiblePortalLauncherGroups(canManage).map((group) => ({
         ...group,
-        links: group.links.filter((link) => {
-          if (!canManage && link.id === "administration") return false;
-          return needle
+        links: group.links.filter((link) =>
+          needle
             ? `${group.title} ${group.description} ${link.label} ${link.description}`
                 .toLowerCase()
                 .includes(needle)
-            : true;
-        }),
+            : true,
+        ),
       })).filter((group) => group.links.length > 0),
     [canManage, needle],
   );

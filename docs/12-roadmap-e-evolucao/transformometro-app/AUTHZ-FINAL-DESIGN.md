@@ -38,6 +38,12 @@ Saem, no alvo: processo, revisão, medição, investimento, recurso, ata, assina
 
 Sem `access`, nega. Com `access`, o produto inteiro, inclusive processos de qualquer unidade. Código `branch.*` não participa. Não se restaura «sem filial → vê tudo» como regra de escopo. A capability é que abre o produto.
 
+## Rotas internas do MFE
+
+No Portal Transforma+, `manifest.routes` não lista toda view do MFE. A Core publica as rotas que precisam ser conhecidas pela plataforma. O parser local pode resolver rotas extras sob `/apps/transformometro`, sem permission nova e sem entrada própria no manifesto.
+
+`/apps/transformometro/help` é uma dessas rotas. Alias local: `/ajuda`. `HELP_ROUTE_MANIFEST_ENTRY = NOT_REQUIRED`. O guard vigente do portal casa o prefixo `/apps/transformometro` e exige `transformometro.access`. `manage` sozinho não abre a Ajuda nem o restante do uso normal. Isso não é wildcard novo e não vale como regra dos outros plugins.
+
 ## Filial
 
 Objeto de domínio. Na Visão geral, o filtro Todas / 01 / 02 / futuras muda a consulta. Não muda quem pode ver. O catálogo do filtro vem de `filiais`. Sem chamada de autorização ao Core.

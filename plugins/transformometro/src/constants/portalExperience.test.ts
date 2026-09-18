@@ -18,8 +18,10 @@ import {
   isPortalSearchShortcut,
   processListPlaceholder,
   resolvePortalTopBarId,
+  visiblePortalLauncherGroups,
+  visiblePortalTopBarItems,
 } from "./portalExperience";
-import { USER_MANUAL_CONTENT } from "../content/userManualContent";
+import { USER_MANUAL_CONTENT, visibleManualLinks } from "../content/userManualContent";
 
 describe("Portal Transforma+ navigation", () => {
   it("mantém o produto e a saudação sem nome inventado", () => {
@@ -78,6 +80,7 @@ describe("Portal Transforma+ navigation", () => {
     expect(parseTransformometroPath(TRANSFORMOMETRO_ROUTES.data).view).toBe("dados");
     expect(parseTransformometroPath(TRANSFORMOMETRO_ROUTES.help).view).toBe("help");
     expect(parseTransformometroPath("/apps/transformometro/ajuda").view).toBe("help");
+    expect(parseTransformometroPath("/apps/transformometro/manual").view).toBe("dashboard");
   });
 
   it("marca Administração nas rotas administrativas e não na home", () => {
@@ -112,6 +115,8 @@ describe("Portal Transforma+ navigation", () => {
     expect(filterPortalCatalog("ajuda", { includeAdministration: false }).map((item) => item.path)).toContain(
       TRANSFORMOMETRO_ROUTES.help,
     );
+    expect(filterPortalCatalog("favoritos")).toEqual([]);
+    expect(filterPortalCatalog("tarefas")).toEqual([]);
     expect(isPortalSearchShortcut({ key: "k", ctrlKey: true, metaKey: false })).toBe(true);
     expect(isPortalSearchShortcut({ key: "K", ctrlKey: false, metaKey: true })).toBe(true);
     expect(isPortalSearchShortcut({ key: "k", ctrlKey: false, metaKey: false })).toBe(false);
@@ -154,8 +159,9 @@ describe("Portal Transforma+ navigation", () => {
     expect(PORTAL_PAGE_COPY.administration.title).toBe("Administração");
     expect(PORTAL_PAGE_COPY.settings.title).toBe("Configurações");
     expect(PORTAL_PAGE_COPY.help).toMatchObject({
-      eyebrow: "AJUDA",
-      title: "Manual do usuário",
+      eyebrow: "Portal Transforma+",
+      title: "Ajuda",
+      description: "Consulte orientações para navegar e utilizar o Portal Transforma+.",
     });
     expect(PORTAL_LAUNCHER_GROUPS.map((group) => group.title)).toEqual([
       "Gestão",
@@ -184,14 +190,45 @@ describe("Portal Transforma+ navigation", () => {
       ]),
     );
     const text = JSON.stringify(USER_MANUAL_CONTENT);
-    expect(text).not.toMatch(/Sala de interação|Minhas tarefas|Keycloak|MCP|GPT Actions/);
+    expect(text).not.toMatch(/Sala de interação|Minhas tarefas|Favoritos|Keycloak|MCP|GPT Actions|JWT/);
+    expect(text).toContain("usuários responsáveis pela administração do Portal");
     for (const section of USER_MANUAL_CONTENT.sections) {
-      for (const link of section.links ?? []) {
+      for (const link of visibleManualLinks(section.links, false)) {
         const view = parseTransformometroPath(link.path).view;
-        expect(["home", "help", "dashboard", "processos", "atas", "dados", "administration", "configuracoes"]).toContain(
-          view,
-        );
+        expect(["home", "help", "dashboard", "processos", "atas", "dados"]).toContain(view);
       }
     }
+    const adminLinks = USER_MANUAL_CONTENT.sections.flatMap((section) =>
+      visibleManualLinks(section.links, true).filter((link) => link.requiresManage),
+    );
+    expect(adminLinks.map((link) => link.path)).toEqual(
+      expect.arrayContaining([
+        TRANSFORMOMETRO_ROUTES.administration,
+        TRANSFORMOMETRO_ROUTES.settingsUnits,
+      ]),
+    );
+    expect(visibleManualLinks(adminLinks, false)).toEqual([]);
+  });
+
+  it("esconde Administração sem manage e não promove Favoritos", () => {
+    expect(visiblePortalTopBarItems(false).map((item) => item.label)).toEqual([
+      "Início",
+      "Visão geral",
+      "Meus processos",
+      "Ajuda",
+    ]);
+    expect(visiblePortalTopBarItems(true).map((item) => item.label)).toContain("Administração");
+    expect(visiblePortalTopBarItems(true).map((item) => item.label)).not.toContain("Configurações");
+    expect(visiblePortalTopBarItems(true).map((item) => item.label)).not.toContain("Favoritos");
+
+    const home = visiblePortalLauncherGroups(false).flatMap((group) => group.links.map((link) => link.label));
+    expect(home).toEqual(
+      expect.arrayContaining(["Visão geral", "Meus processos", "Atas", "Exportar / Importar", "Manual do usuário"]),
+    );
+    expect(home).not.toContain("Administração");
+    expect(home).not.toContain("Configurações");
+    expect(visiblePortalLauncherGroups(true).flatMap((group) => group.links.map((link) => link.label))).toContain(
+      "Administração",
+    );
   });
 });

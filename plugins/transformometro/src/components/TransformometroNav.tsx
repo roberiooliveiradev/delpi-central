@@ -10,10 +10,10 @@ import {
 } from "@delpi/plugin-ui/index";
 
 import {
-  PORTAL_TOPBAR_ITEMS,
   filterPortalCatalog,
   isPortalSearchShortcut,
   resolvePortalTopBarId,
+  visiblePortalTopBarItems,
 } from "../constants/portalExperience";
 import { useCanManagePortal } from "../state/portalChrome";
 
@@ -39,9 +39,7 @@ export function PortalTopBar({ currentPath, onNavigate }: PortalTopBarProps) {
   const [query, setQuery] = useState("");
   const activeId = resolvePortalTopBarId(currentPath);
   const canManage = useCanManagePortal();
-  const items = PORTAL_TOPBAR_ITEMS.filter(
-    (item) => canManage || item.id !== "administration",
-  );
+  const items = visiblePortalTopBarItems(canManage);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

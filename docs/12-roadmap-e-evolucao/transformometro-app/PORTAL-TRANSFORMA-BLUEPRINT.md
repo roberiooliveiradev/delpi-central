@@ -10,7 +10,7 @@ TopBar funcional: Início, Visão geral, Meus processos, Administração, Ajuda.
 
 Target oculto, não PROVEN: Sala de interação, Minhas tarefas. Utility oculta: Favoritos e Usuário. Favoritos de rota não têm owner transversal. Core guarda app favorito (`/me/apps/favorites`). O Comercial persiste em `commercial-api` `/me/home-favorites`. Supplies usa localStorage próprio. Ajuda é página `/apps/transformometro/help`, conteúdo em `userManualContent.ts`, permission herdada do prefixo `transformometro.access`.
 
-Launcher do Início: Operação, Gestão, Registros, Administração. Configurações não é card nem item da TopBar. Fica em Administração → Configurações. Exportar/Importar fica em Registros e exige `transformometro.access`. Administração exige `transformometro.manage`. Sem Keycloak novo e sem terceira permission.
+Launcher do Início: Gestão, Processos, Registros, Administração, Ajuda. Configurações não é card nem item da TopBar. Fica em Administração → Configurações. Exportar/Importar fica em Registros e exige `transformometro.access`. Administração exige `transformometro.manage`. Ajuda é rota interna `/apps/transformometro/help` (alias `/ajuda`). Não entra no `manifest.routes` e não cria permission. O guard do portal resolve pelo prefixo `/apps/transformometro` = `transformometro.access`. `HELP_ROUTE_MANIFEST_ENTRY = NOT_REQUIRED`. Favoritos = `TO_INVENTORY`. Sem Keycloak novo e sem terceira permission.
 
 ## 1. Stack provada
 
