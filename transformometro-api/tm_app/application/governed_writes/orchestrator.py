@@ -203,10 +203,12 @@ class GovernedWriteOrchestrator:
                 status_code=403,
             )
         if entity in {"branch", "shared_resource", "resource_cost"}:
-            err = require_transformometro_view_access(request)
+            from tm_app.interface.http.branch_access_http import require_portal_manage
+
+            err = require_portal_manage(request)
             if err is not None:
                 raise GovernedWriteError(
-                    "Sem permissão de catálogo admin para esta entidade.",
+                    "Sem permissão transformometro.manage.",
                     code=FORBIDDEN,
                     status_code=403,
                 )

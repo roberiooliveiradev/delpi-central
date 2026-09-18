@@ -6,6 +6,7 @@ import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { CATALOG_CREATE } from "../../constants/catalogRoutes";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
+import { PORTAL_PRODUCT_NAME } from "../../constants/portalExperience";
 import {
   buildFilialPath,
   buildRecursoPath,
@@ -205,9 +206,9 @@ export function SettingsWorkspacePage({ getAccessToken, route, pathname, onNavig
   return (
     <TransformometroShell>
       <PageHeader
-        eyebrow="Administração"
+        eyebrow={PORTAL_PRODUCT_NAME}
         title="Configurações"
-        subtitle="Unidades, departamentos e recursos compartilhados usados nos processos e no dashboard"
+        subtitle="Gerencie unidades, departamentos e demais cadastros administrativos."
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.configuracoesUnidades}
         onNavigate={onNavigate}
       />

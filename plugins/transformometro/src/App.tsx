@@ -30,10 +30,13 @@ import { TRANSFORMOMETRO_ROUTES } from "./constants/routes";
 import { buildProcessoPath, parseTransformometroPath } from "./utils/routeParser";
 import { navigateTransformometro } from "./utils/navigation";
 import { buildTransformometroTransitionKey } from "./utils/transitionKey";
+import { PortalChromeProvider } from "./state/portalChrome";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
   pathname?: string;
+  permissions?: readonly string[];
+  isSuperadmin?: boolean;
 };
 
 function AppRoutes({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
@@ -170,12 +173,14 @@ function AppRoutes({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
 
 export default function App(props: AppProps) {
   return (
-    <ConfirmDialogProvider>
-      <UnsavedChangesGuardProvider>
-        <FloatingNoticeProvider>
-          <AppRoutes {...props} />
-        </FloatingNoticeProvider>
-      </UnsavedChangesGuardProvider>
-    </ConfirmDialogProvider>
+    <PortalChromeProvider permissions={props.permissions} isSuperadmin={props.isSuperadmin}>
+      <ConfirmDialogProvider>
+        <UnsavedChangesGuardProvider>
+          <FloatingNoticeProvider>
+            <AppRoutes {...props} />
+          </FloatingNoticeProvider>
+        </UnsavedChangesGuardProvider>
+      </ConfirmDialogProvider>
+    </PortalChromeProvider>
   );
 }

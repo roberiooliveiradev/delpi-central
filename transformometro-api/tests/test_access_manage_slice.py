@@ -20,6 +20,7 @@ from tm_app.interface.http.branch_access_http import (
     check_dashboard_filial_access,
     check_processo_view_access,
     filter_rows_for_access,
+    require_portal_manage,
     require_transformometro_view_access,
 )
 
@@ -120,11 +121,13 @@ def test_access_uses_the_product_and_does_not_administer():
     request = _request(user)
     policy.require_access(user)
     assert require_transformometro_view_access(request) is None
+    assert require_portal_manage(request) is not None
     with pytest.raises(AuthorizationDenied):
         policy.require_manage(user)
 
     admin = _request(_user(permissions=[MANAGE_PERMISSION]))
     assert require_transformometro_view_access(admin) is not None
+    assert require_portal_manage(admin) is None
 
 
 def test_legacy_codes_do_not_open_the_portal():

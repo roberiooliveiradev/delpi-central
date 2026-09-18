@@ -62,7 +62,9 @@ Recálculo pedido na Visão geral é uso normal. Reconstrói cache depois de med
 
 Exportar e importar é backup do cadastro do produto, não gestão de acessos. Alvo: `access`. Preview, validação, confirmação de replace e read-back permanecem. `data.transfer` sai.
 
-`manage` é a Administração do portal: equipe, grupos, acessos e assignments, pelos contratos da Core. Não edita processo. Não implica `access`. O Transformômetro não cria tabela de usuário, papel ou grupo.
+`manage` é a Administração do portal. Não implica `access` e não edita processo, revisão, medição, investimento, ata nem backup.
+
+Configurações é subárea de Administração, não área principal. O CRUD dos catálogos de unidade, departamento e recurso compartilhado exige `manage`. A consulta desses catálogos para operar um processo continua `access`. O vínculo de um recurso a uma revisão é uso normal e continua `access`. Equipe, grupos e acessos seguem contrato da Core; o Transformômetro não os duplica.
 
 ## O que o código faz hoje
 

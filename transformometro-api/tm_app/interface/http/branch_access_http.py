@@ -63,6 +63,15 @@ def require_transformometro_view_access(request: Request) -> JSONResponse | None
     return None
 
 
+def require_portal_manage(request: Request) -> JSONResponse | None:
+    """CRUD do catálogo em Administração. Não abre o uso normal."""
+    try:
+        _policy().require_manage(_user(request))
+    except AuthorizationDenied as exc:
+        return _as_response(exc)
+    return None
+
+
 def resolve_filial_codigo(filial_ref: str | None) -> str | None:
     if not filial_ref:
         return None

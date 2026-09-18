@@ -14,6 +14,7 @@ import {
   filterPortalCatalog,
   resolvePortalTopBarId,
 } from "../constants/portalExperience";
+import { useCanManagePortal } from "../state/portalChrome";
 
 type PortalTopBarProps = {
   currentPath?: string;
@@ -36,6 +37,10 @@ export function PortalTopBar({ currentPath, onNavigate }: PortalTopBarProps) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [query, setQuery] = useState("");
   const activeId = resolvePortalTopBarId(currentPath);
+  const canManage = useCanManagePortal();
+  const items = PORTAL_TOPBAR_ITEMS.filter(
+    (item) => canManage || item.id !== "administration",
+  );
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -54,7 +59,7 @@ export function PortalTopBar({ currentPath, onNavigate }: PortalTopBarProps) {
       <TopBar
         classNames={TOPBAR}
         navClassNames={NAV}
-        items={PORTAL_TOPBAR_ITEMS.map((item) => ({
+        items={items.map((item) => ({
           id: item.id,
           label: item.label,
           onSelect: () => onNavigate(item.path),
@@ -88,7 +93,7 @@ export function PortalTopBar({ currentPath, onNavigate }: PortalTopBarProps) {
         placeholder="Buscar caminhos e funcionalidades…"
         emptyHitsLabel="Nenhuma funcionalidade encontrada."
         clearLabel="Limpar busca"
-        hits={filterPortalCatalog(query).map((item) => ({
+        hits={filterPortalCatalog(query, { includeAdministration: canManage }).map((item) => ({
           id: item.path,
           label: item.label,
           groupLabel: item.group,

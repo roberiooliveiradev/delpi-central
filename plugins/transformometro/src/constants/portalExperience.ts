@@ -127,6 +127,12 @@ export const PORTAL_LAUNCHER_GROUPS: readonly {
         path: TRANSFORMOMETRO_ROUTES.meetingMinutes,
         description: "Reuniões, pendências, assinaturas e registros.",
       },
+      {
+        id: "data",
+        label: "Exportar/Importar",
+        path: TRANSFORMOMETRO_ROUTES.data,
+        description: "Backup, prévia e confirmação de importação.",
+      },
     ],
   },
   {
@@ -134,16 +140,10 @@ export const PORTAL_LAUNCHER_GROUPS: readonly {
     title: "Administração",
     links: [
       {
-        id: "settings",
-        label: "Configurações",
-        path: TRANSFORMOMETRO_ROUTES.settingsUnits,
-        description: "Unidades, departamentos e recursos compartilhados.",
-      },
-      {
-        id: "data",
-        label: "Exportar/Importar",
-        path: TRANSFORMOMETRO_ROUTES.data,
-        description: "Backup, prévia e confirmação de importação.",
+        id: "administration",
+        label: "Administração",
+        path: TRANSFORMOMETRO_ROUTES.administration,
+        description: "Configurações administrativas do portal.",
       },
     ],
   },
@@ -203,16 +203,23 @@ export const PORTAL_SEARCH_CATALOG: readonly PortalCatalogItem[] = [
     label: link.label,
     description: link.description,
     path: link.path,
-    group: "Configurações",
+    group: "Administração",
     placement: "launcher" as const,
     status: "FUNCTIONAL" as const,
   })),
 ];
 
-export function filterPortalCatalog(query: string): PortalCatalogItem[] {
+export function filterPortalCatalog(
+  query: string,
+  options?: { includeAdministration?: boolean },
+): PortalCatalogItem[] {
   const needle = query.trim().toLowerCase();
+  const includeAdministration = options?.includeAdministration !== false;
   const unique = new Map<string, PortalCatalogItem>();
   for (const item of PORTAL_SEARCH_CATALOG) {
+    if (!includeAdministration && (item.group === "Administração" || item.id === "administration")) {
+      continue;
+    }
     unique.set(item.path, item);
   }
   const items = [...unique.values()];
@@ -238,8 +245,6 @@ export function resolvePortalTopBarId(currentPath?: string): string {
     currentPath.includes("/settings") ||
     currentPath.includes("/configuracoes") ||
     currentPath.includes("/cadastros") ||
-    currentPath.includes("/data") ||
-    currentPath.endsWith("/dados") ||
     currentPath.includes("/filiais") ||
     currentPath.includes("/setores") ||
     currentPath.includes("/recursos")

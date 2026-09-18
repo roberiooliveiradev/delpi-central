@@ -35,11 +35,17 @@ describe("Portal Transforma+ navigation", () => {
     expect(labels).not.toMatch(/Atas|Configurações|Exportar|Sala|Tarefas|Ajuda/);
   });
 
-  it("deixa Atas, Configurações e Exportar/Importar no launcher", () => {
+  it("não coloca Configurações como área principal", () => {
+    expect(PORTAL_TOPBAR_ITEMS.map((item) => item.label)).not.toContain("Configurações");
     const links = PORTAL_LAUNCHER_GROUPS.flatMap((group) => group.links.map((link) => link.label));
+    expect(links).not.toContain("Configurações");
     expect(links).toEqual(
-      expect.arrayContaining(["Atas", "Configurações", "Exportar/Importar", "Meus processos", "Visão geral"]),
+      expect.arrayContaining(["Atas", "Exportar/Importar", "Meus processos", "Visão geral", "Administração"]),
     );
+    const visible = filterPortalCatalog("", { includeAdministration: false }).map((item) => item.label);
+    expect(visible).not.toContain("Configurações");
+    expect(visible).not.toContain("Administração");
+    expect(visible).toContain("Exportar/Importar");
   });
 
   it("não promove sala, tarefas, ajuda, favoritos ou usuário a funcional", () => {
@@ -73,7 +79,7 @@ describe("Portal Transforma+ navigation", () => {
     expect(resolvePortalTopBarId(TRANSFORMOMETRO_ROUTES.dashboard)).toBe("overview");
     expect(resolvePortalTopBarId(TRANSFORMOMETRO_ROUTES.processes)).toBe("processes");
     expect(resolvePortalTopBarId(TRANSFORMOMETRO_ROUTES.settingsUnits)).toBe("administration");
-    expect(resolvePortalTopBarId(TRANSFORMOMETRO_ROUTES.data)).toBe("administration");
+    expect(resolvePortalTopBarId(TRANSFORMOMETRO_ROUTES.data)).toBe("");
     expect(resolvePortalTopBarId(TRANSFORMOMETRO_ROUTES.meetingMinutes)).toBe("");
   });
 

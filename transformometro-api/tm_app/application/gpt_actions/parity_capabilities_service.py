@@ -51,6 +51,7 @@ from tm_app.interface.http.branch_access_http import (
     check_instancia_view_access,
     check_processo_manage_access,
     check_processo_view_access,
+    require_portal_manage,
     require_transformometro_view_access,
 )
 
@@ -431,7 +432,7 @@ class ParityCapabilitiesService:
         observacoes: str | None = None,
     ) -> dict[str, Any]:
         # Same authoritative gate as UI reajuste_recurso_custo.
-        self._raise_http_err(require_transformometro_view_access(request))
+        self._raise_http_err(require_portal_manage(request))
         recurso_id = str(recurso_compartilhado_id or "").strip()
         if not recurso_id:
             raise GptActionsError("recurso_compartilhado_id is required.", 400)

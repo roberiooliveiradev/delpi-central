@@ -115,7 +115,7 @@ from tm_app.interface.http.branch_access_http import (
     check_processo_view_access,
     check_view_filial_access,
     filter_rows_for_access,
-    require_transformometro_view_access,
+    require_portal_manage,
 )
 
 router = APIRouter(prefix="/transformometro", tags=["Transformômetro CRUD"])
@@ -1179,7 +1179,7 @@ def get_filial(filial_id: str, request: Request):
 @router.post("/filiais",
     operation_id="create_filial")
 def create_filial(body: FilialBody, request: Request):
-    if err := require_transformometro_view_access(request):
+    if err := require_portal_manage(request):
         return err
     try:
         _validate_filial_body(body, is_create=True)
@@ -1198,7 +1198,7 @@ def create_filial(body: FilialBody, request: Request):
 @router.put("/filiais/{filial_id}",
     operation_id="update_filial")
 def update_filial(filial_id: str, body: FilialUpdateBody, request: Request):
-    if err := require_transformometro_view_access(request):
+    if err := require_portal_manage(request):
         return err
     try:
         _validate_filial_body(body, is_create=False)
@@ -1219,7 +1219,7 @@ def update_filial(filial_id: str, body: FilialUpdateBody, request: Request):
 @router.delete("/filiais/{filial_id}",
     operation_id="delete_filial")
 def delete_filial(filial_id: str, request: Request):
-    if err := require_transformometro_view_access(request):
+    if err := require_portal_manage(request):
         return err
     existing = FilialRepository().get(filial_id)
     if not existing:
@@ -1259,6 +1259,8 @@ def get_setor(setor_id: str):
 @router.post("/setores",
     operation_id="create_setor")
 def create_setor(body: SetorBody, request: Request):
+    if err := require_portal_manage(request):
+        return err
     try:
         _validate_setor_body(body, is_create=True)
         row = SetorRepository().create(body.model_dump())
@@ -1276,6 +1278,8 @@ def create_setor(body: SetorBody, request: Request):
 @router.put("/setores/{setor_id}",
     operation_id="update_setor")
 def update_setor(setor_id: str, body: SetorUpdateBody, request: Request):
+    if err := require_portal_manage(request):
+        return err
     try:
         _validate_setor_body(body, is_create=False)
         row = SetorRepository().update(setor_id, body.model_dump())
@@ -1295,6 +1299,8 @@ def update_setor(setor_id: str, body: SetorUpdateBody, request: Request):
 @router.delete("/setores/{setor_id}",
     operation_id="delete_setor")
 def delete_setor(setor_id: str, request: Request):
+    if err := require_portal_manage(request):
+        return err
     try:
         if not SetorRepository().soft_delete(setor_id):
             return fail("Setor não encontrado.", 404)
@@ -1327,6 +1333,8 @@ def get_recurso(recurso_id: str):
 @router.post("/recursos-compartilhados",
     operation_id="create_recurso")
 def create_recurso(body: RecursoBody, request: Request):
+    if err := require_portal_manage(request):
+        return err
     try:
         _validate_recurso_body(body)
         row = RecursoRepository().create(body.model_dump())
@@ -1342,6 +1350,8 @@ def create_recurso(body: RecursoBody, request: Request):
 @router.put("/recursos-compartilhados/{recurso_id}",
     operation_id="update_recurso")
 def update_recurso(recurso_id: str, body: RecursoBody, request: Request):
+    if err := require_portal_manage(request):
+        return err
     try:
         _validate_recurso_body(body)
         row = RecursoRepository().update(recurso_id, body.model_dump())
@@ -1359,6 +1369,8 @@ def update_recurso(recurso_id: str, body: RecursoBody, request: Request):
 @router.delete("/recursos-compartilhados/{recurso_id}",
     operation_id="delete_recurso")
 def delete_recurso(recurso_id: str, request: Request):
+    if err := require_portal_manage(request):
+        return err
     if not RecursoRepository().soft_delete(recurso_id):
         return fail("Recurso não encontrado.", 404)
     _audit(request, "recurso", recurso_id, "delete", {})
@@ -1387,6 +1399,8 @@ def list_recurso_custos(recurso_id: str):
 @router.post("/recursos-compartilhados/{recurso_id}/custos",
     operation_id="create_recurso_custo")
 def create_recurso_custo(recurso_id: str, body: RecursoCustoBody, request: Request):
+    if err := require_portal_manage(request):
+        return err
     if not RecursoRepository().get(recurso_id):
         return fail("Recurso não encontrado.", 404)
     try:
@@ -1419,7 +1433,7 @@ def create_recurso_custo(recurso_id: str, body: RecursoCustoBody, request: Reque
 @router.post("/recursos-compartilhados/{recurso_id}/custos/reajuste",
     operation_id="reajuste_recurso_custo")
 def reajuste_recurso_custo(recurso_id: str, body: RecursoCustoReajusteBody, request: Request):
-    if err := require_transformometro_view_access(request):
+    if err := require_portal_manage(request):
         return err
     if not RecursoRepository().get(recurso_id):
         return fail("Recurso não encontrado.", 404)
@@ -1453,6 +1467,8 @@ def reajuste_recurso_custo(recurso_id: str, body: RecursoCustoReajusteBody, requ
 @router.put("/recurso-custos/{recurso_custo_id}",
     operation_id="update_recurso_custo")
 def update_recurso_custo(recurso_custo_id: str, body: RecursoCustoBody, request: Request):
+    if err := require_portal_manage(request):
+        return err
     existing = RecursoCustoRepository().get(recurso_custo_id)
     if not existing:
         return fail("Vigência de custo não encontrada.", 404)
@@ -1485,6 +1501,8 @@ def update_recurso_custo(recurso_custo_id: str, body: RecursoCustoBody, request:
 @router.delete("/recurso-custos/{recurso_custo_id}",
     operation_id="delete_recurso_custo")
 def delete_recurso_custo(recurso_custo_id: str, request: Request):
+    if err := require_portal_manage(request):
+        return err
     existing = RecursoCustoRepository().get(recurso_custo_id)
     if not existing:
         return fail("Vigência de custo não encontrada.", 404)

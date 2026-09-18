@@ -11,6 +11,7 @@ import {
   PORTAL_PRODUCT_NAME,
   PORTAL_WELCOME,
 } from "../../constants/portalExperience";
+import { useCanManagePortal } from "../../state/portalChrome";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 
 const SECTION = sectionCardPacBemClasses("ds");
@@ -25,17 +26,19 @@ type PortalHomePageProps = Pick<AppProps, "pathname"> & {
 export function PortalHomePage({ pathname, onNavigate }: PortalHomePageProps) {
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();
+  const canManage = useCanManagePortal();
   const groups = useMemo(
     () =>
       PORTAL_LAUNCHER_GROUPS.map((group) => ({
         ...group,
-        links: group.links.filter((link) =>
-          needle
+        links: group.links.filter((link) => {
+          if (!canManage && link.id === "administration") return false;
+          return needle
             ? `${group.title} ${link.label} ${link.description}`.toLowerCase().includes(needle)
-            : true,
-        ),
+            : true;
+        }),
       })).filter((group) => group.links.length > 0),
-    [needle],
+    [canManage, needle],
   );
 
   return (
