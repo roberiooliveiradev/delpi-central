@@ -242,7 +242,7 @@ W5 e W6 podem trocar de ordem. W9 não entra no meio.
 
 ## 13. Waves
 
-Cada wave abaixo está NOT_READY_FOR_IMPLEMENTATION até o pacote da §14 fechar o DoR. W0 é este documento.
+A Wave 1 tem pacote em [WAVE-1-IMPLEMENTATION-PACKET.md](./WAVE-1-IMPLEMENTATION-PACKET.md) e está READY_FOR_ARCH_REVIEW, não autorizada. As demais continuam NOT_READY_FOR_IMPLEMENTATION até o pacote da §14. W0 é este documento.
 
 | Wave | Objetivo | Inclui | Não inclui | Trilha | Aceite quando for executada |
 |---|---|---|---|---|---|
@@ -276,21 +276,34 @@ Rollback / Risks / Gaps
 Status = NOT_READY_FOR_IMPLEMENTATION até o DoR
 ```
 
-DoR: owner PROVEN, source PROVEN, boundary DECIDED, contrato de domínio DECIDED, AuthZ DECIDED, persistência DECIDED, impacto de API/MCP/Actions DECIDED, UX DECIDED, plano de migration READY, testes READY, aceite READY. Falta um item → não implementar.
+DoR decide se a wave pode começar. DoD decide se ela pode ser declarada concluída. Não misturar.
 
-DoD, só na wave que o pacote marcar como material: código no owner, teste positive/sibling/negative, AuthZ fail-closed, migration `up` se houver, OpenAPI se o contrato HTTP mudar, MCP/Actions só se a superfície mudar, UI com vazio/erro/403, read-back quando houver write, runtime não assumido por teste local, docs da fonte canônica atualizadas, commit pedido à parte. Deploy não faz parte deste runway.
+```text
+CODE COMPLETE != IMPLEMENTATION DONE != PRODUCTION VERIFIED
+technical success != business outcome
+HTTP 2xx != write success
+```
 
-Pirâmide: unitário de domínio e application quando houver regra nova; repositório se houver SQL; contrato HTTP se a rota mudar; AuthZ negativo; componente de UI na wave de tela; adapter MCP/Actions só se o pacote mexer neles; E2E não é obrigatório na Wave 1 se o aceite for deep link + 403. Dashboard e workspace atuais são o sibling que não pode quebrar.
+DoR: owner PROVEN, source PROVEN, boundary DECIDED, contrato de domínio DECIDED, AuthZ DECIDED, persistência DECIDED, impacto de API/MCP/Actions DECIDED, UX DECIDED, plano de migration READY ou NOT_APPLICABLE, testes READY, aceite READY. Falta um item necessário → não implementar.
+
+DoD, por tipo de passe:
+
+| Tipo | Runtime / deploy | Outcome |
+|---|---|---|
+| Só documentação | NOT_APPLICABLE | NOT_APPLICABLE |
+| Código sem release neste passe | DEFERRED_BY_SCOPE. Não chamar de produção | NOT_APPLICABLE se não houver write |
+| Runtime alterado | SHA, build, deploy, health, smoke, proveniência do ambiente | Se houver write: read-back autoritativo. Falha = `OUTCOME_VERIFICATION_FAILED`. 2xx não basta |
+| Wave 1, quando for executada | Frontend implantado: SHA, build, health e smoke no browser da versão que subiu | NOT_APPLICABLE. A wave não exige write |
+
+Itens do DoD só entram quando o pacote os marcar como materiais: código no owner, positive/sibling/negative, AuthZ fail-closed, migration `up`, OpenAPI se o HTTP mudar, descoberta MCP se a tool mudar, reimport de Actions se o schema mudar, estados de UI (loading, vazio, erro, 403), busca residual, docs da fonte canônica. Teste local verde não é produção.
+
+Pirâmide: unitário de domínio e application quando houver regra nova; repositório se houver SQL; contrato HTTP se a rota mudar; AuthZ negativo; componente de UI na wave de tela; adapter MCP/Actions só se o pacote mexer neles. Dashboard e workspace atuais são o sibling que não pode quebrar.
 
 ## 15. Primeira fatia recomendada
 
 **Portal shell + Meus processos em leitura + workspace que já existe.**
 
-Classificação desta revisão: **READY_FOR_ARCH_REVIEW**. Implementação: **NOT_READY_FOR_IMPLEMENTATION**. O pacote da §14 não está preenchido. Este arquivo não autoriza código.
-
-Motivo da recomendação: não pede migration, não pede sala, tarefa nem portfólio, reusa dashboard, lista e workspace, e prova o boundary D3/D4. Blast radius: MFE e, no máximo, rótulos. Backend fica estável.
-
-Fora dessa fatia: qualquer seção TARGET da §7, qualquer tool, qualquer favorito, qualquer rename.
+Pacote: [WAVE-1-IMPLEMENTATION-PACKET.md](./WAVE-1-IMPLEMENTATION-PACKET.md). Status do pacote: **READY_FOR_ARCH_REVIEW**. Implementação: **NOT AUTHORIZED**. As outras waves continuam sem pacote.
 
 ## 16. Drift
 
@@ -304,12 +317,14 @@ Fora dessa fatia: qualquer seção TARGET da §7, qualquer tool, qualquer favori
 | Finding, SIPOC entidade, plano de ação TM | TARGET ou TO_INVENTORY, não CURRENT |
 | Contagem MCP/Actions | PROVEN no código em `TOOL_CLASS` (33) e `GPT_ACTIONS_OPERATION_IDS` (21). Meta `gpt_get_openapi_schema` fora. 20 Actions e 32 tools = HISTORICAL (2026-09-17). 14 Actions = HISTORICAL mais antigo |
 | `gpt-builder-go-live.md` linhas que ainda diziam «20 actions» como critério atual | DOC_DRIFT corrigido neste passe. O reimport no Builder continua TEST_NOT_RUN |
-| `.cursor/rules/openai-plugin-mcp-integration.mdc` exemplo «32 tools ≠ 20 Actions» | CURSOR_RULE_DRIFT só no exemplo numérico, sob «não generalizar contagem». A regra não foi editada. O invariante (contagem ≠ paridade) continua válido; o número vigente no código é 33 ≠ 21 |
-| `ProcessContextService` importa `Request` FastAPI e repositórios | CODE_DRIFT de camada. Documentado. Código não foi alterado para esconder |
+| `.cursor/rules/openai-plugin-mcp-integration.mdc` exemplo «32 tools ≠ 20 Actions» | CURSOR_RULE_DRIFT = RESOLVED. O exemplo numérico saiu. Ficou a regra atemporal: tool count ≠ operation count; capability parity ≠ surface count parity |
+| `ProcessContextService` importa `Request` FastAPI, `interface.http.branch_access_http` e repositórios concretos | CODE_DRIFT = OPEN_NON_BLOCKING. PROVEN. Wave 1 = NOT_USED. Correção pequena seria enganosa: não há ports desses repositórios e a AuthZ está no helper HTTP. Não é FALSE_POSITIVE e não bloqueia a Wave 1 |
+| Definition of Done sem deploy | RESOLVED na §14. Docs = NOT_APPLICABLE. Release = SHA/deploy/smoke. Write = read-back ou `OUTCOME_VERIFICATION_FAILED` |
+| Wave 1 | Pacote preenchido. READY_FOR_ARCH_REVIEW. IMPLEMENTATION = NOT AUTHORIZED |
 | «editor Mermaid bidirecional» em `status-atual.md` | TO_INVENTORY. `flowchart_v1` segue canônico; Mermaid tem export e parser no kit. Este passe não reprovou ida e volta |
 
 Esta seção é o ledger de gap/drift da evolução Portal Transforma+ / TÉO. Não abrir outro ledger para o mesmo assunto.
 
 ## 17. Riscos
 
-Começar pela Wave 4 antes do shell e chamar isso de portal. Tratar o contexto atual como se já tivesse `sections`. Promover path conceitual a rota. Criar permissão por tela. Completar o DoR no papel e implementar no mesmo commit deste arquivo. Este arquivo não fecha o DoR de nenhuma wave de código.
+Começar pela Wave 4 antes do shell e chamar isso de portal. Tratar o contexto atual como se já tivesse `sections`. Promover path conceitual a rota. Criar permissão por tela. Tratar READY_FOR_ARCH_REVIEW como licença para codar. Este arquivo não autoriza implementação.
