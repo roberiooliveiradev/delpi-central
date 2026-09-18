@@ -1,7 +1,7 @@
 # Tutorial de uso — Transformômetro
 
 **Público:** gestores, analistas de processo e usuários operacionais  
-**Última atualização:** jul/2026 (workspace Processos + Configurações; subpastas de revisão; duplicar revisão; matriz impacto×esforço; referência entre revisões V035)  
+**Última atualização:** set/2026. Configurações deixou de ser área principal: o caminho é **Administração → Configurações**. O restante deste guia (cadastro, diagrama, revisão) continua válido.  
 **Acesso:** Minha Delpi → menu **Transformômetro** (`/apps/transformometro`)
 
 Este guia explica **como cadastrar corretamente**, **como usar diagramas** (macro → escopo → revisão) e **como tirar proveito das demais funcionalidades** do app.
@@ -26,8 +26,8 @@ Tudo gira em torno de uma **revisão** — cenário calculável (baseline, melho
 
 | Conceito | O que é | Onde cadastra |
 |----------|---------|---------------|
-| **Unidade (filial)** | Planta ou site operacional (ex.: SC, ES) | **Configurações** → Unidades |
-| **Departamento (setor)** | Área dentro da unidade (ex.: Engenharia, Qualidade) | **Configurações** → Departamentos |
+| **Unidade (filial)** | Planta ou site operacional (ex.: SC, ES) | **Administração → Configurações** → Unidades |
+| **Departamento (setor)** | Área dentro da unidade (ex.: Engenharia, Qualidade) | **Administração → Configurações** → Departamentos |
 | **Processo-mestre** | Iniciativa corporativa (ex.: «Automação do fechamento») | Menu **Processos** |
 | **Melhoria operacional** | Aplicação do processo a **unidade + departamento(s)** — foco distinto de transformação | Detalhe do processo → painel **Melhorias** |
 | **Revisão** | Cenário com vigência, medição e custos | Detalhe da melhoria → **Nova revisão** |
@@ -36,7 +36,7 @@ Tudo gira em torno de uma **revisão** — cenário calculável (baseline, melho
 | **Escopo no diagrama** | Quais nós do macro valem **nesta melhoria** | Detalhe da melhoria → **Escopo no diagrama** |
 | **Escopo no mapeamento** | Quais processos-chave da WBS esta melhoria executa | Detalhe da melhoria → **Escopo no mapeamento** |
 | **Overlay da revisão** | Estado visual **as-is** (baseline) ou **to-be** (melhoria) — fluxo e/ou WBS | Detalhe da revisão → **Diagrama** / **Mapeamento da revisão** |
-| **Recurso compartilhado** | Licença/ferramenta rateada entre revisões | **Configurações** → Recursos + vínculo na revisão |
+| **Recurso compartilhado** | Licença/ferramenta rateada entre revisões | **Administração → Configurações** → Recursos. O vínculo na revisão é uso normal |
 
 ### Hierarquia recomendada
 
@@ -60,7 +60,7 @@ Siga esta sequência na **primeira implantação** ou ao onboarding de uma nova 
 
 ### Passo 1 — Unidades
 
-1. Abra **Configurações** → pasta **Unidades** (ou clique em uma unidade na árvore).
+1. Abra **Administração → Configurações** → pasta **Unidades**.
 2. Cadastre cada filial com **código TOTVS** (ex.: `01`, `02`) e nome.
 3. Mantenha status **ativo** para aparecer em formulários e filtros.
 
@@ -68,14 +68,14 @@ Siga esta sequência na **primeira implantação** ou ao onboarding de uma nova 
 
 ### Passo 2 — Departamentos
 
-1. Abra **Configurações** → pasta **Departamentos**.
+1. Abra **Administração → Configurações** → pasta **Departamentos**.
 2. Cadastre o código (ex.: `engenharia`) e o nome.
 3. Marque **em quais unidades** o departamento existe.
 4. Um departamento só pode ser usado em processos das unidades vinculadas.
 
 ### Passo 3 — Recursos compartilhados (opcional, mas cedo se houver licenças globais)
 
-1. Abra **Configurações** → pasta **Recursos compartilhados**.
+1. Abra **Administração → Configurações** → pasta **Recursos compartilhados**.
 2. Cadastre licenças, assinaturas ou ferramentas compartilhadas.
 3. Defina **escopo do recurso**:
    - **Empresa** — rateio entre todos os vínculos vigentes;
@@ -121,12 +121,14 @@ Siga esta sequência na **primeira implantação** ou ao onboarding de uma nova 
 
 | Aba / menu | Função |
 |------------|--------|
-| **Dashboard** | KPIs, gráficos, alertas, exportação, recalcular |
-| **Processos** | Lista e **workspace** do processo-mestre (árvore lateral) |
-| **Configurações** | Unidades, departamentos e recursos compartilhados (workspace com árvore) |
-| **Exportar / Importar** | Backup e restauração JSON |
+| **Início** | Launcher do portal |
+| **Visão geral** | KPIs, gráficos, alertas, exportação, recalcular |
+| **Meus processos** | Lista e **workspace** do processo-mestre (árvore lateral) |
+| **Administração** | Configurações administrativas. Não é peer de Configurações |
+| **Configurações** | Subárea: unidades, departamentos e catálogo de recursos |
+| **Exportar / Importar** | Backup e restauração JSON. Uso normal, não administração |
 
-> As antigas abas **Unidades**, **Departamentos** e **Recursos** foram unificadas em **Configurações**. URLs legadas (`/filiais`, `/setores`, `/recursos`, `/cadastros/*`) continuam abrindo o mesmo conteúdo.
+> Configurações não aparece na navegação principal. As antigas abas **Unidades**, **Departamentos** e **Recursos** continuam no workspace de Configurações. URLs legadas (`/filiais`, `/setores`, `/recursos`, `/cadastros/*`, `/configuracoes/*`) abrem o mesmo conteúdo em `/settings/*`.
 
 ### Workspace de Processos
 
@@ -199,9 +201,9 @@ Botões **Nova unidade**, **Novo departamento** e **Novo recurso** ficam no roda
 | Melhoria (instância) | `/apps/transformometro/processos/{processoId}/instancias/{instanciaId}` |
 | Revisão | `/apps/transformometro/processos/{processoId}/instancias/{instanciaId}/revisoes/{revisaoId}` |
 | Seção da revisão | Mesma URL + hash (`#matriz`, `#vigencia`, `#medicao`, …) |
-| Configurações — unidades | `/apps/transformometro/configuracoes/unidades` |
-| Configurações — departamentos | `/apps/transformometro/configuracoes/departamentos` |
-| Configurações — recursos | `/apps/transformometro/configuracoes/recursos` |
+| Configurações — unidades | `/apps/transformometro/settings/units` |
+| Configurações — departamentos | `/apps/transformometro/settings/departments` |
+| Configurações — recursos | `/apps/transformometro/settings/shared-resources` |
 
 > A rota contém `/instancias/` por compatibilidade técnica; na UI o rótulo é **Melhoria**.
 

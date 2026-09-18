@@ -14,9 +14,10 @@ Plugin microfrontend do Transformômetro para o portal Minha Delpi.
 | `/apps/transformometro/processos/{id}/instancias/{instanciaId}/diagrama/edit` | Editor full-page do escopo no diagrama |
 | `/apps/transformometro/processos/{id}/instancias/{instanciaId}/revisoes/{revisaoId}` | URL canônica da revisão + subpastas na árvore |
 | `/apps/transformometro/processos/{id}/instancias/{instanciaId}/revisoes/{revisaoId}/diagrama/edit` | Editor full-page do overlay da revisão |
-| `/apps/transformometro/configuracoes/unidades` | **Workspace Configurações** — catálogo de unidades |
-| `/apps/transformometro/configuracoes/departamentos` | Departamentos no workspace |
-| `/apps/transformometro/configuracoes/recursos` | Recursos compartilhados no workspace |
+| `/apps/transformometro/administration` | Administração. Configurações entra por aqui |
+| `/apps/transformometro/settings/units` | Catálogo de unidades |
+| `/apps/transformometro/settings/departments` | Departamentos |
+| `/apps/transformometro/settings/shared-resources` | Catálogo de recursos compartilhados |
 | `/apps/transformometro/dados` | Export/import backup JSON |
 | `/apps/transformometro/meeting-minutes` | Atas Transforma+ (lista por filial) |
 | `/apps/transformometro/meeting-minutes/new` · `…/{id}/edit` | Editor: preencher ou importar DOCX + **Gerar ata com IA** (Kimi) + signatários |
@@ -25,7 +26,7 @@ Plugin microfrontend do Transformômetro para o portal Minha Delpi.
 | `/apps/transformometro/meeting-minutes/pending` | Pendências de assinatura do usuário |
 | `/apps/transformometro/my-signature` | Perfil de assinatura pessoal |
 
-**Legado (ainda parseado):** `/filiais`, `/setores`, `/recursos`, `/cadastros/*` — redirecionam para o mesmo conteúdo em `/configuracoes/*`.
+**Legado (ainda parseado):** `/filiais`, `/setores`, `/recursos`, `/cadastros/*`, `/configuracoes/*` — o parser reescreve para `/settings/*`. Configurações não é rota de menu principal.
 
 **Fonte de dados:** Postgres via `transformometro-api` (não planilha Google).
 
@@ -53,7 +54,7 @@ Dois ambientes com **árvore lateral** colapsável e redimensionável (persistê
 | Aba | Árvore | Conteúdo principal |
 |-----|--------|-------------------|
 | **Processos** | Processo → seções (visão geral, mapeamento, diagrama, melhorias…) → melhoria → revisão → **subpastas** (matriz, vigência, medição…) | Detalhe embutido à direita |
-| **Configurações** | Unidades / Departamentos / Recursos → itens do catálogo → subpastas do recurso (dados, custos, vínculos) | Listas e formulários embutidos |
+| **Configurações** | Subárea de Administração: unidades, departamentos e catálogo de recursos | Listas e formulários embutidos |
 
 Na revisão, cada subpasta corresponde a uma seção do cadastro (hash `#matriz`, `#vigencia`, etc.). Badge de quadrante (matriz impacto × esforço) aparece no nó da revisão na árvore de Processos.
 

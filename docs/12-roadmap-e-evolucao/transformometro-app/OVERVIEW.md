@@ -27,23 +27,24 @@ Origem histórica: **Google Sheets + Apps Script**. Hoje a aplicação web na **
 | Banco | schema `transformometro` em `postgres-plugins` | `PLUGINS_DB_*` |
 | Cadastro de dados | CRUD na API + telas do MFE | Postgres como fonte de verdade |
 
-### Rotas do MFE (menu e abas superiores)
+### Rotas do MFE
+
+A navegação principal é Início, Visão geral, Meus processos e Administração. Configurações não é aba superior: fica em Administração. Os paths abaixo são deep links; aliases em português continuam canônicos no parser.
 
 | Rota | Função |
 |------|--------|
 | `/apps/transformometro/dashboard` | KPIs, toggle Consolidado/Filial/Departamento, alertas, export, recalcular |
-| `/apps/transformometro/processos` | Lista; create com primeira melhoria; duplicar processo completo |
-| `/apps/transformometro/processos/{id}` | **Workspace** do mestre (árvore: seções, melhorias, revisões e subpastas) |
-| `/apps/transformometro/processos/{id}/instancias/{instanciaId}/revisoes/{revisaoId}` | URL canônica da revisão (rota `/instancias/` = melhoria na UI); seções via hash `#matriz`, `#vigencia`, … |
-| `/apps/transformometro/processos/{id}/revisoes/{revisaoId}` | Legado (redirect automático) |
-| `/apps/transformometro/configuracoes/unidades` | Catálogo de filiais (workspace Configurações) |
-| `/apps/transformometro/configuracoes/departamentos` | Catálogo de setores |
-| `/apps/transformometro/configuracoes/recursos` | Catálogo global (`escopo_recurso`) |
-| `/apps/transformometro/dados` | Export/import backup JSON |
+| `/apps/transformometro/processes` | Lista; create com primeira melhoria; duplicar processo completo |
+| `/apps/transformometro/processes/{id}` | Workspace do mestre |
+| `/apps/transformometro/administration` | Administração. Exige `transformometro.manage` |
+| `/apps/transformometro/settings/units` | Catálogo de filiais, dentro de Configurações |
+| `/apps/transformometro/settings/departments` | Catálogo de setores |
+| `/apps/transformometro/settings/shared-resources` | Catálogo de recursos compartilhados |
+| `/apps/transformometro/data` | Export/import backup JSON |
 
-**Legado:** `/filiais`, `/setores`, `/recursos`, `/cadastros/*` — ainda reconhecidos pelo roteador.
+**Legado:** `/filiais`, `/setores`, `/recursos`, `/cadastros/*`, `/configuracoes/*` — o parser reescreve para `/settings/*`.
 
-No workspace de Processos, cada revisão expõe subpastas na árvore (matriz, vigência, medição, investimentos, recursos, evidências, diagrama, mapeamento). A aba superior **Configurações** concentra os três catálogos operacionais com o mesmo padrão de sidebar colapsável e redimensionável.
+No workspace de Processos, cada revisão expõe subpastas na árvore (matriz, vigência, medição, investimentos, recursos, evidências, diagrama, mapeamento). O workspace de Configurações concentra os três catálogos, com a mesma sidebar, e só se abre pela Administração.
 
 ## Fluxo do usuário
 

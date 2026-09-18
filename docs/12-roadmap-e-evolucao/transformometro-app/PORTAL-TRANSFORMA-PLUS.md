@@ -48,7 +48,7 @@ TopBar funcional nesta revisão: Início, Visão geral, Meus processos, Administ
 
 TARGET, não PROVEN e não exibido: Sala de interação, Minhas tarefas, Ajuda, Favoritos, Usuário. A sala do Comercial não é reutilizada. Pendências de ata não viram Minhas tarefas. `user_favorite_apps` do Core é favorito de app do portal, não atalho deste launcher.
 
-O Início cataloga Operação, Gestão, Registros e Administração. Atas, Configurações e Exportar/Importar continuam nas rotas atuais.
+O Início cataloga Operação, Gestão, Registros e Administração. Configurações não é card do Início: entra por Administração. Exportar/Importar fica em Registros.
 
 ## 1. O que o Transformômetro já mostra
 
@@ -56,7 +56,8 @@ PROVEN em `TransformometroNav` e no parser de rotas. Home atual **é** o dashboa
 
 | Peça | Estado |
 |---|---|
-| Dashboard, Processos, Atas, Configurações, Exportar/Importar | PROVEN |
+| Dashboard, Processos, Atas, Exportar/Importar | PROVEN |
+| Administração → Configurações | CURRENT. Configurações não é área principal |
 | Workspace do processo (visão geral, dados, mapeamento, diagrama, arquivos, melhorias, priorização, timeline) | PROVEN |
 | Configurações: unidades, departamentos, recursos compartilhados | PROVEN |
 | `PluginShell` dentro do MFE Transformômetro | Ausente. PROVEN que não existe |

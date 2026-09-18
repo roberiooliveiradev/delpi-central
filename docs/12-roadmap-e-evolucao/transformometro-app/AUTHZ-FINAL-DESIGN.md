@@ -77,8 +77,9 @@ O backend só conhece `transformometro.access` e `transformometro.manage`. `Fili
 | Atas | `can_view_filial` / `can_manage_filial` | `access`; assinar pela regra do signatário | sim |
 | `/options` | esconde filial fora do papel | catálogo para o filtro, com `access` | sim |
 | Writes de instância | `check_manage_filial_access` | `access` + regra de domínio | sim |
-| Catálogo de filial | `access` | `access` | feito na policy |
-| Recurso, backup, recálculo de usuário | `access` | `access` | feito na policy |
+| Catálogo de filial e departamento | leitura de referência com `access` | escrita administrativa com `manage` | feito na policy |
+| Catálogo de recurso compartilhado | escrita administrativa com `manage` | vínculo na revisão com `access` | feito na policy |
+| Backup e recálculo de usuário | `access` | `access` | feito na policy |
 | Administração de equipe, grupo e acesso | ainda não existe no app | `manage`, via Core | rota depois do assignment |
 | GPT/MCP | os mesmos helpers | o mesmo contexto do HTTP | sim |
 

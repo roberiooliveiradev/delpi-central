@@ -313,12 +313,13 @@ Manifesto `transformometro.manifest.json` (espelho do SI):
 | `/apps/transformometro/processos/{id}/instancias/{instanciaId}` | Melhoria no workspace |
 | `/apps/transformometro/processos/{id}/instancias/{instanciaId}/revisoes/{revisaoId}` | URL **canônica** da revisão; seções via hash (`#matriz`, `#vigencia`, …) |
 | `/apps/transformometro/processos/{id}/revisoes/{revisaoId}` | Legado → redirect para URL canônica |
-| `/apps/transformometro/configuracoes/unidades` | Workspace **Configurações** — filiais |
-| `/apps/transformometro/configuracoes/departamentos` | Departamentos (`codigo_setor` na UI) |
-| `/apps/transformometro/configuracoes/recursos` | Recursos + **`escopo_recurso`** + subpastas custos/vínculos |
+| `/apps/transformometro/administration` | Administração. Configurações não é área principal |
+| `/apps/transformometro/settings/units` | Configurações — filiais. Alias `/configuracoes/unidades` |
+| `/apps/transformometro/settings/departments` | Departamentos. Alias `/configuracoes/departamentos` |
+| `/apps/transformometro/settings/shared-resources` | Recursos. Alias `/configuracoes/recursos` |
 | `/apps/transformometro/dados` | Export/import backup JSON 1.1 (`filiais`, `processo_instancias`) |
 
-**Legado MFE:** `/filiais`, `/setores`, `/recursos`, `/cadastros/*` — parseados pelo roteador.
+**Legado MFE:** `/filiais`, `/setores`, `/recursos`, `/cadastros/*`, `/configuracoes/*` — o parser leva a `/settings/*`. Configurações não é peer de Início, Visão geral, Meus processos ou Administração.
 
 Módulos MFE: `routeParser.ts`, `processoWorkspaceNav.ts`, `configuracoesWorkspaceNav.ts`, `ProcessoWorkspaceShell.tsx`, `ConfiguracoesWorkspaceShell.tsx`, `dashboardViewScope.ts`.
 

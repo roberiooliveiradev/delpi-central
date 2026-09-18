@@ -10,7 +10,7 @@ TopBar funcional: Início, Visão geral, Meus processos, Administração. Busca 
 
 Target oculto, não PROVEN: Sala de interação, Minhas tarefas, Ajuda. Utility oculta: Favoritos e Usuário. Não há contrato transversal; o favorito `/me/home-favorites` continua do Comercial.
 
-Launcher do Início: Operação, Gestão, Registros, Administração. Atas, Configurações e Exportar/Importar saíram da TopBar e seguem pelas rotas atuais. Administração é composição frontend sobre essas rotas, sem Keycloak e sem RBAC novo.
+Launcher do Início: Operação, Gestão, Registros, Administração. Configurações não é card nem item da TopBar. Fica em Administração → Configurações. Exportar/Importar fica em Registros e exige `transformometro.access`. Administração exige `transformometro.manage`. Sem Keycloak novo e sem terceira permission.
 
 ## 1. Stack provada
 
@@ -42,7 +42,7 @@ Backend: FastAPI, repositórios `PluginBaseRepository` com psycopg (não SQLAlch
 | Lista | MFE TM | `ProcessesPage` |
 | Workspace | MFE TM | `ProcessWorkspaceShell` / `processWorkspaceNav.ts` |
 | Atas | MFE TM | `MeetingMinutesPage` e rotas de ata |
-| Configurações | MFE TM | `settingsWorkspaceNav.ts` — unidades, departamentos, recursos |
+| Configurações | MFE TM | Administração → `settingsWorkspaceNav.ts` — unidades, departamentos, recursos |
 | Exportar | MFE TM | `DataTransferPage` |
 
 Kit em `@delpi/plugin-ui`, confirmado no índice: `TopBar`, `PageHero`, `NavigationCard`, `KpiCard`, `SectionCard`, `EmptyState`, `FiltersRow`, `CommandPalette`, `FieldLabel`, `NativeTextControl`, `HelpTooltip`. O MFE **já** usa `KpiCard` (wrapper local), `FieldLabel`, `HelpTooltip`. **Não** importa `TopBar`, `PageHero`, `NavigationCard` nem `EmptyState` hoje.
@@ -56,8 +56,9 @@ Início            launcher. Não repete o dashboard inteiro.
 Visão geral       o dashboard que já existe.
 Meus processos    lista autorizada. Não é "processos de que sou dono".
 Atas              fluxo atual.
-Configurações     catálogos do domínio. Não é admin de Keycloak/Core.
-Exportar/Importar fluxo atual, com confirmação de replace.
+Administração     container. Exige manage.
+  Configurações   catálogos do domínio. Não é área principal nem admin de Keycloak/Core.
+Exportar/Importar fluxo atual, com confirmação de replace. Fica em Registros.
 ```
 
 Fora da nav: Sala, Tarefas, Portfólio, Diagnóstico, definição de KPI, plano, arquitetura corporativa, Ajuda como página.
@@ -78,7 +79,8 @@ Propósito: orientar. Dado: nenhuma lista "recentes" (não há fonte). Ação: n
 │ Transformação e melhoria de processos            │
 │                                                  │
 │ [Meus processos] [Visão geral] [Atas]            │
-│ [Configurações] [Exportar / Importar]            │
+│ [Exportar / Importar]                            │
+│ [Administração] só com manage                    │
 └──────────────────────────────────────────────────┘
 ```
 
@@ -140,7 +142,7 @@ Lista, filtro e status atuais. Pendência em `/meeting-minutes/pending`. Detalhe
 
 ### Configurações
 
-Unidades, departamentos, recursos. Identidade e RBAC ficam no Keycloak e no Core. A tela não ganha gestão de usuário.
+Subárea de Administração, não caminho de primeiro nível. Unidades, departamentos e catálogo de recursos compartilhados. O CRUD administrativo exige `transformometro.manage`. A consulta para operar um processo continua `access`. Identidade e RBAC ficam no Keycloak e no Core. A tela não ganha gestão de usuário.
 
 ### Exportar / Importar
 
@@ -155,7 +157,7 @@ Export JSON/pacote e import com preview. Modo `replace` pede `useConfirm` ("Subs
 | Meus processos | `list_processos` | não | não | não | não |
 | Workspace | APIs já do workspace | os writes atuais, sem ampliação | não | não | não |
 | Atas | meeting-minutes | fluxo atual | não | não | não |
-| Configurações | CRUD de catálogo | fluxo atual | não | não | não |
+| Configurações | CRUD de catálogo, sob Administração | fluxo atual | não | não | não |
 | Exportar | backup JSON | fluxo atual | não | não | não |
 
 Cache: sem React Query. Invalidação continua a que cada página já faz no `load()`. Abort existe em algumas buscas (ata, presença), não é padrão global. N+1 do dashboard (vários `fetchDashboard*`) é CURRENT_RISK, não bloqueia a wave: não criar endpoint agregado só para o wireframe.

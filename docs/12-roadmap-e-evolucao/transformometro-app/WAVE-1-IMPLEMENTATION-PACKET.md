@@ -1,6 +1,7 @@
 # Wave 1 — Implementation Packet
 
 > **Status:** IMPLEMENTED_NOT_RUNTIME_PROVEN. Código da Wave 1 está em `383e07b73` e o MFE `transformometro` foi reconstruído em `srv-api`. Smoke visual no browser = TEST_NOT_RUN. Não promove a PROVEN.
+> **SUPERSEDED (IA):** a nav desta wave tratava Configurações como peer. O caminho vigente é Administração → Configurações. Fonte: [PORTAL-TRANSFORMA-BLUEPRINT.md](./PORTAL-TRANSFORMA-BLUEPRINT.md).
 > **Sequência:** [ARCHITECTURE-RUNWAY.md](./ARCHITECTURE-RUNWAY.md). Este arquivo é o único pacote da Wave 1.  
 > DoR preenchido abaixo não é DoD e não é licença para codar.
 
@@ -25,7 +26,7 @@ Nav: `TransformometroNav.tsx`. Rotas: `plugins/transformometro/src/constants/rou
 
 ## Current state
 
-Nav PROVEN: Dashboard, Processos, Atas, Configurações, Exportar/Importar. Home é o dashboard. Lista filtra por `status` e `q` (`ProcessesPage`). O backend também aceita `filial_id`, `setor_id` e `familia_processo`, devolve `{total, items}` sem paginação, e aplica `filter_rows_for_access`. 403 vira título «Acesso negado» (`apiErrorMessage.ts`). A página passa `error` para `StatusAlerts` e `emptyMessage` só para lista vazia. Workspace PROVEN: visão geral, dados, mapeamento, diagrama, arquivos, melhorias, priorização, timeline. O MFE não chama `get_process_context`.
+Nav desta wave (HISTORICAL): Dashboard, Processos, Atas, Configurações, Exportar/Importar. Configurações deixou de ser peer; ver o aviso SUPERSEDED no topo. Home é o dashboard. Lista filtra por `status` e `q` (`ProcessesPage`). O backend também aceita `filial_id`, `setor_id` e `familia_processo`, devolve `{total, items}` sem paginação, e aplica `filter_rows_for_access`. 403 vira título «Acesso negado» (`apiErrorMessage.ts`). A página passa `error` para `StatusAlerts` e `emptyMessage` só para lista vazia. Workspace PROVEN: visão geral, dados, mapeamento, diagrama, arquivos, melhorias, priorização, timeline. O MFE não chama `get_process_context`.
 
 ## Target state
 
@@ -39,7 +40,7 @@ Nav desta wave:
 | Visão geral | `/dashboard` | O dashboard atual. Sem read model novo |
 | Meus processos | `/processes` | Ver semântica abaixo |
 | Atas | `/meeting-minutes` | Capability já na nav |
-| Configurações | `/settings` | Não rotular «Administração». O que existe é unidade, departamento e recurso |
+| Configurações | `/settings` | SUPERSEDED como peer. Vigente: Administração → Configurações |
 | Exportar/Importar | `/data` | Permanece. Não é admin de usuário |
 
 Ajuda, Sala, Tarefas e Portfólio **não entram** na nav. Ajuda hoje é tooltip, não página.

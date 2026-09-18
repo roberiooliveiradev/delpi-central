@@ -172,7 +172,7 @@ Aliases PT preservados (`/processos`, `/atas`, `/dados`, …).
 | WBS | Decomposição / mapeamento | workspace processo |
 | Matriz | Impacto × esforço | revisão |
 | Governança | Atas Transforma+ + assinatura | meeting-minutes pages |
-| Admin | Filiais, departamentos, recursos, data transfer | settings + data |
+| Admin | Administração → Configurações: filiais, departamentos, catálogo de recursos | settings. Data transfer é uso normal |
 | Conversacional | TÉO (ChatGPT Actions) | fora do MFE |
 
 ### AuthZ
