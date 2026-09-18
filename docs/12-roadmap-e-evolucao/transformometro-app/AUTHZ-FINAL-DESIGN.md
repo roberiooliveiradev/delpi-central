@@ -1,12 +1,14 @@
 # Portal Transforma+ — autorização final
 
-> **Status:** fatia 1 no runtime. Códigos antigos ainda ativos.
-> **access/manage = IMPLEMENTED_COMPATIBILITY.**
+> **Status:** fatia 1 no runtime. Fatia 2A preparou a matriz e não sincronizou o catálogo.
+> **access/manage no backend = IMPLEMENTED_COMPATIBILITY.**
 > **unit authorization = REMOVED_FROM_RUNTIME.**
-> **legacy codes = ACTIVE_FOR_COMPATIBILITY.**
-> **manifest simplification = IN_PROGRESS.** Não é 21 → 2 concluído.
-> **IMPLEMENTATION da migração de papéis = NOT AUTHORIZED.**
-> A rota raiz com `access` não foi publicada. O portal compara o código exato e os usuários atuais ainda não têm o assignment.
+> **ACCESS/MANAGE CORE CATALOG = ABSENT.** Leitura em 2026-09-18: 21 códigos.
+> **ASSIGNMENTS = NOT_MIGRATED.**
+> **HUMAN MATRIX = PREPARED.** `manage` continua UNCLASSIFIED.
+> **LEGACY = ACTIVE.**
+> **ROUTE MIGRATION = PENDING.**
+> **ASSIGNMENT WRITE = NOT AUTHORIZED.**
 
 ## EXECUTION_DRIFT
 
@@ -94,14 +96,19 @@ Os códigos `access` e `manage` foram adicionados. Os 21 antigos permanecem. As 
 
 A TopBar não cria permission e não muda com a filial. Uso normal: `access`. Administração: `manage`.
 
+## Catálogo da Core
+
+Leitura autoritativa em `delpi-postgres-core`, app `transformometro`, versão `0.5.0`, nome ainda `Transformômetro`. 21 códigos. Os dois novos não estão lá. Zero grant direto. O `PUT` de manifesto recusa mudança de permission. O `POST /admin/apps/register` da mesma versão devolve `plugin.version_already_exists`. Um register de versão nova preserva UUID dos códigos que permanecem e apaga o que sair do manifesto. Os 21 atuais estão no manifesto do Git, então um register futuro inseriria 2 e apagaria 0. O mesmo register recria rotas e a identidade do app. Produção tem 6 rotas e o nome antigo. O manifesto do Git tem 7 rotas, inclusive Administração, e o nome Portal Transforma+. Isso não é sync só de código. Não houve write. Não houve ator `apps.manage` nesta sessão. Homologação: **TO_INVENTORY**.
+
 ## Papéis
 
-Produção, inventário anterior: papel Transforma Mais, 21 códigos, 4 usuários, grupo Supervisor Engenharia, zero grant direto. Não reconsultar neste passe. Não inferir `manage` pelo nome.
+Releitura de 2026-09-18. Um papel, um grupo, quatro pessoas, zero grant direto. Três pessoas têm o papel direto. Uma tem o papel direto e também o grupo. Não criar papel novo. A menor write futura é no papel que já existe. `manage` não foi inferido.
 
-| Principal ou grupo | access | manage | Aprovador | Status |
-|---|---|---|---|---|
-| 4 usuários do papel Transforma Mais | — | — | — | UNCLASSIFIED |
-| grupo Supervisor Engenharia | — | — | — | UNCLASSIFIED |
+| Principal ou grupo | Efeito atual | access proposto | manage proposto | Fonte | Status |
+|---|---|---|---|---|---|
+| papel Transforma Mais `86a058d2-aeb3-4c85-b103-d52ba0ac22e9` | 21 códigos, inclusive `view` e os manages de uso | adicionar `access` | não propor | o papel já abre o portal pelo legado de uso | PROPOSED |
+| grupo Supervisor Engenharia `5585f5f3-27f0-4d31-a032-91279d21f4f4` | herda o mesmo papel | nenhum grant novo | nenhum | o grupo não é a única via | PROPOSED |
+| quatro pessoas ligadas ao papel | superadmin da plataforma, além do papel | nenhum grant direto | UNCLASSIFIED | superadmin não decide `manage` do produto | UNCLASSIFIED |
 
 ## Transição
 
