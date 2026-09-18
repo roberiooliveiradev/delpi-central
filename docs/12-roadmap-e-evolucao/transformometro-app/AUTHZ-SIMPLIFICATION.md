@@ -1,10 +1,9 @@
 # Portal Transforma+ — simplificação de AuthZ multiunidade
 
-> **Status:** inventário e alvo para revisão. **IMPLEMENTATION = NOT AUTHORIZED.**  
-> **AUTHZ_MIGRATION = NOT_READY.**  
-> Base: `769b2a0a161af54c36eb58bd31a0d7033de412ab`.  
-> Manifesto lido: `plugins/transformometro/transformometro.manifest.json`.  
-> Enforcement lido: `transformometro_permissions.py`, `branch_access_scope_service.py`, `branch_access_http.py`, `meeting_minutes_service.py`, `dispatch_service.py`.
+> **Status:** hardening de enforcement aplicado. Simplificação do manifesto **não autorizada**.
+> **AUTHZ_MIGRATION = NOT_READY.**
+> Base do inventário: `769b2a0a161af54c36eb58bd31a0d7033de412ab`.
+> Hardening: ver §10.
 
 Keycloak continua identidade. Core continua dono do RBAC transversal (`PermissionResolver` + `/me`). Transformômetro aplica a regra final de domínio. Frontend não autoriza. TÉO consome o mesmo usuário.
 
@@ -20,15 +19,15 @@ O manifesto declara **21** códigos. Sete são alias legado explícito no própr
 | `transformometro.measurements.manage` | REDUNDANT como RBAC fino | Só aparece como membro de `GLOBAL_MANAGE_PERMISSIONS`. Sem consumidor HTTP próprio. |
 | `transformometro.investments.manage` | REDUNDANT como RBAC fino | Igual medições. |
 | `transformometro.shared-resources.manage` | SPECIAL_CAPABILITY hoje | Além do conjunto global, `require_shared_resources_manage` barra o catálogo de recursos. |
-| `transformometro.dashboard.recalculate` | SPECIAL_CAPABILITY parcial | GPT/MCP exigem este código **ou** qualquer manage global. `POST /dashboard/recalcular` **não** chama esse gate. |
-| `transformometro.view.consolidated` | ORGANIZATIONAL_SCOPE | Só importa quando o usuário já está em modo `scoped`. Sem código de filial, a visão já é irrestrita. |
+| `transformometro.dashboard.recalculate` | SPECIAL_CAPABILITY | HTTP, MCP e GPT Actions chamam `TransformometroAuthorizationPolicy.require_dashboard_recalculate`. O recálculo interno depois de escrita ou importação não usa esse gate. |
+| `transformometro.view.consolidated` | ORGANIZATIONAL_SCOPE | Abre a visão consolidada quando o usuário está em modo `scoped`. Sem código de filial, não abre as unidades. |
 | `transformometro.branch.filial-01` | ORGANIZATIONAL_SCOPE | Fonte canônica atual do escopo da unidade 01. |
 | `transformometro.branch.filial-02` | ORGANIZATIONAL_SCOPE | Fonte canônica atual do escopo da unidade 02. |
 | `transformometro.view.filial-01` | LEGACY_ALIAS | Soma a unidade 01 em `FilialAccessScopeService`. |
 | `transformometro.view.filial-02` | LEGACY_ALIAS | Soma a unidade 02. |
 | `transformometro.manage.filial-01` | LEGACY_ALIAS | Escopo 01 **e** escrita naquela unidade, sem manage global. |
 | `transformometro.manage.filial-02` | LEGACY_ALIAS | Igual para 02. |
-| `transformometro.data.transfer` | SPECIAL_CAPABILITY só no portal | Porta `/data` no manifesto. Nenhuma checagem no `json_backup_routes.py`. |
+| `transformometro.data.transfer` | SPECIAL_CAPABILITY | Export, preview e import na API exigem este código. O colapso para `manage` continua decisão de negócio. CLI de operador não passa por este gate. |
 | `transformometro.meeting-minutes.view` | PRODUCT_ACCESS de ata | Lista e leitura, com alias `atas.view`. |
 | `transformometro.meeting-minutes.manage` | DOMAIN + escopo | Cria/edita/envia/finaliza. Também entra em `GLOBAL_MANAGE`. |
 | `transformometro.meeting-minutes.sign` | DOMAIN_RESOURCE_AUTHZ + permissão | Exigida em `_assert(..., "sign")`. Além disso o serviço exige ser signatário e estado assinável. |
@@ -42,24 +41,24 @@ Não existem outros códigos `transformometro.*` no manifesto além destes 21.
 
 | Campo | Valor |
 |---|---|
-| UNIT_SCOPE_OWNER | Transformômetro, `FilialAccessScopeService` |
-| UNIT_SCOPE_SOURCE | Códigos no `user.permissions` devolvido pelo Core `GET /me` |
-| UNIT_SCOPE_CONTRACT | PROVEN para o modelo atual: `branch.filial-*`, com alias `view.filial-*` e `manage.filial-*` |
-| UNIT_SCOPE_BACKEND_ENFORCEMENT | PROVEN em `check_*_access`, `filter_rows_for_access` e atas |
-| Contrato alvo `authorized_units` sem permission | **TO_INVENTORY** |
+| ASSIGNMENT AUTHORITY | Core: `role_permissions`, `user_roles`, `group_roles`, `user_permissions`. Sem tabela de membership ou unit scope. |
+| SOURCE | Códigos em `user.permissions` do Core `GET /me` |
+| DOMAIN INTERPRETER | Transformômetro, `FilialAccessScopeService` |
+| ENFORCEMENT | `check_*_access`, `filter_rows_for_access`, atas, policy de backup e recálculo |
+| Contrato alvo `authorized_units` sem permission | **TO_INVENTORY**. Core público não tem tabela de scope, membership, filial ou unit. |
 
-Regra provada:
+Regra vigente depois do hardening:
 
 - superadmin → `unrestricted`;
-- sem nenhum código de filial → `unrestricted` (vê todas as unidades);
-- com `branch`/`view.filial`/`manage.filial` → `scoped` às unidades `01` e/ou `02`;
-- `view.consolidated` só abre o consolidado **dentro** do modo scoped;
-- escrita na filial: `manage.filial-*` **ou** qualquer código de `GLOBAL_MANAGE_PERMISSIONS`, e a filial precisa ser visível;
-- `user is None` em `resolve()` também cai em `unrestricted`. Isso é fail-open se o request chegar sem usuário. Não corrigir neste passe.
+- `user is None` → `denied`;
+- sem código de filial, usuário autenticado → `scoped` vazio (não vê unidade);
+- com `branch`/`view.filial`/`manage.filial` → `scoped` em `01` e/ou `02`;
+- `view.consolidated` abre só o consolidado nesse modo;
+- escrita na filial visível: `manage.filial-*` ou qualquer `GLOBAL_MANAGE_PERMISSIONS`.
 
-Não há claim JWT, grupo Keycloak nem tabela local de unidades autorizadas. Cargo não entra.
+Opções de alvo ainda não implementadas: membership de app com unidades, assignment de permission já escopado, IDs de unidade no `/me`, escopo organizacional transversal. Nenhuma está no schema do Core. Não criar claim JWT, tabela local nem convenção de grupo Keycloak.
 
-Por isso `branch.filial-03` não é a direção futura: cada unidade nova vira código, papel, teste e alias. Mas **não dá para apagar** `branch.filial-01/02` enquanto não existir outra fonte de escopo. Remover agora abriria todas as unidades para quem só tinha uma.
+Produção inventariada sem nomes de pessoas: um papel, `Transforma Mais`, com os 21 códigos, 4 usuários no papel, 1 grupo (`Supervisor Engenharia`), zero grant direto. Não há persona só de acesso, só de uma unidade, só de assinatura ou só de transferência. Remover alias ainda exige migrar esse papel. Os códigos de filial permanecem.
 
 ## 3. Onde cada camada decide
 
@@ -69,7 +68,7 @@ Portal: `ProtectedRoute` exige `route.permission`. O MFE **não** chama `hasPerm
 
 MCP e GPT Actions passam pelo mesmo `dispatch_service` / serviços de domínio. Não há permission exclusiva de tool. Actions continuam `LEGACY_TRANSITIONAL_BRIDGE`.
 
-Atribuições reais de papéis/usuários em produção: **não provadas neste repositório**. Isso bloqueia remoção.
+Atribuições de produção: um papel com os 21 códigos. Ver §2. Isso não autoriza apagar código.
 
 ## 4. Rotas do manifesto
 
@@ -81,7 +80,7 @@ Atribuições reais de papéis/usuários em produção: **não provadas neste re
 | `/meeting-minutes` | `meeting-minutes.view` | view/manage/sign + escopo | `access` |
 | `/my-signature` | `meeting-minutes.view` | perfil de ata | `access` |
 | `/settings/units` | `processes.manage` | catálogo: `require_unrestricted_catalog_admin` em parte das escritas | `manage` |
-| `/data` | `data.transfer` | **não checado na API** | `manage`, e a API precisa passar a checar |
+| `/data` | `data.transfer` | `TransformometroAuthorizationPolicy.require_data_transfer` | `manage` só se o negócio confirmar |
 | `/administration` | `view` | página só de links | `manage` |
 
 ## 5. Alvo para revisão
@@ -152,14 +151,28 @@ Fail-closed: usuário sem `access` e sem código legado equivalente → 403. Com
 
 | Gate | Estado |
 |---|---|
+| FAIL-OPEN `user is None` | CLOSED |
+| DATA TRANSFER enforcement | CLOSED no código atual |
+| DASHBOARD RECALC parity HTTP/MCP/GPT | CLOSED |
 | TARGET CODES | DECIDED_FOR_REVIEW, não contrato |
-| UNIT SCOPE OWNER | PROVEN (`FilialAccessScopeService`) |
-| UNIT SCOPE CONTRACT alvo sem permission | TO_INVENTORY |
-| OLD→NEW | completo acima |
-| Assignments Core | não provado |
-| API backup e HTTP recalcular | gap |
-| Sign | decisão de negócio aberta |
-| NEGATIVE TEST PLAN | escrito, não implementado |
-| ROLLBACK | escrito |
+| UNIT SCOPE assignment authority | PROVEN (Core RBAC) |
+| UNIT SCOPE interpreter | PROVEN (`FilialAccessScopeService`) |
+| UNIT SCOPE TARGET sem permission | TO_INVENTORY |
+| OLD→NEW | completo |
+| Assignments de produção | inventariados, um papel com os 21 códigos |
+| Sign / data.transfer / meeting-minutes.manage | decisão de negócio aberta |
+| NEGATIVE TESTS do hardening | implementados |
+| ROLLBACK | reverter o commit de hardening; papéis não foram alterados |
+| Manifest migration | NOT AUTHORIZED |
 
-**AUTHZ_MIGRATION = NOT_READY. IMPLEMENTATION = NOT AUTHORIZED.**
+**AUTHZ_MIGRATION = NOT_READY.**
+
+## 10. Hardening
+
+`TransformometroAuthorizationPolicy` é a policy user-facing de backup e recálculo. HTTP, MCP e GPT Actions chamam o mesmo método. O serviço `DashboardRecalcService` continua sem permission, porque importação e hooks de escrita disparam recálculo interno.
+
+Assinatura de ata continua com permission `meeting-minutes.sign` mais signatário, unidade e estado assinável. Recomendação técnica: a regra material é a do recurso. O código global só impede tentar assinar quem não tem a capability, mesmo sendo signatário. Não remover até decisão explícita.
+
+Raiz `/apps/transformometro` com `access` e `showInMenu: true` permanece alvo, não aplicada.
+
+CLI `cadastro_json_cli` é contexto de operador, fora da policy HTTP. Não é fallback de `user is None`.
