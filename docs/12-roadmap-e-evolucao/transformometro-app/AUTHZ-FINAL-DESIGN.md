@@ -1,9 +1,12 @@
 # Portal Transforma+ — autorização final
 
-> **Status:** desenho corrigido. Não é runtime.
-> **IMPLEMENTATION = NOT AUTHORIZED.**
-> **AUTHZ_MIGRATION = READY_FOR_IMPLEMENTATION_REVIEW.**
-> A fase de assignment continua bloqueada até a matriz humana ser aprovada.
+> **Status:** fatia 1 no runtime. Códigos antigos ainda ativos.
+> **access/manage = IMPLEMENTED_COMPATIBILITY.**
+> **unit authorization = REMOVED_FROM_RUNTIME.**
+> **legacy codes = ACTIVE_FOR_COMPATIBILITY.**
+> **manifest simplification = IN_PROGRESS.** Não é 21 → 2 concluído.
+> **IMPLEMENTATION da migração de papéis = NOT AUTHORIZED.**
+> A rota raiz com `access` não foi publicada. O portal compara o código exato e os usuários atuais ainda não têm o assignment.
 
 ## EXECUTION_DRIFT
 
@@ -85,11 +88,9 @@ O serviço sai da autorização. Se sobrar helper só de filtro de consulta, nã
 | `view.consolidated` | sai; é o filtro Todas |
 | `branch.filial-*`, `view.filial-*`, `manage.filial-*` | sai |
 
-## Manifesto proposto
+## Manifesto
 
-Não aplicar.
-
-Raiz `/apps/transformometro`, label Portal Transforma+, `access`, `showInMenu: true`. Visão geral, Meus processos, atas, minha assinatura e, quando existirem, sala, tarefas e ajuda: `access`. Administração, configurações e exportar/importar: `manage`.
+Os códigos `access` e `manage` foram adicionados. Os 21 antigos permanecem. As rotas do portal continuam com as permissions legadas. A raiz com `showInMenu: true` e permission `access` espera a matriz humana. Sem isso, o `ProtectedRoute` bloquearia quem ainda não recebeu `access`.
 
 A TopBar não cria permission e não muda com a filial. Uso normal: `access`. Administração: `manage`.
 
@@ -106,11 +107,17 @@ Produção, inventário anterior: papel Transforma Mais, 21 códigos, 4 usuário
 
 Janela curta. Sem dual-read de unidade.
 
-`access` efetivo se houver `access` ou um código legado de uso: `view`, `meeting-minutes.view`, `atas.view`, `meeting-minutes.sign`, `atas.sign`, `meeting-minutes.manage`, `atas.manage`, `processes.manage`, `revisions.manage`, `measurements.manage`, `investments.manage`, `view.consolidated`, `branch.*`, `view.filial.*`, `manage.filial.*`.
+`access` efetivo se houver `access` ou um código legado de uso: `view`, `processes.manage`, `revisions.manage`, `measurements.manage`, `investments.manage`, `meeting-minutes.view`, `atas.view`, `meeting-minutes.manage`, `atas.manage`.
 
-`manage` efetivo se houver `manage` ou `shared-resources.manage` ou `dashboard.recalculate` ou `data.transfer`.
+Não entram em `access`: `branch.*`, `view.filial-*`, `manage.filial-*`, `view.consolidated`, `meeting-minutes.sign`, `atas.sign`, `shared-resources.manage`, `dashboard.recalculate`, `data.transfer`. Sign continua reconhecido só na ação de assinar e no detalhe pendente.
+
+`manage` de catálogo é só o código novo. Transferência aceita `manage` ou `data.transfer`. Recálculo de usuário aceita `manage` ou `dashboard.recalculate`. Recurso compartilhado aceita `manage` ou `shared-resources.manage`. Uso normal não administra.
 
 Ausência dos dois lados nega. A janela fecha na fase 12. Não fica OR eterno.
+
+## Gap de semântica
+
+**DOMAIN_AUTHORIZATION_SEMANTICS_GAP:** escrita normal de processo, revisão, medição, investimento e conteúdo de ata passou a depender de `access` (ou do legado de uso) mais as validações de domínio que já existiam. Não há regra de domínio separada que substitua o antigo `processes.manage` contra `view`. Não se inventou regra. Unidade não foi usada como substituto.
 
 ## Fases
 
