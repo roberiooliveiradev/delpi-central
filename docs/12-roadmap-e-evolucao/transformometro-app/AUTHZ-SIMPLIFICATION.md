@@ -1,6 +1,6 @@
 # Portal Transforma+ — simplificação de AuthZ multiunidade
 
-> Inventário histórico. A semântica vigente é: `access` faz o CRUD normal do produto; `manage` administra equipe, grupos e acessos. Matriz em [AUTHZ-FINAL-DESIGN.md](./AUTHZ-FINAL-DESIGN.md).
+> **SUPERSEDED.** Inventário histórico. A semântica vigente é: `access` faz o CRUD normal do produto; `manage` administra equipe, grupos e acessos. Fonte canônica: [AUTHZ-FINAL-DESIGN.md](./AUTHZ-FINAL-DESIGN.md).
 > Base do inventário: `769b2a0a161af54c36eb58bd31a0d7033de412ab`.
 > Hardening: ver §10.
 

@@ -42,8 +42,8 @@ Módulo de atas oficiais (CRUD, assinatura eletrônica manuscrita, PDF, geraçã
 | [atas-kimi.md](../../transformometro-api/docs/meeting-minutes/kimi.md) | API + configuração `KIMI_*` |
 
 **API base:** `/apps/transformometro-api/transformometro/meeting-minutes` (JWT).  
-**Permissões:** `transformometro.meeting-minutes.view` / `.manage` / `.sign`.  
-**Escopo de filial (canônico):** `transformometro.branch.filial-01` / `filial-02` — combinar com capacidades. Legado: `view.filial-*` / `manage.filial-*`. Após mudar o manifesto: `register-manifest.sh` + re-grant nas roles.  
+**Permissão:** `transformometro.access`. Assinar continua exigindo ser signatário e estado assinável.  
+**Unidade:** dado e filtro. Não é permissão.  
 **Rebuild MFE:** `./infra/scripts/up-dev-sequential.sh --fase mfe --build transformometro`
 
 ## Workspaces (jul/2026)
@@ -95,7 +95,7 @@ chmod +x scripts/register-manifest.sh
 ./scripts/register-manifest.sh
 ```
 
-Permissão do catálogo: `transformometro.shared-resources.manage` (atribuir na **Core API** RBAC, não no Keycloak).
+Permissões do portal: `transformometro.access` (uso normal, inclusive catálogo) e `transformometro.manage` (Administração). Atribuir na **Core API**, não no Keycloak.
 
 Documentação RBAC: [modelo-rbac.md](../../docs/09-banco-de-dados/modelo-rbac.md).
 

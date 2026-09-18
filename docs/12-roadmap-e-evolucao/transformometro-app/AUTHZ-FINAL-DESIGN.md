@@ -1,13 +1,13 @@
 # Portal Transforma+ — autorização final
 
-> **Status:** semântica final travada. CRUD normal é `access`. Administração do portal é `manage`.
-> **access/manage no backend = IMPLEMENTED_COMPATIBILITY.**
-> **unit authorization = REMOVED_FROM_RUNTIME.**
-> **ACCESS/MANAGE CORE CATALOG = ABSENT.**
-> **ASSIGNMENTS = NOT_MIGRATED.**
-> **LEGACY = ACTIVE.** Os 21 códigos continuam até o assignment novo ser comprovado.
-> **ROUTE MIGRATION = PENDING.**
-> **FINAL PERMISSION COUNT no alvo = 2.** Ainda não é o catálogo runtime.
+> **Status:** modelo final. Duas permissions. Sem autorização por unidade.
+> **FINAL PERMISSION COUNT = 2.**
+> **ACCESS** = uso normal completo do Portal Transforma+, em todas as unidades.
+> **MANAGE** = administração do portal (equipe, grupos, acessos). Não faz CRUD do domínio e não implica `access`.
+> **UNIT AUTHORIZATION = none.**
+> **CORE** = autoridade de permission, role, group e assignment.
+> **TRANSFORMÔMETRO** = autoridade do domínio. Não cria RBAC.
+> **LEGACY AUTH = removed** do runtime. Histórico fica no Git.
 
 ## EXECUTION_DRIFT
 
@@ -66,7 +66,7 @@ Exportar e importar é backup do cadastro do produto, não gestão de acessos. A
 
 ## O que o código faz hoje
 
-`FilialAccessScopeService` está no caminho de autorização. Consumidores: `branch_access_http` (`check_*`, `filter_rows_for_access`, `require_unrestricted_catalog_admin`), `crud_routes`, `dashboard_routes`, `meeting_minutes_service`, `transformometro_routes` (`/options`), `dispatch_service`, `process_context_service`, `orchestrator`. Testes em `test_branch_access_scope_service.py`.
+O backend só conhece `transformometro.access` e `transformometro.manage`. `FilialAccessScopeService` foi removido. Unidade não autoriza. Administração de equipe, grupo e acesso continua contrato da Core; a rota `/administration` exige `manage`. O Transformômetro não implementa essa gestão.
 
 | Superfície | Hoje | Alvo | Migrar |
 |---|---|---|---|

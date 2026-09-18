@@ -78,7 +78,7 @@ Ver [playbook-18-implementation-status.md](../archive/playbooks/playbook-18-impl
 1. `TM_RUN_MIGRATIONS_ON_STARTUP=true` (ou `up` manual antes do tráfego)
 2. Rebuild **API + MFE** após cada release: `docker compose build transformometro-api transformometro && docker compose up -d --force-recreate transformometro-api transformometro`
 3. Registrar manifesto na Core API: `plugins/transformometro/scripts/register-manifest.sh` (inclui rota `/recursos`)
-4. RBAC (Core API): vincular `transformometro.*` às roles/grupos no admin do portal — ex.: `transformometro.shared-resources.manage` para quem edita o catálogo; `transformometro.meeting-minutes.view|manage|sign` para atas
+4. RBAC (Core API): `transformometro.access` para uso normal; `transformometro.manage` só para Administração. Não atribuir no Keycloak.
 5. Health: `GET /apps/transformometro-api/transformometro/health` → `db_ready: true`
 6. Integração (rede Docker): `curl -H "X-Delpi-Service-Token: $API_DELPI_INTERNAL_SERVICE_TOKEN" http://transformometro-api:8000/transformometro/integrations/engineering/transforma-mais/processes/summary`
 7. Se usar IA nas atas: `KIMI_API_KEY` no `.env` + smoke em [meeting-minutes/kimi.md](../meeting-minutes/kimi.md)

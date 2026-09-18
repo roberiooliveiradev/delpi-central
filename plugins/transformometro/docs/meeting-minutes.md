@@ -137,13 +137,9 @@ Após salvar: atalhos para enviar / ver ata / continuar editando.
 
 ## Permissões (manifesto)
 
-```text
-transformometro.meeting-minutes.view
-transformometro.meeting-minutes.manage
-transformometro.meeting-minutes.sign
-```
-
-Menu Atas exige `.view`. Detalhe no README do plugin e em `transformometro.manifest.json`.
+Uso normal, inclusive atas e assinatura de quem é signatário: `transformometro.access`.
+Administração do portal: `transformometro.manage`.
+Fonte: `transformometro.manifest.json` e [AUTHZ-FINAL-DESIGN.md](../../../docs/12-roadmap-e-evolucao/transformometro-app/AUTHZ-FINAL-DESIGN.md).
 
 ---
 
