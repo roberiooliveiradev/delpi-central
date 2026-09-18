@@ -269,6 +269,14 @@ export {
   type AvatarStackProps,
   type DashboardAvatarStackProps,
 } from "./AvatarStack";
+export {
+  EntityAvatarLabel,
+  createDashboardEntityAvatarLabel,
+  entityAvatarLabelBemClasses,
+  type DashboardEntityAvatarLabelProps,
+  type EntityAvatarLabelClassNames,
+  type EntityAvatarLabelProps,
+} from "./EntityAvatarLabel";
 export { FitText } from "./FitText";
 export {
   PageHeader,

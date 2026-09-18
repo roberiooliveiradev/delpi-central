@@ -54,6 +54,7 @@ describe("PurchaseRequests feature", () => {
     expect(detail).toContain("getPurchaseRequest");
     expect(detail).toContain("SuppliesPagePath");
     expect(detail).toContain("SP_HELP.purchaseRequestDetail");
+    expect(detail).toContain("SuppliesPersonIdentity");
     expect(detail).toContain("classifyPurchaseRequestDetailError");
   });
 
@@ -89,6 +90,7 @@ describe("PurchaseRequests feature", () => {
     expect(table).toContain("ExcelExportButton");
     expect(table).toContain("SuppliesCompactPagination");
     expect(table).toContain("SuppliesEntityLink");
+    expect(table).toContain("SuppliesPersonIdentity");
     expect(table).toContain("buildPurchaseRequestDetailPath");
     expect(table).toContain("PurchaseRequestsCards");
     expect(table).toContain("nextServerSort");
@@ -96,6 +98,9 @@ describe("PurchaseRequests feature", () => {
     expect(table).not.toContain("is-selected");
     expect(table).not.toContain("buildRequestKey");
     expect(table).not.toContain("?request=");
+
+    const cards = readFileSync(join(dir, "PurchaseRequestsCards.tsx"), "utf8");
+    expect(cards).toContain("SuppliesPersonIdentity");
 
     const config = readFileSync(join(dir, "purchaseRequestsTableConfig.ts"), "utf8");
     expect(config).toContain("supplies:purchase-requests:column-prefs:v1");

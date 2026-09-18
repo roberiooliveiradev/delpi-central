@@ -5,6 +5,8 @@ export function purchaseOrdersColumnHelp(
   key: PurchaseOrderTableColumnKey,
 ): string | undefined {
   switch (key) {
+    case "supplier":
+      return SP_HELP.purchaseOrdersColSupplier;
     case "open_quantity":
       return SP_HELP.purchaseOrdersColOpenQty;
     case "delivery":

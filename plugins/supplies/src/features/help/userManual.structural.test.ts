@@ -37,6 +37,7 @@ describe("userManual content", () => {
     expect(questions).toMatch(/filial padrão|densidade/i);
     expect(questions).toMatch(/\/profile|Minha DELPI/i);
     expect(questions).toMatch(/detalhe de um pedido de compra/i);
+    expect(questions).toMatch(/avatar do fornecedor|solicitante/i);
   });
 
   it("exposes glossary terms and tool link targets", () => {

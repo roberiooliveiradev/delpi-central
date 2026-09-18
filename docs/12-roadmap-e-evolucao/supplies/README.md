@@ -94,7 +94,8 @@ selecionar página em foco
 | 8 | Estoque de segurança | `/safety-stock` | fila |
 | 9 | Análise de consumo | `/safety-stock/consumption-analysis` | fila |
 | 10 | Fornecedores | `/suppliers` | fila / contrato de busca a confirmar |
-| 11 | Fornecedor 360 | `/suppliers/:code/:store` | fila |
+| 11 | Fornecedor 360 | `/suppliers/:code/:store` | fila — avatar já identifica o fornecedor nas listas de PC; sem href. Ver [DIRECTORY-OBJECTS.md](./DIRECTORY-OBJECTS.md) |
+| 11b | Pessoa 360 | `/people/:code` | fila reservada (solicitante / comprador); avatar nas listas de SC/PC; sem href |
 | 12 | OTD fornecedores | `/suppliers/otd` | fila |
 | 13 | Produtos / MP | `/products` | fila |
 | 14 | Produto / MP 360 | `/products/:code` | fila |
@@ -199,6 +200,7 @@ Invariantes:
 | [KPI-FICHAS.md](./KPI-FICHAS.md) | indicadores |
 | [INTEGRACOES.md](./INTEGRACOES.md) | HTTP, authz, observabilidade |
 | [HELP-AND-ONBOARDING.md](./HELP-AND-ONBOARDING.md) | Ajuda e onboarding |
+| [DIRECTORY-OBJECTS.md](./DIRECTORY-OBJECTS.md) | avatar kit + rotas reservadas de fornecedor e pessoa |
 | [IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md) | estado de execução + fila; página-a-página |
 | [HOMOLOGACAO-PARIDADE.md](./HOMOLOGACAO-PARIDADE.md) | paridade mensurável |
 | [CUTOVER-RUNBOOK.md](./CUTOVER-RUNBOOK.md) | target-first, redirect-last |

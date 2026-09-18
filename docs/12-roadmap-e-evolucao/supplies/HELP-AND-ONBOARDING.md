@@ -35,6 +35,7 @@ Herdar textos já canônicos de:
 - Loading padrão: `SuppliesLoadingCard` (plugin-ui); banners só para error/partial/forbidden.
 - Manual `/help`: PageHero + SectionCard (família Comercial), conteúdo em `userManualContent.ts`.
 - Onde ver SC, ESTSEG, item, fornecedor.
+- Fornecedor e solicitante nas listas/fichas de PC e SC usam avatar de iniciais do kit (`EntityAvatarLabel`). Fichas próprias reservadas — ver `DIRECTORY-OBJECTS.md`. O avatar **não** navega até as páginas existirem.
 - O que cada KPI do Overview significa (link fichas, linguagem de negócio).
 - 403: «sem permissão para esta filial / este módulo».
 - FAQ: diferença estoque × estoque de segurança; OTD × atraso; Overview × página OTD; Sheets × indicadores; filtros/URL; Meta parcial × Meta mês.

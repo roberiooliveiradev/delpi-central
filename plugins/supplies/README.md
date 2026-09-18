@@ -45,9 +45,10 @@ Atualizar manifesto já registrado: `PUT $BASE_URL/core-api/admin/apps/supplies/
 |---|---|
 | **Início** | DoD fechado — hub + `GET /home/attention` + Favoritos TopBar (localStorage P0) |
 | Visão geral | DoD fechado |
-| Pedidos | `/purchase-orders` |
+| Pedidos | `/purchase-orders` — fornecedor com avatar de iniciais (kit) |
 | Detalhe pedido | `/purchase-orders/:branch/:number` |
-| SC | E6 C1 |
+| SC | E6 C1 — solicitante com avatar de iniciais (kit) |
+| Fornecedor / pessoa | Fichas **reservadas** (`/suppliers/:code/:store`, `/people/:code`) — ver [DIRECTORY-OBJECTS.md](../../docs/12-roadmap-e-evolucao/supplies/DIRECTORY-OBJECTS.md). Não navegam ainda. |
 | Perfil | `/users/:userId` |
 | Ajuda | `/help` |
 

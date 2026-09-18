@@ -108,6 +108,8 @@ export const SP_HELP = {
     "No modo Tabela: colunas visíveis e total de linhas do recorte filtrado (não só a página atual).",
   purchaseRequestsCardsMeta:
     "Total de linhas do recorte filtrado no modo Cards (não só a página atual). Fonte e Colunas são preferências só da Tabela.",
+  purchaseRequestsColRequester:
+    "Solicitante da SC com avatar de iniciais, no mesmo padrão visual do Portal Comercial. A ficha da pessoa ainda não existe; o avatar não abre outra página.",
   purchaseRequestsColCc: "Centro de custo da linha no escopo liberado ao usuário.",
   purchaseRequestsColOpened: "Data de abertura da solicitação de compras.",
   purchaseRequestsColStage: "Situação consolidada da SC a partir do andamento dos itens.",
@@ -146,6 +148,8 @@ export const SP_HELP = {
     "No modo Tabela: colunas visíveis e total de linhas do recorte filtrado (não só a página atual).",
   purchaseOrdersCardsMeta:
     "Total de linhas do recorte filtrado no modo Cards (não só a página atual). Fonte e Colunas são preferências só da Tabela.",
+  purchaseOrdersColSupplier:
+    "Fornecedor da linha com avatar de iniciais, no mesmo padrão visual do Portal Comercial. A ficha do fornecedor ainda não existe; o avatar não abre outra página.",
   purchaseOrdersColOpenQty: "Quantidade ainda em aberto (saldo a receber) nesta linha.",
   purchaseOrdersColDelivery: "Data prometida de entrega do item.",
   purchaseOrdersColStatus: "Situação em relação à data prometida: atrasado, no prazo ou sem data.",

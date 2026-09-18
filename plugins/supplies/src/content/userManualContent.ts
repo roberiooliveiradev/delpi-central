@@ -124,9 +124,14 @@ export const USER_MANUAL_CONTENT = {
           how: "Busca e ficha 360 quando liberada",
         },
         {
+          want: "Identificar fornecedor ou solicitante",
+          where: "Pedidos de compra",
+          how: "Avatar de iniciais na lista, nos cards e na ficha — também em Solicitações de compras. A página própria ainda não existe; o avatar não navega",
+        },
+        {
           want: "Consultar fornecedor",
           where: "Fornecedores",
-          how: "Busca e ficha 360 quando liberada",
+          how: "Lista 360 reservada; hoje o avatar identifica o fornecedor nos pedidos",
         },
         {
           want: "Acompanhar pedidos e entregas",
@@ -192,6 +197,10 @@ export const USER_MANUAL_CONTENT = {
         {
           q: "Por que não vejo Exportar CSV?",
           a: "A exportação exige a permissão de exportação além do acesso às solicitações. Ter só a lista não libera o download.",
+        },
+        {
+          q: "Por que o avatar do fornecedor ou do solicitante não abre uma ficha?",
+          a: "A identificação visual já segue o padrão do Portal Comercial. As páginas de fornecedor e de pessoa estão reservadas e ainda não existem — o avatar não navega.",
         },
         {
           q: "Como abro e compartilho o detalhe de um pedido de compra?",

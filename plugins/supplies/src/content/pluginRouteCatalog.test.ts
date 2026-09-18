@@ -46,6 +46,7 @@ describe("routeCatalog", () => {
     const ids = HUB_SECTIONS.flatMap((section) => section.routes.map((route) => route.id));
     expect(ids).not.toContain("imports");
     expect(ids).not.toContain("approvals");
+    expect(ids).not.toContain("people");
   });
 
   it("filters shell nav by capability", () => {

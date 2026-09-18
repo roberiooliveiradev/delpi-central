@@ -1,5 +1,6 @@
 import { useMemo, useState, type CSSProperties } from "react";
 
+import { SuppliesSupplierIdentity } from "../../app/SuppliesDirectoryIdentity";
 import { buildPurchaseOrderDetailPath } from "../../app/pluginRoutes";
 import {
   DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS,
@@ -154,7 +155,13 @@ export function PurchaseOrdersListTable({
               case "product":
                 return formatProductLabel(row.product_code, row.product_description);
               case "supplier":
-                return row.supplier_name || row.supplier_code || "—";
+                return (
+                  <SuppliesSupplierIdentity
+                    name={row.supplier_name}
+                    code={row.supplier_code}
+                    store={row.supplier_store}
+                  />
+                );
               case "open_quantity":
                 return row.open_quantity ?? "—";
               case "delivery":

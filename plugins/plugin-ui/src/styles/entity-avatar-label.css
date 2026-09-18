@@ -1,0 +1,36 @@
+/**
+ * EntityAvatarLabel — .delpi-ui-entity-avatar-label*
+ * Chrome de avatar + nome para tabelas e cards. Sem HTTP e sem href.
+ */
+
+.delpi-ui-entity-avatar-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.delpi-ui-entity-avatar-label__text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.delpi-ui-entity-avatar-label__name {
+  overflow: hidden;
+  font-weight: 600;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delpi-ui-entity-avatar-label__secondary {
+  overflow: hidden;
+  color: var(--delpi-ui-muted, var(--text-muted, #6b7280));
+  font-size: 0.75rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

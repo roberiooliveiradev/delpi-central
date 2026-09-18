@@ -1,3 +1,4 @@
+import { SuppliesSupplierIdentity } from "../../app/SuppliesDirectoryIdentity";
 import { buildPurchaseOrderDetailPath } from "../../app/pluginRoutes";
 import {
   SuppliesDataCardsGrid,
@@ -61,7 +62,11 @@ export function PurchaseOrdersCards({
               {formatProductLabel(row.product_code, row.product_description)}
             </p>
             <p className="sp-purchase-orders__card-supplier">
-              {row.supplier_name || row.supplier_code || "—"}
+              <SuppliesSupplierIdentity
+                name={row.supplier_name}
+                code={row.supplier_code}
+                store={row.supplier_store}
+              />
             </p>
             <dl className="sp-purchase-orders__card-meta">
               <div>

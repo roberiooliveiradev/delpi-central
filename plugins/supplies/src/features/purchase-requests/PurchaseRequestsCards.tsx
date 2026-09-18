@@ -1,3 +1,4 @@
+import { SuppliesPersonIdentity } from "../../app/SuppliesDirectoryIdentity";
 import {
   SuppliesDataCardsGrid,
   SuppliesEntityLink,
@@ -70,7 +71,9 @@ export function PurchaseRequestsCards({
             <dl className="sp-purchase-requests__card-meta">
               <div>
                 <dt>{C.cardRequester}</dt>
-                <dd>{row.requester?.name || row.requester?.code || "—"}</dd>
+                <dd>
+                  <SuppliesPersonIdentity person={row.requester} />
+                </dd>
               </div>
               <div>
                 <dt>{C.cardCc}</dt>

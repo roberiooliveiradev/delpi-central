@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { navigatePluginView } from "../../app/pluginNavigation";
+import { SuppliesPersonIdentity } from "../../app/SuppliesDirectoryIdentity";
 import { buildPluginPath } from "../../app/pluginRoutes";
 import { formatSuppliesUnitLabel } from "../../app/suppliesUnits";
 import {
@@ -112,7 +113,9 @@ export function PurchaseRequestDetailPage({
           </div>
           <div>
             <dt>Solicitante</dt>
-            <dd>{header?.requester?.name || header?.requester?.code || "—"}</dd>
+            <dd>
+              <SuppliesPersonIdentity person={header?.requester} />
+            </dd>
           </div>
           <div>
             <dt>Abertura</dt>

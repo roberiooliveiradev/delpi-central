@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 
 import { navigatePluginView } from "../../app/pluginNavigation";
+import {
+  SuppliesPersonIdentity,
+  SuppliesSupplierIdentity,
+} from "../../app/SuppliesDirectoryIdentity";
 import { buildPluginPath } from "../../app/pluginRoutes";
 import { formatSuppliesUnitLabel } from "../../app/suppliesUnits";
 import {
@@ -180,7 +184,13 @@ export function PurchaseOrderDetailPage({
                 <dl className="sp-purchase-order-detail__item-meta">
                   <div>
                     <dt>{C.colSupplier}</dt>
-                    <dd>{item.supplier_name || item.supplier_code || "—"}</dd>
+                    <dd>
+                      <SuppliesSupplierIdentity
+                        name={item.supplier_name}
+                        code={item.supplier_code}
+                        store={item.supplier_store}
+                      />
+                    </dd>
                   </div>
                   <div>
                     <dt>{C.sourceRequestLabel}</dt>
@@ -206,7 +216,11 @@ export function PurchaseOrderDetailPage({
                   {item.buyer_code ? (
                     <div>
                       <dt>{C.buyerLabel}</dt>
-                      <dd>{item.buyer_code}</dd>
+                      <dd>
+                        <SuppliesPersonIdentity
+                          person={{ code: item.buyer_code, name: item.buyer_code }}
+                        />
+                      </dd>
                     </div>
                   ) : null}
                   <div>

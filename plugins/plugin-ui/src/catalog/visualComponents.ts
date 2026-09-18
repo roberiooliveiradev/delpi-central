@@ -169,6 +169,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Avatar chrome: foto ou iniciais com cor determinística (sem HTTP).",
   }),
+  vc("layout", "EntityAvatarLabel", {
+    addedAt: "2026-09-18",
+    description:
+      "Avatar + nome para diretório (fornecedor, pessoa). Sem href até existir a página do objeto.",
+  }),
   vc("layout", "ChartCard"),
   vc("layout", "ChartToolbar"),
   vc("layout", "ChartGranularityToggle"),

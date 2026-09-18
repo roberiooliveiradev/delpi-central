@@ -40,6 +40,8 @@ import {
   metricKpiCardBemClasses,
   InitialsAvatar,
   initialsAvatarBemClasses,
+  EntityAvatarLabel,
+  entityAvatarLabelBemClasses,
   NavigationCard,
   navigationCardBemClasses,
   PagePath,
@@ -89,6 +91,7 @@ const sectionCn = sectionCardKaizenBemClasses(PUC_PREFIX);
 const simpleKpiCn = simpleKpiCardBemClasses(PUC_PREFIX, "kpi-card", { withBody: true, withSubtitle: true });
 const metricKpiCn = metricKpiCardBemClasses(PUC_PREFIX);
 const avatarCn = initialsAvatarBemClasses(PUC_PREFIX);
+const entityAvatarLabelCn = entityAvatarLabelBemClasses(PUC_PREFIX);
 const detailCn = detailCardProductionBemClasses(PUC_PREFIX);
 const detailGridCn = detailFieldGridBemClasses(PUC_PREFIX);
 const formGridCn = formGridBemClasses(PUC_PREFIX);
@@ -688,6 +691,36 @@ export const layoutCatalogEntries: CatalogEntryDraft[] = [
               classNames={avatarCn}
               previewTitle="Com foto"
               portalScopeClassName="dashboard-plugin-ui-catalog"
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.EntityAvatarLabel",
+    family: "layout",
+    exportName: "EntityAvatarLabel",
+    title: "EntityAvatarLabel",
+    description: "Avatar + nome para diretório. Sem href até existir a página do objeto.",
+    propsSummary: ["name", "colorKey", "secondary", "src", "size"],
+    demos: [
+      {
+        id: "default",
+        label: "Fornecedor e pessoa",
+        render: () => (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <EntityAvatarLabel
+              name="Multiprint"
+              secondary="000123"
+              colorKey="000123"
+              classNames={entityAvatarLabelCn}
+            />
+            <EntityAvatarLabel
+              name="João Silva"
+              secondary="JOSI"
+              colorKey="JOSI"
+              classNames={entityAvatarLabelCn}
             />
           </div>
         ),

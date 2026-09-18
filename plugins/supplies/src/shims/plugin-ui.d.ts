@@ -56,6 +56,16 @@ declare module "@delpi/plugin-ui/index" {
     className?: string;
   }>;
 
+  export function createDashboardEntityAvatarLabel(prefix: string): ComponentType<{
+    name: string;
+    colorKey?: string;
+    secondary?: string | null;
+    src?: string | null;
+    size?: "sm" | "md" | "lg";
+    emptyLabel?: string;
+    className?: string;
+  }>;
+
   export function emptyStateCardBemClasses(prefix: string): {
     root: string;
     withTitle: boolean;

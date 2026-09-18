@@ -153,6 +153,7 @@ describe("PurchaseOrders feature", () => {
     expect(table).toContain("C.cardsMeta");
     expect(table).toContain("!showCards");
     expect(table).toContain("SuppliesEntityLink");
+    expect(table).toContain("SuppliesSupplierIdentity");
     expect(table).toContain("buildPurchaseOrderDetailPath");
     expect(table).toContain("headerHint");
     expect(table).toContain('align: "right"');
@@ -173,6 +174,7 @@ describe("PurchaseOrders feature", () => {
 
     const cards = readFileSync(join(dir, "PurchaseOrdersCards.tsx"), "utf8");
     expect(cards).toContain("SuppliesDataCardsGrid");
+    expect(cards).toContain("SuppliesSupplierIdentity");
     expect(cards).toContain("buildPurchaseOrderDetailPath");
 
     const filters = readFileSync(join(dir, "PurchaseOrdersFilters.tsx"), "utf8");
@@ -214,6 +216,8 @@ describe("PurchaseOrders feature", () => {
     expect(page).toContain("C.receiptsEmpty");
     expect(page).toContain("formatSuppliesUnitLabel");
     expect(page).toContain("SP_HELP.purchaseOrderDetail");
+    expect(page).toContain("SuppliesSupplierIdentity");
+    expect(page).toContain("SuppliesPersonIdentity");
     expect(page).toContain("sp-purchase-order-detail__item-card");
     expect(page).toContain("C.receiptsTableScrollRegion");
     expect(page).toMatch(/role=\"region\"/);

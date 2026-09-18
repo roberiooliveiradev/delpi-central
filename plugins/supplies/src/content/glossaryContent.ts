@@ -23,6 +23,16 @@ export const GLOSSARY_CONTENT: readonly GlossaryEntry[] = [
     meaning: "Solicitação de compras — pedido interno de compra no escopo de centro de custo e filial.",
   },
   {
+    term: "Fornecedor",
+    meaning:
+      "Empresa do pedido de compra. Nas listas aparece com avatar de iniciais. A ficha própria está reservada e ainda não navega.",
+  },
+  {
+    term: "Solicitante",
+    meaning:
+      "Pessoa que abriu a SC. Nas listas aparece com avatar de iniciais. A ficha própria está reservada e ainda não navega.",
+  },
+  {
     term: "PC",
     meaning:
       "Pedido de compra — documento com fornecedor após a SC. A ficha mostra itens, entrega prometida, recebimentos e a SC de origem de cada item.",

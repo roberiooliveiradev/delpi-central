@@ -230,11 +230,11 @@ SectionCard "OTD no tempo"
 
 ### WF-09 — Fornecedores
 
-Busca/lista; contrato de busca fornecedor precisa estar comprovado ao promover.
+Busca/lista; contrato de busca fornecedor precisa estar comprovado ao promover. Enquanto a página não existir, o fornecedor já aparece com avatar de iniciais nas listas de PC (`DIRECTORY-OBJECTS.md`). Sem href.
 
 ### WF-10 — Fornecedor 360
 
-Identidade/TOTVS + blocos operacionais + notas/tasks. **Qualidade fica fora do P0 enquanto P-11 estiver aberto**; não deixar “Qualidade autorizada” como decisão implícita de implementação.
+Identidade/TOTVS + blocos operacionais + notas/tasks. Rota reservada `/suppliers/:code/:store`. **Qualidade fica fora do P0 enquanto P-11 estiver aberto**; não deixar “Qualidade autorizada” como decisão implícita de implementação. Pessoa 360 (`/people/:code`) é reserva irmã, ainda sem wireframe de página.
 
 ### WF-11 — OTD Fornecedores
 
