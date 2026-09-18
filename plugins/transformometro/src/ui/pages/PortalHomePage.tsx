@@ -1,12 +1,16 @@
 import { BarChart3, BookOpen, FileText, List, Settings } from "lucide-react";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   CatalogSearchBar,
   EmptyState,
+  HubChipRow,
+  RouteChip,
   SectionCard,
   SectionRouteCard,
   catalogSearchBarBemClasses,
   emptyStateCardBemClasses,
+  hubChipRowBemClasses,
+  routeChipBemClasses,
   sectionCardPacBemClasses,
   sectionRouteCardBemClasses,
 } from "@delpi/plugin-ui/index";
@@ -16,12 +20,20 @@ import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { PORTAL_PAGE_COPY, filterPortalCatalog, visiblePortalLauncherGroups } from "../../constants/portalExperience";
 import { useCanManagePortal } from "../../state/portalChrome";
+import {
+  subscribePortalFavorites,
+  togglePortalFavorite,
+  visiblePortalFavorites,
+  type PortalFavoriteItem,
+} from "../../state/portalFavorites";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 
 const SECTION = sectionCardPacBemClasses("ds");
 const ROUTE_CARD = sectionRouteCardBemClasses("ds");
 const SEARCH = catalogSearchBarBemClasses("ds");
 const EMPTY = emptyStateCardBemClasses("ds");
+const CHIPS = hubChipRowBemClasses("ds");
+const CHIP = routeChipBemClasses("ds");
 const SECTION_LABELS = {
   titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
 };
@@ -40,20 +52,28 @@ type PortalHomePageProps = Pick<AppProps, "pathname"> & {
 
 export function PortalHomePage({ pathname, onNavigate }: PortalHomePageProps) {
   const [query, setQuery] = useState("");
+  const [favorites, setFavorites] = useState<PortalFavoriteItem[]>([]);
   const needle = query.trim().toLowerCase();
   const canManage = useCanManagePortal();
+  const visibleFavorites = visiblePortalFavorites(favorites, canManage);
+  const favoritePaths = useMemo(() => new Set(visibleFavorites.map((item) => item.path)), [visibleFavorites]);
+
+  useEffect(() => subscribePortalFavorites(setFavorites), []);
+
   const groups = useMemo(
     () =>
-      visiblePortalLauncherGroups(canManage).map((group) => ({
-        ...group,
-        links: group.links.filter((link) =>
-          needle
-            ? `${group.title} ${group.description} ${link.label} ${link.description}`
-                .toLowerCase()
-                .includes(needle)
-            : true,
-        ),
-      })).filter((group) => group.links.length > 0),
+      visiblePortalLauncherGroups(canManage)
+        .map((group) => ({
+          ...group,
+          links: group.links.filter((link) =>
+            needle
+              ? `${group.title} ${group.description} ${link.label} ${link.description}`
+                  .toLowerCase()
+                  .includes(needle)
+              : true,
+          ),
+        }))
+        .filter((group) => group.links.length > 0),
     [canManage, needle],
   );
   const hits = useMemo(
@@ -93,6 +113,21 @@ export function PortalHomePage({ pathname, onNavigate }: PortalHomePageProps) {
             emptyHitsLabel="Nenhuma funcionalidade encontrada."
             aria-label="Buscar caminhos e funcionalidades"
           />
+          {visibleFavorites.length > 0 ? (
+            <HubChipRow classNames={CHIPS} label="Favoritos" aria-label="Favoritos">
+              {visibleFavorites.map((item) => (
+                <RouteChip
+                  key={item.path}
+                  classNames={CHIP}
+                  tone="pinned"
+                  label={item.label}
+                  onNavigate={() => onNavigate(item.path)}
+                  onRemove={() => togglePortalFavorite(item)}
+                  removeLabel="Remover dos favoritos"
+                />
+              ))}
+            </HubChipRow>
+          ) : null}
           {groups.length === 0 ? (
             <EmptyState classNames={EMPTY} defaultMessage="Nenhuma funcionalidade encontrada." />
           ) : (
@@ -107,6 +142,10 @@ export function PortalHomePage({ pathname, onNavigate }: PortalHomePageProps) {
                   routes={group.links.map((link) => ({
                     id: link.id,
                     label: link.label,
+                    pinned: favoritePaths.has(link.path),
+                    pinLabel: "Adicionar aos favoritos",
+                    unpinLabel: "Remover dos favoritos",
+                    onPinClick: () => togglePortalFavorite({ path: link.path, label: link.label }),
                     onClick: () => onNavigate(link.path),
                   }))}
                 />

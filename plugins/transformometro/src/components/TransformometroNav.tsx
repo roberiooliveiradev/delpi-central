@@ -15,6 +15,7 @@ import {
   resolvePortalTopBarId,
   visiblePortalTopBarItems,
 } from "../constants/portalExperience";
+import { PortalFavoritesTrigger } from "./PortalFavoritesTrigger";
 import { useCanManagePortal } from "../state/portalChrome";
 
 type PortalTopBarProps = {
@@ -69,16 +70,19 @@ export function PortalTopBar({ currentPath, onNavigate }: PortalTopBarProps) {
         menuLabel="Menu do Portal Transforma+"
         portalScopeClassName="dashboard-transformometro"
         secondary={
-          <TopBarSearchTrigger
-            ref={searchRef}
-            classNames={SEARCH}
-            onOpen={() => setPaletteOpen(true)}
-            expanded={paletteOpen}
-            label="Buscar"
-            shortcutLabel="Ctrl+K"
-            aria-label="Buscar caminhos e funcionalidades"
-            title="Buscar caminhos e funcionalidades (Ctrl+K)"
-          />
+          <div className="tm-topbar-secondary">
+            <TopBarSearchTrigger
+              ref={searchRef}
+              classNames={SEARCH}
+              onOpen={() => setPaletteOpen(true)}
+              expanded={paletteOpen}
+              label="Buscar"
+              shortcutLabel="Ctrl+K"
+              aria-label="Buscar caminhos e funcionalidades"
+              title="Buscar caminhos e funcionalidades (Ctrl+K)"
+            />
+            <PortalFavoritesTrigger onNavigate={onNavigate} />
+          </div>
         }
       />
       <CommandPalette

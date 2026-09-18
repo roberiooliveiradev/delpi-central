@@ -54,11 +54,10 @@ describe("Portal Transforma+ navigation", () => {
     expect(visible).toContain("Exportar / Importar");
   });
 
-  it("não promove sala, tarefas, favoritos ou usuário a funcional", () => {
+  it("não promove sala, tarefas ou usuário a funcional", () => {
     expect(DEFERRED_NAV_ITEMS.map((item) => item.label)).toEqual([
       "Sala de interação",
       "Minhas tarefas",
-      "Favoritos",
       "Usuário",
     ]);
     expect(DEFERRED_NAV_ITEMS.every((item) => item.status === "TO_INVENTORY")).toBe(true);
@@ -159,8 +158,8 @@ describe("Portal Transforma+ navigation", () => {
     expect(PORTAL_PAGE_COPY.administration.title).toBe("Administração");
     expect(PORTAL_PAGE_COPY.settings.title).toBe("Configurações");
     expect(PORTAL_PAGE_COPY.help).toMatchObject({
-      eyebrow: "Portal Transforma+",
-      title: "Ajuda",
+      eyebrow: "Ajuda",
+      title: "Manual do usuário",
       description: "Consulte orientações para navegar e utilizar o Portal Transforma+.",
     });
     expect(PORTAL_LAUNCHER_GROUPS.map((group) => group.title)).toEqual([
@@ -190,11 +189,13 @@ describe("Portal Transforma+ navigation", () => {
       ]),
     );
     const text = JSON.stringify(USER_MANUAL_CONTENT);
-    expect(text).not.toMatch(/Sala de interação|Minhas tarefas|Favoritos|Keycloak|MCP|GPT Actions|JWT/);
+    expect(text).not.toMatch(/Keycloak|MCP|GPT Actions|JWT/);
+    expect(text).toContain("ainda não fazem parte deste portal");
     expect(text).toContain("usuários responsáveis pela administração do Portal");
     for (const section of USER_MANUAL_CONTENT.sections) {
       for (const link of visibleManualLinks(section.links, false)) {
-        const view = parseTransformometroPath(link.path).view;
+        expect(link.path).toBeTruthy();
+        const view = parseTransformometroPath(link.path!).view;
         expect(["home", "help", "dashboard", "processos", "atas", "dados"]).toContain(view);
       }
     }

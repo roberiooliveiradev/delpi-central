@@ -48,8 +48,8 @@ export const PORTAL_PAGE_COPY = {
     description: "Gerencie unidades, departamentos e demais cadastros administrativos.",
   },
   help: {
-    eyebrow: PORTAL_PRODUCT_NAME,
-    title: "Ajuda",
+    eyebrow: "Ajuda",
+    title: "Manual do usuário",
     description: "Consulte orientações para navegar e utilizar o Portal Transforma+.",
   },
 } as const;
@@ -89,9 +89,8 @@ export const PORTAL_TOPBAR_ITEMS = [
 ] as const;
 
 /**
- * Posição congelada na IA, sem implementação.
  * Sala e tarefas pertencem a outros contextos.
- * Favoritos de rota não têm contrato transversal: Core guarda app favorito, Comercial guarda o próprio.
+ * Favoritos de rota deste portal são preferência local do MFE, não item da TopBar de negócio.
  */
 export const DEFERRED_NAV_ITEMS: readonly DeferredNavItem[] = [
   {
@@ -107,14 +106,6 @@ export const DEFERRED_NAV_ITEMS: readonly DeferredNavItem[] = [
     placement: "topbar",
     status: "TO_INVENTORY",
     reason: "Não há task store compartilhado. Pendências de ata não são essa capability.",
-  },
-  {
-    id: "favorites",
-    label: "Favoritos",
-    placement: "utility",
-    status: "TO_INVENTORY",
-    reason:
-      "Não há contrato público de favorito de rota. Core guarda apps favoritos do portal. /me/home-favorites é do commercial-api. Supplies usa localStorage próprio.",
   },
   {
     id: "user",

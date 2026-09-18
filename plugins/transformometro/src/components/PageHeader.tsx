@@ -8,9 +8,10 @@ import { PortalTopBar } from "./TransformometroNav";
 import "./PageHeader.css";
 
 type PageHeaderProps = {
-  title: string;
-  subtitle: string;
-  eyebrow?: string;
+  title: ReactNode;
+  subtitle: ReactNode;
+  eyebrow?: ReactNode;
+  lead?: ReactNode;
   currentPath?: string;
   onNavigate: (path: string) => void;
   onRefresh?: () => void;
@@ -25,6 +26,7 @@ export function PageHeader({
   title,
   subtitle,
   eyebrow = PORTAL_PRODUCT_NAME,
+  lead,
   currentPath,
   onNavigate,
   onRefresh,
@@ -35,6 +37,7 @@ export function PageHeader({
   return (
     <>
       <PortalTopBar currentPath={currentPath} onNavigate={onNavigate} />
+      {lead}
       <PageHero
         classNames={HERO}
         density="compact"

@@ -6,15 +6,23 @@ import { TRANSFORMOMETRO_ROUTES } from "../constants/routes";
  * docs/12-roadmap-e-evolucao/transformometro-app/TUTORIAL-USUARIO.md.
  */
 export type UserManualLink = {
-  label: string;
-  path: string;
+  want: string;
+  where: string;
+  how: string;
+  path?: string;
   requiresManage?: boolean;
+};
+
+export type UserManualConcept = {
+  term: string;
+  meaning: string;
 };
 
 export type UserManualSection = {
   id: string;
   title: string;
-  paragraphs: readonly string[];
+  intro?: string;
+  bullets?: readonly string[];
   links?: readonly UserManualLink[];
 };
 
@@ -26,75 +34,109 @@ export function visibleManualLinks(
 }
 
 export const USER_MANUAL_CONTENT = {
+  backHome: "Voltar ao início",
+  scopeNote:
+    "Este manual descreve o que o Portal Transforma+ já oferece. Sala de interação e Minhas tarefas ainda não fazem parte deste portal.",
   tocTitle: "Neste manual",
   tocAriaLabel: "Sumário do manual",
-  sections: [
+  conceptsTitle: "Conceitos",
+  concepts: [
     {
-      id: "portal",
-      title: "O Portal Transforma+",
-      paragraphs: [
-        "O Portal Transforma+ acompanha processos, melhorias e resultados.",
-        "A barra superior leva às áreas do portal. O botão Buscar, ou Ctrl+K, abre os mesmos caminhos em qualquer tela.",
-        "A busca da página Início filtra os cards daquela tela. A busca da barra superior é o atalho do portal inteiro.",
-      ],
+      term: "Início",
+      meaning: "Hub dos caminhos do portal: Gestão, Processos, Registros, Ajuda e, para quem administra, Administração.",
     },
     {
+      term: "Visão geral",
+      meaning: "Indicadores do programa. Competência, datas, unidade e departamento recortam o gráfico.",
+    },
+    {
+      term: "Meus processos",
+      meaning: "Lista os processos disponíveis. Abra um processo para ver melhorias, revisões e diagramas.",
+    },
+    {
+      term: "Administração",
+      meaning: "Área disponível para usuários responsáveis pela administração do Portal. Configurações fica dentro dela.",
+    },
+  ] satisfies readonly UserManualConcept[],
+  sections: [
+    {
       id: "home",
-      title: "Início",
-      paragraphs: [
-        "O Início reúne os caminhos: Gestão, Processos, Registros, Administração e Ajuda.",
-        "Administração só aparece para quem administra o portal.",
+      title: "Início e busca",
+      intro:
+        "A barra superior leva às áreas do portal. Buscar, ou Ctrl+K, abre os mesmos caminhos em qualquer tela. A busca do Início filtra os cards daquela tela.",
+      bullets: [
+        "Use a estrela de um caminho para fixá-lo em Favoritos.",
+        "Favoritos ficam ao lado de Buscar e também no Início.",
       ],
-      links: [{ label: "Abrir Início", path: TRANSFORMOMETRO_ROUTES.home }],
+      links: [{ want: "Abrir o hub", where: "Início", how: "Clique em Início na barra.", path: TRANSFORMOMETRO_ROUTES.home }],
     },
     {
       id: "overview",
       title: "Visão geral",
-      paragraphs: [
-        "A Visão geral mostra indicadores do programa de transformação.",
-        "Competência, datas, unidade e departamento recortam o gráfico. Não mudam quem pode ver o portal.",
+      intro: "Mostra indicadores e resultados do programa de transformação.",
+      bullets: [
         "As visões são Consolidado, Unidade e Departamento.",
+        "O filtro não muda quem pode ver o portal.",
       ],
-      links: [{ label: "Abrir Visão geral", path: TRANSFORMOMETRO_ROUTES.dashboard }],
+      links: [
+        {
+          want: "Ver indicadores",
+          where: "Visão geral",
+          how: "Abra Visão geral na barra ou no Início.",
+          path: TRANSFORMOMETRO_ROUTES.dashboard,
+        },
+      ],
     },
     {
       id: "processes",
       title: "Meus processos",
-      paragraphs: [
-        "Meus processos lista os processos disponíveis no portal.",
-        "Abra um processo para ver melhorias, revisões, medição e diagramas.",
+      intro: "Lista os processos disponíveis no portal.",
+      links: [
+        {
+          want: "Trabalhar um processo",
+          where: "Meus processos",
+          how: "Abra a lista e escolha o processo.",
+          path: TRANSFORMOMETRO_ROUTES.processes,
+        },
       ],
-      links: [{ label: "Abrir Meus processos", path: TRANSFORMOMETRO_ROUTES.processes }],
     },
     {
       id: "minutes",
       title: "Atas",
-      paragraphs: [
-        "Atas reúne reuniões, registros e assinaturas.",
-        "Assinar uma ata depende de ser signatário daquela ata.",
+      intro: "Reuniões, registros e assinaturas. Assinar depende de ser signatário daquela ata.",
+      links: [
+        {
+          want: "Abrir atas",
+          where: "Atas",
+          how: "No Início, em Registros.",
+          path: TRANSFORMOMETRO_ROUTES.meetingMinutes,
+        },
       ],
-      links: [{ label: "Abrir Atas", path: TRANSFORMOMETRO_ROUTES.meetingMinutes }],
     },
     {
       id: "data",
       title: "Exportar / Importar",
-      paragraphs: [
-        "Exportar / Importar faz backup, transferência e restauração dos dados do portal.",
-        "A importação pede prévia e confirmação antes de substituir dados.",
+      intro: "Backup, transferência e restauração. A importação pede prévia e confirmação.",
+      links: [
+        {
+          want: "Fazer backup",
+          where: "Exportar / Importar",
+          how: "No Início, em Registros.",
+          path: TRANSFORMOMETRO_ROUTES.data,
+        },
       ],
-      links: [{ label: "Abrir Exportar / Importar", path: TRANSFORMOMETRO_ROUTES.data }],
     },
     {
       id: "administration",
       title: "Administração",
-      paragraphs: [
-        "A área Administração fica disponível para usuários responsáveis pela administração do Portal.",
-        "Quem só usa o portal no dia a dia não vê essa área na barra nem na busca.",
-        "Configurações fica dentro de Administração. Não é uma área da barra superior.",
-      ],
+      intro:
+        "A área Administração fica disponível para usuários responsáveis pela administração do Portal. Quem só usa o portal no dia a dia não vê essa área na barra nem na busca.",
+      bullets: ["Configurações fica dentro de Administração. Não é uma área da barra superior."],
       links: [
         {
-          label: "Abrir Administração",
+          want: "Abrir a administração",
+          where: "Administração",
+          how: "Use a barra ou o card Administração no Início.",
           path: TRANSFORMOMETRO_ROUTES.administration,
           requiresManage: true,
         },
@@ -103,28 +145,34 @@ export const USER_MANUAL_CONTENT = {
     {
       id: "settings",
       title: "Configurações",
-      paragraphs: [
+      intro: "Unidades, departamentos e o catálogo de recursos compartilhados.",
+      bullets: [
         "Unidades são as plantas ou sites usados nos processos e no filtro da Visão geral.",
         "Departamentos são as áreas ligadas às unidades.",
-        "Recursos compartilhados são licenças e ferramentas do catálogo. Criar ou alterar o catálogo é administração. Ligar um recurso a uma revisão faz parte do uso normal do processo.",
+        "Criar ou alterar o catálogo de recursos é administração. Ligar um recurso a uma revisão faz parte do uso normal do processo.",
       ],
       links: [
-        { label: "Unidades", path: TRANSFORMOMETRO_ROUTES.settingsUnits, requiresManage: true },
-        { label: "Departamentos", path: TRANSFORMOMETRO_ROUTES.settingsDepartments, requiresManage: true },
         {
-          label: "Recursos compartilhados",
+          want: "Cadastrar unidade",
+          where: "Unidades",
+          how: "Administração → Configurações → Unidades.",
+          path: TRANSFORMOMETRO_ROUTES.settingsUnits,
+          requiresManage: true,
+        },
+        {
+          want: "Cadastrar departamento",
+          where: "Departamentos",
+          how: "Administração → Configurações → Departamentos.",
+          path: TRANSFORMOMETRO_ROUTES.settingsDepartments,
+          requiresManage: true,
+        },
+        {
+          want: "Cadastrar recurso",
+          where: "Recursos compartilhados",
+          how: "Administração → Configurações → Recursos compartilhados.",
           path: TRANSFORMOMETRO_ROUTES.settingsSharedResources,
           requiresManage: true,
         },
-      ],
-    },
-    {
-      id: "navigate",
-      title: "Como navegar",
-      paragraphs: [
-        "Use a barra superior para Início, Visão geral, Meus processos, Administração e Ajuda.",
-        "Use Buscar ou Ctrl+K para achar um caminho e Enter para abrir.",
-        "Escape fecha a busca.",
       ],
     },
   ] satisfies readonly UserManualSection[],
