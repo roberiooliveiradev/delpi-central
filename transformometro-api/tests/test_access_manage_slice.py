@@ -75,7 +75,7 @@ def test_branch_and_consolidated_do_not_grant_access():
     for code in LEGACY_SCOPE_CODES_THAT_DO_NOT_GRANT_ACCESS:
         assert policy.has_access(_user(permissions=[code])) is False
     assert "transformometro.view.consolidated" in LEGACY_SCOPE_CODES_THAT_DO_NOT_GRANT_ACCESS
-    assert TRANSFORMOMETRO_DATA_TRANSFER not in LEGACY_NORMAL_USE_PERMISSIONS
+    assert TRANSFORMOMETRO_DATA_TRANSFER in LEGACY_NORMAL_USE_PERMISSIONS
 
 
 def test_manage_does_not_imply_access():
@@ -85,9 +85,11 @@ def test_manage_does_not_imply_access():
     assert policy.has_access(admin) is False
     with pytest.raises(AuthorizationDenied):
         policy.require_access(admin)
-    policy.require_data_transfer(admin)
-    policy.require_dashboard_recalculate(admin)
     policy.require_manage(admin)
+    with pytest.raises(AuthorizationDenied):
+        policy.require_data_transfer(admin)
+    with pytest.raises(AuthorizationDenied):
+        policy.require_dashboard_recalculate(admin)
 
 
 def test_access_sees_both_filiais_and_dashboard_filters():
@@ -112,36 +114,26 @@ def test_access_sees_both_filiais_and_dashboard_filters():
     ) is None
 
 
-def test_access_denies_admin_transfer_and_recalc():
+def test_access_uses_the_product_and_does_not_administer():
     policy = TransformometroAuthorizationPolicy()
     user = _user(permissions=[TRANSFORMOMETRO_ACCESS])
     request = _request(user)
+    policy.require_data_transfer(user)
+    policy.require_dashboard_recalculate(user)
+    policy.require_shared_resources(user)
+    assert require_unrestricted_catalog_admin(request) is None
+    assert require_shared_resources_manage(request) is None
     with pytest.raises(AuthorizationDenied):
-        policy.require_data_transfer(user)
-    with pytest.raises(AuthorizationDenied):
-        policy.require_dashboard_recalculate(user)
-    assert require_unrestricted_catalog_admin(request) is not None
-    assert require_shared_resources_manage(request) is not None
-    both = _user(permissions=[TRANSFORMOMETRO_ACCESS, TRANSFORMOMETRO_MANAGE])
-    policy.require_data_transfer(both)
-    policy.require_dashboard_recalculate(both)
-    assert require_unrestricted_catalog_admin(_request(both)) is None
+        policy.require_manage(user)
 
 
 def test_legacy_view_still_opens_portal_and_admin_codes_stay_narrow():
     view = _request(_user(permissions=[TRANSFORMOMETRO_VIEW]))
     assert require_transformometro_view_access(view) is None
-    assert require_unrestricted_catalog_admin(view) is not None
-    transfer = _request(_user(permissions=[TRANSFORMOMETRO_DATA_TRANSFER]))
-    assert require_transformometro_view_access(transfer) is not None
-    policy = TransformometroAuthorizationPolicy()
-    policy.require_data_transfer(_user(permissions=[TRANSFORMOMETRO_DATA_TRANSFER]))
-    policy.require_shared_resources(
-        _user(permissions=["transformometro.shared-resources.manage"])
-    )
-    policy.require_dashboard_recalculate(
-        _user(permissions=["transformometro.dashboard.recalculate"])
-    )
+    assert require_unrestricted_catalog_admin(view) is None
+    assert require_transformometro_view_access(
+        _request(_user(permissions=["transformometro.branch.filial-01"]))
+    ) is not None
 
 
 class _MinuteRepo:

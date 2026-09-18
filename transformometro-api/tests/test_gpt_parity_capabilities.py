@@ -329,8 +329,8 @@ def test_adjust_shared_resource_cost_denied_without_manage_zero_mutation():
     custo_repo.return_value.registrar_reajuste.assert_not_called()
 
 
-def test_adjust_shared_resource_cost_view_only_permission_denied():
-    """view-only (no shared-resources.manage) must not mutate."""
+def test_adjust_shared_resource_cost_without_access_denied():
+    """Sem access não altera recurso. view legado equivale a access."""
     from types import SimpleNamespace
 
     from tm_app.application.gpt_actions.parity_capabilities_service import (
@@ -341,7 +341,7 @@ def test_adjust_shared_resource_cost_view_only_permission_denied():
     request.state.user = SimpleNamespace(
         id="u-view",
         is_superadmin=False,
-        permissions=["transformometro.view"],
+        permissions=[],
     )
     svc = ParityCapabilitiesService(
         raise_http_err=GptActionsDispatchService()._raise_http_err,
@@ -358,7 +358,7 @@ def test_adjust_shared_resource_cost_view_only_permission_denied():
                 vigente_desde="2026-10-01",
             )
     assert exc.value.status_code == 403
-    assert "shared-resources.manage" in exc.value.message
+    assert "transformometro.access" in exc.value.message
     custo_repo.return_value.registrar_reajuste.assert_not_called()
 
 
@@ -395,7 +395,7 @@ def test_ui_reajuste_requires_shared_resources_manage(tm_client):
     prev_super = support.TEST_USER.is_superadmin
     prev_perms = list(support.TEST_USER.permissions)
     support.TEST_USER.is_superadmin = False
-    support.TEST_USER.permissions = ["transformometro.view"]
+    support.TEST_USER.permissions = []
     try:
         with patch(
             "tm_app.interface.http.routes.crud_routes.RecursoCustoRepository"

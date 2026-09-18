@@ -14,10 +14,7 @@ from delpi_auth.authz_core import has_any_permission, has_permission
 from tm_app.application.security.transformometro_permissions import (
     LEGACY_NORMAL_USE_PERMISSIONS,
     TRANSFORMOMETRO_ACCESS,
-    TRANSFORMOMETRO_DASHBOARD_RECALCULATE,
-    TRANSFORMOMETRO_DATA_TRANSFER,
     TRANSFORMOMETRO_MANAGE,
-    TRANSFORMOMETRO_SHARED_RESOURCES_MANAGE,
 )
 
 
@@ -62,33 +59,16 @@ class TransformometroAuthorizationPolicy:
         raise AuthorizationDenied("Sem permissão transformometro.manage.")
 
     def require_data_transfer(self, user: Any | None) -> None:
-        self._require_user(user)
-        if self.has_manage(user) or has_permission(user, TRANSFORMOMETRO_DATA_TRANSFER):
-            return
-        raise AuthorizationDenied(
-            "Sem permissão transformometro.manage ou transformometro.data.transfer."
-        )
+        """Backup do cadastro é uso normal do produto, não gestão de acessos."""
+        self.require_access(user)
 
     def require_dashboard_recalculate(self, user: Any | None) -> None:
-        """Comando do usuário. Uso normal não recalcula."""
-        self._require_user(user)
-        if self.has_manage(user) or has_permission(
-            user, TRANSFORMOMETRO_DASHBOARD_RECALCULATE
-        ):
-            return
-        raise AuthorizationDenied(
-            "Sem permissão transformometro.manage ou transformometro.dashboard.recalculate."
-        )
+        """Botão da Visão geral. Reconstrói cache derivado. Não administra o portal."""
+        self.require_access(user)
 
     def require_shared_resources(self, user: Any | None) -> None:
-        self._require_user(user)
-        if self.has_manage(user) or has_permission(
-            user, TRANSFORMOMETRO_SHARED_RESOURCES_MANAGE
-        ):
-            return
-        raise AuthorizationDenied(
-            "Sem permissão transformometro.manage ou transformometro.shared-resources.manage."
-        )
+        """Recurso compartilhado é dado do domínio."""
+        self.require_access(user)
 
     @staticmethod
     def _require_user(user: Any | None) -> None:

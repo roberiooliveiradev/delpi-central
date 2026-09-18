@@ -12,13 +12,13 @@
     {
       "code": "transformometro.access",
       "name": "Acessar Portal Transforma+",
-      "description": "Permite acessar e utilizar as funcionalidades normais do Portal Transforma+.",
+      "description": "Permite acessar e utilizar todas as funcionalidades normais do Portal Transforma+.",
       "module": "transformometro"
     },
     {
       "code": "transformometro.manage",
       "name": "Administrar Portal Transforma+",
-      "description": "Permite acessar funcionalidades administrativas e de configuração do Portal Transforma+.",
+      "description": "Permite acessar as funcionalidades administrativas do Portal Transforma+, como gestão de equipe, grupos, acessos e outras capacidades administrativas.",
       "module": "transformometro"
     },
     {

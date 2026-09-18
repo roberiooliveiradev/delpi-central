@@ -64,9 +64,9 @@ def require_transformometro_view_access(request: Request) -> JSONResponse | None
 
 
 def require_unrestricted_catalog_admin(request: Request) -> JSONResponse | None:
-    """Cadastro de filiais e departamentos. Só manage. Uso normal não administra."""
+    """Filial e departamento são cadastro do domínio. Quem usa o portal altera."""
     try:
-        _policy().require_manage(_user(request))
+        _policy().require_access(_user(request))
     except AuthorizationDenied as exc:
         return _as_response(exc)
     return None

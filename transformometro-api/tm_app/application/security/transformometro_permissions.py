@@ -94,14 +94,17 @@ BRANCH_VIEW_PERMISSIONS: tuple[str, ...] = tuple(VIEW_FILIAL_PERMISSIONS.values(
 BRANCH_MANAGE_PERMISSIONS: tuple[str, ...] = tuple(MANAGE_FILIAL_PERMISSIONS.values())
 BRANCH_SCOPE_PERMISSION_CODES: tuple[str, ...] = tuple(BRANCH_SCOPE_PERMISSIONS.values())
 
-# Uso normal legado. Não inclui filial, consolidado, transferência, recálculo
-# nem recurso compartilhado. Sign fica fora: não abre o portal.
+# Uso normal legado. Inclui o CRUD do domínio que o alvo absorve em access.
+# Não inclui filial nem consolidado. Sign não abre o portal: só a ação de assinar.
 LEGACY_NORMAL_USE_PERMISSIONS: tuple[str, ...] = (
     TRANSFORMOMETRO_VIEW,
     TRANSFORMOMETRO_PROCESSES_MANAGE,
     TRANSFORMOMETRO_REVISIONS_MANAGE,
     TRANSFORMOMETRO_MEASUREMENTS_MANAGE,
     TRANSFORMOMETRO_INVESTMENTS_MANAGE,
+    TRANSFORMOMETRO_SHARED_RESOURCES_MANAGE,
+    TRANSFORMOMETRO_DASHBOARD_RECALCULATE,
+    TRANSFORMOMETRO_DATA_TRANSFER,
     *MEETING_MINUTES_VIEW_PERMISSIONS,
     *MEETING_MINUTES_MANAGE_PERMISSIONS,
 )

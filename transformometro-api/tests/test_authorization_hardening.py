@@ -51,29 +51,32 @@ def _request(user) -> Request:
     return request
 
 
-def test_data_transfer_denies_missing_user_and_view_only():
+def test_data_transfer_denies_missing_user_and_allows_normal_use():
     policy = TransformometroAuthorizationPolicy()
     with pytest.raises(AuthorizationDenied) as missing:
         policy.require_data_transfer(None)
     assert missing.value.status_code == 401
 
-    with pytest.raises(AuthorizationDenied) as view_only:
-        policy.require_data_transfer(_user(permissions=["transformometro.view"]))
-    assert view_only.value.status_code == 403
+    with pytest.raises(AuthorizationDenied):
+        policy.require_data_transfer(_user(permissions=[]))
 
+    policy.require_data_transfer(_user(permissions=["transformometro.view"]))
+    policy.require_data_transfer(_user(permissions=["transformometro.access"]))
     policy.require_data_transfer(_user(permissions=["transformometro.data.transfer"]))
     policy.require_data_transfer(_user(is_superadmin=True))
+    with pytest.raises(AuthorizationDenied):
+        policy.require_data_transfer(_user(permissions=["transformometro.manage"]))
 
 
 def test_export_route_uses_data_transfer_gate():
-    denied = export_json(_request(_user(permissions=["transformometro.view"])))
+    denied = export_json(_request(_user(permissions=[])))
     assert denied.status_code == 403
 
     with patch(
         "tm_app.interface.http.routes.json_backup_routes.JsonBackupService.export_bundle",
         return_value={"counts": {}},
     ):
-        allowed = export_json(_request(_user(permissions=["transformometro.data.transfer"])))
+        allowed = export_json(_request(_user(permissions=["transformometro.access"])))
     assert allowed.status_code == 200
 
 
@@ -82,7 +85,7 @@ def test_import_preview_does_not_run_without_permission():
     with patch(
         "tm_app.interface.http.routes.json_backup_routes.JsonBackupService.preview"
     ) as preview:
-        denied = import_preview(body, _request(_user(permissions=["transformometro.dashboard.recalculate"])))
+        denied = import_preview(body, _request(_user(permissions=[])))
     assert denied.status_code == 403
     preview.assert_not_called()
 
@@ -90,31 +93,32 @@ def test_import_preview_does_not_run_without_permission():
 def test_dashboard_recalculate_policy_parity():
     policy = TransformometroAuthorizationPolicy()
     view_only = _user(permissions=["transformometro.view"])
+    nobody = _user(permissions=[])
     recalc = _user(permissions=["transformometro.dashboard.recalculate"])
-    sibling = _user(permissions=["transformometro.dashboard.recalculate"])
+    sibling = _user(permissions=["transformometro.access"])
     normal_use = _user(permissions=["transformometro.processes.manage"])
 
     with pytest.raises(AuthorizationDenied):
         policy.require_dashboard_recalculate(None)
     with pytest.raises(AuthorizationDenied):
-        policy.require_dashboard_recalculate(view_only)
+        policy.require_dashboard_recalculate(nobody)
+    policy.require_dashboard_recalculate(view_only)
     policy.require_dashboard_recalculate(recalc)
     policy.require_dashboard_recalculate(sibling)
-    with pytest.raises(AuthorizationDenied):
-        policy.require_dashboard_recalculate(normal_use)
+    policy.require_dashboard_recalculate(normal_use)
 
-    http_denied = recalcular_dashboard(_request(view_only))
+    http_denied = recalcular_dashboard(_request(nobody))
     assert http_denied.status_code == 403
 
     dispatch = GptActionsDispatchService()
     with pytest.raises(GptActionsError) as gpt:
-        dispatch._require_dashboard_recalculate_access(_request(view_only))
+        dispatch._require_dashboard_recalculate_access(_request(nobody))
     assert gpt.value.status_code == 403
-    assert "dashboard.recalculate" in str(gpt.value)
+    assert "transformometro.access" in str(gpt.value)
 
     with pytest.raises(GovernedWriteError) as mcp:
         GovernedWriteOrchestrator().prepare(
-            _request(view_only),
+            _request(nobody),
             capability="recalculate_dashboard",
             args={},
         )

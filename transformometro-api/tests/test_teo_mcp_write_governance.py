@@ -118,7 +118,7 @@ class TestGovernedOrchestrator:
 
     def test_prepare_forbidden_recalculate(self):
         orch = GovernedWriteOrchestrator()
-        user = _auth_user(permissions=["transformometro.view"])
+        user = _auth_user(permissions=[])
         request = _request_for(user)
         with pytest.raises(GovernedWriteError) as exc:
             orch.prepare(request, capability="recalculate_dashboard", args={})
@@ -420,7 +420,7 @@ class TestDispatchAuthZ:
 
     def test_recalculate_dashboard_unauthorized(self):
         dispatch = GptActionsDispatchService()
-        request = _request_for(_auth_user(permissions=["transformometro.view"]))
+        request = _request_for(_auth_user(permissions=[]))
         with pytest.raises(GptActionsError) as exc:
             dispatch.recalculate_dashboard(request)
         assert exc.value.status_code == 403
@@ -506,7 +506,7 @@ class TestMcpBridgeGoverned:
         assert result.structuredContent["status_code"] == 401
 
     def test_prepare_recalculate_forbidden_via_bridge(self):
-        user_token, auth_token = self._auth(permissions=["transformometro.view"])
+        user_token, auth_token = self._auth(permissions=[])
         try:
             result = tool_prepare_recalculate_dashboard()
             assert result.isError is True
