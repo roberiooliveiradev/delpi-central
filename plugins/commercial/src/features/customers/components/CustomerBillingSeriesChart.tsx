@@ -294,21 +294,8 @@ export function CustomerBillingSeriesChart({
     });
     return [
       ...compare,
-      {
-        id: "trend-weight",
-        label: "Ponderar período parcial",
-        summaryLabel: "Tendência ponderada",
-        hint: CM_HELP.customers.billingTrendIncomplete,
-        hintAriaLabel: "Ajuda: tendência em período parcial",
-        checked: incompleteBucketMode === "weightByFraction",
-        onChange: (checked) =>
-          setPreferences({
-            incompleteBucketMode: checked ? "weightByFraction" : "exclude",
-          }),
-        disabled: !anyTrend,
-      },
     ];
-  }, [anyTrend, compareYears, incompleteBucketMode, setPreferences]);
+  }, [compareYears, setPreferences]);
   const seriesConfigItems = useMemo(
     () => buildChartSeriesConfigItems(baseBars, preferences),
     [baseBars, preferences],
@@ -459,6 +446,16 @@ export function CustomerBillingSeriesChart({
                     seriesTrend: { ...(prev.seriesTrend ?? {}), [dataKey]: enabled },
                   }))
                 }
+                incompleteBucketWeighted={
+                  incompleteBucketMode === "weightByFraction"
+                }
+                onIncompleteBucketWeightChange={(weighted) =>
+                  setPreferences({
+                    incompleteBucketMode: weighted ? "weightByFraction" : "exclude",
+                  })
+                }
+                incompleteBucketWeightHint={CM_HELP.customers.billingTrendIncomplete}
+                incompleteBucketWeightHintAriaLabel="Ajuda: tendência em período parcial"
                 onTrendStyleChange={(dataKey, style) =>
                   setPreferences((prev) => ({
                     ...prev,

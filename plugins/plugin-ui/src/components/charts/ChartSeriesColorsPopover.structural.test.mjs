@@ -16,6 +16,7 @@ describe("ChartSeriesColorsPopover (fonte)", () => {
     assert.match(src, /AnchoredPanelPortal/);
     assert.match(src, /onVisibleChange/);
     assert.match(src, /onTrendChange/);
+    assert.match(src, /onIncompleteBucketWeightChange/);
     assert.match(src, /onReset/);
     assert.match(src, /variant="fill"/);
     assert.match(src, /showNoFill=\{false\}/);

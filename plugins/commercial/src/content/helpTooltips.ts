@@ -322,7 +322,7 @@ export const CM_HELP = {
     billingSeriesYoy:
       "Compara o mesmo período filtrado deslocado −1…−3 anos em séries agrupadas. Em Ambos, o overlay inclui faturamento e quantidade. Alinhamento por bucket em qualquer granularidade permitida.",
     billingTrendIncomplete:
-      "Por padrão a tendência exclui o bucket incompleto (ex.: mês corrente). Ative «Ponderar período parcial» para incluir o valor do período atual escalado pelo % já decorrido. A ponderação não se aplica às séries comparativas (ano anterior, −2 e −3 anos): esses buckets já estão completos no calendário de origem.",
+      "Por padrão a tendência exclui o bucket incompleto (ex.: mês corrente). Em Séries, com a tendência ativa, «Ponderar período parcial» inclui o valor do período atual escalado pelo % já decorrido. A ponderação não se aplica às séries comparativas (ano anterior, −2 e −3 anos): esses buckets já estão completos no calendário de origem.",
     billingFilterCustomer:
       "Restringe o gráfico, o mix e o ABC aos clientes selecionados. Vazio = toda a carteira do escopo. Compartilhado entre os painéis Faturamento e ABC.",
     billingFilterProductGroup:
@@ -472,7 +472,7 @@ export const CM_HELP = {
     billingSeriesAccount:
       "Evolução do faturamento ou da quantidade fornecida deste cliente no período dos filtros (Métrica R$ | Qtd). A quantidade inclui a UM da nota; UMs diferentes no período omitem a UM (não usam «mistas» como unidade). Em Opções do gráfico, «Comparar ano anterior» coloca as colunas do ano anterior lado a lado com o período atual. Em Séries, configure cor, visibilidade e tendência linear de cada série (inclusive o ano anterior); «Restaurar padrão» remove a personalização da série selecionada.",
     billingSeriesTrend:
-      "Regressão linear calculada no gráfico, só da série escolhida, na cor e no eixo dessa série. Em Séries, ative, desative e estilize cada tendência (inclusive Ano ant., −2/−3 anos e quantidades comparativas). O default é desligada. Em Opções permanece só «Ponderar período parcial», habilitado quando alguma tendência está ativa. Em Ambos, quantidade e sua tendência ficam no eixo direito.",
+      "Regressão linear calculada no gráfico, só da série escolhida, na cor e no eixo dessa série. Em Séries, ative, desative, estilize e pondere cada tendência (inclusive Ano ant., −2/−3 anos e quantidades comparativas). O default é desligada. «Ponderar período parcial» fica nas opções da tendência e só vale para o período atual. Em Ambos, quantidade e sua tendência ficam no eixo direito.",
     billingSeriesDateStart: "Início do intervalo personalizado da série de faturamento.",
     billingSeriesDateEnd: "Fim do intervalo personalizado da série de faturamento.",
     purchaseEvolutionPeriod:

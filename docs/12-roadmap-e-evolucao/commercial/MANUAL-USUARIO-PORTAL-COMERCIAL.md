@@ -159,10 +159,10 @@ Não. São conceitos diferentes: ROL é faturamento no período; carteira aberta
 **Minha Carteira → Faturamento**: toggle **Métrica R$ | Qtd | Ambos**. **Ambos** mostra dois eixos Y (R$ à esquerda, quantidade à direita) no tipo de gráfico escolhido (colunas, linhas ou área) e as duas métricas nas colunas do mix, com a UM da nota. **Ano anterior** também compara a quantidade. **Conta → Histórico** e **Evolução de compras** permanecem **R$ | Qtd**. A quantidade é a fornecida (`D2_QUANT`). UMs diferentes omitem a UM no gráfico (não convertem); no mix a coluna UM mostra **mistas**.
 
 **A linha de tendência distorce no mês corrente?**  
-Por padrão a tendência **exclui** o bucket incompleto. Em **Opções**, «Ponderar período parcial» inclui o valor do período atual escalado pelo % já decorrido — não altera as séries de anos anteriores. Ligar/desligar a tendência é só em **Séries**.
+Por padrão a tendência **exclui** o bucket incompleto. Em **Séries**, com a tendência ativa, «Ponderar período parcial» inclui o valor do período atual escalado pelo % já decorrido — não altera as séries de anos anteriores.
 
 **Posso mudar as cores das séries do gráfico?**  
-Sim. Nos gráficos com toolbar (**Visão geral**, **Minha Carteira**, **Conta**), use **Séries** para escolher a série, alterar cor, ocultar ou ativar tendência linear — inclusive **Ano ant.** e demais comparativos. A escolha fica neste navegador; **Restaurar padrão** volta aos defaults da série selecionada. **Opções** guarda comparação de anos e ponderação, não o liga/desliga da tendência.
+Sim. Nos gráficos com toolbar (**Visão geral**, **Minha Carteira**, **Conta**), use **Séries** para escolher a série, alterar cor, ocultar ou ativar tendência linear — inclusive **Ano ant.** e demais comparativos. «Ponderar período parcial» fica nas opções da tendência. A escolha fica neste navegador; **Restaurar padrão** volta aos defaults da série selecionada. **Opções** guarda a comparação de anos.
 
 **Como comparo com o ano passado?**  
 Na Visão geral / gráficos, use a opção de **comparar ano anterior** (quando disponível no gráfico).

@@ -254,11 +254,11 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "A linha de tendência distorce no mês corrente?",
-          a: "Por padrão a tendência exclui o bucket incompleto (ex.: mês em andamento). Em Opções, «Ponderar período parcial» inclui o valor do período atual escalado pelo % já decorrido — não altera as séries de anos anteriores. A tendência em si liga e desliga só em Séries.",
+          a: "Por padrão a tendência exclui o bucket incompleto (ex.: mês em andamento). Em Séries, com a tendência ativa, «Ponderar período parcial» inclui o valor do período atual escalado pelo % já decorrido — não altera as séries de anos anteriores.",
         },
         {
           q: "Posso mudar as cores das séries do gráfico?",
-          a: "Sim. Nos gráficos com toolbar (Visão geral, Minha Carteira, Conta), use Séries para escolher a série, alterar cor, ocultar ou ativar tendência linear — inclusive Ano ant. e demais comparativos. A escolha fica neste navegador; «Restaurar padrão» volta aos defaults da série selecionada. Opções guarda comparação de anos e ponderação, não o liga/desliga da tendência.",
+          a: "Sim. Nos gráficos com toolbar (Visão geral, Minha Carteira, Conta), use Séries para escolher a série, alterar cor, ocultar ou ativar tendência linear — inclusive Ano ant. e demais comparativos. «Ponderar período parcial» fica nas opções da tendência. A escolha fica neste navegador; «Restaurar padrão» volta aos defaults da série selecionada. Opções guarda a comparação de anos.",
         },
         {
           q: "Cadê o GR / telão de vendas?",

@@ -220,8 +220,8 @@ describe("CustomerDetailPage billing (fonte)", () => {
     assert.match(chart, /ChartSeriesColorsPopover/);
     assert.match(chart, /applySeriesViewPreferences/);
     assert.match(chart, /MultiTypeSeriesChart|ChartViewShell/);
-    assert.match(chart, /id:\s*"trend-weight"/);
-    assert.match(chart, /disabled: !anyTrend/);
+    assert.match(chart, /onIncompleteBucketWeightChange/);
+    assert.doesNotMatch(chart, /id:\s*"trend-weight"/);
     assert.doesNotMatch(chart, /id:\s*"trend"/);
     assert.doesNotMatch(chart, /showTrendLine/);
     assert.doesNotMatch(chart, /AreaChart/);

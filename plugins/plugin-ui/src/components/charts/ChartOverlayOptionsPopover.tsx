@@ -39,7 +39,7 @@ export function summarizeChartOverlayOptions(
 }
 
 /**
- * Popover of chart overlay checkboxes (YoY / multi-year / incomplete-bucket weight).
+ * Popover of chart overlay checkboxes (YoY / multi-year).
  * Same density as ChartTypeSegmentToggle — use inside ChartViewShell.overlays.
  */
 export function ChartOverlayOptionsPopover({

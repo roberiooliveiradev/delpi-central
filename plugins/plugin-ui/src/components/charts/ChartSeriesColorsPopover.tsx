@@ -21,6 +21,7 @@ export type ChartSeriesColorItem = {
   trendColor?: string | null;
   trendDash?: SeriesTrendDash;
   trendWidth?: number;
+  trendApplyIncompleteBucket?: boolean;
 };
 
 export type ChartSeriesConfigLabels = {
@@ -41,6 +42,7 @@ export type ChartSeriesConfigLabels = {
   trendWidthThinLabel?: string;
   trendWidthDefaultLabel?: string;
   trendWidthThickLabel?: string;
+  trendWeightIncompleteLabel?: string;
 };
 
 export type ChartSeriesColorsPopoverProps = {
@@ -51,6 +53,10 @@ export type ChartSeriesColorsPopoverProps = {
   onVisibleChange?: (dataKey: string, visible: boolean) => void;
   onTrendChange?: (dataKey: string, enabled: boolean) => void;
   onTrendStyleChange?: (dataKey: string, style: SeriesTrendStyle) => void;
+  incompleteBucketWeighted?: boolean;
+  onIncompleteBucketWeightChange?: (weighted: boolean) => void;
+  incompleteBucketWeightHint?: string;
+  incompleteBucketWeightHintAriaLabel?: string;
   onResetSeries?: (dataKey: string) => void;
   onReset?: () => void;
   hasOverrides?: boolean;
@@ -84,10 +90,11 @@ const DEFAULT_LABELS = {
   trendWidthThinLabel: "Fina",
   trendWidthDefaultLabel: "Padrão",
   trendWidthThickLabel: "Grossa",
+  trendWeightIncompleteLabel: "Ponderar período parcial",
 } as const;
 
 /**
- * Inspector of one chart series (color, visibility, OLS trend).
+ * Inspector of one chart series (color, visibility, OLS trend and partial-period weight).
  * Use inside ChartViewShell.seriesColors. Color-only hosts omit optional callbacks.
  */
 export function ChartSeriesColorsPopover({
@@ -97,6 +104,10 @@ export function ChartSeriesColorsPopover({
   onVisibleChange,
   onTrendChange,
   onTrendStyleChange,
+  incompleteBucketWeighted = false,
+  onIncompleteBucketWeightChange,
+  incompleteBucketWeightHint,
+  incompleteBucketWeightHintAriaLabel = "Ajuda: tendência em período parcial",
   onResetSeries,
   onReset,
   hasOverrides,
@@ -338,6 +349,20 @@ export function ChartSeriesColorsPopover({
                             />
                           </label>
                         </>
+                      ) : null}
+                      {onIncompleteBucketWeightChange ? (
+                        <NativeCheckboxControl
+                          id={`${idPrefix}-trend-weight`}
+                          checked={incompleteBucketWeighted}
+                          disabled={selected.trendApplyIncompleteBucket === false}
+                          onChange={onIncompleteBucketWeightChange}
+                          label={copy.trendWeightIncompleteLabel}
+                          hint={incompleteBucketWeightHint}
+                          hintPlacement={
+                            incompleteBucketWeightHint ? "tooltip" : "inline"
+                          }
+                          hintAriaLabel={incompleteBucketWeightHintAriaLabel}
+                        />
                       ) : null}
                     </>
                   ) : null}

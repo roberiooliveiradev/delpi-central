@@ -92,6 +92,23 @@ describe("trend capability vs state", () => {
     const items = buildChartSeriesConfigItems(BASE);
     expect(items.map((entry) => entry.trendCapable)).toEqual([true, true, true]);
     expect(items.every((entry) => entry.trendEnabled === false)).toBe(true);
+    expect(items.every((entry) => entry.trendApplyIncompleteBucket === true)).toBe(
+      true,
+    );
+  });
+
+  it("propaga opt-out de ponderação da spec comparativa", () => {
+    const items = buildChartSeriesConfigItems([
+      { dataKey: "faturamento", name: "Fat", fill: "#1" },
+      {
+        dataKey: "faturamento_prior",
+        name: "Ano ant.",
+        fill: "#2",
+        trendApplyIncompleteBucket: false,
+      },
+    ]);
+    expect(items[0].trendApplyIncompleteBucket).toBe(true);
+    expect(items[1].trendApplyIncompleteBucket).toBe(false);
   });
 
   it("opt-out explícito desliga a capability", () => {

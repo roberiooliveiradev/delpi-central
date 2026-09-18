@@ -17,6 +17,8 @@ export type ChartSeriesConfigItem = {
   trendColor: string | null;
   trendDash: SeriesTrendDash;
   trendWidth: number;
+  /** False for comparatives whose buckets are already complete. */
+  trendApplyIncompleteBucket: boolean;
 };
 
 export type SeriesViewPreferenceSlice = Pick<
@@ -148,6 +150,7 @@ export function buildChartSeriesConfigItems(
         typeof width === "number" && Number.isFinite(width)
           ? Math.min(8, Math.max(1, Math.round(width)))
           : DEFAULT_TREND_WIDTH,
+      trendApplyIncompleteBucket: entry.trendApplyIncompleteBucket !== false,
     };
   });
 }

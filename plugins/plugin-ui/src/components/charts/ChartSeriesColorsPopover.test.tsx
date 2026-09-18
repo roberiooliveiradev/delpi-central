@@ -198,11 +198,59 @@ describe("ChartSeriesColorsPopover", () => {
     expect(document.querySelector("select")).toBeNull();
   });
 
+  it("Ponderar período parcial fica nas opções da tendência, não em COLOR_ONLY", () => {
+    const onIncompleteBucketWeightChange = vi.fn();
+    renderInspector({
+      onTrendChange: () => undefined,
+      onTrendStyleChange: () => undefined,
+      incompleteBucketWeighted: false,
+      onIncompleteBucketWeightChange,
+      series: SERIES.map((entry) =>
+        entry.dataKey === "faturamento"
+          ? { ...entry, trendEnabled: true, trendApplyIncompleteBucket: true }
+          : entry.dataKey === "faturamento_prior"
+            ? { ...entry, trendEnabled: true, trendApplyIncompleteBucket: false }
+            : { ...entry, trendApplyIncompleteBucket: false },
+      ),
+    });
+    openInspector();
+    fireEvent.click(screen.getByLabelText("Ponderar período parcial"));
+    expect(onIncompleteBucketWeightChange).toHaveBeenCalledWith(true);
+
+    chooseSeries("Ano ant.");
+    const comparative = screen.getByLabelText(
+      "Ponderar período parcial",
+    ) as HTMLInputElement;
+    expect(comparative.disabled).toBe(true);
+  });
+
+  it("com tendência desligada não mostra ponderar mesmo com callback", () => {
+    renderInspector({
+      onTrendChange: () => undefined,
+      incompleteBucketWeighted: false,
+      onIncompleteBucketWeightChange: () => undefined,
+    });
+    openInspector();
+    expect(screen.queryByLabelText("Ponderar período parcial")).toBeNull();
+  });
+
+  it("sem callback de ponderação não mostra o checkbox", () => {
+    renderInspector({
+      onTrendChange: () => undefined,
+      series: SERIES.map((entry) =>
+        entry.dataKey === "faturamento" ? { ...entry, trendEnabled: true } : entry,
+      ),
+    });
+    openInspector();
+    expect(screen.queryByLabelText("Ponderar período parcial")).toBeNull();
+  });
+
   it("COLOR_ONLY não exibe seção de tendência mesmo com série capable", () => {
     renderInspector();
     openInspector();
     expect(screen.queryByLabelText("Ativar")).toBeNull();
     expect(screen.queryByText("Linha de tendência")).toBeNull();
+    expect(screen.queryByLabelText("Ponderar período parcial")).toBeNull();
   });
 
   it("série com opt-out de tendência não mostra Ativar", () => {
