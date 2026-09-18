@@ -58,30 +58,35 @@ export function omitRecordKey<T>(
   return Object.keys(next).length > 0 ? next : undefined;
 }
 
+export function isSeriesTrendCapable(
+  entry: Pick<MultiTypeSeriesSpec, "trendCapable">,
+): boolean {
+  return entry.trendCapable !== false;
+}
+
+/** Effective ON state: only an explicit `seriesTrend[dataKey] === true`. */
 export function resolveSeriesTrendEnabled(
   dataKey: string,
   eligible: boolean,
-  showTrend: boolean,
   seriesTrend?: Record<string, boolean> | null,
 ): boolean {
   if (!eligible) return false;
-  const override = seriesTrend?.[dataKey];
-  if (typeof override === "boolean") return override;
-  return Boolean(showTrend);
+  return seriesTrend?.[dataKey] === true;
 }
 
 export function resolveEffectiveShowTrend(
-  series: ReadonlyArray<Pick<MultiTypeSeriesSpec, "dataKey" | "trendSource">>,
-  showTrend: boolean,
+  series: ReadonlyArray<Pick<MultiTypeSeriesSpec, "dataKey" | "trendCapable">>,
   seriesTrend?: Record<string, boolean> | null,
+  hiddenSeries?: Record<string, boolean> | null,
 ): boolean {
-  return series.some((entry) =>
-    resolveSeriesTrendEnabled(
-      entry.dataKey,
-      Boolean(entry.trendSource),
-      showTrend,
-      seriesTrend,
-    ),
+  return series.some(
+    (entry) =>
+      !hiddenSeries?.[entry.dataKey] &&
+      resolveSeriesTrendEnabled(
+        entry.dataKey,
+        isSeriesTrendCapable(entry),
+        seriesTrend,
+      ),
   );
 }
 
@@ -93,11 +98,10 @@ export function applySeriesViewPreferences(
   return filled
     .filter((entry) => !preferences?.hiddenSeries?.[entry.dataKey])
     .map((entry) => {
-      const eligible = Boolean(entry.trendSource);
+      const capable = isSeriesTrendCapable(entry);
       const trendOn = resolveSeriesTrendEnabled(
         entry.dataKey,
-        eligible,
-        Boolean(preferences?.showTrend),
+        capable,
         preferences?.seriesTrend,
       );
       const style = preferences?.seriesTrendStyles?.[entry.dataKey];
@@ -125,7 +129,7 @@ export function buildChartSeriesConfigItems(
   const filled = applySeriesFillPreferences(series, preferences?.seriesFills);
   return filled.map((entry) => {
     const style = preferences?.seriesTrendStyles?.[entry.dataKey];
-    const capable = Boolean(entry.trendSource);
+    const capable = isSeriesTrendCapable(entry);
     const width = style?.width;
     return {
       dataKey: entry.dataKey,
@@ -136,7 +140,6 @@ export function buildChartSeriesConfigItems(
       trendEnabled: resolveSeriesTrendEnabled(
         entry.dataKey,
         capable,
-        Boolean(preferences?.showTrend),
         preferences?.seriesTrend,
       ),
       trendColor: style?.color?.trim() || null,

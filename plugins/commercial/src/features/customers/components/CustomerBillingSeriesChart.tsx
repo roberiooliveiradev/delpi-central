@@ -13,7 +13,6 @@ import {
   omitRecordKey,
   patchSeriesTrendStyle,
   resetSeriesViewPreferences,
-  resolveEffectiveShowTrend,
   runTabularExport,
   seriesViewHasOverrides,
   usePersistedChartPreferences,
@@ -116,7 +115,6 @@ export function CustomerBillingSeriesChart({
     allowedChartTypes: TIME_MULTI_SERIES_TYPES,
   });
   const compareYears = (preferences.compareYears ?? 0) as CompareYearsCount;
-  const showTrend = Boolean(preferences.showTrend);
   const incompleteBucketMode =
     preferences.incompleteBucketMode === "weightByFraction"
       ? "weightByFraction"
@@ -202,7 +200,6 @@ export function CustomerBillingSeriesChart({
         dataKey: "faturamento",
         name: valueName,
         fill: SERIES_COLOR,
-        trendSource: true,
       });
     }
     if (showQuantity && billingMetric === "quantity") {
@@ -210,7 +207,6 @@ export function CustomerBillingSeriesChart({
         dataKey: "faturamento",
         name: quantityLabel,
         fill: SERIES_COLOR,
-        trendSource: true,
       });
     }
     if (showQuantity && billingMetric === "both") {
@@ -219,7 +215,6 @@ export function CustomerBillingSeriesChart({
         name: quantityLabel,
         fill: QUANTITY_SERIES_COLOR,
         axis: "secondary",
-        trendSource: true,
       });
     }
     if (showValue && compareYears >= 1) {
@@ -227,6 +222,7 @@ export function CustomerBillingSeriesChart({
         dataKey: "faturamento_prior",
         name: "Ano ant.",
         fill: PRIOR_SERIES_COLOR,
+        trendApplyIncompleteBucket: false,
       });
     }
     if (showQuantity && billingMetric === "both" && compareYears >= 1) {
@@ -235,6 +231,7 @@ export function CustomerBillingSeriesChart({
         name: "Qtd ano ant.",
         fill: QUANTITY_PRIOR_COLOR,
         axis: "secondary",
+        trendApplyIncompleteBucket: false,
       });
     }
     if (showValue && compareYears >= 2) {
@@ -242,6 +239,7 @@ export function CustomerBillingSeriesChart({
         dataKey: "faturamento_prior_2",
         name: "−2 anos",
         fill: PRIOR_2_COLOR,
+        trendApplyIncompleteBucket: false,
       });
     }
     if (showQuantity && billingMetric === "both" && compareYears >= 2) {
@@ -250,6 +248,7 @@ export function CustomerBillingSeriesChart({
         name: "Qtd −2 anos",
         fill: QUANTITY_PRIOR_2_COLOR,
         axis: "secondary",
+        trendApplyIncompleteBucket: false,
       });
     }
     if (showValue && compareYears >= 3) {
@@ -257,6 +256,7 @@ export function CustomerBillingSeriesChart({
         dataKey: "faturamento_prior_3",
         name: "−3 anos",
         fill: PRIOR_3_COLOR,
+        trendApplyIncompleteBucket: false,
       });
     }
     if (showQuantity && billingMetric === "both" && compareYears >= 3) {
@@ -265,16 +265,17 @@ export function CustomerBillingSeriesChart({
         name: "Qtd −3 anos",
         fill: QUANTITY_PRIOR_3_COLOR,
         axis: "secondary",
+        trendApplyIncompleteBucket: false,
       });
     }
     return list;
   }, [billingMetric, billingNature, compareYears, quantityLabel, showQuantity, showValue]);
 
-  const anyTrend = resolveEffectiveShowTrend(
-    baseBars,
-    showTrend,
-    preferences.seriesTrend,
+  const bars = useMemo(
+    () => applySeriesViewPreferences(baseBars, preferences),
+    [baseBars, preferences],
   );
+  const anyTrend = bars.some((entry) => entry.trendSource);
   const overlayOptions = useMemo((): ChartOverlayOption[] => {
     const compare = buildCompareYearsOverlayOptions({
       compareYears,
@@ -294,16 +295,6 @@ export function CustomerBillingSeriesChart({
     return [
       ...compare,
       {
-        id: "trend",
-        label: CUSTOMER_BILLING_CONTENT.showTrendLine,
-        summaryLabel: CUSTOMER_BILLING_CONTENT.showTrendLine,
-        checked: anyTrend,
-        onChange: (checked) =>
-          setPreferences({ showTrend: checked, seriesTrend: undefined }),
-        hint: CM_HELP.customerDetail.billingSeriesTrend,
-        hintAriaLabel: "Ajuda: linha de tendência",
-      },
-      {
         id: "trend-weight",
         label: "Ponderar período parcial",
         summaryLabel: "Tendência ponderada",
@@ -318,11 +309,6 @@ export function CustomerBillingSeriesChart({
       },
     ];
   }, [anyTrend, compareYears, incompleteBucketMode, setPreferences]);
-
-  const bars = useMemo(
-    () => applySeriesViewPreferences(baseBars, preferences),
-    [baseBars, preferences],
-  );
   const seriesConfigItems = useMemo(
     () => buildChartSeriesConfigItems(baseBars, preferences),
     [baseBars, preferences],

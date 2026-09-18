@@ -72,6 +72,20 @@ describe("buildLinearTrendValues", () => {
     expect(trend[1]).toBeCloseTo(0, 6);
     expect(trend[2]).toBeCloseTo(10, 6);
   });
+
+  it("trata zero real como ponto válido e não como null", () => {
+    const zeros = buildLinearTrendValues([0, 0, 0]);
+    expect(zeros[0]).toBeCloseTo(0, 6);
+    expect(zeros[1]).toBeCloseTo(0, 6);
+    const mixed = buildLinearTrendValues([null, 0, 10]);
+    expect(mixed[1]).toBeCloseTo(0, 5);
+    expect(mixed[2]).toBeCloseTo(10, 5);
+    expect(buildLinearTrendValues([null, undefined, Number.NaN])).toEqual([
+      null,
+      null,
+      null,
+    ]);
+  });
 });
 
 describe("withLinearTrendField", () => {
@@ -87,5 +101,55 @@ describe("withLinearTrendField", () => {
       fractionKey: "f",
     });
     expect(out[3]._t).toBeCloseTo(30, 6);
+  });
+
+  it("calcula tendência independente por série", () => {
+    const rows = [
+      { atual: 10, anterior: 20 },
+      { atual: 20, anterior: 18 },
+      { atual: 30, anterior: 16 },
+    ];
+    const withAtual = withLinearTrendField(rows, "atual", "_trend_atual");
+    const withBoth = withLinearTrendField(
+      withAtual,
+      "anterior",
+      "_trend_anterior",
+    );
+    expect(withBoth[0]._trend_atual).toBeLessThan(withBoth[2]._trend_atual as number);
+    expect(withBoth[0]._trend_anterior).toBeGreaterThan(
+      withBoth[2]._trend_anterior as number,
+    );
+    expect(withBoth[0].atual).toBe(10);
+    expect(withBoth[0].anterior).toBe(20);
+  });
+
+  it("não aplica _bucketFraction quando fractionKey é omitido", () => {
+    const rows = [
+      { v: 10, _bucketFraction: 1 },
+      { v: 20, _bucketFraction: 1 },
+      { v: 10, _bucketFraction: 0.5 },
+    ];
+    const weighted = withLinearTrendField(rows, "v", "_t", {
+      incompleteBucketMode: "weightByFraction",
+      fractionKey: "_bucketFraction",
+    });
+    const skipped = withLinearTrendField(rows, "v", "_t", {
+      incompleteBucketMode: "weightByFraction",
+    });
+    expect(skipped[2]._t).not.toBeCloseTo(Number(weighted[2]._t));
+  });
+
+  it("preserva zero real e ignora null nas pontas e no meio", () => {
+    const rows = [
+      { v: null },
+      { v: 0 },
+      { v: null },
+      { v: 10 },
+      { v: undefined },
+    ];
+    const out = withLinearTrendField(rows, "v", "_t");
+    expect(out[1].v).toBe(0);
+    expect(out[1]._t).not.toBeNull();
+    expect(out.every((row) => row.v !== 0 || row._t != null)).toBe(true);
   });
 });

@@ -495,12 +495,12 @@
 .delpi-ui-chart-series-colors__panel {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  min-width: 260px;
-  max-width: min(360px, calc(100vw - 24px));
-  max-height: min(70vh, 560px);
+  gap: 8px;
+  min-width: 248px;
+  max-width: min(340px, calc(100vw - 24px));
+  max-height: min(64vh, 480px);
   overflow: auto;
-  padding: 12px;
+  padding: 10px 12px;
   border: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));
   border-radius: 12px;
   background: var(--delpi-ui-surface, var(--surface, #fff));
@@ -532,6 +532,13 @@
   font-weight: 500;
 }
 
+.delpi-ui-chart-series-colors__readonly {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--delpi-ui-text, var(--text, #111));
+}
+
 .delpi-ui-chart-series-colors__picker {
   flex: 0 0 auto;
 }
@@ -560,7 +567,7 @@
 }
 
 .delpi-ui-chart-series-colors__section {
-  margin: 4px 0 0;
+  margin: 2px 0 0;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -573,6 +580,10 @@
   flex-direction: column;
   gap: 4px;
   min-width: 0;
+}
+
+.delpi-ui-chart-series-colors__field .delpi-ui-select {
+  width: 100%;
 }
 
 .delpi-ui-chart-series-colors__field-label {

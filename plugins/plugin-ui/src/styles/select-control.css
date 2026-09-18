@@ -117,6 +117,8 @@
   right: auto;
   top: auto;
   left: auto;
+  /* Above nested inspectors (chart series = 1200) and peer popovers. */
+  z-index: 10200;
   min-width: 12rem;
   width: max-content;
   max-width: min(480px, calc(100vw - 16px));

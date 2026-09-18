@@ -12,7 +12,6 @@ import {
   omitRecordKey,
   patchSeriesTrendStyle,
   resetSeriesViewPreferences,
-  resolveEffectiveShowTrend,
   runTabularExport,
   seriesViewHasOverrides,
   usePersistedChartPreferences,
@@ -108,7 +107,6 @@ export function CustomerAccountBillingChart({
     },
     allowedChartTypes: TIME_MULTI_SERIES_TYPES,
   });
-  const showTrend = Boolean(preferences.showTrend);
   const incompleteBucketMode =
     preferences.incompleteBucketMode === "weightByFraction"
       ? "weightByFraction"
@@ -166,7 +164,6 @@ export function CustomerAccountBillingChart({
         dataKey: "faturamento",
         name: seriesName,
         fill: SERIES_COLOR,
-        trendSource: true,
       },
     ];
     if (comparePriorYear) {
@@ -174,16 +171,17 @@ export function CustomerAccountBillingChart({
         dataKey: "faturamento_prior",
         name: "Ano ant.",
         fill: PRIOR_SERIES_COLOR,
+        trendApplyIncompleteBucket: false,
       });
     }
     return list;
   }, [comparePriorYear, seriesName]);
 
-  const anyTrend = resolveEffectiveShowTrend(
-    baseBars,
-    showTrend,
-    preferences.seriesTrend,
+  const bars = useMemo(
+    () => applySeriesViewPreferences(baseBars, preferences),
+    [baseBars, preferences],
   );
+  const anyTrend = bars.some((entry) => entry.trendSource);
   const overlayOptions = useMemo((): ChartOverlayOption[] => {
     return [
       {
@@ -193,15 +191,6 @@ export function CustomerAccountBillingChart({
         onChange: onComparePriorYearChange,
         hint: CM_HELP.customerDetail.billingSeriesAccount,
         hintAriaLabel: "Ajuda: comparar ano anterior",
-      },
-      {
-        id: "trend",
-        label: CUSTOMER_BILLING_CONTENT.showTrendLine,
-        checked: anyTrend,
-        onChange: (checked) =>
-          setPreferences({ showTrend: checked, seriesTrend: undefined }),
-        hint: CM_HELP.customerDetail.billingSeriesTrend,
-        hintAriaLabel: "Ajuda: linha de tendência",
       },
       {
         id: "trend-weight",
@@ -223,11 +212,6 @@ export function CustomerAccountBillingChart({
     onComparePriorYearChange,
     setPreferences,
   ]);
-
-  const bars = useMemo(
-    () => applySeriesViewPreferences(baseBars, preferences),
-    [baseBars, preferences],
-  );
   const seriesConfigItems = useMemo(
     () => buildChartSeriesConfigItems(baseBars, preferences),
     [baseBars, preferences],

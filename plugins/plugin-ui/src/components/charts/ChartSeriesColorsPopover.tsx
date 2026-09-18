@@ -1,8 +1,8 @@
 import { ChevronDown, Palette } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
+import { FormSelectControl } from "../forms/FormSelectControl";
 import { NativeCheckboxControl } from "../forms/NativeCheckboxControl";
-import { NativeSelectControl } from "../forms/NativeSelectControl";
 import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
 import { ColorPickerPopoverTrigger } from "../shape/ColorPickerPopover";
 import type {
@@ -155,6 +155,7 @@ export function ChartSeriesColorsPopover({
 
   const trendColorValue = selected?.trendColor?.trim() || selected?.fill || fillValue;
   const trendAutomatic = !selected?.trendColor?.trim();
+  const selectClassName = "delpi-ui-select--compact";
 
   return (
     <div ref={rootRef} className={rootClass}>
@@ -204,11 +205,15 @@ export function ChartSeriesColorsPopover({
                 <span className="delpi-ui-chart-series-colors__field-label">
                   {copy.seriesLabel}
                 </span>
-                <NativeSelectControl
+                <FormSelectControl
                   id={`${idPrefix}-series`}
-                  aria-label={copy.seriesLabel}
+                  ariaLabel={copy.seriesLabel}
                   value={selected.dataKey}
                   onChange={setSelectedKey}
+                  allowEmpty={false}
+                  searchable={false}
+                  portalScopeClassName={portalScopeClassName}
+                  className={selectClassName}
                   options={series.map((entry) => ({
                     value: entry.dataKey,
                     label: entry.name,
@@ -223,7 +228,7 @@ export function ChartSeriesColorsPopover({
                   showNoFill={false}
                   value={fillValue}
                   onChange={(color) => onChange(selected.dataKey, color)}
-                  triggerLabel={selected.name}
+                  triggerLabel={copy.colorLabel}
                   triggerAriaLabel={`Cor da série ${selected.name}`}
                   triggerClassName="delpi-ui-chart-series-colors__picker"
                 />
@@ -237,7 +242,7 @@ export function ChartSeriesColorsPopover({
                   label={copy.visibleLabel}
                 />
               ) : null}
-              {selected.trendCapable && onTrendChange ? (
+              {selected.trendCapable !== false && onTrendChange ? (
                 <>
                   <p className="delpi-ui-chart-series-colors__section">
                     {copy.trendSectionLabel}
@@ -250,19 +255,14 @@ export function ChartSeriesColorsPopover({
                   />
                   {selected.trendEnabled ? (
                     <>
-                      <label className="delpi-ui-chart-series-colors__field">
-                        <span className="delpi-ui-chart-series-colors__field-label">
+                      <div className="delpi-ui-chart-series-colors__row">
+                        <span className="delpi-ui-chart-series-colors__row-name">
                           {copy.trendTypeLabel}
                         </span>
-                        <NativeSelectControl
-                          id={`${idPrefix}-trend-type`}
-                          aria-label={copy.trendTypeLabel}
-                          value="linear"
-                          onChange={() => undefined}
-                          disabled
-                          options={[{ value: "linear", label: copy.trendTypeLinearLabel }]}
-                        />
-                      </label>
+                        <span className="delpi-ui-chart-series-colors__readonly">
+                          {copy.trendTypeLinearLabel}
+                        </span>
+                      </div>
                       <div className="delpi-ui-chart-series-colors__row">
                         <span className="delpi-ui-chart-series-colors__row-name">
                           {copy.trendColorLabel}
@@ -294,15 +294,19 @@ export function ChartSeriesColorsPopover({
                             <span className="delpi-ui-chart-series-colors__field-label">
                               {copy.trendDashLabel}
                             </span>
-                            <NativeSelectControl
+                            <FormSelectControl
                               id={`${idPrefix}-trend-dash`}
-                              aria-label={copy.trendDashLabel}
+                              ariaLabel={copy.trendDashLabel}
                               value={selected.trendDash ?? "dashed"}
                               onChange={(value) =>
                                 onTrendStyleChange(selected.dataKey, {
                                   dash: value as SeriesTrendDash,
                                 })
                               }
+                              allowEmpty={false}
+                              searchable={false}
+                              portalScopeClassName={portalScopeClassName}
+                              className={selectClassName}
                               options={[
                                 { value: "dashed", label: copy.trendDashDashedLabel },
                                 { value: "solid", label: copy.trendDashSolidLabel },
@@ -313,15 +317,19 @@ export function ChartSeriesColorsPopover({
                             <span className="delpi-ui-chart-series-colors__field-label">
                               {copy.trendWidthLabel}
                             </span>
-                            <NativeSelectControl
+                            <FormSelectControl
                               id={`${idPrefix}-trend-width`}
-                              aria-label={copy.trendWidthLabel}
+                              ariaLabel={copy.trendWidthLabel}
                               value={String(selected.trendWidth ?? 3)}
                               onChange={(value) =>
                                 onTrendStyleChange(selected.dataKey, {
                                   width: Number(value),
                                 })
                               }
+                              allowEmpty={false}
+                              searchable={false}
+                              portalScopeClassName={portalScopeClassName}
+                              className={selectClassName}
                               options={[
                                 { value: "2", label: copy.trendWidthThinLabel },
                                 { value: "3", label: copy.trendWidthDefaultLabel },

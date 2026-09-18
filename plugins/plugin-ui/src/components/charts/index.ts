@@ -332,6 +332,7 @@ export {
   omitRecordKey,
   patchSeriesTrendStyle,
   resetSeriesViewPreferences,
+  isSeriesTrendCapable,
   resolveEffectiveShowTrend,
   resolveSeriesTrendEnabled,
   seriesViewHasOverrides,

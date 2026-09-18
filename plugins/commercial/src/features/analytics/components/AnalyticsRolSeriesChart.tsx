@@ -12,7 +12,6 @@ import {
   omitRecordKey,
   patchSeriesTrendStyle,
   resetSeriesViewPreferences,
-  resolveEffectiveShowTrend,
   runTabularExport,
   seriesViewHasOverrides,
   usePersistedChartPreferences,
@@ -94,7 +93,6 @@ export function AnalyticsRolSeriesChart({
     allowedChartTypes: TIME_MULTI_SERIES_TYPES,
   });
   const yoyActive = Boolean(preferences.comparePriorYear);
-  const showTrend = Boolean(preferences.showTrend);
   const chartType = preferences.chartType ?? "column";
 
   const [points, setPoints] = useState<RolChartPoint[]>([]);
@@ -188,7 +186,6 @@ export function AnalyticsRolSeriesChart({
         dataKey: "rol_matrix",
         name: ANALYTICS_ROL_SERIES_LABELS.unit01,
         fill: "var(--chart-1, #089bdb)",
-        trendSource: true,
       });
     }
     if (seriesUnits.includes("02")) {
@@ -196,7 +193,6 @@ export function AnalyticsRolSeriesChart({
         dataKey: "rol_branch",
         name: ANALYTICS_ROL_SERIES_LABELS.unit02,
         fill: "var(--chart-2, #10b981)",
-        trendSource: true,
       });
     }
     if (yoyActive) {
@@ -218,11 +214,6 @@ export function AnalyticsRolSeriesChart({
     return list;
   }, [priorLabels.unit01, priorLabels.unit02, seriesUnits, yoyActive]);
 
-  const anyTrend = resolveEffectiveShowTrend(
-    baseSeries,
-    showTrend,
-    preferences.seriesTrend,
-  );
   const overlayOptions = useMemo((): ChartOverlayOption[] => {
     return [
       {
@@ -234,18 +225,8 @@ export function AnalyticsRolSeriesChart({
         hint: CM_HELP.overview.rolSeriesYoy,
         hintAriaLabel: "Ajuda: comparar ano anterior",
       },
-      {
-        id: "trend",
-        label: CUSTOMER_BILLING_CONTENT.showTrendLine,
-        summaryLabel: CUSTOMER_BILLING_CONTENT.showTrendLine,
-        checked: anyTrend,
-        onChange: (checked) =>
-          setPreferences({ showTrend: checked, seriesTrend: undefined }),
-        hint: CM_HELP.customerDetail.billingSeriesTrend,
-        hintAriaLabel: "Ajuda: linha de tendência",
-      },
     ];
-  }, [anyTrend, setPreferences, yoyActive]);
+  }, [setPreferences, yoyActive]);
 
   const series = useMemo(
     () => applySeriesViewPreferences(baseSeries, preferences),

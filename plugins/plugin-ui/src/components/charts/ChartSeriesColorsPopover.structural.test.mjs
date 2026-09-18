@@ -12,13 +12,16 @@ const indexSrc = readFileSync(join(here, "index.ts"), "utf8");
 describe("ChartSeriesColorsPopover (fonte)", () => {
   it("reutiliza ColorPickerPopoverTrigger e exporta no barrel", () => {
     assert.match(src, /ColorPickerPopoverTrigger/);
+    assert.match(src, /FormSelectControl/);
     assert.match(src, /AnchoredPanelPortal/);
-    assert.match(src, /NativeSelectControl/);
     assert.match(src, /onVisibleChange/);
     assert.match(src, /onTrendChange/);
     assert.match(src, /onReset/);
     assert.match(src, /variant="fill"/);
     assert.match(src, /showNoFill=\{false\}/);
+    assert.match(src, /delpi-ui-chart-series-colors__readonly/);
+    assert.doesNotMatch(src, /NativeSelectControl/);
+    assert.doesNotMatch(src, /<select/);
     assert.match(indexSrc, /ChartSeriesColorsPopover/);
     assert.match(indexSrc, /applySeriesFillPreferences/);
     assert.match(indexSrc, /applySeriesViewPreferences/);

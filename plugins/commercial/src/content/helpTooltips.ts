@@ -308,7 +308,7 @@ export const CM_HELP = {
     rankingLimit:
       "Quantidade máxima de linhas no ranking (10, 15, 20 ou 50).",
     billingSeries:
-      "Soma do faturamento no período (bruto de nota ou líquido ROL). Com Métrica Qtd ou Ambos, a quantidade aparece com a UM da nota (eixo, total e tooltip); UMs diferentes no recorte omitem a UM no gráfico (não convertem). Com Ambos, há dois eixos Y (R$ à esquerda, quantidade à direita) e o tipo do gráfico (colunas, linhas ou área) vale para as duas métricas. Ano anterior também sobrepõe a quantidade. Os filtros do hero (cliente, família, produto e mercado) também restringem este gráfico — com produto/família/mercado o bruto usa valor de linha (D2_TOTAL), alinhado ao mix. Em Séries, configure cor, visibilidade e tendência linear de cada série (identificada pelo dataKey, não pelo rótulo). «Restaurar padrão» volta aos defaults da série; «Restaurar todas» limpa as personalizações neste navegador.",
+      "Soma do faturamento no período (bruto de nota ou líquido ROL). Com Métrica Qtd ou Ambos, a quantidade aparece com a UM da nota (eixo, total e tooltip); UMs diferentes no recorte omitem a UM no gráfico (não convertem). Com Ambos, há dois eixos Y (R$ à esquerda, quantidade à direita) e o tipo do gráfico (colunas, linhas ou área) vale para as duas métricas. Ano anterior também sobrepõe a quantidade. Os filtros do hero (cliente, família, produto e mercado) também restringem este gráfico — com produto/família/mercado o bruto usa valor de linha (D2_TOTAL), alinhado ao mix. Em Séries, configure cor, visibilidade e tendência linear de cada série temporal (incluindo Ano ant. e quantidades comparativas). «Restaurar padrão» volta aos defaults da série; «Restaurar todas» limpa as personalizações neste navegador. A tendência não aparece em Opções.",
     billingNature:
       "Bruto = valor de nota fiscal na série e Fat.12m (ranking/share usam receita bruta do envelope). Líquido = mesma fórmula ROL da Visão geral (impostos e devoluções). Aplica a Fat.12m, tendência, gráfico, mix, ABC, ranking e share.",
     billingMetric:
@@ -322,7 +322,7 @@ export const CM_HELP = {
     billingSeriesYoy:
       "Compara o mesmo período filtrado deslocado −1…−3 anos em séries agrupadas. Em Ambos, o overlay inclui faturamento e quantidade. Alinhamento por bucket em qualquer granularidade permitida.",
     billingTrendIncomplete:
-      "Por padrão a tendência exclui o bucket incompleto (ex.: mês corrente). Ative «Ponderar período parcial» para incluir o valor escalado pelo % do período já decorrido.",
+      "Por padrão a tendência exclui o bucket incompleto (ex.: mês corrente). Ative «Ponderar período parcial» para incluir o valor do período atual escalado pelo % já decorrido. A ponderação não se aplica às séries comparativas (ano anterior, −2 e −3 anos): esses buckets já estão completos no calendário de origem.",
     billingFilterCustomer:
       "Restringe o gráfico, o mix e o ABC aos clientes selecionados. Vazio = toda a carteira do escopo. Compartilhado entre os painéis Faturamento e ABC.",
     billingFilterProductGroup:
@@ -444,7 +444,7 @@ export const CM_HELP = {
       "Roteiro da Conta com o que já existe (histórico, pedidos, OV, atividades). Rentabilidade permanece bloqueada (FIN-004).",
     lastSale: "Data da última venda conhecida para o cliente (quando disponível).",
     purchaseEvolution:
-      "Comparativo mês a mês em colunas: janela atual versus a janela imediatamente anterior. Use Métrica R$ | Qtd para valor ou quantidade fornecida. Em Séries, personalize cada série; «Restaurar padrão» volta aos defaults da série selecionada.",
+      "Comparativo mês a mês em colunas: janela atual versus a janela imediatamente anterior. Use Métrica R$ | Qtd para valor ou quantidade fornecida. Em Séries, personalize cor, visibilidade e tendência linear de cada período; «Restaurar padrão» volta aos defaults da série selecionada.",
     purchaseEvolutionComparison:
       "Compara a janela atual com a anterior para evidenciar mudança de ritmo nas compras (ou no fornecimento em quantidade).",
     timeline:
@@ -470,9 +470,9 @@ export const CM_HELP = {
     billingSeriesCustomer:
       "Filtra a série de faturamento da carteira a um ou mais clientes (código+loja).",
     billingSeriesAccount:
-      "Evolução do faturamento ou da quantidade fornecida deste cliente no período dos filtros (Métrica R$ | Qtd). A quantidade inclui a UM da nota; UMs diferentes no período omitem a UM (não usam «mistas» como unidade). Em Opções do gráfico, «Comparar ano anterior» coloca as colunas do ano anterior lado a lado com o período atual. Em Séries, configure cor, visibilidade e tendência de cada série; «Restaurar padrão» remove a personalização da série selecionada.",
+      "Evolução do faturamento ou da quantidade fornecida deste cliente no período dos filtros (Métrica R$ | Qtd). A quantidade inclui a UM da nota; UMs diferentes no período omitem a UM (não usam «mistas» como unidade). Em Opções do gráfico, «Comparar ano anterior» coloca as colunas do ano anterior lado a lado com o período atual. Em Séries, configure cor, visibilidade e tendência linear de cada série (inclusive o ano anterior); «Restaurar padrão» remove a personalização da série selecionada.",
     billingSeriesTrend:
-      "Uma regressão linear por série do período atual, na cor e no eixo dessa série. O atalho global em Opções liga/desliga as séries elegíveis; em Séries dá para ativar ou desativar cada uma. Em Ambos, há tendência de faturamento (eixo R$) e de quantidade (eixo direito). Não cobre as séries de ano anterior por padrão.",
+      "Regressão linear calculada no gráfico, só da série escolhida, na cor e no eixo dessa série. Em Séries, ative, desative e estilize cada tendência (inclusive Ano ant., −2/−3 anos e quantidades comparativas). O default é desligada. Em Opções permanece só «Ponderar período parcial», habilitado quando alguma tendência está ativa. Em Ambos, quantidade e sua tendência ficam no eixo direito.",
     billingSeriesDateStart: "Início do intervalo personalizado da série de faturamento.",
     billingSeriesDateEnd: "Fim do intervalo personalizado da série de faturamento.",
     purchaseEvolutionPeriod:
@@ -737,7 +737,7 @@ export const CM_HELP = {
       "Datas, competência, atalho de período (hoje…últimos 12 meses), unidade, segmento, cliente(s) e carteira (quando permitido) aplicados aos painéis de período. O KPI «Carteira em aberto» é snapshot agora e ignora o período.",
     kpis: "Indicadores do período: ROL vs meta SI (natureza líquido; consolidado = realizado+meta SC+ES pelo SI), conversão, OTD% e novos negócios. «Carteira em aberto» é valor aberto de pedido (snapshot) — não some com ROL e não é programação do PCP. Bruto só com contrato BFF.",
     rolSeries:
-      "Evolução do ROL no período. Com «Unidade (indicadores)» em Todas, compara Santa Catarina e Espírito Santo; com uma unidade selecionada, mostra só essa série. Em Séries, configure cor, visibilidade e tendência de cada série (persistida neste navegador); «Restaurar padrão» volta aos defaults da série.",
+      "Evolução do ROL no período. Com «Unidade (indicadores)» em Todas, compara Santa Catarina e Espírito Santo; com uma unidade selecionada, mostra só essa série. Em Séries, configure cor, visibilidade e tendência linear de cada série (incluindo comparativos de ano anterior); «Restaurar padrão» volta aos defaults da série. A tendência não aparece em Opções.",
     rolSeriesYoy:
       "Compara o mesmo período filtrado deslocado −1 ano em colunas agrupadas, em Dia/Semana/Mês/Ano. Alinhamento por bucket; drill só no período atual.",
     closingRateSeries:

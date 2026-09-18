@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import {
   ChartCard,
-  ChartOverlayOptionsPopover,
   ChartSeriesColorsPopover,
   ChartTypeSegmentToggle,
   ChartViewShell,
@@ -14,11 +13,9 @@ import {
   omitRecordKey,
   patchSeriesTrendStyle,
   resetSeriesViewPreferences,
-  resolveEffectiveShowTrend,
   runTabularExport,
   seriesViewHasOverrides,
   usePersistedChartPreferences,
-  type ChartOverlayOption,
   type MultiTypeSeriesSpec,
 } from "@delpi/plugin-ui/index";
 
@@ -84,10 +81,9 @@ export function CustomerPurchaseEvolutionChart({
 }: CustomerPurchaseEvolutionChartProps) {
   const { preferences, setPreferences, setChartType } = usePersistedChartPreferences({
     storageKey: "commercial:account:purchase-evolution",
-    defaults: { chartType: "column", showTrend: false },
+    defaults: { chartType: "column" },
     allowedChartTypes: PERIOD_COMPARE_TYPES,
   });
-  const showTrend = Boolean(preferences.showTrend);
   const chartType = preferences.chartType ?? "column";
 
   const hasValues = useMemo(
@@ -122,7 +118,6 @@ export function CustomerPurchaseEvolutionChart({
         dataKey: "atual",
         name: `Período atual · ${formatMetricTotal(totals.atual, billingMetric)}`,
         fill: COLOR_CURRENT,
-        trendSource: true,
       },
       {
         dataKey: "anterior",
@@ -132,25 +127,6 @@ export function CustomerPurchaseEvolutionChart({
     ],
     [billingMetric, totals.atual, totals.anterior],
   );
-
-  const anyTrend = resolveEffectiveShowTrend(
-    baseBars,
-    showTrend,
-    preferences.seriesTrend,
-  );
-  const overlayOptions = useMemo((): ChartOverlayOption[] => {
-    return [
-      {
-        id: "trend",
-        label: CUSTOMER_BILLING_CONTENT.showTrendLine,
-        checked: anyTrend,
-        onChange: (checked) =>
-          setPreferences({ showTrend: checked, seriesTrend: undefined }),
-        hint: CM_HELP.customerDetail.billingSeriesTrend,
-        hintAriaLabel: "Ajuda: linha de tendência",
-      },
-    ];
-  }, [anyTrend, setPreferences]);
 
   const bars = useMemo(
     () => applySeriesViewPreferences(baseBars, preferences),
@@ -243,7 +219,6 @@ export function CustomerPurchaseEvolutionChart({
       ) : (
         <ChartViewShell
           prefix="cm"
-          overlaysLabel={ANALYTICS_CONTENT.overview.chartOverlaysLabel}
           seriesColorsLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsLabel}
           typeToggleLabel={ANALYTICS_CONTENT.overview.chartTypeLabel}
           typeToggle={
@@ -267,15 +242,6 @@ export function CustomerPurchaseEvolutionChart({
                   payload: buildPurchaseEvolutionExportPayload(chartData),
                 });
               }}
-            />
-          }
-          overlays={
-            <ChartOverlayOptionsPopover
-              idPrefix="purchase-evolution-overlays"
-              portalScopeClassName="dashboard-commercial"
-              panelTitle={ANALYTICS_CONTENT.overview.chartOverlaysPanelTitle}
-              emptySummaryLabel={ANALYTICS_CONTENT.overview.chartOverlaysEmpty}
-              options={overlayOptions}
             />
           }
           seriesColors={

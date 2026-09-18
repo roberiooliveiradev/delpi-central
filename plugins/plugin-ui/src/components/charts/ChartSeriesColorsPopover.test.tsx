@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import type { ComponentProps } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ChartSeriesColorsPopover } from "./ChartSeriesColorsPopover";
@@ -33,7 +34,40 @@ const SERIES = [
     name: "Ano ant.",
     fill: "#94a3b8",
     visible: true,
-    trendCapable: false,
+    trendCapable: true,
+    trendEnabled: false,
+    trendColor: null,
+    trendDash: "dashed" as const,
+    trendWidth: 3,
+  },
+  {
+    dataKey: "faturamento_prior_2",
+    name: "−2 anos",
+    fill: "#64748b",
+    visible: true,
+    trendCapable: true,
+    trendEnabled: false,
+    trendColor: null,
+    trendDash: "dashed" as const,
+    trendWidth: 3,
+  },
+  {
+    dataKey: "faturamento_prior_3",
+    name: "−3 anos",
+    fill: "#475569",
+    visible: true,
+    trendCapable: true,
+    trendEnabled: false,
+    trendColor: null,
+    trendDash: "dashed" as const,
+    trendWidth: 3,
+  },
+  {
+    dataKey: "quantidade_prior",
+    name: "Qtd ano ant.",
+    fill: "#fb923c",
+    visible: true,
+    trendCapable: true,
     trendEnabled: false,
     trendColor: null,
     trendDash: "dashed" as const,
@@ -41,25 +75,37 @@ const SERIES = [
   },
 ];
 
+function openInspector() {
+  fireEvent.click(screen.getByRole("button", { name: "Configurar séries" }));
+}
+
+function chooseSeries(label: string) {
+  fireEvent.click(screen.getByRole("button", { name: "Série" }));
+  fireEvent.click(screen.getByRole("button", { name: label }));
+}
+
+function renderInspector(
+  extra?: Partial<ComponentProps<typeof ChartSeriesColorsPopover>>,
+) {
+  return render(
+    <ChartSeriesColorsPopover
+      idPrefix="test-series"
+      series={SERIES}
+      onChange={() => undefined}
+      {...extra}
+    />,
+  );
+}
+
 describe("ChartSeriesColorsPopover", () => {
-  it("lista séries e seleciona por dataKey, não pelo índice", () => {
+  it("usa FormSelectControl por dataKey e não HTMLSelectElement nativo", () => {
     const onChange = vi.fn();
-    render(
-      <ChartSeriesColorsPopover
-        idPrefix="test-series"
-        series={SERIES}
-        onChange={onChange}
-      />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Configurar séries" }));
-    const select = screen.getByLabelText("Série") as HTMLSelectElement;
-    expect([...select.options].map((option) => option.value)).toEqual([
-      "faturamento",
-      "quantidade",
-      "faturamento_prior",
-    ]);
-    fireEvent.change(select, { target: { value: "quantidade" } });
-    expect(select.value).toBe("quantidade");
+    renderInspector({ onChange, onTrendChange: () => undefined });
+    openInspector();
+    expect(document.querySelector("select")).toBeNull();
+    expect(document.querySelector(".delpi-ui-select")).toBeTruthy();
+    chooseSeries("Quantidade fornecida");
+    expect(screen.getByRole("dialog", { name: "Configurar séries" })).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "Cor da série Quantidade fornecida" }),
     ).toBeTruthy();
@@ -70,16 +116,9 @@ describe("ChartSeriesColorsPopover", () => {
     const hidden = SERIES.map((entry) =>
       entry.dataKey === "quantidade" ? { ...entry, visible: false } : entry,
     );
-    const { rerender } = render(
-      <ChartSeriesColorsPopover
-        idPrefix="test-series"
-        series={SERIES}
-        onChange={() => undefined}
-        onVisibleChange={onVisibleChange}
-      />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Configurar séries" }));
-    fireEvent.change(screen.getByLabelText("Série"), { target: { value: "quantidade" } });
+    const { rerender } = renderInspector({ onVisibleChange });
+    openInspector();
+    chooseSeries("Quantidade fornecida");
     fireEvent.click(screen.getByLabelText("Visível"));
     expect(onVisibleChange).toHaveBeenCalledWith("quantidade", false);
 
@@ -91,42 +130,100 @@ describe("ChartSeriesColorsPopover", () => {
         onVisibleChange={onVisibleChange}
       />,
     );
-    expect(screen.getByLabelText("Série")).toBeTruthy();
-    fireEvent.change(screen.getByLabelText("Série"), { target: { value: "quantidade" } });
+    expect(screen.getByRole("dialog", { name: "Configurar séries" })).toBeTruthy();
+    chooseSeries("Quantidade fornecida");
     fireEvent.click(screen.getByLabelText("Visível"));
     expect(onVisibleChange).toHaveBeenCalledWith("quantidade", true);
   });
 
-  it("ativa tendência só da série selecionada", () => {
+  it("ativa tendência da série selecionada, inclusive comparativas", () => {
     const onTrendChange = vi.fn();
-    render(
-      <ChartSeriesColorsPopover
-        idPrefix="test-series"
-        series={SERIES}
-        onChange={() => undefined}
-        onTrendChange={onTrendChange}
-      />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Configurar séries" }));
+    renderInspector({ onTrendChange });
+    openInspector();
     fireEvent.click(screen.getByLabelText("Ativar"));
     expect(onTrendChange).toHaveBeenCalledWith("faturamento", true);
-    fireEvent.change(screen.getByLabelText("Série"), {
-      target: { value: "faturamento_prior" },
+
+    for (const label of ["Ano ant.", "−2 anos", "−3 anos", "Qtd ano ant."]) {
+      onTrendChange.mockClear();
+      chooseSeries(label);
+      expect(screen.getByLabelText("Ativar")).toBeTruthy();
+      fireEvent.click(screen.getByLabelText("Ativar"));
+    }
+    expect(onTrendChange).toHaveBeenCalledWith("quantidade_prior", true);
+  });
+
+  it("mostra Tipo Linear como valor read-only, não como select", () => {
+    renderInspector({
+      onTrendChange: () => undefined,
+      onTrendStyleChange: () => undefined,
+      series: SERIES.map((entry) =>
+        entry.dataKey === "faturamento"
+          ? { ...entry, trendEnabled: true }
+          : entry,
+      ),
     });
+    openInspector();
+    expect(screen.getByText("Linear")).toBeTruthy();
+    expect(
+      screen.getByText("Linear").className,
+    ).toContain("delpi-ui-chart-series-colors__readonly");
+    expect(document.querySelector("select")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Tipo" })).toBeNull();
+  });
+
+  it("Estilo e Espessura usam FormSelectControl e não fecham o inspector", () => {
+    const onTrendStyleChange = vi.fn();
+    renderInspector({
+      onTrendChange: () => undefined,
+      onTrendStyleChange,
+      series: SERIES.map((entry) =>
+        entry.dataKey === "faturamento"
+          ? { ...entry, trendEnabled: true }
+          : entry,
+      ),
+    });
+    openInspector();
+    fireEvent.click(screen.getByRole("button", { name: "Estilo" }));
+    fireEvent.click(screen.getByRole("button", { name: "Contínuo" }));
+    expect(onTrendStyleChange).toHaveBeenCalledWith("faturamento", {
+      dash: "solid",
+    });
+    expect(screen.getByRole("dialog", { name: "Configurar séries" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Espessura" }));
+    fireEvent.click(screen.getByRole("button", { name: "Grossa" }));
+    expect(onTrendStyleChange).toHaveBeenCalledWith("faturamento", {
+      width: 4,
+    });
+    expect(document.querySelector("select")).toBeNull();
+  });
+
+  it("COLOR_ONLY não exibe seção de tendência mesmo com série capable", () => {
+    renderInspector();
+    openInspector();
+    expect(screen.queryByLabelText("Ativar")).toBeNull();
+    expect(screen.queryByText("Linha de tendência")).toBeNull();
+  });
+
+  it("série com opt-out de tendência não mostra Ativar", () => {
+    renderInspector({
+      onTrendChange: () => undefined,
+      series: [
+        {
+          ...SERIES[0],
+          trendCapable: false,
+        },
+      ],
+    });
+    openInspector();
     expect(screen.queryByLabelText("Ativar")).toBeNull();
   });
 
   it("altera a cor só da série selecionada, por dataKey", () => {
     const onChange = vi.fn();
-    render(
-      <ChartSeriesColorsPopover
-        idPrefix="test-series"
-        series={SERIES}
-        onChange={onChange}
-      />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Configurar séries" }));
-    fireEvent.change(screen.getByLabelText("Série"), { target: { value: "quantidade" } });
+    renderInspector({ onChange });
+    openInspector();
+    chooseSeries("Quantidade fornecida");
     fireEvent.click(
       screen.getByRole("button", { name: "Cor da série Quantidade fornecida" }),
     );
@@ -137,16 +234,9 @@ describe("ChartSeriesColorsPopover", () => {
 
   it("reset restaura a série selecionada", () => {
     const onResetSeries = vi.fn();
-    render(
-      <ChartSeriesColorsPopover
-        idPrefix="test-series"
-        series={SERIES}
-        onChange={() => undefined}
-        onResetSeries={onResetSeries}
-      />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Configurar séries" }));
-    fireEvent.change(screen.getByLabelText("Série"), { target: { value: "quantidade" } });
+    renderInspector({ onResetSeries });
+    openInspector();
+    chooseSeries("Quantidade fornecida");
     fireEvent.click(screen.getByRole("button", { name: "Restaurar padrão" }));
     expect(onResetSeries).toHaveBeenCalledWith("quantidade");
   });

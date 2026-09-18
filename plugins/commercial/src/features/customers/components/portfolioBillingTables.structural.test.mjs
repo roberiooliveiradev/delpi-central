@@ -129,10 +129,11 @@ describe("Portfolio billing tables — estrutural", () => {
     assert.match(chart, /quantitySeriesName/);
     assert.match(chart, /quantityUnit/);
     assert.match(chart, /quantidade_prior/);
-    assert.match(chart, /trendSource: true/);
     assert.match(chart, /applySeriesViewPreferences/);
     assert.match(chart, /onVisibleChange/);
     assert.match(chart, /onTrendChange/);
+    assert.match(chart, /trendApplyIncompleteBucket: false/);
+    assert.doesNotMatch(chart, /id:\s*"trend"/);
     assert.doesNotMatch(chart, /plotAs: "line"/);
   });
 });

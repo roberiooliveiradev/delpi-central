@@ -1,6 +1,6 @@
 # Chart View Shell — inventário e famílias
 
-Shell canônico do kit para controles densos (tipo de gráfico, overlays YoY/tendência), preferências em `localStorage` (mesmo padrão de `usePersistedViewLayout`) e plot Recharts multi-tipo.
+Shell canônico do kit para controles densos (tipo de gráfico, overlays YoY/ponderação), preferências em `localStorage` (mesmo padrão de `usePersistedViewLayout`) e plot Recharts multi-tipo. Tendência linear por série vive no inspector **Séries**, não no overlay **Opções**.
 
 Consumidor desta onda: **Portal Commercial** (`plugins/commercial`). Dashboard Comercial fica fora.
 
@@ -39,8 +39,8 @@ Teste estrutural: `plugins/commercial/src/features/analytics/chartExcelCoverage.
 |------|--------|
 | Preferências | `usePersistedChartPreferences` (`seriesFills` por `dataKey`) |
 | Type switcher | `ChartTypeSegmentToggle` (ícone + popover `ChartTypeCatalogPanel` filtrado por família) |
-| Overlay options | `ChartOverlayOptionsPopover` + `buildCompareYearsOverlayOptions` (YoY / tendência) |
-| Series config | `ChartSeriesColorsPopover` (inspector por `dataKey`: cor, visibilidade, tendência) + `applySeriesViewPreferences` |
+| Overlay options | `ChartOverlayOptionsPopover` + `buildCompareYearsOverlayOptions` (YoY / ponderação; sem toggle global de tendência nos FULL_INSPECTOR) |
+| Series config | `ChartSeriesColorsPopover` (inspector por `dataKey`: cor, visibilidade, tendência; selects `FormSelectControl`) + `applySeriesViewPreferences` |
 | Plot | `MultiTypeSeriesChart` |
 | Shell | `ChartViewShell` — **mesma linha:** Agrupamento · Opções · Séries · Tipo · export |
 | Checkbox compacto | `NativeCheckboxControl` `hintPlacement: "tooltip"` (help no **label**, sem ícone `?`) |

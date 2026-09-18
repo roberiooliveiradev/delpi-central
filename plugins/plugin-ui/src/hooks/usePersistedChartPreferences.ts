@@ -32,8 +32,9 @@ export type PersistedChartPreferences = {
   /** dataKey → true hides the series without dropping source rows. */
   hiddenSeries?: Record<string, boolean>;
   /**
-   * Per-series OLS trend override keyed by `dataKey`.
-   * Absent key inherits `showTrend` for eligible (`trendSource`) series.
+   * Per-series OLS trend ON/OFF keyed by `dataKey`.
+   * Absent key = OFF for inspector hosts (`applySeriesViewPreferences`).
+   * `showTrend` remains for historical COLOR_ONLY / non-inspector charts.
    */
   seriesTrend?: Record<string, boolean>;
   /** Optional trend stroke/dash/width overrides keyed by `dataKey`. */

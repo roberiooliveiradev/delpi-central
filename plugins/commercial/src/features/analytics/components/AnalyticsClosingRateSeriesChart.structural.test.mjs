@@ -19,6 +19,8 @@ describe("AnalyticsClosingRateSeriesChart", () => {
     assert.match(chart, /ChartViewShell/);
     assert.match(chart, /ChartSeriesColorsPopover/);
     assert.match(chart, /applySeriesFillPreferences/);
+    assert.doesNotMatch(chart, /onTrendChange/);
+    assert.doesNotMatch(chart, /id:\s*"trend"/);
     assert.doesNotMatch(chart, /CommercialChartToolbar/);
     assert.doesNotMatch(chart, /NativeCheckboxControl/);
     assert.match(chart, /comparePriorYear|shiftPeriodRangeByYears/);

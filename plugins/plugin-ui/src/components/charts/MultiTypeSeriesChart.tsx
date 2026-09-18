@@ -35,8 +35,22 @@ export type MultiTypeSeriesSpec = {
   dataKey: string;
   name: string;
   fill: string;
-  /** OLS trend source (column/line/area only). */
+  /**
+   * Runtime: draw OLS trend for this series (column/line/area).
+   * Capability lives on `trendCapable`; this flag is the effective ON state
+   * after `applySeriesViewPreferences`.
+   */
   trendSource?: boolean;
+  /**
+   * Capability: series may receive a trend. Default true in view preferences.
+   * Set false to opt out (non-temporal / non-numeric overlays).
+   */
+  trendCapable?: boolean;
+  /**
+   * When false, OLS ignores `_bucketFraction` (comparatives aligned to the
+   * current axis whose prior buckets are already complete).
+   */
+  trendApplyIncompleteBucket?: boolean;
   /** Eixo Y direito para escalas independentes (ex.: R$ vs quantidade). */
   axis?: "primary" | "secondary";
   /** No gráfico de colunas, série secundária pode ser linha. */
@@ -212,9 +226,10 @@ export function MultiTypeSeriesChart({
       chartType === "column" || chartType === "line" || chartType === "area";
     if (!showTrend || !trendAllowed || trendSources.length === 0) return rows;
     for (const source of trendSources) {
+      const applyIncompleteBucket = source.trendApplyIncompleteBucket !== false;
       rows = withLinearTrendField(rows, source.dataKey, `_trend_${source.dataKey}`, {
-        incompleteBucketMode,
-        fractionKey: bucketFractionKey,
+        incompleteBucketMode: applyIncompleteBucket ? incompleteBucketMode : "exclude",
+        fractionKey: applyIncompleteBucket ? bucketFractionKey : undefined,
       });
     }
     return rows;

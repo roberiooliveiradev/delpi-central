@@ -18,6 +18,8 @@ describe("MultiTypeSeriesChart (fonte)", () => {
     assert.match(src, /ComposedChart/);
     assert.match(src, /TREND_STROKE_WIDTH/);
     assert.match(src, /trendSources\.length > 1/);
+    assert.match(src, /trendApplyIncompleteBucket/);
+    assert.match(src, /trendCapable/);
     assert.match(src, /yAxisId=\{seriesAxisId\(source/);
     assert.doesNotMatch(src, /delpi-ui-chart-trend-stroke/);
   });

@@ -146,6 +146,43 @@ describe("MultiTypeSeriesChart dual Y", () => {
     expect(container.textContent).toMatch(/Tendência \(Quantidade fornecida\)/);
   });
 
+  it("sibling: tendências de série atual e comparativa coexistuem com nomes distintos", async () => {
+    stubChartHostSize();
+    const { container } = render(
+      <MultiTypeSeriesChart
+        data={[
+          { periodo: "Out.", faturamento: 10, faturamento_prior: 20 },
+          { periodo: "Nov.", faturamento: 20, faturamento_prior: 18 },
+          { periodo: "Dez.", faturamento: 30, faturamento_prior: 16 },
+        ]}
+        categoryKey="periodo"
+        chartType="column"
+        height={320}
+        showTrend
+        series={[
+          {
+            dataKey: "faturamento",
+            name: "Faturamento · Bruto",
+            fill: "#089bdb",
+            trendSource: true,
+          },
+          {
+            dataKey: "faturamento_prior",
+            name: "Ano ant.",
+            fill: "#94a3b8",
+            trendSource: true,
+            trendApplyIncompleteBucket: false,
+          },
+        ]}
+      />,
+    );
+    await waitFor(() => {
+      expect(container.querySelectorAll(".recharts-line").length).toBe(2);
+    });
+    expect(container.textContent).toMatch(/Tendência \(Faturamento · Bruto\)/);
+    expect(container.textContent).toMatch(/Tendência \(Ano ant\.\)/);
+  });
+
   it("negative: uma série em R$ não marca dual-y", async () => {
     stubChartHostSize();
     const { container } = render(
