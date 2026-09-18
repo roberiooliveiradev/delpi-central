@@ -242,7 +242,7 @@ W5 e W6 podem trocar de ordem. W9 não entra no meio.
 
 ## 13. Waves
 
-A Wave 1 tem pacote em [WAVE-1-IMPLEMENTATION-PACKET.md](./WAVE-1-IMPLEMENTATION-PACKET.md) e está READY_FOR_ARCH_REVIEW, não autorizada. As demais continuam NOT_READY_FOR_IMPLEMENTATION até o pacote da §14. W0 é este documento.
+A Wave 1 está IMPLEMENTED_NOT_RUNTIME_PROVEN (SHA `383e07b73`, MFE em `srv-api`, browser smoke TEST_NOT_RUN). As demais continuam NOT_READY_FOR_IMPLEMENTATION até o pacote da §14. W0 é este documento.
 
 | Wave | Objetivo | Inclui | Não inclui | Trilha | Aceite quando for executada |
 |---|---|---|---|---|---|
@@ -303,7 +303,7 @@ Pirâmide: unitário de domínio e application quando houver regra nova; reposit
 
 **Portal shell + Meus processos em leitura + workspace que já existe.**
 
-Pacote: [WAVE-1-IMPLEMENTATION-PACKET.md](./WAVE-1-IMPLEMENTATION-PACKET.md). Desenho: [PORTAL-TRANSFORMA-BLUEPRINT.md](./PORTAL-TRANSFORMA-BLUEPRINT.md). Status do pacote: **READY_FOR_ARCH_REVIEW**. Status do desenho: **READY_FOR_IMPLEMENTATION_REVIEW**. Implementação: **NOT AUTHORIZED**. As outras waves continuam sem pacote.
+Pacote: [WAVE-1-IMPLEMENTATION-PACKET.md](./WAVE-1-IMPLEMENTATION-PACKET.md). Desenho: [PORTAL-TRANSFORMA-BLUEPRINT.md](./PORTAL-TRANSFORMA-BLUEPRINT.md). Status: **IMPLEMENTED_NOT_RUNTIME_PROVEN** (`383e07b73` no MFE de `srv-api`; browser smoke TEST_NOT_RUN). As outras waves continuam sem pacote.
 
 ## 16. Drift
 
@@ -320,7 +320,7 @@ Pacote: [WAVE-1-IMPLEMENTATION-PACKET.md](./WAVE-1-IMPLEMENTATION-PACKET.md). De
 | `.cursor/rules/openai-plugin-mcp-integration.mdc` exemplo «32 tools ≠ 20 Actions» | CURSOR_RULE_DRIFT = RESOLVED. O exemplo numérico saiu. Ficou a regra atemporal: tool count ≠ operation count; capability parity ≠ surface count parity |
 | `ProcessContextService` importa `Request` FastAPI, `interface.http.branch_access_http` e repositórios concretos | CODE_DRIFT = OPEN_NON_BLOCKING. PROVEN. Wave 1 = NOT_USED. Correção pequena seria enganosa: não há ports desses repositórios e a AuthZ está no helper HTTP. Não é FALSE_POSITIVE e não bloqueia a Wave 1 |
 | Definition of Done sem deploy | RESOLVED na §14. Docs = NOT_APPLICABLE. Release = SHA/deploy/smoke. Write = read-back ou `OUTCOME_VERIFICATION_FAILED` |
-| Wave 1 | Pacote preenchido. READY_FOR_ARCH_REVIEW. IMPLEMENTATION = NOT AUTHORIZED |
+| Wave 1 | IMPLEMENTED_NOT_RUNTIME_PROVEN. SHA `383e07b73` no MFE de `srv-api`. Browser smoke TEST_NOT_RUN |
 | «editor Mermaid bidirecional» em `status-atual.md` | TO_INVENTORY. `flowchart_v1` segue canônico; Mermaid tem export e parser no kit. Este passe não reprovou ida e volta |
 
 Esta seção é o ledger de gap/drift da evolução Portal Transforma+ / TÉO. Não abrir outro ledger para o mesmo assunto.

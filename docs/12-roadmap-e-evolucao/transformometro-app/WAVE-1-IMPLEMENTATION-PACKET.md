@@ -1,6 +1,6 @@
 # Wave 1 — Implementation Packet
 
-> **Status:** READY_FOR_ARCH_REVIEW. **IMPLEMENTATION = NOT AUTHORIZED.**  
+> **Status:** IMPLEMENTED_NOT_RUNTIME_PROVEN. Código da Wave 1 está em `383e07b73` e o MFE `transformometro` foi reconstruído em `srv-api`. Smoke visual no browser = TEST_NOT_RUN. Não promove a PROVEN.
 > **Sequência:** [ARCHITECTURE-RUNWAY.md](./ARCHITECTURE-RUNWAY.md). Este arquivo é o único pacote da Wave 1.  
 > DoR preenchido abaixo não é DoD e não é licença para codar.
 

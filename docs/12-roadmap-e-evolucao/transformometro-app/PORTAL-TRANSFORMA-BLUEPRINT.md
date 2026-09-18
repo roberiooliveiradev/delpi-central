@@ -1,8 +1,8 @@
 # Portal Transforma+ — blueprint técnico e de UX
 
-> **Status:** desenho. **IMPLEMENTATION = NOT AUTHORIZED.**  
-> Pacote de escopo: [WAVE-1-IMPLEMENTATION-PACKET.md](./WAVE-1-IMPLEMENTATION-PACKET.md). Ordem: [ARCHITECTURE-RUNWAY.md](./ARCHITECTURE-RUNWAY.md).  
-> Wave 1 design = **READY_FOR_IMPLEMENTATION_REVIEW**. Isso não autoriza código.
+> **Status:** desenho implementado no MFE; runtime visual = TEST_NOT_RUN. Classificação: **IMPLEMENTED_NOT_RUNTIME_PROVEN**.
+> Pacote de escopo: [WAVE-1-IMPLEMENTATION-PACKET.md](./WAVE-1-IMPLEMENTATION-PACKET.md). Ordem: [ARCHITECTURE-RUNWAY.md](./ARCHITECTURE-RUNWAY.md).
+> Wave 1 design foi aprovada e a fatia foi implementada. Browser smoke não foi executado neste passe.
 
 ## 1. Stack provada
 

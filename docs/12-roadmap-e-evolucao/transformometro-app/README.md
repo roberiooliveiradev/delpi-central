@@ -31,7 +31,7 @@ Documentação de arquitetura e plano de entrega do **Transformômetro** como pr
 | **[CICLO-INTELIGENCIA-DE-PROCESSO.md](./CICLO-INTELIGENCIA-DE-PROCESSO.md)** | **Alvo de produto** — ciclo mapeamento → diagnóstico → TO-BE → medição → aprendizado. Não é runtime. |
 | **[PORTAL-TRANSFORMA-PLUS.md](./PORTAL-TRANSFORMA-PLUS.md)** | **Portal Transforma+** — experiência e IA sobre o domínio Transformômetro. Comercial é referência de UX, não fonte de regra. Não é runtime. |
 | **[ARCHITECTURE-RUNWAY.md](./ARCHITECTURE-RUNWAY.md)** | **Ordem de implementação** — decisões caras, waves, DoR/DoD e pacote. Única fonte de sequência. Não autoriza código. |
-| **[WAVE-1-IMPLEMENTATION-PACKET.md](./WAVE-1-IMPLEMENTATION-PACKET.md)** | Pacote da Wave 1. READY_FOR_ARCH_REVIEW. Não autoriza implementação. |
+| **[WAVE-1-IMPLEMENTATION-PACKET.md](./WAVE-1-IMPLEMENTATION-PACKET.md)** | Pacote da Wave 1. IMPLEMENTED_NOT_RUNTIME_PROVEN. Browser smoke ainda TEST_NOT_RUN. |
 | **[PORTAL-TRANSFORMA-BLUEPRINT.md](./PORTAL-TRANSFORMA-BLUEPRINT.md)** | Blueprint técnico e wireframes. Design da Wave 1 pronto para revisão de implementação. Não autoriza código. |
 | **[PLAYBOOK-PORTAL-TRANSFORMA.md](./PLAYBOOK-PORTAL-TRANSFORMA.md)** | Inventário de portal (2026-09-17). A sequência vigente está no runway, não nas fases 0–6 deste playbook. |
 | [ESPECIFICACAO.md](./ESPECIFICACAO.md) | Especificação funcional (planilha + Apps Script) |
