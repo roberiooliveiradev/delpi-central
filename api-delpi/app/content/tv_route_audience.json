@@ -1920,6 +1920,21 @@
         }
       }
     },
+    "list_inspecoes_processo_operation_inspections": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Process inspections for OP+operation",
+          "description": "Aggregated inspection sessions (who, when, result) for one production order and operation. No assay rows.",
+          "label": "Operation process inspections"
+        },
+        "pt-BR": {
+          "summary": "Inspeções de processo da OP+operação",
+          "description": "Sessões de inspeção agregadas (quem, quando, resultado) para uma OP e operação. Sem linhas de ensaio.",
+          "label": "Inspeções da operação"
+        }
+      }
+    },
     "get_inspecoes_processo_por_ensaiador": {
       "category": "quality",
       "locale": {

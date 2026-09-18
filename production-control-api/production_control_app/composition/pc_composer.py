@@ -38,6 +38,9 @@ from production_control_app.application.services.public_operation_appointments_s
 from production_control_app.application.services.public_operation_materials_service import (
     PublicOperationMaterialsService,
 )
+from production_control_app.application.services.public_operation_process_inspections_service import (
+    PublicOperationProcessInspectionsService,
+)
 from production_control_app.application.services.public_work_center_performance_service import (
     PublicWorkCenterPerformanceService,
 )
@@ -295,6 +298,20 @@ def build_public_operation_materials_service(
 ) -> PublicOperationMaterialsService:
     resolved = gateway or DelpiProductionGateway()
     return PublicOperationMaterialsService(
+        resolved,
+        access=build_public_cockpit_access_service(),
+        machine_load=build_machine_load_service(resolved, snapshots=snapshots),
+        branch_access=build_branch_access_service(),
+    )
+
+
+def build_public_operation_process_inspections_service(
+    gateway: DelpiProductionGateway | None = None,
+    *,
+    snapshots: MachineLoadSnapshotRepositoryPort | None = None,
+) -> PublicOperationProcessInspectionsService:
+    resolved = gateway or DelpiProductionGateway()
+    return PublicOperationProcessInspectionsService(
         resolved,
         access=build_public_cockpit_access_service(),
         machine_load=build_machine_load_service(resolved, snapshots=snapshots),

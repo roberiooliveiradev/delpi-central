@@ -1908,6 +1908,30 @@
   outline: none;
 }
 
+.pcp-pub__icon-btn--ok {
+  border-color: color-mix(in srgb, #1f9d57 55%, transparent);
+  color: #0b6b3a;
+  background: color-mix(in srgb, #1f9d57 14%, transparent);
+}
+
+.pcp-pub__icon-btn--ok:hover,
+.pcp-pub__icon-btn--ok:focus-visible {
+  border-color: #1f9d57;
+  background: color-mix(in srgb, #1f9d57 22%, transparent);
+}
+
+.pcp-pub__icon-btn--empty {
+  border-color: color-mix(in srgb, #e11d48 50%, transparent);
+  color: #9b1c1c;
+  background: color-mix(in srgb, #e11d48 12%, transparent);
+}
+
+.pcp-pub__icon-btn--empty:hover,
+.pcp-pub__icon-btn--empty:focus-visible {
+  border-color: #e11d48;
+  background: color-mix(in srgb, #e11d48 20%, transparent);
+}
+
 .pcp-pub__icon-btn-badge {
   position: absolute;
   top: -6px;
@@ -1940,10 +1964,10 @@
   inset: 0;
   border: 0;
   padding: 0;
-  /* Scrim + blur: fundo da página fica mais desfocado ao abrir qualquer modal. */
+  /* Scrim + blur suave: fundo menos desfocado ao abrir qualquer modal. */
   background: rgba(15, 35, 55, 0.42);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(130%);
+  backdrop-filter: blur(8px) saturate(130%);
   cursor: pointer;
 }
 
@@ -2019,8 +2043,42 @@
   width: min(920px, 100%);
 }
 
+.pcp-pub-modal__panel--inspections {
+  width: min(640px, 100%);
+}
+
 .pcp-pub-modal__panel--downtime {
   width: min(720px, 100%);
+}
+
+.pcp-pub-modal__result {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+}
+
+.pcp-pub-modal__result--ok {
+  color: #0b6b3a;
+  background: color-mix(in srgb, #1f9d57 16%, transparent);
+}
+
+.pcp-pub-modal__result--fail {
+  color: #9b1c1c;
+  background: color-mix(in srgb, #e11d48 14%, transparent);
+}
+
+.pcp-pub-modal__result--warn {
+  color: #92400e;
+  background: color-mix(in srgb, #f59e0b 18%, transparent);
+}
+
+.pcp-pub-modal__result--neutral {
+  color: var(--pcp-muted);
+  background: color-mix(in srgb, var(--pcp-muted) 14%, transparent);
 }
 
 .pcp-pub-modal__lede {
@@ -2077,6 +2135,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.92rem;
+  color: var(--pcp-text);
 }
 
 .pcp-pub-modal__table th,
@@ -2103,6 +2162,51 @@
 .pcp-pub-modal__table .pcp-pub__num {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  font-weight: 700;
+  color: var(--pcp-title);
+}
+
+/* Contraste da tabela nos modais — modo noturno (fundo claro translúcido sumia o texto). */
+:root[data-theme="dark"] .pcp-pub-modal__table-wrap {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(4, 16, 28, 0.72);
+}
+
+:root[data-theme="dark"] .pcp-pub-modal__table th {
+  color: #eaf3fa;
+  background: color-mix(in srgb, var(--pcp-accent, #30b8ec) 22%, rgba(0, 0, 0, 0.35));
+  border-bottom-color: rgba(255, 255, 255, 0.14);
+}
+
+:root[data-theme="dark"] .pcp-pub-modal__table td {
+  color: #e4eef6;
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .pcp-pub-modal__table .pcp-pub__num {
+  color: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .pcp-pub-modal__table-wrap {
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(4, 16, 28, 0.72);
+  }
+
+  :root:not([data-theme="light"]) .pcp-pub-modal__table th {
+    color: #eaf3fa;
+    background: color-mix(in srgb, var(--pcp-accent, #30b8ec) 22%, rgba(0, 0, 0, 0.35));
+    border-bottom-color: rgba(255, 255, 255, 0.14);
+  }
+
+  :root:not([data-theme="light"]) .pcp-pub-modal__table td {
+    color: #e4eef6;
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+
+  :root:not([data-theme="light"]) .pcp-pub-modal__table .pcp-pub__num {
+    color: #ffffff;
+  }
 }
 
 .pcp-pub-modal__operators {

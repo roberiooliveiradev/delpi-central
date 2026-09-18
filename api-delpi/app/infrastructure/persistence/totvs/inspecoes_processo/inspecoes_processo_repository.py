@@ -982,6 +982,70 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
             )
         return rows[safe_offset:]
 
+    def list_operation_inspections(
+        self,
+        *,
+        branch: str,
+        production_order: str,
+        operation: str,
+    ) -> list[dict]:
+        """Sessões de inspeção da OP+operação — sem linhas de ensaio."""
+        order = production_order.strip()
+        oper = operation.strip()
+        branch_clause, params = _where_branch("Filial", branch)
+        params.extend([order, oper])
+        sql = f"""
+        SELECT
+            RTRIM(LTRIM(Operacao)) AS operation,
+            RTRIM(LTRIM(ISNULL(Matricula_Ensaiador, ''))) AS inspector_registration,
+            RTRIM(LTRIM(ISNULL(Nome_Ensaiador, ''))) AS inspector_name,
+            Data_Medicao_Date AS measurement_date,
+            RTRIM(LTRIM(ISNULL(Hora_Medicao, ''))) AS measurement_time,
+            CASE MAX(
+                CASE
+                    WHEN RTRIM(ISNULL(Resultado_Codigo, '')) = 'R' THEN 3
+                    WHEN RTRIM(ISNULL(Resultado_Codigo, '')) = 'T' THEN 2
+                    WHEN RTRIM(ISNULL(Resultado_Codigo, '')) = 'A' THEN 1
+                    ELSE 0
+                END
+            )
+                WHEN 3 THEN 'R'
+                WHEN 2 THEN 'T'
+                WHEN 1 THEN 'A'
+                ELSE ''
+            END AS result_code,
+            CASE MAX(
+                CASE
+                    WHEN RTRIM(ISNULL(Resultado_Codigo, '')) = 'R' THEN 3
+                    WHEN RTRIM(ISNULL(Resultado_Codigo, '')) = 'T' THEN 2
+                    WHEN RTRIM(ISNULL(Resultado_Codigo, '')) = 'A' THEN 1
+                    ELSE 0
+                END
+            )
+                WHEN 3 THEN 'REPROVADO'
+                WHEN 2 THEN 'TOLERANCIA'
+                WHEN 1 THEN 'APROVADO'
+                ELSE 'REALIZADA'
+            END AS result,
+            COUNT(*) AS assay_count
+        FROM {HISTORICO_TELA_VIEW} WITH (NOLOCK)
+        WHERE {branch_clause}
+          AND RTRIM(LTRIM(Ordem_Producao)) = ?
+          AND RTRIM(LTRIM(Operacao)) = ?
+        GROUP BY
+            RTRIM(LTRIM(Operacao)),
+            RTRIM(LTRIM(ISNULL(Matricula_Ensaiador, ''))),
+            RTRIM(LTRIM(ISNULL(Nome_Ensaiador, ''))),
+            Data_Medicao_Date,
+            RTRIM(LTRIM(ISNULL(Hora_Medicao, '')))
+        ORDER BY
+            Data_Medicao_Date DESC,
+            RTRIM(LTRIM(ISNULL(Hora_Medicao, ''))) DESC,
+            RTRIM(LTRIM(ISNULL(Nome_Ensaiador, ''))) ASC
+        """
+        with self:
+            return self.execute_query(sql, tuple(params))
+
     def list_auditoria_apontamentos_page(
         self,
         branch: str,

@@ -1,6 +1,9 @@
 from app.application.use_cases.inspecoes_processo.get_inspecoes_processo_historico_detalhe_use_case import (
     GetInspecoesProcessoHistoricoDetalheUseCase,
 )
+from app.application.use_cases.inspecoes_processo.list_inspecoes_processo_operation_inspections_use_case import (
+    ListInspecoesProcessoOperationInspectionsUseCase,
+)
 from app.application.use_cases.inspecoes_processo.get_inspecoes_processo_resumo_use_case import (
     GetInspecoesProcessoResumoUseCase,
 )
@@ -76,6 +79,14 @@ def build_get_inspecoes_processo_historico_detalhe_use_case() -> (
     GetInspecoesProcessoHistoricoDetalheUseCase
 ):
     return GetInspecoesProcessoHistoricoDetalheUseCase(
+        repository=InspecoesProcessoRepository(),
+    )
+
+
+def build_list_inspecoes_processo_operation_inspections_use_case() -> (
+    ListInspecoesProcessoOperationInspectionsUseCase
+):
+    return ListInspecoesProcessoOperationInspectionsUseCase(
         repository=InspecoesProcessoRepository(),
     )
 

@@ -30,6 +30,7 @@ Plugin consumidor: `plugins/inspecoes-processo` · Auditoria: [ESPECIFICACAO-AUD
 | GET | `/inspecoes-processo/por-ensaiador` | `list` | Ranking por ensaiador |
 | GET | `/inspecoes-processo/historico` | `paged_list` | Histórico por OP (janela de 12 meses) |
 | GET | `/inspecoes-processo/historico/detalhe` | `object` | Detalhe/medições da OP |
+| GET | `/inspecoes-processo/operations/inspections` | `playbook_report` | Sessões da OP+operação (quem, quando, resultado — sem ensaios) |
 | GET | `/inspecoes-processo/auditoria-apontamentos` | `paged_list` | Apontamentos com inspeção amarrada sem QPR |
 
 ---

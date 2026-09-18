@@ -1952,6 +1952,15 @@
       "status": "covered"
     },
     {
+      "operationId": "list_inspecoes_processo_operation_inspections",
+      "method": "GET",
+      "path": "/inspecoes-processo/operations/inspections",
+      "module": "inspecoes-processo",
+      "entity": "inspecoes_processo_operation_inspections",
+      "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
       "operationId": "get_inspecoes_processo_por_ensaiador",
       "method": "GET",
       "path": "/inspecoes-processo/por-ensaiador",

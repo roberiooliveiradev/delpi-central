@@ -17,6 +17,7 @@ from app.composition.inspecoes_processo_composer import (
     build_get_inspecoes_processo_resumo_use_case,
     build_list_inspecoes_processo_auditoria_apontamentos_use_case,
     build_list_inspecoes_processo_historico_use_case,
+    build_list_inspecoes_processo_operation_inspections_use_case,
     build_list_inspecoes_processo_por_ensaiador_use_case,
     build_list_inspecoes_processo_por_operacao_use_case,
     build_list_inspecoes_processo_por_produto_use_case,
@@ -453,6 +454,60 @@ def get_inspecoes_processo_historico_detalhe_route(
             )
         return error_response(
             "Erro interno ao carregar detalhe de inspeções de processo.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/operations/inspections",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_inspecoes_processo_operation_inspections",
+        path="/inspecoes-processo/operations/inspections",
+    ),
+)
+@require_any_permission(INSPECOES_PROCESSO_READ_PERMISSIONS)
+def list_inspecoes_processo_operation_inspections_route(
+    branch: str = BRANCH_QUERY_REQUIRED(),
+    production_order: str = Query(
+        ...,
+        min_length=1,
+        description="Production order (C2_OP / QPR_OP).",
+    ),
+    operation: str = Query(
+        ...,
+        min_length=1,
+        description="Operation code (QPR_OPERAC).",
+    ),
+):
+    """Sessions of process inspection for one OP+operation — who, when, result; no assays."""
+    branch_error = branch_access_error(branch)
+    if branch_error:
+        return branch_error
+
+    try:
+        result = build_list_inspecoes_processo_operation_inspections_use_case().execute(
+            branch=branch,
+            production_order=production_order,
+            operation=operation,
+        )
+        return api_delpi_success(
+            result,
+            operation_id="list_inspecoes_processo_operation_inspections",
+            message="Inspeções da operação carregadas com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação em operations/inspections: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao carregar inspeções da operação: {exc}")
+        detail = str(exc).lower()
+        if "hyt00" in detail or "timeout" in detail:
+            return error_response(
+                "A consulta de inspeções demorou demais. Tente novamente em instantes.",
+                status_code=504,
+            )
+        return error_response(
+            "Erro interno ao carregar inspeções da operação.",
             status_code=500,
         )
 
