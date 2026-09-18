@@ -1,15 +1,18 @@
-"""Códigos RBAC do Transformômetro — escopo por filial (Playbook 18 S10).
+"""Códigos RBAC do Transformômetro.
 
-Meeting minutes: canônico `meeting-minutes.*`; `atas.*` permanece como alias legado.
-
-Escopo de filial (canônico): `transformometro.branch.filial-*` — só segrega.
-Combinar com capacidades (`*.view` / `*.manage` / `*.sign` / `processes.manage` …).
-Legado: `view.filial-*` e `manage.filial-*` continuam como aliases de escopo
-(`manage.filial-*` também implica manage naquela filial).
+Alvo: `transformometro.access` e `transformometro.manage`.
+Os 21 códigos antigos permanecem no manifesto nesta fatia.
+Códigos `branch.*`, `view.filial-*` e `manage.filial-*` são legado.
+Eles não concedem acesso ao portal.
+`view.consolidated` também não concede acesso: consolidado é filtro.
+`meeting-minutes.sign` e `atas.sign` autorizam a ação de assinar e o detalhe
+pendente. Não abrem a lista de processos.
 """
 
 from __future__ import annotations
 
+TRANSFORMOMETRO_ACCESS = "transformometro.access"
+TRANSFORMOMETRO_MANAGE = "transformometro.manage"
 TRANSFORMOMETRO_VIEW = "transformometro.view"
 TRANSFORMOMETRO_VIEW_CONSOLIDATED = "transformometro.view.consolidated"
 TRANSFORMOMETRO_VIEW_FILIAL_01 = "transformometro.view.filial-01"
@@ -90,3 +93,23 @@ GLOBAL_MANAGE_PERMISSIONS: tuple[str, ...] = (
 BRANCH_VIEW_PERMISSIONS: tuple[str, ...] = tuple(VIEW_FILIAL_PERMISSIONS.values())
 BRANCH_MANAGE_PERMISSIONS: tuple[str, ...] = tuple(MANAGE_FILIAL_PERMISSIONS.values())
 BRANCH_SCOPE_PERMISSION_CODES: tuple[str, ...] = tuple(BRANCH_SCOPE_PERMISSIONS.values())
+
+# Uso normal legado. Não inclui filial, consolidado, transferência, recálculo
+# nem recurso compartilhado. Sign fica fora: não abre o portal.
+LEGACY_NORMAL_USE_PERMISSIONS: tuple[str, ...] = (
+    TRANSFORMOMETRO_VIEW,
+    TRANSFORMOMETRO_PROCESSES_MANAGE,
+    TRANSFORMOMETRO_REVISIONS_MANAGE,
+    TRANSFORMOMETRO_MEASUREMENTS_MANAGE,
+    TRANSFORMOMETRO_INVESTMENTS_MANAGE,
+    *MEETING_MINUTES_VIEW_PERMISSIONS,
+    *MEETING_MINUTES_MANAGE_PERMISSIONS,
+)
+
+# Estes códigos não são access. Ficam nomeados para o teste negativo.
+LEGACY_SCOPE_CODES_THAT_DO_NOT_GRANT_ACCESS: tuple[str, ...] = (
+    *BRANCH_SCOPE_PERMISSION_CODES,
+    *BRANCH_VIEW_PERMISSIONS,
+    *BRANCH_MANAGE_PERMISSIONS,
+    TRANSFORMOMETRO_VIEW_CONSOLIDATED,
+)

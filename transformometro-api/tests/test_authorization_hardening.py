@@ -91,7 +91,8 @@ def test_dashboard_recalculate_policy_parity():
     policy = TransformometroAuthorizationPolicy()
     view_only = _user(permissions=["transformometro.view"])
     recalc = _user(permissions=["transformometro.dashboard.recalculate"])
-    sibling = _user(permissions=["transformometro.processes.manage"])
+    sibling = _user(permissions=["transformometro.dashboard.recalculate"])
+    normal_use = _user(permissions=["transformometro.processes.manage"])
 
     with pytest.raises(AuthorizationDenied):
         policy.require_dashboard_recalculate(None)
@@ -99,6 +100,8 @@ def test_dashboard_recalculate_policy_parity():
         policy.require_dashboard_recalculate(view_only)
     policy.require_dashboard_recalculate(recalc)
     policy.require_dashboard_recalculate(sibling)
+    with pytest.raises(AuthorizationDenied):
+        policy.require_dashboard_recalculate(normal_use)
 
     http_denied = recalcular_dashboard(_request(view_only))
     assert http_denied.status_code == 403

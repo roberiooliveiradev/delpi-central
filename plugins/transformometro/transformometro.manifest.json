@@ -10,6 +10,18 @@
   "entry": "/apps/transformometro/assets/remoteEntry.js",
   "permissions": [
     {
+      "code": "transformometro.access",
+      "name": "Acessar Portal Transforma+",
+      "description": "Permite acessar e utilizar as funcionalidades normais do Portal Transforma+.",
+      "module": "transformometro"
+    },
+    {
+      "code": "transformometro.manage",
+      "name": "Administrar Portal Transforma+",
+      "description": "Permite acessar funcionalidades administrativas e de configuração do Portal Transforma+.",
+      "module": "transformometro"
+    },
+    {
       "code": "transformometro.view",
       "name": "Acessar Transformômetro",
       "description": "Permite abrir o dashboard e listagens do Transformômetro.",
