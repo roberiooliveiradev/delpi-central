@@ -11,6 +11,10 @@ from tm_app.application.services.backup_package_service import (
 )
 from tm_app.application.services.json_backup_service import JsonBackupService
 from tm_app.application.services.transformometro_realtime_notify import notify_entity_updated
+from tm_app.application.security.authorization_policy import (
+    AuthorizationDenied,
+    TransformometroAuthorizationPolicy,
+)
 from tm_app.core.auth_actor import actor_from_request, client_id_from_request
 from tm_app.core.responses import fail, ok
 from tm_app.core.serialize import json_safe
@@ -18,11 +22,23 @@ from tm_app.infrastructure.persistence.repositories.audit_repository import Audi
 from tm_app.interface.http.schemas.json_backup_schemas import JsonImportBody, JsonImportMode
 
 router = APIRouter(prefix="/transformometro/data", tags=["Transformômetro — backup JSON"])
+_authz = TransformometroAuthorizationPolicy()
+
+
+def _require_data_transfer(request: Request) -> JSONResponse | None:
+    user = getattr(request.state, "user", None)
+    try:
+        _authz.require_data_transfer(user)
+    except AuthorizationDenied as exc:
+        return fail(str(exc), exc.status_code)
+    return None
 
 
 @router.get("/export",
     operation_id="export_json")
-def export_json(_request: Request):
+def export_json(request: Request):
+    if denied := _require_data_transfer(request):
+        return denied
     bundle = JsonBackupService().export_bundle()
     filename = f"transformometro-backup-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}.json"
     body = json.dumps(json_safe(bundle), ensure_ascii=False, indent=2).encode("utf-8")
@@ -35,7 +51,9 @@ def export_json(_request: Request):
 
 @router.get("/export/package",
     operation_id="export_package")
-def export_package(_request: Request):
+def export_package(request: Request):
+    if denied := _require_data_transfer(request):
+        return denied
     try:
         payload = TransformometroBackupPackageService().export_package()
     except ValueError as exc:
@@ -60,10 +78,13 @@ async def _read_upload_file(file: UploadFile) -> bytes:
 @router.post("/import/package/preview",
     operation_id="import_package_preview")
 async def import_package_preview(
+    request: Request,
     file: UploadFile = File(...),
     mode: JsonImportMode = Form(default="merge"),
     import_format: str = Form(default="auto"),
 ):
+    if denied := _require_data_transfer(request):
+        return denied
     try:
         raw = await _read_upload_file(file)
         result = TransformometroBackupPackageService().preview_package(
@@ -85,6 +106,8 @@ async def import_package_apply(
     import_format: str = Form(default="auto"),
 ):
     user_id, user_email, user_name = actor_from_request(request)
+    if denied := _require_data_transfer(request):
+        return denied
     try:
         raw = await _read_upload_file(file)
         result = TransformometroBackupPackageService().apply_package(
@@ -122,7 +145,9 @@ async def import_package_apply(
 
 @router.post("/import/preview",
     operation_id="import_preview")
-def import_preview(body: JsonImportBody):
+def import_preview(body: JsonImportBody, request: Request):
+    if denied := _require_data_transfer(request):
+        return denied
     result = JsonBackupService().preview(body.data, body.mode, body.import_format)
     if not result.get("valid"):
         return fail("Pacote JSON inválido.", 422, data=result)
@@ -133,6 +158,8 @@ def import_preview(body: JsonImportBody):
     operation_id="import_apply")
 def import_apply(body: JsonImportBody, request: Request):
     user_id, user_email, user_name = actor_from_request(request)
+    if denied := _require_data_transfer(request):
+        return denied
     try:
         result = JsonBackupService().apply(body.data, body.mode, body.import_format)
     except ValueError as exc:

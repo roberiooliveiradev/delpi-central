@@ -26,18 +26,40 @@ def _user(**kwargs):
     return SimpleNamespace(**defaults)
 
 
+def test_unauthenticated_user_is_denied():
+    svc = FilialAccessScopeService()
+    scope = svc.resolve(None)
+    assert scope.is_denied
+    assert scope.is_unrestricted is False
+    assert svc.can_view_filial(scope, "01") is False
+    assert svc.can_view_filial(scope, "02") is False
+    assert svc.can_view_consolidated(scope) is False
+    assert svc.can_manage_filial(scope, "01", user=None) is False
+
+
 def test_superadmin_is_unrestricted():
     scope = FilialAccessScopeService().resolve(_user(is_superadmin=True))
     assert scope.is_unrestricted
     assert scope.can_view_consolidated is True
 
 
-def test_legacy_view_without_branch_perms_is_unrestricted():
-    scope = FilialAccessScopeService().resolve(
-        _user(permissions=["transformometro.view"])
-    )
-    assert scope.is_unrestricted
-    assert scope.can_view_consolidated is True
+def test_view_without_branch_does_not_open_units():
+    svc = FilialAccessScopeService()
+    scope = svc.resolve(_user(permissions=["transformometro.view"]))
+    assert scope.mode == "scoped"
+    assert scope.allowed_codigos == frozenset()
+    assert scope.can_view_consolidated is False
+    assert svc.can_view_filial(scope, "01") is False
+    assert svc.can_view_filial(scope, "02") is False
+
+
+def test_global_manage_without_branch_cannot_write_units():
+    svc = FilialAccessScopeService()
+    user = _user(permissions=[TRANSFORMOMETRO_PROCESSES_MANAGE])
+    scope = svc.resolve(user)
+    assert scope.is_unrestricted is False
+    assert svc.can_manage_filial(scope, "01", user=user) is False
+    assert svc.can_manage_filial(scope, "02", user=user) is False
 
 
 def test_branch_view_scopes_allowed_filiais():
@@ -96,13 +118,6 @@ def test_can_view_filial_respects_scope():
     scope = svc.resolve(_user(permissions=[TRANSFORMOMETRO_VIEW_FILIAL_01]))
     assert svc.can_view_filial(scope, "01") is True
     assert svc.can_view_filial(scope, "02") is False
-
-
-def test_global_manage_on_unrestricted_scope():
-    svc = FilialAccessScopeService()
-    user = _user(permissions=[TRANSFORMOMETRO_PROCESSES_MANAGE])
-    scope = svc.resolve(user)
-    assert svc.can_manage_filial(scope, "02", user=user) is True
 
 
 def test_branch_manage_only_on_matching_filial():

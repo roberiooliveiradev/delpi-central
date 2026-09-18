@@ -320,6 +320,7 @@ class SmokeDouble:
             if name == "resolve":
                 scope = MagicMock(
                     is_unrestricted=True,
+                    is_denied=False,
                     allowed_codigos=frozenset(),
                     can_view_consolidated=True,
                     scoped_manage=False,

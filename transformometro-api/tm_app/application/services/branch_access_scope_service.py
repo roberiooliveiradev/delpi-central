@@ -31,6 +31,10 @@ class FilialAccessScope:
     def is_unrestricted(self) -> bool:
         return self.mode == "unrestricted"
 
+    @property
+    def is_denied(self) -> bool:
+        return self.mode == "denied"
+
     def meta(self) -> dict[str, Any]:
         return {
             "mode": self.mode,
@@ -45,16 +49,18 @@ class FilialAccessScopeService:
 
     Escopo canônico: `transformometro.branch.filial-*`.
     Legado: `view.filial-*` / `manage.filial-*` também contribuem ao escopo.
-    Capacidade de escrita: `manage.filial-*` (legado) **ou** capacidade global
-    (`GLOBAL_MANAGE_PERMISSIONS`) combinada com o escopo.
+    Sem esses códigos, usuário autenticado não vê unidade. Superadmin é irrestrito.
+    `user is None` é negado. CLI de backup não usa este serviço.
     """
 
     def resolve(self, user: Any | None) -> FilialAccessScope:
+        # Sem códigos de filial, um usuário autenticado não vê unidade alguma.
+        # Superadmin continua irrestrito. Jobs e CLI não passam por aqui.
         if user is None:
             return FilialAccessScope(
-                mode="unrestricted",
+                mode="denied",
                 allowed_codigos=frozenset(),
-                can_view_consolidated=True,
+                can_view_consolidated=False,
                 scoped_manage=False,
             )
 
@@ -89,11 +95,13 @@ class FilialAccessScopeService:
                 scoped_manage=scoped_manage,
             )
 
+        # Sem código de filial o usuário autenticado não herda todas as unidades.
+        # Superadmin já retornou acima. Produção (papel Transforma Mais) tem os dois branch.
         return FilialAccessScope(
-            mode="unrestricted",
+            mode="scoped",
             allowed_codigos=frozenset(),
-            can_view_consolidated=True,
-            scoped_manage=bool(branch_manage),
+            can_view_consolidated=TRANSFORMOMETRO_VIEW_CONSOLIDATED in permissions,
+            scoped_manage=False,
         )
 
     @staticmethod

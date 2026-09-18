@@ -27,6 +27,7 @@ TRANSFORMOMETRO_MEASUREMENTS_MANAGE = "transformometro.measurements.manage"
 TRANSFORMOMETRO_INVESTMENTS_MANAGE = "transformometro.investments.manage"
 TRANSFORMOMETRO_SHARED_RESOURCES_MANAGE = "transformometro.shared-resources.manage"
 TRANSFORMOMETRO_DASHBOARD_RECALCULATE = "transformometro.dashboard.recalculate"
+TRANSFORMOMETRO_DATA_TRANSFER = "transformometro.data.transfer"
 
 # Canônico EN
 TRANSFORMOMETRO_MEETING_MINUTES_VIEW = "transformometro.meeting-minutes.view"

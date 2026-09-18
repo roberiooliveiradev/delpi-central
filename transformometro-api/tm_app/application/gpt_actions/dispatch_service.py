@@ -134,8 +134,6 @@ from tm_app.application.services.process_write_service import (
     RevisionActivationService,
 )
 from tm_app.application.security.transformometro_permissions import (
-    GLOBAL_MANAGE_PERMISSIONS,
-    TRANSFORMOMETRO_DASHBOARD_RECALCULATE,
     TRANSFORMOMETRO_REVISIONS_MANAGE,
 )
 from tm_app.interface.http.branch_access_http import (
@@ -1638,23 +1636,17 @@ class GptActionsDispatchService:
         raise GptActionsError("Sem permissão para gerenciar esta revisão.", 403)
 
     def _require_dashboard_recalculate_access(self, request: Request) -> None:
-        """Canonical AuthZ for dashboard recalculate (GPT Actions + MCP)."""
-        from delpi_auth.authz_core import has_permission
+        """Adapter: MCP e GPT Actions usam a mesma policy do HTTP."""
+        from tm_app.application.security.authorization_policy import (
+            AuthorizationDenied,
+            TransformometroAuthorizationPolicy,
+        )
 
         user = getattr(request.state, "user", None)
-        if user is None:
-            raise GptActionsError("Usuário não autenticado.", 401)
-        if getattr(user, "is_superadmin", False):
-            return
-        if has_permission(user, TRANSFORMOMETRO_DASHBOARD_RECALCULATE):
-            return
-        for code in (TRANSFORMOMETRO_REVISIONS_MANAGE, *GLOBAL_MANAGE_PERMISSIONS):
-            if has_permission(user, code):
-                return
-        raise GptActionsError(
-            "Sem permissão transformometro.dashboard.recalculate (ou manage equivalente).",
-            403,
-        )
+        try:
+            TransformometroAuthorizationPolicy().require_dashboard_recalculate(user)
+        except AuthorizationDenied as exc:
+            raise GptActionsError(str(exc), exc.status_code) from exc
 
     def _verify_document_postcondition(
         self,

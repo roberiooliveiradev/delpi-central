@@ -12,6 +12,10 @@ from tm_app.application.services.dashboard_recalc_service import DashboardRecalc
 from tm_app.application.services.dashboard_snapshot_read_service import (
     DashboardSnapshotReadService,
 )
+from tm_app.application.security.authorization_policy import (
+    AuthorizationDenied,
+    TransformometroAuthorizationPolicy,
+)
 from tm_app.application.services.transformometro_realtime_notify import notify_catalog_updated
 from tm_app.core.auth_actor import actor_from_request, client_id_from_request
 from tm_app.core.errors import format_api_error
@@ -24,6 +28,16 @@ logger = logging.getLogger(__name__)
 
 _live = DashboardLiveService()
 _snapshot = DashboardSnapshotReadService()
+_authz = TransformometroAuthorizationPolicy()
+
+
+def _require_dashboard_recalculate(request: Request):
+    user = getattr(request.state, "user", None)
+    try:
+        _authz.require_dashboard_recalculate(user)
+    except AuthorizationDenied as exc:
+        return fail(str(exc), exc.status_code)
+    return None
 
 
 def _scope_error_response(
@@ -52,6 +66,8 @@ def recalcular_dashboard(
     competencia_fim: str | None = None,
 ):
     """Opcional: atualiza cache em `dashboard_calculos`. As rotas GET já calculam em tempo real."""
+    if denied := _require_dashboard_recalculate(request):
+        return denied
     try:
         result = DashboardRecalcService().recalculate(
             revisao_id=revisao_id,

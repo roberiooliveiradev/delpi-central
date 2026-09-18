@@ -42,6 +42,12 @@ def resolve_access_scope(request: Request) -> FilialAccessScope:
     return _scope_service.resolve(user)
 
 
+def reject_unauthenticated_scope(scope: FilialAccessScope) -> JSONResponse | None:
+    if scope.is_denied:
+        return access_denied("Usuário não autenticado.")
+    return None
+
+
 def access_denied(message: str = "Sem permissão para acessar esta unidade.") -> JSONResponse:
     return fail(message, 403)
 
@@ -72,6 +78,8 @@ def check_dashboard_filial_access(
     setor_id: str | None,
 ) -> JSONResponse | None:
     scope = resolve_access_scope(request)
+    if denied := reject_unauthenticated_scope(scope):
+        return denied
     try:
         dashboard_scope = _view_scope.resolve(
             view=view,
@@ -99,6 +107,8 @@ def check_view_filial_access(
     filial_ref: str | None,
 ) -> JSONResponse | None:
     scope = resolve_access_scope(request)
+    if denied := reject_unauthenticated_scope(scope):
+        return denied
     codigo = resolve_filial_codigo(filial_ref)
     if not codigo:
         return fail("Unidade inválida.", 400)
@@ -112,6 +122,8 @@ def check_manage_filial_access(
     filial_ref: str | None,
 ) -> JSONResponse | None:
     scope = resolve_access_scope(request)
+    if denied := reject_unauthenticated_scope(scope):
+        return denied
     user = getattr(request.state, "user", None)
     codigo = resolve_filial_codigo(filial_ref)
     if not codigo:
@@ -123,6 +135,8 @@ def check_manage_filial_access(
 
 def check_processo_view_access(request: Request, processo_id: str) -> JSONResponse | None:
     scope = resolve_access_scope(request)
+    if denied := reject_unauthenticated_scope(scope):
+        return denied
     if scope.is_unrestricted:
         return None
     instancias = ProcessoInstanciaRepository().list_by_processo(processo_id)
@@ -139,6 +153,8 @@ def check_processo_view_access(request: Request, processo_id: str) -> JSONRespon
 def check_processo_manage_access(request: Request, processo_id: str) -> JSONResponse | None:
     """Write gate: view is not sufficient — require manage on a related branch."""
     scope = resolve_access_scope(request)
+    if denied := reject_unauthenticated_scope(scope):
+        return denied
     if scope.is_unrestricted:
         return None
     user = getattr(request.state, "user", None)
@@ -158,6 +174,8 @@ def check_instancia_view_access(request: Request, instancia_id: str) -> JSONResp
     if not row:
         return None
     scope = resolve_access_scope(request)
+    if denied := reject_unauthenticated_scope(scope):
+        return denied
     if row.get("todas_filiais_ativas"):
         if scope.is_unrestricted or _scope_service.can_view_consolidated(scope):
             return None
@@ -173,6 +191,8 @@ def check_instancia_manage_access(request: Request, instancia_id: str) -> JSONRe
     if not row:
         return None
     scope = resolve_access_scope(request)
+    if denied := reject_unauthenticated_scope(scope):
+        return denied
     user = getattr(request.state, "user", None)
     if row.get("todas_filiais_ativas"):
         if scope.is_unrestricted:
@@ -191,6 +211,8 @@ def filter_rows_for_access(
     alt_codigo_key: str | None = "codigo_filial",
 ) -> list[dict[str, Any]]:
     scope = resolve_access_scope(request)
+    if scope.is_denied:
+        return []
     return _scope_service.filter_rows_by_filial(
         rows,
         scope,
@@ -201,6 +223,8 @@ def filter_rows_for_access(
 
 def require_unrestricted_catalog_admin(request: Request) -> JSONResponse | None:
     scope = resolve_access_scope(request)
+    if denied := reject_unauthenticated_scope(scope):
+        return denied
     if scope.is_unrestricted:
         return None
     return access_denied("Operação restrita a perfis globais do Transformômetro.")
