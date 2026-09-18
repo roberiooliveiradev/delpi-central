@@ -73,5 +73,12 @@
     "ChatGPT application/pdf model visibility via remote MCP still TO_INVENTORY",
     "LEVEL 5 blind model test not executed"
   ],
-  "verdict": "PASS_WITH_RESIDUAL"
+  "verdict": "PASS_WITH_RESIDUAL",
+  "evidenceCorrection": {
+    "taskId": "DAVI-DOCUMENT-TRANSPORT-NONPROD-REMOTE-001",
+    "note": "productionChanged=false in the original object is imprecise and retained historically. Governing correction is the fields below.",
+    "sourceChanged": true,
+    "productionRuntimeChanged": false,
+    "productionMcpSurfaceChanged": false
+  }
 }

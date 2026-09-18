@@ -3,7 +3,8 @@
 **Artifact class:** `EVIDENCE_NOT_RUNTIME_AUTHORITY`  
 **Task type:** PROVIDER SPIKE / NON-PRODUCTION EXPERIMENT  
 **Implementation authorized:** `NO`  
-**Production changed:** `NO` (spike default OFF)
+**Historical field (imprecise):** `productionChanged = false` — see addendum below.
+**Production runtime changed:** `NO` (spike default OFF; not enabled in production runtime)
 
 ## Bootstrap
 
@@ -110,3 +111,15 @@ allowlist v9 / eligible 17 / tools 3 / drawing JSON unchanged / dynamic READ unc
 ## Next step
 
 Provision or identify a **non-production remote MCP** with the same OAuth pattern, then re-run LEVEL 2–5. Until then, retain inventory OUTCOME F — do not implement `product.drawing.document`.
+
+## Evidence correction addendum (DAVI-DOCUMENT-TRANSPORT-NONPROD-REMOTE-001)
+
+The field `productionChanged = false` in the original artifact is imprecise because the spike harness was committed to `main`.
+
+| Field | Corrected value |
+|---|---|
+| SOURCE_CHANGED | `true` (harness committed; commit `a70c30dbc`) |
+| PRODUCTION_RUNTIME_CHANGED | `false` |
+| PRODUCTION_MCP_SURFACE_CHANGED | `false` with default production configuration (`DAVI_DOCUMENT_TRANSPORT_SPIKE_ENABLED` unset/false; compose does not enable it) |
+
+The historical JSON field `productionChanged` is left in place. This addendum is the governing correction.
