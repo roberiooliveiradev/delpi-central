@@ -16,6 +16,7 @@ type PageHeaderProps = {
   onRefresh?: () => void;
   refreshing?: boolean;
   actions?: ReactNode;
+  children?: ReactNode;
 };
 
 const HERO = pageHeroBemClasses("ds");
@@ -29,6 +30,7 @@ export function PageHeader({
   onRefresh,
   refreshing = false,
   actions,
+  children,
 }: PageHeaderProps) {
   return (
     <>
@@ -55,7 +57,9 @@ export function PageHeader({
             {actions}
           </>
         }
-      />
+      >
+        {children}
+      </PageHero>
     </>
   );
 }

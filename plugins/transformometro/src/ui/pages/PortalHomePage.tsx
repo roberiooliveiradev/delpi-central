@@ -1,34 +1,37 @@
-import { ArrowDownUp, FileText, LayoutDashboard, List, Settings } from "lucide-react";
-import { useMemo, useState } from "react";
+import { BarChart3, FileText, List, Settings } from "lucide-react";
+import { useMemo, useState, type ReactNode } from "react";
 import {
-  FieldLabel,
-  NativeTextControl,
-  NavigationCard,
+  CatalogSearchBar,
+  EmptyState,
   SectionCard,
-  navigationCardBemClasses,
+  SectionRouteCard,
+  catalogSearchBarBemClasses,
+  emptyStateCardBemClasses,
   sectionCardPacBemClasses,
+  sectionRouteCardBemClasses,
 } from "@delpi/plugin-ui/index";
 
 import type { AppProps } from "../../App";
 import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
-import { PORTAL_LAUNCHER_GROUPS, PORTAL_PAGE_COPY } from "../../constants/portalExperience";
+import { PORTAL_LAUNCHER_GROUPS, PORTAL_PAGE_COPY, filterPortalCatalog } from "../../constants/portalExperience";
 import { useCanManagePortal } from "../../state/portalChrome";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 
 const SECTION = sectionCardPacBemClasses("ds");
-const NAV_CARD = navigationCardBemClasses("ds");
+const ROUTE_CARD = sectionRouteCardBemClasses("ds");
+const SEARCH = catalogSearchBarBemClasses("ds");
+const EMPTY = emptyStateCardBemClasses("ds");
 const SECTION_LABELS = {
   titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
 };
 
-const LINK_ICONS = {
-  overview: LayoutDashboard,
-  processes: List,
-  "meeting-minutes": FileText,
-  data: ArrowDownUp,
-  administration: Settings,
-} as const;
+const GROUP_ICONS: Record<string, ReactNode> = {
+  management: <BarChart3 size={20} strokeWidth={1.75} aria-hidden="true" />,
+  processes: <List size={20} strokeWidth={1.75} aria-hidden="true" />,
+  records: <FileText size={20} strokeWidth={1.75} aria-hidden="true" />,
+  administration: <Settings size={20} strokeWidth={1.75} aria-hidden="true" />,
+};
 
 type PortalHomePageProps = Pick<AppProps, "pathname"> & {
   onNavigate: (path: string) => void;
@@ -45,11 +48,22 @@ export function PortalHomePage({ pathname, onNavigate }: PortalHomePageProps) {
         links: group.links.filter((link) => {
           if (!canManage && link.id === "administration") return false;
           return needle
-            ? `${group.title} ${link.label} ${link.description}`.toLowerCase().includes(needle)
+            ? `${group.title} ${group.description} ${link.label} ${link.description}`
+                .toLowerCase()
+                .includes(needle)
             : true;
         }),
       })).filter((group) => group.links.length > 0),
     [canManage, needle],
+  );
+  const hits = useMemo(
+    () =>
+      filterPortalCatalog(query, { includeAdministration: canManage }).map((item) => ({
+        id: item.path,
+        label: item.label,
+        groupLabel: item.group,
+      })),
+    [canManage, query],
   );
 
   return (
@@ -61,48 +75,46 @@ export function PortalHomePage({ pathname, onNavigate }: PortalHomePageProps) {
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.home}
         onNavigate={onNavigate}
       />
-      <section className="tm-portal-catalog" aria-label="Caminhos e funcionalidades">
-        <div className="tm-portal-catalog__search">
-          <FieldLabel className="tm-field__label" label="Caminhos e funcionalidades" />
-          <NativeTextControl
-            id="tm-portal-catalog-search"
-            type="search"
-            placeholder="Buscar caminhos e funcionalidades…"
+      <SectionCard
+        classNames={SECTION}
+        labels={SECTION_LABELS}
+        title="Caminhos e funcionalidades"
+        subtitle="Busque ou abra uma funcionalidade do portal."
+      >
+        <div className="tm-home-paths">
+          <CatalogSearchBar
+            classNames={SEARCH}
             value={query}
             onChange={setQuery}
+            hits={hits}
+            onSelectHit={(id) => onNavigate(id)}
+            placeholder="Buscar caminhos e funcionalidades…"
+            clearLabel="Limpar busca"
+            emptyHitsLabel="Nenhuma funcionalidade encontrada."
+            aria-label="Buscar caminhos e funcionalidades"
           />
+          {groups.length === 0 ? (
+            <EmptyState classNames={EMPTY} defaultMessage="Nenhuma funcionalidade encontrada." />
+          ) : (
+            <div className="tm-home-sections-grid" aria-label="Caminhos e funcionalidades">
+              {groups.map((group) => (
+                <SectionRouteCard
+                  key={group.id}
+                  classNames={ROUTE_CARD}
+                  title={group.title}
+                  description={group.description}
+                  icon={GROUP_ICONS[group.id]}
+                  routes={group.links.map((link) => ({
+                    id: link.id,
+                    label: link.label,
+                    onClick: () => onNavigate(link.path),
+                  }))}
+                />
+              ))}
+            </div>
+          )}
         </div>
-        <div className="ds-shortcuts-grid">
-          {groups.map((group) => (
-            <SectionCard
-              key={group.id}
-              classNames={SECTION}
-              labels={SECTION_LABELS}
-              title={group.title}
-            >
-              <div className="tm-portal-nav-grid">
-                {group.links.map((link) => {
-                  const Icon = LINK_ICONS[link.id as keyof typeof LINK_ICONS];
-                  return (
-                    <NavigationCard
-                      key={link.id}
-                      classNames={NAV_CARD}
-                      orientation="horizontal"
-                      title={link.label}
-                      description={link.description}
-                      icon={Icon ? <Icon size={18} aria-hidden="true" /> : undefined}
-                      onClick={() => onNavigate(link.path)}
-                    />
-                  );
-                })}
-              </div>
-            </SectionCard>
-          ))}
-        </div>
-        {groups.length === 0 ? (
-          <p className="ds-hint">Nenhuma funcionalidade encontrada.</p>
-        ) : null}
-      </section>
+      </SectionCard>
     </TransformometroShell>
   );
 }

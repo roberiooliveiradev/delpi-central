@@ -128,11 +128,13 @@ export const DEFERRED_NAV_ITEMS: readonly DeferredNavItem[] = [
 export const PORTAL_LAUNCHER_GROUPS: readonly {
   id: string;
   title: string;
+  description: string;
   links: readonly { id: string; label: string; path: string; description: string }[];
 }[] = [
   {
     id: "management",
     title: "Gestão",
+    description: "Indicadores e resultados do programa de transformação.",
     links: [
       {
         id: "overview",
@@ -145,6 +147,7 @@ export const PORTAL_LAUNCHER_GROUPS: readonly {
   {
     id: "processes",
     title: "Processos",
+    description: "Processos disponíveis no Portal Transforma+.",
     links: [
       {
         id: "processes",
@@ -157,6 +160,7 @@ export const PORTAL_LAUNCHER_GROUPS: readonly {
   {
     id: "records",
     title: "Registros",
+    description: "Reuniões, registros e backup do portal.",
     links: [
       {
         id: "meeting-minutes",
@@ -175,6 +179,7 @@ export const PORTAL_LAUNCHER_GROUPS: readonly {
   {
     id: "administration",
     title: "Administração",
+    description: "Configurações administrativas do portal.",
     links: [
       {
         id: "administration",

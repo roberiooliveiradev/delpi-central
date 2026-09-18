@@ -16,7 +16,9 @@ import {
   ComparativeAreaChart,
   FieldLabel,
   NativeTextControl,
+  SectionCard,
   SegmentToggle,
+  sectionCardPacBemClasses,
   useChartGranularitySelection,
 } from "@delpi/plugin-ui/index";
 import { MultiSelectField } from "../../components/MultiSelectField";
@@ -114,6 +116,11 @@ const defaultFilters: Filters = {
   competence: dateRangeToCompetence(monthRange.dataInicial, monthRange.dataFinal),
   filialIds: [],
   setorIds: [],
+};
+
+const SECTION = sectionCardPacBemClasses("ds");
+const SECTION_LABELS = {
+  titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
 };
 
 const VIEW_OPTIONS: { value: DashboardViewMode; label: string }[] = [
@@ -579,8 +586,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
             onRecalcCache={() => void handleRecalcCache()}
           />
         }
-      />
-
+      >
       <section className={`${DS_FILTERS_ROW} ds-no-print`}>
           <label className={DS_FILTER_BOX}>
             <FieldLabel className="tm-field__label"
@@ -673,6 +679,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
             />
           </div>
       </section>
+      </PageHeader>
 
       <StatusAlerts
         error={error}
@@ -776,6 +783,11 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         </CollapsiblePanel>
       ) : null}
 
+      <SectionCard
+        classNames={SECTION}
+        labels={SECTION_LABELS}
+        title="Indicadores"
+      >
       <section className="ds-kpi-grid">
         <KpiCard
           title="Economia líquida"
@@ -826,6 +838,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           loading={isBusy && !resumo}
         />
       </section>
+      </SectionCard>
 
       <div className="ds-charts-layout">
         <section className="ds-charts-grid ds-charts-grid--hero">
