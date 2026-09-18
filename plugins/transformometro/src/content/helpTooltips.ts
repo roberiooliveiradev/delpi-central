@@ -139,6 +139,7 @@ export const TM_HELP_TOOLTIPS = {
     filtroUnidade: "Filtra o catálogo para exibir apenas departamentos vinculados à unidade escolhida.",
   },
   processos: {
+    listaEscopo: "Processos disponíveis no seu escopo de acesso.",
     codigo:
       "Código de negócio do processo (ex.: PROC-XXXX). Editável; o identificador técnico imutável é o ID do processo.",
     nome: "Nome do processo-mestre monitorado no Transformômetro.",

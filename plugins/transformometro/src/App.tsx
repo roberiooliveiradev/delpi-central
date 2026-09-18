@@ -8,6 +8,7 @@ import {
 } from "./components/ui/UnsavedChangesGuard";
 import { FloatingNoticeProvider } from "./components/ui/FloatingNoticeProvider";
 import { DashboardPage } from "./ui/pages/DashboardPage";
+import { PortalHomePage } from "./ui/pages/PortalHomePage";
 import {
   SettingsWorkspacePage,
   isSettingsWorkspaceRoute,
@@ -45,7 +46,9 @@ function AppRoutes({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
 
   let page: ReactNode;
 
-  if (route.view === "dashboard") {
+  if (route.view === "home") {
+    page = <PortalHomePage pathname={pathname} onNavigate={onNavigate} />;
+  } else if (route.view === "dashboard") {
     page = (
       <DashboardPage
         getAccessToken={getAccessToken}

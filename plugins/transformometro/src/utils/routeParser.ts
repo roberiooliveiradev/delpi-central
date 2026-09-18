@@ -3,6 +3,7 @@ import type { RecursoWorkspaceSectionId } from "../ui/settings/settingsWorkspace
 import { defaultRecursoSection } from "../ui/settings/settingsWorkspaceNav";
 
 export type TransformometroView =
+  | "home"
   | "dashboard"
   | "dados"
   | "configuracoes"
@@ -214,11 +215,11 @@ export function parseTransformometroPath(pathname: string): ParsedTransformometr
     return { view: "setor", setorId: legacySetorMatch[1] };
   }
 
-  if (
-    path === TRANSFORMOMETRO_ROUTES.home ||
-    path === TRANSFORMOMETRO_ROUTES.dashboard ||
-    path.endsWith("/dashboard")
-  ) {
+  if (path === TRANSFORMOMETRO_ROUTES.home) {
+    return { view: "home" };
+  }
+
+  if (path === TRANSFORMOMETRO_ROUTES.dashboard || path.endsWith("/dashboard")) {
     return { view: "dashboard" };
   }
 

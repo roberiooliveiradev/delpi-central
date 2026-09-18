@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "id": "transformometro",
-  "name": "Transformômetro",
-  "description": "Cadastro e mensuração de melhorias de processo — economia, investimento, ROI e payback.",
+  "name": "Portal Transforma+",
+  "description": "Experiência do Portal Transforma+ sobre o domínio Transformômetro — processos, indicadores, atas e configurações.",
   "icon": "gauge",
   "version": "0.5.0",
   "type": "microfrontend",
@@ -139,7 +139,7 @@
   "routes": [
     {
       "path": "/apps/transformometro/dashboard",
-      "label": "Dashboard",
+      "label": "Visão geral",
       "permission": "transformometro.view",
       "icon": "layout-dashboard",
       "entry": null,
@@ -148,7 +148,7 @@
     },
     {
       "path": "/apps/transformometro/processes",
-      "label": "Processos",
+      "label": "Meus processos",
       "permission": "transformometro.processes.manage",
       "icon": "list",
       "entry": null,
@@ -184,7 +184,7 @@
     },
     {
       "path": "/apps/transformometro/data",
-      "label": "Exportar / Importar",
+      "label": "Exportar/Importar",
       "permission": "transformometro.data.transfer",
       "icon": "arrow-down-up",
       "entry": null,

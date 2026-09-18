@@ -3,6 +3,7 @@ import { Gauge } from "lucide-react";
 
 import { PageHeader as PluginPageHeader, pageHeaderBrandBemClasses } from "@delpi/plugin-ui/index";
 
+import { PORTAL_PRODUCT_NAME } from "../constants/portalExperience";
 import { TransformometroNav } from "./TransformometroNav";
 import "./PageHeader.css";
 
@@ -36,7 +37,7 @@ export function PageHeader({
       classNames={pageHeaderBrandBemClasses("ds")}
       labels={LABELS}
       icon={<Gauge size={28} strokeWidth={1.75} />}
-      eyebrow="DELPI • Transformômetro"
+      eyebrow={PORTAL_PRODUCT_NAME}
       title={title}
       subtitle={subtitle}
       hideHeading

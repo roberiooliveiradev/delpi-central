@@ -235,7 +235,7 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
   return (
     <TransformometroShell>
       <PageHeader
-        title="Exportar / Importar"
+        title="Exportar/Importar"
         subtitle="Backup completo em pacote (.tmbackup.zip) com cadastro, diagramas, mapeamento, arquivos do processo e evidências."
         currentPath={pathname}
         onNavigate={onNavigate}

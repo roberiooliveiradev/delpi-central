@@ -7,6 +7,16 @@ export type ApiEnvelope<T> = {
   detail?: unknown;
 };
 
+export class TransformometroHttpError extends Error {
+  readonly status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "TransformometroHttpError";
+    this.status = status;
+  }
+}
+
 function detailFromBody(body: { message?: string; detail?: unknown }): string {
   if (typeof body.message === "string" && body.message.trim()) {
     return body.message.trim();
@@ -38,11 +48,14 @@ export async function parseApiEnvelope<T>(response: Response): Promise<T> {
     if (response.ok) {
       throw new Error("Resposta inválida da API.");
     }
-    throw new Error(describeHttpError(response.status));
+    throw new TransformometroHttpError(response.status, describeHttpError(response.status));
   }
 
   if (!response.ok || !body.success) {
-    throw new Error(describeHttpError(response.status, detailFromBody(body)));
+    throw new TransformometroHttpError(
+      response.status,
+      describeHttpError(response.status, detailFromBody(body)),
+    );
   }
   return body.data;
 }

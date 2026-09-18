@@ -14,6 +14,9 @@ import {
   type OptionsData,
   type Processo,
 } from "../../data/api/transformometroApi";
+import { PROCESS_LIST_EMPTY_MESSAGE, PROCESS_LIST_SUBTITLE, buildProcessListQuery, processListPlaceholder } from "../../constants/portalExperience";
+import { describeHttpErrorTitle } from "../../utils/apiErrorMessage";
+import { TransformometroHttpError } from "../../data/api/transformometroHttp";
 import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
@@ -57,6 +60,7 @@ export function ProcessesPage({
   const [items, setItems] = useState<Processo[]>([]);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [httpStatus, setHttpStatus] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -65,12 +69,10 @@ export function ProcessesPage({
   const [statusFilter, setStatusFilter] = useState("");
   const [searchQ, setSearchQ] = useState("");
 
-  const listParams = useMemo(() => {
-    const params: Record<string, string> = {};
-    if (statusFilter) params.status = statusFilter;
-    if (searchQ.trim()) params.q = searchQ.trim();
-    return params;
-  }, [searchQ, statusFilter]);
+  const listParams = useMemo(
+    () => buildProcessListQuery(searchQ, statusFilter),
+    [searchQ, statusFilter],
+  );
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -81,7 +83,12 @@ export function ProcessesPage({
       ]);
       setItems(list.items);
       setOptions(opts);
+      setError(null);
+      setHttpStatus(null);
     } catch (err) {
+      const status = err instanceof TransformometroHttpError ? err.status : 0;
+      setHttpStatus(status);
+      if (status === 403) setItems([]);
       setError(err instanceof Error ? err.message : "Erro ao carregar");
     } finally {
       setLoading(false);
@@ -118,6 +125,7 @@ export function ProcessesPage({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setHttpStatus(null);
     if (!hasProcessoEscopo(form.escopo)) {
       setError("Selecione ao menos uma unidade e um departamento no escopo do processo.");
       return;
@@ -173,8 +181,8 @@ export function ProcessesPage({
   return (
     <TransformometroShell>
       <PageHeader
-        title="Processos"
-        subtitle="Cadastro mestre das melhorias monitoradas no PostgreSQL"
+        title="Meus processos"
+        subtitle={PROCESS_LIST_SUBTITLE}
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.processos}
         onNavigate={onNavigate}
         onRefresh={() => void load()}
@@ -193,9 +201,11 @@ export function ProcessesPage({
         hasData={items.length > 0}
         onRetry={() => {
           setError(null);
+          setHttpStatus(null);
           void load();
         }}
         onDismissError={() => setError(null)}
+        errorTitle={httpStatus != null ? describeHttpErrorTitle(httpStatus) : undefined}
       />
 
       {showForm && options ? (
@@ -241,7 +251,11 @@ export function ProcessesPage({
         items={items}
         loading={loading}
         refreshing={refreshing}
-        emptyMessage="Nenhum processo. Use Novo processo para cadastrar."
+        emptyMessage={
+          httpStatus != null
+            ? processListPlaceholder(httpStatus, error)
+            : PROCESS_LIST_EMPTY_MESSAGE
+        }
         detailColumns={detailColumns}
         onOpen={(row) => onOpenProcesso(row.processo_id)}
         onNavigate={onNavigate}
