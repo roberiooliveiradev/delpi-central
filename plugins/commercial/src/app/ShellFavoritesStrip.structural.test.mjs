@@ -10,16 +10,17 @@ const here = dirname(fileURLToPath(import.meta.url));
 describe("ShellFavoritesStrip", () => {
   it("PluginShell monta favoritos no slot secondary da TopBar", () => {
     const shell = readFileSync(join(here, "PluginShell.tsx"), "utf8");
-    assert.match(shell, /ShellFavoritesStrip/);
-    assert.match(shell, /secondary=\{<ShellFavoritesStrip/);
+    assert.match(shell, /ShellTopBarSecondary/);
+    assert.match(shell, /secondary=\{/);
+    assert.match(shell, /<ShellTopBarSecondary/);
   });
 
-  it("usa popover AnchoredPanelPortal e store compartilhado", () => {
+  it("usa chrome do kit e store compartilhado", () => {
     const strip = readFileSync(join(here, "ShellFavoritesStrip.tsx"), "utf8");
-    assert.match(strip, /AnchoredPanelPortal/);
+    assert.match(strip, /CommercialTopBarFavoritesStrip/);
     assert.match(strip, /subscribeHomeFavorites/);
     assert.match(strip, /refreshHomeFavorites/);
-    assert.match(strip, /cm-shell-favorites__trigger/);
+    assert.doesNotMatch(strip, /cm-shell-favorites__trigger/);
     assert.match(strip, /favoritesEmpty/);
   });
 

@@ -205,9 +205,83 @@
   color: var(--delpi-ui-accent, var(--primary, #089bdb));
 }
 
-/* —— TopBar search trigger (pill Buscar + kbd) —— */
+/* —— TopBar utility cluster (Buscar + Favoritos) —— */
 
-.delpi-ui-topbar-search {
+.delpi-ui-topbar-utility {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.delpi-ui-topbar-favorites {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.delpi-ui-topbar-favorites__panel {
+  min-width: min(18rem, 90vw);
+  max-width: min(22rem, 94vw);
+  max-height: min(70vh, 24rem);
+  overflow: auto;
+  padding: 6px;
+}
+
+.delpi-ui-topbar-favorites__status {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--delpi-ui-text, var(--text, #111)) 72%, transparent);
+}
+
+.delpi-ui-topbar-favorites__row {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  min-width: 0;
+}
+
+.delpi-ui-topbar-favorites__row > [role="menuitem"] {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.delpi-ui-topbar-favorites__remove {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 2rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: color-mix(in srgb, var(--delpi-ui-text, var(--text, #111)) 55%, transparent);
+  cursor: pointer;
+}
+
+.delpi-ui-topbar-favorites__remove:hover {
+  background: color-mix(in srgb, var(--delpi-ui-text, var(--text, #111)) 8%, transparent);
+  color: var(--delpi-ui-text, var(--text, #111));
+}
+
+.delpi-ui-topbar-favorites__remove:focus-visible {
+  outline: 2px solid color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 70%,
+    transparent
+  );
+  outline-offset: 1px;
+}
+
+/* —— TopBar search / favorites trigger (pill) —— */
+
+.delpi-ui-topbar-search,
+.delpi-ui-topbar-favorites__trigger {
   appearance: none;
   display: inline-flex;
   align-items: center;
@@ -231,7 +305,8 @@
   transition: background 160ms ease, border-color 160ms ease;
 }
 
-.delpi-ui-topbar-search:hover {
+.delpi-ui-topbar-search:hover,
+.delpi-ui-topbar-favorites__trigger:hover {
   background: color-mix(
     in srgb,
     var(--delpi-ui-accent, var(--primary, #089bdb)) 12%,
@@ -244,7 +319,8 @@
   );
 }
 
-.delpi-ui-topbar-search:focus-visible {
+.delpi-ui-topbar-search:focus-visible,
+.delpi-ui-topbar-favorites__trigger:focus-visible {
   outline: 2px solid color-mix(
     in srgb,
     var(--delpi-ui-accent, var(--primary, #089bdb)) 70%,
@@ -253,7 +329,26 @@
   outline-offset: 2px;
 }
 
-.delpi-ui-topbar-search__label {
+.delpi-ui-topbar-favorites--open .delpi-ui-topbar-favorites__trigger {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 16%,
+    transparent
+  );
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 45%,
+    transparent
+  );
+}
+
+.delpi-ui-topbar-favorites__trigger-icon {
+  flex: 0 0 auto;
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-topbar-search__label,
+.delpi-ui-topbar-favorites__label {
   white-space: nowrap;
 }
 
@@ -281,7 +376,8 @@
 @media (max-width: 720px) {
   .delpi-ui-topbar-collapse-label,
   .delpi-ui-topbar-search__label,
-  .delpi-ui-topbar-search__kbd {
+  .delpi-ui-topbar-search__kbd,
+  .delpi-ui-topbar-favorites__label {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -293,7 +389,8 @@
     border: 0;
   }
 
-  .delpi-ui-topbar-search {
+  .delpi-ui-topbar-search,
+  .delpi-ui-topbar-favorites__trigger {
     min-height: 40px;
     padding-inline: 0.55rem;
     gap: 0;
@@ -303,7 +400,8 @@
 @media (prefers-reduced-motion: reduce) {
   .delpi-ui-topbar,
   .delpi-ui-topbar__actions,
-  .delpi-ui-topbar-search {
+  .delpi-ui-topbar-search,
+  .delpi-ui-topbar-favorites__trigger {
     transition: none;
   }
 }

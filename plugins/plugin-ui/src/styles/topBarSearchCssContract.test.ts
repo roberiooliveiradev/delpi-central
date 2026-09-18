@@ -6,8 +6,16 @@ import { describe, expect, it } from "vitest";
 const css = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "top-bar.css"), "utf8");
 
 describe("top-bar.css — TopBar chrome compacto", () => {
+  it("define cluster de utilidade e pill de favoritos sem prefixo de MFE", () => {
+    expect(css).toMatch(/\.delpi-ui-topbar-utility\s*\{/);
+    expect(css).toMatch(/\.delpi-ui-topbar-favorites__trigger\s*\{/);
+    expect(css).toMatch(/\.delpi-ui-topbar-favorites__panel\s*\{/);
+    expect(css).not.toMatch(/\.cm-shell-favorites\s*\{/);
+    expect(css).not.toMatch(/\.sp-shell-favorites\s*\{/);
+  });
+
   it("define pill canônico delpi-ui-topbar-search com kbd e hide mobile", () => {
-    expect(css).toMatch(/\.delpi-ui-topbar-search\s*\{/);
+    expect(css).toMatch(/\.delpi-ui-topbar-search(?:,\s*\.delpi-ui-topbar-favorites__trigger)?\s*\{/);
     expect(css).toMatch(/\.delpi-ui-topbar-search__kbd\s*\{/);
     expect(css).toMatch(
       /@media \(max-width:\s*720px\)[\s\S]*\.delpi-ui-topbar-search__label[\s\S]*\.delpi-ui-topbar-search__kbd/,

@@ -76,6 +76,9 @@ describe("home hub stack", () => {
     assert.match(ui, /CommercialCommandPalette/);
     assert.match(ui, /CommercialTopBarSearchTrigger/);
     assert.match(ui, /createDashboardTopBarSearchTrigger/);
+    assert.match(ui, /CommercialTopBarFavoritesStrip/);
+    assert.match(ui, /CommercialTopBarUtilityCluster/);
+    assert.match(ui, /CommercialUserManual/);
   });
 
   it("PluginShell abre CommandPalette com Ctrl/Cmd+K", () => {
@@ -94,11 +97,12 @@ describe("home hub stack", () => {
     const shellCss = readSrc("styles/shell.css");
     const help = readSrc("content/helpTooltips.ts");
     assert.match(secondary, /CommercialTopBarSearchTrigger/);
+    assert.match(secondary, /CommercialTopBarUtilityCluster/);
     assert.match(secondary, /ShellFavoritesStrip/);
     assert.match(secondary, /searchTriggerRef/);
     assert.match(secondary, /SHELL_NAV_CONTENT\.searchLabel/);
     assert.match(secondary, /onOpen=\{onOpenPalette\}/);
-    assert.match(shellCss, /\.cm-shell-secondary/);
+    assert.doesNotMatch(shellCss, /\.cm-shell-secondary/);
     assert.doesNotMatch(shellCss, /\.delpi-ui-topbar-search/);
     assert.match(help, /botão Buscar da barra superior/);
     assert.match(help, /popover ancorado/);
@@ -107,8 +111,8 @@ describe("home hub stack", () => {
   it("Favoritos e nome do avatar usam collapse-label do kit", () => {
     const favorites = readSrc("app/ShellFavoritesStrip.tsx");
     const userMenu = readSrc("app/ShellUserPortfolioMenu.tsx");
-    assert.match(favorites, /delpi-ui-topbar-collapse-label/);
-    assert.match(favorites, /cm-shell-favorites__trigger-label/);
+    assert.match(favorites, /CommercialTopBarFavoritesStrip/);
+    assert.doesNotMatch(favorites, /cm-shell-favorites__trigger-label/);
     assert.match(userMenu, /cm-shell-user__name delpi-ui-topbar-collapse-label/);
   });
 });

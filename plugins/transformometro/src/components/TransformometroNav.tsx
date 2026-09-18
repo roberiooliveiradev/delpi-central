@@ -3,9 +3,11 @@ import {
   CommandPalette,
   TopBar,
   TopBarSearchTrigger,
+  TopBarUtilityCluster,
   commandPaletteBemClasses,
   topBarBemClasses,
   topBarSearchTriggerBemClasses,
+  topBarUtilityClusterBemClasses,
   underlineNavBemClasses,
 } from "@delpi/plugin-ui/index";
 
@@ -26,6 +28,7 @@ type PortalTopBarProps = {
 const TOPBAR = topBarBemClasses("ds");
 const NAV = underlineNavBemClasses("ds");
 const SEARCH = topBarSearchTriggerBemClasses("ds");
+const UTILITY = topBarUtilityClusterBemClasses("ds");
 const PALETTE = commandPaletteBemClasses("ds");
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -70,7 +73,7 @@ export function PortalTopBar({ currentPath, onNavigate }: PortalTopBarProps) {
         menuLabel="Menu do Portal Transforma+"
         portalScopeClassName="dashboard-transformometro"
         secondary={
-          <div className="tm-topbar-secondary">
+          <TopBarUtilityCluster classNames={UTILITY}>
             <TopBarSearchTrigger
               ref={searchRef}
               classNames={SEARCH}
@@ -82,7 +85,7 @@ export function PortalTopBar({ currentPath, onNavigate }: PortalTopBarProps) {
               title="Buscar caminhos e funcionalidades (Ctrl+K)"
             />
             <PortalFavoritesTrigger onNavigate={onNavigate} />
-          </div>
+          </TopBarUtilityCluster>
         }
       />
       <CommandPalette

@@ -1,0 +1,268 @@
+/**
+ * Manual do usuário — chrome compartilhado dos portais Minha DELPI.
+ * Conteúdo e links ficam no MFE.
+ */
+
+.delpi-ui-user-manual {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.delpi-ui-user-manual__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.delpi-ui-user-manual__scope {
+  margin: 0;
+  color: color-mix(in srgb, var(--delpi-ui-text, var(--text, #111)) 78%, transparent);
+  line-height: 1.5;
+}
+
+.delpi-ui-user-manual__layout {
+  display: grid;
+  grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.delpi-ui-user-manual__toc {
+  position: sticky;
+  top: 72px;
+  padding: 12px 14px;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  border-radius: 12px;
+  background: var(--delpi-ui-surface, var(--surface, transparent));
+}
+
+.delpi-ui-user-manual__toc-title {
+  margin: 0 0 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.delpi-ui-user-manual__toc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.delpi-ui-user-manual__toc-link {
+  appearance: none;
+  width: 100%;
+  margin: 0;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.delpi-ui-user-manual__toc-link:hover {
+  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 10%, transparent);
+}
+
+.delpi-ui-user-manual__toc-link:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
+}
+
+.delpi-ui-user-manual__main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.delpi-ui-user-manual__section {
+  min-width: 0;
+  scroll-margin-top: 1.25rem;
+}
+
+.delpi-ui-user-manual__intro {
+  margin: 0 0 0.75rem;
+  line-height: 1.5;
+}
+
+.delpi-ui-user-manual__concepts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.delpi-ui-user-manual__concept {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  border-radius: 12px;
+}
+
+.delpi-ui-user-manual__concept p,
+.delpi-ui-user-manual__concept :last-child {
+  margin-bottom: 0;
+}
+
+.delpi-ui-user-manual__list {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.delpi-ui-user-manual__table-wrap {
+  overflow-x: auto;
+}
+
+.delpi-ui-user-manual__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.delpi-ui-user-manual__table th,
+.delpi-ui-user-manual__table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  text-align: left;
+  vertical-align: top;
+}
+
+.delpi-ui-user-manual__table th:nth-child(1),
+.delpi-ui-user-manual__table td:nth-child(1) {
+  width: 38%;
+}
+
+.delpi-ui-user-manual__table th:nth-child(2),
+.delpi-ui-user-manual__table td:nth-child(2) {
+  width: 22%;
+}
+
+.delpi-ui-user-manual__where,
+.delpi-ui-user-manual__tool-link {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.delpi-ui-user-manual__where:focus-visible,
+.delpi-ui-user-manual__tool-link:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
+}
+
+.delpi-ui-user-manual__faq,
+.delpi-ui-user-manual__glossary {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.delpi-ui-user-manual__faq-item,
+.delpi-ui-user-manual__glossary-item {
+  margin: 0;
+  padding: 0.75rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  background: var(--delpi-ui-surface, var(--surface, transparent));
+}
+
+.delpi-ui-user-manual__faq-item dt,
+.delpi-ui-user-manual__glossary-item dt {
+  margin: 0 0 0.3rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.delpi-ui-user-manual__faq-item dd,
+.delpi-ui-user-manual__glossary-item dd {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--delpi-ui-text, var(--text, #111)) 72%, transparent);
+}
+
+.delpi-ui-user-manual__glossary-group {
+  margin-top: 1.25rem;
+}
+
+.delpi-ui-user-manual__glossary-group:first-of-type {
+  margin-top: 0.5rem;
+}
+
+.delpi-ui-user-manual__glossary-group-title {
+  margin: 0 0 0.65rem;
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.delpi-ui-user-manual__glossary-applies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  margin: 0.45rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.delpi-ui-user-manual__glossary-applies-label {
+  font-weight: 600;
+  color: var(--delpi-ui-text, var(--text, #111));
+}
+
+.delpi-ui-user-manual__glossary-applies-label::after {
+  content: ":";
+}
+
+@media (max-width: 1100px) {
+  .delpi-ui-user-manual__faq,
+  .delpi-ui-user-manual__glossary {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .delpi-ui-user-manual__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .delpi-ui-user-manual__toc {
+    position: static;
+  }
+
+  .delpi-ui-user-manual__toc-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.5rem;
+  }
+
+  .delpi-ui-user-manual__toc-link {
+    width: auto;
+    padding: 0.3rem 0.55rem;
+    background: color-mix(
+      in srgb,
+      var(--delpi-ui-accent, var(--primary, #089bdb)) 8%,
+      var(--delpi-ui-surface, var(--surface, #fff))
+    );
+  }
+}

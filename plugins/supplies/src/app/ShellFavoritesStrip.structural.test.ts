@@ -10,9 +10,9 @@ describe("ShellFavoritesStrip", () => {
     const slots = readFileSync(join(dir, "ShellTopBarSlots.tsx"), "utf8");
     const strip = readFileSync(join(dir, "ShellFavoritesStrip.tsx"), "utf8");
     expect(slots).toMatch(/ShellFavoritesStrip/);
-    expect(strip).toMatch(/sp-shell-favorites__trigger/);
+    expect(slots).toMatch(/SuppliesTopBarUtilityCluster/);
+    expect(strip).toMatch(/SuppliesTopBarFavoritesStrip/);
     expect(strip).toMatch(/favoritesEmpty/);
-    expect(strip).toMatch(/AnchoredPanelPortal/);
-    expect(strip).toMatch(/delpi-ui-topbar-collapse-label/);
+    expect(strip).not.toMatch(/sp-shell-favorites__trigger/);
   });
 });

@@ -11,7 +11,11 @@ import { navigatePluginPath } from "./pluginNavigation";
 import { ShellFavoritesStrip } from "./ShellFavoritesStrip";
 import { useSuppliesSession } from "./SuppliesSessionContext";
 import { useMyPersonProfile } from "./useMyPersonProfile";
-import { SuppliesAvatar, SuppliesTopBarSearchTrigger } from "./suppliesUi";
+import {
+  SuppliesAvatar,
+  SuppliesTopBarSearchTrigger,
+  SuppliesTopBarUtilityCluster,
+} from "./suppliesUi";
 
 type ShellTopBarSecondaryProps = {
   basePath: string;
@@ -28,7 +32,7 @@ export function ShellTopBarSecondary({
   onOpenPalette,
 }: ShellTopBarSecondaryProps) {
   return (
-    <div className="sp-shell-secondary">
+    <SuppliesTopBarUtilityCluster>
       <SuppliesTopBarSearchTrigger
         ref={searchTriggerRef}
         onOpen={onOpenPalette}
@@ -39,7 +43,7 @@ export function ShellTopBarSecondary({
         expanded={paletteOpen}
       />
       <ShellFavoritesStrip basePath={basePath} />
-    </div>
+    </SuppliesTopBarUtilityCluster>
   );
 }
 

@@ -32,9 +32,13 @@ import {
   createDashboardTitleWithHelp,
   createDashboardTopBar,
   createDashboardTopBarSearchTrigger,
+  createDashboardTopBarFavoritesStrip,
+  createDashboardTopBarUtilityCluster,
+  createDashboardUserManual,
   createDashboardViewTransition,
   createFilterBarShell,
   createInitialsAvatar,
+  createDashboardEntityAvatarLabel,
   createDashboardInlineNavLink,
   ClearFiltersButton,
   DataTable,
@@ -74,6 +78,14 @@ export const SuppliesTopBar = createDashboardTopBar({ prefix: UI_PREFIX });
 export const SuppliesTopBarSearchTrigger = createDashboardTopBarSearchTrigger({
   prefix: UI_PREFIX,
 });
+export const SuppliesTopBarUtilityCluster = createDashboardTopBarUtilityCluster({
+  prefix: UI_PREFIX,
+});
+export const SuppliesTopBarFavoritesStrip = createDashboardTopBarFavoritesStrip({
+  prefix: UI_PREFIX,
+  portalScopeClassName: SP_PORTAL_SCOPE,
+});
+export const SuppliesUserManual = createDashboardUserManual({ prefix: UI_PREFIX });
 export const SuppliesCommandPalette = createDashboardCommandPalette({
   prefix: UI_PREFIX,
   portalScopeClassName: SP_PORTAL_SCOPE,
@@ -116,6 +128,7 @@ export const SuppliesStatusBadge = createDashboardStatusBadge({ prefix: UI_PREFI
 export const SuppliesActionButton = ActionButton;
 export const SuppliesClearFiltersButton = ClearFiltersButton;
 export const SuppliesAvatar = createInitialsAvatar(UI_PREFIX);
+export const SuppliesEntityAvatarLabel = createDashboardEntityAvatarLabel(UI_PREFIX);
 export const SuppliesEntityLink = createDashboardInlineNavLink(UI_PREFIX);
 
 export const SuppliesLoadingCard = createDashboardLoadingActivityCard({

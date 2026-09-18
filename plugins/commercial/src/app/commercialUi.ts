@@ -20,6 +20,9 @@ import {
   createDashboardCatalogSearchBar,
   createDashboardCommandPalette,
   createDashboardTopBarSearchTrigger,
+  createDashboardTopBarFavoritesStrip,
+  createDashboardTopBarUtilityCluster,
+  createDashboardUserManual,
   createDashboardHubChipRow,
   createDashboardRouteChip,
   createDashboardScopeChipBar,
@@ -191,6 +194,14 @@ export const CommercialCommandPalette = createDashboardCommandPalette({
 export const CommercialTopBarSearchTrigger = createDashboardTopBarSearchTrigger({
   prefix: UI_PREFIX,
 });
+export const CommercialTopBarUtilityCluster = createDashboardTopBarUtilityCluster({
+  prefix: UI_PREFIX,
+});
+export const CommercialTopBarFavoritesStrip = createDashboardTopBarFavoritesStrip({
+  prefix: UI_PREFIX,
+  portalScopeClassName: CM_PORTAL_SCOPE,
+});
+export const CommercialUserManual = createDashboardUserManual({ prefix: UI_PREFIX });
 export const CommercialTopBar = createDashboardTopBar({ prefix: UI_PREFIX });
 export const CommercialActionButton = ActionButton;
 export const CommercialClearFiltersButton = ClearFiltersButton;

@@ -326,6 +326,39 @@ export {
   type TopBarSearchTriggerProps,
 } from "./TopBarSearchTrigger";
 export {
+  TopBarUtilityCluster,
+  createDashboardTopBarUtilityCluster,
+  topBarUtilityClusterBemClasses,
+  type DashboardTopBarUtilityClusterProps,
+  type TopBarUtilityClusterClassNames,
+  type TopBarUtilityClusterProps,
+} from "./TopBarUtilityCluster";
+export {
+  TopBarFavoritesStrip,
+  createDashboardTopBarFavoritesStrip,
+  topBarFavoritesStripBemClasses,
+  type DashboardTopBarFavoritesStripProps,
+  type TopBarFavoritesItem,
+  type TopBarFavoritesStripClassNames,
+  type TopBarFavoritesStripProps,
+} from "./TopBarFavoritesStrip";
+export {
+  UserManual,
+  UserManualConcepts,
+  UserManualEyebrow,
+  UserManualFaq,
+  UserManualGlossary,
+  UserManualGuideTable,
+  UserManualLayout,
+  UserManualScope,
+  UserManualSection,
+  createDashboardUserManual,
+  userManualBemClasses,
+  type UserManualClassNames,
+  type UserManualGlossaryEntry,
+  type UserManualTocItem,
+} from "./UserManual";
+export {
   ProgressTracker,
   createDashboardProgressTracker,
   progressTrackerBemClasses,

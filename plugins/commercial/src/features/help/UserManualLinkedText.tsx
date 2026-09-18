@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { CommercialUserManual } from "../../app/commercialUi";
 import { navigatePluginView } from "../../app/pluginNavigation";
 import { buildPluginPath } from "../../app/pluginRoutes";
 import { splitManualTextWithToolLinks } from "../../content/userManualToolLinks";
@@ -31,7 +32,7 @@ export function UserManualLinkedText({
         return (
           <a
             key={`l-${index}-${part.value}`}
-            className="cm-user-manual__tool-link"
+            className={CommercialUserManual.classNames.toolLink}
             href={href}
             onClick={(event) => {
               event.preventDefault();

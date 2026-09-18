@@ -2,6 +2,7 @@ import {
   ActionButton,
   PagePath,
   SectionCard,
+  createDashboardUserManual,
   pagePathBemClasses,
   sectionCardPacBemClasses,
 } from "@delpi/plugin-ui/index";
@@ -17,6 +18,7 @@ import { useCanManagePortal } from "../../state/portalChrome";
 
 const SECTION = sectionCardPacBemClasses("ds");
 const PATH = pagePathBemClasses("ds");
+const Manual = createDashboardUserManual({ prefix: "ds" });
 const SECTION_LABELS = {
   titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
 };
@@ -39,10 +41,10 @@ export function HelpPage({ pathname, onNavigate }: HelpPageProps) {
     <TransformometroShell>
       <PageHeader
         eyebrow={
-          <span className="tm-user-manual__eyebrow">
+          <Manual.Eyebrow>
             <BookOpen size={16} strokeWidth={1.75} aria-hidden="true" />
             {copy.eyebrow}
-          </span>
+          </Manual.Eyebrow>
         }
         title={copy.title}
         subtitle={copy.description}
@@ -70,97 +72,72 @@ export function HelpPage({ pathname, onNavigate }: HelpPageProps) {
           </ActionButton>
         }
       />
-      <div className="tm-user-manual">
-        <p className="tm-user-manual__scope">{manual.scopeNote}</p>
-        <div className="tm-user-manual__layout">
-          <nav className="tm-user-manual__toc" aria-label={manual.tocAriaLabel}>
-            <p className="tm-user-manual__toc-title">{manual.tocTitle}</p>
-            <ul>
-              <li>
-                <button type="button" className="tm-user-manual__toc-link" onClick={() => scrollToSection("concepts")}>
-                  {manual.conceptsTitle}
-                </button>
-              </li>
-              {manual.sections.map((section) => (
-                <li key={section.id}>
-                  <button
-                    type="button"
-                    className="tm-user-manual__toc-link"
-                    onClick={() => scrollToSection(section.id)}
-                  >
-                    {section.title}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </nav>
-          <div className="tm-user-manual__main">
-            <section id="manual-concepts">
-              <SectionCard classNames={SECTION} labels={SECTION_LABELS} title={manual.conceptsTitle}>
-                <ul className="tm-user-manual__concepts">
-                  {manual.concepts.map((item) => (
-                    <li key={item.term} className="tm-user-manual__concept">
-                      <strong>{item.term}</strong>
-                      <p>{item.meaning}</p>
-                    </li>
-                  ))}
-                </ul>
-              </SectionCard>
-            </section>
-            {manual.sections.map((section) => {
-              const links = visibleManualLinks(section.links, canManage);
-              return (
-                <section key={section.id} id={`manual-${section.id}`}>
-                  <SectionCard classNames={SECTION} labels={SECTION_LABELS} title={section.title}>
-                    {section.intro ? <p>{section.intro}</p> : null}
-                    {section.bullets && section.bullets.length > 0 ? (
-                      <ul className="tm-user-manual__list">
-                        {section.bullets.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    ) : null}
-                    {links.length > 0 ? (
-                      <div className="tm-user-manual__table-wrap">
-                        <table className="tm-user-manual__table">
-                          <thead>
-                            <tr>
-                              <th scope="col">Quero…</th>
-                              <th scope="col">Onde ir</th>
-                              <th scope="col">Como</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {links.map((link) => (
-                              <tr key={`${link.want}-${link.where}`}>
-                                <td>{link.want}</td>
-                                <td>
-                                  {link.path ? (
-                                    <button
-                                      type="button"
-                                      className="tm-user-manual__where"
-                                      onClick={() => onNavigate(link.path!)}
-                                    >
-                                      {link.where}
-                                    </button>
-                                  ) : (
-                                    link.where
-                                  )}
-                                </td>
-                                <td>{link.how}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : null}
-                  </SectionCard>
-                </section>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+      <Manual.Frame>
+        <Manual.Scope>{manual.scopeNote}</Manual.Scope>
+        <Manual.Layout
+          title={manual.tocTitle}
+          aria-label={manual.tocAriaLabel}
+          items={[
+            {
+              id: "concepts",
+              label: manual.conceptsTitle,
+              onSelect: () => scrollToSection("concepts"),
+            },
+            ...manual.sections.map((section) => ({
+              id: section.id,
+              label: section.title,
+              onSelect: () => scrollToSection(section.id),
+            })),
+          ]}
+        >
+          <Manual.Section id="manual-concepts">
+            <SectionCard classNames={SECTION} labels={SECTION_LABELS} title={manual.conceptsTitle}>
+              <Manual.Concepts
+                items={manual.concepts.map((item) => ({
+                  term: item.term,
+                  meaning: item.meaning,
+                }))}
+              />
+            </SectionCard>
+          </Manual.Section>
+          {manual.sections.map((section) => {
+            const links = visibleManualLinks(section.links, canManage);
+            return (
+              <Manual.Section key={section.id} id={`manual-${section.id}`}>
+                <SectionCard classNames={SECTION} labels={SECTION_LABELS} title={section.title}>
+                  {section.intro ? <p className={Manual.classNames.intro}>{section.intro}</p> : null}
+                  {section.bullets && section.bullets.length > 0 ? (
+                    <ul className={Manual.classNames.list}>
+                      {section.bullets.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {links.length > 0 ? (
+                    <Manual.GuideTable
+                      rows={links.map((link) => ({
+                        want: link.want,
+                        where: link.path ? (
+                          <button
+                            type="button"
+                            className={Manual.classNames.where}
+                            onClick={() => onNavigate(link.path!)}
+                          >
+                            {link.where}
+                          </button>
+                        ) : (
+                          link.where
+                        ),
+                        how: link.how,
+                      }))}
+                    />
+                  ) : null}
+                </SectionCard>
+              </Manual.Section>
+            );
+          })}
+        </Manual.Layout>
+      </Manual.Frame>
     </TransformometroShell>
   );
 }

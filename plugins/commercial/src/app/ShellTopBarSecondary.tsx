@@ -1,6 +1,6 @@
 import type { RefObject } from "react";
 
-import { CommercialTopBarSearchTrigger } from "./commercialUi";
+import { CommercialTopBarSearchTrigger, CommercialTopBarUtilityCluster } from "./commercialUi";
 import { SHELL_NAV_CONTENT } from "../content/shellNav";
 import { ShellFavoritesStrip } from "./ShellFavoritesStrip";
 
@@ -21,7 +21,7 @@ export function ShellTopBarSecondary({
   paletteOpen = false,
 }: ShellTopBarSecondaryProps) {
   return (
-    <div className="cm-shell-secondary">
+    <CommercialTopBarUtilityCluster>
       <CommercialTopBarSearchTrigger
         ref={searchTriggerRef}
         onOpen={onOpenPalette}
@@ -32,6 +32,6 @@ export function ShellTopBarSecondary({
         title={SHELL_NAV_CONTENT.searchTitle}
       />
       <ShellFavoritesStrip basePath={basePath} />
-    </div>
+    </CommercialTopBarUtilityCluster>
   );
 }

@@ -64,6 +64,7 @@ describe("userManual content", () => {
     expect(page).toContain("SuppliesPageHero");
     expect(page).toContain("SuppliesSectionCard");
     expect(page).toContain("SuppliesActionButton");
+    expect(page).toContain("SuppliesUserManual");
     expect(page).not.toContain("sp-user-manual__hero");
     expect(page).not.toMatch(/className=\"sp-home__chip\"/);
   });

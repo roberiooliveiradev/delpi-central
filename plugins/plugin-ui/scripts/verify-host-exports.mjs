@@ -17,7 +17,14 @@ const assetsDir = path.resolve(
 );
 
 /** Símbolos host-only que o Index MF deve preservar no bundle. */
-const REQUIRED_HOST_EXPORTS = ["resolveColorFamily", "listColorFamilies", "getColorFamilyDefinition"];
+const REQUIRED_HOST_EXPORTS = [
+  "resolveColorFamily",
+  "listColorFamilies",
+  "getColorFamilyDefinition",
+  "createDashboardTopBarFavoritesStrip",
+  "createDashboardTopBarUtilityCluster",
+  "createDashboardUserManual",
+];
 
 function findIndexExpose(dir) {
   if (!fs.existsSync(dir)) {

@@ -59,8 +59,16 @@ import {
   sectionCardKaizenBemClasses,
   SimpleKpiCard,
   simpleKpiCardBemClasses,
+  TopBarFavoritesStrip,
+  topBarFavoritesStripBemClasses,
+  TopBarUtilityCluster,
+  topBarUtilityClusterBemClasses,
   UnderlineNav,
   underlineNavBemClasses,
+  UserManual,
+  UserManualConcepts,
+  UserManualLayout,
+  userManualBemClasses,
 } from "../../components/layout";
 import type { CatalogEntryDraft } from "../types";
 
@@ -87,6 +95,9 @@ const formGridCn = formGridBemClasses(PUC_PREFIX);
 const formActionsCn = formActionsBemClasses(PUC_PREFIX);
 const sectionBlockCn = sectionBlockBemClasses(PUC_PREFIX);
 const progressTrackerCn = progressTrackerBemClasses(PUC_PREFIX);
+const topBarUtilityCn = topBarUtilityClusterBemClasses(PUC_PREFIX);
+const topBarFavoritesCn = topBarFavoritesStripBemClasses(PUC_PREFIX);
+const userManualCn = userManualBemClasses(PUC_PREFIX);
 
 function UnderlineNavDemo({ mode }: { mode: "navigation" | "tabs" }) {
   const [activeId, setActiveId] = useState("overview");
@@ -867,6 +878,79 @@ export const layoutCatalogEntries: CatalogEntryDraft[] = [
               { id: "freight", label: "Transporte", state: "locked" },
             ]}
           />
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.TopBarUtilityCluster",
+    family: "layout",
+    exportName: "TopBarUtilityCluster",
+    title: "TopBarUtilityCluster",
+    description: "Agrupa Buscar + Favoritos no slot secondary da TopBar.",
+    demos: [
+      {
+        id: "default",
+        label: "Cluster",
+        render: () => (
+          <TopBarUtilityCluster classNames={topBarUtilityCn}>
+            <button type="button">Buscar</button>
+            <button type="button">Favoritos</button>
+          </TopBarUtilityCluster>
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.TopBarFavoritesStrip",
+    family: "layout",
+    exportName: "TopBarFavoritesStrip",
+    title: "TopBarFavoritesStrip",
+    description: "Gatilho e painel de favoritos da TopBar.",
+    demos: [
+      {
+        id: "default",
+        label: "Faixa",
+        render: () => (
+          <TopBarFavoritesStrip
+            classNames={topBarFavoritesCn}
+            items={[{ id: "home", label: "Início" }]}
+            onSelect={() => undefined}
+            onRemove={() => undefined}
+            title="Favoritos"
+            emptyLabel="Nenhum favorito."
+            openAriaLabel="Abrir favoritos"
+            closeAriaLabel="Fechar favoritos"
+            removeLabel={(label) => `Remover ${label}`}
+          />
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.UserManual",
+    family: "layout",
+    exportName: "UserManual",
+    title: "UserManual",
+    description: "Chrome compartilhado do manual do usuário.",
+    demos: [
+      {
+        id: "default",
+        label: "Manual",
+        render: () => (
+          <UserManual classNames={userManualCn}>
+            <UserManualLayout
+              classNames={userManualCn}
+              title="Neste manual"
+              aria-label="Índice do manual"
+              items={[{ id: "concepts", label: "Conceitos", onSelect: () => undefined }]}
+            >
+              <UserManualConcepts
+                classNames={userManualCn}
+                items={[{ term: "Portal", meaning: "Área do produto no host." }]}
+              />
+            </UserManualLayout>
+          </UserManual>
         ),
       },
     ],

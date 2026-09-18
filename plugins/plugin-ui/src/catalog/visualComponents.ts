@@ -88,6 +88,20 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Faixa sticky de navegação (padrão admin-navbar): compõe UnderlineNav + slot actions; flush por padrão.",
   }),
+  vc("layout", "TopBarUtilityCluster", {
+    addedAt: "2026-09-18",
+    description: "Agrupa Buscar + Favoritos no slot secondary da TopBar.",
+  }),
+  vc("layout", "TopBarFavoritesStrip", {
+    addedAt: "2026-09-18",
+    description:
+      "Gatilho e painel de favoritos da TopBar; persistência fica no portal consumidor.",
+  }),
+  vc("layout", "UserManual", {
+    addedAt: "2026-09-18",
+    description:
+      "Chrome do manual do usuário (TOC, conceitos, tabela Quero/Onde/Como, FAQ, glossário).",
+  }),
   vc("layout", "ProgressTracker", {
     addedAt: "2026-09-08",
     description:

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { navigatePluginView } from "../../app/pluginNavigation";
 import { buildPluginPath } from "../../app/pluginRoutes";
+import { SuppliesUserManual } from "../../app/suppliesUi";
 import { splitManualTextWithToolLinks } from "../../content/userManualToolLinks";
 
 type UserManualLinkedTextProps = {
@@ -31,7 +32,7 @@ export function UserManualLinkedText({
         return (
           <a
             key={`l-${index}-${part.value}`}
-            className="sp-user-manual__tool-link"
+            className={SuppliesUserManual.classNames.toolLink}
             href={href}
             onClick={(event) => {
               event.preventDefault();

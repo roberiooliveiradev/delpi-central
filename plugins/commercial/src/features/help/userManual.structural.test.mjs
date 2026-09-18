@@ -53,7 +53,7 @@ describe("user manual page", () => {
     assert.match(page, /glossaryGroups/);
     assert.match(page, /Onde aparece/);
     assert.match(page, /UserManualLinkedText/);
-    assert.match(page, /cm-user-manual__layout/);
+    assert.match(page, /CommercialUserManual/);
     const links = readSrc("content/userManualToolLinks.ts");
     assert.match(links, /MANUAL_TOOL_TARGETS/);
     assert.match(links, /splitManualTextWithToolLinks/);
