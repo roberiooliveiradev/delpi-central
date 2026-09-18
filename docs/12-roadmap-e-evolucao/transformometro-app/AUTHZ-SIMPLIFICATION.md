@@ -1,11 +1,11 @@
 # Portal Transforma+ — simplificação de AuthZ multiunidade
 
-> Inventário vigente e hardening. O desenho final, que fecha as decisões de negócio, está em [AUTHZ-FINAL-DESIGN.md](./AUTHZ-FINAL-DESIGN.md). Este arquivo não é o contrato alvo.
+> Inventário do estado anterior ao desenho final. A autoridade de permissão é a Core API. Decisões fechadas e o vínculo de unidade estão em [AUTHZ-FINAL-DESIGN.md](./AUTHZ-FINAL-DESIGN.md). Trechos abaixo que ainda tratam sign, data transfer ou escopo como decisão aberta estão superados.
 > **AUTHZ_MIGRATION = NOT_READY.**
 > Base do inventário: `769b2a0a161af54c36eb58bd31a0d7033de412ab`.
 > Hardening: ver §10.
 
-Keycloak continua identidade. Core continua dono do RBAC transversal (`PermissionResolver` + `/me`). Transformômetro aplica a regra final de domínio. Frontend não autoriza. TÉO consome o mesmo usuário.
+Keycloak continua identidade. A Core API é a autoridade de permissão (`PermissionResolver` + `/me`). O Transformômetro não concede permissão. Aplica só invariantes de domínio e pode negar o que o Core autorizou. Frontend não autoriza.
 
 ## 1. Modelo atual
 

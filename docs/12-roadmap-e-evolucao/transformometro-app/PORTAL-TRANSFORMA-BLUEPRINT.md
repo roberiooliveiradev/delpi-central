@@ -192,7 +192,7 @@ Vitest no MFE (nav, parser, lista, 403). Pytest na API só se alguém tocar hand
 
 ## 11. Segurança
 
-O MFE não decide quem vê o processo. Cargo não filtra. Segredo não vai para o bundle. MCP e permissões não mudam neste blueprint. O inventário e o alvo de AuthZ estão em [AUTHZ-SIMPLIFICATION.md](./AUTHZ-SIMPLIFICATION.md) e não são runtime.
+O MFE não decide quem vê o processo. Cargo não filtra. Segredo não vai para o bundle. A Core API decide permissão e escopo. O Transformômetro decide se a operação de domínio é válida. O inventário e o alvo estão em [AUTHZ-FINAL-DESIGN.md](./AUTHZ-FINAL-DESIGN.md) e não são runtime.
 
 ## 12. Alvo futuro — wireframes baixos
 

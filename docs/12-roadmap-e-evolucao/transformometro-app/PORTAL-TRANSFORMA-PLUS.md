@@ -26,7 +26,7 @@ cargo != authorization
 menu oculto != AuthZ
 ```
 
-AuthZ vigente e alvo de simplificação: [AUTHZ-SIMPLIFICATION.md](./AUTHZ-SIMPLIFICATION.md). Esse alvo não é runtime. AUTHZ_MIGRATION = NOT_READY.
+AuthZ: a Core API decide permissão. Desenho em [AUTHZ-FINAL-DESIGN.md](./AUTHZ-FINAL-DESIGN.md). Não é runtime.
 
 ```text
 Portal Transforma+
