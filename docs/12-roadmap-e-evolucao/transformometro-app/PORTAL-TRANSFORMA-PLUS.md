@@ -34,6 +34,20 @@ Portal Transforma+
 
 TÉO continua especialista em transformação digital. O nome da experiência não muda o owner das writes.
 
+## Navegação — revisão visual
+
+```text
+TOPBAR = estrutura estável
+HOME LAUNCHER = catálogo de capabilities
+FAVORITES = personalização individual, ainda sem contrato transversal
+```
+
+TopBar funcional nesta revisão: Início, Visão geral, Meus processos, Administração. Buscar usa o Command Palette compartilhado só para caminhos do portal.
+
+TARGET, não PROVEN e não exibido: Sala de interação, Minhas tarefas, Ajuda, Favoritos, Usuário. A sala do Comercial não é reutilizada. Pendências de ata não viram Minhas tarefas. `user_favorite_apps` do Core é favorito de app do portal, não atalho deste launcher.
+
+O Início cataloga Operação, Gestão, Registros e Administração. Atas, Configurações e Exportar/Importar continuam nas rotas atuais.
+
 ## 1. O que o Transformômetro já mostra
 
 PROVEN em `TransformometroNav` e no parser de rotas. Home atual **é** o dashboard (`/apps/transformometro`).

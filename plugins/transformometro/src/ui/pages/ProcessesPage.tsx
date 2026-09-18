@@ -181,6 +181,7 @@ export function ProcessesPage({
   return (
     <TransformometroShell>
       <PageHeader
+        eyebrow="Processos"
         title="Meus processos"
         subtitle={PROCESS_LIST_SUBTITLE}
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.processos}

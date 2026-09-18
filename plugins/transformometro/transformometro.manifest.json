@@ -190,6 +190,15 @@
       "entry": null,
       "order": 26,
       "showInMenu": false
+    },
+    {
+      "path": "/apps/transformometro/administration",
+      "label": "Administração",
+      "permission": "transformometro.view",
+      "icon": "settings",
+      "entry": null,
+      "order": 27,
+      "showInMenu": false
     }
   ],
   "backend": {

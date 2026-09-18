@@ -1,31 +1,104 @@
-import { PORTAL_NAV_LINKS, isPortalNavActive } from "../constants/portalExperience";
+import { useEffect, useRef, useState } from "react";
+import {
+  CommandPalette,
+  TopBar,
+  TopBarSearchTrigger,
+  commandPaletteBemClasses,
+  topBarBemClasses,
+  topBarSearchTriggerBemClasses,
+  underlineNavBemClasses,
+} from "@delpi/plugin-ui/index";
 
-type TransformometroNavProps = {
+import {
+  PORTAL_TOPBAR_ITEMS,
+  filterPortalCatalog,
+  resolvePortalTopBarId,
+} from "../constants/portalExperience";
+
+type PortalTopBarProps = {
   currentPath?: string;
   onNavigate: (path: string) => void;
 };
 
-export function TransformometroNav({ currentPath, onNavigate }: TransformometroNavProps) {
+const TOPBAR = topBarBemClasses("ds");
+const NAV = underlineNavBemClasses("ds");
+const SEARCH = topBarSearchTriggerBemClasses("ds");
+const PALETTE = commandPaletteBemClasses("ds");
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  const tag = target.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable;
+}
+
+export function PortalTopBar({ currentPath, onNavigate }: PortalTopBarProps) {
+  const searchRef = useRef<HTMLButtonElement>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const activeId = resolvePortalTopBarId(currentPath);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const chord = (event.key === "k" || event.key === "K") && (event.metaKey || event.ctrlKey);
+      if (!chord) return;
+      if (isEditableTarget(event.target) && !paletteOpen) return;
+      event.preventDefault();
+      setPaletteOpen((open) => !open);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [paletteOpen]);
+
   return (
-    <nav className="ds-nav" aria-label="Navegação do Portal Transforma+">
-      {PORTAL_NAV_LINKS.map((link) => {
-        const active = isPortalNavActive(link.path, currentPath);
-        return (
-          <a
-            key={link.path}
-            href={link.path}
-            className={`ds-nav__link${active ? " ds-nav__link--active" : ""}`}
-            aria-current={active ? "page" : undefined}
-            onClick={(event) => {
-              if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-              event.preventDefault();
-              onNavigate(link.path);
-            }}
-          >
-            {link.label}
-          </a>
-        );
-      })}
-    </nav>
+    <>
+      <TopBar
+        classNames={TOPBAR}
+        navClassNames={NAV}
+        items={PORTAL_TOPBAR_ITEMS.map((item) => ({
+          id: item.id,
+          label: item.label,
+          onSelect: () => onNavigate(item.path),
+        }))}
+        activeId={activeId}
+        aria-label="Navegação do Portal Transforma+"
+        collapsible
+        menuLabel="Menu do Portal Transforma+"
+        portalScopeClassName="dashboard-transformometro"
+        secondary={
+          <TopBarSearchTrigger
+            ref={searchRef}
+            classNames={SEARCH}
+            onOpen={() => setPaletteOpen(true)}
+            expanded={paletteOpen}
+            label="Buscar"
+            shortcutLabel="Ctrl+K"
+            aria-label="Buscar caminhos e funcionalidades"
+            title="Buscar caminhos e funcionalidades (Ctrl+K)"
+          />
+        }
+      />
+      <CommandPalette
+        classNames={PALETTE}
+        portalScopeClassName="dashboard-transformometro"
+        open={paletteOpen}
+        anchorRef={searchRef}
+        title="Caminhos e funcionalidades"
+        value={query}
+        onChange={setQuery}
+        placeholder="Buscar caminhos e funcionalidades…"
+        emptyHitsLabel="Nenhuma funcionalidade encontrada."
+        clearLabel="Limpar busca"
+        hits={filterPortalCatalog(query).map((item) => ({
+          id: item.path,
+          label: item.label,
+          groupLabel: item.group,
+        }))}
+        onSelectHit={(path) => {
+          setQuery("");
+          onNavigate(path);
+        }}
+        onClose={() => setPaletteOpen(false)}
+      />
+    </>
   );
 }

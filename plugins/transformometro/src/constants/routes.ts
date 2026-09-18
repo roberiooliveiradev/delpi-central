@@ -34,6 +34,7 @@ export const TRANSFORMOMETRO_ROUTES = {
   data: "/apps/transformometro/data",
   /** @deprecated alias — use `data` */
   dados: "/apps/transformometro/data",
+  administration: "/apps/transformometro/administration",
 } as const;
 
 export function buildAtaPath(ataId: string): string {

@@ -534,7 +534,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       <TransformometroShell>
         <PageHeader
           title="Visão geral"
-          subtitle="Economia bruta e líquida por competência — cadastro no PostgreSQL"
+          subtitle="Indicadores e resultados do programa de transformação."
           currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.dashboard}
           onNavigate={onNavigate}
         />
@@ -561,7 +561,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     <TransformometroShell>
       <PageHeader
         title="Visão geral"
-        subtitle="Economia bruta e líquida por competência — cadastro no PostgreSQL"
+        subtitle="Indicadores e resultados do programa de transformação."
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.dashboard}
         onNavigate={onNavigate}
         onRefresh={() => void handleRefresh()}

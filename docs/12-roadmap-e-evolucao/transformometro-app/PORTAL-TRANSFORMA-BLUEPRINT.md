@@ -4,6 +4,14 @@
 > Pacote de escopo: [WAVE-1-IMPLEMENTATION-PACKET.md](./WAVE-1-IMPLEMENTATION-PACKET.md). Ordem: [ARCHITECTURE-RUNWAY.md](./ARCHITECTURE-RUNWAY.md).
 > Wave 1 design foi aprovada e a fatia foi implementada. Browser smoke não foi executado neste passe.
 
+## Navegação — IA congelada
+
+TopBar funcional: Início, Visão geral, Meus processos, Administração. Busca da TopBar indexa só caminhos do portal (`CommandPalette`), não entidades.
+
+Target oculto, não PROVEN: Sala de interação, Minhas tarefas, Ajuda. Utility oculta: Favoritos e Usuário. Não há contrato transversal; o favorito `/me/home-favorites` continua do Comercial.
+
+Launcher do Início: Operação, Gestão, Registros, Administração. Atas, Configurações e Exportar/Importar saíram da TopBar e seguem pelas rotas atuais. Administração é composição frontend sobre essas rotas, sem Keycloak e sem RBAC novo.
+
 ## 1. Stack provada
 
 Frontend (`plugins/transformometro/package.json`): React 19.2.7, Vite 7, Module Federation (`@originjs/vite-plugin-federation`), TypeScript, Vitest, ESLint, lucide-react, recharts, mermaid, xyflow. Sem React Router, TanStack Query, Redux, Zustand, React Hook Form, Formik, Zod, Yup ou Axios. Cliente HTTP: `fetch` + `parseApiEnvelope` em `transformometroHttp.ts`. Estado: `useState` / `useEffect` / `useCallback`. Roteamento: `parseTransformometroPath` + `onNavigate`. CSS: `index.css` e CSS de página, breakpoints já usados (540, 720, 760, 768, 900, 980, 1100). Confirmação: `useConfirm`. Aviso: `useFloatingNotice`. Não há Error Boundary nem feature flag no MFE. Não há Playwright no `package.json`. Teste de UI: Vitest.

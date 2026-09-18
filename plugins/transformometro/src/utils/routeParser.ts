@@ -5,6 +5,7 @@ import { defaultRecursoSection } from "../ui/settings/settingsWorkspaceNav";
 export type TransformometroView =
   | "home"
   | "dashboard"
+  | "administration"
   | "dados"
   | "configuracoes"
   | "filiais"
@@ -217,6 +218,10 @@ export function parseTransformometroPath(pathname: string): ParsedTransformometr
 
   if (path === TRANSFORMOMETRO_ROUTES.home) {
     return { view: "home" };
+  }
+
+  if (path === TRANSFORMOMETRO_ROUTES.administration) {
+    return { view: "administration" };
   }
 
   if (path === TRANSFORMOMETRO_ROUTES.dashboard || path.endsWith("/dashboard")) {

@@ -205,6 +205,7 @@ export function SettingsWorkspacePage({ getAccessToken, route, pathname, onNavig
   return (
     <TransformometroShell>
       <PageHeader
+        eyebrow="Administração"
         title="Configurações"
         subtitle="Unidades, departamentos e recursos compartilhados usados nos processos e no dashboard"
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.configuracoesUnidades}

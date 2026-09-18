@@ -7,88 +7,246 @@ export const PORTAL_PRODUCT_NAME = "Portal Transforma+";
 
 export const PORTAL_WELCOME = "Bem-vindo ao Portal Transforma+";
 
-export const PORTAL_HOME_SUBTITLE = "Escolha um caminho. Indicadores ficam na Visão geral.";
+export const PORTAL_HOME_DESCRIPTION =
+  "Acompanhe processos, melhorias e resultados da transformação digital.";
 
 export const PROCESS_LIST_SUBTITLE = TM_HELP_TOOLTIPS.processos.listaEscopo;
 
 export const PROCESS_LIST_EMPTY_MESSAGE =
   "Nenhum processo. Use Novo processo para cadastrar.";
 
-export type PortalNavLink = {
-  path: string;
+export type PortalPlacement = "topbar" | "launcher" | "utility" | "target";
+
+export type PortalNavStatus = "FUNCTIONAL" | "TO_INVENTORY";
+
+export type PortalCatalogItem = {
+  id: string;
   label: string;
   description: string;
+  path: string;
+  group: string;
+  placement: PortalPlacement;
+  status: PortalNavStatus;
 };
 
-export const PORTAL_NAV_LINKS: readonly PortalNavLink[] = [
+export type DeferredNavItem = {
+  id: string;
+  label: string;
+  placement: PortalPlacement;
+  status: "TO_INVENTORY";
+  reason: string;
+};
+
+/** Áreas principais com destino e owner atuais. Itens sem capability ficam fora. */
+export const PORTAL_TOPBAR_ITEMS = [
+  { id: "home", label: "Início", path: TRANSFORMOMETRO_ROUTES.home },
+  { id: "overview", label: "Visão geral", path: TRANSFORMOMETRO_ROUTES.dashboard },
+  { id: "processes", label: "Meus processos", path: TRANSFORMOMETRO_ROUTES.processes },
+  { id: "administration", label: "Administração", path: TRANSFORMOMETRO_ROUTES.administration },
+] as const;
+
+/**
+ * Posição congelada na IA, sem implementação nesta remediação.
+ * Sala e tarefas pertencem a outros contextos. Favoritos de launcher não têm contrato transversal.
+ * Ajuda in-app ainda é tooltip, não manual.
+ */
+export const DEFERRED_NAV_ITEMS: readonly DeferredNavItem[] = [
   {
-    path: TRANSFORMOMETRO_ROUTES.home,
-    label: "Início",
-    description: "Orientação e atalhos do portal.",
+    id: "interaction",
+    label: "Sala de interação",
+    placement: "topbar",
+    status: "TO_INVENTORY",
+    reason: "A sala funcional pertence ao commercial-api. Não há contrato transversal no Core.",
   },
   {
-    path: TRANSFORMOMETRO_ROUTES.dashboard,
-    label: "Visão geral",
-    description: "Gestão à vista dos indicadores já calculados.",
+    id: "tasks",
+    label: "Minhas tarefas",
+    placement: "topbar",
+    status: "TO_INVENTORY",
+    reason: "Não há task store compartilhado. Pendências de ata não são essa capability.",
   },
   {
-    path: TRANSFORMOMETRO_ROUTES.processes,
-    label: "Meus processos",
-    description: "Processos disponíveis no seu escopo de acesso.",
+    id: "help",
+    label: "Ajuda",
+    placement: "topbar",
+    status: "TO_INVENTORY",
+    reason: "Não há manual canônico carregado pelo MFE. Tooltips não são a página Ajuda.",
   },
   {
-    path: TRANSFORMOMETRO_ROUTES.meetingMinutes,
-    label: "Atas",
-    description: "Lista, pendências e assinaturas.",
+    id: "favorites",
+    label: "Favoritos",
+    placement: "utility",
+    status: "TO_INVENTORY",
+    reason: "Core guarda apps favoritos do portal, não atalhos deste launcher. O contrato /me/home-favorites é do Comercial.",
   },
   {
-    path: TRANSFORMOMETRO_ROUTES.settingsUnits,
-    label: "Configurações",
-    description: "Unidades, departamentos e recursos.",
-  },
-  {
-    path: TRANSFORMOMETRO_ROUTES.data,
-    label: "Exportar/Importar",
-    description: "Backup, prévia e confirmação de importação.",
+    id: "user",
+    label: "Usuário",
+    placement: "utility",
+    status: "TO_INVENTORY",
+    reason: "O MFE não recebe display_name sem uma chamada nova.",
   },
 ];
 
-export const PORTAL_HOME_LINKS = PORTAL_NAV_LINKS.filter((link) => link.path !== TRANSFORMOMETRO_ROUTES.home);
+export const PORTAL_LAUNCHER_GROUPS: readonly {
+  id: string;
+  title: string;
+  links: readonly { id: string; label: string; path: string; description: string }[];
+}[] = [
+  {
+    id: "operation",
+    title: "Operação",
+    links: [
+      {
+        id: "processes",
+        label: "Meus processos",
+        path: TRANSFORMOMETRO_ROUTES.processes,
+        description: "Processos disponíveis no seu escopo de acesso.",
+      },
+    ],
+  },
+  {
+    id: "management",
+    title: "Gestão",
+    links: [
+      {
+        id: "overview",
+        label: "Visão geral",
+        path: TRANSFORMOMETRO_ROUTES.dashboard,
+        description: "Indicadores e resultados do programa de transformação.",
+      },
+    ],
+  },
+  {
+    id: "records",
+    title: "Registros",
+    links: [
+      {
+        id: "meeting-minutes",
+        label: "Atas",
+        path: TRANSFORMOMETRO_ROUTES.meetingMinutes,
+        description: "Reuniões, pendências, assinaturas e registros.",
+      },
+    ],
+  },
+  {
+    id: "administration",
+    title: "Administração",
+    links: [
+      {
+        id: "settings",
+        label: "Configurações",
+        path: TRANSFORMOMETRO_ROUTES.settingsUnits,
+        description: "Unidades, departamentos e recursos compartilhados.",
+      },
+      {
+        id: "data",
+        label: "Exportar/Importar",
+        path: TRANSFORMOMETRO_ROUTES.data,
+        description: "Backup, prévia e confirmação de importação.",
+      },
+    ],
+  },
+];
 
-export function isPortalNavActive(path: string, currentPath?: string): boolean {
-  if (!currentPath) {
-    return path === TRANSFORMOMETRO_ROUTES.home;
+export const PORTAL_ADMIN_LINKS = [
+  {
+    id: "units",
+    label: "Unidades",
+    path: TRANSFORMOMETRO_ROUTES.settingsUnits,
+    description: "Catálogo de unidades usado nos processos.",
+  },
+  {
+    id: "departments",
+    label: "Departamentos",
+    path: TRANSFORMOMETRO_ROUTES.settingsDepartments,
+    description: "Departamentos vinculados às unidades.",
+  },
+  {
+    id: "resources",
+    label: "Recursos compartilhados",
+    path: TRANSFORMOMETRO_ROUTES.settingsSharedResources,
+    description: "Licenças e ferramentas compartilhadas.",
+  },
+  {
+    id: "data",
+    label: "Exportar/Importar",
+    path: TRANSFORMOMETRO_ROUTES.data,
+    description: "Backup, prévia e confirmação de importação.",
+  },
+] as const;
+
+/** Busca de funcionalidades do portal. Não indexa processos, atas nem melhorias. */
+export const PORTAL_SEARCH_CATALOG: readonly PortalCatalogItem[] = [
+  ...PORTAL_TOPBAR_ITEMS.map((item) => ({
+    id: item.id,
+    label: item.label,
+    description: item.label,
+    path: item.path,
+    group: "Navegação",
+    placement: "topbar" as const,
+    status: "FUNCTIONAL" as const,
+  })),
+  ...PORTAL_LAUNCHER_GROUPS.flatMap((group) =>
+    group.links.map((link) => ({
+      id: link.id,
+      label: link.label,
+      description: link.description,
+      path: link.path,
+      group: group.title,
+      placement: "launcher" as const,
+      status: "FUNCTIONAL" as const,
+    })),
+  ),
+  ...PORTAL_ADMIN_LINKS.filter((link) => link.id !== "data").map((link) => ({
+    id: link.id,
+    label: link.label,
+    description: link.description,
+    path: link.path,
+    group: "Configurações",
+    placement: "launcher" as const,
+    status: "FUNCTIONAL" as const,
+  })),
+];
+
+export function filterPortalCatalog(query: string): PortalCatalogItem[] {
+  const needle = query.trim().toLowerCase();
+  const unique = new Map<string, PortalCatalogItem>();
+  for (const item of PORTAL_SEARCH_CATALOG) {
+    unique.set(item.path, item);
   }
-  if (path === TRANSFORMOMETRO_ROUTES.home) {
-    return currentPath === path;
+  const items = [...unique.values()];
+  if (!needle) return items;
+  return items.filter((item) =>
+    `${item.label} ${item.group} ${item.description}`.toLowerCase().includes(needle),
+  );
+}
+
+export function resolvePortalTopBarId(currentPath?: string): string {
+  if (!currentPath || currentPath === TRANSFORMOMETRO_ROUTES.home) return "home";
+  if (
+    currentPath === TRANSFORMOMETRO_ROUTES.dashboard ||
+    currentPath.endsWith("/dashboard")
+  ) {
+    return "overview";
   }
-  if (path === TRANSFORMOMETRO_ROUTES.dashboard) {
-    return currentPath === path || currentPath.endsWith("/dashboard");
+  if (currentPath.includes("/processes") || currentPath.includes("/processos")) {
+    return "processes";
   }
-  if (path === TRANSFORMOMETRO_ROUTES.processes) {
-    return currentPath === path || currentPath.startsWith(`${path}/`);
+  if (
+    currentPath === TRANSFORMOMETRO_ROUTES.administration ||
+    currentPath.includes("/settings") ||
+    currentPath.includes("/configuracoes") ||
+    currentPath.includes("/cadastros") ||
+    currentPath.includes("/data") ||
+    currentPath.endsWith("/dados") ||
+    currentPath.includes("/filiais") ||
+    currentPath.includes("/setores") ||
+    currentPath.includes("/recursos")
+  ) {
+    return "administration";
   }
-  if (path === TRANSFORMOMETRO_ROUTES.settingsUnits) {
-    return (
-      currentPath.includes("/settings") ||
-      currentPath.includes("/configuracoes") ||
-      currentPath.includes("/cadastros") ||
-      currentPath.includes("/filiais") ||
-      currentPath.includes("/setores") ||
-      currentPath.includes("/recursos")
-    );
-  }
-  if (path === TRANSFORMOMETRO_ROUTES.meetingMinutes) {
-    return (
-      currentPath === path ||
-      currentPath.startsWith(`${path}/`) ||
-      currentPath.includes("/meeting-minutes") ||
-      currentPath.includes("/atas") ||
-      currentPath.includes("/my-signature") ||
-      currentPath.includes("/minha-assinatura")
-    );
-  }
-  return currentPath === path || currentPath.startsWith(`${path}/`);
+  return "";
 }
 
 export function buildProcessListQuery(

@@ -25,7 +25,7 @@ Definidas em `src/constants/routes.ts` e registradas no manifesto / router do ap
 
 Assinatura **sem** login no módulo: `/p/transformometro/sign/{token}` (public-hub).
 
-Nav: item **Atas** em `TransformometroNav`.
+Nav: Atas saiu da TopBar. O destino continua em `/apps/transformometro/meeting-minutes`, pelo card do Início.
 
 ### Signatários
 

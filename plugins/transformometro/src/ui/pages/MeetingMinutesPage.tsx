@@ -77,8 +77,9 @@ export function MeetingMinutesPage({ getAccessToken, pathname, onNavigate }: Pro
   return (
     <TransformometroShell>
       <PageHeader
-        title="Atas Transforma+"
-        subtitle="Documente reuniões, acompanhe assinaturas e finalize o registro oficial."
+        eyebrow="Registros"
+        title="Atas"
+        subtitle="Reuniões, pendências, assinaturas e registros."
         currentPath={pathname}
         onNavigate={onNavigate}
         onRefresh={() => void load()}
