@@ -3,11 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from tm_app.application.security import transformometro_permissions as perms
+from tm_app.application.security.authorization_policy import TransformometroAuthorizationPolicy
 from tm_app.application.services.meeting_minutes_storage import TmAtaStorageError, UserSignatureStorageService
 from tm_app.infrastructure.persistence.repositories.user_signature_repository import UserSignatureRepository
 
-_PROFILE_PERMISSIONS: frozenset[str] = frozenset(perms.MEETING_MINUTES_PROFILE_PERMISSIONS)
+_PROFILE_POLICY = TransformometroAuthorizationPolicy()
 
 
 class UserSignatureService:
@@ -25,8 +25,7 @@ class UserSignatureService:
     def _has_profile_permission(user: Any) -> bool:
         if getattr(user, "is_superadmin", False):
             return True
-        permissions = set(getattr(user, "permissions", None) or getattr(user, "roles", None) or [])
-        return bool(permissions & _PROFILE_PERMISSIONS)
+        return _PROFILE_POLICY.has_access(user)
 
     def _assert_profile_access(self, user: Any) -> None:
         if not self._has_profile_permission(user):

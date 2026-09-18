@@ -329,8 +329,8 @@ def test_adjust_shared_resource_cost_denied_without_manage_zero_mutation():
     custo_repo.return_value.registrar_reajuste.assert_not_called()
 
 
-def test_adjust_shared_resource_cost_without_access_denied():
-    """Sem access não altera recurso. view legado equivale a access."""
+def test_adjust_shared_resource_cost_without_manage_denied():
+    """Reajuste do catálogo é settings. Sem manage não altera."""
     from types import SimpleNamespace
 
     from tm_app.application.gpt_actions.parity_capabilities_service import (
@@ -358,7 +358,7 @@ def test_adjust_shared_resource_cost_without_access_denied():
                 vigente_desde="2026-10-01",
             )
     assert exc.value.status_code == 403
-    assert "transformometro.access" in exc.value.message
+    assert "transformometro.manage" in exc.value.message
     custo_repo.return_value.registrar_reajuste.assert_not_called()
 
 

@@ -1,12 +1,7 @@
 """Códigos RBAC do Transformômetro.
 
-Alvo: `transformometro.access` e `transformometro.manage`.
-Os 21 códigos antigos permanecem no manifesto nesta fatia.
-Códigos `branch.*`, `view.filial-*` e `manage.filial-*` são legado.
-Eles não concedem acesso ao portal.
-`view.consolidated` também não concede acesso: consolidado é filtro.
-`meeting-minutes.sign` e `atas.sign` autorizam a ação de assinar e o detalhe
-pendente. Não abrem a lista de processos.
+As rotas só aceitam `transformometro.access` e `transformometro.manage`.
+Os códigos antigos permanecem nomeados para teste negativo. Não autorizam.
 """
 
 from __future__ import annotations

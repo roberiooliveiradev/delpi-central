@@ -35,6 +35,14 @@ def _service() -> UserSignatureService:
     return UserSignatureService(repo=repo, storage=storage)
 
 
+def test_profile_allows_access() -> None:
+    service = _service()
+    user = _user(permissions=[perms.TRANSFORMOMETRO_ACCESS])
+    assert service.get_me(user)["user_id"] == "u1"
+    assert service.update_display_name(user, "Ana Silva")["display_name"] == "Ana Silva"
+    assert service.save_image(user, b"\x89PNG\r\n")["has_signature"] is True
+
+
 @pytest.mark.parametrize(
     "permission",
     [
@@ -46,12 +54,11 @@ def _service() -> UserSignatureService:
         perms.TRANSFORMOMETRO_MEETING_MINUTES_SIGN,
     ],
 )
-def test_profile_allows_any_atas_permission(permission: str) -> None:
+def test_profile_denies_legacy_atas_permission(permission: str) -> None:
     service = _service()
     user = _user(permissions=[permission])
-    assert service.get_me(user)["user_id"] == "u1"
-    assert service.update_display_name(user, "Ana Silva")["display_name"] == "Ana Silva"
-    assert service.save_image(user, b"\x89PNG\r\n")["has_signature"] is True
+    with pytest.raises(PermissionError, match="assinatura pessoal"):
+        service.get_me(user)
 
 
 def test_profile_allows_superadmin_without_atas_permission() -> None:

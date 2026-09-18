@@ -55,7 +55,7 @@ def _as_response(exc: AuthorizationDenied) -> JSONResponse:
 
 
 def require_transformometro_view_access(request: Request) -> JSONResponse | None:
-    """Uso normal do portal: access ou código legado de uso, nunca filial."""
+    """Uso normal do portal. Só transformometro.access."""
     try:
         _policy().require_access(_user(request))
     except AuthorizationDenied as exc:
@@ -64,17 +64,18 @@ def require_transformometro_view_access(request: Request) -> JSONResponse | None
 
 
 def require_unrestricted_catalog_admin(request: Request) -> JSONResponse | None:
-    """Filial e departamento são cadastro do domínio. Quem usa o portal altera."""
+    """Configurações ficam em Administração. Só transformometro.manage."""
     try:
-        _policy().require_access(_user(request))
+        _policy().require_manage(_user(request))
     except AuthorizationDenied as exc:
         return _as_response(exc)
     return None
 
 
 def require_shared_resources_manage(request: Request) -> JSONResponse | None:
+    """Catálogo de recursos compartilhados é settings, portanto manage."""
     try:
-        _policy().require_shared_resources(_user(request))
+        _policy().require_manage(_user(request))
     except AuthorizationDenied as exc:
         return _as_response(exc)
     return None

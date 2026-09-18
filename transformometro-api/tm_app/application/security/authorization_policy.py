@@ -1,6 +1,7 @@
 """Política de autorização do Transformômetro.
 
 HTTP, MCP e GPT Actions chamam estes métodos. Não decidem sozinhos.
+Só `transformometro.access` e `transformometro.manage`. Código legado não autoriza.
 `manage` não implica `access`. Filial não entra aqui.
 O recálculo interno depois de escrita ou importação não passa por aqui.
 """
@@ -9,10 +10,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from delpi_auth.authz_core import has_any_permission, has_permission
+from delpi_auth.authz_core import has_permission
 
 from tm_app.application.security.transformometro_permissions import (
-    LEGACY_NORMAL_USE_PERMISSIONS,
     TRANSFORMOMETRO_ACCESS,
     TRANSFORMOMETRO_MANAGE,
 )
@@ -30,13 +30,10 @@ class TransformometroAuthorizationPolicy:
             return False
         if getattr(user, "is_superadmin", False):
             return True
-        return has_any_permission(
-            user,
-            (TRANSFORMOMETRO_ACCESS, *LEGACY_NORMAL_USE_PERMISSIONS),
-        )
+        return has_permission(user, TRANSFORMOMETRO_ACCESS)
 
     def has_manage(self, user: Any | None) -> bool:
-        """Só o código novo. Não herda access e não aceita legado."""
+        """Não herda access."""
         if user is None:
             return False
         if getattr(user, "is_superadmin", False):
@@ -47,10 +44,7 @@ class TransformometroAuthorizationPolicy:
         self._require_user(user)
         if self.has_access(user):
             return
-        raise AuthorizationDenied(
-            "Sem permissão transformometro.access "
-            "(ou uso legado, inclusive transformometro.view)."
-        )
+        raise AuthorizationDenied("Sem permissão transformometro.access.")
 
     def require_manage(self, user: Any | None) -> None:
         self._require_user(user)
@@ -67,7 +61,7 @@ class TransformometroAuthorizationPolicy:
         self.require_access(user)
 
     def require_shared_resources(self, user: Any | None) -> None:
-        """Recurso compartilhado é dado do domínio."""
+        """Uso do recurso no processo. O catálogo de settings usa require_manage."""
         self.require_access(user)
 
     @staticmethod

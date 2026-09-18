@@ -60,10 +60,12 @@ def test_data_transfer_denies_missing_user_and_allows_normal_use():
     with pytest.raises(AuthorizationDenied):
         policy.require_data_transfer(_user(permissions=[]))
 
-    policy.require_data_transfer(_user(permissions=["transformometro.view"]))
     policy.require_data_transfer(_user(permissions=["transformometro.access"]))
-    policy.require_data_transfer(_user(permissions=["transformometro.data.transfer"]))
     policy.require_data_transfer(_user(is_superadmin=True))
+    with pytest.raises(AuthorizationDenied):
+        policy.require_data_transfer(_user(permissions=["transformometro.view"]))
+    with pytest.raises(AuthorizationDenied):
+        policy.require_data_transfer(_user(permissions=["transformometro.data.transfer"]))
     with pytest.raises(AuthorizationDenied):
         policy.require_data_transfer(_user(permissions=["transformometro.manage"]))
 
@@ -92,20 +94,20 @@ def test_import_preview_does_not_run_without_permission():
 
 def test_dashboard_recalculate_policy_parity():
     policy = TransformometroAuthorizationPolicy()
-    view_only = _user(permissions=["transformometro.view"])
     nobody = _user(permissions=[])
-    recalc = _user(permissions=["transformometro.dashboard.recalculate"])
     sibling = _user(permissions=["transformometro.access"])
-    normal_use = _user(permissions=["transformometro.processes.manage"])
 
     with pytest.raises(AuthorizationDenied):
         policy.require_dashboard_recalculate(None)
     with pytest.raises(AuthorizationDenied):
         policy.require_dashboard_recalculate(nobody)
-    policy.require_dashboard_recalculate(view_only)
-    policy.require_dashboard_recalculate(recalc)
+    with pytest.raises(AuthorizationDenied):
+        policy.require_dashboard_recalculate(_user(permissions=["transformometro.view"]))
+    with pytest.raises(AuthorizationDenied):
+        policy.require_dashboard_recalculate(_user(permissions=["transformometro.dashboard.recalculate"]))
+    with pytest.raises(AuthorizationDenied):
+        policy.require_dashboard_recalculate(_user(permissions=["transformometro.processes.manage"]))
     policy.require_dashboard_recalculate(sibling)
-    policy.require_dashboard_recalculate(normal_use)
 
     http_denied = recalcular_dashboard(_request(nobody))
     assert http_denied.status_code == 403
@@ -136,5 +138,5 @@ def test_dashboard_recalculate_policy_parity():
         "tm_app.interface.http.routes.dashboard_routes.client_id_from_request",
         return_value="test",
     ):
-        allowed = recalcular_dashboard(_request(recalc))
+        allowed = recalcular_dashboard(_request(sibling))
     assert allowed.status_code == 200

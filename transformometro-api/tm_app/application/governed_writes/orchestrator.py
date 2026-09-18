@@ -199,7 +199,7 @@ class GovernedWriteOrchestrator:
         err = require_transformometro_view_access(request)
         if err is not None:
             raise GovernedWriteError(
-                "Sem permissão transformometro.view (ou equivalente).",
+                "Sem permissão transformometro.access.",
                 code=FORBIDDEN,
                 status_code=403,
             )
@@ -391,7 +391,7 @@ class GovernedWriteOrchestrator:
         err = require_transformometro_view_access(request)
         if err is not None:
             raise GovernedWriteError(
-                "Sem permissão transformometro.view (ou equivalente).",
+                "Sem permissão transformometro.access.",
                 code=FORBIDDEN,
                 status_code=403,
             )

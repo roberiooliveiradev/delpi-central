@@ -60,11 +60,7 @@ def _auth_user(**kwargs):
         groups=[],
         permissions=kwargs.get(
             "permissions",
-            [
-                "transformometro.view",
-                "transformometro.revisions.manage",
-                "transformometro.dashboard.recalculate",
-            ],
+            ["transformometro.access"],
         ),
         is_superadmin=kwargs.get("is_superadmin", False),
     )

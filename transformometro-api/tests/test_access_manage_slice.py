@@ -12,7 +12,6 @@ from tm_app.application.security.authorization_policy import (
     TransformometroAuthorizationPolicy,
 )
 from tm_app.application.security.transformometro_permissions import (
-    LEGACY_NORMAL_USE_PERMISSIONS,
     LEGACY_SCOPE_CODES_THAT_DO_NOT_GRANT_ACCESS,
     TRANSFORMOMETRO_ACCESS,
     TRANSFORMOMETRO_DATA_TRANSFER,
@@ -67,7 +66,8 @@ def test_no_access_is_denied_and_access_is_allowed():
     with pytest.raises(AuthorizationDenied):
         policy.require_access(_user(permissions=[]))
     policy.require_access(_user(permissions=[TRANSFORMOMETRO_ACCESS]))
-    policy.require_access(_user(permissions=[TRANSFORMOMETRO_VIEW]))
+    with pytest.raises(AuthorizationDenied):
+        policy.require_access(_user(permissions=[TRANSFORMOMETRO_VIEW]))
 
 
 def test_branch_and_consolidated_do_not_grant_access():
@@ -75,7 +75,7 @@ def test_branch_and_consolidated_do_not_grant_access():
     for code in LEGACY_SCOPE_CODES_THAT_DO_NOT_GRANT_ACCESS:
         assert policy.has_access(_user(permissions=[code])) is False
     assert "transformometro.view.consolidated" in LEGACY_SCOPE_CODES_THAT_DO_NOT_GRANT_ACCESS
-    assert TRANSFORMOMETRO_DATA_TRANSFER in LEGACY_NORMAL_USE_PERMISSIONS
+    assert policy.has_access(_user(permissions=[TRANSFORMOMETRO_DATA_TRANSFER])) is False
 
 
 def test_manage_does_not_imply_access():
@@ -121,16 +121,20 @@ def test_access_uses_the_product_and_does_not_administer():
     policy.require_data_transfer(user)
     policy.require_dashboard_recalculate(user)
     policy.require_shared_resources(user)
-    assert require_unrestricted_catalog_admin(request) is None
-    assert require_shared_resources_manage(request) is None
+    assert require_unrestricted_catalog_admin(request) is not None
+    assert require_shared_resources_manage(request) is not None
     with pytest.raises(AuthorizationDenied):
         policy.require_manage(user)
 
+    admin = _request(_user(permissions=[TRANSFORMOMETRO_MANAGE]))
+    assert require_unrestricted_catalog_admin(admin) is None
+    assert require_shared_resources_manage(admin) is None
 
-def test_legacy_view_still_opens_portal_and_admin_codes_stay_narrow():
+
+def test_legacy_codes_do_not_open_portal_or_settings():
     view = _request(_user(permissions=[TRANSFORMOMETRO_VIEW]))
-    assert require_transformometro_view_access(view) is None
-    assert require_unrestricted_catalog_admin(view) is None
+    assert require_transformometro_view_access(view) is not None
+    assert require_unrestricted_catalog_admin(view) is not None
     assert require_transformometro_view_access(
         _request(_user(permissions=["transformometro.branch.filial-01"]))
     ) is not None

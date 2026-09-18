@@ -3,7 +3,6 @@ from __future__ import annotations
 import secrets
 from typing import Any
 
-from tm_app.application.security import transformometro_permissions as perms
 from tm_app.application.services.content_hash_service import ContentHashService
 from tm_app.application.services.html_sanitizer import TmAtaHtmlSanitizer
 from tm_app.application.services.meeting_minute_write_fields import (
@@ -79,35 +78,12 @@ class MeetingMinutesService:
         if invite_id:
             self.mail_engagement.confirm_delivered_if_pending(invite_id)
 
-    def _permissions(self, user: Any) -> set[str]:
-        return set(getattr(user, "permissions", []) or [])
-
-    def _has_any_permission(self, user: Any, *codes: str) -> bool:
-        if getattr(user, "is_superadmin", False):
-            return True
-        permissions = self._permissions(user)
-        return any(code in permissions for code in codes)
-
     def _assert(self, user: Any, action: str, unit_code: str) -> None:
-        del unit_code
+        del action, unit_code
         if user is None:
             raise PermissionError("Usuário não autenticado.")
-        if getattr(user, "is_superadmin", False):
-            return
-        if action == "view":
-            allowed = self._authz.has_access(user) or self._has_any_permission(
-                user, *perms.MEETING_MINUTES_READ_PERMISSIONS
-            )
-        elif action == "manage":
-            allowed = self._authz.has_access(user) or self._has_any_permission(
-                user, *perms.MEETING_MINUTES_MANAGE_PERMISSIONS
-            )
-        else:
-            allowed = self._authz.has_access(user) or self._has_any_permission(
-                user, *perms.MEETING_MINUTES_SIGN_PERMISSIONS
-            )
-        if not allowed:
-            raise PermissionError("Sem permissão para esta operação de atas.")
+        if not self._authz.has_access(user):
+            raise PermissionError("Sem permissão transformometro.access.")
 
     def _load(self, user: Any, action: str, minute_id: str) -> dict[str, Any]:
         minute = self.repo.get_minute(minute_id)
@@ -123,17 +99,8 @@ class MeetingMinutesService:
 
     def list_minutes(self, user: Any, filters: dict[str, Any]) -> dict[str, Any]:
         pending_for_me = bool(filters.get("pending_for_me"))
-        if pending_for_me:
-            if not (
-                self._authz.has_access(user)
-                or self._has_any_permission(user, *perms.MEETING_MINUTES_READ_PERMISSIONS)
-            ):
-                raise PermissionError("Sem permissão para consultar atas.")
-        elif not (
-            self._authz.has_access(user)
-            or self._has_any_permission(user, *perms.MEETING_MINUTES_LIST_PERMISSIONS)
-        ):
-            raise PermissionError("Sem permissão para consultar atas.")
+        if not self._authz.has_access(user):
+            raise PermissionError("Sem permissão transformometro.access.")
         units = None
         if filters.get("unit_code"):
             units = [str(filters["unit_code"]).zfill(2)]

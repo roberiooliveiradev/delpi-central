@@ -311,7 +311,7 @@ def _gpt_client_without_universal_mocks():
 
 
 def test_gpt_catalog_forbidden_without_view():
-    """Negative: authenticated user without transformometro.view → 403."""
+    """Negative: authenticated user without transformometro.access → 403."""
     from tests.support import test_app as support
 
     client = _gpt_client_without_universal_mocks()
@@ -326,7 +326,7 @@ def test_gpt_catalog_forbidden_without_view():
         support.TEST_USER.permissions = prev_perms
     assert response.status_code == 403
     assert response.json()["success"] is False
-    assert "transformometro.view" in response.json()["message"]
+    assert "transformometro.access" in response.json()["message"]
 
 
 def test_gpt_analyze_forbidden_without_view():
@@ -351,14 +351,14 @@ def test_gpt_analyze_forbidden_without_view():
     assert response.status_code == 403
 
 
-def test_gpt_catalog_allowed_with_legacy_view():
+def test_gpt_catalog_allowed_with_access():
     from tests.support import test_app as support
 
     client = _gpt_client_without_universal_mocks()
     prev_super = support.TEST_USER.is_superadmin
     prev_perms = list(support.TEST_USER.permissions)
     support.TEST_USER.is_superadmin = False
-    support.TEST_USER.permissions = ["transformometro.view"]
+    support.TEST_USER.permissions = ["transformometro.access"]
     try:
         with (
             patch(
