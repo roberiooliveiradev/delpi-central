@@ -26,6 +26,8 @@ cargo != authorization
 menu oculto != AuthZ
 ```
 
+AuthZ vigente e alvo de simplificação: [AUTHZ-SIMPLIFICATION.md](./AUTHZ-SIMPLIFICATION.md). Esse alvo não é runtime. AUTHZ_MIGRATION = NOT_READY.
+
 ```text
 Portal Transforma+
   → capabilities do domínio Transformômetro
