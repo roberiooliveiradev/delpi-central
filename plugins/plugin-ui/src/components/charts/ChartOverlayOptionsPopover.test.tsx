@@ -1,10 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import {
-  ChartOverlayOptionsPopover,
-  summarizeChartOverlayOptions,
-} from "./ChartOverlayOptionsPopover";
+import { ChartOverlayOptionsPopover } from "./ChartOverlayOptionsPopover";
 import {
   buildCompareYearsOverlayOptions,
   clampCompareYears,
@@ -13,34 +10,55 @@ import {
 
 afterEach(() => cleanup());
 
-describe("summarizeChartOverlayOptions", () => {
-  it("junta overlays ativos", () => {
-    expect(
-      summarizeChartOverlayOptions([
-        {
-          id: "a",
-          label: "Ano anterior",
-          summaryLabel: "Ano ant.",
-          checked: true,
-          onChange: () => undefined,
-        },
-        {
-          id: "b",
-          label: "Tendência",
-          checked: true,
-          onChange: () => undefined,
-        },
-      ]),
-    ).toBe("Ano ant. · Tendência");
+describe("ChartOverlayOptionsPopover trigger", () => {
+  it("mantém só Opções mesmo com overlays ativos", () => {
+    render(
+      <ChartOverlayOptionsPopover
+        idPrefix="test-ov-summary"
+        options={[
+          {
+            id: "yoy-1",
+            label: "Comparar ano anterior",
+            summaryLabel: "Ano anterior",
+            checked: true,
+            onChange: () => undefined,
+          },
+          {
+            id: "yoy-2",
+            label: "+2 anos",
+            summaryLabel: "Até −2 anos",
+            checked: true,
+            onChange: () => undefined,
+          },
+        ]}
+      />,
+    );
+    const trigger = screen.getByRole("button", { name: "Opções do gráfico" });
+    expect(trigger.textContent).toContain("Opções");
+    expect(trigger.textContent).not.toContain("Ano anterior");
+    expect(trigger.textContent).not.toContain("Até −2 anos");
   });
 
-  it("usa empty quando nenhum ativo", () => {
-    expect(
-      summarizeChartOverlayOptions(
-        [{ id: "a", label: "X", checked: false, onChange: () => undefined }],
-        "Opções",
-      ),
-    ).toBe("Opções");
+  it("aceita summaryLabel estável sem listar o que está marcado", () => {
+    render(
+      <ChartOverlayOptionsPopover
+        idPrefix="test-ov-custom"
+        summaryLabel="Sobreposições"
+        emptySummaryLabel="Nenhuma"
+        options={[
+          {
+            id: "yoy",
+            label: "Comparar ano anterior",
+            checked: true,
+            onChange: () => undefined,
+          },
+        ]}
+      />,
+    );
+    const trigger = screen.getByRole("button", { name: "Opções do gráfico" });
+    expect(trigger.textContent).toContain("Sobreposições");
+    expect(trigger.textContent).not.toContain("Nenhuma");
+    expect(trigger.textContent).not.toContain("Comparar ano anterior");
   });
 });
 

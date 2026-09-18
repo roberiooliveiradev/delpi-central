@@ -14,6 +14,8 @@ import {
   resolveComplexBlockForeground,
   resolvePaintTextColor,
   resolveSelectedSwatchHex,
+  tryParseCssColorToHex,
+  resolveComputedCssColor,
   isTransparentCssColor,
   resolveColorTriggerPreviewMode,
   hasIllegibleTextContrast,
@@ -49,6 +51,17 @@ describe("shape colorUtils", () => {
     expect(isTransparentCssColor("none")).toBe(true);
     expect(resolveSelectedSwatchHex("#000000")).toBe("#000000");
     expect(resolveSelectedSwatchHex("#089bdb")).toBe("#089bdb");
+    expect(resolveSelectedSwatchHex("var(--cm-accent)")).toBeUndefined();
+    expect(tryParseCssColorToHex("var(--cm-accent)")).toBeUndefined();
+  });
+
+  it("resolveComputedCssColor lê var() do host, sem cair em preto", () => {
+    const host = document.createElement("div");
+    host.style.setProperty("--cm-accent", "#089bdb");
+    document.body.appendChild(host);
+    expect(resolveComputedCssColor("var(--cm-accent)", host)).toBe("#089bdb");
+    expect(resolveComputedCssColor("var(--cm-accent, #e53935)")).toBe("#e53935");
+    host.remove();
   });
 
   it("resolveColorTriggerPreviewMode: transparent → none; text auto → auto", () => {

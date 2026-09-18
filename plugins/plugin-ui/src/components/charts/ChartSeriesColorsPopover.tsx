@@ -5,6 +5,7 @@ import { FormSelectControl } from "../forms/FormSelectControl";
 import { NativeCheckboxControl } from "../forms/NativeCheckboxControl";
 import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
 import { ColorPickerPopoverTrigger } from "../shape/ColorPickerPopover";
+import { AUTOMATIC_TEXT_COLOR, isAutomaticTextColor } from "../shape/colorUtils";
 import type {
   SeriesTrendDash,
   SeriesTrendStyle,
@@ -164,9 +165,14 @@ export function ChartSeriesColorsPopover({
     return selected.fill;
   })();
 
-  const trendColorValue = selected?.trendColor?.trim() || selected?.fill || fillValue;
-  const trendAutomatic = !selected?.trendColor?.trim();
+  const trendAutomatic = isAutomaticTextColor(selected?.trendColor);
   const selectClassName = "delpi-ui-select--compact";
+
+  const persistTrendColor = (dataKey: string, color: string) => {
+    onTrendStyleChange?.(dataKey, {
+      color: isAutomaticTextColor(color) ? "" : color,
+    });
+  };
 
   return (
     <div ref={rootRef} className={rootClass}>
@@ -279,17 +285,14 @@ export function ChartSeriesColorsPopover({
                           {copy.trendColorLabel}
                         </span>
                         <ColorPickerPopoverTrigger
-                          variant="text"
+                          variant="fill"
                           showNoFill={false}
                           showAutomatic
                           automaticLabel={copy.trendColorAutoLabel}
-                          value={trendColorValue}
-                          onChange={(color) =>
-                            onTrendStyleChange?.(selected.dataKey, { color })
-                          }
-                          onAutomatic={() =>
-                            onTrendStyleChange?.(selected.dataKey, { color: "" })
-                          }
+                          automaticPreview={fillValue}
+                          value={trendAutomatic ? AUTOMATIC_TEXT_COLOR : selected.trendColor ?? ""}
+                          onChange={(color) => persistTrendColor(selected.dataKey, color)}
+                          onAutomatic={() => persistTrendColor(selected.dataKey, "")}
                           triggerLabel={
                             trendAutomatic
                               ? copy.trendColorAutoLabel

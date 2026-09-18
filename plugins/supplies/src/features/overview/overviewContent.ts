@@ -39,7 +39,7 @@ export const OVERVIEW_CONTENT = {
   chartTypeLabel: "Tipo",
   chartOverlaysLabel: "Sobreposições",
   chartOverlaysPanelTitle: "Sobreposições do gráfico",
-  chartOverlaysEmpty: "Nenhuma",
+  chartOverlaysEmpty: "Sobreposições",
   comparePriorYear: "Comparar ano anterior",
   comparePriorYearHint:
     "Sobreposição da mesma série no intervalo deslocado um ano (mesmo filtro de unidade).",

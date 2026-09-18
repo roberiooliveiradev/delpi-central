@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -196,6 +196,44 @@ describe("ChartSeriesColorsPopover", () => {
       width: 4,
     });
     expect(document.querySelector("select")).toBeNull();
+  });
+
+  it("tendência Automática herda a cor da série e persiste vazio, não auto", () => {
+    const onTrendStyleChange = vi.fn();
+    renderInspector({
+      onTrendChange: () => undefined,
+      onTrendStyleChange,
+      series: SERIES.map((entry) =>
+        entry.dataKey === "faturamento"
+          ? { ...entry, trendEnabled: true, trendColor: null, fill: "#ea580c" }
+          : entry,
+      ),
+    });
+    openInspector();
+    const trigger = screen.getByRole("button", {
+      name: "Cor da tendência Faturamento · Bruto",
+    });
+    expect(trigger.textContent).toContain("Automática");
+    const preview = trigger.querySelector(
+      ".delpi-ui-color-picker-trigger__preview",
+    ) as HTMLElement;
+    expect(preview.className).not.toContain("preview--auto");
+    expect(preview.style.background).toMatch(/ea580c|234,\s*88,\s*12/i);
+
+    fireEvent.click(trigger);
+    const picker = screen.getByRole("dialog", {
+      name: "Cor da tendência Faturamento · Bruto",
+      hidden: true,
+    });
+    expect(
+      within(picker).getByRole("button", { name: "Automática" }).getAttribute("aria-pressed"),
+    ).toBe("true");
+    fireEvent.click(within(picker).getByRole("button", { name: "#c00000" }));
+    expect(onTrendStyleChange).toHaveBeenCalledWith("faturamento", { color: "#c00000" });
+
+    onTrendStyleChange.mockClear();
+    fireEvent.click(within(picker).getByRole("button", { name: "Automática" }));
+    expect(onTrendStyleChange).toHaveBeenCalledWith("faturamento", { color: "" });
   });
 
   it("Ponderar período parcial fica nas opções da tendência, não em COLOR_ONLY", () => {

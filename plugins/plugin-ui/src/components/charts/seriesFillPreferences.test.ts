@@ -194,6 +194,18 @@ describe("applySeriesViewPreferences", () => {
     expect(next[1].trendLineStyle).toBeUndefined();
   });
 
+  it("sentinel auto herda a cor da série e não vira stroke", () => {
+    const next = applySeriesViewPreferences(BASE, {
+      seriesTrend: { rol_matrix: true },
+      seriesTrendStyles: { rol_matrix: { color: "auto" } },
+    });
+    expect(next[0].trendStroke).toBeUndefined();
+    const items = buildChartSeriesConfigItems(BASE, {
+      seriesTrendStyles: { rol_matrix: { color: "auto" } },
+    });
+    expect(items[0]?.trendColor).toBeNull();
+  });
+
   it("reset da série remove só aquele dataKey e volta tendência OFF", () => {
     const prev = {
       chartType: "column" as const,

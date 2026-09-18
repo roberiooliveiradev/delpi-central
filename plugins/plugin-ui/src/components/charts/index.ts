@@ -313,7 +313,6 @@ export {
 
 export {
   ChartOverlayOptionsPopover,
-  summarizeChartOverlayOptions,
   type ChartOverlayOption,
   type ChartOverlayOptionsPopoverProps,
 } from "./ChartOverlayOptionsPopover";

@@ -472,7 +472,7 @@ export const CM_HELP = {
     billingSeriesAccount:
       "Evolução do faturamento ou da quantidade fornecida deste cliente no período dos filtros (Métrica R$ | Qtd). A quantidade inclui a UM da nota; UMs diferentes no período omitem a UM (não usam «mistas» como unidade). Em Opções do gráfico, «Comparar ano anterior» coloca as colunas do ano anterior lado a lado com o período atual. Em Séries, configure cor, visibilidade e tendência linear de cada série (inclusive o ano anterior); «Restaurar padrão» remove a personalização da série selecionada.",
     billingSeriesTrend:
-      "Regressão linear calculada no gráfico, só da série escolhida, na cor e no eixo dessa série. Em Séries, ative, desative, estilize e pondere cada tendência (inclusive Ano ant., −2/−3 anos e quantidades comparativas). O default é desligada. «Ponderar período parcial» fica nas opções da tendência e só vale para o período atual. Em Ambos, quantidade e sua tendência ficam no eixo direito.",
+      "Regressão linear calculada no gráfico, só da série escolhida. «Automática» usa a mesma cor da série (a cor real pintada, inclusive tokens CSS). Em Séries, ative, desative, estilize e pondere cada tendência (inclusive Ano ant., −2/−3 anos e quantidades comparativas). O default é desligada. «Ponderar período parcial» fica nas opções da tendência e só vale para o período atual. Em Ambos, quantidade e sua tendência ficam no eixo direito.",
     billingSeriesDateStart: "Início do intervalo personalizado da série de faturamento.",
     billingSeriesDateEnd: "Fim do intervalo personalizado da série de faturamento.",
     purchaseEvolutionPeriod:

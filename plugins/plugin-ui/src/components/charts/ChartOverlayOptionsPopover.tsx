@@ -1,5 +1,5 @@
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
-import { useId, useMemo, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 
 import { NativeCheckboxControl } from "../forms/NativeCheckboxControl";
 import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
@@ -9,7 +9,7 @@ export type ChartOverlayOption = {
   label: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
-  /** Shorter text for the trigger summary (defaults to `label`). */
+  /** Optional short name; unused on the trigger (stable label only). */
   summaryLabel?: string;
   hint?: string;
   hintAriaLabel?: string;
@@ -18,8 +18,9 @@ export type ChartOverlayOption = {
 
 export type ChartOverlayOptionsPopoverProps = {
   options: readonly ChartOverlayOption[];
-  /** Override trigger text (defaults to joined checked summaries). */
+  /** Override trigger text. Defaults to `emptySummaryLabel`. Never lists active options. */
   summaryLabel?: string;
+  /** Stable trigger text when `summaryLabel` is omitted. */
   emptySummaryLabel?: string;
   panelTitle?: string;
   triggerAriaLabel?: string;
@@ -29,18 +30,10 @@ export type ChartOverlayOptionsPopoverProps = {
   className?: string;
 };
 
-export function summarizeChartOverlayOptions(
-  options: readonly ChartOverlayOption[],
-  emptySummaryLabel = "Opções",
-): string {
-  const active = options.filter((option) => option.checked && !option.disabled);
-  if (active.length === 0) return emptySummaryLabel;
-  return active.map((option) => option.summaryLabel ?? option.label).join(" · ");
-}
-
 /**
  * Popover of chart overlay checkboxes (YoY / multi-year).
  * Same density as ChartTypeSegmentToggle — use inside ChartViewShell.overlays.
+ * The trigger stays a fixed label; checked state is only in the panel (and --active).
  */
 export function ChartOverlayOptionsPopover({
   options,
@@ -58,10 +51,7 @@ export function ChartOverlayOptionsPopover({
   const panelRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
 
-  const resolvedSummary = useMemo(
-    () => summaryLabel ?? summarizeChartOverlayOptions(options, emptySummaryLabel),
-    [emptySummaryLabel, options, summaryLabel],
-  );
+  const resolvedSummary = summaryLabel ?? emptySummaryLabel;
 
   const hasActive = options.some((option) => option.checked);
   const close = () => setOpen(false);

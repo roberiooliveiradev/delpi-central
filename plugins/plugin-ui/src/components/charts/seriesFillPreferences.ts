@@ -2,6 +2,7 @@ import type {
   PersistedChartPreferences,
   SeriesTrendStyle,
 } from "../../hooks/usePersistedChartPreferences";
+import { isAutomaticTextColor } from "../shape/colorUtils";
 import type { MultiTypeSeriesSpec } from "./MultiTypeSeriesChart";
 
 export type { SeriesTrendStyle };
@@ -107,7 +108,11 @@ export function applySeriesViewPreferences(
         preferences?.seriesTrend,
       );
       const style = preferences?.seriesTrendStyles?.[entry.dataKey];
-      const trendStroke = style?.color?.trim() || undefined;
+      const rawTrendColor = style?.color?.trim();
+      const trendStroke =
+        rawTrendColor && !isAutomaticTextColor(rawTrendColor)
+          ? rawTrendColor
+          : undefined;
       const trendLineStyle: SeriesTrendDash | undefined = style?.dash;
       const width = style?.width;
       const trendStrokeWidth =
@@ -144,7 +149,10 @@ export function buildChartSeriesConfigItems(
         capable,
         preferences?.seriesTrend,
       ),
-      trendColor: style?.color?.trim() || null,
+      trendColor:
+        style?.color?.trim() && !isAutomaticTextColor(style.color)
+          ? style.color.trim()
+          : null,
       trendDash: style?.dash === "solid" ? "solid" : "dashed",
       trendWidth:
         typeof width === "number" && Number.isFinite(width)

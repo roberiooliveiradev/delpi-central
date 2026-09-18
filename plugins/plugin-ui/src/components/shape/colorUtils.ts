@@ -258,19 +258,97 @@ export function isAutomaticTextColor(color?: string | null): boolean {
 }
 
 /**
- * Hex da swatch selecionada no grid — ou `undefined` quando não há cor opaca
- * («transparent»/alpha 0 / «auto»). Evita marcar preto: `cssToColorValue("transparent")`
- * usa fallback `#000000` só como placeholder de canal RGB.
+ * Hex opaco a partir de hex/rgb — sem fallback para preto.
+ * `var()` / `color-mix()` retornam `undefined` (precisam de `resolveComputedCssColor`).
  */
-export function resolveSelectedSwatchHex(value?: string | null): string | undefined {
-  if (value == null) return undefined;
-  const trimmed = value.trim();
+export function tryParseCssColorToHex(input?: string | null): string | undefined {
+  if (input == null) return undefined;
+  const trimmed = input.trim();
   if (!trimmed || isAutomaticTextColor(trimmed)) return undefined;
-  if (trimmed.toLowerCase() === "transparent") return undefined;
-  if (trimmed.toLowerCase() === "none") return undefined;
-  const parsed = cssToColorValue(trimmed);
-  if (parsed.alpha <= 0) return undefined;
-  return normalizeHex(parsed.hex);
+  const lower = trimmed.toLowerCase();
+  if (lower === "transparent" || lower === "none") return undefined;
+  if (/^var\(/i.test(trimmed) || /^color-mix\(/i.test(trimmed)) return undefined;
+  const rgba = trimmed.match(
+    /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\s*\)$/i,
+  );
+  if (rgba) {
+    const alpha = rgba[4] !== undefined ? clampAlpha(Number(rgba[4])) : 1;
+    if (alpha <= 0) return undefined;
+    return rgbToHex(Number(rgba[1]), Number(rgba[2]), Number(rgba[3]));
+  }
+  const parsed = parseHexColor(trimmed);
+  if (!parsed || parsed.alpha <= 0) return undefined;
+  return parsed.hex;
+}
+
+function readCssCustomProperty(name: string, start?: Element | null): string {
+  if (typeof document === "undefined") return "";
+  let node: Element | null = start ?? null;
+  while (node) {
+    const value = getComputedStyle(node).getPropertyValue(name).trim();
+    if (value) return value;
+    node = node.parentElement;
+  }
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+/**
+ * Resolve `var(--token)`, `color-mix(...)` e hex/rgb para a cor pintada de fato.
+ * Sem host, `var()` não inventa `#000000`. `probe` só no layout (muta o DOM).
+ */
+export function resolveComputedCssColor(
+  input?: string | null,
+  host?: Element | null,
+  options?: { probe?: boolean },
+): string | undefined {
+  const direct = tryParseCssColorToHex(input);
+  if (direct) return direct;
+  if (input == null) return undefined;
+  const trimmed = input.trim();
+  if (!trimmed || isAutomaticTextColor(trimmed) || typeof document === "undefined") {
+    return undefined;
+  }
+
+  const varMatch = trimmed.match(
+    /^var\(\s*(--[A-Za-z0-9_-]+)(?:\s*,\s*((?:.|\n)+))?\s*\)$/i,
+  );
+  if (varMatch) {
+    const fromTree = readCssCustomProperty(varMatch[1], host ?? null);
+    if (fromTree) {
+      const nested = resolveComputedCssColor(fromTree, host, options);
+      if (nested) return nested;
+    }
+    if (varMatch[2]) {
+      const fallback = resolveComputedCssColor(varMatch[2].trim(), host, options);
+      if (fallback) return fallback;
+    }
+  }
+
+  if (!options?.probe) return undefined;
+
+  const source =
+    host && "isConnected" in host && host.isConnected ? host : document.documentElement;
+  const probe = document.createElement("span");
+  probe.style.backgroundColor = trimmed;
+  probe.style.position = "absolute";
+  probe.style.visibility = "hidden";
+  probe.style.pointerEvents = "none";
+  source.appendChild(probe);
+  const computed = getComputedStyle(probe).backgroundColor;
+  source.removeChild(probe);
+  return tryParseCssColorToHex(computed);
+}
+
+/**
+ * Hex da swatch selecionada no grid — ou `undefined` quando não há cor opaca
+ * («transparent»/alpha 0 / «auto» / `var()` sem host). Evita marcar preto:
+ * `cssToColorValue("var(--x)")` usava fallback `#000000`.
+ */
+export function resolveSelectedSwatchHex(
+  value?: string | null,
+  host?: Element | null,
+): string | undefined {
+  return resolveComputedCssColor(value, host);
 }
 
 /** Sem fundo / sem contorno / rgba com alpha 0. */

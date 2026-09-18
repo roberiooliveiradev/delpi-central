@@ -103,6 +103,8 @@ export {
   hasIllegibleTextContrast,
   rgbToHex,
   resolveSelectedSwatchHex,
+  resolveComputedCssColor,
+  tryParseCssColorToHex,
   resolveColorTriggerPreviewMode,
 } from "./colorUtils";
 export {

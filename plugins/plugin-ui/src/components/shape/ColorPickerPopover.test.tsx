@@ -72,6 +72,53 @@ describe("ColorPickerPopover", () => {
     expect(onChange).toHaveBeenCalledWith("auto");
   });
 
+  it("var(--token) não marca preto; destaca a cor resolvida", () => {
+    const host = document.createElement("div");
+    host.style.setProperty("--cm-accent", "#089bdb");
+    document.body.appendChild(host);
+    const { container } = render(
+      <ColorPickerPopover
+        variant="fill"
+        showNoFill={false}
+        value="var(--cm-accent)"
+        swatchHost={host}
+        onChange={vi.fn()}
+      />,
+    );
+    const view = within(container);
+    const black = view.getByRole("button", { name: "#000000" });
+    expect(black.getAttribute("aria-pressed")).not.toBe("true");
+    expect(view.getByRole("button", { name: "#089bdb" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    host.remove();
+    container.remove();
+  });
+
+  it("Automática com preview lista a cor da série", () => {
+    render(
+      <ColorPickerPopoverTrigger
+        triggerLabel="Automática"
+        showAutomatic
+        automaticLabel="Automática"
+        automaticPreview="#089bdb"
+        value="auto"
+        onChange={vi.fn()}
+      />,
+    );
+    const trigger = screen.getByRole("button", { name: "Automática" });
+    const preview = trigger.querySelector(".delpi-ui-color-picker-trigger__preview");
+    expect(preview?.className).not.toContain("preview--auto");
+    fireEvent.click(trigger);
+    const picker = screen.getByRole("dialog", { name: "Automática", hidden: true });
+    expect(
+      within(picker).getByRole("button", { name: "Automática" }).getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(
+      within(picker).getByRole("button", { name: "#089bdb" }).getAttribute("aria-pressed"),
+    ).toBe("true");
+  });
+
   it("mostra Sem contorno no variant outline", () => {
     const onChange = vi.fn();
     const { container } = render(

@@ -42,10 +42,11 @@ type ColorThemeGridProps = {
   value?: string;
   onSelect: (color: string) => void;
   ariaLabel?: string;
+  host?: Element | null;
 };
 
-export function ColorThemeGrid({ rows, value, onSelect, ariaLabel }: ColorThemeGridProps) {
-  const normalizedValue = resolveSelectedSwatchHex(value);
+export function ColorThemeGrid({ rows, value, onSelect, ariaLabel, host }: ColorThemeGridProps) {
+  const normalizedValue = resolveSelectedSwatchHex(value, host);
 
   return (
     <div className="delpi-ui-color-theme-grid" role="grid" aria-label={ariaLabel}>
@@ -70,10 +71,11 @@ type ColorStandardRowProps = {
   value?: string;
   onSelect: (color: string) => void;
   ariaLabel?: string;
+  host?: Element | null;
 };
 
-export function ColorStandardRow({ colors, value, onSelect, ariaLabel }: ColorStandardRowProps) {
-  const normalizedValue = resolveSelectedSwatchHex(value);
+export function ColorStandardRow({ colors, value, onSelect, ariaLabel, host }: ColorStandardRowProps) {
+  const normalizedValue = resolveSelectedSwatchHex(value, host);
 
   return (
     <div className="delpi-ui-color-standard-row" role="list" aria-label={ariaLabel}>

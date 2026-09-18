@@ -1,12 +1,12 @@
 import { ALargeSmall, Droplet, Image, Palette, Pipette } from "lucide-react";
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 import { useRibbonSectionPopoverSurface } from "../ribbon/RibbonGroupSurfaceContext";
 import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
 import { DELPI_STANDARD_COLORS, DELPI_THEME_COLOR_GRID } from "./colorPalettes";
 import { ColorMorePanel } from "./ColorMorePanel";
 import { ColorStandardRow, ColorThemeGrid } from "./ColorThemeGrid";
-import { resolveAutomaticTextColor, AUTOMATIC_TEXT_COLOR, isAutomaticTextColor, isTransparentCssColor } from "./colorUtils";
+import { resolveAutomaticTextColor, AUTOMATIC_TEXT_COLOR, isAutomaticTextColor, isTransparentCssColor, resolveComputedCssColor, resolveSelectedSwatchHex } from "./colorUtils";
 import { FillGradientPanel } from "./FillGradientPanel";
 import {
   normalizeGradientStops,
@@ -30,6 +30,13 @@ export type ColorPickerPopoverProps = {
   showNoFill?: boolean;
   /** Cor de texto Automático — contraste com o fundo informado. */
   showAutomatic?: boolean;
+  /**
+   * Cor efetiva quando Automático herda outro paint (ex.: tendência = cor da série).
+   * O gatilho e a grade listam esta cor; o valor persistido continua `auto`.
+   */
+  automaticPreview?: string | null;
+  /** Host com tokens CSS (`var(--cm-accent)`) para resolver a cor pintada. */
+  swatchHost?: Element | null;
   contrastBackground?: string | null;
   onAutomatic?: (color: "#000000" | "#ffffff") => void;
   automaticLabel?: string;
@@ -79,6 +86,8 @@ export function ColorPickerPopover({
   noFillLabel,
   showNoFill,
   showAutomatic,
+  automaticPreview,
+  swatchHost,
   contrastBackground,
   onAutomatic,
   automaticLabel,
@@ -102,16 +111,34 @@ export function ColorPickerPopover({
   const [eyedropperBusy, setEyedropperBusy] = useState(false);
   const moreBtnRef = useRef<HTMLButtonElement>(null);
   const morePanelRef = useRef<HTMLDivElement>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const [resolvedHost, setResolvedHost] = useState<Element | null>(swatchHost ?? null);
 
   const noFillEnabled = resolveNoFillEnabled(variant, showNoFill);
   const automaticEnabled = resolveAutomaticEnabled(variant, showAutomatic);
   const eyedropperEnabled = Boolean(onEyedropper) || isEyedropperSupported();
   const noFillSelected = noFillEnabled && isTransparentCssColor(value);
   const automaticSelected = automaticEnabled && isAutomaticTextColor(value);
+  const gridValue =
+    automaticSelected && automaticPreview?.trim() ? automaticPreview : value;
   const recent =
     recentColors?.filter(
       (color) => typeof color === "string" && color.trim() && color !== "transparent" && color !== "auto",
     ) ?? [];
+
+  useLayoutEffect(() => {
+    setResolvedHost(swatchHost ?? pickerRef.current);
+  }, [swatchHost]);
+
+  const [swatchHex, setSwatchHex] = useState<string | undefined>(() =>
+    resolveSelectedSwatchHex(gridValue, swatchHost ?? null),
+  );
+  useLayoutEffect(() => {
+    setSwatchHex(
+      resolveComputedCssColor(gridValue, resolvedHost, { probe: true }) ??
+        resolveSelectedSwatchHex(gridValue, resolvedHost),
+    );
+  }, [gridValue, resolvedHost]);
 
   const handleNoFill = () => {
     onFillChange?.({ kind: "none" });
@@ -162,7 +189,10 @@ export function ColorPickerPopover({
   };
 
   return (
-    <div className={["delpi-ui-color-picker", className].filter(Boolean).join(" ")}>
+    <div
+      ref={pickerRef}
+      className={["delpi-ui-color-picker", className].filter(Boolean).join(" ")}
+    >
       {showGradient ? (
         <div className="delpi-ui-fill-mode" role="tablist" aria-label={L.fill}>
           <button
@@ -273,7 +303,8 @@ export function ColorPickerPopover({
           <h4 className="delpi-ui-color-picker__heading">{L.recentColors}</h4>
           <ColorStandardRow
             colors={recent}
-            value={value}
+            value={swatchHex ?? gridValue}
+            host={resolvedHost}
             onSelect={handleSelect}
             ariaLabel={L.recentColors}
           />
@@ -282,14 +313,21 @@ export function ColorPickerPopover({
 
       <section className="delpi-ui-color-picker__section">
         <h4 className="delpi-ui-color-picker__heading">{L.themeColors}</h4>
-        <ColorThemeGrid rows={themeRows} value={value} onSelect={handleSelect} ariaLabel={L.themeColors} />
+        <ColorThemeGrid
+          rows={themeRows}
+          value={swatchHex ?? gridValue}
+          host={resolvedHost}
+          onSelect={handleSelect}
+          ariaLabel={L.themeColors}
+        />
       </section>
 
       <section className="delpi-ui-color-picker__section">
         <h4 className="delpi-ui-color-picker__heading">{L.standardColors}</h4>
         <ColorStandardRow
           colors={standardColors}
-          value={value}
+          value={swatchHex ?? gridValue}
+          host={resolvedHost}
           onSelect={handleSelect}
           ariaLabel={L.standardColors}
         />
@@ -340,7 +378,7 @@ export function ColorPickerPopover({
           onDismiss={() => setMoreOpen(false)}
         >
           <ColorMorePanel
-            value={value}
+            value={swatchHex ?? value}
             labels={labels}
             onConfirm={(color) => {
               handleSelect(color);
@@ -376,22 +414,37 @@ export function ColorPickerPopoverTrigger({
   onClose,
   className,
   variant,
+  automaticPreview,
+  showAutomatic,
+  swatchHost,
   ...popoverProps
 }: ColorPickerPopoverTriggerProps) {
   const [open, setOpen] = useState(false);
+  const [hostEl, setHostEl] = useState<HTMLDivElement | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const inSectionPopover = useRibbonSectionPopoverSurface();
+
+  useLayoutEffect(() => {
+    setHostEl(rootRef.current);
+  }, []);
 
   const dismiss = () => {
     setOpen(false);
     onClose?.();
   };
 
+  const automaticEnabled = resolveAutomaticEnabled(variant, showAutomatic);
+  const automaticSelected = automaticEnabled && isAutomaticTextColor(value);
+  const previewValue =
+    automaticSelected && automaticPreview?.trim() ? automaticPreview : value;
+  const previewVariant =
+    automaticSelected && automaticPreview?.trim() ? "fill" : variant;
+
   const { mode: previewMode, background: previewBackground } = resolveFillTriggerPreview(
     popoverProps.fill,
-    value,
-    variant,
+    previewValue,
+    previewVariant,
   );
 
   return (
@@ -428,13 +481,16 @@ export function ColorPickerPopoverTrigger({
           panelRef={panelRef}
           className="delpi-ui-color-picker-trigger__panel--portal"
           role="dialog"
-          aria-label={triggerLabel}
+          aria-label={triggerAriaLabel ?? triggerLabel}
           exclusive={!inSectionPopover}
           onDismiss={dismiss}
         >
           <ColorPickerPopover
             {...popoverProps}
             variant={variant}
+            showAutomatic={showAutomatic}
+            automaticPreview={automaticPreview}
+            swatchHost={swatchHost ?? hostEl}
             className={className}
             value={value}
             onChange={(color) => {
