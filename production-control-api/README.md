@@ -37,6 +37,7 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | GET | `/public/machine-load/{token}/performance?branch=01\|02&workCenter=&days=` | público (desempenho do posto na fila) |
 | GET | `/public/machine-load/{token}/operations/appointments?branch=&productionOrder=&operationCode=` | público (histórico de apontamentos da OP+operação na fila) |
 | GET | `/public/machine-load/{token}/operations/materials?branch=&productionOrder=&operationCode=` | público (materiais SD4 da OP+operação na fila) |
+| GET | `/public/machine-load/{token}/operations/process-inspections?branch=&productionOrder=&operationCode=` | público (inspeções de processo da OP+operação na fila) |
 | WS | `/public/machine-load/{token}/ws?branch=01\|02` | público (token do cockpit) |
 
 Envelope `{ success, message, data }`.
@@ -107,6 +108,8 @@ Fonte canônica e resolução de arquivo: ver `api-delpi/docs/api/14-desenhos-pd
 `GET /public/machine-load/{token}/operations/appointments?branch=&productionOrder=&operationCode=` alimenta o modal de apontamentos do detalhe: linhas com data, quantidade, posto e nome do operador (sem login/código/R$), só se a OP+operação estiver na fila publicada. Fonte: ``SH6010`` via `list_production_appointments` (inclui CT-00 — a view de eficiência fabril exclui CT-00 na SQL e **não** serve para saldo). Recorte estrito por **OP + operação** (`H6_OP` + `H6_OPERAC`). Escala MI alinhada à fila. Janela: últimos 120 dias.
 
 `GET /public/machine-load/{token}/operations/materials?branch=&productionOrder=&operationCode=` alimenta o modal **Materiais da operação**: código, descrição, UM, quantidade original (`D4_QTDEORI`), saldo (`D4_QUANT`) e consumido, só se a OP+operação estiver na fila publicada. Fonte: ``SD4010`` via `list_production_order_operation_materials` — filtro obrigatório `D4_OP` + `D4_OPERAC` + filial; múltiplos empenhos do mesmo componente são agregados; **sem** fallback SG1. Lista vazia = operação sem vínculo de material.
+
+`GET /public/machine-load/{token}/operations/process-inspections?branch=&productionOrder=&operationCode=` alimenta o modal **Inspeções de processo**: quem inspecionou, data, hora e resultado (aprovado/reprovado/tolerância), só se a OP+operação estiver na fila publicada. Fonte: view `historico_tela` via `list_inspecoes_processo_operation_inspections` — agrega sessões da OP+operação **sem** linhas de ensaio.
 
 Guardrails, no mesmo espírito do PDF do desenho:
 

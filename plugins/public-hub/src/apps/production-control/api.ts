@@ -391,6 +391,58 @@ export async function fetchPublicOperationMaterials(
   return envelope.data;
 }
 
+export type PublicOperationProcessInspection = {
+  inspector_name: string;
+  measurement_date: string | null;
+  measurement_time: string | null;
+  result: string;
+  result_code: string;
+};
+
+export type PublicOperationProcessInspections = {
+  branch: string;
+  production_order: string;
+  operation_code: string;
+  items: PublicOperationProcessInspection[];
+  summary: {
+    inspection_count: number;
+  };
+};
+
+export function buildPublicOperationProcessInspectionsUrl(
+  token: string,
+  branch: string,
+  productionOrder: string,
+  operationCode: string,
+): string {
+  const params = new URLSearchParams({
+    branch,
+    productionOrder,
+    operationCode,
+  });
+  return `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/operations/process-inspections?${params}`;
+}
+
+export async function fetchPublicOperationProcessInspections(
+  token: string,
+  branch: string,
+  productionOrder: string,
+  operationCode: string,
+): Promise<PublicOperationProcessInspections> {
+  const response = await fetch(
+    buildPublicOperationProcessInspectionsUrl(token, branch, productionOrder, operationCode),
+    { headers: { Accept: "application/json" } },
+  );
+  if (!response.ok) {
+    throw new Error(await readError(response, "Inspeções da operação indisponíveis."));
+  }
+  const envelope = (await response.json()) as ApiEnvelope<PublicOperationProcessInspections>;
+  if (envelope.success === false || !envelope.data) {
+    throw new Error(envelope.message || "Inspeções da operação indisponíveis.");
+  }
+  return envelope.data;
+}
+
 export type DeliveryMapRow = {
   production_order: string;
   product_code: string;

@@ -478,6 +478,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_inspecoes_processo_historico_detalhe": RouteContract(
         "inspecoes_processo_historico_detalhe", "object"
     ),
+    "list_inspecoes_processo_operation_inspections": RouteContract(
+        "inspecoes_processo_operation_inspections", "playbook_report"
+    ),
     "get_inspecoes_processo_auditoria_apontamentos": RouteContract(
         "inspecoes_processo_auditoria_apontamentos", "paged_list"
     ),

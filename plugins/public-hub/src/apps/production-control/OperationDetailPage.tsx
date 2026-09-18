@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { ArrowLeft, ClipboardList, Package } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, ClipboardList, Package } from "lucide-react";
 import type { MachineLoadOperation } from "./api";
 import { buildPublicProductModelGlbUrl } from "./api";
 import {
@@ -26,6 +26,10 @@ import {
   usePublicOperationMaterials,
   type PublicOperationMaterialsState,
 } from "./usePublicOperationMaterials";
+import {
+  usePublicOperationProcessInspections,
+  type PublicOperationProcessInspectionsState,
+} from "./usePublicOperationProcessInspections";
 
 type Props = {
   token: string;
@@ -73,6 +77,7 @@ export function OperationDetailPage({
   const [fullscreen, setFullscreen] = useState(false);
   const [appointmentsOpen, setAppointmentsOpen] = useState(false);
   const [materialsOpen, setMaterialsOpen] = useState(false);
+  const [inspectionsOpen, setInspectionsOpen] = useState(false);
   const appointments = usePublicOperationAppointments(
     token,
     branch,
@@ -86,6 +91,20 @@ export function OperationDetailPage({
     operation.operation_code,
     materialsOpen,
   );
+  const inspections = usePublicOperationProcessInspections(
+    token,
+    branch,
+    operation.production_order,
+    operation.operation_code,
+  );
+  const inspectionCount =
+    inspections.data?.summary.inspection_count ?? inspections.data?.items.length ?? 0;
+  const inspectionsTone =
+    inspections.loading || inspections.error
+      ? null
+      : inspectionCount > 0
+        ? "ok"
+        : "empty";
   const status = resolveStatus(operation);
   const paCode = operation.pa_product_code?.trim() || "";
   const productCode = operation.product_code?.trim() || "";
@@ -277,10 +296,37 @@ export function OperationDetailPage({
                 type="button"
                 className="pcp-pub__icon-btn"
                 onClick={() => setMaterialsOpen(true)}
-                aria-label="Materiais da operação"
-                title="Materiais da operação"
+                aria-label="Matérias-primas"
+                title="Matérias-primas"
               >
                 <Package size={20} strokeWidth={2.2} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className={[
+                  "pcp-pub__icon-btn",
+                  inspectionsTone === "ok" ? "pcp-pub__icon-btn--ok" : "",
+                  inspectionsTone === "empty" ? "pcp-pub__icon-btn--empty" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                onClick={() => setInspectionsOpen(true)}
+                aria-label={
+                  inspectionsTone === "ok"
+                    ? `Inspeções de processo (${inspectionCount})`
+                    : inspectionsTone === "empty"
+                      ? "Inspeções de processo (nenhuma registrada)"
+                      : "Inspeções de processo"
+                }
+                title={
+                  inspectionsTone === "ok"
+                    ? `Inspeções realizadas (${inspectionCount})`
+                    : inspectionsTone === "empty"
+                      ? "Nenhuma inspeção registrada"
+                      : "Inspeções de processo"
+                }
+              >
+                <ClipboardCheck size={20} strokeWidth={2.2} aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -366,6 +412,13 @@ export function OperationDetailPage({
         <MaterialsModal
           materials={materials}
           onClose={() => setMaterialsOpen(false)}
+        />
+      ) : null}
+
+      {inspectionsOpen ? (
+        <ProcessInspectionsModal
+          inspections={inspections}
+          onClose={() => setInspectionsOpen(false)}
         />
       ) : null}
     </section>
@@ -527,14 +580,14 @@ function MaterialsModal({
       <button type="button" className="pcp-pub-modal__backdrop" aria-label="Fechar" onClick={onClose} />
       <div className="pcp-pub-modal__panel pcp-pub-modal__panel--materials">
         <header className="pcp-pub-modal__head">
-          <h2 id="pcp-pub-materials-title">Materiais da operação</h2>
+          <h2 id="pcp-pub-materials-title">Matérias-primas</h2>
           <button type="button" className="pcp-pub__ghost pcp-pub__ghost--plain" onClick={onClose}>
             Fechar
           </button>
         </header>
 
         {loading ? (
-          <p className="pcp-pub-modal__empty">Carregando materiais…</p>
+          <p className="pcp-pub-modal__empty">Carregando matérias-primas…</p>
         ) : error ? (
           <p className="pcp-pub-modal__empty">{error}</p>
         ) : items.length > 0 ? (
@@ -566,7 +619,82 @@ function MaterialsModal({
           </div>
         ) : (
           <p className="pcp-pub-modal__empty">
-            Esta operação não possui materiais vinculados.
+            Esta operação não possui matérias-primas vinculadas.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ProcessInspectionsModal({
+  inspections,
+  onClose,
+}: {
+  inspections: PublicOperationProcessInspectionsState;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const { data: payload, loading, error } = inspections;
+  const items = payload?.items ?? [];
+
+  return (
+    <div
+      className="pcp-pub-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pcp-pub-inspections-title"
+    >
+      <button type="button" className="pcp-pub-modal__backdrop" aria-label="Fechar" onClick={onClose} />
+      <div className="pcp-pub-modal__panel pcp-pub-modal__panel--inspections">
+        <header className="pcp-pub-modal__head">
+          <h2 id="pcp-pub-inspections-title">Inspeções de processo</h2>
+          <button type="button" className="pcp-pub__ghost pcp-pub__ghost--plain" onClick={onClose}>
+            Fechar
+          </button>
+        </header>
+
+        {loading ? (
+          <p className="pcp-pub-modal__empty">Carregando inspeções…</p>
+        ) : error ? (
+          <p className="pcp-pub-modal__empty">{error}</p>
+        ) : items.length > 0 ? (
+          <div className="pcp-pub-modal__table-wrap">
+            <table className="pcp-pub-modal__table">
+              <thead>
+                <tr>
+                  <th scope="col">Quando</th>
+                  <th scope="col">Inspetor</th>
+                  <th scope="col">Resultado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((row, index) => (
+                  <tr key={`${row.inspector_name}-${row.measurement_date}-${row.measurement_time}-${index}`}>
+                    <td>{formatAppointmentWhen(row.measurement_date, row.measurement_time)}</td>
+                    <td>{row.inspector_name?.trim() || "—"}</td>
+                    <td>
+                      <span
+                        className={`pcp-pub-modal__result pcp-pub-modal__result--${inspectionResultTone(row.result_code, row.result)}`}
+                      >
+                        {formatInspectionResult(row.result)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="pcp-pub-modal__empty">
+            Nenhuma inspeção de processo registrada para esta operação.
           </p>
         )}
       </div>
@@ -581,6 +709,29 @@ function formatAppointmentWhen(date: string | null, time: string | null): string
   if (!clock) return day;
   if (day === "—") return clock;
   return `${day}, ${clock}`;
+}
+
+function formatInspectionResult(result: string): string {
+  const raw = (result || "").trim();
+  if (!raw) return "Realizada";
+  const upper = raw.toUpperCase();
+  if (upper === "APROVADO") return "Aprovado";
+  if (upper === "REPROVADO") return "Reprovado";
+  if (upper === "TOLERANCIA" || upper === "TOLERÂNCIA") return "Tolerância";
+  if (upper === "REALIZADA") return "Realizada";
+  return raw;
+}
+
+function inspectionResultTone(code: string, result: string): "ok" | "fail" | "warn" | "neutral" {
+  const c = (code || "").trim().toUpperCase();
+  if (c === "A") return "ok";
+  if (c === "R") return "fail";
+  if (c === "T") return "warn";
+  const upper = (result || "").trim().toUpperCase();
+  if (upper.startsWith("APROV")) return "ok";
+  if (upper.startsWith("REPROV")) return "fail";
+  if (upper.startsWith("TOLER")) return "warn";
+  return "neutral";
 }
 
 function Fact({

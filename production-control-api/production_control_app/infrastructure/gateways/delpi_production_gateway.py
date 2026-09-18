@@ -308,6 +308,24 @@ class DelpiProductionGateway:
             params={"branch": branch},
         )
 
+    def fetch_process_inspections_for_operation(
+        self,
+        *,
+        branch: str,
+        production_order: str,
+        operation: str,
+    ) -> dict[str, Any]:
+        """Sessões de inspeção de processo da OP+operação — sem ensaios."""
+        return self._request(
+            "GET",
+            "/inspecoes-processo/operations/inspections",
+            params={
+                "branch": branch,
+                "production_order": str(production_order or "").strip(),
+                "operation": str(operation or "").strip(),
+            },
+        )
+
     def fetch_factory_shifts(self) -> dict[str, Any]:
         """Catálogo de turnos + turno corrente — a api-delpi é dona dos horários."""
         return self._request("GET", "/production/factory-shifts")

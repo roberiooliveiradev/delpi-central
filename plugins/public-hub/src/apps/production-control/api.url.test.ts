@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   buildPublicDrawingPdfUrl,
   buildPublicOperationMaterialsUrl,
+  buildPublicOperationProcessInspectionsUrl,
   buildPublicProductModelGlbUrl,
 } from "./api.ts";
 
@@ -32,6 +33,13 @@ describe("public cockpit asset URLs", () => {
     assert.equal(
       buildPublicOperationMaterialsUrl("aberto", "01", "10964501004", "01"),
       "/apps/production-control-api/public/machine-load/aberto/operations/materials?branch=01&productionOrder=10964501004&operationCode=01",
+    );
+  });
+
+  it("builds the operation process-inspections URL with OP and operation filters", () => {
+    assert.equal(
+      buildPublicOperationProcessInspectionsUrl("aberto", "01", "10964501004", "01"),
+      "/apps/production-control-api/public/machine-load/aberto/operations/process-inspections?branch=01&productionOrder=10964501004&operationCode=01",
     );
   });
 });

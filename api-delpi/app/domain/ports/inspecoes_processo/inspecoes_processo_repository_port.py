@@ -77,6 +77,14 @@ class InspecoesProcessoRepositoryPort(Protocol):
         fetch_next: int,
     ) -> list[dict]: ...
 
+    def list_operation_inspections(
+        self,
+        *,
+        branch: str,
+        production_order: str,
+        operation: str,
+    ) -> list[dict]: ...
+
     def list_auditoria_apontamentos_page(
         self,
         branch: str,
