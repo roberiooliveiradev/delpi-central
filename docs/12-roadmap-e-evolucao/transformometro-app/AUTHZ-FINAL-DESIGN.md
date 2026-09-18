@@ -1,14 +1,13 @@
 # Portal Transforma+ — autorização final
 
-> **Status:** fatia 1 no runtime. Fatia 2A preparou a matriz e não sincronizou o catálogo.
+> **Status:** semântica final travada. CRUD normal é `access`. Administração do portal é `manage`.
 > **access/manage no backend = IMPLEMENTED_COMPATIBILITY.**
 > **unit authorization = REMOVED_FROM_RUNTIME.**
-> **ACCESS/MANAGE CORE CATALOG = ABSENT.** Leitura em 2026-09-18: 21 códigos.
+> **ACCESS/MANAGE CORE CATALOG = ABSENT.**
 > **ASSIGNMENTS = NOT_MIGRATED.**
-> **HUMAN MATRIX = PREPARED.** `manage` continua UNCLASSIFIED.
-> **LEGACY = ACTIVE.**
+> **LEGACY = ACTIVE.** Os 21 códigos continuam até o assignment novo ser comprovado.
 > **ROUTE MIGRATION = PENDING.**
-> **ASSIGNMENT WRITE = NOT AUTHORIZED.**
+> **FINAL PERMISSION COUNT no alvo = 2.** Ainda não é o catálogo runtime.
 
 ## EXECUTION_DRIFT
 
@@ -55,11 +54,15 @@ Sem instância: `access` lê. Escrita normal é `access` mais a regra de negóci
 
 Instância, revisão, medição e investimento continuam ligados à unidade como contexto do dado. Isso não autoriza nem esconde.
 
-Ata: `access`. Assinar exige ser signatário, estado assinável e ainda não ter assinado. A unidade da ata não limita a permissão.
+Ata: `access`. Assinar exige ser signatário, estado assinável e ainda não ter assinado. A unidade da ata não limita a permissão. Não existe `meeting-minutes.sign` no alvo.
 
-Exportar/importar, recálculo pedido pelo usuário, recursos compartilhados, filiais, departamentos e configurações: `manage`. Preview, validação, confirmação de replace e read-back permanecem. O hook interno de recálculo depois de uma escrita não é esse comando.
+Processo, instância, revisão, medição, investimento, melhoria, diagrama, decomposição, recurso compartilhado, filial e departamento: CRUD normal é `access` mais a regra de domínio. Não há permission de escrita por entidade.
 
-`manage` sem `access` não abre a raiz do portal. Rotas de administração exigem `manage`. Os dois códigos são explícitos.
+Recálculo pedido na Visão geral é uso normal. Reconstrói cache depois de medição ou revisão. Não é gestão de equipe. Alvo: `access`. O hook interno depois de escrita continua fora desse gate.
+
+Exportar e importar é backup do cadastro do produto, não gestão de acessos. Alvo: `access`. Preview, validação, confirmação de replace e read-back permanecem. `data.transfer` sai.
+
+`manage` é a Administração do portal: equipe, grupos, acessos e assignments, pelos contratos da Core. Não edita processo. Não implica `access`. O Transformômetro não cria tabela de usuário, papel ou grupo.
 
 ## O que o código faz hoje
 
@@ -72,7 +75,9 @@ Exportar/importar, recálculo pedido pelo usuário, recursos compartilhados, fil
 | Atas | `can_view_filial` / `can_manage_filial` | `access`; assinar pela regra do signatário | sim |
 | `/options` | esconde filial fora do papel | catálogo para o filtro, com `access` | sim |
 | Writes de instância | `check_manage_filial_access` | `access` + regra de domínio | sim |
-| Catálogo de filial | `require_unrestricted_catalog_admin` | `manage` | sim |
+| Catálogo de filial | `access` | `access` | feito na policy |
+| Recurso, backup, recálculo de usuário | `access` | `access` | feito na policy |
+| Administração de equipe, grupo e acesso | ainda não existe no app | `manage`, via Core | rota depois do assignment |
 | GPT/MCP | os mesmos helpers | o mesmo contexto do HTTP | sim |
 
 O serviço sai da autorização. Se sobrar helper só de filtro de consulta, não pode se chamar de autorização. Não apagar no mesmo diff da fundação se ainda houver caller.
@@ -86,15 +91,23 @@ O serviço sai da autorização. Se sobrar helper só de filtro de consulta, nã
 | `meeting-minutes.view`, `meeting-minutes.manage` | `access` + regra de domínio |
 | `meeting-minutes.sign` | `access` + signatário e estado |
 | `atas.*` | sai com os canônicos de ata |
-| `shared-resources.manage`, `dashboard.recalculate`, `data.transfer` | `manage` |
+| `shared-resources.manage`, `dashboard.recalculate`, `data.transfer` | `access`. São dado ou operação normal do produto |
 | `view.consolidated` | sai; é o filtro Todas |
 | `branch.filial-*`, `view.filial-*`, `manage.filial-*` | sai |
 
 ## Manifesto
 
-Os códigos `access` e `manage` foram adicionados. Os 21 antigos permanecem. As rotas do portal continuam com as permissions legadas. A raiz com `showInMenu: true` e permission `access` espera a matriz humana. Sem isso, o `ProtectedRoute` bloquearia quem ainda não recebeu `access`.
+Os códigos `access` e `manage` foram adicionados. Os 21 antigos permanecem. As rotas do portal ainda usam os códigos legados. O `ProtectedRoute` compara o código exato. Trocar a rota antes do assignment novo bloquearia quem ainda não tem `access`.
 
-A TopBar não cria permission e não muda com a filial. Uso normal: `access`. Administração: `manage`.
+Alvo, ainda não aplicado:
+
+| Rota | Permission |
+|---|---|
+| `/apps/transformometro` | `access` |
+| dashboard, processes, settings/units, meeting-minutes, my-signature, data | `access` |
+| administration | `manage` |
+
+Início, Visão geral, Sala, Minhas tarefas, Meus processos e Ajuda são `access`. Administração é `manage`. A filial não entra na TopBar.
 
 ## Catálogo da Core
 
@@ -114,13 +127,11 @@ Releitura de 2026-09-18. Um papel, um grupo, quatro pessoas, zero grant direto. 
 
 Janela curta. Sem dual-read de unidade.
 
-`access` efetivo se houver `access` ou um código legado de uso: `view`, `processes.manage`, `revisions.manage`, `measurements.manage`, `investments.manage`, `meeting-minutes.view`, `atas.view`, `meeting-minutes.manage`, `atas.manage`.
+`access` efetivo se houver `access` ou um código legado de uso do domínio: `view`, `processes.manage`, `revisions.manage`, `measurements.manage`, `investments.manage`, `shared-resources.manage`, `dashboard.recalculate`, `data.transfer`, `meeting-minutes.view`, `atas.view`, `meeting-minutes.manage`, `atas.manage`.
 
-Não entram em `access`: `branch.*`, `view.filial-*`, `manage.filial-*`, `view.consolidated`, `meeting-minutes.sign`, `atas.sign`, `shared-resources.manage`, `dashboard.recalculate`, `data.transfer`. Sign continua reconhecido só na ação de assinar e no detalhe pendente.
+Não entram em `access`: `branch.*`, `view.filial-*`, `manage.filial-*`, `view.consolidated`, `meeting-minutes.sign`, `atas.sign`. Sign continua só na ação de assinar e no detalhe pendente.
 
-`manage` de catálogo é só o código novo. Transferência aceita `manage` ou `data.transfer`. Recálculo de usuário aceita `manage` ou `dashboard.recalculate`. Recurso compartilhado aceita `manage` ou `shared-resources.manage`. Uso normal não administra.
-
-Ausência dos dois lados nega. A janela fecha na fase 12. Não fica OR eterno.
+`manage` efetivo é só `transformometro.manage`. Nenhum código antigo de entidade vira administração do portal. Ausência nega. A janela fecha quando os assignments novos estiverem comprovados e os 21 saírem. Não fica OR eterno.
 
 ## Gap de semântica
 

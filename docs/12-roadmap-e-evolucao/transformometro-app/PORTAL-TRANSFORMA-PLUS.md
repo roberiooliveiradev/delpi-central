@@ -214,9 +214,7 @@ Visão geral do processo: identificação, objetivo, escopo, responsáveis, revi
 
 ## 11. Administração, perfil, ajuda, busca, favoritos
 
-Administração Transforma+ não copia carteira, equipe, grupo ou SLA. Identidade fica no Keycloak. RBAC transversal fica no Core. Sem usuário local, grupo substituto ou papel por cargo.
-
-O que já se administra no TM: unidades, departamentos, recursos compartilhados, exportação/importação. Família de processo hoje é campo do cadastro, não um console separado — não promover a «admin de famílias» sem inventário. Parâmetros de medição e governance settings: TARGET só após prova.
+Administração do Portal Transforma+, no alvo, é equipe, grupos e acessos. Esses objetos continuam na Core. O app não cria usuário, papel nem grupo locais. Unidades, departamentos, recursos, exportação e recálculo da Visão geral são uso normal: `access`. O texto antigo que chamava esses cadastros de administração do produto está superado.
 
 Perfil: se o kit tiver avatar e o token tiver nome/e-mail, exibir. Cargo, se aparecer, é rótulo. Escopo autorizado vem do backend.
 
