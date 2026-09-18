@@ -321,7 +321,7 @@ Pacote: [WAVE-1-IMPLEMENTATION-PACKET.md](./WAVE-1-IMPLEMENTATION-PACKET.md). De
 | `ProcessContextService` importa `Request` FastAPI, `interface.http.branch_access_http` e repositórios concretos | CODE_DRIFT = OPEN_NON_BLOCKING. PROVEN. Wave 1 = NOT_USED. Correção pequena seria enganosa: não há ports desses repositórios e a AuthZ está no helper HTTP. Não é FALSE_POSITIVE e não bloqueia a Wave 1 |
 | Definition of Done sem deploy | RESOLVED na §14. Docs = NOT_APPLICABLE. Release = SHA/deploy/smoke. Write = read-back ou `OUTCOME_VERIFICATION_FAILED` |
 | Wave 1 | IMPLEMENTED_NOT_RUNTIME_PROVEN. SHA `383e07b73` no MFE de `srv-api`. Browser smoke TEST_NOT_RUN |
-| AuthZ multiunidade | Hardening de enforcement aplicado. Manifesto não migrado. AUTHZ_MIGRATION = NOT_READY. Ver [AUTHZ-SIMPLIFICATION.md](./AUTHZ-SIMPLIFICATION.md) |
+| AuthZ multiunidade | Desenho final em [AUTHZ-FINAL-DESIGN.md](./AUTHZ-FINAL-DESIGN.md). READY_FOR_ARCH_REVIEW. Migração do manifesto não autorizada |
 | «editor Mermaid bidirecional» em `status-atual.md` | TO_INVENTORY. `flowchart_v1` segue canônico; Mermaid tem export e parser no kit. Este passe não reprovou ida e volta |
 
 Esta seção é o ledger de gap/drift da evolução Portal Transforma+ / TÉO. Não abrir outro ledger para o mesmo assunto.

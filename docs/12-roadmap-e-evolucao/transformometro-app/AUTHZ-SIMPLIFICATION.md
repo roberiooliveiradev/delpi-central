@@ -1,6 +1,6 @@
 # Portal Transforma+ — simplificação de AuthZ multiunidade
 
-> **Status:** hardening de enforcement aplicado. Simplificação do manifesto **não autorizada**.
+> Inventário vigente e hardening. O desenho final, que fecha as decisões de negócio, está em [AUTHZ-FINAL-DESIGN.md](./AUTHZ-FINAL-DESIGN.md). Este arquivo não é o contrato alvo.
 > **AUTHZ_MIGRATION = NOT_READY.**
 > Base do inventário: `769b2a0a161af54c36eb58bd31a0d7033de412ab`.
 > Hardening: ver §10.
