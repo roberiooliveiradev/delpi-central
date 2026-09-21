@@ -77,7 +77,7 @@ As rotas abaixo são **alvos de composição** e só entram em implementação q
 |---|---|---|---|---|---|
 | Pedidos | GET | `/purchase-orders` | `supplies.access` + unit | api-delpi `GET /supplies/purchase-orders` (SC7 aberto + `summary`) | **IMPLEMENTADO** |
 | Detalhe pedido | GET | `/purchase-orders/{branch}/{number}` | `supplies.access` + filtro de dados `01`/`02` + resource (universo aberto SC7) | api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}` | **IMPLEMENTADO** |
-| Entregas | GET | `/deliveries/late` | `supplies.access` + filtro de dados `01`/`02` | api-delpi PO-OTD panel | PLANEJADO |
+| Entregas | GET | `/deliveries/late` | `supplies.access` + filtro de dados `01`/`02` | api-delpi `GET /supplies/purchase-order-otd/panel` já existe; BFF ausente | PLANEJADO |
 | Estoque | GET | `/inventory/stock-value` | política a fechar na página | api-delpi stock-value | PLANEJADO |
 | Estoque | GET | `/inventory/stock-balances` | `supplies.access` + filtro de dados `01`/`02` | api-delpi stock-balances | PLANEJADO |
 | Giro | GET | `/inventory/turnover` | analytics + unit | api-delpi inventory-turnover | PLANEJADO |

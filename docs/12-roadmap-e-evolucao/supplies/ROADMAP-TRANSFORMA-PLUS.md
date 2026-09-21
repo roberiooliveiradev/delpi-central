@@ -481,7 +481,7 @@ Distinguir sempre: consulta · preparação · pré-validação · gravação.
 
 | Drift | Onde | Tratamento |
 |---|---|---|
-| Prosa E1–E8 concluída vs YAML `e6-s5 pending` / `e7`/`e8` blocked | IMPLEMENTATION-PLAN + README | KNOWN DOCUMENTATION_DRIFT — registrar; não alterar histórico só para cosmético |
+| Prosa E1–E8 concluída vs YAML antigo `e6-s5 pending` / `e7`/`e8` blocked | IMPLEMENTATION-PLAN | Reconciliado em 2026-09-21 (`aa13f1075`): YAML `completed` para a entrega. GATE-FEATURE WF-06 segue `INCONCLUSIVE`; E9 segue bloqueada |
 | `/me/routes` vs `/me/apps` | README/instruções oficiais vs Core atual | Contrato vigente = `/me` + `/me/apps`; documentado no README supplies |
 | Cutover OTD → `/suppliers/otd` vs placeholder | CUTOVER-RUNBOOK vs código | Target documentado; código ainda não |
 | DESIGN-IA “foco SC” vs E8 implementado (gate INCONCLUSIVE) | DESIGN-IA status | Doc de status atrasada |

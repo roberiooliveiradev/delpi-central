@@ -1,9 +1,9 @@
 # IMPLEMENTATION-PLAN — Portal Suprimentos
 
-> **Status (2026-09-16):** plano executável revisado segundo `evidence-driven-execution.mdc`, `plan-construction.mdc` e `plan-execution.mdc`.  
-> **Entregue:** E1–E8 (incluindo E8 / WF-06 detalhe do pedido).  
-> **Em foco:** nenhuma página — E9 / WF-07 Entregas **não autorizada**.  
-> **Próxima página candidata:** E9 WF-07 Entregas, bloqueada até autorização explícita do Product Owner.  
+> **Status (revalidado 2026-09-21, `aa13f1075`):** plano executável revisado segundo `evidence-driven-execution.mdc`, `plan-construction.mdc` e `plan-execution.mdc`.
+> **Entregue:** E1–E8 (incluindo E8 / WF-06 detalhe do pedido). GATE-FEATURE WF-06 permanece `INCONCLUSIVE`: não há evidência persistida de smoke federado live.
+> **Em foco:** nenhuma página — E9 / WF-07 Entregas **não autorizada**. Não há, neste repositório, registro persistido de autorização do Product Owner nem de contract freeze que libere a implementação.
+> **Próxima página candidata:** E9 WF-07 Entregas, bloqueada até essa autorização existir como evidência do repositório.
 > **Modo:** uma página user-facing por vez; etapas futuras abaixo são fila/grafo, não autorização de execução.
 
 Referências: [README](./README.md), ADR-001..ADR-007, [WIREFRAMES](./WIREFRAMES.md), [API-ROUTES](./API-ROUTES.md), [DECISOES_FUNCIONAIS_PENDENTES](./DECISOES_FUNCIONAIS_PENDENTES.md), [HOMOLOGACAO-PARIDADE](./HOMOLOGACAO-PARIDADE.md).
@@ -47,8 +47,8 @@ Invariantes:
 | RQ-05 | Overview/OTD com KPIs e metas SI canônicas | ATENDIDO — E5 |
 | RQ-06 | SC C1 funcional + DoD da página | ATENDIDO — E6.S1–S5 |
 | RQ-07 | Pedidos de Compra (lista) | ATENDIDO — E7 |
-| RQ-08 | Detalhe do Pedido | ATENDIDO — E8 (YAML do ledger abaixo permanece `blocked` — KNOWN DOCUMENTATION_DRIFT) |
-| RQ-09 | Entregas/Atrasos | BLOQUEADO pela fila — E9 |
+| RQ-08 | Detalhe do Pedido | ATENDIDO — E8 implementado; GATE-FEATURE WF-06 `INCONCLUSIVE` |
+| RQ-09 | Entregas/Atrasos | BLOQUEADO — E9 sem autorização persistida e com pré-condição de gate E8 ainda inconclusiva |
 | RQ-10 | Estoque | BLOQUEADO pela fila — E10 |
 | RQ-11 | ESTSEG | BLOQUEADO pela fila — E11 |
 | RQ-12 | Análise de Consumo | BLOQUEADO pela fila — E12 |
@@ -203,13 +203,13 @@ As etapas abaixo estão **BLOCKED_BY_QUEUE**. Antes de executar qualquer uma, su
 
 ## E8 — WF-06 Detalhe do Pedido
 
-**Executado 2026-09-16** (autorização PO 2026-09-15). Producer api-delpi + BFF + MFE ficha read-only. O YAML de status abaixo **não** foi normalizado neste entregável (`e8-purchase-order-detail: blocked` permanece) — **KNOWN DOCUMENTATION_DRIFT**.
+**Executado 2026-09-16** (autorização PO 2026-09-15, registrada neste plano). Producer api-delpi + BFF + MFE ficha read-only. O ledger YAML marca a entrega como `completed`. Isso não promove GATE-FEATURE WF-06 a PASS: o smoke federado live segue `INCONCLUSIVE`.
 
 Pré-condição: autorização explícita PO (E7 já PASS). Contrato de detalhe + resource scope + itens/prometida/recebimentos/SC origem + follow-up apenas se recurso/capability permitirem. Fechar GATE-FEATURE próprio.
 
 ## E9 — WF-07 Entregas/Atrasos
 
-Pré-condição: E8 PASS. Comparar regra do BI Atraso quando evidência produtiva existir; isso bloqueia **depreciação/paridade**, não necessariamente a construção da página nativa se o contrato PO-OTD estiver confirmado. Fechar GATE-FEATURE.
+Pré-condição persistida neste plano: E8 com GATE-FEATURE PASS e autorização explícita do Product Owner registrada no repositório. Nenhuma das duas foi encontrada na revalidação de 2026-09-21 (`aa13f1075`). Comparar regra do BI Atraso quando evidência produtiva existir; isso bloqueia **depreciação/paridade**, não a construção da página nativa se o contrato PO-OTD estiver confirmado e a página for autorizada. Fechar GATE-FEATURE.
 
 ## E10 — WF-15 Controle de Estoques
 
@@ -355,14 +355,14 @@ todos:
     status: completed
     dependsOn: [e6-s1-pr-gateway]
   - id: e6-s5-wf04-feature-gate
-    status: pending
+    status: completed
     dependsOn: [e6-s2-pr-list-detail, e6-s3-pr-export, e6-s4-c2-evidence]
 
   - id: e7-purchase-orders-list
-    status: blocked
+    status: completed
     dependsOn: [e6-s5-wf04-feature-gate]
   - id: e8-purchase-order-detail
-    status: blocked
+    status: completed
     dependsOn: [e7-purchase-orders-list]
   - id: e9-deliveries
     status: blocked

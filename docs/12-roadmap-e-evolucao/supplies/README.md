@@ -224,8 +224,8 @@ Invariantes:
 
 ## 7. Próximo passo operacional
 
-**Único próximo passo autorizado pelo roadmap:** Product Owner autorizar a promoção de **WF-07 Entregas / atrasos**. Sem essa autorização, a fila permanece bloqueada.
+**Único próximo passo autorizado pelo roadmap:** Product Owner autorizar a promoção de **WF-07 Entregas / atrasos** em evidência persistida neste repositório. Sem essa autorização, a fila permanece bloqueada.
 
-O ledger YAML de `IMPLEMENTATION-PLAN.md` ainda lista `e6-s5 pending` / `e7 blocked` enquanto a prosa E1–E8 está concluída — **KNOWN DOCUMENTATION_DRIFT**; não foi normalizado neste entregável.
+Revalidação 2026-09-21 (`aa13f1075`): o ledger YAML de E6.S5, E7 e E8 acompanha a prosa (entrega concluída). GATE-FEATURE WF-06 continua `INCONCLUSIVE`. Não há arquivo, ADR ou evidência que registre `E8_GATE_STATUS = PASS` nem autorização de implementação de E9. Alegação fora do repositório não altera esses estados.
 
 Dump Core de produção dos BIs externos não bloqueia a fila de páginas; bloqueia decisões de paridade/depreciação/redirect e o `GATE-CUTOVER`.
