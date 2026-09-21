@@ -2,8 +2,8 @@
 
 > **Status (revalidado 2026-09-21, `4f3ed59483`):** plano executável revisado segundo `evidence-driven-execution.mdc`, `plan-construction.mdc` e `plan-execution.mdc`.
 > **Entregue:** E1–E8 (incluindo E8 / WF-06 detalhe do pedido). GATE-FEATURE WF-06 = **PASS** ([evidência](./evidence/e8-wf06-federated-runtime-gate.md)).
-> **Em foco:** **E9 / WF-07 Entregas / atrasos** — BFF + MFE + Help/URL entregues (E9.S1–S4); GATE-FEATURE pendente.
-> **Próxima receita:** `E9.S5` (suites + federated runtime GATE-FEATURE WF-07).
+> **Em foco:** **E9 / WF-07 Entregas / atrasos** — E9.S1–S5 executados; **GATE-FEATURE WF-07 = FAIL** ([evidência](./evidence/e9-wf07-federated-runtime-gate.md)): MFE prod OK, BFF prod 404 em `/deliveries/late`.
+> **Próxima receita:** redeploy `supplies-api` com E9.S2 + re-smoke federado (não promover E10 enquanto o gate estiver FAIL).
 > **Modo:** uma página user-facing por vez; etapas futuras abaixo são fila/grafo, não autorização automática.
 
 Referências: [README](./README.md), ADR-001..ADR-007, [WIREFRAMES](./WIREFRAMES.md), [API-ROUTES](./API-ROUTES.md), [DECISOES_FUNCIONAIS_PENDENTES](./DECISOES_FUNCIONAIS_PENDENTES.md), [HOMOLOGACAO-PARIDADE](./HOMOLOGACAO-PARIDADE.md).
@@ -246,9 +246,13 @@ Sync Manual / Quero→onde / FAQ / tooltips / glossário; «atrasos do dia» rem
 
 **Teste:** `features/deliveries/*` + `userManual.structural` + `helpTooltips.structural`.
 
-### E9.S5 — Suites + GATE-FEATURE WF-07 — NEXT
+### E9.S5 — Suites + GATE-FEATURE WF-07 — COMPLETED (GATE FAIL)
 
-Suites API+MFE + smoke federado Portal → BFF only. Só então classificar GATE-FEATURE.
+Suites API (41 PASS) + MFE (156 PASS) + build PASS. Smoke federado Portal produção: MFE E9 presente (`App-C2Qj6Ude.js`); BFF `GET /deliveries/late` → **404 not_found**.
+
+**Evidência:** [e9-wf07-federated-runtime-gate.md](./evidence/e9-wf07-federated-runtime-gate.md).
+
+**GATE-FEATURE WF-07 = FAIL.** E9 permanece aberta. Não promover E10.
 
 ## E10 — WF-15 Controle de Estoques
 
