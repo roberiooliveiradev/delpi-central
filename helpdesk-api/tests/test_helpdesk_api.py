@@ -63,13 +63,23 @@ def test_list_publishes_dates_and_forwards_filter():
     body = listed.json()
     assert body["items"][0]["id"] == 7
     assert body["items"][0]["created_at"] == ""
+    assert body["items"][0]["status_id"] == 1
     assert "assigned_display_name" in body["items"][0]
     assert body["page"] == 1
     assert glpi.last_list_query.filter.startswith("is_deleted==false")
     assert "name=like=*Impressora*" in glpi.last_list_query.filter
     assert "status.id=in=(1,10,2,3,4)" in glpi.last_list_query.filter
+    assert "status_id" in body["items"][0]
+    pending = client.get("/tickets", params={"status": "pending"}, headers=auth_headers())
+    assert pending.status_code == 200
+    assert "status.id==4" in glpi.last_list_query.filter
+    approval = client.get("/tickets", params={"status": "approval"}, headers=auth_headers())
+    assert approval.status_code == 200
+    assert "status.id==10" in glpi.last_list_query.filter
     bad = client.get("/tickets", params={"status": "drop-table"}, headers=auth_headers())
     assert bad.status_code == 422
+    foo = client.get("/tickets", params={"status": "foo"}, headers=auth_headers())
+    assert foo.status_code == 422
 
 
 def test_create_ticket_and_followup_are_idempotent():
@@ -149,6 +159,7 @@ def test_attachment_download_uses_only_files_on_the_ticket():
     assert detail.status_code == 200
     body = detail.json()
     assert body["created_at"] == "2026-09-21T11:00:00Z"
+    assert body["status_id"] == 1
     assert body["requester_display_name"] == "Robério Teixeira"
     assert body["requester_mine"] is False
     assert body["timeline"][0]["mine"] is False

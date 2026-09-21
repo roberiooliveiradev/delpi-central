@@ -41,17 +41,20 @@ describe("viewForTicketLoad", () => {
 });
 
 describe("statusBadgeVariant", () => {
-  it("marca chamado novo e solucionado com tons diferentes", () => {
-    expect(statusBadgeVariant("Novo")).toBe("info");
-    expect(statusBadgeVariant("Solucionado")).toBe("success");
+  it("marca chamado novo e solucionado pelo id", () => {
+    expect(statusBadgeVariant(1)).toBe("info");
+    expect(statusBadgeVariant(5)).toBe("success");
   });
 
-  it("trata atendimento atribuído como o mesmo tom de em andamento", () => {
-    expect(statusBadgeVariant("Em atendimento (atribuído)")).toBe("warning");
+  it("trata atendimento e aprovação pelo id, sem ler o rótulo", () => {
+    expect(statusBadgeVariant(2)).toBe("warning");
+    expect(statusBadgeVariant(3)).toBe("warning");
+    expect(statusBadgeVariant(10)).toBe("warning");
   });
 
-  it("não promove status desconhecido", () => {
-    expect(statusBadgeVariant("Aguardando peça")).toBe("neutral");
+  it("não promove id desconhecido nem ausência de id", () => {
+    expect(statusBadgeVariant(99)).toBe("neutral");
+    expect(statusBadgeVariant()).toBe("neutral");
   });
 });
 

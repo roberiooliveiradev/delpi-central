@@ -428,6 +428,8 @@ def test_list_query_uses_rsql_and_rejects_injection():
     assert "status==1" not in query.filter
     assert "name=like=*Monitorstatus1*" in query.filter
     assert "status.id=in=(1,10,2,3,4)" in query.filter
+    assert build_ticket_list_query(status="pending").filter.endswith("status.id==4")
+    assert build_ticket_list_query(status="approval").filter.endswith("status.id==10")
     assert "urgency==3" in query.filter
     assert "category.id==8" in query.filter
     assert query.sort == "date_creation:asc"
@@ -441,6 +443,26 @@ def test_list_query_uses_rsql_and_rejects_injection():
     assert build_ticket_list_query(sort="status:asc").sort == "status.id:asc"
     assert build_ticket_list_query(sort="urgency:desc").sort == "urgency:desc"
     assert build_ticket_list_query(sort="category:asc").sort == "category.name:asc"
+
+
+def test_mapping_publishes_status_id_and_keeps_glpi_label():
+    listed = parse_ticket_list(
+        [{"id": 1, "name": "Novo", "status": {"id": 1, "name": "Novo"}, "urgency": 2}]
+    )
+    assert listed[0].status_id == 1
+    assert listed[0].status == "Novo"
+    approval = parse_ticket_list(
+        [
+            {
+                "id": 10,
+                "name": "Aguardando",
+                "status": {"id": 10, "name": "Aprovação"},
+                "urgency": 3,
+            }
+        ]
+    )
+    assert approval[0].status_id == 10
+    assert approval[0].status == "Aprovação"
 
 
 def test_mapping_list_publishes_created_at_and_assigned():
@@ -461,6 +483,8 @@ def test_mapping_list_publishes_created_at_and_assigned():
     assert listed[0].created_at == "2026-02-19T10:00:00Z"
     assert listed[0].assigned_display_name == "Ana Silva"
     assert listed[0].category == ""
+    assert listed[0].status_id == 2
+    assert listed[0].status == "Em atendimento (atribuído)"
 
 
 def test_mapping_list_drops_deleted_and_detail_hides_them():

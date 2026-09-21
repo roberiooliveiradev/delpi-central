@@ -57,6 +57,7 @@ export type TicketSummary = {
   id: number;
   title: string;
   status: string;
+  status_id?: number | null;
   category: string;
   urgency: string;
   updated_at: string;

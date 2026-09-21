@@ -493,7 +493,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
             <HelpdeskRecordCard
               title={detailRecordHeading(ticket.category, ticket.urgency).title}
               subtitle={[`#${ticket.id}`, ticket.assigned_display_name].filter(Boolean).join(" · ")}
-              status={<HelpdeskStatusBadge label={ticket.status} variant={statusBadgeVariant(ticket.status)} />}
+              status={<HelpdeskStatusBadge label={ticket.status} variant={statusBadgeVariant(ticket.status_id)} />}
             />
             <HelpdeskMessageThread
               listAriaLabel="Conversa do chamado"

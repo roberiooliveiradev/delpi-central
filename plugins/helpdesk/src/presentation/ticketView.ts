@@ -81,6 +81,8 @@ export const TICKET_STATUS_FILTERS = [
   { value: "", label: "Todos" },
   { value: "open", label: "Abertos" },
   { value: "in_progress", label: "Em atendimento" },
+  { value: "pending", label: "Pendentes" },
+  { value: "approval", label: "Aguardando aprovação" },
   { value: "solved", label: "Solucionados" },
   { value: "closed", label: "Fechados" },
 ] as const;
@@ -177,13 +179,19 @@ export function detailRecordHeading(category: string, urgency: string): { title:
   return { title: urgencyName || "Chamado" };
 }
 
-export function statusBadgeVariant(status: string): "neutral" | "info" | "success" | "warning" | "danger" {
-  const normalized = status.trim().toLocaleLowerCase("pt-BR");
-  if (normalized.startsWith("novo")) return "info";
-  if (normalized.includes("solucion")) return "success";
-  if (normalized.includes("atendimento") || normalized.includes("atribu")) return "warning";
-  if (normalized.includes("pendente") || normalized.includes("fechado")) return "neutral";
-  return "neutral";
+const STATUS_BADGE_BY_ID: Record<number, "neutral" | "info" | "success" | "warning" | "danger"> = {
+  1: "info",
+  2: "warning",
+  3: "warning",
+  4: "neutral",
+  5: "success",
+  6: "neutral",
+  10: "warning",
+};
+
+export function statusBadgeVariant(statusId?: number | null): "neutral" | "info" | "success" | "warning" | "danger" {
+  if (statusId == null) return "neutral";
+  return STATUS_BADGE_BY_ID[statusId] ?? "neutral";
 }
 
 export function newIdempotencyKey(): string {

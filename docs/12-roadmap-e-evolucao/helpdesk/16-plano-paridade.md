@@ -25,7 +25,7 @@ O colaborador passa a ver e gravar no Meus Chamados de TI o que o GLPI já entre
 
 | RQ | Requisito | Estado no plano |
 |---|---|---|
-| RQ-01 | `status_id` + badge/filtro por id; grupos pending/approval | ATENDIDO_NO_PLANO E7.S1 |
+| RQ-01 | `status_id` + badge/filtro por id; grupos pending/approval | **ATENDIDO** E7.S1 |
 | RQ-02 | Lista: data absoluta, período de abertura, page_size | ATENDIDO_NO_PLANO E7.S2 |
 | RQ-03 | Lista: solved_at / busca no content se H6 | DESBLOQUEADO — 13-H1 e 13-H2 **PROVEN** → E7.S3 |
 | RQ-04 | HTML sanitizado na bolha | ATENDIDO_NO_PLANO E8.S1–S2 |

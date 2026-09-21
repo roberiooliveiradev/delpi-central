@@ -30,7 +30,7 @@ class FakeGlpi:
     def __init__(self):
         self.tokens_by_code = {"good-code": TokenSet("access-a", "refresh-a", 3600)}
         self.tickets = [
-            TicketSummary(7, "Impressora", "Novo", "Hardware", "Média", "2026-09-21T12:00:00Z")
+            TicketSummary(7, "Impressora", "Novo", "Hardware", "Média", "2026-09-21T12:00:00Z", status_id=1)
         ]
         self.detail = TicketDetail(
             7,
@@ -49,6 +49,7 @@ class FakeGlpi:
             ),
             "2026-09-21T11:00:00Z",
             "Robério Teixeira",
+            status_id=1,
         )
         self.files = {
             2: (b"png-bytes", "image/png"),

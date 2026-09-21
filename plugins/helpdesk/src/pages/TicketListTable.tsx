@@ -34,7 +34,7 @@ export function TicketListTable({
           key: "status",
           header: "Status",
           sortable: true,
-          render: (row) => <HelpdeskStatusBadge label={row.status} variant={statusBadgeVariant(row.status)} />,
+          render: (row) => <HelpdeskStatusBadge label={row.status} variant={statusBadgeVariant(row.status_id)} />,
         },
         { key: "category", header: "Categoria", sortable: true, render: (row) => row.category },
         { key: "urgency", header: "Urgência", sortable: true, render: (row) => row.urgency },

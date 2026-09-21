@@ -42,6 +42,8 @@ _DATE_ONLY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _STATUS_GROUPS = {
     "open": (1, 10, 2, 3, 4),
     "in_progress": (2, 3),
+    "pending": (4,),
+    "approval": (10,),
     "solved": (5,),
     "closed": (6,),
 }
@@ -173,6 +175,7 @@ def parse_ticket_detail(payload: dict, timeline_payload: dict | list) -> TicketD
         requester_display_name=_requester_name(payload),
         assigned_display_name=summary.assigned_display_name,
         requester_identity=_requester_identity(payload),
+        status_id=summary.status_id,
     )
 
 
@@ -206,6 +209,7 @@ def _summary(row: dict) -> TicketSummary:
         updated_at=str(row.get("date_mod") or row.get("date_creation") or ""),
         created_at=str(row.get("date_creation") or ""),
         assigned_display_name=_team_name(row, "assigned"),
+        status_id=_status_id(row.get("status")),
     )
 
 
@@ -435,6 +439,17 @@ def _named(value) -> str:
     if isinstance(value, dict):
         return display_text(value.get("name") or value.get("completename"))
     return ""
+
+
+def _status_id(value) -> int | None:
+    raw = value.get("id") if isinstance(value, dict) else value
+    try:
+        status_id = int(raw)
+    except (TypeError, ValueError):
+        return None
+    if status_id not in {1, 2, 3, 4, 5, 6, 10}:
+        return None
+    return status_id
 
 
 def _status_name(value) -> str:

@@ -42,6 +42,7 @@ class TicketSummary:
     updated_at: str
     created_at: str = ""
     assigned_display_name: str = ""
+    status_id: int | None = None
 
 
 @dataclass(frozen=True)
@@ -96,6 +97,7 @@ class TicketDetail:
     assigned_display_name: str = ""
     requester_identity: PersonIdentity = PersonIdentity()
     requester_mine: bool = False
+    status_id: int | None = None
 
 
 @dataclass(frozen=True)
