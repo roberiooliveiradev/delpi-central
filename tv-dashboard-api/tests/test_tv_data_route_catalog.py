@@ -18,6 +18,29 @@ def test_catalog_lists_allowlist_routes():
     assert "get_supplies_stock_value" in ids
     assert "get_dashboard_department_idd" in ids
     assert "get_dashboard_department_idd_dashboard_department_idd_get" not in ids
+    assert "get_commercial_rol_by_customer_center" in ids
+
+
+def test_catalog_commercial_rol_by_customer_center_is_table_route():
+    """Lista tabular: overlay tableFields=items; group_by não entra em defaultParams."""
+    catalog = TvDataRouteCatalogService()
+    route = catalog.get_route("get_commercial_rol_by_customer_center")
+    assert route is not None
+    assert route["path"] == "/commercial/rol/by-customer-center"
+    assert route.get("tableFields") == "items"
+    assert route.get("allowedDisplayModes") == ["table", "auto"]
+    assert "group_by" not in (route.get("defaultParams") or {})
+    schema = route.get("paramSchema") or {}
+    assert schema.get("customer_stores", {}).get("optional") is True
+    group_by = schema.get("group_by") or {}
+    assert "center" in (group_by.get("enum") or [])
+    assert "center_product" in (group_by.get("enum") or [])
+    fields = route.get("valueFields") or []
+    assert "rol" in fields
+    labels = route.get("valueFieldLabels") or {}
+    assert labels.get("customer_center") == "Centro do cliente"
+    when_to_use = route.get("whenToUse") or ""
+    assert "SEM CENTRO" in when_to_use
 
 
 def test_catalog_resolves_legacy_department_idd_operation_id():

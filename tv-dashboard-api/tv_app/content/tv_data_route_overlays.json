@@ -1057,6 +1057,37 @@
       "description": "Ranking de clientes por ROL no período.",
       "whenToUse": "Use em tabela de ranking por cliente."
     },
+    "get_commercial_rol_by_customer_center": {
+      "tableFields": "items",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "valueFields": [
+        "rol",
+        "gross_revenue",
+        "qty",
+        "share_pct"
+      ],
+      "valueFieldLabels": {
+        "customer_code": "Código cliente",
+        "customer_store": "Loja cliente",
+        "customer_name": "Cliente",
+        "customer_center": "Centro do cliente",
+        "customer_center_name": "Nome do centro",
+        "center_active": "Centro ativo",
+        "product_code": "Código produto",
+        "product_name": "Produto",
+        "rol": "ROL",
+        "gross_revenue": "Receita bruta",
+        "qty": "Quantidade",
+        "share_pct": "% participação",
+        "rank": "Ranking"
+      },
+      "label": "ROL comercial por centro do cliente",
+      "description": "ROL classificado pelo centro atual da amarração produto–cliente (SA7/ZC0). Sem snapshot histórico na nota.",
+      "whenToUse": "Use em tabela de ROL por centro do cliente. Itens sem cadastro aparecem como SEM CENTRO."
+    },
     "get_commercial_rol_by_branch": {
       "tableFields": "items",
       "allowedDisplayModes": [
