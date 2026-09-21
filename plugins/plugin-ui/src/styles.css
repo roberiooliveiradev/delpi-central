@@ -36,6 +36,7 @@
 @import "./styles/chart-view-shell.css";
 @import "./styles/loading-activity.css";
 @import "./styles/loading-activity-badge.css";
+@import "./styles/task-workspace.css";
 @import "./styles/inline-loading-progress.css";
 @import "./styles/journey-progress-bar.css";
 @import "./styles/progress-tracker.css";

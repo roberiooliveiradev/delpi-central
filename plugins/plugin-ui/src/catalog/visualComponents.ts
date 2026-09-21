@@ -244,6 +244,16 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("feedback", "StateBoxPanel"),
   vc("feedback", "InfoStatePanel"),
   vc("feedback", "StatusBadge"),
+  vc("feedback", "TaskEditorFrame", {
+    addedAt: "2026-09-21",
+    description:
+      "Chrome de criação/edição de tarefa. OWNS apresentação; DOES NOT OWN persistência, assignment ou AuthZ.",
+  }),
+  vc("data", "TaskItemsTable", {
+    addedAt: "2026-09-21",
+    description:
+      "Tabela de descriptors de tarefa. OWNS colunas/ações visuais; DOES NOT OWN domínio.",
+  }),
   vc("feedback", "ModalShell"),
   vc("feedback", "ModalFrame"),
   vc("feedback", "DrawerShell"),

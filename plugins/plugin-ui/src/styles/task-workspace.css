@@ -1,0 +1,55 @@
+/**
+ * Chrome de Minhas tarefas — apresentação apenas.
+ * OWNS: layout do editor e ações da tabela.
+ * DOES NOT OWN: persistência, assignment, AuthZ.
+ */
+
+.delpi-ui-task-editor-frame {
+  display: grid;
+  gap: 16px;
+}
+
+.delpi-ui-task-editor-frame__review {
+  padding: 12px 14px;
+  border: 1px solid var(--delpi-ui-border, #e6e6e6);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--delpi-ui-surface, #fff) 92%, var(--delpi-ui-accent, #089bdb) 8%);
+}
+
+.delpi-ui-task-editor-frame__review-title {
+  margin: 0 0 8px;
+  font-size: 0.92rem;
+}
+
+.delpi-ui-task-editor-frame__review-list {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.delpi-ui-task-editor-frame__review-row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 10rem) 1fr;
+  gap: 8px;
+}
+
+.delpi-ui-task-editor-frame__review-row dt {
+  font-weight: 600;
+}
+
+.delpi-ui-task-editor-frame__review-row dd {
+  margin: 0;
+}
+
+.delpi-ui-task-editor-frame__actions,
+.delpi-ui-task-items-table__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 720px) {
+  .delpi-ui-task-editor-frame__review-row {
+    grid-template-columns: 1fr;
+  }
+}

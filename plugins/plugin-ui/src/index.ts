@@ -50,6 +50,18 @@ export {
 } from "./utils/portalGreeting";
 /** Hosts sinalizam refresh sem fetch no kit. */
 export { LoadingActivityBadge } from "./components/feedback/LoadingActivityBadge";
+/** Hosts consomem chrome de tarefas sem persistência no kit. */
+export {
+  TaskEditorFrame,
+  TaskItemsTable,
+  buildTaskWorkspaceHighlights,
+} from "./components/tasks";
+export type {
+  TaskItemActionFlags,
+  TaskItemPresentation,
+  TaskWorkspaceHighlight,
+  TaskWorkspaceSummary,
+} from "./components/tasks";
 /** Hosts dos portais consomem o chrome de IDD sem uso interno no remote. */
 export {
   DepartmentScoreBadge,

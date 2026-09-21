@@ -622,6 +622,16 @@ Gramática compartilhada de apresentação (o portal continua dono do fetch):
 | Error | mensagem do portal + retry local |
 | Empty | empty state real, depois da consulta terminar |
 
+### `TaskEditorFrame` / `TaskItemsTable`
+
+Chrome compartilhado de Minhas tarefas.
+
+OWNS: layout do editor, resumo de confirmação, tabela e ações visíveis.
+
+DOES NOT OWN: persistência, assignment, workflow, AuthZ ou status de negócio.
+
+O portal passa `TaskItemPresentation` e callbacks. O kit não faz fetch.
+
 ### `LoadingActivityCard`
 
 Feedback de carregamento com spinner, barra de progresso (determinada ou indeterminada) e variantes `compact` / `panel`.
