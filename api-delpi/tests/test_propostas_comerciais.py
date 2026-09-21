@@ -21,6 +21,9 @@ from app.domain.propostas_comerciais.services.proposta_comercial_pdf_export_over
 from app.infrastructure.pdf.propostas_comerciais.proposta_comercial_pdf_renderer import (
     PropostaComercialPdfRenderer,
     _compose_observacoes_text,
+    _condition_text,
+    _format_frete_display,
+    _format_icms_display,
 )
 from app.infrastructure.totvs.propostas_comerciais.queries import DETAIL_ITEMS_SQL
 
@@ -846,6 +849,26 @@ def test_pdf_export_overrides_service_merges_editable_fields_only() -> None:
     assert merged["rotulos"]["colunas_itens"]["valor_bruto"] == "Bruto customizado"
     assert merged["rotulos"]["resumo"]["total_r_mil"] == "Total geral"
     assert merged["rotulos"]["total_proposta"] == "Total editado"
+    assert merged["pdf_literal_condition_fields"] == ["descricao", "pis_cofins"]
+
+
+def test_overridden_freight_and_icms_stay_literal_in_pdf() -> None:
+    detail = _sample_detail()
+    merged = PropostaComercialPdfExportOverridesService.apply(
+        detail,
+        {"condicoes": {"frete": "FOB — coleta na fábrica", "icms": "7% diferido"}},
+    )
+    literal = set(merged["pdf_literal_condition_fields"])
+
+    assert _condition_text(merged["condicoes"], "frete", literal, _format_frete_display) == (
+        "FOB — coleta na fábrica"
+    )
+    assert _condition_text(merged["condicoes"], "icms", literal, _format_icms_display) == "7% diferido"
+    assert _condition_text(detail["condicoes"], "frete", set(), _format_frete_display) == (
+        "FOB - por conta do comprador"
+    )
+    assert _condition_text(detail["condicoes"], "icms", set(), _format_icms_display) == "12% - INCLUSO"
+    assert "ipi" not in literal
 
 
 def test_pdf_export_overrides_service_ignores_unknown_rotulos() -> None:

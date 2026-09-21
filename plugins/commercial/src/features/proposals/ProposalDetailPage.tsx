@@ -3,7 +3,7 @@ import {
   formatOperationalUnitCode,
   type DataTableColumn,
 } from "@delpi/plugin-ui/index";
-import { FileDown, RefreshCw } from "lucide-react";
+import { Check, FileDown, Pencil, RefreshCw, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -78,6 +78,26 @@ function displayValue(value: string | number | null | undefined): string {
   return text || "—";
 }
 
+type PdfConditionFields = {
+  descricao: string;
+  icms: string;
+  pis_cofins: string;
+  frete: string;
+};
+
+const PDF_CONDITION_KEYS = ["descricao", "icms", "pis_cofins", "frete"] as const;
+
+function conditionsFromDocument(
+  condicoes: ProposalDocumentDetail["condicoes"] | null | undefined,
+): PdfConditionFields {
+  return {
+    descricao: condicoes?.descricao ?? "",
+    icms: condicoes?.icms ?? "",
+    pis_cofins: condicoes?.pis_cofins ?? "",
+    frete: condicoes?.frete ?? "",
+  };
+}
+
 type ProposalDetailPageProps = {
   basePath: string;
   propostaId: string;
@@ -98,6 +118,11 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
   const [pdfContatoDepartamento, setPdfContatoDepartamento] = useState("");
   const [pdfContatoEmail, setPdfContatoEmail] = useState("");
   const [pdfContatoTelefone, setPdfContatoTelefone] = useState("");
+  const [pdfCondicoes, setPdfCondicoes] = useState<PdfConditionFields>(conditionsFromDocument(null));
+  const [editingConditions, setEditingConditions] = useState(false);
+  const [conditionDraft, setConditionDraft] = useState<PdfConditionFields>(
+    conditionsFromDocument(null),
+  );
 
   function syncPdfContactFields(
     options: readonly ProposalPdfContactOption[],
@@ -122,6 +147,8 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
         if (controller.signal.aborted) return;
         setData(result);
         setPdfObservacoes(result.observacoes || "");
+        setPdfCondicoes(conditionsFromDocument(result.condicoes));
+        setEditingConditions(false);
 
         const code = result.cliente.codigo?.trim();
         const store = result.cliente.loja?.trim();
@@ -212,6 +239,15 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
       contato.telefone = telefone;
     }
     if (Object.keys(contato).length) overrides.contato = contato;
+    const source = editingConditions ? conditionDraft : pdfCondicoes;
+    const condicoes: NonNullable<ProposalDocumentPdfExportOverrides["condicoes"]> = {};
+    for (const key of PDF_CONDITION_KEYS) {
+      const next = source[key].trim();
+      if (next !== (data.condicoes?.[key] || "").trim()) {
+        condicoes[key] = next;
+      }
+    }
+    if (Object.keys(condicoes).length) overrides.condicoes = condicoes;
     return Object.keys(overrides).length ? overrides : undefined;
   }
 
@@ -340,15 +376,93 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
                 ]}
               />
             </CommercialSectionCard>
-            <CommercialSectionCard title="Condições">
-              <CommercialDetailFieldGrid
-                fields={[
-                  { label: "Descrição", value: displayValue(data.condicoes.descricao) },
-                  { label: "ICMS", value: displayValue(data.condicoes.icms) },
-                  { label: "PIS/COFINS", value: displayValue(data.condicoes.pis_cofins) },
-                  { label: "Frete", value: displayValue(data.condicoes.frete) },
-                ]}
-              />
+            <CommercialSectionCard
+              title="Condições"
+              hint={canExportProposals ? CM_HELP.proposals.editConditions : undefined}
+              actions={
+                canExportProposals && !editingConditions ? (
+                  <CommercialActionButton
+                    variant="ghost"
+                    aria-label={PROPOSALS_CONTENT.detail.editConditions}
+                    onClick={() => {
+                      setConditionDraft(pdfCondicoes);
+                      setEditingConditions(true);
+                    }}
+                  >
+                    <Pencil size={16} aria-hidden="true" />
+                  </CommercialActionButton>
+                ) : null
+              }
+            >
+              {editingConditions ? (
+                <div className="cm-form-grid">
+                  <p className="cm-muted">{PROPOSALS_CONTENT.detail.conditionsPdfHint}</p>
+                  <CommercialTextField
+                    id="proposal-pdf-condicao-descricao"
+                    label="Descrição"
+                    hint={CM_HELP.proposals.editConditions}
+                    value={conditionDraft.descricao}
+                    onChange={(value) =>
+                      setConditionDraft((current) => ({ ...current, descricao: value }))
+                    }
+                  />
+                  <CommercialTextField
+                    id="proposal-pdf-condicao-icms"
+                    label="ICMS"
+                    hint={CM_HELP.proposals.editConditions}
+                    value={conditionDraft.icms}
+                    onChange={(value) =>
+                      setConditionDraft((current) => ({ ...current, icms: value }))
+                    }
+                  />
+                  <CommercialTextField
+                    id="proposal-pdf-condicao-pis"
+                    label="PIS/COFINS"
+                    hint={CM_HELP.proposals.editConditions}
+                    value={conditionDraft.pis_cofins}
+                    onChange={(value) =>
+                      setConditionDraft((current) => ({ ...current, pis_cofins: value }))
+                    }
+                  />
+                  <CommercialTextField
+                    id="proposal-pdf-condicao-frete"
+                    label="Frete"
+                    hint={CM_HELP.proposals.editConditions}
+                    value={conditionDraft.frete}
+                    onChange={(value) =>
+                      setConditionDraft((current) => ({ ...current, frete: value }))
+                    }
+                  />
+                  <div className="cm-nav-row">
+                    <CommercialActionButton
+                      variant="primary"
+                      onClick={() => {
+                        setPdfCondicoes(conditionDraft);
+                        setEditingConditions(false);
+                      }}
+                    >
+                      <Check size={16} aria-hidden="true" />
+                      {PROPOSALS_CONTENT.detail.applyConditions}
+                    </CommercialActionButton>
+                    <CommercialActionButton
+                      variant="ghost"
+                      onClick={() => setEditingConditions(false)}
+                    >
+                      <X size={16} aria-hidden="true" />
+                      {PROPOSALS_CONTENT.detail.cancelConditions}
+                    </CommercialActionButton>
+                  </div>
+                </div>
+              ) : (
+                <CommercialDetailFieldGrid
+                  fields={[
+                    { label: "Descrição", value: displayValue(pdfCondicoes.descricao) },
+                    { label: "ICMS", value: displayValue(pdfCondicoes.icms) },
+                    { label: "PIS/COFINS", value: displayValue(pdfCondicoes.pis_cofins) },
+                    { label: "Frete", value: displayValue(pdfCondicoes.frete) },
+                  ]}
+                />
+              )}
             </CommercialSectionCard>
           </div>
 

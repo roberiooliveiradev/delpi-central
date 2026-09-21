@@ -826,6 +826,8 @@ export const CM_HELP = {
       "Telefone exibido no PDF. Não grava no cadastro da Conta nem na proposta.",
     pdfObservacoes:
       "Observações incluídas só neste PDF. Não alteram a proposta salva.",
+    editConditions:
+      "Ajusta descrição, ICMS, PIS/COFINS e frete só neste PDF. O ícone de editar no bloco Condições não grava a proposta.",
     columns: {
       ov: "Número da oportunidade de venda vinculada à proposta-documento.",
       item: "Sequência do item na proposta-documento.",

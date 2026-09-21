@@ -132,7 +132,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "PDF / documento de proposta",
           where: "Início → Propostas",
-          how: "Documento ADY (não é a lista de OV)",
+          how: "Documento ADY. No detalhe, o ícone de editar em Condições ajusta descrição, ICMS, PIS/COFINS e frete só neste PDF.",
         },
         {
           want: "Administrar carteiras",
@@ -277,6 +277,10 @@ export const USER_MANUAL_CONTENT = {
         {
           q: "Pedido, OV e Proposta são a mesma coisa?",
           a: "Não. Pedido = operação; OV = oportunidade; Proposta = documento/PDF.",
+        },
+        {
+          q: "Posso alterar ICMS, frete ou a condição de pagamento só no PDF?",
+          a: "Sim. Em Propostas, abra o documento e use o ícone de editar no bloco Condições. Descrição, ICMS, PIS/COFINS e frete valem só para essa emissão — a proposta salva não muda.",
         },
         {
           q: "Qual a diferença entre data de entrega, despacho e previsão OP?",

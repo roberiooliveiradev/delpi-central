@@ -186,7 +186,14 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
             )
         )
         story.append(Spacer(1, 3 * mm))
-        story.extend(self._build_conditions_section(cabecalho, condicoes, styles))
+        story.extend(
+            self._build_conditions_section(
+                cabecalho,
+                condicoes,
+                styles,
+                literal_fields=_literal_condition_fields(detail),
+            )
+        )
         story.append(Spacer(1, 2.5 * mm))
         story.extend(self._build_closing_sections(observacoes, vendedor, styles))
         return story
@@ -414,17 +421,22 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
         cabecalho: dict,
         condicoes: dict,
         styles: dict[str, ParagraphStyle],
+        literal_fields: set[str] | None = None,
     ) -> list[Flowable]:
         validade = cabecalho.get("validade_dias")
         validade_text = "—" if validade in (None, "") else f"{validade} dias"
+        literal = literal_fields or set()
 
         entries = [
-            ("Condição de pagamento", _display(condicoes.get("descricao"))),
-            ("ICMS", _format_icms_display(_display(condicoes.get("icms")))),
-            ("PIS/COFINS", _display(condicoes.get("pis_cofins"))),
-            ("IPI", _display(condicoes.get("ipi"))),
-            ("Embalagem", _format_embalagem_display(_display(condicoes.get("embalagem")))),
-            ("Frete", _format_frete_display(_display(condicoes.get("frete")))),
+            ("Condição de pagamento", _condition_text(condicoes, "descricao", literal)),
+            ("ICMS", _condition_text(condicoes, "icms", literal, _format_icms_display)),
+            ("PIS/COFINS", _condition_text(condicoes, "pis_cofins", literal)),
+            ("IPI", _condition_text(condicoes, "ipi", literal)),
+            (
+                "Embalagem",
+                _condition_text(condicoes, "embalagem", literal, _format_embalagem_display),
+            ),
+            ("Frete", _condition_text(condicoes, "frete", literal, _format_frete_display)),
             ("Validade da proposta", validade_text),
         ]
 
@@ -900,6 +912,26 @@ def _format_prazo_display(value: Any) -> str:
     if lowered.endswith("dias") or lowered.endswith("dia"):
         return text
     return text
+
+
+def _literal_condition_fields(detail: dict) -> set[str]:
+    raw = detail.get("pdf_literal_condition_fields")
+    if not isinstance(raw, (list, set, frozenset, tuple)):
+        return set()
+    return {str(item) for item in raw if item}
+
+
+def _condition_text(
+    condicoes: dict,
+    field: str,
+    literal_fields: set[str],
+    formatter=None,
+) -> str:
+    """Texto da condição no PDF. Override do operador entra literal; o restante segue o formato canônico."""
+    text = _display(condicoes.get(field))
+    if field in literal_fields or formatter is None:
+        return text
+    return formatter(text)
 
 
 def _format_icms_display(value: str) -> str:

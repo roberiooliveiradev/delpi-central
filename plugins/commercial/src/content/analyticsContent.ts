@@ -149,5 +149,9 @@ export const PROPOSALS_CONTENT = {
     pdfContactEmailLabel: "E-mail no PDF",
     pdfContactTelefoneLabel: "Telefone no PDF",
     pdfObservacoesLabel: "Observações no PDF",
+    editConditions: "Editar condições do PDF",
+    applyConditions: "Aplicar no PDF",
+    cancelConditions: "Cancelar",
+    conditionsPdfHint: "Esses textos entram só neste PDF. A proposta salva não muda.",
   },
 };

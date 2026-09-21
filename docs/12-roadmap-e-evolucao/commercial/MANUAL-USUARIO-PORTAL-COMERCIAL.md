@@ -52,7 +52,7 @@ Documento irmão (instrutores): [TREINAMENTO-PORTAL-COMERCIAL-1H.md](./TREINAMEN
 | Ver indicadores do mês / ano | **Visão geral** | Ajuste período e unidade (SC/ES); KPIs e gráficos. Na busca de caminhos do **Início**, «indicadores» / «dashboard» / «meta» também abrem a Visão geral |
 | Ver pontualidade (OTD) | **Início** (launcher) ou drill na Visão geral → **OTD** | Página Pontualidade |
 | Ver oportunidades (OV) no período | **Início** → Oportunidades | **Visão** no hero: Por colaborador (resumo; clique filtra) ou Por oportunidade (**Busca** e **Status** no hero). Colunas/fonte/export na toolbar. Status **não** altera o resumo. |
-| Gerar / revisar PDF de proposta | **Início** → **Propostas** | Documento ADY (não é a lista de OV) |
+| Gerar / revisar PDF de proposta | **Início** → **Propostas** | Documento ADY. No detalhe, o ícone de editar em Condições ajusta descrição, ICMS, PIS/COFINS e frete só neste PDF. |
 | Trocar de carteira (se eu tiver mais de uma) | Menu do usuário (canto) / **Escopo** | Escolha a carteira ativa |
 | Saber o que significa um termo | **Ajuda** | Catálogo de termos (definição e onde aparece) |
 
@@ -224,7 +224,7 @@ Sim — escolha modo **Grupos** (não misture usuários e grupos na mesma atribu
 ### Propostas e OTD
 
 **Onde gero o PDF?**  
-**Propostas** (documento ADY), não na lista de Oportunidades.
+**Propostas** (documento ADY), não na lista de Oportunidades. No detalhe, o ícone de editar no bloco Condições ajusta descrição, ICMS, PIS/COFINS e frete só nesta emissão — a proposta salva não muda.
 
 **OTD usa qual data?**  
 Pontualidade compara **data de faturamento** com a **data prometida** (veja a ajuda `?` na tela OTD).

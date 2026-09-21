@@ -22,6 +22,10 @@ describe("Proposal PDF contacts (E7)", () => {
     assert.match(page, /buildPdfOverrides/);
     assert.match(page, /pdfContactFieldsHint|PDF revisável/);
     assert.match(page, /CommercialTextAreaField/);
+    assert.match(page, /title="Condições"/);
+    assert.match(page, /editConditions/);
+    assert.match(page, /pdfCondicoes/);
+    assert.match(page, /overrides\.condicoes/);
     // Card Contato da ficha permanece DetailFieldGrid (somente leitura).
     assert.match(page, /title="Contato"/);
     assert.match(page, /CommercialDetailFieldGrid/);

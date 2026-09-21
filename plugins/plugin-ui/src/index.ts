@@ -71,6 +71,21 @@ export {
   createDashboardDepartmentScoreBadge,
   departmentScoreBadgeBemClasses,
 } from "./components/layout/DepartmentScoreBadge";
+/**
+ * Hosts (Portal Comercial / Supplies) instanciam estes kits no load do MFE.
+ * `export *` some no tree-shake do remote e o host recebe TypeError
+ * "X is not a function".
+ */
+export {
+  createDashboardTopBarFavoritesStrip,
+} from "./components/layout/TopBarFavoritesStrip";
+export {
+  createDashboardTopBarUtilityCluster,
+} from "./components/layout/TopBarUtilityCluster";
+export { createDashboardUserManual } from "./components/layout/UserManual";
+export { createDashboardEntityAvatarLabel } from "./components/layout/EntityAvatarLabel";
+export { createDashboardEventsSection } from "./components/layout/EventsSection";
+export { createDashboardRecentAccessStrip } from "./components/layout/RecentAccessStrip";
 /** Hosts dos portais consomem o seletor de período sem uso interno no remote. */
 export {
   QuickPeriodSelector,

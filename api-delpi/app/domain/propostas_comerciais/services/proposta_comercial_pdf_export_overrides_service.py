@@ -31,6 +31,7 @@ _ROTULO_COLUNAS_KEYS = frozenset(
 _ROTULO_RESUMO_KEYS = frozenset(
     {"numero_ov", "data", "versao", "total_r_mil", "empresa", "cliente"}
 )
+PDF_LITERAL_CONDITION_FIELDS_KEY = "pdf_literal_condition_fields"
 
 
 class PropostaComercialPdfExportOverridesService:
@@ -50,6 +51,7 @@ class PropostaComercialPdfExportOverridesService:
             value = overrides["exibir_coluna_valor_liquido"]
             result["exibir_coluna_valor_liquido"] = True if value is None else bool(value)
 
+        literal_condition_fields: list[str] = []
         for section, allowed_fields in _ALLOWED_NESTED_FIELDS.items():
             section_overrides = overrides.get(section)
             if not isinstance(section_overrides, dict):
@@ -64,6 +66,11 @@ class PropostaComercialPdfExportOverridesService:
                 if field not in allowed_fields or value is None:
                     continue
                 current[field] = str(value).strip() if isinstance(value, str) else value
+                if section == "condicoes":
+                    literal_condition_fields.append(field)
+
+        if literal_condition_fields:
+            result[PDF_LITERAL_CONDITION_FIELDS_KEY] = literal_condition_fields
 
         PropostaComercialPdfExportOverridesService._apply_item_text_overrides(
             result,
