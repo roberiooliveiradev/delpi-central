@@ -68,4 +68,22 @@ describe("AttachmentPreviewStrip", () => {
     );
     expect(onOpen).not.toHaveBeenCalled();
   });
+
+  it("modo manage oculta remover quando removable=false", () => {
+    render(
+      <AttachmentPreviewStrip
+        mode="manage"
+        items={[
+          { id: "1", fileName: "foto.png", removable: true },
+          { id: "2", fileName: "doc.pdf", removable: false },
+        ]}
+        onOpen={vi.fn()}
+        onRemove={vi.fn()}
+        classNames={attachmentPreviewStripBemClasses("cm")}
+        labels={labels}
+      />,
+    );
+    expect(screen.getByRole("button", { name: /Remover foto\.png/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Remover doc\.pdf/ })).toBeNull();
+  });
 });

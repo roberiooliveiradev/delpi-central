@@ -191,6 +191,7 @@ export {
   InteractionRoomPage,
   INTERACTION_ROOM_PAGE_LABELS_PT,
   type InteractionRoomAttachment,
+  type InteractionRoomLayout,
   type InteractionRoomMessage,
   type InteractionRoomPageLabels,
   type InteractionRoomPageProps,
@@ -210,6 +211,12 @@ export {
   messageBodyHtmlFromMarkdown,
   messageBodyHtmlIsPlainParagraph,
 } from "./messageThreadMarkdown";
+export {
+  THREAD_STICK_BOTTOM_PX,
+  remainingThreadScrollPx,
+  shouldStickThreadToBottom,
+  type ThreadScrollMetrics,
+} from "./threadStickToBottom";
 export {
   ensureComposerParagraphFlow,
   insertComposerParagraph,

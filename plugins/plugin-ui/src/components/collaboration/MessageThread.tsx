@@ -17,9 +17,12 @@ import {
   useMessageThreadActionsOpen,
 } from "./MessageThreadActionsBar";
 import {
+  markdownToPlainPreview,
   messageBodyHtmlFromMarkdown,
   messageBodyHtmlIsPlainParagraph,
 } from "./messageThreadMarkdown";
+import { applyAttachmentImageSources } from "../rich-text/richTextMarkdown";
+import { stripDangerousRichTextTags } from "../rich-text/richTextHtmlFormat";
 
 export type MessageThreadKind = "text" | "system" | "task_ref" | "pin" | string;
 
@@ -27,6 +30,11 @@ export type MessageThreadItem = {
   id: string;
   kind: MessageThreadKind;
   bodyText: string;
+  /**
+   * HTML already sanitized by the owning API (e.g. helpdesk BFF).
+   * Used when `bodyMode="html"`; the kit strips dangerous tags again as defense.
+   */
+  bodyHtml?: string | null;
   createdAtLabel: string;
   authorName?: string | null;
   authorUserId?: string | null;
@@ -104,10 +112,11 @@ export type MessageThreadProps = {
   /** In-place composer (or other editor) while `editingId` matches. */
   renderEditSlot?: (message: MessageThreadItem) => ReactNode;
   /**
-   * `markdown` sanitiza o corpo (padrão das salas).
-   * `plain` mostra `bodyText` como texto, sem HTML.
+   * `markdown` converts `bodyText` (padrão das salas).
+   * `plain` shows `bodyText` as text, without HTML.
+   * `html` renders `bodyHtml` (fallback `bodyText`) after client strip — no markdown.
    */
-  bodyMode?: "markdown" | "plain";
+  bodyMode?: "markdown" | "plain" | "html";
   /** Nas salas, a bolha «minha» omite nome e avatar. O helpdesk pede os dois. */
   showMineIdentity?: boolean;
   /** Override body render (default: markdown sanitizado + MentionText no plano). */
@@ -299,6 +308,41 @@ function plainMessageBody(
   return <span className={classNames.body}>{message.bodyText}</span>;
 }
 
+/** HTML already owned by the API; kit only defends + resolves attachment image src. */
+function htmlMessageBody(
+  message: MessageThreadItem,
+  classNames: MessageThreadClassNames,
+  resolveAttachmentImageSrc?: MessageThreadProps["resolveAttachmentImageSrc"],
+  onAttachmentImageClick?: MessageThreadProps["onAttachmentImageClick"],
+): ReactNode {
+  if (message.deleted) {
+    return <span className={classNames.body}>{message.bodyText}</span>;
+  }
+  const source = (message.bodyHtml ?? message.bodyText ?? "").trim();
+  if (!source) {
+    return <span className={classNames.body}>{message.bodyText}</span>;
+  }
+  const cleaned = stripDangerousRichTextTags(source).trim();
+  const html = applyAttachmentImageSources(cleaned, resolveAttachmentImageSrc);
+  if (!html || messageBodyHtmlIsPlainParagraph(html)) {
+    return <span className={classNames.body}>{message.bodyText || html.replace(/<[^>]+>/g, "")}</span>;
+  }
+  return (
+    <div
+      className={classNames.bodyRich}
+      // Defense-in-depth: API is the authority; stripDangerousRichTextTags ran above.
+      dangerouslySetInnerHTML={{ __html: html }}
+      onClick={(event) => {
+        if (!onAttachmentImageClick) return;
+        const target = event.target as HTMLElement | null;
+        const img = target?.closest?.("img[data-attachment-id]") as HTMLElement | null;
+        const id = img?.getAttribute("data-attachment-id")?.trim();
+        if (id) onAttachmentImageClick(id);
+      }}
+    />
+  );
+}
+
 export function MessageThread({
   messages,
   classNames,
@@ -412,7 +456,7 @@ type MessageThreadTextItemProps = {
   resolveActions?: MessageThreadProps["resolveActions"];
   resolveActionExtras?: MessageThreadProps["resolveActionExtras"];
   renderEditSlot?: MessageThreadProps["renderEditSlot"];
-  bodyMode: "markdown" | "plain";
+  bodyMode: "markdown" | "plain" | "html";
   showMineIdentity: boolean;
   renderBody?: MessageThreadProps["renderBody"];
   onMentionActivate?: MessageThreadProps["onMentionActivate"];
@@ -456,13 +500,20 @@ function MessageThreadTextItem({
     renderBody?.(message) ??
     (bodyMode === "plain"
       ? plainMessageBody(message, classNames)
-      : defaultMessageBody(
-          message,
-          classNames,
-          onMentionActivate,
-          resolveAttachmentImageSrc,
-          onAttachmentImageClick,
-        ))
+      : bodyMode === "html"
+        ? htmlMessageBody(
+            message,
+            classNames,
+            resolveAttachmentImageSrc,
+            onAttachmentImageClick,
+          )
+        : defaultMessageBody(
+            message,
+            classNames,
+            onMentionActivate,
+            resolveAttachmentImageSrc,
+            onAttachmentImageClick,
+          ))
   );
   const avatarName = (message.authorName ?? "").trim();
   const authorHref = (message.authorHref ?? "").trim();
@@ -561,7 +612,9 @@ function MessageThreadTextItem({
                         <time className={classNames.quoteTime}>{quoted.createdAtLabel}</time>
                       ) : null}
                     </header>
-                    <p className={classNames.quoteBody}>{quoted.bodyText}</p>
+                    <p className={classNames.quoteBody}>
+                      {markdownToPlainPreview(quoted.bodyText)}
+                    </p>
                   </button>
                 ) : (
                   <blockquote className={classNames.quote}>
@@ -573,7 +626,9 @@ function MessageThreadTextItem({
                         <time className={classNames.quoteTime}>{quoted.createdAtLabel}</time>
                       ) : null}
                     </header>
-                    <p className={classNames.quoteBody}>{quoted.bodyText}</p>
+                    <p className={classNames.quoteBody}>
+                      {markdownToPlainPreview(quoted.bodyText)}
+                    </p>
                   </blockquote>
                 )
               ) : null}

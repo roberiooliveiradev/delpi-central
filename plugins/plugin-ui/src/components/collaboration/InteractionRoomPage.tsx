@@ -3,7 +3,7 @@
  * Hosts pass data and commands. This module does not fetch, authorize, or know a portal domain.
  */
 
-import { useEffect, useMemo, useState, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { ArrowLeft, Copy, Files, MessageSquare, PanelRight, Pencil, Pin, RefreshCw, Reply, Search, Trash2 } from "lucide-react";
 
 import { ActionButton } from "../actions/ActionButton";
@@ -38,6 +38,7 @@ import {
 import {
   MessageThread,
   messageThreadBemClasses,
+  type MessageThreadAction,
   type MessageThreadItem,
 } from "./MessageThread";
 import { ReactionBar, reactionBarBemClasses, type ReactionBarItem } from "./ReactionBar";
@@ -81,10 +82,12 @@ import {
 } from "./RoomSharedItemList";
 import { RoomSidePanel, roomSidePanelBemClasses } from "./RoomSidePanel";
 import { markdownToPlainPreview } from "./messageThreadMarkdown";
+import { shouldStickThreadToBottom } from "./threadStickToBottom";
 
 export type InteractionRoomPane = "chat" | "shared";
 export type InteractionRoomSide = "find" | "context" | null;
 export type InteractionRoomSharedKind = "recent" | "file" | "link";
+export type InteractionRoomLayout = "workspace" | "thread";
 
 export type InteractionRoomAttachment = {
   id: string;
@@ -134,6 +137,7 @@ export type InteractionRoomPageLabels = {
   expandInboxHelp: string;
   threadAriaLabel: string;
   messagesAriaLabel: string;
+  actionsToolbarAriaLabel: string;
   emptyThreadTitle: string;
   emptyThreadMessage: string;
   loadingRoomsTitle: string;
@@ -141,6 +145,8 @@ export type InteractionRoomPageLabels = {
   loadingThreadTitle: string;
   loadingThreadMessage: string;
   hasMore: string;
+  loadOlder: string;
+  loadingOlder: string;
   dropOverlay: string;
   reply: string;
   pin: string;
@@ -197,6 +203,7 @@ export const INTERACTION_ROOM_PAGE_LABELS_PT: InteractionRoomPageLabels = {
   expandInboxHelp: "Mostra de novo a lista de conversas à esquerda.",
   threadAriaLabel: "Conversa",
   messagesAriaLabel: "Mensagens da sala",
+  actionsToolbarAriaLabel: "Opções da mensagem",
   emptyThreadTitle: "Nenhuma mensagem ainda",
   emptyThreadMessage: "Escreva a primeira mensagem nesta sala.",
   loadingRoomsTitle: "Carregando salas",
@@ -204,6 +211,8 @@ export const INTERACTION_ROOM_PAGE_LABELS_PT: InteractionRoomPageLabels = {
   loadingThreadTitle: "Carregando a sala…",
   loadingThreadMessage: "Buscando a conversa.",
   hasMore: "Mostrando as mensagens mais recentes.",
+  loadOlder: "Carregar mensagens anteriores",
+  loadingOlder: "Carregando mensagens anteriores…",
   dropOverlay: "Solte o arquivo para anexar",
   reply: "Responder",
   pin: "Fixar",
@@ -233,7 +242,31 @@ export const INTERACTION_ROOM_PAGE_LABELS_PT: InteractionRoomPageLabels = {
     attachAriaLabel: "Anexar arquivo",
     mentionListAriaLabel: "Pessoas",
     mentionEmptyLabel: "Nenhuma pessoa para mencionar",
-    formatToggleAriaLabel: "Formatação",
+    formatToggleAriaLabel: "Formatar",
+    formatBoldAriaLabel: "Negrito",
+    formatItalicAriaLabel: "Itálico",
+    formatStrikeAriaLabel: "Riscado",
+    formatUnderlineAriaLabel: "Sublinhado",
+    formatListAriaLabel: "Lista",
+    formatOrderedListAriaLabel: "Lista numerada",
+    formatCodeAriaLabel: "Código",
+    formatQuoteAriaLabel: "Citação",
+    formatLinkAriaLabel: "Link",
+    formatAlignLeftAriaLabel: "Alinhar à esquerda",
+    formatAlignCenterAriaLabel: "Centralizar",
+    formatAlignRightAriaLabel: "Alinhar à direita",
+    formatAlignJustifyAriaLabel: "Justificar",
+    formatFontSizeAriaLabel: "Tamanho da fonte",
+    formatFontSizeDecreaseAriaLabel: "Diminuir fonte",
+    formatFontSizeIncreaseAriaLabel: "Aumentar fonte",
+    formatUndoAriaLabel: "Desfazer",
+    formatRedoAriaLabel: "Refazer",
+    formatEmojiAriaLabel: "Emoji",
+    emojiMenuAriaLabel: "Inserir emoji",
+    pendingDocumentsHeading: "Arquivos a enviar",
+    pendingDocumentOpenAriaLabel: (fileName) => `Abrir ${fileName}`,
+    pendingRemoveAriaLabel: (fileName) => `Remover ${fileName}`,
+    pendingDocumentsEmptyLabel: "Nenhum documento",
     replyCancelAriaLabel: "Cancelar resposta",
   },
   find: {
@@ -257,6 +290,8 @@ export const INTERACTION_ROOM_PAGE_LABELS_PT: InteractionRoomPageLabels = {
 export type InteractionRoomPageProps = {
   prefix?: string;
   labels?: InteractionRoomPageLabels;
+  /** `workspace` = inbox + thread; `thread` = só a sala (exige `room`). */
+  layout?: InteractionRoomLayout;
   inboxQuery: string;
   onInboxQueryChange: (value: string) => void;
   chips: readonly ScopeChip[];
@@ -286,6 +321,10 @@ export type InteractionRoomPageProps = {
   composerError?: string | null;
   actionError?: string | null;
   hasMore?: boolean;
+  onLoadOlder?: () => void;
+  loadingOlder?: boolean;
+  /** Auto-scroll perto do fundo (default true). */
+  stickToBottom?: boolean;
   editingId?: string | null;
   /** Override do editor in-place. Sem override, o kit usa MentionComposer rico. */
   renderEditSlot?: (message: InteractionRoomMessage) => ReactNode;
@@ -301,6 +340,8 @@ export type InteractionRoomPageProps = {
   onFiles: (files: File[]) => void;
   onRemovePendingAttachment?: (id: string) => void;
   accept: string;
+  /** Substitui o MentionComposer padrão no dock. */
+  renderComposer?: ReactNode;
   mentionHits?: readonly MentionMenuHit[];
   onMentionQueryChange?: (query: string | null) => void;
   onMentionInserted?: (hit: MentionMenuHit, token: string) => void;
@@ -314,8 +355,19 @@ export type InteractionRoomPageProps = {
   onEdit?: (message: InteractionRoomMessage) => void;
   onDelete?: (messageId: string) => void;
   onToggleReaction?: (messageId: string, code: string) => void;
+  /** Ações de domínio após reply/pin/edit/delete. */
+  resolveExtraActions?: (message: InteractionRoomMessage) => MessageThreadAction[];
+  /** Se definido, substitui o ReactionQuickBar do kit. */
+  resolveActionExtras?: (message: InteractionRoomMessage) => ReactNode;
   onOpenAttachment?: (attachmentId: string) => void;
   onRemoveAttachment?: (attachmentId: string) => void;
+  resolveAttachmentImageSrc?: (attachmentId: string) => string | null | undefined;
+  onAttachmentImageClick?: (attachmentId: string) => void;
+  onInlineImagesInserted?: NonNullable<
+    import("./MentionComposer").MentionComposerProps["onInlineImagesInserted"]
+  >;
+  onInlineImageRemoved?: (pendingId: string) => void;
+  onInlineAttachmentRemoved?: (attachmentId: string) => void;
   sharedItems: readonly InteractionRoomSharedItem[];
   onOpenShared: (item: InteractionRoomSharedItem) => void;
   entityPrimary?: string | null;
@@ -343,6 +395,7 @@ function useNarrowRoom() {
 export function InteractionRoomPage({
   prefix = "ds",
   labels = INTERACTION_ROOM_PAGE_LABELS_PT,
+  layout = "workspace",
   inboxQuery,
   onInboxQueryChange,
   chips,
@@ -364,6 +417,9 @@ export function InteractionRoomPage({
   composerError = null,
   actionError = null,
   hasMore = false,
+  onLoadOlder,
+  loadingOlder = false,
+  stickToBottom = true,
   editingId = null,
   renderEditSlot,
   editDraft = "",
@@ -378,6 +434,7 @@ export function InteractionRoomPage({
   onFiles,
   onRemovePendingAttachment,
   accept,
+  renderComposer,
   mentionHits,
   onMentionQueryChange,
   onMentionInserted,
@@ -390,8 +447,15 @@ export function InteractionRoomPage({
   onEdit,
   onDelete,
   onToggleReaction,
+  resolveExtraActions,
+  resolveActionExtras,
   onOpenAttachment,
   onRemoveAttachment,
+  resolveAttachmentImageSrc,
+  onAttachmentImageClick,
+  onInlineImagesInserted,
+  onInlineImageRemoved,
+  onInlineAttachmentRemoved,
   sharedItems,
   onOpenShared,
   entityPrimary,
@@ -408,6 +472,8 @@ export function InteractionRoomPage({
   const [sharedKind, setSharedKind] = useState<InteractionRoomSharedKind>("recent");
   const [sharedFilter, setSharedFilter] = useState("");
   const [findQuery, setFindQuery] = useState("");
+  const msgsRef = useRef<HTMLDivElement | null>(null);
+  const stickToBottomRef = useRef(true);
 
   useEffect(() => {
     setPane("chat");
@@ -415,7 +481,15 @@ export function InteractionRoomPage({
     setSharedKind("recent");
     setSharedFilter("");
     setFindQuery("");
+    stickToBottomRef.current = true;
   }, [room?.id]);
+
+  useEffect(() => {
+    if (!stickToBottom) return;
+    const el = msgsRef.current;
+    if (!el || !stickToBottomRef.current) return;
+    el.scrollTop = el.scrollHeight;
+  }, [messages, messagesLoading, stickToBottom]);
 
   const section = sectionCardPacBemClasses(prefix);
   const search = catalogSearchBarBemClasses(prefix);
@@ -462,6 +536,10 @@ export function InteractionRoomPage({
               onMentionInserted={onMentionInserted}
               showAttach={false}
               portalScopeClassName={portalScopeClassName}
+              resolveAttachmentImageSrc={resolveAttachmentImageSrc}
+              onInlineImagesInserted={onInlineImagesInserted}
+              onInlineImageRemoved={onInlineImageRemoved}
+              onInlineAttachmentRemoved={onInlineAttachmentRemoved}
               footer={
                 <ActionButton type="button" variant="ghost" onClick={() => onCancelEdit?.()}>
                   {labels.editCancel}
@@ -748,6 +826,16 @@ export function InteractionRoomPage({
         ) : (
           <RoomConversationChatColumn
             classNames={shell}
+            msgsRef={stickToBottom ? msgsRef : undefined}
+            onMsgsScroll={
+              stickToBottom
+                ? (event) => {
+                    stickToBottomRef.current = shouldStickThreadToBottom(
+                      event.currentTarget,
+                    );
+                  }
+                : undefined
+            }
             dock={
               <div aria-busy={submitting || undefined}>
                 {composerError ? (
@@ -755,27 +843,33 @@ export function InteractionRoomPage({
                     {composerError}
                   </p>
                 ) : null}
-                <MentionComposer
-                  key={room.id}
-                  classNames={composer}
-                  labels={labels.composer}
-                  value={draft}
-                  onChange={onDraftChange}
-                  onSubmit={onSubmit}
-                  submitting={submitting}
-                  disabled={submitting}
-                  showAttach={true}
-                  fileAccept={accept}
-                  pendingAttachments={pendingAttachments}
-                  onFilesSelected={onFiles}
-                  onRemovePendingAttachment={onRemovePendingAttachment}
-                  mentionHits={mentionHits}
-                  onMentionQueryChange={onMentionQueryChange}
-                  onMentionInserted={onMentionInserted}
-                  replyTo={replyTo}
-                  onCancelReply={onCancelReply}
-                  portalScopeClassName={portalScopeClassName}
-                />
+                {renderComposer ?? (
+                  <MentionComposer
+                    key={room.id}
+                    classNames={composer}
+                    labels={labels.composer}
+                    value={draft}
+                    onChange={onDraftChange}
+                    onSubmit={onSubmit}
+                    submitting={submitting}
+                    disabled={submitting}
+                    showAttach={true}
+                    fileAccept={accept}
+                    pendingAttachments={pendingAttachments}
+                    onFilesSelected={onFiles}
+                    onRemovePendingAttachment={onRemovePendingAttachment}
+                    mentionHits={mentionHits}
+                    onMentionQueryChange={onMentionQueryChange}
+                    onMentionInserted={onMentionInserted}
+                    replyTo={replyTo}
+                    onCancelReply={onCancelReply}
+                    portalScopeClassName={portalScopeClassName}
+                    resolveAttachmentImageSrc={resolveAttachmentImageSrc}
+                    onInlineImagesInserted={onInlineImagesInserted}
+                    onInlineImageRemoved={onInlineImageRemoved}
+                    onInlineAttachmentRemoved={onInlineAttachmentRemoved}
+                  />
+                )}
               </div>
             }
           >
@@ -790,7 +884,21 @@ export function InteractionRoomPage({
                 {actionError}
               </p>
             ) : null}
-            {hasMore ? <p className={`${root}__note`}>{labels.hasMore}</p> : null}
+            {hasMore && onLoadOlder ? (
+              <div className={`${root}__load-older`}>
+                <ActionButton
+                  type="button"
+                  variant="ghost"
+                  onClick={onLoadOlder}
+                  disabled={loadingOlder}
+                  aria-busy={loadingOlder || undefined}
+                >
+                  {loadingOlder ? labels.loadingOlder : labels.loadOlder}
+                </ActionButton>
+              </div>
+            ) : hasMore ? (
+              <p className={`${root}__note`}>{labels.hasMore}</p>
+            ) : null}
             <MessageThread
               classNames={thread}
               messages={messages.map((item) => {
@@ -799,25 +907,34 @@ export function InteractionRoomPage({
                   label: reactionLabelForCode(reaction.code) || reaction.label,
                 }));
                 const files = item.files ?? [];
-                const hasExtras =
+                const canManageAttachments =
+                  Boolean(onRemoveAttachment) &&
+                  files.some((file) => Boolean(file.removable));
+                const kitExtras =
                   !item.deleted &&
-                  (files.length > 0 || (onToggleReaction && reactionChips.length > 0));
-                return {
-                  ...item,
-                  belowBody: hasExtras ? (
+                  (files.length > 0 || (onToggleReaction && reactionChips.length > 0)) ? (
                     <div className={`${root}__extra`}>
                       {files.length > 0 ? (
                         <AttachmentPreviewStrip
                           classNames={attachments}
-                          mode="preview"
+                          mode={canManageAttachments ? "manage" : "preview"}
                           items={files.map((file) => ({
                             id: file.id,
                             fileName: file.fileName,
                             contentType: file.contentType,
                             previewUrl: file.previewUrl,
                             detail: file.detail ?? undefined,
+                            removable: Boolean(file.removable),
                           }))}
                           onOpen={(file) => onOpenAttachment?.(file.id)}
+                          onRemove={
+                            canManageAttachments
+                              ? (file) => {
+                                  if (file.removable === false) return;
+                                  onRemoveAttachment?.(file.id);
+                                }
+                              : undefined
+                          }
                           labels={{
                             empty: labels.attachmentsEmpty,
                             openAriaLabel: labels.attachmentOpenAriaLabel,
@@ -834,7 +951,17 @@ export function InteractionRoomPage({
                         />
                       ) : null}
                     </div>
-                  ) : null,
+                  ) : null;
+                const hostBelow = item.belowBody ?? null;
+                return {
+                  ...item,
+                  belowBody:
+                    kitExtras || hostBelow ? (
+                      <>
+                        {kitExtras}
+                        {hostBelow}
+                      </>
+                    ) : null,
                 };
               })}
               listAriaLabel={labels.messagesAriaLabel}
@@ -851,10 +978,14 @@ export function InteractionRoomPage({
               onParentQuoteClick={focusMessage}
               onMentionActivate={onMentionActivate}
               portalScopeClassName={portalScopeClassName}
+              actionsToolbarAriaLabel={labels.actionsToolbarAriaLabel}
+              resolveAttachmentImageSrc={resolveAttachmentImageSrc}
+              onAttachmentImageClick={onAttachmentImageClick}
               resolveActionExtras={(row) => {
-                if (!onToggleReaction) return null;
                 const source = messages.find((item) => item.id === row.id);
                 if (!source || source.deleted) return null;
+                if (resolveActionExtras) return resolveActionExtras(source);
+                if (!onToggleReaction) return null;
                 const activeCodes = (source.reactions ?? [])
                   .filter((reaction) => reaction.reactedByMe)
                   .map((reaction) => reaction.code);
@@ -873,7 +1004,7 @@ export function InteractionRoomPage({
               resolveActions={(row) => {
                 const source = messages.find((item) => item.id === row.id);
                 if (!source || source.deleted) return [];
-                const actions = [];
+                const actions: MessageThreadAction[] = [];
                 if (onReply) {
                   actions.push({
                     id: "reply",
@@ -907,7 +1038,8 @@ export function InteractionRoomPage({
                     onClick: () => onDelete(source.id),
                   });
                 }
-                return actions;
+                const extras = resolveExtraActions?.(source) ?? [];
+                return extras.length > 0 ? [...actions, ...extras] : actions;
               }}
               emptyContent={
                 <EmptyGuidance
@@ -927,8 +1059,14 @@ export function InteractionRoomPage({
 
   return (
     <div className={root}>
-      <div className={`${root}__grid`}>
-        {narrow ? (
+      <div
+        className={
+          layout === "thread" ? `${root}__grid ${root}__grid--thread` : `${root}__grid`
+        }
+      >
+        {layout === "thread" ? (
+          threadPane
+        ) : narrow ? (
           room ? threadPane : inboxPane
         ) : room ? (
           <ResizableColumns

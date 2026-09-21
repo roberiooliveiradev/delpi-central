@@ -553,6 +553,32 @@ describe("MessageThread", () => {
     expect(container.querySelector("strong")).toBeNull();
   });
 
+  it("renders API html without interpreting markdown markers", () => {
+    const { container } = render(
+      <MessageThread
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        bodyMode="html"
+        messages={[
+          {
+            id: "html",
+            kind: "text",
+            bodyText: "**não markdown**",
+            bodyHtml: "<p><strong>Rede</strong> e **literal**</p><script>alert(1)</script>",
+            authorName: "Ana",
+            createdAtLabel: "10:00",
+          },
+        ]}
+      />,
+    );
+    const rich = container.querySelector(".delpi-ui-message-thread__body--rich");
+    expect(rich).not.toBeNull();
+    expect(rich?.innerHTML.toLowerCase()).toContain("<strong>rede</strong>");
+    expect(rich?.textContent).toContain("**literal**");
+    expect(rich?.innerHTML.toLowerCase()).not.toContain("<script");
+  });
+
   it("omits the heading when headingText is absent", () => {
     const { container } = render(
       <MessageThread
@@ -700,5 +726,35 @@ describe("message-thread.css host scroll", () => {
     const quote = screen.getByRole("button", { name: /Ana/i });
     fireEvent.click(quote);
     expect(onParentQuoteClick).toHaveBeenCalledWith("parent-1");
+  });
+
+  it("mostra citação em texto plano via markdownToPlainPreview", () => {
+    const { container } = render(
+      <MessageThread
+        classNames={classNames}
+        listAriaLabel="Messages"
+        emptyLabel="Empty"
+        messages={[
+          {
+            id: "parent-1",
+            kind: "text",
+            bodyText: "**Pergunta** com `código`",
+            authorName: "Ana",
+            createdAtLabel: "10:00",
+          },
+          {
+            id: "reply-1",
+            kind: "text",
+            bodyText: "Resposta",
+            authorName: "Bruno",
+            createdAtLabel: "10:01",
+            parentId: "parent-1",
+          },
+        ]}
+      />,
+    );
+    const quoteBody = container.querySelector(".delpi-ui-message-thread__quote-body");
+    expect(quoteBody?.textContent).toBe("Pergunta com código");
+    expect(quoteBody?.textContent).not.toMatch(/\*\*/);
   });
 });

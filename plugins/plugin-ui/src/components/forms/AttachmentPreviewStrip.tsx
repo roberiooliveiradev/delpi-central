@@ -14,6 +14,8 @@ export type AttachmentPreviewStripItem = {
   previewUrl?: string | null;
   detail?: string;
   busy?: boolean;
+  /** Em mode=manage: `false` oculta o botão remover (default: removível). */
+  removable?: boolean;
 };
 
 export type AttachmentPreviewStripClassNames = {
@@ -124,7 +126,7 @@ export function AttachmentPreviewStrip({
                   ) : null}
                 </span>
               </button>
-              {canRemove && onRemove ? (
+              {canRemove && onRemove && item.removable !== false ? (
                 <button
                   type="button"
                   className={classNames.remove}

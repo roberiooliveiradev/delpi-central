@@ -15,17 +15,28 @@ afterEach(() => {
 
 const labels = INTERACTION_ROOM_PAGE_LABELS_PT;
 
+const baseProps = {
+  labels,
+  inboxQuery: "",
+  onInboxQueryChange: () => undefined,
+  chips: [{ id: "all", label: "Todas", active: true, onSelect: () => undefined }],
+  rooms: [{ id: "room-1", title: "Processo piloto", selected: true }],
+  onRefresh: () => undefined,
+  onSelectRoom: () => undefined,
+  room: { id: "room-1", title: "Processo piloto" },
+  draft: "",
+  onDraftChange: () => undefined,
+  onSubmit: () => undefined,
+  onFiles: () => undefined,
+  accept: "image/png",
+  sharedItems: [] as const,
+  onOpenShared: () => undefined,
+};
+
 function renderRoom() {
   return render(
     <InteractionRoomPage
-      labels={labels}
-      inboxQuery=""
-      onInboxQueryChange={() => undefined}
-      chips={[{ id: "all", label: "Todas", active: true, onSelect: () => undefined }]}
-      rooms={[{ id: "room-1", title: "Processo piloto", selected: true }]}
-      onRefresh={() => undefined}
-      onSelectRoom={() => undefined}
-      room={{ id: "room-1", title: "Processo piloto" }}
+      {...baseProps}
       messages={[
         {
           id: "m1",
@@ -39,11 +50,6 @@ function renderRoom() {
           files: [{ id: "f1", fileName: "foto.png", removable: true }],
         },
       ]}
-      draft=""
-      onDraftChange={() => undefined}
-      onSubmit={() => undefined}
-      onFiles={() => undefined}
-      accept="image/png"
       onReply={() => undefined}
       onTogglePin={() => undefined}
       onEdit={() => undefined}
@@ -64,7 +70,6 @@ function renderRoom() {
           ariaLabel: "Abrir link",
         },
       ]}
-      onOpenShared={() => undefined}
       entityPrimary="PROC-0001"
       entityFields={[{ label: "Processo", value: "Processo piloto" }]}
       entityHref="/processo"
@@ -82,9 +87,18 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/ReactionQuickBar/);
     expect(source).toMatch(/reactionLabelForCode/);
     expect(source).toMatch(/resolveActionExtras/);
+    expect(source).toMatch(/resolveExtraActions/);
+    expect(source).toMatch(/renderComposer/);
+    expect(source).toMatch(/layout === "thread"/);
+    expect(source).toMatch(/shouldStickThreadToBottom/);
+    expect(source).toMatch(/onLoadOlder/);
+    expect(source).toMatch(/resolveAttachmentImageSrc/);
+    expect(source).toMatch(/onInlineImagesInserted/);
     expect(source).toMatch(/AttachmentPreviewStrip/);
+    expect(source).toMatch(/mode=\{canManageAttachments \? "manage" : "preview"\}/);
     expect(source).toMatch(/onParentQuoteClick=\{focusMessage\}/);
     expect(source).toMatch(/portalScopeClassName/);
+    expect(source).toMatch(/actionsToolbarAriaLabel/);
     expect(source).not.toMatch(/emojiAdd=\{\{/);
     expect(source).toMatch(/RoomContextPanel/);
     expect(source).toMatch(/RoomSidePanel/);
@@ -96,17 +110,18 @@ describe("InteractionRoomPage", () => {
     expect(source).not.toMatch(/commercial/);
   });
 
+  it("completa labels PT do composer sem depender de fallback EN", () => {
+    expect(labels.composer.formatBoldAriaLabel).toBe("Negrito");
+    expect(labels.composer.formatEmojiAriaLabel).toBe("Emoji");
+    expect(labels.composer.pendingDocumentsHeading).toBe("Arquivos a enviar");
+    expect(labels.actionsToolbarAriaLabel).toBe("Opções da mensagem");
+    expect(labels.loadOlder).toMatch(/anteriores/i);
+  });
+
   it("mostra glyph da reação na bolha, sem o seletor + embutido", () => {
     render(
       <InteractionRoomPage
-        labels={labels}
-        inboxQuery=""
-        onInboxQueryChange={() => undefined}
-        chips={[]}
-        rooms={[{ id: "room-1", title: "Sala", selected: true }]}
-        onRefresh={() => undefined}
-        onSelectRoom={() => undefined}
-        room={{ id: "room-1", title: "Sala" }}
+        {...baseProps}
         messages={[
           {
             id: "m1",
@@ -118,13 +133,6 @@ describe("InteractionRoomPage", () => {
             reactions: [{ code: "check", label: "check", count: 1, reactedByMe: true }],
           },
         ]}
-        draft=""
-        onDraftChange={() => undefined}
-        onSubmit={() => undefined}
-        onFiles={() => undefined}
-        accept="*/*"
-        sharedItems={[]}
-        onOpenShared={() => undefined}
         onToggleReaction={() => undefined}
       />,
     );
@@ -142,6 +150,113 @@ describe("InteractionRoomPage", () => {
     expect(screen.getByRole("tab", { name: labels.sharedRecent })).toBeTruthy();
     expect(screen.getByRole("tab", { name: labels.sharedLinks })).toBeTruthy();
     expect(screen.getByText("foto.png")).toBeTruthy();
+  });
+
+  it("usa mode manage e remove só anexos removable", () => {
+    const onRemoveAttachment = vi.fn();
+    render(
+      <InteractionRoomPage
+        {...baseProps}
+        messages={[
+          {
+            id: "m1",
+            kind: "text",
+            bodyText: "olá",
+            createdAtLabel: "hoje",
+            authorName: "Ana",
+            mine: true,
+            files: [
+              { id: "f1", fileName: "foto.png", removable: true },
+              { id: "f2", fileName: "doc.pdf", removable: false },
+            ],
+          },
+        ]}
+        onRemoveAttachment={onRemoveAttachment}
+      />,
+    );
+    expect(screen.getByRole("button", { name: labels.attachmentRemoveAriaLabel("foto.png") })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: labels.attachmentRemoveAriaLabel("doc.pdf") })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: labels.attachmentRemoveAriaLabel("foto.png") }));
+    expect(onRemoveAttachment).toHaveBeenCalledWith("f1");
+  });
+
+  it("mostra botão load older quando hasMore e onLoadOlder", () => {
+    const onLoadOlder = vi.fn();
+    render(
+      <InteractionRoomPage
+        {...baseProps}
+        messages={[]}
+        hasMore
+        onLoadOlder={onLoadOlder}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: labels.loadOlder }));
+    expect(onLoadOlder).toHaveBeenCalledOnce();
+    expect(screen.queryByText(labels.hasMore)).toBeNull();
+  });
+
+  it("mantém nota hasMore quando não há onLoadOlder", () => {
+    render(
+      <InteractionRoomPage
+        {...baseProps}
+        messages={[]}
+        hasMore
+      />,
+    );
+    expect(screen.getByText(labels.hasMore)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: labels.loadOlder })).toBeNull();
+  });
+
+  it("layout thread oculta inbox e resize", () => {
+    render(
+      <InteractionRoomPage
+        {...baseProps}
+        layout="thread"
+        messages={[]}
+      />,
+    );
+    expect(screen.queryByLabelText(labels.inboxTitle)).toBeNull();
+    expect(screen.queryByLabelText(labels.resizeSeparator)).toBeNull();
+    expect(screen.getByLabelText(labels.composer.attachAriaLabel)).toBeTruthy();
+  });
+
+  it("resolveExtraActions concatena após ações canônicas", () => {
+    render(
+      <InteractionRoomPage
+        {...baseProps}
+        messages={[
+          {
+            id: "m1",
+            kind: "text",
+            bodyText: "olá",
+            createdAtLabel: "hoje",
+            authorName: "Ana",
+            mine: true,
+          },
+        ]}
+        onReply={() => undefined}
+        resolveExtraActions={() => [
+          {
+            id: "task",
+            label: "Criar tarefa",
+            onClick: () => undefined,
+          },
+        ]}
+      />,
+    );
+    expect(source).toMatch(/\[\.\.\.actions, \.\.\.extras\]/);
+  });
+
+  it("renderComposer substitui o MentionComposer do dock", () => {
+    render(
+      <InteractionRoomPage
+        {...baseProps}
+        messages={[]}
+        renderComposer={<div data-testid="custom-composer">Composer host</div>}
+      />,
+    );
+    expect(screen.getByTestId("custom-composer")).toBeTruthy();
+    expect(screen.queryByLabelText(labels.composer.attachAriaLabel)).toBeNull();
   });
 
   it("abre o painel da sala com a mensagem fixada", () => {
