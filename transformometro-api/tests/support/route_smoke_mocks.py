@@ -317,6 +317,14 @@ class SmokeDouble:
                 return {"items": []}
             if name == "list_negative_savings_alerts":
                 return {"items": []}
+            if name == "get_program_context":
+                return {
+                    "available": False,
+                    "strategic_indicators_department": "engineering",
+                    "department_idd": None,
+                    "indicators": [],
+                    "gross_savings": None,
+                }
             if name == "resolve":
                 scope = MagicMock(
                     is_unrestricted=True,

@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-18",
-  "baselineOperationCount": 173,
-  "operationCount": 173,
-  "coveredCount": 173,
+  "generatedAt": "2026-09-21",
+  "baselineOperationCount": 174,
+  "operationCount": 174,
+  "coveredCount": 174,
   "gapCount": 0,
   "exemptCount": 0,
   "byModule": {
@@ -20,8 +20,8 @@
       "exempt": 0
     },
     "dashboard": {
-      "total": 14,
-      "covered": 14,
+      "total": 15,
+      "covered": 15,
       "gap": 0,
       "exempt": 0
     },
@@ -851,6 +851,13 @@
       "operationId": "get_dashboard_snapshot_resumo",
       "method": "GET",
       "path": "/transformometro/dashboard/snapshot/resumo",
+      "module": "dashboard",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_dashboard_strategic_indicators",
+      "method": "GET",
+      "path": "/transformometro/dashboard/strategic-indicators",
       "module": "dashboard",
       "status": "covered"
     },

@@ -12,6 +12,12 @@ from tm_app.application.services.dashboard_recalc_service import DashboardRecalc
 from tm_app.application.services.dashboard_snapshot_read_service import (
     DashboardSnapshotReadService,
 )
+from tm_app.application.services.dashboard_strategic_indicators_service import (
+    DashboardStrategicIndicatorsService,
+)
+from tm_app.infrastructure.gateways.strategic_indicators_gateway import (
+    StrategicIndicatorsGateway,
+)
 from tm_app.application.security.authorization_policy import (
     AuthorizationDenied,
     TransformometroAuthorizationPolicy,
@@ -28,6 +34,7 @@ logger = logging.getLogger(__name__)
 
 _live = DashboardLiveService()
 _snapshot = DashboardSnapshotReadService()
+_si_context = DashboardStrategicIndicatorsService(StrategicIndicatorsGateway())
 _authz = TransformometroAuthorizationPolicy()
 
 
@@ -276,6 +283,48 @@ def dashboard_resumo(
         competencia_fim=competencia_fim,
     )
     return ok(summary)
+
+
+@router.get("/strategic-indicators", operation_id="get_dashboard_strategic_indicators")
+def dashboard_strategic_indicators(
+    request: Request,
+    competence: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    branch: str | None = None,
+    competencia: str | None = None,
+    competencia_inicio: str | None = None,
+    competencia_fim: str | None = None,
+    filial_id: str | None = None,
+):
+    """SI targets/IDD for Transforma+ (Engineering context). Fail-closed.
+
+    ``department_id`` is not accepted from the client — the program context is
+    always Engineering. ``branch`` is SI period/unit context, not AuthZ.
+    """
+    if denied := _require_access(request):
+        return denied
+    try:
+        payload = _si_context.get_program_context(
+            competence=competence or competencia,
+            start_date=start_date or competencia_inicio,
+            end_date=end_date or competencia_fim,
+            branch=branch or filial_id,
+        )
+    except Exception as exc:
+        logger.exception("dashboard_strategic_indicators_failed")
+        return ok(
+            {
+                "available": False,
+                "strategic_indicators_department": "engineering",
+                "department_idd": None,
+                "indicators": [],
+                "gross_savings": None,
+                "error": format_api_error(exc),
+            },
+            "Metas e IDD indisponíveis.",
+        )
+    return ok(payload)
 
 
 @router.get("/evolucao",

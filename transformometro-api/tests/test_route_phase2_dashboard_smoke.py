@@ -17,6 +17,7 @@ OPERATION_IDS = (
     "dashboard_por_familia",
     "dashboard_processos",
     "dashboard_resumo",
+    "get_dashboard_strategic_indicators",
     "dashboard_vencimentos",
     "get_dashboard_snapshot_instancias",
     "get_dashboard_snapshot_linhas",
