@@ -507,7 +507,8 @@
 }
 
 .dashboard-supplies-portal .sp-purchase-requests__period-presets,
-.dashboard-supplies-portal .sp-purchase-orders__period-presets {
+.dashboard-supplies-portal .sp-purchase-orders__period-presets,
+.dashboard-supplies-portal .sp-deliveries__period-presets {
   display: grid;
   gap: 0.35rem;
   align-content: start;
@@ -736,6 +737,22 @@
   display: grid;
   gap: 0.65rem;
   justify-items: start;
+}
+
+.dashboard-supplies-portal .sp-deliveries__error {
+  display: grid;
+  gap: 0.65rem;
+  justify-items: start;
+}
+
+.dashboard-supplies-portal .sp-deliveries .delpi-ui-data-list-toolbar {
+  flex-wrap: wrap;
+}
+
+.dashboard-supplies-portal .sp-deliveries__freshness {
+  font-size: 0.75rem;
+  color: var(--sp-text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .dashboard-supplies-portal .sp-purchase-orders .delpi-ui-data-list-toolbar {

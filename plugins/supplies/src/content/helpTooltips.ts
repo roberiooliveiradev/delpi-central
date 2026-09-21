@@ -167,6 +167,20 @@ export const SP_HELP = {
     "Cada item traz fornecedor, quantidades, entrega prometida e a solicitação de origem. Um mesmo pedido pode ter itens de solicitações e fornecedores diferentes.",
   purchaseOrderDetailReceipts:
     "Recebimentos do item, com nota, quantidade, datas de emissão e entrada. Se a lista estiver vazia, ainda não há documento de entrada para aquela linha.",
+  deliveries:
+    "Linhas de recebimento de matéria-prima classificadas por pontualidade. Não é a lista de pedidos em aberto nem o OTD analítico. Sync completa de Help fica em E9.S4.",
+  deliveriesBranch:
+    "Unidade do recorte (Santa Catarina e/ou Espírito Santo). «Todas» omite o parâmetro branch; o BFF compõe 01+02. Códigos técnicos ficam só na URL e na API.",
+  deliveriesPeriod:
+    "Período da data de digitação do recebimento (entrada), não da data prometida nem da emissão do PC. Atalhos preenchem De/Até; Personalizado = intervalo manual.",
+  deliveriesStatus:
+    "Situação de pontualidade do recebimento: Em atraso ou No prazo. O valor vem do contrato; o Portal não recalcula atraso.",
+  deliveriesFilters:
+    "Filtros aplicam automaticamente. Limpar volta ao padrão (Todas, Em atraso, mês corrente).",
+  deliveriesRefresh:
+    "Recarrega a lista e o resumo com os mesmos filtros. O horário é da última consulta bem-sucedida nesta tela.",
+  deliveriesTableMeta:
+    "Colunas visíveis e total de linhas do recorte filtrado (não só a página atual).",
   userProfile:
     "Perfil do Portal Suprimentos: identidade Minha DELPI (foto, cargo e contatos da Core, só leitura), atalhos por capability e preferências (filial padrão e densidade). Edite foto/cargo/contatos em /profile do Portal host.",
   userProfilePrefs:

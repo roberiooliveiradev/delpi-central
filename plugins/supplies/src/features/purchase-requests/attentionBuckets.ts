@@ -1,6 +1,6 @@
 import type { OverallStage } from "./types";
 
-/** Mirrors purchase-requests-api ATTENTION_BUCKETS. The owner counts; this only writes the URL. */
+/** Mirrors purchase-requests ATTENTION_BUCKETS. The owner counts; this only writes the URL. */
 export const ATTENTION_BUCKETS = {
   ordering: ["awaiting_order", "partially_ordered"],
   receiving: ["ordered", "awaiting_receipt", "partially_received"],

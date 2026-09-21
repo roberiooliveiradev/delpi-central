@@ -2,8 +2,8 @@
 
 > **Status (revalidado 2026-09-21, `4f3ed59483`):** plano executável revisado segundo `evidence-driven-execution.mdc`, `plan-construction.mdc` e `plan-execution.mdc`.
 > **Entregue:** E1–E8 (incluindo E8 / WF-06 detalhe do pedido). GATE-FEATURE WF-06 = **PASS** ([evidência](./evidence/e8-wf06-federated-runtime-gate.md)).
-> **Em foco:** **E9 / WF-07 Entregas / atrasos** — BFF `GET /deliveries/late` entregue (E9.S1–S2); MFE pendente.
-> **Próxima receita:** `E9.S3` (MFE) → `E9.S4` → `E9.S5`.
+> **Em foco:** **E9 / WF-07 Entregas / atrasos** — BFF + MFE entregues (E9.S1–S3); Help/URL final pendente.
+> **Próxima receita:** `E9.S4` (Help + URL/F5) → `E9.S5`.
 > **Modo:** uma página user-facing por vez; etapas futuras abaixo são fila/grafo, não autorização automática.
 
 Referências: [README](./README.md), ADR-001..ADR-007, [WIREFRAMES](./WIREFRAMES.md), [API-ROUTES](./API-ROUTES.md), [DECISOES_FUNCIONAIS_PENDENTES](./DECISOES_FUNCIONAIS_PENDENTES.md), [HOMOLOGACAO-PARIDADE](./HOMOLOGACAO-PARIDADE.md).
@@ -234,13 +234,13 @@ Rota Flask + composição AuthZ/`01`/`02`/defaults/merge consolidado (fetch comp
 
 **Teste:** `tests/application/test_late_deliveries_composition.py` + `tests/interface/http/test_deliveries_bff.py`.
 
-### E9.S3 — MFE página kit-first
+### E9.S3 — MFE página kit-first — COMPLETED
 
-Substituir placeholder; FilterBar (unidade, período, status); DataTable; estados; URL sync. Sem drill P0.
+Rota `/apps/supplies/deliveries` substitui placeholder; client BFF-only `GET /deliveries/late`; filtros Unidade/Período(digitação)/Status; sort e paginação server-side; estados loading/empty/error/403/retry; **NO DRILL P0**; sem cálculo local de `DIAS`.
 
-**Teste:** structural + vitest de filtros/URL/estados.
+**Teste:** `features/deliveries/*.test.ts` (query/client + structural).
 
-### E9.S4 — Help + estados + URL
+### E9.S4 — Help + estados + URL — NEXT
 
 Sync Manual / Quero→onde / FAQ / tooltips / glossário; corrigir «atrasos do dia» para a semântica de digitação do recebimento.
 
