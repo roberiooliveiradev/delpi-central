@@ -20,6 +20,7 @@ type Props = {
   onNavigate: (href: string) => void;
   backActions?: ReactNode;
   processActions?: ReactNode;
+  persistentActions?: ReactNode;
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
 };
@@ -123,6 +124,7 @@ export function ProcessWorkspaceSidebar({
   onNavigate,
   backActions,
   processActions,
+  persistentActions,
   collapsed = false,
   onToggleCollapsed,
 }: Props) {
@@ -249,7 +251,10 @@ export function ProcessWorkspaceSidebar({
         ) : null}
       </nav>
 
-      <ProcessWorkspaceSidebarActions processActions={processActions} />
+      <ProcessWorkspaceSidebarActions
+        processActions={processActions}
+        persistentActions={persistentActions}
+      />
     </aside>
   );
 }

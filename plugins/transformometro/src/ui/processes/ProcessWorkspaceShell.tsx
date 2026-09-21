@@ -47,6 +47,7 @@ type Props = {
   revisoes?: Revisao[];
   backActions?: ReactNode;
   processActions?: ReactNode;
+  persistentActions?: ReactNode;
 };
 
 export function ProcessWorkspaceShell({
@@ -60,6 +61,7 @@ export function ProcessWorkspaceShell({
   revisoes: revisoesProp,
   backActions,
   processActions,
+  persistentActions,
 }: Props) {
   const [processo, setProcesso] = useState<Processo | null>(processoProp ?? null);
   const [instancias, setInstancias] = useState<ProcessoInstancia[]>(instanciasProp ?? []);
@@ -152,6 +154,7 @@ export function ProcessWorkspaceShell({
             onNavigate={onNavigate}
             backActions={backActions}
             processActions={processActions}
+            persistentActions={persistentActions}
             collapsed={collapsed}
             onToggleCollapsed={toggleCollapsed}
           />

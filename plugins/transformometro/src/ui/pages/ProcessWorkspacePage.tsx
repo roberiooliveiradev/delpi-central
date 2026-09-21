@@ -36,6 +36,7 @@ import {
   resolveActiveWorkspaceNodeId,
   resolveWorkspacePanelKey,
 } from "../processes/processWorkspaceNav";
+import { reloadProcessWorkspaceTree } from "../processes/reloadProcessWorkspaceTree";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   route: ParsedTransformometroRoute & { processoId: string };
@@ -77,21 +78,19 @@ export function ProcessWorkspacePage({
   const [processo, setProcesso] = useState<Processo | null>(null);
   const [instancias, setInstancias] = useState<ProcessoInstancia[]>([]);
   const [revisoes, setRevisoes] = useState<Revisao[]>([]);
+  const [treePartialError, setTreePartialError] = useState<string | null>(null);
   const missingRevisaoRefreshKey = useRef<string | null>(null);
 
   const reloadWorkspaceTree = useCallback(async () => {
-    try {
-      const [proc, inst, revs] = await Promise.all([
-        fetchProcesso(processoId, getAccessToken),
-        fetchProcessoInstancias(processoId, getAccessToken),
-        fetchRevisoes(processoId, getAccessToken),
-      ]);
-      setProcesso(proc);
-      setInstancias(inst.items);
-      setRevisoes(revs.items);
-    } catch {
-      setProcesso(null);
-    }
+    await reloadProcessWorkspaceTree({
+      fetchProcesso: () => fetchProcesso(processoId, getAccessToken),
+      fetchInstancias: () => fetchProcessoInstancias(processoId, getAccessToken),
+      fetchRevisoes: () => fetchRevisoes(processoId, getAccessToken),
+      setProcesso: (value) => setProcesso(value as Processo | null),
+      setInstancias: (value) => setInstancias(value as ProcessoInstancia[]),
+      setRevisoes: (value) => setRevisoes(value as Revisao[]),
+      setTreePartialError,
+    });
   }, [getAccessToken, processoId]);
 
   const activeRevisao = useMemo(
@@ -251,7 +250,7 @@ export function ProcessWorkspacePage({
     </button>
   );
 
-  const processSidebarActions = (
+  const persistentRoomActions = (
     <>
       <button
         type="button"
@@ -265,6 +264,14 @@ export function ProcessWorkspacePage({
       {roomError ? (
         <p role="alert">{roomError}</p>
       ) : null}
+      {treePartialError ? (
+        <p role="status">{treePartialError}</p>
+      ) : null}
+    </>
+  );
+
+  const processCrudActions = (
+    <>
       <button
         type="button"
         className={`${DS_GHOST_BTN} tm-processo-workspace-sidebar__action-btn`}
@@ -354,7 +361,8 @@ export function ProcessWorkspacePage({
         processo={processo}
         instancias={instancias}
         revisoes={revisoes}
-        processActions={route.view === "processo" ? processSidebarActions : undefined}
+        processActions={route.view === "processo" ? processCrudActions : undefined}
+        persistentActions={persistentRoomActions}
         backActions={processBackAction}
       >
         {Array.from(visiblePanels).map((panelKey) => (

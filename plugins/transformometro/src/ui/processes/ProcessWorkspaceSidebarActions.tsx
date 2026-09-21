@@ -4,34 +4,40 @@ import { useProcessWorkspacePanelActionsRegistry } from "./processWorkspacePanel
 
 type Props = {
   processActions?: ReactNode;
+  /** Always visible (e.g. open interaction room), even when panel actions replace process CRUD. */
+  persistentActions?: ReactNode;
 };
 
 /**
- * Footer da sidebar: ações do escopo ativo apenas.
- * Painel (melhoria/revisão) tem prioridade sobre ações do processo-mestre —
- * nunca empilha os dois para evitar exclusão no escopo errado.
+ * Footer da sidebar: ações do escopo ativo + ações persistentes do processo.
+ * Painel (melhoria/revisão) tem prioridade sobre CRUD do processo-mestre —
+ * nunca empilha exclusão/duplicação no escopo errado.
  */
-export function ProcessWorkspaceSidebarActions({ processActions }: Props) {
+export function ProcessWorkspaceSidebarActions({ processActions, persistentActions }: Props) {
   const registry = useProcessWorkspacePanelActionsRegistry();
   const panelActions = registry?.panelActions;
+  const scopedActions = panelActions ?? processActions;
 
-  if (panelActions) {
-    return (
-      <div className="tm-processo-workspace-sidebar__footer">
-        <div className="tm-processo-workspace-sidebar__actions tm-processo-workspace-sidebar__actions--panel">
-          {panelActions}
-        </div>
-      </div>
-    );
-  }
-
-  if (!processActions) return null;
+  if (!scopedActions && !persistentActions) return null;
 
   return (
     <div className="tm-processo-workspace-sidebar__footer">
-      <div className="tm-processo-workspace-sidebar__actions tm-processo-workspace-sidebar__actions--process">
-        {processActions}
-      </div>
+      {persistentActions ? (
+        <div className="tm-processo-workspace-sidebar__actions tm-processo-workspace-sidebar__actions--persistent">
+          {persistentActions}
+        </div>
+      ) : null}
+      {scopedActions ? (
+        <div
+          className={`tm-processo-workspace-sidebar__actions ${
+            panelActions
+              ? "tm-processo-workspace-sidebar__actions--panel"
+              : "tm-processo-workspace-sidebar__actions--process"
+          }`}
+        >
+          {scopedActions}
+        </div>
+      ) : null}
     </div>
   );
 }

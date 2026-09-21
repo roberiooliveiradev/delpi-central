@@ -7,6 +7,7 @@ import {
   parseInstanciaSectionFromHash,
   parseRevisaoSectionFromHash,
   resolveActiveWorkspaceNodeId,
+  PROCESSO_WORKSPACE_SECTIONS,
 } from "./processWorkspaceNav";
 
 const processo = {
@@ -36,6 +37,16 @@ const revisaoBaseline = {
   versao_revisao: "1.0.0",
   cenario_tipo: "baseline",
 } as const;
+
+describe("processo workspace sections", () => {
+  it("expõe Sala e Tarefas relacionadas sem inventar Atas", () => {
+    const ids = PROCESSO_WORKSPACE_SECTIONS.map((section) => section.id);
+    expect(ids).toContain("sala");
+    expect(ids).toContain("tarefas");
+    expect(ids).not.toContain("atas");
+    expect(ids).not.toContain("meeting-minutes");
+  });
+});
 
 describe("revisao workspace sections", () => {
   it("expõe subpastas nas revisões da árvore", () => {

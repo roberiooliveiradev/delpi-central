@@ -104,3 +104,18 @@ export function completeTask(id: string, getAccessToken?: () => string | undefin
 export function cancelTask(id: string, getAccessToken?: () => string | undefined) {
   return request<TransformometroTask>(`/tasks/${id}/cancel`, getAccessToken, { method: "POST" });
 }
+
+export type ProcessoRelatedTasksResponse = {
+  items: TransformometroTask[];
+  total: number;
+};
+
+export function listProcessoRelatedTasks(
+  processoId: string,
+  getAccessToken?: () => string | undefined,
+) {
+  return request<ProcessoRelatedTasksResponse>(
+    `/processos/${encodeURIComponent(processoId)}/related-tasks`,
+    getAccessToken,
+  );
+}

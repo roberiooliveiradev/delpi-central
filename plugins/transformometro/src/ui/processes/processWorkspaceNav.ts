@@ -12,6 +12,8 @@ export type ProcessoWorkspaceSectionId =
   | "arquivos"
   | "melhorias"
   | "priorizacao"
+  | "tarefas"
+  | "sala"
   | "timeline";
 
 export type RevisaoWorkspaceSectionId =
@@ -61,6 +63,8 @@ export const PROCESSO_WORKSPACE_SECTIONS: Array<{
   { id: "arquivos", label: "Arquivos" },
   { id: "melhorias", label: "Melhorias" },
   { id: "priorizacao", label: "Priorização (matriz)" },
+  { id: "tarefas", label: "Tarefas relacionadas" },
+  { id: "sala", label: "Sala de interação" },
   { id: "timeline", label: "Linha do tempo" },
 ];
 

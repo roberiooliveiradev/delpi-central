@@ -690,6 +690,25 @@
 }.dashboard-transformometro .tm-processo-workspace-overview__stats{
   margin: 0;
   min-width: 10rem;
+}.dashboard-transformometro .tm-processo-workspace-overview__links,
+.dashboard-transformometro .tm-processo-workspace-overview__actions{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  align-items: center;
+  grid-column: 1 / -1;
+}.dashboard-transformometro .tm-processo-related-tasks{
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}.dashboard-transformometro .tm-processo-related-tasks__item{
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-md, 10px);
+  background: color-mix(in srgb, var(--ds-card-bg) 92%, var(--ds-accent, var(--primary, #089bdb)) 8%);
 }.dashboard-transformometro .tm-processo-workspace-sidebar{
   position: sticky;
   top: 0.75rem;
