@@ -105,5 +105,9 @@ describe("ResizableColumns", () => {
     const rail = css.match(/\.delpi-ui-resizable-columns__left--rail \{[^}]+\}/)?.[0] ?? "";
     expect(rail).not.toMatch(/border-right:\s*1px/);
     expect(css).toMatch(/\.delpi-ui-resizable-columns__handle::before/);
+    expect(css).toMatch(
+      /\.delpi-ui-resizable-columns:not\(\.delpi-ui-resizable-columns--collapsed\)\s*>\s*\.delpi-ui-resizable-columns__right/,
+    );
+    expect(css).toMatch(/padding-inline-start:\s*2\.25rem/);
   });
 });

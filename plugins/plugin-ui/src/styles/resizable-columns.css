@@ -31,6 +31,15 @@
   flex: 1 1 auto;
 }
 
+/*
+ * O botão de recolher fica absoluto no handle e avança ~28px para a direita.
+ * Reserva esse espaço na coluna direita para não cobrir título/conteúdo.
+ */
+.delpi-ui-resizable-columns:not(.delpi-ui-resizable-columns--collapsed)
+  > .delpi-ui-resizable-columns__right {
+  padding-inline-start: 2.25rem;
+}
+
 /* Faixa fina de hit-test centrada na linha — sem bloco colorido (padrão Cursor). */
 .delpi-ui-resizable-columns__handle {
   position: relative;
@@ -81,7 +90,9 @@
 .delpi-ui-resizable-columns__collapse {
   position: absolute;
   top: 0.35rem;
-  left: calc(50% + 6px);
+  /* Centraliza no divisor; o padding da coluna direita evita cobrir o título. */
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 1;
   display: inline-flex;
   align-items: center;
@@ -93,7 +104,11 @@
   border: none;
   border-radius: 0.35rem;
   color: inherit;
-  background: transparent;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-surface, var(--surface, #ffffff)) 88%,
+    transparent
+  );
   cursor: pointer;
 }
 
@@ -117,9 +132,11 @@
 
 .delpi-ui-resizable-columns__collapse--collapsed {
   position: static;
+  transform: none;
   width: 36px;
   height: 36px;
   color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  background: transparent;
 }
 
 @media (prefers-reduced-motion: no-preference) {
