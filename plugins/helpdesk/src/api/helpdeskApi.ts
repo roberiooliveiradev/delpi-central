@@ -62,6 +62,8 @@ export type TicketSummary = {
   urgency: string;
   updated_at: string;
   created_at: string;
+  solved_at?: string;
+  closed_at?: string;
   assigned_display_name: string;
 };
 

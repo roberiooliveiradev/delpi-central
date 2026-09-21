@@ -76,7 +76,9 @@ def test_list_publishes_dates_and_forwards_filter():
     assert body["page"] == 1
     assert body["page_size"] == 10
     assert glpi.last_list_query.filter.startswith("is_deleted==false")
-    assert "name=like=*Impressora*" in glpi.last_list_query.filter
+    assert "(name=like=*Impressora*,content=like=*Impressora*)" in glpi.last_list_query.filter
+    assert "solved_at" in body["items"][0]
+    assert "closed_at" in body["items"][0]
     assert "status.id=in=(1,10,2,3,4)" in glpi.last_list_query.filter
     assert "date_creation=ge=2026-01-01T00:00:00" in glpi.last_list_query.filter
     assert "date_creation=le=2026-01-31T23:59:59" in glpi.last_list_query.filter

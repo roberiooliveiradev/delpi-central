@@ -43,17 +43,17 @@ Base do MFE: `/apps/helpdesk-api`.
 
 | Query | Papel |
 |---|---|
-| `q` | busca sanitizada no título (`name=like=*termo*`) |
+| `q` | busca sanitizada no título **ou** no texto da abertura (`name=like` / `content=like`) |
 | `status` | `open` (1,10,2,3,4), `in_progress` (2,3), `pending` (4), `approval` (10), `solved` (5), `closed` (6) |
 | `urgency_id` | urgência 1–5 |
 | `category_id` | categoria do token |
 | `updated_from` / `updated_to` | `YYYY-MM-DD` em `date_mod` |
 | `created_from` / `created_to` | `YYYY-MM-DD` em `date_creation` |
-| `sort` | `updated_at:desc` (padrão), `created_at`, `title`, `id`, `status`, `category`, `urgency` + `:asc\|:desc` |
+| `sort` | `updated_at:desc` (padrão), `created_at`, `solved_at`, `title`, `id`, `status`, `category`, `urgency` + `:asc\|:desc` |
 | `page` | página 1-based |
 | `page_size` | padrão 20; a tela envia 10, 20 ou 50 (máximo 50) |
 
-O BFF pede `limit = page_size + 1` à HLAPI e devolve `has_more`. Não inventa total do parque. Evolução da grade (`solved_at`, busca no conteúdo) está em [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md) e só entra com evidência H6. Status ou sort desconhecidos, ou data inválida: 422 `validation_error`. `q` só conserva letra, número, espaço, hífen e underscore.
+O BFF pede `limit = page_size + 1` à HLAPI e devolve `has_more`. Não inventa total do parque. Status ou sort desconhecidos, ou data inválida: 422 `validation_error`. `q` só conserva letra, número, espaço, hífen e underscore.
 
 ```json
 {
@@ -67,6 +67,8 @@ O BFF pede `limit = page_size + 1` à HLAPI e devolve `has_more`. Não inventa t
       "urgency": "string",
       "updated_at": "2026-09-21T12:00:00Z",
       "created_at": "2026-09-20T08:00:00Z",
+      "solved_at": "",
+      "closed_at": "",
       "assigned_display_name": "string"
     }
   ],

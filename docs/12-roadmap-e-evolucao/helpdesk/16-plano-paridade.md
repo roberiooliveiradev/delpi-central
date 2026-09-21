@@ -27,7 +27,7 @@ O colaborador passa a ver e gravar no Meus Chamados de TI o que o GLPI já entre
 |---|---|---|
 | RQ-01 | `status_id` + badge/filtro por id; grupos pending/approval | **ATENDIDO** E7.S1 |
 | RQ-02 | Lista: data absoluta, período de abertura, page_size | **ATENDIDO** E7.S2 |
-| RQ-03 | Lista: solved_at / busca no content se H6 | DESBLOQUEADO — 13-H1 e 13-H2 **PROVEN** → E7.S3 |
+| RQ-03 | Lista: solved_at / busca no content se H6 | **ATENDIDO** E7.S3 |
 | RQ-04 | HTML sanitizado na bolha | ATENDIDO_NO_PLANO E8.S1–S2 |
 | RQ-05 | Compositor rico abrir+responder | ATENDIDO_NO_PLANO E8.S3 |
 | RQ-06 | Imagem no corpo via BFF se H6 | DESBLOQUEADO — 12-H1 **PROVEN**; A-07 continua FORA → E8.S4 |
@@ -166,8 +166,8 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 - **Não fazer:** inventar data; buscar HTML cru.
 - **Deps:** E6.S1.
 - **Teste:** se PROVEN — positive termo só no content; negativo `q` com `;`. Se FORA — nenhum campo novo.
-- **Pronto:** veredito de E6 cumprido.
-- **Commit:** `feat(helpdesk): completa a lista com o que a HLAPI comprovou.` **ou** `docs(helpdesk): descarta solved_at/content na lista por evidência.`
+- **Pronto:** veredito de E6 cumprido. **CUMPRIDO** 21/09/2026.
+- **Commit:** `feat(helpdesk): completa a lista com o que a HLAPI comprovou.`
 
 ---
 

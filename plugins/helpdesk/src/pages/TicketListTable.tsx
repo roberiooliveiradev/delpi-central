@@ -50,6 +50,17 @@ export function TicketListTable({
           sortable: true,
           render: (row) => absoluteDateTimeLabel(row.updated_at),
         },
+        {
+          key: "solved_at",
+          header: "Resolvido",
+          sortable: true,
+          render: (row) => absoluteDateTimeLabel(row.solved_at ?? ""),
+        },
+        {
+          key: "closed_at",
+          header: "Fechado",
+          render: (row) => absoluteDateTimeLabel(row.closed_at ?? ""),
+        },
       ]}
     />
   );

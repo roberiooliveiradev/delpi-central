@@ -55,6 +55,7 @@ _SORT_FIELDS = {
     "urgency": "urgency",
     "updated_at": "date_mod",
     "created_at": "date_creation",
+    "solved_at": "date_solve",
 }
 _MAX_PAGE_SIZE = 50
 _DEFAULT_PAGE_SIZE = 20
@@ -124,7 +125,7 @@ def build_ticket_list_query(
     clauses: list[str] = ["is_deleted==false"]
     term = _search_term(q)
     if term:
-        clauses.append(f"name=like=*{term}*")
+        clauses.append(f"(name=like=*{term}*,content=like=*{term}*)")
     status_ids = _status_ids(status)
     if status_ids:
         joined = ",".join(str(item) for item in status_ids)
@@ -218,7 +219,18 @@ def _summary(row: dict) -> TicketSummary:
         created_at=str(row.get("date_creation") or ""),
         assigned_display_name=_team_name(row, "assigned"),
         status_id=_status_id(row.get("status")),
+        solved_at=_optional_instant(row.get("date_solve")),
+        closed_at=_optional_instant(row.get("date_close")),
     )
+
+
+def _optional_instant(value) -> str:
+    if value is None:
+        return ""
+    text = str(value).strip()
+    if not text or text.lower() in {"null", "none"}:
+        return ""
+    return text
 
 
 def _timeline_entry(row: dict) -> TimelineEntry | None:

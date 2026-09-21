@@ -428,7 +428,7 @@ def test_list_query_uses_rsql_and_rejects_injection():
     )
     assert query.filter.startswith("is_deleted==false")
     assert "status==1" not in query.filter
-    assert "name=like=*Monitorstatus1*" in query.filter
+    assert "(name=like=*Monitorstatus1*,content=like=*Monitorstatus1*)" in query.filter
     assert "status.id=in=(1,10,2,3,4)" in query.filter
     assert build_ticket_list_query(status="pending").filter.endswith("status.id==4")
     assert build_ticket_list_query(status="approval").filter.endswith("status.id==10")
@@ -456,6 +456,7 @@ def test_list_query_uses_rsql_and_rejects_injection():
     assert build_ticket_list_query(sort="status:asc").sort == "status.id:asc"
     assert build_ticket_list_query(sort="urgency:desc").sort == "urgency:desc"
     assert build_ticket_list_query(sort="category:asc").sort == "category.name:asc"
+    assert build_ticket_list_query(sort="solved_at:desc").sort == "date_solve:desc"
 
 
 def test_mapping_publishes_status_id_and_keeps_glpi_label():
@@ -489,6 +490,8 @@ def test_mapping_list_publishes_created_at_and_assigned():
                 "urgency": 3,
                 "date_creation": "2026-02-19T10:00:00Z",
                 "date_mod": "2026-02-19T12:00:00Z",
+                "date_solve": None,
+                "date_close": None,
                 "team": [{"role": "assigned", "firstname": "Ana", "realname": "Silva"}],
             }
         ]
@@ -498,6 +501,25 @@ def test_mapping_list_publishes_created_at_and_assigned():
     assert listed[0].category == ""
     assert listed[0].status_id == 2
     assert listed[0].status == "Em atendimento (atribuído)"
+    assert listed[0].solved_at == ""
+    assert listed[0].closed_at == ""
+
+
+def test_mapping_list_publishes_solved_and_closed_instants():
+    listed = parse_ticket_list(
+        [
+            {
+                "id": 9,
+                "name": "Resolvido",
+                "status": {"id": 5, "name": "Solucionado"},
+                "urgency": 2,
+                "date_solve": "2026-09-20T18:00:00Z",
+                "date_close": "2026-09-21T09:00:00Z",
+            }
+        ]
+    )
+    assert listed[0].solved_at == "2026-09-20T18:00:00Z"
+    assert listed[0].closed_at == "2026-09-21T09:00:00Z"
 
 
 def test_mapping_list_drops_deleted_and_detail_hides_them():

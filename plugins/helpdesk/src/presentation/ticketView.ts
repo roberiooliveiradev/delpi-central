@@ -106,11 +106,12 @@ export const TICKET_LIST_SORTABLE_COLUMNS = [
   "urgency",
   "created_at",
   "updated_at",
+  "solved_at",
 ] as const;
 
 export type TicketListSortKey = (typeof TICKET_LIST_SORTABLE_COLUMNS)[number];
 
-const DESC_FIRST_SORT_KEYS = new Set<TicketListSortKey>(["created_at", "updated_at"]);
+const DESC_FIRST_SORT_KEYS = new Set<TicketListSortKey>(["created_at", "updated_at", "solved_at"]);
 
 export function parseTicketSort(sort: string): { key: TicketListSortKey; direction: "asc" | "desc" } {
   const [field, direction] = (sort || "updated_at:desc").split(":");
