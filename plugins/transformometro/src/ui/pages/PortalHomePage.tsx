@@ -3,10 +3,11 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   CatalogSearchBar,
   EmptyState,
-  HubChipRow,
-  RouteChip,
+  EventsSection,
+  RecentAccessStrip,
   SectionCard,
   SectionRouteCard,
+  alertQueueBemClasses,
   catalogSearchBarBemClasses,
   emptyStateCardBemClasses,
   hubChipRowBemClasses,
@@ -19,6 +20,7 @@ import type { AppProps } from "../../App";
 import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { PORTAL_PAGE_COPY, filterPortalCatalog, visiblePortalLauncherGroups } from "../../constants/portalExperience";
+import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { useCanManagePortal } from "../../state/portalChrome";
 import {
   subscribePortalFavorites,
@@ -26,14 +28,25 @@ import {
   visiblePortalFavorites,
   type PortalFavoriteItem,
 } from "../../state/portalFavorites";
-import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
+import {
+  subscribePortalRecentAccess,
+  visiblePortalRecentAccess,
+  type PortalRecentAccessItem,
+} from "../../state/portalRecentAccess";
+import { usePortalHomeSignals } from "./usePortalHomeSignals";
 
 const SECTION = sectionCardPacBemClasses("ds");
 const ROUTE_CARD = sectionRouteCardBemClasses("ds");
 const SEARCH = catalogSearchBarBemClasses("ds");
 const EMPTY = emptyStateCardBemClasses("ds");
-const CHIPS = hubChipRowBemClasses("ds");
-const CHIP = routeChipBemClasses("ds");
+const EVENTS = {
+  section: SECTION,
+  queue: alertQueueBemClasses("ds"),
+};
+const RECENTS = {
+  row: hubChipRowBemClasses("ds"),
+  chip: routeChipBemClasses("ds"),
+};
 const SECTION_LABELS = {
   titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
 };
@@ -46,19 +59,23 @@ const GROUP_ICONS: Record<string, ReactNode> = {
   help: <BookOpen size={20} strokeWidth={1.75} aria-hidden="true" />,
 };
 
-type PortalHomePageProps = Pick<AppProps, "pathname"> & {
+type PortalHomePageProps = Pick<AppProps, "pathname" | "getAccessToken"> & {
   onNavigate: (path: string) => void;
 };
 
-export function PortalHomePage({ pathname, onNavigate }: PortalHomePageProps) {
+export function PortalHomePage({ pathname, getAccessToken, onNavigate }: PortalHomePageProps) {
   const [query, setQuery] = useState("");
   const [favorites, setFavorites] = useState<PortalFavoriteItem[]>([]);
+  const [recents, setRecents] = useState<PortalRecentAccessItem[]>([]);
   const needle = query.trim().toLowerCase();
   const canManage = useCanManagePortal();
   const visibleFavorites = visiblePortalFavorites(favorites, canManage);
+  const visibleRecents = visiblePortalRecentAccess(recents, canManage);
   const favoritePaths = useMemo(() => new Set(visibleFavorites.map((item) => item.path)), [visibleFavorites]);
+  const { highlights, events } = usePortalHomeSignals(getAccessToken);
 
   useEffect(() => subscribePortalFavorites(setFavorites), []);
+  useEffect(() => subscribePortalRecentAccess(setRecents), []);
 
   const groups = useMemo(
     () =>
@@ -94,6 +111,19 @@ export function PortalHomePage({ pathname, onNavigate }: PortalHomePageProps) {
         subtitle={PORTAL_PAGE_COPY.home.description}
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.home}
         onNavigate={onNavigate}
+        highlights={highlights}
+      />
+      <EventsSection
+        classNames={EVENTS}
+        labels={SECTION_LABELS}
+        title="Eventos e interações"
+        subtitle="Sinais já disponíveis no programa de transformação."
+        items={events.map((event) => ({
+          ...event,
+          actionLabel: "Ver na Visão geral",
+          onAction: () => onNavigate(TRANSFORMOMETRO_ROUTES.dashboard),
+        }))}
+        listAriaLabel="Eventos e interações do Portal Transforma+"
       />
       <SectionCard
         classNames={SECTION}
@@ -113,21 +143,15 @@ export function PortalHomePage({ pathname, onNavigate }: PortalHomePageProps) {
             emptyHitsLabel="Nenhuma funcionalidade encontrada."
             aria-label="Buscar caminhos e funcionalidades"
           />
-          {visibleFavorites.length > 0 ? (
-            <HubChipRow classNames={CHIPS} label="Favoritos" aria-label="Favoritos">
-              {visibleFavorites.map((item) => (
-                <RouteChip
-                  key={item.path}
-                  classNames={CHIP}
-                  tone="pinned"
-                  label={item.label}
-                  onNavigate={() => onNavigate(item.path)}
-                  onRemove={() => togglePortalFavorite(item)}
-                  removeLabel="Remover dos favoritos"
-                />
-              ))}
-            </HubChipRow>
-          ) : null}
+          <RecentAccessStrip
+            classNames={RECENTS}
+            label="Últimos acessos"
+            items={visibleRecents.map((item) => ({
+              id: item.path,
+              label: item.label,
+            }))}
+            onSelect={(id: string) => onNavigate(id)}
+          />
           {groups.length === 0 ? (
             <EmptyState classNames={EMPTY} defaultMessage="Nenhuma funcionalidade encontrada." />
           ) : (

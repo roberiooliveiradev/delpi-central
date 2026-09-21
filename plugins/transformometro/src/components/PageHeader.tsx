@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { RefreshCw } from "lucide-react";
-import { PageHero, pageHeroBemClasses } from "@delpi/plugin-ui/index";
+import { PageHero, pageHeroBemClasses, type PageHeroHighlight } from "@delpi/plugin-ui/index";
 
 import { PORTAL_PRODUCT_NAME } from "../constants/portalExperience";
 import { DS_GHOST_BTN } from "./ghostChrome";
@@ -17,6 +17,7 @@ type PageHeaderProps = {
   onRefresh?: () => void;
   refreshing?: boolean;
   actions?: ReactNode;
+  highlights?: PageHeroHighlight[];
   children?: ReactNode;
 };
 
@@ -32,6 +33,7 @@ export function PageHeader({
   onRefresh,
   refreshing = false,
   actions,
+  highlights,
   children,
 }: PageHeaderProps) {
   return (
@@ -44,6 +46,7 @@ export function PageHeader({
         eyebrow={eyebrow}
         title={title}
         description={subtitle}
+        highlights={highlights}
         actions={
           <>
             {onRefresh ? (

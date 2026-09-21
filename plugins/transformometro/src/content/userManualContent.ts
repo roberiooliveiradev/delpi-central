@@ -66,7 +66,9 @@ export const USER_MANUAL_CONTENT = {
         "A barra superior leva às áreas do portal. Buscar, ou Ctrl+K, abre os mesmos caminhos em qualquer tela. A busca do Início filtra os cards daquela tela.",
       bullets: [
         "Use a estrela de um caminho para fixá-lo em Favoritos.",
-        "Favoritos ficam ao lado de Buscar e também no Início.",
+        "Favoritos ficam só ao lado de Buscar, na barra superior.",
+        "Abaixo da busca do Início aparecem os últimos acessos, não uma segunda lista de favoritos.",
+        "Eventos e interações mostram só sinais já existentes, como revisões a vencer.",
       ],
       links: [{ want: "Abrir o hub", where: "Início", how: "Clique em Início na barra.", path: TRANSFORMOMETRO_ROUTES.home }],
     },

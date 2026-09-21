@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import { PageTransition } from "./components/PageTransition";
 import { ConfirmDialogProvider } from "./components/ui/ConfirmDialogProvider";
@@ -31,7 +31,8 @@ import { TRANSFORMOMETRO_ROUTES } from "./constants/routes";
 import { buildProcessoPath, parseTransformometroPath } from "./utils/routeParser";
 import { navigateTransformometro } from "./utils/navigation";
 import { buildTransformometroTransitionKey } from "./utils/transitionKey";
-import { PortalChromeProvider } from "./state/portalChrome";
+import { PortalChromeProvider, useCanManagePortal } from "./state/portalChrome";
+import { recordPortalRecentAccess } from "./state/portalRecentAccess";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -48,11 +49,22 @@ function AppRoutes({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
   useDelpiPortalBridge(pathname);
 
   const onNavigate = useGuardedNavigate(navigateTransformometro);
+  const canManage = useCanManagePortal();
+
+  useEffect(() => {
+    recordPortalRecentAccess(pathname, { canManage });
+  }, [canManage, pathname]);
 
   let page: ReactNode;
 
   if (route.view === "home") {
-    page = <PortalHomePage pathname={pathname} onNavigate={onNavigate} />;
+    page = (
+      <PortalHomePage
+        getAccessToken={getAccessToken}
+        pathname={pathname}
+        onNavigate={onNavigate}
+      />
+    );
   } else if (route.view === "help") {
     page = <HelpPage pathname={pathname} onNavigate={onNavigate} />;
   } else if (route.view === "administration") {
