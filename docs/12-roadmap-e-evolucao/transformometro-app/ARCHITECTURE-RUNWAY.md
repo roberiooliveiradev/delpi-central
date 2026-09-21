@@ -102,7 +102,7 @@ Nenhuma dessas linhas implementa feature. DECIDED aqui não torna a capability P
 | Plano de ação | TARGET, owner não fechado | task store |
 | Resultado | ganho medido / verificado | ganho estimado |
 | Arquitetura de processos | TARGET corporativo | `decomposition_tree` de um mestre |
-| Documentação textual do processo | TARGET (`ProcessDocument.content_md`) | ata / evidência / diagrama / revisão |
+| Documentação textual do processo | IMPLEMENTED (`ProcessDocument.content_md`, V049) | ata / evidência / diagrama / revisão |
 | Meu portfólio | projeção adiada | carteira comercial |
 
 Enums PROVEN em `tm_app/core/catalogs.py`: `STATUS_PROCESSO` ativo/descontinuado/em_implantacao; `STATUS_INSTANCIA` ativo/inativo; `CENARIO_TIPO` baseline/melhoria/automacao/correcao; `FASE_MELHORIA` planejado/piloto/implantado/encerrado; `STATUS_APROVACAO_REVISAO` rascunho/em_analise/aprovada/rejeitada. Status de achado, causa, evidência epistemológica e ação **não existem**. Não criar enum paralelo de «fase do portal» em cima desses.
@@ -111,7 +111,9 @@ Enums PROVEN em `tm_app/core/catalogs.py`: `STATUS_PROCESSO` ativo/descontinuado
 
 CURRENT, já persistido: Process, Instance, Revision, Measurement, Investment, Shared resource, Diagram, Decomposition (+ escopos e overlays), Impact-effort matrix, Process file, Revision evidence, Meeting minute, Audit log, Dashboard read model.
 
-TARGET, sem classe de implementação: Finding, Cause hypothesis, Indicator definition, Action plan, Process interfaces, Corporate process architecture, Completeness projection, Portfolio projection, **Process Documentation** (`ProcessDocument.content_md`).
+TARGET, sem classe de implementação: Finding, Cause hypothesis, Indicator definition, Action plan, Process interfaces, Corporate process architecture, Completeness projection, Portfolio projection.
+
+IMPLEMENTED (código; runtime PROVEN após deploy): **Process Documentation** (`ProcessDocument.content_md`).
 
 | Conceito | Classe recomendada | Por quê, ainda sem implementar |
 |---|---|---|
@@ -124,7 +126,7 @@ TARGET, sem classe de implementação: Finding, Cause hypothesis, Indicator defi
 | Completude | PROJECTION | Sem score |
 | Portfólio | PROJECTION | Sem regra própria |
 | Arquitetura corporativa | NEW ENTITY na Wave 10 | Não é a árvore |
-| Process Documentation | NEW ENTITY (TARGET) | `content_md` canônico; ≠ ata; ver ADR |
+| Process Documentation | NEW ENTITY (IMPLEMENTED) | `content_md` canônico; ≠ ata; ver ADR |
 
 ## 7. Workspace — contrato por seção
 
@@ -147,9 +149,9 @@ O workspace PROVEN usa seções em `processWorkspaceNav.ts` e rotas `/apps/trans
 | Evidência de revisão | PROVEN | TM | metadata + binário | upload da revisão | manage de revisão | `RevisaoEvidenceStorage` |
 | Timeline | PROVEN | TM | `audit_logs` | nenhum write direto de UI | view | append de mutação, não event sourcing |
 | Atas | PROVEN (módulo próprio) | TM | meeting minutes | manage/sign | permissões de ata | **sem** FK canônica processo↔ata por padrão |
-| Documentação do processo (`ProcessDocument.content_md`) | TARGET | TM | — | — | pacote próprio | ≠ ata, ≠ revisão, ≠ diagrama, ≠ evidência |
+| Documentação do processo (`ProcessDocument.content_md`) | IMPLEMENTED | TM | `process_documents` | `/processos/{id}/documents` + `#documentacao` | V1 entregue | ≠ ata, ≠ revisão, ≠ diagrama, ≠ evidência |
 
-Dependência: diagnóstico e plano não entram na nav até o pacote da wave passar no DoR. A Wave 2 só reorganiza o que esta tabela marca PROVEN. **Process Documentation** não entra no workspace até o pacote TARGET passar no DoR; Atas continuam fora do workspace enquanto a relação direta processo↔ata permanecer ABSENT — ver [adr-process-documentation-vs-meeting-minute.md](../../../transformometro-api/docs/architecture/adr-process-documentation-vs-meeting-minute.md).
+Dependência: diagnóstico e plano não entram na nav até o pacote da wave passar no DoR. A Wave 2 só reorganiza o que esta tabela marca PROVEN. **Process Documentation** entrou no workspace como capability IMPLEMENTED (Markdown/`process_documents`); Atas continuam fora do workspace enquanto a relação direta processo↔ata permanecer ABSENT — ver [adr-process-documentation-vs-meeting-minute.md](../../../transformometro-api/docs/architecture/adr-process-documentation-vs-meeting-minute.md).
 
 ## 8. API, contexto, MCP, Actions
 

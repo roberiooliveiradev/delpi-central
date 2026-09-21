@@ -1,9 +1,9 @@
 # ADR — Documentação de processo ≠ Ata
 
-**Status:** DECIDED (2026-09-21). Capability de documentação: **TARGET** (não implementada).  
+**Status:** DECIDED (2026-09-21). Capability de documentação: **IMPLEMENTED** (pacote V1 local). Runtime prod fica **PROVEN** após deploy/read-back.  
 **Escopo:** Transformômetro / Portal Transforma+.
 
-Documentação não prova runtime. Nenhuma tabela/API abaixo é PROVEN só por este ADR.
+Documentação não prova runtime. Tabela/API abaixo são IMPLEMENTED no código; PROVEN só com evidência de deploy.
 
 ## Contexto
 
@@ -15,8 +15,8 @@ Isso é inadequado: ata é registro de **reunião**, que pode tratar vários ass
 
 1. **Ata** = registro de uma reunião (vários assuntos possíveis). Continua bounded context próprio (`tm_meeting_minutes`, rotas `/meeting-minutes`).
 2. **Processo ↔ Ata** = **não** é relação direta canônica por padrão. Não criar FK `processo_id` em ata “só para o workspace”. Não inferir vínculo por título/texto.
-3. **Process Documentation** = nova capability **TARGET** do Transformômetro (dona: `transformometro-api` + MFE).
-4. Artefato textual canônico alvo: **`ProcessDocument.content_md`** (nome de campo ainda sujeito a pacote/DoR).
+3. **Process Documentation** = capability do Transformômetro (dona: `transformometro-api` + MFE).
+4. Artefato textual canônico: **`ProcessDocument.content_md`** (tabela `transformometro.process_documents`, migration `V049`).
 5. **`ProcessDocument` não é**:
    - estado canônico do processo (mestre/instância/revisão);
    - revisão / AS-IS / TO-BE;
@@ -24,14 +24,23 @@ Isso é inadequado: ata é registro de **reunião**, que pode tratar vários ass
    - evidência de revisão ou arquivo do processo;
    - ata / meeting minute.
 
+## Implementação V1 (2026-09-21)
+
+- Cardinalidade: Processo 1→N `ProcessDocument`.
+- Soft-delete via `deleted_at` (padrão arquivos/evidências).
+- AuthZ: somente `transformometro.access` (manage-only ≠ access).
+- API: `/transformometro/processos/{id}/documents` (+ alias EN `/processes/.../documents`).
+- Workspace: seção `#documentacao` (+ `#documentacao/{documentId}`).
+- Editor: textarea Markdown + preview seguro (`MessageBodyReadonly` / sanitizer do plugin-ui).
+- Fora de escopo V1: versionamento, tags, attachments, approval, Mermaid, GPT Actions, MCP, TÉO.
+
 ## Consequências
 
-- Process Workspace **não** integra Atas enquanto a relação continuar ABSENT (estado atual confirmado no inventário).
-- Qualquer UI futura de “documentação do processo” usa a capability Process Documentation, não o módulo de atas.
-- Implementação de `ProcessDocument` exige pacote próprio (Abstraction Gate, AuthZ `transformometro.access`, migration `up` imutável, OpenAPI, Help) — **não autorizada** só por este ADR.
+- Process Workspace integra **Documentação**, não Atas.
+- Markdown é fonte canônica textual do documento; autoridades estruturadas prevalecem se houver contradição.
+- `flowchart_v1` permanece a única fonte de verdade do diagrama.
 
-## Não decidido (TO_INVENTORY)
+## Histórico
 
-- Schema exacto (`process_documents` vs outro), versionamento, vínculo opcional a revisão.
-- Se anexos da documentação reusam `processo_arquivos` ou storage próprio.
-- Se a sala/tarefas podem **referenciar** uma ata sem tornar ata filha do processo.
+- 2026-09-21: ADR inicial com capability TARGET e relação processo↔ata ABSENT.
+- 2026-09-21: V1 implementada (domain/API/MFE); status IMPLEMENTED até aceite runtime.

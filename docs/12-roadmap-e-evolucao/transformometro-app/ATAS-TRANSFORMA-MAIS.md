@@ -18,7 +18,7 @@ Documentação de produto e implementação do módulo de **atas oficiais Transf
 
 Registrar atas de reunião do programa Transforma+ **dentro** do Transformômetro (schema Postgres `transformometro`, migrations **V042** + **V043**), com ciclo de vida semelhante à CIPA, **sem** reutilizar tabelas `cipa.*`.
 
-**Limite de domínio (2026-09-21):** ata **não** é documentação canônica do processo e **não** há relação direta processo↔ata por padrão. Documentação textual do processo é capability TARGET distinta (`ProcessDocument.content_md`) — ver [adr-process-documentation-vs-meeting-minute.md](../../../transformometro-api/docs/architecture/adr-process-documentation-vs-meeting-minute.md).
+**Limite de domínio (2026-09-21):** ata **não** é documentação canônica do processo e **não** há relação direta processo↔ata por padrão. Documentação textual do processo é capability distinta (`ProcessDocument.content_md`, IMPLEMENTED) — ver [adr-process-documentation-vs-meeting-minute.md](../../../transformometro-api/docs/architecture/adr-process-documentation-vs-meeting-minute.md).
 
 Fluxo núcleo:
 
