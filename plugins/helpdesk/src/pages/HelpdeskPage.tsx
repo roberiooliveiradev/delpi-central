@@ -660,14 +660,16 @@ function CreateTicketPage() {
               />
               <div className="helpdesk-create-layout__aside-actions">
                 <HintAction hint={helpTooltips.createUi.send} ariaLabel="Ajuda: Enviar chamado">
-                  <HelpdeskIconButton
-                    tone="primary"
+                  <ActionButton
+                    variant="primary"
                     type="submit"
+                    className="helpdesk-create-send"
                     aria-label={saving ? "Enviando" : "Enviar chamado"}
                     disabled={saving || loading || !title.trim() || !hasVisibleRichText(description)}
                   >
-                    <Send size={16} aria-hidden />
-                  </HelpdeskIconButton>
+                    <Send size={18} aria-hidden />
+                    {saving ? "Enviando…" : "Enviar"}
+                  </ActionButton>
                 </HintAction>
               </div>
             </aside>

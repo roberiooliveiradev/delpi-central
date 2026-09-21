@@ -272,10 +272,19 @@
 
 .dashboard-helpdesk .helpdesk-create-layout__aside-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: stretch;
   margin-block-start: auto;
   padding-block-start: 0.75rem;
   border-block-start: 1px solid var(--helpdesk-border);
+}
+
+.dashboard-helpdesk .helpdesk-create-send {
+  width: 100%;
+  min-height: 2.75rem;
+  padding-inline: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  gap: 0.5rem;
 }
 
 .dashboard-helpdesk .helpdesk-rich-text-field {
