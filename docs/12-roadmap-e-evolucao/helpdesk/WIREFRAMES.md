@@ -7,6 +7,7 @@
 > **Regras:** `plugins-reusable-components.mdc`, `plugins-visual-design-system.mdc`
 > **Estado:** lista com filtros, vínculo, conversa e prévia de anexo publicados. H5 abaixo é especificação, não autorização para implementar.
 > **Lacunas restantes:** [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md).
+> **Corpo da mensagem (alvo, sem implementar):** [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md).
 
 Implementar uma tela deste módulo é montar as factories já nomeadas. Não criar `button`, `input`, `select`, `textarea`, card ou badge com CSS próprio.
 

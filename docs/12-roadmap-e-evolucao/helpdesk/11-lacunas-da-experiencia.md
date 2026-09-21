@@ -100,6 +100,7 @@ A conversa em bolhas já foi publicada. As fotos mostram o corte que ainda falta
 | C-05 | Lado da bolha | no 2 as duas mensagens foram para a direita; `mine` era «autor = solicitante» | IMPLEMENTADO — `mine` no BFF por id GLPI ou e-mail; nome só rótulo |
 | C-06 | Título da abertura vs cartão de urgência | o cartão do 2 virou «Média» porque a categoria está vazia (`itilcategories_id=0`) | já documentado; não inventar categoria |
 | C-07 | Tarefa, solução, aprovação, atores, SLA | fotos do 6288 | CONSOLE_GLPI — já em [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md) |
+| C-08 | Formatação, HTML, imagem no corpo | o BFF remove tags; a bolha é `plain`; o 6288 tem imagem no fio | inventário em [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) — sem autorização de código |
 
 ### 3.4 Abrir chamado
 
