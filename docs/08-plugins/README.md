@@ -96,7 +96,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/central-agendamento` | `central-agendamento` | microfrontend | plugin | `/apps/central-agendamento` | `delpi-central-agendamento` |
 | `plugins/cultura-delpi` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
 | `plugins/transformometro` | `transformometro` | microfrontend | plugin | `/apps/transformometro` | `delpi-transformometro` |
-| `plugins/helpdesk` | (ver manifesto) | — | — | — | Pode ser externo / legado |
+| `plugins/helpdesk` | (ver manifesto) | iframe legado | — | — | Alvo nativo em [helpdesk/README.md](../12-roadmap-e-evolucao/helpdesk/README.md); ainda não implementado |
 | `plugins/api-delpi-console` | `api-delpi-console` | microfrontend | plugin | `/apps/api-delpi-console` | `delpi-api-delpi-console` |
 | `plugins/idd_production` | (ver manifesto) | — | — | — | Avaliar registro na Core API |
 | `plugins/tv-dashboard` | `tv-dashboard` | microfrontend | plugin | `/apps/tv-dashboard` | `delpi-tv-dashboard` |

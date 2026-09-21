@@ -1,0 +1,57 @@
+# 01 — Visão de produto
+
+> **Status:** `PLANNED`
+> **North star e authorities:** [`README.md`](./README.md)
+
+## 1. Para quem
+
+Colaborador que já entra na Minha DELPI e hoje precisaria ir ao GLPI para abrir ou acompanhar um chamado.
+
+O técnico, o supervisor e o administrador do parque continuam no GLPI. Esta entrega não substitui a bancada deles.
+
+## 2. O que a primeira entrega faz
+
+| Ação | Resultado perceptível |
+|---|---|
+| Abrir o Helpdesk | Tela da Minha DELPI, não um iframe do GLPI |
+| Primeira vez | O navegador autoriza o cliente OAuth no GLPI e volta para a Minha DELPI |
+| Ver chamados | Lista só os chamados que o perfil da pessoa enxerga |
+| Abrir chamado | Título, descrição, categoria e urgência; o solicitante é a própria pessoa |
+| Ver detalhe | Status, datas e linha do tempo |
+| Incluir acompanhamento | Texto no chamado que ela pode ver |
+
+Estados obrigatórios em cada tela: carregando, vazio, erro, acesso negado.
+
+## 3. Wireframe
+
+```text
+Helpdesk
+[ Novo chamado ]
+
+Meus chamados
+| Número | Título | Status | Atualizado |
+| 1234   | ...    | ...    | ...        |
+vazio: "Você ainda não tem chamados."
+
+--- Novo chamado ---
+Título
+Descrição
+Categoria   (lista vinda do GLPI)
+Urgência    (lista vinda do GLPI)
+[ Enviar ]
+
+--- Chamado 1234 ---
+Título, status, categoria, urgência
+Linha do tempo
+[ Novo acompanhamento ]
+```
+
+Deep link do detalhe fica na URL do MFE (`/apps/helpdesk/tickets/{id}`), para sobreviver a atualizar a página.
+
+## 4. O que não muda para a pessoa que opera a fila
+
+`https://helpdesk.centraldelpi.com.br` continua o console do GLPI. Chamado criado na Minha DELPI aparece lá como chamado daquela pessoa, na entidade padrão dela no GLPI. O BFF não escolhe outra entidade e não aceita solicitante vindo da tela.
+
+## 5. Ajuda
+
+A ajuda in-app (manual do produto e textos de campo) entra na mesma entrega da tela, em [`06-plano-execucao.md`](./06-plano-execucao.md) `E4.S3`. Não descreve path de API nem nome de tabela.

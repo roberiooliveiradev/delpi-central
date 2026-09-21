@@ -53,6 +53,14 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 |---|---|
 | [davi/README.md](./davi/README.md) | Product/architecture baseline, capability/source model, CURRENT PROVEN vs TARGET e authority boundaries |
 
+### Helpdesk DELPI
+
+| Arquivo | Conteúdo |
+|---|---|
+| [helpdesk/README.md](./helpdesk/README.md) | Entrada — GLPI dono do chamado, BFF em nome do usuário, ondas H0–H5 |
+| [helpdesk/INDEX.md](./helpdesk/INDEX.md) | Roteamento da documentação |
+| [helpdesk/06-plano-execucao.md](./helpdesk/06-plano-execucao.md) | Ordem executável E1–E5 (não autoriza implementação sozinha) |
+
 ### Apontamento de Produção
 
 | Arquivo | Conteúdo |

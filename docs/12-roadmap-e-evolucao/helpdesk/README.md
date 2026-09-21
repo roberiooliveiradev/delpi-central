@@ -1,0 +1,91 @@
+# Helpdesk DELPI
+
+> **Status:** `PLANNED / NOT_STARTED` para código da Minha DELPI
+> **Fundação GLPI:** `PROVEN` em produção (21/09/2026)
+> **Produto:** abertura e acompanhamento de chamados dentro da Minha DELPI, com o GLPI como dono do chamado
+> **Requisitos:** `HD-001…HD-018` em [`07-requisitos.md`](./07-requisitos.md)
+> **Próxima etapa:** `E1.S1 — scaffold da helpdesk-api`
+> **Ordem de execução:** [`06-plano-execucao.md`](./06-plano-execucao.md)
+> **Estado de execução:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
+
+Esta pasta decide o produto. Não autoriza implementação sozinha e não prova runtime da Minha DELPI. O GLPI em produção já está no estado descrito em [`02-arquitetura.md`](./02-arquitetura.md).
+
+## 1. Decisão fundamental
+
+O Helpdesk DELPI não é um segundo sistema de chamados e não é um conserto do iframe atual.
+
+```text
+Hoje                              Alvo
+-------------------------------  --------------------------------
+plugins/helpdesk (iframe)        plugins/helpdesk (MFE nativo)
+sem API própria                  helpdesk-api
+GLPI na tela cheia / outro host  GLPI só como autoridade do chamado
+```
+
+```text
+MFE helpdesk
+  → helpdesk-api
+      → GLPI HLAPI 2.2, em nome do usuário
+```
+
+O navegador não chama o GLPI. A api-delpi não entra neste fluxo. O GLPI continua a fonte dos chamados, categorias, filas, acompanhamentos e perfis.
+
+## 2. North Star
+
+> **A pessoa abre e acompanha o próprio chamado na Minha DELPI, com a mesma identidade do Keycloak e com o direito que o perfil dela já tem no GLPI.**
+
+```text
+entrar na Minha DELPI
+→ abrir o Helpdesk
+→ autorizar uma vez no GLPI (sessão SAML já existente)
+→ ver os meus chamados
+→ abrir um chamado
+→ acompanhar e incluir follow-up
+```
+
+A fila do técnico, o inventário e a administração continuam no GLPI em `https://helpdesk.centraldelpi.com.br`.
+
+## 3. Authorities
+
+```text
+Keycloak           = identidade / SSO da Minha DELPI
+GLPI + SAML        = sessão do helpdesk e perfil do chamado
+GLPI HLAPI OAuth   = token em nome do usuário
+Core API           = app, rota, permissão helpdesk.access
+helpdesk-api       = BFF, sessão OAuth, contrato do MFE
+Portal / MFE       = navegação e renderização
+GLPI               = fonte do chamado
+```
+
+E:
+
+```text
+permissão do portal  !=  direito de abrir chamado
+escopo OAuth api     !=  recorte só de chamado
+token do BFF         !=  token no browser
+iframe               !=  produto alvo
+API legada           !=  API deste módulo
+```
+
+O portão da Minha DELPI é `helpdesk.access`. O que a pessoa pode criar ou ver é o perfil GLPI aplicado ao token dela. Se o GLPI responder 403, a tela mostra acesso negado. O MFE não reimplementa essa regra.
+
+## 4. Como ler
+
+| Pergunta | Documento |
+|---|---|
+| O que a pessoa faz? | [`01-visao-produto.md`](./01-visao-produto.md) |
+| Quem é dono e o que já existe? | [`02-arquitetura.md`](./02-arquitetura.md) |
+| Qual é o contrato? | [`03-contrato.md`](./03-contrato.md) |
+| Como a identidade funciona? | [`04-seguranca.md`](./04-seguranca.md) |
+| Em que ondas o produto cresce? | [`05-roadmap.md`](./05-roadmap.md) |
+| Qual é a próxima etapa executável? | [`06-plano-execucao.md`](./06-plano-execucao.md) |
+| Qual requisito isso cobre? | [`07-requisitos.md`](./07-requisitos.md) |
+| Quando uma etapa está pronta? | [`08-definition-of-done.md`](./08-definition-of-done.md) |
+| Como provar? | [`09-testes-e-aceite.md`](./09-testes-e-aceite.md) |
+| O que já foi provado? | [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) |
+
+Mapa curto: [`INDEX.md`](./INDEX.md).
+
+## 5. Fora da primeira entrega
+
+Anexo, pesquisa de satisfação, fila do técnico, mudança, problema, inventário, API legada do GLPI e gravação de chamado em banco da Minha DELPI. Detalhe em [`05-roadmap.md`](./05-roadmap.md).
