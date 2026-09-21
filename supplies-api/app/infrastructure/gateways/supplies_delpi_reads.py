@@ -175,3 +175,44 @@ class SuppliesDelpiReads:
             )
         )
         return data if isinstance(data, dict) else {}
+
+    def get_purchase_order_otd_panel(
+        self,
+        *,
+        access_token: str,
+        branch: str,
+        start_date: str | None,
+        end_date: str | None,
+        status: str | None,
+        page: int,
+        page_size: int,
+        sort_by: str | None = None,
+        sort_dir: str | None = None,
+    ) -> dict[str, Any]:
+        """Panel lines for one concrete branch. Never call with branch omitted."""
+        concrete = str(branch or "").strip()
+        if not concrete:
+            raise ValueError("branch is required for purchase-order-otd panel reads")
+        extra: dict[str, Any] = {
+            "page": page,
+            "page_size": page_size,
+        }
+        if status:
+            extra["status"] = status
+        if sort_by:
+            extra["sort_by"] = sort_by
+        if sort_dir:
+            extra["sort_dir"] = sort_dir
+        data = unwrap_delpi_envelope(
+            self.gateway.get(
+                "/supplies/purchase-order-otd/panel",
+                access_token=access_token,
+                params=self._params(
+                    branch=concrete,
+                    start_date=start_date,
+                    end_date=end_date,
+                    extra=extra,
+                ),
+            )
+        )
+        return data if isinstance(data, dict) else {}

@@ -2,8 +2,8 @@
 
 > **Status (revalidado 2026-09-21, `4f3ed59483`):** plano executável revisado segundo `evidence-driven-execution.mdc`, `plan-construction.mdc` e `plan-execution.mdc`.
 > **Entregue:** E1–E8 (incluindo E8 / WF-06 detalhe do pedido). GATE-FEATURE WF-06 = **PASS** ([evidência](./evidence/e8-wf06-federated-runtime-gate.md)).
-> **Em foco:** **E9 / WF-07 Entregas / atrasos** — promoção AUTHORIZED; P0 **FROZEN** ([freeze](./evidence/e9-wf07-p0-contract-freeze.md)); implementação ainda não iniciada.
-> **Próxima receita:** `E9.S1` → `E9.S5` sem ultrapassar o freeze.
+> **Em foco:** **E9 / WF-07 Entregas / atrasos** — BFF `GET /deliveries/late` entregue (E9.S1–S2); MFE pendente.
+> **Próxima receita:** `E9.S3` (MFE) → `E9.S4` → `E9.S5`.
 > **Modo:** uma página user-facing por vez; etapas futuras abaixo são fila/grafo, não autorização automática.
 
 Referências: [README](./README.md), ADR-001..ADR-007, [WIREFRAMES](./WIREFRAMES.md), [API-ROUTES](./API-ROUTES.md), [DECISOES_FUNCIONAIS_PENDENTES](./DECISOES_FUNCIONAIS_PENDENTES.md), [HOMOLOGACAO-PARIDADE](./HOMOLOGACAO-PARIDADE.md).
@@ -222,17 +222,17 @@ Contrato resumido:
 - MFE: `/apps/supplies/deliveries`; **NO DRILL P0** para ficha E8
 - P-03: não bloqueia a página nativa; bloqueia paridade/depreciação do BI
 
-### E9.S1 — Verificar producer + wiring BFF (sem mudar TOTVS)
+### E9.S1 — Verificar producer + wiring BFF (sem mudar TOTVS) — COMPLETED
 
-Revalidar panel no HEAD de implementação; adicionar read no gateway `supplies-api` apontando ao panel. Sem alteração de SQL/regra.
+Producer `GET /supplies/purchase-order-otd/panel` revalidado sem mudança TOTVS. Read `SuppliesDelpiReads.get_purchase_order_otd_panel` exige `branch` concreto.
 
-**Teste:** smoke de contrato existente do producer; teste de gateway isolado se houver padrão.
+**Teste:** `tests/application/test_late_deliveries_composition.py` (gateway exige branch).
 
-### E9.S2 — BFF `GET /deliveries/late`
+### E9.S2 — BFF `GET /deliveries/late` — COMPLETED
 
-AuthZ + unit scope + defaults (`status=late`, mês corrente) + merge 01/02 + flatten `items` + mapeamento de erros. Fail-closed se Core ou perna upstream falhar.
+Rota Flask + composição AuthZ/`01`/`02`/defaults/merge consolidado (fetch completo por filial + sort global + slice). Uma perna falha → 502. Sem omitir branch no producer para Todas.
 
-**Teste:** happy / 1 branch / Todas / 403 / 422 / 502 / sort / pagination / Core down.
+**Teste:** `tests/application/test_late_deliveries_composition.py` + `tests/interface/http/test_deliveries_bff.py`.
 
 ### E9.S3 — MFE página kit-first
 
@@ -249,8 +249,6 @@ Sync Manual / Quero→onde / FAQ / tooltips / glossário; corrigir «atrasos do 
 ### E9.S5 — Suites + GATE-FEATURE WF-07
 
 Suites API+MFE + smoke federado Portal → BFF only. Só então classificar GATE-FEATURE.
-
-**Não executar E9.S* neste documento — freeze apenas.**
 
 ## E10 — WF-15 Controle de Estoques
 
@@ -409,10 +407,10 @@ todos:
     status: pending
     dependsOn: [e8-purchase-order-detail]
   - id: e9-s1-producer-wiring
-    status: pending
+    status: completed
     dependsOn: [e9-deliveries]
   - id: e9-s2-bff-deliveries-late
-    status: pending
+    status: completed
     dependsOn: [e9-s1-producer-wiring]
   - id: e9-s3-mfe-page
     status: pending
