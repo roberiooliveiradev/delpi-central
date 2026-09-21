@@ -1,7 +1,7 @@
 {
   "version": 1,
   "generatedAt": "2026-09-21",
-  "operation_count": 195,
+  "operation_count": 196,
   "operations": [
     {
       "operationId": "post_liberar",
@@ -337,6 +337,12 @@
       "operationId": "processo_matriz_impacto_esforco",
       "method": "GET",
       "path": "/transformometro/processos/{processo_id}/matriz-impacto-esforco",
+      "module": "crud"
+    },
+    {
+      "operationId": "list_processo_related_tasks",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/related-tasks",
       "module": "crud"
     },
     {

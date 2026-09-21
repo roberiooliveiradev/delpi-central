@@ -205,3 +205,107 @@ def test_partial_signature_failure_keeps_manual_tasks():
     result = ListMyTaskItemsUseCase(commands, boom).execute(_user())
     assert result["items"][0]["type"] == "manual_task"
     assert result["partial_error"]
+
+
+def test_list_related_to_process_via_interaction_chain():
+    repo = InMemoryTaskRepository()
+    processo_a = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    processo_b = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+    msg_a = "cccccccc-cccc-cccc-cccc-cccccccccccc"
+    msg_b = "dddddddd-dddd-dddd-dddd-dddddddddddd"
+    repo.link_message_to_process(msg_a, processo_a)
+    repo.link_message_to_process(msg_b, processo_b)
+    commands = TaskCommandUseCases(repo)
+
+    related_a = commands.create(
+        _user(),
+        title="Da sala A",
+        description=None,
+        assignee_user_id=USER,
+        due_date=None,
+        source_interaction_message_id=msg_a,
+    )
+    commands.create(
+        _user(),
+        title="Da sala B",
+        description=None,
+        assignee_user_id=USER,
+        due_date=None,
+        source_interaction_message_id=msg_b,
+    )
+    commands.create(
+        _user(),
+        title="Manual sem origem",
+        description=None,
+        assignee_user_id=USER,
+        due_date=None,
+    )
+
+    listed_a = commands.list_related_to_process(_user(), processo_a)
+    listed_b = commands.list_related_to_process(_user(), processo_b)
+    assert [item.id for item in listed_a] == [related_a.id]
+    assert [item.title for item in listed_b] == ["Da sala B"]
+    assert all(item.source_interaction_message_id for item in listed_a)
+
+
+def test_list_related_to_process_authz():
+    repo = InMemoryTaskRepository()
+    commands = TaskCommandUseCases(repo)
+    with pytest.raises(AuthorizationDenied) as missing:
+        commands.list_related_to_process(_user(permissions=[]), "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+    assert missing.value.status_code == 403
+    with pytest.raises(AuthorizationDenied):
+        commands.list_related_to_process(
+            _user(permissions=[MANAGE_PERMISSION]),
+            "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        )
+    with pytest.raises(AuthorizationDenied) as anonymous:
+        commands.list_related_to_process(None, "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+    assert anonymous.value.status_code == 401
+
+
+def test_http_list_processo_related_tasks():
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock, patch
+
+    from tm_app.interface.http.routes import task_routes
+
+    repo = InMemoryTaskRepository()
+    msg_id = "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"
+    processo_id = "ffffffff-ffff-ffff-ffff-ffffffffffff"
+    repo.link_message_to_process(msg_id, processo_id)
+    commands = TaskCommandUseCases(repo)
+    commands.create(
+        _user(),
+        title="Relacionada",
+        description=None,
+        assignee_user_id=USER,
+        due_date=None,
+        source_interaction_message_id=msg_id,
+    )
+    request = SimpleNamespace(state=SimpleNamespace(user=_user()))
+    processo_repo = MagicMock()
+    processo_repo.get.return_value = {"processo_id": processo_id}
+
+    with (
+        patch.object(task_routes, "_commands", commands),
+        patch.object(task_routes, "ProcessoRepository", return_value=processo_repo),
+        patch.object(task_routes, "check_processo_view_access", return_value=None),
+    ):
+        ok_resp = task_routes.list_processo_related_tasks(processo_id, request)
+        forbidden = task_routes.list_processo_related_tasks(
+            processo_id,
+            SimpleNamespace(state=SimpleNamespace(user=_user(permissions=[]))),
+        )
+        processo_repo.get.return_value = None
+        missing = task_routes.list_processo_related_tasks(processo_id, request)
+
+    assert ok_resp.status_code == 200
+    body = ok_resp.body
+    import json
+
+    payload = json.loads(body)
+    assert payload["data"]["total"] == 1
+    assert payload["data"]["items"][0]["title"] == "Relacionada"
+    assert forbidden.status_code == 403
+    assert missing.status_code == 404

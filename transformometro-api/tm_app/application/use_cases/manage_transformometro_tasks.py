@@ -117,6 +117,13 @@ class TaskCommandUseCases:
         statuses = self._statuses(status)
         return self._repo.list_for_assignee(assignee, statuses=statuses)
 
+    def list_related_to_process(self, user: Any, processo_id: str) -> list[TransformometroTask]:
+        self._policy.require_access(user)
+        pid = (processo_id or "").strip()
+        if not pid:
+            raise ValueError("Processo inválido.")
+        return self._repo.list_related_to_process(pid)
+
     def _require(self, task_id: str) -> TransformometroTask:
         task = self._repo.get(task_id)
         if task is None:

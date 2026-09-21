@@ -133,14 +133,34 @@ class TaskRepository(PluginBaseRepository, TaskRepositoryPort):
         )
         return [_row_to_task(row) for row in rows]
 
+    def list_related_to_process(self, processo_id: str) -> list[TransformometroTask]:
+        rows = self.fetch_all(
+            f"""SELECT t.*
+                FROM {_S}.tm_tasks t
+                INNER JOIN {_S}.tm_interaction_messages m
+                    ON m.id = t.source_interaction_message_id
+                   AND m.deleted_at IS NULL
+                INNER JOIN {_S}.tm_interaction_rooms r
+                    ON r.id = m.room_id
+                WHERE r.processo_id = %s::uuid
+                ORDER BY t.created_at DESC""",
+            (processo_id,),
+        )
+        return [_row_to_task(row) for row in rows]
+
 
 class InMemoryTaskRepository(TaskRepositoryPort):
     def __init__(self) -> None:
         self.rows: dict[str, TransformometroTask] = {}
         self.message_ids: set[str] = set()
+        self.message_processo_ids: dict[str, str] = {}
 
     def message_exists(self, message_id: str) -> bool:
         return message_id in self.message_ids
+
+    def link_message_to_process(self, message_id: str, processo_id: str) -> None:
+        self.message_ids.add(message_id)
+        self.message_processo_ids[message_id] = processo_id
 
     def create(self, **kwargs) -> TransformometroTask:
         now = datetime.utcnow()
@@ -193,3 +213,14 @@ class InMemoryTaskRepository(TaskRepositoryPort):
             for task in self.rows.values()
             if task.assignee_user_id == assignee_user_id and task.status in statuses
         ]
+
+    def list_related_to_process(self, processo_id: str) -> list[TransformometroTask]:
+        related: list[TransformometroTask] = []
+        for task in self.rows.values():
+            source = task.source_interaction_message_id
+            if not source:
+                continue
+            if self.message_processo_ids.get(source) == processo_id:
+                related.append(task)
+        related.sort(key=lambda item: item.created_at or datetime.min, reverse=True)
+        return related

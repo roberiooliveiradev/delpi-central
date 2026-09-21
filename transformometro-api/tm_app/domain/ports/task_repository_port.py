@@ -57,3 +57,8 @@ class TaskRepositoryPort(ABC):
         statuses: Sequence[TaskStatus],
     ) -> list[TransformometroTask]:
         raise NotImplementedError
+
+    @abstractmethod
+    def list_related_to_process(self, processo_id: str) -> list[TransformometroTask]:
+        """Tasks linked via interaction message → room → processo (no manual join in UI)."""
+        raise NotImplementedError

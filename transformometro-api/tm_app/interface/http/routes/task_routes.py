@@ -8,7 +8,9 @@ from tm_app.application.services.meeting_minutes_service import MeetingMinutesSe
 from tm_app.application.use_cases.list_my_task_items import ListMyTaskItemsUseCase
 from tm_app.application.use_cases.manage_transformometro_tasks import TaskCommandUseCases
 from tm_app.core.responses import fail, ok
+from tm_app.infrastructure.persistence.repositories.process_repository import ProcessoRepository
 from tm_app.infrastructure.persistence.repositories.task_repository import TaskRepository
+from tm_app.interface.http.branch_access_http import check_processo_view_access
 
 router = APIRouter(prefix="/transformometro", tags=["Transformômetro Tasks"])
 _commands = TaskCommandUseCases(TaskRepository())
@@ -49,6 +51,22 @@ def _handle(exc: Exception):
 def list_my_tasks(request: Request, status: str = "pending"):
     try:
         return ok(_list_items.execute(request.state.user, status=status))
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.get(
+    "/processos/{processo_id}/related-tasks",
+    operation_id="list_processo_related_tasks",
+)
+def list_processo_related_tasks(processo_id: str, request: Request):
+    if err := check_processo_view_access(request, processo_id):
+        return err
+    if not ProcessoRepository().get(processo_id):
+        return fail("Processo não encontrado.", 404)
+    try:
+        items = _commands.list_related_to_process(request.state.user, processo_id)
+        return ok({"items": [item.to_dict() for item in items], "total": len(items)})
     except Exception as exc:
         return _handle(exc)
 
