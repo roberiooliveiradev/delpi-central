@@ -16,7 +16,7 @@ H6  Investigação HLAPI (gates)             PROVEN
 H7  Estados e lista do solicitante         TARGET
 H8  Corpo rico da mensagem                 TARGET
 H9  Página do chamado                      TARGET
-H10 Solução, reabrir, satisfação           TARGET   (ex-H5 do solicitante)
+H10 Solução, reabrir, satisfação           CONSOLE  (E10.S1 — sem operação HLAPI do solicitante)
 H11 Condicionais (TTR, observer)           TARGET   Forms e vínculo riscados (H6)
 H12 Upload de arquivo novo                 BLOQUEADO até decisão + API
 H13 Listagem dinâmica (modelo → builder)   TARGET   prep de componentes autorizada
@@ -103,9 +103,9 @@ Ex-H5 que **é** do colaborador, não da bancada.
 
 | Entrega | Fonte | HD |
 |---|---|---|
-| Ver solução e aprovar/recusar | 14 P-07, 15 X-46 | HD-024 |
-| Reabrir se a matriz simplificada deixar | 14 P-08 | HD-024 |
-| Pesquisa de satisfação | 15 X-51 | HD-024 |
+| Ver solução e aprovar/recusar | 14 P-07, 15 X-46 — **CONSOLE** E10 | HD-024 |
+| Reabrir se a matriz simplificada deixar | 14 P-08 — **CONSOLE** (PATCH 403) | HD-024 |
+| Pesquisa de satisfação | 15 X-51 — **CONSOLE** (sem path) | HD-024 |
 
 Cada item exige operação HLAPI (Solution / Validation / Satisfaction). Se H6 não achar a operação, a linha volta a CONSOLE e não se inventa tela.
 

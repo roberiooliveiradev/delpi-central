@@ -1,6 +1,6 @@
 # 16 — Plano de paridade do solicitante
 
-> **Status:** em execução. **E8** e **E9.S1** / **E13.S1** entregues; **E10+** no plano.
+> **Status:** em execução. **E8**, **E9.S1**, **E10.S1** (CONSOLE) e **E13.S1** entregues; **E11+** no plano.
 > **Não altera** [`06-plano-execucao.md`](./06-plano-execucao.md) (`E1…E5`).
 > **Ondas:** [`05-roadmap.md`](./05-roadmap.md) H6…H13.
 > **Inventários:** [`12`](./12-conteudo-da-mensagem.md) · [`13`](./13-listagem-de-chamados.md) · [`14`](./14-pagina-e-estados-do-chamado.md) · [`15`](./15-capacidades-glpi.md).
@@ -32,7 +32,7 @@ O colaborador passa a ver e gravar no Meus Chamados de TI o que o GLPI já entre
 | RQ-05 | Compositor rico abrir+responder | **ATENDIDO** E8.S3 |
 | RQ-06 | Imagem no corpo via BFF se H6 | **ATENDIDO** E8.S4 — 12-H1 PROVEN; P0 6288 FORA (substituto 1108); A-07 continua FORA |
 | RQ-07 | Página: datas, can_followup, observador | **ATENDIDO** E9.S1 — `can_followup` só false no status 6 |
-| RQ-08 | Aprovar/reabrir/satisfação se HLAPI | PARCIAL — Solution/Validation **têm** path; Satisfaction **sem** path (CONSOLE) → E10 |
+| RQ-08 | Aprovar/reabrir/satisfação se HLAPI | **ATENDIDO** E10.S1 = **CONSOLE** — Satisfaction sem path; approve/reject sem `add_close` na HLAPI; reopen PATCH 403 |
 | RQ-09 | TTR, vínculo, Form, observer write se H6 | TTR + observer **PROVEN**; Form + vínculo **FORA** → E11 |
 | RQ-10 | Upload | BLOQUEADO_COM_EVIDENCIA E12 |
 | RQ-11 | Ajuda no mesmo entregável | HERDADO_POR_SOLUCAO_TRANSVERSAL cada S user-facing |
@@ -248,6 +248,7 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 - **Teste:** positive aprovar fecha (status 6); irmão recusar; negativo chamado alheio 404; sem operation = sem rota.
 - **Pronto:** HD-024 ou 15 X-46/X-51 = CONSOLE com evidência.
 - **Commit:** `feat(helpdesk): deixa o solicitante encerrar o ciclo no próprio chamado.` **ou** docs.
+- **Estado:** **ATENDIDO** como **CONSOLE** — [`evidence/e10-cycle-console.md`](./evidence/e10-cycle-console.md). Sem tela inventada.
 
 ---
 

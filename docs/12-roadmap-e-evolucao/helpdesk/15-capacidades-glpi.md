@@ -142,7 +142,7 @@ Estes não abrem etapa. Só deixam de ser lacuna invisível.
 | X-13 | Observador na abertura | o GLPI simplificado deixa adicionar watcher | **PROVEN** TeamMember (H-X2) |
 | X-28 | TTR visível | «até quando deve ser resolvido» | **PROVEN** `sla_ttr` / `sla_tto` |
 | X-29 | Vínculo (duplicata / filho) | o solicitante vê que o 1101 é duplicata do 1090 | **FORA** (H-X4); criar vínculo CONSOLE |
-| X-46 | Aprovar solução | já era H5; permanece | H5 |
+| X-46 | Aprovar solução | já era H5; permanece | **CONSOLE** (E10) |
 
 Não promover X-09 a tela de catálogo sem endpoint. Não copiar Formcreator/plugin.
 
@@ -155,7 +155,7 @@ Não promover X-09 a tela de catálogo sem endpoint. Não copiar Formcreator/plu
 | H-X3 | **PROVEN** | lista e detalhe trazem `date_solve`, `date_close`, `sla_ttr.{id,name}`, `sla_tto.{id,name}`. Não há campo `time_to_resolve`. |
 | H-X4 | **FORA** | GET Ticket **não** inclui vínculos. Schema `Ticket_Ticket` existe; `GET /Assistance/Ticket_Ticket` = 404. |
 
-`TicketSatisfaction` existe no schema e **não** tem path (404). Solution e Validation **têm** `GET/POST …/Timeline/Solution` e `…/Validation`. Sem corpo pessoal neste arquivo.
+`TicketSatisfaction` existe no schema e **não** tem path (404). Solution e Validation **têm** `GET/POST …/Timeline/Solution` e `…/Validation`, mas **não** substituem o aceitar/recusar solução do solicitante na HLAPI atual — ver [`evidence/e10-cycle-console.md`](./evidence/e10-cycle-console.md).
 
 ## 10. O que este arquivo não faz
 

@@ -166,9 +166,9 @@ HIPOTESE_A_VALIDAR   BLOQUEADO   CONSOLE_GLPI   H5   FORA
 | P-04 | Data-hora absoluta no cabeçalho (aberto / atualizado / solução) | **IMPLEMENTADO** | cartão do detalhe |
 | P-05 | Observador só leitura (rótulo) | **IMPLEMENTADO** se `team.observer` | `observers_display_name` |
 | P-06 | Esconder Responder quando o GLPI não aceita acompanhamento (fechado, sem direito) | **IMPLEMENTADO** | `can_followup=false` só em status 6 |
-| P-07 | Aprovar / recusar solução | H5 | — |
-| P-08 | Reabrir fechado | H5 (matriz simplificada) | — |
-| P-09 | Pesquisa de satisfação | H5 | — |
+| P-07 | Aprovar / recusar solução | **CONSOLE** E10 | HLAPI sem operação do solicitante |
+| P-08 | Reabrir fechado | **CONSOLE** E10 | PATCH status 403 no Colaborador |
+| P-09 | Pesquisa de satisfação | **CONSOLE** E10 | sem path |
 | P-10 | Excluir chamado Novo | CONSOLE_GLPI | a doc permite ao solicitante; esta tela não apaga |
 | P-11 | Editar atores, SLA, itens, categoria, urgência depois de aberto | CONSOLE_GLPI | sem PATCH de Ticket |
 | P-12 | Abas, PDF, 2/15, Salvar, lixeira, tarefa, documento novo | CONSOLE_GLPI / A-08 | — |

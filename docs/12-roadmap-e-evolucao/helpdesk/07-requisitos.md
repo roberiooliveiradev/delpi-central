@@ -31,7 +31,7 @@
 | HD-021 | Leitura do corpo em HTML sanitizado (+ imagem se H6) | BFF allowlist + kit html | E8.S1, E8.S2, E8.S4 | [`12`](./12-conteudo-da-mensagem.md) |
 | HD-022 | Escrita rica (abrir e responder) | `RichTextEditor`; sem colar imagem | E8.S3 | [`12`](./12-conteudo-da-mensagem.md) |
 | HD-023 | Página: datas, `can_followup`, observador só leitura | detalhe | E9.S1 | [`14`](./14-pagina-e-estados-do-chamado.md) |
-| HD-024 | Aprovar/recusar solução, reabrir, satisfação | só com operation HLAPI | E10.S1 | [`15`](./15-capacidades-glpi.md) X-46/X-50/X-51 |
+| HD-024 | Aprovar/recusar solução, reabrir, satisfação | **CONSOLE** — sem operação HLAPI do solicitante | E10.S1 | [`evidence/e10-cycle-console.md`](./evidence/e10-cycle-console.md) |
 | HD-025 | TTR, vínculo, Form, observer na abertura | só se E6.S1 PROVEN | E11.S1 | [`15`](./15-capacidades-glpi.md) |
 | HD-026 | Upload de arquivo novo | BLOQUEADO | E12.S1 | A-08 |
 | HD-027 | Listagem dinâmica: modelo/colunas/toolbar agora; builder AND/OR e prefs depois | sem export/massa/mapa | E13.S1, E13.S2 | [`13`](./13-listagem-de-chamados.md) G-50…G-55 |
