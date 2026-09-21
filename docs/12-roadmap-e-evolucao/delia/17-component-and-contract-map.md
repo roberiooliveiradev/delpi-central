@@ -971,6 +971,26 @@ PANEL STATE: TRANSIENT_UI_STATE (no localStorage/sessionStorage)
 NEW_HOST_FIELDS = NONE
 ```
 
+C2-T5R3 companion dock (Product Master UX; frozen host props unchanged):
+
+```text
+GLOBAL_DELIA_SURFACE_V1 = SUPERSEDED_UX
+GLOBAL_DELIA_SURFACE_V2 = COMPANION_DOCK_APPROVED
+OWNER: Portal workspace layout + dock chrome + host lifecycle; DÉLIA = federated ./App content
+NON_MODAL = YES
+BACKDROP = NONE
+PORTAL_REMAINS_INTERACTIVE = YES
+TRIGGER: right-edge handle "Abrir DÉLIA ao lado"; no special sidebar or mobile launcher
+NORMAL_APP_ENTRY: id=delia basePath=/apps/delia preserved
+VISIBILITY: AuthContext.apps id=delia AND viewport >= 1025px AND workspace fits min 360px at <= 45%
+WIDTH: TRANSIENT_UI_STATE default 440, min 360, max min(640, 45% workspace)
+NAVIGATION: dock stays mounted; updateRoute only
+FULL_PAGE: dock unmounts on /apps/delia(+children) and stays closed until explicit reopen
+NEW_HOST_FIELDS = NONE
+BROWSER_RETAINED_STATE = NONE
+LIVE_COMPANION_DOCK = TEST_NOT_RUN
+```
+
 C2-T4 owner/source inventory (no runtime Workspace; DÉLIA is not owner):
 
 ```text

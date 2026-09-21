@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C2-T5R2` live revalidation (`LIVE_GLOBAL_SURFACE=FAIL` until Product Master confirms the published launcher; `C2_EXECUTED=NO`; do not start T6)
+**Próxima etapa:** `C2-T5R3` companion dock live smoke (`LIVE_COMPANION_DOCK=TEST_NOT_RUN`; `C2_EXECUTED=NO`; do not start T6)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -369,6 +369,7 @@ C2_T4R1 = STATUS_NORMALIZATION_READY_FOR_REVIEW
 C2_T5 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
 C2_T5R1 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
 C2_T5R2 = LIVE_GLOBAL_SURFACE_FAIL_BUNDLE_CONTAINS_T5
+C2_T5R3 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
 C2_STARTED = YES
 C2_IMPLEMENTATION_STARTED = YES
 C2_EXECUTED = NO
@@ -386,7 +387,7 @@ BROWSER_STATE_RESIDENCY_POLICY = APPROVED (C2-T1D1)
 BROWSER_RETAINED_STATE_CURRENTLY_REQUIRED = NO
 CENTRALIZED_BROWSER_STATE_BOUNDARY = REQUIRED_ON_FIRST_RETAINED_STATE
 SHARED_DEVICE_ISOLATION_INVARIANT = FROZEN_ACCEPTED
-NEXT = C2-T5R2 live revalidation (LIVE_GLOBAL_SURFACE=FAIL; do not start T6)
+NEXT = C2-T5R3 companion dock live smoke (LIVE_COMPANION_DOCK=TEST_NOT_RUN; do not start T6)
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -624,14 +625,14 @@ CLOSED_FOR_CURRENT_SCOPE: host props, route projection, mount/updateRoute/unmoun
 DEFER: WorkspaceContext runtime until operational owners/sources exist
 DEFER: PlatformCommand bus; Portal location remains the navigation mechanism
 DEFER: iframe bridge until DÉLIA has a real iframe consumer
-IMPLEMENTED_CURRENT_SCOPE: C2-T5 Portal global launcher + panel reuses federated remote `delia` / `./App` (same AppHost lifecycle helpers); visibility = `/me/apps` id=delia only
+IMPLEMENTED_CURRENT_SCOPE: C2-T5R3 companion dock reuses federated remote `delia` / `./App`; V1 modal surface is SUPERSEDED_UX; visibility = `/me/apps` id=delia plus eligible split; no special sidebar launcher
 DEFER: CP-012 intelligence to C3
 C2-T4: OP/PRODUCT/OPERATION public via api-delpi (TOTVS); MACHINE/POSTO TO_INVENTORY; aggregate OPERATIONAL_CONTEXT remains TO_INVENTORY
 C2-T4R1: formal status OPERATIONAL_CONTEXT = TO_INVENTORY (MIXED is not a canonical factual status)
 WORKSPACE_CONTEXT_RUNTIME = DEFER
 C2_IMPLEMENTATION_STARTED = YES
 C2_EXECUTED = NO
-NEXT = C2-T5R2 live revalidation (no iframe bridge)
+NEXT = C2-T5R3 companion dock live smoke (no iframe bridge)
 C2-FINAL after those reviews
 Workspace binding remains unscheduled
 ```
