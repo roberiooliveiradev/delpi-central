@@ -33,6 +33,7 @@ import {
   visiblePortalRecentAccess,
   type PortalRecentAccessItem,
 } from "../../state/portalRecentAccess";
+import { usePortalGreeting } from "./usePortalGreeting";
 import { usePortalHomeSignals } from "./usePortalHomeSignals";
 
 const SECTION = sectionCardPacBemClasses("ds");
@@ -73,6 +74,7 @@ export function PortalHomePage({ pathname, getAccessToken, onNavigate }: PortalH
   const visibleRecents = visiblePortalRecentAccess(recents, canManage);
   const favoritePaths = useMemo(() => new Set(visibleFavorites.map((item) => item.path)), [visibleFavorites]);
   const { highlights, events } = usePortalHomeSignals(getAccessToken);
+  const greeting = usePortalGreeting(getAccessToken);
 
   useEffect(() => subscribePortalFavorites(setFavorites), []);
   useEffect(() => subscribePortalRecentAccess(setRecents), []);
@@ -107,7 +109,7 @@ export function PortalHomePage({ pathname, getAccessToken, onNavigate }: PortalH
     <TransformometroShell>
       <PageHeader
         eyebrow={PORTAL_PAGE_COPY.home.eyebrow}
-        title={PORTAL_PAGE_COPY.home.title}
+        title={greeting}
         subtitle={PORTAL_PAGE_COPY.home.description}
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.home}
         onNavigate={onNavigate}

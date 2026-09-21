@@ -17,9 +17,11 @@ describe("portalHomeSignals", () => {
         horas_economizadas_total: 8.5,
         roi_medio: 1.2,
       },
+      contextLabel: "Consolidado (todas as unidades) · 01/09/2026 — 21/09/2026",
     });
     expect(tiles.map((item) => item.id)).toEqual(["net-economy", "hours", "solutions"]);
     expect(tiles.every((item) => item.loading !== true)).toBe(true);
+    expect(tiles.every((item) => item.description?.includes("todas as unidades"))).toBe(true);
   });
 
   it("mostra só eventos comprovados", () => {

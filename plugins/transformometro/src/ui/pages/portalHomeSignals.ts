@@ -17,26 +17,31 @@ export type PortalHomeEventDescriptor = {
 export function buildPortalHomeHighlights(input: {
   loading: boolean;
   resumo: DashboardResumo | null;
+  contextLabel?: string | null;
 }): PageHeroHighlight[] {
-  const { loading, resumo } = input;
+  const { loading, resumo, contextLabel } = input;
   if (!resumo && !loading) return [];
+  const description = contextLabel?.trim() || undefined;
   return [
     {
       id: "net-economy",
       label: "Economia líquida",
       value: formatCurrency(resumo?.economia_liquida_total),
+      description,
       loading,
     },
     {
       id: "hours",
       label: "Horas economizadas",
       value: formatHours(resumo?.horas_economizadas_total),
+      description,
       loading,
     },
     {
       id: "solutions",
       label: "Soluções implementadas",
       value: formatDecimal(resumo?.solucoes_implementadas, 0),
+      description,
       loading,
     },
   ];

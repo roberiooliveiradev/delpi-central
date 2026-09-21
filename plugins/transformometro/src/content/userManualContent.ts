@@ -43,11 +43,15 @@ export const USER_MANUAL_CONTENT = {
   concepts: [
     {
       term: "Início",
-      meaning: "Hub dos caminhos do portal: Gestão, Processos, Registros, Ajuda e, para quem administra, Administração.",
+      meaning: "Hub dos caminhos do portal: Gestão, Processos, Registros, Ajuda e, para quem administra, Administração. A saudação usa o primeiro nome da sessão autenticada.",
     },
     {
       term: "Visão geral",
-      meaning: "Indicadores do programa. Competência, datas, unidade e departamento recortam o gráfico.",
+      meaning: "Indicadores do programa. Competência, datas, unidade e departamento recortam o gráfico. Consolidado reúne todas as unidades do recorte — é filtro, não autorização.",
+    },
+    {
+      term: "Consolidado",
+      meaning: "Visão com os totais do universo permitido pelos filtros. Os cards identificam «todas as unidades» e o período. Os valores vêm da API, sem soma na tela.",
     },
     {
       term: "Meus processos",
@@ -65,6 +69,8 @@ export const USER_MANUAL_CONTENT = {
       intro:
         "A barra superior leva às áreas do portal. Buscar, ou Ctrl+K, abre os mesmos caminhos em qualquer tela. A busca do Início filtra os cards daquela tela.",
       bullets: [
+        "A saudação do Hero usa Bom dia, Boa tarde ou Boa noite e o primeiro nome da sessão. Sem nome, aparece Bem-vindo ao Portal Transforma+.",
+        "As métricas do Hero (economia líquida, horas e soluções) vêm do mesmo resumo da Visão geral no mês corrente.",
         "Use a estrela de um caminho para fixá-lo em Favoritos.",
         "Favoritos ficam só ao lado de Buscar, na barra superior.",
         "Abaixo da busca do Início aparecem os últimos acessos, não uma segunda lista de favoritos.",
@@ -77,8 +83,10 @@ export const USER_MANUAL_CONTENT = {
       title: "Visão geral",
       intro: "Mostra indicadores e resultados do programa de transformação.",
       bullets: [
-        "As visões são Consolidado, Unidade e Departamento.",
-        "O filtro não muda quem pode ver o portal.",
+        "As visões são Consolidado, Unidade e Departamento. Isso recorta os dados; não muda quem pode abrir o portal.",
+        "Em Consolidado, os cards mostram o contexto de todas as unidades e o período.",
+        "Em Unidade ou Departamento, o rodapé do card identifica o nome canônico escolhido e o período.",
+        "Economia, horas, soluções, investimento e ROI vêm calculados pela API. A tela não soma cards.",
       ],
       links: [
         {

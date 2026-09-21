@@ -281,3 +281,15 @@ Histórico de agrupamento de UX. **Não são a ordem vigente.** A ordem está em
 ## 16. O que este adendo não faz
 
 Não altera frontend, API, MCP, Actions, OpenAPI, Keycloak, RBAC, migrations nem runtime. Não copia regra de pedido, carteira, SLA ou sala. Não trata documentação como prova de produção.
+
+## 17. Experiência compartilhada — estado comprovado
+
+Registro do recorte saudação / consolidado / IDD / Help. Documentação não promove runtime.
+
+| Capability | Status | Owner / fonte |
+|---|---|---|
+| GREETING | IMPLEMENTED_NOT_RUNTIME_PROVEN | Chrome `formatPortalGreeting` em `@delpi/plugin-ui`. Identidade = `GET /core-api/me` `name`. Fallback `Bem-vindo ao Portal Transforma+`. Sem persistência de PII. |
+| CONSOLIDATED_CONTEXT | IMPLEMENTED_NOT_RUNTIME_PROVEN | Valores: `DashboardLiveService.build_summary` + ROI sobre totais. UI: `buildDashboardKpiContextLabel`. Consolidado = todas as unidades do recorte, não autorização. |
+| IDD | TO_INVENTORY / BLOCKED_BY_TARGET_CONTRACT | IDD canônico vive no SI (`pickSiIddScoreLabel`) para dashboards de departamento. Transformômetro não tem fórmula, inputs nem metas próprias. |
+| TARGETS | TO_INVENTORY | Sem meta canônica no domínio Transformômetro. Não inventar 0. |
+| HELP | IMPLEMENTED_NOT_RUNTIME_PROVEN | `UserManual*` + `userManualContent.ts` do próprio portal. `/help` continua rota interna; manifesto 0.5.5. |

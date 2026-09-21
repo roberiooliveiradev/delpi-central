@@ -9,6 +9,7 @@ const source = readFileSync(join(dir, "PortalHomePage.tsx"), "utf8");
 describe("PortalHomePage shared chrome", () => {
   it("compõe hero, eventos, busca, recentes e cards com estrela", () => {
     expect(source).toMatch(/PageHeader/);
+    expect(source).toMatch(/usePortalGreeting/);
     expect(source).toMatch(/highlights=/);
     expect(source).toMatch(/EventsSection/);
     expect(source).toMatch(/CatalogSearchBar/);

@@ -75,6 +75,7 @@ import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { buildProcessoPath } from "../../utils/routeParser";
 import { DS_FILTERS_ROW, DS_FILTER_BOX, DS_FILTER_BOX_WIDE } from "../../components/filterChrome";
 import { EMPTY_STATE_CLASS } from "../../components/emptyStateUi";
+import { buildDashboardKpiContextLabel, formatDashboardPeriodLabel } from "../../utils/dashboardKpiContext";
 import {
   buildDashboardQueryParams,
   canSelectConsolidatedView,
@@ -134,12 +135,6 @@ type TopDailyPoint = {
   value: number;
 };
 
-function formatPeriod(filters: Filters) {
-  return `${filters.dataInicial.split("-").reverse().join("/")} — ${filters.dataFinal
-    .split("-")
-    .reverse()
-    .join("/")}`;
-}
 
 function chartHint(
   periodLabel: string,
@@ -204,7 +199,22 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       ),
     [filters, options?.access_scope, viewMode]
   );
-  const periodLabel = useMemo(() => formatPeriod(filters), [filters]);
+  const periodLabel = useMemo(
+    () => formatDashboardPeriodLabel(filters.dataInicial, filters.dataFinal),
+    [filters.dataFinal, filters.dataInicial],
+  );
+  const kpiContext = useMemo(
+    () =>
+      buildDashboardKpiContextLabel({
+        viewMode,
+        filialIds: viewMode === "consolidated" ? [] : filters.filialIds,
+        setorIds: viewMode === "department" ? filters.setorIds : [],
+        periodLabel,
+        filiais: options?.filiais,
+        setores: options?.setores,
+      }),
+    [filters.filialIds, filters.setorIds, options?.filiais, options?.setores, periodLabel, viewMode],
+  );
   const setoresFiltrados = useMemo(() => {
     const setores = options?.setores ?? [];
     if (filters.filialIds.length === 0) return setores;
@@ -793,7 +803,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           title="Economia líquida"
           titleHint={TM_HELP_TOOLTIPS.dashboard.kpis.economiaLiquida}
           value={formatCurrency(resumo?.economia_liquida_total)}
-          subtitle={`Recorte · ${periodLabel}`}
+          contextLabel={kpiContext}
           icon={<Coins size={22} />}
           loading={isBusy && !resumo}
         />
@@ -801,7 +811,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           title="Economia bruta"
           titleHint={TM_HELP_TOOLTIPS.dashboard.kpis.economiaBruta}
           value={formatCurrency(resumo?.economia_bruta_total)}
-          subtitle={`Recorte · ${periodLabel}`}
+          contextLabel={kpiContext}
           icon={<Coins size={22} />}
           loading={isBusy && !resumo}
         />
@@ -809,7 +819,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           title="Soluções implementadas"
           titleHint={TM_HELP_TOOLTIPS.dashboard.kpis.solucoes}
           value={formatDecimal(resumo?.solucoes_implementadas, 0)}
-          subtitle="Melhorias com revisão ativa implantada"
+          contextLabel={kpiContext}
           icon={<Lightbulb size={22} />}
           loading={isBusy && !resumo}
         />
@@ -817,7 +827,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           title="Horas economizadas"
           titleHint={TM_HELP_TOOLTIPS.dashboard.kpis.horas}
           value={formatDecimal(resumo?.horas_economizadas_total, 1)}
-          subtitle={periodLabel}
+          contextLabel={kpiContext}
           icon={<Clock size={22} />}
           loading={isBusy && !resumo}
         />
@@ -825,7 +835,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           title="ROI acumulado"
           titleHint={TM_HELP_TOOLTIPS.dashboard.kpis.roi}
           value={formatRoiRatio(resumo?.roi_medio, 1)}
-          subtitle={`Economia líquida / investimento · ${periodLabel}`}
+          contextLabel={kpiContext}
           icon={<TrendingUp size={22} />}
           loading={isBusy && !resumo}
         />
@@ -833,7 +843,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           title="Investimento total"
           titleHint={TM_HELP_TOOLTIPS.dashboard.kpis.investimento}
           value={formatCurrency(resumo?.investimento_total ?? resumo?.investimento_unico_total)}
-          subtitle="Único, recorrente e recursos"
+          contextLabel={kpiContext}
           icon={<Coins size={22} />}
           loading={isBusy && !resumo}
         />
