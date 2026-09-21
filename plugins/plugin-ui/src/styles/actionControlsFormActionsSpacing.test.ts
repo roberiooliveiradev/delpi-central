@@ -32,6 +32,17 @@ describe("action-controls FormActions spacing", () => {
     );
   });
 
+  it("desliga o visual nativo do botão para o tema do portal pintar o ícone", () => {
+    expect(css).toMatch(/\.delpi-ui-action-btn\s*\{[^}]*appearance:\s*none/);
+    expect(css).toMatch(/\.delpi-ui-icon-btn\s*\{[^}]*appearance:\s*none/);
+    expect(css).toMatch(
+      /\.delpi-ui-icon-btn--primary\s*\{[^}]*color:\s*var\(--delpi-ui-on-accent,\s*#ffffff\)/,
+    );
+    expect(css).toMatch(
+      /:root\[data-theme="dark"\]\s*\.delpi-ui-icon-btn--primary[\s\S]*?color:\s*var\(--delpi-ui-on-accent,\s*#ffffff\)/,
+    );
+  });
+
   it("desktop FormActions base não usa coluna", () => {
     const baseBlock = css.match(/\.delpi-ui-form-actions\s*\{[^}]+\}/);
     expect(baseBlock?.[0] ?? "").not.toMatch(/flex-direction:\s*column/);

@@ -1,6 +1,7 @@
 /* ActionButton / BackLink — botões de ação e voltar canônicos dos MFEs */
 
 .delpi-ui-action-btn {
+  appearance: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -23,7 +24,7 @@ a.delpi-ui-action-btn:visited {
 }
 
 a.delpi-ui-action-btn--primary:visited {
-  color: #fff;
+  color: var(--delpi-ui-on-accent, #ffffff);
 }
 
 a.delpi-ui-action-btn--link:visited {
@@ -56,7 +57,7 @@ a.delpi-ui-action-btn--link:visited {
 .delpi-ui-action-btn--primary {
   background: var(--delpi-ui-accent, var(--primary, #089bdb));
   border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
-  color: #fff;
+  color: var(--delpi-ui-on-accent, #ffffff);
 }
 
 .delpi-ui-action-btn--primary:hover:not(:disabled):not(.delpi-ui-action-btn--disabled) {
@@ -176,6 +177,7 @@ a.delpi-ui-action-btn--link:visited {
 }
 
 .delpi-ui-icon-btn {
+  appearance: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -185,9 +187,15 @@ a.delpi-ui-action-btn--link:visited {
   border-radius: 8px;
   border: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));
   background: var(--delpi-ui-surface, var(--surface, #ffffff));
-  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, #64748b));
+  color: var(--delpi-ui-text, var(--text, #111111));
   cursor: pointer;
   transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.delpi-ui-icon-btn svg,
+.delpi-ui-action-btn svg {
+  flex-shrink: 0;
+  color: inherit;
 }
 
 .delpi-ui-icon-btn:hover:not(:disabled) {
@@ -215,12 +223,30 @@ a.delpi-ui-action-btn--link:visited {
 .delpi-ui-icon-btn--primary {
   background: var(--delpi-ui-accent, var(--primary, #089bdb));
   border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
-  color: #fff;
+  color: var(--delpi-ui-on-accent, #ffffff);
 }
 
 .delpi-ui-icon-btn--primary:hover:not(:disabled) {
-  color: #fff;
+  color: var(--delpi-ui-on-accent, #ffffff);
   filter: brightness(1.05);
+}
+
+:root[data-theme="dark"] .delpi-ui-icon-btn:not(.delpi-ui-icon-btn--primary):not(.delpi-ui-icon-btn--danger),
+:root[data-theme="dark"] .delpi-ui-action-btn:not(.delpi-ui-action-btn--primary):not(.delpi-ui-action-btn--ghost):not(.delpi-ui-action-btn--link) {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-surface, var(--surface-2, #1b2030)) 82%,
+    white
+  );
+  border-color: var(--delpi-ui-border, var(--border, rgba(255, 255, 255, 0.16)));
+  color: var(--delpi-ui-text, var(--text, rgba(255, 255, 255, 0.85)));
+}
+
+:root[data-theme="dark"] .delpi-ui-icon-btn--primary,
+:root[data-theme="dark"] .delpi-ui-action-btn--primary {
+  background: var(--delpi-ui-accent, var(--primary, #089bdb));
+  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  color: var(--delpi-ui-on-accent, #ffffff);
 }
 
 .delpi-ui-icon-btn--danger:hover:not(:disabled) {

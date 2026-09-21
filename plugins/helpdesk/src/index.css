@@ -17,6 +17,7 @@
   --helpdesk-danger: var(--danger, #b42318);
 
   --delpi-ui-accent: var(--helpdesk-accent);
+  --delpi-ui-on-accent: #ffffff;
   --delpi-ui-title: var(--helpdesk-title);
   --delpi-ui-surface: var(--helpdesk-surface);
   --delpi-ui-text: var(--helpdesk-text);
