@@ -1074,6 +1074,8 @@ Também provar:
 - execution/model/memory/device refs no context não concedem authority;
 - platform visual action não vira Business Action.
 
+C2-T3: `LOCKED` em `25` para CP-001–CP-012, CP-025, CP-059, CP-061–CP-070, CP-156, CP-159 e CP-171 não é evidência de runtime. Host/lifecycle atuais estão cobertos por C2-T1/T2. Contexto operacional, Workspace runtime, painel global, commands tipados e bridge de iframe permanecem `NOT_IMPLEMENTED` ou `TO_INVENTORY`. CP-012 depende de C3. `PORTAL_LOGOUT_FULL_E2E` e `LIVE_USER_A_USER_B` continuam `TEST_NOT_RUN`.
+
 ## 5. Gate C3 — Intelligence + Capability Foundations
 
 ### Planner/OpenAPI/Expertise

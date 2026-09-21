@@ -162,7 +162,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-070 | Observabilidade iframe bridge | Portal/Observability | trace/redaction | LOCKED |
 | CP-156 | Paridade de RBAC/policy entre Global/Workspace/Meeting/Frontline | Portal/DÉLIA Policy | surface parity | LOCKED |
 | CP-159 | Contexto operacional OP/máquina/produto/operação/posto usa WorkspaceContext + EntityRef | Portal/MFE/DÉLIA | operational context contract | LOCKED |
-| CP-171 | Device metadata não substitui identidade/autorização | Portal/DÉLIA Security | shared-device/context negative | LOCKED |
+| CP-171 | Device metadata não substitui identidade/autorização | Portal/DÉLIA Security | shared-device/context negative | LOCKED — requirement only; not a C2 device runtime |
 
 ## 5. C3 — Intelligence Core + Extended Foundations
 
@@ -568,6 +568,8 @@ No CP promoted to PASS by documentation alone
 ```
 
 Related non-inventory CPs (CP-178/179 OT, CP-091 EntityRef, etc.) remain PLANNED/LOCKED per their rows; inventory evidence does not satisfy runtime gates.
+
+C2-T3: rows CP-001–CP-012, CP-025, CP-059, CP-061–CP-070, CP-156 and CP-159 stay `LOCKED` as requirements. That status is not `IMPLEMENTED_RUNTIME`. Host presentation and transient lifecycle are the only C2 behaviors with current tests. WorkspaceContext, operational OP/machine/product/operation/posto, global panel, typed command bus and DÉLIA iframe bridge are not runtime. CP-012 reasoning is C3.
 
 ## 15. C0.S1 naming / physical ownership linkage — accepted review
 

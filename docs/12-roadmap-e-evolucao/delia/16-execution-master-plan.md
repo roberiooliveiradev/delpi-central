@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** revisão de `C2-T2` (`C2_STARTED=YES`; `C2_IMPLEMENTATION_STARTED=NO`; ciclo de host existente suficiente; sem storage/logout novo; `PRODUCTION_READINESS=NOT_PROVEN`)
+**Próxima etapa:** `C2-T4 — OPERATIONAL_CONTEXT_OWNER_SOURCE_INVENTORY` (`C2-T3` dependency freeze; inventário apenas; `C2_EXECUTED=NO`; `C2_IMPLEMENTATION_STARTED=NO`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -363,15 +363,17 @@ TYPESCRIPT_ISOLATED = INCONCLUSIVE (NON_BLOCKING_RESIDUAL)
 CORE_CONTEXT_LIVE_NETWORK = TEST_NOT_RUN (NON_BLOCKING; formal CORE_CONTEXT=PASS; T6 proved live Core governance path)
 C2_T1 = INVENTORY_FREEZE_READY_FOR_REVIEW
 C2_T2 = VERIFICATION_EVIDENCE_READY_FOR_REVIEW
+C2_T3 = DEPENDENCY_FREEZE_READY_FOR_REVIEW
 C2_STARTED = YES
 C2_IMPLEMENTATION_STARTED = NO
+C2_EXECUTED = NO
 PORTAL_HOST_CONTRACT = FROZEN_ACCEPTED (current AppHost props; ≠ business AuthZ)
 OPERATIONAL_CONTEXT = TO_INVENTORY (no runtime WorkspaceContext)
 BROWSER_STATE_RESIDENCY_POLICY = APPROVED (C2-T1D1)
 BROWSER_RETAINED_STATE_CURRENTLY_REQUIRED = NO
 CENTRALIZED_BROWSER_STATE_BOUNDARY = REQUIRED_ON_FIRST_RETAINED_STATE
 SHARED_DEVICE_ISOLATION_INVARIANT = FROZEN_ACCEPTED
-NEXT = hold for C2-T2 review (do not start operational context or a command bus)
+NEXT = C2-T4 — OPERATIONAL_CONTEXT_OWNER_SOURCE_INVENTORY (do not start automatically)
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -601,6 +603,21 @@ FOUNDATION_FREEZE = APPROVED does NOT mean:
 - shared-device/session cleanup under `BROWSER_STATE_RESIDENCY_POLICY` (C2-T1D1): verify host lifecycle first; introduce a browser-state boundary only when retained state is proven;
 - operational context OP/machine/product/operation/posto;
 - no memory/Edge/device/tool/provider state as permission authority.
+
+C2-T3 freeze (documentation only; `LOCKED` in `25` is not runtime evidence):
+
+```text
+CLOSED_FOR_CURRENT_SCOPE: host props, route projection, mount/updateRoute/unmount, transient remount, browser-state policy, no DÉLIA logout, no storage framework
+DEFER: WorkspaceContext runtime until operational owners/sources exist
+DEFER: PlatformCommand bus; Portal location remains the navigation mechanism
+DEFER: iframe bridge until DÉLIA has a real iframe consumer
+DEFER: global panel until a Portal slot that reuses the same runtime is proven
+DEFER: CP-012 intelligence to C3
+NEXT = C2-T4 operational owner/source inventory only
+C2-T5 global surface applicability
+C2-T6 iframe applicability (no new bridge by default)
+C2-FINAL after those reviews
+```
 
 ---
 
