@@ -41,6 +41,23 @@ def test_post_is_not_retried_and_get_retries_transient_status():
     assert calls["get"] == 3
 
 
+def test_authorization_url_keeps_state_across_glpi_login():
+    client = HttpxGlpiClient(
+        base_url="https://helpdesk.example",
+        client_id="client",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+    )
+    url = client.authorization_url(state="abc_DEF-123", code_challenge="challenge")
+    assert url.startswith("https://helpdesk.example/?redirect=")
+    inner = url.split("redirect=", 1)[1]
+    assert "api.php%2Fauthorize" in inner
+    assert "state%3Dabc_DEF-123" in inner
+    assert "code_challenge%3Dchallenge" in inner
+    assert "code_challenge_method%3DS256" in inner
+    assert inner.startswith("https%3A%2F%2Fhelpdesk.example%2Fapi.php%2Fauthorize")
+
+
 def test_mapping_keeps_followups_and_hides_tasks():
     detail = parse_ticket_detail(
         {

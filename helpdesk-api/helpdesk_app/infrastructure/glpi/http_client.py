@@ -1,4 +1,5 @@
 import logging
+from urllib.parse import quote
 
 import httpx
 
@@ -59,7 +60,11 @@ class HttpxGlpiClient:
                 "code_challenge_method": "S256",
             }
         )
-        return f"{self._base}/api.php/authorize?{params}"
+        authorize = f"{self._base}/api.php/authorize?{params}"
+        # GLPI 11.0.5 recria /authorize sem state nem PKCE quando a sessão
+        # ainda não existe. Entrar por /?redirect= faz o login SAML voltar
+        # para a URL original, com state e code_challenge intactos.
+        return f"{self._base}/?redirect={quote(authorize, safe='')}"
 
     def exchange_code(self, *, code: str, code_verifier: str) -> TokenSet:
         payload = self._form(
