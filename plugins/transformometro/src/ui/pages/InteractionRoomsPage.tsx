@@ -776,7 +776,7 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
         : "Abra um processo para iniciar uma interação.";
 
   return (
-    <TransformometroShell>
+    <TransformometroShell fillViewport>
       <PortalTopBar currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.interactionRooms} onNavigate={onNavigate} />
       <InteractionRoomPage
         labels={{

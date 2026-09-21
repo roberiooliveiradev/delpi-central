@@ -93,6 +93,14 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/data-layout=\{layout\}/);
     expect(source).toMatch(/\bfill\b/);
     expect(source).toMatch(/shouldStickThreadToBottom/);
+    const roomCss = readFileSync(
+      join(dir, "../../styles/interaction-room-page.css"),
+      "utf8",
+    );
+    expect(roomCss).not.toMatch(/min-height:\s*calc\(\s*100vh/);
+    expect(roomCss).not.toMatch(/height:\s*calc\(\s*100vh/);
+    expect(roomCss).toMatch(/min-height:\s*0/);
+    expect(roomCss).toMatch(/height:\s*100%/);
     expect(source).toMatch(/onLoadOlder/);
     expect(source).toMatch(/resolveAttachmentImageSrc/);
     expect(source).toMatch(/onInlineImagesInserted/);

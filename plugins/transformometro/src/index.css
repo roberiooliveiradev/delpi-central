@@ -67,6 +67,32 @@
   display: flex;
   flex-direction: column;
   gap: var(--ds-section-gap);
+}
+/* Sala: preenche o mount do Portal — scroll fica no stage, não na página. */
+.dashboard-transformometro.dashboard-page--fill{
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.dashboard-transformometro.dashboard-page--fill > .tm-page-sections{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+.dashboard-transformometro.dashboard-page--fill > .tm-page-sections > .ds-interaction-room{
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  align-self: stretch;
+}
+#root:has(> .dashboard-transformometro.dashboard-page--fill){
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
 }.dashboard-transformometro .tm-page-sections > .ds-card,
 .dashboard-transformometro .tm-page-sections > .ds-table-section,
 .dashboard-transformometro .tm-page-sections > .ds-state,

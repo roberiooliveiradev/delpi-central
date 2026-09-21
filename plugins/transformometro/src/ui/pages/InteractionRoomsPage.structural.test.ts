@@ -9,6 +9,7 @@ const source = readFileSync(join(dir, "InteractionRoomsPage.tsx"), "utf8");
 describe("InteractionRoomsPage", () => {
   it("usa a página canônica do kit e só entrega dados do processo", () => {
     expect(source).toMatch(/InteractionRoomPage/);
+    expect(source).toMatch(/fillViewport/);
     expect(source).toMatch(/INTERACTION_ROOM_PAGE_LABELS_PT/);
     expect(source).toMatch(/Não lidas/);
     expect(source).toMatch(/Menções/);
