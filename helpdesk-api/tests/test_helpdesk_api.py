@@ -132,6 +132,62 @@ def test_create_ticket_and_followup_are_idempotent():
     assert len(glpi.followups) == 1
 
 
+def test_create_and_followup_sanitize_html_and_keep_plain_text():
+    client, glpi = build_client()
+    link(client)
+    rich = client.post(
+        "/tickets",
+        json={
+            "title": "Rede",
+            "description": '<p>Cabo <strong>solto</strong> <script>alert(1)</script></p>',
+            "category_id": 3,
+            "urgency_id": 3,
+        },
+        headers={**auth_headers(), "Idempotency-Key": "intent-html-1"},
+    )
+    assert rich.status_code == 201
+    assert glpi.created[-1][1] == "<p>Cabo <strong>solto</strong> </p>"
+    assert "<script" not in glpi.created[-1][1].lower()
+
+    plain = client.post(
+        "/tickets",
+        json={
+            "title": "Teclado",
+            "description": "Só texto puro",
+            "category_id": 3,
+            "urgency_id": 3,
+        },
+        headers={**auth_headers(), "Idempotency-Key": "intent-plain-1"},
+    )
+    assert plain.status_code == 201
+    assert glpi.created[-1][1] == "Só texto puro"
+
+    dirty_follow = client.post(
+        "/tickets/42/followups",
+        json={"content": '<p>ok</p><img src="https://evil.example/x.png" onerror="x">'},
+        headers={**auth_headers(), "Idempotency-Key": "intent-html-2"},
+    )
+    assert dirty_follow.status_code == 201
+    assert glpi.followups[-1][1] == "<p>ok</p>"
+    assert "<img" not in glpi.followups[-1][1].lower()
+
+    script_only = client.post(
+        "/tickets/42/followups",
+        json={"content": "<script>alert(1)</script>"},
+        headers={**auth_headers(), "Idempotency-Key": "intent-html-3"},
+    )
+    assert script_only.status_code == 422
+    assert script_only.json()["error"] == "validation_error"
+
+    too_long = client.post(
+        "/tickets/42/followups",
+        json={"content": "x" * 50_001},
+        headers={**auth_headers(), "Idempotency-Key": "intent-html-4"},
+    )
+    assert too_long.status_code == 422
+    assert too_long.json()["error"] == "validation_error"
+
+
 def test_create_rejects_requester_field_and_missing_key():
     client, glpi = build_client()
     link(client)

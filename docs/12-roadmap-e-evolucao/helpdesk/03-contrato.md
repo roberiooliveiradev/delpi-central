@@ -97,11 +97,13 @@ Cabeçalho `Idempotency-Key` obrigatório, gerado na intenção de envio e reuti
 ```json
 {
   "title": "string",
-  "description": "string",
+  "description": "string | HTML",
   "category_id": 1,
   "urgency_id": 3
 }
 ```
+
+`description` e `content` do follow-up aceitam **texto puro ou HTML**. O BFF re-sanitiza com a mesma allowlist da leitura ([`12`](./12-conteudo-da-mensagem.md) §7) antes de gravar no GLPI: remove `script`/`on*`/`javascript:`, imagens estrangeiras e `document.send.php` sem `docid` permitido. Payload com mais de **50 000** caracteres (M-29) ou sem texto visível após a limpeza: `422 validation_error`. Título continua texto puro.
 
 Não existe campo de solicitante nem de entidade. O BFF não reenvia esses campos ao GLPI. O chamado nasce na entidade padrão do usuário do token.
 
@@ -116,7 +118,7 @@ Repetir a mesma chave depois de sucesso devolve o mesmo `id`, sem segundo chamad
 `POST /tickets/{id}/followups`
 
 ```json
-{ "content": "string" }
+{ "content": "string | HTML" }
 ```
 
 Também exige `Idempotency-Key`. Resposta `201` com `{ "id": 1 }`.

@@ -1,6 +1,6 @@
 # 16 — Plano de paridade do solicitante
 
-> **Status:** em execução. **E8.S1** e **E13.S1** entregues; **E8.S2** em entrega.
+> **Status:** em execução. **E8.S1–S3** e **E13.S1** entregues; **E8.S4** / **E9+** no plano.
 > **Não altera** [`06-plano-execucao.md`](./06-plano-execucao.md) (`E1…E5`).
 > **Ondas:** [`05-roadmap.md`](./05-roadmap.md) H6…H13.
 > **Inventários:** [`12`](./12-conteudo-da-mensagem.md) · [`13`](./13-listagem-de-chamados.md) · [`14`](./14-pagina-e-estados-do-chamado.md) · [`15`](./15-capacidades-glpi.md).
@@ -28,8 +28,8 @@ O colaborador passa a ver e gravar no Meus Chamados de TI o que o GLPI já entre
 | RQ-01 | `status_id` + badge/filtro por id; grupos pending/approval | **ATENDIDO** E7.S1 |
 | RQ-02 | Lista: data absoluta, período de abertura, page_size | **ATENDIDO** E7.S2 |
 | RQ-03 | Lista: solved_at / busca no content se H6 | **ATENDIDO** E7.S3 |
-| RQ-04 | HTML sanitizado na bolha | **ATENDIDO** E8.S1–S2; E8.S3–S4 no plano |
-| RQ-05 | Compositor rico abrir+responder | ATENDIDO_NO_PLANO E8.S3 |
+| RQ-04 | HTML sanitizado na bolha | **ATENDIDO** E8.S1–S2; E8.S4 imagem no fio |
+| RQ-05 | Compositor rico abrir+responder | **ATENDIDO** E8.S3 |
 | RQ-06 | Imagem no corpo via BFF se H6 | DESBLOQUEADO — 12-H1 **PROVEN**; A-07 continua FORA → E8.S4 |
 | RQ-07 | Página: datas, can_followup, observador | ATENDIDO_NO_PLANO E9.S1 — `can_followup` só false no status 6 |
 | RQ-08 | Aprovar/reabrir/satisfação se HLAPI | PARCIAL — Solution/Validation **têm** path; Satisfaction **sem** path (CONSOLE) → E10 |
@@ -201,12 +201,13 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 
 - **Objetivo:** abrir e responder usam o mesmo `RichTextEditor`; POST HTML sanitizado de novo no BFF.
 - **RQ:** RQ-05 · HD-022
-- **Fazer:** factory do kit; teto de tamanho (M-29); menção só se E6 tiver catálogo por **id**.
+- **Fazer:** `HelpdeskRichTextField` (kit); teto M-29 = 50 000; menção só se E6 tiver catálogo por **id**.
 - **Não fazer:** `MentionComposer`; colar imagem; editor diferente na abertura.
 - **Deps:** E8.S1.
 - **Teste:** positive negrito volta no GLPI e no F5; irmão texto puro ainda grava; negativo script no POST some.
 - **Pronto:** ajuda create/detail descreve formatação, sem path.
 - **Commit:** `feat(helpdesk): grava abertura e resposta em HTML sanitizado.`
+- **Estado:** **ATENDIDO** (BFF `prepare_outbound_message_html` + MFE `HelpdeskRichTextField`).
 
 ### E8.S4 — Imagem no fio
 

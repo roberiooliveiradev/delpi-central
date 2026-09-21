@@ -93,7 +93,7 @@ O kit já tem `MessageThread` em `plugins/plugin-ui/src/components/collaboration
 
 `RoomConversationShell` é o chrome das salas de outro produto. O helpdesk não importa esse shell nem a regra de sala.
 
-O compositor de resposta continua `HelpdeskTextArea` e `ActionButton`. `MentionComposer` fica nas salas; o acompanhamento desta entrega é texto puro, como o contrato já devolve.
+O compositor de resposta e o de abertura usam o mesmo `HelpdeskRichTextField` (`RichTextEditor` do kit). `MentionComposer` fica nas salas; colar imagem e upload novo continuam fora.
 
 ## 6. Contrato
 

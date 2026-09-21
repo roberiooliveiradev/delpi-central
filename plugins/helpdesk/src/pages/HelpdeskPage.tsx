@@ -21,6 +21,7 @@ import {
   conversationAuthorSrc,
   conversationMessages,
   detailRecordHeading,
+  hasVisibleRichText,
   isTicketFilterActive,
   listHelpdeskAttachmentIdsInHtml,
   newIdempotencyKey,
@@ -51,11 +52,11 @@ import {
   HelpdeskMessageThread,
   HelpdeskPageHeader,
   HelpdeskRecordCard,
+  HelpdeskRichTextField,
   HelpdeskSectionCard,
   HelpdeskSelect,
   HelpdeskStateBanner,
   HelpdeskStatusBadge,
-  HelpdeskTextArea,
   HelpdeskTextField,
 } from "../ui/helpdeskUi";
 
@@ -430,7 +431,7 @@ function CreateTicketPage() {
         className="helpdesk-create-form"
         onSubmit={(event) => {
           event.preventDefault();
-          if (saving) return;
+          if (saving || !title.trim() || !hasVisibleRichText(description)) return;
           setSaving(true);
           setErrorText(null);
           void createTicket(
@@ -459,12 +460,12 @@ function CreateTicketPage() {
               required
               icon={<Type size={14} aria-hidden />}
             />
-            <HelpdeskTextArea
+            <HelpdeskRichTextField
               label="Descrição"
+              hint={helpTooltips.create}
               value={description}
               onChange={setDescription}
-              required
-              rows={12}
+              minHeight={280}
               icon={<AlignLeft size={14} aria-hidden />}
             />
           </div>
@@ -493,7 +494,7 @@ function CreateTicketPage() {
             tone="primary"
             type="submit"
             aria-label={saving ? "Enviando" : "Enviar chamado"}
-            disabled={saving || loading}
+            disabled={saving || loading || !title.trim() || !hasVisibleRichText(description)}
           >
             <Send size={16} aria-hidden />
           </HelpdeskIconButton>
@@ -652,7 +653,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
             <form
               onSubmit={(event) => {
                 event.preventDefault();
-                if (saving || !content.trim()) return;
+                if (saving || !hasVisibleRichText(content)) return;
                 setSaving(true);
                 void createFollowup(ticketId, content.trim(), idempotencyKey)
                   .then(() => {
@@ -664,19 +665,19 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                   .finally(() => setSaving(false));
               }}
             >
-              <HelpdeskTextArea
+              <HelpdeskRichTextField
                 label="Responder"
+                hint={helpTooltips.detail}
                 value={content}
                 onChange={setContent}
-                rows={3}
-                required
+                minHeight={120}
               />
               <HelpdeskFormActions>
                 <HelpdeskIconButton
                   tone="primary"
                   type="submit"
                   aria-label={saving ? "Enviando" : "Enviar"}
-                  disabled={saving}
+                  disabled={saving || !hasVisibleRichText(content)}
                 >
                   <Send size={16} aria-hidden />
                 </HelpdeskIconButton>

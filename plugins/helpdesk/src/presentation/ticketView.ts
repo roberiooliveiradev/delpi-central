@@ -267,6 +267,17 @@ export function stampHelpdeskAttachmentIds(html: string): string {
   );
 }
 
+/** True when rich-text HTML still has visible characters after stripping tags. */
+export function hasVisibleRichText(html: string): boolean {
+  const plain = String(html || "")
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return plain.length > 0;
+}
+
 export function listHelpdeskAttachmentIdsInHtml(html: string): number[] {
   const ids: number[] = [];
   const seen = new Set<number>();

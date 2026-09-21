@@ -6,12 +6,16 @@ Contract: docs/12-roadmap-e-evolucao/helpdesk/12-conteudo-da-mensagem.md §7.
 from __future__ import annotations
 
 import base64
+import html as html_lib
 import re
 from collections.abc import Collection
 
 import bleach
 
 _API_PREFIX = "/apps/helpdesk-api"
+
+# M-29 — teto do HTML na escrita (create/followup). Caracteres do payload cru.
+MAX_MESSAGE_HTML_CHARS = 50_000
 
 ALLOWED_TAGS: list[str] = [
     "p",
@@ -133,6 +137,30 @@ def sanitize_message_html(
     cleaned = _EMPTY_ANCHOR_RE.sub(r"\1", cleaned)
     cleaned = _HREFLESS_ANCHOR_RE.sub(r"\1", cleaned)
     return cleaned.strip()
+
+
+_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def message_html_has_visible_text(html: str) -> bool:
+    plain = html_lib.unescape(_TAG_RE.sub(" ", html or ""))
+    return bool(plain.strip())
+
+
+def prepare_outbound_message_html(raw_html: str | None) -> str:
+    """Sanitize HTML for create/followup before sending to GLPI.
+
+    Write path has no ticket attachments yet for new tickets, and follow-ups
+    must not invent document links — so document_ids are empty and foreign
+    imgs are stripped (no paste-image / upload in the compositor).
+    """
+    text = str(raw_html or "")
+    if not text.strip():
+        return ""
+    cleaned = sanitize_message_html(text, ticket_id=0, allowed_document_ids=())
+    if not message_html_has_visible_text(cleaned):
+        return ""
+    return cleaned
 
 
 def _rewrite_document_urls(

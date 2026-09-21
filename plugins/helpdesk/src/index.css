@@ -153,6 +153,17 @@
   border-inline-start: 1px solid var(--helpdesk-border);
 }
 
+.dashboard-helpdesk .helpdesk-rich-text-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.dashboard-helpdesk .helpdesk-rich-text-field .delpi-ui-rich-text {
+  min-width: 0;
+}
+
 @media (max-width: 768px) {
   .dashboard-helpdesk .helpdesk-create-layout {
     grid-template-columns: 1fr;

@@ -287,23 +287,23 @@ FORA                  → não entra neste produto
 
 | ID | Capacidade | Estado | Dono quando houver código |
 |---|---|---|---|
-| M-20 | Compositor rico no lugar do textarea (parágrafo, ênfase, lista, link) | ALVO_ESCRITA | `RichTextEditor` do kit (`HERDA_KIT`) |
-| M-21 | POST `content` em HTML sanitizado, não texto achatado | ALVO_ESCRITA | mesmos paths; semântica HTML |
-| M-22 | Título, tabela, código, cor, alinhamento no compositor | ALVO_ESCRITA | toolbar do `RichTextEditor` |
+| M-20 | Compositor rico no lugar do textarea (parágrafo, ênfase, lista, link) | IMPLEMENTADO | `HelpdeskRichTextField` → `RichTextEditor` |
+| M-21 | POST `content` em HTML sanitizado, não texto achatado | IMPLEMENTADO | BFF `prepare_outbound_message_html` |
+| M-22 | Título, tabela, código, cor, alinhamento no compositor | IMPLEMENTADO | toolbar do `RichTextEditor` |
 | M-23 | Menção no compositor (`@`) | ALVO_ESCRITA + HIPOTESE catálogo | só com id; sem `MentionComposer` das salas |
 | M-24 | Inserir imagem ou arquivo novo no envio | BLOQUEADO | A-08; JSON-only |
 | M-25 | Colar imagem da área de transferência | BLOQUEADO | vira upload |
 | M-26 | Editar mensagem já gravada | CONSOLE_GLPI | a doc do GLPI tem Edit; o BFF não publica PATCH |
 | M-27 | Modelo, origem, pendência no envio | CONSOLE_GLPI | follow-up doc |
-| M-28 | Abrir e responder compartilham o mesmo compositor | ALVO_ESCRITA | uma factory; sem editor paralelo |
-| M-29 | Teto de tamanho do HTML no BFF | ALVO_ESCRITA | definir no plano de código; hoje só “não vazio” |
+| M-28 | Abrir e responder compartilham o mesmo compositor | IMPLEMENTADO | `HelpdeskRichTextField` |
+| M-29 | Teto de tamanho do HTML no BFF | IMPLEMENTADO | `MAX_MESSAGE_HTML_CHARS = 50_000` |
 
 ### 8.3 Componente (kit)
 
 | ID | Capacidade | Estado |
 |---|---|---|
 | M-30 | Modo de corpo **HTML já sanitizado** no `MessageThread` (além de `markdown` / `plain`) | KIT_A_ESTENDER |
-| M-31 | `RichTextEditor` como compositor do helpdesk | HERDA_KIT |
+| M-31 | `RichTextEditor` como compositor do helpdesk | HERDA_KIT — IMPLEMENTADO via `HelpdeskRichTextField` |
 | M-32 | Prévia / modal / baixar anexo | HERDA_KIT — já ligados na abertura |
 | M-33 | CSS de bolha no MFE helpdesk | proibido — factories do plugin-ui |
 | M-34 | Chip de menção a partir de `data-user-id`, sem casar `@nome` | KIT_A_ESTENDER (hoje `MentionText` é label) |
@@ -315,7 +315,7 @@ Enquanto M-30 não existir, o helpdesk **não** implementa um renderer HTML pró
 
 | ID | Capacidade | Estado |
 |---|---|---|
-| M-40 | `helpTooltips.create` e `.detail` descrevem formatação e imagem no corpo | ALVO_LEITURA + ALVO_ESCRITA — mesmo entregável |
+| M-40 | `helpTooltips.create` e `.detail` descrevem formatação e imagem no corpo | IMPLEMENTADO (escrita); leitura de imagem no fio em E8.S2/S4 |
 | M-41 | F5 no detalhe mostra o mesmo HTML sanitizado | invariante de persistência (dono = GLPI) |
 | M-42 | Lista / `q` / cartão **não** passam a buscar HTML | FORA deste inventário; busca no texto da abertura é G-21 em [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md) |
 | M-43 | Log do BFF continua sem corpo da mensagem | invariante [`04-seguranca.md`](./04-seguranca.md) |
@@ -428,7 +428,7 @@ Campos de rótulo (`title`, nomes) continuam em `display_text`. Conteúdo de men
 |---|---|---|
 | H1–H4 | captura do `content` cru no 6288 e no 1114 | M-08, M-09 |
 | H5 menção | markup exato + lista HLAPI de mencionáveis | M-23, parte de M-07 se o atributo divergir |
-| H6 teto | tamanho máximo que o GLPI/BFF aceita | M-29 (número) |
+| H6 teto | tamanho máximo que o GLPI/BFF aceita | M-29 = 50 000 caracteres no BFF |
 
 ## 15. Hipóteses de imagem — vereditos (E6.S1, 21/09/2026)
 

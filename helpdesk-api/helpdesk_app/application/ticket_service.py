@@ -1,5 +1,9 @@
 from helpdesk_app.application.oauth_service import OAuthService
 from helpdesk_app.application.ports import GlpiGateway, IdempotencyStore
+from helpdesk_app.application.services.message_html_sanitizer import (
+    MAX_MESSAGE_HTML_CHARS,
+    prepare_outbound_message_html,
+)
 from helpdesk_app.domain.errors import (
     GlpiNotFound,
     GlpiUnauthorized,
@@ -45,7 +49,7 @@ class TicketService:
     ) -> StoredResponse:
         key = _require_key(idempotency_key)
         _validate_text(title, "title")
-        _validate_text(description, "description")
+        description_html = _prepare_message_html(description, "description")
         operation = "create_ticket"
         existing = self._idempotency.get(subject, operation, key)
         if existing is not None:
@@ -53,7 +57,7 @@ class TicketService:
         ticket_id = self._glpi.create_ticket(
             self._token(subject),
             title=title.strip(),
-            description=description.strip(),
+            description=description_html,
             category_id=category_id,
             urgency_id=urgency_id,
         )
@@ -70,13 +74,13 @@ class TicketService:
         idempotency_key: str | None,
     ) -> StoredResponse:
         key = _require_key(idempotency_key)
-        _validate_text(content, "content")
+        content_html = _prepare_message_html(content, "content")
         operation = f"followup:{ticket_id}"
         existing = self._idempotency.get(subject, operation, key)
         if existing is not None:
             return existing
         followup_id = self._glpi.add_followup(
-            self._token(subject), ticket_id, content.strip()
+            self._token(subject), ticket_id, content_html
         )
         stored = StoredResponse(status_code=201, body={"id": followup_id})
         self._idempotency.save(subject, operation, key, stored)
@@ -98,3 +102,14 @@ def _require_key(value: str | None) -> str:
 def _validate_text(value: str, field: str) -> None:
     if not value or not value.strip():
         raise GlpiValidation(f"{field} é obrigatório.")
+
+
+def _prepare_message_html(value: str, field: str) -> str:
+    if value is None:
+        raise GlpiValidation(f"{field} é obrigatório.")
+    if len(value) > MAX_MESSAGE_HTML_CHARS:
+        raise GlpiValidation(f"{field} excede o tamanho máximo permitido.")
+    cleaned = prepare_outbound_message_html(value)
+    if not cleaned:
+        raise GlpiValidation(f"{field} é obrigatório.")
+    return cleaned

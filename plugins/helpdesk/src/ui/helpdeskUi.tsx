@@ -1,10 +1,11 @@
-import { type ComponentProps } from "react";
+import { type ComponentProps, type ReactNode } from "react";
 import {
   attachmentPreviewStripBemClasses,
   createDashboardAttachmentPreviewStrip,
   createDashboardDataRecordCard,
   DataTable,
   dataTableBemClasses,
+  FieldLabel,
   IconButton,
   createDashboardEmptyState,
   createDashboardFiltersKit,
@@ -22,6 +23,7 @@ import {
   formActionsBemClasses,
   loadingStateCardBemClasses,
   pageHeaderTitleRowBemClasses,
+  RichTextEditor,
   sectionCardPacBemClasses,
   selectFieldPacClasses,
   stateBannerBemClasses,
@@ -105,6 +107,43 @@ export const HelpdeskTextField = createDashboardTextField({
 export const HelpdeskTextArea = createDashboardTextAreaField({
   classNames: textAreaFieldBemClasses(PREFIX),
 });
+
+export type HelpdeskRichTextFieldProps = {
+  label: string;
+  hint?: string;
+  value: string;
+  onChange: (value: string) => void;
+  icon?: ReactNode;
+  ariaLabel?: string;
+  minHeight?: number;
+  disabled?: boolean;
+};
+
+/** Same RichTextEditor for open + reply (M-28). No MentionComposer / image paste. */
+export function HelpdeskRichTextField({
+  label,
+  hint,
+  value,
+  onChange,
+  icon,
+  ariaLabel,
+  minHeight = 180,
+  disabled,
+}: HelpdeskRichTextFieldProps) {
+  return (
+    <div className="helpdesk-field helpdesk-rich-text-field">
+      <FieldLabel className="helpdesk-field__label" label={label} hint={hint} icon={icon} />
+      <RichTextEditor
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        portalScopeClassName="dashboard-helpdesk"
+        minHeight={minHeight}
+        ariaLabel={ariaLabel ?? label}
+      />
+    </div>
+  );
+}
 
 const helpdeskFilters = createDashboardFiltersKit({
   prefix: PREFIX,

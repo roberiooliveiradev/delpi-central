@@ -5,6 +5,7 @@ import {
   conversationAuthorSrc,
   conversationMessages,
   detailRecordHeading,
+  hasVisibleRichText,
   isTicketFilterActive,
   listHelpdeskAttachmentIdsInHtml,
   nextTicketSort,
@@ -341,5 +342,15 @@ describe("ticket list filters", () => {
     expect(nextTicketSort("title:asc", "created_at")).toBe("created_at:desc");
     expect(nextTicketSort("updated_at:desc", "solved_at")).toBe("solved_at:desc");
     expect(nextTicketSort("updated_at:desc", "assigned")).toBe("updated_at:desc");
+  });
+});
+
+describe("hasVisibleRichText", () => {
+  it("aceita HTML com texto e rejeita vazio ou só tags", () => {
+    expect(hasVisibleRichText("<p><strong>ok</strong></p>")).toBe(true);
+    expect(hasVisibleRichText("texto puro")).toBe(true);
+    expect(hasVisibleRichText("<p></p>")).toBe(false);
+    expect(hasVisibleRichText("<p><br></p>")).toBe(false);
+    expect(hasVisibleRichText("")).toBe(false);
   });
 });
