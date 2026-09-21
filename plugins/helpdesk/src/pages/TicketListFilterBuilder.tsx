@@ -1,5 +1,5 @@
-import { Plus, Trash2 } from "lucide-react";
-import { ActionButton, HintAction } from "@delpi/plugin-ui/index";
+import { Check, Eraser, Plus, Trash2 } from "lucide-react";
+import { HintAction } from "@delpi/plugin-ui/index";
 
 import { helpTooltips } from "../content/helpTooltips";
 import {
@@ -159,18 +159,20 @@ export function TicketListFilterBuilder({
         })}
       </ul>
       <HelpdeskFormActions>
-        <HintAction hint={help.addRule} ariaLabel="Ajuda: Regra">
-          <ActionButton onClick={addRule}>
-            <Plus size={14} aria-hidden /> Regra
-          </ActionButton>
+        <HintAction hint={help.addRule} ariaLabel="Ajuda: Adicionar regra">
+          <HelpdeskIconButton aria-label="Adicionar regra" onClick={addRule}>
+            <Plus size={16} aria-hidden />
+          </HelpdeskIconButton>
         </HintAction>
-        <HintAction hint={help.clear} ariaLabel="Ajuda: Limpar">
-          <ActionButton onClick={onClear}>Limpar</ActionButton>
+        <HintAction hint={help.clear} ariaLabel="Ajuda: Limpar regras">
+          <HelpdeskIconButton aria-label="Limpar regras" onClick={onClear}>
+            <Eraser size={16} aria-hidden />
+          </HelpdeskIconButton>
         </HintAction>
-        <HintAction hint={help.apply} ariaLabel="Ajuda: Aplicar">
-          <ActionButton variant="primary" onClick={onApply}>
-            Aplicar
-          </ActionButton>
+        <HintAction hint={help.apply} ariaLabel="Ajuda: Aplicar filtros">
+          <HelpdeskIconButton tone="primary" aria-label="Aplicar filtros" onClick={onApply}>
+            <Check size={16} aria-hidden />
+          </HelpdeskIconButton>
         </HintAction>
       </HelpdeskFormActions>
     </div>

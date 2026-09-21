@@ -1,9 +1,8 @@
-import { Plus, Trash2 } from "lucide-react";
-import { ActionButton, HintAction } from "@delpi/plugin-ui/index";
+import { Check, Plus, Trash2 } from "lucide-react";
+import { HintAction } from "@delpi/plugin-ui/index";
 
 import { helpTooltips } from "../content/helpTooltips";
 import {
-  formatTicketSortLevels,
   type TicketListSortLevel,
 } from "../presentation/ticketListViewModel";
 import { TICKET_LIST_SORTABLE_COLUMNS } from "../presentation/ticketView";
@@ -96,7 +95,8 @@ export function TicketListSortBuilder({
       <HelpdeskFormActions>
         {levels.length < 3 ? (
           <HintAction hint={help.addLevel} ariaLabel="Ajuda: Outra ordenação">
-            <ActionButton
+            <HelpdeskIconButton
+              aria-label="Outra ordenação"
               onClick={() =>
                 onChange([
                   ...levels,
@@ -108,20 +108,21 @@ export function TicketListSortBuilder({
                 ])
               }
             >
-              <Plus size={14} aria-hidden /> Outra ordenação
-            </ActionButton>
+              <Plus size={16} aria-hidden />
+            </HelpdeskIconButton>
           </HintAction>
         ) : null}
         <HintAction hint={help.apply} ariaLabel="Ajuda: Aplicar ordenação">
-          <ActionButton
-            variant="primary"
+          <HelpdeskIconButton
+            tone="primary"
+            aria-label="Aplicar ordenação"
             onClick={() => {
               onChange(levels);
               onApply();
             }}
           >
-            Aplicar ({formatTicketSortLevels(levels)})
-          </ActionButton>
+            <Check size={16} aria-hidden />
+          </HelpdeskIconButton>
         </HintAction>
       </HelpdeskFormActions>
     </div>
