@@ -14,7 +14,13 @@ import {
   type TicketSummary,
 } from "../api/helpdeskApi";
 import { helpTooltips } from "../content/helpTooltips";
-import { newIdempotencyKey, statusBadgeVariant, viewForTicketLoad } from "../presentation/ticketView";
+import {
+  detailRecordHeading,
+  newIdempotencyKey,
+  statusBadgeVariant,
+  ticketRecordFields,
+  viewForTicketLoad,
+} from "../presentation/ticketView";
 import { navigateHelpdesk, type HelpdeskRoute } from "../routing/helpdeskRoute";
 import {
   HelpdeskEmptyState,
@@ -126,10 +132,7 @@ function TicketListPage() {
                 key={item.id}
                 title={item.title}
                 status={<HelpdeskStatusBadge label={item.status} variant={statusBadgeVariant(item.status)} />}
-                fields={[
-                  { id: "category", label: "Categoria", value: item.category },
-                  { id: "urgency", label: "Urgência", value: item.urgency },
-                ]}
+                fields={ticketRecordFields(item.category, item.urgency)}
                 href={`/apps/helpdesk/tickets/${item.id}`}
                 ariaLabel={item.title}
                 onNavigate={(event) => {
@@ -264,8 +267,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
         {ticket ? (
           <>
             <HelpdeskRecordCard
-              title={ticket.category}
-              subtitle={ticket.urgency}
+              {...detailRecordHeading(ticket.category, ticket.urgency)}
               status={<HelpdeskStatusBadge label={ticket.status} variant={statusBadgeVariant(ticket.status)} />}
             />
             <p>{ticket.description}</p>

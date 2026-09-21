@@ -5,7 +5,7 @@ import pytest
 
 from helpdesk_app.domain.errors import GlpiUnavailable
 from helpdesk_app.infrastructure.glpi.http_client import HttpxGlpiClient
-from helpdesk_app.infrastructure.glpi.mapping import parse_categories, parse_ticket_detail
+from helpdesk_app.infrastructure.glpi.mapping import parse_categories, parse_ticket_detail, parse_ticket_list
 
 
 def test_post_is_not_retried_and_get_retries_transient_status():
@@ -133,3 +133,75 @@ def test_mapping_keeps_followups_and_hides_tasks():
     assert [entry.kind for entry in detail.timeline] == ["followup"]
     categories = parse_categories({"results": [{"id": 2, "completename": "TI > Rede"}]})
     assert categories[0].name == "TI > Rede"
+
+
+def test_mapping_repairs_legacy_text_and_strips_html():
+    listed = parse_ticket_list(
+        [
+            {
+                "id": 3,
+                "name": "Email n\u251c\u00fao funcionando",
+                "status": {"id": 1, "name": "Novo"},
+                "urgency": 3,
+            }
+        ]
+    )
+    assert listed[0].title == "Email não funcionando"
+    assert listed[0].category == ""
+    detail = parse_ticket_detail(
+        {
+            "id": 1,
+            "name": "Teste",
+            "content": "<p>Rede n\u251c\u00fao quer funcionar</p>",
+            "status": {"id": 1, "name": "Novo"},
+            "category": {"id": 0},
+            "urgency": 2,
+        },
+        {
+            "results": [
+                {
+                    "id": 9,
+                    "type": "Followup",
+                    "content": "<p>M\u251c\u00edquina ligada</p>",
+                    "date_creation": "2026-09-21T11:00:00Z",
+                    "user": {"name": "Ana"},
+                }
+            ]
+        },
+    )
+    assert detail.description == "Rede não quer funcionar"
+    assert detail.timeline[0].content == "Máquina ligada"
+    assert detail.category == ""
+
+
+def test_mapping_keeps_text_that_is_already_utf8():
+    detail = parse_ticket_detail(
+        {
+            "id": 5,
+            "name": "Não consigo encontrar o email",
+            "content": "<p>Testando 123 caçador</p>",
+            "status": {"name": "Solucionado"},
+            "category": {"id": 4, "name": "E-mail"},
+            "urgency": 2,
+        },
+        {"results": []},
+    )
+    assert detail.title == "Não consigo encontrar o email"
+    assert detail.description == "Testando 123 caçador"
+    assert detail.category == "E-mail"
+    assert detail.status == "Solucionado"
+
+
+def test_mapping_leaves_unrepairable_marker_unchanged():
+    detail = parse_ticket_detail(
+        {
+            "id": 8,
+            "name": "Sinal \u251c isolado",
+            "content": "Sem tag",
+            "status": {"name": "Novo"},
+            "urgency": 1,
+        },
+        {"results": []},
+    )
+    assert detail.title == "Sinal \u251c isolado"
+    assert detail.description == "Sem tag"

@@ -27,7 +27,9 @@ const selectClasses = selectFieldPacClasses(PREFIX);
 
 export const HelpdeskPageHeader = createDashboardPageHeader({
   layout: "titleRow",
-  classNames: pageHeaderTitleRowBemClasses(PREFIX),
+  classNames: pageHeaderTitleRowBemClasses(PREFIX, {
+    buttonClass: "delpi-ui-action-btn delpi-ui-action-btn--primary",
+  }),
   labels: { refresh: "Atualizar", refreshing: "Atualizando…" },
 });
 

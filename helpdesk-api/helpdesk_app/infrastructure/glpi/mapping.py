@@ -6,6 +6,9 @@ Chamado: /api.php/v2.2/Assistance/Ticket
 Acompanhamento: POST .../Timeline/Followup
 """
 
+import html
+import re
+
 from helpdesk_app.domain.errors import GlpiValidation
 from helpdesk_app.domain.models import Category, TicketDetail, TicketSummary, TimelineEntry, TokenSet, Urgency
 
@@ -18,6 +21,10 @@ URGENCIES: tuple[Urgency, ...] = (
     Urgency(5, "Muito alta"),
 )
 _URGENCY_NAMES = {item.id: item.name for item in URGENCIES}
+# Chamados antigos gravaram UTF-8 lido como CP850. O sinal estável é o traço ├.
+_CP850_MOJIBAKE = "\u251c"
+_HTML_TAG = re.compile(r"<[^>]+>")
+_WHITESPACE = re.compile(r"\s+")
 
 
 def parse_token_set(payload: dict) -> TokenSet:
@@ -35,7 +42,7 @@ def parse_categories(payload: dict | list) -> list[Category]:
     for row in rows:
         if not isinstance(row, dict) or "id" not in row:
             continue
-        name = str(row.get("completename") or row.get("name") or "").strip()
+        name = display_text(row.get("completename") or row.get("name"))
         if not name:
             continue
         categories.append(Category(id=int(row["id"]), name=name))
@@ -89,7 +96,7 @@ def create_ticket_body(*, title: str, description: str, category_id: int, urgenc
 def _summary(row: dict) -> TicketSummary:
     return TicketSummary(
         id=int(row.get("id") or 0),
-        title=str(row.get("name") or ""),
+        title=display_text(row.get("name")),
         status=_status_name(row.get("status")),
         category=_named(row.get("category")),
         urgency=_urgency_name(row.get("urgency")),
@@ -106,7 +113,7 @@ def _timeline_entry(row: dict) -> TimelineEntry | None:
     user = row.get("user") or row.get("users_id") or {}
     author = ""
     if isinstance(user, dict):
-        author = str(user.get("name") or user.get("completename") or "")
+        author = display_text(user.get("name") or user.get("completename"))
     return TimelineEntry(
         id=int(row.get("id") or 0),
         kind="followup",
@@ -127,16 +134,19 @@ def _results(payload: dict | list) -> list:
 
 def _named(value) -> str:
     if isinstance(value, dict):
-        return str(value.get("name") or value.get("completename") or "")
+        return display_text(value.get("name") or value.get("completename"))
     return ""
 
 
 def _status_name(value) -> str:
     if isinstance(value, dict):
-        return str(value.get("name") or value.get("id") or "")
+        named = value.get("name")
+        if named:
+            return display_text(named)
+        return display_text(value.get("id"))
     if value is None:
         return ""
-    return str(value)
+    return display_text(value)
 
 
 def _urgency_name(value) -> str:
@@ -148,7 +158,27 @@ def _urgency_name(value) -> str:
         return ""
 
 
-def _text(value) -> str:
+def display_text(value) -> str:
+    """Texto visível: repara o CP850 legado e remove o HTML que o GLPI grava no conteúdo."""
     if value is None:
         return ""
-    return str(value)
+    text = _repair_cp850_mojibake(str(value))
+    text = _HTML_TAG.sub(" ", text)
+    text = html.unescape(text)
+    return _WHITESPACE.sub(" ", text).strip()
+
+
+def _text(value) -> str:
+    return display_text(value)
+
+
+def _repair_cp850_mojibake(text: str) -> str:
+    if _CP850_MOJIBAKE not in text:
+        return text
+    try:
+        repaired = text.encode("cp850").decode("utf-8")
+    except UnicodeError:
+        return text
+    if _CP850_MOJIBAKE in repaired:
+        return text
+    return repaired
