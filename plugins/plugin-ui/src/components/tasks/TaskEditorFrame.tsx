@@ -28,6 +28,11 @@ export type TaskEditorFrameProps = {
   primaryDisabled?: boolean;
   classNames?: SectionCardClassNames;
   labels?: SectionCardLabels;
+  /**
+   * `section` = card colapsável da página (default).
+   * `bare` = só campos/revisão/ações — para hospedar dentro de ModalShell.
+   */
+  surface?: "section" | "bare";
 };
 
 const DEFAULT_LABELS: SectionCardLabels = {
@@ -49,7 +54,43 @@ export function TaskEditorFrame({
   primaryDisabled = false,
   classNames = sectionCardPacBemClasses("delpi-ui"),
   labels = DEFAULT_LABELS,
+  surface = "section",
 }: TaskEditorFrameProps) {
+  const body = (
+    <div className="delpi-ui-task-editor-frame">
+      <div className="delpi-ui-task-editor-frame__fields">{children}</div>
+      {reviewRows && reviewRows.length > 0 ? (
+        <section className="delpi-ui-task-editor-frame__review" aria-label={reviewTitle}>
+          <h3 className="delpi-ui-task-editor-frame__review-title">{reviewTitle}</h3>
+          <dl className="delpi-ui-task-editor-frame__review-list">
+            {reviewRows.map((row) => (
+              <div key={row.label} className="delpi-ui-task-editor-frame__review-row">
+                <dt>{row.label}</dt>
+                <dd>{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ) : null}
+      <div className="delpi-ui-task-editor-frame__actions">
+        <ActionButton variant="ghost" onClick={onClose}>
+          {closeLabel}
+        </ActionButton>
+        <ActionButton
+          variant="primary"
+          disabled={primaryBusy || primaryDisabled}
+          onClick={onPrimary}
+        >
+          {primaryBusy ? "Salvando…" : primaryLabel}
+        </ActionButton>
+      </div>
+    </div>
+  );
+
+  if (surface === "bare") {
+    return body;
+  }
+
   return (
     <SectionCard
       classNames={classNames}
@@ -68,34 +109,7 @@ export function TaskEditorFrame({
         </ActionButton>
       }
     >
-      <div className="delpi-ui-task-editor-frame">
-        <div className="delpi-ui-task-editor-frame__fields">{children}</div>
-        {reviewRows && reviewRows.length > 0 ? (
-          <section className="delpi-ui-task-editor-frame__review" aria-label={reviewTitle}>
-            <h3 className="delpi-ui-task-editor-frame__review-title">{reviewTitle}</h3>
-            <dl className="delpi-ui-task-editor-frame__review-list">
-              {reviewRows.map((row) => (
-                <div key={row.label} className="delpi-ui-task-editor-frame__review-row">
-                  <dt>{row.label}</dt>
-                  <dd>{row.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </section>
-        ) : null}
-        <div className="delpi-ui-task-editor-frame__actions">
-          <ActionButton variant="ghost" onClick={onClose}>
-            {closeLabel}
-          </ActionButton>
-          <ActionButton
-            variant="primary"
-            disabled={primaryBusy || primaryDisabled}
-            onClick={onPrimary}
-          >
-            {primaryBusy ? "Salvando…" : primaryLabel}
-          </ActionButton>
-        </div>
-      </div>
+      {body}
     </SectionCard>
   );
 }

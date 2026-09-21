@@ -27,6 +27,8 @@ describe("InteractionRoomsPage", () => {
     expect(source).toMatch(/beforeId/);
     expect(source).toMatch(/onCreateTask/);
     expect(source).toMatch(/TaskEditorFrame/);
+    expect(source).toMatch(/surface="bare"/);
+    expect(source).toMatch(/<Modal\b/);
     expect(source).toMatch(/source_interaction_message_id/);
     expect(source).toMatch(/useConfirm/);
     expect(source).not.toMatch(/window\.confirm/);

@@ -35,4 +35,25 @@ describe("TaskEditorFrame", () => {
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
     expect(onClose).toHaveBeenCalled();
   });
+
+  it("surface bare omite o SectionCard e mantém review/ações", () => {
+    render(
+      <TaskEditorFrame
+        surface="bare"
+        title="Nova tarefa"
+        primaryLabel="Criar tarefa"
+        onPrimary={() => undefined}
+        onClose={() => undefined}
+        reviewRows={[{ label: "Título", value: "x" }]}
+      >
+        <label>
+          Título
+          <input />
+        </label>
+      </TaskEditorFrame>,
+    );
+    expect(screen.queryByRole("button", { name: "Fechar" })).toBeNull();
+    expect(screen.getByText("Revise antes de gravar")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Criar tarefa" })).toBeTruthy();
+  });
 });

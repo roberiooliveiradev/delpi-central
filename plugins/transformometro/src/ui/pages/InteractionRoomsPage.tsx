@@ -22,6 +22,7 @@ import {
 import type { AppProps } from "../../App";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { PortalTopBar } from "../../components/TransformometroNav";
+import { Modal } from "../../components/ui/Modal";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { TmNativeTextAreaField, TmNativeTextField } from "../../components/ui/tmNativeFormFields";
 import { TRANSFORMOMETRO_ROUTES, buildInteractionRoomPath } from "../../constants/routes";
@@ -1052,10 +1053,15 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
         onCopyLink={() => void navigator.clipboard.writeText(window.location.href)}
         threadStatus={refreshing ? <p role="status">Atualizando mensagens…</p> : null}
       />
-      {taskFormOpen ? (
+      <Modal
+        open={taskFormOpen}
+        title="Nova tarefa a partir da mensagem"
+        description="A tarefa fica no Portal Transforma+. A mensagem original permanece na sala."
+        onClose={closeTaskForm}
+      >
         <TaskEditorFrame
+          surface="bare"
           title="Nova tarefa a partir da mensagem"
-          subtitle="A tarefa fica no Portal Transforma+. A mensagem original permanece na sala."
           reviewRows={[
             { label: "Título", value: taskTitle.trim() || "—" },
             { label: "Responsável", value: taskAssignee[0]?.name || "—" },
@@ -1095,7 +1101,7 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
             labels={{ title: "Responsável", placeholder: "Atribuir a mim ou buscar…" }}
           />
         </TaskEditorFrame>
-      ) : null}
+      </Modal>
       <FilePreviewModal
         open={Boolean(preview)}
         title={preview?.fileName ?? "Arquivo"}
