@@ -208,7 +208,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "O centro do cliente muda o funil e os novos negócios?",
-          a: "Não. Na Visão geral ele restringe ROL e OTD. Funil, novos negócios e metas continuam no recorte de período, unidade, segmento e cliente. Em Minha Carteira vale no ABC, ranking, mix e share. A série de notas do faturamento segue o cliente selecionado.",
+          a: "Não. Na Visão geral ele restringe ROL e OTD. Funil, novos negócios e metas continuam no recorte de período, unidade, segmento e cliente. Em Minha Carteira e em Meus pedidos o cliente é código, loja e centro. Sem centro, a loja inteira continua visível. Um centro novo só entra na carteira depois de ser vinculado e conferido. Contatos e avatar continuam da loja. O faturamento de 12 meses da linha separada por centro pode ficar vazio.",
         },
         {
           q: "ABC de clientes é o mesmo que Ranking?",

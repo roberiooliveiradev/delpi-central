@@ -132,8 +132,9 @@ export async function removeSellerCustomer(
   sellerId: string,
   customerCode: string,
   customerStore: string,
+  customerCenter?: string | null,
 ): Promise<SellerPortfolio> {
-  return commercial.removeSellerCustomer(sellerId, customerCode, customerStore);
+  return commercial.removeSellerCustomer(sellerId, customerCode, customerStore, customerCenter);
 }
 
 export type { TransferSellerCustomersResult };

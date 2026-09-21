@@ -45,6 +45,7 @@ def _normalize_item(row: dict) -> dict:
         "codigo_cliente": _as_str(row.get("codigo_cliente")),
         "codigo_cadastro": _as_str(row.get("codigo_cadastro")),
         "loja_cadastro": _as_str(row.get("loja_cadastro")),
+        "customer_center": _as_str(row.get("customer_center")),
         "quantidade": _as_float(row.get("quantidade")),
         "entregue": _as_float(row.get("entregue")),
         "saldo": _as_float(row.get("saldo")),
@@ -111,7 +112,11 @@ class ListPedidosVendaAbertosUseCase:
     def __init__(self, repository: PedidosVendaAbertosQueryRepositoryPort):
         self._repository = repository
 
-    def execute(self, scope: PortfolioScope | None = None) -> ListPedidosVendaAbertosResponse:
+    def execute(
+        self,
+        scope: PortfolioScope | None = None,
+        customer_centers: list[str] | None = None,
+    ) -> ListPedidosVendaAbertosResponse:
         if scope is not None and scope.empty_portfolio:
             return ListPedidosVendaAbertosResponse(
                 items=[],
@@ -121,7 +126,9 @@ class ListPedidosVendaAbertosUseCase:
                 portfolio_seller_id=scope.seller_id,
             )
 
-        raw_items, raw_summary = self._repository.list_open_orders()
+        raw_items, raw_summary = self._repository.list_open_orders(
+            customer_centers=customer_centers
+        )
         items = [_normalize_item(row) for row in raw_items]
 
         if scope is None or scope.unrestricted or scope.allowed_customers is None:
@@ -149,6 +156,7 @@ class ListPedidosVendaAbertosUseCase:
         self,
         customer_code: str,
         customer_store: str,
+        customer_centers: list[str] | None = None,
     ) -> ListPedidosVendaAbertosResponse:
         """Conta 360: linhas do par código/loja sem membership/carteira."""
         code = _as_str(customer_code)
@@ -159,6 +167,7 @@ class ListPedidosVendaAbertosUseCase:
         raw_items, raw_summary = self._repository.list_open_orders_for_customer(
             code,
             store,
+            customer_centers=customer_centers,
         )
         items = [_normalize_item(row) for row in raw_items]
         return ListPedidosVendaAbertosResponse(

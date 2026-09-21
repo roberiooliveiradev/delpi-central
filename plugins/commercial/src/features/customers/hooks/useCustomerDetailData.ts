@@ -43,9 +43,11 @@ export function useCustomerDetailData(
   loja: string,
   options?: {
     sellerNameByKey?: ReadonlyMap<string, string>;
+    customerCenter?: string | null;
   },
 ): UseCustomerDetailDataResult {
   const sellerNameByKey = options?.sellerNameByKey;
+  const customerCenter = options?.customerCenter?.trim() || "";
   const [identity, setIdentity] = useState<CustomerSummary | null | undefined>(
     undefined,
   );
@@ -156,10 +158,13 @@ export function useCustomerDetailData(
             nome: hit?.name ?? null,
             enrichment: enrich,
             sellerName,
+            customerCenter: customerCenter || null,
           });
         })();
 
-        const ordersPromise = getCustomerOpenOrdersTotvs(code, store, controller.signal)
+        const ordersPromise = getCustomerOpenOrdersTotvs(code, store, controller.signal, {
+          customerCenter: customerCenter || null,
+        })
           .then((data) => data.items ?? [])
           .catch((err: unknown) => {
             if (controller.signal.aborted) throw err;
@@ -183,6 +188,7 @@ export function useCustomerDetailData(
               nome: null,
               enrichment: null,
               sellerName: sellerNameByKey?.get(`${code}|${store}`) ?? null,
+              customerCenter: customerCenter || null,
             });
           }),
           ordersPromise,
@@ -218,7 +224,7 @@ export function useCustomerDetailData(
     })();
 
     return () => controller.abort();
-  }, [codigo, loja, sellerNameByKey, reloadKey]);
+  }, [codigo, loja, sellerNameByKey, customerCenter, reloadKey]);
 
   const fromOrders = useMemo(() => {
     if (!ordersReady) return undefined;
@@ -227,10 +233,11 @@ export function useCustomerDetailData(
       aggregated.customers.find(
         (customer) =>
           customer.codigo.trim() === codigo.trim() &&
-          customer.loja.trim() === loja.trim(),
+          customer.loja.trim() === loja.trim() &&
+          (!customerCenter || (customer.customerCenter || "").trim() === customerCenter),
       ) ?? null
     );
-  }, [orderItems, ordersReady, codigo, loja]);
+  }, [orderItems, ordersReady, codigo, loja, customerCenter]);
 
   const customer = useMemo(() => {
     if (identity === undefined && fromOrders === undefined) return undefined;

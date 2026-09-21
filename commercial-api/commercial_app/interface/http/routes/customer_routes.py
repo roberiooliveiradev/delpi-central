@@ -282,6 +282,8 @@ def list_commercial_customer_billing_series(
             payload["product_groups"] = body.product_groups
         if body.market:
             payload["market"] = body.market
+        if body.customer_centers:
+            payload["customer_centers"] = body.customer_centers
         result = build_delpi_commercial_gateway().list_customer_billing_series(
             payload=payload
         )
@@ -304,6 +306,35 @@ def list_commercial_customer_billing_series(
         )
 
 
+@router.get("/center-assignments", operation_id="list_commercial_customer_center_assignments")
+@require_any_permission(*COMMERCIAL_READ_PERMISSIONS, *COMMERCIAL_MANAGE_PERMISSIONS)
+def list_commercial_customer_center_assignments(request: Request):
+    """Centros por código e loja, restritos aos códigos da membership."""
+    try:
+        scope = _customer_scope_for_request(request)
+        params: dict[str, Any] = {}
+        if scope.allowed_customers is not None:
+            codes = sorted({code for code, _store in scope.allowed_customers if code})
+            params["customer_codes"] = ",".join(codes)
+        payload = build_delpi_commercial_gateway().get_commercial_analytics(
+            "/customer-center-assignments",
+            params=params,
+        )
+        data = payload.get("data", payload) if isinstance(payload, dict) else {}
+        return ok(
+            data,
+            message="Centros do cliente carregados.",
+            operation_id="list_commercial_customer_center_assignments",
+        )
+    except Exception:
+        logger.exception("list_commercial_customer_center_assignments_failed")
+        return fail(
+            "Erro interno ao listar centros do cliente.",
+            500,
+            operation_id="list_commercial_customer_center_assignments",
+        )
+
+
 @router.get(
     "/{customer_code}/{customer_store}/outbound-invoices",
     operation_id="list_commercial_customer_outbound_invoices",
@@ -319,6 +350,7 @@ def list_commercial_customer_outbound_invoices(
     page_size: int = Query(default=20, ge=1, le=100),
     situation: str | None = Query(default="all"),
     search: str | None = Query(default=None),
+    customer_centers: str | None = Query(default=None),
 ):
     try:
         result = build_delpi_commercial_gateway().list_customer_outbound_invoices(
@@ -331,6 +363,7 @@ def list_commercial_customer_outbound_invoices(
                 "page_size": page_size,
                 "situation": situation,
                 "search": search,
+                **({"customer_centers": customer_centers} if customer_centers else {}),
             },
         )
         data = result.get("data", result)
@@ -436,12 +469,14 @@ def list_commercial_customer_open_orders(
     _request: Request,
     customer_code: str = Path(..., min_length=1),
     customer_store: str = Path(..., min_length=1),
+    customer_centers: str | None = Query(default=None),
 ):
     """Conta 360: pedidos do par código/loja sem filtro de membership."""
     try:
         result = build_delpi_commercial_gateway().list_open_orders_by_customer(
             customer_code=customer_code,
             customer_store=customer_store,
+            params={"customer_centers": customer_centers} if customer_centers else None,
         )
         data = result.get("data", result)
         return ok(

@@ -20,6 +20,7 @@ export function mergePortfolioCustomersWithOpenOrders(
       codigo: item.customer_code,
       loja: item.customer_store,
       nome: item.customer_name,
+      customerCenter: item.customer_center,
     });
     if (!identity) continue;
 

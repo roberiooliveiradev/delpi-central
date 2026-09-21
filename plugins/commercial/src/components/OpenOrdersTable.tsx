@@ -229,11 +229,17 @@ export function OpenOrdersTable({
           Boolean(code && store) &&
           Boolean(customerAvatars.get(customerAvatarKey(code, store)));
         const name = row.nome_cliente?.trim() || "—";
-        const entityLine = formatEntityTypeWithCodeStore(
-          row.tipo_entidade,
-          row.codigo_cadastro,
-          null,
-        );
+        const center = row.customer_center?.trim() || "";
+        const entityLine = [
+          formatEntityTypeWithCodeStore(
+            row.tipo_entidade,
+            row.codigo_cadastro,
+            null,
+          ),
+          center,
+        ]
+          .filter(Boolean)
+          .join(" · ");
         const returnNav = currentReturnNav("Meus pedidos");
         const accountHref =
           code && store
@@ -246,7 +252,11 @@ export function OpenOrdersTable({
         const accountTitle = accountLinkTitle(name);
         const goAccount = () => {
           if (!code || !store) return;
-          navigateCustomerDetail(code, store, { basePath, returnNav });
+          navigateCustomerDetail(code, store, {
+            basePath,
+            returnNav,
+            customerCenter: center,
+          });
         };
         return (
           <div className="cm-open-orders-client">

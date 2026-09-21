@@ -50,7 +50,11 @@ def test_execute_for_customer_maps_items_and_summary() -> None:
         "06",
     )
 
-    repository.list_open_orders_for_customer.assert_called_once_with("000001", "06")
+    repository.list_open_orders_for_customer.assert_called_once_with(
+        "000001",
+        "06",
+        customer_centers=None,
+    )
     assert len(result.items) == 1
     assert result.items[0]["pedido"] == "102723"
     assert result.summary.total_linhas == 1

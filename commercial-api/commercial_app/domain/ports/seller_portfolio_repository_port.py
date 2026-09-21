@@ -91,6 +91,8 @@ class SellerPortfolioRepositoryPort(ABC):
         portfolio_id: str,
         customer_code: str,
         customer_store: str,
+        customer_center: str | None = None,
+        match_center: bool = False,
     ) -> SellerPortfolio | None:
         raise NotImplementedError
 

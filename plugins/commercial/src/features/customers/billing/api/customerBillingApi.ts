@@ -15,6 +15,7 @@ export type CustomerBillingQuery = {
   pageSize: number;
   situation: CustomerBillingSituationFilter;
   search: string;
+  customerCenters?: string | null;
 };
 
 function encodeSegment(value: string): string {
@@ -30,6 +31,9 @@ export function buildCustomerBillingPath(query: CustomerBillingQuery): string {
   params.set("situation", query.situation);
   if (query.search.trim()) {
     params.set("search", query.search.trim());
+  }
+  if (query.customerCenters?.trim()) {
+    params.set("customer_centers", query.customerCenters.trim());
   }
   return (
     `${commercialApiUrl(

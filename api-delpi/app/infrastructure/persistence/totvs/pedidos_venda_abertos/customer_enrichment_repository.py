@@ -8,6 +8,7 @@ from app.domain.ports.pedidos_venda_abertos.customer_enrichment_repository_port 
     CustomerEnrichmentRepositoryPort,
     CustomerGeoRow,
 )
+from app.domain.totvs.protheus_customer_center import customer_center_exists_predicate
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.pedidos_venda_abertos.customer_billing_series_sql import (
     DEFAULT_BILLING_METRIC,
@@ -150,6 +151,7 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
         product_codes: Sequence[str] | None = None,
         product_groups: Sequence[str] | None = None,
         market: str | None = None,
+        customer_centers: Sequence[str] | None = None,
     ) -> list[CustomerBillingMonthRow]:
         pairs = [(c.strip(), s.strip()) for c, s in customers if c.strip() and s.strip()]
         if not pairs:
@@ -168,6 +170,7 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
             clauses.append("(D2.D2_CLIENTE = ? AND D2.D2_LOJA = ?)")
             pair_params.extend([code, store])
         where_pairs = " OR ".join(clauses)
+        center_predicate, center_params = customer_center_exists_predicate(list(customer_centers) if customer_centers is not None else None)
 
         sql = build_customer_billing_series_sql(
             where_pairs=where_pairs,
@@ -175,6 +178,7 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
             nature=nature,
             metric=metric,
             recorte=recorte,
+            center_predicate=center_predicate,
         )
         params = billing_series_params(
             pair_params=pair_params,
@@ -183,6 +187,7 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
             nature=nature,
             metric=metric,
             recorte=recorte,
+            center_params=center_params,
         )
         with self as repo:
             rows = repo.execute_query(sql, params)

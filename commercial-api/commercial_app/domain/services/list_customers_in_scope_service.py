@@ -36,14 +36,16 @@ class ListCustomersInScopeService:
             if key[0] and key[1]:
                 index[key] = metric
 
-        seen: set[tuple[str, str]] = set()
+        seen: set[tuple[str, str, str]] = set()
         items: list[CustomerInScopeItem] = []
         for assignment in assignments:
             key = customer_coverage_key(assignment.customer_code, assignment.customer_store)
-            if not key[0] or not key[1] or key in seen:
+            center = str(assignment.customer_center or "").strip()
+            identity = (key[0], key[1], center)
+            if not key[0] or not key[1] or identity in seen:
                 continue
-            seen.add(key)
-            metric = index.get(key)
+            seen.add(identity)
+            metric = index.get(key) if not center else None
             open_value = float(metric.open_value) if metric is not None else 0.0
             has_overdue = bool(metric.has_overdue) if metric is not None else False
             name = None
@@ -59,10 +61,18 @@ class ListCustomersInScopeService:
                     open_value=open_value,
                     has_overdue=has_overdue,
                     has_open_orders=open_value > 0 or has_overdue,
+                    customer_center=center or None,
                 )
             )
 
-        items.sort(key=lambda item: (item.customer_name or "", item.customer_code, item.customer_store))
+        items.sort(
+            key=lambda item: (
+                item.customer_name or "",
+                item.customer_code,
+                item.customer_store,
+                item.customer_center or "",
+            )
+        )
         reason = metrics_reason
         if not metrics_available and reason is None:
             reason = _METRICS_FETCH_FAILED

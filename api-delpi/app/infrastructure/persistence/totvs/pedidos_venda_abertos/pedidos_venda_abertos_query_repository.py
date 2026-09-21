@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-from typing import Sequence
+from typing import Optional, Sequence
 
 from app.domain.ports.pedidos_venda_abertos.pedidos_venda_abertos_query_repository_port import (
     PedidosVendaAbertosQueryRepositoryPort,
+)
+from app.domain.totvs.protheus_customer_center import (
+    customer_center_in_predicate,
+    customer_center_link_sql,
 )
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 
@@ -38,7 +42,8 @@ _ITEMS_SELECT = f"""
     CONVERT(VARCHAR(10), v.data_entrega, 23) AS data_entrega,
     v.no_estoque,
     v.preco_venda,
-    v.valor_aberto
+    v.valor_aberto,
+    RTRIM(ISNULL(SA7C.customer_center, '')) AS customer_center
 """
 
 _ITEMS_FROM = f"""
@@ -58,30 +63,73 @@ _ITEMS_FROM = f"""
 """
 
 
+def _center_join() -> str:
+    return customer_center_link_sql(
+        product_column="C6.C6_PRODUTO",
+        customer_column="C5.C5_CLIENTE",
+        store_column="C5.C5_LOJACLI",
+        join_type="left",
+    )
+
+
+def _center_filter(centers: list[str] | None) -> tuple[str, list[str]]:
+    predicate, params = customer_center_in_predicate(centers)
+    if not predicate:
+        return "", []
+    return f"AND {predicate}", params
+
+
 class PedidosVendaAbertosQueryRepository(BaseRepository, PedidosVendaAbertosQueryRepositoryPort):
 
-    def list_open_orders(self) -> tuple[list[dict], dict]:
+    def list_open_orders(
+        self,
+        customer_centers: Optional[list[str]] = None,
+    ) -> tuple[list[dict], dict]:
+        center_sql, center_params = _center_filter(customer_centers)
         with self:
-            summary_row = self.execute_one(
-                f"""
-                SELECT
-                    COUNT(*) AS total_linhas,
-                    ISNULL(SUM(valor_aberto), 0) AS valor_total_aberto,
-                    ISNULL(SUM(saldo), 0) AS saldo_total,
-                    SUM(CASE WHEN no_estoque >= saldo THEN 1 ELSE 0 END) AS itens_com_estoque,
-                    SUM(
-                        CASE WHEN no_estoque > 0 AND no_estoque < saldo THEN 1 ELSE 0 END
-                    ) AS itens_estoque_parcial,
-                    SUM(CASE WHEN no_estoque <= 0 THEN 1 ELSE 0 END) AS itens_sem_estoque
-                FROM {VIEW} v
-                """
-            )
+            if center_sql:
+                summary_row = self.execute_one(
+                    f"""
+                    SELECT
+                        COUNT(*) AS total_linhas,
+                        ISNULL(SUM(v.valor_aberto), 0) AS valor_total_aberto,
+                        ISNULL(SUM(v.saldo), 0) AS saldo_total,
+                        SUM(CASE WHEN v.no_estoque >= v.saldo THEN 1 ELSE 0 END) AS itens_com_estoque,
+                        SUM(
+                            CASE WHEN v.no_estoque > 0 AND v.no_estoque < v.saldo THEN 1 ELSE 0 END
+                        ) AS itens_estoque_parcial,
+                        SUM(CASE WHEN v.no_estoque <= 0 THEN 1 ELSE 0 END) AS itens_sem_estoque
+                    {_ITEMS_FROM}
+                    {_center_join()}
+                    WHERE 1 = 1
+                    {center_sql}
+                    """,
+                    tuple(center_params),
+                )
+            else:
+                summary_row = self.execute_one(
+                    f"""
+                    SELECT
+                        COUNT(*) AS total_linhas,
+                        ISNULL(SUM(valor_aberto), 0) AS valor_total_aberto,
+                        ISNULL(SUM(saldo), 0) AS saldo_total,
+                        SUM(CASE WHEN no_estoque >= saldo THEN 1 ELSE 0 END) AS itens_com_estoque,
+                        SUM(
+                            CASE WHEN no_estoque > 0 AND no_estoque < saldo THEN 1 ELSE 0 END
+                        ) AS itens_estoque_parcial,
+                        SUM(CASE WHEN no_estoque <= 0 THEN 1 ELSE 0 END) AS itens_sem_estoque
+                    FROM {VIEW} v
+                    """
+                )
             items = self.execute_query(
                 f"""
                 SELECT {_ITEMS_SELECT}
                 {_ITEMS_FROM}
+                {_center_join()}
+                {"WHERE 1 = 1 " + center_sql if center_sql else ""}
                 ORDER BY v.data_entrega DESC
-                """
+                """,
+                tuple(center_params),
             )
 
         return items, summary_row or {}
@@ -90,6 +138,7 @@ class PedidosVendaAbertosQueryRepository(BaseRepository, PedidosVendaAbertosQuer
         self,
         customer_code: str,
         customer_store: str,
+        customer_centers: Optional[list[str]] = None,
     ) -> tuple[list[dict], dict]:
         """Pedidos em aberto de um par código/loja (Conta 360 — sem dump global)."""
         code = str(customer_code or "").strip()
@@ -108,7 +157,8 @@ class PedidosVendaAbertosQueryRepository(BaseRepository, PedidosVendaAbertosQuer
             WHERE NULLIF(LTRIM(RTRIM(C5.C5_CLIENTE)), '') = ?
               AND NULLIF(LTRIM(RTRIM(C5.C5_LOJACLI)), '') = ?
         """
-        params = (code, store)
+        center_sql, center_params = _center_filter(customer_centers)
+        params = (code, store, *center_params)
 
         with self:
             summary_row = self.execute_one(
@@ -123,7 +173,9 @@ class PedidosVendaAbertosQueryRepository(BaseRepository, PedidosVendaAbertosQuer
                     ) AS itens_estoque_parcial,
                     SUM(CASE WHEN v.no_estoque <= 0 THEN 1 ELSE 0 END) AS itens_sem_estoque
                 {_ITEMS_FROM}
+                {_center_join()}
                 {customer_where}
+                {center_sql}
                 """,
                 params,
             )
@@ -131,7 +183,9 @@ class PedidosVendaAbertosQueryRepository(BaseRepository, PedidosVendaAbertosQuer
                 f"""
                 SELECT {_ITEMS_SELECT}
                 {_ITEMS_FROM}
+                {_center_join()}
                 {customer_where}
+                {center_sql}
                 ORDER BY v.data_entrega DESC
                 """,
                 params,

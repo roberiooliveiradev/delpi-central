@@ -293,6 +293,7 @@ export function SellerPortfolioDetailPage({
             customer_code: item.code,
             customer_store: item.store,
             customer_name: item.name,
+            customer_center: item.customerCenter,
           });
           latest = stripPortfolioCoverageFields(result);
           setPortfolio(latest);
@@ -337,12 +338,12 @@ export function SellerPortfolioDetailPage({
     }
   }
 
-  async function handleRemoveCustomer(code: string, store: string) {
+  async function handleRemoveCustomer(code: string, store: string, center?: string | null) {
     if (!portfolio) return;
     const key = customerKey(code, store);
-    setBusyCustomerKey(key);
+    setBusyCustomerKey(center?.trim() ? `${key}|${center.trim()}` : key);
     try {
-      const updated = await removeSellerCustomer(portfolio.id, code, store);
+      const updated = await removeSellerCustomer(portfolio.id, code, store, center ?? "");
       setPortfolio(updated);
       notifySuccess("Cliente removido da carteira.");
     } catch (err: unknown) {
@@ -352,7 +353,9 @@ export function SellerPortfolioDetailPage({
     }
   }
 
-  async function handleRemoveCustomers(items: Array<{ code: string; store: string }>) {
+  async function handleRemoveCustomers(
+    items: Array<{ code: string; store: string; center?: string | null }>,
+  ) {
     if (!portfolio || items.length === 0) return;
     setUnlinkingCustomers(true);
     let ok = 0;
@@ -364,6 +367,7 @@ export function SellerPortfolioDetailPage({
             portfolio.id,
             item.code,
             item.store,
+            item.center ?? "",
           );
           setPortfolio(updated);
           ok += 1;
@@ -486,13 +490,17 @@ export function SellerPortfolioDetailPage({
       return;
     }
     const customers = portfolio.customers
-      .filter((customer) =>
-        input.customerKeys.includes(customerKey(customer.customer_code, customer.customer_store)),
-      )
+      .filter((customer) => {
+        const pair = customerKey(customer.customer_code, customer.customer_store);
+        const center = customer.customer_center?.trim() || "";
+        const rowKey = center ? `${pair}|${center}` : pair;
+        return input.customerKeys.includes(rowKey);
+      })
       .map((customer) => ({
         customer_code: customer.customer_code,
         customer_store: customer.customer_store,
         customer_name: customer.customer_name,
+        customer_center: customer.customer_center,
       }));
     setTransferring(true);
     setTransferError(null);

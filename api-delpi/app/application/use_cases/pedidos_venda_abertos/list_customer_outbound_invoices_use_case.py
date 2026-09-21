@@ -37,6 +37,7 @@ class ListCustomerOutboundInvoicesRequest:
     page_size: int = 20
     situation: Optional[str] = None
     search: Optional[str] = None
+    customer_centers: Optional[list[str]] = None
 
 
 class ListCustomerOutboundInvoicesUseCase:
@@ -91,4 +92,5 @@ class ListCustomerOutboundInvoicesUseCase:
             page_size=page_size,
             situation=situation,
             search=search,
+            customer_centers=request.customer_centers,
         )

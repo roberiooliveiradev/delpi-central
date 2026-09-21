@@ -8,6 +8,7 @@ class SellerCustomerAssignment:
     customer_code: str
     customer_store: str
     customer_name: str | None = None
+    customer_center: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

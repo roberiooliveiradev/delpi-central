@@ -54,6 +54,7 @@ const PRIOR_SERIES_COLOR = "var(--chart-3, #94a3b8)";
 type CustomerAccountBillingChartProps = {
   codigo: string;
   loja: string;
+  customerCenter?: string | null;
   startDate: string;
   endDate: string;
   comparePriorYear: boolean;
@@ -64,14 +65,20 @@ type CustomerAccountBillingChartProps = {
 };
 
 /** Stub mínimo para o hook de série (só código+loja entram no request). */
-function accountAsSeriesCustomer(codigo: string, loja: string): CustomerSummary {
+function accountAsSeriesCustomer(
+  codigo: string,
+  loja: string,
+  customerCenter?: string | null,
+): CustomerSummary {
   const code = codigo.trim();
   const store = loja.trim();
+  const center = customerCenter?.trim() || "";
   return {
-    key: `${code}|${store}`,
+    key: center ? `${code}|${store}|${center}` : `${code}|${store}`,
     codigo: code,
     loja: store,
     nome: code,
+    customerCenter: center || null,
     quantidadePedidosAbertos: 0,
     quantidadeLinhasAbertas: 0,
     valorTotalAberto: 0,
@@ -91,6 +98,7 @@ function accountAsSeriesCustomer(codigo: string, loja: string): CustomerSummary 
 export function CustomerAccountBillingChart({
   codigo,
   loja,
+  customerCenter,
   startDate,
   endDate,
   comparePriorYear,
@@ -114,8 +122,8 @@ export function CustomerAccountBillingChart({
   const chartType = preferences.chartType ?? "column";
 
   const customers = useMemo(
-    () => [accountAsSeriesCustomer(codigo, loja)],
-    [codigo, loja],
+    () => [accountAsSeriesCustomer(codigo, loja, customerCenter)],
+    [codigo, loja, customerCenter],
   );
   const queryEnabled =
     enabled && Boolean(codigo.trim() && loja.trim() && startDate && endDate);

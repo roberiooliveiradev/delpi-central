@@ -353,6 +353,7 @@ export function OpenOrdersPageImpl({ basePath }: { basePath?: string }) {
                 hasActiveFilters={hasActiveFilters}
                 onChange={updateFilters}
                 onReset={resetFilters}
+                sellerId={canFilterPortfolios ? sellerIdFilter : null}
                 scopeFilter={
                   canFilterPortfolios ? (
                     <SellerScopeFilter

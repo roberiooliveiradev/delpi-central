@@ -6,7 +6,7 @@ import {
   type DirectoryUserOption,
 } from "@delpi/plugin-ui/index";
 
-import { searchDirectoryUsers } from "../../api/commercialPortfolioApi";
+import { searchDirectoryUsers, getCustomerCenterAssignments, type CustomerCenterAssignment } from "../../api/commercialPortfolioApi";
 import {
   CommercialActionButton,
   CommercialDataListToolbar,
@@ -15,6 +15,7 @@ import {
   CommercialSectionCard,
   CommercialStateBanner,
   CommercialStatusBadge,
+  CommercialSelectField,
   CommercialTextField,
   CommercialViewTransition,
   type DataTableColumn,
@@ -52,13 +53,30 @@ type SellerPortfolioDetailProps = {
   otherPortfolioLabelsFor?: (customerCode: string, customerStore: string) => string[];
   directoryLabelFor: (userId: string | null | undefined, fallback?: string | null) => string;
   onAddCustomers: (items: CustomerSearchSelection[]) => void;
-  onRemoveCustomer: (code: string, store: string) => void;
-  onRemoveCustomers: (items: Array<{ code: string; store: string }>) => void;
+  onRemoveCustomer: (code: string, store: string, center?: string | null) => void;
+  onRemoveCustomers: (items: Array<{ code: string; store: string; center?: string | null }>) => void;
   unlinkingCustomers?: boolean;
   onAddMembers: (userIds: string[]) => void;
   onRemoveMember: (userId: string) => void;
   onSetOwner: (userId: string) => void;
 };
+
+function linkedRowKey(row: {
+  customer_code: string;
+  customer_store: string;
+  customer_center?: string | null;
+}): string {
+  const pair = customerKey(row.customer_code, row.customer_store);
+  const center = row.customer_center?.trim() || "";
+  return center ? `${pair}|${center}` : pair;
+}
+
+function sameCustomerStore(left: string, right: string): boolean {
+  const a = left.trim();
+  const b = right.trim();
+  if (a === b) return true;
+  return /^\d+$/.test(a) && /^\d+$/.test(b) && a.padStart(2, "0") === b.padStart(2, "0");
+}
 
 function resolveMembers(portfolio: SellerPortfolio): SellerPortfolioMember[] {
   const members = portfolio.members ?? [];
@@ -74,6 +92,7 @@ function linkedCustomerMatchesFilter(row: SellerCustomer, query: string): boolea
     row.customer_code,
     row.customer_store,
     row.customer_name ?? "",
+    row.customer_center ?? "",
     `${row.customer_code}/${row.customer_store}`,
   ]
     .join(" ")
@@ -100,6 +119,8 @@ export function SellerPortfolioDetail({
 }: SellerPortfolioDetailProps) {
   const [memberPicker, setMemberPicker] = useState<DirectoryUserOption[]>([]);
   const [customerPicker, setCustomerPicker] = useState<CustomerSearchSelection[]>([]);
+  const [centerChoice, setCenterChoice] = useState<Record<string, string>>({});
+  const [assignments, setAssignments] = useState<CustomerCenterAssignment[]>([]);
   const [selectedLinkedKeys, setSelectedLinkedKeys] = useState<Set<string>>(
     () => new Set(),
   );
@@ -124,9 +145,9 @@ export function SellerPortfolioDetail({
   const linkedKeys = useMemo(
     () =>
       new Set(
-        linked.map((customer) =>
-          customerKey(customer.customer_code, customer.customer_store),
-        ),
+        linked
+          .filter((customer) => !customer.customer_center?.trim())
+          .map((customer) => customerKey(customer.customer_code, customer.customer_store)),
       ),
     [linked],
   );
@@ -146,12 +167,17 @@ export function SellerPortfolioDetail({
     );
   }, [linkedKeys]);
 
+  const allLinkedRowKeys = useMemo(
+    () => new Set(linked.map((row) => linkedRowKey(row))),
+    [linked],
+  );
+
   useEffect(() => {
     setSelectedLinkedKeys((prev) => {
-      const next = new Set([...prev].filter((key) => linkedKeys.has(key)));
+      const next = new Set([...prev].filter((key) => allLinkedRowKeys.has(key)));
       return next.size === prev.size ? prev : next;
     });
-  }, [linkedKeys]);
+  }, [allLinkedRowKeys]);
 
   const members = resolveMembers(portfolio);
   const isOrphan = members.length === 0;
@@ -165,6 +191,19 @@ export function SellerPortfolioDetail({
   useEffect(() => {
     setMemberPicker((prev) => prev.filter((user) => !memberIds.has(user.id)));
   }, [memberIds]);
+
+  useEffect(() => {
+    if (!showCustomerSearch) return;
+    const controller = new AbortController();
+    void getCustomerCenterAssignments(controller.signal)
+      .then((items) => {
+        if (!controller.signal.aborted) setAssignments(items);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setAssignments([]);
+      });
+    return () => controller.abort();
+  }, [showCustomerSearch]);
 
   const searchMemberCandidates = useCallback(
     async (query: string, limit?: number, signal?: AbortSignal) => {
@@ -181,9 +220,7 @@ export function SellerPortfolioDetail({
 
   const filteredLinkedKeys = useMemo(
     () =>
-      filteredLinked.map((row) =>
-        customerKey(row.customer_code, row.customer_store),
-      ),
+      filteredLinked.map((row) => linkedRowKey(row)),
     [filteredLinked],
   );
 
@@ -197,7 +234,7 @@ export function SellerPortfolioDetail({
         key: "select",
         header: "Sel.",
         render: (row) => {
-          const key = customerKey(row.customer_code, row.customer_store);
+          const key = linkedRowKey(row);
           return (
             <NativeCheckboxControl
               id={`portfolio-linked-${portfolio.id}-${key}`}
@@ -221,6 +258,12 @@ export function SellerPortfolioDetail({
         header: "Código/loja",
         headerHint: CM_HELP.sellerPortfolios.colCustomerCode,
         render: (row) => `${row.customer_code}/${row.customer_store}`,
+      },
+      {
+        key: "center",
+        header: "Centro",
+        headerHint: CM_HELP.sellerPortfolios.customers,
+        render: (row) => row.customer_center?.trim() || "—",
       },
       {
         key: "name",
@@ -273,14 +316,16 @@ export function SellerPortfolioDetail({
         key: "action",
         header: "Ação",
         render: (row) => {
-          const key = customerKey(row.customer_code, row.customer_store);
+          const key = linkedRowKey(row);
           return (
             <CommercialActionButton
               variant="ghost"
               disabled={
                 busyCustomerKey === key || linkingCustomers || unlinkingCustomers
               }
-              onClick={() => onRemoveCustomer(row.customer_code, row.customer_store)}
+              onClick={() =>
+                onRemoveCustomer(row.customer_code, row.customer_store, row.customer_center)
+              }
               aria-label={`Remover ${row.customer_name ?? row.customer_code}`}
             >
               {busyCustomerKey === key ? "Removendo…" : "Remover"}
@@ -588,11 +633,59 @@ export function SellerPortfolioDetail({
                   </span>
                 )}
               />
+              {customerPicker.map((item) => {
+                const options = assignments.filter(
+                  (assignment) =>
+                    assignment.customer_code.trim() === item.code.trim() &&
+                    sameCustomerStore(assignment.customer_store, item.store),
+                );
+                if (options.length === 0) return null;
+                const key = customerKey(item.code, item.store);
+                return (
+                  <CommercialSelectField
+                    key={key}
+                    label={`Centro de ${item.code}/${item.store}`}
+                    hint={CM_HELP.sellerPortfolios.linkSelectedCustomers}
+                    value={centerChoice[key] ?? ""}
+                    onChange={(value) =>
+                      setCenterChoice((prev) => ({ ...prev, [key]: value }))
+                    }
+                    options={options.map((option) => ({
+                      value: option.center,
+                      label: option.label || option.center,
+                    }))}
+                    allowEmpty
+                    emptyLabel="Selecione o centro"
+                  />
+                );
+              })}
               <div className="cm-portfolios-form__actions">
                 <CommercialActionButton
                   variant="primary"
-                  disabled={linkingCustomers || customerPicker.length === 0}
-                  onClick={() => onAddCustomers(customerPicker)}
+                  disabled={
+                    linkingCustomers ||
+                    customerPicker.length === 0 ||
+                    customerPicker.some((item) => {
+                      const options = assignments.filter(
+                        (assignment) =>
+                          assignment.customer_code.trim() === item.code.trim() &&
+                          sameCustomerStore(assignment.customer_store, item.store),
+                      );
+                      return (
+                        options.length > 0 &&
+                        !centerChoice[customerKey(item.code, item.store)]?.trim()
+                      );
+                    })
+                  }
+                  onClick={() =>
+                    onAddCustomers(
+                      customerPicker.map((item) => ({
+                        ...item,
+                        customerCenter:
+                          centerChoice[customerKey(item.code, item.store)]?.trim() || null,
+                      })),
+                    )
+                  }
                   title={CM_HELP.sellerPortfolios.linkSelectedCustomers}
                 >
                   {linkingCustomers
@@ -667,14 +760,11 @@ export function SellerPortfolioDetail({
                       disabled={unlinkingCustomers || selectedLinkedKeys.size === 0}
                       onClick={() => {
                         const items = linked
-                          .filter((row) =>
-                            selectedLinkedKeys.has(
-                              customerKey(row.customer_code, row.customer_store),
-                            ),
-                          )
+                          .filter((row) => selectedLinkedKeys.has(linkedRowKey(row)))
                           .map((row) => ({
                             code: row.customer_code,
                             store: row.customer_store,
+                            center: row.customer_center,
                           }));
                         onRemoveCustomers(items);
                       }}
@@ -705,9 +795,7 @@ export function SellerPortfolioDetail({
                 <CommercialDataTable
                   rows={filteredLinked}
                   columns={linkedColumns}
-                  rowKey={(row, index) =>
-                    customerKey(row.customer_code, row.customer_store) || `linked-${index}`
-                  }
+                  rowKey={(row, index) => linkedRowKey(row) || `linked-${index}`}
                   layout="embedded"
                 />
               )}

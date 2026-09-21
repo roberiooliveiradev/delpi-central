@@ -9,6 +9,7 @@ export type CustomerSearchSelection = {
   code: string;
   store: string;
   name: string;
+  customerCenter?: string | null;
 };
 
 export type CustomerSearchPickerProps = {

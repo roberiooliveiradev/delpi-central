@@ -22,6 +22,7 @@ type CustomerBillingPanelProps = {
   basePath: string;
   codigo: string;
   loja: string;
+  customerCenter?: string | null;
 };
 
 export function CustomerBillingPanel({
@@ -29,6 +30,7 @@ export function CustomerBillingPanel({
   basePath,
   codigo,
   loja,
+  customerCenter,
 }: CustomerBillingPanelProps) {
   const {
     loading,
@@ -101,6 +103,7 @@ export function CustomerBillingPanel({
       <CustomerAccountBillingChart
         codigo={codigo}
         loja={loja}
+        customerCenter={customerCenter}
         startDate={startDate}
         endDate={endDate}
         comparePriorYear={comparePriorYear}

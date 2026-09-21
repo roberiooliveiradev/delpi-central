@@ -39,6 +39,8 @@ export type CustomerSummary = {
   nextAction?: string;
   /** Vendedor responsável pela carteira do cliente. */
   sellerName?: string | null;
+  /** Centro da amarração. Vazio = fallback da loja inteira. */
+  customerCenter?: string | null;
 };
 
 export type CustomerAggregationResult = {

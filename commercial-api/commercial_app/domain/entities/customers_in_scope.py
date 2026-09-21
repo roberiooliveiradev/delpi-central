@@ -13,6 +13,7 @@ class CustomerInScopeItem:
     open_value: float
     has_overdue: bool
     has_open_orders: bool
+    customer_center: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import type { CustomerSummary } from "../types/customerSummary";
 import { buildCustomersExportPayload } from "./customerExportPayload";
-import { CUSTOMER_COLUMN_CATALOG } from "./customerTableColumns";
+import {
+  CUSTOMER_COLUMN_CATALOG,
+  type CustomerColumnKey,
+} from "./customerTableColumns";
 
 const CUSTOMER: CustomerSummary = {
   key: "000123|01",
@@ -31,13 +34,15 @@ const CUSTOMER: CustomerSummary = {
   status: "atencao",
 };
 
+function column(key: CustomerColumnKey) {
+  const found = CUSTOMER_COLUMN_CATALOG.find((item) => item.key === key);
+  if (!found) throw new Error(`coluna ausente: ${key}`);
+  return found;
+}
+
 describe("buildCustomersExportPayload", () => {
   it("exporta somente as colunas visíveis, na mesma ordem e com os mesmos rótulos", () => {
-    const columns = [
-      CUSTOMER_COLUMN_CATALOG[7],
-      CUSTOMER_COLUMN_CATALOG[0],
-      CUSTOMER_COLUMN_CATALOG[6],
-    ];
+    const columns = [column("valorTotalAberto"), column("nome"), column("status")];
 
     const payload = buildCustomersExportPayload([CUSTOMER], columns);
 
@@ -58,11 +63,7 @@ describe("buildCustomersExportPayload", () => {
   it("mantém formatos legíveis para campos derivados", () => {
     const payload = buildCustomersExportPayload(
       [CUSTOMER],
-      [
-        CUSTOMER_COLUMN_CATALOG[2],
-        CUSTOMER_COLUMN_CATALOG[4],
-        CUSTOMER_COLUMN_CATALOG[5],
-      ],
+      [column("city"), column("billed12m"), column("billingTrend")],
     );
 
     expect(payload.rows[0]).toEqual({
@@ -82,10 +83,10 @@ describe("buildCustomersExportPayload", () => {
         },
       ],
       [
-        CUSTOMER_COLUMN_CATALOG[2],
-        CUSTOMER_COLUMN_CATALOG[3],
-        CUSTOMER_COLUMN_CATALOG[4],
-        CUSTOMER_COLUMN_CATALOG[5],
+        column("city"),
+        column("lastPurchaseDate"),
+        column("billed12m"),
+        column("billingTrend"),
       ],
     );
 

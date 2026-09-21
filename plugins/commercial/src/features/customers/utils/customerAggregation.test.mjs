@@ -70,6 +70,17 @@ describe("customerIdentity", () => {
     assert.notEqual(buildCustomerKey("000123", "01"), buildCustomerKey("000123", "02"));
   });
 
+  it("separa centros do mesmo par e mantem fallback sem centro", () => {
+    assert.equal(buildCustomerKey("000001", "01", "1100"), "000001|01|1100");
+    assert.equal(buildCustomerKey("000001", "01", "1200"), "000001|01|1200");
+    assert.notEqual(
+      buildCustomerKey("000001", "01", "1100"),
+      buildCustomerKey("000001", "01", "1200"),
+    );
+    assert.equal(buildCustomerKey("000001", "10", ""), "000001|10");
+    assert.equal(buildCustomerKey("000001", "10", null), "000001|10");
+  });
+
   it("nao usa nome", () => {
     const key = buildCustomerKey("1", "01");
     assert.equal(key, "1|01");
@@ -106,6 +117,27 @@ describe("customerAggregation", () => {
       line({ codigo_cadastro: "000123", loja_cadastro: "02", nome_cliente: "OUTRO" }),
     ]);
     assert.equal(result.customers.length, 2);
+  });
+
+  it("separa o mesmo par por centro e junta loja sem centro", () => {
+    const split = aggregateCustomers([
+      line({ customer_center: "1100", valor_aberto: 10 }),
+      line({ customer_center: "1200", valor_aberto: 20 }),
+    ]);
+    assert.equal(split.customers.length, 2);
+    const centers = split.customers.map((customer) => customer.customerCenter).sort();
+    assert.deepEqual(centers, ["1100", "1200"]);
+    const wholeStore = aggregateCustomers([
+      line({ codigo_cadastro: "000001", loja_cadastro: "10", customer_center: "" }),
+      line({
+        codigo_cadastro: "000001",
+        loja_cadastro: "10",
+        customer_center: null,
+        linha: "02",
+      }),
+    ]);
+    assert.equal(wholeStore.customers.length, 1);
+    assert.equal(wholeStore.customers[0].key, "000001|10");
   });
 
   it("conta pedidos distintos por filial e pedido", () => {

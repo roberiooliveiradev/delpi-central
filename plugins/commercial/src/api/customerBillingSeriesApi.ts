@@ -24,6 +24,7 @@ export type CustomerBillingSeriesQuery = {
   productCodes?: string[];
   productGroups?: string[];
   market?: "domestic" | "export";
+  customerCenters?: string[];
   signal?: AbortSignal;
 };
 
@@ -57,6 +58,9 @@ function billingSeriesBody(options?: CustomerBillingSeriesQuery) {
       ? { product_groups: options.productGroups }
       : {}),
     ...(options?.market ? { market: options.market } : {}),
+    ...(options?.customerCenters?.length
+      ? { customer_centers: options.customerCenters }
+      : {}),
   };
 }
 

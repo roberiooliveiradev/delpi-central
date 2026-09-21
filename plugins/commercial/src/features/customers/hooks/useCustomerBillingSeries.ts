@@ -45,28 +45,26 @@ export type UseCustomerBillingSeriesResult = {
 function buildRequestPairs(
   customers: CustomerSummary[] | undefined,
   selectedKeys: string[],
-): Array<{ customer_code: string; customer_store: string }> {
+): Array<{ customer_code: string; customer_store: string; customer_center?: string }> {
   if (!customers?.length) return [];
-  if (!selectedKeys.length) {
-    return customers.map((c) => ({
-      customer_code: c.codigo,
-      customer_store: c.loja,
-    }));
-  }
+  const mapRow = (customer: CustomerSummary) => {
+    const center = customer.customerCenter?.trim();
+    return {
+      customer_code: customer.codigo,
+      customer_store: customer.loja,
+      ...(center ? { customer_center: center } : {}),
+    };
+  };
+  if (!selectedKeys.length) return customers.map(mapRow);
   const selected = new Set(selectedKeys);
-  return customers
-    .filter((c) => selected.has(c.key))
-    .map((c) => ({
-      customer_code: c.codigo,
-      customer_store: c.loja,
-    }));
+  return customers.filter((customer) => selected.has(customer.key)).map(mapRow);
 }
 
 function requestFingerprint(
-  pairs: Array<{ customer_code: string; customer_store: string }>,
+  pairs: Array<{ customer_code: string; customer_store: string; customer_center?: string }>,
 ): string {
   return pairs
-    .map((p) => `${p.customer_code}\0${p.customer_store}`)
+    .map((pair) => `${pair.customer_code}\0${pair.customer_store}\0${pair.customer_center ?? ""}`)
     .sort()
     .join("|");
 }
@@ -151,10 +149,21 @@ export function useCustomerBillingSeries(
   useEffect(() => {
     if (!enabled || !fingerprint) return;
 
-    const pairs = fingerprint.split("|").map((token) => {
-      const [customer_code, customer_store] = token.split("\0");
-      return { customer_code, customer_store };
+    const rows = fingerprint.split("|").map((token) => {
+      const [customer_code, customer_store, customer_center = ""] = token.split("\0");
+      return { customer_code, customer_store, customer_center };
     });
+    const pairKeys = new Set<string>();
+    const pairs: Array<{ customer_code: string; customer_store: string }> = [];
+    for (const row of rows) {
+      const key = `${row.customer_code}|${row.customer_store}`;
+      if (pairKeys.has(key)) continue;
+      pairKeys.add(key);
+      pairs.push({ customer_code: row.customer_code, customer_store: row.customer_store });
+    }
+    const customerCenters = rows.some((row) => !row.customer_center)
+      ? undefined
+      : [...new Set(rows.map((row) => row.customer_center))].sort();
 
     const controller = new AbortController();
     let cancelled = false;
@@ -174,6 +183,7 @@ export function useCustomerBillingSeries(
       productCodes,
       productGroups,
       market,
+      customerCenters,
       signal: controller.signal,
     } as const;
 
@@ -192,6 +202,7 @@ export function useCustomerBillingSeries(
         productCodes,
         productGroups,
         market,
+        customerCenters,
         signal: controller.signal,
       });
 

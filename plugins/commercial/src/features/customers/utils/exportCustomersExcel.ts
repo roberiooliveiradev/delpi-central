@@ -2,7 +2,7 @@ import { exportTableFormat } from "@delpi/plugin-ui/index";
 
 import type { CustomerSummary } from "../types/customerSummary";
 import { buildCustomersExportPayload } from "./customerExportPayload";
-import type { CustomerColumnDef } from "./customerTableColumns";
+import type { CustomerColumnKey } from "./customerTableColumns";
 
 function buildFilename(): string {
   const now = new Date();
@@ -13,7 +13,7 @@ function buildFilename(): string {
 
 export async function exportCustomersExcel(
   customers: CustomerSummary[],
-  columns: CustomerColumnDef[],
+  columns: Array<{ key: CustomerColumnKey; label: string }>,
   options?: { billingNature?: "gross" | "net" },
 ): Promise<void> {
   if (customers.length === 0 || columns.length === 0) return;

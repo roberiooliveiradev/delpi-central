@@ -274,6 +274,8 @@ class LegacyPostgresSellerPortfolioRepository(
         portfolio_id: str,
         customer_code: str,
         customer_store: str,
+        customer_center: str | None = None,
+        match_center: bool = False,
     ) -> SellerPortfolio | None:
         if self.fetch_one(
             "SELECT id FROM pedidos_venda_abertos.sellers WHERE id = %s",

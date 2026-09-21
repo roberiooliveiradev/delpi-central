@@ -211,6 +211,7 @@ def build_customer_billing_series_sql(
     nature: str = DEFAULT_BILLING_NATURE,
     metric: str = DEFAULT_BILLING_METRIC,
     recorte: BillingSeriesRecorte | None = None,
+    center_predicate: str = "",
 ) -> str:
     nature = normalize_billing_nature(nature)
     metric = normalize_billing_metric(metric)
@@ -222,32 +223,46 @@ def build_customer_billing_series_sql(
                 granularity=granularity,
                 recorte=active,
                 metric="quantity",
+                center_predicate=center_predicate,
             )
         return _build_net_series_sql(
             where_pairs=where_pairs,
             granularity=granularity,
             recorte=active,
             metric="quantity",
+            center_predicate=center_predicate,
         )
     if nature == "gross" and not active.has_line_filters:
-        return _build_gross_series_sql(where_pairs=where_pairs, granularity=granularity)
+        return _build_gross_series_sql(
+            where_pairs=where_pairs,
+            granularity=granularity,
+            center_predicate=center_predicate,
+        )
     if nature == "gross":
         return _build_gross_line_series_sql(
             where_pairs=where_pairs,
             granularity=granularity,
             recorte=active,
             metric="value",
+            center_predicate=center_predicate,
         )
     return _build_net_series_sql(
         where_pairs=where_pairs,
         granularity=granularity,
         recorte=active,
         metric="value",
+        center_predicate=center_predicate,
     )
 
 
-def _build_gross_series_sql(*, where_pairs: str, granularity: str) -> str:
+def _build_gross_series_sql(
+    *,
+    where_pairs: str,
+    granularity: str,
+    center_predicate: str = "",
+) -> str:
     period_expr = billing_series_period_expr(granularity)
+    center_sql = f"AND ({center_predicate})" if center_predicate else ""
     return f"""
             WITH note_base AS (
                 SELECT
@@ -267,6 +282,7 @@ def _build_gross_series_sql(*, where_pairs: str, granularity: str) -> str:
                    AND F2.D_E_L_E_T_ = ''
                  WHERE D2.D_E_L_E_T_ = ''
                    AND ({where_pairs})
+                   {center_sql}
                    AND D2.D2_EMISSAO >= ?
                    AND D2.D2_EMISSAO <= ?
                  GROUP BY
@@ -296,11 +312,13 @@ def _build_gross_line_series_sql(
     granularity: str,
     recorte: BillingSeriesRecorte,
     metric: str = DEFAULT_BILLING_METRIC,
+    center_predicate: str = "",
 ) -> str:
     """Gross por linha: D2_TOTAL (value) ou D2_QUANT (quantity) — nunca F2_VALBRUT."""
     metric = normalize_billing_metric(metric)
     sale_period = _period_expr_from_protheus_col("D2.D2_EMISSAO", granularity)
     joins, where_extra, _ = _recorte_sale_fragments(recorte)
+    center_sql = f"AND ({center_predicate})" if center_predicate else ""
     if metric == "quantity":
         value_expr = _QTY_SALE_SUM
         unit_select = f",{_UNIT_AGG_SALE}"
@@ -317,6 +335,7 @@ def _build_gross_line_series_sql(
              WHERE D2.D_E_L_E_T_ = ''
                AND ISNULL(D2.D2_TIPO, '') <> 'D'
                AND ({where_pairs})
+               {center_sql}
                AND D2.D2_EMISSAO >= ?
                AND D2.D2_EMISSAO <= ?
                {where_extra}
@@ -331,6 +350,7 @@ def _build_net_series_sql(
     granularity: str,
     recorte: BillingSeriesRecorte | None = None,
     metric: str = DEFAULT_BILLING_METRIC,
+    center_predicate: str = "",
 ) -> str:
     """ROL líquido por bucket: vendas (D2_EMISSAO) − devoluções (D1_DTDIGIT)."""
     metric = normalize_billing_metric(metric)
@@ -341,6 +361,7 @@ def _build_net_series_sql(
     ret_period = _period_expr_from_protheus_col("D1.D1_DTDIGIT", granularity)
     exists_where = "D1X.D1_DTDIGIT >= ? AND D1X.D1_DTDIGIT <= ?"
     d2_pairs = where_pairs
+    center_sql = f"AND ({center_predicate})" if center_predicate else ""
     d1_pairs = where_pairs.replace("D2.D2_CLIENTE", "D1.D1_FORNECE").replace(
         "D2.D2_LOJA", "D1.D1_LOJA"
     )
@@ -383,6 +404,7 @@ def _build_net_series_sql(
                   {sale_joins}
                  WHERE D2.D_E_L_E_T_ = ''
                    AND ({d2_pairs})
+                   {center_sql}
                    AND D2.D2_EMISSAO >= ?
                    AND D2.D2_EMISSAO <= ?
                    AND {eligibility}
@@ -581,20 +603,23 @@ def billing_series_params(
     nature: str,
     metric: str = DEFAULT_BILLING_METRIC,
     recorte: BillingSeriesRecorte | None = None,
+    center_params: list[str] | None = None,
 ) -> tuple:
     nature = normalize_billing_nature(nature)
     metric = normalize_billing_metric(metric)
     active = recorte if recorte and recorte.has_line_filters else BillingSeriesRecorte()
     _, _, sale_params = _recorte_sale_fragments(active)
     _, _, ret_params = _recorte_return_fragments(active)
+    centers = list(center_params or [])
     if nature == "gross":
         # value+sem recorte = path F2_VALBRUT; quantity ou recorte = path linha
         if metric == "value" and not active.has_line_filters:
-            return tuple(pair_params + [start_date, end_date])
-        return tuple(pair_params + [start_date, end_date] + sale_params)
-    # net: vendas pairs+start/end+exists start/end+sale filters; devolucoes pairs+start/end+ret filters
+            return tuple(pair_params + centers + [start_date, end_date])
+        return tuple(pair_params + centers + [start_date, end_date] + sale_params)
+    # net: vendas pairs+center+start/end+exists start/end+sale filters; devolucoes pairs+start/end+ret filters
     return tuple(
         pair_params
+        + centers
         + [start_date, end_date, start_date, end_date]
         + sale_params
         + pair_params

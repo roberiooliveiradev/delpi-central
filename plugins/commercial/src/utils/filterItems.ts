@@ -21,6 +21,7 @@ export type OpenOrdersTotvsFilters = {
   search: string;
   filial: string;
   clientCodes: string[];
+  customerCenters: string[];
   stockStatus: StockFilter;
   dateStart: string;
   dateEnd: string;
@@ -34,6 +35,7 @@ export const DEFAULT_FILTERS: OpenOrdersTotvsFilters = {
   search: "",
   filial: "",
   clientCodes: [],
+  customerCenters: [],
   stockStatus: "",
   dateStart: "",
   dateEnd: "",
@@ -42,6 +44,12 @@ export const DEFAULT_FILTERS: OpenOrdersTotvsFilters = {
 };
 
 export function getClientKey(item: OpenOrdersTotvsItem): string {
+  const code = item.codigo_cadastro?.trim() || "";
+  const store = item.loja_cadastro?.trim() || "";
+  const center = item.customer_center?.trim() || "";
+  if (code && store) {
+    return center ? `${code}|${store}|${center}` : `${code}|${store}`;
+  }
   return item.nome_cliente?.trim() || item.codigo_cliente?.trim() || "";
 }
 
@@ -60,6 +68,12 @@ export function filterPedidosItems(
     if (
       filters.clientCodes.length > 0 &&
       !filters.clientCodes.includes(getClientKey(item))
+    ) {
+      return false;
+    }
+    if (
+      filters.customerCenters.length > 0 &&
+      !filters.customerCenters.includes((item.customer_center || "").trim())
     ) {
       return false;
     }
@@ -121,8 +135,8 @@ export function collectDistinctClients(items: OpenOrdersTotvsItem[]): ClientOpti
 
     const key = getClientKey(item);
     if (!key || clients.has(key)) continue;
-
-    clients.set(key, { key, name });
+    const center = item.customer_center?.trim() || "";
+    clients.set(key, { key, name: center ? `${name} (${center})` : name });
   }
 
   return [...clients.values()].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));

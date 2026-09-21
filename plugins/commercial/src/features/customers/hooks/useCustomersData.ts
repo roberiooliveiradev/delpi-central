@@ -15,6 +15,7 @@ import type {
   CustomerSummary,
 } from "../types/customerSummary";
 import { aggregateCustomers } from "../utils/customerAggregation";
+import { buildCustomerKey } from "../utils/customerIdentity";
 import { filterCustomers } from "../utils/customerFilters";
 import {
   resolveCustomerNextAction,
@@ -221,22 +222,30 @@ export function useCustomersData(
     const fromOrders = aggregateCustomers(items);
     const customers = mergePortfolioCustomersWithOpenOrders(inScopeItems, fromOrders.customers).map(
       (customer) => {
-        const enrich = enrichmentByKey[customer.key];
+        const pairKey = buildCustomerKey(customer.codigo, customer.loja) ?? customer.key;
+        const enrich = enrichmentByKey[pairKey] ?? enrichmentByKey[customer.key];
+        const splitByCenter = Boolean(customer.customerCenter?.trim());
         const withStatus = {
           ...customer,
           city: enrich?.city ?? customer.city ?? null,
           state: enrich?.state ?? customer.state ?? null,
           lastPurchaseDate: enrich?.lastPurchaseDate ?? customer.lastPurchaseDate ?? null,
-          billed12m: enrich?.billed12m ?? customer.billed12m ?? null,
+          billed12m: splitByCenter
+            ? null
+            : (enrich?.billed12m ?? customer.billed12m ?? null),
           hasAvatar: enrich?.hasAvatar ?? customer.hasAvatar ?? false,
-          billingTrend: enrich?.billingTrend ?? customer.billingTrend ?? null,
-          billingTrendPct: enrich?.billingTrendPct ?? customer.billingTrendPct ?? null,
-          coverageKnown: enrichmentKnownKeys.has(customer.key) || Boolean(customer.coverageKnown),
+          billingTrend: splitByCenter
+            ? null
+            : (enrich?.billingTrend ?? customer.billingTrend ?? null),
+          billingTrendPct: splitByCenter
+            ? null
+            : (enrich?.billingTrendPct ?? customer.billingTrendPct ?? null),
+          coverageKnown: enrichmentKnownKeys.has(pairKey) || Boolean(customer.coverageKnown),
           enrichmentAvailable: Boolean(enrich) || Boolean(customer.enrichmentAvailable),
         };
         return {
           ...withStatus,
-          sellerName: sellerNameByKey?.get(customer.key) ?? null,
+          sellerName: sellerNameByKey?.get(pairKey) ?? sellerNameByKey?.get(customer.key) ?? null,
           status: resolveCustomerStatus(withStatus),
           nextAction: resolveCustomerNextAction(withStatus),
         };

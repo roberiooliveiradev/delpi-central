@@ -51,6 +51,7 @@ class CustomerOutboundInvoice:
     item_count: int
     access_key: Optional[str] = None
     carrier: Optional[str] = None
+    customer_center: str = ""
     items: tuple[CustomerOutboundInvoiceItem, ...] = field(default_factory=tuple)
 
     def to_dict(self) -> dict[str, Any]:
@@ -70,6 +71,7 @@ class CustomerOutboundInvoice:
             "item_count": self.item_count,
             "access_key": self.access_key,
             "carrier": self.carrier,
+            "customer_center": self.customer_center,
             "items": [item.to_dict() for item in self.items],
         }
 

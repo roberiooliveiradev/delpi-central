@@ -49,6 +49,33 @@ def test_service_left_joins_metrics_and_zeros_missing() -> None:
     assert by_code["200"].has_open_orders is False
 
 
+def test_service_keeps_one_row_per_center_and_pair_fallback() -> None:
+    service = ListCustomersInScopeService()
+    result = service.build(
+        [
+            SellerCustomerAssignment("000001", "01", "WEG", customer_center="1100"),
+            SellerCustomerAssignment("000001", "01", "WEG", customer_center="1200"),
+            SellerCustomerAssignment("000001", "10", "Sem centro"),
+        ],
+        [
+            CustomerOpenOrderMetric(
+                customer_code="000001",
+                customer_store="01",
+                customer_name="WEG",
+                open_value=900.0,
+                has_overdue=True,
+            )
+        ],
+    )
+    assert result.customer_count == 3
+    centers = {
+        (item.customer_store, item.customer_center): item.open_value for item in result.items
+    }
+    assert centers[("01", "1100")] == 0.0
+    assert centers[("01", "1200")] == 0.0
+    assert centers[("10", None)] == 0.0
+
+
 def test_use_case_membership_without_open_orders_still_listed() -> None:
     repo = MagicMock()
     repo.list_portfolios.return_value = [

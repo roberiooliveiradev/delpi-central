@@ -294,6 +294,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_commercial_customer_centers": RouteContract(
         "commercial_customer_center", "list"
     ),
+    "list_commercial_customer_center_assignments": RouteContract(
+        "commercial_customer_center_assignment", "list"
+    ),
     "list_commercial_proposals": RouteContract("commercial_proposal", "paged_list"),
     "summarize_commercial_proposals_by_collaborator": RouteContract(
         "commercial_proposal_collaborator_summary", "playbook_report"

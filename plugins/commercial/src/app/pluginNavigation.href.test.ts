@@ -33,6 +33,25 @@ describe("buildUserProfileHref / buildCustomerDetailHref", () => {
     expect(href).toContain("/apps/commercial/customers/0001/01");
     expect(href).toContain("returnTo=");
   });
+
+  it("nao inclui o centro na URL da Conta", () => {
+    const href = buildCustomerDetailHref("000001", "01", {
+      basePath: "/apps/commercial",
+      search: "?q=autom",
+    });
+    expect(href).toBe("/apps/commercial/customers/000001/01?q=autom");
+    expect(href).not.toContain("customer_center");
+  });
+
+  it("navigateCustomerDetail aceita centro sem gravar na URL", async () => {
+    const { navigateCustomerDetail } = await import("./pluginNavigation");
+    const href = buildCustomerDetailHref("000001", "11", {
+      basePath: "/apps/commercial",
+      search: "",
+    });
+    expect(href).toBe("/apps/commercial/customers/000001/11");
+    expect(typeof navigateCustomerDetail).toBe("function");
+  });
 });
 
 describe("buildOverviewKpiHref / buildProductHref", () => {

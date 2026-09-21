@@ -70,5 +70,6 @@ class CustomerEnrichmentRepositoryPort(ABC):
         product_codes: Sequence[str] | None = None,
         product_groups: Sequence[str] | None = None,
         market: str | None = None,
+        customer_centers: Sequence[str] | None = None,
     ) -> list[CustomerBillingMonthRow]:
         raise NotImplementedError

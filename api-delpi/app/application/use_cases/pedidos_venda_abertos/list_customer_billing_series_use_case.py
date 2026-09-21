@@ -48,6 +48,7 @@ class ListCustomerBillingSeriesRequest:
     product_codes: Sequence[str] | None = None
     product_groups: Sequence[str] | None = None
     market: str | None = None
+    customer_centers: Sequence[str] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -192,6 +193,7 @@ class ListCustomerBillingSeriesUseCase:
                 product_codes=request.product_codes,
                 product_groups=request.product_groups,
                 market=request.market,
+                customer_centers=request.customer_centers,
             )
             for row in rows:
                 period_key = period_key_from_protheus(

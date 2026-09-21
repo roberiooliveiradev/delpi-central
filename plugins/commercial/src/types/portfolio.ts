@@ -2,12 +2,14 @@ export type SellerCustomer = {
   customer_code: string;
   customer_store: string;
   customer_name: string | null;
+  customer_center?: string | null;
 };
 
 export type SellerCustomerInput = {
   customer_code: string;
   customer_store: string;
   customer_name?: string | null;
+  customer_center?: string | null;
 };
 
 export type SellerPortfolioMemberRole = "owner" | "member";

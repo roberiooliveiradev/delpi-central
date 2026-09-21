@@ -47,6 +47,7 @@ export function useCustomerBilling(
   codigo: string,
   loja: string,
   enabled: boolean,
+  customerCenter?: string | null,
 ): UseCustomerBillingResult {
   const initial = periodRangeFromPreset("90");
   const [preset, setPresetState] = useState<CustomerBillingPeriodPreset>("90");
@@ -129,6 +130,7 @@ export function useCustomerBilling(
             pageSize: 20,
             situation,
             search: debouncedSearch,
+            customerCenters: customerCenter,
           },
           controller.signal,
         );
@@ -150,6 +152,7 @@ export function useCustomerBilling(
                     pageSize: 1,
                     situation,
                     search: debouncedSearch,
+                    customerCenters: customerCenter,
                   },
                   controller.signal,
                 );
@@ -195,6 +198,7 @@ export function useCustomerBilling(
     validationError,
     codigo,
     loja,
+    customerCenter,
     startDate,
     endDate,
     page,

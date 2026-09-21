@@ -108,6 +108,7 @@ function summarizeGroup(
     temAtraso: quantidadePedidosAtrasados > 0,
     temPedidoParcial: quantidadePedidosParciais > 0,
     lines,
+    customerCenter: normalizeCadastroPart(lines[0]?.customer_center) || null,
   };
 }
 
@@ -124,7 +125,11 @@ export function aggregateCustomers(
   let totalValorAberto = 0;
 
   for (const item of items) {
-    const key = buildCustomerKey(item.codigo_cadastro, item.loja_cadastro);
+    const key = buildCustomerKey(
+      item.codigo_cadastro,
+      item.loja_cadastro,
+      item.customer_center,
+    );
     if (!key) {
       incompleteLineCount += 1;
       continue;

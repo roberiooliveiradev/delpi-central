@@ -9,7 +9,7 @@ import {
   type CustomerColumnKey,
 } from "../utils/customerTableColumns";
 
-const STORAGE_KEY = "commercial:customers:table-columns:v2";
+const STORAGE_KEY = "commercial:customers:table-columns:v3";
 const WIDTHS_STORAGE_KEY = `${STORAGE_KEY}:widths`;
 const LEGACY_STORAGE_KEYS = ["commercial:customers:table-columns:v1"];
 

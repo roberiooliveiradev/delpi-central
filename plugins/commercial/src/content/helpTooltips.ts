@@ -128,11 +128,11 @@ export const CM_HELP = {
     kpiCanInvoice: "Linhas com estoque suficiente para faturar integralmente.",
     kpiPartialStock: "Linhas com estoque parcial — atendem só parte da quantidade em aberto.",
     kpiLate: "Linhas com data de entrega prometida vencida e ainda em aberto.",
-    filters: "Refine a lista por busca, unidade, cliente, status de estoque e janela de entrega. Com filtros ativos, use Limpar (destaque) no cabeçalho da barra.",
+    filters: "Refine a lista por busca, unidade, cliente, centro, status de estoque e janela de entrega. Com filtros ativos, use Limpar (destaque) no cabeçalho da barra.",
     filterSearch: "Busca em cliente, pedido, produto e códigos da linha.",
     filterBranch:
       "Unidade responsável pelo pedido (Santa Catarina ou Espírito Santo). Vazio = todas as unidades do escopo.",
-    filterClient: "Um ou mais clientes da carteira (código+loja).",
+    filterClient: "Cliente da carteira: código, loja e centro quando existir. Sem centro, a loja inteira permanece.",
     filterStock:
       "Situação de estoque da linha: pode faturar, parcial ou sem estoque/atrasado. Os chips de atenção também aplicam este filtro.",
     filterLate: "Filtrar só linhas com entrega prometida vencida e saldo em aberto.",
@@ -326,7 +326,7 @@ export const CM_HELP = {
     billingFilterCustomer:
       "Restringe o gráfico, o mix e o ABC aos clientes selecionados. Vazio = toda a carteira do escopo. Compartilhado entre os painéis Faturamento e ABC.",
     billingFilterCustomerCenter:
-      "Centro da amarração produto–cliente. Não é o nome jurídico da WEG. Vazio = todos os centros. Vale no ABC, no ranking, no mix de produto e no share. A série de notas do painel continua pelo cliente selecionado.",
+      "Centro da amarração produto–cliente. Não é o nome jurídico da WEG. Sem centro, a loja inteira continua visível. Centro novo só entra depois de vinculado e conferido. Contatos e avatar continuam da loja.",
     billingFilterProductGroup:
       "Família Protheus (B1_GRUPO). Filtra o mix de produto e o ABC. Vazio = todas as famílias do recorte.",
     billingFilterProduct:
@@ -385,7 +385,7 @@ export const CM_HELP = {
       "Restringe a lista à carteira do vendedor selecionado. Sem seleção, considera as carteiras que você pode consultar.",
     portfolioAudit:
       "Linha do tempo das alterações na carteira (clientes, membros, responsável). Com «Todas» no filtro, escolha qual carteira acompanhar.",
-    list: "Lista paginada da carteira. Clique na linha para abrir a Conta 360.",
+    list: "Lista da carteira. Cada linha é código, loja e, quando houver, o centro. Sem centro, a loja inteira continua visível. Clique para abrir a Conta.",
     tableRowOpensDetail:
       "Clique na linha ou no nome do cliente abre a Conta 360. Controles internos com destino diferente não propagam o clique.",
     layoutToggle:
@@ -568,11 +568,11 @@ export const CM_HELP = {
     removeMember: "Remove o acesso deste usuário à carteira (não apaga o usuário do portal).",
     edit: "Abre o formulário para alterar o nome de exibição da carteira no hero.",
     customers:
-      "Clientes vinculados a esta carteira. Busque e selecione vários para vincular de uma vez.",
+      "Clientes vinculados a esta carteira. O cliente é código, loja e centro. Sem centro, a loja inteira continua visível. Centro novo precisa ser vinculado e é conferido.",
     searchCustomers:
-      "Busca no cadastro TOTVS (código, razão social ou nome reduzido). Inclui contas bloqueadas com pedido aberto. Já selecionados ou vinculados não aparecem nos resultados.",
+      "Busca no cadastro TOTVS (código, razão social ou nome reduzido). Se a loja tiver centros, escolha um antes de vincular. Loja sem centro vincula só código e loja.",
     linkSelectedCustomers:
-      "Inclui na carteira todos os clientes selecionados nos chips (até 20 por vez).",
+      "Inclui na carteira os clientes selecionados. Centro que não existe na amarração não grava.",
     unlinkSelectedCustomers:
       "Remove da carteira os clientes marcados na tabela.",
     filterLinkedCustomers:

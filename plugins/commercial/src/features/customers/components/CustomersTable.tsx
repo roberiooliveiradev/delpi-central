@@ -38,7 +38,7 @@ import {
 } from "../../../utils/customersColumnHelp";
 import type { CustomersListSellerAccess } from "../../../utils/customersListDeepLink";
 import { formatDisplayDate } from "../../../utils/dates";
-import { formatEntityCodeStore } from "../../../utils/entityCodeStore";
+import { formatEntityCodeStoreCenter } from "../../../utils/entityCodeStore";
 import { formatCurrency } from "../../../utils/format";
 import { useCustomerTablePreferences } from "../hooks/useCustomerTablePreferences";
 import type {
@@ -78,7 +78,9 @@ type CustomersTableProps = {
 };
 
 const SORTABLE_COLUMN_KEYS = new Set<CustomerColumnKey>(
-  CUSTOMER_COLUMN_CATALOG.map((column) => column.key),
+  CUSTOMER_COLUMN_CATALOG.map((column) => column.key).filter(
+    (key) => key !== "customerCenter",
+  ),
 );
 
 const SORT_OPTIONS = CUSTOMER_COLUMN_CATALOG.filter((column) =>
@@ -107,8 +109,11 @@ function customerIdentity(customer: CustomerSummary): {
   codeStore: string;
 } {
   const codeStore =
-    formatEntityCodeStore(customer.codigo, customer.loja) ??
-    `${customer.codigo}-${customer.loja}`;
+    formatEntityCodeStoreCenter(
+      customer.codigo,
+      customer.loja,
+      customer.customerCenter,
+    ) ?? `${customer.codigo}-${customer.loja}`;
   return {
     name: customer.nome?.trim() || "—",
     codeStore,
@@ -171,6 +176,7 @@ export function CustomersTable({
       basePath,
       search: listSearch,
       sellerAccess,
+      customerCenter: customer.customerCenter,
     });
 
   const customerHref = (customer: CustomerSummary) =>
@@ -235,6 +241,12 @@ export function CustomersTable({
           </div>
         );
       },
+    },
+    {
+      key: "customerCenter",
+      header: "Centro",
+      headerHint: CM_HELP.customers.list,
+      render: (customer) => customer.customerCenter?.trim() || "—",
     },
     {
       key: "sellerName",

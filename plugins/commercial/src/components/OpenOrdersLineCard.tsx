@@ -82,6 +82,7 @@ function renderCardValue(
       const code = item.codigo_cadastro?.trim() ?? "";
       const store = item.loja_cadastro?.trim() ?? "";
       const name = item.nome_cliente?.trim() || "—";
+      const center = item.customer_center?.trim() || "";
       const returnNav = currentReturnNav("Meus pedidos");
       const accountHref =
         code && store
@@ -97,6 +98,7 @@ function renderCardValue(
         navigateCustomerDetail(code, store, {
           basePath: options.basePath,
           returnNav,
+          customerCenter: center,
         });
       };
       return (

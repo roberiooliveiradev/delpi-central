@@ -26,7 +26,13 @@ from commercial_app.application.use_cases.manage_seller_portfolio import (
     load_summary_to_dict,
     parse_customer_assignments,
 )
-from commercial_app.composition.commercial_composer import build_manage_seller_portfolio_use_case
+from commercial_app.composition.commercial_composer import (
+    build_delpi_commercial_gateway,
+    build_manage_seller_portfolio_use_case,
+)
+from commercial_app.domain.services.customer_center_assignment_validation import (
+    validate_customer_center_assignment,
+)
 from commercial_app.core.auth_actor import (
     actor_sub_from_request,
     bind_request_actor,
@@ -52,6 +58,22 @@ from commercial_app.interface.http.schemas.portfolio_schemas import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _verified_customer_center(code: str, store: str, center: str | None) -> str | None:
+    payload = build_delpi_commercial_gateway().get_commercial_analytics(
+        "/customer-center-assignments",
+        params={"customer_codes": code.strip()},
+    )
+    data = payload.get("data", payload) if isinstance(payload, dict) else {}
+    items = data.get("items") if isinstance(data, dict) else []
+    known = [
+        str(item.get("center") or "").strip()
+        for item in items or []
+        if isinstance(item, dict)
+        and str(item.get("customer_store") or "").strip() == store.strip()
+    ]
+    return validate_customer_center_assignment(center, known)
 
 
 def _bind_actor_dependency(request: Request):
@@ -484,6 +506,11 @@ def add_seller_customer(
                 customer_code=body.customer_code.strip(),
                 customer_store=body.customer_store.strip(),
                 customer_name=(body.customer_name or "").strip() or None,
+                customer_center=_verified_customer_center(
+                    body.customer_code,
+                    body.customer_store,
+                    body.customer_center,
+                ),
             ),
             actor_user_id=_current_user_id(request),
         )
@@ -521,11 +548,14 @@ def remove_seller_customer(
     customer_code: str = Path(..., min_length=1),
     customer_store: str = Path(..., min_length=1),
 ):
+    match_center = "customer_center" in request.query_params
     try:
         portfolio = _use_case().remove_customer(
             portfolio_id=portfolio_id,
             customer_code=customer_code,
             customer_store=customer_store,
+            customer_center=request.query_params.get("customer_center"),
+            match_center=match_center,
             actor_user_id=_current_user_id(request),
         )
         return ok(

@@ -188,13 +188,16 @@ export async function removeSellerCustomer(
   portfolioId: string,
   customerCode: string,
   customerStore: string,
+  customerCenter?: string | null,
 ): Promise<SellerPortfolio> {
+  const params = new URLSearchParams();
+  params.set("customer_center", (customerCenter ?? "").trim());
   const response = await httpDelete<ApiSuccessResponse<SellerPortfolio>>(
-    commercialApiUrl(
+    `${commercialApiUrl(
       `/seller-portfolios/${encodeURIComponent(portfolioId)}/customers/${encodeURIComponent(
         customerCode,
       )}/${encodeURIComponent(customerStore)}`,
-    ),
+    )}?${params.toString()}`,
   );
   return unwrapEnvelope(response, "Erro ao remover cliente da carteira.");
 }
@@ -401,6 +404,24 @@ export async function getSellerPortfolio(
     { signal },
   );
   return unwrapEnvelope(response, "Erro ao carregar carteira.");
+}
+
+export type CustomerCenterAssignment = {
+  customer_code: string;
+  customer_store: string;
+  center: string;
+  label: string;
+};
+
+export async function getCustomerCenterAssignments(
+  signal?: AbortSignal,
+): Promise<CustomerCenterAssignment[]> {
+  const response = await httpGet<ApiSuccessResponse<{ items?: CustomerCenterAssignment[] }>>(
+    commercialApiUrl("/customers/center-assignments"),
+    { signal },
+  );
+  const data = unwrapEnvelope(response, "Erro ao carregar centros do cliente.");
+  return data.items ?? [];
 }
 
 export async function deactivateSellerPortfolio(sellerId: string): Promise<SellerPortfolio> {

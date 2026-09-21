@@ -29,11 +29,16 @@ export async function getCustomerOpenOrdersTotvs(
   customerCode: string,
   customerStore: string,
   signal?: AbortSignal,
+  options?: { customerCenter?: string | null },
 ): Promise<OpenOrdersTotvsData> {
   const code = encodeURIComponent(customerCode.trim());
   const store = encodeURIComponent(customerStore.trim());
+  const params = new URLSearchParams();
+  const center = options?.customerCenter?.trim();
+  if (center) params.set("customer_centers", center);
+  const qs = params.toString();
   const response = await httpGet<ApiSuccessResponse<OpenOrdersTotvsData>>(
-    commercialApiUrl(`/customers/${code}/${store}/open-orders`),
+    `${commercialApiUrl(`/customers/${code}/${store}/open-orders`)}${qs ? `?${qs}` : ""}`,
     { signal },
   );
   return unwrapEnvelope(response, "Erro ao carregar pedidos em aberto do cliente.");

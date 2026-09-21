@@ -21,9 +21,12 @@ def _as_float(value: Any) -> float:
     return float(value)
 
 
-def _item_in_scope(item: dict[str, Any], allowed: frozenset[tuple[str, str]]) -> bool:
-    key = (_as_str(item.get("codigo_cadastro")), _as_str(item.get("loja_cadastro")))
-    return key in allowed
+def _item_in_scope(item: dict[str, Any], scope: CommercialCustomerScope) -> bool:
+    return scope.allows_open_order_line(
+        _as_str(item.get("codigo_cadastro")),
+        _as_str(item.get("loja_cadastro")),
+        _as_str(item.get("customer_center")),
+    )
 
 
 def _recompute_summary(items: list[dict[str, Any]]) -> dict[str, Any]:
@@ -95,7 +98,7 @@ class FilterOpenOrdersByScopeService:
         items_raw = base.get("items")
         items = [item for item in items_raw if isinstance(item, dict)] if isinstance(items_raw, list) else []
         filtered = [
-            item for item in items if _item_in_scope(item, scope.allowed_customers)
+            item for item in items if _item_in_scope(item, scope)
         ]
         result = {
             "items": filtered,

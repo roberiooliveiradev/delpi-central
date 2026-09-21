@@ -79,6 +79,7 @@ describe("openOrdersDeepLink", () => {
       search: "x",
       filial: "02",
       clientCodes: ["A", "B"],
+      customerCenters: [],
       stockStatus: "",
       dateStart: "",
       dateEnd: "2026-08-10",

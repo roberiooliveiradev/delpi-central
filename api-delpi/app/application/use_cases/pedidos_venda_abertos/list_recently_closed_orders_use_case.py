@@ -42,6 +42,7 @@ def _normalize_item(row: dict[str, Any]) -> dict[str, Any]:
         "codigo_cliente": _as_str(row.get("codigo_cliente")),
         "codigo_cadastro": _as_str(row.get("codigo_cadastro")),
         "loja_cadastro": _as_str(row.get("loja_cadastro")),
+        "customer_center": _as_str(row.get("customer_center")),
         "quantidade": _as_float(row.get("quantidade")),
         "entregue": _as_float(row.get("entregue")),
         "saldo": 0.0,
@@ -60,8 +61,16 @@ class ListRecentlyClosedOrdersUseCase:
     def __init__(self, repository: RecentlyClosedOrdersQueryRepository | None = None):
         self._repository = repository or RecentlyClosedOrdersQueryRepository()
 
-    def execute(self, *, days: int = 30) -> dict[str, Any]:
-        rows = self._repository.list_recently_closed(days=days)
+    def execute(
+        self,
+        *,
+        days: int = 30,
+        customer_centers: list[str] | None = None,
+    ) -> dict[str, Any]:
+        rows = self._repository.list_recently_closed(
+            days=days,
+            customer_centers=customer_centers,
+        )
         items = [_normalize_item(row) for row in rows]
         return {
             "items": items,

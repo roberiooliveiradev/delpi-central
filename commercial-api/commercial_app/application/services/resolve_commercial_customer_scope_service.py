@@ -26,6 +26,7 @@ class CommercialCustomerScope:
     empty_portfolio: bool = False
     message: str | None = None
     portfolio_id: str | None = None
+    center_rules: frozenset[tuple[str, str, str]] | None = None
 
     def allows(self, customer_code: str, customer_store: str) -> bool:
         if self.unrestricted:
@@ -36,6 +37,27 @@ class CommercialCustomerScope:
         if not key[0] or not key[1]:
             return False
         return key in self.allowed_customers
+
+    def allows_open_order_line(
+        self,
+        customer_code: str,
+        customer_store: str,
+        customer_center: str | None,
+    ) -> bool:
+        """Filled center restricts the line. A blank rule keeps the whole pair."""
+        if not self.allows(customer_code, customer_store):
+            return False
+        if self.unrestricted or self.center_rules is None:
+            return True
+        code, store = _normalize_pair(customer_code, customer_store)
+        rules = {
+            center
+            for rule_code, rule_store, center in self.center_rules
+            if rule_code == code and rule_store == store
+        }
+        if not rules or "" in rules:
+            return True
+        return str(customer_center or "").strip() in rules
 
     def for_open_orders(self) -> CommercialCustomerScope:
         """Pedidos em aberto: sem vínculo de carteira → consolidado (todos os clientes)."""
@@ -158,9 +180,12 @@ class ResolveCommercialCustomerScopeService:
         self, scopes: list[CommercialCustomerScope]
     ) -> CommercialCustomerScope:
         allowed: set[tuple[str, str]] = set()
+        rules: set[tuple[str, str, str]] = set()
         for scope in scopes:
             if scope.allowed_customers:
                 allowed.update(scope.allowed_customers)
+            if scope.center_rules:
+                rules.update(scope.center_rules)
         if not allowed:
             first = scopes[0] if scopes else None
             return CommercialCustomerScope(
@@ -176,6 +201,7 @@ class ResolveCommercialCustomerScopeService:
             unrestricted=False,
             allowed_customers=frozenset(allowed),
             portfolio_id=None,
+            center_rules=frozenset(rules),
         )
 
     def constrain_unrestricted_to_active_portfolios(self) -> CommercialCustomerScope:
@@ -237,6 +263,15 @@ class ResolveCommercialCustomerScopeService:
             if _normalize_pair(item.customer_code, item.customer_store)[0]
             and _normalize_pair(item.customer_code, item.customer_store)[1]
         )
+        center_rules = frozenset(
+            (
+                *_normalize_pair(item.customer_code, item.customer_store),
+                str(item.customer_center or "").strip(),
+            )
+            for item in portfolio.customers
+            if _normalize_pair(item.customer_code, item.customer_store)[0]
+            and _normalize_pair(item.customer_code, item.customer_store)[1]
+        )
         if not allowed:
             return CommercialCustomerScope(
                 unrestricted=False,
@@ -251,6 +286,7 @@ class ResolveCommercialCustomerScopeService:
             unrestricted=False,
             allowed_customers=allowed,
             portfolio_id=portfolio.id,
+            center_rules=center_rules,
         )
 
     def filter_pairs(

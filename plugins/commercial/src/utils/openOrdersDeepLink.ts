@@ -109,6 +109,10 @@ export function parseOpenOrdersListUrlState(
         .getAll("client")
         .map((value) => value.trim())
         .filter((value, index, values) => Boolean(value) && values.indexOf(value) === index),
+      customerCenters: (params.get("customer_centers") ?? "")
+        .split(",")
+        .map((value) => value.trim())
+        .filter((value, index, values) => Boolean(value) && values.indexOf(value) === index),
       stockStatus: STOCK_QUERY_VALUES.has(stock) ? (stock as StockFilter) : "",
       dateStart: isIsoDate(dateStart) ? dateStart : "",
       dateEnd: isIsoDate(dateEnd) ? dateEnd : "",
@@ -139,6 +143,9 @@ export function buildOpenOrdersListSearch(state: OpenOrdersListUrlState): string
     const value = client.trim();
     if (value) params.append("client", value);
   }
+  if (filters.customerCenters.length > 0) {
+    params.set("customer_centers", filters.customerCenters.join(","));
+  }
   if (filters.stockStatus && STOCK_QUERY_VALUES.has(filters.stockStatus)) {
     params.set("stock", filters.stockStatus);
   }
@@ -168,6 +175,7 @@ export function buildOpenOrdersBoardHref(options: {
       search: "",
       filial: "",
       clientCodes: [],
+      customerCenters: [],
       stockStatus: "",
       dateStart: "",
       dateEnd: "",
@@ -252,6 +260,7 @@ export function buildOpenOrdersHorizonListHref(options: {
     search: "",
     filial: "",
     clientCodes: [],
+    customerCenters: [],
     stockStatus: "",
     dateStart: "",
     dateEnd: "",
@@ -296,6 +305,7 @@ export function buildOpenOrdersPostponedListHref(options?: {
       search: "",
       filial: "",
       clientCodes: [],
+      customerCenters: [],
       stockStatus: "",
       dateStart: "",
       dateEnd: "",

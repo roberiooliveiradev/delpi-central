@@ -197,6 +197,7 @@ export function useOpenOrdersDashboard(
     Boolean(filters.search.trim()) ||
     Boolean(filters.filial) ||
     filters.clientCodes.length > 0 ||
+    filters.customerCenters.length > 0 ||
     Boolean(filters.stockStatus) ||
     Boolean(filters.dateStart) ||
     Boolean(filters.dateEnd) ||

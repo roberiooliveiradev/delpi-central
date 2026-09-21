@@ -32,3 +32,7 @@ Uma amarração é `A7_PRODUTO` + `A7_CLIENTE` + `A7_LOJA`. Nesse trio há no m�
 Centros preenchidos hoje existem só no cliente `000001`. Exemplos: `1100` e `1200` na loja `01`, `1320` na loja `11`, `1505` na loja `12`, `1106` na loja `09`, `1700` na loja `06`. Lojas sem nenhum centro continuam acessíveis por `customer_code_stores`.
 
 A lista para um seletor é `GET /commercial/customer-centers` (`list_commercial_customer_centers`). O rótulo é o nome reduzido de uma loja do centro mais o código, não um mapa fixo de unidades.
+
+O mapa código + loja + centro é `GET /commercial/customer-center-assignments` (`list_commercial_customer_center_assignments`). O vínculo da carteira usa esse trio. Um centro novo na amarração não entra sozinho num vínculo antigo: só vale depois de ser gravado e conferido contra essa lista.
+
+Pedidos em aberto, pedidos recém-encerrados, notas da conta e a série de faturamento aceitam `customer_centers`. Sem o parâmetro, o predicado não entra. A linha de pedido projeta o centro com `LEFT JOIN` no mesmo fragmento agrupado.

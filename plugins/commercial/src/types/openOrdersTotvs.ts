@@ -22,6 +22,7 @@ export type OpenOrdersTotvsItem = {
   codigo_cadastro: string;
   /** Loja Protheus do cliente/fornecedor (SC5.C5_LOJACLI). */
   loja_cadastro: string;
+  customer_center?: string | null;
   quantidade: number;
   entregue: number;
   saldo: number;

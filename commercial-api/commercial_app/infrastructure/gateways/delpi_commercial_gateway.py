@@ -105,11 +105,19 @@ class DelpiCommercialGateway:
             params=params,
         )
 
-    def list_recently_closed_orders(self, *, days: int = 30) -> dict[str, Any]:
+    def list_recently_closed_orders(
+        self,
+        *,
+        days: int = 30,
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        query = {"days": days}
+        if params:
+            query.update(params)
         return self._request(
             "GET",
             "/pedidos-venda-abertos/totvs-recently-closed-orders",
-            params={"days": days},
+            params=query,
         )
 
     def list_open_orders_by_customer(
@@ -117,6 +125,7 @@ class DelpiCommercialGateway:
         *,
         customer_code: str,
         customer_store: str,
+        params: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Pedidos em aberto de um par código/loja (Conta 360 — sem dump global)."""
         code = quote(str(customer_code or "").strip(), safe="")
@@ -124,6 +133,7 @@ class DelpiCommercialGateway:
         return self._request(
             "GET",
             f"/pedidos-venda-abertos/totvs-open-orders/{code}/{store}",
+            params=params,
         )
 
     def list_ops_abertas(self) -> dict[str, Any]:

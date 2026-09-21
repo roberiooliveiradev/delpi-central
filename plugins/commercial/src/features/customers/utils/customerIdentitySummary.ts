@@ -11,8 +11,9 @@ export function buildIdentityCustomerSummary(input: {
   nome?: string | null;
   enrichment?: CustomerEnrichmentItem | null;
   sellerName?: string | null;
+  customerCenter?: string | null;
 }): CustomerSummary | null {
-  const key = buildCustomerKey(input.codigo, input.loja);
+  const key = buildCustomerKey(input.codigo, input.loja, input.customerCenter);
   if (!key) return null;
   const codigo = input.codigo.trim();
   const loja = input.loja.trim();
@@ -46,6 +47,7 @@ export function buildIdentityCustomerSummary(input: {
     coverageKnown: Boolean(enrich),
     enrichmentAvailable: Boolean(enrich),
     sellerName: input.sellerName ?? null,
+    customerCenter: input.customerCenter?.trim() || null,
   };
 }
 
@@ -70,6 +72,7 @@ export function mergeCustomerIdentity(
       enrichmentAvailable:
         fromOrders.enrichmentAvailable || identity.enrichmentAvailable,
       sellerName: fromOrders.sellerName ?? identity.sellerName,
+      customerCenter: fromOrders.customerCenter ?? identity.customerCenter ?? null,
     };
   }
   return identity;

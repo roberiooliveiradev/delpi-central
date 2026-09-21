@@ -22,7 +22,7 @@ _PORTFOLIO_COLUMNS_SP = (
     "sp.created_by_user_id, sp.created_at, sp.updated_at"
 )
 _CUSTOMER_COLUMNS = (
-    "id, seller_portfolio_id, customer_code, customer_store, customer_name, created_at"
+    "id, seller_portfolio_id, customer_code, customer_store, customer_center, customer_name, created_at"
 )
 _MEMBER_COLUMNS = "user_id, role"
 
@@ -271,15 +271,16 @@ class PostgresSellerPortfolioRepository(PluginBaseRepository, SellerPortfolioRep
                         cursor.execute(
                             """
                             INSERT INTO commercial.seller_customers (
-                                seller_portfolio_id, customer_code, customer_store, customer_name
-                            ) VALUES (%s, %s, %s, %s)
-                            ON CONFLICT (seller_portfolio_id, customer_code, customer_store) DO UPDATE
+                                seller_portfolio_id, customer_code, customer_store, customer_center, customer_name
+                            ) VALUES (%s, %s, %s, %s, %s)
+                            ON CONFLICT (seller_portfolio_id, customer_code, customer_store, (COALESCE(customer_center, ''))) DO UPDATE
                                SET customer_name = EXCLUDED.customer_name
                             """,
                             (
                                 portfolio_id,
                                 customer.customer_code,
                                 customer.customer_store,
+                                customer.customer_center,
                                 customer.customer_name,
                             ),
                         )
@@ -311,9 +312,9 @@ class PostgresSellerPortfolioRepository(PluginBaseRepository, SellerPortfolioRep
         self.execute(
             """
             INSERT INTO commercial.seller_customers (
-                seller_portfolio_id, customer_code, customer_store, customer_name
-            ) VALUES (%s, %s, %s, %s)
-            ON CONFLICT (seller_portfolio_id, customer_code, customer_store) DO UPDATE
+                seller_portfolio_id, customer_code, customer_store, customer_center, customer_name
+            ) VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (seller_portfolio_id, customer_code, customer_store, (COALESCE(customer_center, ''))) DO UPDATE
                SET customer_name = COALESCE(
                    EXCLUDED.customer_name,
                    commercial.seller_customers.customer_name
@@ -323,6 +324,7 @@ class PostgresSellerPortfolioRepository(PluginBaseRepository, SellerPortfolioRep
                 portfolio_id,
                 customer.customer_code,
                 customer.customer_store,
+                customer.customer_center,
                 customer.customer_name,
             ),
         )
@@ -342,21 +344,35 @@ class PostgresSellerPortfolioRepository(PluginBaseRepository, SellerPortfolioRep
         portfolio_id: str,
         customer_code: str,
         customer_store: str,
+        customer_center: str | None = None,
+        match_center: bool = False,
     ) -> SellerPortfolio | None:
         if self.fetch_one(
             "SELECT id FROM commercial.seller_portfolios WHERE id = %s",
             (portfolio_id,),
         ) is None:
             return None
-        self.execute(
-            """
-            DELETE FROM commercial.seller_customers
-             WHERE seller_portfolio_id = %s
-               AND customer_code = %s
-               AND customer_store = %s
-            """,
-            (portfolio_id, customer_code, customer_store),
-        )
+        if match_center:
+            self.execute(
+                """
+                DELETE FROM commercial.seller_customers
+                 WHERE seller_portfolio_id = %s
+                   AND customer_code = %s
+                   AND customer_store = %s
+                   AND COALESCE(customer_center, '') = %s
+                """,
+                (portfolio_id, customer_code, customer_store, customer_center or ""),
+            )
+        else:
+            self.execute(
+                """
+                DELETE FROM commercial.seller_customers
+                 WHERE seller_portfolio_id = %s
+                   AND customer_code = %s
+                   AND customer_store = %s
+                """,
+                (portfolio_id, customer_code, customer_store),
+            )
         self.execute(
             """
             UPDATE commercial.seller_portfolios
@@ -395,11 +411,13 @@ class PostgresSellerPortfolioRepository(PluginBaseRepository, SellerPortfolioRep
                              WHERE seller_portfolio_id = %s
                                AND customer_code = %s
                                AND customer_store = %s
+                               AND COALESCE(customer_center, '') = %s
                             """,
                             (
                                 source_portfolio_id,
                                 customer.customer_code,
                                 customer.customer_store,
+                                customer.customer_center or "",
                             ),
                         )
                         row = cursor.fetchone()
@@ -416,9 +434,9 @@ class PostgresSellerPortfolioRepository(PluginBaseRepository, SellerPortfolioRep
                         cursor.execute(
                             """
                             INSERT INTO commercial.seller_customers (
-                                seller_portfolio_id, customer_code, customer_store, customer_name
-                            ) VALUES (%s, %s, %s, %s)
-                            ON CONFLICT (seller_portfolio_id, customer_code, customer_store) DO UPDATE
+                                seller_portfolio_id, customer_code, customer_store, customer_center, customer_name
+                            ) VALUES (%s, %s, %s, %s, %s)
+                            ON CONFLICT (seller_portfolio_id, customer_code, customer_store, (COALESCE(customer_center, ''))) DO UPDATE
                                SET customer_name = COALESCE(
                                    EXCLUDED.customer_name,
                                    commercial.seller_customers.customer_name
@@ -428,6 +446,7 @@ class PostgresSellerPortfolioRepository(PluginBaseRepository, SellerPortfolioRep
                                 target_portfolio_id,
                                 customer.customer_code,
                                 customer.customer_store,
+                                customer.customer_center,
                                 name,
                             ),
                         )
@@ -437,11 +456,13 @@ class PostgresSellerPortfolioRepository(PluginBaseRepository, SellerPortfolioRep
                              WHERE seller_portfolio_id = %s
                                AND customer_code = %s
                                AND customer_store = %s
+                               AND COALESCE(customer_center, '') = %s
                             """,
                             (
                                 source_portfolio_id,
                                 customer.customer_code,
                                 customer.customer_store,
+                                customer.customer_center or "",
                             ),
                         )
                     cursor.execute(
@@ -680,6 +701,11 @@ class PostgresSellerPortfolioRepository(PluginBaseRepository, SellerPortfolioRep
                 SellerCustomerAssignment(
                     customer_code=str(item["customer_code"]),
                     customer_store=str(item["customer_store"]),
+                    customer_center=(
+                        str(item["customer_center"]).strip()
+                        if item.get("customer_center")
+                        else None
+                    ),
                     customer_name=(
                         str(item["customer_name"]).strip()
                         if item.get("customer_name")

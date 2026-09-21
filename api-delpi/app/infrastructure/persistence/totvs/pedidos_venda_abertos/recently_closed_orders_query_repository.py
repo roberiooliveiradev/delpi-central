@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional
 
+from app.domain.totvs.protheus_customer_center import (
+    customer_center_in_predicate,
+    customer_center_link_sql,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 
 _DEFAULT_DAYS = 30
@@ -14,8 +18,21 @@ _MAX_ROWS = 500
 class RecentlyClosedOrdersQueryRepository(BaseRepository):
     """TOTVS-pure: lines with qty delivered covering sold qty in the last N days."""
 
-    def list_recently_closed(self, *, days: int = _DEFAULT_DAYS) -> list[dict[str, Any]]:
+    def list_recently_closed(
+        self,
+        *,
+        days: int = _DEFAULT_DAYS,
+        customer_centers: Optional[list[str]] = None,
+    ) -> list[dict[str, Any]]:
         lookback = max(1, min(int(days or _DEFAULT_DAYS), _MAX_DAYS))
+        predicate, center_params = customer_center_in_predicate(customer_centers)
+        center_sql = f"AND {predicate}" if predicate else ""
+        center_join = customer_center_link_sql(
+            product_column="C6.C6_PRODUTO",
+            customer_column="C5.C5_CLIENTE",
+            store_column="C5.C5_LOJACLI",
+            join_type="left",
+        )
         sql = f"""
         SELECT TOP ({_MAX_ROWS})
             RTRIM(ISNULL(SA1.A1_NOME, '')) AS nome_cliente,
@@ -55,7 +72,8 @@ class RecentlyClosedOrdersQueryRepository(BaseRepository):
             CAST(0 AS FLOAT) AS no_estoque,
             CAST(C6.C6_PRCVEN AS FLOAT) AS preco_venda,
             CAST(C6.C6_QTDENT * C6.C6_PRCVEN AS FLOAT) AS valor_aberto,
-            'completed' AS kanbanStage
+            'completed' AS kanbanStage,
+            RTRIM(ISNULL(SA7C.customer_center, '')) AS customer_center
         FROM SC6010 C6 WITH (NOLOCK)
         INNER JOIN SC5010 C5 WITH (NOLOCK)
             ON C5.C5_FILIAL = C6.C6_FILIAL
@@ -68,6 +86,7 @@ class RecentlyClosedOrdersQueryRepository(BaseRepository):
         LEFT JOIN SB1010 B1 WITH (NOLOCK)
             ON B1.B1_COD = C6.C6_PRODUTO
            AND B1.D_E_L_E_T_ = ''
+        {center_join}
         WHERE C6.D_E_L_E_T_ = ' '
           AND C5.C5_FILIAL IN ('01', '02')
           AND C6.C6_QTDENT > 0
@@ -77,7 +96,8 @@ class RecentlyClosedOrdersQueryRepository(BaseRepository):
           AND NULLIF(RTRIM(C6.C6_DATFAT), '') IS NOT NULL
           AND TRY_CONVERT(DATE, NULLIF(RTRIM(C6.C6_DATFAT), ''), 112)
                 >= DATEADD(DAY, -?, CAST(GETDATE() AS DATE))
+          {center_sql}
         ORDER BY C6.C6_DATFAT DESC, C5.C5_NUM DESC, C6.C6_ITEM
         """
         with self:
-            return self.execute_query(sql, (lookback,))
+            return self.execute_query(sql, (lookback, *center_params))

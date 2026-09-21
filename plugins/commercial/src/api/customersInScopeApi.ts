@@ -8,6 +8,7 @@ export type CustomerInScopeItem = {
   open_value: number;
   has_overdue: boolean;
   has_open_orders: boolean;
+  customer_center?: string | null;
 };
 
 export type CustomersInScopeData = {

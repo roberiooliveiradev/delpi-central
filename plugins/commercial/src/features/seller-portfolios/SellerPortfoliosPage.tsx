@@ -350,6 +350,7 @@ export function SellerPortfoliosPage({ basePath }: SellerPortfoliosPageProps) {
         customer_code: customer.customer_code,
         customer_store: customer.customer_store,
         customer_name: customer.customer_name,
+        customer_center: customer.customer_center,
       }));
     setBulkBusy(true);
     setBulkError(null);

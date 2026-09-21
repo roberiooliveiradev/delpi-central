@@ -3,7 +3,7 @@ import { formatEntityCodeStore } from "../../../utils/entityCodeStore";
 import type { CustomerSummary } from "../types/customerSummary";
 import { hasCustomerEnrichmentCoverage } from "./customerEnrichmentCoverage";
 import { resolveCustomerStatus, statusLabel } from "./customerListPresentation";
-import type { CustomerColumnDef, CustomerColumnKey } from "./customerTableColumns";
+import type { CustomerColumnKey } from "./customerTableColumns";
 
 type ExportCellValue = string | number;
 type CustomerTableExportPayload = {
@@ -69,12 +69,14 @@ export function customerExportValue(
       return customer.quantidadePedidosAtrasados;
     case "proximaEntrega":
       return customer.proximaEntrega ? formatDisplayDate(customer.proximaEntrega) : "";
+    case "customerCenter":
+      return customer.customerCenter?.trim() || "";
   }
 }
 
 export function buildCustomersExportPayload(
   customers: CustomerSummary[],
-  columns: CustomerColumnDef[],
+  columns: Array<{ key: CustomerColumnKey; label: string }>,
 ): CustomerTableExportPayload {
   return {
     title: "Clientes da carteira",

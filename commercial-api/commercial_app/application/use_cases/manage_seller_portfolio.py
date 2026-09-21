@@ -97,6 +97,7 @@ def portfolio_to_dict(
             {
                 "customer_code": item.customer_code,
                 "customer_store": item.customer_store,
+                "customer_center": item.customer_center,
                 "customer_name": item.customer_name,
             }
             for item in portfolio.customers
@@ -141,13 +142,14 @@ def parse_customer_assignments(raw: Sequence[dict[str, Any]] | None) -> list[Sel
     if not raw:
         return []
     parsed: list[SellerCustomerAssignment] = []
-    seen: set[tuple[str, str]] = set()
+    seen: set[tuple[str, str, str]] = set()
     for item in raw:
         code = _normalize_code(str(item.get("customer_code") or item.get("codigo") or ""))
         store = _normalize_code(str(item.get("customer_store") or item.get("loja") or ""))
+        center = _normalize_code(str(item.get("customer_center") or ""))
         if not code or not store:
             raise ValueError("Cada cliente precisa de customer_code e customer_store.")
-        key = (code, store)
+        key = (code, store, center)
         if key in seen:
             continue
         seen.add(key)
@@ -158,6 +160,7 @@ def parse_customer_assignments(raw: Sequence[dict[str, Any]] | None) -> list[Sel
                 customer_code=code,
                 customer_store=store,
                 customer_name=name or None,
+                customer_center=center or None,
             )
         )
     return parsed
@@ -859,6 +862,8 @@ class ManageSellerPortfolioUseCase:
         customer_store: str,
         actor_user_id: str | None = None,
         customer_name: str | None = None,
+        customer_center: str | None = None,
+        match_center: bool = False,
     ) -> SellerPortfolio:
         code, store = customer_key(customer_code, customer_store)
         if not code or not store:
@@ -874,6 +879,8 @@ class ManageSellerPortfolioUseCase:
             portfolio_id=portfolio_id,
             customer_code=code,
             customer_store=store,
+            customer_center=customer_center,
+            match_center=match_center,
         )
         if updated is None:
             raise LookupError("Vendedor não encontrado.")

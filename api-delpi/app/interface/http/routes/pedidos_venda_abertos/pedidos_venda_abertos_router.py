@@ -123,6 +123,14 @@ class EnrichCustomersBody(BaseModel):
     )
 
 
+def _parse_customer_centers(value: Optional[str] | Optional[list[str]]) -> Optional[list[str]]:
+    from app.domain.services.commercial_customer_center_filter_service import (
+        CommercialCustomerCenterFilterService,
+    )
+
+    return CommercialCustomerCenterFilterService.normalize(value)
+
+
 class OpenOrderMetricsBody(BaseModel):
     """Optional customer keys; empty/omitted = full open-orders universe."""
 
@@ -169,6 +177,10 @@ class BillingSeriesBody(BaseModel):
         default=None,
         pattern=r"^(domestic|export)$",
         description="Optional market filter: domestic (CFOP 5/6) or export (CFOP 7).",
+    )
+    customer_centers: Optional[list[str]] = Field(
+        default=None,
+        description="Optional customer center codes from the product-customer link.",
     )
 
 
@@ -239,14 +251,22 @@ def list_pedidos_venda_abertos_route(
     ),
 )
 @require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)
-def list_totvs_open_orders_route():
+def list_totvs_open_orders_route(
+    customer_centers: Optional[str] = Query(
+        None,
+        description="CSV of customer center codes from the product-customer link (SA7.A7_XCENT).",
+    ),
+):
     """
     Leitura TOTVS pura (sem membership/carteira) — consumo BFF commercial-api.
     Reusa ListPedidosVendaAbertosUseCase com scope=None. Não altera regras da rota `/`.
     """
     try:
         use_case = build_list_pedidos_venda_abertos_use_case()
-        result = use_case.execute(scope=None)
+        result = use_case.execute(
+            scope=None,
+            customer_centers=_parse_customer_centers(customer_centers),
+        )
         return api_delpi_success(
             result.to_dict(),
             operation_id="list_totvs_open_orders",
@@ -278,6 +298,10 @@ def list_totvs_recently_closed_orders_route(
         le=90,
         description="Lookback window in days for fully delivered sales-order lines.",
     ),
+    customer_centers: Optional[str] = Query(
+        None,
+        description="CSV of customer center codes from the product-customer link (SA7.A7_XCENT).",
+    ),
 ):
     """Fully delivered SC6 lines in the lookback window (TOTVS pure — commercial BFF scopes)."""
     try:
@@ -285,7 +309,10 @@ def list_totvs_recently_closed_orders_route(
             ListRecentlyClosedOrdersUseCase,
         )
 
-        result = ListRecentlyClosedOrdersUseCase().execute(days=days)
+        result = ListRecentlyClosedOrdersUseCase().execute(
+            days=days,
+            customer_centers=_parse_customer_centers(customer_centers),
+        )
         return api_delpi_success(
             result,
             operation_id="list_totvs_recently_closed_orders",
@@ -313,11 +340,19 @@ def list_totvs_recently_closed_orders_route(
 def list_totvs_open_orders_by_customer_route(
     customer_code: str = Path(..., min_length=1),
     customer_store: str = Path(..., min_length=1),
+    customer_centers: Optional[str] = Query(
+        None,
+        description="CSV of customer center codes from the product-customer link (SA7.A7_XCENT).",
+    ),
 ):
     """Pedidos em aberto de um cliente (TOTVS puro) — Conta 360 via BFF commercial-api."""
     try:
         use_case = build_list_pedidos_venda_abertos_use_case()
-        result = use_case.execute_for_customer(customer_code, customer_store)
+        result = use_case.execute_for_customer(
+            customer_code,
+            customer_store,
+            customer_centers=_parse_customer_centers(customer_centers),
+        )
         return api_delpi_success(
             result.to_dict(),
             operation_id="list_totvs_open_orders_by_customer",
@@ -506,6 +541,7 @@ def list_customer_billing_series_route(body: BillingSeriesBody = Body(...)):
                 product_codes=body.product_codes,
                 product_groups=body.product_groups,
                 market=body.market,
+                customer_centers=_parse_customer_centers(body.customer_centers),
             )
         )
         return api_delpi_success(
@@ -946,6 +982,7 @@ def _execute_outbound_invoices(
     situation: Optional[str],
     search: Optional[str],
     operation_id: str,
+    customer_centers: Optional[list[str]] = None,
 ):
     use_case = build_list_customer_outbound_invoices_use_case()
     result = use_case.execute(
@@ -958,6 +995,7 @@ def _execute_outbound_invoices(
             page_size=page_size,
             situation=situation,
             search=search,
+            customer_centers=customer_centers,
         )
     )
     return api_delpi_success(
@@ -1004,6 +1042,10 @@ def list_totvs_outbound_invoices_route(
         None,
         description="Search by NF number, series, sales order, customer PO or product.",
     ),
+    customer_centers: Optional[str] = Query(
+        None,
+        description="CSV of customer center codes from the product-customer link (SA7.A7_XCENT).",
+    ),
 ):
     """
     Leitura TOTVS pura (sem membership PVA) — consumo BFF commercial-api.
@@ -1020,6 +1062,7 @@ def list_totvs_outbound_invoices_route(
             situation=situation,
             search=search,
             operation_id="list_totvs_outbound_invoices",
+            customer_centers=_parse_customer_centers(customer_centers),
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao listar NF TOTVS: {exc}")

@@ -7,6 +7,7 @@ class CustomerAssignmentBody(BaseModel):
     customer_code: str = Field(..., min_length=1)
     customer_store: str = Field(..., min_length=1)
     customer_name: str | None = None
+    customer_center: str | None = None
 
 
 class CreatePortfolioBody(BaseModel):
@@ -32,6 +33,7 @@ class AddCustomerBody(BaseModel):
     customer_code: str = Field(..., min_length=1)
     customer_store: str = Field(..., min_length=1)
     customer_name: str | None = None
+    customer_center: str | None = None
 
 
 class MemberBody(BaseModel):
@@ -122,6 +124,10 @@ class BillingSeriesBody(BaseModel):
         default=None,
         pattern=r"^(domestic|export)$",
         description="Mercado: domestic (CFOP 5/6) ou export (CFOP 7).",
+    )
+    customer_centers: list[str] | None = Field(
+        default=None,
+        description="Centros do cliente conferidos na amarração.",
     )
 
 

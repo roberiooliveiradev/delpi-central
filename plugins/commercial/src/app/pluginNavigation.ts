@@ -24,6 +24,7 @@ import {
   buildCustomerDetailSearch,
   type CustomerDetailSection,
 } from "../features/customers/utils/customerDetailSection";
+import { writeAccountCustomerCenter } from "../features/customers/utils/accountCustomerCenter";
 
 export function navigatePluginPath(
   target: string,
@@ -64,15 +65,18 @@ export function navigateCustomerDetail(
     /** Abre a Conta já na seção (ex.: contatos). Preserva query allowlisted da lista. */
     section?: CustomerDetailSection;
     returnNav?: ReturnNavOptions;
+    /** Centro operacional — persiste fora da URL e segrega a Conta. */
+    customerCenter?: string | null;
   },
 ): boolean {
   const target = buildCustomerDetailHref(codigo, loja, options);
   if (!target) return false;
+  writeAccountCustomerCenter(codigo, loja, options?.customerCenter);
   navigatePluginPath(target);
   return true;
 }
 
-/** Href da Conta (path + search de lista/seção + returnTo opcional). */
+/** Href da Conta (path código/loja + search de lista/seção + returnTo opcional). Sem centro na URL. */
 export function buildCustomerDetailHref(
   codigo: string,
   loja: string,

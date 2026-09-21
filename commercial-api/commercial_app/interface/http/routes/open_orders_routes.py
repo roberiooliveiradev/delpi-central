@@ -57,12 +57,15 @@ def list_commercial_open_orders(
         default=None,
         description="PK da carteira (preferencial). Se ambos, portfolio_id vence.",
     ),
+    customer_centers: str | None = Query(default=None),
 ):
     try:
         pid = (portfolio_id or seller_id or "").strip() or None
         scope = _open_orders_scope(request, portfolio_id=pid)
         # api-delpi: sem seller_id — commercial filtra no BFF (opção a do plano).
-        payload = build_delpi_commercial_gateway().list_open_orders()
+        payload = build_delpi_commercial_gateway().list_open_orders(
+            params={"customer_centers": customer_centers} if customer_centers else None
+        )
         raw = payload.get("data", payload) if isinstance(payload, dict) else {}
         data = FilterOpenOrdersByScopeService().apply(
             raw if isinstance(raw, dict) else {},
@@ -104,11 +107,15 @@ def list_commercial_recently_closed_orders(
     days: int = Query(default=30, ge=1, le=90),
     seller_id: str | None = Query(default=None),
     portfolio_id: str | None = Query(default=None),
+    customer_centers: str | None = Query(default=None),
 ):
     try:
         pid = (portfolio_id or seller_id or "").strip() or None
         scope = _open_orders_scope(request, portfolio_id=pid)
-        payload = build_delpi_commercial_gateway().list_recently_closed_orders(days=days)
+        payload = build_delpi_commercial_gateway().list_recently_closed_orders(
+            days=days,
+            params={"customer_centers": customer_centers} if customer_centers else None,
+        )
         raw = payload.get("data", payload) if isinstance(payload, dict) else {}
         data = FilterOpenOrdersByScopeService().apply(
             raw if isinstance(raw, dict) else {},

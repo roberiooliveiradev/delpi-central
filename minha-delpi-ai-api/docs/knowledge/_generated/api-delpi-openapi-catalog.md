@@ -1,6 +1,6 @@
 # Catálogo OpenAPI — api-delpi (gerado automaticamente)
 
-**Provider:** `api-delpi` · **Rotas:** 709 · **Gerado em:** 2026-09-16 20:49 UTC
+**Provider:** `api-delpi` · **Rotas:** 713 · **Gerado em:** 2026-09-21 16:29 UTC
 
 > Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
 
@@ -52,12 +52,14 @@
 |--------|------|-------------|---------|
 | `GET` | `/customers/search` | `search_customers` | Search Customers Route |
 
-## Comercial (24)
+## Comercial (26)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
 | `GET` | `/commercial/closing-rate` | `get_sales_conversion_rate` | Sales conversion rate |
 | `GET` | `/commercial/closing-rate/series` | `get_sales_conversion_rate_series` | Sales conversion rate series |
+| `GET` | `/commercial/customer-center-assignments` | `list_commercial_customer_center_assignments` | Lista — Commercial customer center assignment |
+| `GET` | `/commercial/customer-centers` | `list_commercial_customer_centers` | Lista — Commercial customer center |
 | `GET` | `/commercial/new-business-rol-pct` | `get_new_business_rol_pct` | New business rol pct |
 | `GET` | `/commercial/new-business-rol-target-pct` | `get_new_business_rol_target_pct` | Commercial new business ROL target (realized and goal) |
 | `GET` | `/commercial/new-clients-average` | `get_new_clients_average` | New clients average |
@@ -332,13 +334,14 @@
 | `GET` | `/inspecoes-entrada/rejeitadas-produto` | `get_inspecoes_entrada_rejeitadas_produto` | Incoming inspections — rejected by product |
 | `GET` | `/inspecoes-entrada/resumo` | `get_inspecoes_entrada_resumo` | Incoming inspections — summary KPIs |
 
-## Inspeções de Processo (8)
+## Inspeções de Processo (9)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
 | `GET` | `/inspecoes-processo/auditoria-apontamentos` | `get_inspecoes_processo_auditoria_apontamentos` | Inspections processo auditoria apontamentos |
 | `GET` | `/inspecoes-processo/historico` | `get_inspecoes_processo_historico` | In-process inspections — history |
 | `GET` | `/inspecoes-processo/historico/detalhe` | `get_inspecoes_processo_historico_detalhe` | Inspections processo history detail |
+| `GET` | `/inspecoes-processo/operations/inspections` | `list_inspecoes_processo_operation_inspections` | Process inspections for OP+operation |
 | `GET` | `/inspecoes-processo/por-ensaiador` | `get_inspecoes_processo_por_ensaiador` | Inspections processo por tester |
 | `GET` | `/inspecoes-processo/por-operacao` | `get_inspecoes_processo_por_operacao` | Inspections processo por operacao |
 | `GET` | `/inspecoes-processo/por-produto` | `get_inspecoes_processo_por_produto` | Inspections processo por product |
@@ -564,7 +567,7 @@
 | `GET` | `/production/overall_equipment_effectiveness_pct` | `get_overall_equipment_effectiveness_pct` | Overall equipment effectiveness % |
 | `GET` | `/production/production_cost_pct` | `get_production_cost_pct` | Production cost pct |
 
-## Produção operacional (16)
+## Produção operacional (17)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
@@ -580,6 +583,7 @@
 | `GET` | `/production/orders/finished` | `get_production_orders_finished` | Production orders finished |
 | `GET` | `/production/orders/finished-without-consumption` | `get_production_orders_finished_without_consumption` | Production orders finished without consumption |
 | `GET` | `/production/orders/open` | `get_production_orders_open` | Production orders open |
+| `GET` | `/production/orders/{production_order}/operations/{operation}/materials` | `list_production_order_operation_materials` | Operation materials from SD4 |
 | `GET` | `/production/planned-vs-real-time` | `get_production_planned_vs_real_time` | Production planned vs real time |
 | `GET` | `/production/schedule/today` | `get_production_schedule_today` | product programados para produzir na data |
 | `GET` | `/production/work-centers/average-planned-time` | `get_production_work_center_average_planned_time` | Production work center average planned time |

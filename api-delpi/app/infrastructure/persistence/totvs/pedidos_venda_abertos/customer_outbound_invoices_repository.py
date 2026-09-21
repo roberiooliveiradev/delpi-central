@@ -31,6 +31,10 @@ from app.domain.entities.pedidos_venda_abertos.customer_outbound_invoice import 
 from app.domain.ports.pedidos_venda_abertos.customer_outbound_invoices_repository_port import (
     CustomerOutboundInvoicesRepositoryPort,
 )
+from app.domain.totvs.protheus_customer_center import (
+    customer_center_in_predicate,
+    customer_center_link_sql,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.pagination import paginate
 
@@ -85,6 +89,7 @@ class CustomerOutboundInvoicesRepository(
         page_size: int,
         situation: Optional[str],
         search: Optional[str],
+        customer_centers: Optional[list[str]] = None,
     ) -> CustomerOutboundInvoicesPage:
         paging = paginate(page, page_size)
         code = _trim(customer_code)
@@ -92,7 +97,15 @@ class CustomerOutboundInvoicesRepository(
         search_term = _trim(search) if search else ""
         situation_filter = _trim(situation).lower() if situation else "all"
 
-        base_params: list[Any] = [code, store, start_date, end_date]
+        center_predicate, center_params = customer_center_in_predicate(customer_centers)
+        center_sql = f"AND {center_predicate}" if center_predicate else ""
+        center_join = customer_center_link_sql(
+            product_column="D2.D2_COD",
+            customer_column="D2.D2_CLIENTE",
+            store_column="D2.D2_LOJA",
+            join_type="left",
+        )
+        base_params: list[Any] = [code, store, start_date, end_date, *center_params]
         search_sql = ""
         if search_term:
             like = f"%{search_term}%"
@@ -130,7 +143,12 @@ class CustomerOutboundInvoicesRepository(
                     MAX(RTRIM(ISNULL(C5.C5_PEDCLI, ''))) AS customer_order_sample,
                     MAX(RTRIM(ISNULL(SA1.A1_NREDUZ, ISNULL(SA1.A1_NOME, '')))) AS customer_name,
                     MAX(RTRIM(ISNULL(F2.F2_CHVNFE, ''))) AS access_key,
-                    MAX(RTRIM(ISNULL(F2.F2_TRANSP, ''))) AS carrier
+                    MAX(RTRIM(ISNULL(F2.F2_TRANSP, ''))) AS carrier,
+                    CASE
+                        WHEN COUNT(DISTINCT NULLIF(RTRIM(SA7C.customer_center), '')) = 1
+                        THEN MAX(RTRIM(SA7C.customer_center))
+                        ELSE ''
+                    END AS customer_center
                 FROM SD2010 D2 WITH (NOLOCK)
                 INNER JOIN SF2010 F2 WITH (NOLOCK)
                     ON F2.F2_FILIAL = D2.D2_FILIAL
@@ -145,11 +163,13 @@ class CustomerOutboundInvoicesRepository(
                     ON C5.C5_FILIAL = D2.D2_FILIAL
                     AND LTRIM(RTRIM(C5.C5_NUM)) = LTRIM(RTRIM(D2.D2_PEDIDO))
                     AND C5.D_E_L_E_T_ = ''
+                {center_join}
                 WHERE D2.D_E_L_E_T_ = ''
                     AND D2.D2_CLIENTE = ?
                     AND D2.D2_LOJA = ?
                     AND D2.D2_EMISSAO >= ?
                     AND D2.D2_EMISSAO <= ?
+                    {center_sql}
                     {search_sql}
                     {situation_sql}
                 GROUP BY D2.D2_FILIAL, D2.D2_DOC, D2.D2_SERIE
@@ -192,7 +212,8 @@ class CustomerOutboundInvoicesRepository(
                 sales_order_sample,
                 customer_order_sample,
                 access_key,
-                carrier
+                carrier,
+                customer_center
             FROM note_base
             ORDER BY issue_date_raw DESC, invoice_number DESC, invoice_series DESC
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
@@ -232,7 +253,17 @@ class CustomerOutboundInvoicesRepository(
                 # Se a última nota não está na página atual, buscar valor à parte
                 if last_date and last_value is None:
                     last_value = self._last_invoice_value(
-                        repo, code, store, start_date, end_date, last_date, search_sql, situation_sql, base_params
+                        repo,
+                        code,
+                        store,
+                        start_date,
+                        end_date,
+                        last_date,
+                        search_sql,
+                        situation_sql,
+                        base_params,
+                        center_join,
+                        center_sql,
                     )
 
                 for row in page_rows:
@@ -261,6 +292,7 @@ class CustomerOutboundInvoicesRepository(
                             item_count=int(row.get("item_count") or len(items)),
                             access_key=_trim(row.get("access_key")) or None,
                             carrier=_trim(row.get("carrier")) or None,
+                            customer_center=_trim(row.get("customer_center")),
                             items=items,
                         )
                     )
@@ -497,6 +529,8 @@ class CustomerOutboundInvoicesRepository(
         search_sql: str,
         situation_sql: str,
         base_params: list[Any],
+        center_join: str,
+        center_sql: str,
     ) -> Optional[float]:
         # Converte ISO para AAAAMMDD se necessário para comparar com D2_EMISSAO
         raw_date = last_date.replace("-", "") if "-" in last_date else last_date
@@ -517,14 +551,16 @@ class CustomerOutboundInvoicesRepository(
                 ON C5.C5_FILIAL = D2.D2_FILIAL
                 AND LTRIM(RTRIM(C5.C5_NUM)) = LTRIM(RTRIM(D2.D2_PEDIDO))
                 AND C5.D_E_L_E_T_ = ''
+            {center_join}
             WHERE D2.D_E_L_E_T_ = ''
                 AND D2.D2_CLIENTE = ?
                 AND D2.D2_LOJA = ?
                 AND D2.D2_EMISSAO >= ?
                 AND D2.D2_EMISSAO <= ?
-                AND D2.D2_EMISSAO = ?
+                {center_sql}
                 {search_sql}
                 {situation_sql}
+                AND D2.D2_EMISSAO = ?
             GROUP BY D2.D2_FILIAL, D2.D2_DOC, D2.D2_SERIE, F2.F2_VALBRUT
             ORDER BY D2.D2_DOC DESC
         """

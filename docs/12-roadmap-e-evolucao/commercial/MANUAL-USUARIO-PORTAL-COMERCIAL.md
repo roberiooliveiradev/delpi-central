@@ -106,10 +106,12 @@ Telas extras (OTD, Oportunidades, Propostas) entram pelo **Início** ou por atal
 
 ### 3.3 Pedido → linha → OP
 
-1. Em **Meus pedidos**, filtre o que importa (atraso, estoque, cliente, datas).  
+1. Em **Meus pedidos**, filtre o que importa (atraso, estoque, cliente, centro, datas).  
 2. Clique na **linha** → status fabril, estoque, OPs, estrutura do produto, OV se houver vínculo.  
 3. Abra a **OP** pela ficha da linha quando precisar de apontamentos / prazo.  
 4. A URL da lista e das fichas pode ser **copiada e compartilhada** (filtros costumam ser preservados ao voltar).
+
+O cliente da carteira é código, loja e centro. Se a loja não tiver centro, ela continua aparecendo inteira. Centro novo precisa ser vinculado e é conferido na amarração. Contatos e avatar são da loja.
 
 ---
 

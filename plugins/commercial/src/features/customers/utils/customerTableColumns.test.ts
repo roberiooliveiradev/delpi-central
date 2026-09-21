@@ -15,6 +15,7 @@ describe("createCustomerDefaultColumnVisibility", () => {
       valorTotalAberto: true,
       quantidadePedidosAtrasados: true,
       proximaEntrega: true,
+      customerCenter: true,
     });
   });
 

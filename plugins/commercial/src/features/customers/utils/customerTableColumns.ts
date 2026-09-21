@@ -1,5 +1,6 @@
 export const CUSTOMER_COLUMN_CATALOG = [
   { key: "nome", label: "Cliente" },
+  { key: "customerCenter", label: "Centro" },
   { key: "sellerName", label: "Vendedor" },
   { key: "city", label: "Cidade / UF" },
   { key: "lastPurchaseDate", label: "Última venda" },
@@ -28,5 +29,6 @@ export function createCustomerDefaultColumnVisibility(
     valorTotalAberto: true,
     quantidadePedidosAtrasados: true,
     proximaEntrega: true,
+    customerCenter: true,
   };
 }

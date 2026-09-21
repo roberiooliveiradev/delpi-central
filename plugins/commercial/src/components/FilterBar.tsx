@@ -16,6 +16,7 @@ import {
   CommercialTextField,
 } from "../app/commercialUi";
 import { CM_HELP } from "../content/helpTooltips";
+import { useAnalyticsCustomerCenterOptions } from "../features/analytics/hooks/useAnalyticsCustomerCenterOptions";
 import type { ClientOption, OpenOrdersTotvsFilters } from "../utils/filterItems";
 import type { StockFilter } from "../utils/statusBadges";
 
@@ -26,6 +27,7 @@ type FilterBarProps = {
   hasActiveFilters: boolean;
   onChange: (patch: Partial<OpenOrdersTotvsFilters>) => void;
   onReset: () => void;
+  sellerId?: string | null;
   /** Escopo de carteira (SellerScopeFilter) na mesma barra de filtros. */
   scopeFilter?: ReactNode;
 };
@@ -43,6 +45,7 @@ export function FilterBar({
   hasActiveFilters,
   onChange,
   onReset,
+  sellerId = null,
   scopeFilter = null,
 }: FilterBarProps) {
   const [showMore, setShowMore] = useState(false);
@@ -51,6 +54,7 @@ export function FilterBar({
     value: client.key,
     label: client.name,
   }));
+  const centerOptions = useAnalyticsCustomerCenterOptions(sellerId);
 
   return (
     <CommercialFilterBarShell
@@ -96,6 +100,13 @@ export function FilterBar({
         options={clientOptions}
         selectedValues={filters.clientCodes}
         onChange={(clientCodes) => onChange({ clientCodes })}
+      />
+      <CommercialMultiSelectField
+        label="Centro"
+        hint={CM_HELP.openOrders.filterClient}
+        options={centerOptions}
+        selectedValues={filters.customerCenters}
+        onChange={(customerCenters) => onChange({ customerCenters })}
       />
       <CommercialDateField
         label="Entrega de"

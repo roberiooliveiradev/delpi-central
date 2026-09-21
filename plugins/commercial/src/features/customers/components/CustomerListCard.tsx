@@ -7,7 +7,7 @@ import {
 } from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
 import { formatDisplayDate } from "../../../utils/dates";
-import { formatEntityCodeStore } from "../../../utils/entityCodeStore";
+import { formatEntityCodeStoreCenter } from "../../../utils/entityCodeStore";
 import { formatCurrency } from "../../../utils/format";
 import type { CustomerSummary } from "../types/customerSummary";
 import { hasCustomerEnrichmentCoverage } from "../utils/customerEnrichmentCoverage";
@@ -43,8 +43,11 @@ function renderCardValue(
 ): ReactNode {
   const name = customer.nome?.trim() || "—";
   const codeStore =
-    formatEntityCodeStore(customer.codigo, customer.loja) ??
-    `${customer.codigo}-${customer.loja}`;
+    formatEntityCodeStoreCenter(
+      customer.codigo,
+      customer.loja,
+      customer.customerCenter,
+    ) ?? `${customer.codigo}-${customer.loja}`;
   const covered = hasCustomerEnrichmentCoverage(customer);
 
   switch (key) {
@@ -65,6 +68,8 @@ function renderCardValue(
           </div>
         </div>
       );
+    case "customerCenter":
+      return customer.customerCenter?.trim() || "—";
     case "sellerName":
       return customer.sellerName?.trim() || "—";
     case "city":

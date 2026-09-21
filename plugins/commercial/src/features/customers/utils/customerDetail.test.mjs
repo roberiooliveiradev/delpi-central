@@ -485,7 +485,9 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
       { billing: false, activities: false },
     );
     assert.match(page, /resolveCustomerDetailFetchPolicy/);
-    assert.match(page, /useCustomerBilling\(codigo, loja, fetchPolicy\.billing\)/);
+    assert.match(page, /useCustomerBilling\(codigo, loja, fetchPolicy\.billing, customerCenter\)/);
+    assert.match(page, /resolveAccountCustomerCenter/);
+    assert.doesNotMatch(page, /customer_center=/);
     assert.match(page, /fetchPolicy\.activities/);
     assert.match(overview, /useCustomerPurchaseEvolution/);
     assert.match(overview, /CustomerPurchaseEvolutionChart/);

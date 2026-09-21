@@ -17,22 +17,25 @@ export function normalizeCadastroPart(value: string | null | undefined): string 
 export function buildCustomerKey(
   codigoCadastro: string | null | undefined,
   lojaCadastro: string | null | undefined,
+  customerCenter?: string | null,
 ): string | null {
   const codigo = normalizeCadastroPart(codigoCadastro);
   const loja = normalizeCadastroPart(lojaCadastro);
   if (!codigo || !loja) return null;
-  return `${codigo}${CUSTOMER_KEY_SEPARATOR}${loja}`;
+  const center = normalizeCadastroPart(customerCenter);
+  const pair = `${codigo}${CUSTOMER_KEY_SEPARATOR}${loja}`;
+  return center ? `${pair}${CUSTOMER_KEY_SEPARATOR}${center}` : pair;
 }
 
 export function parseCustomerKey(
   key: string,
-): { codigo: string; loja: string } | null {
-  const sep = key.indexOf(CUSTOMER_KEY_SEPARATOR);
-  if (sep <= 0 || sep === key.length - 1) return null;
-  const codigo = key.slice(0, sep);
-  const loja = key.slice(sep + 1);
-  if (!codigo || !loja || loja.includes(CUSTOMER_KEY_SEPARATOR)) return null;
-  return { codigo, loja };
+): { codigo: string; loja: string; center: string } | null {
+  const parts = key.split(CUSTOMER_KEY_SEPARATOR);
+  if (parts.length !== 2 && parts.length !== 3) return null;
+  const [codigo, loja, center = ""] = parts;
+  if (!codigo || !loja) return null;
+  if (parts.length === 3 && !center) return null;
+  return { codigo, loja, center };
 }
 
 export function isValidCustomerIdentity(

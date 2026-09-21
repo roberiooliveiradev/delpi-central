@@ -71,6 +71,7 @@ function buildDescription(customer: CustomerSummary, lastSuccessAt: Date | null,
     `${customer.codigo}-${customer.loja}`;
   const parts = [
     codeStore,
+    customer.customerCenter?.trim() || null,
     locationLabel(customer),
     customer.sellerName?.trim() ? `Vendedor ${customer.sellerName.trim()}` : null,
     `Atualizado em ${formatUpdatedAt(lastSuccessAt)}${refreshing ? " · Atualizando…" : ""}`,

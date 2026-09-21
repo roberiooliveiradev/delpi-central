@@ -104,18 +104,21 @@ class ListCustomersInScopeUseCase:
     def _dedupe_assignments(
         assignments: list[SellerCustomerAssignment],
     ) -> list[SellerCustomerAssignment]:
-        seen: set[tuple[str, str]] = set()
+        seen: set[tuple[str, str, str]] = set()
         out: list[SellerCustomerAssignment] = []
         for assignment in assignments:
             key = customer_coverage_key(assignment.customer_code, assignment.customer_store)
-            if not key[0] or not key[1] or key in seen:
+            center = str(assignment.customer_center or "").strip()
+            identity = (key[0], key[1], center)
+            if not key[0] or not key[1] or identity in seen:
                 continue
-            seen.add(key)
+            seen.add(identity)
             out.append(
                 SellerCustomerAssignment(
                     customer_code=key[0],
                     customer_store=key[1],
                     customer_name=assignment.customer_name,
+                    customer_center=center or None,
                 )
             )
         return out
@@ -131,6 +134,7 @@ class ListCustomersInScopeUseCase:
                     "open_value": item.open_value,
                     "has_overdue": item.has_overdue,
                     "has_open_orders": item.has_open_orders,
+                    "customer_center": item.customer_center,
                 }
                 for item in result.items
             ],

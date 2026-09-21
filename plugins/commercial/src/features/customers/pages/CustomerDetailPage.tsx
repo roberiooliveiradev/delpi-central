@@ -30,6 +30,7 @@ import { useCustomerActivities } from "../hooks/useCustomerActivities";
 import { useCustomerSharedCoverage } from "../hooks/useCustomerSharedCoverage";
 import { hasCustomerEnrichmentCoverage } from "../utils/customerEnrichmentCoverage";
 import { isCustomerInViewerPortfolios } from "../utils/customerMembership";
+import { resolveAccountCustomerCenter } from "../utils/accountCustomerCenter";
 import {
   buildCustomerDetailSearch,
   customerDetailPanelId,
@@ -89,6 +90,15 @@ export function CustomerDetailPage({
     () => isCustomerInViewerPortfolios(codigo, loja, myPortfolios),
     [codigo, loja, myPortfolios],
   );
+  const customerCenter = useMemo(
+    () =>
+      resolveAccountCustomerCenter({
+        codigo,
+        loja,
+        portfolios: canUseTeamScope || canManagePortfolios ? sellers : myPortfolios,
+      }),
+    [codigo, loja, canUseTeamScope, canManagePortfolios, sellers, myPortfolios],
+  );
   const showPortfolioCoverage =
     inViewerPortfolio || canUseTeamScope || canManagePortfolios;
 
@@ -120,6 +130,7 @@ export function CustomerDetailPage({
     enrichmentLoading,
   } = useCustomerDetailData(codigo, loja, {
     sellerNameByKey,
+    customerCenter,
   });
 
   const customer = rawCustomer;
@@ -157,7 +168,7 @@ export function CustomerDetailPage({
     hasCustomer: Boolean(customer),
     canViewWorklist,
   });
-  const billing = useCustomerBilling(codigo, loja, fetchPolicy.billing);
+  const billing = useCustomerBilling(codigo, loja, fetchPolicy.billing, customerCenter);
   const activities = useCustomerActivities(
     codigo,
     loja,
@@ -351,6 +362,7 @@ export function CustomerDetailPage({
                   basePath={basePath}
                   codigo={codigo}
                   loja={loja}
+                  customerCenter={customerCenter}
                 />
               ) : null}
 

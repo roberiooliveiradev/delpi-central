@@ -20,6 +20,7 @@ class CustomerOutboundInvoicesRepositoryPort(Protocol):
         page_size: int,
         situation: Optional[str],
         search: Optional[str],
+        customer_centers: Optional[list[str]] = None,
     ) -> CustomerOutboundInvoicesPage:
         ...
 

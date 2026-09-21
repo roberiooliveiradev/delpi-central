@@ -16,6 +16,20 @@ export function formatEntityCodeStore(
   return normalizedCode || normalizedStore;
 }
 
+/** Código-loja com centro quando preenchido (`000001-01 · 1100`). */
+export function formatEntityCodeStoreCenter(
+  code?: string | null,
+  store?: string | null,
+  center?: string | null,
+): string | null {
+  const codeStore = formatEntityCodeStore(code, store);
+  const normalizedCenter = center?.trim() ?? "";
+  if (!codeStore && !normalizedCenter) return null;
+  if (!codeStore) return normalizedCenter || null;
+  if (!normalizedCenter) return codeStore;
+  return `${codeStore} · ${normalizedCenter}`;
+}
+
 export function formatEntityTypeWithCodeStore(
   entityType?: string | null,
   code?: string | null,
