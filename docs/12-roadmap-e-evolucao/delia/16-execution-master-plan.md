@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C2-T4 — OPERATIONAL_CONTEXT_OWNER_SOURCE_INVENTORY` (`C2-T3` dependency freeze; inventário apenas; `C2_EXECUTED=NO`; `C2_IMPLEMENTATION_STARTED=NO`)
+**Próxima etapa:** `C2-T5 — GLOBAL_SURFACE_APPLICABILITY` (`C2-T4` inventory: OP/PRODUCT/OPERATION proven; MACHINE/POSTO TO_INVENTORY; Workspace DEFER; `C2_IMPLEMENTATION_STARTED=NO`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -364,16 +364,17 @@ CORE_CONTEXT_LIVE_NETWORK = TEST_NOT_RUN (NON_BLOCKING; formal CORE_CONTEXT=PASS
 C2_T1 = INVENTORY_FREEZE_READY_FOR_REVIEW
 C2_T2 = VERIFICATION_EVIDENCE_READY_FOR_REVIEW
 C2_T3 = DEPENDENCY_FREEZE_READY_FOR_REVIEW
+C2_T4 = OPERATIONAL_CONTEXT_INVENTORY_READY_FOR_REVIEW
 C2_STARTED = YES
 C2_IMPLEMENTATION_STARTED = NO
 C2_EXECUTED = NO
 PORTAL_HOST_CONTRACT = FROZEN_ACCEPTED (current AppHost props; ≠ business AuthZ)
-OPERATIONAL_CONTEXT = TO_INVENTORY (no runtime WorkspaceContext)
+OPERATIONAL_CONTEXT = MIXED (OP/PRODUCT/OPERATION=PROVEN; MACHINE/POSTO=TO_INVENTORY; Workspace DEFER)
 BROWSER_STATE_RESIDENCY_POLICY = APPROVED (C2-T1D1)
 BROWSER_RETAINED_STATE_CURRENTLY_REQUIRED = NO
 CENTRALIZED_BROWSER_STATE_BOUNDARY = REQUIRED_ON_FIRST_RETAINED_STATE
 SHARED_DEVICE_ISOLATION_INVARIANT = FROZEN_ACCEPTED
-NEXT = C2-T4 — OPERATIONAL_CONTEXT_OWNER_SOURCE_INVENTORY (do not start automatically)
+NEXT = C2-T5 — GLOBAL_SURFACE_APPLICABILITY (do not start automatically; no Workspace runtime)
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -613,10 +614,12 @@ DEFER: PlatformCommand bus; Portal location remains the navigation mechanism
 DEFER: iframe bridge until DÉLIA has a real iframe consumer
 DEFER: global panel until a Portal slot that reuses the same runtime is proven
 DEFER: CP-012 intelligence to C3
-NEXT = C2-T4 operational owner/source inventory only
-C2-T5 global surface applicability
+C2-T4 MIXED: OP/PRODUCT/OPERATION public via api-delpi (TOTVS); MACHINE/POSTO no canonical identity
+WORKSPACE_CONTEXT_RUNTIME = DEFER
+NEXT = C2-T5 global surface applicability
 C2-T6 iframe applicability (no new bridge by default)
 C2-FINAL after those reviews
+Workspace binding remains unscheduled
 ```
 
 ---

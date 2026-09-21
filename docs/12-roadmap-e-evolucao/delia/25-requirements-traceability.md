@@ -161,7 +161,7 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-069 | SSO iframe sem token pelo bridge | Portal/App/Security | auth architecture | TO_INVENTORY |
 | CP-070 | Observabilidade iframe bridge | Portal/Observability | trace/redaction | LOCKED |
 | CP-156 | Paridade de RBAC/policy entre Global/Workspace/Meeting/Frontline | Portal/DÉLIA Policy | surface parity | LOCKED |
-| CP-159 | Contexto operacional OP/máquina/produto/operação/posto usa WorkspaceContext + EntityRef | Portal/MFE/DÉLIA | operational context contract | LOCKED |
+| CP-159 | Contexto operacional OP/máquina/produto/operação/posto usa WorkspaceContext + EntityRef | Portal/MFE/DÉLIA | operational context contract | LOCKED — C2-T4: OP/PRODUCT/OPERATION sources proven; MACHINE/POSTO TO_INVENTORY; no Workspace runtime |
 | CP-171 | Device metadata não substitui identidade/autorização | Portal/DÉLIA Security | shared-device/context negative | LOCKED — requirement only; not a C2 device runtime |
 
 ## 5. C3 — Intelligence Core + Extended Foundations

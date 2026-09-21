@@ -951,6 +951,8 @@ materialized KPI cache != authority
 | Pulse device | production-pulse-api | UUID + controller_code | DOMAIN_LOCAL |
 | Cross-domain EntityRef | — | — | `NOT_PROVEN` shared |
 
+C2-T4 (inventory only): OP = `C2_OP` via `GET /production/orders/by-op/{production_order}`; product item = `B1_COD` via `GET /products/{code}`; operation = `production_order`+`operation_code` via machine-load; work center = `H8_CTRAB` (UI sometimes says “posto”); physical machine has no public master (`machine-load` ≠ machine; Pulse `machine_label` is a binding slug). Device ≠ machine ≠ work center. Shared EntityRef still `NOT_PROVEN`.
+
 Cross-service identity: **DOMAIN_LOCAL** / **PARTIAL** (business keys); no stable shared EntityRef registry.
 
 ### 33.3 Metrics / formulas / dimensions (amostra)

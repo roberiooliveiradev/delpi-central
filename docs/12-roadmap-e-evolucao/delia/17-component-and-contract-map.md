@@ -958,6 +958,33 @@ ChatWorkspaceContext / TvWorkspaceContext = CHAT_ONLY ≠ product Workspace
 NO new host abstraction (single Portal producer; typed props suffice)
 ```
 
+C2-T4 owner/source inventory (no runtime Workspace; DÉLIA is not owner):
+
+```text
+OP = PROVEN
+  owner = TOTVS SC2 via api-delpi
+  GET /production/orders/by-op/{production_order}
+  id = C2_OP (production_order); conjunto = C2_NUM (order_number, 6 digits)
+  scoped by C2_FILIAL (branch)
+PRODUCT = PROVEN as ERP item (SB1 B1_COD)
+  GET /products/{code}  Auth = API_DELPI_ACCESS
+  not a separate Product Master app
+OPERATION = PROVEN as routing step on an OP
+  composite = branch + production_order + operation_code (SH8 H8_OPER)
+  GET /production/machine-load/operations  Auth = KPI_PRODUCTION_ACCESS
+  planned queue vs live appointment-status (is_in_production)
+MACHINE = TO_INVENTORY
+  "machine-load" = work_center H8_CTRAB, not a machine master
+  Pulse machine_label = local device-binding slug ≠ TOTVS machine
+POSTO = TO_INVENTORY as distinct entity
+  PCP public UI uses "posto" as label for work_center
+WORK_CENTER = PROVEN related concept (not one of the five CP-159 names)
+  H8_CTRAB; GET /production/machine-load/work-centers
+Pulse device UUID ≠ machine ≠ work_center
+EntityRef/SourceRef remain CONTRACT_CANDIDATE only
+Workspace promotion = DEFER
+```
+
 #### DELIA.DOMAIN.READ
 
 ```text
