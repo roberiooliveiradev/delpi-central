@@ -1,4 +1,4 @@
-import type { OverviewKpiStrategic, OverviewUnitValueMap } from "../../api/overview";
+import type { OverviewKpiStrategic, OverviewStrategicContext, OverviewUnitValueMap } from "../../api/overview";
 
 export const STRATEGIC_UNIT_ORDER = ["consolidated", "01", "02"] as const;
 
@@ -51,13 +51,34 @@ function hasKey(map: OverviewUnitValueMap | undefined, key: StrategicUnitKey): b
   return Boolean(map && Object.prototype.hasOwnProperty.call(map, key));
 }
 
+export function activeStrategicScopeKey(
+  context: OverviewStrategicContext | null | undefined,
+): StrategicUnitKey | null {
+  const key = context?.scope?.key;
+  if (key === "consolidated" || key === "01" || key === "02") return key;
+  const scoreKeys = STRATEGIC_UNIT_ORDER.filter((candidate) => context?.scores?.[candidate]);
+  if (scoreKeys.length === 1) return scoreKeys[0] ?? null;
+  return null;
+}
+
+export function buildActiveStrategicScopeRow(
+  strategic: OverviewKpiStrategic | null | undefined,
+  scopeKey: StrategicUnitKey | null,
+): StrategicUnitRow | null {
+  if (!strategic?.indicatorId || !scopeKey) return null;
+  const rows = buildStrategicUnitRows(strategic, scopeKey);
+  return rows[0] ?? null;
+}
+
 export function buildStrategicUnitRows(
   strategic: OverviewKpiStrategic | null | undefined,
+  scopeKey?: StrategicUnitKey | null,
 ): StrategicUnitRow[] {
   if (!strategic?.indicatorId) return [];
   const caption = periodGoalCaption(strategic.goalPeriodKind);
+  const keys = scopeKey ? [scopeKey] : [];
   const rows: StrategicUnitRow[] = [];
-  for (const key of STRATEGIC_UNIT_ORDER) {
+  for (const key of keys) {
     const hasRealized = hasKey(strategic.realized, key);
     const hasGoal = hasKey(strategic.goals, key);
     if (!hasRealized && !hasGoal) continue;

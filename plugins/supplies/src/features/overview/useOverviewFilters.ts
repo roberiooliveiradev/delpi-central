@@ -8,14 +8,14 @@ import {
 import { resolvePeriodPreset, type PeriodPresetId } from "../../app/periodPreset";
 import {
   formatSuppliesScopeBadge,
-  resolveApiBranch,
+  resolveApiBranches,
   resolveEffectiveUnits,
   suppliesUnitOptions,
 } from "./suppliesBranchFilters";
 import { OVERVIEW_CONTENT } from "./overviewContent";
 
 export type OverviewApiParams = {
-  branch?: string;
+  branches: string[];
   from: string;
   to: string;
 };
@@ -93,7 +93,7 @@ export function useOverviewFilters(allowedUnits: readonly string[]) {
 
   const apiParams: OverviewApiParams = useMemo(
     () => ({
-      branch: resolveApiBranch(branches, allowedUnits),
+      branches: resolveApiBranches(branches, allowedUnits),
       from,
       to,
     }),

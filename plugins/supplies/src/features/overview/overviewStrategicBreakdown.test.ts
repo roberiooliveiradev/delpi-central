@@ -29,28 +29,19 @@ function strategic(overrides: Partial<OverviewKpiStrategic> = {}): OverviewKpiSt
 }
 
 describe("overview strategic breakdown", () => {
-  it("renders consolidated, SC and ES when Todas payload includes them", () => {
-    const rows = buildStrategicUnitRows(strategic());
-    expect(rows.map((row) => row.label)).toEqual([
-      "Consolidado",
-      "Santa Catarina",
-      "Espírito Santo",
-    ]);
-    expect(rows[0]?.realizedLabel).toContain("95,2");
-    expect(rows[0]?.goalCaption).toBe("Meta parcial");
-    expect(rows[2]?.realizedLabel).toBe("—");
-    expect(rows[2]?.goalLabel).toBe("Meta não cadastrada");
+  it("shows only the consolidated row when Todas is active, even if other units exist", () => {
+    const rows = buildStrategicUnitRows(strategic(), "consolidated");
+    expect(rows.map((row) => row.key)).toEqual(["consolidated"]);
+    expect(rows.map((row) => row.label)).toEqual(["Consolidado"]);
+    expect(rows.some((row) => row.label === "Santa Catarina")).toBe(false);
+    expect(rows.some((row) => row.label === "Espírito Santo")).toBe(false);
   });
 
   it("shows only the selected unit", () => {
-    const sc = buildStrategicUnitRows(
-      strategic({ realized: { "01": 96.1 }, goals: { "01": 97 } }),
-    );
-    expect(sc.map((row) => row.key)).toEqual(["01"]);
-    const es = buildStrategicUnitRows(
-      strategic({ realized: { "02": 94.3 }, goals: { "02": 97 } }),
-    );
-    expect(es.map((row) => row.key)).toEqual(["02"]);
+    expect(buildStrategicUnitRows(strategic(), "01").map((row) => row.key)).toEqual(["01"]);
+    expect(buildStrategicUnitRows(strategic(), "02").map((row) => row.label)).toEqual([
+      "Espírito Santo",
+    ]);
   });
 
   it("does not turn a missing department score into zero", () => {
@@ -65,15 +56,9 @@ describe("overview strategic breakdown", () => {
     expect(periodGoalCaption("partial")).toBe("Meta parcial");
   });
 
-  it("does not invent a strategic block without an indicator id", () => {
-    expect(buildStrategicUnitRows(null)).toEqual([]);
-    expect(buildStrategicUnitRows(strategic({ indicatorId: null }))).toEqual([]);
-  });
-
-  it("does not sum units in the portal", () => {
-    const rows = buildStrategicUnitRows(strategic());
-    const source = buildStrategicUnitRows.toString();
-    expect(source).not.toContain("reduce");
-    expect(rows[0]?.realizedLabel).not.toContain("191");
+  it("does not invent a strategic block without an indicator id or scope", () => {
+    expect(buildStrategicUnitRows(null, "consolidated")).toEqual([]);
+    expect(buildStrategicUnitRows(strategic({ indicatorId: null }), "01")).toEqual([]);
+    expect(buildStrategicUnitRows(strategic(), null)).toEqual([]);
   });
 });

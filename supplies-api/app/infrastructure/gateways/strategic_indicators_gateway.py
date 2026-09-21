@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
 from app.infrastructure.gateways.delpi_api_gateway import DelpiApiGateway
@@ -18,7 +17,6 @@ SI_INDICATOR_BY_KPI = {
     "KPI-SAVINGS": "supplies-negotiation-savings",
 }
 
-UNIT_SCOPE_KEYS = ("consolidated", "01", "02")
 STRATEGIC_KPI_IDS = frozenset(SI_INDICATOR_BY_KPI)
 
 
@@ -199,69 +197,41 @@ class StrategicIndicatorsGateway:
         start_date: str | None,
         end_date: str | None,
     ) -> dict[str, Any]:
-        """Department IDD + per-indicator realized/goals. Does not recalculate scores."""
+        """Department IDD + per-indicator realized/goals for the active scope only."""
         view_branch = branch if branch in {"01", "02"} else None
-        fetches: tuple[tuple[str, str | None], ...] = (
-            ((view_branch, view_branch),)
-            if view_branch
-            else (("consolidated", None), ("01", "01"), ("02", "02"))
-        )
-        items: dict[str, dict[str, Any]] = {}
-        errors: list[str] = []
-        with ThreadPoolExecutor(max_workers=len(fetches)) as pool:
-            futures = {
-                pool.submit(
-                    self._fetch_department_item,
-                    access_token=access_token,
-                    branch=fetch_branch,
-                    start_date=start_date,
-                    end_date=end_date,
-                ): scope_key
-                for scope_key, fetch_branch in fetches
-            }
-            for future in as_completed(futures):
-                scope_key = futures[future]
-                try:
-                    item = future.result()
-                except StrategicIndicatorsGatewayError as exc:
-                    errors.append(f"{scope_key}: {exc}")
-                    continue
-                if isinstance(item, dict):
-                    items[scope_key] = item
-
-        primary_key = view_branch or "consolidated"
-        if primary_key not in items and not items:
+        scope_key = view_branch or "consolidated"
+        try:
+            item = self._fetch_department_item(
+                access_token=access_token,
+                branch=view_branch,
+                start_date=start_date,
+                end_date=end_date,
+            )
+        except StrategicIndicatorsGatewayError as exc:
+            raise StrategicIndicatorsGatewayError("strategic indicators unavailable") from exc
+        if not isinstance(item, dict):
             raise StrategicIndicatorsGatewayError("strategic indicators unavailable")
 
-        visible = (view_branch,) if view_branch else UNIT_SCOPE_KEYS
-        metrics = _metrics_from_item(
-            items.get(primary_key),
-            branch=view_branch,
-            visible_keys=visible,
-        )
-        scores: dict[str, dict[str, Any]] = {}
-        partial = bool(errors)
-        for scope_key, item in items.items():
-            if scope_key not in visible:
-                continue
-            raw_score = item.get("score")
-            if raw_score is None:
-                raw_score = item.get("idd")
-            classification = item.get("classification")
-            scores[scope_key] = {
-                "score": _as_optional_float(raw_score),
-                "classification": classification if isinstance(classification, str) else None,
-            }
-            if item.get("partial_success") is True:
-                partial = True
+        visible = (scope_key,)
+        metrics = _metrics_from_item(item, branch=view_branch, visible_keys=visible)
+        raw_score = item.get("score")
+        if raw_score is None:
+            raw_score = item.get("idd")
+        classification = item.get("classification")
+        score = {
+            "score": _as_optional_float(raw_score),
+            "classification": classification if isinstance(classification, str) else None,
+        }
         return {
             "metrics": metrics,
             "context": {
                 "departmentId": "supplies",
-                "scores": scores,
-                "partialSuccess": partial,
+                "scopeKey": scope_key,
+                "scores": {scope_key: score},
+                "score": score,
+                "partialSuccess": item.get("partial_success") is True,
             },
-            "errors": errors,
+            "errors": [],
         }
 
     def _fetch_department_item(

@@ -89,8 +89,8 @@ Não criar permission CRUD por existir novo botão/GET/POST/PATCH.
 | Filtros globais | período + `from`/`to` + `branch`; URL shareable |
 | Fora do chrome global | cliente/segmento/carteira/vendedor, `location` e `stock_method` quando não suportados por todos os KPIs |
 | Metas | tríade SI: `goalValue`, `comparableGoal`, `referenceGoal` + `iddScore`; rodapé com realizado/meta por unidade quando o SI enviar |
-| IDD | badge do kit (`DepartmentScoreBadge`) para Consolidado / 01 / 02 conforme o filtro; nota ausente não vira 0 |
-| Gráficos | OTD no tempo + comparativo valor×meta conforme natureza temporal |
+| IDD | um badge do kit para o escopo ativo: Consolidado, Santa Catarina ou Espírito Santo. Sem breakdown simultâneo |
+| Gráficos | OTD no tempo segue o mesmo escopo: uma unidade ou consolidado 01+02 |
 | Partial | blocos auxiliares podem ficar unavailable sem derrubar tudo |
 
 ### Hero
@@ -113,9 +113,9 @@ Não criar permission CRUD por existir novo botão/GET/POST/PATCH.
 [StateBanner partial, se necessário]
 
 SectionCard "Indicadores"
-  IDD Suprimentos (Consolidado, Santa Catarina, Espírito Santo — só os que o SI devolver)
+  IDD Suprimentos do escopo ativo (somente Consolidado, ou somente a unidade filtrada)
   7 KPI cards; help no próprio título/labels de meta
-  rodapé dos 5 KPIs SI: realizado e meta do período por unidade do filtro
+  rodapé dos 5 KPIs SI: realizado e meta só do escopo ativo
 
 SectionCard "OTD no tempo"                                  [Abrir OTD]
   ChartViewShell + série

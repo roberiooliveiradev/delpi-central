@@ -59,6 +59,13 @@ export type OverviewDepartmentScore = {
 
 export type OverviewStrategicContext = {
   departmentId: string;
+  scope?: {
+    mode: "single" | "consolidated";
+    branches: string[];
+    key: "consolidated" | "01" | "02";
+    label: string;
+  };
+  score?: OverviewDepartmentScore;
   scores: {
     consolidated?: OverviewDepartmentScore;
     "01"?: OverviewDepartmentScore;
@@ -96,14 +103,16 @@ export type OverviewResponse = {
 };
 
 export type OverviewQuery = {
-  branch?: string;
+  branches?: string[];
   from?: string;
   to?: string;
 };
 
 function buildQuery(params: OverviewQuery): string {
   const search = new URLSearchParams();
-  if (params.branch) search.set("branch", params.branch);
+  for (const branch of params.branches ?? []) {
+    if (branch) search.append("branch", branch);
+  }
   if (params.from) search.set("from", params.from);
   if (params.to) search.set("to", params.to);
   const qs = search.toString();

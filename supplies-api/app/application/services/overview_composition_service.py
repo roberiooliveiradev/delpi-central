@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 from typing import Any, Callable
 
+from app.application.security.supplies_permissions import OPERATIONAL_UNITS
 from app.application.services.authorization_service import AuthorizationService
 from app.domain.entities import EffectiveUser
 from app.domain.exceptions import AuthorizationError
@@ -81,6 +82,37 @@ KPI_DEFS: tuple[dict[str, str], ...] = (
 
 
 logger = logging.getLogger("supplies-api.overview")
+
+_SCOPE_LABEL = {
+    "consolidated": "Consolidado",
+    "01": "Santa Catarina",
+    "02": "Espírito Santo",
+}
+
+
+def normalize_overview_branches(raw: list[str] | None) -> list[str]:
+    """Deduplicate operational branches. Empty selection means the full 01+02 set."""
+    seen: list[str] = []
+    allowed = set(OPERATIONAL_UNITS)
+    for item in raw or []:
+        for part in str(item).split(","):
+            code = part.strip()
+            if not code or code == "all":
+                continue
+            if code not in allowed:
+                raise ValueError(f"Unknown branch: {code}")
+            if code not in seen:
+                seen.append(code)
+    if not seen:
+        return list(OPERATIONAL_UNITS)
+    return seen
+
+
+def _active_scope(effective: list[str]) -> tuple[str, str, str | None]:
+    if len(effective) == 1:
+        key = effective[0]
+        return "single", key, key
+    return "consolidated", "consolidated", None
 
 
 def _first_day_of_month(today: date | None = None) -> str:
@@ -207,6 +239,7 @@ class OverviewCompositionService:
         user: EffectiveUser,
         *,
         branch: str | None = None,
+        branches: list[str] | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
     ) -> dict[str, Any]:
@@ -218,33 +251,46 @@ class OverviewCompositionService:
         end = end_date or _today()
         period_label = f"{start} → {end}"
 
-        if branch and branch not in {"", "all"}:
-            self.authorization.require_unit(user, branch)
-            branches = [branch]
-            mode = "single"
-        else:
-            branches = allowed or ["01", "02"]
-            mode = "consolidated" if len(branches) > 1 else "single"
+        requested = branches if branches is not None else ([branch] if branch else [])
+        effective = normalize_overview_branches(requested)
+        for code in effective:
+            self.authorization.require_unit(user, code)
+        mode, scope_key, si_branch = _active_scope(effective)
 
         token = user.access_token or ""
         partial_failures: list[dict[str, str]] = []
-        view_branch = branches[0] if mode == "single" else None
 
         si_metrics: dict[str, dict[str, Any]] = {}
+        empty_score = {"score": None, "classification": None}
         strategic_context: dict[str, Any] = {
             "departmentId": "supplies",
+            "scope": {
+                "mode": mode,
+                "branches": effective,
+                "key": scope_key,
+                "label": _SCOPE_LABEL[scope_key],
+            },
+            "score": empty_score,
             "scores": {},
             "partialSuccess": False,
         }
         try:
             loaded = self._load_strategic(
-                branch=view_branch,
+                branch=si_branch,
                 start_date=start,
                 end_date=end,
                 access_token=token,
             )
             si_metrics = loaded["metrics"]
-            strategic_context = loaded["context"]
+            loaded_context = loaded["context"]
+            score = loaded_context.get("score") or empty_score
+            strategic_context = {
+                "departmentId": "supplies",
+                "scope": strategic_context["scope"],
+                "score": score,
+                "scores": {scope_key: score},
+                "partialSuccess": bool(loaded_context.get("partialSuccess")),
+            }
             for message in loaded.get("errors") or []:
                 partial_failures.append(
                     {
@@ -264,7 +310,7 @@ class OverviewCompositionService:
 
         fetchers: dict[str, Callable[[], Any]] = {
             "KPI-OTD": lambda: self._collect_numeric(
-                branches,
+                effective,
                 lambda b: self.delpi_reads.get_otd(
                     access_token=token,
                     branch=b,
@@ -274,7 +320,7 @@ class OverviewCompositionService:
                 agg=_mean,
             ),
             "KPI-STOCK-VALUE": lambda: self._collect_numeric(
-                branches,
+                effective,
                 lambda b: self.delpi_reads.get_stock_value(
                     access_token=token,
                     branch=b,
@@ -284,7 +330,7 @@ class OverviewCompositionService:
                 agg=_sum,
             ),
             "KPI-TURNOVER": lambda: self._collect_numeric(
-                branches,
+                effective,
                 lambda b: self.delpi_reads.get_inventory_turnover(
                     access_token=token,
                     branch=b,
@@ -294,7 +340,7 @@ class OverviewCompositionService:
                 agg=_mean,
             ),
             "KPI-CPV": lambda: self._collect_numeric(
-                branches,
+                effective,
                 lambda b: self.delpi_reads.get_cpv(
                     access_token=token,
                     branch=b,
@@ -304,7 +350,7 @@ class OverviewCompositionService:
                 agg=_mean,
             ),
             "KPI-SAVINGS": lambda: self._collect_numeric(
-                branches,
+                effective,
                 lambda b: (
                     self.delpi_reads.get_negotiation_savings(
                         access_token=token,
@@ -316,14 +362,14 @@ class OverviewCompositionService:
                 agg=_sum,
             ),
             "KPI-CRITICAL-MP": lambda: self._collect_numeric(
-                branches,
+                effective,
                 lambda b: self.delpi_reads.get_safety_stock_summary(
                     access_token=token,
                     branch=b,
                 ).get("below_safety_stock"),
                 agg=_sum,
             ),
-            "KPI-SC-OPEN": lambda: self._collect_sc_open(token, branches),
+            "KPI-SC-OPEN": lambda: self._collect_sc_open(token, effective),
         }
 
         results: dict[str, Any] = {}
@@ -368,7 +414,7 @@ class OverviewCompositionService:
             goal_mode = si_row.get("goal_mode")
             meta_value = comparable_goal if comparable_goal is not None else goal_value
             strategic = _strategic_block(kpi_id, si_row)
-            active_scope = branches[0] if mode == "single" else "consolidated"
+            active_scope = scope_key
             drift = _si_value_drift(
                 kpi_id=kpi_id,
                 scope=active_scope,
@@ -413,7 +459,7 @@ class OverviewCompositionService:
             )
 
         return {
-            "scope": {"branches": branches, "mode": mode},
+            "scope": {"branches": effective, "mode": mode},
             "period": {"from": start, "to": end, "label": period_label},
             "kpis": kpis,
             "partialFailures": partial_failures,

@@ -52,7 +52,7 @@ Não espelhar CRUD em permission codes. Qualquer `ANY_OF`/`ALL_OF` precisa ser d
 | GET | `/me/preferences` | `supplies.access` | PG supplies | **IMPLEMENTADO** |
 | PATCH | `/me/preferences` | `supplies.access`; `default_branch ∈ allowedUnits` | PG supplies | **IMPLEMENTADO** |
 | GET | `/home/attention` | `supplies.access` | composição autorizada | **IMPLEMENTADO** |
-| GET | `/analytics/overview` | `supplies.access` | api-delpi (headline) + SI via `/dashboard/department-indicators`. Aditivo: `strategicContext.scores` (consolidated/01/02) e `kpis[].strategic` (realized/goals por unidade, nota SI). SC-OPEN e CRITICAL-MP ficam sem bloco estratégico. | **IMPLEMENTADO** |
+| GET | `/analytics/overview` | `supplies.access` | `branch` repetido (0, 1 ou N). 0 ou 01+02 = consolidado; uma filial = escopo único. SI: uma chamada `department-indicators`. Série OTD usa a mesma regra (uma filial ou consolidado 01+02). Filial inválida = 422. | **IMPLEMENTADO** |
 | GET | `/analytics/otd/series` | `supplies.access` + unit | api-delpi | **IMPLEMENTADO** |
 | GET | `/analytics/otd` | `supplies.access` + unit | api-delpi + SI | **IMPLEMENTADO** |
 | GET | `/purchase-requests` | `supplies.access` + units + CC | PR-api (`?branch=` repetido, `sort_by`/`sort_dir` allow-list + `overall_stage` owner-local, antes da página) | **IMPLEMENTADO_C1** |

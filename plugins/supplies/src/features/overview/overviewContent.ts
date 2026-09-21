@@ -6,7 +6,7 @@ export const OVERVIEW_CONTENT = {
   description:
     "Indicadores consolidados do período e das unidades selecionadas no seu escopo. Use Solicitações e Operações para tratar os itens operacionais.",
   helpAriaLabel: "Ajuda: Visão geral e natureza temporal",
-  scopeBadgeAll: "Consolidado (unidades liberadas)",
+  scopeBadgeAll: "Consolidado",
   scopeBadgeBranch: (branch: string) => branch,
   branchAll: "Todas",
   branchLabel: "Unidade",

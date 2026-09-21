@@ -40,18 +40,30 @@ export function serializeSuppliesBranchCsv(values: readonly string[]): string {
     .join(",");
 }
 
-/** Single branch for BFF when exactly one unit is selected; otherwise consolidated. */
+/** Selected branches sent to the BFF. Empty means Todas (BFF expands to 01+02). */
+export function resolveApiBranches(
+  branches: readonly string[],
+  allowedUnits: readonly string[] = [],
+): string[] {
+  const allowed = new Set(
+    allowedUnits.map((unit) => normalizeOperationalUnitCode(unit)).filter(Boolean),
+  );
+  const selected: string[] = [];
+  for (const value of branches) {
+    const code = normalizeOperationalUnitCode(value);
+    if (!CANONICAL_CODES.has(code)) continue;
+    if (allowed.size > 0 && !allowed.has(code)) continue;
+    if (!selected.includes(code)) selected.push(code);
+  }
+  return selected;
+}
+
+/** Series and legacy callers: one unit stays single; zero or many stay consolidated. */
 export function resolveApiBranch(
   branches: readonly string[],
   allowedUnits: readonly string[] = [],
 ): string | undefined {
-  const allowed = new Set(
-    allowedUnits.map((unit) => normalizeOperationalUnitCode(unit)).filter(Boolean),
-  );
-  const selected = branches
-    .map((value) => normalizeOperationalUnitCode(value))
-    .filter((value) => CANONICAL_CODES.has(value))
-    .filter((value) => (allowed.size === 0 ? true : allowed.has(value)));
+  const selected = resolveApiBranches(branches, allowedUnits);
   if (selected.length === 1) return selected[0];
   return undefined;
 }

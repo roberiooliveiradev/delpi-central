@@ -49,7 +49,7 @@ Owner de IDD, classificação, realizado estratégico e metas: **strategic-indic
 | KPI-CPV | `supplies-cpv` |
 | KPI-SAVINGS | `supplies-negotiation-savings` |
 
-KPI-SC-OPEN e KPI-CRITICAL-MP não têm indicador SI. `goal_value` é meta cadastral; `comparable_goal` / `goals[unidade]` é a meta do período; `reference_goal` é a meta mês/referência.
+KPI-SC-OPEN e KPI-CRITICAL-MP não têm indicador SI. `goal_value` é meta cadastral; `comparable_goal` / `goals` do escopo ativo é a meta do período; `reference_goal` é a meta mês/referência. O consolidado não traz breakdown das filiais: outra unidade se vê pelo filtro.
 
 ---
 

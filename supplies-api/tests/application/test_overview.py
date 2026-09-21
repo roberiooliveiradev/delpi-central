@@ -283,10 +283,11 @@ def test_overview_strategic_context_and_unit_maps():
     )
 
     scores = result["strategicContext"]["scores"]
-    assert set(scores) == {"consolidated", "01", "02"}
+    assert set(scores) == {"consolidated"}
+    assert result["strategicContext"]["scope"]["key"] == "consolidated"
+    assert result["strategicContext"]["scope"]["branches"] == ["01", "02"]
     assert scores["consolidated"]["score"] == 7.4
-    assert scores["01"]["classification"] == "Bom"
-    assert scores["02"]["score"] == 6.0
+    assert result["strategicContext"]["score"]["classification"] == "Regular"
     assert result["scope"]["mode"] == "consolidated"
     assert result["period"]["from"] == "2026-09-01"
     assert "partialFailures" in result
@@ -301,12 +302,8 @@ def test_overview_strategic_context_and_unit_maps():
     for kpi_id in strategic_ids:
         strategic = next(k for k in result["kpis"] if k["id"] == kpi_id)["strategic"]
         assert strategic["indicatorId"]
-        assert strategic["realized"]["consolidated"] == 95.0
-        assert strategic["realized"]["01"] == 96.1
-        assert strategic["realized"]["02"] is None
-        assert strategic["goals"]["consolidated"] == 97.0
-        assert strategic["goals"]["01"] == 94.0
-        assert strategic["goals"]["02"] is None
+        assert strategic["realized"] == {"consolidated": 95.0}
+        assert strategic["goals"] == {"consolidated": 97.0}
         assert strategic["score"] == 6.57
         assert strategic["goalMode"] == "prorated"
         assert strategic["goalPeriodKind"] == "accumulated"
@@ -368,4 +365,73 @@ def test_overview_si_failure_keeps_operational_headline():
     assert otd["strategic"] is None
     assert result["strategicContext"]["scores"] == {}
     assert any(item["source"] == "si" for item in result["partialFailures"])
+
+
+def test_overview_explicit_both_units_is_one_consolidated_fetch():
+    delpi = _delpi_for_scopes()
+    result = OverviewCompositionService(
+        delpi_reads=_stub_reads(),
+        purchase_requests=MagicMock(count_open_requests=MagicMock(return_value=1)),
+        strategic_indicators=StrategicIndicatorsGateway(delpi=delpi),
+    ).compose(
+        _strategic_user(),
+        branches=["01", "02"],
+        start_date="2026-09-01",
+        end_date="2026-09-08",
+    )
+    assert delpi.get.call_count == 1
+    assert "branch" not in delpi.get.call_args.kwargs["params"]
+    assert result["scope"] == {"branches": ["01", "02"], "mode": "consolidated"}
+    assert result["strategicContext"]["scope"]["key"] == "consolidated"
+    assert set(result["strategicContext"]["scores"]) == {"consolidated"}
+
+
+def test_overview_duplicate_branch_normalizes_to_single():
+    result = OverviewCompositionService(
+        delpi_reads=_stub_reads(),
+        purchase_requests=MagicMock(count_open_requests=MagicMock(return_value=1)),
+        strategic_indicators=StrategicIndicatorsGateway(delpi=_delpi_for_scopes()),
+    ).compose(_strategic_user(), branches=["01", "01"], start_date="2026-09-01", end_date="2026-09-08")
+    assert result["scope"]["mode"] == "single"
+    assert result["scope"]["branches"] == ["01"]
+
+
+def test_overview_unknown_branch_raises():
+    service = OverviewCompositionService(
+        delpi_reads=_stub_reads(),
+        purchase_requests=MagicMock(),
+        strategic_indicators=MagicMock(),
+    )
+    try:
+        service.compose(_strategic_user(), branches=["99"])
+        assert False, "expected ValueError"
+    except ValueError as exc:
+        assert "99" in str(exc)
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch("app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user")
+def test_http_overview_rejects_unknown_branch(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _strategic_user()
+    client = create_app().test_client()
+    response = client.get(
+        "/analytics/overview?branch=99",
+        headers={"Authorization": "Bearer good-token"},
+    )
+    assert response.status_code == 422
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch("app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user")
+def test_http_overview_manage_only_forbidden(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions={"supplies.manage"})
+    client = create_app().test_client()
+    response = client.get(
+        "/analytics/overview?branch=01&branch=02",
+        headers={"Authorization": "Bearer good-token"},
+    )
+    assert response.status_code == 403
+
 

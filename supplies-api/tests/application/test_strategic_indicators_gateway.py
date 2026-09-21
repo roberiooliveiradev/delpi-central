@@ -186,21 +186,20 @@ def test_compose_strategic_keeps_unit_maps_and_does_not_recalculate_score():
         start_date="2026-09-01",
         end_date="2026-09-08",
     )
-    assert delpi.get.call_count == 3
+    assert delpi.get.call_count == 1
+    assert delpi.get.call_args.kwargs["params"].get("branch") is None
     scores = loaded["context"]["scores"]
+    assert set(scores) == {"consolidated"}
     assert scores["consolidated"]["score"] == 7.25
     assert scores["consolidated"]["classification"] == "Regular"
-    assert scores["01"]["score"] == 8.1
-    assert scores["02"]["score"] is None
-    assert scores["02"]["score"] != 0
+    assert "01" not in scores
+    assert "02" not in scores
     otd = loaded["metrics"]["KPI-OTD"]
     assert otd["score"] == 6.57
+    assert set(otd["realized"]) == {"consolidated"}
     assert otd["realized"]["consolidated"] == 95.0
-    assert otd["realized"]["01"] == 96.1
-    assert otd["realized"]["02"] is None
+    assert set(otd["goals_by_unit"]) == {"consolidated"}
     assert otd["goals_by_unit"]["consolidated"] == 97.0
-    assert otd["goals_by_unit"]["01"] == 97.0
-    assert otd["goals_by_unit"]["02"] is None
     assert otd["goal_period_kind"] == "partial"
     assert otd["goal_mode"] == "standard"
     assert otd["performance_direction"] == "higher_is_better"

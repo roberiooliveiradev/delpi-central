@@ -67,9 +67,9 @@ export const SP_HELP = {
   overviewGoalTriad:
     "Meta do período vem do SI (comparable_goal). Para estoque (snapshot), a meta é o nível/teto cadastrado — não há pró-rata diária nem soma de meses. Meta mês/referência é a meta cadastrada consolidada. Nota IDD é o score do SI — não é recalculada no navegador.",
   overviewDepartmentIdd:
-    "IDD Suprimentos é a nota canônica do Strategic Indicators para o departamento. Consolidado reúne as unidades 01 e 02 pela regra do SI. Santa Catarina é a unidade 01 e Espírito Santo a 02. Nota ausente não vira zero.",
+    "IDD Suprimentos é a nota canônica do Strategic Indicators para o escopo ativo do filtro. Todas ou as duas unidades mostram só o consolidado. Uma unidade mostra só Santa Catarina ou Espírito Santo. Nota ausente não vira zero.",
   overviewUnitRealized:
-    "Realizado por unidade é o valor que o Strategic Indicators usa na nota e na meta. Não é soma feita no Portal. Traço significa valor indisponível.",
+    "Realizado do escopo ativo é o valor que o Strategic Indicators usa na nota e na meta. Não é soma feita no Portal. Traço significa valor indisponível.",
   overviewUnitGoal:
     "Meta do período é a meta comparável ao recorte (parcial, fechada ou acumulada). Meta mês é a referência cadastrada e não substitui a meta do período.",
   overviewOtdChart:

@@ -15,6 +15,7 @@ import {
 } from "@delpi/plugin-ui/index";
 
 import { getOtdSeries } from "../../api/otdSeries";
+import { resolveApiBranch } from "./suppliesBranchFilters";
 import {
   SuppliesChartGranularityToggle,
   SuppliesEmptyState,
@@ -93,9 +94,10 @@ export function OverviewOtdSeriesChart({
     setError(null);
     setPartialNote(null);
 
+    const seriesBranch = resolveApiBranch(filters.branches);
     const currentPromise = getOtdSeries(
       {
-        branch: filters.branch,
+        branch: seriesBranch,
         from: filters.from,
         to: filters.to,
         granularity: granularity as "day" | "week" | "month",
@@ -111,7 +113,7 @@ export function OverviewOtdSeriesChart({
     const priorPromise = priorRange
       ? getOtdSeries(
           {
-            branch: filters.branch,
+            branch: seriesBranch,
             from: priorRange.from,
             to: priorRange.to,
             granularity: granularity as "day" | "week" | "month",
@@ -160,7 +162,7 @@ export function OverviewOtdSeriesChart({
       });
 
     return () => controller.abort();
-  }, [filters.branch, filters.from, filters.to, granularity, yoyActive]);
+  }, [filters.branches, filters.from, filters.to, granularity, yoyActive]);
 
   const baseSeries = useMemo((): MultiTypeSeriesSpec[] => {
     const list: MultiTypeSeriesSpec[] = [

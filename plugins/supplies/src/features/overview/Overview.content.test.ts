@@ -14,6 +14,7 @@ import {
   formatOperationalUnitCode,
   parseSuppliesBranchCsv,
   resolveApiBranch,
+  resolveApiBranches,
   serializeSuppliesBranchCsv,
   suppliesUnitOptions,
 } from "./suppliesBranchFilters";
@@ -140,6 +141,9 @@ describe("Overview URL filters + unit MultiSelect", () => {
     expect(resolveApiBranch(["01"], ["01", "02"])).toBe("01");
     expect(resolveApiBranch(["01", "02"], ["01", "02"])).toBeUndefined();
     expect(resolveApiBranch([], ["01", "02"])).toBeUndefined();
+    expect(resolveApiBranches(["01", "02"], ["01", "02"])).toEqual(["01", "02"]);
+    expect(resolveApiBranches([], ["01", "02"])).toEqual([]);
+    expect(resolveApiBranches(["01", "01"], ["01", "02"])).toEqual(["01"]);
     expect(parseSuppliesBranchCsv("01,02")).toEqual(["01", "02"]);
     expect(serializeSuppliesBranchCsv(["01", "02"])).toBe("01,02");
   });
@@ -168,7 +172,7 @@ describe("overview KPI presentation", () => {
   const ctx = {
     from: "2026-09-01",
     to: "2026-09-08",
-    scopeLabel: "Consolidado (unidades liberadas)",
+    scopeLabel: "Consolidado",
     consolidated: true,
   };
 

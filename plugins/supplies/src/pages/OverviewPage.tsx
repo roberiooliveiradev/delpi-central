@@ -42,8 +42,12 @@ import {
   OVERVIEW_CONTENT,
 } from "../features/overview/overviewContent";
 import { OverviewStrategicUnits } from "../features/overview/OverviewStrategicUnits";
+import { resolveApiBranch } from "../features/overview/suppliesBranchFilters";
 import { buildOverviewKpiPresentation } from "../features/overview/overviewKpiPresentation";
-import { formatDepartmentScore } from "../features/overview/overviewStrategicBreakdown";
+import {
+  activeStrategicScopeKey,
+  formatDepartmentScore,
+} from "../features/overview/overviewStrategicBreakdown";
 import { resolvePeriodKindChip } from "../app/periodPreset";
 import { useOverviewFilters } from "../features/overview/useOverviewFilters";
 
@@ -95,15 +99,16 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
   );
   const hasPartial = (data?.partialFailures.length ?? 0) > 0;
   const periodKindBadge = resolvePeriodKindChip(filters.period);
+  const seriesBranch = resolveApiBranch(filters.branches);
   const kpiGoalContext = useMemo(
     () => ({
       from: filters.from,
       to: filters.to,
       scopeLabel: filters.scopeBadge,
-      branch: filters.apiParams.branch,
-      consolidated: !filters.apiParams.branch,
+      branch: seriesBranch,
+      consolidated: seriesBranch == null,
     }),
-    [filters.apiParams.branch, filters.from, filters.scopeBadge, filters.to],
+    [filters.from, filters.scopeBadge, filters.to, seriesBranch],
   );
 
   const homeHref = buildPluginPath("home", basePath);
@@ -169,7 +174,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
         hint={OVERVIEW_CONTENT.indicatorsHint}
       >
         {!loading && !error ? (
-          <OverviewDepartmentIdd scores={data?.strategicContext?.scores} />
+          <OverviewDepartmentIdd context={data?.strategicContext} />
         ) : null}
         {loading ? (
           <SuppliesLoadingCard title={OVERVIEW_CONTENT.loadingKpisTitle} variant="panel" />
@@ -188,6 +193,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
                   kpi={kpi}
                   periodKindBadge={periodKindBadge}
                   goalContext={kpiGoalContext}
+                  scopeKey={activeStrategicScopeKey(data?.strategicContext)}
                 />
               </li>
             ))}
@@ -230,35 +236,30 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
   );
 }
 
-const DEPARTMENT_SCORE_SCOPES = [
-  { key: "consolidated" as const, label: "Consolidado" },
-  { key: "01" as const, label: "Santa Catarina" },
-  { key: "02" as const, label: "Espírito Santo" },
-];
+const ACTIVE_SCOPE_LABEL = {
+  consolidated: "CONSOLIDADO",
+  "01": "SANTA CATARINA",
+  "02": "ESPÍRITO SANTO",
+} as const;
 
 function OverviewDepartmentIdd({
-  scores,
+  context,
 }: {
-  scores?: OverviewStrategicContext["scores"];
+  context?: OverviewStrategicContext;
 }) {
-  const badges = DEPARTMENT_SCORE_SCOPES.flatMap((scope) => {
-    const entry = scores?.[scope.key];
-    const scoreLabel = formatDepartmentScore(entry?.score);
-    if (!scoreLabel) return [];
-    return [
-      <SuppliesDepartmentScoreBadge
-        key={scope.key}
-        label={`IDD ${scope.label}`}
-        scoreLabel={scoreLabel}
-        classification={entry?.classification}
-      />,
-    ];
-  });
-  if (badges.length === 0) return null;
+  const key = activeStrategicScopeKey(context);
+  if (!key) return null;
+  const entry = context?.score ?? context?.scores?.[key];
+  const scoreLabel = formatDepartmentScore(entry?.score);
+  if (!scoreLabel) return null;
   return (
     <div className="sp-overview__idd">
       <SuppliesSectionHintLabel label="IDD Suprimentos" hint={SP_HELP.overviewDepartmentIdd} />
-      {badges}
+      <SuppliesDepartmentScoreBadge
+        label={`IDD ${ACTIVE_SCOPE_LABEL[key]}`}
+        scoreLabel={scoreLabel}
+        classification={entry?.classification}
+      />
     </div>
   );
 }
@@ -267,9 +268,11 @@ function OverviewKpiItem({
   kpi,
   periodKindBadge,
   goalContext,
+  scopeKey,
 }: {
   kpi: OverviewKpiCard;
   periodKindBadge: "MTD" | "YTD" | null;
+  scopeKey: "consolidated" | "01" | "02" | null;
   goalContext: {
     from: string;
     to: string;
@@ -303,7 +306,7 @@ function OverviewKpiItem({
       goalScopeHint={presentation.goalScopeHint}
       goalPerformanceBadge={performance}
       iddScoreLabel={presentation.iddScoreLabel}
-      footer={<OverviewStrategicUnits strategic={kpi.strategic ?? null} />}
+      footer={<OverviewStrategicUnits strategic={kpi.strategic ?? null} scopeKey={scopeKey} />}
       icon={KPI_ICONS[kpi.id] ?? <BarChart3 size={22} strokeWidth={1.75} aria-hidden="true" />}
       className={unavailable ? "sp-overview__kpi--unavailable" : undefined}
     />
