@@ -127,11 +127,12 @@ export const USER_MANUAL_CONTENT = {
       id: "processes",
       title: "Meus processos",
       intro:
-        "Lista os processos e abre o workspace do processo: visão geral, melhorias, revisões, diagrama, tarefas da sala e Sala de interação no mesmo contexto.",
+        "Lista os processos e abre o workspace do processo: visão geral, melhorias, revisões, diagrama, documentação Markdown, tarefas da sala e Sala de interação no mesmo contexto.",
       bullets: [
         "Abra um processo para trabalhar no workspace. A árvore à esquerda separa processo-mestre, melhorias (instâncias) e revisões.",
         "Processo-mestre não pertence a uma única unidade: unidade e departamento aparecem na melhoria.",
         "Medições, investimentos e recursos compartilhados ficam em cada revisão — não invente pontuação no resumo.",
+        "Documentação do processo guarda textos em Markdown (criar, visualizar, editar e excluir). Não substitui diagrama, revisão nem dados estruturados.",
         "Sala de interação abre a conversa canônica daquele processo. Tarefas relacionadas são só as criadas a partir de mensagens da sala.",
         "Atas continuam em Atas; não há vínculo de ata ao processo neste workspace.",
       ],
@@ -143,9 +144,35 @@ export const USER_MANUAL_CONTENT = {
           path: TRANSFORMOMETRO_ROUTES.processes,
         },
         {
+          want: "Documentar o processo",
+          where: "Documentação do processo",
+          how: "No workspace, abra Documentação, crie um documento Markdown, visualize e salve. Excluir pede confirmação.",
+          path: TRANSFORMOMETRO_ROUTES.processes,
+        },
+        {
           want: "Abrir a sala do processo",
           where: "Workspace do processo",
           how: "Use Sala de interação na árvore ou no rodapé do painel.",
+          path: TRANSFORMOMETRO_ROUTES.processes,
+        },
+      ],
+    },
+    {
+      id: "process-documentation",
+      title: "Documentação do processo",
+      intro:
+        "Registre o conhecimento textual do processo em documentos Markdown dentro do workspace.",
+      bullets: [
+        "Crie quantos documentos precisar; cada um tem título, conteúdo Markdown, autoria e data de atualização.",
+        "Use Editar / Visualizar para escrever e conferir a renderização segura antes de salvar.",
+        "A documentação descreve o processo — não redefine diagrama, revisão, medição, ata ou evidências.",
+        "Excluir um documento pede confirmação e remove apenas aquela documentação.",
+      ],
+      links: [
+        {
+          want: "Abrir documentação",
+          where: "Workspace do processo",
+          how: "Na árvore do processo, escolha Documentação.",
           path: TRANSFORMOMETRO_ROUTES.processes,
         },
       ],

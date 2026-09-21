@@ -5,6 +5,8 @@ import {
   defaultInstanciaSection,
   defaultRevisaoSection,
   parseInstanciaSectionFromHash,
+  parseProcessDocumentIdFromHash,
+  parseProcessoSectionFromHash,
   parseRevisaoSectionFromHash,
   resolveActiveWorkspaceNodeId,
   PROCESSO_WORKSPACE_SECTIONS,
@@ -39,12 +41,23 @@ const revisaoBaseline = {
 } as const;
 
 describe("processo workspace sections", () => {
-  it("expõe Sala e Tarefas relacionadas sem inventar Atas", () => {
+  it("expõe Sala, Tarefas e Documentação sem inventar Atas", () => {
     const ids = PROCESSO_WORKSPACE_SECTIONS.map((section) => section.id);
     expect(ids).toContain("sala");
     expect(ids).toContain("tarefas");
+    expect(ids).toContain("documentacao");
     expect(ids).not.toContain("atas");
     expect(ids).not.toContain("meeting-minutes");
+  });
+
+  it("interpreta hash de documentação com documento selecionado", () => {
+    expect(parseProcessoSectionFromHash("#documentacao")).toBe("documentacao");
+    expect(
+      parseProcessDocumentIdFromHash(
+        "#documentacao/33333333-3333-3333-3333-333333333333",
+      ),
+    ).toBe("33333333-3333-3333-3333-333333333333");
+    expect(parseProcessDocumentIdFromHash("#documentacao")).toBeNull();
   });
 });
 

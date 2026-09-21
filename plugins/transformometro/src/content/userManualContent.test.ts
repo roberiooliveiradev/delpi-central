@@ -39,6 +39,7 @@ describe("Transforma+ user manual", () => {
       "overview",
       "targets-idd",
       "processes",
+      "process-documentation",
       "my-tasks",
       "interaction",
       "minutes",
@@ -46,6 +47,7 @@ describe("Transforma+ user manual", () => {
       "administration",
       "settings",
     ]);
+    expect(JSON.stringify(USER_MANUAL_CONTENT.sections)).toMatch(/Documentação do processo/);
     const tasks = USER_MANUAL_CONTENT.sections.find((section) => section.id === "my-tasks");
     expect(tasks?.intro).toMatch(/assinatura/i);
     expect(JSON.stringify(tasks)).toMatch(/Nova tarefa/);

@@ -9,6 +9,7 @@ export type ProcessoWorkspaceSectionId =
   | "dados"
   | "mapeamento"
   | "diagrama"
+  | "documentacao"
   | "arquivos"
   | "melhorias"
   | "priorizacao"
@@ -60,6 +61,7 @@ export const PROCESSO_WORKSPACE_SECTIONS: Array<{
   { id: "dados", label: "Dados do processo" },
   { id: "mapeamento", label: "Mapeamento" },
   { id: "diagrama", label: "Diagrama macro" },
+  { id: "documentacao", label: "Documentação" },
   { id: "arquivos", label: "Arquivos" },
   { id: "melhorias", label: "Melhorias" },
   { id: "priorizacao", label: "Priorização (matriz)" },
@@ -207,16 +209,32 @@ function buildRevisaoSectionNodes(input: {
   }));
 }
 
+const DOCUMENT_ID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function parseProcessoSectionFromHash(hash: string): ProcessoWorkspaceSectionId {
   const raw = (hash.startsWith("#") ? hash.slice(1) : hash).trim().toLowerCase();
   if (!raw || raw === "nova-instancia") return raw === "nova-instancia" ? "melhorias" : "visao-geral";
-  return isProcessoWorkspaceSectionId(raw) ? raw : "visao-geral";
+  const sectionPart = raw.split("/")[0] || "";
+  return isProcessoWorkspaceSectionId(sectionPart) ? sectionPart : "visao-geral";
+}
+
+export function parseProcessDocumentIdFromHash(hash: string): string | null {
+  const raw = (hash.startsWith("#") ? hash.slice(1) : hash).trim();
+  const [section, documentId] = raw.split("/");
+  if ((section || "").toLowerCase() !== "documentacao") return null;
+  const id = (documentId || "").trim();
+  return DOCUMENT_ID_RE.test(id) ? id : null;
 }
 
 export function buildProcessoSectionHref(processoId: string, section: ProcessoWorkspaceSectionId): string {
   if (section === "visao-geral") return buildProcessoPath(processoId);
   if (section === "melhorias") return `${buildProcessoPath(processoId)}#melhorias`;
   return `${buildProcessoPath(processoId)}#${section}`;
+}
+
+export function buildProcessDocumentHref(processoId: string, documentId: string): string {
+  return `${buildProcessoPath(processoId)}#documentacao/${documentId}`;
 }
 
 export function instanciaNavLabel(instancia: ProcessoInstancia): string {

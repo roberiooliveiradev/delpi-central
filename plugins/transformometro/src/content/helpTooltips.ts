@@ -166,6 +166,8 @@ export const TM_HELP_TOOLTIPS = {
       "Mapa canônico do fluxo end-to-end do processo-mestre. Nós com ID estável são reutilizados nas melhorias e revisões. «Editar diagrama» abre o editor em página dedicada (com trava colaborativa).",
     diagramaComposto:
       "Visão do fluxo na data D: diagrama macro + overlays das revisões vigentes. Interseções no mesmo nó geram aviso.",
+    documentacao:
+      "Documentação textual do processo em Markdown. Explica e consolida conhecimento; não redefine diagrama, revisão nem dados estruturados.",
     arquivos:
       "Documentos de referência do processo-mestre — POP, instruções, planilhas e links úteis (independente das evidências por revisão).",
     arquivoUrl: "Endereço web externo do documento (SharePoint, drive, repositório…).",

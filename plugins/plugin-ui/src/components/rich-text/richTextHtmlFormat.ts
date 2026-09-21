@@ -92,18 +92,68 @@ export function wrapOrphanRichTextNodes(html: string): string {
   }
 }
 
-/** Remove tags perigosas no cliente (defesa em profundidade; servidor permanece canônico). */
+const SAFE_URL_PROTOCOLS = new Set(["http:", "https:", "mailto:"]);
+
+function isSafeUrl(value: string): boolean {
+  const raw = (value || "").trim();
+  if (!raw) return false;
+  if (raw.startsWith("#") || raw.startsWith("/") || raw.startsWith("./") || raw.startsWith("../")) {
+    return true;
+  }
+  if (raw.startsWith("attachment:")) return true;
+  try {
+    const parsed = new URL(raw, "https://example.invalid");
+    return SAFE_URL_PROTOCOLS.has(parsed.protocol);
+  } catch {
+    return false;
+  }
+}
+
+/** Remove tags/attrs perigosos no cliente (defesa em profundidade). */
 export function stripDangerousRichTextTags(html: string): string {
   const raw = html || "";
   if (!raw.trim()) return "<p></p>";
   try {
     const doc = new DOMParser().parseFromString(raw, "text/html");
     doc.querySelectorAll([...DANGEROUS_TAGS].join(",")).forEach((el) => el.remove());
+    for (const el of Array.from(doc.body.querySelectorAll("*"))) {
+      for (const attr of Array.from(el.attributes)) {
+        const name = attr.name.toLowerCase();
+        if (name.startsWith("on") || name === "srcdoc") {
+          el.removeAttribute(attr.name);
+          continue;
+        }
+        if (name === "href" || name === "src" || name === "xlink:href") {
+          if (!isSafeUrl(attr.value)) {
+            el.removeAttribute(attr.name);
+          }
+        }
+      }
+      if (el.tagName.toLowerCase() === "a") {
+        const href = (el.getAttribute("href") || "").trim();
+        if (href && /^https?:/i.test(href)) {
+          const rel = new Set(
+            (el.getAttribute("rel") || "")
+              .split(/\s+/)
+              .map((part) => part.trim().toLowerCase())
+              .filter(Boolean),
+          );
+          rel.add("noopener");
+          rel.add("noreferrer");
+          el.setAttribute("rel", Array.from(rel).join(" "));
+          if (!el.getAttribute("target")) {
+            el.setAttribute("target", "_blank");
+          }
+        }
+      }
+    }
     return wrapOrphanRichTextNodes(doc.body.innerHTML || "<p></p>");
   } catch {
     const stripped = raw
       .replace(/<(script|style|iframe|object|embed|form)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "")
-      .replace(/<(script|style|iframe|object|embed|form)\b[^>]*\/?>/gi, "");
+      .replace(/<(script|style|iframe|object|embed|form)\b[^>]*\/?>/gi, "")
+      .replace(/\son\w+\s*=\s*(['"]).*?\1/gi, "")
+      .replace(/\s(href|src)\s*=\s*(['"])\s*javascript:[^'"]*\2/gi, "");
     return wrapOrphanRichTextNodes(stripped);
   }
 }

@@ -64,6 +64,7 @@ import { ProcessoDecompositionComposedSection } from "../../components/decomposi
 import { ProcessoDiagramSection } from "../../components/diagram/sections/ProcessoDiagramSection";
 import { ProcessoDiagramComposedSection } from "../../components/diagram/sections/ProcessoDiagramComposedSection";
 import { ProcessFilesSection } from "../process/ProcessFilesSection";
+import { ProcessDocumentationSection } from "../processes/ProcessDocumentationSection";
 import { ProcessInteractionRoomSection } from "../processes/ProcessInteractionRoomSection";
 import { ProcessRelatedTasksSection } from "../processes/ProcessRelatedTasksSection";
 import {
@@ -632,6 +633,19 @@ export function ProcessDetailPage({
             }
             editContent={null}
           />
+          </ProcessWorkspaceSectionPanel>
+        ) : null}
+
+        {visibleSections.has("documentacao") ? (
+          <ProcessWorkspaceSectionPanel
+            active={activeSection === "documentacao"}
+            sectionId="documentacao"
+          >
+            <ProcessDocumentationSection
+              processoId={processoId}
+              getAccessToken={getAccessToken}
+              onNavigate={onNavigate}
+            />
           </ProcessWorkspaceSectionPanel>
         ) : null}
 
