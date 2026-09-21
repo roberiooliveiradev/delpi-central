@@ -11,6 +11,7 @@ import {
   CommercialReactionQuickBar,
   CommercialRoomHeader,
   CommercialRoomInboxList,
+  CommercialRoomSharedItemList,
   CommercialRoomSidePanel,
 } from "./commercialUi";
 
@@ -25,6 +26,7 @@ describe("commercialUi interaction room factories", () => {
     expect(typeof CommercialReactionBar).toBe("function");
     expect(typeof CommercialReactionQuickBar).toBe("function");
     expect(typeof CommercialRoomInboxList).toBe("function");
+    expect(typeof CommercialRoomSharedItemList).toBe("function");
     expect(typeof CommercialRoomHeader).toBe("function");
     expect(typeof CommercialRoomSidePanel).toBe("function");
   });

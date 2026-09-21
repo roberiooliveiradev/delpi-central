@@ -10,6 +10,7 @@ import {
   CommercialAvatar,
   CommercialEmptyState,
   CommercialLoadingCard,
+  CommercialRoomSharedItemList,
   CommercialTextField,
   CommercialUnderlineNav,
 } from "../../app/commercialUi";
@@ -104,9 +105,38 @@ export function InteractionRoomSharedView({ roomId, onError }: Props) {
     [content.sharedLoadError, onError],
   );
 
+  const rows = useMemo(
+    () =>
+      items.map((item) => {
+        const sharedById = (item.shared_by || "").trim();
+        const sharedBy = sharedById ? nameFor(sharedById) : "—";
+        return {
+          id: item.id,
+          title: item.title,
+          subtitle: item.subtitle,
+          whenLabel: formatInteractionMessageTime(item.shared_at),
+          whoLabel: sharedBy,
+          ariaLabel:
+            item.kind === "link"
+              ? content.sharedOpenLinkAriaLabel
+              : content.sharedOpenFileAriaLabel.replace("{fileName}", item.title || "file"),
+          kind: item.kind,
+          sharedById,
+          sharedBy,
+        };
+      }),
+    [content.sharedOpenFileAriaLabel, content.sharedOpenLinkAriaLabel, items, nameFor],
+  );
+
   return (
-    <div className="cm-room-shared">
-      <div className="cm-room-shared__toolbar">
+    <CommercialRoomSharedItemList
+      listAriaLabel={content.roomViewShared}
+      items={loading ? [] : rows}
+      onOpen={(id) => {
+        const item = items.find((row) => row.id === id);
+        if (item) void openItem(item);
+      }}
+      toolbar={
         <CommercialUnderlineNav
           mode="tabs"
           aria-label={content.roomViewShared}
@@ -129,80 +159,44 @@ export function InteractionRoomSharedView({ roomId, onError }: Props) {
             },
           ]}
         />
-        <div className="cm-room-shared__toolbar-actions">
-          <CommercialTextField
-            id={filterId}
-            label={content.sharedFilterPlaceholder}
-            hideLabel
-            value={filter}
-            onChange={setFilter}
-            placeholder={content.sharedFilterPlaceholder}
-            fullWidth
-          />
-        </div>
-      </div>
-      {loading ? (
-        <CommercialLoadingCard
-          title={content.sharedLoadingLabel}
-          variant="panel"
+      }
+      toolbarActions={
+        <CommercialTextField
+          id={filterId}
+          label={content.sharedFilterPlaceholder}
+          hideLabel
+          value={filter}
+          onChange={setFilter}
+          placeholder={content.sharedFilterPlaceholder}
+          fullWidth
         />
-      ) : null}
-      {!loading && items.length === 0 ? (
+      }
+      icon={(item) => {
+        const source = items.find((row) => row.id === item.id);
+        const Icon = source?.kind === "link" ? Link2 : FileText;
+        return <Icon size={18} />;
+      }}
+      whoLeading={(item) => {
+        const source = rows.find((row) => row.id === item.id);
+        if (!source?.sharedById) return null;
+        return (
+          <CommercialAvatar
+            name={source.sharedBy}
+            src={photoByUserId.get(source.sharedById) ?? null}
+            size="sm"
+            previewable={false}
+          />
+        );
+      }}
+    >
+      {loading ? (
+        <CommercialLoadingCard title={content.sharedLoadingLabel} variant="panel" />
+      ) : (
         <CommercialEmptyState
           title={content.sharedEmptyTitle}
           message={content.sharedEmptyDescription}
         />
-      ) : null}
-      {!loading && items.length > 0 ? (
-        <ul className="cm-room-shared__list">
-          {items.map((item) => {
-            const Icon = item.kind === "link" ? Link2 : FileText;
-            const sharedById = (item.shared_by || "").trim();
-            const sharedBy = sharedById ? nameFor(sharedById) : "—";
-            const aria =
-              item.kind === "link"
-                ? content.sharedOpenLinkAriaLabel
-                : content.sharedOpenFileAriaLabel.replace(
-                    "{fileName}",
-                    item.title || "file",
-                  );
-            return (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  className="cm-room-shared__row"
-                  aria-label={aria}
-                  onClick={() => void openItem(item)}
-                >
-                  <span className="cm-room-shared__icon" aria-hidden>
-                    <Icon size={18} />
-                  </span>
-                  <span className="cm-room-shared__meta">
-                    <span className="cm-room-shared__title">{item.title}</span>
-                    {item.subtitle ? (
-                      <span className="cm-room-shared__subtitle">{item.subtitle}</span>
-                    ) : null}
-                  </span>
-                  <span className="cm-room-shared__when">
-                    {formatInteractionMessageTime(item.shared_at)}
-                  </span>
-                  <span className="cm-room-shared__who">
-                    {sharedById ? (
-                      <CommercialAvatar
-                        name={sharedBy}
-                        src={photoByUserId.get(sharedById) ?? null}
-                        size="sm"
-                        previewable={false}
-                      />
-                    ) : null}
-                    <span className="cm-room-shared__who-name">{sharedBy}</span>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      ) : null}
-    </div>
+      )}
+    </CommercialRoomSharedItemList>
   );
 }

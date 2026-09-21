@@ -90,6 +90,7 @@ import {
   createDashboardRoomContextPanel,
   createDashboardRoomSidePanel,
   createDashboardRoomMessageFindPanel,
+  createDashboardRoomSharedItemList,
   createDashboardResizableColumns,
   createDashboardConversationFileDropLayer,
   createDashboardRoomConversationShell,
@@ -594,6 +595,7 @@ export const CommercialRoomContextPanel = createDashboardRoomContextPanel(UI_PRE
 export const CommercialRoomSidePanel = createDashboardRoomSidePanel(UI_PREFIX);
 export const CommercialRoomMessageFindPanel =
   createDashboardRoomMessageFindPanel(UI_PREFIX);
+export const CommercialRoomSharedItemList = createDashboardRoomSharedItemList(UI_PREFIX);
 export const CommercialResizableColumns = createDashboardResizableColumns(UI_PREFIX);
 export const CommercialConversationFileDropLayer =
   createDashboardConversationFileDropLayer(UI_PREFIX);

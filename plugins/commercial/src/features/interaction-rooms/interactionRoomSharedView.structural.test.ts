@@ -9,6 +9,7 @@ describe("InteractionRoomSharedView", () => {
   it("lista shared-items em modo consulta sem Carregar", () => {
     const source = readFileSync(join(dir, "InteractionRoomSharedView.tsx"), "utf8");
     expect(source).toMatch(/listRoomSharedItems/);
+    expect(source).toMatch(/CommercialRoomSharedItemList/);
     expect(source).toMatch(/hideLabel/);
     expect(source).toMatch(/CommercialAvatar/);
     expect(source).toMatch(/CommercialUnderlineNav/);

@@ -1,0 +1,131 @@
+/**
+ * Lista de itens compartilhados da sala — apresentação apenas.
+ * OWNS: toolbar, linha, ícone, meta, quando e quem.
+ * DOES NOT OWN: download, href, AuthZ, diretório.
+ */
+
+.delpi-ui-room-shared-items {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--delpi-ui-gap-sm, 0.75rem);
+  min-height: 0;
+  min-width: 0;
+  padding: var(--delpi-ui-gap-sm, 0.75rem);
+}
+
+.delpi-ui-room-shared-items__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--delpi-ui-gap-sm, 0.75rem);
+}
+
+.delpi-ui-room-shared-items__toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem;
+  min-width: min(100%, 20rem);
+}
+
+.delpi-ui-room-shared-items__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.delpi-ui-room-shared-items__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 0.65rem 0.85rem;
+  align-items: center;
+  width: 100%;
+  margin: 0;
+  padding: 0.65rem 0.35rem;
+  border: none;
+  border-radius: 0.4rem;
+  border-bottom: 1px solid var(--delpi-ui-border, #e6e6e6);
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  outline: none;
+  box-shadow: none;
+}
+
+.delpi-ui-room-shared-items__row:hover {
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 8%, transparent);
+}
+
+.delpi-ui-room-shared-items__row:focus-visible {
+  outline: none;
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 10%, transparent);
+  box-shadow: inset 3px 0 0 var(--delpi-ui-accent, #089bdb);
+}
+
+.delpi-ui-room-shared-items__icon {
+  display: inline-flex;
+  color: var(--delpi-ui-text-muted, #64748b);
+}
+
+.delpi-ui-room-shared-items__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.delpi-ui-room-shared-items__title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delpi-ui-room-shared-items__subtitle,
+.delpi-ui-room-shared-items__when,
+.delpi-ui-room-shared-items__who {
+  font-size: 0.8125rem;
+  color: var(--delpi-ui-text-muted, #64748b);
+}
+
+.delpi-ui-room-shared-items__subtitle,
+.delpi-ui-room-shared-items__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delpi-ui-room-shared-items__when,
+.delpi-ui-room-shared-items__who {
+  white-space: nowrap;
+}
+
+.delpi-ui-room-shared-items__who {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.delpi-ui-room-shared-items__who-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 8rem;
+}
+
+@media (max-width: 720px) {
+  .delpi-ui-room-shared-items__row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .delpi-ui-room-shared-items__when,
+  .delpi-ui-room-shared-items__who {
+    grid-column: 2;
+  }
+}

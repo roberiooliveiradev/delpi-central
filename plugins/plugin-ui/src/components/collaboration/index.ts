@@ -137,6 +137,15 @@ export {
   type RoomMessageFindAuthorAvatar,
 } from "./RoomMessageFindPanel";
 export {
+  RoomSharedItemList,
+  createDashboardRoomSharedItemList,
+  roomSharedItemListBemClasses,
+  type DashboardRoomSharedItemListProps,
+  type RoomSharedItem,
+  type RoomSharedItemListClassNames,
+  type RoomSharedItemListProps,
+} from "./RoomSharedItemList";
+export {
   buildFindSnippet,
   splitFindHighlightSegments,
   type FindHighlightSegment,

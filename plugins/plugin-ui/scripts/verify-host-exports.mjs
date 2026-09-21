@@ -46,6 +46,8 @@ const REQUIRED_HOST_EXPORTS = [
   "detectPeriodPreset",
   "resolveEffectivePeriodPreset",
   "PERIOD_PRESET_OPTIONS",
+  "RoomSharedItemList",
+  "createDashboardRoomSharedItemList",
 ];
 
 function findIndexExpose(dir) {

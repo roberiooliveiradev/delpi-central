@@ -562,6 +562,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     addedAt: "2026-08-19",
     description: "Coluna direita da thread (Neste chat); toggle só no header.",
   }),
+  vc("collaboration", "RoomSharedItemList", {
+    addedAt: "2026-09-21",
+    description:
+      "Lista de arquivos e links da sala. OWNS a linha; DOES NOT OWN download, href ou AuthZ.",
+  }),
   vc("collaboration", "ConversationFileDropLayer", {
     addedAt: "2026-08-19",
     description: "Overlay de drop de arquivo sobre a coluna da conversa.",

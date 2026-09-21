@@ -1525,8 +1525,9 @@ Primitivos neutros para threads estilo Teams/Slack (Portal Comercial). **Sem HTT
 | `RoomConversationShell` / `RoomConversationChatColumn` / `RoomPanel` | Chrome canônico da thread (`header`/`body`/`main`/`stage`/`msgs`/`dock` + drop) e moldura do embed; factory `createDashboardRoomConversationShell`. |
 | `RoomSidePanel` / `RoomContextPanel` | Painel «Neste chat» (host controla open). `entityPrimary` + `entityFields` no ABOUT (sem `entityKey` cru). |
 | `RoomMessageFindPanel` | Localizar no chat: input + Limpar + resultados com snippet/`mark`; host busca via API e faz jump. |
+| `RoomSharedItemList` | Arquivos e links já compartilhados. O host busca, baixa e decide o ícone; o kit só desenha a linha. |
 
-Factories: `createDashboardMentionText`, `createDashboardMentionMenu`, `createDashboardMentionComposer`, `createDashboardMessageThread`, `createDashboardEntityUnfurlCard`, `createDashboardReactionBar`, `createDashboardReactionQuickBar`, `createDashboardRoomInboxList`, `createDashboardRoomHeader`, `createDashboardRoomConversationShell`, `createDashboardRoomContextPanel`, `createDashboardRoomSidePanel`, `createDashboardRoomMessageFindPanel`.
+Factories: `createDashboardMentionText`, `createDashboardMentionMenu`, `createDashboardMentionComposer`, `createDashboardMessageThread`, `createDashboardEntityUnfurlCard`, `createDashboardReactionBar`, `createDashboardReactionQuickBar`, `createDashboardRoomInboxList`, `createDashboardRoomHeader`, `createDashboardRoomConversationShell`, `createDashboardRoomContextPanel`, `createDashboardRoomSidePanel`, `createDashboardRoomMessageFindPanel`, `createDashboardRoomSharedItemList`.
 
 Helpers: `markdownToPlainPreview`, `richTextHtmlToMarkdown` / família `richTextMarkdown.ts` (submit do composer); `buildFindSnippet` / `splitFindHighlightSegments` (find).
 
