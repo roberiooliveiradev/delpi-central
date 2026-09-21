@@ -1095,21 +1095,24 @@ C3_T2_IMPLEMENTS = YES
 ### C3-T2 — Evidence epistemic domain model + deterministic conformance
 
 ```text
-STATUS = PASS (domain model + unit conformance; evaluated SHA/config in ledger §6.64)
+STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 OWNER = delia-api/app/domain/evidence/
 CANONICAL = 21 §4B.13 + this gate + 38
+PERSISTENCE_HEAD = 74e221fea
+TEST_EVIDENCE = PASS (18 conformance + delia-api suite on evaluated SHA)
+ARCHITECTURE_REVIEW = PENDING
 RUNTIME_EVIDENCE_STORE = NOT_IMPLEMENTED
 MODEL_INVOCATION = NOT_IMPLEMENTED
 RAG = NOT_IMPLEMENTED
 PLANNER = NOT_IMPLEMENTED
 CONVERSATION = NOT_IMPLEMENTED
-C3_T2 = PASS
+C3_T2 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 C3_EXECUTED = NO
-C3_T3_AUTHORIZED = YES
+C3_T3_AUTHORIZED = NO
 TEST_MODULE = tests/test_evidence_epistemic_conformance.py
 ```
 
-Required deterministic cases (C3-T2) — implemented:
+Required deterministic cases (C3-T2) — implemented (test PASS; review pending):
 
 - positive authoritative Evidence linkage with SourceRef;
 - sibling source type preserves the same epistemic/linkage semantics;

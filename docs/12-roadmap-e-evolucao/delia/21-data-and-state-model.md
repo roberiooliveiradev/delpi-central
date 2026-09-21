@@ -251,15 +251,15 @@ NEW_RUNTIME_ABSTRACTIONS = NONE
 C3_STARTED = YES
 C3_EXECUTED = NO
 C3_T2_AUTHORIZED = YES
-C3_T2 = PASS
+C3_T2 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 PRODUCTION_READINESS = NOT_PROVEN
 THEMATIC_OWNER_DETAIL = 38-evidence-provenance-and-epistemic-ux.md
 FACT_STATUS != ACCESS_PERMISSION
 NOTE_SUPERSEDED_CANDIDATE: historical C3-T1 candidate markers live in ledger §6.62
-C3_T2_IMPLEMENTATION = delia-api/app/domain/evidence/ (domain model + conformance; no store)
+C3_T2_IMPLEMENTATION = delia-api/app/domain/evidence/ (domain model + conformance; no store; PERSISTENCE_HEAD=74e221fea)
 ```
 
-C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime. C3-T2 materializa o domain model + testes determinísticos em `delia-api/app/domain/evidence/` sem store/runtime.
+C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime. C3-T2 materializa o domain model + testes determinísticos em `delia-api/app/domain/evidence/` sem store/runtime; estado = `CANDIDATE_FOR_ARCHITECTURE_REVIEW`.
 
 ### 4B.1 Ownership
 
@@ -270,8 +270,8 @@ CANONICAL SOURCE OF ORIGINAL FACT: Domain API / provider / document owner / proc
 CONSUMERS (future): multimodal, Evidence Board, Internet Research, connectors, Teams,
   Process Intelligence, Prediction, Model lineage, Knowledge, planner, synthesis
 CONTRACT: this §4B + C0.S3 SourceRef/EvidenceRef/ModelRef/PredictionRef + thematic 38
-CURRENT IMPLEMENTATION: C3-T2 PASS — domain model + conformance in delia-api/app/domain/evidence/
-  (no Evidence store / repository / LLM / RAG / planner / conversation)
+CURRENT IMPLEMENTATION: C3-T2 CANDIDATE_FOR_ARCHITECTURE_REVIEW — domain model + conformance in delia-api/app/domain/evidence/
+  (no Evidence store / repository / LLM / RAG / planner / conversation; PERSISTENCE_HEAD=74e221fea)
 ```
 
 ```text
@@ -522,7 +522,7 @@ Personal Memory != Organizational Knowledge
 raw media / biometric remain separate classes
 ```
 
-### 4B.13 C3-T2 conformance expectations (domain PASS; not Evidence-store runtime PASS)
+### 4B.13 C3-T2 conformance expectations (candidate; test PASS ≠ Architecture Review)
 
 C3-T2 implements deterministic conformance (`tests/test_evidence_epistemic_conformance.py`) for at least:
 
