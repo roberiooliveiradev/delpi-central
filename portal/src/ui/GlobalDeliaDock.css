@@ -1,0 +1,140 @@
+.global-delia-workspace {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.global-delia-workspace__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.global-delia-workspace__main > .main-area {
+  flex: 1;
+  min-height: 0;
+}
+
+.global-delia-dock-handle {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  z-index: 4;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 4.25rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-right: 0;
+  border-radius: 0.7rem 0 0 0.7rem;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.global-delia-dock-handle:hover,
+.global-delia-dock-handle:focus-visible {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.global-delia-dock-separator {
+  position: relative;
+  flex: 0 0 1px;
+  width: 1px;
+  background: var(--border);
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.global-delia-dock-separator::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -6px;
+  right: -6px;
+}
+
+.global-delia-dock-separator:hover,
+.global-delia-dock-separator:focus-visible,
+.global-delia-dock-separator.is-dragging {
+  background: color-mix(in srgb, var(--primary) 55%, var(--border));
+}
+
+.global-delia-dock {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.global-delia-dock__rail {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  padding: 0.35rem 0.45rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.global-delia-dock__mark {
+  display: inline-flex;
+  color: var(--text-muted);
+}
+
+.global-delia-dock__rail-spacer {
+  flex: 1;
+}
+
+.global-delia-dock__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.global-delia-dock__action:hover,
+.global-delia-dock__action:focus-visible {
+  background: var(--surface-2);
+}
+
+.global-delia-dock__body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.global-delia-dock__status {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  color: var(--text-muted);
+}
+
+.global-delia-dock__mount {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}

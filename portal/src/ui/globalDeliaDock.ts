@@ -12,6 +12,15 @@ export const DELIA_APP_ID = "delia";
 /** Same Module Federation expose used by full-page AppHost. */
 export const DELIA_EXPOSED_MODULE = "./App";
 
+/** Matches the Portal desktop chrome breakpoint (`min-width: 1025px`). */
+export const DELIA_DOCK_MIN_VIEWPORT_PX = 1025;
+
+export const DELIA_DOCK_DEFAULT_WIDTH = 440;
+export const DELIA_DOCK_MIN_WIDTH = 360;
+export const DELIA_DOCK_MAX_WIDTH = 640;
+export const DELIA_DOCK_MAX_WORKSPACE_RATIO = 0.45;
+export const DELIA_DOCK_KEYBOARD_STEP = 24;
+
 export function normalizeAppBasePath(basePath: string) {
   const normalized = basePath.startsWith("/") ? basePath : `/${basePath}`;
   return normalized.replace(/\/+$/, "") || "/";
@@ -38,23 +47,72 @@ export function isDeliaFullPagePath(pathname: string, basePath?: string): boolea
   return path === base || path.startsWith(`${base}/`);
 }
 
-export function shouldRenderGlobalDeliaLauncher(options: {
+export function isCompanionDockViewport(viewportWidth: number): boolean {
+  return viewportWidth >= DELIA_DOCK_MIN_VIEWPORT_PX;
+}
+
+/** Smallest workspace that keeps a 360px dock at or under 45% of the split. */
+export function minimumCompanionWorkspaceWidth(): number {
+  return Math.ceil(DELIA_DOCK_MIN_WIDTH / DELIA_DOCK_MAX_WORKSPACE_RATIO);
+}
+
+export function resolveDeliaDockMaxWidth(workspaceWidth: number): number {
+  if (!Number.isFinite(workspaceWidth) || workspaceWidth <= 0) return 0;
+  const ratioCap = Math.floor(workspaceWidth * DELIA_DOCK_MAX_WORKSPACE_RATIO);
+  return Math.min(DELIA_DOCK_MAX_WIDTH, Math.max(0, ratioCap));
+}
+
+export function canFitCompanionDock(workspaceWidth: number): boolean {
+  return resolveDeliaDockMaxWidth(workspaceWidth) >= DELIA_DOCK_MIN_WIDTH;
+}
+
+export function shouldRenderCompanionHandle(options: {
   apps: AppItem[] | undefined;
   pathname: string;
+  viewportWidth: number;
+  workspaceWidth: number;
 }): boolean {
   const app = findAuthorizedDeliaApp(options.apps);
   if (!app) return false;
+  if (!isCompanionDockViewport(options.viewportWidth)) return false;
+  if (!canFitCompanionDock(options.workspaceWidth)) return false;
   return !isDeliaFullPagePath(options.pathname, app.basePath);
 }
 
-const MODAL_FOCUSABLE_SELECTOR = [
-  "a[href]",
-  "button:not([disabled])",
-  "input:not([disabled])",
-  "select:not([disabled])",
-  "textarea:not([disabled])",
-  '[tabindex]:not([tabindex="-1"])',
-].join(", ");
+export function shouldKeepCompanionDockOpen(options: {
+  apps: AppItem[] | undefined;
+  pathname: string;
+  viewportWidth: number;
+  workspaceWidth: number;
+  requestedOpen: boolean;
+}): boolean {
+  if (!options.requestedOpen) return false;
+  return shouldRenderCompanionHandle(options);
+}
+
+export function clampDeliaDockWidth(requested: number, workspaceWidth: number): number {
+  const max = resolveDeliaDockMaxWidth(workspaceWidth);
+  if (max < DELIA_DOCK_MIN_WIDTH) return max;
+  return Math.min(max, Math.max(DELIA_DOCK_MIN_WIDTH, requested));
+}
+
+/** ArrowLeft widens the right dock. ArrowRight narrows it. Home/End jump to bounds. */
+export function adjustDeliaDockWidth(
+  current: number,
+  workspaceWidth: number,
+  key: string,
+): number {
+  const max = resolveDeliaDockMaxWidth(workspaceWidth);
+  if (key === "Home") return clampDeliaDockWidth(DELIA_DOCK_MIN_WIDTH, workspaceWidth);
+  if (key === "End") return clampDeliaDockWidth(max, workspaceWidth);
+  if (key === "ArrowLeft") {
+    return clampDeliaDockWidth(current + DELIA_DOCK_KEYBOARD_STEP, workspaceWidth);
+  }
+  if (key === "ArrowRight") {
+    return clampDeliaDockWidth(current - DELIA_DOCK_KEYBOARD_STEP, workspaceWidth);
+  }
+  return clampDeliaDockWidth(current, workspaceWidth);
+}
 
 /** Visible, connected control. Display:none yields an empty client rect. */
 export function isUsableFocusTarget(el: HTMLElement | null): el is HTMLElement {
@@ -65,10 +123,6 @@ export function isUsableFocusTarget(el: HTMLElement | null): el is HTMLElement {
   return true;
 }
 
-/**
- * Focus returns to the trigger that opened the panel when it is still usable.
- * Otherwise the first still-visible launcher. Transient only.
- */
 export function resolveFocusReturnTarget(
   trigger: HTMLElement | null,
   fallbacks: Array<HTMLElement | null>,
@@ -78,36 +132,6 @@ export function resolveFocusReturnTarget(
     if (isUsableFocusTarget(candidate)) return candidate;
   }
   return null;
-}
-
-export function listModalFocusables(root: ParentNode): HTMLElement[] {
-  return Array.from(root.querySelectorAll<HTMLElement>(MODAL_FOCUSABLE_SELECTOR)).filter(
-    (el) => isUsableFocusTarget(el),
-  );
-}
-
-/** Tab cycles inside the dialog. Focus outside the list lands on the first item. */
-export function resolveModalTabTarget(
-  focusables: HTMLElement[],
-  active: Element | null,
-  shiftKey: boolean,
-): HTMLElement | null {
-  if (!focusables.length) return null;
-  const index = focusables.findIndex((el) => el === active);
-  if (index < 0) return shiftKey ? focusables[focusables.length - 1] : focusables[0];
-  if (shiftKey) {
-    return focusables[index === 0 ? focusables.length - 1 : index - 1];
-  }
-  return focusables[index === focusables.length - 1 ? 0 : index + 1];
-}
-
-export function shouldKeepGlobalDeliaPanelOpen(options: {
-  apps: AppItem[] | undefined;
-  pathname: string;
-  requestedOpen: boolean;
-}): boolean {
-  if (!options.requestedOpen) return false;
-  return shouldRenderGlobalDeliaLauncher(options);
 }
 
 export type GlobalDeliaHostInput = {

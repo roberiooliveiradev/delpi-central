@@ -7,16 +7,16 @@ import {
   type FederatedHostProps,
   type FederatedRemoteModule,
 } from "./federatedRemoteHost.ts";
-import { DELIA_EXPOSED_MODULE } from "./globalDeliaSurface.ts";
+import { DELIA_EXPOSED_MODULE } from "./globalDeliaDock.ts";
 
 const DELIA_ENTRY = "/apps/delia/assets/remoteEntry.js";
 
-function hostProps(pathname = "/apps/helpdesk"): FederatedHostProps {
+function hostProps(pathname = "/apps/helpdesk", search = ""): FederatedHostProps {
   return {
     getAccessToken: () => undefined,
     basePath: "/apps/delia",
     pathname,
-    search: "",
+    search,
     appRoutes: [{ path: "/apps/delia", entry: null, openInNewTab: false }],
   };
 }
@@ -102,6 +102,35 @@ describe("federated mount lifecycle", () => {
     };
     updateFederatedRemote(mod, {} as HTMLElement, hostProps("/profile"));
     assert.deepEqual(calls, ["mount:/profile"]);
+  });
+
+  it("atualiza pathname/search sem segundo mount", async () => {
+    let mounts = 0;
+    const updates: string[] = [];
+    const session = createFederatedMountSession({
+      async loadModule() {
+        return {
+          mount() {
+            mounts += 1;
+          },
+          updateRoute(_el, props) {
+            updates.push(`${props.pathname}${props.search}`);
+          },
+          unmount() {},
+        };
+      },
+    });
+    const el = { innerHTML: "", dataset: {} } as unknown as HTMLElement;
+    await session.mount(
+      el,
+      DELIA_ENTRY,
+      hostProps("/apps/my-requests", "?tab=open"),
+      DELIA_EXPOSED_MODULE,
+    );
+    session.updateRoute(hostProps("/apps/commercial", "?view=board"));
+    assert.equal(mounts, 1);
+    assert.equal(session.isMounted(), true);
+    assert.deepEqual(updates, ["/apps/commercial?view=board"]);
   });
 });
 

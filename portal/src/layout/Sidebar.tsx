@@ -12,7 +12,6 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { useTheme } from "../hooks/useTheme";
 import { AppLauncher } from "../components/AppLauncher";
-import { GlobalDeliaSidebarLauncher } from "../ui/GlobalDeliaSurface";
 import { SidebarFavoritesList } from "./SidebarFavoritesList";
 import { usePortalMobileChrome } from "../hooks/usePortalMobileChrome";
 
@@ -804,8 +803,6 @@ export const Sidebar = () => {
                   </div>
                 </div>
               )}
-
-              <GlobalDeliaSidebarLauncher />
 
               <div
                 className={sidebarFooterItemClass({ open: launcherOpen })}
