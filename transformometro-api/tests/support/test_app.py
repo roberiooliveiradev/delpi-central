@@ -67,6 +67,7 @@ from tm_app.interface.http.routes.public_meeting_minutes_routes import (
 from tm_app.interface.http.routes.revision_evidence_routes import router as revisao_evidence_router
 from tm_app.interface.http.routes.signature_profile_routes import router as signature_profile_router
 from tm_app.interface.http.routes.task_routes import router as task_router
+from tm_app.interface.http.routes.interaction_room_routes import router as interaction_room_router
 from tm_app.interface.http.routes.transformometro_routes import router as transformometro_router
 
 TEST_USER = SimpleNamespace(
@@ -114,4 +115,5 @@ def create_test_app() -> FastAPI:
     app.include_router(public_meeting_minutes_router, prefix="/public/meeting-minutes/sign-invites")
     app.include_router(signature_profile_router)
     app.include_router(task_router)
+    app.include_router(interaction_room_router)
     return app

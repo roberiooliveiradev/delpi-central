@@ -1,7 +1,7 @@
 {
   "version": 1,
   "generatedAt": "2026-09-21",
-  "operation_count": 180,
+  "operation_count": 185,
   "operations": [
     {
       "operationId": "post_liberar",
@@ -878,6 +878,36 @@
       "method": "GET",
       "path": "/transformometro/integrations/engineering/transforma-mais/processes/summary",
       "module": "integrations"
+    },
+    {
+      "operationId": "list_transformometro_interaction_rooms",
+      "method": "GET",
+      "path": "/transformometro/interaction-rooms",
+      "module": "interaction_rooms"
+    },
+    {
+      "operationId": "open_transformometro_interaction_room",
+      "method": "POST",
+      "path": "/transformometro/interaction-rooms",
+      "module": "interaction_rooms"
+    },
+    {
+      "operationId": "get_transformometro_interaction_room",
+      "method": "GET",
+      "path": "/transformometro/interaction-rooms/{room_id}",
+      "module": "interaction_rooms"
+    },
+    {
+      "operationId": "list_transformometro_interaction_messages",
+      "method": "GET",
+      "path": "/transformometro/interaction-rooms/{room_id}/messages",
+      "module": "interaction_rooms"
+    },
+    {
+      "operationId": "post_transformometro_interaction_message",
+      "method": "POST",
+      "path": "/transformometro/interaction-rooms/{room_id}/messages",
+      "module": "interaction_rooms"
     },
     {
       "operationId": "list_meeting_minutes",

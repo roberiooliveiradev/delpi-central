@@ -17,6 +17,13 @@ from tm_app.infrastructure.persistence.repositories.task_repository import InMem
 USER = "11111111-1111-1111-1111-111111111111"
 OTHER = "22222222-2222-2222-2222-222222222222"
 
+# operationIds do baseline: list_my_transformometro_tasks
+# create_transformometro_task
+# get_transformometro_task
+# update_transformometro_task
+# cancel_transformometro_task
+# complete_transformometro_task
+
 
 def _user(*, user_id=USER, permissions=None, is_superadmin=False):
     return SimpleNamespace(

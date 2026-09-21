@@ -44,6 +44,7 @@ Schema: **`transformometro`** no Postgres **postgres-plugins** (`PLUGINS_DB_*`).
 | V040 | `V040__ganho_capacidade_no_roi_comment.sql` | Comentário: `ganho_capacidade` entra no ROI via `economia_bruta` |
 | V041 | `V041__beneficio_categoria_default_automatico.sql` | Default + backfill `beneficio_calculo_categoria` → `automatico` (a partir de `economia_tempo`) |
 | V042 | `V042__meeting_minutes_transforma_mais.sql` | Atas Transforma+ (`tm_meeting_minutes*`, assinaturas, perfil de assinatura) |
+| V046 | `V046__interaction_rooms.sql` | Sala de interação do processo (`tm_interaction_rooms`, `tm_interaction_messages`). Aditiva. Sem FK para Core. |
 
 ## Notas V019–V020
 
@@ -68,3 +69,9 @@ docker exec delpi-transformometro-api python -m tm_app.infrastructure.persistenc
 ```
 
 Startup automático: `TM_RUN_MIGRATIONS_ON_STARTUP=true` (padrão no `infra/docker-compose.yml` para `transformometro-api`).
+
+## V046 — sala de interação
+
+Aplicação: `up` no boot da API. Não reescreve migrations anteriores e não faz reset.
+
+Recuperação, só se a versão ainda não tiver conversa de negócio: `DROP TABLE transformometro.tm_interaction_messages; DROP TABLE transformometro.tm_interaction_rooms;` e remover a linha `V046__interaction_rooms.sql` de `transformometro.schema_migrations`. Não apagar outras tabelas.

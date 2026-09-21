@@ -1,9 +1,9 @@
 {
   "version": 1,
   "generatedAt": "2026-09-21",
-  "baselineOperationCount": 174,
-  "operationCount": 174,
-  "coveredCount": 174,
+  "baselineOperationCount": 185,
+  "operationCount": 185,
+  "coveredCount": 185,
   "gapCount": 0,
   "exemptCount": 0,
   "byModule": {
@@ -49,6 +49,12 @@
       "gap": 0,
       "exempt": 0
     },
+    "interaction_rooms": {
+      "total": 5,
+      "covered": 5,
+      "gap": 0,
+      "exempt": 0
+    },
     "meeting_minutes": {
       "total": 24,
       "covered": 24,
@@ -58,6 +64,12 @@
     "meeting_minutes_public": {
       "total": 4,
       "covered": 4,
+      "gap": 0,
+      "exempt": 0
+    },
+    "tasks": {
+      "total": 6,
+      "covered": 6,
       "gap": 0,
       "exempt": 0
     }
@@ -1086,6 +1098,41 @@
       "status": "covered"
     },
     {
+      "operationId": "list_transformometro_interaction_rooms",
+      "method": "GET",
+      "path": "/transformometro/interaction-rooms",
+      "module": "interaction_rooms",
+      "status": "covered"
+    },
+    {
+      "operationId": "open_transformometro_interaction_room",
+      "method": "POST",
+      "path": "/transformometro/interaction-rooms",
+      "module": "interaction_rooms",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_transformometro_interaction_room",
+      "method": "GET",
+      "path": "/transformometro/interaction-rooms/{room_id}",
+      "module": "interaction_rooms",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_transformometro_interaction_messages",
+      "method": "GET",
+      "path": "/transformometro/interaction-rooms/{room_id}/messages",
+      "module": "interaction_rooms",
+      "status": "covered"
+    },
+    {
+      "operationId": "post_transformometro_interaction_message",
+      "method": "POST",
+      "path": "/transformometro/interaction-rooms/{room_id}/messages",
+      "module": "interaction_rooms",
+      "status": "covered"
+    },
+    {
       "operationId": "list_meeting_minutes",
       "method": "GET",
       "path": "/transformometro/meeting-minutes",
@@ -1279,6 +1326,48 @@
       "method": "GET",
       "path": "/public/meeting-minutes/sign-invites/{token}/signatures/{signature_id}/image",
       "module": "meeting_minutes_public",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_my_transformometro_tasks",
+      "method": "GET",
+      "path": "/transformometro/my-tasks",
+      "module": "tasks",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_transformometro_task",
+      "method": "POST",
+      "path": "/transformometro/tasks",
+      "module": "tasks",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_transformometro_task",
+      "method": "GET",
+      "path": "/transformometro/tasks/{task_id}",
+      "module": "tasks",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_transformometro_task",
+      "method": "PATCH",
+      "path": "/transformometro/tasks/{task_id}",
+      "module": "tasks",
+      "status": "covered"
+    },
+    {
+      "operationId": "cancel_transformometro_task",
+      "method": "POST",
+      "path": "/transformometro/tasks/{task_id}/cancel",
+      "module": "tasks",
+      "status": "covered"
+    },
+    {
+      "operationId": "complete_transformometro_task",
+      "method": "POST",
+      "path": "/transformometro/tasks/{task_id}/complete",
+      "module": "tasks",
       "status": "covered"
     }
   ]

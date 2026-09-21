@@ -45,6 +45,8 @@ def _module_for_path(path: str) -> str:
         return "meeting_minutes"
     if second in {"my-tasks", "tasks"}:
         return "tasks"
+    if second == "interaction-rooms":
+        return "interaction_rooms"
     return "crud"
 
 
