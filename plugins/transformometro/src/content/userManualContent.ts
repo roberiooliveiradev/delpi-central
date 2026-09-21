@@ -166,7 +166,7 @@ export const USER_MANUAL_CONTENT = {
         "Na barra, Sala de interação abre Conversas. A busca filtra pelo nome ou código do processo.",
         "Todas, Não lidas, Menções e Processos usam a leitura e as menções reais da sala.",
         "Escreva a mensagem, mencione uma pessoa com @, responda, reaja ou anexe um arquivo e envie. O texto permanece se o envio falhar.",
-        "Arquivos mostra o que foi enviado nesta sala. Fixar, editar e remover valem para a própria mensagem.",
+        "Arquivos e links reúne o que foi enviado na sala. O painel da sala mostra o processo, quem falou e as mensagens fixadas. Fixar, editar e remover valem para a própria mensagem.",
         "Atualizar busca as mensagens de novo. A conversa também é atualizada enquanto a sala está aberta.",
         "A sala não substitui tarefas, atas nem revisões. Cada uma continua no seu lugar.",
       ],

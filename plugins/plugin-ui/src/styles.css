@@ -87,6 +87,7 @@
 @import "./styles/room-side-panel.css";
 @import "./styles/room-message-find.css";
 @import "./styles/room-shared-items.css";
+@import "./styles/interaction-room-page.css";
 @import "./styles/conversation-drop.css";
 @import "./styles/resizable-columns.css";
 @import "./styles/top-bar.css";

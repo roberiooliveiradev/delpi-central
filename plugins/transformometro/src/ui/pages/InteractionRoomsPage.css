@@ -1,57 +1,3 @@
-.tm-room-workspace {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  min-width: 0;
-  min-height: calc(100vh - 4.75rem);
-}
-
-.tm-room-workspace__grid {
-  display: flex;
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 0;
-  align-items: stretch;
-}
-
-.tm-room-inbox-pane,
-.tm-room-thread {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.tm-room-inbox-pane {
-  gap: 0.75rem;
-}
-
-.tm-room-inbox-pane__filters {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.tm-room-message-extra {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin-top: 0.35rem;
-}
-
-.tm-room-file-link,
-.tm-room-edit textarea {
-  font: inherit;
-}
-
-.tm-room-file-link {
-  display: inline-flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
 .tm-room-edit {
   display: flex;
   flex-direction: column;
@@ -61,31 +7,5 @@
 .tm-room-edit textarea {
   min-height: 4.5rem;
   resize: vertical;
-}
-
-.tm-room-inbox-pane__refresh,
-.tm-room-thread__refresh,
-.tm-room-alert {
-  margin: 0;
-}
-
-.tm-room-workspace__grid > .tm-room-inbox-pane,
-.tm-room-workspace .delpi-ui-resizable-columns,
-.tm-room-workspace .delpi-ui-resizable-columns__left,
-.tm-room-workspace .delpi-ui-resizable-columns__right,
-.tm-room-workspace .delpi-ui-room-thread,
-.tm-room-workspace .delpi-ui-room-thread__body,
-.tm-room-workspace .delpi-ui-room-thread__main,
-.tm-room-workspace .delpi-ui-room-thread__stage {
-  min-height: 0;
-}
-
-.tm-room-workspace .delpi-ui-resizable-columns {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.tm-room-workspace .delpi-ui-resizable-columns__right > .tm-room-thread,
-.tm-room-workspace .delpi-ui-room-thread {
-  height: 100%;
+  font: inherit;
 }

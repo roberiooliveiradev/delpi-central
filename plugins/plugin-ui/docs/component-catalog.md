@@ -1526,6 +1526,7 @@ Primitivos neutros para threads estilo Teams/Slack (Portal Comercial). **Sem HTT
 | `RoomSidePanel` / `RoomContextPanel` | Painel «Neste chat» (host controla open). `entityPrimary` + `entityFields` no ABOUT (sem `entityKey` cru). |
 | `RoomMessageFindPanel` | Localizar no chat: input + Limpar + resultados com snippet/`mark`; host busca via API e faz jump. |
 | `RoomSharedItemList` | Arquivos e links já compartilhados. O host busca, baixa e decide o ícone; o kit só desenha a linha. |
+| `InteractionRoomPage` | Página canônica da sala: inbox, conversa, arquivos e links, localizar e «Neste chat». O host entrega dados e comandos; a página não busca, não autoriza e não conhece o domínio do portal. Estado de vista (conversa/arquivos, painel, filtro) fica na página. Chips da inbox, menu do cabeçalho e identidade do registro ficam no host. |
 
 Factories: `createDashboardMentionText`, `createDashboardMentionMenu`, `createDashboardMentionComposer`, `createDashboardMessageThread`, `createDashboardEntityUnfurlCard`, `createDashboardReactionBar`, `createDashboardReactionQuickBar`, `createDashboardRoomInboxList`, `createDashboardRoomHeader`, `createDashboardRoomConversationShell`, `createDashboardRoomContextPanel`, `createDashboardRoomSidePanel`, `createDashboardRoomMessageFindPanel`, `createDashboardRoomSharedItemList`.
 

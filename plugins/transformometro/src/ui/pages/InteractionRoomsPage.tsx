@@ -1,51 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, MessageSquare, Pencil, Pin, RefreshCw, Reply, Search, Trash2 } from "lucide-react";
 import {
   ActionButton,
-  CatalogSearchBar,
-  EmptyGuidance,
-  InitialsAvatar,
-  MentionComposer,
-  MessageThread,
-  ReactionBar,
-  ResizableColumns,
-  RoomConversationChatColumn,
-  RoomConversationShell,
-  RoomHeader,
-  RoomInboxList,
-  RoomInboxPanel,
-  RoomMessageFindPanel,
-  RoomSharedItemList,
-  ScopeChipBar,
-  SectionCard,
-  SegmentToggle,
-  catalogSearchBarBemClasses,
-  conversationFileDropLayerBemClasses,
-  emptyGuidanceBemClasses,
-  initialsAvatarBemClasses,
+  INTERACTION_ROOM_PAGE_LABELS_PT,
+  InteractionRoomPage,
   markdownToPlainPreview,
-  mentionComposerBemClasses,
-  messageThreadBemClasses,
-  reactionBarBemClasses,
-  resizableColumnsBemClasses,
-  roomConversationShellBemClasses,
-  roomHeaderBemClasses,
-  roomInboxListBemClasses,
-  roomMessageFindPanelBemClasses,
-  roomSharedItemListBemClasses,
-  scopeChipBarBemClasses,
-  sectionCardPacBemClasses,
-  segmentToggleBemClasses,
+  type InteractionRoomMessage,
+  type InteractionRoomSharedItem,
   type MentionComposerPendingAttachment,
   type MentionMenuHit,
-  type MessageThreadItem,
   type ReactionBarItem,
-  type RoomInboxListItem,
-  type RoomSharedItem,
 } from "@delpi/plugin-ui/index";
 
 import type { AppProps } from "../../App";
-import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { PortalTopBar } from "../../components/TransformometroNav";
 import { TRANSFORMOMETRO_ROUTES, buildInteractionRoomPath } from "../../constants/routes";
@@ -82,52 +48,12 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   onNavigate: (path: string) => void;
 };
 
-type RoomPane = "chat" | "files";
-
-const SECTION = sectionCardPacBemClasses("ds");
-const SECTION_LABELS = { titleHelpAriaLabel: (title: string) => title };
-const SEARCH = catalogSearchBarBemClasses("ds");
-const CHIPS = scopeChipBarBemClasses("ds");
-const INBOX = roomInboxListBemClasses("ds");
-const AVATAR = initialsAvatarBemClasses("ds");
-const HEADER = roomHeaderBemClasses("ds");
-const THREAD = messageThreadBemClasses("ds");
-const SHELL = roomConversationShellBemClasses("ds");
-const DROP = conversationFileDropLayerBemClasses("ds");
-const COLUMNS = resizableColumnsBemClasses("ds");
-const EMPTY = emptyGuidanceBemClasses("ds");
-const COMPOSER = mentionComposerBemClasses("ds");
-const REACTIONS = reactionBarBemClasses("ds");
-const SHARED = roomSharedItemListBemClasses("ds");
-const FIND = roomMessageFindPanelBemClasses("ds");
-const SEGMENTS = segmentToggleBemClasses("ds");
 const FILE_ACCEPT =
   "image/jpeg,image/png,image/webp,image/gif,application/pdf,text/plain,text/csv,.doc,.docx,.xls,.xlsx";
-
-const COMPOSER_LABELS = {
-  placeholder: "Escreva uma mensagem…",
-  sendAriaLabel: "Enviar",
-  attachAriaLabel: "Anexar arquivo",
-  mentionListAriaLabel: "Pessoas",
-  mentionEmptyLabel: "Nenhuma pessoa para mencionar",
-  formatToggleAriaLabel: "Formatação",
-  replyCancelAriaLabel: "Cancelar resposta",
-};
+const LINK_PATTERN = /https?:\/\/[^\s<>"')\]]+/g;
 
 function errorText(reason: unknown, fallback: string): string {
   return reason instanceof Error && reason.message ? reason.message : fallback;
-}
-
-function useNarrowWorkspace() {
-  const [narrow, setNarrow] = useState(false);
-  useEffect(() => {
-    const media = window.matchMedia("(max-width: 900px)");
-    const apply = () => setNarrow(media.matches);
-    apply();
-    media.addEventListener("change", apply);
-    return () => media.removeEventListener("change", apply);
-  }, []);
-  return narrow;
 }
 
 function plainMessage(value: string): string {
@@ -151,7 +77,6 @@ function reactionItems(message: InteractionMessageDto, meId: string | null): Rea
 }
 
 export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavigate }: Props) {
-  const narrow = useNarrowWorkspace();
   const mentionsRef = useRef<InteractionMentionDto[]>([]);
   const [rooms, setRooms] = useState<InteractionRoomDto[] | null>(null);
   const [roomsError, setRoomsError] = useState<string | null>(null);
@@ -171,9 +96,6 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
   const [mentionHits, setMentionHits] = useState<MentionMenuHit[]>([]);
-  const [pane, setPane] = useState<RoomPane>("chat");
-  const [findOpen, setFindOpen] = useState(false);
-  const [findQuery, setFindQuery] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -243,9 +165,6 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
     mentionsRef.current = [];
     setSendError(null);
     setActionError(null);
-    setPane("chat");
-    setFindOpen(false);
-    setFindQuery("");
     setRoom(null);
     setMessages(null);
     setShared([]);
@@ -307,7 +226,6 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
 
   function addFiles(files: File[]) {
     if (files.length === 0) return;
-    setPane("chat");
     setPending((current) => {
       const next = [...current];
       for (const file of files) {
@@ -491,22 +409,7 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
     });
   }, [filter, query, rooms]);
 
-  const inboxItems = useMemo<RoomInboxListItem[]>(
-    () =>
-      visibleRooms.map((item) => ({
-        id: item.id,
-        title: item.processo_nome || item.processo_codigo || "Processo",
-        preview: item.last_message_preview ? markdownToPlainPreview(item.last_message_preview) : null,
-        metaLabel: item.last_message_at ? formatDateTime(item.last_message_at) : null,
-        kindLabel: "Processo",
-        unreadCount: item.unread_count ?? 0,
-        mentioned: item.mentioned,
-        selected: item.id === roomId,
-      })),
-    [roomId, visibleRooms],
-  );
-
-  const threadItems = useMemo<MessageThreadItem[]>(
+  const threadItems = useMemo<InteractionRoomMessage[]>(
     () =>
       (messages ?? []).map((item) => {
         const removed = Boolean(item.deleted_at);
@@ -522,454 +425,252 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
           parentId: item.parent_id,
           mine: Boolean(meId && item.author_user_id === meId),
           deleted: removed,
+          pinned: Boolean(item.pinned),
           mentions: (item.mentions ?? []).map((mention) => ({
             kind: "user",
             id: mention.user_id,
             label: mention.label,
           })),
-          belowBody: removed ? null : (
-            <div className="tm-room-message-extra">
-              {(item.attachments ?? []).map((file) => (
-                <span key={file.id} className="tm-room-file-link">
-                  <button type="button" onClick={() => void openFile(file)}>
-                    {file.file_name}
-                  </button>
-                  {meId && file.uploaded_by_user_id === meId ? (
-                    <button type="button" onClick={() => void removeFile(file)}>
-                      Remover
-                    </button>
-                  ) : null}
-                </span>
-              ))}
-              <ReactionBar
-                classNames={REACTIONS}
-                items={reactionItems(item, meId)}
-                listAriaLabel="Reações"
-                addAriaLabel="Reagir"
-                onToggle={(code) => void react(item.id, code)}
-                onAdd={(code) => void react(item.id, code)}
-                emojiAdd={{ listAriaLabel: "Escolher reação" }}
-              />
-            </div>
-          ),
+          reactions: reactionItems(item, meId),
+          files: (item.attachments ?? []).map((file) => ({
+            id: file.id,
+            fileName: file.file_name,
+            removable: Boolean(meId && file.uploaded_by_user_id === meId),
+          })),
         };
       }),
     [authorName, meId, messages],
   );
 
-  const findResults = useMemo(() => {
-    const needle = findQuery.trim().toLowerCase();
-    if (needle.length < 2) return [];
-    return (messages ?? [])
-      .filter((item) => !item.deleted_at && item.content.toLowerCase().includes(needle))
-      .map((item) => ({
-        id: item.id,
-        messageId: item.id,
-        authorLabel: authorName(item.author_user_id),
-        dateLabel: formatDateTime(item.created_at),
-        bodyText: markdownToPlainPreview(item.content),
-      }));
-  }, [authorName, findQuery, messages]);
+  const speakers = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const item of messages ?? []) {
+      if (!seen.has(item.author_user_id)) seen.set(item.author_user_id, authorName(item.author_user_id));
+    }
+    return [...seen.entries()].map(([id, name]) => ({ id, name }));
+  }, [authorName, messages]);
 
-  const sharedItems = useMemo<RoomSharedItem[]>(
-    () =>
-      shared.map((file) => ({
-        id: file.id,
-        title: file.file_name,
-        subtitle: file.content_type,
-        whenLabel: file.created_at ? formatDateTime(file.created_at) : null,
-        whoLabel: authorName(file.uploaded_by_user_id),
-        ariaLabel: `Abrir ${file.file_name}`,
-      })),
-    [authorName, shared],
-  );
+  const sharedItems = useMemo<InteractionRoomSharedItem[]>(() => {
+    const files: InteractionRoomSharedItem[] = shared.map((file) => ({
+      id: file.id,
+      kind: "file",
+      title: file.file_name,
+      subtitle: file.content_type,
+      whenLabel: file.created_at ? formatDateTime(file.created_at) : null,
+      whoLabel: authorName(file.uploaded_by_user_id),
+      ariaLabel: `Abrir ${file.file_name}`,
+    }));
+    const links: InteractionRoomSharedItem[] = [];
+    for (const item of messages ?? []) {
+      if (item.deleted_at) continue;
+      const seen = new Set<string>();
+      for (const match of item.content.matchAll(LINK_PATTERN)) {
+        const href = match[0].replace(/[.,;:]+$/, "");
+        if (!href || seen.has(href)) continue;
+        seen.add(href);
+        links.push({
+          id: `${item.id}:${href}`,
+          kind: "link",
+          title: href,
+          href,
+          whenLabel: formatDateTime(item.created_at),
+          whoLabel: authorName(item.author_user_id),
+          ariaLabel: `Abrir ${href}`,
+        });
+      }
+    }
+    return [...files, ...links];
+  }, [authorName, messages, shared]);
 
   const replyTarget = (messages ?? []).find((item) => item.id === replyId) ?? null;
   const searchEmpty = query.trim().length > 0 && (rooms?.length ?? 0) > 0 && visibleRooms.length === 0;
-  const initialLoading = rooms === null;
-
-  const inbox = (
-    <section className="tm-room-inbox-pane" aria-label="Conversas">
-      <SectionCard
-        classNames={SECTION}
-        labels={SECTION_LABELS}
-        title="Conversas"
-        actions={
-          <ActionButton type="button" variant="ghost" onClick={() => void refresh()} disabled={refreshing || initialLoading}>
-            <RefreshCw size={16} aria-hidden="true" />
-            {refreshing ? "Atualizando…" : "Atualizar"}
-          </ActionButton>
-        }
-      >
-        <div className="tm-room-inbox-pane__filters">
-          <CatalogSearchBar
-            classNames={SEARCH}
-            value={query}
-            onChange={setQuery}
-            placeholder="Buscar por título da sala"
-            aria-label="Buscar por título da sala"
-          />
-          <ScopeChipBar
-            classNames={CHIPS}
-            aria-label="Filtros da caixa de entrada"
-            chips={[
-              { id: "all", label: "Todas", active: filter === "all", onSelect: () => setFilter("all") },
-              { id: "unread", label: "Não lidas", active: filter === "unread", onSelect: () => setFilter("unread") },
-              { id: "mentioned", label: "Menções", active: filter === "mentioned", onSelect: () => setFilter("mentioned") },
-              { id: "process", label: "Processos", active: filter === "process", onSelect: () => setFilter("process") },
-            ]}
-          />
-        </div>
-      </SectionCard>
-      {roomsError ? (
-        <p className="tm-room-alert" role="alert">
-          Não foi possível carregar as salas. {roomsError}
-        </p>
-      ) : null}
-      {refreshing ? (
-        <p className="tm-room-inbox-pane__refresh" role="status">
-          Atualizando conversas…
-        </p>
-      ) : null}
-      <RoomInboxPanel classNames={INBOX} aria-label="Salas de interação">
-        {initialLoading ? (
-          <LoadingActivityCard title="Carregando salas" description="Buscando as salas de interação já abertas." />
-        ) : null}
-        {!initialLoading && !roomsError && visibleRooms.length === 0 ? (
-          <EmptyGuidance
-            classNames={EMPTY}
-            variant="panel"
-            title={searchEmpty ? "Nenhuma sala com esse título" : "Nenhuma sala ainda"}
-            message={
-              searchEmpty
-                ? "Tente outro nome ou código de processo."
-                : filter === "unread"
-                  ? "Nenhuma sala com mensagem nova."
-                  : filter === "mentioned"
-                    ? "Nenhuma menção nova."
-                    : "Abra um processo para iniciar uma interação."
-            }
-          >
-            {searchEmpty || filter === "unread" || filter === "mentioned" ? null : (
-              <ActionButton type="button" onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.processes)}>
-                Meus processos
-              </ActionButton>
-            )}
-          </EmptyGuidance>
-        ) : null}
-        {!initialLoading && visibleRooms.length > 0 ? (
-          <RoomInboxList
-            classNames={INBOX}
-            items={inboxItems}
-            listAriaLabel="Salas de interação"
-            emptyLabel="Nenhuma sala ainda"
-            onSelect={(id) => onNavigate(buildInteractionRoomPath(id))}
-            leading={(row) => <InitialsAvatar classNames={AVATAR} name={row.title} size="sm" />}
-            subtitle={(row) => visibleRooms.find((item) => item.id === row.id)?.processo_codigo || "Processo"}
-          />
-        ) : null}
-      </RoomInboxPanel>
-    </section>
-  );
-
-  const thread = !roomId ? null : roomError && !room ? (
-    <p className="tm-room-alert" role="alert">
-      Não foi possível abrir a sala. {roomError}
-    </p>
-  ) : (
-    <RoomConversationShell
-      classNames={SHELL}
-      dropClassNames={DROP}
-      rootClassName="tm-room-thread"
-      as="section"
-      dropOverlayLabel="Solte o arquivo para anexar"
-      accept={FILE_ACCEPT}
-      onFiles={addFiles}
-      header={
-        <RoomHeader
-          classNames={HEADER}
-          title={room?.processo_nome || "Processo"}
-          chips={room?.processo_codigo ? <span className={HEADER.chip}>{room.processo_codigo}</span> : null}
-          titleActionLabel="Abrir processo"
-          onTitleClick={room ? () => onNavigate(buildProcessoPath(room.processo_id)) : undefined}
-          navAriaLabel="Conteúdo da sala"
-          nav={
-            <SegmentToggle
-              classNames={SEGMENTS}
-              ariaLabel="Conteúdo da sala"
-              value={pane}
-              onChange={setPane}
-              options={[
-                { value: "chat", label: "Conversa" },
-                { value: "files", label: "Arquivos" },
-              ]}
-            />
-          }
-          leadingAction={
-            narrow ? (
-              <ActionButton
-                type="button"
-                variant="ghost"
-                aria-label="Voltar para conversas"
-                title="Voltar para conversas"
-                onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.interactionRooms)}
-              >
-                <ArrowLeft size={16} aria-hidden="true" />
-              </ActionButton>
-            ) : undefined
-          }
-          actions={
-            <ActionButton
-              type="button"
-              variant="ghost"
-              aria-label="Buscar na conversa"
-              aria-expanded={findOpen}
-              onClick={() => setFindOpen((open) => !open)}
-            >
-              <Search size={16} aria-hidden="true" />
-            </ActionButton>
-          }
-        />
-      }
-      sidePanel={
-        findOpen ? (
-          <RoomMessageFindPanel
-            classNames={FIND}
-            labels={{
-              title: "Buscar na conversa",
-              closeAriaLabel: "Fechar busca",
-              placeholder: "Buscar nas mensagens carregadas",
-              clear: "Limpar",
-              empty: "Nenhuma mensagem com esse texto.",
-              loading: "Buscando…",
-            }}
-            query={findQuery}
-            onQueryChange={setFindQuery}
-            onClear={() => setFindQuery("")}
-            onClose={() => setFindOpen(false)}
-            results={findResults}
-            onSelectResult={(messageId) => {
-              setPane("chat");
-              document.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`)?.scrollIntoView({
-                block: "center",
-              });
-            }}
-          />
-        ) : undefined
-      }
-      main={
-        messages === null && !messagesError ? (
-          <LoadingActivityCard title="Carregando a sala…" description="Buscando a conversa deste processo." />
-        ) : pane === "files" ? (
-          <RoomSharedItemList
-            classNames={SHARED}
-            items={sharedItems}
-            listAriaLabel="Arquivos da sala"
-            onOpen={(id) => {
-              const file = shared.find((item) => item.id === id);
-              if (file) void openFile(file);
-            }}
-          >
-            <EmptyGuidance
-              classNames={EMPTY}
-              variant="panel"
-              title="Nenhum arquivo ainda"
-              message="Anexe um arquivo na conversa para ele aparecer aqui."
-            />
-          </RoomSharedItemList>
-        ) : (
-          <RoomConversationChatColumn
-            classNames={SHELL}
-            dock={
-              <div aria-busy={sending || undefined}>
-                {sendError ? (
-                  <p className="tm-room-alert" role="alert">
-                    {sendError}
-                  </p>
-                ) : null}
-                <MentionComposer
-                  key={roomId}
-                  classNames={COMPOSER}
-                  labels={COMPOSER_LABELS}
-                  value={draft}
-                  onChange={setDraft}
-                  onSubmit={(markdown) => void send(markdown)}
-                  submitting={sending}
-                  disabled={sending}
-                  showAttach={true}
-                  pendingAttachments={pending}
-                  onFilesSelected={addFiles}
-                  onRemovePendingAttachment={(id) => setPending((current) => current.filter((item) => item.id !== id))}
-                  mentionHits={mentionHits}
-                  onMentionQueryChange={(next) => {
-                    if (!next?.trim()) {
-                      setMentionHits([]);
-                      return;
-                    }
-                    void searchDirectoryUsers(next.trim(), 8, undefined, getAccessToken)
-                      .then((users) =>
-                        setMentionHits(
-                          users.map((user) => ({
-                            id: user.id,
-                            kind: "user",
-                            label: user.name,
-                            subtitle: user.email,
-                            avatarName: user.name,
-                          })),
-                        ),
-                      )
-                      .catch(() => setMentionHits([]));
-                  }}
-                  onMentionInserted={(hit) => {
-                    const label = hit.label.replace(/^@/, "").trim();
-                    if (!label) return;
-                    mentionsRef.current = [
-                      ...mentionsRef.current.filter((item) => item.user_id !== hit.id),
-                      { user_id: hit.id, label },
-                    ];
-                  }}
-                  replyTo={
-                    replyTarget
-                      ? {
-                          label: "Respondendo",
-                          preview: markdownToPlainPreview(replyTarget.deleted_at ? "Mensagem removida." : replyTarget.content),
-                        }
-                      : null
-                  }
-                  onCancelReply={() => setReplyId(null)}
-                />
-              </div>
-            }
-          >
-            {refreshing ? (
-              <p className="tm-room-thread__refresh" role="status">
-                Atualizando mensagens…
-              </p>
-            ) : null}
-            {messagesError ? (
-              <p className="tm-room-alert" role="alert">
-                Não foi possível carregar as mensagens. {messagesError}
-              </p>
-            ) : null}
-            {actionError ? (
-              <p className="tm-room-alert" role="alert">
-                {actionError}
-              </p>
-            ) : null}
-            {hasMore ? <p>Mostrando as mensagens mais recentes.</p> : null}
-            <MessageThread
-              classNames={THREAD}
-              messages={threadItems}
-              listAriaLabel="Mensagens da sala"
-              emptyLabel="Nenhuma mensagem ainda"
-              editingId={editingId}
-              renderEditSlot={() => (
-                <form
-                  className="tm-room-edit"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void saveEdit();
-                  }}
-                >
-                  <textarea
-                    value={editDraft}
-                    maxLength={INTERACTION_MESSAGE_MAX_LENGTH}
-                    aria-label="Editar mensagem"
-                    onChange={(event) => setEditDraft(event.target.value)}
-                  />
-                  <span>
-                    <ActionButton type="submit">Salvar</ActionButton>
-                    <ActionButton type="button" variant="ghost" onClick={() => setEditingId(null)}>
-                      Cancelar
-                    </ActionButton>
-                  </span>
-                </form>
-              )}
-              resolveActions={(row) => {
-                const source = (messages ?? []).find((item) => item.id === row.id);
-                if (!source || source.deleted_at) return [];
-                const mine = Boolean(meId && source.author_user_id === meId);
-                return [
-                  {
-                    id: "reply",
-                    label: "Responder",
-                    icon: <Reply size={16} aria-hidden="true" />,
-                    onClick: () => {
-                      setReplyId(source.id);
-                      setEditingId(null);
-                    },
-                  },
-                  {
-                    id: "pin",
-                    label: source.pinned ? "Desafixar" : "Fixar",
-                    icon: <Pin size={16} aria-hidden="true" />,
-                    onClick: () => void togglePin(source),
-                  },
-                  ...(mine
-                    ? [
-                        {
-                          id: "edit",
-                          label: "Editar",
-                          icon: <Pencil size={16} aria-hidden="true" />,
-                          onClick: () => {
-                            setEditingId(source.id);
-                            setEditDraft(source.content);
-                          },
-                        },
-                        {
-                          id: "delete",
-                          label: "Remover",
-                          danger: true,
-                          icon: <Trash2 size={16} aria-hidden="true" />,
-                          onClick: () => void removeMessage(source.id),
-                        },
-                      ]
-                    : []),
-                ];
-              }}
-              emptyContent={
-                <EmptyGuidance
-                  classNames={EMPTY}
-                  variant="canvas"
-                  title="Nenhuma mensagem ainda"
-                  message="Escreva a primeira mensagem nesta sala."
-                  icon={<MessageSquare aria-hidden="true" />}
-                />
-              }
-            />
-          </RoomConversationChatColumn>
-        )
-      }
-    />
-  );
+  const emptyTitle = searchEmpty
+    ? "Nenhuma sala com esse título"
+    : filter === "unread"
+      ? "Nenhuma sala com mensagem nova"
+      : filter === "mentioned"
+        ? "Nenhuma menção nova"
+        : undefined;
+  const emptyMessage = searchEmpty
+    ? "Tente outro nome ou código de processo."
+    : filter === "unread"
+      ? "Quando alguém escrever em uma sala que você já abriu, ela aparece aqui."
+      : filter === "mentioned"
+        ? "Quando alguém mencionar você, a sala aparece aqui."
+        : "Abra um processo para iniciar uma interação.";
 
   return (
     <TransformometroShell>
       <PortalTopBar currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.interactionRooms} onNavigate={onNavigate} />
-      <div className="tm-room-workspace">
-        <div className="tm-room-workspace__grid">
-          {narrow ? (
-            roomId ? (
-              thread
-            ) : (
-              inbox
-            )
-          ) : roomId ? (
-            <ResizableColumns
-              classNames={COLUMNS}
-              left={inbox}
-              right={thread}
-              labels={{
-                separatorAriaLabel: "Redimensionar lista de salas",
-                collapseAriaLabel: "Recolher lista de salas",
-                expandAriaLabel: "Mostrar lista de salas",
-              }}
+      <InteractionRoomPage
+        labels={{
+          ...INTERACTION_ROOM_PAGE_LABELS_PT,
+          context: {
+            ...INTERACTION_ROOM_PAGE_LABELS_PT.context,
+            openEntity: "Abrir processo",
+          },
+        }}
+        inboxQuery={query}
+        onInboxQueryChange={setQuery}
+        chips={[
+          { id: "all", label: "Todas", active: filter === "all", onSelect: () => setFilter("all") },
+          { id: "unread", label: "Não lidas", active: filter === "unread", onSelect: () => setFilter("unread") },
+          { id: "mentioned", label: "Menções", active: filter === "mentioned", onSelect: () => setFilter("mentioned") },
+          { id: "process", label: "Processos", active: filter === "process", onSelect: () => setFilter("process") },
+        ]}
+        rooms={visibleRooms.map((item) => ({
+          id: item.id,
+          title: item.processo_nome || item.processo_codigo || "Processo",
+          preview: item.last_message_preview ? markdownToPlainPreview(item.last_message_preview) : null,
+          metaLabel: item.last_message_at ? formatDateTime(item.last_message_at) : null,
+          kindLabel: "Processo",
+          unreadCount: item.unread_count ?? 0,
+          mentioned: item.mentioned,
+          selected: item.id === roomId,
+        }))}
+        roomsLoading={rooms === null}
+        roomsRefreshing={refreshing}
+        roomsError={roomsError ? `Não foi possível carregar as salas. ${roomsError}` : null}
+        inboxEmptyTitle={emptyTitle}
+        inboxEmptyMessage={emptyMessage}
+        inboxEmptyAction={
+          searchEmpty || filter === "unread" || filter === "mentioned" ? undefined : (
+            <ActionButton type="button" onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.processes)}>
+              Meus processos
+            </ActionButton>
+          )
+        }
+        onRefresh={() => void refresh()}
+        onSelectRoom={(id) => onNavigate(buildInteractionRoomPath(id))}
+        inboxSubtitle={(row) => visibleRooms.find((item) => item.id === row.id)?.processo_codigo || "Processo"}
+        room={
+          roomId
+            ? {
+                id: roomId,
+                title: room?.processo_nome || "Processo",
+                chips: room?.processo_codigo ? <span>{room.processo_codigo}</span> : undefined,
+                titleActionLabel: "Abrir processo",
+                onTitleClick: room ? () => onNavigate(buildProcessoPath(room.processo_id)) : undefined,
+                participants: speakers,
+                participantsAriaLabel: "Quem falou",
+              }
+            : null
+        }
+        onBack={() => onNavigate(TRANSFORMOMETRO_ROUTES.interactionRooms)}
+        messages={threadItems}
+        messagesLoading={Boolean(roomId) && messages === null && !messagesError}
+        messagesError={messagesError ? `Não foi possível carregar as mensagens. ${messagesError}` : roomError}
+        composerError={sendError}
+        actionError={actionError}
+        hasMore={hasMore}
+        editingId={editingId}
+        renderEditSlot={() => (
+          <form
+            className="tm-room-edit"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void saveEdit();
+            }}
+          >
+            <textarea
+              value={editDraft}
+              maxLength={INTERACTION_MESSAGE_MAX_LENGTH}
+              aria-label="Editar mensagem"
+              onChange={(event) => setEditDraft(event.target.value)}
             />
-          ) : (
-            inbox
-          )}
-        </div>
-      </div>
+            <span>
+              <ActionButton type="submit">Salvar</ActionButton>
+              <ActionButton type="button" variant="ghost" onClick={() => setEditingId(null)}>
+                Cancelar
+              </ActionButton>
+            </span>
+          </form>
+        )}
+        draft={draft}
+        onDraftChange={setDraft}
+        onSubmit={(markdown) => void send(markdown)}
+        submitting={sending}
+        pendingAttachments={pending}
+        onFiles={addFiles}
+        onRemovePendingAttachment={(id) => setPending((current) => current.filter((item) => item.id !== id))}
+        accept={FILE_ACCEPT}
+        mentionHits={mentionHits}
+        onMentionQueryChange={(next) => {
+          if (!next?.trim()) {
+            setMentionHits([]);
+            return;
+          }
+          void searchDirectoryUsers(next.trim(), 8, undefined, getAccessToken)
+            .then((users) =>
+              setMentionHits(
+                users.map((user) => ({
+                  id: user.id,
+                  kind: "user",
+                  label: user.name,
+                  subtitle: user.email,
+                  avatarName: user.name,
+                })),
+              ),
+            )
+            .catch(() => setMentionHits([]));
+        }}
+        onMentionInserted={(hit) => {
+          const label = hit.label.replace(/^@/, "").trim();
+          if (!label) return;
+          mentionsRef.current = [
+            ...mentionsRef.current.filter((item) => item.user_id !== hit.id),
+            { user_id: hit.id, label },
+          ];
+        }}
+        replyTo={
+          replyTarget
+            ? {
+                label: "Respondendo",
+                preview: markdownToPlainPreview(replyTarget.deleted_at ? "Mensagem removida." : replyTarget.content),
+              }
+            : null
+        }
+        onCancelReply={() => setReplyId(null)}
+        onReply={(id) => {
+          setReplyId(id);
+          setEditingId(null);
+        }}
+        onTogglePin={(message) => {
+          const source = (messages ?? []).find((item) => item.id === message.id);
+          if (source) void togglePin(source);
+        }}
+        onEdit={(message) => {
+          const source = (messages ?? []).find((item) => item.id === message.id);
+          if (!source) return;
+          setEditingId(source.id);
+          setEditDraft(source.content);
+        }}
+        onDelete={(id) => void removeMessage(id)}
+        onToggleReaction={(id, code) => void react(id, code)}
+        onOpenAttachment={(id) => {
+          const file = shared.find((item) => item.id === id);
+          if (file) void openFile(file);
+        }}
+        onRemoveAttachment={(id) => {
+          const file = shared.find((item) => item.id === id);
+          if (file) void removeFile(file);
+        }}
+        sharedItems={sharedItems}
+        onOpenShared={(item) => {
+          if (item.kind === "link" && item.href) {
+            window.open(item.href, "_blank", "noopener,noreferrer");
+            return;
+          }
+          const file = shared.find((entry) => entry.id === item.id);
+          if (file) void openFile(file);
+        }}
+        entityPrimary={room?.processo_codigo || null}
+        entityFields={room ? [{ label: "Processo", value: room.processo_nome }] : []}
+        entityHref={room ? buildProcessoPath(room.processo_id) : null}
+        onOpenEntity={room ? () => onNavigate(buildProcessoPath(room.processo_id)) : undefined}
+        onCopyLink={() => void navigator.clipboard.writeText(window.location.href)}
+        threadStatus={refreshing ? <p role="status">Atualizando mensagens…</p> : null}
+      />
     </TransformometroShell>
   );
 }

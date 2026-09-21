@@ -181,7 +181,18 @@ export {
   snapshotEditablePlaintext,
   type ActiveMentionQuery,
 } from "./mentionComposerCaret";
-export { parseMentionText } from "./parseMentionText";
+export {
+  InteractionRoomPage,
+  INTERACTION_ROOM_PAGE_LABELS_PT,
+  type InteractionRoomAttachment,
+  type InteractionRoomMessage,
+  type InteractionRoomPageLabels,
+  type InteractionRoomPageProps,
+  type InteractionRoomPane,
+  type InteractionRoomSharedItem,
+  type InteractionRoomSharedKind,
+  type InteractionRoomSide,
+} from "./InteractionRoomPage";
 export {
   MessageBodyReadonly,
   type MessageBodyReadonlyProps,

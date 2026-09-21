@@ -48,6 +48,8 @@ const REQUIRED_HOST_EXPORTS = [
   "PERIOD_PRESET_OPTIONS",
   "RoomSharedItemList",
   "createDashboardRoomSharedItemList",
+  "InteractionRoomPage",
+  "INTERACTION_ROOM_PAGE_LABELS_PT",
 ];
 
 function findIndexExpose(dir) {

@@ -567,6 +567,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Lista de arquivos e links da sala. OWNS a linha; DOES NOT OWN download, href ou AuthZ.",
   }),
+  vc("collaboration", "InteractionRoomPage", {
+    addedAt: "2026-09-21",
+    description:
+      "Página canônica da sala. OWNS a vista (conversa, arquivos e links, localizar, neste chat). DOES NOT OWN busca, autorização nem domínio do portal.",
+  }),
   vc("collaboration", "ConversationFileDropLayer", {
     addedAt: "2026-08-19",
     description: "Overlay de drop de arquivo sobre a coluna da conversa.",
