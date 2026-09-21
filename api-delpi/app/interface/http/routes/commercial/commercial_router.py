@@ -10,6 +10,7 @@ from app.interface.http.query_param_enums import (
     BRANCH_QUERY_REQUIRED,
     COMMERCIAL_OTD_STATUS_QUERY,
     COMMERCIAL_PROPOSAL_STATUS_QUERY,
+    COMMERCIAL_ROL_CENTER_GROUP_BY_QUERY,
     CUSTOMER_SEGMENT_QUERY,
     GRANULARITY_QUERY_REQUIRED,
     GRANULARITY_QUERY_WEEK,
@@ -53,6 +54,9 @@ from app.application.dto.commercial.get_rol_by_customer_request import (
 from app.application.dto.commercial.get_rol_by_product_request import (
     GetRolByProductRequest,
 )
+from app.application.dto.commercial.get_rol_by_customer_center_request import (
+    GetRolByCustomerCenterRequest,
+)
 from app.application.dto.commercial.get_rol_by_branch_request import (
     GetRolByBranchRequest,
 )
@@ -91,6 +95,7 @@ from app.composition.commercial_composer import (
     build_get_commercial_rol_summary_use_case,
     build_get_commercial_rol_by_customer_use_case,
     build_get_commercial_rol_by_product_use_case,
+    build_get_commercial_rol_by_customer_center_use_case,
     build_get_commercial_rol_by_branch_use_case,
     build_get_sales_order_otd_use_case,
     build_get_sales_order_otd_panel_use_case,
@@ -523,6 +528,87 @@ def get_commercial_rol_by_product(
         log_error(f"Error while fetching ROL by product: {exc}")
         return error_response(
             "Internal error while fetching ROL by product.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/rol/by-customer-center",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_commercial_rol_by_customer_center",
+        path="/commercial/rol/by-customer-center",
+    ),
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_commercial_rol_by_customer_center(
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(
+        None, description="CSV of TOTVS customer codes (portfolio filter)."
+    ),
+    customer_stores: Optional[str] = Query(
+        None, description="CSV of TOTVS customer store codes (A1_LOJA / D2_LOJA)."
+    ),
+    customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to include (partial match, LIKE)."
+    ),
+    customer_centers: Optional[str] = Query(
+        None,
+        description="CSV of customer center codes from the product-customer link (SA7.A7_XCENT), e.g. 1320,1505.",
+    ),
+    exclude_customer_codes: Optional[str] = Query(
+        None, description="Comma-separated TOTVS customer codes to exclude."
+    ),
+    exclude_customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
+    ),
+    product_codes: Optional[str] = Query(
+        None, description="CSV of product codes (SB1.B1_COD / D2_COD)."
+    ),
+    product_groups: Optional[str] = Query(
+        None, description="CSV of product groups (SB1.B1_GRUPO)."
+    ),
+    market: Optional[str] = Query(
+        None,
+        description="Market filter: domestic (CFOP 5/6) or export (CFOP 7).",
+        pattern="^(domestic|export)$",
+    ),
+    group_by: str = COMMERCIAL_ROL_CENTER_GROUP_BY_QUERY(),
+    limit: int = LIMIT_QUERY("limit_500_500"),
+):
+    try:
+        request = GetRolByCustomerCenterRequest(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
+            customer_stores=parse_customer_codes(customer_stores),
+            customer_names=parse_customer_names(customer_names),
+            customer_centers=parse_customer_centers(customer_centers),
+            exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
+            exclude_customer_names=parse_customer_names(exclude_customer_names),
+            product_codes=parse_customer_codes(product_codes),
+            product_groups=parse_customer_codes(product_groups),
+            market=market,
+            group_by=group_by,
+            limit=limit,
+        )
+        result = build_get_commercial_rol_by_customer_center_use_case().execute(request)
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="get_commercial_rol_by_customer_center",
+            message="Commercial ROL by customer center fetched successfully.",
+        )
+    except ValueError as exc:
+        log_error(f"Validation error while fetching ROL by customer center: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Error while fetching ROL by customer center: {exc}")
+        return error_response(
+            "Internal error while fetching ROL by customer center.",
             status_code=500,
         )
 

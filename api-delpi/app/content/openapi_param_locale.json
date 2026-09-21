@@ -419,6 +419,18 @@
         }
       }
     },
+    "customer_stores": {
+      "locale": {
+        "en": {
+          "label": "Customer stores",
+          "description": "Comma-separated TOTVS customer store codes (A1_LOJA / D2_LOJA)."
+        },
+        "pt-BR": {
+          "label": "Lojas do cliente",
+          "description": "Lista CSV de lojas TOTVS do cliente (A1_LOJA / D2_LOJA)."
+        }
+      }
+    },
     "customer_names": {
       "locale": {
         "en": {
@@ -1412,6 +1424,22 @@
           },
           "pt-BR": {
             "label": "Grupo de produto"
+          }
+        },
+        "center": {
+          "en": {
+            "label": "Customer center"
+          },
+          "pt-BR": {
+            "label": "Centro do cliente"
+          }
+        },
+        "center_product": {
+          "en": {
+            "label": "Customer center and product"
+          },
+          "pt-BR": {
+            "label": "Centro do cliente e produto"
           }
         },
         "unit": {

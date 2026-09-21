@@ -153,6 +153,8 @@ Documentação completa: [invoice-issuance.md](./invoice-issuance.md) · playboo
 | GET | `/commercial/rol/summary` | ROL + meta SI (hub TV KPI; `recompute_target_pct_from=rol`; `branch` opcional). |
 | GET | `/commercial/rol/series` | Série temporal de ROL (`granularity`: day, week, month, year). |
 | GET | `/commercial/rol/by-customer` | Ranking de ROL por cliente (Top N + Demais). |
+| GET | `/commercial/rol/by-product` | Ranking de ROL por produto ou família. |
+| GET | `/commercial/rol/by-customer-center` | ROL classificado pelo centro atual do cliente (SA7/ZC0); itens sem cadastro = `SEM CENTRO`. |
 | GET | `/commercial/proposals` | Listagem paginada de propostas (OV). Filtros: `start_date`, `end_date`, `branch`, `status` (`won`/`open`), `customer_segment` (`weg`/`new_business`), `page`, `page_size`, `sort_by`, `sort_dir`, `search`. Ver `plugins/dashboard-commercial/docs/PROPOSTAS-PERIODO.md`. |
 | GET | `/commercial/proposals/{proposal_number}` | Detalhe da proposta (AD1010 + cliente/vendedor + **`list_products[]`** ADJ010). Query: `branch` (obrig.), `revision` opcional. Produtos via `LMPQueryRepository.list_ov_products` (SQL compartilhado com LMP). |
 | GET | `/commercial/proposals/{proposal_number}/history/events` | Histórico AIJ010 da OV — mesmo pipeline que LMP (`get_lmp_history_events`). Query: `branch`, `revision`, `date_start`, `date_end` (período aceito pelo MFE; **não** dispara batch de listagem). |

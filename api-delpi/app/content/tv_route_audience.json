@@ -1183,6 +1183,21 @@
       },
       "category": "commercial"
     },
+    "get_commercial_rol_by_customer_center": {
+      "locale": {
+        "en": {
+          "summary": "Commercial ROL by customer center",
+          "description": "Net operating revenue (ROL) classified by the current product-customer center (SA7.A7_XCENT / ZC0). Unclassified items remain as SEM CENTRO. Classification uses the current cadastre, not a historical snapshot on the invoice.",
+          "label": "Commercial ROL by customer center"
+        },
+        "pt-BR": {
+          "label": "Indicador — ROL por centro do cliente",
+          "summary": "ROL comercial por centro do cliente",
+          "description": "Receita operacional líquida classificada pelo centro atual da amarração produto–cliente (SA7.A7_XCENT / ZC0). Itens sem cadastro permanecem como SEM CENTRO. A classificação usa o cadastro vigente, sem snapshot histórico na nota."
+        }
+      },
+      "category": "commercial"
+    },
     "get_console_alerts": {
       "locale": {
         "en": {
