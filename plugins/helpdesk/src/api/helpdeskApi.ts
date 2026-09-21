@@ -67,6 +67,7 @@ export type TicketSummary = {
   sla_ttr?: string;
   sla_tto?: string;
   assigned_display_name: string;
+  requester_display_name?: string;
 };
 
 export type TicketListQuery = {

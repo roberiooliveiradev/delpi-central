@@ -13,7 +13,7 @@ Este arquivo é a **matriz completa** do módulo Assistência do GLPI 11 que toc
 | Destino | Significa |
 |---|---|
 | IMPLEMENTADO | na Minha DELPI hoje |
-| ALVO | inventário ainda aberto (ex.: G-05 lista requester) |
+| ALVO | inventário ainda aberto |
 | CONSOLE_GLPI | só no host GLPI |
 | BLOQUEADO | HLAPI / decisão impede |
 | FORA | fora do produto do solicitante |
@@ -130,7 +130,7 @@ Motor [Search](https://help.glpi-project.org/documentation/readme-1-1/search) + 
 
 | ID | Capacidade GLPI | Destino |
 |---|---|---|
-| X-80 | Grade do solicitante (id, título, status, datas, categoria, técnico) | **IMPLEMENTADO**; datas absolutas / resolução / fechamento |
+| X-80 | Grade do solicitante (id, título, status, datas, categoria, técnico, requerente) | **IMPLEMENTADO**; datas absolutas / resolução / fechamento / `requester_display_name` |
 | X-81 | Busca no título e no conteúdo | **IMPLEMENTADO** (`q` OR content) |
 | X-82 | Critérios AND/OR, multi-itemtype, lixeira, saved search, export, massa, mapa, multi-sort | **fatiado** — multi-itemtype/lixeira/saved search/export/massa/mapa = CONSOLE; critérios + multi-sort do **solicitante** = H13 ([`13`](./13-listagem-de-chamados.md) §3.5, G-50…G-56) |
 | X-83 | Busca rápida global (ativos, usuários…) | CONSOLE_GLPI / outro módulo |
@@ -147,7 +147,7 @@ Estes não abrem etapa sozinhos. Só deixam de ser lacuna invisível.
 | X-28 | TTR visível | «até quando deve ser resolvido» | **IMPLEMENTADO** `sla_ttr` / `sla_tto` |
 | X-29 | Vínculo (duplicata / filho) | o solicitante vê que o 1101 é duplicata do 1090 | **FORA** (H-X4); criar vínculo CONSOLE |
 | X-46 | Aprovar solução | já era H5; permanece | **CONSOLE** (E10) |
-| G-05 | Requerente na lista | detalhe tem; lista BFF não publica | ALVO_LEITURA residual |
+| G-05 | Requerente na lista | mesmo rótulo do detalhe | **IMPLEMENTADO** `requester_display_name` |
 | H12 / M-23 | upload / `@` escrita | HLAPI | BLOQUEADO |
 
 Não promover X-09 a tela de catálogo sem endpoint. Não copiar Formcreator/plugin.

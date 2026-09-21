@@ -105,6 +105,7 @@ def list_tickets(
                 "sla_ttr": row.sla_ttr,
                 "sla_tto": row.sla_tto,
                 "assigned_display_name": row.assigned_display_name,
+                "requester_display_name": row.requester_display_name,
             }
             for row in listed.items
         ],

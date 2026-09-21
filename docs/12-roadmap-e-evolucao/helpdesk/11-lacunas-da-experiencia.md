@@ -1,6 +1,6 @@
 # 11 — Lacunas da experiência
 
-> **Status:** inventário histórico. L-01…L-12 e C-08 **IMPLEMENTADOS**. Residuais: A-08/H12 upload, M-23 `@`, H10 ciclo, G-05 requester na lista. Paridade: [`12`](./12-conteudo-da-mensagem.md)–[`15`](./15-capacidades-glpi.md). Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
+> **Status:** inventário histórico. L-01…L-12, C-08 e G-05 **IMPLEMENTADOS**. Residuais: A-08/H12 upload, M-23 `@`, H10 ciclo. Paridade: [`12`](./12-conteudo-da-mensagem.md)–[`15`](./15-capacidades-glpi.md). Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
 > **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md).
 > **Conversa:** [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md).
 > **Contrato vigente:** [`03-contrato.md`](./03-contrato.md).

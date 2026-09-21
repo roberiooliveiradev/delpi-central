@@ -68,6 +68,8 @@ function renderColumn(key: TicketListColumnDefinition["key"], row: TicketSummary
       return row.urgency;
     case "assigned":
       return row.assigned_display_name;
+    case "requester":
+      return (row.requester_display_name ?? "").trim();
     case "created_at":
       return absoluteDateTimeLabel(row.created_at);
     case "updated_at":
@@ -76,7 +78,6 @@ function renderColumn(key: TicketListColumnDefinition["key"], row: TicketSummary
       return absoluteDateTimeLabel(row.solved_at ?? "");
     case "closed_at":
       return absoluteDateTimeLabel(row.closed_at ?? "");
-    case "requester":
     case "entity":
     case "last_editor":
       return "";

@@ -5,6 +5,7 @@ import {
   parseTicketListFilters,
 } from "./ticketView";
 import {
+  cellTextForColumn,
   defaultTicketListColumnPreferences,
   formatTicketSortLevels,
   parseTicketSortLevels,
@@ -12,6 +13,7 @@ import {
   ticketListFiltersFromFilterGroup,
   ticketListViewModelFromFilters,
 } from "./ticketListViewModel";
+import type { TicketSummary } from "../api/helpdeskApi";
 
 describe("ticketListViewModelFromFilters", () => {
   it("monta regras a partir do recorte plano da URL", () => {
@@ -117,5 +119,29 @@ describe("ticketListFiltersFromFilterGroup", () => {
     );
     expect(next.status).toBe("open");
     expect(next.q).toBe("");
+  });
+});
+
+describe("cellTextForColumn", () => {
+  const row: TicketSummary = {
+    id: 1120,
+    title: "Monitor",
+    status: "Novo",
+    category: "Hardware",
+    urgency: "Média",
+    updated_at: "2026-09-21T12:00:00Z",
+    created_at: "2026-09-21T10:00:00Z",
+    assigned_display_name: "Ana Silva",
+    requester_display_name: "Robério Teixeira",
+  };
+
+  it("publica o requerente da lista (G-05)", () => {
+    expect(cellTextForColumn(row, "requester")).toBe("Robério Teixeira");
+    expect(cellTextForColumn(row, "assigned")).toBe("Ana Silva");
+  });
+
+  it("não inventa nome quando o BFF omite o campo", () => {
+    const withoutRequester = { ...row, requester_display_name: undefined };
+    expect(cellTextForColumn(withoutRequester, "requester")).toBe("");
   });
 });

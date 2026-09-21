@@ -1,7 +1,7 @@
 # 13 — Listagem de chamados
 
 > **Status:** inventário sincronizado com o código (E7 + H13). Paridade [`16-plano-paridade.md`](./16-plano-paridade.md) **concluída**. Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
-> **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md) §1 — tabela com filtros, datas absolutas, `solved_at`/`closed_at`, `q` no conteúdo, `pending`/`approval`, `created_*`, `page_size`, builder AND.
+> **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md) §1 — tabela com filtros, datas absolutas, `solved_at`/`closed_at`, `requester_display_name`, `q` no conteúdo, `pending`/`approval`, `created_*`, `page_size`, builder AND.
 > **Fotos de 21/09/2026:** MFE `/apps/helpdesk` e GLPI Super-Admin `front/ticket.php` (bancada, não o produto).
 > **Contrato vigente:** [`03-contrato.md`](./03-contrato.md).
 > **Lacunas antigas da lista:** L-01…L-12 em [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md) — sincronizadas com este arquivo.
@@ -69,7 +69,7 @@ A foto do Super-Admin **não** é o alvo visual. Serve para inventariar capacida
 | Data de abertura | `date` / `date_creation` | **IMPLEMENTADO** — «Aberto» (data-hora absoluta) |
 | Data da resolução | `date_solve` / `solvedate` | **IMPLEMENTADO** — `solved_at` |
 | Última atualização | `date_mod` | **IMPLEMENTADO** — «Atualizado» (data-hora absoluta) |
-| Requerente | `team` role `requester` | slot de coluna no MFE; **lista BFF ainda não publica** `requester_display_name` (G-05) |
+| Requerente | `team` role `requester` | **IMPLEMENTADO** — `requester_display_name` (rótulo; **não ordena**) |
 | Atribuído — técnico | `team` role `assigned` | **IMPLEMENTADO** — rótulo; **não ordena** |
 | Categoria | `category` | IMPLEMENTADO |
 | Última edição por | `users_id_lastupdater` | CONSOLE_GLPI — bancada; nome não identifica |
@@ -180,7 +180,7 @@ URL ?q=&status=&urgency_id=&category_id=&created_from=&created_to=&updated_from=
 | Aberto / atualizado | data-hora | data-hora absoluta | invariante |
 | Data de resolução | bancada e schema | `solved_at` | invariante |
 | Data de fechamento | schema `date_close` | `closed_at` | invariante |
-| Requerente | bancada | slot UI; BFF lista sem campo | G-05 (detalhe já tem) |
+| Requerente | bancada | **IMPLEMENTADO** `requester_display_name` | invariante (G-05) |
 | Busca no título | sim | sim | invariante |
 | Busca no conteúdo | motor central; self-service limitado | `q` OR content | invariante |
 | Filtro atualizado | sim | sim | invariante |
@@ -208,11 +208,11 @@ FORA                  → não entra neste produto
 
 | ID | Capacidade | Estado | Dono |
 |---|---|---|---|
-| G-01 | Id, título, status, categoria, urgência, técnico, aberto, atualizado | **IMPLEMENTADO** | — |
+| G-01 | Id, título, status, categoria, urgência, técnico, requerente, aberto, atualizado | **IMPLEMENTADO** | requerente é rótulo (G-05); não ordena |
 | G-02 | Data-hora absoluta na célula | **IMPLEMENTADO** | MFE `absoluteDateTimeLabel` |
 | G-03 | `solved_at` a partir de `date_solve` | **IMPLEMENTADO** | BFF aditivo |
 | G-04 | `closed_at` a partir de `date_close` | **IMPLEMENTADO** | BFF aditivo |
-| G-05 | `requester_display_name` na lista | ALVO_LEITURA | slot UI existe; JSON da lista ainda não publica (detalhe sim) |
+| G-05 | `requester_display_name` na lista | **IMPLEMENTADO** | mesmo `_requester_name` do detalhe; coluna opcional no catálogo |
 | G-06 | Ordenar por técnico | BLOQUEADO | `team` não é coluna SQL da HLAPI |
 | G-07 | Ordenar por resolução | **IMPLEMENTADO** | `sort=solved_at` → `date_solve` |
 | G-08 | Coluna entidade / último editor / prioridade / tipo / impacto | CONSOLE_GLPI / FORA | — |
@@ -299,7 +299,7 @@ Evolução **ADDITIVE** já aplicada. Não reabrir como alvo.
 | `created_from` / `created_to` | — |
 | `status=pending` / `approval` | ADDITIVE; `open` ainda inclui 10 |
 | `page_size` | 10/20/50 na tela |
-| `requester_display_name` na lista | **ainda não** (G-05) |
+| `requester_display_name` na lista | **IMPLEMENTADO** (G-05; rótulo; não ordena) |
 
 Sem path novo. Sem total inventado. Sem filtrar por nome de pessoa.
 
@@ -309,7 +309,7 @@ Sem path novo. Sem total inventado. Sem filtrar por nome de pessoa.
 URL do MFE (recorte)
   → BFF monta RSQL só com campos do schema
   → GLPI devolve a página do token
-  → BFF traduz rótulos + datas + assigned
+  → BFF traduz rótulos + datas + assigned + requester
   → DataTable do kit  render-only
 ```
 

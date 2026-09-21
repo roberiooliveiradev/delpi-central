@@ -623,11 +623,15 @@ def test_mapping_list_publishes_created_at_and_assigned():
                 "date_close": None,
                 "sla_ttr": {"id": 1, "name": "TTR 8h"},
                 "sla_tto": {"id": 2, "name": "TTO 1h"},
-                "team": [{"role": "assigned", "firstname": "Ana", "realname": "Silva"}],
+                "team": [
+                    {"role": "requester", "firstname": "Robério", "realname": "Teixeira"},
+                    {"role": "assigned", "firstname": "Ana", "realname": "Silva"},
+                ],
             }
         ]
     )
     assert listed[0].created_at == "2026-02-19T10:00:00Z"
+    assert listed[0].requester_display_name == "Robério Teixeira"
     assert listed[0].assigned_display_name == "Ana Silva"
     assert listed[0].category == ""
     assert listed[0].status_id == 2
@@ -636,6 +640,23 @@ def test_mapping_list_publishes_created_at_and_assigned():
     assert listed[0].closed_at == ""
     assert listed[0].sla_ttr == "TTR 8h"
     assert listed[0].sla_tto == "TTO 1h"
+
+
+def test_mapping_list_requester_falls_back_to_user_recipient():
+    listed = parse_ticket_list(
+        [
+            {
+                "id": 3,
+                "name": "Sem team requester",
+                "status": {"id": 1, "name": "Novo"},
+                "urgency": 2,
+                "user_recipient": {"firstname": "Lia", "realname": "Costa"},
+                "team": [{"role": "assigned", "firstname": "Ana", "realname": "Silva"}],
+            }
+        ]
+    )
+    assert listed[0].requester_display_name == "Lia Costa"
+    assert listed[0].assigned_display_name == "Ana Silva"
 
 
 def test_team_member_observer_body_is_hd011_safe():

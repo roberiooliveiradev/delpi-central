@@ -8,7 +8,7 @@
 > **Estado:** lista com filtros/builder, conversa HTML, compositor rico e prévia de anexo **publicados**. H5/H10/H12 abaixo são especificação ou park, não autorização nova.
 > **Lacunas restantes:** [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md).
 > **Corpo da mensagem:** [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) (vigente; M-23 park).
-> **Listagem:** [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md) (vigente; G-05 residual).
+> **Listagem:** [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md) (vigente).
 > **Página e estados:** [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md).
 > **Matriz GLPI Assistência:** [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).
 > **Paridade E6…E13:** [`16-plano-paridade.md`](./16-plano-paridade.md) — **concluída**. Menção: [`evidence/e14-mentions.md`](./evidence/e14-mentions.md).

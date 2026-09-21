@@ -73,6 +73,7 @@ def test_list_publishes_dates_and_forwards_filter():
     assert body["items"][0]["created_at"] == ""
     assert body["items"][0]["status_id"] == 1
     assert "assigned_display_name" in body["items"][0]
+    assert body["items"][0]["requester_display_name"] == "Robério Teixeira"
     assert body["page"] == 1
     assert body["page_size"] == 10
     assert glpi.last_list_query.filter.startswith("is_deleted==false")

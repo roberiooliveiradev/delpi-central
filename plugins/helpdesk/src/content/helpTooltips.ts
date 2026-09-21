@@ -80,6 +80,6 @@ export const helpTooltips = {
     updated_at: "Data e hora da última alteração.",
     solved_at: "Data e hora da solução, quando existir.",
     closed_at: "Data e hora do fechamento, quando existir.",
-    requester: "Nome do solicitante (rótulo).",
+    requester: "Nome do solicitante (rótulo). O helpdesk não identifica pessoa pelo nome.",
   },
 } as const;

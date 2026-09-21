@@ -246,6 +246,8 @@ export function cellTextForColumn(row: TicketSummary, key: TicketListColumnKey):
       return row.urgency;
     case "assigned":
       return row.assigned_display_name ?? "";
+    case "requester":
+      return (row.requester_display_name ?? "").trim();
     case "created_at":
       return absoluteDateTimeLabel(row.created_at);
     case "updated_at":
@@ -254,8 +256,6 @@ export function cellTextForColumn(row: TicketSummary, key: TicketListColumnKey):
       return absoluteDateTimeLabel(row.solved_at ?? "");
     case "closed_at":
       return absoluteDateTimeLabel(row.closed_at ?? "");
-    case "requester":
-      return "";
     case "entity":
     case "last_editor":
       return "";
