@@ -40,6 +40,26 @@ def test_list_forwards_bearer_and_query():
 
 
 @responses.activate
+def test_summary_forwards_service_identity():
+    responses.add(
+        responses.GET,
+        "http://pr-api.test/purchase-requests/summary",
+        json={"success": True, "data": {"total_requests": 0}},
+        status=200,
+    )
+    gateway = PurchaseRequestsGateway(
+        base_url="http://pr-api.test",
+        timeout_seconds=2.0,
+        caller_app="supplies-api",
+    )
+    gateway.get_summary(access_token="tok-1", query_string="branch=01")
+    assert responses.calls[0].request.headers["Authorization"] == "Bearer tok-1"
+    assert responses.calls[0].request.headers["X-Delpi-Caller-App"] == "supplies-api"
+    assert responses.calls[0].request.headers["X-Delpi-Service-Token"] == "svc-secret"
+    assert "svc-secret" not in (responses.calls[0].request.headers.get("Authorization") or "")
+
+
+@responses.activate
 def test_get_detail_positive():
     responses.add(
         responses.GET,
@@ -72,18 +92,31 @@ def test_list_forbidden_propagates_status():
 
 @responses.activate
 def test_count_open_sibling_sums_stages():
-    for _stage in PurchaseRequestsGateway.OPEN_STAGES:
-        responses.add(
-            responses.GET,
-            "http://pr-api.test/purchase-requests",
-            json={"success": True, "data": {"items": [], "total": 2}},
-            status=200,
-        )
+    responses.add(
+        responses.GET,
+        "http://pr-api.test/purchase-requests/summary",
+        json={
+            "success": True,
+            "data": {
+                "stage_counts": {
+                    "awaiting_order": 2,
+                    "partially_ordered": 2,
+                    "ordered": 9,
+                    "awaiting_receipt": 2,
+                    "partially_received": 2,
+                    "completed": 4,
+                    "residual_closed": 1,
+                }
+            },
+        },
+        status=200,
+    )
     gateway = PurchaseRequestsGateway(base_url="http://pr-api.test", timeout_seconds=2.0)
     assert gateway.count_open_requests(access_token="tok", branch="01") == 2 * len(
         PurchaseRequestsGateway.OPEN_STAGES
     )
-    assert len(responses.calls) == len(PurchaseRequestsGateway.OPEN_STAGES)
+    assert len(responses.calls) == 1
+    assert "purchase-requests/summary" in (responses.calls[0].request.url or "")
 
 
 def test_missing_service_token_is_fail_closed(monkeypatch):

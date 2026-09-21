@@ -55,7 +55,8 @@ Não espelhar CRUD em permission codes. Qualquer `ANY_OF`/`ALL_OF` precisa ser d
 | GET | `/analytics/overview` | `supplies.access` + unit | api-delpi + SI | **IMPLEMENTADO** |
 | GET | `/analytics/otd/series` | `supplies.access` + unit | api-delpi | **IMPLEMENTADO** |
 | GET | `/analytics/otd` | `supplies.access` + unit | api-delpi + SI | **IMPLEMENTADO** |
-| GET | `/purchase-requests` | `supplies.access` + units + CC | PR-api (`?branch=` repetido, `sort_by`/`sort_dir` allow-list + `overall_stage` owner-local) | **IMPLEMENTADO_C1** |
+| GET | `/purchase-requests` | `supplies.access` + units + CC | PR-api (`?branch=` repetido, `sort_by`/`sort_dir` allow-list + `overall_stage` owner-local, antes da página) | **IMPLEMENTADO_C1** |
+| GET | `/purchase-requests/summary` | `supplies.access`; downstream S2S | PR-api `/summary`. `total_requests` = SCs distintas; `total_items` = linhas; `stage_counts`/`buckets` = cabeçalho pelo estágio conservador. Ignora `overall_stage` para manter os demais atalhos. Cap do recorte derivado; acima disso 422 e a lista segue. | **IMPLEMENTADO** |
 | GET | `/purchase-requests/{branch}/{number}` | `supplies.access` + unit + resource scope | PR-api | **IMPLEMENTADO_C1** |
 | GET | `/purchase-requests/export` | `supplies.access`; downstream S2S; acompanhamento global | PR-api `/export` → CSV default ou `format=xlsx` | **IMPLEMENTADO_C1** |
 | GET | `/purchase-orders` | `supplies.access` + units | api-delpi `GET /supplies/purchase-orders` | **IMPLEMENTADO** |

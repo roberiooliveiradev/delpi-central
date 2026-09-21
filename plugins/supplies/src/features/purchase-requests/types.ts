@@ -50,6 +50,21 @@ export type PurchaseRequestListResponse = {
   total_pages?: number;
 };
 
+export type PurchaseRequestStageCounts = Record<OverallStage, number>;
+
+export type PurchaseRequestAttentionBuckets = {
+  ordering: number;
+  receiving: number;
+  completed: number;
+};
+
+export type PurchaseRequestSummary = {
+  total_requests: number;
+  total_items: number;
+  stage_counts: PurchaseRequestStageCounts;
+  buckets: PurchaseRequestAttentionBuckets;
+};
+
 export type PurchaseRequestDetail = {
   header: {
     branch: string;

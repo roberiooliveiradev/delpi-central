@@ -50,7 +50,7 @@ export function createDefaultQuery(
 
 export function buildListSearchParams(
   query: PurchaseRequestsQuery,
-  options?: { includePagination?: boolean },
+  options?: { includePagination?: boolean; includeStages?: boolean },
 ): URLSearchParams {
   const params = new URLSearchParams();
   for (const branch of query.branches) {
@@ -61,8 +61,10 @@ export function buildListSearchParams(
   if (query.date_to.trim()) params.set("date_to", query.date_to.trim());
   if (query.request_number.trim()) params.set("request_number", query.request_number.trim());
   if (query.product_code.trim()) params.set("product_code", query.product_code.trim());
-  for (const stage of query.overall_stages) {
-    params.append("overall_stage", stage);
+  if (options?.includeStages !== false) {
+    for (const stage of query.overall_stages) {
+      params.append("overall_stage", stage);
+    }
   }
   if (query.sort_by.trim()) {
     params.set("sort_by", query.sort_by.trim());

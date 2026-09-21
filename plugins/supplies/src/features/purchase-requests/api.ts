@@ -2,6 +2,7 @@ import { httpGet, httpGetBlob, suppliesApiUrl } from "../../api/httpClient";
 import type {
   PurchaseRequestDetail,
   PurchaseRequestListResponse,
+  PurchaseRequestSummary,
   PurchaseRequestsQuery,
 } from "./types";
 import { buildListSearchParams } from "./query";
@@ -17,6 +18,19 @@ export async function listPurchaseRequests(
   );
 }
 
+export async function listPurchaseRequestSummary(
+  query: PurchaseRequestsQuery,
+  signal?: AbortSignal,
+): Promise<PurchaseRequestSummary> {
+  const qs = buildListSearchParams(query, {
+    includePagination: false,
+    includeStages: false,
+  }).toString();
+  return httpGet<PurchaseRequestSummary>(
+    suppliesApiUrl(`/purchase-requests/summary?${qs}`),
+    { signal },
+  );
+}
 export async function getPurchaseRequest(
   branch: string,
   requestNumber: string,

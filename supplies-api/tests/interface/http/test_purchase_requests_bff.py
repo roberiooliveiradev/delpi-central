@@ -4,6 +4,9 @@ from unittest.mock import MagicMock, patch
 
 from app.create_app import create_app
 from app.domain.entities import AuthenticatedIdentity, EffectiveUser
+from app.infrastructure.gateways.purchase_requests_gateway import (
+    PurchaseRequestsGatewayError,
+)
 
 
 def _user(*, permissions: set[str], is_superadmin: bool = False) -> EffectiveUser:
@@ -182,3 +185,70 @@ def test_list_empty_unit_selection_fail_closed(mock_resolve, mock_validate):
         headers={"Authorization": "Bearer tok"},
     )
     assert response.status_code == 403
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_summary_positive_requires_access(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
+    gateway = MagicMock()
+    gateway.get_summary.return_value = {
+        "success": True,
+        "data": {"total_requests": 3, "buckets": {"ordering": 1}},
+    }
+    with patch(
+        "app.interfaces.http.routes.purchase_requests_routes._GATEWAY",
+        gateway,
+    ):
+        client = create_app().test_client()
+        response = client.get(
+            "/purchase-requests/summary?branch=01&overall_stage=completed",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 200
+    assert response.get_json()["total_requests"] == 3
+    gateway.get_summary.assert_called_once()
+    forwarded = gateway.get_summary.call_args.kwargs["query_string"]
+    assert "branch=01" in forwarded
+    assert "overall_stage=completed" in forwarded
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_summary_negative_forbidden_without_access(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions=set())
+    client = create_app().test_client()
+    response = client.get(
+        "/purchase-requests/summary?branch=01",
+        headers={"Authorization": "Bearer tok"},
+    )
+    assert response.status_code == 403
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_summary_upstream_unavailable(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
+    gateway = MagicMock()
+    gateway.get_summary.side_effect = PurchaseRequestsGatewayError(
+        "purchase-requests-api timeout"
+    )
+    with patch(
+        "app.interfaces.http.routes.purchase_requests_routes._GATEWAY",
+        gateway,
+    ):
+        client = create_app().test_client()
+        response = client.get(
+            "/purchase-requests/summary?branch=01",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 502

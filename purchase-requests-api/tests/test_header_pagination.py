@@ -428,6 +428,86 @@ def test_overall_stage_sort_chunks_multiple_list_pages() -> None:
     assert result["total"] == 3
 
 
+def test_stage_filter_reads_past_the_first_upstream_page() -> None:
+    """A stage match that exists only on upstream page 2 is on filtered page 1."""
+    page_one = [
+        _stage_line(request_number="100", request_item="0001", stage_kind="completed"),
+    ]
+    page_two = [
+        _stage_line(request_number="200", request_item="0001", stage_kind="awaiting_order"),
+    ]
+    gateway = MagicMock()
+    gateway.list_lines.side_effect = [
+        {
+            "items": page_one,
+            "page": 1,
+            "page_size": 200,
+            "total": 2,
+            "total_pages": 2,
+        },
+        {
+            "items": page_two,
+            "page": 2,
+            "page_size": 200,
+            "total": 2,
+            "total_pages": 2,
+        },
+    ]
+    scope_repo = MagicMock()
+    scope_repo.list_active_cost_centers_for_user.return_value = [
+        {"branch": "02", "cost_center_code": "0413"}
+    ]
+    user = SimpleNamespace(
+        id="u1",
+        sub="u1",
+        is_superadmin=False,
+        permissions=["purchase-requests.access", "purchase-requests.unit.filial-02"],
+    )
+    result = ListPurchaseRequestsUseCase(gateway=gateway, scope_repository=scope_repo).execute(
+        user=user,
+        branch="02",
+        overall_stage="awaiting_order",
+        page=1,
+        page_size=50,
+    )
+    gateway.export_lines.assert_not_called()
+    assert gateway.list_lines.call_count == 2
+    assert [item["request_number"] for item in result["items"]] == ["200"]
+    assert result["total"] == 1
+    assert result["total_pages"] == 1
+
+
+def test_mixed_header_filter_uses_conservative_stage() -> None:
+    """Sibling lines stay with the header whose conservative stage matches."""
+    awaiting = _stage_line(request_number="100", request_item="0001", stage_kind="awaiting_order")
+    completed = _stage_line(request_number="100", request_item="0002", stage_kind="completed")
+    gateway = MagicMock()
+    gateway.list_lines.return_value = {
+        "items": [awaiting, completed],
+        "page": 1,
+        "page_size": 200,
+        "total": 1,
+        "total_pages": 1,
+    }
+    scope_repo = MagicMock()
+    scope_repo.list_active_cost_centers_for_user.return_value = [
+        {"branch": "02", "cost_center_code": "0413"}
+    ]
+    user = SimpleNamespace(
+        id="u1",
+        sub="u1",
+        is_superadmin=False,
+        permissions=["purchase-requests.access", "purchase-requests.unit.filial-02"],
+    )
+    use_case = ListPurchaseRequestsUseCase(gateway=gateway, scope_repository=scope_repo)
+    kept = use_case.execute(user=user, branch="02", overall_stage="awaiting_order")
+    assert kept["total"] == 1
+    assert {item["request_item"] for item in kept["items"]} == {"0001", "0002"}
+    dropped = use_case.execute(user=user, branch="02", overall_stage="completed")
+    assert dropped["total"] == 0
+    assert dropped["items"] == []
+
+
 def test_invalid_sort_by_is_rejected() -> None:
     """Negative: unknown sort_by rejected before gateway call."""
     gateway = MagicMock()

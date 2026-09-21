@@ -701,7 +701,8 @@
   align-items: center;
 }
 
-.dashboard-supplies-portal .sp-purchase-orders__chip-row {
+.dashboard-supplies-portal .sp-purchase-orders__chip-row,
+.dashboard-supplies-portal .sp-purchase-requests__chip-row {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;

@@ -167,6 +167,48 @@ def export_purchase_requests(
         return fail("Erro interno ao exportar solicitações de compra.", 500)
 
 
+@router.get("/summary")
+def summarize_purchase_requests(
+    branch: list[str] = Query(...),
+    date_from: str | None = Query(None),
+    date_to: str | None = Query(None),
+    request_number: str | None = Query(None),
+    requester_user_id: list[str] | None = Query(None),
+    cost_center: list[str] | None = Query(None),
+    product_code: str | None = Query(None),
+    supplier_code: str | None = Query(None),
+    order_number: str | None = Query(None),
+    overall_stage: list[str] | None = Query(None),
+    user=Depends(_current_user),
+):
+    """Header summary. overall_stage is accepted and ignored so chips keep facet counts."""
+    try:
+        kwargs = _list_kwargs(
+            branch=branch,
+            date_from=date_from,
+            date_to=date_to,
+            request_number=request_number,
+            requester_user_id=requester_user_id,
+            cost_center=cost_center,
+            product_code=product_code,
+            supplier_code=supplier_code,
+            order_number=order_number,
+            overall_stage=overall_stage,
+            sort_by=None,
+            sort_dir=None,
+        )
+        kwargs.pop("sort_by", None)
+        kwargs.pop("sort_dir", None)
+        result = ListPurchaseRequestsUseCase().summarize(user=user, **kwargs)
+        return ok(result, message="Resumo de solicitações de compra.")
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    except ValueError as exc:
+        return fail(str(exc), 422)
+    except Exception:
+        return fail("Erro interno ao resumir solicitações de compra.", 500)
+
+
 @router.get("/requesters")
 def list_purchase_request_requesters(
     branch: list[str] = Query(...),

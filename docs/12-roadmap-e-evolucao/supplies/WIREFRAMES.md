@@ -183,8 +183,9 @@ SectionCard "OTD no tempo"
 | Resource scope | acompanhamento global do Portal; CC/view-all só no standalone |
 | Export | mesma visibilidade do dataset; sem permission de export no Portal |
 | Fonte | PR-api C1; supplies-api/PG somente após C2 |
-| Chrome | PagePath + PageHero + FilterBar kit + SectionCard + ActionButton |
-| Estado | **GATE-FEATURE PASS** (2026-09-11); smoke federado `INCONCLUSIVE` |
+| Chrome | PageHero com 3 indicadores de SC + faixa Atenção + FilterBar kit + SectionCard + ActionButton |
+| Resumo | `GET /purchase-requests/summary` no owner; grão do contador é o cabeçalho (`branch` + número). Buckets: ordering = awaiting_order + partially_ordered; receiving = ordered + awaiting_receipt + partially_received; completed = completed + residual_closed. O chip não entra no recorte do resumo. |
+| Estado | melhoria incremental do WF-04; não é página nova |
 | DoD | kit-first, estados, Help, filtros/URL/F5, tema/mobile, positive+sibling+negative |
 
 ---

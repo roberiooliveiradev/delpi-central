@@ -20,7 +20,6 @@ import {
   SuppliesSectionHintLabel,
   SuppliesMultiSelectField,
   SuppliesSegmentToggle,
-  SuppliesSelectField,
   SuppliesTextField,
   spFiltersKit,
 } from "../../app/suppliesUi";
@@ -168,19 +167,17 @@ export function PurchaseRequestsFilters({
           onChange={product.setDraft}
           hint={SP_HELP.purchaseRequestsProduct}
         />
-        <SuppliesSelectField
+        <SuppliesMultiSelectField
           label={C.stageLabel}
           hint={SP_HELP.purchaseRequestsStage}
-          value={query.overall_stages[0] ?? ""}
-          onChange={(value) => {
-            const stage = value as OverallStage | "";
+          selectedValues={query.overall_stages}
+          onChange={(values) => {
             onPatch({
-              overall_stages: stage ? [stage] : [],
+              overall_stages: values as OverallStage[],
               page: 1,
             });
           }}
           options={stageOptions}
-          allowEmpty
           emptyLabel={C.stageAll}
           searchable={false}
         />

@@ -9,9 +9,25 @@ export const PURCHASE_REQUESTS_CONTENT = {
   listTitle: "Lista de solicitações",
   listHint:
     "Clique na SC ou na linha para abrir a ficha. Lista vazia significa ausência de item no período ou nos filtros.",
-  tableMeta: (columns: number, rows: number) =>
-    `${columns} coluna(s) · ${rows.toLocaleString("pt-BR")} linha(s)`,
-  cardsMeta: (rows: number) => `${rows.toLocaleString("pt-BR")} linha(s)`,
+  tableMeta: (columns: number, requests: number) =>
+    `${columns} coluna(s) · ${requests.toLocaleString("pt-BR")} SC(s)`,
+  cardsMeta: (requests: number) => `${requests.toLocaleString("pt-BR")} SC(s)`,
+  heroRequests: "Solicitações",
+  heroOrdering: "Aguardando pedido",
+  heroReceiving: "Aguardando recebimento",
+  attentionLabel: "Atenção",
+  attentionAriaLabel: "Atalhos de situação das solicitações",
+  attentionAll: "Todos",
+  attentionOrdering: "Aguardando pedido",
+  attentionReceiving: "Aguardando recebimento",
+  attentionCompleted: "Concluídas",
+  attentionAllWithCount: (count: number) => `Todos (${count.toLocaleString("pt-BR")})`,
+  attentionOrderingWithCount: (count: number) =>
+    `Aguardando pedido (${count.toLocaleString("pt-BR")})`,
+  attentionReceivingWithCount: (count: number) =>
+    `Aguardando recebimento (${count.toLocaleString("pt-BR")})`,
+  attentionCompletedWithCount: (count: number) =>
+    `Concluídas (${count.toLocaleString("pt-BR")})`,
   openScLinkTitle: (number: string) => `Abrir solicitação ${number}`,
   branchLabel: "Unidade",
   dateFromLabel: "De",

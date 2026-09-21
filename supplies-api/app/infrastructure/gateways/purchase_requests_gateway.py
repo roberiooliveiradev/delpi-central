@@ -58,22 +58,20 @@ class PurchaseRequestsGateway:
         access_token: str,
         branch: str,
     ) -> int:
+        payload = self.get_summary(
+            access_token=access_token,
+            params={"branch": branch},
+        )
+        data = payload.get("data", payload) if isinstance(payload, dict) else {}
+        if not isinstance(data, dict):
+            return 0
+        counts = data.get("stage_counts") or {}
+        if not isinstance(counts, dict):
+            return 0
         total = 0
         for stage in self.OPEN_STAGES:
-            payload = self.list_purchase_requests(
-                access_token=access_token,
-                params={
-                    "branch": branch,
-                    "overall_stage": stage,
-                    "page": 1,
-                    "page_size": 1,
-                },
-            )
-            data = payload.get("data", payload) if isinstance(payload, dict) else {}
-            if not isinstance(data, dict):
-                continue
             try:
-                total += int(data.get("total") or 0)
+                total += int(counts.get(stage) or 0)
             except (TypeError, ValueError):
                 continue
         return total
@@ -115,6 +113,20 @@ class PurchaseRequestsGateway:
     ) -> Any:
         return self.get(
             "purchase-requests/requesters",
+            access_token=access_token,
+            params=params,
+            query_string=query_string,
+        )
+
+    def get_summary(
+        self,
+        *,
+        access_token: str,
+        params: dict[str, Any] | list[tuple[str, Any]] | None = None,
+        query_string: str | None = None,
+    ) -> Any:
+        return self.get(
+            "purchase-requests/summary",
             access_token=access_token,
             params=params,
             query_string=query_string,

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
 
 import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
@@ -14,6 +14,7 @@ import {
   SuppliesLoadingCard,
   SuppliesPageHero,
   SuppliesPagePath,
+  SuppliesScopeChipBar,
   SuppliesSectionCard,
   SuppliesSectionHintLabel,
   SuppliesStateBanner,
@@ -21,8 +22,10 @@ import {
 import { SP_HELP } from "../../content/helpTooltips";
 import {
   downloadPurchaseRequestsExport,
+  listPurchaseRequestSummary,
   listPurchaseRequests,
 } from "./api";
+import { activeAttentionBucket, attentionQueryPatch } from "./attentionBuckets";
 import {
   mapPurchaseRequestsFetchError,
   PURCHASE_REQUESTS_CONTENT as C,
@@ -36,7 +39,7 @@ import {
   parseQueryFromSearch,
   parseRequestKey,
 } from "./query";
-import type { PurchaseRequestListItem, PurchaseRequestsQuery } from "./types";
+import type { PurchaseRequestListItem, PurchaseRequestSummary, PurchaseRequestsQuery } from "./types";
 
 type PurchaseRequestsPageProps = {
   basePath: string;
@@ -79,6 +82,7 @@ export function PurchaseRequestsPage({ basePath }: PurchaseRequestsPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [items, setItems] = useState<PurchaseRequestListItem[]>([]);
   const [total, setTotal] = useState(0);
+  const [summary, setSummary] = useState<PurchaseRequestSummary | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
 
@@ -128,11 +132,101 @@ export function PurchaseRequestsPage({ basePath }: PurchaseRequestsPageProps) {
     return () => controller.abort();
   }, [query, reloadKey, units]);
 
+  const summaryKey = [
+    query.branches.join(","),
+    query.date_from,
+    query.date_to,
+    query.request_number,
+    query.product_code,
+    reloadKey,
+    units.join(","),
+  ].join("|");
+
+  useEffect(() => {
+    if (!units.length) return;
+    const controller = new AbortController();
+    listPurchaseRequestSummary(authorizeQueryBranches(query, units), controller.signal)
+      .then((payload) => {
+        setSummary(payload);
+      })
+      .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
+        setSummary(null);
+        void err;
+      });
+    return () => controller.abort();
+    // summaryKey omits overall_stages so a chip does not refetch facet counts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [summaryKey]);
+
   const homeHref = buildPluginPath("home", basePath);
 
   const patchQuery = useCallback((patch: Partial<PurchaseRequestsQuery>) => {
     setQuery((current) => ({ ...current, ...patch }));
   }, []);
+
+  const highlights = useMemo(() => {
+    const ordering = summary?.buckets.ordering ?? 0;
+    const receiving = summary?.buckets.receiving ?? 0;
+    return [
+      {
+        id: "requests",
+        label: C.heroRequests,
+        value: summary == null ? "—" : summary.total_requests.toLocaleString("pt-BR"),
+      },
+      {
+        id: "ordering",
+        label: C.heroOrdering,
+        value: summary == null ? "—" : ordering.toLocaleString("pt-BR"),
+        tone: summary != null && ordering > 0 ? ("warning" as const) : undefined,
+      },
+      {
+        id: "receiving",
+        label: C.heroReceiving,
+        value: summary == null ? "—" : receiving.toLocaleString("pt-BR"),
+        tone: summary != null && receiving > 0 ? ("warning" as const) : undefined,
+      },
+    ];
+  }, [summary]);
+
+  const activeBucket = activeAttentionBucket(query.overall_stages);
+  const attentionChips = useMemo(() => {
+    return [
+      {
+        id: "all",
+        label: summary == null ? C.attentionAll : C.attentionAllWithCount(summary.total_requests),
+        active: activeBucket === "all",
+        onSelect: () => patchQuery(attentionQueryPatch("all")),
+      },
+      {
+        id: "ordering",
+        label:
+          summary == null
+            ? C.attentionOrdering
+            : C.attentionOrderingWithCount(summary.buckets.ordering),
+        active: activeBucket === "ordering",
+        onSelect: () => patchQuery(attentionQueryPatch("ordering")),
+      },
+      {
+        id: "receiving",
+        label:
+          summary == null
+            ? C.attentionReceiving
+            : C.attentionReceivingWithCount(summary.buckets.receiving),
+        active: activeBucket === "receiving",
+        onSelect: () => patchQuery(attentionQueryPatch("receiving")),
+      },
+      {
+        id: "completed",
+        label:
+          summary == null
+            ? C.attentionCompleted
+            : C.attentionCompletedWithCount(summary.buckets.completed),
+        active: activeBucket === "completed",
+        onSelect: () => patchQuery(attentionQueryPatch("completed")),
+      },
+    ];
+  }, [activeBucket, patchQuery, summary]);
 
   const reload = () => setReloadKey((value) => value + 1);
 
@@ -181,6 +275,7 @@ export function PurchaseRequestsPage({ basePath }: PurchaseRequestsPageProps) {
         }
         description={C.description}
         aria-label={C.filtersAriaLabel}
+        highlights={highlights}
         actions={
           <div className="sp-list-hero-actions sp-purchase-requests__toolbar-actions">
             {lastUpdatedAt && !loading ? (
@@ -207,12 +302,21 @@ export function PurchaseRequestsPage({ basePath }: PurchaseRequestsPageProps) {
         {!units.length ? (
           <SuppliesEmptyState title={C.noUnitsTitle} message={C.noUnitsMessage} />
         ) : (
-          <PurchaseRequestsFilters
-            query={query}
-            units={units}
-            onPatch={patchQuery}
-            onClear={onClear}
-          />
+          <>
+            <div className="sp-purchase-requests__chip-row">
+              <SuppliesScopeChipBar
+                aria-label={C.attentionAriaLabel}
+                label={C.attentionLabel}
+                chips={attentionChips}
+              />
+            </div>
+            <PurchaseRequestsFilters
+              query={query}
+              units={units}
+              onPatch={patchQuery}
+              onClear={onClear}
+            />
+          </>
         )}
       </SuppliesPageHero>
 

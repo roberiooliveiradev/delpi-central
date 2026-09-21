@@ -83,6 +83,21 @@ def list_portal_purchase_requests():
     return jsonify(_unwrap_data(payload)), 200
 
 
+@purchase_requests_bp.get("/purchase-requests/summary")
+@require_policy(can_use_purchase_requests)
+@require_units("branch")
+def summarize_portal_purchase_requests():
+    """operationId: summarize_portal_purchase_requests — BFF; counts stay on the owner."""
+    try:
+        payload = _GATEWAY.get_summary(
+            access_token=_access_token(),
+            query_string=request.query_string.decode("utf-8") or None,
+        )
+    except PurchaseRequestsGatewayError as exc:
+        return _gateway_error_response(exc)
+    return jsonify(_unwrap_data(payload)), 200
+
+
 @purchase_requests_bp.get("/purchase-requests/requesters")
 @require_policy(can_use_purchase_requests)
 @require_units("branch")

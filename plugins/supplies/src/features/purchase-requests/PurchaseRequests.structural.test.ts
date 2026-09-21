@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { mapPurchaseRequestsFetchError } from "./content";
+import { attentionQueryPatch, activeAttentionBucket } from "./attentionBuckets";
 import {
   authorizeQueryBranches,
   buildListSearchParams,
@@ -34,6 +35,11 @@ describe("PurchaseRequests feature", () => {
   it("lista sem painel inline e com redirect legado", () => {
     const page = readFileSync(join(dir, "PurchaseRequestsPage.tsx"), "utf8");
     expect(page).toContain("SuppliesPageHero");
+    expect(page).toContain("highlights=");
+    expect(page).toContain("SuppliesScopeChipBar");
+    expect(page).toContain("listPurchaseRequestSummary");
+    expect(page).toContain("setSummary(null)");
+    expect(page).not.toContain("items.reduce");
     expect(page).toContain("PurchaseRequestsFilters");
     expect(page).toContain("SuppliesSectionCard");
     expect(page).toContain("lastUpdatedAt");
@@ -74,7 +80,8 @@ describe("PurchaseRequests feature", () => {
     expect(filters).not.toContain("C.moreFilters");
     expect(filters).not.toContain("showMore");
     expect(filters).not.toContain("searchable={unitOptions.length > 4}");
-    expect(filters).not.toContain("Aplicar filtros");
+    expect(filters).toContain("selectedValues={query.overall_stages}");
+    expect(filters).not.toContain("overall_stages[0]");
   });
 
   it("toolbar canônica com href canônico de SC sem is-selected", () => {
@@ -120,7 +127,9 @@ describe("PurchaseRequests feature", () => {
 
     const content = readFileSync(join(dir, "content.ts"), "utf8");
     expect(content).toContain("cardsMeta:");
-    expect(content).toMatch(/cardsMeta: \(rows: number\) =>/);
+    expect(content).toMatch(/cardsMeta: \(requests: number\) =>/);
+    expect(content).toContain("SC(s)");
+    expect(content).not.toMatch(/linha\(s\)/);
   });
 
   it("CSS não recria botão/filtro do kit e usa região de tabela compartilhada", () => {
@@ -184,6 +193,28 @@ describe("PurchaseRequests feature", () => {
     expect(parseRequestKey("invalid")).toBeNull();
     expect(buildRequestKey("01", "100")).toBe("01:100");
     expect(parseQueryFromSearch("?overall_stage=not-a-stage", ["01"]).overall_stages).toEqual([]);
+    expect(
+      parseQueryFromSearch(
+        "?overall_stage=awaiting_order&overall_stage=partially_ordered",
+        ["01"],
+      ).overall_stages,
+    ).toEqual(["awaiting_order", "partially_ordered"]);
+    expect(attentionQueryPatch("ordering")).toEqual({
+      overall_stages: ["awaiting_order", "partially_ordered"],
+      page: 1,
+    });
+    expect(attentionQueryPatch("receiving").overall_stages).toEqual([
+      "ordered",
+      "awaiting_receipt",
+      "partially_received",
+    ]);
+    expect(attentionQueryPatch("completed").overall_stages).toEqual([
+      "completed",
+      "residual_closed",
+    ]);
+    expect(attentionQueryPatch("all")).toEqual({ overall_stages: [], page: 1 });
+    expect(activeAttentionBucket([])).toBe("all");
+    expect(activeAttentionBucket(["awaiting_order"])).toBeNull();
   });
 
   it("matriz de sort UI→API cobre item, produto e stage", async () => {

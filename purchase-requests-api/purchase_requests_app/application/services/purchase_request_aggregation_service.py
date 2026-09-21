@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from purchase_requests_app.domain.services.purchase_request_domain_service import (
@@ -37,13 +38,30 @@ GATEWAY_SORT_FIELDS: frozenset[str] = frozenset(
 
 LOCAL_SORT_FIELDS: frozenset[str] = frozenset({"overall_stage"})
 
-# overall_stage list sort: chunked list_lines (not export) with hard header cap.
-STAGE_SORT_MAX_HEADERS = 10000
-STAGE_SORT_PAGE_SIZE = 200
-STAGE_SORT_TOO_LARGE_MESSAGE = (
+# UX buckets over canonical stages. Single owner for summary and header filters.
+# "ordered" stays in the receiving bucket even though derive_overall_stage
+# currently falls through to awaiting_receipt.
+ATTENTION_BUCKETS: dict[str, tuple[str, ...]] = {
+    "ordering": ("awaiting_order", "partially_ordered"),
+    "receiving": ("ordered", "awaiting_receipt", "partially_received"),
+    "completed": ("completed", "residual_closed"),
+}
+
+# Derived-stage operations (sort, header filter, summary): chunked list_lines, not export.
+DERIVED_STAGE_MAX_HEADERS = 10000
+DERIVED_STAGE_PAGE_SIZE = 200
+DERIVED_STAGE_TOO_LARGE_MESSAGE = (
     "Ordenação por situação exige um recorte menor. "
     "Reduza o período ou selecione uma unidade."
 )
+SUMMARY_TOO_LARGE_MESSAGE = (
+    "Resumo operacional exige um recorte menor. "
+    "Reduza o período ou selecione uma unidade."
+)
+# Aliases kept for existing imports.
+STAGE_SORT_MAX_HEADERS = DERIVED_STAGE_MAX_HEADERS
+STAGE_SORT_PAGE_SIZE = DERIVED_STAGE_PAGE_SIZE
+STAGE_SORT_TOO_LARGE_MESSAGE = DERIVED_STAGE_TOO_LARGE_MESSAGE
 
 
 def normalize_list_sort_by(sort_by: str | None) -> str | None:
@@ -73,6 +91,124 @@ class PurchaseRequestAggregationService:
                 line.get("cost_center_code"),
             )
         ]
+
+    def group_headers(self, lines: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Headers in first-seen order. Stage is the existing conservative rule."""
+        order: list[tuple[str, str]] = []
+        groups: dict[tuple[str, str], list[dict[str, Any]]] = {}
+        for line in lines:
+            key = (str(line.get("branch") or ""), str(line.get("request_number") or ""))
+            bucket = groups.get(key)
+            if bucket is None:
+                groups[key] = [line]
+                order.append(key)
+            else:
+                bucket.append(line)
+        headers: list[dict[str, Any]] = []
+        for key in order:
+            group = groups[key]
+            stages = [
+                str(self._enrich_line(line)["derived"]["overall_stage"])
+                for line in group
+            ]
+            headers.append(
+                {
+                    "branch": key[0],
+                    "request_number": key[1],
+                    "stage": self._conservative_stage(stages),
+                    "lines": group,
+                }
+            )
+        return headers
+
+    def summarize_lines(self, lines: list[dict[str, Any]]) -> dict[str, Any]:
+        """Header grain. total_items counts lines. Buckets ignore the stage chip."""
+        headers = self.group_headers(lines)
+        stage_counts = {stage: 0 for stage in OVERALL_STAGE_SORT_ORDER}
+        for header in headers:
+            stage = str(header["stage"])
+            if stage in stage_counts:
+                stage_counts[stage] += 1
+        buckets = {
+            name: sum(stage_counts[stage] for stage in members)
+            for name, members in ATTENTION_BUCKETS.items()
+        }
+        return {
+            "total_requests": len(headers),
+            "total_items": len(lines),
+            "stage_counts": stage_counts,
+            "buckets": buckets,
+            "bucket_stages": {
+                name: list(members) for name, members in ATTENTION_BUCKETS.items()
+            },
+        }
+
+    def lines_matching_header_stages(
+        self,
+        lines: list[dict[str, Any]],
+        allowed_stages: set[str],
+    ) -> list[dict[str, Any]]:
+        selected: list[dict[str, Any]] = []
+        for header in self.group_headers(lines):
+            if header["stage"] in allowed_stages:
+                selected.extend(header["lines"])
+        return selected
+
+    def page_by_header(
+        self,
+        lines: list[dict[str, Any]],
+        *,
+        allowed_stages: set[str] | None,
+        sort_by: str | None,
+        sort_dir: str | None,
+        page: int,
+        page_size: int,
+    ) -> dict[str, Any]:
+        headers = self.group_headers(lines)
+        if allowed_stages:
+            headers = [header for header in headers if header["stage"] in allowed_stages]
+        if sort_by == "overall_stage":
+            headers = self._sort_headers(headers, sort_dir=sort_dir)
+        total = len(headers)
+        safe_page = max(1, int(page or 1))
+        safe_size = max(1, int(page_size or 50))
+        start = (safe_page - 1) * safe_size
+        chosen = headers[start : start + safe_size]
+        items: list[dict[str, Any]] = []
+        for header in chosen:
+            items.extend(self._enrich_line(line) for line in header["lines"])
+        total_pages = math.ceil(total / safe_size) if total else 0
+        return {
+            "items": items,
+            "page": safe_page,
+            "page_size": safe_size,
+            "total": total,
+            "total_pages": total_pages,
+        }
+
+    def _sort_headers(
+        self,
+        headers: list[dict[str, Any]],
+        *,
+        sort_dir: str | None,
+    ) -> list[dict[str, Any]]:
+        direction = (sort_dir or "desc").strip().lower()
+        if direction not in {"asc", "desc"}:
+            raise ValueError("Invalid sort_dir")
+        order_index = {stage: idx for idx, stage in enumerate(OVERALL_STAGE_SORT_ORDER)}
+        unknown = len(OVERALL_STAGE_SORT_ORDER)
+
+        def header_key(header: dict[str, Any]) -> tuple:
+            rank = order_index.get(str(header.get("stage") or ""), unknown)
+            if direction == "desc":
+                rank = -rank
+            return (
+                rank,
+                str(header.get("branch") or ""),
+                str(header.get("request_number") or ""),
+            )
+
+        return sorted(headers, key=header_key)
 
     def build_list_line_items(
         self,

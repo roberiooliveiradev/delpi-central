@@ -13,11 +13,12 @@ from purchase_requests_app.application.security.supplies_portal_context import (
     is_trusted_supplies_bff_call,
 )
 from purchase_requests_app.application.services.purchase_request_aggregation_service import (
+    DERIVED_STAGE_MAX_HEADERS,
+    DERIVED_STAGE_PAGE_SIZE,
+    DERIVED_STAGE_TOO_LARGE_MESSAGE,
     GATEWAY_SORT_FIELDS,
     LOCAL_SORT_FIELDS,
-    STAGE_SORT_MAX_HEADERS,
-    STAGE_SORT_PAGE_SIZE,
-    STAGE_SORT_TOO_LARGE_MESSAGE,
+    SUMMARY_TOO_LARGE_MESSAGE,
     PurchaseRequestAggregationService,
     normalize_list_sort_by,
 )
@@ -94,10 +95,15 @@ class ListPurchaseRequestsUseCase:
             }
         normalized_sort = normalize_list_sort_by(sort_by)
         self._assert_sort(normalized_sort, sort_dir)
-
-        if normalized_sort == "overall_stage":
-            # overall_stage is owner-derived — never forward to api-delpi SQL.
-            # Chunked list_lines (capped) instead of uncapped export_lines.
+        stages = _normalize_overall_stages(overall_stages, overall_stage)
+        if normalized_sort == "overall_stage" or stages:
+            # Derived stage is owner-local. Collect the capped header universe
+            # before the page cut so the filter is not limited to one upstream page.
+            gateway_sort = (
+                None
+                if normalized_sort == "overall_stage"
+                else (normalized_sort if normalized_sort in GATEWAY_SORT_FIELDS else None)
+            )
             params = self._gateway_params(
                 branches=codes,
                 date_from=date_from,
@@ -109,15 +115,17 @@ class ListPurchaseRequestsUseCase:
                 requester_user_ids=requester_user_ids,
                 cost_centers=cost_center_codes,
                 scopes=scopes,
-                sort_by=None,
-                sort_dir=None,
+                sort_by=gateway_sort,
+                sort_dir=sort_dir if gateway_sort else None,
             )
-            payload = self._collect_lines_for_stage_sort(params=params)
-            return self._assemble_owner_sorted_page(
+            payload = self._collect_lines_for_derived_stage(
+                params=params,
+                too_large_message=DERIVED_STAGE_TOO_LARGE_MESSAGE,
+            )
+            return self._assemble_derived_page(
                 payload,
                 resolution=resolution,
-                overall_stages=overall_stages,
-                overall_stage=overall_stage,
+                stages=stages,
                 sort_by=normalized_sort,
                 sort_dir=sort_dir,
                 page=page,
@@ -213,18 +221,81 @@ class ListPurchaseRequestsUseCase:
             sort_dir=sort_dir if gateway_sort else None,
         )
         payload = self._gateway.export_lines(params=params)
-        assembled = self._assemble_page(
-            payload,
+        lines = self._aggregation.filter_authorized_lines(
+            payload.get("items") or [],
             resolution=resolution,
-            overall_stages=overall_stages,
-            overall_stage=overall_stage,
+        )
+        stages = _normalize_overall_stages(overall_stages, overall_stage)
+        if stages:
+            lines = self._aggregation.lines_matching_header_stages(lines, set(stages))
+        items = self._aggregation.build_list_line_items(
+            lines,
             sort_by=normalized_sort,
             sort_dir=sort_dir,
-            page=1,
-            page_size=len(payload.get("items") or []) or 1,
         )
-        items = assembled["items"]
         return {"items": items, "total": len(items)}
+
+    def summarize(
+        self,
+        *,
+        user,
+        branch: str | None = None,
+        branches: list[str] | None = None,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        request_number: str | None = None,
+        requester_user_ids: list[str] | None = None,
+        cost_center: str | None = None,
+        cost_centers: list[str] | None = None,
+        product_code: str | None = None,
+        supplier_code: str | None = None,
+        order_number: str | None = None,
+        overall_stage: str | None = None,
+        overall_stages: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Header summary for the base filters. The stage chip is ignored on purpose."""
+        del overall_stage, overall_stages
+        portal = is_trusted_supplies_bff_call()
+        if not portal and not has_access(user):
+            raise PermissionError("Sem permissão para acessar solicitações de compra.")
+        codes = self._authorized_branches(
+            user,
+            branch=branch,
+            branches=branches,
+            portal=portal,
+        )
+        resolution, cost_center_codes, scopes = self._resolve_scopes(
+            user=user,
+            branches=codes,
+            cost_center=cost_center,
+            cost_centers=cost_centers,
+            portal=portal,
+        )
+        if cost_center_codes == [] or scopes == []:
+            return self._aggregation.summarize_lines([])
+        params = self._gateway_params(
+            branches=codes,
+            date_from=date_from,
+            date_to=date_to,
+            request_number=request_number,
+            product_code=product_code,
+            supplier_code=supplier_code,
+            order_number=order_number,
+            requester_user_ids=requester_user_ids,
+            cost_centers=cost_center_codes,
+            scopes=scopes,
+            sort_by=None,
+            sort_dir=None,
+        )
+        payload = self._collect_lines_for_derived_stage(
+            params=params,
+            too_large_message=SUMMARY_TOO_LARGE_MESSAGE,
+        )
+        lines = self._aggregation.filter_authorized_lines(
+            payload.get("items") or [],
+            resolution=resolution,
+        )
+        return self._aggregation.summarize_lines(lines)
 
     @staticmethod
     def _assert_sort(sort_by: str | None, sort_dir: str | None) -> None:
@@ -345,27 +416,28 @@ class ListPurchaseRequestsUseCase:
                 params["requester_protheus_user_id"] = cleaned
         return params
 
-    def _collect_lines_for_stage_sort(
+    def _collect_lines_for_derived_stage(
         self,
         *,
         params: dict[str, Any],
+        too_large_message: str,
     ) -> dict[str, Any]:
-        """Fetch all line pages via list_lines for owner-local overall_stage sort.
+        """Fetch list_lines pages for derived-stage sort, filter or summary.
 
-        Caps by header ``total`` from the first page (api-delpi header grain).
+        Caps by header total from the first page. Does not use uncapped export.
         """
         first_params = {
             **params,
             "page": "1",
-            "page_size": str(STAGE_SORT_PAGE_SIZE),
+            "page_size": str(DERIVED_STAGE_PAGE_SIZE),
         }
         first = self._gateway.list_lines(params=first_params)
         try:
             total = int(first.get("total") or 0)
         except (TypeError, ValueError):
             total = 0
-        if total > STAGE_SORT_MAX_HEADERS:
-            raise ValueError(STAGE_SORT_TOO_LARGE_MESSAGE)
+        if total > DERIVED_STAGE_MAX_HEADERS:
+            raise ValueError(too_large_message)
 
         items: list[Any] = list(first.get("items") or [])
         try:
@@ -373,13 +445,13 @@ class ListPurchaseRequestsUseCase:
         except (TypeError, ValueError):
             total_pages = 0
         if total_pages <= 0 and total > 0:
-            total_pages = math.ceil(total / STAGE_SORT_PAGE_SIZE)
+            total_pages = math.ceil(total / DERIVED_STAGE_PAGE_SIZE)
 
         for page_num in range(2, total_pages + 1):
             page_params = {
                 **params,
                 "page": str(page_num),
-                "page_size": str(STAGE_SORT_PAGE_SIZE),
+                "page_size": str(DERIVED_STAGE_PAGE_SIZE),
             }
             payload = self._gateway.list_lines(params=page_params)
             items.extend(payload.get("items") or [])
@@ -424,49 +496,29 @@ class ListPurchaseRequestsUseCase:
             "total_pages": payload.get("total_pages", 0),
         }
 
-    def _assemble_owner_sorted_page(
+    def _assemble_derived_page(
         self,
         payload: dict[str, Any],
         *,
         resolution,
-        overall_stages: list[str] | None,
-        overall_stage: str | None,
-        sort_by: str,
+        stages: list[str],
+        sort_by: str | None,
         sort_dir: str | None,
         page: int,
         page_size: int,
     ) -> dict[str, Any]:
-        lines = payload.get("items") or []
         lines = self._aggregation.filter_authorized_lines(
-            lines,
+            payload.get("items") or [],
             resolution=resolution,
         )
-        items = self._aggregation.build_list_line_items(
+        return self._aggregation.page_by_header(
             lines,
+            allowed_stages=set(stages) if stages else None,
             sort_by=sort_by,
             sort_dir=sort_dir,
+            page=page,
+            page_size=page_size,
         )
-        stages = _normalize_overall_stages(overall_stages, overall_stage)
-        if stages:
-            allowed_stages = set(stages)
-            items = [
-                item
-                for item in items
-                if (item.get("derived") or {}).get("overall_stage") in allowed_stages
-            ]
-        total = len(items)
-        safe_page = max(1, int(page or 1))
-        safe_size = max(1, int(page_size or 50))
-        start = (safe_page - 1) * safe_size
-        page_items = items[start : start + safe_size]
-        total_pages = math.ceil(total / safe_size) if total else 0
-        return {
-            "items": page_items,
-            "page": safe_page,
-            "page_size": safe_size,
-            "total": total,
-            "total_pages": total_pages,
-        }
 
 
 def _normalize_overall_stages(

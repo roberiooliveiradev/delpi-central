@@ -79,7 +79,15 @@ export const SP_HELP = {
   otdAnalyticsPage:
     "Pontualidade de compras com velocímetros por unidade (Santa Catarina / Espírito Santo) e evolução no tempo. Diferente da Visão geral (placar de KPIs) e de Entregas (atrasos do dia).",
   purchaseRequests:
-    "Itens de solicitações de compra no período. Quem tem uso normal do Portal acompanha as duas unidades e exporta Excel/CSV. Clique na SC ou na linha para abrir a ficha.",
+    "Acompanhamento global das solicitações no período. Os indicadores contam SCs, não linhas: Solicitações é o total do recorte; Aguardando pedido reúne SCs ainda sem pedido completo; Aguardando recebimento reúne SCs já encaminhadas e ainda não concluídas. Atenção só filtra a lista — não é permissão nem um fluxo novo.",
+  purchaseRequestsStage:
+    "Situação da SC. Pode marcar várias. Aguardando pedido = aguardando pedido e pedido parcial. Aguardando recebimento = pedido emitido, aguardando entrega e recebimento parcial. Concluídas = concluída e encerrada por resíduo. A faixa Atenção aplica esses mesmos grupos.",
+  purchaseRequestsAttention:
+    "Atalhos do recorte atual, sem o filtro de situação. Todos limpa a situação. Os números continuam visíveis mesmo depois de escolher um atalho.",
+  purchaseRequestsTableMeta:
+    "No modo Tabela: colunas visíveis e total de solicitações (SCs) do recorte filtrado, não a quantidade de linhas da página.",
+  purchaseRequestsCardsMeta:
+    "Total de solicitações (SCs) do recorte filtrado no modo Cards, não a quantidade de linhas da página.",
   purchaseRequestsBranch:
     "Unidade do recorte (Santa Catarina e/ou Espírito Santo). «Todas» consulta todas as unidades liberadas na sessão. Códigos técnicos ficam só na URL e na API.",
   purchaseRequestsView:
@@ -92,8 +100,6 @@ export const SP_HELP = {
     "Período de abertura da SC — mesmos atalhos da Visão geral (Hoje, Esta semana, Este mês…). Editar datas manualmente vira Personalizado. Compartilhável pela URL via date_from/date_to (F5 restaura o recorte; o atalho é derivado das datas). O padrão é Este mês.",
   purchaseRequestsNumber: "Filtra pelo número da solicitação de compras.",
   purchaseRequestsProduct: "Filtra por código ou trecho de produto/MP da linha.",
-  purchaseRequestsStage:
-    "Situação consolidada da SC (aguardando pedido, parcial, concluída etc.).",
   purchaseRequestsExport:
     "Exporta para Excel o recorte filtrado inteiro, sem truncar na página. Faz parte do uso normal do Portal. CSV permanece disponível como formato legado.",
   purchaseRequestsFilters:
@@ -104,15 +110,12 @@ export const SP_HELP = {
     "Ajusta o tamanho da fonte da tabela neste navegador. Vale só no modo Tabela; no modo Cards o controle não aparece. A preferência fica salva localmente e volta ao retornar à Tabela.",
   purchaseRequestsTableColumns:
     "Escolha quais colunas exibir e arraste para reordenar na Tabela. No modo Cards o menu não aparece (composição fixa dos cards). A preferência fica salva neste navegador; não altera permissões nem dados.",
-  purchaseRequestsTableMeta:
-    "No modo Tabela: colunas visíveis e total de linhas do recorte filtrado (não só a página atual).",
-  purchaseRequestsCardsMeta:
-    "Total de linhas do recorte filtrado no modo Cards (não só a página atual). Fonte e Colunas são preferências só da Tabela.",
   purchaseRequestsColRequester:
     "Solicitante da SC com avatar de iniciais, no mesmo padrão visual do Portal Comercial. A ficha da pessoa ainda não existe; o avatar não abre outra página.",
   purchaseRequestsColCc: "Centro de custo da linha no escopo liberado ao usuário.",
   purchaseRequestsColOpened: "Data de abertura da solicitação de compras.",
-  purchaseRequestsColStage: "Situação consolidada da SC a partir do andamento dos itens.",
+  purchaseRequestsColStage:
+    "Situação do item. Os atalhos de Atenção usam a situação conservadora da SC inteira, não só desta linha.",
   purchaseRequestsEntityLink:
     "O número da SC abre a ficha em página própria (/purchase-requests/unidade/número). Você também pode clicar na linha ou no card.",
   purchaseRequestDetail:
