@@ -48,7 +48,7 @@ Base do MFE: `/apps/helpdesk-api`.
 | `urgency_id` | urgência 1–5 |
 | `category_id` | categoria do token |
 | `updated_from` / `updated_to` | `YYYY-MM-DD` em `date_mod` |
-| `sort` | `updated_at:desc` (padrão), `created_at:asc\|desc`, `title:asc` |
+| `sort` | `updated_at:desc` (padrão), `created_at`, `title`, `id`, `status`, `category`, `urgency` + `:asc\|:desc` |
 | `page` | página 1-based |
 | `page_size` | padrão 20, máximo 50 |
 

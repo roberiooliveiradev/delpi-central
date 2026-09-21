@@ -323,6 +323,10 @@ def test_list_query_uses_rsql_and_rejects_injection():
         build_ticket_list_query(status="admin")
     with pytest.raises(GlpiValidation):
         build_ticket_list_query(sort="entity:desc")
+    assert build_ticket_list_query(sort="id:desc").sort == "id:desc"
+    assert build_ticket_list_query(sort="status:asc").sort == "status.id:asc"
+    assert build_ticket_list_query(sort="urgency:desc").sort == "urgency:desc"
+    assert build_ticket_list_query(sort="category:asc").sort == "category.name:asc"
 
 
 def test_mapping_list_publishes_created_at_and_assigned():

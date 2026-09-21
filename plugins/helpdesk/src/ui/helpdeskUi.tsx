@@ -3,6 +3,8 @@ import {
   attachmentPreviewStripBemClasses,
   createDashboardAttachmentPreviewStrip,
   createDashboardDataRecordCard,
+  DataTable,
+  dataTableBemClasses,
   createDashboardEmptyState,
   createDashboardFiltersKit,
   createDashboardFormActions,
@@ -71,6 +73,25 @@ export function HelpdeskMessageThread(
 export const HelpdeskStatusBadge = createDashboardStatusBadge({ prefix: PREFIX });
 
 export const HelpdeskRecordCard = createDashboardDataRecordCard({ prefix: PREFIX });
+
+const tableClassNames = dataTableBemClasses(PREFIX);
+
+export function HelpdeskDataTable<T extends object>(
+  props: Omit<ComponentProps<typeof DataTable<T>>, "classNames" | "labels">,
+) {
+  return (
+    <DataTable
+      classNames={tableClassNames}
+      labels={{
+        emptyMessage: "Nenhum chamado neste recorte.",
+        loadingMessage: "Carregando chamados…",
+        sortByAriaLabel: (header) => `Ordenar por ${header}`,
+        headerHelpAriaLabel: (header) => `Ajuda: ${header}`,
+      }}
+      {...props}
+    />
+  );
+}
 
 export const HelpdeskTextField = createDashboardTextField({
   classNames: textFieldPacClasses(PREFIX),

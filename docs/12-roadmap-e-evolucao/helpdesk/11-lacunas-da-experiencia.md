@@ -25,7 +25,7 @@ A lista do GLPI é a bancada Super-Admin. Meus Chamados de TI não copia essa gr
 
 | Capacidade | Onde |
 |---|---|
-| Lista dos chamados visíveis ao token | `GET /tickets` → cartões |
+| Lista dos chamados visíveis ao token | `GET /tickets` → tabela com ordenação de coluna |
 | Abrir chamado | título, descrição, categoria, urgência |
 | Conversa | abertura + acompanhamentos em `HelpdeskMessageThread` |
 | Responder | texto + `Idempotency-Key` |
@@ -66,7 +66,7 @@ Pedido explícito das fotos: filtros e listagem de dados.
 | L-11 | Paginação | GLPI 15 por página; BFF pede a coleção inteira de `GET /Assistance/Ticket` | IMPLEMENTADO | `page`/`has_more`; sem total inventado |
 | L-12 | Estado vazio com filtro ativo | hoje o vazio significa «nenhum chamado»; com filtro precisa dizer «nenhum neste recorte» | IMPLEMENTADO | apresentação + ajuda |
 
-Kit já no plugin-ui, ainda sem factory no helpdesk: `createDashboardFiltersKit` (`FiltersRow`, `FilterInputField`, `FilterSelectField`). Uma moldura só — a do `FilterBar`. Sem tabela de 11 colunas: o wireframe vigente proíbe rolagem horizontal. A listagem continua em `HelpdeskRecordCard`, com mais campos.
+Filtros: `createDashboardFiltersKit`. Lista: `HelpdeskDataTable` (`DataTable` do kit), com scroll horizontal intencional. Sem coluna de entidade, último editor ou contadores do parque. Técnico aparece, mas não ordena — a HLAPI não tem propriedade simples de atribuído.
 
 Não copiar da foto do GLPI para esta lista: entidade, data de solução, último editor, contadores do parque (1 000 novos, 128 128 linhas). Isso é a bancada.
 
@@ -137,9 +137,8 @@ Uma coluna, kit da Minha DELPI, tokens `--delpi-ui-*`. Sem grade do GLPI e sem v
   HelpdeskPageHeader
   HelpdeskSectionCard  «Meus chamados»
     FiltersRow          busca, status, urgência, categoria, período
-    HelpdeskRecordCard  id · título · status
-                        categoria, urgência, técnico, aberto em, atualizado em
-    paginação do kit, se L-11 se confirmar
+    HelpdeskDataTable   colunas com ordenação no helpdesk
+    paginação Anterior / Próxima via has_more
 
 /apps/helpdesk/tickets/{id}
   Conversa  (já publicada)

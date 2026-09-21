@@ -72,7 +72,8 @@ O bloco escuro é `:root[data-theme="dark"] .dashboard-helpdesk`. Superfície, t
 | `createDashboardLoadingState` | `HelpdeskLoadingState` | Lista, abertura, detalhe |
 | `createDashboardEmptyState` | `HelpdeskEmptyState` | Lista sem itens e sem erro |
 | `createDashboardStatusBadge` | `HelpdeskStatusBadge` | Status do chamado |
-| `createDashboardDataRecordCard` | `HelpdeskRecordCard` | Cada item da lista e o resumo do detalhe |
+| `createDashboardDataRecordCard` | `HelpdeskRecordCard` | Resumo do detalhe |
+| `DataTable` | `HelpdeskDataTable` | Lista com ordenação de coluna |
 | `createDashboardMessageThread` | `HelpdeskMessageThread` | Abertura e acompanhamentos do detalhe, em texto puro |
 | `createDashboardTextField` | `HelpdeskTextField` | Título |
 | `createDashboardTextAreaField` | `HelpdeskTextArea` | Descrição e resposta |
@@ -122,7 +123,6 @@ HelpdeskSectionCard  «Meus chamados»  hint = helpTooltips.list
     Urgência [Select]
     Categoria [Select]
     Atualizado de / até  date
-    Ordenar [Select]
     [ Limpar filtros ]  só com recorte ativo
 
   carregando     │ ░░░ │  «Carregando chamados…»
@@ -133,21 +133,16 @@ HelpdeskSectionCard  «Meus chamados»  hint = helpTooltips.list
                  [ Autorizar no helpdesk ]
   vazio          ∅  «Você ainda não tem chamados.»
                  ∅  «Nenhum chamado neste recorte.»  se filtro ativo
-  lista          ▢  título do chamado
-                    ● status
-                    Chamado      id
-                    Categoria    valor
-                    Urgência     valor
-                    Técnico      valor
-                    Aberto       relativo
-                    Atualizado   relativo
-                 ▢  …
+  lista          HelpdeskDataTable  layout=scroll
+                    colunas ordenáveis: Chamado, Título, Status, Categoria, Urgência, Aberto, Atualizado
+                    Técnico sem ordenação (não é propriedade da HLAPI)
+                    clique na linha → /apps/helpdesk/tickets/{id}
   [ Anterior ]  Página N  [ Próxima ]  via has_more; sem total inventado
 ```
 
 Um estado por vez. Lista vazia só aparece com HTTP 200 e `items: []`. Proibido, vínculo e indisponível não podem parecer lista vazia.
 
-O cartão inteiro é o link `/apps/helpdesk/tickets/{id}`.
+A ordenação do cabeçalho pede de novo ao helpdesk; não reordena só a página visível. Em tela estreita a tabela usa scroll horizontal do kit. Sem coluna de entidade nem contadores do parque.
 
 ## 2. Abrir chamado — `/apps/helpdesk/tickets/new`
 

@@ -446,6 +446,10 @@ declare module "@delpi/plugin-ui/index" {
     key: string;
     header: string;
     render: (row: T) => ReactNode;
+    sortable?: boolean;
+    className?: string;
+    interactive?: boolean;
+    rowClick?: "stop" | "propagate";
   };
 
   export type DataTableProps<T> = {
@@ -455,8 +459,17 @@ declare module "@delpi/plugin-ui/index" {
     loading?: boolean;
     onRowClick?: (row: T) => void;
     layout?: "section" | "embedded" | "scroll";
+    sortKey?: string | null;
+    sortDirection?: "asc" | "desc";
+    onSortChange?: (columnKey: string) => void;
+    emptyMessage?: string;
     classNames: Record<string, string>;
-    labels: Record<string, string | ((header: string) => string)>;
+    labels: {
+      emptyMessage: string;
+      loadingMessage: string;
+      sortByAriaLabel: (header: string) => string;
+      headerHelpAriaLabel: (header: string) => string;
+    };
   };
 
   export function DataTable<T>(props: DataTableProps<T>): ReactElement;

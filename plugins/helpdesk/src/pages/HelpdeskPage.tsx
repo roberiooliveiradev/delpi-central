@@ -21,15 +21,17 @@ import {
   newIdempotencyKey,
   parseTicketListFilters,
   statusBadgeVariant,
+  nextTicketSort,
+  parseTicketSort,
   ticketListSearch,
   ticketRecordFields,
-  TICKET_SORT_OPTIONS,
   TICKET_STATUS_FILTERS,
   type TicketListFilters,
   viewForTicketLoad,
 } from "../presentation/ticketView";
 import { navigateHelpdesk, type HelpdeskRoute } from "../routing/helpdeskRoute";
 import { TicketAttachmentPreview } from "./TicketAttachmentPreview";
+import { TicketListTable } from "./TicketListTable";
 import {
   HelpdeskEmptyState,
   HelpdeskFilterInput,
@@ -237,12 +239,6 @@ function TicketListPage() {
               value={filters.updated_to}
               onChange={(updated_to) => commitFilters({ ...filters, updated_to, page: 1 })}
             />
-            <HelpdeskFilterSelect
-              label="Ordenar"
-              value={filters.sort}
-              onChange={(sort) => commitFilters({ ...filters, sort, page: 1 })}
-              options={[...TICKET_SORT_OPTIONS]}
-            />
           </HelpdeskFiltersRow>
         )}
         {view === "loading" ? <HelpdeskLoadingState /> : null}
@@ -279,32 +275,15 @@ function TicketListPage() {
           />
         ) : null}
         {view === "list" ? (
-          <div className="helpdesk-record-list">
-            {items.map((item) => (
-              <HelpdeskRecordCard
-                key={item.id}
-                title={item.title}
-                status={<HelpdeskStatusBadge label={item.status} variant={statusBadgeVariant(item.status)} />}
-                fields={ticketRecordFields({
-                  id: item.id,
-                  category: item.category,
-                  urgency: item.urgency,
-                  assigned_display_name: item.assigned_display_name,
-                  created_at: item.created_at,
-                  updated_at: item.updated_at,
-                })}
-                href={`/apps/helpdesk/tickets/${item.id}`}
-                ariaLabel={item.title}
-                onNavigate={(event) => {
-                  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
-                    return;
-                  }
-                  event.preventDefault();
-                  navigateHelpdesk(`/apps/helpdesk/tickets/${item.id}`);
-                }}
-              />
-            ))}
-          </div>
+          <TicketListTable
+            items={items}
+            loading={loading}
+            sort={parseTicketSort(filters.sort)}
+            onSortChange={(columnKey) =>
+              commitFilters({ ...filters, sort: nextTicketSort(filters.sort, columnKey), page: 1 })
+            }
+            onOpen={(ticketId) => navigateHelpdesk(`/apps/helpdesk/tickets/${ticketId}`)}
+          />
         ) : null}
         {view === "list" || (view === "empty" && filters.page > 1) ? (
           <HelpdeskFormActions>

@@ -85,12 +85,37 @@ export const TICKET_STATUS_FILTERS = [
   { value: "closed", label: "Fechados" },
 ] as const;
 
-export const TICKET_SORT_OPTIONS = [
-  { value: "updated_at:desc", label: "Atualizados recentemente" },
-  { value: "created_at:desc", label: "Abertos recentemente" },
-  { value: "created_at:asc", label: "Mais antigos" },
-  { value: "title:asc", label: "Título A–Z" },
+export const TICKET_LIST_SORTABLE_COLUMNS = [
+  "id",
+  "title",
+  "status",
+  "category",
+  "urgency",
+  "created_at",
+  "updated_at",
 ] as const;
+
+export type TicketListSortKey = (typeof TICKET_LIST_SORTABLE_COLUMNS)[number];
+
+const DESC_FIRST_SORT_KEYS = new Set<TicketListSortKey>(["created_at", "updated_at"]);
+
+export function parseTicketSort(sort: string): { key: TicketListSortKey; direction: "asc" | "desc" } {
+  const [field, direction] = (sort || "updated_at:desc").split(":");
+  const key = TICKET_LIST_SORTABLE_COLUMNS.includes(field as TicketListSortKey)
+    ? (field as TicketListSortKey)
+    : "updated_at";
+  return { key, direction: direction === "asc" ? "asc" : "desc" };
+}
+
+export function nextTicketSort(current: string, columnKey: string): string {
+  if (!TICKET_LIST_SORTABLE_COLUMNS.includes(columnKey as TicketListSortKey)) return current;
+  const parsed = parseTicketSort(current);
+  if (parsed.key === columnKey) {
+    return `${columnKey}:${parsed.direction === "asc" ? "desc" : "asc"}`;
+  }
+  const direction = DESC_FIRST_SORT_KEYS.has(columnKey as TicketListSortKey) ? "desc" : "asc";
+  return `${columnKey}:${direction}`;
+}
 
 export const DEFAULT_TICKET_LIST_FILTERS: TicketListFilters = {
   q: "",

@@ -43,9 +43,13 @@ _STATUS_GROUPS = {
     "closed": (6,),
 }
 _SORT_FIELDS = {
+    "id": "id",
+    "title": "name",
+    "status": "status.id",
+    "category": "category.name",
+    "urgency": "urgency",
     "updated_at": "date_mod",
     "created_at": "date_creation",
-    "title": "name",
 }
 _MAX_PAGE_SIZE = 50
 _DEFAULT_PAGE_SIZE = 20
