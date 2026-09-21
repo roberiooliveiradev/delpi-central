@@ -41,15 +41,17 @@ O colaborador passa a ver e gravar no Meus Chamados de TI o que o GLPI já entre
 
 ## Evidências e hipóteses
 
-CONFIRMADO: tela e BFF publicados; HTML achatado; status só string; lista relativa; HLAPI JSON-only; sete status fixos; `team` não filtra em RSQL.
+CONFIRMADO (pré-paridade): tela e BFF publicados; HTML achatado; status só string; lista relativa; HLAPI JSON-only; sete status fixos; `team` não filtra em RSQL. **Pós E6–E14:** HTML/`status_id`/datas/`*_html`/builder entregues; ver inventários 12–15.
 
 E6.S1 fechou as hipóteses. Vereditos no [`05`](./05-roadmap.md) H6. **EXECUTION_DRIFT:** 14-H1 não é 403 em status 5 — só em 6.
 
-## Arquitetura atual → alvo
+## Arquitetura vigente (pós E6–E14)
 
 ```text
-HOJE   GLPI HTML/status/datas → display_text + status.name → MFE plain
-ALVO   GLPI → BFF allowlist + status_id + datas → contrato aditivo → kit render-only
+VIGENTE  GLPI HTML/status/datas
+           → BFF allowlist + status_id + datas + *_html
+           → contrato aditivo
+           → kit render-only (bodyMode=html) + RichTextEditor
 ```
 
 Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE só monta.

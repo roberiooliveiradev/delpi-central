@@ -1,14 +1,13 @@
 # 13 — Listagem de chamados
 
-> **Status:** inventário. Ordem de código: [`16-plano-paridade.md`](./16-plano-paridade.md) E7 (HD-019, HD-020). Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
-> **Pedido:** a listagem deve cobrir o que o GLPI já entrega para o solicitante achar e ler o próprio chamado. Este arquivo só documenta.
-> **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md) §1 — tabela com filtros, sem total do parque.
-> **Fotos de 21/09/2026:** MFE `/apps/helpdesk` (tabela + filtros) e GLPI Super-Admin `front/ticket.php` (128 128 linhas). A segunda é bancada, não o produto.
+> **Status:** inventário sincronizado com o código (E7 + H13). Paridade [`16-plano-paridade.md`](./16-plano-paridade.md) **concluída**. Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
+> **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md) §1 — tabela com filtros, datas absolutas, `solved_at`/`closed_at`, `q` no conteúdo, `pending`/`approval`, `created_*`, `page_size`, builder AND.
+> **Fotos de 21/09/2026:** MFE `/apps/helpdesk` e GLPI Super-Admin `front/ticket.php` (bancada, não o produto).
 > **Contrato vigente:** [`03-contrato.md`](./03-contrato.md).
-> **Lacunas antigas da lista:** L-01…L-12 em [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md) — várias já publicadas; este arquivo é a fonte da paridade GLPI × Minha DELPI.
+> **Lacunas antigas da lista:** L-01…L-12 em [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md) — sincronizadas com este arquivo.
 > **Corpo da mensagem:** [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) — a lista **não** mostra HTML.
 
-Este documento responde: o que o GLPI considera uma listagem de chamados, o que a interface simplificada do solicitante mostra, o que a HLAPI 2.2 devolve, o que a Minha DELPI faz hoje e o que **deve** entrar na grade quando houver autorização de código.
+Este documento responde: o que o GLPI considera uma listagem de chamados, o que a HLAPI 2.2 devolve, o que a Minha DELPI **entrega hoje**, e o que permanece CONSOLE / BLOQUEADO.
 
 ## 1. Recorte do produto
 
@@ -67,11 +66,11 @@ A foto do Super-Admin **não** é o alvo visual. Serve para inventariar capacida
 | Título | `name` | IMPLEMENTADO |
 | Entidade | `entities_id` | CONSOLE_GLPI — HD-011 |
 | Status | `status` | IMPLEMENTADO (rótulo + badge) |
-| Data de abertura | `date` / `date_creation` | IMPLEMENTADO — «Aberto» (só relativo) |
-| Data da resolução | `date_solve` / `solvedate` | ALVO_LEITURA — BFF ainda não publica |
-| Última atualização | `date_mod` | IMPLEMENTADO — «Atualizado» (só relativo) |
-| Requerente | `team` role `requester` | ALVO_LEITURA se o token vir chamado de outro; senão redundante |
-| Atribuído — técnico | `team` role `assigned` | IMPLEMENTADO — rótulo; **não ordena** |
+| Data de abertura | `date` / `date_creation` | **IMPLEMENTADO** — «Aberto» (data-hora absoluta) |
+| Data da resolução | `date_solve` / `solvedate` | **IMPLEMENTADO** — `solved_at` |
+| Última atualização | `date_mod` | **IMPLEMENTADO** — «Atualizado» (data-hora absoluta) |
+| Requerente | `team` role `requester` | slot de coluna no MFE; **lista BFF ainda não publica** `requester_display_name` (G-05) |
+| Atribuído — técnico | `team` role `assigned` | **IMPLEMENTADO** — rótulo; **não ordena** |
 | Categoria | `category` | IMPLEMENTADO |
 | Última edição por | `users_id_lastupdater` | CONSOLE_GLPI — bancada; nome não identifica |
 
@@ -90,8 +89,8 @@ A doc oficial lista, além das colunas:
 | Export CSV / PDF / SLK (página ou todas) | CONSOLE_GLPI |
 | Ações em massa (lixeira, atualizar, atribuir…) | CONSOLE_GLPI |
 | Vista mapa | CONSOLE_GLPI |
-| Multi-sort (Ctrl+clique) | CONSOLE_GLPI / kit sem isso |
-| Itens por página + «Showing 1 to 15 of N» | total **não** inventar; seletor de página ALVO menor |
+| Multi-sort (Ctrl+clique / popover) | **IMPLEMENTADO** no MFE (`TicketListSortLevel[]`, até 3 níveis); console GLPI continua à parte |
+| Itens por página + «Showing 1 to 15 of N» | total **não** inventar; seletor `page_size` 10/20/50 **IMPLEMENTADO** |
 | Busca rápida global (tickets + ativos + usuários) | CONSOLE_GLPI — outro módulo |
 | Kanban / modelos / adicionar em massa | CONSOLE_GLPI |
 | Contadores do parque (1 000, 100 novos, 128 128) | CONSOLE_GLPI |
@@ -109,13 +108,13 @@ Fotos do GLPI `front/ticket.php` (interface central). **Não** são a tela do so
 
 | Peça na captura | Comportamento GLPI | Destino Meus Chamados |
 |---|---|---|
-| Builder «Pesquisar» | linha = campo + operador (`é`) + valor; `+ regra` / `+ regra global` / `+ grupo`; lógica AND/OR entre linhas | **modelo** `TicketListFilterGroup` (PREP); builder rico = H13; recorte simples continua na URL |
-| Chip «Filtrado por Status» | resumo do recorte ativo | `TicketListToolbar` chips (PREP → ligado) |
-| «Ordenado por Última atualização» + popover | multi-nível (`+ Adicionar outra ordenação`, ASC/DESC) | **modelo** `TicketListSortLevel[]` (PREP); UI multi-sort = H13; hoje 1 nível na URL |
-| Modal «Selecione os itens padrões…» | visão global vs pessoal; colunas fixas ID/Título/Entidade; demais arrastáveis | **catálogo** `TICKET_LIST_COLUMN_CATALOG` + prefs (PREP); Entidade/último editor continuam CONSOLE |
-| Toolbar grade/mapa | troca lista ↔ mapa | `viewMode: "table" \| "map"` tipado; **mapa = CONSOLE** |
+| Builder «Pesquisar» | linha = campo + operador + valor; `+ regra` / grupo; lógica AND/OR | **IMPLEMENTADO** AND (`TicketListFilterBuilder`); OR/grupo aninhado = CONSOLE/evolução |
+| Chip «Filtrado por Status» | resumo do recorte ativo | **IMPLEMENTADO** `TicketListToolbar` chips |
+| «Ordenado por Última atualização» + popover | multi-nível ASC/DESC | **IMPLEMENTADO** multi-sort na URL/BFF |
+| Modal «Selecione os itens padrões…» | visão global vs pessoal; colunas fixas/arrastáveis | **IMPLEMENTADO** catálogo + prefs localStorage; Entidade/último editor CONSOLE |
+| Toolbar grade/mapa | troca lista ↔ mapa | mapa = CONSOLE |
 | Seleção + lixeira vermelha | ações em massa | CONSOLE |
-| Ícone colunas + atualizar + Exportar | preferência de colunas, reload, CSV/PDF | colunas/atualizar = PREP/H13; **export = CONSOLE** |
+| Ícone colunas + atualizar + Exportar | preferência, reload, CSV/PDF | colunas/atualizar **IMPLEMENTADO**; export = CONSOLE |
 
 Contrato futuro do BFF para grupos/regras continua ADDITIVE e RSQL — sem copiar o JSON interno do Search Engine do PHP.
 
@@ -125,20 +124,20 @@ Contrato futuro do BFF para grupos/regras continua ADDITIVE e RSQL — sem copia
 
 | Necessidade | HLAPI | BFF hoje |
 |---|---|---|
-| Título | `name=like=*termo*` | `q` |
-| Conteúdo | `content=like=` **se** a propriedade existir no item | não pede |
-| Status | `status.id==` / `=in=` | grupos `open` / `in_progress` / `solved` / `closed` |
+| Título | `name=like=*termo*` | `q` (OR com content) |
+| Conteúdo | `content=like=` | `q` → `(name=like=…,content=like=…)` |
+| Status | `status.id==` / `=in=` | grupos `open` / `in_progress` / `solved` / `closed` / `pending` / `approval` |
 | Urgência | `urgency==1…5` | `urgency_id` |
 | Categoria | `category.id==` | `category_id` |
-| Abertura | `date_creation=ge=` / `=le=` | não pede |
+| Abertura | `date_creation=ge=` / `=le=` | `created_from` / `created_to` |
 | Atualização | `date_mod=ge=` / `=le=` | `updated_from` / `updated_to` |
-| Resolução / fechamento | `date_solve` / `date_close` no changelog 2.1 | não lê nem filtra |
-| Tipo incidente/requisição | `type` no schema ITIL (HIPOTESE no GET) | não publica |
-| Prioridade / impacto | schema ITIL (HIPOTESE no GET) | não publica |
+| Resolução / fechamento | `date_solve` / `date_close` | lê e publica `solved_at` / `closed_at`; sort por resolução se pedido |
+| Tipo incidente/requisição | `type` no schema ITIL | não publica |
+| Prioridade / impacto | schema ITIL | não publica |
 | Técnico | `team` no JSON; **RSQL em `team` não funciona** | só rótulo `assigned_display_name` |
 | Lixeira | `is_deleted==false` | sempre |
-| Ordem | `sort` no campo do schema | `id`, `name`, `status.id`, `category.name`, `urgency`, `date_mod`, `date_creation` |
-| Página | `start` / `limit` | `page` / `page_size` (20, máx. 50) + `has_more` |
+| Ordem | `sort` no campo do schema | multi-nível; campos id/name/status/category/urgency/dates |
+| Página | `start` / `limit` | `page` / `page_size` (10/20/50) + `has_more` |
 | Total do parque | a coleção **não** devolve total confiável | proibido inventar |
 
 `q` só conserva letra, número, espaço, hífen e underscore. Status ou sort desconhecidos: 422.
@@ -146,30 +145,27 @@ Contrato futuro do BFF para grupos/regras continua ADDITIVE e RSQL — sem copia
 ## 5. O que a Minha DELPI faz hoje
 
 ```text
-URL ?q=&status=&urgency_id=&category_id=&updated_from=&updated_to=&sort=&page=
+URL ?q=&status=&urgency_id=&category_id=&created_from=&created_to=&updated_from=&updated_to=&sort=&page=&page_size=
   → GET /tickets (BFF)
     → GET /Assistance/Ticket filter/start/limit/sort
-      → items[] + has_more
-        → HelpdeskDataTable
+      → items[] (+ solved_at/closed_at/status_id) + has_more
+        → HelpdeskDataTable + TicketListToolbar + FilterBuilder
 ```
 
 | Superfície | Hoje |
 |---|---|
-| Colunas | id, título, status (badge), categoria, urgência, técnico, aberto, atualizado |
-| Datas na grade | só relativo («4 minutos atrás»); o GLPI da foto usa data-hora absoluta |
-| Busca | só título; placeholder «Título do chamado» |
-| Filtros | status agrupado, urgência, categoria, atualizado de/até |
-| Filtro de abertura | não existe |
-| Ordenação | clique no cabeçalho → novo GET; técnico sem sort |
-| Página | número + setas; sem total; sem escolher tamanho |
+| Colunas | id, título, status (badge por id), categoria, urgência, técnico, aberto, atualizado, resolução, fechamento (+ slots requester/entity ocultos) |
+| Datas na grade | data-hora absoluta (`absoluteDateTimeLabel`) |
+| Busca | título **ou** conteúdo (`q`) |
+| Filtros | status agrupado (`open`/`in_progress`/`solved`/`closed`/`pending`/`approval`), urgência, categoria, aberto de/até, atualizado de/até |
+| Ordenação | multi-nível na URL; técnico sem sort |
+| Página | número + setas + seletor 10/20/50; sem total |
 | Estado na URL | sim — F5 mantém o recorte |
 | Vazio | «nenhum chamado» vs «nenhum neste recorte» |
-| Default | `status` vazio = Todos (inclui solucionado/fechado); subtítulo «Chamados no seu nome» |
-| Kit | `DataTable` + `FiltersKit`; sem CSS de grade no MFE |
+| Default | `status` vazio = Todos; subtítulo «Chamados no seu nome» |
+| Kit | `DataTable` + `FiltersKit` + toolbar/builder; sem CSS de grade no MFE |
 
-**Causa das diferenças para a foto Super-Admin:** recorte de produto (colaborador) + contrato que ainda não lê `date_solve` / `date_close` / `content` na lista. Não é limitação escondida do kit.
-
-[`11`](./11-lacunas-da-experiencia.md) §1 ainda descreve a lista MFE como cartões sem busca. Essa frase está **obsoleta** em relação à tela publicada; a autoridade da lista passa a ser este arquivo.
+**Causa das diferenças para a foto Super-Admin:** recorte de produto (colaborador) + CONSOLE (export, massa, mapa, entidade). Não é gap de datas/`content`/`pending` — esses já estão no BFF/MFE.
 
 ## 6. Paridade GLPI × Minha DELPI × alvo
 
@@ -181,33 +177,28 @@ URL ?q=&status=&urgency_id=&category_id=&updated_from=&updated_to=&sort=&page=
 | Categoria | sim | sim | invariante |
 | Urgência | schema; self-service cria com ela | sim | invariante |
 | Técnico (rótulo) | sim | sim | invariante |
-| Aberto / atualizado | data-hora | só relativo | **absoluta + relativo** |
-| Data de resolução | bancada e schema | não | coluna quando `date_solve` vier |
-| Data de fechamento | schema `date_close` | não | coluna ou a mesma célula se só uma existir |
-| Requerente | bancada | não | só se o token listar chamado alheio |
+| Aberto / atualizado | data-hora | data-hora absoluta | invariante |
+| Data de resolução | bancada e schema | `solved_at` | invariante |
+| Data de fechamento | schema `date_close` | `closed_at` | invariante |
+| Requerente | bancada | slot UI; BFF lista sem campo | G-05 (detalhe já tem) |
 | Busca no título | sim | sim | invariante |
-| Busca no conteúdo | motor central; self-service limitado | não | se H1 confirmar `content=like` |
+| Busca no conteúdo | motor central; self-service limitado | `q` OR content | invariante |
 | Filtro atualizado | sim | sim | invariante |
-| Filtro aberto | sim | não | `created_from` / `created_to` |
+| Filtro aberto | sim | `created_from` / `created_to` | invariante |
 | Filtro técnico | UI central | não | BLOQUEADO — `team` não filtra em RSQL |
 | Tipo / prioridade / impacto | ITIL | não | FORA do colaborador (abertura só urgência) |
 | Entidade / último editor | bancada | não | CONSOLE_GLPI |
 | Total / contadores | bancada | `has_more` | invariante — sem total inventado |
-| Itens por página | 15 na foto | 20 fixo | seletor 10/20/50 no contrato já existente |
+| Itens por página | 15 na foto | seletor 10/20/50 | invariante |
 | Export / massa / Kanban / saved search / lixeira / mapa | doc Search | não | CONSOLE_GLPI |
 | HTML do título | título não é HTML | `display_text` | invariante |
 
-## 7. Ledger — o que deve ser implementado
-
-Estado neste inventário (nenhum item autoriza diff):
+## 7. Ledger — estado vigente
 
 ```text
 IMPLEMENTADO          → já na tela/contrato
-ALVO_LEITURA          → a linha deve mostrar o que o GLPI já grava
-ALVO_RECORTE          → o GET deve aceitar o critério
-KIT_A_ESTENDER        → falta primitivo no plugin-ui
-HERDA_KIT             → só ligar
-HIPOTESE_A_VALIDAR    → falta captura no pipeline real
+ALVO_LEITURA          → ainda não entregue
+ALVO_RECORTE          → ainda não entregue
 BLOQUEADO             → evidência impede agora
 CONSOLE_GLPI          → fora do MFE
 FORA                  → não entra neste produto
@@ -215,49 +206,49 @@ FORA                  → não entra neste produto
 
 ### 7.1 Grade (colunas)
 
-| ID | Capacidade | Estado | Dono quando houver código |
+| ID | Capacidade | Estado | Dono |
 |---|---|---|---|
-| G-01 | Id, título, status, categoria, urgência, técnico, aberto, atualizado | IMPLEMENTADO | — |
-| G-02 | Data-hora absoluta na célula (o relativo pode ficar como texto auxiliar) | ALVO_LEITURA | MFE; o JSON já é instante |
-| G-03 | `solved_at` a partir de `date_solve` | ALVO_LEITURA + HIPOTESE campo no GET | BFF aditivo |
-| G-04 | `closed_at` a partir de `date_close` | ALVO_LEITURA + HIPOTESE | BFF aditivo; se igual a `solved_at`, uma coluna basta |
-| G-05 | `requester_display_name` na lista | ALVO_LEITURA se o token vir outro solicitante | BFF já tem a regra no detalhe |
+| G-01 | Id, título, status, categoria, urgência, técnico, aberto, atualizado | **IMPLEMENTADO** | — |
+| G-02 | Data-hora absoluta na célula | **IMPLEMENTADO** | MFE `absoluteDateTimeLabel` |
+| G-03 | `solved_at` a partir de `date_solve` | **IMPLEMENTADO** | BFF aditivo |
+| G-04 | `closed_at` a partir de `date_close` | **IMPLEMENTADO** | BFF aditivo |
+| G-05 | `requester_display_name` na lista | ALVO_LEITURA | slot UI existe; JSON da lista ainda não publica (detalhe sim) |
 | G-06 | Ordenar por técnico | BLOQUEADO | `team` não é coluna SQL da HLAPI |
-| G-07 | Ordenar por resolução | ALVO_RECORTE se H2 | `sort=solved_at` → `date_solve` |
+| G-07 | Ordenar por resolução | **IMPLEMENTADO** | `sort=solved_at` → `date_solve` |
 | G-08 | Coluna entidade / último editor / prioridade / tipo / impacto | CONSOLE_GLPI / FORA | — |
-| G-09 | Badge de status pelos tokens do kit | IMPLEMENTADO | sem verde fixo do GLPI |
+| G-09 | Badge de status pelos tokens do kit | **IMPLEMENTADO** | por `status_id` |
 
 ### 7.2 Recorte (filtros e busca)
 
-| ID | Capacidade | Estado | Dono quando houver código |
+| ID | Capacidade | Estado | Dono |
 |---|---|---|---|
-| G-20 | `q` no título | IMPLEMENTADO | — |
-| G-21 | `q` também no `content` (texto, não HTML) | ALVO_RECORTE + H1 | BFF `name=like` **ou** `content=like`; sem segunda caixa |
-| G-22 | Status agrupado | IMPLEMENTADO | — |
-| G-23 | Grupo `pending` (status 4) explícito | ALVO_RECORTE | mesmo enum; detalhe em [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md) S-05 |
-| G-24 | Urgência, categoria, atualizado de/até | IMPLEMENTADO | — |
-| G-25 | Aberto de/até (`created_from` / `created_to`) | ALVO_RECORTE | `date_creation`; ADDITIVE |
+| G-20 | `q` no título | **IMPLEMENTADO** | — |
+| G-21 | `q` também no `content` (texto, não HTML) | **IMPLEMENTADO** | BFF `(name=like,content=like)` |
+| G-22 | Status agrupado | **IMPLEMENTADO** | — |
+| G-23 | Grupo `pending` (status 4) explícito | **IMPLEMENTADO** | [`14`](./14-pagina-e-estados-do-chamado.md) S-05 |
+| G-24 | Urgência, categoria, atualizado de/até | **IMPLEMENTADO** | — |
+| G-25 | Aberto de/até (`created_from` / `created_to`) | **IMPLEMENTADO** | `date_creation` |
 | G-26 | Filtro por técnico | BLOQUEADO | mesmo motivo de G-06 |
-| G-27 | Default «Abertos» | FORA neste inventário | default Todos + subtítulo «no seu nome» já corrige o mentir de «abertos» |
+| G-27 | Default «Abertos» | FORA neste inventário | default Todos + subtítulo «no seu nome» |
 | G-28 | Caracteres de `q` | invariante | sem injetar RSQL |
 
 ### 7.3 Página, URL, vazios
 
 | ID | Capacidade | Estado |
 |---|---|---|
-| G-30 | `page` / `has_more` sem total | IMPLEMENTADO |
-| G-31 | Seletor `page_size` 10/20/50 | ALVO_RECORTE — query já existe; a tela não oferece |
-| G-32 | Recorte na URL e F5 | IMPLEMENTADO |
-| G-33 | Vazio vs recorte vazio | IMPLEMENTADO |
-| G-34 | 403/409 não viram lista vazia | IMPLEMENTADO |
-| G-35 | Lixeira fora da lista | IMPLEMENTADO |
+| G-30 | `page` / `has_more` sem total | **IMPLEMENTADO** |
+| G-31 | Seletor `page_size` 10/20/50 | **IMPLEMENTADO** |
+| G-32 | Recorte na URL e F5 | **IMPLEMENTADO** |
+| G-33 | Vazio vs recorte vazio | **IMPLEMENTADO** |
+| G-34 | 403/409 não viram lista vazia | **IMPLEMENTADO** |
+| G-35 | Lixeira fora da lista | **IMPLEMENTADO** |
 | G-36 | «Showing 1–15 of 128128» | CONSOLE_GLPI |
 
 ### 7.4 Satélites
 
 | ID | Capacidade | Estado |
 |---|---|---|
-| G-40 | `helpTooltips.list` / `.filters` descrevem data absoluta, resolução e busca no texto | mesmo entregável de código |
+| G-40 | `helpTooltips.list` / `.filters` descrevem data absoluta, resolução e busca no texto | **IMPLEMENTADO** |
 | G-41 | Lista não renderiza HTML do título/corpo | invariante — [`12`](./12-conteudo-da-mensagem.md) |
 | G-42 | Identidade: id/e-mail; nome na coluna é rótulo | invariante |
 | G-43 | Sem CSS de tabela no MFE | invariante |
@@ -294,21 +285,23 @@ DOCS/HELP         este arquivo + helpTooltips no entregável de código
 
 Ler `TicketListTable`, `ticketListViewModel` e `build_ticket_list_query` **antes** de mudar o JSON. Campos novos são aditivos.
 
-## 9. Contrato-alvo (quando for implementar)
+## 9. Contrato vigente (campos aditivos já publicados)
 
-Decisão travada: evolução **ADDITIVE**. Não é etapa de código.
+Evolução **ADDITIVE** já aplicada. Não reabrir como alvo.
 
-| Hoje | Permanece | Novo se H2/H5 confirmarem |
-|---|---|---|
-| `created_at`, `updated_at` | instante ISO | — |
-| — | — | `solved_at`, `closed_at` (opcionais, string vazia se o GLPI não trouxer) |
-| — | — | `requester_display_name` na lista (opcional) |
-| `q` | título | também `content` **se** H1 |
-| `updated_from` / `updated_to` | — | `created_from` / `created_to` |
-| `status=open` inclui 4 | documentar | `pending` como valor novo do enum (ADDITIVE) |
-| `page_size` | 20 | a tela passa a enviar 10/20/50 |
+| Campo / query | Estado |
+|---|---|
+| `created_at`, `updated_at` | instante ISO |
+| `solved_at`, `closed_at` | opcionais; string vazia se o GLPI não trouxer |
+| `status_id` + `status` | lista e detalhe |
+| `q` | título **ou** conteúdo |
+| `updated_from` / `updated_to` | — |
+| `created_from` / `created_to` | — |
+| `status=pending` / `approval` | ADDITIVE; `open` ainda inclui 10 |
+| `page_size` | 10/20/50 na tela |
+| `requester_display_name` na lista | **ainda não** (G-05) |
 
-Classificação: ADDITIVE nos GET e nas query. Sem path novo. Sem total inventado. Sem filtrar por nome de pessoa.
+Sem path novo. Sem total inventado. Sem filtrar por nome de pessoa.
 
 ## 10. Arquitetura-alvo (quando for implementar)
 

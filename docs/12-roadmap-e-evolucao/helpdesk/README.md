@@ -1,11 +1,11 @@
 # Meus Chamados de TI
 
-> **Status:** primeira entrega publicada; leitura e tela `PROVEN` no ledger em 21/09/2026
+> **Status:** primeira entrega + paridade do solicitante **publicadas** (E1–E13 + E14 menção leitura). Ledger e verify-final em 21/09/2026.
 > **Fundação GLPI:** `PROVEN` em produção (21/09/2026)
 > **Produto:** Meus Chamados de TI — abertura e acompanhamento de chamados dentro da Minha DELPI, com o GLPI como dono do chamado
-> **Requisitos:** `HD-001…HD-026` em [`07-requisitos.md`](./07-requisitos.md)
-> **Próxima execução de paridade:** [`16-plano-paridade.md`](./16-plano-paridade.md) `E6.S0` / `E6.S1` — só quando pedirem para executar.
-> **Ordem:** [`06-plano-execucao.md`](./06-plano-execucao.md) `E1…E5` · [`16-plano-paridade.md`](./16-plano-paridade.md) `E6…E12`
+> **Requisitos:** `HD-001…HD-027` em [`07-requisitos.md`](./07-requisitos.md)
+> **Paridade:** [`16-plano-paridade.md`](./16-plano-paridade.md) `E6…E13` **concluído**; menção leitura [`evidence/e14-mentions.md`](./evidence/e14-mentions.md)
+> **Ordem histórica:** [`06-plano-execucao.md`](./06-plano-execucao.md) `E1…E5` · [`16-plano-paridade.md`](./16-plano-paridade.md) `E6…E13`
 > **Ondas:** [`05-roadmap.md`](./05-roadmap.md)
 > **Estado de execução:** [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)
 
@@ -16,11 +16,12 @@ Esta pasta decide o produto. Não autoriza implementação sozinha e não prova 
 Meus Chamados de TI não é um segundo sistema de chamados e não é um conserto do iframe atual.
 
 ```text
-Hoje, publicado                     Ainda aberto
----------------------------------  --------------------------------
-MFE em /apps/helpdesk              H3 ao vivo no ledger (POST já existe na tela)
-helpdesk-api com sessão OAuth      H5 (upload, satisfação, bancada)
-GLPI continua dono do chamado      inventários 12–15 (sem autorização)
+Hoje, publicado                              Ainda aberto / parque
+-------------------------------------------  --------------------------------
+MFE /apps/helpdesk + HTML + builder AND      H10 ciclo (CONSOLE)
+helpdesk-api OAuth + contrato ADDITIVE       H12 upload (BLOQUEADO)
+GLPI dono do chamado                         M-23 @ escrita (BLOQUEADO)
+E14 chips de menção na bolha                 bancada / Change / HD-011 (FORA)
 ```
 
 ```text
@@ -100,12 +101,13 @@ O id não muda. O plugin iframe já é `helpdesk`, e o cliente OAuth de produç�
 | Qual é o contrato? | [`03-contrato.md`](./03-contrato.md) |
 | Como a identidade funciona? | [`04-seguranca.md`](./04-seguranca.md) |
 | Em que ondas o produto cresce? | [`05-roadmap.md`](./05-roadmap.md) |
-| Qual é a próxima etapa executável? | [`06-plano-execucao.md`](./06-plano-execucao.md) (E1…E5) ou [`16-plano-paridade.md`](./16-plano-paridade.md) (E6…E12) |
+| Qual é a próxima etapa executável? | Paridade `E6…E13` **fechada**; próximo código só com decisão nova (ex.: M-23, H12, H10 se HLAPI). Ledger: [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) |
 | Qual é a onda? | [`05-roadmap.md`](./05-roadmap.md) |
 | Qual requisito isso cobre? | [`07-requisitos.md`](./07-requisitos.md) |
 | Quando uma etapa está pronta? | [`08-definition-of-done.md`](./08-definition-of-done.md) |
 | Como provar? | [`09-testes-e-aceite.md`](./09-testes-e-aceite.md) |
 | O que já foi provado? | [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) |
+| Menção leitura / park `@`? | [`evidence/e14-mentions.md`](./evidence/e14-mentions.md) |
 
 Mapa curto: [`INDEX.md`](./INDEX.md).
 

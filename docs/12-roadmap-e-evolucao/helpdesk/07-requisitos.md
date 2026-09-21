@@ -4,7 +4,7 @@
 > **Primeira entrega:** [`06-plano-execucao.md`](./06-plano-execucao.md) `E1…E5`
 > **Paridade:** [`16-plano-paridade.md`](./16-plano-paridade.md) `E6…E13`
 
-`HD-001…HD-017` estão no produto publicado. `HD-018` / H3 ao vivo no ledger ainda fecha em E6.S0. `HD-019…HD-026` são a paridade. `HD-027` é listagem dinâmica (modelo agora; builder depois).
+`HD-001…HD-018` estão no produto publicado (H3 no ledger via E6.S0). `HD-019…HD-027` da paridade E6–E13 estão **entregues** (HD-024 CONSOLE, HD-026 BLOQUEADO). Menção leitura: E14 / M-07. Inventários 12–15 descrevem o estado vigente + o que permanece park.
 
 | ID | Requisito | Decisão | Etapa | Prova |
 |---|---|---|---|---|
@@ -36,7 +36,7 @@
 | HD-026 | Upload de arquivo novo | **BLOQUEADO** — HLAPI JSON-only; API legada desligada | E12.S1 | A-08 |
 | HD-027 | Listagem dinâmica: modelo/colunas/toolbar agora; builder AND/OR e prefs depois | sem export/massa/mapa | E13.S1, E13.S2 | [`13`](./13-listagem-de-chamados.md) G-50…G-55 |
 
-Inventários 12–15 descrevem o alvo. A ordem de código é o [`16`](./16-plano-paridade.md).
+Inventários 12–15 descrevem o estado vigente (IMPLEMENTADO / CONSOLE / BLOQUEADO). A ordem histórica de código é o [`16`](./16-plano-paridade.md) (**concluído**). Menção: [`evidence/e14-mentions.md`](./evidence/e14-mentions.md).
 
 ## Herdados da plataforma
 

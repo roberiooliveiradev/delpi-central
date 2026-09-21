@@ -1,14 +1,13 @@
 # 12 — Conteúdo da mensagem da conversa
 
-> **Status:** leitura HTML + imagem autenticada **IMPLEMENTADAS** (E8); escrita rica E8.S3. Ordem restante: [`16-plano-paridade.md`](./16-plano-paridade.md) E9+. Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
-> **Pedido:** o componente de mensagem deve cobrir o que o GLPI já entrega no fio público do chamado (texto, formatação, imagem e afins). Este arquivo só documenta.
-> **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md) §3 — hoje `bodyMode=plain` e descrição em texto puro. O desenho publicado **não** muda até haver autorização de código.
+> **Status:** leitura HTML + imagem + escrita rica **IMPLEMENTADAS** (E8); menção leitura **IMPLEMENTADA** (E14 / M-07). Escrita `@` **BLOQUEADA** (M-23). Paridade E6–E13 fechada. Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
+> **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md) §3 — `bodyMode=html`, `description_html` / `content_html`, compositor `HelpdeskRichTextField`.
 > **Conversa (estrutura):** [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md).
-> **Contrato vigente (texto puro):** [`03-contrato.md`](./03-contrato.md). Evolução do corpo: §10 deste arquivo.
+> **Contrato:** [`03-contrato.md`](./03-contrato.md) + campos HTML aditivos. Menção: [`evidence/e14-mentions.md`](./evidence/e14-mentions.md).
 > **Identidade:** id do GLPI ou e-mail; nome é rótulo, nunca chave. [`04-seguranca.md`](./04-seguranca.md).
 > **Lacuna de experiência:** C-08 em [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md).
 
-Este documento responde: o que o GLPI considera conteúdo de uma mensagem, o markup que a HLAPI 2.2 devolve, o que a Minha DELPI faz hoje, o contrato-alvo e o que **deve** entrar no componente quando houver autorização de código.
+Este documento responde: o que o GLPI considera conteúdo de uma mensagem, o markup que a HLAPI 2.2 devolve, o que a Minha DELPI **entrega hoje**, e o que permanece BLOQUEADO / CONSOLE.
 
 ## 1. Recorte do produto
 
@@ -42,12 +41,13 @@ Isto **estende** HD-009 (detalhe), HD-010 (abrir), HD-013 (acompanhamento) e HD-
 | Código / CSS GLPI (`[data-user-mention="true"]`, `document.send.php?docid=`) | CONFIRMADO_NO_CODIGO (upstream) | markup de menção e de imagem embutida |
 | Colar imagem no TinyMCE → `image_paste*.png` + Documento | CONFIRMADO_EM_DOCUMENTACAO_CANONICA (issues 11.0.6/11.0.7) | escrita de imagem **é upload**; A-08 |
 | `GET /session`, `team[].id`, `Followup.user.id` | CONFIRMADO_NO_CODIGO | identidade; fora do corpo |
-| `helpdesk_app/.../mapping.py` `display_text` / `_text` | CONFIRMADO_NO_CODIGO | o BFF remove toda tag HTML do conteúdo |
-| Teste `test_mapping_repairs_legacy_text_and_strips_html` | CONFIRMADO_EM_TESTE | `<p>…</p>` vira texto puro |
-| `HelpdeskMessageThread` `bodyMode="plain"` | CONFIRMADO_NO_CODIGO | a bolha mostra texto cru |
-| `stripDangerousRichTextTags` | CONFIRMADO_NO_CODIGO | **denylist** de 6 tags; não é allowlist |
-| `MessageThread` + `RichTextEditor` no plugin-ui | CONFIRMADO_NO_CODIGO | kit sanitiza markdown/HTML no cliente e tem editor rico; o helpdesk não os usa no fio |
-| `MentionComposer` | CONFIRMADO_NO_CODIGO | compositor das **salas**; cola imagem inline; **não** é o compositor do helpdesk |
+| `mapping.py` `sanitize_message_html` + `description_html` / `content_html` | CONFIRMADO_NO_CODIGO | BFF allowlist + rewrite de `document.send.php`; texto plano derivado em `description` / `content` |
+| Testes `test_mapping_publishes_sanitized_html_*` / create sanitize | CONFIRMADO_EM_TESTE | HTML sanitizado publicado; script fora |
+| `HelpdeskMessageThread` `bodyMode="html"` | CONFIRMADO_NO_CODIGO | bolha renderiza HTML já sanitizado + chips de menção |
+| `stripDangerousRichTextTags` | CONFIRMADO_NO_CODIGO | defesa no cliente; **não** substitui o BFF |
+| `MessageThread` (`html`/`markdown`/`plain`) + `RichTextEditor` | CONFIRMADO_NO_CODIGO | kit ligado no fio e no compositor do helpdesk |
+| `enrichGlpiUserMentionSpans` | CONFIRMADO_NO_CODIGO | M-07 — chip a partir de `data-user-id` |
+| `MentionComposer` | CONFIRMADO_NO_CODIGO | salas; **não** é o compositor do helpdesk (M-23) |
 | URL exata da `<img>` no HTML de produção (6288) | HIPOTESE_A_VALIDAR | típico `document.send.php?docid=N`; precisa de captura |
 | Vínculo documento↔acompanhamento na Timeline | HIPOTESE_A_VALIDAR | A-07 em [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md) |
 
@@ -161,36 +161,37 @@ Não há, neste inventário, operação HLAPI de “usuários mencionáveis” c
 
 ```text
 GLPI HTML
-  → mapping.display_text / _text  (remove <…>, repara CP850, unescape)
-  → description / timeline[].content  texto puro
-  → HelpdeskMessageThread bodyMode=plain
-  → bolha sem formatação
+  → mapping.sanitize_message_html (+ rewrite document.send.php)
+  → description_html / content_html  (sanitizado)
+  → description / content            (texto derivado)
+  → HelpdeskMessageThread bodyMode=html
+  → enrichGlpiUserMentionSpans → chip de menção
 ```
 
 | Superfície | Hoje |
 |---|---|
-| Abertura | título + texto sem marca; anexos do chamado no `belowBody` da abertura |
-| Acompanhamento | texto sem marca; sem arquivo próprio (A-07) |
-| Responder / abrir | `HelpdeskTextArea` — texto puro; POST reenvia string como `content` |
-| Validação de escrita | não vazio; sem teto de tamanho nem sanitizer HTML |
-| Lista `q` | só título (`name=like=`); HTML da descrição **não** entra na busca |
+| Abertura | título + HTML sanitizado; anexos do chamado no `belowBody` da abertura |
+| Acompanhamento | HTML sanitizado; sem arquivo próprio por bolha (A-07) |
+| Responder / abrir | `HelpdeskRichTextField` → `RichTextEditor`; POST HTML via `prepare_outbound_message_html` |
+| Validação de escrita | não vazio; teto `MAX_MESSAGE_HTML_CHARS`; sanitizer no BFF |
+| Lista `q` | título **ou** conteúdo (`name=like` / `content=like`); ver G-21 |
 | Identidade | `mine` / `requester_mine` no BFF (id ou e-mail) |
 | Foto | Core só se `mine`; demais iniciais |
-| Kit `MessageThread` | `markdown` (converte MD → HTML, `dangerouslySetInnerHTML`) e `plain`; **não** tem modo `html` |
-| Kit strip | remove `script`, `style`, `iframe`, `object`, `embed`, `form`; **mantém** o resto, inclusive `on*` e `src` arbitrário |
-| Kit `RichTextEditor` | toolbar WYSIWYG (ênfase, cor, H2, lista, alinhamento, fonte, tabela, link, fonte HTML/MD); **sem** botão de imagem |
-| Kit `MentionComposer` | salas; `@` + cola imagem; **proibido** no helpdesk enquanto A-08 existir |
-| Ajuda | `helpTooltips.create` / `.detail` descrevem texto e prévia de anexo, não formatação no corpo |
+| Kit `MessageThread` | `html` (helpdesk), `markdown`, `plain` |
+| Kit strip | defesa no cliente após o BFF |
+| Kit `RichTextEditor` | toolbar WYSIWYG (ênfase, cor, H2, lista, alinhamento, fonte, tabela, link, HR, fonte HTML/MD); **sem** botão de imagem |
+| Kit `MentionComposer` | salas; `@` + cola imagem; **proibido** no helpdesk (M-23 / A-08) |
+| Ajuda | `helpTooltips.create` / `.detail` descrevem formatação, imagem no corpo e menção leitura |
 
-**Causa do achatamento:** o tradutor trata conteúdo de mensagem com a mesma função de rótulo (`display_text`). Não é limitação do GLPI.
+**Causa histórica do achatamento (corrigida):** o tradutor usava `display_text` no corpo. Hoje o corpo passa pelo sanitizer canônico do BFF.
 
-**⚠ Desvio se o MFE renderizar o HTML do GLPI com o strip do kit:** o cliente não é autoridade de sanitização; o strip não é allowlist. **Responsabilidade canônica:** `platform-security-identity-authorization.mdc` + BFF. **Risco:** XSS e o browser ir a `helpdesk.centraldelpi.com.br`.
+**Invariante:** o MFE **não** é autoridade de sanitização. HTML cru do GLPI não entra no browser. **Responsabilidade canônica:** BFF + `platform-security-identity-authorization.mdc`.
 
-## 6. Paridade TinyMCE (GLPI) × kit × alvo
+## 6. Paridade TinyMCE (GLPI) × kit × estado na conversa
 
 O GLPI 11 carrega TinyMCE em toda página. A doc oficial não lista os botões; a paridade abaixo usa o que o editor ITIL costuma gravar + o que o `RichTextEditor` já faz. Botão ausente no kit **não** autoriza TinyMCE no MFE.
 
-| Capacidade | GLPI | Kit hoje | Alvo na conversa |
+| Capacidade | GLPI | Kit | Na conversa helpdesk |
 |---|---|---|---|
 | Parágrafo, quebra | sim | sim | leitura + escrita |
 | Negrito / itálico / sublinhado / riscado | sim | sim | leitura + escrita |
@@ -203,13 +204,13 @@ O GLPI 11 carrega TinyMCE em toda página. A doc oficial não lista os botões; 
 | Tabela | sim | sim | leitura + escrita |
 | Código | sim | modo fonte + bloco | leitura + escrita |
 | Citação | sim | via HTML | leitura; escrita se o kit já emitir |
-| Menção `@` | plugin TinyMCE | `MentionText` / `MentionComposer` (salas, por **label**) | leitura por `data-user-id`; escrita só com catálogo por **id** |
+| Menção `@` | plugin TinyMCE | `MentionText` / `MentionComposer` (salas, por **label**) | leitura por `data-user-id` (E14); escrita BLOQUEADA (M-23) |
 | Imagem no corpo | insert/colar → Documento | `MentionComposer` cola blob | leitura reescrita; escrita BLOQUEADA |
 | Vídeo / iframe / objeto | TinyMCE media (se ligado) | strip remove | **fora** — nunca publicar |
 | Emoji | possível | unicode | unicode no texto; sem sprite do GLPI |
 | Desfazer / refazer | sim | sim no editor | só no compositor |
 | HTML fonte | sim | sim no editor | compositor; a bolha nunca mostra fonte |
-| Documento anexo (não inline) | «Add a document» | `FilePreviewModal` | leitura na abertura (hoje); por bolha se A-07 |
+| Documento anexo (não inline) | «Add a document» | `FilePreviewModal` | leitura na abertura; por bolha se A-07 |
 
 ## 7. Allowlist e segurança (BFF é a autoridade)
 
@@ -251,15 +252,13 @@ O browser **não** chama o host do GLPI. O GET já exige o token da pessoa e 404
 
 `stripDangerousRichTextTags` é defesa no cliente. Continua depois do BFF. **Não** autoriza `dangerouslySetInnerHTML` com HTML cru. O modo `markdown` do `MessageThread` **não** pode receber HTML do GLPI: ele interpreta markdown e quebraria listas/HTML.
 
-## 8. Ledger — o que deve ser implementado
-
-Estado neste inventário (nenhum item autoriza diff):
+## 8. Ledger — estado vigente
 
 ```text
-ALVO_LEITURA          → a bolha deve mostrar o que o GLPI já gravou
-ALVO_ESCRITA          → abrir / responder deve gravar o mesmo tipo de conteúdo
-KIT_A_ESTENDER        → o primitivo falta no plugin-ui; o helpdesk não copia CSS
-HERDA_KIT             → o primitivo já existe; só ligar
+IMPLEMENTADO          → já na tela/contrato
+ALVO_LEITURA          → ainda não entregue (raro neste arquivo)
+KIT_A_ESTENDER        → primitivo do kit ainda incompleto
+HERDA_KIT             → primitivo do kit ligado
 HIPOTESE_A_VALIDAR    → falta captura no pipeline real
 BLOQUEADO             → evidência impede agora
 CONSOLE_GLPI          → fora do MFE
@@ -268,20 +267,20 @@ FORA                  → não entra neste produto
 
 ### 8.1 Leitura da bolha
 
-| ID | Capacidade | Estado | Dono quando houver código |
+| ID | Capacidade | Estado | Dono |
 |---|---|---|---|
-| M-01 | Preservar o HTML do `content` no contrato (não passar pelo strip de rótulo) | ALVO_LEITURA | BFF: campo HTML distinto de `display_text` |
-| M-02 | Texto plano derivado para busca, aria e fallback | ALVO_LEITURA | BFF, a partir do HTML sanitizado |
-| M-03 | Parágrafo, quebra, lista, ênfase | ALVO_LEITURA | kit + MFE render-only |
-| M-04 | Link (`http`, `https`, `mailto`); sem `javascript:` | ALVO_LEITURA | sanitizer canônico no BFF |
-| M-05 | Título, citação, alinhamento e cor **se** vierem no HTML | ALVO_LEITURA | same allowlist |
-| M-06 | Tabela e bloco de código | ALVO_LEITURA | kit; tokens `--delpi-ui-*` |
+| M-01 | Preservar o HTML do `content` no contrato (não passar pelo strip de rótulo) | **IMPLEMENTADO** | BFF `description_html` / `content_html` |
+| M-02 | Texto plano derivado para busca, aria e fallback | **IMPLEMENTADO** | BFF `description` / `content` a partir do HTML sanitizado |
+| M-03 | Parágrafo, quebra, lista, ênfase | **IMPLEMENTADO** | allowlist + `bodyMode=html` |
+| M-04 | Link (`http`, `https`, `mailto`); sem `javascript:` | **IMPLEMENTADO** | sanitizer canônico no BFF |
+| M-05 | Título, citação, alinhamento e cor **se** vierem no HTML | **IMPLEMENTADO** | same allowlist |
+| M-06 | Tabela e bloco de código | **IMPLEMENTADO** | kit + tokens `--delpi-ui-*` |
 | M-07 | Menção visível (chip), sem usar o nome como identidade | **IMPLEMENTADO** E14 | `enrichGlpiUserMentionSpans` + `bodyMode=html` |
-| M-08 | Imagem **no** corpo, autenticada | IMPLEMENTADO | rewrite `document.send.php` → GET anexo; blob + `FilePreviewModal` |
+| M-08 | Imagem **no** corpo, autenticada | **IMPLEMENTADO** | rewrite `document.send.php` → GET anexo; blob + `FilePreviewModal` |
 | M-09 | Documento ligado **àquela** mensagem | HIPOTESE_A_VALIDAR (A-07) | não inventar vínculo |
-| M-10 | Documento só do chamado, sem mensagem dona | IMPLEMENTADO hoje na abertura | invariante até A-07 |
-| M-11 | HTML de e-mail / Outlook sobrevive sanitizado | ALVO_LEITURA | mesmo sanitizer; irmão do P0 |
-| M-12 | `[data-form-tag]` e lixo TinyMCE | ALVO_LEITURA | strip; não vira controle |
+| M-10 | Documento só do chamado, sem mensagem dona | **IMPLEMENTADO** na abertura | invariante até A-07 |
+| M-11 | HTML de e-mail / Outlook sobrevive sanitizado | **IMPLEMENTADO** (mesmo sanitizer) | irmão do P0 |
+| M-12 | `[data-form-tag]` e lixo TinyMCE | **IMPLEMENTADO** | strip; não vira controle |
 
 ### 8.2 Escrita (abrir e responder)
 
@@ -302,14 +301,14 @@ FORA                  → não entra neste produto
 
 | ID | Capacidade | Estado |
 |---|---|---|
-| M-30 | Modo de corpo **HTML já sanitizado** no `MessageThread` (além de `markdown` / `plain`) | KIT_A_ESTENDER |
-| M-31 | `RichTextEditor` como compositor do helpdesk | HERDA_KIT — IMPLEMENTADO via `HelpdeskRichTextField` |
+| M-30 | Modo de corpo **HTML já sanitizado** no `MessageThread` (além de `markdown` / `plain`) | **IMPLEMENTADO** | `bodyMode="html"` + `htmlMessageBody` |
+| M-31 | `RichTextEditor` como compositor do helpdesk | HERDA_KIT — **IMPLEMENTADO** via `HelpdeskRichTextField` |
 | M-32 | Prévia / modal / baixar anexo | HERDA_KIT — já ligados na abertura |
 | M-33 | CSS de bolha no MFE helpdesk | proibido — factories do plugin-ui |
 | M-34 | Chip de menção a partir de `data-user-id`, sem casar `@nome` | **IMPLEMENTADO** E14 | `enrichGlpiUserMentionSpans` no kit |
-| M-35 | `resolveAttachmentImageSrc` para `document_id` do BFF (não `attachment:{uuid}` das salas) | KIT_A_ESTENDER ou adapter no host |
+| M-35 | `resolveAttachmentImageSrc` para `document_id` do BFF (não `attachment:{uuid}` das salas) | **IMPLEMENTADO** (adapter no host / rewrite BFF) |
 
-Enquanto M-30 não existir, o helpdesk **não** implementa um renderer HTML próprio e **não** reusa `bodyMode=markdown` para HTML do GLPI.
+Enquanto M-23 estiver BLOQUEADO, o helpdesk **não** importa `MentionComposer` das salas.
 
 ### 8.4 Satélites
 
@@ -324,7 +323,7 @@ Enquanto M-30 não existir, o helpdesk **não** implementa um renderer HTML pró
 
 ```text
 PRODUCER          GLPI Ticket.content / Followup.content (HTML)
-TRANSFORMER       mapping.py (hoje display_text; alvo: sanitize + rewrite + derive text)
+TRANSFORMER       mapping.py (sanitize + rewrite + derive text) + message_html_sanitizer
 CANONICAL OWNER   helpdesk-api (contrato do corpo)
 CONSUMERS         MFE helpdesk (MessageThread, create form, reply)
 NÃO-CONSUMIDOR    api-delpi, Chat AI, portal (não leem este JSON)
@@ -392,14 +391,14 @@ Campos de rótulo (`title`, nomes) continuam em `display_text`. Conteúdo de men
 | Ajuda | `helpTooltips` | M-40 |
 | Tema claro/escuro | tokens do kit | invariante |
 
-## 13. Estado antes × depois (alvo perceptível)
+## 13. Estado antes × depois (perceptível)
 
-| Caso | Hoje | Alvo |
+| Caso | Antes (pré-E8) | Depois (vigente) |
 |---|---|---|
 | P0 — imagem no fio (id 6288 **inexistente**; substituto **1108**) | — | **ATENDIDO** — `<img>` no HTML usa GET BFF; F5 sem cookie GLPI; `docid` alheio some; A-07 sem vínculo por bolha |
 | Irmão — listas e link num follow-up | uma linha corrida | **ATENDIDO** — HTML sanitizado na bolha |
 | Irmão — follow-up de e-mail | texto achatado | HTML sanitizado; `cid:` some |
-| Negativo — HTML com script | hoje some tudo; amanhã o script continua fora | **ATENDIDO** — allowlist; sem execução |
+| Negativo — HTML com script | sumia tudo | **ATENDIDO** — allowlist; sem execução |
 | Negativo — `src` para host do GLPI | — | **ATENDIDO** — não sobrevive no HTML publicado |
 | Invariante | privado, tarefa, solução, entidade, upload novo | não mudam |
 | Identidade | id / e-mail | não volta a usar nome |
@@ -413,7 +412,7 @@ Campos de rótulo (`title`, nomes) continuam em `display_text`. Conteúdo de men
 |---|---|---|
 | D-01 | Evolução ADDITIVE (`description_html` / `content_html`); campos atuais ficam texto | contrato vigente + consumidores `plain` |
 | D-02 | Sanitizer allowlist no BFF; kit é defesa | strip do kit é denylist |
-| D-03 | Sem TinyMCE e sem renderer HTML no MFE | kit + boundaries |
+| D-03 | Sem TinyMCE; HTML só via kit `bodyMode=html` (não renderer no MFE) | kit + boundaries |
 | D-04 | Sem `MentionComposer` no helpdesk | cola imagem = A-08; menção por label |
 | D-05 | Browser não chama o host do GLPI | A-06 + 04-segurança |
 | D-06 | Identidade continua id ou e-mail | C-05 |
@@ -493,6 +492,6 @@ Quando houver implementação, no **mesmo** entregável, sem path de API:
 - não muda busca da lista;
 - não autoriza investigação live que grave senha ou corpo em log.
 
-Quando o pedido passar de «documentar» para «implementar», a primeira subetapa é fechar H1–H4 no pipeline real e classificar a evolução do contrato (já pré-classificada aqui como ADDITIVE). Só então M-01…M-23 viram plano executável.
+Quando o pedido for **nova** capacidade de corpo (ex.: M-23 `@`, A-07 vínculo por bolha, upload), revalidar HLAPI + ownership antes de abrir plano. M-01…M-22, M-28…M-35 e E14 já estão no código; não reabrir como inventário «a implementar».
 
 Capacidades de Assistência que não são corpo da mensagem (Forms, SLA, vínculos): [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).

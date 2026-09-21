@@ -140,7 +140,7 @@ Aceite parcial registrado no ledger: sessão, lista e tela. A abertura e o acomp
 
 ## Fora deste plano
 
-Paridade do solicitante **não** entra em `E1…E5`. Ordem: [`16-plano-paridade.md`](./16-plano-paridade.md) (`E6…E12`) e ondas H6…H12 em [`05-roadmap.md`](./05-roadmap.md). Não criar etapa especulativa de bancada neste arquivo.
+Paridade do solicitante **não** entra em `E1…E5`. Ordem histórica: [`16-plano-paridade.md`](./16-plano-paridade.md) (`E6…E13`, **concluída**) e ondas H6…H14 em [`05-roadmap.md`](./05-roadmap.md). Não criar etapa especulativa de bancada neste arquivo.
 
 ## Revisão adversarial
 

@@ -6,7 +6,8 @@ Entrada: [`README.md`](./README.md).
 
 1. Instruções oficiais e regras `.cursor` da plataforma — autoridade superior a esta pasta.
 2. [`06-plano-execucao.md`](./06-plano-execucao.md) — ordem `E1…E5` (primeira entrega, não reabrir).
-2b. [`16-plano-paridade.md`](./16-plano-paridade.md) — ordem `E6…E13` (paridade do solicitante).
+2b. [`16-plano-paridade.md`](./16-plano-paridade.md) — ordem `E6…E13` (paridade do solicitante, **concluída**).
+2c. [`evidence/e14-mentions.md`](./evidence/e14-mentions.md) — menção leitura (M-07); M-23 park.
 3. [`02-arquitetura.md`](./02-arquitetura.md) — ownership e estado `PROVEN`.
 4. [`03-contrato.md`](./03-contrato.md) — contrato do BFF e mapa para a HLAPI.
 5. [`04-seguranca.md`](./04-seguranca.md) — OAuth, sessão e segredos.
@@ -17,12 +18,12 @@ Entrada: [`README.md`](./README.md).
 Visão e ondas: [`01-visao-produto.md`](./01-visao-produto.md), [`05-roadmap.md`](./05-roadmap.md).
 Telas e componentes: [`WIREFRAMES.md`](./WIREFRAMES.md).
 Conversa do chamado: [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md). A tela publicada está em [`WIREFRAMES.md`](./WIREFRAMES.md).
-Lacunas da experiência (inventário, sem autorização de código): [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md).
-Conteúdo da mensagem (formatação, imagem, HTML; inventário, sem autorização de código): [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md).
-Listagem de chamados (colunas, filtros, paridade GLPI; inventário, sem autorização de código): [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md).
-Página do chamado e estados (formulário GLPI × detalhe; ciclo ITIL; inventário, sem autorização de código): [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md).
+Lacunas da experiência (inventário; estados sincronizados com o código): [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md).
+Conteúdo da mensagem (formatação, imagem, HTML): [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md).
+Listagem de chamados (colunas, filtros, paridade GLPI): [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md).
+Página do chamado e estados (formulário GLPI × detalhe; ciclo ITIL): [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md).
 Capacidades do GLPI Assistência (Forms, SLA, vínculos, abas; matriz): [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).
-Plano de paridade `E6…E12`: [`16-plano-paridade.md`](./16-plano-paridade.md).
+Plano de paridade `E6…E13` (concluído): [`16-plano-paridade.md`](./16-plano-paridade.md).
 
 ## Roteamento rápido
 
@@ -30,16 +31,16 @@ Plano de paridade `E6…E12`: [`16-plano-paridade.md`](./16-plano-paridade.md).
 o que a pessoa vê?          → 01 e WIREFRAMES.md
 de quem é o chamado?        → 02
 qual URL e qual JSON?       → 03
-o corpo da mensagem?        → 12 (HTML, formatação, imagem; inventário)
-a listagem de chamados?     → 13 (colunas, filtros, paridade GLPI; inventário)
-a página e os estados?      → 14 (detalhe do solicitante + ciclo ITIL; inventário)
-o que o GLPI tem além disso? → 15 (matriz Assistência; inventário)
+o corpo da mensagem?        → 12 (HTML, formatação, imagem; E14 menção)
+a listagem de chamados?     → 13 (colunas, filtros, builder AND)
+a página e os estados?      → 14 (detalhe do solicitante + ciclo ITIL)
+o que o GLPI tem além disso? → 15 (matriz Assistência)
 onde fica o segredo?        → 04
-o que vem depois do MVP?    → 05 (H6…H13)
-o que implementar agora?    → 06 (E1…E5) ou 16 (E6…E13)
+ondas do produto?           → 05 (H0…H14)
+o que implementar agora?    → ledger: paridade fechada; próximo só com decisão nova
 qual HD?                    → 07
 como fechar a etapa?        → 08 e 09
 já está em produção?        → evidence/execution-ledger
 ```
 
-O ledger em `evidence/` prova runtime. Inventários 12–15 descrevem o alvo. Código da primeira entrega: [`06`](./06-plano-execucao.md). Código da paridade: [`16`](./16-plano-paridade.md), só quando o pedido for executar.
+O ledger em `evidence/` prova runtime. Inventários 12–15 descrevem o alvo **e** o estado vigente (IMPLEMENTADO / CONSOLE / BLOQUEADO). Código da primeira entrega: [`06`](./06-plano-execucao.md). Código da paridade: [`16`](./16-plano-paridade.md) (histórico). Menção: [`e14-mentions.md`](./evidence/e14-mentions.md).

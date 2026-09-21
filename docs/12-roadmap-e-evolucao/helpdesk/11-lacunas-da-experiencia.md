@@ -1,11 +1,11 @@
 # 11 — Lacunas da experiência
 
-> **Status:** inventário histórico da experiência. Lista, filtros e prévia **já publicados**. Lacunas restantes e paridade GLPI: [`12`](./12-conteudo-da-mensagem.md)–[`15`](./15-capacidades-glpi.md). Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
+> **Status:** inventário histórico. L-01…L-12 e C-08 **IMPLEMENTADOS**. Residuais: A-08/H12 upload, M-23 `@`, H10 ciclo, G-05 requester na lista. Paridade: [`12`](./12-conteudo-da-mensagem.md)–[`15`](./15-capacidades-glpi.md). Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
 > **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md).
-> **Conversa já especificada:** [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md).
+> **Conversa:** [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md).
 > **Contrato vigente:** [`03-contrato.md`](./03-contrato.md).
 
-Este documento lista o que a pessoa ainda não encontra em Meus Chamados de TI, comparado com o que as fotos de 21/09/2026 mostram no MFE e no GLPI. Não é etapa de código.
+Este documento lista o que a pessoa ainda não encontra em Meus Chamados de TI frente ao GLPI. Não é etapa de código.
 
 O produto continua o do colaborador. O console do técnico permanece em `https://helpdesk.centraldelpi.com.br`.
 
@@ -27,7 +27,8 @@ A lista do GLPI é a bancada Super-Admin. Meus Chamados de TI não copia essa gr
 |---|---|
 | Lista dos chamados visíveis ao token | `GET /tickets` → tabela com ordenação de coluna |
 | Abrir chamado | título e descrição à esquerda; categoria e urgência à direita |
-| Conversa | abertura + acompanhamentos em `HelpdeskMessageThread` |
+| Conversa | abertura + acompanhamentos em `HelpdeskMessageThread` `bodyMode=html` |
+| Compositor | `HelpdeskRichTextField` na abertura e no Responder |
 | Responder | texto + `Idempotency-Key` |
 | Arquivo já ligado ao chamado | botão Baixar; 404 se o `document_id` não for daquele chamado |
 | Console do técnico | rota `helpdesk.console`, fora do MFE |
@@ -53,18 +54,18 @@ Pedido explícito das fotos: filtros e listagem de dados.
 
 | ID | Lacuna | Evidência | Estado | Dono |
 |---|---|---|---|---|
-| L-01 | Busca por texto (título / conteúdo visível) | `q` no título publicado; conteúdo ainda não — G-21 no 13 | IMPLEMENTADO (título) | BFF `q` + `FilterInputField` |
-| L-02 | Filtro de status | a lista mistura Novo, Em atendimento e Solucionado; o subtítulo diz «abertos» | IMPLEMENTADO | BFF + `FilterSelectField` |
-| L-03 | Filtro de urgência | o dado já existe no cartão; não dá para restringir | IMPLEMENTADO | BFF + kit de filtro |
-| L-04 | Filtro de categoria | categorias já vêm de `GET /ticket-categories` | IMPLEMENTADO | BFF + filtro |
-| L-05 | Filtro de período (abertura ou última atualização) | `updated_from`/`updated_to` publicados; período de **abertura** ainda não — G-25 no 13 | IMPLEMENTADO (atualização) | BFF + date |
-| L-06 | Id do chamado visível | GLPI coluna ID; MFE só o path | IMPLEMENTADO | apresentação; `id` já está no JSON |
-| L-07 | Data de abertura na lista | GLPI «Data de abertura»; BFF da lista não publica `created_at` | IMPLEMENTADO | `TicketSummary.created_at` |
-| L-08 | Data da última atualização na lista | coluna «Atualizado» publicada (relativo; absoluta no 13) | IMPLEMENTADO | `TicketListTable` |
-| L-09 | Técnico atribuído na lista e no detalhe | GLPI «Atribuído»; o `team` com `role=assigned` já existe no ticket | IMPLEMENTADO | `assigned_display_name` |
-| L-10 | Ordenar (última atualização, abertura, título) | GLPI «Ordenado por Última atualização»; BFF devolve a ordem do GLPI sem parâmetro | IMPLEMENTADO | query `sort` |
-| L-11 | Paginação | `page`/`has_more` publicados; a frase «BFF pede a coleção inteira» é drift | IMPLEMENTADO | `start`/`limit` +1 |
-| L-12 | Estado vazio com filtro ativo | hoje o vazio significa «nenhum chamado»; com filtro precisa dizer «nenhum neste recorte» | IMPLEMENTADO | apresentação + ajuda |
+| L-01 | Busca por texto (título / conteúdo visível) | `q` OR content — G-21 **IMPLEMENTADO** | **IMPLEMENTADO** | BFF `q` + `FilterInputField` |
+| L-02 | Filtro de status | grupos + pending/approval | **IMPLEMENTADO** | BFF + `FilterSelectField` |
+| L-03 | Filtro de urgência | o dado já existe no cartão; não dá para restringir | **IMPLEMENTADO** | BFF + kit de filtro |
+| L-04 | Filtro de categoria | categorias já vêm de `GET /ticket-categories` | **IMPLEMENTADO** | BFF + filtro |
+| L-05 | Filtro de período (abertura ou última atualização) | `updated_*` + `created_*` — G-25 **IMPLEMENTADO** | **IMPLEMENTADO** | BFF + date |
+| L-06 | Id do chamado visível | GLPI coluna ID; MFE só o path | **IMPLEMENTADO** | apresentação; `id` já está no JSON |
+| L-07 | Data de abertura na lista | data-hora absoluta | **IMPLEMENTADO** | `TicketSummary.created_at` |
+| L-08 | Data da última atualização na lista | absoluta | **IMPLEMENTADO** | `TicketListTable` |
+| L-09 | Técnico atribuído na lista e no detalhe | GLPI «Atribuído»; o `team` com `role=assigned` já existe no ticket | **IMPLEMENTADO** | `assigned_display_name` |
+| L-10 | Ordenar (última atualização, abertura, título) | multi-sort | **IMPLEMENTADO** | query `sort` |
+| L-11 | Paginação + `page_size` | 10/20/50 | **IMPLEMENTADO** | `start`/`limit` +1 |
+| L-12 | Estado vazio com filtro ativo | «nenhum neste recorte» | **IMPLEMENTADO** | apresentação + ajuda |
 
 Filtros: `createDashboardFiltersKit`. Lista: `HelpdeskDataTable` (`DataTable` do kit), com scroll horizontal intencional. Sem coluna de entidade, último editor ou contadores do parque. Técnico aparece, mas não ordena — a HLAPI não tem propriedade simples de atribuído.
 
@@ -170,7 +171,7 @@ H3  Super-Admin no MFE não justifica filtrar 128 128 no browser — invariante 
 |---|---|
 | 11 colunas da bancada | tabela do kit, colunas do solicitante — [`13`](./13-listagem-de-chamados.md) |
 | Contadores do parque | bancada |
-| Entidade, último editor | bancada; data de resolução é ALVO no 13, não «só bancada» |
+| Entidade, último editor | bancada; data de resolução **IMPLEMENTADA** no 13 (`solved_at`) |
 | Foto de perfil | iniciais |
 | Imagem embutida como HTML do GLPI | blob autenticado no modal do kit; sem HTML cru |
 | Abas, atores editáveis, excluir, salvar | console |

@@ -19,6 +19,7 @@ Estados: `PROVEN` | `PLANNED` | `TARGET` | `NOT_STARTED`.
 | H4 | MFE nativo | PROVEN | menu Meus Chamados de TI em `/apps/helpdesk`, sem iframe |
 | H5 | Anexo, satisfação, bancada técnica | TARGET | fatiado em H10/H12/CONSOLE — [`05-roadmap.md`](../05-roadmap.md) |
 | H6 | Gates HLAPI da paridade | PROVEN | 21/09/2026 — vereditos em [`12`](../12-conteudo-da-mensagem.md) §15, [`13`](../13-listagem-de-chamados.md) §13, [`14`](../14-pagina-e-estados-do-chamado.md) §10, [`15`](../15-capacidades-glpi.md) §9 |
+| H14 | Menção leitura (chips) | PROVEN | E14 — [`e14-mentions.md`](./e14-mentions.md); M-23 park |
 
 H3 e H6 fechados. Paridade E6–E13 + verify-final concluídos. E14 (menção leitura M-07) entregue; M-23 (`@` no compositor) BLOQUEADO sem catálogo HLAPI. Sem senha neste arquivo.
 

@@ -1,10 +1,11 @@
 # 05 — Roadmap
 
 > **Primeira entrega (E1…E5):** [`06-plano-execucao.md`](./06-plano-execucao.md) — **não reabrir**.
-> **Paridade do solicitante (E6…E12):** [`16-plano-paridade.md`](./16-plano-paridade.md).
-> **Inventários:** [`12`](./12-conteudo-da-mensagem.md) · [`13`](./13-listagem-de-chamados.md) · [`14`](./14-pagina-e-estados-do-chamado.md) · [`15`](./15-capacidades-glpi.md).
-> **Requisitos:** `HD-001…HD-026` em [`07-requisitos.md`](./07-requisitos.md).
-> Este arquivo é a evolução macro. Não marca fase como feita.
+> **Paridade do solicitante (E6…E13):** [`16-plano-paridade.md`](./16-plano-paridade.md) — **concluída**.
+> **Menção leitura (E14):** [`evidence/e14-mentions.md`](./evidence/e14-mentions.md).
+> **Inventários (estado sincronizado com o código):** [`12`](./12-conteudo-da-mensagem.md) · [`13`](./13-listagem-de-chamados.md) · [`14`](./14-pagina-e-estados-do-chamado.md) · [`15`](./15-capacidades-glpi.md).
+> **Requisitos:** `HD-001…HD-027` em [`07-requisitos.md`](./07-requisitos.md).
+> Este arquivo é a evolução macro. Estados H0–H14 abaixo refletem o ledger.
 
 ```text
 H0  Fundação GLPI                          PROVEN

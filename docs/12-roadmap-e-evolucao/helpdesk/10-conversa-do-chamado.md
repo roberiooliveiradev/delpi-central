@@ -1,13 +1,12 @@
 # 10 — Conversa do chamado
 
-> **Status:** a tela publicada está em [`WIREFRAMES.md`](./WIREFRAMES.md) §3. Este arquivo permanece o inventário da decisão.
-> **Contrato vigente:** [`03-contrato.md`](./03-contrato.md).
->
-> O `createDashboardMessageThread` já saía pelo barrel do plugin-ui. A entrega estendeu o fio com título, texto puro e identidade na bolha do solicitante; não criou outro componente.
-> **Corpo da mensagem (HTML, formatação, imagem):** inventário em [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md). Não implementar a partir deste arquivo.
-> **Página (abas, atores, ciclo de status):** inventário em [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md). Não implementar a partir deste arquivo.
+> **Status:** a tela publicada está em [`WIREFRAMES.md`](./WIREFRAMES.md) §3 (`bodyMode=html` + `HelpdeskRichTextField`).
+> **Contrato vigente:** [`03-contrato.md`](./03-contrato.md) + `description_html` / `content_html`.
+> **Corpo da mensagem:** [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) — vigente; M-23 park.
+> **Página (abas, atores, ciclo de status):** [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md).
+> **Menção leitura:** [`evidence/e14-mentions.md`](./evidence/e14-mentions.md).
 
-Este documento descreve o que falta para o detalhe de Meus Chamados de TI parecer a conversa do GLPI, dentro do kit da Minha DELPI. As fotos de referência são o chamado `1114` em `helpdesk.centraldelpi.com.br/front/ticket.form.php?id=1114`, visto pela interface padrão (central), com o usuário Super-Admin.
+Este documento descreve a conversa do solicitante na Minha DELPI frente ao fio do GLPI. As fotos de referência históricas são o chamado `1114` em `helpdesk.centraldelpi.com.br/front/ticket.form.php?id=1114` (interface central, Super-Admin).
 
 ## 1. O que a foto é
 
@@ -68,14 +67,14 @@ HelpdeskSectionCard  «Conversa»
     avatar com as iniciais
     nome do solicitante · tempo relativo
     título
-    descrição em texto puro
+    description_html (sanitizado; chips de menção)
 
   bolha de acompanhamento
     avatar · nome · tempo
-    texto
-    baixar arquivo, quando o arquivo estiver ligado a essa mensagem
+    content_html
+    baixar arquivo, quando o arquivo estiver ligado a essa mensagem (A-07)
 
-  HelpdeskTextArea  «Responder»
+  HelpdeskRichTextField  «Responder»  (oculto se can_followup=false)
   [ Enviar ]
 ```
 
@@ -89,11 +88,11 @@ As iniciais saem do nome exibido. A foto da Minha DELPI (Core) só entra quando 
 
 O `HelpdeskTimeline` atual (`createTimeline`) é uma trilha de eventos: título, hora e detalhe. Não é a bolha com avatar da foto.
 
-O kit já tem `MessageThread` em `plugins/plugin-ui/src/components/collaboration/MessageThread.tsx`: iniciais, bolha, lado «meu» / outro, hora, texto e um espaço `belowBody` para o anexo. O factory `createDashboardMessageThread` já saía pelo barrel que o MFE importa. A tela usa esse factory, com título, texto puro e o nome do solicitante visível na própria bolha. Nenhum CSS de bolha nasceu em `plugins/helpdesk`.
+O kit já tem `MessageThread` em `plugins/plugin-ui/src/components/collaboration/MessageThread.tsx`: iniciais, bolha, lado «meu» / outro, hora, `bodyMode=html|markdown|plain` e `belowBody` para o anexo. A tela usa `bodyMode=html` com HTML já sanitizado pelo BFF e chips via `enrichGlpiUserMentionSpans`. Nenhum CSS de bolha nasceu em `plugins/helpdesk`.
 
 `RoomConversationShell` é o chrome das salas de outro produto. O helpdesk não importa esse shell nem a regra de sala.
 
-O compositor de resposta e o de abertura usam o mesmo `HelpdeskRichTextField` (`RichTextEditor` do kit). `MentionComposer` fica nas salas; colar imagem e upload novo continuam fora.
+O compositor de resposta e o de abertura usam o mesmo `HelpdeskRichTextField` (`RichTextEditor` do kit). `MentionComposer` fica nas salas; colar imagem e upload novo continuam fora (M-23 / A-08).
 
 ## 6. Contrato
 
@@ -101,16 +100,16 @@ O compositor de resposta e o de abertura usam o mesmo `HelpdeskRichTextField` (`
 |---|---|---|
 | Instante da abertura | `Ticket.date_creation` | `created_at` no detalhe |
 | Nome do solicitante | `Ticket.team[]` com `role=requester`; a limpeza da equipe também preserva `display_name` | `requester_display_name` |
-| Texto da abertura | `Ticket.content` (HTML) | `description`, já em texto puro; HTML sanitizado só no alvo de [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) |
-| Acompanhamento | `Followup.user`, `content`, `date_creation` | `timeline[]` com `author_display_name`, `content`, `created_at`, `mine` |
+| Texto da abertura | `Ticket.content` (HTML) | `description` (texto) + `description_html` (sanitizado) |
+| Acompanhamento | `Followup.user`, `content`, `date_creation` | `timeline[]` com `author_display_name`, `content`, `content_html`, `created_at`, `mine` |
 | Autor da mensagem | `Followup.user.id` / `team[].id` e `GET /session` → `user_id`; e-mail do JWT se o GLPI trouxer e-mail | `mine` / `requester_mine` — nunca o nome |
 | Acompanhamento privado | `Followup.is_private` | não entra em `timeline` |
 | Arquivo do chamado | `Timeline` tipo `Document`, `documents_id` | `attachments[]` e o download já publicados; a tela mostra o botão na abertura |
 | Arquivo de um acompanhamento | documento ligado ao follow-up, não ao chamado | a HLAPI do item `Followup` não devolve essa lista; o download continua do chamado inteiro |
 
-Texto visível continua passando pelo mesmo reparo de acento e pela remoção de HTML já feitos no tradutor. A conversa não volta a mostrar tag.
+Texto plano derivado continua no campo `description` / `content` (busca, aria, fallback). A bolha renderiza o HTML sanitizado — não tags cruas do GLPI.
 
-Enviar arquivo novo, tarefa, solução, aprovação, atores editáveis, SLA e entidade continuam fora. O envio de arquivo esbarra na HLAPI, que não recebe o binário; a API legada permanece desligada.
+Enviar arquivo novo, tarefa, solução, aprovação, atores editáveis e entidade continuam fora. O envio de arquivo esbarra na HLAPI, que não recebe o binário; a API legada permanece desligada.
 
 ## 7. O que não copiar
 

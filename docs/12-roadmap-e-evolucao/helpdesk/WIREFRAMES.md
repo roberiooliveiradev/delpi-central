@@ -5,13 +5,13 @@
 > **API:** `/apps/helpdesk-api` (o navegador não chama o GLPI nem a api-delpi)
 > **UI kit:** `@delpi/plugin-ui` via Module Federation · factories em [`plugins/helpdesk/src/ui/helpdeskUi.tsx`](../../../plugins/helpdesk/src/ui/helpdeskUi.tsx)
 > **Regras:** `plugins-reusable-components.mdc`, `plugins-visual-design-system.mdc`
-> **Estado:** lista com filtros, vínculo, conversa e prévia de anexo publicados. H5 abaixo é especificação, não autorização para implementar.
+> **Estado:** lista com filtros/builder, conversa HTML, compositor rico e prévia de anexo **publicados**. H5/H10/H12 abaixo são especificação ou park, não autorização nova.
 > **Lacunas restantes:** [`11-lacunas-da-experiencia.md`](./11-lacunas-da-experiencia.md).
-> **Corpo da mensagem (alvo, sem implementar):** [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md).
-> **Listagem (alvo, sem implementar):** [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md). A tela publicada abaixo permanece.
-> **Página e estados (alvo, sem implementar):** [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md).
+> **Corpo da mensagem:** [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) (vigente; M-23 park).
+> **Listagem:** [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md) (vigente; G-05 residual).
+> **Página e estados:** [`14-pagina-e-estados-do-chamado.md`](./14-pagina-e-estados-do-chamado.md).
 > **Matriz GLPI Assistência:** [`15-capacidades-glpi.md`](./15-capacidades-glpi.md).
-> **Ordem de paridade:** [`16-plano-paridade.md`](./16-plano-paridade.md). A tela publicada abaixo permanece até o S correspondente.
+> **Paridade E6…E13:** [`16-plano-paridade.md`](./16-plano-paridade.md) — **concluída**. Menção: [`evidence/e14-mentions.md`](./evidence/e14-mentions.md).
 
 Implementar uma tela deste módulo é montar as factories já nomeadas. Não criar `button`, `input`, `select`, `textarea`, card ou badge com CSS próprio.
 
@@ -22,7 +22,8 @@ Implementar uma tela deste módulo é montar as factories já nomeadas. Não cri
 | `[ Botão ]` | `ActionButton` `primary` |
 | `[ Botão ]` secundário | `ActionButton` default |
 | `·····` | `HelpdeskTextField` |
-| `[ texto ]` | `HelpdeskTextArea` |
+| `[ texto ]` | `HelpdeskTextArea` (legado; preferir rich) |
+| `[ HTML ]` | `HelpdeskRichTextField` → `RichTextEditor` |
 | `[Select v]` | `HelpdeskSelect` |
 | `│ ░░░ │` | `HelpdeskLoadingState` |
 | `⚠` | `HelpdeskStateBanner` `variant="error"` |
@@ -80,9 +81,10 @@ O bloco escuro é `:root[data-theme="dark"] .dashboard-helpdesk`. Superfície, t
 | `createDashboardDataRecordCard` | `HelpdeskRecordCard` | Resumo do detalhe |
 | `DataTable` | `HelpdeskDataTable` | Lista com ordenação de coluna (colunas via catálogo) |
 | `TicketListToolbar` | — | Chips de recorte/sort + atualizar (H13) |
-| `createDashboardMessageThread` | `HelpdeskMessageThread` | Abertura e acompanhamentos do detalhe, em texto puro. Alvo HTML: [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md) |
+| `createDashboardMessageThread` | `HelpdeskMessageThread` | Abertura e acompanhamentos, `bodyMode=html` (HTML sanitizado + chips de menção) |
 | `createDashboardTextField` | `HelpdeskTextField` | Título |
-| `createDashboardTextAreaField` | `HelpdeskTextArea` | Descrição e resposta |
+| `createDashboardTextAreaField` | `HelpdeskTextArea` | Legado; abertura/resposta usam rich |
+| `HelpdeskRichTextField` | `RichTextEditor` | Descrição na abertura e Responder |
 | `createDashboardSelectField` | `HelpdeskSelect` | Categoria (com busca) e urgência |
 | `createDashboardFormActions` | `HelpdeskFormActions` | Rodapé dos formulários, vínculo e paginação |
 | `createDashboardFiltersKit` | `HelpdeskFiltersRow` / `HelpdeskFilterInput` / `HelpdeskFilterSelect` | Recorte da lista |
@@ -93,14 +95,16 @@ O bloco escuro é `:root[data-theme="dark"] .dashboard-helpdesk`. Superfície, t
 
 Texto de ajuda: `plugins/helpdesk/src/content/helpTooltips.ts`. O hint fica na prop `hint` do card ou do campo. Não colocar path de API no texto.
 
-Tom do badge, em `statusBadgeVariant`:
+Tom do badge, em `statusBadgeVariant` (**por `status_id`**):
 
-| Status | Variante |
+| Id | Variante |
 |---|---|
-| começa com «novo» | `info` |
-| contém «solucion» | `success` |
-| contém «atendimento» ou «atribu» | `warning` |
-| qualquer outro, inclusive pendente e fechado | `neutral` |
+| 1 Novo | `info` |
+| 2 / 3 Em atendimento | `warning` |
+| 4 Pendente / 6 Fechado | `neutral` |
+| 5 Solucionado | `success` |
+| 10 Approval | `warning` |
+| demais | `neutral` |
 
 ## Rotas
 
@@ -172,7 +176,7 @@ HelpdeskSectionCard  «Abrir chamado»  hint = helpTooltips.create  fill
     .helpdesk-create-layout          grid 2fr / 1fr; 1 coluna abaixo de 768px
       main  (esquerda, ~2/3)
         Título        ícone Type        ·····   obrigatório   hint = helpTooltips.create
-        Descrição     ícone AlignLeft   [ texto ] obrigatório, área alta
+        Descrição     ícone AlignLeft   [ HTML ] obrigatório, área alta
       aside (direita, ~1/3)
         Categoria     ícone FolderTree  [Select v] obrigatório, searchable
         Urgência      ícone Gauge       [Select v] obrigatório
@@ -204,24 +208,23 @@ HelpdeskSectionCard  «Conversa»  hint = helpTooltips.detail
      ● status
      Chamado / Técnico quando existirem
 
-  HelpdeskMessageThread  bodyMode = plain   (publicado; alvo HTML em 12)
+  HelpdeskMessageThread  bodyMode = html
     abertura
       autor = requester_display_name
       hora = «Criado em …»
       título = título do chamado
-      corpo = descrição em texto puro   (publicado)
+      corpo = description_html (sanitizado; chips de menção)
       prévia = HelpdeskAttachmentPreviewStrip; clique abre FilePreviewModal com Baixar
     acompanhamento
-      autor, hora, texto
+      autor, hora, content_html
       sem arquivo próprio (A-07 ainda não inventa o vínculo)
 
-  Responder   [ texto ]  obrigatório  hint = helpTooltips.detail   (publicado; alvo RichTextEditor em 12)
+  Responder   [ HTML ]  obrigatório  hint = helpTooltips.detail   (oculto se can_followup=false)
   HelpdeskFormActions
-    Responder   [ texto ]  3 linhas
     [ enviar ]
 ```
 
-A abertura existe mesmo sem acompanhamento. Tarefa, solução, aprovação e acompanhamento privado não entram. `mine` e `requester_mine` vêm do BFF (id do GLPI ou e-mail). A tela não compara nome. A foto da Core só entra nessa bolha; as outras usam iniciais.
+A abertura existe mesmo sem acompanhamento. Tarefa, solução, aprovação e acompanhamento privado não entram. `mine` e `requester_mine` vêm do BFF (id do GLPI ou e-mail). A tela não compara nome. A foto da Core só entra nessa bolha; as outras usam iniciais. Rascunho de resposta em `sessionStorage` sobrevive a F5.
 
 ## 4. Fora destas rotas
 

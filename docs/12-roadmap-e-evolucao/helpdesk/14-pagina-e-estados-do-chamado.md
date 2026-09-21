@@ -1,13 +1,12 @@
 # 14 — Página do chamado e estados
 
-> **Status:** inventário. Ordem de código: [`16-plano-paridade.md`](./16-plano-paridade.md) E7.S1 e E9 (HD-019, HD-023). Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
-> **Pedido:** a página do chamado e os estados devem cobrir o que o GLPI já entrega ao solicitante. Este arquivo só documenta.
-> **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md) §3.
-> **Foto de 21/09/2026:** `front/ticket.form.php?id=1101` (interface central, Super-Admin) — três colunas, abas, atores, menu Responder.
+> **Status:** inventário sincronizado com o código (E7 + E9 + E10 CONSOLE). Paridade [`16-plano-paridade.md`](./16-plano-paridade.md) **concluída**. Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
+> **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md) §3 — cartão com `status_id`, datas absolutas, HTML, `can_followup`, observadores.
+> **Foto de 21/09/2026:** `front/ticket.form.php?id=1101` (interface central) — três colunas = CONSOLE.
 > **Conversa:** [`10-conversa-do-chamado.md`](./10-conversa-do-chamado.md). **Corpo:** [`12-conteudo-da-mensagem.md`](./12-conteudo-da-mensagem.md). **Lista:** [`13-listagem-de-chamados.md`](./13-listagem-de-chamados.md).
 > **Contrato vigente:** [`03-contrato.md`](./03-contrato.md).
 
-Este documento responde: o que o formulário de chamado do GLPI contém, o que o ciclo ITIL de status faz, o que a Minha DELPI mostra hoje e o que **deve** entrar na página quando houver autorização de código.
+Este documento responde: o que o formulário de chamado do GLPI contém, o que o ciclo ITIL de status faz, o que a Minha DELPI **mostra hoje**, e o que permanece CONSOLE / FORA.
 
 ## 1. Recorte do produto
 
@@ -35,10 +34,10 @@ Isto **estende** HD-009, HD-013, HD-015 e HD-016. Aprovar solução / reabrir / 
 | [Life cycle matrix](https://help.glpi-project.org/documentation/modules/administration/profiles/lifecyclematrix.md) | CONFIRMADO_EM_DOCUMENTACAO_CANONICA | matriz por perfil; interface simplificada: fechar e reabrir |
 | [Followup](https://help.glpi-project.org/documentation/modules/assistance/tabs/followup) / [Solution](https://help.glpi-project.org/documentation/modules/assistance/tabs/solution) | CONFIRMADO_EM_DOCUMENTACAO_CANONICA | responder vs solucionar vs aprovar |
 | Foto 1101 `ticket.form.php` | CONFIRMADO (captura) | abas, atores, menu Responder, 2/15, ponto de status |
-| Schema HLAPI `Ticket.status` `{id, name}` | CONFIRMADO_NO_CODIGO | o BFF publica só o `name` |
-| `mapping._STATUS_GROUPS` e `_status_ids` | CONFIRMADO_NO_CODIGO | grupos + ids `1,2,3,4,5,6,10` |
-| `statusBadgeVariant` | CONFIRMADO_NO_CODIGO | casa **rótulo** PT; Aprovação e Planejado não têm variante própria |
-| Forum / DeepWiki GLPI 11 `APPROVAL=10` | CONFIRMADO_EM_DOCUMENTACAO_CANONICA | id 10 = Approval; o BFF já aceita `10` no filtro |
+| Schema HLAPI `Ticket.status` `{id, name}` | CONFIRMADO_NO_CODIGO | BFF publica `status` + `status_id` |
+| `mapping._STATUS_GROUPS` e `_status_ids` | CONFIRMADO_NO_CODIGO | grupos + ids `1,2,3,4,5,6,10` + `pending`/`approval` |
+| `statusBadgeVariant` | CONFIRMADO_NO_CODIGO | mapa **id→variante** (não substring do nome) |
+| Forum / DeepWiki GLPI 11 `APPROVAL=10` | CONFIRMADO_EM_DOCUMENTACAO_CANONICA | id 10 = Approval |
 | Rótulo PT-BR exato de cada id nesta produção | HIPOTESE_A_VALIDAR | capturar `status` dos sete ids |
 
 Os status **não se cadastram**. A matriz do perfil só esconde transição, não cria estado novo.
@@ -70,21 +69,22 @@ Quem entra como colaborador no GLPI **não** vê o menu da foto. Vê título, st
 
 ```text
 HelpdeskPageHeader   título · Voltar · Atualizar
-HelpdeskRecordCard   categoria | #id · técnico | badge de status
-HelpdeskMessageThread  abertura + acompanhamentos (texto puro)
-HelpdeskTextArea     Responder  (sempre visível se o GET ok)
+HelpdeskRecordCard   categoria | #id · técnico | badge por status_id · datas absolutas · observadores
+HelpdeskMessageThread  bodyMode=html  (abertura + acompanhamentos)
+HelpdeskRichTextField  Responder  (oculto se can_followup=false)
 ```
 
 | Peça | Hoje |
 |---|---|
-| Título, id, status (string), categoria, urgência, técnico | cartão |
-| Datas | só na conversa, relativas |
-| Observador | não |
-| Tipo / prioridade / impacto / entidade / SLA | não |
-| Responder com chamado solucionado/fechado | o formulário continua na tela; o GLPI decide 403 |
-| Aprovar solução / reabrir / pesquisa | não |
-| Excluir Novo | não — e não entra (CONSOLE / risco) |
-| F5 | o id está no path |
+| Título, id, `status` + `status_id`, categoria, urgência, técnico | cartão |
+| Datas | absolutas no cartão (aberto / atualizado / solução quando houver) |
+| Observador | rótulo só leitura se `team.observer` |
+| Tipo / prioridade / impacto / entidade | não |
+| SLA TTR/TTO | rótulos se a HLAPI trouxer |
+| Responder com chamado fechado (6) | formulário oculto (`can_followup=false`); status 5 ainda permite follow-up |
+| Aprovar solução / reabrir / pesquisa | CONSOLE (E10) |
+| Excluir Novo | não — CONSOLE |
+| F5 | id no path; rascunho de resposta em `sessionStorage` |
 
 ## 4. Estados do chamado
 
@@ -125,23 +125,24 @@ O técnico pode forçar status se a matriz do perfil deixar. O solicitante, na i
 | `in_progress` | 2, 3 | sim — em atendimento |
 | `solved` | 5 | sim |
 | `closed` | 6 | sim |
-| *(ausente)* | 4 sozinho | [`13`](./13-listagem-de-chamados.md) G-23 `pending` |
-| *(ausente)* | 10 sozinho | ALVO `approval` — hoje some dentro de `open` |
-| id numérico `1`…`6`,`10` | um id | o BFF já aceita; a tela não oferece |
+| `pending` | 4 | **IMPLEMENTADO** G-23 / S-05 |
+| `approval` | 10 | **IMPLEMENTADO** G-23-irmão / S-06; `open` ainda inclui 10 |
+| id numérico `1`…`6`,`10` | um id | BFF aceita; a tela oferece os grupos |
 
-### 4.4 Badge hoje (problema de classe)
+### 4.4 Badge vigente (por id)
 
-`statusBadgeVariant` decide pela **string**:
+`statusBadgeVariant` decide pelo **`status_id`**:
 
-| Casa | Variante | Furo |
+| Id | Variante | Nota |
 |---|---|---|
-| começa com «novo» | `info` | ok para Novo |
-| contém «solucion» | `success` | ok |
-| contém «atendimento» ou «atribu» | `warning` | Planejado e Atribuído iguais — aceitável |
-| contém «pendente» ou «fechado» | `neutral` | Fechado e Pendente iguais |
-| resto | `neutral` | **Approval (10)** cai aqui se o rótulo for «Aprovação» |
+| 1 Novo | `info` | |
+| 2 Atribuído / 3 Planejado | `warning` | Planned herda warning (aceitável) |
+| 4 Pendente / 6 Fechado | `neutral` | |
+| 5 Solucionado | `success` | |
+| 10 Approval | `warning` | **≠ Novo** (`info`) — S-04 atendido |
+| demais | `neutral` | |
 
-Identidade do estado não pode ser o nome. O alvo é `status_id` no contrato; o badge mapeia **id**, o rótulo continua o `name` do GLPI.
+Identidade do estado = id. O rótulo visível continua o `name` do GLPI.
 
 ### 4.5 Tipo, urgência, impacto, prioridade
 
@@ -179,35 +180,31 @@ HIPOTESE_A_VALIDAR   BLOQUEADO   CONSOLE_GLPI   H5   FORA
 
 | ID | Capacidade | Estado | Dono |
 |---|---|---|---|
-| S-01 | Publicar `status_id` (1, 2, 3, 4, 5, 6, 10) + `status` (rótulo GLPI) | ALVO_LEITURA | BFF ADDITIVE |
-| S-02 | Badge e filtro por **id**, não por substring do nome | ALVO_LEITURA | MFE / kit |
-| S-03 | Os sete rótulos aparecem como o GLPI mandou | ALVO_LEITURA | sem dicionário paralelo |
-| S-04 | Variante de Approval e Planned distintas o bastante (Approval ≠ Novo; Planned pode herdar warning) | ALVO_LEITURA | mapa id→variante do kit |
-| S-05 | Grupo `pending` (4) na lista | ALVO_RECORTE | já no 13 G-23 |
-| S-06 | Grupo `approval` (10) na lista | ALVO_RECORTE | hoje diluído em `open` |
-| S-07 | `open` continua incluindo 10 até existir `approval` | invariante de compat | não quebrar quem já filtra `open` |
+| S-01 | Publicar `status_id` (1, 2, 3, 4, 5, 6, 10) + `status` (rótulo GLPI) | **IMPLEMENTADO** | BFF ADDITIVE |
+| S-02 | Badge e filtro por **id**, não por substring do nome | **IMPLEMENTADO** | MFE `statusBadgeVariant` |
+| S-03 | Os sete rótulos aparecem como o GLPI mandou | **IMPLEMENTADO** | sem dicionário paralelo |
+| S-04 | Variante de Approval ≠ Novo; Planned pode herdar warning | **IMPLEMENTADO** | id 10=`warning`, id 1=`info` |
+| S-05 | Grupo `pending` (4) na lista | **IMPLEMENTADO** | 13 G-23 |
+| S-06 | Grupo `approval` (10) na lista | **IMPLEMENTADO** | query `approval` |
+| S-07 | `open` continua incluindo 10 até decisão de quebrar | invariante de compat | quem filtra `open` não perde 10 |
 | S-08 | Colaborador **não** escolhe status ao abrir nem no detalhe | invariante | GLPI nasce Novo; técnico transita |
 | S-09 | Motivo de pendência | CONSOLE_GLPI | a página só mostra o status Pendente |
 | S-10 | PATCH de status pelo MFE | FORA | sem rota; matriz vive no GLPI |
 
-## 6. Contrato-alvo (quando for implementar)
+## 6. Contrato vigente (campos aditivos)
 
-ADDITIVE. Não é etapa de código.
+ADDITIVE já aplicado. Não reabrir como alvo.
 
 `GET /tickets` e `GET /tickets/{id}`:
 
-| Hoje | Permanece | Novo |
-|---|---|---|
-| `status` string | rótulo GLPI | `status_id` inteiro |
-| — | — | `can_followup` boolean (se H1 da página fechar) |
-| — | — | `observers_display_name` opcional |
-
-Query da lista:
-
-| Hoje | Novo |
+| Campo | Estado |
 |---|---|
-| `status=open\|in_progress\|solved\|closed` | `pending`, `approval` (ADDITIVE) |
-| `status=10` já válido | a tela pode passar a oferecer |
+| `status` string | rótulo GLPI |
+| `status_id` inteiro | **publicado** |
+| `can_followup` boolean | **publicado** (false só em status 6 nesta produção) |
+| `observers_display_name` | **publicado** quando houver observador |
+
+Query da lista: `status=open|in_progress|solved|closed|pending|approval` (+ id numérico).
 
 O MFE antigo que só lê `status` string **não quebra**.
 
@@ -241,16 +238,16 @@ GLPI Ticket.status {id, name}
 
 ## 9. Estado antes × depois
 
-| Caso | Hoje | Alvo |
+| Caso | Antes (pré-E7) | Depois (vigente) |
 |---|---|---|
-| P0 — 1101 Novo, sem técnico | título, #1101, badge Novo, conversa, Responder | + `status_id=1`; datas absolutas; técnico vazio continua válido |
-| Irmão — Aprovação (10) | some em «Abertos»; badge neutro se o nome não tiver «novo» | grupo `approval`; variante própria |
-| Irmão — Pendente | «Abertos»; badge se o rótulo tiver «pendente» | grupo `pending`; badge por id |
-| Irmão — Fechado | Responder visível; POST pode 403 | sem campo se `can_followup=false` |
+| P0 — 1101 Novo, sem técnico | título, #1101, badge por nome, Responder | `status_id=1`; datas absolutas; técnico vazio válido |
+| Irmão — Aprovação (10) | some em «Abertos»; badge neutro | grupo `approval`; variante `warning` ≠ Novo |
+| Irmão — Pendente | «Abertos» | grupo `pending`; badge por id |
+| Irmão — Fechado | Responder visível; POST 403 | sem campo se `can_followup=false` |
 | Negativo — mudar para Pendente na Minha DELPI | não existe | continua sem |
 | Negativo — copiar abas da foto | não | continua sem |
 | Invariante | privado, tarefa, solução, upload, entidade | 10 / 12 / A-08 / HD-011 |
-| Identidade | id / e-mail | status também por **id**, não por nome |
+| Identidade | id / e-mail | status por **id**, não por nome |
 
 ## 10. Decisões travadas × não prontas
 

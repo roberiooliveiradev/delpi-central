@@ -1,6 +1,7 @@
 # 15 — Capacidades do GLPI × Meus Chamados de TI
 
-> **Status:** inventário. Destino ALVO/H5 do solicitante entra em [`16-plano-paridade.md`](./16-plano-paridade.md). Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
+> **Status:** inventário sincronizado com o código. Paridade [`16-plano-paridade.md`](./16-plano-paridade.md) **concluída**. Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
+> **Estados:** IMPLEMENTADO / CONSOLE_GLPI / BLOQUEADO / FORA — alinhados a 12/13/14 e ao ledger.
 > **Pedido:** preencher o que 12–14 ainda não listaram; corrigir drift com a tela e o contrato vigentes.
 > **Fontes:** [Opening a ticket](https://help.glpi-project.org/documentation/modules/assistance/tickets/ticketopening), [Manage tickets](https://help.glpi-project.org/documentation/modules/assistance/tickets/ticketmanagement), [Ticket life cycle](https://help.glpi-project.org/documentation/modules/assistance/tickets/ticketlifecycle), [Forms](https://help.glpi-project.org/faq/glpi/forms), HLAPI 2.2, código da helpdesk-api/MFE em 21/09/2026.
 > **Detalhe já fatiado:** mensagem [`12`](./12-conteudo-da-mensagem.md) · lista [`13`](./13-listagem-de-chamados.md) · página/estados [`14`](./14-pagina-e-estados-do-chamado.md).
@@ -12,7 +13,10 @@ Este arquivo é a **matriz completa** do módulo Assistência do GLPI 11 que toc
 | Destino | Significa |
 |---|---|
 | IMPLEMENTADO | na Minha DELPI hoje |
-| ALVO | inventário em 12/13/14; sem código ainda |
+| ALVO | inventário ainda aberto (ex.: G-05 lista requester) |
+| CONSOLE_GLPI | só no host GLPI |
+| BLOQUEADO | HLAPI / decisão impede |
+| FORA | fora do produto do solicitante |
 | H10 / H11 / H12 | [`05-roadmap.md`](./05-roadmap.md) — H5 foi fatiado |
 | BLOQUEADO | evidência impede (HLAPI JSON-only, etc.) |
 | CONSOLE_GLPI | fica em `helpdesk.centraldelpi.com.br` |
@@ -42,7 +46,7 @@ Doc: [Opening a ticket](https://help.glpi-project.org/documentation/modules/assi
 | ID | Capacidade GLPI | Destino |
 |---|---|---|
 | X-01 | Formulário autenticado (título, descrição, categoria, urgência) | IMPLEMENTADO |
-| X-02 | Descrição rica / HTML / colar imagem | ALVO leitura+escrita no [`12`](./12-conteudo-da-mensagem.md); colar imagem BLOQUEADO (A-08) |
+| X-02 | Descrição rica / HTML / colar imagem | **IMPLEMENTADO** leitura+escrita ([`12`](./12-conteudo-da-mensagem.md)); colar imagem BLOQUEADO (A-08) |
 | X-03 | Um ou mais documentos na abertura | BLOQUEADO A-08 / N-01 |
 | X-04 | Título vazio → GLPI usa os 70 primeiros caracteres da descrição | FORA — a Minha DELPI exige título |
 | X-05 | Abrir em nome de outro (delegação / grupo) | FORA HD-011 |
@@ -66,12 +70,12 @@ Doc: [Manage tickets](https://help.glpi-project.org/documentation/modules/assist
 
 | ID | Capacidade GLPI | Destino |
 |---|---|---|
-| X-20 | Título, descrição, datas de criação e alteração | IMPLEMENTADO (descrição achatada; HTML no 12) |
-| X-21 | Os sete status | ALVO `status_id` no [`14`](./14-pagina-e-estados-do-chamado.md) |
+| X-20 | Título, descrição, datas de criação e alteração | **IMPLEMENTADO** (HTML + datas absolutas) |
+| X-21 | Os sete status | **IMPLEMENTADO** `status_id` + grupos pending/approval ([`14`](./14-pagina-e-estados-do-chamado.md)) |
 | X-22 | Urgência do solicitante | IMPLEMENTADO |
 | X-23 | Impacto (técnico) e prioridade (matriz) | CONSOLE_GLPI / FORA na UI do colaborador |
 | X-24 | Aprovação do chamado («Not subject to approval» / etapas) | CONSOLE_GLPI / H5 |
-| X-25 | Atores: requerente, observador, atribuído (pessoa/grupo/fornecedor) | atribuído e requerente IMPLEMENTADOS como rótulo; editar CONSOLE; observador ALVO no 14 P-05 |
+| X-25 | Atores: requerente, observador, atribuído (pessoa/grupo/fornecedor) | atribuído/requerente/observador **IMPLEMENTADOS** como rótulo; editar CONSOLE |
 | X-26 | Notificação por ator (sim/não, e-mail) | CONSOLE_GLPI |
 | X-27 | Itens de inventário | CONSOLE_GLPI |
 | X-28 | TTO, TTR, TTO/TTR internos, SLA, OLA, próximo nível | CONSOLE para gerir; **TTR/TTO visíveis IMPLEMENTADOS** (`sla_ttr` / `sla_tto`) |
@@ -126,15 +130,15 @@ Motor [Search](https://help.glpi-project.org/documentation/readme-1-1/search) + 
 
 | ID | Capacidade GLPI | Destino |
 |---|---|---|
-| X-80 | Grade do solicitante (id, título, status, datas, categoria, técnico) | IMPLEMENTADO; datas absolutas / resolução no 13 |
-| X-81 | Busca no título | IMPLEMENTADO; no conteúdo ALVO 13 G-21 |
+| X-80 | Grade do solicitante (id, título, status, datas, categoria, técnico) | **IMPLEMENTADO**; datas absolutas / resolução / fechamento |
+| X-81 | Busca no título e no conteúdo | **IMPLEMENTADO** (`q` OR content) |
 | X-82 | Critérios AND/OR, multi-itemtype, lixeira, saved search, export, massa, mapa, multi-sort | **fatiado** — multi-itemtype/lixeira/saved search/export/massa/mapa = CONSOLE; critérios + multi-sort do **solicitante** = H13 ([`13`](./13-listagem-de-chamados.md) §3.5, G-50…G-56) |
 | X-83 | Busca rápida global (ativos, usuários…) | CONSOLE_GLPI / outro módulo |
-| X-84 | Colunas pessoais vs globais | PREP catálogo MFE; prefs pessoais = H13 no host DELPI (não `front/ticket.php`) |
+| X-84 | Colunas pessoais vs globais | **IMPLEMENTADO** catálogo MFE + prefs localStorage (não `front/ticket.php`) |
 
-## 8. O que ainda **não** estava em 12–14 (novos ALVO/HIPOTESE)
+## 8. O que ainda **não** está fechado (BLOQUEADO / CONSOLE / residual)
 
-Estes não abrem etapa. Só deixam de ser lacuna invisível.
+Estes não abrem etapa sozinhos. Só deixam de ser lacuna invisível.
 
 | ID | Capacidade | Por que importa ao solicitante | Estado |
 |---|---|---|---|
@@ -143,6 +147,8 @@ Estes não abrem etapa. Só deixam de ser lacuna invisível.
 | X-28 | TTR visível | «até quando deve ser resolvido» | **IMPLEMENTADO** `sla_ttr` / `sla_tto` |
 | X-29 | Vínculo (duplicata / filho) | o solicitante vê que o 1101 é duplicata do 1090 | **FORA** (H-X4); criar vínculo CONSOLE |
 | X-46 | Aprovar solução | já era H5; permanece | **CONSOLE** (E10) |
+| G-05 | Requerente na lista | detalhe tem; lista BFF não publica | ALVO_LEITURA residual |
+| H12 / M-23 | upload / `@` escrita | HLAPI | BLOQUEADO |
 
 Não promover X-09 a tela de catálogo sem endpoint. Não copiar Formcreator/plugin.
 
