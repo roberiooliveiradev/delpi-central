@@ -33,7 +33,7 @@ A lista do GLPI é a bancada Super-Admin. Meus Chamados de TI não copia essa gr
 | Arquivo já ligado ao chamado | botão Baixar; 404 se o `document_id` não for daquele chamado |
 | Console do técnico | rota `helpdesk.console`, fora do MFE |
 
-A lista mostra `updated_at` e `created_at` (relativo). O detalhe mostra solicitante na abertura, técnico no cartão e prévia de anexo pelo mime. Frases antigas («a tela não mostra data / mime / nome») são **drift** — corrigidas em 21/09/2026.
+A lista mostra `created_at`, `updated_at`, `solved_at` e `closed_at` em data-hora absoluta; requerente é coluna opcional (`requester_display_name`). O detalhe mostra solicitante na abertura, técnico no cartão e prévia de anexo pelo mime. Frases antigas («cartões», «datas relativas», «a tela não mostra data / mime / nome») são **drift** — corrigidas em 21/09/2026.
 
 ## 3. Ledger do que falta
 

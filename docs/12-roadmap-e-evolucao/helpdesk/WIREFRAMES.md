@@ -176,18 +176,17 @@ HelpdeskSectionCard  «Abrir chamado»  hint = helpTooltips.create  fill
   form.helpdesk-create-form
     .helpdesk-create-layout          grid 2fr / 1fr; 1 coluna abaixo de 768px
       main  (esquerda, ~2/3)
-        Título        ícone Type        ·····   obrigatório   hint = helpTooltips.create
+        Título        ícone Type        ·····   obrigatório
         Descrição     ícone AlignLeft   [ HTML ] obrigatório, área alta
       aside (direita, ~1/3)
         Categoria     ícone FolderTree  [Select v] obrigatório, searchable
         Urgência      ícone Gauge       [Select v] obrigatório
                       Muito baixa | Baixa | Média | Alta | Muito alta
-
-    HelpdeskFormActions  align=end     faixa inteira, enviar à direita
-      [ enviar ]  ícone; aria-label Enviar chamado
+        Observadores  ícone Users       ·····   opcional (ids do helpdesk)
+        [ Enviar ]    ícone Send        no rodapé da classificação
 ```
 
-Não há campo de solicitante nem de entidade. Sucesso navega para `/apps/helpdesk/tickets/{id}` devolvido pela API. A mesma intenção de envio reutiliza a `Idempotency-Key`; não há segundo clique automático.
+Não há campo de solicitante nem de entidade. Observadores são só papel `observer` (HD-011). Sucesso navega para `/apps/helpdesk/tickets/{id}` devolvido pela API. A mesma intenção de envio reutiliza a `Idempotency-Key`; não há segundo clique automático. O rascunho (título, descrição, classificação) sobrevive ao F5 neste navegador até o envio.
 
 ## 3. Detalhe — `/apps/helpdesk/tickets/{id}`
 

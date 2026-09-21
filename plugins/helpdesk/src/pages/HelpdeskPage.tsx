@@ -619,7 +619,7 @@ function CreateTicketPage() {
         nav={<HelpdeskBackButton hint={helpTooltips.createUi.back} />}
         icon={<TicketPlus size={18} aria-hidden />}
       />
-      <HelpdeskSectionCard title="Formulário" hint={helpTooltips.create} fill>
+      <HelpdeskSectionCard title="Abrir chamado" hint={helpTooltips.create} fill>
         {loading ? <HelpdeskLoadingState message="Carregando categorias…" /> : null}
         {errorText ? <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner> : null}
         <form

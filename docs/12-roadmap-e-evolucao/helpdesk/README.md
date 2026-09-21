@@ -101,7 +101,7 @@ O id não muda. O plugin iframe já é `helpdesk`, e o cliente OAuth de produç�
 | Qual é o contrato? | [`03-contrato.md`](./03-contrato.md) |
 | Como a identidade funciona? | [`04-seguranca.md`](./04-seguranca.md) |
 | Em que ondas o produto cresce? | [`05-roadmap.md`](./05-roadmap.md) |
-| Qual é a próxima etapa executável? | G-05 entregue; lista com `href` estável e `sort=closed_at`. Próximo código só com decisão nova (M-23, H12, H10 se HLAPI). Ledger: [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) |
+| Qual é a próxima etapa executável? | Paridade fechada. Próximo código só com decisão nova (M-23 `@`, H12 upload, H10 ciclo se HLAPI). Ledger: [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) |
 | Qual é a onda? | [`05-roadmap.md`](./05-roadmap.md) |
 | Qual requisito isso cobre? | [`07-requisitos.md`](./07-requisitos.md) |
 | Quando uma etapa está pronta? | [`08-definition-of-done.md`](./08-definition-of-done.md) |

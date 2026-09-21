@@ -20,7 +20,10 @@ Estados: `PROVEN` | `PLANNED` | `TARGET` | `NOT_STARTED`.
 | H5 | Anexo, satisfação, bancada técnica | TARGET | fatiado em H10/H12/CONSOLE — [`05-roadmap.md`](../05-roadmap.md) |
 | H6 | Gates HLAPI da paridade | PROVEN | 21/09/2026 — vereditos em [`12`](../12-conteudo-da-mensagem.md) §15, [`13`](../13-listagem-de-chamados.md) §13, [`14`](../14-pagina-e-estados-do-chamado.md) §10, [`15`](../15-capacidades-glpi.md) §9 |
 | H14 | Menção leitura (chips) | PROVEN | E14 — [`e14-mentions.md`](./e14-mentions.md); M-23 park |
+| G-05 | `requester_display_name` na lista | PROVEN | commit `d1fb8a0af`, 21/09/2026 |
+| lista.href | Chamado/título com path estável + meio-clique | PROVEN | commit `e0439aab9`, 21/09/2026 |
+| G-07+ | `sort=closed_at` → `date_close` | PROVEN | commit `e0439aab9`, 21/09/2026 |
 
-H3 e H6 fechados. Paridade E6–E13 + verify-final concluídos. E14 (menção leitura M-07) entregue; M-23 (`@` no compositor) BLOQUEADO sem catálogo HLAPI. Sem senha neste arquivo.
+H3 e H6 fechados. Paridade E6–E13 + verify-final concluídos. E14 (menção leitura M-07) entregue; M-23 (`@` no compositor) BLOQUEADO sem catálogo HLAPI. Residuais de produto: H10 CONSOLE, H12 BLOQUEADO. Sem senha neste arquivo.
 
 Segredo do cliente OAuth não é registrado aqui.
