@@ -319,7 +319,7 @@ describe("MessageThread", () => {
     );
   });
 
-  it("repete nome, avatar e horário em cada bloco do mesmo autor", () => {
+  it("agrupa mensagens consecutivas do mesmo autor (continue)", () => {
     const { container } = render(
       <MessageThread
         classNames={classNames}
@@ -345,11 +345,11 @@ describe("MessageThread", () => {
         ]}
       />,
     );
-    expect(screen.getAllByText("Bruno Costa")).toHaveLength(2);
-    expect(container.querySelectorAll(".delpi-ui-avatar")).toHaveLength(2);
+    expect(screen.getAllByText("Bruno Costa")).toHaveLength(1);
+    expect(container.querySelectorAll(".delpi-ui-avatar")).toHaveLength(1);
     expect(screen.getByText("07:43")).toBeTruthy();
     expect(screen.getByText("07:44")).toBeTruthy();
-    expect(container.querySelector(".delpi-ui-message-thread__item--continue")).toBeNull();
+    expect(container.querySelector(".delpi-ui-message-thread__item--continue")).not.toBeNull();
   });
 
   it("repete horário em cada bloco das próprias mensagens", () => {

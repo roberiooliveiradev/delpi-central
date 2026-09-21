@@ -29,16 +29,17 @@
 }
 
 .delpi-ui-interaction-room__filters,
-.delpi-ui-interaction-room__extra,
-.delpi-ui-interaction-room__file {
+.delpi-ui-interaction-room__extra {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
 }
 
-.delpi-ui-interaction-room__file {
-  flex-direction: row;
-  align-items: center;
+.delpi-ui-interaction-room__edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
 }
 
 .delpi-ui-interaction-room__alert,

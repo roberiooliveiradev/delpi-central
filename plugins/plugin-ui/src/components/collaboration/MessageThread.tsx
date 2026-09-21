@@ -217,12 +217,29 @@ function itemClassName(
   classNames: MessageThreadClassNames,
   message: MessageThreadItem,
   editing: boolean,
+  continues = false,
 ): string {
   const parts = [classNames.item];
   if (message.parentId) parts.push(classNames.itemReply);
   if (message.mine && !isSystemKind(message.kind)) parts.push(classNames.itemMine);
+  if (continues) parts.push(classNames.itemContinue);
   if (editing) parts.push(classNames.itemEditing);
   return parts.join(" ");
+}
+
+/** Same author back-to-back (non-system): hide avatar/name via `--continue`. */
+function continuesFromPrevious(
+  previous: MessageThreadItem | undefined,
+  message: MessageThreadItem,
+): boolean {
+  if (!previous || isSystemKind(previous.kind) || isSystemKind(message.kind)) return false;
+  if (Boolean(previous.mine) !== Boolean(message.mine)) return false;
+  const prevId = (previous.authorUserId ?? "").trim();
+  const nextId = (message.authorUserId ?? "").trim();
+  if (prevId && nextId) return prevId === nextId;
+  const prevName = (previous.authorName ?? "").trim().toLowerCase();
+  const nextName = (message.authorName ?? "").trim().toLowerCase();
+  return Boolean(prevName && nextName && prevName === nextName);
 }
 
 /**
@@ -324,12 +341,14 @@ export function MessageThread({
   return (
     <div className={rootClass}>
       <ul className={classNames.list} aria-label={listAriaLabel}>
-        {messages.map((message) => {
+        {messages.map((message, index) => {
+          const previous = index > 0 ? messages[index - 1] : undefined;
+          const continues = continuesFromPrevious(previous, message);
           const isEditing =
             Boolean(activeEditingId) &&
             message.id === activeEditingId &&
             Boolean(renderEditSlot);
-              if (isSystemKind(message.kind)) {
+          if (isSystemKind(message.kind)) {
             return (
               <li
                 key={message.id}
@@ -363,6 +382,7 @@ export function MessageThread({
               messages={messages}
               classNames={classNames}
               isEditing={isEditing}
+              continues={continues}
               resolveActions={resolveActions}
               resolveActionExtras={resolveActionExtras}
               renderEditSlot={renderEditSlot}
@@ -388,6 +408,7 @@ type MessageThreadTextItemProps = {
   messages: readonly MessageThreadItem[];
   classNames: MessageThreadClassNames;
   isEditing: boolean;
+  continues?: boolean;
   resolveActions?: MessageThreadProps["resolveActions"];
   resolveActionExtras?: MessageThreadProps["resolveActionExtras"];
   renderEditSlot?: MessageThreadProps["renderEditSlot"];
@@ -407,6 +428,7 @@ function MessageThreadTextItem({
   messages,
   classNames,
   isEditing,
+  continues = false,
   resolveActions,
   resolveActionExtras,
   renderEditSlot,
@@ -446,7 +468,9 @@ function MessageThreadTextItem({
   const authorHref = (message.authorHref ?? "").trim();
   const authorLinkTitle = (message.authorLinkTitle ?? "").trim();
   const authorSrc = (message.authorSrc ?? "").trim() || null;
-  const showAvatar = Boolean(avatarName && (!message.mine || showMineIdentity));
+  const showAvatar = Boolean(
+    avatarName && (!message.mine || showMineIdentity) && !continues,
+  );
   const avatar = showAvatar ? (
     authorHref && authorLinkTitle ? (
       <InitialsAvatar
@@ -470,12 +494,14 @@ function MessageThreadTextItem({
       />
     )
   ) : null;
-  const showAuthor = Boolean(avatarName && (!message.mine || showMineIdentity));
+  const showAuthor = Boolean(
+    avatarName && (!message.mine || showMineIdentity) && !continues,
+  );
   const showHeading = showAuthor || Boolean(message.createdAtLabel);
 
   return (
     <li
-      className={itemClassName(classNames, message, isEditing)}
+      className={itemClassName(classNames, message, isEditing, continues)}
       data-message-id={message.id}
       data-message-kind={message.kind}
       data-editing={isEditing ? "true" : undefined}

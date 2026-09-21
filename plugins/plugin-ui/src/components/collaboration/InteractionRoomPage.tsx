@@ -3,12 +3,16 @@
  * Hosts pass data and commands. This module does not fetch, authorize, or know a portal domain.
  */
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type MouseEvent, type ReactNode } from "react";
 import { ArrowLeft, Copy, Files, MessageSquare, PanelRight, Pencil, Pin, RefreshCw, Reply, Search, Trash2 } from "lucide-react";
 
 import { ActionButton } from "../actions/ActionButton";
 import { EmptyGuidance, emptyGuidanceBemClasses } from "../feedback/EmptyGuidance";
 import { ScopeChipBar, scopeChipBarBemClasses, type ScopeChip } from "../feedback/ScopeChipBar";
+import {
+  AttachmentPreviewStrip,
+  attachmentPreviewStripBemClasses,
+} from "../forms/AttachmentPreviewStrip";
 import { TextField, textFieldBemClasses } from "../forms/TextField";
 import { SegmentToggle, segmentToggleBemClasses } from "../forms/SegmentToggle";
 import { CatalogSearchBar, catalogSearchBarBemClasses } from "../layout/CatalogSearchBar";
@@ -24,8 +28,13 @@ import {
   type MentionComposerLabels,
   type MentionComposerPendingAttachment,
   type MentionComposerReplyTo,
-  type MentionMenuHit,
 } from "./MentionComposer";
+import {
+  type MentionMenuHit,
+} from "./MentionMenu";
+import {
+  type MentionTextItem,
+} from "./MentionText";
 import {
   MessageThread,
   messageThreadBemClasses,
@@ -80,6 +89,9 @@ export type InteractionRoomSharedKind = "recent" | "file" | "link";
 export type InteractionRoomAttachment = {
   id: string;
   fileName: string;
+  contentType?: string | null;
+  previewUrl?: string | null;
+  detail?: string | null;
   removable?: boolean;
 };
 
@@ -136,6 +148,12 @@ export type InteractionRoomPageLabels = {
   edit: string;
   delete: string;
   removeFile: string;
+  attachmentsEmpty: string;
+  attachmentOpenAriaLabel: (fileName: string) => string;
+  attachmentRemoveAriaLabel: (fileName: string) => string;
+  editSave: string;
+  editCancel: string;
+  editAriaLabel: string;
   reactionsList: string;
   react: string;
   chooseReaction: string;
@@ -193,6 +211,12 @@ export const INTERACTION_ROOM_PAGE_LABELS_PT: InteractionRoomPageLabels = {
   edit: "Editar",
   delete: "Remover",
   removeFile: "Remover",
+  attachmentsEmpty: "Nenhum anexo",
+  attachmentOpenAriaLabel: (fileName) => `Abrir ${fileName}`,
+  attachmentRemoveAriaLabel: (fileName) => `Remover ${fileName}`,
+  editSave: "Salvar",
+  editCancel: "Cancelar",
+  editAriaLabel: "Editar mensagem",
   reactionsList: "Reações",
   react: "Reagir",
   chooseReaction: "Escolher reação",
@@ -263,7 +287,12 @@ export type InteractionRoomPageProps = {
   actionError?: string | null;
   hasMore?: boolean;
   editingId?: string | null;
+  /** Override do editor in-place. Sem override, o kit usa MentionComposer rico. */
   renderEditSlot?: (message: InteractionRoomMessage) => ReactNode;
+  editDraft?: string;
+  onEditDraftChange?: (value: string) => void;
+  onSaveEdit?: (markdown: string) => void;
+  onCancelEdit?: () => void;
   draft: string;
   onDraftChange: (value: string) => void;
   onSubmit: (markdown: string) => void;
@@ -275,6 +304,9 @@ export type InteractionRoomPageProps = {
   mentionHits?: readonly MentionMenuHit[];
   onMentionQueryChange?: (query: string | null) => void;
   onMentionInserted?: (hit: MentionMenuHit, token: string) => void;
+  onMentionActivate?: (item: MentionTextItem, event: MouseEvent<HTMLElement>) => void;
+  /** Escopo CSS do MFE nos portais (toolbar / emoji / menus). */
+  portalScopeClassName?: string;
   replyTo?: MentionComposerReplyTo | null;
   onCancelReply?: () => void;
   onReply?: (messageId: string) => void;
@@ -334,6 +366,10 @@ export function InteractionRoomPage({
   hasMore = false,
   editingId = null,
   renderEditSlot,
+  editDraft = "",
+  onEditDraftChange,
+  onSaveEdit,
+  onCancelEdit,
   draft,
   onDraftChange,
   onSubmit,
@@ -345,6 +381,8 @@ export function InteractionRoomPage({
   mentionHits,
   onMentionQueryChange,
   onMentionInserted,
+  onMentionActivate,
+  portalScopeClassName,
   replyTo = null,
   onCancelReply,
   onReply,
@@ -393,6 +431,7 @@ export function InteractionRoomPage({
   const composer = mentionComposerBemClasses(prefix);
   const reactions = reactionBarBemClasses(prefix);
   const quickReactions = reactionQuickBarBemClasses(prefix);
+  const attachments = attachmentPreviewStripBemClasses(prefix);
   const shared = roomSharedItemListBemClasses(prefix);
   const find = roomMessageFindPanelBemClasses(prefix);
   const context = roomContextPanelBemClasses(prefix);
@@ -401,6 +440,37 @@ export function InteractionRoomPage({
   const nav = underlineNavBemClasses(prefix);
   const field = textFieldBemClasses(prefix);
   const root = delpiUiClass(`${prefix}-interaction-room`, "delpi-ui-interaction-room");
+
+  const canEditInline = Boolean(onSaveEdit && onEditDraftChange);
+  const resolvedRenderEditSlot =
+    renderEditSlot ??
+    (canEditInline
+      ? () => (
+          <div className={`${root}__edit`}>
+            <MentionComposer
+              classNames={composer}
+              labels={{
+                ...labels.composer,
+                placeholder: labels.editAriaLabel,
+                sendAriaLabel: labels.editSave,
+              }}
+              value={editDraft}
+              onChange={onEditDraftChange!}
+              onSubmit={(markdown) => onSaveEdit?.(markdown)}
+              mentionHits={mentionHits}
+              onMentionQueryChange={onMentionQueryChange}
+              onMentionInserted={onMentionInserted}
+              showAttach={false}
+              portalScopeClassName={portalScopeClassName}
+              footer={
+                <ActionButton type="button" variant="ghost" onClick={() => onCancelEdit?.()}>
+                  {labels.editCancel}
+                </ActionButton>
+              }
+            />
+          </div>
+        )
+      : undefined);
 
   const searchEmpty = inboxQuery.trim().length > 0 && rooms.length === 0 && !roomsLoading;
   const visibleShared = useMemo(() => {
@@ -704,6 +774,7 @@ export function InteractionRoomPage({
                   onMentionInserted={onMentionInserted}
                   replyTo={replyTo}
                   onCancelReply={onCancelReply}
+                  portalScopeClassName={portalScopeClassName}
                 />
               </div>
             }
@@ -727,25 +798,33 @@ export function InteractionRoomPage({
                   ...reaction,
                   label: reactionLabelForCode(reaction.code) || reaction.label,
                 }));
+                const files = item.files ?? [];
                 const hasExtras =
                   !item.deleted &&
-                  ((item.files ?? []).length > 0 || (onToggleReaction && reactionChips.length > 0));
+                  (files.length > 0 || (onToggleReaction && reactionChips.length > 0));
                 return {
                   ...item,
                   belowBody: hasExtras ? (
                     <div className={`${root}__extra`}>
-                      {(item.files ?? []).map((file) => (
-                        <span key={file.id} className={`${root}__file`}>
-                          <button type="button" onClick={() => onOpenAttachment?.(file.id)}>
-                            {file.fileName}
-                          </button>
-                          {file.removable && onRemoveAttachment ? (
-                            <button type="button" onClick={() => onRemoveAttachment(file.id)}>
-                              {labels.removeFile}
-                            </button>
-                          ) : null}
-                        </span>
-                      ))}
+                      {files.length > 0 ? (
+                        <AttachmentPreviewStrip
+                          classNames={attachments}
+                          mode="preview"
+                          items={files.map((file) => ({
+                            id: file.id,
+                            fileName: file.fileName,
+                            contentType: file.contentType,
+                            previewUrl: file.previewUrl,
+                            detail: file.detail ?? undefined,
+                          }))}
+                          onOpen={(file) => onOpenAttachment?.(file.id)}
+                          labels={{
+                            empty: labels.attachmentsEmpty,
+                            openAriaLabel: labels.attachmentOpenAriaLabel,
+                            removeAriaLabel: labels.attachmentRemoveAriaLabel,
+                          }}
+                        />
+                      ) : null}
                       {onToggleReaction && reactionChips.length > 0 ? (
                         <ReactionBar
                           classNames={reactions}
@@ -761,7 +840,17 @@ export function InteractionRoomPage({
               listAriaLabel={labels.messagesAriaLabel}
               emptyLabel={labels.emptyThreadTitle}
               editingId={editingId}
-              renderEditSlot={renderEditSlot}
+              renderEditSlot={
+                resolvedRenderEditSlot
+                  ? (row) => {
+                      const source = messages.find((item) => item.id === row.id);
+                      return source ? resolvedRenderEditSlot(source) : null;
+                    }
+                  : undefined
+              }
+              onParentQuoteClick={focusMessage}
+              onMentionActivate={onMentionActivate}
+              portalScopeClassName={portalScopeClassName}
               resolveActionExtras={(row) => {
                 if (!onToggleReaction) return null;
                 const source = messages.find((item) => item.id === row.id);
@@ -777,6 +866,7 @@ export function InteractionRoomPage({
                     emojiMenuAriaLabel={labels.chooseReaction}
                     activeCodes={activeCodes}
                     onPick={(code) => onToggleReaction(source.id, code)}
+                    portalScopeClassName={portalScopeClassName}
                   />
                 );
               }}

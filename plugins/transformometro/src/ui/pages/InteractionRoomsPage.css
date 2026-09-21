@@ -1,11 +1,1 @@
-.tm-room-edit {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.tm-room-edit textarea {
-  min-height: 4.5rem;
-  resize: vertical;
-  font: inherit;
-}
+/* Page-specific chrome for Transforma+ interaction rooms lives in the kit. */

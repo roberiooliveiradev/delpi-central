@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActionButton,
+  FilePreviewModal,
   INTERACTION_ROOM_PAGE_LABELS_PT,
   InteractionRoomPage,
   markdownToPlainPreview,
@@ -9,6 +10,7 @@ import {
   type InteractionRoomSharedItem,
   type MentionComposerPendingAttachment,
   type MentionMenuHit,
+  type MentionTextItem,
   type ReactionBarItem,
 } from "@delpi/plugin-ui/index";
 
@@ -39,6 +41,8 @@ import {
   type InteractionMessageDto,
   type InteractionRoomDto,
 } from "../../data/api/transformometroInteractionApi";
+import { useDirectoryUserLabels } from "../../hooks/useDirectoryUserLabels";
+import { useMyPersonProfilePhotoUrl } from "../../hooks/useMyPersonProfilePhotoUrl";
 import { buildProcessoPath } from "../../utils/routeParser";
 import { formatDateTime } from "../../utils/format";
 import "./InteractionRoomsPage.css";
@@ -52,6 +56,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
 const FILE_ACCEPT =
   "image/jpeg,image/png,image/webp,image/gif,application/pdf,text/plain,text/csv,.doc,.docx,.xls,.xlsx";
 const LINK_PATTERN = /https?:\/\/[^\s<>"')\]]+/g;
+const TM_PORTAL_SCOPE = "dashboard-transformometro";
 
 function errorText(reason: unknown, fallback: string): string {
   return reason instanceof Error && reason.message ? reason.message : fallback;
@@ -59,6 +64,18 @@ function errorText(reason: unknown, fallback: string): string {
 
 function plainMessage(value: string): string {
   return markdownToPlainPreview(value, INTERACTION_MESSAGE_MAX_LENGTH).trim();
+}
+
+function formatBytes(value: number): string {
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function isImageAttachment(file: Pick<InteractionAttachmentDto, "content_type" | "file_name">): boolean {
+  const ct = (file.content_type || "").toLowerCase();
+  if (ct.startsWith("image/")) return true;
+  return /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(file.file_name || "");
 }
 
 function reactionItems(message: InteractionMessageDto, meId: string | null): ReactionBarItem[] {
@@ -76,6 +93,14 @@ function reactionItems(message: InteractionMessageDto, meId: string | null): Rea
   }
   return [...grouped.values()];
 }
+
+type PreviewTarget = {
+  id: string;
+  fileName: string;
+  contentType: string;
+  byteSize: number;
+  blob: Blob;
+};
 
 export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavigate }: Props) {
   const mentionsRef = useRef<InteractionMentionDto[]>([]);
@@ -102,6 +127,9 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
   const [actionError, setActionError] = useState<string | null>(null);
   const [meId, setMeId] = useState<string | null>(null);
   const [meName, setMeName] = useState<string | null>(null);
+  const [thumbUrls, setThumbUrls] = useState<Record<string, string>>({});
+  const [preview, setPreview] = useState<PreviewTarget | null>(null);
+  const nameCacheRef = useRef<Record<string, string>>({});
 
   useEffect(() => {
     void fetchMeProfile(getAccessToken)
@@ -111,6 +139,84 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
       })
       .catch(() => undefined);
   }, [getAccessToken]);
+
+  const authorIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const item of messages ?? []) {
+      if (item.author_user_id) ids.add(item.author_user_id);
+      for (const mention of item.mentions ?? []) {
+        if (mention.user_id) ids.add(mention.user_id);
+      }
+    }
+    for (const file of shared) {
+      if (file.uploaded_by_user_id) ids.add(file.uploaded_by_user_id);
+    }
+    return [...ids];
+  }, [messages, shared]);
+
+  const { nameFor: directoryNameFor } = useDirectoryUserLabels(authorIds, getAccessToken);
+  const myPhotoUrl = useMyPersonProfilePhotoUrl(Boolean(meId), getAccessToken);
+
+  const authorName = useCallback(
+    (authorUserId: string, fallback?: string | null) => {
+      const cached = nameCacheRef.current[authorUserId];
+      if (cached) return cached;
+      if (meId && authorUserId === meId && meName) return meName;
+      return directoryNameFor(authorUserId, fallback);
+    },
+    [directoryNameFor, meId, meName],
+  );
+
+  useEffect(() => {
+    for (const item of messages ?? []) {
+      for (const mention of item.mentions ?? []) {
+        const label = (mention.label ?? "").replace(/^@/, "").trim();
+        if (mention.user_id && label) nameCacheRef.current[mention.user_id] = label;
+      }
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    if (!roomId || !messages) {
+      setThumbUrls((previous) => {
+        for (const url of Object.values(previous)) URL.revokeObjectURL(url);
+        return {};
+      });
+      return;
+    }
+    let cancelled = false;
+    const created: string[] = [];
+    const imageFiles = messages.flatMap((item) =>
+      (item.attachments ?? []).filter((file) => isImageAttachment(file)),
+    );
+    void (async () => {
+      const next: Record<string, string> = {};
+      for (const file of imageFiles) {
+        try {
+          const blob = await downloadInteractionAttachment(roomId, file.id, getAccessToken);
+          if (cancelled) return;
+          const url = URL.createObjectURL(blob);
+          created.push(url);
+          next[file.id] = url;
+        } catch {
+          /* prévia opcional */
+        }
+      }
+      if (cancelled) {
+        for (const url of created) URL.revokeObjectURL(url);
+        return;
+      }
+      setThumbUrls((previous) => {
+        for (const url of Object.values(previous)) URL.revokeObjectURL(url);
+        return next;
+      });
+      created.length = 0;
+    })();
+    return () => {
+      cancelled = true;
+      for (const url of created) URL.revokeObjectURL(url);
+    };
+  }, [getAccessToken, messages, roomId]);
 
   const loadRooms = useCallback(async () => {
     const page = await listInteractionRooms(getAccessToken, filter);
@@ -307,9 +413,9 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
     }
   }
 
-  async function saveEdit() {
+  async function saveEdit(markdown: string) {
     if (!roomId || !editingId) return;
-    const content = editDraft.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
+    const content = markdown.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
     if (!plainMessage(content)) {
       setActionError("A mensagem não pode ficar em branco.");
       return;
@@ -362,14 +468,16 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
     if (!roomId) return;
     try {
       const blob = await downloadInteractionAttachment(roomId, file.id, getAccessToken);
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = file.file_name;
-      anchor.click();
-      URL.revokeObjectURL(url);
+      setPreview({
+        id: file.id,
+        fileName: file.file_name,
+        contentType: file.content_type,
+        byteSize: file.byte_size,
+        blob,
+      });
+      setActionError(null);
     } catch (reason) {
-      setActionError(errorText(reason, "Não foi possível baixar o arquivo."));
+      setActionError(errorText(reason, "Não foi possível abrir o arquivo."));
     }
   }
 
@@ -391,14 +499,6 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
       setActionError(errorText(reason, "Não foi possível remover o arquivo."));
     }
   }
-
-  const authorName = useCallback(
-    (authorUserId: string) => {
-      if (meId && authorUserId === meId && meName) return meName;
-      return "Nome indisponível";
-    },
-    [meId, meName],
-  );
 
   const visibleRooms = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -423,24 +523,36 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
             : formatDateTime(item.created_at),
           authorName: authorName(item.author_user_id),
           authorUserId: item.author_user_id,
+          authorSrc: meId && item.author_user_id === meId ? myPhotoUrl : null,
           parentId: item.parent_id,
           mine: Boolean(meId && item.author_user_id === meId),
           deleted: removed,
           pinned: Boolean(item.pinned),
-          mentions: (item.mentions ?? []).map((mention) => ({
-            kind: "user",
-            id: mention.user_id,
-            label: mention.label,
-          })),
+          mentions: (item.mentions ?? []).map((mention) => {
+            const label = (mention.label ?? "").replace(/^@/, "").trim() || mention.label;
+            const resolved = authorName(mention.user_id, label);
+            return {
+              kind: "user",
+              id: mention.user_id,
+              label,
+              avatarName: resolved,
+              title: `Menção: ${resolved}`,
+              avatarSrc:
+                meId && mention.user_id === meId ? myPhotoUrl ?? undefined : undefined,
+            };
+          }),
           reactions: reactionItems(item, meId),
           files: (item.attachments ?? []).map((file) => ({
             id: file.id,
             fileName: file.file_name,
+            contentType: file.content_type,
+            previewUrl: thumbUrls[file.id] ?? null,
+            detail: formatBytes(file.byte_size),
             removable: Boolean(meId && file.uploaded_by_user_id === meId),
           })),
         };
       }),
-    [authorName, meId, messages],
+    [authorName, meId, messages, myPhotoUrl, thumbUrls],
   );
 
   const speakers = useMemo(() => {
@@ -448,8 +560,12 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
     for (const item of messages ?? []) {
       if (!seen.has(item.author_user_id)) seen.set(item.author_user_id, authorName(item.author_user_id));
     }
-    return [...seen.entries()].map(([id, name]) => ({ id, name }));
-  }, [authorName, messages]);
+    return [...seen.entries()].map(([id, name]) => ({
+      id,
+      name,
+      src: meId && id === meId ? myPhotoUrl : null,
+    }));
+  }, [authorName, meId, messages, myPhotoUrl]);
 
   const sharedItems = useMemo<InteractionRoomSharedItem[]>(() => {
     const files: InteractionRoomSharedItem[] = shared.map((file) => ({
@@ -565,28 +681,14 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
         actionError={actionError}
         hasMore={hasMore}
         editingId={editingId}
-        renderEditSlot={() => (
-          <form
-            className="tm-room-edit"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void saveEdit();
-            }}
-          >
-            <textarea
-              value={editDraft}
-              maxLength={INTERACTION_MESSAGE_MAX_LENGTH}
-              aria-label="Editar mensagem"
-              onChange={(event) => setEditDraft(event.target.value)}
-            />
-            <span>
-              <ActionButton type="submit">Salvar</ActionButton>
-              <ActionButton type="button" variant="ghost" onClick={() => setEditingId(null)}>
-                Cancelar
-              </ActionButton>
-            </span>
-          </form>
-        )}
+        editDraft={editDraft}
+        onEditDraftChange={setEditDraft}
+        onSaveEdit={(markdown) => void saveEdit(markdown)}
+        onCancelEdit={() => {
+          setEditingId(null);
+          setEditDraft("");
+        }}
+        portalScopeClassName={TM_PORTAL_SCOPE}
         draft={draft}
         onDraftChange={setDraft}
         onSubmit={(markdown) => void send(markdown)}
@@ -602,7 +704,10 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
             return;
           }
           void searchDirectoryUsers(next.trim(), 8, undefined, getAccessToken)
-            .then((users) =>
+            .then((users) => {
+              for (const user of users) {
+                if (user.id && user.name) nameCacheRef.current[user.id] = user.name;
+              }
               setMentionHits(
                 users.map((user) => ({
                   id: user.id,
@@ -610,18 +715,23 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
                   label: user.name,
                   subtitle: user.email,
                   avatarName: user.name,
+                  avatarSrc: meId && user.id === meId ? myPhotoUrl ?? undefined : undefined,
                 })),
-              ),
-            )
+              );
+            })
             .catch(() => setMentionHits([]));
         }}
         onMentionInserted={(hit) => {
           const label = hit.label.replace(/^@/, "").trim();
           if (!label) return;
+          nameCacheRef.current[hit.id] = label;
           mentionsRef.current = [
             ...mentionsRef.current.filter((item) => item.user_id !== hit.id),
             { user_id: hit.id, label },
           ];
+        }}
+        onMentionActivate={(_item: MentionTextItem) => {
+          /* Chip ativável (acessível); TM não tem perfil de usuário próprio. */
         }}
         replyTo={
           replyTarget
@@ -649,8 +759,18 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
         onDelete={(id) => void removeMessage(id)}
         onToggleReaction={(id, code) => void react(id, code)}
         onOpenAttachment={(id) => {
-          const file = shared.find((item) => item.id === id);
-          if (file) void openFile(file);
+          const fromShared = shared.find((item) => item.id === id);
+          if (fromShared) {
+            void openFile(fromShared);
+            return;
+          }
+          for (const message of messages ?? []) {
+            const hit = (message.attachments ?? []).find((item) => item.id === id);
+            if (hit) {
+              void openFile(hit);
+              return;
+            }
+          }
         }}
         onRemoveAttachment={(id) => {
           const file = shared.find((item) => item.id === id);
@@ -671,6 +791,20 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
         onOpenEntity={room ? () => onNavigate(buildProcessoPath(room.processo_id)) : undefined}
         onCopyLink={() => void navigator.clipboard.writeText(window.location.href)}
         threadStatus={refreshing ? <p role="status">Atualizando mensagens…</p> : null}
+      />
+      <FilePreviewModal
+        open={Boolean(preview)}
+        title={preview?.fileName ?? "Arquivo"}
+        onClose={() => setPreview(null)}
+        portalScopeClassName={TM_PORTAL_SCOPE}
+        source={preview?.blob}
+        fileName={preview?.fileName}
+        mimeType={preview?.contentType}
+        metaItems={
+          preview
+            ? [preview.contentType, formatBytes(preview.byteSize)]
+            : undefined
+        }
       />
     </TransformometroShell>
   );

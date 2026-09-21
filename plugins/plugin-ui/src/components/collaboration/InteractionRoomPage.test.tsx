@@ -82,6 +82,9 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/ReactionQuickBar/);
     expect(source).toMatch(/reactionLabelForCode/);
     expect(source).toMatch(/resolveActionExtras/);
+    expect(source).toMatch(/AttachmentPreviewStrip/);
+    expect(source).toMatch(/onParentQuoteClick=\{focusMessage\}/);
+    expect(source).toMatch(/portalScopeClassName/);
     expect(source).not.toMatch(/emojiAdd=\{\{/);
     expect(source).toMatch(/RoomContextPanel/);
     expect(source).toMatch(/RoomSidePanel/);
