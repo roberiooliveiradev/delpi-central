@@ -97,7 +97,7 @@ export const TM_HELP_TOOLTIPS = {
       economiaLiquida:
         "Economia líquida do recorte: economia bruta menos os custos (investimentos e rateio de recursos) no período. Instâncias «todas as unidades ativas» multiplicam só a economia operacional no Consolidado (não investimento nem recursos).",
       economiaBruta:
-        "Ganho bruto do período (economia de custo + ganho de capacidade), antes de descontar investimentos. No Consolidado, instâncias multi-unidade contam uma vez por unidade ativa cadastrada.",
+        "Ganho bruto do período (economia de custo + ganho de capacidade), antes de descontar investimentos. Quando a meta do programa está disponível, o card mostra meta parcial, meta do período, nota IDD e status.",
       ganhoCapacidade:
         "Parcela da economia bruta relativa a volume acima da referência. Entra no ROI via economia bruta/líquida.",
       solucoes:

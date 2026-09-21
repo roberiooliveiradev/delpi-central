@@ -54,6 +54,10 @@ export const USER_MANUAL_CONTENT = {
       meaning: "Visão com os totais do universo permitido pelos filtros. Os cards identificam «todas as unidades» e o período. Os valores vêm da API, sem soma na tela.",
     },
     {
+      term: "Meta e IDD",
+      meaning: "A Economia bruta é o indicador do programa com meta e nota IDD. A meta parcial, a meta do período e a nota vêm prontas — a tela não calcula. Os outros cards mostram só o valor operacional.",
+    },
+    {
       term: "Meus processos",
       meaning: "Lista os processos disponíveis. Abra um processo para ver melhorias, revisões e diagramas.",
     },
@@ -93,6 +97,28 @@ export const USER_MANUAL_CONTENT = {
           want: "Ver indicadores",
           where: "Visão geral",
           how: "Abra Visão geral na barra ou no Início.",
+          path: TRANSFORMOMETRO_ROUTES.dashboard,
+        },
+      ],
+    },
+    {
+      id: "targets-idd",
+      title: "Metas e IDD",
+      intro:
+        "A Visão geral mostra a meta e a nota IDD do programa no card de Economia bruta, quando esses dados estão disponíveis.",
+      bullets: [
+        "Economia bruta é o indicador do programa com meta.",
+        "Meta parcial é a referência já calculada para o recorte de datas aberto — não é uma conta feita na tela.",
+        "Meta do período (ou meta do mês) é a referência do intervalo canônico.",
+        "A nota IDD do card e o selo no título da página vêm prontos. Sem dado, o valor operacional continua e a meta some.",
+        "Consolidado, Unidade e Departamento recortam os números do programa. A meta estratégica do programa permanece a referência de Engenharia e é rotulada quando for consolidada.",
+        "Status (dentro, abaixo ou acima da meta) e a direção (quanto maior ou menor, melhor) acompanham a meta da Economia bruta.",
+      ],
+      links: [
+        {
+          want: "Ver metas e IDD",
+          where: "Visão geral",
+          how: "Abra Visão geral e veja o card Economia bruta.",
           path: TRANSFORMOMETRO_ROUTES.dashboard,
         },
       ],

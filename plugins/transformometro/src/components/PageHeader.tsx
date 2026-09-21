@@ -17,6 +17,7 @@ type PageHeaderProps = {
   onRefresh?: () => void;
   refreshing?: boolean;
   actions?: ReactNode;
+  badge?: ReactNode;
   highlights?: PageHeroHighlight[];
   children?: ReactNode;
 };
@@ -33,6 +34,7 @@ export function PageHeader({
   onRefresh,
   refreshing = false,
   actions,
+  badge,
   highlights,
   children,
 }: PageHeaderProps) {
@@ -46,6 +48,7 @@ export function PageHeader({
         eyebrow={eyebrow}
         title={title}
         description={subtitle}
+        badge={badge}
         highlights={highlights}
         actions={
           <>

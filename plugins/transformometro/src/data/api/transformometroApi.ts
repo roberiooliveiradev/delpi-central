@@ -865,6 +865,57 @@ export function deleteVinculo(vinculoId: string, getAccessToken?: () => string |
   return request<null>(`/revision-shared-resources/${vinculoId}`, getAccessToken, { method: "DELETE" });
 }
 
+export type DashboardStrategicIndicatorScore = {
+  indicator_id?: string | null;
+  score?: number | null;
+  name?: string | null;
+};
+
+export type DashboardStrategicIndicatorsGoal = {
+  indicator_id?: string | null;
+  source_key?: string | null;
+  score?: number | null;
+  goal_label?: string | null;
+  goal_value?: number | null;
+  comparable_goal?: number | null;
+  reference_goal?: number | null;
+  target?: number | null;
+  has_goal?: boolean;
+  goal_periodicity?: string | null;
+  goal_mode?: string | null;
+  goal_aggregation?: string | null;
+  goal_period_kind?: string | null;
+  goal_period_partial?: boolean | null;
+  goal_scope_branch?: string | null;
+  goal_scope_label?: string | null;
+  goal_scope_hint?: string | null;
+  scope_type?: string | null;
+  performance_direction?: string | null;
+  value_unit?: string | null;
+  value_prefix?: string | null;
+  value_suffix?: string | null;
+  value_decimals?: number | null;
+  start_date?: string | null;
+  end_date?: string | null;
+};
+
+export type DashboardStrategicIndicators = {
+  available?: boolean;
+  strategic_indicators_department?: string;
+  department_label?: string;
+  competence?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  branch?: string | null;
+  department_idd?: {
+    score?: number | null;
+    classification?: string | null;
+    partial_success?: boolean;
+  } | null;
+  indicators?: DashboardStrategicIndicatorScore[] | null;
+  gross_savings?: DashboardStrategicIndicatorsGoal | null;
+};
+
 export type DashboardResumo = {
   solucoes_implementadas: number;
   economia_liquida_total: number;
@@ -940,6 +991,17 @@ export function fetchDashboardResumo(
 ) {
   const qs = params ? `?${new URLSearchParams(params)}` : "";
   return request<DashboardResumo>(`/dashboard/summary${qs}`, getAccessToken);
+}
+
+export function fetchDashboardStrategicIndicators(
+  getAccessToken?: () => string | undefined,
+  params?: Record<string, string>
+) {
+  const qs = params ? `?${new URLSearchParams(params)}` : "";
+  return request<DashboardStrategicIndicators>(
+    `/dashboard/strategic-indicators${qs}`,
+    getAccessToken
+  );
 }
 
 export function fetchDashboardEvolucao(

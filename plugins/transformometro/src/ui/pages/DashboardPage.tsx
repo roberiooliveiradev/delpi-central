@@ -14,7 +14,10 @@ import { DataTableSection } from "../../components/DataTableSection";
 import { DateField } from "../../components/DateField";
 import {
   ComparativeAreaChart,
+  DepartmentScoreBadge,
+  departmentScoreBadgeBemClasses,
   FieldLabel,
+  formatIndicatorIddScore,
   NativeTextControl,
   SectionCard,
   SegmentToggle,
@@ -47,6 +50,7 @@ import {
   fetchDashboardPorFamilia,
   fetchDashboardProcessos,
   fetchDashboardResumo,
+  fetchDashboardStrategicIndicators,
   fetchDashboardVencimentos,
   fetchOptions,
   recalcularDashboard,
@@ -55,6 +59,7 @@ import {
   type DashboardFamiliaItem,
   type DashboardProcessoItem,
   type DashboardResumo,
+  type DashboardStrategicIndicators,
   type DashboardVencimentoItem,
   type OptionsData,
 } from "../../data/api/transformometroApi";
@@ -76,6 +81,8 @@ import { buildProcessoPath } from "../../utils/routeParser";
 import { DS_FILTERS_ROW, DS_FILTER_BOX, DS_FILTER_BOX_WIDE } from "../../components/filterChrome";
 import { EMPTY_STATE_CLASS } from "../../components/emptyStateUi";
 import { buildDashboardKpiContextLabel, formatDashboardPeriodLabel } from "../../utils/dashboardKpiContext";
+import { buildGrossSavingsKpiPresentation } from "../../utils/dashboardGrossSavingsPresentation";
+import { resolveStrategicIndicatorsBranch } from "../../utils/strategicIndicatorsBranch";
 import {
   buildDashboardQueryParams,
   canSelectConsolidatedView,
@@ -120,6 +127,7 @@ const defaultFilters: Filters = {
 };
 
 const SECTION = sectionCardPacBemClasses("ds");
+const DEPT_IDD = departmentScoreBadgeBemClasses("ds");
 const SECTION_LABELS = {
   titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
 };
@@ -161,6 +169,9 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   const confirm = useConfirm();
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [resumo, setResumo] = useState<DashboardResumo | null>(null);
+  const [strategicIndicators, setStrategicIndicators] =
+    useState<DashboardStrategicIndicators | null>(null);
+  const [siLoading, setSiLoading] = useState(true);
   const [evolucao, setEvolucao] = useState<DashboardEvolucaoItem[]>([]);
   const [processos, setProcessos] = useState<DashboardProcessoItem[]>([]);
   const [alertas, setAlertas] = useState<DashboardAlertItem[]>([]);
@@ -215,6 +226,38 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       }),
     [filters.filialIds, filters.setorIds, options?.filiais, options?.setores, periodLabel, viewMode],
   );
+  const siBranch = useMemo(
+    () =>
+      resolveStrategicIndicatorsBranch(
+        viewMode,
+        viewMode === "consolidated" ? [] : filters.filialIds,
+      ),
+    [filters.filialIds, viewMode],
+  );
+  const siParams = useMemo(() => {
+    const next: Record<string, string> = {};
+    if (filters.competence) next.competence = filters.competence;
+    if (filters.dataInicial) next.start_date = filters.dataInicial;
+    if (filters.dataFinal) next.end_date = filters.dataFinal;
+    if (siBranch) next.branch = siBranch;
+    return next;
+  }, [filters.competence, filters.dataFinal, filters.dataInicial, siBranch]);
+  const grossSavingsPresentation = useMemo(
+    () =>
+      buildGrossSavingsKpiPresentation(
+        kpiContext,
+        strategicIndicators,
+        resumo?.economia_bruta_total,
+        filters.dataInicial,
+        filters.dataFinal,
+      ),
+    [filters.dataFinal, filters.dataInicial, kpiContext, resumo?.economia_bruta_total, strategicIndicators],
+  );
+  const globalIddLabel = useMemo(() => {
+    if (!strategicIndicators?.available) return null;
+    return formatIndicatorIddScore(strategicIndicators.department_idd?.score, "") || null;
+  }, [strategicIndicators]);
+  const globalIddClassification = strategicIndicators?.department_idd?.classification ?? null;
   const setoresFiltrados = useMemo(() => {
     const setores = options?.setores ?? [];
     if (filters.filialIds.length === 0) return setores;
@@ -281,6 +324,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
 
   const load = useCallback(async () => {
     setRefreshing(true);
+    setSiLoading(true);
     try {
       const evolucaoParams = {
         ...params,
@@ -293,6 +337,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         alertasData,
         familiaData,
         vencimentosData,
+        siData,
       ] = await Promise.all([
         fetchDashboardResumo(getAccessToken, params),
         fetchDashboardEvolucao(getAccessToken, evolucaoParams),
@@ -300,6 +345,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         fetchDashboardAlertas(getAccessToken, params),
         fetchDashboardPorFamilia(getAccessToken, params),
         fetchDashboardVencimentos(getAccessToken, params),
+        fetchDashboardStrategicIndicators(getAccessToken, siParams).catch(() => null),
       ]);
       setResumo(resumoData);
       setEvolucao(evolucaoData.items);
@@ -308,13 +354,15 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       setPorFamilia(familiaData.items);
       setVencendo(vencimentosData.vencendo ?? []);
       setVencidas(vencimentosData.vencidas ?? []);
+      setStrategicIndicators(siData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar dashboard");
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setSiLoading(false);
     }
-  }, [getAccessToken, params, savingsGranularity]);
+  }, [getAccessToken, params, savingsGranularity, siParams]);
 
   useEffect(() => {
     void load();
@@ -556,6 +604,14 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           subtitle={PORTAL_PAGE_COPY.overview.description}
           currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.dashboard}
           onNavigate={onNavigate}
+          badge={
+            <DepartmentScoreBadge
+              classNames={DEPT_IDD}
+              loading={siLoading}
+              scoreLabel={globalIddLabel}
+              classification={globalIddClassification}
+            />
+          }
         />
         <LoadingActivityCard
           title="Carregando indicadores do Transformômetro"
@@ -584,6 +640,14 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         subtitle={PORTAL_PAGE_COPY.overview.description}
         currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.dashboard}
         onNavigate={onNavigate}
+        badge={
+          <DepartmentScoreBadge
+            classNames={DEPT_IDD}
+            loading={siLoading}
+            scoreLabel={globalIddLabel}
+            classification={globalIddClassification}
+          />
+        }
         onRefresh={() => void handleRefresh()}
         refreshing={refreshing || recalculating}
         actions={
@@ -811,7 +875,17 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           title="Economia bruta"
           titleHint={TM_HELP_TOOLTIPS.dashboard.kpis.economiaBruta}
           value={formatCurrency(resumo?.economia_bruta_total)}
-          contextLabel={kpiContext}
+          contextLabel={grossSavingsPresentation.contextLabel}
+          goalLabel={grossSavingsPresentation.goalLabel}
+          goalPrefix={grossSavingsPresentation.goalPrefix}
+          goalHint={grossSavingsPresentation.goalHint}
+          monthlyGoalLabel={grossSavingsPresentation.monthlyGoalLabel}
+          monthlyGoalPrefix={grossSavingsPresentation.monthlyGoalPrefix}
+          monthlyGoalHint={grossSavingsPresentation.monthlyGoalHint}
+          goalScopeBadge={grossSavingsPresentation.goalScopeBadge}
+          goalScopeHint={grossSavingsPresentation.goalScopeHint}
+          goalPerformanceBadge={grossSavingsPresentation.goalPerformanceBadge}
+          iddScoreLabel={grossSavingsPresentation.iddScoreLabel}
           icon={<Coins size={22} />}
           loading={isBusy && !resumo}
         />

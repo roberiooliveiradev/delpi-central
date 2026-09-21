@@ -286,10 +286,17 @@ Não altera frontend, API, MCP, Actions, OpenAPI, Keycloak, RBAC, migrations nem
 
 Registro do recorte saudação / consolidado / IDD / Help. Documentação não promove runtime.
 
+### 17.1 Strategic Indicators — contexto do programa
+
+- Departamento SI do Transforma+: `engineering` (rótulo «Engenharia»). Não é AuthZ e não trava o filtro Departamento da Visão geral.
+- KPI com meta/IDD: Economia bruta → indicador `engineering-transforma-plus` / `source_key=transforma_mais`.
+- Os outros cinco KPIs da Overview não têm mapeamento SI comprovado.
+- Consumer: `transformometro-api` `GET /dashboard/strategic-indicators` (cliente público `StrategicIndicatorsApiClient`). MFE não chama api-delpi.
+
 | Capability | Status | Owner / fonte |
 |---|---|---|
 | GREETING | IMPLEMENTED_NOT_RUNTIME_PROVEN | Chrome `formatPortalGreeting` em `@delpi/plugin-ui`. Identidade = `GET /core-api/me` `name`. Fallback `Bem-vindo ao Portal Transforma+`. Sem persistência de PII. |
 | CONSOLIDATED_CONTEXT | IMPLEMENTED_NOT_RUNTIME_PROVEN | Valores: `DashboardLiveService.build_summary` + ROI sobre totais. UI: `buildDashboardKpiContextLabel`. Consolidado = todas as unidades do recorte, não autorização. |
-| IDD | TO_INVENTORY / BLOCKED_BY_TARGET_CONTRACT | IDD canônico vive no SI (`pickSiIddScoreLabel`) para dashboards de departamento. Transformômetro não tem fórmula, inputs nem metas próprias. |
-| TARGETS | TO_INVENTORY | Sem meta canônica no domínio Transformômetro. Não inventar 0. |
+| IDD | CONSUMER_OF_STRATEGIC_INDICATORS | Owner da fórmula: Strategic Indicators. Consumer: Transformômetro via `GET /dashboard/strategic-indicators`. Departamento SI = `engineering`. Indicador = `engineering-transforma-plus` (Economia bruta). Score/label = contrato SI (`indicators[].score`, `department-idd.score` + `classification`). MFE não calcula IDD. |
+| TARGETS | CONSUMER_OF_STRATEGIC_INDICATORS | Meta/parcial = `comparable_goal` / `reference_goal` / `goal_period_kind` do SI (`source_key=transforma_mais`). Transformômetro não armazena cópia canônica. Fail-closed: valor operacional permanece; meta/IDD omitidos. |
 | HELP | IMPLEMENTED_NOT_RUNTIME_PROVEN | `UserManual*` + `userManualContent.ts` do próprio portal. `/help` continua rota interna; manifesto 0.5.5. |

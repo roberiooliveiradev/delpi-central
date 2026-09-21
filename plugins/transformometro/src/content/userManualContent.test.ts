@@ -12,7 +12,11 @@ describe("Transforma+ user manual", () => {
     expect(text).toMatch(/todas as unidades/);
     expect(text).toMatch(/Favoritos/);
     expect(text).toMatch(/últimos acessos/i);
-    expect(text).not.toMatch(/Nota IDD/);
+    expect(text).toMatch(/Metas e IDD/);
+    expect(text).toMatch(/Economia bruta é o indicador do programa com meta/);
+    expect(text).toMatch(/nota IDD/);
+    expect(text).not.toMatch(/Strategic Indicators/);
+    expect(text).not.toMatch(/Keycloak/);
     expect(text).toMatch(/ainda não fazem parte deste portal/);
     expect(text).not.toMatch(/carteira/);
     const linked = USER_MANUAL_CONTENT.sections.flatMap((section) => section.links ?? []);
@@ -22,6 +26,7 @@ describe("Transforma+ user manual", () => {
     expect(USER_MANUAL_CONTENT.sections.map((section) => section.id)).toEqual([
       "home",
       "overview",
+      "targets-idd",
       "processes",
       "minutes",
       "data",
