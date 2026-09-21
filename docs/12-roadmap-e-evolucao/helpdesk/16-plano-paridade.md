@@ -1,6 +1,6 @@
 # 16 — Plano de paridade do solicitante
 
-> **Status:** aprovado como ordem `E6…E12`. **Não executa sozinho** — implementar só quando o pedido for executar este plano.
+> **Status:** em execução. **E6.S0 e E6.S1 concluídos** em 21/09/2026.
 > **Não altera** [`06-plano-execucao.md`](./06-plano-execucao.md) (`E1…E5`).
 > **Ondas:** [`05-roadmap.md`](./05-roadmap.md) H6…H12.
 > **Inventários:** [`12`](./12-conteudo-da-mensagem.md) · [`13`](./13-listagem-de-chamados.md) · [`14`](./14-pagina-e-estados-do-chamado.md) · [`15`](./15-capacidades-glpi.md).
@@ -27,23 +27,23 @@ O colaborador passa a ver e gravar no Meus Chamados de TI o que o GLPI já entre
 |---|---|---|
 | RQ-01 | `status_id` + badge/filtro por id; grupos pending/approval | ATENDIDO_NO_PLANO E7.S1 |
 | RQ-02 | Lista: data absoluta, período de abertura, page_size | ATENDIDO_NO_PLANO E7.S2 |
-| RQ-03 | Lista: solved_at / busca no content se H6 | ATENDIDO_NO_PLANO E7.S3 (pode FORA) |
+| RQ-03 | Lista: solved_at / busca no content se H6 | DESBLOQUEADO — 13-H1 e 13-H2 **PROVEN** → E7.S3 |
 | RQ-04 | HTML sanitizado na bolha | ATENDIDO_NO_PLANO E8.S1–S2 |
 | RQ-05 | Compositor rico abrir+responder | ATENDIDO_NO_PLANO E8.S3 |
-| RQ-06 | Imagem no corpo via BFF se H6 | ATENDIDO_NO_PLANO E8.S4 (pode FORA) |
-| RQ-07 | Página: datas, can_followup, observador | ATENDIDO_NO_PLANO E9.S1 |
-| RQ-08 | Aprovar/reabrir/satisfação se HLAPI | ATENDIDO_NO_PLANO E10.S1 (pode CONSOLE) |
-| RQ-09 | TTR, vínculo, Form, observer write se H6 | ATENDIDO_NO_PLANO E11.S1 (pode FORA) |
+| RQ-06 | Imagem no corpo via BFF se H6 | DESBLOQUEADO — 12-H1 **PROVEN**; A-07 continua FORA → E8.S4 |
+| RQ-07 | Página: datas, can_followup, observador | ATENDIDO_NO_PLANO E9.S1 — `can_followup` só false no status 6 |
+| RQ-08 | Aprovar/reabrir/satisfação se HLAPI | PARCIAL — Solution/Validation **têm** path; Satisfaction **sem** path (CONSOLE) → E10 |
+| RQ-09 | TTR, vínculo, Form, observer write se H6 | TTR + observer **PROVEN**; Form + vínculo **FORA** → E11 |
 | RQ-10 | Upload | BLOQUEADO_COM_EVIDENCIA E12 |
 | RQ-11 | Ajuda no mesmo entregável | HERDADO_POR_SOLUCAO_TRANSVERSAL cada S user-facing |
 | RQ-12 | Bancada / Change / entidade / API legada | FORA_DO_ESCOPO_COM_JUSTIFICATIVA |
-| RQ-13 | H3 no ledger | ATENDIDO_NO_PLANO E6.S0 (homologação, não UI) |
+| RQ-13 | H3 no ledger | **ATENDIDO** E6.S0 — ids 1120 / 593 |
 
 ## Evidências e hipóteses
 
 CONFIRMADO: tela e BFF publicados; HTML achatado; status só string; lista relativa; HLAPI JSON-only; sete status fixos; `team` não filtra em RSQL.
 
-HIPOTESE (fechar em E6.S1): 12-H1…H4, 13-H1/H2, 14-H1, 15-HX1…HX4.
+E6.S1 fechou as hipóteses. Vereditos no [`05`](./05-roadmap.md) H6. **EXECUTION_DRIFT:** 14-H1 não é 403 em status 5 — só em 6.
 
 ## Arquitetura atual → alvo
 
@@ -115,7 +115,7 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 - **Evidência:** `06` E5.S2 ainda aberto para escrita.
 - **Deps:** nenhuma de paridade.
 - **Teste:** o id existe no GLPI no usuário do token.
-- **Pronto:** ledger H3 ≠ `NOT_STARTED`.
+- **Pronto:** ledger H3 ≠ `NOT_STARTED`. **CUMPRIDO** — H3 `PROVEN` (1120 / 593, Colaborador `user_id` 69).
 - **Commit:** `docs(helpdesk): registra H3 da escrita ao vivo no ledger.`
 
 ### E6.S1 — Fechar gates HLAPI
@@ -127,7 +127,7 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 - **Evidência:** inventários marcam HIPOTESE.
 - **Deps:** sessão OAuth de homologação.
 - **Teste:** tabela gate → veredito no próprio S.
-- **Pronto:** nenhuma HIPOTESE material sem veredito.
+- **Pronto:** nenhuma HIPOTESE material sem veredito. **CUMPRIDO** — tabela no [`05`](./05-roadmap.md) H6.
 - **Commit:** `docs(helpdesk): fecha as hipóteses HLAPI da paridade.`
 
 ---
@@ -225,7 +225,7 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 
 - **Objetivo:** datas absolutas; esconder Responder se `can_followup=false`; observador rótulo se existir.
 - **RQ:** RQ-07 · HD-023
-- **Fazer:** campo aditivo `can_followup` (default true se E6 inconclusivo **não** — fail-closed só com 14-H1 PROVEN 403; senão manter campo). Observador sem virar identidade.
+- **Fazer:** campo aditivo `can_followup` — **false só se `status_id==6`** (14-H1: solucionado ainda aceita follow-up; fechado 403). Observador sem virar identidade.
 - **Não fazer:** PATCH; abas da foto 1101.
 - **Deps:** E7.S1; E6.S1 para can_followup.
 - **Teste:** Novo mostra Responder; Fechado some se PROVEN; F5.
@@ -240,8 +240,8 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 
 - **Objetivo:** o solicitante aprova/recusa solução, reabre se a matriz deixar, responde pesquisa — **só** com operation HLAPI comprovada em E6.
 - **RQ:** RQ-08 · HD-024
-- **Fazer:** novas rotas BFF em inglês; backend autoriza; MFE kit (sem estrela CSS).
-- **Não fazer:** se E6 não achar operation — CONSOLE, atualizar 14/15, zero tela.
+- **Fazer:** Satisfaction **não tem path** → CONSOLE (15). Solution e Validation **existem** (`GET/POST …/Timeline/Solution` e `…/Validation`) — só então tela de aprovar/recusar. Reabrir via PATCH de status = 403 no Colaborador.
+- **Não fazer:** tela de pesquisa; PATCH de status; inventar path de Satisfaction.
 - **Deps:** E6.S1, E9.S1.
 - **Teste:** positive aprovar fecha (status 6); irmão recusar; negativo chamado alheio 404; sem operation = sem rota.
 - **Pronto:** HD-024 ou 15 X-46/X-51 = CONSOLE com evidência.
@@ -255,7 +255,7 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 
 - **Objetivo:** uma capacidade por evidência PROVEN; as outras FORA.
 - **RQ:** RQ-09 · HD-025
-- **Fazer:** campos/rotas ADDITIVE só para o que E6.S1 marcou PROVEN. Form = consumir catálogo GLPI, não clonar.
+- **Fazer:** TTR (`sla_ttr`/`sla_tto`) e observer (`POST …/TeamMember`). Form e vínculo **FORA** — não abrir UI.
 - **Não fazer:** tela para gate morto; criar SLA/vínculo/item.
 - **Deps:** E6.S1.
 - **Teste:** por capacidade viva; negativo HD-011 (observer não manda requester/entity).
@@ -291,7 +291,7 @@ Owner do corpo e do status: helpdesk-api. Owner da bolha/editor: plugin-ui. MFE 
 
 1. Rebuild helpdesk + helpdesk-api.
 2. Lista 1114: data absoluta, status_id, F5.
-3. Detalhe 6288: HTML; imagem se PROVEN.
+3. Detalhe com `<img>` (1108 / 1045 / 467; **6288 inexistente**): HTML; imagem se rewrite.
 4. Abrir+responder HTML; F5.
 5. Chamado fechado: sem Responder se PROVEN.
 6. 403/409 inalterados.

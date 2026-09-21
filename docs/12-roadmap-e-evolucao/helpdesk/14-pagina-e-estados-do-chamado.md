@@ -268,14 +268,14 @@ GLPI Ticket.status {id, name}
 | D-08 | `open` não perde o 10 até existir `approval` | compat |
 | D-09 | Conversação e HTML continuam 10 e 12 | ownership |
 
-### Não prontas
+### Não prontas — fechadas em E6.S1 (21/09/2026)
 
-| ID | Falta | Bloqueia |
+| ID | Veredito | Bloqueia |
 |---|---|---|
-| H1 | o POST de follow-up em chamado 5/6 devolve 403 para o colaborador? | P-06 |
-| H2 | rótulos PT-BR dos sete ids neste GLPI | S-03 (só confere, não bloqueia id) |
-| H3 | `team` traz observer na lista/detalhe | P-05 |
-| H4 | matriz Self-Service / Colaborador: fechar e reabrir ligados? | só H5 |
+| H1 | **PROVEN com drift** — Colaborador: follow-up em status **5 = 200**; status **6 = 403** `ERROR_RIGHT_MISSING`. PATCH de status = 403. | P-06: `can_followup=false` **só** no fechado |
+| H2 | **PROVEN** — schema + live: `1 Novo`, `2 Em atendimento (atribuído)`, `5 Solucionado`, `6 Fechado`; enum também 3/4/10 | S-03 conferido; sem dicionário PT no BFF |
+| H3 | **PARCIAL** — 1101 traz `team[].role=requester` (+ id/nome); 1114 veio `team[]` vazio no Super-Admin; `POST …/TeamMember` observer = 201 | P-05: publicar observador **se** o GET trouxer o role |
+| H4 | **FORA** para PATCH — Colaborador não muda status (403). Reabrir/fechar não é PATCH neste perfil. | H10 só com operation de Solution/Validation |
 
 ## 11. Prova, quando houver autorização
 

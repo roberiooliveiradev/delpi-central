@@ -430,22 +430,20 @@ Campos de rótulo (`title`, nomes) continuam em `display_text`. Conteúdo de men
 | H5 menção | markup exato + lista HLAPI de mencionáveis | M-23, parte de M-07 se o atributo divergir |
 | H6 teto | tamanho máximo que o GLPI/BFF aceita | M-29 (número) |
 
-## 15. Hipóteses a fechar **antes** de receitar o rewrite de imagem
+## 15. Hipóteses de imagem — vereditos (E6.S1, 21/09/2026)
 
-```text
-H1  o HTML de produção aponta para /front/document.send.php?docid=N
-H2  o HTML embute data-URI ou URL absoluta do host do GLPI
-H3  a imagem do 6288 é só Document da Timeline, sem <img> no content
-H4  o Followup da HLAPI traz lista de documentos (fecha A-07) ou não traz
-```
+Captura HLAPI `GET /Assistance/Ticket/{id}` + Timeline + um item da lista. Só chaves e formato do `content` (tags / padrão de URL). Sem corpo pessoal.
 
-Uma captura do `GET /tickets/{id}` (BFF) **e** do `content` cru do GLPI no 6288 e no 1114 decide H1–H4. Sem isso, M-08 e M-09 não viram etapa executável.
+O id **6288 não existe** neste GLPI (`MAX(id)=1119`). Substitutos com `<img>`: 1108 (content + Timeline `Document`), 1045 e 467 (Followup/Solution).
 
-Como capturar (quando autorizado a **investigar**, ainda sem produto):
+| ID | Veredito | Evidência |
+|---|---|---|
+| H1 | **PROVEN** | `content` traz `<img>` / `<a>` com `src`/`href` relativo `/front/document.send.php` e query `docid` (+ `items_id`, `itemtype`) |
+| H2 | **FORA** | nenhum data-URI `data:image` nem URL absoluta do host nos corpos amostrados |
+| H3 | **FORA** | 6288 inexistente; 1108 tem `<img>` **e** item Timeline `Document` (`documents_id`) |
+| H4 | **FORA** (A-07) | schema e JSON de `Followup` **não** listam documentos; `Document` é tipo irmão na Timeline |
 
-1. no GLPI, abrir o chamado 6288 como o mesmo perfil do token;
-2. no BFF, log temporário **proibido** (corpo não vai a log);
-3. caminho aceitável: teste de homologação que persiste o `content` **só** em fixture de teste, sem commit de dado pessoal; ou inspeção na HLAPI com o token da sessão, sem gravar senha.
+M-08 (rewrite de `document.send.php`) **desbloqueado**. M-09 / A-07 **não** desbloqueiam: a imagem no HTML e o `Document` da Timeline não vêm amarrados ao Followup.
 
 ## 16. Prova, quando houver autorização
 

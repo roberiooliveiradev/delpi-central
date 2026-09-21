@@ -338,17 +338,17 @@ Não filtrar no cliente a coleção do Super-Admin. O token decide o universo; o
 | D-08 | Sem CSS de grade no MFE | kit |
 | D-09 | Default da lista permanece Todos | subtítulo já não diz «abertos» |
 
-### Não prontas (não viram receita E*.S*)
+### Não prontas — fechadas em E6.S1 (21/09/2026)
 
-| ID | Falta | Bloqueia |
+| ID | Veredito | Bloqueia |
 |---|---|---|
-| H1 | `content=like` no GET de produção | G-21 |
-| H2 | `date_solve` / `date_close` no item da lista | G-03, G-04, G-07 |
-| H3 | o token colaborador vs Super-Admin: quantos itens o GET devolve | só confirma D-01; paginação já existe |
-| H4 | markup/campos de `type` e `priority` no item | só reforçaria D-05 |
-| H5 | um token que vê chamado de outro solicitante | G-05 |
+| H1 | **PROVEN** — `filter=content=like=*token*` HTTP 200 e achou o chamado 1119 | G-21 **segue** (E7.S3) |
+| H2 | **PROVEN** — item da lista traz `date_solve` e `date_close` (null se aberto) | G-03, G-04 **seguem** (E7.S3) |
+| H3 | **PROVEN** — Colaborador lista vazia / 404 nos ids 1114 e 1101; Super-Admin 206 com itens | confirma D-01 |
+| H4 | **PROVEN** — item traz `type` e `priority` (int) | continua **fora** da grade (D-05) |
+| H5 | **PROVEN** — token Colaborador 404 em 1114/1101 | G-05 |
 
-Captura aceitável (quando autorizada a **investigar**, sem produto): um item de `GET /Assistance/Ticket` (chaves do JSON, sem gravar corpo pessoal em log). Senha de teste não entra em commit.
+Item da lista (chaves, sem corpo): `id`, `name`, `content`, `status.{id,name}`, `date_creation`, `date_mod`, `date_solve`, `date_close`, `resolution_date`, `sla_ttr`, `sla_tto`, `team[]`, `category`, `urgency`, `entity`, `user_recipient`. Senha de teste não entra em commit.
 
 ## 14. Prova, quando houver autorização
 

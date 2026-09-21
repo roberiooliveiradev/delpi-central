@@ -49,11 +49,11 @@ Doc: [Opening a ticket](https://help.glpi-project.org/documentation/modules/assi
 | X-06 | Chamado anônimo (`helpdesk.html`) | FORA — exige JWT + OAuth |
 | X-07 | Abrir por e-mail (coletor: assunto, corpo, Cc→observador, anexo) | CONSOLE_GLPI / servidor; o MFE não é o coletor |
 | X-08 | Chamado recorrente | CONSOLE_GLPI |
-| X-09 | **Formulários nativos + catálogo de serviços (GLPI 11)** | HIPOTESE / CONSOLE até existir HLAPI de Form; não reimplementar o catálogo no MFE |
+| X-09 | **Formulários nativos + catálogo de serviços (GLPI 11)** | **FORA** — H-X1; não reimplementar o catálogo no MFE |
 | X-10 | Modelo de chamado (campo obrigatório / pré-preenchido / oculto) | CONSOLE_GLPI — o BFF não lê template |
 | X-11 | «Informar-me por e-mail» + escolher endereço | CONSOLE_GLPI — notificação é do GLPI; e-mail vem do usuário |
 | X-12 | Itens de inventário associados na abertura | CONSOLE_GLPI / inventário |
-| X-13 | Observadores na abertura | HIPOTESE — se o POST HLAPI aceitar `team` observer **sem** mudar solicitante; senão CONSOLE. Não é HD-011 |
+| X-13 | Observadores na abertura | **PROVEN** — `POST …/TeamMember` observer (H-X2). Não é HD-011 |
 | X-14 | Pedido de validação já na abertura | CONSOLE_GLPI / H5 |
 | X-15 | Origem (Direct, E-Mail, Helpdesk, Phone…) | CONSOLE_GLPI — o POST não envia; o GLPI grava a origem da API |
 | X-16 | Localização / telefone do solicitante | CONSOLE_GLPI — cadastro de usuário |
@@ -74,8 +74,8 @@ Doc: [Manage tickets](https://help.glpi-project.org/documentation/modules/assist
 | X-25 | Atores: requerente, observador, atribuído (pessoa/grupo/fornecedor) | atribuído e requerente IMPLEMENTADOS como rótulo; editar CONSOLE; observador ALVO no 14 P-05 |
 | X-26 | Notificação por ator (sim/não, e-mail) | CONSOLE_GLPI |
 | X-27 | Itens de inventário | CONSOLE_GLPI |
-| X-28 | TTO, TTR, TTO/TTR internos, SLA, OLA, próximo nível | CONSOLE_GLPI para gerir; **data TTR visível ao solicitante** = HIPOTESE ALVO_LEITURA se o schema trouxer |
-| X-29 | Chamados ligados: Linked to, Duplicates, Child of, Parent of | CONSOLE para criar o vínculo; **ver o id ligado do próprio chamado** = HIPOTESE ALVO_LEITURA |
+| X-28 | TTO, TTR, TTO/TTR internos, SLA, OLA, próximo nível | CONSOLE_GLPI para gerir; **TTR visível** = ALVO_LEITURA (`sla_ttr` / `sla_tto`, H-X3) |
+| X-29 | Chamados ligados: Linked to, Duplicates, Child of, Parent of | CONSOLE para criar **e** para ver — H-X4 **FORA** (sem campo/rota na HLAPI) |
 | X-30 | Duplicata fecha em cascata | CONSOLE_GLPI — o GLPI aplica; a Minha DELPI só relê o status |
 | X-31 | Último editor | CONSOLE_GLPI — [`13`](./13-listagem-de-chamados.md) |
 
@@ -138,24 +138,24 @@ Estes não abrem etapa. Só deixam de ser lacuna invisível.
 
 | ID | Capacidade | Por que importa ao solicitante | Estado |
 |---|---|---|---|
-| X-09 | Catálogo / Forms GLPI 11 | muita abertura real passa por formulário, não pelo ticket genérico | HIPOTESE — inventariar HLAPI `Form` antes de qualquer tela |
-| X-13 | Observador na abertura | o GLPI simplificado deixa adicionar watcher | HIPOTESE de contrato; sem isso CONSOLE |
-| X-28 | TTR visível | «até quando deve ser resolvido» | HIPOTESE ALVO_LEITURA |
-| X-29 | Vínculo (duplicata / filho) | o solicitante vê que o 1101 é duplicata do 1090 | HIPOTESE ALVO_LEITURA; criar vínculo CONSOLE |
+| X-09 | Catálogo / Forms GLPI 11 | muita abertura real passa por formulário, não pelo ticket genérico | **FORA** (H-X1) |
+| X-13 | Observador na abertura | o GLPI simplificado deixa adicionar watcher | **PROVEN** TeamMember (H-X2) |
+| X-28 | TTR visível | «até quando deve ser resolvido» | **PROVEN** `sla_ttr` / `sla_tto` |
+| X-29 | Vínculo (duplicata / filho) | o solicitante vê que o 1101 é duplicata do 1090 | **FORA** (H-X4); criar vínculo CONSOLE |
 | X-46 | Aprovar solução | já era H5; permanece | H5 |
 
 Não promover X-09 a tela de catálogo sem endpoint. Não copiar Formcreator/plugin.
 
-## 9. Hipóteses a fechar (investigação, não produto)
+## 9. Hipóteses — vereditos (E6.S1, 21/09/2026)
 
-```text
-H-X1  a HLAPI 2.2 desta produção tem recurso Form / Service catalog
-H-X2  POST Ticket aceita observer sem requester/entity
-H-X3  GET Ticket traz time_to_resolve / sla / date_solve
-H-X4  GET Ticket traz linked tickets (tipo + id)
-```
+| ID | Veredito | Evidência |
+|---|---|---|
+| H-X1 | **FORA** | OpenAPI 2.2 sem path Form/Service catalog; `GET /Form`, `/Assistance/Form`, `/ServiceCatalog` = 404. Perfil Colaborador `form: 0`. |
+| H-X2 | **PROVEN** | `POST /Assistance/Ticket/{id}/TeamMember` com `{type: User, role: observer, id}` = **201**, sem requester/entity. Schema `Ticket.team[].role` existe; o POST de criação do Ticket não foi o caminho testado. |
+| H-X3 | **PROVEN** | lista e detalhe trazem `date_solve`, `date_close`, `sla_ttr.{id,name}`, `sla_tto.{id,name}`. Não há campo `time_to_resolve`. |
+| H-X4 | **FORA** | GET Ticket **não** inclui vínculos. Schema `Ticket_Ticket` existe; `GET /Assistance/Ticket_Ticket` = 404. |
 
-Mesma regra do 12: captura de chaves do JSON, sem logar corpo nem senha.
+`TicketSatisfaction` existe no schema e **não** tem path (404). Solution e Validation **têm** `GET/POST …/Timeline/Solution` e `…/Validation`. Sem corpo pessoal neste arquivo.
 
 ## 10. O que este arquivo não faz
 
