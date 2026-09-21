@@ -15,10 +15,11 @@ Estados: `PROVEN` | `PLANNED` | `TARGET` | `NOT_STARTED`.
 | H0.7 | Iframe antigo não era o host real do GLPI | PROVEN | entry antiga `https://centraldelpi.com.br/helpdesk/` observada em 21/09/2026; manifesto vigente é microfrontend em `/apps/helpdesk` |
 | H1 | helpdesk-api e sessão OAuth | PROVEN | autorização concluída e lista carregada em `minhadelpi.com.br/apps/helpdesk`, 21/09/2026 |
 | H2 | Leitura de chamados | PROVEN | lista real do usuário logado na mesma sessão |
-| H3 | Abertura e acompanhamento | NOT_STARTED | tela publicada; criação e acompanhamento ao vivo ainda não registrados |
+| H3 | Abertura e acompanhamento | PROVEN | perfil Colaborador — Chamados, `user_id` 69, 21/09/2026: `POST /Assistance/Ticket` → id **1120**; `POST …/Timeline/Followup` → id **593**. Super-Admin (sessão irmã) também criou **1119** + follow-up **591**. Sem senha neste arquivo. |
 | H4 | MFE nativo | PROVEN | menu Meus Chamados de TI em `/apps/helpdesk`, sem iframe |
-| H5 | Anexo, satisfação, bancada técnica | TARGET | [`05-roadmap.md`](../05-roadmap.md) |
+| H5 | Anexo, satisfação, bancada técnica | TARGET | fatiado em H10/H12/CONSOLE — [`05-roadmap.md`](../05-roadmap.md) |
+| H6 | Gates HLAPI da paridade | PROVEN | 21/09/2026 — vereditos em [`12`](../12-conteudo-da-mensagem.md) §15, [`13`](../13-listagem-de-chamados.md) §13, [`14`](../14-pagina-e-estados-do-chamado.md) §10, [`15`](../15-capacidades-glpi.md) §9 |
 
-Próxima etapa: registrar no ledger a abertura e o acompanhamento feitos por um usuário real. H5 continua `TARGET`.
+H3 e H6 fechados. Próxima onda de código: H7 (`status_id`) em [`16-plano-paridade.md`](../16-plano-paridade.md) E7. Sem senha neste arquivo.
 
 Segredo do cliente OAuth não é registrado aqui.

@@ -1,11 +1,11 @@
 # 06 — Plano de execução
 
-> **Status:** H1, H2 e H4 `PROVEN` no ledger; H3 ainda `NOT_STARTED`
+> **Status:** H1, H2, H3 e H4 `PROVEN` no ledger. Paridade: [`16-plano-paridade.md`](./16-plano-paridade.md).
 > **Esta é a ordem.** [`05-roadmap.md`](./05-roadmap.md) só mostra as ondas.
 > **Requisitos:** [`07-requisitos.md`](./07-requisitos.md)
 > **Prova:** [`09-testes-e-aceite.md`](./09-testes-e-aceite.md)
 
-A lista e a sessão OAuth foram usadas em produção em 21/09/2026. A abertura e o acompanhamento ainda não têm esse registro no ledger.
+A lista e a sessão OAuth foram usadas em produção em 21/09/2026. A abertura e o acompanhamento ao vivo fecharam H3 no mesmo dia (ledger).
 
 ## Antes × depois
 
@@ -136,7 +136,7 @@ Cobre: HD-018.
 
 Um colaborador com perfil de chamado abre um chamado de teste na Minha DELPI e o mesmo número aparece no GLPI em nome dele. Um usuário sem direito no GLPI recebe acesso negado. O console do técnico não muda.
 
-Aceite parcial registrado no ledger: sessão, lista e tela. A abertura de um chamado de teste e o acompanhamento ainda fecham H3.
+Aceite parcial registrado no ledger: sessão, lista e tela. A abertura e o acompanhamento ao vivo fecharam H3 em 21/09/2026 (ids 1120 / follow-up 593 no perfil Colaborador). Receitas `E1…E5` acima permanecem históricas.
 
 ## Fora deste plano
 
