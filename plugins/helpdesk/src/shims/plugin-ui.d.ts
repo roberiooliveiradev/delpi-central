@@ -53,6 +53,7 @@ declare module "@delpi/plugin-ui/index" {
     subtitle?: ReactNode;
     eyebrow?: ReactNode;
     icon?: ReactNode;
+    nav?: ReactNode;
     onRefresh?: () => void;
     refreshing?: boolean;
     compact?: boolean;

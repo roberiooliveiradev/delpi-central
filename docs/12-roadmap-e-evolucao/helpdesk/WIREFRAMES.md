@@ -149,6 +149,7 @@ A ordenação do cabeçalho pede de novo ao helpdesk; não reordena só a págin
 
 ```text
 HelpdeskPageHeader
+  [ ← ]  nav canto superior esquerdo  aria-label Voltar
   título: Abrir chamado
   [ Atualizar ] oculto nesta rota
 
@@ -164,7 +165,6 @@ HelpdeskSectionCard  «Abrir chamado»  hint = helpTooltips.create
                 Muito baixa | Baixa | Média | Alta | Muito alta
 
   HelpdeskFormActions
-    [ ← ]  voltar
     [ enviar ]  ícone; aria-label Enviar chamado
 ```
 
@@ -176,6 +176,7 @@ A tela publicada é a conversa abaixo. O inventário que a originou está em [`1
 
 ```text
 HelpdeskPageHeader
+  [ ← ]  nav canto superior esquerdo  aria-label Voltar
   título: título do chamado, ou «Chamado» enquanto carrega
   [ Atualizar ]
 
@@ -203,7 +204,7 @@ HelpdeskSectionCard  «Conversa»  hint = helpTooltips.detail
   Responder   [ texto ]  obrigatório  hint = helpTooltips.detail
   HelpdeskFormActions
     Responder   [ texto ]  3 linhas
-    [ ← ]  [ enviar ]
+    [ enviar ]
 ```
 
 A abertura existe mesmo sem acompanhamento. Tarefa, solução, aprovação e acompanhamento privado não entram. `mine` significa que o autor é o solicitante do chamado.

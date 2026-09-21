@@ -82,6 +82,14 @@ function HelpdeskPageStack({ children }: { children: ReactNode }) {
   return <div className="helpdesk-page-stack">{children}</div>;
 }
 
+function HelpdeskBackButton() {
+  return (
+    <HelpdeskIconButton aria-label="Voltar" onClick={() => navigateHelpdesk("/apps/helpdesk")}>
+      <ChevronLeft size={16} aria-hidden />
+    </HelpdeskIconButton>
+  );
+}
+
 function currentListFilters(): TicketListFilters {
   return parseTicketListFilters(typeof window === "undefined" ? "" : window.location.search);
 }
@@ -354,6 +362,7 @@ function CreateTicketPage() {
 
   return (
     <HelpdeskPageStack>
+    <HelpdeskPageHeader title="Abrir chamado" compact nav={<HelpdeskBackButton />} />
     <HelpdeskSectionCard title="Abrir chamado" hint={helpTooltips.create} fill>
       {loading ? <HelpdeskLoadingState message="Carregando categorias…" /> : null}
       {errorText ? <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner> : null}
@@ -397,9 +406,6 @@ function CreateTicketPage() {
           options={urgencies.map((item) => ({ value: String(item.id), label: item.name }))}
         />
         <HelpdeskFormActions>
-          <HelpdeskIconButton aria-label="Voltar" onClick={() => navigateHelpdesk("/apps/helpdesk")}>
-            <ChevronLeft size={16} aria-hidden />
-          </HelpdeskIconButton>
           <HelpdeskIconButton
             tone="primary"
             type="submit"
@@ -439,7 +445,13 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
 
   return (
     <HelpdeskPageStack>
-      <HelpdeskPageHeader title={ticket?.title || "Chamado"} compact onRefresh={load} refreshing={loading} />
+      <HelpdeskPageHeader
+        title={ticket?.title || "Chamado"}
+        compact
+        nav={<HelpdeskBackButton />}
+        onRefresh={load}
+        refreshing={loading}
+      />
       <HelpdeskSectionCard title="Conversa" hint={helpTooltips.detail} fill>
         {loading ? <HelpdeskLoadingState message="Carregando chamado…" /> : null}
         {errorText ? <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner> : null}
@@ -495,9 +507,6 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 required
               />
               <HelpdeskFormActions>
-                <HelpdeskIconButton aria-label="Voltar" onClick={() => navigateHelpdesk("/apps/helpdesk")}>
-                  <ChevronLeft size={16} aria-hidden />
-                </HelpdeskIconButton>
                 <HelpdeskIconButton
                   tone="primary"
                   type="submit"

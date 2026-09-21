@@ -33,6 +33,26 @@ describe("PageHeader", () => {
     expect(screen.getByRole("button", { name: "Nova ata" })).toBeTruthy();
   });
 
+  it("no compacto o nav fica à esquerda do título", () => {
+    const { container } = render(
+      <PageHeader
+        layout="titleRow"
+        compact
+        classNames={pageHeaderTitleRowBemClasses("helpdesk")}
+        labels={{ refresh: "Atualizar", refreshing: "Atualizando…" }}
+        nav={<button type="button">Voltar</button>}
+        title="Chamado"
+      />,
+    );
+
+    const wrap = container.querySelector(".delpi-ui-page-header__title-wrap");
+    const nav = container.querySelector(".delpi-ui-page-header__nav");
+    expect(container.querySelector(".delpi-ui-page-header--compact")).toBeTruthy();
+    expect(nav).toBeTruthy();
+    expect(wrap?.firstElementChild).toBe(nav);
+    expect(screen.getByRole("button", { name: "Voltar" })).toBeTruthy();
+  });
+
   it("hideHeading omite h1 e subtítulo no layout brand", () => {
     render(
       <PageHeader

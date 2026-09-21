@@ -89,6 +89,17 @@
   align-items: center;
 }
 
+.delpi-ui-page-header--compact .delpi-ui-page-header__title-wrap {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.delpi-ui-page-header--compact .delpi-ui-page-header__nav {
+  margin: 0;
+  flex-shrink: 0;
+}
+
 .delpi-ui-page-header--compact h1,
 .delpi-ui-page-header--compact .delpi-ui-page-header__title {
   font-size: 1.25rem;
