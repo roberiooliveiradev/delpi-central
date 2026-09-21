@@ -112,9 +112,12 @@ describe("InteractionRoomPage", () => {
 
   it("completa labels PT do composer sem depender de fallback EN", () => {
     expect(labels.composer.formatBoldAriaLabel).toBe("Negrito");
+    expect(labels.composer.formatItalicAriaLabel).toBe("Itálico");
+    expect(labels.composer.formatLinkAriaLabel).toBe("Link");
     expect(labels.composer.formatEmojiAriaLabel).toBe("Emoji");
     expect(labels.composer.pendingDocumentsHeading).toBe("Arquivos a enviar");
     expect(labels.actionsToolbarAriaLabel).toBe("Opções da mensagem");
+    expect(labels.find.title).toMatch(/Localizar/i);
     expect(labels.loadOlder).toMatch(/anteriores/i);
   });
 

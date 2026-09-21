@@ -51,4 +51,15 @@ describe("Transforma+ user manual", () => {
     expect(paths.length).toBeGreaterThan(0);
     expect(paths.every((path) => REAL_PATHS.has(path))).toBe(true);
   });
+
+  it("documenta a sala de interação com Localizar, anexos, colar imagem e histórico", () => {
+    const interaction = USER_MANUAL_CONTENT.sections.find((section) => section.id === "interaction");
+    expect(interaction).toBeTruthy();
+    const text = JSON.stringify(interaction);
+    expect(text).toMatch(/Localizar/);
+    expect(text).toMatch(/colar uma imagem/i);
+    expect(text).toMatch(/remover o anexo/i);
+    expect(text).toMatch(/Carregar mensagens anteriores/);
+    expect(text).toMatch(/fotos de perfil/i);
+  });
 });

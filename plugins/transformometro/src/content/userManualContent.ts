@@ -167,6 +167,7 @@ export const USER_MANUAL_CONTENT = {
         "Todas, Não lidas, Menções e Processos usam a leitura e as menções reais da sala.",
         "Escreva a mensagem, mencione uma pessoa com @, responda, reaja ou anexe um arquivo e envie. Também dá para colar uma imagem direto no editor. O texto permanece se o envio falhar. As reações ficam na mensagem; para reagir, use as opções da mensagem.",
         "Na conversa, mensagens seguidas da mesma pessoa ficam agrupadas. Toque na citação de uma resposta para ir até a mensagem original. Anexos aparecem na bolha com prévia; você pode remover o anexo que você mesmo enviou. Menções ficam destacadas e as fotos de perfil aparecem quando disponíveis.",
+        "Use Localizar no chat (ícone de busca no cabeçalho da sala) para achar texto nas mensagens já carregadas.",
         "Ao editar a própria mensagem, use o mesmo editor rico do envio (formatação e @). Arquivos e links reúne o que foi enviado na sala. O painel da sala mostra o processo, quem falou e as mensagens fixadas.",
         "Atualizar busca as mensagens de novo. A conversa também é atualizada enquanto a sala está aberta. Use Carregar mensagens anteriores para ver o histórico mais antigo. O botão ao lado da linha divisória recolhe ou mostra a lista de conversas; arraste a linha para mudar a largura.",
         "A sala não substitui tarefas, atas nem revisões. Cada uma continua no seu lugar.",

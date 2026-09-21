@@ -860,6 +860,10 @@ export function InteractionRoomsPage({ getAccessToken, pathname, roomId, onNavig
         onRemovePendingAttachment={(id) => setPending((current) => current.filter((item) => item.id !== id))}
         accept={FILE_ACCEPT}
         resolveAttachmentImageSrc={resolveAttachmentImageSrc}
+        onAttachmentImageClick={(id) => {
+          const file = findAttachment(id);
+          if (file) void openFile(file);
+        }}
         onInlineImagesInserted={onInlineImagesInserted}
         onInlineImageRemoved={onInlineImageRemoved}
         mentionHits={mentionHitsWithPhotos}

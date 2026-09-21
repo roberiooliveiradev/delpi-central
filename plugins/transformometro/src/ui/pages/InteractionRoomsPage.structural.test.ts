@@ -19,11 +19,13 @@ describe("InteractionRoomsPage", () => {
     expect(source).toMatch(/onSaveEdit/);
     expect(source).toMatch(/onRemoveAttachment/);
     expect(source).toMatch(/resolveAttachmentImageSrc/);
+    expect(source).toMatch(/onAttachmentImageClick/);
     expect(source).toMatch(/rewriteInlinePendingInMarkdown/);
     expect(source).toMatch(/onInlineImagesInserted/);
     expect(source).toMatch(/onLoadOlder/);
     expect(source).toMatch(/beforeId/);
     expect(source).toMatch(/FilePreviewModal/);
+    expect(source).toMatch(/findAttachment/);
     expect(source).not.toMatch(/<RoomConversationShell[\s/>]/);
     expect(source).not.toMatch(/<MentionComposer[\s/>]/);
     expect(source).not.toMatch(/<textarea\b/);
