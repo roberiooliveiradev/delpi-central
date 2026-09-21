@@ -43,7 +43,9 @@
   --ds-page-bg: var(--background, var(--page-bg, var(--ds-card-bg)));
   --delpi-ui-accent: var(--ds-accent);
   --delpi-ui-surface: var(--ds-card-bg);
+  --delpi-ui-surface-muted: var(--ds-surface-muted);
   --delpi-ui-text: var(--ds-text);
+  --delpi-ui-text-muted: var(--ds-text-muted);
   --delpi-ui-border: var(--ds-card-border);
   --delpi-ui-muted: var(--ds-text-muted);
   /* Faixa de marca (mesmas cores do header de inspeções-entrada) */

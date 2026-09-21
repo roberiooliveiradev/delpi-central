@@ -57,5 +57,7 @@ describe("EmptyGuidance", () => {
     expect(css).toMatch(/\.delpi-ui-empty-guidance--panel/);
     expect(css).toMatch(/\.delpi-ui-empty-guidance--canvas/);
     expect(css).toMatch(/pointer-events: auto/);
+    expect(css).toMatch(/--delpi-ui-surface-muted/);
+    expect(css).not.toMatch(/#f1f5f9/);
   });
 });

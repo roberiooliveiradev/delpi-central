@@ -111,7 +111,14 @@
   border-radius: var(--delpi-ui-room-panel-radius, 0.75rem);
   background: var(
     --delpi-ui-room-panel-bg,
-    var(--delpi-ui-surface-muted, var(--delpi-ui-surface, #f6f8fa))
+    var(
+      --delpi-ui-surface-muted,
+      color-mix(
+        in srgb,
+        var(--delpi-ui-text, var(--text, #0f172a)) 8%,
+        var(--delpi-ui-surface, var(--surface, #ffffff))
+      )
+    )
   );
   box-sizing: border-box;
   --delpi-ui-room-thread-dock-padding: 0.75rem 0.85rem 0.85rem;

@@ -31,6 +31,7 @@
   --cm-success: #15803d;
   --delpi-ui-accent: var(--cm-accent);
   --delpi-ui-surface: var(--cm-surface);
+  --delpi-ui-surface-muted: var(--cm-surface-muted);
   --delpi-ui-text: var(--cm-text);
   --delpi-ui-title: var(--secundary, #003866);
   --delpi-ui-text-muted: var(--cm-text-muted);
@@ -52,6 +53,7 @@
   --cm-success: #4ade80;
   --delpi-ui-accent: var(--cm-accent);
   --delpi-ui-surface: var(--cm-surface);
+  --delpi-ui-surface-muted: var(--cm-surface-muted);
   --delpi-ui-text: var(--cm-text);
   --delpi-ui-title: var(--cm-text);
   --delpi-ui-text-muted: var(--cm-text-muted);
