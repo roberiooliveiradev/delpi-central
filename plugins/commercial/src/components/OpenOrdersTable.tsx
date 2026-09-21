@@ -54,7 +54,7 @@ import {
 import { useTableColumnPreferences } from "../hooks/useTableColumnPreferences";
 import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
 import { formatDisplayDate, getDeliveryOverdueDays } from "../utils/dates";
-import { formatEntityTypeWithCodeStore } from "../utils/entityCodeStore";
+import { formatEntityTypeWithCodeStoreCenter } from "../utils/entityCodeStore";
 import { exportOpenOrdersExcel } from "../utils/exportOpenOrdersExcel";
 import { formatCurrency } from "../utils/format";
 import {
@@ -230,16 +230,12 @@ export function OpenOrdersTable({
           Boolean(customerAvatars.get(customerAvatarKey(code, store)));
         const name = row.nome_cliente?.trim() || "—";
         const center = row.customer_center?.trim() || "";
-        const entityLine = [
-          formatEntityTypeWithCodeStore(
-            row.tipo_entidade,
-            row.codigo_cadastro,
-            null,
-          ),
+        const entityLine = formatEntityTypeWithCodeStoreCenter(
+          row.tipo_entidade,
+          row.codigo_cadastro,
+          row.loja_cadastro,
           center,
-        ]
-          .filter(Boolean)
-          .join(" · ");
+        );
         const returnNav = currentReturnNav("Meus pedidos");
         const accountHref =
           code && store

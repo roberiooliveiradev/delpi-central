@@ -24,7 +24,7 @@ import { CM_HELP } from "../content/helpTooltips";
 import { CustomerAvatar } from "../features/customers/components/CustomerAvatar";
 import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
 import { formatDisplayDate, getDeliveryOverdueDays } from "../utils/dates";
-import { formatEntityTypeWithCodeStore } from "../utils/entityCodeStore";
+import { formatEntityTypeWithCodeStoreCenter } from "../utils/entityCodeStore";
 import { formatCurrency } from "../utils/format";
 import {
   DEFAULT_QUANTITY_DISPLAY_MODE,
@@ -137,16 +137,12 @@ function renderCardValue(
               <strong className="cm-open-orders-client__name">{name}</strong>
             )}
             <span className="cm-open-orders-client__id">
-              {[
-                formatEntityTypeWithCodeStore(
-                  item.tipo_entidade,
-                  item.codigo_cadastro,
-                  null,
-                ),
+              {formatEntityTypeWithCodeStoreCenter(
+                item.tipo_entidade,
+                item.codigo_cadastro,
+                item.loja_cadastro,
                 center,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
+              )}
             </span>
           </div>
         </div>

@@ -44,3 +44,16 @@ export function formatEntityTypeWithCodeStore(
 
   return `${label} ${codeStore}`;
 }
+
+/** Tipo + código-loja + centro (`CLIENTE 000001-09 · 1106`). */
+export function formatEntityTypeWithCodeStoreCenter(
+  entityType?: string | null,
+  code?: string | null,
+  store?: string | null,
+  center?: string | null,
+): string {
+  const label = entityType?.trim() || "—";
+  const codeStoreCenter = formatEntityCodeStoreCenter(code, store, center);
+  if (!codeStoreCenter) return label;
+  return `${label} ${codeStoreCenter}`;
+}

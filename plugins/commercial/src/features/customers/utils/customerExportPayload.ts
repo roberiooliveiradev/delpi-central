@@ -1,5 +1,5 @@
 import { formatDisplayDate } from "../../../utils/dates";
-import { formatEntityCodeStore } from "../../../utils/entityCodeStore";
+import { formatEntityCodeStoreCenter } from "../../../utils/entityCodeStore";
 import type { CustomerSummary } from "../types/customerSummary";
 import { hasCustomerEnrichmentCoverage } from "./customerEnrichmentCoverage";
 import { resolveCustomerStatus, statusLabel } from "./customerListPresentation";
@@ -47,8 +47,11 @@ export function customerExportValue(
   switch (key) {
     case "nome": {
       const codeStore =
-        formatEntityCodeStore(customer.codigo, customer.loja) ??
-        `${customer.codigo}-${customer.loja}`;
+        formatEntityCodeStoreCenter(
+          customer.codigo,
+          customer.loja,
+          customer.customerCenter,
+        ) ?? `${customer.codigo}-${customer.loja}`;
       return customer.nome ? `${customer.nome} (${codeStore})` : codeStore;
     }
     case "sellerName":
