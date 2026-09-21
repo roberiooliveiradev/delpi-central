@@ -1,4 +1,4 @@
-import { getEmojiCatalog } from "@delpi/plugin-ui/index";
+import { reactionLabelForCode } from "@delpi/plugin-ui/index";
 
 import type { InteractionReactionDto } from "../../api/interactionRoomsApi";
 
@@ -9,17 +9,7 @@ export type AggregatedReaction = {
   reactedByMe?: boolean;
 };
 
-const catalogById = new Map(
-  getEmojiCatalog().map((item) => [item.id, item] as const),
-);
-
-export function reactionLabelForCode(code: string): string {
-  const key = code.trim();
-  if (!key) return "";
-  const fromCatalog = catalogById.get(key);
-  if (fromCatalog?.glyph) return fromCatalog.glyph;
-  return key;
-}
+export { reactionLabelForCode };
 
 export function aggregateMessageReactions(
   reactions: readonly InteractionReactionDto[] | null | undefined,

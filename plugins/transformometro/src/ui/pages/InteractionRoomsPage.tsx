@@ -4,6 +4,7 @@ import {
   INTERACTION_ROOM_PAGE_LABELS_PT,
   InteractionRoomPage,
   markdownToPlainPreview,
+  reactionLabelForCode,
   type InteractionRoomMessage,
   type InteractionRoomSharedItem,
   type MentionComposerPendingAttachment,
@@ -65,7 +66,7 @@ function reactionItems(message: InteractionMessageDto, meId: string | null): Rea
   for (const reaction of message.reactions ?? []) {
     const current = grouped.get(reaction.code) ?? {
       code: reaction.code,
-      label: reaction.code,
+      label: reactionLabelForCode(reaction.code),
       count: 0,
       reactedByMe: false,
     };

@@ -79,6 +79,10 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/showAttach=\{true\}/);
     expect(source).toMatch(/fileAccept=\{accept\}/);
     expect(source).toMatch(/ReactionBar/);
+    expect(source).toMatch(/ReactionQuickBar/);
+    expect(source).toMatch(/reactionLabelForCode/);
+    expect(source).toMatch(/resolveActionExtras/);
+    expect(source).not.toMatch(/emojiAdd=\{\{/);
     expect(source).toMatch(/RoomContextPanel/);
     expect(source).toMatch(/RoomSidePanel/);
     expect(source).toMatch(/RoomMessageFindPanel/);
@@ -87,6 +91,43 @@ describe("InteractionRoomPage", () => {
     expect(source).toMatch(/sharedLinks/);
     expect(source).not.toMatch(/\bfetch\(/);
     expect(source).not.toMatch(/commercial/);
+  });
+
+  it("mostra glyph da reação na bolha, sem o seletor + embutido", () => {
+    render(
+      <InteractionRoomPage
+        labels={labels}
+        inboxQuery=""
+        onInboxQueryChange={() => undefined}
+        chips={[]}
+        rooms={[{ id: "room-1", title: "Sala", selected: true }]}
+        onRefresh={() => undefined}
+        onSelectRoom={() => undefined}
+        room={{ id: "room-1", title: "Sala" }}
+        messages={[
+          {
+            id: "m1",
+            kind: "text",
+            bodyText: "olá",
+            createdAtLabel: "hoje",
+            authorName: "Ana",
+            mine: true,
+            reactions: [{ code: "check", label: "check", count: 1, reactedByMe: true }],
+          },
+        ]}
+        draft=""
+        onDraftChange={() => undefined}
+        onSubmit={() => undefined}
+        onFiles={() => undefined}
+        accept="*/*"
+        sharedItems={[]}
+        onOpenShared={() => undefined}
+        onToggleReaction={() => undefined}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "✅" })).toBeTruthy();
+    expect(screen.queryByText("check")).toBeNull();
+    expect(screen.queryByLabelText(labels.react)).toBeNull();
   });
 
   it("mostra conversa, anexo, painel e itens compartilhados", () => {

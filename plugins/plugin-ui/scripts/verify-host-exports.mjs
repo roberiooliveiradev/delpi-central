@@ -50,6 +50,8 @@ const REQUIRED_HOST_EXPORTS = [
   "createDashboardRoomSharedItemList",
   "InteractionRoomPage",
   "INTERACTION_ROOM_PAGE_LABELS_PT",
+  "reactionLabelForCode",
+  "aggregateReactionBarItems",
 ];
 
 function findIndexExpose(dir) {

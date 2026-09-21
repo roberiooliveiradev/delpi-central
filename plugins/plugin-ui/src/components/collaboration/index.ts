@@ -49,6 +49,12 @@ export {
   type EmojiCatalogItem,
 } from "../../content/emojiCatalog";
 export {
+  reactionLabelForCode,
+  aggregateReactionBarItems,
+  type AggregatedReactionItem,
+  type ReactionSourceRow,
+} from "../../content/reactionDisplay";
+export {
   MessageThread,
   createDashboardMessageThread,
   messageThreadBemClasses,

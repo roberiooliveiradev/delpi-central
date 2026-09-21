@@ -33,6 +33,11 @@ import {
 } from "./MessageThread";
 import { ReactionBar, reactionBarBemClasses, type ReactionBarItem } from "./ReactionBar";
 import {
+  ReactionQuickBar,
+  reactionQuickBarBemClasses,
+} from "./ReactionQuickBar";
+import { reactionLabelForCode } from "../../content/reactionDisplay";
+import {
   RoomContextPanel,
   roomContextPanelBemClasses,
   type RoomContextEntityField,
@@ -387,6 +392,7 @@ export function InteractionRoomPage({
   const empty = emptyGuidanceBemClasses(prefix);
   const composer = mentionComposerBemClasses(prefix);
   const reactions = reactionBarBemClasses(prefix);
+  const quickReactions = reactionQuickBarBemClasses(prefix);
   const shared = roomSharedItemListBemClasses(prefix);
   const find = roomMessageFindPanelBemClasses(prefix);
   const context = roomContextPanelBemClasses(prefix);
@@ -716,40 +722,64 @@ export function InteractionRoomPage({
             {hasMore ? <p className={`${root}__note`}>{labels.hasMore}</p> : null}
             <MessageThread
               classNames={thread}
-              messages={messages.map((item) => ({
-                ...item,
-                belowBody: item.deleted ? null : (
-                  <div className={`${root}__extra`}>
-                    {(item.files ?? []).map((file) => (
-                      <span key={file.id} className={`${root}__file`}>
-                        <button type="button" onClick={() => onOpenAttachment?.(file.id)}>
-                          {file.fileName}
-                        </button>
-                        {file.removable && onRemoveAttachment ? (
-                          <button type="button" onClick={() => onRemoveAttachment(file.id)}>
-                            {labels.removeFile}
+              messages={messages.map((item) => {
+                const reactionChips = (item.reactions ?? []).map((reaction) => ({
+                  ...reaction,
+                  label: reactionLabelForCode(reaction.code) || reaction.label,
+                }));
+                const hasExtras =
+                  !item.deleted &&
+                  ((item.files ?? []).length > 0 || (onToggleReaction && reactionChips.length > 0));
+                return {
+                  ...item,
+                  belowBody: hasExtras ? (
+                    <div className={`${root}__extra`}>
+                      {(item.files ?? []).map((file) => (
+                        <span key={file.id} className={`${root}__file`}>
+                          <button type="button" onClick={() => onOpenAttachment?.(file.id)}>
+                            {file.fileName}
                           </button>
-                        ) : null}
-                      </span>
-                    ))}
-                    {onToggleReaction ? (
-                      <ReactionBar
-                        classNames={reactions}
-                        items={item.reactions ?? []}
-                        listAriaLabel={labels.reactionsList}
-                        addAriaLabel={labels.react}
-                        onToggle={(code) => onToggleReaction(item.id, code)}
-                        onAdd={(code) => onToggleReaction(item.id, code)}
-                        emojiAdd={{ listAriaLabel: labels.chooseReaction }}
-                      />
-                    ) : null}
-                  </div>
-                ),
-              }))}
+                          {file.removable && onRemoveAttachment ? (
+                            <button type="button" onClick={() => onRemoveAttachment(file.id)}>
+                              {labels.removeFile}
+                            </button>
+                          ) : null}
+                        </span>
+                      ))}
+                      {onToggleReaction && reactionChips.length > 0 ? (
+                        <ReactionBar
+                          classNames={reactions}
+                          items={reactionChips}
+                          listAriaLabel={labels.reactionsList}
+                          onToggle={(code) => onToggleReaction(item.id, code)}
+                        />
+                      ) : null}
+                    </div>
+                  ) : null,
+                };
+              })}
               listAriaLabel={labels.messagesAriaLabel}
               emptyLabel={labels.emptyThreadTitle}
               editingId={editingId}
               renderEditSlot={renderEditSlot}
+              resolveActionExtras={(row) => {
+                if (!onToggleReaction) return null;
+                const source = messages.find((item) => item.id === row.id);
+                if (!source || source.deleted) return null;
+                const activeCodes = (source.reactions ?? [])
+                  .filter((reaction) => reaction.reactedByMe)
+                  .map((reaction) => reaction.code);
+                return (
+                  <ReactionQuickBar
+                    classNames={quickReactions}
+                    listAriaLabel={labels.react}
+                    addAriaLabel={labels.react}
+                    emojiMenuAriaLabel={labels.chooseReaction}
+                    activeCodes={activeCodes}
+                    onPick={(code) => onToggleReaction(source.id, code)}
+                  />
+                );
+              }}
               resolveActions={(row) => {
                 const source = messages.find((item) => item.id === row.id);
                 if (!source || source.deleted) return [];
