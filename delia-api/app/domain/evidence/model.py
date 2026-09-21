@@ -2,6 +2,7 @@
 
 Canonical classes and linkage rules: docs/12-roadmap-e-evolucao/delia/21 §4B.
 Refs reuse C0.S3 shared reference semantics (no parallel primitives).
+C3-T2R1: SourceRef is identity/origin only (no authority field on the shared ref).
 """
 
 from __future__ import annotations
@@ -23,7 +24,7 @@ class EpistemicClass(str, Enum):
 
 
 class TypedResultKind(str, Enum):
-    """Separate typed results — not members of EpistemicClass."""
+    """Sole canonical discriminator for typed results outside EpistemicClass."""
 
     PREDICTION = "PREDICTION"
     SIMULATION = "SIMULATION"
@@ -37,14 +38,6 @@ class FreshnessClass(str, Enum):
     UNKNOWN = "unknown"
 
 
-class SourceAuthorityCapability(str, Enum):
-    """Semantic capability of a source for a proposition — not an access grant."""
-
-    AUTHORITATIVE_FOR_PROPOSITION = "authoritative_for_proposition"
-    NON_AUTHORITATIVE = "non_authoritative"
-    UNTRUSTED_EXTERNAL = "untrusted_external"
-
-
 class EvidencePresence(str, Enum):
     """Presence of evidence about a proposition — missing ≠ false."""
 
@@ -55,11 +48,15 @@ class EvidencePresence(str, Enum):
 
 @dataclass(frozen=True, slots=True)
 class SourceRef:
-    """Identifiable origin. Not source authority itself. Not an access grant."""
+    """Identifiable origin reference only.
+
+    SourceRef != source authority itself.
+    SourceRef != source-access grant.
+    Proposition authority is an external qualification input, not a SourceRef field.
+    """
 
     source_id: str
     source_system: str
-    authority_capability: SourceAuthorityCapability
     provider_name: str | None = None
     revision: str | None = None
     observed_at: str | None = None
@@ -154,6 +151,8 @@ class FactQualificationCriteria:
 
     Deliberately excludes current-user live AuthZ.
     FACT_STATUS != ACCESS_PERMISSION.
+    source_authoritative_for_proposition is external deterministic input —
+    not an intrinsic SourceRef property.
     """
 
     source_identifiable: bool

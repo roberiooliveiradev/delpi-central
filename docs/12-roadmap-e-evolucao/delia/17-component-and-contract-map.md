@@ -456,12 +456,12 @@ C3_STARTED = YES
 C3_EXECUTED = NO
 C3_T2 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 C3_T2_AUTHORIZED = YES
-C3_T2_IMPL = delia-api/app/domain/evidence/
+C3_T2_IMPL = delia-api/app/domain/evidence/ (C3-T2R1)
 C3_T3_AUTHORIZED = NO
-NEXT = ARCHITECTURE_REVIEW_C3_T2
+NEXT = ARCHITECTURE_REVIEW_C3_T2R1
 ```
 
-Evidence coordination is owned by DÉLIA; original source/domain/provider remains authority for the underlying fact. EvidenceRef ≠ permission; SourceRef ≠ access grant; Prediction ≠ FACT; Recommendation ≠ authorization; OBSERVATION ≠ FACT; FACT_STATUS ≠ ACCESS_PERMISSION. C3-T2 domain model + conformance candidate persisted (`74e221fea`); Evidence store remains NOT_IMPLEMENTED; Architecture Review pending.
+Evidence coordination is owned by DÉLIA; original source/domain/provider remains authority for the underlying fact. EvidenceRef ≠ permission; SourceRef ≠ access grant / ≠ source authority itself; Prediction ≠ FACT; Recommendation ≠ authorization; OBSERVATION ≠ FACT; FACT_STATUS ≠ ACCESS_PERMISSION. C3-T2R1 rework candidate (no total EpistemicClass ranking; TypedResultKind sole discriminator; SourceRef identity-only); Evidence store remains NOT_IMPLEMENTED; Architecture Review pending.
 
 ## 3A. Architecture / persistence / privacy / safety — C0.S4 freeze accepted
 

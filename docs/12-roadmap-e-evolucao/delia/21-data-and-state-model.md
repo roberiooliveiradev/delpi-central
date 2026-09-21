@@ -256,10 +256,12 @@ PRODUCTION_READINESS = NOT_PROVEN
 THEMATIC_OWNER_DETAIL = 38-evidence-provenance-and-epistemic-ux.md
 FACT_STATUS != ACCESS_PERMISSION
 NOTE_SUPERSEDED_CANDIDATE: historical C3-T1 candidate markers live in ledger §6.62
-C3_T2_IMPLEMENTATION = delia-api/app/domain/evidence/ (domain model + conformance; no store; PERSISTENCE_HEAD=74e221fea)
+C3_T2_IMPLEMENTATION = delia-api/app/domain/evidence/ (C3-T2R1 rework candidate; no store)
+NOTE_C3_T2R1: total epistemic ordering removed; TypedResultKind sole discriminator;
+  SourceRef identity-only; source authority = FactQualificationCriteria input
 ```
 
-C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime. C3-T2 materializa o domain model + testes determinísticos em `delia-api/app/domain/evidence/` sem store/runtime; estado = `CANDIDATE_FOR_ARCHITECTURE_REVIEW`.
+C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime. C3-T2R1 corrige o domain model/tests para o freeze C3-T1 sem inventar política; estado = `CANDIDATE_FOR_ARCHITECTURE_REVIEW`.
 
 ### 4B.1 Ownership
 
@@ -270,8 +272,10 @@ CANONICAL SOURCE OF ORIGINAL FACT: Domain API / provider / document owner / proc
 CONSUMERS (future): multimodal, Evidence Board, Internet Research, connectors, Teams,
   Process Intelligence, Prediction, Model lineage, Knowledge, planner, synthesis
 CONTRACT: this §4B + C0.S3 SourceRef/EvidenceRef/ModelRef/PredictionRef + thematic 38
-CURRENT IMPLEMENTATION: C3-T2 CANDIDATE_FOR_ARCHITECTURE_REVIEW — domain model + conformance in delia-api/app/domain/evidence/
-  (no Evidence store / repository / LLM / RAG / planner / conversation; PERSISTENCE_HEAD=74e221fea)
+CURRENT IMPLEMENTATION: C3-T2R1 CANDIDATE_FOR_ARCHITECTURE_REVIEW — domain model + conformance in delia-api/app/domain/evidence/
+  (no Evidence store / repository / LLM / RAG / planner / conversation;
+   SourceRef identity-only; TypedResultKind sole typed-result discriminator;
+   no global EpistemicClass numeric ordering)
 ```
 
 ```text
@@ -399,7 +403,7 @@ Unvalidated OCR/VLM/extraction defaults to **OBSERVATION** (non-FACT) with limit
 | Recommendation | RECOMMENDATION | never authorization |
 | Cached / stale material | stale/unknown limitation required when currency matters | only if source contract says cached-valid |
 | User statement | OBSERVATION / Personal Memory class as applicable; not Domain FACT | explicit user-confirmed personal class is Personal Memory, not Org FACT |
-| Derived synthesis | inherits weakest epistemic strength + lineage | only if promotion rules below are met |
+| Derived synthesis | preserves relevant uncertainty, limitations, provenance constraints and unsupported premises + lineage; EpistemicClass values are semantic kinds and do **not** define a single global numeric strength ordering | only if promotion rules below are met (never silent FACT) |
 
 ### 4B.6 FACT promotion rules
 
@@ -462,7 +466,23 @@ limitations
 ModelRef/tool lineage when model/tool produced the derivation
 ```
 
-No Evidence DAG service, lineage database or provenance graph engine in C3-T1.
+Clarification (C3-T2R1; does not redesign C3-T1):
+
+```text
+Derived outputs must not silently erase uncertainty, source/provenance constraints,
+limitations, unsupported premises, or authority boundaries.
+
+EpistemicClass values are semantic kinds.
+They do NOT define one global numeric strength / ordinal scale across classes.
+
+OBSERVATION → CALCULATION is valid when the transformation is an identifiable calculation
+and lineage/limitations are retained (CALCULATION != automatic FACT).
+
+Generic derivation helpers must not silently produce FACT.
+FACT requires the explicit FactQualificationCriteria path.
+```
+
+No Evidence DAG service, lineage database or provenance graph engine in C3-T1/C3-T2.
 
 ### 4B.9 Model lineage hook (no model runtime)
 
@@ -522,9 +542,9 @@ Personal Memory != Organizational Knowledge
 raw media / biometric remain separate classes
 ```
 
-### 4B.13 C3-T2 conformance expectations (candidate; test PASS ≠ Architecture Review)
+### 4B.13 C3-T2 / C3-T2R1 conformance expectations (candidate; test PASS ≠ Architecture Review)
 
-C3-T2 implements deterministic conformance (`tests/test_evidence_epistemic_conformance.py`) for at least:
+C3-T2R1 implements deterministic conformance (`tests/test_evidence_epistemic_conformance.py`) for at least:
 
 ```text
 positive authoritative Evidence linkage

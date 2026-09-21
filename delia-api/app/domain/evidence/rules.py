@@ -1,9 +1,12 @@
-"""Pure Evidence / epistemic invariants (C3-T2 conformance surface)."""
+"""Pure Evidence / epistemic invariants (C3-T2R1 conformance surface).
+
+C3-T2R1 removes unauthorized total epistemic ordering, duplicate typed-result
+discriminators, and SourceRef authority fields. Derivation uses explicit semantic kinds only.
+"""
 
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from enum import Enum
 from typing import Any
 
 from app.domain.evidence.model import (
@@ -16,17 +19,8 @@ from app.domain.evidence.model import (
     FactQualificationCriteria,
     FreshnessClass,
     SourceRef,
+    TypedResultKind,
 )
-
-# Stronger → weaker. Derived synthesis inherits the weakest parent strength.
-_EPISTEMIC_STRENGTH: dict[EpistemicClass, int] = {
-    EpistemicClass.FACT: 60,
-    EpistemicClass.CALCULATION: 50,
-    EpistemicClass.CONCLUSION: 40,
-    EpistemicClass.OBSERVATION: 30,
-    EpistemicClass.HYPOTHESIS: 20,
-    EpistemicClass.RECOMMENDATION: 10,
-}
 
 _SECRET_FIELD_MARKERS = frozenset(
     {
@@ -57,22 +51,25 @@ _COT_FIELD_MARKERS = frozenset(
     }
 )
 
+_CALCULATION_TRANSFORMS = frozenset(
+    {
+        "calculation",
+        "arithmetic",
+        "identifiable_calculation",
+    }
+)
+
+_CALCULATION_PARENT_CLASSES = frozenset(
+    {
+        EpistemicClass.OBSERVATION,
+        EpistemicClass.FACT,
+        EpistemicClass.CALCULATION,
+    }
+)
+
 
 class EvidenceDomainError(ValueError):
     """Domain invariant violation for Evidence / epistemic rules."""
-
-
-class TypedResultPlaceholder(str, Enum):
-    """Marks Prediction/Simulation defaults outside EpistemicClass."""
-
-    PREDICTION = "PREDICTION"
-    SIMULATION = "SIMULATION"
-
-
-def epistemically_weaker(left: EpistemicClass, right: EpistemicClass) -> EpistemicClass:
-    if _EPISTEMIC_STRENGTH[left] <= _EPISTEMIC_STRENGTH[right]:
-        return left
-    return right
 
 
 def can_qualify_as_fact(criteria: FactQualificationCriteria) -> bool:
@@ -165,21 +162,35 @@ def derive_evidence(
     parents: Sequence[EvidenceItem],
     proposition: str,
     transformation_kind: str,
-    target_class: EpistemicClass | None = None,
+    target_class: EpistemicClass,
     limitations: Sequence[str] = (),
 ) -> EvidenceItem:
+    """Derive Evidence by explicit semantic kind — no numeric epistemic ranking.
+
+    Epistemic classes are kinds, not a global ordinal strength scale.
+    Derived outputs preserve parent EvidenceRef[] / SourceRef lineage and limitations.
+    FACT is never produced by this helper; use FactQualificationCriteria.
+    """
     if not parents:
         raise EvidenceDomainError("derived Evidence requires parent lineage")
+    if not transformation_kind.strip():
+        raise EvidenceDomainError("transformation_kind is required")
 
-    weakest = parents[0].epistemic_class
-    for parent in parents[1:]:
-        weakest = epistemically_weaker(weakest, parent.epistemic_class)
-
-    resolved_class = target_class if target_class is not None else weakest
-    if _EPISTEMIC_STRENGTH[resolved_class] > _EPISTEMIC_STRENGTH[weakest]:
+    if target_class is EpistemicClass.FACT:
         raise EvidenceDomainError(
-            "derived Evidence cannot strengthen epistemic class beyond weakest parent"
+            "derive_evidence cannot produce FACT; use FactQualificationCriteria"
         )
+
+    if target_class is EpistemicClass.CALCULATION:
+        if transformation_kind not in _CALCULATION_TRANSFORMS:
+            raise EvidenceDomainError(
+                "CALCULATION requires an identifiable calculation transformation_kind"
+            )
+        for parent in parents:
+            if parent.epistemic_class not in _CALCULATION_PARENT_CLASSES:
+                raise EvidenceDomainError(
+                    "CALCULATION parents must be OBSERVATION, FACT, or CALCULATION"
+                )
 
     parent_refs = tuple(parent.evidence_ref for parent in parents)
     lineage: list[SourceRef] = []
@@ -201,7 +212,7 @@ def derive_evidence(
     )
     return create_evidence_item(
         evidence_id=evidence_id,
-        epistemic_class=resolved_class,
+        epistemic_class=target_class,
         proposition=proposition,
         source_ref=lineage[0] if lineage else None,
         freshness=FreshnessClass.UNKNOWN,
@@ -218,16 +229,15 @@ def build_conflict_set(items: Sequence[EvidenceItem]) -> EvidenceConflictSet:
     return EvidenceConflictSet(items=tuple(items), reconciled=False)
 
 
-def rename_provider_preserves_semantics(
+def rename_provider_preserves_identity(
     original: SourceRef,
     *,
     renamed_provider_name: str,
 ) -> SourceRef:
-    """Provider/display rename must not alter authority capability semantics."""
+    """Provider/display rename must not alter SourceRef identity fields."""
     return SourceRef(
         source_id=original.source_id,
         source_system=original.source_system,
-        authority_capability=original.authority_capability,
         provider_name=renamed_provider_name,
         revision=original.revision,
         observed_at=original.observed_at,
@@ -272,17 +282,17 @@ def absorb_external_content_into_authority(
 
 def default_class_for_input_kind(
     input_kind: str,
-) -> EpistemicClass | TypedResultPlaceholder:
+) -> EpistemicClass | TypedResultKind:
     """Default epistemic treatment table (21 §4B.5) — subset used by conformance."""
-    mapping: dict[str, EpistemicClass | TypedResultPlaceholder] = {
+    mapping: dict[str, EpistemicClass | TypedResultKind] = {
         "authoritative_domain_api": EpistemicClass.FACT,
         "external_webpage": EpistemicClass.OBSERVATION,
         "ocr_vlm_extraction": EpistemicClass.OBSERVATION,
         "model_inference": EpistemicClass.HYPOTHESIS,
         "recommendation": EpistemicClass.RECOMMENDATION,
         "user_statement": EpistemicClass.OBSERVATION,
-        "prediction": TypedResultPlaceholder.PREDICTION,
-        "simulation": TypedResultPlaceholder.SIMULATION,
+        "prediction": TypedResultKind.PREDICTION,
+        "simulation": TypedResultKind.SIMULATION,
     }
     try:
         return mapping[input_kind]

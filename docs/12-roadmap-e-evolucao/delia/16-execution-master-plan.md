@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_T2` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1=APPROVED`; `C3-T2=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; do not start C3-T3; do not self-approve C3-T2)
+**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_T2R1` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1=APPROVED`; `C3-T2=CANDIDATE_FOR_ARCHITECTURE_REVIEW` after C3-T2R1 rework; do not start C3-T3; do not self-approve C3-T2)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -401,15 +401,16 @@ BROWSER_STATE_RESIDENCY_POLICY = APPROVED (C2-T1D1)
 BROWSER_RETAINED_STATE_CURRENTLY_REQUIRED = NO
 CENTRALIZED_BROWSER_STATE_BOUNDARY = REQUIRED_ON_FIRST_RETAINED_STATE
 SHARED_DEVICE_ISOLATION_INVARIANT = FROZEN_ACCEPTED
-NEXT = ARCHITECTURE_REVIEW_C3_T2
+NEXT = ARCHITECTURE_REVIEW_C3_T2R1
 ```
 
 C3 initial bounded DAG (Coordination-approved dependency order; not the numbered foundation inventory):
 
 ```text
 C3-T1 Evidence / epistemic semantics + source linkage = APPROVED (21 §4B; ARCHITECTURE_REVIEW_C3_T1 ACCEPT_WITH_RESIDUAL)
-→ C3-T2 Evidence epistemic domain model + conformance = CANDIDATE_FOR_ARCHITECTURE_REVIEW (`74e221fea`; tests PASS ≠ review)
-→ C3-T3 Minimal Model Invocation + Eval/Lineage Foundation (NOT authorized until C3-T2 Architecture Review)
+→ C3-T2 Evidence epistemic domain model + conformance = REWORK (ARCHITECTURE_REVIEW_C3_T2)
+→ C3-T2R1 rework candidate = CANDIDATE_FOR_ARCHITECTURE_REVIEW (await ARCHITECTURE_REVIEW_C3_T2R1)
+→ C3-T3 Minimal Model Invocation + Eval/Lineage Foundation (NOT authorized until C3-T2 accepted)
 → C3-T4 Structured Understanding Vertical Slice
 (partial parallel after Evidence baseline) C3-T5 OpenAPI Action Catalog + Capability Projection
 → C3-T6 Expertise / Knowledge Governance + Retrieval Contracts
@@ -682,8 +683,8 @@ C3_T2 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 C3_T2_AUTHORIZED = YES
 C3_T3_AUTHORIZED = NO
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = ARCHITECTURE_REVIEW_C3_T2
-C2-FINAL accepted with residual; C3-T1 Architecture Review accepted (`ACCEPT_WITH_RESIDUAL`); C3-T2 candidate persisted (`74e221fea`); awaiting Architecture Review
+NEXT = ARCHITECTURE_REVIEW_C3_T2R1
+C2-FINAL accepted with residual; C3-T1 Architecture Review accepted (`ACCEPT_WITH_RESIDUAL`); C3-T2 REWORK then C3-T2R1 candidate; awaiting Architecture Review
 Workspace binding remains unscheduled
 ```
 

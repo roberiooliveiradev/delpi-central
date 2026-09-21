@@ -1,4 +1,4 @@
-"""Evidence / epistemic coordination domain (C3-T2).
+"""Evidence / epistemic coordination domain (C3-T2R1).
 
 Implements frozen semantics from `21` §4B + thematic `38`.
 No Evidence store, repository, LLM, RAG, planner, or conversation runtime.
@@ -19,7 +19,6 @@ from app.domain.evidence.model import (
     PredictionResult,
     ScenarioRef,
     SimulationResult,
-    SourceAuthorityCapability,
     SourceRef,
     TypedResultKind,
 )
@@ -29,13 +28,13 @@ from app.domain.evidence.rules import (
     build_conflict_set,
     can_qualify_as_fact,
     create_evidence_item,
+    default_class_for_input_kind,
     derive_evidence,
-    epistemically_weaker,
     evidence_ref_grants_source_permission,
     missing_means_negative_fact,
     recommendation_authorizes_act,
     reject_secret_bearing_payload,
-    rename_provider_preserves_semantics,
+    rename_provider_preserves_identity,
     source_ref_grants_provider_access,
     try_automatic_observation_to_fact,
 )
@@ -55,7 +54,6 @@ __all__ = [
     "PredictionResult",
     "ScenarioRef",
     "SimulationResult",
-    "SourceAuthorityCapability",
     "SourceRef",
     "TypedResultKind",
     "absorb_external_content_into_authority",
@@ -63,13 +61,13 @@ __all__ = [
     "build_conflict_set",
     "can_qualify_as_fact",
     "create_evidence_item",
+    "default_class_for_input_kind",
     "derive_evidence",
-    "epistemically_weaker",
     "evidence_ref_grants_source_permission",
     "missing_means_negative_fact",
     "recommendation_authorizes_act",
     "reject_secret_bearing_payload",
-    "rename_provider_preserves_semantics",
+    "rename_provider_preserves_identity",
     "source_ref_grants_provider_access",
     "try_automatic_observation_to_fact",
 ]
