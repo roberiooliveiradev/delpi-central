@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** `C2-T6 — IFRAME_APPLICABILITY_AND_SECURITY_BOUNDARY` (`C2-T5` global surface implemented; Workspace DEFER; `C2_IMPLEMENTATION_STARTED=YES`; `C2_EXECUTED=NO`). Não iniciar automaticamente. Não criar iframe bridge automaticamente.
+**Next:** `C2-T6 — IFRAME_APPLICABILITY_AND_SECURITY_BOUNDARY` (`C2-T5R1` lifecycle hardening recorded; Workspace DEFER; `C2_IMPLEMENTATION_STARTED=YES`; `C2_EXECUTED=NO`). Não iniciar automaticamente. Não criar iframe bridge automaticamente.
 
 ## 1. Ledger rule
 
@@ -103,6 +103,7 @@ C2_T3 = DEPENDENCY_FREEZE_READY_FOR_REVIEW (§6.49)
 C2_T4 = OPERATIONAL_CONTEXT_INVENTORY_READY_FOR_REVIEW (§6.50)
 C2_T4R1 = STATUS_NORMALIZATION_READY_FOR_REVIEW (§6.51)
 C2_T5 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW (§6.52)
+C2_T5R1 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW (§6.53)
 C2_EXECUTED = NO
 C2_STARTED = YES
 C2_IMPLEMENTATION_STARTED = YES
@@ -2340,7 +2341,7 @@ DATE: 2026-09-21
 STEP: C2-T5
 MODE: INVENTORY + MINIMAL RUNTIME IMPLEMENTATION
 T5_COMMIT: 67cbcebfd9b48dd694ad5195eca88c4c0207ec7f
-T4R1_COMMIT: 6a4bed97f714f94a98634b833be734b99766aca8
+T4R1_COMMIT: aacffdb413c84ddc1bde05cc7b7484d5f4e3b488
 GLOBAL_SURFACE = IMPLEMENTED
 GLOBAL_DELIA_LAUNCHER = PASS (unit/structural)
 GLOBAL_DELIA_PANEL = PASS (unit/structural)
@@ -2355,6 +2356,35 @@ OPERATIONAL_CONTEXT = TO_INVENTORY
 WORKSPACE_CONTEXT_RUNTIME_STATUS = DEFER
 C2_IMPLEMENTATION_STARTED = YES
 C2_EXECUTED = NO
+NEXT = C2-T6 — IFRAME_APPLICABILITY_AND_SECURITY_BOUNDARY (do not start automatically)
+```
+
+## 6.53 C2-T5R1 — GLOBAL_SURFACE_LIFECYCLE_AND_EVIDENCE_HARDENING
+
+```text
+DATE: 2026-09-21
+STEP: C2-T5R1
+MODE: BOUNDED RUNTIME HARDENING + TEST EVIDENCE + DOCUMENTATION CORRECTION
+ACCEPTED_T5_ARCHITECTURE = preserved
+ASYNC_STALE_MOUNT = PASS (unit; generation token)
+CLOSE_BEFORE_LOAD_RESOLVES = PASS
+OLDER_MOUNT_CANNOT_OVERRIDE_NEWER = PASS
+NORMAL_MOUNT_REGRESSION = PASS
+FOCUS_CONTAINMENT = PASS (unit cycle)
+FOCUS_RETURN_DESKTOP = PASS (unit)
+FOCUS_RETURN_MOBILE = PASS (unit)
+COMPONENT_RENDERED_INTEGRATION = TEST_NOT_RUN (Portal has node:test only; no Testing Library/jsdom/vitest)
+LIVE_GLOBAL_SURFACE = TEST_NOT_RUN
+LIVE_LOGOUT = TEST_NOT_RUN
+FULLPAGE_DELIA_LIVE_RENDER = user-supplied evidence only (does not prove global panel/logout)
+T4R1_STALE_SHA_CORRECTION = STALE_EVIDENCE_CORRECTION
+STALE_SHA = 6a4bed97f714f94a98634b833be734b99766aca8
+ACCEPTED_T4R1_SHA = aacffdb413c84ddc1bde05cc7b7484d5f4e3b488
+BROWSER_RETAINED_STATE = NONE
+OPERATIONAL_CONTEXT = TO_INVENTORY
+WORKSPACE_CONTEXT_RUNTIME_STATUS = DEFER
+C2_EXECUTED = NO
+PRODUCTION_READINESS = NOT_PROVEN
 NEXT = C2-T6 — IFRAME_APPLICABILITY_AND_SECURITY_BOUNDARY (do not start automatically)
 ```
 
@@ -2566,4 +2596,4 @@ SAFETY_INTERLOCK_BYPASS
 
 ## 14. First execution
 
-Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1..T6D1 completed standalone bootstrap. **C1-FINAL** (`§6.45`) accepted bootstrap with non-blocking residuals (`TYPESCRIPT_ISOLATED`, `CORE_CONTEXT_LIVE_NETWORK`). `C1_EXECUTED=YES`. `C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`. `C1_BOOTSTRAP_RUNTIME_READINESS=PROVEN` (bootstrap scope). `PRODUCTION_READINESS=NOT_PROVEN`. `C2_AUTHORIZED=YES`. `C0=NOT_STARTED`. **C2-T1** (`§6.46`) froze the current Portal host/route contract. Operational WorkspaceContext remains `TO_INVENTORY`. `C2_STARTED=NO`. `C2_IMPLEMENTATION_STARTED=NO`. **C2-T1D1** (`§6.47`) approved `BROWSER_STATE_RESIDENCY_POLICY`. No retained browser state is required now. **C2-T2** (`§6.48`) verified the existing host lifecycle. No new logout stack or storage boundary. `C2_STARTED=YES`. `C2_IMPLEMENTATION_STARTED=NO`. `C2_EXECUTED=NO`. **C2-T3** (`§6.49`) froze the remaining C2 order. **C2-T4** (`§6.50`) inventoried operational authorities: OP/PRODUCT/OPERATION proven via api-delpi; MACHINE/POSTO `TO_INVENTORY`; Workspace remains `DEFER`. **C2-T4R1** (`§6.51`) removed illegal formal status `OPERATIONAL_CONTEXT=MIXED` and restored `OPERATIONAL_CONTEXT=TO_INVENTORY` while preserving the proven OP/product/operation sub-facts. **C2-T5** (`§6.52`) implemented the approved Portal global DÉLIA surface using the same federated remote `delia` / `./App`. `C2_IMPLEMENTATION_STARTED=YES`. `C2_EXECUTED=NO`. Next bounded task: **C2-T6 — IFRAME_APPLICABILITY_AND_SECURITY_BOUNDARY** (do not start automatically; do not create an iframe bridge automatically).
+Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1..T6D1 completed standalone bootstrap. **C1-FINAL** (`§6.45`) accepted bootstrap with non-blocking residuals (`TYPESCRIPT_ISOLATED`, `CORE_CONTEXT_LIVE_NETWORK`). `C1_EXECUTED=YES`. `C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`. `C1_BOOTSTRAP_RUNTIME_READINESS=PROVEN` (bootstrap scope). `PRODUCTION_READINESS=NOT_PROVEN`. `C2_AUTHORIZED=YES`. `C0=NOT_STARTED`. **C2-T1** (`§6.46`) froze the current Portal host/route contract. Operational WorkspaceContext remains `TO_INVENTORY`. `C2_STARTED=NO`. `C2_IMPLEMENTATION_STARTED=NO`. **C2-T1D1** (`§6.47`) approved `BROWSER_STATE_RESIDENCY_POLICY`. No retained browser state is required now. **C2-T2** (`§6.48`) verified the existing host lifecycle. No new logout stack or storage boundary. `C2_STARTED=YES`. `C2_IMPLEMENTATION_STARTED=NO`. `C2_EXECUTED=NO`. **C2-T3** (`§6.49`) froze the remaining C2 order. **C2-T4** (`§6.50`) inventoried operational authorities: OP/PRODUCT/OPERATION proven via api-delpi; MACHINE/POSTO `TO_INVENTORY`; Workspace remains `DEFER`. **C2-T4R1** (`§6.51`) removed illegal formal status `OPERATIONAL_CONTEXT=MIXED` and restored `OPERATIONAL_CONTEXT=TO_INVENTORY` while preserving the proven OP/product/operation sub-facts. **C2-T5** (`§6.52`) implemented the approved Portal global DÉLIA surface using the same federated remote `delia` / `./App`. **C2-T5R1** (`§6.53`) hardened stale async mount and dialog focus, and corrected the stale T4R1 SHA in §6.52. `C2_IMPLEMENTATION_STARTED=YES`. `C2_EXECUTED=NO`. Next bounded task: **C2-T6 — IFRAME_APPLICABILITY_AND_SECURITY_BOUNDARY** (do not start automatically; do not create an iframe bridge automatically).

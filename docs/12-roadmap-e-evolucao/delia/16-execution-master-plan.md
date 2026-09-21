@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C2-T6 — IFRAME_APPLICABILITY_AND_SECURITY_BOUNDARY` (`C2-T5`: global surface implemented; `C2_IMPLEMENTATION_STARTED=YES`; `C2_EXECUTED=NO`; Workspace DEFER)
+**Próxima etapa:** `C2-T6 — IFRAME_APPLICABILITY_AND_SECURITY_BOUNDARY` (`C2-T5R1` lifecycle hardening recorded; `C2_IMPLEMENTATION_STARTED=YES`; `C2_EXECUTED=NO`; do not start T6; no iframe bridge)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -367,6 +367,7 @@ C2_T3 = DEPENDENCY_FREEZE_READY_FOR_REVIEW
 C2_T4 = OPERATIONAL_CONTEXT_INVENTORY_READY_FOR_REVIEW
 C2_T4R1 = STATUS_NORMALIZATION_READY_FOR_REVIEW
 C2_T5 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+C2_T5R1 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
 C2_STARTED = YES
 C2_IMPLEMENTATION_STARTED = YES
 C2_EXECUTED = NO

@@ -569,7 +569,7 @@ No CP promoted to PASS by documentation alone
 
 Related non-inventory CPs (CP-178/179 OT, CP-091 EntityRef, etc.) remain PLANNED/LOCKED per their rows; inventory evidence does not satisfy runtime gates.
 
-C2-T3: rows CP-002–CP-012, CP-025, CP-059, CP-061–CP-070 remain `LOCKED` as requirements. C2-T5 promotes CP-001/CP-149 to `IMPLEMENTED_CURRENT_SCOPE` for the Portal global surface only (`C2_EXECUTED=NO`). CP-156 is `PARTIAL`. Host presentation, transient lifecycle and the global panel are the current C2 runtime. WorkspaceContext, operational OP/machine/product/operation/posto, typed command bus and DÉLIA iframe bridge are not runtime. CP-012 reasoning is C3.
+C2-T3: rows CP-002–CP-012, CP-025, CP-059, CP-061–CP-070 remain `LOCKED` as requirements. C2-T5 promotes CP-001/CP-149 to `IMPLEMENTED_CURRENT_SCOPE` for the Portal global surface only (`C2_EXECUTED=NO`). C2-T5R1 hardens async mount invalidation and focus return without a new product capability. CP-156 is `PARTIAL`. Host presentation, transient lifecycle and the global panel are the current C2 runtime. WorkspaceContext, operational OP/machine/product/operation/posto, typed command bus and DÉLIA iframe bridge are not runtime. CP-012 reasoning is C3.
 
 ## 15. C0.S1 naming / physical ownership linkage — accepted review
 
