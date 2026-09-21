@@ -810,6 +810,15 @@ declare module "@delpi/plugin-ui/index" {
     tip?: string;
   };
   export function SpeedometerGauge(props: SpeedometerGaugeProps): ReactNode;
+
+  export function firstNameFromDisplay(name: string | null | undefined): string | null;
+  export function portalDayPeriodGreeting(date?: Date): "Bom dia" | "Boa tarde" | "Boa noite";
+  export function formatPortalGreeting(input?: {
+    displayName?: string | null;
+    firstName?: string | null;
+    now?: Date;
+    fallback?: string | null;
+  }): string;
 }
 
 declare module "@delpi/plugin-ui/styles";

@@ -155,7 +155,7 @@ export const USER_MANUAL_CONTENT = {
       id: "screens",
       title: "Mapa das telas",
       bullets: [
-        "Início — hub: eventos + caminhos (busca, últimos acessos e cards com estrela). Favoritos só na barra superior.",
+        "Início — hub: saudação com o primeiro nome da sessão, eventos e caminhos (busca, últimos acessos e cards com estrela). Favoritos só na barra superior.",
         "Barra superior — Buscar (Ctrl/Cmd+K) abre a mesma busca de caminhos em qualquer tela; favoritos ficam ao lado.",
         "Visão geral — placar do período (ROL, meta, conversão, carteira aberta…).",
         "Meus pedidos — bancada operacional; URL compartilhável com filtros.",

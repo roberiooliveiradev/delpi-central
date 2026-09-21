@@ -9,7 +9,7 @@ import {
   MessagesSquare,
   Users,
 } from "lucide-react";
-import { HelpTooltip } from "@delpi/plugin-ui/index";
+import { HelpTooltip, formatPortalGreeting } from "@delpi/plugin-ui/index";
 
 import { fetchMeProfile, firstNameFromDisplay } from "../api/meApi";
 import { getMyWorklist } from "../api/worklistApi";
@@ -89,13 +89,6 @@ const NAV_ICONS: Record<PluginNavId, ReactNode> = {
   administration: <BriefcaseBusiness size={16} strokeWidth={1.75} aria-hidden="true" />,
   help: <BookOpen size={16} strokeWidth={1.75} aria-hidden="true" />,
 };
-
-function greetingForNow(date = new Date()): string {
-  const hour = date.getHours();
-  if (hour < 12) return "Bom dia";
-  if (hour < 18) return "Boa tarde";
-  return "Boa noite";
-}
 
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -274,8 +267,7 @@ export function PluginShell({
     customerDetailOutsidePortfolio: Boolean(ephemeralClientNav),
   });
   const showGreeting = view === "home";
-  const greeting = greetingForNow();
-  const heroTitle = userFirstName ? `${greeting}, ${userFirstName}` : greeting;
+  const heroTitle = formatPortalGreeting({ firstName: userFirstName });
 
   const heroCopy = SHELL_NAV_CONTENT.homeHero;
   const lateCount =

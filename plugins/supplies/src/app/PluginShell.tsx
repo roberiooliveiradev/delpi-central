@@ -9,6 +9,8 @@ import {
   ShoppingCart,
 } from "lucide-react";
 
+import { formatPortalGreeting } from "@delpi/plugin-ui/index";
+
 import { fetchMeProfile, firstNameFromDisplay } from "../api/meApi";
 import { SP_HELP } from "../content/helpTooltips";
 import {
@@ -78,13 +80,6 @@ const NAV_TARGET: Record<PluginNavId, Parameters<typeof navigatePluginView>[0]> 
   administration: "administration",
   help: "help",
 };
-
-function greetingForNow(date = new Date()): string {
-  const hour = date.getHours();
-  if (hour < 12) return "Bom dia";
-  if (hour < 18) return "Boa tarde";
-  return "Boa noite";
-}
 
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -177,8 +172,7 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
   const density = session.preferences?.tableDensity ?? "comfortable";
   const showGreeting = view === "home";
   const heroCopy = SHELL_NAV_CONTENT.homeHero;
-  const greeting = greetingForNow();
-  const heroTitle = userFirstName ? `${greeting}, ${userFirstName}` : greeting;
+  const heroTitle = formatPortalGreeting({ firstName: userFirstName });
   const actionableAttention = attention.cards.filter((card) => card.status !== "unavailable");
   const attentionReady = !attention.loading && !attention.error;
   const attentionValue = attention.loading

@@ -42,7 +42,7 @@ describe("Home launcher visual pattern", () => {
     const shell = readFileSync(join(dir, "../../app/PluginShell.tsx"), "utf8");
     const page = readFileSync(join(dir, "../../pages/HomePage.tsx"), "utf8");
     expect(shell).toMatch(/SuppliesPageHero/);
-    expect(shell).toMatch(/greetingForNow/);
+    expect(shell).toMatch(/formatPortalGreeting/);
     expect(page).not.toMatch(/HUB_CONTENT\.home\.title/);
   });
 });

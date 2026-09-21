@@ -154,7 +154,7 @@ export const USER_MANUAL_CONTENT = {
       id: "screens",
       title: "Mapa das áreas",
       bullets: [
-        "Início — atenção, busca, favoritos e caminhos por capability.",
+        "Início — saudação com o primeiro nome da sessão, atenção, busca, favoritos e caminhos por capability.",
         "Visão geral — indicadores consolidados do período e das unidades selecionadas; itens operacionais em Solicitações e Operações.",
         "OTD — velocímetros de pontualidade e evolução; abra pelo Início, catálogo Análises ou CTA da Visão geral.",
         "Pedidos de compra — itens com saldo pendente de recebimento no recorte; hero com linhas/valor/atrasadas; Atenção Todos(N)/Atrasados(N) do resumo do servidor; filtros automáticos, Atualizar; Unidade como Santa Catarina / Espírito Santo; clique no PC para a ficha. Distinto do OTD de pontualidade.",
