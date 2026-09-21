@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   clearCreateDraft,
@@ -9,9 +9,33 @@ import {
   writeReplyDraft,
 } from "./ticketDraftStorage";
 
+function createMemoryStorage(): Storage {
+  const store = new Map<string, string>();
+  return {
+    get length() {
+      return store.size;
+    },
+    clear() {
+      store.clear();
+    },
+    getItem(key: string) {
+      return store.has(key) ? store.get(key)! : null;
+    },
+    key(index: number) {
+      return Array.from(store.keys())[index] ?? null;
+    },
+    removeItem(key: string) {
+      store.delete(key);
+    },
+    setItem(key: string, value: string) {
+      store.set(key, String(value));
+    },
+  };
+}
+
 describe("ticketDraftStorage", () => {
   beforeEach(() => {
-    sessionStorage.clear();
+    vi.stubGlobal("sessionStorage", createMemoryStorage());
   });
 
   it("preserva o rascunho de abertura e limpa quando vazio", () => {
