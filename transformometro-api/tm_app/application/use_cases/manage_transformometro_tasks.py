@@ -38,19 +38,29 @@ class TaskCommandUseCases:
         description: str | None,
         assignee_user_id: str | None,
         due_date: str | date | None,
+        source_interaction_message_id: str | None = None,
     ) -> TransformometroTask:
         self._policy.require_access(user)
         actor = _user_id(user)
         assignee = normalize_user_id(assignee_user_id or actor, field="Responsável")
+        source_id = (source_interaction_message_id or "").strip() or None
+        if source_id and not self._repo.message_exists(source_id):
+            raise LookupError("Mensagem de origem não encontrada.")
         created = self._repo.create(
             title=normalize_title(title),
             description=normalize_description(description),
             assignee_user_id=assignee,
             created_by_user_id=actor,
             due_date=parse_due_date(due_date),
+            source_interaction_message_id=source_id,
         )
         read_back = self._repo.get(created.id)
-        if read_back is None or read_back.title != created.title or read_back.assignee_user_id != assignee:
+        if (
+            read_back is None
+            or read_back.title != created.title
+            or read_back.assignee_user_id != assignee
+            or (read_back.source_interaction_message_id or None) != source_id
+        ):
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
         return read_back
 

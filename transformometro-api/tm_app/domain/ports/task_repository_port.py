@@ -17,7 +17,12 @@ class TaskRepositoryPort(ABC):
         assignee_user_id: str,
         created_by_user_id: str,
         due_date: date | None,
+        source_interaction_message_id: str | None = None,
     ) -> TransformometroTask:
+        raise NotImplementedError
+
+    @abstractmethod
+    def message_exists(self, message_id: str) -> bool:
         raise NotImplementedError
 
     @abstractmethod

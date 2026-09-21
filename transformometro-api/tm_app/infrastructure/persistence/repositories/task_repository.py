@@ -15,6 +15,7 @@ def _row_to_task(row: dict[str, Any]) -> TransformometroTask:
     due = row.get("due_date")
     if isinstance(due, datetime):
         due = due.date()
+    source = row.get("source_interaction_message_id")
     return TransformometroTask(
         id=str(row["id"]),
         title=str(row["title"]),
@@ -26,6 +27,7 @@ def _row_to_task(row: dict[str, Any]) -> TransformometroTask:
         created_at=row.get("created_at"),
         updated_at=row.get("updated_at"),
         completed_at=row.get("completed_at"),
+        source_interaction_message_id=str(source) if source else None,
     )
 
 
@@ -38,17 +40,35 @@ class TaskRepository(PluginBaseRepository, TaskRepositoryPort):
         assignee_user_id: str,
         created_by_user_id: str,
         due_date: date | None,
+        source_interaction_message_id: str | None = None,
     ) -> TransformometroTask:
         row = self.execute_returning_one(
             f"""INSERT INTO {_S}.tm_tasks
-                (title, description, status, assignee_user_id, created_by_user_id, due_date)
-                VALUES (%s, %s, 'pending', %s::uuid, %s::uuid, %s)
+                (title, description, status, assignee_user_id, created_by_user_id, due_date,
+                 source_interaction_message_id)
+                VALUES (%s, %s, 'pending', %s::uuid, %s::uuid, %s,
+                        NULLIF(%s, '')::uuid)
                 RETURNING *""",
-            (title, description, assignee_user_id, created_by_user_id, due_date),
+            (
+                title,
+                description,
+                assignee_user_id,
+                created_by_user_id,
+                due_date,
+                source_interaction_message_id or "",
+            ),
         )
         if row is None:
             raise RuntimeError("Falha ao criar a tarefa.")
         return _row_to_task(row)
+
+    def message_exists(self, message_id: str) -> bool:
+        row = self.fetch_one(
+            f"""SELECT 1 AS ok FROM {_S}.tm_interaction_messages
+                WHERE id = %s::uuid AND deleted_at IS NULL""",
+            (message_id,),
+        )
+        return row is not None
 
     def get(self, task_id: str) -> TransformometroTask | None:
         row = self.fetch_one(f"SELECT * FROM {_S}.tm_tasks WHERE id = %s::uuid", (task_id,))
@@ -117,6 +137,10 @@ class TaskRepository(PluginBaseRepository, TaskRepositoryPort):
 class InMemoryTaskRepository(TaskRepositoryPort):
     def __init__(self) -> None:
         self.rows: dict[str, TransformometroTask] = {}
+        self.message_ids: set[str] = set()
+
+    def message_exists(self, message_id: str) -> bool:
+        return message_id in self.message_ids
 
     def create(self, **kwargs) -> TransformometroTask:
         now = datetime.utcnow()

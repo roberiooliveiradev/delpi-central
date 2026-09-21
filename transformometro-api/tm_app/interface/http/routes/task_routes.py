@@ -21,10 +21,14 @@ class CreateTaskBody(BaseModel):
     description: str | None = Field(default=None, max_length=2000)
     assignee_user_id: str | None = None
     due_date: str | None = None
+    source_interaction_message_id: str | None = None
 
 
-class UpdateTaskBody(CreateTaskBody):
-    pass
+class UpdateTaskBody(BaseModel):
+    title: str = Field(..., min_length=1, max_length=200)
+    description: str | None = Field(default=None, max_length=2000)
+    assignee_user_id: str | None = None
+    due_date: str | None = None
 
 
 def _handle(exc: Exception):
@@ -59,6 +63,7 @@ def create_task(request: Request, body: CreateTaskBody):
                 description=body.description,
                 assignee_user_id=body.assignee_user_id,
                 due_date=body.due_date,
+                source_interaction_message_id=body.source_interaction_message_id,
             ).to_dict(),
             status_code=201,
         )

@@ -145,6 +145,56 @@ def test_http_authz_and_create():
     assert anonymous.status_code == 401
 
 
+def test_create_with_source_interaction_message():
+    repo = InMemoryTaskRepository()
+    msg_id = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    repo.message_ids.add(msg_id)
+    commands = TaskCommandUseCases(repo)
+    created = commands.create(
+        _user(),
+        title="Validar fluxo de compras",
+        description="Validar fluxo de compras",
+        assignee_user_id=USER,
+        due_date=None,
+        source_interaction_message_id=msg_id,
+    )
+    assert created.source_interaction_message_id == msg_id
+    with pytest.raises(LookupError):
+        commands.create(
+            _user(),
+            title="Sem origem",
+            description=None,
+            assignee_user_id=USER,
+            due_date=None,
+            source_interaction_message_id="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        )
+
+
+def test_create_allows_multiple_tasks_from_same_message():
+    repo = InMemoryTaskRepository()
+    msg_id = "cccccccc-cccc-cccc-cccc-cccccccccccc"
+    repo.message_ids.add(msg_id)
+    commands = TaskCommandUseCases(repo)
+    first = commands.create(
+        _user(),
+        title="Tarefa 1",
+        description=None,
+        assignee_user_id=USER,
+        due_date=None,
+        source_interaction_message_id=msg_id,
+    )
+    second = commands.create(
+        _user(),
+        title="Tarefa 2",
+        description=None,
+        assignee_user_id=USER,
+        due_date=None,
+        source_interaction_message_id=msg_id,
+    )
+    assert first.id != second.id
+    assert first.source_interaction_message_id == second.source_interaction_message_id == msg_id
+
+
 def test_partial_signature_failure_keeps_manual_tasks():
     commands = _commands()
     commands.create(_user(), title="Manual", description=None, assignee_user_id=USER, due_date=None)
