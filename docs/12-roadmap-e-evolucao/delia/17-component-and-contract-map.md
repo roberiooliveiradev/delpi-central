@@ -454,11 +454,14 @@ NO_PARALLEL_PRIMITIVE = YES
 NO_RUNTIME = Evidence store / LLM / RAG / planner / conversation = NONE
 C3_STARTED = YES
 C3_EXECUTED = NO
+C3_T2 = PASS
 C3_T2_AUTHORIZED = YES
-NEXT = C3-T2 — EVIDENCE_EPISTEMIC_DOMAIN_MODEL_AND_CONFORMANCE
+C3_T2_IMPL = delia-api/app/domain/evidence/
+C3_T3_AUTHORIZED = YES
+NEXT = C3-T3 — MINIMAL_MODEL_INVOCATION_AND_EVAL_LINEAGE_FOUNDATION
 ```
 
-Evidence coordination is owned by DÉLIA; original source/domain/provider remains authority for the underlying fact. EvidenceRef ≠ permission; SourceRef ≠ access grant; Prediction ≠ FACT; Recommendation ≠ authorization; OBSERVATION ≠ FACT; FACT_STATUS ≠ ACCESS_PERMISSION.
+Evidence coordination is owned by DÉLIA; original source/domain/provider remains authority for the underlying fact. EvidenceRef ≠ permission; SourceRef ≠ access grant; Prediction ≠ FACT; Recommendation ≠ authorization; OBSERVATION ≠ FACT; FACT_STATUS ≠ ACCESS_PERMISSION. C3-T2 domain model + conformance PASS; Evidence store remains NOT_IMPLEMENTED.
 
 ## 3A. Architecture / persistence / privacy / safety — C0.S4 freeze accepted
 

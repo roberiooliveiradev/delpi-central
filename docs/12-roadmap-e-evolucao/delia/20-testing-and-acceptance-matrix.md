@@ -1089,10 +1089,27 @@ RUNTIME_TESTS = TEST_NOT_RUN
 OWNER = 21 §4B + 38
 C3_T1 = APPROVED
 C3_T2_AUTHORIZED = YES
-C3_T2_IMPLEMENTS = YES (future deterministic conformance; not executed here)
+C3_T2_IMPLEMENTS = YES
 ```
 
-Required future deterministic cases (C3-T2):
+### C3-T2 — Evidence epistemic domain model + deterministic conformance
+
+```text
+STATUS = PASS (domain model + unit conformance; evaluated SHA/config in ledger §6.64)
+OWNER = delia-api/app/domain/evidence/
+CANONICAL = 21 §4B.13 + this gate + 38
+RUNTIME_EVIDENCE_STORE = NOT_IMPLEMENTED
+MODEL_INVOCATION = NOT_IMPLEMENTED
+RAG = NOT_IMPLEMENTED
+PLANNER = NOT_IMPLEMENTED
+CONVERSATION = NOT_IMPLEMENTED
+C3_T2 = PASS
+C3_EXECUTED = NO
+C3_T3_AUTHORIZED = YES
+TEST_MODULE = tests/test_evidence_epistemic_conformance.py
+```
+
+Required deterministic cases (C3-T2) — implemented:
 
 - positive authoritative Evidence linkage with SourceRef;
 - sibling source type preserves the same epistemic/linkage semantics;

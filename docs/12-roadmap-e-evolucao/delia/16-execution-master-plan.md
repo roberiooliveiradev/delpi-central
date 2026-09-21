@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C3-T2 — EVIDENCE_EPISTEMIC_DOMAIN_MODEL_AND_CONFORMANCE` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1=APPROVED`; do not claim C3 complete)
+**Próxima etapa:** `C3-T3 — MINIMAL_MODEL_INVOCATION_AND_EVAL_LINEAGE_FOUNDATION` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1=APPROVED`; `C3-T2=PASS` domain/conformance; do not claim C3 complete)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -401,15 +401,15 @@ BROWSER_STATE_RESIDENCY_POLICY = APPROVED (C2-T1D1)
 BROWSER_RETAINED_STATE_CURRENTLY_REQUIRED = NO
 CENTRALIZED_BROWSER_STATE_BOUNDARY = REQUIRED_ON_FIRST_RETAINED_STATE
 SHARED_DEVICE_ISOLATION_INVARIANT = FROZEN_ACCEPTED
-NEXT = C3-T2 — EVIDENCE_EPISTEMIC_DOMAIN_MODEL_AND_CONFORMANCE
+NEXT = C3-T3 — MINIMAL_MODEL_INVOCATION_AND_EVAL_LINEAGE_FOUNDATION
 ```
 
 C3 initial bounded DAG (Coordination-approved dependency order; not the numbered foundation inventory):
 
 ```text
 C3-T1 Evidence / epistemic semantics + source linkage = APPROVED (21 §4B; ARCHITECTURE_REVIEW_C3_T1 ACCEPT_WITH_RESIDUAL)
-→ C3-T2 Evidence epistemic domain model + conformance (AUTHORIZED; do not start here)
-→ C3-T3 Minimal Model Invocation + Eval/Lineage Foundation
+→ C3-T2 Evidence epistemic domain model + conformance = PASS (delia-api/app/domain/evidence; deterministic unit conformance)
+→ C3-T3 Minimal Model Invocation + Eval/Lineage Foundation (AUTHORIZED by order; do not start here)
 → C3-T4 Structured Understanding Vertical Slice
 (partial parallel after Evidence baseline) C3-T5 OpenAPI Action Catalog + Capability Projection
 → C3-T6 Expertise / Knowledge Governance + Retrieval Contracts
@@ -423,7 +423,8 @@ EVIDENCE_EPISTEMIC_SEMANTICS = FROZEN_ACCEPTED
 SOURCE_LINKAGE_SEMANTICS = FROZEN_ACCEPTED
 C3_STARTED = YES
 C3_EXECUTED = NO
-C3_T2_AUTHORIZED = YES
+C3_T2 = PASS
+C3_T3_AUTHORIZED = YES
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -677,10 +678,12 @@ C3_EXECUTED = NO
 C3_T1 = APPROVED
 EVIDENCE_EPISTEMIC_SEMANTICS = FROZEN_ACCEPTED
 SOURCE_LINKAGE_SEMANTICS = FROZEN_ACCEPTED
+C3_T2 = PASS
 C3_T2_AUTHORIZED = YES
+C3_T3_AUTHORIZED = YES
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = C3-T2 — EVIDENCE_EPISTEMIC_DOMAIN_MODEL_AND_CONFORMANCE
-C2-FINAL accepted with residual; C3-T1 Architecture Review accepted (`ACCEPT_WITH_RESIDUAL`)
+NEXT = C3-T3 — MINIMAL_MODEL_INVOCATION_AND_EVAL_LINEAGE_FOUNDATION
+C2-FINAL accepted with residual; C3-T1 Architecture Review accepted (`ACCEPT_WITH_RESIDUAL`); C3-T2 domain/conformance PASS
 Workspace binding remains unscheduled
 ```
 
