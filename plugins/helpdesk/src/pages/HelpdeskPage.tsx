@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { ActionButton } from "@delpi/plugin-ui/index";
-import { ChevronLeft, ChevronRight, FilterX, Plus, Send } from "lucide-react";
+import { AlignLeft, ChevronLeft, ChevronRight, FilterX, FolderTree, Gauge, Plus, Send, TicketPlus, Type } from "lucide-react";
 
 import {
   HelpdeskApiError,
@@ -367,7 +367,12 @@ function CreateTicketPage() {
 
   return (
     <HelpdeskPageStack>
-    <HelpdeskPageHeader title="Abrir chamado" compact nav={<HelpdeskBackButton />} />
+    <HelpdeskPageHeader
+      title="Abrir chamado"
+      compact
+      nav={<HelpdeskBackButton />}
+      icon={<TicketPlus size={18} aria-hidden />}
+    />
     <HelpdeskSectionCard title="Abrir chamado" hint={helpTooltips.create} fill>
       {loading ? <HelpdeskLoadingState message="Carregando categorias…" /> : null}
       {errorText ? <HelpdeskStateBanner variant="error">{errorText}</HelpdeskStateBanner> : null}
@@ -396,13 +401,21 @@ function CreateTicketPage() {
       >
         <div className="helpdesk-create-layout">
           <div className="helpdesk-create-layout__main">
-            <HelpdeskTextField label="Título" hint={helpTooltips.create} value={title} onChange={setTitle} required />
+            <HelpdeskTextField
+              label="Título"
+              hint={helpTooltips.create}
+              value={title}
+              onChange={setTitle}
+              required
+              icon={<Type size={14} aria-hidden />}
+            />
             <HelpdeskTextArea
               label="Descrição"
               value={description}
               onChange={setDescription}
               required
               rows={12}
+              icon={<AlignLeft size={14} aria-hidden />}
             />
           </div>
           <aside className="helpdesk-create-layout__aside" aria-label="Classificação do chamado">
@@ -413,6 +426,7 @@ function CreateTicketPage() {
               required
               searchable
               options={categories.map((item) => ({ value: String(item.id), label: item.name }))}
+              icon={<FolderTree size={14} aria-hidden />}
             />
             <HelpdeskSelect
               label="Urgência"
@@ -420,10 +434,11 @@ function CreateTicketPage() {
               onChange={setUrgencyId}
               required
               options={urgencies.map((item) => ({ value: String(item.id), label: item.name }))}
+              icon={<Gauge size={14} aria-hidden />}
             />
           </aside>
         </div>
-        <HelpdeskFormActions>
+        <HelpdeskFormActions align="end">
           <HelpdeskIconButton
             tone="primary"
             type="submit"

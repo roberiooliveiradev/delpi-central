@@ -1,5 +1,5 @@
 import { ChevronDown } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 import { FieldLabel } from "../help/FieldLabel";
 import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
@@ -254,6 +254,7 @@ export type SelectFieldProps = {
   className?: string;
   allowEmpty?: boolean;
   emptyLabel?: string;
+  icon?: ReactNode;
   classNames: SelectFieldClassNames;
   controlClassNames: SelectControlClassNames;
   labels: SelectFieldLabels;
@@ -302,6 +303,7 @@ export function SelectField({
   className,
   allowEmpty = false,
   emptyLabel,
+  icon,
   classNames,
   controlClassNames,
   labels,
@@ -316,7 +318,7 @@ export function SelectField({
   return (
     <div className={rootClass}>
       <label htmlFor={fieldId} className={classNames.labelWrapper}>
-        <FieldLabel className={classNames.fieldLabel || undefined} label={label} hint={hint} />
+        <FieldLabel className={classNames.fieldLabel || undefined} label={label} hint={hint} icon={icon} />
         {required ? <span className={classNames.required}> *</span> : null}
       </label>
       <SelectControl

@@ -280,6 +280,17 @@
   color: var(--delpi-ui-text, var(--text, #111111));
 }
 
+.delpi-ui-field-label__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-field-label__icon svg {
+  width: 14px;
+  height: 14px;
+}
+
 .delpi-ui-field-label__text {
   cursor: help;
 }

@@ -329,6 +329,7 @@ declare module "@delpi/plugin-ui/index" {
     hint?: string;
     htmlFor?: string;
     className?: string;
+    icon?: ReactNode;
   };
 
   export function FieldLabel(props: FieldLabelProps): ReactElement;
@@ -372,6 +373,7 @@ declare module "@delpi/plugin-ui/index" {
     required?: boolean;
     type?: string;
     id?: string;
+    icon?: ReactNode;
   };
 
   export function createDashboardTextField(config: {
@@ -405,6 +407,7 @@ declare module "@delpi/plugin-ui/index" {
     required?: boolean;
     disabled?: boolean;
     searchable?: boolean;
+    icon?: ReactNode;
   };
 
   export function createDashboardSelectField(config: {
@@ -886,6 +889,7 @@ declare module "@delpi/plugin-ui/index" {
     disabled?: boolean;
     required?: boolean;
     id?: string;
+    icon?: ReactNode;
   };
 
   export function textAreaFieldBemClasses(prefix: string): TextFieldClassNames;

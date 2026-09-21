@@ -152,6 +152,7 @@ O GLPI 11 (`templates/components/itilobject/layout.html.twig`) parte a abertura 
 ```text
 HelpdeskPageHeader
   [ ← ]  nav canto superior esquerdo  aria-label Voltar
+  ícone TicketPlus
   título: Abrir chamado
   [ Atualizar ] oculto nesta rota
 
@@ -163,14 +164,14 @@ HelpdeskSectionCard  «Abrir chamado»  hint = helpTooltips.create  fill
   form.helpdesk-create-form
     .helpdesk-create-layout          grid 2fr / 1fr; 1 coluna abaixo de 768px
       main  (esquerda, ~2/3)
-        Título        ·····   obrigatório   hint = helpTooltips.create
-        Descrição     [ texto ] obrigatório, área alta (conteúdo do chamado)
+        Título        ícone Type        ·····   obrigatório   hint = helpTooltips.create
+        Descrição     ícone AlignLeft   [ texto ] obrigatório, área alta
       aside (direita, ~1/3)
-        Categoria     [Select v] obrigatório, searchable
-        Urgência      [Select v] obrigatório
+        Categoria     ícone FolderTree  [Select v] obrigatório, searchable
+        Urgência      ícone Gauge       [Select v] obrigatório
                       Muito baixa | Baixa | Média | Alta | Muito alta
 
-    HelpdeskFormActions              faixa inteira, abaixo das duas colunas
+    HelpdeskFormActions  align=end     faixa inteira, enviar à direita
       [ enviar ]  ícone; aria-label Enviar chamado
 ```
 

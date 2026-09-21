@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId, type ReactNode } from "react";
 
 import { FieldLabel } from "../help/FieldLabel";
 import { delpiUiClass } from "../../utils/delpiUiClass";
@@ -26,6 +26,7 @@ export type TextFieldProps = {
   fullWidth?: boolean;
   /** Keep label for a11y; hide visually (placeholder carries the cue). */
   hideLabel?: boolean;
+  icon?: ReactNode;
   classNames: TextFieldClassNames;
 };
 
@@ -55,6 +56,7 @@ export function TextField({
   className,
   fullWidth = false,
   hideLabel = false,
+  icon,
   classNames,
 }: TextFieldProps) {
   const generatedId = useId();
@@ -76,7 +78,12 @@ export function TextField({
   return (
     <div className={rootClass}>
       <label htmlFor={fieldId} className={labelClass}>
-        <FieldLabel className={classNames.fieldLabel || undefined} label={label} hint={hideLabel ? undefined : hint} />
+        <FieldLabel
+          className={classNames.fieldLabel || undefined}
+          label={label}
+          hint={hideLabel ? undefined : hint}
+          icon={hideLabel ? undefined : icon}
+        />
         {required && !hideLabel ? (
           <span className={classNames.required}> *</span>
         ) : null}

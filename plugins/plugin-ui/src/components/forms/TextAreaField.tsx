@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId, type ReactNode } from "react";
 
 import { FieldLabel } from "../help/FieldLabel";
 
@@ -21,6 +21,7 @@ export type TextAreaFieldProps = {
   required?: boolean;
   className?: string;
   fullWidth?: boolean;
+  icon?: ReactNode;
   classNames: TextAreaFieldClassNames;
 };
 
@@ -46,6 +47,7 @@ export function TextAreaField({
   required = false,
   className,
   fullWidth = false,
+  icon,
   classNames,
 }: TextAreaFieldProps) {
   const generatedId = useId();
@@ -61,7 +63,7 @@ export function TextAreaField({
   return (
     <div className={rootClass}>
       <label htmlFor={fieldId} className={classNames.labelWrapper}>
-        <FieldLabel className={classNames.fieldLabel || undefined} label={label} hint={hint} />
+        <FieldLabel className={classNames.fieldLabel || undefined} label={label} hint={hint} icon={icon} />
         {required ? <span className={classNames.required}> *</span> : null}
       </label>
       <textarea
